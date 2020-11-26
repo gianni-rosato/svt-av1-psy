@@ -18,8 +18,8 @@
 
 int32_t read_y4m_header(EbConfig *cfg);
 
-int32_t read_and_skip_y4m_header(EbConfig *cfg);
+void read_and_skip_y4m_header(FILE *input_file);
 
-int32_t read_y4m_frame_delimiter(EbConfig *cfg);
+void read_y4m_frame_delimiter(FILE *input_file, FILE *error_log_file);
 
 EbBool check_if_y4m(EbConfig *cfg);

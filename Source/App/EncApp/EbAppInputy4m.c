@@ -14,47 +14,28 @@
 #if !defined(_WIN32) || !defined(HAVE_STRNLEN_S)
 #include "safe_str_lib.h"
 #endif
-#define YFM_HEADER_MAX 80
-#define YUV4MPEG2_IND_SIZE 9
+#define YFM_HEADER_MAX 4096 // Technically no max according to "spec"
 #define PRINT_HEADER 0
-#define CHROMA_MAX 4
 
-/* copy a string until a specified character or a new line is found */
-char *copy_until_char_or_newline(char *src, char *dst, char chr) {
-    rsize_t count    = 0;
-    char *  src_init = src;
-
-    while (*src != chr && *src != '\n') {
-        src++;
-        count++;
-    }
-
-    strncpy_s(dst, YFM_HEADER_MAX, src_init, count);
-
-    return src;
-}
 /* only reads the y4m header, needed when we reach end of the file and loop to the beginning */
-int32_t read_and_skip_y4m_header(EbConfig *cfg) {
-    char  buffer[YFM_HEADER_MAX];
-    char *fresult = fgets(buffer, sizeof(buffer), cfg->input_file);
-    if (fresult == NULL) return EB_ErrorBadParameter;
-    return EB_ErrorNone;
+void read_and_skip_y4m_header(FILE *input_file) {
+    int c = 0;
+    while ((c = fgetc(input_file)) != '\n' && c != EOF) {}
 }
 
 /* reads the y4m header and parses the input parameters */
 int32_t read_y4m_header(EbConfig *cfg) {
-    FILE *   ptr_in;
-    char     buffer[YFM_HEADER_MAX];
-    char *   fresult, *tokstart, *tokend, format_str[YFM_HEADER_MAX];
-    uint32_t bitdepth = 8, width = 0, height = 0, fr_n = 0, fr_d = 0, aspect_n, aspect_d;
-    char     chroma[CHROMA_MAX] = "420", scan_type = 'p';
-
-    /* pointer to the input file */
-    ptr_in = cfg->input_file;
+#define CHROMA_MAX 4
+    char          buffer[YFM_HEADER_MAX];
+    char *        tokstart = buffer;
+    uint32_t      bitdepth = 8;
+    unsigned long width = 0, height = 0;
+    long          fr_n = 0, fr_d = 0, aspect_n = 0, aspect_d = 0;
+    char          chroma[CHROMA_MAX] = "420", scan_type = 'p';
 
     /* get first line after YUV4MPEG2 */
-    fresult = fgets(buffer, sizeof(buffer), ptr_in);
-    if (fresult == NULL) return EB_ErrorBadParameter;
+    if (!fgets(buffer, sizeof(buffer), cfg->input_file))
+        return EB_ErrorBadParameter;
 
     /* print header */
     if (PRINT_HEADER) {
@@ -63,24 +44,18 @@ int32_t read_y4m_header(EbConfig *cfg) {
     }
 
     /* read header parameters */
-    tokstart = &(buffer[0]);
-
     while (*tokstart != '\0') {
-        if (*tokstart == 0x20) {
-            tokstart++;
-            continue;
-        }
-
         switch (*tokstart++) {
+        case 0x20: continue;
         case 'W': /* width, required. */
-            width = (uint32_t)strtol(tokstart, &tokend, 10);
-            if (PRINT_HEADER) fprintf(stderr, "width = %u\n", width);
-            tokstart = tokend;
+            width = strtol(tokstart, &tokstart, 10);
+            if (PRINT_HEADER)
+                fprintf(stderr, "width = %lu\n", width);
             break;
         case 'H': /* height, required. */
-            height = (uint32_t)strtol(tokstart, &tokend, 10);
-            if (PRINT_HEADER) fprintf(stderr, "height = %u\n", height);
-            tokstart = tokend;
+            height = strtol(tokstart, &tokstart, 10);
+            if (PRINT_HEADER)
+                fprintf(stderr, "height = %lu\n", height);
             break;
         case 'I': /* scan type, not required, default: 'p' */
             switch (*tokstart++) {
@@ -92,117 +67,117 @@ int32_t read_y4m_header(EbConfig *cfg) {
                 fprintf(cfg->error_log_file, "interlace type not supported\n");
                 return EB_ErrorBadParameter;
             }
-            if (PRINT_HEADER) fprintf(stderr, "scan_type = %c\n", scan_type);
+            if (PRINT_HEADER)
+                fprintf(stderr, "scan_type = %c\n", scan_type);
             break;
         case 'C': /* color space, not required: default "420" */
-            tokstart = copy_until_char_or_newline(tokstart, format_str, 0x20);
-            if (strcmp("420mpeg2", format_str) == 0) {
+#define chroma_compare(a, b) !strncmp(a, b, sizeof(a) - 1)
+            if (chroma_compare("420mpeg2", tokstart)) {
                 strcpy_s(chroma, CHROMA_MAX, "420");
                 // chroma left
                 bitdepth = 8;
-            } else if (strcmp("420paldv", format_str) == 0) {
+            } else if (chroma_compare("420paldv", tokstart)) {
                 strcpy_s(chroma, CHROMA_MAX, "420");
                 // chroma top-left
                 bitdepth = 8;
-            } else if (strcmp("420jpeg", format_str) == 0) {
+            } else if (chroma_compare("420jpeg", tokstart)) {
                 strcpy_s(chroma, CHROMA_MAX, "420");
                 // chroma center
                 bitdepth = 8;
-            } else if (strcmp("420p16", format_str) == 0) {
+            } else if (chroma_compare("420p16", tokstart)) {
                 strcpy_s(chroma, CHROMA_MAX, "420");
                 bitdepth = 16;
-            } else if (strcmp("422p16", format_str) == 0) {
+            } else if (chroma_compare("422p16", tokstart)) {
                 strcpy_s(chroma, CHROMA_MAX, "422");
                 bitdepth = 16;
-            } else if (strcmp("444p16", format_str) == 0) {
+            } else if (chroma_compare("444p16", tokstart)) {
                 strcpy_s(chroma, CHROMA_MAX, "444");
                 bitdepth = 16;
-            } else if (strcmp("420p14", format_str) == 0) {
+            } else if (chroma_compare("420p14", tokstart)) {
                 strcpy_s(chroma, CHROMA_MAX, "420");
                 bitdepth = 14;
-            } else if (strcmp("422p14", format_str) == 0) {
+            } else if (chroma_compare("422p14", tokstart)) {
                 strcpy_s(chroma, CHROMA_MAX, "422");
                 bitdepth = 14;
-            } else if (strcmp("444p14", format_str) == 0) {
+            } else if (chroma_compare("444p14", tokstart)) {
                 strcpy_s(chroma, CHROMA_MAX, "444");
                 bitdepth = 14;
-            } else if (strcmp("420p12", format_str) == 0) {
+            } else if (chroma_compare("420p12", tokstart)) {
                 strcpy_s(chroma, CHROMA_MAX, "420");
                 bitdepth = 12;
-            } else if (strcmp("422p12", format_str) == 0) {
+            } else if (chroma_compare("422p12", tokstart)) {
                 strcpy_s(chroma, CHROMA_MAX, "422");
                 bitdepth = 12;
-            } else if (strcmp("444p12", format_str) == 0) {
+            } else if (chroma_compare("444p12", tokstart)) {
                 strcpy_s(chroma, CHROMA_MAX, "444");
                 bitdepth = 12;
-            } else if (strcmp("420p10", format_str) == 0) {
+            } else if (chroma_compare("420p10", tokstart)) {
                 strcpy_s(chroma, CHROMA_MAX, "420");
                 bitdepth = 10;
-            } else if (strcmp("422p10", format_str) == 0) {
+            } else if (chroma_compare("422p10", tokstart)) {
                 strcpy_s(chroma, CHROMA_MAX, "422");
                 bitdepth = 10;
-            } else if (strcmp("444p10", format_str) == 0) {
+            } else if (chroma_compare("444p10", tokstart)) {
                 strcpy_s(chroma, CHROMA_MAX, "444");
                 bitdepth = 10;
-            } else if (strcmp("420p9", format_str) == 0) {
+            } else if (chroma_compare("420p9", tokstart)) {
                 strcpy_s(chroma, CHROMA_MAX, "420");
                 bitdepth = 9;
-            } else if (strcmp("422p9", format_str) == 0) {
+            } else if (chroma_compare("422p9", tokstart)) {
                 strcpy_s(chroma, CHROMA_MAX, "422");
                 bitdepth = 9;
-            } else if (strcmp("444p9", format_str) == 0) {
+            } else if (chroma_compare("444p9", tokstart)) {
                 strcpy_s(chroma, CHROMA_MAX, "444");
                 bitdepth = 9;
-            } else if (strcmp("420", format_str) == 0) {
+            } else if (chroma_compare("420", tokstart)) {
                 strcpy_s(chroma, CHROMA_MAX, "420");
                 bitdepth = 8;
-            } else if (strcmp("411", format_str) == 0) {
+            } else if (chroma_compare("411", tokstart)) {
                 strcpy_s(chroma, CHROMA_MAX, "411");
                 bitdepth = 8;
-            } else if (strcmp("422", format_str) == 0) {
+            } else if (chroma_compare("422", tokstart)) {
                 strcpy_s(chroma, CHROMA_MAX, "422");
                 bitdepth = 8;
-            } else if (strcmp("444", format_str) == 0) {
+            } else if (chroma_compare("444", tokstart)) {
                 strcpy_s(chroma, CHROMA_MAX, "444");
                 bitdepth = 8;
-            } else if (strcmp("mono16", format_str) == 0) {
+            } else if (chroma_compare("mono16", tokstart)) {
                 strcpy_s(chroma, CHROMA_MAX, "400");
                 bitdepth = 16;
-            } else if (strcmp("mono12", format_str) == 0) {
+            } else if (chroma_compare("mono12", tokstart)) {
                 strcpy_s(chroma, CHROMA_MAX, "400");
                 bitdepth = 12;
-            } else if (strcmp("mono10", format_str) == 0) {
+            } else if (chroma_compare("mono10", tokstart)) {
                 strcpy_s(chroma, CHROMA_MAX, "400");
                 bitdepth = 10;
-            } else if (strcmp("mono9", format_str) == 0) {
+            } else if (chroma_compare("mono9", tokstart)) {
                 strcpy_s(chroma, CHROMA_MAX, "400");
                 bitdepth = 9;
-            } else if (strcmp("mono", format_str) == 0) {
+            } else if (chroma_compare("mono", tokstart)) {
                 strcpy_s(chroma, CHROMA_MAX, "400");
                 bitdepth = 8;
             } else {
                 fprintf(cfg->error_log_file, "chroma format not supported\n");
                 return EB_ErrorBadParameter;
             }
-            if (PRINT_HEADER) fprintf(stderr, "chroma = %s, bitdepth = %u\n", chroma, bitdepth);
+#undef chroma_compare
+            while (*tokstart != 0x20 && *tokstart != '\n') tokstart++;
+            if (PRINT_HEADER)
+                fprintf(stderr, "chroma = %s, bitdepth = %u\n", chroma, bitdepth);
             break;
         case 'F': /* frame rate, required */
-            tokstart = copy_until_char_or_newline(tokstart, format_str, ':');
-            fr_n     = (uint32_t)strtol(format_str, (char **)NULL, 10);
-            tokstart++;
-            tokstart = copy_until_char_or_newline(tokstart, format_str, 0x20);
-            fr_d     = (uint32_t)strtol(format_str, (char **)NULL, 10);
+            fr_n = strtol(tokstart, &tokstart, 10);
+            fr_d = strtol(++tokstart, &tokstart, 10);
+            ++tokstart;
             if (PRINT_HEADER)
-                fprintf(stderr, "framerate_n = %u\nframerate_d = %u\n", fr_n, fr_d);
+                fprintf(stderr, "framerate_n = %ld\nframerate_d = %ld\n", fr_n, fr_d);
             break;
         case 'A': /* aspect ratio, not required */
-            tokstart = copy_until_char_or_newline(tokstart, format_str, ':');
-            aspect_n = (uint32_t)strtol(format_str, (char **)NULL, 10);
-            tokstart++;
-            tokstart = copy_until_char_or_newline(tokstart, format_str, 0x20);
-            aspect_d = (uint32_t)strtol(format_str, (char **)NULL, 10);
+            aspect_n = strtol(tokstart, &tokstart, 10);
+            aspect_d = strtol(++tokstart, &tokstart, 10);
+            ++tokstart;
             if (PRINT_HEADER)
-                fprintf(stderr, "aspect_n = %u\naspect_d = %u\n", aspect_n, aspect_d);
+                fprintf(stderr, "aspect_n = %ld\naspect_d = %ld\n", aspect_n, aspect_d);
             break;
         default:
             /* Unknown section: skip it */
@@ -210,9 +185,6 @@ int32_t read_y4m_header(EbConfig *cfg) {
             break;
         }
     }
-
-    /* Check that we did not try to parse further the end of the header string */
-    assert(fresult + strlen(fresult) == tokstart);
 
     /*check if required parameters were read*/
     if (width == 0) {
@@ -239,42 +211,33 @@ int32_t read_y4m_header(EbConfig *cfg) {
         (instead of the encoder bit depth) and chroma format */
 
     return EB_ErrorNone;
+#undef CHROMA_MAX
 }
 
 /* read next line which contains the "FRAME" delimiter */
-int32_t read_y4m_frame_delimiter(EbConfig *cfg) {
-    unsigned char buffer_y4m_header[10];
-    char *        fresult;
+void read_y4m_frame_delimiter(FILE *input_file, FILE *error_log_file) {
+    char buffer_y4m_header[YFM_HEADER_MAX] = {0};
 
-    fresult = fgets((char *)buffer_y4m_header, sizeof(buffer_y4m_header), cfg->input_file);
-
-    if (fresult == NULL) {
-        assert(feof(cfg->input_file));
-        return EB_ErrorNone;
+    if (!fgets(buffer_y4m_header, sizeof(buffer_y4m_header), input_file)) {
+        assert(feof(input_file));
+        return;
     }
-
-    if (strcmp((const char *)buffer_y4m_header, "FRAME\n") !=0
-        && strcmp((const char *)buffer_y4m_header, "FRAME\r\n") != 0) {
-        fprintf(cfg->error_log_file, "Failed to read proper y4m frame delimeter. Read broken.\n");
-        return EB_ErrorBadParameter;
+    if (strncmp(buffer_y4m_header, "FRAME", sizeof("FRAME") - 1)) {
+        fprintf(error_log_file, "Failed to read proper y4m frame delimeter. Read broken.\n");
+        return;
     }
-
-    return EB_ErrorNone;
 }
 
 /* check if the input file is in YUV4MPEG2 (y4m) format */
 EbBool check_if_y4m(EbConfig *cfg) {
-    size_t len;
-    char   buf[YUV4MPEG2_IND_SIZE + 1];
-    len = fread(buf, YUV4MPEG2_IND_SIZE, 1, cfg->input_file);
-    if (len != 1) return EB_FALSE;
-
-    if ((cfg->input_file != stdin) && (!cfg->input_file_is_fifo)) {
+#define YUV4MPEG2_IND_SIZE 9
+    char   buf[YUV4MPEG2_IND_SIZE + 1] = {0};
+    if (fread(buf, YUV4MPEG2_IND_SIZE, 1, cfg->input_file) != 1)
+        return EB_FALSE;
+    if (cfg->input_file != stdin && !cfg->input_file_is_fifo)
         fseek(cfg->input_file, 0, SEEK_SET);
-    } else {
+    else
         memcpy(cfg->y4m_buf, buf, YUV4MPEG2_IND_SIZE);
-    }
-
-    buf[YUV4MPEG2_IND_SIZE] = 0;
-    return (strcmp(buf, "YUV4MPEG2") == 0);
+    return !strncmp(buf, "YUV4MPEG2", sizeof("YUV4MPEG2") - 1);
+#undef YUV4MPEG2_IND_SIZE
 }

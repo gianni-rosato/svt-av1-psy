@@ -656,7 +656,8 @@ void read_input_frames(EbConfig *config, uint8_t is_16bit, EbBufferHeaderType *h
 
             header_ptr->n_filled_len = 0;
             /* if input is a y4m file, read next line which contains "FRAME" */
-            if (config->y4m_input == EB_TRUE) read_y4m_frame_delimiter(config);
+            if (config->y4m_input == EB_TRUE)
+                read_y4m_frame_delimiter(config->input_file, config->error_log_file);
             uint64_t luma_read_size = (uint64_t)input_padded_width * input_padded_height
                                       << is_16bit;
             uint8_t *eb_input_ptr = input_ptr->luma;
@@ -680,8 +681,8 @@ void read_input_frames(EbConfig *config, uint8_t is_16bit, EbBufferHeaderType *h
             if (read_size != header_ptr->n_filled_len) {
                 fseek(input_file, 0, SEEK_SET);
                 if (config->y4m_input == EB_TRUE) {
-                    read_and_skip_y4m_header(config);
-                    read_y4m_frame_delimiter(config);
+                    read_and_skip_y4m_header(config->input_file);
+                    read_y4m_frame_delimiter(config->input_file, config->error_log_file);
                 }
                 header_ptr->n_filled_len =
                     (uint32_t)fread(input_ptr->luma, 1, luma_read_size, input_file);
