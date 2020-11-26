@@ -980,8 +980,8 @@ typedef uint16_t CONV_BUF_TYPE;
 #define MAX_WEDGE_SQUARE (MAX_WEDGE_SIZE * MAX_WEDGE_SIZE)
 #define WEDGE_WEIGHT_BITS 6
 #define WEDGE_NONE -1
-#define MASK_MASTER_SIZE ((MAX_WEDGE_SIZE) << 1)
-#define MASK_MASTER_STRIDE (MASK_MASTER_SIZE)
+#define MASK_PRIMARY_SIZE ((MAX_WEDGE_SIZE) << 1)
+#define MASK_PRIMARY_STRIDE (MASK_PRIMARY_SIZE)
 typedef struct {
     int enable_order_hint; // 0 - disable order hint, and related tools
     int order_hint_bits_minus_1; // dist_wtd_comp, ref_frame_mvs,

@@ -24,7 +24,7 @@ static void svt_sequence_control_set_dctor(EbPtr p) {
     General notes on how Sequence Control Sets (SCS) are used.
 
     SequenceControlSetInstance
-        is the master copy that interacts with the API in real-time.  When a
+        is the primary copy that interacts with the API in real-time.  When a
         change happens, the changeFlag is signaled so that appropriate action can
         be taken.  There is one scsInstance per stream/encode instance.  The scsInstance
         owns the encodeContext

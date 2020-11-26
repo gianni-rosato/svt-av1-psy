@@ -1504,17 +1504,17 @@ void svt_highbd_inter_predictor(const uint16_t *src, int32_t src_stride, uint16_
 #define USE_PRECOMPUTED_WEDGE_MASK 1
 
 #if USE_PRECOMPUTED_WEDGE_MASK
-static const uint8_t wedge_master_oblique_odd[MASK_MASTER_SIZE] = {
+static const uint8_t wedge_primary_oblique_odd[MASK_PRIMARY_SIZE] = {
         0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
         0,  0,  0,  0,  0,  0,  1,  2,  6,  18, 37, 53, 60, 63, 64, 64, 64, 64, 64, 64, 64, 64,
         64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64,
 };
-static const uint8_t wedge_master_oblique_even[MASK_MASTER_SIZE] = {
+static const uint8_t wedge_primary_oblique_even[MASK_PRIMARY_SIZE] = {
         0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
         0,  0,  0,  0,  0,  0,  1,  4,  11, 27, 46, 58, 62, 63, 64, 64, 64, 64, 64, 64, 64, 64,
         64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64,
 };
-static const uint8_t wedge_master_vertical[MASK_MASTER_SIZE] = {
+static const uint8_t wedge_primary_vertical[MASK_PRIMARY_SIZE] = {
         0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
         0,  0,  0,  0,  0,  0,  0,  2,  7,  21, 43, 57, 62, 64, 64, 64, 64, 64, 64, 64, 64, 64,
         64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64,
@@ -1663,36 +1663,36 @@ int get_wedge_params_bits(BlockSize sb_type) {
 
 // [negative][direction]
 DECLARE_ALIGNED(16, static uint8_t,
-                wedge_mask_obl[2][WEDGE_DIRECTIONS][MASK_MASTER_SIZE * MASK_MASTER_SIZE]);
+                wedge_mask_obl[2][WEDGE_DIRECTIONS][MASK_PRIMARY_SIZE * MASK_PRIMARY_SIZE]);
 
 // 4 * MAX_WEDGE_SQUARE is an easy to compute and fairly tight upper bound
 // on the sum of all mask sizes up to an including MAX_WEDGE_SQUARE.
 DECLARE_ALIGNED(16, static uint8_t, wedge_mask_buf[2 * MAX_WEDGE_TYPES * 4 * MAX_WEDGE_SQUARE]);
 
-static void init_wedge_master_masks() {
-    const int w      = MASK_MASTER_SIZE;
-    const int h      = MASK_MASTER_SIZE;
-    const int stride = MASK_MASTER_STRIDE;
-    // Note: index [0] stores the masters, and [1] its complement.
+static void init_wedge_primary_masks() {
+    const int w      = MASK_PRIMARY_SIZE;
+    const int h      = MASK_PRIMARY_SIZE;
+    const int stride = MASK_PRIMARY_STRIDE;
+    // Note: index [0] stores the primary, and [1] its complement.
 #if USE_PRECOMPUTED_WEDGE_MASK
-    // Generate prototype by shifting the masters
+    // Generate prototype by shifting the primary
     int shift = h / 4;
     for (int i = 0; i < h; i += 2) {
-        shift_copy(wedge_master_oblique_even,
+        shift_copy(wedge_primary_oblique_even,
                    &wedge_mask_obl[0][WEDGE_OBLIQUE63][i * stride],
                    shift,
-                   MASK_MASTER_SIZE);
+                   MASK_PRIMARY_SIZE);
         shift--;
-        shift_copy(wedge_master_oblique_odd,
+        shift_copy(wedge_primary_oblique_odd,
                    &wedge_mask_obl[0][WEDGE_OBLIQUE63][(i + 1) * stride],
                    shift,
-                   MASK_MASTER_SIZE);
+                   MASK_PRIMARY_SIZE);
         svt_memcpy(&wedge_mask_obl[0][WEDGE_VERTICAL][i * stride],
-                wedge_master_vertical,
-               MASK_MASTER_SIZE * sizeof(wedge_master_vertical[0]));
+                   wedge_primary_vertical,
+                   MASK_PRIMARY_SIZE * sizeof(wedge_primary_vertical[0]));
         svt_memcpy(&wedge_mask_obl[0][WEDGE_VERTICAL][(i + 1) * stride],
-                wedge_master_vertical,
-               MASK_MASTER_SIZE * sizeof(wedge_master_vertical[0]));
+                   wedge_primary_vertical,
+                   MASK_PRIMARY_SIZE * sizeof(wedge_primary_vertical[0]));
     }
 #else
     static const double smoother_param = 2.85;
@@ -1745,11 +1745,11 @@ static void init_wedge_signs() {
 
         if (wbits) {
             for (int w = 0; w < wtypes; ++w) {
-                // Get the mask master, i.e. index [0]
+                // Get the mask primary, i.e. index [0]
                 const uint8_t *mask = get_wedge_mask_inplace(w, 0, sb_type);
                 int            avg  = 0;
                 for (int i = 0; i < bw; ++i) avg += mask[i];
-                for (int i = 1; i < bh; ++i) avg += mask[i * MASK_MASTER_STRIDE];
+                for (int i = 1; i < bh; ++i) avg += mask[i * MASK_PRIMARY_STRIDE];
                 avg = (avg + (bw + bh - 1) / 2) / (bw + bh - 1);
                 // Default sign of this wedge is 1 if the average < 32, 0 otherwise.
                 // If default sign is 1:
@@ -1757,7 +1757,7 @@ static void init_wedge_signs() {
                 //   the complement i.e. index [1] instead. If sign requested is 1
                 //   we need to flip the sign and return index [0] instead.
                 // If default sign is 0:
-                //   If sign requested is 0, we need to return index [0] the master
+                //   If sign requested is 0, we need to return index [0] the primary
                 //   if sign requested is 1, we need to return the complement index [1]
                 //   instead.
                 wedge_params.signflip[w] = (avg < 32);
@@ -1768,7 +1768,6 @@ static void init_wedge_signs() {
 #endif // !USE_PRECOMPUTED_WEDGE_SIGN
 
 static const uint8_t *get_wedge_mask_inplace(int wedge_index, int neg, BlockSize sb_type) {
-    const uint8_t *      master;
     const int            bh = block_size_high[sb_type];
     const int            bw = block_size_wide[sb_type];
 
@@ -1779,9 +1778,8 @@ static const uint8_t *get_wedge_mask_inplace(int wedge_index, int neg, BlockSize
 
     woff   = (a->x_offset * bw) >> 3;
     hoff   = (a->y_offset * bh) >> 3;
-    master = wedge_mask_obl[neg ^ wsignflip][a->direction] +
-             MASK_MASTER_STRIDE * (MASK_MASTER_SIZE / 2 - hoff) + MASK_MASTER_SIZE / 2 - woff;
-    return master;
+    return wedge_mask_obl[neg ^ wsignflip][a->direction] +
+        MASK_PRIMARY_STRIDE * (MASK_PRIMARY_SIZE / 2 - hoff) + MASK_PRIMARY_SIZE / 2 - woff;
 }
 
 static void init_wedge_masks() {
@@ -1797,12 +1795,12 @@ static void init_wedge_masks() {
         for (int w = 0; w < wtypes; ++w) {
             const uint8_t *mask;
             mask = get_wedge_mask_inplace(w, 0, bsize);
-            aom_convolve_copy_c(mask, MASK_MASTER_STRIDE, dst, bw, NULL, 0, NULL, 0, bw, bh);
+            aom_convolve_copy_c(mask, MASK_PRIMARY_STRIDE, dst, bw, NULL, 0, NULL, 0, bw, bh);
             wedge_params->masks[0][w] = dst;
             dst += bw * bh;
 
             mask = get_wedge_mask_inplace(w, 1, bsize);
-            aom_convolve_copy_c(mask, MASK_MASTER_STRIDE, dst, bw, NULL, 0, NULL, 0, bw, bh);
+            aom_convolve_copy_c(mask, MASK_PRIMARY_STRIDE, dst, bw, NULL, 0, NULL, 0, bw, bh);
             wedge_params->masks[1][w] = dst;
             dst += bw * bh;
         }
@@ -1812,7 +1810,7 @@ static void init_wedge_masks() {
 
 // Equation of line: f(x, y) = a[0]*(x - a[2]*w/8) + a[1]*(y - a[3]*h/8) = 0
 void svt_av1_init_wedge_masks(void) {
-    init_wedge_master_masks();
+    init_wedge_primary_masks();
 #if !USE_PRECOMPUTED_WEDGE_SIGN
     init_wedge_signs();
 #endif // !USE_PRECOMPUTED_WEDGE_SIGN

@@ -27,7 +27,7 @@
 #include "EbDecParseFrame.h"
 #include "EbDecParseHelper.h"
 
-/* Inititalizes prms for current tile from Master TilesInfo ! */
+/* Inititalizes prms for current tile from main TilesInfo ! */
 void svt_tile_init(TileInfo *cur_tile_info, FrameHeader *frame_header, int32_t tile_row,
                    int32_t tile_col) {
     TilesInfo *tiles_info = &frame_header->tiles_info;
