@@ -3,16 +3,41 @@
 #Known warnings are tracked in issue: #1308
 
 #Race warnings (data races and use-after-free reports):
+#1]
 race:svt_memcpy_small
 race:svt_memcpy_sse
 race:mode_decision_kernel
+#mode_decision_kernel() is run two times with that same pcs_ptr in separated tasks,
+#when: enc_dec_tasks_ptr->input_type is ENCDEC_TASKS_MDC_INPUT or ENCDEC_TASKS_ENCDEC_INPUT.
+#Some calculation are done double on that same memory.
+#Example for one of the warnings is to change in mode_decision_kernel:
+#((EbReferenceObject *)
+#     pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
+#    ->average_intensity = pcs_ptr->parent_pcs_ptr->average_intensity[0];
+#to:
+#if (ENCDEC_TASKS_MDC_INPUT == input_type) {
+#    ((EbReferenceObject *)
+#         pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
+#        ->average_intensity = pcs_ptr->parent_pcs_ptr->average_intensity[0];
+#}
+
+#2]
 race:picture_decision_kernel
-race:calculate_input_average_intensity
-race:compute_luma_sad_between_center_and_target_frame
-race:compute_block_mean_compute_variance
 race:picture_manager_kernel
+#picture_manager_kernel() use encode_context_ptr: current_input_poc = encode_context_ptr->current_input_poc; after release
+#written in  picture_decision_kernel():encode_context_ptr->current_input_poc = pcs_ptr->picture_number;
+
+#3]
 race:packetization_kernel
+#Not synchronize access to variable:
+#encode_context_ptr->terminating_sequence_flag_received = EB_TRUE;
+#Between: picture_decision_kernel and packetization_kernel
+
+#4]
 race:signal_derivation_pre_analysis_oq
-race:compute_chroma_block_mean
+#dlf_kernel() read scs_ptr->seq_header.enable_restoration
+#cdef_kernel() read scs_ptr->seq_header.cdef_level
+#writed in resource_coordination_kernel():signal_derivation_pre_analysis_oq()
+
 
 #End of file

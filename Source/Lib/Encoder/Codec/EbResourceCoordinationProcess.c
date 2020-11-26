@@ -749,6 +749,7 @@ void *resource_coordination_kernel(void *input_ptr) {
     for (;;) {
         // Tie instance_index to zero for now...
         uint32_t instance_index = 0;
+        SequenceControlSet *scs_tmp;
 
         // Get the Next svt Input Buffer [BLOCKING]
         EB_GET_FULL_OBJECT(context_ptr->input_buffer_fifo_ptr, &eb_input_wrapper_ptr);
@@ -788,11 +789,15 @@ void *resource_coordination_kernel(void *input_ptr) {
             svt_get_empty_object(context_ptr->sequence_control_set_empty_fifo_ptr,
                                  &context_ptr->sequence_control_set_active_array[instance_index]);
 
+            scs_tmp = (SequenceControlSet *)context_ptr->sequence_control_set_active_array[instance_index]
+                ->object_ptr;
             // Copy the contents of the active SequenceControlSet into the new empty SequenceControlSet
-            copy_sequence_control_set(
-                (SequenceControlSet *)context_ptr->sequence_control_set_active_array[instance_index]
-                    ->object_ptr,
+            copy_sequence_control_set(scs_tmp,
                 context_ptr->scs_instance_array[instance_index]->scs_ptr);
+
+            // Set the SCD Mode
+            scs_tmp->scd_mode =
+                scs_tmp->static_config.scene_change_detection == 0 ? SCD_MODE_0 : SCD_MODE_1;
 
             // Disable releaseFlag of new SequenceControlSet
             svt_object_release_disable(
@@ -982,13 +987,6 @@ void *resource_coordination_kernel(void *input_ptr) {
             } else
                 pcs_ptr->enc_mode = (EbEncMode)scs_ptr->static_config.enc_mode;
             //  If the mode of the second pass is not set from CLI, it is set to enc_mode
-
-            // Set the SCD Mode
-            scs_ptr->scd_mode =
-                scs_ptr->static_config.scene_change_detection == 0 ? SCD_MODE_0 : SCD_MODE_1;
-
-            // Set the block mean calculation prec
-            scs_ptr->block_mean_calc_prec = BLOCK_MEAN_PREC_SUB;
 
             // Pre-Analysis Signal(s) derivation
             if(use_output_stat(scs_ptr))

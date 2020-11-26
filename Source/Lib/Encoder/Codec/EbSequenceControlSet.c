@@ -188,6 +188,15 @@ EbErrorType svt_sequence_control_set_ctor(SequenceControlSet *scs_ptr, EbPtr obj
     scs_ptr->lap_enabled = 0;
 #endif
 
+    // Set the block mean calculation prec
+    scs_ptr->block_mean_calc_prec = BLOCK_MEAN_PREC_SUB;
+
+    // Set Picture Parameters for statistics gathering
+    scs_ptr->picture_analysis_number_of_regions_per_width =
+        HIGHER_THAN_CLASS_1_REGION_SPLIT_PER_WIDTH;
+    scs_ptr->picture_analysis_number_of_regions_per_height =
+        HIGHER_THAN_CLASS_1_REGION_SPLIT_PER_HEIGHT;
+
     return EB_ErrorNone;
 }
 

@@ -493,6 +493,9 @@ void *rest_kernel(void *input_ptr) {
     EbObjectWrapper *    picture_demux_results_wrapper_ptr;
     PictureDemuxResults *picture_demux_results_rtr;
     // SB Loop variables
+    uint8_t tile_cols;
+    uint8_t tile_rows;
+
 
     for (;;) {
         // Get Cdef Results
@@ -596,6 +599,9 @@ void *rest_kernel(void *input_ptr) {
                 pad_ref_and_set_flags(pcs_ptr, scs_ptr);
             if (scs_ptr->static_config.recon_enabled) { recon_output(pcs_ptr, scs_ptr); }
 
+            tile_cols = pcs_ptr->parent_pcs_ptr->av1_cm->tiles_info.tile_cols;
+            tile_rows = pcs_ptr->parent_pcs_ptr->av1_cm->tiles_info.tile_rows;
+
             if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag) {
                 // Get Empty PicMgr Results
                 svt_get_empty_object(context_ptr->picture_demux_fifo_ptr,
@@ -612,22 +618,17 @@ void *rest_kernel(void *input_ptr) {
                 // Post Reference Picture
                 svt_post_full_object(picture_demux_results_wrapper_ptr);
             }
+
             //Jing: TODO
             //Consider to add parallelism here, sending line by line, not waiting for a full frame
             int sb_size_log2 = scs_ptr->seq_header.sb_size_log2;
-            for (int tile_row_idx = 0;
-                 tile_row_idx < pcs_ptr->parent_pcs_ptr->av1_cm->tiles_info.tile_rows;
-                 tile_row_idx++) {
+            for (int tile_row_idx = 0; tile_row_idx < tile_rows; tile_row_idx++) {
                 uint16_t tile_height_in_sb =
                     (cm->tiles_info.tile_row_start_mi[tile_row_idx + 1] -
                      cm->tiles_info.tile_row_start_mi[tile_row_idx] + (1 << sb_size_log2) - 1)
                      >> sb_size_log2;
-                for (int tile_col_idx = 0;
-                     tile_col_idx < pcs_ptr->parent_pcs_ptr->av1_cm->tiles_info.tile_cols;
-                     tile_col_idx++) {
-                    const int tile_idx =
-                        tile_row_idx * pcs_ptr->parent_pcs_ptr->av1_cm->tiles_info.tile_cols +
-                        tile_col_idx;
+                for (int tile_col_idx = 0; tile_col_idx < tile_cols; tile_col_idx++) {
+                    const int tile_idx = tile_row_idx * tile_cols + tile_col_idx;
                     svt_get_empty_object(context_ptr->rest_output_fifo_ptr,
                                          &rest_results_wrapper_ptr);
                     rest_results_ptr = (struct RestResults *)rest_results_wrapper_ptr->object_ptr;

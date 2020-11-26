@@ -2602,20 +2602,6 @@ EbErrorType denoise_estimate_film_grain(SequenceControlSet *     scs_ptr,
 }
 
 /************************************************
- * Set Picture Parameters based on input configuration
- ** Setting Number of regions per resolution
- ** Setting width and height for subpicture and when picture scan type is 1
- ************************************************/
-void set_picture_parameters_for_statistics_gathering(SequenceControlSet *scs_ptr) {
-    scs_ptr->picture_analysis_number_of_regions_per_width =
-        HIGHER_THAN_CLASS_1_REGION_SPLIT_PER_WIDTH;
-    scs_ptr->picture_analysis_number_of_regions_per_height =
-        HIGHER_THAN_CLASS_1_REGION_SPLIT_PER_HEIGHT;
-
-    return;
-}
-
-/************************************************
  * Picture Pre Processing Operations *
  *** A function that groups all of the Pre proceesing
  * operations performed on the input picture
@@ -4028,9 +4014,6 @@ void *picture_analysis_kernel(void *input_ptr) {
                                sizeof(uint8_t) * input_picture_ptr->width);
             }
 
-            // Set picture parameters to account for subpicture, picture scantype, and set regions by resolutions
-            set_picture_parameters_for_statistics_gathering(scs_ptr);
-
             // Pre processing operations performed on the input picture
             picture_pre_processing_operations(pcs_ptr, scs_ptr, sb_total_count);
             if (input_picture_ptr->color_format >= EB_YUV422) {
@@ -4134,9 +4117,6 @@ void *picture_analysis_kernel(void *input_ptr) {
 
             // Padding for input pictures
             pad_input_pictures(scs_ptr, input_picture_ptr);
-
-            // Set picture parameters to account for subpicture, picture scantype, and set regions by resolutions
-            set_picture_parameters_for_statistics_gathering(scs_ptr);
 
             // Pre processing operations performed on the input picture
             picture_pre_processing_operations(pcs_ptr, scs_ptr);
