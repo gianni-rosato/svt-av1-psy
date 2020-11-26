@@ -37,7 +37,7 @@
 #endif
 #ifdef min
 #undef min
-#endif min
+#endif
 /**
  * @brief Unit test for Bitstream writer functions:
  * - aom_write

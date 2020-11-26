@@ -294,14 +294,15 @@ static void set_cfg_input_file(const char *filename, EbConfig *cfg) {
 };
 
 static void set_pred_struct_file(const char *value, EbConfig *cfg) {
-    if (cfg->input_pred_struct_filename) {
+    if (cfg->input_pred_struct_filename)
         free(cfg->input_pred_struct_filename);
-    }
-    cfg->input_pred_struct_filename = (char *)malloc(strlen(value) + 1);
-    strcpy_s(cfg->input_pred_struct_filename, strlen(value) + 1, value);
-
+#ifndef _WIN32
+    cfg->input_pred_struct_filename = strdup(value);
+#else
+    cfg->input_pred_struct_filename = _strdup(value);
+#endif
     cfg->config.enable_manual_pred_struct = EB_TRUE;
-};
+}
 
 static void set_cfg_stream_file(const char *value, EbConfig *cfg) {
     if (cfg->bitstream_file && cfg->bitstream_file != stdout) {
@@ -2342,16 +2343,9 @@ void mark_token_as_read(const char *token, char *cmd_copy[], int32_t *cmd_token_
     }
 }
 
-EbBool is_negative_number(const char *string) {
-    int32_t length = (int32_t)strlen(string);
-    int32_t index  = 0;
-    if (string[0] != '-')
-        return EB_FALSE;
-    for (index = 1; index < length; index++) {
-        if (string[index] < '0' || string[index] > '9')
-            return EB_FALSE;
-    }
-    return EB_TRUE;
+static EbBool is_negative_number(const char *string) {
+    char *end;
+    return strtol(string, &end, 10) < 0 && *end == '\0';
 }
 
 // Computes the number of frames in the input file
