@@ -1008,7 +1008,11 @@ void *picture_manager_kernel(void *input_ptr) {
                     availability_flag = EB_TRUE;
                     if (entry_pcs_ptr->decode_order != decode_order &&
 #if FEATURE_PA_ME
+#if FEATURE_LAP_ENABLED_VBR
+                    (scs_ptr->enable_dec_order || use_input_stat(scs_ptr) || scs_ptr->lap_enabled ))
+#else
                         ((scs_ptr->enable_dec_order) || use_input_stat(scs_ptr)))
+#endif
 #else
                         use_input_stat(scs_ptr))
 #endif

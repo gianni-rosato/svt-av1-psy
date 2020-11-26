@@ -32,7 +32,9 @@
 #include "EbPictureDemuxResults.h"
 #include "EbRateControlTasks.h"
 #endif
-
+#if FEATURE_FIRST_PASS_RESTRUCTURE
+#include "firstpass.h"
+#endif
 /* --32x32-
 |00||01|
 |02||03|
@@ -129,7 +131,11 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
                 me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 500;
             }
             else {
+#if FEATURE_LAP_ENABLED_VBR
+                if (use_output_stat(scs_ptr) || (scs_ptr->lap_enabled && !pcs_ptr->first_pass_done)) {
+#else
                 if (use_output_stat(scs_ptr)) {
+#endif
                     me_context_ptr->search_area_width = me_context_ptr->search_area_height = 37;
                     me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 175;
                 }
@@ -171,7 +177,11 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
     }
 #endif
     else {
+#if FEATURE_LAP_ENABLED_VBR
+        if (use_output_stat(scs_ptr) || (scs_ptr->lap_enabled && !pcs_ptr->first_pass_done)) {
+#else
         if (use_output_stat(scs_ptr)) {
+#endif
             me_context_ptr->search_area_width = me_context_ptr->search_area_height = 8;
             me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 8;
         }
@@ -199,7 +209,11 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
             me_context_ptr->hme_level0_max_total_search_area_width = me_context_ptr->hme_level0_max_total_search_area_height = 164;
         }
     if (!pcs_ptr->sc_content_detected)
+#if FEATURE_LAP_ENABLED_VBR
+        if (use_output_stat(scs_ptr) || (scs_ptr->lap_enabled && !pcs_ptr->first_pass_done)) {
+#else
         if (use_output_stat(scs_ptr)) {
+#endif
             me_context_ptr->hme_level0_total_search_area_width = me_context_ptr->hme_level0_total_search_area_height  = me_context_ptr->hme_level0_total_search_area_width/2;
             me_context_ptr->hme_level0_max_total_search_area_width = me_context_ptr->hme_level0_max_total_search_area_height =   me_context_ptr->hme_level0_max_total_search_area_width/2;
         }
@@ -263,7 +277,11 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
         me_context_ptr->hme_level2_search_area_in_height_array[1] = 16;
 #endif
     if (!pcs_ptr->sc_content_detected)
+#if FEATURE_LAP_ENABLED_VBR
+        if (use_output_stat(scs_ptr) || (scs_ptr->lap_enabled && !pcs_ptr->first_pass_done)) {
+#else
         if (use_output_stat(scs_ptr)) {
+#endif
             me_context_ptr->hme_level1_search_area_in_width_array[0] =
                 me_context_ptr->hme_level1_search_area_in_width_array[1] =
                 me_context_ptr->hme_level1_search_area_in_height_array[0] =
@@ -590,7 +608,11 @@ EbErrorType signal_tpl_me_kernel(SequenceControlSet *       scs_ptr,
     return return_error;
 };
 #endif
+#if FEATURE_FIRST_PASS_RESTRUCTURE
+void open_loop_first_pass(struct PictureParentControlSet *ppcs_ptr,
+                                 MotionEstimationContext_t *me_context_ptr, int32_t segment_index);
 
+#endif
 /******************************************************
 * Derive ME Settings for first pass
   Input   : encoder mode and tune
@@ -944,8 +966,14 @@ void *motion_estimation_kernel(void *input_ptr) {
 
         context_ptr->me_context_ptr->me_alt_ref = in_results_ptr->task_type == 1;
 #else
+#if FEATURE_FIRST_PASS_RESTRUCTURE
+        context_ptr->me_context_ptr->me_type =
+            in_results_ptr->task_type == 1 ? ME_MCTF :
+            in_results_ptr->task_type == 0 ? ME_OPEN_LOOP : ME_FIRST_PASS;
+#else
         context_ptr->me_context_ptr->me_type =
             in_results_ptr->task_type == 1 ? ME_MCTF: ME_OPEN_LOOP;
+#endif
 #endif
 
         // Lambda Assignement
@@ -1013,6 +1041,13 @@ void *motion_estimation_kernel(void *input_ptr) {
                 y_segment_index, picture_height_in_sb, pcs_ptr->me_segments_row_count);
             uint32_t y_sb_end_index = SEGMENT_END_IDX(
                 y_segment_index, picture_height_in_sb, pcs_ptr->me_segments_row_count);
+#if FEATURE_FIRST_PASS_RESTRUCTURE
+            EbBool skip_me = EB_FALSE;
+            if (use_output_stat(scs_ptr))
+                skip_me = EB_TRUE;
+            // skip me for the first pass. ME is already performed
+            if (!skip_me) {
+#endif
             // *** MOTION ESTIMATION CODE ***
 #if FEATURE_INL_ME
             if (pcs_ptr->slice_type != I_SLICE && !scs_ptr->in_loop_me) {
@@ -1259,7 +1294,7 @@ void *motion_estimation_kernel(void *input_ptr) {
                     y_sb_start_index,
                     y_sb_end_index);
 #endif
-
+#if !FEATURE_FIRST_PASS_RESTRUCTURE
             // ZZ SSDs Computation
             // 1 lookahead frame is needed to get valid (0,0) SAD
             if (use_output_stat(scs_ptr) && scs_ptr->static_config.look_ahead_distance != 0) {
@@ -1274,34 +1309,36 @@ void *motion_estimation_kernel(void *input_ptr) {
                         y_sb_end_index);
                 }
             }
-            // Calculate the ME Distortion and OIS Historgrams
+#endif
 
-            svt_block_on_mutex(pcs_ptr->rc_distortion_histogram_mutex);
-
-
+#if FEATURE_LAP_ENABLED_VBR
+            if (scs_ptr->static_config.rate_control_mode && !use_input_stat(scs_ptr) && !scs_ptr->lap_enabled) {
+#endif
+                // Calculate the ME Distortion and OIS Historgrams
+                svt_block_on_mutex(pcs_ptr->rc_distortion_histogram_mutex);
 
 #if !FEATURE_INL_ME
-            if (scs_ptr->static_config.rate_control_mode
-                && !(use_input_stat(scs_ptr) && scs_ptr->static_config.rate_control_mode == 1) //skip 2pass VBR
-                ) {
-                if (pcs_ptr->slice_type != I_SLICE) {
-                    for (uint32_t y_sb_index = y_sb_start_index; y_sb_index < y_sb_end_index;
-                         ++y_sb_index)
-                        for (uint32_t x_sb_index = x_sb_start_index; x_sb_index < x_sb_end_index;
-                             ++x_sb_index) {
+                if (scs_ptr->static_config.rate_control_mode
+                    && !(use_input_stat(scs_ptr) && scs_ptr->static_config.rate_control_mode == 1) //skip 2pass VBR
+                    ) {
+                    if (pcs_ptr->slice_type != I_SLICE) {
+                        for (uint32_t y_sb_index = y_sb_start_index; y_sb_index < y_sb_end_index;
+                            ++y_sb_index)
+                            for (uint32_t x_sb_index = x_sb_start_index; x_sb_index < x_sb_end_index;
+                                ++x_sb_index) {
                             uint32_t sb_origin_x = x_sb_index * scs_ptr->sb_sz;
                             uint32_t sb_origin_y = y_sb_index * scs_ptr->sb_sz;
-                            uint32_t sb_width    = (pcs_ptr->aligned_width - sb_origin_x) <
-                                    BLOCK_SIZE_64
+                            uint32_t sb_width = (pcs_ptr->aligned_width - sb_origin_x) <
+                                BLOCK_SIZE_64
                                 ? pcs_ptr->aligned_width - sb_origin_x
                                 : BLOCK_SIZE_64;
                             uint32_t sb_height = (pcs_ptr->aligned_height - sb_origin_y) <
-                                    BLOCK_SIZE_64
+                                BLOCK_SIZE_64
                                 ? pcs_ptr->aligned_height - sb_origin_y
                                 : BLOCK_SIZE_64;
 
-                            uint32_t sb_index                           = (uint16_t)(x_sb_index +
-                                                           y_sb_index * pic_width_in_sb);
+                            uint32_t sb_index = (uint16_t)(x_sb_index +
+                                y_sb_index * pic_width_in_sb);
                             pcs_ptr->inter_sad_interval_index[sb_index] = 0;
                             pcs_ptr->intra_sad_interval_index[sb_index] = 0;
 
@@ -1330,13 +1367,13 @@ void *motion_estimation_kernel(void *input_ptr) {
                                 uint32_t intra_sad_interval_index =
                                     pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_64x64] >> 4;
                                 intra_sad_interval_index = (uint16_t)(intra_sad_interval_index >>
-                                                                      2);
+                                    2);
                                 if (intra_sad_interval_index > (NUMBER_OF_SAD_INTERVALS >> 1) - 1) {
                                     uint32_t sad_interval_index_temp = intra_sad_interval_index -
                                         ((NUMBER_OF_SAD_INTERVALS >> 1) - 1);
 
                                     intra_sad_interval_index = ((NUMBER_OF_SAD_INTERVALS >> 1) -
-                                                                1) +
+                                        1) +
                                         (sad_interval_index_temp >> 3);
                                 }
                                 if (intra_sad_interval_index >= NUMBER_OF_SAD_INTERVALS - 1)
@@ -1350,127 +1387,133 @@ void *motion_estimation_kernel(void *input_ptr) {
                                 ++pcs_ptr->full_sb_count;
                             }
                         }
-                } else
-                    for (uint32_t y_sb_index = y_sb_start_index; y_sb_index < y_sb_end_index;
-                         ++y_sb_index)
-                        for (uint32_t x_sb_index = x_sb_start_index; x_sb_index < x_sb_end_index;
-                             ++x_sb_index) {
-                            uint32_t sb_origin_x = x_sb_index * scs_ptr->sb_sz;
-                            uint32_t sb_origin_y = y_sb_index * scs_ptr->sb_sz;
-                            uint32_t sb_width    = (pcs_ptr->aligned_width - sb_origin_x) <
-                                    BLOCK_SIZE_64
-                                ? pcs_ptr->aligned_width - sb_origin_x
-                                : BLOCK_SIZE_64;
-                            uint32_t sb_height = (pcs_ptr->aligned_height - sb_origin_y) <
-                                    BLOCK_SIZE_64
-                                ? pcs_ptr->aligned_height - sb_origin_y
-                                : BLOCK_SIZE_64;
+                    }
+                    else
+                        for (uint32_t y_sb_index = y_sb_start_index; y_sb_index < y_sb_end_index;
+                            ++y_sb_index)
+                            for (uint32_t x_sb_index = x_sb_start_index; x_sb_index < x_sb_end_index;
+                                ++x_sb_index) {
+                        uint32_t sb_origin_x = x_sb_index * scs_ptr->sb_sz;
+                        uint32_t sb_origin_y = y_sb_index * scs_ptr->sb_sz;
+                        uint32_t sb_width = (pcs_ptr->aligned_width - sb_origin_x) <
+                            BLOCK_SIZE_64
+                            ? pcs_ptr->aligned_width - sb_origin_x
+                            : BLOCK_SIZE_64;
+                        uint32_t sb_height = (pcs_ptr->aligned_height - sb_origin_y) <
+                            BLOCK_SIZE_64
+                            ? pcs_ptr->aligned_height - sb_origin_y
+                            : BLOCK_SIZE_64;
 
-                            uint32_t sb_index = (uint16_t)(x_sb_index +
-                                                           y_sb_index * pic_width_in_sb);
+                        uint32_t sb_index = (uint16_t)(x_sb_index +
+                            y_sb_index * pic_width_in_sb);
 
-                            pcs_ptr->inter_sad_interval_index[sb_index] = 0;
-                            pcs_ptr->intra_sad_interval_index[sb_index] = 0;
+                        pcs_ptr->inter_sad_interval_index[sb_index] = 0;
+                        pcs_ptr->intra_sad_interval_index[sb_index] = 0;
 
-                            if (sb_width == BLOCK_SIZE_64 && sb_height == BLOCK_SIZE_64) {
-                                uint32_t intra_sad_interval_index =
-                                    pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_64x64] >> 4;
-                                intra_sad_interval_index = (uint16_t)(intra_sad_interval_index >>
-                                                                      2);
-                                if (intra_sad_interval_index > (NUMBER_OF_SAD_INTERVALS >> 1) - 1) {
-                                    uint32_t sad_interval_index_temp = intra_sad_interval_index -
-                                        ((NUMBER_OF_SAD_INTERVALS >> 1) - 1);
+                        if (sb_width == BLOCK_SIZE_64 && sb_height == BLOCK_SIZE_64) {
+                            uint32_t intra_sad_interval_index =
+                                pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_64x64] >> 4;
+                            intra_sad_interval_index = (uint16_t)(intra_sad_interval_index >>
+                                2);
+                            if (intra_sad_interval_index > (NUMBER_OF_SAD_INTERVALS >> 1) - 1) {
+                                uint32_t sad_interval_index_temp = intra_sad_interval_index -
+                                    ((NUMBER_OF_SAD_INTERVALS >> 1) - 1);
 
-                                    intra_sad_interval_index = ((NUMBER_OF_SAD_INTERVALS >> 1) -
-                                                                1) +
-                                        (sad_interval_index_temp >> 3);
-                                }
-                                if (intra_sad_interval_index >= NUMBER_OF_SAD_INTERVALS - 1)
-                                    intra_sad_interval_index = NUMBER_OF_SAD_INTERVALS - 1;
-
-                                pcs_ptr->intra_sad_interval_index[sb_index] =
-                                    intra_sad_interval_index;
-
-                                pcs_ptr->ois_distortion_histogram[intra_sad_interval_index]++;
-
-                                ++pcs_ptr->full_sb_count;
+                                intra_sad_interval_index = ((NUMBER_OF_SAD_INTERVALS >> 1) -
+                                    1) +
+                                    (sad_interval_index_temp >> 3);
                             }
+                            if (intra_sad_interval_index >= NUMBER_OF_SAD_INTERVALS - 1)
+                                intra_sad_interval_index = NUMBER_OF_SAD_INTERVALS - 1;
+
+                            pcs_ptr->intra_sad_interval_index[sb_index] =
+                                intra_sad_interval_index;
+
+                            pcs_ptr->ois_distortion_histogram[intra_sad_interval_index]++;
+
+                            ++pcs_ptr->full_sb_count;
                         }
-            }
+                    }
+                }
 #else
-            if (scs_ptr->static_config.rate_control_mode
-                && !(use_input_stat(scs_ptr) && scs_ptr->static_config.rate_control_mode == 1) //skip 2pass VBR
-                ) {
+                if (scs_ptr->static_config.rate_control_mode
+                    && !(use_input_stat(scs_ptr) && scs_ptr->static_config.rate_control_mode == 1) //skip 2pass VBR
+                    ) {
                     for (uint32_t y_sb_index = y_sb_start_index; y_sb_index < y_sb_end_index;
-                         ++y_sb_index)
+                        ++y_sb_index)
                         for (uint32_t x_sb_index = x_sb_start_index; x_sb_index < x_sb_end_index;
-                             ++x_sb_index) {
-                            uint32_t sb_origin_x = x_sb_index * scs_ptr->sb_sz;
-                            uint32_t sb_origin_y = y_sb_index * scs_ptr->sb_sz;
-                            uint32_t sb_width    = (pcs_ptr->aligned_width - sb_origin_x) <
-                                    BLOCK_SIZE_64
-                                ? pcs_ptr->aligned_width - sb_origin_x
-                                : BLOCK_SIZE_64;
-                            uint32_t sb_height = (pcs_ptr->aligned_height - sb_origin_y) <
-                                    BLOCK_SIZE_64
-                                ? pcs_ptr->aligned_height - sb_origin_y
-                                : BLOCK_SIZE_64;
+                            ++x_sb_index) {
+                        uint32_t sb_origin_x = x_sb_index * scs_ptr->sb_sz;
+                        uint32_t sb_origin_y = y_sb_index * scs_ptr->sb_sz;
+                        uint32_t sb_width = (pcs_ptr->aligned_width - sb_origin_x) <
+                            BLOCK_SIZE_64
+                            ? pcs_ptr->aligned_width - sb_origin_x
+                            : BLOCK_SIZE_64;
+                        uint32_t sb_height = (pcs_ptr->aligned_height - sb_origin_y) <
+                            BLOCK_SIZE_64
+                            ? pcs_ptr->aligned_height - sb_origin_y
+                            : BLOCK_SIZE_64;
 
-                            uint32_t sb_index = (uint16_t)(x_sb_index +
-                                                           y_sb_index * pic_width_in_sb);
-                            pcs_ptr->inter_sad_interval_index[sb_index] = 0;
-                            pcs_ptr->intra_sad_interval_index[sb_index] = 0;
+                        uint32_t sb_index = (uint16_t)(x_sb_index +
+                            y_sb_index * pic_width_in_sb);
+                        pcs_ptr->inter_sad_interval_index[sb_index] = 0;
+                        pcs_ptr->intra_sad_interval_index[sb_index] = 0;
 
-                            if (sb_width == BLOCK_SIZE_64 && sb_height == BLOCK_SIZE_64) {
-                                if (pcs_ptr->slice_type != I_SLICE && !scs_ptr->in_loop_me) {
-                                    uint16_t sad_interval_index = (uint16_t)(
-                                            pcs_ptr->rc_me_distortion[sb_index] >>
-                                            (12 - SAD_PRECISION_INTERVAL)); //change 12 to 2*log2(64)
+                        if (sb_width == BLOCK_SIZE_64 && sb_height == BLOCK_SIZE_64) {
+                            if (pcs_ptr->slice_type != I_SLICE && !scs_ptr->in_loop_me) {
+                                uint16_t sad_interval_index = (uint16_t)(
+                                    pcs_ptr->rc_me_distortion[sb_index] >>
+                                    (12 - SAD_PRECISION_INTERVAL)); //change 12 to 2*log2(64)
 
-                                    sad_interval_index = (uint16_t)(sad_interval_index >> 2);
-                                    if (sad_interval_index > (NUMBER_OF_SAD_INTERVALS >> 1) - 1) {
-                                        uint16_t sad_interval_index_temp = sad_interval_index -
-                                            ((NUMBER_OF_SAD_INTERVALS >> 1) - 1);
-
-                                        sad_interval_index = ((NUMBER_OF_SAD_INTERVALS >> 1) - 1) +
-                                            (sad_interval_index_temp >> 3);
-                                    }
-                                    if (sad_interval_index >= NUMBER_OF_SAD_INTERVALS - 1)
-                                        sad_interval_index = NUMBER_OF_SAD_INTERVALS - 1;
-
-                                    pcs_ptr->inter_sad_interval_index[sb_index] = sad_interval_index;
-
-                                    pcs_ptr->me_distortion_histogram[sad_interval_index]++;
-                                }
-
-                                uint32_t intra_sad_interval_index =
-                                    pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_64x64] >> 4;
-                                intra_sad_interval_index = (uint16_t)(intra_sad_interval_index >>
-                                                                      2);
-                                if (intra_sad_interval_index > (NUMBER_OF_SAD_INTERVALS >> 1) - 1) {
-                                    uint32_t sad_interval_index_temp = intra_sad_interval_index -
+                                sad_interval_index = (uint16_t)(sad_interval_index >> 2);
+                                if (sad_interval_index > (NUMBER_OF_SAD_INTERVALS >> 1) - 1) {
+                                    uint16_t sad_interval_index_temp = sad_interval_index -
                                         ((NUMBER_OF_SAD_INTERVALS >> 1) - 1);
 
-                                    intra_sad_interval_index = ((NUMBER_OF_SAD_INTERVALS >> 1) -
-                                                                1) +
+                                    sad_interval_index = ((NUMBER_OF_SAD_INTERVALS >> 1) - 1) +
                                         (sad_interval_index_temp >> 3);
                                 }
-                                if (intra_sad_interval_index >= NUMBER_OF_SAD_INTERVALS - 1)
-                                    intra_sad_interval_index = NUMBER_OF_SAD_INTERVALS - 1;
+                                if (sad_interval_index >= NUMBER_OF_SAD_INTERVALS - 1)
+                                    sad_interval_index = NUMBER_OF_SAD_INTERVALS - 1;
 
-                                pcs_ptr->intra_sad_interval_index[sb_index] =
-                                    intra_sad_interval_index;
+                                pcs_ptr->inter_sad_interval_index[sb_index] = sad_interval_index;
 
-                                pcs_ptr->ois_distortion_histogram[intra_sad_interval_index]++;
-
-                                ++pcs_ptr->full_sb_count;
+                                pcs_ptr->me_distortion_histogram[sad_interval_index]++;
                             }
+
+                            uint32_t intra_sad_interval_index =
+                                pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_64x64] >> 4;
+                            intra_sad_interval_index = (uint16_t)(intra_sad_interval_index >>
+                                2);
+                            if (intra_sad_interval_index > (NUMBER_OF_SAD_INTERVALS >> 1) - 1) {
+                                uint32_t sad_interval_index_temp = intra_sad_interval_index -
+                                    ((NUMBER_OF_SAD_INTERVALS >> 1) - 1);
+
+                                intra_sad_interval_index = ((NUMBER_OF_SAD_INTERVALS >> 1) -
+                                    1) +
+                                    (sad_interval_index_temp >> 3);
+                            }
+                            if (intra_sad_interval_index >= NUMBER_OF_SAD_INTERVALS - 1)
+                                intra_sad_interval_index = NUMBER_OF_SAD_INTERVALS - 1;
+
+                            pcs_ptr->intra_sad_interval_index[sb_index] =
+                                intra_sad_interval_index;
+
+                            pcs_ptr->ois_distortion_histogram[intra_sad_interval_index]++;
+
+                            ++pcs_ptr->full_sb_count;
                         }
+                    }
                 }
 #endif
 
-            svt_release_mutex(pcs_ptr->rc_distortion_histogram_mutex);
-
+                svt_release_mutex(pcs_ptr->rc_distortion_histogram_mutex);
+#if FEATURE_LAP_ENABLED_VBR
+            }
+#endif
+#if FEATURE_FIRST_PASS_RESTRUCTURE
+            }
+#endif
             // Get Empty Results Object
             svt_get_empty_object(context_ptr->motion_estimation_results_output_fifo_ptr,
                                 &out_results_wrapper_ptr);
@@ -1485,7 +1528,11 @@ void *motion_estimation_kernel(void *input_ptr) {
 
             // Post the Full Results Object
             svt_post_full_object(out_results_wrapper_ptr);
+#if FEATURE_FIRST_PASS_RESTRUCTURE
+        } else if (in_results_ptr->task_type == 1) {
+#else
         } else {
+#endif
             // ME Kernel Signal(s) derivation
             tf_signal_derivation_me_kernel_oq(scs_ptr, pcs_ptr, context_ptr);
 
@@ -1501,6 +1548,20 @@ void *motion_estimation_kernel(void *input_ptr) {
             // Release the Input Results
             svt_release_object(in_results_wrapper_ptr);
         }
+#if FEATURE_FIRST_PASS_RESTRUCTURE
+        else {
+            // ME Kernel Signal(s) derivation
+            first_pass_signal_derivation_me_kernel(scs_ptr, pcs_ptr, context_ptr);
+
+            // first pass start
+            context_ptr->me_context_ptr->me_type = ME_FIRST_PASS;
+            open_loop_first_pass(
+                pcs_ptr, context_ptr, in_results_ptr->segment_index);
+
+            // Release the Input Results
+            svt_release_object(in_results_wrapper_ptr);
+        }
+#endif
     }
 
     return NULL;
@@ -1766,7 +1827,10 @@ void *inloop_me_kernel(void *input_ptr) {
                 skip_me = ppcs_ptr->tpl_me_done;
 #endif
             }
-
+#if FEATURE_FIRST_PASS_RESTRUCTURE
+            if(use_output_stat(scs_ptr))
+                skip_me = EB_TRUE;
+#endif
             // Segments
             segment_index = in_results_ptr->segment_index;
 

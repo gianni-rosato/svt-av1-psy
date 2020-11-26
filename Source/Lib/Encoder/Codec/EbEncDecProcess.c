@@ -3911,6 +3911,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #endif
     return return_error;
 }
+#if !FEATURE_FIRST_PASS_RESTRUCTURE
 /******************************************************
 * Derive EncDec Settings for first pass
 Input   : encoder mode and pd pass
@@ -3919,6 +3920,7 @@ Output  : EncDec Kernel signal(s)
 EbErrorType first_pass_signal_derivation_enc_dec_kernel(
     PictureControlSet *pcs_ptr,
     ModeDecisionContext *context_ptr);
+#endif
 void copy_neighbour_arrays(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
                            uint32_t src_idx, uint32_t dst_idx, uint32_t blk_mds, uint32_t sb_org_x,
                            uint32_t sb_org_y);
@@ -4976,7 +4978,9 @@ static void build_starting_cand_block_array(SequenceControlSet *scs_ptr, Picture
 
     results_ptr->leaf_count = 0;
     uint32_t blk_index = 0;
+#if !FEATURE_FIRST_PASS_RESTRUCTURE
     int32_t force_blk_size = FORCED_BLK_SIZE;
+#endif
 #if FEATURE_PD0_CUT_DEPTH
     int32_t min_sq_size =
         (context_ptr->depth_refinement_ctrls.enabled && context_ptr->depth_refinement_ctrls.disallow_below_16x16)
@@ -4985,6 +4989,7 @@ static void build_starting_cand_block_array(SequenceControlSet *scs_ptr, Picture
 #endif
     while (blk_index < scs_ptr->max_block_cnt) {
         const BlockGeom *blk_geom = get_blk_geom_mds(blk_index);
+#if !FEATURE_FIRST_PASS_RESTRUCTURE
         if (use_output_stat(scs_ptr) && blk_geom->bheight >= FORCED_BLK_SIZE && blk_geom->bwidth >= FORCED_BLK_SIZE) {
             force_blk_size = FORCED_BLK_SIZE;
             if (blk_geom->bheight == FORCED_BLK_SIZE && blk_geom->bwidth == FORCED_BLK_SIZE &&
@@ -5000,6 +5005,7 @@ static void build_starting_cand_block_array(SequenceControlSet *scs_ptr, Picture
                     FORCED_BLK_SIZE;
             }
         }
+#endif
 #if FEATURE_PD0_CUT_DEPTH
         // SQ/NSQ block(s) filter based on the SQ size
         uint8_t is_block_tagged =
@@ -5050,18 +5056,22 @@ static void build_starting_cand_block_array(SequenceControlSet *scs_ptr, Picture
                     results_ptr->leaf_data_array[results_ptr->leaf_count].tot_d1_blocks = tot_d1_blocks;
 
                     results_ptr->leaf_data_array[results_ptr->leaf_count].final_pred_depth_refinement = 0;
+#if !FEATURE_FIRST_PASS_RESTRUCTURE
                     if (use_output_stat(scs_ptr)) {
                         if (blk_geom->sq_size == force_blk_size)
                             results_ptr->leaf_data_array[results_ptr->leaf_count++].split_flag = EB_FALSE;
                     }
                     else {
+#endif
                     if (blk_geom->sq_size > min_sq_size)
                         results_ptr->leaf_data_array[results_ptr->leaf_count++].split_flag =
                         EB_TRUE;
                     else
                         results_ptr->leaf_data_array[results_ptr->leaf_count++].split_flag =
                         EB_FALSE;
+#if !FEATURE_FIRST_PASS_RESTRUCTURE
                     }
+#endif
                 }
                 blk_index++;
             }
@@ -5133,7 +5143,11 @@ static void recode_loop_decision_maker(PictureControlSet *pcs_ptr,
         // 2pass QPM with tpl_la
         if (scs_ptr->static_config.enable_adaptive_quantization == 2 &&
             !use_output_stat(scs_ptr) &&
+#if FEATURE_LAP_ENABLED_VBR
+            (use_input_stat(scs_ptr) || scs_ptr->lap_enabled) &&
+#else
             use_input_stat(scs_ptr) &&
+#endif
 #if !ENABLE_TPL_ZERO_LAD
             scs_ptr->static_config.look_ahead_distance != 0 &&
 #endif
@@ -5243,7 +5257,9 @@ void *mode_decision_kernel(void *input_ptr) {
         context_ptr->tile_group_index = enc_dec_tasks_ptr->tile_group_index;
         context_ptr->coded_sb_count   = 0;
         segments_ptr = pcs_ptr->enc_dec_segment_ctrl[context_ptr->tile_group_index];
+#if  !FEATURE_FIRST_PASS_RESTRUCTURE
         EbBool last_sb_flag           = EB_FALSE;
+#endif
         // SB Constants
         uint8_t sb_sz      = (uint8_t)scs_ptr->sb_size_pix;
         uint8_t sb_size_log2 = (uint8_t)svt_log2f(sb_sz);
@@ -5253,9 +5269,28 @@ void *mode_decision_kernel(void *input_ptr) {
         uint16_t tile_group_width_in_sb = pcs_ptr->parent_pcs_ptr
                                               ->tile_group_info[context_ptr->tile_group_index]
                                               .tile_group_width_in_sb;
+#if !FEATURE_FIRST_PASS_RESTRUCTURE
         uint32_t sb_row_index_start = 0, sb_row_index_count = 0;
+#endif
         context_ptr->tot_intra_coded_area       = 0;
+#if  FEATURE_FIRST_PASS_RESTRUCTURE
+        // Bypass encdec for the first pass
+        if (use_output_stat(scs_ptr)) {
 
+            svt_release_object(pcs_ptr->parent_pcs_ptr->me_data_wrapper_ptr);
+            pcs_ptr->parent_pcs_ptr->me_data_wrapper_ptr = (EbObjectWrapper *)NULL;
+            // Get Empty EncDec Results
+            svt_get_empty_object(context_ptr->enc_dec_output_fifo_ptr, &enc_dec_results_wrapper_ptr);
+            enc_dec_results_ptr = (EncDecResults *)enc_dec_results_wrapper_ptr->object_ptr;
+            enc_dec_results_ptr->pcs_wrapper_ptr = enc_dec_tasks_ptr->pcs_wrapper_ptr;
+            enc_dec_results_ptr->completed_sb_row_index_start = 0;
+            enc_dec_results_ptr->completed_sb_row_count =
+                ((pcs_ptr->parent_pcs_ptr->aligned_height + scs_ptr->sb_size_pix - 1) >> sb_size_log2);
+            // Post EncDec Results
+            svt_post_full_object(enc_dec_results_wrapper_ptr);
+        }
+        else{
+#endif
         memset(context_ptr->md_context->part_cnt, 0, sizeof(uint32_t) * SSEG_NUM * (NUMBER_OF_SHAPES-1) * FB_NUM);
         generate_nsq_prob(pcs_ptr, context_ptr->md_context);
         memset(context_ptr->md_context->pred_depth_count, 0, sizeof(uint32_t) * DEPTH_DELTA_NUM * (NUMBER_OF_SHAPES-1));
@@ -5330,8 +5365,10 @@ void *mode_decision_kernel(void *input_ptr) {
                     sb_index = (uint16_t)((y_sb_index + tile_group_y_sb_start) * pic_width_in_sb +
                                           x_sb_index + tile_group_x_sb_start);
 #endif
+#if !FEATURE_FIRST_PASS_RESTRUCTURE
                     if (use_output_stat(scs_ptr) && sb_index == 0)
                         setup_firstpass_data(pcs_ptr->parent_pcs_ptr);
+#endif
                     sb_ptr = context_ptr->md_context->sb_ptr = pcs_ptr->sb_ptr_array[sb_index];
                     sb_origin_x = (x_sb_index + tile_group_x_sb_start) << sb_size_log2;
                     sb_origin_y = (y_sb_index + tile_group_y_sb_start) << sb_size_log2;
@@ -5344,7 +5381,7 @@ void *mode_decision_kernel(void *input_ptr) {
                     context_ptr->md_context->tile_index = sb_ptr->tile_info.tile_rs_index;
                     context_ptr->md_context->sb_origin_x = sb_origin_x;
                     context_ptr->md_context->sb_origin_y = sb_origin_y;
-
+#if !FEATURE_FIRST_PASS_RESTRUCTURE
                     sb_row_index_start =
                         (x_sb_index + 1 == tile_group_width_in_sb && sb_row_index_count == 0)
                             ? y_sb_index
@@ -5352,6 +5389,7 @@ void *mode_decision_kernel(void *input_ptr) {
                     sb_row_index_count = (x_sb_index + 1 == tile_group_width_in_sb)
                                              ? sb_row_index_count + 1
                                              : sb_row_index_count;
+#endif
                     mdc_ptr = context_ptr->md_context->mdc_sb_array;
                     context_ptr->sb_index = sb_index;
                     context_ptr->md_context->sb_class = NONE_CLASS;
@@ -5546,9 +5584,11 @@ void *mode_decision_kernel(void *input_ptr) {
                     }
                     // [PD_PASS_2] Signal(s) derivation
                     context_ptr->md_context->pd_pass = PD_PASS_2;
+#if !FEATURE_FIRST_PASS_RESTRUCTURE
                     if (use_output_stat(scs_ptr))
                         first_pass_signal_derivation_enc_dec_kernel(pcs_ptr, context_ptr->md_context);
                     else
+#endif
 #if FEATURE_REMOVE_CIRCULAR
                         signal_derivation_enc_dec_kernel_oq(scs_ptr, pcs_ptr, context_ptr->md_context);
 #else
@@ -5594,7 +5634,9 @@ void *mode_decision_kernel(void *input_ptr) {
                                     context_ptr);
 #else
                     // Encode Pass
+#if !FEATURE_FIRST_PASS_RESTRUCTURE
                     if(!use_output_stat(scs_ptr))
+#endif
                     av1_encode_decode(
                         scs_ptr, pcs_ptr, sb_ptr, sb_index, sb_origin_x, sb_origin_y, context_ptr);
 #endif
@@ -5628,14 +5670,22 @@ void *mode_decision_kernel(void *input_ptr) {
                 pcs_ptr->txt_cnt[depth_delta][txs_idx] += context_ptr->md_context->txt_cnt[depth_delta][txs_idx];
 
         pcs_ptr->enc_dec_coded_sb_count += (uint32_t)context_ptr->coded_sb_count;
+#if FEATURE_FIRST_PASS_RESTRUCTURE
+        EbBool last_sb_flag = (pcs_ptr->sb_total_count_pix == pcs_ptr->enc_dec_coded_sb_count);
+#else
         last_sb_flag = (pcs_ptr->sb_total_count_pix == pcs_ptr->enc_dec_coded_sb_count);
+#endif
         svt_release_mutex(pcs_ptr->intra_mutex);
 
         if (last_sb_flag) {
 #if FEATURE_RE_ENCODE
             EbBool do_recode = EB_FALSE;
             scs_ptr->encode_context_ptr->recode_loop = scs_ptr->static_config.recode_loop;
+#if FEATURE_LAP_ENABLED_VBR
+            if ((use_input_stat(scs_ptr) || scs_ptr->lap_enabled) &&
+#else
             if (use_input_stat(scs_ptr) &&
+#endif
                 scs_ptr->encode_context_ptr->recode_loop != DISALLOW_RECODE) {
                 recode_loop_decision_maker(pcs_ptr, scs_ptr, &do_recode);
             }
@@ -5701,11 +5751,13 @@ void *mode_decision_kernel(void *input_ptr) {
             pcs_ptr->parent_pcs_ptr->av1x->rdmult =
                 context_ptr->pic_full_lambda[(context_ptr->bit_depth == EB_10BIT) ? EB_10_BIT_MD
                                                                                   : EB_8_BIT_MD];
+#if  !FEATURE_FIRST_PASS_RESTRUCTURE
             if (use_output_stat(scs_ptr)) {
                 first_pass_frame_end(pcs_ptr->parent_pcs_ptr, pcs_ptr->parent_pcs_ptr->ts_duration);
                 if(pcs_ptr->parent_pcs_ptr->end_of_sequence_flag)
                     svt_av1_end_first_pass(pcs_ptr->parent_pcs_ptr);
             }
+#endif
             svt_release_object(pcs_ptr->parent_pcs_ptr->me_data_wrapper_ptr);
             pcs_ptr->parent_pcs_ptr->me_data_wrapper_ptr = (EbObjectWrapper *)NULL;
             // Get Empty EncDec Results
@@ -5722,6 +5774,9 @@ void *mode_decision_kernel(void *input_ptr) {
             }
 #endif
         }
+#if  FEATURE_FIRST_PASS_RESTRUCTURE
+        }
+#endif
         // Release Mode Decision Results
         svt_release_object(enc_dec_tasks_wrapper_ptr);
     }

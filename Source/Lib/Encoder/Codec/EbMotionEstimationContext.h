@@ -47,6 +47,9 @@ typedef enum EbMeType {
     ME_MCTF = 1,
     ME_TPL = 2,
     ME_OPEN_LOOP = 3
+#if FEATURE_FIRST_PASS_RESTRUCTURE
+    ,ME_FIRST_PASS = 4
+#endif
 } EbMeType;
 #endif
 typedef enum EbMeTierZeroPu {

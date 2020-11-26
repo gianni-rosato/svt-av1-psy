@@ -978,6 +978,17 @@ typedef struct PictureParentControlSet {
     int low_cr_seen;
     uint64_t pcs_total_rate;
 #endif
+#if FEATURE_FIRST_PASS_RESTRUCTURE
+    int16_t     first_pass_seg_total_count;
+    uint8_t     first_pass_seg_column_count;
+    uint8_t     first_pass_seg_row_count;
+    uint16_t    first_pass_seg_acc;
+    EbHandle    first_pass_done_semaphore;
+    EbHandle    first_pass_mutex;
+    struct PictureParentControlSet *first_pass_ref_ppcs_ptr[2];
+    uint8_t     first_pass_ref_count;
+    uint8_t     first_pass_done;
+#endif
 } PictureParentControlSet;
 
 typedef struct PictureControlSetInitData {

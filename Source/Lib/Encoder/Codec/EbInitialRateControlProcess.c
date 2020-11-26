@@ -1464,7 +1464,11 @@ void *initial_rate_control_kernel(void *input_ptr) {
                 // Determine offset from the Head Ptr
                 determine_picture_offset_in_queue(
                     encode_context_ptr, pcs_ptr, in_results_ptr);
-
+#if FEATURE_LAP_ENABLED_VBR
+            if (scs_ptr->static_config.rate_control_mode && !use_input_stat(scs_ptr) && !scs_ptr->lap_enabled)
+                    // Getting the Histogram Queue Data
+                    get_histogram_queue_data(scs_ptr, encode_context_ptr, pcs_ptr);
+#else
             if (use_input_stat(scs_ptr) && scs_ptr->static_config.rate_control_mode == 1)
                 ; //skip 2pass VBR
             else
@@ -1472,7 +1476,7 @@ void *initial_rate_control_kernel(void *input_ptr) {
                 // Getting the Histogram Queue Data
                 get_histogram_queue_data(scs_ptr, encode_context_ptr, pcs_ptr);
             }
-
+#endif
             for (uint8_t temporal_layer_index = 0; temporal_layer_index < EB_MAX_TEMPORAL_LAYERS;
                  temporal_layer_index++)
                 pcs_ptr->frames_in_interval[temporal_layer_index] = 0;
@@ -1512,7 +1516,11 @@ void *initial_rate_control_kernel(void *input_ptr) {
                         PictureParentControlSet* pcs =
                             (PictureParentControlSet*)(encode_context_ptr
                                                            ->initial_rate_control_reorder_queue
+#if FIX_IRC_IDX
+                                                               [queue_entry_index_temp2]
+#else
                                                                [queue_entry_index_temp]
+#endif
                                                                ->parent_pcs_wrapper_ptr)->object_ptr;
                         if (pcs->is_next_frame_intra)
                             break;
@@ -1603,7 +1611,14 @@ void *initial_rate_control_kernel(void *input_ptr) {
                             pcs_ptr->end_of_sequence_region = EB_TRUE;
                         else
                             pcs_ptr->end_of_sequence_region = EB_FALSE;
-
+#if FEATURE_LAP_ENABLED_VBR
+                        if (scs_ptr->static_config.rate_control_mode && !use_input_stat(scs_ptr) && !scs_ptr->lap_enabled)
+                            // Determine offset from the Head Ptr for HLRC histogram queue and set the life count
+                            if (scs_ptr->static_config.look_ahead_distance != 0)
+                                // Update Histogram Queue Entry Life count
+                                update_histogram_queue_entry(
+                                    scs_ptr, encode_context_ptr, pcs_ptr, frames_in_sw);
+#else
                         if (use_input_stat(scs_ptr) && scs_ptr->static_config.rate_control_mode == 1)
                             ; //skip 2pass VBR
                         else
@@ -1615,6 +1630,7 @@ void *initial_rate_control_kernel(void *input_ptr) {
                                     scs_ptr, encode_context_ptr, pcs_ptr, frames_in_sw);
                             }
                         }
+#endif
                         // BACKGROUND ENHANCEMENT Part II
                         if (!pcs_ptr->end_of_sequence_flag &&
                             scs_ptr->static_config.look_ahead_distance != 0) {

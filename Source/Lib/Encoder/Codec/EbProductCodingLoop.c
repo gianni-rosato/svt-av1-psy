@@ -4947,10 +4947,10 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
     EbPictureBufferDesc *input_picture_ptr = context_ptr->hbd_mode_decision
         ? pcs_ptr->input_frame16bit
         : pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr;
-
+#if !FEATURE_FIRST_PASS_RESTRUCTURE
     SequenceControlSet *scs_ptr;
     scs_ptr = (SequenceControlSet*)pcs_ptr->scs_wrapper_ptr->object_ptr;
-
+#endif
     int32_t seg_qp = pcs_ptr->parent_pcs_ptr->frm_hdr.segmentation_params.segmentation_enabled
         ? pcs_ptr->parent_pcs_ptr->frm_hdr.segmentation_params
               .feature_data[context_ptr->blk_ptr->segment_id][SEG_LVL_ALT_Q]
@@ -5271,9 +5271,11 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
         }
 
         //LUMA-ONLY
+#if !FEATURE_FIRST_PASS_RESTRUCTURE
         if (use_output_stat(scs_ptr))
             y_txb_coeff_bits_txt[tx_type] = 0;
         else
+#endif
         av1_txb_estimate_coeff_bits(
             context_ptr,
             0, //allow_update_cdf,
@@ -8943,10 +8945,11 @@ void md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionContext *context_pt
     context_ptr->md_local_blk_unit[blk_ptr->mds_idx].avail_blk_flag = EB_TRUE;
 #endif
 }
-
+#if !FEATURE_FIRST_PASS_RESTRUCTURE
  void first_pass_md_encode_block(PictureControlSet *pcs_ptr,
     ModeDecisionContext *context_ptr, EbPictureBufferDesc *input_picture_ptr,
     ModeDecisionCandidateBuffer *bestcandidate_buffers[5]);
+#endif
 /*
  * Determine if the evaluation of nsq blocks (HA, HB, VA, VB, H4, V4) can be skipped
  * based on the relative cost of the SQ, H, and V blocks.  The scaling factor sq_weight
@@ -9333,7 +9336,7 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
     uint32_t             d1_block_itr      = 0;
     uint32_t             d1_first_block    = 1;
     EbPictureBufferDesc *input_picture_ptr = pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr;
-#if FIX_10BIT
+#if FIX_10BIT && !FEATURE_FIRST_PASS_RESTRUCTURE
     if (context_ptr->hbd_mode_decision || (use_output_stat(scs_ptr) && pcs_ptr->parent_pcs_ptr->scs_ptr->encoder_bit_depth > EB_8BIT)) {
 #else
     if (context_ptr->hbd_mode_decision) {
@@ -9510,7 +9513,10 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
 
         uint8_t  redundant_blk_avail = 0;
         uint16_t redundant_blk_mds;
-        if (!use_output_stat(scs_ptr)) {
+#if !FEATURE_FIRST_PASS_RESTRUCTURE
+        if (!use_output_stat(scs_ptr))
+#endif
+        {
         // Reset settings, in case they were over-written by previous block
 #if FEATURE_REMOVE_CIRCULAR
             signal_derivation_enc_dec_kernel_oq(scs_ptr, pcs_ptr, context_ptr);
@@ -9679,12 +9685,14 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureContr
                 !zero_sq_coeff_skip_action &&
                 !skip_next_depth &&
                 !skip_nsq) {
+#if !FEATURE_FIRST_PASS_RESTRUCTURE
                 if (use_output_stat(scs_ptr))
                     first_pass_md_encode_block(pcs_ptr,
                         context_ptr,
                         input_picture_ptr,
                         bestcandidate_buffers);
                 else
+#endif
                 md_encode_block(pcs_ptr, context_ptr, input_picture_ptr, bestcandidate_buffers);
             } else if (sq_weight_based_nsq_skip || skip_next_depth || zero_sq_coeff_skip_action) {
                 if (context_ptr->blk_geom->shape != PART_N)

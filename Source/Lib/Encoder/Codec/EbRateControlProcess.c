@@ -6585,6 +6585,17 @@ static void av1_rc_init(SequenceControlSet *scs_ptr) {
   // Set absolute upper and lower quality limits
   rc->worst_quality = rc_cfg->worst_allowed_q;
   rc->best_quality  = rc_cfg->best_allowed_q;
+#if FEATURE_LAP_ENABLED_VBR
+  if (scs_ptr->lap_enabled) {
+      double frame_rate = (double)scs_ptr->static_config.frame_rate_numerator / (double)scs_ptr->static_config.frame_rate_denominator;
+      // Each frame can have a different duration, as the frame rate in the source
+      // isn't guaranteed to be constant. The frame rate prior to the first frame
+      // encoded in the second pass is a guess. However, the sum duration is not.
+      // It is calculated based on the actual durations of all frames from the
+      // first pass.
+      svt_av1_new_framerate(scs_ptr, frame_rate);
+  }
+#endif
 }
 
 static AOM_INLINE int combine_prior_with_tpl_boost_org(double min_factor,
@@ -6611,6 +6622,42 @@ void process_tpl_stats_frame_kf_gfu_boost(PictureControlSet *pcs_ptr) {
 
     if (scs_ptr->lap_enabled) {
         double min_boost_factor = sqrt(rc->baseline_gf_interval);
+#if FEATURE_LAP_ENABLED_VBR
+#if TUNE_TPL
+        // The new tpl only looks at pictures in tpl group, which is fewer than before,
+        // As a results, we defined a factor to adjust r0
+        if (pcs_ptr->parent_pcs_ptr->slice_type != 2) {
+            double div_factor = 1;
+#if ENABLE_TPL_TRAILING
+            double factor;
+            if (pcs_ptr->parent_pcs_ptr->tpl_trailing_frame_count == 0)
+                factor = 2;
+            else if (pcs_ptr->parent_pcs_ptr->tpl_trailing_frame_count <= 6)
+                factor = 1.5;
+            else
+                factor = 1;
+#if FEATURE_LAP_ENABLED_VBR
+            if (pcs_ptr->parent_pcs_ptr->pd_window_count == scs_ptr->scd_delay)
+                div_factor = factor;
+            else if (pcs_ptr->parent_pcs_ptr->pd_window_count <= 1)
+                div_factor = 1.0 / factor;
+#else
+            if (rc->frames_to_key > (int)pcs_ptr->parent_pcs_ptr->tpl_group_size * 3 / 2)
+                div_factor = factor;
+            else if (rc->frames_to_key <= (int)pcs_ptr->parent_pcs_ptr->tpl_group_size)
+                div_factor = 1.0 / factor;
+#endif
+#else
+
+            if (rc->frames_to_key > (int)pcs_ptr->parent_pcs_ptr->tpl_group_size * 3 / 2)
+                div_factor = 2;
+            else if (rc->frames_to_key <= (int)pcs_ptr->parent_pcs_ptr->tpl_group_size)
+                div_factor = 0.5;
+#endif
+            pcs_ptr->parent_pcs_ptr->r0 = pcs_ptr->parent_pcs_ptr->r0 / div_factor;
+        }
+#endif
+#endif
         const int gfu_boost = get_gfu_boost_from_r0_lap(
                 min_boost_factor, MAX_GFUBOOST_FACTOR, pcs_ptr->parent_pcs_ptr->r0,
                 rc->num_stats_required_for_gfu_boost);
@@ -7115,7 +7162,6 @@ static int rc_pick_q_and_bounds(PictureControlSet *pcs_ptr) {
     assert(q <= rc->worst_quality && q >= rc->best_quality);
 
     if (gf_group->update_type[pcs_ptr->parent_pcs_ptr->gf_group_index] == ARF_UPDATE) rc->arf_q = q;
-    //printf("\nrc_pick_q_and_bounds return poc%d boost=%d, q=%d, bottom_index=%d top_index=%d, isintra=%d base_frame_target=%d, buffer_level=%d\n", pcs_ptr->picture_number, frame_is_intra_only(pcs_ptr->parent_pcs_ptr) ? rc->kf_boost : rc->gfu_boost, q, active_best_quality, active_worst_quality, frame_is_intra_only(pcs_ptr->parent_pcs_ptr), rc->base_frame_target, rc->buffer_level);
 
     return q;
 }
@@ -7953,7 +7999,11 @@ void *rate_control_kernel(void *input_ptr) {
                     pcs_ptr->parent_pcs_ptr->sad_me +=
                         pcs_ptr->parent_pcs_ptr->rc_me_distortion[sb_addr];
                 }
+#if FEATURE_LAP_ENABLED_VBR
+            if (use_input_stat(scs_ptr) || scs_ptr->lap_enabled) {
+#else
             if (use_input_stat(scs_ptr)) {
+#endif
                 if (pcs_ptr->picture_number == 0) {
                     set_rc_buffer_sizes(scs_ptr);
                     av1_rc_init(scs_ptr);
@@ -8088,6 +8138,9 @@ void *rate_control_kernel(void *input_ptr) {
                 // ***Rate Control***
                 if (scs_ptr->static_config.rate_control_mode == 1) {
                     if (use_input_stat(scs_ptr)
+#if FEATURE_LAP_ENABLED_VBR
+                        || scs_ptr->lap_enabled
+#endif
 #if !ENABLE_TPL_ZERO_LAD
                         &&
                         scs_ptr->static_config.look_ahead_distance != 0
@@ -8184,7 +8237,11 @@ void *rate_control_kernel(void *input_ptr) {
             // 2pass QPM with tpl_la
             if (scs_ptr->static_config.enable_adaptive_quantization == 2 &&
                 !use_output_stat(scs_ptr) &&
+#if FEATURE_LAP_ENABLED_VBR
+                (use_input_stat(scs_ptr) || scs_ptr->lap_enabled) &&
+#else
                 use_input_stat(scs_ptr) &&
+#endif
 #if !ENABLE_TPL_ZERO_LAD
                 scs_ptr->static_config.look_ahead_distance != 0 &&
 #endif
@@ -8212,7 +8269,11 @@ void *rate_control_kernel(void *input_ptr) {
                     pcs_ptr->parent_pcs_ptr->average_qp += pcs_ptr->picture_qp;
                 }
             }
+#if FEATURE_LAP_ENABLED_VBR
+            if(use_input_stat(scs_ptr) || scs_ptr->lap_enabled)
+#else
             if (use_input_stat(scs_ptr))
+#endif
                 update_rc_counts(pcs_ptr->parent_pcs_ptr);
             // Get Empty Rate Control Results Buffer
             svt_get_empty_object(context_ptr->rate_control_output_results_fifo_ptr,
@@ -8293,7 +8354,11 @@ void *rate_control_kernel(void *input_ptr) {
                     (int64_t)parentpicture_control_set_ptr->total_num_bits -
                     (int64_t)context_ptr->high_level_rate_control_ptr->channel_bit_rate_per_frame;
 
+#if FEATURE_LAP_ENABLED_VBR
+                if (use_input_stat(scs_ptr) || scs_ptr->lap_enabled
+#else
                 if (use_input_stat(scs_ptr)
+#endif
 #if !ENABLE_TPL_ZERO_LAD
                     &&
                     scs_ptr->static_config.look_ahead_distance != 0
@@ -8303,7 +8368,11 @@ void *rate_control_kernel(void *input_ptr) {
                 } else
                 high_level_rc_feed_back_picture(parentpicture_control_set_ptr, scs_ptr);
                 if (scs_ptr->static_config.rate_control_mode == 1)
+#if FEATURE_LAP_ENABLED_VBR
+                    if (use_input_stat(scs_ptr) || scs_ptr->lap_enabled
+#else
                     if (use_input_stat(scs_ptr)
+#endif
 #if !ENABLE_TPL_ZERO_LAD
                         &&
                         scs_ptr->static_config.look_ahead_distance != 0

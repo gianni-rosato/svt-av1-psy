@@ -4233,6 +4233,16 @@ void *picture_analysis_kernel(void *input_ptr) {
                             (EbPictureBufferDesc *)pa_ref_obj_->quarter_filtered_picture_ptr,
                             (EbPictureBufferDesc *)pa_ref_obj_->sixteenth_filtered_picture_ptr);
                 }
+#if FEATURE_FIRST_PASS_RESTRUCTURE
+                if (scs_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED) {
+                    pcs_ptr->ds_pics.quarter_picture_ptr = pa_ref_obj_->quarter_filtered_picture_ptr;
+                    pcs_ptr->ds_pics.sixteenth_picture_ptr = pa_ref_obj_->sixteenth_filtered_picture_ptr;
+                }
+                else {
+                    pcs_ptr->ds_pics.quarter_picture_ptr = pa_ref_obj_->quarter_decimated_picture_ptr;
+                    pcs_ptr->ds_pics.sixteenth_picture_ptr = pa_ref_obj_->sixteenth_decimated_picture_ptr;
+                }
+#endif
                 // Gathering statistics of input picture, including Variance Calculation, Histogram Bins
                 gathering_picture_statistics(
                         scs_ptr,

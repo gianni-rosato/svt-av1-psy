@@ -1310,7 +1310,7 @@ uint32_t get_compound_mode_rate(uint8_t md_pass, ModeDecisionCandidate *candidat
 int is_interintra_wedge_used(BlockSize sb_type);
 int svt_is_interintra_allowed(uint8_t enable_inter_intra, BlockSize sb_type, PredictionMode mode,
                               const MvReferenceFrame ref_frame[2]);
-
+#if !FEATURE_FIRST_PASS_RESTRUCTURE
 /* two_pass_cost_update
  * This function adds some biases for distortion and rate.
  * The function is used in the first pass only and for the purpose of data collection */
@@ -1354,7 +1354,7 @@ void two_pass_cost_update_64bit(PictureControlSet *pcs_ptr, ModeDecisionCandidat
         *distortion += (*distortion) * 2;
     }
 }
-
+#endif
 uint64_t av1_inter_fast_cost(BlkStruct *blk_ptr, ModeDecisionCandidate *candidate_ptr, uint32_t qp,
                              uint64_t luma_distortion, uint64_t chroma_distortion, uint64_t lambda,
 #if !FIX_REMOVE_UNUSED_CODE
@@ -1667,9 +1667,11 @@ uint64_t av1_inter_fast_cost(BlkStruct *blk_ptr, ModeDecisionCandidate *candidat
         total_distortion += chromasad_;
 
         rate = luma_rate + chroma_rate;
+#if !FEATURE_FIRST_PASS_RESTRUCTURE
         if (use_output_stat(pcs_ptr->parent_pcs_ptr->scs_ptr)) {
             two_pass_cost_update(pcs_ptr, candidate_ptr, &rate, &total_distortion);
         }
+#endif
         if (candidate_ptr->merge_flag) {
             uint64_t skip_mode_rate =
                 candidate_ptr->md_rate_estimation_ptr->skip_mode_fac_bits[skip_mode_ctx][1];
@@ -1683,9 +1685,11 @@ uint64_t av1_inter_fast_cost(BlkStruct *blk_ptr, ModeDecisionCandidate *candidat
         total_distortion = luma_sad + chromasad_;
         if (blk_geom->has_uv == 0 && chromasad_ != 0) SVT_LOG("av1_inter_fast_cost: Chroma error");
         rate = luma_rate + chroma_rate;
+#if !FEATURE_FIRST_PASS_RESTRUCTURE
         if (use_output_stat(pcs_ptr->parent_pcs_ptr->scs_ptr)) {
             two_pass_cost_update(pcs_ptr, candidate_ptr, &rate, &total_distortion);
         }
+#endif
         // Assign fast cost
         if (candidate_ptr->merge_flag) {
             uint64_t skip_mode_rate =
@@ -1966,11 +1970,13 @@ EbErrorType av1_full_cost(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
 
     rate = luma_rate + chroma_rate + coeff_rate;
     if (candidate_buffer_ptr->candidate_ptr->block_has_coeff) rate += tx_size_bits;
+#if !FEATURE_FIRST_PASS_RESTRUCTURE
     if (use_output_stat(pcs_ptr->parent_pcs_ptr->scs_ptr) &&
         candidate_buffer_ptr->candidate_ptr->type != INTRA_MODE) {
         two_pass_cost_update_64bit(
             pcs_ptr, candidate_buffer_ptr->candidate_ptr, &rate, &total_distortion);
     }
+#endif
     // Assign full cost
     *(candidate_buffer_ptr->full_cost_ptr) = RDCOST(lambda, rate, total_distortion);
     candidate_buffer_ptr->candidate_ptr->total_rate = rate;
@@ -2113,6 +2119,7 @@ EbErrorType av1_merge_skip_full_cost(PictureControlSet *pcs_ptr, ModeDecisionCon
     skip_distortion = skip_luma_sse + skip_chroma_sse;
     skip_rate       = skip_mode_rate;
     skip_cost       = RDCOST(lambda, skip_rate, skip_distortion);
+#if !FEATURE_FIRST_PASS_RESTRUCTURE
     if (use_output_stat(pcs_ptr->parent_pcs_ptr->scs_ptr)) {
         MvReferenceFrame ref_type[2];
         av1_set_ref_frame(ref_type, candidate_buffer_ptr->candidate_ptr->ref_frame_type);
@@ -2132,6 +2139,7 @@ EbErrorType av1_merge_skip_full_cost(PictureControlSet *pcs_ptr, ModeDecisionCon
             merge_cost += merge_cost * 2;
         }
     }
+#endif
     // Assigne full cost
     *candidate_buffer_ptr->full_cost_ptr       = (skip_cost <= merge_cost) ? skip_cost : merge_cost;
     *candidate_buffer_ptr->full_cost_merge_ptr = merge_cost;

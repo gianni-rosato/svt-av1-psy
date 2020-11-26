@@ -32,7 +32,6 @@
 #include "common_dsp_rtcd.h"
 #include "EbResize.h"
 #include "EbMalloc.h"
-
 /************************************************
  * Defines
  ************************************************/
@@ -4003,7 +4002,46 @@ EbBool is_delayed_intra(PictureParentControlSet *pcs) {
     else
         return 0;
 }
+#if FEATURE_FIRST_PASS_RESTRUCTURE
+/*
+  Performs first pass in ME process
+*/
+void process_first_pass_frame(
+    SequenceControlSet      *scs_ptr, PictureParentControlSet *pcs_ptr, PictureDecisionContext  *context_ptr) {
+    int16_t seg_idx;
 
+    // Initialize Segments
+    pcs_ptr->first_pass_seg_column_count = (uint8_t)(scs_ptr->me_segment_column_count_array[0]);
+    pcs_ptr->first_pass_seg_row_count = (uint8_t)(scs_ptr->me_segment_row_count_array[0]);
+    pcs_ptr->first_pass_seg_total_count = (uint16_t)(pcs_ptr->first_pass_seg_column_count  * pcs_ptr->first_pass_seg_row_count);
+    pcs_ptr->first_pass_seg_acc = 0;
+    first_pass_signal_derivation_multi_processes(scs_ptr, pcs_ptr, context_ptr);
+    if (pcs_ptr->me_data_wrapper_ptr == NULL) {
+        EbObjectWrapper               *me_wrapper;
+        svt_get_empty_object(context_ptr->me_fifo_ptr, &me_wrapper);
+        pcs_ptr->me_data_wrapper_ptr = me_wrapper;
+        pcs_ptr->pa_me_data = (MotionEstimationData *)me_wrapper->object_ptr;
+    }
+
+    for (seg_idx = 0; seg_idx < pcs_ptr->first_pass_seg_total_count; ++seg_idx) {
+
+        EbObjectWrapper               *out_results_wrapper_ptr;
+        PictureDecisionResults        *out_results_ptr;
+        svt_get_empty_object(
+            context_ptr->picture_decision_results_output_fifo_ptr,
+            &out_results_wrapper_ptr);
+        out_results_ptr = (PictureDecisionResults*)out_results_wrapper_ptr->object_ptr;
+        out_results_ptr->pcs_wrapper_ptr = pcs_ptr->p_pcs_wrapper_ptr;
+        out_results_ptr->segment_index = seg_idx;
+        out_results_ptr->task_type = 2;
+        svt_post_full_object(out_results_wrapper_ptr);
+    }
+
+    svt_block_on_semaphore(pcs_ptr->first_pass_done_semaphore);
+    svt_release_object(pcs_ptr->me_data_wrapper_ptr);
+    pcs_ptr->me_data_wrapper_ptr = (EbObjectWrapper *)NULL;
+}
+#endif
 /*
   Performs Motion Compensated Temporal Filtering in ME process
 */
@@ -4942,6 +4980,9 @@ void* picture_decision_kernel(void *input_ptr)
             }
 
             pcs_ptr->pic_decision_reorder_queue_idx = queue_entry_index;
+#if FEATURE_FIRST_PASS_RESTRUCTURE
+            pcs_ptr->first_pass_done = 0;
+#endif
         }
         // Process the head of the Picture Decision Reordering Queue (Entry N)
         // P.S. The Picture Decision Reordering Queue should be parsed in the display order to be able to construct a pred structure
@@ -4955,6 +4996,44 @@ void* picture_decision_kernel(void *input_ptr)
                 frame_passthrough = EB_FALSE;
             window_avail = EB_TRUE;
             previous_entry_index = QUEUE_GET_PREVIOUS_SPOT(encode_context_ptr->picture_decision_reorder_queue_head_index);
+
+#if FEATURE_FIRST_PASS_RESTRUCTURE
+#if FEATURE_LAP_ENABLED_VBR
+            if (use_output_stat(scs_ptr) || scs_ptr->lap_enabled) {
+#else
+            if (use_output_stat(scs_ptr)) {
+#endif
+                for (window_index = 0; window_index < scs_ptr->scd_delay; window_index++) {
+                    entry_index = QUEUE_GET_NEXT_SPOT(encode_context_ptr->picture_decision_reorder_queue_head_index, window_index);
+                    PictureDecisionReorderEntry   *first_pass_queue_entry = encode_context_ptr->picture_decision_reorder_queue[entry_index];
+                    if (first_pass_queue_entry->parent_pcs_wrapper_ptr == NULL) {
+                        break;
+                    }
+                    else {
+
+                        PictureParentControlSet *first_pass_pcs_ptr = (PictureParentControlSet*)first_pass_queue_entry->parent_pcs_wrapper_ptr->object_ptr;
+                        if (!first_pass_pcs_ptr->first_pass_done) {
+#if !FEATURE_LAP_ENABLED_VBR
+                            first_pass_pcs_ptr->first_pass_done = 1;
+#endif
+                            int32_t temp_entry_index = QUEUE_GET_PREVIOUS_SPOT(entry_index);
+                            first_pass_pcs_ptr->first_pass_ref_ppcs_ptr[0] = first_pass_queue_entry->picture_number > 0 ?
+                                (PictureParentControlSet *)encode_context_ptr->picture_decision_reorder_queue[temp_entry_index]->parent_pcs_wrapper_ptr->object_ptr : NULL;
+                            temp_entry_index = QUEUE_GET_PREVIOUS_SPOT(temp_entry_index);
+                            first_pass_pcs_ptr->first_pass_ref_ppcs_ptr[1] = first_pass_queue_entry->picture_number > 1 ?
+                                (PictureParentControlSet *)encode_context_ptr->picture_decision_reorder_queue[temp_entry_index]->parent_pcs_wrapper_ptr->object_ptr : NULL;
+                            first_pass_pcs_ptr->first_pass_ref_count = first_pass_queue_entry->picture_number > 1 ? 2 : first_pass_queue_entry->picture_number > 0 ? 1 : 0;
+
+                            process_first_pass_frame(scs_ptr, first_pass_pcs_ptr, context_ptr);
+#if FEATURE_LAP_ENABLED_VBR
+                            first_pass_pcs_ptr->first_pass_done = 1;
+#endif
+                        }
+                    }
+                }
+            }
+#endif
+
 #if FEATURE_NEW_DELAY
             pcs_ptr = (PictureParentControlSet*)queue_entry_ptr->parent_pcs_wrapper_ptr->object_ptr;
             memset(pcs_ptr->pd_window, 0, PD_WINDOW_SIZE * sizeof(PictureParentControlSet*));

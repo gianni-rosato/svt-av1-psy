@@ -1201,6 +1201,10 @@ static void picture_parent_control_set_dctor(EbPtr ptr) {
   //  EB_DESTROY_SEMAPHORE(obj->pame_done_semaphore);
     EB_DESTROY_MUTEX(obj->pame_done.mutex);
 #endif
+#if FEATURE_FIRST_PASS_RESTRUCTURE
+    EB_DESTROY_SEMAPHORE(obj->first_pass_done_semaphore);
+    EB_DESTROY_MUTEX(obj->first_pass_mutex);
+#endif
     if(obj->frame_superres_enabled){
         svt_pcs_sb_structs_dctor(obj);
         EB_DELETE(obj->enhanced_picture_ptr);
@@ -1341,6 +1345,10 @@ EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr,
 
 #if FEATURE_PA_ME
     EB_CREATE_MUTEX(object_ptr->pame_done.mutex);
+#endif
+#if FEATURE_FIRST_PASS_RESTRUCTURE
+    EB_CREATE_SEMAPHORE(object_ptr->first_pass_done_semaphore, 0, 1);
+    EB_CREATE_MUTEX(object_ptr->first_pass_mutex);
 #endif
     object_ptr->av1_cm->interp_filter = SWITCHABLE;
 

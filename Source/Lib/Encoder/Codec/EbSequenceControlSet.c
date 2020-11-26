@@ -184,8 +184,10 @@ EbErrorType svt_sequence_control_set_ctor(SequenceControlSet *scs_ptr, EbPtr obj
 
     scs_ptr->film_grain_random_seed = 7391;
     scs_ptr->reference_count        = 4;
-
+#if !FEATURE_LAP_ENABLED_VBR
     scs_ptr->lap_enabled = 0;
+#endif
+
     return EB_ErrorNone;
 }
 
@@ -307,6 +309,9 @@ EbErrorType copy_sequence_control_set(SequenceControlSet *dst, SequenceControlSe
 #if FEATURE_PA_ME
     dst->enable_pic_mgr_dec_order = src->enable_pic_mgr_dec_order;
     dst->enable_dec_order = src->enable_dec_order;
+#endif
+#if FEATURE_LAP_ENABLED_VBR
+    dst->lap_enabled                    = src->lap_enabled;
 #endif
     return EB_ErrorNone;
 }

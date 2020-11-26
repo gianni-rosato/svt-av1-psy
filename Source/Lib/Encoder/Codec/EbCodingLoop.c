@@ -2318,7 +2318,11 @@ EB_EXTERN void av1_encode_decode(SequenceControlSet *scs_ptr, PictureControlSet 
                               (sb_origin_x + blk_geom->origin_x) >> MI_SIZE_LOG2);
         }
 #if FEATURE_RE_ENCODE
-        if (use_input_stat(scs_ptr) &&
+#if FEATURE_LAP_ENABLED_VBR
+        if ((use_input_stat(scs_ptr) || scs_ptr->lap_enabled ) &&
+#else
+        if (use_input_stat(scs_ptr)  &&
+#endif
             blk_it == 0 && sb_origin_x == 0 && blk_geom->origin_x == 0 && sb_origin_y == 0 && blk_geom->origin_y == 0) {
             pcs_ptr->parent_pcs_ptr->pcs_total_rate = 0;
         }
@@ -3211,7 +3215,7 @@ EB_EXTERN void av1_encode_decode(SequenceControlSet *scs_ptr, PictureControlSet 
                                         context_ptr->blk_geom->has_uv && uv_pass ? COMPONENT_ALL
                                                                                  : COMPONENT_LUMA);
                                 }
-
+#if !FEATURE_FIRST_PASS_RESTRUCTURE
                                 // CBF Tu decision
                                 if (use_output_stat(scs_ptr)) {
                                     context_ptr->md_context
@@ -3228,7 +3232,7 @@ EB_EXTERN void av1_encode_decode(SequenceControlSet *scs_ptr, PictureControlSet 
                                         count_non_zero_coeffs[2] != 0 ? EB_TRUE : EB_FALSE;
                                 }
                                 else
-
+#endif
                                 av1_encode_txb_calc_cost(context_ptr,
                                                          count_non_zero_coeffs,
                                                          y_tu_full_distortion,
