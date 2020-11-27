@@ -74,7 +74,6 @@ valgrind compile:
   variables:
     EXTRA_CFLAGS: -Wno-error -g
     EXTRA_CXXFLAGS: -Wno-error -g
-    LDFLAGS: -static -static-libgcc
     EXTRA_CMAKE_FLAGS: -DCMAKE_OUTPUT_DIRECTORY=valgrind
     CMAKE_BUILD_TYPE: Debug
   artifacts:
