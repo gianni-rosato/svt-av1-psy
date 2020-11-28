@@ -75,15 +75,12 @@
 #define SET_AVX2(ptr, c, avx2)                              SET_FUNCTIONS(ptr, c, 0, 0, 0, 0, 0, 0, 0, 0, avx2, 0)
 #define SET_AVX2_AVX512(ptr, c, avx2, avx512)               SET_FUNCTIONS(ptr, c, 0, 0, 0, 0, 0, 0, 0, 0, avx2, avx512)
 
-
 void setup_rtcd_internal(CPU_FLAGS flags) {
-
-#ifdef ARCH_X86_64
     /* Avoid check that pointer is set double, after first  setup. */
-    static EbBool first_call_setup = EB_TRUE;
-    EbBool check_pointer_was_set = first_call_setup;
-    first_call_setup = EB_FALSE;
-
+    static EbBool first_call_setup      = EB_TRUE;
+    EbBool        check_pointer_was_set = first_call_setup;
+    first_call_setup                    = EB_FALSE;
+#ifdef ARCH_X86_64
     /** Should be done during library initialization,
         but for safe limiting cpu flags again. */
     flags &= get_cpu_flags_to_use();
@@ -384,5 +381,4 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
     SET_AVX2(svt_av1_calc_indices_dim2, svt_av1_calc_indices_dim2_c, svt_av1_calc_indices_dim2_avx2);
     SET_AVX2(variance_highbd, variance_highbd_c, variance_highbd_avx2);
     SET_AVX2(svt_av1_haar_ac_sad_8x8_uint8_input, svt_av1_haar_ac_sad_8x8_uint8_input_c, svt_av1_haar_ac_sad_8x8_uint8_input_avx2);
-
 }

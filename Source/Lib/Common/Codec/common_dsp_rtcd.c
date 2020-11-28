@@ -245,12 +245,11 @@ CPU_FLAGS get_cpu_flags_to_use() {
 
 
 void setup_common_rtcd_internal(CPU_FLAGS flags) {
-#ifdef ARCH_X86_64
     /* Avoid check that pointer is set double, after first  setup. */
-    static EbBool first_call_setup = EB_TRUE;
-    EbBool check_pointer_was_set = first_call_setup;
-    first_call_setup = EB_FALSE;
-
+    static EbBool first_call_setup      = EB_TRUE;
+    EbBool        check_pointer_was_set = first_call_setup;
+    first_call_setup                    = EB_FALSE;
+#ifdef ARCH_X86_64
     /** Should be done during library initialization,
         but for safe limiting cpu flags again. */
     flags &= get_cpu_flags_to_use();
