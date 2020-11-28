@@ -170,6 +170,14 @@ foreach(flag ${flags_to_test};${release_flags_to_test};${debug_flags_to_test})
     endif()
 endforeach()
 
+if(CMAKE_C_FLAGS MATCHES ".*-march=native.*")
+    string(APPEND CMAKE_C_FLAGS " -mno-avx")
+endif()
+
+if(CMAKE_CXX_FLAGS MATCHES ".*-march=native.*")
+    string(APPEND CMAKE_CXX_FLAGS " -mno-avx")
+endif()
+
 if(CMAKE_ASM_NASM_OBJECT_FORMAT MATCHES "win")
     set(CMAKE_ASM_NASM_FLAGS_DEBUG "${CMAKE_ASM_NASM_FLAGS_DEBUG} -gcv8")
 elseif(CMAKE_ASM_NASM_COMPILER MATCHES "nasm")
