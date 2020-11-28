@@ -1198,8 +1198,6 @@ EbErrorType  intra_luma_prediction_for_interintra(
     return return_error;
 }
 
-
-#define USE_PADDING_FIX 1
 EbErrorType update_neighbor_samples_array_open_loop_mb(
         uint8_t                            *above_ref,
         uint8_t                            *left_ref,
@@ -1244,10 +1242,8 @@ EbErrorType update_neighbor_samples_array_open_loop_mb(
     count = block_size_half;
     if (src_origin_x != 0) {
         read_ptr = src_ptr - 1;
-#if USE_PADDING_FIX
         if(src_origin_y == 0)
             *(left_ref - 1) = *read_ptr;
-#endif
         count = ((src_origin_y + count) > height) ? count - ((src_origin_y + count) - height) : count;
         for (idx = 0; idx < count; ++idx) {
             *left_ref = *read_ptr;
@@ -1255,17 +1251,13 @@ EbErrorType update_neighbor_samples_array_open_loop_mb(
             left_ref++;
         }
         left_ref += (block_size_half - count);
-#if USE_PADDING_FIX
         // pading unknown left bottom pixels with value at(-1, -15)
         for(idx = 0; idx < bheight; idx++)
             *(left_ref - bheight + idx) = *(left_ref - bheight - 1);
-#endif
-#if USE_PADDING_FIX
     } else if (src_origin_y != 0 ) {
         count = ((src_origin_y + count) > height) ? count - ((src_origin_y + count) - height) : count;
         EB_MEMSET(left_ref - 1, *(src_ptr - stride), count + 1);
         *(above_ref - 1) = *(src_ptr - stride);
-#endif
     }else
         left_ref += count;
 
@@ -1275,19 +1267,13 @@ EbErrorType update_neighbor_samples_array_open_loop_mb(
         read_ptr = src_ptr - stride;
         count = ((src_origin_x + count) > width) ? count - ((src_origin_x + count) - width) : count;
         EB_MEMCPY(above_ref, read_ptr, count);
-#if USE_PADDING_FIX
         // pading unknown top right pixels with value at(15, -1)
         if(src_origin_x != 0)
             for(idx = 0; idx < bwidth; idx++)
                 *(above_ref + bwidth + idx) = *(above_ref + bwidth - 1);
-#else
-        above_ref += (block_size_half - count);
-#endif
-#if USE_PADDING_FIX
     } else if (src_origin_x != 0 ) {
         count = ((src_origin_x + count) > width) ? count - ((src_origin_x + count) - width) : count;
         EB_MEMSET(above_ref - 1, *(left_ref - count), count + 1);
-#endif
     }
 
     return return_error;
@@ -1331,10 +1317,8 @@ EbErrorType update_neighbor_samples_array_open_loop_mb_recon(
     count = block_size_half;
     if (src_origin_x != 0) {
         read_ptr = src_ptr - 1;
-#if USE_PADDING_FIX
         if (src_origin_y == 0)
             *(left_ref - 1) = *read_ptr;
-#endif
         count = ((src_origin_y + count) > height) ? count - ((src_origin_y + count) - height) : count;
         for (idx = 0; idx < count; ++idx) {
             *left_ref = *read_ptr;
@@ -1342,19 +1326,15 @@ EbErrorType update_neighbor_samples_array_open_loop_mb_recon(
             left_ref++;
         }
         left_ref += (block_size_half - count);
-#if USE_PADDING_FIX
         // pading unknown left bottom pixels with value at(-1, -15)
         for (idx = 0; idx < bheight; idx++)
             *(left_ref - bheight + idx) = *(left_ref - bheight - 1);
-#endif
-#if USE_PADDING_FIX
     }
     else
         if (src_origin_y != 0) {
             count = ((src_origin_y + count) > height) ? count - ((src_origin_y + count) - height) : count;
             EB_MEMSET(left_ref - 1, *(src_ptr - stride), count + 1);
             *(above_ref - 1) = *(src_ptr - stride);
-#endif
         }
         else
             left_ref += count;
@@ -1365,21 +1345,15 @@ EbErrorType update_neighbor_samples_array_open_loop_mb_recon(
         read_ptr = src_ptr - stride;
         count = ((src_origin_x + count) > width) ? count - ((src_origin_x + count) - width) : count;
         EB_MEMCPY(above_ref, read_ptr, count);
-#if USE_PADDING_FIX
         // pading unknown top right pixels with value at(15, -1)
         if (src_origin_x != 0)
             for (idx = 0; idx < bwidth; idx++)
                 *(above_ref + bwidth + idx) = *(above_ref + bwidth - 1);
-#else
-        above_ref += (block_size_half - count);
-#endif
-#if USE_PADDING_FIX
     }
     else
         if (src_origin_x != 0) {
             count = ((src_origin_x + count) > width) ? count - ((src_origin_x + count) - width) : count;
             EB_MEMSET(above_ref - 1, *(left_ref - count), count + 1);
-#endif
         }
 
     return return_error;

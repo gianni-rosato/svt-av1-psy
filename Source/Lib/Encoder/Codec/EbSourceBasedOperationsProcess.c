@@ -20,10 +20,8 @@
 #endif
 #include "EbEncHandle.h"
 #include "EbUtility.h"
-#if FEATURE_TPL_SOP
 #include "EbPictureManagerProcess.h"
 #include "EbReferenceObject.h"
-#endif
 /**************************************
  * Context
  **************************************/
@@ -104,7 +102,6 @@ void derive_picture_activity_statistics(PictureParentControlSet *pcs_ptr)
     return;
 }
 
-#if FEATURE_TPL_SOP
 EbErrorType tpl_get_open_loop_me(
     PictureManagerContext           *context_ptr,
     SequenceControlSet              *scs_ptr,
@@ -113,7 +110,6 @@ EbErrorType tpl_mc_flow(
     EncodeContext                   *encode_context_ptr,
     SequenceControlSet              *scs_ptr,
     PictureParentControlSet         *pcs_ptr);
-#endif
 /************************************************
  * Source Based Operations Kernel
  * Source-based operations process involves a number of analysis algorithms
@@ -140,7 +136,6 @@ void *source_based_operations_kernel(void *input_ptr) {
         uint32_t sb_index;
 
 
-#if FEATURE_TPL_SOP
         SequenceControlSet * scs_ptr = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
         // Get TPL ME
 
@@ -148,24 +143,15 @@ void *source_based_operations_kernel(void *input_ptr) {
             tpl_get_open_loop_me(NULL, scs_ptr, pcs_ptr);
 
 
-#if FEATURE_IN_LOOP_TPL
-
-#if FEATURE_PA_ME
             if (/*scs_ptr->in_loop_me &&*/ scs_ptr->static_config.enable_tpl_la &&
                 pcs_ptr->temporal_layer_index == 0) {
-#else
-            if (scs_ptr->in_loop_me && scs_ptr->static_config.enable_tpl_la &&
-                pcs_ptr->temporal_layer_index == 0) {
-#endif
                 tpl_mc_flow(scs_ptr->encode_context_ptr, scs_ptr, pcs_ptr);
             }
-#endif
             //any picture not belonging to any TPL group should release its PA references
             if (pcs_ptr->num_tpl_grps == 0) {
                 release_pa_reference_objects(scs_ptr, pcs_ptr);
             }
         }
-#endif
 
 
 

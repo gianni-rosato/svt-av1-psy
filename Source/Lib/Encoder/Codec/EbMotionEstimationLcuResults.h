@@ -43,9 +43,6 @@ typedef struct MeSbResults {
     MeCandidate *me_candidate_array;
     // [PU][LAST, LAST2, LAST3, GOLD, BWD, ALT2, ALT] if MRP Mode 0,
     // [PU][LAST, LAST2, BWD, ALT2] if MRP Mode 1,
-#if !FEATURE_INTER_INTRA_LEVELS
-    uint8_t do_comp[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
-#endif
 } MeSbResults;
 #ifdef __cplusplus
 }

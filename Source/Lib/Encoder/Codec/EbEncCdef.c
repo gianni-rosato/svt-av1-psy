@@ -219,16 +219,6 @@ uint64_t compute_cdef_dist_8bit_c(const uint8_t *dst8, int32_t dstride, const ui
 }
 
 
-#if !TUNE_CDEF_FILTER
-int32_t get_cdef_gi_step(int8_t cdef_level) {
-    int32_t gi_step = cdef_level == 5
-                        ? 1
-                        : cdef_level == 4
-                                ? 4
-                                : cdef_level == 3 ? 8 : cdef_level == 2 ? 16 : 64;
-    return gi_step;
-}
-#endif
 int32_t svt_sb_all_skip(PictureControlSet *pcs_ptr, const Av1Common *const cm, int32_t mi_row,
                         int32_t mi_col) {
     int32_t maxc, maxr;
@@ -1171,12 +1161,10 @@ static uint64_t joint_strength_search_dual(int32_t *best_lev0, int32_t *best_lev
     return best_tot_mse;
 }
 
-#if TUNE_CDEF_FILTER
 #define STORE_CDEF_FILTER_STRENGTH(cdef_strength, pick_method, strength_idx) \
   get_cdef_filter_strengths((pick_method), &pri_strength, &sec_strength,     \
                             (strength_idx));                                 \
   cdef_strength = pri_strength * CDEF_SEC_STRENGTHS + sec_strength;
-#endif
 void finish_cdef_search(EncDecContext *context_ptr, PictureControlSet *pcs_ptr,
                         int32_t selected_strength_cnt[64]) {
     (void)context_ptr;
@@ -1196,44 +1184,19 @@ void finish_cdef_search(EncDecContext *context_ptr, PictureControlSet *pcs_ptr,
     int32_t       nhfb              = (mi_cols + MI_SIZE_64X64 - 1) / MI_SIZE_64X64;
     int32_t *     sb_index          = (int32_t *)malloc(nvfb * nhfb * sizeof(*sb_index));
     int32_t *     selected_strength = (int32_t *)malloc(nvfb * nhfb * sizeof(*sb_index));
-#if !TUNE_CDEF_FILTER
-    int32_t       best_frame_gi_cnt = 0;
-    const int32_t total_strengths   = TOTAL_STRENGTHS;
-    int32_t       gi_step;
-    int32_t       mid_gi;
-#endif
     int32_t       start_gi;
     int32_t       end_gi;
-#if TUNE_CDEF_FILTER
     CDEF_PICK_METHOD pick_method = pcs_ptr->parent_pcs_ptr->cdef_level == 2 ? CDEF_FAST_SEARCH_LVL1
                                  : pcs_ptr->parent_pcs_ptr->cdef_level == 3 ?  CDEF_FAST_SEARCH_LVL2
                                  : pcs_ptr->parent_pcs_ptr->cdef_level == 4 ?  CDEF_FAST_SEARCH_LVL3 : 0;
 
     const int fast = (pick_method >= CDEF_FAST_SEARCH_LVL1 &&
                 pick_method <= CDEF_FAST_SEARCH_LVL3);
-#endif
     assert(sb_index != NULL);
     assert(selected_strength != NULL);
 
-#if !TUNE_CDEF_FILTER
-    gi_step = get_cdef_gi_step(ppcs->cdef_level);
-#endif
-#if !TUNE_CDEF_FILTER
-    mid_gi = ppcs->cdf_ref_frame_strength;
-#endif
-#if TUNE_CDEF_FILTER
     start_gi =  0;
-#else
-    start_gi = ppcs->use_ref_frame_cdef_strength && ppcs->cdef_level == 5
-                    ? (AOMMAX(0, mid_gi - gi_step))
-                    : 0;
-#endif
-#if TUNE_CDEF_FILTER
     end_gi = nb_cdef_strengths[pick_method] ;
-#else
-    end_gi = ppcs->use_ref_frame_cdef_strength ? AOMMIN(total_strengths, mid_gi + gi_step)
-                                               : ppcs->cdef_level == 5 ? 8 : total_strengths;
-#endif
 
     uint64_t(*mse[2])[TOTAL_STRENGTHS];
     int32_t       pri_damping = 3 + (frm_hdr->quantization_params.base_q_idx >> 6);
@@ -1357,7 +1320,6 @@ void finish_cdef_search(EncDecContext *context_ptr, PictureControlSet *pcs_ptr,
         default: break;
         }
     }
-#if TUNE_CDEF_FILTER
   if (fast) {
     for (int j = 0; j < ppcs->nb_cdef_strengths; j++) {
 
@@ -1370,14 +1332,8 @@ void finish_cdef_search(EncDecContext *context_ptr, PictureControlSet *pcs_ptr,
                                  chroma_strength);
     }
   }
-#endif
     //cdef_pri_damping & cdef_sec_damping consolidated to cdef_damping
     frm_hdr->cdef_params.cdef_damping = pri_damping;
-#if !TUNE_CDEF_FILTER
-    for (i = 0; i < total_strengths; i++)
-        best_frame_gi_cnt += selected_strength_cnt[i] > best_frame_gi_cnt ? 1 : 0;
-    ppcs->cdef_frame_strength = ((best_frame_gi_cnt + 4) / 4) * 4;
-#endif
     free(mse[0]);
     free(mse[1]);
     free(sb_index);

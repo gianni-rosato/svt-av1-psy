@@ -12,9 +12,7 @@
 #include "EncodeTxbRef_C.h"
 #include "EbCommonUtils.h"
 #include "EbCoefficients.h"
-#if FEATURE_OPT_RDOQ
 #include "EbFullLoop.h"
-#endif
 /*
 const int8_t av1_nz_map_ctx_offset_4x4[16] = {
     0,
@@ -423,13 +421,8 @@ static INLINE int get_nz_map_ctx(const uint8_t* const levels, const int coeff_id
 void svt_av1_get_nz_map_contexts_c(const uint8_t* const levels, const int16_t* const scan,
                                    const uint16_t eob, const TxSize tx_size, const TxClass tx_class,
                                    int8_t* const coeff_contexts) {
-#if FEATURE_OPT_RDOQ
     const int bwl    = get_txb_bwl_tab[tx_size];
     const int height = get_txb_high_tab[tx_size];
-#else
-    const int bwl    = get_txb_bwl(tx_size);
-    const int height = get_txb_high(tx_size);
-#endif
     for (int i = 0; i < eob; ++i) {
         const int pos = scan[i];
         coeff_contexts[pos] =

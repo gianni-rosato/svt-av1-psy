@@ -55,7 +55,6 @@ typedef struct DepCntPicInfo {
     uint64_t      pic_num;
     int32_t      dep_cnt_diff; //increase(e.g 4L->5L) or decrease of dep cnt . not including the run-time decrease
 } DepCntPicInfo;
-#if FEATURE_INL_ME
 typedef struct EbDownScaledBufDescPtrArray {
     EbPictureBufferDesc *picture_ptr;
     EbPictureBufferDesc *quarter_picture_ptr;
@@ -79,7 +78,6 @@ typedef struct EbDownScaledObjectDescInitData {
     uint8_t enable_quarter_luma_input;
     uint8_t enable_sixteenth_luma_input;
 } EbDownScaledObjectDescInitData;
-#endif
 typedef struct MacroblockPlane {
     // Quantizer setings
     // These are used/accessed only in the quantization process
@@ -211,14 +209,12 @@ typedef struct MeshPattern {
     int interval;
 } MeshPattern;
 
-#if TUNE_CDF
 typedef struct CdfControls {
     uint8_t  enabled;    //1 if mv, or se, or coeff is ON
     uint8_t  update_mv;  //cdf update for mv
     uint8_t  update_se;  //cdf update for various syntax elements
     uint8_t  update_coef;//cdf update for coeffs
 } CdfControls;
-#endif
 typedef struct SpeedFeatures {
     // This allows us to use motion search at other sizes as a starting
     // point for this motion search and limits the search range around it.
@@ -254,9 +250,7 @@ typedef struct PictureControlSet {
     // Packetization (used to encode SPS, PPS, etc)
     Bitstream *bitstream_ptr;
 
-#if FEATURE_INL_ME
     EbObjectWrapper *          c_pcs_wrapper_ptr;
-#endif
 
     // Reference Lists
     // Reference Lists
@@ -316,9 +310,6 @@ typedef struct PictureControlSet {
     NeighborArrayUnit **md_mv_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
     NeighborArrayUnit **md_skip_flag_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
     NeighborArrayUnit **md_mode_type_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
-#if !TUNE_REMOVE_UNUSED_NEIG_ARRAY
-    NeighborArrayUnit **md_leaf_depth_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
-#endif
     NeighborArrayUnit **md_luma_recon_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
     NeighborArrayUnit **md_tx_depth_1_luma_recon_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
     NeighborArrayUnit **md_tx_depth_2_luma_recon_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
@@ -331,9 +322,6 @@ typedef struct PictureControlSet {
     NeighborArrayUnit **md_tx_depth_2_luma_recon_neighbor_array16bit[NEIGHBOR_ARRAY_TOTAL_COUNT];
     NeighborArrayUnit **md_cb_recon_neighbor_array16bit[NEIGHBOR_ARRAY_TOTAL_COUNT];
     NeighborArrayUnit **md_cr_recon_neighbor_array16bit[NEIGHBOR_ARRAY_TOTAL_COUNT];
-#if !FIX_REMOVE_MD_SKIP_COEFF_CIRCUITERY
-    NeighborArrayUnit **md_skip_coeff_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
-#endif
     NeighborArrayUnit **md_luma_dc_sign_level_coeff_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
     NeighborArrayUnit *
         *md_tx_depth_1_luma_dc_sign_level_coeff_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
@@ -353,9 +341,6 @@ typedef struct PictureControlSet {
     NeighborArrayUnit **ep_mv_neighbor_array;
     NeighborArrayUnit **ep_skip_flag_neighbor_array;
     NeighborArrayUnit **ep_mode_type_neighbor_array;
-#if !TUNE_REMOVE_UNUSED_NEIG_ARRAY
-    NeighborArrayUnit **ep_leaf_depth_neighbor_array;
-#endif
     NeighborArrayUnit **ep_luma_recon_neighbor_array;
     NeighborArrayUnit **ep_cb_recon_neighbor_array;
     NeighborArrayUnit **ep_cr_recon_neighbor_array;
@@ -405,11 +390,7 @@ typedef struct PictureControlSet {
 
     FRAME_CONTEXT *                 ec_ctx_array;
     FRAME_CONTEXT                   md_frame_context;
-#if TUNE_CDF
     CdfControls                     cdf_ctrl;
-#else
-    uint8_t                         update_cdf;
-#endif
     FRAME_CONTEXT                   ref_frame_context[REF_FRAMES];
     EbWarpedMotionParams            ref_global_motion[TOTAL_REFS_PER_FRAME];
     struct MdRateEstimationContext *md_rate_estimation_array;
@@ -477,7 +458,6 @@ typedef struct MotionEstimationData {
     MeSbResults **me_results;
     uint16_t sb_total_count_unscaled;
 } MotionEstimationData;
-#if TUNE_TPL_OPT
 typedef struct TplControls {
     uint8_t tpl_opt_flag;               // 0:OFF 1:ON - TPL optimizations : no rate, only DC
     uint8_t enable_tpl_qps;             // 0:OFF 1:ON - QPS in TPL
@@ -489,8 +469,6 @@ typedef struct TplControls {
 
 }TplControls;
 
-
-#endif
 
 /*!
  * \brief Refresh frame flags for different type of frames.
@@ -506,7 +484,6 @@ typedef struct {
   bool alt_ref_frame; /*!< Refresh flag for alt-ref frame */
 } RefreshFrameFlagsInfo;
 
-#if TUNE_INL_TPL_ENHANCEMENT
 typedef struct {
     uint8_t     tpl_temporal_layer_index;
     EB_SLICE    tpl_slice_type;
@@ -516,34 +493,22 @@ typedef struct {
     EbBool      ref_in_slide_window[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
     EbBool      is_used_as_reference_flag;
     EbDownScaledBufDescPtrArray tpl_ref_ds_ptr_array[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
-#if ENABLE_TPL_TRAILING && !TUNE_TPL_OPT
-    uint8_t       tpl_opt_flag;
-#endif
-#if TUNE_TPL_OPT
     TplControls  tpl_ctrls;
-#endif
 } TPLData;
-#endif
-#if FEATURE_OPT_TF
 typedef struct  TfControls {
     uint8_t enabled;
     uint8_t window_size;                 // 3, 5, 7
     uint8_t noise_based_window_adjust;   // add an offset to default window_size based on the noise level; higher the noise, smaller is the offset
     uint8_t hp;                          // w/o 1/16 pel MV refinement
     uint8_t chroma;                      // use chroma
-#if FEATURE_OPT_TF
     uint64_t block_32x32_16x16_th;       // control tf_16x16 using tf_32x32 pred error
-#endif
 }TfControls;
-#endif
-#if FEATURE_GM_OPT // GmControls
 typedef struct  GmControls {
     uint8_t enabled;
     uint8_t identiy_exit;       // 0: generate GM params for both list_0 and list_1, 1: do not generate GM params for list_1 if list_0/ref_idx_0 is id
     uint8_t rotzoom_model_only; // 0: use both rotzoom and affine models, 1:use rotzoom model only
     uint8_t bipred_only;        // 0: test both unipred and bipred, 1: test bipred only
 } GmControls;
-#endif
 //CHKN
 // Add the concept of PictureParentControlSet which is a subset of the old PictureControlSet.
 // It actually holds only high level Picture based control data:(GOP management,when to start a picture, when to release the PCS, ....).
@@ -639,22 +604,10 @@ typedef struct PictureParentControlSet {
     double   cr_ssim;
     double   cb_ssim;
 
-#if FEATURE_INL_ME
     EbObjectWrapper *down_scaled_picture_wrapper_ptr;
     EbDownScaledBufDescPtrArray ds_pics; // Pointer array for down scaled pictures
 
-#if !TUNE_INL_TPL_ENHANCEMENT
-    // iME TPL
-    EbDownScaledBufDescPtrArray tpl_ref_ds_ptr_array[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
-#if FEATURE_IN_LOOP_TPL
-    uint8_t                     tpl_ref0_count;
-    uint8_t                     tpl_ref1_count;
-    EbBool                      ref_in_slide_window[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
-#endif
-#else
     TPLData                     tpl_data;
-#endif
-#endif
 
     // Pre Analysis
     EbObjectWrapper *ref_pa_pic_ptr_array[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
@@ -688,12 +641,10 @@ typedef struct PictureParentControlSet {
     uint8_t  me_segments_row_count;
     uint16_t me_segments_completion_count;
 
-#if FEATURE_INL_ME
     uint16_t inloop_me_segments_total_count;
     uint8_t  inloop_me_segments_column_count;
     uint8_t  inloop_me_segments_row_count;
     uint16_t inloop_me_segments_completion_count;
-#endif
 
     // Motion Estimation Results
     uint8_t       max_number_of_pus_per_sb;
@@ -708,10 +659,8 @@ typedef struct PictureParentControlSet {
     uint16_t *ois_distortion_histogram;
     uint32_t *intra_sad_interval_index;
     uint32_t *inter_sad_interval_index;
-#if !FEATURE_IN_LOOP_TPL|| FIX_GM_COMPUTATION
     uint16_t me_processed_sb_count;
     EbHandle me_processed_sb_mutex;
-#endif
     EbHandle  rc_distortion_histogram_mutex;
     FirstPassData firstpass_data;
     RefreshFrameFlagsInfo refresh_frame;
@@ -726,9 +675,6 @@ typedef struct PictureParentControlSet {
     double       *tpl_rdmult_scaling_factors;
     double       *tpl_sb_rdmult_scaling_factors;
     EbBool       blk_lambda_tuning;
-#if !ENABLE_TPL_TRAILING
-    uint8_t       tpl_opt_flag;
-#endif
     // Dynamic GOP
     EbPred   pred_structure;
     uint8_t  hierarchical_levels;
@@ -798,12 +744,6 @@ typedef struct PictureParentControlSet {
     // Global quant matrix tables
     const QmVal *giqmatrix[NUM_QM_LEVELS][3][TX_SIZES_ALL];
     const QmVal *gqmatrix[NUM_QM_LEVELS][3][TX_SIZES_ALL];
-#if !FIX_OPTIMIZE_BUILD_QUANTIZER
-    Quants quants_bd; // follows input bit depth
-    Dequants deq_bd;  // follows input bit depth
-    Quants quants_8bit;  // 8bit
-    Dequants deq_8bit; // 8bit
-#endif
     int32_t      min_qmlevel;
     int32_t      max_qmlevel;
     // Encoder
@@ -859,11 +799,6 @@ typedef struct PictureParentControlSet {
     AomDenoiseAndModel *denoise_and_model;
     RestUnitSearchInfo *rusi_picture[3]; //for 3 planes
     int8_t              cdef_level;
-#if !TUNE_CDEF_FILTER
-    int32_t             cdef_frame_strength;
-    int32_t             cdf_ref_frame_strength;
-    int32_t             use_ref_frame_cdef_strength;
-#endif
     uint8_t             palette_level;
     uint8_t             sc_content_detected;
     uint8_t             ibc_mode;
@@ -885,7 +820,6 @@ typedef struct PictureParentControlSet {
 
     uint8_t  temp_filt_prep_done;
     uint16_t temp_filt_seg_acc;
-#if FEATURE_INL_ME
     // TPL ME
     EbHandle tpl_me_done_semaphore;
     EbHandle tpl_me_mutex;
@@ -894,15 +828,10 @@ typedef struct PictureParentControlSet {
     uint8_t  tpl_me_segments_column_count;
     uint8_t  tpl_me_segments_row_count;
     uint8_t  tpl_me_done;
-#endif
-#if FEATURE_PA_ME
     AtomicVarU32  pame_done;          //set when PA ME is done.
     EbHandle   pame_done_semaphore;
-#endif
-#if FEATURE_PA_ME
     uint8_t num_tpl_grps;
     uint8_t num_tpl_processed;
-#endif
     int16_t tf_segments_total_count;
     uint8_t tf_segments_column_count;
     uint8_t tf_segments_row_count;
@@ -941,34 +870,19 @@ typedef struct PictureParentControlSet {
     EbObjectWrapper *me_data_wrapper_ptr;
     MotionEstimationData *pa_me_data;
     unsigned char gf_group_index;
-#if FEATURE_NEW_DELAY
     struct PictureParentControlSet* tpl_group[MAX_TPL_GROUP_SIZE]; //stores pcs pictures needed for tpl algorithm
     uint32_t tpl_group_size;             //size of above buffer
     void* pd_window[PD_WINDOW_SIZE]; //stores previous, current, future pictures from pd-reord-queue. empty for first I.
-#if TUNE_TPL
     uint8_t pd_window_count;
-#endif
-#if ENABLE_TPL_TRAILING
     // For TPL, in addition to frames in the minigop size, we might process extra frames from the next minigop. These frames are
     // called trailing frames. Trailing frames are available because of TF and their minigop is not determined yet. As a result,
     // when used in RC there is a risk of race condition to access the PCS data. To prevent the problem, TplData should be used instead of PCS.
     uint8_t tpl_trailing_frame_count;
-#endif
-#if TUNE_TPL_TOWARD_CHROMA
     // Tune TPL for better chroma.Only for 240P
     uint8_t tune_tpl_for_chroma;
-#endif
-#if FEATURE_NEW_DELAY
     uint8_t is_next_frame_intra;
-#endif
-#endif
-#if FEATURE_OPT_TF
     TfControls tf_ctrls;
-#endif
-#if FEATURE_GM_OPT
     GmControls gm_ctrls;
-#endif
-#if FEATURE_RE_ENCODE
     // Loop variables
     int q_low;
     int q_high;
@@ -977,8 +891,6 @@ typedef struct PictureParentControlSet {
     int undershoot_seen;
     int low_cr_seen;
     uint64_t pcs_total_rate;
-#endif
-#if FEATURE_FIRST_PASS_RESTRUCTURE
     int16_t     first_pass_seg_total_count;
     uint8_t     first_pass_seg_column_count;
     uint8_t     first_pass_seg_row_count;
@@ -988,7 +900,6 @@ typedef struct PictureParentControlSet {
     struct PictureParentControlSet *first_pass_ref_ppcs_ptr[2];
     uint8_t     first_pass_ref_count;
     uint8_t     first_pass_done;
-#endif
 } PictureParentControlSet;
 
 typedef struct PictureControlSetInitData {
@@ -1032,9 +943,7 @@ typedef struct PictureControlSetInitData {
     uint16_t  non_m8_pad_w;
     uint16_t  non_m8_pad_h;
     uint8_t enable_tpl_la;
-#if TUNE_TPL_OIS
     uint8_t in_loop_ois;
-#endif
 
 } PictureControlSetInitData;
 

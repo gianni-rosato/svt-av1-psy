@@ -527,7 +527,6 @@ typedef struct EbSvtAv1EncConfiguration {
      * value can range from 0-1000. */
     uint32_t over_shoot_pct;
 
-#if FEATURE_RE_ENCODE
     /* recode_loop indicates the recode levels,
      * DISALLOW_RECODE = 0, No recode.
      * ALLOW_RECODE_KFMAXBW = 1, Allow recode for KF and exceeding maximum frame bandwidth.
@@ -535,7 +534,6 @@ typedef struct EbSvtAv1EncConfiguration {
      * ALLOW_RECODE = 3, Allow recode for all frames based on bitrate constraints.
      * default is 2 */
     uint32_t recode_loop;
-#endif
 
     /* Flag to signal the content being a screen sharing content type
     *

@@ -1843,7 +1843,6 @@ void swap_me_candidate(MePredUnit *a, MePredUnit *b) {
     *a       = *b;
     *b       = temp_ptr;
 }
-#if FEATURE_INL_ME
 // get ME references based on level:
 // level: 0 => sixteenth, 1 => quarter, 2 => original
 static EbPictureBufferDesc* get_me_reference(
@@ -1862,7 +1861,6 @@ static EbPictureBufferDesc* get_me_reference(
     *dist = ABS((int16_t)(pcs_ptr->picture_number - context_ptr->me_ds_ref_array[list_index][ref_pic_index].picture_number));
     return ref_pic_ptr;
 }
-#endif
 /*******************************************
  *   performs integer search motion estimation for
  all avaiable references frames
@@ -1898,53 +1896,24 @@ void integer_search_sb(
     uint32_t num_of_list_to_search;
     uint32_t list_index;
     uint8_t ref_pic_index;
-#if !FEATURE_INL_ME
-    uint8_t num_of_ref_pic_to_search;
-#endif
     // Final ME Search Center
     int16_t x_search_center = 0;
     int16_t y_search_center = 0;
     EbPictureBufferDesc *ref_pic_ptr;
-#if !FEATURE_INL_ME
-    num_of_list_to_search =
-        (pcs_ptr->slice_type == P_SLICE) ? (uint32_t)REF_LIST_0 : (uint32_t)REF_LIST_1;
-    if (context_ptr->me_alt_ref == EB_TRUE) num_of_list_to_search = 0;
-#else
     num_of_list_to_search = context_ptr->num_of_list_to_search;
-#endif
 
     // Uni-Prediction motion estimation loop
     // List Loop
     for (list_index = REF_LIST_0; list_index <= num_of_list_to_search; ++list_index) {
-#if !FEATURE_INL_ME
-        if (context_ptr->me_alt_ref == EB_TRUE) {
-            num_of_ref_pic_to_search = 1;
-        } else {
-            num_of_ref_pic_to_search = (pcs_ptr->slice_type == P_SLICE)
-                ? pcs_ptr->ref_list0_count_try
-                : (list_index == REF_LIST_0) ? pcs_ptr->ref_list0_count_try
-                : pcs_ptr->ref_list1_count_try;
-        }
-#else
         uint8_t num_of_ref_pic_to_search =
             context_ptr->num_of_ref_pic_to_search[list_index];
-#endif
 
         // Ref Picture Loop
         for (ref_pic_index = 0; ref_pic_index < num_of_ref_pic_to_search; ++ref_pic_index) {
-#if !FEATURE_INL_ME
-            EbPaReferenceObject *reference_object = context_ptr->me_alt_ref == EB_TRUE
-                ? (EbPaReferenceObject *)context_ptr->alt_ref_reference_ptr
-                : (EbPaReferenceObject *)pcs_ptr->ref_pa_pic_ptr_array[list_index][ref_pic_index]
-                      ->object_ptr;
-
-            ref_pic_ptr = (EbPictureBufferDesc *)reference_object->input_padded_picture_ptr;
-#else
             uint16_t dist = 0;
             ref_pic_ptr = get_me_reference(pcs_ptr,
                                            context_ptr, list_index, ref_pic_index,
                                            2, &dist);
-#endif
             // Get hme results
             if (context_ptr->hme_results[list_index][ref_pic_index].do_ref == 0)
                 continue;  //so will not get ME results for those references.
@@ -1953,18 +1922,8 @@ void integer_search_sb(
             search_area_width = context_ptr->search_area_width;
             search_area_height = context_ptr->search_area_height;
 
-#if !FEATURE_INL_ME
-            uint16_t dist = (context_ptr->me_alt_ref == EB_TRUE) ?
-                ABS((int16_t)(context_ptr->tf_frame_index - context_ptr->tf_index_center)) :
-                ABS((int16_t)(pcs_ptr->picture_number -
-                    pcs_ptr->ref_pic_poc_array[list_index][ref_pic_index]));
-#endif
             // factor to slowdown the ME search region growth to MAX
-#if !FEATURE_INL_ME
-            if (context_ptr->me_alt_ref == 0) {
-#else
             if (context_ptr->me_type != ME_MCTF) {
-#endif
                 int8_t round_up = ((dist%8) == 0) ? 0 : 1;
                 dist = ((dist * 5) / 8) + round_up;
             }
@@ -1976,11 +1935,7 @@ void integer_search_sb(
             search_area_width = ((search_area_width / context_ptr->reduce_me_sr_divisor[list_index][ref_pic_index]) + 7) & ~0x07;
             search_area_height = MAX(1, (search_area_height / context_ptr->reduce_me_sr_divisor[list_index][ref_pic_index]));
             if ((x_search_center != 0 || y_search_center != 0) &&
-#if !FEATURE_INL_ME
-                (pcs_ptr->is_used_as_reference_flag == EB_TRUE)) {
-#else
                 (context_ptr->is_used_as_reference_flag == EB_TRUE)) {
-#endif
                 check_00_center(ref_pic_ptr,
                                 context_ptr,
                                 sb_origin_x,
@@ -2187,53 +2142,19 @@ void integer_search_sb(
   using previous stage ME results (Integer Search) for each reference
   frame. keep only the references that are close to the best reference.
 */
-#if FEATURE_INTER_INTRA_LEVELS
 void me_prune_ref(MeContext* context_ptr) {
-#else
-void me_prune_ref(
-    PictureParentControlSet   *pcs_ptr,
-    uint32_t                   sb_index,
-    MeContext                 *context_ptr)
-{
-#endif
     HmeResults sorted[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
     uint32_t num_of_cand_to_sort = MAX_NUM_OF_REF_PIC_LIST * REF_LIST_MAX_DEPTH;
     uint8_t list_index, ref_pic_index;
-#if !FEATURE_INL_ME
-    uint8_t num_of_ref_pic_to_search, num_of_list_to_search;
-#endif
     uint32_t idx;
     uint32_t pu_index;
 
-#if !FEATURE_INL_ME
-    num_of_list_to_search = (pcs_ptr->slice_type == P_SLICE)
-        ? (uint32_t)REF_LIST_0
-        : (uint32_t)REF_LIST_1;
-
-    if (context_ptr->me_alt_ref == EB_TRUE)
-        num_of_list_to_search = 0;
-#else
     uint8_t num_of_list_to_search = context_ptr->num_of_list_to_search;
-#endif
 
     for (list_index = REF_LIST_0; list_index <= num_of_list_to_search; ++list_index) {
 
 
-#if !FEATURE_INL_ME
-        if (context_ptr->me_alt_ref == EB_TRUE) {
-            num_of_ref_pic_to_search = 1;
-        }
-        else {
-            num_of_ref_pic_to_search =
-                (pcs_ptr->slice_type == P_SLICE)
-                ? pcs_ptr->ref_list0_count_try
-                : (list_index == REF_LIST_0)
-                ? pcs_ptr->ref_list0_count_try
-                : pcs_ptr->ref_list1_count_try;
-        }
-#else
         uint8_t num_of_ref_pic_to_search = context_ptr->num_of_ref_pic_to_search[list_index];
-#endif
         // Ref Picture Loop
         for (ref_pic_index = 0; ref_pic_index < num_of_ref_pic_to_search; ++ref_pic_index) {
             context_ptr->hme_results[list_index][ref_pic_index].hme_sad = 0;
@@ -2263,29 +2184,8 @@ void me_prune_ref(
         }
     }
     uint64_t best = sorted[0][0].hme_sad;//is this always the best?
-#if !FEATURE_INTER_INTRA_LEVELS
-    uint8_t counter = 0;
-#define NUMBER_REF_INTER_COMP   2
-#endif
     for (uint32_t li = 0; li < MAX_NUM_OF_REF_PIC_LIST; li++) {
         for (uint32_t ri = 0; ri < REF_LIST_MAX_DEPTH; ri++){
-#if !FEATURE_INTER_INTRA_LEVELS
-#if FEATURE_INL_ME
-            if (context_ptr->me_type != ME_MCTF)
-#else
-            if (context_ptr->me_alt_ref == EB_FALSE)
-#endif
-            {
-                if (counter < NUMBER_REF_INTER_COMP)
-                    pcs_ptr->pa_me_data->me_results[sb_index]->
-                    do_comp[sorted[0][counter].list_i][sorted[0][counter].ref_i] = 1;
-                else
-                    pcs_ptr->pa_me_data->me_results[sb_index]->
-                    do_comp[sorted[0][counter].list_i][sorted[0][counter].ref_i] = 0;
-                counter++;
-
-            }
-#endif
             // Prune references based on ME sad
             uint16_t prune_ref_th = context_ptr->me_hme_prune_ctrls.prune_ref_if_me_sad_dev_bigger_than_th;
             if (context_ptr->me_hme_prune_ctrls.enable_me_hme_ref_pruning &&
@@ -2304,9 +2204,6 @@ void me_prune_ref(
 static void hme_level0_sb(PictureParentControlSet *pcs_ptr, uint32_t sb_origin_x,
                           uint32_t sb_origin_y, MeContext *context_ptr,
                           EbPictureBufferDesc *input_ptr) {
-#if !FEATURE_INL_ME
-    SequenceControlSet *scs_ptr  = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
-#endif
     const uint32_t      sb_width = (input_ptr->width - sb_origin_x) < BLOCK_SIZE_64
         ? input_ptr->width - sb_origin_x
         : BLOCK_SIZE_64;
@@ -2320,13 +2217,7 @@ static void hme_level0_sb(PictureParentControlSet *pcs_ptr, uint32_t sb_origin_x
         ? 0
         : context_ptr->enable_hme_level0_flag;
 
-#if !FEATURE_INL_ME
-    const int num_of_list_to_search = context_ptr->me_alt_ref
-        ? 0
-        : pcs_ptr->slice_type == P_SLICE ? REF_LIST_0 : REF_LIST_1;
-#else
     const int num_of_list_to_search = context_ptr->num_of_list_to_search;
-#endif
 
     // HME
     uint32_t search_region_number_in_width  = 0;
@@ -2335,38 +2226,15 @@ static void hme_level0_sb(PictureParentControlSet *pcs_ptr, uint32_t sb_origin_x
     // Uni-Prediction motion estimation loop
     // List Loop
     for (int list_index = REF_LIST_0; list_index <= num_of_list_to_search; ++list_index) {
-#if !FEATURE_INL_ME
-        uint8_t num_of_ref_pic_to_search = context_ptr->me_alt_ref ? 1
-                                                                   : pcs_ptr->slice_type == P_SLICE
-                ? pcs_ptr->ref_list0_count
-                : list_index == REF_LIST_0 ? pcs_ptr->ref_list0_count : pcs_ptr->ref_list1_count;
-#else
         uint8_t num_of_ref_pic_to_search = context_ptr->num_of_ref_pic_to_search[list_index];
-#endif
 
         // Ref Picture Loop
         for (uint8_t ref_pic_index = 0; ref_pic_index < num_of_ref_pic_to_search; ++ref_pic_index) {
-#if !FEATURE_INL_ME
-            EbPaReferenceObject *referenceObject = context_ptr->me_alt_ref
-                ? (EbPaReferenceObject *)context_ptr->alt_ref_reference_ptr
-                : (EbPaReferenceObject *)pcs_ptr->ref_pa_pic_ptr_array[list_index][ref_pic_index]
-                      ->object_ptr;
-            // 1/16 ME reference buffer(s); filtered or decimated
-            EbPictureBufferDesc *sixteenthRefPicPtr = (scs_ptr->down_sampling_method_me_search ==
-                                                       ME_FILTERED_DOWNSAMPLED)
-                ? (EbPictureBufferDesc *)referenceObject->sixteenth_filtered_picture_ptr
-                : (EbPictureBufferDesc *)referenceObject->sixteenth_decimated_picture_ptr;
-#else
             uint16_t dist = 0;
             EbPictureBufferDesc *sixteenthRefPicPtr = get_me_reference(pcs_ptr,
                                            context_ptr, list_index, ref_pic_index,
                                            0, &dist);
-#endif
-#if !FEATURE_INL_ME
-            if (pcs_ptr->temporal_layer_index > 0 || list_index == 0) {
-#else
             if (context_ptr->temporal_layer_index > 0 || list_index == 0) {
-#endif
                 int16_t x_search_center = 0;
                 int16_t y_search_center = 0;
                 // B - NO HME in boundaries
@@ -2404,13 +2272,6 @@ static void hme_level0_sb(PictureParentControlSet *pcs_ptr, uint32_t sb_origin_x
                     if (enable_hme_level0_flag) {
                         search_region_number_in_height = 0;
                         search_region_number_in_width  = 0;
-#if !FEATURE_INL_ME
-                        uint16_t dist                  = (context_ptr->me_alt_ref == EB_TRUE)
-                            ? ABS((int16_t)(context_ptr->tf_frame_index -
-                                            context_ptr->tf_index_center))
-                            : ABS((int16_t)(pcs_ptr->picture_number -
-                                            pcs_ptr->ref_pic_poc_array[list_index][ref_pic_index]));
-#endif
                         int32_t hme_sr_factor_x, hme_sr_factor_y;
                         // factor to scaledown the ME search region growth to MAX
                         int8_t   round_up = ((dist % 8) == 0) ? 0 : 1;
@@ -2477,9 +2338,6 @@ void hme_level1_sb(
     EbPictureBufferDesc       *input_ptr
 )
 {
-#if !FEATURE_INL_ME
-    SequenceControlSet *scs_ptr = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
-#endif
     uint32_t sb_width = (input_ptr->width - sb_origin_x) < BLOCK_SIZE_64
                             ? input_ptr->width - sb_origin_x
                             : BLOCK_SIZE_64;
@@ -2497,51 +2355,20 @@ void hme_level1_sb(
         : context_ptr->hme_decimation == ZERO_DECIMATION_HME ? 0
                                                              : context_ptr->enable_hme_level1_flag;
 
-#if !FEATURE_INL_ME
-    const uint32_t num_of_list_to_search = context_ptr->me_alt_ref
-        ? 0
-        : pcs_ptr->slice_type == P_SLICE ? REF_LIST_0 : REF_LIST_1;
-#else
     const uint32_t num_of_list_to_search = context_ptr->num_of_list_to_search;
-#endif
 
     // Uni-Prediction motion estimation loop
     // List Loop
     for (uint32_t list_index = REF_LIST_0; list_index <= num_of_list_to_search; ++list_index) {
-#if !FEATURE_INL_ME
-        const uint8_t num_of_ref_pic_to_search = context_ptr->me_alt_ref
-            ? 1
-            : pcs_ptr->slice_type == P_SLICE
-                ? pcs_ptr->ref_list0_count
-                : list_index == REF_LIST_0 ? pcs_ptr->ref_list0_count : pcs_ptr->ref_list1_count;
-#else
         const uint8_t num_of_ref_pic_to_search = context_ptr->num_of_ref_pic_to_search[list_index];
-#endif
         // Ref Picture Loop
         for (uint8_t ref_pic_index = 0; ref_pic_index < num_of_ref_pic_to_search;++ref_pic_index){
 
-#if !FEATURE_INL_ME
-            const EbPaReferenceObject *referenceObject = context_ptr->me_alt_ref
-                ? (EbPaReferenceObject *)context_ptr->alt_ref_reference_ptr
-                : (EbPaReferenceObject *)pcs_ptr->ref_pa_pic_ptr_array[list_index][ref_pic_index]
-                      ->object_ptr;
-
-            // Set 1/4 ME reference buffer(s); filtered or decimated
-            EbPictureBufferDesc *quarterRefPicPtr = scs_ptr->down_sampling_method_me_search ==
-                    ME_FILTERED_DOWNSAMPLED
-                ? (EbPictureBufferDesc *)referenceObject->quarter_filtered_picture_ptr
-                : (EbPictureBufferDesc *)referenceObject->quarter_decimated_picture_ptr;
-#else
             uint16_t dist = 0;
             EbPictureBufferDesc *quarterRefPicPtr = get_me_reference(pcs_ptr,
                                            context_ptr, list_index, ref_pic_index,
                                            1, &dist);
-#endif
-#if !FEATURE_INL_ME
-            if (pcs_ptr->temporal_layer_index > 0 || list_index == 0) {
-#else
             if (context_ptr->temporal_layer_index > 0 || list_index == 0) {
-#endif
                 // B - NO HME in boundaries
                 if (context_ptr->enable_hme_flag) {
                     // HME: Level1 search
@@ -2549,11 +2376,6 @@ void hme_level1_sb(
                         search_region_number_in_height = 0;
                         search_region_number_in_width = 0;
 
-#if !FEATURE_INL_ME
-                        uint16_t dist = (context_ptr->me_alt_ref == EB_TRUE) ?
-                            ABS((int16_t)(context_ptr->tf_frame_index - context_ptr->tf_index_center)) :
-                            ABS((int16_t)(pcs_ptr->picture_number - pcs_ptr->ref_pic_poc_array[list_index][ref_pic_index]));
-#endif
                         int32_t hme_sr_factor_x, hme_sr_factor_y;
                         // factor to scaledown the ME search region growth to MAX
                         int8_t round_up = ((dist % 8) == 0) ? 0 : 1;
@@ -2638,55 +2460,23 @@ static void hme_level2_sb(PictureParentControlSet *pcs_ptr, uint32_t sb_origin_x
         ? context_ptr->enable_hme_level0_flag
         : context_ptr->enable_hme_level2_flag;
 
-#if !FEATURE_INL_ME
-    const int num_of_list_to_search = context_ptr->me_alt_ref
-        ? 1
-        : pcs_ptr->slice_type == P_SLICE ? REF_LIST_0 : REF_LIST_1;
-#else
     const int num_of_list_to_search = context_ptr->num_of_list_to_search;
-#endif
     // Uni-Prediction motion estimation loop
     // List Loop
     for (int list_index = REF_LIST_0; list_index <= num_of_list_to_search; ++list_index) {
-#if !FEATURE_INL_ME
-        uint8_t num_of_ref_pic_to_search = context_ptr->me_alt_ref ? 1
-                                                                   : pcs_ptr->slice_type == P_SLICE
-                ? pcs_ptr->ref_list0_count
-                : list_index == REF_LIST_0 ? pcs_ptr->ref_list0_count : pcs_ptr->ref_list1_count;
-#else
         uint8_t num_of_ref_pic_to_search = context_ptr->num_of_ref_pic_to_search[list_index];
-#endif
         // Ref Picture Loop
         for (uint8_t ref_pic_index = 0; ref_pic_index < num_of_ref_pic_to_search; ++ref_pic_index) {
-#if !FEATURE_INL_ME
-            EbPaReferenceObject *referenceObject = context_ptr->me_alt_ref
-                ? (EbPaReferenceObject *)context_ptr->alt_ref_reference_ptr
-                : (EbPaReferenceObject *)pcs_ptr->ref_pa_pic_ptr_array[list_index][ref_pic_index]
-                      ->object_ptr;
-
-            EbPictureBufferDesc *refPicPtr = referenceObject->input_padded_picture_ptr;
-#else
             uint16_t dist = 0;
             EbPictureBufferDesc *refPicPtr = get_me_reference(pcs_ptr,
                                            context_ptr, list_index, ref_pic_index,
                                            2, &dist);
-#endif
 
-#if !FEATURE_INL_ME
-            if (pcs_ptr->temporal_layer_index > 0 || list_index == 0) {
-#else
             if (context_ptr->temporal_layer_index > 0 || list_index == 0) {
-#endif
                 if (context_ptr->enable_hme_flag && enable_hme_level2_flag) {
                     // HME: Level2 search
                     search_region_number_in_height = 0;
                     search_region_number_in_width  = 0;
-#if !FEATURE_INL_ME
-                    uint16_t dist                  = (context_ptr->me_alt_ref == EB_TRUE)
-                        ? ABS((int16_t)(context_ptr->tf_frame_index - context_ptr->tf_index_center))
-                        : ABS((int16_t)(pcs_ptr->picture_number -
-                                        pcs_ptr->ref_pic_poc_array[list_index][ref_pic_index]));
-#endif
                     int32_t hme_sr_factor_x, hme_sr_factor_y;
                     // factor to scaledown the ME search region growth to MAX
                     int8_t   round_up = ((dist % 8) == 0) ? 0 : 1;
@@ -2786,9 +2576,7 @@ void set_final_seach_centre_sb(
     PictureParentControlSet   *pcs_ptr,
     MeContext                 *context_ptr
 ) {
-#if FEATURE_INL_ME
     UNUSED(pcs_ptr);
-#endif
     // Hierarchical ME Search Center
     int16_t xHmeSearchCenter = 0;
     int16_t yHmeSearchCenter = 0;
@@ -2802,17 +2590,6 @@ void set_final_seach_centre_sb(
     uint32_t num_of_list_to_search;
     uint32_t list_index;
     uint8_t ref_pic_index;
-#if !FEATURE_INL_ME
-    uint8_t num_of_ref_pic_to_search;
-
-    uint32_t numQuadInWidth;
-    uint32_t totalMeQuad;
-    uint32_t quadIndex;
-    uint32_t nextQuadIndex;
-    uint64_t tempXHmeSad;
-    uint64_t ref0Poc = 0;
-    uint64_t ref1Poc = 0;
-#endif
     // Configure HME level 0, level 1 and level 2 from static config parameters
     EbBool enable_hme_level0_flag =
         context_ptr->enable_hme_level0_flag;
@@ -2824,51 +2601,15 @@ void set_final_seach_centre_sb(
     uint64_t best_cost = (uint64_t)~0;
     context_ptr->best_list_idx = 0;
     context_ptr->best_ref_idx = 0;
-#if !FEATURE_INL_ME
-    num_of_list_to_search = (pcs_ptr->slice_type == P_SLICE)
-        ? (uint32_t)REF_LIST_0
-        : (uint32_t)REF_LIST_1;
-
-    if (context_ptr->me_alt_ref == EB_TRUE)
-        num_of_list_to_search = 0;
-#else
     num_of_list_to_search = context_ptr->num_of_list_to_search;
-#endif
 
     // Uni-Prediction motion estimation loop
     // List Loop
     for (list_index = REF_LIST_0; list_index <= num_of_list_to_search; ++list_index) {
-#if !FEATURE_INL_ME
-        if (context_ptr->me_alt_ref == EB_TRUE) {
-            num_of_ref_pic_to_search = 1;
-        }
-        else {
-            num_of_ref_pic_to_search =
-                (pcs_ptr->slice_type == P_SLICE)
-                ? pcs_ptr->ref_list0_count
-                : (list_index == REF_LIST_0)
-                ? pcs_ptr->ref_list0_count
-                : pcs_ptr->ref_list1_count;
-            ref0Poc = pcs_ptr->ref_pic_poc_array[0][0];
-        }
-#else
         uint8_t num_of_ref_pic_to_search = context_ptr->num_of_ref_pic_to_search[list_index];
-#endif
         // Ref Picture Loop
         for (ref_pic_index = 0; ref_pic_index < num_of_ref_pic_to_search; ++ref_pic_index){
-#if !FEATURE_INL_ME
-            if (context_ptr->me_alt_ref == EB_TRUE) {
-            }
-            else {
-                if (num_of_list_to_search) {
-                    ref1Poc = pcs_ptr->ref_pic_poc_array[1][0];
-                }
-            }
-
-            if (pcs_ptr->temporal_layer_index > 0 || list_index == 0) {
-#else
             if (context_ptr->temporal_layer_index > 0 || list_index == 0) {
-#endif
                 if (context_ptr->enable_hme_flag) {
                     // Hierarchical ME - Search Center
                     if (enable_hme_level0_flag && !enable_hme_level1_flag &&
@@ -2971,69 +2712,6 @@ void set_final_seach_centre_sb(
                             search_region_number_in_width = 0;
                             search_region_number_in_height++;
                         }
-#if !FEATURE_INL_ME
-                        numQuadInWidth = context_ptr->number_hme_search_region_in_width;
-                        totalMeQuad = context_ptr->number_hme_search_region_in_height * context_ptr->number_hme_search_region_in_width;
-                        if (ref0Poc == ref1Poc && list_index == 1 && totalMeQuad > 1) {
-                            for (quadIndex = 0; quadIndex < totalMeQuad - 1;  ++quadIndex) {
-                                for (nextQuadIndex = quadIndex + 1; nextQuadIndex < totalMeQuad;  ++nextQuadIndex) {
-                                    if (context_ptr->hme_level2_sad[list_index][ref_pic_index][quadIndex / numQuadInWidth][quadIndex % numQuadInWidth] >  context_ptr->hme_level2_sad[list_index][ref_pic_index][nextQuadIndex / numQuadInWidth][nextQuadIndex % numQuadInWidth]) {
-                                        const int16_t tempXHmeSearchCenter =
-                                            context_ptr->x_hme_level2_search_center
-                                                [list_index][ref_pic_index]
-                                                [quadIndex / numQuadInWidth]
-                                                [quadIndex % numQuadInWidth];
-                                        const int16_t tempYHmeSearchCenter =
-                                            context_ptr->y_hme_level2_search_center
-                                                [list_index][ref_pic_index]
-                                                [quadIndex / numQuadInWidth]
-                                                [quadIndex % numQuadInWidth];
-                                        tempXHmeSad =
-                                            context_ptr->hme_level2_sad[list_index][ref_pic_index]
-                                                                       [quadIndex / numQuadInWidth]
-                                                                       [quadIndex % numQuadInWidth];
-
-                                        context_ptr->x_hme_level2_search_center
-                                            [list_index][ref_pic_index][quadIndex / numQuadInWidth]
-                                            [quadIndex % numQuadInWidth] =
-                                            context_ptr->x_hme_level2_search_center
-                                                [list_index][ref_pic_index]
-                                                [nextQuadIndex / numQuadInWidth]
-                                                [nextQuadIndex % numQuadInWidth];
-                                        context_ptr->y_hme_level2_search_center
-                                            [list_index][ref_pic_index][quadIndex / numQuadInWidth]
-                                            [quadIndex % numQuadInWidth] =
-                                            context_ptr->y_hme_level2_search_center
-                                                [list_index][ref_pic_index]
-                                                [nextQuadIndex / numQuadInWidth]
-                                                [nextQuadIndex % numQuadInWidth];
-                                        context_ptr->hme_level2_sad[list_index][ref_pic_index]
-                                                                   [quadIndex / numQuadInWidth]
-                                                                   [quadIndex % numQuadInWidth] =
-                                            context_ptr
-                                                ->hme_level2_sad[list_index][ref_pic_index]
-                                                                [nextQuadIndex / numQuadInWidth]
-                                                                [nextQuadIndex % numQuadInWidth];
-
-                                        context_ptr->x_hme_level2_search_center
-                                            [list_index][ref_pic_index]
-                                            [nextQuadIndex / numQuadInWidth]
-                                            [nextQuadIndex % numQuadInWidth] = tempXHmeSearchCenter;
-                                        context_ptr->y_hme_level2_search_center
-                                            [list_index][ref_pic_index]
-                                            [nextQuadIndex / numQuadInWidth]
-                                            [nextQuadIndex % numQuadInWidth] = tempYHmeSearchCenter;
-                                        context_ptr->hme_level2_sad[list_index][ref_pic_index]
-                                                                   [nextQuadIndex / numQuadInWidth]
-                                                                   [nextQuadIndex %
-                                                                    numQuadInWidth] = tempXHmeSad;
-                                    }
-                                }
-                            }
-                            xHmeSearchCenter = context_ptr->x_hme_level2_search_center[list_index][ref_pic_index][0][1];
-                            yHmeSearchCenter = context_ptr->y_hme_level2_search_center[list_index][ref_pic_index][0][1];
-                        }
-#endif
                     }
 
                     x_search_center = xHmeSearchCenter;
@@ -3148,14 +2826,7 @@ void construct_me_candidate_array(PictureParentControlSet *pcs_ptr, MeContext *c
                                   uint8_t *total_me_candidate_index, uint32_t num_of_list_to_search,
                                   uint32_t pu_index, uint32_t n_idx) {
     for (uint32_t list_index = REF_LIST_0; list_index <= num_of_list_to_search; ++list_index) {
-#if !FEATURE_INL_ME
-        const uint8_t num_of_ref_pic_to_search = pcs_ptr->slice_type == P_SLICE
-            ? pcs_ptr->ref_list0_count_try
-            : list_index == REF_LIST_0 ? pcs_ptr->ref_list0_count_try
-                                       : pcs_ptr->ref_list1_count_try;
-#else
         const uint8_t num_of_ref_pic_to_search = context_ptr->num_of_ref_pic_to_search[list_index];
-#endif
 
         // Ref Picture Loop
         for (uint32_t ref_pic_index = 0; ref_pic_index < num_of_ref_pic_to_search;
@@ -3251,43 +2922,15 @@ EbErrorType motion_estimate_sb(
     EbErrorType         return_error = EB_ErrorNone;
     SequenceControlSet *scs_ptr      = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
     uint32_t            max_number_of_pus_per_sb = pcs_ptr->max_number_of_pus_per_sb;
-#if !FEATURE_INL_ME
-    uint32_t num_of_list_to_search = pcs_ptr->slice_type == P_SLICE ? (uint32_t)REF_LIST_0
-                                                                    : (uint32_t)REF_LIST_1;
-#else
     uint32_t num_of_list_to_search = context_ptr->num_of_list_to_search;
-#endif
 
     //pruning of the references is not done for alt-ref / when HMeLevel2 not done
-#if !FEATURE_INL_ME
-    uint8_t prune_ref = context_ptr->enable_hme_flag && context_ptr->enable_hme_level2_flag &&
-        !context_ptr->me_alt_ref;
-#else
     uint8_t prune_ref = context_ptr->enable_hme_flag && context_ptr->enable_hme_level2_flag &&
         context_ptr->me_type != ME_MCTF;
-#endif
-#if !TUNE_INL_TPL_ENHANCEMENT
-#if FEATURE_INL_ME
-#if !TUNE_IME_REUSE_TPL_RESULT
-    prune_ref = (context_ptr->me_type == ME_TPL) ? 0 : prune_ref;
-#endif
-#endif
-#endif
     //init hme results buffer
     for (uint32_t li = 0; li < MAX_NUM_OF_REF_PIC_LIST; li++) {
         for (uint32_t ri = 0; ri < REF_LIST_MAX_DEPTH; ri++) {
-#if !FEATURE_INL_ME
-            if (context_ptr->me_alt_ref == EB_FALSE)
-#else
-#if TUNE_INL_TPL_ENHANCEMENT
             if (context_ptr->me_type != ME_MCTF)
-#else
-            if(context_ptr->me_type != ME_MCTF && context_ptr->me_type != ME_TPL)
-#endif
-#endif
-#if !FEATURE_INTER_INTRA_LEVELS
-                pcs_ptr->pa_me_data->me_results[sb_index]->do_comp[li][ri] = 1;
-#endif
             context_ptr->hme_results[li][ri].list_i   = li;
             context_ptr->hme_results[li][ri].ref_i    = ri;
             context_ptr->hme_results[li][ri].do_ref   = 1;
@@ -3311,20 +2954,10 @@ EbErrorType motion_estimate_sb(
     integer_search_sb(pcs_ptr, sb_index, sb_origin_x, sb_origin_y, context_ptr, input_ptr);
     // prune the refrence frames
     if (prune_ref && context_ptr->me_hme_prune_ctrls.enable_me_hme_ref_pruning) {
-#if FEATURE_INTER_INTRA_LEVELS
         me_prune_ref(context_ptr);
-#else
-        me_prune_ref(pcs_ptr, sb_index, context_ptr);
-#endif
     }
 
-#if !FEATURE_INL_ME
-    if (context_ptr->me_alt_ref == EB_TRUE)
-        num_of_list_to_search = 0;
-    if (context_ptr->me_alt_ref == EB_FALSE) {
-#else
     if (context_ptr->me_type != ME_MCTF) {
-#endif
         // Bi-Prediction motion estimation loop
         for (uint32_t pu_index = 0; pu_index < max_number_of_pus_per_sb; ++pu_index) {
             uint32_t n_idx;
@@ -3367,14 +3000,7 @@ EbErrorType motion_estimate_sb(
 
             for (uint32_t list_index = REF_LIST_0; list_index <= num_of_list_to_search;
                  ++list_index) {
-#if !FEATURE_INL_ME
-                uint8_t num_of_ref_pic_to_search = pcs_ptr->slice_type == P_SLICE
-                    ? pcs_ptr->ref_list0_count_try
-                    : list_index == REF_LIST_0 ? pcs_ptr->ref_list0_count_try
-                                               : pcs_ptr->ref_list1_count_try;
-#else
                 uint8_t num_of_ref_pic_to_search = context_ptr->num_of_ref_pic_to_search[list_index];
-#endif
 
                 // Ref Picture Loop
                 for (uint8_t ref_pic_index = 0; ref_pic_index < num_of_ref_pic_to_search;
@@ -3484,15 +3110,7 @@ EbErrorType open_loop_intra_search_mb(
             EbBool   enable_paeth                = pcs_ptr->scs_ptr->static_config.enable_paeth == DEFAULT ? EB_TRUE : (EbBool) pcs_ptr->scs_ptr->static_config.enable_paeth;
             EbBool   enable_smooth               = pcs_ptr->scs_ptr->static_config.enable_smooth == DEFAULT ? EB_TRUE : (EbBool) pcs_ptr->scs_ptr->static_config.enable_smooth;
             uint8_t intra_mode_end =
-#if ENABLE_TPL_TRAILING
-#if TUNE_TPL_OPT
                 pcs_ptr->tpl_data.tpl_ctrls.tpl_opt_flag
-#else
-                pcs_ptr->tpl_data.tpl_opt_flag
-#endif
-#else
-                pcs_ptr->tpl_opt_flag
-#endif
                     ? DC_PRED
                     : enable_paeth ? PAETH_PRED : enable_smooth ? SMOOTH_H_PRED : D67_PRED;
             PredictionMode best_mode       = DC_PRED;

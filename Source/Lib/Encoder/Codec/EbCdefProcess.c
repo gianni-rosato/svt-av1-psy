@@ -122,24 +122,15 @@ void cdef_seg_search(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr,
     int32_t  sec_damping = pri_damping;
 
     const int32_t num_planes      = 3;
-#if !TUNE_CDEF_FILTER
-    const int32_t total_strengths = TOTAL_STRENGTHS;
-#endif
     DECLARE_ALIGNED(32, uint16_t, inbuf[CDEF_INBUF_SIZE]);
     uint16_t *in;
     DECLARE_ALIGNED(32, uint8_t, tmp_dst[1 << (MAX_SB_SIZE_LOG2 * 2)]);
 
-#if !TUNE_CDEF_FILTER
-    int32_t gi_step;
-    int32_t mid_gi;
-#endif
     int32_t start_gi;
     int32_t end_gi;
-#if TUNE_CDEF_FILTER
     CDEF_PICK_METHOD pick_method = pcs_ptr->parent_pcs_ptr->cdef_level == 2 ? CDEF_FAST_SEARCH_LVL1
                                  : pcs_ptr->parent_pcs_ptr->cdef_level == 3 ?  CDEF_FAST_SEARCH_LVL2
                                  : pcs_ptr->parent_pcs_ptr->cdef_level == 4 ?  CDEF_FAST_SEARCH_LVL3 : 0;
-#endif
 
     EbPictureBufferDesc *input_picture_ptr =
         (EbPictureBufferDesc *)pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr;
@@ -229,26 +220,8 @@ void cdef_seg_search(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr,
                             stride_src[pli],
                             ysize,
                             xsize);
-#if !TUNE_CDEF_FILTER
-                gi_step = get_cdef_gi_step(ppcs->cdef_level);
-#endif
-#if !TUNE_CDEF_FILTER
-                mid_gi   = ppcs->cdf_ref_frame_strength;
-#endif
-#if TUNE_CDEF_FILTER
                 start_gi =  0;
-#else
-                start_gi = ppcs->use_ref_frame_cdef_strength && ppcs->cdef_level == 5
-                               ? (AOMMAX(0, mid_gi - gi_step))
-                               : 0;
-#endif
-#if TUNE_CDEF_FILTER
                 end_gi =  nb_cdef_strengths[pick_method];
-#else
-                end_gi = ppcs->use_ref_frame_cdef_strength
-                             ? AOMMIN(total_strengths, mid_gi + gi_step)
-                             : ppcs->cdef_level == 5 ? 8 : total_strengths;
-#endif
 
                 for (gi = start_gi; gi < end_gi; gi++) {
                     int32_t  threshold;
@@ -258,10 +231,8 @@ void cdef_seg_search(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr,
                     /* We avoid filtering the pixels for which some of the pixels to
                     average are outside the frame. We could change the filter instead, but it would add special cases for any future vectorization. */
                     sec_strength = gi % CDEF_SEC_STRENGTHS;
-#if TUNE_CDEF_FILTER
                     get_cdef_filter_strengths(pick_method, &threshold, &sec_strength,
                                     gi);
-#endif
                     svt_cdef_filter_fb(tmp_dst,
                                        NULL,
                                        CDEF_BSTRIDE,
@@ -335,11 +306,9 @@ void cdef_seg_search16bit(PictureControlSet *pcs_ptr, SequenceControlSet *scs_pt
     int32_t mi_rows = ppcs->av1_cm->mi_rows;
     int32_t mi_cols = ppcs->av1_cm->mi_cols;
 
-#if TUNE_CDEF_FILTER
     CDEF_PICK_METHOD pick_method = pcs_ptr->parent_pcs_ptr->cdef_level == 2 ? CDEF_FAST_SEARCH_LVL1
                                  : pcs_ptr->parent_pcs_ptr->cdef_level == 3 ?  CDEF_FAST_SEARCH_LVL2
                                  : pcs_ptr->parent_pcs_ptr->cdef_level == 4 ?  CDEF_FAST_SEARCH_LVL3 : 0;
-#endif
     uint32_t  fbr, fbc;
     uint16_t *src[3];
     uint16_t *ref_coeff[3];
@@ -362,16 +331,9 @@ void cdef_seg_search16bit(PictureControlSet *pcs_ptr, SequenceControlSet *scs_pt
     int32_t   sec_damping = pri_damping;
 
     const int32_t num_planes      = 3;
-#if !TUNE_CDEF_FILTER
-    const int32_t total_strengths = TOTAL_STRENGTHS;
-#endif
     DECLARE_ALIGNED(32, uint16_t, inbuf[CDEF_INBUF_SIZE]);
     uint16_t *in;
     DECLARE_ALIGNED(32, uint16_t, tmp_dst[1 << (MAX_SB_SIZE_LOG2 * 2)]);
-#if !TUNE_CDEF_FILTER
-    int32_t gi_step;
-    int32_t mid_gi;
-#endif
     int32_t start_gi;
     int32_t end_gi;
 
@@ -453,26 +415,8 @@ void cdef_seg_search16bit(PictureControlSet *pcs_ptr, SequenceControlSet *scs_pt
                              stride_src[pli],
                              ysize,
                              xsize);
-#if !TUNE_CDEF_FILTER
-                gi_step = get_cdef_gi_step(ppcs->cdef_level);
-#endif
-#if !TUNE_CDEF_FILTER
-                mid_gi = ppcs->cdf_ref_frame_strength;
-#endif
-#if TUNE_CDEF_FILTER
                 start_gi = 0;
-#else
-                start_gi = ppcs->use_ref_frame_cdef_strength && ppcs->cdef_level == 5
-                                ? (AOMMAX(0, mid_gi - gi_step))
-                                : 0;
-#endif
-#if TUNE_CDEF_FILTER
                 end_gi  = nb_cdef_strengths[pick_method] ;
-#else
-                end_gi = ppcs->use_ref_frame_cdef_strength
-                                ? AOMMIN(total_strengths, mid_gi + gi_step)
-                                : ppcs->cdef_level == 5 ? 8 : total_strengths;
-#endif
 
                 for (gi = start_gi; gi < end_gi; gi++) {
                     int32_t  threshold;
@@ -482,10 +426,8 @@ void cdef_seg_search16bit(PictureControlSet *pcs_ptr, SequenceControlSet *scs_pt
                     /* We avoid filtering the pixels for which some of the pixels to
                     average are outside the frame. We could change the filter instead, but it would add special cases for any future vectorization. */
                     sec_strength = gi % CDEF_SEC_STRENGTHS;
-#if TUNE_CDEF_FILTER
                     get_cdef_filter_strengths(pick_method, &threshold, &sec_strength,
                                     gi);
-#endif
                     svt_cdef_filter_fb(NULL,
                                        tmp_dst,
                                        CDEF_BSTRIDE,

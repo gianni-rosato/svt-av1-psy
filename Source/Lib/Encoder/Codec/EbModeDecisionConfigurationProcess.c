@@ -341,38 +341,6 @@ void set_reference_sg_ep(PictureControlSet *pcs_ptr) {
     }
 }
 
-#if !TUNE_CDEF_FILTER
-/******************************************************
-* Set the reference cdef strength for a given picture
-******************************************************/
-void set_reference_cdef_strength(PictureControlSet *pcs_ptr) {
-    EbReferenceObject *ref_obj_l0, *ref_obj_l1;
-    int32_t            strength;
-    // NADER: set pcs_ptr->parent_pcs_ptr->use_ref_frame_cdef_strength 0 to test all strengths
-    switch (pcs_ptr->slice_type) {
-    case I_SLICE:
-        pcs_ptr->parent_pcs_ptr->use_ref_frame_cdef_strength = 0;
-        pcs_ptr->parent_pcs_ptr->cdf_ref_frame_strength      = 0;
-        break;
-    case B_SLICE:
-        ref_obj_l0 = (EbReferenceObject *)pcs_ptr->ref_pic_ptr_array[REF_LIST_0][0]->object_ptr;
-        ref_obj_l1 = (EbReferenceObject *)pcs_ptr->ref_pic_ptr_array[REF_LIST_1][0]->object_ptr;
-        strength   = (ref_obj_l0->cdef_frame_strength + ref_obj_l1->cdef_frame_strength) / 2;
-        pcs_ptr->parent_pcs_ptr->use_ref_frame_cdef_strength = 1;
-        pcs_ptr->parent_pcs_ptr->cdf_ref_frame_strength      = strength;
-        break;
-    case P_SLICE:
-        ref_obj_l0 = (EbReferenceObject *)pcs_ptr->ref_pic_ptr_array[REF_LIST_0][0]->object_ptr;
-        strength   = ref_obj_l0->cdef_frame_strength;
-        pcs_ptr->parent_pcs_ptr->use_ref_frame_cdef_strength = 1;
-        pcs_ptr->parent_pcs_ptr->cdf_ref_frame_strength      = strength;
-        break;
-    default: SVT_LOG("CDEF: Not supported picture type"); break;
-    }
-}
-#endif
-
-#if FEATURE_RE_ENCODE
 void mode_decision_configuration_init_qp_update(PictureControlSet *pcs_ptr) {
     FrameHeader *frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
     pcs_ptr->parent_pcs_ptr->average_qp = 0;
@@ -384,46 +352,11 @@ void mode_decision_configuration_init_qp_update(PictureControlSet *pcs_ptr) {
     // Init tx_type selection
     memset(pcs_ptr->txt_cnt, 0, sizeof(uint32_t) * TXT_DEPTH_DELTA_NUM * TX_TYPES);
     // Compute Tc, and Beta offsets for a given picture
-#if !TUNE_CDEF_FILTER
-    // Set reference cdef strength
-    set_reference_cdef_strength(pcs_ptr);
-#endif
     // Set reference sg ep
     set_reference_sg_ep(pcs_ptr);
     set_global_motion_field(pcs_ptr);
 
     svt_av1_qm_init(pcs_ptr->parent_pcs_ptr);
-#if !FIX_OPTIMIZE_BUILD_QUANTIZER
-    SequenceControlSet *scs_ptr = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
-    Quants *const quants_bd = &pcs_ptr->parent_pcs_ptr->quants_bd;
-    Dequants *const deq_bd = &pcs_ptr->parent_pcs_ptr->deq_bd;
-    svt_av1_set_quantizer(
-            pcs_ptr->parent_pcs_ptr,
-            frm_hdr->quantization_params.base_q_idx);
-    svt_av1_build_quantizer(
-            (AomBitDepth)scs_ptr->static_config.encoder_bit_depth,
-            frm_hdr->quantization_params.delta_q_dc[AOM_PLANE_Y],
-            frm_hdr->quantization_params.delta_q_dc[AOM_PLANE_U],
-            frm_hdr->quantization_params.delta_q_ac[AOM_PLANE_U],
-            frm_hdr->quantization_params.delta_q_dc[AOM_PLANE_V],
-            frm_hdr->quantization_params.delta_q_ac[AOM_PLANE_V],
-            quants_bd,
-            deq_bd);
-
-    Quants *const quants_8bit = &pcs_ptr->parent_pcs_ptr->quants_8bit;
-    Dequants *const deq_8bit = &pcs_ptr->parent_pcs_ptr->deq_8bit;
-    svt_av1_build_quantizer(
-            AOM_BITS_8,
-            frm_hdr->quantization_params.delta_q_dc[AOM_PLANE_Y],
-            frm_hdr->quantization_params.delta_q_dc[AOM_PLANE_U],
-            frm_hdr->quantization_params.delta_q_ac[AOM_PLANE_U],
-            frm_hdr->quantization_params.delta_q_dc[AOM_PLANE_V],
-            frm_hdr->quantization_params.delta_q_ac[AOM_PLANE_V],
-            quants_8bit,
-            deq_8bit);
-
-    // Hsan: collapse spare code
-#endif
     MdRateEstimationContext *md_rate_estimation_array;
 
     md_rate_estimation_array = pcs_ptr->md_rate_estimation_array;
@@ -447,7 +380,6 @@ void mode_decision_configuration_init_qp_update(PictureControlSet *pcs_ptr) {
     av1_estimate_coefficients_rate(md_rate_estimation_array,
             &pcs_ptr->md_frame_context);
 }
-#endif
 
 /******************************************************
 * Compute Tc, and Beta offsets for a given picture
@@ -505,303 +437,6 @@ EbErrorType mode_decision_configuration_context_ctor(EbThreadContext *  thread_c
     return EB_ErrorNone;
 }
 
-#if !FIX_REMOVE_UNUSED_CODE
-/******************************************************
-* Load the cost of the different partitioning method into a local array and derive sensitive picture flag
-    Input   : the offline derived cost per search method, detection signals
-    Output  : valid cost_depth_mode and valid sensitivePicture
-******************************************************/
-void configure_adp(PictureControlSet *pcs_ptr, ModeDecisionConfigurationContext *context_ptr) {
-    UNUSED(pcs_ptr);
-    context_ptr->cost_depth_mode[SB_SQ_BLOCKS_DEPTH_MODE - 1]      = SQ_BLOCKS_SEARCH_COST;
-    context_ptr->cost_depth_mode[SB_SQ_NON4_BLOCKS_DEPTH_MODE - 1] = SQ_NON4_BLOCKS_SEARCH_COST;
-
-    // Initialize the score based TH
-    context_ptr->score_th[0] = ~0;
-    context_ptr->score_th[1] = ~0;
-    context_ptr->score_th[2] = ~0;
-    context_ptr->score_th[3] = ~0;
-    context_ptr->score_th[4] = ~0;
-    context_ptr->score_th[5] = ~0;
-    context_ptr->score_th[6] = ~0;
-
-    // Initialize the predicted budget
-    context_ptr->predicted_cost = (uint32_t)~0;
-}
-
-/******************************************************
-* Assign a search method based on the allocated cost
-    Input   : allocated budget per SB
-    Output  : search method per SB
-******************************************************/
-void derive_search_method(PictureControlSet *               pcs_ptr,
-                          ModeDecisionConfigurationContext *context_ptr) {
-    uint32_t sb_index;
-
-    for (sb_index = 0; sb_index < pcs_ptr->sb_total_count_pix; sb_index++) {
-        if (context_ptr->sb_cost_array[sb_index] ==
-            context_ptr->cost_depth_mode[SB_SQ_NON4_BLOCKS_DEPTH_MODE - 1])
-            pcs_ptr->parent_pcs_ptr->sb_depth_mode_array[sb_index] = SB_SQ_NON4_BLOCKS_DEPTH_MODE;
-        else
-            pcs_ptr->parent_pcs_ptr->sb_depth_mode_array[sb_index] = SB_SQ_BLOCKS_DEPTH_MODE;
-    }
-}
-
-/******************************************************
-* Set SB budget
-    Input   : SB score, detection signals, iteration
-    Output  : predicted budget for the SB
-******************************************************/
-void set_sb_budget(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr, SuperBlock *sb_ptr,
-                   ModeDecisionConfigurationContext *context_ptr) {
-    const uint32_t sb_index = sb_ptr->index;
-    UNUSED(scs_ptr);
-    UNUSED(pcs_ptr);
-    {
-        context_ptr->sb_score_array[sb_index] = CLIP3(context_ptr->sb_min_score,
-                                                      context_ptr->sb_max_score,
-                                                      context_ptr->sb_score_array[sb_index]);
-        const uint32_t score_to_min = context_ptr->sb_score_array[sb_index] - context_ptr->sb_min_score;
-        const uint32_t max_to_min_score = context_ptr->sb_max_score - context_ptr->sb_min_score;
-
-        if ((score_to_min <= (max_to_min_score * context_ptr->score_th[0]) / 100 &&
-             context_ptr->score_th[0] != 0) ||
-            context_ptr->number_of_segments == 1 || context_ptr->score_th[1] == 100) {
-            context_ptr->sb_cost_array[sb_index] = context_ptr->interval_cost[0];
-            context_ptr->predicted_cost += context_ptr->interval_cost[0];
-        } else if ((score_to_min <= (max_to_min_score * context_ptr->score_th[1]) / 100 &&
-                    context_ptr->score_th[1] != 0) ||
-                   context_ptr->number_of_segments == 2 || context_ptr->score_th[2] == 100) {
-            context_ptr->sb_cost_array[sb_index] = context_ptr->interval_cost[1];
-            context_ptr->predicted_cost += context_ptr->interval_cost[1];
-        } else if ((score_to_min <= (max_to_min_score * context_ptr->score_th[2]) / 100 &&
-                    context_ptr->score_th[2] != 0) ||
-                   context_ptr->number_of_segments == 3 || context_ptr->score_th[3] == 100) {
-            context_ptr->sb_cost_array[sb_index] = context_ptr->interval_cost[2];
-            context_ptr->predicted_cost += context_ptr->interval_cost[2];
-        } else if ((score_to_min <= (max_to_min_score * context_ptr->score_th[3]) / 100 &&
-                    context_ptr->score_th[3] != 0) ||
-                   context_ptr->number_of_segments == 4 || context_ptr->score_th[4] == 100) {
-            context_ptr->sb_cost_array[sb_index] = context_ptr->interval_cost[3];
-            context_ptr->predicted_cost += context_ptr->interval_cost[3];
-        } else if ((score_to_min <= (max_to_min_score * context_ptr->score_th[4]) / 100 &&
-                    context_ptr->score_th[4] != 0) ||
-                   context_ptr->number_of_segments == 5 || context_ptr->score_th[5] == 100) {
-            context_ptr->sb_cost_array[sb_index] = context_ptr->interval_cost[4];
-            context_ptr->predicted_cost += context_ptr->interval_cost[4];
-        } else if ((score_to_min <= (max_to_min_score * context_ptr->score_th[5]) / 100 &&
-                    context_ptr->score_th[5] != 0) ||
-                   context_ptr->number_of_segments == 6 || context_ptr->score_th[6] == 100) {
-            context_ptr->sb_cost_array[sb_index] = context_ptr->interval_cost[5];
-            context_ptr->predicted_cost += context_ptr->interval_cost[5];
-        } else {
-            context_ptr->sb_cost_array[sb_index] = context_ptr->interval_cost[6];
-            context_ptr->predicted_cost += context_ptr->interval_cost[6];
-        }
-    }
-}
-
-/******************************************************
-* Loop multiple times over the SBs in order to derive the optimal budget per SB
-    Input   : budget per picture, ditortion, detection signals, iteration
-    Output  : optimal budget for each SB
-******************************************************/
-void derive_optimal_budget_per_sb(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
-                                  ModeDecisionConfigurationContext *context_ptr) {
-    uint32_t sb_index;
-    // Initialize the deviation between the picture predicted cost & the target budget to 100,
-    uint32_t deviation_to_target = 1000;
-
-    // Set the adjustment step to 1 (could be increased for faster convergence),
-    int8_t adjustement_step = 1;
-
-    // Set the initial shooting state & the final shooting state to TBD
-    uint32_t initial_shooting = TBD_SHOOTING;
-    uint32_t final_shooting   = TBD_SHOOTING;
-
-    uint8_t max_adjustement_iteration = 100;
-    uint8_t adjustement_iteration     = 0;
-
-    while (deviation_to_target != 0 && (initial_shooting == final_shooting) &&
-           adjustement_iteration <= max_adjustement_iteration) {
-        if (context_ptr->predicted_cost < context_ptr->budget)
-            initial_shooting = UNDER_SHOOTING;
-        else
-            initial_shooting = OVER_SHOOTING;
-        // reset running cost
-        context_ptr->predicted_cost = 0;
-
-        for (sb_index = 0; sb_index < pcs_ptr->sb_total_count_pix; sb_index++) {
-            SuperBlock *sb_ptr = pcs_ptr->sb_ptr_array[sb_index];
-
-            set_sb_budget(scs_ptr, pcs_ptr, sb_ptr, context_ptr);
-        }
-
-        // Compute the deviation between the predicted budget & the target budget
-        deviation_to_target =
-            (ABS((int32_t)(context_ptr->predicted_cost - context_ptr->budget)) * 1000) /
-            context_ptr->budget;
-        // Derive shooting status
-        if (context_ptr->predicted_cost < context_ptr->budget) {
-            context_ptr->score_th[0] = MAX((context_ptr->score_th[0] - adjustement_step), 0);
-            context_ptr->score_th[1] = MAX((context_ptr->score_th[1] - adjustement_step), 0);
-            context_ptr->score_th[2] = MAX((context_ptr->score_th[2] - adjustement_step), 0);
-            context_ptr->score_th[3] = MAX((context_ptr->score_th[3] - adjustement_step), 0);
-            context_ptr->score_th[4] = MAX((context_ptr->score_th[4] - adjustement_step), 0);
-            final_shooting           = UNDER_SHOOTING;
-        } else {
-            context_ptr->score_th[0] = (context_ptr->score_th[0] == 0)
-                                           ? 0
-                                           : MIN(context_ptr->score_th[0] + adjustement_step, 100);
-            context_ptr->score_th[1] = (context_ptr->score_th[1] == 0)
-                                           ? 0
-                                           : MIN(context_ptr->score_th[1] + adjustement_step, 100);
-            context_ptr->score_th[2] = (context_ptr->score_th[2] == 0)
-                                           ? 0
-                                           : MIN(context_ptr->score_th[2] + adjustement_step, 100);
-            context_ptr->score_th[3] = (context_ptr->score_th[3] == 0)
-                                           ? 0
-                                           : MIN(context_ptr->score_th[3] + adjustement_step, 100);
-            context_ptr->score_th[4] = (context_ptr->score_th[4] == 0)
-                                           ? 0
-                                           : MIN(context_ptr->score_th[4] + adjustement_step, 100);
-            final_shooting = OVER_SHOOTING;
-        }
-
-        if (adjustement_iteration == 0) initial_shooting = final_shooting;
-
-        adjustement_iteration++;
-    }
-}
-
-EbErrorType derive_default_segments(ModeDecisionConfigurationContext *context_ptr) {
-    EbErrorType return_error = EB_ErrorNone;
-
-    context_ptr->number_of_segments = 2;
-    context_ptr->score_th[0] = (int8_t)((1 * 100) / context_ptr->number_of_segments);
-    context_ptr->score_th[1] = (int8_t)((2 * 100) / context_ptr->number_of_segments);
-    context_ptr->score_th[2] = (int8_t)((3 * 100) / context_ptr->number_of_segments);
-    context_ptr->score_th[3] = (int8_t)((4 * 100) / context_ptr->number_of_segments);
-    context_ptr->interval_cost[0] = context_ptr->cost_depth_mode[SB_SQ_NON4_BLOCKS_DEPTH_MODE - 1];
-    context_ptr->interval_cost[1] =
-        context_ptr->cost_depth_mode[SB_SQ_BLOCKS_DEPTH_MODE - 1];
-    return return_error;
-}
-
-/******************************************************
-* Compute the score of each SB
-    Input   : distortion, detection signals
-    Output  : SB score
-******************************************************/
-void derive_sb_score(PictureControlSet *pcs_ptr,
-                     ModeDecisionConfigurationContext *context_ptr) {
-    uint32_t sb_index;
-    uint32_t sb_score = 0;
-
-    uint64_t sb_tot_score     = 0;
-    context_ptr->sb_min_score = ~0u;
-    context_ptr->sb_max_score = 0u;
-
-    for (sb_index = 0; sb_index < pcs_ptr->sb_total_count_pix; sb_index++) {
-
-        if (pcs_ptr->slice_type == I_SLICE)
-            assert(0);
-        else
-            sb_score = pcs_ptr->parent_pcs_ptr->rc_me_distortion[sb_index];
-
-        context_ptr->sb_score_array[sb_index] = sb_score;
-        // Track MIN and MAX SB scores
-        context_ptr->sb_min_score = MIN(sb_score, context_ptr->sb_min_score);
-        context_ptr->sb_max_score = MAX(sb_score, context_ptr->sb_max_score);
-        sb_tot_score += sb_score;
-    }
-    context_ptr->sb_average_score = (uint32_t)(sb_tot_score / pcs_ptr->sb_total_count_pix);
-}
-
-/******************************************************
-* Set the target budget
-Input   : cost per depth
-Output  : budget per picture
-******************************************************/
-void set_target_budget_oq(PictureControlSet *pcs_ptr,
-                          ModeDecisionConfigurationContext *context_ptr) {
-    uint32_t budget;
-
-    // Luminosity-based budget boost - if P or b only; add 1 U for each 1 current-to-ref diff
-    uint32_t luminosity_change_boost = 0;
-    if (pcs_ptr->slice_type != I_SLICE) {
-        if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag) {
-            EbReferenceObject *ref_obj__l0, *ref_obj__l1;
-            ref_obj__l0 =
-                (EbReferenceObject *)pcs_ptr->ref_pic_ptr_array[REF_LIST_0][0]->object_ptr;
-            ref_obj__l1 =
-                (pcs_ptr->parent_pcs_ptr->slice_type == B_SLICE)
-                    ? (EbReferenceObject *)pcs_ptr->ref_pic_ptr_array[REF_LIST_1][0]->object_ptr
-                    : (EbReferenceObject *)NULL;
-            luminosity_change_boost =
-                ABS(pcs_ptr->parent_pcs_ptr->average_intensity[0] - ref_obj__l0->average_intensity);
-            luminosity_change_boost += (ref_obj__l1 != NULL)
-                                           ? ABS(pcs_ptr->parent_pcs_ptr->average_intensity[0] -
-                                                 ref_obj__l1->average_intensity)
-                                           : 0;
-            luminosity_change_boost = MAX(MAX_LUMINOSITY_BOOST, luminosity_change_boost);
-        }
-    }
-    // Hsan: cross multiplication to derive budget_per_sb from sb_average_score; budget_per_sb range is [SB_PRED_OPEN_LOOP_COST,U_150], and sb_average_score range [0,HIGH_SB_SCORE]
-    // Hsan: 3 segments [0,LOW_SB_SCORE], [LOW_SB_SCORE,MEDIUM_SB_SCORE] and [MEDIUM_SB_SCORE,U_150]
-    uint32_t budget_per_sb;
-    if (context_ptr->sb_average_score <= LOW_SB_SCORE)
-        budget_per_sb =
-            ((context_ptr->sb_average_score * (SB_OPEN_LOOP_COST - SB_PRED_OPEN_LOOP_COST)) /
-             LOW_SB_SCORE) +
-            SB_PRED_OPEN_LOOP_COST;
-    else if (context_ptr->sb_average_score <= MEDIUM_SB_SCORE)
-        budget_per_sb =
-            (((context_ptr->sb_average_score - LOW_SB_SCORE) * (U_125 - SB_OPEN_LOOP_COST)) /
-             (MEDIUM_SB_SCORE - LOW_SB_SCORE)) +
-            SB_OPEN_LOOP_COST;
-    else
-        budget_per_sb = (((context_ptr->sb_average_score - MEDIUM_SB_SCORE) * (U_150 - U_125)) /
-                         (HIGH_SB_SCORE - MEDIUM_SB_SCORE)) +
-                        U_125;
-    budget_per_sb = CLIP3(
-        SB_PRED_OPEN_LOOP_COST,
-        U_150,
-        budget_per_sb + budget_per_sb_boost[context_ptr->adp_level] + luminosity_change_boost);
-
-    //SVT_LOG("picture_number = %d\tsb_average_score = %d\n", pcs_ptr->picture_number, budget_per_sb);
-    budget = pcs_ptr->sb_total_count_pix * budget_per_sb;
-
-    context_ptr->budget = budget;
-}
-
-/******************************************************
-* Assign a search method for each SB
-    Input   : SB score, detection signals
-    Output  : search method for each SB
-******************************************************/
-void derive_sb_md_mode(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
-                       ModeDecisionConfigurationContext *context_ptr) {
-    // Configure ADP
-    configure_adp(pcs_ptr, context_ptr);
-
-    // Derive SB score
-    derive_sb_score(pcs_ptr, context_ptr);
-
-    // Set the target budget
-    set_target_budget_oq(pcs_ptr, context_ptr);
-
-    // Set the percentage based thresholds
-    derive_default_segments(context_ptr);
-
-    // Perform Budgetting
-    derive_optimal_budget_per_sb(scs_ptr, pcs_ptr, context_ptr);
-
-    // Set the search method using the SB cost (mapping)
-    derive_search_method(pcs_ptr, context_ptr);
-}
-#endif
-#if TUNE_CDF
 void set_cdf_controls(PictureControlSet *pcs, uint8_t update_cdf_level)
 {
     CdfControls * ctrl = &pcs->cdf_ctrl;
@@ -835,51 +470,26 @@ void set_cdf_controls(PictureControlSet *pcs, uint8_t update_cdf_level)
     ctrl->update_mv = pcs->slice_type == I_SLICE ? 0 : ctrl->update_mv;
     ctrl->enabled = ctrl->update_coef | ctrl->update_mv | ctrl->update_se;
 }
-#endif
 /******************************************************
 * Derive Mode Decision Config Settings for OQ
 Input   : encoder mode and tune
 Output  : EncDec Kernel signal(s)
 ******************************************************/
-#if FIX_REMOVE_UNUSED_CODE
 EbErrorType signal_derivation_mode_decision_config_kernel_oq(
     SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr) {
-#else
-EbErrorType signal_derivation_mode_decision_config_kernel_oq(
-    SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
-    ModeDecisionConfigurationContext *context_ptr) {
-#endif
     UNUSED(scs_ptr);
     EbErrorType return_error = EB_ErrorNone;
-#if !FIX_REMOVE_UNUSED_CODE
-    context_ptr->adp_level = pcs_ptr->parent_pcs_ptr->enc_mode;
-#endif
 
-#if TUNE_CDF
     uint8_t update_cdf_level = 0;
-#if TUNE_NEW_PRESETS
     if (pcs_ptr->enc_mode <= ENC_M3)
-#else
-    if (pcs_ptr->enc_mode <= ENC_M4)
-#endif
         update_cdf_level = 1;
     else if (pcs_ptr->enc_mode <= ENC_M5)
         update_cdf_level = 2;
-#if !TUNE_NEW_PRESETS
-    else if (pcs_ptr->enc_mode <= ENC_M7)
-        update_cdf_level = pcs_ptr->slice_type == I_SLICE ? 1 : 3;
-#endif
     else
         update_cdf_level = pcs_ptr->slice_type == I_SLICE ? 1 : 0;
 
     //set the conrols uisng the required level
     set_cdf_controls(pcs_ptr, update_cdf_level);
-#else
-        if (pcs_ptr->enc_mode <= ENC_M4)
-            pcs_ptr->update_cdf = 1;
-        else
-            pcs_ptr->update_cdf = pcs_ptr->slice_type == I_SLICE ? 1 : 0;
-#endif
     //Filter Intra Mode : 0: OFF  1: ON
     // pic_filter_intra_level specifies whether filter intra would be active
     // for a given picture.
@@ -889,11 +499,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(
     // 1                      | ON
     if (scs_ptr->static_config.filter_intra_level == DEFAULT) {
         if (scs_ptr->seq_header.filter_intra_level) {
-#if TUNE_NEW_PRESETS
             if (pcs_ptr->enc_mode <= ENC_M5)
-#else
-            if (pcs_ptr->enc_mode <= ENC_M6)
-#endif
                 pcs_ptr->pic_filter_intra_level = 1;
             else
                 pcs_ptr->pic_filter_intra_level = 0;
@@ -910,11 +516,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(
             ? 1
             : 0;
     EbBool enable_wm;
-#if TUNE_NEW_PRESETS
     if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M3) {
-#else
-        if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M2) {
-#endif
         enable_wm = EB_TRUE;
     } else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M9) {
         enable_wm = (pcs_ptr->parent_pcs_ptr->temporal_layer_index == 0) ? EB_TRUE : EB_FALSE;
@@ -945,21 +547,12 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(
     //         2        | Faster level subject to possible constraints      | Level 2 everywhere in PD_PASS_2
     //         3        | Even faster level subject to possible constraints | Level 3 everywhere in PD_PASS_3
     if (scs_ptr->static_config.obmc_level == DEFAULT) {
-#if FEATURE_NEW_OBMC_LEVELS
-#if TUNE_NEW_PRESETS
         if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M1)
-#else
-        if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M3)
-#endif
             pcs_ptr->parent_pcs_ptr->pic_obmc_level = 1;
         else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M4)
             pcs_ptr->parent_pcs_ptr->pic_obmc_level = 2;
         else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M5)
             pcs_ptr->parent_pcs_ptr->pic_obmc_level = 3;
-#else
-        if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M4)
-            pcs_ptr->parent_pcs_ptr->pic_obmc_level = 2;
-#endif
         else
             pcs_ptr->parent_pcs_ptr->pic_obmc_level = 0;
     }
@@ -984,14 +577,8 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(
 Input   : encoder mode and tune
 Output  : EncDec Kernel signal(s)
 ******************************************************/
-#if FIX_REMOVE_UNUSED_CODE
 EbErrorType first_pass_signal_derivation_mode_decision_config_kernel(
     PictureControlSet *pcs_ptr);
-#else
-EbErrorType first_pass_signal_derivation_mode_decision_config_kernel(
-    PictureControlSet *pcs_ptr,
-    ModeDecisionConfigurationContext *context_ptr) ;
-#endif
 void av1_set_ref_frame(MvReferenceFrame *rf, int8_t ref_frame_type);
 
 static INLINE int get_relative_dist(const OrderHintInfo *oh, int a, int b) {
@@ -1261,17 +848,10 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
         FrameHeader *frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
 
         // Mode Decision Configuration Kernel Signal(s) derivation
-#if FIX_REMOVE_UNUSED_CODE
         if (use_output_stat(scs_ptr))
             first_pass_signal_derivation_mode_decision_config_kernel(pcs_ptr);
         else
             signal_derivation_mode_decision_config_kernel_oq(scs_ptr, pcs_ptr);
-#else
-        if (use_output_stat(scs_ptr))
-            first_pass_signal_derivation_mode_decision_config_kernel(pcs_ptr, context_ptr);
-        else
-            signal_derivation_mode_decision_config_kernel_oq(scs_ptr, pcs_ptr, context_ptr);
-#endif
 
         pcs_ptr->parent_pcs_ptr->average_qp = 0;
         pcs_ptr->intra_coded_area           = 0;
@@ -1282,46 +862,12 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
         // Init tx_type selection
         memset(pcs_ptr->txt_cnt, 0, sizeof(uint32_t) * TXT_DEPTH_DELTA_NUM * TX_TYPES);
         // Compute Tc, and Beta offsets for a given picture
-#if !TUNE_CDEF_FILTER
-        // Set reference cdef strength
-        set_reference_cdef_strength(pcs_ptr);
-#endif
 
         // Set reference sg ep
         set_reference_sg_ep(pcs_ptr);
         set_global_motion_field(pcs_ptr);
 
         svt_av1_qm_init(pcs_ptr->parent_pcs_ptr);
-#if !FIX_OPTIMIZE_BUILD_QUANTIZER
-        Quants *const quants_bd = &pcs_ptr->parent_pcs_ptr->quants_bd;
-        Dequants *const deq_bd = &pcs_ptr->parent_pcs_ptr->deq_bd;
-        svt_av1_set_quantizer(
-            pcs_ptr->parent_pcs_ptr,
-            frm_hdr->quantization_params.base_q_idx);
-        svt_av1_build_quantizer(
-            (AomBitDepth)scs_ptr->static_config.encoder_bit_depth,
-            frm_hdr->quantization_params.delta_q_dc[AOM_PLANE_Y],
-            frm_hdr->quantization_params.delta_q_dc[AOM_PLANE_U],
-            frm_hdr->quantization_params.delta_q_ac[AOM_PLANE_U],
-            frm_hdr->quantization_params.delta_q_dc[AOM_PLANE_V],
-            frm_hdr->quantization_params.delta_q_ac[AOM_PLANE_V],
-            quants_bd,
-            deq_bd);
-
-        Quants *const quants_8bit = &pcs_ptr->parent_pcs_ptr->quants_8bit;
-        Dequants *const deq_8bit = &pcs_ptr->parent_pcs_ptr->deq_8bit;
-        svt_av1_build_quantizer(
-            AOM_BITS_8,
-            frm_hdr->quantization_params.delta_q_dc[AOM_PLANE_Y],
-            frm_hdr->quantization_params.delta_q_dc[AOM_PLANE_U],
-            frm_hdr->quantization_params.delta_q_ac[AOM_PLANE_U],
-            frm_hdr->quantization_params.delta_q_dc[AOM_PLANE_V],
-            frm_hdr->quantization_params.delta_q_ac[AOM_PLANE_V],
-            quants_8bit,
-            deq_8bit);
-
-        // Hsan: collapse spare code
-#endif
         MdRateEstimationContext *md_rate_estimation_array;
 
         // QP

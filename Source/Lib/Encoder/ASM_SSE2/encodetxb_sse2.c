@@ -15,9 +15,7 @@
 #include "EbDefinitions.h"
 #include "EbCabacContextModel.h"
 #include "EbCommonUtils.h"
-#if FEATURE_OPT_RDOQ
 #include "EbFullLoop.h"
-#endif
 
 static INLINE __m128i loadh_epi64(const void *const src, const __m128i s) {
     return _mm_castps_si128(_mm_loadh_pi(_mm_castsi128_ps(s), (const __m64 *)src));
@@ -530,11 +528,7 @@ void svt_av1_get_nz_map_contexts_sse2(const uint8_t *const levels, const int16_t
         }
     }
 
-#if FEATURE_OPT_RDOQ
     const int32_t bwl = get_txb_bwl_tab[tx_size];
-#else
-    const int32_t bwl = get_txb_bwl(tx_size);
-#endif
     const int32_t pos = scan[last_idx];
     if (last_idx <= (height << bwl) / 8)
         coeff_contexts[pos] = 1;

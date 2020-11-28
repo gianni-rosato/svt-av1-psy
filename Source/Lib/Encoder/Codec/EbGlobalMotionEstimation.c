@@ -24,12 +24,7 @@
 #define GMV_ME_SAD_TH_0  0
 #define GMV_ME_SAD_TH_1  5
 #define GMV_ME_SAD_TH_2 10
-#if FEATURE_GM_OPT
 void global_motion_estimation(PictureParentControlSet *pcs_ptr, EbPictureBufferDesc *input_picture_ptr) {
-#else
-void global_motion_estimation(PictureParentControlSet *pcs_ptr, MeContext *context_ptr,
-                              EbPictureBufferDesc *input_picture_ptr) {
-#endif
     // Get downsampled pictures with a downsampling factor of 2 in each dimension
     EbPaReferenceObject *pa_reference_object;
     EbPictureBufferDesc *quarter_ref_pic_ptr;
@@ -127,21 +122,13 @@ void global_motion_estimation(PictureParentControlSet *pcs_ptr, MeContext *conte
                 ref_picture_ptr = (EbPictureBufferDesc *)reference_object->input_padded_picture_ptr;
             }
 
-#if FEATURE_GM_OPT
             compute_global_motion(pcs_ptr, input_picture_ptr,
-#else
-            compute_global_motion(input_picture_ptr,
-#endif
                                   ref_picture_ptr,
                                   &pcs_ptr->global_motion_estimation[list_index][ref_pic_index],
                                   pcs_ptr->frm_hdr.allow_high_precision_mv);
         }
 
-#if FEATURE_GM_OPT
         if (pcs_ptr->gm_ctrls.identiy_exit) {
-#else
-        if (context_ptr->gm_identiy_exit) {
-#endif
             if (list_index == 0) {
                 if (pcs_ptr->global_motion_estimation[0][0].wmtype == IDENTITY) {
                     break;
@@ -167,14 +154,8 @@ void global_motion_estimation(PictureParentControlSet *pcs_ptr, MeContext *conte
     }
 }
 
-#if FEATURE_INL_ME
 // This function performs global motion estimation when in loop me is used
-#if FEATURE_GM_OPT
 void global_motion_estimation_inl(PictureParentControlSet *pcs_ptr, EbPictureBufferDesc *input_picture_ptr) {
-#else
-void global_motion_estimation_inl(PictureParentControlSet *pcs_ptr, MeContext *context_ptr,
-                              EbPictureBufferDesc *input_picture_ptr) {
-#endif
     EbDownScaledObject *ds_object =
         (EbDownScaledObject*)pcs_ptr->down_scaled_picture_wrapper_ptr->object_ptr;
     EbPictureBufferDesc *quarter_picture_ptr = ds_object->quarter_picture_ptr;
@@ -241,41 +222,21 @@ void global_motion_estimation_inl(PictureParentControlSet *pcs_ptr, MeContext *c
             // Set the source and the reference picture to be used by the global motion search
             // based on the input search mode
             if (pcs_ptr->gm_level == GM_DOWN16) {
-#if !TUNE_INL_ME_RECON_INPUT
-                ref_picture_ptr = reference_object->sixteenth_reference_picture;
-#else
                 ref_picture_ptr = reference_object->sixteenth_input_picture;
-#endif
                 input_picture_ptr = sixteenth_picture_ptr;
             }
             else if (pcs_ptr->gm_level == GM_DOWN) {
-#if !TUNE_INL_ME_RECON_INPUT
-                ref_picture_ptr = reference_object->quarter_reference_picture;
-#else
                 ref_picture_ptr = reference_object->quarter_input_picture;
-#endif
                 input_picture_ptr = quarter_picture_ptr;
             } else {
-#if !TUNE_INL_ME_RECON_INPUT
-                ref_picture_ptr = (EbPictureBufferDesc *)reference_object->reference_picture;
-#else
                 ref_picture_ptr = reference_object->input_picture;
-#endif
             }
-#if FEATURE_GM_OPT
             compute_global_motion(pcs_ptr, input_picture_ptr,
-#else
-            compute_global_motion(input_picture_ptr,
-#endif
                                   ref_picture_ptr,
                                   &pcs_ptr->global_motion_estimation[list_index][ref_pic_index],
                                   pcs_ptr->frm_hdr.allow_high_precision_mv);
         }
-#if FEATURE_GM_OPT
         if (pcs_ptr->gm_ctrls.identiy_exit) {
-#else
-        if (context_ptr->gm_identiy_exit) {
-#endif
             if (list_index == 0) {
                 if (pcs_ptr->global_motion_estimation[0][0].wmtype == IDENTITY) {
                     break;
@@ -300,13 +261,8 @@ void global_motion_estimation_inl(PictureParentControlSet *pcs_ptr, MeContext *c
         }
     }
 }
-#endif
 
-#if FEATURE_GM_OPT
 void compute_global_motion(PictureParentControlSet *pcs_ptr, EbPictureBufferDesc *input_pic, EbPictureBufferDesc *ref_pic,
-#else
-void compute_global_motion(EbPictureBufferDesc *input_pic, EbPictureBufferDesc *ref_pic,
-#endif
                            EbWarpedMotionParams *bestWarpedMotion, int allow_high_precision_mv) {
     MotionModel params_by_motion[RANSAC_NUM_MOTIONS];
     for (int m = 0; m < RANSAC_NUM_MOTIONS; m++) {
@@ -346,11 +302,7 @@ void compute_global_motion(EbPictureBufferDesc *input_pic, EbPictureBufferDesc *
 #define GLOBAL_TRANS_TYPES_ENC 3
 
         const GlobalMotionEstimationType gm_estimation_type = GLOBAL_MOTION_FEATURE_BASED;
-#if FEATURE_GM_OPT
         for (model = ROTZOOM; model <= (pcs_ptr->gm_ctrls.rotzoom_model_only ? ROTZOOM : GLOBAL_TRANS_TYPES_ENC); ++model) {
-#else
-        for (model = ROTZOOM; model <= GLOBAL_TRANS_TYPES_ENC; ++model) {
-#endif
             int64_t best_warp_error = INT64_MAX;
             // Initially set all params to identity.
             for (unsigned i = 0; i < RANSAC_NUM_MOTIONS; ++i) {

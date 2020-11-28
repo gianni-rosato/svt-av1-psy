@@ -26,10 +26,6 @@ typedef void (*CdefFilterBlockFunc)(uint8_t *dst8, uint16_t *dst16, int32_t dstr
 void copy_cdef_16bit_to_16bit(uint16_t *dst, int32_t dstride, uint16_t *src, CdefList *dlist,
                               int32_t cdef_count, int32_t bsize);
 
-#if !TUNE_CDEF_FILTER
-int32_t get_cdef_gi_step(int8_t cdef_level);
-#endif
-
 
 #ifdef __cplusplus
 }

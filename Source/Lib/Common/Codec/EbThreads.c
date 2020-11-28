@@ -360,7 +360,6 @@ EbErrorType svt_destroy_mutex(EbHandle mutex_handle)
 
     return return_error;
 }
-#if FEATURE_PA_ME
 /*
     set an atomic variable to an input value
 */
@@ -370,4 +369,3 @@ void atomic_set_u32(AtomicVarU32 *var, uint32_t in)
     var->obj = in;
     svt_release_mutex(var->mutex);
 }
-#endif

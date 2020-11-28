@@ -119,9 +119,7 @@ extern uint64_t *        total_lib_memory; // library Memory malloc'd
         }                                                                  \
     } while (0)
 
-#if FEATURE_PA_ME
 void atomic_set_u32(AtomicVarU32* var, uint32_t in);
-#endif
 #ifdef __cplusplus
 }
 #endif

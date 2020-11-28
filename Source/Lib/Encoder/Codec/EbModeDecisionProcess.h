@@ -64,29 +64,18 @@ typedef struct {
 typedef struct MdBlkStruct {
     unsigned             tested_blk_flag : 1; //tells whether this CU is tested in MD.
     unsigned             mdc_array_index : 7;
-#if TUNE_REMOVE_UNUSED_NEIG_ARRAY
     unsigned             count_non_zero_coeffs : 12;
-#else
-    unsigned             count_non_zero_coeffs : 11;
-#endif
     unsigned             top_neighbor_depth : 8;
     unsigned             left_neighbor_depth : 8;
     unsigned             top_neighbor_mode : 2;
     unsigned             left_neighbor_mode : 2;
     unsigned             full_distortion : 32;
-#if !FIX_REMOVE_UNUSED_CODE
-    unsigned             chroma_distortion : 32;
-    unsigned             chroma_distortion_inter_depth : 32;
-#endif
     PartitionContextType left_neighbor_partition;
     PartitionContextType above_neighbor_partition;
     uint64_t             cost;
     uint64_t             default_cost; // Similar to cost but does not get updated @ d1_non_square_block_decision() and d2_inter_depth_block_decision()
     CandidateMv          ed_ref_mv_stack[MODE_CTX_REF_FRAMES]
                                [MAX_REF_MV_STACK_SIZE]; //to be used in MD and EncDec
-#if !FIX_VALID_BLOCK_DERIVATION_OPT
-    uint8_t avail_blk_flag; //tells whether this CU is tested in MD and have a valid cu data
-#endif
     IntMv ref_mvs[MODE_CTX_REF_FRAMES][MAX_MV_REF_CANDIDATES]; //used only for nonCompound modes.
     uint32_t best_d1_blk;
     uint8_t *neigh_left_recon[3]; //only for MD
@@ -134,7 +123,6 @@ typedef enum InterCandGroup {
     GLOBAL_GROUP        = 7,
     TOT_INTER_GROUP     = 8,
 } InterCandGroup;
-#if FEATURE_NEW_INTER_COMP_LEVELS
 typedef struct  InterCompCtrls {
     uint8_t allowed_comp_types[MD_COMP_TYPES];       // Compound types to inject; AVG/DIST/DIFF/WEDGE (if a comp type is disallowed here, it will
                                                      // override distance-based settings)
@@ -143,36 +131,25 @@ typedef struct  InterCompCtrls {
     uint8_t allowed_dist2_comp_types[MD_COMP_TYPES]; // Compound types to inject for bipred cands with a ref > distance 2 from current frame; AVG/DIST/DIFF/WEDGE
                                                      // The distance-based compound types should be a subset of the allowed_comp_types
 }InterCompCtrls;
-#endif
-#if FEATURE_INTER_INTRA_LEVELS
 typedef struct InterIntraCompCtrls {
     uint8_t enabled;
     uint8_t skip_pme_unipred; // Skip inter-intra compound injetion for PME and unipred3x3
     uint8_t closest_ref_only; // Use inter-intra only for the closest ref frames
 } InterIntraCompCtrls;
-#endif
 typedef struct  ObmcControls {
     uint8_t enabled;
     uint8_t me_count;      //how many me candidates to consider injecting obmc
     uint8_t pme_best_ref;  //limit injection to best ref in pme
     uint8_t mvp_ref_count; //closest references allowed in mvp 0:4
     uint8_t near_count;    //how many near to consider injecting obmc 0..3
-#if FEATURE_NEW_OBMC_LEVELS
     EbBool max_blk_size_16x16; // if true, cap the max block size that OBMC can be used to 16x16
-#endif
 }ObmcControls;
 typedef struct  AMdCycleRControls {
     uint8_t enabled; // On/Off feature control
     uint16_t skip_nsq_th;  // Threshold to bypass nsq <the higher th the higher speed>
-#if FEATURE_REMOVE_CIRCULAR
     uint16_t switch_level_th; // TH level used to determine if more aggressive feature levels should be used for the current block
     uint8_t non_skip_level; // Which level of aggressive features to use when probability of block is less than switch_level_th; higher is more aggressive
-#else
-    uint16_t switch_mode_th;
-    uint8_t mode_offset;
-#endif
 }AMdCycleRControls;
-#if TUNE_TX_TYPE_LEVELS
 typedef struct TxtControls {
     uint8_t enabled;
 
@@ -186,27 +163,11 @@ typedef struct TxtControls {
     uint16_t intra_th;    // Threshold to bypass intra TXT <the higher th the higher speed>
     uint16_t inter_th;    // Threshold to bypass inter TXT <the higher th the higher speed>
 }TxtControls;
-#else
-typedef struct  TxtCycleRControls {
-    uint8_t enabled;    // On/Off feature control
-    uint16_t intra_th;  // Threshold to bypass intra TXT <the higher th the higher speed>
-    uint16_t inter_th;  // Threshold to bypass inter TXT <the higher th the higher speed>
-}TxtCycleRControls;
-#endif
 typedef struct  TxsCycleRControls {
     uint8_t enabled;    // On/Off feature control
     uint16_t intra_th;  // Threshold to bypass intra TXS <the higher th the higher speed>
     uint16_t inter_th;  // Threshold to bypass inter TXS <the higher th the higher speed>
 }TxsCycleRControls;
-
-#if !FEATURE_NEW_INTER_COMP_LEVELS
-typedef struct  InterCompoundControls {
-    uint8_t enabled;
-    uint8_t mrp_pruning_w_distortion;   // 0: OFF ; 1: Prune number of references based on ME/PME distortion
-    uint8_t mrp_pruning_w_distance;     // 4: ALL ; 1: Prune number of references based on reference distance (Best 1)
-    uint8_t wedge_search_mode;          // 0: Fast search: estimate Wedge sign 1: full search
-}InterCompoundControls;
-#endif
 
 typedef struct RefPruningControls {
     uint8_t enabled; // 0: OFF; 1: use inter to inter distortion deviation to derive best_refs
@@ -218,19 +179,13 @@ typedef struct DepthRefinementCtrls {
 
     int64_t sub_to_current_th; // decrease towards a more agressive level
     int64_t parent_to_current_th; // decrease towards a more agressive level
-#if FEATURE_COST_BASED_PRED_REFINEMENT
     uint8_t use_pred_block_cost;   // add an offset to sub_to_current_th and parent_to_current_th on the cost range of the predicted block; use default ths for high cost(s) and more aggressive TH(s) for low cost(s)
-#endif
-#if FEATURE_PD0_CUT_DEPTH
     uint8_t disallow_below_16x16;  // remove 16x16 & lower depth(s) based on the 64x64 distortion if sb_64x64
-#endif
 
 }DepthRefinementCtrls;
-#if FEATURE_PARTIAL_FREQUENCY
 typedef struct PfCtrls {
     EB_TRANS_COEFF_SHAPE pf_shape;
 } PfCtrls;
-#endif
 typedef struct MdNsqMotionSearchCtrls {
     uint8_t enabled;                    // 0: NSQ motion search @ MD OFF; 1: NSQ motion search @ MD ON
     uint8_t use_ssd;                    // 0: search using SAD; 1: search using SSD
@@ -282,14 +237,9 @@ typedef struct MdSubPelSearchCtrls {
 }MdSubPelSearchCtrls;
 typedef struct CoeffBSwMdCtrls {
     uint8_t enabled;                // 0:  OFF; 1:  ON
-#if FEATURE_REMOVE_CIRCULAR
     uint8_t non_skip_level;         // Which level of aggressive features to use when SQ has zero coeffs; higher is more aggressive
-#else
-    uint8_t mode_offset;            // Offset to the mode to switch to
-#endif
     uint8_t skip_block;             // Allow skipping NSQ blocks
 }CoeffBSwMdCtrls;
-#if FEATURE_OPT_RDOQ
 typedef struct RdoqCtrls {
     uint8_t enabled;
 
@@ -300,18 +250,13 @@ typedef struct RdoqCtrls {
     uint8_t fp_q_l;           // 0: use default quant for luma; 1: use fp_quant for luma
     uint8_t fp_q_c;           // 0: use default quant for chroma; 1: use fp_quant for chroma
     uint8_t satd_factor;      // do not perform rdoq if the tx satd > satd_factor
-#if FEATURE_OPT_RDOQ
     uint8_t early_exit_th;     // do not perform rdoq based on an early skip/non-skip cost, threshold for early exit is 5
-#endif
 }RdoqCtrls;
-#endif
-#if FEATURE_NIC_SCALING_PER_STAGE
 typedef struct NicCtrls {
     uint8_t stage1_scaling_num; // Scaling numerator for post-stage 0 NICS: <x>/16
     uint8_t stage2_scaling_num; // Scaling numerator for post-stage 1 NICS: <x>/16
     uint8_t stage3_scaling_num; // Scaling numerator for post-stage 2 NICS: <x>/16
 }NicCtrls;
-#endif
 typedef struct ModeDecisionContext {
     EbDctor  dctor;
     EbFifo * mode_decision_configuration_input_fifo_ptr;
@@ -329,9 +274,7 @@ typedef struct ModeDecisionContext {
     InterPredictionContext *      inter_prediction_context;
     MdBlkStruct *                md_local_blk_unit;
     BlkStruct *                  md_blk_arr_nsq;
-#if FIX_VALID_BLOCK_DERIVATION_OPT
     uint8_t *avail_blk_flag;
-#endif
     MdcSbData *mdc_sb_array;
 
     NeighborArrayUnit *intra_luma_mode_neighbor_array;
@@ -339,9 +282,6 @@ typedef struct ModeDecisionContext {
     NeighborArrayUnit *mv_neighbor_array;
     NeighborArrayUnit *skip_flag_neighbor_array;
     NeighborArrayUnit *mode_type_neighbor_array;
-#if !TUNE_REMOVE_UNUSED_NEIG_ARRAY
-    NeighborArrayUnit *leaf_depth_neighbor_array;
-#endif
     NeighborArrayUnit *luma_recon_neighbor_array;
     NeighborArrayUnit *cb_recon_neighbor_array;
     NeighborArrayUnit *cr_recon_neighbor_array;
@@ -350,9 +290,6 @@ typedef struct ModeDecisionContext {
     NeighborArrayUnit *cb_recon_neighbor_array16bit;
     NeighborArrayUnit *cr_recon_neighbor_array16bit;
     NeighborArrayUnit *tx_search_luma_recon_neighbor_array16bit;
-#if !FIX_REMOVE_MD_SKIP_COEFF_CIRCUITERY
-    NeighborArrayUnit *skip_coeff_neighbor_array;
-#endif
     NeighborArrayUnit *
         luma_dc_sign_level_coeff_neighbor_array; // Stored per 4x4. 8 bit: lower 6 bits (COEFF_CONTEXT_BITS), shows if there is at least one Coef. Top 2 bit store the sign of DC as follow: 0->0,1->-1,2-> 1
     NeighborArrayUnit *
@@ -396,9 +333,6 @@ typedef struct ModeDecisionContext {
     uint8_t          pu_itr;
     uint8_t          cu_size_log2;
     uint32_t         best_candidate_index_array[MAX_NFL_BUFF];
-#if !FIX_TUNIFY_SORTING_ARRAY
-    uint32_t         sorted_candidate_index_array[MAX_NFL];
-#endif
     uint16_t         blk_origin_x;
     uint16_t         blk_origin_y;
     uint8_t          sb_sz;
@@ -461,9 +395,6 @@ typedef struct ModeDecisionContext {
     uint32_t me_block_offset;
     uint32_t me_cand_offset;
     EbPictureBufferDesc *cfl_temp_prediction_ptr;
-#if !FEATURE_OPT_IFS
-    EbPictureBufferDesc *prediction_ptr_temp;
-#endif
     EbPictureBufferDesc
         *residual_quant_coeff_ptr; // One buffer for residual and quantized coefficient
     uint8_t  tx_depth;
@@ -517,9 +448,6 @@ typedef struct ModeDecisionContext {
     MdStage md_stage;
     uint32_t     cand_buff_indices[CAND_CLASS_TOTAL][MAX_NFL_BUFF];
     uint8_t      md_staging_mode;
-#if !TUNE_NICS
-    uint8_t      md_staging_count_level;
-#endif
     uint8_t      bypass_md_stage_1[CAND_CLASS_TOTAL];
     uint8_t bypass_md_stage_2[CAND_CLASS_TOTAL];
     uint32_t md_stage_0_count[CAND_CLASS_TOTAL];
@@ -542,11 +470,7 @@ typedef struct ModeDecisionContext {
     // full_loop_core signals
     EbBool md_staging_perform_inter_pred; // 0: perform luma & chroma prediction + interpolation search, 2: nothing (use information from previous stages)
     EbBool md_staging_tx_size_mode; // 0: Tx Size recon only, 1:Tx Size search and recon
-#if TUNE_TX_TYPE_LEVELS
     EbBool md_staging_txt_level;
-#else
-    EbBool md_staging_tx_search; // 0: skip, 1: use ref cost, 2: no shortcuts
-#endif
     EbBool md_staging_skip_full_chroma;
     EbBool md_staging_skip_rdoq;
     EbBool md_staging_spatial_sse_full_loop_level;
@@ -559,15 +483,10 @@ typedef struct ModeDecisionContext {
     uint64_t     md_stage_1_cand_prune_th;
     uint64_t     md_stage_1_class_prune_th;
 
-#if FEATURE_MDS2
     uint64_t     md_stage_2_cand_prune_th;
     uint64_t     md_stage_2_class_prune_th;
     uint64_t     md_stage_3_cand_prune_th;
     uint64_t     md_stage_3_class_prune_th;
-#else
-    uint64_t     md_stage_2_3_cand_prune_th;
-    uint64_t     md_stage_2_3_class_prune_th;
-#endif
     DECLARE_ALIGNED(16, uint8_t, obmc_buff_0[2 * 2 * MAX_MB_PLANE * MAX_SB_SQUARE]);
     DECLARE_ALIGNED(16, uint8_t, obmc_buff_1[2 * 2 * MAX_MB_PLANE * MAX_SB_SQUARE]);
     DECLARE_ALIGNED(16, uint8_t, obmc_buff_0_8b[2 * MAX_MB_PLANE * MAX_SB_SQUARE]);
@@ -580,14 +499,9 @@ typedef struct ModeDecisionContext {
     // square cost weighting for deciding if a/b shapes could be skipped
     uint32_t sq_weight;
     // signal for enabling shortcut to skip search depths
-#if !FEATURE_NEW_INTER_COMP_LEVELS
-    MD_COMP_TYPE compound_types_to_try;
-#endif
     uint8_t      dc_cand_only_flag;
     EbBool       disable_angle_z2_intra_flag;
-#if FEATURE_PD0_SHUT_SKIP_DC_SIGN_UPDATE
     uint8_t      shut_skip_ctx_dc_sign_update;
-#endif
     uint8_t      shut_fast_rate; // use coeff rate and slipt flag rate only (no MVP derivation)
 #if !TUne_TX_TYPE_LEVELS
     uint8_t      tx_search_level;
@@ -605,10 +519,8 @@ typedef struct ModeDecisionContext {
     uint8_t      dist_based_ref_pruning;
     uint8_t block_based_depth_refinement_level;
     DepthRefinementCtrls depth_refinement_ctrls;
-#if FEATURE_PARTIAL_FREQUENCY
     uint8_t pf_level;
     PfCtrls pf_ctrls;
-#endif
     // Control signals for MD sparse search (used for increasing ME search for active clips)
     uint8_t md_sq_mv_search_level;
     MdSqMotionSearchCtrls md_sq_me_ctrls;
@@ -623,30 +535,18 @@ typedef struct ModeDecisionContext {
     uint8_t      md_max_ref_count;
     RefResults    pme_res[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
     ObmcControls obmc_ctrls;
-#if FEATURE_NEW_INTER_COMP_LEVELS
     InterCompCtrls inter_comp_ctrls;
-#else
-    InterCompoundControls inter_comp_ctrls;
-#endif
-#if FEATURE_INTER_INTRA_LEVELS
     InterIntraCompCtrls inter_intra_comp_ctrls;
-#endif
     RefResults ref_filtering_res[TOT_INTER_GROUP][MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
     RefPruningControls ref_pruning_ctrls;
     // Signal to control initial and final pass PD setting(s)
     PdPass pd_pass;
 
     EbBool        md_disable_cfl;
-#if TUNE_TX_TYPE_LEVELS
     TxtControls txt_ctrls;
-#else
-    TxtCycleRControls txt_cycles_red_ctrls;
-#endif
     TxsCycleRControls txs_cycles_red_ctrls;
     AMdCycleRControls admd_cycles_red_ctrls;
-#if FEATURE_OPT_RDOQ
     RdoqCtrls rdoq_ctrls;
-#endif
     uint8_t disallow_4x4;
     uint8_t       md_disallow_nsq;
     uint64_t best_nsq_default_cost;
@@ -678,34 +578,18 @@ typedef struct ModeDecisionContext {
     int16_t sprs_lev0_start_y;
     int16_t sprs_lev0_end_y;
 
-#if FEATURE_MDS2
     uint8_t md_staging_tx_size_level;
-#else
-    uint8_t txs_in_inter_classes;
-#endif
-#if FEATURE_NIC_SCALING_PER_STAGE
     NicCtrls nic_ctrls;
-#else
-    uint8_t nic_scaling_level;
-#endif
     uint8_t inter_compound_mode;
     uint8_t switch_md_mode_based_on_sq_coeff;
     CoeffBSwMdCtrls cb_sw_md_ctrls;
     MV ref_mv;
-#if FEATURE_OPT_IFS
     uint8_t ifs_is_regular_last; // If regular is last performed interp_filters @ IFS
-#endif
-#if FEATURE_OPT_RDOQ
     uint8_t use_prev_mds_res;
-#endif
-#if FEATURE_PD0_CUT_DEPTH
     uint16_t sb_index;
-#endif
-#if FEATURE_MDS0_ELIMINATE_CAND
     uint8_t early_cand_elimination;
     uint64_t mds0_best_cost;
     uint8_t mds0_best_class;
-#endif
 } ModeDecisionContext;
 
 typedef void (*EbAv1LambdaAssignFunc)(PictureControlSet* pcs_ptr, uint32_t *fast_lambda, uint32_t *full_lambda,

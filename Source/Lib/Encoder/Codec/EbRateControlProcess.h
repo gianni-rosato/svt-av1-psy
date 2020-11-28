@@ -200,21 +200,15 @@ typedef struct {
     int enable_scenecut_detection;
     int use_arf_in_this_kf_group;
     int next_is_fwd_key;
-#if FEATURE_RE_ENCODE
     int top_index;
     int bottom_index;
-#endif
 } RATE_CONTROL;
 
 /**************************************
  * Input Port Types
  **************************************/
 typedef enum RateControlInputPortTypes {
-#if FEATURE_INL_ME
     RATE_CONTROL_INPUT_PORT_INLME = 0,
-#else
-    RATE_CONTROL_INPUT_PORT_PICTURE_MANAGER = 0,
-#endif
     RATE_CONTROL_INPUT_PORT_PACKETIZATION   = 1,
     RATE_CONTROL_INPUT_PORT_ENTROPY_CODING  = 2,
     RATE_CONTROL_INPUT_PORT_TOTAL_COUNT     = 3,

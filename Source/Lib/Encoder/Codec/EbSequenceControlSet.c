@@ -184,9 +184,6 @@ EbErrorType svt_sequence_control_set_ctor(SequenceControlSet *scs_ptr, EbPtr obj
 
     scs_ptr->film_grain_random_seed = 7391;
     scs_ptr->reference_count        = 4;
-#if !FEATURE_LAP_ENABLED_VBR
-    scs_ptr->lap_enabled = 0;
-#endif
 
     // Set the block mean calculation prec
     scs_ptr->block_mean_calc_prec = BLOCK_MEAN_PREC_SUB;
@@ -265,9 +262,7 @@ EbErrorType copy_sequence_control_set(SequenceControlSet *dst, SequenceControlSe
     dst->motion_estimation_fifo_init_count = src->motion_estimation_fifo_init_count;
     dst->initial_rate_control_fifo_init_count = src->initial_rate_control_fifo_init_count;
     dst->picture_demux_fifo_init_count = src->picture_demux_fifo_init_count;
-#if FEATURE_INL_ME
     dst->in_loop_me_fifo_init_count = src->in_loop_me_fifo_init_count;
-#endif
     dst->rate_control_tasks_fifo_init_count = src->rate_control_tasks_fifo_init_count;
     dst->rate_control_fifo_init_count = src->rate_control_fifo_init_count;
     dst->mode_decision_configuration_fifo_init_count =
@@ -309,19 +304,11 @@ EbErrorType copy_sequence_control_set(SequenceControlSet *dst, SequenceControlSe
     dst->over_boundary_block_mode       = src->over_boundary_block_mode;
     dst->mfmv_enabled                   = src->mfmv_enabled;
     dst->scd_delay                      = src->scd_delay;
-#if FEATURE_INL_ME
     dst->in_loop_me                     = src->in_loop_me;
-#endif
-#if TUNE_TPL_OIS
     dst->in_loop_ois                     = src->in_loop_ois;
-#endif
-#if FEATURE_PA_ME
     dst->enable_pic_mgr_dec_order = src->enable_pic_mgr_dec_order;
     dst->enable_dec_order = src->enable_dec_order;
-#endif
-#if FEATURE_LAP_ENABLED_VBR
     dst->lap_enabled                    = src->lap_enabled;
-#endif
     return EB_ErrorNone;
 }
 
@@ -347,10 +334,6 @@ extern EbErrorType derive_input_resolution(EbInputResolution *input_resolution, 
 
 static void svt_sequence_control_set_instance_dctor(EbPtr p) {
     EbSequenceControlSetInstance *obj = (EbSequenceControlSetInstance *)p;
-#if !FEATURE_IN_LOOP_TPL
-    if (obj->encode_context_ptr && obj->encode_context_ptr->mc_flow_rec_picture_buffer_saved)
-        EB_FREE_ARRAY(obj->encode_context_ptr->mc_flow_rec_picture_buffer_saved);
-#endif
     EB_DELETE(obj->encode_context_ptr);
     EB_DELETE(obj->scs_ptr);
     EB_DESTROY_MUTEX(obj->config_mutex);
@@ -363,10 +346,6 @@ EbErrorType svt_sequence_control_set_instance_ctor(EbSequenceControlSetInstance 
 
     EB_NEW(object_ptr->encode_context_ptr, encode_context_ctor, NULL);
     scs_init_data.encode_context_ptr = object_ptr->encode_context_ptr;
-#if !FEATURE_IN_LOOP_TPL
-    if (scs_init_data.encode_context_ptr)
-        scs_init_data.encode_context_ptr->mc_flow_rec_picture_buffer_saved = NULL;
-#endif
 
     scs_init_data.sb_size = 64;
 

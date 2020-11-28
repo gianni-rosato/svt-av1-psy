@@ -15,9 +15,7 @@
 #include "EbDefinitions.h"
 
 #include "EbPictureControlSet.h"
-#if FEATURE_INL_ME
 #include "EbSequenceControlSet.h"
-#endif
 
 /***************************************
  * Extern Function Declaration
@@ -33,9 +31,7 @@ void downsample_filtering_input_picture(PictureParentControlSet *pcs_ptr,
                                         EbPictureBufferDesc *    quarter_picture_ptr,
                                         EbPictureBufferDesc *    sixteenth_picture_ptr);
 
-#if FEATURE_INL_ME
 void pad_input_pictures(SequenceControlSet *scs_ptr,
                                EbPictureBufferDesc *input_picture_ptr);
-#endif
 
 #endif // EbPictureAnalysis_h

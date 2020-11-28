@@ -65,10 +65,6 @@ typedef struct ModeDecisionConfigurationContext {
     CandidateMv *          mdc_ref_mv_stack;
     BlkStruct *           mdc_blk_ptr;
     uint8_t                qp_index;
-#if !FIX_REMOVE_UNUSED_CODE
-    // Multi - Mode signal(s)
-    EbEncMode adp_level;
-#endif
 } ModeDecisionConfigurationContext;
 
 /**************************************

@@ -160,7 +160,6 @@ uint64_t svt_handle_transform64x64_avx2(int32_t *output) {
 
     return three_quad_energy;
 }
-#if FEATURE_PARTIAL_FREQUENCY
 uint64_t handle_transform16x64_N2_N4_avx2(int32_t *output) {
     (void)output;
     return 0;
@@ -188,4 +187,3 @@ uint64_t handle_transform64x64_N2_N4_avx2(int32_t *output) {
     copy_256x_bytes_avx2(output + 64, output + 32, 31);
     return 0;
 }
-#endif /*FEATURE_PARTIAL_FREQUENCY*/

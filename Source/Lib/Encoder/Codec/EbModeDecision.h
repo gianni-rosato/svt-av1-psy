@@ -82,10 +82,6 @@ typedef struct ModeDecisionCandidate {
     uint64_t                 fast_luma_rate;
     uint64_t                 fast_chroma_rate;
     uint64_t                 total_rate;
-#if !FIX_REMOVE_UNUSED_CODE
-    uint64_t                 chroma_distortion;
-    uint64_t                 chroma_distortion_inter_depth;
-#endif
     uint32_t                 luma_fast_distortion;
     uint64_t                 full_distortion;
     EbPtr                    prediction_context_ptr;
@@ -161,9 +157,6 @@ typedef uint64_t (*EbFastCostFunc)(BlkStruct *                  blk_ptr,
                                    struct ModeDecisionCandidate *candidate_buffer, uint32_t qp,
                                    uint64_t luma_distortion, uint64_t chroma_distortion,
                                    uint64_t lambda,
-#if !FIX_REMOVE_UNUSED_CODE
-                                   EbBool use_ssd,
-#endif
                                     PictureControlSet *pcs_ptr,
                                    CandidateMv *ref_mv_stack, const BlockGeom *blk_geom,
                                    uint32_t miRow, uint32_t miCol, uint8_t enable_inter_intra,
@@ -234,18 +227,10 @@ extern EbErrorType mode_decision_candidate_buffer_ctor(
 extern EbErrorType mode_decision_scratch_candidate_buffer_ctor(
     ModeDecisionCandidateBuffer *buffer_ptr, uint8_t sb_size, EbBitDepthEnum max_bitdepth);
 
-#if FIX_REMOVE_UNUSED_CODE
 uint32_t product_full_mode_decision(struct ModeDecisionContext *context_ptr, BlkStruct *blk_ptr,
     ModeDecisionCandidateBuffer **buffer_ptr_array,
     uint32_t candidate_total_count,
     uint32_t * best_candidate_index_array);
-#else
-uint32_t product_full_mode_decision(struct ModeDecisionContext *context_ptr, BlkStruct *blk_ptr,
-                                    ModeDecisionCandidateBuffer **buffer_ptr_array,
-                                    uint32_t                      candidate_total_count,
-                                    uint32_t *                    best_candidate_index_array,
-                                    uint32_t *best_intra_mode);
-#endif
 uint32_t get_blk_tuned_full_lambda(struct ModeDecisionContext *context_ptr, PictureControlSet *pcs_ptr,
                                    uint32_t pic_full_lambda);
 void set_tuned_blk_lambda(struct ModeDecisionContext *context_ptr, PictureControlSet *pcs_ptr);

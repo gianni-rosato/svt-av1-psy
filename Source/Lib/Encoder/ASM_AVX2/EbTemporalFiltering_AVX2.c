@@ -366,11 +366,7 @@ void svt_av1_apply_temporal_filter_planewise_avx2(
     assert(block_width % 16 == 0 && "block width must be multiple of 16");
     assert(block_height % 2 == 0 && "block height must be even");
     assert((ss_x == 0 || ss_x == 1) && (ss_y == 0 || ss_y == 1) && "invalid chroma subsampling");
-#if FEATURE_OPT_TF
     const int num_planes = context_ptr->tf_chroma ? 3 : 1;
-#else
-    const int num_planes = 3;
-#endif
     uint16_t luma_sq_error[SSE_STRIDE * BH];
     uint16_t chroma_sq_error[SSE_STRIDE * BH];
 
@@ -717,11 +713,7 @@ void svt_av1_apply_temporal_filter_planewise_hbd_avx2(
     assert(block_height % 2 == 0 && "block height must be even");
     assert((ss_x == 0 || ss_x == 1) && (ss_y == 0 || ss_y == 1) && "invalid chroma subsampling");
 
-#if FEATURE_OPT_TF
     const int num_planes = context_ptr->tf_chroma ? 3 : 1;
-#else
-    const int num_planes = 3;
-#endif
     uint32_t  luma_sq_error[SSE_STRIDE * BH];
     uint32_t  chroma_sq_error[SSE_STRIDE * BH];
 

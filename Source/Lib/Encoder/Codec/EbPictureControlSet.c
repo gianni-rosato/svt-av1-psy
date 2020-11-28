@@ -107,9 +107,6 @@ void picture_control_set_dctor(EbPtr p) {
     EB_DELETE_PTR_ARRAY(obj->ep_mv_neighbor_array, tile_cnt);
     EB_DELETE_PTR_ARRAY(obj->ep_skip_flag_neighbor_array, tile_cnt);
     EB_DELETE_PTR_ARRAY(obj->ep_mode_type_neighbor_array, tile_cnt);
-#if !TUNE_REMOVE_UNUSED_NEIG_ARRAY
-    EB_DELETE_PTR_ARRAY(obj->ep_leaf_depth_neighbor_array, tile_cnt);
-#endif
     EB_DELETE_PTR_ARRAY(obj->ep_luma_recon_neighbor_array, tile_cnt);
     EB_DELETE_PTR_ARRAY(obj->ep_cb_recon_neighbor_array, tile_cnt);
     EB_DELETE_PTR_ARRAY(obj->ep_cr_recon_neighbor_array, tile_cnt);
@@ -143,9 +140,6 @@ void picture_control_set_dctor(EbPtr p) {
         EB_DELETE_PTR_ARRAY(obj->md_mv_neighbor_array[depth], tile_cnt);
         EB_DELETE_PTR_ARRAY(obj->md_skip_flag_neighbor_array[depth], tile_cnt);
         EB_DELETE_PTR_ARRAY(obj->md_mode_type_neighbor_array[depth], tile_cnt);
-#if !TUNE_REMOVE_UNUSED_NEIG_ARRAY
-        EB_DELETE_PTR_ARRAY(obj->md_leaf_depth_neighbor_array[depth], tile_cnt);
-#endif
         EB_DELETE_PTR_ARRAY(obj->mdleaf_partition_neighbor_array[depth], tile_cnt);
 
         EB_DELETE_PTR_ARRAY(obj->md_luma_recon_neighbor_array16bit[depth], tile_cnt);
@@ -160,9 +154,6 @@ void picture_control_set_dctor(EbPtr p) {
         EB_DELETE_PTR_ARRAY(obj->md_cb_recon_neighbor_array[depth], tile_cnt);
         EB_DELETE_PTR_ARRAY(obj->md_cr_recon_neighbor_array[depth], tile_cnt);
 
-#if !FIX_REMOVE_MD_SKIP_COEFF_CIRCUITERY
-        EB_DELETE_PTR_ARRAY(obj->md_skip_coeff_neighbor_array[depth], tile_cnt);
-#endif
         EB_DELETE_PTR_ARRAY(obj->md_luma_dc_sign_level_coeff_neighbor_array[depth], tile_cnt);
         EB_DELETE_PTR_ARRAY(obj->md_tx_depth_1_luma_dc_sign_level_coeff_neighbor_array[depth], tile_cnt);
         EB_DELETE_PTR_ARRAY(obj->md_cr_dc_sign_level_coeff_neighbor_array[depth], tile_cnt);
@@ -409,13 +400,7 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
         EB_ALLOC_PTR_ARRAY(object_ptr->md_mv_neighbor_array[depth], total_tile_cnt);
         EB_ALLOC_PTR_ARRAY(object_ptr->md_skip_flag_neighbor_array[depth], total_tile_cnt);
         EB_ALLOC_PTR_ARRAY(object_ptr->md_mode_type_neighbor_array[depth], total_tile_cnt);
-#if !TUNE_REMOVE_UNUSED_NEIG_ARRAY
-        EB_ALLOC_PTR_ARRAY(object_ptr->md_leaf_depth_neighbor_array[depth], total_tile_cnt);
-#endif
         EB_ALLOC_PTR_ARRAY(object_ptr->mdleaf_partition_neighbor_array[depth], total_tile_cnt);
-#if !FIX_REMOVE_MD_SKIP_COEFF_CIRCUITERY
-        EB_ALLOC_PTR_ARRAY(object_ptr->md_skip_coeff_neighbor_array[depth], total_tile_cnt);
-#endif
         EB_ALLOC_PTR_ARRAY(object_ptr->md_luma_dc_sign_level_coeff_neighbor_array[depth], total_tile_cnt);
         EB_ALLOC_PTR_ARRAY(object_ptr->md_tx_depth_1_luma_dc_sign_level_coeff_neighbor_array[depth], total_tile_cnt);
         EB_ALLOC_PTR_ARRAY(object_ptr->md_cr_dc_sign_level_coeff_neighbor_array[depth], total_tile_cnt);
@@ -488,17 +473,6 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
                     PU_NEIGHBOR_ARRAY_GRANULARITY,
                     NEIGHBOR_ARRAY_UNIT_FULL_MASK,
                 },
-#if !TUNE_REMOVE_UNUSED_NEIG_ARRAY
-                {
-                    &object_ptr->md_leaf_depth_neighbor_array[depth][tile_idx],
-                    MAX_PICTURE_WIDTH_SIZE,
-                    MAX_PICTURE_HEIGHT_SIZE,
-                    sizeof(uint8_t),
-                    PU_NEIGHBOR_ARRAY_GRANULARITY,
-                    PU_NEIGHBOR_ARRAY_GRANULARITY,
-                    NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK,
-                },
-#endif
                 {
                     &object_ptr->mdleaf_partition_neighbor_array[depth][tile_idx],
                     MAX_PICTURE_WIDTH_SIZE,
@@ -508,17 +482,6 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
                     PU_NEIGHBOR_ARRAY_GRANULARITY,
                     NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK,
                 },
-#if !FIX_REMOVE_MD_SKIP_COEFF_CIRCUITERY
-                {
-                    &object_ptr->md_skip_coeff_neighbor_array[depth][tile_idx],
-                    MAX_PICTURE_WIDTH_SIZE,
-                    MAX_PICTURE_HEIGHT_SIZE,
-                    sizeof(uint8_t),
-                    PU_NEIGHBOR_ARRAY_GRANULARITY,
-                    PU_NEIGHBOR_ARRAY_GRANULARITY,
-                    NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK,
-                },
-#endif
                 // for each 4x4
                 {
                     &object_ptr->md_luma_dc_sign_level_coeff_neighbor_array[depth][tile_idx],
@@ -711,9 +674,6 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
     EB_ALLOC_PTR_ARRAY(object_ptr->ep_mv_neighbor_array, total_tile_cnt);
     EB_ALLOC_PTR_ARRAY(object_ptr->ep_skip_flag_neighbor_array, total_tile_cnt);
     EB_ALLOC_PTR_ARRAY(object_ptr->ep_mode_type_neighbor_array, total_tile_cnt);
-#if !TUNE_REMOVE_UNUSED_NEIG_ARRAY
-    EB_ALLOC_PTR_ARRAY(object_ptr->ep_leaf_depth_neighbor_array, total_tile_cnt);
-#endif
     EB_ALLOC_PTR_ARRAY(object_ptr->ep_luma_recon_neighbor_array, total_tile_cnt);
     EB_ALLOC_PTR_ARRAY(object_ptr->ep_cb_recon_neighbor_array, total_tile_cnt);
     EB_ALLOC_PTR_ARRAY(object_ptr->ep_cr_recon_neighbor_array, total_tile_cnt);
@@ -790,17 +750,6 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
                 PU_NEIGHBOR_ARRAY_GRANULARITY,
                 NEIGHBOR_ARRAY_UNIT_FULL_MASK,
             },
-#if !TUNE_REMOVE_UNUSED_NEIG_ARRAY
-            {
-                &object_ptr->ep_leaf_depth_neighbor_array[tile_idx],
-                MAX_PICTURE_WIDTH_SIZE,
-                MAX_PICTURE_HEIGHT_SIZE,
-                sizeof(uint8_t),
-                PU_NEIGHBOR_ARRAY_GRANULARITY,
-                PU_NEIGHBOR_ARRAY_GRANULARITY,
-                NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK,
-            },
-#endif
             {
                 &object_ptr->ep_luma_recon_neighbor_array[tile_idx],
                 MAX_PICTURE_WIDTH_SIZE,
@@ -1185,26 +1134,18 @@ static void picture_parent_control_set_dctor(EbPtr ptr) {
     EB_FREE_ARRAY(obj->rusi_picture[2]);
 
     EB_FREE_ARRAY(obj->av1x);
-#if !FEATURE_IN_LOOP_TPL|| FIX_GM_COMPUTATION
     EB_DESTROY_MUTEX(obj->me_processed_sb_mutex);
-#endif
     EB_DESTROY_MUTEX(obj->rc_distortion_histogram_mutex);
     EB_DESTROY_SEMAPHORE(obj->temp_filt_done_semaphore);
     EB_DESTROY_MUTEX(obj->temp_filt_mutex);
     EB_DESTROY_MUTEX(obj->debug_mutex);
     EB_FREE_ARRAY(obj->tile_group_info);
-#if FEATURE_INL_ME
     EB_DESTROY_SEMAPHORE(obj->tpl_me_done_semaphore);
     EB_DESTROY_MUTEX(obj->tpl_me_mutex);
-#endif
-#if FEATURE_PA_ME
   //  EB_DESTROY_SEMAPHORE(obj->pame_done_semaphore);
     EB_DESTROY_MUTEX(obj->pame_done.mutex);
-#endif
-#if FEATURE_FIRST_PASS_RESTRUCTURE
     EB_DESTROY_SEMAPHORE(obj->first_pass_done_semaphore);
     EB_DESTROY_MUTEX(obj->first_pass_mutex);
-#endif
     if(obj->frame_superres_enabled){
         svt_pcs_sb_structs_dctor(obj);
         EB_DELETE(obj->enhanced_picture_ptr);
@@ -1296,14 +1237,10 @@ EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr,
         const uint16_t picture_height_in_mb = (uint16_t)((init_data_ptr->picture_height + 15) / 16);
         object_ptr->r0 = 0;
         object_ptr->is_720p_or_larger = AOMMIN(init_data_ptr->picture_width, init_data_ptr->picture_height) >= 720;
-#if TUNE_TPL_OIS
         if (init_data_ptr->in_loop_ois == 0)
-#endif
         EB_MALLOC_2D(object_ptr->ois_mb_results, (uint32_t)(picture_width_in_mb * picture_height_in_mb), 1);
-#if TUNE_TPL_OIS
         else
             object_ptr->ois_mb_results = NULL;
-#endif
         EB_MALLOC_2D(object_ptr->tpl_stats, (uint32_t)((picture_width_in_mb << (1 - object_ptr->is_720p_or_larger)) * (picture_height_in_mb << (1 - object_ptr->is_720p_or_larger))), 1);
         EB_MALLOC_ARRAY(object_ptr->tpl_beta, object_ptr->sb_total_count);
         EB_MALLOC_ARRAY(object_ptr->tpl_rdmult_scaling_factors, picture_width_in_mb * picture_height_in_mb);
@@ -1328,9 +1265,7 @@ EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr,
     EB_MALLOC_ARRAY(object_ptr->non_moving_index_array, object_ptr->sb_total_count);
     // SB noise variance array
     EB_MALLOC_ARRAY(object_ptr->sb_flat_noise_array, object_ptr->sb_total_count);
-#if !FEATURE_IN_LOOP_TPL|| FIX_GM_COMPUTATION
     EB_CREATE_MUTEX(object_ptr->me_processed_sb_mutex);
-#endif
     EB_CREATE_MUTEX(object_ptr->rc_distortion_histogram_mutex);
     EB_MALLOC_ARRAY(object_ptr->sb_depth_mode_array, object_ptr->sb_total_count);
     EB_CREATE_SEMAPHORE(object_ptr->temp_filt_done_semaphore, 0, 1);
@@ -1338,18 +1273,12 @@ EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr,
     EB_CREATE_MUTEX(object_ptr->debug_mutex);
     EB_MALLOC_ARRAY(object_ptr->av1_cm, 1);
 
-#if FEATURE_INL_ME
     EB_CREATE_SEMAPHORE(object_ptr->tpl_me_done_semaphore, 0, 1);
     EB_CREATE_MUTEX(object_ptr->tpl_me_mutex);
-#endif
 
-#if FEATURE_PA_ME
     EB_CREATE_MUTEX(object_ptr->pame_done.mutex);
-#endif
-#if FEATURE_FIRST_PASS_RESTRUCTURE
     EB_CREATE_SEMAPHORE(object_ptr->first_pass_done_semaphore, 0, 1);
     EB_CREATE_MUTEX(object_ptr->first_pass_mutex);
-#endif
     object_ptr->av1_cm->interp_filter = SWITCHABLE;
 
     object_ptr->av1_cm->mi_stride = picture_sb_width * (BLOCK_SIZE_64 / 4);
@@ -1426,13 +1355,11 @@ EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr,
     object_ptr->frame_height = init_data_ptr->picture_height;
 
     object_ptr->superres_denom = SCALE_NUMERATOR;
-#if FEATURE_RE_ENCODE
      // Loop variables
     object_ptr->loop_count = 0;
     object_ptr->overshoot_seen = 0;
     object_ptr->undershoot_seen = 0;
     object_ptr->low_cr_seen = 0;
-#endif
 
     return return_error;
 }

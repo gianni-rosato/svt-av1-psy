@@ -326,17 +326,6 @@ struct TileDataEnc;
 void svt_av1_twopass_zero_stats(FIRSTPASS_STATS *section);
 void svt_av1_accumulate_stats(FIRSTPASS_STATS *section,
                           const FIRSTPASS_STATS *frame);
-#if !FEATURE_FIRST_PASS_RESTRUCTURE
-struct PictureParentControlSet;
-extern void svt_av1_end_first_pass(struct PictureParentControlSet *pcs_ptr);
-extern void first_pass_frame_end(struct PictureParentControlSet *pcs_ptr, const int64_t ts_duration);
-extern void setup_firstpass_data(struct PictureParentControlSet *pcs_ptr);
-extern void average_non_16x16_stats(FRAME_STATS *mb_stats, int blk_num);
-void accumulate_mv_stats(const MV best_mv, const FULLPEL_MV mv,
-    const int mb_row, const int mb_col,
-    const int mb_rows, const int mb_cols,
-    MV *last_mv, FRAME_STATS *stats);
-#endif
 /*!\endcond */
 
 #ifdef __cplusplus

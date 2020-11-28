@@ -385,9 +385,6 @@ typedef struct BlkStruct {
                        // final_ref_mv_stack and ref_mv_count for EC
     PredictionMode pred_mode; // ec
 #if !CLEAN_UP_SB_DATA_4
-#if !FIX_REMOVE_MD_SKIP_COEFF_CIRCUITERY
-    uint8_t        skip_coeff_context;
-#endif
     uint8_t        reference_mode_context;
     uint8_t        compoud_reference_type_context;
     int32_t        quantized_dc[3][MAX_TXB_COUNT];
@@ -417,9 +414,7 @@ typedef struct BlkStruct {
     uint8_t        filter_intra_mode;// ec
     uint8_t        do_not_process_block;
     uint8_t                  use_intrabc;
-#if FEATURE_RE_ENCODE
     uint64_t       total_rate;
-#endif
 } BlkStruct;
 
 typedef struct TplStats {

@@ -81,13 +81,8 @@
 PredictionStructureConfigEntry flat_pred_struct[] = {{
     0, // GOP Index 0 - Temporal Layer
     0, // GOP Index 0 - Decode Order
-#if TUNE_LOW_DELAY
     {1, 3, 5, 8},    // GOP Index 0 - Ref List 0
     {2, 4, 6, 0}     // GOP Index 0 - Ref List 1
-#else
-    {1, 2, 0, 0}, // GOP Index 0 - Ref List 0
-    {1, 2, 0, 0} // GOP Index 0 - Ref List 1
-#endif
 }};
 
 /************************************************
@@ -107,24 +102,14 @@ PredictionStructureConfigEntry two_level_hierarchical_pred_struct[] = {
     {
         0, // GOP Index 0 - Temporal Layer
         0, // GOP Index 0 - Decode Order
-#if TUNE_LOW_DELAY
         {2, 6, 10, 0},     // GOP Index 0 - Ref List 0
         {4, 8, 0, 0}      // GOP Index 0 - Ref List 1
-#else
-        {2, 4, 0, 0}, // GOP Index 0 - Ref List 0
-        {2, 4, 0, 0} // GOP Index 0 - Ref List 1
-#endif
     },
     {
         1, // GOP Index 1 - Temporal Layer
         1, // GOP Index 1 - Decode Order
-#if TUNE_LOW_DELAY
         { 1, 2 ,3, 5},    // GOP Index 1 - Ref List 0
         {-1, 0, 0, 0}     // GOP Index 1 - Ref List 1
-#else
-        {1, 3, 0, 0}, // GOP Index 1 - Ref List 0
-        {-1, 0, 0, 0} // GOP Index 1 - Ref List 1
-#endif
     }};
 
 /************************************************
@@ -148,13 +133,8 @@ PredictionStructureConfigEntry three_level_hierarchical_pred_struct[] = {
     {
         0, // GOP Index 0 - Temporal Layer
         0, // GOP Index 0 - Decode Order
-#if TUNE_LOW_DELAY
         {4, 12, 0, 0},     // GOP Index 0 - Ref List 0
         {4, 8, 0, 0}      // GOP Index 0 - Ref List 1
-#else
-        {4, 8, 0, 0}, // GOP Index 0 - Ref List 0
-        {4, 8, 0, 0} // GOP Index 0 - Ref List 1
-#endif
     },
     {
         2, // GOP Index 1 - Temporal Layer
@@ -1847,7 +1827,6 @@ EbErrorType prediction_structure_group_ctor(PredictionStructureGroup *pred_struc
     }
 
     if (ref_count_used < MAX_REF_IDX) {
-#if TUNE_LOW_DELAY
         for (int gop_i = 0; gop_i < 1; ++gop_i) {
             for (int i = ref_count_used; i < MAX_REF_IDX; ++i) {
                 prediction_structure_config_array[0].entry_array[gop_i].ref_list0[i] = 0;
@@ -1867,14 +1846,6 @@ EbErrorType prediction_structure_group_ctor(PredictionStructureGroup *pred_struc
             }
         }
         pred_struct_group_ptr->ref_count_used = ref_count_used;
-#else
-        for (int gop_i = 1; gop_i < 4; ++gop_i) {
-            for (int i = ref_count_used; i < MAX_REF_IDX; ++i) {
-                prediction_structure_config_array[2].entry_array[gop_i].ref_list0[i] = 0;
-                prediction_structure_config_array[2].entry_array[gop_i].ref_list1[i] = 0;
-            }
-        }
-#endif
 
         for (int gop_i = 1; gop_i < 8; ++gop_i) {
             for (int i = ref_count_used; i < MAX_REF_IDX; ++i) {

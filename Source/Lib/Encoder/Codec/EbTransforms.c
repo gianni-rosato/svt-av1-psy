@@ -2934,7 +2934,6 @@ uint64_t svt_handle_transform16x64_c(int32_t *output) {
     return three_quad_energy;
 }
 
-#if FEATURE_PARTIAL_FREQUENCY
 uint64_t handle_transform16x64_N2_N4_c(int32_t *output) {
     (void)output;
     return 0;
@@ -2968,7 +2967,6 @@ uint64_t handle_transform64x64_N2_N4_c(int32_t *output) {
 
     return 0;
 }
-#endif /*FEATURE_PARTIAL_FREQUENCY*/
 void svt_av1_fwd_txfm2d_32x16_c(int16_t *input, int32_t *output, uint32_t input_stride,
                                 TxType transform_type, uint8_t bit_depth) {
     int32_t       intermediate_transform_buffer[32 * 16];
@@ -3058,7 +3056,6 @@ void svt_av1_fwd_txfm2d_4x8_c(int16_t *input, int32_t *output, uint32_t input_st
     /*fwd_txfm2d_c*/ av1_tranform_two_d_core_c(
         input, input_stride, output, &cfg, intermediate_transform_buffer, bit_depth);
 }
-#if FEATURE_PARTIAL_FREQUENCY
 static EbErrorType av1_estimate_transform_N2(int16_t *residual_buffer, uint32_t residual_stride,
                                    int32_t *coeff_buffer, uint32_t coeff_stride,
                                    TxSize transform_size, uint64_t *three_quad_energy,
@@ -3613,7 +3610,6 @@ EbErrorType av1_estimate_transform_default(int16_t *residual_buffer, uint32_t re
 
     return return_error;
 }
-#endif /* FEATURE_PARTIAL_FREQUENCY */
 /*********************************************************************
 * Transform
 *   Note there is an implicit assumption that TU Size <= PU Size,
@@ -3627,12 +3623,8 @@ EbErrorType av1_estimate_transform(int16_t *residual_buffer, uint32_t residual_s
 
 {
     (void)trans_coeff_shape;
-#if !FEATURE_PARTIAL_FREQUENCY
-    EbErrorType return_error = EB_ErrorNone;
-#endif
     (void)coeff_stride;
     (void)component_type;
-#if FEATURE_PARTIAL_FREQUENCY
     switch (trans_coeff_shape) {
     case DEFAULT_SHAPE:
         return av1_estimate_transform_default(residual_buffer,
@@ -3678,170 +3670,6 @@ EbErrorType av1_estimate_transform(int16_t *residual_buffer, uint32_t residual_s
 
     assert(0);
     return EB_ErrorBadParameter;
-#else  /*FEATURE_PARTIAL_FREQUENCY*/
-    switch (transform_size) {
-    case TX_64X32:
-        if (transform_type == DCT_DCT)
-            svt_av1_fwd_txfm2d_64x32(
-                residual_buffer, coeff_buffer, residual_stride, transform_type, bit_depth);
-        else
-            svt_av1_fwd_txfm2d_64x32_c(
-                residual_buffer, coeff_buffer, residual_stride, transform_type, bit_depth);
-
-        *three_quad_energy = svt_handle_transform64x32(coeff_buffer);
-
-        break;
-
-    case TX_32X64:
-        if (transform_type == DCT_DCT)
-            svt_av1_fwd_txfm2d_32x64(
-                residual_buffer, coeff_buffer, residual_stride, transform_type, bit_depth);
-        else
-            svt_av1_fwd_txfm2d_32x64_c(
-                residual_buffer, coeff_buffer, residual_stride, transform_type, bit_depth);
-
-        *three_quad_energy = svt_handle_transform32x64(coeff_buffer);
-
-        break;
-
-    case TX_64X16:
-        if (transform_type == DCT_DCT)
-            svt_av1_fwd_txfm2d_64x16(
-                residual_buffer, coeff_buffer, residual_stride, transform_type, bit_depth);
-        else
-            svt_av1_fwd_txfm2d_64x16_c(
-                residual_buffer, coeff_buffer, residual_stride, transform_type, bit_depth);
-
-        *three_quad_energy = svt_handle_transform64x16(coeff_buffer);
-
-        break;
-
-    case TX_16X64:
-        if (transform_type == DCT_DCT)
-            svt_av1_fwd_txfm2d_16x64(
-                residual_buffer, coeff_buffer, residual_stride, transform_type, bit_depth);
-        else
-            svt_av1_fwd_txfm2d_16x64_c(
-                residual_buffer, coeff_buffer, residual_stride, transform_type, bit_depth);
-
-        *three_quad_energy = svt_handle_transform16x64(coeff_buffer);
-
-        break;
-
-    case TX_32X16:
-        // TTK
-        if ((transform_type == DCT_DCT) || (transform_type == IDTX))
-            svt_av1_fwd_txfm2d_32x16(
-                residual_buffer, coeff_buffer, residual_stride, transform_type, bit_depth);
-        else
-            svt_av1_fwd_txfm2d_32x16_c(
-                residual_buffer, coeff_buffer, residual_stride, transform_type, bit_depth);
-        break;
-
-    case TX_16X32:
-        if ((transform_type == DCT_DCT) || (transform_type == IDTX))
-            svt_av1_fwd_txfm2d_16x32(
-                residual_buffer, coeff_buffer, residual_stride, transform_type, bit_depth);
-        else
-            svt_av1_fwd_txfm2d_16x32_c(
-                residual_buffer, coeff_buffer, residual_stride, transform_type, bit_depth);
-        break;
-
-    case TX_16X8:
-        svt_av1_fwd_txfm2d_16x8(
-            residual_buffer, coeff_buffer, residual_stride, transform_type, bit_depth);
-        break;
-
-    case TX_8X16:
-        svt_av1_fwd_txfm2d_8x16(
-            residual_buffer, coeff_buffer, residual_stride, transform_type, bit_depth);
-        break;
-
-    case TX_32X8:
-        if ((transform_type == DCT_DCT) || (transform_type == IDTX))
-            svt_av1_fwd_txfm2d_32x8(
-                residual_buffer, coeff_buffer, residual_stride, transform_type, bit_depth);
-        else
-            svt_av1_fwd_txfm2d_32x8_c(
-                residual_buffer, coeff_buffer, residual_stride, transform_type, bit_depth);
-        break;
-
-    case TX_8X32:
-        if ((transform_type == DCT_DCT) || (transform_type == IDTX))
-            svt_av1_fwd_txfm2d_8x32(
-                residual_buffer, coeff_buffer, residual_stride, transform_type, bit_depth);
-        else
-            svt_av1_fwd_txfm2d_8x32_c(
-                residual_buffer, coeff_buffer, residual_stride, transform_type, bit_depth);
-        break;
-    case TX_16X4:
-        svt_av1_fwd_txfm2d_16x4(
-            residual_buffer, coeff_buffer, residual_stride, transform_type, bit_depth);
-        break;
-    case TX_4X16:
-        svt_av1_fwd_txfm2d_4x16(
-            residual_buffer, coeff_buffer, residual_stride, transform_type, bit_depth);
-        break;
-    case TX_8X4:
-
-        svt_av1_fwd_txfm2d_8x4(
-            residual_buffer, coeff_buffer, residual_stride, transform_type, bit_depth);
-
-        break;
-    case TX_4X8:
-
-        svt_av1_fwd_txfm2d_4x8(
-            residual_buffer, coeff_buffer, residual_stride, transform_type, bit_depth);
-
-        break;
-
-    case TX_64X64:
-
-        svt_av1_fwd_txfm2d_64x64(
-            residual_buffer, coeff_buffer, residual_stride, transform_type, bit_depth);
-
-        *three_quad_energy = svt_handle_transform64x64(coeff_buffer);
-
-        break;
-
-    case TX_32X32:
-        if (transform_type == V_DCT || transform_type == H_DCT || transform_type == V_ADST ||
-            transform_type == H_ADST || transform_type == V_FLIPADST ||
-            transform_type == H_FLIPADST)
-            // Tahani: I believe those cases are never hit
-            svt_av1_transform_two_d_32x32_c(
-                residual_buffer, coeff_buffer, residual_stride, transform_type, bit_depth);
-
-        else {
-            svt_av1_fwd_txfm2d_32x32(
-                residual_buffer, coeff_buffer, residual_stride, transform_type, bit_depth);
-        }
-
-        break;
-
-    case TX_16X16:
-
-        svt_av1_fwd_txfm2d_16x16(
-            residual_buffer, coeff_buffer, residual_stride, transform_type, bit_depth);
-
-        break;
-    case TX_8X8:
-
-        svt_av1_fwd_txfm2d_8x8(
-            residual_buffer, coeff_buffer, residual_stride, transform_type, bit_depth);
-
-        break;
-    case TX_4X4:
-
-        svt_av1_fwd_txfm2d_4x4(
-            residual_buffer, coeff_buffer, residual_stride, transform_type, bit_depth);
-
-        break;
-    default: assert(0); break;
-    }
-
-    return return_error;
-#endif  /*FEATURE_PARTIAL_FREQUENCY*/
 }
 static void highbd_fwd_txfm_64x64(int16_t *src_diff, TranLow *coeff,
                                   int diff_stride, TxfmParam *txfm_param) {
@@ -4060,7 +3888,6 @@ void svt_av1_wht_fwd_txfm(int16_t *src_diff, int bw, int32_t *coeff, TxSize tx_s
     svt_av1_highbd_fwd_txfm(src_diff, coeff, bw, &txfm_param);
 }
 
-#if FEATURE_PARTIAL_FREQUENCY
 void svt_av1_fidentity16_N2_c(const int32_t *input, int32_t *output, int8_t cos_bit,
                              const int8_t *stage_range) {
     (void)stage_range;
@@ -7472,7 +7299,6 @@ void svt_av1_fwd_txfm2d_4x8_N4_c(int16_t *input, int32_t *output, uint32_t input
     av1_tranform_two_d_core_N4_c(
         input, input_stride, output, &cfg, intermediate_transform_buffer, bit_depth);
 }
-#endif /*FEATURE_PARTIAL_FREQUENCY*/
 /*********************************************************************
  * Map Chroma QP
  *********************************************************************/

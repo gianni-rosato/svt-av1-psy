@@ -381,7 +381,6 @@ void av1_estimate_mv_rate(PictureControlSet *      pcs_ptr,
             md_rate_estimation_array->dv_joint_cost, dvcost, &fc->ndvc, MV_SUBPEL_NONE);
     }
 }
-#if TUNE_CDF
 void copy_mv_rate(PictureControlSet *pcs, MdRateEstimationContext * dst_rate)
 {
     FrameHeader * frm_hdr = &pcs->parent_pcs_ptr->frm_hdr;
@@ -407,7 +406,6 @@ void copy_mv_rate(PictureControlSet *pcs, MdRateEstimationContext * dst_rate)
         memcpy(dst_rate->dv_joint_cost, pcs->md_rate_estimation_array->dv_joint_cost, MV_JOINTS * sizeof(int32_t));
     }
 }
-#endif
 /**************************************************************************
 * av1_estimate_coefficients_rate()
 * Estimate the rate of the quantised coefficient
@@ -1156,13 +1154,7 @@ void update_part_stats(PictureControlSet *pcs_ptr, BlkStruct *blk_ptr,
         const int has_cols = (mi_col + hbs) < cm->mi_cols;
 
         if (has_rows && has_cols) {
-#if !TUNE_CDF
-            if (pcs_ptr->update_cdf) {
-#endif
                 update_cdf(fc->partition_cdf[ctx], partition, partition_cdf_length(bsize));
-#if !TUNE_CDF
-            }
-#endif
         }
     }
 }

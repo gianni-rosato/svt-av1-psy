@@ -140,9 +140,7 @@
 #define VBR_MAX_SECTION_PCT_TOKEN "-maxsection-pct"
 #define UNDER_SHOOT_PCT_TOKEN "-undershoot-pct"
 #define OVER_SHOOT_PCT_TOKEN "-overshoot-pct"
-#if FEATURE_RE_ENCODE
 #define RECODE_LOOP_TOKEN "-recode-loop"
-#endif
 #define ADAPTIVE_QP_ENABLE_TOKEN "-adaptive-quantization"
 #define LOOK_AHEAD_DIST_TOKEN "-lad"
 #define ENABLE_TPL_LA_TOKEN "-enable-tpl-la"
@@ -552,11 +550,9 @@ static void set_under_shoot_pct(const char *value, EbConfig *cfg) {
 static void set_over_shoot_pct(const char *value, EbConfig *cfg) {
     cfg->config.over_shoot_pct = strtoul(value, NULL, 0);
 };
-#if FEATURE_RE_ENCODE
 static void set_recode_loop(const char *value, EbConfig *cfg) {
     cfg->config.recode_loop = strtoul(value, NULL, 0);
 };
-#endif
 static void set_adaptive_quantization(const char *value, EbConfig *cfg) {
     cfg->config.enable_adaptive_quantization = (EbBool)strtol(value, NULL, 0);
 };
@@ -852,9 +848,7 @@ ConfigEntry config_entry_rc[] = {
     {SINGLE_INPUT, VBV_BUFSIZE_TOKEN, "VBV buffer size", set_vbv_buf_size},
     {SINGLE_INPUT, UNDER_SHOOT_PCT_TOKEN, "Datarate undershoot (min) target (%)", set_under_shoot_pct},
     {SINGLE_INPUT, OVER_SHOOT_PCT_TOKEN, "Datarate overshoot (max) target (%)", set_over_shoot_pct},
-#if FEATURE_RE_ENCODE
     {SINGLE_INPUT, RECODE_LOOP_TOKEN, "Recode loop levels ", set_recode_loop},
-#endif
     // Termination
     {SINGLE_INPUT, NULL, NULL, NULL}};
 ConfigEntry config_entry_2p[] = {
@@ -1205,9 +1199,7 @@ ConfigEntry config_entry[] = {
     {SINGLE_INPUT, VBR_MAX_SECTION_PCT_TOKEN, "GOP max bitrate (% of target)", set_vbr_max_section_pct},
     {SINGLE_INPUT, UNDER_SHOOT_PCT_TOKEN, "Datarate undershoot (min) target (%)", set_under_shoot_pct},
     {SINGLE_INPUT, OVER_SHOOT_PCT_TOKEN, "Datarate overshoot (max) target (%)", set_over_shoot_pct},
-#if FEATURE_RE_ENCODE
     {SINGLE_INPUT, RECODE_LOOP_TOKEN, "Recode loop levels ", set_recode_loop},
-#endif
 
     // DLF
     {SINGLE_INPUT, LOOP_FILTER_DISABLE_TOKEN, "LoopFilterDisable", set_disable_dlf_flag},
@@ -1916,15 +1908,7 @@ static EbErrorType verify_settings(EbConfig *config, uint32_t channel_number) {
         return EB_ErrorBadParameter;
     }
     if (pass != DEFAULT || config->input_stat_file || config->output_stat_file) {
-#if FIX_2PASS_VBR_4L_SUPPORT
-#if TUNE_LOW_DELAY
         if (config->config.hierarchical_levels > 4)
-#else
-        if (config->config.hierarchical_levels != 3 && config->config.hierarchical_levels != 4)
-#endif
-#else
-        if (config->config.hierarchical_levels != 4)
-#endif
         {
             fprintf(config->error_log_file,
                 "Error instance %u: 2 pass encode for hierarchical_levels %u is not supported\n",
@@ -2181,12 +2165,8 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncodePass pass[MAX_ENCODE
         preset = strtol(config_string, NULL, 0);
     }
     int rc_mode = 0;
-#if FIX_RC_TOKEN
     if (find_token(argc, argv, RATE_CONTROL_ENABLE_TOKEN, config_string) == 0 ||
         find_token(argc, argv, "--rc", config_string) == 0 )
-#else
-    if (find_token(argc, argv, RATE_CONTROL_ENABLE_TOKEN, config_string) == 0 )
-#endif
         rc_mode = strtol(config_string, NULL, 0);
 
     if (preset > 3 && rc_mode == 0) {

@@ -140,13 +140,8 @@ const uint8_t *svt_av1_get_obmc_mask(int length);
 
 int8_t av1_ref_frame_type(const MvReferenceFrame *const rf);
 
-#if FIX_REMOVE_UNUSED_CODE
 void model_rd_from_sse(BlockSize bsize, int16_t quantizer, uint8_t bit_depth, uint64_t sse,
     uint32_t *rate, uint64_t *dist, uint8_t simple_model_rd_from_var) ;
-#else
-void model_rd_from_sse(BlockSize bsize, int16_t quantizer, uint8_t bit_depth, uint64_t sse,
-                       uint32_t *rate, uint64_t *dist);
-#endif
 #ifdef __cplusplus
 }
 #endif

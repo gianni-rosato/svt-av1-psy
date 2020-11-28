@@ -55,12 +55,8 @@ typedef struct {
 } GF_FRAME_STATS;
 
 void svt_av1_init_second_pass(struct SequenceControlSet *scs_ptr);
-#if FEATURE_LAP_ENABLED_VBR
 void svt_av1_init_single_pass_lap(struct SequenceControlSet *scs_ptr);
 void svt_av1_new_framerate(struct SequenceControlSet *scs_ptr, double framerate);
-#else
-void av1_init_single_pass_lap(AV1_COMP *cpi);
-#endif
 
 void svt_av1_get_second_pass_params(struct PictureParentControlSet *pcs_ptr);
 

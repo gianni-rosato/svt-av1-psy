@@ -367,11 +367,7 @@ void speed_buffer_control(ResourceCoordinationContext *context_ptr,
     svt_release_mutex(scs_ptr->encode_context_ptr->sc_buffer_mutex);
     context_ptr->prev_enc_mod = scs_ptr->encode_context_ptr->enc_mode;
 }
-#if FEATURE_PA_ME
 static EbErrorType reset_pcs_av1(PictureParentControlSet *pcs_ptr) {
-#else
-void reset_pcs_av1(PictureParentControlSet *pcs_ptr) {
-#endif
     FrameHeader *frm_hdr = &pcs_ptr->frm_hdr;
     Av1Common *  cm      = pcs_ptr->av1_cm;
 
@@ -470,19 +466,14 @@ void reset_pcs_av1(PictureParentControlSet *pcs_ptr) {
     frm_hdr->frame_refs_short_signaling = 0;
     pcs_ptr->allow_comp_inter_inter     = 0;
     //  int32_t all_one_sided_refs;
-#if FEATURE_INL_ME
     pcs_ptr->tpl_me_done = 0;
     pcs_ptr->me_data_wrapper_ptr = NULL;
     pcs_ptr->down_scaled_picture_wrapper_ptr = NULL;
     pcs_ptr->ds_pics.picture_ptr = NULL;
     pcs_ptr->ds_pics.quarter_picture_ptr = NULL;
     pcs_ptr->ds_pics.sixteenth_picture_ptr = NULL;
-#if TUNE_INL_TPL_ENHANCEMENT
     pcs_ptr->max_number_of_pus_per_sb = SQUARE_PU_COUNT;
-#endif
-#endif
 
-#if FEATURE_PA_ME
     atomic_set_u32(&pcs_ptr->pame_done, 0);
     EB_CREATE_SEMAPHORE(pcs_ptr->pame_done_semaphore, 0, 1);
 
@@ -490,7 +481,6 @@ void reset_pcs_av1(PictureParentControlSet *pcs_ptr) {
    pcs_ptr->num_tpl_processed = 0;
 
     return EB_ErrorNone;
-#endif
 }
 /***********************************************
 **** Copy the input buffer from the
@@ -684,10 +674,8 @@ static void setup_two_pass(SequenceControlSet *scs_ptr) {
             svt_av1_init_second_pass(scs_ptr);
         }
     }
-#if FEATURE_LAP_ENABLED_VBR
     else if (scs_ptr->lap_enabled)
         svt_av1_init_single_pass_lap(scs_ptr);
-#endif
 }
 
 extern EbErrorType first_pass_signal_derivation_pre_analysis(SequenceControlSet *     scs_ptr,
@@ -839,11 +827,7 @@ void *resource_coordination_kernel(void *input_ptr) {
                 // 0                 OFF
                 // 1                 ON
                 scs_ptr->seq_header.enable_interintra_compound =
-#if TUNE_NEW_PRESETS
                 (scs_ptr->static_config.enc_mode <= ENC_M2) ? 1 : 0;
-#else
-                (scs_ptr->static_config.enc_mode <= ENC_M3) ? 1 : 0;
-#endif
 
             } else
                 scs_ptr->seq_header.enable_interintra_compound =
@@ -854,11 +838,7 @@ void *resource_coordination_kernel(void *input_ptr) {
             // 1                             | Enable
             if (scs_ptr->static_config.filter_intra_level == DEFAULT)
                 scs_ptr->seq_header.filter_intra_level =
-#if TUNE_NEW_PRESETS
                 (scs_ptr->static_config.enc_mode <= ENC_M5) ? 1 : 0;
-#else
-                (scs_ptr->static_config.enc_mode <= ENC_M6) ? 1 : 0;
-#endif
             else
                 scs_ptr->seq_header.filter_intra_level = (scs_ptr->static_config.filter_intra_level == 0) ? 0 : 1;
             // Set compound mode      Settings
@@ -1024,17 +1004,10 @@ void *resource_coordination_kernel(void *input_ptr) {
                 pcs_ptr->picture_number = context_ptr->picture_number_array[instance_index]++;
             else
                 pcs_ptr->picture_number = context_ptr->picture_number_array[instance_index];
-#if  !FEATURE_PA_ME
-            reset_pcs_av1(pcs_ptr);
-#endif
             if (pcs_ptr->picture_number == 0) {
                 if (use_input_stat(scs_ptr))
                     read_stat(scs_ptr);
-#if FEATURE_LAP_ENABLED_VBR
                 if (use_input_stat(scs_ptr) || use_output_stat(scs_ptr) || scs_ptr->lap_enabled)
-#else
-                if (use_input_stat(scs_ptr) || use_output_stat(scs_ptr))
-#endif
                     setup_two_pass(scs_ptr);
             }
             pcs_ptr->ts_duration = (int64_t)10000000*(1<<16) / scs_ptr->frame_rate;
@@ -1051,14 +1024,12 @@ void *resource_coordination_kernel(void *input_ptr) {
                 svt_object_inc_live_count(pcs_ptr->pa_reference_picture_wrapper_ptr, 1);
             else
                 svt_object_inc_live_count(pcs_ptr->pa_reference_picture_wrapper_ptr, 2);
-#if FEATURE_INL_ME
             if (scs_ptr->in_loop_me) {
                 EbObjectWrapper *ds_wrapper;
                 svt_get_empty_object(scs_ptr->encode_context_ptr->down_scaled_picture_pool_fifo_ptr,
                         &ds_wrapper);
                 pcs_ptr->down_scaled_picture_wrapper_ptr = ds_wrapper;
             }
-#endif
             if (scs_ptr->static_config.unrestricted_motion_vector == 0) {
                 struct PictureParentControlSet *ppcs_ptr = pcs_ptr;
                 Av1Common *const                cm       = ppcs_ptr->av1_cm;
@@ -1106,7 +1077,6 @@ void *resource_coordination_kernel(void *input_ptr) {
 
             // Get Empty Output Results Object
             if (pcs_ptr->picture_number > 0 && (prev_pcs_wrapper_ptr != NULL)) {
-#if  FEATURE_PA_ME
                 PictureParentControlSet * ppcs_out = (PictureParentControlSet *)prev_pcs_wrapper_ptr->object_ptr;
 
                 ppcs_out->end_of_sequence_flag = end_of_sequence_flag;
@@ -1115,21 +1085,10 @@ void *resource_coordination_kernel(void *input_ptr) {
                     ppcs_out->alt_ref_ppcs_ptr->end_of_sequence_flag = EB_TRUE;
 
                 reset_pcs_av1(ppcs_out);
-#else
-                ((PictureParentControlSet *)prev_pcs_wrapper_ptr->object_ptr)
-                    ->end_of_sequence_flag = end_of_sequence_flag;
-#endif
                 svt_get_empty_object(context_ptr->resource_coordination_results_output_fifo_ptr,
                                      &output_wrapper_ptr);
                 out_results_ptr = (ResourceCoordinationResults *)output_wrapper_ptr->object_ptr;
                 out_results_ptr->pcs_wrapper_ptr = prev_pcs_wrapper_ptr;
-#if  !FEATURE_PA_ME
-                // since overlay frame has the end of sequence set properly, set the end of sequence to true in the alt ref picture
-                if (((PictureParentControlSet *)prev_pcs_wrapper_ptr->object_ptr)->is_overlay &&
-                    end_of_sequence_flag)
-                    ((PictureParentControlSet *)prev_pcs_wrapper_ptr->object_ptr)
-                        ->alt_ref_ppcs_ptr->end_of_sequence_flag = EB_TRUE;
-#endif
                 // Post the finished Results Object
                 svt_post_full_object(output_wrapper_ptr);
             }

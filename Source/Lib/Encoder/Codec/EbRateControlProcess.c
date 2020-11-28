@@ -29,15 +29,12 @@
 #include "EbLambdaRateTables.h"
 #include "pass2_strategy.h"
 
-#if FEATURE_IN_LOOP_TPL
 #include "EbTransforms.h"
 #include "aom_dsp_rtcd.h"
 #include "EbLog.h"
 #include "EbIntraPrediction.h"
 #include "EbMotionEstimation.h"
-#endif
 
-#if FEATURE_IN_LOOP_TPL
 // Generate lambda factor to tune lambda based on TPL stats
 static void generate_lambda_scaling_factor(PictureParentControlSet         *pcs_ptr, int64_t mc_dep_cost_base)
 {
@@ -288,7 +285,6 @@ static uint8_t is_me_data_valid(
     }
     return 0;
 }
-#if TUNE_TPL_OPT
 // Reference pruning, Loop over all available references and get the best reference idx based on SAD
 void get_best_reference(
     PictureParentControlSet *pcs_ptr,
@@ -343,7 +339,6 @@ void get_best_reference(
     }
     return;
 }
-#endif
 /************************************************
 * Genrate TPL MC Flow Dispenser  Based on Lookahead
 ** LAD Window: sliding window size
@@ -354,25 +349,13 @@ void tpl_mc_flow_dispenser(
     PictureParentControlSet         *pcs_ptr,
     int32_t                          frame_idx)
 {
-#if !TUNE_TPL_LOSSLESS
-    uint32_t    picture_width_in_sb = (pcs_ptr->enhanced_picture_ptr->width + BLOCK_SIZE_64 - 1) / BLOCK_SIZE_64;
-#endif
     uint32_t    picture_width_in_mb = (pcs_ptr->enhanced_picture_ptr->width + 16 - 1) / 16;
-#if !TUNE_TPL_LOSSLESS
-    uint32_t    picture_height_in_sb = (pcs_ptr->enhanced_picture_ptr->height + BLOCK_SIZE_64 - 1) / BLOCK_SIZE_64;
-#endif
     int16_t     x_curr_mv = 0;
     int16_t     y_curr_mv = 0;
     uint32_t    me_mb_offset = 0;
     TxSize      tx_size = TX_16X16;
     EbPictureBufferDesc  *ref_pic_ptr;
-#if !TUNE_TPL_LOSSLESS
-    struct      ScaleFactors sf;
-#endif
     BlockGeom   blk_geom;
-#if !TUNE_TPL_LOSSLESS
-    uint32_t    kernel = (EIGHTTAP_REGULAR << 16) | EIGHTTAP_REGULAR;
-#endif
     EbPictureBufferDesc *input_picture_ptr = pcs_ptr->enhanced_picture_ptr;
     EbPictureBufferDesc *recon_picture_ptr = encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx];
     TplStats  tpl_stats;
@@ -387,19 +370,10 @@ void tpl_mc_flow_dispenser(
 
     blk_geom.bwidth = 16;
     blk_geom.bheight = 16;
-#if !TUNE_TPL_LOSSLESS
-    svt_av1_setup_scale_factors_for_frame(
-        &sf, picture_width_in_sb * BLOCK_SIZE_64,
-        picture_height_in_sb * BLOCK_SIZE_64,
-        picture_width_in_sb * BLOCK_SIZE_64,
-        picture_height_in_sb * BLOCK_SIZE_64);
-#endif
 
     MacroblockPlane mb_plane;
     int32_t qIndex = quantizer_to_qindex[(uint8_t)scs_ptr->static_config.qp];
-#if TUNE_TPL_OPT
     if (pcs_ptr->tpl_data.tpl_ctrls.enable_tpl_qps){
-#endif
     const  double delta_rate_new[7][6] =
     {
         { 1.0, 1.0, 1.0, 1.0, 1.0, 1.0 }, // 1L
@@ -411,11 +385,7 @@ void tpl_mc_flow_dispenser(
     };
     double q_val;  q_val = svt_av1_convert_qindex_to_q(qIndex, 8);
     int32_t delta_qindex;
-#if ENABLE_TPL_TRAILING
     if (pcs_ptr->tpl_data.tpl_slice_type == I_SLICE)
-#else
-    if (pcs_ptr->slice_type == I_SLICE)
-#endif
         delta_qindex = svt_av1_compute_qdelta(
             q_val,
             q_val * 0.25,
@@ -423,20 +393,12 @@ void tpl_mc_flow_dispenser(
     else
         delta_qindex = svt_av1_compute_qdelta(
             q_val,
-#if ENABLE_TPL_TRAILING
             q_val * delta_rate_new[pcs_ptr->hierarchical_levels]
             [pcs_ptr->tpl_data.tpl_temporal_layer_index],
-#else
-            q_val * delta_rate_new[pcs_ptr->hierarchical_levels]
-            [pcs_ptr->temporal_layer_index],
-#endif
             8);
     qIndex =
         (qIndex + delta_qindex);
-#if TUNE_TPL_OPT
     }
-#endif
-#if FIX_OPTIMIZE_BUILD_QUANTIZER
     mb_plane.quant_qtx = scs_ptr->quants_8bit.y_quant[qIndex];
     mb_plane.quant_fp_qtx = scs_ptr->quants_8bit.y_quant_fp[qIndex];
     mb_plane.round_fp_qtx = scs_ptr->quants_8bit.y_round_fp[qIndex];
@@ -444,35 +406,10 @@ void tpl_mc_flow_dispenser(
     mb_plane.zbin_qtx = scs_ptr->quants_8bit.y_zbin[qIndex];
     mb_plane.round_qtx = scs_ptr->quants_8bit.y_round[qIndex];
     mb_plane.dequant_qtx = scs_ptr->deq_8bit.y_dequant_qtx[qIndex];
-#else
-    Quants *const quants_bd = &pcs_ptr->quants_bd;
-    Dequants *const deq_bd = &pcs_ptr->deq_bd;
-    svt_av1_set_quantizer(
-        pcs_ptr,
-        pcs_ptr->frm_hdr.quantization_params.base_q_idx);
-    svt_av1_build_quantizer(
-        /*pcs_ptr->hbd_mode_decision ? AOM_BITS_10 :*/ AOM_BITS_8,
-        pcs_ptr->frm_hdr.quantization_params.delta_q_dc[AOM_PLANE_Y],
-        pcs_ptr->frm_hdr.quantization_params.delta_q_dc[AOM_PLANE_U],
-        pcs_ptr->frm_hdr.quantization_params.delta_q_ac[AOM_PLANE_U],
-        pcs_ptr->frm_hdr.quantization_params.delta_q_dc[AOM_PLANE_V],
-        pcs_ptr->frm_hdr.quantization_params.delta_q_ac[AOM_PLANE_V],
-        quants_bd,
-        deq_bd);
-    mb_plane.quant_qtx = pcs_ptr->quants_bd.y_quant[qIndex];
-    mb_plane.quant_fp_qtx = pcs_ptr->quants_bd.y_quant_fp[qIndex];
-    mb_plane.round_fp_qtx = pcs_ptr->quants_bd.y_round_fp[qIndex];
-    mb_plane.quant_shift_qtx = pcs_ptr->quants_bd.y_quant_shift[qIndex];
-    mb_plane.zbin_qtx = pcs_ptr->quants_bd.y_zbin[qIndex];
-    mb_plane.round_qtx = pcs_ptr->quants_bd.y_round[qIndex];
-    mb_plane.dequant_qtx = pcs_ptr->deq_bd.y_dequant_qtx[qIndex];
-#endif
     pcs_ptr->base_rdmult = svt_av1_compute_rd_mult_based_on_qindex((AomBitDepth)8/*scs_ptr->static_config.encoder_bit_depth*/, qIndex) / 6;
-#if TUNE_TPL_OIS
 
     EbPictureBufferDesc *input_ptr =  pcs_ptr->enhanced_picture_ptr;
 
-#endif
     // Walk the first N entries in the sliding window
     for (uint32_t sb_index = 0; sb_index < pcs_ptr->sb_total_count; ++sb_index) {
         {
@@ -511,21 +448,15 @@ void tpl_mc_flow_dispenser(
                     int64_t best_inter_cost = INT64_MAX;
                     MV final_best_mv = { 0, 0 };
                     uint32_t max_inter_ref = MAX_PA_ME_MV;
-#if !TUNE_TPL_OIS
-                    OisMbResults *ois_mb_results_ptr = pcs_ptr->ois_mb_results[(mb_origin_y >> 4) * picture_width_in_mb + (mb_origin_x >> 4)];
-                    int64_t best_intra_cost = ois_mb_results_ptr->intra_cost;
-#else
 
                     PredictionMode best_intra_mode = DC_PRED;
                     int64_t        best_intra_cost = INT64_MAX;
-#if TUNE_TPL_OPT
                     // Disable intra prediction
                     uint8_t disable_intra_pred  = pcs_ptr->tpl_data.tpl_ctrls.disable_intra_pred_nref ||
                         pcs_ptr->tpl_data.tpl_ctrls.disable_intra_pred_nbase;
                     if (!disable_intra_pred ||
                         (pcs_ptr->tpl_data.tpl_ctrls.disable_intra_pred_nref && pcs_ptr->tpl_data.is_used_as_reference_flag) ||
                         (pcs_ptr->tpl_data.tpl_ctrls.disable_intra_pred_nbase && pcs_ptr->tpl_data.tpl_temporal_layer_index == 0)){
-#endif
                     if (scs_ptr->in_loop_ois == 0) {
                         OisMbResults *ois_mb_results_ptr = pcs_ptr->ois_mb_results[(mb_origin_y >> 4) * picture_width_in_mb + (mb_origin_x >> 4)];
                         best_intra_mode       = ois_mb_results_ptr->intra_mode;
@@ -535,7 +466,6 @@ void tpl_mc_flow_dispenser(
                     else { // ois
                         // always process as block16x16 even bsize or tx_size is 8x8
                         bsize = 16;
-#if TUNE_TPL_OIS
                         DECLARE_ALIGNED(16, uint8_t, left0_data[MAX_TX_SIZE * 2 + 32]);
                         DECLARE_ALIGNED(16, uint8_t, above0_data[MAX_TX_SIZE * 2 + 32]);
                         DECLARE_ALIGNED(16, uint8_t, left_data[MAX_TX_SIZE * 2 + 32]);
@@ -545,7 +475,6 @@ void tpl_mc_flow_dispenser(
                         uint8_t *left_col;
                         uint8_t *above0_row;
                         uint8_t *left0_col;
-#endif
                         above0_row = above0_data + 16;
                         left0_col = left0_data + 16;
                         above_row = above_data + 16;
@@ -564,11 +493,7 @@ void tpl_mc_flow_dispenser(
                         EbBool   enable_smooth               = pcs_ptr->scs_ptr->static_config.enable_smooth == DEFAULT ? EB_TRUE : (EbBool) pcs_ptr->scs_ptr->static_config.enable_smooth;
                         uint8_t intra_mode_end =
 
-#if TUNE_TPL_OPT
                             pcs_ptr->tpl_data.tpl_ctrls.tpl_opt_flag
-#else
-                            pcs_ptr->tpl_opt_flag
-#endif
 
                                 ? DC_PRED
                                 : enable_paeth ? PAETH_PRED : enable_smooth ? SMOOTH_H_PRED : D67_PRED;
@@ -600,10 +525,7 @@ void tpl_mc_flow_dispenser(
                             }
                         }
                     }
-#if TUNE_TPL_OPT
                     }
-#endif
-#endif
                     uint8_t best_mode = DC_PRED;
                     uint8_t *src_mb = input_picture_ptr->buffer_y + input_picture_ptr->origin_x + mb_origin_x +
                         (input_picture_ptr->origin_y + mb_origin_y) * input_picture_ptr->stride_y;
@@ -613,7 +535,6 @@ void tpl_mc_flow_dispenser(
                     me_mb_offset = get_me_info_index(pcs_ptr->max_number_of_pus_per_sb, &blk_geom, 0, 0);
 
 
-#if TUNE_TPL_OPT
                     uint32_t best_reference = 0;
                     if (pcs_ptr->tpl_data.tpl_ctrls.get_best_ref)
                         // Reference pruning
@@ -625,66 +546,24 @@ void tpl_mc_flow_dispenser(
                             mb_origin_y,
                             &best_reference );
 
-#endif
                     for (uint32_t rf_idx = 0; rf_idx < max_inter_ref; rf_idx++) {
 
-#if TUNE_TPL_OPT
                         if (pcs_ptr->tpl_data.tpl_ctrls.get_best_ref)
                             if (rf_idx != best_reference)
                                 continue;
-#endif
                         uint32_t list_index = rf_idx < 4 ? 0 : 1;
                         uint32_t ref_pic_index = rf_idx >= 4 ? (rf_idx - 4) : rf_idx;
-#if TUNE_INL_TPL_ENHANCEMENT
                         if ((list_index == 0 && (ref_pic_index + 1) > pcs_ptr->tpl_data.tpl_ref0_count) ||
                             (list_index == 1 && (ref_pic_index + 1) > pcs_ptr->tpl_data.tpl_ref1_count))
                             continue;
-#else
-                        if ((list_index == 0 && (ref_pic_index + 1) > pcs_ptr->tpl_ref0_count) ||
-                            (list_index == 1 && (ref_pic_index + 1) > pcs_ptr->tpl_ref1_count))
-                            continue;
-#endif
                         if (!is_me_data_valid(pcs_ptr->pa_me_data->me_results[sb_index], me_mb_offset, list_index, ref_pic_index))
                             continue;
-#if TUNE_INL_TPL_ENHANCEMENT
                         ref_pic_ptr = (EbPictureBufferDesc*)pcs_ptr->tpl_data.tpl_ref_ds_ptr_array[list_index][ref_pic_index].picture_ptr;
-#else
-                        ref_pic_ptr = (EbPictureBufferDesc*)pcs_ptr->tpl_ref_ds_ptr_array[list_index][ref_pic_index].picture_ptr;
-#endif
-#if !TUNE_TPL_LOSSLESS
-                        const int ref_basic_offset = ref_pic_ptr->origin_y * ref_pic_ptr->stride_y + ref_pic_ptr->origin_x;
-                        const int ref_mb_offset = mb_origin_y * ref_pic_ptr->stride_y + mb_origin_x;
-                        uint8_t *ref_mb = ref_pic_ptr->buffer_y + ref_basic_offset + ref_mb_offset;
-
-                        struct Buf2D ref_buf = { NULL, ref_pic_ptr->buffer_y + ref_basic_offset,
-                                                  ref_pic_ptr->width, ref_pic_ptr->height,
-                                                  ref_pic_ptr->stride_y };
-#endif
                         const MeSbResults *me_results = pcs_ptr->pa_me_data->me_results[sb_index];
                         x_curr_mv = me_results->me_mv_array[me_mb_offset * MAX_PA_ME_MV + (list_index ? 4 : 0) + ref_pic_index].x_mv << 1;
                         y_curr_mv = me_results->me_mv_array[me_mb_offset * MAX_PA_ME_MV + (list_index ? 4 : 0) + ref_pic_index].y_mv << 1;
-#if !TUNE_TPL_LOSSLESS
-                        InterPredParams inter_pred_params;
-                        svt_av1_init_inter_params(&inter_pred_params, 16, 16, mb_origin_y,
-                            mb_origin_x, 0, 0, 8, 0, 0,
-                            &sf, &ref_buf, kernel);
-
-                        inter_pred_params.conv_params = get_conv_params(0, 0, 0, 8);
-#endif
 
                         MV best_mv = { y_curr_mv, x_curr_mv };
-#if !TUNE_TPL_LOSSLESS
-                        av1_build_inter_predictor(pcs_ptr->av1_cm,
-                            ref_mb,
-                            ref_pic_ptr->stride_y,
-                            predictor,
-                            16,
-                            &best_mv,
-                            mb_origin_x,
-                            mb_origin_y,
-                            &inter_pred_params);
-#endif
-#if TUNE_TPL_LOSSLESS
                         int32_t ref_origin_index = ref_pic_ptr->origin_x +
                         (mb_origin_x + (best_mv.col >> 3)) +
                         (mb_origin_y + (best_mv.row >> 3) +
@@ -692,19 +571,12 @@ void tpl_mc_flow_dispenser(
 
                         svt_aom_subtract_block(16, 16, src_diff, 16, src_mb, input_picture_ptr->stride_y,
                             ref_pic_ptr->buffer_y + ref_origin_index, ref_pic_ptr->stride_y);
-#else
-                        svt_aom_subtract_block(16, 16, src_diff, 16, src_mb, input_picture_ptr->stride_y, predictor, 16);
-#endif
                         svt_av1_wht_fwd_txfm(src_diff, 16, coeff, tx_size, 8, 0);
 
                         inter_cost = svt_aom_satd(coeff, 256);
                         if (inter_cost < best_inter_cost) {
                             EB_MEMCPY(best_coeff, coeff, sizeof(best_coeff));
-#if TUNE_INL_TPL_ENHANCEMENT
                             best_ref_poc = pcs_ptr->tpl_data.tpl_ref_ds_ptr_array[list_index][ref_pic_index].picture_number;
-#else
-                            best_ref_poc = pcs_ptr->tpl_ref_ds_ptr_array[list_index][ref_pic_index].picture_number;
-#endif
 
                             best_rf_idx = rf_idx;
                             best_inter_cost = inter_cost;
@@ -714,35 +586,12 @@ void tpl_mc_flow_dispenser(
                         }
                     } // rf_idx
 
-#if TUNE_TPL_LOSSLESS
                    if ( best_mode == NEWMV) {
-#else
-                    if (best_inter_cost < INT64_MAX) {
-#endif
                         uint16_t eob = 0;
                         get_quantize_error(&mb_plane, best_coeff, qcoeff, dqcoeff, tx_size, &eob, &recon_error, &sse);
-#if ENABLE_TPL_TRAILING
-#if TUNE_TPL_OPT
                         int rate_cost = pcs_ptr->tpl_data.tpl_ctrls.tpl_opt_flag ? 0 : rate_estimator(qcoeff, eob, tx_size);
-#else
-                        int rate_cost = pcs_ptr->tpl_data.tpl_opt_flag ? 0 : rate_estimator(qcoeff, eob, tx_size);
-#endif
-#else
-                        int rate_cost = pcs_ptr->tpl_opt_flag ? 0 : rate_estimator(qcoeff, eob, tx_size);
-#endif
                         tpl_stats.srcrf_rate = rate_cost << TPL_DEP_COST_SCALE_LOG2;
                     }
-#if !TUNE_TPL_LOSSLESS
-                    best_intra_cost = AOMMAX(best_intra_cost, 1);
-#if ENABLE_TPL_TRAILING
-                    if (pcs_ptr->tpl_data.tpl_slice_type == I_SLICE)
-#else
-                    if (frame_is_intra_only(pcs_ptr))
-#endif
-                        best_inter_cost = 0;
-                    else
-                        best_inter_cost = AOMMIN(best_intra_cost, best_inter_cost);
-#endif
                     tpl_stats.srcrf_dist = recon_error << (TPL_DEP_COST_SCALE_LOG2);
 
                     if (best_mode == NEWMV) {
@@ -750,11 +599,7 @@ void tpl_mc_flow_dispenser(
                         uint64_t ref_poc = best_ref_poc;
                         uint32_t list_index = best_rf_idx < 4 ? 0 : 1;
                         uint32_t ref_pic_index = best_rf_idx >= 4 ? (best_rf_idx - 4) : best_rf_idx;
-#if TUNE_INL_TPL_ENHANCEMENT
                         if (pcs_ptr->tpl_data.ref_in_slide_window[list_index][ref_pic_index]) {
-#else
-                        if (pcs_ptr->ref_in_slide_window[list_index][ref_pic_index]) {
-#endif
                         uint32_t ref_frame_idx = 0;
                             while (ref_frame_idx < MAX_TPL_LA_SW && encode_context_ptr->poc_map_idx[ref_frame_idx] != ref_poc)
                                 ref_frame_idx++;
@@ -762,36 +607,7 @@ void tpl_mc_flow_dispenser(
                             ref_pic_ptr = encode_context_ptr->mc_flow_rec_picture_buffer[ref_frame_idx];
                         }
                         else
-#if TUNE_INL_TPL_ENHANCEMENT
                             ref_pic_ptr = (EbPictureBufferDesc*)pcs_ptr->tpl_data.tpl_ref_ds_ptr_array[list_index][ref_pic_index].picture_ptr;
-#else
-                            ref_pic_ptr = (EbPictureBufferDesc*)pcs_ptr->tpl_ref_ds_ptr_array[list_index][ref_pic_index].picture_ptr;
-#endif
-#if !TUNE_TPL_LOSSLESS
-                        const int ref_basic_offset = ref_pic_ptr->origin_y * ref_pic_ptr->stride_y + ref_pic_ptr->origin_x;
-                        const int ref_mb_offset = mb_origin_y * ref_pic_ptr->stride_y + mb_origin_x;
-                        uint8_t *ref_mb = ref_pic_ptr->buffer_y + ref_basic_offset + ref_mb_offset;
-
-                        struct Buf2D ref_buf = { NULL, ref_pic_ptr->buffer_y + ref_basic_offset,
-                                                  ref_pic_ptr->width, ref_pic_ptr->height,
-                                                  ref_pic_ptr->stride_y };
-
-                        InterPredParams inter_pred_params;
-                        svt_av1_init_inter_params(&inter_pred_params, 16, 16, mb_origin_y,
-                            mb_origin_x, 0, 0, 8, 0, 0,
-                            &sf, &ref_buf, kernel);
-
-                        inter_pred_params.conv_params = get_conv_params(0, 0, 0, 8);
-                        av1_build_inter_predictor(pcs_ptr->av1_cm,
-                            ref_mb,
-                            ref_pic_ptr->stride_y,
-                            dst_buffer,
-                            dst_buffer_stride,
-                            &final_best_mv,
-                            mb_origin_x,
-                            mb_origin_y,
-                            &inter_pred_params);
-#else
                         int32_t ref_origin_index = ref_pic_ptr->origin_x +
                         (mb_origin_x + (final_best_mv.col >> 3)) +
                         (mb_origin_y + (final_best_mv.row >> 3) +
@@ -801,7 +617,6 @@ void tpl_mc_flow_dispenser(
                                 dst_buffer+ i * dst_buffer_stride,
                                 ref_pic_ptr->buffer_y + ref_origin_index + i * ref_pic_ptr->stride_y,
                                 sizeof(uint8_t)*(16));
-#endif
                     }
                     else {
                         // intra recon
@@ -826,21 +641,12 @@ void tpl_mc_flow_dispenser(
                             16,
                             input_picture_ptr->width,
                             input_picture_ptr->height);
-#if TUNE_TPL_OIS
                         uint8_t ois_intra_mode = best_intra_mode;// ois_mb_results_ptr->intra_mode;
                         int32_t p_angle = av1_is_directional_mode((PredictionMode)ois_intra_mode) ? mode_to_angle_map[(PredictionMode)ois_intra_mode] : 0;
                         // Edge filter
                         if (av1_is_directional_mode((PredictionMode)ois_intra_mode) && 1/*scs_ptr->seq_header.enable_intra_edge_filter*/) {
                             filter_intra_edge(NULL, ois_intra_mode, scs_ptr->seq_header.max_frame_width, scs_ptr->seq_header.max_frame_height, p_angle, mb_origin_x, mb_origin_y, above_row, left_col);
                         }
-#else
-                        uint8_t ois_intra_mode = ois_mb_results_ptr->intra_mode;
-                        int32_t p_angle = av1_is_directional_mode((PredictionMode)ois_intra_mode) ? mode_to_angle_map[(PredictionMode)ois_intra_mode] : 0;
-                        // Edge filter
-                        if (av1_is_directional_mode((PredictionMode)ois_intra_mode) && 1/*scs_ptr->seq_header.enable_intra_edge_filter*/) {
-                            filter_intra_edge(ois_mb_results_ptr, ois_intra_mode, scs_ptr->seq_header.max_frame_width, scs_ptr->seq_header.max_frame_height, p_angle, mb_origin_x, mb_origin_y, above_row, left_col);
-                        }
-#endif
                         // PRED
                         intra_prediction_open_loop_mb(p_angle, ois_intra_mode, mb_origin_x, mb_origin_y, tx_size, above_row, left_col, dst_buffer, dst_buffer_stride);
                     }
@@ -852,22 +658,12 @@ void tpl_mc_flow_dispenser(
 
                     get_quantize_error(&mb_plane, coeff, qcoeff, dqcoeff, tx_size, &eob, &recon_error, &sse);
 
-#if ENABLE_TPL_TRAILING
-#if TUNE_TPL_OPT
                     int rate_cost = pcs_ptr->tpl_data.tpl_ctrls.tpl_opt_flag ? 0 : rate_estimator(qcoeff, eob, tx_size);
-#else
-                    int rate_cost = pcs_ptr->tpl_data.tpl_opt_flag ? 0 : rate_estimator(qcoeff, eob, tx_size);
-#endif
-#else
-                    int rate_cost = pcs_ptr->tpl_opt_flag ? 0 : rate_estimator(qcoeff, eob, tx_size);
-#endif
-#if TUNE_TPL_OPT
                     // Disable intra prediction
                     disable_intra_pred  = pcs_ptr->tpl_data.tpl_ctrls.disable_intra_pred_nref ||
                         pcs_ptr->tpl_data.tpl_ctrls.disable_intra_pred_nbase;
                     if (!disable_intra_pred ||
                         (pcs_ptr->tpl_data.is_used_as_reference_flag))
-#endif
                     if (eob) {
                         av1_inv_transform_recon8bit((int32_t*)dqcoeff, dst_buffer, dst_buffer_stride, dst_buffer, dst_buffer_stride, TX_16X16, DCT_DCT, PLANE_TYPE_Y, eob, 0);
                     }
@@ -880,11 +676,7 @@ void tpl_mc_flow_dispenser(
                     }
                     tpl_stats.recrf_dist = AOMMAX(tpl_stats.srcrf_dist, tpl_stats.recrf_dist);
                     tpl_stats.recrf_rate = AOMMAX(tpl_stats.srcrf_rate, tpl_stats.recrf_rate);
-#if ENABLE_TPL_TRAILING
                     if (pcs_ptr->tpl_data.tpl_slice_type != I_SLICE && best_rf_idx != -1) {
-#else
-                    if (!frame_is_intra_only(pcs_ptr) && best_rf_idx != -1) {
-#endif
                         tpl_stats.mv = final_best_mv;
                         tpl_stats.ref_frame_poc = best_ref_poc;
                     }
@@ -1009,19 +801,9 @@ static AOM_INLINE void tpl_model_update_b(PictureParentControlSet *ref_pcs_ptr, 
         ((double)(tpl_stats_ptr->recrf_dist - tpl_stats_ptr->srcrf_dist) /
             tpl_stats_ptr->recrf_dist));
     int64_t delta_rate = tpl_stats_ptr->recrf_rate - tpl_stats_ptr->srcrf_rate;
-#if TUNE_TPL_RATE
-#if TUNE_TPL_OPT
     int64_t mc_dep_rate = pcs_ptr->tpl_data.tpl_ctrls.tpl_opt_flag ? 0 :
-#else
-    int64_t mc_dep_rate = pcs_ptr->tpl_data.tpl_opt_flag ? 0 :
-#endif
         delta_rate_cost(tpl_stats_ptr->mc_dep_rate, tpl_stats_ptr->recrf_dist,
             tpl_stats_ptr->srcrf_dist, pix_num);
-#else
-    int64_t mc_dep_rate =
-        delta_rate_cost(tpl_stats_ptr->mc_dep_rate, tpl_stats_ptr->recrf_dist,
-            tpl_stats_ptr->srcrf_dist, pix_num);
-#endif
 
     for (block = 0; block < 4; ++block) {
         int grid_pos_row = grid_pos_row_base + bh * (block >> 1);
@@ -1191,11 +973,7 @@ EbErrorType init_tpl_buffers(
         (EbPtr)&picture_buffer_desc_init_data);
 
     for (frame_idx = 0; frame_idx < frames_in_sw; frame_idx++) {
-#if TUNE_INL_TPL_ENHANCEMENT
         if (pcs_array[frame_idx]->tpl_data.is_used_as_reference_flag) {
-#else
-        if (pcs_array[frame_idx]->is_used_as_reference_flag) {
-#endif
             EB_NEW(encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx],
                 svt_picture_buffer_desc_ctor,
                 (EbPtr)&picture_buffer_desc_init_data);
@@ -1227,8 +1005,6 @@ EbErrorType tpl_mc_flow(
     for (frame_idx = 0; frame_idx < (int32_t)pcs_ptr->tpl_group_size; frame_idx++)
         pcs_array[frame_idx] = pcs_ptr->tpl_group[frame_idx];
 
-#if FEATURE_PA_ME
-
     if (scs_ptr->in_loop_me == 0) {
         //wait for PA ME to be done.
         for (uint32_t i = 1; i < pcs_ptr->tpl_group_size; i++) {
@@ -1243,27 +1019,19 @@ EbErrorType tpl_mc_flow(
 
     }
 
-#endif
     init_tpl_buffers(
         encode_context_ptr,
         pcs_ptr,
         pcs_array);
 
-#if TUNE_INL_TPL_ENHANCEMENT
     if (pcs_array[0]->tpl_data.tpl_temporal_layer_index == 0) {
-#else
-    if (pcs_array[0]->temporal_layer_index == 0) {
-#endif
-#if TUNE_TPL_OPT
         uint8_t tpl_on ;
-#endif
         encode_context_ptr->poc_map_idx[0] = pcs_array[0]->picture_number;
         for (frame_idx = 0; frame_idx < frames_in_sw; frame_idx++) {
             encode_context_ptr->poc_map_idx[frame_idx] = pcs_array[frame_idx]->picture_number;
             for (uint32_t blky = 0; blky < (picture_height_in_mb << shift); blky++) {
                 memset(pcs_array[frame_idx]->tpl_stats[blky * (picture_width_in_mb << shift)], 0, (picture_width_in_mb << shift) * sizeof(TplStats));
             }
-#if TUNE_TPL_OPT
             tpl_on = !(pcs_array[0]->tpl_data.tpl_ctrls.disable_tpl_nref);
             tpl_on = (pcs_array[0]->slice_type == I_SLICE) ? 1 : tpl_on;
             if (tpl_on == 0)
@@ -1274,17 +1042,13 @@ EbErrorType tpl_mc_flow(
                         <= pcs_array[0]->tpl_data.tpl_ctrls.disable_tpl_pic_dist) ? 1: tpl_on;
             }
             if (tpl_on)
-#endif
             tpl_mc_flow_dispenser(encode_context_ptr, scs_ptr, pcs_array[frame_idx], frame_idx);
 
-#if FEATURE_PA_ME
             pcs_array[frame_idx]->num_tpl_processed ++;
-#endif
         }
 
         // synthesizer
         for (frame_idx = frames_in_sw - 1; frame_idx >= 0; frame_idx--)
-#if TUNE_TPL_OPT
         {
             tpl_on = !(pcs_array[0]->tpl_data.tpl_ctrls.disable_tpl_nref);
             tpl_on = (pcs_array[0]->slice_type == I_SLICE) ? 1 : tpl_on;
@@ -1296,14 +1060,11 @@ EbErrorType tpl_mc_flow(
                         <= pcs_array[0]->tpl_data.tpl_ctrls.disable_tpl_pic_dist) ? 1: tpl_on;
             }
             if (tpl_on)
-#endif
             tpl_mc_flow_synthesizer(pcs_array, frame_idx, frames_in_sw);
 
-#if TUNE_TPL_OPT
             }
 
         // generate tpl stats
-#endif
         generate_r0beta(pcs_array[0]);
 
 #if DEBUG_TPL
@@ -1343,7 +1104,6 @@ EbErrorType tpl_mc_flow(
             EB_DELETE(encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx]);
     }
     EB_DELETE(encode_context_ptr->mc_flow_rec_picture_buffer_noref);
-#if FEATURE_PA_ME
     if (scs_ptr->in_loop_me == 0) {
         for (uint32_t i = 0; i < pcs_ptr->tpl_group_size; i++) {
             if (pcs_ptr->tpl_group[i]->num_tpl_processed == pcs_ptr->tpl_group[i]->num_tpl_grps) {
@@ -1351,11 +1111,9 @@ EbErrorType tpl_mc_flow(
             }
         }
     }
-#endif
 
     return EB_ErrorNone;
 }
-#endif
 static const uint32_t rate_percentage_layer_array[EB_MAX_TEMPORAL_LAYERS][EB_MAX_TEMPORAL_LAYERS] =
     {{100, 0, 0, 0, 0, 0},
      {70, 30, 0, 0, 0, 0},
@@ -5761,7 +5519,6 @@ static int get_gf_high_motion_quality(int q, AomBitDepth bit_depth) {
 int16_t svt_av1_dc_quant_qtx(int32_t qindex, int32_t delta, AomBitDepth bit_depth);
 
 static int get_cqp_kf_boost_from_r0(double r0, int frames_to_key, EbInputResolution input_resolution) {
-#if FIX_RC_BUG
     double factor;
     // when frames_to_key not available, it is set to -1. In this case the factor is set to average of min and max
     if (frames_to_key == -1)
@@ -5771,19 +5528,9 @@ static int get_cqp_kf_boost_from_r0(double r0, int frames_to_key, EbInputResolut
         factor = AOMMIN(factor, 10.0);
         factor = AOMMAX(factor, 4.0);
     }
-#else
-    double factor = sqrt((double)frames_to_key);
-    factor = AOMMIN(factor, 10.0);
-    factor = AOMMAX(factor, 4.0);
-#endif
     const int is_720p_or_smaller = input_resolution <= INPUT_SIZE_720p_RANGE;
-#if TUNE_QPS_QPM
     const int boost = is_720p_or_smaller ? (int)rint(3 * (75.0 + 17.0 * factor) / 2 / r0)
                                          : (int)rint(2 * (75.0 + 17.0 * factor) / r0);
-#else
-    const int boost = is_720p_or_smaller ? (int)rint(3 * (75.0 + 14.0 * factor) / 2 / r0)
-                                         : (int)rint(2 * (75.0 + 14.0 * factor) / r0);
-#endif
     return boost;
 }
 
@@ -5805,23 +5552,15 @@ static int get_gfu_boost_from_r0_lap(double min_factor, double max_factor,
   return boost;
 }
 
-#if TUNE_QPS_QPM
 int svt_av1_get_deltaq_offset(AomBitDepth bit_depth, int qindex, double beta, EB_SLICE slice_type) {
-#else
-int svt_av1_get_deltaq_offset(AomBitDepth bit_depth, int qindex, double beta) {
-#endif
     assert(beta > 0.0);
     int q = svt_av1_dc_quant_qtx(qindex, 0, bit_depth);
-#if TUNE_QPS_QPM
     int newq;
     // use a less aggressive action when lowering the q for non I_slice
     if (slice_type != I_SLICE && beta > 1)
         newq = (int)rint(q / sqrt(sqrt(beta)));
     else
         newq = (int)rint(q / sqrt(beta));
-#else
-    int newq = (int)rint(q / sqrt(beta));
-#endif
     int orig_qindex = qindex;
     if (newq < q) {
         do {
@@ -5841,20 +5580,14 @@ int svt_av1_get_deltaq_offset(AomBitDepth bit_depth, int qindex, double beta) {
 #define MIN_BPB_FACTOR 0.005
 #define MAX_BPB_FACTOR 50
 int svt_av1_rc_bits_per_mb(FrameType frame_type, int qindex,
-#if TUNE_SC_QPS_IMP
                     double correction_factor, const int bit_depth,
                     const int is_screen_content_type) {
-#else
-                       double correction_factor, const int bit_depth) {
-#endif
   const double q = svt_av1_convert_qindex_to_q(qindex, bit_depth);
   int enumerator = frame_type == KEY_FRAME ? 2000000 : 1500000;
-#if TUNE_SC_QPS_IMP
   if (is_screen_content_type) {
       enumerator = frame_type == KEY_FRAME ? 1000000 : 750000;
 
   }
-#endif
   assert(correction_factor <= MAX_BPB_FACTOR &&
          correction_factor >= MIN_BPB_FACTOR);
 
@@ -5864,9 +5597,7 @@ int svt_av1_rc_bits_per_mb(FrameType frame_type, int qindex,
 
 static int find_qindex_by_rate(int desired_bits_per_mb,
                                const int bit_depth, FrameType frame_type,
-#if TUNE_SC_QPS_IMP
                                 const int is_screen_content_type,
-#endif
                                int best_qindex, int worst_qindex) {
   assert(best_qindex <= worst_qindex);
   int low = best_qindex;
@@ -5874,11 +5605,7 @@ static int find_qindex_by_rate(int desired_bits_per_mb,
   while (low < high) {
     const int mid = (low + high) >> 1;
     const int mid_bits_per_mb =
-#if TUNE_SC_QPS_IMP
         svt_av1_rc_bits_per_mb(frame_type, mid, 1.0, bit_depth, is_screen_content_type);
-#else
-        svt_av1_rc_bits_per_mb(frame_type, mid, 1.0, bit_depth);
-#endif
     if (mid_bits_per_mb > desired_bits_per_mb) {
       low = mid + 1;
     } else {
@@ -5886,42 +5613,23 @@ static int find_qindex_by_rate(int desired_bits_per_mb,
     }
   }
   assert(low == high);
-#if TUNE_SC_QPS_IMP
   assert(svt_av1_rc_bits_per_mb(frame_type, low, 1.0, bit_depth, is_screen_content_type) <=
       desired_bits_per_mb || low == worst_qindex);
-#else
-  assert(svt_av1_rc_bits_per_mb(frame_type, low, 1.0, bit_depth) <=
-             desired_bits_per_mb ||
-         low == worst_qindex);
-#endif
   return low;
 }
 
 int svt_av1_compute_qdelta_by_rate(const RATE_CONTROL *rc, FrameType frame_type,
                                int qindex, double rate_target_ratio,
-#if TUNE_SC_QPS_IMP
                                 const int bit_depth,const int is_screen_content_type) {
-#else
-
-                                const int bit_depth) {
-#endif
   // Look up the current projected bits per block for the base index
   const int base_bits_per_mb =
-#if TUNE_SC_QPS_IMP
      svt_av1_rc_bits_per_mb(frame_type, qindex, 1.0, bit_depth, is_screen_content_type);
-#else
-      svt_av1_rc_bits_per_mb(frame_type, qindex, 1.0, bit_depth);
-#endif
 
   // Find the target bits per mb based on the base value and given ratio.
   const int target_bits_per_mb = (int)(rate_target_ratio * base_bits_per_mb);
 
   const int target_index =
-#if TUNE_SC_QPS_IMP
       find_qindex_by_rate(target_bits_per_mb, bit_depth, frame_type, is_screen_content_type,
-#else
-      find_qindex_by_rate(target_bits_per_mb, bit_depth, frame_type,
-#endif
                           rc->best_quality, rc->worst_quality);
   return target_index - qindex;
 }
@@ -5935,11 +5643,7 @@ static const double rate_factor_deltas[RATE_FACTOR_LEVELS] = {
   2.00,  // KF_STD
 };
 
-#if TUNE_SC_QPS_IMP
 int svt_av1_frame_type_qdelta(RATE_CONTROL *rc, int rf_level, int q, const int bit_depth, const int sc_content_detected) {
-#else
-int svt_av1_frame_type_qdelta(RATE_CONTROL *rc, int rf_level, int q, const int bit_depth) {
-#endif
   const int/*rate_factor_level*/ rf_lvl = rf_level;//get_rate_factor_level(&cpi->gf_group);
   const FrameType frame_type = (rf_lvl == KF_STD) ? KEY_FRAME : INTER_FRAME;
   double rate_factor;
@@ -5949,11 +5653,7 @@ int svt_av1_frame_type_qdelta(RATE_CONTROL *rc, int rf_level, int q, const int b
     rate_factor -= (0/*cpi->gf_group.layer_depth[cpi->gf_group.index]*/ - 2) * 0.1;
     rate_factor = AOMMAX(rate_factor, 1.0);
   }
-#if TUNE_SC_QPS_IMP
   return svt_av1_compute_qdelta_by_rate(rc, frame_type, q, rate_factor, bit_depth, sc_content_detected);
-#else
-  return svt_av1_compute_qdelta_by_rate(rc, frame_type, q, rate_factor, bit_depth);
-#endif
 }
 
 static const rate_factor_level rate_factor_levels[FRAME_UPDATE_TYPES] = {
@@ -5972,12 +5672,8 @@ static rate_factor_level get_rate_factor_level(const GF_GROUP *const gf_group, u
   return rate_factor_levels[update_type];
 }
 
-#if TUNE_SC_QPS_IMP
 int av1_frame_type_qdelta_org(RATE_CONTROL *rc, GF_GROUP *gf_group, unsigned char gf_group_index, int q, const int bit_depth,
     uint8_t sc_content_detected) {
-#else
-int av1_frame_type_qdelta_org(RATE_CONTROL *rc, GF_GROUP *gf_group, unsigned char gf_group_index, int q, const int bit_depth) {
-#endif
   const rate_factor_level rf_lvl = get_rate_factor_level(gf_group, gf_group_index);
   const FrameType frame_type = (rf_lvl == KF_STD) ? KEY_FRAME : INTER_FRAME;
   double rate_factor;
@@ -5987,11 +5683,7 @@ int av1_frame_type_qdelta_org(RATE_CONTROL *rc, GF_GROUP *gf_group, unsigned cha
     rate_factor -= (gf_group->layer_depth[gf_group_index] - 2) * 0.1;
     rate_factor = AOMMAX(rate_factor, 1.0);
   }
-#if TUNE_SC_QPS_IMP
   return svt_av1_compute_qdelta_by_rate(rc, frame_type, q, rate_factor, bit_depth, sc_content_detected);
-#else
-  return svt_av1_compute_qdelta_by_rate(rc, frame_type, q, rate_factor, bit_depth);
-#endif
 }
 
 static void adjust_active_best_and_worst_quality_org(PictureControlSet *pcs_ptr, RATE_CONTROL *rc,
@@ -6030,12 +5722,8 @@ static void adjust_active_best_and_worst_quality_org(PictureControlSet *pcs_ptr,
     // Static forced key frames Q restrictions dealt with elsewhere.
     if (!frame_is_intra_only(pcs_ptr->parent_pcs_ptr) || !this_key_frame_forced
         || (twopass->last_kfgroup_zeromotion_pct < STATIC_MOTION_THRESH)) {
-#if TUNE_SC_QPS_IMP
         const int qdelta = av1_frame_type_qdelta_org(rc, gf_group, pcs_ptr->parent_pcs_ptr->gf_group_index, active_worst_quality,
             bit_depth, pcs_ptr->parent_pcs_ptr->sc_content_detected);
-#else
-        const int qdelta = av1_frame_type_qdelta_org(rc, gf_group, pcs_ptr->parent_pcs_ptr->gf_group_index, active_worst_quality, bit_depth);
-#endif
         active_worst_quality =
             AOMMAX(active_worst_quality + qdelta, active_best_quality);
     }
@@ -6061,12 +5749,8 @@ static void adjust_active_best_and_worst_quality(PictureControlSet *pcs_ptr, RAT
     // Static forced key frames Q restrictions dealt with elsewhere.
     if (!frame_is_intra_only(pcs_ptr->parent_pcs_ptr)
         /*|| (cpi->twopass.last_kfgroup_zeromotion_pct < STATIC_MOTION_THRESH)*/) {
-#if TUNE_SC_QPS_IMP
         const int qdelta = svt_av1_frame_type_qdelta(rc, rf_level, active_worst_quality, bit_depth,
             pcs_ptr->parent_pcs_ptr->sc_content_detected);
-#else
-        const int qdelta = svt_av1_frame_type_qdelta(rc, rf_level, active_worst_quality, bit_depth);
-#endif
         active_worst_quality =
             AOMMAX(active_worst_quality + qdelta, active_best_quality);
     }
@@ -6120,7 +5804,6 @@ static int cqp_qindex_calc_tpl_la(PictureControlSet *pcs_ptr, RATE_CONTROL *rc, 
         double q_val;
         rc->worst_quality   = MAXQ;
         rc->best_quality    = MINQ;
-#if TUNE_TPL_FWD_FRAME
         // The new tpl only looks at pictures in tpl group, which is fewer than before,
         // As a results, we defined a factor to adjust r0
         if (pcs_ptr->parent_pcs_ptr->frm_hdr.frame_type != KEY_FRAME) {
@@ -6131,28 +5814,14 @@ static int cqp_qindex_calc_tpl_la(PictureControlSet *pcs_ptr, RATE_CONTROL *rc, 
                  factor = 1;
              pcs_ptr->parent_pcs_ptr->r0 = pcs_ptr->parent_pcs_ptr->r0 / factor;
          }
-#endif
         // when frames_to_key not available, i.e. in 1 pass encoding
         rc->kf_boost = get_cqp_kf_boost_from_r0(pcs_ptr->parent_pcs_ptr->r0, -1, scs_ptr->input_resolution);
         // Baseline value derived from cpi->active_worst_quality and kf boost.
         active_best_quality = get_kf_active_quality_tpl(rc, active_worst_quality, bit_depth);
         // Allow somewhat lower kf minq with small image formats.
         if (pcs_ptr->parent_pcs_ptr->input_resolution == INPUT_SIZE_240p_RANGE)
-#if TUNE_QPS_QPM
-#if TUNE_TPL_TOWARD_CHROMA
             q_adj_factor -= (pcs_ptr->parent_pcs_ptr->tune_tpl_for_chroma) ? 0.2 : 0.15;
-#else
-            q_adj_factor -= 0.2;
-#endif
-#else
-            q_adj_factor -= 0.15;
-#endif
         // Make a further adjustment based on the kf zero motion measure.
-#if !TUNE_TPL
-        q_adj_factor +=
-            0.05 - (0.001 * (double)pcs_ptr->parent_pcs_ptr
-                                ->kf_zeromotion_pct /*(double)cpi->twopass.kf_zeromotion_pct*/);
-#endif
 
         // Convert the adjustment factor to a qindex delta
         // on active_best_quality.
@@ -6160,12 +5829,10 @@ static int cqp_qindex_calc_tpl_la(PictureControlSet *pcs_ptr, RATE_CONTROL *rc, 
         active_best_quality += svt_av1_compute_qdelta(q_val, q_val * q_adj_factor, bit_depth);
     } else if (refresh_golden_frame || is_intrl_arf_boost || refresh_alt_ref_frame) {
         double min_boost_factor = sqrt(1 << pcs_ptr->parent_pcs_ptr->hierarchical_levels);
-#if TUNE_TPL
         // The new tpl only looks at pictures in tpl group, which is fewer than before,
         // As a results, we defined a factor to adjust r0
         if (pcs_ptr->parent_pcs_ptr->temporal_layer_index == 0) {
             double div_factor = 1;
-#if ENABLE_TPL_TRAILING
             double factor;
             if (pcs_ptr->parent_pcs_ptr->tpl_trailing_frame_count == 0)
                 factor = 2;
@@ -6178,28 +5845,15 @@ static int cqp_qindex_calc_tpl_la(PictureControlSet *pcs_ptr, RATE_CONTROL *rc, 
                 div_factor = factor;
             else if (pcs_ptr->parent_pcs_ptr->pd_window_count <= 1)
                 div_factor = 1.0 / factor;
-#else
-            if (pcs_ptr->parent_pcs_ptr->pd_window_count == scs_ptr->scd_delay)
-                div_factor = 2;
-            else if (pcs_ptr->parent_pcs_ptr->pd_window_count <= 1)
-                div_factor = 0.5;
-#endif
             pcs_ptr->parent_pcs_ptr->r0 = pcs_ptr->parent_pcs_ptr->r0 / div_factor;
         }
 
         int num_stats_required_for_gfu_boost = pcs_ptr->parent_pcs_ptr->tpl_group_size + (1 << pcs_ptr->parent_pcs_ptr->hierarchical_levels);
 
-#else
-        int num_stats_required_for_gfu_boost = pcs_ptr->parent_pcs_ptr->frames_in_sw + (1 << pcs_ptr->parent_pcs_ptr->hierarchical_levels);
-#endif
         rc->gfu_boost = get_gfu_boost_from_r0_lap(min_boost_factor, MAX_GFUBOOST_FACTOR, pcs_ptr->parent_pcs_ptr->r0, num_stats_required_for_gfu_boost);
         rc->arf_boost_factor =
             (pcs_ptr->ref_slice_type_array[0][0] == I_SLICE &&
-#if TUNE_TPL
                 pcs_ptr->ref_pic_r0[0][0] - pcs_ptr->parent_pcs_ptr->r0 >= 0.08)
-#else
-                pcs_ptr->ref_pic_r0[0][0] - pcs_ptr->parent_pcs_ptr->r0 >= 0.1)
-#endif
             ? (float_t)1.3
             : (float_t)1;
         q = active_worst_quality;
@@ -6396,11 +6050,7 @@ static void sb_setup_lambda(PictureControlSet *pcs_ptr,
  * Calculates the QP per SB based on the tpl statistics
  * used in one pass and second pass of two pass encoding
  ******************************************************/
-#if FEATURE_RE_ENCODE
 void sb_qp_derivation_tpl_la(
-#else
-static void sb_qp_derivation_tpl_la(
-#endif
     PictureControlSet         *pcs_ptr) {
 
     PictureParentControlSet   *ppcs_ptr = pcs_ptr->parent_pcs_ptr;
@@ -6418,12 +6068,8 @@ static void sb_qp_derivation_tpl_la(
         for (sb_addr = 0; sb_addr < scs_ptr->sb_tot_cnt; ++sb_addr) {
             sb_ptr = pcs_ptr->sb_ptr_array[sb_addr];
             double beta = ppcs_ptr->tpl_beta[sb_addr];
-#if TUNE_QPS_QPM
             int offset = svt_av1_get_deltaq_offset(scs_ptr->static_config.encoder_bit_depth, ppcs_ptr->frm_hdr.quantization_params.base_q_idx,
                 beta, pcs_ptr->parent_pcs_ptr->slice_type);
-#else
-            int offset = svt_av1_get_deltaq_offset(scs_ptr->static_config.encoder_bit_depth, ppcs_ptr->frm_hdr.quantization_params.base_q_idx, beta);
-#endif
             offset = AOMMIN(offset,  pcs_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_res * 9*4 - 1);
             offset = AOMMAX(offset, -pcs_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_res * 9*4 + 1);
 
@@ -6585,7 +6231,6 @@ static void av1_rc_init(SequenceControlSet *scs_ptr) {
   // Set absolute upper and lower quality limits
   rc->worst_quality = rc_cfg->worst_allowed_q;
   rc->best_quality  = rc_cfg->best_allowed_q;
-#if FEATURE_LAP_ENABLED_VBR
   if (scs_ptr->lap_enabled) {
       double frame_rate = (double)scs_ptr->static_config.frame_rate_numerator / (double)scs_ptr->static_config.frame_rate_denominator;
       // Each frame can have a different duration, as the frame rate in the source
@@ -6595,7 +6240,6 @@ static void av1_rc_init(SequenceControlSet *scs_ptr) {
       // first pass.
       svt_av1_new_framerate(scs_ptr, frame_rate);
   }
-#endif
 }
 
 static AOM_INLINE int combine_prior_with_tpl_boost_org(double min_factor,
@@ -6622,13 +6266,10 @@ void process_tpl_stats_frame_kf_gfu_boost(PictureControlSet *pcs_ptr) {
 
     if (scs_ptr->lap_enabled) {
         double min_boost_factor = sqrt(rc->baseline_gf_interval);
-#if FEATURE_LAP_ENABLED_VBR
-#if TUNE_TPL
         // The new tpl only looks at pictures in tpl group, which is fewer than before,
         // As a results, we defined a factor to adjust r0
         if (pcs_ptr->parent_pcs_ptr->slice_type != 2) {
             double div_factor = 1;
-#if ENABLE_TPL_TRAILING
             double factor;
             if (pcs_ptr->parent_pcs_ptr->tpl_trailing_frame_count == 0)
                 factor = 2;
@@ -6636,28 +6277,12 @@ void process_tpl_stats_frame_kf_gfu_boost(PictureControlSet *pcs_ptr) {
                 factor = 1.5;
             else
                 factor = 1;
-#if FEATURE_LAP_ENABLED_VBR
             if (pcs_ptr->parent_pcs_ptr->pd_window_count == scs_ptr->scd_delay)
                 div_factor = factor;
             else if (pcs_ptr->parent_pcs_ptr->pd_window_count <= 1)
                 div_factor = 1.0 / factor;
-#else
-            if (rc->frames_to_key > (int)pcs_ptr->parent_pcs_ptr->tpl_group_size * 3 / 2)
-                div_factor = factor;
-            else if (rc->frames_to_key <= (int)pcs_ptr->parent_pcs_ptr->tpl_group_size)
-                div_factor = 1.0 / factor;
-#endif
-#else
-
-            if (rc->frames_to_key > (int)pcs_ptr->parent_pcs_ptr->tpl_group_size * 3 / 2)
-                div_factor = 2;
-            else if (rc->frames_to_key <= (int)pcs_ptr->parent_pcs_ptr->tpl_group_size)
-                div_factor = 0.5;
-#endif
             pcs_ptr->parent_pcs_ptr->r0 = pcs_ptr->parent_pcs_ptr->r0 / div_factor;
         }
-#endif
-#endif
         const int gfu_boost = get_gfu_boost_from_r0_lap(
                 min_boost_factor, MAX_GFUBOOST_FACTOR, pcs_ptr->parent_pcs_ptr->r0,
                 rc->num_stats_required_for_gfu_boost);
@@ -6666,12 +6291,10 @@ void process_tpl_stats_frame_kf_gfu_boost(PictureControlSet *pcs_ptr) {
                 min_boost_factor, MAX_BOOST_COMBINE_FACTOR, rc->gfu_boost,
                 gfu_boost, rc->num_stats_used_for_gfu_boost);
     } else {
-#if TUNE_TPL
         // The new tpl only looks at pictures in tpl group, which is fewer than before,
         // As a results, we defined a factor to adjust r0
         if (pcs_ptr->parent_pcs_ptr->slice_type != 2) {
             double div_factor = 1;
-#if ENABLE_TPL_TRAILING
             double factor;
             if (pcs_ptr->parent_pcs_ptr->tpl_trailing_frame_count == 0)
                 factor = 2;
@@ -6684,16 +6307,8 @@ void process_tpl_stats_frame_kf_gfu_boost(PictureControlSet *pcs_ptr) {
                 div_factor = factor;
             else if (rc->frames_to_key <= (int)pcs_ptr->parent_pcs_ptr->tpl_group_size)
                 div_factor = 1.0 / factor;
-#else
-
-            if (rc->frames_to_key > (int) pcs_ptr->parent_pcs_ptr->tpl_group_size * 3 / 2)
-                div_factor = 2;
-            else if (rc->frames_to_key <= (int)pcs_ptr->parent_pcs_ptr->tpl_group_size)
-                div_factor = 0.5;
-#endif
             pcs_ptr->parent_pcs_ptr->r0 = pcs_ptr->parent_pcs_ptr->r0 / div_factor;
         }
-#if TUNE_TPL_FWD_FRAME
         else if (pcs_ptr->parent_pcs_ptr->frm_hdr.frame_type != KEY_FRAME) {
             double factor;
             if (pcs_ptr->parent_pcs_ptr->tpl_trailing_frame_count <= 6)
@@ -6702,8 +6317,6 @@ void process_tpl_stats_frame_kf_gfu_boost(PictureControlSet *pcs_ptr) {
                 factor = 1;
             pcs_ptr->parent_pcs_ptr->r0 = pcs_ptr->parent_pcs_ptr->r0 / factor;
         }
-#endif
-#endif
         rc->gfu_boost       = get_gfu_boost_from_r0_lap(MIN_BOOST_COMBINE_FACTOR,
                                                   MAX_GFUBOOST_FACTOR,
                                                   pcs_ptr->parent_pcs_ptr->r0,
@@ -6773,26 +6386,12 @@ static void get_intra_q_and_bounds(PictureControlSet *pcs_ptr,
                 twopass->kf_zeromotion_pct >= STATIC_KF_GROUP_THRESH) {
             active_best_quality /= 3;
         }
-#if TUNE_SC_QPS_IMP
         if (pcs_ptr->parent_pcs_ptr->sc_content_detected && encode_context_ptr->rc_cfg.mode == AOM_VBR)
             active_best_quality /= 2;
-#endif
         // Allow somewhat lower kf minq with small image formats.
         if (pcs_ptr->parent_pcs_ptr->input_resolution <= INPUT_SIZE_240p_RANGE)
-#if TUNE_QPS_QPM
-#if TUNE_TPL_TOWARD_CHROMA
             q_adj_factor -= (pcs_ptr->parent_pcs_ptr->tune_tpl_for_chroma) ? 0.2 : 0.15;
-#else
-            q_adj_factor -= 0.2;
-#endif
-#else
-            q_adj_factor -= 0.15;
-#endif
         // Make a further adjustment based on the kf zero motion measure.
-#if !TUNE_TPL
-        q_adj_factor +=
-            0.05 - (0.001 * (double)MAX(twopass->kf_zeromotion_pct, pcs_ptr->parent_pcs_ptr->kf_zeromotion_pct));
-#endif
 
         // Convert the adjustment factor to a qindex delta
         // on active_best_quality.
@@ -6866,11 +6465,7 @@ static int get_active_best_quality(PictureControlSet *pcs_ptr,
 
     rc->arf_boost_factor =
         (pcs_ptr->ref_slice_type_array[0][0] == I_SLICE &&
-#if TUNE_TPL
             pcs_ptr->ref_pic_r0[0][0] - pcs_ptr->parent_pcs_ptr->r0 >= 0.08)
-#else
-            pcs_ptr->ref_pic_r0[0][0] - pcs_ptr->parent_pcs_ptr->r0 >= 0.1)
-#endif
         ? (float_t)1.3
         : (float_t)1;
     active_best_quality = min_boost - (int)(boost * rc->arf_boost_factor);
@@ -6924,36 +6519,14 @@ static void set_rate_correction_factor(PictureParentControlSet *ppcs_ptr, double
 }
 
 // Calculate rate for the given 'q'.
-#if FEATURE_RE_ENCODE
 static int get_bits_per_mb(PictureParentControlSet *ppcs_ptr, int use_cyclic_refresh,
-#else
-static int get_bits_per_mb(PictureControlSet *pcs_ptr, int use_cyclic_refresh,
-#endif
                            double correction_factor, int q) {
-#if FEATURE_RE_ENCODE
   SequenceControlSet *scs_ptr = ppcs_ptr->scs_ptr;
-#else
-  SequenceControlSet *scs_ptr = pcs_ptr->parent_pcs_ptr->scs_ptr;
-#endif
   return use_cyclic_refresh
              ? 0/*av1_cyclic_refresh_rc_bits_per_mb(cpi, q, correction_factor)*/
-#if FEATURE_RE_ENCODE
              : svt_av1_rc_bits_per_mb(ppcs_ptr->frm_hdr.frame_type, q,
-#if TUNE_SC_QPS_IMP
                 correction_factor, scs_ptr->static_config.encoder_bit_depth,
                  ppcs_ptr->sc_content_detected);
-#else
-                 correction_factor, scs_ptr->static_config.encoder_bit_depth);
-#endif
-#else
-             : svt_av1_rc_bits_per_mb(pcs_ptr->parent_pcs_ptr->frm_hdr.frame_type, q,
-#if TUNE_SC_QPS_IMP
-                correction_factor, scs_ptr->static_config.encoder_bit_depth,
-                 pcs_ptr->parent_pcs_ptr->sc_content_detected);
-#else
-                 correction_factor, scs_ptr->static_config.encoder_bit_depth);
-#endif
-#endif
 }
 
 // Similar to find_qindex_by_rate() function in ratectrl.c, but returns the q
@@ -6961,11 +6534,7 @@ static int get_bits_per_mb(PictureControlSet *pcs_ptr, int use_cyclic_refresh,
 // the two rates is closer to the desired rate.
 // Also, respects the selected aq_mode when computing the rate.
 static int find_closest_qindex_by_rate(int desired_bits_per_mb,
-#if FEATURE_RE_ENCODE
                                        PictureParentControlSet *ppcs_ptr,
-#else
-                                       PictureControlSet *pcs_ptr,
-#endif
                                        double correction_factor,
                                        int best_qindex, int worst_qindex) {
   const int use_cyclic_refresh = 0/*cpi->oxcf.q_cfg.aq_mode == CYCLIC_REFRESH_AQ &&
@@ -6978,11 +6547,7 @@ static int find_closest_qindex_by_rate(int desired_bits_per_mb,
   while (low < high) {
     const int mid = (low + high) >> 1;
     const int mid_bits_per_mb =
-#if FEATURE_RE_ENCODE
         get_bits_per_mb(ppcs_ptr, use_cyclic_refresh, correction_factor, mid);
-#else
-        get_bits_per_mb(pcs_ptr, use_cyclic_refresh, correction_factor, mid);
-#endif
     if (mid_bits_per_mb > desired_bits_per_mb) {
       low = mid + 1;
     } else {
@@ -6994,11 +6559,7 @@ static int find_closest_qindex_by_rate(int desired_bits_per_mb,
   // Calculate rate difference of this q index from the desired rate.
   const int curr_q = low;
   const int curr_bits_per_mb =
-#if FEATURE_RE_ENCODE
       get_bits_per_mb(ppcs_ptr, use_cyclic_refresh, correction_factor, curr_q);
-#else
-      get_bits_per_mb(pcs_ptr, use_cyclic_refresh, correction_factor, curr_q);
-#endif
   const int curr_bit_diff = (curr_bits_per_mb <= desired_bits_per_mb)
                                 ? desired_bits_per_mb - curr_bits_per_mb
                                 : INT_MAX;
@@ -7012,11 +6573,7 @@ static int find_closest_qindex_by_rate(int desired_bits_per_mb,
     prev_bit_diff = INT_MAX;
   } else {
     const int prev_bits_per_mb =
-#if FEATURE_RE_ENCODE
         get_bits_per_mb(ppcs_ptr, use_cyclic_refresh, correction_factor, prev_q);
-#else
-        get_bits_per_mb(pcs_ptr, use_cyclic_refresh, correction_factor, prev_q);
-#endif
     assert(prev_bits_per_mb > desired_bits_per_mb);
     prev_bit_diff = prev_bits_per_mb - desired_bits_per_mb;
   }
@@ -7026,29 +6583,17 @@ static int find_closest_qindex_by_rate(int desired_bits_per_mb,
   return (curr_bit_diff <= prev_bit_diff) ? curr_q : prev_q;
 }
 
-#if FEATURE_RE_ENCODE
 static int av1_rc_regulate_q(PictureParentControlSet *ppcs_ptr, int target_bits_per_frame,
-#else
-static int av1_rc_regulate_q(PictureControlSet *pcs_ptr, int target_bits_per_frame,
-#endif
                       int active_best_quality, int active_worst_quality,
                       int width, int height) {
   const int MBs = ((width + 15) / 16) * ((height + 15) / 16);//av1_get_MBs(width, height);
   const double correction_factor =
-#if FEATURE_RE_ENCODE
       get_rate_correction_factor(ppcs_ptr/*, width, height*/);
-#else
-      get_rate_correction_factor(pcs_ptr->parent_pcs_ptr/*, width, height*/);
-#endif
   const int target_bits_per_mb =
       (int)(((uint64_t)target_bits_per_frame << BPER_MB_NORMBITS) / MBs);
 
   int q =
-#if FEATURE_RE_ENCODE
       find_closest_qindex_by_rate(target_bits_per_mb, ppcs_ptr, correction_factor,
-#else
-      find_closest_qindex_by_rate(target_bits_per_mb, pcs_ptr, correction_factor,
-#endif
                                   active_best_quality, active_worst_quality);
 
   return q;
@@ -7082,13 +6627,8 @@ static int get_q(PictureControlSet *pcs_ptr,
     }
     q = clamp(q, active_best_quality, active_worst_quality);
   } else {
-#if FEATURE_RE_ENCODE
     q = av1_rc_regulate_q(pcs_ptr->parent_pcs_ptr, rc->this_frame_target, active_best_quality,
                           active_worst_quality, width, height);
-#else
-    q = av1_rc_regulate_q(pcs_ptr, rc->this_frame_target, active_best_quality,
-                          active_worst_quality, width, height);
-#endif
     if (q > active_worst_quality) {
       // Special case when we are targeting the max allowed rate.
       if (rc->this_frame_target < rc->max_frame_bandwidth) {
@@ -7152,13 +6692,11 @@ static int rc_pick_q_and_bounds(PictureControlSet *pcs_ptr) {
         active_worst_quality = q;
     }
 
-#if FEATURE_RE_ENCODE
     rc->top_index = active_worst_quality;
     rc->bottom_index = active_best_quality;
 
     assert(rc->top_index <= rc->worst_quality && rc->top_index >= rc->best_quality);
     assert(rc->bottom_index <= rc->worst_quality && rc->bottom_index >= rc->best_quality);
-#endif
     assert(q <= rc->worst_quality && q >= rc->best_quality);
 
     if (gf_group->update_type[pcs_ptr->parent_pcs_ptr->gf_group_index] == ARF_UPDATE) rc->arf_q = q;
@@ -7167,19 +6705,10 @@ static int rc_pick_q_and_bounds(PictureControlSet *pcs_ptr) {
 }
 
 static int av1_estimate_bits_at_q(FrameType frame_type, int q, int mbs,
-#if TUNE_SC_QPS_IMP
                         double correction_factor, AomBitDepth bit_depth,
                         uint8_t sc_content_detected) {
-#else
-                           double correction_factor,
-                           AomBitDepth bit_depth) {
-#endif
   const int bpm =
-#if TUNE_SC_QPS_IMP
     (int)(svt_av1_rc_bits_per_mb(frame_type, q, correction_factor, bit_depth, sc_content_detected));
-#else
-      (int)(svt_av1_rc_bits_per_mb(frame_type, q, correction_factor, bit_depth));
-#endif
   return AOMMAX(FRAME_OVERHEAD_BITS,
                 (int)((uint64_t)bpm * mbs) >> BPER_MB_NORMBITS);
 }
@@ -7211,11 +6740,7 @@ static void av1_rc_update_rate_correction_factors(PictureParentControlSet *ppcs_
   {
     projected_size_based_on_q = av1_estimate_bits_at_q(
         ppcs_ptr->frm_hdr.frame_type, ppcs_ptr->frm_hdr.quantization_params.base_q_idx/*cm->quant_params.base_qindex*/, MBs,
-#if TUNE_SC_QPS_IMP
         rate_correction_factor, scs_ptr->static_config.encoder_bit_depth, ppcs_ptr->sc_content_detected);
-#else
-        rate_correction_factor, scs_ptr->static_config.encoder_bit_depth);
-#endif
   }
   // Work out a size correction factor.
   if (projected_size_based_on_q > FRAME_OVERHEAD_BITS)
@@ -7579,7 +7104,6 @@ static void av1_set_target_rate(PictureControlSet *pcs_ptr, int width, int heigh
     av1_rc_set_frame_target(pcs_ptr, target_rate, width, height);
 }
 
-#if FEATURE_RE_ENCODE
 static double av1_get_compression_ratio(PictureParentControlSet *ppcs_ptr,
                                  size_t encoded_frame_size) {
   const int upscaled_width = ppcs_ptr->av1_cm->frm_size.superres_upscaled_width;
@@ -7757,56 +7281,6 @@ void recode_loop_update_q(
                                    &frame_over_shoot_limit);
   if (frame_over_shoot_limit == 0) frame_over_shoot_limit = 1;
 
-#if 0
-  if (ppcs_ptr->frm_hdr.frame_type == KEY_FRAME && rc->this_key_frame_forced &&
-      rc->projected_frame_size < rc->max_frame_bandwidth) {
-    AV1_COMMON *const cm = &ppcs_ptr->av1_cm;
-    int64_t kf_err;
-    const int64_t high_err_target = cpi->ambient_err;
-    const int64_t low_err_target = cpi->ambient_err >> 1;
-
-#if CONFIG_AV1_HIGHBITDEPTH
-    if (cm->seq_params.use_highbitdepth) {
-      kf_err = aom_highbd_get_y_sse(cpi->source, &cm->cur_frame->buf);
-    } else {
-      kf_err = aom_get_y_sse(cpi->source, &cm->cur_frame->buf);
-    }
-#else
-    kf_err = aom_get_y_sse(cpi->source, &cm->cur_frame->buf);
-#endif
-    // Prevent possible divide by zero error below for perfect KF
-    kf_err += !kf_err;
-
-    // The key frame is not good enough or we can afford
-    // to make it better without undue risk of popping.
-    if ((kf_err > high_err_target &&
-         rc->projected_frame_size <= frame_over_shoot_limit) ||
-        (kf_err > low_err_target &&
-         rc->projected_frame_size <= frame_under_shoot_limit)) {
-      // Lower q_high
-      *q_high = AOMMAX(*q - 1, *q_low);
-
-      // Adjust Q
-      *q = (int)((*q * high_err_target) / kf_err);
-      *q = AOMMIN(*q, (*q_high + *q_low) >> 1);
-    } else if (kf_err < low_err_target &&
-               rc->projected_frame_size >= frame_under_shoot_limit) {
-      // The key frame is much better than the previous frame
-      // Raise q_low
-      *q_low = AOMMIN(*q + 1, *q_high);
-
-      // Adjust Q
-      *q = (int)((*q * low_err_target) / kf_err);
-      *q = AOMMIN(*q, (*q_high + *q_low + 1) >> 1);
-    }
-
-    // Clamp Q to upper and lower limits:
-    *q = clamp(*q, *q_low, *q_high);
-    *loop = (*q != last_q);
-    return;
-  }
-#endif
-
   if (recode_loop_test(ppcs_ptr, frame_over_shoot_limit, frame_under_shoot_limit, *q,
                        AOMMAX(*q_high, top_index), bottom_index)) {
       const int width  = ppcs_ptr->av1_cm->frm_size.frame_width;
@@ -7898,7 +7372,6 @@ void recode_loop_update_q(
                       *q);
   *loop = (*q != last_q);
 }
-#endif
 
 void *rate_control_kernel(void *input_ptr) {
     // Context
@@ -7941,9 +7414,6 @@ void *rate_control_kernel(void *input_ptr) {
 
         // Modify these for different temporal layers later
         switch (task_type) {
-#if !FEATURE_INL_ME
-        case RC_PICTURE_MANAGER_RESULT:
-#else
         case RC_INPUT:
             pcs_ptr = (PictureControlSet *)rate_control_tasks_ptr->pcs_wrapper_ptr->object_ptr;
 
@@ -7955,7 +7425,6 @@ void *rate_control_kernel(void *input_ptr) {
                 svt_release_object(rate_control_tasks_wrapper_ptr);
                 continue;
             }
-#endif
 
             pcs_ptr = (PictureControlSet *)rate_control_tasks_ptr->pcs_wrapper_ptr->object_ptr;
             scs_ptr = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
@@ -7963,30 +7432,18 @@ void *rate_control_kernel(void *input_ptr) {
             pcs_ptr->parent_pcs_ptr->blk_lambda_tuning = EB_FALSE;
 
 
-#if  FEATURE_TPL_SOP
-
            if (scs_ptr->in_loop_me)
-#endif
-#if FEATURE_IN_LOOP_TPL
 
-#if FEATURE_PA_ME
-            if (/*scs_ptr->in_loop_me &&*/ scs_ptr->static_config.enable_tpl_la &&
+                if (/*scs_ptr->in_loop_me &&*/ scs_ptr->static_config.enable_tpl_la &&
                 pcs_ptr->temporal_layer_index == 0) {
-#else
-            if (scs_ptr->in_loop_me && scs_ptr->static_config.enable_tpl_la &&
-                pcs_ptr->temporal_layer_index == 0) {
-#endif
-                tpl_mc_flow(scs_ptr->encode_context_ptr, scs_ptr, pcs_ptr->parent_pcs_ptr);
-            }
-#endif
+                    tpl_mc_flow(scs_ptr->encode_context_ptr, scs_ptr, pcs_ptr->parent_pcs_ptr);
+                }
 
-#if FEATURE_INL_ME
             // Release the down scaled input
             if (scs_ptr->in_loop_me) {
                 svt_release_object(pcs_ptr->parent_pcs_ptr->down_scaled_picture_wrapper_ptr);
                 pcs_ptr->parent_pcs_ptr->down_scaled_picture_wrapper_ptr = NULL;
             }
-#endif
 
             if (pcs_ptr->picture_number == 0) {
                 //init rate control parameters
@@ -7999,11 +7456,7 @@ void *rate_control_kernel(void *input_ptr) {
                     pcs_ptr->parent_pcs_ptr->sad_me +=
                         pcs_ptr->parent_pcs_ptr->rc_me_distortion[sb_addr];
                 }
-#if FEATURE_LAP_ENABLED_VBR
             if (use_input_stat(scs_ptr) || scs_ptr->lap_enabled) {
-#else
-            if (use_input_stat(scs_ptr)) {
-#endif
                 if (pcs_ptr->picture_number == 0) {
                     set_rc_buffer_sizes(scs_ptr);
                     av1_rc_init(scs_ptr);
@@ -8085,17 +7538,10 @@ void *rate_control_kernel(void *input_ptr) {
                         // Content adaptive qp assignment
                         // 1pass QPS with tpl_la
                             if (!use_input_stat(scs_ptr) &&
-#if !ENABLE_TPL_ZERO_LAD
-                                 scs_ptr->static_config.look_ahead_distance != 0 &&
-#endif
                                  scs_ptr->static_config.enable_tpl_la)
                             new_qindex = cqp_qindex_calc_tpl_la(pcs_ptr, &rc, qindex);
                         else
                         if (use_input_stat(scs_ptr)
-#if !ENABLE_TPL_ZERO_LAD
-                            &&
-                            scs_ptr->static_config.look_ahead_distance != 0
-#endif
                             ) {
                             int32_t update_type = scs_ptr->encode_context_ptr->gf_group.update_type[pcs_ptr->parent_pcs_ptr->gf_group_index];
                             frm_hdr->quantization_params.base_q_idx = quantizer_to_qindex[pcs_ptr->picture_qp];
@@ -8138,13 +7584,7 @@ void *rate_control_kernel(void *input_ptr) {
                 // ***Rate Control***
                 if (scs_ptr->static_config.rate_control_mode == 1) {
                     if (use_input_stat(scs_ptr)
-#if FEATURE_LAP_ENABLED_VBR
                         || scs_ptr->lap_enabled
-#endif
-#if !ENABLE_TPL_ZERO_LAD
-                        &&
-                        scs_ptr->static_config.look_ahead_distance != 0
-#endif
                         ) {
                         int32_t new_qindex = quantizer_to_qindex[(uint8_t)scs_ptr->static_config.qp];
                         int32_t update_type = scs_ptr->encode_context_ptr->gf_group.update_type[pcs_ptr->parent_pcs_ptr->gf_group_index];
@@ -8190,13 +7630,6 @@ void *rate_control_kernel(void *input_ptr) {
                                                      scs_ptr->static_config.max_qp_allowed,
                                                      pcs_ptr->picture_qp);
 
-#if !TUNE_TPL
-                if (scs_ptr->static_config.rate_control_mode == 1 &&
-                    use_input_stat(scs_ptr) &&
-                    scs_ptr->static_config.look_ahead_distance != 0)
-                    ;//hack skip base_q_idx writeback for accuracy loss like 89 to 88
-                else
-#endif
                 frm_hdr->quantization_params.base_q_idx = quantizer_to_qindex[pcs_ptr->picture_qp];
             }
 
@@ -8237,14 +7670,7 @@ void *rate_control_kernel(void *input_ptr) {
             // 2pass QPM with tpl_la
             if (scs_ptr->static_config.enable_adaptive_quantization == 2 &&
                 !use_output_stat(scs_ptr) &&
-#if FEATURE_LAP_ENABLED_VBR
                 (use_input_stat(scs_ptr) || scs_ptr->lap_enabled) &&
-#else
-                use_input_stat(scs_ptr) &&
-#endif
-#if !ENABLE_TPL_ZERO_LAD
-                scs_ptr->static_config.look_ahead_distance != 0 &&
-#endif
                 scs_ptr->static_config.enable_tpl_la &&
                 pcs_ptr->parent_pcs_ptr->r0 != 0)
                 sb_qp_derivation_tpl_la(pcs_ptr);
@@ -8253,9 +7679,6 @@ void *rate_control_kernel(void *input_ptr) {
             if (scs_ptr->static_config.enable_adaptive_quantization == 2 &&
                 !use_output_stat(scs_ptr) &&
                 !use_input_stat(scs_ptr) &&
-#if !ENABLE_TPL_ZERO_LAD
-                scs_ptr->static_config.look_ahead_distance != 0 &&
-#endif
                 scs_ptr->static_config.enable_tpl_la &&
                 pcs_ptr->parent_pcs_ptr->r0 != 0)
                 sb_qp_derivation_tpl_la(pcs_ptr);
@@ -8269,11 +7692,7 @@ void *rate_control_kernel(void *input_ptr) {
                     pcs_ptr->parent_pcs_ptr->average_qp += pcs_ptr->picture_qp;
                 }
             }
-#if FEATURE_LAP_ENABLED_VBR
             if(use_input_stat(scs_ptr) || scs_ptr->lap_enabled)
-#else
-            if (use_input_stat(scs_ptr))
-#endif
                 update_rc_counts(pcs_ptr->parent_pcs_ptr);
             // Get Empty Rate Control Results Buffer
             svt_get_empty_object(context_ptr->rate_control_output_results_fifo_ptr,
@@ -8337,11 +7756,6 @@ void *rate_control_kernel(void *input_ptr) {
                         : context_ptr->rate_control_param_queue[interval_index_temp - 1];
             }
             if (scs_ptr->static_config.rate_control_mode == 0
-#if !ENABLE_TPL_ZERO_LAD
-                &&
-                use_input_stat(scs_ptr) &&
-                1//scs_ptr->static_config.look_ahead_distance != 0
-#endif
                 ) {
                 av1_rc_postencode_update(parentpicture_control_set_ptr, (parentpicture_control_set_ptr->total_num_bits + 7) >> 3);
                 svt_av1_twopass_postencode_update(parentpicture_control_set_ptr);
@@ -8354,29 +7768,13 @@ void *rate_control_kernel(void *input_ptr) {
                     (int64_t)parentpicture_control_set_ptr->total_num_bits -
                     (int64_t)context_ptr->high_level_rate_control_ptr->channel_bit_rate_per_frame;
 
-#if FEATURE_LAP_ENABLED_VBR
                 if (use_input_stat(scs_ptr) || scs_ptr->lap_enabled
-#else
-                if (use_input_stat(scs_ptr)
-#endif
-#if !ENABLE_TPL_ZERO_LAD
-                    &&
-                    scs_ptr->static_config.look_ahead_distance != 0
-#endif
                     ) {
                     ;
                 } else
                 high_level_rc_feed_back_picture(parentpicture_control_set_ptr, scs_ptr);
                 if (scs_ptr->static_config.rate_control_mode == 1)
-#if FEATURE_LAP_ENABLED_VBR
                     if (use_input_stat(scs_ptr) || scs_ptr->lap_enabled
-#else
-                    if (use_input_stat(scs_ptr)
-#endif
-#if !ENABLE_TPL_ZERO_LAD
-                        &&
-                        scs_ptr->static_config.look_ahead_distance != 0
-#endif
                         ) {
                         av1_rc_postencode_update(parentpicture_control_set_ptr, (parentpicture_control_set_ptr->total_num_bits + 7) >> 3);
                         svt_av1_twopass_postencode_update(parentpicture_control_set_ptr);
@@ -8575,9 +7973,7 @@ void *rate_control_kernel(void *input_ptr) {
             }
 #endif
             total_number_of_fb_frames++;
-#if FEATURE_PA_ME
             EB_DESTROY_SEMAPHORE(parentpicture_control_set_ptr->pame_done_semaphore);
-#endif
 
             // Release the SequenceControlSet
             svt_release_object(parentpicture_control_set_ptr->scs_wrapper_ptr);

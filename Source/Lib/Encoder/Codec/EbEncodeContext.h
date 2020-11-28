@@ -90,9 +90,7 @@ typedef struct EncodeContext {
     // Picture Buffer Fifos
     EbFifo *reference_picture_pool_fifo_ptr;
     EbFifo *pa_reference_picture_pool_fifo_ptr;
-#if FEATURE_INL_ME
     EbFifo *down_scaled_picture_pool_fifo_ptr;
-#endif
 
     // Picture Decision Reorder Queue
     PictureDecisionReorderEntry **picture_decision_reorder_queue;
@@ -189,13 +187,8 @@ typedef struct EncodeContext {
     EbBool  is_i_slice_in_last_mini_gop;
     uint64_t i_slice_picture_number_in_last_mini_gop;
     uint64_t poc_map_idx[MAX_TPL_LA_SW];
-#if FEATURE_IN_LOOP_TPL
     EbPictureBufferDesc *mc_flow_rec_picture_buffer[MAX_TPL_LA_SW];
     EbPictureBufferDesc *mc_flow_rec_picture_buffer_noref;
-#else
-    EbByte  mc_flow_rec_picture_buffer[MAX_TPL_LA_SW];
-    EbByte  mc_flow_rec_picture_buffer_saved;
-#endif
     FrameInfo      frame_info;
     TwoPassCfg     two_pass_cfg; // two pass datarate control
     RATE_CONTROL   rc;
@@ -209,12 +202,10 @@ typedef struct EncodeContext {
     STATS_BUFFER_CTX stats_buf_context;
     SvtAv1FixedBuf rc_twopass_stats_in; // replaced oxcf->two_pass_cfg.stats_in in aom
     FirstPassStatsOut stats_out;
-#if FEATURE_RE_ENCODE
     RecodeLoopType recode_loop;
     // This feature controls the tolerence vs target used in deciding whether to
     // recode a frame. It has no meaning if recode is disabled.
     int recode_tolerance;
-#endif
 } EncodeContext;
 
 typedef struct EncodeContextInitData {
