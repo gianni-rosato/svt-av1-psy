@@ -2392,11 +2392,6 @@ void copy_api_from_app(
     scs_ptr->static_config.qp = ((EbSvtAv1EncConfiguration*)config_struct)->qp;
     scs_ptr->static_config.recon_enabled = ((EbSvtAv1EncConfiguration*)config_struct)->recon_enabled;
     scs_ptr->static_config.enable_tpl_la = ((EbSvtAv1EncConfiguration*)config_struct)->enable_tpl_la;
-    if (scs_ptr->static_config.rate_control_mode && !use_input_stat(scs_ptr) && !use_output_stat(scs_ptr) &&
-        !scs_ptr->lap_enabled && scs_ptr->static_config.enable_tpl_la) {
-        SVT_LOG("SVT [Warning]: force enable_tpl_la to be 0. Not supported for 1 PASS RC \n");
-        scs_ptr->static_config.enable_tpl_la = 0;
-    }
     // Extract frame rate from Numerator and Denominator if not 0
     if (scs_ptr->static_config.frame_rate_numerator != 0 && scs_ptr->static_config.frame_rate_denominator != 0)
         scs_ptr->frame_rate = scs_ptr->static_config.frame_rate = (((scs_ptr->static_config.frame_rate_numerator << 8) / (scs_ptr->static_config.frame_rate_denominator)) << 8);
@@ -2412,7 +2407,8 @@ void copy_api_from_app(
         scs_ptr->static_config.look_ahead_distance = cap_look_ahead_distance(&scs_ptr->static_config);
     if (scs_ptr->static_config.enable_tpl_la &&
         scs_ptr->static_config.look_ahead_distance > (uint32_t)0 &&
-        scs_ptr->static_config.look_ahead_distance != (uint32_t)TPL_LAD) {
+        scs_ptr->static_config.look_ahead_distance != (uint32_t)TPL_LAD &&
+        (scs_ptr->static_config.rate_control_mode == 0 || use_input_stat(scs_ptr) || scs_ptr->lap_enabled)) {
 
         SVT_LOG("SVT [Warning]: force look_ahead_distance to be %d from %d for perf/quality tradeoff when enable_tpl_la=1\n", (uint32_t)TPL_LAD, scs_ptr->static_config.look_ahead_distance);
         scs_ptr->static_config.look_ahead_distance = TPL_LAD;
