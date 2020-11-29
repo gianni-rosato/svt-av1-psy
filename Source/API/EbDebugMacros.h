@@ -14,11 +14,13 @@
 * This file contains only debug macros that are used during the development
 * and are supposed to be cleaned up every tag cycle
 * all macros must have the following format:
-* - enabling a feature should be prefixed by ENABLE_
-* - disableing a feature should be prefixed by DISABLE_
+* - adding a new feature should be prefixed by FTR_
 * - tuning a feature should be prefixed by TUNE_
-* - adding a new feature should be prefixed by FEATURE_
+* - enabling a feature should be prefixed by EN_
+* - disabling a feature should be prefixed by DIS_
 * - bug fixes should be prefixed by FIX_
+* - code refactors should be prefixed by RFCTR_
+* - code cleanups should be prefixed by CLN_
 * - all macros must have a coherent comment explaining what the MACRO is doing
 * - #if 0 / #if 1 are not to be used
 */

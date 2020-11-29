@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.8.6] - 2020-11-28
+
+Encoder
+- Further quality-speed tradeoffs tuning for VOD use cases
+- Improved TPL support within 1-pass and 2-pass CRF moode
+- Continued non-optimized support for 2pass VBR and CRF
+- Align kernel nomenclature to prefix svt_aom for kernels brough from libaom to avoid symbol conflicts
+
+Build and Testing
+- Bug fixes
+- Improve CI
+- Added CI support for gitlab
+- Improve Unit Test Coverage
+- Address C vs asm mismatches
+- Fix static analysis warnings / errors
+- Add address sanitizer
+- Fix symbol conflicts with libaom and libvpx when staticly linked to ffmpeg
+
 ## [0.8.5] - 2020-09-04
 Relicensing notice
 - Change the outbound license from BSD+Patent to the AOM license / patent
@@ -20,7 +38,7 @@ Build and Testing
 - Address C vs asm mismatches
 - Fix static analysis warnings / errors
 - Add address sanitizer
-- Fix symbol conflicts with libaom and libvpx when staticly lined to ffmpeg
+- Fix symbol conflicts with libaom and libvpx when staticly linked to ffmpeg
 
 
 ## [0.8.4] - 2020-06-26
