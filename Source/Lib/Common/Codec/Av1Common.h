@@ -31,12 +31,11 @@ extern "C" {
 #define SEGMENT_END_IDX(index, pic_size_in_sb, num_of_seg) \
     ((((index) + 1) * (pic_size_in_sb)) / (num_of_seg))
 
-
 typedef struct Av1Common {
     int32_t      mi_rows;
     int32_t      mi_cols;
     int32_t      ref_frame_sign_bias[REF_FRAMES]; /* Two state 0, 1 */
-    uint8_t *    last_frame_seg_map;
+    uint8_t*     last_frame_seg_map;
     InterpFilter interp_filter;
     int32_t      mi_stride;
 
@@ -53,24 +52,23 @@ typedef struct Av1Common {
     // Output of loop restoration
     Yv12BufferConfig rst_frame;
     // pointer to a scratch buffer used by self-guided restoration
-    int32_t *                       rst_tmpbuf;
-    Yv12BufferConfig *              frame_to_show;
-    int32_t                         byte_alignment;
-    int32_t                         last_tile_cols, last_tile_rows;
-    int32_t                         log2_tile_cols; // only valid for uniform tiles
-    int32_t                         log2_tile_rows; // only valid for uniform tiles
-    int32_t                         tile_width, tile_height; // In MI units
+    int32_t*          rst_tmpbuf;
+    Yv12BufferConfig* frame_to_show;
+    int32_t           byte_alignment;
+    int32_t           last_tile_cols, last_tile_rows;
+    int32_t           log2_tile_cols; // only valid for uniform tiles
+    int32_t           log2_tile_rows; // only valid for uniform tiles
+    int32_t           tile_width, tile_height; // In MI units
 
-//    SeqHeader                       *seq_header_ptr;
-    int8_t                          sg_filter_mode;
-    int32_t                         sg_frame_ep_cnt[SGRPROJ_PARAMS];
-    int32_t                         sg_frame_ep;
-    int8_t                          sg_ref_frame_ep[2];
-    int8_t                          wn_filter_mode;
+    //    SeqHeader                       *seq_header_ptr;
+    int8_t  sg_filter_mode;
+    int32_t sg_frame_ep_cnt[SGRPROJ_PARAMS];
+    int32_t sg_frame_ep;
+    int8_t  sg_ref_frame_ep[2];
+    int8_t  wn_filter_mode;
 
-
-    FrameSize frm_size;
-    TilesInfo tiles_info;
+    FrameSize    frm_size;
+    TilesInfo    tiles_info;
     CurrentFrame current_frame;
 
 } Av1Common;

@@ -39,8 +39,8 @@ uint16_t get_variance_for_cu(const BlockGeom *blk_geom, uint16_t *variance_ptr) 
     case BLOCK_4X16:
     case BLOCK_16X4:
     case BLOCK_16X16:
-        index0 = index1 =
-            ME_TIER_ZERO_PU_16x16_0 + ((blk_geom->origin_x >> 4) + (blk_geom->origin_y >> 2));
+        index0 = index1 = ME_TIER_ZERO_PU_16x16_0 +
+            ((blk_geom->origin_x >> 4) + (blk_geom->origin_y >> 2));
         break;
 
     case BLOCK_16X32:
@@ -56,8 +56,8 @@ uint16_t get_variance_for_cu(const BlockGeom *blk_geom, uint16_t *variance_ptr) 
     case BLOCK_8X32:
     case BLOCK_32X8:
     case BLOCK_32X32:
-        index0 = index1 =
-            ME_TIER_ZERO_PU_32x32_0 + ((blk_geom->origin_x >> 5) + (blk_geom->origin_y >> 4));
+        index0 = index1 = ME_TIER_ZERO_PU_32x32_0 +
+            ((blk_geom->origin_x >> 5) + (blk_geom->origin_y >> 4));
         break;
 
     case BLOCK_32X64:
@@ -90,16 +90,16 @@ void apply_segmentation_based_quantization(const BlockGeom *blk_geom, PictureCon
         }
     }
     int32_t q_index = pcs_ptr->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx +
-                      pcs_ptr->parent_pcs_ptr->frm_hdr.segmentation_params
-                          .feature_data[blk_ptr->segment_id][SEG_LVL_ALT_Q];
+        pcs_ptr->parent_pcs_ptr->frm_hdr.segmentation_params
+            .feature_data[blk_ptr->segment_id][SEG_LVL_ALT_Q];
     blk_ptr->qindex = q_index;
 }
 
 void setup_segmentation(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr,
                         RateControlLayerContext *rateControlLayerPtr) {
     SegmentationParams *segmentation_params = &pcs_ptr->parent_pcs_ptr->frm_hdr.segmentation_params;
-    segmentation_params->segmentation_enabled =
-        (EbBool)(scs_ptr->static_config.enable_adaptive_quantization == 1);
+    segmentation_params->segmentation_enabled = (EbBool)(
+        scs_ptr->static_config.enable_adaptive_quantization == 1);
     if (segmentation_params->segmentation_enabled) {
         int32_t segment_qps[MAX_SEGMENTS] = {0};
         segmentation_params->segmentation_update_data =
@@ -123,7 +123,9 @@ void calculate_segmentation_data(SegmentationParams *segmentation_params) {
         for (int j = 0; j < SEG_LVL_MAX; j++) {
             if (segmentation_params->feature_enabled[i][j]) {
                 segmentation_params->last_active_seg_id = i;
-                if (j >= SEG_LVL_REF_FRAME) { segmentation_params->seg_id_pre_skip = 1; }
+                if (j >= SEG_LVL_REF_FRAME) {
+                    segmentation_params->seg_id_pre_skip = 1;
+                }
             }
         }
     }
@@ -132,13 +134,13 @@ void calculate_segmentation_data(SegmentationParams *segmentation_params) {
 void find_segment_qps(SegmentationParams *segmentation_params,
                       PictureControlSet * pcs_ptr) { //QP needs to be specified as qpindex, not qp.
 
-    uint16_t  min_var = UINT16_MAX, max_var = MIN_UNSIGNED_VALUE, avg_var = 0;
+    uint16_t    min_var = UINT16_MAX, max_var = MIN_UNSIGNED_VALUE, avg_var = 0;
     const float strength = 2; //to tune
 
     // get range of variance
     for (uint32_t sb_idx = 0; sb_idx < pcs_ptr->sb_total_count; ++sb_idx) {
         uint16_t *variance_ptr = pcs_ptr->parent_pcs_ptr->variance[sb_idx];
-        uint32_t var_index, local_avg = 0;
+        uint32_t  var_index, local_avg = 0;
         // Loop over all 8x8s in a 64x64
         for (var_index = ME_TIER_ZERO_PU_8x8_0; var_index <= ME_TIER_ZERO_PU_8x8_63; var_index++) {
             max_var = MAX(max_var, variance_ptr[var_index]);
@@ -154,15 +156,15 @@ void find_segment_qps(SegmentationParams *segmentation_params,
     uint16_t min_var_log = svt_log2f(MAX(1, min_var));
     uint16_t max_var_log = svt_log2f(MAX(1, max_var));
     uint16_t step_size   = (uint16_t)(max_var_log - min_var_log) <= MAX_SEGMENTS
-                             ? 1
-                             : ROUND(((max_var_log - min_var_log)) / MAX_SEGMENTS);
-    uint16_t bin_edge   = min_var_log + step_size;
-    uint16_t bin_center = bin_edge >> 1;
+          ? 1
+          : ROUND(((max_var_log - min_var_log)) / MAX_SEGMENTS);
+    uint16_t bin_edge    = min_var_log + step_size;
+    uint16_t bin_center  = bin_edge >> 1;
 
     for (int i = 0; i < MAX_SEGMENTS; i++) {
-        segmentation_params->variance_bin_edge[i] = POW2(bin_edge);
-        segmentation_params->feature_data[i][SEG_LVL_ALT_Q] =
-            ROUND((uint16_t)strength * (MAX(1, bin_center) - avg_var));
+        segmentation_params->variance_bin_edge[i]           = POW2(bin_edge);
+        segmentation_params->feature_data[i][SEG_LVL_ALT_Q] = ROUND((uint16_t)strength *
+                                                                    (MAX(1, bin_center) - avg_var));
         bin_edge += step_size;
         bin_center += step_size;
     }

@@ -27,9 +27,8 @@
 #include "EbCommonUtils.h"
 #include "EbResize.h"
 
-
 int32_t get_qzbin_factor(int32_t q, AomBitDepth bit_depth);
-void invert_quant(int16_t *quant, int16_t *shift, int32_t d);
+void    invert_quant(int16_t *quant, int16_t *shift, int32_t d);
 int16_t svt_av1_dc_quant_q3(int32_t qindex, int32_t delta, AomBitDepth bit_depth);
 int16_t svt_av1_ac_quant_q3(int32_t qindex, int32_t delta, AomBitDepth bit_depth);
 int16_t svt_av1_dc_quant_qtx(int32_t qindex, int32_t delta, AomBitDepth bit_depth);
@@ -130,36 +129,35 @@ void set_global_motion_field(PictureControlSet *pcs_ptr) {
     PictureParentControlSet *parent_pcs_ptr = pcs_ptr->parent_pcs_ptr;
     for (frame_index = INTRA_FRAME; frame_index <= ALTREF_FRAME; ++frame_index) {
         if (parent_pcs_ptr
-            ->is_global_motion[get_list_idx(frame_index)][get_ref_frame_idx(frame_index)])
+                ->is_global_motion[get_list_idx(frame_index)][get_ref_frame_idx(frame_index)])
             parent_pcs_ptr->global_motion[frame_index] =
-            parent_pcs_ptr->global_motion_estimation[get_list_idx(frame_index)]
-            [get_ref_frame_idx(frame_index)];
+                parent_pcs_ptr->global_motion_estimation[get_list_idx(frame_index)]
+                                                        [get_ref_frame_idx(frame_index)];
 
         // Upscale the translation parameters by 2, because the search is done on a down-sampled
         // version of the source picture (with a down-sampling factor of 2 in each dimension).
         if (parent_pcs_ptr->gm_level == GM_DOWN16) {
             parent_pcs_ptr->global_motion[frame_index].wmmat[0] *= 4;
             parent_pcs_ptr->global_motion[frame_index].wmmat[1] *= 4;
-            parent_pcs_ptr->global_motion[frame_index].wmmat[0] =
-                (int32_t)clamp(parent_pcs_ptr->global_motion[frame_index].wmmat[0],
-                    GM_TRANS_MIN * GM_TRANS_DECODE_FACTOR,
-                    GM_TRANS_MAX * GM_TRANS_DECODE_FACTOR);
-            parent_pcs_ptr->global_motion[frame_index].wmmat[1] =
-                (int32_t)clamp(parent_pcs_ptr->global_motion[frame_index].wmmat[1],
-                    GM_TRANS_MIN * GM_TRANS_DECODE_FACTOR,
-                    GM_TRANS_MAX * GM_TRANS_DECODE_FACTOR);
-        }
-        else if (parent_pcs_ptr->gm_level == GM_DOWN) {
+            parent_pcs_ptr->global_motion[frame_index].wmmat[0] = (int32_t)clamp(
+                parent_pcs_ptr->global_motion[frame_index].wmmat[0],
+                GM_TRANS_MIN * GM_TRANS_DECODE_FACTOR,
+                GM_TRANS_MAX * GM_TRANS_DECODE_FACTOR);
+            parent_pcs_ptr->global_motion[frame_index].wmmat[1] = (int32_t)clamp(
+                parent_pcs_ptr->global_motion[frame_index].wmmat[1],
+                GM_TRANS_MIN * GM_TRANS_DECODE_FACTOR,
+                GM_TRANS_MAX * GM_TRANS_DECODE_FACTOR);
+        } else if (parent_pcs_ptr->gm_level == GM_DOWN) {
             parent_pcs_ptr->global_motion[frame_index].wmmat[0] *= 2;
             parent_pcs_ptr->global_motion[frame_index].wmmat[1] *= 2;
-            parent_pcs_ptr->global_motion[frame_index].wmmat[0] =
-                (int32_t)clamp(parent_pcs_ptr->global_motion[frame_index].wmmat[0],
-                    GM_TRANS_MIN * GM_TRANS_DECODE_FACTOR,
-                    GM_TRANS_MAX * GM_TRANS_DECODE_FACTOR);
-            parent_pcs_ptr->global_motion[frame_index].wmmat[1] =
-                (int32_t)clamp(parent_pcs_ptr->global_motion[frame_index].wmmat[1],
-                    GM_TRANS_MIN * GM_TRANS_DECODE_FACTOR,
-                    GM_TRANS_MAX * GM_TRANS_DECODE_FACTOR);
+            parent_pcs_ptr->global_motion[frame_index].wmmat[0] = (int32_t)clamp(
+                parent_pcs_ptr->global_motion[frame_index].wmmat[0],
+                GM_TRANS_MIN * GM_TRANS_DECODE_FACTOR,
+                GM_TRANS_MAX * GM_TRANS_DECODE_FACTOR);
+            parent_pcs_ptr->global_motion[frame_index].wmmat[1] = (int32_t)clamp(
+                parent_pcs_ptr->global_motion[frame_index].wmmat[1],
+                GM_TRANS_MIN * GM_TRANS_DECODE_FACTOR,
+                GM_TRANS_MAX * GM_TRANS_DECODE_FACTOR);
         }
     }
 }
@@ -182,20 +180,20 @@ void svt_av1_set_quantizer(PictureParentControlSet *pcs_ptr, int32_t q) {
     frm_hdr->quantization_params.delta_q_dc[AOM_PLANE_V] = 0;
     frm_hdr->quantization_params.qm[AOM_PLANE_Y]         = aom_get_qmlevel(
         frm_hdr->quantization_params.base_q_idx, pcs_ptr->min_qmlevel, pcs_ptr->max_qmlevel);
-    frm_hdr->quantization_params.qm[AOM_PLANE_U] =
-        aom_get_qmlevel(frm_hdr->quantization_params.base_q_idx +
-                            frm_hdr->quantization_params.delta_q_ac[AOM_PLANE_U],
-                        pcs_ptr->min_qmlevel,
-                        pcs_ptr->max_qmlevel);
+    frm_hdr->quantization_params.qm[AOM_PLANE_U] = aom_get_qmlevel(
+        frm_hdr->quantization_params.base_q_idx +
+            frm_hdr->quantization_params.delta_q_ac[AOM_PLANE_U],
+        pcs_ptr->min_qmlevel,
+        pcs_ptr->max_qmlevel);
 
     if (!pcs_ptr->separate_uv_delta_q)
         frm_hdr->quantization_params.qm[AOM_PLANE_V] = frm_hdr->quantization_params.qm[AOM_PLANE_U];
     else
-        frm_hdr->quantization_params.qm[AOM_PLANE_V] =
-            aom_get_qmlevel(frm_hdr->quantization_params.base_q_idx +
-                                frm_hdr->quantization_params.delta_q_ac[AOM_PLANE_V],
-                            pcs_ptr->min_qmlevel,
-                            pcs_ptr->max_qmlevel);
+        frm_hdr->quantization_params.qm[AOM_PLANE_V] = aom_get_qmlevel(
+            frm_hdr->quantization_params.base_q_idx +
+                frm_hdr->quantization_params.delta_q_ac[AOM_PLANE_V],
+            pcs_ptr->min_qmlevel,
+            pcs_ptr->max_qmlevel);
 }
 
 void svt_av1_build_quantizer(AomBitDepth bit_depth, int32_t y_dc_delta_q, int32_t u_dc_delta_q,
@@ -309,8 +307,6 @@ void svt_av1_qm_init(PictureParentControlSet *pcs_ptr) {
     }
 }
 
-
-
 /******************************************************
 * Set the reference sg ep for a given picture
 ******************************************************/
@@ -342,13 +338,14 @@ void set_reference_sg_ep(PictureControlSet *pcs_ptr) {
 }
 
 void mode_decision_configuration_init_qp_update(PictureControlSet *pcs_ptr) {
-    FrameHeader *frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
+    FrameHeader *frm_hdr                = &pcs_ptr->parent_pcs_ptr->frm_hdr;
     pcs_ptr->parent_pcs_ptr->average_qp = 0;
     pcs_ptr->intra_coded_area           = 0;
     // Init block selection
-    memset(pcs_ptr->part_cnt, 0, sizeof(uint32_t) * (NUMBER_OF_SHAPES-1) * FB_NUM * SSEG_NUM);
+    memset(pcs_ptr->part_cnt, 0, sizeof(uint32_t) * (NUMBER_OF_SHAPES - 1) * FB_NUM * SSEG_NUM);
     // Init pred_depth selection
-    memset(pcs_ptr->pred_depth_count, 0, sizeof(uint32_t) * DEPTH_DELTA_NUM * (NUMBER_OF_SHAPES-1));
+    memset(
+        pcs_ptr->pred_depth_count, 0, sizeof(uint32_t) * DEPTH_DELTA_NUM * (NUMBER_OF_SHAPES - 1));
     // Init tx_type selection
     memset(pcs_ptr->txt_cnt, 0, sizeof(uint32_t) * TXT_DEPTH_DELTA_NUM * TX_TYPES);
     // Compute Tc, and Beta offsets for a given picture
@@ -363,22 +360,21 @@ void mode_decision_configuration_init_qp_update(PictureControlSet *pcs_ptr) {
 
     if (pcs_ptr->parent_pcs_ptr->frm_hdr.primary_ref_frame != PRIMARY_REF_NONE)
         memcpy(&pcs_ptr->md_frame_context,
-                &pcs_ptr->ref_frame_context[pcs_ptr->parent_pcs_ptr->frm_hdr.primary_ref_frame],
-                sizeof(FRAME_CONTEXT));
+               &pcs_ptr->ref_frame_context[pcs_ptr->parent_pcs_ptr->frm_hdr.primary_ref_frame],
+               sizeof(FRAME_CONTEXT));
     else {
-        svt_av1_default_coef_probs(&pcs_ptr->md_frame_context, frm_hdr->quantization_params.base_q_idx);
+        svt_av1_default_coef_probs(&pcs_ptr->md_frame_context,
+                                   frm_hdr->quantization_params.base_q_idx);
         init_mode_probs(&pcs_ptr->md_frame_context);
     }
     // Initial Rate Estimation of the syntax elements
     av1_estimate_syntax_rate(md_rate_estimation_array,
-            pcs_ptr->slice_type == I_SLICE ? EB_TRUE : EB_FALSE,
-            &pcs_ptr->md_frame_context);
+                             pcs_ptr->slice_type == I_SLICE ? EB_TRUE : EB_FALSE,
+                             &pcs_ptr->md_frame_context);
     // Initial Rate Estimation of the Motion vectors
-    av1_estimate_mv_rate(
-            pcs_ptr, md_rate_estimation_array, &pcs_ptr->md_frame_context);
+    av1_estimate_mv_rate(pcs_ptr, md_rate_estimation_array, &pcs_ptr->md_frame_context);
     // Initial Rate Estimation of the quantized coefficients
-    av1_estimate_coefficients_rate(md_rate_estimation_array,
-            &pcs_ptr->md_frame_context);
+    av1_estimate_coefficients_rate(md_rate_estimation_array, &pcs_ptr->md_frame_context);
 }
 
 /******************************************************
@@ -387,10 +383,11 @@ void mode_decision_configuration_init_qp_update(PictureControlSet *pcs_ptr) {
 
 static void mode_decision_configuration_context_dctor(EbPtr p) {
     EbThreadContext *                 thread_context_ptr = (EbThreadContext *)p;
-    ModeDecisionConfigurationContext *obj =
-        (ModeDecisionConfigurationContext *)thread_context_ptr->priv;
+    ModeDecisionConfigurationContext *obj                = (ModeDecisionConfigurationContext *)
+                                                thread_context_ptr->priv;
 
-    if (obj->is_md_rate_estimation_ptr_owner) EB_FREE_ARRAY(obj->md_rate_estimation_ptr);
+    if (obj->is_md_rate_estimation_ptr_owner)
+        EB_FREE_ARRAY(obj->md_rate_estimation_ptr);
     EB_FREE_ARRAY(obj->sb_score_array);
     EB_FREE_ARRAY(obj->sb_cost_array);
     EB_FREE_ARRAY(obj->mdc_candidate_ptr);
@@ -406,8 +403,8 @@ EbErrorType mode_decision_configuration_context_ctor(EbThreadContext *  thread_c
                                                      const EbEncHandle *enc_handle_ptr,
                                                      int input_index, int output_index) {
     const SequenceControlSet *scs_ptr = enc_handle_ptr->scs_instance_array[0]->scs_ptr;
-    uint32_t                  sb_total_count =
-        ((scs_ptr->max_input_luma_width + BLOCK_SIZE_64 - 1) / BLOCK_SIZE_64) *
+    uint32_t sb_total_count           = ((scs_ptr->max_input_luma_width + BLOCK_SIZE_64 - 1) /
+                               BLOCK_SIZE_64) *
         ((scs_ptr->max_input_luma_height + BLOCK_SIZE_64 - 1) / BLOCK_SIZE_64);
 
     ModeDecisionConfigurationContext *context_ptr;
@@ -418,8 +415,9 @@ EbErrorType mode_decision_configuration_context_ctor(EbThreadContext *  thread_c
     // Input/Output System Resource Manager FIFOs
     context_ptr->rate_control_input_fifo_ptr = svt_system_resource_get_consumer_fifo(
         enc_handle_ptr->rate_control_results_resource_ptr, input_index);
-    context_ptr->mode_decision_configuration_output_fifo_ptr = svt_system_resource_get_producer_fifo(
-        enc_handle_ptr->enc_dec_tasks_resource_ptr, output_index);
+    context_ptr->mode_decision_configuration_output_fifo_ptr =
+        svt_system_resource_get_producer_fifo(enc_handle_ptr->enc_dec_tasks_resource_ptr,
+                                              output_index);
     // Rate estimation
     EB_MALLOC_ARRAY(context_ptr->md_rate_estimation_ptr, 1);
     context_ptr->is_md_rate_estimation_ptr_owner = EB_TRUE;
@@ -437,46 +435,42 @@ EbErrorType mode_decision_configuration_context_ctor(EbThreadContext *  thread_c
     return EB_ErrorNone;
 }
 
-void set_cdf_controls(PictureControlSet *pcs, uint8_t update_cdf_level)
-{
-    CdfControls * ctrl = &pcs->cdf_ctrl;
-    switch (update_cdf_level)
-    {
+void set_cdf_controls(PictureControlSet *pcs, uint8_t update_cdf_level) {
+    CdfControls *ctrl = &pcs->cdf_ctrl;
+    switch (update_cdf_level) {
     case 0:
-        ctrl->update_mv = 0;
-        ctrl->update_se = 0;
+        ctrl->update_mv   = 0;
+        ctrl->update_se   = 0;
         ctrl->update_coef = 0;
         break;
     case 1:
-        ctrl->update_mv = 1;
-        ctrl->update_se = 1;
+        ctrl->update_mv   = 1;
+        ctrl->update_se   = 1;
         ctrl->update_coef = 1;
         break;
     case 2:
-        ctrl->update_mv = 0;
-        ctrl->update_se = 1;
+        ctrl->update_mv   = 0;
+        ctrl->update_se   = 1;
         ctrl->update_coef = 1;
         break;
     case 3:
-        ctrl->update_mv = 0;
-        ctrl->update_se = 1;
+        ctrl->update_mv   = 0;
+        ctrl->update_se   = 1;
         ctrl->update_coef = 0;
         break;
-    default:
-        assert(0);
-        break;
+    default: assert(0); break;
     }
 
     ctrl->update_mv = pcs->slice_type == I_SLICE ? 0 : ctrl->update_mv;
-    ctrl->enabled = ctrl->update_coef | ctrl->update_mv | ctrl->update_se;
+    ctrl->enabled   = ctrl->update_coef | ctrl->update_mv | ctrl->update_se;
 }
 /******************************************************
 * Derive Mode Decision Config Settings for OQ
 Input   : encoder mode and tune
 Output  : EncDec Kernel signal(s)
 ******************************************************/
-EbErrorType signal_derivation_mode_decision_config_kernel_oq(
-    SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr) {
+EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet *scs_ptr,
+                                                             PictureControlSet * pcs_ptr) {
     UNUSED(scs_ptr);
     EbErrorType return_error = EB_ErrorNone;
 
@@ -503,18 +497,16 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(
                 pcs_ptr->pic_filter_intra_level = 1;
             else
                 pcs_ptr->pic_filter_intra_level = 0;
-        }
-        else
+        } else
             pcs_ptr->pic_filter_intra_level = 0;
-    }
-    else
+    } else
         pcs_ptr->pic_filter_intra_level = scs_ptr->static_config.filter_intra_level;
-    FrameHeader *frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
-    frm_hdr->allow_high_precision_mv =
-                frm_hdr->quantization_params.base_q_idx < HIGH_PRECISION_MV_QTHRESH &&
-                (scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE)
-            ? 1
-            : 0;
+    FrameHeader *frm_hdr             = &pcs_ptr->parent_pcs_ptr->frm_hdr;
+    frm_hdr->allow_high_precision_mv = frm_hdr->quantization_params.base_q_idx <
+                HIGH_PRECISION_MV_QTHRESH &&
+            (scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE)
+        ? 1
+        : 0;
     EbBool enable_wm;
     if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M3) {
         enable_wm = EB_TRUE;
@@ -528,11 +520,9 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(
 
     // Note: local warp should be disabled when super-res is ON
     // according to the AV1 spec 5.11.27
-    frm_hdr->allow_warped_motion =
-        enable_wm &&
+    frm_hdr->allow_warped_motion = enable_wm &&
         !(frm_hdr->frame_type == KEY_FRAME || frm_hdr->frame_type == INTRA_ONLY_FRAME) &&
-        !frm_hdr->error_resilient_mode &&
-        !pcs_ptr->parent_pcs_ptr->frame_superres_enabled;
+        !frm_hdr->error_resilient_mode && !pcs_ptr->parent_pcs_ptr->frame_superres_enabled;
 
     frm_hdr->is_motion_mode_switchable = frm_hdr->allow_warped_motion;
 
@@ -555,8 +545,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(
             pcs_ptr->parent_pcs_ptr->pic_obmc_level = 3;
         else
             pcs_ptr->parent_pcs_ptr->pic_obmc_level = 0;
-    }
-    else
+    } else
         pcs_ptr->parent_pcs_ptr->pic_obmc_level = scs_ptr->static_config.obmc_level;
 
     // Switchable Motion Mode
@@ -577,12 +566,12 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(
 Input   : encoder mode and tune
 Output  : EncDec Kernel signal(s)
 ******************************************************/
-EbErrorType first_pass_signal_derivation_mode_decision_config_kernel(
-    PictureControlSet *pcs_ptr);
-void av1_set_ref_frame(MvReferenceFrame *rf, int8_t ref_frame_type);
+EbErrorType first_pass_signal_derivation_mode_decision_config_kernel(PictureControlSet *pcs_ptr);
+void        av1_set_ref_frame(MvReferenceFrame *rf, int8_t ref_frame_type);
 
 static INLINE int get_relative_dist(const OrderHintInfo *oh, int a, int b) {
-    if (!oh->enable_order_hint) return 0;
+    if (!oh->enable_order_hint)
+        return 0;
 
     const int bits = oh->order_hint_bits;
 
@@ -601,16 +590,17 @@ static int get_block_position(Av1Common *cm, int *mi_r, int *mi_c, int blk_row, 
     const int base_blk_row = (blk_row >> 3) << 3;
     const int base_blk_col = (blk_col >> 3) << 3;
 
-    const int row_offset =
-        (mv.row >= 0) ? (mv.row >> (4 + MI_SIZE_LOG2)) : -((-mv.row) >> (4 + MI_SIZE_LOG2));
+    const int row_offset = (mv.row >= 0) ? (mv.row >> (4 + MI_SIZE_LOG2))
+                                         : -((-mv.row) >> (4 + MI_SIZE_LOG2));
 
-    const int col_offset =
-        (mv.col >= 0) ? (mv.col >> (4 + MI_SIZE_LOG2)) : -((-mv.col) >> (4 + MI_SIZE_LOG2));
+    const int col_offset = (mv.col >= 0) ? (mv.col >> (4 + MI_SIZE_LOG2))
+                                         : -((-mv.col) >> (4 + MI_SIZE_LOG2));
 
     const int row = (sign_bias == 1) ? blk_row - row_offset : blk_row + row_offset;
     const int col = (sign_bias == 1) ? blk_col - col_offset : blk_col + col_offset;
 
-    if (row < 0 || row >= (cm->mi_rows >> 1) || col < 0 || col >= (cm->mi_cols >> 1)) return 0;
+    if (row < 0 || row >= (cm->mi_rows >> 1) || col < 0 || col >= (cm->mi_cols >> 1))
+        return 0;
 
     if (row < base_blk_row - (MAX_OFFSET_HEIGHT >> 3) ||
         row >= base_blk_row + 8 + (MAX_OFFSET_HEIGHT >> 3) ||
@@ -643,41 +633,42 @@ static int motion_field_projection(Av1Common *cm, PictureControlSet *pcs_ptr,
     EbReferenceObject *start_frame_buf =
         (EbReferenceObject *)pcs_ptr->ref_pic_ptr_array[list_idx0][ref_idx_l0]->object_ptr;
 
-    if (start_frame_buf == NULL) return 0;
+    if (start_frame_buf == NULL)
+        return 0;
 
     if (start_frame_buf->frame_type == KEY_FRAME || start_frame_buf->frame_type == INTRA_ONLY_FRAME)
         return 0;
 
     // MFMV is not applied when the reference picture is of a different spatial resolution
     // (described in the AV1 spec section 7.9.2.)
-    if (start_frame_buf->mi_rows != cm->mi_rows ||
-        start_frame_buf->mi_cols != cm->mi_cols){
+    if (start_frame_buf->mi_rows != cm->mi_rows || start_frame_buf->mi_cols != cm->mi_cols) {
         return 0;
     }
 
-    const int                 start_frame_order_hint = start_frame_buf->order_hint;
-    const unsigned int *const ref_order_hints        = &start_frame_buf->ref_order_hint[0];
+    const int                 start_frame_order_hint        = start_frame_buf->order_hint;
+    const unsigned int *const ref_order_hints               = &start_frame_buf->ref_order_hint[0];
     int                       start_to_current_frame_offset = get_relative_dist(
         &pcs_ptr->parent_pcs_ptr->scs_ptr->seq_header.order_hint_info,
         start_frame_order_hint,
         pcs_ptr->parent_pcs_ptr->cur_order_hint);
 
     for (int i = LAST_FRAME; i <= INTER_REFS_PER_FRAME; ++i)
-        ref_offset[i] =
-            get_relative_dist(&pcs_ptr->parent_pcs_ptr->scs_ptr->seq_header.order_hint_info,
-                              start_frame_order_hint,
-                              ref_order_hints[i - LAST_FRAME]);
+        ref_offset[i] = get_relative_dist(
+            &pcs_ptr->parent_pcs_ptr->scs_ptr->seq_header.order_hint_info,
+            start_frame_order_hint,
+            ref_order_hints[i - LAST_FRAME]);
 
-    if (dir == 2) start_to_current_frame_offset = -start_to_current_frame_offset;
+    if (dir == 2)
+        start_to_current_frame_offset = -start_to_current_frame_offset;
 
     const MV_REF *const mv_ref_base = start_frame_buf->mvs;
-    const int mvs_rows    = (cm->mi_rows + 1) >> 1;
-    const int mvs_cols    = (cm->mi_cols + 1) >> 1;
+    const int           mvs_rows    = (cm->mi_rows + 1) >> 1;
+    const int           mvs_cols    = (cm->mi_cols + 1) >> 1;
 
     for (int blk_row = 0; blk_row < mvs_rows; ++blk_row) {
         for (int blk_col = 0; blk_col < mvs_cols; ++blk_col) {
             const MV_REF *const mv_ref = &mv_ref_base[blk_row * mvs_cols + blk_col];
-            MV      fwd_mv = mv_ref->mv.as_mv;
+            MV                  fwd_mv = mv_ref->mv.as_mv;
 
             if (mv_ref->ref_frame > INTRA_FRAME) {
                 MV        this_mv;
@@ -712,7 +703,8 @@ static void av1_setup_motion_field(Av1Common *cm, PictureControlSet *pcs_ptr) {
     const OrderHintInfo *const order_hint_info =
         &pcs_ptr->parent_pcs_ptr->scs_ptr->seq_header.order_hint_info;
     memset(pcs_ptr->ref_frame_side, 0, sizeof(pcs_ptr->ref_frame_side));
-    if (!order_hint_info->enable_order_hint) return;
+    if (!order_hint_info->enable_order_hint)
+        return;
 
     TPL_MV_REF *tpl_mvs_base = pcs_ptr->tpl_mvs;
     int         size         = ((cm->mi_rows + MAX_MIB_SIZE) >> 1) * (cm->mi_stride >> 1);
@@ -734,7 +726,8 @@ static void av1_setup_motion_field(Av1Common *cm, PictureControlSet *pcs_ptr) {
         EbReferenceObject *buf =
             (EbReferenceObject *)pcs_ptr->ref_pic_ptr_array[list_idx0][ref_idx_l0]->object_ptr;
 
-        if (buf != NULL) order_hint = buf->order_hint;
+        if (buf != NULL)
+            order_hint = buf->order_hint;
 
         ref_buf[ref_idx]        = buf;
         ref_order_hint[ref_idx] = order_hint;
@@ -750,29 +743,34 @@ static void av1_setup_motion_field(Av1Common *cm, PictureControlSet *pcs_ptr) {
     if (ref_buf[LAST_FRAME - LAST_FRAME] != NULL) {
         const int alt_of_lst_order_hint =
             ref_buf[LAST_FRAME - LAST_FRAME]->ref_order_hint[ALTREF_FRAME - LAST_FRAME];
-        const int is_lst_overlay =
-            (alt_of_lst_order_hint == ref_order_hint[GOLDEN_FRAME - LAST_FRAME]);
-        if (!is_lst_overlay) motion_field_projection(cm, pcs_ptr, LAST_FRAME, 2);
+        const int is_lst_overlay = (alt_of_lst_order_hint ==
+                                    ref_order_hint[GOLDEN_FRAME - LAST_FRAME]);
+        if (!is_lst_overlay)
+            motion_field_projection(cm, pcs_ptr, LAST_FRAME, 2);
 
         --ref_stamp;
     }
 
     if (get_relative_dist(
             order_hint_info, ref_order_hint[BWDREF_FRAME - LAST_FRAME], cur_order_hint) > 0) {
-        if (motion_field_projection(cm, pcs_ptr, BWDREF_FRAME, 0)) --ref_stamp;
+        if (motion_field_projection(cm, pcs_ptr, BWDREF_FRAME, 0))
+            --ref_stamp;
     }
 
     if (get_relative_dist(
             order_hint_info, ref_order_hint[ALTREF2_FRAME - LAST_FRAME], cur_order_hint) > 0) {
-        if (motion_field_projection(cm, pcs_ptr, ALTREF2_FRAME, 0)) --ref_stamp;
+        if (motion_field_projection(cm, pcs_ptr, ALTREF2_FRAME, 0))
+            --ref_stamp;
     }
 
     if (get_relative_dist(
             order_hint_info, ref_order_hint[ALTREF_FRAME - LAST_FRAME], cur_order_hint) > 0 &&
         ref_stamp >= 0)
-        if (motion_field_projection(cm, pcs_ptr, ALTREF_FRAME, 0)) --ref_stamp;
+        if (motion_field_projection(cm, pcs_ptr, ALTREF_FRAME, 0))
+            --ref_stamp;
 
-    if (ref_stamp >= 0) motion_field_projection(cm, pcs_ptr, LAST2_FRAME, 2);
+    if (ref_stamp >= 0)
+        motion_field_projection(cm, pcs_ptr, LAST2_FRAME, 2);
 }
 
 /* Mode Decision Configuration Kernel */
@@ -806,10 +804,10 @@ static void av1_setup_motion_field(Av1Common *cm, PictureControlSet *pcs_ptr) {
 void *mode_decision_configuration_kernel(void *input_ptr) {
     // Context & SCS & PCS
     EbThreadContext *                 thread_context_ptr = (EbThreadContext *)input_ptr;
-    ModeDecisionConfigurationContext *context_ptr =
-        (ModeDecisionConfigurationContext *)thread_context_ptr->priv;
+    ModeDecisionConfigurationContext *context_ptr        = (ModeDecisionConfigurationContext *)
+                                                        thread_context_ptr->priv;
     // Input
-    EbObjectWrapper *   rate_control_results_wrapper_ptr;
+    EbObjectWrapper *rate_control_results_wrapper_ptr;
 
     // Output
     EbObjectWrapper *enc_dec_tasks_wrapper_ptr;
@@ -828,18 +826,19 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
         // -------
         // Scale references if resolution of the reference is different than the input
         // -------
-        if(pcs_ptr->parent_pcs_ptr->frame_superres_enabled == 1 && pcs_ptr->slice_type != I_SLICE) {
+        if (pcs_ptr->parent_pcs_ptr->frame_superres_enabled == 1 &&
+            pcs_ptr->slice_type != I_SLICE) {
             if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE &&
-                pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr != NULL){
+                pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr != NULL) {
                 // update mi_rows and mi_cols for the reference pic wrapper (used in mfmv for other pictures)
-                EbReferenceObject *reference_object = pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr;
+                EbReferenceObject *reference_object =
+                    pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr;
                 reference_object->mi_rows = pcs_ptr->parent_pcs_ptr->aligned_height >> MI_SIZE_LOG2;
                 reference_object->mi_cols = pcs_ptr->parent_pcs_ptr->aligned_width >> MI_SIZE_LOG2;
             }
 
-            scale_rec_references(pcs_ptr,
-                                 pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr,
-                                 pcs_ptr->hbd_mode_decision);
+            scale_rec_references(
+                pcs_ptr, pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr, pcs_ptr->hbd_mode_decision);
         }
 
         if (pcs_ptr->parent_pcs_ptr->frm_hdr.use_ref_frame_mvs)
@@ -856,9 +855,11 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
         pcs_ptr->parent_pcs_ptr->average_qp = 0;
         pcs_ptr->intra_coded_area           = 0;
         // Init block selection
-        memset(pcs_ptr->part_cnt, 0, sizeof(uint32_t) * (NUMBER_OF_SHAPES-1) * FB_NUM * SSEG_NUM);
+        memset(pcs_ptr->part_cnt, 0, sizeof(uint32_t) * (NUMBER_OF_SHAPES - 1) * FB_NUM * SSEG_NUM);
         // Init pred_depth selection
-        memset(pcs_ptr->pred_depth_count, 0, sizeof(uint32_t) * DEPTH_DELTA_NUM * (NUMBER_OF_SHAPES-1));
+        memset(pcs_ptr->pred_depth_count,
+               0,
+               sizeof(uint32_t) * DEPTH_DELTA_NUM * (NUMBER_OF_SHAPES - 1));
         // Init tx_type selection
         memset(pcs_ptr->txt_cnt, 0, sizeof(uint32_t) * TXT_DEPTH_DELTA_NUM * TX_TYPES);
         // Compute Tc, and Beta offsets for a given picture
@@ -885,22 +886,21 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
         context_ptr->md_rate_estimation_ptr = md_rate_estimation_array;
         if (pcs_ptr->parent_pcs_ptr->frm_hdr.primary_ref_frame != PRIMARY_REF_NONE)
             memcpy(&pcs_ptr->md_frame_context,
-                &pcs_ptr->ref_frame_context[pcs_ptr->parent_pcs_ptr->frm_hdr.primary_ref_frame],
-                sizeof(FRAME_CONTEXT));
+                   &pcs_ptr->ref_frame_context[pcs_ptr->parent_pcs_ptr->frm_hdr.primary_ref_frame],
+                   sizeof(FRAME_CONTEXT));
         else {
-            svt_av1_default_coef_probs(&pcs_ptr->md_frame_context, frm_hdr->quantization_params.base_q_idx);
+            svt_av1_default_coef_probs(&pcs_ptr->md_frame_context,
+                                       frm_hdr->quantization_params.base_q_idx);
             init_mode_probs(&pcs_ptr->md_frame_context);
         }
         // Initial Rate Estimation of the syntax elements
         av1_estimate_syntax_rate(md_rate_estimation_array,
-            pcs_ptr->slice_type == I_SLICE ? EB_TRUE : EB_FALSE,
-            &pcs_ptr->md_frame_context);
+                                 pcs_ptr->slice_type == I_SLICE ? EB_TRUE : EB_FALSE,
+                                 &pcs_ptr->md_frame_context);
         // Initial Rate Estimation of the Motion vectors
-        av1_estimate_mv_rate(
-            pcs_ptr, md_rate_estimation_array, &pcs_ptr->md_frame_context);
+        av1_estimate_mv_rate(pcs_ptr, md_rate_estimation_array, &pcs_ptr->md_frame_context);
         // Initial Rate Estimation of the quantized coefficients
-        av1_estimate_coefficients_rate(md_rate_estimation_array,
-            &pcs_ptr->md_frame_context);
+        av1_estimate_coefficients_rate(md_rate_estimation_array, &pcs_ptr->md_frame_context);
         if (frm_hdr->allow_intrabc) {
             int            i;
             int            speed          = 1;
@@ -932,7 +932,7 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
 
             {
                 // add to hash table
-                const int pic_width = pcs_ptr->parent_pcs_ptr->aligned_width;
+                const int pic_width  = pcs_ptr->parent_pcs_ptr->aligned_width;
                 const int pic_height = pcs_ptr->parent_pcs_ptr->aligned_height;
 
                 uint32_t *block_hash_values[2][2];
@@ -959,84 +959,84 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
                 svt_av1_generate_block_2x2_hash_value(
                     &cpi_source, block_hash_values[0], is_block_same[0], pcs_ptr);
                 svt_av1_generate_block_hash_value(&cpi_source,
-                                              4,
-                                              block_hash_values[0],
-                                              block_hash_values[1],
-                                              is_block_same[0],
-                                              is_block_same[1],
-                                              pcs_ptr);
+                                                  4,
+                                                  block_hash_values[0],
+                                                  block_hash_values[1],
+                                                  is_block_same[0],
+                                                  is_block_same[1],
+                                                  pcs_ptr);
                 svt_av1_add_to_hash_map_by_row_with_precal_data(&pcs_ptr->hash_table,
-                                                            block_hash_values[1],
-                                                            is_block_same[1][2],
-                                                            pic_width,
-                                                            pic_height,
-                                                            4);
+                                                                block_hash_values[1],
+                                                                is_block_same[1][2],
+                                                                pic_width,
+                                                                pic_height,
+                                                                4);
                 svt_av1_generate_block_hash_value(&cpi_source,
-                                              8,
-                                              block_hash_values[1],
-                                              block_hash_values[0],
-                                              is_block_same[1],
-                                              is_block_same[0],
-                                              pcs_ptr);
+                                                  8,
+                                                  block_hash_values[1],
+                                                  block_hash_values[0],
+                                                  is_block_same[1],
+                                                  is_block_same[0],
+                                                  pcs_ptr);
                 svt_av1_add_to_hash_map_by_row_with_precal_data(&pcs_ptr->hash_table,
-                                                            block_hash_values[0],
-                                                            is_block_same[0][2],
-                                                            pic_width,
-                                                            pic_height,
-                                                            8);
+                                                                block_hash_values[0],
+                                                                is_block_same[0][2],
+                                                                pic_width,
+                                                                pic_height,
+                                                                8);
                 svt_av1_generate_block_hash_value(&cpi_source,
-                                              16,
-                                              block_hash_values[0],
-                                              block_hash_values[1],
-                                              is_block_same[0],
-                                              is_block_same[1],
-                                              pcs_ptr);
+                                                  16,
+                                                  block_hash_values[0],
+                                                  block_hash_values[1],
+                                                  is_block_same[0],
+                                                  is_block_same[1],
+                                                  pcs_ptr);
                 svt_av1_add_to_hash_map_by_row_with_precal_data(&pcs_ptr->hash_table,
-                                                            block_hash_values[1],
-                                                            is_block_same[1][2],
-                                                            pic_width,
-                                                            pic_height,
-                                                            16);
+                                                                block_hash_values[1],
+                                                                is_block_same[1][2],
+                                                                pic_width,
+                                                                pic_height,
+                                                                16);
                 svt_av1_generate_block_hash_value(&cpi_source,
-                                              32,
-                                              block_hash_values[1],
-                                              block_hash_values[0],
-                                              is_block_same[1],
-                                              is_block_same[0],
-                                              pcs_ptr);
+                                                  32,
+                                                  block_hash_values[1],
+                                                  block_hash_values[0],
+                                                  is_block_same[1],
+                                                  is_block_same[0],
+                                                  pcs_ptr);
                 svt_av1_add_to_hash_map_by_row_with_precal_data(&pcs_ptr->hash_table,
-                                                            block_hash_values[0],
-                                                            is_block_same[0][2],
-                                                            pic_width,
-                                                            pic_height,
-                                                            32);
+                                                                block_hash_values[0],
+                                                                is_block_same[0][2],
+                                                                pic_width,
+                                                                pic_height,
+                                                                32);
                 svt_av1_generate_block_hash_value(&cpi_source,
-                                              64,
-                                              block_hash_values[0],
-                                              block_hash_values[1],
-                                              is_block_same[0],
-                                              is_block_same[1],
-                                              pcs_ptr);
+                                                  64,
+                                                  block_hash_values[0],
+                                                  block_hash_values[1],
+                                                  is_block_same[0],
+                                                  is_block_same[1],
+                                                  pcs_ptr);
                 svt_av1_add_to_hash_map_by_row_with_precal_data(&pcs_ptr->hash_table,
-                                                            block_hash_values[1],
-                                                            is_block_same[1][2],
-                                                            pic_width,
-                                                            pic_height,
-                                                            64);
+                                                                block_hash_values[1],
+                                                                is_block_same[1][2],
+                                                                pic_width,
+                                                                pic_height,
+                                                                64);
 
                 svt_av1_generate_block_hash_value(&cpi_source,
-                                              128,
-                                              block_hash_values[1],
-                                              block_hash_values[0],
-                                              is_block_same[1],
-                                              is_block_same[0],
-                                              pcs_ptr);
+                                                  128,
+                                                  block_hash_values[1],
+                                                  block_hash_values[0],
+                                                  is_block_same[1],
+                                                  is_block_same[0],
+                                                  pcs_ptr);
                 svt_av1_add_to_hash_map_by_row_with_precal_data(&pcs_ptr->hash_table,
-                                                            block_hash_values[0],
-                                                            is_block_same[0][2],
-                                                            pic_width,
-                                                            pic_height,
-                                                            128);
+                                                                block_hash_values[0],
+                                                                is_block_same[0][2],
+                                                                pic_width,
+                                                                pic_height,
+                                                                128);
 
                 for (k = 0; k < 2; k++) {
                     for (j = 0; j < 2; j++) free(block_hash_values[k][j]);
@@ -1050,8 +1050,8 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
 
         // Post the results to the MD processes
 
-        uint16_t tg_count =
-            pcs_ptr->parent_pcs_ptr->tile_group_cols * pcs_ptr->parent_pcs_ptr->tile_group_rows;
+        uint16_t tg_count = pcs_ptr->parent_pcs_ptr->tile_group_cols *
+            pcs_ptr->parent_pcs_ptr->tile_group_rows;
         for (uint16_t tile_group_idx = 0; tile_group_idx < tg_count; tile_group_idx++) {
             svt_get_empty_object(context_ptr->mode_decision_configuration_output_fifo_ptr,
                                  &enc_dec_tasks_wrapper_ptr);

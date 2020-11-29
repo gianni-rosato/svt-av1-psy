@@ -39,8 +39,8 @@ typedef enum AppPortActiveType { APP_PortActive = 0, APP_PortInactive } AppPortA
 
 typedef enum EncodePass {
     ENCODE_SINGLE_PASS, //single pass mode
-    ENCODE_FIRST_PASS,  // first pass of multi pass mode
-    ENCODE_LAST_PASS,   // last pass of multi pass mode
+    ENCODE_FIRST_PASS, // first pass of multi pass mode
+    ENCODE_LAST_PASS, // last pass of multi pass mode
     MAX_ENCODE_PASS = 2,
 } EncodePass;
 
@@ -84,7 +84,9 @@ extern uint32_t          app_malloc_count;
             *total_app_memory += ((n_elements) + (8 - ((n_elements) % 8)));  \
         }                                                                    \
     }                                                                        \
-    if (*(app_memory_map_index) >= MAX_APP_NUM_PTR) { return return_type; }  \
+    if (*(app_memory_map_index) >= MAX_APP_NUM_PTR) {                        \
+        return return_type;                                                  \
+    }                                                                        \
     app_malloc_count++;
 
 #define EB_APP_MALLOC_NR(type, pointer, n_elements, pointer_class, return_type) \
@@ -164,28 +166,27 @@ typedef struct EbConfig {
     /****************************************
      * File I/O
      ****************************************/
-    FILE *        config_file;
-    FILE *        input_file;
-    EbBool        input_file_is_fifo;
-    FILE *        bitstream_file;
-    FILE *        recon_file;
-    FILE *        error_log_file;
-    FILE *        stat_file;
-    FILE *        buffer_file;
-    FILE *        qp_file;
+    FILE * config_file;
+    FILE * input_file;
+    EbBool input_file_is_fifo;
+    FILE * bitstream_file;
+    FILE * recon_file;
+    FILE * error_log_file;
+    FILE * stat_file;
+    FILE * buffer_file;
+    FILE * qp_file;
     /* two pass */
-    int           pass;
-    const char*   stats;
-    FILE *        input_stat_file;
-    FILE *        output_stat_file;
-
+    int         pass;
+    const char *stats;
+    FILE *      input_stat_file;
+    FILE *      output_stat_file;
 
     FILE *        input_pred_struct_file;
     char *        input_pred_struct_filename;
     EbBool        y4m_input;
     unsigned char y4m_buf[9];
 
-    uint8_t       progress; // 0 = no progress output, 1 = normal, 2 = aomenc style verbose progress
+    uint8_t progress; // 0 = no progress output, 1 = normal, 2 = aomenc style verbose progress
     /****************************************
      * Computational Performance Data
      ****************************************/
@@ -201,10 +202,9 @@ typedef struct EbConfig {
     int32_t   buffered_input;
     uint8_t **sequence_buffer;
 
-    uint32_t      injector_frame_rate;
-    uint32_t      injector;
-    uint32_t      speed_control_flag;
-
+    uint32_t injector_frame_rate;
+    uint32_t injector;
+    uint32_t speed_control_flag;
 
     uint32_t hme_level0_column_index;
     uint32_t hme_level0_row_index;
@@ -228,32 +228,32 @@ typedef struct EbConfig {
 } EbConfig;
 
 typedef struct EncChannel {
-    EbConfig        *config; // Encoder Configuration
-    EbAppContext    *app_callback; // Instances App callback date
-    EbErrorType     return_error; // Error Handling
+    EbConfig *           config; // Encoder Configuration
+    EbAppContext *       app_callback; // Instances App callback date
+    EbErrorType          return_error; // Error Handling
     AppExitConditionType exit_cond_output; // Processing loop exit condition
     AppExitConditionType exit_cond_recon; // Processing loop exit condition
     AppExitConditionType exit_cond_input; // Processing loop exit condition
     AppExitConditionType exit_cond; // Processing loop exit condition
-    EbBool active;
+    EbBool               active;
 } EncChannel;
 
 typedef struct EncApp {
     SvtAv1FixedBuf rc_twopasses_stats;
 } EncApp;
 
-EbConfig * svt_config_ctor(EncodePass pass);
-void svt_config_dtor(EbConfig *config_ptr);
+EbConfig *svt_config_ctor(EncodePass pass);
+void      svt_config_dtor(EbConfig *config_ptr);
 
-EbErrorType enc_channel_ctor(EncChannel* c, EncodePass pass);
-void enc_channel_dctor(EncChannel* c, uint32_t inst_cnt);
+EbErrorType enc_channel_ctor(EncChannel *c, EncodePass pass);
+void        enc_channel_dctor(EncChannel *c, uint32_t inst_cnt);
 
 extern EbErrorType read_command_line(int32_t argc, char *const argv[], EncChannel *channels,
-                                     uint32_t num_channels,
-                                     char *warning_str[WARNING_LENGTH]);
+                                     uint32_t num_channels, char *warning_str[WARNING_LENGTH]);
 extern uint32_t    get_help(int32_t argc, char *const argv[]);
 extern uint32_t    get_number_of_channels(int32_t argc, char *const argv[]);
-uint32_t get_passes(int32_t argc, char *const argv[], EncodePass pass[]);
-EbErrorType set_two_passes_stats(EbConfig *config, EncodePass pass,
-    const SvtAv1FixedBuf* rc_twopass_stats_in, uint32_t channel_number);
+uint32_t           get_passes(int32_t argc, char *const argv[], EncodePass pass[]);
+EbErrorType        set_two_passes_stats(EbConfig *config, EncodePass pass,
+                                        const SvtAv1FixedBuf *rc_twopass_stats_in,
+                                        uint32_t              channel_number);
 #endif //EbAppConfig_h

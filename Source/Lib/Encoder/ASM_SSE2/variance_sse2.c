@@ -90,7 +90,7 @@ static INLINE void variance8_sse2(const uint8_t *src, const int src_stride, cons
                                                     int            src_stride,   \
                                                     const uint8_t *ref,          \
                                                     int            ref_stride,   \
-                                                    unsigned int * sse) {        \
+                                                    unsigned int * sse) {         \
         __m128i vsse = _mm_setzero_si128();                                      \
         __m128i vsum;                                                            \
         int     sum = 0;                                                         \
@@ -256,7 +256,7 @@ void svt_aom_upsampled_pred_sse2(MacroBlockD *xd, const struct AV1Common *const 
     (void)mi_col;
     (void)mv;
     const InterpFilterParams *filter = av1_get_filter(subpel_search);
-    assert(filter!=NULL);
+    assert(filter != NULL);
     int filter_taps = (subpel_search <= USE_4_TAPS) ? 4 : SUBPEL_TAPS;
 
     if (!subpel_x_q3 && !subpel_y_q3) {
@@ -290,7 +290,7 @@ void svt_aom_upsampled_pred_sse2(MacroBlockD *xd, const struct AV1Common *const 
             assert(!(width & 3));
             assert(!(height & 3));
             /*Read 4 pixels four rows at a time.*/
-            for (i = 0; i < height; i+=4) {
+            for (i = 0; i < height; i += 4) {
                 const __m128i row0 = xx_loadl_64(ref + 0 * ref_stride);
                 const __m128i row1 = xx_loadl_64(ref + 1 * ref_stride);
                 const __m128i row2 = xx_loadl_64(ref + 2 * ref_stride);
@@ -303,24 +303,27 @@ void svt_aom_upsampled_pred_sse2(MacroBlockD *xd, const struct AV1Common *const 
             }
         }
     } else if (!subpel_y_q3) {
-        const int16_t *const kernel =
-            av1_get_interp_filter_subpel_kernel(*filter, subpel_x_q3 << 1);
-        svt_aom_convolve8_horiz(ref, ref_stride, comp_pred, width, kernel, 16, NULL, -1, width, height);
+        const int16_t *const kernel = av1_get_interp_filter_subpel_kernel(*filter,
+                                                                          subpel_x_q3 << 1);
+        svt_aom_convolve8_horiz(
+            ref, ref_stride, comp_pred, width, kernel, 16, NULL, -1, width, height);
     } else if (!subpel_x_q3) {
-        const int16_t *const kernel =
-            av1_get_interp_filter_subpel_kernel(*filter, subpel_y_q3 << 1);
-        svt_aom_convolve8_vert(ref, ref_stride, comp_pred, width, NULL, -1, kernel, 16, width, height);
+        const int16_t *const kernel = av1_get_interp_filter_subpel_kernel(*filter,
+                                                                          subpel_y_q3 << 1);
+        svt_aom_convolve8_vert(
+            ref, ref_stride, comp_pred, width, NULL, -1, kernel, 16, width, height);
     } else {
         DECLARE_ALIGNED(16, uint8_t, temp[((MAX_SB_SIZE * 2 + 16) + 16) * MAX_SB_SIZE]);
-        const int16_t *const kernel_x =
-            av1_get_interp_filter_subpel_kernel(*filter, subpel_x_q3 << 1);
-        const int16_t *const kernel_y =
-            av1_get_interp_filter_subpel_kernel(*filter, subpel_y_q3 << 1);
-        const uint8_t *ref_start = ref - ref_stride * ((filter_taps >> 1) - 1);
-        uint8_t *      temp_start_horiz =
-            (subpel_search <= USE_4_TAPS) ? temp + (filter_taps >> 1) * MAX_SB_SIZE : temp;
-        uint8_t *temp_start_vert     = temp + MAX_SB_SIZE * ((filter->taps >> 1) - 1);
-        int      intermediate_height = (((height - 1) * 8 + subpel_y_q3) >> 3) + filter_taps;
+        const int16_t *const kernel_x         = av1_get_interp_filter_subpel_kernel(*filter,
+                                                                            subpel_x_q3 << 1);
+        const int16_t *const kernel_y         = av1_get_interp_filter_subpel_kernel(*filter,
+                                                                            subpel_y_q3 << 1);
+        const uint8_t *      ref_start        = ref - ref_stride * ((filter_taps >> 1) - 1);
+        uint8_t *            temp_start_horiz = (subpel_search <= USE_4_TAPS)
+                        ? temp + (filter_taps >> 1) * MAX_SB_SIZE
+                        : temp;
+        uint8_t *            temp_start_vert  = temp + MAX_SB_SIZE * ((filter->taps >> 1) - 1);
+        int intermediate_height = (((height - 1) * 8 + subpel_y_q3) >> 3) + filter_taps;
         assert(intermediate_height <= (MAX_SB_SIZE * 2 + 16) + 16);
         svt_aom_convolve8_horiz(ref_start,
                                 ref_stride,

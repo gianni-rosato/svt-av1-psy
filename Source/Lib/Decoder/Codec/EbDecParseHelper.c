@@ -20,8 +20,10 @@
 #include "EbInterPrediction.h"
 
 int neg_deinterleave(const int diff, int ref, int max) {
-    if (!ref) return diff;
-    if (ref >= max - 1) return max - diff - 1;
+    if (!ref)
+        return diff;
+    if (ref >= max - 1)
+        return max - diff - 1;
     if (2 * ref < max) {
         if (diff <= 2 * ref) {
             if (diff & 1)
@@ -61,17 +63,19 @@ static INLINE int get_tx_size_context(const PartitionInfo *xd, ParseCtxt *parse_
     const int                  has_above   = xd->up_available;
     const int                  has_left    = xd->left_available;
 
-    int above =
-        parse_ctxt->parse_above_nbr4x4_ctxt
-            ->above_tx_wd[xd->mi_col - parse_ctxt->cur_tile_info.mi_col_start] >= max_tx_wide;
+    int above = parse_ctxt->parse_above_nbr4x4_ctxt
+                    ->above_tx_wd[xd->mi_col - parse_ctxt->cur_tile_info.mi_col_start] >=
+        max_tx_wide;
     int left = parse_ctxt->parse_left_nbr4x4_ctxt->left_tx_ht[xd->mi_row - parse_ctxt->sb_row_mi] >=
-               max_tx_high;
+        max_tx_high;
 
     if (has_above)
-        if (is_inter_block(above_mbmi)) above = block_size_wide[above_mbmi->sb_type] >= max_tx_wide;
+        if (is_inter_block(above_mbmi))
+            above = block_size_wide[above_mbmi->sb_type] >= max_tx_wide;
 
     if (has_left)
-        if (is_inter_block(left_mbmi)) left = block_size_high[left_mbmi->sb_type] >= max_tx_high;
+        if (is_inter_block(left_mbmi))
+            left = block_size_high[left_mbmi->sb_type] >= max_tx_high;
 
     if (has_above && has_left)
         return (above + left);
@@ -96,11 +100,12 @@ void update_tx_context(ParseCtxt *parse_ctxt, PartitionInfo *pi, BlockSize bsize
     ParseAboveNbr4x4Ctxt *above_parse_ctx = parse_ctxt->parse_above_nbr4x4_ctxt;
     ParseLeftNbr4x4Ctxt * left_parse_ctx  = parse_ctxt->parse_left_nbr4x4_ctxt;
     BlockSize             b_size          = bsize;
-    if (is_inter_block(pi->mi)) b_size = txsize_to_bsize[tx_size];
-    uint8_t *const above_ctx =
-        above_parse_ctx->above_tx_wd + (mi_col - parse_ctxt->cur_tile_info.mi_col_start + blk_col);
-    uint8_t *const left_ctx =
-        left_parse_ctx->left_tx_ht + (mi_row - parse_ctxt->sb_row_mi + blk_row);
+    if (is_inter_block(pi->mi))
+        b_size = txsize_to_bsize[tx_size];
+    uint8_t *const above_ctx = above_parse_ctx->above_tx_wd +
+        (mi_col - parse_ctxt->cur_tile_info.mi_col_start + blk_col);
+    uint8_t *const left_ctx = left_parse_ctx->left_tx_ht +
+        (mi_row - parse_ctxt->sb_row_mi + blk_row);
 
     const uint8_t tx_wide = tx_size_wide[tx_size];
     const uint8_t tx_high = tx_size_high[tx_size];
@@ -178,7 +183,8 @@ IntMv gm_get_motion_vector(const GlobalMotionParams *gm, int allow_hp, BlockSize
         res.as_mv.row = gm->gm_params[0] >> GM_TRANS_ONLY_PREC_DIFF;
         res.as_mv.col = gm->gm_params[1] >> GM_TRANS_ONLY_PREC_DIFF;
         assert(IMPLIES(1 & (res.as_mv.row | res.as_mv.col), allow_hp));
-        if (is_integer) integer_mv_precision(&res.as_mv);
+        if (is_integer)
+            integer_mv_precision(&res.as_mv);
         return res;
     }
 
@@ -198,13 +204,14 @@ IntMv gm_get_motion_vector(const GlobalMotionParams *gm, int allow_hp, BlockSize
     res.as_mv.row = ty;
     res.as_mv.col = tx;
 
-    if (is_integer) integer_mv_precision(&res.as_mv);
+    if (is_integer)
+        integer_mv_precision(&res.as_mv);
     return res;
 }
 
 static INLINE int has_uni_comp_refs(const BlockModeInfo *mbmi) {
     return has_second_ref(mbmi) &&
-           (!((mbmi->ref_frame[0] >= BWDREF_FRAME) ^ (mbmi->ref_frame[1] >= BWDREF_FRAME)));
+        (!((mbmi->ref_frame[0] >= BWDREF_FRAME) ^ (mbmi->ref_frame[1] >= BWDREF_FRAME)));
 }
 
 int get_comp_reference_type_context(const PartitionInfo *xd) {
@@ -234,17 +241,17 @@ int get_comp_reference_type_context(const PartitionInfo *xd) {
             const MvReferenceFrame frfl = left_mbmi->ref_frame[0];
 
             if (a_sg && l_sg) { // single/single
-                pred_context =
-                    1 + 2 * (!(IS_BACKWARD_REF_FRAME(frfa) ^ IS_BACKWARD_REF_FRAME(frfl)));
+                pred_context = 1 +
+                    2 * (!(IS_BACKWARD_REF_FRAME(frfa) ^ IS_BACKWARD_REF_FRAME(frfl)));
             } else if (l_sg || a_sg) { // single/comp
-                const int uni_rfc =
-                    a_sg ? has_uni_comp_refs(left_mbmi) : has_uni_comp_refs(above_mbmi);
+                const int uni_rfc = a_sg ? has_uni_comp_refs(left_mbmi)
+                                         : has_uni_comp_refs(above_mbmi);
 
                 if (!uni_rfc) // comp bidir
                     pred_context = 1;
                 else // comp unidir
-                    pred_context =
-                        3 + (!(IS_BACKWARD_REF_FRAME(frfa) ^ IS_BACKWARD_REF_FRAME(frfl)));
+                    pred_context = 3 +
+                        (!(IS_BACKWARD_REF_FRAME(frfa) ^ IS_BACKWARD_REF_FRAME(frfl)));
             } else { // comp/comp
                 const int a_uni_rfc = has_uni_comp_refs(above_mbmi);
                 const int l_uni_rfc = has_uni_comp_refs(left_mbmi);

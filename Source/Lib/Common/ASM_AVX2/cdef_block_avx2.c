@@ -170,8 +170,8 @@ int32_t svt_cdef_find_dir_avx2(const uint16_t *img, int32_t stride, int32_t *var
     __m128i const_128 = _mm_set1_epi16(128);
     for (i = 0; i < 8; i++) {
         lines[i] = _mm_lddqu_si128((__m128i *)&img[i * stride]);
-        lines[i] =
-            _mm_sub_epi16(_mm_sra_epi16(lines[i], _mm_cvtsi32_si128(coeff_shift)), const_128);
+        lines[i] = _mm_sub_epi16(_mm_sra_epi16(lines[i], _mm_cvtsi32_si128(coeff_shift)),
+                                 const_128);
     }
 
     /* Compute "mostly vertical" directions. */
@@ -212,8 +212,8 @@ static INLINE __m256i constrain16(const __m256i in0, const __m256i in1, const __
 }
 
 static void svt_cdef_filter_block_4x4_8_avx2(uint8_t *dst, int32_t dstride, const uint16_t *in,
-                                             int32_t pri_strength, int32_t sec_strength, int32_t dir,
-                                             int32_t pri_damping, int32_t sec_damping,
+                                             int32_t pri_strength, int32_t sec_strength,
+                                             int32_t dir, int32_t pri_damping, int32_t sec_damping,
                                              int32_t coeff_shift) {
     __m256i p0, p1, p2, p3, sum, row, res;
     __m256i max, min, large = _mm256_set1_epi16(CDEF_VERY_LARGE);
@@ -229,8 +229,10 @@ static void svt_cdef_filter_block_4x4_8_avx2(uint8_t *dst, int32_t dstride, cons
     __m256i        pri_strength_256 = _mm256_set1_epi16(pri_strength);
     __m256i        sec_strength_256 = _mm256_set1_epi16(sec_strength);
 
-    if (pri_strength) pri_damping = AOMMAX(0, pri_damping - get_msb(pri_strength));
-    if (sec_strength) sec_damping = AOMMAX(0, sec_damping - get_msb(sec_strength));
+    if (pri_strength)
+        pri_damping = AOMMAX(0, pri_damping - get_msb(pri_strength));
+    if (sec_strength)
+        sec_damping = AOMMAX(0, sec_damping - get_msb(sec_strength));
 
     sum = _mm256_setzero_si256();
     row = _mm256_set_epi64x(*(uint64_t *)(in),
@@ -242,40 +244,40 @@ static void svt_cdef_filter_block_4x4_8_avx2(uint8_t *dst, int32_t dstride, cons
     if (pri_strength) {
         // Primary near taps
         p0 = _mm256_set_epi64x(*(uint64_t *)(in + po1),
-            *(uint64_t *)(in + 1 * CDEF_BSTRIDE + po1),
-            *(uint64_t *)(in + 2 * CDEF_BSTRIDE + po1),
-            *(uint64_t *)(in + 3 * CDEF_BSTRIDE + po1));
+                               *(uint64_t *)(in + 1 * CDEF_BSTRIDE + po1),
+                               *(uint64_t *)(in + 2 * CDEF_BSTRIDE + po1),
+                               *(uint64_t *)(in + 3 * CDEF_BSTRIDE + po1));
         p1 = _mm256_set_epi64x(*(uint64_t *)(in - po1),
-            *(uint64_t *)(in + 1 * CDEF_BSTRIDE - po1),
-            *(uint64_t *)(in + 2 * CDEF_BSTRIDE - po1),
-            *(uint64_t *)(in + 3 * CDEF_BSTRIDE - po1));
+                               *(uint64_t *)(in + 1 * CDEF_BSTRIDE - po1),
+                               *(uint64_t *)(in + 2 * CDEF_BSTRIDE - po1),
+                               *(uint64_t *)(in + 3 * CDEF_BSTRIDE - po1));
 
         max = _mm256_max_epi16(
             _mm256_max_epi16(max, _mm256_andnot_si256(_mm256_cmpeq_epi16(p0, large), p0)),
             _mm256_andnot_si256(_mm256_cmpeq_epi16(p1, large), p1));
         min = _mm256_min_epi16(_mm256_min_epi16(min, p0), p1);
-        p0 = constrain16(p0, row, pri_strength_256, pri_damping);
-        p1 = constrain16(p1, row, pri_strength_256, pri_damping);
+        p0  = constrain16(p0, row, pri_strength_256, pri_damping);
+        p1  = constrain16(p1, row, pri_strength_256, pri_damping);
 
         // sum += pri_taps[0] * (p0 + p1)
         sum = _mm256_add_epi16(
             sum, _mm256_mullo_epi16(_mm256_set1_epi16(pri_taps[0]), _mm256_add_epi16(p0, p1)));
 
         // Primary far taps
-        p0 = _mm256_set_epi64x(*(uint64_t *)(in + po2),
-            *(uint64_t *)(in + 1 * CDEF_BSTRIDE + po2),
-            *(uint64_t *)(in + 2 * CDEF_BSTRIDE + po2),
-            *(uint64_t *)(in + 3 * CDEF_BSTRIDE + po2));
-        p1 = _mm256_set_epi64x(*(uint64_t *)(in - po2),
-            *(uint64_t *)(in + 1 * CDEF_BSTRIDE - po2),
-            *(uint64_t *)(in + 2 * CDEF_BSTRIDE - po2),
-            *(uint64_t *)(in + 3 * CDEF_BSTRIDE - po2));
+        p0  = _mm256_set_epi64x(*(uint64_t *)(in + po2),
+                               *(uint64_t *)(in + 1 * CDEF_BSTRIDE + po2),
+                               *(uint64_t *)(in + 2 * CDEF_BSTRIDE + po2),
+                               *(uint64_t *)(in + 3 * CDEF_BSTRIDE + po2));
+        p1  = _mm256_set_epi64x(*(uint64_t *)(in - po2),
+                               *(uint64_t *)(in + 1 * CDEF_BSTRIDE - po2),
+                               *(uint64_t *)(in + 2 * CDEF_BSTRIDE - po2),
+                               *(uint64_t *)(in + 3 * CDEF_BSTRIDE - po2));
         max = _mm256_max_epi16(
             _mm256_max_epi16(max, _mm256_andnot_si256(_mm256_cmpeq_epi16(p0, large), p0)),
             _mm256_andnot_si256(_mm256_cmpeq_epi16(p1, large), p1));
         min = _mm256_min_epi16(_mm256_min_epi16(min, p0), p1);
-        p0 = constrain16(p0, row, pri_strength_256, pri_damping);
-        p1 = constrain16(p1, row, pri_strength_256, pri_damping);
+        p0  = constrain16(p0, row, pri_strength_256, pri_damping);
+        p1  = constrain16(p1, row, pri_strength_256, pri_damping);
 
         // sum += pri_taps[1] * (p0 + p1)
         sum = _mm256_add_epi16(
@@ -284,76 +286,76 @@ static void svt_cdef_filter_block_4x4_8_avx2(uint8_t *dst, int32_t dstride, cons
 
     if (sec_strength) {
         // Secondary near taps
-        p0 = _mm256_set_epi64x(*(uint64_t *)(in + s1o1),
-            *(uint64_t *)(in + 1 * CDEF_BSTRIDE + s1o1),
-            *(uint64_t *)(in + 2 * CDEF_BSTRIDE + s1o1),
-            *(uint64_t *)(in + 3 * CDEF_BSTRIDE + s1o1));
-        p1 = _mm256_set_epi64x(*(uint64_t *)(in - s1o1),
-            *(uint64_t *)(in + 1 * CDEF_BSTRIDE - s1o1),
-            *(uint64_t *)(in + 2 * CDEF_BSTRIDE - s1o1),
-            *(uint64_t *)(in + 3 * CDEF_BSTRIDE - s1o1));
-        p2 = _mm256_set_epi64x(*(uint64_t *)(in + s2o1),
-            *(uint64_t *)(in + 1 * CDEF_BSTRIDE + s2o1),
-            *(uint64_t *)(in + 2 * CDEF_BSTRIDE + s2o1),
-            *(uint64_t *)(in + 3 * CDEF_BSTRIDE + s2o1));
-        p3 = _mm256_set_epi64x(*(uint64_t *)(in - s2o1),
-            *(uint64_t *)(in + 1 * CDEF_BSTRIDE - s2o1),
-            *(uint64_t *)(in + 2 * CDEF_BSTRIDE - s2o1),
-            *(uint64_t *)(in + 3 * CDEF_BSTRIDE - s2o1));
+        p0  = _mm256_set_epi64x(*(uint64_t *)(in + s1o1),
+                               *(uint64_t *)(in + 1 * CDEF_BSTRIDE + s1o1),
+                               *(uint64_t *)(in + 2 * CDEF_BSTRIDE + s1o1),
+                               *(uint64_t *)(in + 3 * CDEF_BSTRIDE + s1o1));
+        p1  = _mm256_set_epi64x(*(uint64_t *)(in - s1o1),
+                               *(uint64_t *)(in + 1 * CDEF_BSTRIDE - s1o1),
+                               *(uint64_t *)(in + 2 * CDEF_BSTRIDE - s1o1),
+                               *(uint64_t *)(in + 3 * CDEF_BSTRIDE - s1o1));
+        p2  = _mm256_set_epi64x(*(uint64_t *)(in + s2o1),
+                               *(uint64_t *)(in + 1 * CDEF_BSTRIDE + s2o1),
+                               *(uint64_t *)(in + 2 * CDEF_BSTRIDE + s2o1),
+                               *(uint64_t *)(in + 3 * CDEF_BSTRIDE + s2o1));
+        p3  = _mm256_set_epi64x(*(uint64_t *)(in - s2o1),
+                               *(uint64_t *)(in + 1 * CDEF_BSTRIDE - s2o1),
+                               *(uint64_t *)(in + 2 * CDEF_BSTRIDE - s2o1),
+                               *(uint64_t *)(in + 3 * CDEF_BSTRIDE - s2o1));
         max = _mm256_max_epi16(
             _mm256_max_epi16(max, _mm256_andnot_si256(_mm256_cmpeq_epi16(p0, large), p0)),
             _mm256_andnot_si256(_mm256_cmpeq_epi16(p1, large), p1));
         max = _mm256_max_epi16(
             _mm256_max_epi16(max, _mm256_andnot_si256(_mm256_cmpeq_epi16(p2, large), p2)),
             _mm256_andnot_si256(_mm256_cmpeq_epi16(p3, large), p3));
-        min =
-            _mm256_min_epi16(_mm256_min_epi16(_mm256_min_epi16(_mm256_min_epi16(min, p0), p1), p2), p3);
+        min = _mm256_min_epi16(
+            _mm256_min_epi16(_mm256_min_epi16(_mm256_min_epi16(min, p0), p1), p2), p3);
         p0 = constrain16(p0, row, sec_strength_256, sec_damping);
         p1 = constrain16(p1, row, sec_strength_256, sec_damping);
         p2 = constrain16(p2, row, sec_strength_256, sec_damping);
         p3 = constrain16(p3, row, sec_strength_256, sec_damping);
 
         // sum += sec_taps[0] * (p0 + p1 + p2 + p3)
-        sum = _mm256_add_epi16(
-            sum,
-            _mm256_mullo_epi16(_mm256_set1_epi16(sec_taps[0]),
-                _mm256_add_epi16(_mm256_add_epi16(p0, p1), _mm256_add_epi16(p2, p3))));
+        sum = _mm256_add_epi16(sum,
+                               _mm256_mullo_epi16(_mm256_set1_epi16(sec_taps[0]),
+                                                  _mm256_add_epi16(_mm256_add_epi16(p0, p1),
+                                                                   _mm256_add_epi16(p2, p3))));
 
         // Secondary far taps
-        p0 = _mm256_set_epi64x(*(uint64_t *)(in + s1o2),
-            *(uint64_t *)(in + 1 * CDEF_BSTRIDE + s1o2),
-            *(uint64_t *)(in + 2 * CDEF_BSTRIDE + s1o2),
-            *(uint64_t *)(in + 3 * CDEF_BSTRIDE + s1o2));
-        p1 = _mm256_set_epi64x(*(uint64_t *)(in - s1o2),
-            *(uint64_t *)(in + 1 * CDEF_BSTRIDE - s1o2),
-            *(uint64_t *)(in + 2 * CDEF_BSTRIDE - s1o2),
-            *(uint64_t *)(in + 3 * CDEF_BSTRIDE - s1o2));
-        p2 = _mm256_set_epi64x(*(uint64_t *)(in + s2o2),
-            *(uint64_t *)(in + 1 * CDEF_BSTRIDE + s2o2),
-            *(uint64_t *)(in + 2 * CDEF_BSTRIDE + s2o2),
-            *(uint64_t *)(in + 3 * CDEF_BSTRIDE + s2o2));
-        p3 = _mm256_set_epi64x(*(uint64_t *)(in - s2o2),
-            *(uint64_t *)(in + 1 * CDEF_BSTRIDE - s2o2),
-            *(uint64_t *)(in + 2 * CDEF_BSTRIDE - s2o2),
-            *(uint64_t *)(in + 3 * CDEF_BSTRIDE - s2o2));
+        p0  = _mm256_set_epi64x(*(uint64_t *)(in + s1o2),
+                               *(uint64_t *)(in + 1 * CDEF_BSTRIDE + s1o2),
+                               *(uint64_t *)(in + 2 * CDEF_BSTRIDE + s1o2),
+                               *(uint64_t *)(in + 3 * CDEF_BSTRIDE + s1o2));
+        p1  = _mm256_set_epi64x(*(uint64_t *)(in - s1o2),
+                               *(uint64_t *)(in + 1 * CDEF_BSTRIDE - s1o2),
+                               *(uint64_t *)(in + 2 * CDEF_BSTRIDE - s1o2),
+                               *(uint64_t *)(in + 3 * CDEF_BSTRIDE - s1o2));
+        p2  = _mm256_set_epi64x(*(uint64_t *)(in + s2o2),
+                               *(uint64_t *)(in + 1 * CDEF_BSTRIDE + s2o2),
+                               *(uint64_t *)(in + 2 * CDEF_BSTRIDE + s2o2),
+                               *(uint64_t *)(in + 3 * CDEF_BSTRIDE + s2o2));
+        p3  = _mm256_set_epi64x(*(uint64_t *)(in - s2o2),
+                               *(uint64_t *)(in + 1 * CDEF_BSTRIDE - s2o2),
+                               *(uint64_t *)(in + 2 * CDEF_BSTRIDE - s2o2),
+                               *(uint64_t *)(in + 3 * CDEF_BSTRIDE - s2o2));
         max = _mm256_max_epi16(
             _mm256_max_epi16(max, _mm256_andnot_si256(_mm256_cmpeq_epi16(p0, large), p0)),
             _mm256_andnot_si256(_mm256_cmpeq_epi16(p1, large), p1));
         max = _mm256_max_epi16(
             _mm256_max_epi16(max, _mm256_andnot_si256(_mm256_cmpeq_epi16(p2, large), p2)),
             _mm256_andnot_si256(_mm256_cmpeq_epi16(p3, large), p3));
-        min =
-            _mm256_min_epi16(_mm256_min_epi16(_mm256_min_epi16(_mm256_min_epi16(min, p0), p1), p2), p3);
+        min = _mm256_min_epi16(
+            _mm256_min_epi16(_mm256_min_epi16(_mm256_min_epi16(min, p0), p1), p2), p3);
         p0 = constrain16(p0, row, sec_strength_256, sec_damping);
         p1 = constrain16(p1, row, sec_strength_256, sec_damping);
         p2 = constrain16(p2, row, sec_strength_256, sec_damping);
         p3 = constrain16(p3, row, sec_strength_256, sec_damping);
 
         // sum += sec_taps[1] * (p0 + p1 + p2 + p3)
-        sum = _mm256_add_epi16(
-            sum,
-            _mm256_mullo_epi16(_mm256_set1_epi16(sec_taps[1]),
-                _mm256_add_epi16(_mm256_add_epi16(p0, p1), _mm256_add_epi16(p2, p3))));
+        sum = _mm256_add_epi16(sum,
+                               _mm256_mullo_epi16(_mm256_set1_epi16(sec_taps[1]),
+                                                  _mm256_add_epi16(_mm256_add_epi16(p0, p1),
+                                                                   _mm256_add_epi16(p2, p3))));
     }
 
     // res = row + ((sum - (sum < 0) + 8) >> 4)
@@ -371,8 +373,8 @@ static void svt_cdef_filter_block_4x4_8_avx2(uint8_t *dst, int32_t dstride, cons
 }
 
 static void svt_cdef_filter_block_8x8_8_avx2(uint8_t *dst, int32_t dstride, const uint16_t *in,
-                                             int32_t pri_strength, int32_t sec_strength, int32_t dir,
-                                             int32_t pri_damping, int32_t sec_damping,
+                                             int32_t pri_strength, int32_t sec_strength,
+                                             int32_t dir, int32_t pri_damping, int32_t sec_damping,
                                              int32_t coeff_shift) {
     int32_t i;
     __m256i sum, p0, p1, p2, p3, row, res;
@@ -394,8 +396,10 @@ static void svt_cdef_filter_block_8x8_8_avx2(uint8_t *dst, int32_t dstride, cons
     __m256i        pri_strength_256 = _mm256_set1_epi16(pri_strength);
     __m256i        sec_strength_256 = _mm256_set1_epi16(sec_strength);
 
-    if (pri_strength) pri_damping = AOMMAX(0, pri_damping - get_msb(pri_strength));
-    if (sec_strength) sec_damping = AOMMAX(0, sec_damping - get_msb(sec_strength));
+    if (pri_strength)
+        pri_damping = AOMMAX(0, pri_damping - get_msb(pri_strength));
+    if (sec_strength)
+        sec_damping = AOMMAX(0, sec_damping - get_msb(sec_strength));
 
     for (i = 0; i < 8; i += 2) {
         sum = _mm256_setzero_si256();
@@ -405,31 +409,31 @@ static void svt_cdef_filter_block_8x8_8_avx2(uint8_t *dst, int32_t dstride, cons
         min = max = row;
         if (pri_strength) {
             // Primary near taps
-            p0 = _mm256_setr_m128i(_mm_loadu_si128((__m128i *)(in + (i + 1) * CDEF_BSTRIDE + po1)),
-                _mm_loadu_si128((__m128i *)(in + i * CDEF_BSTRIDE + po1)));
-            p1 = _mm256_setr_m128i(_mm_loadu_si128((__m128i *)(in + (i + 1) * CDEF_BSTRIDE - po1)),
-                _mm_loadu_si128((__m128i *)(in + i * CDEF_BSTRIDE - po1)));
+            p0  = _mm256_setr_m128i(_mm_loadu_si128((__m128i *)(in + (i + 1) * CDEF_BSTRIDE + po1)),
+                                   _mm_loadu_si128((__m128i *)(in + i * CDEF_BSTRIDE + po1)));
+            p1  = _mm256_setr_m128i(_mm_loadu_si128((__m128i *)(in + (i + 1) * CDEF_BSTRIDE - po1)),
+                                   _mm_loadu_si128((__m128i *)(in + i * CDEF_BSTRIDE - po1)));
             max = _mm256_max_epi16(
                 _mm256_max_epi16(max, _mm256_andnot_si256(_mm256_cmpeq_epi16(p0, large), p0)),
                 _mm256_andnot_si256(_mm256_cmpeq_epi16(p1, large), p1));
             min = _mm256_min_epi16(_mm256_min_epi16(min, p0), p1);
-            p0 = constrain16(p0, row, pri_strength_256, pri_damping);
-            p1 = constrain16(p1, row, pri_strength_256, pri_damping);
+            p0  = constrain16(p0, row, pri_strength_256, pri_damping);
+            p1  = constrain16(p1, row, pri_strength_256, pri_damping);
 
             // sum += pri_taps[0] * (p0 + p1)
             sum = _mm256_add_epi16(sum, _mm256_mullo_epi16(pri_taps_0, _mm256_add_epi16(p0, p1)));
 
             // Primary far taps
-            p0 = _mm256_setr_m128i(_mm_loadu_si128((__m128i *)(in + (i + 1) * CDEF_BSTRIDE + po2)),
-                _mm_loadu_si128((__m128i *)(in + i * CDEF_BSTRIDE + po2)));
-            p1 = _mm256_setr_m128i(_mm_loadu_si128((__m128i *)(in + (i + 1) * CDEF_BSTRIDE - po2)),
-                _mm_loadu_si128((__m128i *)(in + i * CDEF_BSTRIDE - po2)));
+            p0  = _mm256_setr_m128i(_mm_loadu_si128((__m128i *)(in + (i + 1) * CDEF_BSTRIDE + po2)),
+                                   _mm_loadu_si128((__m128i *)(in + i * CDEF_BSTRIDE + po2)));
+            p1  = _mm256_setr_m128i(_mm_loadu_si128((__m128i *)(in + (i + 1) * CDEF_BSTRIDE - po2)),
+                                   _mm_loadu_si128((__m128i *)(in + i * CDEF_BSTRIDE - po2)));
             max = _mm256_max_epi16(
                 _mm256_max_epi16(max, _mm256_andnot_si256(_mm256_cmpeq_epi16(p0, large), p0)),
                 _mm256_andnot_si256(_mm256_cmpeq_epi16(p1, large), p1));
             min = _mm256_min_epi16(_mm256_min_epi16(min, p0), p1);
-            p0 = constrain16(p0, row, pri_strength_256, pri_damping);
-            p1 = constrain16(p1, row, pri_strength_256, pri_damping);
+            p0  = constrain16(p0, row, pri_strength_256, pri_damping);
+            p1  = constrain16(p1, row, pri_strength_256, pri_damping);
 
             // sum += pri_taps[1] * (p0 + p1)
             sum = _mm256_add_epi16(sum, _mm256_mullo_epi16(pri_taps_1, _mm256_add_epi16(p0, p1)));
@@ -438,13 +442,13 @@ static void svt_cdef_filter_block_8x8_8_avx2(uint8_t *dst, int32_t dstride, cons
         if (sec_strength) {
             // Secondary near taps
             p0 = _mm256_setr_m128i(_mm_loadu_si128((__m128i *)(in + (i + 1) * CDEF_BSTRIDE + s1o1)),
-                _mm_loadu_si128((__m128i *)(in + i * CDEF_BSTRIDE + s1o1)));
+                                   _mm_loadu_si128((__m128i *)(in + i * CDEF_BSTRIDE + s1o1)));
             p1 = _mm256_setr_m128i(_mm_loadu_si128((__m128i *)(in + (i + 1) * CDEF_BSTRIDE - s1o1)),
-                _mm_loadu_si128((__m128i *)(in + i * CDEF_BSTRIDE - s1o1)));
+                                   _mm_loadu_si128((__m128i *)(in + i * CDEF_BSTRIDE - s1o1)));
             p2 = _mm256_setr_m128i(_mm_loadu_si128((__m128i *)(in + (i + 1) * CDEF_BSTRIDE + s2o1)),
-                _mm_loadu_si128((__m128i *)(in + i * CDEF_BSTRIDE + s2o1)));
+                                   _mm_loadu_si128((__m128i *)(in + i * CDEF_BSTRIDE + s2o1)));
             p3 = _mm256_setr_m128i(_mm_loadu_si128((__m128i *)(in + (i + 1) * CDEF_BSTRIDE - s2o1)),
-                _mm_loadu_si128((__m128i *)(in + i * CDEF_BSTRIDE - s2o1)));
+                                   _mm_loadu_si128((__m128i *)(in + i * CDEF_BSTRIDE - s2o1)));
             max = _mm256_max_epi16(
                 _mm256_max_epi16(max, _mm256_andnot_si256(_mm256_cmpeq_epi16(p0, large), p0)),
                 _mm256_andnot_si256(_mm256_cmpeq_epi16(p1, large), p1));
@@ -459,20 +463,20 @@ static void svt_cdef_filter_block_8x8_8_avx2(uint8_t *dst, int32_t dstride, cons
             p3 = constrain16(p3, row, sec_strength_256, sec_damping);
 
             // sum += sec_taps[0] * (p0 + p1 + p2 + p3)
-            sum = _mm256_add_epi16(
-                sum,
-                _mm256_mullo_epi16(
-                    sec_taps_0, _mm256_add_epi16(_mm256_add_epi16(p0, p1), _mm256_add_epi16(p2, p3))));
+            sum = _mm256_add_epi16(sum,
+                                   _mm256_mullo_epi16(sec_taps_0,
+                                                      _mm256_add_epi16(_mm256_add_epi16(p0, p1),
+                                                                       _mm256_add_epi16(p2, p3))));
 
             // Secondary far taps
             p0 = _mm256_setr_m128i(_mm_loadu_si128((__m128i *)(in + (i + 1) * CDEF_BSTRIDE + s1o2)),
-                _mm_loadu_si128((__m128i *)(in + i * CDEF_BSTRIDE + s1o2)));
+                                   _mm_loadu_si128((__m128i *)(in + i * CDEF_BSTRIDE + s1o2)));
             p1 = _mm256_setr_m128i(_mm_loadu_si128((__m128i *)(in + (i + 1) * CDEF_BSTRIDE - s1o2)),
-                _mm_loadu_si128((__m128i *)(in + i * CDEF_BSTRIDE - s1o2)));
+                                   _mm_loadu_si128((__m128i *)(in + i * CDEF_BSTRIDE - s1o2)));
             p2 = _mm256_setr_m128i(_mm_loadu_si128((__m128i *)(in + (i + 1) * CDEF_BSTRIDE + s2o2)),
-                _mm_loadu_si128((__m128i *)(in + i * CDEF_BSTRIDE + s2o2)));
+                                   _mm_loadu_si128((__m128i *)(in + i * CDEF_BSTRIDE + s2o2)));
             p3 = _mm256_setr_m128i(_mm_loadu_si128((__m128i *)(in + (i + 1) * CDEF_BSTRIDE - s2o2)),
-                _mm_loadu_si128((__m128i *)(in + i * CDEF_BSTRIDE - s2o2)));
+                                   _mm_loadu_si128((__m128i *)(in + i * CDEF_BSTRIDE - s2o2)));
             max = _mm256_max_epi16(
                 _mm256_max_epi16(max, _mm256_andnot_si256(_mm256_cmpeq_epi16(p0, large), p0)),
                 _mm256_andnot_si256(_mm256_cmpeq_epi16(p1, large), p1));
@@ -487,10 +491,10 @@ static void svt_cdef_filter_block_8x8_8_avx2(uint8_t *dst, int32_t dstride, cons
             p3 = constrain16(p3, row, sec_strength_256, sec_damping);
 
             // sum += sec_taps[1] * (p0 + p1 + p2 + p3)
-            sum = _mm256_add_epi16(
-                sum,
-                _mm256_mullo_epi16(
-                    sec_taps_1, _mm256_add_epi16(_mm256_add_epi16(p0, p1), _mm256_add_epi16(p2, p3))));
+            sum = _mm256_add_epi16(sum,
+                                   _mm256_mullo_epi16(sec_taps_1,
+                                                      _mm256_add_epi16(_mm256_add_epi16(p0, p1),
+                                                                       _mm256_add_epi16(p2, p3))));
         }
 
         // res = row + ((sum - (sum < 0) + 8) >> 4)
@@ -523,8 +527,10 @@ static void svt_cdef_filter_block_4x4_16_avx2(uint16_t *dst, int32_t dstride, co
     __m256i        pri_strength_256 = _mm256_set1_epi16(pri_strength);
     __m256i        sec_strength_256 = _mm256_set1_epi16(sec_strength);
 
-    if (pri_strength) pri_damping = AOMMAX(0, pri_damping - get_msb(pri_strength));
-    if (sec_strength) sec_damping = AOMMAX(0, sec_damping - get_msb(sec_strength));
+    if (pri_strength)
+        pri_damping = AOMMAX(0, pri_damping - get_msb(pri_strength));
+    if (sec_strength)
+        sec_damping = AOMMAX(0, sec_damping - get_msb(sec_strength));
     sum = _mm256_setzero_si256();
     row = _mm256_set_epi64x(*(uint64_t *)(in),
                             *(uint64_t *)(in + 1 * CDEF_BSTRIDE),
@@ -596,12 +602,12 @@ static void svt_cdef_filter_block_4x4_16_avx2(uint16_t *dst, int32_t dstride, co
     max = _mm256_max_epi16(
         _mm256_max_epi16(max, _mm256_andnot_si256(_mm256_cmpeq_epi16(p2, large), p2)),
         _mm256_andnot_si256(_mm256_cmpeq_epi16(p3, large), p3));
-    min =
-        _mm256_min_epi16(_mm256_min_epi16(_mm256_min_epi16(_mm256_min_epi16(min, p0), p1), p2), p3);
-    p0 = constrain16(p0, row, sec_strength_256, sec_damping);
-    p1 = constrain16(p1, row, sec_strength_256, sec_damping);
-    p2 = constrain16(p2, row, sec_strength_256, sec_damping);
-    p3 = constrain16(p3, row, sec_strength_256, sec_damping);
+    min = _mm256_min_epi16(_mm256_min_epi16(_mm256_min_epi16(_mm256_min_epi16(min, p0), p1), p2),
+                           p3);
+    p0  = constrain16(p0, row, sec_strength_256, sec_damping);
+    p1  = constrain16(p1, row, sec_strength_256, sec_damping);
+    p2  = constrain16(p2, row, sec_strength_256, sec_damping);
+    p3  = constrain16(p3, row, sec_strength_256, sec_damping);
 
     // sum += sec_taps[0] * (p0 + p1 + p2 + p3)
     sum = _mm256_add_epi16(
@@ -632,12 +638,12 @@ static void svt_cdef_filter_block_4x4_16_avx2(uint16_t *dst, int32_t dstride, co
     max = _mm256_max_epi16(
         _mm256_max_epi16(max, _mm256_andnot_si256(_mm256_cmpeq_epi16(p2, large), p2)),
         _mm256_andnot_si256(_mm256_cmpeq_epi16(p3, large), p3));
-    min =
-        _mm256_min_epi16(_mm256_min_epi16(_mm256_min_epi16(_mm256_min_epi16(min, p0), p1), p2), p3);
-    p0 = constrain16(p0, row, sec_strength_256, sec_damping);
-    p1 = constrain16(p1, row, sec_strength_256, sec_damping);
-    p2 = constrain16(p2, row, sec_strength_256, sec_damping);
-    p3 = constrain16(p3, row, sec_strength_256, sec_damping);
+    min = _mm256_min_epi16(_mm256_min_epi16(_mm256_min_epi16(_mm256_min_epi16(min, p0), p1), p2),
+                           p3);
+    p0  = constrain16(p0, row, sec_strength_256, sec_damping);
+    p1  = constrain16(p1, row, sec_strength_256, sec_damping);
+    p2  = constrain16(p2, row, sec_strength_256, sec_damping);
+    p3  = constrain16(p3, row, sec_strength_256, sec_damping);
 
     // sum += sec_taps[1] * (p0 + p1 + p2 + p3)
     sum = _mm256_add_epi16(
@@ -736,8 +742,10 @@ void svt_cdef_filter_block_8x8_16_avx2(const uint16_t *const in, const int32_t p
     const __m256i  pri_strength_256 = _mm256_set1_epi16(pri_strength);
     const __m256i  sec_strength_256 = _mm256_set1_epi16(sec_strength);
 
-    if (pri_strength) pri_damping = AOMMAX(0, pri_damping - get_msb(pri_strength));
-    if (sec_strength) sec_damping = AOMMAX(0, sec_damping - get_msb(sec_strength));
+    if (pri_strength)
+        pri_damping = AOMMAX(0, pri_damping - get_msb(pri_strength));
+    if (sec_strength)
+        sec_damping = AOMMAX(0, sec_damping - get_msb(sec_strength));
 
     for (i = 0; i < 8; i += 2) {
         const __m256i row = loadu_u16_8x2_avx2(in + i * CDEF_BSTRIDE, CDEF_BSTRIDE);

@@ -2296,12 +2296,12 @@ static const Transform1dSsse3 lowbd_txfm_all_1d_w4_arr[TX_SIZES][ITX_TYPES_1D] =
 static INLINE void iidentity_row_8xn_ssse3(__m128i *out, const int32_t *input, int32_t stride,
                                            int32_t shift, int32_t height, int32_t txw_idx,
                                            int32_t rect_type) {
-    const int32_t *input_row = input;
-    const __m128i  scale     = _mm_set1_epi16(new_sqrt2list[txw_idx]);
-    const __m128i  rounding =
-        _mm_set1_epi16((1 << (new_sqrt2_bits - 1)) + (1 << (new_sqrt2_bits - shift - 1)));
-    const __m128i one            = _mm_set1_epi16(1);
-    const __m128i scale_rounding = _mm_unpacklo_epi16(scale, rounding);
+    const int32_t *input_row      = input;
+    const __m128i  scale          = _mm_set1_epi16(new_sqrt2list[txw_idx]);
+    const __m128i  rounding       = _mm_set1_epi16((1 << (new_sqrt2_bits - 1)) +
+                                            (1 << (new_sqrt2_bits - shift - 1)));
+    const __m128i  one            = _mm_set1_epi16(1);
+    const __m128i  scale_rounding = _mm_unpacklo_epi16(scale, rounding);
     if (rect_type != 1 && rect_type != -1) {
         for (int32_t i = 0; i < height; ++i) {
             const __m128i src = load_32bit_to_16bit(input_row);
@@ -2770,18 +2770,17 @@ static void lowbd_inv_txfm2d_add_4x16_ssse3(const int32_t *input, uint8_t *outpu
         transpose_16bit_4x8(buf_cur, buf_cur);
         if (row_txfm == iidentity4_new_ssse3) {
             const __m128i scale = pair_set_epi16(new_sqrt2, 3 << (new_sqrt2_bits - 1));
-            const __m128i ones = _mm_set1_epi16(1);
+            const __m128i ones  = _mm_set1_epi16(1);
             for (int j = 0; j < 4; ++j) {
-                const __m128i buf_lo = _mm_unpacklo_epi16(buf_cur[j], ones);
-                const __m128i buf_hi = _mm_unpackhi_epi16(buf_cur[j], ones);
-                const __m128i buf_32_lo =
-                    _mm_srai_epi32(_mm_madd_epi16(buf_lo, scale), (new_sqrt2_bits + 1));
-                const __m128i buf_32_hi =
-                    _mm_srai_epi32(_mm_madd_epi16(buf_hi, scale), (new_sqrt2_bits + 1));
-                buf_cur[j] = _mm_packs_epi32(buf_32_lo, buf_32_hi);
+                const __m128i buf_lo    = _mm_unpacklo_epi16(buf_cur[j], ones);
+                const __m128i buf_hi    = _mm_unpackhi_epi16(buf_cur[j], ones);
+                const __m128i buf_32_lo = _mm_srai_epi32(_mm_madd_epi16(buf_lo, scale),
+                                                         (new_sqrt2_bits + 1));
+                const __m128i buf_32_hi = _mm_srai_epi32(_mm_madd_epi16(buf_hi, scale),
+                                                         (new_sqrt2_bits + 1));
+                buf_cur[j]              = _mm_packs_epi32(buf_32_lo, buf_32_hi);
             }
-        }
-        else {
+        } else {
             row_txfm(buf_cur, buf_cur, cos_bit_row);
             round_shift_16bit_ssse3(buf_cur, row_one_loop, shift[0]);
         }
@@ -2829,18 +2828,17 @@ static void lowbd_inv_txfm2d_add_16x4_ssse3(const int32_t *input, uint8_t *outpu
     }
     if (row_txfm == iidentity16_new_ssse3) {
         const __m128i scale = pair_set_epi16(2 * new_sqrt2, 3 << (new_sqrt2_bits - 1));
-        const __m128i ones = _mm_set1_epi16(1);
+        const __m128i ones  = _mm_set1_epi16(1);
         for (int j = 0; j < 16; ++j) {
-            const __m128i buf_lo = _mm_unpacklo_epi16(buf[j], ones);
-            const __m128i buf_hi = _mm_unpackhi_epi16(buf[j], ones);
-            const __m128i buf_32_lo =
-                _mm_srai_epi32(_mm_madd_epi16(buf_lo, scale), (new_sqrt2_bits + 1));
-            const __m128i buf_32_hi =
-                _mm_srai_epi32(_mm_madd_epi16(buf_hi, scale), (new_sqrt2_bits + 1));
-            buf[j] = _mm_packs_epi32(buf_32_lo, buf_32_hi);
+            const __m128i buf_lo    = _mm_unpacklo_epi16(buf[j], ones);
+            const __m128i buf_hi    = _mm_unpackhi_epi16(buf[j], ones);
+            const __m128i buf_32_lo = _mm_srai_epi32(_mm_madd_epi16(buf_lo, scale),
+                                                     (new_sqrt2_bits + 1));
+            const __m128i buf_32_hi = _mm_srai_epi32(_mm_madd_epi16(buf_hi, scale),
+                                                     (new_sqrt2_bits + 1));
+            buf[j]                  = _mm_packs_epi32(buf_32_lo, buf_32_hi);
         }
-    }
-    else {
+    } else {
         row_txfm(buf, buf, cos_bit_row);
         round_shift_16bit_ssse3(buf, txfm_size_col, shift[0]);
     }

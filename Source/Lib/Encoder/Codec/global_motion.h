@@ -56,15 +56,17 @@ typedef struct {
 
 void svt_av1_convert_model_to_params(const double *params, EbWarpedMotionParams *model);
 
-int svt_av1_is_enough_erroradvantage(double best_erroradvantage, int params_cost, int erroradv_type);
+int svt_av1_is_enough_erroradvantage(double best_erroradvantage, int params_cost,
+                                     int erroradv_type);
 
 // Returns the av1_warp_error between "dst" and the result of applying the
 // motion params that result from fine-tuning "wm" to "ref". Note that "wm" is
 // modified in place.
 int64_t svt_av1_refine_integerized_param(EbWarpedMotionParams *wm, TransformationType wmtype,
-                                     int use_hbd, int bd, uint8_t *ref, int r_width, int r_height,
-                                     int r_stride, uint8_t *dst, int d_width, int d_height,
-                                     int d_stride, int n_refinements, int64_t best_frame_error);
+                                         int use_hbd, int bd, uint8_t *ref, int r_width,
+                                         int r_height, int r_stride, uint8_t *dst, int d_width,
+                                         int d_height, int d_stride, int n_refinements,
+                                         int64_t best_frame_error);
 
 /*
   Computes "num_motions" candidate global motion parameters between two frames.
@@ -82,11 +84,11 @@ int64_t svt_av1_refine_integerized_param(EbWarpedMotionParams *wm, Transformatio
   num_inliers entry is 0 should be ignored by the caller.
 */
 int svt_av1_compute_global_motion(TransformationType type, unsigned char *frm_buffer, int frm_width,
-                              int frm_height, int frm_stride, int *frm_corners, int num_frm_corners,
-                              uint8_t *ref, int ref_stride, int bit_depth,
-                              GlobalMotionEstimationType gm_estimation_type,
-                              int *num_inliers_by_motion, MotionModel *params_by_motion,
-                              int num_motions);
+                                  int frm_height, int frm_stride, int *frm_corners,
+                                  int num_frm_corners, uint8_t *ref, int ref_stride, int bit_depth,
+                                  GlobalMotionEstimationType gm_estimation_type,
+                                  int *num_inliers_by_motion, MotionModel *params_by_motion,
+                                  int num_motions);
 #ifdef __cplusplus
 } // extern "C"
 #endif

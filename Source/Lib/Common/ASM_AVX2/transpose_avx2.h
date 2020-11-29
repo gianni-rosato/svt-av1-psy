@@ -43,7 +43,7 @@ static INLINE __m256i _mm256_unpackhi_epi128(const __m256i in0, const __m256i in
 }
 
 static INLINE void transpose_8bit_16x16_reg128bit_avx2(const __m128i *const in,
-    __m128i *const out) {
+                                                       __m128i *const       out) {
     // Combine to 256 bit registers. Goes from:
     // in[ 0]: 00 01 02 03 04 05 06 07  08 09 0A 0B 0C 0D 0E 0F
     // in[ 1]: 10 11 12 13 14 15 16 17  18 19 1A 1B 1C 1D 1E 1F
@@ -151,16 +151,16 @@ static INLINE void transpose_8bit_16x16_reg128bit_avx2(const __m128i *const in,
     const __m256i e6 = _mm256_permute4x64_epi64(d6, 0xD8);
     const __m256i e7 = _mm256_permute4x64_epi64(d7, 0xD8);
 
-    out[0] = _mm256_castsi256_si128(e0);
-    out[1] = _mm256_extracti128_si256(e0, 1);
-    out[2] = _mm256_castsi256_si128(e1);
-    out[3] = _mm256_extracti128_si256(e1, 1);
-    out[4] = _mm256_castsi256_si128(e2);
-    out[5] = _mm256_extracti128_si256(e2, 1);
-    out[6] = _mm256_castsi256_si128(e3);
-    out[7] = _mm256_extracti128_si256(e3, 1);
-    out[8] = _mm256_castsi256_si128(e4);
-    out[9] = _mm256_extracti128_si256(e4, 1);
+    out[0]  = _mm256_castsi256_si128(e0);
+    out[1]  = _mm256_extracti128_si256(e0, 1);
+    out[2]  = _mm256_castsi256_si128(e1);
+    out[3]  = _mm256_extracti128_si256(e1, 1);
+    out[4]  = _mm256_castsi256_si128(e2);
+    out[5]  = _mm256_extracti128_si256(e2, 1);
+    out[6]  = _mm256_castsi256_si128(e3);
+    out[7]  = _mm256_extracti128_si256(e3, 1);
+    out[8]  = _mm256_castsi256_si128(e4);
+    out[9]  = _mm256_extracti128_si256(e4, 1);
     out[10] = _mm256_castsi256_si128(e5);
     out[11] = _mm256_extracti128_si256(e5, 1);
     out[12] = _mm256_castsi256_si128(e6);

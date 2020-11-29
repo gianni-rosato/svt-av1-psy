@@ -306,16 +306,16 @@ static AOM_FORCE_INLINE void calc_ab(int32_t *A, int32_t *b, const int32_t *C, c
                 const __m256i a_res = _mm256_i32gather_epi32(eb_x_by_xplus1, z, 4);
                 yy_storeu_256(A + j, a_res);
 
-                const __m256i a_complement =
-                    _mm256_sub_epi32(_mm256_set1_epi32(SGRPROJ_SGR), a_res);
+                const __m256i a_complement = _mm256_sub_epi32(_mm256_set1_epi32(SGRPROJ_SGR),
+                                                              a_res);
 
                 // sum1 might have lanes greater than 2^15, so we can't use madd to do
                 // multiplication involving sum1. However, a_complement and one_over_n
                 // are both less than 256, so we can multiply them first.
                 const __m256i a_comp_over_n = _mm256_madd_epi16(a_complement, one_over_n);
                 const __m256i b_int         = _mm256_mullo_epi32(a_comp_over_n, sum1);
-                const __m256i b_res =
-                    _mm256_srli_epi32(_mm256_add_epi32(b_int, rnd_res), SGRPROJ_RECIP_BITS);
+                const __m256i b_res         = _mm256_srli_epi32(_mm256_add_epi32(b_int, rnd_res),
+                                                        SGRPROJ_RECIP_BITS);
                 yy_storeu_256(b + j, b_res);
                 j += 8;
             } while (j < width + 2);
@@ -339,16 +339,16 @@ static AOM_FORCE_INLINE void calc_ab(int32_t *A, int32_t *b, const int32_t *C, c
                 const __m256i a_res = _mm256_i32gather_epi32(eb_x_by_xplus1, z, 4);
                 yy_storeu_256(A + j, a_res);
 
-                const __m256i a_complement =
-                    _mm256_sub_epi32(_mm256_set1_epi32(SGRPROJ_SGR), a_res);
+                const __m256i a_complement = _mm256_sub_epi32(_mm256_set1_epi32(SGRPROJ_SGR),
+                                                              a_res);
 
                 // sum1 might have lanes greater than 2^15, so we can't use madd to do
                 // multiplication involving sum1. However, a_complement and one_over_n
                 // are both less than 256, so we can multiply them first.
                 const __m256i a_comp_over_n = _mm256_madd_epi16(a_complement, one_over_n);
                 const __m256i b_int         = _mm256_mullo_epi32(a_comp_over_n, sum1);
-                const __m256i b_res =
-                    _mm256_srli_epi32(_mm256_add_epi32(b_int, rnd_res), SGRPROJ_RECIP_BITS);
+                const __m256i b_res         = _mm256_srli_epi32(_mm256_add_epi32(b_int, rnd_res),
+                                                        SGRPROJ_RECIP_BITS);
                 yy_storeu_256(b + j, b_res);
                 j += 8;
             } while (j < width + 2);
@@ -388,8 +388,8 @@ static INLINE __m256i cross_sum(const int32_t *buf, int32_t stride) {
     const __m256i xb  = yy_loadu_256(buf + stride);
     const __m256i xbr = yy_loadu_256(buf + 1 + stride);
 
-    const __m256i fours =
-        _mm256_add_epi32(xl, _mm256_add_epi32(xt, _mm256_add_epi32(xr, _mm256_add_epi32(xb, x))));
+    const __m256i fours = _mm256_add_epi32(
+        xl, _mm256_add_epi32(xt, _mm256_add_epi32(xr, _mm256_add_epi32(xb, x))));
     const __m256i threes = _mm256_add_epi32(xtl, _mm256_add_epi32(xtr, _mm256_add_epi32(xbr, xbl)));
 
     return _mm256_sub_epi32(_mm256_slli_epi32(_mm256_add_epi32(fours, threes), 2), threes);
@@ -486,16 +486,16 @@ static AOM_FORCE_INLINE void calc_ab_fast(int32_t *A, int32_t *b, const int32_t 
                 const __m256i a_res = _mm256_i32gather_epi32(eb_x_by_xplus1, z, 4);
                 yy_storeu_256(A + j, a_res);
 
-                const __m256i a_complement =
-                    _mm256_sub_epi32(_mm256_set1_epi32(SGRPROJ_SGR), a_res);
+                const __m256i a_complement = _mm256_sub_epi32(_mm256_set1_epi32(SGRPROJ_SGR),
+                                                              a_res);
 
                 // sum1 might have lanes greater than 2^15, so we can't use madd to do
                 // multiplication involving sum1. However, a_complement and one_over_n
                 // are both less than 256, so we can multiply them first.
                 const __m256i a_comp_over_n = _mm256_madd_epi16(a_complement, one_over_n);
                 const __m256i b_int         = _mm256_mullo_epi32(a_comp_over_n, sum1);
-                const __m256i b_res =
-                    _mm256_srli_epi32(_mm256_add_epi32(b_int, rnd_res), SGRPROJ_RECIP_BITS);
+                const __m256i b_res         = _mm256_srli_epi32(_mm256_add_epi32(b_int, rnd_res),
+                                                        SGRPROJ_RECIP_BITS);
                 yy_storeu_256(b + j, b_res);
                 j += 8;
             } while (j < width + 2);
@@ -520,16 +520,16 @@ static AOM_FORCE_INLINE void calc_ab_fast(int32_t *A, int32_t *b, const int32_t 
                 const __m256i a_res = _mm256_i32gather_epi32(eb_x_by_xplus1, z, 4);
                 yy_storeu_256(A + j, a_res);
 
-                const __m256i a_complement =
-                    _mm256_sub_epi32(_mm256_set1_epi32(SGRPROJ_SGR), a_res);
+                const __m256i a_complement = _mm256_sub_epi32(_mm256_set1_epi32(SGRPROJ_SGR),
+                                                              a_res);
 
                 // sum1 might have lanes greater than 2^15, so we can't use madd to do
                 // multiplication involving sum1. However, a_complement and one_over_n
                 // are both less than 256, so we can multiply them first.
                 const __m256i a_comp_over_n = _mm256_madd_epi16(a_complement, one_over_n);
                 const __m256i b_int         = _mm256_mullo_epi32(a_comp_over_n, sum1);
-                const __m256i b_res =
-                    _mm256_srli_epi32(_mm256_add_epi32(b_int, rnd_res), SGRPROJ_RECIP_BITS);
+                const __m256i b_res         = _mm256_srli_epi32(_mm256_add_epi32(b_int, rnd_res),
+                                                        SGRPROJ_RECIP_BITS);
                 yy_storeu_256(b + j, b_res);
                 j += 8;
             } while (j < width + 2);

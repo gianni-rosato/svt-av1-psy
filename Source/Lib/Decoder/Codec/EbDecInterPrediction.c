@@ -63,52 +63,50 @@ static INLINE MV dec_clamp_mv_to_umv_border_sb(int32_t mb_to_left_edge, int32_t 
     return clamped_mv;
 }
 
-#define OPT_DYN_PAD        0
+#define OPT_DYN_PAD 0
 
-static void highbd_build_mc_border(const uint8_t *src8, int32_t src_stride,
-    uint8_t *dst8, int32_t dst_stride, int32_t x, int32_t y,
-    int32_t b_w, int32_t b_h, int32_t w, int32_t h)
-{
-    const uint16_t *ref_row = (uint16_t *) src8;
-    uint16_t *dst = (uint16_t *) dst8;
+static void highbd_build_mc_border(const uint8_t *src8, int32_t src_stride, uint8_t *dst8,
+                                   int32_t dst_stride, int32_t x, int32_t y, int32_t b_w,
+                                   int32_t b_h, int32_t w, int32_t h) {
+    const uint16_t *ref_row = (uint16_t *)src8;
+    uint16_t *      dst     = (uint16_t *)dst8;
 
 #if OPT_DYN_PAD
-    int32_t x0 = x, y0 = y;
-    uint16_t *dst_temp = dst;
-    const uint16_t *ref_temp = ref_row;
-    int32_t blk_fill_itt = 0;
+    int32_t         x0 = x, y0 = y;
+    uint16_t *      dst_temp     = dst;
+    const uint16_t *ref_temp     = ref_row;
+    int32_t         blk_fill_itt = 0;
 
     int32_t left = x0 < 0 ? -x0 : 0;
-    if (left > b_w) left = b_w;
+    if (left > b_w)
+        left = b_w;
 
     int32_t right = b_w - left;
 
     int32_t top = y0 < 0 ? -y0 : 0;
-    if (top > b_h) top = b_h;
+    if (top > b_h)
+        top = b_h;
 
     int32_t bottom = b_h - top;
 
     if (y0 + b_h <= 0) {
         blk_fill_itt = top;
-        top = 0;
-    }
-    else if (y0 < 0) {
-        dst_temp = dst + (top * dst_stride);
+        top          = 0;
+    } else if (y0 < 0) {
+        dst_temp     = dst + (top * dst_stride);
         blk_fill_itt = bottom;
-        bottom = 0;
-    }
-    else if (y0 > h) {
-        ref_temp = ref_row + (h - 1)* src_stride;
+        bottom       = 0;
+    } else if (y0 > h) {
+        ref_temp     = ref_row + (h - 1) * src_stride;
         blk_fill_itt = bottom;
-        bottom = 0;
-}
-    else {
+        bottom       = 0;
+    } else {
         ref_temp = ref_row + (y0 * src_stride);
         if (y0 + b_h > h)
             blk_fill_itt = h - y0;
         else {
             blk_fill_itt = bottom;
-            bottom = 0;
+            bottom       = 0;
         }
     }
 
@@ -116,10 +114,12 @@ static void highbd_build_mc_border(const uint8_t *src8, int32_t src_stride,
         y0 = y0 + top;
         for (int32_t i = 0; i < blk_fill_itt; i++) {
             svt_aom_memset16((void *)dst_temp, ref_temp[0], left);
-            if (right) svt_memcpy(dst_temp + left, ref_temp, right * sizeof(uint16_t));
+            if (right)
+                svt_memcpy(dst_temp + left, ref_temp, right * sizeof(uint16_t));
             dst_temp += dst_stride;
             ++y0;
-            if (y0 > 0 && y0 < h) ref_temp += src_stride;
+            if (y0 > 0 && y0 < h)
+                ref_temp += src_stride;
         }
         right = 0;
     }
@@ -127,19 +127,24 @@ static void highbd_build_mc_border(const uint8_t *src8, int32_t src_stride,
     if (right) {
         int32_t copy = 0, set = 0, ptr_ext = 0;
         y0 = y0 + top;
-        if (x0 + b_w < w) copy = right;
-        else if (x0 > w) set = right;
+        if (x0 + b_w < w)
+            copy = right;
+        else if (x0 > w)
+            set = right;
         else {
-            copy = w - x0;
-            set = b_w - copy;
+            copy    = w - x0;
+            set     = b_w - copy;
             ptr_ext = copy;
         }
         for (int32_t i = 0; i < blk_fill_itt; i++) {
-            if (copy) svt_memcpy(dst_temp, ref_temp + x0, copy * sizeof(uint16_t));
-            if (set) svt_aom_memset16((void *)(dst_temp + ptr_ext), ref_temp[w - 1], set);
+            if (copy)
+                svt_memcpy(dst_temp, ref_temp + x0, copy * sizeof(uint16_t));
+            if (set)
+                svt_aom_memset16((void *)(dst_temp + ptr_ext), ref_temp[w - 1], set);
             dst_temp += dst_stride;
             ++y0;
-            if (y0 > 0 && y0 < h) ref_temp += src_stride;
+            if (y0 > 0 && y0 < h)
+                ref_temp += src_stride;
         }
     }
 
@@ -153,7 +158,7 @@ static void highbd_build_mc_border(const uint8_t *src8, int32_t src_stride,
 
     if (bottom) {
         int32_t itt = b_h - (h - y);
-        dst = dst_temp;
+        dst         = dst_temp;
         dst_temp -= dst_stride;
         for (int32_t i = 0; i < itt; i++) {
             svt_memcpy(dst, dst_temp, b_w * sizeof(uint16_t));
@@ -169,75 +174,80 @@ static void highbd_build_mc_border(const uint8_t *src8, int32_t src_stride,
 
     do {
         int right = 0, copy;
-        int left = x < 0 ? -x : 0;
+        int left  = x < 0 ? -x : 0;
 
-        if (left > b_w) left = b_w;
+        if (left > b_w)
+            left = b_w;
 
-        if (x + b_w > w) right = x + b_w - w;
+        if (x + b_w > w)
+            right = x + b_w - w;
 
-        if (right > b_w) right = b_w;
+        if (right > b_w)
+            right = b_w;
 
         copy = b_w - left - right;
 
-        if (left) svt_aom_memset16((void*)dst, ref_row[0], left);
+        if (left)
+            svt_aom_memset16((void *)dst, ref_row[0], left);
 
-        if (copy) svt_memcpy(dst + left, ref_row + x + left, copy * sizeof(uint16_t));
+        if (copy)
+            svt_memcpy(dst + left, ref_row + x + left, copy * sizeof(uint16_t));
 
-        if (right) svt_aom_memset16((void*)(dst + left + copy), ref_row[w - 1], right);
+        if (right)
+            svt_aom_memset16((void *)(dst + left + copy), ref_row[w - 1], right);
 
         dst += dst_stride;
         ++y;
 
-        if (y > 0 && y < h) ref_row += src_stride;
+        if (y > 0 && y < h)
+            ref_row += src_stride;
     } while (--b_h);
 #endif
 }
 
-static void build_mc_border(const uint8_t *ref_row, int32_t src_stride,
-    uint8_t *dst, int32_t dst_stride, int32_t x, int32_t y, int32_t b_w,
-    int32_t b_h, int32_t w, int32_t h)
-{
+static void build_mc_border(const uint8_t *ref_row, int32_t src_stride, uint8_t *dst,
+                            int32_t dst_stride, int32_t x, int32_t y, int32_t b_w, int32_t b_h,
+                            int32_t w, int32_t h) {
     //x,y = block start postion in ref frame
     //b_w, b_h  = block size in ref frame
     //w, h = ref frame width  & height
 
 #if OPT_DYN_PAD
-    int32_t x0 = x, y0 = y;
-    uint8_t *dst_temp = dst;
-    const uint8_t *ref_temp = ref_row;
-    int32_t blk_fill_itt = 0;
+    int32_t        x0 = x, y0 = y;
+    uint8_t *      dst_temp     = dst;
+    const uint8_t *ref_temp     = ref_row;
+    int32_t        blk_fill_itt = 0;
 
     int32_t left = x0 < 0 ? -x0 : 0;
-    if (left > b_w) left = b_w;
+    if (left > b_w)
+        left = b_w;
 
     int32_t right = b_w - left;
 
     int32_t top = y0 < 0 ? -y0 : 0;
-    if (top > b_h) top = b_h;
+    if (top > b_h)
+        top = b_h;
 
     int32_t bottom = b_h - top;
 
     if (y0 + b_h <= 0) {
         blk_fill_itt = top;
-        top = 0;
-    }
-    else if (y0 < 0) {
-        dst_temp = dst + (top * dst_stride);
+        top          = 0;
+    } else if (y0 < 0) {
+        dst_temp     = dst + (top * dst_stride);
         blk_fill_itt = bottom;
-        bottom = 0;
-    }
-    else if (y0 > h) {
-        ref_temp = ref_row + (h - 1)* src_stride;
+        bottom       = 0;
+    } else if (y0 > h) {
+        ref_temp     = ref_row + (h - 1) * src_stride;
         blk_fill_itt = bottom;
-        bottom = 0;
-    }
-    else {
+        bottom       = 0;
+    } else {
         ref_temp = ref_row + (y0 * src_stride);
         if (y0 + b_h > h)
             blk_fill_itt = h - y0;
         else {
             blk_fill_itt = bottom;
-            bottom = 0;
+            bottom       = 0;
         }
     }
 
@@ -245,10 +255,12 @@ static void build_mc_border(const uint8_t *ref_row, int32_t src_stride,
         y0 = y0 + top;
         for (int32_t i = 0; i < blk_fill_itt; i++) {
             memset(dst_temp, ref_temp[0], left);
-            if (right) svt_memcpy(dst_temp + left, ref_temp, right);
+            if (right)
+                svt_memcpy(dst_temp + left, ref_temp, right);
             dst_temp += dst_stride;
             ++y0;
-            if (y0 > 0 && y0 < h) ref_temp += src_stride;
+            if (y0 > 0 && y0 < h)
+                ref_temp += src_stride;
         }
         right = 0;
     }
@@ -256,19 +268,24 @@ static void build_mc_border(const uint8_t *ref_row, int32_t src_stride,
     if (right) {
         int32_t copy = 0, set = 0, ptr_ext = 0;
         y0 = y0 + top;
-        if (x0 + b_w < w) copy = right;
-        else if (x0 > w) set = right;
+        if (x0 + b_w < w)
+            copy = right;
+        else if (x0 > w)
+            set = right;
         else {
-            copy = w - x0;
-            set = b_w - copy;
+            copy    = w - x0;
+            set     = b_w - copy;
             ptr_ext = copy;
         }
         for (int32_t i = 0; i < blk_fill_itt; i++) {
-            if (copy) svt_memcpy(dst_temp, ref_temp + x0, copy);
-            if (set) memset(dst_temp + ptr_ext, ref_temp[w - 1], set);
+            if (copy)
+                svt_memcpy(dst_temp, ref_temp + x0, copy);
+            if (set)
+                memset(dst_temp + ptr_ext, ref_temp[w - 1], set);
             dst_temp += dst_stride;
             ++y0;
-            if (y0 > 0 && y0 < h) ref_temp +=  src_stride;
+            if (y0 > 0 && y0 < h)
+                ref_temp += src_stride;
         }
     }
 
@@ -282,7 +299,7 @@ static void build_mc_border(const uint8_t *ref_row, int32_t src_stride,
 
     if (bottom) {
         int32_t itt = b_h - (h - y);
-        dst = dst_temp;
+        dst         = dst_temp;
         dst_temp -= dst_stride;
         for (int32_t i = 0; i < itt; i++) {
             svt_memcpy(dst, dst_temp, b_w);
@@ -298,45 +315,49 @@ static void build_mc_border(const uint8_t *ref_row, int32_t src_stride,
 
     do {
         int right = 0, copy;
-        int left = x < 0 ? -x : 0;
+        int left  = x < 0 ? -x : 0;
 
-        if (left > b_w) left = b_w;
+        if (left > b_w)
+            left = b_w;
 
-        if (x + b_w > w) right = x + b_w - w;
+        if (x + b_w > w)
+            right = x + b_w - w;
 
-        if (right > b_w) right = b_w;
+        if (right > b_w)
+            right = b_w;
 
         copy = b_w - left - right;
 
-        if (left) memset(dst, ref_row[0], left);
+        if (left)
+            memset(dst, ref_row[0], left);
 
-        if (copy) svt_memcpy(dst + left, ref_row + x + left, copy);
+        if (copy)
+            svt_memcpy(dst + left, ref_row + x + left, copy);
 
-        if (right) memset(dst + left + copy, ref_row[w - 1], right);
+        if (right)
+            memset(dst + left + copy, ref_row[w - 1], right);
 
         dst += dst_stride;
         ++y;
 
-        if (y > 0 && y < h) ref_row += src_stride;
+        if (y > 0 && y < h)
+            ref_row += src_stride;
     } while (--b_h);
 #endif //OPT_DYN_PAD
 }
 
-static INLINE int update_extend_mc_border_params(PadBlock *block,
-     EbDecPicBuf *ref_buf, MV32 scaled_mv, const ScaleFactors *sf,
-    int32_t *x_pad, int32_t *y_pad,
-    int32_t ss_x, int32_t ss_y)
-{
-    int frame_width = (ref_buf->superres_upscaled_width + ss_x) >> ss_x;
+static INLINE int update_extend_mc_border_params(PadBlock *block, EbDecPicBuf *ref_buf,
+                                                 MV32 scaled_mv, const ScaleFactors *sf,
+                                                 int32_t *x_pad, int32_t *y_pad, int32_t ss_x,
+                                                 int32_t ss_y) {
+    int frame_width  = (ref_buf->superres_upscaled_width + ss_x) >> ss_x;
     int frame_height = (ref_buf->frame_height + ss_y) >> ss_y;
-
 
     // Skip border extension if block is inside the frame.
     if (block->x0 < -(DYNIMIC_PAD_VALUE >> ss_x) ||
-        block->x1 >((frame_width - 1) + (DYNIMIC_PAD_VALUE >> ss_x)) ||
+        block->x1 > ((frame_width - 1) + (DYNIMIC_PAD_VALUE >> ss_x)) ||
         block->y0 < -(DYNIMIC_PAD_VALUE >> ss_y) ||
-        block->y1 >((frame_height - 1) + (DYNIMIC_PAD_VALUE >> ss_y)))
-    {
+        block->y1 > ((frame_height - 1) + (DYNIMIC_PAD_VALUE >> ss_y))) {
         if ((scaled_mv.col & SUBPEL_MASK) || (sf->x_step_q4 != SUBPEL_SHIFTS)) {
             block->x0 -= AOM_INTERP_EXTEND;
             block->x1 += AOM_INTERP_EXTEND;
@@ -355,36 +376,43 @@ static INLINE int update_extend_mc_border_params(PadBlock *block,
     return 0;
 }
 
-static INLINE void extend_mc_border(void *src, int32_t *src_stride,
-    PadBlock *block, MV32 scaled_mv, const ScaleFactors *sf, int32_t highbd,
-    uint8_t *mc_buf, EbDecPicBuf *ref_buf,
-    void **src_mod, int32_t ss_x, int32_t ss_y)
-    {
+static INLINE void extend_mc_border(void *src, int32_t *src_stride, PadBlock *block, MV32 scaled_mv,
+                                    const ScaleFactors *sf, int32_t highbd, uint8_t *mc_buf,
+                                    EbDecPicBuf *ref_buf, void **src_mod, int32_t ss_x,
+                                    int32_t ss_y) {
     int32_t x_pad = 0, y_pad = 0;
-    if (update_extend_mc_border_params(block, ref_buf, scaled_mv, sf, &x_pad,
-        &y_pad, ss_x, ss_y))
-    {
+    if (update_extend_mc_border_params(block, ref_buf, scaled_mv, sf, &x_pad, &y_pad, ss_x, ss_y)) {
         int32_t buf_stride = *src_stride;
-        *src_mod = NULL;
-        const int32_t b_w = block->x1 - block->x0;
-        const int32_t b_h = block->y1 - block->y0;
+        *src_mod           = NULL;
+        const int32_t b_w  = block->x1 - block->x0;
+        const int32_t b_h  = block->y1 - block->y0;
 
         // Extend the border.
         if (highbd) {
-            highbd_build_mc_border((uint8_t*)src, buf_stride, mc_buf, b_w,
-                block->x0, block->y0, b_w, b_h,
-                ref_buf->superres_upscaled_width >> ss_x,
-                ref_buf->frame_height >> ss_y);
+            highbd_build_mc_border((uint8_t *)src,
+                                   buf_stride,
+                                   mc_buf,
+                                   b_w,
+                                   block->x0,
+                                   block->y0,
+                                   b_w,
+                                   b_h,
+                                   ref_buf->superres_upscaled_width >> ss_x,
+                                   ref_buf->frame_height >> ss_y);
+        } else {
+            build_mc_border((uint8_t *)src,
+                            buf_stride,
+                            mc_buf,
+                            b_w,
+                            block->x0,
+                            block->y0,
+                            b_w,
+                            b_h,
+                            ref_buf->superres_upscaled_width >> ss_x,
+                            ref_buf->frame_height >> ss_y);
         }
-        else {
-            build_mc_border((uint8_t*)src, buf_stride, mc_buf, b_w, block->x0,
-                block->y0, b_w, b_h,
-                ref_buf->superres_upscaled_width >> ss_x ,
-                ref_buf->frame_height >> ss_y);
-        }
-        mc_buf = mc_buf + ((y_pad * AOM_INTERP_EXTEND * b_w +
-            x_pad * AOM_INTERP_EXTEND) << highbd);
-        *src_mod = (void*)mc_buf;
+        mc_buf = mc_buf + ((y_pad * AOM_INTERP_EXTEND * b_w + x_pad * AOM_INTERP_EXTEND) << highbd);
+        *src_mod    = (void *)mc_buf;
         *src_stride = b_w;
     }
 }
@@ -392,18 +420,19 @@ static INLINE void extend_mc_border(void *src, int32_t *src_stride,
 void svt_make_inter_predictor(PartitionInfo *part_info, int32_t ref, void *src, int32_t src_stride,
                               void *dst_mod, int32_t dst_stride, EbDecPicBuf *ref_buf,
                               int32_t pre_x, int32_t pre_y, int32_t bw, int32_t bh,
-                              ConvolveParams *conv_params, int32_t plane, int32_t do_warp, EbBool is_16bit) {
+                              ConvolveParams *conv_params, int32_t plane, int32_t do_warp,
+                              EbBool is_16bit) {
     const BlockModeInfo *mi         = part_info->mi;
     const int32_t        is_intrabc = is_intrabc_block(mi);
 
     const int32_t ss_x      = plane ? part_info->subsampling_x : 0;
     const int32_t ss_y      = plane ? part_info->subsampling_y : 0;
     int32_t       bit_depth = ref_buf->ps_pic_buf->bit_depth;
-    int32_t       highbd = bit_depth > EB_8BIT || is_16bit;
+    int32_t       highbd    = bit_depth > EB_8BIT || is_16bit;
 
     /*ScaleFactor*/
-    const struct ScaleFactors *const sf =
-        is_intrabc ? part_info->sf_identity : part_info->block_ref_sf[ref];
+    const struct ScaleFactors *const sf = is_intrabc ? part_info->sf_identity
+                                                     : part_info->block_ref_sf[ref];
 
     const MV     mv = mi->mv[ref].as_mv;
     MV           mv_q4;
@@ -411,7 +440,7 @@ void svt_make_inter_predictor(PartitionInfo *part_info, int32_t ref, void *src, 
     SubpelParams subpel_params;
     do_warp = do_warp && !av1_is_scaled(sf);
     PadBlock block;
-    MV32 scaled_mv;
+    MV32     scaled_mv;
 
     const int32_t is_scaled = av1_is_scaled(sf);
     if (is_scaled) {
@@ -427,9 +456,9 @@ void svt_make_inter_predictor(PartitionInfo *part_info, int32_t ref, void *src, 
         const int top    = -AOM_LEFT_TOP_MARGIN_SCALED(ss_y);
         const int left   = -AOM_LEFT_TOP_MARGIN_SCALED(ss_x);
         const int bottom = ((ref_buf->frame_height >> ss_y) + AOM_INTERP_EXTEND)
-                           << SCALE_SUBPEL_BITS;
+            << SCALE_SUBPEL_BITS;
         const int right = ((ref_buf->superres_upscaled_width >> ss_x) + AOM_INTERP_EXTEND)
-                          << SCALE_SUBPEL_BITS;
+            << SCALE_SUBPEL_BITS;
 
         pos_y = clamp(pos_y, top, bottom);
         pos_x = clamp(pos_x, left, right);
@@ -440,17 +469,17 @@ void svt_make_inter_predictor(PartitionInfo *part_info, int32_t ref, void *src, 
         subpel_params.ys       = sf->y_step_q4;
 
         // Get reference block top left coordinate.
-        block.x0 = pos_x >> SCALE_SUBPEL_BITS;;
-        block.y0 = pos_y >> SCALE_SUBPEL_BITS;;
+        block.x0 = pos_x >> SCALE_SUBPEL_BITS;
+        ;
+        block.y0 = pos_y >> SCALE_SUBPEL_BITS;
+        ;
 
         // Get reference block bottom right coordinate.
-        block.x1 =
-            ((pos_x + (bw - 1) * subpel_params.xs) >> SCALE_SUBPEL_BITS) + 1;
-        block.y1 =
-            ((pos_y + (bh - 1) * subpel_params.ys) >> SCALE_SUBPEL_BITS) + 1;
+        block.x1 = ((pos_x + (bw - 1) * subpel_params.xs) >> SCALE_SUBPEL_BITS) + 1;
+        block.y1 = ((pos_y + (bh - 1) * subpel_params.ys) >> SCALE_SUBPEL_BITS) + 1;
 
         MV temp_mv;
-        temp_mv = dec_clamp_mv_to_umv_border_sb(part_info->mb_to_left_edge,
+        temp_mv   = dec_clamp_mv_to_umv_border_sb(part_info->mb_to_left_edge,
                                                 part_info->mb_to_right_edge,
                                                 part_info->mb_to_top_edge,
                                                 part_info->mb_to_bottom_edge,
@@ -462,7 +491,7 @@ void svt_make_inter_predictor(PartitionInfo *part_info, int32_t ref, void *src, 
         scaled_mv = svt_av1_scale_mv(&temp_mv, (pre_x + 0), (pre_y + 0), sf);
         scaled_mv.row += SCALE_EXTRA_OFF;
         scaled_mv.col += SCALE_EXTRA_OFF;
-        int32_t src_offset = (block.y0 * src_stride ) + block.x0;
+        int32_t src_offset = (block.y0 * src_stride) + block.x0;
         src_mod            = (void *)((uint8_t *)src + (src_offset << highbd));
     } else {
         mv_q4 = dec_clamp_mv_to_umv_border_sb(part_info->mb_to_left_edge,
@@ -475,7 +504,6 @@ void svt_make_inter_predictor(PartitionInfo *part_info, int32_t ref, void *src, 
                                               ss_x,
                                               ss_y);
 
-
         // Get block position in current frame.
         int pos_x = (pre_x + 0) << SUBPEL_BITS;
         int pos_y = (pre_y + 0) << SUBPEL_BITS;
@@ -486,12 +514,12 @@ void svt_make_inter_predictor(PartitionInfo *part_info, int32_t ref, void *src, 
         block.y0 = pos_y >> SUBPEL_BITS;
 
         // Get reference block bottom right coordinate.
-        block.x1 = (pos_x >> SUBPEL_BITS) + (bw - 1) + 1;
-        block.y1 = (pos_y >> SUBPEL_BITS) + (bh - 1) + 1;
-        scaled_mv.row =(int32_t) mv_q4.row;
-        scaled_mv.col = (int32_t)mv_q4.col;
+        block.x1           = (pos_x >> SUBPEL_BITS) + (bw - 1) + 1;
+        block.y1           = (pos_y >> SUBPEL_BITS) + (bh - 1) + 1;
+        scaled_mv.row      = (int32_t)mv_q4.row;
+        scaled_mv.col      = (int32_t)mv_q4.col;
         int32_t src_offset = (((pre_y) + (mv_q4.row >> SUBPEL_BITS)) * src_stride) + (pre_x) +
-                             (mv_q4.col >> SUBPEL_BITS);
+            (mv_q4.col >> SUBPEL_BITS);
         src_mod = (void *)((uint8_t *)src + (src_offset << highbd));
 
         subpel_params.xs       = SCALE_SUBPEL_SHIFTS;
@@ -501,8 +529,17 @@ void svt_make_inter_predictor(PartitionInfo *part_info, int32_t ref, void *src, 
     }
 
     if ((!do_warp && !is_intrabc) || (is_scaled && !do_warp && !is_intrabc)) {
-        extend_mc_border(src, &src_stride, &block, scaled_mv, sf, highbd,
-            part_info->mc_buf[ref], ref_buf, &src_mod, ss_x, ss_y);
+        extend_mc_border(src,
+                         &src_stride,
+                         &block,
+                         scaled_mv,
+                         sf,
+                         highbd,
+                         part_info->mc_buf[ref],
+                         ref_buf,
+                         &src_mod,
+                         ss_x,
+                         ss_y);
     }
     assert(IMPLIES(is_intrabc, !do_warp));
 
@@ -635,8 +672,8 @@ void svt_make_masked_inter_predictor(PartitionInfo *part_info, int32_t ref, void
 }
 
 static void av1_combine_interintra(PartitionInfo *part_info, BlockSize bsize, int plane,
-                            uint8_t *inter_pred, int inter_stride, uint8_t *intra_pred,
-                            int intra_stride, EbBitDepthEnum bit_depth, EbBool is_16bit) {
+                                   uint8_t *inter_pred, int inter_stride, uint8_t *intra_pred,
+                                   int intra_stride, EbBitDepthEnum bit_depth, EbBool is_16bit) {
     BlockModeInfo * mi          = part_info->mi;
     int32_t         sub_x       = (plane > 0) ? part_info->subsampling_x : 0;
     int32_t         sub_y       = (plane > 0) ? part_info->subsampling_y : 0;
@@ -676,12 +713,13 @@ static void av1_combine_interintra(PartitionInfo *part_info, BlockSize bsize, in
                        intra_stride);
 }
 
-static void av1_build_intra_predictors_for_interintra(DecModCtxt *dec_mod_ctxt, PartitionInfo *part_info,
-                                               void *pv_blk_recon_buf, int32_t recon_stride,
-                                               BlockSize bsize, int32_t plane, uint8_t *dst,
-                                               int dst_stride, EbBitDepthEnum bit_depth) {
-    EbDecHandle *dec_handle = (EbDecHandle *)dec_mod_ctxt->dec_handle_ptr;
-    EbBool is16b = dec_handle->is_16bit_pipeline;
+static void av1_build_intra_predictors_for_interintra(DecModCtxt *   dec_mod_ctxt,
+                                                      PartitionInfo *part_info,
+                                                      void *pv_blk_recon_buf, int32_t recon_stride,
+                                                      BlockSize bsize, int32_t plane, uint8_t *dst,
+                                                      int dst_stride, EbBitDepthEnum bit_depth) {
+    EbDecHandle *  dec_handle  = (EbDecHandle *)dec_mod_ctxt->dec_handle_ptr;
+    EbBool         is16b       = dec_handle->is_16bit_pipeline;
     BlockModeInfo *mi          = part_info->mi;
     int32_t        sub_x       = (plane > 0) ? part_info->subsampling_x : 0;
     int32_t        sub_y       = (plane > 0) ? part_info->subsampling_y : 0;
@@ -725,9 +763,9 @@ static void av1_build_intra_predictors_for_interintra(DecModCtxt *dec_mod_ctxt, 
 }
 
 /* Build interintra_predictors */
-static void av1_build_interintra_predictors(DecModCtxt *dec_mod_ctxt, PartitionInfo *part_info, void *pred,
-                                     int32_t stride, int plane, BlockSize bsize,
-                                     EbBitDepthEnum bit_depth, EbBool is_16bit) {
+static void av1_build_interintra_predictors(DecModCtxt *dec_mod_ctxt, PartitionInfo *part_info,
+                                            void *pred, int32_t stride, int plane, BlockSize bsize,
+                                            EbBitDepthEnum bit_depth, EbBool is_16bit) {
     if (bit_depth > EB_8BIT || is_16bit) {
         DECLARE_ALIGNED(16, uint16_t, intrapredictor[MAX_SB_SQUARE]);
         av1_build_intra_predictors_for_interintra(dec_mod_ctxt,
@@ -759,8 +797,15 @@ static void av1_build_interintra_predictors(DecModCtxt *dec_mod_ctxt, PartitionI
                                                   intrapredictor,
                                                   MAX_SB_SIZE,
                                                   bit_depth);
-        av1_combine_interintra(
-            part_info, bsize, plane, pred, stride, intrapredictor, MAX_SB_SIZE, bit_depth, is_16bit);
+        av1_combine_interintra(part_info,
+                               bsize,
+                               plane,
+                               pred,
+                               stride,
+                               intrapredictor,
+                               MAX_SB_SIZE,
+                               bit_depth,
+                               is_16bit);
     }
 }
 
@@ -773,21 +818,21 @@ void svtav1_predict_inter_block_plane(DecModCtxt *dec_mod_ctx, EbDecHandle *dec_
     const FrameHeader *  cur_frm_hdr = dec_mod_ctx->frame_header;
     SeqHeader *          seq_header  = dec_mod_ctx->seq_header;
     int32_t              is_compound = has_second_ref(mi);
-    const int32_t        is_intrabc = is_intrabc_block(mi);
+    const int32_t        is_intrabc  = is_intrabc_block(mi);
 
     //temporary buffer for joint compound, move this to context if stack does not hold.
     DECLARE_ALIGNED(32, uint16_t, tmp_dst[128 * 128]);
 
     EbBool is16b = (bit_depth > EB_8BIT) || dec_hdl->is_16bit_pipeline;
 
-    const BlockSize bsize     = mi->sb_type;
+    const BlockSize bsize = mi->sb_type;
     assert(bsize < BlockSizeS_ALL);
-    const int32_t   ss_x      = plane ? part_info->subsampling_x : 0;
-    const int32_t   ss_y      = plane ? part_info->subsampling_y : 0;
-    int32_t         bw        = part_info->wpx[0] >> ss_x;
-    int32_t         bh        = part_info->hpx[0] >> ss_y;
-    int32_t         row_start = 0;
-    int32_t         col_start = 0;
+    const int32_t ss_x      = plane ? part_info->subsampling_x : 0;
+    const int32_t ss_y      = plane ? part_info->subsampling_y : 0;
+    int32_t       bw        = part_info->wpx[0] >> ss_x;
+    int32_t       bh        = part_info->hpx[0] >> ss_y;
+    int32_t       row_start = 0;
+    int32_t       col_start = 0;
     // For sub8x8 chroma blocks, we may be covering more than one luma block's
     // worth of pixels. Thus (mi_x, mi_y) may not be the correct coordinates for
     // the top-left corner of the prediction source - the correct top-left corner
@@ -852,8 +897,8 @@ void svtav1_predict_inter_block_plane(DecModCtxt *dec_mod_ctx, EbDecHandle *dec_
         const EbWarpedMotionParams *const wm_global =
             &part_info->ps_global_motion[mi->ref_frame[ref]];
 
-        EbDecPicBuf *ref_buf = is_intrabc ? dec_hdl->cur_pic_buf[0]
-                                          : get_ref_frame_buf(dec_hdl, mi->ref_frame[ref]);
+        EbDecPicBuf *        ref_buf        = is_intrabc ? dec_hdl->cur_pic_buf[0]
+                                                         : get_ref_frame_buf(dec_hdl, mi->ref_frame[ref]);
         EbPictureBufferDesc *ps_ref_pic_buf = ref_buf->ps_pic_buf;
 
         int32_t do_warp = (bw >= 8 && bh >= 8 && !build_for_obmc &&
@@ -939,7 +984,8 @@ void svtav1_predict_inter_block(DecModCtxt *dec_mod_ctxt, EbDecHandle *dec_hdl,
         for (i = row_start; i <= row_end; i++) {
             for (j = col_start; j <= col_end; j++) {
                 BlockModeInfo *mode_info = get_cur_mode_info(dec_hdl, i, j, part_info->sb_info);
-                if (mode_info->ref_frame[0] == INTRA_FRAME) some_use_intra = 1;
+                if (mode_info->ref_frame[0] == INTRA_FRAME)
+                    some_use_intra = 1;
             }
         }
     }

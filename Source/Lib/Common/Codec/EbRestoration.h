@@ -17,7 +17,6 @@
 #include "EbPictureBufferDesc.h"
 #include "EbAv1Structs.h"
 
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -180,8 +179,7 @@ typedef struct SgrprojInfo {
 // Similarly, the column buffers (used when we're at a vertical tile edge
 // that we can't filter across) need space for one processing unit's worth
 // of pixels, plus the top/bottom border width
-#define RESTORATION_COLBUFFER_HEIGHT \
-  (RESTORATION_PROC_UNIT_SIZE + 2 * RESTORATION_BORDER)
+#define RESTORATION_COLBUFFER_HEIGHT (RESTORATION_PROC_UNIT_SIZE + 2 * RESTORATION_BORDER)
 
 typedef struct RestorationUnitInfo {
     RestorationType restoration_type;
@@ -248,8 +246,8 @@ static INLINE void set_default_wiener(WienerInfo *wiener_info) {
     wiener_info->vfilter[0] = wiener_info->hfilter[0] = WIENER_FILT_TAP0_MIDV;
     wiener_info->vfilter[1] = wiener_info->hfilter[1] = WIENER_FILT_TAP1_MIDV;
     wiener_info->vfilter[2] = wiener_info->hfilter[2] = WIENER_FILT_TAP2_MIDV;
-    wiener_info->vfilter[WIENER_HALFWIN]              = wiener_info->hfilter[WIENER_HALFWIN] =
-        -2 * (WIENER_FILT_TAP2_MIDV + WIENER_FILT_TAP1_MIDV + WIENER_FILT_TAP0_MIDV);
+    wiener_info->vfilter[WIENER_HALFWIN] = wiener_info->hfilter[WIENER_HALFWIN] = -2 *
+        (WIENER_FILT_TAP2_MIDV + WIENER_FILT_TAP1_MIDV + WIENER_FILT_TAP0_MIDV);
     wiener_info->vfilter[4] = wiener_info->hfilter[4] = WIENER_FILT_TAP2_MIDV;
     wiener_info->vfilter[5] = wiener_info->hfilter[5] = WIENER_FILT_TAP1_MIDV;
     wiener_info->vfilter[6] = wiener_info->hfilter[6] = WIENER_FILT_TAP0_MIDV;
@@ -353,7 +351,8 @@ static INLINE int32_t linsolve(int32_t n, double *A, int32_t stride, double *b, 
             }
         }
         for (i = k; i < n - 1; i++) {
-            if (fabs(A[k * stride + k]) < tiny_near_zero) return 0;
+            if (fabs(A[k * stride + k]) < tiny_near_zero)
+                return 0;
             c = A[(i + 1) * stride + k] / A[k * stride + k];
             for (j = 0; j < n; j++) A[(i + 1) * stride + j] -= c * A[k * stride + j];
             b[i + 1] -= c * b[k];
@@ -361,7 +360,8 @@ static INLINE int32_t linsolve(int32_t n, double *A, int32_t stride, double *b, 
     }
     // Backward substitution
     for (i = n - 1; i >= 0; i--) {
-        if (fabs(A[i * stride + i]) < tiny_near_zero) return 0;
+        if (fabs(A[i * stride + i]) < tiny_near_zero)
+            return 0;
         c = 0;
         for (j = i + 1; j <= n - 1; j++) c += A[i * stride + j] * x[j];
         x[i] = (b[i] - c) / A[i * stride + i];
@@ -399,54 +399,42 @@ typedef struct RestUnitSearchInfo {
 
 #define NUM_STRIPE_FILTERS 4
 
-    void wiener_filter_stripe(const RestorationUnitInfo *rui,
-        int32_t stripe_width, int32_t stripe_height,
-        int32_t procunit_width, const uint8_t *src,
-        int32_t src_stride, uint8_t *dst, int32_t dst_stride,
-        int32_t *tmpbuf, int32_t bit_depth);
-    void sgrproj_filter_stripe(const RestorationUnitInfo *rui,
-        int32_t stripe_width, int32_t stripe_height,
-        int32_t procunit_width, const uint8_t *src,
-        int32_t src_stride, uint8_t *dst, int32_t dst_stride,
-        int32_t *tmpbuf, int32_t bit_depth);
-    void wiener_filter_stripe_highbd(const RestorationUnitInfo *rui,
-        int32_t stripe_width, int32_t stripe_height,
-        int32_t procunit_width, const uint8_t *src8,
-        int32_t src_stride, uint8_t *dst8,
-        int32_t dst_stride, int32_t *tmpbuf,
-        int32_t bit_depth);
-    void sgrproj_filter_stripe_highbd(const RestorationUnitInfo *rui,
-        int32_t stripe_width, int32_t stripe_height,
-        int32_t procunit_width,
-        const uint8_t *src8, int32_t src_stride,
-        uint8_t *dst8, int32_t dst_stride,
-        int32_t *tmpbuf, int32_t bit_depth);
+void wiener_filter_stripe(const RestorationUnitInfo *rui, int32_t stripe_width,
+                          int32_t stripe_height, int32_t procunit_width, const uint8_t *src,
+                          int32_t src_stride, uint8_t *dst, int32_t dst_stride, int32_t *tmpbuf,
+                          int32_t bit_depth);
+void sgrproj_filter_stripe(const RestorationUnitInfo *rui, int32_t stripe_width,
+                           int32_t stripe_height, int32_t procunit_width, const uint8_t *src,
+                           int32_t src_stride, uint8_t *dst, int32_t dst_stride, int32_t *tmpbuf,
+                           int32_t bit_depth);
+void wiener_filter_stripe_highbd(const RestorationUnitInfo *rui, int32_t stripe_width,
+                                 int32_t stripe_height, int32_t procunit_width, const uint8_t *src8,
+                                 int32_t src_stride, uint8_t *dst8, int32_t dst_stride,
+                                 int32_t *tmpbuf, int32_t bit_depth);
+void sgrproj_filter_stripe_highbd(const RestorationUnitInfo *rui, int32_t stripe_width,
+                                  int32_t stripe_height, int32_t procunit_width,
+                                  const uint8_t *src8, int32_t src_stride, uint8_t *dst8,
+                                  int32_t dst_stride, int32_t *tmpbuf, int32_t bit_depth);
 
-    void get_stripe_boundary_info(const RestorationTileLimits *limits,
-        const Av1PixelRect *tile_rect, int32_t ss_y,
-        int32_t *copy_above, int32_t *copy_below);
-    void setup_processing_stripe_boundary(
-        const RestorationTileLimits *limits,
-        const RestorationStripeBoundaries *rsb,
-        int32_t rsb_row, int32_t use_highbd,
-        int32_t h, uint8_t *data8, int32_t data_stride,
-        RestorationLineBuffers *rlbs, int32_t copy_above,
-        int32_t copy_below, int32_t opt);
-    void restore_processing_stripe_boundary(
-        const RestorationTileLimits *limits,
-        const RestorationLineBuffers *rlbs,
-        int32_t use_highbd, int32_t h, uint8_t *data8,
-        int32_t data_stride, int32_t copy_above,
-        int32_t copy_below, int32_t opt);
+void get_stripe_boundary_info(const RestorationTileLimits *limits, const Av1PixelRect *tile_rect,
+                              int32_t ss_y, int32_t *copy_above, int32_t *copy_below);
+void setup_processing_stripe_boundary(const RestorationTileLimits *      limits,
+                                      const RestorationStripeBoundaries *rsb, int32_t rsb_row,
+                                      int32_t use_highbd, int32_t h, uint8_t *data8,
+                                      int32_t data_stride, RestorationLineBuffers *rlbs,
+                                      int32_t copy_above, int32_t copy_below, int32_t opt);
+void restore_processing_stripe_boundary(const RestorationTileLimits * limits,
+                                        const RestorationLineBuffers *rlbs, int32_t use_highbd,
+                                        int32_t h, uint8_t *data8, int32_t data_stride,
+                                        int32_t copy_above, int32_t copy_below, int32_t opt);
 
-    typedef void(*StripeFilterFun)(const RestorationUnitInfo *rui, int32_t stripe_width,
-        int32_t stripe_height, int32_t procunit_width, const uint8_t *src,
-        int32_t src_stride, uint8_t *dst, int32_t dst_stride,
-        int32_t *tmpbuf, int32_t bit_depth);
+typedef void (*StripeFilterFun)(const RestorationUnitInfo *rui, int32_t stripe_width,
+                                int32_t stripe_height, int32_t procunit_width, const uint8_t *src,
+                                int32_t src_stride, uint8_t *dst, int32_t dst_stride,
+                                int32_t *tmpbuf, int32_t bit_depth);
 
-    void copy_tile(int32_t width, int32_t height,
-        const uint8_t *src, int32_t src_stride,
-        uint8_t *dst, int32_t dst_stride, int32_t highbd);
+void copy_tile(int32_t width, int32_t height, const uint8_t *src, int32_t src_stride, uint8_t *dst,
+               int32_t dst_stride, int32_t highbd);
 #ifdef __cplusplus
 } // extern "C"
 #endif

@@ -12,7 +12,6 @@
 #ifndef EbIntraCommon_h
 #define EbIntraCommon_h
 
-
 #ifdef __cplusplus
 extern "C" {
 #endif

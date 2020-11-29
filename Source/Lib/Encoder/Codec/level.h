@@ -43,38 +43,37 @@ enum {
     SEQ_LEVEL_MAX = 31
 } UENUM1BYTE(AV1_LEVEL);
 
-
 typedef BitstreamProfile BITSTREAM_PROFILE;
 
 // AV1 Level Specifications
 typedef struct {
-  AV1_LEVEL level;
-  int max_picture_size;
-  int max_h_size;
-  int max_v_size;
-  int max_header_rate;
-  int max_tile_rate;
-  int max_tiles;
-  int max_tile_cols;
-  int64_t max_display_rate;
-  int64_t max_decode_rate;
-  double main_mbps;
-  double high_mbps;
-  double main_cr;
-  double high_cr;
+    AV1_LEVEL level;
+    int       max_picture_size;
+    int       max_h_size;
+    int       max_v_size;
+    int       max_header_rate;
+    int       max_tile_rate;
+    int       max_tiles;
+    int       max_tile_cols;
+    int64_t   max_display_rate;
+    int64_t   max_decode_rate;
+    double    main_mbps;
+    double    high_mbps;
+    double    main_cr;
+    double    high_cr;
 } AV1LevelSpec;
 
 typedef struct AV1LevelParams {
-  // Specifies the level that the coded video sequence conforms to for each
-  // operating point.
-  //AV1_LEVEL target_seq_level_idx[MAX_NUM_OPERATING_POINTS];
-  // Bit mask to indicate whether to keep level stats for corresponding
-  // operating points.
-  uint32_t keep_level_stats;
-  // Level information for each operating point.
-  //AV1LevelInfo *level_info[MAX_NUM_OPERATING_POINTS];
-  // Count the number of OBU_FRAME and OBU_FRAME_HEADER for level calculation.
-  int frame_header_count;
+    // Specifies the level that the coded video sequence conforms to for each
+    // operating point.
+    //AV1_LEVEL target_seq_level_idx[MAX_NUM_OPERATING_POINTS];
+    // Bit mask to indicate whether to keep level stats for corresponding
+    // operating points.
+    uint32_t keep_level_stats;
+    // Level information for each operating point.
+    //AV1LevelInfo *level_info[MAX_NUM_OPERATING_POINTS];
+    // Count the number of OBU_FRAME and OBU_FRAME_HEADER for level calculation.
+    int frame_header_count;
 } AV1LevelParams;
 
-#endif  // AOM_AV1_ENCODER_LEVEL_H_
+#endif // AOM_AV1_ENCODER_LEVEL_H_

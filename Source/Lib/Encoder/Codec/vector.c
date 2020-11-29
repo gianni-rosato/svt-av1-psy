@@ -31,7 +31,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 int svt_aom_vector_setup(Vector *vector, size_t capacity, size_t element_size) {
     assert(vector != NULL);
 
-    if (vector == NULL) return VECTOR_ERROR;
+    if (vector == NULL)
+        return VECTOR_ERROR;
 
     vector->size         = 0;
     vector->capacity     = MAX(VECTOR_MINIMUM_CAPACITY, capacity);
@@ -41,11 +42,11 @@ int svt_aom_vector_setup(Vector *vector, size_t capacity, size_t element_size) {
     return vector->data == NULL ? VECTOR_ERROR : VECTOR_SUCCESS;
 }
 
-
 int svt_aom_vector_destroy(Vector *vector) {
     assert(vector != NULL);
 
-    if (vector == NULL) return VECTOR_ERROR;
+    if (vector == NULL)
+        return VECTOR_ERROR;
 
     free(vector->data);
     vector->data = NULL;
@@ -59,7 +60,8 @@ int svt_aom_vector_push_back(Vector *vector, void *element) {
     assert(element != NULL);
 
     if (_vector_should_grow(vector)) {
-        if (_vector_adjust_capacity(vector) == VECTOR_ERROR) return VECTOR_ERROR;
+        if (_vector_adjust_capacity(vector) == VECTOR_ERROR)
+            return VECTOR_ERROR;
     }
 
     _vector_assign(vector, vector->size, element);
@@ -71,7 +73,9 @@ int svt_aom_vector_push_back(Vector *vector, void *element) {
 
 /* Information */
 
-size_t svt_aom_vector_byte_size(const Vector *vector) { return vector->size * vector->element_size; }
+size_t svt_aom_vector_byte_size(const Vector *vector) {
+    return vector->size * vector->element_size;
+}
 
 /* Iterators */
 Iterator svt_aom_vector_begin(Vector *vector) { return svt_aom_vector_iterator(vector, 0); }
@@ -81,9 +85,12 @@ Iterator svt_aom_vector_iterator(Vector *vector, size_t index) {
 
     assert(vector != NULL && index <= vector->size);
 
-    if (vector == NULL) return iterator;
-    if (index > vector->size) return iterator;
-    if (vector->element_size == 0) return iterator;
+    if (vector == NULL)
+        return iterator;
+    if (index > vector->size)
+        return iterator;
+    if (vector->element_size == 0)
+        return iterator;
 
     iterator.pointer      = _vector_offset(vector, index);
     iterator.element_size = vector->element_size;
@@ -92,12 +99,11 @@ Iterator svt_aom_vector_iterator(Vector *vector, size_t index) {
 }
 
 void *iterator_get(Iterator *iterator) { return iterator->pointer; }
-void iterator_increment(Iterator *iterator) {
+void  iterator_increment(Iterator *iterator) {
     assert(iterator != NULL);
     // iterator->pointer += iterator->element_size;
     iterator->pointer = (unsigned char *)iterator->pointer + iterator->element_size;
 }
-
 
 /***** PRIVATE *****/
 
@@ -137,7 +143,8 @@ int _vector_reallocate(Vector *vector, size_t new_capacity) {
     new_capacity_in_bytes = new_capacity * vector->element_size;
     old                   = vector->data;
 
-    if ((vector->data = malloc(new_capacity_in_bytes)) == NULL) return VECTOR_ERROR;
+    if ((vector->data = malloc(new_capacity_in_bytes)) == NULL)
+        return VECTOR_ERROR;
 #ifdef __STDC_LIB_EXT1__
     /* clang-format off */
     if (memcpy_s(vector->data,

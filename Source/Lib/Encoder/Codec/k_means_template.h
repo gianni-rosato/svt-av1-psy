@@ -30,13 +30,13 @@ static INLINE int RENAME(calc_dist)(const int *p1, const int *p2) {
 }
 
 void RENAME(svt_av1_calc_indices)(const int *data, const int *centroids, uint8_t *indices, int n,
-                                     int k) {
+                                  int k) {
     for (int i = 0; i < n; ++i) {
         int min_dist = RENAME(calc_dist)(data + i * AV1_K_MEANS_DIM, centroids);
         indices[i]   = 0;
         for (int j = 1; j < k; ++j) {
-            const int this_dist =
-                RENAME(calc_dist)(data + i * AV1_K_MEANS_DIM, centroids + j * AV1_K_MEANS_DIM);
+            const int this_dist = RENAME(calc_dist)(data + i * AV1_K_MEANS_DIM,
+                                                    centroids + j * AV1_K_MEANS_DIM);
             if (this_dist < min_dist) {
                 min_dist   = this_dist;
                 indices[i] = j;
@@ -66,17 +66,17 @@ static INLINE void RENAME(calc_centroids)(const int *data, int *centroids, const
         if (count[i] == 0) {
             if (svt_memcpy != NULL)
                 svt_memcpy(centroids + i * AV1_K_MEANS_DIM,
-                       data + (lcg_rand16(&rand_state) % n) * AV1_K_MEANS_DIM,
-                       sizeof(centroids[0]) * AV1_K_MEANS_DIM);
+                           data + (lcg_rand16(&rand_state) % n) * AV1_K_MEANS_DIM,
+                           sizeof(centroids[0]) * AV1_K_MEANS_DIM);
             else
                 svt_memcpy_c(centroids + i * AV1_K_MEANS_DIM,
-                    data + (lcg_rand16(&rand_state) % n) * AV1_K_MEANS_DIM,
-                    sizeof(centroids[0]) * AV1_K_MEANS_DIM);
+                             data + (lcg_rand16(&rand_state) % n) * AV1_K_MEANS_DIM,
+                             sizeof(centroids[0]) * AV1_K_MEANS_DIM);
 
         } else {
             for (j = 0; j < AV1_K_MEANS_DIM; ++j) {
-                centroids[i * AV1_K_MEANS_DIM + j] =
-                    DIVIDE_AND_ROUND(centroids[i * AV1_K_MEANS_DIM + j], count[i]);
+                centroids[i * AV1_K_MEANS_DIM + j] = DIVIDE_AND_ROUND(
+                    centroids[i * AV1_K_MEANS_DIM + j], count[i]);
             }
         }
     }
@@ -87,14 +87,14 @@ static INLINE int64_t RENAME(calc_total_dist)(const int *data, const int *centro
     int64_t dist = 0;
     (void)k;
     for (int i = 0; i < n; ++i) {
-        dist +=
-            RENAME(calc_dist)(data + i * AV1_K_MEANS_DIM, centroids + indices[i] * AV1_K_MEANS_DIM);
+        dist += RENAME(calc_dist)(data + i * AV1_K_MEANS_DIM,
+                                  centroids + indices[i] * AV1_K_MEANS_DIM);
     }
     return dist;
 }
 
 void RENAME(svt_av1_k_means)(const int *data, int *centroids, uint8_t *indices, int n, int k,
-                         int max_itr) {
+                             int max_itr) {
     int     pre_centroids[2 * PALETTE_MAX_SIZE];
     uint8_t pre_indices[MAX_SB_SQUARE];
 
@@ -103,13 +103,10 @@ void RENAME(svt_av1_k_means)(const int *data, int *centroids, uint8_t *indices, 
 
     for (int i = 0; i < max_itr; ++i) {
         const int64_t pre_dist = this_dist;
-        if (svt_memcpy != NULL)
-        {
+        if (svt_memcpy != NULL) {
             svt_memcpy(pre_centroids, centroids, sizeof(pre_centroids[0]) * k * AV1_K_MEANS_DIM);
             svt_memcpy(pre_indices, indices, sizeof(pre_indices[0]) * n);
-        }
-        else
-        {
+        } else {
             svt_memcpy_c(pre_centroids, centroids, sizeof(pre_centroids[0]) * k * AV1_K_MEANS_DIM);
             svt_memcpy_c(pre_indices, indices, sizeof(pre_indices[0]) * n);
         }
@@ -119,16 +116,14 @@ void RENAME(svt_av1_k_means)(const int *data, int *centroids, uint8_t *indices, 
         this_dist = RENAME(calc_total_dist)(data, centroids, indices, n, k);
 
         if (this_dist > pre_dist) {
-            if (svt_memcpy != NULL)
-            {
-                svt_memcpy(centroids, pre_centroids, sizeof(pre_centroids[0]) * k * AV1_K_MEANS_DIM);
+            if (svt_memcpy != NULL) {
+                svt_memcpy(
+                    centroids, pre_centroids, sizeof(pre_centroids[0]) * k * AV1_K_MEANS_DIM);
                 svt_memcpy(indices, pre_indices, sizeof(pre_indices[0]) * n);
-            }
-            else
-            {
-                svt_memcpy_c(centroids, pre_centroids, sizeof(pre_centroids[0]) * k * AV1_K_MEANS_DIM);
+            } else {
+                svt_memcpy_c(
+                    centroids, pre_centroids, sizeof(pre_centroids[0]) * k * AV1_K_MEANS_DIM);
                 svt_memcpy_c(indices, pre_indices, sizeof(pre_indices[0]) * n);
-
             }
             break;
         }

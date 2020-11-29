@@ -24,18 +24,17 @@
 extern "C" {
 #endif
 
-
 struct ModeDecisionContext;
 struct InterPredictionContext;
 
 extern EbErrorType clip_mv(uint32_t blk_origin_x, uint32_t blk_origin_y, int16_t *mv_x,
                            int16_t *mv_y, uint32_t picture_width, uint32_t picture_height,
                            uint32_t tb_size);
-void init_xd(PictureControlSet *pcs_ptr, struct ModeDecisionContext *context_ptr);
-void generate_av1_mvp_table(TileInfo *tile, struct ModeDecisionContext *context_ptr,
-                            BlkStruct  *blk_ptr, const BlockGeom *blk_geom, uint16_t blk_origin_x,
-                            uint16_t blk_origin_y, MvReferenceFrame *ref_frames, uint32_t tot_refs,
-                            PictureControlSet *pcs_ptr);
+void               init_xd(PictureControlSet *pcs_ptr, struct ModeDecisionContext *context_ptr);
+void               generate_av1_mvp_table(TileInfo *tile, struct ModeDecisionContext *context_ptr,
+                                          BlkStruct *blk_ptr, const BlockGeom *blk_geom, uint16_t blk_origin_x,
+                                          uint16_t blk_origin_y, MvReferenceFrame *ref_frames, uint32_t tot_refs,
+                                          PictureControlSet *pcs_ptr);
 
 void get_av1_mv_pred_drl(struct ModeDecisionContext *context_ptr, BlkStruct *blk_ptr,
                          MvReferenceFrame ref_frame, uint8_t is_compound, PredictionMode mode,
@@ -55,22 +54,19 @@ uint16_t wm_find_samples(BlkStruct *blk_ptr, const BlockGeom *blk_geom, uint16_t
                          uint16_t blk_origin_y, MvReferenceFrame rf0, PictureControlSet *pcs_ptr,
                          int32_t *pts, int32_t *pts_inref);
 
-void wm_count_samples(BlkStruct *blk_ptr, const BlockSize sb_size, const BlockGeom *blk_geom, uint16_t blk_origin_x,
-                      uint16_t blk_origin_y, uint8_t ref_frame_type, PictureControlSet *pcs_ptr,
-                      uint16_t *num_samples);
+void wm_count_samples(BlkStruct *blk_ptr, const BlockSize sb_size, const BlockGeom *blk_geom,
+                      uint16_t blk_origin_x, uint16_t blk_origin_y, uint8_t ref_frame_type,
+                      PictureControlSet *pcs_ptr, uint16_t *num_samples);
 
 EbBool warped_motion_parameters(PictureControlSet *pcs_ptr, BlkStruct *blk_ptr, MvUnit *mv_unit,
                                 const BlockGeom *blk_geom, uint16_t blk_origin_x,
                                 uint16_t blk_origin_y, uint8_t ref_frame_type,
                                 EbWarpedMotionParams *wm_params, uint16_t *num_samples);
 
-
-
 static INLINE EbBool has_overlappable_candidates(const BlkStruct *blk_ptr) {
     return (blk_ptr->prediction_unit_array[0].overlappable_neighbors[0] != 0 ||
             blk_ptr->prediction_unit_array[0].overlappable_neighbors[1] != 0);
 }
-
 
 void svt_av1_count_overlappable_neighbors(const PictureControlSet *pcs_ptr, BlkStruct *blk_ptr,
                                           const BlockSize bsize, int32_t mi_row, int32_t mi_col);

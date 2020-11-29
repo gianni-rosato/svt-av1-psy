@@ -62,20 +62,18 @@ void restoration_seg_search(int32_t *rst_tmpbuf, Yv12BufferConfig *org_fts,
                             PictureControlSet *pcs_ptr, uint32_t segment_index);
 void rest_finish_search(PictureParentControlSet *p_pcs_ptr, Macroblock *x, Av1Common *const cm);
 
-void svt_av1_upscale_normative_rows(const Av1Common *cm, const uint8_t *src,
-                                    int src_stride, uint8_t *dst, int dst_stride, int rows, int sub_x, int bd,
+void svt_av1_upscale_normative_rows(const Av1Common *cm, const uint8_t *src, int src_stride,
+                                    uint8_t *dst, int dst_stride, int rows, int sub_x, int bd,
                                     EbBool is_16bit_pipeline);
 
 #if DEBUG_UPSCALING
 void save_YUV_to_file(char *filename, EbByte buffer_y, EbByte buffer_u, EbByte buffer_v,
-                      uint16_t width, uint16_t height,
-                      uint16_t stride_y, uint16_t stride_u, uint16_t stride_v,
-                      uint16_t origin_y, uint16_t origin_x,
-                      uint32_t ss_x, uint32_t ss_y);
+                      uint16_t width, uint16_t height, uint16_t stride_y, uint16_t stride_u,
+                      uint16_t stride_v, uint16_t origin_y, uint16_t origin_x, uint32_t ss_x,
+                      uint32_t ss_y);
 #endif
 
-static void rest_context_dctor(EbPtr p)
-{
+static void rest_context_dctor(EbPtr p) {
     EbThreadContext *thread_context_ptr = (EbThreadContext *)p;
     RestContext *    obj                = (RestContext *)thread_context_ptr->priv;
     EB_DELETE(obj->temp_lf_recon_picture_ptr);
@@ -102,10 +100,10 @@ EbErrorType rest_context_ctor(EbThreadContext *  thread_context_ptr,
     thread_context_ptr->dctor = rest_context_dctor;
 
     // Input/Output System Resource Manager FIFOs
-    context_ptr->rest_input_fifo_ptr =
-        svt_system_resource_get_consumer_fifo(enc_handle_ptr->cdef_results_resource_ptr, index);
-    context_ptr->rest_output_fifo_ptr =
-        svt_system_resource_get_producer_fifo(enc_handle_ptr->rest_results_resource_ptr, index);
+    context_ptr->rest_input_fifo_ptr = svt_system_resource_get_consumer_fifo(
+        enc_handle_ptr->cdef_results_resource_ptr, index);
+    context_ptr->rest_output_fifo_ptr = svt_system_resource_get_producer_fifo(
+        enc_handle_ptr->rest_results_resource_ptr, index);
     context_ptr->picture_demux_fifo_ptr = svt_system_resource_get_producer_fifo(
         enc_handle_ptr->picture_demux_results_resource_ptr, demux_index);
 
@@ -115,23 +113,21 @@ EbErrorType rest_context_ctor(EbThreadContext *  thread_context_ptr,
         init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK;
         init_data.max_width          = (uint16_t)scs_ptr->max_input_luma_width;
         init_data.max_height         = (uint16_t)scs_ptr->max_input_luma_height;
-        init_data.bit_depth          = config->is_16bit_pipeline || is_16bit
-                                     ? EB_16BIT : EB_8BIT;
+        init_data.bit_depth          = config->is_16bit_pipeline || is_16bit ? EB_16BIT : EB_8BIT;
         init_data.color_format       = color_format;
         init_data.left_padding       = AOM_BORDER_IN_PIXELS;
         init_data.right_padding      = AOM_BORDER_IN_PIXELS;
         init_data.top_padding        = AOM_BORDER_IN_PIXELS;
         init_data.bot_padding        = AOM_BORDER_IN_PIXELS;
         init_data.split_mode         = EB_FALSE;
-        init_data.is_16bit_pipeline = config->is_16bit_pipeline;
+        init_data.is_16bit_pipeline  = config->is_16bit_pipeline;
 
         EB_NEW(context_ptr->trial_frame_rst, svt_picture_buffer_desc_ctor, (EbPtr)&init_data);
 
         EB_NEW(context_ptr->org_rec_frame, svt_picture_buffer_desc_ctor, (EbPtr)&init_data);
-        if (!is_16bit)
-        {
+        if (!is_16bit) {
             context_ptr->trial_frame_rst->bit_depth = EB_8BIT;
-            context_ptr->org_rec_frame->bit_depth = EB_8BIT;
+            context_ptr->org_rec_frame->bit_depth   = EB_8BIT;
         }
 
         EB_MALLOC_ALIGNED(context_ptr->rst_tmpbuf, RESTORATION_TMPBUF_SIZE);
@@ -165,75 +161,69 @@ EbErrorType rest_context_ctor(EbThreadContext *  thread_context_ptr,
 }
 void get_own_recon(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
                    RestContext *context_ptr, EbBool is_16bit) {
-
     const uint32_t ss_x = scs_ptr->subsampling_x;
     const uint32_t ss_y = scs_ptr->subsampling_y;
 
     EbPictureBufferDesc *recon_picture_ptr;
     if (is_16bit) {
         if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE)
-            recon_picture_ptr =
-                ((EbReferenceObject *)
-                     pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
-                    ->reference_picture16bit;
+            recon_picture_ptr = ((EbReferenceObject *)pcs_ptr->parent_pcs_ptr
+                                     ->reference_picture_wrapper_ptr->object_ptr)
+                                    ->reference_picture16bit;
         else
             recon_picture_ptr = pcs_ptr->recon_picture16bit_ptr;
 
         uint16_t *rec_ptr = (uint16_t *)recon_picture_ptr->buffer_y + recon_picture_ptr->origin_x +
-                            recon_picture_ptr->origin_y * recon_picture_ptr->stride_y;
+            recon_picture_ptr->origin_y * recon_picture_ptr->stride_y;
         uint16_t *rec_ptr_cb = (uint16_t *)recon_picture_ptr->buffer_cb +
-                               recon_picture_ptr->origin_x / 2 +
-                               recon_picture_ptr->origin_y / 2 * recon_picture_ptr->stride_cb;
+            recon_picture_ptr->origin_x / 2 +
+            recon_picture_ptr->origin_y / 2 * recon_picture_ptr->stride_cb;
         uint16_t *rec_ptr_cr = (uint16_t *)recon_picture_ptr->buffer_cr +
-                               recon_picture_ptr->origin_x / 2 +
-                               recon_picture_ptr->origin_y / 2 * recon_picture_ptr->stride_cr;
+            recon_picture_ptr->origin_x / 2 +
+            recon_picture_ptr->origin_y / 2 * recon_picture_ptr->stride_cr;
 
         EbPictureBufferDesc *org_rec = context_ptr->org_rec_frame;
         uint16_t *           org_ptr = (uint16_t *)org_rec->buffer_y + org_rec->origin_x +
-                            org_rec->origin_y * org_rec->stride_y;
+            org_rec->origin_y * org_rec->stride_y;
         uint16_t *org_ptr_cb = (uint16_t *)org_rec->buffer_cb + org_rec->origin_x / 2 +
-                               org_rec->origin_y / 2 * org_rec->stride_cb;
+            org_rec->origin_y / 2 * org_rec->stride_cb;
         uint16_t *org_ptr_cr = (uint16_t *)org_rec->buffer_cr + org_rec->origin_x / 2 +
-                               org_rec->origin_y / 2 * org_rec->stride_cr;
+            org_rec->origin_y / 2 * org_rec->stride_cr;
 
         for (int r = 0; r < recon_picture_ptr->height; ++r)
             svt_memcpy(org_ptr + r * org_rec->stride_y,
-                   rec_ptr + r * recon_picture_ptr->stride_y,
-                   recon_picture_ptr->width << 1);
+                       rec_ptr + r * recon_picture_ptr->stride_y,
+                       recon_picture_ptr->width << 1);
 
         for (int r = 0; r < (recon_picture_ptr->height >> ss_y); ++r) {
             svt_memcpy(org_ptr_cb + r * org_rec->stride_cb,
-                   rec_ptr_cb + r * recon_picture_ptr->stride_cb,
-                   (recon_picture_ptr->width >> ss_x) << 1);
+                       rec_ptr_cb + r * recon_picture_ptr->stride_cb,
+                       (recon_picture_ptr->width >> ss_x) << 1);
             svt_memcpy(org_ptr_cr + r * org_rec->stride_cr,
-                   rec_ptr_cr + r * recon_picture_ptr->stride_cr,
-                   (recon_picture_ptr->width >> ss_x) << 1);
+                       rec_ptr_cr + r * recon_picture_ptr->stride_cr,
+                       (recon_picture_ptr->width >> ss_x) << 1);
         }
     } else {
         if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE)
-            recon_picture_ptr =
-                ((EbReferenceObject *)
-                     pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
-                    ->reference_picture;
+            recon_picture_ptr = ((EbReferenceObject *)pcs_ptr->parent_pcs_ptr
+                                     ->reference_picture_wrapper_ptr->object_ptr)
+                                    ->reference_picture;
         else
             recon_picture_ptr = pcs_ptr->recon_picture_ptr;
 
-        uint8_t *rec_ptr =
-            &((recon_picture_ptr
-                   ->buffer_y)[recon_picture_ptr->origin_x +
-                               recon_picture_ptr->origin_y * recon_picture_ptr->stride_y]);
-        uint8_t *rec_ptr_cb =
-            &((recon_picture_ptr
-                   ->buffer_cb)[recon_picture_ptr->origin_x / 2 +
-                                recon_picture_ptr->origin_y / 2 * recon_picture_ptr->stride_cb]);
-        uint8_t *rec_ptr_cr =
-            &((recon_picture_ptr
-                   ->buffer_cr)[recon_picture_ptr->origin_x / 2 +
-                                recon_picture_ptr->origin_y / 2 * recon_picture_ptr->stride_cr]);
+        uint8_t *rec_ptr    = &((recon_picture_ptr->buffer_y)[recon_picture_ptr->origin_x +
+                                                           recon_picture_ptr->origin_y *
+                                                               recon_picture_ptr->stride_y]);
+        uint8_t *rec_ptr_cb = &((recon_picture_ptr->buffer_cb)[recon_picture_ptr->origin_x / 2 +
+                                                               recon_picture_ptr->origin_y / 2 *
+                                                                   recon_picture_ptr->stride_cb]);
+        uint8_t *rec_ptr_cr = &((recon_picture_ptr->buffer_cr)[recon_picture_ptr->origin_x / 2 +
+                                                               recon_picture_ptr->origin_y / 2 *
+                                                                   recon_picture_ptr->stride_cr]);
 
         EbPictureBufferDesc *org_rec = context_ptr->org_rec_frame;
-        uint8_t *            org_ptr =
-            &((org_rec->buffer_y)[org_rec->origin_x + org_rec->origin_y * org_rec->stride_y]);
+        uint8_t *            org_ptr = &(
+            (org_rec->buffer_y)[org_rec->origin_x + org_rec->origin_y * org_rec->stride_y]);
         uint8_t *org_ptr_cb = &((org_rec->buffer_cb)[org_rec->origin_x / 2 +
                                                      org_rec->origin_y / 2 * org_rec->stride_cb]);
         uint8_t *org_ptr_cr = &((org_rec->buffer_cr)[org_rec->origin_x / 2 +
@@ -241,154 +231,142 @@ void get_own_recon(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
 
         for (int r = 0; r < recon_picture_ptr->height; ++r)
             svt_memcpy(org_ptr + r * org_rec->stride_y,
-                   rec_ptr + r * recon_picture_ptr->stride_y,
-                   recon_picture_ptr->width);
+                       rec_ptr + r * recon_picture_ptr->stride_y,
+                       recon_picture_ptr->width);
 
         for (int r = 0; r < (recon_picture_ptr->height >> ss_y); ++r) {
             svt_memcpy(org_ptr_cb + r * org_rec->stride_cb,
-                   rec_ptr_cb + r * recon_picture_ptr->stride_cb,
-                   (recon_picture_ptr->width >> ss_x));
+                       rec_ptr_cb + r * recon_picture_ptr->stride_cb,
+                       (recon_picture_ptr->width >> ss_x));
             svt_memcpy(org_ptr_cr + r * org_rec->stride_cr,
-                   rec_ptr_cr + r * recon_picture_ptr->stride_cr,
-                   (recon_picture_ptr->width >> ss_x));
+                       rec_ptr_cr + r * recon_picture_ptr->stride_cr,
+                       (recon_picture_ptr->width >> ss_x));
         }
     }
 }
 
-void set_unscaled_input_16bit(PictureControlSet *pcs_ptr){
+void set_unscaled_input_16bit(PictureControlSet *pcs_ptr) {
     uint16_t *unscaled_input_frame16bit[MAX_MB_PLANE];
     unscaled_input_frame16bit[0] = (uint16_t *)pcs_ptr->input_frame16bit->buffer_y;
     unscaled_input_frame16bit[1] = (uint16_t *)pcs_ptr->input_frame16bit->buffer_cb;
     unscaled_input_frame16bit[2] = (uint16_t *)pcs_ptr->input_frame16bit->buffer_cr;
 
-    pack_highbd_pic(pcs_ptr->parent_pcs_ptr->enhanced_unscaled_picture_ptr, unscaled_input_frame16bit, 1, 1, EB_TRUE);
-    copy_buffer_info(pcs_ptr->parent_pcs_ptr->enhanced_unscaled_picture_ptr, pcs_ptr->input_frame16bit);
+    pack_highbd_pic(pcs_ptr->parent_pcs_ptr->enhanced_unscaled_picture_ptr,
+                    unscaled_input_frame16bit,
+                    1,
+                    1,
+                    EB_TRUE);
+    copy_buffer_info(pcs_ptr->parent_pcs_ptr->enhanced_unscaled_picture_ptr,
+                     pcs_ptr->input_frame16bit);
 }
 
 void derive_blk_pointers_enc(EbPictureBufferDesc *recon_picture_buf, int32_t plane,
-                             int32_t blk_col_px, int32_t blk_row_px,
-                             void **pp_blk_recon_buf, int32_t *recon_stride,
-                             int32_t sub_x, int32_t sub_y)
-{
+                             int32_t blk_col_px, int32_t blk_row_px, void **pp_blk_recon_buf,
+                             int32_t *recon_stride, int32_t sub_x, int32_t sub_y) {
     int32_t block_offset;
 
     if (plane == 0) {
-        block_offset = (recon_picture_buf->origin_y + blk_row_px) *
-                       recon_picture_buf->stride_y + (recon_picture_buf->origin_x +
-                                                      blk_col_px);
+        block_offset = (recon_picture_buf->origin_y + blk_row_px) * recon_picture_buf->stride_y +
+            (recon_picture_buf->origin_x + blk_col_px);
         *recon_stride = recon_picture_buf->stride_y;
-    }
-    else if (plane == 1) {
-        block_offset = ((recon_picture_buf->origin_y >> sub_y) +
-                        blk_row_px) * recon_picture_buf->stride_cb +
-                       ((recon_picture_buf->origin_x >> sub_x) + blk_col_px);
+    } else if (plane == 1) {
+        block_offset = ((recon_picture_buf->origin_y >> sub_y) + blk_row_px) *
+                recon_picture_buf->stride_cb +
+            ((recon_picture_buf->origin_x >> sub_x) + blk_col_px);
         *recon_stride = recon_picture_buf->stride_cb;
-    }
-    else {
-        block_offset = ((recon_picture_buf->origin_y >> sub_y) +
-                        blk_row_px) * recon_picture_buf->stride_cr +
-                       ((recon_picture_buf->origin_x >> sub_x) + blk_col_px);
+    } else {
+        block_offset = ((recon_picture_buf->origin_y >> sub_y) + blk_row_px) *
+                recon_picture_buf->stride_cr +
+            ((recon_picture_buf->origin_x >> sub_x) + blk_col_px);
         *recon_stride = recon_picture_buf->stride_cr;
     }
 
-    if (recon_picture_buf->bit_depth != EB_8BIT) {//16bit
+    if (recon_picture_buf->bit_depth != EB_8BIT) { //16bit
         if (plane == 0)
-            *pp_blk_recon_buf = (void *)((uint16_t*)recon_picture_buf->buffer_y
-                                         + block_offset);
+            *pp_blk_recon_buf = (void *)((uint16_t *)recon_picture_buf->buffer_y + block_offset);
         else if (plane == 1)
-            *pp_blk_recon_buf = (void *)((uint16_t*)recon_picture_buf->buffer_cb
-                                         + block_offset);
+            *pp_blk_recon_buf = (void *)((uint16_t *)recon_picture_buf->buffer_cb + block_offset);
         else
-            *pp_blk_recon_buf = (void *)((uint16_t*)recon_picture_buf->buffer_cr
-                                         + block_offset);
-    }
-    else {
+            *pp_blk_recon_buf = (void *)((uint16_t *)recon_picture_buf->buffer_cr + block_offset);
+    } else {
         if (plane == 0)
-            *pp_blk_recon_buf = (void *)((uint8_t*)recon_picture_buf->buffer_y
-                                         + block_offset);
+            *pp_blk_recon_buf = (void *)((uint8_t *)recon_picture_buf->buffer_y + block_offset);
         else if (plane == 1)
-            *pp_blk_recon_buf = (void *)((uint8_t*)recon_picture_buf->buffer_cb
-                                         + block_offset);
+            *pp_blk_recon_buf = (void *)((uint8_t *)recon_picture_buf->buffer_cb + block_offset);
         else
-            *pp_blk_recon_buf = (void *)((uint8_t*)recon_picture_buf->buffer_cr
-                                         + block_offset);
+            *pp_blk_recon_buf = (void *)((uint8_t *)recon_picture_buf->buffer_cr + block_offset);
     }
 }
 
-EbErrorType copy_recon_enc(SequenceControlSet *scs_ptr,
-                           EbPictureBufferDesc*recon_picture_src,
-                           EbPictureBufferDesc *recon_picture_dst,
-                           int num_planes,
-                           int skip_copy){
-
-    recon_picture_dst->origin_x      = recon_picture_src->origin_x;
-    recon_picture_dst->origin_y      = recon_picture_src->origin_y;
-    recon_picture_dst->width         = recon_picture_src->width;
-    recon_picture_dst->height        = recon_picture_src->height;
-    recon_picture_dst->max_width     = recon_picture_src->max_width;
-    recon_picture_dst->max_height    = recon_picture_src->max_height;
-    recon_picture_dst->bit_depth     = recon_picture_src->bit_depth;
-    recon_picture_dst->color_format  = recon_picture_src->color_format;
+EbErrorType copy_recon_enc(SequenceControlSet *scs_ptr, EbPictureBufferDesc *recon_picture_src,
+                           EbPictureBufferDesc *recon_picture_dst, int num_planes, int skip_copy) {
+    recon_picture_dst->origin_x     = recon_picture_src->origin_x;
+    recon_picture_dst->origin_y     = recon_picture_src->origin_y;
+    recon_picture_dst->width        = recon_picture_src->width;
+    recon_picture_dst->height       = recon_picture_src->height;
+    recon_picture_dst->max_width    = recon_picture_src->max_width;
+    recon_picture_dst->max_height   = recon_picture_src->max_height;
+    recon_picture_dst->bit_depth    = recon_picture_src->bit_depth;
+    recon_picture_dst->color_format = recon_picture_src->color_format;
 
     recon_picture_dst->stride_y  = recon_picture_src->stride_y;
     recon_picture_dst->stride_cb = recon_picture_src->stride_cb;
     recon_picture_dst->stride_cr = recon_picture_src->stride_cr;
 
-    recon_picture_dst->luma_size    = recon_picture_src->luma_size;
-    recon_picture_dst->chroma_size  = recon_picture_src->chroma_size;
-    recon_picture_dst->packed_flag   = recon_picture_src->packed_flag;
+    recon_picture_dst->luma_size   = recon_picture_src->luma_size;
+    recon_picture_dst->chroma_size = recon_picture_src->chroma_size;
+    recon_picture_dst->packed_flag = recon_picture_src->packed_flag;
 
-    recon_picture_dst->stride_bit_inc_y = recon_picture_src->stride_bit_inc_y;
+    recon_picture_dst->stride_bit_inc_y  = recon_picture_src->stride_bit_inc_y;
     recon_picture_dst->stride_bit_inc_cb = recon_picture_src->stride_bit_inc_cb;
     recon_picture_dst->stride_bit_inc_cr = recon_picture_src->stride_bit_inc_cr;
 
-    recon_picture_dst->buffer_enable_mask = scs_ptr->seq_header.color_config.mono_chrome ?
-                                            PICTURE_BUFFER_DESC_LUMA_MASK : PICTURE_BUFFER_DESC_FULL_MASK;
+    recon_picture_dst->buffer_enable_mask = scs_ptr->seq_header.color_config.mono_chrome
+        ? PICTURE_BUFFER_DESC_LUMA_MASK
+        : PICTURE_BUFFER_DESC_FULL_MASK;
 
     uint32_t bytesPerPixel = (recon_picture_dst->bit_depth == EB_8BIT) ? 1 : 2;
 
     // Allocate the Picture Buffers (luma & chroma)
     if (recon_picture_dst->buffer_enable_mask & PICTURE_BUFFER_DESC_Y_FLAG) {
-        EB_MALLOC_ALIGNED(recon_picture_dst->buffer_y, recon_picture_dst->luma_size * bytesPerPixel);
-        memset(recon_picture_dst->buffer_y, 0,
-               recon_picture_dst->luma_size * bytesPerPixel);
-    }
-    else
+        EB_MALLOC_ALIGNED(recon_picture_dst->buffer_y,
+                          recon_picture_dst->luma_size * bytesPerPixel);
+        memset(recon_picture_dst->buffer_y, 0, recon_picture_dst->luma_size * bytesPerPixel);
+    } else
         recon_picture_dst->buffer_y = 0;
     if (recon_picture_dst->buffer_enable_mask & PICTURE_BUFFER_DESC_Cb_FLAG) {
-        EB_MALLOC_ALIGNED(recon_picture_dst->buffer_cb, recon_picture_dst->chroma_size * bytesPerPixel);
-        memset(recon_picture_dst->buffer_cb, 0,
-               recon_picture_dst->chroma_size * bytesPerPixel);
-    }
-    else
+        EB_MALLOC_ALIGNED(recon_picture_dst->buffer_cb,
+                          recon_picture_dst->chroma_size * bytesPerPixel);
+        memset(recon_picture_dst->buffer_cb, 0, recon_picture_dst->chroma_size * bytesPerPixel);
+    } else
         recon_picture_dst->buffer_cb = 0;
     if (recon_picture_dst->buffer_enable_mask & PICTURE_BUFFER_DESC_Cr_FLAG) {
-        EB_MALLOC_ALIGNED(recon_picture_dst->buffer_cr, recon_picture_dst->chroma_size * bytesPerPixel);
-        memset(recon_picture_dst->buffer_cr, 0,
-               recon_picture_dst->chroma_size * bytesPerPixel);
-    }
-    else
+        EB_MALLOC_ALIGNED(recon_picture_dst->buffer_cr,
+                          recon_picture_dst->chroma_size * bytesPerPixel);
+        memset(recon_picture_dst->buffer_cr, 0, recon_picture_dst->chroma_size * bytesPerPixel);
+    } else
         recon_picture_dst->buffer_cr = 0;
 
     int use_highbd = (scs_ptr->static_config.encoder_bit_depth > 8);
 
-    if(!skip_copy){
+    if (!skip_copy) {
         for (int plane = 0; plane < num_planes; ++plane) {
             uint8_t *src_buf, *dst_buf;
-            int32_t src_stride, dst_stride;
+            int32_t  src_stride, dst_stride;
 
             int sub_x = plane ? scs_ptr->subsampling_x : 0;
             int sub_y = plane ? scs_ptr->subsampling_y : 0;
 
-            derive_blk_pointers_enc(recon_picture_src, plane, 0, 0, (void *)&src_buf,
-                                    &src_stride, sub_x, sub_y);
-            derive_blk_pointers_enc(recon_picture_dst, plane, 0, 0, (void *)&dst_buf,
-                                    &dst_stride, sub_x, sub_y);
+            derive_blk_pointers_enc(
+                recon_picture_src, plane, 0, 0, (void *)&src_buf, &src_stride, sub_x, sub_y);
+            derive_blk_pointers_enc(
+                recon_picture_dst, plane, 0, 0, (void *)&dst_buf, &dst_stride, sub_x, sub_y);
 
             int height = (recon_picture_src->height >> sub_y);
             for (int row = 0; row < height; ++row) {
-                svt_memcpy(dst_buf, src_buf, (recon_picture_src->width >> sub_x) *
-                                         sizeof(*src_buf) << use_highbd);
+                svt_memcpy(dst_buf,
+                           src_buf,
+                           (recon_picture_src->width >> sub_x) * sizeof(*src_buf) << use_highbd);
                 src_buf += src_stride << use_highbd;
                 dst_buf += dst_stride << use_highbd;
             }
@@ -398,42 +376,39 @@ EbErrorType copy_recon_enc(SequenceControlSet *scs_ptr,
     return EB_ErrorNone;
 }
 
-void get_recon_pic(PictureControlSet *pcs_ptr,
-                   EbPictureBufferDesc **recon_ptr,
-                   EbBool is_highbd){
-    if(!is_highbd){
+void get_recon_pic(PictureControlSet *pcs_ptr, EbPictureBufferDesc **recon_ptr, EbBool is_highbd) {
+    if (!is_highbd) {
         if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE)
-            *recon_ptr = ((EbReferenceObject*)pcs_ptr->parent_pcs_ptr->
-                    reference_picture_wrapper_ptr->object_ptr)->reference_picture;
+            *recon_ptr = ((EbReferenceObject *)
+                              pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
+                             ->reference_picture;
         else
             *recon_ptr = pcs_ptr->recon_picture_ptr;
-    }else {
+    } else {
         if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE)
-            *recon_ptr = ((EbReferenceObject *) pcs_ptr->parent_pcs_ptr->
-                    reference_picture_wrapper_ptr->object_ptr)->reference_picture16bit;
+            *recon_ptr = ((EbReferenceObject *)
+                              pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
+                             ->reference_picture16bit;
         else
             *recon_ptr = pcs_ptr->recon_picture16bit_ptr;
     }
 }
 
-void svt_av1_superres_upscale_frame(struct Av1Common *cm,
-                                    PictureControlSet *pcs_ptr,
-                                    SequenceControlSet *scs_ptr)
-{
+void svt_av1_superres_upscale_frame(struct Av1Common *cm, PictureControlSet *pcs_ptr,
+                                    SequenceControlSet *scs_ptr) {
     // Set these parameters for testing since they are not correctly populated yet
     EbPictureBufferDesc *recon_ptr;
 
-    EbBool is_16bit = (EbBool)(scs_ptr->static_config.encoder_bit_depth > EB_8BIT) || (scs_ptr->static_config.is_16bit_pipeline);
+    EbBool is_16bit = (EbBool)(scs_ptr->static_config.encoder_bit_depth > EB_8BIT) ||
+        (scs_ptr->static_config.is_16bit_pipeline);
 
-    get_recon_pic(pcs_ptr,
-                  &recon_ptr,
-                  is_16bit);
+    get_recon_pic(pcs_ptr, &recon_ptr, is_16bit);
 
-    uint16_t ss_x = scs_ptr->subsampling_x;
-    uint16_t ss_y = scs_ptr->subsampling_y;
+    uint16_t  ss_x       = scs_ptr->subsampling_x;
+    uint16_t  ss_y       = scs_ptr->subsampling_y;
     const int num_planes = scs_ptr->seq_header.color_config.mono_chrome ? 1 : MAX_MB_PLANE;
 
-    EbPictureBufferDesc recon_pic_temp;
+    EbPictureBufferDesc  recon_pic_temp;
     EbPictureBufferDesc *ps_recon_pic_temp;
     ps_recon_pic_temp = &recon_pic_temp;
 
@@ -452,25 +427,28 @@ void svt_av1_superres_upscale_frame(struct Av1Common *cm,
 
     for (int plane = 0; plane < num_planes; ++plane) {
         uint8_t *src_buf, *dst_buf;
-        int32_t src_stride, dst_stride;
+        int32_t  src_stride, dst_stride;
 
         int sub_x = plane ? ss_x : 0;
         int sub_y = plane ? ss_y : 0;
-        derive_blk_pointers_enc(src, plane, 0, 0, (void *) &src_buf, &src_stride,
-                                sub_x, sub_y);
-        derive_blk_pointers_enc(dst, plane, 0, 0, (void *) &dst_buf, &dst_stride,
-                                sub_x, sub_y);
+        derive_blk_pointers_enc(src, plane, 0, 0, (void *)&src_buf, &src_stride, sub_x, sub_y);
+        derive_blk_pointers_enc(dst, plane, 0, 0, (void *)&dst_buf, &dst_stride, sub_x, sub_y);
 
-        svt_av1_upscale_normative_rows(cm, (const uint8_t *) src_buf, src_stride, dst_buf,
-                                       dst_stride, src->height >> sub_x,
-                                       sub_x, bit_depth, is_16bit);
+        svt_av1_upscale_normative_rows(cm,
+                                       (const uint8_t *)src_buf,
+                                       src_stride,
+                                       dst_buf,
+                                       dst_stride,
+                                       src->height >> sub_x,
+                                       sub_x,
+                                       bit_depth,
+                                       is_16bit);
     }
 
     // free the memory
     EB_FREE_ALIGNED_ARRAY(ps_recon_pic_temp->buffer_y);
     EB_FREE_ALIGNED_ARRAY(ps_recon_pic_temp->buffer_cb);
     EB_FREE_ALIGNED_ARRAY(ps_recon_pic_temp->buffer_cr);
-
 }
 
 /******************************************************
@@ -496,51 +474,52 @@ void *rest_kernel(void *input_ptr) {
     uint8_t tile_cols;
     uint8_t tile_rows;
 
-
     for (;;) {
         // Get Cdef Results
         EB_GET_FULL_OBJECT(context_ptr->rest_input_fifo_ptr, &cdef_results_wrapper_ptr);
 
-        cdef_results_ptr = (CdefResults *)cdef_results_wrapper_ptr->object_ptr;
-        pcs_ptr          = (PictureControlSet *)cdef_results_ptr->pcs_wrapper_ptr->object_ptr;
-        scs_ptr          = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
+        cdef_results_ptr      = (CdefResults *)cdef_results_wrapper_ptr->object_ptr;
+        pcs_ptr               = (PictureControlSet *)cdef_results_ptr->pcs_wrapper_ptr->object_ptr;
+        scs_ptr               = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
         FrameHeader *frm_hdr  = &pcs_ptr->parent_pcs_ptr->frm_hdr;
-        EbBool     is_16bit = (EbBool)(scs_ptr->static_config.encoder_bit_depth > EB_8BIT);
-        Av1Common *cm       = pcs_ptr->parent_pcs_ptr->av1_cm;
+        EbBool       is_16bit = (EbBool)(scs_ptr->static_config.encoder_bit_depth > EB_8BIT);
+        Av1Common *  cm       = pcs_ptr->parent_pcs_ptr->av1_cm;
 
         if (scs_ptr->seq_header.enable_restoration && frm_hdr->allow_intrabc == 0) {
-
             // ------- start: Normative upscaling - super-resolution tool
-            if(!av1_superres_unscaled(&cm->frm_size)) {
-                svt_av1_superres_upscale_frame(cm,
-                                               pcs_ptr,
-                                               scs_ptr);
+            if (!av1_superres_unscaled(&cm->frm_size)) {
+                svt_av1_superres_upscale_frame(cm, pcs_ptr, scs_ptr);
 
-                if(scs_ptr->static_config.is_16bit_pipeline || is_16bit){
+                if (scs_ptr->static_config.is_16bit_pipeline || is_16bit) {
                     set_unscaled_input_16bit(pcs_ptr);
                 }
             }
             // ------- end: Normative upscaling - super-resolution tool
-            get_own_recon(scs_ptr, pcs_ptr, context_ptr,
-                scs_ptr->static_config.is_16bit_pipeline || is_16bit);
+            get_own_recon(scs_ptr,
+                          pcs_ptr,
+                          context_ptr,
+                          scs_ptr->static_config.is_16bit_pipeline || is_16bit);
             Yv12BufferConfig cpi_source;
-            pcs_ptr->parent_pcs_ptr->enhanced_unscaled_picture_ptr->is_16bit_pipeline = scs_ptr->static_config.is_16bit_pipeline;
+            pcs_ptr->parent_pcs_ptr->enhanced_unscaled_picture_ptr->is_16bit_pipeline =
+                scs_ptr->static_config.is_16bit_pipeline;
             link_eb_to_aom_buffer_desc(scs_ptr->static_config.is_16bit_pipeline || is_16bit
-                                       ? pcs_ptr->input_frame16bit
-                                       : pcs_ptr->parent_pcs_ptr->enhanced_unscaled_picture_ptr,
+                                           ? pcs_ptr->input_frame16bit
+                                           : pcs_ptr->parent_pcs_ptr->enhanced_unscaled_picture_ptr,
                                        &cpi_source,
                                        scs_ptr->max_input_pad_right,
                                        scs_ptr->max_input_pad_bottom,
                                        scs_ptr->static_config.is_16bit_pipeline || is_16bit);
 
             Yv12BufferConfig trial_frame_rst;
-            link_eb_to_aom_buffer_desc(context_ptr->trial_frame_rst, &trial_frame_rst,
+            link_eb_to_aom_buffer_desc(context_ptr->trial_frame_rst,
+                                       &trial_frame_rst,
                                        scs_ptr->max_input_pad_right,
                                        scs_ptr->max_input_pad_bottom,
                                        scs_ptr->static_config.is_16bit_pipeline || is_16bit);
 
             Yv12BufferConfig org_fts;
-            link_eb_to_aom_buffer_desc(context_ptr->org_rec_frame, &org_fts,
+            link_eb_to_aom_buffer_desc(context_ptr->org_rec_frame,
+                                       &org_fts,
                                        scs_ptr->max_input_pad_right,
                                        scs_ptr->max_input_pad_bottom,
                                        scs_ptr->static_config.is_16bit_pipeline || is_16bit);
@@ -559,7 +538,9 @@ void *rest_kernel(void *input_ptr) {
         pcs_ptr->tot_seg_searched_rest++;
         if (pcs_ptr->tot_seg_searched_rest == pcs_ptr->rest_segments_total_count) {
             if (scs_ptr->seq_header.enable_restoration && frm_hdr->allow_intrabc == 0) {
-                rest_finish_search(pcs_ptr->parent_pcs_ptr, pcs_ptr->parent_pcs_ptr->av1x, pcs_ptr->parent_pcs_ptr->av1_cm);
+                rest_finish_search(pcs_ptr->parent_pcs_ptr,
+                                   pcs_ptr->parent_pcs_ptr->av1x,
+                                   pcs_ptr->parent_pcs_ptr->av1_cm);
 
                 if (cm->rst_info[0].frame_restoration_type != RESTORE_NONE ||
                     cm->rst_info[1].frame_restoration_type != RESTORE_NONE ||
@@ -597,7 +578,9 @@ void *rest_kernel(void *input_ptr) {
             // Pad the reference picture and set ref POC
             if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE)
                 pad_ref_and_set_flags(pcs_ptr, scs_ptr);
-            if (scs_ptr->static_config.recon_enabled) { recon_output(pcs_ptr, scs_ptr); }
+            if (scs_ptr->static_config.recon_enabled) {
+                recon_output(pcs_ptr, scs_ptr);
+            }
 
             tile_cols = pcs_ptr->parent_pcs_ptr->av1_cm->tiles_info.tile_cols;
             tile_rows = pcs_ptr->parent_pcs_ptr->av1_cm->tiles_info.tile_rows;
@@ -607,8 +590,8 @@ void *rest_kernel(void *input_ptr) {
                 svt_get_empty_object(context_ptr->picture_demux_fifo_ptr,
                                      &picture_demux_results_wrapper_ptr);
 
-                picture_demux_results_rtr =
-                    (PictureDemuxResults *)picture_demux_results_wrapper_ptr->object_ptr;
+                picture_demux_results_rtr = (PictureDemuxResults *)
+                                                picture_demux_results_wrapper_ptr->object_ptr;
                 picture_demux_results_rtr->reference_picture_wrapper_ptr =
                     pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr;
                 picture_demux_results_rtr->scs_wrapper_ptr = pcs_ptr->scs_wrapper_ptr;
@@ -623,10 +606,10 @@ void *rest_kernel(void *input_ptr) {
             //Consider to add parallelism here, sending line by line, not waiting for a full frame
             int sb_size_log2 = scs_ptr->seq_header.sb_size_log2;
             for (int tile_row_idx = 0; tile_row_idx < tile_rows; tile_row_idx++) {
-                uint16_t tile_height_in_sb =
-                    (cm->tiles_info.tile_row_start_mi[tile_row_idx + 1] -
-                     cm->tiles_info.tile_row_start_mi[tile_row_idx] + (1 << sb_size_log2) - 1)
-                     >> sb_size_log2;
+                uint16_t tile_height_in_sb = (cm->tiles_info.tile_row_start_mi[tile_row_idx + 1] -
+                                              cm->tiles_info.tile_row_start_mi[tile_row_idx] +
+                                              (1 << sb_size_log2) - 1) >>
+                    sb_size_log2;
                 for (int tile_col_idx = 0; tile_col_idx < tile_cols; tile_col_idx++) {
                     const int tile_idx = tile_row_idx * tile_cols + tile_col_idx;
                     svt_get_empty_object(context_ptr->rest_output_fifo_ptr,

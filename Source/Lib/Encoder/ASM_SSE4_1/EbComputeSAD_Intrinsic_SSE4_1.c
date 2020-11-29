@@ -24,10 +24,9 @@
         y_best  = i;                   \
     }
 
-void svt_ext_sad_calculation_32x32_64x64_sse4_intrin(uint32_t *p_sad16x16, uint32_t *p_best_sad_32x32,
-                                                     uint32_t *p_best_sad_64x64,
-                                                     uint32_t *p_best_mv32x32, uint32_t *p_best_mv64x64,
-                                                     uint32_t mv, uint32_t *p_sad32x32) {
+void svt_ext_sad_calculation_32x32_64x64_sse4_intrin(
+    uint32_t *p_sad16x16, uint32_t *p_best_sad_32x32, uint32_t *p_best_sad_64x64,
+    uint32_t *p_best_mv32x32, uint32_t *p_best_mv64x64, uint32_t mv, uint32_t *p_sad32x32) {
     __m128i xmm_n1, sad32x32_greater_than_bitmask, sad32x32_less_than_or_eq_bitmask, best_sad32x32,
         best_mv_32x32, xmm_mv;
     __m128i sad_16x16_0_7_lo, sad_16x16_0_7_hi, sad_16x16_8_15_lo, sad_16x16_8_15_hi, xmm_sad64x64,
@@ -42,11 +41,11 @@ void svt_ext_sad_calculation_32x32_64x64_sse4_intrin(uint32_t *p_sad16x16, uint3
     sad_16x16_8_15_hi = _mm_unpackhi_epi32(_mm_loadu_si128((__m128i *)(p_sad16x16 + 8)),
                                            _mm_loadu_si128((__m128i *)(p_sad16x16 + 12)));
 
-    xmm_sad64x64 =
-        _mm_add_epi32(_mm_add_epi32(_mm_unpacklo_epi64(sad_16x16_0_7_lo, sad_16x16_8_15_lo),
-                                    _mm_unpackhi_epi64(sad_16x16_0_7_lo, sad_16x16_8_15_lo)),
-                      _mm_add_epi32(_mm_unpacklo_epi64(sad_16x16_0_7_hi, sad_16x16_8_15_hi),
-                                    _mm_unpackhi_epi64(sad_16x16_0_7_hi, sad_16x16_8_15_hi)));
+    xmm_sad64x64 = _mm_add_epi32(
+        _mm_add_epi32(_mm_unpacklo_epi64(sad_16x16_0_7_lo, sad_16x16_8_15_lo),
+                      _mm_unpackhi_epi64(sad_16x16_0_7_lo, sad_16x16_8_15_lo)),
+        _mm_add_epi32(_mm_unpacklo_epi64(sad_16x16_0_7_hi, sad_16x16_8_15_hi),
+                      _mm_unpackhi_epi64(sad_16x16_0_7_hi, sad_16x16_8_15_hi)));
 
     p_sad32x32[0] = _mm_extract_epi32(xmm_sad64x64, 0);
     p_sad32x32[1] = _mm_extract_epi32(xmm_sad64x64, 1);
@@ -67,16 +66,16 @@ void svt_ext_sad_calculation_32x32_64x64_sse4_intrin(uint32_t *p_sad16x16, uint3
     sad32x32_greater_than_bitmask = _mm_cmpgt_epi32(
         xmm_p_best_sad_32x32, xmm_sad64x64); // _mm_cmplt_epi32(xmm_p_best_sad_32x32, xmm_sad64x64);
 
-    xmm_n1 =
-        _mm_cmpeq_epi8(xmm_mv, xmm_mv); // anything compared to itself is equal (get 0xFFFFFFFF)
+    xmm_n1                           = _mm_cmpeq_epi8(xmm_mv,
+                            xmm_mv); // anything compared to itself is equal (get 0xFFFFFFFF)
     sad32x32_less_than_or_eq_bitmask = _mm_sub_epi32(xmm_n1, sad32x32_greater_than_bitmask);
 
-    best_sad32x32 =
-        _mm_or_si128(_mm_and_si128(xmm_p_best_sad_32x32, sad32x32_less_than_or_eq_bitmask),
-                     _mm_and_si128(xmm_sad64x64, sad32x32_greater_than_bitmask));
-    best_mv_32x32 =
-        _mm_or_si128(_mm_and_si128(xmm_p_best_mv_32x32, sad32x32_less_than_or_eq_bitmask),
-                     _mm_and_si128(xmm_mv, sad32x32_greater_than_bitmask));
+    best_sad32x32 = _mm_or_si128(
+        _mm_and_si128(xmm_p_best_sad_32x32, sad32x32_less_than_or_eq_bitmask),
+        _mm_and_si128(xmm_sad64x64, sad32x32_greater_than_bitmask));
+    best_mv_32x32 = _mm_or_si128(
+        _mm_and_si128(xmm_p_best_mv_32x32, sad32x32_less_than_or_eq_bitmask),
+        _mm_and_si128(xmm_mv, sad32x32_greater_than_bitmask));
 
     _mm_storeu_si128((__m128i *)p_best_sad_32x32, best_sad32x32);
     _mm_storeu_si128((__m128i *)p_best_mv32x32, best_mv_32x32);
@@ -218,11 +217,9 @@ void svt_sad_loop_kernel_sse4_1_intrin(
                 p_ref = ref + j;
                 for (uint32_t search_area = 0; search_area < 8; search_area++) {
                     for (uint32_t y = 0; y < block_height; y++) {
-                        tsum[search_area] +=
-                            EB_ABS_DIFF(src[y * src_stride + 4],
-                                        p_ref[y * ref_stride + 4]) +
-                            EB_ABS_DIFF(src[y * src_stride + 5],
-                                        p_ref[y * ref_stride + 5]);
+                        tsum[search_area] += EB_ABS_DIFF(src[y * src_stride + 4],
+                                                         p_ref[y * ref_stride + 4]) +
+                            EB_ABS_DIFF(src[y * src_stride + 5], p_ref[y * ref_stride + 5]);
                     }
                     p_ref += 1;
                 }
@@ -261,18 +258,16 @@ void svt_sad_loop_kernel_sse4_1_intrin(
                     p_ref += ref_stride << 1;
                 }
 
-                s3      = _mm_or_si128(s3, s8);
+                s3 = _mm_or_si128(s3, s8);
 
                 DECLARE_ALIGNED(16, uint16_t, tsum[8]);
                 memset(tsum, 0, 8 * sizeof(uint16_t));
                 p_ref = ref + j;
                 for (uint32_t search_area = 0; search_area < leftover; search_area++) {
                     for (uint32_t y = 0; y < block_height; y++) {
-                        tsum[search_area] +=
-                            EB_ABS_DIFF(src[y * src_stride + 4],
-                                        p_ref[y * ref_stride + 4]) +
-                            EB_ABS_DIFF(src[y * src_stride + 5],
-                                        p_ref[y * ref_stride + 5]);
+                        tsum[search_area] += EB_ABS_DIFF(src[y * src_stride + 4],
+                                                         p_ref[y * ref_stride + 4]) +
+                            EB_ABS_DIFF(src[y * src_stride + 5], p_ref[y * ref_stride + 5]);
                     }
                     p_ref += 1;
                 }

@@ -38,7 +38,7 @@ typedef struct Md5Context {
     unsigned int buf[4];
     unsigned int bytes[2];
     unsigned int in[16];
-}Md5Context;
+} Md5Context;
 
 void md5_init(Md5Context *context);
 void md5_update(Md5Context *context, unsigned char const *buf, unsigned int len);

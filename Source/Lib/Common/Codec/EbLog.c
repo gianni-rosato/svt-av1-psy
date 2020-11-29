@@ -21,13 +21,15 @@ static FILE*       g_log_file;
 static void svt_log_set_level(SvtLogLevel level) { g_log_level = level; }
 
 static void svt_log_set_log_file(const char* file) {
-    if (file) g_log_file = fopen(file, "w+");
+    if (file)
+        g_log_file = fopen(file, "w+");
 }
 
 void svt_log_init() {
     const char* log   = getenv("SVT_LOG");
     SvtLogLevel level = SVT_LOG_INFO;
-    if (log) level = (SvtLogLevel)atoi(log);
+    if (log)
+        level = (SvtLogLevel)atoi(log);
     svt_log_set_level(level);
 
     if (!g_log_file) {
@@ -48,11 +50,14 @@ static const char* log_level_str(SvtLogLevel level) {
 }
 
 void svt_log(SvtLogLevel level, const char* tag, const char* format, ...) {
-    if (level > g_log_level) return;
+    if (level > g_log_level)
+        return;
 
-    if (!g_log_file) g_log_file = stderr;
+    if (!g_log_file)
+        g_log_file = stderr;
 
-    if (tag) fprintf(g_log_file, "%s[%s]: ", tag, log_level_str(level));
+    if (tag)
+        fprintf(g_log_file, "%s[%s]: ", tag, log_level_str(level));
 
     va_list args;
     va_start(args, format);

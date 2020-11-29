@@ -53,7 +53,8 @@ static INLINE void obmc_variance_w4(const uint8_t *pre, const int pre_stride, co
 
         n += 4;
 
-        if (n % 4 == 0) pre += pre_step;
+        if (n % 4 == 0)
+            pre += pre_step;
     } while (n < 4 * h);
 
     *sum = xx_hsum_epi32_si32(v_sum_d);
@@ -63,16 +64,16 @@ static INLINE void obmc_variance_w4(const uint8_t *pre, const int pre_stride, co
 static INLINE void obmc_variance_w8n(const uint8_t *pre, const int pre_stride, const int32_t *wsrc,
                                      const int32_t *mask, unsigned int *const sse, int *const sum,
                                      const int w, const int h) {
-    int            n = 0, height = h;
-    __m128i        v_sum_d  = _mm_setzero_si128();
-    __m128i        v_sse_d  = _mm_setzero_si128();
-    const __m256i  v_bias_d = _mm256_set1_epi32((1 << 12) >> 1);
-    __m128i        v_d;
+    int           n = 0, height = h;
+    __m128i       v_sum_d  = _mm_setzero_si128();
+    __m128i       v_sse_d  = _mm_setzero_si128();
+    const __m256i v_bias_d = _mm256_set1_epi32((1 << 12) >> 1);
+    __m128i       v_d;
     assert(w >= 8);
     assert(IS_POWER_OF_TWO(w));
     assert(IS_POWER_OF_TWO(h));
     do {
-        int width    = w;
+        int            width    = w;
         const uint8_t *pre_temp = pre;
         do {
             const __m128i v_p_b  = _mm_loadl_epi64((const __m128i *)pre_temp);
@@ -86,9 +87,9 @@ static INLINE void obmc_variance_w8n(const uint8_t *pre, const int pre_stride, c
             const __m256i v_pm_d    = _mm256_madd_epi16(v_p0_d, v_m_d);
             const __m256i v_diff0_d = _mm256_sub_epi32(v_w_d, v_pm_d);
 
-            const __m256i v_sign_d = _mm256_srai_epi32(v_diff0_d, 31);
-            const __m256i v_tmp_d =
-                _mm256_add_epi32(_mm256_add_epi32(v_diff0_d, v_bias_d), v_sign_d);
+            const __m256i v_sign_d   = _mm256_srai_epi32(v_diff0_d, 31);
+            const __m256i v_tmp_d    = _mm256_add_epi32(_mm256_add_epi32(v_diff0_d, v_bias_d),
+                                                     v_sign_d);
             const __m256i v_rdiff0_d = _mm256_srai_epi32(v_tmp_d, 12);
             const __m128i v_rdiff_d  = _mm256_castsi256_si128(v_rdiff0_d);
             const __m128i v_rdiff1_d = _mm256_extracti128_si256(v_rdiff0_d, 1);
@@ -116,18 +117,18 @@ static INLINE void obmc_variance_w8n(const uint8_t *pre, const int pre_stride, c
 static INLINE void obmc_variance_w16n(const uint8_t *pre, const int pre_stride, const int32_t *wsrc,
                                       const int32_t *mask, unsigned int *const sse, int *const sum,
                                       const int w, const int h) {
-    int            n = 0, height = h;
-    __m256i        v_d;
-    __m128i        res0;
-    const __m256i  v_bias_d = _mm256_set1_epi32((1 << 12) >> 1);
-    __m256i        v_sum_d  = _mm256_setzero_si256();
-    __m256i        v_sse_d  = _mm256_setzero_si256();
+    int           n = 0, height = h;
+    __m256i       v_d;
+    __m128i       res0;
+    const __m256i v_bias_d = _mm256_set1_epi32((1 << 12) >> 1);
+    __m256i       v_sum_d  = _mm256_setzero_si256();
+    __m256i       v_sse_d  = _mm256_setzero_si256();
 
     assert(w >= 16);
     assert(IS_POWER_OF_TWO(w));
     assert(IS_POWER_OF_TWO(h));
     do {
-        int width = w;
+        int            width    = w;
         const uint8_t *pre_temp = pre;
         do {
             const __m128i v_p_b  = _mm_loadu_si128((__m128i *)pre_temp);
@@ -148,10 +149,10 @@ static INLINE void obmc_variance_w16n(const uint8_t *pre, const int pre_stride, 
             const __m256i v_sign0_d = _mm256_srai_epi32(v_diff0_d, 31);
             const __m256i v_sign1_d = _mm256_srai_epi32(v_diff1_d, 31);
 
-            const __m256i v_tmp0_d =
-                _mm256_add_epi32(_mm256_add_epi32(v_diff0_d, v_bias_d), v_sign0_d);
-            const __m256i v_tmp1_d =
-                _mm256_add_epi32(_mm256_add_epi32(v_diff1_d, v_bias_d), v_sign1_d);
+            const __m256i v_tmp0_d = _mm256_add_epi32(_mm256_add_epi32(v_diff0_d, v_bias_d),
+                                                      v_sign0_d);
+            const __m256i v_tmp1_d = _mm256_add_epi32(_mm256_add_epi32(v_diff1_d, v_bias_d),
+                                                      v_sign1_d);
 
             const __m256i v_rdiff0_d = _mm256_srai_epi32(v_tmp0_d, 12);
             const __m256i v_rdiff2_d = _mm256_srai_epi32(v_tmp1_d, 12);
@@ -184,7 +185,7 @@ static INLINE void obmc_variance_w16n(const uint8_t *pre, const int pre_stride, 
                                                        int            pre_stride, \
                                                        const int32_t *wsrc,       \
                                                        const int32_t *mask,       \
-                                                       unsigned int * sse) {      \
+                                                       unsigned int * sse) {       \
         int sum;                                                                  \
         if (W == 4) {                                                             \
             obmc_variance_w4(pre, pre_stride, wsrc, mask, sse, &sum, H);          \

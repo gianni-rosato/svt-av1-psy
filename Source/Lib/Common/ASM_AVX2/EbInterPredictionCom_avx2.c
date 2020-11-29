@@ -12,7 +12,6 @@
 #include "synonyms.h"
 #include "synonyms_avx2.h"
 
-
 #include "EbDefinitions.h"
 
 static INLINE __m256i calc_mask_d16_avx2(const __m256i *data_src0, const __m256i *data_src1,
@@ -61,12 +60,12 @@ static INLINE void build_compound_diffwtd_mask_d16_avx2(uint8_t *mask, const CON
             const __m128i s1_b = xx_loadl_64(src1 + src1_stride);
             const __m128i s1_c = xx_loadl_64(src1 + src1_stride * 2);
             const __m128i s1_d = xx_loadl_64(src1 + src1_stride * 3);
-            const __m256i s0 =
-                    yy_set_m128i(_mm_unpacklo_epi64(s0_c, s0_d), _mm_unpacklo_epi64(s0_a, s0_b));
-            const __m256i s1 =
-                    yy_set_m128i(_mm_unpacklo_epi64(s1_c, s1_d), _mm_unpacklo_epi64(s1_a, s1_b));
-            const __m256i m16 = calc_mask_d16_avx2(&s0, &s1, &_r, &y38, &y64, shift);
-            const __m256i m8  = _mm256_packus_epi16(m16, _mm256_setzero_si256());
+            const __m256i s0   = yy_set_m128i(_mm_unpacklo_epi64(s0_c, s0_d),
+                                            _mm_unpacklo_epi64(s0_a, s0_b));
+            const __m256i s1   = yy_set_m128i(_mm_unpacklo_epi64(s1_c, s1_d),
+                                            _mm_unpacklo_epi64(s1_a, s1_b));
+            const __m256i m16  = calc_mask_d16_avx2(&s0, &s1, &_r, &y38, &y64, shift);
+            const __m256i m8   = _mm256_packus_epi16(m16, _mm256_setzero_si256());
             xx_storeu_128(mask, _mm256_castsi256_si128(_mm256_permute4x64_epi64(m8, 0xd8)));
             src0 += src0_stride << 2;
             src1 += src1_stride << 2;
@@ -78,7 +77,7 @@ static INLINE void build_compound_diffwtd_mask_d16_avx2(uint8_t *mask, const CON
             const __m256i s0_a_b  = yy_loadu2_128(src0 + src0_stride, src0);
             const __m256i s0_c_d  = yy_loadu2_128(src0 + src0_stride * 3, src0 + src0_stride * 2);
             const __m256i s1_a_b  = yy_loadu2_128(src1 + src1_stride, src1);
-            const __m256i s1_c_d    = yy_loadu2_128(src1 + src1_stride * 3, src1 + src1_stride * 2);
+            const __m256i s1_c_d  = yy_loadu2_128(src1 + src1_stride * 3, src1 + src1_stride * 2);
             const __m256i m16_a_b = calc_mask_d16_avx2(&s0_a_b, &s1_a_b, &_r, &y38, &y64, shift);
             const __m256i m16_c_d = calc_mask_d16_avx2(&s0_c_d, &s1_c_d, &_r, &y38, &y64, shift);
             const __m256i m8      = _mm256_packus_epi16(m16_a_b, m16_c_d);
@@ -183,10 +182,9 @@ static INLINE void build_compound_diffwtd_mask_d16_avx2(uint8_t *mask, const CON
     }
 }
 
-
 static INLINE void build_compound_diffwtd_mask_d16_inv_avx2(
-        uint8_t *mask, const CONV_BUF_TYPE *src0, int src0_stride, const CONV_BUF_TYPE *src1,
-        int src1_stride, int h, int w, int shift) {
+    uint8_t *mask, const CONV_BUF_TYPE *src0, int src0_stride, const CONV_BUF_TYPE *src1,
+    int src1_stride, int h, int w, int shift) {
     const int     mask_base = 38;
     const __m256i _r        = _mm256_set1_epi16((1 << shift) >> 1);
     const __m256i y38       = _mm256_set1_epi16(mask_base);
@@ -202,12 +200,12 @@ static INLINE void build_compound_diffwtd_mask_d16_inv_avx2(
             const __m128i s1_b = xx_loadl_64(src1 + src1_stride);
             const __m128i s1_c = xx_loadl_64(src1 + src1_stride * 2);
             const __m128i s1_d = xx_loadl_64(src1 + src1_stride * 3);
-            const __m256i s0 =
-                    yy_set_m128i(_mm_unpacklo_epi64(s0_c, s0_d), _mm_unpacklo_epi64(s0_a, s0_b));
-            const __m256i s1 =
-                    yy_set_m128i(_mm_unpacklo_epi64(s1_c, s1_d), _mm_unpacklo_epi64(s1_a, s1_b));
-            const __m256i m16 = calc_mask_d16_inv_avx2(&s0, &s1, &_r, &y38, &y64, shift);
-            const __m256i m8  = _mm256_packus_epi16(m16, _mm256_setzero_si256());
+            const __m256i s0   = yy_set_m128i(_mm_unpacklo_epi64(s0_c, s0_d),
+                                            _mm_unpacklo_epi64(s0_a, s0_b));
+            const __m256i s1   = yy_set_m128i(_mm_unpacklo_epi64(s1_c, s1_d),
+                                            _mm_unpacklo_epi64(s1_a, s1_b));
+            const __m256i m16  = calc_mask_d16_inv_avx2(&s0, &s1, &_r, &y38, &y64, shift);
+            const __m256i m8   = _mm256_packus_epi16(m16, _mm256_setzero_si256());
             xx_storeu_128(mask, _mm256_castsi256_si128(_mm256_permute4x64_epi64(m8, 0xd8)));
             src0 += src0_stride << 2;
             src1 += src1_stride << 2;
@@ -216,14 +214,15 @@ static INLINE void build_compound_diffwtd_mask_d16_inv_avx2(
         } while (i < h);
     } else if (w == 8) {
         do {
-            const __m256i s0_a_b = yy_loadu2_128(src0 + src0_stride, src0);
-            const __m256i s0_c_d = yy_loadu2_128(src0 + src0_stride * 3, src0 + src0_stride * 2);
-            const __m256i s1_a_b = yy_loadu2_128(src1 + src1_stride, src1);
-            const __m256i s1_c_d   = yy_loadu2_128(src1 + src1_stride * 3, src1 + src1_stride * 2);
-            const __m256i m16_a_b =
-                    calc_mask_d16_inv_avx2(&s0_a_b, &s1_a_b, &_r, &y38, &y64, shift);
-            const __m256i m16_c_d = calc_mask_d16_inv_avx2(&s0_c_d, &s1_c_d, &_r, &y38, &y64, shift);
-            const __m256i m8      = _mm256_packus_epi16(m16_a_b, m16_c_d);
+            const __m256i s0_a_b  = yy_loadu2_128(src0 + src0_stride, src0);
+            const __m256i s0_c_d  = yy_loadu2_128(src0 + src0_stride * 3, src0 + src0_stride * 2);
+            const __m256i s1_a_b  = yy_loadu2_128(src1 + src1_stride, src1);
+            const __m256i s1_c_d  = yy_loadu2_128(src1 + src1_stride * 3, src1 + src1_stride * 2);
+            const __m256i m16_a_b = calc_mask_d16_inv_avx2(
+                &s0_a_b, &s1_a_b, &_r, &y38, &y64, shift);
+            const __m256i m16_c_d = calc_mask_d16_inv_avx2(
+                &s0_c_d, &s1_c_d, &_r, &y38, &y64, shift);
+            const __m256i m8 = _mm256_packus_epi16(m16_a_b, m16_c_d);
             yy_storeu_256(mask, _mm256_permute4x64_epi64(m8, 0xd8));
             src0 += src0_stride << 2;
             src1 += src1_stride << 2;
@@ -339,9 +338,9 @@ void svt_av1_build_compound_diffwtd_mask_d16_avx2(uint8_t *mask, DIFFWTD_MASK_TY
 
     if (mask_type == DIFFWTD_38) {
         build_compound_diffwtd_mask_d16_avx2(
-                mask, src0, src0_stride, src1, src1_stride, h, w, shift);
+            mask, src0, src0_stride, src1, src1_stride, h, w, shift);
     } else {
         build_compound_diffwtd_mask_d16_inv_avx2(
-                mask, src0, src0_stride, src1, src1_stride, h, w, shift);
+            mask, src0, src0_stride, src1, src1_stride, h, w, shift);
     }
 }

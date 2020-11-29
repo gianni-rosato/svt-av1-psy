@@ -286,7 +286,8 @@ static INLINE void aom_write_cdf(AomWriter *w, int32_t symb, const AomCdfProb *c
 
 static INLINE void aom_write_symbol(AomWriter *w, int32_t symb, AomCdfProb *cdf, int32_t nsymbs) {
     aom_write_cdf(w, symb, cdf, nsymbs);
-    if (w->allow_update_cdf) update_cdf(cdf, symb, nsymbs);
+    if (w->allow_update_cdf)
+        update_cdf(cdf, symb, nsymbs);
 }
 
 /********************************************************************************************************************************/

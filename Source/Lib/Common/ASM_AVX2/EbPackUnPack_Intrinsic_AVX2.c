@@ -115,7 +115,7 @@ void svt_enc_un_pack8_bit_data_avx2_intrin(uint16_t *in_16bit_buffer, uint32_t i
         return;
     default:
         if (!(width & 63)) {
-            uint32_t in_stride_diff64 = in_stride - width;
+            uint32_t in_stride_diff64  = in_stride - width;
             uint32_t out_stride_diff64 = out_stride - width;
             for (uint32_t x = 0; x < height; x += 1) {
                 for (uint32_t y = 0; y < width; y += 64) {
@@ -147,7 +147,7 @@ void svt_enc_un_pack8_bit_data_avx2_intrin(uint16_t *in_16bit_buffer, uint32_t i
                 out_8bit_buffer += out_stride_diff64;
             }
         } else if (!(width & 31)) {
-            uint32_t in_stride_diff = (2 * in_stride) - width;
+            uint32_t in_stride_diff  = (2 * in_stride) - width;
             uint32_t out_stride_diff = (2 * out_stride) - width;
             for (uint32_t x = 0; x < height; x += 2) {
                 for (uint32_t y = 0; y < width; y += 32) {
@@ -186,7 +186,7 @@ void svt_enc_un_pack8_bit_data_avx2_intrin(uint16_t *in_16bit_buffer, uint32_t i
                 out_8bit_buffer += out_stride_diff;
             }
         } else if (!(width & 15)) {
-            uint32_t in_stride_diff = (2 * in_stride) - width;
+            uint32_t in_stride_diff  = (2 * in_stride) - width;
             uint32_t out_stride_diff = (2 * out_stride) - width;
             for (uint32_t x = 0; x < height; x += 2) {
                 for (uint32_t y = 0; y < width; y += 16) {
@@ -213,7 +213,7 @@ void svt_enc_un_pack8_bit_data_avx2_intrin(uint16_t *in_16bit_buffer, uint32_t i
                 out_8bit_buffer += out_stride_diff;
             }
         } else if (!(width & 7)) {
-            uint32_t in_stride_diff = (2 * in_stride) - width;
+            uint32_t in_stride_diff  = (2 * in_stride) - width;
             uint32_t out_stride_diff = (2 * out_stride) - width;
             for (uint32_t x = 0; x < height; x += 2) {
                 for (uint32_t y = 0; y < width; y += 8) {
@@ -241,9 +241,9 @@ void svt_enc_un_pack8_bit_data_avx2_intrin(uint16_t *in_16bit_buffer, uint32_t i
                 out_8bit_buffer += out_stride_diff;
             }
         } else {
-            uint32_t in_stride_diff = (2 * in_stride) - width;
+            uint32_t in_stride_diff  = (2 * in_stride) - width;
             uint32_t out_stride_diff = (2 * out_stride) - width;
-            uint32_t width_down4 = width & (~0x3);
+            uint32_t width_down4     = width & (~0x3);
             for (uint32_t x = 0; x < height; x += 2) {
                 uint32_t y = 0;
                 for (; y < width_down4; y += 4) {

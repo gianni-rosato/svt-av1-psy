@@ -94,7 +94,6 @@ typedef struct LrCtxt {
 
 } LrCtxt;
 
-
 void decode_super_block(DecModCtxt *dec_mod_ctxt, uint32_t mi_row, uint32_t mi_col,
                         SBInfo *sb_info);
 

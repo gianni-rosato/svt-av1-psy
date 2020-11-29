@@ -31,7 +31,7 @@ extern "C" {
 typedef uint16_t AomCdfProb;
 typedef struct {
     AomCdfProb *color_map_cdf;
-    uint8_t token;
+    uint8_t     token;
 } TOKENEXTRA;
 
 #define CDF_SIZE(x) ((x) + 1)
@@ -845,7 +845,8 @@ void av1_setup_frame_contexts(struct AV1Common *cm);
 void av1_setup_past_independence(struct AV1Common *cm);
 
 static INLINE int32_t av1_ceil_log2(int32_t n) {
-    if (n < 2) return 0;
+    if (n < 2)
+        return 0;
     int32_t i = 1, p = 2;
     while (p < n) {
         i++;
@@ -859,7 +860,6 @@ static AomCdfProb cdf_element_prob(const AomCdfProb *const cdf, size_t element) 
     return (element > 0 ? cdf[element - 1] : CDF_PROB_TOP) - cdf[element];
 }
 
-
 static INLINE void partition_gather_horz_alike(AomCdfProb *out, const AomCdfProb *const in,
                                                BlockSize bsize) {
     out[0] = CDF_PROB_TOP;
@@ -868,7 +868,8 @@ static INLINE void partition_gather_horz_alike(AomCdfProb *out, const AomCdfProb
     out[0] -= cdf_element_prob(in, PARTITION_HORZ_A);
     out[0] -= cdf_element_prob(in, PARTITION_HORZ_B);
     out[0] -= cdf_element_prob(in, PARTITION_VERT_A);
-    if (bsize != BLOCK_128X128) out[0] -= cdf_element_prob(in, PARTITION_HORZ_4);
+    if (bsize != BLOCK_128X128)
+        out[0] -= cdf_element_prob(in, PARTITION_HORZ_4);
     out[0] = AOM_ICDF(out[0]);
     out[1] = AOM_ICDF(CDF_PROB_TOP);
     out[2] = 0;
@@ -882,7 +883,8 @@ static INLINE void partition_gather_vert_alike(AomCdfProb *out, const AomCdfProb
     out[0] -= cdf_element_prob(in, PARTITION_HORZ_A);
     out[0] -= cdf_element_prob(in, PARTITION_VERT_A);
     out[0] -= cdf_element_prob(in, PARTITION_VERT_B);
-    if (bsize != BLOCK_128X128) out[0] -= cdf_element_prob(in, PARTITION_VERT_4);
+    if (bsize != BLOCK_128X128)
+        out[0] -= cdf_element_prob(in, PARTITION_VERT_4);
     out[0] = AOM_ICDF(out[0]);
     out[1] = AOM_ICDF(CDF_PROB_TOP);
     out[2] = 0;

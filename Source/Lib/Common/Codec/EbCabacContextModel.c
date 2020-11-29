@@ -852,46 +852,70 @@ static const AomCdfProb default_switchable_interp_cdf[SWITCHABLE_FILTER_CONTEXTS
                             {AOM_CDF3(14969, 21398)}};
 
 void init_mode_probs(FRAME_CONTEXT *fc) {
-    svt_memcpy(fc->palette_y_size_cdf, default_palette_y_size_cdf, sizeof(default_palette_y_size_cdf));
-    svt_memcpy(fc->palette_uv_size_cdf, default_palette_uv_size_cdf, sizeof(default_palette_uv_size_cdf));
-    svt_memcpy(fc->palette_y_color_index_cdf, default_palette_y_color_index_cdf, sizeof(default_palette_y_color_index_cdf));
-    svt_memcpy(fc->palette_uv_color_index_cdf, default_palette_uv_color_index_cdf, sizeof(default_palette_uv_color_index_cdf));
+    svt_memcpy(
+        fc->palette_y_size_cdf, default_palette_y_size_cdf, sizeof(default_palette_y_size_cdf));
+    svt_memcpy(
+        fc->palette_uv_size_cdf, default_palette_uv_size_cdf, sizeof(default_palette_uv_size_cdf));
+    svt_memcpy(fc->palette_y_color_index_cdf,
+               default_palette_y_color_index_cdf,
+               sizeof(default_palette_y_color_index_cdf));
+    svt_memcpy(fc->palette_uv_color_index_cdf,
+               default_palette_uv_color_index_cdf,
+               sizeof(default_palette_uv_color_index_cdf));
     svt_memcpy(fc->kf_y_cdf, default_kf_y_mode_cdf, sizeof(default_kf_y_mode_cdf));
     svt_memcpy(fc->angle_delta_cdf, default_angle_delta_cdf, sizeof(default_angle_delta_cdf));
     svt_memcpy(fc->comp_inter_cdf, default_comp_inter_cdf, sizeof(default_comp_inter_cdf));
     svt_memcpy(fc->comp_ref_type_cdf, default_comp_ref_type_cdf, sizeof(default_comp_ref_type_cdf));
     svt_memcpy(fc->uni_comp_ref_cdf, default_uni_comp_ref_cdf, sizeof(default_uni_comp_ref_cdf));
-    svt_memcpy(fc->palette_y_mode_cdf, default_palette_y_mode_cdf, sizeof(default_palette_y_mode_cdf));
-    svt_memcpy(fc->palette_uv_mode_cdf, default_palette_uv_mode_cdf, sizeof(default_palette_uv_mode_cdf));
+    svt_memcpy(
+        fc->palette_y_mode_cdf, default_palette_y_mode_cdf, sizeof(default_palette_y_mode_cdf));
+    svt_memcpy(
+        fc->palette_uv_mode_cdf, default_palette_uv_mode_cdf, sizeof(default_palette_uv_mode_cdf));
     svt_memcpy(fc->comp_ref_cdf, default_comp_ref_cdf, sizeof(default_comp_ref_cdf));
     svt_memcpy(fc->comp_bwdref_cdf, default_comp_bwdref_cdf, sizeof(default_comp_bwdref_cdf));
     svt_memcpy(fc->single_ref_cdf, default_single_ref_cdf, sizeof(default_single_ref_cdf));
-    svt_memcpy(fc->txfm_partition_cdf, default_txfm_partition_cdf, sizeof(default_txfm_partition_cdf));
-    svt_memcpy(fc->compound_index_cdf, default_compound_idx_cdfs, sizeof(default_compound_idx_cdfs));
-    svt_memcpy(fc->comp_group_idx_cdf, default_comp_group_idx_cdfs, sizeof(default_comp_group_idx_cdfs));
+    svt_memcpy(
+        fc->txfm_partition_cdf, default_txfm_partition_cdf, sizeof(default_txfm_partition_cdf));
+    svt_memcpy(
+        fc->compound_index_cdf, default_compound_idx_cdfs, sizeof(default_compound_idx_cdfs));
+    svt_memcpy(
+        fc->comp_group_idx_cdf, default_comp_group_idx_cdfs, sizeof(default_comp_group_idx_cdfs));
     svt_memcpy(fc->newmv_cdf, default_newmv_cdf, sizeof(default_newmv_cdf));
     svt_memcpy(fc->zeromv_cdf, default_zeromv_cdf, sizeof(default_zeromv_cdf));
     svt_memcpy(fc->refmv_cdf, default_refmv_cdf, sizeof(default_refmv_cdf));
     svt_memcpy(fc->drl_cdf, default_drl_cdf, sizeof(default_drl_cdf));
     svt_memcpy(fc->motion_mode_cdf, default_motion_mode_cdf, sizeof(default_motion_mode_cdf));
     svt_memcpy(fc->obmc_cdf, default_obmc_cdf, sizeof(default_obmc_cdf));
-    svt_memcpy(fc->inter_compound_mode_cdf, default_inter_compound_mode_cdf, sizeof(default_inter_compound_mode_cdf));
+    svt_memcpy(fc->inter_compound_mode_cdf,
+               default_inter_compound_mode_cdf,
+               sizeof(default_inter_compound_mode_cdf));
     svt_memcpy(fc->compound_type_cdf, default_compound_type_cdf, sizeof(default_compound_type_cdf));
     svt_memcpy(fc->wedge_idx_cdf, default_wedge_idx_cdf, sizeof(default_wedge_idx_cdf));
     svt_memcpy(fc->interintra_cdf, default_interintra_cdf, sizeof(default_interintra_cdf));
-    svt_memcpy(fc->wedge_interintra_cdf, default_wedge_interintra_cdf, sizeof(default_wedge_interintra_cdf));
-    svt_memcpy(fc->interintra_mode_cdf, default_interintra_mode_cdf, sizeof(default_interintra_mode_cdf));
+    svt_memcpy(fc->wedge_interintra_cdf,
+               default_wedge_interintra_cdf,
+               sizeof(default_wedge_interintra_cdf));
+    svt_memcpy(
+        fc->interintra_mode_cdf, default_interintra_mode_cdf, sizeof(default_interintra_mode_cdf));
     svt_memcpy(fc->seg.pred_cdf, default_segment_pred_cdf, sizeof(default_segment_pred_cdf));
     svt_memcpy(fc->seg.tree_cdf, default_seg_tree_cdf, sizeof(default_seg_tree_cdf));
     svt_memcpy(fc->filter_intra_cdfs, default_filter_intra_cdfs, sizeof(default_filter_intra_cdfs));
-    svt_memcpy(fc->filter_intra_mode_cdf, default_filter_intra_mode_cdf, sizeof(default_filter_intra_mode_cdf));
-    svt_memcpy(fc->switchable_restore_cdf, default_switchable_restore_cdf, sizeof(default_switchable_restore_cdf));
-    svt_memcpy(fc->wiener_restore_cdf, default_wiener_restore_cdf, sizeof(default_wiener_restore_cdf));
-    svt_memcpy(fc->sgrproj_restore_cdf, default_sgrproj_restore_cdf, sizeof(default_sgrproj_restore_cdf));
+    svt_memcpy(fc->filter_intra_mode_cdf,
+               default_filter_intra_mode_cdf,
+               sizeof(default_filter_intra_mode_cdf));
+    svt_memcpy(fc->switchable_restore_cdf,
+               default_switchable_restore_cdf,
+               sizeof(default_switchable_restore_cdf));
+    svt_memcpy(
+        fc->wiener_restore_cdf, default_wiener_restore_cdf, sizeof(default_wiener_restore_cdf));
+    svt_memcpy(
+        fc->sgrproj_restore_cdf, default_sgrproj_restore_cdf, sizeof(default_sgrproj_restore_cdf));
     svt_memcpy(fc->y_mode_cdf, default_if_y_mode_cdf, sizeof(default_if_y_mode_cdf));
     svt_memcpy(fc->uv_mode_cdf, default_uv_mode_cdf, sizeof(default_uv_mode_cdf));
 
-    svt_memcpy(fc->switchable_interp_cdf, default_switchable_interp_cdf, sizeof(default_switchable_interp_cdf));
+    svt_memcpy(fc->switchable_interp_cdf,
+               default_switchable_interp_cdf,
+               sizeof(default_switchable_interp_cdf));
 
     svt_memcpy(fc->partition_cdf, default_partition_cdf, sizeof(default_partition_cdf));
     svt_memcpy(fc->intra_ext_tx_cdf, default_intra_ext_tx_cdf, sizeof(default_intra_ext_tx_cdf));
@@ -900,11 +924,14 @@ void init_mode_probs(FRAME_CONTEXT *fc) {
     svt_memcpy(fc->skip_cdfs, default_skip_cdfs, sizeof(default_skip_cdfs));
     svt_memcpy(fc->intra_inter_cdf, default_intra_inter_cdf, sizeof(default_intra_inter_cdf));
     for (uint32_t i = 0; i < SPATIAL_PREDICTION_PROBS; i++)
-        svt_memcpy(fc->seg.spatial_pred_seg_cdf[i], default_spatial_pred_seg_tree_cdf[i], sizeof(default_spatial_pred_seg_tree_cdf[i]));
+        svt_memcpy(fc->seg.spatial_pred_seg_cdf[i],
+                   default_spatial_pred_seg_tree_cdf[i],
+                   sizeof(default_spatial_pred_seg_tree_cdf[i]));
     svt_memcpy(fc->tx_size_cdf, default_tx_size_cdf, sizeof(default_tx_size_cdf));
     svt_memcpy(fc->delta_q_cdf, default_delta_q_cdf, sizeof(default_delta_q_cdf));
     svt_memcpy(fc->delta_lf_cdf, default_delta_lf_cdf, sizeof(default_delta_lf_cdf));
-    svt_memcpy(fc->delta_lf_multi_cdf, default_delta_lf_multi_cdf, sizeof(default_delta_lf_multi_cdf));
+    svt_memcpy(
+        fc->delta_lf_multi_cdf, default_delta_lf_multi_cdf, sizeof(default_delta_lf_multi_cdf));
     svt_memcpy(fc->cfl_sign_cdf, default_cfl_sign_cdf, sizeof(default_cfl_sign_cdf));
     svt_memcpy(fc->cfl_alpha_cdf, default_cfl_alpha_cdf, sizeof(default_cfl_alpha_cdf));
     svt_memcpy(fc->intrabc_cdf, default_intrabc_cdf, sizeof(default_intrabc_cdf));
@@ -3028,9 +3055,12 @@ static const AomCdfProb av1_default_coeff_base_eob_multi_cdfs[TOKEN_CDF_Q_CTXS][
 /********************************************************************************************************************************/
 // entropy.c
 static int32_t get_q_ctx(int32_t q) {
-    if (q <= 20) return 0;
-    if (q <= 60) return 1;
-    if (q <= 120) return 2;
+    if (q <= 20)
+        return 0;
+    if (q <= 60)
+        return 1;
+    if (q <= 120)
+        return 2;
     return 3;
 }
 
@@ -3040,37 +3070,86 @@ void svt_av1_default_coef_probs(FRAME_CONTEXT *fc, int32_t base_qindex) {
 #if CONFIG_ENTROPY_STATS
     cm->coef_cdf_category = index;
 #endif
-    if (svt_memcpy != NULL)
-    {
-        svt_memcpy(fc->txb_skip_cdf, av1_default_txb_skip_cdfs[index], sizeof(av1_default_txb_skip_cdfs[index]));
-        svt_memcpy(fc->eob_extra_cdf, av1_default_eob_extra_cdfs[index], sizeof(av1_default_eob_extra_cdfs[index]));
-        svt_memcpy(fc->dc_sign_cdf, av1_default_dc_sign_cdfs[index], sizeof(av1_default_dc_sign_cdfs[index]));
-        svt_memcpy(fc->coeff_br_cdf, av1_default_coeff_lps_multi_cdfs[index], sizeof(av1_default_coeff_lps_multi_cdfs[index]));
-        svt_memcpy(fc->coeff_base_cdf, av1_default_coeff_base_multi_cdfs[index], sizeof(av1_default_coeff_base_multi_cdfs[index]));
-        svt_memcpy(fc->coeff_base_eob_cdf, av1_default_coeff_base_eob_multi_cdfs[index], sizeof(av1_default_coeff_base_eob_multi_cdfs[index]));
-        svt_memcpy(fc->eob_flag_cdf16, av1_default_eob_multi16_cdfs[index], sizeof(av1_default_eob_multi16_cdfs[index]));
-        svt_memcpy(fc->eob_flag_cdf32, av1_default_eob_multi32_cdfs[index], sizeof(av1_default_eob_multi32_cdfs[index]));
-        svt_memcpy(fc->eob_flag_cdf64, av1_default_eob_multi64_cdfs[index], sizeof(av1_default_eob_multi64_cdfs[index]));
-        svt_memcpy(fc->eob_flag_cdf128, av1_default_eob_multi128_cdfs[index], sizeof(av1_default_eob_multi128_cdfs[index]));
-        svt_memcpy(fc->eob_flag_cdf256, av1_default_eob_multi256_cdfs[index], sizeof(av1_default_eob_multi256_cdfs[index]));
-        svt_memcpy(fc->eob_flag_cdf512, av1_default_eob_multi512_cdfs[index], sizeof(av1_default_eob_multi512_cdfs[index]));
-        svt_memcpy(fc->eob_flag_cdf1024, av1_default_eob_multi1024_cdfs[index], sizeof(av1_default_eob_multi1024_cdfs[index]));
-    }
-    else
-    {
-        svt_memcpy_c(fc->txb_skip_cdf, av1_default_txb_skip_cdfs[index], sizeof(av1_default_txb_skip_cdfs[index]));
-        svt_memcpy_c(fc->eob_extra_cdf, av1_default_eob_extra_cdfs[index], sizeof(av1_default_eob_extra_cdfs[index]));
-        svt_memcpy_c(fc->dc_sign_cdf, av1_default_dc_sign_cdfs[index], sizeof(av1_default_dc_sign_cdfs[index]));
-        svt_memcpy_c(fc->coeff_br_cdf, av1_default_coeff_lps_multi_cdfs[index], sizeof(av1_default_coeff_lps_multi_cdfs[index]));
-        svt_memcpy_c(fc->coeff_base_cdf, av1_default_coeff_base_multi_cdfs[index], sizeof(av1_default_coeff_base_multi_cdfs[index]));
-        svt_memcpy_c(fc->coeff_base_eob_cdf, av1_default_coeff_base_eob_multi_cdfs[index], sizeof(av1_default_coeff_base_eob_multi_cdfs[index]));
-        svt_memcpy_c(fc->eob_flag_cdf16, av1_default_eob_multi16_cdfs[index], sizeof(av1_default_eob_multi16_cdfs[index]));
-        svt_memcpy_c(fc->eob_flag_cdf32, av1_default_eob_multi32_cdfs[index], sizeof(av1_default_eob_multi32_cdfs[index]));
-        svt_memcpy_c(fc->eob_flag_cdf64, av1_default_eob_multi64_cdfs[index], sizeof(av1_default_eob_multi64_cdfs[index]));
-        svt_memcpy_c(fc->eob_flag_cdf128, av1_default_eob_multi128_cdfs[index], sizeof(av1_default_eob_multi128_cdfs[index]));
-        svt_memcpy_c(fc->eob_flag_cdf256, av1_default_eob_multi256_cdfs[index], sizeof(av1_default_eob_multi256_cdfs[index]));
-        svt_memcpy_c(fc->eob_flag_cdf512, av1_default_eob_multi512_cdfs[index], sizeof(av1_default_eob_multi512_cdfs[index]));
-        svt_memcpy_c(fc->eob_flag_cdf1024, av1_default_eob_multi1024_cdfs[index], sizeof(av1_default_eob_multi1024_cdfs[index]));
+    if (svt_memcpy != NULL) {
+        svt_memcpy(fc->txb_skip_cdf,
+                   av1_default_txb_skip_cdfs[index],
+                   sizeof(av1_default_txb_skip_cdfs[index]));
+        svt_memcpy(fc->eob_extra_cdf,
+                   av1_default_eob_extra_cdfs[index],
+                   sizeof(av1_default_eob_extra_cdfs[index]));
+        svt_memcpy(fc->dc_sign_cdf,
+                   av1_default_dc_sign_cdfs[index],
+                   sizeof(av1_default_dc_sign_cdfs[index]));
+        svt_memcpy(fc->coeff_br_cdf,
+                   av1_default_coeff_lps_multi_cdfs[index],
+                   sizeof(av1_default_coeff_lps_multi_cdfs[index]));
+        svt_memcpy(fc->coeff_base_cdf,
+                   av1_default_coeff_base_multi_cdfs[index],
+                   sizeof(av1_default_coeff_base_multi_cdfs[index]));
+        svt_memcpy(fc->coeff_base_eob_cdf,
+                   av1_default_coeff_base_eob_multi_cdfs[index],
+                   sizeof(av1_default_coeff_base_eob_multi_cdfs[index]));
+        svt_memcpy(fc->eob_flag_cdf16,
+                   av1_default_eob_multi16_cdfs[index],
+                   sizeof(av1_default_eob_multi16_cdfs[index]));
+        svt_memcpy(fc->eob_flag_cdf32,
+                   av1_default_eob_multi32_cdfs[index],
+                   sizeof(av1_default_eob_multi32_cdfs[index]));
+        svt_memcpy(fc->eob_flag_cdf64,
+                   av1_default_eob_multi64_cdfs[index],
+                   sizeof(av1_default_eob_multi64_cdfs[index]));
+        svt_memcpy(fc->eob_flag_cdf128,
+                   av1_default_eob_multi128_cdfs[index],
+                   sizeof(av1_default_eob_multi128_cdfs[index]));
+        svt_memcpy(fc->eob_flag_cdf256,
+                   av1_default_eob_multi256_cdfs[index],
+                   sizeof(av1_default_eob_multi256_cdfs[index]));
+        svt_memcpy(fc->eob_flag_cdf512,
+                   av1_default_eob_multi512_cdfs[index],
+                   sizeof(av1_default_eob_multi512_cdfs[index]));
+        svt_memcpy(fc->eob_flag_cdf1024,
+                   av1_default_eob_multi1024_cdfs[index],
+                   sizeof(av1_default_eob_multi1024_cdfs[index]));
+    } else {
+        svt_memcpy_c(fc->txb_skip_cdf,
+                     av1_default_txb_skip_cdfs[index],
+                     sizeof(av1_default_txb_skip_cdfs[index]));
+        svt_memcpy_c(fc->eob_extra_cdf,
+                     av1_default_eob_extra_cdfs[index],
+                     sizeof(av1_default_eob_extra_cdfs[index]));
+        svt_memcpy_c(fc->dc_sign_cdf,
+                     av1_default_dc_sign_cdfs[index],
+                     sizeof(av1_default_dc_sign_cdfs[index]));
+        svt_memcpy_c(fc->coeff_br_cdf,
+                     av1_default_coeff_lps_multi_cdfs[index],
+                     sizeof(av1_default_coeff_lps_multi_cdfs[index]));
+        svt_memcpy_c(fc->coeff_base_cdf,
+                     av1_default_coeff_base_multi_cdfs[index],
+                     sizeof(av1_default_coeff_base_multi_cdfs[index]));
+        svt_memcpy_c(fc->coeff_base_eob_cdf,
+                     av1_default_coeff_base_eob_multi_cdfs[index],
+                     sizeof(av1_default_coeff_base_eob_multi_cdfs[index]));
+        svt_memcpy_c(fc->eob_flag_cdf16,
+                     av1_default_eob_multi16_cdfs[index],
+                     sizeof(av1_default_eob_multi16_cdfs[index]));
+        svt_memcpy_c(fc->eob_flag_cdf32,
+                     av1_default_eob_multi32_cdfs[index],
+                     sizeof(av1_default_eob_multi32_cdfs[index]));
+        svt_memcpy_c(fc->eob_flag_cdf64,
+                     av1_default_eob_multi64_cdfs[index],
+                     sizeof(av1_default_eob_multi64_cdfs[index]));
+        svt_memcpy_c(fc->eob_flag_cdf128,
+                     av1_default_eob_multi128_cdfs[index],
+                     sizeof(av1_default_eob_multi128_cdfs[index]));
+        svt_memcpy_c(fc->eob_flag_cdf256,
+                     av1_default_eob_multi256_cdfs[index],
+                     sizeof(av1_default_eob_multi256_cdfs[index]));
+        svt_memcpy_c(fc->eob_flag_cdf512,
+                     av1_default_eob_multi512_cdfs[index],
+                     sizeof(av1_default_eob_multi512_cdfs[index]));
+        svt_memcpy_c(fc->eob_flag_cdf1024,
+                     av1_default_eob_multi1024_cdfs[index],
+                     sizeof(av1_default_eob_multi1024_cdfs[index]));
     }
 }
 
@@ -3199,7 +3278,7 @@ void svt_av1_reset_cdf_symbol_counters(FRAME_CONTEXT *fc) {
 #define MAX_COLOR_CONTEXT_HASH 8
 // Negative values are invalid
 int palette_color_index_context_lookup[MAX_COLOR_CONTEXT_HASH + 1] = {
-        -1, -1, 0, -1, -1, 4, 3, 2, 1};
+    -1, -1, 0, -1, -1, 4, 3, 2, 1};
 
 #define NUM_PALETTE_NEIGHBORS 3 // left, top-left and top.
 int av1_get_palette_color_index_context_optimized(const uint8_t *color_map, int stride, int r,
@@ -3209,12 +3288,15 @@ int av1_get_palette_color_index_context_optimized(const uint8_t *color_map, int 
 
     uint8_t scores[PALETTE_MAX_SIZE]              = {0};
     uint8_t inverse_color_order[PALETTE_MAX_SIZE] = {0, 1, 2, 3, 4, 5, 6, 7};
-    uint8_t color_order[PALETTE_MAX_SIZE] = {0, 1, 2, 3, 4, 5, 6, 7};
-    int8_t i;
+    uint8_t color_order[PALETTE_MAX_SIZE]         = {0, 1, 2, 3, 4, 5, 6, 7};
+    int8_t  i;
 
-    if (c - 1 >= 0) scores[color_map[r * stride + c - 1]] = 2;
-    if (c - 1 >= 0 && r - 1 >= 0) scores[color_map[(r - 1) * stride + c - 1]] += 1;
-    if (r - 1 >= 0) scores[color_map[(r - 1) * stride + c]] += 2;
+    if (c - 1 >= 0)
+        scores[color_map[r * stride + c - 1]] = 2;
+    if (c - 1 >= 0 && r - 1 >= 0)
+        scores[color_map[(r - 1) * stride + c - 1]] += 1;
+    if (r - 1 >= 0)
+        scores[color_map[(r - 1) * stride + c]] += 2;
 
     // Get the top NUM_PALETTE_NEIGHBORS scores (sorted from large to small).
     for (i = 0; i < NUM_PALETTE_NEIGHBORS; ++i) {
@@ -3239,7 +3321,8 @@ int av1_get_palette_color_index_context_optimized(const uint8_t *color_map, int 
         }
     }
 
-    if (color_idx != NULL) *color_idx = inverse_color_order[color_map[r * stride + c]];
+    if (color_idx != NULL)
+        *color_idx = inverse_color_order[color_map[r * stride + c]];
 
     int color_index_ctx_hash = scores[0] + scores[1] * 2 + scores[2] * 2;
 

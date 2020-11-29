@@ -17,7 +17,6 @@
 extern "C" {
 #endif
 
-
 uint32_t svt_compute8x_m_sad_avx2_intrin(
     const uint8_t *src, // input parameter, source samples Ptr
     uint32_t       src_stride, // input parameter, source stride
@@ -73,7 +72,6 @@ uint32_t svt_compute128x_m_sad_avx2_intrin(
     uint32_t       ref_stride, // input parameter, reference stride
     uint32_t       height, // input parameter, block height (M)
     uint32_t       width); // input parameter, block width (N)
-
 
 #ifdef __cplusplus
 }

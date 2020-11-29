@@ -65,9 +65,9 @@ void svt_full_distortion_kernel32_bits_c(int32_t *coeff, uint32_t coeff_stride,
                                          uint32_t area_width, uint32_t area_height);
 
 uint64_t svt_full_distortion_kernel16_bits_c(uint8_t *input, uint32_t input_offset,
-                                             uint32_t input_stride, uint8_t *pred, int32_t pred_offset,
-                                             uint32_t pred_stride, uint32_t area_width,
-                                             uint32_t area_height);
+                                             uint32_t input_stride, uint8_t *pred,
+                                             int32_t pred_offset, uint32_t pred_stride,
+                                             uint32_t area_width, uint32_t area_height);
 
 void svt_residual_kernel16bit_c(uint16_t *input, uint32_t input_stride, uint16_t *pred,
                                 uint32_t pred_stride, int16_t *residual, uint32_t residual_stride,

@@ -39,10 +39,10 @@ EbErrorType enc_dec_segments_ctor(EncDecSegments *segments_ptr, uint32_t segment
 
     segments_ptr->dctor = enc_dec_segments_dctor;
 
-    segments_ptr->segment_max_row_count  = segment_row_count;
-    segments_ptr->segment_max_band_count = segment_row_count + segment_col_count;
-    segments_ptr->segment_max_total_count =
-        segments_ptr->segment_max_row_count * segments_ptr->segment_max_band_count;
+    segments_ptr->segment_max_row_count   = segment_row_count;
+    segments_ptr->segment_max_band_count  = segment_row_count + segment_col_count;
+    segments_ptr->segment_max_total_count = segments_ptr->segment_max_row_count *
+        segments_ptr->segment_max_band_count;
 
     // Start Arrays
     EB_MALLOC_ARRAY(segments_ptr->x_start_array, segments_ptr->segment_max_total_count);
@@ -74,15 +74,15 @@ void enc_dec_segments_init(EncDecSegments *segments_ptr, uint32_t segColCount, u
     segColCount = (segColCount < pic_width_sb) ? segColCount : pic_width_sb;
     segRowCount = (segRowCount < pic_height_sb) ? segRowCount : pic_height_sb;
     segRowCount = (segRowCount < segments_ptr->segment_max_row_count)
-                      ? segRowCount
-                      : segments_ptr->segment_max_row_count;
+        ? segRowCount
+        : segments_ptr->segment_max_row_count;
 
     segments_ptr->sb_row_count       = pic_height_sb;
     segments_ptr->sb_band_count      = BAND_TOTAL_COUNT(pic_height_sb, pic_width_sb);
     segments_ptr->segment_row_count  = segRowCount;
     segments_ptr->segment_band_count = BAND_TOTAL_COUNT(segRowCount, segColCount);
-    segments_ptr->segment_ttl_count =
-        segments_ptr->segment_row_count * segments_ptr->segment_band_count;
+    segments_ptr->segment_ttl_count  = segments_ptr->segment_row_count *
+        segments_ptr->segment_band_count;
 
     //EB_MEMSET(segments_ptr->inputMap.inputDependencyMap, 0, sizeof(uint16_t) * segments_ptr->segment_ttl_count);
     EB_MEMSET(
@@ -104,12 +104,12 @@ void enc_dec_segments_init(EncDecSegments *segments_ptr, uint32_t segColCount, u
             ++segments_ptr->valid_sb_count_array[segment_index];
             segments_ptr->x_start_array[segment_index] =
                 (segments_ptr->x_start_array[segment_index] == (uint16_t)-1)
-                    ? (uint16_t)x
-                    : segments_ptr->x_start_array[segment_index];
+                ? (uint16_t)x
+                : segments_ptr->x_start_array[segment_index];
             segments_ptr->y_start_array[segment_index] =
                 (segments_ptr->y_start_array[segment_index] == (uint16_t)-1)
-                    ? (uint16_t)y
-                    : segments_ptr->y_start_array[segment_index];
+                ? (uint16_t)y
+                : segments_ptr->y_start_array[segment_index];
         }
     }
 
@@ -119,20 +119,20 @@ void enc_dec_segments_init(EncDecSegments *segments_ptr, uint32_t segColCount, u
                       (segments_ptr->segment_row_count - 1)) /
             segments_ptr->segment_row_count;
         unsigned y_last = ((((row_index + 1) * segments_ptr->sb_row_count) +
-                           (segments_ptr->segment_row_count - 1)) /
-                          segments_ptr->segment_row_count) -
+                            (segments_ptr->segment_row_count - 1)) /
+                           segments_ptr->segment_row_count) -
             1;
         unsigned band_index = BAND_INDEX(
             0, y, segments_ptr->segment_band_count, segments_ptr->sb_band_count);
 
-        segments_ptr->row_array[row_index].starting_seg_index =
-            (uint16_t)SEGMENT_INDEX(row_index, band_index, segments_ptr->segment_band_count);
-        band_index = BAND_INDEX(pic_width_sb - 1,
+        segments_ptr->row_array[row_index].starting_seg_index = (uint16_t)SEGMENT_INDEX(
+            row_index, band_index, segments_ptr->segment_band_count);
+        band_index                                          = BAND_INDEX(pic_width_sb - 1,
                                 y_last,
                                 segments_ptr->segment_band_count,
                                 segments_ptr->sb_band_count);
-        segments_ptr->row_array[row_index].ending_seg_index =
-            (uint16_t)SEGMENT_INDEX(row_index, band_index, segments_ptr->segment_band_count);
+        segments_ptr->row_array[row_index].ending_seg_index = (uint16_t)SEGMENT_INDEX(
+            row_index, band_index, segments_ptr->segment_band_count);
         segments_ptr->row_array[row_index].current_seg_index =
             segments_ptr->row_array[row_index].starting_seg_index;
     }

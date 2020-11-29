@@ -51,8 +51,10 @@ static INLINE void build_obmc_inter_pred_above(
     int above_tmp_stride[MAX_MB_PLANE], uint8_t *curr_blk_recon_buf[MAX_MB_PLANE],
     int32_t curr_recon_stride[MAX_MB_PLANE], const int num_planes) {
     EbPictureBufferDesc *recon_picture_buf = dec_handle->cur_pic_buf[0]->ps_pic_buf;
-    const int            is_hbd = ((recon_picture_buf->bit_depth != EB_8BIT) ||
-        recon_picture_buf->is_16bit_pipeline) ? 1 : 0;
+    const int            is_hbd            = ((recon_picture_buf->bit_depth != EB_8BIT) ||
+                        recon_picture_buf->is_16bit_pipeline)
+                              ? 1
+                              : 0;
     const int overlap = AOMMIN(block_size_high[bsize], block_size_high[BLOCK_64X64]) >> 1;
     uint8_t * above_buf;
     int32_t   above_stride;
@@ -65,12 +67,13 @@ static INLINE void build_obmc_inter_pred_above(
         const int bw    = (above_mi_width * MI_SIZE) >> sub_x;
         const int bh    = overlap >> sub_y;
 
-        if (svt_av1_skip_u4x4_pred_in_obmc(bsize, 0, sub_x, sub_y)) continue;
+        if (svt_av1_skip_u4x4_pred_in_obmc(bsize, 0, sub_x, sub_y))
+            continue;
 
         if (is_hbd) {
-            above_buf =
-                (uint8_t *)((uint16_t *)above_tmp_buf[plane] + ((rel_mi_col * MI_SIZE) >> sub_x) +
-                            0 /*No y-offset for obmc above pred*/);
+            above_buf        = (uint8_t *)((uint16_t *)above_tmp_buf[plane] +
+                                    ((rel_mi_col * MI_SIZE) >> sub_x) +
+                                    0 /*No y-offset for obmc above pred*/);
             above_stride     = above_tmp_stride[plane];
             tmp_recon_buf    = (uint8_t *)((uint16_t *)curr_blk_recon_buf[plane] +
                                         ((rel_mi_col * MI_SIZE) >> sub_x) +
@@ -79,10 +82,10 @@ static INLINE void build_obmc_inter_pred_above(
 
         } else {
             above_buf = above_tmp_buf[plane] + ((rel_mi_col * MI_SIZE) >> sub_x) +
-                        0 /*No y-offset for obmc above pred*/;
+                0 /*No y-offset for obmc above pred*/;
             above_stride  = above_tmp_stride[plane];
             tmp_recon_buf = curr_blk_recon_buf[plane] + ((rel_mi_col * MI_SIZE) >> sub_x) +
-                            0 /*No y-offset for obmc above pred*/;
+                0 /*No y-offset for obmc above pred*/;
             tmp_recon_stride = curr_recon_stride[plane];
         }
 
@@ -119,8 +122,10 @@ static INLINE void build_obmc_inter_pred_left(
     uint8_t *curr_blk_recon_buf[MAX_MB_PLANE], int32_t curr_recon_stride[MAX_MB_PLANE],
     const int num_planes) {
     EbPictureBufferDesc *recon_picture_buf = dec_handle->cur_pic_buf[0]->ps_pic_buf;
-    const int            is_hbd = ((recon_picture_buf->bit_depth != EB_8BIT) ||
-        recon_picture_buf->is_16bit_pipeline) ? 1 : 0;
+    const int            is_hbd            = ((recon_picture_buf->bit_depth != EB_8BIT) ||
+                        recon_picture_buf->is_16bit_pipeline)
+                              ? 1
+                              : 0;
     const int overlap = AOMMIN(block_size_wide[bsize], block_size_wide[BLOCK_64X64]) >> 1;
 
     uint8_t *left_buf;
@@ -133,7 +138,8 @@ static INLINE void build_obmc_inter_pred_left(
         const int bw    = overlap >> sub_x;
         const int bh    = (left_mi_height * MI_SIZE) >> sub_y;
 
-        if (svt_av1_skip_u4x4_pred_in_obmc(bsize, 1, sub_x, sub_y)) continue;
+        if (svt_av1_skip_u4x4_pred_in_obmc(bsize, 1, sub_x, sub_y))
+            continue;
 
         if (is_hbd) {
             left_buf    = (uint8_t *)((uint16_t *)left_tmp_buf[plane] +
@@ -141,20 +147,20 @@ static INLINE void build_obmc_inter_pred_left(
                                    0 /*No x offst for left obmc pred*/);
             left_stride = left_tmp_stride[plane];
 
-            tmp_recon_buf =
-                (uint8_t *)((uint16_t *)curr_blk_recon_buf[plane] +
-                            ((MI_SIZE * rel_mi_row * curr_recon_stride[plane]) >> sub_y) +
-                            0 /*No y-offset for obmc above pred*/);
+            tmp_recon_buf    = (uint8_t *)((uint16_t *)curr_blk_recon_buf[plane] +
+                                        ((MI_SIZE * rel_mi_row * curr_recon_stride[plane]) >>
+                                         sub_y) +
+                                        0 /*No y-offset for obmc above pred*/);
             tmp_recon_stride = curr_recon_stride[plane];
         } else {
             left_buf = left_tmp_buf[plane] +
-                       ((MI_SIZE * rel_mi_row * left_tmp_stride[plane]) >> sub_y) +
-                       0 /*No x offst for left obmc pred*/;
+                ((MI_SIZE * rel_mi_row * left_tmp_stride[plane]) >> sub_y) +
+                0 /*No x offst for left obmc pred*/;
             left_stride = left_tmp_stride[plane];
 
             tmp_recon_buf = curr_blk_recon_buf[plane] +
-                            ((MI_SIZE * rel_mi_row * curr_recon_stride[plane]) >> sub_y) +
-                            0 /*No y-offset for obmc above pred*/;
+                ((MI_SIZE * rel_mi_row * curr_recon_stride[plane]) >> sub_y) +
+                0 /*No y-offset for obmc above pred*/;
             tmp_recon_stride = curr_recon_stride[plane];
         }
 
@@ -225,20 +231,20 @@ static INLINE void dec_build_prediction_by_above_pred(
         uint8_t sub_x = (plane > 0) ? backup_pi->subsampling_x : 0;
         uint8_t sub_y = (plane > 0) ? backup_pi->subsampling_y : 0;
 
-        if ((recon_picture_buf->bit_depth != EB_8BIT) ||
-            recon_picture_buf->is_16bit_pipeline) {
-            tmp_recon_buf =
-                (uint8_t *)((uint16_t *)tmp_buf[plane] + ((rel_mi_col * MI_SIZE) >> sub_x) +
-                            0 /*No y-offset for obmc above pred*/);
+        if ((recon_picture_buf->bit_depth != EB_8BIT) || recon_picture_buf->is_16bit_pipeline) {
+            tmp_recon_buf = (uint8_t *)((uint16_t *)tmp_buf[plane] +
+                                        ((rel_mi_col * MI_SIZE) >> sub_x) +
+                                        0 /*No y-offset for obmc above pred*/);
 
             tmp_recon_stride = tmp_stride[plane];
         } else {
             tmp_recon_buf = tmp_buf[plane] + ((rel_mi_col * MI_SIZE) >> sub_x) +
-                            0 /*No y-offset for obmc above pred*/;
+                0 /*No y-offset for obmc above pred*/;
             tmp_recon_stride = tmp_stride[plane];
         }
 
-        if (svt_av1_skip_u4x4_pred_in_obmc(bsize, 0, sub_x, sub_y)) continue;
+        if (svt_av1_skip_u4x4_pred_in_obmc(bsize, 0, sub_x, sub_y))
+            continue;
         svtav1_predict_inter_block_plane(dec_mod_ctx,
                                          dec_handle,
                                          backup_pi,
@@ -259,7 +265,8 @@ static void dec_build_prediction_by_above_preds(DecModCtxt *dec_mod_ctx, EbDecHa
                                                 PartitionInfo *pi, int mi_row, int mi_col,
                                                 uint8_t *above_dst_buf[MAX_MB_PLANE],
                                                 int      above_dst_stride[MAX_MB_PLANE]) {
-    if (!pi->up_available) return;
+    if (!pi->up_available)
+        return;
     PartitionInfo backup_pi = *pi;
 
     // Adjust mb_to_bottom_edge to have the correct value for the OBMC
@@ -389,8 +396,7 @@ static INLINE void dec_build_prediction_by_left_pred(
         int32_t sub_x = (plane > 0) ? backup_pi->subsampling_x : 0;
         int32_t sub_y = (plane > 0) ? backup_pi->subsampling_y : 0;
 
-        if ((recon_picture_buf->bit_depth != EB_8BIT) ||
-            recon_picture_buf->is_16bit_pipeline) {
+        if ((recon_picture_buf->bit_depth != EB_8BIT) || recon_picture_buf->is_16bit_pipeline) {
             tmp_recon_buf = (uint8_t *)((uint16_t *)tmp_buf[plane] +
                                         ((MI_SIZE * rel_mi_row * tmp_stride[plane]) >> sub_y) +
                                         0 /*No x offst for left obmc pred*/);
@@ -398,11 +404,12 @@ static INLINE void dec_build_prediction_by_left_pred(
             tmp_recon_stride = tmp_stride[plane];
         } else {
             tmp_recon_buf = tmp_buf[plane] + ((MI_SIZE * rel_mi_row * tmp_stride[plane]) >> sub_y) +
-                            0 /*No x offst for left obmc pred*/;
+                0 /*No x offst for left obmc pred*/;
             tmp_recon_stride = tmp_stride[plane];
         }
 
-        if (svt_av1_skip_u4x4_pred_in_obmc(bsize, 1, sub_x, sub_y)) continue;
+        if (svt_av1_skip_u4x4_pred_in_obmc(bsize, 1, sub_x, sub_y))
+            continue;
         // dec_build_inter_predictors(ctxt->cm, pi, j, &backup_mbmi, 1, bw, bh, mi_x,
         //                            mi_y);
         svtav1_predict_inter_block_plane(dec_mod_ctx,
@@ -425,7 +432,8 @@ static void dec_build_prediction_by_left_preds(DecModCtxt *dec_mod_ctx, EbDecHan
                                                PartitionInfo *pi, int mi_row, int mi_col,
                                                uint8_t *left_dst_buf[MAX_MB_PLANE],
                                                int      left_dst_stride[MAX_MB_PLANE]) {
-    if (!pi->left_available) return;
+    if (!pi->left_available)
+        return;
     PartitionInfo backup_pi = *pi;
 
     // Adjust mb_to_right_edge to have the correct value for the OBMC

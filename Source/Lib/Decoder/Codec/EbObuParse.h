@@ -74,16 +74,16 @@ enum {
     SEQ_LEVEL_MAX = 31
 } UENUM1BYTE(AV1_LEVEL);
 
-int get_qindex(SegmentationParams *seg_params, int segment_id, int base_q_idx);
-void svt_setup_motion_field(EbDecHandle *dec_handle, DecThreadCtxt *thread_ctxt);
+int         get_qindex(SegmentationParams *seg_params, int segment_id, int base_q_idx);
+void        svt_setup_motion_field(EbDecHandle *dec_handle, DecThreadCtxt *thread_ctxt);
 EbErrorType decode_multiple_obu(EbDecHandle *dec_handle_ptr, uint8_t **data, size_t data_size,
                                 uint32_t is_annexb);
 
 static INLINE int allow_intrabc(const EbDecHandle *dec_handle) {
     return (dec_handle->frame_header.frame_type == KEY_FRAME ||
             dec_handle->frame_header.frame_type == INTRA_ONLY_FRAME) &&
-           dec_handle->seq_header.seq_force_screen_content_tools &&
-           dec_handle->frame_header.allow_intrabc;
+        dec_handle->seq_header.seq_force_screen_content_tools &&
+        dec_handle->frame_header.allow_intrabc;
 }
 
 #endif // EbDecObuParser_h

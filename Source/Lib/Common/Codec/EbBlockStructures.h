@@ -43,29 +43,27 @@ typedef struct mv32 {
 
 // The motion vector in units of full pixel
 typedef struct fullpel_mv {
-  int16_t row;
-  int16_t col;
+    int16_t row;
+    int16_t col;
 } FULLPEL_MV;
-static const MV kZeroMv = { 0, 0 };
-static const FULLPEL_MV kZeroFullMv = { 0, 0 };
-static INLINE int is_zero_mv(const MV *mv) {
-    return *((const uint32_t *)mv) == 0;
-}
+static const MV         kZeroMv     = {0, 0};
+static const FULLPEL_MV kZeroFullMv = {0, 0};
+static INLINE int       is_zero_mv(const MV *mv) { return *((const uint32_t *)mv) == 0; }
 
 static INLINE int is_equal_mv(const MV *a, const MV *b) {
     return *((const uint32_t *)a) == *((const uint32_t *)b);
 }
 
 static AOM_INLINE FULLPEL_MV get_fullmv_from_mv(const MV *subpel_mv) {
-  const FULLPEL_MV full_mv = { (int16_t)GET_MV_RAWPEL(subpel_mv->row),
-                               (int16_t)GET_MV_RAWPEL(subpel_mv->col) };
-  return full_mv;
+    const FULLPEL_MV full_mv = {(int16_t)GET_MV_RAWPEL(subpel_mv->row),
+                                (int16_t)GET_MV_RAWPEL(subpel_mv->col)};
+    return full_mv;
 }
 
 static AOM_INLINE MV get_mv_from_fullmv(const FULLPEL_MV *full_mv) {
-  const MV subpel_mv = { (int16_t)GET_MV_SUBPEL(full_mv->row),
-                         (int16_t)GET_MV_SUBPEL(full_mv->col) };
-  return subpel_mv;
+    const MV subpel_mv = {(int16_t)GET_MV_SUBPEL(full_mv->row),
+                          (int16_t)GET_MV_SUBPEL(full_mv->col)};
+    return subpel_mv;
 }
 
 typedef struct OisMbResults {
@@ -113,7 +111,6 @@ typedef struct InterIntraModeParams {
     /*!< Specifies the sign of the wedge blend. */
     // int interintra_wedge_sign; Always 0
 } InterIntraModeParams;
-
 
 typedef struct BlockModeInfo {
     // Common for both INTER and INTRA blocks
@@ -199,7 +196,6 @@ typedef struct BlockModeInfo {
 #endif
 } BlockModeInfo;
 
-
 typedef struct MbModeInfo {
 #if CONFIG_RD_DEBUG
     RD_STATS rd_stats;
@@ -215,7 +211,6 @@ typedef struct MbModeInfo {
     BlockModeInfo   block_mi;
     PaletteModeInfo palette_mode_info;
 } MbModeInfo;
-
 
 void svt_av1_tile_set_col(TileInfo *tile, const TilesInfo *tiles_info, int32_t mi_cols, int col);
 void svt_av1_tile_set_row(TileInfo *tile, TilesInfo *tiles_info, int32_t mi_rows, int row);

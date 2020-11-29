@@ -635,11 +635,9 @@ static INLINE void sad_loop_kernel_8_avx2(const uint8_t *const src, const uint32
 static INLINE void sad_loop_kernel_8_oneline_avx2(const uint8_t *const src,
                                                   const uint8_t *const ref, __m256i *const sum) {
     const __m256i ss0 = _mm256_insertf128_si256(
-        _mm256_castsi128_si256(_mm_loadl_epi64((__m128i *)src)), _mm_setzero_si128(),
-        1);
+        _mm256_castsi128_si256(_mm_loadl_epi64((__m128i *)src)), _mm_setzero_si128(), 1);
     const __m256i rr0 = _mm256_insertf128_si256(
-        _mm256_castsi128_si256(_mm_loadu_si128((__m128i *)ref)), _mm_setzero_si128(),
-        1);
+        _mm256_castsi128_si256(_mm_loadu_si128((__m128i *)ref)), _mm_setzero_si128(), 1);
     *sum = _mm256_adds_epu16(*sum, _mm256_mpsadbw_epu8(rr0, ss0, (0 << 3) | 0)); // 000 000
     *sum = _mm256_adds_epu16(*sum, _mm256_mpsadbw_epu8(rr0, ss0, (5 << 3) | 5)); // 101 101
 }
@@ -854,7 +852,7 @@ SIMD_INLINE void sad_loop_kernel_16_2sum_avx512(const uint8_t *const src, const 
 * Compute one line
 *******************************************************************************/
 SIMD_INLINE void sad_loop_kernel_16_2sum_oneline_avx512(const uint8_t *const src,
-                                                         const uint8_t *const ref, __m512i sum[2]) {
+                                                        const uint8_t *const ref, __m512i sum[2]) {
     const __m128i s0  = _mm_loadu_si128((__m128i *)src);
     const __m256i s01 = _mm256_insertf128_si256(_mm256_castsi128_si256(s0), _mm_setzero_si128(), 1);
     const __m512i s   = _mm512_castsi256_si512(s01);
@@ -995,7 +993,7 @@ static INLINE void sad_loop_kernel_12_2sum_avx2(const uint8_t *const src, const 
 * Compute one line
 *******************************************************************************/
 static INLINE void sad_loop_kernel_12_2sum_oneline_avx2(const uint8_t *const src,
-                                                   const uint8_t *const ref, __m256i sums[2]) {
+                                                        const uint8_t *const ref, __m256i sums[2]) {
     const __m256i ss0 = _mm256_insertf128_si256(
         _mm256_castsi128_si256(_mm_loadu_si128((__m128i *)src)), _mm_setzero_si128(), 1);
     const __m256i rr0 = _mm256_insertf128_si256(
@@ -1480,7 +1478,9 @@ static INLINE void update_leftover_256_pel(const __m256i sum256, const int16_t s
     const __m128i sum256_lo = _mm256_castsi256_si128(sum256);
     const __m128i sum256_hi = _mm256_extracti128_si256(sum256, 1);
     __m128i       sad       = _mm_adds_epu16(sum256_lo, sum256_hi);
-    if ((x + 8) > search_area_width) { sad = _mm_or_si128(sad, mask); }
+    if ((x + 8) > search_area_width) {
+        sad = _mm_or_si128(sad, mask);
+    }
     update_best(sad, x, y, best_s, best_x, best_y);
 }
 
@@ -1489,7 +1489,9 @@ static INLINE void update_leftover_512_pel(const __m256i sum256, const int16_t s
                                            uint32_t *const best_s, int32_t *const best_x,
                                            int32_t *const best_y) {
     __m256i sum = sum256;
-    if ((x + 8) > search_area_width) { sum = _mm256_or_si256(sum256, mask); }
+    if ((x + 8) > search_area_width) {
+        sum = _mm256_or_si256(sum256, mask);
+    }
     const __m128i  sum0 = _mm256_castsi256_si128(sum);
     const __m128i  sum1 = _mm256_extracti128_si256(sum, 1);
     __m128i        minpos;
@@ -1691,7 +1693,8 @@ SIMD_INLINE void update_leftover_2048_pel(const __m256i sums256[4], const int16_
 * Returns "search_size" of SAD's for all height in 5th and 6th col
 *******************************************************************************/
 static INLINE __m128i complement_4_to_6(uint8_t *ref, uint32_t ref_stride, uint8_t *src,
-                                        uint32_t src_stride, uint32_t height,uint32_t search_size) {
+                                        uint32_t src_stride, uint32_t height,
+                                        uint32_t search_size) {
     __m128i sum;
     DECLARE_ALIGNED(16, uint16_t, tsum[8]);
     memset(tsum, 0, 8 * sizeof(uint16_t));
@@ -1727,7 +1730,7 @@ void sad_loop_kernel_generalized_avx512(
     int32_t        x_best = *x_search_center, y_best = *y_search_center;
     uint32_t       leftover = search_area_width & 15;
 
-    __m128i leftover_mask = _mm_set1_epi32(-1);
+    __m128i leftover_mask    = _mm_set1_epi32(-1);
     __m128i leftover_mask32b = _mm_set1_epi32(-1);
     if (leftover) {
         for (k = 0; k < (uint32_t)(search_area_width & 7); k++)
@@ -1760,7 +1763,8 @@ void sad_loop_kernel_generalized_avx512(
                 const uint8_t *temp_ref   = p_ref;
                 if (width_calc >= 32) {
                     sad_loop_kernel_32_4sum_avx512(temp_src, temp_ref, &sums512[0]);
-                    sad_loop_kernel_32_4sum_avx512(temp_src + src_stride, temp_ref + ref_stride, &sums512[4]);
+                    sad_loop_kernel_32_4sum_avx512(
+                        temp_src + src_stride, temp_ref + ref_stride, &sums512[4]);
 
                     width_calc -= 32;
                     temp_src += 32;
@@ -1776,7 +1780,8 @@ void sad_loop_kernel_generalized_avx512(
                 }
                 if (width_calc >= 8) {
                     sad_loop_kernel_8_avx2(temp_src, src_stride, temp_ref, ref_stride, &sum256_1);
-                    sad_loop_kernel_8_avx2(temp_src, src_stride, temp_ref + 8, ref_stride, &sum256_2);
+                    sad_loop_kernel_8_avx2(
+                        temp_src, src_stride, temp_ref + 8, ref_stride, &sum256_2);
 
                     width_calc -= 8;
                     temp_src += 8;
@@ -1784,7 +1789,8 @@ void sad_loop_kernel_generalized_avx512(
                 }
                 if (width_calc >= 4) {
                     sad_loop_kernel_4_avx2(temp_src, src_stride, temp_ref, ref_stride, &sum256_3);
-                    sad_loop_kernel_4_avx2(temp_src, src_stride, temp_ref + 8, ref_stride, &sum256_4);
+                    sad_loop_kernel_4_avx2(
+                        temp_src, src_stride, temp_ref + 8, ref_stride, &sum256_4);
 
                     width_calc -= 4;
                     temp_src += 4;
@@ -1833,8 +1839,8 @@ void sad_loop_kernel_generalized_avx512(
                     temp_ref += 8;
                 }
                 if (width_calc >= 4) {
-                    sad_loop_kernel_4_oneline_avx2(temp_src,temp_ref, &sum256_3);
-                    sad_loop_kernel_4_oneline_avx2(temp_src,temp_ref + 8, &sum256_4);
+                    sad_loop_kernel_4_oneline_avx2(temp_src, temp_ref, &sum256_3);
+                    sad_loop_kernel_4_oneline_avx2(temp_src, temp_ref + 8, &sum256_4);
 
                     width_calc -= 4;
                     temp_src += 4;
@@ -1874,11 +1880,11 @@ void sad_loop_kernel_generalized_avx512(
             const __m512i sum512_0123 = _mm512_adds_epu16(sum512_01, sum512_23);
             const __m512i sum512_4567 = _mm512_adds_epu16(sum512_45, sum512_67);
             sum512                    = _mm512_adds_epu16(sum512_0123, sum512_4567);
-            const __m256i  sum_lo     = _mm512_castsi512_si256(sum512);
-            const __m256i  sum_hi     = _mm512_extracti64x4_epi64(sum512, 1);
-            const __m256i  sad        = _mm256_adds_epu16(sum_lo, sum_hi);
-            __m128i  sad_lo     = _mm256_castsi256_si128(sad);
-            __m128i  sad_hi     = _mm256_extracti128_si256(sad, 1);
+            const __m256i sum_lo      = _mm512_castsi512_si256(sum512);
+            const __m256i sum_hi      = _mm512_extracti64x4_epi64(sum512, 1);
+            const __m256i sad         = _mm256_adds_epu16(sum_lo, sum_hi);
+            __m128i       sad_lo      = _mm256_castsi256_si128(sad);
+            __m128i       sad_hi      = _mm256_extracti128_si256(sad, 1);
             if (leftover && (j + 16) >= search_area_width) {
                 if (leftover < 8) {
                     sad_lo = _mm_or_si128(sad_lo, leftover_mask);
@@ -1887,10 +1893,10 @@ void sad_loop_kernel_generalized_avx512(
                     sad_hi = _mm_or_si128(sad_hi, leftover_mask);
                 }
             }
-            const __m128i  minpos_lo  = _mm_minpos_epu16(sad_lo);
-            const __m128i  minpos_hi  = _mm_minpos_epu16(sad_hi);
-            const uint32_t min0       = _mm_extract_epi16(minpos_lo, 0);
-            const uint32_t min1       = _mm_extract_epi16(minpos_hi, 0);
+            const __m128i  minpos_lo = _mm_minpos_epu16(sad_lo);
+            const __m128i  minpos_hi = _mm_minpos_epu16(sad_hi);
+            const uint32_t min0      = _mm_extract_epi16(minpos_lo, 0);
+            const uint32_t min1      = _mm_extract_epi16(minpos_hi, 0);
             uint32_t       minmin, delta;
             __m128i        minpos;
 
@@ -2096,9 +2102,9 @@ void svt_sad_loop_kernel_avx512_intrin(
                     h -= 2;
                 };
 
-                    if (h) {
-                            sad_loop_kernel_8_oneline_avx2(s, r, &sum256);
-                    };
+                if (h) {
+                    sad_loop_kernel_8_oneline_avx2(s, r, &sum256);
+                };
 
                 update_small_pel(sum256, 0, y, &best_s, &best_x, &best_y);
                 ref += src_stride_raw;
@@ -2554,17 +2560,17 @@ void svt_sad_loop_kernel_avx512_intrin(
 
         default:
             sad_loop_kernel_generalized_avx512(src,
-                              src_stride,
-                              ref,
-                              ref_stride,
-                              height,
-                              width,
-                              best_sad,
-                              x_search_center,
-                              y_search_center,
-                              src_stride_raw,
-                              search_area_width,
-                              search_area_height);
+                                               src_stride,
+                                               ref,
+                                               ref_stride,
+                                               height,
+                                               width,
+                                               best_sad,
+                                               x_search_center,
+                                               y_search_center,
+                                               src_stride_raw,
+                                               search_area_width,
+                                               search_area_height);
             return;
         }
     } else if (search_area_width == 16) {
@@ -2802,7 +2808,7 @@ void svt_sad_loop_kernel_avx512_intrin(
                     };
 
                     if (h) {
-                            sad_loop_kernel_8_oneline_avx2(s, r, &sum256);
+                        sad_loop_kernel_8_oneline_avx2(s, r, &sum256);
                     };
 
                     update_small_pel(sum256, 0, y, &best_s, &best_x, &best_y);
@@ -2823,7 +2829,7 @@ void svt_sad_loop_kernel_avx512_intrin(
                     };
 
                     if (h) {
-                            sad_loop_kernel_8_oneline_avx2(s, r, &sum256);
+                        sad_loop_kernel_8_oneline_avx2(s, r, &sum256);
                     };
 
                     update_small_pel(sum256, 8, y, &best_s, &best_x, &best_y);
@@ -3322,17 +3328,17 @@ void svt_sad_loop_kernel_avx512_intrin(
 
         default:
             sad_loop_kernel_generalized_avx512(src,
-                              src_stride,
-                              ref,
-                              ref_stride,
-                              height,
-                              width,
-                              best_sad,
-                              x_search_center,
-                              y_search_center,
-                              src_stride_raw,
-                              search_area_width,
-                              search_area_height);
+                                               src_stride,
+                                               ref,
+                                               ref_stride,
+                                               height,
+                                               width,
+                                               best_sad,
+                                               x_search_center,
+                                               y_search_center,
+                                               src_stride_raw,
+                                               search_area_width,
+                                               search_area_height);
             return;
         }
     } else {
@@ -3467,7 +3473,7 @@ void svt_sad_loop_kernel_avx512_intrin(
 
                         __m128i sum2 = complement_4_to_6(
                             ref + x, ref_stride, src, src_stride, height, 8);
-                        sum  = _mm_adds_epu16(sum, sum2);
+                        sum = _mm_adds_epu16(sum, sum2);
 
                         update_best(sum, x, y, &best_s, &best_x, &best_y);
                     }
@@ -3580,7 +3586,7 @@ void svt_sad_loop_kernel_avx512_intrin(
                     };
 
                     if (h) {
-                            sad_loop_kernel_8_oneline_avx2(s, r, &sum256);
+                        sad_loop_kernel_8_oneline_avx2(s, r, &sum256);
                     };
 
                     update_small_pel(sum256, x, y, &best_s, &best_x, &best_y);
@@ -3601,7 +3607,7 @@ void svt_sad_loop_kernel_avx512_intrin(
                     };
 
                     if (h) {
-                            sad_loop_kernel_8_oneline_avx2(s, r, &sum256);
+                        sad_loop_kernel_8_oneline_avx2(s, r, &sum256);
                     };
 
                     update_leftover_small_pel(sum256, x, y, mask128, &best_s, &best_x, &best_y);
@@ -4905,17 +4911,17 @@ void svt_sad_loop_kernel_avx512_intrin(
 
         default:
             sad_loop_kernel_generalized_avx512(src,
-                              src_stride,
-                              ref,
-                              ref_stride,
-                              height,
-                              width,
-                              best_sad,
-                              x_search_center,
-                              y_search_center,
-                              src_stride_raw,
-                              search_area_width,
-                              search_area_height);
+                                               src_stride,
+                                               ref,
+                                               ref_stride,
+                                               height,
+                                               width,
+                                               best_sad,
+                                               x_search_center,
+                                               y_search_center,
+                                               src_stride_raw,
+                                               search_area_width,
+                                               search_area_height);
             return;
         }
     }

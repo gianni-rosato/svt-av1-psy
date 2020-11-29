@@ -10,7 +10,6 @@
 * PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
 */
 
-
 #include "EbDefinitions.h"
 #include "EbAv1Structs.h"
 
@@ -65,14 +64,14 @@ typedef struct Av1DeblockingParameters {
 } Av1DeblockingParameters;
 
 static const int32_t mode_lf_lut[] = {
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // INTRA_MODES
-        1, 1, 0, 1, // INTER_MODES (GLOBALMV == 0)
-        1, 1, 1, 1, 1, 1, 0, 1 // INTER_COMPOUND_MODES (GLOBAL_GLOBALMV == 0)
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // INTRA_MODES
+    1, 1, 0, 1, // INTER_MODES (GLOBALMV == 0)
+    1, 1, 1, 1, 1, 1, 0, 1 // INTER_COMPOUND_MODES (GLOBAL_GLOBALMV == 0)
 };
 
-uint8_t get_filter_level_delta_lf(FrameHeader* frm_hdr, const int32_t dir_idx,
-                                  int32_t plane, int32_t *sb_delta_lf, uint8_t seg_id,
-                                  PredictionMode pred_mode, MvReferenceFrame ref_frame_0);
+uint8_t get_filter_level_delta_lf(FrameHeader *frm_hdr, const int32_t dir_idx, int32_t plane,
+                                  int32_t *sb_delta_lf, uint8_t seg_id, PredictionMode pred_mode,
+                                  MvReferenceFrame ref_frame_0);
 
 static INLINE int32_t is_inter_block_no_intrabc(MvReferenceFrame ref_frame_0) {
     return /*is_intrabc_block(mbmi) ||*/ ref_frame_0 > INTRA_FRAME;
@@ -80,8 +79,6 @@ static INLINE int32_t is_inter_block_no_intrabc(MvReferenceFrame ref_frame_0) {
 
 void svt_av1_loop_filter_frame_init(FrameHeader *frm_hdr, LoopFilterInfoN *lf_info,
                                     int32_t plane_start, int32_t plane_end);
-
-
 
 void update_sharpness(LoopFilterInfoN *lfi, int32_t sharpness_lvl);
 

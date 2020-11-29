@@ -21,7 +21,7 @@ extern "C" {
 #endif
 #pragma pack(push, 1)
 typedef struct PredictionUnit {
-    Mv mv[MAX_NUM_OF_REF_PIC_LIST]; // 16-bytes
+    Mv      mv[MAX_NUM_OF_REF_PIC_LIST]; // 16-bytes
     uint8_t inter_pred_direction_index;
 
     // Intra Mode
@@ -31,12 +31,12 @@ typedef struct PredictionUnit {
     uint32_t intra_chroma_mode;
 
     // Inter Mode
-    PredictionMode         inter_mode;
-    EbBool                 is_compound;
-    uint8_t  ref_frame_type;
-    MotionMode           motion_mode;
-    uint16_t             num_proj_ref;
-    uint32_t             overlappable_neighbors[2];
+    PredictionMode inter_mode;
+    EbBool         is_compound;
+    uint8_t        ref_frame_type;
+    MotionMode     motion_mode;
+    uint16_t       num_proj_ref;
+    uint32_t       overlappable_neighbors[2];
 
     // Index of the alpha Cb and alpha Cr combination
     int32_t cfl_alpha_idx;

@@ -23,10 +23,10 @@ extern "C" {
  * Context
  ***************************************/
 typedef struct PictureManagerContext {
-    EbDctor dctor;
-    EbFifo *picture_input_fifo_ptr;
-    EbFifo *picture_manager_output_fifo_ptr;
-    EbFifo *picture_control_set_fifo_ptr;
+    EbDctor  dctor;
+    EbFifo * picture_input_fifo_ptr;
+    EbFifo * picture_manager_output_fifo_ptr;
+    EbFifo * picture_control_set_fifo_ptr;
     uint64_t pmgr_dec_order;
 } PictureManagerContext;
 /***************************************

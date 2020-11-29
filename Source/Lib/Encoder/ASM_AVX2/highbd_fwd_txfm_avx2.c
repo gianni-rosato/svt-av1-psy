@@ -162,22 +162,22 @@ static INLINE void transpose_8nx8n(const __m256i *input, __m256i *output, const 
                                out1[3],
                                out1[6],
                                out1[7]);
-            output[j * height + i + (numcol * 0)] =
-                _mm256_permute2x128_si256(out1[0], out1[2], 0x20);
-            output[j * height + i + (numcol * 1)] =
-                _mm256_permute2x128_si256(out1[1], out1[3], 0x20);
-            output[j * height + i + (numcol * 2)] =
-                _mm256_permute2x128_si256(out1[4], out1[6], 0x20);
-            output[j * height + i + (numcol * 3)] =
-                _mm256_permute2x128_si256(out1[5], out1[7], 0x20);
-            output[j * height + i + (numcol * 4)] =
-                _mm256_permute2x128_si256(out1[0], out1[2], 0x31);
-            output[j * height + i + (numcol * 5)] =
-                _mm256_permute2x128_si256(out1[1], out1[3], 0x31);
-            output[j * height + i + (numcol * 6)] =
-                _mm256_permute2x128_si256(out1[4], out1[6], 0x31);
-            output[j * height + i + (numcol * 7)] =
-                _mm256_permute2x128_si256(out1[5], out1[7], 0x31);
+            output[j * height + i + (numcol * 0)] = _mm256_permute2x128_si256(
+                out1[0], out1[2], 0x20);
+            output[j * height + i + (numcol * 1)] = _mm256_permute2x128_si256(
+                out1[1], out1[3], 0x20);
+            output[j * height + i + (numcol * 2)] = _mm256_permute2x128_si256(
+                out1[4], out1[6], 0x20);
+            output[j * height + i + (numcol * 3)] = _mm256_permute2x128_si256(
+                out1[5], out1[7], 0x20);
+            output[j * height + i + (numcol * 4)] = _mm256_permute2x128_si256(
+                out1[0], out1[2], 0x31);
+            output[j * height + i + (numcol * 5)] = _mm256_permute2x128_si256(
+                out1[1], out1[3], 0x31);
+            output[j * height + i + (numcol * 6)] = _mm256_permute2x128_si256(
+                out1[4], out1[6], 0x31);
+            output[j * height + i + (numcol * 7)] = _mm256_permute2x128_si256(
+                out1[5], out1[7], 0x31);
         }
     }
 }
@@ -685,27 +685,27 @@ static void fdct8x8_avx2(const __m256i *in, __m256i *out, int8_t bit, const int3
 
     // stage 3
     // type 0
-    v[0] = _mm256_mullo_epi32(v[0], cospi32);
-    v[1] = _mm256_mullo_epi32(v[1], cospi32);
-    u[0] = _mm256_add_epi32(v[0], v[1]);
-    u[0] = _mm256_add_epi32(u[0], rnding);
+    v[0]             = _mm256_mullo_epi32(v[0], cospi32);
+    v[1]             = _mm256_mullo_epi32(v[1], cospi32);
+    u[0]             = _mm256_add_epi32(v[0], v[1]);
+    u[0]             = _mm256_add_epi32(u[0], rnding);
     out[0 * col_num] = _mm256_srai_epi32(u[0], bit);
 
-    u[1] = _mm256_sub_epi32(v[0], v[1]);
-    u[1] = _mm256_add_epi32(u[1], rnding);
+    u[1]             = _mm256_sub_epi32(v[0], v[1]);
+    u[1]             = _mm256_add_epi32(u[1], rnding);
     out[4 * col_num] = _mm256_srai_epi32(u[1], bit);
 
     // type 1
-    v[0] = _mm256_mullo_epi32(v[2], cospi48);
-    v[1] = _mm256_mullo_epi32(v[3], cospi16);
-    u[2] = _mm256_add_epi32(v[0], v[1]);
-    u[2] = _mm256_add_epi32(u[2], rnding);
+    v[0]             = _mm256_mullo_epi32(v[2], cospi48);
+    v[1]             = _mm256_mullo_epi32(v[3], cospi16);
+    u[2]             = _mm256_add_epi32(v[0], v[1]);
+    u[2]             = _mm256_add_epi32(u[2], rnding);
     out[2 * col_num] = _mm256_srai_epi32(u[2], bit);
 
-    v[0] = _mm256_mullo_epi32(v[2], cospi16);
-    v[1] = _mm256_mullo_epi32(v[3], cospi48);
-    u[3] = _mm256_sub_epi32(v[1], v[0]);
-    u[3] = _mm256_add_epi32(u[3], rnding);
+    v[0]             = _mm256_mullo_epi32(v[2], cospi16);
+    v[1]             = _mm256_mullo_epi32(v[3], cospi48);
+    u[3]             = _mm256_sub_epi32(v[1], v[0]);
+    u[3]             = _mm256_add_epi32(u[3], rnding);
     out[6 * col_num] = _mm256_srai_epi32(u[3], bit);
 
     u[4] = _mm256_add_epi32(v[4], v[5]);
@@ -1129,8 +1129,9 @@ static INLINE void load_buffer_16x16(const int16_t *input, __m256i *out, int32_t
     convert_8x8_to_16x16(in, out);
 }
 
-static AOM_FORCE_INLINE void load_buffer_16x16_N2(const int16_t *input, __m256i *out, int32_t stride,
-                                        int32_t flipud, int32_t fliplr, int32_t shift) {
+static AOM_FORCE_INLINE void load_buffer_16x16_N2(const int16_t *input, __m256i *out,
+                                                  int32_t stride, int32_t flipud, int32_t fliplr,
+                                                  int32_t shift) {
     // Load 4 8x8 blocks
     const int16_t *top_l = input;
     const int16_t *top_r = input + 8;
@@ -1166,8 +1167,9 @@ static AOM_FORCE_INLINE void load_buffer_16x16_N2(const int16_t *input, __m256i 
     load_buffer_8x8_N2(bot_l, &out[16], stride, flipud, fliplr, shift);
 }
 
-static AOM_FORCE_INLINE void load_buffer_16x16_N2_H(const int16_t *input, __m256i *out, int32_t stride,
-                                          int32_t flipud, int32_t fliplr, int32_t shift) {
+static AOM_FORCE_INLINE void load_buffer_16x16_N2_H(const int16_t *input, __m256i *out,
+                                                    int32_t stride, int32_t flipud, int32_t fliplr,
+                                                    int32_t shift) {
     // Load 4 8x8 blocks
     const int16_t *top_l = input;
     const int16_t *top_r = input + 8;
@@ -1205,8 +1207,9 @@ static AOM_FORCE_INLINE void load_buffer_16x16_N2_H(const int16_t *input, __m256
     load_buffer_8x8_N2(top_r, &out[1], stride, flipud, fliplr, shift);
 }
 
-static AOM_FORCE_INLINE void load_buffer_16x16_N2_half(const int16_t *input, __m256i *out, int32_t stride,
-                                             int32_t flipud, int32_t fliplr, int32_t shift) {
+static AOM_FORCE_INLINE void load_buffer_16x16_N2_half(const int16_t *input, __m256i *out,
+                                                       int32_t stride, int32_t flipud,
+                                                       int32_t fliplr, int32_t shift) {
     // Load 4 8x8 blocks
     const int16_t *top_l = input;
     const int16_t *top_r = input + 8;
@@ -2125,26 +2128,26 @@ static void fdct16x16_avx2(const __m256i *in, __m256i *out, int8_t bit, const in
         u[14] = _mm256_add_epi32(u[14], v[13]);
 
         // stage 4
-        u[0] = _mm256_mullo_epi32(u[0], cospi32);
-        u[1] = _mm256_mullo_epi32(u[1], cospi32);
-        v[0] = _mm256_add_epi32(u[0], u[1]);
-        v[0] = _mm256_add_epi32(v[0], rnding);
+        u[0]                   = _mm256_mullo_epi32(u[0], cospi32);
+        u[1]                   = _mm256_mullo_epi32(u[1], cospi32);
+        v[0]                   = _mm256_add_epi32(u[0], u[1]);
+        v[0]                   = _mm256_add_epi32(v[0], rnding);
         out[0 * col_num + col] = _mm256_srai_epi32(v[0], bit);
 
-        v[1] = _mm256_sub_epi32(u[0], u[1]);
-        v[1] = _mm256_add_epi32(v[1], rnding);
+        v[1]                   = _mm256_sub_epi32(u[0], u[1]);
+        v[1]                   = _mm256_add_epi32(v[1], rnding);
         out[8 * col_num + col] = _mm256_srai_epi32(v[1], bit);
 
-        v[2] = _mm256_mullo_epi32(u[2], cospi48);
-        x    = _mm256_mullo_epi32(u[3], cospi16);
-        v[2] = _mm256_add_epi32(v[2], x);
-        v[2] = _mm256_add_epi32(v[2], rnding);
+        v[2]                   = _mm256_mullo_epi32(u[2], cospi48);
+        x                      = _mm256_mullo_epi32(u[3], cospi16);
+        v[2]                   = _mm256_add_epi32(v[2], x);
+        v[2]                   = _mm256_add_epi32(v[2], rnding);
         out[4 * col_num + col] = _mm256_srai_epi32(v[2], bit);
 
-        v[3] = _mm256_mullo_epi32(u[2], cospi16);
-        x    = _mm256_mullo_epi32(u[3], cospi48);
-        v[3] = _mm256_sub_epi32(x, v[3]);
-        v[3] = _mm256_add_epi32(v[3], rnding);
+        v[3]                    = _mm256_mullo_epi32(u[2], cospi16);
+        x                       = _mm256_mullo_epi32(u[3], cospi48);
+        v[3]                    = _mm256_sub_epi32(x, v[3]);
+        v[3]                    = _mm256_add_epi32(v[3], rnding);
         out[12 * col_num + col] = _mm256_srai_epi32(v[3], bit);
 
         v[5] = _mm256_sub_epi32(v[4], u[5]);
@@ -2177,28 +2180,28 @@ static void fdct16x16_avx2(const __m256i *in, __m256i *out, int8_t bit, const in
         v[13] = _mm256_srai_epi32(v[13], bit);
 
         // stage 5
-        u[4] = _mm256_mullo_epi32(v[4], cospi56);
-        x    = _mm256_mullo_epi32(v[7], cospi8);
-        u[4] = _mm256_add_epi32(u[4], x);
-        u[4] = _mm256_add_epi32(u[4], rnding);
+        u[4]                   = _mm256_mullo_epi32(v[4], cospi56);
+        x                      = _mm256_mullo_epi32(v[7], cospi8);
+        u[4]                   = _mm256_add_epi32(u[4], x);
+        u[4]                   = _mm256_add_epi32(u[4], rnding);
         out[2 * col_num + col] = _mm256_srai_epi32(u[4], bit);
 
-        u[7] = _mm256_mullo_epi32(v[4], cospi8);
-        x    = _mm256_mullo_epi32(v[7], cospi56);
-        u[7] = _mm256_sub_epi32(x, u[7]);
-        u[7] = _mm256_add_epi32(u[7], rnding);
+        u[7]                    = _mm256_mullo_epi32(v[4], cospi8);
+        x                       = _mm256_mullo_epi32(v[7], cospi56);
+        u[7]                    = _mm256_sub_epi32(x, u[7]);
+        u[7]                    = _mm256_add_epi32(u[7], rnding);
         out[14 * col_num + col] = _mm256_srai_epi32(u[7], bit);
 
-        u[5] = _mm256_mullo_epi32(v[5], cospi24);
-        x    = _mm256_mullo_epi32(v[6], cospi40);
-        u[5] = _mm256_add_epi32(u[5], x);
-        u[5] = _mm256_add_epi32(u[5], rnding);
+        u[5]                    = _mm256_mullo_epi32(v[5], cospi24);
+        x                       = _mm256_mullo_epi32(v[6], cospi40);
+        u[5]                    = _mm256_add_epi32(u[5], x);
+        u[5]                    = _mm256_add_epi32(u[5], rnding);
         out[10 * col_num + col] = _mm256_srai_epi32(u[5], bit);
 
-        u[6] = _mm256_mullo_epi32(v[5], cospi40);
-        x    = _mm256_mullo_epi32(v[6], cospi24);
-        u[6] = _mm256_sub_epi32(x, u[6]);
-        u[6] = _mm256_add_epi32(u[6], rnding);
+        u[6]                   = _mm256_mullo_epi32(v[5], cospi40);
+        x                      = _mm256_mullo_epi32(v[6], cospi24);
+        u[6]                   = _mm256_sub_epi32(x, u[6]);
+        u[6]                   = _mm256_add_epi32(u[6], rnding);
         out[6 * col_num + col] = _mm256_srai_epi32(u[6], bit);
 
         u[9]  = _mm256_sub_epi32(u[8], v[9]);
@@ -2211,52 +2214,52 @@ static void fdct16x16_avx2(const __m256i *in, __m256i *out, int8_t bit, const in
         u[15] = _mm256_add_epi32(u[15], v[14]);
 
         // stage 6
-        v[8] = _mm256_mullo_epi32(u[8], cospi60);
-        x    = _mm256_mullo_epi32(u[15], cospi4);
-        v[8] = _mm256_add_epi32(v[8], x);
-        v[8] = _mm256_add_epi32(v[8], rnding);
+        v[8]                   = _mm256_mullo_epi32(u[8], cospi60);
+        x                      = _mm256_mullo_epi32(u[15], cospi4);
+        v[8]                   = _mm256_add_epi32(v[8], x);
+        v[8]                   = _mm256_add_epi32(v[8], rnding);
         out[1 * col_num + col] = _mm256_srai_epi32(v[8], bit);
 
-        v[15] = _mm256_mullo_epi32(u[8], cospi4);
-        x     = _mm256_mullo_epi32(u[15], cospi60);
-        v[15] = _mm256_sub_epi32(x, v[15]);
-        v[15] = _mm256_add_epi32(v[15], rnding);
+        v[15]                   = _mm256_mullo_epi32(u[8], cospi4);
+        x                       = _mm256_mullo_epi32(u[15], cospi60);
+        v[15]                   = _mm256_sub_epi32(x, v[15]);
+        v[15]                   = _mm256_add_epi32(v[15], rnding);
         out[15 * col_num + col] = _mm256_srai_epi32(v[15], bit);
 
-        v[9] = _mm256_mullo_epi32(u[9], cospi28);
-        x    = _mm256_mullo_epi32(u[14], cospi36);
-        v[9] = _mm256_add_epi32(v[9], x);
-        v[9] = _mm256_add_epi32(v[9], rnding);
+        v[9]                   = _mm256_mullo_epi32(u[9], cospi28);
+        x                      = _mm256_mullo_epi32(u[14], cospi36);
+        v[9]                   = _mm256_add_epi32(v[9], x);
+        v[9]                   = _mm256_add_epi32(v[9], rnding);
         out[9 * col_num + col] = _mm256_srai_epi32(v[9], bit);
 
-        v[14] = _mm256_mullo_epi32(u[9], cospi36);
-        x     = _mm256_mullo_epi32(u[14], cospi28);
-        v[14] = _mm256_sub_epi32(x, v[14]);
-        v[14] = _mm256_add_epi32(v[14], rnding);
+        v[14]                  = _mm256_mullo_epi32(u[9], cospi36);
+        x                      = _mm256_mullo_epi32(u[14], cospi28);
+        v[14]                  = _mm256_sub_epi32(x, v[14]);
+        v[14]                  = _mm256_add_epi32(v[14], rnding);
         out[7 * col_num + col] = _mm256_srai_epi32(v[14], bit);
 
-        v[10] = _mm256_mullo_epi32(u[10], cospi44);
-        x     = _mm256_mullo_epi32(u[13], cospi20);
-        v[10] = _mm256_add_epi32(v[10], x);
-        v[10] = _mm256_add_epi32(v[10], rnding);
+        v[10]                  = _mm256_mullo_epi32(u[10], cospi44);
+        x                      = _mm256_mullo_epi32(u[13], cospi20);
+        v[10]                  = _mm256_add_epi32(v[10], x);
+        v[10]                  = _mm256_add_epi32(v[10], rnding);
         out[5 * col_num + col] = _mm256_srai_epi32(v[10], bit);
 
-        v[13] = _mm256_mullo_epi32(u[10], cospi20);
-        x     = _mm256_mullo_epi32(u[13], cospi44);
-        v[13] = _mm256_sub_epi32(x, v[13]);
-        v[13] = _mm256_add_epi32(v[13], rnding);
+        v[13]                   = _mm256_mullo_epi32(u[10], cospi20);
+        x                       = _mm256_mullo_epi32(u[13], cospi44);
+        v[13]                   = _mm256_sub_epi32(x, v[13]);
+        v[13]                   = _mm256_add_epi32(v[13], rnding);
         out[11 * col_num + col] = _mm256_srai_epi32(v[13], bit);
 
-        v[11] = _mm256_mullo_epi32(u[11], cospi12);
-        x     = _mm256_mullo_epi32(u[12], cospi52);
-        v[11] = _mm256_add_epi32(v[11], x);
-        v[11] = _mm256_add_epi32(v[11], rnding);
+        v[11]                   = _mm256_mullo_epi32(u[11], cospi12);
+        x                       = _mm256_mullo_epi32(u[12], cospi52);
+        v[11]                   = _mm256_add_epi32(v[11], x);
+        v[11]                   = _mm256_add_epi32(v[11], rnding);
         out[13 * col_num + col] = _mm256_srai_epi32(v[11], bit);
 
-        v[12] = _mm256_mullo_epi32(u[11], cospi52);
-        x     = _mm256_mullo_epi32(u[12], cospi12);
-        v[12] = _mm256_sub_epi32(x, v[12]);
-        v[12] = _mm256_add_epi32(v[12], rnding);
+        v[12]                  = _mm256_mullo_epi32(u[11], cospi52);
+        x                      = _mm256_mullo_epi32(u[12], cospi12);
+        v[12]                  = _mm256_sub_epi32(x, v[12]);
+        v[12]                  = _mm256_add_epi32(v[12], rnding);
         out[3 * col_num + col] = _mm256_srai_epi32(v[12], bit);
     }
 }
@@ -3072,10 +3075,22 @@ static void av1_fdct32_new_avx2(const __m256i *input, __m256i *output, int8_t co
             cospi_m48, cospi_m16, buf1[21], buf1[26], buf0[21], buf0[26], __rounding, cos_bit);
 
         // stage 5
-        btf_32_type0_avx2_new(
-            cospi_p32, cospi_p32, buf0[0], buf0[1], out[0 * stride], out[16 * stride], __rounding, cos_bit);
-        btf_32_type1_avx2_new(
-            cospi_p48, cospi_p16, buf0[2], buf0[3], out[8 * stride], out[24 * stride], __rounding, cos_bit);
+        btf_32_type0_avx2_new(cospi_p32,
+                              cospi_p32,
+                              buf0[0],
+                              buf0[1],
+                              out[0 * stride],
+                              out[16 * stride],
+                              __rounding,
+                              cos_bit);
+        btf_32_type1_avx2_new(cospi_p48,
+                              cospi_p16,
+                              buf0[2],
+                              buf0[3],
+                              out[8 * stride],
+                              out[24 * stride],
+                              __rounding,
+                              cos_bit);
         buf1[5] = _mm256_sub_epi32(buf1[4], buf0[5]);
         buf1[4] = _mm256_add_epi32(buf1[4], buf0[5]);
         buf1[6] = _mm256_sub_epi32(buf1[7], buf0[6]);
@@ -3102,10 +3117,22 @@ static void av1_fdct32_new_avx2(const __m256i *input, __m256i *output, int8_t co
         buf1[30] = _mm256_add_epi32(buf1[30], buf0[29]);
 
         // stage 6
-        btf_32_type1_avx2_new(
-            cospi_p56, cospi_p08, buf1[4], buf1[7], out[4 * stride], out[28 * stride], __rounding, cos_bit);
-        btf_32_type1_avx2_new(
-            cospi_p24, cospi_p40, buf1[5], buf1[6], out[20 * stride], out[12 * stride], __rounding, cos_bit);
+        btf_32_type1_avx2_new(cospi_p56,
+                              cospi_p08,
+                              buf1[4],
+                              buf1[7],
+                              out[4 * stride],
+                              out[28 * stride],
+                              __rounding,
+                              cos_bit);
+        btf_32_type1_avx2_new(cospi_p24,
+                              cospi_p40,
+                              buf1[5],
+                              buf1[6],
+                              out[20 * stride],
+                              out[12 * stride],
+                              __rounding,
+                              cos_bit);
         buf0[9]  = _mm256_sub_epi32(buf0[8], buf1[9]);
         buf0[8]  = _mm256_add_epi32(buf0[8], buf1[9]);
         buf0[10] = _mm256_sub_epi32(buf0[11], buf1[10]);
@@ -3124,14 +3151,38 @@ static void av1_fdct32_new_avx2(const __m256i *input, __m256i *output, int8_t co
             cospi_m24, cospi_m40, buf1[22], buf1[25], buf0[22], buf0[25], __rounding, cos_bit);
 
         // stage 7
-        btf_32_type1_avx2_new(
-            cospi_p60, cospi_p04, buf0[8], buf0[15], out[2 * stride], out[30 * stride], __rounding, cos_bit);
-        btf_32_type1_avx2_new(
-            cospi_p28, cospi_p36, buf0[9], buf0[14], out[18 * stride], out[14 * stride], __rounding, cos_bit);
-        btf_32_type1_avx2_new(
-            cospi_p44, cospi_p20, buf0[10], buf0[13], out[10 * stride], out[22 * stride], __rounding, cos_bit);
-        btf_32_type1_avx2_new(
-            cospi_p12, cospi_p52, buf0[11], buf0[12], out[26 * stride], out[6 * stride], __rounding, cos_bit);
+        btf_32_type1_avx2_new(cospi_p60,
+                              cospi_p04,
+                              buf0[8],
+                              buf0[15],
+                              out[2 * stride],
+                              out[30 * stride],
+                              __rounding,
+                              cos_bit);
+        btf_32_type1_avx2_new(cospi_p28,
+                              cospi_p36,
+                              buf0[9],
+                              buf0[14],
+                              out[18 * stride],
+                              out[14 * stride],
+                              __rounding,
+                              cos_bit);
+        btf_32_type1_avx2_new(cospi_p44,
+                              cospi_p20,
+                              buf0[10],
+                              buf0[13],
+                              out[10 * stride],
+                              out[22 * stride],
+                              __rounding,
+                              cos_bit);
+        btf_32_type1_avx2_new(cospi_p12,
+                              cospi_p52,
+                              buf0[11],
+                              buf0[12],
+                              out[26 * stride],
+                              out[6 * stride],
+                              __rounding,
+                              cos_bit);
         buf1[17] = _mm256_sub_epi32(buf1[16], buf0[17]);
         buf1[16] = _mm256_add_epi32(buf1[16], buf0[17]);
         buf1[18] = _mm256_sub_epi32(buf1[19], buf0[18]);
@@ -3150,22 +3201,70 @@ static void av1_fdct32_new_avx2(const __m256i *input, __m256i *output, int8_t co
         buf1[31] = _mm256_add_epi32(buf1[31], buf0[30]);
 
         // stage 8
-        btf_32_type1_avx2_new(
-            cospi_p62, cospi_p02, buf1[16], buf1[31], out[1 * stride], out[31 * stride], __rounding, cos_bit);
-        btf_32_type1_avx2_new(
-            cospi_p30, cospi_p34, buf1[17], buf1[30], out[17 * stride], out[15 * stride], __rounding, cos_bit);
-        btf_32_type1_avx2_new(
-            cospi_p46, cospi_p18, buf1[18], buf1[29], out[9 * stride], out[23 * stride], __rounding, cos_bit);
-        btf_32_type1_avx2_new(
-            cospi_p14, cospi_p50, buf1[19], buf1[28], out[25 * stride], out[7 * stride], __rounding, cos_bit);
-        btf_32_type1_avx2_new(
-            cospi_p54, cospi_p10, buf1[20], buf1[27], out[5 * stride], out[27 * stride], __rounding, cos_bit);
-        btf_32_type1_avx2_new(
-            cospi_p22, cospi_p42, buf1[21], buf1[26], out[21 * stride], out[11 * stride], __rounding, cos_bit);
-        btf_32_type1_avx2_new(
-            cospi_p38, cospi_p26, buf1[22], buf1[25], out[13 * stride], out[19 * stride], __rounding, cos_bit);
-        btf_32_type1_avx2_new(
-            cospi_p06, cospi_p58, buf1[23], buf1[24], out[29 * stride], out[3 * stride], __rounding, cos_bit);
+        btf_32_type1_avx2_new(cospi_p62,
+                              cospi_p02,
+                              buf1[16],
+                              buf1[31],
+                              out[1 * stride],
+                              out[31 * stride],
+                              __rounding,
+                              cos_bit);
+        btf_32_type1_avx2_new(cospi_p30,
+                              cospi_p34,
+                              buf1[17],
+                              buf1[30],
+                              out[17 * stride],
+                              out[15 * stride],
+                              __rounding,
+                              cos_bit);
+        btf_32_type1_avx2_new(cospi_p46,
+                              cospi_p18,
+                              buf1[18],
+                              buf1[29],
+                              out[9 * stride],
+                              out[23 * stride],
+                              __rounding,
+                              cos_bit);
+        btf_32_type1_avx2_new(cospi_p14,
+                              cospi_p50,
+                              buf1[19],
+                              buf1[28],
+                              out[25 * stride],
+                              out[7 * stride],
+                              __rounding,
+                              cos_bit);
+        btf_32_type1_avx2_new(cospi_p54,
+                              cospi_p10,
+                              buf1[20],
+                              buf1[27],
+                              out[5 * stride],
+                              out[27 * stride],
+                              __rounding,
+                              cos_bit);
+        btf_32_type1_avx2_new(cospi_p22,
+                              cospi_p42,
+                              buf1[21],
+                              buf1[26],
+                              out[21 * stride],
+                              out[11 * stride],
+                              __rounding,
+                              cos_bit);
+        btf_32_type1_avx2_new(cospi_p38,
+                              cospi_p26,
+                              buf1[22],
+                              buf1[25],
+                              out[13 * stride],
+                              out[19 * stride],
+                              __rounding,
+                              cos_bit);
+        btf_32_type1_avx2_new(cospi_p06,
+                              cospi_p58,
+                              buf1[23],
+                              buf1[24],
+                              out[29 * stride],
+                              out[3 * stride],
+                              __rounding,
+                              cos_bit);
     }
 }
 
@@ -3546,10 +3645,22 @@ static void av1_fdct64_new_avx2(const __m256i *input, __m256i *output, int8_t co
 
         // stage 6
         __m256i x6[40];
-        btf_32_type0_avx2_new(
-            cospi_p32, cospi_p32, x5[0], x5[1], out[0 * stride], out[32 * stride], __rounding, cos_bit);
-        btf_32_type1_avx2_new(
-            cospi_p48, cospi_p16, x5[2], x5[3], out[16 * stride], out[48 * stride], __rounding, cos_bit);
+        btf_32_type0_avx2_new(cospi_p32,
+                              cospi_p32,
+                              x5[0],
+                              x5[1],
+                              out[0 * stride],
+                              out[32 * stride],
+                              __rounding,
+                              cos_bit);
+        btf_32_type1_avx2_new(cospi_p48,
+                              cospi_p16,
+                              x5[2],
+                              x5[3],
+                              out[16 * stride],
+                              out[48 * stride],
+                              __rounding,
+                              cos_bit);
         x6[0] = _mm256_add_epi32(x4[4], x5[4]);
         x6[1] = _mm256_sub_epi32(x4[4], x5[4]);
         x6[2] = _mm256_sub_epi32(x4[7], x5[5]);
@@ -3593,10 +3704,22 @@ static void av1_fdct64_new_avx2(const __m256i *input, __m256i *output, int8_t co
 
         // stage 7
         __m256i x7[48];
-        btf_32_type1_avx2_new(
-            cospi_p56, cospi_p08, x6[0], x6[3], out[8 * stride], out[56 * stride], __rounding, cos_bit);
-        btf_32_type1_avx2_new(
-            cospi_p24, cospi_p40, x6[1], x6[2], out[40 * stride], out[24 * stride], __rounding, cos_bit);
+        btf_32_type1_avx2_new(cospi_p56,
+                              cospi_p08,
+                              x6[0],
+                              x6[3],
+                              out[8 * stride],
+                              out[56 * stride],
+                              __rounding,
+                              cos_bit);
+        btf_32_type1_avx2_new(cospi_p24,
+                              cospi_p40,
+                              x6[1],
+                              x6[2],
+                              out[40 * stride],
+                              out[24 * stride],
+                              __rounding,
+                              cos_bit);
         x7[0] = _mm256_add_epi32(x5[6], x6[4]);
         x7[1] = _mm256_sub_epi32(x5[6], x6[4]);
         x7[2] = _mm256_sub_epi32(x5[9], x6[5]);
@@ -3648,14 +3771,38 @@ static void av1_fdct64_new_avx2(const __m256i *input, __m256i *output, int8_t co
 
         // stage 8
         __m256i x8[32];
-        btf_32_type1_avx2_new(
-            cospi_p60, cospi_p04, x7[0], x7[7], out[4 * stride], out[60 * stride], __rounding, cos_bit);
-        btf_32_type1_avx2_new(
-            cospi_p28, cospi_p36, x7[1], x7[6], out[36 * stride], out[28 * stride], __rounding, cos_bit);
-        btf_32_type1_avx2_new(
-            cospi_p44, cospi_p20, x7[2], x7[5], out[20 * stride], out[44 * stride], __rounding, cos_bit);
-        btf_32_type1_avx2_new(
-            cospi_p12, cospi_p52, x7[3], x7[4], out[52 * stride], out[12 * stride], __rounding, cos_bit);
+        btf_32_type1_avx2_new(cospi_p60,
+                              cospi_p04,
+                              x7[0],
+                              x7[7],
+                              out[4 * stride],
+                              out[60 * stride],
+                              __rounding,
+                              cos_bit);
+        btf_32_type1_avx2_new(cospi_p28,
+                              cospi_p36,
+                              x7[1],
+                              x7[6],
+                              out[36 * stride],
+                              out[28 * stride],
+                              __rounding,
+                              cos_bit);
+        btf_32_type1_avx2_new(cospi_p44,
+                              cospi_p20,
+                              x7[2],
+                              x7[5],
+                              out[20 * stride],
+                              out[44 * stride],
+                              __rounding,
+                              cos_bit);
+        btf_32_type1_avx2_new(cospi_p12,
+                              cospi_p52,
+                              x7[3],
+                              x7[4],
+                              out[52 * stride],
+                              out[12 * stride],
+                              __rounding,
+                              cos_bit);
         x8[0]  = _mm256_add_epi32(x6[8], x7[8]);
         x8[1]  = _mm256_sub_epi32(x6[8], x7[8]);
         x8[2]  = _mm256_sub_epi32(x6[11], x7[9]);
@@ -3691,22 +3838,70 @@ static void av1_fdct64_new_avx2(const __m256i *input, __m256i *output, int8_t co
 
         // stage 9
         __m256i x9[32];
-        btf_32_type1_avx2_new(
-            cospi_p62, cospi_p02, x8[0], x8[15], out[2 * stride], out[62 * stride], __rounding, cos_bit);
-        btf_32_type1_avx2_new(
-            cospi_p30, cospi_p34, x8[1], x8[14], out[34 * stride], out[30 * stride], __rounding, cos_bit);
-        btf_32_type1_avx2_new(
-            cospi_p46, cospi_p18, x8[2], x8[13], out[18 * stride], out[46 * stride], __rounding, cos_bit);
-        btf_32_type1_avx2_new(
-            cospi_p14, cospi_p50, x8[3], x8[12], out[50 * stride], out[14 * stride], __rounding, cos_bit);
-        btf_32_type1_avx2_new(
-            cospi_p54, cospi_p10, x8[4], x8[11], out[10 * stride], out[54 * stride], __rounding, cos_bit);
-        btf_32_type1_avx2_new(
-            cospi_p22, cospi_p42, x8[5], x8[10], out[42 * stride], out[22 * stride], __rounding, cos_bit);
-        btf_32_type1_avx2_new(
-            cospi_p38, cospi_p26, x8[6], x8[9], out[26 * stride], out[38 * stride], __rounding, cos_bit);
-        btf_32_type1_avx2_new(
-            cospi_p06, cospi_p58, x8[7], x8[8], out[58 * stride], out[6 * stride], __rounding, cos_bit);
+        btf_32_type1_avx2_new(cospi_p62,
+                              cospi_p02,
+                              x8[0],
+                              x8[15],
+                              out[2 * stride],
+                              out[62 * stride],
+                              __rounding,
+                              cos_bit);
+        btf_32_type1_avx2_new(cospi_p30,
+                              cospi_p34,
+                              x8[1],
+                              x8[14],
+                              out[34 * stride],
+                              out[30 * stride],
+                              __rounding,
+                              cos_bit);
+        btf_32_type1_avx2_new(cospi_p46,
+                              cospi_p18,
+                              x8[2],
+                              x8[13],
+                              out[18 * stride],
+                              out[46 * stride],
+                              __rounding,
+                              cos_bit);
+        btf_32_type1_avx2_new(cospi_p14,
+                              cospi_p50,
+                              x8[3],
+                              x8[12],
+                              out[50 * stride],
+                              out[14 * stride],
+                              __rounding,
+                              cos_bit);
+        btf_32_type1_avx2_new(cospi_p54,
+                              cospi_p10,
+                              x8[4],
+                              x8[11],
+                              out[10 * stride],
+                              out[54 * stride],
+                              __rounding,
+                              cos_bit);
+        btf_32_type1_avx2_new(cospi_p22,
+                              cospi_p42,
+                              x8[5],
+                              x8[10],
+                              out[42 * stride],
+                              out[22 * stride],
+                              __rounding,
+                              cos_bit);
+        btf_32_type1_avx2_new(cospi_p38,
+                              cospi_p26,
+                              x8[6],
+                              x8[9],
+                              out[26 * stride],
+                              out[38 * stride],
+                              __rounding,
+                              cos_bit);
+        btf_32_type1_avx2_new(cospi_p06,
+                              cospi_p58,
+                              x8[7],
+                              x8[8],
+                              out[58 * stride],
+                              out[6 * stride],
+                              __rounding,
+                              cos_bit);
         x9[0]  = _mm256_add_epi32(x7[16], x8[16]);
         x9[1]  = _mm256_sub_epi32(x7[16], x8[16]);
         x9[2]  = _mm256_sub_epi32(x7[17], x8[17]);
@@ -3741,38 +3936,134 @@ static void av1_fdct64_new_avx2(const __m256i *input, __m256i *output, int8_t co
         x9[31] = _mm256_add_epi32(x7[45], x8[31]);
 
         // stage 10
-        btf_32_type1_avx2_new(
-            cospi_p63, cospi_p01, x9[0], x9[31], out[1 * stride], out[63 * stride], __rounding, cos_bit);
-        btf_32_type1_avx2_new(
-            cospi_p31, cospi_p33, x9[1], x9[30], out[33 * stride], out[31 * stride], __rounding, cos_bit);
-        btf_32_type1_avx2_new(
-            cospi_p47, cospi_p17, x9[2], x9[29], out[17 * stride], out[47 * stride], __rounding, cos_bit);
-        btf_32_type1_avx2_new(
-            cospi_p15, cospi_p49, x9[3], x9[28], out[49 * stride], out[15 * stride], __rounding, cos_bit);
-        btf_32_type1_avx2_new(
-            cospi_p55, cospi_p09, x9[4], x9[27], out[9 * stride], out[55 * stride], __rounding, cos_bit);
-        btf_32_type1_avx2_new(
-            cospi_p23, cospi_p41, x9[5], x9[26], out[41 * stride], out[23 * stride], __rounding, cos_bit);
-        btf_32_type1_avx2_new(
-            cospi_p39, cospi_p25, x9[6], x9[25], out[25 * stride], out[39 * stride], __rounding, cos_bit);
-        btf_32_type1_avx2_new(
-            cospi_p07, cospi_p57, x9[7], x9[24], out[57 * stride], out[7 * stride], __rounding, cos_bit);
-        btf_32_type1_avx2_new(
-            cospi_p59, cospi_p05, x9[8], x9[23], out[5 * stride], out[59 * stride], __rounding, cos_bit);
-        btf_32_type1_avx2_new(
-            cospi_p27, cospi_p37, x9[9], x9[22], out[37 * stride], out[27 * stride], __rounding, cos_bit);
-        btf_32_type1_avx2_new(
-            cospi_p43, cospi_p21, x9[10], x9[21], out[21 * stride], out[43 * stride], __rounding, cos_bit);
-        btf_32_type1_avx2_new(
-            cospi_p11, cospi_p53, x9[11], x9[20], out[53 * stride], out[11 * stride], __rounding, cos_bit);
-        btf_32_type1_avx2_new(
-            cospi_p51, cospi_p13, x9[12], x9[19], out[13 * stride], out[51 * stride], __rounding, cos_bit);
-        btf_32_type1_avx2_new(
-            cospi_p19, cospi_p45, x9[13], x9[18], out[45 * stride], out[19 * stride], __rounding, cos_bit);
-        btf_32_type1_avx2_new(
-            cospi_p35, cospi_p29, x9[14], x9[17], out[29 * stride], out[35 * stride], __rounding, cos_bit);
-        btf_32_type1_avx2_new(
-            cospi_p03, cospi_p61, x9[15], x9[16], out[61 * stride], out[3 * stride], __rounding, cos_bit);
+        btf_32_type1_avx2_new(cospi_p63,
+                              cospi_p01,
+                              x9[0],
+                              x9[31],
+                              out[1 * stride],
+                              out[63 * stride],
+                              __rounding,
+                              cos_bit);
+        btf_32_type1_avx2_new(cospi_p31,
+                              cospi_p33,
+                              x9[1],
+                              x9[30],
+                              out[33 * stride],
+                              out[31 * stride],
+                              __rounding,
+                              cos_bit);
+        btf_32_type1_avx2_new(cospi_p47,
+                              cospi_p17,
+                              x9[2],
+                              x9[29],
+                              out[17 * stride],
+                              out[47 * stride],
+                              __rounding,
+                              cos_bit);
+        btf_32_type1_avx2_new(cospi_p15,
+                              cospi_p49,
+                              x9[3],
+                              x9[28],
+                              out[49 * stride],
+                              out[15 * stride],
+                              __rounding,
+                              cos_bit);
+        btf_32_type1_avx2_new(cospi_p55,
+                              cospi_p09,
+                              x9[4],
+                              x9[27],
+                              out[9 * stride],
+                              out[55 * stride],
+                              __rounding,
+                              cos_bit);
+        btf_32_type1_avx2_new(cospi_p23,
+                              cospi_p41,
+                              x9[5],
+                              x9[26],
+                              out[41 * stride],
+                              out[23 * stride],
+                              __rounding,
+                              cos_bit);
+        btf_32_type1_avx2_new(cospi_p39,
+                              cospi_p25,
+                              x9[6],
+                              x9[25],
+                              out[25 * stride],
+                              out[39 * stride],
+                              __rounding,
+                              cos_bit);
+        btf_32_type1_avx2_new(cospi_p07,
+                              cospi_p57,
+                              x9[7],
+                              x9[24],
+                              out[57 * stride],
+                              out[7 * stride],
+                              __rounding,
+                              cos_bit);
+        btf_32_type1_avx2_new(cospi_p59,
+                              cospi_p05,
+                              x9[8],
+                              x9[23],
+                              out[5 * stride],
+                              out[59 * stride],
+                              __rounding,
+                              cos_bit);
+        btf_32_type1_avx2_new(cospi_p27,
+                              cospi_p37,
+                              x9[9],
+                              x9[22],
+                              out[37 * stride],
+                              out[27 * stride],
+                              __rounding,
+                              cos_bit);
+        btf_32_type1_avx2_new(cospi_p43,
+                              cospi_p21,
+                              x9[10],
+                              x9[21],
+                              out[21 * stride],
+                              out[43 * stride],
+                              __rounding,
+                              cos_bit);
+        btf_32_type1_avx2_new(cospi_p11,
+                              cospi_p53,
+                              x9[11],
+                              x9[20],
+                              out[53 * stride],
+                              out[11 * stride],
+                              __rounding,
+                              cos_bit);
+        btf_32_type1_avx2_new(cospi_p51,
+                              cospi_p13,
+                              x9[12],
+                              x9[19],
+                              out[13 * stride],
+                              out[51 * stride],
+                              __rounding,
+                              cos_bit);
+        btf_32_type1_avx2_new(cospi_p19,
+                              cospi_p45,
+                              x9[13],
+                              x9[18],
+                              out[45 * stride],
+                              out[19 * stride],
+                              __rounding,
+                              cos_bit);
+        btf_32_type1_avx2_new(cospi_p35,
+                              cospi_p29,
+                              x9[14],
+                              x9[17],
+                              out[29 * stride],
+                              out[35 * stride],
+                              __rounding,
+                              cos_bit);
+        btf_32_type1_avx2_new(cospi_p03,
+                              cospi_p61,
+                              x9[15],
+                              x9[16],
+                              out[61 * stride],
+                              out[3 * stride],
+                              __rounding,
+                              cos_bit);
     }
 }
 
@@ -4157,8 +4448,8 @@ static INLINE void load_buffer_32x8n(const int16_t *input, __m256i *out, int32_t
 }
 
 static AOM_FORCE_INLINE void load_buffer_16x8n(const int16_t *input, __m256i *out, int32_t stride,
-                                     int32_t flipud, int32_t fliplr, int32_t shift,
-                                     const int32_t height) {
+                                               int32_t flipud, int32_t fliplr, int32_t shift,
+                                               const int32_t height) {
     for (int32_t col = 0; col < height; col++) {
         const int16_t *in     = input + col * stride;
         __m256i *      output = out + col * 4;
@@ -5466,8 +5757,9 @@ static INLINE void load_buffer_4x8_in_8x8(const int16_t *input, __m256i *in, int
     in[3 * step] = _mm256_slli_epi32(in[3 * step], shift);
 }
 
-static AOM_FORCE_INLINE void load_buffer_4x16_in_16x16(const int16_t *input, __m256i *out, int32_t stride,
-                                             int32_t flipud, int32_t fliplr, int32_t shift) {
+static AOM_FORCE_INLINE void load_buffer_4x16_in_16x16(const int16_t *input, __m256i *out,
+                                                       int32_t stride, int32_t flipud,
+                                                       int32_t fliplr, int32_t shift) {
     // Load 2 4x8 blocks
     const int16_t *top_l = input;
     const int16_t *top_r = input + 8;
@@ -6667,7 +6959,7 @@ static void av1_fdct32_new_N2_avx2(const __m256i *input, __m256i *output, int8_t
 }
 
 static AOM_FORCE_INLINE void fdct32x32_N2_row_avx2(const __m256i *input, __m256i *output,
-                                         const int8_t cos_bit) {
+                                                   const int8_t cos_bit) {
     const int32_t txfm_size   = 32;
     const int32_t num_per_256 = 8;
     int32_t       col_num     = txfm_size / num_per_256;
@@ -6675,7 +6967,7 @@ static AOM_FORCE_INLINE void fdct32x32_N2_row_avx2(const __m256i *input, __m256i
 }
 
 static AOM_FORCE_INLINE void fdct32x32_N2_col_avx2(const __m256i *input, __m256i *output,
-                                         const int8_t cos_bit) {
+                                                   const int8_t cos_bit) {
     const int32_t txfm_size   = 32;
     const int32_t num_per_256 = 8;
     int32_t       col_num     = txfm_size / num_per_256;
@@ -6683,7 +6975,8 @@ static AOM_FORCE_INLINE void fdct32x32_N2_col_avx2(const __m256i *input, __m256i
 }
 
 static AOM_FORCE_INLINE void av1_round_shift_array_32_N2_avx2(__m256i *input, __m256i *output,
-                                                    const int32_t size, const int32_t bit) {
+                                                              const int32_t size,
+                                                              const int32_t bit) {
     int32_t i;
 
     if (bit > 0) {
@@ -7960,8 +8253,7 @@ static void fadst16x4_N2_avx2(__m256i *input, __m256i *output, int32_t bit) {
     out[1] = half_btf_small(&cospi58, &u[14], &cospi6, &u[15], &rnding, bit);
 }
 
-static void fdct4x8_col_N2_avx2(__m256i *in, __m256i *output, int32_t bit,
-                                       const int32_t num_col) {
+static void fdct4x8_col_N2_avx2(__m256i *in, __m256i *output, int32_t bit, const int32_t num_col) {
     const int32_t *cospi   = cospi_arr(bit);
     const __m256i  zero    = _mm256_setzero_si256();
     const __m256i  cospi32 = _mm256_set1_epi32(cospi[32]);
@@ -8012,8 +8304,7 @@ static void fdct4x8_col_N2_avx2(__m256i *in, __m256i *output, int32_t bit,
     output[3] = _mm256_permute2x128_si256(out[2], out[3], 0x31);
 }
 
-static void fadst4x8_col_N2_avx2(__m256i *in, __m256i *output, int32_t bit,
-                                        const int32_t num_col) {
+static void fadst4x8_col_N2_avx2(__m256i *in, __m256i *output, int32_t bit, const int32_t num_col) {
     const int32_t *sinpi  = sinpi_arr(bit);
     const __m256i  zero   = _mm256_setzero_si256();
     const __m256i  rnding = _mm256_set1_epi32(1 << (bit - 1));
@@ -8120,7 +8411,7 @@ static INLINE void fidtx4x8_row_N2_avx2(__m256i *in, __m256i *output, int32_t bi
 }
 
 static void fdct4x8_row_N2_with_round_avx2(__m256i *input, __m256i *output, int32_t bit,
-                                                  const int32_t num_col, int32_t shift) {
+                                           const int32_t num_col, int32_t shift) {
     const int32_t *cospi    = cospi_arr(bit);
     const __m256i  zero     = _mm256_setzero_si256();
     const __m256i  cospi32  = _mm256_set1_epi32(cospi[32]);
@@ -8185,7 +8476,7 @@ static void fdct4x8_row_N2_with_round_avx2(__m256i *input, __m256i *output, int3
 }
 
 static void fadst4x8_row_N2_with_round_avx2(__m256i *input, __m256i *output, int32_t bit,
-                                                   const int32_t num_col, int32_t shift) {
+                                            const int32_t num_col, int32_t shift) {
     const int32_t *sinpi    = sinpi_arr(bit);
     const __m256i  zero     = _mm256_setzero_si256();
     const __m256i  rnding   = _mm256_set1_epi32(1 << (bit - 1));
@@ -8386,8 +8677,7 @@ static AOM_FORCE_INLINE void write_buffer_4x8_N2(const __m256i *res, int32_t *ou
     _mm256_storeu_si256((__m256i *)(output + 3 * 8), zero);
 }
 
-static void fadst8x4_N2_avx2(__m256i *input, __m256i *output, int32_t bit,
-                                    const int32_t col_num) {
+static void fadst8x4_N2_avx2(__m256i *input, __m256i *output, int32_t bit, const int32_t col_num) {
     __m128i *      in       = (__m128i *)input;
     __m128i *      out      = (__m128i *)output;
     const int32_t *cospi    = cospi_arr(bit);
@@ -8547,7 +8837,7 @@ static AOM_FORCE_INLINE void write_buffer_16x8_N2_avx2(const __m256i *res, __m25
 }
 
 void svt_av1_fwd_txfm2d_8x8_N2_avx2(int16_t *input, int32_t *coeff, uint32_t stride, TxType tx_type,
-                                   uint8_t bd) {
+                                    uint8_t bd) {
     __m256i       in[8], out[8];
     const int8_t *shift   = fwd_txfm_shift_ls[TX_8X8];
     const int32_t txw_idx = get_txw_idx(TX_8X8);
@@ -8696,7 +8986,7 @@ void svt_av1_fwd_txfm2d_8x8_N2_avx2(int16_t *input, int32_t *coeff, uint32_t str
 }
 
 void svt_av1_fwd_txfm2d_16x16_N2_avx2(int16_t *input, int32_t *coeff, uint32_t stride,
-                                     TxType tx_type, uint8_t bd) {
+                                      TxType tx_type, uint8_t bd) {
     __m256i       in[32], out[32];
     const int8_t *shift   = fwd_txfm_shift_ls[TX_16X16];
     const int32_t txw_idx = get_txw_idx(TX_16X16);
@@ -8857,7 +9147,7 @@ void svt_av1_fwd_txfm2d_16x16_N2_avx2(int16_t *input, int32_t *coeff, uint32_t s
 }
 
 void svt_av1_fwd_txfm2d_64x64_N2_avx2(int16_t *input, int32_t *output, uint32_t stride,
-                                     TxType tx_type, uint8_t bd) {
+                                      TxType tx_type, uint8_t bd) {
     (void)bd;
     __m256i       in[512];
     __m256i *     out     = (__m256i *)output;
@@ -8892,7 +9182,7 @@ void svt_av1_fwd_txfm2d_64x64_N2_avx2(int16_t *input, int32_t *output, uint32_t 
 }
 
 void svt_av1_fwd_txfm2d_32x32_N2_avx2(int16_t *input, int32_t *output, uint32_t stride,
-                                     TxType tx_type, uint8_t bd) {
+                                      TxType tx_type, uint8_t bd) {
     const int8_t *shift           = fwd_txfm_shift_ls[TX_32X32];
     const int32_t txw_idx         = tx_size_wide_log2[TX_32X32] - tx_size_wide_log2[0];
     const int32_t txh_idx         = tx_size_high_log2[TX_32X32] - tx_size_high_log2[0];
@@ -8951,7 +9241,7 @@ void svt_av1_fwd_txfm2d_32x32_N2_avx2(int16_t *input, int32_t *output, uint32_t 
 }
 
 void svt_av1_fwd_txfm2d_16x32_N2_avx2(int16_t *input, int32_t *output, uint32_t stride,
-                                     TxType tx_type, uint8_t bd) {
+                                      TxType tx_type, uint8_t bd) {
     __m256i       in[64];
     __m256i *     outcoef256    = (__m256i *)output;
     const int8_t *shift         = fwd_txfm_shift_ls[TX_16X32];
@@ -8996,7 +9286,7 @@ void svt_av1_fwd_txfm2d_16x32_N2_avx2(int16_t *input, int32_t *output, uint32_t 
 
 /* call this function only for IDTX */
 void svt_av1_fwd_txfm2d_32x16_N2_avx2(int16_t *input, int32_t *output, uint32_t stride,
-                                     TxType tx_type, uint8_t bd) {
+                                      TxType tx_type, uint8_t bd) {
     __m256i       in[64];
     __m256i *     outcoef256    = (__m256i *)output;
     const int8_t *shift         = fwd_txfm_shift_ls[TX_32X16];
@@ -9039,7 +9329,7 @@ void svt_av1_fwd_txfm2d_32x16_N2_avx2(int16_t *input, int32_t *output, uint32_t 
 
 /* call this function only for DCT_DCT, IDTX */
 void svt_av1_fwd_txfm2d_8x32_N2_avx2(int16_t *input, int32_t *output, uint32_t stride,
-                                    TxType tx_type, uint8_t bd) {
+                                     TxType tx_type, uint8_t bd) {
     __m256i       in[32];
     __m256i *     outcoef256 = (__m256i *)output;
     const int8_t *shift      = fwd_txfm_shift_ls[TX_8X32];
@@ -9082,7 +9372,7 @@ void svt_av1_fwd_txfm2d_8x32_N2_avx2(int16_t *input, int32_t *output, uint32_t s
 
 /* call this function only for DCT_DCT, IDTX */
 void svt_av1_fwd_txfm2d_32x8_N2_avx2(int16_t *input, int32_t *output, uint32_t stride,
-                                    TxType tx_type, uint8_t bd) {
+                                     TxType tx_type, uint8_t bd) {
     __m256i       in[32];
     __m256i *     outcoef256 = (__m256i *)output;
     const int8_t *shift      = fwd_txfm_shift_ls[TX_32X8];
@@ -9124,7 +9414,7 @@ void svt_av1_fwd_txfm2d_32x8_N2_avx2(int16_t *input, int32_t *output, uint32_t s
 
 /* call this function for all 16 transform types */
 void svt_av1_fwd_txfm2d_8x16_N2_avx2(int16_t *input, int32_t *output, uint32_t stride,
-                                    TxType tx_type, uint8_t bd) {
+                                     TxType tx_type, uint8_t bd) {
     __m256i       in[16], out[16];
     __m256i *     outcoef256 = (__m256i *)output;
     const int8_t *shift      = fwd_txfm_shift_ls[TX_8X16];
@@ -9307,7 +9597,7 @@ void svt_av1_fwd_txfm2d_8x16_N2_avx2(int16_t *input, int32_t *output, uint32_t s
 
 /* call this function for all 16 transform types */
 void svt_av1_fwd_txfm2d_16x8_N2_avx2(int16_t *input, int32_t *output, uint32_t stride,
-                                    TxType tx_type, uint8_t bd) {
+                                     TxType tx_type, uint8_t bd) {
     __m256i       in[16], out[16];
     __m256i *     outcoef256 = (__m256i *)output;
     const int8_t *shift      = fwd_txfm_shift_ls[TX_16X8];
@@ -9586,8 +9876,8 @@ void svt_av1_fwd_txfm2d_16x8_N2_avx2(int16_t *input, int32_t *output, uint32_t s
     (void)bd;
 }
 
-void svt_av1_fwd_txfm2d_4x8_N2_avx2(int16_t *input, int32_t *output, uint32_t stride, TxType tx_type,
-                                   uint8_t bd) {
+void svt_av1_fwd_txfm2d_4x8_N2_avx2(int16_t *input, int32_t *output, uint32_t stride,
+                                    TxType tx_type, uint8_t bd) {
     __m256i in[4];
     __m256i outcoeff256[4];
 
@@ -9743,8 +10033,8 @@ void svt_av1_fwd_txfm2d_4x8_N2_avx2(int16_t *input, int32_t *output, uint32_t st
     (void)bd;
 }
 
-void svt_av1_fwd_txfm2d_8x4_N2_avx2(int16_t *input, int32_t *output, uint32_t stride, TxType tx_type,
-                                   uint8_t bd) {
+void svt_av1_fwd_txfm2d_8x4_N2_avx2(int16_t *input, int32_t *output, uint32_t stride,
+                                    TxType tx_type, uint8_t bd) {
     __m256i       in[4];
     __m256i *     outcoeff256 = (__m256i *)output;
     const int8_t *shift       = fwd_txfm_shift_ls[TX_8X4];
@@ -9888,7 +10178,7 @@ void svt_av1_fwd_txfm2d_8x4_N2_avx2(int16_t *input, int32_t *output, uint32_t st
 }
 
 void svt_av1_fwd_txfm2d_4x16_N2_avx2(int16_t *input, int32_t *output, uint32_t stride,
-                                    TxType tx_type, uint8_t bd) {
+                                     TxType tx_type, uint8_t bd) {
     __m256i       in[8];
     __m256i *     outcoeff256 = (__m256i *)output;
     const int8_t *shift       = fwd_txfm_shift_ls[TX_4X16];
@@ -10029,7 +10319,7 @@ void svt_av1_fwd_txfm2d_4x16_N2_avx2(int16_t *input, int32_t *output, uint32_t s
 }
 
 void svt_av1_fwd_txfm2d_16x4_N2_avx2(int16_t *input, int32_t *output, uint32_t stride,
-                                    TxType tx_type, uint8_t bd) {
+                                     TxType tx_type, uint8_t bd) {
     __m256i       in[8];
     __m256i *     outcoeff256 = (__m256i *)output;
     const int8_t *shift       = fwd_shift_16x4;
@@ -10169,7 +10459,7 @@ void svt_av1_fwd_txfm2d_16x4_N2_avx2(int16_t *input, int32_t *output, uint32_t s
 }
 
 void svt_av1_fwd_txfm2d_32x64_N2_avx2(int16_t *input, int32_t *output, uint32_t stride,
-                                     TxType tx_type, uint8_t bd) {
+                                      TxType tx_type, uint8_t bd) {
     (void)tx_type;
     __m256i       in[256];
     __m256i *     outcoef256    = (__m256i *)output;
@@ -10201,7 +10491,7 @@ void svt_av1_fwd_txfm2d_32x64_N2_avx2(int16_t *input, int32_t *output, uint32_t 
 }
 
 void svt_av1_fwd_txfm2d_64x32_N2_avx2(int16_t *input, int32_t *output, uint32_t stride,
-                                     TxType tx_type, uint8_t bd) {
+                                      TxType tx_type, uint8_t bd) {
     (void)tx_type;
     __m256i       in[256];
     __m256i *     outcoef256    = (__m256i *)output;
@@ -10237,7 +10527,7 @@ void svt_av1_fwd_txfm2d_64x32_N2_avx2(int16_t *input, int32_t *output, uint32_t 
 }
 
 void svt_av1_fwd_txfm2d_16x64_N2_avx2(int16_t *input, int32_t *output, uint32_t stride,
-                                     TxType tx_type, uint8_t bd) {
+                                      TxType tx_type, uint8_t bd) {
     __m256i       in[128];
     __m256i *     outcoeff256   = (__m256i *)output;
     const int8_t *shift         = fwd_txfm_shift_ls[TX_16X64];
@@ -10272,7 +10562,7 @@ void svt_av1_fwd_txfm2d_16x64_N2_avx2(int16_t *input, int32_t *output, uint32_t 
 }
 
 void svt_av1_fwd_txfm2d_64x16_N2_avx2(int16_t *input, int32_t *output, uint32_t stride,
-                                     TxType tx_type, uint8_t bd) {
+                                      TxType tx_type, uint8_t bd) {
     __m256i       in[128];
     __m256i *     outcoeff256   = (__m256i *)output;
     const int8_t *shift         = fwd_txfm_shift_ls[TX_64X16];
@@ -10660,7 +10950,7 @@ static INLINE void load_buffer_16x16_in_64x64_avx2(const int16_t *input, int32_t
 }
 
 static AOM_FORCE_INLINE void load_buffer_8x16_N4(const int16_t *input, __m256i *out, int32_t stride,
-                                       int32_t flipud, int32_t fliplr, int32_t shift) {
+                                                 int32_t flipud, int32_t fliplr, int32_t shift) {
     if (flipud)
         load_buffer_8x8(input + 8 * stride, out, stride, flipud, fliplr, shift);
     else
@@ -11568,7 +11858,7 @@ static void av1_fdct32_new_N4_avx2(const __m256i *input, __m256i *output, int8_t
 }
 
 static AOM_FORCE_INLINE void fdct32x32_N4_col_avx2(const __m256i *input, __m256i *output,
-                                         const int8_t cos_bit) {
+                                                   const int8_t cos_bit) {
     const int32_t txfm_size   = 32;
     const int32_t num_per_256 = 8;
     int32_t       col_num     = txfm_size / num_per_256;
@@ -11576,7 +11866,7 @@ static AOM_FORCE_INLINE void fdct32x32_N4_col_avx2(const __m256i *input, __m256i
 }
 
 static AOM_FORCE_INLINE void fdct32x32_N4_row_avx2(const __m256i *input, __m256i *output,
-                                         const int8_t cos_bit) {
+                                                   const int8_t cos_bit) {
     const int32_t txfm_size   = 32;
     const int32_t num_per_256 = 8;
     int32_t       col_num     = txfm_size / num_per_256;
@@ -12371,8 +12661,7 @@ static void fdct16x4_N4_avx2(__m256i *input, __m256i *output, int32_t bit) {
     out[3] = _mm_srai_epi32(v[12], bit);
 }
 
-static void fdct4x8_col_N4_avx2(__m256i *in, __m256i *output, int32_t bit,
-                                       const int32_t num_col) {
+static void fdct4x8_col_N4_avx2(__m256i *in, __m256i *output, int32_t bit, const int32_t num_col) {
     const int32_t *cospi   = cospi_arr(bit);
     const __m256i  zero    = _mm256_setzero_si256();
     const __m256i  cospi32 = _mm256_set1_epi32(cospi[32]);
@@ -12410,7 +12699,7 @@ static void fdct4x8_col_N4_avx2(__m256i *in, __m256i *output, int32_t bit,
 }
 
 static void fdct4x8_row_N4_with_round_avx2(__m256i *input, __m256i *output, int32_t bit,
-                                                  const int32_t num_col, int32_t shift) {
+                                           const int32_t num_col, int32_t shift) {
     const int32_t *cospi    = cospi_arr(bit);
     const __m256i  zero     = _mm256_setzero_si256();
     const __m256i  cospi32  = _mm256_set1_epi32(cospi[32]);
@@ -12503,7 +12792,7 @@ static INLINE void fadst4x8_col_N4_avx2(__m256i *in, __m256i *output, int32_t bi
 }
 
 static void fadst4x8_row_N4_with_round_avx2(__m256i *input, __m256i *output, int32_t bit,
-                                                   const int32_t num_col, int32_t shift) {
+                                            const int32_t num_col, int32_t shift) {
     const int32_t *sinpi    = sinpi_arr(bit);
     const __m256i  zero     = _mm256_setzero_si256();
     const __m256i  rnding   = _mm256_set1_epi32(1 << (bit - 1));
@@ -12838,8 +13127,7 @@ static void fdct4x8_N4_avx2(__m256i *input, __m256i *output, int32_t bit) {
     out[1] = _mm_srai_epi32(v[0], bit); // buf0[4]
 }
 
-static void fadst8x4_N4_avx2(__m256i *input, __m256i *output, int32_t bit,
-                                    const int32_t col_num) {
+static void fadst8x4_N4_avx2(__m256i *input, __m256i *output, int32_t bit, const int32_t col_num) {
     __m128i *      in       = (__m128i *)input;
     __m128i *      out      = (__m128i *)output;
     const int32_t *cospi    = cospi_arr(bit);
@@ -12980,7 +13268,7 @@ static AOM_FORCE_INLINE void col_txfm_8x4_N4_rounding(__m256i *in, int32_t shift
 }
 
 void svt_av1_fwd_txfm2d_8x8_N4_avx2(int16_t *input, int32_t *coeff, uint32_t stride, TxType tx_type,
-                                   uint8_t bd) {
+                                    uint8_t bd) {
     __m256i       in[8], out[8];
     const int8_t *shift   = fwd_txfm_shift_ls[TX_8X8];
     const int32_t txw_idx = get_txw_idx(TX_8X8);
@@ -13133,7 +13421,7 @@ void svt_av1_fwd_txfm2d_8x8_N4_avx2(int16_t *input, int32_t *coeff, uint32_t str
 }
 
 void svt_av1_fwd_txfm2d_16x16_N4_avx2(int16_t *input, int32_t *coeff, uint32_t stride,
-                                     TxType tx_type, uint8_t bd) {
+                                      TxType tx_type, uint8_t bd) {
     __m256i       in[32], out[32];
     const int8_t *shift   = fwd_txfm_shift_ls[TX_16X16];
     const int32_t txw_idx = get_txw_idx(TX_16X16);
@@ -13294,7 +13582,7 @@ void svt_av1_fwd_txfm2d_16x16_N4_avx2(int16_t *input, int32_t *coeff, uint32_t s
 }
 
 void svt_av1_fwd_txfm2d_64x64_N4_avx2(int16_t *input, int32_t *output, uint32_t stride,
-                                     TxType tx_type, uint8_t bd) {
+                                      TxType tx_type, uint8_t bd) {
     (void)bd;
     __m256i       in[512];
     __m256i *     out     = (__m256i *)output;
@@ -13331,7 +13619,7 @@ void svt_av1_fwd_txfm2d_64x64_N4_avx2(int16_t *input, int32_t *output, uint32_t 
 }
 
 void svt_av1_fwd_txfm2d_32x32_N4_avx2(int16_t *input, int32_t *output, uint32_t stride,
-                                     TxType tx_type, uint8_t bd) {
+                                      TxType tx_type, uint8_t bd) {
     const int8_t *shift           = fwd_txfm_shift_ls[TX_32X32];
     const int32_t txw_idx         = tx_size_wide_log2[TX_32X32] - tx_size_wide_log2[0];
     const int32_t txh_idx         = tx_size_high_log2[TX_32X32] - tx_size_high_log2[0];
@@ -13396,7 +13684,7 @@ void svt_av1_fwd_txfm2d_32x32_N4_avx2(int16_t *input, int32_t *output, uint32_t 
 }
 
 void svt_av1_fwd_txfm2d_16x32_N4_avx2(int16_t *input, int32_t *output, uint32_t stride,
-                                     TxType tx_type, uint8_t bd) {
+                                      TxType tx_type, uint8_t bd) {
     __m256i       in[64];
     __m256i *     outcoef256    = (__m256i *)output;
     const int8_t *shift         = fwd_txfm_shift_ls[TX_16X32];
@@ -13439,7 +13727,7 @@ void svt_av1_fwd_txfm2d_16x32_N4_avx2(int16_t *input, int32_t *output, uint32_t 
 
 /* call this function only for IDTX */
 void svt_av1_fwd_txfm2d_32x16_N4_avx2(int16_t *input, int32_t *output, uint32_t stride,
-                                     TxType tx_type, uint8_t bd) {
+                                      TxType tx_type, uint8_t bd) {
     __m256i       in[64];
     __m256i *     outcoef256    = (__m256i *)output;
     const int8_t *shift         = fwd_txfm_shift_ls[TX_32X16];
@@ -13481,7 +13769,7 @@ void svt_av1_fwd_txfm2d_32x16_N4_avx2(int16_t *input, int32_t *output, uint32_t 
 
 /* call this function only for DCT_DCT, IDTX */
 void svt_av1_fwd_txfm2d_8x32_N4_avx2(int16_t *input, int32_t *output, uint32_t stride,
-                                    TxType tx_type, uint8_t bd) {
+                                     TxType tx_type, uint8_t bd) {
     __m256i       in[32];
     __m256i *     outcoef256 = (__m256i *)output;
     const int8_t *shift      = fwd_txfm_shift_ls[TX_8X32];
@@ -13522,7 +13810,7 @@ void svt_av1_fwd_txfm2d_8x32_N4_avx2(int16_t *input, int32_t *output, uint32_t s
 
 /* call this function only for DCT_DCT, IDTX */
 void svt_av1_fwd_txfm2d_32x8_N4_avx2(int16_t *input, int32_t *output, uint32_t stride,
-                                    TxType tx_type, uint8_t bd) {
+                                     TxType tx_type, uint8_t bd) {
     __m256i       in[32];
     __m256i *     outcoef256 = (__m256i *)output;
     const int8_t *shift      = fwd_txfm_shift_ls[TX_32X8];
@@ -13562,7 +13850,7 @@ void svt_av1_fwd_txfm2d_32x8_N4_avx2(int16_t *input, int32_t *output, uint32_t s
 
 /* call this function for all 16 transform types */
 void svt_av1_fwd_txfm2d_8x16_N4_avx2(int16_t *input, int32_t *output, uint32_t stride,
-                                    TxType tx_type, uint8_t bd) {
+                                     TxType tx_type, uint8_t bd) {
     __m256i       in[16], out[16];
     __m256i *     outcoef256 = (__m256i *)output;
     const int8_t *shift      = fwd_txfm_shift_ls[TX_8X16];
@@ -13736,7 +14024,7 @@ void svt_av1_fwd_txfm2d_8x16_N4_avx2(int16_t *input, int32_t *output, uint32_t s
 
 /* call this function for all 16 transform types */
 void svt_av1_fwd_txfm2d_16x8_N4_avx2(int16_t *input, int32_t *output, uint32_t stride,
-                                    TxType tx_type, uint8_t bd) {
+                                     TxType tx_type, uint8_t bd) {
     __m256i       in[16], out[16];
     __m256i *     outcoef256 = (__m256i *)output;
     const int8_t *shift      = fwd_txfm_shift_ls[TX_16X8];
@@ -14014,8 +14302,8 @@ void svt_av1_fwd_txfm2d_16x8_N4_avx2(int16_t *input, int32_t *output, uint32_t s
     (void)bd;
 }
 
-void svt_av1_fwd_txfm2d_4x8_N4_avx2(int16_t *input, int32_t *output, uint32_t stride, TxType tx_type,
-                                   uint8_t bd) {
+void svt_av1_fwd_txfm2d_4x8_N4_avx2(int16_t *input, int32_t *output, uint32_t stride,
+                                    TxType tx_type, uint8_t bd) {
     __m256i in[4];
     __m256i outcoeff256[4];
 
@@ -14171,8 +14459,8 @@ void svt_av1_fwd_txfm2d_4x8_N4_avx2(int16_t *input, int32_t *output, uint32_t st
     (void)bd;
 }
 
-void svt_av1_fwd_txfm2d_8x4_N4_avx2(int16_t *input, int32_t *output, uint32_t stride, TxType tx_type,
-                                   uint8_t bd) {
+void svt_av1_fwd_txfm2d_8x4_N4_avx2(int16_t *input, int32_t *output, uint32_t stride,
+                                    TxType tx_type, uint8_t bd) {
     __m256i       in[4];
     __m256i *     outcoeff256 = (__m256i *)output;
     const int8_t *shift       = fwd_txfm_shift_ls[TX_8X4];
@@ -14316,7 +14604,7 @@ void svt_av1_fwd_txfm2d_8x4_N4_avx2(int16_t *input, int32_t *output, uint32_t st
 }
 
 void svt_av1_fwd_txfm2d_4x16_N4_avx2(int16_t *input, int32_t *output, uint32_t stride,
-                                    TxType tx_type, uint8_t bd) {
+                                     TxType tx_type, uint8_t bd) {
     __m256i       in[8];
     __m256i *     outcoeff256 = (__m256i *)output;
     const int8_t *shift       = fwd_txfm_shift_ls[TX_4X16];
@@ -14457,7 +14745,7 @@ void svt_av1_fwd_txfm2d_4x16_N4_avx2(int16_t *input, int32_t *output, uint32_t s
 }
 
 void svt_av1_fwd_txfm2d_16x4_N4_avx2(int16_t *input, int32_t *output, uint32_t stride,
-                                    TxType tx_type, uint8_t bd) {
+                                     TxType tx_type, uint8_t bd) {
     __m256i       in[8];
     __m256i *     outcoeff256 = (__m256i *)output;
     const int8_t *shift       = fwd_shift_16x4;
@@ -14599,7 +14887,7 @@ void svt_av1_fwd_txfm2d_16x4_N4_avx2(int16_t *input, int32_t *output, uint32_t s
 }
 
 void svt_av1_fwd_txfm2d_32x64_N4_avx2(int16_t *input, int32_t *output, uint32_t stride,
-                                     TxType tx_type, uint8_t bd) {
+                                      TxType tx_type, uint8_t bd) {
     (void)tx_type;
     __m256i       in[256];
     __m256i *     outcoef256    = (__m256i *)output;
@@ -14627,7 +14915,7 @@ void svt_av1_fwd_txfm2d_32x64_N4_avx2(int16_t *input, int32_t *output, uint32_t 
 }
 
 void svt_av1_fwd_txfm2d_64x32_N4_avx2(int16_t *input, int32_t *output, uint32_t stride,
-                                     TxType tx_type, uint8_t bd) {
+                                      TxType tx_type, uint8_t bd) {
     (void)tx_type;
     __m256i       in[256];
     __m256i *     outcoef256    = (__m256i *)output;
@@ -14658,7 +14946,7 @@ void svt_av1_fwd_txfm2d_64x32_N4_avx2(int16_t *input, int32_t *output, uint32_t 
 }
 
 void svt_av1_fwd_txfm2d_16x64_N4_avx2(int16_t *input, int32_t *output, uint32_t stride,
-                                     TxType tx_type, uint8_t bd) {
+                                      TxType tx_type, uint8_t bd) {
     __m256i       in[128];
     __m256i *     outcoeff256   = (__m256i *)output;
     const int8_t *shift         = fwd_txfm_shift_ls[TX_16X64];
@@ -14690,7 +14978,7 @@ void svt_av1_fwd_txfm2d_16x64_N4_avx2(int16_t *input, int32_t *output, uint32_t 
 }
 
 void svt_av1_fwd_txfm2d_64x16_N4_avx2(int16_t *input, int32_t *output, uint32_t stride,
-                                     TxType tx_type, uint8_t bd) {
+                                      TxType tx_type, uint8_t bd) {
     __m256i       in[128];
     __m256i *     outcoeff256   = (__m256i *)output;
     const int8_t *shift         = fwd_txfm_shift_ls[TX_64X16];

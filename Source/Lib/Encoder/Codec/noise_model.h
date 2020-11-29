@@ -82,7 +82,7 @@ typedef struct {
      * \param[in]  bit_depth The bit depth used to derive {min,max}_intensity.
      */
 int32_t svt_aom_noise_strength_solver_init(AomNoiseStrengthSolver *solver, int32_t num_bins,
-                                          int32_t bit_depth);
+                                           int32_t bit_depth);
 /*!\brief Gets the x coordinate of bin i.
      *
      * \param[in]  i  The bin whose coordinate to query.
@@ -94,8 +94,8 @@ double svt_aom_noise_strength_solver_get_center(const AomNoiseStrengthSolver *so
      * \param[in]  block_mean  The average block intensity,
      * \param[in]  noise_std   The observed noise strength.
      */
-void svt_aom_noise_strength_solver_add_measurement(AomNoiseStrengthSolver *solver, double block_mean,
-                                                  double noise_std);
+void svt_aom_noise_strength_solver_add_measurement(AomNoiseStrengthSolver *solver,
+                                                   double block_mean, double noise_std);
 
 /*!\brief Solves the current set of equations for the noise strength. */
 int32_t svt_aom_noise_strength_solver_solve(AomNoiseStrengthSolver *solver);
@@ -106,8 +106,8 @@ int32_t svt_aom_noise_strength_solver_solve(AomNoiseStrengthSolver *solver);
      * \param[out] lut  The output piecewise linear lut.
      */
 int32_t svt_aom_noise_strength_solver_fit_piecewise(const AomNoiseStrengthSolver *solver,
-                                                   int32_t                       max_num_points,
-                                                   AomNoiseStrengthLut *    lut);
+                                                    int32_t                       max_num_points,
+                                                    AomNoiseStrengthLut *         lut);
 
 /*!\brief Helper for holding precomputed data for finding flat blocks.
      *
@@ -129,14 +129,14 @@ typedef struct {
 
 /*!\brief Init the block_finder with the given block size, bit_depth */
 int32_t svt_aom_flat_block_finder_init(AomFlatBlockFinder *block_finder, int32_t block_size,
-                                      int32_t bit_depth, int32_t use_highbd);
+                                       int32_t bit_depth, int32_t use_highbd);
 void    svt_aom_flat_block_finder_free(AomFlatBlockFinder *block_finder);
 
 /*!\brief Helper to extract a block and low order "planar" model. */
 void svt_aom_flat_block_finder_extract_block(const AomFlatBlockFinder *block_finder,
-                                            const uint8_t *const data, int32_t w, int32_t h,
-                                            int32_t stride, int32_t offsx, int32_t offsy,
-                                            double *plane, double *block);
+                                             const uint8_t *const data, int32_t w, int32_t h,
+                                             int32_t stride, int32_t offsx, int32_t offsy,
+                                             double *plane, double *block);
 
 /*!\brief Runs the flat block finder on the input data.
      *
@@ -146,8 +146,8 @@ void svt_aom_flat_block_finder_extract_block(const AomFlatBlockFinder *block_fin
      * confidence in the decision.
      */
 int32_t svt_aom_flat_block_finder_run(const AomFlatBlockFinder *block_finder,
-                                     const uint8_t *const data, int32_t w, int32_t h,
-                                     int32_t stride, uint8_t *flat_blocks);
+                                      const uint8_t *const data, int32_t w, int32_t h,
+                                      int32_t stride, uint8_t *flat_blocks);
 
 // The noise shape indicates the allowed coefficients in the AR model.
 typedef enum { AOM_NOISE_SHAPE_DIAMOND = 0, AOM_NOISE_SHAPE_SQUARE = 1 } AomNoiseShape;
@@ -274,10 +274,10 @@ void    svt_aom_noise_model_free(AomNoiseModel *model);
      * \param[in]     block_size      The size of blocks.
      */
 AomNoiseStatus svt_aom_noise_model_update(AomNoiseModel *const noise_model,
-                                         const uint8_t *const data[3],
-                                         const uint8_t *const denoised[3], int32_t w, int32_t h,
-                                         int32_t strides[3], int32_t chroma_sub_log2[2],
-                                         const uint8_t *const flat_blocks, int32_t block_size);
+                                          const uint8_t *const data[3],
+                                          const uint8_t *const denoised[3], int32_t w, int32_t h,
+                                          int32_t strides[3], int32_t chroma_sub_log2[2],
+                                          const uint8_t *const flat_blocks, int32_t block_size);
 
 /*\brief Save the "latest" estimate into the "combined" estimate.
      *
@@ -295,7 +295,7 @@ void svt_aom_noise_model_save_latest(AomNoiseModel *noise_model);
      * function does the conversion by selecting the correct quantization levels.
      */
 int32_t svt_aom_noise_model_get_grain_parameters(AomNoiseModel *const noise_model,
-                                                AomFilmGrain *       film_grain);
+                                                 AomFilmGrain *       film_grain);
 
 /*!\brief Perform a Wiener filter denoising in 2D using the provided noise psd.
      *
@@ -313,9 +313,9 @@ int32_t svt_aom_noise_model_get_grain_parameters(AomNoiseModel *const noise_mode
      *                                This must be true when bit_depth >= 10.
      */
 int32_t svt_aom_wiener_denoise_2d(const uint8_t *const data[3], uint8_t *denoised[3], int32_t w,
-                                 int32_t h, int32_t stride[3], int32_t chroma_sub_log2[2],
-                                 float *noise_psd[3], int32_t block_size, int32_t bit_depth,
-                                 int32_t use_highbd);
+                                  int32_t h, int32_t stride[3], int32_t chroma_sub_log2[2],
+                                  float *noise_psd[3], int32_t block_size, int32_t bit_depth,
+                                  int32_t use_highbd);
 
 struct AomDenoiseAndModel;
 
@@ -334,7 +334,7 @@ struct AomDenoiseAndModel;
      * \param[out]    grain  Output film grain parameters
      */
 int32_t svt_aom_denoise_and_model_run(struct AomDenoiseAndModel *ctx, EbPictureBufferDesc *sd,
-                                     AomFilmGrain *film_grain, int32_t use_highbd);
+                                      AomFilmGrain *film_grain, int32_t use_highbd);
 
 /*!\brief Allocates a context that can be used for denoising and noise modeling.
      *

@@ -26,22 +26,22 @@ uint64_t compute_subd_mean_of_squared_values8x8_sse2_intrin(
     /*xmm_input = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i *)(input_samples + input_stride)), xmm0);
     xmm_block_mean = _mm_add_epi32(xmm_block_mean, _mm_madd_epi16(xmm_input, xmm_input));*/
 
-    xmm_input =
-        _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i *)(input_samples + 2 * input_stride)), xmm0);
+    xmm_input = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i *)(input_samples + 2 * input_stride)),
+                                  xmm0);
     xmm_block_mean = _mm_add_epi32(xmm_block_mean, _mm_madd_epi16(xmm_input, xmm_input));
 
     /*xmm_input = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i *)(input_samples+3*input_stride)), xmm0);
     xmm_block_mean = _mm_add_epi32(xmm_block_mean, _mm_madd_epi16(xmm_input, xmm_input));*/
 
-    xmm_input =
-        _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i *)(input_samples + 4 * input_stride)), xmm0);
+    xmm_input = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i *)(input_samples + 4 * input_stride)),
+                                  xmm0);
     xmm_block_mean = _mm_add_epi32(xmm_block_mean, _mm_madd_epi16(xmm_input, xmm_input));
 
     //xmm_input = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i *)(input_samples+5*input_stride)), xmm0);
     //xmm_block_mean = _mm_add_epi32(xmm_block_mean, _mm_madd_epi16(xmm_input, xmm_input));
 
-    xmm_input =
-        _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i *)(input_samples + 6 * input_stride)), xmm0);
+    xmm_input = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i *)(input_samples + 6 * input_stride)),
+                                  xmm0);
     xmm_block_mean = _mm_add_epi32(xmm_block_mean, _mm_madd_epi16(xmm_input, xmm_input));
 
     /*xmm_input = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i *)(input_samples+7*input_stride)), xmm0);
@@ -93,28 +93,28 @@ uint64_t svt_compute_mean_of_squared_values8x8_sse2_intrin(
     xmm_input = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i *)(input_samples + input_stride)), xmm0);
     xmm_block_mean = _mm_add_epi32(xmm_block_mean, _mm_madd_epi16(xmm_input, xmm_input));
 
-    xmm_input =
-        _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i *)(input_samples + 2 * input_stride)), xmm0);
+    xmm_input = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i *)(input_samples + 2 * input_stride)),
+                                  xmm0);
     xmm_block_mean = _mm_add_epi32(xmm_block_mean, _mm_madd_epi16(xmm_input, xmm_input));
 
-    xmm_input =
-        _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i *)(input_samples + 3 * input_stride)), xmm0);
+    xmm_input = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i *)(input_samples + 3 * input_stride)),
+                                  xmm0);
     xmm_block_mean = _mm_add_epi32(xmm_block_mean, _mm_madd_epi16(xmm_input, xmm_input));
 
-    xmm_input =
-        _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i *)(input_samples + 4 * input_stride)), xmm0);
+    xmm_input = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i *)(input_samples + 4 * input_stride)),
+                                  xmm0);
     xmm_block_mean = _mm_add_epi32(xmm_block_mean, _mm_madd_epi16(xmm_input, xmm_input));
 
-    xmm_input =
-        _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i *)(input_samples + 5 * input_stride)), xmm0);
+    xmm_input = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i *)(input_samples + 5 * input_stride)),
+                                  xmm0);
     xmm_block_mean = _mm_add_epi32(xmm_block_mean, _mm_madd_epi16(xmm_input, xmm_input));
 
-    xmm_input =
-        _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i *)(input_samples + 6 * input_stride)), xmm0);
+    xmm_input = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i *)(input_samples + 6 * input_stride)),
+                                  xmm0);
     xmm_block_mean = _mm_add_epi32(xmm_block_mean, _mm_madd_epi16(xmm_input, xmm_input));
 
-    xmm_input =
-        _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i *)(input_samples + 7 * input_stride)), xmm0);
+    xmm_input = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i *)(input_samples + 7 * input_stride)),
+                                  xmm0);
     xmm_block_mean = _mm_add_epi32(xmm_block_mean, _mm_madd_epi16(xmm_input, xmm_input));
 
     xmm_block_mean = _mm_add_epi32(xmm_block_mean, _mm_srli_si128(xmm_block_mean, 8));
@@ -128,28 +128,28 @@ void svt_compute_interm_var_four8x8_helper_sse2(uint8_t *input_samples, uint16_t
 {
     uint32_t block_index = 0;
     // (0,1)
-    mean_of8x8_blocks[0] = svt_compute_sub_mean8x8_sse2_intrin(input_samples + block_index,
+    mean_of8x8_blocks[0]         = svt_compute_sub_mean8x8_sse2_intrin(input_samples + block_index,
                                                                input_stride);
     mean_of_squared8x8_blocks[0] = compute_subd_mean_of_squared_values8x8_sse2_intrin(
         input_samples + block_index, input_stride);
 
     // (0,2)
-    block_index = block_index + 8;
-    mean_of8x8_blocks[1] = svt_compute_sub_mean8x8_sse2_intrin(input_samples + block_index,
+    block_index                  = block_index + 8;
+    mean_of8x8_blocks[1]         = svt_compute_sub_mean8x8_sse2_intrin(input_samples + block_index,
                                                                input_stride);
     mean_of_squared8x8_blocks[1] = compute_subd_mean_of_squared_values8x8_sse2_intrin(
         input_samples + block_index, input_stride);
 
     // (0,3)
-    block_index = block_index + 8;
-    mean_of8x8_blocks[2] = svt_compute_sub_mean8x8_sse2_intrin(input_samples + block_index,
+    block_index                  = block_index + 8;
+    mean_of8x8_blocks[2]         = svt_compute_sub_mean8x8_sse2_intrin(input_samples + block_index,
                                                                input_stride);
     mean_of_squared8x8_blocks[2] = compute_subd_mean_of_squared_values8x8_sse2_intrin(
         input_samples + block_index, input_stride);
 
     // (0,4)
-    block_index = block_index + 8;
-    mean_of8x8_blocks[3] = svt_compute_sub_mean8x8_sse2_intrin(input_samples + block_index,
+    block_index                  = block_index + 8;
+    mean_of8x8_blocks[3]         = svt_compute_sub_mean8x8_sse2_intrin(input_samples + block_index,
                                                                input_stride);
     mean_of_squared8x8_blocks[3] = compute_subd_mean_of_squared_values8x8_sse2_intrin(
         input_samples + block_index, input_stride);

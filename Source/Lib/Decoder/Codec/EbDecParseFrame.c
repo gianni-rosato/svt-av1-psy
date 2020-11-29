@@ -36,8 +36,8 @@ void svt_tile_init(TileInfo *cur_tile_info, FrameHeader *frame_header, int32_t t
     assert(tile_row < tiles_info->tile_rows);
     cur_tile_info->tile_row     = tile_row;
     cur_tile_info->mi_row_start = tiles_info->tile_row_start_mi[tile_row];
-    cur_tile_info->mi_row_end =
-        AOMMIN(tiles_info->tile_row_start_mi[tile_row + 1], frame_header->mi_rows);
+    cur_tile_info->mi_row_end   = AOMMIN(tiles_info->tile_row_start_mi[tile_row + 1],
+                                       frame_header->mi_rows);
 
     assert(cur_tile_info->mi_row_end > cur_tile_info->mi_row_start);
 
@@ -46,8 +46,8 @@ void svt_tile_init(TileInfo *cur_tile_info, FrameHeader *frame_header, int32_t t
 
     cur_tile_info->tile_col     = tile_col;
     cur_tile_info->mi_col_start = tiles_info->tile_col_start_mi[tile_col];
-    cur_tile_info->mi_col_end =
-        AOMMIN(tiles_info->tile_col_start_mi[tile_col + 1], frame_header->mi_cols);
+    cur_tile_info->mi_col_end   = AOMMIN(tiles_info->tile_col_start_mi[tile_col + 1],
+                                       frame_header->mi_cols);
 
     assert(cur_tile_info->mi_col_end > cur_tile_info->mi_col_start);
 }
@@ -123,10 +123,10 @@ void clear_loop_filter_delta(ParseCtxt *parse_ctx) {
 EbErrorType start_parse_tile(EbDecHandle *dec_handle_ptr, ParseCtxt *parse_ctxt,
                              TilesInfo *tiles_info, int tile_num, int is_mt) {
     MainParseCtxt *main_parse_ctxt = (MainParseCtxt *)dec_handle_ptr->pv_main_parse_ctxt;
-    FrameHeader *    frame_header      = &dec_handle_ptr->frame_header;
-    ParseTileData *  parse_tile_data   = &main_parse_ctxt->parse_tile_data[tile_num];
-    int              tile_row          = tile_num / tiles_info->tile_cols;
-    int              tile_col          = tile_num % tiles_info->tile_cols;
+    FrameHeader *  frame_header    = &dec_handle_ptr->frame_header;
+    ParseTileData *parse_tile_data = &main_parse_ctxt->parse_tile_data[tile_num];
+    int            tile_row        = tile_num / tiles_info->tile_cols;
+    int            tile_col        = tile_num % tiles_info->tile_cols;
     svt_tile_init(&parse_ctxt->cur_tile_info, frame_header, tile_row, tile_col);
 
     parse_ctxt->cur_q_ind = frame_header->quantization_params.base_q_idx;
@@ -136,13 +136,14 @@ EbErrorType start_parse_tile(EbDecHandle *dec_handle_ptr, ParseCtxt *parse_ctxt,
                                          parse_tile_data->data_end,
                                          parse_tile_data->tile_size,
                                          !(parse_ctxt->frame_header->disable_cdf_update));
-    if (status != EB_ErrorNone) return status;
+    if (status != EB_ErrorNone)
+        return status;
 
     parse_ctxt->cur_tile_ctx = main_parse_ctxt->init_frm_ctx;
 
     /* Parse Tile */
-    status =
-        parse_tile(dec_handle_ptr, parse_ctxt, tiles_info, tile_num, tile_row, tile_col, is_mt);
+    status = parse_tile(
+        dec_handle_ptr, parse_ctxt, tiles_info, tile_num, tile_row, tile_col, is_mt);
 
     /* Save CDF */
     if (!frame_header->disable_frame_end_update_cdf &&
@@ -185,7 +186,7 @@ EbErrorType parse_tile(EbDecHandle *dec_handle_ptr, ParseCtxt *parse_ctx, TilesI
                  .dec_mt_frame_data.parse_recon_tile_info_array[tile_num];
 
         sb_row_tile_start = (parse_recon_tile_info->tile_info.mi_row_start << MI_SIZE_LOG2) >>
-                            dec_handle_ptr->seq_header.sb_size_log2;
+            dec_handle_ptr->seq_header.sb_size_log2;
     }
     for (uint32_t mi_row = tile_info->tile_row_start_mi[tile_row];
          mi_row < tile_info->tile_row_start_mi[tile_row + 1];
@@ -211,22 +212,19 @@ EbErrorType parse_tile(EbDecHandle *dec_handle_ptr, ParseCtxt *parse_ctx, TilesI
 
             //clear_block_decoded_flags(r, c, sbSize4)
             MainFrameBuf *main_frame_buf = &dec_handle_ptr->main_frame_buf;
-            CurFrameBuf * frame_buf        = &main_frame_buf->cur_frame_bufs[0];
-            int32_t       num_mis_in_sb    = main_frame_buf->num_mis_in_sb;
+            CurFrameBuf * frame_buf      = &main_frame_buf->cur_frame_bufs[0];
+            int32_t       num_mis_in_sb  = main_frame_buf->num_mis_in_sb;
 
             SBInfo *sb_info = frame_buf->sb_info + (sb_row * main_frame_buf->sb_cols) + sb_col;
             *(main_frame_buf->frame_mi_map.pps_sb_info +
               sb_row * main_frame_buf->frame_mi_map.sb_cols + sb_col) = sb_info;
-            sb_info->sb_mode_info                                       = frame_buf->mode_info +
-                                    (sb_row * num_mis_in_sb * main_frame_buf->sb_cols) +
-                                    sb_col * num_mis_in_sb;
-
-            sb_info->sb_trans_info[AOM_PLANE_Y] =
-                frame_buf->trans_info[AOM_PLANE_Y] +
+            sb_info->sb_mode_info                                     = frame_buf->mode_info +
                 (sb_row * num_mis_in_sb * main_frame_buf->sb_cols) + sb_col * num_mis_in_sb;
 
-            sb_info->sb_trans_info[AOM_PLANE_U] =
-                frame_buf->trans_info[AOM_PLANE_U] +
+            sb_info->sb_trans_info[AOM_PLANE_Y] = frame_buf->trans_info[AOM_PLANE_Y] +
+                (sb_row * num_mis_in_sb * main_frame_buf->sb_cols) + sb_col * num_mis_in_sb;
+
+            sb_info->sb_trans_info[AOM_PLANE_U] = frame_buf->trans_info[AOM_PLANE_U] +
                 ((sb_row * num_mis_in_sb * main_frame_buf->sb_cols >> sy) +
                  (sb_col * num_mis_in_sb >> sx)) *
                     2;
@@ -235,34 +233,27 @@ EbErrorType parse_tile(EbDecHandle *dec_handle_ptr, ParseCtxt *parse_ctx, TilesI
                 sb_info->sb_coeff[AOM_PLANE_Y] = frame_buf->coeff[AOM_PLANE_Y];
                 sb_info->sb_coeff[AOM_PLANE_U] = frame_buf->coeff[AOM_PLANE_U];
                 sb_info->sb_coeff[AOM_PLANE_V] = frame_buf->coeff[AOM_PLANE_V];
-            }
-            else {
+            } else {
                 /*TODO : Change to macro */
-                sb_info->sb_coeff[AOM_PLANE_Y] =
-                    frame_buf->coeff[AOM_PLANE_Y] +
-                    (sb_row * num_mis_in_sb * main_frame_buf->sb_cols * (16 + 1))
-                        + sb_col * num_mis_in_sb* (16 + 1);
+                sb_info->sb_coeff[AOM_PLANE_Y] = frame_buf->coeff[AOM_PLANE_Y] +
+                    (sb_row * num_mis_in_sb * main_frame_buf->sb_cols * (16 + 1)) +
+                    sb_col * num_mis_in_sb * (16 + 1);
                 /*TODO : Change to macro */
-                sb_info->sb_coeff[AOM_PLANE_U] =
-                    frame_buf->coeff[AOM_PLANE_U] +
-                    (sb_row * num_mis_in_sb * main_frame_buf->sb_cols * (16 + 1) >> (sy + sx))
-                        + (sb_col * num_mis_in_sb * (16 + 1) >> (sy + sx));
-                sb_info->sb_coeff[AOM_PLANE_V] =
-                    frame_buf->coeff[AOM_PLANE_V] +
-                    (sb_row * num_mis_in_sb * main_frame_buf->sb_cols * (16 + 1) >> (sy + sx))
-                        + (sb_col * num_mis_in_sb * (16 + 1) >> (sy + sx));
+                sb_info->sb_coeff[AOM_PLANE_U] = frame_buf->coeff[AOM_PLANE_U] +
+                    (sb_row * num_mis_in_sb * main_frame_buf->sb_cols * (16 + 1) >> (sy + sx)) +
+                    (sb_col * num_mis_in_sb * (16 + 1) >> (sy + sx));
+                sb_info->sb_coeff[AOM_PLANE_V] = frame_buf->coeff[AOM_PLANE_V] +
+                    (sb_row * num_mis_in_sb * main_frame_buf->sb_cols * (16 + 1) >> (sy + sx)) +
+                    (sb_col * num_mis_in_sb * (16 + 1) >> (sy + sx));
             }
-            int cdef_factor = dec_handle_ptr->seq_header.use_128x128_superblock ? 4 : 1;
-            sb_info->sb_cdef_strength =
-                frame_buf->cdef_strength +
+            int cdef_factor           = dec_handle_ptr->seq_header.use_128x128_superblock ? 4 : 1;
+            sb_info->sb_cdef_strength = frame_buf->cdef_strength +
                 (((sb_row * main_frame_buf->sb_cols) + sb_col) * cdef_factor);
 
-            sb_info->sb_delta_lf =
-                frame_buf->delta_lf +
+            sb_info->sb_delta_lf = frame_buf->delta_lf +
                 (FRAME_LF_COUNT * ((sb_row * main_frame_buf->sb_cols) + sb_col));
 
-            sb_info->sb_delta_q =
-                frame_buf->delta_q + (sb_row * main_frame_buf->sb_cols) + sb_col;
+            sb_info->sb_delta_q = frame_buf->delta_q + (sb_row * main_frame_buf->sb_cols) + sb_col;
 
             clear_cdef(sb_info->sb_cdef_strength, cdef_factor);
 

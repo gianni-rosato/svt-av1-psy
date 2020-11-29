@@ -1,3 +1,4 @@
+// clang-format off
 /*
 * Copyright(c) 2019 Intel Corporation
 * Copyright (c) 2016, Alliance for Open Media. All rights reserved
@@ -794,3 +795,4 @@ void setup_common_rtcd_internal(CPU_FLAGS flags) {
     SET_SSE2(svt_memcpy, svt_memcpy_c, svt_memcpy_intrin_sse);
 
 }
+// clang-format on

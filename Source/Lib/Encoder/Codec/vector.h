@@ -83,10 +83,9 @@ void iterator_increment(Iterator *iterator);
 
 bool _vector_should_grow(Vector *vector);
 
-void *      _vector_offset(Vector *vector, size_t index);
-void _vector_assign(Vector *vector, size_t index, void *element);
-int _vector_adjust_capacity(Vector *vector);
-int _vector_reallocate(Vector *vector, size_t new_capacity);
-
+void *_vector_offset(Vector *vector, size_t index);
+void  _vector_assign(Vector *vector, size_t index, void *element);
+int   _vector_adjust_capacity(Vector *vector);
+int   _vector_reallocate(Vector *vector, size_t new_capacity);
 
 #endif /* VECTOR_H */

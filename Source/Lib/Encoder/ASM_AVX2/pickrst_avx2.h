@@ -574,10 +574,9 @@ static INLINE void step3_win5_avx2(const int16_t **const d, const int32_t d_stri
 }
 
 static INLINE void step3_win5_oneline_avx2(const int16_t **const d, const int32_t d_stride,
-                                   const int32_t width, const int32_t height,
-                                   __m256i ds[WIENER_WIN_CHROMA],
-                                   __m256i deltas[WIENER_WIN_CHROMA]) {
-
+                                           const int32_t width, const int32_t height,
+                                           __m256i ds[WIENER_WIN_CHROMA],
+                                           __m256i deltas[WIENER_WIN_CHROMA]) {
     const __m256i const_n1_0 = _mm256_setr_epi16(
         0xFFFF, 0, 0xFFFF, 0, 0xFFFF, 0, 0xFFFF, 0, 0xFFFF, 0, 0xFFFF, 0, 0xFFFF, 0, 0xFFFF, 0);
 
@@ -605,7 +604,6 @@ static INLINE void step3_win5_oneline_avx2(const int16_t **const d, const int32_
 
         *d += d_stride;
     } while (--y);
-
 }
 
 static INLINE void step3_win7_avx2(const int16_t **const d, const int32_t d_stride,

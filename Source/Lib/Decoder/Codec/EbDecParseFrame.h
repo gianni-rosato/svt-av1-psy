@@ -167,8 +167,9 @@ static int read_is_valid(const uint8_t *start, size_t len, const uint8_t *end) {
     return len != 0 && len <= (size_t)(end - start);
 }
 
-static INLINE EbErrorType init_svt_reader(SvtReader *r, const uint8_t *data, const uint8_t *data_end,
-                            const size_t read_size, uint8_t allow_update_cdf) {
+static INLINE EbErrorType init_svt_reader(SvtReader *r, const uint8_t *data,
+                                          const uint8_t *data_end, const size_t read_size,
+                                          uint8_t allow_update_cdf) {
     if (read_is_valid(data, read_size, data_end) && !svt_reader_init(r, data, read_size))
         r->allow_update_cdf = allow_update_cdf;
     else

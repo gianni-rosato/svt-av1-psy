@@ -125,7 +125,7 @@ typedef struct PredictionStructureGroup {
     EbDctor               dctor;
     PredictionStructure **prediction_structure_ptr_array;
     uint32_t              prediction_structure_count;
-    void*                 priv; /* private member*/
+    void *                priv; /* private member*/
     uint8_t               ref_count_used;
 } PredictionStructureGroup;
 

@@ -88,13 +88,13 @@ static INLINE void get_4_nz_map_contexts_2d(const uint8_t *levels, const int32_t
                                             int8_t *const          coeff_contexts) {
     const int32_t stride              = 4 + TX_PAD_HOR;
     const __m128i pos_to_offset_large = _mm_set1_epi8(21);
-    __m128i       pos_to_offset =
-        (height == 4) ? _mm_setr_epi8(0, 1, 6, 6, 1, 6, 6, 21, 6, 6, 21, 21, 6, 21, 21, 21)
-                      : _mm_setr_epi8(0, 11, 11, 11, 11, 11, 11, 11, 6, 6, 21, 21, 6, 21, 21, 21);
-    __m128i count;
-    __m128i level[5];
-    int8_t *cc  = coeff_contexts;
-    int32_t row = height;
+    __m128i       pos_to_offset       = (height == 4)
+                    ? _mm_setr_epi8(0, 1, 6, 6, 1, 6, 6, 21, 6, 6, 21, 21, 6, 21, 21, 21)
+                    : _mm_setr_epi8(0, 11, 11, 11, 11, 11, 11, 11, 6, 6, 21, 21, 6, 21, 21, 21);
+    __m128i       count;
+    __m128i       level[5];
+    int8_t *      cc  = coeff_contexts;
+    int32_t       row = height;
 
     assert(!(height % 4));
 
@@ -125,18 +125,18 @@ static INLINE void get_8_coeff_contexts_2d(const uint8_t *levels, const int32_t 
 
     if (height == 8) {
         pos_to_offset[0] = _mm_setr_epi8(0, 1, 6, 6, 21, 21, 21, 21, 1, 6, 6, 21, 21, 21, 21, 21);
-        pos_to_offset[1] =
-            _mm_setr_epi8(6, 6, 21, 21, 21, 21, 21, 21, 6, 21, 21, 21, 21, 21, 21, 21);
+        pos_to_offset[1] = _mm_setr_epi8(
+            6, 6, 21, 21, 21, 21, 21, 21, 6, 21, 21, 21, 21, 21, 21, 21);
     } else if (height < 8) {
-        pos_to_offset[0] =
-            _mm_setr_epi8(0, 16, 6, 6, 21, 21, 21, 21, 16, 16, 6, 21, 21, 21, 21, 21);
-        pos_to_offset[1] =
-            _mm_setr_epi8(16, 16, 21, 21, 21, 21, 21, 21, 16, 16, 21, 21, 21, 21, 21, 21);
+        pos_to_offset[0] = _mm_setr_epi8(
+            0, 16, 6, 6, 21, 21, 21, 21, 16, 16, 6, 21, 21, 21, 21, 21);
+        pos_to_offset[1] = _mm_setr_epi8(
+            16, 16, 21, 21, 21, 21, 21, 21, 16, 16, 21, 21, 21, 21, 21, 21);
     } else {
-        pos_to_offset[0] =
-            _mm_setr_epi8(0, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11);
-        pos_to_offset[1] =
-            _mm_setr_epi8(6, 6, 21, 21, 21, 21, 21, 21, 6, 21, 21, 21, 21, 21, 21, 21);
+        pos_to_offset[0] = _mm_setr_epi8(
+            0, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11);
+        pos_to_offset[1] = _mm_setr_epi8(
+            6, 6, 21, 21, 21, 21, 21, 21, 6, 21, 21, 21, 21, 21, 21, 21);
     }
     pos_to_offset[2] = _mm_set1_epi8(21);
 
@@ -171,30 +171,30 @@ static INLINE void get_16n_coeff_contexts_2d(const uint8_t *levels, const int32_
 
     pos_to_offset_large[2] = _mm_set1_epi8(21);
     if (real_width == real_height) {
-        pos_to_offset[0] =
-            _mm_setr_epi8(0, 1, 6, 6, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21);
-        pos_to_offset[1] =
-            _mm_setr_epi8(1, 6, 6, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21);
-        pos_to_offset[2] =
-            _mm_setr_epi8(6, 6, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21);
-        pos_to_offset[3] =
-            _mm_setr_epi8(6, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21);
+        pos_to_offset[0] = _mm_setr_epi8(
+            0, 1, 6, 6, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21);
+        pos_to_offset[1] = _mm_setr_epi8(
+            1, 6, 6, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21);
+        pos_to_offset[2] = _mm_setr_epi8(
+            6, 6, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21);
+        pos_to_offset[3] = _mm_setr_epi8(
+            6, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21);
         pos_to_offset[4] = pos_to_offset_large[0] = pos_to_offset_large[1] = pos_to_offset_large[2];
     } else if (real_width > real_height) {
-        pos_to_offset[0] =
-            _mm_setr_epi8(0, 16, 6, 6, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21);
-        pos_to_offset[1] =
-            _mm_setr_epi8(16, 16, 6, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21);
-        pos_to_offset[2] = pos_to_offset[3] = pos_to_offset[4] =
-            _mm_setr_epi8(16, 16, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21);
+        pos_to_offset[0] = _mm_setr_epi8(
+            0, 16, 6, 6, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21);
+        pos_to_offset[1] = _mm_setr_epi8(
+            16, 16, 6, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21);
+        pos_to_offset[2] = pos_to_offset[3] = pos_to_offset[4] = _mm_setr_epi8(
+            16, 16, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21);
         pos_to_offset_large[0] = pos_to_offset_large[1] = pos_to_offset_large[2];
     } else { // real_width < real_height
-        pos_to_offset[0] = pos_to_offset[1] =
-            _mm_setr_epi8(11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11);
-        pos_to_offset[2] =
-            _mm_setr_epi8(6, 6, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21);
-        pos_to_offset[3] =
-            _mm_setr_epi8(6, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21);
+        pos_to_offset[0] = pos_to_offset[1] = _mm_setr_epi8(
+            11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11);
+        pos_to_offset[2] = _mm_setr_epi8(
+            6, 6, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21);
+        pos_to_offset[3] = _mm_setr_epi8(
+            6, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21);
         pos_to_offset[4]       = pos_to_offset_large[2];
         pos_to_offset_large[0] = pos_to_offset_large[1] = _mm_set1_epi8(11);
     }

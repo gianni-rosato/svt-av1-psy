@@ -24,8 +24,8 @@ void avc_style_copy_sse2(EbByte ref_pic, uint32_t src_stride, EbByte dst, uint32
 //This function should be removed and replace by avc_style_copy_sse2
 
 void svt_picture_average_kernel_sse2_intrin(EbByte src0, uint32_t src0_stride, EbByte src1,
-                                        uint32_t src1_stride, EbByte dst, uint32_t dst_stride,
-                                        uint32_t area_width, uint32_t area_height) {
+                                            uint32_t src1_stride, EbByte dst, uint32_t dst_stride,
+                                            uint32_t area_width, uint32_t area_height) {
     __m128i  xmm_avg1, xmm_avg2;
     uint32_t y;
     assert((area_width & 3) == 0);
@@ -70,8 +70,8 @@ void svt_picture_average_kernel_sse2_intrin(EbByte src0, uint32_t src0_stride, E
         }
     } else if (area_width == 8) {
         for (y = 0; y < area_height; y += 2) {
-            xmm_avg1 =
-                _mm_avg_epu8(_mm_loadl_epi64((__m128i *)src0), _mm_loadl_epi64((__m128i *)src1));
+            xmm_avg1 = _mm_avg_epu8(_mm_loadl_epi64((__m128i *)src0),
+                                    _mm_loadl_epi64((__m128i *)src1));
             xmm_avg2 = _mm_avg_epu8(_mm_loadl_epi64((__m128i *)(src0 + src0_stride)),
                                     _mm_loadl_epi64((__m128i *)(src1 + src1_stride)));
 
@@ -86,7 +86,7 @@ void svt_picture_average_kernel_sse2_intrin(EbByte src0, uint32_t src0_stride, E
 }
 
 void svt_picture_average_kernel1_line_sse2_intrin(EbByte src0, EbByte src1, EbByte dst,
-                                              uint32_t area_width) {
+                                                  uint32_t area_width) {
     __m128i xmm_avg1, xmm_avg2, xmm_avg3, xmm_avg4;
 
     if (area_width > 16) {

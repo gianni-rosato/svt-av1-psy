@@ -31,8 +31,7 @@ extern "C" {
      * Defines
      **************************************/
 #define MODE_DECISION_CANDIDATE_MAX_COUNT_Y 1855
-#define MODE_DECISION_CANDIDATE_MAX_COUNT \
-    (MODE_DECISION_CANDIDATE_MAX_COUNT_Y + 84)
+#define MODE_DECISION_CANDIDATE_MAX_COUNT (MODE_DECISION_CANDIDATE_MAX_COUNT_Y + 84)
 #define DEPTH_ONE_STEP 21
 #define DEPTH_TWO_STEP 5
 #define DEPTH_THREE_STEP 1
@@ -73,19 +72,20 @@ typedef struct MdBlkStruct {
     PartitionContextType left_neighbor_partition;
     PartitionContextType above_neighbor_partition;
     uint64_t             cost;
-    uint64_t             default_cost; // Similar to cost but does not get updated @ d1_non_square_block_decision() and d2_inter_depth_block_decision()
-    CandidateMv          ed_ref_mv_stack[MODE_CTX_REF_FRAMES]
+    uint64_t
+                default_cost; // Similar to cost but does not get updated @ d1_non_square_block_decision() and d2_inter_depth_block_decision()
+    CandidateMv ed_ref_mv_stack[MODE_CTX_REF_FRAMES]
                                [MAX_REF_MV_STACK_SIZE]; //to be used in MD and EncDec
-    IntMv ref_mvs[MODE_CTX_REF_FRAMES][MAX_MV_REF_CANDIDATES]; //used only for nonCompound modes.
+    IntMv    ref_mvs[MODE_CTX_REF_FRAMES][MAX_MV_REF_CANDIDATES]; //used only for nonCompound modes.
     uint32_t best_d1_blk;
     uint8_t *neigh_left_recon[3]; //only for MD
     uint8_t *neigh_top_recon[3];
     uint16_t *neigh_left_recon_16bit[3];
     uint16_t *neigh_top_recon_16bit[3];
-    uint8_t merge_flag;
-    uint8_t sse_gradian_band[NUMBER_OF_SHAPES];
-    int8_t pred_depth_refinement;
-    int8_t pred_depth;
+    uint8_t   merge_flag;
+    uint8_t   sse_gradian_band[NUMBER_OF_SHAPES];
+    int8_t    pred_depth_refinement;
+    int8_t    pred_depth;
     // wm
     EbWarpedMotionParams wm_params_l0;
     EbWarpedMotionParams wm_params_l1;
@@ -93,7 +93,7 @@ typedef struct MdBlkStruct {
     int8_t ref_frame_index_l0;
     int8_t ref_frame_index_l1;
     // compound
-    uint8_t compound_idx;
+    uint8_t                compound_idx;
     InterInterCompoundData interinter_comp;
     // txb
     uint8_t u_has_coeff[TRANSFORM_UNIT_MAX_COUNT];
@@ -106,11 +106,11 @@ struct ModeDecisionCandidateBuffer;
 struct InterPredictionContext;
 
 typedef struct RefResults {
-    uint8_t  list_i;   // list index of this ref
-    uint8_t  ref_i;    // ref list index of this ref
-    uint32_t dist;     // distortion
-    uint8_t  do_ref;   // to process this ref  or not
-    EbBool valid_ref;
+    uint8_t  list_i; // list index of this ref
+    uint8_t  ref_i; // ref list index of this ref
+    uint32_t dist; // distortion
+    uint8_t  do_ref; // to process this ref  or not
+    EbBool   valid_ref;
 } RefResults;
 typedef enum InterCandGroup {
     PA_ME_GROUP         = 0,
@@ -123,159 +123,176 @@ typedef enum InterCandGroup {
     GLOBAL_GROUP        = 7,
     TOT_INTER_GROUP     = 8,
 } InterCandGroup;
-typedef struct  InterCompCtrls {
-    uint8_t allowed_comp_types[MD_COMP_TYPES];       // Compound types to inject; AVG/DIST/DIFF/WEDGE (if a comp type is disallowed here, it will
-                                                     // override distance-based settings)
-    uint8_t allowed_dist1_comp_types[MD_COMP_TYPES]; // Compound types to inject for bipred cands with a ref > distance 1 from current frame; AVG/DIST/DIFF/WEDGE
-                                                     // The distance-based compound types should be a subset of the allowed_comp_types
-    uint8_t allowed_dist2_comp_types[MD_COMP_TYPES]; // Compound types to inject for bipred cands with a ref > distance 2 from current frame; AVG/DIST/DIFF/WEDGE
-                                                     // The distance-based compound types should be a subset of the allowed_comp_types
-}InterCompCtrls;
+typedef struct InterCompCtrls {
+    uint8_t allowed_comp_types
+        [MD_COMP_TYPES]; // Compound types to inject; AVG/DIST/DIFF/WEDGE (if a comp type is disallowed here, it will
+        // override distance-based settings)
+    uint8_t allowed_dist1_comp_types
+        [MD_COMP_TYPES]; // Compound types to inject for bipred cands with a ref > distance 1 from current frame; AVG/DIST/DIFF/WEDGE
+        // The distance-based compound types should be a subset of the allowed_comp_types
+    uint8_t allowed_dist2_comp_types
+        [MD_COMP_TYPES]; // Compound types to inject for bipred cands with a ref > distance 2 from current frame; AVG/DIST/DIFF/WEDGE
+        // The distance-based compound types should be a subset of the allowed_comp_types
+} InterCompCtrls;
 typedef struct InterIntraCompCtrls {
     uint8_t enabled;
     uint8_t skip_pme_unipred; // Skip inter-intra compound injetion for PME and unipred3x3
     uint8_t closest_ref_only; // Use inter-intra only for the closest ref frames
 } InterIntraCompCtrls;
-typedef struct  ObmcControls {
+typedef struct ObmcControls {
     uint8_t enabled;
-    uint8_t me_count;      //how many me candidates to consider injecting obmc
-    uint8_t pme_best_ref;  //limit injection to best ref in pme
+    uint8_t me_count; //how many me candidates to consider injecting obmc
+    uint8_t pme_best_ref; //limit injection to best ref in pme
     uint8_t mvp_ref_count; //closest references allowed in mvp 0:4
-    uint8_t near_count;    //how many near to consider injecting obmc 0..3
-    EbBool max_blk_size_16x16; // if true, cap the max block size that OBMC can be used to 16x16
-}ObmcControls;
-typedef struct  AMdCycleRControls {
-    uint8_t enabled; // On/Off feature control
-    uint16_t skip_nsq_th;  // Threshold to bypass nsq <the higher th the higher speed>
-    uint16_t switch_level_th; // TH level used to determine if more aggressive feature levels should be used for the current block
-    uint8_t non_skip_level; // Which level of aggressive features to use when probability of block is less than switch_level_th; higher is more aggressive
-}AMdCycleRControls;
+    uint8_t near_count; //how many near to consider injecting obmc 0..3
+    EbBool  max_blk_size_16x16; // if true, cap the max block size that OBMC can be used to 16x16
+} ObmcControls;
+typedef struct AMdCycleRControls {
+    uint8_t  enabled; // On/Off feature control
+    uint16_t skip_nsq_th; // Threshold to bypass nsq <the higher th the higher speed>
+    uint16_t
+        switch_level_th; // TH level used to determine if more aggressive feature levels should be used for the current block
+    uint8_t
+        non_skip_level; // Which level of aggressive features to use when probability of block is less than switch_level_th; higher is more aggressive
+} AMdCycleRControls;
 typedef struct TxtControls {
     uint8_t enabled;
 
-    uint8_t txt_group_inter_lt_16x16;       // group to use when inter and tx block < 16x16
-    uint8_t txt_group_inter_gt_eq_16x16;    // group to use when inter and tx block >= 16x16
+    uint8_t txt_group_inter_lt_16x16; // group to use when inter and tx block < 16x16
+    uint8_t txt_group_inter_gt_eq_16x16; // group to use when inter and tx block >= 16x16
 
-    uint8_t txt_group_intra_lt_16x16;       // group to use when intra and tx block < 16x16
-    uint8_t txt_group_intra_gt_eq_16x16;    // group to use when intra and tx block >= 16x16
+    uint8_t txt_group_intra_lt_16x16; // group to use when intra and tx block < 16x16
+    uint8_t txt_group_intra_gt_eq_16x16; // group to use when intra and tx block >= 16x16
 
-    uint8_t use_stats;    // On/Off feature control
-    uint16_t intra_th;    // Threshold to bypass intra TXT <the higher th the higher speed>
-    uint16_t inter_th;    // Threshold to bypass inter TXT <the higher th the higher speed>
-}TxtControls;
-typedef struct  TxsCycleRControls {
-    uint8_t enabled;    // On/Off feature control
-    uint16_t intra_th;  // Threshold to bypass intra TXS <the higher th the higher speed>
-    uint16_t inter_th;  // Threshold to bypass inter TXS <the higher th the higher speed>
-}TxsCycleRControls;
+    uint8_t  use_stats; // On/Off feature control
+    uint16_t intra_th; // Threshold to bypass intra TXT <the higher th the higher speed>
+    uint16_t inter_th; // Threshold to bypass inter TXT <the higher th the higher speed>
+} TxtControls;
+typedef struct TxsCycleRControls {
+    uint8_t  enabled; // On/Off feature control
+    uint16_t intra_th; // Threshold to bypass intra TXS <the higher th the higher speed>
+    uint16_t inter_th; // Threshold to bypass inter TXS <the higher th the higher speed>
+} TxsCycleRControls;
 
 typedef struct RefPruningControls {
     uint8_t enabled; // 0: OFF; 1: use inter to inter distortion deviation to derive best_refs
-    uint8_t best_refs[TOT_INTER_GROUP];     // 0: OFF; 1: limit the injection to the best references based on distortion
-    uint8_t closest_refs[TOT_INTER_GROUP];  // 0: OFF; 1: limit the injection to the closest references based on distance (LAST/BWD)
-}RefPruningControls;
+    uint8_t best_refs
+        [TOT_INTER_GROUP]; // 0: OFF; 1: limit the injection to the best references based on distortion
+    uint8_t closest_refs
+        [TOT_INTER_GROUP]; // 0: OFF; 1: limit the injection to the closest references based on distance (LAST/BWD)
+} RefPruningControls;
 typedef struct DepthRefinementCtrls {
     uint8_t enabled;
 
     int64_t sub_to_current_th; // decrease towards a more agressive level
     int64_t parent_to_current_th; // decrease towards a more agressive level
-    uint8_t use_pred_block_cost;   // add an offset to sub_to_current_th and parent_to_current_th on the cost range of the predicted block; use default ths for high cost(s) and more aggressive TH(s) for low cost(s)
-    uint8_t disallow_below_16x16;  // remove 16x16 & lower depth(s) based on the 64x64 distortion if sb_64x64
+    uint8_t
+        use_pred_block_cost; // add an offset to sub_to_current_th and parent_to_current_th on the cost range of the predicted block; use default ths for high cost(s) and more aggressive TH(s) for low cost(s)
+    uint8_t
+        disallow_below_16x16; // remove 16x16 & lower depth(s) based on the 64x64 distortion if sb_64x64
 
-}DepthRefinementCtrls;
+} DepthRefinementCtrls;
 typedef struct PfCtrls {
     EB_TRANS_COEFF_SHAPE pf_shape;
 } PfCtrls;
 typedef struct MdNsqMotionSearchCtrls {
-    uint8_t enabled;                    // 0: NSQ motion search @ MD OFF; 1: NSQ motion search @ MD ON
-    uint8_t use_ssd;                    // 0: search using SAD; 1: search using SSD
-    uint8_t full_pel_search_width;      // Full Pel search area width
-    uint8_t full_pel_search_height;     // Full Pel search area height
-}MdNsqMotionSearchCtrls;
+    uint8_t enabled; // 0: NSQ motion search @ MD OFF; 1: NSQ motion search @ MD ON
+    uint8_t use_ssd; // 0: search using SAD; 1: search using SSD
+    uint8_t full_pel_search_width; // Full Pel search area width
+    uint8_t full_pel_search_height; // Full Pel search area height
+} MdNsqMotionSearchCtrls;
 typedef struct MdSqMotionSearchCtrls {
-    uint8_t enabled;                    // 0: SQ motion search @ MD OFF; 1: SQ motion search @ MD ON
-    uint8_t use_ssd;                    // 0: search using SAD; 1: search using SSD
+    uint8_t enabled; // 0: SQ motion search @ MD OFF; 1: SQ motion search @ MD ON
+    uint8_t use_ssd; // 0: search using SAD; 1: search using SSD
 
-    uint16_t pame_distortion_th;        // TH for pa_me distortion to determine whether to search (distortion per pixel)
+    uint16_t
+        pame_distortion_th; // TH for pa_me distortion to determine whether to search (distortion per pixel)
 
-    uint8_t  sprs_lev0_enabled;         // 0: OFF; 1: ON
-    uint8_t  sprs_lev0_step;            // Sparse search step
-    uint16_t sprs_lev0_w;               // Sparse search area width
-    uint16_t sprs_lev0_h;               // Sparse search area height
-    uint16_t max_sprs_lev0_w;           // Max Sparse search area width
-    uint16_t max_sprs_lev0_h;           // Max Sparse search area height
-    int16_t sprs_lev0_multiplier;       // search area multiplier (is a % -- 100 is no scaling)
+    uint8_t  sprs_lev0_enabled; // 0: OFF; 1: ON
+    uint8_t  sprs_lev0_step; // Sparse search step
+    uint16_t sprs_lev0_w; // Sparse search area width
+    uint16_t sprs_lev0_h; // Sparse search area height
+    uint16_t max_sprs_lev0_w; // Max Sparse search area width
+    uint16_t max_sprs_lev0_h; // Max Sparse search area height
+    int16_t  sprs_lev0_multiplier; // search area multiplier (is a % -- 100 is no scaling)
 
-    uint8_t  sprs_lev1_enabled;         // 0: OFF; 1: ON
-    uint8_t  sprs_lev1_step;            // Sparse search step
-    uint16_t sprs_lev1_w;               // Sparse search area width
-    uint16_t sprs_lev1_h;               // Sparse search area height
-    uint16_t max_sprs_lev1_w;           // Max Sparse search area width
-    uint16_t max_sprs_lev1_h;           // Max Sparse search area height
-    int16_t sprs_lev1_multiplier;       // search area multiplier (is a % -- 100 is no scaling)
+    uint8_t  sprs_lev1_enabled; // 0: OFF; 1: ON
+    uint8_t  sprs_lev1_step; // Sparse search step
+    uint16_t sprs_lev1_w; // Sparse search area width
+    uint16_t sprs_lev1_h; // Sparse search area height
+    uint16_t max_sprs_lev1_w; // Max Sparse search area width
+    uint16_t max_sprs_lev1_h; // Max Sparse search area height
+    int16_t  sprs_lev1_multiplier; // search area multiplier (is a % -- 100 is no scaling)
 
-    uint8_t  sprs_lev2_enabled;         // 0: OFF; 1: ON
-    uint8_t  sprs_lev2_step;            // Sparse search step
-    uint16_t sprs_lev2_w;               // Sparse search area width
-    uint16_t sprs_lev2_h;               // Sparse search area height
-}MdSqMotionSearchCtrls;
+    uint8_t  sprs_lev2_enabled; // 0: OFF; 1: ON
+    uint8_t  sprs_lev2_step; // Sparse search step
+    uint16_t sprs_lev2_w; // Sparse search area width
+    uint16_t sprs_lev2_h; // Sparse search area height
+} MdSqMotionSearchCtrls;
 typedef struct MdPmeCtrls {
-    uint8_t enabled;                    // 0: PME search @ MD OFF; 1: PME search @ MD ON
-    uint8_t use_ssd;                    // 0: search using SAD; 1: search using SSD
-    uint8_t full_pel_search_width;      // Full Pel search area width
-    uint8_t full_pel_search_height;     // Full Pel search area height
-    int pre_fp_pme_to_me_cost_th;   // If pre_fp_pme_to_me_cost higher than pre_fp_pme_to_me_cost_th then PME_MV = ME_MV and exit (decrease towards a faster level)
-    int pre_fp_pme_to_me_mv_th;     // If pre_fp_pme_to_me_mv smaller than pre_fp_pme_to_me_mv_th then PME_MV = ME_MV and exit (increase towards a faster level)
-    int post_fp_pme_to_me_cost_th;  // If post_fp_pme_to_me_cost higher than post_fp_pme_to_me_cost_th then PME_MV = ME_MV and exit (decrease towards a faster level)
-    int post_fp_pme_to_me_mv_th;    // If post_fp_pme_to_me_mv smaller than post_fp_pme_to_me_mv_th then PME_MV = ME_MV and exit (increase towards a faster level)
-}MdPmeCtrls;
+    uint8_t enabled; // 0: PME search @ MD OFF; 1: PME search @ MD ON
+    uint8_t use_ssd; // 0: search using SAD; 1: search using SSD
+    uint8_t full_pel_search_width; // Full Pel search area width
+    uint8_t full_pel_search_height; // Full Pel search area height
+    int     pre_fp_pme_to_me_cost_th; // If pre_fp_pme_to_me_cost higher than pre_fp_pme_to_me_cost_th then PME_MV = ME_MV and exit (decrease towards a faster level)
+    int     pre_fp_pme_to_me_mv_th; // If pre_fp_pme_to_me_mv smaller than pre_fp_pme_to_me_mv_th then PME_MV = ME_MV and exit (increase towards a faster level)
+    int     post_fp_pme_to_me_cost_th; // If post_fp_pme_to_me_cost higher than post_fp_pme_to_me_cost_th then PME_MV = ME_MV and exit (decrease towards a faster level)
+    int     post_fp_pme_to_me_mv_th; // If post_fp_pme_to_me_mv smaller than post_fp_pme_to_me_mv_th then PME_MV = ME_MV and exit (increase towards a faster level)
+} MdPmeCtrls;
 typedef struct MdSubPelSearchCtrls {
-    uint8_t enabled;                             // 0: subpel search @ MD OFF; 1: subpel search @ MD ON
-    SUBPEL_SEARCH_TYPE subpel_search_type;       // USE_8_TAPS | USE_4_TAPS | USE_2_TAPS | USE_2_TAPS_ORIG (not supported)
-    int subpel_iters_per_step;                   // Maximum number of steps in logarithmic subpel search before giving up.
-    uint8_t eight_pel_search_enabled;            // 0: OFF; 1: ON
-}MdSubPelSearchCtrls;
+    uint8_t enabled; // 0: subpel search @ MD OFF; 1: subpel search @ MD ON
+    SUBPEL_SEARCH_TYPE
+        subpel_search_type; // USE_8_TAPS | USE_4_TAPS | USE_2_TAPS | USE_2_TAPS_ORIG (not supported)
+    int subpel_iters_per_step; // Maximum number of steps in logarithmic subpel search before giving up.
+    uint8_t eight_pel_search_enabled; // 0: OFF; 1: ON
+} MdSubPelSearchCtrls;
 typedef struct CoeffBSwMdCtrls {
-    uint8_t enabled;                // 0:  OFF; 1:  ON
-    uint8_t non_skip_level;         // Which level of aggressive features to use when SQ has zero coeffs; higher is more aggressive
-    uint8_t skip_block;             // Allow skipping NSQ blocks
-}CoeffBSwMdCtrls;
+    uint8_t enabled; // 0:  OFF; 1:  ON
+    uint8_t
+            non_skip_level; // Which level of aggressive features to use when SQ has zero coeffs; higher is more aggressive
+    uint8_t skip_block; // Allow skipping NSQ blocks
+} CoeffBSwMdCtrls;
 typedef struct RdoqCtrls {
     uint8_t enabled;
 
-    uint8_t eob_fast_l_inter; // 0: do not use eob_fast  for luma inter; 1:  use eob_fast  for luma inter
-    uint8_t eob_fast_l_intra; // 0: do not use eob_fast  for luma intra; 1:  use eob_fast  for luma intra
-    uint8_t eob_fast_c_inter; // 0: do not use eob_fast  for chroma inter; 1:  use eob_fast  for chroma inter
-    uint8_t eob_fast_c_intra; // 0: do not use eob_fast  for chroma intra; 1:  use eob_fast  for chroma intra
-    uint8_t fp_q_l;           // 0: use default quant for luma; 1: use fp_quant for luma
-    uint8_t fp_q_c;           // 0: use default quant for chroma; 1: use fp_quant for chroma
-    uint8_t satd_factor;      // do not perform rdoq if the tx satd > satd_factor
-    uint8_t early_exit_th;     // do not perform rdoq based on an early skip/non-skip cost, threshold for early exit is 5
-}RdoqCtrls;
+    uint8_t
+        eob_fast_l_inter; // 0: do not use eob_fast  for luma inter; 1:  use eob_fast  for luma inter
+    uint8_t
+        eob_fast_l_intra; // 0: do not use eob_fast  for luma intra; 1:  use eob_fast  for luma intra
+    uint8_t
+        eob_fast_c_inter; // 0: do not use eob_fast  for chroma inter; 1:  use eob_fast  for chroma inter
+    uint8_t
+        eob_fast_c_intra; // 0: do not use eob_fast  for chroma intra; 1:  use eob_fast  for chroma intra
+    uint8_t fp_q_l; // 0: use default quant for luma; 1: use fp_quant for luma
+    uint8_t fp_q_c; // 0: use default quant for chroma; 1: use fp_quant for chroma
+    uint8_t satd_factor; // do not perform rdoq if the tx satd > satd_factor
+    uint8_t
+        early_exit_th; // do not perform rdoq based on an early skip/non-skip cost, threshold for early exit is 5
+} RdoqCtrls;
 typedef struct NicCtrls {
     uint8_t stage1_scaling_num; // Scaling numerator for post-stage 0 NICS: <x>/16
     uint8_t stage2_scaling_num; // Scaling numerator for post-stage 1 NICS: <x>/16
     uint8_t stage3_scaling_num; // Scaling numerator for post-stage 2 NICS: <x>/16
-}NicCtrls;
+} NicCtrls;
 typedef struct ModeDecisionContext {
     EbDctor  dctor;
     EbFifo * mode_decision_configuration_input_fifo_ptr;
     EbFifo * mode_decision_output_fifo_ptr;
     int16_t *transform_inner_array_ptr;
 
-    ModeDecisionCandidate **      fast_candidate_ptr_array;
-    ModeDecisionCandidate *       fast_candidate_array;
-    ModeDecisionCandidateBuffer **candidate_buffer_ptr_array;
-    ModeDecisionCandidateBuffer *candidate_buffer_tx_depth_1;
-    ModeDecisionCandidateBuffer *candidate_buffer_tx_depth_2;
-    MdRateEstimationContext *     md_rate_estimation_ptr;
-    EbBool                        is_md_rate_estimation_ptr_owner;
+    ModeDecisionCandidate **       fast_candidate_ptr_array;
+    ModeDecisionCandidate *        fast_candidate_array;
+    ModeDecisionCandidateBuffer ** candidate_buffer_ptr_array;
+    ModeDecisionCandidateBuffer *  candidate_buffer_tx_depth_1;
+    ModeDecisionCandidateBuffer *  candidate_buffer_tx_depth_2;
+    MdRateEstimationContext *      md_rate_estimation_ptr;
+    EbBool                         is_md_rate_estimation_ptr_owner;
     struct MdRateEstimationContext rate_est_table;
-    InterPredictionContext *      inter_prediction_context;
-    MdBlkStruct *                md_local_blk_unit;
-    BlkStruct *                  md_blk_arr_nsq;
-    uint8_t *avail_blk_flag;
-    MdcSbData *mdc_sb_array;
+    InterPredictionContext *       inter_prediction_context;
+    MdBlkStruct *                  md_local_blk_unit;
+    BlkStruct *                    md_blk_arr_nsq;
+    uint8_t *                      avail_blk_flag;
+    MdcSbData *                    mdc_sb_array;
 
     NeighborArrayUnit *intra_luma_mode_neighbor_array;
     NeighborArrayUnit *intra_chroma_mode_neighbor_array;
@@ -317,12 +334,13 @@ typedef struct ModeDecisionContext {
     // Lambda
     uint32_t fast_lambda_md[2];
     uint32_t full_lambda_md[2];
-    uint32_t full_sb_lambda_md[2]; // for the case of lambda modulation (blk_lambda_tuning), full_lambda_md/fast_lambda_md corresponds
-                                   // to block lambda and full_sb_lambda_md is the full lambda per sb
-    EbBool       blk_lambda_tuning;
+    uint32_t full_sb_lambda_md
+        [2]; // for the case of lambda modulation (blk_lambda_tuning), full_lambda_md/fast_lambda_md corresponds
+        // to block lambda and full_sb_lambda_md is the full lambda per sb
+    EbBool blk_lambda_tuning;
     //  Context Variables---------------------------------
     SuperBlock *     sb_ptr;
-    BlkStruct *     blk_ptr;
+    BlkStruct *      blk_ptr;
     const BlockGeom *blk_geom;
     PredictionUnit * pu_ptr;
     MvUnit           mv_unit;
@@ -346,7 +364,7 @@ typedef struct ModeDecisionContext {
     uint16_t         pu_height;
     EbPfMode         pf_md_mode;
     uint8_t          hbd_mode_decision;
-    uint8_t         qp_index;
+    uint8_t          qp_index;
     uint64_t         three_quad_energy;
     uint32_t         txb_1d_offset;
     EbBool           uv_intra_comp_only;
@@ -390,13 +408,13 @@ typedef struct ModeDecisionContext {
         [MODE_DECISION_CANDIDATE_MAX_COUNT]; // used to do not inject existing MV
     int16_t injected_mv_y_bipred_l1_array
         [MODE_DECISION_CANDIDATE_MAX_COUNT]; // used to do not inject existing MV
-    uint8_t  injected_mv_count_bipred;
-    uint32_t fast_candidate_inter_count;
-    uint32_t me_block_offset;
-    uint32_t me_cand_offset;
+    uint8_t              injected_mv_count_bipred;
+    uint32_t             fast_candidate_inter_count;
+    uint32_t             me_block_offset;
+    uint32_t             me_cand_offset;
     EbPictureBufferDesc *cfl_temp_prediction_ptr;
     EbPictureBufferDesc
-        *residual_quant_coeff_ptr; // One buffer for residual and quantized coefficient
+        *    residual_quant_coeff_ptr; // One buffer for residual and quantized coefficient
     uint8_t  tx_depth;
     uint8_t  txb_itr;
     uint32_t me_sb_addr;
@@ -445,30 +463,31 @@ typedef struct ModeDecisionContext {
     DECLARE_ALIGNED(32, int16_t, residual1[MAX_SB_SQUARE]);
     DECLARE_ALIGNED(32, int16_t, diff10[MAX_SB_SQUARE]);
     unsigned int prediction_mse;
-    MdStage md_stage;
+    MdStage      md_stage;
     uint32_t     cand_buff_indices[CAND_CLASS_TOTAL][MAX_NFL_BUFF];
     uint8_t      md_staging_mode;
     uint8_t      bypass_md_stage_1[CAND_CLASS_TOTAL];
-    uint8_t bypass_md_stage_2[CAND_CLASS_TOTAL];
-    uint32_t md_stage_0_count[CAND_CLASS_TOTAL];
-    uint32_t md_stage_1_count[CAND_CLASS_TOTAL];
-    uint32_t md_stage_2_count[CAND_CLASS_TOTAL];
-    uint32_t md_stage_3_count[CAND_CLASS_TOTAL];
-    uint32_t md_stage_1_total_count;
-    uint32_t md_stage_2_total_count;
-    uint32_t md_stage_3_total_count;
-    uint32_t md_stage_3_total_intra_count;
-    uint64_t best_intra_cost;
-    uint64_t best_inter_cost;
-    uint16_t skip_cfl_cost_dev_th;
-    uint16_t mds3_intra_prune_th;
-    CandClass target_class;
+    uint8_t      bypass_md_stage_2[CAND_CLASS_TOTAL];
+    uint32_t     md_stage_0_count[CAND_CLASS_TOTAL];
+    uint32_t     md_stage_1_count[CAND_CLASS_TOTAL];
+    uint32_t     md_stage_2_count[CAND_CLASS_TOTAL];
+    uint32_t     md_stage_3_count[CAND_CLASS_TOTAL];
+    uint32_t     md_stage_1_total_count;
+    uint32_t     md_stage_2_total_count;
+    uint32_t     md_stage_3_total_count;
+    uint32_t     md_stage_3_total_intra_count;
+    uint64_t     best_intra_cost;
+    uint64_t     best_inter_cost;
+    uint16_t     skip_cfl_cost_dev_th;
+    uint16_t     mds3_intra_prune_th;
+    CandClass    target_class;
 
     // fast_loop_core signals
     EbBool md_staging_skip_interpolation_search;
     EbBool md_staging_skip_chroma_pred;
     // full_loop_core signals
-    EbBool md_staging_perform_inter_pred; // 0: perform luma & chroma prediction + interpolation search, 2: nothing (use information from previous stages)
+    EbBool
+           md_staging_perform_inter_pred; // 0: perform luma & chroma prediction + interpolation search, 2: nothing (use information from previous stages)
     EbBool md_staging_tx_size_mode; // 0: Tx Size recon only, 1:Tx Size search and recon
     EbBool md_staging_txt_level;
     EbBool md_staging_skip_full_chroma;
@@ -478,15 +497,15 @@ typedef struct ModeDecisionContext {
     DECLARE_ALIGNED(
         16, uint8_t,
         intrapred_buf[INTERINTRA_MODES][2 * 32 * 32]); //MAX block size for inter intra is 32x32
-    uint64_t *   ref_best_cost_sq_table;
-    uint32_t *   ref_best_ref_sq_table;
-    uint64_t     md_stage_1_cand_prune_th;
-    uint64_t     md_stage_1_class_prune_th;
+    uint64_t *ref_best_cost_sq_table;
+    uint32_t *ref_best_ref_sq_table;
+    uint64_t  md_stage_1_cand_prune_th;
+    uint64_t  md_stage_1_class_prune_th;
 
-    uint64_t     md_stage_2_cand_prune_th;
-    uint64_t     md_stage_2_class_prune_th;
-    uint64_t     md_stage_3_cand_prune_th;
-    uint64_t     md_stage_3_class_prune_th;
+    uint64_t md_stage_2_cand_prune_th;
+    uint64_t md_stage_2_class_prune_th;
+    uint64_t md_stage_3_cand_prune_th;
+    uint64_t md_stage_3_class_prune_th;
     DECLARE_ALIGNED(16, uint8_t, obmc_buff_0[2 * 2 * MAX_MB_PLANE * MAX_SB_SQUARE]);
     DECLARE_ALIGNED(16, uint8_t, obmc_buff_1[2 * 2 * MAX_MB_PLANE * MAX_SB_SQUARE]);
     DECLARE_ALIGNED(16, uint8_t, obmc_buff_0_8b[2 * MAX_MB_PLANE * MAX_SB_SQUARE]);
@@ -499,109 +518,108 @@ typedef struct ModeDecisionContext {
     // square cost weighting for deciding if a/b shapes could be skipped
     uint32_t sq_weight;
     // signal for enabling shortcut to skip search depths
-    uint8_t      dc_cand_only_flag;
-    EbBool       disable_angle_z2_intra_flag;
-    uint8_t      shut_skip_ctx_dc_sign_update;
-    uint8_t      shut_fast_rate; // use coeff rate and slipt flag rate only (no MVP derivation)
+    uint8_t dc_cand_only_flag;
+    EbBool  disable_angle_z2_intra_flag;
+    uint8_t shut_skip_ctx_dc_sign_update;
+    uint8_t shut_fast_rate; // use coeff rate and slipt flag rate only (no MVP derivation)
 #if !TUne_TX_TYPE_LEVELS
-    uint8_t      tx_search_level;
+    uint8_t tx_search_level;
 #endif
-    uint8_t      interpolation_search_level;
-    uint8_t      md_tx_size_search_mode;
-    uint8_t      md_pic_obmc_level;
-    uint8_t      md_enable_paeth;
-    uint8_t      md_enable_smooth;
-    uint8_t      md_inter_intra_level;
-    uint8_t      md_filter_intra_level;
-    uint8_t      md_intra_angle_delta;
-    uint8_t      md_allow_intrabc;
-    uint8_t      md_palette_level;
-    uint8_t      dist_based_ref_pruning;
-    uint8_t block_based_depth_refinement_level;
+    uint8_t              interpolation_search_level;
+    uint8_t              md_tx_size_search_mode;
+    uint8_t              md_pic_obmc_level;
+    uint8_t              md_enable_paeth;
+    uint8_t              md_enable_smooth;
+    uint8_t              md_inter_intra_level;
+    uint8_t              md_filter_intra_level;
+    uint8_t              md_intra_angle_delta;
+    uint8_t              md_allow_intrabc;
+    uint8_t              md_palette_level;
+    uint8_t              dist_based_ref_pruning;
+    uint8_t              block_based_depth_refinement_level;
     DepthRefinementCtrls depth_refinement_ctrls;
-    uint8_t pf_level;
-    PfCtrls pf_ctrls;
+    uint8_t              pf_level;
+    PfCtrls              pf_ctrls;
     // Control signals for MD sparse search (used for increasing ME search for active clips)
-    uint8_t md_sq_mv_search_level;
-    MdSqMotionSearchCtrls md_sq_me_ctrls;
-    uint8_t md_nsq_mv_search_level ;
+    uint8_t                md_sq_mv_search_level;
+    MdSqMotionSearchCtrls  md_sq_me_ctrls;
+    uint8_t                md_nsq_mv_search_level;
     MdNsqMotionSearchCtrls md_nsq_motion_search_ctrls;
-    uint8_t md_pme_level;
-    MdPmeCtrls md_pme_ctrls;
-    uint8_t md_subpel_me_level;
-    MdSubPelSearchCtrls md_subpel_me_ctrls;
-    uint8_t md_subpel_pme_level;
-    MdSubPelSearchCtrls md_subpel_pme_ctrls;
-    uint8_t      md_max_ref_count;
-    RefResults    pme_res[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
-    ObmcControls obmc_ctrls;
-    InterCompCtrls inter_comp_ctrls;
-    InterIntraCompCtrls inter_intra_comp_ctrls;
+    uint8_t                md_pme_level;
+    MdPmeCtrls             md_pme_ctrls;
+    uint8_t                md_subpel_me_level;
+    MdSubPelSearchCtrls    md_subpel_me_ctrls;
+    uint8_t                md_subpel_pme_level;
+    MdSubPelSearchCtrls    md_subpel_pme_ctrls;
+    uint8_t                md_max_ref_count;
+    RefResults             pme_res[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
+    ObmcControls           obmc_ctrls;
+    InterCompCtrls         inter_comp_ctrls;
+    InterIntraCompCtrls    inter_intra_comp_ctrls;
     RefResults ref_filtering_res[TOT_INTER_GROUP][MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
     RefPruningControls ref_pruning_ctrls;
     // Signal to control initial and final pass PD setting(s)
     PdPass pd_pass;
 
-    EbBool        md_disable_cfl;
-    TxtControls txt_ctrls;
+    EbBool            md_disable_cfl;
+    TxtControls       txt_ctrls;
     TxsCycleRControls txs_cycles_red_ctrls;
     AMdCycleRControls admd_cycles_red_ctrls;
-    RdoqCtrls rdoq_ctrls;
-    uint8_t disallow_4x4;
-    uint8_t       md_disallow_nsq;
-    uint64_t best_nsq_default_cost;
-    uint64_t default_cost_per_shape[NUMBER_OF_SHAPES];
-    uint8_t enable_area_based_cycles_allocation;
-    uint8_t sb_class;
-    uint16_t coeff_area_based_bypass_nsq_th;
-    uint8_t sb_size;
+    RdoqCtrls         rdoq_ctrls;
+    uint8_t           disallow_4x4;
+    uint8_t           md_disallow_nsq;
+    uint64_t          best_nsq_default_cost;
+    uint64_t          default_cost_per_shape[NUMBER_OF_SHAPES];
+    uint8_t           enable_area_based_cycles_allocation;
+    uint8_t           sb_class;
+    uint16_t          coeff_area_based_bypass_nsq_th;
+    uint8_t           sb_size;
 
     EbPictureBufferDesc *recon_coeff_ptr[TX_TYPES];
     EbPictureBufferDesc *recon_ptr[TX_TYPES];
-    uint32_t part_cnt[NUMBER_OF_SHAPES-1][FB_NUM][SSEG_NUM];
-    uint16_t part_prob[NUMBER_OF_SHAPES-1][FB_NUM][SSEG_NUM];
-    uint32_t pred_depth_count[DEPTH_DELTA_NUM][NUMBER_OF_SHAPES-1];
-    uint32_t depth_prob[DEPTH_DELTA_NUM];
-    uint32_t ad_md_prob[DEPTH_DELTA_NUM][NUMBER_OF_SHAPES-1];
-    uint32_t txt_cnt[TXT_DEPTH_DELTA_NUM][TX_TYPES];
-    uint32_t txt_prob[TXT_DEPTH_DELTA_NUM][TX_TYPES];
-    uint8_t skip_intra;
-    EbPictureBufferDesc* temp_residual_ptr;
-    EbPictureBufferDesc* temp_recon_ptr;
+    uint32_t             part_cnt[NUMBER_OF_SHAPES - 1][FB_NUM][SSEG_NUM];
+    uint16_t             part_prob[NUMBER_OF_SHAPES - 1][FB_NUM][SSEG_NUM];
+    uint32_t             pred_depth_count[DEPTH_DELTA_NUM][NUMBER_OF_SHAPES - 1];
+    uint32_t             depth_prob[DEPTH_DELTA_NUM];
+    uint32_t             ad_md_prob[DEPTH_DELTA_NUM][NUMBER_OF_SHAPES - 1];
+    uint32_t             txt_cnt[TXT_DEPTH_DELTA_NUM][TX_TYPES];
+    uint32_t             txt_prob[TXT_DEPTH_DELTA_NUM][TX_TYPES];
+    uint8_t              skip_intra;
+    EbPictureBufferDesc *temp_residual_ptr;
+    EbPictureBufferDesc *temp_recon_ptr;
     // Array for all nearest/near MVs for a block for single ref case
     MV mvp_array[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH][MAX_MVP_CANIDATES];
     // Count of all nearest/near MVs for a block for single ref case
-    int8_t  mvp_count[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
+    int8_t mvp_count[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
     // Start/end position for MD sparse search
     int16_t sprs_lev0_start_x;
     int16_t sprs_lev0_end_x;
     int16_t sprs_lev0_start_y;
     int16_t sprs_lev0_end_y;
 
-    uint8_t md_staging_tx_size_level;
-    NicCtrls nic_ctrls;
-    uint8_t inter_compound_mode;
-    uint8_t switch_md_mode_based_on_sq_coeff;
+    uint8_t         md_staging_tx_size_level;
+    NicCtrls        nic_ctrls;
+    uint8_t         inter_compound_mode;
+    uint8_t         switch_md_mode_based_on_sq_coeff;
     CoeffBSwMdCtrls cb_sw_md_ctrls;
-    MV ref_mv;
-    uint8_t ifs_is_regular_last; // If regular is last performed interp_filters @ IFS
-    uint8_t use_prev_mds_res;
-    uint16_t sb_index;
-    uint8_t early_cand_elimination;
-    uint64_t mds0_best_cost;
-    uint8_t mds0_best_class;
+    MV              ref_mv;
+    uint8_t         ifs_is_regular_last; // If regular is last performed interp_filters @ IFS
+    uint8_t         use_prev_mds_res;
+    uint16_t        sb_index;
+    uint8_t         early_cand_elimination;
+    uint64_t        mds0_best_cost;
+    uint8_t         mds0_best_class;
 } ModeDecisionContext;
 
-typedef void (*EbAv1LambdaAssignFunc)(PictureControlSet* pcs_ptr, uint32_t *fast_lambda, uint32_t *full_lambda,
-                                      uint8_t bit_depth, uint16_t qp_index,
+typedef void (*EbAv1LambdaAssignFunc)(PictureControlSet *pcs_ptr, uint32_t *fast_lambda,
+                                      uint32_t *full_lambda, uint8_t bit_depth, uint16_t qp_index,
                                       EbBool multiply_lambda);
 
 /**************************************
      * Extern Function Declarations
      **************************************/
 extern EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr,
-                                              EbColorFormat        color_format,
-                                              uint8_t sb_size,
+                                              EbColorFormat color_format, uint8_t sb_size,
                                               EbFifo *mode_decision_configuration_input_fifo_ptr,
                                               EbFifo *mode_decision_output_fifo_ptr,
                                               uint8_t enable_hbd_mode_decision,
@@ -618,15 +636,17 @@ static const uint8_t quantizer_to_qindex[] = {
     192, 196, 200, 204, 208, 212, 216, 220, 224, 228, 232, 236, 240, 244, 249, 255};
 
 extern void reset_mode_decision(SequenceControlSet *scs_ptr, ModeDecisionContext *context_ptr,
-                                PictureControlSet *pcs_ptr, uint16_t tile_row_idx, uint32_t segment_index);
+                                PictureControlSet *pcs_ptr, uint16_t tile_row_idx,
+                                uint32_t segment_index);
 
 extern void mode_decision_configure_sb(ModeDecisionContext *context_ptr, PictureControlSet *pcs_ptr,
                                        uint8_t sb_qp);
 extern void md_cfl_rd_pick_alpha(PictureControlSet *          pcs_ptr,
-                              ModeDecisionCandidateBuffer *candidate_buffer, SuperBlock *sb_ptr,
-                              ModeDecisionContext *context_ptr,
-                              EbPictureBufferDesc *input_picture_ptr,
-                              uint32_t input_cb_origin_in_index, uint32_t blk_chroma_origin_index);
+                                 ModeDecisionCandidateBuffer *candidate_buffer, SuperBlock *sb_ptr,
+                                 ModeDecisionContext *context_ptr,
+                                 EbPictureBufferDesc *input_picture_ptr,
+                                 uint32_t             input_cb_origin_in_index,
+                                 uint32_t             blk_chroma_origin_index);
 
 #ifdef __cplusplus
 }

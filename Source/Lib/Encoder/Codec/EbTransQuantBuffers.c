@@ -20,7 +20,8 @@ static void svt_trans_quant_buffers_dctor(EbPtr p) {
     EB_DELETE(obj->txb_quant_coeff_n2x_n2_ptr);
 }
 
-EbErrorType svt_trans_quant_buffers_ctor(EbTransQuantBuffers* trans_quant_buffers_ptr, uint8_t sb_size) {
+EbErrorType svt_trans_quant_buffers_ctor(EbTransQuantBuffers* trans_quant_buffers_ptr,
+                                         uint8_t              sb_size) {
     EbPictureBufferDescInitData trans_coeff_init_array;
 
     trans_quant_buffers_ptr->dctor            = svt_trans_quant_buffers_dctor;

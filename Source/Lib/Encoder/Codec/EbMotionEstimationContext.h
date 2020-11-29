@@ -42,11 +42,11 @@ typedef struct MePredictionUnit {
 } MePredictionUnit;
 
 typedef enum EbMeType {
-    ME_CLOSE_LOOP  = 0,
-    ME_MCTF = 1,
-    ME_TPL = 2,
-    ME_OPEN_LOOP = 3
-    ,ME_FIRST_PASS = 4
+    ME_CLOSE_LOOP = 0,
+    ME_MCTF       = 1,
+    ME_TPL        = 2,
+    ME_OPEN_LOOP  = 3,
+    ME_FIRST_PASS = 4
 } EbMeType;
 typedef enum EbMeTierZeroPu {
     // 2Nx2N [85 partitions]
@@ -288,26 +288,33 @@ typedef struct MotionEstimationTierZero {
     MePredUnit pu[SQUARE_PU_COUNT];
 } MotionEstimationTierZero;
 typedef struct MeHmeRefPruneCtrls {
-    EbBool   enable_me_hme_ref_pruning;
-    uint16_t prune_ref_if_hme_sad_dev_bigger_than_th;   // TH used to prune references based on hme sad deviation
-    uint16_t prune_ref_if_me_sad_dev_bigger_than_th;    // TH used to prune references based on me sad deviation
+    EbBool enable_me_hme_ref_pruning;
+    uint16_t
+        prune_ref_if_hme_sad_dev_bigger_than_th; // TH used to prune references based on hme sad deviation
+    uint16_t
+        prune_ref_if_me_sad_dev_bigger_than_th; // TH used to prune references based on me sad deviation
 } MeHmeRefPruneCtrls;
 
 typedef struct MeSrCtrls {
-    EbBool   enable_me_sr_adjustment;
-    uint16_t reduce_me_sr_based_on_mv_length_th;    // reduce the ME search region if HME MVs and HME sad are small
-    uint16_t stationary_hme_sad_abs_th;             // reduce the ME search region if HME MVs and HME sad are small
-    uint16_t stationary_me_sr_divisor;              // Reduction factor for the ME search region if HME MVs and HME sad are small
-    uint16_t reduce_me_sr_based_on_hme_sad_abs_th;  // reduce the ME search region if HME sad is small
-    uint16_t me_sr_divisor_for_low_hme_sad;         // Reduction factor for the ME search region if HME sad is small
+    EbBool enable_me_sr_adjustment;
+    uint16_t
+        reduce_me_sr_based_on_mv_length_th; // reduce the ME search region if HME MVs and HME sad are small
+    uint16_t
+        stationary_hme_sad_abs_th; // reduce the ME search region if HME MVs and HME sad are small
+    uint16_t
+        stationary_me_sr_divisor; // Reduction factor for the ME search region if HME MVs and HME sad are small
+    uint16_t
+        reduce_me_sr_based_on_hme_sad_abs_th; // reduce the ME search region if HME sad is small
+    uint16_t
+        me_sr_divisor_for_low_hme_sad; // Reduction factor for the ME search region if HME sad is small
 } MeSrCtrls;
 typedef struct HmeResults {
-    uint8_t  list_i;   // list index of this ref
-    uint8_t  ref_i;    // ref list index of this ref
+    uint8_t  list_i; // list index of this ref
+    uint8_t  ref_i; // ref list index of this ref
     int16_t  hme_sc_x; // hme search centre x
     int16_t  hme_sc_y; // hme search centre y
-    uint64_t hme_sad;  // hme sad
-    uint8_t  do_ref;   // to process this ref in ME or not
+    uint64_t hme_sad; // hme sad
+    uint8_t  do_ref; // to process this ref in ME or not
 } HmeResults;
 typedef struct MeContext {
     EbDctor dctor;
@@ -354,52 +361,67 @@ typedef struct MeContext {
     EB_ALIGN(64) uint32_t p_eight_sad8x8[64][8];
     EbBitFraction *mvd_bits_array;
     uint64_t       lambda;
-    uint8_t hme_search_method;
-    uint8_t me_search_method;
+    uint8_t        hme_search_method;
+    uint8_t        me_search_method;
 
-    EbBool enable_hme_flag;
-    EbBool enable_hme_level0_flag;
-    EbBool enable_hme_level1_flag;
-    EbBool enable_hme_level2_flag;
+    EbBool             enable_hme_flag;
+    EbBool             enable_hme_level0_flag;
+    EbBool             enable_hme_level1_flag;
+    EbBool             enable_hme_level2_flag;
     MeHmeRefPruneCtrls me_hme_prune_ctrls;
-    MeSrCtrls me_sr_adjustment_ctrls;
-    uint8_t max_hme_sr_area_multipler;
+    MeSrCtrls          me_sr_adjustment_ctrls;
+    uint8_t            max_hme_sr_area_multipler;
 
     // ME
     uint16_t search_area_width;
     uint16_t search_area_height;
     uint16_t max_me_search_width;
     uint16_t max_me_search_height;
-    uint8_t best_list_idx;
-    uint8_t best_ref_idx;
+    uint8_t  best_list_idx;
+    uint8_t  best_ref_idx;
     // HME
-    uint16_t number_hme_search_region_in_width;
-    uint16_t number_hme_search_region_in_height;
-    uint16_t hme_level0_total_search_area_width;
-    uint16_t hme_level0_total_search_area_height;
-    uint16_t hme_level0_search_area_in_width_array[EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT];
-    uint16_t hme_level0_search_area_in_height_array[EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
-    uint16_t hme_level0_max_total_search_area_width;
-    uint16_t hme_level0_max_total_search_area_height;
-    uint16_t hme_level0_max_search_area_in_width_array[EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT];
-    uint16_t hme_level0_max_search_area_in_height_array[EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
-    uint16_t hme_level1_search_area_in_width_array[EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT];
-    uint16_t hme_level1_search_area_in_height_array[EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
-    uint16_t hme_level2_search_area_in_width_array[EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT];
-    uint16_t hme_level2_search_area_in_height_array[EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
-    uint8_t hme_decimation;
-    uint8_t  update_hme_search_center_flag;
+    uint16_t   number_hme_search_region_in_width;
+    uint16_t   number_hme_search_region_in_height;
+    uint16_t   hme_level0_total_search_area_width;
+    uint16_t   hme_level0_total_search_area_height;
+    uint16_t   hme_level0_search_area_in_width_array[EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT];
+    uint16_t   hme_level0_search_area_in_height_array[EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
+    uint16_t   hme_level0_max_total_search_area_width;
+    uint16_t   hme_level0_max_total_search_area_height;
+    uint16_t   hme_level0_max_search_area_in_width_array[EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT];
+    uint16_t   hme_level0_max_search_area_in_height_array[EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
+    uint16_t   hme_level1_search_area_in_width_array[EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT];
+    uint16_t   hme_level1_search_area_in_height_array[EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
+    uint16_t   hme_level2_search_area_in_width_array[EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT];
+    uint16_t   hme_level2_search_area_in_height_array[EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
+    uint8_t    hme_decimation;
+    uint8_t    update_hme_search_center_flag;
     HmeResults hme_results[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
-    uint32_t reduce_me_sr_divisor[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
-    int16_t x_hme_level0_search_center[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT][EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
-    int16_t y_hme_level0_search_center[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT][EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
-    uint64_t hme_level0_sad[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT][EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
-    int16_t x_hme_level1_search_center[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT][EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
-    int16_t y_hme_level1_search_center[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT][EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
-    uint64_t hme_level1_sad[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT][EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
-    int16_t x_hme_level2_search_center[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT][EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
-    int16_t y_hme_level2_search_center[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT][EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
-    uint64_t hme_level2_sad[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT][EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
+    uint32_t   reduce_me_sr_divisor[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
+    int16_t    x_hme_level0_search_center[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX]
+                                      [EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT]
+                                      [EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
+    int16_t y_hme_level0_search_center[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX]
+                                      [EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT]
+                                      [EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
+    uint64_t hme_level0_sad[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX]
+                           [EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT][EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
+    int16_t x_hme_level1_search_center[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX]
+                                      [EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT]
+                                      [EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
+    int16_t y_hme_level1_search_center[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX]
+                                      [EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT]
+                                      [EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
+    uint64_t hme_level1_sad[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX]
+                           [EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT][EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
+    int16_t x_hme_level2_search_center[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX]
+                                      [EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT]
+                                      [EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
+    int16_t y_hme_level2_search_center[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX]
+                                      [EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT]
+                                      [EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
+    uint64_t hme_level2_sad[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX]
+                           [EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT][EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
     int16_t adjust_hme_l1_factor[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
     int16_t adjust_hme_l2_factor[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
     int16_t hme_factor;
@@ -408,32 +430,32 @@ typedef struct MeContext {
     uint16_t adj_search_area_height;
     void *   alt_ref_reference_ptr;
     // Open Loop ME
-    EbMeType me_type;
+    EbMeType                    me_type;
     EbDownScaledBufDescPtrArray mctf_ref_desc_ptr_array;
 
-    uint8_t num_of_list_to_search;
-    uint8_t num_of_ref_pic_to_search[2];
-    uint8_t temporal_layer_index;
-    EbBool  is_used_as_reference_flag;
+    uint8_t                     num_of_list_to_search;
+    uint8_t                     num_of_ref_pic_to_search[2];
+    uint8_t                     temporal_layer_index;
+    EbBool                      is_used_as_reference_flag;
     EbDownScaledBufDescPtrArray me_ds_ref_array[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
     // tf
-    uint8_t tf_hp;
-    uint8_t tf_chroma;
-    uint64_t tf_block_32x32_16x16_th;
-    int tf_frame_index;
-    int tf_index_center;
+    uint8_t      tf_hp;
+    uint8_t      tf_chroma;
+    uint64_t     tf_block_32x32_16x16_th;
+    int          tf_frame_index;
+    int          tf_index_center;
     signed short tf_16x16_mv_x[16];
     signed short tf_16x16_mv_y[16];
-    uint64_t tf_16x16_block_error[16];
+    uint64_t     tf_16x16_block_error[16];
 
     signed short tf_32x32_mv_x[4];
     signed short tf_32x32_mv_y[4];
-    uint64_t tf_32x32_block_error[4];
-    int tf_32x32_block_split_flag[4];
-    int tf_16x16_search_do[4];
-    int tf_block_row;
-    int tf_block_col;
-    uint16_t min_frame_size;
+    uint64_t     tf_32x32_block_error[4];
+    int          tf_32x32_block_split_flag[4];
+    int          tf_16x16_search_do[4];
+    int          tf_block_row;
+    int          tf_block_col;
+    uint16_t     min_frame_size;
     // -------
 } MeContext;
 

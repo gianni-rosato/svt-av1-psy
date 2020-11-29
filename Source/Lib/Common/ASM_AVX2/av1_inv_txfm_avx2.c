@@ -1660,10 +1660,10 @@ static INLINE void iidentity_row_16xn_avx2(__m256i *out, const int32_t *input, i
                                            int shift, int height, int txw_idx, int rect_type) {
     const int32_t *input_row = input;
     const __m256i  scale     = _mm256_set1_epi16(new_sqrt2list[txw_idx]);
-    const __m256i  _r =
-        _mm256_set1_epi16((1 << (new_sqrt2_bits - 1)) + (1 << (new_sqrt2_bits - shift - 1)));
-    const __m256i one      = _mm256_set1_epi16(1);
-    const __m256i scale__r = _mm256_unpacklo_epi16(scale, _r);
+    const __m256i  _r        = _mm256_set1_epi16((1 << (new_sqrt2_bits - 1)) +
+                                         (1 << (new_sqrt2_bits - shift - 1)));
+    const __m256i  one       = _mm256_set1_epi16(1);
+    const __m256i  scale__r  = _mm256_unpacklo_epi16(scale, _r);
     if (rect_type != 1 && rect_type != -1) {
         for (int i = 0; i < height; ++i) {
             const __m256i src = load_32bit_to_16bit_w16_avx2(input_row);

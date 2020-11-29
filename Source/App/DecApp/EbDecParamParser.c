@@ -23,7 +23,8 @@
 
 static int parse_name(const char *value, const char *const *names) {
     for (int i = 0; names[i]; i++)
-        if (!strcmp(value, names[i])) return i;
+        if (!strcmp(value, names[i]))
+            return i;
     return -1;
 }
 
@@ -39,8 +40,7 @@ static void set_bit_depth(const char *value, EbSvtAv1DecConfiguration *cfg) {
 static void set_decoder_16bit_pipeline(const char *value, EbSvtAv1DecConfiguration *cfg) {
     cfg->is_16bit_pipeline = (EbBool)strtoul(value, NULL, 0);
     if (cfg->is_16bit_pipeline != 1 && cfg->is_16bit_pipeline != 0) {
-        fprintf(stderr,
-            "Warning : Invalid value for is_16bit_pipeline, setting value to 0. \n");
+        fprintf(stderr, "Warning : Invalid value for is_16bit_pipeline, setting value to 0. \n");
         cfg->is_16bit_pipeline = 0;
     }
 };
@@ -87,22 +87,22 @@ ConfigEntry config_entry[] = {
 static void show_help() {
 #define H0 printf
     H0(" Options : \n");
-    H0( " -help                     Show usage options and exit \n");
-    H0( " -i <arg>                  Input file name \n");
-    H0( " -o <arg>                  Output file name \n");
-    H0( " -skip <arg>               Skip the first n input frames \n");
-    H0( " -limit <arg>              Stop decoding after n frames \n");
-    H0( " -bit-depth <arg>          Input bitdepth. [8, 10] \n");
-    H0( " -w <arg>                  Input picture width \n");
-    H0( " -h <arg>                  Input picture height \n");
-    H0( " -colour-space <arg>       Input picture colour space. [400, 420, 422, 444]\n");
-    H0( " -threads <arg>            Number of threads to be launched \n");
-    H0( " -parallel-frames <arg>    Number of frames to be processed in parallel \n");
-    H0( " -md5                      MD5 support flag \n");
-    H0( " -fps-frm                  Show fps after each frame decoded\n");
-    H0( " -fps-summary              Show fps summary");
-    H0( " -skip-film-grain          Disable Film Grain");
-    H0( " -16bit-pipeline           Enable 16b pipeline. [1 - enable, 0 - disable]");
+    H0(" -help                     Show usage options and exit \n");
+    H0(" -i <arg>                  Input file name \n");
+    H0(" -o <arg>                  Output file name \n");
+    H0(" -skip <arg>               Skip the first n input frames \n");
+    H0(" -limit <arg>              Stop decoding after n frames \n");
+    H0(" -bit-depth <arg>          Input bitdepth. [8, 10] \n");
+    H0(" -w <arg>                  Input picture width \n");
+    H0(" -h <arg>                  Input picture height \n");
+    H0(" -colour-space <arg>       Input picture colour space. [400, 420, 422, 444]\n");
+    H0(" -threads <arg>            Number of threads to be launched \n");
+    H0(" -parallel-frames <arg>    Number of frames to be processed in parallel \n");
+    H0(" -md5                      MD5 support flag \n");
+    H0(" -fps-frm                  Show fps after each frame decoded\n");
+    H0(" -fps-summary              Show fps summary");
+    H0(" -skip-film-grain          Disable Film Grain");
+    H0(" -16bit-pipeline           Enable 16b pipeline. [1 - enable, 0 - disable]");
 
     exit(1);
 }
@@ -196,7 +196,7 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EbSvtAv1DecConfi
         return EB_ErrorBadParameter;
     }
 
-    cli->fmt = configs->max_color_format;
+    cli->fmt                 = configs->max_color_format;
     configs->skip_film_grain = cli->skip_film_grain;
 
     if (file_is_ivf(cli)) {
@@ -209,6 +209,6 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EbSvtAv1DecConfi
         return EB_ErrorBadParameter;
     }
     configs->max_picture_height = cli->height;
-    configs->max_picture_width = cli->width;
+    configs->max_picture_width  = cli->width;
     return EB_ErrorNone;
 }

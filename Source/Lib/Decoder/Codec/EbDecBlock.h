@@ -96,7 +96,7 @@ typedef struct SBInfo {
 
     BlockModeInfo *sb_mode_info;
 
-    int32_t     num_block;
+    int32_t num_block;
 
 } SBInfo;
 

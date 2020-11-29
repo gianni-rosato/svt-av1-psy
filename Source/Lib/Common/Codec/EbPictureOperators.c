@@ -163,8 +163,8 @@ void svt_full_distortion_kernel32_bits_c(int32_t *coeff, uint32_t coeff_stride,
     while (row_index < area_height) {
         uint32_t column_index = 0;
         while (column_index < area_width) {
-            residual_distortion +=
-                (int64_t)SQR((int64_t)(coeff[column_index]) - (recon_coeff[column_index]));
+            residual_distortion += (int64_t)SQR((int64_t)(coeff[column_index]) -
+                                                (recon_coeff[column_index]));
             prediction_distortion += (int64_t)SQR((int64_t)(coeff[column_index]));
             ++column_index;
         }
@@ -193,8 +193,8 @@ uint64_t svt_full_distortion_kernel16_bits_c(uint8_t *input, uint32_t input_offs
     while (row_index < area_height) {
         uint32_t column_index = 0;
         while (column_index < area_width) {
-            sse_distortion +=
-                (int64_t)SQR((int64_t)(input_16bit[column_index]) - (pred_16bit[column_index]));
+            sse_distortion += (int64_t)SQR((int64_t)(input_16bit[column_index]) -
+                                           (pred_16bit[column_index]));
             ++column_index;
         }
         input_16bit += input_stride;
@@ -371,22 +371,22 @@ void compressed_pack_sb(uint8_t *in8_bit_buffer, uint32_t in8_stride, uint8_t *i
                         uint32_t width, uint32_t height) {
     if (width == 64 || width == 32) {
         svt_compressed_packmsb(in8_bit_buffer,
-                           in8_stride,
-                           inn_bit_buffer,
-                           out16_bit_buffer,
-                           inn_stride,
-                           out_stride,
-                           width,
-                           height);
+                               in8_stride,
+                               inn_bit_buffer,
+                               out16_bit_buffer,
+                               inn_stride,
+                               out_stride,
+                               width,
+                               height);
     } else {
         svt_compressed_packmsb_c(in8_bit_buffer,
-                             in8_stride,
-                             inn_bit_buffer,
-                             out16_bit_buffer,
-                             inn_stride,
-                             out_stride,
-                             width,
-                             height);
+                                 in8_stride,
+                                 inn_bit_buffer,
+                                 out16_bit_buffer,
+                                 inn_stride,
+                                 out_stride,
+                                 width,
+                                 height);
     }
 }
 // Copies the source image into the destination image and updates the

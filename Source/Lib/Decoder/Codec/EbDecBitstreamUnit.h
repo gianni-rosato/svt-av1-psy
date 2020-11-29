@@ -401,7 +401,8 @@ static INLINE int daala_read_symbol(DaalaReader_t *r, const AomCdfProb *cdf, int
             assert(0);
         } else {
             for (i = 0; i < nsymbs; ++i)
-                if (cdf[i] != ref_cdf[i]) cdf_error = 1;
+                if (cdf[i] != ref_cdf[i])
+                    cdf_error = 1;
         }
         if (cdf_error) {
             SVT_ERROR("\n *** cdf error, frame_idx_r %d cdf {%d", frame_idx, cdf[0]);

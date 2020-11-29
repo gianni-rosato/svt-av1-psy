@@ -12,7 +12,6 @@
 #ifndef EbMeSadCalculation_h
 #define EbMeSadCalculation_h
 
-
 #include "EbDefinitions.h"
 #ifdef __cplusplus
 extern "C" {

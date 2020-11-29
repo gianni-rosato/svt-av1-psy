@@ -136,7 +136,7 @@ static void od_ec_enc_normalize(OdEcEnc *enc, OdEcWindow low, unsigned rng) {
         offs    = enc->offs;
         if (offs + 2 > storage) {
             storage = 2 * storage + 2;
-            buf = realloc(enc->precarry_buf, sizeof(*buf) * storage);
+            buf     = realloc(enc->precarry_buf, sizeof(*buf) * storage);
             if (!buf) {
                 enc->error = -1;
                 enc->offs  = 0;
@@ -232,7 +232,7 @@ static void od_ec_encode_q15(OdEcEnc *enc, unsigned fl, unsigned fh, int32_t s, 
         r = u - v;
     } else {
         r -= ((r >> 8) * (uint32_t)(fh >> EC_PROB_SHIFT) >> (7 - EC_PROB_SHIFT - CDF_SHIFT)) +
-             EC_MIN_PROB * (N - (s + 0));
+            EC_MIN_PROB * (N - (s + 0));
     }
     od_ec_enc_normalize(enc, l, r);
 #if OD_MEASURE_EC_OVERHEAD
@@ -255,7 +255,8 @@ void svt_od_ec_encode_bool_q15(OdEcEnc *enc, int32_t val, unsigned f) {
     assert(32768U <= r);
     v = ((r >> 8) * (uint32_t)(f >> EC_PROB_SHIFT) >> (7 - EC_PROB_SHIFT));
     v += EC_MIN_PROB;
-    if (val) l += r - v;
+    if (val)
+        l += r - v;
     r = val ? v : r - v;
     od_ec_enc_normalize(enc, l, r);
 #if OD_MEASURE_EC_OVERHEAD
@@ -290,7 +291,8 @@ uint8_t *svt_od_ec_enc_done(OdEcEnc *enc, uint32_t *nbytes) {
     OdEcWindow l;
     int32_t    c;
     int32_t    s;
-    if (enc->error) return NULL;
+    if (enc->error)
+        return NULL;
 #if OD_MEASURE_EC_OVERHEAD
     {
         uint32_t tell;
@@ -315,7 +317,7 @@ uint8_t *svt_od_ec_enc_done(OdEcEnc *enc, uint32_t *nbytes) {
         storage = enc->precarry_storage;
         if (offs + ((s + 7) >> 3) > storage) {
             storage = storage * 2 + ((s + 7) >> 3);
-            buf = realloc(enc->precarry_buf, sizeof(*buf) * storage);
+            buf     = realloc(enc->precarry_buf, sizeof(*buf) * storage);
             if (!buf) {
                 enc->error = -1;
                 return NULL;
@@ -339,7 +341,7 @@ uint8_t *svt_od_ec_enc_done(OdEcEnc *enc, uint32_t *nbytes) {
     c       = OD_MAXI((s + 7) >> 3, 0);
     if (offs + c > storage) {
         storage = offs + c;
-        out = realloc(enc->buf, sizeof(*buf) * storage);
+        out     = realloc(enc->buf, sizeof(*buf) * storage);
         if (!out) {
             enc->error = -1;
             return NULL;

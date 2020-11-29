@@ -42,7 +42,8 @@ static INLINE int32_t linsolve(int32_t n, double *A, int32_t stride, double *b, 
             }
         }
         for (i = k; i < n - 1; i++) {
-            if (fabs(A[k * stride + k]) < tiny_near_zero) return 0;
+            if (fabs(A[k * stride + k]) < tiny_near_zero)
+                return 0;
             c = A[(i + 1) * stride + k] / A[k * stride + k];
             for (j = 0; j < n; j++) A[(i + 1) * stride + j] -= c * A[k * stride + j];
             b[i + 1] -= c * b[k];
@@ -50,7 +51,8 @@ static INLINE int32_t linsolve(int32_t n, double *A, int32_t stride, double *b, 
     }
     // Backward substitution
     for (i = n - 1; i >= 0; i--) {
-        if (fabs(A[i * stride + i]) < tiny_near_zero) return 0;
+        if (fabs(A[i * stride + i]) < tiny_near_zero)
+            return 0;
         c = 0;
         for (j = i + 1; j <= n - 1; j++) c += A[i * stride + j] * x[j];
         x[i] = (b[i] - c) / A[i * stride + i];
@@ -74,7 +76,7 @@ static INLINE int32_t least_squares(int32_t n, double *A, int32_t rows, int32_t 
         scratch  = scratch_;
     }
     at_a = scratch;
-    atb = scratch + n * n;
+    atb  = scratch + n * n;
     assert(at_a);
     for (i = 0; i < n; ++i) {
         for (j = i; j < n; ++j) {
@@ -86,7 +88,8 @@ static INLINE int32_t least_squares(int32_t n, double *A, int32_t rows, int32_t 
         for (k = 0; k < rows; ++k) atb[i] += A[k * stride + i] * b[k];
     }
     int32_t ret = linsolve(n, at_a, n, atb, x);
-    if (scratch_) free(scratch_);
+    if (scratch_)
+        free(scratch_);
     return ret;
 }
 
@@ -224,7 +227,8 @@ static INLINE int32_t svdcmp(double **u, int32_t m, int32_t n, double w[], doubl
                     flag = 0;
                     break;
                 }
-                if ((double)(fabs(w[nm]) + anorm) == anorm) break;
+                if ((double)(fabs(w[nm]) + anorm) == anorm)
+                    break;
             }
             if (flag) {
                 c = 0.0;
@@ -233,7 +237,8 @@ static INLINE int32_t svdcmp(double **u, int32_t m, int32_t n, double w[], doubl
                     assert(i > 0);
                     f      = s * rv1[i];
                     rv1[i] = c * rv1[i];
-                    if ((double)(fabs(f) + anorm) == anorm) break;
+                    if ((double)(fabs(f) + anorm) == anorm)
+                        break;
                     g    = w[i];
                     h    = pythag(f, g);
                     w[i] = h;

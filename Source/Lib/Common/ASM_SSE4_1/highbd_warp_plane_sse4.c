@@ -27,14 +27,14 @@ static const uint8_t highbd_shuffle_alpha0_mask3[16] = {
 
 static INLINE void highbd_prepare_horizontal_filter_coeff(int alpha, int sx, __m128i *coeff) {
     // Filter even-index pixels
-    const __m128i tmp_0 =
-        _mm_loadu_si128((__m128i *)(eb_warped_filter + ((sx + 0 * alpha) >> WARPEDDIFF_PREC_BITS)));
-    const __m128i tmp_2 =
-        _mm_loadu_si128((__m128i *)(eb_warped_filter + ((sx + 2 * alpha) >> WARPEDDIFF_PREC_BITS)));
-    const __m128i tmp_4 =
-        _mm_loadu_si128((__m128i *)(eb_warped_filter + ((sx + 4 * alpha) >> WARPEDDIFF_PREC_BITS)));
-    const __m128i tmp_6 =
-        _mm_loadu_si128((__m128i *)(eb_warped_filter + ((sx + 6 * alpha) >> WARPEDDIFF_PREC_BITS)));
+    const __m128i tmp_0 = _mm_loadu_si128(
+        (__m128i *)(eb_warped_filter + ((sx + 0 * alpha) >> WARPEDDIFF_PREC_BITS)));
+    const __m128i tmp_2 = _mm_loadu_si128(
+        (__m128i *)(eb_warped_filter + ((sx + 2 * alpha) >> WARPEDDIFF_PREC_BITS)));
+    const __m128i tmp_4 = _mm_loadu_si128(
+        (__m128i *)(eb_warped_filter + ((sx + 4 * alpha) >> WARPEDDIFF_PREC_BITS)));
+    const __m128i tmp_6 = _mm_loadu_si128(
+        (__m128i *)(eb_warped_filter + ((sx + 6 * alpha) >> WARPEDDIFF_PREC_BITS)));
 
     // coeffs 0 1 0 1 2 3 2 3 for pixels 0, 2
     const __m128i tmp_8 = _mm_unpacklo_epi32(tmp_0, tmp_2);
@@ -55,14 +55,14 @@ static INLINE void highbd_prepare_horizontal_filter_coeff(int alpha, int sx, __m
     coeff[6] = _mm_unpackhi_epi64(tmp_12, tmp_14);
 
     // Filter odd-index pixels
-    const __m128i tmp_1 =
-        _mm_loadu_si128((__m128i *)(eb_warped_filter + ((sx + 1 * alpha) >> WARPEDDIFF_PREC_BITS)));
-    const __m128i tmp_3 =
-        _mm_loadu_si128((__m128i *)(eb_warped_filter + ((sx + 3 * alpha) >> WARPEDDIFF_PREC_BITS)));
-    const __m128i tmp_5 =
-        _mm_loadu_si128((__m128i *)(eb_warped_filter + ((sx + 5 * alpha) >> WARPEDDIFF_PREC_BITS)));
-    const __m128i tmp_7 =
-        _mm_loadu_si128((__m128i *)(eb_warped_filter + ((sx + 7 * alpha) >> WARPEDDIFF_PREC_BITS)));
+    const __m128i tmp_1 = _mm_loadu_si128(
+        (__m128i *)(eb_warped_filter + ((sx + 1 * alpha) >> WARPEDDIFF_PREC_BITS)));
+    const __m128i tmp_3 = _mm_loadu_si128(
+        (__m128i *)(eb_warped_filter + ((sx + 3 * alpha) >> WARPEDDIFF_PREC_BITS)));
+    const __m128i tmp_5 = _mm_loadu_si128(
+        (__m128i *)(eb_warped_filter + ((sx + 5 * alpha) >> WARPEDDIFF_PREC_BITS)));
+    const __m128i tmp_7 = _mm_loadu_si128(
+        (__m128i *)(eb_warped_filter + ((sx + 7 * alpha) >> WARPEDDIFF_PREC_BITS)));
 
     const __m128i tmp_9  = _mm_unpacklo_epi32(tmp_1, tmp_3);
     const __m128i tmp_11 = _mm_unpacklo_epi32(tmp_5, tmp_7);
@@ -77,8 +77,8 @@ static INLINE void highbd_prepare_horizontal_filter_coeff(int alpha, int sx, __m
 
 static INLINE void highbd_prepare_horizontal_filter_coeff_alpha0(int sx, __m128i *coeff) {
     // Filter coeff
-    const __m128i tmp_0 =
-        _mm_loadu_si128((__m128i *)(eb_warped_filter + (sx >> WARPEDDIFF_PREC_BITS)));
+    const __m128i tmp_0 = _mm_loadu_si128(
+        (__m128i *)(eb_warped_filter + (sx >> WARPEDDIFF_PREC_BITS)));
 
     coeff[0] = _mm_shuffle_epi8(tmp_0, _mm_loadu_si128((__m128i *)highbd_shuffle_alpha0_mask0));
     coeff[2] = _mm_shuffle_epi8(tmp_0, _mm_loadu_si128((__m128i *)highbd_shuffle_alpha0_mask1));
@@ -97,8 +97,8 @@ static INLINE void highbd_filter_src_pixels(const __m128i *src, const __m128i *s
     const __m128i src_1  = *src;
     const __m128i src2_1 = *src2;
 
-    const __m128i round_const =
-        _mm_set1_epi32((1 << offset_bits_horiz) + ((1 << reduce_bits_horiz) >> 1));
+    const __m128i round_const = _mm_set1_epi32((1 << offset_bits_horiz) +
+                                               ((1 << reduce_bits_horiz) >> 1));
 
     const __m128i res_0 = _mm_madd_epi16(src_1, coeff[0]);
     const __m128i res_2 = _mm_madd_epi16(_mm_alignr_epi8(src2_1, src_1, 4), coeff[2]);
@@ -106,8 +106,8 @@ static INLINE void highbd_filter_src_pixels(const __m128i *src, const __m128i *s
     const __m128i res_6 = _mm_madd_epi16(_mm_alignr_epi8(src2_1, src_1, 12), coeff[6]);
 
     __m128i res_even = _mm_add_epi32(_mm_add_epi32(res_0, res_4), _mm_add_epi32(res_2, res_6));
-    res_even =
-        _mm_sra_epi32(_mm_add_epi32(res_even, round_const), _mm_cvtsi32_si128(reduce_bits_horiz));
+    res_even         = _mm_sra_epi32(_mm_add_epi32(res_even, round_const),
+                             _mm_cvtsi32_si128(reduce_bits_horiz));
 
     const __m128i res_1 = _mm_madd_epi16(_mm_alignr_epi8(src2_1, src_1, 2), coeff[1]);
     const __m128i res_3 = _mm_madd_epi16(_mm_alignr_epi8(src2_1, src_1, 6), coeff[3]);
@@ -115,8 +115,8 @@ static INLINE void highbd_filter_src_pixels(const __m128i *src, const __m128i *s
     const __m128i res_7 = _mm_madd_epi16(_mm_alignr_epi8(src2_1, src_1, 14), coeff[7]);
 
     __m128i res_odd = _mm_add_epi32(_mm_add_epi32(res_1, res_5), _mm_add_epi32(res_3, res_7));
-    res_odd =
-        _mm_sra_epi32(_mm_add_epi32(res_odd, round_const), _mm_cvtsi32_si128(reduce_bits_horiz));
+    res_odd         = _mm_sra_epi32(_mm_add_epi32(res_odd, round_const),
+                            _mm_cvtsi32_si128(reduce_bits_horiz));
 
     // Combine results into one register.
     // We store the columns in the order 0, 2, 4, 6, 1, 3, 5, 7
@@ -305,10 +305,10 @@ void svt_av1_highbd_warp_affine_sse4_1(const int32_t *mat, const uint16_t *ref, 
                                        int16_t alpha, int16_t beta, int16_t gamma, int16_t delta) {
     __m128i   tmp[15];
     int       i, j, k;
-    const int reduce_bits_horiz =
-        conv_params->round_0 + AOMMAX(bd + FILTER_BITS - conv_params->round_0 - 14, 0);
-    const int reduce_bits_vert =
-        conv_params->is_compound ? conv_params->round_1 : 2 * FILTER_BITS - reduce_bits_horiz;
+    const int reduce_bits_horiz = conv_params->round_0 +
+        AOMMAX(bd + FILTER_BITS - conv_params->round_0 - 14, 0);
+    const int reduce_bits_vert  = conv_params->is_compound ? conv_params->round_1
+                                                           : 2 * FILTER_BITS - reduce_bits_horiz;
     const int offset_bits_horiz = bd + FILTER_BITS - 1;
     assert(IMPLIES(conv_params->is_compound, conv_params->dst != NULL));
     assert(!(bd == 12 && reduce_bits_horiz < 5));
@@ -359,9 +359,9 @@ void svt_av1_highbd_warp_affine_sse4_1(const int32_t *mat, const uint16_t *ref, 
 
             // Add in all the constant terms, including rounding and offset
             sx4 += alpha * (-4) + beta * (-4) + (1 << (WARPEDDIFF_PREC_BITS - 1)) +
-                   (WARPEDPIXEL_PREC_SHIFTS << WARPEDDIFF_PREC_BITS);
+                (WARPEDPIXEL_PREC_SHIFTS << WARPEDDIFF_PREC_BITS);
             sy4 += gamma * (-4) + delta * (-4) + (1 << (WARPEDDIFF_PREC_BITS - 1)) +
-                   (WARPEDPIXEL_PREC_SHIFTS << WARPEDDIFF_PREC_BITS);
+                (WARPEDPIXEL_PREC_SHIFTS << WARPEDDIFF_PREC_BITS);
 
             sx4 &= ~((1 << WARP_PARAM_REDUCE_BITS) - 1);
             sy4 &= ~((1 << WARP_PARAM_REDUCE_BITS) - 1);
@@ -377,9 +377,9 @@ void svt_av1_highbd_warp_affine_sse4_1(const int32_t *mat, const uint16_t *ref, 
                         iy = 0;
                     else if (iy > height - 1)
                         iy = height - 1;
-                    tmp[k + 7] =
-                        _mm_set1_epi16((1 << (bd + FILTER_BITS - reduce_bits_horiz - 1)) +
-                                       ref[iy * stride] * (1 << (FILTER_BITS - reduce_bits_horiz)));
+                    tmp[k + 7] = _mm_set1_epi16((1 << (bd + FILTER_BITS - reduce_bits_horiz - 1)) +
+                                                ref[iy * stride] *
+                                                    (1 << (FILTER_BITS - reduce_bits_horiz)));
                 }
             } else if (ix4 >= width + 6) {
                 for (k = -7; k < AOMMIN(8, p_height - i); ++k) {
@@ -417,15 +417,15 @@ void svt_av1_highbd_warp_affine_sse4_1(const int32_t *mat, const uint16_t *ref, 
                     __m128i src_hi = _mm_unpackhi_epi64(src_01, src2_01);
 
                     if (out_of_boundary_left >= 0) {
-                        const __m128i shuffle_reg_left =
-                            _mm_loadu_si128((__m128i *)warp_pad_left[out_of_boundary_left]);
+                        const __m128i shuffle_reg_left = _mm_loadu_si128(
+                            (__m128i *)warp_pad_left[out_of_boundary_left]);
                         src_lo = _mm_shuffle_epi8(src_lo, shuffle_reg_left);
                         src_hi = _mm_shuffle_epi8(src_hi, shuffle_reg_left);
                     }
 
                     if (out_of_boundary_right >= 0) {
-                        const __m128i shuffle_reg_right =
-                            _mm_loadu_si128((__m128i *)warp_pad_right[out_of_boundary_right]);
+                        const __m128i shuffle_reg_right = _mm_loadu_si128(
+                            (__m128i *)warp_pad_right[out_of_boundary_right]);
                         src_lo = _mm_shuffle_epi8(src_lo, shuffle_reg_right);
                         src_hi = _mm_shuffle_epi8(src_hi, shuffle_reg_right);
                     }
@@ -495,8 +495,8 @@ void svt_av1_highbd_warp_affine_sse4_1(const int32_t *mat, const uint16_t *ref, 
                 const __m128i res_4 = _mm_madd_epi16(src_4, coeff_4);
                 const __m128i res_6 = _mm_madd_epi16(src_6, coeff_6);
 
-                const __m128i res_even =
-                    _mm_add_epi32(_mm_add_epi32(res_0, res_2), _mm_add_epi32(res_4, res_6));
+                const __m128i res_even = _mm_add_epi32(_mm_add_epi32(res_0, res_2),
+                                                       _mm_add_epi32(res_4, res_6));
 
                 // Filter odd-index pixels
                 const __m128i src_1 = _mm_unpackhi_epi16(src[0], src[1]);
@@ -528,8 +528,8 @@ void svt_av1_highbd_warp_affine_sse4_1(const int32_t *mat, const uint16_t *ref, 
                 const __m128i res_5 = _mm_madd_epi16(src_5, coeff_5);
                 const __m128i res_7 = _mm_madd_epi16(src_7, coeff_7);
 
-                const __m128i res_odd =
-                    _mm_add_epi32(_mm_add_epi32(res_1, res_3), _mm_add_epi32(res_5, res_7));
+                const __m128i res_odd = _mm_add_epi32(_mm_add_epi32(res_1, res_3),
+                                                      _mm_add_epi32(res_5, res_7));
 
                 // Rearrange pixels back into the order 0 ... 7
                 __m128i res_lo = _mm_unpacklo_epi32(res_even, res_odd);
@@ -602,10 +602,10 @@ void svt_av1_highbd_warp_affine_sse4_1(const int32_t *mat, const uint16_t *ref, 
                     const __m128i round_const = _mm_set1_epi32(-(1 << (bd + reduce_bits_vert - 1)) +
                                                                ((1 << reduce_bits_vert) >> 1));
 
-                    const __m128i res_lo_round =
-                        _mm_srai_epi32(_mm_add_epi32(res_lo, round_const), reduce_bits_vert);
-                    const __m128i res_hi_round =
-                        _mm_srai_epi32(_mm_add_epi32(res_hi, round_const), reduce_bits_vert);
+                    const __m128i res_lo_round = _mm_srai_epi32(_mm_add_epi32(res_lo, round_const),
+                                                                reduce_bits_vert);
+                    const __m128i res_hi_round = _mm_srai_epi32(_mm_add_epi32(res_hi, round_const),
+                                                                reduce_bits_vert);
 
                     __m128i res_16bit = _mm_packs_epi32(res_lo_round, res_hi_round);
                     // Clamp res_16bit to the range [0, 2^bd - 1]

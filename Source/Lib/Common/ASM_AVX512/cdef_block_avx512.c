@@ -113,8 +113,10 @@ void svt_cdef_filter_block_8x8_16_avx512(const uint16_t *const in, const int32_t
     const __m512i  sec_strength_256 = _mm512_set1_epi16(sec_strength);
     const __m512i  zero             = _mm512_setzero_si512();
 
-    if (pri_strength) pri_damping = AOMMAX(0, pri_damping - get_msb(pri_strength));
-    if (sec_strength) sec_damping = AOMMAX(0, sec_damping - get_msb(sec_strength));
+    if (pri_strength)
+        pri_damping = AOMMAX(0, pri_damping - get_msb(pri_strength));
+    if (sec_strength)
+        sec_damping = AOMMAX(0, sec_damping - get_msb(sec_strength));
 
     const __m128i pri_d = _mm_cvtsi32_si128(pri_damping);
     const __m128i sec_d = _mm_cvtsi32_si128(sec_damping);

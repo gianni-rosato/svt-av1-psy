@@ -47,10 +47,10 @@ void setup_segmentation_dequant(DecModCtxt *dec_mod_ctxt) {
             dc_delta_q = frame_info->quantization_params.delta_q_dc[plane];
             ac_delta_q = frame_info->quantization_params.delta_q_ac[plane];
 
-            dec_mod_ctxt->dequants.dequant_qtx[i][plane][0] =
-                get_dc_quant(qindex, dc_delta_q, bit_depth);
-            dec_mod_ctxt->dequants.dequant_qtx[i][plane][1] =
-                get_ac_quant(qindex, ac_delta_q, bit_depth);
+            dec_mod_ctxt->dequants.dequant_qtx[i][plane][0] = get_dc_quant(
+                qindex, dc_delta_q, bit_depth);
+            dec_mod_ctxt->dequants.dequant_qtx[i][plane][1] = get_ac_quant(
+                qindex, ac_delta_q, bit_depth);
         }
     }
 }
@@ -106,10 +106,10 @@ void update_dequant(DecModCtxt *dec_mod_ctxt, SBInfo *sb_info) {
                 const int dc_delta_q = frame->quantization_params.delta_q_dc[plane];
                 const int ac_delta_q = frame->quantization_params.delta_q_ac[plane];
 
-                dec_mod_ctxt->dequants_delta_q->dequant_qtx[i][plane][0] =
-                    get_dc_quant(current_qindex, dc_delta_q, bit_depth);
-                dec_mod_ctxt->dequants_delta_q->dequant_qtx[i][plane][1] =
-                    get_ac_quant(current_qindex, ac_delta_q, bit_depth);
+                dec_mod_ctxt->dequants_delta_q->dequant_qtx[i][plane][0] = get_dc_quant(
+                    current_qindex, dc_delta_q, bit_depth);
+                dec_mod_ctxt->dequants_delta_q->dequant_qtx[i][plane][1] = get_ac_quant(
+                    current_qindex, ac_delta_q, bit_depth);
             }
         }
     }
@@ -138,13 +138,13 @@ int32_t inverse_quantize(DecModCtxt *dec_mod_ctxt, PartitionInfo *part, BlockMod
     const QmVal *  iqmatrix;
     const TxSize   qm_tx_size = av1_get_adjusted_tx_size(tx_size);
 
-    int using_qm = frame->quantization_params.using_qmatrix;
-    int lossless = frame->lossless_array[mode->segment_id];
-    dequant      = dec_mod_ctxt->dequants_delta_q->dequant_qtx[mode->segment_id][plane];
-    qmlevel =
-        (lossless || using_qm == 0) ? NUM_QM_LEVELS - 1 : frame->quantization_params.qm[plane];
-    iqmatrix = IS_2D_TRANSFORM(tx_type) ? dec_mod_ctxt->giqmatrix[qmlevel][plane][qm_tx_size]
-                                        : dec_mod_ctxt->giqmatrix[NUM_QM_LEVELS - 1][0][qm_tx_size];
+    int using_qm    = frame->quantization_params.using_qmatrix;
+    int lossless    = frame->lossless_array[mode->segment_id];
+    dequant         = dec_mod_ctxt->dequants_delta_q->dequant_qtx[mode->segment_id][plane];
+    qmlevel         = (lossless || using_qm == 0) ? NUM_QM_LEVELS - 1
+                                                  : frame->quantization_params.qm[plane];
+    iqmatrix        = IS_2D_TRANSFORM(tx_type) ? dec_mod_ctxt->giqmatrix[qmlevel][plane][qm_tx_size]
+                                               : dec_mod_ctxt->giqmatrix[NUM_QM_LEVELS - 1][0][qm_tx_size];
     const int shift = av1_get_tx_scale(tx_size);
 
     // Level is 1D array with eob length as first value then continued by
@@ -165,7 +165,8 @@ int32_t inverse_quantize(DecModCtxt *dec_mod_ctxt, PartitionInfo *part, BlockMod
         q_coeff = (TranLow)((int64_t)abs(lev) * get_dqv(dequant[0], pos, iqmatrix) & 0xffffff);
         q_coeff = q_coeff >> shift;
 
-        if (lev < 0) q_coeff = -q_coeff;
+        if (lev < 0)
+            q_coeff = -q_coeff;
         qcoeffs[0] = clamp(q_coeff, min_value, max_value);
     }
 
@@ -176,7 +177,8 @@ int32_t inverse_quantize(DecModCtxt *dec_mod_ctxt, PartitionInfo *part, BlockMod
             q_coeff = (TranLow)((int64_t)abs(lev) * get_dqv(dequant[1], pos, iqmatrix) & 0xffffff);
             q_coeff = q_coeff >> shift;
 
-            if (lev < 0) q_coeff = -q_coeff;
+            if (lev < 0)
+                q_coeff = -q_coeff;
 
             qcoeffs[pos] = clamp(q_coeff, min_value, max_value);
         }

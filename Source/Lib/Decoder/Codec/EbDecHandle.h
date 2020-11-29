@@ -26,8 +26,8 @@ extern "C" {
 
 /* This value is set to 72 to make
    DEC_PAD_VALUE a multiple of 16. */
-#define DYNIMIC_PAD_VALUE  72
-#define DEC_PAD_VALUE    (DYNIMIC_PAD_VALUE + 8)
+#define DYNIMIC_PAD_VALUE 72
+#define DEC_PAD_VALUE (DYNIMIC_PAD_VALUE + 8)
 
 /* Maximum number of frames in parallel */
 #define DEC_MAX_NUM_FRM_PRLL 1
@@ -245,7 +245,8 @@ typedef struct EbDecHandle {
     EbHandle              thread_semaphore;
     struct DecThreadCtxt *thread_ctxt_pa;
 
-    EbBool is_16bit_pipeline; // internal bit-depth: when equals 1 internal bit-depth is 16bits regardless of the input bit-depth
+    EbBool
+        is_16bit_pipeline; // internal bit-depth: when equals 1 internal bit-depth is 16bits regardless of the input bit-depth
 } EbDecHandle;
 
 /* Thread level context data */

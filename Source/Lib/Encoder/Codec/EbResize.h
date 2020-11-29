@@ -30,27 +30,24 @@ typedef struct {
     uint8_t  superres_denom;
 } superres_params_type;
 
-void scale_source_references(SequenceControlSet *scs_ptr,
-                             PictureParentControlSet *pcs_ptr,
+void scale_source_references(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_ptr,
                              EbPictureBufferDesc *input_picture_ptr);
 
-void scale_rec_references(PictureControlSet *pcs_ptr,
-                          EbPictureBufferDesc *input_picture_ptr,
+void scale_rec_references(PictureControlSet *pcs_ptr, EbPictureBufferDesc *input_picture_ptr,
                           uint8_t hbd_mode_decision);
 
-void use_scaled_rec_refs_if_needed(PictureControlSet *pcs_ptr,
+void use_scaled_rec_refs_if_needed(PictureControlSet *  pcs_ptr,
                                    EbPictureBufferDesc *input_picture_ptr,
-                                   EbReferenceObject *ref_obj,
-                                   EbPictureBufferDesc **ref_pic);
+                                   EbReferenceObject *ref_obj, EbPictureBufferDesc **ref_pic);
 
 void use_scaled_source_refs_if_needed(PictureParentControlSet *pcs_ptr,
-                                      EbPictureBufferDesc *input_picture_ptr,
-                                      EbPaReferenceObject *ref_obj,
-                                      EbPictureBufferDesc **ref_pic_ptr,
-                                      EbPictureBufferDesc **quarter_ref_pic_ptr,
-                                      EbPictureBufferDesc **sixteenth_ref_pic_ptr);
+                                      EbPictureBufferDesc *    input_picture_ptr,
+                                      EbPaReferenceObject *    ref_obj,
+                                      EbPictureBufferDesc **   ref_pic_ptr,
+                                      EbPictureBufferDesc **   quarter_ref_pic_ptr,
+                                      EbPictureBufferDesc **   sixteenth_ref_pic_ptr);
 
-void init_resize_picture(SequenceControlSet* scs_ptr, PictureParentControlSet* pcs_ptr);
+void init_resize_picture(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_ptr);
 
 #define filteredinterp_filters1000 av1_resize_filter_normative
 

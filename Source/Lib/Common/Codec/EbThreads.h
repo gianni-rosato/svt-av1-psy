@@ -50,26 +50,26 @@ extern EbErrorType svt_destroy_semaphore(EbHandle semaphore_handle);
 /**************************************
      * Mutex
      **************************************/
-extern EbHandle svt_create_mutex(void);
-extern EbErrorType svt_release_mutex(EbHandle mutex_handle);
-extern EbErrorType svt_block_on_mutex(EbHandle mutex_handle);
-extern EbErrorType svt_destroy_mutex(EbHandle mutex_handle);
+extern EbHandle          svt_create_mutex(void);
+extern EbErrorType       svt_release_mutex(EbHandle mutex_handle);
+extern EbErrorType       svt_block_on_mutex(EbHandle mutex_handle);
+extern EbErrorType       svt_destroy_mutex(EbHandle mutex_handle);
 extern EbMemoryMapEntry *memory_map; // library Memory table
 extern uint32_t *        memory_map_index; // library memory index
 extern uint64_t *        total_lib_memory; // library Memory malloc'd
 #ifdef _WIN32
 
-#define EB_CREATE_THREAD(pointer, thread_function, thread_context)   \
-    do {                                                             \
-        pointer = svt_create_thread(thread_function, thread_context);\
-        EB_ADD_MEM(pointer, 1, EB_THREAD);                           \
-        if (num_groups == 1)                                         \
-            SetThreadAffinityMask(pointer, group_affinity.Mask);     \
-        else if (num_groups == 2 && alternate_groups) {              \
-            group_affinity.Group = 1 - group_affinity.Group;         \
-            SetThreadGroupAffinity(pointer, &group_affinity, NULL);  \
-        } else if (num_groups == 2 && !alternate_groups)             \
-            SetThreadGroupAffinity(pointer, &group_affinity, NULL);  \
+#define EB_CREATE_THREAD(pointer, thread_function, thread_context)    \
+    do {                                                              \
+        pointer = svt_create_thread(thread_function, thread_context); \
+        EB_ADD_MEM(pointer, 1, EB_THREAD);                            \
+        if (num_groups == 1)                                          \
+            SetThreadAffinityMask(pointer, group_affinity.Mask);      \
+        else if (num_groups == 2 && alternate_groups) {               \
+            group_affinity.Group = 1 - group_affinity.Group;          \
+            SetThreadGroupAffinity(pointer, &group_affinity, NULL);   \
+        } else if (num_groups == 2 && !alternate_groups)              \
+            SetThreadGroupAffinity(pointer, &group_affinity, NULL);   \
     } while (0)
 
 #elif defined(__linux__)
@@ -88,10 +88,10 @@ extern uint64_t *        total_lib_memory; // library Memory malloc'd
         pthread_setaffinity_np(*((pthread_t *)pointer), sizeof(cpu_set_t), &group_affinity); \
     } while (0)
 #else
-#define EB_CREATE_THREAD(pointer, thread_function, thread_context)   \
-    do {                                                             \
-        pointer = svt_create_thread(thread_function, thread_context);\
-        EB_ADD_MEM(pointer, 1, EB_THREAD);                           \
+#define EB_CREATE_THREAD(pointer, thread_function, thread_context)    \
+    do {                                                              \
+        pointer = svt_create_thread(thread_function, thread_context); \
+        EB_ADD_MEM(pointer, 1, EB_THREAD);                            \
     } while (0)
 #endif
 
@@ -119,7 +119,7 @@ extern uint64_t *        total_lib_memory; // library Memory malloc'd
         }                                                                  \
     } while (0)
 
-void atomic_set_u32(AtomicVarU32* var, uint32_t in);
+void atomic_set_u32(AtomicVarU32 *var, uint32_t in);
 #ifdef __cplusplus
 }
 #endif

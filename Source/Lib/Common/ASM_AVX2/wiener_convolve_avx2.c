@@ -117,7 +117,8 @@ void svt_av1_wiener_convolve_add_src_avx2(const uint8_t* const src, const ptrdif
                                           uint8_t* const dst, const ptrdiff_t dst_stride,
                                           const int16_t* const filter_x,
                                           const int16_t* const filter_y, const int32_t w,
-                                          const int32_t h, const ConvolveParams* const conv_params) {
+                                          const int32_t               h,
+                                          const ConvolveParams* const conv_params) {
     const int32_t  bd         = 8;
     const int      center_tap = (SUBPEL_TAPS - 1) / 2;
     const int      round_0    = WIENER_ROUND0_BITS;
@@ -318,7 +319,7 @@ void svt_av1_wiener_convolve_add_src_avx2(const uint8_t* const src, const ptrdif
                 const __m256i r0 = wiener_convolve_v8x2_tap7(coeffs_v, round_v, s[0]);
                 const __m256i r1 = wiener_convolve_v8x2_tap7(coeffs_v, round_v, s[1]);
                 if (y == 1) {
-                    const __m256i d = _mm256_packus_epi16(r0, r1);
+                    const __m256i d  = _mm256_packus_epi16(r0, r1);
                     const __m128i d0 = _mm256_castsi256_si128(d);
                     _mm_storeu_si128((__m128i*)dst_p, d0);
                 } else {
@@ -349,10 +350,10 @@ void svt_av1_wiener_convolve_add_src_avx2(const uint8_t* const src, const ptrdif
                 src_p, src_stride, coeffs_h, filt, filt_center, round_h0, round_h1, clamp_high);
             src_p += 2 * src_stride;
 
-            s[1] =
-                _mm256_setr_m128i(_mm256_extracti128_si256(s[0], 1), _mm256_castsi256_si128(s[2]));
-            s[3] =
-                _mm256_setr_m128i(_mm256_extracti128_si256(s[2], 1), _mm256_castsi256_si128(s[4]));
+            s[1] = _mm256_setr_m128i(_mm256_extracti128_si256(s[0], 1),
+                                     _mm256_castsi256_si128(s[2]));
+            s[3] = _mm256_setr_m128i(_mm256_extracti128_si256(s[2], 1),
+                                     _mm256_castsi256_si128(s[4]));
 
             int y = h;
             do {
@@ -534,8 +535,8 @@ void svt_av1_wiener_convolve_add_src_avx2(const uint8_t* const src, const ptrdif
                 src_p, src_stride, coeffs_h, filt, filt_center, round_h0, round_h1, clamp_high);
             src_p += 2 * src_stride;
 
-            s[1] =
-                _mm256_setr_m128i(_mm256_extracti128_si256(s[0], 1), _mm256_castsi256_si128(s[2]));
+            s[1] = _mm256_setr_m128i(_mm256_extracti128_si256(s[0], 1),
+                                     _mm256_castsi256_si128(s[2]));
 
             int y = h;
             do {
@@ -748,8 +749,8 @@ void svt_av1_highbd_wiener_convolve_add_src_avx2(
 
     /* Horizontal filter */
     {
-        const __m256i clamp_high_ep =
-            _mm256_set1_epi16(WIENER_CLAMP_LIMIT(conv_params->round_0, bd) - 1);
+        const __m256i clamp_high_ep = _mm256_set1_epi16(
+            WIENER_CLAMP_LIMIT(conv_params->round_0, bd) - 1);
 
         // coeffs [ f7 f6 f5 f4 f3 f2 f1 f0 ]
         const __m128i coeffs_x = _mm_add_epi16(xx_loadu_128(filter_x), offset);
@@ -777,8 +778,8 @@ void svt_av1_highbd_wiener_convolve_add_src_avx2(
         // coeffs [ f7 f6 f7 f6 f7 f6 f7 f6 ][ f7 f6 f7 f6 f7 f6 f7 f6 ]
         const __m256i coeffs_67 = yy_set_m128i(coeffs_67_128, coeffs_67_128);
 
-        const __m256i round_const =
-            _mm256_set1_epi32((1 << (conv_params->round_0 - 1)) + (1 << (bd + FILTER_BITS - 1)));
+        const __m256i round_const = _mm256_set1_epi32((1 << (conv_params->round_0 - 1)) +
+                                                      (1 << (bd + FILTER_BITS - 1)));
 
         for (int32_t i = 0; i < intermediate_height; ++i) {
             for (int32_t j = 0; j < w; j += 16) {
@@ -820,9 +821,9 @@ void svt_av1_highbd_wiener_convolve_add_src_avx2(
                 // back into one register. The _mm256_packs_epi32 intrinsic returns
                 // a register with the pixels ordered as follows:
                 // [ 15 13 11 9 14 12 10 8 ] [ 7 5 3 1 6 4 2 0 ]
-                const __m256i res = _mm256_packs_epi32(res_even, res_odd);
-                const __m256i res_clamped =
-                    _mm256_min_epi16(_mm256_max_epi16(res, clamp_low), clamp_high_ep);
+                const __m256i res         = _mm256_packs_epi32(res_even, res_odd);
+                const __m256i res_clamped = _mm256_min_epi16(_mm256_max_epi16(res, clamp_low),
+                                                             clamp_high_ep);
 
                 // Store in a temporary array
                 yy_storeu_256(temp + i * MAX_SB_SIZE + j, res_clamped);
@@ -917,22 +918,21 @@ void svt_av1_highbd_wiener_convolve_add_src_avx2(
                 const __m256i res_lo = _mm256_unpacklo_epi32(res_even, res_odd);
                 const __m256i res_hi = _mm256_unpackhi_epi32(res_even, res_odd);
 
-                const __m256i res_lo_round =
-                    _mm256_srai_epi32(_mm256_add_epi32(res_lo, round_const), conv_params->round_1);
-                const __m256i res_hi_round =
-                    _mm256_srai_epi32(_mm256_add_epi32(res_hi, round_const), conv_params->round_1);
+                const __m256i res_lo_round = _mm256_srai_epi32(
+                    _mm256_add_epi32(res_lo, round_const), conv_params->round_1);
+                const __m256i res_hi_round = _mm256_srai_epi32(
+                    _mm256_add_epi32(res_hi, round_const), conv_params->round_1);
 
                 // Reduce to 16-bit precision and pack into the correct order:
                 // [ 15 14 13 12 11 10 9 8 ][ 7 6 5 4 3 2 1 0 ]
-                const __m256i res_16bit = _mm256_packs_epi32(res_lo_round, res_hi_round);
-                const __m256i res_16bit_clamped =
-                    _mm256_min_epi16(_mm256_max_epi16(res_16bit, clamp_low), clamp_high);
+                const __m256i res_16bit         = _mm256_packs_epi32(res_lo_round, res_hi_round);
+                const __m256i res_16bit_clamped = _mm256_min_epi16(
+                    _mm256_max_epi16(res_16bit, clamp_low), clamp_high);
 
                 // Store in the dst array
                 if (j + 8 < w) {
                     yy_storeu_256(dst16 + i * dst_stride + j, res_16bit_clamped);
-                }
-                else {
+                } else {
                     _mm_storeu_si128((__m128i*)(dst16 + i * dst_stride + j),
                                      _mm256_extracti128_si256(res_16bit_clamped, 0));
                 }

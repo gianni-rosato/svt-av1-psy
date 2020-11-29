@@ -41,8 +41,7 @@ struct ModeDecisionCandidate;
 struct EntropyCodingContext;
 extern EbErrorType write_sb(struct EntropyCodingContext *context_ptr, SuperBlock *tb_ptr,
                             PictureControlSet *pcs_ptr, uint16_t tile_idx,
-                            EntropyCoder *entropy_coder_ptr,
-                            EbPictureBufferDesc *coeff_ptr);
+                            EntropyCoder *entropy_coder_ptr, EbPictureBufferDesc *coeff_ptr);
 
 extern int get_wedge_params_bits(BlockSize sb_type);
 
@@ -51,20 +50,20 @@ extern EbErrorType encode_slice_finish(EntropyCoder *entropy_coder_ptr);
 extern EbErrorType reset_entropy_coder(EncodeContext *encode_context_ptr,
                                        EntropyCoder *entropy_coder_ptr, uint32_t qp,
                                        EB_SLICE slice_type);
-EbErrorType av1_txb_estimate_coeff_bits(
-    struct ModeDecisionContext *md_context, uint8_t allow_update_cdf, FRAME_CONTEXT *ec_ctx,
-    PictureControlSet *pcs_ptr, struct ModeDecisionCandidateBuffer *candidate_buffer_ptr,
-    uint32_t txb_origin_index, uint32_t txb_chroma_origin_index,
-    EbPictureBufferDesc *coeff_buffer_sb, uint32_t y_eob, uint32_t cb_eob, uint32_t cr_eob,
-    uint64_t *y_txb_coeff_bits, uint64_t *cb_txb_coeff_bits, uint64_t *cr_txb_coeff_bits,
-    TxSize txsize, TxSize txsize_uv, TxType tx_type, TxType tx_type_uv,
-    COMPONENT_TYPE component_type);
+EbErrorType        av1_txb_estimate_coeff_bits(
+           struct ModeDecisionContext *md_context, uint8_t allow_update_cdf, FRAME_CONTEXT *ec_ctx,
+           PictureControlSet *pcs_ptr, struct ModeDecisionCandidateBuffer *candidate_buffer_ptr,
+           uint32_t txb_origin_index, uint32_t txb_chroma_origin_index,
+           EbPictureBufferDesc *coeff_buffer_sb, uint32_t y_eob, uint32_t cb_eob, uint32_t cr_eob,
+           uint64_t *y_txb_coeff_bits, uint64_t *cb_txb_coeff_bits, uint64_t *cr_txb_coeff_bits,
+           TxSize txsize, TxSize txsize_uv, TxType tx_type, TxType tx_type_uv,
+           COMPONENT_TYPE component_type);
 
 //**********************************************************************************************************//
 //onyxc_int.h
 static INLINE int32_t frame_is_intra_only(const PictureParentControlSet *const pcs_ptr) {
     return pcs_ptr->frm_hdr.frame_type == KEY_FRAME ||
-           pcs_ptr->frm_hdr.frame_type == INTRA_ONLY_FRAME;
+        pcs_ptr->frm_hdr.frame_type == INTRA_ONLY_FRAME;
 }
 
 static INLINE int32_t frame_is_sframe(const PictureParentControlSet *pcs_ptr) {
@@ -76,15 +75,15 @@ static INLINE int32_t frame_is_sframe(const PictureParentControlSet *pcs_ptr) {
 static INLINE int32_t frame_might_allow_ref_frame_mvs(const PictureParentControlSet *pcs_ptr,
                                                       SequenceControlSet *           scs_ptr) {
     return !pcs_ptr->frm_hdr.error_resilient_mode &&
-           scs_ptr->seq_header.order_hint_info.enable_ref_frame_mvs &&
-           scs_ptr->seq_header.order_hint_info.enable_order_hint && !frame_is_intra_only(pcs_ptr);
+        scs_ptr->seq_header.order_hint_info.enable_ref_frame_mvs &&
+        scs_ptr->seq_header.order_hint_info.enable_order_hint && !frame_is_intra_only(pcs_ptr);
 }
 
 // Returns 1 if this frame might use warped_motion
 static INLINE int32_t frame_might_allow_warped_motion(const PictureParentControlSet *pcs_ptr,
                                                       SequenceControlSet *           scs_ptr) {
     return !pcs_ptr->frm_hdr.error_resilient_mode && !frame_is_intra_only(pcs_ptr) &&
-           scs_ptr->static_config.enable_warped_motion;
+        scs_ptr->static_config.enable_warped_motion;
 }
 
 static INLINE uint8_t major_minor_to_seq_level_idx(BitstreamLevel bl) {
@@ -97,7 +96,7 @@ static INLINE uint8_t major_minor_to_seq_level_idx(BitstreamLevel bl) {
 static INLINE int32_t get_ref_frame_map_idx(const PictureParentControlSet *pcs_ptr,
                                             MvReferenceFrame               ref_frame) {
     return pcs_ptr->av1_ref_signal
-            .ref_dpb_index[ref_frame - LAST_FRAME]; //LAST-LAST2-LAST3-GOLDEN-BWD-ALT2-ALT
+        .ref_dpb_index[ref_frame - LAST_FRAME]; //LAST-LAST2-LAST3-GOLDEN-BWD-ALT2-ALT
 }
 
 //*******************************************************************************************//
@@ -210,7 +209,6 @@ MotionMode motion_mode_allowed(const PictureControlSet *pcs_ptr, const BlkStruct
                                PredictionMode mode);
 
 int is_masked_compound_type(COMPOUND_TYPE type);
-
 
 int32_t svt_aom_count_primitive_subexpfin(uint16_t n, uint16_t k, uint16_t v);
 int32_t svt_aom_count_primitive_refsubexpfin(uint16_t n, uint16_t k, uint16_t ref, uint16_t v);

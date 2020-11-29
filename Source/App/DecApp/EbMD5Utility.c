@@ -86,7 +86,8 @@ void md5_update(Md5Context *ctx, const unsigned char *buf, unsigned int len) {
 
     t = ctx->bytes[0];
 
-    if ((ctx->bytes[0] = t + len) < t) ctx->bytes[1]++; /* Carry from low to high */
+    if ((ctx->bytes[0] = t + len) < t)
+        ctx->bytes[1]++; /* Carry from low to high */
 
     t = 64 - (t & 0x3f); /* Space available in ctx->in (at least 1) */
 

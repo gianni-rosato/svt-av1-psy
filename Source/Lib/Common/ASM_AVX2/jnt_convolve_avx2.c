@@ -68,8 +68,8 @@ static void jnt_convolve_y_2tap_avx2(const uint8_t *const src, const int32_t src
         if (conv_params->use_jnt_comp_avg) {
             const int32_t factor = conv_params->fwd_offset | (conv_params->bck_offset << 16);
             const int32_t offset_comp_avg = round_offset * conv_params->bck_offset +
-                                            (1 << (round_bits + DIST_PRECISION_BITS - 1)) -
-                                            (round_offset << DIST_PRECISION_BITS);
+                (1 << (round_bits + DIST_PRECISION_BITS - 1)) -
+                (round_offset << DIST_PRECISION_BITS);
 
             if (w <= 4) {
                 const __m128i factor_128          = _mm_set1_epi32(factor);
@@ -83,8 +83,8 @@ static void jnt_convolve_y_2tap_avx2(const uint8_t *const src, const int32_t src
                     s_16[0] = _mm_cvtsi32_si128(*(int16_t *)src_ptr);
 
                     do {
-                        const __m128i res =
-                            y_convolve_2tap_2x2_ssse3(src_ptr, src_stride, coeffs_128, s_16);
+                        const __m128i res = y_convolve_2tap_2x2_ssse3(
+                            src_ptr, src_stride, coeffs_128, s_16);
                         jnt_comp_avg_round_store_2x2_sse2(res,
                                                           factor_128,
                                                           offset_comp_avg_128,
@@ -105,8 +105,8 @@ static void jnt_convolve_y_2tap_avx2(const uint8_t *const src, const int32_t src
                     s_32[0] = _mm_cvtsi32_si128(*(int32_t *)src_ptr);
 
                     do {
-                        const __m128i res =
-                            y_convolve_2tap_4x2_ssse3(src_ptr, src_stride, coeffs_128, s_32);
+                        const __m128i res = y_convolve_2tap_4x2_ssse3(
+                            src_ptr, src_stride, coeffs_128, s_32);
                         jnt_comp_avg_round_store_4x2_sse2(res,
                                                           factor_128,
                                                           offset_comp_avg_128,
@@ -132,8 +132,8 @@ static void jnt_convolve_y_2tap_avx2(const uint8_t *const src, const int32_t src
                     s_64[0] = _mm_loadl_epi64((__m128i *)src_ptr);
 
                     do {
-                        const __m256i res =
-                            y_convolve_2tap_8x2_avx2(src_ptr, src_stride, coeffs_256, s_64);
+                        const __m256i res = y_convolve_2tap_8x2_avx2(
+                            src_ptr, src_stride, coeffs_256, s_64);
                         jnt_comp_avg_round_store_8x2_avx2(res,
                                                           factor_256,
                                                           offset_comp_avg_256,
@@ -318,7 +318,7 @@ static void jnt_convolve_y_2tap_avx2(const uint8_t *const src, const int32_t src
             }
         } else {
             const int16_t offset_avg = (1 << (FILTER_BITS - 1)) + (1 << (round_1 - bits - 2)) -
-                                       (round_offset << (round_1 - bits - 1));
+                (round_offset << (round_1 - bits - 1));
 
             if (w <= 4) {
                 const __m128i offset_avg_128 = _mm_set1_epi16(offset_avg);
@@ -331,8 +331,8 @@ static void jnt_convolve_y_2tap_avx2(const uint8_t *const src, const int32_t src
                     s_16[0] = _mm_cvtsi32_si128(*(int16_t *)src_ptr);
 
                     do {
-                        const __m128i res =
-                            y_convolve_2tap_2x2_ssse3(src_ptr, src_stride, coeffs_128, s_16);
+                        const __m128i res = y_convolve_2tap_2x2_ssse3(
+                            src_ptr, src_stride, coeffs_128, s_16);
                         jnt_avg_round_store_2x2_sse2(
                             res, offset_avg_128, dst, dst_stride, dst8, dst8_stride);
                         src_ptr += 2 * src_stride;
@@ -348,8 +348,8 @@ static void jnt_convolve_y_2tap_avx2(const uint8_t *const src, const int32_t src
                     s_32[0] = _mm_cvtsi32_si128(*(int32_t *)src_ptr);
 
                     do {
-                        const __m128i res =
-                            y_convolve_2tap_4x2_ssse3(src_ptr, src_stride, coeffs_128, s_32);
+                        const __m128i res = y_convolve_2tap_4x2_ssse3(
+                            src_ptr, src_stride, coeffs_128, s_32);
                         jnt_avg_round_store_4x2_sse2(
                             res, offset_avg_128, dst, dst_stride, dst8, dst8_stride);
                         src_ptr += 2 * src_stride;
@@ -369,8 +369,8 @@ static void jnt_convolve_y_2tap_avx2(const uint8_t *const src, const int32_t src
                     s_64[0] = _mm_loadl_epi64((__m128i *)src_ptr);
 
                     do {
-                        const __m256i res =
-                            y_convolve_2tap_8x2_avx2(src_ptr, src_stride, coeffs_256, s_64);
+                        const __m256i res = y_convolve_2tap_8x2_avx2(
+                            src_ptr, src_stride, coeffs_256, s_64);
                         jnt_avg_round_store_8x2_avx2(
                             res, offset_avg_256, dst, dst_stride, dst8, dst8_stride);
                         src_ptr += 2 * src_stride;
@@ -536,8 +536,8 @@ static void jnt_convolve_y_2tap_avx2(const uint8_t *const src, const int32_t src
             }
         }
     } else {
-        const int16_t offset_no_avg =
-            (round_offset << (round_1 - bits - 1)) + (1 << (round_1 - bits - 2));
+        const int16_t offset_no_avg = (round_offset << (round_1 - bits - 1)) +
+            (1 << (round_1 - bits - 2));
 
         if (w <= 4) {
             const __m128i offset_no_avg_128 = _mm_set1_epi16(offset_no_avg);
@@ -550,8 +550,8 @@ static void jnt_convolve_y_2tap_avx2(const uint8_t *const src, const int32_t src
                 s_16[0] = _mm_cvtsi32_si128(*(int16_t *)src_ptr);
 
                 do {
-                    const __m128i res =
-                        y_convolve_2tap_2x2_ssse3(src_ptr, src_stride, coeffs_128, s_16);
+                    const __m128i res = y_convolve_2tap_2x2_ssse3(
+                        src_ptr, src_stride, coeffs_128, s_16);
                     jnt_no_avg_round_store_2x2_sse2(res, offset_no_avg_128, dst, dst_stride);
                     src_ptr += 2 * src_stride;
                     dst += 2 * dst_stride;
@@ -565,8 +565,8 @@ static void jnt_convolve_y_2tap_avx2(const uint8_t *const src, const int32_t src
                 s_32[0] = _mm_cvtsi32_si128(*(int32_t *)src_ptr);
 
                 do {
-                    const __m128i res =
-                        y_convolve_2tap_4x2_ssse3(src_ptr, src_stride, coeffs_128, s_32);
+                    const __m128i res = y_convolve_2tap_4x2_ssse3(
+                        src_ptr, src_stride, coeffs_128, s_32);
                     jnt_no_avg_round_store_4x2_sse2(res, offset_no_avg_128, dst, dst_stride);
                     src_ptr += 2 * src_stride;
                     dst += 2 * dst_stride;
@@ -584,8 +584,8 @@ static void jnt_convolve_y_2tap_avx2(const uint8_t *const src, const int32_t src
                 s_64[0] = _mm_loadl_epi64((__m128i *)src_ptr);
 
                 do {
-                    const __m256i res =
-                        y_convolve_2tap_8x2_avx2(src_ptr, src_stride, coeffs_256, s_64);
+                    const __m256i res = y_convolve_2tap_8x2_avx2(
+                        src_ptr, src_stride, coeffs_256, s_64);
                     jnt_no_avg_round_store_8x2_avx2(res, offset_no_avg_256, dst, dst_stride);
                     src_ptr += 2 * src_stride;
                     dst += 2 * dst_stride;
@@ -753,8 +753,8 @@ void jnt_convolve_y_4tap_avx2(const uint8_t *const src, const int32_t src_stride
         if (conv_params->use_jnt_comp_avg) {
             const int32_t factor = conv_params->fwd_offset | (conv_params->bck_offset << 16);
             const int32_t offset_comp_avg = round_offset * conv_params->bck_offset +
-                                            (1 << (round_bits + DIST_PRECISION_BITS - 1)) -
-                                            (round_offset << DIST_PRECISION_BITS);
+                (1 << (round_bits + DIST_PRECISION_BITS - 1)) -
+                (round_offset << DIST_PRECISION_BITS);
 
             if (w <= 4) {
                 const __m128i factor_128          = _mm_set1_epi32(factor);
@@ -844,8 +844,8 @@ void jnt_convolve_y_4tap_avx2(const uint8_t *const src, const int32_t src_stride
 
                     do {
                         src_ptr += 2 * src_stride;
-                        const __m256i res =
-                            y_convolve_4tap_8x2_avx2(src_ptr, src_stride, coeffs_256, s_64, ss_256);
+                        const __m256i res = y_convolve_4tap_8x2_avx2(
+                            src_ptr, src_stride, coeffs_256, s_64, ss_256);
                         jnt_comp_avg_round_store_8x2_avx2(res,
                                                           factor_256,
                                                           offset_comp_avg_256,
@@ -892,7 +892,7 @@ void jnt_convolve_y_4tap_avx2(const uint8_t *const src, const int32_t src_stride
             }
         } else {
             const int16_t offset_avg = (1 << (FILTER_BITS - 1)) + (1 << (round_1 - bits - 2)) -
-                                       (round_offset << (round_1 - bits - 1));
+                (round_offset << (round_1 - bits - 1));
 
             if (w <= 4) {
                 const __m128i offset_avg_128 = _mm_set1_epi16(offset_avg);
@@ -970,8 +970,8 @@ void jnt_convolve_y_4tap_avx2(const uint8_t *const src, const int32_t src_stride
 
                     do {
                         src_ptr += 2 * src_stride;
-                        const __m256i res =
-                            y_convolve_4tap_8x2_avx2(src_ptr, src_stride, coeffs_256, s_64, ss_256);
+                        const __m256i res = y_convolve_4tap_8x2_avx2(
+                            src_ptr, src_stride, coeffs_256, s_64, ss_256);
                         jnt_avg_round_store_8x2_avx2(
                             res, offset_avg_256, dst, dst_stride, dst8, dst8_stride);
                         ss_256[0] = ss_256[1];
@@ -1013,8 +1013,8 @@ void jnt_convolve_y_4tap_avx2(const uint8_t *const src, const int32_t src_stride
             }
         }
     } else {
-        const int16_t offset_no_avg =
-            (round_offset << (round_1 - bits - 1)) + (1 << (round_1 - bits - 2));
+        const int16_t offset_no_avg = (round_offset << (round_1 - bits - 1)) +
+            (1 << (round_1 - bits - 2));
 
         if (w <= 4) {
             const __m128i offset_no_avg_128 = _mm_set1_epi16(offset_no_avg);
@@ -1035,8 +1035,8 @@ void jnt_convolve_y_4tap_avx2(const uint8_t *const src, const int32_t src_stride
 
                 do {
                     src_ptr += 2 * src_stride;
-                    const __m128i res =
-                        y_convolve_4tap_2x2_ssse3(src_ptr, src_stride, coeffs_128, s_16, ss_128);
+                    const __m128i res = y_convolve_4tap_2x2_ssse3(
+                        src_ptr, src_stride, coeffs_128, s_16, ss_128);
                     jnt_no_avg_round_store_2x2_sse2(res, offset_no_avg_128, dst, dst_stride);
                     ss_128[0] = ss_128[1];
                     dst += 2 * dst_stride;
@@ -1058,8 +1058,8 @@ void jnt_convolve_y_4tap_avx2(const uint8_t *const src, const int32_t src_stride
 
                 do {
                     src_ptr += 2 * src_stride;
-                    const __m128i res =
-                        y_convolve_4tap_4x2_ssse3(src_ptr, src_stride, coeffs_128, s_32, ss_128);
+                    const __m128i res = y_convolve_4tap_4x2_ssse3(
+                        src_ptr, src_stride, coeffs_128, s_32, ss_128);
                     jnt_no_avg_round_store_4x2_sse2(res, offset_no_avg_128, dst, dst_stride);
                     ss_128[0] = ss_128[1];
                     dst += 2 * dst_stride;
@@ -1087,8 +1087,8 @@ void jnt_convolve_y_4tap_avx2(const uint8_t *const src, const int32_t src_stride
 
                 do {
                     src_ptr += 2 * src_stride;
-                    const __m256i res =
-                        y_convolve_4tap_8x2_avx2(src_ptr, src_stride, coeffs_256, s_64, ss_256);
+                    const __m256i res = y_convolve_4tap_8x2_avx2(
+                        src_ptr, src_stride, coeffs_256, s_64, ss_256);
                     jnt_no_avg_round_store_8x2_avx2(res, offset_no_avg_256, dst, dst_stride);
                     ss_256[0] = ss_256[1];
                     dst += 2 * dst_stride;
@@ -1149,8 +1149,8 @@ static void jnt_convolve_y_6tap_avx2(const uint8_t *const src, const int32_t src
         if (conv_params->use_jnt_comp_avg) {
             const int32_t factor = conv_params->fwd_offset | (conv_params->bck_offset << 16);
             const int32_t offset_comp_avg = round_offset * conv_params->bck_offset +
-                                            (1 << (round_bits + DIST_PRECISION_BITS - 1)) -
-                                            (round_offset << DIST_PRECISION_BITS);
+                (1 << (round_bits + DIST_PRECISION_BITS - 1)) -
+                (round_offset << DIST_PRECISION_BITS);
 
             if (w <= 4) {
                 const __m128i factor_128          = _mm_set1_epi32(factor);
@@ -1260,8 +1260,8 @@ static void jnt_convolve_y_6tap_avx2(const uint8_t *const src, const int32_t src
                     int32_t y = h;
                     do {
                         src_ptr += 2 * src_stride;
-                        const __m256i res =
-                            y_convolve_6tap_8x2_avx2(src_ptr, src_stride, coeffs_256, s_64, ss_256);
+                        const __m256i res = y_convolve_6tap_8x2_avx2(
+                            src_ptr, src_stride, coeffs_256, s_64, ss_256);
                         jnt_comp_avg_round_store_8x2_avx2(res,
                                                           factor_256,
                                                           offset_comp_avg_256,
@@ -1373,7 +1373,7 @@ static void jnt_convolve_y_6tap_avx2(const uint8_t *const src, const int32_t src
             }
         } else {
             const int16_t offset_avg = (1 << (FILTER_BITS - 1)) + (1 << (round_1 - bits - 2)) -
-                                       (round_offset << (round_1 - bits - 1));
+                (round_offset << (round_1 - bits - 1));
 
             if (w <= 4) {
                 const __m128i offset_avg_128 = _mm_set1_epi16(offset_avg);
@@ -1471,8 +1471,8 @@ static void jnt_convolve_y_6tap_avx2(const uint8_t *const src, const int32_t src
                     int32_t y = h;
                     do {
                         src_ptr += 2 * src_stride;
-                        const __m256i res =
-                            y_convolve_6tap_8x2_avx2(src_ptr, src_stride, coeffs_256, s_64, ss_256);
+                        const __m256i res = y_convolve_6tap_8x2_avx2(
+                            src_ptr, src_stride, coeffs_256, s_64, ss_256);
                         jnt_avg_round_store_8x2_avx2(
                             res, offset_avg_256, dst, dst_stride, dst8, dst8_stride);
                         ss_256[0] = ss_256[1];
@@ -1575,8 +1575,8 @@ static void jnt_convolve_y_6tap_avx2(const uint8_t *const src, const int32_t src
             }
         }
     } else {
-        const int16_t offset_no_avg =
-            (round_offset << (round_1 - bits - 1)) + (1 << (round_1 - bits - 2));
+        const int16_t offset_no_avg = (round_offset << (round_1 - bits - 1)) +
+            (1 << (round_1 - bits - 2));
 
         if (w <= 4) {
             const __m128i offset_no_avg_128 = _mm_set1_epi16(offset_no_avg);
@@ -1604,8 +1604,8 @@ static void jnt_convolve_y_6tap_avx2(const uint8_t *const src, const int32_t src
 
                 do {
                     src_ptr += 2 * src_stride;
-                    const __m128i res =
-                        y_convolve_6tap_2x2_ssse3(src_ptr, src_stride, coeffs_128, s_16, ss_128);
+                    const __m128i res = y_convolve_6tap_2x2_ssse3(
+                        src_ptr, src_stride, coeffs_128, s_16, ss_128);
                     jnt_no_avg_round_store_2x2_sse2(res, offset_no_avg_128, dst, dst_stride);
                     ss_128[0] = ss_128[1];
                     ss_128[1] = ss_128[2];
@@ -1633,8 +1633,8 @@ static void jnt_convolve_y_6tap_avx2(const uint8_t *const src, const int32_t src
 
                 do {
                     src_ptr += 2 * src_stride;
-                    const __m128i res =
-                        y_convolve_6tap_4x2_ssse3(src_ptr, src_stride, coeffs_128, s_32, ss_128);
+                    const __m128i res = y_convolve_6tap_4x2_ssse3(
+                        src_ptr, src_stride, coeffs_128, s_32, ss_128);
                     jnt_no_avg_round_store_4x2_sse2(res, offset_no_avg_128, dst, dst_stride);
                     ss_128[0] = ss_128[1];
                     ss_128[1] = ss_128[2];
@@ -1669,8 +1669,8 @@ static void jnt_convolve_y_6tap_avx2(const uint8_t *const src, const int32_t src
                 int32_t y = h;
                 do {
                     src_ptr += 2 * src_stride;
-                    const __m256i res =
-                        y_convolve_6tap_8x2_avx2(src_ptr, src_stride, coeffs_256, s_64, ss_256);
+                    const __m256i res = y_convolve_6tap_8x2_avx2(
+                        src_ptr, src_stride, coeffs_256, s_64, ss_256);
                     jnt_no_avg_round_store_8x2_avx2(res, offset_no_avg_256, dst, dst_stride);
                     ss_256[0] = ss_256[1];
                     ss_256[1] = ss_256[2];
@@ -1789,8 +1789,8 @@ static void jnt_convolve_y_8tap_avx2(const uint8_t *const src, const int32_t src
         if (conv_params->use_jnt_comp_avg) {
             const int32_t factor = conv_params->fwd_offset | (conv_params->bck_offset << 16);
             const int32_t offset_comp_avg = round_offset * conv_params->bck_offset +
-                                            (1 << (round_bits + DIST_PRECISION_BITS - 1)) -
-                                            (round_offset << DIST_PRECISION_BITS);
+                (1 << (round_bits + DIST_PRECISION_BITS - 1)) -
+                (round_offset << DIST_PRECISION_BITS);
 
             if (w <= 4) {
                 const __m128i factor_128          = _mm_set1_epi32(factor);
@@ -1916,8 +1916,8 @@ static void jnt_convolve_y_8tap_avx2(const uint8_t *const src, const int32_t src
 
                     int32_t y = h;
                     do {
-                        const __m256i res =
-                            y_convolve_8tap_8x2_avx2(src_ptr, src_stride, coeffs_256, s_64, ss_256);
+                        const __m256i res = y_convolve_8tap_8x2_avx2(
+                            src_ptr, src_stride, coeffs_256, s_64, ss_256);
                         jnt_comp_avg_round_store_8x2_avx2(res,
                                                           factor_256,
                                                           offset_comp_avg_256,
@@ -2049,7 +2049,7 @@ static void jnt_convolve_y_8tap_avx2(const uint8_t *const src, const int32_t src
             }
         } else {
             const int16_t offset_avg = (1 << (FILTER_BITS - 1)) + (1 << (round_1 - bits - 2)) -
-                                       (round_offset << (round_1 - bits - 1));
+                (round_offset << (round_1 - bits - 1));
 
             if (w <= 4) {
                 const __m128i offset_avg_128 = _mm_set1_epi16(offset_avg);
@@ -2163,8 +2163,8 @@ static void jnt_convolve_y_8tap_avx2(const uint8_t *const src, const int32_t src
 
                     int32_t y = h;
                     do {
-                        const __m256i res =
-                            y_convolve_8tap_8x2_avx2(src_ptr, src_stride, coeffs_256, s_64, ss_256);
+                        const __m256i res = y_convolve_8tap_8x2_avx2(
+                            src_ptr, src_stride, coeffs_256, s_64, ss_256);
                         jnt_avg_round_store_8x2_avx2(
                             res, offset_avg_256, dst, dst_stride, dst8, dst8_stride);
                         ss_256[0] = ss_256[1];
@@ -2287,8 +2287,8 @@ static void jnt_convolve_y_8tap_avx2(const uint8_t *const src, const int32_t src
             }
         }
     } else {
-        const int16_t offset_no_avg =
-            (round_offset << (round_1 - bits - 1)) + (1 << (round_1 - bits - 2));
+        const int16_t offset_no_avg = (round_offset << (round_1 - bits - 1)) +
+            (1 << (round_1 - bits - 2));
 
         if (w <= 4) {
             const __m128i offset_no_avg_128 = _mm_set1_epi16(offset_no_avg);
@@ -2320,8 +2320,8 @@ static void jnt_convolve_y_8tap_avx2(const uint8_t *const src, const int32_t src
                 ss_128[2] = _mm_unpacklo_epi8(src45, src56);
 
                 do {
-                    const __m128i res =
-                        y_convolve_8tap_2x2_ssse3(src_ptr, src_stride, coeffs_128, s_16, ss_128);
+                    const __m128i res = y_convolve_8tap_2x2_ssse3(
+                        src_ptr, src_stride, coeffs_128, s_16, ss_128);
                     jnt_no_avg_round_store_2x2_sse2(res, offset_no_avg_128, dst, dst_stride);
                     ss_128[0] = ss_128[1];
                     ss_128[1] = ss_128[2];
@@ -2355,8 +2355,8 @@ static void jnt_convolve_y_8tap_avx2(const uint8_t *const src, const int32_t src
                 ss_128[2] = _mm_unpacklo_epi8(src45, src56);
 
                 do {
-                    const __m128i res =
-                        y_convolve_8tap_4x2_ssse3(src_ptr, src_stride, coeffs_128, s_32, ss_128);
+                    const __m128i res = y_convolve_8tap_4x2_ssse3(
+                        src_ptr, src_stride, coeffs_128, s_32, ss_128);
                     jnt_no_avg_round_store_4x2_sse2(res, offset_no_avg_128, dst, dst_stride);
                     ss_128[0] = ss_128[1];
                     ss_128[1] = ss_128[2];
@@ -2397,8 +2397,8 @@ static void jnt_convolve_y_8tap_avx2(const uint8_t *const src, const int32_t src
 
                 int32_t y = h;
                 do {
-                    const __m256i res =
-                        y_convolve_8tap_8x2_avx2(src_ptr, src_stride, coeffs_256, s_64, ss_256);
+                    const __m256i res = y_convolve_8tap_8x2_avx2(
+                        src_ptr, src_stride, coeffs_256, s_64, ss_256);
                     jnt_no_avg_round_store_8x2_avx2(res, offset_no_avg_256, dst, dst_stride);
                     ss_256[0] = ss_256[1];
                     ss_256[1] = ss_256[2];
@@ -2591,8 +2591,7 @@ void svt_av1_jnt_convolve_2d_copy_avx2(const uint8_t *src, int32_t src_stride, u
         if (conv_params->use_jnt_comp_avg) {
             const int32_t factor = conv_params->fwd_offset | (conv_params->bck_offset << 16);
             const int32_t offset_comp_avg = round_offset * conv_params->bck_offset +
-                                            (1 << (bits + DIST_PRECISION_BITS - 1)) -
-                                            (round_offset << DIST_PRECISION_BITS);
+                (1 << (bits + DIST_PRECISION_BITS - 1)) - (round_offset << DIST_PRECISION_BITS);
 
             if (w <= 4) {
                 const __m128i factor_128          = _mm_set1_epi32(factor);
@@ -3064,8 +3063,8 @@ static void jnt_convolve_x_2tap_avx2(const uint8_t *const src, const int32_t src
         if (conv_params->use_jnt_comp_avg) {
             const int32_t factor = conv_params->fwd_offset | (conv_params->bck_offset << 16);
             const int32_t offset_comp_avg = round_offset * conv_params->bck_offset +
-                                            (1 << (round_bits + DIST_PRECISION_BITS - 1)) -
-                                            (round_offset << DIST_PRECISION_BITS);
+                (1 << (round_bits + DIST_PRECISION_BITS - 1)) -
+                (round_offset << DIST_PRECISION_BITS);
 
             if (w <= 4) {
                 const __m128i factor_128          = _mm_set1_epi32(factor);
@@ -3075,8 +3074,8 @@ static void jnt_convolve_x_2tap_avx2(const uint8_t *const src, const int32_t src
 
                 if (w == 2) {
                     do {
-                        const __m128i res =
-                            x_convolve_2tap_2x2_sse4_1(src_ptr, src_stride, coeffs_128);
+                        const __m128i res = x_convolve_2tap_2x2_sse4_1(
+                            src_ptr, src_stride, coeffs_128);
                         jnt_comp_avg_round_store_2x2_sse2(res,
                                                           factor_128,
                                                           offset_comp_avg_128,
@@ -3093,8 +3092,8 @@ static void jnt_convolve_x_2tap_avx2(const uint8_t *const src, const int32_t src
                     assert(w == 4);
 
                     do {
-                        const __m128i res =
-                            x_convolve_2tap_4x2_ssse3(src_ptr, src_stride, coeffs_128);
+                        const __m128i res = x_convolve_2tap_4x2_ssse3(
+                            src_ptr, src_stride, coeffs_128);
                         jnt_comp_avg_round_store_4x2_sse2(res,
                                                           factor_128,
                                                           offset_comp_avg_128,
@@ -3117,8 +3116,8 @@ static void jnt_convolve_x_2tap_avx2(const uint8_t *const src, const int32_t src
 
                 if (w == 8) {
                     do {
-                        const __m256i res =
-                            x_convolve_2tap_8x2_avx2(src_ptr, src_stride, coeffs_256);
+                        const __m256i res = x_convolve_2tap_8x2_avx2(
+                            src_ptr, src_stride, coeffs_256);
                         jnt_comp_avg_round_store_8x2_avx2(res,
                                                           factor_256,
                                                           offset_comp_avg_256,
@@ -3195,7 +3194,7 @@ static void jnt_convolve_x_2tap_avx2(const uint8_t *const src, const int32_t src
             }
         } else {
             const int16_t offset_avg = (1 << (FILTER_BITS - 1)) + (1 << (round_0 - bits - 2)) -
-                                       (round_offset << (round_0 - bits - 1));
+                (round_offset << (round_0 - bits - 1));
 
             if (w <= 4) {
                 const __m128i offset_avg_128 = _mm_set1_epi16(offset_avg);
@@ -3204,8 +3203,8 @@ static void jnt_convolve_x_2tap_avx2(const uint8_t *const src, const int32_t src
 
                 if (w == 2) {
                     do {
-                        const __m128i res =
-                            x_convolve_2tap_2x2_sse4_1(src_ptr, src_stride, coeffs_128);
+                        const __m128i res = x_convolve_2tap_2x2_sse4_1(
+                            src_ptr, src_stride, coeffs_128);
                         jnt_avg_round_store_2x2_sse2(
                             res, offset_avg_128, dst, dst_stride, dst8, dst8_stride);
                         src_ptr += 2 * src_stride;
@@ -3217,8 +3216,8 @@ static void jnt_convolve_x_2tap_avx2(const uint8_t *const src, const int32_t src
                     assert(w == 4);
 
                     do {
-                        const __m128i res =
-                            x_convolve_2tap_4x2_ssse3(src_ptr, src_stride, coeffs_128);
+                        const __m128i res = x_convolve_2tap_4x2_ssse3(
+                            src_ptr, src_stride, coeffs_128);
                         jnt_avg_round_store_4x2_sse2(
                             res, offset_avg_128, dst, dst_stride, dst8, dst8_stride);
                         src_ptr += 2 * src_stride;
@@ -3235,8 +3234,8 @@ static void jnt_convolve_x_2tap_avx2(const uint8_t *const src, const int32_t src
 
                 if (w == 8) {
                     do {
-                        const __m256i res =
-                            x_convolve_2tap_8x2_avx2(src_ptr, src_stride, coeffs_256);
+                        const __m256i res = x_convolve_2tap_8x2_avx2(
+                            src_ptr, src_stride, coeffs_256);
                         jnt_avg_round_store_8x2_avx2(
                             res, offset_avg_256, dst, dst_stride, dst8, dst8_stride);
                         src_ptr += 2 * src_stride;
@@ -3298,8 +3297,8 @@ static void jnt_convolve_x_2tap_avx2(const uint8_t *const src, const int32_t src
             }
         }
     } else {
-        const int16_t offset_no_avg =
-            (round_offset << (round_0 - bits - 1)) + (1 << (round_0 - bits - 2));
+        const int16_t offset_no_avg = (round_offset << (round_0 - bits - 1)) +
+            (1 << (round_0 - bits - 2));
 
         if (w <= 4) {
             const __m128i offset_no_avg_128 = _mm_set1_epi16(offset_no_avg);
@@ -3403,8 +3402,8 @@ void jnt_convolve_x_4tap_ssse3(const uint8_t *const src, const int32_t src_strid
         if (conv_params->use_jnt_comp_avg) {
             const int32_t factor = conv_params->fwd_offset | (conv_params->bck_offset << 16);
             const int32_t offset_comp_avg = round_offset * conv_params->bck_offset +
-                                            (1 << (round_bits + DIST_PRECISION_BITS - 1)) -
-                                            (round_offset << DIST_PRECISION_BITS);
+                (1 << (round_bits + DIST_PRECISION_BITS - 1)) -
+                (round_offset << DIST_PRECISION_BITS);
             const __m128i factor_128          = _mm_set1_epi32(factor);
             const __m128i offset_comp_avg_128 = _mm_set1_epi32(offset_comp_avg);
 
@@ -3433,7 +3432,7 @@ void jnt_convolve_x_4tap_ssse3(const uint8_t *const src, const int32_t src_strid
             }
         } else {
             const int16_t offset_avg = (1 << (FILTER_BITS - 1)) + (1 << (round_0 - bits - 2)) -
-                                       (round_offset << (round_0 - bits - 1));
+                (round_offset << (round_0 - bits - 1));
             const __m128i offset_avg_128 = _mm_set1_epi16(offset_avg);
 
             if (w == 2) {
@@ -3461,8 +3460,8 @@ void jnt_convolve_x_4tap_ssse3(const uint8_t *const src, const int32_t src_strid
             }
         }
     } else {
-        const int16_t offset_no_avg =
-            (round_offset << (round_0 - bits - 1)) + (1 << (round_0 - bits - 2));
+        const int16_t offset_no_avg = (round_offset << (round_0 - bits - 1)) +
+            (1 << (round_0 - bits - 2));
         const __m128i offset_no_avg_128 = _mm_set1_epi16(offset_no_avg);
 
         if (w == 2) {
@@ -3516,15 +3515,15 @@ static void jnt_convolve_x_6tap_avx2(const uint8_t *const src, const int32_t src
         if (conv_params->use_jnt_comp_avg) {
             const int32_t factor = conv_params->fwd_offset | (conv_params->bck_offset << 16);
             const int32_t offset_comp_avg = round_offset * conv_params->bck_offset +
-                                            (1 << (round_bits + DIST_PRECISION_BITS - 1)) -
-                                            (round_offset << DIST_PRECISION_BITS);
+                (1 << (round_bits + DIST_PRECISION_BITS - 1)) -
+                (round_offset << DIST_PRECISION_BITS);
             const __m256i factor_256          = _mm256_set1_epi32(factor);
             const __m256i offset_comp_avg_256 = _mm256_set1_epi32(offset_comp_avg);
 
             if (w == 8) {
                 do {
-                    const __m256i res =
-                        x_convolve_6tap_8x2_avx2(src_ptr, src_stride, coeffs_256, filt_256);
+                    const __m256i res = x_convolve_6tap_8x2_avx2(
+                        src_ptr, src_stride, coeffs_256, filt_256);
                     jnt_comp_avg_round_store_8x2_avx2(
                         res, factor_256, offset_comp_avg_256, dst, dst_stride, dst8, dst8_stride);
                     src_ptr += 2 * src_stride;
@@ -3606,13 +3605,13 @@ static void jnt_convolve_x_6tap_avx2(const uint8_t *const src, const int32_t src
             }
         } else {
             const int16_t offset_avg = (1 << (FILTER_BITS - 1)) + (1 << (round_0 - bits - 2)) -
-                                       (round_offset << (round_0 - bits - 1));
+                (round_offset << (round_0 - bits - 1));
             const __m256i offset_avg_256 = _mm256_set1_epi16(offset_avg);
 
             if (w == 8) {
                 do {
-                    const __m256i res =
-                        x_convolve_6tap_8x2_avx2(src_ptr, src_stride, coeffs_256, filt_256);
+                    const __m256i res = x_convolve_6tap_8x2_avx2(
+                        src_ptr, src_stride, coeffs_256, filt_256);
                     jnt_avg_round_store_8x2_avx2(
                         res, offset_avg_256, dst, dst_stride, dst8, dst8_stride);
                     src_ptr += 2 * src_stride;
@@ -3685,14 +3684,14 @@ static void jnt_convolve_x_6tap_avx2(const uint8_t *const src, const int32_t src
             }
         }
     } else {
-        const int16_t offset_no_avg =
-            (round_offset << (round_0 - bits - 1)) + (1 << (round_0 - bits - 2));
+        const int16_t offset_no_avg = (round_offset << (round_0 - bits - 1)) +
+            (1 << (round_0 - bits - 2));
         const __m256i offset_no_avg_256 = _mm256_set1_epi16(offset_no_avg);
 
         if (w == 8) {
             do {
-                const __m256i res =
-                    x_convolve_6tap_8x2_avx2(src_ptr, src_stride, coeffs_256, filt_256);
+                const __m256i res = x_convolve_6tap_8x2_avx2(
+                    src_ptr, src_stride, coeffs_256, filt_256);
                 jnt_no_avg_round_store_8x2_avx2(res, offset_no_avg_256, dst, dst_stride);
                 src_ptr += 2 * src_stride;
                 dst += 2 * dst_stride;
@@ -3768,15 +3767,15 @@ static void jnt_convolve_x_8tap_avx2(const uint8_t *const src, const int32_t src
         if (conv_params->use_jnt_comp_avg) {
             const int32_t factor = conv_params->fwd_offset | (conv_params->bck_offset << 16);
             const int32_t offset_comp_avg = round_offset * conv_params->bck_offset +
-                                            (1 << (round_bits + DIST_PRECISION_BITS - 1)) -
-                                            (round_offset << DIST_PRECISION_BITS);
+                (1 << (round_bits + DIST_PRECISION_BITS - 1)) -
+                (round_offset << DIST_PRECISION_BITS);
             const __m256i factor_256          = _mm256_set1_epi32(factor);
             const __m256i offset_comp_avg_256 = _mm256_set1_epi32(offset_comp_avg);
 
             if (w == 8) {
                 do {
-                    const __m256i res =
-                        x_convolve_8tap_8x2_avx2(src_ptr, src_stride, coeffs_256, filt_256);
+                    const __m256i res = x_convolve_8tap_8x2_avx2(
+                        src_ptr, src_stride, coeffs_256, filt_256);
                     jnt_comp_avg_round_store_8x2_avx2(
                         res, factor_256, offset_comp_avg_256, dst, dst_stride, dst8, dst8_stride);
                     src_ptr += 2 * src_stride;
@@ -3858,13 +3857,13 @@ static void jnt_convolve_x_8tap_avx2(const uint8_t *const src, const int32_t src
             }
         } else {
             const int16_t offset_avg = (1 << (FILTER_BITS - 1)) + (1 << (round_0 - bits - 2)) -
-                                       (round_offset << (round_0 - bits - 1));
+                (round_offset << (round_0 - bits - 1));
             const __m256i offset_avg_256 = _mm256_set1_epi16(offset_avg);
 
             if (w == 8) {
                 do {
-                    const __m256i res =
-                        x_convolve_8tap_8x2_avx2(src_ptr, src_stride, coeffs_256, filt_256);
+                    const __m256i res = x_convolve_8tap_8x2_avx2(
+                        src_ptr, src_stride, coeffs_256, filt_256);
                     jnt_avg_round_store_8x2_avx2(
                         res, offset_avg_256, dst, dst_stride, dst8, dst8_stride);
                     src_ptr += 2 * src_stride;
@@ -3937,14 +3936,14 @@ static void jnt_convolve_x_8tap_avx2(const uint8_t *const src, const int32_t src
             }
         }
     } else {
-        const int16_t offset_no_avg =
-            (round_offset << (round_0 - bits - 1)) + (1 << (round_0 - bits - 2));
+        const int16_t offset_no_avg = (round_offset << (round_0 - bits - 1)) +
+            (1 << (round_0 - bits - 2));
         const __m256i offset_no_avg_256 = _mm256_set1_epi16(offset_no_avg);
 
         if (w == 8) {
             do {
-                const __m256i res =
-                    x_convolve_8tap_8x2_avx2(src_ptr, src_stride, coeffs_256, filt_256);
+                const __m256i res = x_convolve_8tap_8x2_avx2(
+                    src_ptr, src_stride, coeffs_256, filt_256);
                 jnt_no_avg_round_store_8x2_avx2(res, offset_no_avg_256, dst, dst_stride);
                 src_ptr += 2 * src_stride;
                 dst += 2 * dst_stride;

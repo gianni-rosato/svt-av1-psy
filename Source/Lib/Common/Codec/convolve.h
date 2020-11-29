@@ -26,10 +26,10 @@ extern "C" {
 #define WIENER_CLAMP_LIMIT(r0, bd) (1 << ((bd) + 1 + FILTER_BITS - r0))
 
 typedef void (*AomConvolveFn)(const uint8_t *src, int32_t src_stride, uint8_t *dst,
-                                  int32_t dst_stride, int32_t w, int32_t h,
-                                  InterpFilterParams *filter_params_x,
-                                  InterpFilterParams *filter_params_y, const int32_t subpel_x_q4,
-                                  const int32_t subpel_y_q4, ConvolveParams *conv_params);
+                              int32_t dst_stride, int32_t w, int32_t h,
+                              InterpFilterParams *filter_params_x,
+                              InterpFilterParams *filter_params_y, const int32_t subpel_x_q4,
+                              const int32_t subpel_y_q4, ConvolveParams *conv_params);
 
 typedef void (*aom_highbd_convolve_fn_t)(const uint16_t *src, int32_t src_stride, uint16_t *dst,
                                          int32_t dst_stride, int32_t w, int32_t h,
@@ -51,15 +51,16 @@ static INLINE ConvolveParams get_conv_params_no_round(int32_t ref, int32_t do_av
     // conv_params.ref = ref;
     conv_params.do_average = do_average;
     assert(IMPLIES(do_average, is_compound));
-    conv_params.is_compound = is_compound;
-    conv_params.round_0     = ROUND0_BITS;
-    conv_params.round_1 =
-        is_compound ? COMPOUND_ROUND1_BITS : 2 * FILTER_BITS - conv_params.round_0;
+    conv_params.is_compound   = is_compound;
+    conv_params.round_0       = ROUND0_BITS;
+    conv_params.round_1       = is_compound ? COMPOUND_ROUND1_BITS
+                                            : 2 * FILTER_BITS - conv_params.round_0;
     const int32_t intbufrange = bd + FILTER_BITS - conv_params.round_0 + 2;
     ASSERT(IMPLIES(bd < 12, intbufrange <= 16));
     if (intbufrange > 16) {
         conv_params.round_0 += intbufrange - 16;
-        if (!is_compound) conv_params.round_1 -= intbufrange - 16;
+        if (!is_compound)
+            conv_params.round_1 -= intbufrange - 16;
     }
     conv_params.dst        = dst;
     conv_params.dst_stride = dst_stride;

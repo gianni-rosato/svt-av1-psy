@@ -45,24 +45,26 @@
 
 typedef void (*EbDctor)(void* pobj);
 
-#define EB_DELETE_UNCHECKED(pobj)               \
-    do {                                        \
-        if ((pobj)->dctor) (pobj)->dctor(pobj); \
-        EB_FREE((pobj));                        \
+#define EB_DELETE_UNCHECKED(pobj) \
+    do {                          \
+        if ((pobj)->dctor)        \
+            (pobj)->dctor(pobj);  \
+        EB_FREE((pobj));          \
     } while (0)
 
 //trick: to support zero param constructor
 #define EB_VA_ARGS(...) , ##__VA_ARGS__
 
-#define EB_NO_THROW_NEW(pobj, ctor, ...)                        \
-    do {                                                        \
-        EbErrorType err;                                        \
-        size_t      size = sizeof(*pobj);                       \
-        EB_NO_THROW_CALLOC(pobj, 1, size);                      \
-        if (pobj) {                                             \
-            err = ctor(pobj EB_VA_ARGS(__VA_ARGS__));           \
-            if (err != EB_ErrorNone) EB_DELETE_UNCHECKED(pobj); \
-        }                                                       \
+#define EB_NO_THROW_NEW(pobj, ctor, ...)              \
+    do {                                              \
+        EbErrorType err;                              \
+        size_t      size = sizeof(*pobj);             \
+        EB_NO_THROW_CALLOC(pobj, 1, size);            \
+        if (pobj) {                                   \
+            err = ctor(pobj EB_VA_ARGS(__VA_ARGS__)); \
+            if (err != EB_ErrorNone)                  \
+                EB_DELETE_UNCHECKED(pobj);            \
+        }                                             \
     } while (0)
 
 #define EB_NEW(pobj, ctor, ...)                   \
@@ -77,9 +79,10 @@ typedef void (*EbDctor)(void* pobj);
         }                                         \
     } while (0)
 
-#define EB_DELETE(pobj)                      \
-    do {                                     \
-        if (pobj) EB_DELETE_UNCHECKED(pobj); \
+#define EB_DELETE(pobj)                \
+    do {                               \
+        if (pobj)                      \
+            EB_DELETE_UNCHECKED(pobj); \
     } while (0)
 
 #define EB_DELETE_PTR_ARRAY(pa, count)                        \

@@ -60,39 +60,31 @@ void set_hbd_lf_filter_tap_functions(void) {
 }
 
 /*Population of neighbour block lf params for each 4x4 block*/
-void fill_4x4_lf_param(LfCtxt* lf_ctxt,
-                       int32_t tu_x, int32_t tu_y,
-                       int32_t stride,
-                       TxSize tx_size,
-                       int32_t sub_x, int32_t sub_y,
-                       int plane) {
+void fill_4x4_lf_param(LfCtxt *lf_ctxt, int32_t tu_x, int32_t tu_y, int32_t stride, TxSize tx_size,
+                       int32_t sub_x, int32_t sub_y, int plane) {
     /*Population of chroma info is done at 4x4
     to be sync with all other luma population*/
-    const int txw = tx_size_wide_unit[tx_size] << sub_x;
-    const int txh = tx_size_high_unit[tx_size] << sub_y;
-    int tx_offset = tu_y * stride + tu_x;
+    const int txw       = tx_size_wide_unit[tx_size] << sub_x;
+    const int txh       = tx_size_high_unit[tx_size] << sub_y;
+    int       tx_offset = tu_y * stride + tu_x;
     if (plane == 0) {
         TxSize *tx_size_l = lf_ctxt->tx_size_l + tx_offset;
 
         *tx_size_l = tx_size;
-        for (int b4c = 1; b4c < txw; b4c++)
-            *(tx_size_l + b4c) = *tx_size_l;
+        for (int b4c = 1; b4c < txw; b4c++) *(tx_size_l + b4c) = *tx_size_l;
 
         for (int b4r = 1; b4r < txh; b4r++) {
-            for (int b4c = 0; b4c < txw; b4c++)
-                *(tx_size_l + b4r * stride + b4c) = *tx_size_l;
+            for (int b4c = 0; b4c < txw; b4c++) *(tx_size_l + b4r * stride + b4c) = *tx_size_l;
         }
     } else {
         assert(plane == 1);
         TxSize *tx_size_uv = lf_ctxt->tx_size_uv + tx_offset;
 
         *tx_size_uv = tx_size;
-        for (int b4c = 1; b4c < txw; b4c++)
-            *(tx_size_uv + b4c) = *tx_size_uv;
+        for (int b4c = 1; b4c < txw; b4c++) *(tx_size_uv + b4c) = *tx_size_uv;
 
         for (int b4r = 1; b4r < txh; b4r++) {
-            for (int b4c = 0; b4c < txw; b4c++)
-                *(tx_size_uv + b4r * stride + b4c) = *tx_size_uv;
+            for (int b4c = 0; b4c < txw; b4c++) *(tx_size_uv + b4r * stride + b4c) = *tx_size_uv;
         }
     }
 }
@@ -109,18 +101,11 @@ static INLINE TxSize dec_get_transform_size(const EdgeDir edge_dir, TxSize tx_si
 
 /*Return TxSize from get_transform_size(), so it is plane and direction
  awared*/
-static AOM_FORCE_INLINE TxSize dec_set_lpf_parameters(Av1DeblockingParameters *const params,
-                                                      FrameHeader *frm_hdr,
-                                                      EbColorConfig *color_config,
-                                                      BlockModeInfo *mi_cur,
-                                                      BlockModeInfo *mi_near,
-                                                      LfCtxt* lf_ctxt,
-                                                      const EdgeDir edge_dir,
-                                                      const uint32_t x, const uint32_t y,
-                                                      const int32_t plane,
-                                                      int32_t *sb_delta_lf,
-                                                      int32_t *sb_delta_lf_prev,
-                                                      int32_t *min_tx_dim) {
+static AOM_FORCE_INLINE TxSize dec_set_lpf_parameters(
+    Av1DeblockingParameters *const params, FrameHeader *frm_hdr, EbColorConfig *color_config,
+    BlockModeInfo *mi_cur, BlockModeInfo *mi_near, LfCtxt *lf_ctxt, const EdgeDir edge_dir,
+    const uint32_t x, const uint32_t y, const int32_t plane, int32_t *sb_delta_lf,
+    int32_t *sb_delta_lf_prev, int32_t *min_tx_dim) {
     LoopFilterInfoN *lf_info = &lf_ctxt->lf_info;
 
     /*reset to initial values*/
@@ -149,74 +134,72 @@ static AOM_FORCE_INLINE TxSize dec_set_lpf_parameters(Av1DeblockingParameters *c
     TxSize *lf_tx_l_cur  = lf_ctxt->tx_size_l + lf_offset;
     TxSize *lf_tx_uv_cur = lf_ctxt->tx_size_uv + lf_offset;
 
-    if (lf_tx_l_cur  == NULL) return TX_INVALID;
-    if (lf_tx_uv_cur == NULL) return TX_INVALID;
+    if (lf_tx_l_cur == NULL)
+        return TX_INVALID;
+    if (lf_tx_uv_cur == NULL)
+        return TX_INVALID;
 
     /*TODO : to be written get_trnasfrom_size function*/
-    TxSize ts_cur = plane == 0 ? *lf_tx_l_cur : *lf_tx_uv_cur;
-    const TxSize ts = dec_get_transform_size(edge_dir, ts_cur);
+    TxSize       ts_cur = plane == 0 ? *lf_tx_l_cur : *lf_tx_uv_cur;
+    const TxSize ts     = dec_get_transform_size(edge_dir, ts_cur);
     /* For rectangulare blocks,as we need min_hiegt/width only,
         so there is no need of converting to square transfom*/
-    *min_tx_dim = (VERT_EDGE == edge_dir) ? tx_size_high_unit[ts_cur] :
-                                            tx_size_wide_unit[ts_cur];
+    *min_tx_dim = (VERT_EDGE == edge_dir) ? tx_size_high_unit[ts_cur] : tx_size_wide_unit[ts_cur];
 
     {
-        const uint32_t coord = (VERT_EDGE == edge_dir) ? (x >> sub_x) : (y >> sub_y);
-        const uint32_t transform_masks = edge_dir == VERT_EDGE ?
-                                         tx_size_wide[ts] - 1 :
-                                         tx_size_high[ts] - 1;
-        const int32_t txb_edge = (coord & transform_masks) ? (0) : (1);
+        const uint32_t coord           = (VERT_EDGE == edge_dir) ? (x >> sub_x) : (y >> sub_y);
+        const uint32_t transform_masks = edge_dir == VERT_EDGE ? tx_size_wide[ts] - 1
+                                                               : tx_size_high[ts] - 1;
+        const int32_t  txb_edge        = (coord & transform_masks) ? (0) : (1);
 
-        if (!txb_edge) return ts;
+        if (!txb_edge)
+            return ts;
         /*prepare outer edge parameters. deblock the edge if it's an edge of a TU*/
         {
-            uint32_t curr_level; // Added to address 4x4 problem
-            PredictionMode mode = (mi_cur->mode == INTRA_MODE_4x4)
-                                  ? DC_PRED : mi_cur->mode;
+            uint32_t       curr_level; // Added to address 4x4 problem
+            PredictionMode mode = (mi_cur->mode == INTRA_MODE_4x4) ? DC_PRED : mi_cur->mode;
             if (frm_hdr->delta_lf_params.delta_lf_present)
-                curr_level = get_filter_level_delta_lf(frm_hdr, edge_dir,
+                curr_level = get_filter_level_delta_lf(frm_hdr,
+                                                       edge_dir,
                                                        plane,
                                                        sb_delta_lf,
                                                        mi_cur->segment_id,
                                                        mode,
                                                        mi_cur->ref_frame[0]);
             else
-                curr_level = lf_info->lvl[plane]
-                                         [mi_cur->segment_id]
-                                         [edge_dir]
-                                         [mi_cur->ref_frame[0]]
+                curr_level = lf_info->lvl[plane][mi_cur->segment_id][edge_dir][mi_cur->ref_frame[0]]
                                          [mode_lf_lut[mode]];
 
-            const int32_t curr_skipped =
-                mi_cur->skip && is_inter_block_no_intrabc(mi_cur->ref_frame[0]);
+            const int32_t curr_skipped = mi_cur->skip &&
+                is_inter_block_no_intrabc(mi_cur->ref_frame[0]);
 
             uint32_t level = curr_level;
             if (coord) {
                 /* Since block are alligned at 8x8 boundary , so prev block
                     will be cur - 1<<sub_x */
-                TxSize *lf_tx_l_prev =  (VERT_EDGE == edge_dir) ?
-                                        lf_tx_l_cur - (uint64_t)(1 << sub_x) :
-                                        lf_tx_l_cur - (lf_stride << sub_y);
-                TxSize *lf_tx_uv_prev = (VERT_EDGE == edge_dir) ?
-                                        lf_tx_uv_cur - (uint64_t)(1 << sub_x) :
-                                        lf_tx_uv_cur - (lf_stride << sub_y);
+                TxSize *lf_tx_l_prev  = (VERT_EDGE == edge_dir)
+                     ? lf_tx_l_cur - (uint64_t)(1 << sub_x)
+                     : lf_tx_l_cur - (lf_stride << sub_y);
+                TxSize *lf_tx_uv_prev = (VERT_EDGE == edge_dir)
+                    ? lf_tx_uv_cur - (uint64_t)(1 << sub_x)
+                    : lf_tx_uv_cur - (lf_stride << sub_y);
 
-                if (lf_tx_l_prev  == NULL) return TX_INVALID;
-                if (lf_tx_uv_prev == NULL) return TX_INVALID;
+                if (lf_tx_l_prev == NULL)
+                    return TX_INVALID;
+                if (lf_tx_uv_prev == NULL)
+                    return TX_INVALID;
 
-                TxSize pv_ts_act = plane == 0 ? *lf_tx_l_prev : *lf_tx_uv_prev;
-                const TxSize pv_ts = dec_get_transform_size(edge_dir, pv_ts_act);
+                TxSize       pv_ts_act = plane == 0 ? *lf_tx_l_prev : *lf_tx_uv_prev;
+                const TxSize pv_ts     = dec_get_transform_size(edge_dir, pv_ts_act);
 
                 /* For rectangulare blocks,as we need min_hiegt/width only,
                     so there is no need of converting to square transfom*/
-                int32_t prev_ts_dim = (VERT_EDGE == edge_dir) ?
-                                       tx_size_high_unit[pv_ts_act] :
-                                       tx_size_wide_unit[pv_ts_act];
-                *min_tx_dim = AOMMIN(*min_tx_dim, prev_ts_dim);
+                int32_t prev_ts_dim = (VERT_EDGE == edge_dir) ? tx_size_high_unit[pv_ts_act]
+                                                              : tx_size_wide_unit[pv_ts_act];
+                *min_tx_dim         = AOMMIN(*min_tx_dim, prev_ts_dim);
 
                 uint32_t pv_lvl;
-                mode = (mi_near->mode == INTRA_MODE_4x4)
-                        ? DC_PRED : mi_near->mode;
+                mode = (mi_near->mode == INTRA_MODE_4x4) ? DC_PRED : mi_near->mode;
                 if (frm_hdr->delta_lf_params.delta_lf_present)
                     pv_lvl = get_filter_level_delta_lf(frm_hdr,
                                                        edge_dir,
@@ -226,20 +209,16 @@ static AOM_FORCE_INLINE TxSize dec_set_lpf_parameters(Av1DeblockingParameters *c
                                                        mode,
                                                        mi_near->ref_frame[0]);
                 else
-                    pv_lvl = lf_info->lvl[plane][mi_near->segment_id]
-                                         [edge_dir]
-                                         [mi_near->ref_frame[0]]
-                                         [mode_lf_lut[mode]];
+                    pv_lvl = lf_info->lvl[plane][mi_near->segment_id][edge_dir]
+                                         [mi_near->ref_frame[0]][mode_lf_lut[mode]];
 
                 const int32_t pv_skip = mi_near->skip &&
-                                        is_inter_block_no_intrabc(mi_near->ref_frame[0]);
-                const BlockSize bsize = get_plane_block_size(mi_near->sb_type,
-                                                             sub_x, sub_y);
+                    is_inter_block_no_intrabc(mi_near->ref_frame[0]);
+                const BlockSize bsize = get_plane_block_size(mi_near->sb_type, sub_x, sub_y);
                 assert(bsize < BlockSizeS_ALL);
-                const int32_t prediction_masks = edge_dir == VERT_EDGE
-                                                 ? block_size_wide[bsize] - 1
-                                                 : block_size_high[bsize] - 1;
-                const int32_t pu_edge = !(coord & prediction_masks);
+                const int32_t prediction_masks = edge_dir == VERT_EDGE ? block_size_wide[bsize] - 1
+                                                                       : block_size_high[bsize] - 1;
+                const int32_t pu_edge          = !(coord & prediction_masks);
                 /*if the current and the previous blocks are skipped,
                 deblock the edge if the edge belongs to a PU's edge only.*/
                 if ((curr_level || pv_lvl) && (!pv_skip || !curr_skipped || pu_edge)) {
@@ -254,7 +233,8 @@ static AOM_FORCE_INLINE TxSize dec_set_lpf_parameters(Av1DeblockingParameters *c
                     } else {
                         params->filter_length = 14;
                         /* No wide filtering for chroma plane*/
-                        if (plane != 0) params->filter_length = 6;
+                        if (plane != 0)
+                            params->filter_length = 6;
                     }
 
                     /* update the level if the current block is skipped,
@@ -275,54 +255,46 @@ static AOM_FORCE_INLINE TxSize dec_set_lpf_parameters(Av1DeblockingParameters *c
 }
 
 /*It applies Vertical Loop Filtering in a superblock*/
-void dec_av1_filter_block_plane_vert(EbDecHandle *dec_handle,
-                                     SBInfo *sb_info,
-                                     EbPictureBufferDesc *recon_picture_buf,
-                                     LfCtxt *lf_ctxt,
-                                     const int32_t num_planes,
-                                     const int32_t sb_mi_row,
-                                     const int32_t sb_mi_col,
-                                     int32_t *sb_delta_lf)
-{
-    FrameHeader *frm_hdr = &dec_handle->frame_header;
+void dec_av1_filter_block_plane_vert(EbDecHandle *dec_handle, SBInfo *sb_info,
+                                     EbPictureBufferDesc *recon_picture_buf, LfCtxt *lf_ctxt,
+                                     const int32_t num_planes, const int32_t sb_mi_row,
+                                     const int32_t sb_mi_col, int32_t *sb_delta_lf) {
+    FrameHeader *  frm_hdr      = &dec_handle->frame_header;
     EbColorConfig *color_config = &dec_handle->seq_header.color_config;
-    EbBitDepthEnum is16bit = (recon_picture_buf->bit_depth > EB_8BIT ||
-        dec_handle->is_16bit_pipeline);
-    int32_t sub_x = color_config->subsampling_x;
-    int32_t sub_y = color_config->subsampling_y;
-    uint8_t no_lf_luma = !(frm_hdr->loop_filter_params.filter_level[0]) &&
-                         !(frm_hdr->loop_filter_params.filter_level[1]);
+    EbBitDepthEnum is16bit      = (recon_picture_buf->bit_depth > EB_8BIT ||
+                              dec_handle->is_16bit_pipeline);
+    int32_t        sub_x        = color_config->subsampling_x;
+    int32_t        sub_y        = color_config->subsampling_y;
+    uint8_t        no_lf_luma   = !(frm_hdr->loop_filter_params.filter_level[0]) &&
+        !(frm_hdr->loop_filter_params.filter_level[1]);
     uint8_t no_lf_u = !(frm_hdr->loop_filter_params.filter_level_u);
     uint8_t no_lf_v = !(frm_hdr->loop_filter_params.filter_level_v);
 
-    void *blk_recon_buf;
-    int32_t recon_stride;
+    void *   blk_recon_buf;
+    int32_t  recon_stride;
     int32_t *sb_delta_lf_left;
 
     TransformInfo_t *trans_info = NULL;
-    uint32_t num_tu;
+    uint32_t         num_tu;
 
     uint32_t mi_cols = (&dec_handle->frame_header)->mi_cols;
     uint32_t mi_rows = (&dec_handle->frame_header)->mi_rows;
 
-    BlockModeInfo *mode_info = get_cur_mode_info(dec_handle,
-        sb_mi_row, sb_mi_col, sb_info);
+    BlockModeInfo *mode_info = get_cur_mode_info(dec_handle, sb_mi_row, sb_mi_col, sb_info);
 
     int n_blocks = sb_info->num_block;
     for (int sub_blck = 0; sub_blck < n_blocks; sub_blck++) {
+        int32_t   blk_mi_row = sb_mi_row + mode_info->mi_row_in_sb;
+        int32_t   blk_mi_col = sb_mi_col + mode_info->mi_col_in_sb;
+        BlockSize bsize      = mode_info->sb_type;
 
-        int32_t blk_mi_row = sb_mi_row + mode_info->mi_row_in_sb;
-        int32_t blk_mi_col = sb_mi_col + mode_info->mi_col_in_sb;
-        BlockSize bsize = mode_info->sb_type;
-
-        int32_t bw4 = mi_size_wide[bsize];
-        int32_t bh4 = mi_size_high[bsize];
+        int32_t bw4               = mi_size_wide[bsize];
+        int32_t bh4               = mi_size_high[bsize];
         int32_t mb_to_bottom_edge = ((mi_rows - bh4 - blk_mi_row) * MI_SIZE) * 8;
         int32_t mb_to_right_edge  = ((mi_cols - bw4 - blk_mi_col) * MI_SIZE) * 8;
 
-        uint8_t lossless   = frm_hdr->lossless_array[mode_info->segment_id];
-        int lossless_block = (lossless && ((bsize >= BLOCK_64X64) &&
-                             (bsize <= BLOCK_128X128)));
+        uint8_t lossless       = frm_hdr->lossless_array[mode_info->segment_id];
+        int     lossless_block = (lossless && ((bsize >= BLOCK_64X64) && (bsize <= BLOCK_128X128)));
 
         int max_blocks_wide = block_size_wide[bsize];
         int max_blocks_high = block_size_high[bsize];
@@ -333,8 +305,8 @@ void dec_av1_filter_block_plane_vert(EbDecHandle *dec_handle,
         max_blocks_wide = max_blocks_wide >> tx_size_wide_log2[0];
         max_blocks_high = max_blocks_high >> tx_size_high_log2[0];
 
-        int num_chroma_tus = lossless_block ? (max_blocks_wide * max_blocks_high)
-            >> (sub_x + sub_y) : mode_info->num_tus[AOM_PLANE_U];
+        int num_chroma_tus = lossless_block ? (max_blocks_wide * max_blocks_high) >> (sub_x + sub_y)
+                                            : mode_info->num_tus[AOM_PLANE_U];
 
         for (int plane = 0; plane < num_planes; ++plane) {
             if ((plane == 0) && no_lf_luma)
@@ -347,47 +319,46 @@ void dec_av1_filter_block_plane_vert(EbDecHandle *dec_handle,
             sub_x = (plane > 0) ? color_config->subsampling_x : 0;
             sub_y = (plane > 0) ? color_config->subsampling_y : 0;
 
-            trans_info = (plane == 2) ? (sb_info->sb_trans_info[plane - 1] +
-                          mode_info->first_txb_offset[plane - 1] + num_chroma_tus) :
-                          (sb_info->sb_trans_info[plane] +
-                          mode_info->first_txb_offset[plane]);
+            trans_info = (plane == 2)
+                ? (sb_info->sb_trans_info[plane - 1] + mode_info->first_txb_offset[plane - 1] +
+                   num_chroma_tus)
+                : (sb_info->sb_trans_info[plane] + mode_info->first_txb_offset[plane]);
 
-            if (lossless_block)
-            {
+            if (lossless_block) {
                 assert(trans_info->tx_size == TX_4X4);
                 num_tu = (max_blocks_wide * max_blocks_high) >> (sub_x + sub_y);
 
-            }
-            else
+            } else
                 num_tu = mode_info->num_tus[!!plane];
 
-            derive_blk_pointers(recon_picture_buf, plane,
-                               ((blk_mi_col >> sub_x) * MI_SIZE),
-                               ((blk_mi_row >> sub_y) * MI_SIZE),
-                               &blk_recon_buf, &recon_stride,
-                               sub_x, sub_y);
+            derive_blk_pointers(recon_picture_buf,
+                                plane,
+                                ((blk_mi_col >> sub_x) * MI_SIZE),
+                                ((blk_mi_row >> sub_y) * MI_SIZE),
+                                &blk_recon_buf,
+                                &recon_stride,
+                                sub_x,
+                                sub_y);
 
             BlockModeInfo *mi_left = mode_info;
 
             Av1DeblockingParameters params;
             memset(&params, 0, sizeof(params));
 
-            for (uint32_t tu = 0; tu < num_tu; tu++)
-            {
-                void *tu_recon_buf;
+            for (uint32_t tu = 0; tu < num_tu; tu++) {
+                void *  tu_recon_buf;
                 int32_t tu_offset;
-                TxSize cur_tx_size;
+                TxSize  cur_tx_size;
                 int32_t cur_txh, min_txh;
 
                 cur_tx_size = trans_info->tx_size;
-                cur_txh = tx_size_high_unit[cur_tx_size];
+                cur_txh     = tx_size_high_unit[cur_tx_size];
 
-                tu_offset = (trans_info->txb_y_offset * recon_stride +
-                            trans_info->txb_x_offset) << MI_SIZE_LOG2;
-                tu_recon_buf = (void*)((uint8_t*)blk_recon_buf
-                                + (tu_offset << is16bit));
+                tu_offset = (trans_info->txb_y_offset * recon_stride + trans_info->txb_x_offset)
+                    << MI_SIZE_LOG2;
+                tu_recon_buf = (void *)((uint8_t *)blk_recon_buf + (tu_offset << is16bit));
 
-                uint8_t *p = (uint8_t*)tu_recon_buf;
+                uint8_t *p = (uint8_t *)tu_recon_buf;
 
                 /*inner loop always filter vertical edges in a MI block. If MI size
                 is 8x8, it will filter the vertical edge aligned with a 8x8 block.
@@ -397,35 +368,29 @@ void dec_av1_filter_block_plane_vert(EbDecHandle *dec_handle,
                   Since the first 2xX was skipped because of num_tu 0*/
 
                 uint32_t curr_luma_x = (blk_mi_col & (~sub_x)) * MI_SIZE +
-                                       ((trans_info->txb_x_offset << sub_x) * MI_SIZE);
+                    ((trans_info->txb_x_offset << sub_x) * MI_SIZE);
                 uint32_t curr_luma_y = (blk_mi_row & (~sub_y)) * MI_SIZE +
-                                       ((trans_info->txb_y_offset << sub_y)* MI_SIZE);
+                    ((trans_info->txb_y_offset << sub_y) * MI_SIZE);
 
-                int32_t left_mi_row = (blk_mi_row | sub_y) +
-                                      (trans_info->txb_y_offset << sub_y);
-                int32_t left_mi_col = (blk_mi_col & (~sub_x)) +
-                                      (trans_info->txb_x_offset << sub_x);
+                int32_t left_mi_row = (blk_mi_row | sub_y) + (trans_info->txb_y_offset << sub_y);
+                int32_t left_mi_col = (blk_mi_col & (~sub_x)) + (trans_info->txb_x_offset << sub_x);
 
                 /* For VERT_EDGE edge and x_range is for SB scan */
-                sb_delta_lf_left = (left_mi_col == sb_mi_col) ?
-                                   sb_delta_lf - FRAME_LF_COUNT : sb_delta_lf;
+                sb_delta_lf_left = (left_mi_col == sb_mi_col) ? sb_delta_lf - FRAME_LF_COUNT
+                                                              : sb_delta_lf;
 
                 min_txh = cur_txh;
-                for (int32_t temp_txh = 0; temp_txh < cur_txh;
-                    temp_txh += min_txh) {
-
-                    if(params.filter_length)
+                for (int32_t temp_txh = 0; temp_txh < cur_txh; temp_txh += min_txh) {
+                    if (params.filter_length)
                         memset(&params, 0, sizeof(params));
 
                     if (left_mi_col > 0) {
-                        mi_left = get_left_mode_info(dec_handle,
-                                                     left_mi_row,
-                                                     left_mi_col,
-                                                     sb_info);
+                        mi_left = get_left_mode_info(dec_handle, left_mi_row, left_mi_col, sb_info);
                     }
 
                     cur_tx_size = dec_set_lpf_parameters(&params,
-                                                         frm_hdr, color_config,
+                                                         frm_hdr,
+                                                         color_config,
                                                          mode_info,
                                                          mi_left,
                                                          lf_ctxt,
@@ -439,13 +404,13 @@ void dec_av1_filter_block_plane_vert(EbDecHandle *dec_handle,
 
                     if (cur_tx_size == TX_INVALID) {
                         params.filter_length = 0;
-                        cur_tx_size = TX_4X4;
+                        cur_tx_size          = TX_4X4;
                     }
 
                     /*Do the filtering for only for the actual frame boundry*/
-                    int32_t min_high = min_txh << MI_SIZE_LOG2;
+                    int32_t min_high     = min_txh << MI_SIZE_LOG2;
                     int32_t frame_height = frm_hdr->frame_size.frame_height;
-                    int32_t ext_height = curr_luma_y + (min_high << sub_y);
+                    int32_t ext_height   = curr_luma_y + (min_high << sub_y);
                     if (frame_height < ext_height)
                         min_high = ((frame_height - (int32_t)curr_luma_y) + sub_y) >> sub_y;
 
@@ -453,18 +418,16 @@ void dec_av1_filter_block_plane_vert(EbDecHandle *dec_handle,
                         int8_t filter_idx = filter_map[params.filter_length];
                         if (filter_idx != -1) {
                             if (is16bit)
-                                hbd_vert_filter_tap[filter_idx]((uint16_t*)(p),//CONVERT_TO_SHORTPTR(p),
-                                                                recon_stride,
-                                                                params.mblim,
-                                                                params.lim,
-                                                                params.hev_thr,
-                                                                recon_picture_buf->bit_depth);
+                                hbd_vert_filter_tap[filter_idx](
+                                    (uint16_t *)(p), //CONVERT_TO_SHORTPTR(p),
+                                    recon_stride,
+                                    params.mblim,
+                                    params.lim,
+                                    params.hev_thr,
+                                    recon_picture_buf->bit_depth);
                             else
-                                lbd_vert_filter_tap[filter_idx](p,
-                                                                recon_stride,
-                                                                params.mblim,
-                                                                params.lim,
-                                                                params.hev_thr);
+                                lbd_vert_filter_tap[filter_idx](
+                                    p, recon_stride, params.mblim, params.lim, params.hev_thr);
                         }
                         p += ((4 * recon_stride) << is16bit);
                     }
@@ -479,54 +442,46 @@ void dec_av1_filter_block_plane_vert(EbDecHandle *dec_handle,
 }
 
 void dec_av1_filter_block_plane_horz(EbDecHandle *dec_handle, SBInfo *sb_info,
-                                     EbPictureBufferDesc *recon_picture_buf,
-                                     LfCtxt *lf_ctxt,
-                                     const int32_t num_planes,
-                                     const int32_t sb_mi_row,
-                                     const uint32_t sb_mi_col,
-                                     int32_t *sb_delta_lf) {
-    FrameHeader *frm_hdr        = &dec_handle->frame_header;
+                                     EbPictureBufferDesc *recon_picture_buf, LfCtxt *lf_ctxt,
+                                     const int32_t num_planes, const int32_t sb_mi_row,
+                                     const uint32_t sb_mi_col, int32_t *sb_delta_lf) {
+    FrameHeader *  frm_hdr      = &dec_handle->frame_header;
     EbColorConfig *color_config = &dec_handle->seq_header.color_config;
 
-    EbBool is16bit = (recon_picture_buf->bit_depth > EB_8BIT ||
-        dec_handle->is_16bit_pipeline);
+    EbBool is16bit = (recon_picture_buf->bit_depth > EB_8BIT || dec_handle->is_16bit_pipeline);
 
     int32_t sub_x = color_config->subsampling_x;
     int32_t sub_y = color_config->subsampling_y;
 
     uint8_t no_lf_luma = !(frm_hdr->loop_filter_params.filter_level[0]) &&
-                         !(frm_hdr->loop_filter_params.filter_level[1]);
+        !(frm_hdr->loop_filter_params.filter_level[1]);
     uint8_t no_lf_u = !(frm_hdr->loop_filter_params.filter_level_u);
     uint8_t no_lf_v = !(frm_hdr->loop_filter_params.filter_level_v);
 
-    void *blk_recon_buf;
-    int32_t recon_stride;
+    void *   blk_recon_buf;
+    int32_t  recon_stride;
     int32_t *sb_delta_lf_above;
 
     TransformInfo_t *trans_info = NULL;
-    uint32_t num_tu;
+    uint32_t         num_tu;
 
     uint32_t mi_cols = (&dec_handle->frame_header)->mi_cols;
     uint32_t mi_rows = (&dec_handle->frame_header)->mi_rows;
 
-    BlockModeInfo *mode_info = get_cur_mode_info(dec_handle, sb_mi_row,
-                                                 sb_mi_col, sb_info);
-    int n_blocks = sb_info->num_block;
+    BlockModeInfo *mode_info = get_cur_mode_info(dec_handle, sb_mi_row, sb_mi_col, sb_info);
+    int            n_blocks  = sb_info->num_block;
     for (int sub_blck = 0; sub_blck < n_blocks; sub_blck++) {
-        int32_t blk_mi_row = sb_mi_row + mode_info->mi_row_in_sb;
-        int32_t blk_mi_col = sb_mi_col + mode_info->mi_col_in_sb;
-        BlockSize bsize = mode_info->sb_type;
+        int32_t   blk_mi_row = sb_mi_row + mode_info->mi_row_in_sb;
+        int32_t   blk_mi_col = sb_mi_col + mode_info->mi_col_in_sb;
+        BlockSize bsize      = mode_info->sb_type;
 
-        int32_t bw4 = mi_size_wide[bsize];
-        int32_t bh4 = mi_size_high[bsize];
-        int32_t mb_to_bottom_edge = ((mi_rows - bh4 - blk_mi_row)
-                                    * MI_SIZE) * 8;
-        int32_t mb_to_right_edge = ((mi_cols - bw4 - blk_mi_col)
-                                    * MI_SIZE) * 8;
+        int32_t bw4               = mi_size_wide[bsize];
+        int32_t bh4               = mi_size_high[bsize];
+        int32_t mb_to_bottom_edge = ((mi_rows - bh4 - blk_mi_row) * MI_SIZE) * 8;
+        int32_t mb_to_right_edge  = ((mi_cols - bw4 - blk_mi_col) * MI_SIZE) * 8;
 
-        uint8_t lossless = frm_hdr->lossless_array[mode_info->segment_id];
-        int lossless_block = (lossless && ((bsize >= BLOCK_64X64) &&
-                             (bsize <= BLOCK_128X128)));
+        uint8_t lossless       = frm_hdr->lossless_array[mode_info->segment_id];
+        int     lossless_block = (lossless && ((bsize >= BLOCK_64X64) && (bsize <= BLOCK_128X128)));
 
         int max_blocks_wide = block_size_wide[bsize];
         int max_blocks_high = block_size_high[bsize];
@@ -537,9 +492,9 @@ void dec_av1_filter_block_plane_horz(EbDecHandle *dec_handle, SBInfo *sb_info,
         max_blocks_wide = max_blocks_wide >> tx_size_wide_log2[0];
         max_blocks_high = max_blocks_high >> tx_size_high_log2[0];
 
-        int num_chroma_tus = lossless_block ? (max_blocks_wide * max_blocks_high)
-            >> (color_config->subsampling_x + color_config->subsampling_y) :
-            mode_info->num_tus[AOM_PLANE_U];
+        int num_chroma_tus = lossless_block ? (max_blocks_wide * max_blocks_high) >>
+                (color_config->subsampling_x + color_config->subsampling_y)
+                                            : mode_info->num_tus[AOM_PLANE_U];
 
         for (int plane = 0; plane < num_planes; ++plane) {
             if ((plane == 0) && no_lf_luma)
@@ -552,46 +507,45 @@ void dec_av1_filter_block_plane_horz(EbDecHandle *dec_handle, SBInfo *sb_info,
             sub_x = (plane > 0) ? color_config->subsampling_x : 0;
             sub_y = (plane > 0) ? color_config->subsampling_y : 0;
 
-            trans_info = (plane == 2) ? (sb_info->sb_trans_info[plane - 1] +
-                mode_info->first_txb_offset[plane - 1] + num_chroma_tus) :
-                (sb_info->sb_trans_info[plane]
-                    + mode_info->first_txb_offset[plane]);
+            trans_info = (plane == 2)
+                ? (sb_info->sb_trans_info[plane - 1] + mode_info->first_txb_offset[plane - 1] +
+                   num_chroma_tus)
+                : (sb_info->sb_trans_info[plane] + mode_info->first_txb_offset[plane]);
 
-            if (lossless_block)
-            {
+            if (lossless_block) {
                 assert(trans_info->tx_size == TX_4X4);
                 num_tu = (max_blocks_wide * max_blocks_high) >> (sub_x + sub_y);
-            }
-            else
+            } else
                 num_tu = mode_info->num_tus[!!plane];
 
-            derive_blk_pointers(recon_picture_buf, plane,
-                               ((blk_mi_col >> sub_x) * MI_SIZE),
-                               ((blk_mi_row >> sub_y) * MI_SIZE),
-                               &blk_recon_buf, &recon_stride,
-                               sub_x, sub_y);
+            derive_blk_pointers(recon_picture_buf,
+                                plane,
+                                ((blk_mi_col >> sub_x) * MI_SIZE),
+                                ((blk_mi_row >> sub_y) * MI_SIZE),
+                                &blk_recon_buf,
+                                &recon_stride,
+                                sub_x,
+                                sub_y);
 
             BlockModeInfo *mi_top = mode_info;
 
             Av1DeblockingParameters params;
             memset(&params, 0, sizeof(params));
 
-            for (uint32_t tu = 0; tu < num_tu; tu++)
-            {
-                void *tu_recon_buf;
+            for (uint32_t tu = 0; tu < num_tu; tu++) {
+                void *  tu_recon_buf;
                 int32_t tu_offset;
-                TxSize cur_tx_size;
-                int cur_txw, min_txw;
+                TxSize  cur_tx_size;
+                int     cur_txw, min_txw;
 
                 cur_tx_size = trans_info->tx_size;
-                cur_txw = tx_size_wide_unit[cur_tx_size];
+                cur_txw     = tx_size_wide_unit[cur_tx_size];
 
-                tu_offset = (trans_info->txb_y_offset * recon_stride +
-                            trans_info->txb_x_offset) << MI_SIZE_LOG2;
-                tu_recon_buf = (void*)((uint8_t*)blk_recon_buf
-                               + (tu_offset << is16bit));
+                tu_offset = (trans_info->txb_y_offset * recon_stride + trans_info->txb_x_offset)
+                    << MI_SIZE_LOG2;
+                tu_recon_buf = (void *)((uint8_t *)blk_recon_buf + (tu_offset << is16bit));
 
-                uint8_t *p = (uint8_t*)tu_recon_buf;
+                uint8_t *p = (uint8_t *)tu_recon_buf;
 
                 /*inner loop always filter vertical edges in a MI block. If MI size
                 is 8x8, it will filter the vertical edge aligned with a 8x8 block.
@@ -600,34 +554,29 @@ void dec_av1_filter_block_plane_horz(EbDecHandle *dec_handle, SBInfo *sb_info,
                 /*When there are two 2xX, we combine the them do the LF in the first 2xX edge
                  Since the first 2xX was skipped because of num_tu 0*/
                 uint32_t curr_luma_x = (blk_mi_col & (~sub_x)) * MI_SIZE +
-                                       ((trans_info->txb_x_offset << sub_x) * MI_SIZE);
+                    ((trans_info->txb_x_offset << sub_x) * MI_SIZE);
                 uint32_t curr_luma_y = (blk_mi_row & (~sub_y)) * MI_SIZE +
-                                       ((trans_info->txb_y_offset << sub_y)* MI_SIZE);
+                    ((trans_info->txb_y_offset << sub_y) * MI_SIZE);
 
-                int32_t left_mi_row = (blk_mi_row & (~sub_y)) +
-                                      (trans_info->txb_y_offset << sub_y);
-                int32_t left_mi_col = (blk_mi_col | sub_x) +
-                                      (trans_info->txb_x_offset << sub_x);
+                int32_t left_mi_row = (blk_mi_row & (~sub_y)) + (trans_info->txb_y_offset << sub_y);
+                int32_t left_mi_col = (blk_mi_col | sub_x) + (trans_info->txb_x_offset << sub_x);
 
                 /* For VERT_EDGE edge and x_range is for SB scan */
-                sb_delta_lf_above = (left_mi_row == sb_mi_row) ?
-                                    sb_delta_lf - lf_ctxt->delta_lf_stride :
-                                    sb_delta_lf;
+                sb_delta_lf_above = (left_mi_row == sb_mi_row)
+                    ? sb_delta_lf - lf_ctxt->delta_lf_stride
+                    : sb_delta_lf;
 
                 min_txw = cur_txw;
                 for (int temp_txw = 0; temp_txw < cur_txw; temp_txw += min_txw) {
-
-                    if(params.filter_length)
+                    if (params.filter_length)
                         memset(&params, 0, sizeof(params));
 
                     if (left_mi_row > 0)
-                        mi_top = get_top_mode_info(dec_handle,
-                                                   left_mi_row,
-                                                   left_mi_col,
-                                                   sb_info);
+                        mi_top = get_top_mode_info(dec_handle, left_mi_row, left_mi_col, sb_info);
 
                     cur_tx_size = dec_set_lpf_parameters(&params,
-                                                         frm_hdr, color_config,
+                                                         frm_hdr,
+                                                         color_config,
                                                          mode_info,
                                                          mi_top,
                                                          lf_ctxt,
@@ -641,13 +590,13 @@ void dec_av1_filter_block_plane_horz(EbDecHandle *dec_handle, SBInfo *sb_info,
 
                     if (cur_tx_size == TX_INVALID) {
                         params.filter_length = 0;
-                        cur_tx_size = TX_4X4;
+                        cur_tx_size          = TX_4X4;
                     }
 
                     /*Do the filtering for only for the actual frame boundry*/
-                    int32_t min_width = min_txw << MI_SIZE_LOG2;
+                    int32_t min_width   = min_txw << MI_SIZE_LOG2;
                     int32_t frame_width = frm_hdr->frame_size.frame_width;
-                    int32_t ext_width = curr_luma_x + (min_width << sub_x);
+                    int32_t ext_width   = curr_luma_x + (min_width << sub_x);
                     if (frame_width < ext_width)
                         min_width = ((frame_width - (int32_t)curr_luma_x) + sub_x) >> sub_x;
 
@@ -656,18 +605,16 @@ void dec_av1_filter_block_plane_horz(EbDecHandle *dec_handle, SBInfo *sb_info,
 
                         if (filter_idx != -1) {
                             if (is16bit)
-                                hbd_horz_filter_tap[filter_idx]((uint16_t*)(p),//CONVERT_TO_SHORTPTR(p),
-                                                                recon_stride,
-                                                                params.mblim,
-                                                                params.lim,
-                                                                params.hev_thr,
-                                                                recon_picture_buf->bit_depth);
+                                hbd_horz_filter_tap[filter_idx](
+                                    (uint16_t *)(p), //CONVERT_TO_SHORTPTR(p),
+                                    recon_stride,
+                                    params.mblim,
+                                    params.lim,
+                                    params.hev_thr,
+                                    recon_picture_buf->bit_depth);
                             else
-                                lbd_horz_filter_tap[filter_idx](p,
-                                                                recon_stride,
-                                                                params.mblim,
-                                                                params.lim,
-                                                                params.hev_thr);
+                                lbd_horz_filter_tap[filter_idx](
+                                    p, recon_stride, params.mblim, params.lim, params.hev_thr);
                         }
                         p += (4 << is16bit);
                     }
@@ -682,22 +629,17 @@ void dec_av1_filter_block_plane_horz(EbDecHandle *dec_handle, SBInfo *sb_info,
 }
 
 /*LF function to filter each SB*/
-void dec_loop_filter_sb(EbDecHandle *dec_handle,
-                        SBInfo *sb_info,
-                        FrameHeader *frm_hdr,
-                        SeqHeader *seq_header,
-                        EbPictureBufferDesc *recon_picture_buf,
-                        LfCtxt *lf_ctxt,
-                        const int32_t mi_row, const int32_t mi_col,
-                        int32_t plane_start,
-                        int32_t plane_end, uint8_t last_col,
+void dec_loop_filter_sb(EbDecHandle *dec_handle, SBInfo *sb_info, FrameHeader *frm_hdr,
+                        SeqHeader *seq_header, EbPictureBufferDesc *recon_picture_buf,
+                        LfCtxt *lf_ctxt, const int32_t mi_row, const int32_t mi_col,
+                        int32_t plane_start, int32_t plane_end, uint8_t last_col,
                         int32_t *sb_delta_lf) {
-
     int num_planes = plane_end - plane_start;
     if (frm_hdr->loop_filter_params.combine_vert_horz_lf) {
         /*filter all vertical and horizontal edges in every 64x64 super block
          filter vertical edges*/
-        dec_av1_filter_block_plane_vert(dec_handle, sb_info,
+        dec_av1_filter_block_plane_vert(dec_handle,
+                                        sb_info,
                                         recon_picture_buf,
                                         lf_ctxt,
                                         num_planes,
@@ -706,8 +648,7 @@ void dec_loop_filter_sb(EbDecHandle *dec_handle,
                                         sb_delta_lf);
 
         /*filter horizontal edges*/
-        int32_t max_mib_size =
-            seq_header->sb_size == BLOCK_128X128 ? MAX_MIB_SIZE : SB64_MIB_SIZE;
+        int32_t max_mib_size = seq_header->sb_size == BLOCK_128X128 ? MAX_MIB_SIZE : SB64_MIB_SIZE;
 
         if ((int32_t)mi_col - max_mib_size >= 0) {
             dec_av1_filter_block_plane_horz(dec_handle,
@@ -722,7 +663,8 @@ void dec_loop_filter_sb(EbDecHandle *dec_handle,
 
         /*Filter the horizontal edges of the last sb in each row*/
         if (last_col) {
-            dec_av1_filter_block_plane_horz(dec_handle, sb_info,
+            dec_av1_filter_block_plane_horz(dec_handle,
+                                            sb_info,
                                             recon_picture_buf,
                                             lf_ctxt,
                                             num_planes,
@@ -732,7 +674,8 @@ void dec_loop_filter_sb(EbDecHandle *dec_handle,
         }
     } else {
         /*filter all vertical edges in every 64x64 super block*/
-        dec_av1_filter_block_plane_vert(dec_handle, sb_info,
+        dec_av1_filter_block_plane_vert(dec_handle,
+                                        sb_info,
                                         recon_picture_buf,
                                         lf_ctxt,
                                         num_planes,
@@ -741,7 +684,8 @@ void dec_loop_filter_sb(EbDecHandle *dec_handle,
                                         sb_delta_lf);
 
         /*filter all horizontal edges in every 64x64 super block*/
-        dec_av1_filter_block_plane_horz(dec_handle, sb_info,
+        dec_av1_filter_block_plane_horz(dec_handle,
+                                        sb_info,
                                         recon_picture_buf,
                                         lf_ctxt,
                                         num_planes,
@@ -752,11 +696,9 @@ void dec_loop_filter_sb(EbDecHandle *dec_handle,
 }
 
 /* Row level function to trigger loop filter for each superblock*/
-void dec_loop_filter_row(EbDecHandle *dec_handle_ptr,
-                         EbPictureBufferDesc *recon_picture_buf,
-                         LfCtxt *lf_ctxt,
-                         uint32_t y_sb_index,
-                         int32_t plane_start, int32_t plane_end) {
+void dec_loop_filter_row(EbDecHandle *dec_handle_ptr, EbPictureBufferDesc *recon_picture_buf,
+                         LfCtxt *lf_ctxt, uint32_t y_sb_index, int32_t plane_start,
+                         int32_t plane_end) {
     MainFrameBuf *main_frame_buf  = &dec_handle_ptr->main_frame_buf;
     CurFrameBuf * frame_buf       = &main_frame_buf->cur_frame_bufs[0];
     FrameHeader * frm_hdr         = &dec_handle_ptr->frame_header;
@@ -806,13 +748,11 @@ void dec_loop_filter_row(EbDecHandle *dec_handle_ptr,
 }
 
 /*Frame level function to trigger loop filter for each superblock*/
-void dec_av1_loop_filter_frame(EbDecHandle *dec_handle_ptr,
-                               EbPictureBufferDesc *recon_picture_buf,
-                               LfCtxt *lf_ctxt,
-                               int32_t plane_start,
-                               int32_t plane_end,
+void dec_av1_loop_filter_frame(EbDecHandle *dec_handle_ptr, EbPictureBufferDesc *recon_picture_buf,
+                               LfCtxt *lf_ctxt, int32_t plane_start, int32_t plane_end,
                                int32_t is_mt, int enable_flag) {
-    if (!enable_flag) return;
+    if (!enable_flag)
+        return;
 
     FrameHeader *frm_hdr      = &dec_handle_ptr->frame_header;
     SeqHeader *  seq_header   = &dec_handle_ptr->seq_header;
@@ -838,12 +778,8 @@ void dec_av1_loop_filter_frame(EbDecHandle *dec_handle_ptr,
 
     if (is_mt) {
         for (uint32_t y_sb_index = 0; y_sb_index < picture_height_in_sb; ++y_sb_index) {
-            dec_loop_filter_row(dec_handle_ptr,
-                                recon_picture_buf,
-                                lf_ctxt,
-                                y_sb_index,
-                                plane_start,
-                                plane_end);
+            dec_loop_filter_row(
+                dec_handle_ptr, recon_picture_buf, lf_ctxt, y_sb_index, plane_start, plane_end);
         }
     } else {
         /*Loop over a frame : tregger dec_loop_filter_sb for each SB*/
@@ -851,13 +787,13 @@ void dec_av1_loop_filter_frame(EbDecHandle *dec_handle_ptr,
             for (uint32_t x_sb_index = 0; x_sb_index < pic_width_in_sb; ++x_sb_index) {
                 uint32_t sb_origin_x     = x_sb_index << sb_size_log2;
                 uint32_t sb_origin_y     = y_sb_index << sb_size_log2;
-                EbBool end_of_row_flag = x_sb_index == pic_width_in_sb - 1;
+                EbBool   end_of_row_flag = x_sb_index == pic_width_in_sb - 1;
 
                 MainFrameBuf *main_frame_buf = &dec_handle_ptr->main_frame_buf;
-                CurFrameBuf * frame_buf        = &main_frame_buf->cur_frame_bufs[0];
+                CurFrameBuf * frame_buf      = &main_frame_buf->cur_frame_bufs[0];
 
-                SBInfo *sb_info =
-                    frame_buf->sb_info + (((y_sb_index * main_frame_buf->sb_cols) + x_sb_index));
+                SBInfo *sb_info = frame_buf->sb_info +
+                    (((y_sb_index * main_frame_buf->sb_cols) + x_sb_index));
 
                 /*sb_info->sb_delta_lf = frame_buf->delta_lf + (FRAME_LF_COUNT *
                     ((y_sb_index * main_frame_buf->sb_cols) + x_sb_index));*/

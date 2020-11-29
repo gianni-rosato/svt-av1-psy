@@ -41,7 +41,8 @@ void dec_bits_init(Bitstrm *bs, const uint8_t *data, size_t numbytes) {
 Bitstream offset and consumes the bits. Section: 4.10.2 -> f(n) */
 uint32_t dec_get_bits(Bitstrm *bs, uint32_t numbits) {
     uint32_t bits_read;
-    if (0 == numbits) return 0;
+    if (0 == numbits)
+        return 0;
     GET_BITS(bits_read, bs->buf, bs->bit_ofst, bs->cur_word, bs->nxt_word, numbits);
     return bits_read;
 }
@@ -56,7 +57,8 @@ void dec_get_bits_leb128(Bitstrm *bs, size_t available, size_t *value, size_t *l
         uint32_t leb128_byte = dec_get_bits(bs, 8);
         *value |= (((uint64_t)leb128_byte & 0x7f) << (i * 7));
         *length += 1;
-        if (!(leb128_byte & 0x80)) break;
+        if (!(leb128_byte & 0x80))
+            break;
     }
 }
 
@@ -65,7 +67,8 @@ uint32_t dec_get_bits_uvlc(Bitstrm *bs) {
     int leading_zeros = 0;
     while (leading_zeros < 32 && !dec_get_bits(bs, 1)) ++leading_zeros;
     // Maximum 32 bits.
-    if (leading_zeros == 32) return UINT32_MAX;
+    if (leading_zeros == 32)
+        return UINT32_MAX;
     const uint32_t base  = (1u << leading_zeros) - 1;
     const uint32_t value = dec_get_bits(bs, leading_zeros);
     return base + value;
@@ -73,11 +76,13 @@ uint32_t dec_get_bits_uvlc(Bitstrm *bs) {
 
 /* Unsigned encoded integer with maximum number of values n */
 uint32_t dec_get_bits_ns(Bitstrm *bs, uint32_t n) {
-    if (n <= 1) return 0;
+    if (n <= 1)
+        return 0;
     int w = get_msb(n) + 1; //w = FloorLog2(n) + 1
     int m = (1 << w) - n;
     int v = dec_get_bits(bs, w - 1);
-    if (v < m) return v;
+    if (v < m)
+        return v;
     return (v << 1) - m + dec_get_bits(bs, 1);
 }
 
@@ -85,15 +90,15 @@ uint32_t dec_get_bits_ns(Bitstrm *bs, uint32_t n) {
 int32_t dec_get_bits_su(Bitstrm *bs, uint32_t n) {
     int value     = dec_get_bits(bs, n);
     int sign_mask = 1 << (n - 1);
-    if (value & sign_mask) value = value - 2 * sign_mask;
+    if (value & sign_mask)
+        value = value - 2 * sign_mask;
     return value;
 }
 
 /* Unsigned little-endian n-byte number appearing directly in the Bitstream */
 uint32_t dec_get_bits_le(Bitstrm *bs, uint32_t n) {
     uint32_t t = 0;
-    for (uint32_t i = 0; i < n; i++)
-        t += dec_get_bits(bs, 8) << (i * 8);
+    for (uint32_t i = 0; i < n; i++) t += dec_get_bits(bs, 8) << (i * 8);
     return t;
 }
 
@@ -104,8 +109,8 @@ uint32_t get_position(Bitstrm *bs) {
 
 uint8_t *get_bitsteam_buf(Bitstrm *bs) {
     uint8_t *bitsteam_buf = (uint8_t *)bs->buf;
-    bitsteam_buf -=
-        ((WORD_SIZE /*nxt_word*/ >> 3) + ((WORD_SIZE - bs->bit_ofst) /*cur_word*/ >> 3));
+    bitsteam_buf -= ((WORD_SIZE /*nxt_word*/ >> 3) +
+                     ((WORD_SIZE - bs->bit_ofst) /*cur_word*/ >> 3));
 
     assert(bitsteam_buf == (bs->buf_base + (get_position(bs) >> 3)));
 

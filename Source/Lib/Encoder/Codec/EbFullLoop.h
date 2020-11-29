@@ -24,9 +24,8 @@ extern "C" {
 
 void full_loop_r(SuperBlock *sb_ptr, ModeDecisionCandidateBuffer *candidate_buffer,
                  ModeDecisionContext *context_ptr, EbPictureBufferDesc *input_picture_ptr,
-                 PictureControlSet *pcs_ptr, uint32_t component_mask,
-                 uint32_t cb_qindex, uint32_t cr_qindex,
-                 uint32_t *cb_count_non_zero_coeffs,
+                 PictureControlSet *pcs_ptr, uint32_t component_mask, uint32_t cb_qindex,
+                 uint32_t cr_qindex, uint32_t *cb_count_non_zero_coeffs,
                  uint32_t *cr_count_non_zero_coeffs);
 
 void cu_full_distortion_fast_txb_mode_r(
@@ -57,10 +56,9 @@ extern uint32_t d2_inter_depth_block_decision(ModeDecisionContext *context_ptr, 
                                               PictureControlSet *      pcs_ptr);
 
 // compute the cost of curr depth, and the depth above
-extern void compute_depth_costs_md_skip(ModeDecisionContext *context_ptr,
-                                        SequenceControlSet *scs_ptr,
-                                        PictureParentControlSet *pcs_ptr,
-                                        uint32_t above_depth_mds,
+extern void compute_depth_costs_md_skip(ModeDecisionContext *    context_ptr,
+                                        SequenceControlSet *     scs_ptr,
+                                        PictureParentControlSet *pcs_ptr, uint32_t above_depth_mds,
                                         uint32_t step, uint64_t *above_depth_cost,
                                         uint64_t *curr_depth_cost);
 uint64_t    d1_non_square_block_decision(ModeDecisionContext *context_ptr, uint32_t d1_block_itr);

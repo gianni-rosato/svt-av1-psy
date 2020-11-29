@@ -34,25 +34,25 @@ static INLINE void unpack_2d_output(const float *col_fft, float *output, int32_t
         const int32_t y_extra = y2 > n / 2 && y2 < n;
 
         for (int32_t x = 0; x <= n / 2; ++x) {
-            const int32_t x2      = x + n / 2;
-            const int32_t x_extra = x2 > n / 2 && x2 < n;
-            output[2 * (y * n + x)] =
-                col_fft[y * n + x] - (x_extra && y_extra ? col_fft[y2 * n + x2] : 0);
-            output[2 * (y * n + x) + 1] =
-                (y_extra ? col_fft[y2 * n + x] : 0) + (x_extra ? col_fft[y * n + x2] : 0);
+            const int32_t x2        = x + n / 2;
+            const int32_t x_extra   = x2 > n / 2 && x2 < n;
+            output[2 * (y * n + x)] = col_fft[y * n + x] -
+                (x_extra && y_extra ? col_fft[y2 * n + x2] : 0);
+            output[2 * (y * n + x) + 1] = (y_extra ? col_fft[y2 * n + x] : 0) +
+                (x_extra ? col_fft[y * n + x2] : 0);
             if (y_extra) {
-                output[2 * ((n - y) * n + x)] =
-                    col_fft[y * n + x] + (x_extra && y_extra ? col_fft[y2 * n + x2] : 0);
-                output[2 * ((n - y) * n + x) + 1] =
-                    -col_fft[y2 * n + x] + (x_extra ? col_fft[y * n + x2] : 0);
+                output[2 * ((n - y) * n + x)] = col_fft[y * n + x] +
+                    (x_extra && y_extra ? col_fft[y2 * n + x2] : 0);
+                output[2 * ((n - y) * n + x) + 1] = -col_fft[y2 * n + x] +
+                    (x_extra ? col_fft[y * n + x2] : 0);
             }
         }
     }
 }
 
 void svt_aom_fft_2d_gen(const float *input, float *temp, float *output, int32_t n,
-                        AomFft1dFunc tform, AomFftTransposeFunc transpose,
-                        AomFftUnpackFunc unpack, int32_t vec_size) {
+                        AomFft1dFunc tform, AomFftTransposeFunc transpose, AomFftUnpackFunc unpack,
+                        int32_t vec_size) {
     for (int32_t x = 0; x < n; x += vec_size) tform(input + x, output + x, n);
     transpose(output, temp, n);
 
@@ -99,9 +99,8 @@ void svt_aom_fft32x32_float_c(const float *input, float *temp, float *output) {
 }
 
 void svt_aom_ifft_2d_gen(const float *input, float *temp, float *output, int32_t n,
-                         AomFft1dFunc fft_single, AomFft1dFunc fft_multi,
-                         AomFft1dFunc ifft_multi, AomFftTransposeFunc transpose,
-                         int32_t vec_size) {
+                         AomFft1dFunc fft_single, AomFft1dFunc fft_multi, AomFft1dFunc ifft_multi,
+                         AomFftTransposeFunc transpose, int32_t vec_size) {
     // Column 0 and n/2 have conjugate symmetry, so we can directly do the ifft
     // and get real outputs.
     for (int32_t y = 0; y <= n / 2; ++y) {
@@ -135,21 +134,20 @@ void svt_aom_ifft_2d_gen(const float *input, float *temp, float *output, int32_t
         // Fill in the real columns
         for (int32_t x = 0; x <= n / 2; ++x) {
             output[x + y * n] = temp[(y + 1) + x * n] +
-                                ((x > 0 && x < n / 2) ? temp[(y + n / 2) + (x + n / 2) * n] : 0);
+                ((x > 0 && x < n / 2) ? temp[(y + n / 2) + (x + n / 2) * n] : 0);
         }
         for (int32_t x = n / 2 + 1; x < n; ++x) {
-            output[x + y * n] =
-                temp[(y + 1) + (n - x) * n] - temp[(y + n / 2) + ((n - x) + n / 2) * n];
+            output[x + y * n] = temp[(y + 1) + (n - x) * n] -
+                temp[(y + n / 2) + ((n - x) + n / 2) * n];
         }
         // Fill in the imag columns
         for (int32_t x = 0; x <= n / 2; ++x) {
-            output[x + (y + n / 2) * n] =
-                temp[(y + n / 2) + x * n] -
+            output[x + (y + n / 2) * n] = temp[(y + n / 2) + x * n] -
                 ((x > 0 && x < n / 2) ? temp[(y + 1) + (x + n / 2) * n] : 0);
         }
         for (int32_t x = n / 2 + 1; x < n; ++x) {
-            output[x + (y + n / 2) * n] =
-                temp[(y + 1) + ((n - x) + n / 2) * n] + temp[(y + n / 2) + (n - x) * n];
+            output[x + (y + n / 2) * n] = temp[(y + 1) + ((n - x) + n / 2) * n] +
+                temp[(y + n / 2) + (n - x) * n];
         }
     }
     for (int32_t y = 0; y < n; y += vec_size) ifft_multi(output + y, temp + y, n);

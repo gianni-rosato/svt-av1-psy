@@ -56,10 +56,10 @@ typedef struct EntropyCodingContext {
     uint32_t        pu_height;
     MvUnit          mv_unit;
 
-    uint32_t       txb_itr;
-    uint32_t       txb_origin_x;
-    uint32_t       txb_origin_y;
-    uint32_t       txb_size;
+    uint32_t txb_itr;
+    uint32_t txb_origin_x;
+    uint32_t txb_origin_y;
+    uint32_t txb_size;
 
     // MCP Context
     EbBool      is_16bit; //enable 10 bit encode in CL

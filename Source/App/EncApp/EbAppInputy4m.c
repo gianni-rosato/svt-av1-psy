@@ -231,7 +231,7 @@ void read_y4m_frame_delimiter(FILE *input_file, FILE *error_log_file) {
 /* check if the input file is in YUV4MPEG2 (y4m) format */
 EbBool check_if_y4m(EbConfig *cfg) {
 #define YUV4MPEG2_IND_SIZE 9
-    char   buf[YUV4MPEG2_IND_SIZE + 1] = {0};
+    char buf[YUV4MPEG2_IND_SIZE + 1] = {0};
     if (fread(buf, YUV4MPEG2_IND_SIZE, 1, cfg->input_file) != 1)
         return EB_FALSE;
     if (cfg->input_file != stdin && !cfg->input_file_is_fifo)

@@ -112,12 +112,12 @@ static void idct4x4_sse4_1(__m128i *in, __m128i *out, int32_t bit, int32_t do_co
     (void)*out;
     (void)bd;
     (void)out_shift;
-    const int32_t *cospi    = cospi_arr(bit);
-    const __m128i  cospi32  = _mm_set1_epi32(cospi[32]);
-    const __m128i  cospi48  = _mm_set1_epi32(cospi[48]);
-    const __m128i  cospi16  = _mm_set1_epi32(cospi[16]);
-    const __m128i  cospim16 = _mm_set1_epi32(-cospi[16]);
-    const __m128i  rnding   = _mm_set1_epi32(1 << (bit - 1));
+    const int32_t *cospi     = cospi_arr(bit);
+    const __m128i  cospi32   = _mm_set1_epi32(cospi[32]);
+    const __m128i  cospi48   = _mm_set1_epi32(cospi[48]);
+    const __m128i  cospi16   = _mm_set1_epi32(cospi[16]);
+    const __m128i  cospim16  = _mm_set1_epi32(-cospi[16]);
+    const __m128i  rnding    = _mm_set1_epi32(1 << (bit - 1));
     int            log_range = AOMMAX(16, bd + (do_cols ? 6 : 8));
     __m128i        clamp_lo  = _mm_set1_epi32(-(1 << (log_range - 1)));
     __m128i        clamp_hi  = _mm_set1_epi32((1 << (log_range - 1)) - 1);
@@ -2587,11 +2587,11 @@ static void iidentity8_sse4_1(__m128i *in, __m128i *out, int32_t bit, int32_t do
 static void iidentity16_sse4_1(__m128i *in, __m128i *out, int32_t bit, int32_t do_cols, int32_t bd,
                                int32_t out_shift) {
     (void)bit;
-    __m128i       fact   = _mm_set1_epi32(2 * new_sqrt2);
-    __m128i       offset = _mm_set1_epi32(1 << (new_sqrt2_bits - 1));
-    __m128i       a0_low, a0_high, a1_low, a1_high;
-    __m128i       zero = _mm_set1_epi32(0);
-    offset             = _mm_unpacklo_epi32(offset, zero);
+    __m128i fact   = _mm_set1_epi32(2 * new_sqrt2);
+    __m128i offset = _mm_set1_epi32(1 << (new_sqrt2_bits - 1));
+    __m128i a0_low, a0_high, a1_low, a1_high;
+    __m128i zero = _mm_set1_epi32(0);
+    offset       = _mm_unpacklo_epi32(offset, zero);
 
     for (int i = 0; i < 16; i++) {
         a0_low = _mm_mul_epi32(in[i], fact);
@@ -2608,7 +2608,7 @@ static void iidentity16_sse4_1(__m128i *in, __m128i *out, int32_t bit, int32_t d
         out[i]  = _mm_unpacklo_epi64(a1_low, a1_high);
     }
 
-  if (!do_cols) {
+    if (!do_cols) {
         const int     log_range = AOMMAX(16, bd + 6);
         const __m128i clamp_lo  = _mm_set1_epi32(-(1 << (log_range - 1)));
         const __m128i clamp_hi  = _mm_set1_epi32((1 << (log_range - 1)) - 1);
@@ -3038,9 +3038,9 @@ static void idct16x16_low1_sse4_1(__m128i *in, __m128i *out, int32_t bit, int32_
     const int32_t *cospi     = cospi_arr(bit);
     const __m128i  cospi32   = _mm_set1_epi32(cospi[32]);
     const __m128i  rnding    = _mm_set1_epi32(1 << (bit - 1));
-    int32_t  log_range = AOMMAX(16, bd + (do_cols ? 6 : 8));
-    __m128i  clamp_lo  = _mm_set1_epi32(-(1 << (log_range - 1)));
-    __m128i  clamp_hi  = _mm_set1_epi32((1 << (log_range - 1)) - 1);
+    int32_t        log_range = AOMMAX(16, bd + (do_cols ? 6 : 8));
+    __m128i        clamp_lo  = _mm_set1_epi32(-(1 << (log_range - 1)));
+    __m128i        clamp_hi  = _mm_set1_epi32((1 << (log_range - 1)) - 1);
 
     {
         // stage 0
@@ -4372,8 +4372,8 @@ static INLINE void flip_buf_sse2(__m128i *in, __m128i *out, int32_t size) {
 
 static INLINE __m128i highbd_get_recon_8x8_sse4_1(const __m128i pred, __m128i res0, __m128i res1,
                                                   const int32_t bd) {
-    __m128i x0 = _mm_cvtepi16_epi32(pred);
-    __m128i x1 = _mm_cvtepi16_epi32(_mm_srli_si128(pred, 8));
+    __m128i x0           = _mm_cvtepi16_epi32(pred);
+    __m128i x1           = _mm_cvtepi16_epi32(_mm_srli_si128(pred, 8));
     __m128i min_clip_val = _mm_setzero_si128();
     __m128i max_clip_val = _mm_set1_epi32((1 << bd) - 1);
     x0                   = _mm_add_epi32(res0, x0);

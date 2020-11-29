@@ -25,8 +25,8 @@ void svt_residual_kernel16bit_sse2_intrin(uint16_t *input, uint32_t input_stride
 
     if (area_width == 4) {
         for (y = 0; y < area_height; y += 2) {
-            residual0 =
-                _mm_sub_epi16(_mm_loadl_epi64((__m128i *)input), _mm_loadl_epi64((__m128i *)pred));
+            residual0 = _mm_sub_epi16(_mm_loadl_epi64((__m128i *)input),
+                                      _mm_loadl_epi64((__m128i *)pred));
             residual1 = _mm_sub_epi16(_mm_loadl_epi64((__m128i *)(input + input_stride)),
                                       _mm_loadl_epi64((__m128i *)(pred + pred_stride)));
 
@@ -39,8 +39,8 @@ void svt_residual_kernel16bit_sse2_intrin(uint16_t *input, uint32_t input_stride
         }
     } else if (area_width == 8) {
         for (y = 0; y < area_height; y += 2) {
-            residual0 =
-                _mm_sub_epi16(_mm_loadu_si128((__m128i *)input), _mm_loadu_si128((__m128i *)pred));
+            residual0 = _mm_sub_epi16(_mm_loadu_si128((__m128i *)input),
+                                      _mm_loadu_si128((__m128i *)pred));
             residual1 = _mm_sub_epi16(_mm_loadu_si128((__m128i *)(input + input_stride)),
                                       _mm_loadu_si128((__m128i *)(pred + pred_stride)));
 
@@ -55,8 +55,8 @@ void svt_residual_kernel16bit_sse2_intrin(uint16_t *input, uint32_t input_stride
         __m128i residual2, residual3;
 
         for (y = 0; y < area_height; y += 2) {
-            residual0 =
-                _mm_sub_epi16(_mm_loadu_si128((__m128i *)input), _mm_loadu_si128((__m128i *)pred));
+            residual0 = _mm_sub_epi16(_mm_loadu_si128((__m128i *)input),
+                                      _mm_loadu_si128((__m128i *)pred));
             residual1 = _mm_sub_epi16(_mm_loadu_si128((__m128i *)(input + 8)),
                                       _mm_loadu_si128((__m128i *)(pred + 8)));
             residual2 = _mm_sub_epi16(_mm_loadu_si128((__m128i *)(input + input_stride)),
@@ -224,7 +224,8 @@ void svt_residual_kernel16bit_sse2_intrin(uint16_t *input, uint32_t input_stride
 #if defined(__GNUC__) && !defined(__clang__) && !defined(__ICC__)
 __attribute__((optimize("unroll-loops")))
 #endif
-static void svt_memcpy_small(void *dst_ptr, const void *src_ptr, size_t size) {
+static void
+svt_memcpy_small(void *dst_ptr, const void *src_ptr, size_t size) {
     const unsigned char *src = src_ptr;
     unsigned char *      dst = dst_ptr;
     size_t               i   = 0;
@@ -233,19 +234,21 @@ static void svt_memcpy_small(void *dst_ptr, const void *src_ptr, size_t size) {
 #pragma unroll
 #endif
     while ((i + 16) <= size) {
-        _mm_storeu_ps((float *)(void *)(dst + i), _mm_loadu_ps((const float *)(const void *)(src + i)));
+        _mm_storeu_ps((float *)(void *)(dst + i),
+                      _mm_loadu_ps((const float *)(const void *)(src + i)));
         i += 16;
     }
 
     if ((i + 8) <= size) {
-        _mm_store_sd((double *)(void *)(dst + i), _mm_load_sd((const double *)(const void *)(src + i)));
+        _mm_store_sd((double *)(void *)(dst + i),
+                     _mm_load_sd((const double *)(const void *)(src + i)));
         i += 8;
     }
 
     for (; i < size; ++i) dst[i] = src[i];
 }
 #define EB_MIN(a, b) (((a) < (b)) ? (a) : (b))
-static void svt_memcpy_sse(void* dst_ptr, void const* src_ptr, size_t size) {
+static void svt_memcpy_sse(void *dst_ptr, void const *src_ptr, size_t size) {
     const unsigned char *src       = src_ptr;
     unsigned char *      dst       = dst_ptr;
     size_t               i         = 0;
@@ -275,9 +278,10 @@ static void svt_memcpy_sse(void* dst_ptr, void const* src_ptr, size_t size) {
     }
 
     // copy the remainder
-    if (i < size) svt_memcpy_small(dst + i, src + i, size - i);
+    if (i < size)
+        svt_memcpy_small(dst + i, src + i, size - i);
 }
-extern void svt_memcpy_intrin_sse(void* dst_ptr, void const* src_ptr, size_t size) {
+extern void svt_memcpy_intrin_sse(void *dst_ptr, void const *src_ptr, size_t size) {
     if (size > 64)
         svt_memcpy_sse(dst_ptr, src_ptr, size);
     else

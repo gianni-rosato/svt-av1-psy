@@ -26,13 +26,13 @@ static INLINE unsigned int lcg_rand16(unsigned int *state) {
 #define AV1_K_MEANS_RENAME(func, dim) func##_dim##dim##_c
 
 void AV1_K_MEANS_RENAME(svt_av1_calc_indices, 1)(const int *data, const int *centroids,
-                                             uint8_t *indices, int n, int k);
+                                                 uint8_t *indices, int n, int k);
 void AV1_K_MEANS_RENAME(svt_av1_calc_indices, 2)(const int *data, const int *centroids,
-                                             uint8_t *indices, int n, int k);
-void AV1_K_MEANS_RENAME(svt_av1_k_means, 1)(const int *data, int *centroids, uint8_t *indices, int n,
-                                        int k, int max_itr);
-void AV1_K_MEANS_RENAME(svt_av1_k_means, 2)(const int *data, int *centroids, uint8_t *indices, int n,
-                                        int k, int max_itr);
+                                                 uint8_t *indices, int n, int k);
+void AV1_K_MEANS_RENAME(svt_av1_k_means, 1)(const int *data, int *centroids, uint8_t *indices,
+                                            int n, int k, int max_itr);
+void AV1_K_MEANS_RENAME(svt_av1_k_means, 2)(const int *data, int *centroids, uint8_t *indices,
+                                            int n, int k, int max_itr);
 
 // Given 'n' 'data' points and 'k' 'centroids' each of dimension 'dim',
 // calculate the centroid 'indices' for the data points.
@@ -86,9 +86,11 @@ static int av1_remove_duplicates(int *centroids, int num_centroids) {
 }
 
 static int delta_encode_cost(const int *colors, int num, int bit_depth, int min_val) {
-    if (num <= 0) return 0;
+    if (num <= 0)
+        return 0;
     int bits_cost = bit_depth;
-    if (num == 1) return bits_cost;
+    if (num == 1)
+        return bits_cost;
     bits_cost += 2;
     int       max_delta = 0;
     int       deltas[PALETTE_MAX_SIZE];
@@ -97,7 +99,8 @@ static int delta_encode_cost(const int *colors, int num, int bit_depth, int min_
         const int delta = colors[i] - colors[i - 1];
         deltas[i - 1]   = delta;
         assert(delta >= min_val);
-        if (delta > max_delta) max_delta = delta;
+        if (delta > max_delta)
+            max_delta = delta;
     }
     int bits_per_delta = AOMMAX(av1_ceil_log2(max_delta + 1 - min_val), min_bits);
     assert(bits_per_delta <= bit_depth);
@@ -132,13 +135,14 @@ int svt_av1_index_color_cache(const uint16_t *color_cache, int n_cache, const ui
     }
     int j = 0;
     for (int i = 0; i < n_colors; ++i)
-        if (!in_cache_flags[i]) out_cache_colors[j++] = colors[i];
+        if (!in_cache_flags[i])
+            out_cache_colors[j++] = colors[i];
     assert(j == n_colors - n_in_cache);
     return j;
 }
 
-int svt_av1_palette_color_cost_y(const PaletteModeInfo *const pmi, uint16_t *color_cache, int n_cache,
-                                 int bit_depth) {
+int svt_av1_palette_color_cost_y(const PaletteModeInfo *const pmi, uint16_t *color_cache,
+                                 int n_cache, int bit_depth) {
     const int n = pmi->palette_size[0];
     int       out_cache_colors[PALETTE_MAX_SIZE];
     uint8_t   cache_color_found[2 * PALETTE_MAX_SIZE];
@@ -150,7 +154,8 @@ int svt_av1_palette_color_cost_y(const PaletteModeInfo *const pmi, uint16_t *col
 
 static void palette_add_to_cache(uint16_t *cache, int *n, uint16_t val) {
     // Do not add an already existing value
-    if (*n > 0 && val == cache[*n - 1]) return;
+    if (*n > 0 && val == cache[*n - 1])
+        return;
 
     cache[(*n)++] = val;
 }
@@ -161,9 +166,12 @@ int svt_get_palette_cache(const MacroBlockD *const xd, int plane, uint16_t *cach
     const MbModeInfo *const above_mi = (row % (1 << MIN_SB_SIZE_LOG2)) ? xd->above_mbmi : NULL;
     const MbModeInfo *const left_mi  = xd->left_mbmi;
     int                     above_n = 0, left_n = 0;
-    if (above_mi) above_n = above_mi->palette_mode_info.palette_size[plane != 0];
-    if (left_mi) left_n = left_mi->palette_mode_info.palette_size[plane != 0];
-    if (above_n == 0 && left_n == 0) return 0;
+    if (above_mi)
+        above_n = above_mi->palette_mode_info.palette_size[plane != 0];
+    if (left_mi)
+        left_n = left_mi->palette_mode_info.palette_size[plane != 0];
+    if (above_n == 0 && left_n == 0)
+        return 0;
     int             above_idx    = plane * PALETTE_MAX_SIZE;
     int             left_idx     = plane * PALETTE_MAX_SIZE;
     int             n            = 0;
@@ -180,7 +188,8 @@ int svt_get_palette_cache(const MacroBlockD *const xd, int plane, uint16_t *cach
         } else {
             palette_add_to_cache(cache, &n, v_above);
             ++above_idx, --above_n;
-            if (v_left == v_above) ++left_idx, --left_n;
+            if (v_left == v_above)
+                ++left_idx, --left_n;
         }
     }
     while (above_n-- > 0) {
@@ -203,10 +212,11 @@ void av1_get_block_dimensions(BlockSize bsize, int plane, const MacroBlockD *xd,
                               int *height, int *rows_within_bounds, int *cols_within_bounds) {
     const int block_height = block_size_high[bsize];
     const int block_width  = block_size_wide[bsize];
-    const int block_rows =
-        (xd->mb_to_bottom_edge >= 0) ? block_height : (xd->mb_to_bottom_edge >> 3) + block_height;
-    const int block_cols =
-        (xd->mb_to_right_edge >= 0) ? block_width : (xd->mb_to_right_edge >> 3) + block_width;
+    const int block_rows   = (xd->mb_to_bottom_edge >= 0)
+          ? block_height
+          : (xd->mb_to_bottom_edge >> 3) + block_height;
+    const int block_cols   = (xd->mb_to_right_edge >= 0) ? block_width
+                                                         : (xd->mb_to_right_edge >> 3) + block_width;
 
     uint8_t subsampling_x = plane == 0 ? 0 : 1;
     uint8_t subsampling_y = plane == 0 ? 0 : 1;
@@ -218,8 +228,10 @@ void av1_get_block_dimensions(BlockSize bsize, int plane, const MacroBlockD *xd,
     // Special handling for chroma sub8x8.
     const int is_chroma_sub8_x = plane > 0 && plane_block_width < 4;
     const int is_chroma_sub8_y = plane > 0 && plane_block_height < 4;
-    if (width) *width = plane_block_width + 2 * is_chroma_sub8_x;
-    if (height) *height = plane_block_height + 2 * is_chroma_sub8_y;
+    if (width)
+        *width = plane_block_width + 2 * is_chroma_sub8_x;
+    if (height)
+        *height = plane_block_height + 2 * is_chroma_sub8_y;
     if (rows_within_bounds) {
         *rows_within_bounds = (block_rows >> subsampling_y) + 2 * is_chroma_sub8_y;
     }
@@ -232,7 +244,8 @@ void av1_get_block_dimensions(BlockSize bsize, int plane, const MacroBlockD *xd,
 // TODO: Try other schemes to improve compression.
 static AOM_INLINE void optimize_palette_colors(uint16_t *color_cache, int n_cache, int n_colors,
                                                int stride, int *centroids) {
-    if (n_cache <= 0) return;
+    if (n_cache <= 0)
+        return;
     for (int i = 0; i < n_colors * stride; i += stride) {
         int min_diff = abs(centroids[i] - (int)color_cache[0]);
         int idx      = 0;
@@ -243,7 +256,8 @@ static AOM_INLINE void optimize_palette_colors(uint16_t *color_cache, int n_cach
                 idx      = j;
             }
         }
-        if (min_diff <= 1) centroids[i] = color_cache[idx];
+        if (min_diff <= 1)
+            centroids[i] = color_cache[idx];
     }
 }
 // Extends 'color_map' array from 'orig_width x orig_height' to 'new_width x
@@ -254,7 +268,8 @@ static AOM_INLINE void extend_palette_color_map(uint8_t *const color_map, int or
     int j;
     assert(new_width >= orig_width);
     assert(new_height >= orig_height);
-    if (new_width == orig_width && new_height == orig_height) return;
+    if (new_width == orig_width && new_height == orig_height)
+        return;
 
     for (j = orig_height - 1; j >= 0; --j) {
         memmove(color_map + j * new_width, color_map + j * orig_width, orig_width);
@@ -281,12 +296,10 @@ void palette_rd_y(PaletteInfo *palette_info, ModeDecisionContext *context_ptr, B
     }
 
     if (bit_depth > EB_8BIT) {
-       for (int i = 0; i < k; ++i)
-           palette_info->pmi.palette_colors[i] =
-                   clip_pixel_highbd((int)centroids[i], bit_depth);
-    } else {
         for (int i = 0; i < k; ++i)
-            palette_info->pmi.palette_colors[i] = clip_pixel(centroids[i]);
+            palette_info->pmi.palette_colors[i] = clip_pixel_highbd((int)centroids[i], bit_depth);
+    } else {
+        for (int i = 0; i < k; ++i) palette_info->pmi.palette_colors[i] = clip_pixel(centroids[i]);
     }
     palette_info->pmi.palette_size[0] = k;
 
@@ -306,19 +319,18 @@ int svt_av1_count_colors_highbd(uint16_t *src, int stride, int rows, int cols, i
  ****************************************/
 void search_palette_luma(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
                          PaletteInfo *palette_cand, uint32_t *tot_palette_cands) {
-    int colors;
+    int    colors;
     EbBool is16bit = context_ptr->hbd_mode_decision > 0;
 
-    EbPictureBufferDesc *src_pic = is16bit ?
-        pcs_ptr->input_frame16bit :
-        pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr;
-    const int src_stride = src_pic->stride_y;
+    EbPictureBufferDesc *src_pic    = is16bit ? pcs_ptr->input_frame16bit
+                                              : pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr;
+    const int            src_stride = src_pic->stride_y;
 
     const uint8_t *const src = src_pic->buffer_y +
-          (((context_ptr->blk_origin_x + src_pic->origin_x) +
-            (context_ptr->blk_origin_y + src_pic->origin_y) *
-            src_pic->stride_y) << is16bit);
-    int     block_width, block_height, rows, cols;
+        (((context_ptr->blk_origin_x + src_pic->origin_x) +
+          (context_ptr->blk_origin_y + src_pic->origin_y) * src_pic->stride_y)
+         << is16bit);
+    int block_width, block_height, rows, cols;
 
     Av1Common *  cm       = pcs_ptr->parent_pcs_ptr->av1_cm;
     MacroBlockD *xd       = context_ptr->blk_ptr->av1xd;
@@ -345,11 +357,13 @@ void search_palette_luma(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
         // Only mark is_sec_rect as 1 for the last block.
         // For PARTITION_VERT_4, it would be (0, 0, 0, 1);
         // For other partitions, it would be (0, 1).
-        if (!((micol + xd->n8_w) & (xd->n8_h - 1))) xd->is_sec_rect = 1;
+        if (!((micol + xd->n8_w) & (xd->n8_h - 1)))
+            xd->is_sec_rect = 1;
     }
 
     if (xd->n8_w > xd->n8_h)
-        if (mirow & (xd->n8_w - 1)) xd->is_sec_rect = 1;
+        if (mirow & (xd->n8_w - 1))
+            xd->is_sec_rect = 1;
 
     int           mi_stride = cm->mi_stride;
     const int32_t offset    = mirow * mi_stride + micol;
@@ -376,8 +390,8 @@ void search_palette_luma(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
 
     unsigned bit_depth = pcs_ptr->parent_pcs_ptr->scs_ptr->encoder_bit_depth;
     if (is16bit)
-        colors = svt_av1_count_colors_highbd((uint16_t *)src, src_stride, rows, cols,
-            bit_depth, count_buf);
+        colors = svt_av1_count_colors_highbd(
+            (uint16_t *)src, src_stride, rows, cols, bit_depth, count_buf);
     else
         colors = svt_av1_count_colors(src, src_stride, rows, cols, count_buf);
 
@@ -386,22 +400,22 @@ void search_palette_luma(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
         const int  max_itr = 50;
         int *const data    = context_ptr->palette_buffer.kmeans_data_buf;
         int        centroids[PALETTE_MAX_SIZE];
-        int lb, ub;
+        int        lb, ub;
 
-        #define GENERATE_KMEANS_DATA(src_data_type)                           \
-            do {                                                              \
-                lb = ub = ((src_data_type)src)[0];                            \
-                for (r = 0; r < rows; ++r) {                                  \
-                    for (c = 0; c < cols; ++c) {                              \
-                        int val = ((src_data_type)src)[r * src_stride + c];   \
-                        data[r * cols + c] = val;                             \
-                        if (val < lb)                                         \
-                            lb = val;                                         \
-                        else if (val > ub)                                    \
-                            ub = val;                                         \
-                    }                                                         \
-                }                                                             \
-            } while (0)
+#define GENERATE_KMEANS_DATA(src_data_type)                                    \
+    do {                                                                       \
+        lb = ub = ((src_data_type)src)[0];                                     \
+        for (r = 0; r < rows; ++r) {                                           \
+            for (c = 0; c < cols; ++c) {                                       \
+                int val            = ((src_data_type)src)[r * src_stride + c]; \
+                data[r * cols + c] = val;                                      \
+                if (val < lb)                                                  \
+                    lb = val;                                                  \
+                else if (val > ub)                                             \
+                    ub = val;                                                  \
+            }                                                                  \
+        }                                                                      \
+    } while (0)
 
         if (is16bit)
             GENERATE_KMEANS_DATA(uint16_t *);
@@ -429,17 +443,23 @@ void search_palette_luma(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
         // TODO: Try to avoid duplicate computation in cases
         // where the dominant colors and the k-means results are similar.
 
-        int step = (pcs_ptr->parent_pcs_ptr->palette_level == 6)
-                       ? 2
-                       : 1;
+        int step = (pcs_ptr->parent_pcs_ptr->palette_level == 6) ? 2 : 1;
         for (int n = AOMMIN(colors, PALETTE_MAX_SIZE); n >= 2; n -= step) {
             for (i = 0; i < n; ++i) centroids[i] = top_colors[i];
 
-            palette_rd_y(&palette_cand[*tot_palette_cands], context_ptr, bsize, data,
-                         centroids, n, color_cache, n_cache, bit_depth);
+            palette_rd_y(&palette_cand[*tot_palette_cands],
+                         context_ptr,
+                         bsize,
+                         data,
+                         centroids,
+                         n,
+                         color_cache,
+                         n_cache,
+                         bit_depth);
 
             //consider this candidate if it has some non zero palette
-            if (palette_cand[*tot_palette_cands].pmi.palette_size[0] > 2) (*tot_palette_cands)++;
+            if (palette_cand[*tot_palette_cands].pmi.palette_size[0] > 2)
+                (*tot_palette_cands)++;
             assert((*tot_palette_cands) <= 14);
         }
 
@@ -456,11 +476,19 @@ void search_palette_luma(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
                 av1_k_means(data, centroids, color_map, rows * cols, n, 1, max_itr);
             }
 
-            palette_rd_y(&palette_cand[*tot_palette_cands], context_ptr, bsize, data,
-                         centroids, n, color_cache, n_cache, bit_depth);
+            palette_rd_y(&palette_cand[*tot_palette_cands],
+                         context_ptr,
+                         bsize,
+                         data,
+                         centroids,
+                         n,
+                         color_cache,
+                         n_cache,
+                         bit_depth);
 
             //consider this candidate if it has some non zero palette
-            if (palette_cand[*tot_palette_cands].pmi.palette_size[0] > 2) (*tot_palette_cands)++;
+            if (palette_cand[*tot_palette_cands].pmi.palette_size[0] > 2)
+                (*tot_palette_cands)++;
 
             assert((*tot_palette_cands) <= 14);
         }
@@ -491,9 +519,9 @@ static void get_palette_params(FRAME_CONTEXT *frame_context, BlkStruct *blk_ptr,
     const PaletteModeInfo *const pmi  = &mbmi->palette_mode_info;
     params->color_map                 = blk_ptr->palette_info.color_idx_map;
     params->map_cdf                   = plane ? frame_context->palette_uv_color_index_cdf
-                            : frame_context->palette_y_color_index_cdf;
-    params->color_cost = NULL;
-    params->n_colors   = pmi->palette_size[plane];
+                                              : frame_context->palette_y_color_index_cdf;
+    params->color_cost                = NULL;
+    params->n_colors                  = pmi->palette_size[plane];
     av1_get_block_dimensions(
         bsize, plane, xd, &params->plane_width, NULL, &params->rows, &params->cols);
 }
@@ -523,8 +551,8 @@ static void get_palette_params_rate(PaletteInfo *palette_info, MdRateEstimationC
         bsize, plane, xd, &params->plane_width, NULL, &params->rows, &params->cols);
 }
 
-static void get_color_map_params_rate(PaletteInfo *                             palette_info,
-                                      MdRateEstimationContext *                 rate_table,
+static void get_color_map_params_rate(PaletteInfo *                            palette_info,
+                                      MdRateEstimationContext *                rate_table,
                                       /*const MACROBLOCK *const x*/ BlkStruct *blk_ptr, int plane,
                                       BlockSize bsize, COLOR_MAP_TYPE type,
                                       Av1ColorMapParam *params) {
@@ -580,8 +608,8 @@ static int cost_and_tokenize_map(Av1ColorMapParam *param, TOKENEXTRA **t, int pl
 }
 
 void svt_av1_tokenize_color_map(FRAME_CONTEXT *frame_context, BlkStruct *blk_ptr, int plane,
-                                TOKENEXTRA **t, BlockSize bsize, TxSize tx_size, COLOR_MAP_TYPE type,
-                                int allow_update_cdf) {
+                                TOKENEXTRA **t, BlockSize bsize, TxSize tx_size,
+                                COLOR_MAP_TYPE type, int allow_update_cdf) {
     assert(plane == 0 || plane == 1);
     Av1ColorMapParam color_map_params;
     get_color_map_params(frame_context, blk_ptr, plane, bsize, tx_size, type, &color_map_params);

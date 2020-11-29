@@ -60,8 +60,8 @@ static INLINE int32_t dec_sb_compute_cdef_list(EbDecHandle *dec_handle, SBInfo *
     int32_t count = 0;
     for (int32_t r = 0; r < maxr; r += r_step) {
         for (int32_t c = 0; c < maxc; c += c_step) {
-            BlockModeInfo *mbmi =
-                get_cur_mode_info(dec_handle, (mi_row + r), (mi_col + c), sb_info);
+            BlockModeInfo *mbmi = get_cur_mode_info(
+                dec_handle, (mi_row + r), (mi_col + c), sb_info);
             if (!dec_is_8x8_block_skip(mbmi)) {
                 dlist[count].by   = (uint8_t)(r >> r_shift);
                 dlist[count].bx   = (uint8_t)(c >> c_shift);
@@ -82,8 +82,8 @@ void svt_cdef_block(EbDecHandle *dec_handle, int32_t *mi_wide_l2, int32_t *mi_hi
     CurFrameBuf *        frame_buf         = &main_frame_buf->cur_frame_bufs[0];
     EbPictureBufferDesc *recon_picture_ptr = dec_handle->cur_pic_buf[0]->ps_pic_buf;
 
-    int8_t use_highbd = (dec_handle->seq_header.color_config.bit_depth > EB_8BIT ||
-        dec_handle->is_16bit_pipeline);
+    int8_t        use_highbd = (dec_handle->seq_header.color_config.bit_depth > EB_8BIT ||
+                         dec_handle->is_16bit_pipeline);
     const int32_t cdef_mask  = 1;
     uint32_t      cdef_count;
     int32_t       coeff_shift = AOMMAX(recon_picture_ptr->bit_depth - 8, 0);
@@ -108,8 +108,8 @@ void svt_cdef_block(EbDecHandle *dec_handle, int32_t *mi_wide_l2, int32_t *mi_hi
     Index will vary from 0 to 3 based on position of 64x64 block
     in Superblock.*/
     const int32_t index = dec_handle->seq_header.sb_size == BLOCK_128X128
-                              ? (!!(fbc & cdef_mask) + 2 * !!(fbr & cdef_mask))
-                              : 0;
+        ? (!!(fbc & cdef_mask) + 2 * !!(fbr & cdef_mask))
+        : 0;
 
     int32_t level, sec_strength;
     int32_t uv_level, uv_sec_strength;
@@ -120,7 +120,8 @@ void svt_cdef_block(EbDecHandle *dec_handle, int32_t *mi_wide_l2, int32_t *mi_hi
         *cdef_left = 0;
         return;
     }
-    if (!*cdef_left) cstart = -CDEF_HBORDER;
+    if (!*cdef_left)
+        cstart = -CDEF_HBORDER;
     nhb = AOMMIN(MI_SIZE_64X64, frame_info->mi_cols - MI_SIZE_64X64 * fbc);
     nvb = AOMMIN(MI_SIZE_64X64, frame_info->mi_rows - MI_SIZE_64X64 * fbr);
     int32_t frame_top, frame_left, frame_bottom, frame_right;
@@ -418,7 +419,7 @@ void svt_cdef_block(EbDecHandle *dec_handle, int32_t *mi_wide_l2, int32_t *mi_hi
             uint16_t *tmp_buff = (uint16_t *)rec_buff;
             svt_cdef_filter_fb(NULL,
                                &tmp_buff[rec_stride * (MI_SIZE_64X64 * fbr << mi_high_l2[pli]) +
-                               (fbc * MI_SIZE_64X64 << mi_wide_l2[pli])],
+                                         (fbc * MI_SIZE_64X64 << mi_wide_l2[pli])],
                                rec_stride,
                                &src[CDEF_VBORDER * CDEF_BSTRIDE + CDEF_HBORDER],
                                sub_x,
@@ -438,7 +439,7 @@ void svt_cdef_block(EbDecHandle *dec_handle, int32_t *mi_wide_l2, int32_t *mi_hi
         /*Cdef filter calling function for 8 bit depth */
         else
             svt_cdef_filter_fb(&rec_buff[rec_stride * (MI_SIZE_64X64 * fbr << mi_high_l2[pli]) +
-                               (fbc * MI_SIZE_64X64 << mi_wide_l2[pli])],
+                                         (fbc * MI_SIZE_64X64 << mi_wide_l2[pli])],
                                NULL,
                                rec_stride,
                                &src[CDEF_VBORDER * CDEF_BSTRIDE + CDEF_HBORDER],
@@ -519,7 +520,8 @@ void svt_cdef_sb_row_mt(EbDecHandle *dec_handle, int32_t *mi_wide_l2, int32_t *m
     for (int32_t sb_fbc = 0; sb_fbc < pic_width_in_sb; sb_fbc++) {
         /* Top-Right Sync*/
         if (sb_fbr) {
-            if (sb_fbc == pic_width_in_sb - 1) nsync = 0;
+            if (sb_fbc == pic_width_in_sb - 1)
+                nsync = 0;
             while (*cdef_completed_in_prev_row < (sb_fbc + nsync))
                 ;
             //Sleep(5); /* ToDo : Change */
@@ -557,8 +559,10 @@ void svt_cdef_sb_row_mt(EbDecHandle *dec_handle, int32_t *mi_wide_l2, int32_t *m
             /*transversing across 0 - 3 64x64s or 1 128x128*/
             fbr_64 = (sb_fbr << sb_64_shift) + (row_cnt);
             fbc_64 = (sb_fbc << sb_64_shift) + (cnt & 1) + (sb_128 ? !row_cnt : 0);
-            if (fbc_64 >= nhfb) continue;
-            if (fbr_64 >= nvfb) continue;
+            if (fbc_64 >= nhfb)
+                continue;
+            if (fbr_64 >= nvfb)
+                continue;
 
             svt_cdef_block(
                 dec_handle,
@@ -585,7 +589,8 @@ void svt_cdef_sb_row_mt(EbDecHandle *dec_handle, int32_t *mi_wide_l2, int32_t *m
 
 /* Frame level call, for CDEF */
 void svt_cdef_frame(EbDecHandle *dec_handle, int enable_flag) {
-    if (!enable_flag) return;
+    if (!enable_flag)
+        return;
 
     EbPictureBufferDesc *recon_picture_ptr = dec_handle->cur_pic_buf[0]->ps_pic_buf;
 
@@ -600,9 +605,9 @@ void svt_cdef_frame(EbDecHandle *dec_handle, int enable_flag) {
     uint8_t *     row_cdef, *prev_row_cdef, *curr_row_cdef;
     int32_t       mi_wide_l2[3];
     int32_t       mi_high_l2[3];
-    const int32_t nvfb        = (frame_info->mi_rows + MI_SIZE_64X64 - 1) / MI_SIZE_64X64;
-    const int32_t nhfb        = (frame_info->mi_cols + MI_SIZE_64X64 - 1) / MI_SIZE_64X64;
-    row_cdef                  = (uint8_t *)svt_aom_malloc(sizeof(*row_cdef) * (nhfb + 2) * 2);
+    const int32_t nvfb = (frame_info->mi_rows + MI_SIZE_64X64 - 1) / MI_SIZE_64X64;
+    const int32_t nhfb = (frame_info->mi_cols + MI_SIZE_64X64 - 1) / MI_SIZE_64X64;
+    row_cdef           = (uint8_t *)svt_aom_malloc(sizeof(*row_cdef) * (nhfb + 2) * 2);
 
     assert(row_cdef != NULL);
     memset(row_cdef, 1, sizeof(*row_cdef) * (nhfb + 2) * 2);
@@ -612,8 +617,8 @@ void svt_cdef_frame(EbDecHandle *dec_handle, int enable_flag) {
     const int32_t stride = (frame_info->mi_cols << MI_SIZE_LOG2) + 2 * CDEF_HBORDER;
 
     for (int32_t pli = 0; pli < num_planes; pli++) {
-        int32_t sub_x   = (pli == 0) ? 0 : dec_handle->seq_header.color_config.subsampling_x;
-        int32_t sub_y   = (pli == 0) ? 0 : dec_handle->seq_header.color_config.subsampling_y;
+        int32_t sub_x = (pli == 0) ? 0 : dec_handle->seq_header.color_config.subsampling_x;
+        int32_t sub_y = (pli == 0) ? 0 : dec_handle->seq_header.color_config.subsampling_y;
 
         mi_wide_l2[pli] = MI_SIZE_LOG2 - sub_x;
         mi_high_l2[pli] = MI_SIZE_LOG2 - sub_y;

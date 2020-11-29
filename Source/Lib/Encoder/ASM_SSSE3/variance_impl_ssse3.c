@@ -16,20 +16,18 @@
 
 #include "synonyms.h"
 
-void svt_aom_var_filter_block2d_bil_first_pass_ssse3(const uint8_t *a, uint16_t *b,
-                                                 unsigned int src_pixels_per_line,
-                                                 unsigned int pixel_step,
-                                                 unsigned int output_height,
-                                                 unsigned int output_width, const uint8_t *filter) {
+void svt_aom_var_filter_block2d_bil_first_pass_ssse3(
+    const uint8_t *a, uint16_t *b, unsigned int src_pixels_per_line, unsigned int pixel_step,
+    unsigned int output_height, unsigned int output_width, const uint8_t *filter) {
     // Note: filter[0], filter[1] could be {128, 0}, where 128 will overflow
     // in computation using _mm_maddubs_epi16.
     // Change {128, 0} to {64, 0} and reduce FILTER_BITS by 1 to avoid overflow.
-    const int16_t round = (1 << (FILTER_BITS - 1)) >> 1;
-    const __m128i r     = _mm_set1_epi16(round);
-    const uint8_t f0    = filter[0] >> 1;
-    const uint8_t f1    = filter[1] >> 1;
-    const __m128i filters =
-        _mm_setr_epi8(f0, f1, f0, f1, f0, f1, f0, f1, f0, f1, f0, f1, f0, f1, f0, f1);
+    const int16_t round   = (1 << (FILTER_BITS - 1)) >> 1;
+    const __m128i r       = _mm_set1_epi16(round);
+    const uint8_t f0      = filter[0] >> 1;
+    const uint8_t f1      = filter[1] >> 1;
+    const __m128i filters = _mm_setr_epi8(
+        f0, f1, f0, f1, f0, f1, f0, f1, f0, f1, f0, f1, f0, f1, f0, f1);
     (void)pixel_step;
 
     if (output_width >= 8) {
@@ -88,8 +86,8 @@ void svt_aom_var_filter_block2d_bil_second_pass_ssse3(
     const __m128i r       = _mm_set1_epi32(round);
     const __m128i filters = _mm_setr_epi16(
         filter[0], filter[1], filter[0], filter[1], filter[0], filter[1], filter[0], filter[1]);
-    const __m128i shuffle_mask =
-        _mm_setr_epi8(0, 1, 8, 9, 2, 3, 10, 11, 4, 5, 12, 13, 6, 7, 14, 15);
+    const __m128i shuffle_mask = _mm_setr_epi8(
+        0, 1, 8, 9, 2, 3, 10, 11, 4, 5, 12, 13, 6, 7, 14, 15);
     const __m128i mask = _mm_setr_epi8(0, 4, 8, 12, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1);
     unsigned int  i, j;
 

@@ -24,8 +24,8 @@ static void reference_queue_entry_dctor(EbPtr p) {
 }
 
 EbErrorType reference_queue_entry_ctor(ReferenceQueueEntry *entry_ptr) {
-    entry_ptr->dctor                = reference_queue_entry_dctor;
-    entry_ptr->picture_number       = ~0u;
+    entry_ptr->dctor          = reference_queue_entry_dctor;
+    entry_ptr->picture_number = ~0u;
 
     EB_MALLOC_ARRAY(entry_ptr->list0.list, (1 << MAX_TEMPORAL_LAYERS));
     EB_MALLOC_ARRAY(entry_ptr->list1.list, (1 << MAX_TEMPORAL_LAYERS));
@@ -33,7 +33,6 @@ EbErrorType reference_queue_entry_ctor(ReferenceQueueEntry *entry_ptr) {
     return EB_ErrorNone;
 }
 EbErrorType dep_cnt_queue_entry_ctor(PicQueueEntry *entry_ptr) {
-
     entry_ptr->pic_num = ~0u;
     entry_ptr->is_done = 1;
     return EB_ErrorNone;

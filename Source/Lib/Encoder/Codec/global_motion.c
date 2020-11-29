@@ -31,10 +31,11 @@
 static const double erroradv_tr[]      = {0.65, 0.60, 0.65};
 static const double erroradv_prod_tr[] = {20000, 18000, 16000};
 
-int svt_av1_is_enough_erroradvantage(double best_erroradvantage, int params_cost, int erroradv_type) {
+int svt_av1_is_enough_erroradvantage(double best_erroradvantage, int params_cost,
+                                     int erroradv_type) {
     assert(erroradv_type < GM_ERRORADV_TR_TYPES);
     return best_erroradvantage < erroradv_tr[erroradv_type] &&
-           best_erroradvantage * params_cost < erroradv_prod_tr[erroradv_type];
+        best_erroradvantage * params_cost < erroradv_prod_tr[erroradv_type];
 }
 
 static void convert_to_params(const double *params, int32_t *model) {
@@ -54,8 +55,8 @@ static void convert_to_params(const double *params, int32_t *model) {
     }
     for (; i < 8; ++i) {
         model[i] = (int32_t)floor(params[i] * (1 << GM_ROW3HOMO_PREC_BITS) + 0.5);
-        model[i] =
-            (int32_t)clamp(model[i], GM_ROW3HOMO_MIN, GM_ROW3HOMO_MAX) * GM_ROW3HOMO_DECODE_FACTOR;
+        model[i] = (int32_t)clamp(model[i], GM_ROW3HOMO_MIN, GM_ROW3HOMO_MAX) *
+            GM_ROW3HOMO_DECODE_FACTOR;
         alpha_present |= (model[i] != 0);
     }
 
@@ -96,8 +97,8 @@ static int32_t add_param_offset(int param_index, int32_t param_value, int32_t of
 
     // Make parameter zero-centered and offset the shift that was done to make
     // it compatible with the warped model
-    param_value =
-        (param_value - (is_one_centered << WARPEDMODEL_PREC_BITS)) >> scale_vals[param_type];
+    param_value = (param_value - (is_one_centered << WARPEDMODEL_PREC_BITS)) >>
+        scale_vals[param_type];
     // Add desired offset to the rescaled/zero-centered parameter
     param_value += offset;
     // Clamp the parameter so it does not overflow the number of bits allotted
@@ -132,9 +133,10 @@ static void force_wmtype(EbWarpedMotionParams *wm, TransformationType wmtype) {
 }
 
 int64_t svt_av1_refine_integerized_param(EbWarpedMotionParams *wm, TransformationType wmtype,
-                                         int use_hbd, int bd, uint8_t *ref, int r_width, int r_height,
-                                         int r_stride, uint8_t *dst, int d_width, int d_height,
-                                         int d_stride, int n_refinements, int64_t best_frame_error) {
+                                         int use_hbd, int bd, uint8_t *ref, int r_width,
+                                         int r_height, int r_stride, uint8_t *dst, int d_width,
+                                         int d_height, int d_stride, int n_refinements,
+                                         int64_t best_frame_error) {
     static const int max_trans_model_params[TRANS_TYPES] = {0, 2, 4, 6};
     const int        border                              = ERRORADV_BORDER;
     int              i                                   = 0, p;
@@ -319,14 +321,15 @@ static int compute_global_motion_feature_based(TransformationType type, unsigned
 
     // Return true if any one of the motions has inliers.
     for (i = 0; i < num_motions; ++i) {
-        if (num_inliers_by_motion[i] > 0) return 1;
+        if (num_inliers_by_motion[i] > 0)
+            return 1;
     }
     return 0;
 }
 
 int svt_av1_compute_global_motion(TransformationType type, unsigned char *frm_buffer, int frm_width,
-                                  int frm_height, int frm_stride, int *frm_corners, int num_frm_corners,
-                                  uint8_t *ref, int ref_stride, int bit_depth,
+                                  int frm_height, int frm_stride, int *frm_corners,
+                                  int num_frm_corners, uint8_t *ref, int ref_stride, int bit_depth,
                                   GlobalMotionEstimationType gm_estimation_type,
                                   int *num_inliers_by_motion, MotionModel *params_by_motion,
                                   int num_motions) {

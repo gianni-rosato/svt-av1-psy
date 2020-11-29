@@ -35,12 +35,10 @@ extern uint64_t svt_av1_cost_coeffs_txb(uint8_t allow_update_cdf, FRAME_CONTEXT 
 
 extern void coding_loop_context_generation(
     ModeDecisionContext *context_ptr, BlkStruct *blk_ptr, uint32_t blk_origin_x,
-    uint32_t blk_origin_y, uint32_t sb_sz,
-    NeighborArrayUnit *inter_pred_dir_neighbor_array,
+    uint32_t blk_origin_y, uint32_t sb_sz, NeighborArrayUnit *inter_pred_dir_neighbor_array,
     NeighborArrayUnit *ref_frame_type_neighbor_array,
     NeighborArrayUnit *intra_luma_mode_neighbor_array, NeighborArrayUnit *skip_flag_neighbor_array,
-    NeighborArrayUnit *mode_type_neighbor_array,
-    NeighborArrayUnit *leaf_partition_neighbor_array);
+    NeighborArrayUnit *mode_type_neighbor_array, NeighborArrayUnit *leaf_partition_neighbor_array);
 
 extern EbErrorType av1_txb_calc_cost(
     ModeDecisionCandidate *candidate_ptr, // input parameter, prediction result Ptr
@@ -51,7 +49,7 @@ extern EbErrorType av1_txb_calc_cost(
     uint32_t
         cb_count_non_zero_coeffs, // input parameter, number of non zero cb quantized coefficients
     uint32_t
-             cr_count_non_zero_coeffs, // input parameter, number of non zero cr quantized coefficients
+        cr_count_non_zero_coeffs, // input parameter, number of non zero cr quantized coefficients
     uint64_t y_txb_distortion
         [DIST_CALC_TOTAL], // input parameter, Y distortion for both Normal and Cbf zero modes
     uint64_t cb_txb_distortion
@@ -79,7 +77,7 @@ extern EbErrorType av1_txb_calc_cost_luma(
     uint32_t               txb_index, // input parameter, TU index inside the CU
     TxSize                 tx_size,
     uint32_t
-             y_count_non_zero_coeffs, // input parameter, number of non zero Y quantized coefficients
+        y_count_non_zero_coeffs, // input parameter, number of non zero Y quantized coefficients
     uint64_t y_txb_distortion
         [DIST_CALC_TOTAL], // input parameter, Y distortion for both Normal and Cbf zero modes
     uint64_t *y_txb_coeff_bits, // input parameter, Y quantized coefficients rate
@@ -108,7 +106,7 @@ extern EbErrorType split_flag_rate(ModeDecisionContext *context_ptr, BlkStruct *
 #define RDCOST(RM, R, D) \
     (ROUND_POWER_OF_TWO(((uint64_t)(R)) * (RM), AV1_PROB_COST_SHIFT) + ((D) * (1 << RDDIV_BITS)))
 
-extern EbErrorType av1_split_flag_rate(PictureParentControlSet * pcs_ptr,
+extern EbErrorType av1_split_flag_rate(PictureParentControlSet *pcs_ptr,
                                        ModeDecisionContext *context_ptr, BlkStruct *blk_ptr,
                                        uint32_t leaf_index, PartitionType partitionType,
                                        uint64_t *split_rate, uint64_t lambda,
@@ -125,8 +123,7 @@ extern uint64_t av1_intra_fast_cost(BlkStruct *blk_ptr, ModeDecisionCandidate *c
                                     uint64_t chroma_distortion, uint64_t lambda,
                                     PictureControlSet *pcs_ptr, CandidateMv *ref_mv_stack,
                                     const BlockGeom *blk_geom, uint32_t miRow, uint32_t miCol,
-                                    uint8_t enable_inter_intra,
-                                    uint8_t md_pass,
+                                    uint8_t enable_inter_intra, uint8_t md_pass,
                                     uint32_t left_neighbor_mode, uint32_t top_neighbor_mode);
 
 extern uint64_t av1_inter_fast_cost(BlkStruct *blk_ptr, ModeDecisionCandidate *candidate_ptr,
@@ -134,8 +131,7 @@ extern uint64_t av1_inter_fast_cost(BlkStruct *blk_ptr, ModeDecisionCandidate *c
                                     uint64_t chroma_distortion, uint64_t lambda,
                                     PictureControlSet *pcs_ptr, CandidateMv *ref_mv_stack,
                                     const BlockGeom *blk_geom, uint32_t miRow, uint32_t miCol,
-                                    uint8_t enable_inter_intra,
-                                    uint8_t md_pass,
+                                    uint8_t enable_inter_intra, uint8_t md_pass,
                                     uint32_t left_neighbor_mode, uint32_t top_neighbor_mode);
 
 extern EbErrorType av1_intra_full_cost(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,

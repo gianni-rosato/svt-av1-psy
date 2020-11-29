@@ -48,29 +48,28 @@
 #define RC_GROUP_IN_GOP_MAX_NUMBER 512
 #define PICTURE_IN_RC_GROUP_MAX_NUMBER 64
 
-typedef struct DpbDependentList
-{
-    int32_t                              list[1 << MAX_TEMPORAL_LAYERS];
-    uint32_t                             list_count;
+typedef struct DpbDependentList {
+    int32_t  list[1 << MAX_TEMPORAL_LAYERS];
+    uint32_t list_count;
 } DpbDependentList;
 
 typedef struct DPBInfo {
-    uint64_t picture_number;
-    int32_t dep_count;
-    int32_t dep_list0_count;
-    int32_t dep_list1_count;
-    uint8_t temporal_layer_index;
-    EbBool  is_displayed;
-    EbBool  is_used;
-    EbBool  is_alt_ref;
+    uint64_t         picture_number;
+    int32_t          dep_count;
+    int32_t          dep_list0_count;
+    int32_t          dep_list1_count;
+    uint8_t          temporal_layer_index;
+    EbBool           is_displayed;
+    EbBool           is_used;
+    EbBool           is_alt_ref;
     DpbDependentList dep_list0;
     DpbDependentList dep_list1;
 } DPBInfo;
 
 typedef struct FirstPassStatsOut {
-    FIRSTPASS_STATS* stat;
-    size_t size;
-    size_t capability;
+    FIRSTPASS_STATS *stat;
+    size_t           size;
+    size_t           capability;
 } FirstPassStatsOut;
 
 typedef struct EncodeContext {
@@ -96,8 +95,8 @@ typedef struct EncodeContext {
     PictureDecisionReorderEntry **picture_decision_reorder_queue;
     uint32_t                      picture_decision_reorder_queue_head_index;
     //hold undisplayed frame for show existing frame. It's ordered with pts Descend.
-    EbObjectWrapper              *picture_decision_undisplayed_queue[REF_FRAMES];
-    uint32_t                      picture_decision_undisplayed_queue_count;
+    EbObjectWrapper *picture_decision_undisplayed_queue[REF_FRAMES];
+    uint32_t         picture_decision_undisplayed_queue_count;
     // Picture Manager Pre-Assignment Buffer
     uint32_t          pre_assignment_buffer_intra_count;
     uint32_t          pre_assignment_buffer_idr_count;
@@ -124,9 +123,10 @@ typedef struct EncodeContext {
     // Initial Rate Control Reorder Queue
     InitialRateControlReorderEntry **initial_rate_control_reorder_queue;
     uint32_t                         initial_rate_control_reorder_queue_head_index;
-    uint32_t        dep_q_head;
-    uint32_t        dep_q_tail;
-    PicQueueEntry **dep_cnt_picture_queue; //buffer to sotre all pictures needing dependent-count clean-up in PicMgr
+    uint32_t                         dep_q_head;
+    uint32_t                         dep_q_tail;
+    PicQueueEntry **
+        dep_cnt_picture_queue; //buffer to sotre all pictures needing dependent-count clean-up in PicMgr
 
     // High Level Rate Control Histogram Queue
     HlRateControlHistogramEntry **hl_rate_control_historgram_queue;
@@ -181,28 +181,28 @@ typedef struct EncodeContext {
     EbHandle stat_file_mutex;
 
     //DPB list management
-    DPBInfo dpb_list[REF_FRAMES];
-    uint64_t display_picture_number;
-    EbBool  is_mini_gop_changed;
-    EbBool  is_i_slice_in_last_mini_gop;
-    uint64_t i_slice_picture_number_in_last_mini_gop;
-    uint64_t poc_map_idx[MAX_TPL_LA_SW];
+    DPBInfo              dpb_list[REF_FRAMES];
+    uint64_t             display_picture_number;
+    EbBool               is_mini_gop_changed;
+    EbBool               is_i_slice_in_last_mini_gop;
+    uint64_t             i_slice_picture_number_in_last_mini_gop;
+    uint64_t             poc_map_idx[MAX_TPL_LA_SW];
     EbPictureBufferDesc *mc_flow_rec_picture_buffer[MAX_TPL_LA_SW];
     EbPictureBufferDesc *mc_flow_rec_picture_buffer_noref;
-    FrameInfo      frame_info;
-    TwoPassCfg     two_pass_cfg; // two pass datarate control
-    RATE_CONTROL   rc;
-    RateControlCfg rc_cfg;
-    GF_GROUP       gf_group;
-    KeyFrameCfg    kf_cfg;
-    GFConfig       gf_cfg;
-    FIRSTPASS_STATS *frame_stats_buffer;
+    FrameInfo            frame_info;
+    TwoPassCfg           two_pass_cfg; // two pass datarate control
+    RATE_CONTROL         rc;
+    RateControlCfg       rc_cfg;
+    GF_GROUP             gf_group;
+    KeyFrameCfg          kf_cfg;
+    GFConfig             gf_cfg;
+    FIRSTPASS_STATS *    frame_stats_buffer;
     // Number of stats buffers required for look ahead
-    int num_lap_buffers;
-    STATS_BUFFER_CTX stats_buf_context;
-    SvtAv1FixedBuf rc_twopass_stats_in; // replaced oxcf->two_pass_cfg.stats_in in aom
+    int               num_lap_buffers;
+    STATS_BUFFER_CTX  stats_buf_context;
+    SvtAv1FixedBuf    rc_twopass_stats_in; // replaced oxcf->two_pass_cfg.stats_in in aom
     FirstPassStatsOut stats_out;
-    RecodeLoopType recode_loop;
+    RecodeLoopType    recode_loop;
     // This feature controls the tolerence vs target used in deciding whether to
     // recode a frame. It has no meaning if recode is disabled.
     int recode_tolerance;

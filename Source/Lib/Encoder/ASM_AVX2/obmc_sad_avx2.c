@@ -100,7 +100,8 @@ static INLINE unsigned int obmc_sad_w8n_avx2(const uint8_t *pre, const int pre_s
 
         n += 8;
 
-        if ((n & (width - 1)) == 0) pre += pre_step;
+        if ((n & (width - 1)) == 0)
+            pre += pre_step;
     } while (n < width * height);
 
     __m128i v_sad_d_0 = _mm256_castsi256_si128(v_sad_d);

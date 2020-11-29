@@ -26,7 +26,6 @@ extern "C" {
      * Sequence Control Set
      ************************************/
 typedef struct SequenceControlSet {
-
     /*!< Pointer to the dtor of the struct*/
     EbDctor dctor;
     /*!< Encoding context pointer containing the handle pointer */
@@ -35,15 +34,15 @@ typedef struct SequenceControlSet {
     /*!< API structure */
     EbSvtAv1EncConfiguration static_config;
     /*!< Pointer to prediction structure containing the mini-gop information */
-    PredictionStructure *    pred_struct_ptr;
+    PredictionStructure *pred_struct_ptr;
     /*!< Super block geomerty pointer */
-    SbGeom *                 sb_geom;
+    SbGeom *sb_geom;
     /*!< Array of superblock parameters computed at the resource coordination stage */
-    SbParams *               sb_params_array;
+    SbParams *sb_params_array;
     /*!< Bitstream level */
-    BitstreamLevel           level[MAX_NUM_OPERATING_POINTS];
+    BitstreamLevel level[MAX_NUM_OPERATING_POINTS];
     /*!< Sequence header structure, common between the encoder and decoder */
-    SeqHeader                seq_header;
+    SeqHeader seq_header;
 
     /*!< Sequence coding parameters
             parameters/features are set to be set for the full stream
@@ -55,7 +54,7 @@ typedef struct SequenceControlSet {
     /*!< Maximum number of references that a picture can have within the stream */
     uint32_t reference_count;
     /*!< The frequency of intra pictures */
-    int32_t  intra_period_length;
+    int32_t intra_period_length;
     /*!< Intra refresh type 2= key frame, 1= fwd key frame */
     uint32_t intra_refresh_type;
     /*!< Target bitrate in bits per seconds */
@@ -70,9 +69,9 @@ typedef struct SequenceControlSet {
          for algorithms such as SceneChange or TemporalFiltering */
     uint32_t scd_delay;
     /*!< Enable the use of altrefs in the stream */
-    int8_t   tf_level;
+    int8_t tf_level;
     /*!<  */
-    EbBlockMeanPrec          block_mean_calc_prec;
+    EbBlockMeanPrec block_mean_calc_prec;
     /*!< CDF (The signal changes per preset; 0: CDF update, 1: no CDF update) Default is 0.*/
     uint8_t cdf_mode;
     /*!< Down-sampling method @ ME and alt-ref temporal filtering
@@ -81,8 +80,8 @@ typedef struct SequenceControlSet {
     /*!< Use in loop motion estimation
          Default is 0. */
     uint8_t in_loop_me;
-    uint8_t  enable_pic_mgr_dec_order; // if enabled: pic mgr starts pictures in dec order
-    uint8_t  enable_dec_order; // if enabled: encoding are in dec order
+    uint8_t enable_pic_mgr_dec_order; // if enabled: pic mgr starts pictures in dec order
+    uint8_t enable_dec_order; // if enabled: encoding are in dec order
     /*!< Use in loop motion OIS
          Default is 1. */
     uint8_t in_loop_ois;
@@ -90,7 +89,7 @@ typedef struct SequenceControlSet {
         (The signal changes per preset; 0: Enabled, 1: Disabled) Default is 1. */
     uint8_t mfmv_enabled;
     /*!< Film grain strenght */
-    int32_t  film_grain_denoise_strength;
+    int32_t film_grain_denoise_strength;
     /*!< Film grain seed */
     uint16_t film_grain_random_seed;
     /*!< over_boundary_block: pad resolution to a multiple of SB for smaller overhead
@@ -202,9 +201,9 @@ typedef struct SequenceControlSet {
     int32_t  lap_enabled;
     TWO_PASS twopass;
     double   double_frame_rate;
-    Quants quants_bd; // follows input bit depth
-    Dequants deq_bd;  // follows input bit depth
-    Quants quants_8bit;  // 8bit
+    Quants   quants_bd; // follows input bit depth
+    Dequants deq_bd; // follows input bit depth
+    Quants   quants_8bit; // 8bit
     Dequants deq_8bit; // 8bit
 } SequenceControlSet;
 
@@ -240,13 +239,11 @@ extern EbErrorType derive_input_resolution(EbInputResolution *input_resolution,
 
 EbErrorType sb_geom_init(SequenceControlSet *scs_ptr);
 
-inline static EbBool use_input_stat(const SequenceControlSet* scs_ptr)
-{
+inline static EbBool use_input_stat(const SequenceControlSet *scs_ptr) {
     return !!scs_ptr->static_config.rc_twopass_stats_in.sz;
 }
 
-inline static EbBool use_output_stat(const SequenceControlSet* scs_ptr)
-{
+inline static EbBool use_output_stat(const SequenceControlSet *scs_ptr) {
     return scs_ptr->static_config.rc_firstpass_stats_out;
 }
 

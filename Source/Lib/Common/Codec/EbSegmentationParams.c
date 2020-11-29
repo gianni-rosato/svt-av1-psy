@@ -18,5 +18,4 @@ const int segmentation_feature_signed[SEG_LVL_MAX] = {1, 1, 1, 1, 1, 0, 0, 0};
 const int segmentation_feature_bits[SEG_LVL_MAX] = {8, 6, 6, 6, 6, 3, 0, 0};
 
 const int segmentation_feature_max[SEG_LVL_MAX] = {
-        MAXQ, MAX_LOOP_FILTER, MAX_LOOP_FILTER, MAX_LOOP_FILTER, MAX_LOOP_FILTER, 7, 0, 0};
-
+    MAXQ, MAX_LOOP_FILTER, MAX_LOOP_FILTER, MAX_LOOP_FILTER, MAX_LOOP_FILTER, 7, 0, 0};

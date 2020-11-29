@@ -72,10 +72,10 @@ typedef struct ModeDecisionCandidate {
         uint64_t mvs;
     };
 
-    uint8_t     skip_flag;
-    EbBool      merge_flag;
-    uint16_t    count_non_zero_coeffs;
-    uint8_t     type;
+    uint8_t      skip_flag;
+    EbBool       merge_flag;
+    uint16_t     count_non_zero_coeffs;
+    uint8_t      type;
     PaletteInfo *palette_info;
     // MD Rate Estimation Ptr
     MdRateEstimationContext *md_rate_estimation_ptr; // 64 bits
@@ -153,15 +153,14 @@ typedef EbErrorType (*EbPredictionFunc)(uint8_t                             hbd_
                                         struct ModeDecisionContext *        context_ptr,
                                         PictureControlSet *                 pcs_ptr,
                                         struct ModeDecisionCandidateBuffer *candidate_buffer_ptr);
-typedef uint64_t (*EbFastCostFunc)(BlkStruct *                  blk_ptr,
+typedef uint64_t (*EbFastCostFunc)(BlkStruct *                   blk_ptr,
                                    struct ModeDecisionCandidate *candidate_buffer, uint32_t qp,
                                    uint64_t luma_distortion, uint64_t chroma_distortion,
-                                   uint64_t lambda,
-                                    PictureControlSet *pcs_ptr,
+                                   uint64_t lambda, PictureControlSet *pcs_ptr,
                                    CandidateMv *ref_mv_stack, const BlockGeom *blk_geom,
                                    uint32_t miRow, uint32_t miCol, uint8_t enable_inter_intra,
-                                   uint8_t md_pass,
-                                   uint32_t left_neighbor_mode, uint32_t top_neighbor_mode);
+                                   uint8_t md_pass, uint32_t left_neighbor_mode,
+                                   uint32_t top_neighbor_mode);
 
 typedef EbErrorType (*EB_FULL_COST_FUNC)(
     SuperBlock *sb_ptr, BlkStruct *blk_ptr, uint32_t cu_size, uint32_t cu_size_log2,
@@ -219,21 +218,20 @@ typedef struct ModeDecisionCandidateBuffer {
     **************************************/
 extern EbErrorType mode_decision_candidate_buffer_ctor(
     ModeDecisionCandidateBuffer *buffer_ptr, EbBitDepthEnum max_bitdepth, uint8_t sb_size,
-    uint32_t buffer_mask,
-    EbPictureBufferDesc *temp_residual_ptr, EbPictureBufferDesc *temp_recon_ptr,
-    uint64_t *fast_cost_ptr,
-    uint64_t *full_cost_ptr, uint64_t *full_cost_skip_ptr, uint64_t *full_cost_merge_ptr);
+    uint32_t buffer_mask, EbPictureBufferDesc *temp_residual_ptr,
+    EbPictureBufferDesc *temp_recon_ptr, uint64_t *fast_cost_ptr, uint64_t *full_cost_ptr,
+    uint64_t *full_cost_skip_ptr, uint64_t *full_cost_merge_ptr);
 
 extern EbErrorType mode_decision_scratch_candidate_buffer_ctor(
     ModeDecisionCandidateBuffer *buffer_ptr, uint8_t sb_size, EbBitDepthEnum max_bitdepth);
 
 uint32_t product_full_mode_decision(struct ModeDecisionContext *context_ptr, BlkStruct *blk_ptr,
-    ModeDecisionCandidateBuffer **buffer_ptr_array,
-    uint32_t candidate_total_count,
-    uint32_t * best_candidate_index_array);
-uint32_t get_blk_tuned_full_lambda(struct ModeDecisionContext *context_ptr, PictureControlSet *pcs_ptr,
-                                   uint32_t pic_full_lambda);
-void set_tuned_blk_lambda(struct ModeDecisionContext *context_ptr, PictureControlSet *pcs_ptr);
+                                    ModeDecisionCandidateBuffer **buffer_ptr_array,
+                                    uint32_t                      candidate_total_count,
+                                    uint32_t *                    best_candidate_index_array);
+uint32_t get_blk_tuned_full_lambda(struct ModeDecisionContext *context_ptr,
+                                   PictureControlSet *pcs_ptr, uint32_t pic_full_lambda);
+void     set_tuned_blk_lambda(struct ModeDecisionContext *context_ptr, PictureControlSet *pcs_ptr);
 
 typedef EbErrorType (*EB_INTRA_4x4_FAST_LUMA_COST_FUNC)(
     struct ModeDecisionContext *context_ptr, uint32_t pu_index,
@@ -262,12 +260,8 @@ struct CodingLoopContext_s;
 uint8_t                 get_ref_frame_idx(uint8_t ref_type);
 extern MvReferenceFrame svt_get_ref_frame_type(uint8_t list, uint8_t ref_idx);
 uint8_t                 get_list_idx(uint8_t ref_type);
- void angle_estimation(
-    const uint8_t *src,
-    int src_stride,
-    int rows,
-    int cols,
-    uint8_t *directional_mode_skip_mask);
+void                    angle_estimation(const uint8_t *src, int src_stride, int rows, int cols,
+                                         uint8_t *directional_mode_skip_mask);
 #ifdef __cplusplus
 }
 #endif

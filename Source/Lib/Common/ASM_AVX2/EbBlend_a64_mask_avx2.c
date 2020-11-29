@@ -74,8 +74,8 @@ static INLINE void blend_a64_mask_sx_sy_w16_avx2(uint8_t *dst, uint32_t dst_stri
         const __m256i v_m0_b = _mm256_packus_epi16(v_m0_w, v_m0_w);
         const __m256i v_m1_b = _mm256_sub_epi8(v_maxval_b, v_m0_b);
 
-        const __m256i y_res_b =
-            blend_16_u8_avx2(src0, src1, &v_m0_b, &v_m1_b, AOM_BLEND_A64_ROUND_BITS);
+        const __m256i y_res_b = blend_16_u8_avx2(
+            src0, src1, &v_m0_b, &v_m1_b, AOM_BLEND_A64_ROUND_BITS);
 
         xx_storeu_128(dst, _mm256_castsi256_si128(y_res_b));
         dst += dst_stride;
@@ -110,12 +110,12 @@ static INLINE void blend_a64_mask_sx_sy_w32n_avx2(uint8_t *dst, uint32_t dst_str
 
             const __m256i v_m0l_w = yy_roundn_epu16(v_rsl_w, 2);
             const __m256i v_m0h_w = yy_roundn_epu16(v_rsh_w, 2);
-            const __m256i v_m0_b =
-                _mm256_permute4x64_epi64(_mm256_packus_epi16(v_m0l_w, v_m0h_w), 0xd8);
-            const __m256i v_m1_b = _mm256_sub_epi8(v_maxval_b, v_m0_b);
+            const __m256i v_m0_b  = _mm256_permute4x64_epi64(_mm256_packus_epi16(v_m0l_w, v_m0h_w),
+                                                            0xd8);
+            const __m256i v_m1_b  = _mm256_sub_epi8(v_maxval_b, v_m0_b);
 
-            const __m256i v_res_b =
-                blend_32_u8_avx2(src0 + c, src1 + c, &v_m0_b, &v_m1_b, AOM_BLEND_A64_ROUND_BITS);
+            const __m256i v_res_b = blend_32_u8_avx2(
+                src0 + c, src1 + c, &v_m0_b, &v_m1_b, AOM_BLEND_A64_ROUND_BITS);
 
             yy_storeu_256(dst + c, v_res_b);
         }
@@ -205,8 +205,8 @@ static INLINE void blend_a64_mask_sx_w16_avx2(uint8_t *dst, uint32_t dst_stride,
         const __m256i v_m0_b = _mm256_packus_epi16(v_m0_w, _mm256_setzero_si256());
         const __m256i v_m1_b = _mm256_sub_epi8(v_maxval_b, v_m0_b);
 
-        const __m256i v_res_b =
-            blend_16_u8_avx2(src0, src1, &v_m0_b, &v_m1_b, AOM_BLEND_A64_ROUND_BITS);
+        const __m256i v_res_b = blend_16_u8_avx2(
+            src0, src1, &v_m0_b, &v_m1_b, AOM_BLEND_A64_ROUND_BITS);
 
         xx_storeu_128(dst, _mm256_castsi256_si128(v_res_b));
         dst += dst_stride;
@@ -233,12 +233,12 @@ static INLINE void blend_a64_mask_sx_w32n_avx2(uint8_t *dst, uint32_t dst_stride
             const __m256i v_al_b   = _mm256_avg_epu8(v_r0_s_b, _mm256_srli_si256(v_r0_s_b, 8));
             const __m256i v_ah_b   = _mm256_avg_epu8(v_r1_s_b, _mm256_srli_si256(v_r1_s_b, 8));
 
-            const __m256i v_m0_b =
-                _mm256_permute4x64_epi64(_mm256_unpacklo_epi64(v_al_b, v_ah_b), 0xd8);
+            const __m256i v_m0_b = _mm256_permute4x64_epi64(_mm256_unpacklo_epi64(v_al_b, v_ah_b),
+                                                            0xd8);
             const __m256i v_m1_b = _mm256_sub_epi8(v_maxval_b, v_m0_b);
 
-            const __m256i v_res_b =
-                blend_32_u8_avx2(src0 + c, src1 + c, &v_m0_b, &v_m1_b, AOM_BLEND_A64_ROUND_BITS);
+            const __m256i v_res_b = blend_32_u8_avx2(
+                src0 + c, src1 + c, &v_m0_b, &v_m1_b, AOM_BLEND_A64_ROUND_BITS);
 
             yy_storeu_256(dst + c, v_res_b);
         }
@@ -337,12 +337,12 @@ static INLINE void blend_a64_mask_sy_w32n_avx2(uint8_t *dst, uint32_t dst_stride
     do {
         int c;
         for (c = 0; c < w; c += 32) {
-            const __m256i v_ra_b = yy_loadu_256(mask + c);
-            const __m256i v_rb_b = yy_loadu_256(mask + c + mask_stride);
-            const __m256i v_m0_b = _mm256_avg_epu8(v_ra_b, v_rb_b);
-            const __m256i v_m1_b = _mm256_sub_epi8(v_maxval_b, v_m0_b);
-            const __m256i v_res_b =
-                blend_32_u8_avx2(src0 + c, src1 + c, &v_m0_b, &v_m1_b, AOM_BLEND_A64_ROUND_BITS);
+            const __m256i v_ra_b  = yy_loadu_256(mask + c);
+            const __m256i v_rb_b  = yy_loadu_256(mask + c + mask_stride);
+            const __m256i v_m0_b  = _mm256_avg_epu8(v_ra_b, v_rb_b);
+            const __m256i v_m1_b  = _mm256_sub_epi8(v_maxval_b, v_m0_b);
+            const __m256i v_res_b = blend_32_u8_avx2(
+                src0 + c, src1 + c, &v_m0_b, &v_m1_b, AOM_BLEND_A64_ROUND_BITS);
 
             yy_storeu_256(dst + c, v_res_b);
         }
@@ -413,8 +413,8 @@ static INLINE void blend_a64_mask_w32n_avx2(uint8_t *dst, uint32_t dst_stride, c
             const __m256i v_m0_b = yy_loadu_256(mask + c);
             const __m256i v_m1_b = _mm256_sub_epi8(v_maxval_b, v_m0_b);
 
-            const __m256i v_res_b =
-                blend_32_u8_avx2(src0 + c, src1 + c, &v_m0_b, &v_m1_b, AOM_BLEND_A64_ROUND_BITS);
+            const __m256i v_res_b = blend_32_u8_avx2(
+                src0 + c, src1 + c, &v_m0_b, &v_m1_b, AOM_BLEND_A64_ROUND_BITS);
 
             yy_storeu_256(dst + c, v_res_b);
         }
@@ -480,9 +480,8 @@ static INLINE void blend_a64_mask_avx2(uint8_t *dst, uint32_t dst_stride, const 
 }
 
 void svt_aom_blend_a64_mask_avx2(uint8_t *dst, uint32_t dst_stride, const uint8_t *src0,
-                                 uint32_t src0_stride, const uint8_t *src1,
-                                 uint32_t src1_stride, const uint8_t *mask,
-                                 uint32_t mask_stride, int w, int h, int subx,
+                                 uint32_t src0_stride, const uint8_t *src1, uint32_t src1_stride,
+                                 const uint8_t *mask, uint32_t mask_stride, int w, int h, int subx,
                                  int suby) {
     assert(IMPLIES(src0 == dst, src0_stride == dst_stride));
     assert(IMPLIES(src1 == dst, src1_stride == dst_stride));
@@ -761,11 +760,11 @@ static INLINE void lowbd_blend_a64_d16_mask_subw0_subh1_w32_avx2(
     }
 }
 
-void svt_aom_lowbd_blend_a64_d16_mask_avx2(uint8_t *dst, uint32_t dst_stride, const CONV_BUF_TYPE *src0,
-                                           uint32_t src0_stride, const CONV_BUF_TYPE *src1,
-                                           uint32_t src1_stride, const uint8_t *mask,
-                                           uint32_t mask_stride, int w, int h, int subw, int subh,
-                                           ConvolveParams *conv_params) {
+void svt_aom_lowbd_blend_a64_d16_mask_avx2(uint8_t *dst, uint32_t dst_stride,
+                                           const CONV_BUF_TYPE *src0, uint32_t src0_stride,
+                                           const CONV_BUF_TYPE *src1, uint32_t src1_stride,
+                                           const uint8_t *mask, uint32_t mask_stride, int w, int h,
+                                           int subw, int subh, ConvolveParams *conv_params) {
     const int bd         = 8;
     const int round_bits = 2 * FILTER_BITS - conv_params->round_0 - conv_params->round_1;
 
@@ -1210,8 +1209,8 @@ static INLINE void highbd_blend_a64_d16_mask_subw0_subh0_w8_avx2(
     const __m256i *mask_max) {
     do {
         // Load 8x u8 pixels from each of 4 rows in the mask
-        const __m128i mask0a8 =
-            _mm_set_epi64x(*(uint64_t *)mask, *(uint64_t *)(mask + mask_stride));
+        const __m128i mask0a8 = _mm_set_epi64x(*(uint64_t *)mask,
+                                               *(uint64_t *)(mask + mask_stride));
         const __m128i mask0b8 = _mm_set_epi64x(*(uint64_t *)(mask + 2 * mask_stride),
                                                *(uint64_t *)(mask + 3 * mask_stride));
         const __m256i mask0a  = _mm256_cvtepu8_epi16(mask0a8);

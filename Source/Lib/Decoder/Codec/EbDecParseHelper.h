@@ -48,7 +48,7 @@ static INLINE CflAllowedType is_cfl_allowed(PartitionInfo *xd, EbColorConfig *co
 
 static INLINE int allow_palette(int allow_screen_content_tools, BlockSize sb_type) {
     return allow_screen_content_tools && block_size_wide[sb_type] <= 64 &&
-           block_size_high[sb_type] <= 64 && sb_type >= BLOCK_8X8;
+        block_size_high[sb_type] <= 64 && sb_type >= BLOCK_8X8;
 }
 
 static INLINE int max_block_wide(PartitionInfo *part_info, int plane_bsize, int subx) {

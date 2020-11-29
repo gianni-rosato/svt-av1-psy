@@ -19,8 +19,8 @@ svt_enc_msb_un_pack2d_sse2_intrin
 
 void svt_enc_msb_un_pack2d_sse2_intrin(uint16_t *in16_bit_buffer, uint32_t in_stride,
                                        uint8_t *out8_bit_buffer, uint8_t *outn_bit_buffer,
-                                       uint32_t out8_stride, uint32_t outn_stride,
-                                       uint32_t width, uint32_t height) {
+                                       uint32_t out8_stride, uint32_t outn_stride, uint32_t width,
+                                       uint32_t height) {
     uint32_t x, y;
 
     __m128i xmm_3, xmm_00ff, in_pixel0, in_pixel1, temp_pixel0, temp_pixel1, in_pixel1_shft_r_2_u8,
@@ -102,18 +102,20 @@ void svt_enc_msb_un_pack2d_sse2_intrin(uint16_t *in16_bit_buffer, uint32_t in_st
             in_pixel3 = _mm_loadu_si128((__m128i *)(in16_bit_buffer + in_stride + 8));
 
             if (outn_bit_buffer) {
-                temp_pixel0_u8 = _mm_packus_epi16(_mm_slli_epi16(_mm_and_si128(in_pixel0, xmm_3), 6),
-                        _mm_slli_epi16(_mm_and_si128(in_pixel1, xmm_3), 6));
-                temp_pixel1_u8 = _mm_packus_epi16(_mm_slli_epi16(_mm_and_si128(in_pixel2, xmm_3), 6),
-                        _mm_slli_epi16(_mm_and_si128(in_pixel3, xmm_3), 6));
+                temp_pixel0_u8 = _mm_packus_epi16(
+                    _mm_slli_epi16(_mm_and_si128(in_pixel0, xmm_3), 6),
+                    _mm_slli_epi16(_mm_and_si128(in_pixel1, xmm_3), 6));
+                temp_pixel1_u8 = _mm_packus_epi16(
+                    _mm_slli_epi16(_mm_and_si128(in_pixel2, xmm_3), 6),
+                    _mm_slli_epi16(_mm_and_si128(in_pixel3, xmm_3), 6));
             }
 
-            in_pixel0_shft_r_2_u8 =
-                _mm_packus_epi16(_mm_and_si128(_mm_srli_epi16(in_pixel0, 2), xmm_00ff),
-                                 _mm_and_si128(_mm_srli_epi16(in_pixel1, 2), xmm_00ff));
-            in_pixel1_shft_r_2_u8 =
-                _mm_packus_epi16(_mm_and_si128(_mm_srli_epi16(in_pixel2, 2), xmm_00ff),
-                                 _mm_and_si128(_mm_srli_epi16(in_pixel3, 2), xmm_00ff));
+            in_pixel0_shft_r_2_u8 = _mm_packus_epi16(
+                _mm_and_si128(_mm_srli_epi16(in_pixel0, 2), xmm_00ff),
+                _mm_and_si128(_mm_srli_epi16(in_pixel1, 2), xmm_00ff));
+            in_pixel1_shft_r_2_u8 = _mm_packus_epi16(
+                _mm_and_si128(_mm_srli_epi16(in_pixel2, 2), xmm_00ff),
+                _mm_and_si128(_mm_srli_epi16(in_pixel3, 2), xmm_00ff));
 
             if (outn_bit_buffer) {
                 _mm_storeu_si128((__m128i *)outn_bit_buffer, temp_pixel0_u8);
@@ -143,13 +145,13 @@ void svt_enc_msb_un_pack2d_sse2_intrin(uint16_t *in16_bit_buffer, uint32_t in_st
 
             if (outn_bit_buffer) {
                 outn0_u8 = _mm_packus_epi16(_mm_slli_epi16(_mm_and_si128(in_pixel0, xmm_3), 6),
-                        _mm_slli_epi16(_mm_and_si128(in_pixel1, xmm_3), 6));
+                                            _mm_slli_epi16(_mm_and_si128(in_pixel1, xmm_3), 6));
                 outn1_u8 = _mm_packus_epi16(_mm_slli_epi16(_mm_and_si128(in_pixel2, xmm_3), 6),
-                        _mm_slli_epi16(_mm_and_si128(in_pixel3, xmm_3), 6));
+                                            _mm_slli_epi16(_mm_and_si128(in_pixel3, xmm_3), 6));
                 outn2_u8 = _mm_packus_epi16(_mm_slli_epi16(_mm_and_si128(in_pixel4, xmm_3), 6),
-                        _mm_slli_epi16(_mm_and_si128(in_pixel5, xmm_3), 6));
+                                            _mm_slli_epi16(_mm_and_si128(in_pixel5, xmm_3), 6));
                 outn3_u8 = _mm_packus_epi16(_mm_slli_epi16(_mm_and_si128(in_pixel6, xmm_3), 6),
-                        _mm_slli_epi16(_mm_and_si128(in_pixel7, xmm_3), 6));
+                                            _mm_slli_epi16(_mm_and_si128(in_pixel7, xmm_3), 6));
             }
 
             out8_0_u8 = _mm_packus_epi16(_mm_and_si128(_mm_srli_epi16(in_pixel0, 2), xmm_00ff),
@@ -194,13 +196,13 @@ void svt_enc_msb_un_pack2d_sse2_intrin(uint16_t *in16_bit_buffer, uint32_t in_st
 
             if (outn_bit_buffer) {
                 outn0_u8 = _mm_packus_epi16(_mm_slli_epi16(_mm_and_si128(in_pixel0, xmm_3), 6),
-                        _mm_slli_epi16(_mm_and_si128(in_pixel1, xmm_3), 6));
+                                            _mm_slli_epi16(_mm_and_si128(in_pixel1, xmm_3), 6));
                 outn1_u8 = _mm_packus_epi16(_mm_slli_epi16(_mm_and_si128(in_pixel2, xmm_3), 6),
-                        _mm_slli_epi16(_mm_and_si128(in_pixel3, xmm_3), 6));
+                                            _mm_slli_epi16(_mm_and_si128(in_pixel3, xmm_3), 6));
                 outn2_u8 = _mm_packus_epi16(_mm_slli_epi16(_mm_and_si128(in_pixel4, xmm_3), 6),
-                        _mm_slli_epi16(_mm_and_si128(in_pixel5, xmm_3), 6));
+                                            _mm_slli_epi16(_mm_and_si128(in_pixel5, xmm_3), 6));
                 outn3_u8 = _mm_packus_epi16(_mm_slli_epi16(_mm_and_si128(in_pixel6, xmm_3), 6),
-                        _mm_slli_epi16(_mm_and_si128(in_pixel7, xmm_3), 6));
+                                            _mm_slli_epi16(_mm_and_si128(in_pixel7, xmm_3), 6));
             }
 
             out8_0_u8 = _mm_packus_epi16(_mm_and_si128(_mm_srli_epi16(in_pixel0, 2), xmm_00ff),
@@ -255,28 +257,32 @@ void svt_enc_msb_un_pack2d_sse2_intrin(uint16_t *in16_bit_buffer, uint32_t in_st
                     in_pixel7 = _mm_loadu_si128((__m128i *)(in16_bit_buffer + 56));
 
                     if (outn_bit_buffer) {
-                        outn0_u8 = _mm_packus_epi16(_mm_slli_epi16(_mm_and_si128(in_pixel0, xmm_3), 6),
-                                _mm_slli_epi16(_mm_and_si128(in_pixel1, xmm_3), 6));
-                        outn1_u8 = _mm_packus_epi16(_mm_slli_epi16(_mm_and_si128(in_pixel2, xmm_3), 6),
-                                _mm_slli_epi16(_mm_and_si128(in_pixel3, xmm_3), 6));
-                        outn2_u8 = _mm_packus_epi16(_mm_slli_epi16(_mm_and_si128(in_pixel4, xmm_3), 6),
-                                _mm_slli_epi16(_mm_and_si128(in_pixel5, xmm_3), 6));
-                        outn3_u8 = _mm_packus_epi16(_mm_slli_epi16(_mm_and_si128(in_pixel6, xmm_3), 6),
-                                _mm_slli_epi16(_mm_and_si128(in_pixel7, xmm_3), 6));
+                        outn0_u8 = _mm_packus_epi16(
+                            _mm_slli_epi16(_mm_and_si128(in_pixel0, xmm_3), 6),
+                            _mm_slli_epi16(_mm_and_si128(in_pixel1, xmm_3), 6));
+                        outn1_u8 = _mm_packus_epi16(
+                            _mm_slli_epi16(_mm_and_si128(in_pixel2, xmm_3), 6),
+                            _mm_slli_epi16(_mm_and_si128(in_pixel3, xmm_3), 6));
+                        outn2_u8 = _mm_packus_epi16(
+                            _mm_slli_epi16(_mm_and_si128(in_pixel4, xmm_3), 6),
+                            _mm_slli_epi16(_mm_and_si128(in_pixel5, xmm_3), 6));
+                        outn3_u8 = _mm_packus_epi16(
+                            _mm_slli_epi16(_mm_and_si128(in_pixel6, xmm_3), 6),
+                            _mm_slli_epi16(_mm_and_si128(in_pixel7, xmm_3), 6));
                     }
 
-                    out8_0_u8 =
-                        _mm_packus_epi16(_mm_and_si128(_mm_srli_epi16(in_pixel0, 2), xmm_00ff),
-                                         _mm_and_si128(_mm_srli_epi16(in_pixel1, 2), xmm_00ff));
-                    out8_1_u8 =
-                        _mm_packus_epi16(_mm_and_si128(_mm_srli_epi16(in_pixel2, 2), xmm_00ff),
-                                         _mm_and_si128(_mm_srli_epi16(in_pixel3, 2), xmm_00ff));
-                    out8_2_u8 =
-                        _mm_packus_epi16(_mm_and_si128(_mm_srli_epi16(in_pixel4, 2), xmm_00ff),
-                                         _mm_and_si128(_mm_srli_epi16(in_pixel5, 2), xmm_00ff));
-                    out8_3_u8 =
-                        _mm_packus_epi16(_mm_and_si128(_mm_srli_epi16(in_pixel6, 2), xmm_00ff),
-                                         _mm_and_si128(_mm_srli_epi16(in_pixel7, 2), xmm_00ff));
+                    out8_0_u8 = _mm_packus_epi16(
+                        _mm_and_si128(_mm_srli_epi16(in_pixel0, 2), xmm_00ff),
+                        _mm_and_si128(_mm_srli_epi16(in_pixel1, 2), xmm_00ff));
+                    out8_1_u8 = _mm_packus_epi16(
+                        _mm_and_si128(_mm_srli_epi16(in_pixel2, 2), xmm_00ff),
+                        _mm_and_si128(_mm_srli_epi16(in_pixel3, 2), xmm_00ff));
+                    out8_2_u8 = _mm_packus_epi16(
+                        _mm_and_si128(_mm_srli_epi16(in_pixel4, 2), xmm_00ff),
+                        _mm_and_si128(_mm_srli_epi16(in_pixel5, 2), xmm_00ff));
+                    out8_3_u8 = _mm_packus_epi16(
+                        _mm_and_si128(_mm_srli_epi16(in_pixel6, 2), xmm_00ff),
+                        _mm_and_si128(_mm_srli_epi16(in_pixel7, 2), xmm_00ff));
 
                     if (outn_bit_buffer) {
                         _mm_storeu_si128((__m128i *)outn_bit_buffer, outn0_u8);
@@ -317,28 +323,32 @@ void svt_enc_msb_un_pack2d_sse2_intrin(uint16_t *in16_bit_buffer, uint32_t in_st
                     in_pixel7 = _mm_loadu_si128((__m128i *)(in16_bit_buffer + in_stride + 24));
 
                     if (outn_bit_buffer) {
-                        outn0_u8 = _mm_packus_epi16(_mm_slli_epi16(_mm_and_si128(in_pixel0, xmm_3), 6),
-                                _mm_slli_epi16(_mm_and_si128(in_pixel1, xmm_3), 6));
-                        outn1_u8 = _mm_packus_epi16(_mm_slli_epi16(_mm_and_si128(in_pixel2, xmm_3), 6),
-                                _mm_slli_epi16(_mm_and_si128(in_pixel3, xmm_3), 6));
-                        outn2_u8 = _mm_packus_epi16(_mm_slli_epi16(_mm_and_si128(in_pixel4, xmm_3), 6),
-                                _mm_slli_epi16(_mm_and_si128(in_pixel5, xmm_3), 6));
-                        outn3_u8 = _mm_packus_epi16(_mm_slli_epi16(_mm_and_si128(in_pixel6, xmm_3), 6),
-                                _mm_slli_epi16(_mm_and_si128(in_pixel7, xmm_3), 6));
+                        outn0_u8 = _mm_packus_epi16(
+                            _mm_slli_epi16(_mm_and_si128(in_pixel0, xmm_3), 6),
+                            _mm_slli_epi16(_mm_and_si128(in_pixel1, xmm_3), 6));
+                        outn1_u8 = _mm_packus_epi16(
+                            _mm_slli_epi16(_mm_and_si128(in_pixel2, xmm_3), 6),
+                            _mm_slli_epi16(_mm_and_si128(in_pixel3, xmm_3), 6));
+                        outn2_u8 = _mm_packus_epi16(
+                            _mm_slli_epi16(_mm_and_si128(in_pixel4, xmm_3), 6),
+                            _mm_slli_epi16(_mm_and_si128(in_pixel5, xmm_3), 6));
+                        outn3_u8 = _mm_packus_epi16(
+                            _mm_slli_epi16(_mm_and_si128(in_pixel6, xmm_3), 6),
+                            _mm_slli_epi16(_mm_and_si128(in_pixel7, xmm_3), 6));
                     }
 
-                    out8_0_u8 =
-                        _mm_packus_epi16(_mm_and_si128(_mm_srli_epi16(in_pixel0, 2), xmm_00ff),
-                                         _mm_and_si128(_mm_srli_epi16(in_pixel1, 2), xmm_00ff));
-                    out8_1_u8 =
-                        _mm_packus_epi16(_mm_and_si128(_mm_srli_epi16(in_pixel2, 2), xmm_00ff),
-                                         _mm_and_si128(_mm_srli_epi16(in_pixel3, 2), xmm_00ff));
-                    out8_2_u8 =
-                        _mm_packus_epi16(_mm_and_si128(_mm_srli_epi16(in_pixel4, 2), xmm_00ff),
-                                         _mm_and_si128(_mm_srli_epi16(in_pixel5, 2), xmm_00ff));
-                    out8_3_u8 =
-                        _mm_packus_epi16(_mm_and_si128(_mm_srli_epi16(in_pixel6, 2), xmm_00ff),
-                                         _mm_and_si128(_mm_srli_epi16(in_pixel7, 2), xmm_00ff));
+                    out8_0_u8 = _mm_packus_epi16(
+                        _mm_and_si128(_mm_srli_epi16(in_pixel0, 2), xmm_00ff),
+                        _mm_and_si128(_mm_srli_epi16(in_pixel1, 2), xmm_00ff));
+                    out8_1_u8 = _mm_packus_epi16(
+                        _mm_and_si128(_mm_srli_epi16(in_pixel2, 2), xmm_00ff),
+                        _mm_and_si128(_mm_srli_epi16(in_pixel3, 2), xmm_00ff));
+                    out8_2_u8 = _mm_packus_epi16(
+                        _mm_and_si128(_mm_srli_epi16(in_pixel4, 2), xmm_00ff),
+                        _mm_and_si128(_mm_srli_epi16(in_pixel5, 2), xmm_00ff));
+                    out8_3_u8 = _mm_packus_epi16(
+                        _mm_and_si128(_mm_srli_epi16(in_pixel6, 2), xmm_00ff),
+                        _mm_and_si128(_mm_srli_epi16(in_pixel7, 2), xmm_00ff));
 
                     if (outn_bit_buffer) {
                         _mm_storeu_si128((__m128i *)outn_bit_buffer, outn0_u8);
@@ -373,24 +383,25 @@ void svt_enc_msb_un_pack2d_sse2_intrin(uint16_t *in16_bit_buffer, uint32_t in_st
                     in_pixel3 = _mm_loadu_si128((__m128i *)(in16_bit_buffer + in_stride + 8));
 
                     if (outn_bit_buffer) {
-                        temp_pixel0_u8 =
-                            _mm_packus_epi16(_mm_slli_epi16(_mm_and_si128(in_pixel0, xmm_3), 6),
-                                    _mm_slli_epi16(_mm_and_si128(in_pixel1, xmm_3), 6));
-                        temp_pixel1_u8 =
-                            _mm_packus_epi16(_mm_slli_epi16(_mm_and_si128(in_pixel2, xmm_3), 6),
-                                    _mm_slli_epi16(_mm_and_si128(in_pixel3, xmm_3), 6));
+                        temp_pixel0_u8 = _mm_packus_epi16(
+                            _mm_slli_epi16(_mm_and_si128(in_pixel0, xmm_3), 6),
+                            _mm_slli_epi16(_mm_and_si128(in_pixel1, xmm_3), 6));
+                        temp_pixel1_u8 = _mm_packus_epi16(
+                            _mm_slli_epi16(_mm_and_si128(in_pixel2, xmm_3), 6),
+                            _mm_slli_epi16(_mm_and_si128(in_pixel3, xmm_3), 6));
                     }
 
-                    in_pixel0_shft_r_2_u8 =
-                        _mm_packus_epi16(_mm_and_si128(_mm_srli_epi16(in_pixel0, 2), xmm_00ff),
-                                         _mm_and_si128(_mm_srli_epi16(in_pixel1, 2), xmm_00ff));
-                    in_pixel1_shft_r_2_u8 =
-                        _mm_packus_epi16(_mm_and_si128(_mm_srli_epi16(in_pixel2, 2), xmm_00ff),
-                                         _mm_and_si128(_mm_srli_epi16(in_pixel3, 2), xmm_00ff));
+                    in_pixel0_shft_r_2_u8 = _mm_packus_epi16(
+                        _mm_and_si128(_mm_srli_epi16(in_pixel0, 2), xmm_00ff),
+                        _mm_and_si128(_mm_srli_epi16(in_pixel1, 2), xmm_00ff));
+                    in_pixel1_shft_r_2_u8 = _mm_packus_epi16(
+                        _mm_and_si128(_mm_srli_epi16(in_pixel2, 2), xmm_00ff),
+                        _mm_and_si128(_mm_srli_epi16(in_pixel3, 2), xmm_00ff));
 
                     if (outn_bit_buffer) {
                         _mm_storeu_si128((__m128i *)outn_bit_buffer, temp_pixel0_u8);
-                        _mm_storeu_si128((__m128i *)(outn_bit_buffer + outn_stride), temp_pixel1_u8);
+                        _mm_storeu_si128((__m128i *)(outn_bit_buffer + outn_stride),
+                                         temp_pixel1_u8);
                     }
                     _mm_storeu_si128((__m128i *)out8_bit_buffer, in_pixel0_shft_r_2_u8);
                     _mm_storeu_si128((__m128i *)(out8_bit_buffer + out8_stride),
@@ -423,14 +434,15 @@ void svt_enc_msb_un_pack2d_sse2_intrin(uint16_t *in16_bit_buffer, uint32_t in_st
                     in_pixel0_shft_r_2 = _mm_and_si128(_mm_srli_epi16(in_pixel0, 2), xmm_00ff);
                     in_pixel1_shft_r_2 = _mm_and_si128(_mm_srli_epi16(in_pixel1, 2), xmm_00ff);
 
-                    in_pixel0_shft_r_2_u8 =
-                        _mm_packus_epi16(in_pixel0_shft_r_2, in_pixel0_shft_r_2);
-                    in_pixel1_shft_r_2_u8 =
-                        _mm_packus_epi16(in_pixel1_shft_r_2, in_pixel1_shft_r_2);
+                    in_pixel0_shft_r_2_u8 = _mm_packus_epi16(in_pixel0_shft_r_2,
+                                                             in_pixel0_shft_r_2);
+                    in_pixel1_shft_r_2_u8 = _mm_packus_epi16(in_pixel1_shft_r_2,
+                                                             in_pixel1_shft_r_2);
 
                     if (outn_bit_buffer) {
                         _mm_storel_epi64((__m128i *)outn_bit_buffer, temp_pixel0_u8);
-                        _mm_storel_epi64((__m128i *)(outn_bit_buffer + outn_stride), temp_pixel1_u8);
+                        _mm_storel_epi64((__m128i *)(outn_bit_buffer + outn_stride),
+                                         temp_pixel1_u8);
                     }
                     _mm_storel_epi64((__m128i *)out8_bit_buffer, in_pixel0_shft_r_2_u8);
                     _mm_storel_epi64((__m128i *)(out8_bit_buffer + out8_stride),
@@ -463,18 +475,19 @@ void svt_enc_msb_un_pack2d_sse2_intrin(uint16_t *in16_bit_buffer, uint32_t in_st
                     in_pixel0_shft_r_2 = _mm_and_si128(_mm_srli_epi16(in_pixel0, 2), xmm_00ff);
                     in_pixel1_shft_r_2 = _mm_and_si128(_mm_srli_epi16(in_pixel1, 2), xmm_00ff);
 
-                    in_pixel0_shft_r_2_u8 =
-                        _mm_packus_epi16(in_pixel0_shft_r_2, in_pixel0_shft_r_2);
-                    in_pixel1_shft_r_2_u8 =
-                        _mm_packus_epi16(in_pixel1_shft_r_2, in_pixel1_shft_r_2);
+                    in_pixel0_shft_r_2_u8 = _mm_packus_epi16(in_pixel0_shft_r_2,
+                                                             in_pixel0_shft_r_2);
+                    in_pixel1_shft_r_2_u8 = _mm_packus_epi16(in_pixel1_shft_r_2,
+                                                             in_pixel1_shft_r_2);
 
                     if (outn_bit_buffer) {
-                        *(uint32_t *)outn_bit_buffer                 = _mm_cvtsi128_si32(temp_pixel0_u8);
-                        *(uint32_t *)(outn_bit_buffer + outn_stride) = _mm_cvtsi128_si32(temp_pixel1_u8);
+                        *(uint32_t *)outn_bit_buffer = _mm_cvtsi128_si32(temp_pixel0_u8);
+                        *(uint32_t *)(outn_bit_buffer +
+                                      outn_stride)   = _mm_cvtsi128_si32(temp_pixel1_u8);
                     }
                     *(uint32_t *)out8_bit_buffer = _mm_cvtsi128_si32(in_pixel0_shft_r_2_u8);
-                    *(uint32_t *)(out8_bit_buffer + out8_stride) =
-                        _mm_cvtsi128_si32(in_pixel1_shft_r_2_u8);
+                    *(uint32_t *)(out8_bit_buffer +
+                                  out8_stride)   = _mm_cvtsi128_si32(in_pixel1_shft_r_2_u8);
                     if (outn_bit_buffer)
                         outn_bit_buffer += 4;
                     out8_bit_buffer += 4;
@@ -614,16 +627,16 @@ void svt_unpack_avg_sse2_intrin(uint16_t *ref16_l0, uint32_t ref_l0_stride, uint
             in_pixel0 = _mm_loadu_si128((__m128i *)ref16_l0);
             in_pixel1 = _mm_loadu_si128((__m128i *)(ref16_l0 + 8));
 
-            out8_0_u8_l0 =
-                _mm_packus_epi16(_mm_srli_epi16(in_pixel0, 2), _mm_srli_epi16(in_pixel1, 2));
+            out8_0_u8_l0 = _mm_packus_epi16(_mm_srli_epi16(in_pixel0, 2),
+                                            _mm_srli_epi16(in_pixel1, 2));
 
             //List1
 
             in_pixel0 = _mm_loadu_si128((__m128i *)ref16_l1);
             in_pixel1 = _mm_loadu_si128((__m128i *)(ref16_l1 + 8));
 
-            out8_0_u8_l1 =
-                _mm_packus_epi16(_mm_srli_epi16(in_pixel0, 2), _mm_srli_epi16(in_pixel1, 2));
+            out8_0_u8_l1 = _mm_packus_epi16(_mm_srli_epi16(in_pixel0, 2),
+                                            _mm_srli_epi16(in_pixel1, 2));
 
             //AVG
             avg8_0_u8 = _mm_avg_epu8(out8_0_u8_l0, out8_0_u8_l1);
@@ -639,16 +652,16 @@ void svt_unpack_avg_sse2_intrin(uint16_t *ref16_l0, uint32_t ref_l0_stride, uint
             in_pixel4 = _mm_loadu_si128((__m128i *)(ref16_l0 + ref_l0_stride));
             in_pixel5 = _mm_loadu_si128((__m128i *)(ref16_l0 + ref_l0_stride + 8));
 
-            out8_2_u8_l0 =
-                _mm_packus_epi16(_mm_srli_epi16(in_pixel4, 2), _mm_srli_epi16(in_pixel5, 2));
+            out8_2_u8_l0 = _mm_packus_epi16(_mm_srli_epi16(in_pixel4, 2),
+                                            _mm_srli_epi16(in_pixel5, 2));
 
             //List1
 
             in_pixel4 = _mm_loadu_si128((__m128i *)(ref16_l1 + ref_l1_stride));
             in_pixel5 = _mm_loadu_si128((__m128i *)(ref16_l1 + ref_l1_stride + 8));
 
-            out8_2_u8_l1 =
-                _mm_packus_epi16(_mm_srli_epi16(in_pixel4, 2), _mm_srli_epi16(in_pixel5, 2));
+            out8_2_u8_l1 = _mm_packus_epi16(_mm_srli_epi16(in_pixel4, 2),
+                                            _mm_srli_epi16(in_pixel5, 2));
 
             //AVG
             avg8_2_u8 = _mm_avg_epu8(out8_2_u8_l0, out8_2_u8_l1);
@@ -677,10 +690,10 @@ void svt_unpack_avg_sse2_intrin(uint16_t *ref16_l0, uint32_t ref_l0_stride, uint
             in_pixel2 = _mm_loadu_si128((__m128i *)(ref16_l0 + 16));
             in_pixel3 = _mm_loadu_si128((__m128i *)(ref16_l0 + 24));
 
-            out8_0_u8_l0 =
-                _mm_packus_epi16(_mm_srli_epi16(in_pixel0, 2), _mm_srli_epi16(in_pixel1, 2));
-            out8_1_u8_l0 =
-                _mm_packus_epi16(_mm_srli_epi16(in_pixel2, 2), _mm_srli_epi16(in_pixel3, 2));
+            out8_0_u8_l0 = _mm_packus_epi16(_mm_srli_epi16(in_pixel0, 2),
+                                            _mm_srli_epi16(in_pixel1, 2));
+            out8_1_u8_l0 = _mm_packus_epi16(_mm_srli_epi16(in_pixel2, 2),
+                                            _mm_srli_epi16(in_pixel3, 2));
 
             //List1
 
@@ -689,10 +702,10 @@ void svt_unpack_avg_sse2_intrin(uint16_t *ref16_l0, uint32_t ref_l0_stride, uint
             in_pixel2 = _mm_loadu_si128((__m128i *)(ref16_l1 + 16));
             in_pixel3 = _mm_loadu_si128((__m128i *)(ref16_l1 + 24));
 
-            out8_0_u8_l1 =
-                _mm_packus_epi16(_mm_srli_epi16(in_pixel0, 2), _mm_srli_epi16(in_pixel1, 2));
-            out8_1_u8_l1 =
-                _mm_packus_epi16(_mm_srli_epi16(in_pixel2, 2), _mm_srli_epi16(in_pixel3, 2));
+            out8_0_u8_l1 = _mm_packus_epi16(_mm_srli_epi16(in_pixel0, 2),
+                                            _mm_srli_epi16(in_pixel1, 2));
+            out8_1_u8_l1 = _mm_packus_epi16(_mm_srli_epi16(in_pixel2, 2),
+                                            _mm_srli_epi16(in_pixel3, 2));
 
             //AVG
             avg8_0_u8 = _mm_avg_epu8(out8_0_u8_l0, out8_0_u8_l1);
@@ -712,10 +725,10 @@ void svt_unpack_avg_sse2_intrin(uint16_t *ref16_l0, uint32_t ref_l0_stride, uint
             in_pixel6 = _mm_loadu_si128((__m128i *)(ref16_l0 + ref_l0_stride + 16));
             in_pixel7 = _mm_loadu_si128((__m128i *)(ref16_l0 + ref_l0_stride + 24));
 
-            out8_2_u8_l0 =
-                _mm_packus_epi16(_mm_srli_epi16(in_pixel4, 2), _mm_srli_epi16(in_pixel5, 2));
-            out8_3_u8_l0 =
-                _mm_packus_epi16(_mm_srli_epi16(in_pixel6, 2), _mm_srli_epi16(in_pixel7, 2));
+            out8_2_u8_l0 = _mm_packus_epi16(_mm_srli_epi16(in_pixel4, 2),
+                                            _mm_srli_epi16(in_pixel5, 2));
+            out8_3_u8_l0 = _mm_packus_epi16(_mm_srli_epi16(in_pixel6, 2),
+                                            _mm_srli_epi16(in_pixel7, 2));
 
             //List1
 
@@ -724,10 +737,10 @@ void svt_unpack_avg_sse2_intrin(uint16_t *ref16_l0, uint32_t ref_l0_stride, uint
             in_pixel6 = _mm_loadu_si128((__m128i *)(ref16_l1 + ref_l1_stride + 16));
             in_pixel7 = _mm_loadu_si128((__m128i *)(ref16_l1 + ref_l1_stride + 24));
 
-            out8_2_u8_l1 =
-                _mm_packus_epi16(_mm_srli_epi16(in_pixel4, 2), _mm_srli_epi16(in_pixel5, 2));
-            out8_3_u8_l1 =
-                _mm_packus_epi16(_mm_srli_epi16(in_pixel6, 2), _mm_srli_epi16(in_pixel7, 2));
+            out8_2_u8_l1 = _mm_packus_epi16(_mm_srli_epi16(in_pixel4, 2),
+                                            _mm_srli_epi16(in_pixel5, 2));
+            out8_3_u8_l1 = _mm_packus_epi16(_mm_srli_epi16(in_pixel6, 2),
+                                            _mm_srli_epi16(in_pixel7, 2));
 
             //AVG
             avg8_2_u8 = _mm_avg_epu8(out8_2_u8_l0, out8_2_u8_l1);
@@ -758,14 +771,14 @@ void svt_unpack_avg_sse2_intrin(uint16_t *ref16_l0, uint32_t ref_l0_stride, uint
             in_pixel6 = _mm_loadu_si128((__m128i *)(ref16_l0 + 48));
             in_pixel7 = _mm_loadu_si128((__m128i *)(ref16_l0 + 56));
 
-            out8_0_u8_l0 =
-                _mm_packus_epi16(_mm_srli_epi16(in_pixel0, 2), _mm_srli_epi16(in_pixel1, 2));
-            out8_1_u8_l0 =
-                _mm_packus_epi16(_mm_srli_epi16(in_pixel2, 2), _mm_srli_epi16(in_pixel3, 2));
-            out8_2_u8_l0 =
-                _mm_packus_epi16(_mm_srli_epi16(in_pixel4, 2), _mm_srli_epi16(in_pixel5, 2));
-            out8_3_u8_l0 =
-                _mm_packus_epi16(_mm_srli_epi16(in_pixel6, 2), _mm_srli_epi16(in_pixel7, 2));
+            out8_0_u8_l0 = _mm_packus_epi16(_mm_srli_epi16(in_pixel0, 2),
+                                            _mm_srli_epi16(in_pixel1, 2));
+            out8_1_u8_l0 = _mm_packus_epi16(_mm_srli_epi16(in_pixel2, 2),
+                                            _mm_srli_epi16(in_pixel3, 2));
+            out8_2_u8_l0 = _mm_packus_epi16(_mm_srli_epi16(in_pixel4, 2),
+                                            _mm_srli_epi16(in_pixel5, 2));
+            out8_3_u8_l0 = _mm_packus_epi16(_mm_srli_epi16(in_pixel6, 2),
+                                            _mm_srli_epi16(in_pixel7, 2));
 
             //List1
 
@@ -779,14 +792,14 @@ void svt_unpack_avg_sse2_intrin(uint16_t *ref16_l0, uint32_t ref_l0_stride, uint
             in_pixel7 = _mm_loadu_si128((__m128i *)(ref16_l1 + 56));
 
             //Note: old Version used to use _mm_and_si128 to mask the MSB bits of the pixels
-            out8_0_u8_l1 =
-                _mm_packus_epi16(_mm_srli_epi16(in_pixel0, 2), _mm_srli_epi16(in_pixel1, 2));
-            out8_1_u8_l1 =
-                _mm_packus_epi16(_mm_srli_epi16(in_pixel2, 2), _mm_srli_epi16(in_pixel3, 2));
-            out8_2_u8_l1 =
-                _mm_packus_epi16(_mm_srli_epi16(in_pixel4, 2), _mm_srli_epi16(in_pixel5, 2));
-            out8_3_u8_l1 =
-                _mm_packus_epi16(_mm_srli_epi16(in_pixel6, 2), _mm_srli_epi16(in_pixel7, 2));
+            out8_0_u8_l1 = _mm_packus_epi16(_mm_srli_epi16(in_pixel0, 2),
+                                            _mm_srli_epi16(in_pixel1, 2));
+            out8_1_u8_l1 = _mm_packus_epi16(_mm_srli_epi16(in_pixel2, 2),
+                                            _mm_srli_epi16(in_pixel3, 2));
+            out8_2_u8_l1 = _mm_packus_epi16(_mm_srli_epi16(in_pixel4, 2),
+                                            _mm_srli_epi16(in_pixel5, 2));
+            out8_3_u8_l1 = _mm_packus_epi16(_mm_srli_epi16(in_pixel6, 2),
+                                            _mm_srli_epi16(in_pixel7, 2));
 
             //AVG
             avg8_0_u8 = _mm_avg_epu8(out8_0_u8_l0, out8_0_u8_l1);
@@ -812,8 +825,8 @@ svt_enc_msb_pack2d_sse2_intrin
 *********************************************************************************************************************/
 void svt_enc_msb_pack2d_sse2_intrin(uint8_t *in8_bit_buffer, uint32_t in8_stride,
                                     uint8_t *inn_bit_buffer, uint16_t *out16_bit_buffer,
-                                    uint32_t inn_stride, uint32_t out_stride,
-                                    uint32_t width, uint32_t height) {
+                                    uint32_t inn_stride, uint32_t out_stride, uint32_t width,
+                                    uint32_t height) {
     uint32_t count_width, count_height;
 
     if (width == 4) {
@@ -860,14 +873,14 @@ void svt_enc_msb_pack2d_sse2_intrin(uint8_t *in8_bit_buffer, uint32_t in8_stride
             in_8bit_buffer_lo = _mm_loadu_si128((__m128i *)in8_bit_buffer);
             in_8bit_buffer_hi = _mm_loadu_si128((__m128i *)(in8_bit_buffer + in8_stride));
 
-            out_pixel_1 =
-                _mm_srli_epi16(_mm_unpacklo_epi8(inn_bit_buffer_lo, in_8bit_buffer_lo), 6);
-            out_pixel_2 =
-                _mm_srli_epi16(_mm_unpackhi_epi8(inn_bit_buffer_lo, in_8bit_buffer_lo), 6);
-            out_pixel_3 =
-                _mm_srli_epi16(_mm_unpacklo_epi8(inn_bit_buffer_hi, in_8bit_buffer_hi), 6);
-            out_pixel_4 =
-                _mm_srli_epi16(_mm_unpackhi_epi8(inn_bit_buffer_hi, in_8bit_buffer_hi), 6);
+            out_pixel_1 = _mm_srli_epi16(_mm_unpacklo_epi8(inn_bit_buffer_lo, in_8bit_buffer_lo),
+                                         6);
+            out_pixel_2 = _mm_srli_epi16(_mm_unpackhi_epi8(inn_bit_buffer_lo, in_8bit_buffer_lo),
+                                         6);
+            out_pixel_3 = _mm_srli_epi16(_mm_unpacklo_epi8(inn_bit_buffer_hi, in_8bit_buffer_hi),
+                                         6);
+            out_pixel_4 = _mm_srli_epi16(_mm_unpackhi_epi8(inn_bit_buffer_hi, in_8bit_buffer_hi),
+                                         6);
 
             _mm_storeu_si128((__m128i *)out16_bit_buffer, out_pixel_1);
             _mm_storeu_si128((__m128i *)(out16_bit_buffer + 8), out_pixel_2);

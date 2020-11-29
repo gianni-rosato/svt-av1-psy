@@ -214,7 +214,6 @@ static int find_rotzoom(int np, double *pts1, double *pts2, double *mat) {
     double *  b    = a + np2 * 4;
     double *  temp = b + np2;
 
-
     double t1[9], t2[9];
     normalize_homography(pts1, np, t1);
     normalize_homography(pts2, np, t2);
@@ -250,7 +249,8 @@ static int find_affine(int np, double *pts1, double *pts2, double *mat) {
     assert(np > 0);
     const int np2 = np * 2;
     double *  a   = (double *)malloc(sizeof(*a) * (np2 * 7 + 42));
-    if (a == NULL) return 1;
+    if (a == NULL)
+        return 1;
     double *b    = a + np2 * 6;
     double *temp = b + np2;
 
@@ -292,7 +292,8 @@ static int find_affine(int np, double *pts1, double *pts2, double *mat) {
 static int get_rand_indices(int npoints, int minpts, int *indices, unsigned int *seed) {
     int i, j;
     int ptr = lcg_rand16(seed) % npoints;
-    if (minpts > npoints) return 0;
+    if (minpts > npoints)
+        return 0;
     indices[0] = ptr;
     ptr        = (ptr == npoints - 1 ? 0 : ptr + 1);
     i          = 1;
@@ -301,9 +302,11 @@ static int get_rand_indices(int npoints, int minpts, int *indices, unsigned int 
         while (index) {
             ptr = (ptr == npoints - 1 ? 0 : ptr + 1);
             for (j = 0; j < i; ++j) {
-                if (indices[j] == ptr) break;
+                if (indices[j] == ptr)
+                    break;
             }
-            if (j == i) index--;
+            if (j == i)
+                index--;
         }
         indices[i++] = ptr;
     }
@@ -321,10 +324,14 @@ static int compare_motions(const void *arg_a, const void *arg_b) {
     const RANSAC_MOTION *motion_a = (RANSAC_MOTION *)arg_a;
     const RANSAC_MOTION *motion_b = (RANSAC_MOTION *)arg_b;
 
-    if (motion_a->num_inliers > motion_b->num_inliers) return -1;
-    if (motion_a->num_inliers < motion_b->num_inliers) return 1;
-    if (motion_a->variance < motion_b->variance) return -1;
-    if (motion_a->variance > motion_b->variance) return 1;
+    if (motion_a->num_inliers > motion_b->num_inliers)
+        return -1;
+    if (motion_a->num_inliers < motion_b->num_inliers)
+        return 1;
+    if (motion_a->variance < motion_b->variance)
+        return -1;
+    if (motion_a->variance > motion_b->variance)
+        return 1;
     return 0;
 }
 
@@ -376,8 +383,7 @@ static int ransac(const int *matched_points, int npoints, int *num_inliers_by_mo
 
     double *cnp1, *cnp2;
 
-    for (int i = 0; i < num_desired_motions; ++i)
-        num_inliers_by_motion[i] = 0;
+    for (int i = 0; i < num_desired_motions; ++i) num_inliers_by_motion[i] = 0;
 
     if (npoints < minpts * MINPTS_MULTIPLIER || npoints == 0)
         return 1;
@@ -462,9 +468,9 @@ static int ransac(const int *matched_points, int npoints, int *num_inliers_by_mo
         if (current_motion.num_inliers >= worst_kept_motion->num_inliers &&
             current_motion.num_inliers > 1) {
             double mean_distance;
-            mean_distance = sum_distance / ((double)current_motion.num_inliers);
-            current_motion.variance =
-                sum_distance_squared / ((double)current_motion.num_inliers - 1.0) -
+            mean_distance           = sum_distance / ((double)current_motion.num_inliers);
+            current_motion.variance = sum_distance_squared /
+                    ((double)current_motion.num_inliers - 1.0) -
                 mean_distance * mean_distance * ((double)current_motion.num_inliers) /
                     ((double)current_motion.num_inliers - 1.0);
             if (is_better_motion(&current_motion, worst_kept_motion)) {
@@ -475,12 +481,12 @@ static int ransac(const int *matched_points, int npoints, int *num_inliers_by_mo
                 worst_kept_motion->variance    = current_motion.variance;
                 if (svt_memcpy != NULL)
                     svt_memcpy(worst_kept_motion->inlier_indices,
-                        current_motion.inlier_indices,
-                        sizeof(*current_motion.inlier_indices) * npoints);
+                               current_motion.inlier_indices,
+                               sizeof(*current_motion.inlier_indices) * npoints);
                 else
                     svt_memcpy_c(worst_kept_motion->inlier_indices,
-                        current_motion.inlier_indices,
-                        sizeof(*current_motion.inlier_indices) * npoints);
+                                 current_motion.inlier_indices,
+                                 sizeof(*current_motion.inlier_indices) * npoints);
                 assert(npoints > 0);
                 // Determine the new worst kept motion and its num_inliers and variance.
                 for (int i = 0; i < num_desired_motions; ++i) {
@@ -510,12 +516,12 @@ static int ransac(const int *matched_points, int npoints, int *num_inliers_by_mo
             params_by_motion[i].num_inliers = motions[i].num_inliers;
             if (svt_memcpy != NULL)
                 svt_memcpy(params_by_motion[i].inliers,
-                    motions[i].inlier_indices,
-                    sizeof(*motions[i].inlier_indices) * npoints);
+                           motions[i].inlier_indices,
+                           sizeof(*motions[i].inlier_indices) * npoints);
             else
                 svt_memcpy_c(params_by_motion[i].inliers,
-                    motions[i].inlier_indices,
-                    sizeof(*motions[i].inlier_indices) * npoints);
+                             motions[i].inlier_indices,
+                             sizeof(*motions[i].inlier_indices) * npoints);
         }
         num_inliers_by_motion[i] = motions[i].num_inliers;
     }
@@ -528,8 +534,7 @@ finish_ransac:
     free(image1_coord);
     free(current_motion.inlier_indices);
     if (motions) {
-        for (int i = 0; i < num_desired_motions; ++i)
-            free(motions[i].inlier_indices);
+        for (int i = 0; i < num_desired_motions; ++i) free(motions[i].inlier_indices);
         free(motions);
     }
 
@@ -564,8 +569,7 @@ static int ransac_double_prec(const double *matched_points, int npoints, int *nu
 
     double *cnp1, *cnp2;
 
-    for (int i = 0; i < num_desired_motions; ++i)
-        num_inliers_by_motion[i] = 0;
+    for (int i = 0; i < num_desired_motions; ++i) num_inliers_by_motion[i] = 0;
 
     if (npoints < minpts * MINPTS_MULTIPLIER || npoints == 0)
         return 1;
@@ -650,9 +654,9 @@ static int ransac_double_prec(const double *matched_points, int npoints, int *nu
         if (current_motion.num_inliers >= worst_kept_motion->num_inliers &&
             current_motion.num_inliers > 1) {
             double mean_distance;
-            mean_distance = sum_distance / ((double)current_motion.num_inliers);
-            current_motion.variance =
-                sum_distance_squared / ((double)current_motion.num_inliers - 1.0) -
+            mean_distance           = sum_distance / ((double)current_motion.num_inliers);
+            current_motion.variance = sum_distance_squared /
+                    ((double)current_motion.num_inliers - 1.0) -
                 mean_distance * mean_distance * ((double)current_motion.num_inliers) /
                     ((double)current_motion.num_inliers - 1.0);
             if (is_better_motion(&current_motion, worst_kept_motion)) {
@@ -663,12 +667,12 @@ static int ransac_double_prec(const double *matched_points, int npoints, int *nu
                 worst_kept_motion->variance    = current_motion.variance;
                 if (svt_memcpy != NULL)
                     svt_memcpy(worst_kept_motion->inlier_indices,
-                        current_motion.inlier_indices,
-                        sizeof(*current_motion.inlier_indices) * npoints);
+                               current_motion.inlier_indices,
+                               sizeof(*current_motion.inlier_indices) * npoints);
                 else
                     svt_memcpy_c(worst_kept_motion->inlier_indices,
-                        current_motion.inlier_indices,
-                        sizeof(*current_motion.inlier_indices) * npoints);
+                                 current_motion.inlier_indices,
+                                 sizeof(*current_motion.inlier_indices) * npoints);
                 assert(npoints > 0);
                 // Determine the new worst kept motion and its num_inliers and variance.
                 for (int i = 0; i < num_desired_motions; ++i) {
@@ -696,12 +700,12 @@ static int ransac_double_prec(const double *matched_points, int npoints, int *nu
                 motions[i].num_inliers, points1, points2, params_by_motion[i].params);
             if (svt_memcpy != NULL)
                 svt_memcpy(params_by_motion[i].inliers,
-                       motions[i].inlier_indices,
-                       sizeof(*motions[i].inlier_indices) * npoints);
+                           motions[i].inlier_indices,
+                           sizeof(*motions[i].inlier_indices) * npoints);
             else
                 svt_memcpy_c(params_by_motion[i].inliers,
-                    motions[i].inlier_indices,
-                    sizeof(*motions[i].inlier_indices) * npoints);
+                             motions[i].inlier_indices,
+                             sizeof(*motions[i].inlier_indices) * npoints);
         }
         num_inliers_by_motion[i] = motions[i].num_inliers;
     }
@@ -714,8 +718,7 @@ finish_ransac:
     free(image1_coord);
     free(current_motion.inlier_indices);
     if (motions) {
-        for (int i = 0; i < num_desired_motions; ++i)
-            free(motions[i].inlier_indices);
+        for (int i = 0; i < num_desired_motions; ++i) free(motions[i].inlier_indices);
         free(motions);
     }
 

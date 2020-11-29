@@ -21,7 +21,6 @@
 // tran_high_t is the datatype used for intermediate transform stages.
 typedef int64_t tran_high_t;
 typedef int32_t tran_low_t;
-void av1_fdwt8x8(tran_low_t *input, tran_low_t *output, int stride);
-void svt_av1_fdwt8x8_uint8_input_c(uint8_t *input, tran_low_t *output, int stride,
-                                   int hbd);
-#endif  // AOM_AV1_ENCODER_DWT_H_
+void            av1_fdwt8x8(tran_low_t *input, tran_low_t *output, int stride);
+void svt_av1_fdwt8x8_uint8_input_c(uint8_t *input, tran_low_t *output, int stride, int hbd);
+#endif // AOM_AV1_ENCODER_DWT_H_

@@ -13,17 +13,15 @@
 #ifndef EbSuperRes_h
 #define EbSuperRes_h
 
-
 #ifdef __cplusplus
 extern "C" {
 #endif
-
 
 #define UPSCALE_NORMATIVE_TAPS 8
 
 static const int16_t av1_resize_filter_normative[(1 << RS_SUBPEL_BITS)][UPSCALE_NORMATIVE_TAPS] = {
 #if UPSCALE_NORMATIVE_TAPS == 8
-{0, 0, 0, 128, 0, 0, 0, 0},        {0, 0, -1, 128, 2, -1, 0, 0},
+    {0, 0, 0, 128, 0, 0, 0, 0},        {0, 0, -1, 128, 2, -1, 0, 0},
     {0, 1, -3, 127, 4, -2, 1, 0},      {0, 1, -4, 127, 6, -3, 1, 0},
     {0, 2, -6, 126, 8, -3, 1, 0},      {0, 2, -7, 125, 11, -4, 1, 0},
     {-1, 2, -8, 125, 13, -5, 2, 0},    {-1, 3, -9, 124, 15, -6, 2, 0},

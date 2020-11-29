@@ -72,7 +72,7 @@ typedef struct LoopFilterWorkerData {
     EbPictureBufferDesc *   frame_buffer; //reconpicture,
     PictureControlSet *     pcs_ptr;
     struct MacroblockdPlane planes[MAX_MB_PLANE];
-    MacroBlockD *xd;
+    MacroBlockD *           xd;
 } LFWorkerData;
 
 #ifdef __cplusplus

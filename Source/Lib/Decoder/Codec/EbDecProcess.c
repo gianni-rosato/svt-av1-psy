@@ -46,17 +46,15 @@ extern uint8_t        num_groups;
 extern GROUP_AFFINITY group_affinity;
 extern EbBool         alternate_groups;
 #elif defined(__linux__)
-extern cpu_set_t      group_affinity;
+extern cpu_set_t group_affinity;
 #endif
 void *dec_all_stage_kernel(void *input_ptr);
 /*ToDo : Remove all these replications */
 void svt_av1_loop_filter_frame_init(FrameHeader *frm_hdr, LoopFilterInfoN *lfi, int32_t plane_start,
                                     int32_t plane_end);
-void dec_loop_filter_row(EbDecHandle *dec_handle_ptr,
-                         EbPictureBufferDesc *recon_picture_buf,
-                         LfCtxt *lf_ctxt,
-                         uint32_t y_sb_index,
-                         int32_t plane_start, int32_t plane_end);
+void dec_loop_filter_row(EbDecHandle *dec_handle_ptr, EbPictureBufferDesc *recon_picture_buf,
+                         LfCtxt *lf_ctxt, uint32_t y_sb_index, int32_t plane_start,
+                         int32_t plane_end);
 void save_deblock_boundary_lines(uint8_t *src_buf, int32_t src_stride, int32_t src_width,
                                  int32_t src_height, const Av1Common *cm, int32_t plane,
                                  int32_t row, int32_t stripe, int32_t use_highbd, int32_t is_above,
@@ -105,9 +103,7 @@ int64_t dec_timer_elapsed(struct EbDecTimer *t) {
 #endif
 }
 
-void dec_display_timer(char s[], struct EbDecTimer *timer,
-    int th_cnt, FILE *fp)
-{
+void dec_display_timer(char s[], struct EbDecTimer *timer, int th_cnt, FILE *fp) {
     dec_timer_mark(timer);
     uint64_t dx_time = dec_timer_elapsed(timer);
     fprintf(fp, "\n%s Tid %d %d", s, th_cnt, dx_time);
@@ -118,17 +114,15 @@ void dec_display_timer(char s[], struct EbDecTimer *timer,
 /* Row MT Simple Q functions */
 /* Return the sb_row_to_process */
 int32_t get_sb_row_to_process(DecMtRowInfo *sb_row_info) {
-
-    int32_t     sb_row_to_process = -1;
+    int32_t sb_row_to_process = -1;
     //lock mutex
     svt_block_on_mutex(sb_row_info->sbrow_mutex);
 
     //pick up a row and increment the sb row counter
-    if (sb_row_info->sb_row_to_process !=
-        sb_row_info->num_sb_rows) {
+    if (sb_row_info->sb_row_to_process != sb_row_info->num_sb_rows) {
         sb_row_to_process = sb_row_info->sb_row_to_process;
         sb_row_info->sb_row_to_process++;
-        }
+    }
 
     //unlock mutex
     svt_release_mutex(sb_row_info->sbrow_mutex);
@@ -161,9 +155,10 @@ EbErrorType dec_system_resource_init(EbDecHandle *dec_handle_ptr, TilesInfo *til
     dec_mt_frame_data->motion_proj_info.num_motion_proj_rows = -1;
     EB_CREATE_MUTEX(dec_mt_frame_data->motion_proj_info.motion_proj_mutex);
 
-    int32_t  sb_size_h = block_size_high[dec_handle_ptr->seq_header.sb_size];
-    uint32_t picture_height_in_sb = (dec_handle_ptr->frame_header.
-        frame_size.frame_height + sb_size_h - 1) / sb_size_h;
+    int32_t  sb_size_h            = block_size_high[dec_handle_ptr->seq_header.sb_size];
+    uint32_t picture_height_in_sb = (dec_handle_ptr->frame_header.frame_size.frame_height +
+                                     sb_size_h - 1) /
+        sb_size_h;
 
     /************************************
     * Contexts
@@ -172,8 +167,8 @@ EbErrorType dec_system_resource_init(EbDecHandle *dec_handle_ptr, TilesInfo *til
     DecMtRowInfo *parse_tile_info = &dec_mt_frame_data->parse_tile_info;
 
     EB_CREATE_MUTEX(parse_tile_info->sbrow_mutex);
-    parse_tile_info->num_sb_rows        = num_tiles;
-    parse_tile_info->sb_row_to_process  = 0;
+    parse_tile_info->num_sb_rows       = num_tiles;
+    parse_tile_info->sb_row_to_process = 0;
 
     /* Recon */
     EB_MALLOC_DEC(uint32_t *,
@@ -184,8 +179,8 @@ EbErrorType dec_system_resource_init(EbDecHandle *dec_handle_ptr, TilesInfo *til
     DecMtRowInfo *recon_tile_info = &dec_mt_frame_data->recon_tile_info;
     EB_CREATE_MUTEX(recon_tile_info->sbrow_mutex);
 
-    recon_tile_info->num_sb_rows        = num_tiles;
-    recon_tile_info->sb_row_to_process  = 0;
+    recon_tile_info->num_sb_rows       = num_tiles;
+    recon_tile_info->sb_row_to_process = 0;
     /* recon top right sync */
     {
         int32_t tiles_ctr;
@@ -267,7 +262,7 @@ EbErrorType dec_system_resource_init(EbDecHandle *dec_handle_ptr, TilesInfo *til
     DecMtRowInfo *lf_sb_row_info = &dec_mt_frame_data->lf_frame_info.lf_sb_row_info;
 
     EB_CREATE_MUTEX(lf_sb_row_info->sbrow_mutex);
-    lf_sb_row_info->num_sb_rows = picture_height_in_sb;
+    lf_sb_row_info->num_sb_rows       = picture_height_in_sb;
     lf_sb_row_info->sb_row_to_process = 0;
 
     /* CDEF */
@@ -275,8 +270,8 @@ EbErrorType dec_system_resource_init(EbDecHandle *dec_handle_ptr, TilesInfo *til
     uint32_t      mi_cols    = 2 * ((dec_handle_ptr->seq_header.max_frame_width + 7) >> 3);
 
     const int32_t nhfb = (mi_cols + MI_SIZE_64X64 - 1) / MI_SIZE_64X64;
-    const int32_t nvfb =
-        (dec_handle_ptr->seq_header.max_frame_height + (MI_SIZE_64X64 << MI_SIZE_LOG2) - 1) /
+    const int32_t nvfb = (dec_handle_ptr->seq_header.max_frame_height +
+                          (MI_SIZE_64X64 << MI_SIZE_LOG2) - 1) /
         (MI_SIZE_64X64 << MI_SIZE_LOG2);
 
     const int32_t stride                   = (mi_cols << MI_SIZE_LOG2) + 2 * CDEF_HBORDER;
@@ -346,8 +341,8 @@ EbErrorType dec_system_resource_init(EbDecHandle *dec_handle_ptr, TilesInfo *til
 
     EB_CREATE_MUTEX(lr_sb_row_info->sbrow_mutex);
 
-    lr_sb_row_info->num_sb_rows         = picture_height_in_sb;
-    lr_sb_row_info->sb_row_to_process   = 0;
+    lr_sb_row_info->num_sb_rows       = picture_height_in_sb;
+    lr_sb_row_info->sb_row_to_process = 0;
 
     dec_mt_frame_data->temp_mutex = svt_create_mutex();
 
@@ -371,11 +366,11 @@ EbErrorType dec_system_resource_init(EbDecHandle *dec_handle_ptr, TilesInfo *til
        init_dec_mod_ctxt reallocated when required */
 
     DecModCtxt **dec_mod_ctxt_arr;
-    EB_MALLOC_DEC(DecModCtxt **, dec_mod_ctxt_arr, num_lib_threads * sizeof(DecModCtxt *), EB_N_PTR);
+    EB_MALLOC_DEC(
+        DecModCtxt **, dec_mod_ctxt_arr, num_lib_threads * sizeof(DecModCtxt *), EB_N_PTR);
 
     for (uint32_t i = 0; i < num_lib_threads; i++) {
-        init_dec_mod_ctxt(dec_handle_ptr,
-            (void **)&dec_mod_ctxt_arr[i]);
+        init_dec_mod_ctxt(dec_handle_ptr, (void **)&dec_mod_ctxt_arr[i]);
     }
 
     memory_map_end_address = svt_dec_memory_map;
@@ -394,15 +389,14 @@ EbErrorType dec_system_resource_init(EbDecHandle *dec_handle_ptr, TilesInfo *til
             for (uint32_t i = 0; i < num_lib_threads; i++) {
                 thread_ctxt_pa[i].thread_cnt     = i + 1;
                 thread_ctxt_pa[i].dec_handle_ptr = dec_handle_ptr;
-                thread_ctxt_pa[i].dec_mod_ctxt = dec_mod_ctxt_arr[i];
-                EB_CREATE_SEMAPHORE(thread_ctxt_pa[i].thread_semaphore,
-                    0, 100000);
+                thread_ctxt_pa[i].dec_mod_ctxt   = dec_mod_ctxt_arr[i];
+                EB_CREATE_SEMAPHORE(thread_ctxt_pa[i].thread_semaphore, 0, 100000);
                 int use_highbd = (dec_handle_ptr->seq_header.color_config.bit_depth > EB_8BIT ||
-                    dec_handle_ptr->is_16bit_pipeline);
+                                  dec_handle_ptr->is_16bit_pipeline);
                 EB_MALLOC_DEC(uint8_t *,
                               thread_ctxt_pa[i].dst,
-                              (MAX_SB_SIZE + 8) * RESTORATION_PROC_UNIT_SIZE *
-                                    sizeof(uint8_t) << use_highbd,
+                              (MAX_SB_SIZE + 8) * RESTORATION_PROC_UNIT_SIZE * sizeof(uint8_t)
+                                  << use_highbd,
                               EB_N_PTR);
             }
             EB_CREATE_THREAD_ARRAY(dec_handle_ptr->decode_thread_handle_array,
@@ -412,8 +406,7 @@ EbErrorType dec_system_resource_init(EbDecHandle *dec_handle_ptr, TilesInfo *til
         }
     } else {
         for (uint32_t i = 0; i < num_lib_threads; i++) {
-            dec_handle_ptr->thread_ctxt_pa[i].dec_mod_ctxt =
-                dec_mod_ctxt_arr[i];
+            dec_handle_ptr->thread_ctxt_pa[i].dec_mod_ctxt = dec_mod_ctxt_arr[i];
         }
     }
     free(dec_mod_ctxt_arr);
@@ -423,9 +416,9 @@ EbErrorType dec_system_resource_init(EbDecHandle *dec_handle_ptr, TilesInfo *til
 /* Scan through the Tiles to find Bitstream offsets */
 void svt_av1_scan_tiles(EbDecHandle *dec_handle_ptr, TilesInfo *tiles_info, ObuHeader *obu_header,
                         Bitstrm *bs, uint32_t tg_start, uint32_t tg_end) {
-    size_t           tile_size;
+    size_t         tile_size;
     MainParseCtxt *main_parse_ctxt = (MainParseCtxt *)dec_handle_ptr->pv_main_parse_ctxt;
-    ParseTileData *  parse_tile_data   = main_parse_ctxt->parse_tile_data;
+    ParseTileData *parse_tile_data = main_parse_ctxt->parse_tile_data;
 
     for (uint32_t tile_num = tg_start; tile_num <= tg_end; tile_num++) {
         if (tile_num == tg_end)
@@ -449,9 +442,10 @@ void svt_av1_queue_parse_jobs(EbDecHandle *dec_handle_ptr, TilesInfo *tiles_info
     DecMtFrameData *dec_mt_frame_data =
         &dec_handle_ptr->main_frame_buf.cur_frame_bufs[0].dec_mt_frame_data;
 
-    int32_t sb_size_h = block_size_high[dec_handle_ptr->seq_header.sb_size];
-    uint32_t picture_height_in_sb =
-        (dec_handle_ptr->frame_header.frame_size.frame_height + sb_size_h - 1) / sb_size_h;
+    int32_t  sb_size_h            = block_size_high[dec_handle_ptr->seq_header.sb_size];
+    uint32_t picture_height_in_sb = (dec_handle_ptr->frame_header.frame_size.frame_height +
+                                     sb_size_h - 1) /
+        sb_size_h;
 
     EB_MEMSET(dec_mt_frame_data->sb_recon_row_map,
               0,
@@ -465,9 +459,9 @@ void svt_av1_queue_parse_jobs(EbDecHandle *dec_handle_ptr, TilesInfo *tiles_info
 EbErrorType parse_tile_job(EbDecHandle *dec_handle_ptr, int32_t tile_num) {
     EbErrorType status = EB_ErrorNone;
 
-    TilesInfo *      tiles_info        = &dec_handle_ptr->frame_header.tiles_info;
+    TilesInfo *    tiles_info      = &dec_handle_ptr->frame_header.tiles_info;
     MainParseCtxt *main_parse_ctxt = (MainParseCtxt *)dec_handle_ptr->pv_main_parse_ctxt;
-    ParseCtxt *      parse_ctxt        = &main_parse_ctxt->tile_parse_ctxt[tile_num];
+    ParseCtxt *    parse_ctxt      = &main_parse_ctxt->tile_parse_ctxt[tile_num];
 
     parse_ctxt->seq_header   = &dec_handle_ptr->seq_header;
     parse_ctxt->frame_header = &dec_handle_ptr->frame_header;
@@ -492,7 +486,7 @@ void parse_frame_tiles(EbDecHandle *dec_handle_ptr, DecThreadCtxt *thread_ctxt) 
 #endif
     while (*start_parse_frame != EB_TRUE)
         svt_block_on_semaphore(NULL == thread_ctxt ? dec_handle_ptr->thread_semaphore
-                                                  : thread_ctxt->thread_semaphore);
+                                                   : thread_ctxt->thread_semaphore);
 
 #if MT_WAIT_PROFILE
     dec_display_timer("SPF", &timer, th_cnt, fp);
@@ -509,12 +503,9 @@ void parse_frame_tiles(EbDecHandle *dec_handle_ptr, DecThreadCtxt *thread_ctxt) 
                 break;
             }
             svt_post_semaphore(dec_handle_ptr->thread_semaphore);
-            for (uint32_t lib_thrd = 0;
-                lib_thrd < dec_handle_ptr->dec_config.threads - 1;
-                 lib_thrd++)
-            {
-                svt_post_semaphore(dec_handle_ptr->
-                    thread_ctxt_pa[lib_thrd].thread_semaphore);
+            for (uint32_t lib_thrd = 0; lib_thrd < dec_handle_ptr->dec_config.threads - 1;
+                 lib_thrd++) {
+                svt_post_semaphore(dec_handle_ptr->thread_ctxt_pa[lib_thrd].thread_semaphore);
             }
         } else
             break;
@@ -523,7 +514,8 @@ void parse_frame_tiles(EbDecHandle *dec_handle_ptr, DecThreadCtxt *thread_ctxt) 
 
 EbErrorType decode_tile_job(EbDecHandle *dec_handle_ptr, int32_t tile_num,
                             DecModCtxt *dec_mod_ctxt) {
-    return start_decode_tile(dec_handle_ptr, dec_mod_ctxt, &dec_handle_ptr->frame_header.tiles_info, tile_num);
+    return start_decode_tile(
+        dec_handle_ptr, dec_mod_ctxt, &dec_handle_ptr->frame_header.tiles_info, tile_num);
 }
 
 void decode_frame_tiles(EbDecHandle *dec_handle_ptr, DecThreadCtxt *thread_ctxt) {
@@ -538,7 +530,7 @@ void decode_frame_tiles(EbDecHandle *dec_handle_ptr, DecThreadCtxt *thread_ctxt)
 #endif
     while (*start_decode_frame != EB_TRUE)
         svt_block_on_semaphore(NULL == thread_ctxt ? dec_handle_ptr->thread_semaphore
-                                                  : thread_ctxt->thread_semaphore);
+                                                   : thread_ctxt->thread_semaphore);
 
 #if MT_WAIT_PROFILE
     dec_display_timer("SDF", &timer, th_cnt, fp);
@@ -563,9 +555,7 @@ void decode_frame_tiles(EbDecHandle *dec_handle_ptr, DecThreadCtxt *thread_ctxt)
         }
 
         if (-1 != tile_num) {
-            if (EB_ErrorNone != decode_tile_job(dec_handle_ptr,
-                tile_num, dec_mod_ctxt))
-            {
+            if (EB_ErrorNone != decode_tile_job(dec_handle_ptr, tile_num, dec_mod_ctxt)) {
                 SVT_LOG("\nDecode Issue for Tile %d", tile_num);
                 break;
             }
@@ -573,7 +563,7 @@ void decode_frame_tiles(EbDecHandle *dec_handle_ptr, DecThreadCtxt *thread_ctxt)
             int32_t max_rows_pend = -1;
             int32_t tile_idx, next_tile_idx = -1;
             int32_t num_tiles = dec_handle_ptr->frame_header.tiles_info.tile_cols *
-                                dec_handle_ptr->frame_header.tiles_info.tile_rows;
+                dec_handle_ptr->frame_header.tiles_info.tile_rows;
 
             svt_block_on_mutex(dec_mt_frame_data->tile_switch_mutex);
 
@@ -590,7 +580,9 @@ void decode_frame_tiles(EbDecHandle *dec_handle_ptr, DecThreadCtxt *thread_ctxt)
                     int32_t curr_tile_rows_pend;
 
                     for (ctr = 0; ctr < tile_num_sb_rows; ctr++) {
-                        if (0 == parse_recon_tile_info_array->sb_recon_row_started[ctr]) { break; }
+                        if (0 == parse_recon_tile_info_array->sb_recon_row_started[ctr]) {
+                            break;
+                        }
                     }
 
                     curr_tile_rows_pend = tile_num_sb_rows - ctr;
@@ -624,8 +616,9 @@ void svt_av1_queue_lf_jobs(EbDecHandle *dec_handle_ptr) {
         &dec_handle_ptr->main_frame_buf.cur_frame_bufs[0].dec_mt_frame_data.lf_frame_info;
     int32_t sb_size_h = block_size_high[dec_handle_ptr->seq_header.sb_size];
     /* ToDo : picture_height_in_sb used many places. Reuse! */
-    uint32_t picture_height_in_sb =
-        (dec_handle_ptr->frame_header.frame_size.frame_height + sb_size_h - 1) / sb_size_h;
+    uint32_t picture_height_in_sb = (dec_handle_ptr->frame_header.frame_size.frame_height +
+                                     sb_size_h - 1) /
+        sb_size_h;
 
     DecMtFrameData *dec_mt_frame_data =
         &dec_handle_ptr->main_frame_buf.cur_frame_bufs[0].dec_mt_frame_data;
@@ -633,7 +626,7 @@ void svt_av1_queue_lf_jobs(EbDecHandle *dec_handle_ptr) {
     EB_MEMSET(dec_mt_frame_data->lf_row_map, 0, picture_height_in_sb * sizeof(uint32_t));
 
     memset(lf_frame_info->sb_lf_completed_in_row, -1, picture_height_in_sb * sizeof(int32_t));
-    lf_frame_info->lf_info_init_done = EB_FALSE;
+    lf_frame_info->lf_info_init_done                = EB_FALSE;
     lf_frame_info->lf_sb_row_info.sb_row_to_process = 0;
 }
 
@@ -646,8 +639,8 @@ static INLINE void dec_save_lf_boundary_lines_sb_row(EbDecHandle *  dec_handle,
     FrameSize *frame_size = &dec_handle->frame_header.frame_size;
     EbBool     sb_128     = dec_handle->seq_header.sb_size == BLOCK_128X128;
     int32_t    num64s     = sb_128 ? 1 : 0;
-    const int use_highbd = (dec_handle->seq_header.color_config.bit_depth > EB_8BIT ||
-        dec_handle->is_16bit_pipeline);
+    const int  use_highbd = (dec_handle->seq_header.color_config.bit_depth > EB_8BIT ||
+                            dec_handle->is_16bit_pipeline);
     LrCtxt *   lr_ctxt    = (LrCtxt *)dec_handle->pv_lr_ctxt;
     for (int32_t p = 0; p < num_planes; ++p) {
         int32_t                      ss_x          = p ? cm->subsampling_x : 0;
@@ -663,9 +656,10 @@ static INLINE void dec_save_lf_boundary_lines_sb_row(EbDecHandle *  dec_handle,
 
         for (int32_t row_cnt = 0; row_cnt <= num64s; row_cnt++) {
             const int32_t frame_stripe = (sb_row << num64s) + row_cnt; /* 64 strip */
-            const int32_t rel_y0 = AOMMAX(0, frame_stripe * stripe_height - stripe_off);
-            const int32_t y0     = tile_rect[p]->top + rel_y0;
-            if (y0 >= tile_rect[p]->bottom) break;
+            const int32_t rel_y0       = AOMMAX(0, frame_stripe * stripe_height - stripe_off);
+            const int32_t y0           = tile_rect[p]->top + rel_y0;
+            if (y0 >= tile_rect[p]->bottom)
+                break;
 
             const int32_t rel_y1 = (frame_stripe + 1) * stripe_height - stripe_off;
             const int32_t y1     = AOMMIN(tile_rect[p]->top + rel_y1, tile_rect[p]->bottom);
@@ -709,22 +703,22 @@ static INLINE void dec_save_lf_boundary_lines_sb_row(EbDecHandle *  dec_handle,
 }
 
 /* Store CDEF_boundary_line req for LR */
-static INLINE void dec_save_CDEF_boundary_lines_SB_row(
-    EbDecHandle *  dec_handle, Av1PixelRect **tile_rect,
-    int32_t sb_row, uint8_t **src, int32_t *stride, int32_t num_planes)
-{
+static INLINE void dec_save_CDEF_boundary_lines_SB_row(EbDecHandle *  dec_handle,
+                                                       Av1PixelRect **tile_rect, int32_t sb_row,
+                                                       uint8_t **src, int32_t *stride,
+                                                       int32_t num_planes) {
     Av1Common *     cm         = &dec_handle->cm;
     FrameSize *     frame_size = &dec_handle->frame_header.frame_size;
-    const int use_highbd = (dec_handle->seq_header.color_config.bit_depth > EB_8BIT ||
-        dec_handle->is_16bit_pipeline);
+    const int       use_highbd = (dec_handle->seq_header.color_config.bit_depth > EB_8BIT ||
+                            dec_handle->is_16bit_pipeline);
     LrCtxt *        lr_ctxt    = (LrCtxt *)dec_handle->pv_lr_ctxt;
     DecMtFrameData *dec_mt_frame_data =
         &dec_handle->main_frame_buf.cur_frame_bufs[0].dec_mt_frame_data;
     for (int32_t p = 0; p < num_planes; ++p) {
-        int32_t         ss_x          = p ? cm->subsampling_x : 0;
-        int32_t         ss_y          = p ? cm->subsampling_y : 0;
-        const int32_t   stripe_height = RESTORATION_PROC_UNIT_SIZE >> ss_y;
-        const int32_t   stripe_off    = RESTORATION_UNIT_OFFSET >> ss_y;
+        int32_t       ss_x          = p ? cm->subsampling_x : 0;
+        int32_t       ss_y          = p ? cm->subsampling_y : 0;
+        const int32_t stripe_height = RESTORATION_PROC_UNIT_SIZE >> ss_y;
+        const int32_t stripe_off    = RESTORATION_UNIT_OFFSET >> ss_y;
 
         RestorationStripeBoundaries *boundaries = &lr_ctxt->boundaries[p];
         int32_t                      src_width  = frame_size->frame_width >> ss_x;
@@ -738,31 +732,33 @@ static INLINE void dec_save_CDEF_boundary_lines_SB_row(
         const int32_t y0     = tile_rect[p]->top + rel_y0;
 
         const int32_t rel_y1 = (frame_stripe + 1) * stripe_height - stripe_off;
-        int32_t y1  = AOMMIN(tile_rect[p]->top + rel_y1, tile_rect[p]->bottom);
+        int32_t       y1     = AOMMIN(tile_rect[p]->top + rel_y1, tile_rect[p]->bottom);
 
-        int32_t plane_height =
-            ROUND_POWER_OF_TWO(cm->frm_size.frame_height, ss_y);
+        int32_t plane_height = ROUND_POWER_OF_TWO(cm->frm_size.frame_height, ss_y);
 
         // Save CDEF context where needed.
         if (frame_stripe == 0) {
             save_cdef_boundary_lines(
-                src[p], stride[p], src_width, cm, p, y0,
-                frame_stripe, use_highbd, 1, boundaries);
+                src[p], stride[p], src_width, cm, p, y0, frame_stripe, use_highbd, 1, boundaries);
         }
         if (y1 >= plane_height) {
-            save_cdef_boundary_lines(
-                src[p], stride[p], src_width, cm, p, y1 - 1,
-                frame_stripe, use_highbd, 0, boundaries);
+            save_cdef_boundary_lines(src[p],
+                                     stride[p],
+                                     src_width,
+                                     cm,
+                                     p,
+                                     y1 - 1,
+                                     frame_stripe,
+                                     use_highbd,
+                                     0,
+                                     boundaries);
         }
     }
 }
 
 /*Frame level function to trigger loop filter for each superblock*/
-void dec_av1_loop_filter_frame_mt(EbDecHandle *dec_handle,
-                                  EbPictureBufferDesc *recon_picture_buf,
-                                  LfCtxt *lf_ctxt,
-                                  int32_t plane_start,
-                                  int32_t plane_end,
+void dec_av1_loop_filter_frame_mt(EbDecHandle *dec_handle, EbPictureBufferDesc *recon_picture_buf,
+                                  LfCtxt *lf_ctxt, int32_t plane_start, int32_t plane_end,
                                   DecThreadCtxt *thread_ctxt) {
     DecMtFrameData *dec_mt_frame_data1 =
         &dec_handle->main_frame_buf.cur_frame_bufs[0].dec_mt_frame_data;
@@ -776,7 +772,7 @@ void dec_av1_loop_filter_frame_mt(EbDecHandle *dec_handle,
 #endif
     while (*start_lf_frame != EB_TRUE)
         svt_block_on_semaphore(NULL == thread_ctxt ? dec_handle->thread_semaphore
-                                                  : thread_ctxt->thread_semaphore);
+                                                   : thread_ctxt->thread_semaphore);
 #if MT_WAIT_PROFILE
     dec_display_timer("SLF", &timer, th_cnt, fp);
 #endif
@@ -793,12 +789,9 @@ void dec_av1_loop_filter_frame_mt(EbDecHandle *dec_handle,
     if (dec_mt_lf_frame_info->lf_info_init_done == EB_FALSE) {
         /*init hev threshold const vectors*/
         for (int lvl = 0; lvl <= MAX_LOOP_FILTER; lvl++)
-             memset(lf_ctxt->lf_info.lfthr[lvl].hev_thr, (lvl >> 4), SIMD_WIDTH);
+            memset(lf_ctxt->lf_info.lfthr[lvl].hev_thr, (lvl >> 4), SIMD_WIDTH);
 
-        svt_av1_loop_filter_frame_init(frm_hdr,
-                                       &lf_ctxt->lf_info,
-                                       plane_start,
-                                       plane_end);
+        svt_av1_loop_filter_frame_init(frm_hdr, &lf_ctxt->lf_info, plane_start, plane_end);
 
         dec_mt_lf_frame_info->lf_info_init_done = EB_TRUE;
     }
@@ -850,7 +843,7 @@ void dec_av1_loop_filter_frame_mt(EbDecHandle *dec_handle,
             row_index[0] = (sb_row)*tiles_info->tile_cols;
             row_index[1] = (sb_row - (sb_row == 0 ? 0 : 1)) * tiles_info->tile_cols;
             row_index[2] = (sb_row + (sb_row == (dec_mt_frame_data->sb_rows - 1) ? 0 : 1)) *
-                           tiles_info->tile_cols;
+                tiles_info->tile_cols;
 #if MT_WAIT_PROFILE
             dec_timer_start(&timer);
 #endif
@@ -870,12 +863,8 @@ void dec_av1_loop_filter_frame_mt(EbDecHandle *dec_handle,
             if (!dec_handle->frame_header.allow_intrabc) {
                 if (dec_handle->frame_header.loop_filter_params.filter_level[0] ||
                     dec_handle->frame_header.loop_filter_params.filter_level[1]) {
-                    dec_loop_filter_row(dec_handle,
-                                        recon_picture_buf,
-                                        lf_ctxt,
-                                        sb_row,
-                                        plane_start,
-                                        plane_end);
+                    dec_loop_filter_row(
+                        dec_handle, recon_picture_buf, lf_ctxt, sb_row, plane_start, plane_end);
                 }
             }
 
@@ -906,9 +895,10 @@ void svt_av1_queue_cdef_jobs(EbDecHandle *dec_handle_ptr) {
     DecMtFrameData *dec_mt_frame_data =
         &dec_handle_ptr->main_frame_buf.cur_frame_bufs[0].dec_mt_frame_data;
 
-    int32_t  sb_size_h = block_size_high[dec_handle_ptr->seq_header.sb_size];
-    uint32_t picture_height_in_sb =
-        (dec_handle_ptr->frame_header.frame_size.frame_height + sb_size_h - 1) / sb_size_h;
+    int32_t  sb_size_h            = block_size_high[dec_handle_ptr->seq_header.sb_size];
+    uint32_t picture_height_in_sb = (dec_handle_ptr->frame_header.frame_size.frame_height +
+                                     sb_size_h - 1) /
+        sb_size_h;
 
     const int32_t nvfb = (dec_handle_ptr->frame_header.mi_rows + MI_SIZE_64X64 - 1) / MI_SIZE_64X64;
 
@@ -934,7 +924,7 @@ void svt_cdef_frame_mt(EbDecHandle *dec_handle_ptr, DecThreadCtxt *thread_ctxt) 
 #endif
     while (*start_cdef_frame != EB_TRUE)
         svt_block_on_semaphore(NULL == thread_ctxt ? dec_handle_ptr->thread_semaphore
-                                                  : thread_ctxt->thread_semaphore);
+                                                   : thread_ctxt->thread_semaphore);
 
 #if MT_WAIT_PROFILE
     dec_display_timer("SCF", &timer, th_cnt, fp);
@@ -951,8 +941,7 @@ void svt_cdef_frame_mt(EbDecHandle *dec_handle_ptr, DecThreadCtxt *thread_ctxt) 
     Av1PixelRect *tile_rect_p[MAX_MB_PLANE];
 
     EbBool no_ibc      = !dec_handle_ptr->frame_header.allow_intrabc;
-    EbBool do_upscale  = no_ibc &&
-        !av1_superres_unscaled(&dec_handle_ptr->frame_header.frame_size);
+    EbBool do_upscale  = no_ibc && !av1_superres_unscaled(&dec_handle_ptr->frame_header.frame_size);
     LrParams *lr_param = dec_handle_ptr->frame_header.lr_params;
     EbBool    do_lr    = no_ibc &&
         (lr_param[AOM_PLANE_Y].frame_restoration_type != RESTORE_NONE ||
@@ -961,15 +950,12 @@ void svt_cdef_frame_mt(EbDecHandle *dec_handle_ptr, DecThreadCtxt *thread_ctxt) 
 
     for (int32_t pli = 0; pli < num_planes; pli++) {
         int32_t is_uv   = pli ? 1 : 0;
-        int32_t sub_x   = !is_uv ?
-            0 : dec_handle_ptr->seq_header.color_config.subsampling_x;
-        int32_t sub_y   = !is_uv ?
-            0 : dec_handle_ptr->seq_header.color_config.subsampling_y;
+        int32_t sub_x   = !is_uv ? 0 : dec_handle_ptr->seq_header.color_config.subsampling_x;
+        int32_t sub_y   = !is_uv ? 0 : dec_handle_ptr->seq_header.color_config.subsampling_y;
         mi_wide_l2[pli] = MI_SIZE_LOG2 - sub_x;
         mi_high_l2[pli] = MI_SIZE_LOG2 - sub_y;
 
-        tile_rect[pli]   =
-            whole_frame_rect(&dec_handle_ptr->cm.frm_size, sub_x, sub_y, is_uv);
+        tile_rect[pli]   = whole_frame_rect(&dec_handle_ptr->cm.frm_size, sub_x, sub_y, is_uv);
         tile_rect_p[pli] = &tile_rect[pli];
 
         /*Deriveing  recon pict buffer ptr's*/
@@ -1014,8 +1000,8 @@ void svt_cdef_frame_mt(EbDecHandle *dec_handle_ptr, DecThreadCtxt *thread_ctxt) 
 #if MT_WAIT_PROFILE
             dec_timer_start(&timer);
 #endif
-            volatile int32_t *start_cdef = (volatile int32_t *)&dec_mt_frame_data
-                                                ->lf_row_map[sb_row + offset];
+            volatile int32_t *start_cdef =
+                (volatile int32_t *)&dec_mt_frame_data->lf_row_map[sb_row + offset];
             while (!*start_cdef)
                 ;
             assert(*start_cdef == 1);
@@ -1025,9 +1011,9 @@ void svt_cdef_frame_mt(EbDecHandle *dec_handle_ptr, DecThreadCtxt *thread_ctxt) 
             FrameHeader *frame_header = &dec_handle_ptr->frame_header;
             if (!frame_header->allow_intrabc) {
                 const int32_t do_cdef = !frame_header->coded_lossless &&
-                                        (frame_header->cdef_params.cdef_bits ||
-                                         frame_header->cdef_params.cdef_y_strength[0] ||
-                                         frame_header->cdef_params.cdef_uv_strength[0]);
+                    (frame_header->cdef_params.cdef_bits ||
+                     frame_header->cdef_params.cdef_y_strength[0] ||
+                     frame_header->cdef_params.cdef_uv_strength[0]);
                 if (do_cdef) {
                     /* SB Row Index */
                     int32_t sb_fbr = (int32_t)sb_row;
@@ -1083,9 +1069,10 @@ void svt_av1_queue_lr_jobs(EbDecHandle *dec_handle_ptr) {
     DecMtFrameData *dec_mt_frame_data =
         &dec_handle_ptr->main_frame_buf.cur_frame_bufs[0].dec_mt_frame_data;
 
-    int32_t  sb_size_h = block_size_high[dec_handle_ptr->seq_header.sb_size];
-    uint32_t picture_height_in_sb =
-        (dec_handle_ptr->frame_header.frame_size.frame_height + sb_size_h - 1) / sb_size_h;
+    int32_t  sb_size_h            = block_size_high[dec_handle_ptr->seq_header.sb_size];
+    uint32_t picture_height_in_sb = (dec_handle_ptr->frame_header.frame_size.frame_height +
+                                     sb_size_h - 1) /
+        sb_size_h;
 
     EB_MEMSET(dec_mt_frame_data->lr_row_map, 0, picture_height_in_sb * sizeof(uint32_t));
 
@@ -1129,20 +1116,22 @@ void pad_post_lr(EbPictureBufferDesc *recon_picture_buf, int32_t sb_row, int32_t
        recon buffers. */
     if (sb_row != 0 || num_rows == 1) {
         int processing_row = sb_row;
-        if (num_rows != 1) processing_row--;
+        if (num_rows != 1)
+            processing_row--;
         int loop = 1;
 
         /* Pad last 2 rows when the last row's LR
            is being processed*/
-        if (processing_row == num_rows - 2 && num_rows > 1) loop = 2;
+        if (processing_row == num_rows - 2 && num_rows > 1)
+            loop = 2;
         for (int i = 0; i < loop; i++, processing_row++) {
             uint32_t row   = processing_row * sb_size;
             EbByte   src_y = recon_picture_buf->buffer_y + (pad_width << shift) +
-                           ((pad_height + row) * rec_stride[AOM_PLANE_Y]);
+                ((pad_height + row) * rec_stride[AOM_PLANE_Y]);
             EbByte src_cb = recon_picture_buf->buffer_cb + (pad_width >> sx << shift) +
-                            (((pad_height + row) >> sy) * rec_stride[AOM_PLANE_U]);
+                (((pad_height + row) >> sy) * rec_stride[AOM_PLANE_U]);
             EbByte src_cr = recon_picture_buf->buffer_cr + (pad_width >> sx << shift) +
-                            (((pad_height + row) >> sy) * rec_stride[AOM_PLANE_V]);
+                (((pad_height + row) >> sy) * rec_stride[AOM_PLANE_V]);
 
             int32_t row_height = MIN(sb_size, (int32_t)(frame_height - row));
 
@@ -1163,13 +1152,11 @@ void pad_post_lr(EbPictureBufferDesc *recon_picture_buf, int32_t sb_row, int32_t
     }
 }
 
-void dec_av1_loop_restoration_filter_frame_mt(
-    EbDecHandle *dec_handle, DecThreadCtxt *thread_ctxt)
-{
-    uint8_t *    curr_blk_recon_buf[MAX_MB_PLANE];
-    int32_t      curr_recon_stride[MAX_MB_PLANE];
+void dec_av1_loop_restoration_filter_frame_mt(EbDecHandle *dec_handle, DecThreadCtxt *thread_ctxt) {
+    uint8_t *curr_blk_recon_buf[MAX_MB_PLANE];
+    int32_t  curr_recon_stride[MAX_MB_PLANE];
 
-    Av1PixelRect tile_rect[MAX_MB_PLANE];
+    Av1PixelRect  tile_rect[MAX_MB_PLANE];
     Av1PixelRect *tile_rect_p[MAX_MB_PLANE];
 
     DecMtFrameData *dec_mt_frame_data =
@@ -1177,7 +1164,7 @@ void dec_av1_loop_restoration_filter_frame_mt(
     volatile EbBool *start_lr_frame = &dec_mt_frame_data->start_lr_frame;
     while (*start_lr_frame != EB_TRUE)
         svt_block_on_semaphore(NULL == thread_ctxt ? dec_handle->thread_semaphore
-                                                  : thread_ctxt->thread_semaphore);
+                                                   : thread_ctxt->thread_semaphore);
 
     EbPictureBufferDesc *recon_picture_ptr = dec_handle->cur_pic_buf[0]->ps_pic_buf;
     const int32_t        num_planes        = av1_num_planes(&dec_handle->seq_header.color_config);
@@ -1196,8 +1183,8 @@ void dec_av1_loop_restoration_filter_frame_mt(
                             sub_x,
                             sub_y);
 
-        tile_rect[pli] =
-            whole_frame_rect(&dec_handle->frame_header.frame_size, sub_x, sub_y, pli > 0);
+        tile_rect[pli] = whole_frame_rect(
+            &dec_handle->frame_header.frame_size, sub_x, sub_y, pli > 0);
         tile_rect_p[pli] = &tile_rect[pli];
     }
     EbPictureBufferDesc *recon_picture_buf = dec_handle->cur_pic_buf[0]->ps_pic_buf;
@@ -1217,8 +1204,8 @@ void dec_av1_loop_restoration_filter_frame_mt(
     uint32_t pad_height = recon_picture_buf->origin_y;
 
     int32_t shift = 0;
-    if ((recon_picture_buf->bit_depth != EB_8BIT) ||
-        recon_picture_buf->is_16bit_pipeline) shift = 1;
+    if ((recon_picture_buf->bit_depth != EB_8BIT) || recon_picture_buf->is_16bit_pipeline)
+        shift = 1;
 
     int32_t recon_stride[MAX_MB_PLANE];
     recon_stride[AOM_PLANE_Y] = recon_picture_buf->stride_y << shift;
@@ -1233,22 +1220,20 @@ void dec_av1_loop_restoration_filter_frame_mt(
         (lr_param[AOM_PLANE_Y].frame_restoration_type != RESTORE_NONE ||
          lr_param[AOM_PLANE_U].frame_restoration_type != RESTORE_NONE ||
          lr_param[AOM_PLANE_V].frame_restoration_type != RESTORE_NONE);
-    EbBool    do_upscale = no_ibc &&
-        !av1_superres_unscaled(&dec_handle->frame_header.frame_size);
-    int       th_cnt     = NULL == thread_ctxt ? 0 : thread_ctxt->thread_cnt;
+    EbBool do_upscale = no_ibc && !av1_superres_unscaled(&dec_handle->frame_header.frame_size);
+    int    th_cnt     = NULL == thread_ctxt ? 0 : thread_ctxt->thread_cnt;
     while (1) {
         int32_t sb_row = get_sb_row_to_process(&dec_mt_frame_data->lr_sb_row_info);
         if (-1 != sb_row) {
             /* Ensure all CDEF jobs are over for row_index row  */
             volatile int32_t *start_lr =
-                (volatile int32_t *)&dec_mt_frame_data->
-                cdef_completed_for_row_map[sb_row];
+                (volatile int32_t *)&dec_mt_frame_data->cdef_completed_for_row_map[sb_row];
             while (!*start_lr)
                 ;
 
-            LrCtxt * lr_ctxt = (LrCtxt *)dec_handle->pv_lr_ctxt;
+            LrCtxt *lr_ctxt = (LrCtxt *)dec_handle->pv_lr_ctxt;
 
-            uint8_t *dst     = NULL == thread_ctxt ? lr_ctxt->dst : thread_ctxt->dst;
+            uint8_t *dst = NULL == thread_ctxt ? lr_ctxt->dst : thread_ctxt->dst;
 
             if (do_lr && !do_upscale) {
                 // In this case, we should only use CDEF pixels at the top
@@ -1322,7 +1307,8 @@ void dec_av1_loop_restoration_filter_frame_mt(
 
     volatile uint32_t *num_threads_lred = &dec_mt_frame_data->num_threads_lred;
     while (*num_threads_lred != dec_handle->dec_config.threads &&
-            EB_FALSE == dec_mt_frame_data->end_flag);
+           EB_FALSE == dec_mt_frame_data->end_flag)
+        ;
 }
 
 void *dec_all_stage_kernel(void *input_ptr) {

@@ -46,10 +46,10 @@ EbErrorType dlf_context_ctor(EbThreadContext *thread_context_ptr, const EbEncHan
     thread_context_ptr->dctor = dlf_context_dctor;
 
     // Input/Output System Resource Manager FIFOs
-    context_ptr->dlf_input_fifo_ptr =
-        svt_system_resource_get_consumer_fifo(enc_handle_ptr->enc_dec_results_resource_ptr, index);
-    context_ptr->dlf_output_fifo_ptr =
-        svt_system_resource_get_producer_fifo(enc_handle_ptr->dlf_results_resource_ptr, index);
+    context_ptr->dlf_input_fifo_ptr = svt_system_resource_get_consumer_fifo(
+        enc_handle_ptr->enc_dec_results_resource_ptr, index);
+    context_ptr->dlf_output_fifo_ptr = svt_system_resource_get_producer_fifo(
+        enc_handle_ptr->dlf_results_resource_ptr, index);
 
     context_ptr->temp_lf_recon_picture16bit_ptr = (EbPictureBufferDesc *)NULL;
     context_ptr->temp_lf_recon_picture_ptr      = (EbPictureBufferDesc *)NULL;
@@ -71,7 +71,7 @@ EbErrorType dlf_context_ctor(EbThreadContext *thread_context_ptr, const EbEncHan
         EB_NEW(context_ptr->temp_lf_recon_picture16bit_ptr,
                svt_recon_picture_buffer_desc_ctor,
                (EbPtr)&temp_lf_recon_desc_init_data);
-        if(!is_16bit)
+        if (!is_16bit)
             context_ptr->temp_lf_recon_picture16bit_ptr->bit_depth = EB_8BIT;
     } else {
         temp_lf_recon_desc_init_data.bit_depth = EB_8BIT;
@@ -114,71 +114,63 @@ void *dlf_kernel(void *input_ptr) {
 
         if (scs_ptr->static_config.is_16bit_pipeline &&
             scs_ptr->static_config.encoder_bit_depth == EB_8BIT) {
-
             // //copy input from 8bit to 16bit
-            uint8_t*  input_8bit;
-            int32_t   input_stride_8bit;
-            uint16_t* input_16bit;
-            int32_t   input_stride_16bit;
-            EbPictureBufferDesc* input_buffer_8bit = (EbPictureBufferDesc *)
-                pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr;
-            EbPictureBufferDesc* input_buffer = (EbPictureBufferDesc*)pcs_ptr->input_frame16bit;
+            uint8_t *            input_8bit;
+            int32_t              input_stride_8bit;
+            uint16_t *           input_16bit;
+            int32_t              input_stride_16bit;
+            EbPictureBufferDesc *input_buffer_8bit =
+                (EbPictureBufferDesc *)pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr;
+            EbPictureBufferDesc *input_buffer = (EbPictureBufferDesc *)pcs_ptr->input_frame16bit;
             // Y
-            input_16bit = (uint16_t*)(input_buffer->buffer_y)
-                        + input_buffer->origin_x
-                        + input_buffer->origin_y * input_buffer->stride_y;
+            input_16bit = (uint16_t *)(input_buffer->buffer_y) + input_buffer->origin_x +
+                input_buffer->origin_y * input_buffer->stride_y;
             input_stride_16bit = input_buffer->stride_y;
-            input_8bit  = input_buffer_8bit->buffer_y
-                        + input_buffer_8bit->origin_x
-                        + input_buffer_8bit->origin_y * input_buffer_8bit->stride_y;
+            input_8bit         = input_buffer_8bit->buffer_y + input_buffer_8bit->origin_x +
+                input_buffer_8bit->origin_y * input_buffer_8bit->stride_y;
             input_stride_8bit = input_buffer_8bit->stride_y;
 
             svt_convert_8bit_to_16bit(input_8bit,
-                input_stride_8bit,
-                input_16bit,
-                input_stride_16bit,
-                input_buffer->width,
-                input_buffer->height);
+                                      input_stride_8bit,
+                                      input_16bit,
+                                      input_stride_16bit,
+                                      input_buffer->width,
+                                      input_buffer->height);
 
             // Cb
-            input_16bit = (uint16_t*)(input_buffer->buffer_cb)
-                        + input_buffer->origin_x / 2
-                        + input_buffer->origin_y / 2 * input_buffer->stride_cb;
+            input_16bit = (uint16_t *)(input_buffer->buffer_cb) + input_buffer->origin_x / 2 +
+                input_buffer->origin_y / 2 * input_buffer->stride_cb;
             input_stride_16bit = input_buffer->stride_cb;
-            input_8bit  = input_buffer_8bit->buffer_cb
-                        + input_buffer_8bit->origin_x / 2
-                        + input_buffer_8bit->origin_y / 2 * input_buffer_8bit->stride_cb;
+            input_8bit         = input_buffer_8bit->buffer_cb + input_buffer_8bit->origin_x / 2 +
+                input_buffer_8bit->origin_y / 2 * input_buffer_8bit->stride_cb;
             input_stride_8bit = input_buffer_8bit->stride_cb;
 
             svt_convert_8bit_to_16bit(input_8bit,
-                input_stride_8bit,
-                input_16bit,
-                input_stride_16bit,
-                input_buffer->width >> 1 ,
-                input_buffer->height >> 1);
+                                      input_stride_8bit,
+                                      input_16bit,
+                                      input_stride_16bit,
+                                      input_buffer->width >> 1,
+                                      input_buffer->height >> 1);
 
             // Cr
-            input_16bit = (uint16_t*)(input_buffer->buffer_cr)
-                        + input_buffer->origin_x / 2
-                        + input_buffer->origin_y / 2 * input_buffer->stride_cr;
+            input_16bit = (uint16_t *)(input_buffer->buffer_cr) + input_buffer->origin_x / 2 +
+                input_buffer->origin_y / 2 * input_buffer->stride_cr;
             input_stride_16bit = input_buffer->stride_cr;
-            input_8bit  = input_buffer_8bit->buffer_cr
-                        + input_buffer_8bit->origin_x / 2
-                        + input_buffer_8bit->origin_y / 2 * input_buffer_8bit->stride_cr;
+            input_8bit         = input_buffer_8bit->buffer_cr + input_buffer_8bit->origin_x / 2 +
+                input_buffer_8bit->origin_y / 2 * input_buffer_8bit->stride_cr;
             input_stride_8bit = input_buffer_8bit->stride_cr;
 
             svt_convert_8bit_to_16bit(input_8bit,
-                input_stride_8bit,
-                input_16bit,
-                input_stride_16bit,
-                input_buffer->width >> 1,
-                input_buffer->height >> 1);
+                                      input_stride_8bit,
+                                      input_16bit,
+                                      input_stride_16bit,
+                                      input_buffer->width >> 1,
+                                      input_buffer->height >> 1);
         }
 
-
-        EbBool dlf_enable_flag = (EbBool)pcs_ptr->parent_pcs_ptr->loop_filter_mode;
-        uint16_t total_tile_cnt = pcs_ptr->parent_pcs_ptr->av1_cm->tiles_info.tile_cols *
-                                  pcs_ptr->parent_pcs_ptr->av1_cm->tiles_info.tile_rows;
+        EbBool   dlf_enable_flag = (EbBool)pcs_ptr->parent_pcs_ptr->loop_filter_mode;
+        uint16_t total_tile_cnt  = pcs_ptr->parent_pcs_ptr->av1_cm->tiles_info.tile_cols *
+            pcs_ptr->parent_pcs_ptr->av1_cm->tiles_info.tile_rows;
         // Jing: Move sb level lf to here if tile_parallel
         if ((dlf_enable_flag && pcs_ptr->parent_pcs_ptr->loop_filter_mode >= 2) ||
             (dlf_enable_flag && pcs_ptr->parent_pcs_ptr->loop_filter_mode == 1 &&
@@ -230,88 +222,85 @@ void *dlf_kernel(void *input_ptr) {
             EbPictureBufferDesc *recon_picture_ptr;
             if (is_16bit) {
                 if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE)
-                    recon_picture_ptr =
-                        ((EbReferenceObject *)
-                             pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
-                            ->reference_picture16bit;
+                    recon_picture_ptr = ((EbReferenceObject *)pcs_ptr->parent_pcs_ptr
+                                             ->reference_picture_wrapper_ptr->object_ptr)
+                                            ->reference_picture16bit;
                 else
                     recon_picture_ptr = pcs_ptr->recon_picture16bit_ptr;
             } else {
                 if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE)
-                    recon_picture_ptr =
-                        ((EbReferenceObject *)
-                             pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
-                            ->reference_picture;
+                    recon_picture_ptr = ((EbReferenceObject *)pcs_ptr->parent_pcs_ptr
+                                             ->reference_picture_wrapper_ptr->object_ptr)
+                                            ->reference_picture;
                 else
                     recon_picture_ptr = pcs_ptr->recon_picture_ptr;
             }
             if (scs_ptr->static_config.is_16bit_pipeline) {
                 if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE) {
-                    recon_picture_ptr = ((EbReferenceObject *)
-                        pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
-                        ->reference_picture16bit;
+                    recon_picture_ptr = ((EbReferenceObject *)pcs_ptr->parent_pcs_ptr
+                                             ->reference_picture_wrapper_ptr->object_ptr)
+                                            ->reference_picture16bit;
                 } else {
                     recon_picture_ptr = pcs_ptr->recon_picture16bit_ptr;
                 }
             }
-            link_eb_to_aom_buffer_desc(recon_picture_ptr, cm->frame_to_show, scs_ptr->max_input_pad_right, scs_ptr->max_input_pad_bottom, is_16bit || scs_ptr->static_config.is_16bit_pipeline);
+            link_eb_to_aom_buffer_desc(recon_picture_ptr,
+                                       cm->frame_to_show,
+                                       scs_ptr->max_input_pad_right,
+                                       scs_ptr->max_input_pad_bottom,
+                                       is_16bit || scs_ptr->static_config.is_16bit_pipeline);
             if (scs_ptr->seq_header.enable_restoration)
                 svt_av1_loop_restoration_save_boundary_lines(cm->frame_to_show, cm, 0);
             if (scs_ptr->seq_header.cdef_level && pcs_ptr->parent_pcs_ptr->cdef_level) {
                 if (scs_ptr->static_config.is_16bit_pipeline || is_16bit) {
                     pcs_ptr->src[0] = (uint16_t *)recon_picture_ptr->buffer_y +
-                                      (recon_picture_ptr->origin_x +
-                                       recon_picture_ptr->origin_y * recon_picture_ptr->stride_y);
-                    pcs_ptr->src[1] =
-                        (uint16_t *)recon_picture_ptr->buffer_cb +
+                        (recon_picture_ptr->origin_x +
+                         recon_picture_ptr->origin_y * recon_picture_ptr->stride_y);
+                    pcs_ptr->src[1] = (uint16_t *)recon_picture_ptr->buffer_cb +
                         (recon_picture_ptr->origin_x / 2 +
                          recon_picture_ptr->origin_y / 2 * recon_picture_ptr->stride_cb);
-                    pcs_ptr->src[2] =
-                        (uint16_t *)recon_picture_ptr->buffer_cr +
+                    pcs_ptr->src[2] = (uint16_t *)recon_picture_ptr->buffer_cr +
                         (recon_picture_ptr->origin_x / 2 +
                          recon_picture_ptr->origin_y / 2 * recon_picture_ptr->stride_cr);
 
                     EbPictureBufferDesc *input_picture_ptr = pcs_ptr->input_frame16bit;
-                    pcs_ptr->ref_coeff[0] =
-                        (uint16_t *)input_picture_ptr->buffer_y +
+                    pcs_ptr->ref_coeff[0] = (uint16_t *)input_picture_ptr->buffer_y +
                         (input_picture_ptr->origin_x +
                          input_picture_ptr->origin_y * input_picture_ptr->stride_y);
-                    pcs_ptr->ref_coeff[1] =
-                        (uint16_t *)input_picture_ptr->buffer_cb +
+                    pcs_ptr->ref_coeff[1] = (uint16_t *)input_picture_ptr->buffer_cb +
                         (input_picture_ptr->origin_x / 2 +
                          input_picture_ptr->origin_y / 2 * input_picture_ptr->stride_cb);
-                    pcs_ptr->ref_coeff[2] =
-                        (uint16_t *)input_picture_ptr->buffer_cr +
+                    pcs_ptr->ref_coeff[2] = (uint16_t *)input_picture_ptr->buffer_cr +
                         (input_picture_ptr->origin_x / 2 +
                          input_picture_ptr->origin_y / 2 * input_picture_ptr->stride_cr);
                 } else {
-                    EbByte rec_ptr =
-                        &((recon_picture_ptr->buffer_y)[recon_picture_ptr->origin_x +
-                                                        recon_picture_ptr->origin_y *
-                                                            recon_picture_ptr->stride_y]);
-                    EbByte rec_ptr_cb =
-                        &((recon_picture_ptr->buffer_cb)[recon_picture_ptr->origin_x / 2 +
-                                                         recon_picture_ptr->origin_y / 2 *
-                                                             recon_picture_ptr->stride_cb]);
-                    EbByte rec_ptr_cr =
-                        &((recon_picture_ptr->buffer_cr)[recon_picture_ptr->origin_x / 2 +
-                                                         recon_picture_ptr->origin_y / 2 *
-                                                             recon_picture_ptr->stride_cr]);
+                    EbByte rec_ptr    = &((
+                        recon_picture_ptr
+                            ->buffer_y)[recon_picture_ptr->origin_x +
+                                        recon_picture_ptr->origin_y * recon_picture_ptr->stride_y]);
+                    EbByte rec_ptr_cb = &(
+                        (recon_picture_ptr->buffer_cb)[recon_picture_ptr->origin_x / 2 +
+                                                       recon_picture_ptr->origin_y / 2 *
+                                                           recon_picture_ptr->stride_cb]);
+                    EbByte rec_ptr_cr = &(
+                        (recon_picture_ptr->buffer_cr)[recon_picture_ptr->origin_x / 2 +
+                                                       recon_picture_ptr->origin_y / 2 *
+                                                           recon_picture_ptr->stride_cr]);
 
                     EbPictureBufferDesc *input_picture_ptr =
                         (EbPictureBufferDesc *)pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr;
-                    EbByte enh_ptr =
-                        &((input_picture_ptr->buffer_y)[input_picture_ptr->origin_x +
-                                                        input_picture_ptr->origin_y *
-                                                            input_picture_ptr->stride_y]);
-                    EbByte enh_ptr_cb =
-                        &((input_picture_ptr->buffer_cb)[input_picture_ptr->origin_x / 2 +
-                                                         input_picture_ptr->origin_y / 2 *
-                                                             input_picture_ptr->stride_cb]);
-                    EbByte enh_ptr_cr =
-                        &((input_picture_ptr->buffer_cr)[input_picture_ptr->origin_x / 2 +
-                                                         input_picture_ptr->origin_y / 2 *
-                                                             input_picture_ptr->stride_cr]);
+                    EbByte enh_ptr    = &((
+                        input_picture_ptr
+                            ->buffer_y)[input_picture_ptr->origin_x +
+                                        input_picture_ptr->origin_y * input_picture_ptr->stride_y]);
+                    EbByte enh_ptr_cb = &(
+                        (input_picture_ptr->buffer_cb)[input_picture_ptr->origin_x / 2 +
+                                                       input_picture_ptr->origin_y / 2 *
+                                                           input_picture_ptr->stride_cb]);
+                    EbByte enh_ptr_cr = &(
+                        (input_picture_ptr->buffer_cr)[input_picture_ptr->origin_x / 2 +
+                                                       input_picture_ptr->origin_y / 2 *
+                                                           input_picture_ptr->stride_cr]);
 
                     pcs_ptr->src[0] = (uint16_t *)rec_ptr;
                     pcs_ptr->src[1] = (uint16_t *)rec_ptr_cb;
@@ -326,9 +315,9 @@ void *dlf_kernel(void *input_ptr) {
 
         pcs_ptr->cdef_segments_column_count = scs_ptr->cdef_segment_column_count;
         pcs_ptr->cdef_segments_row_count    = scs_ptr->cdef_segment_row_count;
-        pcs_ptr->cdef_segments_total_count =
-            (uint16_t)(pcs_ptr->cdef_segments_column_count * pcs_ptr->cdef_segments_row_count);
-        pcs_ptr->tot_seg_searched_cdef = 0;
+        pcs_ptr->cdef_segments_total_count  = (uint16_t)(pcs_ptr->cdef_segments_column_count *
+                                                        pcs_ptr->cdef_segments_row_count);
+        pcs_ptr->tot_seg_searched_cdef      = 0;
         uint32_t segment_index;
 
         for (segment_index = 0; segment_index < pcs_ptr->cdef_segments_total_count;

@@ -68,8 +68,8 @@ void svt_av1_convolve_y_sr_avx2(const uint8_t *src, int32_t src_stride, uint8_t 
                     s_16[0] = _mm_cvtsi32_si128(*(int16_t *)src_ptr);
 
                     do {
-                        const __m128i res =
-                            y_convolve_2tap_2x2_ssse3(src_ptr, src_stride, coeffs_128, s_16);
+                        const __m128i res = y_convolve_2tap_2x2_ssse3(
+                            src_ptr, src_stride, coeffs_128, s_16);
                         const __m128i r = sr_y_round_sse2(res);
                         pack_store_2x2_sse2(r, dst, dst_stride);
                         src_ptr += 2 * src_stride;
@@ -82,8 +82,8 @@ void svt_av1_convolve_y_sr_avx2(const uint8_t *src, int32_t src_stride, uint8_t 
                     s_32[0] = _mm_cvtsi32_si128(*(int32_t *)src_ptr);
 
                     do {
-                        const __m128i res =
-                            y_convolve_2tap_4x2_ssse3(src_ptr, src_stride, coeffs_128, s_32);
+                        const __m128i res = y_convolve_2tap_4x2_ssse3(
+                            src_ptr, src_stride, coeffs_128, s_32);
                         const __m128i r = sr_y_round_sse2(res);
                         pack_store_4x2_sse2(r, dst, dst_stride);
                         src_ptr += 2 * src_stride;
@@ -405,8 +405,8 @@ void svt_av1_convolve_y_sr_avx2(const uint8_t *src, int32_t src_stride, uint8_t 
 
                 do {
                     src_ptr += 2 * src_stride;
-                    const __m128i res =
-                        y_convolve_4tap_2x2_ssse3(src_ptr, src_stride, coeffs_128, s_16, ss_128);
+                    const __m128i res = y_convolve_4tap_2x2_ssse3(
+                        src_ptr, src_stride, coeffs_128, s_16, ss_128);
                     const __m128i r = sr_y_round_sse2(res);
                     pack_store_2x2_sse2(r, dst, dst_stride);
 
@@ -430,8 +430,8 @@ void svt_av1_convolve_y_sr_avx2(const uint8_t *src, int32_t src_stride, uint8_t 
 
                 do {
                     src_ptr += 2 * src_stride;
-                    const __m128i res =
-                        y_convolve_4tap_4x2_ssse3(src_ptr, src_stride, coeffs_128, s_32, ss_128);
+                    const __m128i res = y_convolve_4tap_4x2_ssse3(
+                        src_ptr, src_stride, coeffs_128, s_32, ss_128);
                     const __m128i r = sr_y_round_sse2(res);
                     pack_store_4x2_sse2(r, dst, dst_stride);
 
@@ -459,8 +459,8 @@ void svt_av1_convolve_y_sr_avx2(const uint8_t *src, int32_t src_stride, uint8_t 
 
                 do {
                     src_ptr += 2 * src_stride;
-                    const __m256i res =
-                        y_convolve_4tap_8x2_avx2(src_ptr, src_stride, coeffs_256, s_64, ss_256);
+                    const __m256i res = y_convolve_4tap_8x2_avx2(
+                        src_ptr, src_stride, coeffs_256, s_64, ss_256);
                     sr_y_round_store_8x2_avx2(res, dst, dst_stride);
 
                     ss_256[0] = ss_256[1];
@@ -555,8 +555,8 @@ void svt_av1_convolve_y_sr_avx2(const uint8_t *src, int32_t src_stride, uint8_t 
 
                 do {
                     src_ptr += 2 * src_stride;
-                    const __m128i res =
-                        y_convolve_6tap_2x2_ssse3(src_ptr, src_stride, coeffs_128, s_16, ss_128);
+                    const __m128i res = y_convolve_6tap_2x2_ssse3(
+                        src_ptr, src_stride, coeffs_128, s_16, ss_128);
                     const __m128i r = sr_y_round_sse2(res);
                     pack_store_2x2_sse2(r, dst, dst_stride);
 
@@ -586,8 +586,8 @@ void svt_av1_convolve_y_sr_avx2(const uint8_t *src, int32_t src_stride, uint8_t 
 
                 do {
                     src_ptr += 2 * src_stride;
-                    const __m128i res =
-                        y_convolve_6tap_4x2_ssse3(src_ptr, src_stride, coeffs_128, s_32, ss_128);
+                    const __m128i res = y_convolve_6tap_4x2_ssse3(
+                        src_ptr, src_stride, coeffs_128, s_32, ss_128);
                     const __m128i r = sr_y_round_sse2(res);
                     pack_store_4x2_sse2(r, dst, dst_stride);
 
@@ -622,8 +622,8 @@ void svt_av1_convolve_y_sr_avx2(const uint8_t *src, int32_t src_stride, uint8_t 
                 y = h;
                 do {
                     src_ptr += 2 * src_stride;
-                    const __m256i res =
-                        y_convolve_6tap_8x2_avx2(src_ptr, src_stride, coeffs_256, s_64, ss_256);
+                    const __m256i res = y_convolve_6tap_8x2_avx2(
+                        src_ptr, src_stride, coeffs_256, s_64, ss_256);
                     sr_y_round_store_8x2_avx2(res, dst, dst_stride);
 
                     ss_256[0] = ss_256[1];
@@ -749,8 +749,8 @@ void svt_av1_convolve_y_sr_avx2(const uint8_t *src, int32_t src_stride, uint8_t 
                 ss_128[2] = _mm_unpacklo_epi8(src45, src56);
 
                 do {
-                    const __m128i res =
-                        y_convolve_8tap_2x2_ssse3(src_ptr, src_stride, coeffs_128, s_16, ss_128);
+                    const __m128i res = y_convolve_8tap_2x2_ssse3(
+                        src_ptr, src_stride, coeffs_128, s_16, ss_128);
                     const __m128i r = sr_y_round_sse2(res);
                     pack_store_2x2_sse2(r, dst, dst_stride);
                     ss_128[0] = ss_128[1];
@@ -785,8 +785,8 @@ void svt_av1_convolve_y_sr_avx2(const uint8_t *src, int32_t src_stride, uint8_t 
                 ss_128[2] = _mm_unpacklo_epi8(src45, src56);
 
                 do {
-                    const __m128i res =
-                        y_convolve_8tap_4x2_ssse3(src_ptr, src_stride, coeffs_128, s_32, ss_128);
+                    const __m128i res = y_convolve_8tap_4x2_ssse3(
+                        src_ptr, src_stride, coeffs_128, s_32, ss_128);
                     const __m128i r = sr_y_round_sse2(res);
                     pack_store_4x2_sse2(r, dst, dst_stride);
                     ss_128[0] = ss_128[1];
@@ -826,8 +826,8 @@ void svt_av1_convolve_y_sr_avx2(const uint8_t *src, int32_t src_stride, uint8_t 
 
                 y = h;
                 do {
-                    const __m256i res =
-                        y_convolve_8tap_8x2_avx2(src_ptr, src_stride, coeffs_256, s_64, ss_256);
+                    const __m256i res = y_convolve_8tap_8x2_avx2(
+                        src_ptr, src_stride, coeffs_256, s_64, ss_256);
                     sr_y_round_store_8x2_avx2(res, dst, dst_stride);
                     ss_256[0] = ss_256[1];
                     ss_256[1] = ss_256[2];
@@ -994,8 +994,8 @@ void svt_av1_convolve_x_sr_avx2(const uint8_t *src, int32_t src_stride, uint8_t 
 
                 if (w == 2) {
                     do {
-                        const __m128i res =
-                            x_convolve_2tap_2x2_sse4_1(src_ptr, src_stride, coeffs_128);
+                        const __m128i res = x_convolve_2tap_2x2_sse4_1(
+                            src_ptr, src_stride, coeffs_128);
                         const __m128i r = sr_x_round_sse2(res);
                         pack_store_2x2_sse2(r, dst, dst_stride);
                         src_ptr += 2 * src_stride;
@@ -1004,8 +1004,8 @@ void svt_av1_convolve_x_sr_avx2(const uint8_t *src, int32_t src_stride, uint8_t 
                     } while (y);
                 } else if (w == 4) {
                     do {
-                        const __m128i res =
-                            x_convolve_2tap_4x2_ssse3(src_ptr, src_stride, coeffs_128);
+                        const __m128i res = x_convolve_2tap_4x2_ssse3(
+                            src_ptr, src_stride, coeffs_128);
                         const __m128i r = sr_x_round_sse2(res);
                         pack_store_4x2_sse2(r, dst, dst_stride);
                         src_ptr += 2 * src_stride;
@@ -1197,8 +1197,8 @@ void svt_av1_convolve_x_sr_avx2(const uint8_t *src, int32_t src_stride, uint8_t 
 
             if (w == 8) {
                 do {
-                    const __m256i res =
-                        x_convolve_6tap_8x2_avx2(src_ptr, src_stride, coeffs_256, filt_256);
+                    const __m256i res = x_convolve_6tap_8x2_avx2(
+                        src_ptr, src_stride, coeffs_256, filt_256);
                     sr_x_round_store_8x2_avx2(res, dst, dst_stride);
                     src_ptr += 2 * src_stride;
                     dst += 2 * dst_stride;
@@ -1249,8 +1249,8 @@ void svt_av1_convolve_x_sr_avx2(const uint8_t *src, int32_t src_stride, uint8_t 
 
             if (w == 8) {
                 do {
-                    const __m256i res =
-                        x_convolve_8tap_8x2_avx2(src_ptr, src_stride, coeffs_256, filt_256);
+                    const __m256i res = x_convolve_8tap_8x2_avx2(
+                        src_ptr, src_stride, coeffs_256, filt_256);
                     sr_x_round_store_8x2_avx2(res, dst, dst_stride);
                     src_ptr += 2 * src_stride;
                     dst += 2 * dst_stride;
@@ -1306,8 +1306,8 @@ static INLINE __m256i calc_mask_avx2(const __m256i mask_base, const __m256i s0, 
 }
 void svt_av1_build_compound_diffwtd_mask_highbd_avx2(uint8_t *mask, DIFFWTD_MASK_TYPE mask_type,
                                                      const uint8_t *src0, int src0_stride,
-                                                     const uint8_t *src1, int src1_stride, int h, int w,
-                                                     int bd) {
+                                                     const uint8_t *src1, int src1_stride, int h,
+                                                     int w, int bd) {
     if (w < 16) {
         svt_av1_build_compound_diffwtd_mask_highbd_ssse3(
             mask, mask_type, src0, src0_stride, src1, src1_stride, h, w, bd);
@@ -1367,11 +1367,11 @@ void svt_av1_build_compound_diffwtd_mask_highbd_avx2(uint8_t *mask, DIFFWTD_MASK
             if (mask_type == DIFFWTD_38_INV) {
                 for (int i = 0; i < h; ++i) {
                     for (int j = 0; j < w; j += 16) {
-                        __m256i s0 = _mm256_loadu_si256((const __m256i *)&ssrc0[j]);
-                        __m256i s1 = _mm256_loadu_si256((const __m256i *)&ssrc1[j]);
-                        __m256i diff =
-                            _mm256_sra_epi16(_mm256_abs_epi16(_mm256_sub_epi16(s0, s1)), xshift);
-                        __m256i m = _mm256_min_epi16(
+                        __m256i s0   = _mm256_loadu_si256((const __m256i *)&ssrc0[j]);
+                        __m256i s1   = _mm256_loadu_si256((const __m256i *)&ssrc1[j]);
+                        __m256i diff = _mm256_sra_epi16(_mm256_abs_epi16(_mm256_sub_epi16(s0, s1)),
+                                                        xshift);
+                        __m256i m    = _mm256_min_epi16(
                             _mm256_max_epi16(y0, _mm256_add_epi16(diff, ymask_base)),
                             y_aom_blend_a64_max_alpha);
                         m          = _mm256_sub_epi16(y_aom_blend_a64_max_alpha, m);
@@ -1387,11 +1387,11 @@ void svt_av1_build_compound_diffwtd_mask_highbd_avx2(uint8_t *mask, DIFFWTD_MASK
             } else {
                 for (int i = 0; i < h; ++i) {
                     for (int j = 0; j < w; j += 16) {
-                        __m256i s0 = _mm256_loadu_si256((const __m256i *)&ssrc0[j]);
-                        __m256i s1 = _mm256_loadu_si256((const __m256i *)&ssrc1[j]);
-                        __m256i diff =
-                            _mm256_sra_epi16(_mm256_abs_epi16(_mm256_sub_epi16(s0, s1)), xshift);
-                        __m256i m = _mm256_min_epi16(
+                        __m256i s0   = _mm256_loadu_si256((const __m256i *)&ssrc0[j]);
+                        __m256i s1   = _mm256_loadu_si256((const __m256i *)&ssrc1[j]);
+                        __m256i diff = _mm256_sra_epi16(_mm256_abs_epi16(_mm256_sub_epi16(s0, s1)),
+                                                        xshift);
+                        __m256i m    = _mm256_min_epi16(
                             _mm256_max_epi16(y0, _mm256_add_epi16(diff, ymask_base)),
                             y_aom_blend_a64_max_alpha);
                         m          = _mm256_packus_epi16(m, m);
@@ -1409,8 +1409,8 @@ void svt_av1_build_compound_diffwtd_mask_highbd_avx2(uint8_t *mask, DIFFWTD_MASK
 }
 
 void svt_av1_build_compound_diffwtd_mask_avx2(uint8_t *mask, DIFFWTD_MASK_TYPE mask_type,
-                                              const uint8_t *src0, int src0_stride, const uint8_t *src1,
-                                              int src1_stride, int h, int w) {
+                                              const uint8_t *src0, int src0_stride,
+                                              const uint8_t *src1, int src1_stride, int h, int w) {
     const int     mb          = (mask_type == DIFFWTD_38_INV) ? AOM_BLEND_A64_MAX_ALPHA : 0;
     const __m256i y_mask_base = _mm256_set1_epi16(38 - mb);
     int           i           = 0;
@@ -1430,7 +1430,7 @@ void svt_av1_build_compound_diffwtd_mask_avx2(uint8_t *mask, DIFFWTD_MASK_TYPE m
             const __m128i s1_c         = xx_loadl_32(src1 + src1_stride * 2);
             const __m128i s1_d         = xx_loadl_32(src1 + src1_stride * 3);
             const __m128i s1_a_b       = _mm_unpacklo_epi32(s1_a, s1_b);
-            const __m128i s1_c_d         = _mm_unpacklo_epi32(s1_c, s1_d);
+            const __m128i s1_c_d       = _mm_unpacklo_epi32(s1_c, s1_d);
             const __m128i s1_a_b_c_d   = _mm_unpacklo_epi64(s1_a_b, s1_c_d);
             const __m256i s1_a_b_c_d_w = _mm256_cvtepu8_epi16(s1_a_b_c_d);
             const __m256i m16          = calc_mask_avx2(y_mask_base, s0_a_b_c_d_w, s1_a_b_c_d_w);
@@ -1455,7 +1455,7 @@ void svt_av1_build_compound_diffwtd_mask_avx2(uint8_t *mask, DIFFWTD_MASK_TYPE m
             const __m128i s1_c     = xx_loadl_64(src1 + src1_stride * 2);
             const __m128i s1_d     = xx_loadl_64(src1 + src1_stride * 3);
             const __m256i s1_a_b_w = _mm256_cvtepu8_epi16(_mm_unpacklo_epi64(s1_a, s1_c));
-            const __m256i s1_c_d_w   = _mm256_cvtepu8_epi16(_mm_unpacklo_epi64(s1_b, s1_d));
+            const __m256i s1_c_d_w = _mm256_cvtepu8_epi16(_mm_unpacklo_epi64(s1_b, s1_d));
             const __m256i m16_a_c  = calc_mask_avx2(y_mask_base, s0_a_c_w, s1_a_b_w);
             const __m256i m16_b_d  = calc_mask_avx2(y_mask_base, s0_b_d_w, s1_c_d_w);
             const __m256i m8       = _mm256_packus_epi16(m16_a_c, m16_b_d);
@@ -1474,13 +1474,13 @@ void svt_av1_build_compound_diffwtd_mask_avx2(uint8_t *mask, DIFFWTD_MASK_TYPE m
             const __m256i s0_a_l = _mm256_cvtepu8_epi16(s0_a);
             const __m256i s0_b_l = _mm256_cvtepu8_epi16(s0_b);
             const __m256i s1_a_l = _mm256_cvtepu8_epi16(s1_a);
-            const __m256i s1_b_l   = _mm256_cvtepu8_epi16(s1_b);
+            const __m256i s1_b_l = _mm256_cvtepu8_epi16(s1_b);
 
             const __m256i m16_a_l = calc_mask_avx2(y_mask_base, s0_a_l, s1_a_l);
             const __m256i m16_b_l = calc_mask_avx2(y_mask_base, s0_b_l, s1_b_l);
 
-            const __m256i m8 =
-                _mm256_permute4x64_epi64(_mm256_packus_epi16(m16_a_l, m16_b_l), 0xd8);
+            const __m256i m8 = _mm256_permute4x64_epi64(_mm256_packus_epi16(m16_a_l, m16_b_l),
+                                                        0xd8);
             yy_storeu_256(mask, m8);
             src0 += src0_stride << 1;
             src1 += src1_stride << 1;
@@ -1499,8 +1499,8 @@ void svt_av1_build_compound_diffwtd_mask_avx2(uint8_t *mask, DIFFWTD_MASK_TYPE m
                 const __m256i s1_h  = _mm256_cvtepu8_epi16(_mm256_extracti128_si256(s1, 1));
                 const __m256i m16_l = calc_mask_avx2(y_mask_base, s0_l, s1_l);
                 const __m256i m16_h = calc_mask_avx2(y_mask_base, s0_h, s1_h);
-                const __m256i m8 =
-                    _mm256_permute4x64_epi64(_mm256_packus_epi16(m16_l, m16_h), 0xd8);
+                const __m256i m8    = _mm256_permute4x64_epi64(_mm256_packus_epi16(m16_l, m16_h),
+                                                            0xd8);
                 yy_storeu_256(mask + j, m8);
                 j += 32;
             } while (j < w);
@@ -1513,14 +1513,13 @@ void svt_av1_build_compound_diffwtd_mask_avx2(uint8_t *mask, DIFFWTD_MASK_TYPE m
 }
 ////////
 
-
 #define MAX_MASK_VALUE (1 << WEDGE_WEIGHT_BITS)
 
 /**
  * See svt_av1_wedge_sse_from_residuals_c
  */
-uint64_t svt_av1_wedge_sse_from_residuals_avx2(const int16_t *r1, const int16_t *d, const uint8_t *m,
-                                               int N) {
+uint64_t svt_av1_wedge_sse_from_residuals_avx2(const int16_t *r1, const int16_t *d,
+                                               const uint8_t *m, int N) {
     int n = -N;
 
     uint64_t csse;
@@ -1555,8 +1554,8 @@ uint64_t svt_av1_wedge_sse_from_residuals_avx2(const int16_t *r1, const int16_t 
 
         const __m256i v_sq0_d = _mm256_madd_epi16(v_t0_w, v_t0_w);
 
-        const __m256i v_sum0_q =
-            _mm256_add_epi64(_mm256_and_si256(v_sq0_d, v_zext_q), _mm256_srli_epi64(v_sq0_d, 32));
+        const __m256i v_sum0_q = _mm256_add_epi64(_mm256_and_si256(v_sq0_d, v_zext_q),
+                                                  _mm256_srli_epi64(v_sq0_d, 32));
 
         v_acc0_q = _mm256_add_epi64(v_acc0_q, v_sum0_q);
 
@@ -1641,8 +1640,8 @@ static INLINE void aom_subtract_block_128xn_avx2(int rows, int16_t *diff_ptr, pt
     }
 }
 void svt_aom_subtract_block_avx2(int rows, int cols, int16_t *diff_ptr, ptrdiff_t diff_stride,
-                                 const uint8_t *src_ptr, ptrdiff_t src_stride, const uint8_t *pred_ptr,
-                                 ptrdiff_t pred_stride) {
+                                 const uint8_t *src_ptr, ptrdiff_t src_stride,
+                                 const uint8_t *pred_ptr, ptrdiff_t pred_stride) {
     switch (cols) {
     case 16:
         aom_subtract_block_16xn_avx2(
@@ -1669,22 +1668,22 @@ void svt_aom_subtract_block_avx2(int rows, int cols, int16_t *diff_ptr, ptrdiff_
 
 static INLINE void sse_w4x4_avx2(const uint8_t *a, int a_stride, const uint8_t *b, int b_stride,
                                  __m256i *sum) {
-    const __m128i v_a0 = xx_loadl_32(a);
-    const __m128i v_a1 = xx_loadl_32(a + a_stride);
-    const __m128i v_a2 = xx_loadl_32(a + a_stride * 2);
-    const __m128i v_a3 = xx_loadl_32(a + a_stride * 3);
-    const __m128i v_b0 = xx_loadl_32(b);
-    const __m128i v_b1 = xx_loadl_32(b + b_stride);
-    const __m128i v_b2 = xx_loadl_32(b + b_stride * 2);
-    const __m128i v_b3 = xx_loadl_32(b + b_stride * 3);
-    const __m128i v_a0123 =
-        _mm_unpacklo_epi64(_mm_unpacklo_epi32(v_a0, v_a1), _mm_unpacklo_epi32(v_a2, v_a3));
-    const __m128i v_b0123 =
-        _mm_unpacklo_epi64(_mm_unpacklo_epi32(v_b0, v_b1), _mm_unpacklo_epi32(v_b2, v_b3));
-    const __m256i v_a_w = _mm256_cvtepu8_epi16(v_a0123);
-    const __m256i v_b_w = _mm256_cvtepu8_epi16(v_b0123);
-    const __m256i v_d_w = _mm256_sub_epi16(v_a_w, v_b_w);
-    *sum                = _mm256_add_epi32(*sum, _mm256_madd_epi16(v_d_w, v_d_w));
+    const __m128i v_a0    = xx_loadl_32(a);
+    const __m128i v_a1    = xx_loadl_32(a + a_stride);
+    const __m128i v_a2    = xx_loadl_32(a + a_stride * 2);
+    const __m128i v_a3    = xx_loadl_32(a + a_stride * 3);
+    const __m128i v_b0    = xx_loadl_32(b);
+    const __m128i v_b1    = xx_loadl_32(b + b_stride);
+    const __m128i v_b2    = xx_loadl_32(b + b_stride * 2);
+    const __m128i v_b3    = xx_loadl_32(b + b_stride * 3);
+    const __m128i v_a0123 = _mm_unpacklo_epi64(_mm_unpacklo_epi32(v_a0, v_a1),
+                                               _mm_unpacklo_epi32(v_a2, v_a3));
+    const __m128i v_b0123 = _mm_unpacklo_epi64(_mm_unpacklo_epi32(v_b0, v_b1),
+                                               _mm_unpacklo_epi32(v_b2, v_b3));
+    const __m256i v_a_w   = _mm256_cvtepu8_epi16(v_a0123);
+    const __m256i v_b_w   = _mm256_cvtepu8_epi16(v_b0123);
+    const __m256i v_d_w   = _mm256_sub_epi16(v_a_w, v_b_w);
+    *sum                  = _mm256_add_epi32(*sum, _mm256_madd_epi16(v_d_w, v_d_w));
 }
 
 static INLINE void sse_w8x2_avx2(const uint8_t *a, int a_stride, const uint8_t *b, int b_stride,
@@ -1719,9 +1718,9 @@ static INLINE int64_t summary_all_avx2(const __m256i *sum_all) {
     const __m256i sum0_4x64 = _mm256_unpacklo_epi32(*sum_all, zero);
     const __m256i sum1_4x64 = _mm256_unpackhi_epi32(*sum_all, zero);
     const __m256i sum_4x64  = _mm256_add_epi64(sum0_4x64, sum1_4x64);
-    const __m128i sum_2x64 =
-        _mm_add_epi64(_mm256_castsi256_si128(sum_4x64), _mm256_extracti128_si256(sum_4x64, 1));
-    const __m128i sum_1x64 = _mm_add_epi64(sum_2x64, _mm_srli_si128(sum_2x64, 8));
+    const __m128i sum_2x64  = _mm_add_epi64(_mm256_castsi256_si128(sum_4x64),
+                                           _mm256_extracti128_si256(sum_4x64, 1));
+    const __m128i sum_1x64  = _mm_add_epi64(sum_2x64, _mm_srli_si128(sum_2x64, 8));
     xx_storel_64(&sum, sum_1x64);
     return sum;
 }
@@ -1840,96 +1839,95 @@ int64_t svt_aom_sse_avx2(const uint8_t *a, int a_stride, const uint8_t *b, int b
 }
 
 int svt_aom_satd_avx2(const TranLow *coeff, int length) {
-  __m256i accum = _mm256_setzero_si256();
-  int i;
+    __m256i accum = _mm256_setzero_si256();
+    int     i;
 
-  for (i = 0; i < length; i += 8, coeff += 8) {
-    const __m256i src_line = _mm256_loadu_si256((const __m256i *)coeff);
-    const __m256i abs = _mm256_abs_epi32(src_line);
-    accum = _mm256_add_epi32(accum, abs);
-  }
+    for (i = 0; i < length; i += 8, coeff += 8) {
+        const __m256i src_line = _mm256_loadu_si256((const __m256i *)coeff);
+        const __m256i abs      = _mm256_abs_epi32(src_line);
+        accum                  = _mm256_add_epi32(accum, abs);
+    }
 
-  {  // 32 bit horizontal add
-    const __m256i a = _mm256_srli_si256(accum, 8);
-    const __m256i b = _mm256_add_epi32(accum, a);
-    const __m256i c = _mm256_srli_epi64(b, 32);
-    const __m256i d = _mm256_add_epi32(b, c);
-    const __m128i accum_128 = _mm_add_epi32(_mm256_castsi256_si128(d),
-                                            _mm256_extractf128_si256(d, 1));
-    return _mm_cvtsi128_si32(accum_128);
-  }
+    { // 32 bit horizontal add
+        const __m256i a         = _mm256_srli_si256(accum, 8);
+        const __m256i b         = _mm256_add_epi32(accum, a);
+        const __m256i c         = _mm256_srli_epi64(b, 32);
+        const __m256i d         = _mm256_add_epi32(b, c);
+        const __m128i accum_128 = _mm_add_epi32(_mm256_castsi256_si128(d),
+                                                _mm256_extractf128_si256(d, 1));
+        return _mm_cvtsi128_si32(accum_128);
+    }
 }
 
-static INLINE void read_coeff(const TranLow *coeff, intptr_t offset,
-                              __m256i *c) {
-  const TranLow *addr = coeff + offset;
+static INLINE void read_coeff(const TranLow *coeff, intptr_t offset, __m256i *c) {
+    const TranLow *addr = coeff + offset;
 
-  if (sizeof(TranLow) == 4) {
-    const __m256i x0 = _mm256_loadu_si256((const __m256i *)addr);
-    const __m256i x1 = _mm256_loadu_si256((const __m256i *)addr + 1);
-    const __m256i y = _mm256_packs_epi32(x0, x1);
-    *c = _mm256_permute4x64_epi64(y, 0xD8);
-  } else {
-    *c = _mm256_loadu_si256((const __m256i *)addr);
-  }
+    if (sizeof(TranLow) == 4) {
+        const __m256i x0 = _mm256_loadu_si256((const __m256i *)addr);
+        const __m256i x1 = _mm256_loadu_si256((const __m256i *)addr + 1);
+        const __m256i y  = _mm256_packs_epi32(x0, x1);
+        *c               = _mm256_permute4x64_epi64(y, 0xD8);
+    } else {
+        *c = _mm256_loadu_si256((const __m256i *)addr);
+    }
 }
 
-int64_t svt_av1_block_error_avx2(const TranLow *coeff, const TranLow *dqcoeff,
-                                 intptr_t block_size, int64_t *ssz) {
-  __m256i sse_reg, ssz_reg, coeff_reg, dqcoeff_reg;
-  __m256i exp_dqcoeff_lo, exp_dqcoeff_hi, exp_coeff_lo, exp_coeff_hi;
-  __m256i sse_reg_64hi, ssz_reg_64hi;
-  __m128i sse_reg128, ssz_reg128;
-  int64_t sse;
-  int i;
-  const __m256i zero_reg = _mm256_setzero_si256();
+int64_t svt_av1_block_error_avx2(const TranLow *coeff, const TranLow *dqcoeff, intptr_t block_size,
+                                 int64_t *ssz) {
+    __m256i       sse_reg, ssz_reg, coeff_reg, dqcoeff_reg;
+    __m256i       exp_dqcoeff_lo, exp_dqcoeff_hi, exp_coeff_lo, exp_coeff_hi;
+    __m256i       sse_reg_64hi, ssz_reg_64hi;
+    __m128i       sse_reg128, ssz_reg128;
+    int64_t       sse;
+    int           i;
+    const __m256i zero_reg = _mm256_setzero_si256();
 
-  // init sse and ssz registerd to zero
-  sse_reg = _mm256_setzero_si256();
-  ssz_reg = _mm256_setzero_si256();
+    // init sse and ssz registerd to zero
+    sse_reg = _mm256_setzero_si256();
+    ssz_reg = _mm256_setzero_si256();
 
-  for (i = 0; i < block_size; i += 16) {
-    // load 32 bytes from coeff and dqcoeff
-    read_coeff(coeff, i, &coeff_reg);
-    read_coeff(dqcoeff, i, &dqcoeff_reg);
-    // dqcoeff - coeff
-    dqcoeff_reg = _mm256_sub_epi16(dqcoeff_reg, coeff_reg);
-    // madd (dqcoeff - coeff)
-    dqcoeff_reg = _mm256_madd_epi16(dqcoeff_reg, dqcoeff_reg);
-    // madd coeff
-    coeff_reg = _mm256_madd_epi16(coeff_reg, coeff_reg);
-    // expand each double word of madd (dqcoeff - coeff) to quad word
-    exp_dqcoeff_lo = _mm256_unpacklo_epi32(dqcoeff_reg, zero_reg);
-    exp_dqcoeff_hi = _mm256_unpackhi_epi32(dqcoeff_reg, zero_reg);
-    // expand each double word of madd (coeff) to quad word
-    exp_coeff_lo = _mm256_unpacklo_epi32(coeff_reg, zero_reg);
-    exp_coeff_hi = _mm256_unpackhi_epi32(coeff_reg, zero_reg);
-    // add each quad word of madd (dqcoeff - coeff) and madd (coeff)
-    sse_reg = _mm256_add_epi64(sse_reg, exp_dqcoeff_lo);
-    ssz_reg = _mm256_add_epi64(ssz_reg, exp_coeff_lo);
-    sse_reg = _mm256_add_epi64(sse_reg, exp_dqcoeff_hi);
-    ssz_reg = _mm256_add_epi64(ssz_reg, exp_coeff_hi);
-  }
-  // save the higher 64 bit of each 128 bit lane
-  sse_reg_64hi = _mm256_srli_si256(sse_reg, 8);
-  ssz_reg_64hi = _mm256_srli_si256(ssz_reg, 8);
-  // add the higher 64 bit to the low 64 bit
-  sse_reg = _mm256_add_epi64(sse_reg, sse_reg_64hi);
-  ssz_reg = _mm256_add_epi64(ssz_reg, ssz_reg_64hi);
+    for (i = 0; i < block_size; i += 16) {
+        // load 32 bytes from coeff and dqcoeff
+        read_coeff(coeff, i, &coeff_reg);
+        read_coeff(dqcoeff, i, &dqcoeff_reg);
+        // dqcoeff - coeff
+        dqcoeff_reg = _mm256_sub_epi16(dqcoeff_reg, coeff_reg);
+        // madd (dqcoeff - coeff)
+        dqcoeff_reg = _mm256_madd_epi16(dqcoeff_reg, dqcoeff_reg);
+        // madd coeff
+        coeff_reg = _mm256_madd_epi16(coeff_reg, coeff_reg);
+        // expand each double word of madd (dqcoeff - coeff) to quad word
+        exp_dqcoeff_lo = _mm256_unpacklo_epi32(dqcoeff_reg, zero_reg);
+        exp_dqcoeff_hi = _mm256_unpackhi_epi32(dqcoeff_reg, zero_reg);
+        // expand each double word of madd (coeff) to quad word
+        exp_coeff_lo = _mm256_unpacklo_epi32(coeff_reg, zero_reg);
+        exp_coeff_hi = _mm256_unpackhi_epi32(coeff_reg, zero_reg);
+        // add each quad word of madd (dqcoeff - coeff) and madd (coeff)
+        sse_reg = _mm256_add_epi64(sse_reg, exp_dqcoeff_lo);
+        ssz_reg = _mm256_add_epi64(ssz_reg, exp_coeff_lo);
+        sse_reg = _mm256_add_epi64(sse_reg, exp_dqcoeff_hi);
+        ssz_reg = _mm256_add_epi64(ssz_reg, exp_coeff_hi);
+    }
+    // save the higher 64 bit of each 128 bit lane
+    sse_reg_64hi = _mm256_srli_si256(sse_reg, 8);
+    ssz_reg_64hi = _mm256_srli_si256(ssz_reg, 8);
+    // add the higher 64 bit to the low 64 bit
+    sse_reg = _mm256_add_epi64(sse_reg, sse_reg_64hi);
+    ssz_reg = _mm256_add_epi64(ssz_reg, ssz_reg_64hi);
 
-  // add each 64 bit from each of the 128 bit lane of the 256 bit
-  sse_reg128 = _mm_add_epi64(_mm256_castsi256_si128(sse_reg),
-                             _mm256_extractf128_si256(sse_reg, 1));
+    // add each 64 bit from each of the 128 bit lane of the 256 bit
+    sse_reg128 = _mm_add_epi64(_mm256_castsi256_si128(sse_reg),
+                               _mm256_extractf128_si256(sse_reg, 1));
 
-  ssz_reg128 = _mm_add_epi64(_mm256_castsi256_si128(ssz_reg),
-                             _mm256_extractf128_si256(ssz_reg, 1));
+    ssz_reg128 = _mm_add_epi64(_mm256_castsi256_si128(ssz_reg),
+                               _mm256_extractf128_si256(ssz_reg, 1));
 
-  // store the results
-  _mm_storel_epi64((__m128i *)(&sse), sse_reg128);
+    // store the results
+    _mm_storel_epi64((__m128i *)(&sse), sse_reg128);
 
-  _mm_storel_epi64((__m128i *)(ssz), ssz_reg128);
-  _mm256_zeroupper();
-  return sse;
+    _mm_storel_epi64((__m128i *)(ssz), ssz_reg128);
+    _mm256_zeroupper();
+    return sse;
 }
 static INLINE uint64_t xx_cvtsi128_si64(__m128i a) {
 #if ARCH_X86_64
@@ -2070,7 +2068,8 @@ int8_t svt_av1_wedge_sign_from_residuals_avx2(const int16_t *ds, const uint8_t *
 /**
  * svt_av1_wedge_compute_delta_squares_c
  */
-void svt_av1_wedge_compute_delta_squares_avx2(int16_t *d, const int16_t *a, const int16_t *b, int N) {
+void svt_av1_wedge_compute_delta_squares_avx2(int16_t *d, const int16_t *a, const int16_t *b,
+                                              int N) {
     const __m256i v_neg_w = _mm256_set1_epi32(0xffff0001);
 
     assert(N % 64 == 0);

@@ -33,7 +33,8 @@ void svtav1_predict_intra_block(PartitionInfo *xd, int32_t plane, TxSize tx_size
                                 int32_t blk_mi_row_off, EbBitDepthEnum bit_depth, EbBool is_16bit);
 
 void svt_cfl_store_tx(PartitionInfo *xd, CflCtx *cfl_ctx, int row, int col, TxSize tx_size,
-                  BlockSize bsize, EbColorConfig *cc, uint8_t *dst_buff, uint32_t dst_stride, EbBool is_16bit);
+                      BlockSize bsize, EbColorConfig *cc, uint8_t *dst_buff, uint32_t dst_stride,
+                      EbBool is_16bit);
 
 #ifdef __cplusplus
 }

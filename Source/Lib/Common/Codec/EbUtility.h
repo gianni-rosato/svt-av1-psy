@@ -56,12 +56,16 @@ typedef struct BlockGeom {
     uint16_t  txb_count[MAX_VARTX_DEPTH + 1]; //4-2-1
     TxSize    txsize[MAX_VARTX_DEPTH + 1][MAX_TXB_COUNT];
     TxSize    txsize_uv[MAX_VARTX_DEPTH + 1][MAX_TXB_COUNT];
-    uint16_t tx_org_x[2][MAX_VARTX_DEPTH + 1][MAX_TXB_COUNT]; //origin is SB - separate tables for INTRA (idx 0) and INTER (idx 1)
-    uint16_t tx_org_y[2][MAX_VARTX_DEPTH + 1][MAX_TXB_COUNT]; //origin is SB - separate tables for INTRA (idx 0) and INTER (idx 1)
-    uint8_t   tx_width[MAX_VARTX_DEPTH + 1][MAX_TXB_COUNT]; //tx_size_wide
-    uint8_t   tx_height[MAX_VARTX_DEPTH + 1][MAX_TXB_COUNT]; //tx_size_wide
-    uint8_t   tx_width_uv[MAX_VARTX_DEPTH + 1][MAX_TXB_COUNT]; //tx_size_wide
-    uint8_t   tx_height_uv[MAX_VARTX_DEPTH + 1][MAX_TXB_COUNT]; //tx_size_wide
+    uint16_t  tx_org_x
+        [2][MAX_VARTX_DEPTH + 1]
+        [MAX_TXB_COUNT]; //origin is SB - separate tables for INTRA (idx 0) and INTER (idx 1)
+    uint16_t tx_org_y
+        [2][MAX_VARTX_DEPTH + 1]
+        [MAX_TXB_COUNT]; //origin is SB - separate tables for INTRA (idx 0) and INTER (idx 1)
+    uint8_t tx_width[MAX_VARTX_DEPTH + 1][MAX_TXB_COUNT]; //tx_size_wide
+    uint8_t tx_height[MAX_VARTX_DEPTH + 1][MAX_TXB_COUNT]; //tx_size_wide
+    uint8_t tx_width_uv[MAX_VARTX_DEPTH + 1][MAX_TXB_COUNT]; //tx_size_wide
+    uint8_t tx_height_uv[MAX_VARTX_DEPTH + 1][MAX_TXB_COUNT]; //tx_size_wide
 
     uint16_t blkidx_mds; // block index in md scan
     uint16_t blkidx_dps; // block index in depth scan
@@ -97,7 +101,8 @@ static const BlockSize ss_size_lookup[BlockSizeS_ALL][2][2] = {
     {{BLOCK_64X16, BLOCK_INVALID}, {BLOCK_32X16, BLOCK_32X8}}};
 static INLINE BlockSize get_plane_block_size(BlockSize bsize, int32_t subsampling_x,
                                              int32_t subsampling_y) {
-    if (bsize == BLOCK_INVALID) return BLOCK_INVALID;
+    if (bsize == BLOCK_INVALID)
+        return BLOCK_INVALID;
     return ss_size_lookup[bsize][subsampling_x][subsampling_y];
 }
 
@@ -105,7 +110,8 @@ static INLINE TxSize av1_get_max_uv_txsize(BlockSize bsize, int32_t subsampling_
                                            int32_t subsampling_y) {
     const BlockSize plane_bsize = get_plane_block_size(bsize, subsampling_x, subsampling_y);
     TxSize          uv_tx       = TX_INVALID;
-    if (plane_bsize < BlockSizeS_ALL) uv_tx = max_txsize_rect_lookup[plane_bsize];
+    if (plane_bsize < BlockSizeS_ALL)
+        uv_tx = max_txsize_rect_lookup[plane_bsize];
     return av1_get_adjusted_tx_size(uv_tx);
 }
 
@@ -122,13 +128,13 @@ const BlockGeom* get_blk_geom_mds(uint32_t bidx_mds);
 
 // CU Stats Helper Functions
 typedef struct CodedBlockStats {
-    uint8_t  depth;
-    uint8_t  size;
-    uint8_t  size_log2;
+    uint8_t depth;
+    uint8_t size;
+    uint8_t size_log2;
     uint8_t origin_x;
     uint8_t origin_y;
-    uint8_t  cu_num_in_depth;
-    uint8_t  parent32x32_index;
+    uint8_t cu_num_in_depth;
+    uint8_t parent32x32_index;
 } CodedBlockStats;
 
 extern void* svt_aom_memalign(size_t align, size_t size);
@@ -151,7 +157,9 @@ extern const CodedBlockStats* get_coded_blk_stats(const uint32_t cu_idx);
      ****************************/
 
 #define MULTI_LINE_MACRO_BEGIN do {
-#define MULTI_LINE_MACRO_END } while (0)
+#define MULTI_LINE_MACRO_END \
+    }                        \
+    while (0)
 
 //**************************************************
 // MACROS
@@ -207,14 +215,14 @@ extern const CodedBlockStats* get_coded_blk_stats(const uint32_t cu_idx);
     (x) |= ((x) >> 16);             \
     (x) += 1;                       \
     MULTI_LINE_MACRO_END
-#define LOG2F_8(x)               \
-    (((x) < 0x0002u)             \
-         ? 0u                    \
-         : ((x) < 0x0004u)       \
-               ? 1u              \
-               : ((x) < 0x0008u) \
-                     ? 2u        \
-                     : ((x) < 0x0010u) ? 3u : ((x) < 0x0020u) ? 4u : ((x) < 0x0040u) ? 5u : 6u)
+#define LOG2F_8(x)              \
+    (((x) < 0x0002u)       ? 0u \
+         : ((x) < 0x0004u) ? 1u \
+         : ((x) < 0x0008u) ? 2u \
+         : ((x) < 0x0010u) ? 3u \
+         : ((x) < 0x0020u) ? 4u \
+         : ((x) < 0x0040u) ? 5u \
+                           : 6u)
 
 #define TWO_D_INDEX(x, y, stride) (((y) * (stride)) + (x))
 

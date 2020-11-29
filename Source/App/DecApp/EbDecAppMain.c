@@ -136,16 +136,16 @@ int32_t main(int32_t argc, char *argv[]) {
 #endif
     // GLOBAL VARIABLES
     EbErrorType               return_error = EB_ErrorNone; // Error Handling
-    EbSvtAv1DecConfiguration *config_ptr =
-        (EbSvtAv1DecConfiguration *)malloc(sizeof(EbSvtAv1DecConfiguration));
+    EbSvtAv1DecConfiguration *config_ptr   = (EbSvtAv1DecConfiguration *)malloc(
+        sizeof(EbSvtAv1DecConfiguration));
     CliInput cli;
     cli.in_file     = NULL;
     cli.out_file    = NULL;
     cli.enable_md5  = 0;
     cli.fps_frm     = 0;
     cli.fps_summary = 0;
-    cli.width = 0;
-    cli.height = 0;
+    cli.width       = 0;
+    cli.height      = 0;
 
     DecInputContext    input   = {NULL, NULL};
     ObuDecInputContext obu_ctx = {NULL, 0, 0, 0, 0};
@@ -167,7 +167,8 @@ int32_t main(int32_t argc, char *argv[]) {
     size_t   bytes_in_buffer = 0, buffer_size = 0;
 
     // Initialize config
-    if (!config_ptr) return EB_ErrorInsufficientResources;
+    if (!config_ptr)
+        return EB_ErrorInsufficientResources;
     EbComponentType *p_handle;
     void *           p_app_data = NULL;
 
@@ -195,11 +196,11 @@ int32_t main(int32_t argc, char *argv[]) {
 
         EbBufferHeaderType *recon_buffer = malloc(sizeof(*recon_buffer));
         assert(recon_buffer != NULL);
-        recon_buffer->p_buffer           = malloc(sizeof(EbSvtIOFormat));
+        recon_buffer->p_buffer = malloc(sizeof(EbSvtIOFormat));
 
         /* FilmGrain module req. even dim. for internal operation */
-        int w = (cli.width & 1) ? (cli.width + 1) : cli.width;
-        int h = (cli.height & 1) ? (cli.height + 1) : cli.height;
+        int w    = (cli.width & 1) ? (cli.width + 1) : cli.width;
+        int h    = (cli.height & 1) ? (cli.height + 1) : cli.height;
         int size = (config_ptr->max_bit_depth == EB_EIGHT_BIT) ? sizeof(uint8_t) : sizeof(uint16_t);
         size     = size * w * h;
         assert(recon_buffer->p_buffer != NULL);
@@ -216,18 +217,20 @@ int32_t main(int32_t argc, char *argv[]) {
                 fprintf(stderr, "Skipping first %" PRIu64 " frames.\n", config_ptr->skip_frames);
             uint64_t skip_frame = config_ptr->skip_frames;
             while (skip_frame) {
-                if (!read_input_frame(&input, &buf, &bytes_in_buffer, &buffer_size, NULL)) break;
+                if (!read_input_frame(&input, &buf, &bytes_in_buffer, &buffer_size, NULL))
+                    break;
                 skip_frame--;
             }
             stop_after = config_ptr->frames_to_be_decoded;
-            if (enable_md5) md5_init(&md5_ctx);
+            if (enable_md5)
+                md5_init(&md5_ctx);
             // Input Loop Thread
             while (read_input_frame(&input, &buf, &bytes_in_buffer, &buffer_size, NULL)) {
                 if (!stop_after || in_frame < stop_after) {
                     dec_timer_start(&timer);
 
-                    return_error |=
-                        svt_av1_dec_frame(p_handle, buf, bytes_in_buffer, obu_ctx.is_annexb);
+                    return_error |= svt_av1_dec_frame(
+                        p_handle, buf, bytes_in_buffer, obu_ctx.is_annexb);
 
                     dec_timer_mark(&timer);
                     dx_time += dec_timer_elapsed(&timer);
@@ -236,10 +239,13 @@ int32_t main(int32_t argc, char *argv[]) {
 
                     if (svt_av1_dec_get_picture(p_handle, recon_buffer, stream_info, frame_info) !=
                         EB_DecNoOutputPicture) {
-                        if (fps_frm) show_progress(in_frame, dx_time);
+                        if (fps_frm)
+                            show_progress(in_frame, dx_time);
 
-                        if (enable_md5) write_md5(recon_buffer, &md5_ctx);
-                        if (cli.out_file != NULL) write_frame(recon_buffer, &cli);
+                        if (enable_md5)
+                            write_md5(recon_buffer, &md5_ctx);
+                        if (cli.out_file != NULL)
+                            write_frame(recon_buffer, &cli);
                     }
                 } else
                     break;
@@ -273,8 +279,10 @@ int32_t main(int32_t argc, char *argv[]) {
     return_error |= svt_av1_dec_deinit_handle(p_handle);
 
 fail:
-    if (cli.in_file) fclose(cli.in_file);
-    if (cli.out_file) fclose(cli.out_file);
+    if (cli.in_file)
+        fclose(cli.in_file);
+    if (cli.out_file)
+        fclose(cli.out_file);
 
     free(config_ptr);
 

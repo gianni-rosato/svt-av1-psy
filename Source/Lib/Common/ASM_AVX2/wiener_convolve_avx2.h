@@ -41,7 +41,9 @@ static INLINE int calc_zero_coef(const int16_t* const filter_x, const int16_t* c
         cnt++;
         if (!(filter_x[1] | filter_y[1])) {
             cnt++;
-            if (!(filter_x[2] | filter_y[2])) { cnt++; }
+            if (!(filter_x[2] | filter_y[2])) {
+                cnt++;
+            }
         }
     }
     return cnt;

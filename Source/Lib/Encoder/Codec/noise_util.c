@@ -36,9 +36,10 @@ struct aom_noise_tx_t {
 };
 
 struct aom_noise_tx_t *svt_aom_noise_tx_malloc(int32_t block_size) {
-    struct aom_noise_tx_t *noise_tx =
-        (struct aom_noise_tx_t *)malloc(sizeof(struct aom_noise_tx_t));
-    if (!noise_tx) return NULL;
+    struct aom_noise_tx_t *noise_tx = (struct aom_noise_tx_t *)malloc(
+        sizeof(struct aom_noise_tx_t));
+    if (!noise_tx)
+        return NULL;
     memset(noise_tx, 0, sizeof(*noise_tx));
     switch (block_size) {
     case 2:
@@ -67,10 +68,10 @@ struct aom_noise_tx_t *svt_aom_noise_tx_malloc(int32_t block_size) {
         return NULL;
     }
     noise_tx->block_size = block_size;
-    noise_tx->tx_block =
-        (float *)svt_aom_memalign(32, 2 * sizeof(*noise_tx->tx_block) * block_size * block_size);
-    noise_tx->temp =
-        (float *)svt_aom_memalign(32, 2 * sizeof(*noise_tx->temp) * block_size * block_size);
+    noise_tx->tx_block   = (float *)svt_aom_memalign(
+        32, 2 * sizeof(*noise_tx->tx_block) * block_size * block_size);
+    noise_tx->temp = (float *)svt_aom_memalign(
+        32, 2 * sizeof(*noise_tx->temp) * block_size * block_size);
     if (!noise_tx->tx_block || !noise_tx->temp) {
         svt_aom_noise_tx_free(noise_tx);
         return NULL;
@@ -113,12 +114,12 @@ void svt_aom_noise_tx_inverse(struct aom_noise_tx_t *noise_tx, float *data) {
 }
 
 void svt_aom_noise_tx_free(struct aom_noise_tx_t *noise_tx) {
-    if (!noise_tx) return;
+    if (!noise_tx)
+        return;
     svt_aom_free(noise_tx->tx_block);
     svt_aom_free(noise_tx->temp);
     free(noise_tx);
 }
-
 
 #define OD_DIVU_DMAX (1024)
 uint32_t od_divu_small_consts[OD_DIVU_DMAX][2] = {

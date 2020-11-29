@@ -29,10 +29,9 @@
 // taps should sum to FILTER_WEIGHT. pixel_step defines whether the filter is
 // applied horizontally (pixel_step = 1) or vertically (pixel_step = stride).
 // It defines the offset required to move from one input to the next.
-static void aom_var_filter_block2d_bil_first_pass_c(const uint8_t *a, uint16_t *b,
-                                                    unsigned int src_pixels_per_line,
-                                                    unsigned int pixel_step, unsigned int output_height,
-                                                    unsigned int output_width, const uint8_t *filter) {
+static void aom_var_filter_block2d_bil_first_pass_c(
+    const uint8_t *a, uint16_t *b, unsigned int src_pixels_per_line, unsigned int pixel_step,
+    unsigned int output_height, unsigned int output_width, const uint8_t *filter) {
     unsigned int i, j;
 
     for (i = 0; i < output_height; ++i) {
@@ -57,10 +56,9 @@ static void aom_var_filter_block2d_bil_first_pass_c(const uint8_t *a, uint16_t *
 // filter is applied horizontally (pixel_step = 1) or vertically
 // (pixel_step = stride). It defines the offset required to move from one input
 // to the next. Output is 8-bit.
-static void aom_var_filter_block2d_bil_second_pass_c(const uint16_t *a, uint8_t *b,
-                                                     unsigned int src_pixels_per_line,
-                                                     unsigned int pixel_step, unsigned int output_height,
-                                                     unsigned int output_width, const uint8_t *filter) {
+static void aom_var_filter_block2d_bil_second_pass_c(
+    const uint16_t *a, uint8_t *b, unsigned int src_pixels_per_line, unsigned int pixel_step,
+    unsigned int output_height, unsigned int output_width, const uint8_t *filter) {
     unsigned int i, j;
 
     for (i = 0; i < output_height; ++i) {
@@ -213,16 +211,16 @@ static INLINE const InterpFilterParams *av1_get_filter(int subpel_search) {
 // Get pred block from up-sampled reference.
 void svt_aom_upsampled_pred_c(MacroBlockD *                 xd,
                               const struct AV1Common *const cm, //const AV1_COMMON *const cm,
-                              int mi_row, int mi_col, const MV *const mv, uint8_t *comp_pred, int width,
-                              int height, int subpel_x_q3, int subpel_y_q3, const uint8_t *ref,
-                              int ref_stride, int subpel_search) {
+                              int mi_row, int mi_col, const MV *const mv, uint8_t *comp_pred,
+                              int width, int height, int subpel_x_q3, int subpel_y_q3,
+                              const uint8_t *ref, int ref_stride, int subpel_search) {
     (void)xd;
     (void)cm;
     (void)mi_row;
     (void)mi_col;
     (void)mv;
     const InterpFilterParams *filter = av1_get_filter(subpel_search);
-    assert(filter!=NULL);
+    assert(filter != NULL);
     if (!subpel_x_q3 && !subpel_y_q3) {
         for (int i = 0; i < height; i++) {
             svt_memcpy(comp_pred, ref, width * sizeof(*comp_pred));
@@ -230,21 +228,21 @@ void svt_aom_upsampled_pred_c(MacroBlockD *                 xd,
             ref += ref_stride;
         }
     } else if (!subpel_y_q3) {
-        const int16_t *const kernel =
-            av1_get_interp_filter_subpel_kernel(*filter, subpel_x_q3 << 1);
+        const int16_t *const kernel = av1_get_interp_filter_subpel_kernel(*filter,
+                                                                          subpel_x_q3 << 1);
         svt_aom_convolve8_horiz_c(
             ref, ref_stride, comp_pred, width, kernel, 16, NULL, -1, width, height);
     } else if (!subpel_x_q3) {
-        const int16_t *const kernel =
-            av1_get_interp_filter_subpel_kernel(*filter, subpel_y_q3 << 1);
+        const int16_t *const kernel = av1_get_interp_filter_subpel_kernel(*filter,
+                                                                          subpel_y_q3 << 1);
         svt_aom_convolve8_vert_c(
             ref, ref_stride, comp_pred, width, NULL, -1, kernel, 16, width, height);
     } else {
         DECLARE_ALIGNED(16, uint8_t, temp[((MAX_SB_SIZE * 2 + 16) + 16) * MAX_SB_SIZE]);
-        const int16_t *const kernel_x =
-            av1_get_interp_filter_subpel_kernel(*filter, subpel_x_q3 << 1);
-        const int16_t *const kernel_y =
-            av1_get_interp_filter_subpel_kernel(*filter, subpel_y_q3 << 1);
+        const int16_t *const kernel_x = av1_get_interp_filter_subpel_kernel(*filter,
+                                                                            subpel_x_q3 << 1);
+        const int16_t *const kernel_y = av1_get_interp_filter_subpel_kernel(*filter,
+                                                                            subpel_y_q3 << 1);
         const int intermediate_height = (((height - 1) * 8 + subpel_y_q3) >> 3) + filter->taps;
         assert(intermediate_height <= (MAX_SB_SIZE * 2 + 16) + 16);
         svt_aom_convolve8_horiz_c(ref - ref_stride * ((filter->taps >> 1) - 1),
@@ -294,7 +292,7 @@ static INLINE void obmc_variance(const uint8_t *pre, int pre_stride, const int32
                                                     int            pre_stride, \
                                                     const int32_t *wsrc,       \
                                                     const int32_t *mask,       \
-                                                    unsigned int * sse) {      \
+                                                    unsigned int * sse) {       \
         int sum;                                                               \
         obmc_variance(pre, pre_stride, wsrc, mask, W, H, sse, &sum);           \
         return *sse - (unsigned int)(((int64_t)sum * sum) / (W * H));          \
@@ -307,7 +305,7 @@ static INLINE void obmc_variance(const uint8_t *pre, int pre_stride, const int32
                                                               int            yoffset,    \
                                                               const int32_t *wsrc,       \
                                                               const int32_t *mask,       \
-                                                              unsigned int * sse) {      \
+                                                              unsigned int * sse) {       \
         uint16_t fdata3[(H + 1) * W];                                                    \
         uint8_t  temp2[H * W];                                                           \
                                                                                          \

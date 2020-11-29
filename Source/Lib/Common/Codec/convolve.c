@@ -67,7 +67,7 @@ static void convolve_add_src_horiz_hip(const uint8_t *src, ptrdiff_t src_stride,
             const uint8_t *const src_x    = &src[x_q4 >> SUBPEL_BITS];
             const int16_t *const x_filter = x_filters[x_q4 & SUBPEL_MASK];
             const int32_t        rounding = ((int32_t)src_x[SUBPEL_TAPS / 2 - 1] << FILTER_BITS) +
-                                     (1 << (bd + FILTER_BITS - 1));
+                (1 << (bd + FILTER_BITS - 1));
             const int32_t sum = horz_scalar_product(src_x, x_filter) + rounding;
             dst[x]            = (uint16_t)clamp(
                 ROUND_POWER_OF_TWO(sum, round0_bits), 0, WIENER_CLAMP_LIMIT(round0_bits, bd) - 1);
@@ -90,8 +90,8 @@ static void convolve_add_src_vert_hip(const uint16_t *src, ptrdiff_t src_stride,
         for (int32_t y = 0; y < h; ++y) {
             const uint16_t *     src_y    = &src[(y_q4 >> SUBPEL_BITS) * src_stride];
             const int16_t *const y_filter = y_filters[y_q4 & SUBPEL_MASK];
-            const int32_t        rounding =
-                ((int32_t)src_y[(SUBPEL_TAPS / 2 - 1) * src_stride] << FILTER_BITS) -
+            const int32_t        rounding = ((int32_t)src_y[(SUBPEL_TAPS / 2 - 1) * src_stride]
+                                      << FILTER_BITS) -
                 (1 << (bd + round1_bits - 1));
             const int32_t sum = highbd_vert_scalar_product(src_y, src_stride, y_filter) + rounding;
             dst[y * dst_stride] = clip_pixel(ROUND_POWER_OF_TWO(sum, round1_bits));
@@ -116,8 +116,8 @@ void svt_av1_wiener_convolve_add_src_c(const uint8_t *const src, const ptrdiff_t
     const int32_t             y0_q4     = get_filter_offset(filter_y, filters_y);
 
     uint16_t      temp[WIENER_MAX_EXT_SIZE * MAX_SB_SIZE];
-    const int32_t intermediate_height =
-        (((h - 1) * y_step_q4 + y0_q4) >> SUBPEL_BITS) + SUBPEL_TAPS;
+    const int32_t intermediate_height = (((h - 1) * y_step_q4 + y0_q4) >> SUBPEL_BITS) +
+        SUBPEL_TAPS;
 
     assert(w <= MAX_SB_SIZE);
     assert(h <= MAX_SB_SIZE);
@@ -160,10 +160,10 @@ static void highbd_convolve_add_src_horiz_hip(const uint8_t *src8, ptrdiff_t src
             const uint16_t *const src_x    = &src[x_q4 >> SUBPEL_BITS];
             const int16_t *const  x_filter = x_filters[x_q4 & SUBPEL_MASK];
             const int32_t         rounding = ((int32_t)src_x[SUBPEL_TAPS / 2 - 1] << FILTER_BITS) +
-                                     (1 << (bd + FILTER_BITS - 1));
+                (1 << (bd + FILTER_BITS - 1));
             const int32_t sum = highbd_horz_scalar_product(src_x, x_filter) + rounding;
-            dst[x] =
-                (uint16_t)clamp(ROUND_POWER_OF_TWO(sum, round0_bits), 0, extraprec_clamp_limit - 1);
+            dst[x]            = (uint16_t)clamp(
+                ROUND_POWER_OF_TWO(sum, round0_bits), 0, extraprec_clamp_limit - 1);
             x_q4 += x_step_q4;
         }
         src += src_stride;
@@ -183,8 +183,8 @@ static void highbd_convolve_add_src_vert_hip(const uint16_t *src, ptrdiff_t src_
         for (int32_t y = 0; y < h; ++y) {
             const uint16_t *     src_y    = &src[(y_q4 >> SUBPEL_BITS) * src_stride];
             const int16_t *const y_filter = y_filters[y_q4 & SUBPEL_MASK];
-            const int32_t        rounding =
-                ((int32_t)src_y[(SUBPEL_TAPS / 2 - 1) * src_stride] << FILTER_BITS) -
+            const int32_t        rounding = ((int32_t)src_y[(SUBPEL_TAPS / 2 - 1) * src_stride]
+                                      << FILTER_BITS) -
                 (1 << (bd + round1_bits - 1));
             const int32_t sum = highbd_vert_scalar_product(src_y, src_stride, y_filter) + rounding;
             dst[y * dst_stride] = clip_pixel_highbd(ROUND_POWER_OF_TWO(sum, round1_bits), bd);
@@ -208,8 +208,8 @@ void svt_av1_highbd_wiener_convolve_add_src_c(
     const int32_t             y0_q4     = get_filter_offset(filter_y, filters_y);
 
     uint16_t      temp[WIENER_MAX_EXT_SIZE * MAX_SB_SIZE];
-    const int32_t intermediate_height =
-        (((h - 1) * y_step_q4 + y0_q4) >> SUBPEL_BITS) + SUBPEL_TAPS;
+    const int32_t intermediate_height = (((h - 1) * y_step_q4 + y0_q4) >> SUBPEL_BITS) +
+        SUBPEL_TAPS;
 
     assert(w <= MAX_SB_SIZE);
     assert(h <= MAX_SB_SIZE);

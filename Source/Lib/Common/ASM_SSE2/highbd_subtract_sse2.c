@@ -214,46 +214,68 @@ SUBTRACT_FUN(64x16) { STACK_H(32, subtract_32x16); }
 
 static SubtractWxHFuncType get_subtract_func(int rows, int cols) {
     if (rows == 4) {
-        if (cols == 4) return subtract_4x4;
-        if (cols == 8) return subtract_8x4;
-        if (cols == 16) return subtract_16x4;
+        if (cols == 4)
+            return subtract_4x4;
+        if (cols == 8)
+            return subtract_8x4;
+        if (cols == 16)
+            return subtract_16x4;
     }
     if (rows == 8) {
-        if (cols == 4) return subtract_4x8;
-        if (cols == 8) return subtract_8x8;
-        if (cols == 16) return subtract_16x8;
-        if (cols == 32) return subtract_32x8;
+        if (cols == 4)
+            return subtract_4x8;
+        if (cols == 8)
+            return subtract_8x8;
+        if (cols == 16)
+            return subtract_16x8;
+        if (cols == 32)
+            return subtract_32x8;
     }
     if (rows == 16) {
-        if (cols == 4) return subtract_4x16;
-        if (cols == 8) return subtract_8x16;
-        if (cols == 16) return subtract_16x16;
-        if (cols == 32) return subtract_32x16;
-        if (cols == 64) return subtract_64x16;
+        if (cols == 4)
+            return subtract_4x16;
+        if (cols == 8)
+            return subtract_8x16;
+        if (cols == 16)
+            return subtract_16x16;
+        if (cols == 32)
+            return subtract_32x16;
+        if (cols == 64)
+            return subtract_64x16;
     }
     if (rows == 32) {
-        if (cols == 8) return subtract_8x32;
-        if (cols == 16) return subtract_16x32;
-        if (cols == 32) return subtract_32x32;
-        if (cols == 64) return subtract_64x32;
+        if (cols == 8)
+            return subtract_8x32;
+        if (cols == 16)
+            return subtract_16x32;
+        if (cols == 32)
+            return subtract_32x32;
+        if (cols == 64)
+            return subtract_64x32;
     }
     if (rows == 64) {
-        if (cols == 16) return subtract_16x64;
-        if (cols == 32) return subtract_32x64;
-        if (cols == 64) return subtract_64x64;
-        if (cols == 128) return subtract_128x64;
+        if (cols == 16)
+            return subtract_16x64;
+        if (cols == 32)
+            return subtract_32x64;
+        if (cols == 64)
+            return subtract_64x64;
+        if (cols == 128)
+            return subtract_128x64;
     }
     if (rows == 128) {
-        if (cols == 64) return subtract_64x128;
-        if (cols == 128) return subtract_128x128;
+        if (cols == 64)
+            return subtract_64x128;
+        if (cols == 128)
+            return subtract_128x128;
     }
     assert(0);
     return NULL;
 }
 
 void svt_aom_highbd_subtract_block_sse2(int rows, int cols, int16_t *diff, ptrdiff_t diff_stride,
-                                        const uint8_t *src8, ptrdiff_t src_stride, const uint8_t *pred8,
-                                        ptrdiff_t pred_stride, int bd) {
+                                        const uint8_t *src8, ptrdiff_t src_stride,
+                                        const uint8_t *pred8, ptrdiff_t pred_stride, int bd) {
     uint16_t *          src  = (uint16_t *)(src8);
     uint16_t *          pred = (uint16_t *)(pred8);
     SubtractWxHFuncType func;

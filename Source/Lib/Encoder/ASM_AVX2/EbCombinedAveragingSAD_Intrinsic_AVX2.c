@@ -64,26 +64,26 @@ void svt_compute_interm_var_four8x8_avx2_intrin(uint8_t *input_samples, uint16_t
     ymm_inputlo = _mm256_unpacklo_epi8(ymm_in_2s, ymm_zero);
     ymm_inputhi = _mm256_unpackhi_epi8(ymm_in_2s, ymm_zero);
 
-    ymm_block_mean_squared_low =
-        _mm256_add_epi32(ymm_block_mean_squared_low, _mm256_madd_epi16(ymm_inputlo, ymm_inputlo));
-    ymm_block_mean_squared_high =
-        _mm256_add_epi32(ymm_block_mean_squared_high, _mm256_madd_epi16(ymm_inputhi, ymm_inputhi));
+    ymm_block_mean_squared_low  = _mm256_add_epi32(ymm_block_mean_squared_low,
+                                                  _mm256_madd_epi16(ymm_inputlo, ymm_inputlo));
+    ymm_block_mean_squared_high = _mm256_add_epi32(ymm_block_mean_squared_high,
+                                                   _mm256_madd_epi16(ymm_inputhi, ymm_inputhi));
 
     ymm_inputlo = _mm256_unpacklo_epi8(ymm_in_second, ymm_zero);
     ymm_inputhi = _mm256_unpackhi_epi8(ymm_in_second, ymm_zero);
 
-    ymm_block_mean_squared_low =
-        _mm256_add_epi32(ymm_block_mean_squared_low, _mm256_madd_epi16(ymm_inputlo, ymm_inputlo));
-    ymm_block_mean_squared_high =
-        _mm256_add_epi32(ymm_block_mean_squared_high, _mm256_madd_epi16(ymm_inputhi, ymm_inputhi));
+    ymm_block_mean_squared_low  = _mm256_add_epi32(ymm_block_mean_squared_low,
+                                                  _mm256_madd_epi16(ymm_inputlo, ymm_inputlo));
+    ymm_block_mean_squared_high = _mm256_add_epi32(ymm_block_mean_squared_high,
+                                                   _mm256_madd_epi16(ymm_inputhi, ymm_inputhi));
 
     ymm_inputlo = _mm256_unpacklo_epi8(ymm_in_2s_second, ymm_zero);
     ymm_inputhi = _mm256_unpackhi_epi8(ymm_in_2s_second, ymm_zero);
 
-    ymm_block_mean_squared_low =
-        _mm256_add_epi32(ymm_block_mean_squared_low, _mm256_madd_epi16(ymm_inputlo, ymm_inputlo));
-    ymm_block_mean_squared_high =
-        _mm256_add_epi32(ymm_block_mean_squared_high, _mm256_madd_epi16(ymm_inputhi, ymm_inputhi));
+    ymm_block_mean_squared_low  = _mm256_add_epi32(ymm_block_mean_squared_low,
+                                                  _mm256_madd_epi16(ymm_inputlo, ymm_inputlo));
+    ymm_block_mean_squared_high = _mm256_add_epi32(ymm_block_mean_squared_high,
+                                                   _mm256_madd_epi16(ymm_inputhi, ymm_inputhi));
 
     ymm_block_mean_squared_low  = _mm256_add_epi32(ymm_block_mean_squared_low,
                                                   _mm256_srli_si256(ymm_block_mean_squared_low, 8));
@@ -95,15 +95,15 @@ void svt_compute_interm_var_four8x8_avx2_intrin(uint8_t *input_samples, uint16_t
     ymm_block_mean_squared_high = _mm256_add_epi32(
         ymm_block_mean_squared_high, _mm256_srli_si256(ymm_block_mean_squared_high, 4));
 
-    ymm_permute8 = _mm256_set_epi32(0, 0, 0, 0, 0, 0, 4, 0);
-    ymm_block_mean_squared_low =
-        _mm256_permutevar8x32_epi32(ymm_block_mean_squared_low, ymm_permute8 /*8*/);
-    ymm_block_mean_squared_high =
-        _mm256_permutevar8x32_epi32(ymm_block_mean_squared_high, ymm_permute8);
+    ymm_permute8                = _mm256_set_epi32(0, 0, 0, 0, 0, 0, 4, 0);
+    ymm_block_mean_squared_low  = _mm256_permutevar8x32_epi32(ymm_block_mean_squared_low,
+                                                             ymm_permute8 /*8*/);
+    ymm_block_mean_squared_high = _mm256_permutevar8x32_epi32(ymm_block_mean_squared_high,
+                                                              ymm_permute8);
 
     ymm_block_mean_squared_lo = _mm256_castsi256_si128(ymm_block_mean_squared_low); //lower 128
-    ymm_block_mean_squared_hi =
-        _mm256_extracti128_si256(ymm_block_mean_squared_high, 0); //lower 128
+    ymm_block_mean_squared_hi = _mm256_extracti128_si256(ymm_block_mean_squared_high,
+                                                         0); //lower 128
 
     ymm_result   = _mm256_unpacklo_epi32(_mm256_castsi128_si256(ymm_block_mean_squared_lo),
                                        _mm256_castsi128_si256(ymm_block_mean_squared_hi));

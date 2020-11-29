@@ -52,11 +52,8 @@ EbErrorType me_context_ctor(MeContext *object_ptr) {
     EB_MEMSET(
         object_ptr->sb_buffer, 0, sizeof(uint8_t) * BLOCK_SIZE_64 * object_ptr->sb_buffer_stride);
     EB_MALLOC_ARRAY(object_ptr->me_candidate, MAX_PA_ME_CAND);
-    for (pu_index = 0; pu_index < SQUARE_PU_COUNT;
-         pu_index++) {
-        for (me_candidate_index = 0;
-            me_candidate_index < MAX_PA_ME_CAND;
-             me_candidate_index++) {
+    for (pu_index = 0; pu_index < SQUARE_PU_COUNT; pu_index++) {
+        for (me_candidate_index = 0; me_candidate_index < MAX_PA_ME_CAND; me_candidate_index++) {
             motion_estimation_pred_unit_ctor(
                 &(object_ptr->me_candidate[me_candidate_index]).pu[pu_index]);
         }
@@ -65,8 +62,8 @@ EbErrorType me_context_ctor(MeContext *object_ptr) {
                     8 * 16); //16= 16 16x16 blocks in a SB.       8=8search points
 
     // Initialize Alt-Ref parameters
-    object_ptr->me_type = ME_CLOSE_LOOP;
-    object_ptr->num_of_list_to_search = 0;
+    object_ptr->me_type                     = ME_CLOSE_LOOP;
+    object_ptr->num_of_list_to_search       = 0;
     object_ptr->num_of_ref_pic_to_search[0] = 0;
     object_ptr->num_of_ref_pic_to_search[1] = 0;
 

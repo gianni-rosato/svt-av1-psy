@@ -25,8 +25,8 @@ typedef struct {
 } Correspondence;
 
 int svt_av1_determine_correspondence(unsigned char *frm, int *frm_corners, int num_frm_corners,
-                                 unsigned char *ref, int *ref_corners, int num_ref_corners,
-                                 int width, int height, int frm_stride, int ref_stride,
-                                 int *correspondence_pts);
+                                     unsigned char *ref, int *ref_corners, int num_ref_corners,
+                                     int width, int height, int frm_stride, int ref_stride,
+                                     int *correspondence_pts);
 
 #endif // AOM_AV1_ENCODER_CORNER_MATCH_H_

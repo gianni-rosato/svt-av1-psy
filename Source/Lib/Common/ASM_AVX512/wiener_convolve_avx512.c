@@ -443,7 +443,8 @@ void svt_av1_wiener_convolve_add_src_avx512(const uint8_t* const src, const ptrd
                 x -= 64;
             }
 
-            if (!width) return;
+            if (!width)
+                return;
 
             x = width & ~31;
             if (x) {
@@ -514,7 +515,7 @@ void svt_av1_wiener_convolve_add_src_avx512(const uint8_t* const src, const ptrd
                     const __m512i r0 = wiener_convolve_v16x2_tap7(coeffs_v_512, round_v_512, s[0]);
                     const __m512i r1 = wiener_convolve_v16x2_tap7(coeffs_v_512, round_v_512, s[1]);
                     if (y == 1) {
-                        const __m512i d = _mm512_packus_epi16(r0, r1);
+                        const __m512i d  = _mm512_packus_epi16(r0, r1);
                         const __m256i d0 = _mm512_castsi512_si256(d);
                         _mm256_storeu_si256((__m256i*)dst_p, d0);
                     } else {
@@ -530,7 +531,8 @@ void svt_av1_wiener_convolve_add_src_avx512(const uint8_t* const src, const ptrd
                 width -= 32;
             }
 
-            if (!width) return;
+            if (!width)
+                return;
         }
 
         const __m256i filt_center = yy_load_256(filt_center_tap7_global_avx);
@@ -642,10 +644,10 @@ void svt_av1_wiener_convolve_add_src_avx512(const uint8_t* const src, const ptrd
                 src_p, src_stride, coeffs_h, filt, filt_center, round_h0, round_h1, clamp_high);
             src_p += 2 * src_stride;
 
-            s[1] =
-                _mm256_setr_m128i(_mm256_extracti128_si256(s[0], 1), _mm256_castsi256_si128(s[2]));
-            s[3] =
-                _mm256_setr_m128i(_mm256_extracti128_si256(s[2], 1), _mm256_castsi256_si128(s[4]));
+            s[1] = _mm256_setr_m128i(_mm256_extracti128_si256(s[0], 1),
+                                     _mm256_castsi256_si128(s[2]));
+            s[3] = _mm256_setr_m128i(_mm256_extracti128_si256(s[2], 1),
+                                     _mm256_castsi256_si128(s[4]));
 
             int y = h;
             do {
@@ -678,11 +680,11 @@ void svt_av1_wiener_convolve_add_src_avx512(const uint8_t* const src, const ptrd
             filt_512[2]                   = zz_load_512(filt3_global_avx);
             populate_coeffs_6tap_avx512(coeffs_x, coeffs_h_512);
             // coeffs 1 2 1 2 1 2 1 2
-            coeffs_v_512[0] =
-                _mm512_shuffle_epi8(filter_coeffs_y_512, _mm512_set1_epi32(0x05040302u));
+            coeffs_v_512[0] = _mm512_shuffle_epi8(filter_coeffs_y_512,
+                                                  _mm512_set1_epi32(0x05040302u));
             // coeffs 3 4 3 4 3 4 3 4
-            coeffs_v_512[1] =
-                _mm512_shuffle_epi8(filter_coeffs_y_512, _mm512_set1_epi32(0x09080706u));
+            coeffs_v_512[1] = _mm512_shuffle_epi8(filter_coeffs_y_512,
+                                                  _mm512_set1_epi32(0x09080706u));
 
             width -= x;
             while (x) {
@@ -752,7 +754,8 @@ void svt_av1_wiener_convolve_add_src_avx512(const uint8_t* const src, const ptrd
                 x -= 64;
             }
 
-            if (!width) return;
+            if (!width)
+                return;
 
             x = width & ~31;
             if (x) {
@@ -824,7 +827,8 @@ void svt_av1_wiener_convolve_add_src_avx512(const uint8_t* const src, const ptrd
                 width -= 32;
             }
 
-            if (!width) return;
+            if (!width)
+                return;
         }
 
         const __m256i filt_center = yy_load_256(filt_center_tap5_global_avx);
@@ -918,8 +922,8 @@ void svt_av1_wiener_convolve_add_src_avx512(const uint8_t* const src, const ptrd
                 src_p, src_stride, coeffs_h, filt, filt_center, round_h0, round_h1, clamp_high);
             src_p += 2 * src_stride;
 
-            s[1] =
-                _mm256_setr_m128i(_mm256_extracti128_si256(s[0], 1), _mm256_castsi256_si128(s[2]));
+            s[1] = _mm256_setr_m128i(_mm256_extracti128_si256(s[0], 1),
+                                     _mm256_castsi256_si128(s[2]));
 
             int y = h;
             do {
@@ -1003,7 +1007,8 @@ void svt_av1_wiener_convolve_add_src_avx512(const uint8_t* const src, const ptrd
                 x -= 64;
             }
 
-            if (!width) return;
+            if (!width)
+                return;
 
             x = width & ~31;
             if (x) {
@@ -1059,7 +1064,8 @@ void svt_av1_wiener_convolve_add_src_avx512(const uint8_t* const src, const ptrd
                 width -= 32;
             }
 
-            if (!width) return;
+            if (!width)
+                return;
         }
 
         const __m256i filt_center = yy_load_256(filt_center_tap3_global_avx);

@@ -39,13 +39,13 @@ void svt_av1_highbd_convolve_2d_sr_avx2(const uint16_t *src, int32_t src_stride,
 
     __m256i s[8], coeffs_y[4], coeffs_x[4];
 
-    const __m256i round_const_x =
-        _mm256_set1_epi32(((1 << conv_params->round_0) >> 1) + (1 << (bd + FILTER_BITS - 1)));
+    const __m256i round_const_x = _mm256_set1_epi32(((1 << conv_params->round_0) >> 1) +
+                                                    (1 << (bd + FILTER_BITS - 1)));
     const __m128i round_shift_x = _mm_cvtsi32_si128(conv_params->round_0);
 
-    const __m256i round_const_y =
-        _mm256_set1_epi32(((1 << conv_params->round_1) >> 1) -
-                          (1 << (bd + 2 * FILTER_BITS - conv_params->round_0 - 1)));
+    const __m256i round_const_y = _mm256_set1_epi32(
+        ((1 << conv_params->round_1) >> 1) -
+        (1 << (bd + 2 * FILTER_BITS - conv_params->round_0 - 1)));
     const __m128i round_shift_y = _mm_cvtsi32_si128(conv_params->round_1);
 
     const int32_t bits             = FILTER_BITS * 2 - conv_params->round_0 - conv_params->round_1;
@@ -76,8 +76,8 @@ void svt_av1_highbd_convolve_2d_sr_avx2(const uint16_t *src, int32_t src_stride,
                 s[3] = _mm256_alignr_epi8(r1, r0, 12);
 
                 __m256i res_even = convolve16_8tap_avx2(s, coeffs_x);
-                res_even =
-                    _mm256_sra_epi32(_mm256_add_epi32(res_even, round_const_x), round_shift_x);
+                res_even         = _mm256_sra_epi32(_mm256_add_epi32(res_even, round_const_x),
+                                            round_shift_x);
 
                 // odd pixels
                 s[0] = _mm256_alignr_epi8(r1, r0, 2);
@@ -122,17 +122,17 @@ void svt_av1_highbd_convolve_2d_sr_avx2(const uint16_t *src, int32_t src_stride,
                 s[3] = _mm256_unpacklo_epi16(s6, s7);
                 s[7] = _mm256_unpackhi_epi16(s6, s7);
 
-                const __m256i res_a = convolve16_8tap_avx2(s, coeffs_y);
-                __m256i       res_a_round =
-                    _mm256_sra_epi32(_mm256_add_epi32(res_a, round_const_y), round_shift_y);
+                const __m256i res_a       = convolve16_8tap_avx2(s, coeffs_y);
+                __m256i       res_a_round = _mm256_sra_epi32(_mm256_add_epi32(res_a, round_const_y),
+                                                       round_shift_y);
 
                 res_a_round = _mm256_sra_epi32(_mm256_add_epi32(res_a_round, round_const_bits),
                                                round_shift_bits);
 
                 if (w - j > 4) {
                     const __m256i res_b = convolve16_8tap_avx2(s + 4, coeffs_y);
-                    __m256i       res_b_round =
-                        _mm256_sra_epi32(_mm256_add_epi32(res_b, round_const_y), round_shift_y);
+                    __m256i res_b_round = _mm256_sra_epi32(_mm256_add_epi32(res_b, round_const_y),
+                                                           round_shift_y);
                     res_b_round = _mm256_sra_epi32(_mm256_add_epi32(res_b_round, round_const_bits),
                                                    round_shift_bits);
 

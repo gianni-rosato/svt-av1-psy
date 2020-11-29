@@ -52,7 +52,8 @@ static INLINE void init_qp(const int16_t *round_ptr, const int16_t *quant_ptr,
     init_one_qp(&round, &qp[0]);
     init_one_qp(&quant, &qp[1]);
 
-    if (log_scale == 1) qp[1] = _mm256_slli_epi16(qp[1], log_scale);
+    if (log_scale == 1)
+        qp[1] = _mm256_slli_epi16(qp[1], log_scale);
 
     init_one_qp(&dequant, &qp[2]);
     *thr = _mm256_srai_epi16(qp[2], 1 + log_scale);

@@ -126,8 +126,8 @@ static void convolve_2d_sr_hor_6tap_avx512(const uint8_t *const src, const int32
 
         if (w == 8) {
             do {
-                const __m256i res =
-                    x_convolve_6tap_8x2_avx2(src_ptr, src_stride, coeffs_256, filt_256);
+                const __m256i res = x_convolve_6tap_8x2_avx2(
+                    src_ptr, src_stride, coeffs_256, filt_256);
                 xy_x_round_store_8x2_avx2(res, im);
                 src_ptr += 2 * src_stride;
                 im += 2 * 8;
@@ -200,8 +200,8 @@ static void convolve_2d_sr_hor_8tap_avx512(const uint8_t *const src, const int32
 
         if (w == 8) {
             do {
-                const __m256i res =
-                    x_convolve_8tap_8x2_avx2(src_ptr, src_stride, coeffs_256, filt_256);
+                const __m256i res = x_convolve_8tap_8x2_avx2(
+                    src_ptr, src_stride, coeffs_256, filt_256);
                 xy_x_round_store_8x2_avx2(res, im);
                 src_ptr += 2 * src_stride;
                 im += 2 * 8;

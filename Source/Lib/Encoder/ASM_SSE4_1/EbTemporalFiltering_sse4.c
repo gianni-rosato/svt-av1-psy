@@ -308,11 +308,11 @@ static INLINE void add_luma_dist_to_8_chroma_mod(const uint16_t *y_dist, int ss_
 // size 4 for the weights for each of the 4 subblocks if blk_fw is not NULL,
 // else use top_weight for top half, and bottom weight for bottom half.
 static void av1_apply_temporal_filter_luma_16(
-    const uint8_t *y_pre, int y_pre_stride, unsigned int block_width,
-    unsigned int block_height, int ss_x, int ss_y, int strength, int use_whole_blk,
-    uint32_t *y_accum, uint16_t *y_count, const uint16_t *y_dist, const uint16_t *u_dist,
-    const uint16_t *v_dist, const int16_t *const *neighbors_first,
-    const int16_t *const *neighbors_second, int top_weight, int bottom_weight, const int *blk_fw) {
+    const uint8_t *y_pre, int y_pre_stride, unsigned int block_width, unsigned int block_height,
+    int ss_x, int ss_y, int strength, int use_whole_blk, uint32_t *y_accum, uint16_t *y_count,
+    const uint16_t *y_dist, const uint16_t *u_dist, const uint16_t *v_dist,
+    const int16_t *const *neighbors_first, const int16_t *const *neighbors_second, int top_weight,
+    int bottom_weight, const int *blk_fw) {
     const int rounding = (1 << strength) >> 1;
     int       weight   = top_weight;
 

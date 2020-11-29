@@ -55,8 +55,8 @@ typedef struct EncDecContext {
     // temporary buffers for decision making of LF (LPF_PICK_FROM_FULL_IMAGE).
     // Since recon switches between reconPtr and referencePtr, the temporary buffers sizes used the referencePtr's which has padding,...
     EbPictureBufferDesc *inverse_quant_buffer;
-    uint32_t pic_fast_lambda[2];
-    uint32_t pic_full_lambda[2];
+    uint32_t             pic_fast_lambda[2];
+    uint32_t             pic_full_lambda[2];
 
     //  Context Variables---------------------------------
     BlkStruct *blk_ptr;
@@ -76,8 +76,8 @@ typedef struct EncDecContext {
     uint64_t three_quad_energy;
 
     // Needed for DC prediction
-    uint8_t upsample_left;
-    uint8_t upsample_above;
+    uint8_t  upsample_left;
+    uint8_t  upsample_above;
     uint16_t coded_area_sb;
     uint16_t coded_area_sb_uv;
 

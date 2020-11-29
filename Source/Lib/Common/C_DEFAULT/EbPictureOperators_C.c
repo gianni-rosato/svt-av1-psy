@@ -36,8 +36,7 @@ void svt_picture_average_kernel1_line_c(EbByte src0, EbByte src1, EbByte dst, ui
 /*********************************
 * Picture Copy Kernel
 *********************************/
-void svt_memcpy_c(void  *dst_ptr, void  const*src_ptr, size_t size)
-{
+void svt_memcpy_c(void *dst_ptr, void const *src_ptr, size_t size) {
     memcpy(dst_ptr, src_ptr, size);
 }
 void picture_copy_kernel(EbByte src, uint32_t src_stride, EbByte dst, uint32_t dst_stride,
@@ -74,8 +73,8 @@ uint64_t svt_spatial_full_distortion_kernel_c(uint8_t *input, uint32_t input_off
     for (uint32_t row_index = 0; row_index < area_height; ++row_index) {
         uint32_t column_index = 0;
         while (column_index < area_width) {
-            spatial_distortion +=
-                (int64_t)SQR((int64_t)(input[column_index]) - (recon[column_index]));
+            spatial_distortion += (int64_t)SQR((int64_t)(input[column_index]) -
+                                               (recon[column_index]));
             ++column_index;
         }
 

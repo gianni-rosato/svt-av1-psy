@@ -39,8 +39,8 @@ static uint64_t          app_memory_mallocd_all_channels[MAX_CHANNEL_NUMBER];
 ***************************************/
 void allocate_memory_table(uint32_t instance_idx) {
     // Malloc Memory Table for the instance @ instance_idx
-    app_memory_map_all_channels[instance_idx] =
-        (EbMemoryMapEntry *)malloc(sizeof(EbMemoryMapEntry) * MAX_APP_NUM_PTR);
+    app_memory_map_all_channels[instance_idx] = (EbMemoryMapEntry *)malloc(
+        sizeof(EbMemoryMapEntry) * MAX_APP_NUM_PTR);
 
     // Init the table index
     app_memory_map_index_all_channels[instance_idx] = 0;
@@ -68,25 +68,29 @@ void allocate_memory_table(uint32_t instance_idx) {
 **************************************/
 
 static EbErrorType allocate_frame_buffer(EbConfig *config, uint8_t *p_buffer) {
-    EbSvtAv1EncConfiguration* cfg = &config->config;
-    const int32_t ten_bit_packed_mode =
-        (cfg->encoder_bit_depth > 8) && (cfg->compressed_ten_bit_format == 0) ? 1 : 0;
+    EbSvtAv1EncConfiguration *cfg                 = &config->config;
+    const int32_t             ten_bit_packed_mode = (cfg->encoder_bit_depth > 8) &&
+            (cfg->compressed_ten_bit_format == 0)
+                    ? 1
+                    : 0;
 
     // Chroma subsampling
     const EbColorFormat color_format  = (EbColorFormat)cfg->encoder_color_format;
     const uint8_t       subsampling_x = (color_format == EB_YUV444 ? 1 : 2) - 1;
 
     // Determine size of each plane
-    const size_t luma_8bit_size =
-        config->input_padded_width * config->input_padded_height * (1 << ten_bit_packed_mode);
+    const size_t luma_8bit_size = config->input_padded_width * config->input_padded_height *
+        (1 << ten_bit_packed_mode);
 
     const size_t chroma_8bit_size = luma_8bit_size >> (3 - color_format);
 
-    const size_t luma_10bit_size =
-        (cfg->encoder_bit_depth > 8 && ten_bit_packed_mode == 0) ? luma_8bit_size : 0;
+    const size_t luma_10bit_size = (cfg->encoder_bit_depth > 8 && ten_bit_packed_mode == 0)
+        ? luma_8bit_size
+        : 0;
 
-    const size_t chroma_10bit_size =
-        (cfg->encoder_bit_depth > 8 && ten_bit_packed_mode == 0) ? chroma_8bit_size : 0;
+    const size_t chroma_10bit_size = (cfg->encoder_bit_depth > 8 && ten_bit_packed_mode == 0)
+        ? chroma_8bit_size
+        : 0;
 
     // Determine
     EbSvtIOFormat *input_ptr = (EbSvtIOFormat *)p_buffer;
@@ -206,12 +210,12 @@ EbErrorType allocate_output_recon_buffers(EbConfig *config, EbAppContext *callba
 }
 
 EbErrorType preload_frames_info_ram(EbConfig *config) {
-    EbErrorType         return_error = EB_ErrorNone;
+    EbErrorType         return_error        = EB_ErrorNone;
     int32_t             input_padded_width  = config->input_padded_width;
     int32_t             input_padded_height = config->input_padded_height;
     size_t              read_size;
-    const EbColorFormat color_format = (EbColorFormat)
-                                           config->config.encoder_color_format; // Chroma subsampling
+    const EbColorFormat color_format =
+        (EbColorFormat)config->config.encoder_color_format; // Chroma subsampling
 
     read_size = input_padded_width * input_padded_height; //Luma
     read_size += 2 * (read_size >> (3 - color_format)); // Add Chroma
@@ -240,7 +244,11 @@ EbErrorType preload_frames_info_ram(EbConfig *config) {
             fseek(config->input_file, 0, SEEK_SET);
 
             // Fill the buffer with a complete frame
-            if (read_size != fread(config->sequence_buffer[processed_frame_count], 1, read_size, config->input_file))
+            if (read_size !=
+                fread(config->sequence_buffer[processed_frame_count],
+                      1,
+                      read_size,
+                      config->input_file))
                 return_error = EB_Corrupt_Frame;
         }
     }
@@ -259,21 +267,22 @@ EbErrorType init_encoder(EbConfig *config, EbAppContext *callback_data, uint32_t
     // Allocate a memory table hosting all allocated pointers
     allocate_memory_table(instance_idx);
 
-
     callback_data->instance_idx = (uint8_t)instance_idx;
     // Initialize Port Activity Flags
-    callback_data->output_stream_port_active                = APP_PortActive;
-
+    callback_data->output_stream_port_active = APP_PortActive;
 
     // Send over all configuration parameters
     // Set the Parameters
     EbErrorType return_error = svt_av1_enc_set_parameter(callback_data->svt_encoder_handle,
-                                            &config->config);
+                                                         &config->config);
 
-    if (return_error != EB_ErrorNone) return return_error;
+    if (return_error != EB_ErrorNone)
+        return return_error;
     // STEP 5: Init Encoder
     return_error = svt_av1_enc_init(callback_data->svt_encoder_handle);
-    if (return_error != EB_ErrorNone) { return return_error; }
+    if (return_error != EB_ErrorNone) {
+        return return_error;
+    }
 
     ///************************* LIBRARY INIT [END] *********************///
 
@@ -282,11 +291,13 @@ EbErrorType init_encoder(EbConfig *config, EbAppContext *callback_data, uint32_t
     // STEP 6: Allocate input buffers carrying the yuv frames in
     return_error = allocate_input_buffers(config, callback_data);
 
-    if (return_error != EB_ErrorNone) return return_error;
+    if (return_error != EB_ErrorNone)
+        return return_error;
     // STEP 7: Allocate output Recon Buffer
     return_error = allocate_output_recon_buffers(config, callback_data);
 
-    if (return_error != EB_ErrorNone) return return_error;
+    if (return_error != EB_ErrorNone)
+        return return_error;
     // Allocate the Sequence Buffer
     if (config->buffered_input != -1) {
         // Preload frames into the ram for a faster yuv access time

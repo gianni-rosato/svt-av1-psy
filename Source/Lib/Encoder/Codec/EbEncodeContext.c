@@ -16,40 +16,41 @@
 #include "EbThreads.h"
 
 static EbErrorType create_stats_buffer(FIRSTPASS_STATS **frame_stats_buffer,
-    STATS_BUFFER_CTX *stats_buf_context,
-    int num_lap_buffers) {
+                                       STATS_BUFFER_CTX *stats_buf_context, int num_lap_buffers) {
     EbErrorType res = EB_ErrorNone;
 
     int size = get_stats_buf_size(num_lap_buffers, MAX_LAG_BUFFERS);
     // *frame_stats_buffer =
     //     (FIRSTPASS_STATS *)aom_calloc(size, sizeof(FIRSTPASS_STATS));
     EB_MALLOC_ARRAY((*frame_stats_buffer), size);
-    if (frame_stats_buffer == NULL) return EB_ErrorInsufficientResources;
+    if (frame_stats_buffer == NULL)
+        return EB_ErrorInsufficientResources;
 
-    stats_buf_context->stats_in_start = *frame_stats_buffer;
-    stats_buf_context->stats_in_end = stats_buf_context->stats_in_start;
-    stats_buf_context->stats_in_buf_end =
-        stats_buf_context->stats_in_start + size;
+    stats_buf_context->stats_in_start   = *frame_stats_buffer;
+    stats_buf_context->stats_in_end     = stats_buf_context->stats_in_start;
+    stats_buf_context->stats_in_buf_end = stats_buf_context->stats_in_start + size;
 
     // stats_buf_context->total_left_stats = aom_calloc(1, sizeof(FIRSTPASS_STATS));
     EB_MALLOC_ARRAY(stats_buf_context->total_left_stats, 1);
-    if (stats_buf_context->total_left_stats == NULL) return EB_ErrorInsufficientResources;
+    if (stats_buf_context->total_left_stats == NULL)
+        return EB_ErrorInsufficientResources;
     svt_av1_twopass_zero_stats(stats_buf_context->total_left_stats);
     // stats_buf_context->total_stats = aom_calloc(1, sizeof(FIRSTPASS_STATS));
     EB_MALLOC_ARRAY(stats_buf_context->total_stats, 1);
-    if (stats_buf_context->total_stats == NULL) return EB_ErrorInsufficientResources;
+    if (stats_buf_context->total_stats == NULL)
+        return EB_ErrorInsufficientResources;
     svt_av1_twopass_zero_stats(stats_buf_context->total_stats);
     return res;
 }
 
 static void destroy_stats_buffer(STATS_BUFFER_CTX *stats_buf_context,
-    FIRSTPASS_STATS *frame_stats_buffer) {
+                                 FIRSTPASS_STATS * frame_stats_buffer) {
     EB_FREE_ARRAY(stats_buf_context->total_left_stats);
     EB_FREE_ARRAY(stats_buf_context->total_stats);
     EB_FREE_ARRAY(frame_stats_buffer);
 }
 static void encode_context_dctor(EbPtr p) {
-    EncodeContext* obj = (EncodeContext*)p;
+    EncodeContext *obj = (EncodeContext *)p;
     EB_DESTROY_MUTEX(obj->total_number_of_recon_frame_mutex);
     EB_DESTROY_MUTEX(obj->hl_rate_control_historgram_queue_mutex);
     EB_DESTROY_MUTEX(obj->rate_table_update_mutex);
@@ -75,7 +76,7 @@ static void encode_context_dctor(EbPtr p) {
     destroy_stats_buffer(&obj->stats_buf_context, obj->frame_stats_buffer);
 }
 
-EbErrorType encode_context_ctor(EncodeContext* encode_context_ptr, EbPtr object_init_data_ptr) {
+EbErrorType encode_context_ctor(EncodeContext *encode_context_ptr, EbPtr object_init_data_ptr) {
     uint32_t    picture_index;
     EbErrorType return_error = EB_ErrorNone;
 
@@ -115,8 +116,7 @@ EbErrorType encode_context_ctor(EncodeContext* encode_context_ptr, EbPtr object_
 
     EB_ALLOC_PTR_ARRAY(encode_context_ptr->dep_cnt_picture_queue, REFERENCE_QUEUE_MAX_DEPTH);
     for (picture_index = 0; picture_index < REFERENCE_QUEUE_MAX_DEPTH; ++picture_index) {
-        EB_NEW(encode_context_ptr->dep_cnt_picture_queue[picture_index],
-            dep_cnt_queue_entry_ctor);
+        EB_NEW(encode_context_ptr->dep_cnt_picture_queue[picture_index], dep_cnt_queue_entry_ctor);
     }
     encode_context_ptr->dep_q_head = encode_context_ptr->dep_q_tail = 0;
     for (picture_index = 0; picture_index < PICTURE_DECISION_PA_REFERENCE_QUEUE_MAX_DEPTH;
@@ -171,7 +171,8 @@ EbErrorType encode_context_ctor(EncodeContext* encode_context_ptr, EbPtr object_
                     TOTAL_NUMBER_OF_INITIAL_RC_TABLES_ENTRY);
 
     return_error = rate_control_tables_init(encode_context_ptr->rate_control_tables_array);
-    if (return_error == EB_ErrorInsufficientResources) return EB_ErrorInsufficientResources;
+    if (return_error == EB_ErrorInsufficientResources)
+        return EB_ErrorInsufficientResources;
     // RC Rate Table Update Mutex
     EB_CREATE_MUTEX(encode_context_ptr->rate_table_update_mutex);
 
@@ -184,7 +185,7 @@ EbErrorType encode_context_ctor(EncodeContext* encode_context_ptr, EbPtr object_
     EB_CREATE_MUTEX(encode_context_ptr->shared_reference_mutex);
     EB_CREATE_MUTEX(encode_context_ptr->stat_file_mutex);
     encode_context_ptr->num_lap_buffers = 0; //lap not supported for now
-    int *num_lap_buffers = &encode_context_ptr->num_lap_buffers;
+    int *num_lap_buffers                = &encode_context_ptr->num_lap_buffers;
     create_stats_buffer(&encode_context_ptr->frame_stats_buffer,
                         &encode_context_ptr->stats_buf_context,
                         *num_lap_buffers);

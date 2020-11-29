@@ -16,8 +16,7 @@
 #define LOG_TAG "SvtMalloc"
 #include "EbLog.h"
 
-void svt_print_alloc_fail(const char* file, int line)
-{
+void svt_print_alloc_fail(const char* file, int line) {
     SVT_FATAL("allocate memory failed, at %s, L%d\n", file, line);
 }
 
@@ -184,7 +183,8 @@ static EbBool count_mem_entry(MemoryEntry* e, void* param) {
     return EB_FALSE;
 }
 
-static inline void get_memory_usage_and_scale(size_t amount, double*const usage, char* const scale) {
+static inline void get_memory_usage_and_scale(size_t amount, double* const usage,
+                                              char* const scale) {
     static const char scales[] = {' ', 'K', 'M', 'G', 'T'};
     size_t            i        = 1;
     for (; i < sizeof(scales) && amount >= (size_t)1 << (++i * 10);)
@@ -268,7 +268,6 @@ static EbBool print_leak(MemoryEntry* e, void* param) {
 }
 
 void svt_print_memory_usage() {
-
     MemSummary sum;
     double     usage;
     char       scale;

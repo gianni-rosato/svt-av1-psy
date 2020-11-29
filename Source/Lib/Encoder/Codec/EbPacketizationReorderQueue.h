@@ -47,8 +47,8 @@ typedef struct PacketizationReorderEntry {
     //small size bitstream for show existing frame
     Bitstream *bitstream_ptr;
     //valid when has_show_existing is true
-    int64_t    next_pts;
-    uint8_t    is_alt_ref;
+    int64_t next_pts;
+    uint8_t is_alt_ref;
 } PacketizationReorderEntry;
 
 extern EbErrorType packetization_reorder_entry_ctor(PacketizationReorderEntry *entry_ptr,

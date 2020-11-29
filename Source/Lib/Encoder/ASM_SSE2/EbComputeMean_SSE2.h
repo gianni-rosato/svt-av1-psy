@@ -17,7 +17,6 @@ extern "C" {
 
 #include "EbDefinitions.h"
 
-
 uint64_t compute_subd_mean_of_squared_values8x8_sse2_intrin(
     uint8_t* input_samples, // input parameter, input samples Ptr
     uint16_t input_stride);

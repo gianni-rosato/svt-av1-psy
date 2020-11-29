@@ -264,11 +264,9 @@ static void addsub_avx512(const __m512i in0, const __m512i in1, __m512i *out0, _
     *out1 = a1;
 }
 
-static void addsub_shift_avx512(const __m512i in0, const __m512i in1, __m512i *out0,
-                                __m512i *out1, const __m512i *clamp_lo,
-    const __m512i *clamp_hi, int32_t shift) {
-
-    __m512i offset = _mm512_set1_epi32((1 << shift) >> 1);
+static void addsub_shift_avx512(const __m512i in0, const __m512i in1, __m512i *out0, __m512i *out1,
+                                const __m512i *clamp_lo, const __m512i *clamp_hi, int32_t shift) {
+    __m512i offset       = _mm512_set1_epi32((1 << shift) >> 1);
     __m512i in0_w_offset = _mm512_add_epi32(in0, offset);
 
     __m512i a0 = _mm512_add_epi32(in0_w_offset, in1);
@@ -795,7 +793,9 @@ static INLINE void write_buffer_16x16_avx512_new(__m512i *in, uint16_t *output_r
 
         u1 = _mm512_cvtepu16_epi32(u0);
         v0 = in[i];
-        if (fliplr) { v0 = _mm512_permutexvar_epi32(index, v0); }
+        if (fliplr) {
+            v0 = _mm512_permutexvar_epi32(index, v0);
+        }
 
         v0 = _mm512_add_epi32(v0, u1);
 
@@ -840,7 +840,9 @@ static INLINE void write_buffer_16x16_avx512(__m512i *in, uint16_t *output_r, in
 
         u1 = _mm512_cvtepu16_epi32(u0);
         v0 = in[i];
-        if (fliplr) { v0 = _mm512_permutexvar_epi32(index, v0); }
+        if (fliplr) {
+            v0 = _mm512_permutexvar_epi32(index, v0);
+        }
 
         v0 = _mm512_add_epi32(v0, u1);
         highbd_clamp_epi32_avx512(&v0, bd);
@@ -869,8 +871,8 @@ static INLINE void round_shift_16x16_avx512(__m512i *in, const int8_t shift) {
 
 static INLINE void iidentity16_and_round_shift_avx512(__m512i *input, int32_t shift) {
     const __m512i scalar = _mm512_set1_epi32(new_sqrt2);
-    const __m512i rnding =
-        _mm512_set1_epi32((1 << (new_sqrt2_bits - 2)) + (!!(shift) << (shift + new_sqrt2_bits - 2)));
+    const __m512i rnding = _mm512_set1_epi32((1 << (new_sqrt2_bits - 2)) +
+                                             (!!(shift) << (shift + new_sqrt2_bits - 2)));
 
     for (int32_t i = 0; i < 16; i++) {
         input[i] = _mm512_mullo_epi32(input[i], scalar);
@@ -2156,8 +2158,8 @@ static INLINE void idct16_avx512(__m512i *in, __m512i *out, const int8_t bit, in
     }
 }
 
-static void idct64_avx512(__m512i *in, __m512i *out, const int8_t bit, int32_t do_cols,
-                          int32_t bd, int32_t out_shift) {
+static void idct64_avx512(__m512i *in, __m512i *out, const int8_t bit, int32_t do_cols, int32_t bd,
+                          int32_t out_shift) {
     int32_t        i, j;
     const int32_t *cospi     = cospi_arr(bit);
     const __m512i  rnding    = _mm512_set1_epi32(1 << (bit - 1));
@@ -2603,7 +2605,7 @@ static void idct64_avx512(__m512i *in, __m512i *out, const int8_t bit, int32_t d
         for (i = 0; i < 32; i++) {
             addsub_shift_avx512(v[i],
                                 v[63 - i],
-                                &out[do_cols * (i)+col],
+                                &out[do_cols * (i) + col],
                                 &out[do_cols * (63 - i) + col],
                                 &clamp_lo,
                                 &clamp_hi,

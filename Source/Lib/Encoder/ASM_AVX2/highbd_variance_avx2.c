@@ -10,113 +10,119 @@
  */
 
 #include "EbDefinitions.h"
-#include <immintrin.h>  // AVX2
+#include <immintrin.h> // AVX2
 
 #include "aom_dsp_rtcd.h"
 
-typedef void (*HighVarianceFn)(const uint16_t *src, int src_stride,
-                               const uint16_t *ref, int ref_stride,
-                               uint32_t *sse, int *sum);
+typedef void (*HighVarianceFn)(const uint16_t *src, int src_stride, const uint16_t *ref,
+                               int ref_stride, uint32_t *sse, int *sum);
 
-static void aom_highbd_calc8x8var_avx2(const uint16_t *src, int src_stride,
-                                       const uint16_t *ref, int ref_stride,
-                                       uint32_t *sse, int *sum) {
-  __m256i v_sum_d = _mm256_setzero_si256();
-  __m256i v_sse_d = _mm256_setzero_si256();
-  for (int i = 0; i < 8; i += 2) {
-    const __m128i v_p_a0 = _mm_loadu_si128((const __m128i *)src);
-    const __m128i v_p_a1 = _mm_loadu_si128((const __m128i *)(src + src_stride));
-    const __m128i v_p_b0 = _mm_loadu_si128((const __m128i *)ref);
-    const __m128i v_p_b1 = _mm_loadu_si128((const __m128i *)(ref + ref_stride));
-    __m256i v_p_a = _mm256_castsi128_si256(v_p_a0);
-    __m256i v_p_b = _mm256_castsi128_si256(v_p_b0);
-    v_p_a = _mm256_inserti128_si256(v_p_a, v_p_a1, 1);
-    v_p_b = _mm256_inserti128_si256(v_p_b, v_p_b1, 1);
-    const __m256i v_diff = _mm256_sub_epi16(v_p_a, v_p_b);
-    const __m256i v_sqrdiff = _mm256_madd_epi16(v_diff, v_diff);
-    v_sum_d = _mm256_add_epi16(v_sum_d, v_diff);
-    v_sse_d = _mm256_add_epi32(v_sse_d, v_sqrdiff);
-    src += src_stride * 2;
-    ref += ref_stride * 2;
-  }
-  __m256i v_sum00 = _mm256_cvtepi16_epi32(_mm256_castsi256_si128(v_sum_d));
-  __m256i v_sum01 = _mm256_cvtepi16_epi32(_mm256_extracti128_si256(v_sum_d, 1));
-  __m256i v_sum0 = _mm256_add_epi32(v_sum00, v_sum01);
-  __m256i v_d_l = _mm256_unpacklo_epi32(v_sum0, v_sse_d);
-  __m256i v_d_h = _mm256_unpackhi_epi32(v_sum0, v_sse_d);
-  __m256i v_d_lh = _mm256_add_epi32(v_d_l, v_d_h);
-  const __m128i v_d0_d = _mm256_castsi256_si128(v_d_lh);
-  const __m128i v_d1_d = _mm256_extracti128_si256(v_d_lh, 1);
-  __m128i v_d = _mm_add_epi32(v_d0_d, v_d1_d);
-  v_d = _mm_add_epi32(v_d, _mm_srli_si128(v_d, 8));
-  *sum = _mm_extract_epi32(v_d, 0);
-  *sse = _mm_extract_epi32(v_d, 1);
-}
-
-static void aom_highbd_calc16x16var_avx2(const uint16_t *src, int src_stride,
-                                         const uint16_t *ref, int ref_stride,
-                                         uint32_t *sse, int *sum) {
-  __m256i v_sum_d = _mm256_setzero_si256();
-  __m256i v_sse_d = _mm256_setzero_si256();
-  const __m256i one = _mm256_set1_epi16(1);
-  for (int i = 0; i < 16; ++i) {
-    const __m256i v_p_a = _mm256_loadu_si256((const __m256i *)src);
-    const __m256i v_p_b = _mm256_loadu_si256((const __m256i *)ref);
-    const __m256i v_diff = _mm256_sub_epi16(v_p_a, v_p_b);
-    const __m256i v_sqrdiff = _mm256_madd_epi16(v_diff, v_diff);
-    v_sum_d = _mm256_add_epi16(v_sum_d, v_diff);
-    v_sse_d = _mm256_add_epi32(v_sse_d, v_sqrdiff);
-    src += src_stride;
-    ref += ref_stride;
-  }
-  __m256i v_sum0 = _mm256_madd_epi16(v_sum_d, one);
-  __m256i v_d_l = _mm256_unpacklo_epi32(v_sum0, v_sse_d);
-  __m256i v_d_h = _mm256_unpackhi_epi32(v_sum0, v_sse_d);
-  __m256i v_d_lh = _mm256_add_epi32(v_d_l, v_d_h);
-  const __m128i v_d0_d = _mm256_castsi256_si128(v_d_lh);
-  const __m128i v_d1_d = _mm256_extracti128_si256(v_d_lh, 1);
-  __m128i v_d = _mm_add_epi32(v_d0_d, v_d1_d);
-  v_d = _mm_add_epi32(v_d, _mm_srli_si128(v_d, 8));
-  *sum = _mm_extract_epi32(v_d, 0);
-  *sse = _mm_extract_epi32(v_d, 1);
-}
-
-static void highbd_10_variance_avx2(const uint16_t *src, int src_stride,
-                                    const uint16_t *ref, int ref_stride, int w,
-                                    int h, uint32_t *sse, int *sum,
-                                    HighVarianceFn var_fn, int block_size) {
-  int i, j;
-  uint64_t sse_long = 0;
-  int32_t sum_long = 0;
-
-  for (i = 0; i < h; i += block_size) {
-    for (j = 0; j < w; j += block_size) {
-      unsigned int sse0;
-      int sum0;
-      var_fn(src + src_stride * i + j, src_stride, ref + ref_stride * i + j,
-             ref_stride, &sse0, &sum0);
-      sse_long += sse0;
-      sum_long += sum0;
+static void aom_highbd_calc8x8var_avx2(const uint16_t *src, int src_stride, const uint16_t *ref,
+                                       int ref_stride, uint32_t *sse, int *sum) {
+    __m256i v_sum_d = _mm256_setzero_si256();
+    __m256i v_sse_d = _mm256_setzero_si256();
+    for (int i = 0; i < 8; i += 2) {
+        const __m128i v_p_a0    = _mm_loadu_si128((const __m128i *)src);
+        const __m128i v_p_a1    = _mm_loadu_si128((const __m128i *)(src + src_stride));
+        const __m128i v_p_b0    = _mm_loadu_si128((const __m128i *)ref);
+        const __m128i v_p_b1    = _mm_loadu_si128((const __m128i *)(ref + ref_stride));
+        __m256i       v_p_a     = _mm256_castsi128_si256(v_p_a0);
+        __m256i       v_p_b     = _mm256_castsi128_si256(v_p_b0);
+        v_p_a                   = _mm256_inserti128_si256(v_p_a, v_p_a1, 1);
+        v_p_b                   = _mm256_inserti128_si256(v_p_b, v_p_b1, 1);
+        const __m256i v_diff    = _mm256_sub_epi16(v_p_a, v_p_b);
+        const __m256i v_sqrdiff = _mm256_madd_epi16(v_diff, v_diff);
+        v_sum_d                 = _mm256_add_epi16(v_sum_d, v_diff);
+        v_sse_d                 = _mm256_add_epi32(v_sse_d, v_sqrdiff);
+        src += src_stride * 2;
+        ref += ref_stride * 2;
     }
-  }
-  *sum = ROUND_POWER_OF_TWO(sum_long, 2);
-  *sse = (uint32_t)ROUND_POWER_OF_TWO(sse_long, 4);
+    __m256i       v_sum00 = _mm256_cvtepi16_epi32(_mm256_castsi256_si128(v_sum_d));
+    __m256i       v_sum01 = _mm256_cvtepi16_epi32(_mm256_extracti128_si256(v_sum_d, 1));
+    __m256i       v_sum0  = _mm256_add_epi32(v_sum00, v_sum01);
+    __m256i       v_d_l   = _mm256_unpacklo_epi32(v_sum0, v_sse_d);
+    __m256i       v_d_h   = _mm256_unpackhi_epi32(v_sum0, v_sse_d);
+    __m256i       v_d_lh  = _mm256_add_epi32(v_d_l, v_d_h);
+    const __m128i v_d0_d  = _mm256_castsi256_si128(v_d_lh);
+    const __m128i v_d1_d  = _mm256_extracti128_si256(v_d_lh, 1);
+    __m128i       v_d     = _mm_add_epi32(v_d0_d, v_d1_d);
+    v_d                   = _mm_add_epi32(v_d, _mm_srli_si128(v_d, 8));
+    *sum                  = _mm_extract_epi32(v_d, 0);
+    *sse                  = _mm_extract_epi32(v_d, 1);
 }
 
-#define VAR_FN(w, h, block_size, shift)                                    \
-  uint32_t svt_aom_highbd_10_variance##w##x##h##_avx2(                     \
-      const uint8_t *src8, int src_stride, const uint8_t *ref8,            \
-      int ref_stride, uint32_t *sse) {                                     \
-    int sum;                                                               \
-    int64_t var;                                                           \
-    uint16_t *src = CONVERT_TO_SHORTPTR(src8);                             \
-    uint16_t *ref = CONVERT_TO_SHORTPTR(ref8);                             \
-    highbd_10_variance_avx2(                                               \
-        src, src_stride, ref, ref_stride, w, h, sse, &sum,                 \
-        aom_highbd_calc##block_size##x##block_size##var_avx2, block_size); \
-    var = (int64_t)(*sse) - (((int64_t)sum * sum) >> shift);               \
-    return (var >= 0) ? (uint32_t)var : 0;                                 \
-  }
+static void aom_highbd_calc16x16var_avx2(const uint16_t *src, int src_stride, const uint16_t *ref,
+                                         int ref_stride, uint32_t *sse, int *sum) {
+    __m256i       v_sum_d = _mm256_setzero_si256();
+    __m256i       v_sse_d = _mm256_setzero_si256();
+    const __m256i one     = _mm256_set1_epi16(1);
+    for (int i = 0; i < 16; ++i) {
+        const __m256i v_p_a     = _mm256_loadu_si256((const __m256i *)src);
+        const __m256i v_p_b     = _mm256_loadu_si256((const __m256i *)ref);
+        const __m256i v_diff    = _mm256_sub_epi16(v_p_a, v_p_b);
+        const __m256i v_sqrdiff = _mm256_madd_epi16(v_diff, v_diff);
+        v_sum_d                 = _mm256_add_epi16(v_sum_d, v_diff);
+        v_sse_d                 = _mm256_add_epi32(v_sse_d, v_sqrdiff);
+        src += src_stride;
+        ref += ref_stride;
+    }
+    __m256i       v_sum0 = _mm256_madd_epi16(v_sum_d, one);
+    __m256i       v_d_l  = _mm256_unpacklo_epi32(v_sum0, v_sse_d);
+    __m256i       v_d_h  = _mm256_unpackhi_epi32(v_sum0, v_sse_d);
+    __m256i       v_d_lh = _mm256_add_epi32(v_d_l, v_d_h);
+    const __m128i v_d0_d = _mm256_castsi256_si128(v_d_lh);
+    const __m128i v_d1_d = _mm256_extracti128_si256(v_d_lh, 1);
+    __m128i       v_d    = _mm_add_epi32(v_d0_d, v_d1_d);
+    v_d                  = _mm_add_epi32(v_d, _mm_srli_si128(v_d, 8));
+    *sum                 = _mm_extract_epi32(v_d, 0);
+    *sse                 = _mm_extract_epi32(v_d, 1);
+}
+
+static void highbd_10_variance_avx2(const uint16_t *src, int src_stride, const uint16_t *ref,
+                                    int ref_stride, int w, int h, uint32_t *sse, int *sum,
+                                    HighVarianceFn var_fn, int block_size) {
+    int      i, j;
+    uint64_t sse_long = 0;
+    int32_t  sum_long = 0;
+
+    for (i = 0; i < h; i += block_size) {
+        for (j = 0; j < w; j += block_size) {
+            unsigned int sse0;
+            int          sum0;
+            var_fn(src + src_stride * i + j,
+                   src_stride,
+                   ref + ref_stride * i + j,
+                   ref_stride,
+                   &sse0,
+                   &sum0);
+            sse_long += sse0;
+            sum_long += sum0;
+        }
+    }
+    *sum = ROUND_POWER_OF_TWO(sum_long, 2);
+    *sse = (uint32_t)ROUND_POWER_OF_TWO(sse_long, 4);
+}
+
+#define VAR_FN(w, h, block_size, shift)                                                            \
+    uint32_t svt_aom_highbd_10_variance##w##x##h##_avx2(                                           \
+        const uint8_t *src8, int src_stride, const uint8_t *ref8, int ref_stride, uint32_t *sse) { \
+        int       sum;                                                                             \
+        int64_t   var;                                                                             \
+        uint16_t *src = CONVERT_TO_SHORTPTR(src8);                                                 \
+        uint16_t *ref = CONVERT_TO_SHORTPTR(ref8);                                                 \
+        highbd_10_variance_avx2(src,                                                               \
+                                src_stride,                                                        \
+                                ref,                                                               \
+                                ref_stride,                                                        \
+                                w,                                                                 \
+                                h,                                                                 \
+                                sse,                                                               \
+                                &sum,                                                              \
+                                aom_highbd_calc##block_size##x##block_size##var_avx2,              \
+                                block_size);                                                       \
+        var = (int64_t)(*sse) - (((int64_t)sum * sum) >> shift);                                   \
+        return (var >= 0) ? (uint32_t)var : 0;                                                     \
+    }
 
 VAR_FN(128, 128, 16, 14);
 VAR_FN(128, 64, 16, 13);
@@ -144,8 +150,9 @@ VAR_FN(64, 16, 16, 10);
 * This kernel is only used by variance_highbd_avx2()
 * Return: SAD and sum of square differences
 */
-static inline void variance_highbd_32x32_avx2(const uint16_t *src, int src_stride, const uint16_t *ref,
-                                int ref_stride, uint32_t *sse, int *sum) {
+static inline void variance_highbd_32x32_avx2(const uint16_t *src, int src_stride,
+                                              const uint16_t *ref, int ref_stride, uint32_t *sse,
+                                              int *sum) {
     uint32_t sse0;
     int      sum0;
 
@@ -174,7 +181,7 @@ uint32_t variance_highbd_avx2(const uint16_t *a, int a_stride, const uint16_t *b
     *sse    = 0;
 
     switch (w) {
-    case 16: aom_highbd_calc16x16var_avx2(a, a_stride, b, b_stride, sse,&sum); break;
+    case 16: aom_highbd_calc16x16var_avx2(a, a_stride, b, b_stride, sse, &sum); break;
     case 32: variance_highbd_32x32_avx2(a, a_stride, b, b_stride, sse, &sum); break;
     default: assert(0);
     }

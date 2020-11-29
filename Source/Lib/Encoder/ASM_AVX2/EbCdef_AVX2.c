@@ -29,12 +29,12 @@
 /* Search for the best luma+chroma strength to add as an option, knowing we
 already selected nb_strengths options. */
 uint64_t svt_search_one_dual_avx2(int *lev0, int *lev1, int nb_strengths,
-                                  uint64_t (**mse)[TOTAL_STRENGTHS], int sb_count,
-                                  int start_gi, int end_gi) {
+                                  uint64_t (**mse)[TOTAL_STRENGTHS], int sb_count, int start_gi,
+                                  int end_gi) {
     DECLARE_ALIGNED(32, uint64_t, tot_mse[TOTAL_STRENGTHS][TOTAL_STRENGTHS]);
-    uint64_t best_tot_mse = (uint64_t)1 << 62;
-    int      best_id0     = 0;
-    int      best_id1     = 0;
+    uint64_t  best_tot_mse    = (uint64_t)1 << 62;
+    int       best_id0        = 0;
+    int       best_id1        = 0;
     const int total_strengths = end_gi;
 
     memset(tot_mse, 0, sizeof(tot_mse));
@@ -44,7 +44,8 @@ uint64_t svt_search_one_dual_avx2(int *lev0, int *lev1, int nb_strengths,
         /* Find best mse among already selected options. */
         for (int gi = 0; gi < nb_strengths; gi++) {
             uint64_t curr = mse[0][i][lev0[gi]] + mse[1][i][lev1[gi]];
-            if (curr < best_mse) best_mse = curr;
+            if (curr < best_mse)
+                best_mse = curr;
         }
         __m256i best_mse_ = _mm256_set1_epi64x(best_mse);
         /* Find best mse when adding each possible new option. */
@@ -54,9 +55,9 @@ uint64_t svt_search_one_dual_avx2(int *lev0, int *lev1, int nb_strengths,
             for (int k = 0; k < total_strengths; k += 4) {
                 __m256i v_mse = _mm256_loadu_si256((const __m256i *)&mse[1][i][k]);
                 __m256i v_tot = _mm256_loadu_si256((const __m256i *)&tot_mse[j][k]);
-                __m256i curr = _mm256_add_epi64(tmp, v_mse);
-                __m256i mask = _mm256_cmpgt_epi64(best_mse_, curr);
-                v_tot = _mm256_add_epi64(v_tot,
+                __m256i curr  = _mm256_add_epi64(tmp, v_mse);
+                __m256i mask  = _mm256_cmpgt_epi64(best_mse_, curr);
+                v_tot         = _mm256_add_epi64(v_tot,
                                          _mm256_or_si256(_mm256_andnot_si256(mask, best_mse_),
                                                          _mm256_and_si256(mask, curr)));
                 _mm256_storeu_si256((__m256i *)&tot_mse[j][k], v_tot);
@@ -123,8 +124,8 @@ static INLINE void mse_8x2_16bit_avx2(const uint16_t **src, const uint16_t *dst,
 static INLINE void mse_8x2_8bit_avx2(const uint8_t **src, const uint8_t *dst, const int32_t dstride,
                                      __m256i *sum) {
     const __m128i s = _mm_loadu_si128((const __m128i *)*src);
-    const __m128i d =
-        _mm_set_epi64x(*(uint64_t *)(dst + 1 * dstride), *(uint64_t *)(dst + 0 * dstride));
+    const __m128i d = _mm_set_epi64x(*(uint64_t *)(dst + 1 * dstride),
+                                     *(uint64_t *)(dst + 0 * dstride));
 
     const __m256i s_16 = _mm256_cvtepu8_epi16(s);
     const __m256i d_16 = _mm256_cvtepu8_epi16(d);
@@ -200,9 +201,10 @@ static INLINE uint64_t dist_8x8_16bit_avx2(const uint16_t **src, const uint16_t 
     /* Compute the variance -- the calculation cannot go negative. */
     uint64_t svar = sum_s2 - ((sum_s * sum_s + 32) >> 6);
     uint64_t dvar = sum_d2 - ((sum_d * sum_d + 32) >> 6);
-    return (uint64_t)floor(.5 + (sum_d2 + sum_s2 - 2 * sum_sd) * .5 *
-                                    (svar + dvar + (400 << 2 * coeff_shift)) /
-                                    (sqrt((20000 << 4 * coeff_shift) + svar * (double)dvar)));
+    return (uint64_t)floor(.5 +
+                           (sum_d2 + sum_s2 - 2 * sum_sd) * .5 *
+                               (svar + dvar + (400 << 2 * coeff_shift)) /
+                               (sqrt((20000 << 4 * coeff_shift) + svar * (double)dvar)));
 }
 
 static INLINE uint64_t dist_8x8_8bit_avx2(const uint8_t **src, const uint8_t *dst,
@@ -249,9 +251,10 @@ static INLINE uint64_t dist_8x8_8bit_avx2(const uint8_t **src, const uint8_t *ds
     /* Compute the variance -- the calculation cannot go negative. */
     uint64_t svar = sum_s2 - ((sum_s * sum_s + 32) >> 6);
     uint64_t dvar = sum_d2 - ((sum_d * sum_d + 32) >> 6);
-    return (uint64_t)floor(.5 + (sum_d2 + sum_s2 - 2 * sum_sd) * .5 *
-                                    (svar + dvar + (400 << 2 * coeff_shift)) /
-                                    (sqrt((20000 << 4 * coeff_shift) + svar * (double)dvar)));
+    return (uint64_t)floor(.5 +
+                           (sum_d2 + sum_s2 - 2 * sum_sd) * .5 *
+                               (svar + dvar + (400 << 2 * coeff_shift)) /
+                               (sqrt((20000 << 4 * coeff_shift) + svar * (double)dvar)));
 }
 
 static INLINE void sum_32_to_64(const __m256i src, __m256i *dst) {
@@ -272,8 +275,8 @@ static INLINE uint64_t sum64(const __m256i src) {
 
 /* Compute MSE only on the blocks we filtered. */
 uint64_t compute_cdef_dist_16bit_avx2(const uint16_t *dst, int32_t dstride, const uint16_t *src,
-                                const CdefList *dlist, int32_t cdef_count, BlockSize bsize,
-                                int32_t coeff_shift, int32_t pli) {
+                                      const CdefList *dlist, int32_t cdef_count, BlockSize bsize,
+                                      int32_t coeff_shift, int32_t pli) {
     uint64_t sum;
     int32_t  bi, bx, by;
 
@@ -341,8 +344,8 @@ uint64_t compute_cdef_dist_8bit_avx2(const uint8_t *dst8, int32_t dstride, const
         for (bi = 0; bi < cdef_count; bi++) {
             by = dlist[bi].by;
             bx = dlist[bi].bx;
-            sum +=
-                dist_8x8_8bit_avx2(&src8, dst8 + 8 * by * dstride + 8 * bx, dstride, coeff_shift);
+            sum += dist_8x8_8bit_avx2(
+                &src8, dst8 + 8 * by * dstride + 8 * bx, dstride, coeff_shift);
         }
     } else {
         __m256i mse64 = _mm256_setzero_si256();

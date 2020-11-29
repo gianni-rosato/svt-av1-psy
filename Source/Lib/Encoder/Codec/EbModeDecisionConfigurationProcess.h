@@ -63,7 +63,7 @@ typedef struct ModeDecisionConfigurationContext {
     const BlockGeom *      blk_geom;
     ModeDecisionCandidate *mdc_candidate_ptr;
     CandidateMv *          mdc_ref_mv_stack;
-    BlkStruct *           mdc_blk_ptr;
+    BlkStruct *            mdc_blk_ptr;
     uint8_t                qp_index;
 } ModeDecisionConfigurationContext;
 

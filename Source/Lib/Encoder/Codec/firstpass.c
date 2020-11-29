@@ -45,42 +45,43 @@
 
 #define STATS_CAPABILITY_INIT 100
 //1.5 times larger than request.
-#define STATS_CAPABILITY_GROW(s) (s * 3 /2)
-static EbErrorType realloc_stats_out(SequenceControlSet *scs_ptr, FirstPassStatsOut* out, uint64_t frame_number) {
+#define STATS_CAPABILITY_GROW(s) (s * 3 / 2)
+static EbErrorType realloc_stats_out(SequenceControlSet *scs_ptr, FirstPassStatsOut *out,
+                                     uint64_t frame_number) {
     if (frame_number < out->size)
         return EB_ErrorNone;
 
     if ((int64_t)frame_number >= (int64_t)out->capability - 1) {
-        size_t capability = (int64_t)frame_number >= (int64_t)STATS_CAPABILITY_INIT - 1 ?
-            STATS_CAPABILITY_GROW(frame_number) : STATS_CAPABILITY_INIT;
+        size_t capability = (int64_t)frame_number >= (int64_t)STATS_CAPABILITY_INIT - 1
+            ? STATS_CAPABILITY_GROW(frame_number)
+            : STATS_CAPABILITY_INIT;
         if (scs_ptr->lap_enabled) {
             //store the data points before re-allocation
             uint64_t stats_in_start_offset = 0;
-            uint64_t stats_in_offset = 0;
-            uint64_t stats_in_end_offset = 0;
+            uint64_t stats_in_offset       = 0;
+            uint64_t stats_in_end_offset   = 0;
             if (frame_number) {
                 stats_in_start_offset = scs_ptr->twopass.stats_buf_ctx->stats_in_start - out->stat;
-                stats_in_offset = scs_ptr->twopass.stats_in - out->stat;
-                stats_in_end_offset = scs_ptr->twopass.stats_buf_ctx->stats_in_end - out->stat;
+                stats_in_offset       = scs_ptr->twopass.stats_in - out->stat;
+                stats_in_end_offset   = scs_ptr->twopass.stats_buf_ctx->stats_in_end - out->stat;
             }
             EB_REALLOC_ARRAY(out->stat, capability);
             // restore the pointers after re-allocation is done
             scs_ptr->twopass.stats_buf_ctx->stats_in_start = out->stat + stats_in_start_offset;
-            scs_ptr->twopass.stats_in = out->stat + stats_in_offset;
-            scs_ptr->twopass.stats_buf_ctx->stats_in_end = out->stat + stats_in_end_offset;
-        }
-        else {
+            scs_ptr->twopass.stats_in                      = out->stat + stats_in_offset;
+            scs_ptr->twopass.stats_buf_ctx->stats_in_end   = out->stat + stats_in_end_offset;
+        } else {
             EB_REALLOC_ARRAY(out->stat, capability);
         }
         out->capability = capability;
     }
     out->size = frame_number + 1;
     return EB_ErrorNone;
-    }
+}
 
 static AOM_INLINE void output_stats(SequenceControlSet *scs_ptr, FIRSTPASS_STATS *stats,
                                     uint64_t frame_number) {
-    FirstPassStatsOut* stats_out = &scs_ptr->encode_context_ptr->stats_out;
+    FirstPassStatsOut *stats_out = &scs_ptr->encode_context_ptr->stats_out;
     svt_block_on_mutex(scs_ptr->encode_context_ptr->stat_file_mutex);
     if (realloc_stats_out(scs_ptr, stats_out, frame_number) != EB_ErrorNone) {
         SVT_ERROR("realloc_stats_out request %d entries failed failed\n", frame_number);
@@ -193,14 +194,15 @@ static double raw_motion_error_stdev(int *raw_motion_err_list, int raw_motion_er
     int64_t sum_raw_err   = 0;
     double  raw_err_avg   = 0;
     double  raw_err_stdev = 0;
-    if (raw_motion_err_counts == 0) return 0;
+    if (raw_motion_err_counts == 0)
+        return 0;
 
     int i;
     for (i = 0; i < raw_motion_err_counts; i++) { sum_raw_err += raw_motion_err_list[i]; }
     raw_err_avg = (double)sum_raw_err / raw_motion_err_counts;
     for (i = 0; i < raw_motion_err_counts; i++) {
-        raw_err_stdev +=
-            (raw_motion_err_list[i] - raw_err_avg) * (raw_motion_err_list[i] - raw_err_avg);
+        raw_err_stdev += (raw_motion_err_list[i] - raw_err_avg) *
+            (raw_motion_err_list[i] - raw_err_avg);
     }
     // Calculate the standard deviation for the motion error of all the inter
     // blocks of the 0,0 motion using the last source
@@ -214,11 +216,13 @@ static double raw_motion_error_stdev(int *raw_motion_err_list, int raw_motion_er
 // Modifies member variables of "stats".
 void accumulate_mv_stats(const MV best_mv, const FULLPEL_MV mv, const int mb_row, const int mb_col,
                          const int mb_rows, const int mb_cols, MV *last_mv, FRAME_STATS *stats) {
-    if (is_zero_mv(&best_mv)) return;
+    if (is_zero_mv(&best_mv))
+        return;
 
     ++stats->mv_count;
     // Non-zero vector, was it different from the last non zero vector?
-    if (!is_equal_mv(&best_mv, last_mv)) ++stats->new_mv_count;
+    if (!is_equal_mv(&best_mv, last_mv))
+        ++stats->new_mv_count;
     *last_mv = best_mv;
 
     // Does the row vector point inwards or outwards?
@@ -265,9 +269,9 @@ void accumulate_mv_stats(const MV best_mv, const FULLPEL_MV mv, const int mb_row
 //   twopass->stats_buf_ctx->stats_in_end: the pointer to the current stats,
 //                                         update its value and its position
 //                                         in the buffer.
-static void update_firstpass_stats(PictureParentControlSet *pcs_ptr,
-                                   const FRAME_STATS *const stats, const double raw_err_stdev,
-                                   const int frame_number, const int64_t ts_duration) {
+static void update_firstpass_stats(PictureParentControlSet *pcs_ptr, const FRAME_STATS *const stats,
+                                   const double raw_err_stdev, const int frame_number,
+                                   const int64_t ts_duration) {
     SequenceControlSet *scs_ptr = pcs_ptr->scs_ptr;
     TWO_PASS *          twopass = &scs_ptr->twopass;
 
@@ -310,10 +314,10 @@ static void update_firstpass_stats(PictureParentControlSet *pcs_ptr,
         fps.mvc_abs = (double)stats->sum_mvc_abs / stats->mv_count;
         fps.MVrv    = ((double)stats->sum_mvrs -
                     ((double)stats->sum_mvr * stats->sum_mvr / stats->mv_count)) /
-                   stats->mv_count;
+            stats->mv_count;
         fps.MVcv = ((double)stats->sum_mvcs -
                     ((double)stats->sum_mvc * stats->sum_mvc / stats->mv_count)) /
-                   stats->mv_count;
+            stats->mv_count;
         fps.mv_in_out_count = (double)stats->sum_in_vectors / (stats->mv_count * 2);
         fps.new_mv_count    = stats->new_mv_count;
         fps.pcnt_motion     = (double)stats->mv_count / num_mbs;
@@ -439,8 +443,8 @@ void first_pass_frame_end(PictureParentControlSet *pcs_ptr, const int64_t ts_dur
 
     FRAME_STATS  stats                      = accumulate_frame_stats(mb_stats, mb_rows, mb_cols);
     int          total_raw_motion_err_count = frame_is_intra_only(pcs_ptr) ? 0 : mb_rows * mb_cols;
-    const double raw_err_stdev =
-        raw_motion_error_stdev(raw_motion_err_list, total_raw_motion_err_count);
+    const double raw_err_stdev              = raw_motion_error_stdev(raw_motion_err_list,
+                                                        total_raw_motion_err_count);
     // Clamp the image start to rows/2. This number of rows is discarded top
     // and bottom as dead data so rows / 2 means the frame is blank.
     if ((stats.image_data_start_row > (int)mb_rows / 2) ||
@@ -449,8 +453,8 @@ void first_pass_frame_end(PictureParentControlSet *pcs_ptr, const int64_t ts_dur
     }
     // Exclude any image dead zone
     if (stats.image_data_start_row > 0) {
-        stats.intra_skip_count =
-            AOMMAX(0, stats.intra_skip_count - (stats.image_data_start_row * (int)mb_cols * 2));
+        stats.intra_skip_count = AOMMAX(
+            0, stats.intra_skip_count - (stats.image_data_start_row * (int)mb_cols * 2));
     }
     const int num_mbs = mb_rows * mb_cols;
     /*(cpi->oxcf.resize_cfg.resize_mode != RESIZE_NONE)
@@ -477,15 +481,15 @@ extern EbErrorType first_pass_signal_derivation_pre_analysis(SequenceControlSet 
 
     //// Set here to allocate resources for the downsampled pictures used in HME (generated in PictureAnalysis)
     //// Will be later updated for SC/NSC in PictureDecisionProcess
-    pcs_ptr->tf_enable_hme_flag                  = 0;
-    pcs_ptr->tf_enable_hme_level0_flag           = 0;
-    pcs_ptr->tf_enable_hme_level1_flag           = 0;
-    pcs_ptr->tf_enable_hme_level2_flag           = 0;
-    scs_ptr->seq_header.enable_intra_edge_filter = 0;
-    scs_ptr->seq_header.pic_based_rate_est       = 0;
-    scs_ptr->seq_header.enable_restoration       = 0;
-    scs_ptr->seq_header.cdef_level/*enable_cdef*/= 0;
-    scs_ptr->seq_header.enable_warped_motion     = 0;
+    pcs_ptr->tf_enable_hme_flag                    = 0;
+    pcs_ptr->tf_enable_hme_level0_flag             = 0;
+    pcs_ptr->tf_enable_hme_level1_flag             = 0;
+    pcs_ptr->tf_enable_hme_level2_flag             = 0;
+    scs_ptr->seq_header.enable_intra_edge_filter   = 0;
+    scs_ptr->seq_header.pic_based_rate_est         = 0;
+    scs_ptr->seq_header.enable_restoration         = 0;
+    scs_ptr->seq_header.cdef_level /*enable_cdef*/ = 0;
+    scs_ptr->seq_header.enable_warped_motion       = 0;
 
     return return_error;
 }
@@ -499,16 +503,16 @@ Output  : Multi-Processes signal(s)
 EbErrorType first_pass_signal_derivation_multi_processes(SequenceControlSet *     scs_ptr,
                                                          PictureParentControlSet *pcs_ptr,
                                                          PictureDecisionContext * context_ptr) {
-    EbErrorType return_error = EB_ErrorNone;
-    FrameHeader *frm_hdr = &pcs_ptr->frm_hdr;
+    EbErrorType  return_error = EB_ErrorNone;
+    FrameHeader *frm_hdr      = &pcs_ptr->frm_hdr;
     // If enabled here, the hme enable flags should also be enabled in ResourceCoordinationProcess
     // to ensure that resources are allocated for the downsampled pictures used in HME
-    pcs_ptr->enable_hme_flag = 1;
+    pcs_ptr->enable_hme_flag        = 1;
     pcs_ptr->enable_hme_level0_flag = 1;
     pcs_ptr->enable_hme_level1_flag = 1;
     pcs_ptr->enable_hme_level2_flag = 1;
 
-    pcs_ptr->tf_enable_hme_flag = 0;
+    pcs_ptr->tf_enable_hme_flag        = 0;
     pcs_ptr->tf_enable_hme_level0_flag = 0;
     pcs_ptr->tf_enable_hme_level1_flag = 0;
     pcs_ptr->tf_enable_hme_level2_flag = 0;
@@ -519,7 +523,7 @@ EbErrorType first_pass_signal_derivation_multi_processes(SequenceControlSet *   
     // Set disallow_nsq
     pcs_ptr->disallow_nsq = EB_TRUE;
 
-    pcs_ptr->max_number_of_pus_per_sb = SQUARE_PU_COUNT;
+    pcs_ptr->max_number_of_pus_per_sb          = SQUARE_PU_COUNT;
     pcs_ptr->disallow_all_nsq_blocks_below_8x8 = EB_TRUE;
 
     // Set disallow_all_nsq_blocks_below_16x16: 16x8, 8x16, 16x4, 4x16
@@ -533,7 +537,7 @@ EbErrorType first_pass_signal_derivation_multi_processes(SequenceControlSet *   
     pcs_ptr->disallow_all_nsq_blocks_above_16x16 = EB_TRUE;
 
     pcs_ptr->disallow_HVA_HVB_HV4 = EB_TRUE;
-    pcs_ptr->disallow_HV4 = EB_TRUE;
+    pcs_ptr->disallow_HV4         = EB_TRUE;
 
     // Set disallow_all_non_hv_nsq_blocks_below_16x16
     pcs_ptr->disallow_all_non_hv_nsq_blocks_below_16x16 = EB_TRUE;
@@ -542,7 +546,7 @@ EbErrorType first_pass_signal_derivation_multi_processes(SequenceControlSet *   
     pcs_ptr->disallow_all_h4_v4_blocks_below_16x16 = EB_TRUE;
 
     frm_hdr->allow_screen_content_tools = 0;
-    frm_hdr->allow_intrabc = 0;
+    frm_hdr->allow_intrabc              = 0;
 
     // Palette Modes:
     //    0:OFF
@@ -575,7 +579,7 @@ EbErrorType first_pass_signal_derivation_multi_processes(SequenceControlSet *   
     // 2                                            1 step refinement
     // 3                                            4 step refinement
     // 4                                            16 step refinement
-    Av1Common *cm = pcs_ptr->av1_cm;
+    Av1Common *cm      = pcs_ptr->av1_cm;
     cm->sg_filter_mode = 0;
 
     // WN Level                                     Settings
@@ -605,10 +609,9 @@ EbErrorType first_pass_signal_derivation_multi_processes(SequenceControlSet *   
     if (scs_ptr->static_config.frame_end_cdf_update == DEFAULT)
         pcs_ptr->frame_end_cdf_update_mode = 0;
     else
-        pcs_ptr->frame_end_cdf_update_mode =
-        scs_ptr->static_config.frame_end_cdf_update;
+        pcs_ptr->frame_end_cdf_update_mode = scs_ptr->static_config.frame_end_cdf_update;
 
-     pcs_ptr->frm_hdr.use_ref_frame_mvs = 0;
+    pcs_ptr->frm_hdr.use_ref_frame_mvs = 0;
 
     // Global motion level                        Settings
     // GM_FULL                                    Exhaustive search mode.
@@ -621,7 +624,6 @@ EbErrorType first_pass_signal_derivation_multi_processes(SequenceControlSet *   
     // 0: OFF
     // 1: ON
     pcs_ptr->tx_size_early_exit = 0;
-
 
     context_ptr->tf_level = 0;
     set_tf_controls(pcs_ptr, context_ptr->tf_level);
@@ -646,8 +648,7 @@ EbErrorType first_pass_signal_derivation_multi_processes(SequenceControlSet *   
 Input   : encoder mode and tune
 Output  : EncDec Kernel signal(s)
 ******************************************************/
-EbErrorType first_pass_signal_derivation_mode_decision_config_kernel(
-    PictureControlSet *pcs_ptr) {
+EbErrorType first_pass_signal_derivation_mode_decision_config_kernel(PictureControlSet *pcs_ptr) {
     EbErrorType return_error = EB_ErrorNone;
     // CDF
     pcs_ptr->cdf_ctrl.enabled = pcs_ptr->cdf_ctrl.update_coef = 0;
@@ -662,11 +663,11 @@ EbErrorType first_pass_signal_derivation_mode_decision_config_kernel(
     pcs_ptr->pic_filter_intra_level = 0;
 
     // High Precision
-    FrameHeader *frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
+    FrameHeader *frm_hdr             = &pcs_ptr->parent_pcs_ptr->frm_hdr;
     frm_hdr->allow_high_precision_mv = 0;
 
     // Warped
-    frm_hdr->allow_warped_motion = 0;
+    frm_hdr->allow_warped_motion       = 0;
     frm_hdr->is_motion_mode_switchable = frm_hdr->allow_warped_motion;
 
     // pic_obmc_level - pic_obmc_level is used to define md_pic_obmc_level.
@@ -688,42 +689,32 @@ EbErrorType first_pass_signal_derivation_mode_decision_config_kernel(
     pcs_ptr->hbd_mode_decision = EB_8_BIT_MD; //first pass hard coded to 8bit
     return return_error;
 }
-void* set_me_hme_params_oq(
-    MeContext                     *me_context_ptr,
-    PictureParentControlSet       *pcs_ptr,
-    SequenceControlSet            *scs_ptr,
-    EbInputResolution             input_resolution);
-void *set_me_hme_params_from_config(SequenceControlSet *scs_ptr, MeContext *me_context_ptr) ;
-void set_me_hme_ref_prune_ctrls(MeContext* context_ptr, uint8_t prune_level) ;
-void set_me_sr_adjustment_ctrls(MeContext* context_ptr, uint8_t sr_adjustment_level);
-void set_gm_controls(PictureParentControlSet *  pcs_ptr, uint8_t gm_level);
+void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *pcs_ptr,
+                           SequenceControlSet *scs_ptr, EbInputResolution input_resolution);
+void *set_me_hme_params_from_config(SequenceControlSet *scs_ptr, MeContext *me_context_ptr);
+void  set_me_hme_ref_prune_ctrls(MeContext *context_ptr, uint8_t prune_level);
+void  set_me_sr_adjustment_ctrls(MeContext *context_ptr, uint8_t sr_adjustment_level);
+void  set_gm_controls(PictureParentControlSet *pcs_ptr, uint8_t gm_level);
 /******************************************************
 * Derive ME Settings for first pass
   Input   : encoder mode and tune
   Output  : ME Kernel signal(s)
 ******************************************************/
-EbErrorType first_pass_signal_derivation_me_kernel(
-    SequenceControlSet        *scs_ptr,
-    PictureParentControlSet   *pcs_ptr,
-    MotionEstimationContext_t   *context_ptr) {
+EbErrorType first_pass_signal_derivation_me_kernel(SequenceControlSet *       scs_ptr,
+                                                   PictureParentControlSet *  pcs_ptr,
+                                                   MotionEstimationContext_t *context_ptr) {
     EbErrorType return_error = EB_ErrorNone;
 
     // Set ME/HME search regions
 
     if (scs_ptr->static_config.use_default_me_hme)
         set_me_hme_params_oq(
-            context_ptr->me_context_ptr,
-            pcs_ptr,
-            scs_ptr,
-            scs_ptr->input_resolution);
+            context_ptr->me_context_ptr, pcs_ptr, scs_ptr, scs_ptr->input_resolution);
     else
-        set_me_hme_params_from_config(
-            scs_ptr,
-            context_ptr->me_context_ptr);
-
+        set_me_hme_params_from_config(scs_ptr, context_ptr->me_context_ptr);
 
     // Set HME flags
-    context_ptr->me_context_ptr->enable_hme_flag = pcs_ptr->enable_hme_flag;
+    context_ptr->me_context_ptr->enable_hme_flag        = pcs_ptr->enable_hme_flag;
     context_ptr->me_context_ptr->enable_hme_level0_flag = pcs_ptr->enable_hme_level0_flag;
     context_ptr->me_context_ptr->enable_hme_level1_flag = pcs_ptr->enable_hme_level1_flag;
     context_ptr->me_context_ptr->enable_hme_level2_flag = pcs_ptr->enable_hme_level2_flag;
@@ -733,7 +724,7 @@ EbErrorType first_pass_signal_derivation_me_kernel(
 
     // ME Search Method
     context_ptr->me_context_ptr->me_search_method = SUB_SAD_SEARCH;
-    uint8_t gm_level = 0;
+    uint8_t gm_level                              = 0;
     set_gm_controls(pcs_ptr, gm_level);
 
     // Set hme/me based reference pruning level (0-4)

@@ -1,3 +1,4 @@
+// clang-format off
 /*
 * Copyright(c) 2019 Intel Corporation
 * Copyright (c) 2016, Alliance for Open Media. All rights reserved
@@ -382,3 +383,4 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
     SET_AVX2(variance_highbd, variance_highbd_c, variance_highbd_avx2);
     SET_AVX2(svt_av1_haar_ac_sad_8x8_uint8_input, svt_av1_haar_ac_sad_8x8_uint8_input_c, svt_av1_haar_ac_sad_8x8_uint8_input_avx2);
 }
+// clang-format on

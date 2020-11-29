@@ -991,7 +991,7 @@ static INLINE void v_pred_16x8(uint16_t **const dst, const ptrdiff_t stride, con
 // 16x4
 
 void svt_aom_highbd_v_predictor_16x4_avx2(uint16_t *dst, ptrdiff_t stride, const uint16_t *above,
-                                         const uint16_t *left, int32_t bd) {
+                                          const uint16_t *left, int32_t bd) {
     // Load all 16 pixels in a row into 256-bit registers.
     const __m256i above0 = _mm256_loadu_si256((const __m256i *)(above + 0x00));
 
@@ -1033,7 +1033,7 @@ void svt_aom_highbd_v_predictor_16x16_avx2(uint16_t *dst, ptrdiff_t stride, cons
 // 16x32
 
 void svt_aom_highbd_v_predictor_16x32_avx2(uint16_t *dst, ptrdiff_t stride, const uint16_t *above,
-                                          const uint16_t *left, int32_t bd) {
+                                           const uint16_t *left, int32_t bd) {
     // Load all 16 pixels in a row into 256-bit registers.
     const __m256i above0 = _mm256_loadu_si256((const __m256i *)(above + 0x00));
 
@@ -1083,7 +1083,7 @@ static INLINE void v_pred_32x8(uint16_t **const dst, const ptrdiff_t stride, con
 // 32x8
 
 void svt_aom_highbd_v_predictor_32x8_avx2(uint16_t *dst, ptrdiff_t stride, const uint16_t *above,
-                                         const uint16_t *left, int32_t bd) {
+                                          const uint16_t *left, int32_t bd) {
     // Load all 32 pixels in a row into 256-bit registers.
     const __m256i above0 = _mm256_loadu_si256((const __m256i *)(above + 0x00));
     const __m256i above1 = _mm256_loadu_si256((const __m256i *)(above + 0x10));
@@ -1111,7 +1111,7 @@ void svt_aom_highbd_v_predictor_32x16_avx2(uint16_t *dst, ptrdiff_t stride, cons
 // 32x32
 
 void svt_aom_highbd_v_predictor_32x32_avx2(uint16_t *dst, ptrdiff_t stride, const uint16_t *above,
-                                          const uint16_t *left, int32_t bd) {
+                                           const uint16_t *left, int32_t bd) {
     // Load all 32 pixels in a row into 256-bit registers.
     const __m256i above0 = _mm256_loadu_si256((const __m256i *)(above + 0x00));
     const __m256i above1 = _mm256_loadu_si256((const __m256i *)(above + 0x10));
@@ -1181,7 +1181,7 @@ void svt_aom_highbd_v_predictor_64x16_avx2(uint16_t *dst, ptrdiff_t stride, cons
 // 64x32
 
 void svt_aom_highbd_v_predictor_64x32_avx2(uint16_t *dst, ptrdiff_t stride, const uint16_t *above,
-                                          const uint16_t *left, int32_t bd) {
+                                           const uint16_t *left, int32_t bd) {
     // Load all 64 pixels in a row into 256-bit registers.
     const __m256i above0 = _mm256_loadu_si256((const __m256i *)(above + 0x00));
     const __m256i above1 = _mm256_loadu_si256((const __m256i *)(above + 0x10));
@@ -1472,8 +1472,9 @@ static INLINE void smooth_pred_8x8(const uint16_t *const left, const __m256i *co
 
 // 8x4
 
-void svt_aom_highbd_smooth_predictor_8x4_avx2(uint16_t *dst, ptrdiff_t stride, const uint16_t *above,
-                                              const uint16_t *left, int32_t bd) {
+void svt_aom_highbd_smooth_predictor_8x4_avx2(uint16_t *dst, ptrdiff_t stride,
+                                              const uint16_t *above, const uint16_t *left,
+                                              int32_t bd) {
     __m256i ab[2], r, lr, weights_w[2], rep[2];
     (void)bd;
 
@@ -1484,8 +1485,9 @@ void svt_aom_highbd_smooth_predictor_8x4_avx2(uint16_t *dst, ptrdiff_t stride, c
 
 // 8x8
 
-void svt_aom_highbd_smooth_predictor_8x8_avx2(uint16_t *dst, ptrdiff_t stride, const uint16_t *above,
-                                              const uint16_t *left, int32_t bd) {
+void svt_aom_highbd_smooth_predictor_8x8_avx2(uint16_t *dst, ptrdiff_t stride,
+                                              const uint16_t *above, const uint16_t *left,
+                                              int32_t bd) {
     __m256i ab[2], r, weights_w[2], rep[2];
     (void)bd;
 
@@ -1762,8 +1764,8 @@ void svt_aom_highbd_smooth_predictor_32x16_avx2(uint16_t *dst, ptrdiff_t stride,
 // 32x32
 
 void svt_aom_highbd_smooth_predictor_32x32_avx2(uint16_t *dst, ptrdiff_t stride,
-                                               const uint16_t *above, const uint16_t *left,
-                                               int32_t bd) {
+                                                const uint16_t *above, const uint16_t *left,
+                                                int32_t bd) {
     __m256i ab[4], r, weights_w[4], rep[4];
     (void)bd;
 
@@ -1880,8 +1882,8 @@ static INLINE void smooth_pred_64x8(const uint16_t *const left, const __m256i *c
 // 64x16
 
 void svt_aom_highbd_smooth_predictor_64x16_avx2(uint16_t *dst, ptrdiff_t stride,
-                                               const uint16_t *above, const uint16_t *left,
-                                               int32_t bd) {
+                                                const uint16_t *above, const uint16_t *left,
+                                                int32_t bd) {
     __m256i ab[8], r, weights_w[8], rep[4];
     (void)bd;
 
@@ -2003,8 +2005,8 @@ void svt_aom_highbd_smooth_h_predictor_8x4_avx2(uint16_t *dst, ptrdiff_t stride,
 // 8x8
 
 void svt_aom_highbd_smooth_h_predictor_8x8_avx2(uint16_t *dst, ptrdiff_t stride,
-                                               const uint16_t *above, const uint16_t *left,
-                                               int32_t bd) {
+                                                const uint16_t *above, const uint16_t *left,
+                                                int32_t bd) {
     __m256i r, weights[2];
     (void)bd;
 

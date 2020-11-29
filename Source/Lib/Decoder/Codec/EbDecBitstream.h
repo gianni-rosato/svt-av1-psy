@@ -50,22 +50,24 @@ typedef struct {
 } Bitstrm;
 
 // Get m_cnt number of bits and update bffer pointers and offset.
-#define GET_BITS(bits, m_pu4_buf, bit_ofst, cur_word, nxt_word, m_cnt)                   \
-    {                                                                                    \
-        bits = (cur_word << bit_ofst) >> (WORD_SIZE - m_cnt);                            \
-        bit_ofst += m_cnt;                                                               \
-        if (bit_ofst > WORD_SIZE) { bits |= SHR(nxt_word, (DBL_WORD_SIZE - bit_ofst)); } \
-                                                                                         \
-        if (bit_ofst >= WORD_SIZE) {                                                     \
-            uint32_t pu4_word_tmp;                                                       \
-            cur_word = nxt_word;                                                         \
-            /* Getting the next word */                                                  \
-            pu4_word_tmp = *(m_pu4_buf++);                                               \
-                                                                                         \
-            bit_ofst -= WORD_SIZE;                                                       \
-            /* Swapping little endian to big endian conversion*/                         \
-            nxt_word = TO_BIG_ENDIAN(pu4_word_tmp);                                      \
-        }                                                                                \
+#define GET_BITS(bits, m_pu4_buf, bit_ofst, cur_word, nxt_word, m_cnt) \
+    {                                                                  \
+        bits = (cur_word << bit_ofst) >> (WORD_SIZE - m_cnt);          \
+        bit_ofst += m_cnt;                                             \
+        if (bit_ofst > WORD_SIZE) {                                    \
+            bits |= SHR(nxt_word, (DBL_WORD_SIZE - bit_ofst));         \
+        }                                                              \
+                                                                       \
+        if (bit_ofst >= WORD_SIZE) {                                   \
+            uint32_t pu4_word_tmp;                                     \
+            cur_word = nxt_word;                                       \
+            /* Getting the next word */                                \
+            pu4_word_tmp = *(m_pu4_buf++);                             \
+                                                                       \
+            bit_ofst -= WORD_SIZE;                                     \
+            /* Swapping little endian to big endian conversion*/       \
+            nxt_word = TO_BIG_ENDIAN(pu4_word_tmp);                    \
+        }                                                              \
     }
 
 void dec_bits_init(Bitstrm *bs, const uint8_t *data, size_t u4_numbytes);

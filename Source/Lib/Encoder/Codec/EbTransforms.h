@@ -56,22 +56,20 @@ static const int8_t fwd_cos_bit_row[MAX_TXWH_IDX /*txw_idx*/][MAX_TXWH_IDX /*txh
     {0, 12, 13, 12, 11},
     {0, 0, 12, 11, 10}};
 
-
-
-static const int8_t fdct4_range_mult2[4]       = {0, 2, 3, 3};
-static const int8_t fdct8_range_mult2[6]       = {0, 2, 4, 5, 5, 5};
-static const int8_t fdct16_range_mult2[8]      = {0, 2, 4, 6, 7, 7, 7, 7};
-static const int8_t fdct32_range_mult2[10]     = {0, 2, 4, 6, 8, 9, 9, 9, 9, 9};
-static const int8_t fdct64_range_mult2[12]     = {0, 2, 4, 6, 8, 10, 11, 11, 11, 11, 11, 11};
-static const int8_t fadst4_range_mult2[7]      = {0, 2, 4, 3, 3, 3, 3};
-static const int8_t fadst8_range_mult2[8]      = {0, 0, 1, 3, 3, 5, 5, 5};
-static const int8_t fadst16_range_mult2[10]    = {0, 0, 1, 3, 3, 5, 5, 7, 7, 7};
-static const int8_t fadst32_range_mult2[12]    = {0, 0, 1, 3, 3, 5, 5, 7, 7, 9, 9, 9};
-static const int8_t fidtx4_range_mult2[1]      = {1};
-static const int8_t fidtx8_range_mult2[1]      = {2};
-static const int8_t fidtx16_range_mult2[1]     = {3};
-static const int8_t fidtx32_range_mult2[1]     = {4};
-static const int8_t fidtx64_range_mult2[1]     = {5};
+static const int8_t fdct4_range_mult2[4]    = {0, 2, 3, 3};
+static const int8_t fdct8_range_mult2[6]    = {0, 2, 4, 5, 5, 5};
+static const int8_t fdct16_range_mult2[8]   = {0, 2, 4, 6, 7, 7, 7, 7};
+static const int8_t fdct32_range_mult2[10]  = {0, 2, 4, 6, 8, 9, 9, 9, 9, 9};
+static const int8_t fdct64_range_mult2[12]  = {0, 2, 4, 6, 8, 10, 11, 11, 11, 11, 11, 11};
+static const int8_t fadst4_range_mult2[7]   = {0, 2, 4, 3, 3, 3, 3};
+static const int8_t fadst8_range_mult2[8]   = {0, 0, 1, 3, 3, 5, 5, 5};
+static const int8_t fadst16_range_mult2[10] = {0, 0, 1, 3, 3, 5, 5, 7, 7, 7};
+static const int8_t fadst32_range_mult2[12] = {0, 0, 1, 3, 3, 5, 5, 7, 7, 9, 9, 9};
+static const int8_t fidtx4_range_mult2[1]   = {1};
+static const int8_t fidtx8_range_mult2[1]   = {2};
+static const int8_t fidtx16_range_mult2[1]  = {3};
+static const int8_t fidtx32_range_mult2[1]  = {4};
+static const int8_t fidtx64_range_mult2[1]  = {5};
 
 #define BLOCK_SIZES_ALL 22
 static INLINE int is_rect_tx(TxSize tx_size) { return tx_size >= TX_SIZES; }
@@ -110,7 +108,6 @@ static INLINE int is_rect_tx_allowed(/*const MacroBlockD *xd,*/
         ;
 }
 
-
 ////////////////////// QUANTIZATION//////////////
 typedef struct QuantParam {
     int32_t      log_scale;
@@ -118,7 +115,6 @@ typedef struct QuantParam {
     const QmVal *qmatrix;
     const QmVal *iqmatrix;
 } QuantParam;
-
 
 static const uint32_t q_func[] = {26214, 23302, 20560, 18396, 16384, 14564};
 
@@ -130,16 +126,16 @@ extern EbErrorType av1_estimate_transform(int16_t *residual_buffer, uint32_t res
                                           EB_TRANS_COEFF_SHAPE trans_coeff_shape);
 
 extern int32_t av1_quantize_inv_quantize(
-        PictureControlSet *pcs_ptr, ModeDecisionContext *md_context, int32_t *coeff,
-        const uint32_t coeff_stride, int32_t *quant_coeff, int32_t *recon_coeff, uint32_t qindex,
-        int32_t segmentation_qp_offset, uint32_t width, uint32_t height, TxSize txsize, uint16_t *eob,
-        uint32_t *y_count_non_zero_coeffs, uint32_t component_type, uint32_t bit_increment,
-        TxType tx_type, ModeDecisionCandidateBuffer *candidate_buffer, int16_t txb_skip_context,
-        int16_t dc_sign_context, PredictionMode pred_mode, EbBool is_intra_bc, uint32_t lambda,EbBool is_encode_pass);
+    PictureControlSet *pcs_ptr, ModeDecisionContext *md_context, int32_t *coeff,
+    const uint32_t coeff_stride, int32_t *quant_coeff, int32_t *recon_coeff, uint32_t qindex,
+    int32_t segmentation_qp_offset, uint32_t width, uint32_t height, TxSize txsize, uint16_t *eob,
+    uint32_t *y_count_non_zero_coeffs, uint32_t component_type, uint32_t bit_increment,
+    TxType tx_type, ModeDecisionCandidateBuffer *candidate_buffer, int16_t txb_skip_context,
+    int16_t dc_sign_context, PredictionMode pred_mode, EbBool is_intra_bc, uint32_t lambda,
+    EbBool is_encode_pass);
 
-void svt_av1_wht_fwd_txfm(int16_t *src_diff, int bw,
-                  int32_t *coeff, TxSize tx_size,
-                  int bit_depth, int is_hbd);
+void svt_av1_wht_fwd_txfm(int16_t *src_diff, int bw, int32_t *coeff, TxSize tx_size, int bit_depth,
+                          int is_hbd);
 
 #ifdef __cplusplus
 }

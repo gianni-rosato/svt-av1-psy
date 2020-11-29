@@ -296,7 +296,7 @@ extern EbErrorType svt_get_full_object(EbFifo *full_fifo_ptr, EbObjectWrapper **
 extern EbErrorType svt_get_full_object_non_blocking(EbFifo *          full_fifo_ptr,
                                                     EbObjectWrapper **wrapper_dbl_ptr);
 
-    /*********************************************************************
+/*********************************************************************
      * EbSystemResourceReleaseObject
      *   Queues an empty EbObjectWrapper to the SystemResource. This
      *   function posts the SystemResource emptyFifo counting_semaphore.
@@ -318,11 +318,12 @@ extern EbErrorType svt_release_object(EbObjectWrapper *object_ptr);
      *********************************************************************/
 extern EbErrorType svt_shutdown_process(const EbSystemResource *resource_ptr);
 
-#define EB_GET_FULL_OBJECT(full_fifo_ptr, wrapper_dbl_ptr)                           \
-     do {                                                                            \
-          EbErrorType err = svt_get_full_object(full_fifo_ptr, wrapper_dbl_ptr);     \
-          if (err == EB_NoErrorFifoShutdown)  return NULL;                           \
-     } while (0)
+#define EB_GET_FULL_OBJECT(full_fifo_ptr, wrapper_dbl_ptr)                     \
+    do {                                                                       \
+        EbErrorType err = svt_get_full_object(full_fifo_ptr, wrapper_dbl_ptr); \
+        if (err == EB_NoErrorFifoShutdown)                                     \
+            return NULL;                                                       \
+    } while (0)
 
 #ifdef __cplusplus
 }
