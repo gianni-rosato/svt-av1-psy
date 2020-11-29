@@ -276,5 +276,6 @@ if(BUILD_TESTING)
 endif()
 
 add_subdirectory(third_party/fastfeat)
+add_subdirectory(third_party/cpuinfo)
 
 install(DIRECTORY ${PROJECT_SOURCE_DIR}/Source/API/ DESTINATION "${CMAKE_INSTALL_FULL_INCLUDEDIR}/svt-av1" FILES_MATCHING PATTERN "*.h")

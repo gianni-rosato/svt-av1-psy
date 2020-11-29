@@ -86,6 +86,7 @@ set(lib_list
     $<TARGET_OBJECTS:ENCODER_ASM_AVX2>
     $<TARGET_OBJECTS:ENCODER_ASM_AVX512>
     $<TARGET_OBJECTS:ENCODER_GLOBALS>
+    cpuinfo_public
     gtest_all)
 if(UNIX)
   # App Source Files
