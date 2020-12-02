@@ -25,6 +25,9 @@ typedef struct MotionEstimationResults {
     EbDctor          dctor;
     EbObjectWrapper *pcs_wrapper_ptr;
     uint32_t         segment_index;
+#if FTR_TPL_TR
+    uint8_t          task_type;
+#endif
 } MotionEstimationResults;
 
 typedef struct MotionEstimationResultsInitData {

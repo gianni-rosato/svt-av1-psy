@@ -30,6 +30,12 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+#if FTR_TPL_TR
+#define  TASK_PAME   0
+#define  TASK_TFME   1
+#define  TASK_FIRST_PASS_ME  2
+#define  TASK_TPL_TR_ME  3
+#endif
 #define SCD_LAD                                             6  //number of future frames
 #define PD_WINDOW_SIZE                                      (SCD_LAD +2) //adding previous+current to future
 #define MAX_TPL_GROUP_SIZE                                  64 //enough to cover 6L gop

@@ -33,6 +33,11 @@
 extern "C" {
 #endif // __cplusplus
 
+    // ============= START SVT_04 =============
+#define FIX_IME                       1 // Fix inloop me
+#define FTR_TPL_TR                    1 // TPL trailing  support
+
+    // ============= END SVT_04 =============
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
 #define DEBUG_TPL               0 // Prints to debug TPL

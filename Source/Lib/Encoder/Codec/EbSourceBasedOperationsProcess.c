@@ -107,6 +107,9 @@ EbErrorType tpl_get_open_loop_me(PictureManagerContext *context_ptr, SequenceCon
                                  PictureParentControlSet *pcs_tpl_base_ptr);
 EbErrorType tpl_mc_flow(EncodeContext *encode_context_ptr, SequenceControlSet *scs_ptr,
                         PictureParentControlSet *pcs_ptr);
+#if FTR_TPL_TR
+void tpl_prep_info(PictureParentControlSet    *pcs) ;
+#endif
 /************************************************
  * Source Based Operations Kernel
  * Source-based operations process involves a number of analysis algorithms
@@ -136,10 +139,16 @@ void *source_based_operations_kernel(void *input_ptr) {
         // Get TPL ME
 
         if (scs_ptr->in_loop_me == 0 && scs_ptr->static_config.enable_tpl_la) {
+#if !FTR_TPL_TR
             tpl_get_open_loop_me(NULL, scs_ptr, pcs_ptr);
+#endif
 
             if (/*scs_ptr->in_loop_me &&*/ scs_ptr->static_config.enable_tpl_la &&
                 pcs_ptr->temporal_layer_index == 0) {
+
+#if FTR_TPL_TR
+                tpl_prep_info(pcs_ptr);
+#endif
                 tpl_mc_flow(scs_ptr->encode_context_ptr, scs_ptr, pcs_ptr);
             }
             //any picture not belonging to any TPL group should release its PA references

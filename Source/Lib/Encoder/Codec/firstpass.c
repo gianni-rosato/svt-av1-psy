@@ -30,6 +30,15 @@
 #include <xmmintrin.h>
 #endif
 #include "EbMotionEstimation.h"
+#if FTR_TPL_TR
+#include "EbPictureDecisionResults.h"
+
+void fill_me_pcs_wraper(
+    PictureParentControlSet *pcs,
+    MePcs *me_pcs,
+    uint32_t                 trail_path,
+    PictureDecisionResults  *in_results);
+#endif
 //#include "EbMotionEstimationProcess.h"
 #undef _MM_HINT_T2
 #define _MM_HINT_T2 1
@@ -1274,7 +1283,16 @@ static EbErrorType first_pass_me(PictureParentControlSet *  ppcs_ptr,
                 me_context_ptr, ppcs_ptr, input_picture_ptr, blk_row, blk_col, ss_x, ss_y);
             // Perform ME - context_ptr will store the outputs (MVs, buffers, etc)
             // Block-based MC using open-loop HME + refinement
-            motion_estimate_sb(ppcs_ptr, // source picture control set -> references come from here
+#if FTR_TPL_TR
+            MePcs *me_pcs = context_ptr->me_pcs;
+            fill_me_pcs_wraper(ppcs_ptr, me_pcs,0,0);
+#endif
+            motion_estimate_sb(
+#if FTR_TPL_TR
+                                me_pcs, // source picture control set -> references come from here
+#else
+                                ppcs_ptr, // source picture control set -> references come from here
+#endif
                                (uint32_t)blk_row * blk_cols + blk_col,
                                (uint32_t)blk_col * BLOCK_SIZE_64, // x block
                                (uint32_t)blk_row * BLOCK_SIZE_64, // y block

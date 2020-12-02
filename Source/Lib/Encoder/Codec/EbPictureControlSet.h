@@ -493,7 +493,9 @@ typedef struct {
     EbBool                      ref_in_slide_window[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
     EbBool                      is_used_as_reference_flag;
     EbDownScaledBufDescPtrArray tpl_ref_ds_ptr_array[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
+#if !FTR_TPL_TR
     TplControls                 tpl_ctrls;
+#endif
 } TPLData;
 typedef struct TfControls {
     uint8_t enabled;
@@ -511,6 +513,67 @@ typedef struct GmControls {
     uint8_t rotzoom_model_only; // 0: use both rotzoom and affine models, 1:use rotzoom model only
     uint8_t bipred_only; // 0: test both unipred and bipred, 1: test bipred only
 } GmControls;
+#if FTR_TPL_TR
+/* a local PCS wraper to make TPL : PCS agnostic*/
+typedef struct {
+    TPLData          tpl_data;
+    uint64_t         picture_number;
+    TplStats       **tpl_stats;
+    EB_SLICE         slice_type;
+    EbPictureBufferDesc *enhanced_picture_ptr;
+    uint8_t          hierarchical_levels;
+    uint16_t         sb_total_count;
+    OisMbResults   **ois_mb_results;
+    struct SequenceControlSet *scs_ptr;
+    uint8_t           max_number_of_pus_per_sb;
+    MotionEstimationData *pa_me_data;
+    Av1Common *                av1_cm;
+    int32_t                    is_720p_or_larger;
+    uint16_t                   aligned_width;
+
+#if FTR_TPL_TR
+    TplControls  tpl_ctrls;
+#endif
+} TplPcs;
+#endif
+#if FTR_TPL_TR
+/* a local PCS wraper to make ME : PCS agnostic*/
+typedef struct MePcs {
+
+    uint64_t                   picture_number;
+    uint16_t                   sb_total_count;
+    uint32_t                   temporal_layer_index;
+    uint8_t                    picture_qp;
+    uint8_t                    max_number_of_pus_per_sb;
+    uint32_t                  *rc_me_distortion;
+    SbParams                  *sb_params_array;
+    uint16_t                   aligned_width;
+    uint16_t                   aligned_height;
+    MotionEstimationData      *pa_me_data;
+    EbPictureBufferDesc       *enhanced_picture_ptr;
+    OisMbResults             **ois_mb_results;
+    struct SequenceControlSet *scs_ptr;
+    //TPLData                    tpl_data;
+#if FTR_TPL_TR
+    TplControls                tpl_ctrls;
+#endif
+    EbEncMode                  enc_mode;
+    EbBool                     enable_hme_flag;
+    EbBool                     enable_hme_level0_flag;
+    EbBool                     enable_hme_level1_flag;
+    EbBool                     enable_hme_level2_flag;
+    uint8_t                    sc_content_detected;
+    EbObjectWrapper           *pa_reference_picture_wrapper_ptr;
+    EbPictureBufferDesc       *enhanced_unscaled_picture_ptr;
+
+    uint16_t                   me_segments_total_count;
+    uint8_t                    me_segments_column_count;
+    uint8_t                    me_segments_row_count;
+
+    EB_SLICE                   slice_type;
+
+} MePcs;
+#endif
 //CHKN
 // Add the concept of PictureParentControlSet which is a subset of the old PictureControlSet.
 // It actually holds only high level Picture based control data:(GOP management,when to start a picture, when to release the PCS, ....).
@@ -644,6 +707,20 @@ typedef struct PictureParentControlSet {
     uint8_t  me_segments_column_count;
     uint8_t  me_segments_row_count;
     uint16_t me_segments_completion_count;
+#if  FTR_TPL_TR
+    uint64_t              me_trailing_segments_completion_count;
+    EbHandle              pame_trail_done_semaphore;
+#endif
+#if  FTR_TPL_TR
+    TPLData               tpl_data_trail;
+    uint8_t               hierarchical_levels_trail;
+    OisMbResults        **ois_mb_results_trail;
+    MotionEstimationData *pa_me_data_trail;
+    uint32_t             *rc_me_distortion_trail;
+#endif
+#if FTR_TPL_TR
+    EbPictureBufferDesc       *non_tf_input;
+#endif
 
     uint16_t inloop_me_segments_total_count;
     uint8_t  inloop_me_segments_column_count;
@@ -913,6 +990,9 @@ typedef struct PictureParentControlSet {
     struct PictureParentControlSet *first_pass_ref_ppcs_ptr[2];
     uint8_t                         first_pass_ref_count;
     uint8_t                         first_pass_done;
+#if FTR_TPL_TR
+    TplControls  tpl_ctrls;
+#endif
 } PictureParentControlSet;
 
 typedef struct PictureControlSetInitData {

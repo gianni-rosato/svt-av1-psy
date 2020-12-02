@@ -456,7 +456,10 @@ typedef struct MeContext {
     int          tf_block_row;
     int          tf_block_col;
     uint16_t     min_frame_size;
-    // -------
+
+#if FTR_TPL_TR
+    MePcs *me_pcs;//PCS wraper for ME
+#endif
 } MeContext;
 
 typedef uint64_t (*EB_ME_DISTORTION_FUNC)(uint8_t *src, uint32_t src_stride, uint8_t *ref,

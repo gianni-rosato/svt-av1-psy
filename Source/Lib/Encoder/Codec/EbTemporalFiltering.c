@@ -35,6 +35,15 @@
 #undef _MM_HINT_T2
 #define _MM_HINT_T2 1
 
+#if FTR_TPL_TR
+#include "EbPictureDecisionResults.h"
+
+void fill_me_pcs_wraper(
+    PictureParentControlSet *pcs,
+    MePcs *me_pcs,
+    uint32_t                 trail_path,
+    PictureDecisionResults  *in_results);
+#endif
 static const uint32_t subblock_xy_16x16[N_16X16_BLOCKS][2] = {{0, 0},
                                                               {0, 1},
                                                               {0, 2},
@@ -2261,8 +2270,16 @@ static EbErrorType produce_temporally_filtered_pic(
 
                     // Perform ME - context_ptr will store the outputs (MVs, buffers, etc)
                     // Block-based MC using open-loop HME + refinement
+#if FTR_TPL_TR
+                    MePcs *me_pcs = context_ptr->me_pcs;
+                    fill_me_pcs_wraper(picture_control_set_ptr_central, me_pcs,0,0);
+#endif
                     motion_estimate_sb(
+#if FTR_TPL_TR
+                        me_pcs,
+#else
                         picture_control_set_ptr_central, // source picture control set -> references come from here
+#endif
                         (uint32_t)blk_row * blk_cols + blk_col,
                         (uint32_t)blk_col * BW, // x block
                         (uint32_t)blk_row * BH, // y block

@@ -349,6 +349,21 @@ void *initial_rate_control_kernel(void *input_ptr) {
                                                in_results_ptr->pcs_wrapper_ptr->object_ptr;
 
         // Set the segment counter
+#if FTR_TPL_TR
+        if (in_results_ptr->task_type == TASK_TPL_TR_ME)
+        {
+            pcs_ptr->me_trailing_segments_completion_count++;
+            if (pcs_ptr->me_trailing_segments_completion_count == pcs_ptr->me_segments_total_count) {
+#if DEBUG_TR
+                printf("[%ld]: iRC in \n", pcs_ptr->picture_number);
+#endif
+                svt_post_semaphore(pcs_ptr->pame_trail_done_semaphore);
+
+            }
+        }
+        else {
+
+#endif
         pcs_ptr->me_segments_completion_count++;
 
         // If the picture is complete, proceed
@@ -664,7 +679,9 @@ void *initial_rate_control_kernel(void *input_ptr) {
                 }
             }
         }
-
+#if FTR_TPL_TR
+        }
+#endif
         // Release the Input Results
         svt_release_object(in_results_wrapper_ptr);
     }

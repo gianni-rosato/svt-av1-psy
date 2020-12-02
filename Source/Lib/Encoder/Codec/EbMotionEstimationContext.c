@@ -31,13 +31,18 @@ static void me_context_dctor(EbPtr p) {
     EB_FREE_ARRAY(obj->p_eight_pos_sad16x16);
     EB_FREE_ALIGNED_ARRAY(obj->sixteenth_sb_buffer);
     EB_FREE_ALIGNED_ARRAY(obj->sb_buffer);
+#if FTR_TPL_TR
+    EB_FREE(obj->me_pcs);
+#endif
 }
 EbErrorType me_context_ctor(MeContext *object_ptr) {
     uint32_t pu_index;
     uint32_t me_candidate_index;
 
     object_ptr->dctor = me_context_dctor;
-
+#if FTR_TPL_TR
+    EB_MALLOC(object_ptr->me_pcs, sizeof(MePcs));
+#endif
     // Intermediate SB-sized buffer to retain the input samples
     object_ptr->sb_buffer_stride = BLOCK_SIZE_64;
     EB_MALLOC_ALIGNED_ARRAY(object_ptr->sb_buffer, BLOCK_SIZE_64 * object_ptr->sb_buffer_stride);

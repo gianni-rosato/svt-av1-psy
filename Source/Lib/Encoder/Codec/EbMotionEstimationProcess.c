@@ -356,6 +356,187 @@ void set_gm_controls(PictureParentControlSet *pcs_ptr, uint8_t gm_level)
         break;
     }
 }
+#if FTR_TPL_TR
+/*
+ * Set ME/HME Params for Trailing path
+ */
+
+#if FTR_TPL_TR
+/*this is a trailing path function. PictureParentControlSet should not be used */
+#define PictureParentControlSet  "TYPE_NOT_ALLOWED"
+#endif
+void trail_set_me_hme_params(MeContext *me_context_ptr, MePcs *mepcs,
+    SequenceControlSet *scs_ptr, EbInputResolution input_resolution) {
+    UNUSED(scs_ptr);
+    // HME/ME default settings
+    me_context_ptr->number_hme_search_region_in_width = 2;
+    me_context_ptr->number_hme_search_region_in_height = 2;
+
+    // Set the minimum ME search area
+    if (mepcs->sc_content_detected)
+        if (mepcs->enc_mode <= ENC_M3) {
+            me_context_ptr->search_area_width = me_context_ptr->search_area_height = 175;
+            me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 750;
+        }
+        else if (mepcs->enc_mode <= ENC_M5) {
+            me_context_ptr->search_area_width = me_context_ptr->search_area_height = 125;
+            me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 500;
+        }
+        else {
+            {
+                me_context_ptr->search_area_width = me_context_ptr->search_area_height = 75;
+                me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 350;
+            }
+        }
+    else if (mepcs->enc_mode <= ENC_M0) {
+        me_context_ptr->search_area_width = me_context_ptr->search_area_height = 64;
+        me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 256;
+    }
+    else if (mepcs->enc_mode <= ENC_M1) {
+        me_context_ptr->search_area_width = me_context_ptr->search_area_height = 64;
+        me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 192;
+    }
+    else if (mepcs->enc_mode <= ENC_M3) {
+        me_context_ptr->search_area_width = me_context_ptr->search_area_height = 64;
+        me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 128;
+    }
+    else if (mepcs->enc_mode <= ENC_M7) {
+        me_context_ptr->search_area_width = me_context_ptr->search_area_height = 16;
+        me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 64;
+    }
+    else {
+        me_context_ptr->search_area_width = me_context_ptr->search_area_height = 16;
+        me_context_ptr->max_me_search_width = 64;
+        me_context_ptr->max_me_search_height = 32;
+
+    }
+    if (mepcs->enc_mode <= ENC_M2) {
+        me_context_ptr->hme_level0_total_search_area_width = me_context_ptr->hme_level0_total_search_area_height = input_resolution <= INPUT_SIZE_1080p_RANGE ? 120 : 240;
+        me_context_ptr->hme_level0_max_total_search_area_width = me_context_ptr->hme_level0_max_total_search_area_height = 480;
+    }
+    else {
+        me_context_ptr->hme_level0_total_search_area_width = me_context_ptr->hme_level0_total_search_area_height = 32;
+        me_context_ptr->hme_level0_max_total_search_area_width = me_context_ptr->hme_level0_max_total_search_area_height = 164;
+    }
+
+    me_context_ptr->hme_level0_max_search_area_in_width_array[0] =
+        me_context_ptr->hme_level0_max_search_area_in_width_array[1] =
+        me_context_ptr->hme_level0_max_total_search_area_width / me_context_ptr->number_hme_search_region_in_width;
+    me_context_ptr->hme_level0_max_search_area_in_height_array[0] =
+        me_context_ptr->hme_level0_max_search_area_in_height_array[1] =
+        me_context_ptr->hme_level0_max_total_search_area_height / me_context_ptr->number_hme_search_region_in_height;
+    me_context_ptr->hme_level0_search_area_in_width_array[0] =
+        me_context_ptr->hme_level0_search_area_in_width_array[1] =
+        me_context_ptr->hme_level0_total_search_area_width / me_context_ptr->number_hme_search_region_in_width;
+    me_context_ptr->hme_level0_search_area_in_height_array[0] =
+        me_context_ptr->hme_level0_search_area_in_height_array[1] =
+        me_context_ptr->hme_level0_total_search_area_height / me_context_ptr->number_hme_search_region_in_height;
+    if (mepcs->enc_mode <= ENC_M7) {
+        me_context_ptr->hme_level1_search_area_in_width_array[0] =
+            me_context_ptr->hme_level1_search_area_in_width_array[1] =
+            me_context_ptr->hme_level1_search_area_in_height_array[0] =
+            me_context_ptr->hme_level1_search_area_in_height_array[1] = 16;
+    }
+    else {
+        me_context_ptr->hme_level1_search_area_in_width_array[0] =
+            me_context_ptr->hme_level1_search_area_in_width_array[1] = 8;
+        me_context_ptr->hme_level1_search_area_in_height_array[0] =
+            me_context_ptr->hme_level1_search_area_in_height_array[1] = 3;
+    }
+    if (mepcs->enc_mode <= ENC_M7) {
+        me_context_ptr->hme_level2_search_area_in_width_array[0] =
+            me_context_ptr->hme_level2_search_area_in_width_array[1] =
+            me_context_ptr->hme_level2_search_area_in_height_array[0] =
+            me_context_ptr->hme_level2_search_area_in_height_array[1] = 16;
+    }
+    else {
+        me_context_ptr->hme_level2_search_area_in_width_array[0] =
+            me_context_ptr->hme_level2_search_area_in_width_array[1] = 8;
+
+        me_context_ptr->hme_level2_search_area_in_height_array[0] =
+            me_context_ptr->hme_level2_search_area_in_height_array[1] = 3;
+    }
+
+    if (input_resolution <= INPUT_SIZE_720p_RANGE)
+        me_context_ptr->hme_decimation = mepcs->enc_mode <= ENC_M0 ? ONE_DECIMATION_HME : TWO_DECIMATION_HME;
+    else
+        me_context_ptr->hme_decimation = TWO_DECIMATION_HME;
+
+    // Scale up the MIN ME area if low frame rate
+    uint8_t  low_frame_rate_flag = (scs_ptr->static_config.frame_rate >> 16) < 50 ? 1 : 0;
+    if (low_frame_rate_flag) {
+        me_context_ptr->search_area_width = (me_context_ptr->search_area_width * 3) / 2;
+        me_context_ptr->search_area_height = (me_context_ptr->search_area_height * 3) / 2;
+    }
+
+    me_context_ptr->update_hme_search_center_flag = 1;
+
+    if (input_resolution <= INPUT_SIZE_480p_RANGE)
+        me_context_ptr->update_hme_search_center_flag = 0;
+
+};
+#if FTR_TPL_TR
+#undef PictureParentControlSet
+#endif
+/*
+  Trailing ME signal derivation
+
+*/
+
+#if FTR_TPL_TR
+/*this is a trailing path function. PictureParentControlSet should not be used */
+#define PictureParentControlSet  "TYPE_NOT_ALLOWED"
+#endif
+EbErrorType trail_signal_derivation_me_kernel(SequenceControlSet *       scs_ptr,
+    MePcs *  mepcs,
+    MotionEstimationContext_t *context_ptr) {
+    EbErrorType return_error = EB_ErrorNone;
+
+    EbEncMode enc_mode = mepcs->enc_mode;
+    EbInputResolution input_resolution = scs_ptr->input_resolution;
+    // Set ME/HME search regions
+    if (scs_ptr->static_config.use_default_me_hme)
+        trail_set_me_hme_params(
+            context_ptr->me_context_ptr, mepcs, scs_ptr, input_resolution);
+
+    else
+        set_me_hme_params_from_config(scs_ptr, context_ptr->me_context_ptr);
+
+    // Set HME flags
+    context_ptr->me_context_ptr->enable_hme_flag = mepcs->enable_hme_flag;
+    context_ptr->me_context_ptr->enable_hme_level0_flag = mepcs->enable_hme_level0_flag;
+    context_ptr->me_context_ptr->enable_hme_level1_flag = mepcs->enable_hme_level1_flag;
+    context_ptr->me_context_ptr->enable_hme_level2_flag = mepcs->enable_hme_level2_flag;
+    // HME Search Method
+    if (enc_mode <= ENC_MRS)
+        context_ptr->me_context_ptr->hme_search_method = FULL_SAD_SEARCH;
+    else
+        context_ptr->me_context_ptr->hme_search_method = SUB_SAD_SEARCH;
+    if (enc_mode <= ENC_MRS)
+        context_ptr->me_context_ptr->me_search_method = FULL_SAD_SEARCH;
+    else
+        context_ptr->me_context_ptr->me_search_method = SUB_SAD_SEARCH;
+
+    // no gm_level in trailing frames path
+
+    // Set hme/me based reference pruning level (0-4)
+    if (enc_mode <= ENC_MR)
+        set_me_hme_ref_prune_ctrls(context_ptr->me_context_ptr, 0);
+    else if (enc_mode <= ENC_M2)
+        set_me_hme_ref_prune_ctrls(context_ptr->me_context_ptr, 2);
+    else
+        set_me_hme_ref_prune_ctrls(context_ptr->me_context_ptr, 4);
+    // Set hme-based me sr adjustment level
+    if (enc_mode <= ENC_MRS)
+        set_me_sr_adjustment_ctrls(context_ptr->me_context_ptr, 0);
+    else
+        set_me_sr_adjustment_ctrls(context_ptr->me_context_ptr, 2);
+    return return_error;
+};
+#endif
+#if FTR_TPL_TR
+#undef PictureParentControlSet
+#endif
 /******************************************************
 * Derive ME Settings for OQ
   Input   : encoder mode and tune
@@ -723,6 +904,109 @@ EbErrorType compute_zz_ssd(/*MotionEstimationContext_t *context_ptr, */PicturePa
     return return_error;
 }
 
+#if FTR_TPL_TR
+/* determine lambda for ME purpose*/
+
+#if FTR_TPL_TR
+/*this is a trailing path function. PictureParentControlSet should not be used */
+#define PictureParentControlSet  "TYPE_NOT_ALLOWED"
+#endif
+void get_lambda_for_me(MeContext *me_ctx, MePcs *pcs_ptr)
+{
+
+    if (pcs_ptr->scs_ptr->static_config.pred_structure == EB_PRED_RANDOM_ACCESS) {
+        if (pcs_ptr->temporal_layer_index == 0)
+            me_ctx->lambda =
+            lambda_mode_decision_ra_sad[pcs_ptr->picture_qp];
+        else if (pcs_ptr->temporal_layer_index < 3)
+            me_ctx->lambda =
+            lambda_mode_decision_ra_sad_qp_scaling_l1[pcs_ptr->picture_qp];
+        else
+            me_ctx->lambda =
+            lambda_mode_decision_ra_sad_qp_scaling_l3[pcs_ptr->picture_qp];
+    }
+    else {
+        if (pcs_ptr->temporal_layer_index == 0)
+            me_ctx->lambda =
+            lambda_mode_decision_ld_sad[pcs_ptr->picture_qp];
+        else
+            me_ctx->lambda =
+            lambda_mode_decision_ld_sad_qp_scaling[pcs_ptr->picture_qp];
+    }
+}
+#endif
+#if FTR_TPL_TR
+#undef PictureParentControlSet
+#endif
+#if FTR_TPL_TR
+/*
+  fills Me PCS warper
+*/
+void fill_me_pcs_wraper(
+    PictureParentControlSet *pcs,
+    MePcs *me_pcs,
+    uint32_t                 trail_path,
+    PictureDecisionResults  *in_results)
+{
+
+    //some pcs fields created at init time (pre-GOP) could safely be used from pcs
+    me_pcs->picture_number = pcs->picture_number;
+    me_pcs->sb_total_count = pcs->sb_total_count;
+    me_pcs->max_number_of_pus_per_sb = pcs->max_number_of_pus_per_sb;
+    me_pcs->sb_params_array = pcs->sb_params_array;
+    me_pcs->aligned_width = pcs->aligned_width;
+    me_pcs->aligned_height = pcs->aligned_height;
+#if FTR_TPL_TR
+    me_pcs->tpl_ctrls = pcs->tpl_ctrls;
+#endif
+    //me_pcs->tpl_data = pcs->tpl_data;
+#if !FTR_TPL_TR
+    me_pcs->enhanced_picture_ptr = pcs->enhanced_picture_ptr;
+#endif
+    me_pcs->scs_ptr = pcs->scs_ptr;
+    me_pcs->picture_qp = pcs->picture_qp;
+    me_pcs->enc_mode = pcs->enc_mode;
+    me_pcs->enable_hme_flag = pcs->enable_hme_flag;
+    me_pcs->enable_hme_level0_flag = pcs->enable_hme_level0_flag;
+    me_pcs->enable_hme_level1_flag = pcs->enable_hme_level1_flag;
+    me_pcs->enable_hme_level2_flag = pcs->enable_hme_level2_flag;
+    me_pcs->pa_reference_picture_wrapper_ptr = pcs->pa_reference_picture_wrapper_ptr;
+    me_pcs->enhanced_unscaled_picture_ptr = pcs->enhanced_unscaled_picture_ptr;
+
+    me_pcs->me_segments_column_count = pcs->me_segments_column_count;
+    me_pcs->me_segments_row_count = pcs->me_segments_row_count;
+    me_pcs->me_segments_total_count = pcs->me_segments_total_count;
+
+
+    if (trail_path){
+
+        me_pcs->pa_me_data = pcs->pa_me_data_trail;
+        me_pcs->ois_mb_results = pcs->ois_mb_results_trail;
+        me_pcs->rc_me_distortion = pcs->rc_me_distortion_trail;
+        me_pcs->temporal_layer_index = in_results->tmp_layer_idx;
+        me_pcs->sc_content_detected = in_results->sc_detected_base;
+        me_pcs->slice_type = B_SLICE;
+#if FTR_TPL_TR
+        if (pcs->non_tf_input)
+            me_pcs->enhanced_picture_ptr = pcs->non_tf_input;
+        else
+            me_pcs->enhanced_picture_ptr = pcs->enhanced_picture_ptr;
+#endif
+    }
+    else {
+        me_pcs->pa_me_data = pcs->pa_me_data;
+        me_pcs->ois_mb_results = pcs->ois_mb_results;
+        me_pcs->rc_me_distortion = pcs->rc_me_distortion;
+        me_pcs->temporal_layer_index = pcs->temporal_layer_index;
+        me_pcs->sc_content_detected = pcs->sc_content_detected;
+        me_pcs->slice_type = pcs->slice_type;
+#if FTR_TPL_TR
+        me_pcs->enhanced_picture_ptr = pcs->enhanced_picture_ptr;
+#endif
+
+    }
+}
+#endif
 /************************************************
  * Motion Analysis Kernel
  * The Motion Analysis performs  Motion Estimation
@@ -736,6 +1020,9 @@ void *motion_estimation_kernel(void *input_ptr) {
     MotionEstimationContext_t *context_ptr = (MotionEstimationContext_t *)thread_context_ptr->priv;
     EbObjectWrapper *          in_results_wrapper_ptr;
     EbObjectWrapper *          out_results_wrapper_ptr;
+#if FTR_TPL_TR
+    MeContext *me_ctx = context_ptr->me_context_ptr;
+#endif
     for (;;) {
         // Get Input Full Object
         EB_GET_FULL_OBJECT(context_ptr->picture_decision_results_input_fifo_ptr,
@@ -745,10 +1032,26 @@ void *motion_estimation_kernel(void *input_ptr) {
         PictureParentControlSet *pcs_ptr = (PictureParentControlSet *)
                                                in_results_ptr->pcs_wrapper_ptr->object_ptr;
         SequenceControlSet * scs_ptr = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
+#if FTR_TPL_TR
+        if (in_results_ptr->task_type == TASK_TFME)
+            context_ptr->me_context_ptr->me_type = ME_MCTF;
+        else if (in_results_ptr->task_type == TASK_FIRST_PASS_ME)
+            context_ptr->me_context_ptr->me_type = ME_FIRST_PASS;
+        else
+            context_ptr->me_context_ptr->me_type = ME_OPEN_LOOP;
+#else
         context_ptr->me_context_ptr->me_type =
             in_results_ptr->task_type == 1 ? ME_MCTF :
             in_results_ptr->task_type == 0 ? ME_OPEN_LOOP : ME_FIRST_PASS;
+#endif
+#if FTR_TPL_TR
+        MePcs *me_pcs = me_ctx->me_pcs;
+        fill_me_pcs_wraper(pcs_ptr, me_pcs, in_results_ptr->task_type == TASK_TPL_TR_ME, in_results_ptr);
+#endif
 
+#if FTR_TPL_TR
+        get_lambda_for_me(me_ctx, me_pcs);
+#else
         // Lambda Assignement
         if (scs_ptr->static_config.pred_structure == EB_PRED_RANDOM_ACCESS) {
             if (pcs_ptr->temporal_layer_index == 0)
@@ -768,7 +1071,17 @@ void *motion_estimation_kernel(void *input_ptr) {
                 context_ptr->me_context_ptr->lambda =
                     lambda_mode_decision_ld_sad_qp_scaling[pcs_ptr->picture_qp];
         }
+#endif
+#if FTR_TPL_TR
+        if (in_results_ptr->task_type == TASK_PAME || in_results_ptr->task_type == TASK_TPL_TR_ME) {
+#else
         if (in_results_ptr->task_type == 0) {
+#endif
+#if FTR_TPL_TR
+            if(in_results_ptr->task_type == TASK_TPL_TR_ME)
+                trail_signal_derivation_me_kernel(scs_ptr, me_pcs, context_ptr);
+            else
+#endif
             // ME Kernel Signal(s) derivation
             if (use_output_stat(scs_ptr))
                 first_pass_signal_derivation_me_kernel(scs_ptr, pcs_ptr, context_ptr);
@@ -780,7 +1093,11 @@ void *motion_estimation_kernel(void *input_ptr) {
             EbPictureBufferDesc *input_picture_ptr = NULL;
             EbPaReferenceObject *pa_ref_obj_ = NULL;
             if (!scs_ptr->in_loop_me) {
+#if FTR_TPL_TR
+                pa_ref_obj_ = (EbPaReferenceObject *)me_pcs->pa_reference_picture_wrapper_ptr->object_ptr;
+#else
                 pa_ref_obj_ = (EbPaReferenceObject *)pcs_ptr->pa_reference_picture_wrapper_ptr->object_ptr;
+#endif
                 // Set 1/4 and 1/16 ME input buffer(s); filtered or decimated
                 quarter_picture_ptr =
                     (scs_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED)
@@ -793,15 +1110,36 @@ void *motion_estimation_kernel(void *input_ptr) {
                     : (EbPictureBufferDesc *)pa_ref_obj_->sixteenth_decimated_picture_ptr;
                 input_padded_picture_ptr = (EbPictureBufferDesc *)pa_ref_obj_->input_padded_picture_ptr;
             }
+#if FTR_TPL_TR
+            input_picture_ptr = me_pcs->enhanced_unscaled_picture_ptr;
+#else
             input_picture_ptr = pcs_ptr->enhanced_unscaled_picture_ptr;
+#endif
             // Segments
             uint32_t segment_index   = in_results_ptr->segment_index;
+#if FTR_TPL_TR
+            uint32_t pic_width_in_sb = (me_pcs->aligned_width + scs_ptr->sb_sz - 1) / scs_ptr->sb_sz;
+            uint32_t picture_height_in_sb = (me_pcs->aligned_height + scs_ptr->sb_sz - 1) /scs_ptr->sb_sz;
+#else
             uint32_t pic_width_in_sb = (pcs_ptr->aligned_width + scs_ptr->sb_sz - 1) /
                 scs_ptr->sb_sz;
             uint32_t picture_height_in_sb = (pcs_ptr->aligned_height + scs_ptr->sb_sz - 1) /
                 scs_ptr->sb_sz;
+#endif
             uint32_t y_segment_index;
             uint32_t x_segment_index;
+#if FTR_TPL_TR
+            SEGMENT_CONVERT_IDX_TO_XY(
+                segment_index, x_segment_index, y_segment_index, me_pcs->me_segments_column_count);
+            uint32_t x_sb_start_index = SEGMENT_START_IDX(
+                x_segment_index, pic_width_in_sb, me_pcs->me_segments_column_count);
+            uint32_t x_sb_end_index = SEGMENT_END_IDX(
+                x_segment_index, pic_width_in_sb, me_pcs->me_segments_column_count);
+            uint32_t y_sb_start_index = SEGMENT_START_IDX(
+                y_segment_index, picture_height_in_sb, me_pcs->me_segments_row_count);
+            uint32_t y_sb_end_index = SEGMENT_END_IDX(
+                y_segment_index, picture_height_in_sb, me_pcs->me_segments_row_count);
+#else
             SEGMENT_CONVERT_IDX_TO_XY(
                 segment_index, x_segment_index, y_segment_index, pcs_ptr->me_segments_column_count);
             uint32_t x_sb_start_index = SEGMENT_START_IDX(
@@ -812,13 +1150,19 @@ void *motion_estimation_kernel(void *input_ptr) {
                 y_segment_index, picture_height_in_sb, pcs_ptr->me_segments_row_count);
             uint32_t y_sb_end_index = SEGMENT_END_IDX(
                 y_segment_index, picture_height_in_sb, pcs_ptr->me_segments_row_count);
+#endif
             EbBool skip_me = EB_FALSE;
             if (use_output_stat(scs_ptr))
                 skip_me = EB_TRUE;
             // skip me for the first pass. ME is already performed
             if (!skip_me) {
+
+#if FTR_TPL_TR
+            if (me_pcs->slice_type != I_SLICE && !scs_ptr->in_loop_me) {
+#else
             // *** MOTION ESTIMATION CODE ***
             if (pcs_ptr->slice_type != I_SLICE && !scs_ptr->in_loop_me) {
+#endif
                 // Use scaled source references if resolution of the reference is different that of the input
                 use_scaled_source_refs_if_needed(pcs_ptr,
                                                  input_picture_ptr,
@@ -835,10 +1179,14 @@ void *motion_estimation_kernel(void *input_ptr) {
                         uint32_t sb_index = (uint16_t)(x_sb_index + y_sb_index * pic_width_in_sb);
                         uint32_t sb_origin_x = x_sb_index * scs_ptr->sb_sz;
                         uint32_t sb_origin_y = y_sb_index * scs_ptr->sb_sz;
-
+#if FTR_TPL_TR
+                        uint32_t sb_width = (me_pcs->aligned_width - sb_origin_x) < BLOCK_SIZE_64
+                            ? me_pcs->aligned_width - sb_origin_x : BLOCK_SIZE_64;
+#else
                         uint32_t sb_width = (pcs_ptr->aligned_width - sb_origin_x) < BLOCK_SIZE_64
                             ? pcs_ptr->aligned_width - sb_origin_x
                             : BLOCK_SIZE_64;
+#endif
 
                         // Load the SB from the input to the intermediate SB buffer
                         uint32_t buffer_index = (input_picture_ptr->origin_y + sb_origin_y) *
@@ -854,9 +1202,14 @@ void *motion_estimation_kernel(void *input_ptr) {
                         }
 #ifdef ARCH_X86_64
                         uint8_t *src_ptr   = &input_padded_picture_ptr->buffer_y[buffer_index];
+#if FTR_TPL_TR
+                        uint32_t sb_height = (me_pcs->aligned_height - sb_origin_y) < BLOCK_SIZE_64
+                            ? me_pcs->aligned_height - sb_origin_y : BLOCK_SIZE_64;
+#else
                         uint32_t sb_height = (pcs_ptr->aligned_height - sb_origin_y) < BLOCK_SIZE_64
                             ? pcs_ptr->aligned_height - sb_origin_y
                             : BLOCK_SIZE_64;
+#endif
                         //_MM_HINT_T0     //_MM_HINT_T1    //_MM_HINT_T2//_MM_HINT_NTA
                         for (uint32_t i = 0; i < sb_height; i++) {
                             char const *p = (char const *)(src_ptr +
@@ -909,6 +1262,10 @@ void *motion_estimation_kernel(void *input_ptr) {
                             }
                         }
                         context_ptr->me_context_ptr->me_type = ME_OPEN_LOOP;
+
+#if FTR_TPL_TR
+                        if (in_results_ptr->task_type == TASK_PAME) {
+#endif
                         context_ptr->me_context_ptr->num_of_list_to_search =
                             (pcs_ptr->slice_type == P_SLICE) ? (uint32_t)REF_LIST_0 : (uint32_t)REF_LIST_1;
 
@@ -938,13 +1295,36 @@ void *motion_estimation_kernel(void *input_ptr) {
                                 context_ptr->me_context_ptr->me_ds_ref_array[i][j].picture_number = reference_object->picture_number;
                             }
                         }
+#if FTR_TPL_TR
+                        } else if (in_results_ptr->task_type == TASK_TPL_TR_ME) {
 
-                        motion_estimate_sb(pcs_ptr,
+                            me_ctx->num_of_list_to_search = (in_results_ptr->lst1_cnt > 0) ? REF_LIST_1 : REF_LIST_0;
+                            me_ctx->num_of_ref_pic_to_search[0] = in_results_ptr->lst0_cnt;
+                            me_ctx->num_of_ref_pic_to_search[1] = in_results_ptr->lst1_cnt;
+                            me_ctx->temporal_layer_index = in_results_ptr->tmp_layer_idx;
+                            me_ctx->is_used_as_reference_flag = in_results_ptr->is_reference;
+                            for (int i = 0; i <= me_ctx->num_of_list_to_search; i++) {
+                                for (int j = 0; j < me_ctx->num_of_ref_pic_to_search[i]; j++) {
+                                    context_ptr->me_context_ptr->me_ds_ref_array[i][j] = in_results_ptr->ref_ds[i][j];
+                                }
+                            }
+                        }
+#endif
+                        motion_estimate_sb(
+#if FTR_TPL_TR
+                                           me_pcs,
+#else
+                                           pcs_ptr,
+#endif
                                            sb_index,
                                            sb_origin_x,
                                            sb_origin_y,
                                            context_ptr->me_context_ptr,
                                            input_picture_ptr);
+
+#if FTR_TPL_TR
+                        if (in_results_ptr->task_type == TASK_PAME) {
+#endif
                         svt_block_on_mutex(pcs_ptr->me_processed_sb_mutex);
                         pcs_ptr->me_processed_sb_count++;
                         // We need to finish ME for all SBs to do GM
@@ -960,20 +1340,35 @@ void *motion_estimation_kernel(void *input_ptr) {
 
                         svt_release_mutex(pcs_ptr->me_processed_sb_mutex);
 
+#if FTR_TPL_TR
+                        }
+#endif
+
                     }
                 }
             }
+#if FTR_TPL_TR
+            if (scs_ptr->in_loop_ois == 0 && scs_ptr->static_config.enable_tpl_la)
+#else
             if (
                 scs_ptr->in_loop_ois == 0 &&
                 (!scs_ptr->in_loop_me || pcs_ptr->slice_type == I_SLICE) &&
                 scs_ptr->static_config.enable_tpl_la)
+#endif
                 for (uint32_t y_sb_index = y_sb_start_index; y_sb_index < y_sb_end_index;
                      ++y_sb_index)
                     for (uint32_t x_sb_index = x_sb_start_index; x_sb_index < x_sb_end_index;
                          ++x_sb_index) {
                         uint32_t sb_index = (uint16_t)(x_sb_index + y_sb_index * pic_width_in_sb);
+#if FTR_TPL_TR
+                        open_loop_intra_search_mb(me_pcs, sb_index, input_picture_ptr);
+#else
                         open_loop_intra_search_mb(pcs_ptr, sb_index, input_picture_ptr);
+#endif
                     }
+#if FTR_TPL_TR
+            if (in_results_ptr->task_type == TASK_PAME) {
+#endif
             // ZZ SADs Computation
             // 1 lookahead frame is needed to get valid (0,0) SAD
             if (scs_ptr->static_config.look_ahead_distance != 0 &&
@@ -1078,6 +1473,10 @@ void *motion_estimation_kernel(void *input_ptr) {
                 }
 
                 svt_release_mutex(pcs_ptr->rc_distortion_histogram_mutex);
+
+#if FTR_TPL_TR
+            }
+#endif
             }
             }
             // Get Empty Results Object
@@ -1088,7 +1487,9 @@ void *motion_estimation_kernel(void *input_ptr) {
                                                            out_results_wrapper_ptr->object_ptr;
             out_results_ptr->pcs_wrapper_ptr = in_results_ptr->pcs_wrapper_ptr;
             out_results_ptr->segment_index   = segment_index;
-
+#if FTR_TPL_TR
+            out_results_ptr->task_type = in_results_ptr->task_type ;
+#endif
             // Release the Input Results
             svt_release_object(in_results_wrapper_ptr);
 
@@ -1406,7 +1807,12 @@ void *inloop_me_kernel(void *input_ptr) {
                         sb_origin_y = y_sb_index * scs_ptr->sb_sz;
                         prepare_sb_me_buffer(context_ptr, ppcs_ptr, sb_origin_x, sb_origin_y);
 
-                        motion_estimate_sb(ppcs_ptr,
+                        motion_estimate_sb(
+#if FTR_TPL_TR
+                                0,
+#else
+                                ppcs_ptr,
+#endif
                                 sb_index,
                                 sb_origin_x,
                                 sb_origin_y,
@@ -1471,7 +1877,11 @@ void *inloop_me_kernel(void *input_ptr) {
                         for (uint32_t x_sb_index = x_sb_start_index; x_sb_index < x_sb_end_index;
                                 ++x_sb_index) {
                             uint32_t sb_index = x_sb_index + y_sb_index * pic_width_in_sb;
+#if FTR_TPL_TR
+                            open_loop_intra_search_mb(0, sb_index, input_picture_ptr);
+#else
                             open_loop_intra_search_mb(ppcs_ptr, sb_index, input_picture_ptr);
+#endif
                         }
                     }
                 }
