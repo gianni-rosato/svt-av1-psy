@@ -3231,9 +3231,11 @@ static EbErrorType av1_generate_rps_info_from_user_config(
         (picture_control_set_ptr->slice_type == B_SLICE)) {
         uint8_t ref_idx = 0;
         for (ref_idx = LAST; ref_idx < LAST + picture_control_set_ptr->ref_list0_count; ++ref_idx) {
-            uint64_t ref_poc = picture_control_set_ptr->picture_number;
-            if (picture_control_set_ptr->is_overlay)
-                ref_poc -= pred_position_ptr->ref_list0.reference_list[ref_idx - LAST];
+            uint64_t ref_poc = picture_control_set_ptr->picture_number - pred_position_ptr->ref_list0.reference_list[ref_idx-LAST];
+            if (picture_control_set_ptr->is_overlay) {
+                ref_poc = picture_control_set_ptr->picture_number;
+            }
+
             dpb_list_idx = 0;
             do {
                 if (dpb_list_ptr[dpb_list_idx].is_used == EB_TRUE &&
