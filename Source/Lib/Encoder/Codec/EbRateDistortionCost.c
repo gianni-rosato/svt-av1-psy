@@ -2248,7 +2248,15 @@ EbErrorType av1_txb_calc_cost(
 * txb_calc_cost
 *   computes TU Cost and generetes TU Cbf
 ********************************************/
+#if FIX_Y_COEFF_FLAG_UPDATE
+EbErrorType av1_txb_calc_cost_luma(
+    uint64_t y_txb_distortion[DIST_CALC_TOTAL], // input parameter, Y distortion for both Normal and Cbf zero modes
+    uint64_t *y_txb_coeff_bits,                 // input parameter, Y quantized coefficients rate
+    uint64_t *y_full_cost,
+    uint64_t lambda)                            // input parameter, lambda for Luma
 
+{
+#else
 EbErrorType av1_txb_calc_cost_luma(
     int16_t                txb_skip_ctx,
     ModeDecisionCandidate *candidate_ptr, // input parameter, prediction result Ptr
@@ -2265,6 +2273,7 @@ EbErrorType av1_txb_calc_cost_luma(
 {
     (void)txb_skip_ctx;
     (void)tx_size;
+#endif
     EbErrorType return_error = EB_ErrorNone;
 
     // Non zero Cbf mode variables
@@ -2287,7 +2296,9 @@ EbErrorType av1_txb_calc_cost_luma(
     y_zero_cbf_cost = 0xFFFFFFFFFFFFFFFFull;
     // **Compute Cost
     y_non_zero_cbf_cost = RDCOST(lambda, y_non_zero_cbf_rate, y_non_zero_cbf_distortion);
+#if !FIX_Y_COEFF_FLAG_UPDATE
     candidate_ptr->y_has_coeff |= ((y_count_non_zero_coeffs != 0) << txb_index);
+#endif
     *y_txb_coeff_bits = (y_non_zero_cbf_cost < y_zero_cbf_cost) ? *y_txb_coeff_bits : 0;
     y_txb_distortion[DIST_CALC_RESIDUAL] = (y_non_zero_cbf_cost < y_zero_cbf_cost)
         ? y_txb_distortion[DIST_CALC_RESIDUAL]

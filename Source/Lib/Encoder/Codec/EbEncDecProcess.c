@@ -2846,6 +2846,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         context_ptr->md_stage_3_class_prune_th = 25;
     else
         context_ptr->md_stage_3_class_prune_th = 25;
+
     // If using a mode offset, do not modify the NSQ-targeting features
     if (pd_pass == PD_PASS_0)
         context_ptr->coeff_area_based_bypass_nsq_th = 0;
@@ -3123,7 +3124,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         context_ptr->dc_cand_only_flag =
         (pcs_ptr->slice_type == I_SLICE) ? EB_FALSE : EB_TRUE;
     else
+#if CLN_ENC_MODE_CHECK
+        if (enc_mode <= ENC_M7)
+#else
         if (enc_mode < ENC_M8)
+#endif
             context_ptr->dc_cand_only_flag = EB_FALSE;
         else
             context_ptr->dc_cand_only_flag = !pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag
@@ -3170,6 +3175,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             context_ptr->skip_intra = 1;
     else
         context_ptr->skip_intra = 0;
+#if !CLN_REMOVE_UNUSED_SIGNALS
     // skip cfl based on inter/intra cost deviation (skip if intra_cost is
     // skip_cfl_cost_dev_th % greater than inter_cost)
     if (enc_mode <= ENC_MR)
@@ -3183,6 +3189,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         context_ptr->mds3_intra_prune_th = (uint16_t)~0;
     else
         context_ptr->mds3_intra_prune_th = 30;
+#endif
     if (pd_pass == PD_PASS_0)
         context_ptr->use_prev_mds_res = EB_FALSE;
     else if (pd_pass == PD_PASS_1)

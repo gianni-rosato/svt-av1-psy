@@ -36,25 +36,33 @@ void cu_full_distortion_fast_txb_mode_r(
     uint32_t count_non_zero_coeffs[3][MAX_NUM_OF_TU_PER_CU], COMPONENT_TYPE component_type,
     uint64_t *cb_coeff_bits, uint64_t *cr_coeff_bits, EbBool is_full_loop);
 
+#if !FIX_Y_COEFF_FLAG_UPDATE
 void product_full_loop(ModeDecisionCandidateBuffer *candidate_buffer,
                        ModeDecisionContext *context_ptr, PictureControlSet *pcs_ptr,
                        EbPictureBufferDesc *input_picture_ptr, uint32_t qindex,
                        uint32_t *y_count_non_zero_coeffs, uint64_t *y_coeff_bits,
                        uint64_t *y_full_distortion);
-
+#endif
 void inv_transform_recon_wrapper(uint8_t *pred_buffer, uint32_t pred_offset, uint32_t pred_stride,
                                  uint8_t *rec_buffer, uint32_t rec_offset, uint32_t rec_stride,
                                  int32_t *rec_coeff_buffer, uint32_t coeff_offset, EbBool hbd,
                                  TxSize txsize, TxType transform_type, PlaneType component_type,
                                  uint32_t eob);
 
+#if RFCTR_MD_BLOCK_LOOP
+extern uint32_t d2_inter_depth_block_decision(SequenceControlSet* scs_ptr,
+                                              PictureControlSet* pcs_ptr,
+                                              ModeDecisionContext* context_ptr,
+                                              uint32_t blk_mds,
+                                              uint32_t sb_addr);
+#else
 extern uint32_t d2_inter_depth_block_decision(ModeDecisionContext *context_ptr, uint32_t blk_mds,
                                               SuperBlock *tb_ptr, uint32_t sb_addr,
                                               uint32_t tb_origin_x, uint32_t tb_origin_y,
                                               uint64_t                 full_lambda,
                                               MdRateEstimationContext *md_rate_estimation_ptr,
                                               PictureControlSet *      pcs_ptr);
-
+#endif
 // compute the cost of curr depth, and the depth above
 extern void compute_depth_costs_md_skip(ModeDecisionContext *    context_ptr,
                                         SequenceControlSet *     scs_ptr,

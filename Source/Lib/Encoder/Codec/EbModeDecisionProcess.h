@@ -478,8 +478,10 @@ typedef struct ModeDecisionContext {
     uint32_t     md_stage_3_total_intra_count;
     uint64_t     best_intra_cost;
     uint64_t     best_inter_cost;
+#if !CLN_REMOVE_UNUSED_SIGNALS
     uint16_t     skip_cfl_cost_dev_th;
     uint16_t     mds3_intra_prune_th;
+#endif
     CandClass    target_class;
 
     // fast_loop_core signals

@@ -1608,6 +1608,7 @@ int32_t av1_quantize_inv_quantize(
     return cul_level;
 }
 
+#if !FIX_Y_COEFF_FLAG_UPDATE
 /****************************************
  ************  Full loop ****************
 ****************************************/
@@ -1832,7 +1833,7 @@ void product_full_loop(ModeDecisionCandidateBuffer *candidate_buffer,
     context_ptr->txb_1d_offset += context_ptr->blk_geom->tx_width[tx_depth][txb_itr] *
                                   context_ptr->blk_geom->tx_height[tx_depth][txb_itr];
 }
-
+#endif
 void inv_transform_recon_wrapper(uint8_t *pred_buffer, uint32_t pred_offset, uint32_t pred_stride,
                                  uint8_t *rec_buffer, uint32_t rec_offset, uint32_t rec_stride,
                                  int32_t *rec_coeff_buffer, uint32_t coeff_offset, EbBool hbd,
@@ -2484,6 +2485,23 @@ void compute_depth_costs(ModeDecisionContext *context_ptr, SequenceControlSet *s
         above_split_rate;
 }
 
+#if RFCTR_MD_BLOCK_LOOP
+/*
+ * Compare costs between depths, then update cost/splitting info in the parent blocks
+ * to reflect chosen partition.  Cost comparison only performed when the all quadrants
+ * of a given depth have been evaluted.
+ */
+uint32_t d2_inter_depth_block_decision(SequenceControlSet* scs_ptr,
+                                       PictureControlSet* pcs_ptr,
+                                       ModeDecisionContext* context_ptr,
+                                       uint32_t blk_mds,
+                                       uint32_t sb_addr) {
+
+    uint64_t parent_depth_cost = 0, current_depth_cost = 0;
+    EbBool last_depth_flag = (context_ptr->md_blk_arr_nsq[blk_mds].split_flag == EB_FALSE);
+    uint32_t last_blk_index = blk_mds, current_depth_idx_mds = blk_mds;
+    const BlockGeom* blk_geom = get_blk_geom_mds(blk_mds);
+#else
 uint32_t d2_inter_depth_block_decision(ModeDecisionContext *context_ptr, uint32_t blk_mds,
                                        SuperBlock *tb_ptr, uint32_t sb_addr, uint32_t tb_origin_x,
                                        uint32_t tb_origin_y, uint64_t full_lambda,
@@ -2509,7 +2527,7 @@ uint32_t d2_inter_depth_block_decision(ModeDecisionContext *context_ptr, uint32_
     last_blk_index                 = blk_mds;
     blk_geom                       = get_blk_geom_mds(blk_mds);
     uint32_t current_depth_idx_mds = blk_mds;
-
+#endif
     if (last_depth_flag) {
         while (blk_geom->is_last_quadrant) {
             //get parent idx

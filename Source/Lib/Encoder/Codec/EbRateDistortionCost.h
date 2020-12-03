@@ -71,6 +71,13 @@ extern EbErrorType txb_calc_cost(
     uint64_t cr_txb_distortion[DIST_CALC_TOTAL], uint32_t component_mask,
     uint64_t *y_txb_coeff_bits, uint64_t *cb_txb_coeff_bits, uint64_t *cr_txb_coeff_bits,
     uint32_t qp, uint64_t lambda, uint64_t lambda_chroma);
+#if FIX_Y_COEFF_FLAG_UPDATE
+extern EbErrorType av1_txb_calc_cost_luma(
+    uint64_t y_txb_distortion[DIST_CALC_TOTAL], // input parameter, Y distortion for both Normal and Cbf zero modes
+    uint64_t *y_txb_coeff_bits,                 // input parameter, Y quantized coefficients rate
+    uint64_t *y_full_cost,
+    uint64_t lambda);                           // input parameter, lambda for Luma
+#else
 extern EbErrorType av1_txb_calc_cost_luma(
     int16_t                txb_skip_ctx,
     ModeDecisionCandidate *candidate_ptr, // input parameter, prediction result Ptr
@@ -83,7 +90,7 @@ extern EbErrorType av1_txb_calc_cost_luma(
     uint64_t *y_txb_coeff_bits, // input parameter, Y quantized coefficients rate
     uint64_t *y_full_cost,
     uint64_t  lambda); // input parameter, lambda for Luma
-
+#endif
 extern EbErrorType intra_luma_mode_context(BlkStruct *blk_ptr, uint32_t luma_mode,
                                            int32_t *prediction_index);
 extern EbErrorType intra2_nx2_n_fast_cost_islice(
