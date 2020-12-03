@@ -201,18 +201,24 @@ sanitizer address test:
   extends: .sanitizer test
   variables:
     SANITIZER: address
+  needs:
+    - 'sanitizer address'
 
 sanitizer memory test:
   extends: .sanitizer test
   variables:
     SANITIZER: memory
     svt_asm: 0
+  needs:
+    - 'sanitizer memory'
 
 sanitizer thread test:
   extends: .sanitizer test
   allow_failure: true
   variables:
     SANITIZER: thread
+  needs:
+    - 'sanitizer thread'
 
 .unit tests:
   extends: .tests
@@ -225,6 +231,8 @@ sanitizer thread test:
     when: always
     reports:
       junit: report.xml
+  needs:
+    - 'gcc 10 test building'
 
 unit tests linux:
   extends: .unit tests
