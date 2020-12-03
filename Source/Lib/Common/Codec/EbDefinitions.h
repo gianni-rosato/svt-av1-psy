@@ -89,6 +89,10 @@ typedef struct {
 #define SSEG_NUM 2 // number of sse_gradient bands
 #define DEPTH_DELTA_NUM 5 // number of depth refinement 0: Pred-2, 1:  Pred-1, 2:  Pred, 3:  Pred+1, 4:  Pred+2,
 #define TXT_DEPTH_DELTA_NUM   3 // negative, pred, positive
+#if FTR_NEW_CYCLES_ALLOC
+#define UNUSED_HIGH_FREQ_BAND_TH 200
+#define UNUSED_LOW_FREQ_BAND_TH 0
+#endif
 
 /*!\brief force enum to be unsigned 1 byte*/
 #define UENUM1BYTE(enumvar) \

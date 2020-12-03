@@ -246,12 +246,33 @@ typedef struct MdSubPelSearchCtrls {
     int subpel_iters_per_step; // Maximum number of steps in logarithmic subpel search before giving up.
     uint8_t eight_pel_search_enabled; // 0: OFF; 1: ON
 } MdSubPelSearchCtrls;
+#if FTR_NEW_CYCLES_ALLOC
+typedef struct ParentSqCoeffAreaBasedCyclesReductionCtrls {
+    EbBool enabled;
+
+    uint8_t high_freq_band1_th;         // cutoff for the highest coeff-area band [0-100]
+    uint8_t high_freq_band1_level;      // level of action to use if luma coeff-area of parent SQ is >= high_freq_band1_th
+    uint8_t high_freq_band2_th;         // cutoff for the second high coeff-area band [0-100]; should be less than high_freq_band1_th
+    uint8_t high_freq_band2_level;      // level of action to use if luma coeff-area of parent SQ is >= high_freq_band2_th
+
+    uint8_t enable_zero_coeff_action;   // enable for whether to apply action when parent SQ has 0 luma coefficients
+    uint8_t zero_coeff_action;          // level of action to use if parent SQ has 0 luma coeffs
+    uint8_t enable_one_coeff_action;    // enable for whether to apply action when parent SQ has 1 luma coefficients
+    uint8_t one_coeff_action;           // level of action to use if parent SQ has 1 luma coeff
+
+    uint8_t low_freq_band1_th;          // cutoff for the lowest coeff-area band [0-100]; should be less than high_freq_band2_th
+    uint8_t low_freq_band1_level;       // level of action to use if luma coeff-area of parent SQ is < low_freq_band1_th
+    uint8_t low_freq_band2_th;          // cutoff for the lowest coeff-area band [0-100]; should be less than high_freq_band2_th and larger than low_freq_band1_th
+    uint8_t low_freq_band2_level;       // level of action to use if luma coeff-area of parent SQ is < low_freq_band2_th
+}ParentSqCoeffAreaBasedCyclesReductionCtrls;
+#else
 typedef struct CoeffBSwMdCtrls {
     uint8_t enabled; // 0:  OFF; 1:  ON
     uint8_t
             non_skip_level; // Which level of aggressive features to use when SQ has zero coeffs; higher is more aggressive
     uint8_t skip_block; // Allow skipping NSQ blocks
 } CoeffBSwMdCtrls;
+#endif
 typedef struct RdoqCtrls {
     uint8_t enabled;
 
@@ -428,7 +449,9 @@ typedef struct ModeDecisionContext {
     int16_t  cr_dc_sign_context;
     // Multi-modes signal(s)
     uint8_t              parent_sq_type[MAX_PARENT_SQ];
+#if !FTR_NEW_CYCLES_ALLOC
     uint8_t              parent_sq_has_coeff[MAX_PARENT_SQ];
+#endif
     uint8_t              parent_sq_pred_mode[MAX_PARENT_SQ];
     uint8_t              chroma_level;
     uint8_t              chroma_at_last_md_stage;
@@ -572,9 +595,15 @@ typedef struct ModeDecisionContext {
     uint8_t           md_disallow_nsq;
     uint64_t          best_nsq_default_cost;
     uint64_t          default_cost_per_shape[NUMBER_OF_SHAPES];
+#if FTR_NEW_CYCLES_ALLOC
+    ParentSqCoeffAreaBasedCyclesReductionCtrls parent_sq_coeff_area_based_cycles_reduction_ctrls;
+#else
     uint8_t           enable_area_based_cycles_allocation;
+#endif
     uint8_t           sb_class;
+#if !FTR_NEW_CYCLES_ALLOC
     uint16_t          coeff_area_based_bypass_nsq_th;
+#endif
     uint8_t           sb_size;
 
     EbPictureBufferDesc *recon_coeff_ptr[TX_TYPES];
@@ -602,8 +631,10 @@ typedef struct ModeDecisionContext {
     uint8_t         md_staging_tx_size_level;
     NicCtrls        nic_ctrls;
     uint8_t         inter_compound_mode;
+#if !FTR_NEW_CYCLES_ALLOC
     uint8_t         switch_md_mode_based_on_sq_coeff;
     CoeffBSwMdCtrls cb_sw_md_ctrls;
+#endif
     MV              ref_mv;
     uint8_t         ifs_is_regular_last; // If regular is last performed interp_filters @ IFS
     uint8_t         use_prev_mds_res;
