@@ -241,3 +241,184 @@ e2e tests linux:
     - mkdir -p unittests
     - mv test/vectors/* .
     - ./Bin/Release/SvtAv1E2ETests --gtest_filter=-*DummySrcTest*
+
+
+#
+# macOS CI Jobs
+#
+.macos-compiler-base:
+  stage: compile
+  tags:
+    - macos-ci
+  variables:
+    VLC_PATH: /Users/videolanci/sandbox/bin
+    CFLAGS: -Werror -Wshadow $EXTRA_CFLAGS
+    CXXFLAGS: -Werror -Wshadow $EXTRA_CXXFLAGS
+  script:
+    - export PATH="${VLC_PATH}:${PATH}"
+    - eval cmake -G${CMAKE_GENERATOR:=Ninja} -B Build -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE:=Release} $EXTRA_CMAKE_FLAGS
+    - cmake --build Build --config $CMAKE_BUILD_TYPE
+
+.macos-fetch-testdata: &macos-fetch-testdata |
+  curl -f -L -O --silent "https://raw.githubusercontent.com/OpenVisualCloud/SVT-AV1-Resources/master/video.tar.gz"
+  tar -xf video.tar.gz
+
+macOS Build (Xcode):
+  extends: .macos-compiler-base
+  variables:
+    CMAKE_GENERATOR: Xcode
+  artifacts:
+    expire_in: 1 day
+    paths:
+      - Bin/Release/*
+
+macOS Build (Ninja, Static, Tests):
+  extends: .macos-compiler-base
+  variables:
+    EXTRA_CMAKE_FLAGS: -DBUILD_SHARED_LIBS=OFF -DBUILD_TESTING=ON
+    EXTRA_CFLAGS: -Wno-error -g
+    EXTRA_CXXFLAGS: -Wno-error -g
+  artifacts:
+    expire_in: 1 day
+    paths:
+      - Bin/Release/*
+
+macOS Unit Tests:
+  tags:
+    - macos-ci
+  stage: test
+  parallel: 10
+  variables:
+    GTEST_TOTAL_SHARDS: 10
+    GTEST_OUTPUT: "xml:report.xml"
+  artifacts:
+    when: always
+    reports:
+      junit: report.xml
+  script:
+    - export GTEST_SHARD_INDEX=$((CI_NODE_INDEX - 1))
+    - ./Bin/Release/SvtAv1UnitTests
+  needs:
+    - 'macOS Build (Ninja, Static, Tests)'
+
+macOS E2E Tests:
+  tags:
+    - macos-ci
+  stage: test
+  parallel: 10
+  variables:
+    GTEST_TOTAL_SHARDS: 10
+    GTEST_OUTPUT: "xml:report.xml"
+  artifacts:
+    when: always
+    reports:
+      junit: report.xml
+  script:
+    - export GTEST_SHARD_INDEX=$((CI_NODE_INDEX - 1))
+    - mkdir -p testvectors && export SVT_AV1_TEST_VECTOR_PATH="$PWD/testvectors"
+    - cmake -GNinja -B Build -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON
+    - cmake --build Build --target TestVectors
+    - ./Bin/Release/SvtAv1E2ETests --gtest_filter=-*DummySrcTest*
+  needs:
+    - 'macOS Build (Ninja, Static, Tests)'
+
+macOS Enc Test:
+  tags:
+    - macos-ci
+  stage: test
+  script:
+    - *macos-fetch-testdata
+    - ./Bin/Release/SvtAv1EncApp --preset 0 -i "$SVT_ENCTEST_FILENAME" -n 3 -b "test-pr-${SVT_ENCTEST_BITNESS}bit-m0.ivf"
+    - ./Bin/Release/SvtAv1EncApp --preset 8 -i "$SVT_ENCTEST_FILENAME" -n 120 -b "test-pr-${SVT_ENCTEST_BITNESS}bit-m8.ivf"
+  parallel:
+    matrix:
+      - SVT_ENCTEST_FILENAME: "akiyo_cif.y4m"
+        SVT_ENCTEST_BITNESS: 8
+      - SVT_ENCTEST_FILENAME: "Chimera-Aerial_480x264_2997fps_10bit_420_150frames.y4m"
+        SVT_ENCTEST_BITNESS: 10
+  needs:
+    - 'macOS Build (Ninja, Static, Tests)'
+
+#
+# Window CI Jobs
+#
+.windows-ci-common:
+  tags:
+    - ci
+  before_script:
+    - |
+      $installPath = &"C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe" -latest -property installationpath
+      Import-Module (Join-Path $installPath "Common7\Tools\Microsoft.VisualStudio.DevShell.dll")
+      Enter-VsDevShell -VsInstallPath $installPath -SkipAutomaticLocation
+
+.windows-fetch-testdata: &windows-fetch-testdata |
+  $ProgressPreference = 'SilentlyContinue'
+  Invoke-WebRequest -OutFile video.tar.gz -Uri https://raw.githubusercontent.com/OpenVisualCloud/SVT-AV1-Resources/master/video.tar.gz
+  tar -xf video.tar.gz
+
+Windows build (Release, Tests):
+  extends: .windows-ci-common
+  stage: compile
+  script:
+    - '&"C:\Program Files\CMake\bin\cmake.exe" -B Build  -DBUILD_TESTING=ON -DCMAKE_BUILD_TYPE=Release -DASM_NASM="C:\Program Files\NASM\nasm.exe"'
+    - '&"C:\Program Files\CMake\bin\cmake.exe" --build Build --config Release'
+  artifacts:
+    untracked: false
+    expire_in: 1 day
+    paths:
+      - Bin\Release\Release\*.exe
+      - Bin\Release\Release\*.dll
+      - Bin\Release\Release\*.pdb
+
+Windows Unit Tests:
+  extends: .windows-ci-common
+  stage: test
+  parallel: 50
+  variables:
+    GTEST_TOTAL_SHARDS: 50
+    GTEST_OUTPUT: "xml:report.xml"
+  artifacts:
+    when: always
+    reports:
+      junit: report.xml
+  script:
+    - $env:GTEST_SHARD_INDEX = $env:CI_NODE_INDEX - 1
+    - '&"Bin\Release\Release\SvtAv1UnitTests.exe" --gtest_filter=-*FFT*'
+  needs:
+    - 'Windows build (Release, Tests)'
+
+Windows Enc Test:
+  extends: .windows-ci-common
+  stage: test
+  script:
+    - *windows-fetch-testdata
+    - '&"Bin\Release\Release\SvtAv1EncApp.exe" --preset 0 -i "$env:SVT_ENCTEST_FILENAME" -n 3 -b "test-pr-${env:SVT_ENCTEST_BITNESS}bit-m0.ivf"'
+    - '&"Bin\Release\Release\SvtAv1EncApp.exe" --preset 8 -i "$env:SVT_ENCTEST_FILENAME" -n 120 -b "test-pr-${env:SVT_ENCTEST_BITNESS}bit-m8.ivf"'
+  parallel:
+    matrix:
+      - SVT_ENCTEST_FILENAME: "akiyo_cif.y4m"
+        SVT_ENCTEST_BITNESS: 8
+      - SVT_ENCTEST_FILENAME: "Chimera-Aerial_480x264_2997fps_10bit_420_150frames.y4m"
+        SVT_ENCTEST_BITNESS: 10
+  needs:
+    - 'Windows build (Release, Tests)'
+
+Windows E2E Tests:
+  extends: .windows-ci-common
+  stage: test
+  parallel: 10
+  variables:
+    GTEST_TOTAL_SHARDS: 10
+    GTEST_OUTPUT: "xml:report.xml"
+  artifacts:
+    when: always
+    reports:
+      junit: report.xml
+  script:
+    - '[string]$env:SVT_AV1_TEST_VECTOR_PATH = New-Item -ItemType Directory -Force -Name "testdata"'
+    - '&"C:\Program Files\CMake\bin\cmake.exe" -B Build  -DBUILD_TESTING=ON -DCMAKE_BUILD_TYPE=Release -DASM_NASM="C:\Program Files\NASM\nasm.exe"'
+    - '&"C:\Program Files\CMake\bin\cmake.exe" --build Build --target TestVectors'
+    - $env:GTEST_SHARD_INDEX = $env:CI_NODE_INDEX - 1
+    - '&"Bin\Release\Release\SvtAv1E2ETests.exe" --gtest_filter=-*DummySrcTest*'
+  needs:
+    - 'Windows build (Release, Tests)'
