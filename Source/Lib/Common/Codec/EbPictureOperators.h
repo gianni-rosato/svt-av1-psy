@@ -82,11 +82,12 @@ void pic_copy_kernel_8bit(EbByte src, uint32_t src_stride, EbByte dst, uint32_t 
 void pic_copy_kernel_16bit(uint16_t *src, uint32_t src_stride, uint16_t *dst, uint32_t dst_stride,
                            uint32_t width, uint32_t height);
 
-EbErrorType picture_copy(EbPictureBufferDesc *src, uint32_t src_luma_origin_index,
-                         uint32_t src_chroma_origin_index, EbPictureBufferDesc *dst,
-                         uint32_t dst_luma_origin_index, uint32_t dst_chroma_origin_index,
-                         uint32_t area_width, uint32_t area_height, uint32_t chroma_area_width,
-                         uint32_t chroma_area_height, uint32_t component_mask, uint8_t hbd);
+EbErrorType svt_av1_picture_copy(EbPictureBufferDesc *src, uint32_t src_luma_origin_index,
+                                 uint32_t src_chroma_origin_index, EbPictureBufferDesc *dst,
+                                 uint32_t dst_luma_origin_index, uint32_t dst_chroma_origin_index,
+                                 uint32_t area_width, uint32_t area_height,
+                                 uint32_t chroma_area_width, uint32_t chroma_area_height,
+                                 uint32_t component_mask, uint8_t hbd);
 
 #ifdef __cplusplus
 }

@@ -774,18 +774,18 @@ void av1_perform_inverse_transform_recon(ModeDecisionContext *        context_pt
                                         PLANE_TYPE_Y,
                                         (uint32_t)candidate_buffer->candidate_ptr->eob[0][txb_itr]);
         else
-            picture_copy(candidate_buffer->prediction_ptr,
-                         txb_origin_index,
-                         0, //txb_chroma_origin_index,
-                         candidate_buffer->recon_ptr,
-                         rec_luma_offset,
-                         0, //txb_chroma_origin_index,
-                         txb_width,
-                         txb_height,
-                         0, //chromaTuSize,
-                         0, //chromaTuSize,
-                         PICTURE_BUFFER_DESC_Y_FLAG,
-                         context_ptr->hbd_mode_decision);
+            svt_av1_picture_copy(candidate_buffer->prediction_ptr,
+                                 txb_origin_index,
+                                 0, //txb_chroma_origin_index,
+                                 candidate_buffer->recon_ptr,
+                                 rec_luma_offset,
+                                 0, //txb_chroma_origin_index,
+                                 txb_width,
+                                 txb_height,
+                                 0, //chromaTuSize,
+                                 0, //chromaTuSize,
+                                 PICTURE_BUFFER_DESC_Y_FLAG,
+                                 context_ptr->hbd_mode_decision);
 
         //CHROMA
         if (tx_depth == 0 || txb_itr == 0) {
@@ -821,18 +821,18 @@ void av1_perform_inverse_transform_recon(ModeDecisionContext *        context_pt
                         PLANE_TYPE_UV,
                         (uint32_t)candidate_buffer->candidate_ptr->eob[1][txb_itr]);
                 else
-                    picture_copy(candidate_buffer->prediction_ptr,
-                                 0,
-                                 cb_tu_chroma_origin_index,
-                                 candidate_buffer->recon_ptr,
-                                 0,
-                                 rec_cb_offset,
-                                 0,
-                                 0,
-                                 chroma_txb_width,
-                                 chroma_txb_height,
-                                 PICTURE_BUFFER_DESC_Cb_FLAG,
-                                 context_ptr->hbd_mode_decision);
+                    svt_av1_picture_copy(candidate_buffer->prediction_ptr,
+                                         0,
+                                         cb_tu_chroma_origin_index,
+                                         candidate_buffer->recon_ptr,
+                                         0,
+                                         rec_cb_offset,
+                                         0,
+                                         0,
+                                         chroma_txb_width,
+                                         chroma_txb_height,
+                                         PICTURE_BUFFER_DESC_Cb_FLAG,
+                                         context_ptr->hbd_mode_decision);
 
                 if (context_ptr->blk_geom->has_uv &&
                     context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds]
@@ -852,18 +852,18 @@ void av1_perform_inverse_transform_recon(ModeDecisionContext *        context_pt
                         PLANE_TYPE_UV,
                         (uint32_t)candidate_buffer->candidate_ptr->eob[2][txb_itr]);
                 else
-                    picture_copy(candidate_buffer->prediction_ptr,
-                                 0,
-                                 cr_tu_chroma_origin_index,
-                                 candidate_buffer->recon_ptr,
-                                 0,
-                                 rec_cr_offset,
-                                 0,
-                                 0,
-                                 chroma_txb_width,
-                                 chroma_txb_height,
-                                 PICTURE_BUFFER_DESC_Cr_FLAG,
-                                 context_ptr->hbd_mode_decision);
+                    svt_av1_picture_copy(candidate_buffer->prediction_ptr,
+                                         0,
+                                         cr_tu_chroma_origin_index,
+                                         candidate_buffer->recon_ptr,
+                                         0,
+                                         rec_cr_offset,
+                                         0,
+                                         0,
+                                         chroma_txb_width,
+                                         chroma_txb_height,
+                                         PICTURE_BUFFER_DESC_Cr_FLAG,
+                                         context_ptr->hbd_mode_decision);
 
                 if (context_ptr->blk_geom->has_uv)
                     txb_1d_offset_uv += context_ptr->blk_geom->tx_width_uv[tx_depth][txb_itr] *
@@ -4463,7 +4463,7 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
                     PLANE_TYPE_Y,
                     (uint32_t)eob_txt[tx_type]);
             else
-                picture_copy(
+                svt_av1_picture_copy(
                     candidate_buffer->prediction_ptr,
                     txb_origin_index,
                     0,

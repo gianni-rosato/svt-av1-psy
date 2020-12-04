@@ -38,11 +38,12 @@ void pic_copy_kernel_16bit(uint16_t *src, uint32_t src_stride, uint16_t *dst, ui
         svt_memcpy(dst + j * dst_stride, src + j * src_stride, sizeof(uint16_t) * width);
 }
 
-EbErrorType picture_copy(EbPictureBufferDesc *src, uint32_t src_luma_origin_index,
-                         uint32_t src_chroma_origin_index, EbPictureBufferDesc *dst,
-                         uint32_t dst_luma_origin_index, uint32_t dst_chroma_origin_index,
-                         uint32_t area_width, uint32_t area_height, uint32_t chroma_area_width,
-                         uint32_t chroma_area_height, uint32_t component_mask, EbBool hbd) {
+EbErrorType svt_av1_picture_copy(EbPictureBufferDesc *src, uint32_t src_luma_origin_index,
+                                 uint32_t src_chroma_origin_index, EbPictureBufferDesc *dst,
+                                 uint32_t dst_luma_origin_index, uint32_t dst_chroma_origin_index,
+                                 uint32_t area_width, uint32_t area_height,
+                                 uint32_t chroma_area_width, uint32_t chroma_area_height,
+                                 uint32_t component_mask, EbBool hbd) {
     EbErrorType return_error = EB_ErrorNone;
 
     if (hbd) {

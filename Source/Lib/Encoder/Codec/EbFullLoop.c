@@ -1722,18 +1722,18 @@ void product_full_loop(ModeDecisionCandidateBuffer *candidate_buffer,
                                         PLANE_TYPE_Y,
                                         (uint32_t)candidate_buffer->candidate_ptr->eob[0][txb_itr]);
         } else {
-            picture_copy(candidate_buffer->prediction_ptr,
-                         txb_origin_index,
-                         0,
-                         candidate_buffer->recon_ptr,
-                         txb_origin_index,
-                         0,
-                         context_ptr->blk_geom->tx_width[tx_depth][txb_itr],
-                         context_ptr->blk_geom->tx_height[tx_depth][txb_itr],
-                         0,
-                         0,
-                         PICTURE_BUFFER_DESC_Y_FLAG,
-                         context_ptr->hbd_mode_decision);
+            svt_av1_picture_copy(candidate_buffer->prediction_ptr,
+                                 txb_origin_index,
+                                 0,
+                                 candidate_buffer->recon_ptr,
+                                 txb_origin_index,
+                                 0,
+                                 context_ptr->blk_geom->tx_width[tx_depth][txb_itr],
+                                 context_ptr->blk_geom->tx_height[tx_depth][txb_itr],
+                                 0,
+                                 0,
+                                 PICTURE_BUFFER_DESC_Y_FLAG,
+                                 context_ptr->hbd_mode_decision);
         }
 
         EbSpatialFullDistType spatial_full_dist_type_fun = context_ptr->hbd_mode_decision
@@ -2011,18 +2011,18 @@ void full_loop_r(SuperBlock *sb_ptr, ModeDecisionCandidateBuffer *candidate_buff
                         PLANE_TYPE_UV,
                         (uint32_t)candidate_buffer->candidate_ptr->eob[1][txb_itr]);
                 else
-                    picture_copy(candidate_buffer->prediction_ptr,
-                                 0,
-                                 tu_cb_origin_index,
-                                 candidate_buffer->recon_ptr,
-                                 0,
-                                 tu_cb_origin_index,
-                                 0,
-                                 0,
-                                 context_ptr->blk_geom->tx_width_uv[tx_depth][txb_itr],
-                                 context_ptr->blk_geom->tx_height_uv[tx_depth][txb_itr],
-                                 PICTURE_BUFFER_DESC_Cb_FLAG,
-                                 context_ptr->hbd_mode_decision);
+                    svt_av1_picture_copy(candidate_buffer->prediction_ptr,
+                                         0,
+                                         tu_cb_origin_index,
+                                         candidate_buffer->recon_ptr,
+                                         0,
+                                         tu_cb_origin_index,
+                                         0,
+                                         0,
+                                         context_ptr->blk_geom->tx_width_uv[tx_depth][txb_itr],
+                                         context_ptr->blk_geom->tx_height_uv[tx_depth][txb_itr],
+                                         PICTURE_BUFFER_DESC_Cb_FLAG,
+                                         context_ptr->hbd_mode_decision);
             }
         }
 
@@ -2098,18 +2098,18 @@ void full_loop_r(SuperBlock *sb_ptr, ModeDecisionCandidateBuffer *candidate_buff
                         PLANE_TYPE_UV,
                         (uint32_t)candidate_buffer->candidate_ptr->eob[2][txb_itr]);
                 else
-                    picture_copy(candidate_buffer->prediction_ptr,
-                                 0,
-                                 tu_cb_origin_index,
-                                 candidate_buffer->recon_ptr,
-                                 0,
-                                 tu_cb_origin_index,
-                                 0,
-                                 0,
-                                 context_ptr->blk_geom->tx_width_uv[tx_depth][txb_itr],
-                                 context_ptr->blk_geom->tx_height_uv[tx_depth][txb_itr],
-                                 PICTURE_BUFFER_DESC_Cr_FLAG,
-                                 context_ptr->hbd_mode_decision);
+                    svt_av1_picture_copy(candidate_buffer->prediction_ptr,
+                                         0,
+                                         tu_cb_origin_index,
+                                         candidate_buffer->recon_ptr,
+                                         0,
+                                         tu_cb_origin_index,
+                                         0,
+                                         0,
+                                         context_ptr->blk_geom->tx_width_uv[tx_depth][txb_itr],
+                                         context_ptr->blk_geom->tx_height_uv[tx_depth][txb_itr],
+                                         PICTURE_BUFFER_DESC_Cr_FLAG,
+                                         context_ptr->hbd_mode_decision);
             }
         }
 
