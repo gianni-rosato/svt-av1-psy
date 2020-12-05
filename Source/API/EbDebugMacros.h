@@ -43,6 +43,17 @@ extern "C" {
 #define CLN_ENC_MODE_CHECK            1 // Make enc mode check conform to convention of using "<="
 #define FTR_NEW_CYCLES_ALLOC          1 // Replace old cycles allocation with a cycles allocation algorithm that
                                         // does not depend on stats.  Merge cycles allocation and zero-sq-coeff feature.
+#define TUNE_M8_TO_MATCH_M7                1
+#define FTR_PD2_BLOCK_REDUCTION            1 // Reduce depth refinement based on the complexity of the SB.
+#define FTR_REDUCE_MDS2_CAND               1 // Reduce mds3 candidates when mds0 and mds1 select the same best candidate.
+#define FTR_DISABLE_ADAPTIVE_ME            1 // Disable adaptive ME
+#define FTR_PD2_REDUCE_INTRA               1 // Reduce intra when the me distortion is low
+#define CLN_CLEANUP_MDC_CTX                1 // Cleanup mdc context
+#define FTR_USE_VAR_IN_FAST_LOOP           1 // Use var in fast loop
+#define CLN_REMOVE_UNUSED_CODE             1 // Remove unused code related to nsq stat
+#define FTR_PD2_REDUCE_MDS0                1 // Reduce the number of injected blocks
+#define FTR_REDUCE_TXT_BASED_ON_DISTORTION 1 // Reduce the number of injected blocks
+#define FTR_USE_VAR_IN_FAST_LOOP10BIT      1 // Use var in fast loop 10bit
     // ============= END SVT_04 =============
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch

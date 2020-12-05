@@ -1632,8 +1632,10 @@ void copy_statistics_to_ref_obj_ect(PictureControlSet *pcs_ptr, SequenceControlS
     pcs_ptr->intra_coded_area =
         (100 * pcs_ptr->intra_coded_area) /
         (pcs_ptr->parent_pcs_ptr->aligned_width * pcs_ptr->parent_pcs_ptr->aligned_height);
+#if !CLN_REMOVE_UNUSED_CODE
     memcpy(((EbReferenceObject *)pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
                     ->ref_part_cnt, pcs_ptr->part_cnt, sizeof(uint32_t) * (NUMBER_OF_SHAPES-1) * FB_NUM *SSEG_NUM);
+#endif
     memcpy(((EbReferenceObject *)pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
         ->ref_pred_depth_count, pcs_ptr->pred_depth_count, sizeof(uint32_t) * DEPTH_DELTA_NUM * (NUMBER_OF_SHAPES-1));
     memcpy(((EbReferenceObject *)pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
@@ -1727,6 +1729,9 @@ void set_block_based_depth_refinement_controls(SequenceControlSet *scs_ptr, Pict
         depth_refinement_ctrls->sub_to_current_th = 25;
         depth_refinement_ctrls->use_pred_block_cost = 0;
         depth_refinement_ctrls->disallow_below_16x16 = 0;
+#if FTR_PD2_BLOCK_REDUCTION
+        depth_refinement_ctrls->use_sb_class = 0;
+#endif
         break;
     case 2:
         depth_refinement_ctrls->enabled = 1;
@@ -1734,6 +1739,9 @@ void set_block_based_depth_refinement_controls(SequenceControlSet *scs_ptr, Pict
         depth_refinement_ctrls->sub_to_current_th = 20;
         depth_refinement_ctrls->use_pred_block_cost = 1;
         depth_refinement_ctrls->disallow_below_16x16 = 0;
+#if FTR_PD2_BLOCK_REDUCTION
+        depth_refinement_ctrls->use_sb_class = 0;
+#endif
         break;
     case 3:
         depth_refinement_ctrls->enabled = 1;
@@ -1741,6 +1749,9 @@ void set_block_based_depth_refinement_controls(SequenceControlSet *scs_ptr, Pict
         depth_refinement_ctrls->sub_to_current_th = 15;
         depth_refinement_ctrls->use_pred_block_cost = 1;
         depth_refinement_ctrls->disallow_below_16x16 = 0;
+#if FTR_PD2_BLOCK_REDUCTION
+        depth_refinement_ctrls->use_sb_class = 0;
+#endif
         break;
     case 4:
         depth_refinement_ctrls->enabled = 1;
@@ -1748,6 +1759,9 @@ void set_block_based_depth_refinement_controls(SequenceControlSet *scs_ptr, Pict
         depth_refinement_ctrls->sub_to_current_th = 10;
         depth_refinement_ctrls->use_pred_block_cost = 1;
         depth_refinement_ctrls->disallow_below_16x16 = 0;
+#if FTR_PD2_BLOCK_REDUCTION
+        depth_refinement_ctrls->use_sb_class = 0;
+#endif
         break;
     case 5:
         depth_refinement_ctrls->enabled = 1;
@@ -1757,7 +1771,25 @@ void set_block_based_depth_refinement_controls(SequenceControlSet *scs_ptr, Pict
         depth_refinement_ctrls->disallow_below_16x16 =
             (pcs_ptr->slice_type != I_SLICE && scs_ptr->static_config.super_block_size == 64 && sb_width % 16 == 0 && sb_height % 16 == 0)
                 ? (pcs_ptr->parent_pcs_ptr->rc_me_distortion[mdctxt->sb_index] < ((5 * 64 * 64) / 4)) : 0;
+#if FTR_PD2_BLOCK_REDUCTION
+        depth_refinement_ctrls->use_sb_class = 0;
+#endif
         break;
+#if FTR_PD2_BLOCK_REDUCTION
+    case 6:
+        depth_refinement_ctrls->enabled = 1;
+        depth_refinement_ctrls->parent_to_current_th = -10;
+        depth_refinement_ctrls->sub_to_current_th = 5;
+        depth_refinement_ctrls->use_pred_block_cost = 1;
+#if !EARLY_DEPTH_REMOVAL
+        depth_refinement_ctrls->disallow_below_16x16 =
+            (pcs_ptr->slice_type != I_SLICE && scs_ptr->static_config.super_block_size == 64 && sb_width % 16 == 0 && sb_height % 16 == 0)
+                ? (pcs_ptr->parent_pcs_ptr->rc_me_distortion[mdctxt->sb_index] < ((5 * 64 * 64) / 4)) : 0;
+#endif
+#if FTR_PD2_BLOCK_REDUCTION
+        depth_refinement_ctrls->use_sb_class = 1;
+#endif
+#endif
     default:
         assert(0);
         break;
@@ -2838,7 +2870,23 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     else if (pd_pass == PD_PASS_1)
         context_ptr->rdoq_level = 0;
     else
+#if TUNE_M8_TO_MATCH_M7
+#if TUNE_M9_FEATURES
+#if OPT_RDOQ_FOR_M9
+#if TUNE_M9_NOV_26
+        if (enc_mode <= ENC_M9)
+#else
+        if (enc_mode <= ENC_M8)
+#endif
+#else
+        if (enc_mode <= ENC_M9)
+#endif
+#else
+        if (enc_mode <= ENC_M8)
+#endif
+#else
         if (enc_mode <= ENC_M7)
+#endif
             context_ptr->rdoq_level = 1;
         else
             context_ptr->rdoq_level = (pcs_ptr->parent_pcs_ptr->slice_type == I_SLICE) ? 2 : 3;
@@ -3152,7 +3200,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         context_ptr->block_based_depth_refinement_level = 0;
     else if (enc_mode <= ENC_M6)
         context_ptr->block_based_depth_refinement_level = 2;
+#if FTR_PD2_BLOCK_REDUCTION
+    else if (enc_mode <= ENC_M7) {
+#else
     else {
+#endif
         if (pcs_ptr->slice_type == I_SLICE) {
             context_ptr->block_based_depth_refinement_level = 4;
         }
@@ -3160,6 +3212,16 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             context_ptr->block_based_depth_refinement_level = 5;
         }
     }
+#if FTR_PD2_BLOCK_REDUCTION
+    else {
+        if (pcs_ptr->slice_type == I_SLICE) {
+            context_ptr->block_based_depth_refinement_level = 4;
+        }
+        else {
+            context_ptr->block_based_depth_refinement_level = 6;
+        }
+    }
+#endif
     set_block_based_depth_refinement_controls(sequence_control_set_ptr, pcs_ptr, context_ptr, context_ptr->block_based_depth_refinement_level, sb_width, sb_height);
     if (pcs_ptr->slice_type != I_SLICE) {
         if (pd_pass == PD_PASS_0)
@@ -3181,8 +3243,15 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             context_ptr->md_sq_mv_search_level = 1;
         else if (enc_mode <= ENC_M4)
             context_ptr->md_sq_mv_search_level = 2;
+#if FTR_DISABLE_ADAPTIVE_ME
+        else if (enc_mode <= ENC_M7)
+            context_ptr->md_sq_mv_search_level = 4;
+        else
+            context_ptr->md_sq_mv_search_level = 0;
+#else
         else
             context_ptr->md_sq_mv_search_level = 4;
+#endif
     md_sq_motion_search_controls(context_ptr, context_ptr->md_sq_mv_search_level);
     if (pd_pass == PD_PASS_0)
         context_ptr->md_nsq_mv_search_level = 0;
@@ -3249,15 +3318,30 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         (pcs_ptr->slice_type == I_SLICE) ? EB_FALSE : EB_TRUE;
     else
 #if CLN_ENC_MODE_CHECK
+#if TUNE_M8_TO_MATCH_M7
+#if TUNE_M9_FEATURES
+        if (enc_mode <= ENC_M9)
+#else
+        if (enc_mode <= ENC_M8)
+#endif
+#else
         if (enc_mode <= ENC_M7)
+#endif
 #else
         if (enc_mode < ENC_M8)
 #endif
             context_ptr->dc_cand_only_flag = EB_FALSE;
         else
+#if FTR_PD2_REDUCE_INTRA
+            context_ptr->dc_cand_only_flag = !pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ||
+            ( (pcs_ptr->slice_type != I_SLICE) && (pcs_ptr->parent_pcs_ptr->rc_me_distortion[context_ptr->sb_index] < (64 * 64 * 3)))
+                ? EB_TRUE
+                : EB_FALSE;
+#else
             context_ptr->dc_cand_only_flag = !pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag
                 ? EB_TRUE
                 : EB_FALSE;
+#endif
 
     // Set intra_angle_delta @ MD
     if (pd_pass == PD_PASS_0)
@@ -3331,6 +3415,127 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             context_ptr->early_cand_elimination = 0;
         else
             context_ptr->early_cand_elimination = (enc_mode <= ENC_M6) ? 0 : 1;
+#if FTR_REDUCE_MDS2_CAND
+     if (pd_pass == PD_PASS_0)
+        context_ptr->reduce_last_md_stage_candidate = 0;
+    else if (pd_pass == PD_PASS_1)
+        context_ptr->reduce_last_md_stage_candidate = 0;
+    else
+        if (pcs_ptr->slice_type == I_SLICE)
+            context_ptr->reduce_last_md_stage_candidate = 0;
+        else
+#if TUNE_NEW_PRESETS_M5_M8
+#if REDUCE_MDS3_COMPLEXITY
+#if TUNE_PRESETS_M4_M8
+#if M9_AGRESSIVE_LAST_MD_STAGE
+#if TUNE_M9_NOV_26 && !TUNE_M8_M9_NOV27
+            context_ptr->reduce_last_md_stage_candidate = (enc_mode <= ENC_M9) ? 0 : 3;
+#else
+            context_ptr->reduce_last_md_stage_candidate = (enc_mode <= ENC_M8) ? 0 : 3;
+#endif
+#else
+            context_ptr->reduce_last_md_stage_candidate = (enc_mode <= ENC_M8) ? 0 : 2;
+#endif
+#else
+            context_ptr->reduce_last_md_stage_candidate = (enc_mode <= ENC_M7) ? 0 : 2;
+#endif
+#else
+            context_ptr->reduce_last_md_stage_candidate = 0;
+#endif
+#else
+            context_ptr->reduce_last_md_stage_candidate = (enc_mode <= ENC_M7) ? 0 : 1;
+#endif
+#endif
+#if FTR_USE_VAR_IN_FAST_LOOP
+#if TUNE_M6_M7
+#if TUNE_PRESETS_M4_M8
+#if TUNE_PRESETS_AND_PRUNING
+     context_ptr->use_var_in_mds0 = (enc_mode <= ENC_M3) ? 0 : pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? 1 : 0;
+#else
+     context_ptr->use_var_in_mds0 = (enc_mode <= ENC_M5) ? 0 : pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? 1 : 0;
+#endif
+#else
+     context_ptr->use_var_in_mds0 = (enc_mode <= ENC_M6) ? 0 : pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? 1 : 0;
+#endif
+#else
+     context_ptr->use_var_in_mds0 = (enc_mode <= ENC_M7) ? 0 : pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? 1 : 0;
+#endif
+#endif
+#if CLEANUP_CANDIDATE_ELEMINATION_CTR
+     uint8_t eliminate_candidate_based_on_pme_me_results = 0;
+#if FTR_PD2_REDUCE_MDS0
+     if (pd_pass == PD_PASS_0)
+        eliminate_candidate_based_on_pme_me_results = 0;
+    else if (pd_pass == PD_PASS_1)
+        eliminate_candidate_based_on_pme_me_results = 0;
+    else
+        if (pcs_ptr->slice_type == I_SLICE)
+            eliminate_candidate_based_on_pme_me_results = 0;
+#if OPTIMISE_WM
+        else if(enc_mode <= ENC_M7)
+            eliminate_candidate_based_on_pme_me_results = 0;
+        else if(enc_mode <= ENC_M8)
+            eliminate_candidate_based_on_pme_me_results = 1;
+        else
+            eliminate_candidate_based_on_pme_me_results = 2;
+#else
+        else
+#if TUNE_NEW_PRESETS_M5_M8
+#if TUNE_M7_FEATURES
+            eliminate_candidate_based_on_pme_me_results = (enc_mode <= ENC_M7) ? 0 : 1;
+#else
+            eliminate_candidate_based_on_pme_me_results = (enc_mode <= ENC_M6) ? 0 : 1;
+#endif
+#else
+            eliminate_candidate_based_on_pme_me_results = (enc_mode <= ENC_M7) ? 0 : 1;
+#endif
+#endif
+#endif
+     set_cand_elimination_controls(context_ptr,eliminate_candidate_based_on_pme_me_results);
+#else
+#if FTR_PD2_REDUCE_MDS0
+     if (pd_pass == PD_PASS_0)
+        context_ptr->eliminate_candidate_based_on_pme_me_results = 0;
+    else if (pd_pass == PD_PASS_1)
+        context_ptr->eliminate_candidate_based_on_pme_me_results = 0;
+    else
+        if (pcs_ptr->slice_type == I_SLICE)
+            context_ptr->eliminate_candidate_based_on_pme_me_results = 0;
+        else
+#if TUNE_NEW_PRESETS_M5_M8
+            context_ptr->eliminate_candidate_based_on_pme_me_results = (enc_mode <= ENC_M6) ? 0 : 1;
+#else
+            context_ptr->eliminate_candidate_based_on_pme_me_results = (enc_mode <= ENC_M7) ? 0 : 1;
+#endif
+#endif
+#endif
+#if FTR_REDUCE_TXT_BASED_ON_DISTORTION
+     if (pd_pass == PD_PASS_0)
+         context_ptr->bypass_tx_search_when_zcoef = 0;
+     else if (pd_pass == PD_PASS_1)
+         context_ptr->bypass_tx_search_when_zcoef = 0;
+     else
+         if (pcs_ptr->slice_type == I_SLICE)
+             context_ptr->bypass_tx_search_when_zcoef = 0;
+         else
+#if TUNE_NEW_PRESETS_M5_M8
+#if TUNE_PRESETS_M4_M8
+#if TUNE_M7_FEATURES
+#if TUNE_M6_FEATURES
+             context_ptr->bypass_tx_search_when_zcoef = (enc_mode <= ENC_M5) ? 0 : 1;
+#else
+             context_ptr->bypass_tx_search_when_zcoef = (enc_mode <= ENC_M6) ? 0 : 1;
+#endif
+#else
+             context_ptr->bypass_tx_search_when_zcoef = (enc_mode <= ENC_M7) ? 0 : 1;
+#endif
+#else
+             context_ptr->bypass_tx_search_when_zcoef = (enc_mode <= ENC_M6) ? 0 : 1;
+#endif
+#else
+             context_ptr->bypass_tx_search_when_zcoef = (enc_mode <= ENC_M7) ? 0 : 1;
+#endif
+#endif
     return return_error;
 }
 void copy_neighbour_arrays(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
@@ -3760,6 +3965,7 @@ void generate_depth_prob(PictureControlSet * pcs_ptr, ModeDecisionContext *conte
 /******************************************************
 * Generate probabilities for the nsq_cycles_reduction
 ******************************************************/
+#if !CLN_REMOVE_UNUSED_CODE
 void generate_nsq_prob(PictureControlSet * pcs_ptr,ModeDecisionContext *context_ptr)
 {
     if (pcs_ptr->parent_pcs_ptr->slice_type != I_SLICE) {
@@ -3890,7 +4096,7 @@ void generate_statistics_nsq(
         }
     }
 }
-
+#endif
 /******************************************************
 * Generate probabilities for the txt_cycles_reduction
 ******************************************************/
@@ -4220,6 +4426,12 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
                         add_parent_depth = is_parent_to_current_deviation_small(
                             scs_ptr, context_ptr, blk_geom, th_offset);
                     }
+#if FTR_PD2_BLOCK_REDUCTION
+                    if (context_ptr->depth_refinement_ctrls.enabled && context_ptr->depth_refinement_ctrls.use_sb_class) {
+                        s_depth = context_ptr->sb_class >= SB_CLASS_1 && context_ptr->sb_class < SB_CLASS_8 ? 0 : s_depth;
+                        e_depth = context_ptr->sb_class >= SB_CLASS_1 && context_ptr->sb_class < SB_CLASS_4 ? 0 : e_depth;
+                    }
+#endif
                     if (add_parent_depth)
                     if (s_depth != 0)
                         set_parent_to_be_considered(
@@ -4247,6 +4459,9 @@ void init_block(ModeDecisionContext *context_ptr, uint32_t blk_index,
                 const BlockGeom *blk_geom) {
     context_ptr->md_local_blk_unit[blk_index].left_neighbor_partition  = +INVALID_NEIGHBOR_DATA;
     context_ptr->md_local_blk_unit[blk_index].above_neighbor_partition = +INVALID_NEIGHBOR_DATA;
+#if FTR_PD2_BLOCK_REDUCTION
+    context_ptr->md_local_blk_unit[blk_index].count_non_zero_coeffs = 0;
+#endif
     if (!context_ptr->md_disallow_nsq)
         for (uint8_t shape_idx = 0; shape_idx < NUMBER_OF_SHAPES; shape_idx++)
         context_ptr->md_local_blk_unit[blk_index].sse_gradian_band[shape_idx] = +1;
@@ -4512,8 +4727,10 @@ void *mode_decision_kernel(void *input_ptr) {
             svt_post_full_object(enc_dec_results_wrapper_ptr);
         }
         else{
+#if !CLN_REMOVE_UNUSED_CODE
         memset(context_ptr->md_context->part_cnt, 0, sizeof(uint32_t) * SSEG_NUM * (NUMBER_OF_SHAPES-1) * FB_NUM);
         generate_nsq_prob(pcs_ptr, context_ptr->md_context);
+#endif
         memset(context_ptr->md_context->pred_depth_count, 0, sizeof(uint32_t) * DEPTH_DELTA_NUM * (NUMBER_OF_SHAPES-1));
         generate_depth_prob(pcs_ptr, context_ptr->md_context);
         memset( context_ptr->md_context->txt_cnt, 0, sizeof(uint32_t) * TXT_DEPTH_DELTA_NUM * TX_TYPES);
@@ -4785,7 +5002,9 @@ void *mode_decision_kernel(void *input_ptr) {
                                      sb_origin_y,
                                      sb_index,
                                      context_ptr->md_context);
+#if !CLN_REMOVE_UNUSED_CODE
                     generate_statistics_nsq(scs_ptr, pcs_ptr, context_ptr->md_context, sb_index);
+#endif
                     generate_statistics_depth(scs_ptr, pcs_ptr, context_ptr->md_context, sb_index);
                     generate_statistics_txt(scs_ptr, pcs_ptr, context_ptr->md_context, sb_index);
 
@@ -4818,10 +5037,12 @@ void *mode_decision_kernel(void *input_ptr) {
         svt_block_on_mutex(pcs_ptr->intra_mutex);
         pcs_ptr->intra_coded_area += (uint32_t)context_ptr->tot_intra_coded_area;
         // Accumulate block selection
+#if !CLN_REMOVE_UNUSED_CODE
         for (uint8_t partidx = 0; partidx < NUMBER_OF_SHAPES-1; partidx++)
             for (uint8_t band = 0; band < FB_NUM; band++)
                 for (uint8_t sse_idx = 0; sse_idx < SSEG_NUM; sse_idx++)
                     pcs_ptr->part_cnt[partidx][band][sse_idx] += context_ptr->md_context->part_cnt[partidx][band][sse_idx];
+#endif
         // Accumulate pred depth selection
         for (uint8_t pred_depth = 0; pred_depth < DEPTH_DELTA_NUM; pred_depth++)
             for (uint8_t part_idx = 0; part_idx < (NUMBER_OF_SHAPES-1); part_idx++)

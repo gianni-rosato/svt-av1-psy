@@ -90,6 +90,7 @@ static const uint16_t block_prob_tab[5][9][3][2]       = {{{{75, 75}, {43, 43}, 
                                                      {{0, 0}, {0, 0}, {0, 0}},
                                                      {{0, 0}, {0, 0}, {0, 0}},
                                                      {{0, 0}, {0, 0}, {0, 0}}}};
+#if !CLN_REMOVE_UNUSED_CODE
 static const uint16_t block_prob_intra_tab[5][9][3][2] = {{{{0, 0}, {0, 0}, {0, 0}},
                                                            {{0, 0}, {0, 0}, {0, 0}},
                                                            {{0, 0}, {0, 0}, {0, 0}},
@@ -135,6 +136,7 @@ static const uint16_t block_prob_intra_tab[5][9][3][2] = {{{{0, 0}, {0, 0}, {0, 
                                                            {{0, 0}, {0, 0}, {0, 0}},
                                                            {{0, 0}, {0, 0}, {0, 0}},
                                                            {{0, 0}, {0, 0}, {0, 0}}}};
+#endif
 static const uint8_t  inter_txt_cycles_reduction_th
     [2 /*depth*/][3 /*depth refinement*/][3 /*tx_size*/][2 /*freq band*/][15 /*tx_type*/] = {
         {// Depth 3

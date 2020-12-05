@@ -54,7 +54,9 @@ typedef struct EbReferenceObject {
     EbHandle             referenced_area_mutex;
     uint64_t             referenced_area_avg;
     double               r0;
+#if !CLN_REMOVE_UNUSED_CODE
     uint32_t             ref_part_cnt[NUMBER_OF_SHAPES - 1][FB_NUM][SSEG_NUM];
+#endif
     uint32_t             ref_pred_depth_count[DEPTH_DELTA_NUM][NUMBER_OF_SHAPES - 1];
     uint32_t             ref_txt_cnt[TXT_DEPTH_DELTA_NUM][TX_TYPES];
     int32_t              mi_cols;

@@ -1001,7 +1001,15 @@ EbErrorType signal_derivation_multi_processes_oq(
     else {
         if (pcs_ptr->enc_mode <= ENC_M2)
             pcs_ptr->intra_pred_mode = 0;
+#if TUNE_M8_TO_MATCH_M7
+#if TUNE_INTRA_WM_MV_TXT_M9
+        else if (pcs_ptr->enc_mode <= ENC_M9)
+#else
+        else if (pcs_ptr->enc_mode <= ENC_M8)
+#endif
+#else
         else if (pcs_ptr->enc_mode <= ENC_M7)
+#endif
             if (pcs_ptr->temporal_layer_index == 0)
                 pcs_ptr->intra_pred_mode = 1;
             else
@@ -1058,6 +1066,9 @@ EbErrorType signal_derivation_multi_processes_oq(
         pcs_ptr->tpl_trailing_frame_count = 0;
 #endif
     pcs_ptr->tpl_trailing_frame_count = MIN(pcs_ptr->tpl_trailing_frame_count, SCD_LAD);
+#if !OMAR
+    pcs_ptr->tpl_trailing_frame_count = 0;
+#endif
     // Tune TPL for better chroma.Only for 240P. 0 is OFF
 #if TUNE_CHROMA_SSIM
     pcs_ptr->tune_tpl_for_chroma = 1;

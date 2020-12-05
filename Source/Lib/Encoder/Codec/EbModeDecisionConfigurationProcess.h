@@ -46,7 +46,7 @@ typedef struct ModeDecisionConfigurationContext {
     MdRateEstimationContext *md_rate_estimation_ptr;
     EbBool                   is_md_rate_estimation_ptr_owner;
     uint8_t                  qp;
-
+#if! CLN_CLEANUP_MDC_CTX
     // Adaptive Depth Partitioning
     uint32_t *sb_score_array;
     uint8_t   cost_depth_mode[SB_SQ_NON4_BLOCKS_DEPTH_MODE];
@@ -64,6 +64,7 @@ typedef struct ModeDecisionConfigurationContext {
     ModeDecisionCandidate *mdc_candidate_ptr;
     CandidateMv *          mdc_ref_mv_stack;
     BlkStruct *            mdc_blk_ptr;
+#endif
     uint8_t                qp_index;
 } ModeDecisionConfigurationContext;
 

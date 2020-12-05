@@ -190,7 +190,9 @@ typedef struct DepthRefinementCtrls {
         use_pred_block_cost; // add an offset to sub_to_current_th and parent_to_current_th on the cost range of the predicted block; use default ths for high cost(s) and more aggressive TH(s) for low cost(s)
     uint8_t
         disallow_below_16x16; // remove 16x16 & lower depth(s) based on the 64x64 distortion if sb_64x64
-
+#if FTR_PD2_BLOCK_REDUCTION
+    uint8_t use_sb_class;
+#endif
 } DepthRefinementCtrls;
 typedef struct PfCtrls {
     EB_TRANS_COEFF_SHAPE pf_shape;
@@ -608,8 +610,10 @@ typedef struct ModeDecisionContext {
 
     EbPictureBufferDesc *recon_coeff_ptr[TX_TYPES];
     EbPictureBufferDesc *recon_ptr[TX_TYPES];
+#if !CLN_REMOVE_UNUSED_CODE
     uint32_t             part_cnt[NUMBER_OF_SHAPES - 1][FB_NUM][SSEG_NUM];
     uint16_t             part_prob[NUMBER_OF_SHAPES - 1][FB_NUM][SSEG_NUM];
+#endif
     uint32_t             pred_depth_count[DEPTH_DELTA_NUM][NUMBER_OF_SHAPES - 1];
     uint32_t             depth_prob[DEPTH_DELTA_NUM];
     uint32_t             ad_md_prob[DEPTH_DELTA_NUM][NUMBER_OF_SHAPES - 1];
@@ -642,6 +646,30 @@ typedef struct ModeDecisionContext {
     uint8_t         early_cand_elimination;
     uint64_t        mds0_best_cost;
     uint8_t         mds0_best_class;
+#if FTR_REDUCE_MDS2_CAND
+    uint8_t reduce_last_md_stage_candidate;
+    uint32_t mds0_best_idx;
+    CandClass mds0_best_class_it;
+    uint32_t mds1_best_idx;
+    CandClass mds1_best_class_it;
+#endif
+#if FTR_USE_VAR_IN_FAST_LOOP
+    uint8_t use_var_in_mds0;
+#endif
+#if REDUCE_PME_SEARCH || FTR_PD2_REDUCE_MDS0
+    uint32_t md_me_cost[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
+    uint32_t md_me_dist;
+#if !CLEANUP_CANDIDATE_ELEMINATION_CTR
+    uint32_t eliminate_candidate_based_on_pme_me_results;
+#endif
+    uint8_t inject_new_me;
+    uint8_t inject_new_pme;
+    uint8_t inject_new_warp;
+#endif
+#if FTR_REDUCE_TXT_BASED_ON_DISTORTION
+    uint8_t bypass_tx_search_when_zcoef;
+#endif
+
 } ModeDecisionContext;
 
 typedef void (*EbAv1LambdaAssignFunc)(PictureControlSet *pcs_ptr, uint32_t *fast_lambda,

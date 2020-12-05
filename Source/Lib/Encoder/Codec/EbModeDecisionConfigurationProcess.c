@@ -348,7 +348,9 @@ void mode_decision_configuration_init_qp_update(PictureControlSet *pcs_ptr) {
     pcs_ptr->parent_pcs_ptr->average_qp = 0;
     pcs_ptr->intra_coded_area           = 0;
     // Init block selection
+#if !CLN_REMOVE_UNUSED_CODE
     memset(pcs_ptr->part_cnt, 0, sizeof(uint32_t) * (NUMBER_OF_SHAPES - 1) * FB_NUM * SSEG_NUM);
+#endif
     // Init pred_depth selection
     memset(
         pcs_ptr->pred_depth_count, 0, sizeof(uint32_t) * DEPTH_DELTA_NUM * (NUMBER_OF_SHAPES - 1));
@@ -394,12 +396,14 @@ static void mode_decision_configuration_context_dctor(EbPtr p) {
 
     if (obj->is_md_rate_estimation_ptr_owner)
         EB_FREE_ARRAY(obj->md_rate_estimation_ptr);
+#if! CLN_CLEANUP_MDC_CTX
     EB_FREE_ARRAY(obj->sb_score_array);
     EB_FREE_ARRAY(obj->sb_cost_array);
     EB_FREE_ARRAY(obj->mdc_candidate_ptr);
     EB_FREE_ARRAY(obj->mdc_ref_mv_stack);
     EB_FREE_ARRAY(obj->mdc_blk_ptr->av1xd);
     EB_FREE_ARRAY(obj->mdc_blk_ptr);
+#endif
     EB_FREE_ARRAY(obj);
 }
 /******************************************************
@@ -408,11 +412,12 @@ static void mode_decision_configuration_context_dctor(EbPtr p) {
 EbErrorType mode_decision_configuration_context_ctor(EbThreadContext *  thread_context_ptr,
                                                      const EbEncHandle *enc_handle_ptr,
                                                      int input_index, int output_index) {
+#if! CLN_CLEANUP_MDC_CTX
     const SequenceControlSet *scs_ptr = enc_handle_ptr->scs_instance_array[0]->scs_ptr;
     uint32_t sb_total_count           = ((scs_ptr->max_input_luma_width + BLOCK_SIZE_64 - 1) /
                                BLOCK_SIZE_64) *
         ((scs_ptr->max_input_luma_height + BLOCK_SIZE_64 - 1) / BLOCK_SIZE_64);
-
+#endif
     ModeDecisionConfigurationContext *context_ptr;
     EB_CALLOC_ARRAY(context_ptr, 1);
     thread_context_ptr->priv  = context_ptr;
@@ -427,7 +432,7 @@ EbErrorType mode_decision_configuration_context_ctor(EbThreadContext *  thread_c
     // Rate estimation
     EB_MALLOC_ARRAY(context_ptr->md_rate_estimation_ptr, 1);
     context_ptr->is_md_rate_estimation_ptr_owner = EB_TRUE;
-
+#if! CLN_CLEANUP_MDC_CTX
     // Adaptive Depth Partitioning
     EB_MALLOC_ARRAY(context_ptr->sb_score_array, sb_total_count);
     EB_MALLOC_ARRAY(context_ptr->sb_cost_array, sb_total_count);
@@ -438,6 +443,7 @@ EbErrorType mode_decision_configuration_context_ctor(EbThreadContext *  thread_c
     EB_MALLOC_ARRAY(context_ptr->mdc_blk_ptr, 1);
     context_ptr->mdc_blk_ptr->av1xd = NULL;
     EB_MALLOC_ARRAY(context_ptr->mdc_blk_ptr->av1xd, 1);
+#endif
     return EB_ErrorNone;
 }
 
@@ -861,7 +867,9 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
         pcs_ptr->parent_pcs_ptr->average_qp = 0;
         pcs_ptr->intra_coded_area           = 0;
         // Init block selection
+#if !CLN_REMOVE_UNUSED_CODE
         memset(pcs_ptr->part_cnt, 0, sizeof(uint32_t) * (NUMBER_OF_SHAPES - 1) * FB_NUM * SSEG_NUM);
+#endif
         // Init pred_depth selection
         memset(pcs_ptr->pred_depth_count,
                0,

@@ -406,7 +406,9 @@ typedef struct PictureControlSet {
     uint16_t sb_total_count_unscaled;
     // pointer to a scratch buffer used by self-guided restoration
     int32_t *rst_tmpbuf;
+#if !CLN_REMOVE_UNUSED_CODE
     uint32_t part_cnt[NUMBER_OF_SHAPES - 1][FB_NUM][SSEG_NUM];
+#endif
     uint32_t pred_depth_count[DEPTH_DELTA_NUM][NUMBER_OF_SHAPES - 1];
     uint32_t txt_cnt[TXT_DEPTH_DELTA_NUM][TX_TYPES];
 } PictureControlSet;
