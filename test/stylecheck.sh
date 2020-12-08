@@ -28,6 +28,10 @@ fi
 # default to master if we have no origin remote
 : "${FETCH_HEAD:=master}"
 
+if ! git merge-tree "$(git merge-base HEAD "$FETCH_HEAD")" HEAD "$FETCH_HEAD"; then
+    echo "ERROR: failed to simulate a merge, check to see if a merge is possible" >&2
+fi
+
 if git diff --exit-code --diff-filter=d --name-only "^$FETCH_HEAD" > /dev/null 2>&1; then
     echo "No differences to upstream's default, skipping further tests"
     exit 0
