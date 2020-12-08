@@ -994,6 +994,14 @@ void *resource_coordination_kernel(void *input_ptr) {
                 scs_ptr->seq_header.order_hint_info.enable_jnt_comp = 0;
                 scs_ptr->seq_header.enable_masked_compound          = 0;
             }
+#if FTR_SCALE_FACTOR // sps
+            // sf_identity
+            svt_av1_setup_scale_factors_for_frame(&scs_ptr->sf_identity,
+                scs_ptr->max_input_luma_width,
+                scs_ptr->max_input_luma_height,
+                scs_ptr->max_input_luma_width,
+                scs_ptr->max_input_luma_height);
+#endif
         }
         // Since at this stage we do not know the prediction structure and the location of ALT_REF pictures,
         // for every picture (except first picture), we allocate two: 1. original picture, 2. potential Overlay picture.
@@ -1067,7 +1075,9 @@ void *resource_coordination_kernel(void *input_ptr) {
             pcs_ptr->scs_ptr                   = scs_ptr;
             pcs_ptr->input_picture_wrapper_ptr = input_picture_wrapper_ptr;
             pcs_ptr->end_of_sequence_flag      = end_of_sequence_flag;
-
+#if FTR_SCALE_FACTOR
+            pcs_ptr->is_superres_none = (scs_ptr->static_config.superres_mode == SUPERRES_NONE);
+#endif
             if (loop_index == 1) {
                 // Get a new input picture for overlay.
                 EbObjectWrapper *input_pic_wrapper_ptr;

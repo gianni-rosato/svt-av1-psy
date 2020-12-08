@@ -307,8 +307,10 @@ typedef struct PictureControlSet {
 
     // Mode Decision Neighbor Arrays
     NeighborArrayUnit **md_intra_luma_mode_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
+#if !CLN_MDC_CTX
     NeighborArrayUnit **md_intra_chroma_mode_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
     NeighborArrayUnit **md_mv_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
+#endif
     NeighborArrayUnit **md_skip_flag_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
     NeighborArrayUnit **md_mode_type_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
     NeighborArrayUnit **md_luma_recon_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
@@ -329,7 +331,9 @@ typedef struct PictureControlSet {
     NeighborArrayUnit **md_cb_dc_sign_level_coeff_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
     NeighborArrayUnit **md_cr_dc_sign_level_coeff_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
     NeighborArrayUnit **md_txfm_context_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
+#if !CLN_MDC_CTX
     NeighborArrayUnit **md_inter_pred_dir_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
+#endif
     NeighborArrayUnit **md_ref_frame_type_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
 
     NeighborArrayUnit32 **md_interpolation_type_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
@@ -366,7 +370,9 @@ typedef struct PictureControlSet {
     NeighborArrayUnit **
                           cb_dc_sign_level_coeff_neighbor_array; // Stored per 4x4. 8 bit: lower 6 bits(COEFF_CONTEXT_BITS), shows if there is at least one Coef. Top 2 bit store the sign of DC as follow: 0->0,1->-1,2-> 1
     NeighborArrayUnit **  txfm_context_array;
+#if !CLN_MDC_CTX
     NeighborArrayUnit **  inter_pred_dir_neighbor_array;
+#endif
     NeighborArrayUnit **  ref_frame_type_neighbor_array;
     NeighborArrayUnit32 **interpolation_type_neighbor_array;
 
@@ -548,6 +554,12 @@ typedef struct MePcs {
     uint8_t                    picture_qp;
     uint8_t                    max_number_of_pus_per_sb;
     uint32_t                  *rc_me_distortion;
+#if FTR_EARLY_DEPTH_REMOVAL
+    uint32_t                  *me_64x64_distortion;
+    uint32_t                  *me_32x32_distortion;
+    uint32_t                  *me_16x16_distortion;
+    uint32_t                  *me_8x8_distortion;
+#endif
     SbParams                  *sb_params_array;
     uint16_t                   aligned_width;
     uint16_t                   aligned_height;
@@ -719,6 +731,12 @@ typedef struct PictureParentControlSet {
     OisMbResults        **ois_mb_results_trail;
     MotionEstimationData *pa_me_data_trail;
     uint32_t             *rc_me_distortion_trail;
+#if FTR_EARLY_DEPTH_REMOVAL
+    uint32_t             *me_64x64_distortion_trail;
+    uint32_t             *me_32x32_distortion_trail;
+    uint32_t             *me_16x16_distortion_trail;
+    uint32_t             *me_8x8_distortion_trail;
+#endif
 #endif
 #if FTR_TPL_TR
     EbPictureBufferDesc       *non_tf_input;
@@ -732,7 +750,12 @@ typedef struct PictureParentControlSet {
     // Motion Estimation Results
     uint8_t   max_number_of_pus_per_sb;
     uint32_t *rc_me_distortion;
-
+#if FTR_EARLY_DEPTH_REMOVAL
+    uint32_t *me_64x64_distortion;
+    uint32_t *me_32x32_distortion;
+    uint32_t *me_16x16_distortion;
+    uint32_t *me_8x8_distortion;
+#endif
     // Global motion estimation results
     EbBool               is_global_motion[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
     EbWarpedMotionParams global_motion_estimation[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
@@ -973,6 +996,9 @@ typedef struct PictureParentControlSet {
     // Tune TPL for better chroma.Only for 240P
     uint8_t    tune_tpl_for_chroma;
     uint8_t    is_next_frame_intra;
+#if FTR_SCALE_FACTOR
+    uint8_t is_superres_none;
+#endif
     TfControls tf_ctrls;
     GmControls gm_ctrls;
     // Loop variables

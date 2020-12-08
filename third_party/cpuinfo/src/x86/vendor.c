@@ -73,117 +73,117 @@
 
 
 enum cpuinfo_vendor cpuinfo_x86_decode_vendor(uint32_t ebx, uint32_t ecx, uint32_t edx) {
-	switch (ebx) {
-		case Genu:
-			switch (edx) {
-				case ineI:
-					if (ecx == ntel) {
-						/* "GenuineIntel" */
-						return cpuinfo_vendor_intel;
-					}
-					break;
+    switch (ebx) {
+        case Genu:
+            switch (edx) {
+                case ineI:
+                    if (ecx == ntel) {
+                        /* "GenuineIntel" */
+                        return cpuinfo_vendor_intel;
+                    }
+                    break;
 #if CPUINFO_ARCH_X86
-				case ineT:
-					if (ecx == Mx86) {
-						/* "GenuineTMx86" */
-						return cpuinfo_vendor_transmeta;
-					}
-					break;
-				case ine:
-					if (ecx == RDC) {
-						/* "Genuine  RDC" */
-						return cpuinfo_vendor_rdc;
-					}
-					break;
+                case ineT:
+                    if (ecx == Mx86) {
+                        /* "GenuineTMx86" */
+                        return cpuinfo_vendor_transmeta;
+                    }
+                    break;
+                case ine:
+                    if (ecx == RDC) {
+                        /* "Genuine  RDC" */
+                        return cpuinfo_vendor_rdc;
+                    }
+                    break;
 #endif
-			}
-			break;
-		case Auth:
-			if (edx == enti && ecx == cAMD) {
-				/* "AuthenticAMD" */
-				return cpuinfo_vendor_amd;
-			}
-			break;
-		case Cent:
-			if (edx == aurH && ecx == auls) {
-				/* "CentaurHauls" */
-				return cpuinfo_vendor_via;
-			}
-			break;
-		case Hygo:
-			if (edx == nGen && ecx == uine) {
-				/* "HygonGenuine" */
-				return cpuinfo_vendor_hygon;
-			}
-			break;
+            }
+            break;
+        case Auth:
+            if (edx == enti && ecx == cAMD) {
+                /* "AuthenticAMD" */
+                return cpuinfo_vendor_amd;
+            }
+            break;
+        case Cent:
+            if (edx == aurH && ecx == auls) {
+                /* "CentaurHauls" */
+                return cpuinfo_vendor_via;
+            }
+            break;
+        case Hygo:
+            if (edx == nGen && ecx == uine) {
+                /* "HygonGenuine" */
+                return cpuinfo_vendor_hygon;
+            }
+            break;
 #if CPUINFO_ARCH_X86
-		case AMDi:
-			if (edx == sbet && ecx == ter) {
-				/* "AMDisbetter!" */
-				return cpuinfo_vendor_amd;
-			}
-			break;
-		case AMD:
-			if (edx == ISBE && ecx == TTER) {
-				/* "AMD ISBETTER" */
-				return cpuinfo_vendor_amd;
-			}
-			break;
-		case VIA:
-			if (edx == VIA && ecx == VIA) {
-				/* "VIA VIA VIA " */
-				return cpuinfo_vendor_via;
-			}
-			break;
-		case Tran:
-			if (edx == smet && ecx == aCPU) {
-				/* "TransmetaCPU" */
-				return cpuinfo_vendor_transmeta;
-			}
-			break;
-		case Cyri:
-			if (edx == xIns && ecx == tead) {
-				/* "CyrixInstead" */
-				return cpuinfo_vendor_cyrix;
-			}
-			break;
-		case Rise:
-			if (edx == Rise && ecx == Rise) {
-				/* "RiseRiseRise" */
-				return cpuinfo_vendor_rise;
-			}
-			break;
-		case Geod:
-			if (edx == e_by && ecx == NSC) {
-				/* "Geode by NSC" */
-				return cpuinfo_vendor_nsc;
-			}
-			break;
-		case SiS:
-			if (edx == SiS && ecx == SiS) {
-				/* "SiS SiS SiS " */
-				return cpuinfo_vendor_sis;
-			}
-			break;
-		case NexG:
-			if (edx == enDr && ecx == iven) {
-				/* "NexGenDriven" */
-				return cpuinfo_vendor_nexgen;
-			}
-			break;
-		case UMC:
-			if (edx == UMC && ecx == UMC) {
-				/* "UMC UMC UMC " */
-				return cpuinfo_vendor_umc;
-			}
-			break;
-		case Vort:
-			if (edx == ex86 && ecx == SoC) {
-				/* "Vortex86 SoC" */
-				return cpuinfo_vendor_dmp;
-			}
-			break;
+        case AMDi:
+            if (edx == sbet && ecx == ter) {
+                /* "AMDisbetter!" */
+                return cpuinfo_vendor_amd;
+            }
+            break;
+        case AMD:
+            if (edx == ISBE && ecx == TTER) {
+                /* "AMD ISBETTER" */
+                return cpuinfo_vendor_amd;
+            }
+            break;
+        case VIA:
+            if (edx == VIA && ecx == VIA) {
+                /* "VIA VIA VIA " */
+                return cpuinfo_vendor_via;
+            }
+            break;
+        case Tran:
+            if (edx == smet && ecx == aCPU) {
+                /* "TransmetaCPU" */
+                return cpuinfo_vendor_transmeta;
+            }
+            break;
+        case Cyri:
+            if (edx == xIns && ecx == tead) {
+                /* "CyrixInstead" */
+                return cpuinfo_vendor_cyrix;
+            }
+            break;
+        case Rise:
+            if (edx == Rise && ecx == Rise) {
+                /* "RiseRiseRise" */
+                return cpuinfo_vendor_rise;
+            }
+            break;
+        case Geod:
+            if (edx == e_by && ecx == NSC) {
+                /* "Geode by NSC" */
+                return cpuinfo_vendor_nsc;
+            }
+            break;
+        case SiS:
+            if (edx == SiS && ecx == SiS) {
+                /* "SiS SiS SiS " */
+                return cpuinfo_vendor_sis;
+            }
+            break;
+        case NexG:
+            if (edx == enDr && ecx == iven) {
+                /* "NexGenDriven" */
+                return cpuinfo_vendor_nexgen;
+            }
+            break;
+        case UMC:
+            if (edx == UMC && ecx == UMC) {
+                /* "UMC UMC UMC " */
+                return cpuinfo_vendor_umc;
+            }
+            break;
+        case Vort:
+            if (edx == ex86 && ecx == SoC) {
+                /* "Vortex86 SoC" */
+                return cpuinfo_vendor_dmp;
+            }
+            break;
 #endif
-	}
-	return cpuinfo_vendor_unknown;
+    }
+    return cpuinfo_vendor_unknown;
 }

@@ -1591,7 +1591,10 @@ int32_t av1_quantize_inv_quantize(
     }
 
     *count_non_zero_coeffs = *eob;
-
+#if FTR_EOB_CUL_LEVEL
+    if (md_context->shut_skip_ctx_dc_sign_update)
+        return 0;
+#endif
     // Derive cul_level
     int32_t              cul_level = 0;
     const int16_t *const scan      = scan_order->scan;
@@ -1600,6 +1603,11 @@ int32_t av1_quantize_inv_quantize(
         const int32_t v     = quant_coeff[pos];
         int32_t       level = ABS(v);
         cul_level += level;
+#if FTR_EOB_CUL_LEVEL
+        // Early exit the loop if cul_level reaches COEFF_CONTEXT_MASK
+        if (cul_level >= COEFF_CONTEXT_MASK)
+            break;
+#endif
     }
 
     cul_level = AOMMIN(COEFF_CONTEXT_MASK, cul_level);
@@ -2399,11 +2407,12 @@ void compute_depth_costs(ModeDecisionContext *context_ptr, SequenceControlSet *s
     uint64_t curr_non_split_rate_blk1 = 0;
     uint64_t curr_non_split_rate_blk2 = 0;
     uint64_t curr_non_split_rate_blk3 = 0;
-
+#if !CLN_MDC_CTX
     context_ptr->md_local_blk_unit[above_depth_mds].left_neighbor_mode =
         context_ptr->md_local_blk_unit[curr_depth_blk0_mds].left_neighbor_mode;
     context_ptr->md_local_blk_unit[above_depth_mds].top_neighbor_mode =
         context_ptr->md_local_blk_unit[curr_depth_blk0_mds].top_neighbor_mode;
+#endif
     context_ptr->md_local_blk_unit[above_depth_mds].left_neighbor_partition =
         context_ptr->md_local_blk_unit[curr_depth_blk0_mds].left_neighbor_partition;
     context_ptr->md_local_blk_unit[above_depth_mds].above_neighbor_partition =
@@ -2607,11 +2616,12 @@ void compute_depth_costs_md_skip(ModeDecisionContext *context_ptr, SequenceContr
     // current depth blocks
     uint32_t curr_depth_blk0_mds =
         context_ptr->blk_geom->sqi_mds - context_ptr->blk_geom->quadi * step;
-
+#if !CLN_MDC_CTX
     context_ptr->md_local_blk_unit[above_depth_mds].left_neighbor_mode =
         context_ptr->md_local_blk_unit[curr_depth_blk0_mds].left_neighbor_mode;
     context_ptr->md_local_blk_unit[above_depth_mds].top_neighbor_mode =
         context_ptr->md_local_blk_unit[curr_depth_blk0_mds].top_neighbor_mode;
+#endif
     context_ptr->md_local_blk_unit[above_depth_mds].left_neighbor_partition =
         context_ptr->md_local_blk_unit[curr_depth_blk0_mds].left_neighbor_partition;
     context_ptr->md_local_blk_unit[above_depth_mds].above_neighbor_partition =

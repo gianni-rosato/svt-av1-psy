@@ -54,6 +54,18 @@ extern "C" {
 #define FTR_PD2_REDUCE_MDS0                1 // Reduce the number of injected blocks
 #define FTR_REDUCE_TXT_BASED_ON_DISTORTION 1 // Reduce the number of injected blocks
 #define FTR_USE_VAR_IN_FAST_LOOP10BIT      1 // Use var in fast loop 10bit
+
+#define FTR_EARLY_DEPTH_REMOVAL            1 // Create a dedicated ctrl for depth removal (i.e. independent from post-PD0 depth refinement), generate depth removal and PD0 depth refinement settings 1 time per SB (rather than per PD), use (me_distortion, variance) to reduce number of input depth(s) to PD0
+#define FTR_NIC_PRUNING                    1 // Add nic_pruning_ctrls to group the loose the per mds pruning signals: mdsx_class_th, mdsx_cand_base_th .. , and to expose the hidden nic operations: mdsx_cand_sq_offset_th, mdsx_cand_intra_class_offset_th,..
+#define CLN_FAST_COST                      1 // Clean-up fast-cost estimation kernels: remove  remove md_pass)
+#define FTR_REF_BITS                       1 // Call estimate_ref_frame_type_bits() 1 time per block before md_stage_0() for all ref rather than per candidate.
+#define FTR_BYPASS_IF_NO_FAST_RATE         1 // Bypass skip_flag_context and is_inter_ctx derivation if no fast rate estimation
+#define CLN_MDC_CTX                        1 // Remove inter_pred_dir_neighbor_array, md_inter_pred_dir_neighbor_array, remove md_intra_chroma_mode_neighbor_array and and md_mv_neighbor_array
+#define FTR_SCALE_FACTOR                   1 // Bypass scale_factor generation if not is_superres_none
+#define CLN_INIT_OP                        1 // Bypass useless pme res and pme initializations
+#define CLN_GET_LIST_GET_REF               1 // Use look-up tables instead of check(s) at get_list_idx(), get_ref_idx(), ..
+#define FTR_EOB_CUL_LEVEL                  1 // Bypass useless eob memset(s) and early exit cul_level derivation if max COEFF_CONTEXT_MASK
+#define FTR_TXT_SKIP_RATE_EST              1 // Do not perform rate estimation @ tx_type search if current tx_type dist is higher than best_cost
     // ============= END SVT_04 =============
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch

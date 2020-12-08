@@ -4621,8 +4621,10 @@ EbErrorType ec_update_neighbors(PictureControlSet *pcs_ptr, EntropyCodingContext
         pcs_ptr->cr_dc_sign_level_coeff_neighbor_array[tile_idx];
     NeighborArrayUnit *cb_dc_sign_level_coeff_neighbor_array =
         pcs_ptr->cb_dc_sign_level_coeff_neighbor_array[tile_idx];
+#if !CLN_MDC_CTX
     NeighborArrayUnit *inter_pred_dir_neighbor_array =
         pcs_ptr->inter_pred_dir_neighbor_array[tile_idx];
+#endif
     NeighborArrayUnit *ref_frame_type_neighbor_array =
         pcs_ptr->ref_frame_type_neighbor_array[tile_idx];
     NeighborArrayUnit32 *interpolation_type_neighbor_array =
@@ -4709,7 +4711,7 @@ EbErrorType ec_update_neighbors(PictureControlSet *pcs_ptr, EntropyCodingContext
         }
         context_ptr->coded_area_sb += blk_geom->bwidth * blk_geom->bheight;
     }
-
+#if !CLN_MDC_CTX
     // Update the Inter Pred Type Neighbor Array
     {
         uint8_t inter_pred_direction_index =
@@ -4722,7 +4724,7 @@ EbErrorType ec_update_neighbors(PictureControlSet *pcs_ptr, EntropyCodingContext
                                        blk_geom->bheight,
                                        NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
     }
-
+#endif
     // Update the refFrame Type Neighbor Array
     {
         uint8_t ref_frame_type = (uint8_t)blk_ptr->prediction_unit_array[0].ref_frame_type;

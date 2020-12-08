@@ -983,6 +983,12 @@ void fill_me_pcs_wraper(
         me_pcs->pa_me_data = pcs->pa_me_data_trail;
         me_pcs->ois_mb_results = pcs->ois_mb_results_trail;
         me_pcs->rc_me_distortion = pcs->rc_me_distortion_trail;
+#if FTR_EARLY_DEPTH_REMOVAL
+        me_pcs->me_64x64_distortion = pcs->me_64x64_distortion_trail;
+        me_pcs->me_32x32_distortion = pcs->me_32x32_distortion_trail;
+        me_pcs->me_16x16_distortion = pcs->me_16x16_distortion_trail;
+        me_pcs->me_8x8_distortion = pcs->me_8x8_distortion_trail;
+#endif
         me_pcs->temporal_layer_index = in_results->tmp_layer_idx;
         me_pcs->sc_content_detected = in_results->sc_detected_base;
         me_pcs->slice_type = B_SLICE;
@@ -997,6 +1003,12 @@ void fill_me_pcs_wraper(
         me_pcs->pa_me_data = pcs->pa_me_data;
         me_pcs->ois_mb_results = pcs->ois_mb_results;
         me_pcs->rc_me_distortion = pcs->rc_me_distortion;
+#if FTR_EARLY_DEPTH_REMOVAL
+        me_pcs->me_64x64_distortion = pcs->me_64x64_distortion;
+        me_pcs->me_32x32_distortion = pcs->me_32x32_distortion;
+        me_pcs->me_16x16_distortion = pcs->me_16x16_distortion;
+        me_pcs->me_8x8_distortion   = pcs->me_8x8_distortion;
+#endif
         me_pcs->temporal_layer_index = pcs->temporal_layer_index;
         me_pcs->sc_content_detected = pcs->sc_content_detected;
         me_pcs->slice_type = pcs->slice_type;

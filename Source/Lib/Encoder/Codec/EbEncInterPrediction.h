@@ -34,6 +34,9 @@ void svt_av1_build_inter_predictor(Av1Common *cm, const uint8_t *src, int src_st
                                    int dst_stride, const MV *src_mv, int pix_col, int pix_row,
                                    InterPredParams *inter_pred_params);
 EbErrorType av1_inter_prediction(
+#if FTR_SCALE_FACTOR
+    SequenceControlSet *scs_ptr,
+#endif
     PictureControlSet *pcs_ptr, uint32_t interp_filters, BlkStruct *blk_ptr, uint8_t ref_frame_type,
     MvUnit *mv_unit, uint8_t use_intrabc, MotionMode motion_mode, uint8_t use_precomputed_obmc,
     struct ModeDecisionContext *md_context, uint8_t compound_idx,

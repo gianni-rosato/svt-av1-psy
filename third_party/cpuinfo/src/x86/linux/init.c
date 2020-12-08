@@ -11,7 +11,7 @@
 
 
 void cpuinfo_x86_linux_init(void) {
-	struct cpuinfo_x86_processor x86_processor;
-	memset(&x86_processor, 0, sizeof(x86_processor));
-	cpuinfo_x86_init_processor(&x86_processor);
+    struct cpuinfo_x86_processor x86_processor;
+    memset(&x86_processor, 0, sizeof(x86_processor));
+    cpuinfo_x86_init_processor(&x86_processor);
 }

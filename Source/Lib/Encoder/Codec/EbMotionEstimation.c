@@ -3175,6 +3175,41 @@ EbErrorType motion_estimate_sb(
                 }
             }
         }
+#if FTR_EARLY_DEPTH_REMOVAL
+        // Determine sb_64x64_me_class
+        SbParams *sb_params = &pcs_ptr->sb_params_array[sb_index];
+        uint32_t sb_size = 64 * 64;
+        uint32_t dist_64x64 = 0, dist_32x32 = 0, dist_16x16 = 0, dist_8x8 = 0;
+
+        // 64x64
+        {
+            MePredUnit *me_candidate = &(context_ptr->me_candidate[0].pu[0]);
+            dist_64x64 = me_candidate->distortion;
+        }
+
+        // 32x32
+        for (unsigned i = 0; i < 4; i++) {
+            MePredUnit *me_candidate = &(context_ptr->me_candidate[0].pu[1 + i]);
+            dist_32x32 += me_candidate->distortion;
+        }
+
+        // 16x16
+        for (unsigned i = 0; i < 16; i++) {
+            MePredUnit *me_candidate = &(context_ptr->me_candidate[0].pu[5 + i]);
+            dist_16x16 += me_candidate->distortion;
+        }
+
+        // 8x8
+        for (unsigned i = 0; i < 64; i++) {
+            MePredUnit *me_candidate = &(context_ptr->me_candidate[0].pu[21 + i]);
+            dist_8x8 += me_candidate->distortion;
+        }
+        // Normalize
+        pcs_ptr->me_64x64_distortion[sb_index] = (dist_64x64 * sb_size) / (sb_params->width * sb_params->height);
+        pcs_ptr->me_32x32_distortion[sb_index] = (dist_32x32 * sb_size) / (sb_params->width * sb_params->height);
+        pcs_ptr->me_16x16_distortion[sb_index] = (dist_16x16 * sb_size) / (sb_params->width * sb_params->height);
+        pcs_ptr->me_8x8_distortion[sb_index] = (dist_8x8 * sb_size) / (sb_params->width * sb_params->height);
+#endif
         pcs_ptr->rc_me_distortion[sb_index] = 0;
         // Compute the sum of the distortion of all 16 16x16 (720 and above) and
         // 64 8x8 (for lower resolutions) blocks in the SB

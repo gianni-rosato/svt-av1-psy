@@ -7,7 +7,7 @@
 #define CPUINFO_LOG_DEBUG_PARSERS 0
 
 #ifndef CPUINFO_LOG_LEVEL
-	#define CPUINFO_LOG_LEVEL CLOG_ERROR
+    #define CPUINFO_LOG_LEVEL CLOG_ERROR
 #endif
 
 CLOG_DEFINE_LOG_DEBUG(cpuinfo_log_debug, "cpuinfo", CPUINFO_LOG_LEVEL);

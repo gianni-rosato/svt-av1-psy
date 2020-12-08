@@ -125,8 +125,10 @@ EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr, EbColor
     for (cand_index = 0; cand_index < MODE_DECISION_CANDIDATE_MAX_COUNT; ++cand_index) {
         context_ptr->fast_candidate_ptr_array[cand_index] =
             &context_ptr->fast_candidate_array[cand_index];
+#if !CLN_FAST_COST
         context_ptr->fast_candidate_ptr_array[cand_index]->md_rate_estimation_ptr =
             context_ptr->md_rate_estimation_ptr;
+#endif
         context_ptr->fast_candidate_ptr_array[cand_index]->palette_info = NULL;
     }
     for (int cd = 0; cd < MAX_PAL_CAND; cd++)
@@ -346,8 +348,10 @@ void reset_mode_decision_neighbor_arrays(PictureControlSet *pcs_ptr, uint16_t ti
     uint8_t depth;
     for (depth = 0; depth < NEIGHBOR_ARRAY_TOTAL_COUNT; depth++) {
         neighbor_array_unit_reset(pcs_ptr->md_intra_luma_mode_neighbor_array[depth][tile_idx]);
+#if !CLN_MDC_CTX
         neighbor_array_unit_reset(pcs_ptr->md_intra_chroma_mode_neighbor_array[depth][tile_idx]);
         neighbor_array_unit_reset(pcs_ptr->md_mv_neighbor_array[depth][tile_idx]);
+#endif
         neighbor_array_unit_reset(pcs_ptr->md_skip_flag_neighbor_array[depth][tile_idx]);
         neighbor_array_unit_reset(pcs_ptr->md_mode_type_neighbor_array[depth][tile_idx]);
         neighbor_array_unit_reset(pcs_ptr->mdleaf_partition_neighbor_array[depth][tile_idx]);
@@ -379,7 +383,9 @@ void reset_mode_decision_neighbor_arrays(PictureControlSet *pcs_ptr, uint16_t ti
         neighbor_array_unit_reset(
             pcs_ptr->md_cr_dc_sign_level_coeff_neighbor_array[depth][tile_idx]);
         neighbor_array_unit_reset(pcs_ptr->md_txfm_context_array[depth][tile_idx]);
+#if !CLN_MDC_CTX
         neighbor_array_unit_reset(pcs_ptr->md_inter_pred_dir_neighbor_array[depth][tile_idx]);
+#endif
         neighbor_array_unit_reset(pcs_ptr->md_ref_frame_type_neighbor_array[depth][tile_idx]);
 
         neighbor_array_unit_reset32(pcs_ptr->md_interpolation_type_neighbor_array[depth][tile_idx]);
@@ -452,11 +458,12 @@ void reset_mode_decision(SequenceControlSet *scs_ptr, ModeDecisionContext *conte
         EB_FREE_ARRAY(context_ptr->md_rate_estimation_ptr);
     }
     context_ptr->md_rate_estimation_ptr = pcs_ptr->md_rate_estimation_array;
+#if !CLN_FAST_COST
     uint32_t cand_index;
     for (cand_index = 0; cand_index < MODE_DECISION_CANDIDATE_MAX_COUNT; ++cand_index)
         context_ptr->fast_candidate_ptr_array[cand_index]->md_rate_estimation_ptr =
             context_ptr->md_rate_estimation_ptr;
-
+#endif
     // Reset CABAC Contexts
 
     // Reset Neighbor Arrays at start of new Segment / Picture

@@ -69,7 +69,9 @@ static void entropy_coding_reset_neighbor_arrays(PictureControlSet *pcs_ptr, uin
     neighbor_array_unit_reset(pcs_ptr->luma_dc_sign_level_coeff_neighbor_array[tile_idx]);
     neighbor_array_unit_reset(pcs_ptr->cb_dc_sign_level_coeff_neighbor_array[tile_idx]);
     neighbor_array_unit_reset(pcs_ptr->cr_dc_sign_level_coeff_neighbor_array[tile_idx]);
+#if !CLN_MDC_CTX
     neighbor_array_unit_reset(pcs_ptr->inter_pred_dir_neighbor_array[tile_idx]);
+#endif
     neighbor_array_unit_reset(pcs_ptr->ref_frame_type_neighbor_array[tile_idx]);
 
     neighbor_array_unit_reset(pcs_ptr->intra_luma_mode_neighbor_array[tile_idx]);

@@ -205,6 +205,9 @@ typedef struct SequenceControlSet {
     Dequants deq_bd; // follows input bit depth
     Quants   quants_8bit; // 8bit
     Dequants deq_8bit; // 8bit
+#if FTR_SCALE_FACTOR
+    ScaleFactors sf_identity;
+#endif
 } SequenceControlSet;
 
 typedef struct EbSequenceControlSetInitData {
