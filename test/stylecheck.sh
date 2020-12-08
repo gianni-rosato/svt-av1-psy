@@ -16,12 +16,20 @@ echo "Checking for carriage returns" >&2
 echo "Checking for trailing spaces" >&2
 ! git --no-pager grep -InP --heading " $" -- . ':!third_party/**/*' ':!*.patch' || ret=1
 
-
 # Test only "new" commits, that is, commits that are not upstream on
-# the master branch.
-git fetch -q https://gitlab.com/AOMediaCodec/SVT-AV1.git master && FETCH_HEAD=FETCH_HEAD || FETCH_HEAD=master
-if git diff --exit-code HEAD ^$FETCH_HEAD > /dev/null 2>&1; then
-    echo "No differences to upstream  master, skipping further tests"
+# the default branch.
+if git fetch -q https://gitlab.com/AOMediaCodec/SVT-AV1.git HEAD; then
+    FETCH_HEAD=FETCH_HEAD
+else
+    # in case the fetch failed, maybe internet issues, try to resolve a local default branch's ref, checked-out or not
+    FETCH_HEAD=$(git rev-parse refs/remotes/origin/HEAD)
+fi
+
+# default to master if we have no origin remote
+: "${FETCH_HEAD:=master}"
+
+if git diff --exit-code --diff-filter=d --name-only "^$FETCH_HEAD" > /dev/null 2>&1; then
+    echo "No differences to upstream's default, skipping further tests"
     exit 0
 fi
 
@@ -36,7 +44,7 @@ while read -r file; do
     fi
 done << EOF
 $(
-    git diff --name-only --diff-filter=d $FETCH_HEAD -- . \
+    git diff --name-only --diff-filter=d "$FETCH_HEAD" -- . \
         ':!third_party' ':!test/e2e_test/test_vector_list.txt' \
         ':!test/vectors/smoking_test.cfg' \
         ':!test/vectors/video_src.cfg' \
@@ -56,6 +64,6 @@ while read -r i; do
         ret=1
     fi
 done << EOF
-$(git rev-list HEAD ^$FETCH_HEAD)
+$(git rev-list HEAD "^$FETCH_HEAD")
 EOF
 exit ${ret:-0}
