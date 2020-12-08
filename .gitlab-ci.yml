@@ -8,9 +8,7 @@ stages:
 
 Style check:
   stage: .pre
-  image: alpine
-  before_script:
-    - apk add --no-cache git
+  image: registry.gitlab.com/aomediacodec/aom-testing/alpine3
   script:
     - ./test/stylecheck.sh
 
