@@ -35,11 +35,11 @@ fi
 
 while read -r file; do
     if ! test -f "$file"; then
-        echo "Ignoring folder or not found file: '$file'"
+        printf "Ignoring file not found: '%s'\n" "$file"
         continue
     fi
     if test -n "$(tail -c1 "$file")"; then
-        echo "No newline at end of $file"
+        printf "No newline at end of %s\n" "$file"
         ret=1
     fi
 done << EOF
@@ -53,14 +53,14 @@ $(
 EOF
 
 while read -r i; do
-    echo "Checking commit message of $i" >&2
+    printf "Checking commit message of %s\n" "$i" >&2
     msg=$(git log --format=%B -n 1 "$i")
     if test -n "$(printf '%s' "$msg" | sed -n 2p)"; then
-        echo "Malformed commit message in $i, second line must be empty"
+        printf "Malformed commit message in %s, second line must be empty\n" "$i"
         ret=1
     fi
     if printf '%s' "$msg" | head -1 | grep -q '\.$'; then
-        echo "Malformed commit message in $i, trailing period in subject line"
+        printf "Malformed commit message in %s, trailing period in subject line\n" "$i"
         ret=1
     fi
 done << EOF
