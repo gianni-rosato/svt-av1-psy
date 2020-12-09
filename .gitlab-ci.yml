@@ -22,10 +22,11 @@ Static analysis (cppcheck):
     policy: pull-push
   script:
     - cmake -B Build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+    - mkdir -p .cppcheck
+    - jq '.[]|=with_entries(select(.value | test(".asm") | not))' Build/compile_commands.json > compile_commands.json
     - |
-      mkdir -p .cppcheck
       cppcheck \
-        --project=Build/compile_commands.json \
+        --project=compile_commands.json \
         --error-exitcode=1 \
         --enable=all \
         -j 2 \
