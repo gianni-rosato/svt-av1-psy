@@ -41,7 +41,7 @@ jobs:
       - uses: msys2/setup-msys2@v2
         with:
           msystem: MINGW64
-          install: mingw-w64-x86_64-ccache mingw-w64-x86_64-yasm mingw-w64-x86_64-nasm mingw-w64-x86_64-cmake mingw-w64-x86_64-pkg-config mingw-w64-x86_64-gcc mingw-w64-x86_64-ninja mingw-w64-x86_64-dav1d make diffutils
+          install: mingw-w64-x86_64-ccache mingw-w64-x86_64-yasm mingw-w64-x86_64-nasm mingw-w64-x86_64-cmake mingw-w64-x86_64-pkg-config mingw-w64-x86_64-gcc mingw-w64-x86_64-ninja mingw-w64-x86_64-dav1d mingw-w64-x86_64-meson make diffutils vim
           update: true
 
       - name: Set ccache dir
@@ -73,13 +73,27 @@ jobs:
         shell: msys2 {0}
         run: |
           mkdir -p vpx-build && cd vpx-build || exit 1
-          ../libvpx/configure  --prefix=/mingw64 --disable-{examples,webm-io,libyuv,postproc,shared,unit-tests,docs,install-bins} --enable-{vp9-postproc,vp9-highbitdepth}
+          ../libvpx/configure --prefix=/mingw64 --disable-{examples,webm-io,libyuv,postproc,shared,unit-tests,docs,install-bins} --enable-{vp9-postproc,vp9-highbitdepth}
           make -j $(getconf _NPROCESSORS_ONLN 2>/dev/null || sysctl -n hw.ncpu) install
+
+      - name: Clone libvmaf
+        uses: actions/checkout@v2
+        with:
+          repository: Netflix/vmaf
+          path: vmaf
+      - name: Configure libvmaf
+        shell: msys2 {0}
+        run: |
+          # additional folder under vmaf/libvmaf needed for builtin models
+          # https://github.com/Netflix/vmaf/issues/752
+          meson setup --prefix /mingw64 --buildtype release --libdir lib -Denable_{tests,docs}=false -Dbuilt_in_models=true vmaf/libvmaf/vmaf-build vmaf/libvmaf
+          meson install -C vmaf/libvmaf/vmaf-build
+          sed -i 's;Libs.private.*;& -lstdc++;' /mingw64/lib/pkgconfig/libvmaf.pc
 
       - name: Configure FFmpeg
         shell: msys2 {0}
         run: |
-          ./configure --arch=x86_64 --pkg-config-flags="--static" --cc="${CC:-ccache gcc}" --cxx="${CXX:-ccache g++}" --enable-{gpl,static} --enable-lib{vpx,aom,svtav1,dav1d}  --disable-shared || {
+          ./configure --arch=x86_64 --pkg-config-flags="--static" --cc="${CC:-ccache gcc}" --cxx="${CXX:-ccache g++}" --enable-{gpl,static} --enable-lib{vpx,aom,svtav1,dav1d,vmaf}  --disable-shared || {
             cat ffbuild/config.log
             exit 1
           }
