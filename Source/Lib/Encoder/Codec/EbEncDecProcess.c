@@ -2979,7 +2979,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     else if (pd_pass == PD_PASS_1)
         context_ptr->interpolation_search_level = IFS_OFF;
     else
+#if TUNE_PRESETS_CLEANUP
+        if (enc_mode <= ENC_M0)
+#else
         if (enc_mode <= ENC_M2)
+#endif
             context_ptr->interpolation_search_level = IFS_MDS1;
         else
             context_ptr->interpolation_search_level = IFS_MDS3;
@@ -3009,7 +3013,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     // Level                Settings
     // 0                    post first md_stage
     // 1                    post last md_stage
+#if TUNE_PRESETS_CLEANUP
+    if (enc_mode <= ENC_MRS) {
+#else
     if (enc_mode <= ENC_MR) {
+#endif
         context_ptr->chroma_at_last_md_stage = 0;
         context_ptr->chroma_at_last_md_stage_intra_th = (uint64_t)~0;
         context_ptr->chroma_at_last_md_stage_cfl_th = (uint64_t)~0;
@@ -3131,7 +3139,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         context_ptr->bipred3x3_injection = 2;
     }
     else if (sequence_control_set_ptr->static_config.bipred_3x3_inject == DEFAULT) {
+#if TUNE_PRESETS_CLEANUP
+        if (enc_mode <= ENC_M0)
+#else
         if (enc_mode <= ENC_M1)
+#endif
             context_ptr->bipred3x3_injection = 1;
         else if (enc_mode <= ENC_M5)
             context_ptr->bipred3x3_injection = 2;
@@ -3379,10 +3391,18 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
                 context_ptr->sq_weight = (uint32_t)~0;
             else
                 if (enc_mode <= ENC_MR)
+#if TUNE_PRESETS_CLEANUP
+                    context_ptr->sq_weight = 105;
+#else
                     context_ptr->sq_weight = 115;
+#endif
                 else
                     if (enc_mode <= ENC_M0)
+#if TUNE_PRESETS_CLEANUP
+                        context_ptr->sq_weight = 100;
+#else
                         context_ptr->sq_weight = 105;
+#endif
                     else if (enc_mode <= ENC_M2)
                         context_ptr->sq_weight = 95;
                     else
@@ -3430,7 +3450,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             context_ptr->md_inter_intra_level = 0;
         else if (pd_pass == PD_PASS_1)
             context_ptr->md_inter_intra_level = 0;
+#if TUNE_PRESETS_CLEANUP
+        else if (enc_mode <= ENC_M0)
+#else
         else if (enc_mode <= ENC_M1)
+#endif
             context_ptr->md_inter_intra_level = 2;
         else if (enc_mode <= ENC_M2)
             context_ptr->md_inter_intra_level = 3;
@@ -3625,9 +3649,13 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     else if (pd_pass == PD_PASS_1)
         context_ptr->md_nsq_mv_search_level = 0;
     else
+#if TUNE_PRESETS_CLEANUP
+        if (enc_mode <= ENC_M0)
+#else
         if (enc_mode <= ENC_MRS)
             context_ptr->md_nsq_mv_search_level = 1;
         else if (enc_mode <= ENC_M1)
+#endif
             context_ptr->md_nsq_mv_search_level = 2;
         else
             context_ptr->md_nsq_mv_search_level = 4;
@@ -4701,6 +4729,7 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
                             s_depth = -2;
                             e_depth = 2;
                         }
+#if !TUNE_PRESETS_CLEANUP
                         else if (pcs_ptr->enc_mode <= ENC_MR) {
                             if (pcs_ptr->parent_pcs_ptr->input_resolution == INPUT_SIZE_240p_RANGE) {
                                 s_depth = pcs_ptr->slice_type == I_SLICE ? -2 : -1;
@@ -4715,6 +4744,7 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
                                 e_depth = pcs_ptr->slice_type == I_SLICE ? 2 : 1;
                             }
                         }
+#endif
                         else if (pcs_ptr->parent_pcs_ptr->multi_pass_pd_level == MULTI_PASS_PD_LEVEL_0) {
                             if (pcs_ptr->enc_mode <= ENC_M4) {
                                 s_depth = pcs_ptr->slice_type == I_SLICE ? -2 : -1;
