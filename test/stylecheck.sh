@@ -67,6 +67,9 @@ while read -r i; do
         printf "Malformed commit message in %s, trailing period in subject line\n" "$i"
         ret=1
     fi
+    if printf '%s' "$msg" | head -1 | grep -qi '^fixup!'; then
+        printf "Warning: fixup commit detected: %s\n" "$i"
+    fi
 done << EOF
 $(git rev-list HEAD "^$FETCH_HEAD")
 EOF
