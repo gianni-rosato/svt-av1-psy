@@ -31,7 +31,7 @@ set(lib_list
     gtest_all
     #SDL2.lib
     aom
-    $<TARGET_OBJECTS:safestringlib>)
+    $<$<TARGET_EXISTS:safestringlib>:$<TARGET_OBJECTS:safestringlib>>)
 
 if(MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_CRT_SECURE_NO_WARNINGS")
@@ -60,8 +60,7 @@ target_include_directories(SvtAv1E2ETests PRIVATE
     ${PROJECT_SOURCE_DIR}/test
     ${PROJECT_SOURCE_DIR}/third_party/aom/inc
     ${PROJECT_SOURCE_DIR}/third_party/googletest/include
-    ${PROJECT_SOURCE_DIR}/third_party/googletest/src
-    ${PROJECT_SOURCE_DIR}/third_party/safestringlib)
+    ${PROJECT_SOURCE_DIR}/third_party/googletest/src)
 
 install(TARGETS SvtAv1E2ETests RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 

@@ -12,7 +12,7 @@
 #include "EbAppInputy4m.h"
 #include <string.h>
 #if !defined(_WIN32) || !defined(HAVE_STRNLEN_S)
-#include "safe_str_lib.h"
+#include "third_party/safestringlib/safe_str_lib.h"
 #endif
 #define YFM_HEADER_MAX 4096 // Technically no max according to "spec"
 #define PRINT_HEADER 0

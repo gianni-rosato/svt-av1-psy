@@ -12,8 +12,7 @@
 # APP Directory CMakeLists.txt
 
 # Include Subdirectories
-include_directories(${PROJECT_SOURCE_DIR}/Source/API/
-    ${CMAKE_OUTPUT_DIRECTORY}/)
+include_directories(${PROJECT_SOURCE_DIR}/Source/API/)
 
 file(GLOB all_files
     "*.h"

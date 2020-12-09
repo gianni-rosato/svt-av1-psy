@@ -14,7 +14,6 @@
 # Include Subdirectories
 include_directories(${PROJECT_SOURCE_DIR}/test/
     ${PROJECT_SOURCE_DIR}/test/ref
-    ${CMAKE_OUTPUT_DIRECTORY}/
     ${PROJECT_SOURCE_DIR}/third_party/googletest/include third_party/googletest/src
     ${PROJECT_SOURCE_DIR}/Source/API
     ${PROJECT_SOURCE_DIR}/Source/Lib/Common/Codec

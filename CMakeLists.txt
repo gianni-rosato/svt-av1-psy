@@ -248,15 +248,33 @@ macro(ASM_COMPILE_TO_TARGET target)
     endif()
 endmacro()
 
-add_subdirectory(third_party/safestringlib)
-
+check_symbol_exists(strnlen_s "string.h" HAVE_STRNLEN_S)
+check_symbol_exists(strncpy_s "string.h" HAVE_STRNCPY_S)
+check_symbol_exists(strcpy_s "string.h" HAVE_STRCPY_S)
 set_property(DIRECTORY .
     APPEND
     PROPERTY COMPILE_DEFINITIONS
-        $<$<BOOL:${HAVE_STRCPY_S}>:HAVE_STRCPY_S=1>
-        $<$<BOOL:${HAVE_STRNCPY_S}>:HAVE_STRNCPY_S=1>
+        SAFECLIB_STR_NULL_SLACK=1
         $<$<BOOL:${HAVE_STRNLEN_S}>:HAVE_STRNLEN_S=1>
+        $<$<BOOL:${HAVE_STRNCPY_S}>:HAVE_STRNCPY_S=1>
+        $<$<BOOL:${HAVE_STRCPY_S}>:HAVE_STRCPY_S=1>
         $<$<BOOL:${WIN32}>:_WIN32_WINNT=0x0601>)
+if(NOT HAVE_STRCPY_S OR NOT HAVE_STRNCPY_S OR NOT HAVE_STRNLEN_S)
+    add_library(safestringlib OBJECT
+        third_party/safestringlib/safeclib_private.h
+        third_party/safestringlib/safe_lib.h
+        third_party/safestringlib/safe_types.h
+        third_party/safestringlib/safe_lib_errno.h
+        third_party/safestringlib/safe_str_lib.h
+        third_party/safestringlib/safe_str_constraint.h
+        third_party/safestringlib/safe_str_constraint.c
+        third_party/safestringlib/ignore_handler_s.c
+        $<$<NOT:$<BOOL:${HAVE_STRNLEN_S}>>:third_party/safestringlib/strnlen_s.c>
+        $<$<NOT:$<BOOL:${HAVE_STRNCPY_S}>>:third_party/safestringlib/strncpy_s.c>
+        $<$<NOT:$<BOOL:${HAVE_STRCPY_S}>>:third_party/safestringlib/strcpy_s.c>)
+endif()
+
+include_directories(.)
 
 # Find out if we have threading available
 set(CMAKE_THREAD_PREFER_PTHREADS ON)
