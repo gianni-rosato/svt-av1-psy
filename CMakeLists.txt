@@ -140,7 +140,7 @@ else()
     if(MINGW)
         list(APPEND flags_to_test -mxsave -fno-asynchronous-unwind-tables)
     else()
-        list(APPEND flags_to_test -fstack-protector-strong -D_FORTIFY_SOURCE=2)
+        list(APPEND flags_to_test -fstack-protector-strong)
     endif()
 endif()
 
@@ -180,6 +180,10 @@ endif()
 
 if(CMAKE_CXX_FLAGS MATCHES ".*-march=native.*")
     string(APPEND CMAKE_CXX_FLAGS " -mno-avx")
+endif()
+
+if(CMAKE_C_FLAGS MATCHES "-O" AND NOT CMAKE_C_FLAGS MATCHES "-O0" AND NOT MINGW)
+    string(APPEND CMAKE_C_FLAGS " -D_FORTIFY_SOURCE=2")
 endif()
 
 if(CMAKE_ASM_NASM_OBJECT_FORMAT MATCHES "win")
