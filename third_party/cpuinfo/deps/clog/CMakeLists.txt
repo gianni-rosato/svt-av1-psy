@@ -5,6 +5,10 @@ INCLUDE(GNUInstallDirs)
 # ---[ Project and semantic versioning.
 PROJECT(clog C CXX)
 
+if(POLICY CMP0063)
+  cmake_policy(SET CMP0063 NEW)
+endif()
+
 # ---[ Options.
 SET(CLOG_RUNTIME_TYPE "default" CACHE STRING "Type of runtime library (shared, static, or default) to use")
 SET_PROPERTY(CACHE CLOG_RUNTIME_TYPE PROPERTY STRINGS default static shared)

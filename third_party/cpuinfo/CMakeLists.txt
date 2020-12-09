@@ -1,5 +1,9 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8.12 FATAL_ERROR)
 
+if(POLICY CMP0063)
+  cmake_policy(SET CMP0063 NEW)
+endif()
+
 INCLUDE(GNUInstallDirs)
 
 # ---[ Options.
