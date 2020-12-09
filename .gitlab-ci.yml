@@ -63,10 +63,7 @@ clang 10:
 
 gcc 4:
   extends: .linux-compiler-base
-  image: registry.gitlab.com/aomediacodec/aom-testing/ubuntu1804
-  variables:
-    CC: gcc-4.8
-    CXX: g++-4.8
+  image: registry.gitlab.com/aomediacodec/aom-testing/centos7
 
 valgrind compile:
   extends: .linux-compiler-base
