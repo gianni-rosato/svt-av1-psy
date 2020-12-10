@@ -205,10 +205,16 @@ EbErrorType signal_derivation_pre_analysis_oq_pcs(SequenceControlSet const * con
 
 #if FTR_TPL_TR
     uint8_t tpl_level;
+#if TUNE_LOWER_PRESETS
+    if (pcs_ptr->enc_mode <= ENC_M5)
+#else
     if (pcs_ptr->enc_mode <= ENC_M4)
+#endif
         tpl_level = 0;
+#if !TUNE_LOWER_PRESETS
     else if (pcs_ptr->enc_mode <= ENC_M5)
         tpl_level = 1;
+#endif
     else
         tpl_level = 2;
 

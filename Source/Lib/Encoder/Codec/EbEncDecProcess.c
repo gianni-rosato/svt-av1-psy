@@ -2393,6 +2393,10 @@ void set_parent_sq_coeff_area_based_cycles_reduction_ctrls(ModeDecisionContext* 
         cycle_red_ctrls->high_freq_band1_level = 3;
         cycle_red_ctrls->high_freq_band2_th = resolution <= INPUT_SIZE_360p_RANGE ? UNUSED_HIGH_FREQ_BAND_TH : 70;
         cycle_red_ctrls->high_freq_band2_level = 2;
+#if TUNE_LOWER_PRESETS
+        cycle_red_ctrls->high_freq_band3_th = UNUSED_HIGH_FREQ_BAND_TH;
+        cycle_red_ctrls->high_freq_band3_level = 0;
+#endif
 
         // Low frequency band THs/actions
         cycle_red_ctrls->enable_zero_coeff_action = 1;
@@ -2413,6 +2417,10 @@ void set_parent_sq_coeff_area_based_cycles_reduction_ctrls(ModeDecisionContext* 
         cycle_red_ctrls->high_freq_band1_level = 3;
         cycle_red_ctrls->high_freq_band2_th = resolution <= INPUT_SIZE_360p_RANGE ? UNUSED_HIGH_FREQ_BAND_TH : 70;
         cycle_red_ctrls->high_freq_band2_level = 2;
+#if TUNE_LOWER_PRESETS
+        cycle_red_ctrls->high_freq_band3_th = UNUSED_HIGH_FREQ_BAND_TH;
+        cycle_red_ctrls->high_freq_band3_level = 0;
+#endif
 
         // Low frequency band THs/actions
         cycle_red_ctrls->enable_zero_coeff_action = 1;
@@ -2429,10 +2437,19 @@ void set_parent_sq_coeff_area_based_cycles_reduction_ctrls(ModeDecisionContext* 
         cycle_red_ctrls->enabled = 1;
 
         // High frequency band THs/actions
+#if TUNE_LOWER_PRESETS
+        cycle_red_ctrls->high_freq_band1_th = 90;
+        cycle_red_ctrls->high_freq_band1_level = resolution <= INPUT_SIZE_360p_RANGE ? 2 : 3;
+        cycle_red_ctrls->high_freq_band2_th = 70;
+        cycle_red_ctrls->high_freq_band2_level = resolution <= INPUT_SIZE_360p_RANGE ? 1 : 3;
+        cycle_red_ctrls->high_freq_band3_th = UNUSED_HIGH_FREQ_BAND_TH;
+        cycle_red_ctrls->high_freq_band3_level = 0;
+#else
         cycle_red_ctrls->high_freq_band1_th = resolution <= INPUT_SIZE_360p_RANGE ? UNUSED_HIGH_FREQ_BAND_TH : 90;
         cycle_red_ctrls->high_freq_band1_level = 3;
         cycle_red_ctrls->high_freq_band2_th = resolution <= INPUT_SIZE_360p_RANGE ? UNUSED_HIGH_FREQ_BAND_TH : 70;
         cycle_red_ctrls->high_freq_band2_level = 3;
+#endif
 
         // Low frequency band THs/actions
         cycle_red_ctrls->enable_zero_coeff_action = 1;
@@ -2445,6 +2462,53 @@ void set_parent_sq_coeff_area_based_cycles_reduction_ctrls(ModeDecisionContext* 
         cycle_red_ctrls->low_freq_band2_th = UNUSED_LOW_FREQ_BAND_TH;
         cycle_red_ctrls->low_freq_band2_level = 0;
         break;
+#if TUNE_LOWER_PRESETS
+    case 4:
+        cycle_red_ctrls->enabled = 1;
+
+        // High frequency band THs/actions
+        cycle_red_ctrls->high_freq_band1_th = 90;
+        cycle_red_ctrls->high_freq_band1_level = resolution <= INPUT_SIZE_360p_RANGE ? 2 : 3;
+        cycle_red_ctrls->high_freq_band2_th = 70;
+        cycle_red_ctrls->high_freq_band2_level = resolution <= INPUT_SIZE_360p_RANGE ? 1 : 3;
+        cycle_red_ctrls->high_freq_band3_th = UNUSED_HIGH_FREQ_BAND_TH;
+        cycle_red_ctrls->high_freq_band3_level = 0;
+
+        // Low frequency band THs/actions
+        cycle_red_ctrls->enable_zero_coeff_action = 1;
+        cycle_red_ctrls->zero_coeff_action = 3;
+        cycle_red_ctrls->enable_one_coeff_action = 1;
+        cycle_red_ctrls->one_coeff_action = 1;
+
+        cycle_red_ctrls->low_freq_band1_th = UNUSED_LOW_FREQ_BAND_TH;
+        cycle_red_ctrls->low_freq_band1_level = 0;
+        cycle_red_ctrls->low_freq_band2_th = UNUSED_LOW_FREQ_BAND_TH;
+        cycle_red_ctrls->low_freq_band2_level = 0;
+        break;
+
+    case 5:
+        cycle_red_ctrls->enabled = 1;
+
+        // High frequency band THs/actions
+        cycle_red_ctrls->high_freq_band1_th = 90;
+        cycle_red_ctrls->high_freq_band1_level = 0;
+        cycle_red_ctrls->high_freq_band2_th = 70;
+        cycle_red_ctrls->high_freq_band2_level = 3;
+        cycle_red_ctrls->high_freq_band3_th = 50;
+        cycle_red_ctrls->high_freq_band3_level = 2;
+
+        // Low frequency band THs/actions
+        cycle_red_ctrls->enable_zero_coeff_action = 1;
+        cycle_red_ctrls->zero_coeff_action = 0;
+        cycle_red_ctrls->enable_one_coeff_action = 1;
+        cycle_red_ctrls->one_coeff_action = 1;
+
+        cycle_red_ctrls->low_freq_band1_th = UNUSED_LOW_FREQ_BAND_TH;
+        cycle_red_ctrls->low_freq_band1_level = 0;
+        cycle_red_ctrls->low_freq_band2_th = UNUSED_LOW_FREQ_BAND_TH;
+        cycle_red_ctrls->low_freq_band2_level = 0;
+        break;
+#else
     case 4:
         cycle_red_ctrls->enabled = 1;
 
@@ -2465,6 +2529,7 @@ void set_parent_sq_coeff_area_based_cycles_reduction_ctrls(ModeDecisionContext* 
         cycle_red_ctrls->low_freq_band2_th = UNUSED_LOW_FREQ_BAND_TH;
         cycle_red_ctrls->low_freq_band2_level = 0;
         break;
+#endif
     default:
         assert(0);
         break;
@@ -2749,17 +2814,96 @@ void set_nic_pruning_controls(ModeDecisionContext *mdctxt, uint8_t nic_pruning_l
         break;
 
     case 3:
+#if TUNE_LOWER_PRESETS
+        nic_pruning_ctrls->mds1_class_th = 300;
+#else
         nic_pruning_ctrls->mds1_class_th = 200;
+#endif
         nic_pruning_ctrls->mds1_band_cnt = 2;
         nic_pruning_ctrls->mds1_scaling_factor = 1;
 
 
+#if TUNE_LOWER_PRESETS
+        nic_pruning_ctrls->mds2_class_th = 30;
+#else
         nic_pruning_ctrls->mds2_class_th = 25;
+#endif
         nic_pruning_ctrls->mds2_band_cnt = 3;
         nic_pruning_ctrls->mds2_scaling_factor = 1;
 
         nic_pruning_ctrls->mds3_class_th = 15;
+#if TUNE_LOWER_PRESETS
+        nic_pruning_ctrls->mds3_band_cnt = 12;
+#else
         nic_pruning_ctrls->mds3_band_cnt = 3;
+#endif
+        nic_pruning_ctrls->mds3_scaling_factor = 1;
+
+#if TUNE_LOWER_PRESETS
+        nic_pruning_ctrls->mds1_cand_base_th = 300;
+#else
+        nic_pruning_ctrls->mds1_cand_base_th = 200;
+#endif
+        nic_pruning_ctrls->mds1_cand_sq_offset_th = 0;
+        nic_pruning_ctrls->mds1_cand_intra_class_offset_th = 0;
+
+#if TUNE_LOWER_PRESETS
+        nic_pruning_ctrls->mds2_cand_base_th = 20;
+#else
+        nic_pruning_ctrls->mds2_cand_base_th = 15;
+#endif
+        nic_pruning_ctrls->mds2_cand_sq_offset_th = (uint64_t)~0;
+        nic_pruning_ctrls->mds2_cand_intra_class_offset_th = (uint64_t)~0;
+
+#if TUNE_LOWER_PRESETS
+        nic_pruning_ctrls->mds3_cand_base_th = 20;
+#else
+        nic_pruning_ctrls->mds3_cand_base_th = 15;
+#endif
+        nic_pruning_ctrls->mds3_cand_sq_offset_th = (uint64_t)~0;
+        nic_pruning_ctrls->mds3_cand_intra_class_offset_th = (uint64_t)~0;
+
+        break;
+
+#if TUNE_LOWER_PRESETS
+    case 4:
+        nic_pruning_ctrls->mds1_class_th = 300;
+        nic_pruning_ctrls->mds1_band_cnt = 6;
+        nic_pruning_ctrls->mds1_scaling_factor = 1;
+
+        nic_pruning_ctrls->mds2_class_th = 25;
+        nic_pruning_ctrls->mds2_band_cnt = 10;
+        nic_pruning_ctrls->mds2_scaling_factor = 1;
+
+        nic_pruning_ctrls->mds3_class_th = 15;
+        nic_pruning_ctrls->mds3_band_cnt = 16;
+        nic_pruning_ctrls->mds3_scaling_factor = 1;
+
+        nic_pruning_ctrls->mds1_cand_base_th = 300;
+        nic_pruning_ctrls->mds1_cand_sq_offset_th = 0;
+        nic_pruning_ctrls->mds1_cand_intra_class_offset_th = 0;
+
+        nic_pruning_ctrls->mds2_cand_base_th = 20;
+        nic_pruning_ctrls->mds2_cand_sq_offset_th = (uint64_t)~0;
+        nic_pruning_ctrls->mds2_cand_intra_class_offset_th = (uint64_t)~0;
+
+        nic_pruning_ctrls->mds3_cand_base_th = 15;
+        nic_pruning_ctrls->mds3_cand_sq_offset_th = (uint64_t)~0;
+        nic_pruning_ctrls->mds3_cand_intra_class_offset_th = (uint64_t)~0;
+
+        break;
+
+    case 5:
+        nic_pruning_ctrls->mds1_class_th = 200;
+        nic_pruning_ctrls->mds1_band_cnt = 16;
+        nic_pruning_ctrls->mds1_scaling_factor = 1;
+
+        nic_pruning_ctrls->mds2_class_th = 25;
+        nic_pruning_ctrls->mds2_band_cnt = 10;
+        nic_pruning_ctrls->mds2_scaling_factor = 1;
+
+        nic_pruning_ctrls->mds3_class_th = 15;
+        nic_pruning_ctrls->mds3_band_cnt = 16;
         nic_pruning_ctrls->mds3_scaling_factor = 1;
 
         nic_pruning_ctrls->mds1_cand_base_th = 200;
@@ -2776,7 +2920,10 @@ void set_nic_pruning_controls(ModeDecisionContext *mdctxt, uint8_t nic_pruning_l
 
         break;
 
+    case 6:
+#else
     case 4:
+#endif
 
         nic_pruning_ctrls->mds1_class_th = 100;
         nic_pruning_ctrls->mds1_band_cnt = 2;
@@ -2804,7 +2951,11 @@ void set_nic_pruning_controls(ModeDecisionContext *mdctxt, uint8_t nic_pruning_l
 
         break;
 
+#if TUNE_LOWER_PRESETS
+    case 7:
+#else
     case 5:
+#endif
 
         nic_pruning_ctrls->mds1_class_th = 100;
         nic_pruning_ctrls->mds1_band_cnt = 2;
@@ -2836,7 +2987,16 @@ void set_nic_pruning_controls(ModeDecisionContext *mdctxt, uint8_t nic_pruning_l
         assert(0);
         break;
     }
-
+#if TUNE_LOWER_PRESETS
+    nic_pruning_ctrls->mds1_cand_sq_offset_th = 0;
+    nic_pruning_ctrls->mds2_cand_sq_offset_th = 0;
+    nic_pruning_ctrls->mds3_cand_sq_offset_th = 0;
+#endif
+#if TUNE_LOWER_PRESETS
+    nic_pruning_ctrls->mds1_cand_intra_class_offset_th = 0;
+    nic_pruning_ctrls->mds2_cand_intra_class_offset_th = 0;
+    nic_pruning_ctrls->mds3_cand_intra_class_offset_th = 0;
+#endif
 }
 #endif
 void set_inter_intra_ctrls(ModeDecisionContext* mdctxt, uint8_t inter_intra_level) {
@@ -2902,7 +3062,11 @@ EbErrorType signal_derivation_enc_dec_kernel_common(
     // Set block_based_depth_refinement_level
     uint8_t block_based_depth_refinement_level;
 
+#if TUNE_LOWER_PRESETS
+    if (enc_mode <= ENC_M4)
+#else
     if (enc_mode <= ENC_M5)
+#endif
         block_based_depth_refinement_level = 0;
     else if (enc_mode <= ENC_M6)
         block_based_depth_refinement_level = 2;
@@ -2975,7 +3139,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     else if (pd_pass == PD_PASS_1)
         txt_level = 0;
     else
+#if TUNE_LOWER_PRESETS
+        if (enc_mode <= ENC_M5)
+#else
         if (enc_mode <= ENC_M4)
+#endif
             txt_level = 1;
         else
             txt_level = 5;
@@ -3028,7 +3196,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         context_ptr->chroma_at_last_md_stage_intra_th = (uint64_t)~0;
         context_ptr->chroma_at_last_md_stage_cfl_th = (uint64_t)~0;
     }
+#if TUNE_LOWER_PRESETS
+    else if (enc_mode <= ENC_M1) {
+#else
     else if (enc_mode <= ENC_M2) {
+#endif
         context_ptr->chroma_at_last_md_stage = (context_ptr->chroma_level == CHROMA_MODE_0) ? 1 : 0;
         context_ptr->chroma_at_last_md_stage_intra_th = 130;
         context_ptr->chroma_at_last_md_stage_cfl_th = 130;
@@ -3062,7 +3234,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
      }
 
      if (pd_pass == PD_PASS_0)
+#if TUNE_LOWER_PRESETS
+         context_ptr->md_disallow_nsq = enc_mode <= ENC_M0 ? pcs_ptr->parent_pcs_ptr->disallow_nsq : 1;
+#else
          context_ptr->md_disallow_nsq = enc_mode <= ENC_MR ? pcs_ptr->parent_pcs_ptr->disallow_nsq : 1;
+#endif
      else if (pd_pass == PD_PASS_1)
          context_ptr->md_disallow_nsq = enc_mode <= ENC_MR ? pcs_ptr->parent_pcs_ptr->disallow_nsq : 1;
      else
@@ -3173,10 +3349,16 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
                 context_ptr->inter_compound_mode = 1;
             else if (enc_mode <= ENC_M0)
                 context_ptr->inter_compound_mode = 3;
+#if TUNE_LOWER_PRESETS
+            else if (enc_mode <= ENC_M2)
+#else
             else if (enc_mode <= ENC_M3)
+#endif
                 context_ptr->inter_compound_mode = 4;
+#if !TUNE_LOWER_PRESETS
             else if (enc_mode <= ENC_M4)
                 context_ptr->inter_compound_mode = 6;
+#endif
             else
                 context_ptr->inter_compound_mode = 0;
         }
@@ -3194,7 +3376,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         context_ptr->md_staging_mode = MD_STAGING_MODE_1;
     }
     else
+#if TUNE_LOWER_PRESETS
+        if (enc_mode <= ENC_M5)
+#else
         if (enc_mode <= ENC_M3)
+#endif
             context_ptr->md_staging_mode = MD_STAGING_MODE_2;
         else
             context_ptr->md_staging_mode = MD_STAGING_MODE_1;
@@ -3367,9 +3553,15 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     else if (enc_mode <= ENC_M1)
         parent_sq_coeff_area_based_cycles_reduction_level = 2;
     else if (enc_mode <= ENC_M2)
+#if TUNE_LOWER_PRESETS
+        parent_sq_coeff_area_based_cycles_reduction_level = 3;
+    else
+        parent_sq_coeff_area_based_cycles_reduction_level = pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? 4 : 5;
+#else
         parent_sq_coeff_area_based_cycles_reduction_level = pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? 3 : 4;
     else
         parent_sq_coeff_area_based_cycles_reduction_level = 4;
+#endif
 
     set_parent_sq_coeff_area_based_cycles_reduction_ctrls(context_ptr, pcs_ptr->parent_pcs_ptr->input_resolution, parent_sq_coeff_area_based_cycles_reduction_level);
 #else
@@ -3411,7 +3603,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #else
                         context_ptr->sq_weight = 105;
 #endif
+#if TUNE_LOWER_PRESETS
+                    else if (enc_mode <= ENC_M1)
+#else
                     else if (enc_mode <= ENC_M2)
+#endif
                         context_ptr->sq_weight = 95;
                     else
                         context_ptr->sq_weight = 90;
@@ -3522,12 +3718,19 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             nic_scaling_level = 0;
         else if (enc_mode <= ENC_M0)
             nic_scaling_level = 1;
+#if TUNE_LOWER_PRESETS
+        else if (enc_mode <= ENC_M2)
+            nic_scaling_level = 2;
+        else if (enc_mode <= ENC_M5)
+            nic_scaling_level = 6;
+#else
         else if (enc_mode <= ENC_M1)
             nic_scaling_level = 4;
         else if (enc_mode <= ENC_M2)
             nic_scaling_level = 5;
         else if (enc_mode <= ENC_M3)
             nic_scaling_level = 7;
+#endif
 #if FTR_NIC_PRUNING
         else if (enc_mode <= ENC_M7)
 #else
@@ -3549,14 +3752,35 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             nic_pruning_level = 0;
         else if (enc_mode <= ENC_MR)
             nic_pruning_level = 1;
+#if TUNE_LOWER_PRESETS
+        else if (enc_mode <= ENC_M0)
+#else
         else if (enc_mode <= ENC_M1)
+#endif
             nic_pruning_level = 2;
+#if TUNE_LOWER_PRESETS
+        else if (enc_mode <= ENC_M1)
+            nic_pruning_level = 3;
+        else if (enc_mode <= ENC_M2)
+            nic_pruning_level = 4;
+        else if (enc_mode <= ENC_M5)
+            nic_pruning_level = 5;
+#else
         else if (enc_mode <= ENC_M5)
             nic_pruning_level = 3;
+#endif
         else if (enc_mode <= ENC_M6)
+#if TUNE_LOWER_PRESETS
+            nic_pruning_level = 6;
+#else
             nic_pruning_level = 4;
+#endif
         else
+#if TUNE_LOWER_PRESETS
+            nic_pruning_level = 7;
+#else
             nic_pruning_level = 5;
+#endif
     set_nic_pruning_controls(context_ptr, nic_pruning_level);
 #endif
 #if !CLN_NSQ_AND_STATS
@@ -3708,7 +3932,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     else if (pd_pass == PD_PASS_1)
         context_ptr->md_pme_level = 3;
     else
+#if TUNE_LOWER_PRESETS
+        if (enc_mode <= ENC_M1)
+#else
         if (enc_mode <= ENC_M2)
+#endif
             context_ptr->md_pme_level = 1;
         else if (enc_mode <= ENC_M6)
             context_ptr->md_pme_level = 2;
@@ -3813,7 +4041,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     if (pcs_ptr->slice_type == I_SLICE)
         context_ptr->skip_intra = 0;
     else if (pd_pass == PD_PASS_0)
+#if TUNE_LOWER_PRESETS
+        if (enc_mode <= ENC_M2)
+#else
         if (enc_mode <= ENC_M3)
+#endif
             context_ptr->skip_intra = 0;
         else
             context_ptr->skip_intra = 1;

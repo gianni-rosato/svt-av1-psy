@@ -1806,7 +1806,11 @@ EbErrorType prediction_structure_group_ctor(PredictionStructureGroup *pred_struc
     uint32_t number_of_references;
 
     pred_struct_group_ptr->dctor = prediction_structure_group_dctor;
-    uint8_t ref_count_used       = enc_mode <= ENC_M4 ? MAX_REF_IDX : enc_mode <= ENC_M5 ? 2 : 1;
+#if TUNE_LOWER_PRESETS
+    uint8_t ref_count_used = enc_mode <= ENC_M5 ? MAX_REF_IDX : 1;
+#else
+    uint8_t ref_count_used = enc_mode <= ENC_M4 ? MAX_REF_IDX : enc_mode <= ENC_M5 ? 2 : 1;
+#endif
 
     PredictionStructureConfigArray *config_array;
     EB_NEW(config_array, prediction_structure_config_array_ctor);

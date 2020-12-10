@@ -274,6 +274,10 @@ typedef struct ParentSqCoeffAreaBasedCyclesReductionCtrls {
     uint8_t high_freq_band1_level;      // level of action to use if luma coeff-area of parent SQ is >= high_freq_band1_th
     uint8_t high_freq_band2_th;         // cutoff for the second high coeff-area band [0-100]; should be less than high_freq_band1_th
     uint8_t high_freq_band2_level;      // level of action to use if luma coeff-area of parent SQ is >= high_freq_band2_th
+#if TUNE_LOWER_PRESETS
+    uint8_t high_freq_band3_th;         // cutoff for the third high coeff-area band [0-100]; should be less than high_freq_band2_th
+    uint8_t high_freq_band3_level;      // level of action to use if luma coeff-area of parent SQ is >= high_freq_band3_th
+#endif
 
     uint8_t enable_zero_coeff_action;   // enable for whether to apply action when parent SQ has 0 luma coefficients
     uint8_t zero_coeff_action;          // level of action to use if parent SQ has 0 luma coeffs

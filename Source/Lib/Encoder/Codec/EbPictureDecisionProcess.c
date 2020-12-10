@@ -818,7 +818,11 @@ EbErrorType signal_derivation_multi_processes_oq(
     pcs_ptr->tf_enable_hme_flag = 1;
     pcs_ptr->tf_enable_hme_level0_flag = 1;
     // Can enable everywhere b/c TF is off for SC anyway; remove fake diff
+#if TUNE_LOWER_PRESETS
+    if (pcs_ptr->enc_mode <= ENC_M5) {
+#else
     if (pcs_ptr->enc_mode <= ENC_M4) {
+#endif
         pcs_ptr->tf_enable_hme_level1_flag = 1;
         pcs_ptr->tf_enable_hme_level2_flag = 1;
     }
@@ -945,7 +949,11 @@ EbErrorType signal_derivation_multi_processes_oq(
     // 4                                            CDEF_FAST_SEARCH_LVL3
     if (scs_ptr->seq_header.cdef_level && frm_hdr->allow_intrabc == 0) {
         if (scs_ptr->static_config.cdef_level == DEFAULT) {
+#if TUNE_LOWER_PRESETS
+            if (pcs_ptr->enc_mode <= ENC_M4)
+#else
             if (pcs_ptr->enc_mode <= ENC_M3)
+#endif
                     pcs_ptr->cdef_level = 1;
                 else
                     pcs_ptr->cdef_level = 4;
@@ -965,7 +973,11 @@ EbErrorType signal_derivation_multi_processes_oq(
 
     Av1Common* cm = pcs_ptr->av1_cm;
     if (scs_ptr->static_config.sg_filter_mode == DEFAULT) {
+#if TUNE_LOWER_PRESETS
+        if (pcs_ptr->enc_mode <= ENC_M4)
+#else
         if (pcs_ptr->enc_mode <= ENC_M3)
+#endif
             cm->sg_filter_mode = 4;
         else
             cm->sg_filter_mode = pcs_ptr->slice_type == I_SLICE ? 4 : 1;
@@ -999,7 +1011,11 @@ EbErrorType signal_derivation_multi_processes_oq(
     if (pcs_ptr->slice_type == I_SLICE)
         pcs_ptr->intra_pred_mode = 0;
     else {
+#if TUNE_LOWER_PRESETS
+        if (pcs_ptr->enc_mode <= ENC_M1)
+#else
         if (pcs_ptr->enc_mode <= ENC_M2)
+#endif
             pcs_ptr->intra_pred_mode = 0;
 #if TUNE_M8_TO_MATCH_M7
 #if TUNE_INTRA_WM_MV_TXT_M9
@@ -1020,7 +1036,11 @@ EbErrorType signal_derivation_multi_processes_oq(
         // Set tx size search mode      Settings
         // 0                 OFF: no transform partitioning
         // 1                 ON for INTRA blocks
-        if (pcs_ptr->enc_mode <= ENC_M4)
+#if TUNE_LOWER_PRESETS
+    if (pcs_ptr->enc_mode <= ENC_M2)
+#else
+    if (pcs_ptr->enc_mode <= ENC_M4)
+#endif
         pcs_ptr->tx_size_search_mode = 1;
     else if (pcs_ptr->enc_mode <= ENC_M9)
         pcs_ptr->tx_size_search_mode = (pcs_ptr->slice_type == I_SLICE) ? 1 : 0;
@@ -5652,7 +5672,11 @@ void* picture_decision_kernel(void *input_ptr)
                                 pcs_ptr->ref_list1_count = (picture_type == I_SLICE || pcs_ptr->is_overlay) ? 0 : (uint8_t)pred_position_ptr->ref_list1.reference_list_count;
 
                                 //set the number of references to try in ME/MD.Note: PicMgr will still use the original values to sync the references.
-                                    if (pcs_ptr->enc_mode <= ENC_M4) {
+#if TUNE_LOWER_PRESETS
+                                if (pcs_ptr->enc_mode <= ENC_M5) {
+#else
+                                if (pcs_ptr->enc_mode <= ENC_M4) {
+#endif
                                         pcs_ptr->ref_list0_count_try = MIN(pcs_ptr->ref_list0_count, 4);
                                         pcs_ptr->ref_list1_count_try = MIN(pcs_ptr->ref_list1_count, 3);
                                     }

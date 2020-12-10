@@ -489,7 +489,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     EbErrorType return_error = EB_ErrorNone;
 
     uint8_t update_cdf_level = 0;
+#if TUNE_LOWER_PRESETS
+    if (pcs_ptr->enc_mode <= ENC_M4)
+#else
     if (pcs_ptr->enc_mode <= ENC_M3)
+#endif
         update_cdf_level = 1;
     else if (pcs_ptr->enc_mode <= ENC_M5)
         update_cdf_level = 2;
@@ -522,7 +526,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         ? 1
         : 0;
     EbBool enable_wm;
+#if TUNE_LOWER_PRESETS
+    if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M4) {
+#else
     if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M3) {
+#endif
         enable_wm = EB_TRUE;
     } else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M9) {
         enable_wm = (pcs_ptr->parent_pcs_ptr->temporal_layer_index == 0) ? EB_TRUE : EB_FALSE;
@@ -551,12 +559,22 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     //         2        | Faster level subject to possible constraints      | Level 2 everywhere in PD_PASS_2
     //         3        | Even faster level subject to possible constraints | Level 3 everywhere in PD_PASS_3
     if (scs_ptr->static_config.obmc_level == DEFAULT) {
+#if TUNE_LOWER_PRESETS
+        if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M2)
+#else
         if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M1)
+#endif
             pcs_ptr->parent_pcs_ptr->pic_obmc_level = 1;
+#if TUNE_LOWER_PRESETS
+        else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M5)
+#else
         else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M4)
+#endif
             pcs_ptr->parent_pcs_ptr->pic_obmc_level = 2;
+#if !TUNE_LOWER_PRESETS
         else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M5)
             pcs_ptr->parent_pcs_ptr->pic_obmc_level = 3;
+#endif
         else
             pcs_ptr->parent_pcs_ptr->pic_obmc_level = 0;
     } else
@@ -566,7 +584,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     frm_hdr->is_motion_mode_switchable = frm_hdr->is_motion_mode_switchable ||
         pcs_ptr->parent_pcs_ptr->pic_obmc_level;
     if (scs_ptr->static_config.enable_hbd_mode_decision == DEFAULT)
+#if TUNE_HBD_MODE_DECISION
+        if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M1)
+#else
         if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M0)
+#endif
             pcs_ptr->hbd_mode_decision = 1;
         else
             pcs_ptr->hbd_mode_decision = 2;

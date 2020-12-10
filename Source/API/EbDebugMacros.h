@@ -77,6 +77,8 @@ extern "C" {
 #define TUNE_M8_MAX_ME                     1 // Decrease the max ME area for M8
 #define FTR_PF_PD0_DETECTOR                1 // Turn on PF in PD0 using a variance-based detector
 #define FTR_ME_HME_PROTECT_CLOSEST_REF     1 // Protect the closest reference frames from ME/HME SAD-based pruning
+#define TUNE_LOWER_PRESETS                 1 // Tune the lower presets M0, M1, M2, M3, and M4
+#define TUNE_HBD_MODE_DECISION             1 // Push M0 level of HBD Mode Decision to M1
     // ============= END SVT_04 =============
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch

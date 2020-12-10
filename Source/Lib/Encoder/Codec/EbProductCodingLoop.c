@@ -7149,7 +7149,11 @@ void interintra_class_pruning_1(ModeDecisionContext *context_ptr, uint64_t best_
                         }
                         else if (context_ptr->nic_pruning_ctrls.mds1_band_cnt >= 3 && context_ptr->md_stage_1_count[cand_class_it] > 1) {
                             uint8_t band_idx = (uint8_t)(dev * (context_ptr->nic_pruning_ctrls.mds1_band_cnt - 1) / context_ptr->nic_pruning_ctrls.mds1_class_th);
+#if TUNE_LOWER_PRESETS
+                            context_ptr->md_stage_1_count[cand_class_it] = DIVIDE_AND_ROUND(context_ptr->md_stage_1_count[cand_class_it], context_ptr->nic_pruning_ctrls.mds1_scaling_factor * (band_idx + 1));
+#else
                             context_ptr->md_stage_1_count[cand_class_it] = MAX(1, DIVIDE_AND_ROUND(context_ptr->md_stage_1_count[cand_class_it], context_ptr->nic_pruning_ctrls.mds1_scaling_factor * (band_idx + 1)));
+#endif
                         }
                     }
                 }
@@ -7305,7 +7309,11 @@ void interintra_class_pruning_2(PictureControlSet *pcs_ptr, ModeDecisionContext 
                         }
                         else if (context_ptr->nic_pruning_ctrls.mds2_band_cnt >= 3 && context_ptr->md_stage_2_count[cand_class_it] > 1) {
                             uint8_t band_idx = (uint8_t)(dev * (context_ptr->nic_pruning_ctrls.mds2_band_cnt - 1) / context_ptr->nic_pruning_ctrls.mds2_class_th);
-                            context_ptr->md_stage_2_count[cand_class_it] = MAX(1, DIVIDE_AND_ROUND(context_ptr->md_stage_2_count[cand_class_it], context_ptr->nic_pruning_ctrls.mds2_scaling_factor *(band_idx + 1)));
+#if TUNE_LOWER_PRESETS
+                            context_ptr->md_stage_2_count[cand_class_it] = DIVIDE_AND_ROUND(context_ptr->md_stage_2_count[cand_class_it], context_ptr->nic_pruning_ctrls.mds2_scaling_factor * (band_idx + 1));
+#else
+                            context_ptr->md_stage_2_count[cand_class_it] = MAX(1, DIVIDE_AND_ROUND(context_ptr->md_stage_2_count[cand_class_it], context_ptr->nic_pruning_ctrls.mds2_scaling_factor * (band_idx + 1)));
+#endif
                         }
                     }
                 }
@@ -7382,7 +7390,11 @@ void interintra_class_pruning_3(ModeDecisionContext *context_ptr, uint64_t best_
                         }
                         else if (context_ptr->nic_pruning_ctrls.mds3_band_cnt >= 3 && context_ptr->md_stage_3_count[cand_class_it] > 1) {
                             uint8_t band_idx = (uint8_t)(dev * (context_ptr->nic_pruning_ctrls.mds3_band_cnt - 1) / context_ptr->nic_pruning_ctrls.mds3_class_th);
-                            context_ptr->md_stage_3_count[cand_class_it] = MAX(1, DIVIDE_AND_ROUND(context_ptr->md_stage_3_count[cand_class_it], context_ptr->nic_pruning_ctrls.mds3_scaling_factor *(band_idx + 1)));
+#if TUNE_LOWER_PRESETS
+                            context_ptr->md_stage_3_count[cand_class_it] = DIVIDE_AND_ROUND(context_ptr->md_stage_3_count[cand_class_it], context_ptr->nic_pruning_ctrls.mds3_scaling_factor * (band_idx + 1));
+#else
+                            context_ptr->md_stage_3_count[cand_class_it] = MAX(1, DIVIDE_AND_ROUND(context_ptr->md_stage_3_count[cand_class_it], context_ptr->nic_pruning_ctrls.mds3_scaling_factor * (band_idx + 1)));
+#endif
                         }
                     }
                 }
@@ -8411,6 +8423,10 @@ uint8_t update_md_settings_based_on_sq_coeff_area(ModeDecisionContext *ctx) {
                     skip_nsq = update_md_settings(ctx, cycles_red_ctrls->high_freq_band1_level);
                 else if (count_non_zero_coeffs >= ((total_samples * cycles_red_ctrls->high_freq_band2_th) / 100))
                     skip_nsq = update_md_settings(ctx, cycles_red_ctrls->high_freq_band2_level);
+#if TUNE_LOWER_PRESETS
+                else if (count_non_zero_coeffs >= ((total_samples * cycles_red_ctrls->high_freq_band3_th) / 100))
+                    skip_nsq = update_md_settings(ctx, cycles_red_ctrls->high_freq_band3_level);
+#endif
                 // Low frequency band actions
                 else if (cycles_red_ctrls->enable_zero_coeff_action && count_non_zero_coeffs == 0) {
                     skip_nsq = update_md_settings(ctx, cycles_red_ctrls->zero_coeff_action);
