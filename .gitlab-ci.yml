@@ -143,6 +143,13 @@ valgrind:
     # --error-limit=no --leak-check=full --show-leak-kinds=all makes the log very huge and takes around 16 minutes
     - valgrind --error-exitcode=1 --track-origins=yes --suppressions=/usr/lib/valgrind/debian.supp -- ./valgrind/SvtAv1EncApp --preset 6 -i akiyo_cif.y4m -n 10 -b test1.ivf
 
+valgrind pass 1:
+  extends: .tests
+  image: registry.gitlab.com/aomediacodec/aom-testing/ubuntu1804
+  allow_failure: true
+  script:
+    - valgrind --error-exitcode=1 --track-origins=yes --suppressions=/usr/lib/valgrind/debian.supp -- ./valgrind/SvtAv1EncApp --preset 6 --pass 1 -i akiyo_cif.y4m -n 10 -b test1.ivf
+
 .sanitizer compile:
   extends: .linux-compiler-base
   variables:
