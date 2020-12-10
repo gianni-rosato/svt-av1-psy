@@ -1870,8 +1870,12 @@ uint64_t av1_inter_fast_cost(
         // inter intra mode rate
         if (pcs_ptr->parent_pcs_ptr->frm_hdr.reference_mode != COMPOUND_REFERENCE &&
             pcs_ptr->parent_pcs_ptr->scs_ptr->seq_header.enable_interintra_compound &&
+#if CLN_MD_CANDS
+            svt_is_interintra_allowed(enable_inter_intra, blk_geom->bsize, candidate_ptr->pred_mode, rf)) {
+#else
             svt_is_interintra_allowed(
                 enable_inter_intra, blk_geom->bsize, candidate_ptr->inter_mode, rf)) {
+#endif
             const int interintra  = candidate_ptr->is_interintra_used;
             const int bsize_group = size_group_lookup[blk_geom->bsize];
 

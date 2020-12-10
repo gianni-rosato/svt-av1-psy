@@ -1510,8 +1510,11 @@ MotionMode motion_mode_allowed(const PictureControlSet *pcs_ptr, const BlkStruct
 static void write_motion_mode(FRAME_CONTEXT *frame_context, AomWriter *ec_writer, BlockSize bsize,
                               MotionMode motion_mode, MvReferenceFrame rf0, MvReferenceFrame rf1,
                               BlkStruct *blk_ptr, PictureControlSet *pcs_ptr) {
+#if CLN_MD_CANDS
+    const PredictionMode mode = blk_ptr->pred_mode;
+#else
     const PredictionMode mode = blk_ptr->prediction_unit_array[0].inter_mode;
-
+#endif
     MotionMode last_motion_mode_allowed = motion_mode_allowed(
         pcs_ptr, blk_ptr, bsize, rf0, rf1, mode);
 
@@ -5825,8 +5828,12 @@ EbErrorType write_modes_b(PictureControlSet *pcs_ptr, EntropyCodingContext *cont
                 MvReferenceFrame rf[2];
                 av1_set_ref_frame(rf, blk_ptr->prediction_unit_array[0].ref_frame_type);
                 int16_t        mode_ctx = av1_mode_context_analyzer(blk_ptr->inter_mode_ctx, rf);
+#if CLN_MD_CANDS
+                PredictionMode inter_mode = (PredictionMode)blk_ptr->pred_mode;
+#else
                 PredictionMode inter_mode =
                     (PredictionMode)blk_ptr->prediction_unit_array[0].inter_mode;
+#endif
                 const int32_t is_compound =
                     (blk_ptr->prediction_unit_array[0].inter_pred_direction_index == BI_PRED);
 

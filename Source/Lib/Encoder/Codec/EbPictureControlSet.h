@@ -415,7 +415,9 @@ typedef struct PictureControlSet {
 #if !CLN_REMOVE_UNUSED_CODE
     uint32_t part_cnt[NUMBER_OF_SHAPES - 1][FB_NUM][SSEG_NUM];
 #endif
+#if !CLN_NSQ_AND_STATS
     uint32_t pred_depth_count[DEPTH_DELTA_NUM][NUMBER_OF_SHAPES - 1];
+#endif
     uint32_t txt_cnt[TXT_DEPTH_DELTA_NUM][TX_TYPES];
 } PictureControlSet;
 

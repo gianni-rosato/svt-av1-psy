@@ -40,6 +40,13 @@ struct ModeDecisionContext;
     * Mode Decision Candidate
     **************************************/
 typedef struct ModeDecisionCandidate {
+#if CLN_MD_CANDS
+    uint8_t intra_luma_mode;   // HEVC mode, use pred_mode for AV1
+    int16_t motion_vector_xl0;
+    int16_t motion_vector_yl0;
+    int16_t motion_vector_xl1;
+    int16_t motion_vector_yl1;
+#else
     // *Warning - this struct has been organized to be cache efficient when being
     //    constructured in the function GenerateAmvpMergeInterIntraMdCandidatesCU.
     //    Changing the ordering could affect performance
@@ -71,7 +78,7 @@ typedef struct ModeDecisionCandidate {
         };
         uint64_t mvs;
     };
-
+#endif
     uint8_t      skip_flag;
     EbBool       merge_flag;
     uint16_t     count_non_zero_coeffs;
@@ -87,7 +94,9 @@ typedef struct ModeDecisionCandidate {
     uint32_t                 luma_fast_distortion;
     uint64_t                 full_distortion;
     EbPtr                    prediction_context_ptr;
+#if !CLN_MD_CANDS
     PictureControlSet *      pcs_ptr;
+#endif
     EbPredDirection          prediction_direction
         [MAX_NUM_OF_PU_PER_CU]; // 2 bits // Hsan: does not seem to be used why not removed ?
 
@@ -95,11 +104,17 @@ typedef struct ModeDecisionCandidate {
         [MAX_NUM_OF_REF_PIC_LIST]; // 16 bits // Hsan: does not seem to be used why not removed ?
     int16_t motion_vector_pred_y
         [MAX_NUM_OF_REF_PIC_LIST]; // 16 bits // Hsan: does not seem to be used why not removed ?
+#if !CLN_MD_CANDS
     uint8_t  motion_vector_pred_idx[MAX_NUM_OF_REF_PIC_LIST]; // 2 bits
+#endif
     uint8_t  block_has_coeff; // ?? bit - determine empirically
     uint8_t  u_has_coeff; // ?? bit
     uint8_t  v_has_coeff; // ?? bit
+#if CLN_MD_CANDS
+    uint16_t y_has_coeff; // Issue, should be less than 32
+#else
     uint32_t y_has_coeff; // Issue, should be less than 32
+#endif
 
     PredictionMode pred_mode; // AV1 mode, no need to convert
     uint8_t        drl_index;
@@ -117,21 +132,27 @@ typedef struct ModeDecisionCandidate {
     int32_t cfl_alpha_signs;
 
     // Inter Mode
+#if !CLN_MD_CANDS
     PredictionMode         inter_mode;
+#endif
     EbBool                 is_compound;
     uint8_t                ref_frame_type;
+#if !CLN_MD_CANDS
     uint8_t                ref_mv_index;
     int8_t                 ref_frame_index_l0;
     int8_t                 ref_frame_index_l1;
     EbBool                 is_new_mv;
+#endif
     TxType                 transform_type[MAX_TXB_COUNT];
     TxType                 transform_type_uv;
     MacroblockPlane        candidate_plane[MAX_MB_PLANE];
     uint16_t               eob[MAX_MB_PLANE][MAX_TXB_COUNT];
     int32_t                quantized_dc[3][MAX_TXB_COUNT];
     uint32_t               interp_filters;
+#if !CLN_MD_CANDS
     uint8_t                txb_width;
     uint8_t                txb_height;
+#endif
     MotionMode             motion_mode;
     uint16_t               num_proj_ref;
     EbBool                 local_warp_valid;

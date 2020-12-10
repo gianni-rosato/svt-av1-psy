@@ -6056,10 +6056,16 @@ void calc_pred_masked_compound(PictureControlSet *    pcs_ptr,
         MvUnit mv_unit;
         mv_unit.mv[0] = mv_0;
         mv_unit.mv[1] = mv_1;
+#if !CLN_MD_CANDS
         int8_t           ref_idx_l0 = candidate_ptr->ref_frame_index_l0;
         int8_t           ref_idx_l1 = candidate_ptr->ref_frame_index_l1;
+#endif
         MvReferenceFrame rf[2];
         av1_set_ref_frame(rf, candidate_ptr->ref_frame_type);
+#if CLN_MD_CANDS
+        int8_t ref_idx_l0 = get_ref_frame_idx(rf[0]);
+        int8_t ref_idx_l1 = rf[1] == NONE_FRAME ? get_ref_frame_idx(rf[0]) : get_ref_frame_idx(rf[1]);
+#endif
         uint8_t list_idx0, list_idx1;
         list_idx0 = get_list_idx(rf[0]);
         if (rf[1] == NONE_FRAME)
@@ -6300,12 +6306,16 @@ EbErrorType inter_pu_prediction_av1(uint8_t hbd_mode_decision, ModeDecisionConte
 
         return return_error;
     }
-
+#if !CLN_MD_CANDS
     int8_t           ref_idx_l0 = candidate_buffer_ptr->candidate_ptr->ref_frame_index_l0;
     int8_t           ref_idx_l1 = candidate_buffer_ptr->candidate_ptr->ref_frame_index_l1;
+#endif
     MvReferenceFrame rf[2];
     av1_set_ref_frame(rf, candidate_buffer_ptr->candidate_ptr->ref_frame_type);
-
+#if CLN_MD_CANDS
+    int8_t ref_idx_l0 = get_ref_frame_idx(rf[0]);
+    int8_t ref_idx_l1 = rf[1] == NONE_FRAME ? get_ref_frame_idx(rf[0]) : get_ref_frame_idx(rf[1]);
+#endif
     uint8_t list_idx0, list_idx1;
     list_idx0 = get_list_idx(rf[0]);
     if (rf[1] == NONE_FRAME)

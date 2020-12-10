@@ -68,6 +68,15 @@ extern "C" {
 #define FTR_TXT_SKIP_RATE_EST              1 // Do not perform rate estimation @ tx_type search if current tx_type dist is higher than best_cost
 
 #define TUNE_PRESETS_CLEANUP               1 // Preset tuning for MRS, MR, M0 and M1
+
+#define CLN_MD_CANDS                       1 // Cleanup MD candidate struct and candidate generation functions
+#define CLN_NSQ_AND_STATS                  1 // Clean-up code for NSQ block processing and remove stats code
+#define CLN_REMOVE_TX_BUFFS                1 // Remove unused TX buffers
+#define RFCTR_INTRA_TX_INIT_FUNC           1 // refactor av1_get_tx_type()
+#define CLN_REMOVE_ME_SSD_CALCS            1 // remove unused SSD calculation from ME
+#define TUNE_M8_MAX_ME                     1 // Decrease the max ME area for M8
+#define FTR_PF_PD0_DETECTOR                1 // Turn on PF in PD0 using a variance-based detector
+#define FTR_ME_HME_PROTECT_CLOSEST_REF     1 // Protect the closest reference frames from ME/HME SAD-based pruning
     // ============= END SVT_04 =============
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch

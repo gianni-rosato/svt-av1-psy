@@ -351,9 +351,11 @@ void mode_decision_configuration_init_qp_update(PictureControlSet *pcs_ptr) {
 #if !CLN_REMOVE_UNUSED_CODE
     memset(pcs_ptr->part_cnt, 0, sizeof(uint32_t) * (NUMBER_OF_SHAPES - 1) * FB_NUM * SSEG_NUM);
 #endif
+#if !CLN_NSQ_AND_STATS
     // Init pred_depth selection
     memset(
         pcs_ptr->pred_depth_count, 0, sizeof(uint32_t) * DEPTH_DELTA_NUM * (NUMBER_OF_SHAPES - 1));
+#endif
     // Init tx_type selection
     memset(pcs_ptr->txt_cnt, 0, sizeof(uint32_t) * TXT_DEPTH_DELTA_NUM * TX_TYPES);
     // Compute Tc, and Beta offsets for a given picture
@@ -870,10 +872,12 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
 #if !CLN_REMOVE_UNUSED_CODE
         memset(pcs_ptr->part_cnt, 0, sizeof(uint32_t) * (NUMBER_OF_SHAPES - 1) * FB_NUM * SSEG_NUM);
 #endif
+#if !CLN_NSQ_AND_STATS
         // Init pred_depth selection
         memset(pcs_ptr->pred_depth_count,
                0,
                sizeof(uint32_t) * DEPTH_DELTA_NUM * (NUMBER_OF_SHAPES - 1));
+#endif
         // Init tx_type selection
         memset(pcs_ptr->txt_cnt, 0, sizeof(uint32_t) * TXT_DEPTH_DELTA_NUM * TX_TYPES);
         // Compute Tc, and Beta offsets for a given picture

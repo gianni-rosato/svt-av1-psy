@@ -2159,7 +2159,7 @@ void integer_search_sb(
                         context_ptr->p_best_mv8x8 =
                             &(context_ptr
                                   ->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_0]);
-
+#if !CLN_REMOVE_ME_SSD_CALCS
                         context_ptr->p_best_ssd64x64 = &(
                             context_ptr
                                 ->p_sb_best_ssd[list_index][ref_pic_index][ME_TIER_ZERO_PU_64x64]);
@@ -2172,7 +2172,7 @@ void integer_search_sb(
                         context_ptr->p_best_ssd8x8 = &(
                             context_ptr
                                 ->p_sb_best_ssd[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_0]);
-
+#endif
                         open_loop_me_fullpel_search_sblock(context_ptr,
                                                            list_index,
                                                            ref_pic_index,
@@ -2238,6 +2238,9 @@ void me_prune_ref(MeContext* context_ptr) {
             // Prune references based on ME sad
             uint16_t prune_ref_th = context_ptr->me_hme_prune_ctrls.prune_ref_if_me_sad_dev_bigger_than_th;
             if (context_ptr->me_hme_prune_ctrls.enable_me_hme_ref_pruning &&
+#if FTR_ME_HME_PROTECT_CLOSEST_REF
+                (!context_ptr->me_hme_prune_ctrls.protect_closest_refs || ri > 0) &&
+#endif
                 (prune_ref_th != (uint16_t)~0) &&
                 (context_ptr->hme_results[li][ri].hme_sad - best) * 100 > (prune_ref_th * best))
             {
@@ -2907,6 +2910,9 @@ void hme_prune_ref_and_adjust_sr(MeContext* context_ptr) {
         for (uint32_t ri = 0; ri < REF_LIST_MAX_DEPTH; ri++){
             // Prune references based on HME sad
             if (context_ptr->me_hme_prune_ctrls.enable_me_hme_ref_pruning &&
+#if FTR_ME_HME_PROTECT_CLOSEST_REF
+                (!context_ptr->me_hme_prune_ctrls.protect_closest_refs || ri > 0) &&
+#endif
                 (prune_ref_th != (uint16_t)~0) &&
                 ((context_ptr->hme_results[li][ri].hme_sad - best) * 100 > (prune_ref_th * best)))
             {

@@ -14,17 +14,21 @@
 static void svt_trans_quant_buffers_dctor(EbPtr p) {
     EbTransQuantBuffers* obj = (EbTransQuantBuffers*)p;
     EB_DELETE(obj->txb_trans_coeff2_nx2_n_ptr);
+#if !CLN_REMOVE_TX_BUFFS
     EB_DELETE(obj->txb_trans_coeff_nxn_ptr);
     EB_DELETE(obj->txb_trans_coeff_n2x_n2_ptr);
     EB_DELETE(obj->txb_quant_coeff_nxn_ptr);
     EB_DELETE(obj->txb_quant_coeff_n2x_n2_ptr);
+#endif
 }
 
 EbErrorType svt_trans_quant_buffers_ctor(EbTransQuantBuffers* trans_quant_buffers_ptr,
                                          uint8_t              sb_size) {
+#if !CLN_REMOVE_TX_BUFFS
     EbPictureBufferDescInitData trans_coeff_init_array;
-
+#endif
     trans_quant_buffers_ptr->dctor            = svt_trans_quant_buffers_dctor;
+#if !CLN_REMOVE_TX_BUFFS
     trans_coeff_init_array.max_width          = sb_size;
     trans_coeff_init_array.max_height         = sb_size;
     trans_coeff_init_array.bit_depth          = EB_16BIT;
@@ -35,6 +39,7 @@ EbErrorType svt_trans_quant_buffers_ctor(EbTransQuantBuffers* trans_quant_buffer
     trans_coeff_init_array.top_padding        = 0;
     trans_coeff_init_array.bot_padding        = 0;
     trans_coeff_init_array.split_mode         = EB_FALSE;
+#endif
 
     EbPictureBufferDescInitData trans_coeff_32bit_init_array;
     trans_coeff_32bit_init_array.max_width          = sb_size;
@@ -51,6 +56,7 @@ EbErrorType svt_trans_quant_buffers_ctor(EbTransQuantBuffers* trans_quant_buffer
     EB_NEW(trans_quant_buffers_ptr->txb_trans_coeff2_nx2_n_ptr,
            svt_picture_buffer_desc_ctor,
            (EbPtr)&trans_coeff_32bit_init_array);
+#if !CLN_REMOVE_TX_BUFFS
     EB_NEW(trans_quant_buffers_ptr->txb_trans_coeff_nxn_ptr,
            svt_picture_buffer_desc_ctor,
            (EbPtr)&trans_coeff_32bit_init_array);
@@ -63,5 +69,6 @@ EbErrorType svt_trans_quant_buffers_ctor(EbTransQuantBuffers* trans_quant_buffer
     EB_NEW(trans_quant_buffers_ptr->txb_quant_coeff_n2x_n2_ptr,
            svt_picture_buffer_desc_ctor,
            (EbPtr)&trans_coeff_init_array);
+#endif
     return EB_ErrorNone;
 }

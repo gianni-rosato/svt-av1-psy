@@ -85,15 +85,19 @@ typedef struct MdBlkStruct {
     uint16_t *neigh_left_recon_16bit[3];
     uint16_t *neigh_top_recon_16bit[3];
     uint8_t   merge_flag;
+#if !CLN_NSQ_AND_STATS
     uint8_t   sse_gradian_band[NUMBER_OF_SHAPES];
+#endif
     int8_t    pred_depth_refinement;
     int8_t    pred_depth;
     // wm
     EbWarpedMotionParams wm_params_l0;
     EbWarpedMotionParams wm_params_l1;
+#if !CLN_MD_CANDS
     // ref frame
     int8_t ref_frame_index_l0;
     int8_t ref_frame_index_l1;
+#endif
     // compound
     uint8_t                compound_idx;
     InterInterCompoundData interinter_comp;
@@ -149,6 +153,7 @@ typedef struct ObmcControls {
     uint8_t near_count; //how many near to consider injecting obmc 0..3
     EbBool  max_blk_size_16x16; // if true, cap the max block size that OBMC can be used to 16x16
 } ObmcControls;
+#if !CLN_NSQ_AND_STATS
 typedef struct AMdCycleRControls {
     uint8_t  enabled; // On/Off feature control
     uint16_t skip_nsq_th; // Threshold to bypass nsq <the higher th the higher speed>
@@ -157,6 +162,7 @@ typedef struct AMdCycleRControls {
     uint8_t
         non_skip_level; // Which level of aggressive features to use when probability of block is less than switch_level_th; higher is more aggressive
 } AMdCycleRControls;
+#endif
 typedef struct TxtControls {
     uint8_t enabled;
 
@@ -669,8 +675,10 @@ typedef struct ModeDecisionContext {
 
     EbBool            md_disable_cfl;
     TxtControls       txt_ctrls;
+#if !CLN_NSQ_AND_STATS
     TxsCycleRControls txs_cycles_red_ctrls;
     AMdCycleRControls admd_cycles_red_ctrls;
+#endif
     RdoqCtrls         rdoq_ctrls;
     uint8_t           disallow_4x4;
     uint8_t           md_disallow_nsq;
@@ -693,9 +701,11 @@ typedef struct ModeDecisionContext {
     uint32_t             part_cnt[NUMBER_OF_SHAPES - 1][FB_NUM][SSEG_NUM];
     uint16_t             part_prob[NUMBER_OF_SHAPES - 1][FB_NUM][SSEG_NUM];
 #endif
+#if !CLN_NSQ_AND_STATS
     uint32_t             pred_depth_count[DEPTH_DELTA_NUM][NUMBER_OF_SHAPES - 1];
     uint32_t             depth_prob[DEPTH_DELTA_NUM];
     uint32_t             ad_md_prob[DEPTH_DELTA_NUM][NUMBER_OF_SHAPES - 1];
+#endif
     uint32_t             txt_cnt[TXT_DEPTH_DELTA_NUM][TX_TYPES];
     uint32_t             txt_prob[TXT_DEPTH_DELTA_NUM][TX_TYPES];
     uint8_t              skip_intra;

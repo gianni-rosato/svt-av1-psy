@@ -2762,12 +2762,18 @@ EB_EXTERN void av1_encode_decode(SequenceControlSet *scs_ptr, PictureControlSet 
                 // Inter
                 else if (blk_ptr->prediction_mode_flag == INTER_MODE) {
                     uint8_t is_inter = context_ptr->is_inter = 1;
+#if !CLN_MD_CANDS
                     int8_t ref_idx_l0 =
                         context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].ref_frame_index_l0;
                     int8_t ref_idx_l1 =
                         context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].ref_frame_index_l1;
+#endif
                     MvReferenceFrame rf[2];
                     av1_set_ref_frame(rf, (&blk_ptr->prediction_unit_array[0])->ref_frame_type);
+#if CLN_MD_CANDS
+                    int8_t ref_idx_l0 = get_ref_frame_idx(rf[0]);
+                    int8_t ref_idx_l1 = rf[1] == NONE_FRAME ? get_ref_frame_idx(rf[0]) : get_ref_frame_idx(rf[1]);
+#endif
                     uint8_t list_idx0, list_idx1;
                     list_idx0 = get_list_idx(rf[0]);
                     if (rf[1] == NONE_FRAME)
@@ -2862,6 +2868,14 @@ EB_EXTERN void av1_encode_decode(SequenceControlSet *scs_ptr, PictureControlSet 
                             EbPictureBufferDesc             *ref_pic_list0;
                             EbPictureBufferDesc             *ref_pic_list1;
                             if (!is_16bit) {
+#if CLN_MD_CANDS
+                                ref_pic_list0 = ref_idx_l0 >= 0
+                                    ? ref_obj_0->reference_picture
+                                    : (EbPictureBufferDesc *)NULL;
+                                ref_pic_list1 = ref_idx_l1 >= 0
+                                    ? ref_obj_1->reference_picture
+                                    : (EbPictureBufferDesc *)NULL;
+#else
                                 ref_pic_list0 =
                                     context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].ref_frame_index_l0 >= 0
                                     ? ref_obj_0->reference_picture
@@ -2870,8 +2884,17 @@ EB_EXTERN void av1_encode_decode(SequenceControlSet *scs_ptr, PictureControlSet 
                                     context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].ref_frame_index_l1 >= 0
                                     ? ref_obj_1->reference_picture
                                     : (EbPictureBufferDesc *)NULL;
+#endif
                             }
                             else {
+#if CLN_MD_CANDS
+                                ref_pic_list0 = ref_idx_l0 >= 0
+                                    ? ref_obj_0->reference_picture16bit
+                                    : (EbPictureBufferDesc *)NULL;
+                                ref_pic_list1 = ref_idx_l1 >= 0
+                                    ? ref_obj_1->reference_picture16bit
+                                    : (EbPictureBufferDesc *)NULL;
+#else
                                 ref_pic_list0 =
                                     context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].ref_frame_index_l0 >= 0
                                     ? ref_obj_0->reference_picture16bit
@@ -2880,6 +2903,7 @@ EB_EXTERN void av1_encode_decode(SequenceControlSet *scs_ptr, PictureControlSet 
                                     context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].ref_frame_index_l1 >= 0
                                     ? ref_obj_1->reference_picture16bit
                                     : (EbPictureBufferDesc *)NULL;
+#endif
                             }
                                 warped_motion_prediction(
                                     pcs_ptr,
@@ -2908,6 +2932,14 @@ EB_EXTERN void av1_encode_decode(SequenceControlSet *scs_ptr, PictureControlSet 
                             EbPictureBufferDesc *ref_pic_list1;
 
                             if (!is_16bit) {
+#if CLN_MD_CANDS
+                                ref_pic_list0 = ref_idx_l0 >= 0
+                                    ? ref_obj_0->reference_picture
+                                    : (EbPictureBufferDesc *)NULL;
+                                ref_pic_list1 = ref_idx_l1 >= 0
+                                    ? ref_obj_1->reference_picture
+                                    : (EbPictureBufferDesc *)NULL;
+#else
                                 ref_pic_list0 =
                                     context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].ref_frame_index_l0 >= 0
                                     ? ref_obj_0->reference_picture
@@ -2916,7 +2948,16 @@ EB_EXTERN void av1_encode_decode(SequenceControlSet *scs_ptr, PictureControlSet 
                                     context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].ref_frame_index_l1 >= 0
                                     ? ref_obj_1->reference_picture
                                     : (EbPictureBufferDesc *)NULL;
+#endif
                             } else {
+#if CLN_MD_CANDS
+                                ref_pic_list0 = ref_idx_l0 >= 0
+                                    ? ref_obj_0->reference_picture16bit
+                                    : (EbPictureBufferDesc *)NULL;
+                                ref_pic_list1 = ref_idx_l1 >= 0
+                                    ? ref_obj_1->reference_picture16bit
+                                    : (EbPictureBufferDesc *)NULL;
+#else
                                 ref_pic_list0 =
                                     context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].ref_frame_index_l0 >= 0
                                     ? ref_obj_0->reference_picture16bit
@@ -2925,6 +2966,7 @@ EB_EXTERN void av1_encode_decode(SequenceControlSet *scs_ptr, PictureControlSet 
                                     context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].ref_frame_index_l1 >= 0
                                     ? ref_obj_1->reference_picture16bit
                                     : (EbPictureBufferDesc *)NULL;
+#endif
                             }
 
 

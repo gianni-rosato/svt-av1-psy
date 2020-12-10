@@ -161,6 +161,30 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
         me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 64;
         }
     }
+#if TUNE_M8_MAX_ME
+    else if (pcs_ptr->enc_mode <= ENC_M7) {
+        if (use_output_stat(scs_ptr)) {
+            me_context_ptr->search_area_width = me_context_ptr->search_area_height = 8;
+            me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 8;
+        }
+        else {
+            me_context_ptr->search_area_width = me_context_ptr->search_area_height = 16;
+            me_context_ptr->max_me_search_width = 64;
+            me_context_ptr->max_me_search_height = 32;
+        }
+    }
+    else {
+        if (use_output_stat(scs_ptr)) {
+            me_context_ptr->search_area_width = me_context_ptr->search_area_height = 8;
+            me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 8;
+        }
+        else {
+            me_context_ptr->search_area_width = me_context_ptr->search_area_height = 16;
+            me_context_ptr->max_me_search_width = 48;
+            me_context_ptr->max_me_search_height = 24;
+        }
+    }
+#else
     else {
         if (use_output_stat(scs_ptr) || (scs_ptr->lap_enabled && !pcs_ptr->first_pass_done)) {
             me_context_ptr->search_area_width = me_context_ptr->search_area_height = 8;
@@ -172,6 +196,7 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
             me_context_ptr->max_me_search_height = 32;
         }
     }
+#endif
 #if TUNE_PRESETS_CLEANUP
     if (pcs_ptr->enc_mode <= ENC_M0) {
 #else
@@ -271,21 +296,33 @@ void set_me_hme_ref_prune_ctrls(MeContext* context_ptr, uint8_t prune_level) {
         me_hme_prune_ctrls->enable_me_hme_ref_pruning = 1;
         me_hme_prune_ctrls->prune_ref_if_hme_sad_dev_bigger_than_th = 160;
         me_hme_prune_ctrls->prune_ref_if_me_sad_dev_bigger_than_th = (uint16_t)~0;
+#if FTR_ME_HME_PROTECT_CLOSEST_REF
+        me_hme_prune_ctrls->protect_closest_refs = 1;
+#endif
         break;
     case 2:
         me_hme_prune_ctrls->enable_me_hme_ref_pruning = 1;
         me_hme_prune_ctrls->prune_ref_if_hme_sad_dev_bigger_than_th = 80;
         me_hme_prune_ctrls->prune_ref_if_me_sad_dev_bigger_than_th = 60;
+#if FTR_ME_HME_PROTECT_CLOSEST_REF
+        me_hme_prune_ctrls->protect_closest_refs = 1;
+#endif
         break;
     case 3:
         me_hme_prune_ctrls->enable_me_hme_ref_pruning = 1;
         me_hme_prune_ctrls->prune_ref_if_hme_sad_dev_bigger_than_th = 50;
         me_hme_prune_ctrls->prune_ref_if_me_sad_dev_bigger_than_th = 60;
+#if FTR_ME_HME_PROTECT_CLOSEST_REF
+        me_hme_prune_ctrls->protect_closest_refs = 1;
+#endif
         break;
     case 4:
         me_hme_prune_ctrls->enable_me_hme_ref_pruning = 1;
         me_hme_prune_ctrls->prune_ref_if_hme_sad_dev_bigger_than_th = 30;
         me_hme_prune_ctrls->prune_ref_if_me_sad_dev_bigger_than_th = 60;
+#if FTR_ME_HME_PROTECT_CLOSEST_REF
+        me_hme_prune_ctrls->protect_closest_refs = 1;
+#endif
         break;
     default:
         assert(0);

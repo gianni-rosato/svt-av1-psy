@@ -293,6 +293,9 @@ typedef struct MeHmeRefPruneCtrls {
         prune_ref_if_hme_sad_dev_bigger_than_th; // TH used to prune references based on hme sad deviation
     uint16_t
         prune_ref_if_me_sad_dev_bigger_than_th; // TH used to prune references based on me sad deviation
+#if FTR_ME_HME_PROTECT_CLOSEST_REF
+    EbBool  protect_closest_refs; // if true, do not prune closest ref frames
+#endif
 } MeHmeRefPruneCtrls;
 
 typedef struct MeSrCtrls {
@@ -350,11 +353,13 @@ typedef struct MeContext {
     uint32_t *p_best_full_pel_mv32x32;
     uint32_t *p_best_full_pel_mv64x64;
     uint8_t   full_quarter_pel_refinement;
+#if !CLN_REMOVE_ME_SSD_CALCS
     uint32_t  p_sb_best_ssd[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][SQUARE_PU_COUNT];
     uint32_t *p_best_ssd8x8;
     uint32_t *p_best_ssd16x16;
     uint32_t *p_best_ssd32x32;
     uint32_t *p_best_ssd64x64;
+#endif
     uint16_t *p_eight_pos_sad16x16;
     EB_ALIGN(64) uint32_t p_eight_sad32x32[4][8];
     EB_ALIGN(64) uint32_t p_eight_sad16x16[16][8];

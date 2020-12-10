@@ -1636,8 +1636,10 @@ void copy_statistics_to_ref_obj_ect(PictureControlSet *pcs_ptr, SequenceControlS
     memcpy(((EbReferenceObject *)pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
                     ->ref_part_cnt, pcs_ptr->part_cnt, sizeof(uint32_t) * (NUMBER_OF_SHAPES-1) * FB_NUM *SSEG_NUM);
 #endif
+#if !CLN_NSQ_AND_STATS
     memcpy(((EbReferenceObject *)pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
         ->ref_pred_depth_count, pcs_ptr->pred_depth_count, sizeof(uint32_t) * DEPTH_DELTA_NUM * (NUMBER_OF_SHAPES-1));
+#endif
     memcpy(((EbReferenceObject *)pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
             ->ref_txt_cnt, pcs_ptr->txt_cnt, sizeof(uint32_t) * TXT_DEPTH_DELTA_NUM *TX_TYPES);
     if (pcs_ptr->slice_type == I_SLICE) pcs_ptr->intra_coded_area = 0;
@@ -2314,6 +2316,7 @@ uint8_t nsq_cycles_reduction_th[19] = {
  1 //[0%;3%]
 };
 #endif
+#if !CLN_NSQ_AND_STATS
 void adaptive_md_cycles_redcution_controls(ModeDecisionContext *mdctxt, uint8_t adaptive_md_cycles_red_mode) {
     AMdCycleRControls* adaptive_md_cycles_red_ctrls = &mdctxt->admd_cycles_red_ctrls;
     switch (adaptive_md_cycles_red_mode)
@@ -2371,95 +2374,96 @@ void adaptive_md_cycles_redcution_controls(ModeDecisionContext *mdctxt, uint8_t 
         break;
     }
 }
+#endif
 #if FTR_NEW_CYCLES_ALLOC
 /*
  * Settings for the parent SQ coeff-area based cycles reduction algorithm.
  */
 void set_parent_sq_coeff_area_based_cycles_reduction_ctrls(ModeDecisionContext* ctx, uint8_t resolution, uint8_t cycles_alloc_lvl) {
-    ParentSqCoeffAreaBasedCyclesReductionCtrls* parent_sq_coeff_area_based_cycles_reduction_ctrls = &ctx->parent_sq_coeff_area_based_cycles_reduction_ctrls;
+    ParentSqCoeffAreaBasedCyclesReductionCtrls* cycle_red_ctrls = &ctx->parent_sq_coeff_area_based_cycles_reduction_ctrls;
     switch (cycles_alloc_lvl) {
     case 0:
-        parent_sq_coeff_area_based_cycles_reduction_ctrls->enabled = 0;
+        cycle_red_ctrls->enabled = 0;
         break;
     case 1:
-        parent_sq_coeff_area_based_cycles_reduction_ctrls->enabled = 1;
+        cycle_red_ctrls->enabled = 1;
 
         // High frequency band THs/actions
-        parent_sq_coeff_area_based_cycles_reduction_ctrls->high_freq_band1_th = resolution <= INPUT_SIZE_360p_RANGE ? UNUSED_HIGH_FREQ_BAND_TH : 90;
-        parent_sq_coeff_area_based_cycles_reduction_ctrls->high_freq_band1_level = 3;
-        parent_sq_coeff_area_based_cycles_reduction_ctrls->high_freq_band2_th = resolution <= INPUT_SIZE_360p_RANGE ? UNUSED_HIGH_FREQ_BAND_TH : 70;
-        parent_sq_coeff_area_based_cycles_reduction_ctrls->high_freq_band2_level = 2;
+        cycle_red_ctrls->high_freq_band1_th = resolution <= INPUT_SIZE_360p_RANGE ? UNUSED_HIGH_FREQ_BAND_TH : 90;
+        cycle_red_ctrls->high_freq_band1_level = 3;
+        cycle_red_ctrls->high_freq_band2_th = resolution <= INPUT_SIZE_360p_RANGE ? UNUSED_HIGH_FREQ_BAND_TH : 70;
+        cycle_red_ctrls->high_freq_band2_level = 2;
 
         // Low frequency band THs/actions
-        parent_sq_coeff_area_based_cycles_reduction_ctrls->enable_zero_coeff_action = 1;
-        parent_sq_coeff_area_based_cycles_reduction_ctrls->zero_coeff_action = 1;
-        parent_sq_coeff_area_based_cycles_reduction_ctrls->enable_one_coeff_action = 0;
-        parent_sq_coeff_area_based_cycles_reduction_ctrls->one_coeff_action = 0;
+        cycle_red_ctrls->enable_zero_coeff_action = 1;
+        cycle_red_ctrls->zero_coeff_action = 1;
+        cycle_red_ctrls->enable_one_coeff_action = 0;
+        cycle_red_ctrls->one_coeff_action = 0;
 
-        parent_sq_coeff_area_based_cycles_reduction_ctrls->low_freq_band1_th = UNUSED_LOW_FREQ_BAND_TH;
-        parent_sq_coeff_area_based_cycles_reduction_ctrls->low_freq_band1_level = 0;
-        parent_sq_coeff_area_based_cycles_reduction_ctrls->low_freq_band2_th = UNUSED_LOW_FREQ_BAND_TH;
-        parent_sq_coeff_area_based_cycles_reduction_ctrls->low_freq_band2_level = 0;
+        cycle_red_ctrls->low_freq_band1_th = UNUSED_LOW_FREQ_BAND_TH;
+        cycle_red_ctrls->low_freq_band1_level = 0;
+        cycle_red_ctrls->low_freq_band2_th = UNUSED_LOW_FREQ_BAND_TH;
+        cycle_red_ctrls->low_freq_band2_level = 0;
         break;
     case 2:
-        parent_sq_coeff_area_based_cycles_reduction_ctrls->enabled = 1;
+        cycle_red_ctrls->enabled = 1;
 
         // High frequency band THs/actions
-        parent_sq_coeff_area_based_cycles_reduction_ctrls->high_freq_band1_th = resolution <= INPUT_SIZE_360p_RANGE ? UNUSED_HIGH_FREQ_BAND_TH : 90;
-        parent_sq_coeff_area_based_cycles_reduction_ctrls->high_freq_band1_level = 3;
-        parent_sq_coeff_area_based_cycles_reduction_ctrls->high_freq_band2_th = resolution <= INPUT_SIZE_360p_RANGE ? UNUSED_HIGH_FREQ_BAND_TH : 70;
-        parent_sq_coeff_area_based_cycles_reduction_ctrls->high_freq_band2_level = 2;
+        cycle_red_ctrls->high_freq_band1_th = resolution <= INPUT_SIZE_360p_RANGE ? UNUSED_HIGH_FREQ_BAND_TH : 90;
+        cycle_red_ctrls->high_freq_band1_level = 3;
+        cycle_red_ctrls->high_freq_band2_th = resolution <= INPUT_SIZE_360p_RANGE ? UNUSED_HIGH_FREQ_BAND_TH : 70;
+        cycle_red_ctrls->high_freq_band2_level = 2;
 
         // Low frequency band THs/actions
-        parent_sq_coeff_area_based_cycles_reduction_ctrls->enable_zero_coeff_action = 1;
-        parent_sq_coeff_area_based_cycles_reduction_ctrls->zero_coeff_action = 2;
-        parent_sq_coeff_area_based_cycles_reduction_ctrls->enable_one_coeff_action = 0;
-        parent_sq_coeff_area_based_cycles_reduction_ctrls->one_coeff_action = 0;
+        cycle_red_ctrls->enable_zero_coeff_action = 1;
+        cycle_red_ctrls->zero_coeff_action = 2;
+        cycle_red_ctrls->enable_one_coeff_action = 0;
+        cycle_red_ctrls->one_coeff_action = 0;
 
-        parent_sq_coeff_area_based_cycles_reduction_ctrls->low_freq_band1_th = UNUSED_LOW_FREQ_BAND_TH;
-        parent_sq_coeff_area_based_cycles_reduction_ctrls->low_freq_band1_level = 0;
-        parent_sq_coeff_area_based_cycles_reduction_ctrls->low_freq_band2_th = UNUSED_LOW_FREQ_BAND_TH;
-        parent_sq_coeff_area_based_cycles_reduction_ctrls->low_freq_band2_level = 0;
+        cycle_red_ctrls->low_freq_band1_th = UNUSED_LOW_FREQ_BAND_TH;
+        cycle_red_ctrls->low_freq_band1_level = 0;
+        cycle_red_ctrls->low_freq_band2_th = UNUSED_LOW_FREQ_BAND_TH;
+        cycle_red_ctrls->low_freq_band2_level = 0;
         break;
     case 3:
-        parent_sq_coeff_area_based_cycles_reduction_ctrls->enabled = 1;
+        cycle_red_ctrls->enabled = 1;
 
         // High frequency band THs/actions
-        parent_sq_coeff_area_based_cycles_reduction_ctrls->high_freq_band1_th = resolution <= INPUT_SIZE_360p_RANGE ? UNUSED_HIGH_FREQ_BAND_TH : 90;
-        parent_sq_coeff_area_based_cycles_reduction_ctrls->high_freq_band1_level = 3;
-        parent_sq_coeff_area_based_cycles_reduction_ctrls->high_freq_band2_th = resolution <= INPUT_SIZE_360p_RANGE ? UNUSED_HIGH_FREQ_BAND_TH : 70;
-        parent_sq_coeff_area_based_cycles_reduction_ctrls->high_freq_band2_level = 3;
+        cycle_red_ctrls->high_freq_band1_th = resolution <= INPUT_SIZE_360p_RANGE ? UNUSED_HIGH_FREQ_BAND_TH : 90;
+        cycle_red_ctrls->high_freq_band1_level = 3;
+        cycle_red_ctrls->high_freq_band2_th = resolution <= INPUT_SIZE_360p_RANGE ? UNUSED_HIGH_FREQ_BAND_TH : 70;
+        cycle_red_ctrls->high_freq_band2_level = 3;
 
         // Low frequency band THs/actions
-        parent_sq_coeff_area_based_cycles_reduction_ctrls->enable_zero_coeff_action = 1;
-        parent_sq_coeff_area_based_cycles_reduction_ctrls->zero_coeff_action = 2;
-        parent_sq_coeff_area_based_cycles_reduction_ctrls->enable_one_coeff_action = 0;
-        parent_sq_coeff_area_based_cycles_reduction_ctrls->one_coeff_action = 0;
+        cycle_red_ctrls->enable_zero_coeff_action = 1;
+        cycle_red_ctrls->zero_coeff_action = 2;
+        cycle_red_ctrls->enable_one_coeff_action = 0;
+        cycle_red_ctrls->one_coeff_action = 0;
 
-        parent_sq_coeff_area_based_cycles_reduction_ctrls->low_freq_band1_th = UNUSED_LOW_FREQ_BAND_TH;
-        parent_sq_coeff_area_based_cycles_reduction_ctrls->low_freq_band1_level = 0;
-        parent_sq_coeff_area_based_cycles_reduction_ctrls->low_freq_band2_th = UNUSED_LOW_FREQ_BAND_TH;
-        parent_sq_coeff_area_based_cycles_reduction_ctrls->low_freq_band2_level = 0;
+        cycle_red_ctrls->low_freq_band1_th = UNUSED_LOW_FREQ_BAND_TH;
+        cycle_red_ctrls->low_freq_band1_level = 0;
+        cycle_red_ctrls->low_freq_band2_th = UNUSED_LOW_FREQ_BAND_TH;
+        cycle_red_ctrls->low_freq_band2_level = 0;
         break;
     case 4:
-        parent_sq_coeff_area_based_cycles_reduction_ctrls->enabled = 1;
+        cycle_red_ctrls->enabled = 1;
 
         // High frequency band THs/actions
-        parent_sq_coeff_area_based_cycles_reduction_ctrls->high_freq_band1_th = resolution <= INPUT_SIZE_360p_RANGE ? UNUSED_HIGH_FREQ_BAND_TH : 90;
-        parent_sq_coeff_area_based_cycles_reduction_ctrls->high_freq_band1_level = 3;
-        parent_sq_coeff_area_based_cycles_reduction_ctrls->high_freq_band2_th = resolution <= INPUT_SIZE_360p_RANGE ? UNUSED_HIGH_FREQ_BAND_TH : 70;
-        parent_sq_coeff_area_based_cycles_reduction_ctrls->high_freq_band2_level = 3;
+        cycle_red_ctrls->high_freq_band1_th = resolution <= INPUT_SIZE_360p_RANGE ? UNUSED_HIGH_FREQ_BAND_TH : 90;
+        cycle_red_ctrls->high_freq_band1_level = 3;
+        cycle_red_ctrls->high_freq_band2_th = resolution <= INPUT_SIZE_360p_RANGE ? UNUSED_HIGH_FREQ_BAND_TH : 70;
+        cycle_red_ctrls->high_freq_band2_level = 3;
 
         // Low frequency band THs/actions
-        parent_sq_coeff_area_based_cycles_reduction_ctrls->enable_zero_coeff_action = 1;
-        parent_sq_coeff_area_based_cycles_reduction_ctrls->zero_coeff_action = 0; // skip
-        parent_sq_coeff_area_based_cycles_reduction_ctrls->enable_one_coeff_action = 0;
-        parent_sq_coeff_area_based_cycles_reduction_ctrls->one_coeff_action = 0;
+        cycle_red_ctrls->enable_zero_coeff_action = 1;
+        cycle_red_ctrls->zero_coeff_action = 0; // skip
+        cycle_red_ctrls->enable_one_coeff_action = 0;
+        cycle_red_ctrls->one_coeff_action = 0;
 
-        parent_sq_coeff_area_based_cycles_reduction_ctrls->low_freq_band1_th = UNUSED_LOW_FREQ_BAND_TH;
-        parent_sq_coeff_area_based_cycles_reduction_ctrls->low_freq_band1_level = 0;
-        parent_sq_coeff_area_based_cycles_reduction_ctrls->low_freq_band2_th = UNUSED_LOW_FREQ_BAND_TH;
-        parent_sq_coeff_area_based_cycles_reduction_ctrls->low_freq_band2_level = 0;
+        cycle_red_ctrls->low_freq_band1_th = UNUSED_LOW_FREQ_BAND_TH;
+        cycle_red_ctrls->low_freq_band1_level = 0;
+        cycle_red_ctrls->low_freq_band2_th = UNUSED_LOW_FREQ_BAND_TH;
+        cycle_red_ctrls->low_freq_band2_level = 0;
         break;
     default:
         assert(0);
@@ -2556,6 +2560,7 @@ void set_txt_controls(ModeDecisionContext *mdctxt, uint8_t txt_level) {
         break;
     }
 }
+#if !CLN_NSQ_AND_STATS
 void set_txs_cycle_reduction_controls(ModeDecisionContext *mdctxt, uint8_t txs_cycles_red_mode) {
 
     TxsCycleRControls* txs_cycle_red_ctrls = &mdctxt->txs_cycles_red_ctrls;
@@ -2587,6 +2592,7 @@ void set_txs_cycle_reduction_controls(ModeDecisionContext *mdctxt, uint8_t txs_c
         break;
     }
 }
+#endif
 void set_nic_controls(ModeDecisionContext *mdctxt, uint8_t nic_scaling_level) {
 
     NicCtrls* nic_ctrls = &mdctxt->nic_ctrls;
@@ -3375,7 +3381,9 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     else
         context_ptr->coeff_area_based_bypass_nsq_th = context_ptr->enable_area_based_cycles_allocation ? nsq_cycles_reduction_th[context_ptr->sb_class] : 0;
 #endif
+#if !CLN_NSQ_AND_STATS
     adaptive_md_cycles_redcution_controls(context_ptr, 0);
+#endif
         // Weighting (expressed as a percentage) applied to
         // square shape costs for determining if a and b
         // shapes should be skipped. Namely:
@@ -3551,9 +3559,10 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             nic_pruning_level = 5;
     set_nic_pruning_controls(context_ptr, nic_pruning_level);
 #endif
-
+#if !CLN_NSQ_AND_STATS
     uint8_t txs_cycles_reduction_level = 0;
     set_txs_cycle_reduction_controls(context_ptr, txs_cycles_reduction_level);
+#endif
     // Set md_filter_intra_mode @ MD
     // md_filter_intra_level specifies whether filter intra would be active
     // for a given prediction candidate in mode decision.
@@ -3615,8 +3624,40 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 
 #endif
     if (pcs_ptr->slice_type != I_SLICE) {
+#if FTR_PF_PD0_DETECTOR
+        if (pd_pass == PD_PASS_0) {
+
+            // Only allow PF if using SB_64x64
+            if (enc_mode <= ENC_M7 ||
+                pcs_ptr->parent_pcs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ||
+                sequence_control_set_ptr->static_config.super_block_size == 128) {
+                context_ptr->pf_level = 1;
+            }
+            else {
+                // Use ME distortion and variance detector to enable PF
+                uint32_t fast_lambda = context_ptr->hbd_mode_decision ?
+                    context_ptr->fast_lambda_md[EB_10_BIT_MD] :
+                    context_ptr->fast_lambda_md[EB_8_BIT_MD];
+                uint32_t sb_size = sequence_control_set_ptr->static_config.super_block_size * sequence_control_set_ptr->static_config.super_block_size;
+                uint64_t cost_th_rate = 1 << 13;
+                uint64_t use_pf_th = 0;
+
+                if (pcs_ptr->parent_pcs_ptr->variance[context_ptr->sb_index][ME_TIER_ZERO_PU_64x64] <= 400)
+                    use_pf_th = RDCOST(fast_lambda, cost_th_rate, sb_size * 2);
+                else if (pcs_ptr->parent_pcs_ptr->variance[context_ptr->sb_index][ME_TIER_ZERO_PU_64x64] <= 800)
+                    use_pf_th = RDCOST(fast_lambda, cost_th_rate, sb_size);
+                else
+                    use_pf_th = RDCOST(fast_lambda, cost_th_rate, sb_size >> 1);
+
+                uint64_t cost_64x64 = RDCOST(fast_lambda, 0, pcs_ptr->parent_pcs_ptr->me_64x64_distortion[context_ptr->sb_index]);
+
+                context_ptr->pf_level = (cost_64x64 < use_pf_th) ? 3 : 1;
+            }
+        }
+#else
         if (pd_pass == PD_PASS_0)
             context_ptr->pf_level = 1;
+#endif
         else if (pd_pass == PD_PASS_1)
             context_ptr->pf_level = 1;
         else
@@ -4067,6 +4108,9 @@ void init_allowed_blocks(MdcSbData *results_ptr, ModeDecisionContext *context_pt
                 INVALID_NEIGHBOR_DATA;
             context_ptr->md_local_blk_unit[d1_blk_idx].above_neighbor_partition =
                 INVALID_NEIGHBOR_DATA;
+#if CLN_NSQ_AND_STATS
+            context_ptr->md_blk_arr_nsq[d1_blk_idx].do_not_process_block = 0;
+#else
             if (!context_ptr->md_disallow_nsq)
                 for (uint8_t shape_idx = 0; shape_idx < NUMBER_OF_SHAPES; shape_idx++)
                     context_ptr->md_local_blk_unit[d1_blk_idx].sse_gradian_band[shape_idx] = +1;
@@ -4088,6 +4132,7 @@ void init_allowed_blocks(MdcSbData *results_ptr, ModeDecisionContext *context_pt
                     }
                 }
             }
+#endif
         }
     }
 }
@@ -4262,6 +4307,7 @@ void generate_statistics_txt(
         for (uint8_t txs_idx = 0; txs_idx < TX_TYPES; txs_idx++)
             context_ptr->txt_cnt[depth_delta][txs_idx] += part_cnt[depth_delta][txs_idx];
 }
+#if !CLN_NSQ_AND_STATS
 Part part_to_shape[NUMBER_OF_SHAPES] = {
     PART_N,
     PART_H,
@@ -4360,6 +4406,7 @@ void generate_depth_prob(PictureControlSet * pcs_ptr, ModeDecisionContext *conte
 /******************************************************
 * Generate probabilities for the nsq_cycles_reduction
 ******************************************************/
+#endif
 #if !CLN_REMOVE_UNUSED_CODE
 void generate_nsq_prob(PictureControlSet * pcs_ptr,ModeDecisionContext *context_ptr)
 {
@@ -4876,9 +4923,11 @@ void init_block(ModeDecisionContext *context_ptr, uint32_t blk_index,
 #if FTR_PD2_BLOCK_REDUCTION
     context_ptr->md_local_blk_unit[blk_index].count_non_zero_coeffs = 0;
 #endif
+#if !CLN_NSQ_AND_STATS
     if (!context_ptr->md_disallow_nsq)
         for (uint8_t shape_idx = 0; shape_idx < NUMBER_OF_SHAPES; shape_idx++)
         context_ptr->md_local_blk_unit[blk_index].sse_gradian_band[shape_idx] = +1;
+#endif
     if (blk_geom->shape == PART_N) {
         context_ptr->md_blk_arr_nsq[blk_index].split_flag         = EB_TRUE;
         context_ptr->md_blk_arr_nsq[blk_index].part               = PARTITION_SPLIT;
@@ -5153,8 +5202,10 @@ void *mode_decision_kernel(void *input_ptr) {
         memset(context_ptr->md_context->part_cnt, 0, sizeof(uint32_t) * SSEG_NUM * (NUMBER_OF_SHAPES-1) * FB_NUM);
         generate_nsq_prob(pcs_ptr, context_ptr->md_context);
 #endif
+#if !CLN_NSQ_AND_STATS
         memset(context_ptr->md_context->pred_depth_count, 0, sizeof(uint32_t) * DEPTH_DELTA_NUM * (NUMBER_OF_SHAPES-1));
         generate_depth_prob(pcs_ptr, context_ptr->md_context);
+#endif
         memset( context_ptr->md_context->txt_cnt, 0, sizeof(uint32_t) * TXT_DEPTH_DELTA_NUM * TX_TYPES);
         generate_txt_prob(pcs_ptr, context_ptr->md_context);
 
@@ -5450,7 +5501,9 @@ void *mode_decision_kernel(void *input_ptr) {
 #if !CLN_REMOVE_UNUSED_CODE
                     generate_statistics_nsq(scs_ptr, pcs_ptr, context_ptr->md_context, sb_index);
 #endif
+#if !CLN_NSQ_AND_STATS
                     generate_statistics_depth(scs_ptr, pcs_ptr, context_ptr->md_context, sb_index);
+#endif
                     generate_statistics_txt(scs_ptr, pcs_ptr, context_ptr->md_context, sb_index);
 
 #if NO_ENCDEC
@@ -5488,10 +5541,12 @@ void *mode_decision_kernel(void *input_ptr) {
                 for (uint8_t sse_idx = 0; sse_idx < SSEG_NUM; sse_idx++)
                     pcs_ptr->part_cnt[partidx][band][sse_idx] += context_ptr->md_context->part_cnt[partidx][band][sse_idx];
 #endif
+#if !CLN_NSQ_AND_STATS
         // Accumulate pred depth selection
         for (uint8_t pred_depth = 0; pred_depth < DEPTH_DELTA_NUM; pred_depth++)
             for (uint8_t part_idx = 0; part_idx < (NUMBER_OF_SHAPES-1); part_idx++)
                 pcs_ptr->pred_depth_count[pred_depth][part_idx] += context_ptr->md_context->pred_depth_count[pred_depth][part_idx];
+#endif
         // Accumulate tx_type selection
         for (uint8_t depth_delta = 0; depth_delta < TXT_DEPTH_DELTA_NUM; depth_delta++)
             for (uint8_t txs_idx = 0; txs_idx < TX_TYPES; txs_idx++)
