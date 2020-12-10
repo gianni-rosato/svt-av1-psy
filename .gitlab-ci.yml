@@ -2,7 +2,11 @@ stages:
   - compile
   - test
 
-style check:
+#
+# General checks
+#
+
+Style check:
   stage: .pre
   image: alpine
   before_script:
@@ -10,7 +14,7 @@ style check:
   script:
     - ./test/stylecheck.sh
 
-cppcheck:
+Static analysis (cppcheck):
   stage: compile
   image: registry.gitlab.com/aomediacodec/aom-testing/ubuntu1804
   cache:
@@ -31,6 +35,9 @@ cppcheck:
         -ithird_party \
         --cppcheck-build-dir=.cppcheck
 
+#
+# Linux CI Jobs
+#
 .linux-compiler-base:
   stage: compile
   image: registry.gitlab.com/aomediacodec/aom-testing/ubuntu2004
@@ -49,23 +56,23 @@ cppcheck:
     - cmake --build Build --config $CMAKE_BUILD_TYPE --target install
     - ccache -s
 
-clang 6:
+Linux (Clang 6):
   extends: .linux-compiler-base
   variables:
     CC: clang-6.0
     CXX: clang++-6.0
 
-clang 10:
+Linux (Clang 10):
   extends: .linux-compiler-base
   variables:
     CC: clang-10
     CXX: clang++-10
 
-gcc 4:
+Linux (GCC 4):
   extends: .linux-compiler-base
   image: registry.gitlab.com/aomediacodec/aom-testing/centos7
 
-valgrind compile:
+Linux (Valgrind):
   extends: .linux-compiler-base
   image: registry.gitlab.com/aomediacodec/aom-testing/ubuntu1804
   variables:
@@ -79,25 +86,25 @@ valgrind compile:
     paths:
       - valgrind/
 
-gcc 7:
+Linux (GCC 7):
   extends: .linux-compiler-base
   variables:
     CC: gcc-7
     CXX: g++-7
 
-gcc 8:
+Linux (GCC 8):
   extends: .linux-compiler-base
   variables:
     CC: gcc-8
     CXX: g++-8
 
-gcc 9:
+Linux (GCC 9):
   extends: .linux-compiler-base
   variables:
     CC: gcc-9
     CXX: g++-9
 
-gcc 10:
+Linux (GCC 10):
   extends: .linux-compiler-base
   variables:
     CC: gcc-10
@@ -111,7 +118,7 @@ gcc 10:
       - Bin/Release/SvtAv1EncApp
       - Bin/Release/SvtAv1DecApp
 
-gcc 10 test building:
+Linux (GCC 10, Tests, Static):
   extends: .linux-compiler-base
   variables:
     CC: gcc-10
@@ -135,15 +142,17 @@ gcc 10 test building:
     - zstd -d /video.tar.zst
     - tar xf /video.tar
 
-valgrind:
+Valgrind:
   extends: .tests
   image: registry.gitlab.com/aomediacodec/aom-testing/ubuntu1804
   allow_failure: true
   script:
     # --error-limit=no --leak-check=full --show-leak-kinds=all makes the log very huge and takes around 16 minutes
     - valgrind --error-exitcode=1 --track-origins=yes --suppressions=/usr/lib/valgrind/debian.supp -- ./valgrind/SvtAv1EncApp --preset 6 -i akiyo_cif.y4m -n 10 -b test1.ivf
+  needs:
+    - 'Linux (Valgrind)'
 
-valgrind pass 1:
+Valgrind (Pass 1):
   extends: .tests
   image: registry.gitlab.com/aomediacodec/aom-testing/ubuntu1804
   allow_failure: true
@@ -164,7 +173,7 @@ valgrind pass 1:
       - memory/
       - thread/
 
-sanitizer address:
+Linux (Address sanitizer):
   extends: .sanitizer compile
   variables:
     EXTRA_CFLAGS: -fsanitize=address
@@ -172,7 +181,7 @@ sanitizer address:
     LDFLAGS: -fsanitize=address
     EXTRA_CMAKE_FLAGS: -DCMAKE_OUTPUT_DIRECTORY=address
 
-sanitizer memory:
+Linux (Memory sanitizer):
   extends: .sanitizer compile
   variables:
     EXTRA_CFLAGS: -fsanitize=memory -fno-omit-frame-pointer -fno-optimize-sibling-calls -fsanitize-memory-track-origins
@@ -180,7 +189,7 @@ sanitizer memory:
     LDFLAGS: -fsanitize=memory -fsanitize-memory-track-origins
     EXTRA_CMAKE_FLAGS: -DCMAKE_OUTPUT_DIRECTORY=memory
 
-sanitizer thread:
+Linux (Thread sanitizer):
   extends: .sanitizer compile
   variables:
     EXTRA_CFLAGS: -fsanitize=thread
@@ -204,28 +213,28 @@ sanitizer thread:
       *) gdb -q -ex "handle SIG32 nostop" -ex r -ex bt -ex q --return-child-result --args $command ;;
       esac
 
-sanitizer address test:
+Linux (Address sanitizer) test:
   extends: .sanitizer test
   variables:
     SANITIZER: address
   needs:
-    - 'sanitizer address'
+    - 'Linux (Address sanitizer)'
 
-sanitizer memory test:
+Linux (Memory sanitizer) test:
   extends: .sanitizer test
   variables:
     SANITIZER: memory
     svt_asm: 0
   needs:
-    - 'sanitizer memory'
+    - 'Linux (Memory sanitizer)'
 
-sanitizer thread test:
+Linux (Thread sanitizer) test:
   extends: .sanitizer test
   allow_failure: true
   variables:
     SANITIZER: thread
   needs:
-    - 'sanitizer thread'
+    - 'Linux (Thread sanitizer)'
 
 .unit tests:
   extends: .tests
@@ -239,16 +248,16 @@ sanitizer thread test:
     reports:
       junit: report.xml
   needs:
-    - 'gcc 10 test building'
+    - 'Linux (GCC 10, Tests, Static)'
 
-unit tests linux:
+Linux Unit Tests:
   extends: .unit tests
   script:
     - export GTEST_SHARD_INDEX=$((CI_NODE_INDEX - 1))
     - mkdir -p unittests
     - ./Bin/Release/SvtAv1UnitTests
 
-e2e tests linux:
+Linux E2E Tests:
   extends: .unit tests
   script:
     - export GTEST_SHARD_INDEX=$((CI_NODE_INDEX - 1))
@@ -278,7 +287,7 @@ e2e tests linux:
   curl -f -L -O --silent "https://gitlab.com/AOMediaCodec/aom-testing/-/raw/master/video.tar.zst"
   zstd --stdout -d video.tar.zst | tar -xf -
 
-macOS Build (Xcode):
+macOS (Xcode):
   extends: .macos-compiler-base
   variables:
     CMAKE_GENERATOR: Xcode
@@ -287,7 +296,7 @@ macOS Build (Xcode):
     paths:
       - Bin/Release/*
 
-macOS Build (Ninja, Static, Tests):
+macOS (Ninja, Static, Tests):
   extends: .macos-compiler-base
   variables:
     EXTRA_CMAKE_FLAGS: -DBUILD_SHARED_LIBS=OFF -DBUILD_TESTING=ON
@@ -314,7 +323,7 @@ macOS Unit Tests:
     - export GTEST_SHARD_INDEX=$((CI_NODE_INDEX - 1))
     - ./Bin/Release/SvtAv1UnitTests
   needs:
-    - 'macOS Build (Ninja, Static, Tests)'
+    - 'macOS (Ninja, Static, Tests)'
 
 macOS E2E Tests:
   tags:
@@ -335,7 +344,7 @@ macOS E2E Tests:
     - cmake --build Build --target TestVectors
     - ./Bin/Release/SvtAv1E2ETests --gtest_filter=-*DummySrcTest*
   needs:
-    - 'macOS Build (Ninja, Static, Tests)'
+    - 'macOS (Ninja, Static, Tests)'
 
 macOS Enc Test:
   tags:
@@ -352,7 +361,7 @@ macOS Enc Test:
       - SVT_ENCTEST_FILENAME: "Chimera-Aerial_480x264_2997fps_10bit_420_150frames.y4m"
         SVT_ENCTEST_BITNESS: 10
   needs:
-    - 'macOS Build (Ninja, Static, Tests)'
+    - 'macOS (Ninja, Static, Tests)'
 
 #
 # Window CI Jobs
@@ -372,7 +381,7 @@ macOS Enc Test:
   zstd -d video.tar.zst -o video.tar
   tar -xf video.tar
 
-Windows build (Release, Tests):
+Win64 (Release, Tests):
   extends: .windows-ci-common
   stage: compile
   script:
@@ -386,7 +395,7 @@ Windows build (Release, Tests):
       - Bin\Release\Release\*.dll
       - Bin\Release\Release\*.pdb
 
-Windows Unit Tests:
+Win64 Unit Tests:
   extends: .windows-ci-common
   stage: test
   parallel: 50
@@ -401,9 +410,9 @@ Windows Unit Tests:
     - $env:GTEST_SHARD_INDEX = $env:CI_NODE_INDEX - 1
     - '&"Bin\Release\Release\SvtAv1UnitTests.exe" --gtest_filter=-*FFT*'
   needs:
-    - 'Windows build (Release, Tests)'
+    - 'Win64 (Release, Tests)'
 
-Windows Enc Test:
+Win64 Enc Test:
   extends: .windows-ci-common
   stage: test
   script:
@@ -417,9 +426,9 @@ Windows Enc Test:
       - SVT_ENCTEST_FILENAME: "Chimera-Aerial_480x264_2997fps_10bit_420_150frames.y4m"
         SVT_ENCTEST_BITNESS: 10
   needs:
-    - 'Windows build (Release, Tests)'
+    - 'Win64 (Release, Tests)'
 
-Windows E2E Tests:
+Win64 E2E Tests:
   extends: .windows-ci-common
   stage: test
   parallel: 10
@@ -437,4 +446,4 @@ Windows E2E Tests:
     - $env:GTEST_SHARD_INDEX = $env:CI_NODE_INDEX - 1
     - '&"Bin\Release\Release\SvtAv1E2ETests.exe" --gtest_filter=-*DummySrcTest*'
   needs:
-    - 'Windows build (Release, Tests)'
+    - 'Win64 (Release, Tests)'
