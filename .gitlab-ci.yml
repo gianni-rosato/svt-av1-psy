@@ -268,8 +268,8 @@ e2e tests linux:
     - cmake --build Build --config $CMAKE_BUILD_TYPE
 
 .macos-fetch-testdata: &macos-fetch-testdata |
-  curl -f -L -O --silent "https://raw.githubusercontent.com/OpenVisualCloud/SVT-AV1-Resources/master/video.tar.gz"
-  tar -xf video.tar.gz
+  curl -f -L -O --silent "https://gitlab.com/AOMediaCodec/aom-testing/-/raw/master/video.tar.zst"
+  zstd --stdout -d video.tar.zst | tar -xf -
 
 macOS Build (Xcode):
   extends: .macos-compiler-base
@@ -361,8 +361,9 @@ macOS Enc Test:
 
 .windows-fetch-testdata: &windows-fetch-testdata |
   $ProgressPreference = 'SilentlyContinue'
-  Invoke-WebRequest -OutFile video.tar.gz -Uri https://raw.githubusercontent.com/OpenVisualCloud/SVT-AV1-Resources/master/video.tar.gz
-  tar -xf video.tar.gz
+  Invoke-WebRequest -OutFile video.tar.zst -Uri https://gitlab.com/AOMediaCodec/aom-testing/-/raw/master/video.tar.zst
+  zstd -d video.tar.zst -o video.tar
+  tar -xf video.tar
 
 Windows build (Release, Tests):
   extends: .windows-ci-common
