@@ -196,6 +196,8 @@ Valgrind (Pass 1):
   allow_failure: true
   script:
     - valgrind --error-exitcode=1 --track-origins=yes --suppressions=/usr/lib/valgrind/debian.supp -- ./valgrind/SvtAv1EncApp --preset 6 --pass 1 -i akiyo_cif.y4m -n 10 -b test1.ivf
+  needs:
+    - 'Linux (Valgrind)'
 
 .sanitizer test:
   extends: .tests
