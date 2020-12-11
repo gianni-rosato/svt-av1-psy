@@ -20,6 +20,8 @@ extern "C" {
 #include "EbSvtAv1Formats.h"
 #include "EbDebugMacros.h"
 
+struct SvtMetadataArray;
+
 // API Version
 #define SVT_VERSION_MAJOR 0
 #define SVT_VERSION_MINOR 8
@@ -109,6 +111,8 @@ typedef struct EbBufferHeaderType {
     double luma_ssim;
     double cr_ssim;
     double cb_ssim;
+
+    struct SvtMetadataArray *metadata;
 } EbBufferHeaderType;
 
 typedef struct EbComponentType {

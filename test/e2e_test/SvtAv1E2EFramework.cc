@@ -193,6 +193,7 @@ void SvtAv1E2ETestFramework::init_test(TestVideoVector &test_vector) {
     av1enc_ctx_.input_picture_buffer->size = sizeof(EbBufferHeaderType);
     av1enc_ctx_.input_picture_buffer->p_app_private = nullptr;
     av1enc_ctx_.input_picture_buffer->pic_type = EB_AV1_INVALID_PICTURE;
+    av1enc_ctx_.input_picture_buffer->metadata = nullptr;
 
     // Output buffer
     av1enc_ctx_.output_stream_buffer = new EbBufferHeaderType;
@@ -207,6 +208,7 @@ void SvtAv1E2ETestFramework::init_test(TestVideoVector &test_vector) {
         EB_OUTPUTSTREAMBUFFERSIZE_MACRO(width * height);
     av1enc_ctx_.output_stream_buffer->p_app_private = nullptr;
     av1enc_ctx_.output_stream_buffer->pic_type = EB_AV1_INVALID_PICTURE;
+    av1enc_ctx_.output_stream_buffer->metadata = nullptr;
 
     // update encoder settings
     update_enc_setting();
@@ -406,6 +408,7 @@ void SvtAv1E2ETestFramework::run_encode_process() {
                         EB_AV1_INVALID_PICTURE;
                     av1enc_ctx_.input_picture_buffer->qp =
                         video_src_->get_frame_qp(video_src_->get_frame_index());
+                    av1enc_ctx_.input_picture_buffer->metadata = nullptr;
                     // Send the picture
                     EXPECT_EQ(EB_ErrorNone,
                               return_error = svt_av1_enc_send_picture(
@@ -426,6 +429,7 @@ void SvtAv1E2ETestFramework::run_encode_process() {
                     headerPtrLast.flags = EB_BUFFERFLAG_EOS;
                     headerPtrLast.p_buffer = nullptr;
                     headerPtrLast.pic_type = EB_AV1_INVALID_PICTURE;
+                    headerPtrLast.metadata = nullptr;
                     av1enc_ctx_.input_picture_buffer->flags = EB_BUFFERFLAG_EOS;
                     EXPECT_EQ(EB_ErrorNone,
                               return_error = svt_av1_enc_send_picture(
@@ -695,6 +699,7 @@ void SvtAv1E2ETestFramework::get_recon_frame(const SvtAv1Context &ctxt,
         recon_frame.p_buffer = new_frame->buffer;
         recon_frame.n_alloc_len = new_frame->buf_size;
         recon_frame.p_app_private = nullptr;
+        recon_frame.metadata = nullptr;
         // non-blocking call until all input frames are sent
         EbErrorType recon_status =
             svt_av1_get_recon(ctxt.enc_handle, &recon_frame);

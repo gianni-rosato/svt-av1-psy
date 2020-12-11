@@ -942,6 +942,7 @@ void process_input_buffer(EncChannel *channel) {
             header_ptr->pts      = config->processed_frame_count - 1;
             header_ptr->pic_type = EB_AV1_INVALID_PICTURE;
             header_ptr->flags    = 0;
+            header_ptr->metadata = NULL;
 
             // Send the picture
             svt_av1_enc_send_picture(component_handle, header_ptr);
@@ -956,6 +957,7 @@ void process_input_buffer(EncChannel *channel) {
             header_ptr->flags         = EB_BUFFERFLAG_EOS;
             header_ptr->p_buffer      = NULL;
             header_ptr->pic_type      = EB_AV1_INVALID_PICTURE;
+            header_ptr->metadata      = NULL;
 
             svt_av1_enc_send_picture(component_handle, header_ptr);
         }
