@@ -43,6 +43,7 @@ extern "C" {
 #define DEBUG_TPL               0 // Prints to debug TPL
 #define DETAILED_FRAME_OUTPUT   0 // Prints detailed frame output from the library for debugging
 #define TUNE_CHROMA_SSIM        0 // Allows for Chroma and SSIM BDR-based Tuning
+#define FTR_ENABLE_FIXED_QINDEX_OFFSETS 1
 #ifdef __cplusplus
 }
 #endif // __cplusplus

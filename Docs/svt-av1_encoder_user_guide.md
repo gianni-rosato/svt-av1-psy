@@ -172,6 +172,35 @@ The encoder parameters present in the `Sample.cfg` file are listed in this table
 | **MinQpAllowed** | --min-qp | [0 - 63] | Null | Minimum (best) quantizer[0-63] |
 | **AdaptiveQuantization** | --adaptive-quantization | [0 - 2] | 0 | 0 = OFF , 1 = variance base using segments , 2 = Deltaq pred efficiency (default) |
 | **VBVBufSize** | --vbv-bufsize | [1 - 4294967] | 1 second TargetBitRate | VBV Buffer Size when RateControl is 2. |
+| **UseFixedQIndexOffsets** | --use-fixed-qindex-offsets | [0 - 1] | 0 | 0 = OFF, 1 = enable fixed qindex offset based on temporal layer and frame type when rc mode is 0. qindex offsets are specified by the following arguments |
+| **QIndexOffsets** | --qindex-offsets | [v0,v1,..,vn] | [0,0,..,0] | list of qindex offsets vi, enclosed in [], seperated by ,. vi is in the range of [-256,255]. this argument should be used after hierarchical-levels, the number of qindex offsets equals to hierarchical-levels + 1 |
+| **KeyFrameQIndexOffset** | --key-frame-qindex-offset | [-256, 255] | 0 | qindex offset for Key frame |
+| **ChromaQIndexOffsets** | --chroma-qindex-offsets | [v0,v1,..,vn] | [0,0,..,0] | list of qindex offset vi, enclosed in [], seperated by ,. vi is in the range of [-256, 255]. this argument should be used after hierarchical-levels, the number of qindex offsets equals to hierarchical-levels + 1 |
+| **KeyFrameChromaQIndexOffset** | --key-frame-chroma-qindex-offset | [-256, 255] | 0 | chroma qindex offset for Key frame |
+
+
+use-fixed-qindex-offsets and associtated arguments (hierarchical-levels, qindex-offsets, chroma-qindex-offsets, key-frame-qindex-offset, key-frame-chroma-qindex-offset) are used together to specify the qindex offsets based on frame type and temporal layer when rc mode = 0.
+
+qp value specified by -q argument is assigned to the pictures at the highest temporal layer. it is first converted to qindex, then corresponding qindex offsets are added on top of it based on frame types (Key/Inter) and temporal layer id.
+
+qindex offset can be negative. the final qindex value will be clamped in the valid min/max qindex range.
+
+for chroma plane, after deciding the qindex for the luma plane, corresponding chroma qindex offsets are added on top of the luma plane qindex based on frame types and temporal layer id.
+
+--qindex-offsets and --chroma-qindex-offsets have to be used after the --hierachical-levels parameter. number of qindex offsets should be hierachical levels plus 1.
+
+an example command line is:
+"--rc 0 -q 42 --hierarchical-levels 3 --use-fixed-qindex-offsets 1 --qindex-offsets [-12,-8,-4,0] --key-frame-qindex-offset -20 --key-frame-chroma-qindex-offset -6 --chroma-qindex-offsets [-6,0,12,24]"
+
+for this command line, corresponding qindex are:
+
+| **Frame Type** | **Luma qindex** | **Chroma qindex** |
+| --- | --- | --- |
+| **Key Frame** | 148 (42x4 - 20) | 142 (148 - 6) |
+| **Layer0 Frame** | 156 (42x4 - 12) | 150 (156 - 6) |
+| **Layer1 Frame** | 160 (42x4 - 8) | 160 (160 + 0) |
+| **Layer2 Frame** | 164 (42x4 - 4) | 176 (164 + 12) |
+| **Layer3 Frame** | 168 (42x4 + 0) | 192 (168 + 24) |
 
 #### Twopass Options
 | **Configuration file parameter** | **Command line** | **Range** | **Default** | **Description** |

@@ -33,6 +33,9 @@ extern "C" {
 
 #define EB_MAX_NUM_OPERATING_POINTS 32
 
+#if FTR_ENABLE_FIXED_QINDEX_OFFSETS
+#define MAX_TEMPORAL_LAYERS     6
+#endif
 #define EB_MAX_TEMPORAL_LAYERS MAX_TEMPORAL_LAYERS
 
 /********************************

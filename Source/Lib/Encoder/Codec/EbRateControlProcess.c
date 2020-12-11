@@ -7319,6 +7319,49 @@ void *rate_control_kernel(void *input_ptr) {
                 // QP scaling based on POC number for Flat IPPP structure
                 frm_hdr->quantization_params.base_q_idx = quantizer_to_qindex[pcs_ptr->picture_qp];
 
+#if FTR_ENABLE_FIXED_QINDEX_OFFSETS
+                if (scs_ptr->static_config.use_fixed_qindex_offsets == 1) {
+                    pcs_ptr->picture_qp = scs_ptr->static_config.qp;
+                    int32_t qindex = quantizer_to_qindex[(uint8_t)scs_ptr->static_config.qp];
+                    if (!frame_is_intra_only(pcs_ptr->parent_pcs_ptr)) {
+                        qindex += scs_ptr->static_config.qindex_offsets[pcs_ptr->temporal_layer_index];
+                    } else {
+                        qindex += scs_ptr->static_config.key_frame_qindex_offset;
+                    }
+                    qindex = CLIP3(quantizer_to_qindex[scs_ptr->static_config.min_qp_allowed],
+                        quantizer_to_qindex[scs_ptr->static_config.max_qp_allowed], qindex);
+                    int32_t chroma_qindex = qindex;
+                    if (frame_is_intra_only(pcs_ptr->parent_pcs_ptr)) {
+                        chroma_qindex += scs_ptr->static_config.key_frame_chroma_qindex_offset;
+                    } else {
+                        chroma_qindex += scs_ptr->static_config.chroma_qindex_offsets[pcs_ptr->temporal_layer_index];
+                    }
+
+                    chroma_qindex = CLIP3(quantizer_to_qindex[scs_ptr->static_config.min_qp_allowed],
+                        quantizer_to_qindex[scs_ptr->static_config.max_qp_allowed], chroma_qindex);
+                    frm_hdr->quantization_params.base_q_idx = qindex;
+                    frm_hdr->quantization_params.delta_q_dc[1] =
+                    frm_hdr->quantization_params.delta_q_dc[2] =
+                    frm_hdr->quantization_params.delta_q_ac[1] =
+                    frm_hdr->quantization_params.delta_q_ac[2] = (chroma_qindex - qindex);
+                    pcs_ptr->picture_qp =
+                        (uint8_t)CLIP3((int32_t)scs_ptr->static_config.min_qp_allowed,
+                        (int32_t)scs_ptr->static_config.max_qp_allowed,
+                        (frm_hdr->quantization_params.base_q_idx + 2) >> 2);
+/*
+                    printf("\nSVT: Frame Type = %s, PicNumber = %lld, DecoderOrder = %lld, Temp Layer "
+                           "Index = %d, Picture QP = %d, Picture Qindex = %d, Picture Chroma Qindex = %d\n",
+                           frame_is_intra_only(pcs_ptr->parent_pcs_ptr) ? "INTRA" : "INTER",
+                           pcs_ptr->picture_number,
+                           pcs_ptr->parent_pcs_ptr->decode_order,
+                           pcs_ptr->temporal_layer_index,
+                           pcs_ptr->picture_qp,
+                           frm_hdr->quantization_params.base_q_idx,
+                           chroma_qindex);
+*/
+                }
+                else
+#endif
                 if (scs_ptr->static_config.enable_qp_scaling_flag &&
                     pcs_ptr->parent_pcs_ptr->qp_on_the_fly == EB_FALSE) {
                     const int32_t qindex = quantizer_to_qindex[(uint8_t)scs_ptr->static_config.qp];
@@ -7359,7 +7402,6 @@ void *rate_control_kernel(void *input_ptr) {
                         (int32_t)scs_ptr->static_config.max_qp_allowed,
                         (frm_hdr->quantization_params.base_q_idx + 2) >> 2);
                 }
-
                 else if (pcs_ptr->parent_pcs_ptr->qp_on_the_fly == EB_TRUE) {
                     pcs_ptr->picture_qp = (uint8_t)CLIP3(
                         (int32_t)scs_ptr->static_config.min_qp_allowed,

@@ -172,12 +172,18 @@ void svt_av1_set_quantizer(PictureParentControlSet *pcs_ptr, int32_t q) {
     pcs_ptr->max_qmlevel                       = 9;
 
     frm_hdr->quantization_params.base_q_idx = AOMMAX(frm_hdr->delta_q_params.delta_q_present, q);
-    frm_hdr->quantization_params.delta_q_dc[AOM_PLANE_Y] = 0;
-    frm_hdr->quantization_params.delta_q_ac[AOM_PLANE_Y] = 0;
-    frm_hdr->quantization_params.delta_q_ac[AOM_PLANE_U] = 0;
-    frm_hdr->quantization_params.delta_q_dc[AOM_PLANE_U] = 0;
-    frm_hdr->quantization_params.delta_q_ac[AOM_PLANE_V] = 0;
-    frm_hdr->quantization_params.delta_q_dc[AOM_PLANE_V] = 0;
+#if FTR_ENABLE_FIXED_QINDEX_OFFSETS
+    if (!pcs_ptr->scs_ptr->static_config.use_fixed_qindex_offsets)
+#endif
+    {
+        frm_hdr->quantization_params.delta_q_dc[AOM_PLANE_Y] = 0;
+        frm_hdr->quantization_params.delta_q_ac[AOM_PLANE_Y] = 0;
+        frm_hdr->quantization_params.delta_q_ac[AOM_PLANE_U] = 0;
+        frm_hdr->quantization_params.delta_q_dc[AOM_PLANE_U] = 0;
+        frm_hdr->quantization_params.delta_q_ac[AOM_PLANE_V] = 0;
+        frm_hdr->quantization_params.delta_q_dc[AOM_PLANE_V] = 0;
+    }
+
     frm_hdr->quantization_params.qm[AOM_PLANE_Y]         = aom_get_qmlevel(
         frm_hdr->quantization_params.base_q_idx, pcs_ptr->min_qmlevel, pcs_ptr->max_qmlevel);
     frm_hdr->quantization_params.qm[AOM_PLANE_U] = aom_get_qmlevel(
