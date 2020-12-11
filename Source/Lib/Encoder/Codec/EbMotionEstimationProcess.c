@@ -391,24 +391,52 @@ void set_gm_controls(PictureParentControlSet *pcs_ptr, uint8_t gm_level)
         gm_ctrls->identiy_exit = 0;
         gm_ctrls->rotzoom_model_only = 0;
         gm_ctrls->bipred_only = 0;
+#if FTR_GM_OPT_BASED_ON_ME
+        gm_ctrls->bypass_based_on_me = 0;
+#endif
+#if TUNE_M9_GM_DETECTOR
+        gm_ctrls->use_stationary_block = 0;
+        gm_ctrls->use_distance_based_active_th = 0;
+#endif
         break;
     case 2:
         gm_ctrls->enabled = 1;
         gm_ctrls->identiy_exit = 1;
         gm_ctrls->rotzoom_model_only = 0;
         gm_ctrls->bipred_only = 0;
+#if FTR_GM_OPT_BASED_ON_ME
+        gm_ctrls->bypass_based_on_me = 0;
+#endif
+#if TUNE_M9_GM_DETECTOR
+        gm_ctrls->use_stationary_block = 0;
+        gm_ctrls->use_distance_based_active_th = 0;
+#endif
         break;
     case 3:
         gm_ctrls->enabled = 1;
         gm_ctrls->identiy_exit = 1;
         gm_ctrls->rotzoom_model_only = 1;
         gm_ctrls->bipred_only = 0;
+#if FTR_GM_OPT_BASED_ON_ME
+        gm_ctrls->bypass_based_on_me = 0;
+#endif
+#if TUNE_M9_GM_DETECTOR
+        gm_ctrls->use_stationary_block = 0;
+        gm_ctrls->use_distance_based_active_th = 0;
+#endif
         break;
     case 4:
         gm_ctrls->enabled = 1;
         gm_ctrls->identiy_exit = 1;
         gm_ctrls->rotzoom_model_only = 1;
         gm_ctrls->bipred_only = 1;
+#if FTR_GM_OPT_BASED_ON_ME
+        gm_ctrls->bypass_based_on_me = 1;
+#endif
+#if TUNE_M9_GM_DETECTOR
+        gm_ctrls->use_stationary_block = 0;
+        gm_ctrls->use_distance_based_active_th = 0;
+#endif
         break;
     default:
         assert(0);
@@ -1062,6 +1090,15 @@ void fill_me_pcs_wraper(
         me_pcs->pa_me_data = pcs->pa_me_data_trail;
         me_pcs->ois_mb_results = pcs->ois_mb_results_trail;
         me_pcs->rc_me_distortion = pcs->rc_me_distortion_trail;
+#if FTR_GM_OPT_BASED_ON_ME
+#if TUNE_M9_GM_DETECTOR
+        me_pcs->stationary_block_present_sb = pcs->stationary_block_present_sb_trail;
+#endif
+        me_pcs->rc_me_allow_gm = pcs->rc_me_allow_gm_trail;
+#endif
+#if TUNE_DEPTH_REMOVAL_PER_RESOLUTION
+        me_pcs->me_8x8_cost_variance = pcs->me_8x8_cost_variance_trail;
+#endif
 #if FTR_EARLY_DEPTH_REMOVAL
         me_pcs->me_64x64_distortion = pcs->me_64x64_distortion_trail;
         me_pcs->me_32x32_distortion = pcs->me_32x32_distortion_trail;
@@ -1082,6 +1119,15 @@ void fill_me_pcs_wraper(
         me_pcs->pa_me_data = pcs->pa_me_data;
         me_pcs->ois_mb_results = pcs->ois_mb_results;
         me_pcs->rc_me_distortion = pcs->rc_me_distortion;
+#if FTR_GM_OPT_BASED_ON_ME
+#if TUNE_M9_GM_DETECTOR
+        me_pcs->stationary_block_present_sb = pcs->stationary_block_present_sb;
+#endif
+        me_pcs->rc_me_allow_gm = pcs->rc_me_allow_gm;
+#endif
+#if TUNE_DEPTH_REMOVAL_PER_RESOLUTION
+        me_pcs->me_8x8_cost_variance = pcs->me_8x8_cost_variance;
+#endif
 #if FTR_EARLY_DEPTH_REMOVAL
         me_pcs->me_64x64_distortion = pcs->me_64x64_distortion;
         me_pcs->me_32x32_distortion = pcs->me_32x32_distortion;

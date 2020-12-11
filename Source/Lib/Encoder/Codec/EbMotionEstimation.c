@@ -3210,6 +3210,15 @@ EbErrorType motion_estimate_sb(
             MePredUnit *me_candidate = &(context_ptr->me_candidate[0].pu[21 + i]);
             dist_8x8 += me_candidate->distortion;
         }
+#if TUNE_DEPTH_REMOVAL_PER_RESOLUTION
+        uint64_t mean_dist_8x8 = dist_8x8 / 64;
+        uint64_t sum_ofsq_dist_8x8 = 0;
+        for (unsigned i = 0; i < 64; i++) {
+            MePredUnit *me_candidate = &(context_ptr->me_candidate[0].pu[21 + i]);
+            sum_ofsq_dist_8x8 += (me_candidate->distortion - mean_dist_8x8) * (me_candidate->distortion - mean_dist_8x8);
+        }
+        pcs_ptr->me_8x8_cost_variance[sb_index] = (uint32_t) (sum_ofsq_dist_8x8/ 64);
+#endif
         // Normalize
         pcs_ptr->me_64x64_distortion[sb_index] = (dist_64x64 * sb_size) / (sb_params->width * sb_params->height);
         pcs_ptr->me_32x32_distortion[sb_index] = (dist_32x32 * sb_size) / (sb_params->width * sb_params->height);
@@ -3219,16 +3228,231 @@ EbErrorType motion_estimate_sb(
         pcs_ptr->rc_me_distortion[sb_index] = 0;
         // Compute the sum of the distortion of all 16 16x16 (720 and above) and
         // 64 8x8 (for lower resolutions) blocks in the SB
+#if FTR_GM_OPT_BASED_ON_ME
+#if TUNE_M9_GM_DETECTOR
+        uint64_t stationary_cnt = 0;
+#endif
+        uint64_t per_sig_cnt[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH][NUM_MV_COMPONENTS][NUM_MV_HIST];
+        uint64_t tot_cnt = 0;
+        memset(per_sig_cnt, 0, sizeof(uint64_t) * MAX_MV_HIST_SIZE);
+#if !TUNE_M9_GM_DETECTOR
+        int gm_th = scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? 4 : 32;
+        int still_th = 4;
+        pcs_ptr->rc_me_allow_gm[sb_index] = 0;
+#endif
+#endif
         if (scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE)
             for (unsigned i = 0; i < 64; i++) {
                 MePredUnit *me_candidate = &(context_ptr->me_candidate[0].pu[21 + i]);
                 pcs_ptr->rc_me_distortion[sb_index] += me_candidate->distortion;
+#if FTR_GM_OPT_BASED_ON_ME
+                int n_idx = 21 + i;
+                uint32_t list_index, ref_pic_index;
+                if (me_candidate->prediction_direction == 0 || me_candidate->prediction_direction == 2) {
+                    list_index = me_candidate->ref0_list;
+                    ref_pic_index = me_candidate->ref_index[0];
+
+#if TUNE_M9_GM_DETECTOR
+                    // Active block detection
+                    uint16_t dist = ABS((int16_t)(pcs_ptr->picture_number - context_ptr->me_ds_ref_array[list_index][ref_pic_index].picture_number));
+                    int active_th = (pcs_ptr->gm_ctrls.use_distance_based_active_th) ?
+                        MAX(dist >> 1, 4) :
+                        4;
+                    int mx = _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][n_idx]);
+                    if (mx < -active_th)
+                        per_sig_cnt[list_index][ref_pic_index][0][0]++;
+                    else if (mx > active_th)
+                        per_sig_cnt[list_index][ref_pic_index][0][1]++;
+                    int my = _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][n_idx]);
+                    if (my < -active_th)
+                        per_sig_cnt[list_index][ref_pic_index][1][0]++;
+                    else if (my > active_th)
+                        per_sig_cnt[list_index][ref_pic_index][1][1]++;
+
+                    // Stationary block detection
+                    int stationary_th = 0;
+                    if (abs(mx) <= stationary_th && abs(my) <= stationary_th)
+                        stationary_cnt++;
+#else
+                    int mx = _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][n_idx]);
+                    if(mx < -gm_th)
+                        per_sig_cnt[list_index][ref_pic_index][0][0]++;
+                    else if(mx > gm_th)
+                        per_sig_cnt[list_index][ref_pic_index][0][2]++;
+                    else if((mx > -still_th) && (mx < still_th))
+                        per_sig_cnt[list_index][ref_pic_index][0][1]++;
+                    int my = _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][n_idx]);
+                    if(my < -gm_th)
+                        per_sig_cnt[list_index][ref_pic_index][1][0]++;
+                    else if(my > gm_th)
+                        per_sig_cnt[list_index][ref_pic_index][1][2]++;
+                    else if((my > -still_th) && (my < still_th))
+                        per_sig_cnt[list_index][ref_pic_index][1][1]++;
+#endif
+                }else if (me_candidate->prediction_direction == 1 || me_candidate->prediction_direction == 2) {
+                    list_index = me_candidate->ref1_list;
+                    ref_pic_index = me_candidate->ref_index[1];
+
+#if TUNE_M9_GM_DETECTOR
+                    // Active block detection
+                    uint16_t dist = ABS((int16_t)(pcs_ptr->picture_number - context_ptr->me_ds_ref_array[list_index][ref_pic_index].picture_number));
+                    int active_th = (pcs_ptr->gm_ctrls.use_distance_based_active_th) ?
+                        MAX(dist >> 1, 4) :
+                        4;
+                    int mx = _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][n_idx]);
+                    if (mx < -active_th)
+                        per_sig_cnt[list_index][ref_pic_index][0][0]++;
+                    else if (mx > active_th)
+                        per_sig_cnt[list_index][ref_pic_index][0][1]++;
+                    int my = _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][n_idx]);
+                    if (my < -active_th)
+                        per_sig_cnt[list_index][ref_pic_index][1][0]++;
+                    else if (my > active_th)
+                        per_sig_cnt[list_index][ref_pic_index][1][1]++;
+
+                    // Stationary block detection
+                    int stationary_th = 0;
+                    if (abs(mx) <= stationary_th && abs(my) <= stationary_th)
+                        stationary_cnt++;
+#else
+                    int mx = _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][n_idx]);
+                    if(mx < -gm_th)
+                        per_sig_cnt[list_index][ref_pic_index][0][0]++;
+                    else if(mx > gm_th)
+                        per_sig_cnt[list_index][ref_pic_index][0][2]++;
+                    else if((mx > -still_th) && (mx < still_th))
+                        per_sig_cnt[list_index][ref_pic_index][0][1]++;
+                    int my = _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][n_idx]);
+                    if(my < -gm_th)
+                        per_sig_cnt[list_index][ref_pic_index][1][0]++;
+                    else if(my > gm_th)
+                        per_sig_cnt[list_index][ref_pic_index][1][2]++;
+                    else if((my > -still_th) && (my < still_th))
+                        per_sig_cnt[list_index][ref_pic_index][1][1]++;
+#endif
+                }
+                tot_cnt++;
+#endif
             }
         else
             for (unsigned i = 0; i < 16; i++) {
                 MePredUnit *me_candidate = &(context_ptr->me_candidate[0].pu[5 + i]);
                 pcs_ptr->rc_me_distortion[sb_index] += me_candidate->distortion;
+#if FTR_GM_OPT_BASED_ON_ME
+                int n_idx = 5 + i;
+                uint32_t list_index, ref_pic_index;
+                if (me_candidate->prediction_direction == 0 || me_candidate->prediction_direction == 2) {
+                    list_index = me_candidate->ref0_list;
+                    ref_pic_index = me_candidate->ref_index[0];
+
+#if TUNE_M9_GM_DETECTOR
+                    // Active block detection
+                    uint16_t dist = ABS((int16_t)(pcs_ptr->picture_number - context_ptr->me_ds_ref_array[list_index][ref_pic_index].picture_number));
+                    int active_th = (pcs_ptr->gm_ctrls.use_distance_based_active_th) ?
+                        MAX(dist * 16, 32) :
+                        32;
+                    int mx = _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][n_idx]);
+                    if (mx < -active_th)
+                        per_sig_cnt[list_index][ref_pic_index][0][0]++;
+                    else if (mx > active_th)
+                        per_sig_cnt[list_index][ref_pic_index][0][1]++;
+                    int my = _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][n_idx]);
+                    if (my < -active_th)
+                        per_sig_cnt[list_index][ref_pic_index][1][0]++;
+                    else if (my > active_th)
+                        per_sig_cnt[list_index][ref_pic_index][1][1]++;
+
+                    // Stationary block detection
+                    int stationary_th = 4;
+                    if (abs(mx) <= stationary_th && abs(my) <= stationary_th)
+                        stationary_cnt++;
+#else
+                    int mx = _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][n_idx]);
+                    if(mx < -gm_th)
+                        per_sig_cnt[list_index][ref_pic_index][0][0]++;
+                    else if(mx > gm_th)
+                        per_sig_cnt[list_index][ref_pic_index][0][2]++;
+                    else if((mx > -still_th) && (mx < still_th))
+                        per_sig_cnt[list_index][ref_pic_index][0][1]++;
+                    int my = _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][n_idx]);
+                    if(my < -gm_th)
+                        per_sig_cnt[list_index][ref_pic_index][1][0]++;
+                    else if(my > gm_th)
+                        per_sig_cnt[list_index][ref_pic_index][1][2]++;
+                    else if((my > -still_th) && (my < still_th))
+                        per_sig_cnt[list_index][ref_pic_index][1][1]++;
+#endif
+
+                }else if (me_candidate->prediction_direction == 1 || me_candidate->prediction_direction == 2) {
+                    list_index = me_candidate->ref1_list;
+                    ref_pic_index = me_candidate->ref_index[1];
+
+#if TUNE_M9_GM_DETECTOR
+                    // Active block detection
+                    uint16_t dist = ABS((int16_t)(pcs_ptr->picture_number - context_ptr->me_ds_ref_array[list_index][ref_pic_index].picture_number));
+                    int active_th = (pcs_ptr->gm_ctrls.use_distance_based_active_th) ?
+                        MAX(dist * 16, 32) :
+                        32;
+                    int mx = _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][n_idx]);
+                    if (mx < -active_th)
+                        per_sig_cnt[list_index][ref_pic_index][0][0]++;
+                    else if (mx > active_th)
+                        per_sig_cnt[list_index][ref_pic_index][0][1]++;
+                    int my = _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][n_idx]);
+                    if (my < -active_th)
+                        per_sig_cnt[list_index][ref_pic_index][1][0]++;
+                    else if (my > active_th)
+                        per_sig_cnt[list_index][ref_pic_index][1][1]++;
+
+                    // Stationary block detection
+                    int stationary_th = 4;
+                    if (abs(mx) <= stationary_th && abs(my) <= stationary_th)
+                        stationary_cnt++;
+#else
+                    int mx = _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][n_idx]);
+                    if(mx < -gm_th)
+                        per_sig_cnt[list_index][ref_pic_index][0][0]++;
+                    else if(mx > gm_th)
+                        per_sig_cnt[list_index][ref_pic_index][0][2]++;
+                    else if((mx > -still_th) && (mx < still_th))
+                        per_sig_cnt[list_index][ref_pic_index][0][1]++;
+                    int my = _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][n_idx]);
+                    if(my < -gm_th)
+                        per_sig_cnt[list_index][ref_pic_index][1][0]++;
+                    else if(my > gm_th)
+                        per_sig_cnt[list_index][ref_pic_index][1][2]++;
+                    else if((my > -still_th) && (my < still_th))
+                        per_sig_cnt[list_index][ref_pic_index][1][1]++;
+#endif
+                }
+                tot_cnt++;
+#endif
             }
+#if FTR_GM_OPT_BASED_ON_ME
+#if TUNE_M9_GM_DETECTOR
+            pcs_ptr->stationary_block_present_sb[sb_index] = 0;
+            // Set stationary_block_present_sb to 1 if stationary_cnt is higher than 5%
+            if (stationary_cnt > ((tot_cnt * 5)/100))
+                pcs_ptr->stationary_block_present_sb[sb_index] = 1;
+            pcs_ptr->rc_me_allow_gm[sb_index] = 0;
+#endif
+            for (int l = 0; l < MAX_NUM_OF_REF_PIC_LIST; l++) {
+                for (int r = 0; r < REF_LIST_MAX_DEPTH; r++) {
+                    for (int c = 0; c < NUM_MV_COMPONENTS; c++) {
+#if FTR_GM_OPT_BASED_ON_ME
+#if TUNE_M9_GM_DETECTOR
+                        for (int s = 0; s < NUM_MV_HIST; s ++) {
+#else
+                        for (int s = 0; s < NUM_MV_HIST; s += 2) {
+#endif
+                            if (per_sig_cnt[l][r][c][s] > (tot_cnt / 2))
+                                pcs_ptr->rc_me_allow_gm[sb_index] = 1;
+                        }
+#endif
+                    }
+                }
+            }
+#endif
     }
 
     return return_error;
@@ -3347,7 +3571,12 @@ EbErrorType open_loop_intra_search_mb(
 
                 // Distortion
                 svt_aom_subtract_block(16, 16, src_diff, 16, src, input_ptr->stride_y, predictor, 16);
+#if OPT_TPL
+                EB_TRANS_COEFF_SHAPE pf_shape = pcs_ptr->tpl_ctrls.tpl_opt_flag ? pcs_ptr->tpl_ctrls.pf_shape : DEFAULT_SHAPE;
+                svt_av1_wht_fwd_txfm(src_diff, 16, coeff, 2/*TX_16X16*/, pf_shape, 8, 0);
+#else
                 svt_av1_wht_fwd_txfm(src_diff, 16, coeff, 2/*TX_16X16*/, 8, 0);
+#endif
                 int64_t intra_cost = svt_aom_satd(coeff, 16 * 16);
 
                 // printf("open_loop_intra_search_mb aom_satd mbxy %d %d, mode=%d, satd=%d, dst[0~4]=0x%d,%d,%d,%d\n", cu_origin_x, cu_origin_y, ois_intra_mode, intra_cost, predictor[0], predictor[1], predictor[2], predictor[3]);

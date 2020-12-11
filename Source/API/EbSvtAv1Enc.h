@@ -27,7 +27,15 @@ extern "C" {
 #define MAX_HIERARCHICAL_LEVEL 6
 #define REF_LIST_MAX_DEPTH 4
 #define MAX_ENC_PRESET 8
-
+#if FTR_GM_OPT_BASED_ON_ME
+#define NUM_MV_COMPONENTS 2
+#if TUNE_M9_GM_DETECTOR
+#define NUM_MV_HIST 2
+#else
+#define NUM_MV_HIST 3
+#endif
+#define MAX_MV_HIST_SIZE  2 * REF_LIST_MAX_DEPTH * NUM_MV_COMPONENTS * NUM_MV_HIST
+#endif
 #define DEFAULT -1
 
 #define EB_BUFFERFLAG_EOS 0x00000001 // signals the last packet of the stream

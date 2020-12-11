@@ -79,6 +79,19 @@ extern "C" {
 #define FTR_ME_HME_PROTECT_CLOSEST_REF     1 // Protect the closest reference frames from ME/HME SAD-based pruning
 #define TUNE_LOWER_PRESETS                 1 // Tune the lower presets M0, M1, M2, M3, and M4
 #define TUNE_HBD_MODE_DECISION             1 // Push M0 level of HBD Mode Decision to M1
+
+#define FTR_CDEF_CHROMA_FOLLOWS_LUMA           1 // Bypass chroma V in the cdef search
+#define FTR_GM_OPT_BASED_ON_ME                 1 // Bypass Global Motion on ME
+#define FTR_OPTIMISE_TF                        0 // Bypass halfpel in temporal feature based on noise level
+#define FTR_REDUCE_MDS3_COMPLEXITY             1 // Added 3 levels of tuning to reduce MDS3 complexity
+#define TUNE_DEPTH_REMOVAL_PER_RESOLUTION      0 // improve depth removal
+#define FTR_M9_AGRESSIVE_LAST_MD_STAGE         1 // M9 agressive last md stage
+#define FTR_M9_AGRESSICE_EARLY_CAN_ELIMINATION 1 // M9 agressive early candidate elimintation
+#define OPT_RDOQ_FOR_M9                        1 // M9 rdoq
+#define TUNE_M9_TF_LEVEL                       0 // create tf level 5 for m9 where temp_layer ==0 and res<=720p
+#define TUNE_M9_OPT_DEPTH_REMOVAL              1 // Depth removal optimisation
+#define FTR_M9_CDEF                            0 // CDEF optimisation
+#define CLEANUP_CANDIDATE_ELEMINATION_CTR      1 // Cleanup candidate elimination
     // ============= END SVT_04 =============
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch

@@ -120,8 +120,22 @@ void cdef_seg_search(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr,
     int32_t  nhfb        = (mi_cols + MI_SIZE_64X64 - 1) / MI_SIZE_64X64;
     int32_t  pri_damping = 3 + (frm_hdr->quantization_params.base_q_idx >> 6);
     int32_t  sec_damping = pri_damping;
-
+#if FTR_M9_CDEF
+    uint64_t best_sse[2];
+    best_sse[0] = MAX_MODE_COST;
+    best_sse[1] = MAX_MODE_COST;
+    int32_t best_gi[2];
+    int32_t gi_offset[2] = { 6,2 };
+#endif
+#if FTR_CDEF_CHROMA_FOLLOWS_LUMA
+#if FTR_M9_CDEF
+    const int32_t num_planes      = pcs_ptr->parent_pcs_ptr->cdef_level >= 5 ? 2 : 3;
+#else
+    const int32_t num_planes      = pcs_ptr->parent_pcs_ptr->cdef_level == 5 ? 2 : 3;
+#endif
+#else
     const int32_t num_planes = 3;
+#endif
     DECLARE_ALIGNED(32, uint16_t, inbuf[CDEF_INBUF_SIZE]);
     uint16_t *in;
     DECLARE_ALIGNED(32, uint8_t, tmp_dst[1 << (MAX_SB_SIZE_LOG2 * 2)]);
@@ -130,8 +144,16 @@ void cdef_seg_search(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr,
     int32_t          end_gi;
     CDEF_PICK_METHOD pick_method = pcs_ptr->parent_pcs_ptr->cdef_level == 2 ? CDEF_FAST_SEARCH_LVL1
         : pcs_ptr->parent_pcs_ptr->cdef_level == 3                          ? CDEF_FAST_SEARCH_LVL2
+#if FTR_CDEF_CHROMA_FOLLOWS_LUMA
+#if FTR_M9_CDEF
+        : (pcs_ptr->parent_pcs_ptr->cdef_level > 3) ?  CDEF_FAST_SEARCH_LVL3 : 0;
+#else
+        : (pcs_ptr->parent_pcs_ptr->cdef_level == 4 || pcs_ptr->parent_pcs_ptr->cdef_level == 5) ?  CDEF_FAST_SEARCH_LVL3 : 0;
+#endif
+#else
         : pcs_ptr->parent_pcs_ptr->cdef_level == 4                          ? CDEF_FAST_SEARCH_LVL3
                                                                             : 0;
+#endif
 
     EbPictureBufferDesc *input_picture_ptr = (EbPictureBufferDesc *)
                                                  pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr;
@@ -228,6 +250,22 @@ void cdef_seg_search(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr,
                 end_gi   = nb_cdef_strengths[pick_method];
 
                 for (gi = start_gi; gi < end_gi; gi++) {
+#if FTR_M9_CDEF
+                    if (pcs_ptr->parent_pcs_ptr->cdef_level >= 6) {
+
+                        if (gi > start_gi + gi_offset[pli ? 1 : 0]) {
+                            if (best_gi[pli ? 1 : 0] == start_gi) {
+                                if (pli < 2)
+                                    pcs_ptr->mse_seg[pli][fbr * nhfb + fbc][gi] = MAX_MODE_COST;
+                                else
+                                    pcs_ptr->mse_seg[1][fbr * nhfb + fbc][gi] += MAX_MODE_COST;
+
+                                continue;
+
+                            }
+                        }
+                    }
+#endif
                     int32_t  threshold;
                     uint64_t curr_mse;
                     int32_t  sec_strength;
@@ -270,6 +308,12 @@ void cdef_seg_search(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr,
                         pcs_ptr->mse_seg[pli][fbr * nhfb + fbc][gi] = curr_mse;
                     else
                         pcs_ptr->mse_seg[1][fbr * nhfb + fbc][gi] += curr_mse;
+#if FTR_M9_CDEF
+                    if (curr_mse < best_sse[pli ? 1 : 0]) {
+                        best_sse[pli ? 1 : 0] = curr_mse;
+                        best_gi[pli ? 1 : 0] = gi;
+                    }
+#endif
                 }
 
                 //if (ppcs->picture_number == 15)
@@ -307,11 +351,25 @@ void cdef_seg_search16bit(PictureControlSet *pcs_ptr, SequenceControlSet *scs_pt
 
     int32_t mi_rows = ppcs->av1_cm->mi_rows;
     int32_t mi_cols = ppcs->av1_cm->mi_cols;
-
+#if FTR_M9_CDEF
+    uint64_t best_sse[2];
+    best_sse[0] = MAX_MODE_COST;
+    best_sse[1] = MAX_MODE_COST;
+    int32_t best_gi[2];
+    int32_t gi_offset[2] = { 6,2 };
+#endif
     CDEF_PICK_METHOD pick_method = pcs_ptr->parent_pcs_ptr->cdef_level == 2 ? CDEF_FAST_SEARCH_LVL1
         : pcs_ptr->parent_pcs_ptr->cdef_level == 3                          ? CDEF_FAST_SEARCH_LVL2
+#if FTR_CDEF_CHROMA_FOLLOWS_LUMA
+#if FTR_M9_CDEF
+        : (pcs_ptr->parent_pcs_ptr->cdef_level > 3) ?  CDEF_FAST_SEARCH_LVL3 : 0;
+#else
+        : (pcs_ptr->parent_pcs_ptr->cdef_level == 4 || pcs_ptr->parent_pcs_ptr->cdef_level == 5) ?  CDEF_FAST_SEARCH_LVL3 : 0;
+#endif
+#else
         : pcs_ptr->parent_pcs_ptr->cdef_level == 4                          ? CDEF_FAST_SEARCH_LVL3
                                                                             : 0;
+#endif
     uint32_t         fbr, fbc;
     uint16_t *       src[3];
     uint16_t *       ref_coeff[3];
@@ -332,8 +390,15 @@ void cdef_seg_search16bit(PictureControlSet *pcs_ptr, SequenceControlSet *scs_pt
     int32_t          nhfb        = (mi_cols + MI_SIZE_64X64 - 1) / MI_SIZE_64X64;
     int32_t          pri_damping = 3 + (frm_hdr->quantization_params.base_q_idx >> 6);
     int32_t          sec_damping = pri_damping;
-
+#if FTR_CDEF_CHROMA_FOLLOWS_LUMA
+#if FTR_M9_CDEF
+    const int32_t num_planes      = pcs_ptr->parent_pcs_ptr->cdef_level >= 5 ? 2 : 3;
+#else
+    const int32_t num_planes      = pcs_ptr->parent_pcs_ptr->cdef_level == 5 ? 2 : 3;
+#endif
+#else
     const int32_t num_planes = 3;
+#endif
     DECLARE_ALIGNED(32, uint16_t, inbuf[CDEF_INBUF_SIZE]);
     uint16_t *in;
     DECLARE_ALIGNED(32, uint16_t, tmp_dst[1 << (MAX_SB_SIZE_LOG2 * 2)]);
@@ -425,6 +490,22 @@ void cdef_seg_search16bit(PictureControlSet *pcs_ptr, SequenceControlSet *scs_pt
                 end_gi   = nb_cdef_strengths[pick_method];
 
                 for (gi = start_gi; gi < end_gi; gi++) {
+#if FTR_M9_CDEF
+                    if (pcs_ptr->parent_pcs_ptr->cdef_level >= 6) {
+
+                        if (gi > start_gi + gi_offset[pli ? 1 : 0]) {
+                            if (best_gi[pli ? 1 : 0] == start_gi) {
+                                if (pli < 2)
+                                    pcs_ptr->mse_seg[pli][fbr * nhfb + fbc][gi] = MAX_MODE_COST;
+                                else
+                                    pcs_ptr->mse_seg[1][fbr * nhfb + fbc][gi] += MAX_MODE_COST;
+
+                                continue;
+
+                            }
+                        }
+                    }
+#endif
                     int32_t  threshold;
                     uint64_t curr_mse;
                     int32_t  sec_strength;
@@ -467,6 +548,12 @@ void cdef_seg_search16bit(PictureControlSet *pcs_ptr, SequenceControlSet *scs_pt
                         pcs_ptr->mse_seg[pli][fbr * nhfb + fbc][gi] = curr_mse;
                     else
                         pcs_ptr->mse_seg[1][fbr * nhfb + fbc][gi] += curr_mse;
+#if FTR_M9_CDEF
+                    if (curr_mse < best_sse[pli ? 1 : 0]) {
+                        best_sse[pli ? 1 : 0] = curr_mse;
+                        best_gi[pli ? 1 : 0] = gi;
+                    }
+#endif
                 }
             }
         }

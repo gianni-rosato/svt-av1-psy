@@ -141,7 +141,9 @@ EbErrorType resource_coordination_context_ctor(EbThreadContext *thread_contxt_pt
 void set_tpl_controls(
     PictureParentControlSet *pcs_ptr, uint8_t tpl_level) {
     TplControls *tpl_ctrls = &pcs_ptr->tpl_ctrls;
-
+#if OPT_TPL
+    SequenceControlSet* scs_ptr = (SequenceControlSet*)pcs_ptr->scs_wrapper_ptr->object_ptr;
+#endif
     switch (tpl_level) {
     case 0:
         tpl_ctrls->tpl_opt_flag = 0;
@@ -151,6 +153,14 @@ void set_tpl_controls(
         tpl_ctrls->disable_tpl_nref = 0;
         tpl_ctrls->disable_tpl_pic_dist = 0;
         tpl_ctrls->get_best_ref = 0;
+#if OPT_TPL
+        tpl_ctrls->pf_shape = DEFAULT_SHAPE;
+        tpl_ctrls->use_pred_sad_in_intra_search = 0;
+#if TPL_REDUCE_NUMBER_OF_REF
+        tpl_ctrls->get_best_ref = 0;
+        tpl_ctrls->use_pred_sad_in_inter_search = 0;
+#endif
+#endif
         break;
     case 1:
         tpl_ctrls->tpl_opt_flag = 1;
@@ -160,6 +170,14 @@ void set_tpl_controls(
         tpl_ctrls->disable_tpl_nref = 0;
         tpl_ctrls->disable_tpl_pic_dist = 0;
         tpl_ctrls->get_best_ref = 0;
+#if OPT_TPL
+        tpl_ctrls->pf_shape = DEFAULT_SHAPE;
+        tpl_ctrls->use_pred_sad_in_intra_search = 0;
+#if TPL_REDUCE_NUMBER_OF_REF
+        tpl_ctrls->get_best_ref = 0;
+        tpl_ctrls->use_pred_sad_in_inter_search = 0;
+#endif
+#endif
         break;
     case 2:
     default:
@@ -170,6 +188,14 @@ void set_tpl_controls(
         tpl_ctrls->disable_tpl_nref = 1;
         tpl_ctrls->disable_tpl_pic_dist = 1;
         tpl_ctrls->get_best_ref = 0;
+#if OPT_TPL
+        tpl_ctrls->pf_shape = scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? N2_SHAPE : N4_SHAPE;
+        tpl_ctrls->use_pred_sad_in_intra_search = 1;
+#if TPL_REDUCE_NUMBER_OF_REF
+        tpl_ctrls->get_best_ref = 1;
+        tpl_ctrls->use_pred_sad_in_inter_search = 0;
+#endif
+#endif
         break;
     }
 }

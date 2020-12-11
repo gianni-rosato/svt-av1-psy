@@ -1132,11 +1132,20 @@ static void picture_parent_control_set_dctor(EbPtr ptr) {
     if (obj->tpl_sb_rdmult_scaling_factors)
         EB_FREE_ARRAY(obj->tpl_sb_rdmult_scaling_factors);
     EB_FREE_ARRAY(obj->rc_me_distortion);
+#if FTR_GM_OPT_BASED_ON_ME
+#if TUNE_M9_GM_DETECTOR
+    EB_FREE_ARRAY(obj->stationary_block_present_sb);
+#endif
+    EB_FREE_ARRAY(obj->rc_me_allow_gm);
+#endif
 #if FTR_EARLY_DEPTH_REMOVAL
     EB_FREE_ARRAY(obj->me_64x64_distortion);
     EB_FREE_ARRAY(obj->me_32x32_distortion);
     EB_FREE_ARRAY(obj->me_16x16_distortion);
     EB_FREE_ARRAY(obj->me_8x8_distortion);
+#endif
+#if TUNE_DEPTH_REMOVAL_PER_RESOLUTION
+    EB_FREE_ARRAY(obj->me_8x8_cost_variance);
 #endif
     // ME and OIS Distortion Histograms
     EB_FREE_ARRAY(obj->me_distortion_histogram);
@@ -1301,11 +1310,20 @@ EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr,
     }
 
     EB_MALLOC_ARRAY(object_ptr->rc_me_distortion, object_ptr->sb_total_count);
+#if FTR_GM_OPT_BASED_ON_ME
+#if TUNE_M9_GM_DETECTOR
+    EB_MALLOC_ARRAY(object_ptr->stationary_block_present_sb, object_ptr->sb_total_count);
+#endif
+    EB_MALLOC_ARRAY(object_ptr->rc_me_allow_gm, object_ptr->sb_total_count);
+#endif
 #if FTR_EARLY_DEPTH_REMOVAL
     EB_MALLOC_ARRAY(object_ptr->me_64x64_distortion, object_ptr->sb_total_count);
     EB_MALLOC_ARRAY(object_ptr->me_32x32_distortion, object_ptr->sb_total_count);
     EB_MALLOC_ARRAY(object_ptr->me_16x16_distortion, object_ptr->sb_total_count);
     EB_MALLOC_ARRAY(object_ptr->me_8x8_distortion, object_ptr->sb_total_count);
+#endif
+#if TUNE_DEPTH_REMOVAL_PER_RESOLUTION
+    EB_MALLOC_ARRAY(object_ptr->me_8x8_cost_variance, object_ptr->sb_total_count);
 #endif
     // ME and OIS Distortion Histograms
     EB_MALLOC_ARRAY(object_ptr->me_distortion_histogram, NUMBER_OF_SAD_INTERVALS);

@@ -477,7 +477,13 @@ typedef struct TplControls {
     uint8_t disable_tpl_nref; // 0:OFF 1:ON - Disable tpl in NREF
     uint8_t disable_tpl_pic_dist; // 16: OFF - 0: ON
     uint8_t get_best_ref; // Reference pruning, get best reference
-
+#if OPT_TPL
+    EB_TRANS_COEFF_SHAPE pf_shape;
+    uint8_t use_pred_sad_in_intra_search;
+#endif
+#if TPL_REDUCE_NUMBER_OF_REF
+    uint8_t use_pred_sad_in_inter_search;
+#endif
 } TplControls;
 
 /*!
@@ -515,6 +521,9 @@ typedef struct TfControls {
     uint8_t  hp; // w/o 1/16 pel MV refinement
     uint8_t  chroma; // use chroma
     uint64_t block_32x32_16x16_th; // control tf_16x16 using tf_32x32 pred error
+#if FTR_OPTIMISE_TF
+    uint8_t bypass_halfpel; // bypass 1/2-pel search
+#endif
 } TfControls;
 typedef struct GmControls {
     uint8_t enabled;
@@ -522,6 +531,13 @@ typedef struct GmControls {
             identiy_exit; // 0: generate GM params for both list_0 and list_1, 1: do not generate GM params for list_1 if list_0/ref_idx_0 is id
     uint8_t rotzoom_model_only; // 0: use both rotzoom and affine models, 1:use rotzoom model only
     uint8_t bipred_only; // 0: test both unipred and bipred, 1: test bipred only
+#if FTR_GM_OPT_BASED_ON_ME
+    uint8_t bypass_based_on_me;
+#if TUNE_M9_GM_DETECTOR
+    uint8_t use_stationary_block; // 0: do not consider stationary_block info @ me-based bypass, 1: consider stationary_block info @ me-based bypass (only if bypass_based_on_me=1)
+    uint8_t use_distance_based_active_th; // 0: used default active_th,1: increase active_th baed on distance to ref (only if bypass_based_on_me=1)
+#endif
+#endif
 } GmControls;
 #if FTR_TPL_TR
 /* a local PCS wraper to make TPL : PCS agnostic*/
@@ -556,11 +572,20 @@ typedef struct MePcs {
     uint8_t                    picture_qp;
     uint8_t                    max_number_of_pus_per_sb;
     uint32_t                  *rc_me_distortion;
+#if FTR_GM_OPT_BASED_ON_ME
+#if TUNE_M9_GM_DETECTOR
+    uint8_t *     stationary_block_present_sb; // 1 when a % of the SB is stationary relative to reference frame(s) ((0,0) MV: decode order), 0 otherwise
+#endif
+    uint8_t *     rc_me_allow_gm;
+#endif
 #if FTR_EARLY_DEPTH_REMOVAL
     uint32_t                  *me_64x64_distortion;
     uint32_t                  *me_32x32_distortion;
     uint32_t                  *me_16x16_distortion;
     uint32_t                  *me_8x8_distortion;
+#endif
+#if TUNE_DEPTH_REMOVAL_PER_RESOLUTION
+    uint32_t *me_8x8_cost_variance;
 #endif
     SbParams                  *sb_params_array;
     uint16_t                   aligned_width;
@@ -733,11 +758,20 @@ typedef struct PictureParentControlSet {
     OisMbResults        **ois_mb_results_trail;
     MotionEstimationData *pa_me_data_trail;
     uint32_t             *rc_me_distortion_trail;
+#if FTR_GM_OPT_BASED_ON_ME
+#if TUNE_M9_GM_DETECTOR
+    uint8_t *     stationary_block_present_sb_trail; // 1 when a % of the SB is stationary relative to reference frame(s) ((0,0) MV: decode order), 0 otherwise
+#endif
+    uint8_t *     rc_me_allow_gm_trail;
+#endif
 #if FTR_EARLY_DEPTH_REMOVAL
     uint32_t             *me_64x64_distortion_trail;
     uint32_t             *me_32x32_distortion_trail;
     uint32_t             *me_16x16_distortion_trail;
     uint32_t             *me_8x8_distortion_trail;
+#endif
+#if TUNE_DEPTH_REMOVAL_PER_RESOLUTION
+    uint32_t *me_8x8_cost_variance_trail;
 #endif
 #endif
 #if FTR_TPL_TR
@@ -752,6 +786,15 @@ typedef struct PictureParentControlSet {
     // Motion Estimation Results
     uint8_t   max_number_of_pus_per_sb;
     uint32_t *rc_me_distortion;
+#if FTR_GM_OPT_BASED_ON_ME
+#if TUNE_M9_GM_DETECTOR
+    uint8_t *     stationary_block_present_sb; // 1 when a % of the SB is stationary relative to reference frame(s) ((0,0) MV: decode order), 0 otherwise
+#endif
+    uint8_t *     rc_me_allow_gm;
+#endif
+#if TUNE_DEPTH_REMOVAL_PER_RESOLUTION
+    uint32_t *me_8x8_cost_variance;
+#endif
 #if FTR_EARLY_DEPTH_REMOVAL
     uint32_t *me_64x64_distortion;
     uint32_t *me_32x32_distortion;

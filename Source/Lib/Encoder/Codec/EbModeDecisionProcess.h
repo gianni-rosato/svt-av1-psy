@@ -313,6 +313,10 @@ typedef struct RdoqCtrls {
     uint8_t satd_factor; // do not perform rdoq if the tx satd > satd_factor
     uint8_t
         early_exit_th; // do not perform rdoq based on an early skip/non-skip cost, threshold for early exit is 5
+#if OPT_RDOQ_FOR_M9
+    uint8_t disallow_md_rdoq_uv;
+    uint8_t md_satd_factor;
+#endif
 } RdoqCtrls;
 typedef struct NicCtrls {
     uint8_t stage1_scaling_num; // Scaling numerator for post-stage 0 NICS: <x>/16
@@ -372,6 +376,15 @@ typedef struct NicPruningCtrls {
     uint64_t mds3_cand_intra_class_offset_th;
 
 } NicPruningCtrls;
+#endif
+#if CLEANUP_CANDIDATE_ELEMINATION_CTR
+typedef struct CandEliminationCtlrs {
+    uint32_t enabled;
+    uint8_t dc_only;
+    uint8_t inject_new_me;
+    uint8_t inject_new_pme;
+    uint8_t inject_new_warp;
+}CandEliminationCtlrs;
 #endif
 typedef struct ModeDecisionContext {
     EbDctor  dctor;
@@ -767,6 +780,9 @@ typedef struct ModeDecisionContext {
 #endif
 #if FTR_REF_BITS
     uint64_t estimate_ref_frames_num_bits[MODE_CTX_REF_FRAMES][2]; // [TOTAL_REFS_PER_FRAME + 1][is_compound]
+#endif
+#if CLEANUP_CANDIDATE_ELEMINATION_CTR
+    CandEliminationCtlrs cand_elimination_ctrs;
 #endif
 } ModeDecisionContext;
 

@@ -1507,7 +1507,11 @@ int32_t av1_quantize_inv_quantize(
             md_context->rdoq_level);
     const int dequant_shift = md_context->hbd_mode_decision ? pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr->bit_depth - 5 : 3;
     const int qstep = candidate_plane.dequant_qtx[1] /*[AC]*/ >> dequant_shift;
-
+#if OPT_RDOQ_FOR_M9
+    if(md_context->rdoq_ctrls.disallow_md_rdoq_uv)
+        if ((!is_encode_pass) && (component_type != COMPONENT_LUMA))
+            perform_rdoq = 0;
+#endif
     if (perform_rdoq && md_context->rdoq_ctrls.satd_factor != ((uint8_t)~0)) {
 
         int satd = svt_aom_satd(coeff, n_coeffs);
@@ -1515,10 +1519,19 @@ int32_t av1_quantize_inv_quantize(
 
         satd = RIGHT_SIGNED_SHIFT(satd, shift);
         satd >>= (pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr->bit_depth - 8);
-
+#if OPT_RDOQ_FOR_M9
+        uint64_t satd_factor = md_context->rdoq_ctrls.satd_factor;
+        if(md_context->rdoq_ctrls.md_satd_factor != ((uint8_t)~0))
+            if ((!is_encode_pass))
+                satd_factor = md_context->rdoq_ctrls.md_satd_factor;
+#endif
         const int skip_block_trellis =
             ((uint64_t)satd >
+#if OPT_RDOQ_FOR_M9
+            (uint64_t)satd_factor * qstep * sqrt_tx_pixels_2d[txsize]);
+#else
             (uint64_t)md_context->rdoq_ctrls.satd_factor * qstep * sqrt_tx_pixels_2d[txsize]);
+#endif
 
         if (skip_block_trellis)
             perform_rdoq = 0;
@@ -1944,7 +1957,19 @@ void full_loop_r(SuperBlock *sb_ptr, ModeDecisionCandidateBuffer *candidate_buff
             (((txb_origin_y >> 3) << 3) *
                 context_ptr->residual_quant_coeff_ptr->stride_cr)) >>
             1;
-
+#if FTR_REDUCE_MDS3_COMPLEXITY
+        EB_TRANS_COEFF_SHAPE pf_shape = context_ptr->pf_ctrls.pf_shape;
+        if (context_ptr->reduce_last_md_stage_candidate && context_ptr->md_stage == MD_STAGE_3) {
+            if (!candidate_buffer->candidate_ptr->block_has_coeff) {
+                pf_shape = N2_SHAPE;
+                if (context_ptr->mds0_best_idx == context_ptr->mds1_best_idx) {
+                    if (candidate_buffer->candidate_ptr->cand_class != context_ptr->mds1_best_class_it) {
+                        pf_shape = N4_SHAPE;
+                    }
+                }
+            }
+        }
+#endif
         //    This function replaces the previous Intra Chroma mode if the LM fast
         //    cost is better.
         //    *Note - this might require that we have inv transform in the loop
@@ -1967,7 +1992,11 @@ void full_loop_r(SuperBlock *sb_ptr, ModeDecisionCandidateBuffer *candidate_buff
                 context_ptr->hbd_mode_decision ? EB_10BIT : EB_8BIT,
                 candidate_buffer->candidate_ptr->transform_type_uv,
                 PLANE_TYPE_UV,
+#if FTR_REDUCE_MDS3_COMPLEXITY
+                pf_shape);
+#else
                 context_ptr->pf_ctrls.pf_shape);
+#endif
 
             int32_t seg_qp =
                 pcs_ptr->parent_pcs_ptr->frm_hdr.segmentation_params.segmentation_enabled
@@ -2054,7 +2083,11 @@ void full_loop_r(SuperBlock *sb_ptr, ModeDecisionCandidateBuffer *candidate_buff
                 context_ptr->hbd_mode_decision ? EB_10BIT : EB_8BIT,
                 candidate_buffer->candidate_ptr->transform_type_uv,
                 PLANE_TYPE_UV,
+#if FTR_REDUCE_MDS3_COMPLEXITY
+                pf_shape);
+#else
                 context_ptr->pf_ctrls.pf_shape);
+#endif
             int32_t seg_qp =
                 pcs_ptr->parent_pcs_ptr->frm_hdr.segmentation_params.segmentation_enabled
                     ? pcs_ptr->parent_pcs_ptr->frm_hdr.segmentation_params

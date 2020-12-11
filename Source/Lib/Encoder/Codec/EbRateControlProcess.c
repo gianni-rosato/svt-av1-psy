@@ -625,7 +625,12 @@ void tpl_mc_flow_dispenser(
                                 // Distortion
                                 svt_aom_subtract_block(
                                     16, 16, src_diff, 16, src, input_ptr->stride_y, predictor, 16);
+#if OPT_TPL
+                                EB_TRANS_COEFF_SHAPE pf_shape = pcs_ptr->tpl_ctrls.tpl_opt_flag ? pcs_ptr->tpl_ctrls.pf_shape : DEFAULT_SHAPE;
+                                svt_av1_wht_fwd_txfm(src_diff, 16, coeff, tx_size,pf_shape, 8, 0);
+#else
                                 svt_av1_wht_fwd_txfm(src_diff, 16, coeff, 2 /*TX_16X16*/, 8, 0);
+#endif
                                 int64_t intra_cost = svt_aom_satd(coeff, 16 * 16);
 
                                 if (intra_cost < best_intra_cost) {
@@ -708,7 +713,12 @@ void tpl_mc_flow_dispenser(
                                                input_picture_ptr->stride_y,
                                                ref_pic_ptr->buffer_y + ref_origin_index,
                                                ref_pic_ptr->stride_y);
+#if OPT_TPL
+                        EB_TRANS_COEFF_SHAPE pf_shape = pcs_ptr->tpl_ctrls.tpl_opt_flag ? pcs_ptr->tpl_ctrls.pf_shape : DEFAULT_SHAPE;
+                        svt_av1_wht_fwd_txfm(src_diff, 16, coeff, tx_size,pf_shape, 8, 0);
+#else
                         svt_av1_wht_fwd_txfm(src_diff, 16, coeff, tx_size, 8, 0);
+#endif
 
                         inter_cost = svt_aom_satd(coeff, 256);
                         if (inter_cost < best_inter_cost) {
@@ -833,7 +843,12 @@ void tpl_mc_flow_dispenser(
                                            input_picture_ptr->stride_y,
                                            dst_buffer,
                                            dst_buffer_stride);
+#if OPT_TPL
+                    EB_TRANS_COEFF_SHAPE pf_shape = pcs_ptr->tpl_ctrls.tpl_opt_flag ? pcs_ptr->tpl_ctrls.pf_shape : DEFAULT_SHAPE;
+                    svt_av1_wht_fwd_txfm(src_diff, 16, coeff, tx_size,pf_shape, 8, 0);
+#else
                     svt_av1_wht_fwd_txfm(src_diff, 16, coeff, tx_size, 8, 0);
+#endif
 
                     uint16_t eob = 0;
 

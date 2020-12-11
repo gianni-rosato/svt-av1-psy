@@ -1816,6 +1816,479 @@ void set_block_based_depth_refinement_controls(SequenceControlSet *scs_ptr, Pict
 /*
  * Generate depth removal settings
  */
+#if TUNE_DEPTH_REMOVAL_PER_RESOLUTION
+void set_depth_removal_level_controls(PictureControlSet *pcs_ptr, ModeDecisionContext *mdctxt, uint8_t block_based_depth_refinement_level) {
+    DepthRemovalCtrls *depth_removal_ctrls = &mdctxt->depth_removal_ctrls;
+    const double noise_level = pcs_ptr->parent_pcs_ptr->noise_levels[0];
+    const uint32_t me_8x8_cost_variance = pcs_ptr->parent_pcs_ptr->me_8x8_cost_variance[mdctxt->sb_index];
+    SbParams *sb_params = &pcs_ptr->parent_pcs_ptr->sb_params_array[mdctxt->sb_index];
+    uint32_t fast_lambda = mdctxt->hbd_mode_decision ?
+        mdctxt->fast_lambda_md[EB_10_BIT_MD] :
+        mdctxt->fast_lambda_md[EB_8_BIT_MD];
+    uint32_t sb_size = 64 * 64;
+    uint64_t cost_th_rate = 1 << 13;
+    uint64_t disallow_below_64x64_th = 0;
+    uint64_t disallow_below_32x32_th = 0;
+    uint64_t disallow_below_16x16_th = 0;
+    int64_t dev_16x16_to_8x8_th = MAX_SIGNED_VALUE;
+#if OPT_M9_DEPTH_REMOVAL
+    int64_t dev_32x32_to_16x16_th = 0;
+#endif
+
+    switch (block_based_depth_refinement_level) {
+    case 0:
+        depth_removal_ctrls->enabled = 0;
+        break;
+    case 1:
+        depth_removal_ctrls->enabled = 1;
+        if (pcs_ptr->parent_pcs_ptr->variance[mdctxt->sb_index][ME_TIER_ZERO_PU_64x64] <= 200) {
+            disallow_below_64x64_th = 0;
+            disallow_below_32x32_th = 0;
+            disallow_below_16x16_th = RDCOST(fast_lambda, cost_th_rate, sb_size);
+        }
+        else if (pcs_ptr->parent_pcs_ptr->variance[mdctxt->sb_index][ME_TIER_ZERO_PU_64x64] <= 400) {
+            disallow_below_64x64_th = 0;
+            disallow_below_32x32_th = 0;
+            disallow_below_16x16_th = RDCOST(fast_lambda, cost_th_rate, sb_size >> 1);
+        }
+        else {
+            disallow_below_64x64_th = 0;
+            disallow_below_32x32_th = 0;
+            disallow_below_16x16_th = 0;
+        }
+
+        dev_16x16_to_8x8_th = 2;
+        if (noise_level < 0.1 )
+            dev_16x16_to_8x8_th *=  (dev_16x16_to_8x8_th * 15)/10;
+        else if(noise_level < 0.5 )
+            dev_16x16_to_8x8_th *= (dev_16x16_to_8x8_th * 12)/10;
+
+        if(me_8x8_cost_variance < 2000)
+            dev_16x16_to_8x8_th *= (dev_16x16_to_8x8_th * 50) / 5;
+        else if(me_8x8_cost_variance <7000)
+            dev_16x16_to_8x8_th *= (dev_16x16_to_8x8_th * 20) / 5;
+        else if(me_8x8_cost_variance <15000)
+            dev_16x16_to_8x8_th *= (dev_16x16_to_8x8_th * 10) / 5;
+        else if(me_8x8_cost_variance <30000)
+            dev_16x16_to_8x8_th *= (dev_16x16_to_8x8_th * 2) / 5;
+        else
+            dev_16x16_to_8x8_th *= (dev_16x16_to_8x8_th * 1) / 5;
+
+        break;
+    case 2:
+        depth_removal_ctrls->enabled = 1;
+
+        if (pcs_ptr->parent_pcs_ptr->variance[mdctxt->sb_index][ME_TIER_ZERO_PU_64x64] <= 200) {
+            disallow_below_64x64_th = 0;
+            disallow_below_32x32_th = 0;
+            disallow_below_16x16_th = RDCOST(fast_lambda, cost_th_rate, sb_size);
+        }
+        else if (pcs_ptr->parent_pcs_ptr->variance[mdctxt->sb_index][ME_TIER_ZERO_PU_64x64] <= 400) {
+            disallow_below_64x64_th = 0;
+            disallow_below_32x32_th = 0;
+            disallow_below_16x16_th = RDCOST(fast_lambda, cost_th_rate, sb_size >> 1);
+        }
+        else {
+            disallow_below_64x64_th = 0;
+            disallow_below_32x32_th = 0;
+            disallow_below_16x16_th = 0;
+        }
+
+        dev_16x16_to_8x8_th = 2;
+        if (noise_level < 0.1 )
+            dev_16x16_to_8x8_th *=  (dev_16x16_to_8x8_th * 15)/10;
+        else if(noise_level < 0.5 )
+            dev_16x16_to_8x8_th *= (dev_16x16_to_8x8_th * 12)/10;
+
+        if(me_8x8_cost_variance < 2000)
+            dev_16x16_to_8x8_th *= (dev_16x16_to_8x8_th * 50) / 5;
+        else if(me_8x8_cost_variance <7000)
+            dev_16x16_to_8x8_th *= (dev_16x16_to_8x8_th * 20) / 5;
+        else if(me_8x8_cost_variance <15000)
+            dev_16x16_to_8x8_th *= (dev_16x16_to_8x8_th * 10) / 5;
+        else if(me_8x8_cost_variance <30000)
+            dev_16x16_to_8x8_th *= (dev_16x16_to_8x8_th * 3) / 5;
+        else
+            dev_16x16_to_8x8_th *= (dev_16x16_to_8x8_th * 2) / 5;
+
+        break;
+    case 3:
+
+        depth_removal_ctrls->enabled = 1;
+        dev_16x16_to_8x8_th = 10;
+        if (pcs_ptr->parent_pcs_ptr->variance[mdctxt->sb_index][ME_TIER_ZERO_PU_64x64] <= 200) {
+            disallow_below_64x64_th = RDCOST(fast_lambda, cost_th_rate, sb_size >> 1);
+            disallow_below_32x32_th = RDCOST(fast_lambda, cost_th_rate, sb_size);
+            disallow_below_16x16_th = RDCOST(fast_lambda, cost_th_rate, sb_size * 16);
+        }
+        else if (pcs_ptr->parent_pcs_ptr->variance[mdctxt->sb_index][ME_TIER_ZERO_PU_64x64] <= 400) {
+            disallow_below_64x64_th = 0;
+            disallow_below_32x32_th = 0;
+            disallow_below_16x16_th = RDCOST(fast_lambda, cost_th_rate, sb_size * 12);
+        }
+        else {
+            disallow_below_64x64_th = 0;
+            disallow_below_32x32_th = 0;
+            disallow_below_16x16_th = RDCOST(fast_lambda, cost_th_rate, sb_size * 2);
+        }
+
+        dev_16x16_to_8x8_th = 2;
+        if (noise_level < 0.1 )
+            dev_16x16_to_8x8_th *=  (dev_16x16_to_8x8_th * 15)/10;
+        else if(noise_level < 0.5 )
+            dev_16x16_to_8x8_th *= (dev_16x16_to_8x8_th * 12)/10;
+
+        if(me_8x8_cost_variance <2000)
+            dev_16x16_to_8x8_th *= (dev_16x16_to_8x8_th * 50) / 5;
+        else if(me_8x8_cost_variance <8000)
+            dev_16x16_to_8x8_th *= (dev_16x16_to_8x8_th * 20) / 5;
+        else if(me_8x8_cost_variance <13000)
+            dev_16x16_to_8x8_th *= (dev_16x16_to_8x8_th * 10) / 5;
+        else if(me_8x8_cost_variance <25000)
+            dev_16x16_to_8x8_th *= (dev_16x16_to_8x8_th * 3) / 5;
+        else
+            dev_16x16_to_8x8_th *= (dev_16x16_to_8x8_th * 2) / 5;
+        break;
+    case 4:
+        depth_removal_ctrls->enabled = 1;
+        dev_16x16_to_8x8_th = 10;
+        if (pcs_ptr->parent_pcs_ptr->variance[mdctxt->sb_index][ME_TIER_ZERO_PU_64x64] <= 200) {
+            disallow_below_64x64_th = RDCOST(fast_lambda, cost_th_rate, sb_size >> 1);
+            disallow_below_32x32_th = RDCOST(fast_lambda, cost_th_rate, sb_size);
+            disallow_below_16x16_th = RDCOST(fast_lambda, cost_th_rate, sb_size * 16);
+        }
+        else if (pcs_ptr->parent_pcs_ptr->variance[mdctxt->sb_index][ME_TIER_ZERO_PU_64x64] <= 400) {
+            disallow_below_64x64_th = 0;
+            disallow_below_32x32_th = 0;
+            disallow_below_16x16_th = RDCOST(fast_lambda, cost_th_rate, sb_size * 12);
+        }
+        else {
+            disallow_below_64x64_th = 0;
+            disallow_below_32x32_th = 0;
+            disallow_below_16x16_th = RDCOST(fast_lambda, cost_th_rate, sb_size * 2);
+
+        }
+
+        dev_16x16_to_8x8_th = 2;
+        if (noise_level < 0.1 )
+            dev_16x16_to_8x8_th *=  (dev_16x16_to_8x8_th * 17)/10;
+        else if(noise_level < 0.5 )
+            dev_16x16_to_8x8_th *= (dev_16x16_to_8x8_th * 13)/10;
+
+        if(me_8x8_cost_variance <5000)
+            dev_16x16_to_8x8_th *= (dev_16x16_to_8x8_th * 50) / 5;
+        else if(me_8x8_cost_variance <10000)
+            dev_16x16_to_8x8_th *= (dev_16x16_to_8x8_th * 20) / 5;
+        else if(me_8x8_cost_variance <20000)
+            dev_16x16_to_8x8_th *= (dev_16x16_to_8x8_th * 10) / 5;
+        else if(me_8x8_cost_variance <40000)
+            dev_16x16_to_8x8_th *= (dev_16x16_to_8x8_th * 3) / 5;
+        else
+            dev_16x16_to_8x8_th *= (dev_16x16_to_8x8_th * 2) / 5;
+        break;
+
+    case 5:
+        depth_removal_ctrls->enabled = 1;
+
+        if (pcs_ptr->parent_pcs_ptr->variance[mdctxt->sb_index][ME_TIER_ZERO_PU_64x64] <= 200) {
+            disallow_below_64x64_th = 0;
+            disallow_below_32x32_th = 0;
+            disallow_below_16x16_th = RDCOST(fast_lambda, cost_th_rate, sb_size);
+        }
+        else if (pcs_ptr->parent_pcs_ptr->variance[mdctxt->sb_index][ME_TIER_ZERO_PU_64x64] <= 400) {
+            disallow_below_64x64_th = 0;
+            disallow_below_32x32_th = 0;
+            disallow_below_16x16_th = RDCOST(fast_lambda, cost_th_rate, sb_size >> 1);
+        }
+        else {
+            disallow_below_64x64_th = 0;
+            disallow_below_32x32_th = 0;
+            disallow_below_16x16_th = 0;
+        }
+
+        dev_16x16_to_8x8_th = 2;
+        if (noise_level < 0.1 )
+            dev_16x16_to_8x8_th *=  (dev_16x16_to_8x8_th * 15)/10;
+        else if(noise_level < 0.5 )
+            dev_16x16_to_8x8_th *= (dev_16x16_to_8x8_th * 12)/10;
+
+        if(me_8x8_cost_variance < 3500)
+            dev_16x16_to_8x8_th *= (dev_16x16_to_8x8_th * 50) / 5;
+        else if(me_8x8_cost_variance <13000)
+            dev_16x16_to_8x8_th *= (dev_16x16_to_8x8_th * 20) / 5;
+        else if(me_8x8_cost_variance <30000)
+            dev_16x16_to_8x8_th *= (dev_16x16_to_8x8_th * 10) / 5;
+        else if(me_8x8_cost_variance <50000)
+            dev_16x16_to_8x8_th *= (dev_16x16_to_8x8_th * 2) / 5;
+        else
+            dev_16x16_to_8x8_th *= (dev_16x16_to_8x8_th * 1) / 5;
+        break;
+    case 6:
+        depth_removal_ctrls->enabled = 1;
+        if (pcs_ptr->parent_pcs_ptr->variance[mdctxt->sb_index][ME_TIER_ZERO_PU_64x64] <= 200) {
+            disallow_below_64x64_th = 0;
+            disallow_below_32x32_th = 0;
+            disallow_below_16x16_th = RDCOST(fast_lambda, cost_th_rate, sb_size);
+        }
+        else if (pcs_ptr->parent_pcs_ptr->variance[mdctxt->sb_index][ME_TIER_ZERO_PU_64x64] <= 400) {
+            disallow_below_64x64_th = 0;
+            disallow_below_32x32_th = 0;
+            disallow_below_16x16_th = RDCOST(fast_lambda, cost_th_rate, sb_size >> 1);
+        }
+        else {
+            disallow_below_64x64_th = 0;
+            disallow_below_32x32_th = 0;
+            disallow_below_16x16_th = 0;
+        }
+        dev_16x16_to_8x8_th = 2;
+#if OPT_M9_DEPTH_REMOVAL
+        dev_32x32_to_16x16_th = 1;
+#endif
+        if (noise_level < 0.1 )
+            dev_16x16_to_8x8_th *=  (dev_16x16_to_8x8_th * 15)/10;
+        else if(noise_level < 0.5 )
+            dev_16x16_to_8x8_th *= (dev_16x16_to_8x8_th * 12)/10;
+#if OPT_M9_DEPTH_REMOVAL
+        if (me_8x8_cost_variance < 9000) {
+            dev_16x16_to_8x8_th *= (dev_16x16_to_8x8_th * 50) / 5;
+            dev_32x32_to_16x16_th *= (dev_32x32_to_16x16_th * 20) / 5;
+        }
+        else if (me_8x8_cost_variance < 20000) {
+            dev_16x16_to_8x8_th *= (dev_16x16_to_8x8_th * 20) / 5;
+        }
+        else if (me_8x8_cost_variance < 50000) {
+            dev_16x16_to_8x8_th *= (dev_16x16_to_8x8_th * 10) / 5;
+            dev_32x32_to_16x16_th *= (dev_32x32_to_16x16_th * 4) / 5;
+        }
+        else if (me_8x8_cost_variance < 70000) {
+            dev_16x16_to_8x8_th *= (dev_16x16_to_8x8_th * 3) / 5;
+            dev_32x32_to_16x16_th *= (dev_32x32_to_16x16_th * 3) / 5;
+        }
+        else {
+            dev_16x16_to_8x8_th *= (dev_16x16_to_8x8_th * 2) / 5;
+            dev_32x32_to_16x16_th *= (dev_32x32_to_16x16_th * 2) / 5;
+        }
+#else
+        if(me_8x8_cost_variance < 9000)
+            dev_16x16_to_8x8_th *= (dev_16x16_to_8x8_th * 50) / 5;
+        else if(me_8x8_cost_variance <20000)
+            dev_16x16_to_8x8_th *= (dev_16x16_to_8x8_th * 20) / 5;
+        else if(me_8x8_cost_variance <50000)
+            dev_16x16_to_8x8_th *= (dev_16x16_to_8x8_th * 10) / 5;
+        else if(me_8x8_cost_variance <70000)
+            dev_16x16_to_8x8_th *= (dev_16x16_to_8x8_th * 3) / 5;
+        else
+            dev_16x16_to_8x8_th *= (dev_16x16_to_8x8_th * 2) / 5;
+#endif
+        break;
+    case 7:
+        depth_removal_ctrls->enabled = 1;
+        dev_16x16_to_8x8_th = 10;
+        if (pcs_ptr->parent_pcs_ptr->variance[mdctxt->sb_index][ME_TIER_ZERO_PU_64x64] <= 200) {
+            disallow_below_64x64_th = RDCOST(fast_lambda, cost_th_rate, sb_size >> 1);
+            disallow_below_32x32_th = RDCOST(fast_lambda, cost_th_rate, sb_size);
+            disallow_below_16x16_th = RDCOST(fast_lambda, cost_th_rate, sb_size * 16);
+        }
+        else if (pcs_ptr->parent_pcs_ptr->variance[mdctxt->sb_index][ME_TIER_ZERO_PU_64x64] <= 400) {
+            disallow_below_64x64_th = 0;
+            disallow_below_32x32_th = 0;
+            disallow_below_16x16_th = RDCOST(fast_lambda, cost_th_rate, sb_size * 12);
+        }
+        else {
+            disallow_below_64x64_th = 0;
+            disallow_below_32x32_th = 0;
+            disallow_below_16x16_th = RDCOST(fast_lambda, cost_th_rate, sb_size * 2);
+        }
+
+        dev_16x16_to_8x8_th = 2;
+#if OPT_M9_DEPTH_REMOVAL
+        dev_32x32_to_16x16_th = 1;
+#endif
+        if (noise_level < 0.1 )
+            dev_16x16_to_8x8_th *=  (dev_16x16_to_8x8_th * 15)/10;
+        else if(noise_level < 0.5 )
+            dev_16x16_to_8x8_th *= (dev_16x16_to_8x8_th * 12)/10;
+#if OPT_M9_DEPTH_REMOVAL
+        if (me_8x8_cost_variance < 9000) {
+            dev_16x16_to_8x8_th *= (dev_16x16_to_8x8_th * 50) / 5;
+            dev_32x32_to_16x16_th *= (dev_32x32_to_16x16_th * 20) / 5;
+        }
+        else if (me_8x8_cost_variance < 20000) {
+            dev_16x16_to_8x8_th *= (dev_16x16_to_8x8_th * 20) / 5;
+        }
+        else if (me_8x8_cost_variance < 50000) {
+            dev_16x16_to_8x8_th *= (dev_16x16_to_8x8_th * 10) / 5;
+        }
+        else if (me_8x8_cost_variance < 70000) {
+            dev_16x16_to_8x8_th *= (dev_16x16_to_8x8_th * 3) / 5;
+            dev_32x32_to_16x16_th *= (dev_32x32_to_16x16_th * 3) / 5;
+        }
+        else {
+            dev_16x16_to_8x8_th *= (dev_16x16_to_8x8_th * 2) / 5;
+            dev_32x32_to_16x16_th *= (dev_32x32_to_16x16_th * 2) / 5;
+        }
+#else
+        if(me_8x8_cost_variance <4500)
+            dev_16x16_to_8x8_th *= (dev_16x16_to_8x8_th * 50) / 5;
+        else if(me_8x8_cost_variance <12000)
+            dev_16x16_to_8x8_th *= (dev_16x16_to_8x8_th * 20) / 5;
+        else if(me_8x8_cost_variance <25000)
+            dev_16x16_to_8x8_th *= (dev_16x16_to_8x8_th * 10) / 5;
+        else if(me_8x8_cost_variance <40000)
+        dev_16x16_to_8x8_th *= (dev_16x16_to_8x8_th * 3) / 5;
+        else
+            dev_16x16_to_8x8_th *= (dev_16x16_to_8x8_th * 2) / 5;
+#endif
+        break;
+    case 8:
+        depth_removal_ctrls->enabled = 1;
+        dev_16x16_to_8x8_th = 10;
+        if (pcs_ptr->parent_pcs_ptr->variance[mdctxt->sb_index][ME_TIER_ZERO_PU_64x64] <= 200) {
+            disallow_below_64x64_th = RDCOST(fast_lambda, cost_th_rate, sb_size >> 1);
+            disallow_below_32x32_th = RDCOST(fast_lambda, cost_th_rate, sb_size);
+            disallow_below_16x16_th = RDCOST(fast_lambda, cost_th_rate, sb_size * 16);
+        }
+        else if (pcs_ptr->parent_pcs_ptr->variance[mdctxt->sb_index][ME_TIER_ZERO_PU_64x64] <= 400) {
+            disallow_below_64x64_th = 0;
+            disallow_below_32x32_th = 0;
+            disallow_below_16x16_th = RDCOST(fast_lambda, cost_th_rate, sb_size * 12);
+        }
+        else {
+            disallow_below_64x64_th = 0;
+            disallow_below_32x32_th = 0;
+            disallow_below_16x16_th = RDCOST(fast_lambda, cost_th_rate, sb_size * 2);
+
+        }
+
+        dev_16x16_to_8x8_th = 2;
+#if OPT_M9_DEPTH_REMOVAL
+        dev_32x32_to_16x16_th = 1;
+#endif
+        if (noise_level < 0.1 )
+            dev_16x16_to_8x8_th *=  (dev_16x16_to_8x8_th * 17)/10;
+        else if(noise_level < 0.5 )
+            dev_16x16_to_8x8_th *= (dev_16x16_to_8x8_th * 13)/10;
+
+#if OPT_M9_DEPTH_REMOVAL
+        if (me_8x8_cost_variance < 50000) {
+            dev_16x16_to_8x8_th *= (dev_16x16_to_8x8_th * 50) / 5;
+            dev_32x32_to_16x16_th *= (dev_32x32_to_16x16_th * 20) / 5;
+        }
+        else if (me_8x8_cost_variance < 100000) {
+            dev_16x16_to_8x8_th *= (dev_16x16_to_8x8_th * 20) / 5;
+        }
+        else if (me_8x8_cost_variance < 150000) {
+            dev_16x16_to_8x8_th *= (dev_16x16_to_8x8_th * 10) / 5;
+        }
+        else if (me_8x8_cost_variance < 200000) {
+            dev_16x16_to_8x8_th *= (dev_16x16_to_8x8_th * 3) / 5;
+            dev_32x32_to_16x16_th *= (dev_32x32_to_16x16_th * 3) / 5;
+        }
+        else {
+            dev_16x16_to_8x8_th *= (dev_16x16_to_8x8_th * 2) / 5;
+            dev_32x32_to_16x16_th *= (dev_32x32_to_16x16_th * 2) / 5;
+        }
+#else
+        if(me_8x8_cost_variance <50000)
+            dev_16x16_to_8x8_th *= (dev_16x16_to_8x8_th * 50) / 5;
+        else if(me_8x8_cost_variance <100000)
+            dev_16x16_to_8x8_th *= (dev_16x16_to_8x8_th * 20) / 5;
+        else if(me_8x8_cost_variance <150000)
+            dev_16x16_to_8x8_th *= (dev_16x16_to_8x8_th * 10) / 5;
+        else if(me_8x8_cost_variance <200000)
+        dev_16x16_to_8x8_th *= (dev_16x16_to_8x8_th * 3) / 5;
+        else
+            dev_16x16_to_8x8_th *= (dev_16x16_to_8x8_th * 2) / 5;
+#endif
+        break;
+#if TUNE_M9_OPT_DEPTH_REMOVAL
+    case 9:
+        depth_removal_ctrls->enabled = 1;
+        dev_16x16_to_8x8_th = 10;
+        disallow_below_64x64_th = RDCOST(fast_lambda, cost_th_rate, sb_size);
+        disallow_below_32x32_th = RDCOST(fast_lambda, cost_th_rate, (sb_size * 3) >> 1);
+        disallow_below_16x16_th = RDCOST(fast_lambda, cost_th_rate, sb_size * 32);
+        dev_16x16_to_8x8_th = 4;
+#if OPT_M9_DEPTH_REMOVAL
+        dev_32x32_to_16x16_th = 2;
+#endif
+        if (noise_level < 0.1 )
+            dev_16x16_to_8x8_th *=  (dev_16x16_to_8x8_th * 17)/10;
+        else if(noise_level < 0.5 )
+            dev_16x16_to_8x8_th *= (dev_16x16_to_8x8_th * 13)/10;
+#if OPT_M9_DEPTH_REMOVAL
+        if (me_8x8_cost_variance < 50000) {
+            dev_16x16_to_8x8_th *= (dev_16x16_to_8x8_th * 50) / 5;
+            dev_32x32_to_16x16_th *= (dev_32x32_to_16x16_th * 10) / 5;
+        }
+        else if (me_8x8_cost_variance < 100000) {
+            dev_16x16_to_8x8_th *= (dev_16x16_to_8x8_th * 20) / 5;
+        }
+        else if (me_8x8_cost_variance < 150000) {
+            dev_16x16_to_8x8_th *= (dev_16x16_to_8x8_th * 10) / 5;
+            dev_32x32_to_16x16_th *= (dev_32x32_to_16x16_th * 2) / 5;
+        }
+        else if (me_8x8_cost_variance < 200000) {
+            dev_16x16_to_8x8_th *= (dev_16x16_to_8x8_th * 3) / 5;
+            dev_32x32_to_16x16_th *= (dev_32x32_to_16x16_th * 2) / 5;
+        }
+        else {
+            dev_16x16_to_8x8_th *= (dev_16x16_to_8x8_th * 2) / 5;
+            dev_32x32_to_16x16_th *= (dev_32x32_to_16x16_th * 2) / 5;
+        }
+#else
+        if(me_8x8_cost_variance <50000)
+            dev_16x16_to_8x8_th *= (dev_16x16_to_8x8_th * 50) / 5;
+        else if(me_8x8_cost_variance <100000)
+            dev_16x16_to_8x8_th *= (dev_16x16_to_8x8_th * 20) / 5;
+        else if(me_8x8_cost_variance <150000)
+            dev_16x16_to_8x8_th *= (dev_16x16_to_8x8_th * 10) / 5;
+        else if(me_8x8_cost_variance <200000)
+            dev_16x16_to_8x8_th *= (dev_16x16_to_8x8_th * 3) / 5;
+        else
+            dev_16x16_to_8x8_th *= (dev_16x16_to_8x8_th * 2) / 5;
+#endif
+        break;
+#endif
+    }
+
+    depth_removal_ctrls->disallow_below_64x64 = 0;
+    depth_removal_ctrls->disallow_below_32x32 = 0;
+    depth_removal_ctrls->disallow_below_16x16 = 0;
+
+    if (depth_removal_ctrls->enabled) {
+
+        uint64_t cost_64x64 = RDCOST(fast_lambda, 0, pcs_ptr->parent_pcs_ptr->me_64x64_distortion[mdctxt->sb_index]);
+        uint64_t cost_32x32 = RDCOST(fast_lambda, 0, pcs_ptr->parent_pcs_ptr->me_32x32_distortion[mdctxt->sb_index]);
+        uint64_t cost_16x16 = RDCOST(fast_lambda, 0, pcs_ptr->parent_pcs_ptr->me_16x16_distortion[mdctxt->sb_index]);
+        uint64_t cost_8x8 = RDCOST(fast_lambda, 0, pcs_ptr->parent_pcs_ptr->me_8x8_distortion[mdctxt->sb_index]);
+#if OPT_M9_DEPTH_REMOVAL
+        int64_t dev_32x32_to_16x16 =
+            (int64_t)(((int64_t)MAX(cost_32x32, 1) - (int64_t)MAX(cost_16x16, 1)) * 100) /
+            (int64_t)MAX(cost_16x16, 1);
+#endif
+        int64_t dev_16x16_to_8x8 =
+            (int64_t)(((int64_t)MAX(cost_16x16, 1) - (int64_t)MAX(cost_8x8, 1)) * 100) /
+            (int64_t)MAX(cost_8x8, 1);
+
+        depth_removal_ctrls->disallow_below_64x64 = (sb_params->width % 64 == 0 && sb_params->height % 64 == 0)
+            ? (cost_64x64 < disallow_below_64x64_th)
+            : 0;
+
+        depth_removal_ctrls->disallow_below_32x32 = (sb_params->width % 32 == 0 && sb_params->height % 32 == 0)
+#if OPT_M9_DEPTH_REMOVAL
+            ? (cost_32x32 < disallow_below_32x32_th || dev_32x32_to_16x16 < dev_32x32_to_16x16_th)
+#else
+            ? (cost_32x32 < disallow_below_32x32_th)
+#endif
+            : 0;
+
+        depth_removal_ctrls->disallow_below_16x16 = (sb_params->width % 16 == 0 && sb_params->height % 16 == 0)
+            ? (cost_16x16 < disallow_below_16x16_th || dev_16x16_to_8x8 < dev_16x16_to_8x8_th)
+            : 0;
+    }
+}
+#else
 void set_depth_removal_level_controls(PictureControlSet *pcs_ptr, ModeDecisionContext *mdctxt, uint8_t block_based_depth_refinement_level) {
     DepthRemovalCtrls *depth_removal_ctrls = &mdctxt->depth_removal_ctrls;
 
@@ -1908,6 +2381,7 @@ void set_depth_removal_level_controls(PictureControlSet *pcs_ptr, ModeDecisionCo
             : 0;
     }
 }
+#endif
 #endif
 /*
  * Control NSQ search
@@ -2207,6 +2681,24 @@ void md_subpel_pme_controls(ModeDecisionContext *mdctxt, uint8_t md_subpel_pme_l
     default: assert(0); break;
     }
 }
+#if CLEANUP_CANDIDATE_ELEMINATION_CTR
+void set_cand_elimination_controls(ModeDecisionContext *mdctxt, uint8_t eliminate_candidate_based_on_pme_me_results){
+    CandEliminationCtlrs *cand_elimination_ctrls = &mdctxt->cand_elimination_ctrs;
+    switch (eliminate_candidate_based_on_pme_me_results) {
+    case 0:
+        cand_elimination_ctrls->enabled = 0;
+        break;
+    case 1:
+        cand_elimination_ctrls->enabled = 1;
+        cand_elimination_ctrls->dc_only = 1;
+        cand_elimination_ctrls->inject_new_me = 1;
+        cand_elimination_ctrls->inject_new_pme = 1;
+        cand_elimination_ctrls->inject_new_warp = 1;
+        break;
+    default: assert(0); break;
+    }
+}
+#endif
 #if !FTR_NEW_CYCLES_ALLOC
 void coeff_based_switch_md_controls(ModeDecisionContext *mdctxt, uint8_t switch_md_mode_based_on_sq_coeff_level) {
     CoeffBSwMdCtrls *coeffb_sw_md_ctrls = &mdctxt->cb_sw_md_ctrls;
@@ -2256,6 +2748,10 @@ void set_rdoq_controls(ModeDecisionContext *mdctxt, uint8_t rdoq_level) {
         rdoq_ctrls->fp_q_c = 1;
         rdoq_ctrls->satd_factor = (uint8_t)~0;
         rdoq_ctrls->early_exit_th = 0;
+#if OPT_RDOQ_FOR_M9
+        rdoq_ctrls->disallow_md_rdoq_uv = 0;
+        rdoq_ctrls->md_satd_factor = (uint8_t)~0;
+#endif
         break;
     case 2:
         rdoq_ctrls->enabled = 1;
@@ -2271,6 +2767,10 @@ void set_rdoq_controls(ModeDecisionContext *mdctxt, uint8_t rdoq_level) {
         rdoq_ctrls->fp_q_c = 0;
         rdoq_ctrls->satd_factor = 128;
         rdoq_ctrls->early_exit_th = 5;
+#if OPT_RDOQ_FOR_M9
+        rdoq_ctrls->disallow_md_rdoq_uv = 1;
+        rdoq_ctrls->md_satd_factor = 64;
+#endif
         break;
     case 3:
         rdoq_ctrls->enabled = 1;
@@ -2284,8 +2784,16 @@ void set_rdoq_controls(ModeDecisionContext *mdctxt, uint8_t rdoq_level) {
         rdoq_ctrls->eob_fast_c_intra = 0;
         rdoq_ctrls->fp_q_l = 1;
         rdoq_ctrls->fp_q_c = 0;
+#if OPT_RDOQ_FOR_M9
+        rdoq_ctrls->satd_factor = 128;
+#else
         rdoq_ctrls->satd_factor = 64;
+#endif
         rdoq_ctrls->early_exit_th = 5;
+#if OPT_RDOQ_FOR_M9
+        rdoq_ctrls->disallow_md_rdoq_uv = 1;
+        rdoq_ctrls->md_satd_factor = 32;
+#endif
         break;
     default: assert(0); break;
     }
@@ -3051,10 +3559,55 @@ EbErrorType signal_derivation_enc_dec_kernel_common(
         uint8_t depth_removal_level;
         if (enc_mode <= ENC_M7)
             depth_removal_level = 0;
-        else if (scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE)
-            depth_removal_level = 1;
-        else
-            depth_removal_level = 2;
+        else {
+#if TUNE_DEPTH_REMOVAL_PER_RESOLUTION
+            if (enc_mode <= ENC_M8) {
+                if (scs_ptr->input_resolution < INPUT_SIZE_480p_RANGE)
+                    depth_removal_level = 1;
+                else if (scs_ptr->input_resolution < INPUT_SIZE_720p_RANGE)
+                    depth_removal_level = 2;
+                else if (scs_ptr->input_resolution < INPUT_SIZE_1080p_RANGE)
+                    depth_removal_level = 3;
+                else
+                    depth_removal_level = 4;
+            } else {
+#if TUNE_M9_OPT_DEPTH_REMOVAL
+#if TUNE_DEPTH_REMOVAL_M9
+                if (scs_ptr->input_resolution < INPUT_SIZE_360p_RANGE)
+                    depth_removal_level = (pcs_ptr->temporal_layer_index == 0) ? 2 : 3;
+                else if (scs_ptr->input_resolution < INPUT_SIZE_480p_RANGE)
+                    depth_removal_level = (pcs_ptr->temporal_layer_index == 0) ? 3 : 4;
+                else if (scs_ptr->input_resolution < INPUT_SIZE_720p_RANGE)
+                    depth_removal_level = (pcs_ptr->temporal_layer_index == 0) ? 6 : 7;
+                else if (scs_ptr->input_resolution < INPUT_SIZE_1080p_RANGE)
+                    depth_removal_level = (pcs_ptr->temporal_layer_index == 0) ? 7 : 8;
+                else
+                    depth_removal_level = (pcs_ptr->temporal_layer_index == 0) ? 9 : 10;
+#else
+                if (scs_ptr->input_resolution < INPUT_SIZE_480p_RANGE)
+                    depth_removal_level = 6;
+                else if (scs_ptr->input_resolution < INPUT_SIZE_720p_RANGE)
+                    depth_removal_level = 7;
+                else if (scs_ptr->input_resolution < INPUT_SIZE_1080p_RANGE)
+                    depth_removal_level = 8;
+                else
+                    depth_removal_level = 9;
+#endif
+#else
+                if (scs_ptr->input_resolution < INPUT_SIZE_480p_RANGE)
+                    depth_removal_level = 5;
+                else if (scs_ptr->input_resolution < INPUT_SIZE_720p_RANGE)
+                    depth_removal_level = 6;
+                else if (scs_ptr->input_resolution < INPUT_SIZE_1080p_RANGE)
+                    depth_removal_level = 7;
+                else
+                    depth_removal_level = 8;
+#endif
+            }
+#else
+            depth_removal_level = (scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE) ? 1 : 2;
+#endif
+        }
 
         set_depth_removal_level_controls(pcs_ptr, ctx, depth_removal_level);
     }
@@ -3109,7 +3662,9 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     EbErrorType return_error = EB_ErrorNone;
     EbEncMode enc_mode = pcs_ptr->enc_mode;
     uint8_t pd_pass = context_ptr->pd_pass;
-
+#if TUNE_NEW_PRESETS && FTR_M9_AGRESSICE_EARLY_CAN_ELIMINATION
+    SequenceControlSet *scs_ptr           = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
+#endif
 #if !FTR_NEW_CYCLES_ALLOC
     // sb_classifier levels
     // Level                Settings
@@ -4082,7 +4637,32 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         if (pcs_ptr->slice_type == I_SLICE)
             context_ptr->early_cand_elimination = 0;
         else
+#if TUNE_NEW_PRESETS_M5_M8
+#if OPTIMISE_EARLY_CANDIDATE_ELIMINATION || FTR_M9_AGRESSICE_EARLY_CAN_ELIMINATION
+#if TUNE_M9_NOV_26 && !TUNE_M8_M9_NOV27
+            if (enc_mode <= ENC_M9)
+#else
+            if (enc_mode <= ENC_M8)
+#endif
+                context_ptr->early_cand_elimination = 0;
+            else
+                context_ptr->early_cand_elimination = scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? 120 : 102;
+#else
+            context_ptr->early_cand_elimination = 0;
+#endif
+#else
             context_ptr->early_cand_elimination = (enc_mode <= ENC_M6) ? 0 : 1;
+#endif
+
+#if FTR_REDUCE_MDS3_COMPLEXITY
+    /*reduce_last_md_stage_candidate
+    0: OFF
+    1: Aply PFN2 when the block is 0 coeff and PFN4 when MDS0 cand == MDS1 cand and
+    the candidate does not belong to the best class
+    2: 1 + disallow RDOQ and IFS when when MDS0 cand == MDS1 cand and
+    the candidate does not belong to the best class
+    3: 1 + 2 + remouve candidates when when MDS0 cand == MDS1 cand and they don't belong to the best class*/
+#endif
 #if FTR_REDUCE_MDS2_CAND
      if (pd_pass == PD_PASS_0)
         context_ptr->reduce_last_md_stage_candidate = 0;
@@ -4093,9 +4673,9 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             context_ptr->reduce_last_md_stage_candidate = 0;
         else
 #if TUNE_NEW_PRESETS_M5_M8
-#if REDUCE_MDS3_COMPLEXITY
+#if FTR_REDUCE_MDS3_COMPLEXITY
 #if TUNE_PRESETS_M4_M8
-#if M9_AGRESSIVE_LAST_MD_STAGE
+#if FTR_M9_AGRESSIVE_LAST_MD_STAGE
 #if TUNE_M9_NOV_26 && !TUNE_M8_M9_NOV27
             context_ptr->reduce_last_md_stage_candidate = (enc_mode <= ENC_M9) ? 0 : 3;
 #else

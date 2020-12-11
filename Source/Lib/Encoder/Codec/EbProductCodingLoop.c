@@ -4556,6 +4556,19 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
             candidate_buffer->candidate_ptr->transform_type_uv = (context_ptr->txb_itr == 0)
                 ? candidate_buffer->candidate_ptr->transform_type[context_ptr->txb_itr]
                 : candidate_buffer->candidate_ptr->transform_type_uv;
+#if FTR_REDUCE_MDS3_COMPLEXITY
+        EB_TRANS_COEFF_SHAPE pf_shape = context_ptr->pf_ctrls.pf_shape;
+        if (context_ptr->reduce_last_md_stage_candidate && context_ptr->md_stage == MD_STAGE_3) {
+            if (!candidate_buffer->candidate_ptr->block_has_coeff) {
+                pf_shape = N2_SHAPE;
+                if (context_ptr->mds0_best_idx == context_ptr->mds1_best_idx) {
+                    if (candidate_buffer->candidate_ptr->cand_class != context_ptr->mds1_best_class_it) {
+                        pf_shape = N4_SHAPE;
+                    }
+                }
+            }
+        }
+#endif
 #if FTR_REDUCE_TXT_BASED_ON_DISTORTION
         if (!tx_search_skip_flag) {
 #endif
@@ -4571,7 +4584,11 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
             context_ptr->hbd_mode_decision ? EB_10BIT : EB_8BIT,
             tx_type,
             PLANE_TYPE_Y,
+#if FTR_REDUCE_MDS3_COMPLEXITY
+                    pf_shape);
+#else
             context_ptr->pf_ctrls.pf_shape);
+#endif
 
         quantized_dc_txt[tx_type] = av1_quantize_inv_quantize(
             pcs_ptr,
@@ -6475,11 +6492,28 @@ static void md_stage_3(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct
             (!context_ptr->bypass_md_stage_1[candidate_ptr->cand_class] ||
              !context_ptr->bypass_md_stage_2[candidate_ptr->cand_class]) &&
                         (!candidate_buffer->candidate_ptr->block_has_coeff);
-
+#if FTR_REDUCE_MDS3_COMPLEXITY
+        // Adjust md stage_count
+        uint32_t disable_feature = 0;
+        if (context_ptr->reduce_last_md_stage_candidate > 1) {
+            if (pcs_ptr->slice_type != I_SLICE) {
+                if (context_ptr->mds0_best_idx == context_ptr->mds1_best_idx) {
+                    if (context_ptr->mds0_best_idx != cand_index) {
+                    //if (candidate_ptr->cand_class != context_ptr->mds1_best_class_it) {
+                        disable_feature = 1;
+                    }
+                }
+            }
+        }
+#endif
         // Set MD Staging full_loop_core settings
         context_ptr->md_staging_perform_inter_pred = context_ptr->md_staging_mode !=
             MD_STAGING_MODE_0;
+#if FTR_REDUCE_MDS3_COMPLEXITY
+        context_ptr->md_staging_skip_interpolation_search = reduce_prec || disable_feature
+#else
         context_ptr->md_staging_skip_interpolation_search = reduce_prec
+#endif
             ? 0 : ((context_ptr->interpolation_search_level == IFS_MDS3) ? EB_FALSE : EB_TRUE);
         context_ptr->md_staging_skip_chroma_pred = EB_FALSE;
         if (context_ptr->md_staging_tx_size_level)
@@ -6489,7 +6523,11 @@ static void md_stage_3(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct
                 candidate_ptr->cand_class == CAND_CLASS_3;
         context_ptr->md_staging_txt_level = reduce_prec ? 0 : context_ptr->txt_ctrls.enabled;
         context_ptr->md_staging_skip_full_chroma          = EB_FALSE;
+#if FTR_REDUCE_MDS3_COMPLEXITY
+        context_ptr->md_staging_skip_rdoq = reduce_prec || disable_feature ? EB_TRUE : EB_FALSE;
+#else
         context_ptr->md_staging_skip_rdoq = reduce_prec ? EB_TRUE : EB_FALSE;
+#endif
 
             context_ptr->md_staging_spatial_sse_full_loop_level = context_ptr->spatial_sse_full_loop_level;
 
@@ -7261,7 +7299,7 @@ void interintra_class_pruning_2(PictureControlSet *pcs_ptr, ModeDecisionContext 
 
 #if FTR_REDUCE_MDS2_CAND
         // Adjust md stage_count
-#if REDUCE_MDS3_COMPLEXITY
+#if FTR_REDUCE_MDS3_COMPLEXITY
         if (context_ptr->reduce_last_md_stage_candidate > 2) {
 #else
         if (context_ptr->reduce_last_md_stage_candidate) {

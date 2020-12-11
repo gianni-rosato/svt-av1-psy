@@ -60,8 +60,20 @@ void global_motion_estimation(PictureParentControlSet *pcs_ptr,
     }
     // Derive total_me_sad
     uint32_t total_me_sad = 0;
+#if FTR_GM_OPT_BASED_ON_ME
+#if TUNE_M9_GM_DETECTOR
+    uint32_t total_stationary_sb = 0;
+#endif
+    uint32_t total_gm_sbs = 0;
+#endif
     for (uint16_t sb_index = 0; sb_index < pcs_ptr->sb_total_count; ++sb_index) {
         total_me_sad += pcs_ptr->rc_me_distortion[sb_index];
+#if FTR_GM_OPT_BASED_ON_ME
+#if TUNE_M9_GM_DETECTOR
+        total_stationary_sb += pcs_ptr->stationary_block_present_sb[sb_index];
+#endif
+        total_gm_sbs += pcs_ptr->rc_me_allow_gm[sb_index];
+#endif
     }
     uint32_t average_me_sad = total_me_sad / (input_picture_ptr->width * input_picture_ptr->height);
     // Derive global_motion_estimation level
@@ -79,7 +91,19 @@ void global_motion_estimation(PictureParentControlSet *pcs_ptr,
         global_motion_estimation_level = 2;
     else
         global_motion_estimation_level = 3;
+#if FTR_GM_OPT_BASED_ON_ME
+    if (pcs_ptr->gm_ctrls.bypass_based_on_me) {
 
+#if TUNE_M9_GM_DETECTOR
+        if ((total_gm_sbs < (uint32_t)(pcs_ptr->sb_total_count >> 1)) ||
+           (pcs_ptr->gm_ctrls.use_stationary_block && (total_stationary_sb > (uint32_t)((pcs_ptr->sb_total_count * 5)/100)))) // if more than 5% of SB(s) have stationary block(s) then shut gm
+#else
+        uint32_t gm_th = pcs_ptr->sb_total_count >> 1;
+        if (total_gm_sbs < gm_th)
+#endif
+            global_motion_estimation_level = 0;
+    }
+#endif
     if (global_motion_estimation_level)
         for (uint32_t list_index = REF_LIST_0; list_index <= num_of_list_to_search; ++list_index) {
             uint32_t num_of_ref_pic_to_search;

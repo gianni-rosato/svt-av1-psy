@@ -764,6 +764,9 @@ void set_tf_controls(PictureParentControlSet *pcs_ptr, uint8_t tf_level) {
         tf_ctrls->hp = 1;
         tf_ctrls->chroma = 1;
         tf_ctrls->block_32x32_16x16_th = 0;
+#if FTR_OPTIMISE_TF
+        tf_ctrls->bypass_halfpel = 0;
+#endif
         break;
     case 2:
         tf_ctrls->enabled = 1;
@@ -772,6 +775,9 @@ void set_tf_controls(PictureParentControlSet *pcs_ptr, uint8_t tf_level) {
         tf_ctrls->hp = 1;
         tf_ctrls->chroma = 1;
         tf_ctrls->block_32x32_16x16_th = 0;
+#if FTR_OPTIMISE_TF
+        tf_ctrls->bypass_halfpel = 0;
+#endif
         break;
     case 3:
         tf_ctrls->enabled = 1;
@@ -780,6 +786,9 @@ void set_tf_controls(PictureParentControlSet *pcs_ptr, uint8_t tf_level) {
         tf_ctrls->hp = 0;
         tf_ctrls->chroma = 1;
         tf_ctrls->block_32x32_16x16_th = 0;
+#if FTR_OPTIMISE_TF
+        tf_ctrls->bypass_halfpel = 0;
+#endif
         break;
 
     case 4:
@@ -789,7 +798,42 @@ void set_tf_controls(PictureParentControlSet *pcs_ptr, uint8_t tf_level) {
         tf_ctrls->hp = 0;
         tf_ctrls->chroma = 0;
         tf_ctrls->block_32x32_16x16_th = 20 * 32 * 32;
+#if FTR_OPTIMISE_TF
+        tf_ctrls->bypass_halfpel = 1;
+#endif
         break;
+#if TUNE_M9_TF_LEVEL
+#if TUNE_FIX_TF
+    case 5:
+        tf_ctrls->enabled = 1;
+        tf_ctrls->window_size = 3;
+        tf_ctrls->adjust_num_level = 2;
+        tf_ctrls->hp = 0;
+        tf_ctrls->chroma = 0;
+        tf_ctrls->block_32x32_16x16_th = (uint64_t)~0;
+        tf_ctrls->bypass_halfpel = 1;
+        break;
+    case 6:
+        tf_ctrls->enabled = 1;
+        tf_ctrls->window_size = 3;
+        tf_ctrls->adjust_num_level = 0;
+        tf_ctrls->hp = 0;
+        tf_ctrls->chroma = 0;
+        tf_ctrls->block_32x32_16x16_th = (uint64_t)~0;
+        tf_ctrls->bypass_halfpel = 1;
+        break;
+#else
+    case 5:
+        tf_ctrls->enabled = 1;
+        tf_ctrls->window_size = 3;
+        tf_ctrls->noise_based_window_adjust = 0;
+        tf_ctrls->hp = 0;
+        tf_ctrls->chroma = 0;
+        tf_ctrls->block_32x32_16x16_th = (uint64_t)~0;
+        tf_ctrls->bypass_halfpel = 1;
+        break;
+#endif
+#endif
     default:
         assert(0);
         break;
@@ -955,8 +999,34 @@ EbErrorType signal_derivation_multi_processes_oq(
             if (pcs_ptr->enc_mode <= ENC_M3)
 #endif
                     pcs_ptr->cdef_level = 1;
+#if FTR_CDEF_CHROMA_FOLLOWS_LUMA
+#if TUNE_NEW_PRESETS_M5_M8
+#if TUNE_PRESETS_M4_M8
+            else if (pcs_ptr->enc_mode <= ENC_M7)
+#else
+            else if (pcs_ptr->enc_mode <= ENC_M6)
+#endif
+#else
+            else if (pcs_ptr->enc_mode <= ENC_M7)
+#endif
+                pcs_ptr->cdef_level = 4;
+#if FTR_M9_CDEF
+            else if (pcs_ptr->enc_mode <= ENC_M8)
+                pcs_ptr->cdef_level = 5;
+            else
+#if TUNE_M9_IMPROVE_SLOPE
+                pcs_ptr->cdef_level = (pcs_ptr->temporal_layer_index == 0) ? 5 : 6;
+#else
+                pcs_ptr->cdef_level = 6;
+#endif
+#else
+            else
+                pcs_ptr->cdef_level = 5;
+#endif
+#else
                 else
                     pcs_ptr->cdef_level = 4;
+#endif
         }
         else
             pcs_ptr->cdef_level = (int8_t)(scs_ptr->static_config.cdef_level);
@@ -3862,25 +3932,95 @@ void mctf_frame(
     //       3       | ON with smaller window_size subject to possible constraints |  ON with even smaller window_size
     if (perform_filtering) {
         if (scs_ptr->static_config.tf_level == DEFAULT) {
+#if TUNE_NEW_PRESETS_M5_M8
+#if TUNE_M6_FEATURES
+        if (pcs_ptr->enc_mode <= ENC_M6) {
+#else
+        if (pcs_ptr->enc_mode <= ENC_M5) {
+#endif
+#else
         if (pcs_ptr->enc_mode <= ENC_M4) {
+#endif
             if (pcs_ptr->temporal_layer_index == 0 || (pcs_ptr->temporal_layer_index == 1 && scs_ptr->static_config.hierarchical_levels >= 3))
                 context_ptr->tf_level = 1;
             else
                 context_ptr->tf_level = 0;
         }
+#if TUNE_NEW_PRESETS_M5_M8
+        else if (pcs_ptr->enc_mode <= ENC_M7) {
+#else
         else if (pcs_ptr->enc_mode <= ENC_M6) {
+#endif
             if (pcs_ptr->temporal_layer_index == 0 || (pcs_ptr->temporal_layer_index == 1 && scs_ptr->static_config.hierarchical_levels >= 3))
                 context_ptr->tf_level = 2;
             else
                 context_ptr->tf_level = 0;
         }
+#if TUNE_M9_TF_LEVEL
+        else if (pcs_ptr->enc_mode <= ENC_M8) {
+#else
         else {
+#endif
+#if FIX_TF_M8
+            if(pcs_ptr->slice_type == I_SLICE)
+                context_ptr->tf_level = 3;
+            else if (pcs_ptr->temporal_layer_index == 0 || (pcs_ptr->temporal_layer_index == 1 && scs_ptr->static_config.hierarchical_levels >= 3))
+                context_ptr->tf_level = 4;
+            else
+                context_ptr->tf_level = 0;
+#else
             if (pcs_ptr->temporal_layer_index == 0)
                 context_ptr->tf_level = 4;
             else
                 context_ptr->tf_level = 0;
+#endif
 
         }
+#if TUNE_M9_TF_LEVEL
+        else {
+#if TUNE_FIX_TF
+            if (pcs_ptr->slice_type == I_SLICE)
+                context_ptr->tf_level = 5;
+            else if (pcs_ptr->temporal_layer_index == 0)
+                context_ptr->tf_level = 6;
+            else
+                context_ptr->tf_level = 0;
+#else
+            if(pcs_ptr->input_resolution <= INPUT_SIZE_720p_RANGE) {
+#if TUNE_M9_IFS_SSE_ADAPT_ME_MV_NEAR_WM_TF
+                if(pcs_ptr->slice_type == I_SLICE)
+#else
+                if(pcs_ptr->temporal_layer_index == 0)
+#endif
+                    context_ptr->tf_level = 5;
+                else
+                    context_ptr->tf_level = 0;
+            }
+            else {
+#if TUNE_M9_TF_1080P
+                if (pcs_ptr->slice_type == I_SLICE)
+                    context_ptr->tf_level = 4; // set tf_level to 3  here towards an M9 slope
+#if TUNE_M9_TF_BASE
+                else if (pcs_ptr->temporal_layer_index == 0)
+#else
+                else if (pcs_ptr->temporal_layer_index == 0 || (pcs_ptr->temporal_layer_index == 1 && scs_ptr->static_config.hierarchical_levels >= 3))
+#endif
+                    context_ptr->tf_level = 5;
+                else
+                    context_ptr->tf_level = 0;
+#else
+                if(pcs_ptr->slice_type == I_SLICE)
+                    context_ptr->tf_level = 3;
+                else if (pcs_ptr->temporal_layer_index == 0 || (pcs_ptr->temporal_layer_index == 1 && scs_ptr->static_config.hierarchical_levels >= 3))
+                    context_ptr->tf_level = 4;
+                else
+                    context_ptr->tf_level = 0;
+#endif
+            }
+#endif
+        }
+#endif
+
         }
         else {
             if (pcs_ptr->temporal_layer_index == 0 || (pcs_ptr->temporal_layer_index == 1 && scs_ptr->static_config.hierarchical_levels >= 3))
@@ -4100,6 +4240,15 @@ EbErrorType create_trail_ressources(PictureParentControlSet *pcs, PictureParentC
             me_sb_results_ctor);
     }
     EB_MALLOC_ARRAY(pcs_tpl->rc_me_distortion_trail, sb_total_count);
+#if FTR_GM_OPT_BASED_ON_ME
+#if TUNE_M9_GM_DETECTOR
+    EB_MALLOC_ARRAY(pcs_tpl->stationary_block_present_sb_trail, sb_total_count);
+#endif
+    EB_MALLOC_ARRAY(pcs_tpl->rc_me_allow_gm_trail, sb_total_count);
+#endif
+#if TUNE_DEPTH_REMOVAL_PER_RESOLUTION
+    EB_MALLOC_ARRAY(pcs_tpl->me_8x8_cost_variance_trail, sb_total_count);
+#endif
 #if FTR_TPL_TR
     // could be move to ME segment 0, to increase //
     if (pcs_tpl->picture_number == pcs->picture_number + 4) {
@@ -4126,6 +4275,15 @@ void  dtor_trail_ressources(PictureParentControlSet * pcs)
         EB_FREE_PTR_ARRAY(pcs->pa_me_data_trail->me_results, pcs->pa_me_data_trail->sb_total_count_unscaled);
         EB_FREE(pcs->pa_me_data_trail);
         EB_FREE_ARRAY(pcs->rc_me_distortion_trail);
+#if FTR_GM_OPT_BASED_ON_ME
+#if TUNE_M9_GM_DETECTOR
+        EB_FREE_ARRAY(pcs->stationary_block_present_sb_trail);
+#endif
+        EB_FREE_ARRAY(pcs->rc_me_allow_gm_trail);
+#endif
+#if TUNE_DEPTH_REMOVAL_PER_RESOLUTION
+        EB_FREE_ARRAY(pcs->me_8x8_cost_variance_trail);
+#endif
     }
 
 }
