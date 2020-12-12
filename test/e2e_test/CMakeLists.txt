@@ -30,8 +30,11 @@ set(lib_list
     SvtAv1Dec
     gtest_all
     #SDL2.lib
-    aom
-    $<$<TARGET_EXISTS:safestringlib>:$<TARGET_OBJECTS:safestringlib>>)
+    aom)
+
+if(TARGET safestringlib)
+    list(APPEND lib_list $<TARGET_OBJECTS:safestringlib>)
+endif()
 
 if(MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_CRT_SECURE_NO_WARNINGS")

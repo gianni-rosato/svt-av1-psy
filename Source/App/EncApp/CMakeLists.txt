@@ -21,8 +21,11 @@ file(GLOB all_files
 
 # App Source Files
 add_executable(SvtAv1EncApp
-    ${all_files}
-    $<$<TARGET_EXISTS:safestringlib>:$<TARGET_OBJECTS:safestringlib>>)
+    ${all_files})
+
+if(TARGET safestringlib)
+    target_sources(SvtAv1EncApp PRIVATE $<TARGET_OBJECTS:safestringlib>)
+endif()
 
 #********** SET COMPILE FLAGS************
 # Link the Encoder App
