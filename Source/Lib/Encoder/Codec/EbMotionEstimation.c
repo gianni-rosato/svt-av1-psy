@@ -2284,6 +2284,14 @@ static void hme_level0_sb(
     uint32_t search_region_number_in_width  = 0;
     uint32_t search_region_number_in_height = 0;
 
+#if FTR_HME_REF_IDX_RESIZING
+    // store base HME sizes, to be used if using ref-index based HME resizing
+    uint16_t base_hme_search_width = context_ptr->hme_level0_total_search_area_width;
+    uint16_t base_hme_search_height = context_ptr->hme_level0_total_search_area_height;
+    uint16_t base_hme_max_search_width = context_ptr->hme_level0_max_total_search_area_width;
+    uint16_t base_hme_max_search_height = context_ptr->hme_level0_max_total_search_area_height;
+#endif
+
     // Uni-Prediction motion estimation loop
     // List Loop
     for (int list_index = REF_LIST_0; list_index <= num_of_list_to_search; ++list_index) {
@@ -2340,6 +2348,29 @@ static void hme_level0_sb(
                         dist              = ((dist * exp) / 8) + round_up;
                         hme_sr_factor_x   = dist * 100;
                         hme_sr_factor_y   = dist * 100;
+#if FTR_HME_REF_IDX_RESIZING
+                        // reduce HME search area for higher ref indices
+                        if (context_ptr->me_sr_adjustment_ctrls.enable_me_sr_adjustment && context_ptr->me_sr_adjustment_ctrls.distance_based_hme_resizing) {
+
+                            context_ptr->hme_level0_total_search_area_width = base_hme_search_width / (1 + ref_pic_index);
+                            context_ptr->hme_level0_total_search_area_height = base_hme_search_height / (1 + ref_pic_index);
+                            context_ptr->hme_level0_max_total_search_area_width = base_hme_max_search_width / (1 + ref_pic_index);
+                            context_ptr->hme_level0_max_total_search_area_height = base_hme_max_search_height / (1 + ref_pic_index);
+
+                            context_ptr->hme_level0_max_search_area_in_width_array[0] =
+                                context_ptr->hme_level0_max_search_area_in_width_array[1] =
+                                context_ptr->hme_level0_max_total_search_area_width / context_ptr->number_hme_search_region_in_width;
+                            context_ptr->hme_level0_max_search_area_in_height_array[0] =
+                                context_ptr->hme_level0_max_search_area_in_height_array[1] =
+                                context_ptr->hme_level0_max_total_search_area_height / context_ptr->number_hme_search_region_in_height;
+                            context_ptr->hme_level0_search_area_in_width_array[0] =
+                                context_ptr->hme_level0_search_area_in_width_array[1] =
+                                context_ptr->hme_level0_total_search_area_width / context_ptr->number_hme_search_region_in_width;
+                            context_ptr->hme_level0_search_area_in_height_array[0] =
+                                context_ptr->hme_level0_search_area_in_height_array[1] =
+                                context_ptr->hme_level0_total_search_area_height / context_ptr->number_hme_search_region_in_height;
+                        }
+#endif
                         while (search_region_number_in_height <
                                context_ptr->number_hme_search_region_in_height) {
                             while (search_region_number_in_width <
@@ -2372,6 +2403,28 @@ static void hme_level0_sb(
                             search_region_number_in_width = 0;
                             search_region_number_in_height++;
                         }
+#if FTR_HME_REF_IDX_RESIZING
+                        // reset base HME area
+                        if (context_ptr->me_sr_adjustment_ctrls.enable_me_sr_adjustment && context_ptr->me_sr_adjustment_ctrls.distance_based_hme_resizing) {
+                            context_ptr->hme_level0_total_search_area_width = base_hme_search_width;
+                            context_ptr->hme_level0_total_search_area_height = base_hme_search_height;
+                            context_ptr->hme_level0_max_total_search_area_width = base_hme_max_search_width;
+                            context_ptr->hme_level0_max_total_search_area_height = base_hme_max_search_height;
+
+                            context_ptr->hme_level0_max_search_area_in_width_array[0] =
+                                context_ptr->hme_level0_max_search_area_in_width_array[1] =
+                                context_ptr->hme_level0_max_total_search_area_width / context_ptr->number_hme_search_region_in_width;
+                            context_ptr->hme_level0_max_search_area_in_height_array[0] =
+                                context_ptr->hme_level0_max_search_area_in_height_array[1] =
+                                context_ptr->hme_level0_max_total_search_area_height / context_ptr->number_hme_search_region_in_height;
+                            context_ptr->hme_level0_search_area_in_width_array[0] =
+                                context_ptr->hme_level0_search_area_in_width_array[1] =
+                                context_ptr->hme_level0_total_search_area_width / context_ptr->number_hme_search_region_in_width;
+                            context_ptr->hme_level0_search_area_in_height_array[0] =
+                                context_ptr->hme_level0_search_area_in_height_array[1] =
+                                context_ptr->hme_level0_total_search_area_height / context_ptr->number_hme_search_region_in_height;
+                        }
+#endif
                     }
                 } else {
                     context_ptr->x_hme_level0_search_center[list_index][ref_pic_index]

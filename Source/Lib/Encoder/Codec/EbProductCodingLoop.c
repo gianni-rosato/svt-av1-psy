@@ -1116,6 +1116,196 @@ void fast_loop_core(ModeDecisionCandidateBuffer *candidate_buffer, PictureContro
     if (context_ptr->md_staging_mode == MD_STAGING_MODE_0)
         *(candidate_buffer->full_cost_ptr) = *(candidate_buffer->fast_cost_ptr);
 }
+#if FTR_NEW_REF_PRUNING_CTRLS
+void set_dist_based_ref_pruning_controls(
+    ModeDecisionContext *mdctxt, uint8_t dist_based_ref_pruning_level) {
+    RefPruningControls *ref_pruning_ctrls = &mdctxt->ref_pruning_ctrls;
+
+    switch (dist_based_ref_pruning_level) {
+    case 0: ref_pruning_ctrls->enabled = 0; break;
+    case 1:
+        ref_pruning_ctrls->enabled = 1;
+
+        ref_pruning_ctrls->max_dev_to_best[PA_ME_GROUP]         = (uint32_t)~0;
+        ref_pruning_ctrls->max_dev_to_best[UNI_3x3_GROUP]       = (uint32_t)~0;
+        ref_pruning_ctrls->max_dev_to_best[BI_3x3_GROUP]        = 0;
+        ref_pruning_ctrls->max_dev_to_best[NRST_NEW_NEAR_GROUP] = 0;
+        ref_pruning_ctrls->max_dev_to_best[NRST_NEAR_GROUP]     = (uint32_t)~0;
+        ref_pruning_ctrls->max_dev_to_best[PRED_ME_GROUP]       = (uint32_t)~0;
+        ref_pruning_ctrls->max_dev_to_best[GLOBAL_GROUP]        = (uint32_t)~0;
+        ref_pruning_ctrls->max_dev_to_best[WARP_GROUP]          = (uint32_t)~0;
+        ref_pruning_ctrls->max_dev_to_best[OBMC_GROUP]          = (uint32_t)~0;
+        ref_pruning_ctrls->max_dev_to_best[II_WEDGE_GROUP]      = (uint32_t)~0;
+        ref_pruning_ctrls->max_dev_to_best[II_DEPENDENT_GROUP]  = (uint32_t)~0;
+        ref_pruning_ctrls->max_dev_to_best[COMP_DIST]           = (uint32_t)~0;
+        ref_pruning_ctrls->max_dev_to_best[COMP_DIFF]           = (uint32_t)~0;
+        ref_pruning_ctrls->max_dev_to_best[COMP_WEDGE]          = (uint32_t)~0;
+        ref_pruning_ctrls->ref_idx_2_offset                     = 0;
+        ref_pruning_ctrls->ref_idx_3_offset                     = 0;
+
+        ref_pruning_ctrls->closest_refs[PA_ME_GROUP]            = 1;
+        ref_pruning_ctrls->closest_refs[UNI_3x3_GROUP]          = 1;
+        ref_pruning_ctrls->closest_refs[BI_3x3_GROUP]           = 1;
+        ref_pruning_ctrls->closest_refs[NRST_NEW_NEAR_GROUP]    = 1;
+        ref_pruning_ctrls->closest_refs[NRST_NEAR_GROUP]        = 1;
+        ref_pruning_ctrls->closest_refs[PRED_ME_GROUP]          = 1;
+        ref_pruning_ctrls->closest_refs[GLOBAL_GROUP]           = 1;
+        ref_pruning_ctrls->closest_refs[WARP_GROUP]             = 1;
+        ref_pruning_ctrls->closest_refs[OBMC_GROUP]             = 1;
+        ref_pruning_ctrls->closest_refs[II_WEDGE_GROUP]         = 1;
+        ref_pruning_ctrls->closest_refs[II_DEPENDENT_GROUP]     = 1;
+        ref_pruning_ctrls->closest_refs[COMP_DIST]              = 1;
+        ref_pruning_ctrls->closest_refs[COMP_DIFF]              = 1;
+        ref_pruning_ctrls->closest_refs[COMP_WEDGE]             = 1;
+
+        break;
+    case 2:
+        ref_pruning_ctrls->enabled = 1;
+
+        ref_pruning_ctrls->max_dev_to_best[PA_ME_GROUP]         = (uint32_t)~0;
+        ref_pruning_ctrls->max_dev_to_best[UNI_3x3_GROUP]       = 0;
+        ref_pruning_ctrls->max_dev_to_best[BI_3x3_GROUP]        = 0;
+        ref_pruning_ctrls->max_dev_to_best[NRST_NEW_NEAR_GROUP] = 0;
+        ref_pruning_ctrls->max_dev_to_best[NRST_NEAR_GROUP]     = 60;
+        ref_pruning_ctrls->max_dev_to_best[PRED_ME_GROUP]       = 60;
+        ref_pruning_ctrls->max_dev_to_best[GLOBAL_GROUP]        = (uint32_t)~0;
+        ref_pruning_ctrls->max_dev_to_best[WARP_GROUP]          = (uint32_t)~0;
+        ref_pruning_ctrls->max_dev_to_best[OBMC_GROUP]          = (uint32_t)~0;
+        ref_pruning_ctrls->max_dev_to_best[II_WEDGE_GROUP]      = 30;
+        ref_pruning_ctrls->max_dev_to_best[II_DEPENDENT_GROUP]  = 30;
+        ref_pruning_ctrls->max_dev_to_best[COMP_DIST]           = 30;
+        ref_pruning_ctrls->max_dev_to_best[COMP_DIFF]           = 30;
+        ref_pruning_ctrls->max_dev_to_best[COMP_WEDGE]          = 30;
+        ref_pruning_ctrls->ref_idx_2_offset                     = 10;
+        ref_pruning_ctrls->ref_idx_3_offset                     = 20;
+
+        ref_pruning_ctrls->closest_refs[PA_ME_GROUP]            = 1;
+        ref_pruning_ctrls->closest_refs[UNI_3x3_GROUP]          = 1;
+        ref_pruning_ctrls->closest_refs[BI_3x3_GROUP]           = 1;
+        ref_pruning_ctrls->closest_refs[NRST_NEW_NEAR_GROUP]    = 1;
+        ref_pruning_ctrls->closest_refs[NRST_NEAR_GROUP]        = 1;
+        ref_pruning_ctrls->closest_refs[PRED_ME_GROUP]          = 1;
+        ref_pruning_ctrls->closest_refs[GLOBAL_GROUP]           = 1;
+        ref_pruning_ctrls->closest_refs[WARP_GROUP]             = 1;
+        ref_pruning_ctrls->closest_refs[OBMC_GROUP]             = 1;
+        ref_pruning_ctrls->closest_refs[II_WEDGE_GROUP]         = 1;
+        ref_pruning_ctrls->closest_refs[II_DEPENDENT_GROUP]     = 1;
+        ref_pruning_ctrls->closest_refs[COMP_DIST]              = 1;
+        ref_pruning_ctrls->closest_refs[COMP_DIFF]              = 1;
+        ref_pruning_ctrls->closest_refs[COMP_WEDGE]             = 1;
+
+        break;
+    case 3:
+        ref_pruning_ctrls->enabled = 1;
+
+        ref_pruning_ctrls->max_dev_to_best[PA_ME_GROUP]         = 60;
+        ref_pruning_ctrls->max_dev_to_best[UNI_3x3_GROUP]       = 0;
+        ref_pruning_ctrls->max_dev_to_best[BI_3x3_GROUP]        = 0;
+        ref_pruning_ctrls->max_dev_to_best[NRST_NEW_NEAR_GROUP] = 0;
+        ref_pruning_ctrls->max_dev_to_best[NRST_NEAR_GROUP]     = 60;
+        ref_pruning_ctrls->max_dev_to_best[PRED_ME_GROUP]       = 60;
+        ref_pruning_ctrls->max_dev_to_best[GLOBAL_GROUP]        = (uint32_t)~0;
+        ref_pruning_ctrls->max_dev_to_best[WARP_GROUP]          = (uint32_t)~0;
+        ref_pruning_ctrls->max_dev_to_best[OBMC_GROUP]          = 30;
+        ref_pruning_ctrls->max_dev_to_best[II_WEDGE_GROUP]      = 10;
+        ref_pruning_ctrls->max_dev_to_best[II_DEPENDENT_GROUP]  = 30;
+        ref_pruning_ctrls->max_dev_to_best[COMP_DIST]           = 10;
+        ref_pruning_ctrls->max_dev_to_best[COMP_DIFF]           = 10;
+        ref_pruning_ctrls->max_dev_to_best[COMP_WEDGE]          = 10;
+        ref_pruning_ctrls->ref_idx_2_offset                     = 10;
+        ref_pruning_ctrls->ref_idx_3_offset                     = 20;
+
+        ref_pruning_ctrls->closest_refs[PA_ME_GROUP]            = 1;
+        ref_pruning_ctrls->closest_refs[UNI_3x3_GROUP]          = 1;
+        ref_pruning_ctrls->closest_refs[BI_3x3_GROUP]           = 1;
+        ref_pruning_ctrls->closest_refs[NRST_NEW_NEAR_GROUP]    = 1;
+        ref_pruning_ctrls->closest_refs[NRST_NEAR_GROUP]        = 1;
+        ref_pruning_ctrls->closest_refs[PRED_ME_GROUP]          = 1;
+        ref_pruning_ctrls->closest_refs[GLOBAL_GROUP]           = 1;
+        ref_pruning_ctrls->closest_refs[WARP_GROUP]             = 1;
+        ref_pruning_ctrls->closest_refs[OBMC_GROUP]             = 1;
+        ref_pruning_ctrls->closest_refs[II_WEDGE_GROUP]         = 1;
+        ref_pruning_ctrls->closest_refs[II_DEPENDENT_GROUP]     = 1;
+        ref_pruning_ctrls->closest_refs[COMP_DIST]              = 1;
+        ref_pruning_ctrls->closest_refs[COMP_DIFF]              = 1;
+        ref_pruning_ctrls->closest_refs[COMP_WEDGE]             = 1;
+
+        break;
+    case 4:
+        ref_pruning_ctrls->enabled = 1;
+
+        ref_pruning_ctrls->max_dev_to_best[PA_ME_GROUP]         = 30;
+        ref_pruning_ctrls->max_dev_to_best[UNI_3x3_GROUP]       = 0;
+        ref_pruning_ctrls->max_dev_to_best[BI_3x3_GROUP]        = 0;
+        ref_pruning_ctrls->max_dev_to_best[NRST_NEW_NEAR_GROUP] = 0;
+        ref_pruning_ctrls->max_dev_to_best[NRST_NEAR_GROUP]     = 30;
+        ref_pruning_ctrls->max_dev_to_best[PRED_ME_GROUP]       = 10;
+        ref_pruning_ctrls->max_dev_to_best[GLOBAL_GROUP]        = (uint32_t)~0;
+        ref_pruning_ctrls->max_dev_to_best[WARP_GROUP]          = (uint32_t)~0;
+        ref_pruning_ctrls->max_dev_to_best[OBMC_GROUP]          = 10;
+        ref_pruning_ctrls->max_dev_to_best[II_WEDGE_GROUP]      = 0;
+        ref_pruning_ctrls->max_dev_to_best[II_DEPENDENT_GROUP]  = 0;
+        ref_pruning_ctrls->max_dev_to_best[COMP_DIST]           = 0;
+        ref_pruning_ctrls->max_dev_to_best[COMP_DIFF]           = 0;
+        ref_pruning_ctrls->max_dev_to_best[COMP_WEDGE]          = 0;
+        ref_pruning_ctrls->ref_idx_2_offset                     = 10;
+        ref_pruning_ctrls->ref_idx_3_offset                     = 20;
+
+        ref_pruning_ctrls->closest_refs[PA_ME_GROUP]            = 1;
+        ref_pruning_ctrls->closest_refs[UNI_3x3_GROUP]          = 1;
+        ref_pruning_ctrls->closest_refs[BI_3x3_GROUP]           = 1;
+        ref_pruning_ctrls->closest_refs[NRST_NEW_NEAR_GROUP]    = 1;
+        ref_pruning_ctrls->closest_refs[NRST_NEAR_GROUP]        = 1;
+        ref_pruning_ctrls->closest_refs[PRED_ME_GROUP]          = 1;
+        ref_pruning_ctrls->closest_refs[GLOBAL_GROUP]           = 1;
+        ref_pruning_ctrls->closest_refs[WARP_GROUP]             = 1;
+        ref_pruning_ctrls->closest_refs[OBMC_GROUP]             = 1;
+        ref_pruning_ctrls->closest_refs[II_WEDGE_GROUP]         = 1;
+        ref_pruning_ctrls->closest_refs[II_DEPENDENT_GROUP]     = 1;
+        ref_pruning_ctrls->closest_refs[COMP_DIST]              = 1;
+        ref_pruning_ctrls->closest_refs[COMP_DIFF]              = 1;
+        ref_pruning_ctrls->closest_refs[COMP_WEDGE]             = 1;
+        break;
+    case 5:
+        ref_pruning_ctrls->enabled = 1;
+
+        ref_pruning_ctrls->max_dev_to_best[PA_ME_GROUP]         = 0;
+        ref_pruning_ctrls->max_dev_to_best[UNI_3x3_GROUP]       = 0;
+        ref_pruning_ctrls->max_dev_to_best[BI_3x3_GROUP]        = 0;
+        ref_pruning_ctrls->max_dev_to_best[NRST_NEW_NEAR_GROUP] = 0;
+        ref_pruning_ctrls->max_dev_to_best[NRST_NEAR_GROUP]     = 0;
+        ref_pruning_ctrls->max_dev_to_best[PRED_ME_GROUP]       = 0;
+        ref_pruning_ctrls->max_dev_to_best[GLOBAL_GROUP]        = (uint32_t)~0;
+        ref_pruning_ctrls->max_dev_to_best[WARP_GROUP]          = 0;
+        ref_pruning_ctrls->max_dev_to_best[OBMC_GROUP]          = 0;
+        ref_pruning_ctrls->max_dev_to_best[II_WEDGE_GROUP]      = 0;
+        ref_pruning_ctrls->max_dev_to_best[II_DEPENDENT_GROUP]  = 0;
+        ref_pruning_ctrls->max_dev_to_best[COMP_DIST]           = 0;
+        ref_pruning_ctrls->max_dev_to_best[COMP_DIFF]           = 0;
+        ref_pruning_ctrls->max_dev_to_best[COMP_WEDGE]          = 0;
+        ref_pruning_ctrls->ref_idx_2_offset                     = 0;
+        ref_pruning_ctrls->ref_idx_3_offset                     = 0;
+
+        ref_pruning_ctrls->closest_refs[PA_ME_GROUP]            = 1;
+        ref_pruning_ctrls->closest_refs[UNI_3x3_GROUP]          = 1;
+        ref_pruning_ctrls->closest_refs[BI_3x3_GROUP]           = 1;
+        ref_pruning_ctrls->closest_refs[NRST_NEW_NEAR_GROUP]    = 1;
+        ref_pruning_ctrls->closest_refs[NRST_NEAR_GROUP]        = 1;
+        ref_pruning_ctrls->closest_refs[PRED_ME_GROUP]          = 1;
+        ref_pruning_ctrls->closest_refs[GLOBAL_GROUP]           = 1;
+        ref_pruning_ctrls->closest_refs[WARP_GROUP]             = 1;
+        ref_pruning_ctrls->closest_refs[OBMC_GROUP]             = 1;
+        ref_pruning_ctrls->closest_refs[II_WEDGE_GROUP]         = 1;
+        ref_pruning_ctrls->closest_refs[II_DEPENDENT_GROUP]     = 1;
+        ref_pruning_ctrls->closest_refs[COMP_DIST]              = 1;
+        ref_pruning_ctrls->closest_refs[COMP_DIFF]              = 1;
+        ref_pruning_ctrls->closest_refs[COMP_WEDGE]             = 1;
+        break;
+
+    default: assert(0); break;
+    }
+}
+#else
 void set_dist_based_ref_pruning_controls(
     ModeDecisionContext *mdctxt, uint8_t dist_based_ref_pruning_level) {
     RefPruningControls *ref_pruning_ctrls = &mdctxt->ref_pruning_ctrls;
@@ -1251,7 +1441,7 @@ void set_dist_based_ref_pruning_controls(
     default: assert(0); break;
     }
 }
-
+#endif
 void set_compound_to_inject(ModeDecisionContext *context_ptr, EbBool * comp_inj_table, EbBool avg, EbBool dist, EbBool diff, EbBool wdg);
 
 void set_inter_comp_controls(ModeDecisionContext *ctx, uint8_t inter_comp_mode) {
@@ -1262,39 +1452,124 @@ void set_inter_comp_controls(ModeDecisionContext *ctx, uint8_t inter_comp_mode) 
     {
     case 0://OFF
         set_compound_to_inject(ctx, inter_comp_ctrls->allowed_comp_types,       1 /*AVG*/, 0 /*DIST*/, 0 /*DIFF*/, 0 /*WEDGE*/);
+#if !FTR_NEW_REF_PRUNING_CTRLS
         set_compound_to_inject(ctx, inter_comp_ctrls->allowed_dist1_comp_types, 1 /*AVG*/, 0 /*DIST*/, 0 /*DIFF*/, 0 /*WEDGE*/);
         set_compound_to_inject(ctx, inter_comp_ctrls->allowed_dist2_comp_types, 1 /*AVG*/, 0 /*DIST*/, 0 /*DIFF*/, 0 /*WEDGE*/);
+#endif
         break;
     case 1://FULL
         set_compound_to_inject(ctx, inter_comp_ctrls->allowed_comp_types,       1 /*AVG*/, 1 /*DIST*/, 1 /*DIFF*/, 1 /*WEDGE*/);
+#if FTR_UPGRADE_COMP_LEVELS
+        inter_comp_ctrls->do_nearest_nearest = 1;
+        inter_comp_ctrls->do_near_near = 1;
+        inter_comp_ctrls->do_me = 1;
+        inter_comp_ctrls->do_pme = 1;
+        inter_comp_ctrls->do_nearest_near_new = 1;
+        inter_comp_ctrls->do_3x3_bi = 1;
+
+        inter_comp_ctrls->use_rate = 1;
+        inter_comp_ctrls->pred0_to_pred1_mult = 0;
+
+        break;
+    case 2:
+        set_compound_to_inject(ctx, inter_comp_ctrls->allowed_comp_types, 1 /*AVG*/, 1 /*DIST*/, 1 /*DIFF*/, 1 /*WEDGE*/);
+
+        inter_comp_ctrls->do_nearest_nearest = 1;
+        inter_comp_ctrls->do_near_near = 1;
+        inter_comp_ctrls->do_me = 1;
+        inter_comp_ctrls->do_pme = 1;
+        inter_comp_ctrls->do_nearest_near_new = 1;
+        inter_comp_ctrls->do_3x3_bi = 0;
+
+        inter_comp_ctrls->use_rate = 0;
+        inter_comp_ctrls->pred0_to_pred1_mult = 0;
+
+        break;
+
+    case 3:
+        set_compound_to_inject(ctx, inter_comp_ctrls->allowed_comp_types, 1 /*AVG*/, 1 /*DIST*/, 1 /*DIFF*/, 1 /*WEDGE*/);
+
+        inter_comp_ctrls->do_nearest_nearest = 1;
+        inter_comp_ctrls->do_near_near = 1;
+        inter_comp_ctrls->do_me = 1;
+        inter_comp_ctrls->do_pme = 1;
+        inter_comp_ctrls->do_nearest_near_new = 0;
+        inter_comp_ctrls->do_3x3_bi = 0;
+
+        inter_comp_ctrls->use_rate = 0;
+        inter_comp_ctrls->pred0_to_pred1_mult = 1;
+
+        break;
+    case 4:
+        set_compound_to_inject(ctx, inter_comp_ctrls->allowed_comp_types, 1 /*AVG*/, 1 /*DIST*/, 1 /*DIFF*/, 1 /*WEDGE*/);
+
+        inter_comp_ctrls->do_nearest_nearest = 1;
+        inter_comp_ctrls->do_near_near = 1;
+        inter_comp_ctrls->do_me = 0;
+        inter_comp_ctrls->do_pme = 0;
+        inter_comp_ctrls->do_nearest_near_new = 0;
+        inter_comp_ctrls->do_3x3_bi = 0;
+
+        inter_comp_ctrls->use_rate = 0;
+        inter_comp_ctrls->pred0_to_pred1_mult = 2;
+
+        break;
+    case 5:
+        set_compound_to_inject(ctx, inter_comp_ctrls->allowed_comp_types, 1 /*AVG*/, 1 /*DIST*/, 1 /*DIFF*/, 1 /*WEDGE*/);
+
+        inter_comp_ctrls->do_nearest_nearest = 1;
+        inter_comp_ctrls->do_near_near = 0;
+        inter_comp_ctrls->do_me = 0;
+        inter_comp_ctrls->do_pme = 0;
+        inter_comp_ctrls->do_nearest_near_new = 0;
+        inter_comp_ctrls->do_3x3_bi = 0;
+
+        inter_comp_ctrls->use_rate = 0;
+        inter_comp_ctrls->pred0_to_pred1_mult = 2;
+
+        break;
+#else
+#if !FTR_NEW_REF_PRUNING_CTRLS
         set_compound_to_inject(ctx, inter_comp_ctrls->allowed_dist1_comp_types, 1 /*AVG*/, 1 /*DIST*/, 1 /*DIFF*/, 1 /*WEDGE*/);
         set_compound_to_inject(ctx, inter_comp_ctrls->allowed_dist2_comp_types, 1 /*AVG*/, 1 /*DIST*/, 1 /*DIFF*/, 1 /*WEDGE*/);
+#endif
         break;
     case 2:
         set_compound_to_inject(ctx, inter_comp_ctrls->allowed_comp_types,       1 /*AVG*/, 1 /*DIST*/, 1 /*DIFF*/, 1 /*WEDGE*/);
+#if !FTR_NEW_REF_PRUNING_CTRLS
         set_compound_to_inject(ctx, inter_comp_ctrls->allowed_dist1_comp_types, 1 /*AVG*/, 1 /*DIST*/, 1 /*DIFF*/, 1 /*WEDGE*/);
         set_compound_to_inject(ctx, inter_comp_ctrls->allowed_dist2_comp_types, 1 /*AVG*/, 0 /*DIST*/, 0 /*DIFF*/, 0 /*WEDGE*/);
+#endif
         break;
     case 3:
         set_compound_to_inject(ctx, inter_comp_ctrls->allowed_comp_types,       1 /*AVG*/, 1 /*DIST*/, 1 /*DIFF*/, 1 /*WEDGE*/);
+#if !FTR_NEW_REF_PRUNING_CTRLS
         set_compound_to_inject(ctx, inter_comp_ctrls->allowed_dist1_comp_types, 1 /*AVG*/, 1 /*DIST*/, 1 /*DIFF*/, 0 /*WEDGE*/);
         set_compound_to_inject(ctx, inter_comp_ctrls->allowed_dist2_comp_types, 1 /*AVG*/, 0 /*DIST*/, 0 /*DIFF*/, 0 /*WEDGE*/);
+#endif
         break;
     case 4:
         set_compound_to_inject(ctx, inter_comp_ctrls->allowed_comp_types,       1 /*AVG*/, 1 /*DIST*/, 1 /*DIFF*/, 1 /*WEDGE*/);
+#if !FTR_NEW_REF_PRUNING_CTRLS
         set_compound_to_inject(ctx, inter_comp_ctrls->allowed_dist1_comp_types, 1 /*AVG*/, 1 /*DIST*/, 0 /*DIFF*/, 0 /*WEDGE*/);
         set_compound_to_inject(ctx, inter_comp_ctrls->allowed_dist2_comp_types, 1 /*AVG*/, 0 /*DIST*/, 0 /*DIFF*/, 0 /*WEDGE*/);
+#endif
         break;
     case 5:
         set_compound_to_inject(ctx, inter_comp_ctrls->allowed_comp_types,       1 /*AVG*/, 1 /*DIST*/, 1 /*DIFF*/, 0 /*WEDGE*/);
+#if !FTR_NEW_REF_PRUNING_CTRLS
         set_compound_to_inject(ctx, inter_comp_ctrls->allowed_dist1_comp_types, 1 /*AVG*/, 1 /*DIST*/, 0 /*DIFF*/, 0 /*WEDGE*/);
         set_compound_to_inject(ctx, inter_comp_ctrls->allowed_dist2_comp_types, 1 /*AVG*/, 0 /*DIST*/, 0 /*DIFF*/, 0 /*WEDGE*/);
+#endif
         break;
     case 6:
         set_compound_to_inject(ctx, inter_comp_ctrls->allowed_comp_types,       1 /*AVG*/, 1 /*DIST*/, 0 /*DIFF*/, 0 /*WEDGE*/);
+#if !FTR_NEW_REF_PRUNING_CTRLS
         set_compound_to_inject(ctx, inter_comp_ctrls->allowed_dist1_comp_types, 1 /*AVG*/, 1 /*DIST*/, 0 /*DIFF*/, 0 /*WEDGE*/);
         set_compound_to_inject(ctx, inter_comp_ctrls->allowed_dist2_comp_types, 1 /*AVG*/, 0 /*DIST*/, 0 /*DIFF*/, 0 /*WEDGE*/);
+#endif
         break;
+#endif
     default:
         assert(0);
         break;
@@ -2355,7 +2630,9 @@ void perform_md_reference_pruning(PictureControlSet *  pcs_ptr,
                                          ModeDecisionContext *context_ptr,
                                          EbPictureBufferDesc *input_picture_ptr) {
     uint32_t early_inter_distortion_array[MAX_NUM_OF_REF_PIC_LIST * REF_LIST_MAX_DEPTH];
-
+#if FTR_NEW_REF_PRUNING_CTRLS
+    uint32_t dev_to_the_best[MAX_NUM_OF_REF_PIC_LIST * REF_LIST_MAX_DEPTH] = { 0 };
+#endif
     // Reset ref_filtering_res
     for (uint32_t gi = 0; gi < TOT_INTER_GROUP; gi++)
         for (uint32_t li = 0; li < MAX_NUM_OF_REF_PIC_LIST; li++)
@@ -2489,6 +2766,15 @@ void perform_md_reference_pruning(PictureControlSet *  pcs_ptr,
 
     // Sort early_inter_distortion_array
     unsigned num_of_cand_to_sort = MAX_NUM_OF_REF_PIC_LIST * REF_LIST_MAX_DEPTH;
+#if FTR_NEW_REF_PRUNING_CTRLS
+    uint32_t min_dist = (uint32_t)~0;
+
+    for (unsigned i = 0; i < num_of_cand_to_sort - 1; ++i)
+        min_dist = MIN(min_dist, early_inter_distortion_array[i]);
+
+    for (unsigned i = 0; i < num_of_cand_to_sort - 1; ++i)
+        dev_to_the_best[i] = ((MAX(early_inter_distortion_array[i], 1) - MAX(min_dist, 1)) * 100) / MAX(min_dist, 1);
+#else
     for (unsigned i = 0; i < num_of_cand_to_sort - 1; ++i)
         for (unsigned j = i + 1; j < num_of_cand_to_sort; ++j)
             if (early_inter_distortion_array[j] < early_inter_distortion_array[i]) {
@@ -2496,18 +2782,36 @@ void perform_md_reference_pruning(PictureControlSet *  pcs_ptr,
                 early_inter_distortion_array[i] = early_inter_distortion_array[j];
                 early_inter_distortion_array[j] = temp;
             }
+#endif
     for (unsigned gi = 0; gi < TOT_INTER_GROUP; gi++) {
+#if !FTR_NEW_REF_PRUNING_CTRLS
         uint8_t best_refs        = context_ptr->ref_pruning_ctrls.best_refs[gi];
         uint8_t total_tagged_ref = 0;
+#endif
             for (unsigned li = 0; li < MAX_NUM_OF_REF_PIC_LIST; li++)
                 for (unsigned ri = 0; ri < REF_LIST_MAX_DEPTH; ri++)
                     if (context_ptr->ref_filtering_res[gi][li][ri].valid_ref) {
                         context_ptr->ref_filtering_res[gi][li][ri].do_ref = 0;
+#if FTR_NEW_REF_PRUNING_CTRLS
+                        uint32_t offset = (ri <= 1)
+                            ? 0
+                            : (ri <= 2)
+                            ? context_ptr->ref_pruning_ctrls.ref_idx_2_offset : context_ptr->ref_pruning_ctrls.ref_idx_3_offset;
+
+                        uint32_t pruning_th = (offset == (uint32_t)~0)
+                            ? 0
+                            : (context_ptr->ref_pruning_ctrls.max_dev_to_best[gi] == (uint32_t)~0)
+                            ? (uint32_t)~0
+                            : MAX(0, ((int64_t)context_ptr->ref_pruning_ctrls.max_dev_to_best[gi] - (int64_t)offset));
+
+                        if (dev_to_the_best[li * REF_LIST_MAX_DEPTH + ri] < pruning_th) {
+#else
                         if (context_ptr->ref_filtering_res[gi][li][ri].dist <=
                                 early_inter_distortion_array[(uint8_t)(best_refs - 1)] &&
                             total_tagged_ref < best_refs) {
-                            context_ptr->ref_filtering_res[gi][li][ri].do_ref = 1;
                             total_tagged_ref++;
+#endif
+                            context_ptr->ref_filtering_res[gi][li][ri].do_ref = 1;
                         }
                     }
     }
@@ -2620,8 +2924,9 @@ void pme_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPictureBuffe
             use_scaled_rec_refs_if_needed(pcs, input_picture_ptr, ref_obj, &ref_pic);
 
             if (!is_valid_unipred_ref(ctx, PRED_ME_GROUP, list_idx, ref_idx)) continue;
-
+#if !FTR_NEW_REF_PRUNING_CTRLS
             if (ref_idx > ctx->md_max_ref_count - 1) continue;
+#endif
             // Get the ME MV
             const MeSbResults *me_results =
                 pcs->parent_pcs_ptr->pa_me_data->me_results[ctx->me_sb_addr];
@@ -6768,6 +7073,30 @@ EbErrorType signal_derivation_block(PictureControlSet *pcs,
 
     EbEncMode enc_mode = pcs->parent_pcs_ptr->enc_mode;
     // Set dist_based_ref_pruning
+#if FTR_NEW_REF_PRUNING_CTRLS
+    if (pcs->parent_pcs_ptr->ref_list0_count_try > 1 || pcs->parent_pcs_ptr->ref_list1_count_try > 1) {
+        if (context_ptr->pd_pass == PD_PASS_0)
+            context_ptr->dist_based_ref_pruning = 0;
+        else if (context_ptr->pd_pass == PD_PASS_1)
+            context_ptr->dist_based_ref_pruning = 0;
+        else if (enc_mode <= ENC_MR)
+            context_ptr->dist_based_ref_pruning = 1;
+        else if (enc_mode <= ENC_M1)
+            context_ptr->dist_based_ref_pruning = 2;
+#if TUNE_M4_M8
+        else
+            context_ptr->dist_based_ref_pruning = 3;
+#else
+        else if (enc_mode <= ENC_M5)
+            context_ptr->dist_based_ref_pruning = 3;
+        else
+            context_ptr->dist_based_ref_pruning = 4;
+#endif
+    }
+    else {
+        context_ptr->dist_based_ref_pruning = 0;
+    }
+#else
     if (pcs->parent_pcs_ptr->ref_list0_count_try > 1 || pcs->parent_pcs_ptr->ref_list1_count_try > 1) {
         if (context_ptr->pd_pass == PD_PASS_0)
             context_ptr->dist_based_ref_pruning = 0;
@@ -6783,6 +7112,7 @@ EbErrorType signal_derivation_block(PictureControlSet *pcs,
     else {
         context_ptr->dist_based_ref_pruning = 0;
     }
+#endif
     set_dist_based_ref_pruning_controls(context_ptr, context_ptr->dist_based_ref_pruning);
 
 

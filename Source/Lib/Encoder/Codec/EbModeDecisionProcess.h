@@ -118,6 +118,27 @@ typedef struct RefResults {
     uint8_t  do_ref; // to process this ref  or not
     EbBool   valid_ref;
 } RefResults;
+#if FTR_NEW_REF_PRUNING_CTRLS
+typedef enum InterCandGroup {
+    // elementary-groups
+    PA_ME_GROUP = 0,
+    UNI_3x3_GROUP = 1,
+    BI_3x3_GROUP = 2,
+    NRST_NEW_NEAR_GROUP = 3,
+    NRST_NEAR_GROUP = 4,
+    PRED_ME_GROUP = 5,
+    GLOBAL_GROUP = 6,
+    // complex-groups
+    WARP_GROUP = 7,
+    OBMC_GROUP = 8,
+    II_WEDGE_GROUP = 9,
+    II_DEPENDENT_GROUP = 10,
+    COMP_DIST = 11,
+    COMP_DIFF = 12,
+    COMP_WEDGE = 13,
+    TOT_INTER_GROUP = 14,
+} InterCandGroup;
+#else
 typedef enum InterCandGroup {
     PA_ME_GROUP         = 0,
     UNI_3x3_GROUP       = 1,
@@ -129,28 +150,47 @@ typedef enum InterCandGroup {
     GLOBAL_GROUP        = 7,
     TOT_INTER_GROUP     = 8,
 } InterCandGroup;
+#endif
 typedef struct InterCompCtrls {
     uint8_t allowed_comp_types
         [MD_COMP_TYPES]; // Compound types to inject; AVG/DIST/DIFF/WEDGE (if a comp type is disallowed here, it will
         // override distance-based settings)
+#if FTR_UPGRADE_COMP_LEVELS
+    uint8_t do_me;                                   // if true, test all compound types for me
+    uint8_t do_pme;                                  // if true, test all compound types for pme
+    uint8_t do_nearest_nearest;                      // if true, test all compound types for nearest_nearest
+    uint8_t do_near_near;                            // if true, test all compound types for near_near
+    uint8_t do_nearest_near_new;                     // if true, test all compound types for nearest_near_new
+    uint8_t do_3x3_bi;                               // if true, test all compound types for 3x3_bipred
+
+    uint8_t pred0_to_pred1_mult;                     // multiplier to the pred0_to_pred1_sad; 0: no pred0_to_pred1_sad-based pruning, >= 1: towards more inter-inter compound
+    uint8_t use_rate;                                // if true, use rate @ compound params derivation
+#else
+#if !FTR_NEW_REF_PRUNING_CTRLS
     uint8_t allowed_dist1_comp_types
         [MD_COMP_TYPES]; // Compound types to inject for bipred cands with a ref > distance 1 from current frame; AVG/DIST/DIFF/WEDGE
         // The distance-based compound types should be a subset of the allowed_comp_types
     uint8_t allowed_dist2_comp_types
         [MD_COMP_TYPES]; // Compound types to inject for bipred cands with a ref > distance 2 from current frame; AVG/DIST/DIFF/WEDGE
         // The distance-based compound types should be a subset of the allowed_comp_types
+#endif
+#endif
 } InterCompCtrls;
 typedef struct InterIntraCompCtrls {
     uint8_t enabled;
+#if !FTR_NEW_REF_PRUNING_CTRLS // intra-inter
     uint8_t skip_pme_unipred; // Skip inter-intra compound injetion for PME and unipred3x3
     uint8_t closest_ref_only; // Use inter-intra only for the closest ref frames
+#endif
 } InterIntraCompCtrls;
 typedef struct ObmcControls {
     uint8_t enabled;
+#if !FTR_NEW_REF_PRUNING_CTRLS
     uint8_t me_count; //how many me candidates to consider injecting obmc
     uint8_t pme_best_ref; //limit injection to best ref in pme
     uint8_t mvp_ref_count; //closest references allowed in mvp 0:4
     uint8_t near_count; //how many near to consider injecting obmc 0..3
+#endif
     EbBool  max_blk_size_16x16; // if true, cap the max block size that OBMC can be used to 16x16
 } ObmcControls;
 #if !CLN_NSQ_AND_STATS
@@ -184,8 +224,14 @@ typedef struct TxsCycleRControls {
 
 typedef struct RefPruningControls {
     uint8_t enabled; // 0: OFF; 1: use inter to inter distortion deviation to derive best_refs
+#if FTR_NEW_REF_PRUNING_CTRLS
+    uint32_t max_dev_to_best[TOT_INTER_GROUP];     // 0: OFF; 1: limit the injection to the best references based on distortion
+    uint32_t ref_idx_2_offset;
+    uint32_t ref_idx_3_offset;
+#else
     uint8_t best_refs
         [TOT_INTER_GROUP]; // 0: OFF; 1: limit the injection to the best references based on distortion
+#endif
     uint8_t closest_refs
         [TOT_INTER_GROUP]; // 0: OFF; 1: limit the injection to the closest references based on distance (LAST/BWD)
 } RefPruningControls;
@@ -680,7 +726,9 @@ typedef struct ModeDecisionContext {
     MdSubPelSearchCtrls    md_subpel_me_ctrls;
     uint8_t                md_subpel_pme_level;
     MdSubPelSearchCtrls    md_subpel_pme_ctrls;
+#if !FTR_NEW_REF_PRUNING_CTRLS
     uint8_t                md_max_ref_count;
+#endif
     RefResults             pme_res[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
     ObmcControls           obmc_ctrls;
     InterCompCtrls         inter_comp_ctrls;

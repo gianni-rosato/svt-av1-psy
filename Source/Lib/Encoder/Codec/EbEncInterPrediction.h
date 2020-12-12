@@ -64,8 +64,13 @@ EbErrorType av1_inter_prediction_16bit_pipeline(
 
 void search_compound_diff_wedge(PictureControlSet *pcs_ptr, struct ModeDecisionContext *context_ptr,
                                 ModeDecisionCandidate *candidate_ptr);
+#if FTR_UPGRADE_COMP_LEVELS
+EbBool calc_pred_masked_compound(PictureControlSet *pcs_ptr, struct ModeDecisionContext *context_ptr,
+                                 ModeDecisionCandidate *candidate_ptr);
+#else
 void calc_pred_masked_compound(PictureControlSet *pcs_ptr, struct ModeDecisionContext *context_ptr,
                                ModeDecisionCandidate *candidate_ptr);
+#endif
 
 EbErrorType inter_pu_prediction_av1(uint8_t                      hbd_mode_decision,
                                     struct ModeDecisionContext * md_context_ptr,

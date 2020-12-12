@@ -1002,9 +1002,14 @@ void *resource_coordination_kernel(void *input_ptr) {
             // 0                             | Disable
             // 1                             | Enable
             if (scs_ptr->static_config.filter_intra_level == DEFAULT)
+#if TUNE_M4_M8
+                scs_ptr->seq_header.filter_intra_level =
+                (scs_ptr->static_config.enc_mode <= ENC_M6) ? 1 : 0;
+#else
                 scs_ptr->seq_header.filter_intra_level = (scs_ptr->static_config.enc_mode <= ENC_M5)
                     ? 1
                     : 0;
+#endif
             else
                 scs_ptr->seq_header.filter_intra_level =
                     (scs_ptr->static_config.filter_intra_level == 0) ? 0 : 1;

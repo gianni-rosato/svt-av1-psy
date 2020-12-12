@@ -1145,9 +1145,6 @@ static void tf_16x16_sub_pel_search(PictureParentControlSet *pcs_ptr, MeContext 
                                     uint16_t **pred_16bit, uint32_t *stride_pred, EbByte *src,
                                     uint16_t **src_16bit, uint32_t *stride_src,
                                     uint32_t sb_origin_x, uint32_t sb_origin_y, uint32_t ss_x,
-#if FTR_OPTIMISE_TF
-    double noise_levels,
-#endif
                                     int encoder_bit_depth) {
 
 #if FTR_SCALE_FACTOR
@@ -1252,7 +1249,7 @@ static void tf_16x16_sub_pel_search(PictureParentControlSet *pcs_ptr, MeContext 
                 signed short best_mv_y = mv_y;
                 // Perform 1/2 Pel MV Refinement
 #if FTR_OPTIMISE_TF
-                if (pcs_ptr->tf_ctrls.bypass_halfpel && noise_levels > 2) {
+                if (pcs_ptr->tf_ctrls.bypass_halfpel) {
 #endif
                     for (signed short i = -4; i <= 4; i = i + 4) {
                         for (signed short j = -4; j <= 4; j = j + 4) {
@@ -1508,9 +1505,6 @@ static void tf_32x32_sub_pel_search(PictureParentControlSet *pcs_ptr, MeContext 
                                     uint16_t **pred_16bit, uint32_t *stride_pred, EbByte *src,
                                     uint16_t **src_16bit, uint32_t *stride_src,
                                     uint32_t sb_origin_x, uint32_t sb_origin_y, uint32_t ss_x,
- #if FTR_OPTIMISE_TF
-    double noise_levels,
-#endif
                                     int encoder_bit_depth) {
 
 #if FTR_SCALE_FACTOR
@@ -1602,7 +1596,7 @@ static void tf_32x32_sub_pel_search(PictureParentControlSet *pcs_ptr, MeContext 
         signed short best_mv_y = mv_y;
         // Perform 1/2 Pel MV Refinement
 #if FTR_OPTIMISE_TF
-        if (pcs_ptr->tf_ctrls.bypass_halfpel && noise_levels > 2) {
+        if (pcs_ptr->tf_ctrls.bypass_halfpel) {
 #endif
             for (signed short i = -4; i <= 4; i = i + 4) {
                 for (signed short j = -4; j <= 4; j = j + 4) {
@@ -2365,9 +2359,6 @@ static EbErrorType produce_temporally_filtered_pic(
                                             (uint32_t)blk_col * BW,
                                             (uint32_t)blk_row * BH,
                                             ss_x,
-#if FTR_OPTIMISE_TF
-                                            noise_levels[0],
-#endif
                                             encoder_bit_depth);
 
                     // Perform TF sub-pel search for 16x16 blocks
@@ -2384,9 +2375,6 @@ static EbErrorType produce_temporally_filtered_pic(
                                             (uint32_t)blk_col * BW,
                                             (uint32_t)blk_row * BH,
                                             ss_x,
-#if FTR_OPTIMISE_TF
-                                            noise_levels[0],
-#endif
                                             encoder_bit_depth);
 
                     // Derive tf_32x32_block_split_flag

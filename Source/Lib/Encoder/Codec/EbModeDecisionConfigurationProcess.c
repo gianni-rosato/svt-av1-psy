@@ -495,8 +495,10 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     if (pcs_ptr->enc_mode <= ENC_M3)
 #endif
         update_cdf_level = 1;
+#if !TUNE_M4_M8
     else if (pcs_ptr->enc_mode <= ENC_M5)
         update_cdf_level = 2;
+#endif
     else
         update_cdf_level = pcs_ptr->slice_type == I_SLICE ? 1 : 0;
 
@@ -511,7 +513,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     // 1                      | ON
     if (scs_ptr->static_config.filter_intra_level == DEFAULT) {
         if (scs_ptr->seq_header.filter_intra_level) {
+#if TUNE_M4_M8
+            if (pcs_ptr->enc_mode <= ENC_M6)
+#else
             if (pcs_ptr->enc_mode <= ENC_M5)
+#endif
                 pcs_ptr->pic_filter_intra_level = 1;
             else
                 pcs_ptr->pic_filter_intra_level = 0;
@@ -527,7 +533,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         : 0;
     EbBool enable_wm;
 #if TUNE_LOWER_PRESETS
+#if TUNE_M4_M8
+    if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M5) {
+#else
     if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M4) {
+#endif
 #else
     if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M3) {
 #endif
@@ -565,6 +575,10 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M1)
 #endif
             pcs_ptr->parent_pcs_ptr->pic_obmc_level = 1;
+#if FTR_NEW_REF_PRUNING_CTRLS
+        else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M5)
+            pcs_ptr->parent_pcs_ptr->pic_obmc_level = 2;
+#else
 #if TUNE_LOWER_PRESETS
         else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M5)
 #else
@@ -574,6 +588,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
 #if !TUNE_LOWER_PRESETS
         else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M5)
             pcs_ptr->parent_pcs_ptr->pic_obmc_level = 3;
+#endif
 #endif
         else
             pcs_ptr->parent_pcs_ptr->pic_obmc_level = 0;

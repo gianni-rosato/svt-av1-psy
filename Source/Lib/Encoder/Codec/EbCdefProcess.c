@@ -121,9 +121,7 @@ void cdef_seg_search(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr,
     int32_t  pri_damping = 3 + (frm_hdr->quantization_params.base_q_idx >> 6);
     int32_t  sec_damping = pri_damping;
 #if FTR_M9_CDEF
-    uint64_t best_sse[2];
-    best_sse[0] = MAX_MODE_COST;
-    best_sse[1] = MAX_MODE_COST;
+    uint64_t best_sse[2] = { MAX_MODE_COST , MAX_MODE_COST };
     int32_t best_gi[2];
     int32_t gi_offset[2] = { 6,2 };
 #endif
@@ -352,9 +350,7 @@ void cdef_seg_search16bit(PictureControlSet *pcs_ptr, SequenceControlSet *scs_pt
     int32_t mi_rows = ppcs->av1_cm->mi_rows;
     int32_t mi_cols = ppcs->av1_cm->mi_cols;
 #if FTR_M9_CDEF
-    uint64_t best_sse[2];
-    best_sse[0] = MAX_MODE_COST;
-    best_sse[1] = MAX_MODE_COST;
+    uint64_t best_sse[2] = { MAX_MODE_COST , MAX_MODE_COST };
     int32_t best_gi[2];
     int32_t gi_offset[2] = { 6,2 };
 #endif

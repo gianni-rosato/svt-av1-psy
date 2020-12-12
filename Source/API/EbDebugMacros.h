@@ -80,18 +80,29 @@ extern "C" {
 #define TUNE_LOWER_PRESETS                 1 // Tune the lower presets M0, M1, M2, M3, and M4
 #define TUNE_HBD_MODE_DECISION             1 // Push M0 level of HBD Mode Decision to M1
 
+#define FTR_NEW_REF_PRUNING_CTRLS          1 // Replace old ref pruning features with new, unified controls; enabled MRP to M7
+#define TUNE_HME_ME_SETTINGS               1 // Tune HME area for M1-M8 and create new levels of HME/ME based ref pruning
+#define FTR_HME_REF_IDX_RESIZING           1 // Add ability to scale down HME size based on ref index
+#define FTR_UPGRADE_COMP_LEVELS            1 // Add the ability to use distortion only and pred0-to-pred1 diff  @ inter-inter compound params generation,
+                                             // add the ability to control inter-inter compound per elementary group, move MVP selection and MV tracking
+                                             // before the compound_type loop as same MVs for all compound_type
+
 #define FTR_CDEF_CHROMA_FOLLOWS_LUMA           1 // Bypass chroma V in the cdef search
 #define FTR_GM_OPT_BASED_ON_ME                 1 // Bypass Global Motion on ME
-#define FTR_OPTIMISE_TF                        0 // Bypass halfpel in temporal feature based on noise level
+#define FTR_OPTIMISE_TF                        1 // Bypass halfpel in temporal filtering
+
+#define TUNE_M4_M8                             1 // Preset optimization: M4-M8
+
 #define FTR_REDUCE_MDS3_COMPLEXITY             1 // Added 3 levels of tuning to reduce MDS3 complexity
 #define TUNE_DEPTH_REMOVAL_PER_RESOLUTION      0 // improve depth removal
 #define FTR_M9_AGRESSIVE_LAST_MD_STAGE         1 // M9 agressive last md stage
 #define FTR_M9_AGRESSICE_EARLY_CAN_ELIMINATION 1 // M9 agressive early candidate elimintation
 #define OPT_RDOQ_FOR_M9                        1 // M9 rdoq
-#define TUNE_M9_TF_LEVEL                       0 // create tf level 5 for m9 where temp_layer ==0 and res<=720p
+#define TUNE_M9_TF_LEVEL                       1 // create tf level 5 for m9 where temp_layer ==0 and res<=720p
 #define TUNE_M9_OPT_DEPTH_REMOVAL              1 // Depth removal optimisation
-#define FTR_M9_CDEF                            0 // CDEF optimisation
+#define FTR_M9_CDEF                            1 // CDEF optimisation
 #define CLEANUP_CANDIDATE_ELEMINATION_CTR      1 // Cleanup candidate elimination
+
     // ============= END SVT_04 =============
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch

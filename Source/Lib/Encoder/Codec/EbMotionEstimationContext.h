@@ -310,6 +310,9 @@ typedef struct MeSrCtrls {
         reduce_me_sr_based_on_hme_sad_abs_th; // reduce the ME search region if HME sad is small
     uint16_t
         me_sr_divisor_for_low_hme_sad; // Reduction factor for the ME search region if HME sad is small
+#if FTR_HME_REF_IDX_RESIZING
+    uint8_t distance_based_hme_resizing; // scale down the HME search area for high ref-indices
+#endif
 } MeSrCtrls;
 typedef struct HmeResults {
     uint8_t  list_i; // list index of this ref

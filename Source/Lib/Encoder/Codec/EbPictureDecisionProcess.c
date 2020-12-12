@@ -879,7 +879,11 @@ EbErrorType signal_derivation_multi_processes_oq(
 
 
     // Set disallow_nsq
+#if TUNE_M4_M8
+    if (pcs_ptr->enc_mode <= ENC_M4)
+#else
     if (pcs_ptr->enc_mode <= ENC_M3)
+#endif
         pcs_ptr->disallow_nsq = EB_FALSE;
     else
         pcs_ptr->disallow_nsq = EB_TRUE;
@@ -902,7 +906,14 @@ EbErrorType signal_derivation_multi_processes_oq(
         pcs_ptr->disallow_all_nsq_blocks_above_16x16 = EB_FALSE;
     else
         pcs_ptr->disallow_all_nsq_blocks_above_16x16 = EB_TRUE;
+#if TUNE_M4_M8
+    if (pcs_ptr->enc_mode <= ENC_M3)
+        pcs_ptr->disallow_HVA_HVB_HV4 = EB_FALSE;
+    else
+        pcs_ptr->disallow_HVA_HVB_HV4 = EB_TRUE;
+#else
     pcs_ptr->disallow_HVA_HVB_HV4 = EB_FALSE;
+#endif
     pcs_ptr->disallow_HV4 = EB_FALSE;
 
     // Set disallow_all_non_hv_nsq_blocks_below_16x16
@@ -1000,7 +1011,7 @@ EbErrorType signal_derivation_multi_processes_oq(
 #endif
                     pcs_ptr->cdef_level = 1;
 #if FTR_CDEF_CHROMA_FOLLOWS_LUMA
-#if TUNE_NEW_PRESETS_M5_M8
+#if TUNE_M4_M8
 #if TUNE_PRESETS_M4_M8
             else if (pcs_ptr->enc_mode <= ENC_M7)
 #else
@@ -1043,10 +1054,14 @@ EbErrorType signal_derivation_multi_processes_oq(
 
     Av1Common* cm = pcs_ptr->av1_cm;
     if (scs_ptr->static_config.sg_filter_mode == DEFAULT) {
+#if TUNE_M4_M8
+        if (pcs_ptr->enc_mode <= ENC_M3)
+#else
 #if TUNE_LOWER_PRESETS
         if (pcs_ptr->enc_mode <= ENC_M4)
 #else
         if (pcs_ptr->enc_mode <= ENC_M3)
+#endif
 #endif
             cm->sg_filter_mode = 4;
         else
@@ -1149,7 +1164,11 @@ EbErrorType signal_derivation_multi_processes_oq(
         // Suggested values are 6 and 0. To go beyond 6, SCD_LAD must be updated too (might cause stablity issues to go beyong 6)
 #if FTR_TPL_TR
     if (scs_ptr->static_config.logical_processors == 1)
+#if TUNE_M4_M8
+        pcs_ptr->tpl_trailing_frame_count = 6;
+#else
         pcs_ptr->tpl_trailing_frame_count = (pcs_ptr->enc_mode <= ENC_M6) ? 6 : 0;
+#endif
     else
         pcs_ptr->tpl_trailing_frame_count = 0;
 #else
@@ -3932,7 +3951,7 @@ void mctf_frame(
     //       3       | ON with smaller window_size subject to possible constraints |  ON with even smaller window_size
     if (perform_filtering) {
         if (scs_ptr->static_config.tf_level == DEFAULT) {
-#if TUNE_NEW_PRESETS_M5_M8
+#if TUNE_M4_M8
 #if TUNE_M6_FEATURES
         if (pcs_ptr->enc_mode <= ENC_M6) {
 #else
@@ -3946,7 +3965,7 @@ void mctf_frame(
             else
                 context_ptr->tf_level = 0;
         }
-#if TUNE_NEW_PRESETS_M5_M8
+#if TUNE_M4_M8
         else if (pcs_ptr->enc_mode <= ENC_M7) {
 #else
         else if (pcs_ptr->enc_mode <= ENC_M6) {
@@ -3961,7 +3980,7 @@ void mctf_frame(
 #else
         else {
 #endif
-#if FIX_TF_M8
+#if TUNE_M4_M8
             if(pcs_ptr->slice_type == I_SLICE)
                 context_ptr->tf_level = 3;
             else if (pcs_ptr->temporal_layer_index == 0 || (pcs_ptr->temporal_layer_index == 1 && scs_ptr->static_config.hierarchical_levels >= 3))
@@ -5831,17 +5850,26 @@ void* picture_decision_kernel(void *input_ptr)
 
                                 //set the number of references to try in ME/MD.Note: PicMgr will still use the original values to sync the references.
 #if TUNE_LOWER_PRESETS
+#if FTR_NEW_REF_PRUNING_CTRLS
+                                if (pcs_ptr->enc_mode <= ENC_M6) {
+#else
                                 if (pcs_ptr->enc_mode <= ENC_M5) {
+#endif
 #else
                                 if (pcs_ptr->enc_mode <= ENC_M4) {
 #endif
-                                        pcs_ptr->ref_list0_count_try = MIN(pcs_ptr->ref_list0_count, 4);
-                                        pcs_ptr->ref_list1_count_try = MIN(pcs_ptr->ref_list1_count, 3);
-                                    }
-                                    else {
+                                    pcs_ptr->ref_list0_count_try = MIN(pcs_ptr->ref_list0_count, 4);
+                                    pcs_ptr->ref_list1_count_try = MIN(pcs_ptr->ref_list1_count, 3);
+                                }
+                                else {
+#if FTR_NEW_REF_PRUNING_CTRLS
+                                    pcs_ptr->ref_list0_count_try = MIN(pcs_ptr->ref_list0_count, 2);
+                                    pcs_ptr->ref_list1_count_try = MIN(pcs_ptr->ref_list1_count, 2);
+#else
                                         pcs_ptr->ref_list0_count_try = pcs_ptr->is_used_as_reference_flag ? MIN(pcs_ptr->ref_list0_count, 2) : MIN(pcs_ptr->ref_list0_count, 1);
                                         pcs_ptr->ref_list1_count_try = pcs_ptr->is_used_as_reference_flag ? MIN(pcs_ptr->ref_list1_count, 2) : MIN(pcs_ptr->ref_list1_count, 1);
-                                    }
+#endif
+                                }
                                 assert(pcs_ptr->ref_list0_count_try <= pcs_ptr->ref_list0_count);
                                 assert(pcs_ptr->ref_list1_count_try <= pcs_ptr->ref_list1_count);
                                 if (!pcs_ptr->is_overlay) {

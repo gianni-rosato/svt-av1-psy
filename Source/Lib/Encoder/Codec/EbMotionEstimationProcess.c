@@ -166,7 +166,11 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
         }
     }
 #if TUNE_M8_MAX_ME
+#if TUNE_M4_M8
+    else if (pcs_ptr->enc_mode <= ENC_M6) {
+#else
     else if (pcs_ptr->enc_mode <= ENC_M7) {
+#endif
         if (use_output_stat(scs_ptr)) {
             me_context_ptr->search_area_width = me_context_ptr->search_area_height = 8;
             me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 8;
@@ -211,7 +215,11 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
         }
         else {
             me_context_ptr->hme_level0_total_search_area_width = me_context_ptr->hme_level0_total_search_area_height = 32;
+#if TUNE_HME_ME_SETTINGS
+            me_context_ptr->hme_level0_max_total_search_area_width = me_context_ptr->hme_level0_max_total_search_area_height = 192;
+#else
             me_context_ptr->hme_level0_max_total_search_area_width = me_context_ptr->hme_level0_max_total_search_area_height = 164;
+#endif
         }
     if (!pcs_ptr->sc_content_detected)
         if (use_output_stat(scs_ptr) || (scs_ptr->lap_enabled && !pcs_ptr->first_pass_done)) {
@@ -231,7 +239,11 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
         me_context_ptr->hme_level0_search_area_in_height_array[1] =
         me_context_ptr->hme_level0_total_search_area_height / me_context_ptr->number_hme_search_region_in_height;
 #if TUNE_LOWER_PRESETS
+#if TUNE_M4_M8
+    if (pcs_ptr->enc_mode <= ENC_M4) {
+#else
     if (pcs_ptr->enc_mode <= ENC_M5) {
+#endif
 #else
     if (pcs_ptr->enc_mode <= ENC_M4) {
 #endif
@@ -247,7 +259,11 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
             me_context_ptr->hme_level1_search_area_in_height_array[1] = 3;
     }
 #if TUNE_LOWER_PRESETS
+#if TUNE_M4_M8
+    if (pcs_ptr->enc_mode <= ENC_M4) {
+#else
     if (pcs_ptr->enc_mode <= ENC_M5) {
+#endif
 #else
     if (pcs_ptr->enc_mode <= ENC_M4) {
 #endif
@@ -340,6 +356,20 @@ void set_me_hme_ref_prune_ctrls(MeContext* context_ptr, uint8_t prune_level) {
         me_hme_prune_ctrls->protect_closest_refs = 1;
 #endif
         break;
+#if TUNE_HME_ME_SETTINGS
+    case 5:
+        me_hme_prune_ctrls->enable_me_hme_ref_pruning = 1;
+        me_hme_prune_ctrls->prune_ref_if_hme_sad_dev_bigger_than_th = 5;
+        me_hme_prune_ctrls->prune_ref_if_me_sad_dev_bigger_than_th = 60;
+        me_hme_prune_ctrls->protect_closest_refs = 1;
+        break;
+    case 6:
+        me_hme_prune_ctrls->enable_me_hme_ref_pruning = 1;
+        me_hme_prune_ctrls->prune_ref_if_hme_sad_dev_bigger_than_th = 0;
+        me_hme_prune_ctrls->prune_ref_if_me_sad_dev_bigger_than_th = 0;
+        me_hme_prune_ctrls->protect_closest_refs = 1;
+        break;
+#endif
     default:
         assert(0);
         break;
@@ -361,6 +391,9 @@ void set_me_sr_adjustment_ctrls(MeContext* context_ptr, uint8_t sr_adjustment_le
         me_sr_adjustment_ctrls->stationary_me_sr_divisor = 16;
         me_sr_adjustment_ctrls->reduce_me_sr_based_on_hme_sad_abs_th = 100;
         me_sr_adjustment_ctrls->me_sr_divisor_for_low_hme_sad = 8;
+#if FTR_HME_REF_IDX_RESIZING
+        me_sr_adjustment_ctrls->distance_based_hme_resizing = 0;
+#endif
         break;
     case 2:
         me_sr_adjustment_ctrls->enable_me_sr_adjustment = 1;
@@ -369,7 +402,21 @@ void set_me_sr_adjustment_ctrls(MeContext* context_ptr, uint8_t sr_adjustment_le
         me_sr_adjustment_ctrls->stationary_me_sr_divisor = 8;
         me_sr_adjustment_ctrls->reduce_me_sr_based_on_hme_sad_abs_th = 6000;
         me_sr_adjustment_ctrls->me_sr_divisor_for_low_hme_sad = 8;
+#if FTR_HME_REF_IDX_RESIZING
+        me_sr_adjustment_ctrls->distance_based_hme_resizing = 0;
+#endif
         break;
+#if FTR_HME_REF_IDX_RESIZING
+    case 3:
+        me_sr_adjustment_ctrls->enable_me_sr_adjustment = 1;
+        me_sr_adjustment_ctrls->reduce_me_sr_based_on_mv_length_th = 4;
+        me_sr_adjustment_ctrls->stationary_hme_sad_abs_th = 12000;
+        me_sr_adjustment_ctrls->stationary_me_sr_divisor = 8;
+        me_sr_adjustment_ctrls->reduce_me_sr_based_on_hme_sad_abs_th = 6000;
+        me_sr_adjustment_ctrls->me_sr_divisor_for_low_hme_sad = 8;
+        me_sr_adjustment_ctrls->distance_based_hme_resizing = 1;
+        break;
+#endif
     default:
         assert(0);
         break;
@@ -613,6 +660,7 @@ EbErrorType trail_signal_derivation_me_kernel(SequenceControlSet *       scs_ptr
         set_me_hme_ref_prune_ctrls(context_ptr->me_context_ptr, 2);
     else
         set_me_hme_ref_prune_ctrls(context_ptr->me_context_ptr, 4);
+
     // Set hme-based me sr adjustment level
     if (enc_mode <= ENC_MRS)
         set_me_sr_adjustment_ctrls(context_ptr->me_context_ptr, 0);
@@ -691,8 +739,24 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
     else if (enc_mode <= ENC_M2)
 #endif
             set_me_hme_ref_prune_ctrls(context_ptr->me_context_ptr, 2);
+#if TUNE_M4_M8
+    else if (enc_mode <= ENC_M3)
+        set_me_hme_ref_prune_ctrls(context_ptr->me_context_ptr, 4);
+    else
+        set_me_hme_ref_prune_ctrls(context_ptr->me_context_ptr, 5);
+#else
+#if TUNE_HME_ME_SETTINGS
+    else if (enc_mode <= ENC_M4)
+        set_me_hme_ref_prune_ctrls(context_ptr->me_context_ptr, 4);
+    else if (enc_mode <= ENC_M5)
+        set_me_hme_ref_prune_ctrls(context_ptr->me_context_ptr, 5);
+    else
+        set_me_hme_ref_prune_ctrls(context_ptr->me_context_ptr, 6);
+#else
     else
             set_me_hme_ref_prune_ctrls(context_ptr->me_context_ptr, 4);
+#endif
+#endif
     // Set hme-based me sr adjustment level
 #if TUNE_PRESETS_CLEANUP
     if (enc_mode <= ENC_MR)
@@ -700,8 +764,15 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
     if (enc_mode <= ENC_MRS)
 #endif
         set_me_sr_adjustment_ctrls(context_ptr->me_context_ptr, 0);
+#if FTR_HME_REF_IDX_RESIZING
+    else if (enc_mode <= ENC_M5)
+        set_me_sr_adjustment_ctrls(context_ptr->me_context_ptr, 2);
+    else
+        set_me_sr_adjustment_ctrls(context_ptr->me_context_ptr, 3);
+#else
     else
         set_me_sr_adjustment_ctrls(context_ptr->me_context_ptr, 2);
+#endif
     return return_error;
 };
 void open_loop_first_pass(struct PictureParentControlSet *ppcs_ptr,
@@ -728,14 +799,34 @@ void *tf_set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet
     me_context_ptr->number_hme_search_region_in_width  = 2;
     me_context_ptr->number_hme_search_region_in_height = 2;
     // Set the minimum ME search area
+#if TUNE_M4_M8
+    if (pcs_ptr->enc_mode <= ENC_M3) {
+#else
     if (pcs_ptr->enc_mode <= ENC_M4) {
+#endif
         me_context_ptr->search_area_width = me_context_ptr->search_area_height = input_resolution <= INPUT_SIZE_480p_RANGE ? 60 : 16;
         me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = input_resolution <= INPUT_SIZE_480p_RANGE ? 120 : 32;
-}
+    }
+#if TUNE_M4_M8
+    else if (pcs_ptr->enc_mode <= ENC_M5) {
+        me_context_ptr->search_area_width = me_context_ptr->search_area_height = input_resolution <= INPUT_SIZE_480p_RANGE ? 8 : 16;
+        me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = input_resolution <= INPUT_SIZE_480p_RANGE ? 16 : 32;
+    }
+#endif
     else {
         me_context_ptr->search_area_width = me_context_ptr->search_area_height = 8;
         me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 16;
     }
+#if TUNE_M4_M8
+    if (pcs_ptr->enc_mode <= ENC_M5) {
+        me_context_ptr->hme_level0_total_search_area_width = me_context_ptr->hme_level0_total_search_area_height = 30;
+        me_context_ptr->hme_level0_max_total_search_area_width = me_context_ptr->hme_level0_max_total_search_area_height = 60;
+    }
+    else {
+        me_context_ptr->hme_level0_total_search_area_width = me_context_ptr->hme_level0_total_search_area_height = 16;
+        me_context_ptr->hme_level0_max_total_search_area_width = me_context_ptr->hme_level0_max_total_search_area_height = 32;
+    }
+#else
     if (pcs_ptr->enc_mode <= ENC_M4)
         me_context_ptr->hme_level0_total_search_area_width = me_context_ptr->hme_level0_total_search_area_height = 30;
     else
@@ -744,6 +835,7 @@ void *tf_set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet
         me_context_ptr->hme_level0_max_total_search_area_width = me_context_ptr->hme_level0_max_total_search_area_height = 60;
     else
         me_context_ptr->hme_level0_max_total_search_area_width = me_context_ptr->hme_level0_max_total_search_area_height = 32;
+#endif
 
 
     me_context_ptr->hme_level0_max_search_area_in_width_array[0] =

@@ -617,11 +617,23 @@ static void pick_wedge(PictureControlSet *picture_control_set_ptr, ModeDecisionC
         uint64_t sse = svt_av1_wedge_sse_from_residuals(residual1, diff10, mask, N);
         sse  = ROUND_POWER_OF_TWO(sse, bd_round);
 
+#if FTR_UPGRADE_COMP_LEVELS
+        int64_t rd = sse;
+        if (context_ptr->inter_comp_ctrls.use_rate) {
+            model_rd_with_curvfit(
+                picture_control_set_ptr, bsize, sse, N, &rate, &dist, context_ptr, full_lambda);
+
+            rd = RDCOST(full_lambda, rate, dist);
+        }
+        else {
+            rd = sse;
+        }
+#else
         model_rd_with_curvfit(
                 picture_control_set_ptr, bsize, sse, N, &rate, &dist,context_ptr, full_lambda);
 
         int64_t rd = RDCOST(full_lambda, rate, dist);
-
+#endif
         if (rd < best_rd) {
             *best_wedge_index = wedge_index;
             *best_wedge_sign  = wedge_sign;
@@ -742,7 +754,25 @@ static void pick_interinter_seg(PictureControlSet *     picture_control_set_ptr,
 
         // compute rd for mask
         const uint64_t sse = svt_av1_wedge_sse_from_residuals(residual1, diff10, temp_mask, N);
+#if FTR_UPGRADE_COMP_LEVELS
+        int64_t rd0;
 
+        if (context_ptr->inter_comp_ctrls.use_rate) {
+            model_rd_with_curvfit(picture_control_set_ptr,
+                bsize,
+                ROUND_POWER_OF_TWO(sse, bd_round),
+                N,
+                &rate,
+                &dist,
+                context_ptr,
+                full_lambda);
+
+            rd0 = RDCOST(full_lambda, rate, dist);
+        }
+        else {
+            rd0 = sse;
+        }
+#else
         model_rd_with_curvfit(picture_control_set_ptr,
                               bsize,
                               ROUND_POWER_OF_TWO(sse, bd_round),
@@ -753,7 +783,7 @@ static void pick_interinter_seg(PictureControlSet *     picture_control_set_ptr,
                               full_lambda);
 
         const int64_t rd0 = RDCOST(full_lambda, rate, dist);
-
+#endif
         if (rd0 < best_rd) {
             best_mask_type = cur_mask_type;
             best_rd        = rd0;
@@ -6025,7 +6055,11 @@ EbErrorType av1_inter_prediction_16bit_pipeline(
     return return_error;
 }
 
+#if FTR_UPGRADE_COMP_LEVELS
+EbBool calc_pred_masked_compound(PictureControlSet *pcs_ptr,
+#else
 void calc_pred_masked_compound(PictureControlSet *    pcs_ptr,
+#endif
     ModeDecisionContext *  context_ptr,
     ModeDecisionCandidate *candidate_ptr) {
 
@@ -6222,6 +6256,34 @@ void calc_pred_masked_compound(PictureControlSet *    pcs_ptr,
                 bwidth);
         }
 
+#if FTR_UPGRADE_COMP_LEVELS
+        EbBool exit_compound_prep = EB_FALSE;
+        uint32_t pred0_to_pred1_dist = 0;
+
+        if (hbd_mode_decision) {
+            pred0_to_pred1_dist = sad_16b_kernel(
+                (uint16_t *)context_ptr->pred0,
+                bwidth,
+                (uint16_t *)context_ptr->pred1,
+                bwidth,
+                bheight,
+                bwidth);
+        }
+        else {
+            pred0_to_pred1_dist = svt_nxm_sad_kernel_sub_sampled(
+                context_ptr->pred0,
+                bwidth,
+                context_ptr->pred1,
+                bwidth,
+                bheight,
+                bwidth);
+        }
+
+        if (pred0_to_pred1_dist < (bheight * bwidth * context_ptr->inter_comp_ctrls.pred0_to_pred1_mult))
+            exit_compound_prep = EB_TRUE;
+
+        return exit_compound_prep;
+#endif
 }
 void search_compound_diff_wedge(PictureControlSet *    picture_control_set_ptr,
                                 ModeDecisionContext *  context_ptr,
