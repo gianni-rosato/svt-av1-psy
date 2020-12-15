@@ -124,22 +124,21 @@ typedef struct RefResults {
 #if FTR_NEW_REF_PRUNING_CTRLS
 typedef enum InterCandGroup {
     // elementary-groups
-    PA_ME_GROUP = 0,
-    UNI_3x3_GROUP = 1,
-    BI_3x3_GROUP = 2,
-    NRST_NEW_NEAR_GROUP = 3,
-    NRST_NEAR_GROUP = 4,
-    PRED_ME_GROUP = 5,
-    GLOBAL_GROUP = 6,
+    PA_ME_GROUP,
+    UNI_3x3_GROUP,
+    BI_3x3_GROUP,
+    NRST_NEW_NEAR_GROUP,
+    NRST_NEAR_GROUP,
+    PRED_ME_GROUP,
+    GLOBAL_GROUP,
     // complex-groups
-    WARP_GROUP = 7,
-    OBMC_GROUP = 8,
-    II_WEDGE_GROUP = 9,
-    II_DEPENDENT_GROUP = 10,
-    COMP_DIST = 11,
-    COMP_DIFF = 12,
-    COMP_WEDGE = 13,
-    TOT_INTER_GROUP = 14,
+    WARP_GROUP,
+    OBMC_GROUP,
+    INTER_INTRA_GROUP,
+    COMP_DIST,
+    COMP_DIFF,
+    COMP_WEDGE,
+    TOT_INTER_GROUP
 } InterCandGroup;
 #else
 typedef enum InterCandGroup {

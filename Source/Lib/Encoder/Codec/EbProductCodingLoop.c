@@ -1135,8 +1135,7 @@ void set_dist_based_ref_pruning_controls(
         ref_pruning_ctrls->max_dev_to_best[GLOBAL_GROUP]        = (uint32_t)~0;
         ref_pruning_ctrls->max_dev_to_best[WARP_GROUP]          = (uint32_t)~0;
         ref_pruning_ctrls->max_dev_to_best[OBMC_GROUP]          = (uint32_t)~0;
-        ref_pruning_ctrls->max_dev_to_best[II_WEDGE_GROUP]      = (uint32_t)~0;
-        ref_pruning_ctrls->max_dev_to_best[II_DEPENDENT_GROUP]  = (uint32_t)~0;
+        ref_pruning_ctrls->max_dev_to_best[INTER_INTRA_GROUP]   = (uint32_t)~0;
         ref_pruning_ctrls->max_dev_to_best[COMP_DIST]           = (uint32_t)~0;
         ref_pruning_ctrls->max_dev_to_best[COMP_DIFF]           = (uint32_t)~0;
         ref_pruning_ctrls->max_dev_to_best[COMP_WEDGE]          = (uint32_t)~0;
@@ -1152,8 +1151,7 @@ void set_dist_based_ref_pruning_controls(
         ref_pruning_ctrls->closest_refs[GLOBAL_GROUP]           = 1;
         ref_pruning_ctrls->closest_refs[WARP_GROUP]             = 1;
         ref_pruning_ctrls->closest_refs[OBMC_GROUP]             = 1;
-        ref_pruning_ctrls->closest_refs[II_WEDGE_GROUP]         = 1;
-        ref_pruning_ctrls->closest_refs[II_DEPENDENT_GROUP]     = 1;
+        ref_pruning_ctrls->closest_refs[INTER_INTRA_GROUP]      = 1;
         ref_pruning_ctrls->closest_refs[COMP_DIST]              = 1;
         ref_pruning_ctrls->closest_refs[COMP_DIFF]              = 1;
         ref_pruning_ctrls->closest_refs[COMP_WEDGE]             = 1;
@@ -1173,8 +1171,7 @@ void set_dist_based_ref_pruning_controls(
         ref_pruning_ctrls->max_dev_to_best[GLOBAL_GROUP] = (uint32_t)~0;
         ref_pruning_ctrls->max_dev_to_best[WARP_GROUP] = (uint32_t)~0;
         ref_pruning_ctrls->max_dev_to_best[OBMC_GROUP] = (uint32_t)~0;
-        ref_pruning_ctrls->max_dev_to_best[II_WEDGE_GROUP] = 60;
-        ref_pruning_ctrls->max_dev_to_best[II_DEPENDENT_GROUP] = 60;
+        ref_pruning_ctrls->max_dev_to_best[INTER_INTRA_GROUP] = 60;
         ref_pruning_ctrls->max_dev_to_best[COMP_DIST] = 60;
         ref_pruning_ctrls->max_dev_to_best[COMP_DIFF] = 60;
         ref_pruning_ctrls->max_dev_to_best[COMP_WEDGE] = 60;
@@ -1191,8 +1188,7 @@ void set_dist_based_ref_pruning_controls(
         ref_pruning_ctrls->closest_refs[GLOBAL_GROUP] = 1;
         ref_pruning_ctrls->closest_refs[WARP_GROUP] = 1;
         ref_pruning_ctrls->closest_refs[OBMC_GROUP] = 1;
-        ref_pruning_ctrls->closest_refs[II_WEDGE_GROUP] = 1;
-        ref_pruning_ctrls->closest_refs[II_DEPENDENT_GROUP] = 1;
+        ref_pruning_ctrls->closest_refs[INTER_INTRA_GROUP] = 1;
         ref_pruning_ctrls->closest_refs[COMP_DIST] = 1;
         ref_pruning_ctrls->closest_refs[COMP_DIFF] = 1;
         ref_pruning_ctrls->closest_refs[COMP_WEDGE] = 1;
@@ -1213,8 +1209,7 @@ void set_dist_based_ref_pruning_controls(
         ref_pruning_ctrls->max_dev_to_best[GLOBAL_GROUP]        = (uint32_t)~0;
         ref_pruning_ctrls->max_dev_to_best[WARP_GROUP]          = (uint32_t)~0;
         ref_pruning_ctrls->max_dev_to_best[OBMC_GROUP]          = (uint32_t)~0;
-        ref_pruning_ctrls->max_dev_to_best[II_WEDGE_GROUP]      = 30;
-        ref_pruning_ctrls->max_dev_to_best[II_DEPENDENT_GROUP]  = 30;
+        ref_pruning_ctrls->max_dev_to_best[INTER_INTRA_GROUP]   = 30;
         ref_pruning_ctrls->max_dev_to_best[COMP_DIST]           = 30;
         ref_pruning_ctrls->max_dev_to_best[COMP_DIFF]           = 30;
         ref_pruning_ctrls->max_dev_to_best[COMP_WEDGE]          = 30;
@@ -1230,8 +1225,7 @@ void set_dist_based_ref_pruning_controls(
         ref_pruning_ctrls->closest_refs[GLOBAL_GROUP]           = 1;
         ref_pruning_ctrls->closest_refs[WARP_GROUP]             = 1;
         ref_pruning_ctrls->closest_refs[OBMC_GROUP]             = 1;
-        ref_pruning_ctrls->closest_refs[II_WEDGE_GROUP]         = 1;
-        ref_pruning_ctrls->closest_refs[II_DEPENDENT_GROUP]     = 1;
+        ref_pruning_ctrls->closest_refs[INTER_INTRA_GROUP]      = 1;
         ref_pruning_ctrls->closest_refs[COMP_DIST]              = 1;
         ref_pruning_ctrls->closest_refs[COMP_DIFF]              = 1;
         ref_pruning_ctrls->closest_refs[COMP_WEDGE]             = 1;
@@ -1253,8 +1247,7 @@ void set_dist_based_ref_pruning_controls(
         ref_pruning_ctrls->max_dev_to_best[GLOBAL_GROUP]        = (uint32_t)~0;
         ref_pruning_ctrls->max_dev_to_best[WARP_GROUP]          = (uint32_t)~0;
         ref_pruning_ctrls->max_dev_to_best[OBMC_GROUP]          = 30;
-        ref_pruning_ctrls->max_dev_to_best[II_WEDGE_GROUP]      = 10;
-        ref_pruning_ctrls->max_dev_to_best[II_DEPENDENT_GROUP]  = 30;
+        ref_pruning_ctrls->max_dev_to_best[INTER_INTRA_GROUP]   = 10;
         ref_pruning_ctrls->max_dev_to_best[COMP_DIST]           = 10;
         ref_pruning_ctrls->max_dev_to_best[COMP_DIFF]           = 10;
         ref_pruning_ctrls->max_dev_to_best[COMP_WEDGE]          = 10;
@@ -1270,8 +1263,7 @@ void set_dist_based_ref_pruning_controls(
         ref_pruning_ctrls->closest_refs[GLOBAL_GROUP]           = 1;
         ref_pruning_ctrls->closest_refs[WARP_GROUP]             = 1;
         ref_pruning_ctrls->closest_refs[OBMC_GROUP]             = 1;
-        ref_pruning_ctrls->closest_refs[II_WEDGE_GROUP]         = 1;
-        ref_pruning_ctrls->closest_refs[II_DEPENDENT_GROUP]     = 1;
+        ref_pruning_ctrls->closest_refs[INTER_INTRA_GROUP]      = 1;
         ref_pruning_ctrls->closest_refs[COMP_DIST]              = 1;
         ref_pruning_ctrls->closest_refs[COMP_DIFF]              = 1;
         ref_pruning_ctrls->closest_refs[COMP_WEDGE]             = 1;
@@ -1293,8 +1285,7 @@ void set_dist_based_ref_pruning_controls(
         ref_pruning_ctrls->max_dev_to_best[GLOBAL_GROUP]        = (uint32_t)~0;
         ref_pruning_ctrls->max_dev_to_best[WARP_GROUP]          = (uint32_t)~0;
         ref_pruning_ctrls->max_dev_to_best[OBMC_GROUP]          = 10;
-        ref_pruning_ctrls->max_dev_to_best[II_WEDGE_GROUP]      = 0;
-        ref_pruning_ctrls->max_dev_to_best[II_DEPENDENT_GROUP]  = 0;
+        ref_pruning_ctrls->max_dev_to_best[INTER_INTRA_GROUP]   = 0;
         ref_pruning_ctrls->max_dev_to_best[COMP_DIST]           = 0;
         ref_pruning_ctrls->max_dev_to_best[COMP_DIFF]           = 0;
         ref_pruning_ctrls->max_dev_to_best[COMP_WEDGE]          = 0;
@@ -1310,8 +1301,7 @@ void set_dist_based_ref_pruning_controls(
         ref_pruning_ctrls->closest_refs[GLOBAL_GROUP]           = 1;
         ref_pruning_ctrls->closest_refs[WARP_GROUP]             = 1;
         ref_pruning_ctrls->closest_refs[OBMC_GROUP]             = 1;
-        ref_pruning_ctrls->closest_refs[II_WEDGE_GROUP]         = 1;
-        ref_pruning_ctrls->closest_refs[II_DEPENDENT_GROUP]     = 1;
+        ref_pruning_ctrls->closest_refs[INTER_INTRA_GROUP]      = 1;
         ref_pruning_ctrls->closest_refs[COMP_DIST]              = 1;
         ref_pruning_ctrls->closest_refs[COMP_DIFF]              = 1;
         ref_pruning_ctrls->closest_refs[COMP_WEDGE]             = 1;
@@ -1332,8 +1322,7 @@ void set_dist_based_ref_pruning_controls(
         ref_pruning_ctrls->max_dev_to_best[GLOBAL_GROUP]        = (uint32_t)~0;
         ref_pruning_ctrls->max_dev_to_best[WARP_GROUP]          = 0;
         ref_pruning_ctrls->max_dev_to_best[OBMC_GROUP]          = 0;
-        ref_pruning_ctrls->max_dev_to_best[II_WEDGE_GROUP]      = 0;
-        ref_pruning_ctrls->max_dev_to_best[II_DEPENDENT_GROUP]  = 0;
+        ref_pruning_ctrls->max_dev_to_best[INTER_INTRA_GROUP]   = 0;
         ref_pruning_ctrls->max_dev_to_best[COMP_DIST]           = 0;
         ref_pruning_ctrls->max_dev_to_best[COMP_DIFF]           = 0;
         ref_pruning_ctrls->max_dev_to_best[COMP_WEDGE]          = 0;
@@ -1349,8 +1338,7 @@ void set_dist_based_ref_pruning_controls(
         ref_pruning_ctrls->closest_refs[GLOBAL_GROUP]           = 1;
         ref_pruning_ctrls->closest_refs[WARP_GROUP]             = 1;
         ref_pruning_ctrls->closest_refs[OBMC_GROUP]             = 1;
-        ref_pruning_ctrls->closest_refs[II_WEDGE_GROUP]         = 1;
-        ref_pruning_ctrls->closest_refs[II_DEPENDENT_GROUP]     = 1;
+        ref_pruning_ctrls->closest_refs[INTER_INTRA_GROUP]      = 1;
         ref_pruning_ctrls->closest_refs[COMP_DIST]              = 1;
         ref_pruning_ctrls->closest_refs[COMP_DIFF]              = 1;
         ref_pruning_ctrls->closest_refs[COMP_WEDGE]             = 1;

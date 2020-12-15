@@ -836,21 +836,13 @@ EbBool is_valid_uni_type(
         return EB_TRUE;
         break;
     case 1:
+    case 2:
         inter_cand_group = is_ii_allowed
-            ? II_WEDGE_GROUP
+            ? INTER_INTRA_GROUP
             : is_warp_allowed
             ? WARP_GROUP
             : OBMC_GROUP;
 
-        return is_valid_unipred_ref(
-            context_ptr, MIN(TOT_INTER_GROUP - 1, inter_cand_group), list_idx, ref_idx);
-        break;
-    case 2:
-        inter_cand_group = is_ii_allowed
-            ? II_DEPENDENT_GROUP
-            : is_warp_allowed
-            ? WARP_GROUP
-            : OBMC_GROUP;
         return is_valid_unipred_ref(
             context_ptr, MIN(TOT_INTER_GROUP - 1, inter_cand_group), list_idx, ref_idx);
         break;
