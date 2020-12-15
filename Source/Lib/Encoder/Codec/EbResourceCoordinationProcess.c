@@ -270,7 +270,11 @@ EbErrorType signal_derivation_pre_analysis_oq_scs(SequenceControlSet * scs_ptr) 
         scs_ptr->seq_header.pic_based_rate_est = (uint8_t)scs_ptr->static_config.pic_based_rate_est;
 
     if (scs_ptr->static_config.enable_restoration_filtering == DEFAULT) {
+#if TUNE_NEW_PRESETS_MR_M8
+        scs_ptr->seq_header.enable_restoration = (scs_ptr->static_config.enc_mode <= ENC_M7) ? 1 : 0;
+#else
         scs_ptr->seq_header.enable_restoration = (scs_ptr->static_config.enc_mode <= ENC_M6) ? 1 : 0;
+#endif
     } else
         scs_ptr->seq_header.enable_restoration =
             (uint8_t)scs_ptr->static_config.enable_restoration_filtering;

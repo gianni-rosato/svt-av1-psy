@@ -880,7 +880,11 @@ EbErrorType signal_derivation_multi_processes_oq(
 
     // Set disallow_nsq
 #if TUNE_M4_M8
+#if TUNE_NEW_PRESETS_MR_M8
+    if (pcs_ptr->enc_mode <= ENC_M5)
+#else
     if (pcs_ptr->enc_mode <= ENC_M4)
+#endif
 #else
     if (pcs_ptr->enc_mode <= ENC_M3)
 #endif
@@ -907,7 +911,11 @@ EbErrorType signal_derivation_multi_processes_oq(
     else
         pcs_ptr->disallow_all_nsq_blocks_above_16x16 = EB_TRUE;
 #if TUNE_M4_M8
+#if TUNE_NEW_PRESETS_MR_M8
+    if (pcs_ptr->enc_mode <= ENC_M2)
+#else
     if (pcs_ptr->enc_mode <= ENC_M3)
+#endif
         pcs_ptr->disallow_HVA_HVB_HV4 = EB_FALSE;
     else
         pcs_ptr->disallow_HVA_HVB_HV4 = EB_TRUE;
@@ -941,8 +949,12 @@ EbErrorType signal_derivation_multi_processes_oq(
             }
 
             //IBC Modes:   0: OFF 1:Slow   2:Faster   3:Fastest
+#if TUNE_SC_SETTINGS
+            if (pcs_ptr->enc_mode <= ENC_M5) {
+#else
             if (pcs_ptr->enc_mode <= ENC_M9)
             {
+#endif
                 pcs_ptr->ibc_mode = 1; // Slow
             } else {
                 pcs_ptr->ibc_mode = 2; // Faster
@@ -987,7 +999,11 @@ EbErrorType signal_derivation_multi_processes_oq(
     assert(pcs_ptr->palette_level < 7);
 
     if (!pcs_ptr->scs_ptr->static_config.disable_dlf_flag && frm_hdr->allow_intrabc == 0) {
+#if TUNE_NEW_PRESETS_MR_M8
+        if (pcs_ptr->enc_mode <= ENC_M5)
+#else
         if (pcs_ptr->enc_mode <= ENC_M6)
+#endif
             pcs_ptr->loop_filter_mode = 3;
         else
             pcs_ptr->loop_filter_mode =
@@ -1005,14 +1021,18 @@ EbErrorType signal_derivation_multi_processes_oq(
     if (scs_ptr->seq_header.cdef_level && frm_hdr->allow_intrabc == 0) {
         if (scs_ptr->static_config.cdef_level == DEFAULT) {
 #if TUNE_LOWER_PRESETS
+#if TUNE_NEW_PRESETS_MR_M8
+            if (pcs_ptr->enc_mode <= ENC_M3)
+#else
             if (pcs_ptr->enc_mode <= ENC_M4)
+#endif
 #else
             if (pcs_ptr->enc_mode <= ENC_M3)
 #endif
                     pcs_ptr->cdef_level = 1;
 #if FTR_CDEF_CHROMA_FOLLOWS_LUMA
 #if TUNE_M4_M8
-#if TUNE_PRESETS_M4_M8
+#if TUNE_NEW_PRESETS_MR_M8
             else if (pcs_ptr->enc_mode <= ENC_M7)
 #else
             else if (pcs_ptr->enc_mode <= ENC_M6)
@@ -1055,7 +1075,11 @@ EbErrorType signal_derivation_multi_processes_oq(
     Av1Common* cm = pcs_ptr->av1_cm;
     if (scs_ptr->static_config.sg_filter_mode == DEFAULT) {
 #if TUNE_M4_M8
+#if TUNE_NEW_PRESETS_MR_M8
+        if (pcs_ptr->enc_mode <= ENC_M2)
+#else
         if (pcs_ptr->enc_mode <= ENC_M3)
+#endif
 #else
 #if TUNE_LOWER_PRESETS
         if (pcs_ptr->enc_mode <= ENC_M4)
@@ -1077,7 +1101,11 @@ EbErrorType signal_derivation_multi_processes_oq(
     // 3                                            7-Tap luma/ 5-Tap chroma
 
     if (scs_ptr->static_config.wn_filter_mode == DEFAULT) {
+#if TUNE_NEW_PRESETS_MR_M8
+        if (pcs_ptr->enc_mode <= ENC_M8)
+#else
             if (pcs_ptr->enc_mode <= ENC_M6)
+#endif
             cm->wn_filter_mode = 3;
         else
             cm->wn_filter_mode = 2;
@@ -1152,7 +1180,11 @@ EbErrorType signal_derivation_multi_processes_oq(
         // GM_TRAN_ONLY                               Translation only using ME MV.
     if (pcs_ptr->enc_mode <= ENC_M2)
         pcs_ptr->gm_level = GM_FULL;
+#if TUNE_NEW_PRESETS_MR_M8
+    else if (pcs_ptr->enc_mode <= ENC_M5)
+#else
     else if (pcs_ptr->enc_mode <= ENC_M4)
+#endif
         pcs_ptr->gm_level = GM_DOWN;
     else
         pcs_ptr->gm_level = GM_DOWN16;
@@ -5851,6 +5883,23 @@ void* picture_decision_kernel(void *input_ptr)
                                 //set the number of references to try in ME/MD.Note: PicMgr will still use the original values to sync the references.
 #if TUNE_LOWER_PRESETS
 #if FTR_NEW_REF_PRUNING_CTRLS
+#if TUNE_SC_SETTINGS
+                                if (pcs_ptr->sc_content_detected) {
+                                    if (pcs_ptr->enc_mode <= ENC_MRS) {
+                                        pcs_ptr->ref_list0_count_try = MIN(pcs_ptr->ref_list0_count, 4);
+                                        pcs_ptr->ref_list1_count_try = MIN(pcs_ptr->ref_list1_count, 3);
+                                }
+                                    else if (pcs_ptr->enc_mode <= ENC_M2) {
+                                        pcs_ptr->ref_list0_count_try = MIN(pcs_ptr->ref_list0_count, 2);
+                                        pcs_ptr->ref_list1_count_try = MIN(pcs_ptr->ref_list1_count, 2);
+                                    }
+                                    else {
+                                        pcs_ptr->ref_list0_count_try = pcs_ptr->temporal_layer_index == 0 ? MIN(pcs_ptr->ref_list0_count, 2) : MIN(pcs_ptr->ref_list0_count, 1);
+                                        pcs_ptr->ref_list1_count_try = pcs_ptr->temporal_layer_index == 0 ? MIN(pcs_ptr->ref_list1_count, 2) : MIN(pcs_ptr->ref_list1_count, 1);
+                                    }
+                                }
+                                else
+#endif
                                 if (pcs_ptr->enc_mode <= ENC_M6) {
 #else
                                 if (pcs_ptr->enc_mode <= ENC_M5) {

@@ -490,7 +490,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
 
     uint8_t update_cdf_level = 0;
 #if TUNE_LOWER_PRESETS
+#if TUNE_NEW_PRESETS_MR_M8
+    if (pcs_ptr->enc_mode <= ENC_M3)
+#else
     if (pcs_ptr->enc_mode <= ENC_M4)
+#endif
 #else
     if (pcs_ptr->enc_mode <= ENC_M3)
 #endif
@@ -534,7 +538,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     EbBool enable_wm;
 #if TUNE_LOWER_PRESETS
 #if TUNE_M4_M8
+#if TUNE_NEW_PRESETS_MR_M8
+    if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M4) {
+#else
     if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M5) {
+#endif
 #else
     if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M4) {
 #endif
@@ -590,6 +598,10 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
             pcs_ptr->parent_pcs_ptr->pic_obmc_level = 3;
 #endif
 #endif
+#if TUNE_NEW_PRESETS_MR_M8
+        else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M7)
+            pcs_ptr->parent_pcs_ptr->pic_obmc_level = pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? 2 : 0;
+#endif
         else
             pcs_ptr->parent_pcs_ptr->pic_obmc_level = 0;
     } else
@@ -599,6 +611,18 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     frm_hdr->is_motion_mode_switchable = frm_hdr->is_motion_mode_switchable ||
         pcs_ptr->parent_pcs_ptr->pic_obmc_level;
     if (scs_ptr->static_config.enable_hbd_mode_decision == DEFAULT)
+#if TUNE_10BIT_MD_SETTINGS
+        if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_MR)
+            pcs_ptr->hbd_mode_decision = 1;
+        else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M1)
+            pcs_ptr->hbd_mode_decision = pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? 1 : 2;
+        else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M4)
+            pcs_ptr->hbd_mode_decision = 2;
+        else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M7)
+            pcs_ptr->hbd_mode_decision = pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? 2 : 0;
+        else
+            pcs_ptr->hbd_mode_decision = pcs_ptr->parent_pcs_ptr->temporal_layer_index == 0 ? 2 : 0;
+#else
 #if TUNE_HBD_MODE_DECISION
         if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M1)
 #else
@@ -607,6 +631,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
             pcs_ptr->hbd_mode_decision = 1;
         else
             pcs_ptr->hbd_mode_decision = 2;
+#endif
     else
         pcs_ptr->hbd_mode_decision = scs_ptr->static_config.enable_hbd_mode_decision;
     return return_error;

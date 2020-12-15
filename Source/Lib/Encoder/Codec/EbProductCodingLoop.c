@@ -1159,7 +1159,49 @@ void set_dist_based_ref_pruning_controls(
         ref_pruning_ctrls->closest_refs[COMP_WEDGE]             = 1;
 
         break;
+#if TUNE_NEW_PRESETS_MR_M8
     case 2:
+        ref_pruning_ctrls->enabled = 1;
+
+
+        ref_pruning_ctrls->max_dev_to_best[PA_ME_GROUP] = (uint32_t)~0;
+        ref_pruning_ctrls->max_dev_to_best[UNI_3x3_GROUP] = 0;
+        ref_pruning_ctrls->max_dev_to_best[BI_3x3_GROUP] = 0;
+        ref_pruning_ctrls->max_dev_to_best[NRST_NEW_NEAR_GROUP] = 0;
+        ref_pruning_ctrls->max_dev_to_best[NRST_NEAR_GROUP] = 90;
+        ref_pruning_ctrls->max_dev_to_best[PRED_ME_GROUP] = 90;
+        ref_pruning_ctrls->max_dev_to_best[GLOBAL_GROUP] = (uint32_t)~0;
+        ref_pruning_ctrls->max_dev_to_best[WARP_GROUP] = (uint32_t)~0;
+        ref_pruning_ctrls->max_dev_to_best[OBMC_GROUP] = (uint32_t)~0;
+        ref_pruning_ctrls->max_dev_to_best[II_WEDGE_GROUP] = 60;
+        ref_pruning_ctrls->max_dev_to_best[II_DEPENDENT_GROUP] = 60;
+        ref_pruning_ctrls->max_dev_to_best[COMP_DIST] = 60;
+        ref_pruning_ctrls->max_dev_to_best[COMP_DIFF] = 60;
+        ref_pruning_ctrls->max_dev_to_best[COMP_WEDGE] = 60;
+        ref_pruning_ctrls->ref_idx_2_offset = 10;
+        ref_pruning_ctrls->ref_idx_3_offset = 20;
+
+
+        ref_pruning_ctrls->closest_refs[PA_ME_GROUP] = 1;
+        ref_pruning_ctrls->closest_refs[UNI_3x3_GROUP] = 1;
+        ref_pruning_ctrls->closest_refs[BI_3x3_GROUP] = 1;
+        ref_pruning_ctrls->closest_refs[NRST_NEW_NEAR_GROUP] = 1;
+        ref_pruning_ctrls->closest_refs[NRST_NEAR_GROUP] = 1;
+        ref_pruning_ctrls->closest_refs[PRED_ME_GROUP] = 1;
+        ref_pruning_ctrls->closest_refs[GLOBAL_GROUP] = 1;
+        ref_pruning_ctrls->closest_refs[WARP_GROUP] = 1;
+        ref_pruning_ctrls->closest_refs[OBMC_GROUP] = 1;
+        ref_pruning_ctrls->closest_refs[II_WEDGE_GROUP] = 1;
+        ref_pruning_ctrls->closest_refs[II_DEPENDENT_GROUP] = 1;
+        ref_pruning_ctrls->closest_refs[COMP_DIST] = 1;
+        ref_pruning_ctrls->closest_refs[COMP_DIFF] = 1;
+        ref_pruning_ctrls->closest_refs[COMP_WEDGE] = 1;
+
+        break;
+    case 3: // M1
+#else
+    case 2:
+#endif
         ref_pruning_ctrls->enabled = 1;
 
         ref_pruning_ctrls->max_dev_to_best[PA_ME_GROUP]         = (uint32_t)~0;
@@ -1195,7 +1237,11 @@ void set_dist_based_ref_pruning_controls(
         ref_pruning_ctrls->closest_refs[COMP_WEDGE]             = 1;
 
         break;
+#if TUNE_NEW_PRESETS_MR_M8
+    case 4:
+#else
     case 3:
+#endif
         ref_pruning_ctrls->enabled = 1;
 
         ref_pruning_ctrls->max_dev_to_best[PA_ME_GROUP]         = 60;
@@ -1231,7 +1277,11 @@ void set_dist_based_ref_pruning_controls(
         ref_pruning_ctrls->closest_refs[COMP_WEDGE]             = 1;
 
         break;
+#if TUNE_NEW_PRESETS_MR_M8
+    case 5:
+#else
     case 4:
+#endif
         ref_pruning_ctrls->enabled = 1;
 
         ref_pruning_ctrls->max_dev_to_best[PA_ME_GROUP]         = 30;
@@ -1266,7 +1316,11 @@ void set_dist_based_ref_pruning_controls(
         ref_pruning_ctrls->closest_refs[COMP_DIFF]              = 1;
         ref_pruning_ctrls->closest_refs[COMP_WEDGE]             = 1;
         break;
+#if TUNE_NEW_PRESETS_MR_M8
+    case 6: // M2-M5
+#else
     case 5:
+#endif
         ref_pruning_ctrls->enabled = 1;
 
         ref_pruning_ctrls->max_dev_to_best[PA_ME_GROUP]         = 0;
@@ -7085,7 +7139,11 @@ EbErrorType signal_derivation_block(PictureControlSet *pcs,
             context_ptr->dist_based_ref_pruning = 2;
 #if TUNE_M4_M8
         else
+#if TUNE_NEW_PRESETS_MR_M8
+            context_ptr->dist_based_ref_pruning = 4;
+#else
             context_ptr->dist_based_ref_pruning = 3;
+#endif
 #else
         else if (enc_mode <= ENC_M5)
             context_ptr->dist_based_ref_pruning = 3;
@@ -7483,6 +7541,9 @@ void interintra_class_pruning_1(ModeDecisionContext *context_ptr, uint64_t best_
     for (CandClass cand_class_it = CAND_CLASS_0; cand_class_it < CAND_CLASS_TOTAL;
          cand_class_it++) {
 #if FTR_NIC_PRUNING // 1st check
+#if TUNE_NEW_PRESETS_MR_M8
+        uint64_t mds1_cand_th = context_ptr->nic_pruning_ctrls.mds1_cand_base_th;
+#else
         uint64_t mds1_cand_th = ((context_ptr->nic_pruning_ctrls.mds1_cand_base_th == (uint64_t)~0) ||
             (context_ptr->nic_pruning_ctrls.mds1_cand_intra_class_offset_th == (uint64_t)~0 && (cand_class_it == CAND_CLASS_0 || cand_class_it == CAND_CLASS_3)) ||
             (context_ptr->nic_pruning_ctrls.mds1_cand_sq_offset_th == (uint64_t)~0 && context_ptr->blk_geom->shape == PART_N)) ?
@@ -7490,6 +7551,7 @@ void interintra_class_pruning_1(ModeDecisionContext *context_ptr, uint64_t best_
             context_ptr->nic_pruning_ctrls.mds1_cand_base_th +
             ((cand_class_it == CAND_CLASS_0 || cand_class_it == CAND_CLASS_3) ? context_ptr->nic_pruning_ctrls.mds1_cand_intra_class_offset_th : 0) +
             ((context_ptr->blk_geom->shape == PART_N) ? context_ptr->nic_pruning_ctrls.mds1_cand_sq_offset_th : 0);
+#endif
 
         if (mds1_cand_th != (uint64_t)~0 ||
             context_ptr->nic_pruning_ctrls.mds1_class_th != (uint64_t)~0)
@@ -7518,7 +7580,11 @@ void interintra_class_pruning_1(ModeDecisionContext *context_ptr, uint64_t best_
                         else if (context_ptr->nic_pruning_ctrls.mds1_band_cnt >= 3 && context_ptr->md_stage_1_count[cand_class_it] > 1) {
                             uint8_t band_idx = (uint8_t)(dev * (context_ptr->nic_pruning_ctrls.mds1_band_cnt - 1) / context_ptr->nic_pruning_ctrls.mds1_class_th);
 #if TUNE_LOWER_PRESETS
+#if TUNE_NEW_PRESETS_MR_M8
+                            context_ptr->md_stage_1_count[cand_class_it] = DIVIDE_AND_ROUND(context_ptr->md_stage_1_count[cand_class_it], band_idx + 1);
+#else
                             context_ptr->md_stage_1_count[cand_class_it] = DIVIDE_AND_ROUND(context_ptr->md_stage_1_count[cand_class_it], context_ptr->nic_pruning_ctrls.mds1_scaling_factor * (band_idx + 1));
+#endif
 #else
                             context_ptr->md_stage_1_count[cand_class_it] = MAX(1, DIVIDE_AND_ROUND(context_ptr->md_stage_1_count[cand_class_it], context_ptr->nic_pruning_ctrls.mds1_scaling_factor * (band_idx + 1)));
 #endif
@@ -7645,6 +7711,9 @@ void interintra_class_pruning_2(PictureControlSet *pcs_ptr, ModeDecisionContext 
         }
 #endif
 #if FTR_NIC_PRUNING // 1st check
+#if TUNE_NEW_PRESETS_MR_M8
+        uint64_t mds2_cand_th = context_ptr->nic_pruning_ctrls.mds2_cand_base_th;
+#else
         uint64_t mds2_cand_th = ((context_ptr->nic_pruning_ctrls.mds2_cand_base_th == (uint64_t)~0) ||
             (context_ptr->nic_pruning_ctrls.mds2_cand_intra_class_offset_th == (uint64_t)~0 && (cand_class_it == CAND_CLASS_0 || cand_class_it == CAND_CLASS_3)) ||
             (context_ptr->nic_pruning_ctrls.mds2_cand_sq_offset_th == (uint64_t)~0 && context_ptr->blk_geom->shape == PART_N)) ?
@@ -7652,6 +7721,7 @@ void interintra_class_pruning_2(PictureControlSet *pcs_ptr, ModeDecisionContext 
             context_ptr->nic_pruning_ctrls.mds2_cand_base_th +
             ((cand_class_it == CAND_CLASS_0 || cand_class_it == CAND_CLASS_3) ? context_ptr->nic_pruning_ctrls.mds2_cand_intra_class_offset_th : 0) +
             ((context_ptr->blk_geom->shape == PART_N) ? context_ptr->nic_pruning_ctrls.mds2_cand_sq_offset_th : 0);
+#endif
 
         if (mds2_cand_th != (uint64_t)~0 ||
             context_ptr->nic_pruning_ctrls.mds2_class_th != (uint64_t)~0)
@@ -7678,7 +7748,11 @@ void interintra_class_pruning_2(PictureControlSet *pcs_ptr, ModeDecisionContext 
                         else if (context_ptr->nic_pruning_ctrls.mds2_band_cnt >= 3 && context_ptr->md_stage_2_count[cand_class_it] > 1) {
                             uint8_t band_idx = (uint8_t)(dev * (context_ptr->nic_pruning_ctrls.mds2_band_cnt - 1) / context_ptr->nic_pruning_ctrls.mds2_class_th);
 #if TUNE_LOWER_PRESETS
+#if TUNE_NEW_PRESETS_MR_M8
+                            context_ptr->md_stage_2_count[cand_class_it] = DIVIDE_AND_ROUND(context_ptr->md_stage_2_count[cand_class_it], band_idx + 1);
+#else
                             context_ptr->md_stage_2_count[cand_class_it] = DIVIDE_AND_ROUND(context_ptr->md_stage_2_count[cand_class_it], context_ptr->nic_pruning_ctrls.mds2_scaling_factor * (band_idx + 1));
+#endif
 #else
                             context_ptr->md_stage_2_count[cand_class_it] = MAX(1, DIVIDE_AND_ROUND(context_ptr->md_stage_2_count[cand_class_it], context_ptr->nic_pruning_ctrls.mds2_scaling_factor * (band_idx + 1)));
 #endif
@@ -7726,6 +7800,9 @@ void interintra_class_pruning_3(ModeDecisionContext *context_ptr, uint64_t best_
     for (CandClass cand_class_it = CAND_CLASS_0; cand_class_it < CAND_CLASS_TOTAL;
         cand_class_it++) {
 #if FTR_NIC_PRUNING // 1st check
+#if TUNE_NEW_PRESETS_MR_M8
+        uint64_t mds3_cand_th = context_ptr->nic_pruning_ctrls.mds3_cand_base_th;
+#else
         uint64_t mds3_cand_th = ((context_ptr->nic_pruning_ctrls.mds3_cand_base_th == (uint64_t)~0) ||
             (context_ptr->nic_pruning_ctrls.mds3_cand_intra_class_offset_th == (uint64_t)~0 && (cand_class_it == CAND_CLASS_0 || cand_class_it == CAND_CLASS_3)) ||
             (context_ptr->nic_pruning_ctrls.mds3_cand_sq_offset_th == (uint64_t)~0 && context_ptr->blk_geom->shape == PART_N)) ?
@@ -7733,6 +7810,7 @@ void interintra_class_pruning_3(ModeDecisionContext *context_ptr, uint64_t best_
             context_ptr->nic_pruning_ctrls.mds3_cand_base_th +
             ((cand_class_it == CAND_CLASS_0 || cand_class_it == CAND_CLASS_3) ? context_ptr->nic_pruning_ctrls.mds3_cand_intra_class_offset_th : 0) +
             ((context_ptr->blk_geom->shape == PART_N) ? context_ptr->nic_pruning_ctrls.mds3_cand_sq_offset_th : 0);
+#endif
 
         if (mds3_cand_th != (uint64_t)~0 ||
             context_ptr->nic_pruning_ctrls.mds3_class_th != (uint64_t)~0)
@@ -7759,7 +7837,11 @@ void interintra_class_pruning_3(ModeDecisionContext *context_ptr, uint64_t best_
                         else if (context_ptr->nic_pruning_ctrls.mds3_band_cnt >= 3 && context_ptr->md_stage_3_count[cand_class_it] > 1) {
                             uint8_t band_idx = (uint8_t)(dev * (context_ptr->nic_pruning_ctrls.mds3_band_cnt - 1) / context_ptr->nic_pruning_ctrls.mds3_class_th);
 #if TUNE_LOWER_PRESETS
+#if TUNE_NEW_PRESETS_MR_M8
+                            context_ptr->md_stage_3_count[cand_class_it] = DIVIDE_AND_ROUND(context_ptr->md_stage_3_count[cand_class_it], band_idx + 1);
+#else
                             context_ptr->md_stage_3_count[cand_class_it] = DIVIDE_AND_ROUND(context_ptr->md_stage_3_count[cand_class_it], context_ptr->nic_pruning_ctrls.mds3_scaling_factor * (band_idx + 1));
+#endif
 #else
                             context_ptr->md_stage_3_count[cand_class_it] = MAX(1, DIVIDE_AND_ROUND(context_ptr->md_stage_3_count[cand_class_it], context_ptr->nic_pruning_ctrls.mds3_scaling_factor * (band_idx + 1)));
 #endif
@@ -8049,6 +8131,49 @@ void estimate_ref_frames_num_bits(
     }
 }
 #endif
+
+#if FTR_NSQ_RED_USING_RECON
+void calc_scr_to_recon_dist_per_quadrant(
+    ModeDecisionContext* context_ptr,
+    EbPictureBufferDesc* input_picture_ptr,
+    const uint32_t input_origin_index,
+    ModeDecisionCandidateBuffer* candidate_buffer,
+    const uint32_t blk_origin_index) {
+
+    if (!context_ptr->md_disallow_nsq) {
+        if (context_ptr->max_part0_to_part1_dev) {
+            // if a non-4x4 SQ
+            if ((context_ptr->blk_geom->bwidth == context_ptr->blk_geom->bheight) && context_ptr->blk_geom->sq_size > 4) {
+
+                EbPictureBufferDesc* recon_ptr = candidate_buffer->recon_ptr;
+
+                EbSpatialFullDistType spatial_full_dist_type_fun = context_ptr->hbd_mode_decision
+                    ? svt_full_distortion_kernel16_bits
+                    : svt_spatial_full_distortion_kernel;
+
+                uint8_t r, c;
+                int32_t quadrant_size = context_ptr->blk_geom->sq_size >> 1;
+
+                for (r = 0; r < 2; r++) {
+                    for (c = 0; c < 2; c++) {
+                        context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].rec_dist_per_quadrant[c + (r << 1)] =
+                            spatial_full_dist_type_fun(
+                                input_picture_ptr->buffer_y,
+                                input_origin_index + c * quadrant_size + (r * quadrant_size) * input_picture_ptr->stride_y,
+                                input_picture_ptr->stride_y,
+                                recon_ptr->buffer_y,
+                                blk_origin_index + c * quadrant_size + (r * quadrant_size) * recon_ptr->stride_y,
+                                recon_ptr->stride_y,
+                                (uint32_t)quadrant_size,
+                                (uint32_t)quadrant_size);
+                    }
+                }
+            }
+        }
+    }
+}
+#endif
+
 void md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
 #if RFCTR_MD_BLOCK_LOOP
                      EbPictureBufferDesc *        input_picture_ptr) {
@@ -8426,6 +8551,15 @@ void md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionContext *context_pt
     if (!context_ptr->skip_intra)
     av1_perform_inverse_transform_recon(context_ptr, candidate_buffer, context_ptr->blk_geom);
 
+#if FTR_NSQ_RED_USING_RECON
+    calc_scr_to_recon_dist_per_quadrant(
+        context_ptr,
+        input_picture_ptr,
+        input_origin_index,
+        candidate_buffer,
+        blk_origin_index);
+#endif
+
     if (!context_ptr->blk_geom->has_uv) {
         // Store the luma data for 4x* and *x4 blocks to be used for CFL
         EbPictureBufferDesc *recon_ptr       = candidate_buffer->recon_ptr;
@@ -8618,6 +8752,63 @@ void md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionContext *context_pt
 #endif
     context_ptr->avail_blk_flag[blk_ptr->mds_idx] = EB_TRUE;
 }
+
+#if FTR_NSQ_RED_USING_RECON
+uint8_t update_skip_nsq_based_on_sq_recon_dist(
+    ModeDecisionContext* context_ptr) {
+    uint8_t  skip_nsq = 0;
+    uint32_t max_part0_to_part1_dev = context_ptr->max_part0_to_part1_dev;
+
+    // return immediately if SQ, or NSQ but Parent not available, or max_part0_to_part1_dev is set to infinity
+    if (context_ptr->blk_geom->shape == PART_N ||
+        context_ptr->avail_blk_flag[context_ptr->blk_geom->sqi_mds] == EB_FALSE ||
+        max_part0_to_part1_dev == 0)
+        return skip_nsq;
+
+    if (context_ptr->blk_geom->shape == PART_H ||
+        context_ptr->blk_geom->shape == PART_HA ||
+        context_ptr->blk_geom->shape == PART_HB || context_ptr->blk_geom->shape == PART_H4) {
+
+        uint64_t dist_h0 =
+            MAX(1,
+                context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds].rec_dist_per_quadrant[0] +
+                context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds].rec_dist_per_quadrant[1]);
+
+        uint64_t dist_h1 =
+            MAX(1,
+                context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds].rec_dist_per_quadrant[2] +
+                context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds].rec_dist_per_quadrant[3]);
+
+        uint32_t dev = (uint32_t)((ABS((int32_t)(dist_h0 - dist_h1)) * 100) / MIN(dist_h0, dist_h1));
+
+        if (dev < max_part0_to_part1_dev)
+            return EB_TRUE;
+    }
+
+    if (context_ptr->blk_geom->shape == PART_V ||
+        context_ptr->blk_geom->shape == PART_VA ||
+        context_ptr->blk_geom->shape == PART_VB || context_ptr->blk_geom->shape == PART_V4) {
+
+        uint64_t dist_v0 =
+            MAX(1,
+                context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds].rec_dist_per_quadrant[0] +
+                context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds].rec_dist_per_quadrant[2]);
+
+        uint64_t dist_v1 =
+            MAX(1,
+                context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds].rec_dist_per_quadrant[1] +
+                context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds].rec_dist_per_quadrant[3]);
+
+        uint32_t dev = (uint32_t)((ABS((int32_t)(dist_v0 - dist_v1)) * 100) / MIN(dist_v0, dist_v1));
+
+        if (dev < max_part0_to_part1_dev)
+            return EB_TRUE;
+    }
+
+    return skip_nsq;
+}
+#endif
+
 /*
  * Determine if the evaluation of nsq blocks (HA, HB, VA, VB, H4, V4) can be skipped
  * based on the relative cost of the SQ, H, and V blocks.  The scaling factor sq_weight
@@ -8762,7 +8953,11 @@ EbBool update_md_settings(ModeDecisionContext *ctx, uint8_t level) {
         md_pme_search_controls(ctx, ctx->md_pme_level);
     }
     if (level >= 3) {
+#if TUNE_NEW_PRESETS_MR_M8
+        ctx->dist_based_ref_pruning = 6;
+#else
         ctx->dist_based_ref_pruning = 5;
+#endif
         set_dist_based_ref_pruning_controls(ctx, ctx->dist_based_ref_pruning);
         ctx->nic_ctrls.stage1_scaling_num = MIN(ctx->nic_ctrls.stage1_scaling_num, 2);
         ctx->nic_ctrls.stage2_scaling_num = MIN(ctx->nic_ctrls.stage2_scaling_num, 1);
@@ -9346,6 +9541,9 @@ void process_block(SequenceControlSet *scs, PictureControlSet *pcs,
 
         // call nsq-reduction func if NSQ is on
         if (!ctx->md_disallow_nsq) {
+#if FTR_NSQ_RED_USING_RECON
+            skip_processing_block |= update_skip_nsq_based_on_sq_recon_dist(ctx);
+#endif
             skip_processing_block |= update_skip_nsq_shapes(ctx);
             skip_processing_block |= update_md_settings_based_on_sq_coeff_area(ctx);
         }

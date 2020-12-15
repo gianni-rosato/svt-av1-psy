@@ -71,6 +71,9 @@ typedef struct MdBlkStruct {
     unsigned             left_neighbor_mode : 2;
 #endif
     unsigned             full_distortion : 32;
+#if FTR_NSQ_RED_USING_RECON
+    uint64_t             rec_dist_per_quadrant[4];
+#endif
     PartitionContextType left_neighbor_partition;
     PartitionContextType above_neighbor_partition;
     uint64_t             cost;
@@ -246,8 +249,10 @@ typedef struct DepthRefinementCtrls {
     uint8_t
         disallow_below_16x16; // remove 16x16 & lower depth(s) based on the 64x64 distortion if sb_64x64
 #endif
+#if !TUNE_IMPROVE_DEPTH_REFINEMENT
 #if FTR_PD2_BLOCK_REDUCTION
     uint8_t use_sb_class;
+#endif
 #endif
 } DepthRefinementCtrls;
 #if FTR_EARLY_DEPTH_REMOVAL
@@ -389,17 +394,23 @@ typedef struct NicPruningCtrls {
    // Post mds0
     uint64_t mds1_class_th;
     uint8_t  mds1_band_cnt; // >=2
+#if !TUNE_NEW_PRESETS_MR_M8
     uint8_t  mds1_scaling_factor; // set the action @ 1st band
+#endif
 
     // Post mds1
     uint64_t mds2_class_th;
     uint8_t  mds2_band_cnt; // >=2
+#if !TUNE_NEW_PRESETS_MR_M8
     uint8_t  mds2_scaling_factor; // set the action @ 1st band
+#endif
 
     // Post mds2
     uint64_t mds3_class_th;
     uint8_t  mds3_band_cnt; // >=2
+#if !TUNE_NEW_PRESETS_MR_M8
     uint8_t  mds3_scaling_factor; // set the action @ 1st band
+#endif
 
     // cand pruning signal(s)
     // mdsx_cand_th (for single cand removal per class); remove cand if deviation to the best_cand for @ the target class is higher than mdsx_cand_th
@@ -407,19 +418,25 @@ typedef struct NicPruningCtrls {
 
     // Post mds0
     uint64_t mds1_cand_base_th;               // base_th
+#if !TUNE_NEW_PRESETS_MR_M8
     uint64_t mds1_cand_sq_offset_th;          // sq_offset: a positive offset towards a less aggressive action for SQ
     uint64_t mds1_cand_intra_class_offset_th; // intra_class_offset: a positive offset towards a less aggressive action for INTRA classes
+#endif
 
 
     // Post mds1
     uint64_t mds2_cand_base_th;
+#if !TUNE_NEW_PRESETS_MR_M8
     uint64_t mds2_cand_sq_offset_th;
     uint64_t mds2_cand_intra_class_offset_th;
+#endif
 
     // Post mds2
     uint64_t mds3_cand_base_th;
+#if !TUNE_NEW_PRESETS_MR_M8
     uint64_t mds3_cand_sq_offset_th;
     uint64_t mds3_cand_intra_class_offset_th;
+#endif
 
 } NicPruningCtrls;
 #endif
@@ -687,6 +704,9 @@ typedef struct ModeDecisionContext {
     uint8_t *    left_txfm_context;
     // square cost weighting for deciding if a/b shapes could be skipped
     uint32_t sq_weight;
+#if FTR_NSQ_RED_USING_RECON
+    uint32_t max_part0_to_part1_dev;
+#endif
     // signal for enabling shortcut to skip search depths
     uint8_t dc_cand_only_flag;
     EbBool  disable_angle_z2_intra_flag;

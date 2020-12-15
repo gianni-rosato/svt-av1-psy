@@ -103,6 +103,13 @@ extern "C" {
 #define FTR_M9_CDEF                            1 // CDEF optimisation
 #define CLEANUP_CANDIDATE_ELEMINATION_CTR      1 // Cleanup candidate elimination
 
+#define TUNE_10BIT_MD_SETTINGS                 0 // New settings for hbd mode decision
+#define TUNE_NEW_PRESETS_MR_M8                 1 // Tune presets MR to M8
+#define TUNE_SB_SIZE                           1 // New SB size settings for M5 and M6
+#define FTR_NSQ_RED_USING_RECON                1 // Use the deviation recon-to-src distortion to prune H/V
+#define TUNE_IMPROVE_DEPTH_REFINEMENT          1 // Better M7 and better M8 depth refinement level(s)
+#define TUNE_SC_SETTINGS                       1 // New SC settings for depth refinement, MRP, IBC, and depth removal
+
     // ============= END SVT_04 =============
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
