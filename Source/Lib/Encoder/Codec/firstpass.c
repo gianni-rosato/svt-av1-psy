@@ -466,12 +466,11 @@ void first_pass_frame_end(PictureParentControlSet *pcs_ptr, const int64_t ts_dur
         pcs_ptr, &stats, raw_err_stdev, (const int)pcs_ptr->picture_number, ts_duration);
 }
 /******************************************************
-* Derive Pre-Analysis settings for first pass
+* Derive Pre-Analysis settings for first pass for pcs
 Input   : encoder mode and tune
 Output  : Pre-Analysis signal(s)
 ******************************************************/
-extern EbErrorType first_pass_signal_derivation_pre_analysis(SequenceControlSet *     scs_ptr,
-                                                             PictureParentControlSet *pcs_ptr) {
+extern EbErrorType first_pass_signal_derivation_pre_analysis_pcs(PictureParentControlSet *pcs_ptr) {
     EbErrorType return_error = EB_ErrorNone;
     // Derive HME Flag
     pcs_ptr->enable_hme_flag        = 1;
@@ -485,6 +484,17 @@ extern EbErrorType first_pass_signal_derivation_pre_analysis(SequenceControlSet 
     pcs_ptr->tf_enable_hme_level0_flag             = 0;
     pcs_ptr->tf_enable_hme_level1_flag             = 0;
     pcs_ptr->tf_enable_hme_level2_flag             = 0;
+
+    return return_error;
+}
+
+/******************************************************
+* Derive Pre-Analysis settings for first pass for scs
+Input   : encoder mode and tune
+Output  : Pre-Analysis signal(s)
+******************************************************/
+extern EbErrorType first_pass_signal_derivation_pre_analysis_scs(SequenceControlSet * scs_ptr) {
+    EbErrorType return_error = EB_ErrorNone;
     scs_ptr->seq_header.enable_intra_edge_filter   = 0;
     scs_ptr->seq_header.pic_based_rate_est         = 0;
     scs_ptr->seq_header.enable_restoration         = 0;
@@ -493,6 +503,7 @@ extern EbErrorType first_pass_signal_derivation_pre_analysis(SequenceControlSet 
 
     return return_error;
 }
+
 #define LOW_MOTION_ERROR_THRESH 25
 void set_tf_controls(PictureParentControlSet *pcs_ptr, uint8_t tf_level);
 /******************************************************

@@ -135,12 +135,12 @@ EbErrorType resource_coordination_context_ctor(EbThreadContext *thread_contxt_pt
 }
 
 /******************************************************
-* Derive Pre-Analysis settings for OQ
+* Derive Pre-Analysis settings for OQ for pcs
 Input   : encoder mode and tune
 Output  : Pre-Analysis signal(s)
 ******************************************************/
-EbErrorType signal_derivation_pre_analysis_oq(SequenceControlSet *     scs_ptr,
-                                              PictureParentControlSet *pcs_ptr) {
+EbErrorType signal_derivation_pre_analysis_oq_pcs(SequenceControlSet const * const scs_ptr,
+                                                  PictureParentControlSet *pcs_ptr) {
     EbErrorType return_error = EB_ErrorNone;
     // Derive HME Flag
     if (scs_ptr->static_config.use_default_me_hme) {
@@ -162,6 +162,18 @@ EbErrorType signal_derivation_pre_analysis_oq(SequenceControlSet *     scs_ptr,
     pcs_ptr->tf_enable_hme_level0_flag = 1;
     pcs_ptr->tf_enable_hme_level1_flag = 1;
     pcs_ptr->tf_enable_hme_level2_flag = 1;
+
+    return return_error;
+}
+
+/******************************************************
+* Derive Pre-Analysis settings for OQ for scs
+Input   : encoder mode and tune
+Output  : Pre-Analysis signal(s)
+******************************************************/
+EbErrorType signal_derivation_pre_analysis_oq_scs(SequenceControlSet * scs_ptr) {
+    EbErrorType return_error = EB_ErrorNone;
+
     if (scs_ptr->static_config.enable_intra_edge_filter == DEFAULT)
         scs_ptr->seq_header.enable_intra_edge_filter = 1;
     else
@@ -174,7 +186,7 @@ EbErrorType signal_derivation_pre_analysis_oq(SequenceControlSet *     scs_ptr,
         scs_ptr->seq_header.pic_based_rate_est = (uint8_t)scs_ptr->static_config.pic_based_rate_est;
 
     if (scs_ptr->static_config.enable_restoration_filtering == DEFAULT) {
-        scs_ptr->seq_header.enable_restoration = (pcs_ptr->enc_mode <= ENC_M6) ? 1 : 0;
+        scs_ptr->seq_header.enable_restoration = (scs_ptr->static_config.enc_mode <= ENC_M6) ? 1 : 0;
     } else
         scs_ptr->seq_header.enable_restoration =
             (uint8_t)scs_ptr->static_config.enable_restoration_filtering;
@@ -187,11 +199,12 @@ EbErrorType signal_derivation_pre_analysis_oq(SequenceControlSet *     scs_ptr,
     if (scs_ptr->static_config.enable_warped_motion == DEFAULT) {
         scs_ptr->seq_header.enable_warped_motion = 1;
     } else
-        scs_ptr->seq_header.enable_warped_motion = (uint8_t)
-                                                       scs_ptr->static_config.enable_warped_motion;
+        scs_ptr->seq_header.enable_warped_motion =
+            (uint8_t)scs_ptr->static_config.enable_warped_motion;
 
     return return_error;
 }
+
 
 //******************************************************************************//
 // Modify the Enc mode based on the buffer Status
@@ -680,8 +693,8 @@ static void setup_two_pass(SequenceControlSet *scs_ptr) {
         svt_av1_init_single_pass_lap(scs_ptr);
 }
 
-extern EbErrorType first_pass_signal_derivation_pre_analysis(SequenceControlSet *     scs_ptr,
-                                                             PictureParentControlSet *pcs_ptr);
+extern EbErrorType first_pass_signal_derivation_pre_analysis_pcs(PictureParentControlSet *pcs_ptr);
+extern EbErrorType first_pass_signal_derivation_pre_analysis_scs(SequenceControlSet *scs_ptr);
 
 /* Resource Coordination Kernel */
 /*********************************************************************************
@@ -789,6 +802,11 @@ void *resource_coordination_kernel(void *input_ptr) {
             // Set the SCD Mode
             scs_tmp->scd_mode = scs_tmp->static_config.scene_change_detection == 0 ? SCD_MODE_0
                                                                                    : SCD_MODE_1;
+            // Pre-Analysis Signal(s) derivation
+            if (use_output_stat(scs_tmp))
+                first_pass_signal_derivation_pre_analysis_scs(scs_tmp);
+            else
+                signal_derivation_pre_analysis_oq_scs(scs_tmp);
 
             // Disable releaseFlag of new SequenceControlSet
             svt_object_release_disable(
@@ -979,9 +997,9 @@ void *resource_coordination_kernel(void *input_ptr) {
 
             // Pre-Analysis Signal(s) derivation
             if (use_output_stat(scs_ptr))
-                first_pass_signal_derivation_pre_analysis(scs_ptr, pcs_ptr);
+                first_pass_signal_derivation_pre_analysis_pcs(pcs_ptr);
             else
-                signal_derivation_pre_analysis_oq(scs_ptr, pcs_ptr);
+                signal_derivation_pre_analysis_oq_pcs(scs_ptr, pcs_ptr);
             pcs_ptr->filtered_sse    = 0;
             pcs_ptr->filtered_sse_uv = 0;
             // Rate Control

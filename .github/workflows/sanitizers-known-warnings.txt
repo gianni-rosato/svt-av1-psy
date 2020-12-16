@@ -33,11 +33,4 @@ race:packetization_kernel
 #encode_context_ptr->terminating_sequence_flag_received = EB_TRUE;
 #Between: picture_decision_kernel and packetization_kernel
 
-#4]
-race:signal_derivation_pre_analysis_oq
-#dlf_kernel() read scs_ptr->seq_header.enable_restoration
-#cdef_kernel() read scs_ptr->seq_header.cdef_level
-#writed in resource_coordination_kernel():signal_derivation_pre_analysis_oq()
-
-
 #End of file
