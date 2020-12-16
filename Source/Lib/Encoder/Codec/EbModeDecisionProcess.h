@@ -213,10 +213,11 @@ typedef struct TxtControls {
 
     uint8_t txt_group_intra_lt_16x16; // group to use when intra and tx block < 16x16
     uint8_t txt_group_intra_gt_eq_16x16; // group to use when intra and tx block >= 16x16
-
+#if !TUNE_REMOVE_TXT_STATS
     uint8_t  use_stats; // On/Off feature control
     uint16_t intra_th; // Threshold to bypass intra TXT <the higher th the higher speed>
     uint16_t inter_th; // Threshold to bypass inter TXT <the higher th the higher speed>
+#endif
 } TxtControls;
 typedef struct TxsCycleRControls {
     uint8_t  enabled; // On/Off feature control
@@ -799,8 +800,10 @@ typedef struct ModeDecisionContext {
     uint32_t             depth_prob[DEPTH_DELTA_NUM];
     uint32_t             ad_md_prob[DEPTH_DELTA_NUM][NUMBER_OF_SHAPES - 1];
 #endif
+#if !TUNE_REMOVE_TXT_STATS
     uint32_t             txt_cnt[TXT_DEPTH_DELTA_NUM][TX_TYPES];
     uint32_t             txt_prob[TXT_DEPTH_DELTA_NUM][TX_TYPES];
+#endif
     uint8_t              skip_intra;
     EbPictureBufferDesc *temp_residual_ptr;
     EbPictureBufferDesc *temp_recon_ptr;

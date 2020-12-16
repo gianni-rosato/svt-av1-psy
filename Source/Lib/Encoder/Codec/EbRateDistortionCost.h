@@ -132,12 +132,12 @@ extern EbErrorType av1_split_flag_rate(PictureParentControlSet *pcs_ptr,
                                        uint64_t *split_rate, uint64_t lambda,
                                        MdRateEstimationContext *md_rate_estimation_ptr,
                                        uint32_t                 tb_max_depth);
-
+#if !FTR_SHUT_ENCDEC_CBF_ZERO
 extern EbErrorType av1_encode_txb_calc_cost(EncDecContext *context_ptr,
                                             uint32_t *     count_non_zero_coeffs,
                                             uint64_t       y_txb_distortion[DIST_CALC_TOTAL],
                                             uint64_t *y_txb_coeff_bits, uint32_t component_mask);
-
+#endif
 extern uint64_t av1_intra_fast_cost(
 #if CLN_FAST_COST
                                    struct ModeDecisionContext *context_ptr,

@@ -346,7 +346,9 @@ void set_reference_sg_ep(PictureControlSet *pcs_ptr) {
 void mode_decision_configuration_init_qp_update(PictureControlSet *pcs_ptr) {
     FrameHeader *frm_hdr                = &pcs_ptr->parent_pcs_ptr->frm_hdr;
     pcs_ptr->parent_pcs_ptr->average_qp = 0;
+#if !TUNE_REMOVE_INTRA_STATS_TRACKING
     pcs_ptr->intra_coded_area           = 0;
+#endif
     // Init block selection
 #if !CLN_REMOVE_UNUSED_CODE
     memset(pcs_ptr->part_cnt, 0, sizeof(uint32_t) * (NUMBER_OF_SHAPES - 1) * FB_NUM * SSEG_NUM);
@@ -356,9 +358,11 @@ void mode_decision_configuration_init_qp_update(PictureControlSet *pcs_ptr) {
     memset(
         pcs_ptr->pred_depth_count, 0, sizeof(uint32_t) * DEPTH_DELTA_NUM * (NUMBER_OF_SHAPES - 1));
 #endif
+#if !TUNE_REMOVE_TXT_STATS
     // Init tx_type selection
     memset(pcs_ptr->txt_cnt, 0, sizeof(uint32_t) * TXT_DEPTH_DELTA_NUM * TX_TYPES);
     // Compute Tc, and Beta offsets for a given picture
+#endif
     // Set reference sg ep
     set_reference_sg_ep(pcs_ptr);
     set_global_motion_field(pcs_ptr);
@@ -554,7 +558,12 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M3) {
 #endif
         enable_wm = EB_TRUE;
+#if TUNE_M9_IFS_SSE_ADAPT_ME_MV_NEAR_WM_TF
+    }
+    else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M8) {
+#else
     } else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M9) {
+#endif
         enable_wm = (pcs_ptr->parent_pcs_ptr->temporal_layer_index == 0) ? EB_TRUE : EB_FALSE;
     } else {
         enable_wm = EB_FALSE;
@@ -933,7 +942,9 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
             signal_derivation_mode_decision_config_kernel_oq(scs_ptr, pcs_ptr);
 
         pcs_ptr->parent_pcs_ptr->average_qp = 0;
+#if !TUNE_REMOVE_INTRA_STATS_TRACKING
         pcs_ptr->intra_coded_area           = 0;
+#endif
         // Init block selection
 #if !CLN_REMOVE_UNUSED_CODE
         memset(pcs_ptr->part_cnt, 0, sizeof(uint32_t) * (NUMBER_OF_SHAPES - 1) * FB_NUM * SSEG_NUM);
@@ -944,10 +955,11 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
                0,
                sizeof(uint32_t) * DEPTH_DELTA_NUM * (NUMBER_OF_SHAPES - 1));
 #endif
+#if !TUNE_REMOVE_TXT_STATS
         // Init tx_type selection
         memset(pcs_ptr->txt_cnt, 0, sizeof(uint32_t) * TXT_DEPTH_DELTA_NUM * TX_TYPES);
         // Compute Tc, and Beta offsets for a given picture
-
+#endif
         // Set reference sg ep
         set_reference_sg_ep(pcs_ptr);
         set_global_motion_field(pcs_ptr);

@@ -4671,7 +4671,7 @@ void copy_txt_data(ModeDecisionCandidateBuffer* candidate_buffer,
                 context_ptr->blk_geom->tx_width[tx_depth][txb_itr]);
     }
 }
-
+#if !TUNE_REMOVE_TXT_STATS
 /*
  * Determine whether to bypass a given tx_type based on statistics of previously chosen tx_types.
  *
@@ -4733,6 +4733,7 @@ EbBool bypass_txt_based_on_stats(PictureControlSet *pcs_ptr,
     }
     return EB_FALSE;
 }
+#endif
 uint8_t get_tx_type_group(ModeDecisionContext *context_ptr, ModeDecisionCandidateBuffer *candidate_buffer, EbBool only_dct_dct) {
     int tx_group = 1;
     if (!only_dct_dct) {
@@ -4843,6 +4844,7 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
 
             if (only_dct_dct && tx_type != DCT_DCT)
                 continue;
+#if !TUNE_REMOVE_TXT_STATS
         // Perform search selectively based on statistics (DCT_DCT always performed)
         if (context_ptr->txt_ctrls.use_stats && tx_type != DCT_DCT) {
             // Determine if current tx_type should be skipped based on statistics
@@ -4854,6 +4856,7 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
                 y_count_non_zero_coeffs_txt[DCT_DCT]))
                 continue;
         }
+#endif
      // Do not use temporary buffers when TXT is OFF
     EbPictureBufferDesc *recon_coeff_ptr =
             only_dct_dct

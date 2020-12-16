@@ -1332,7 +1332,7 @@ void get_av1_mv_pred_drl(ModeDecisionContext *context_ptr, BlkStruct *blk_ptr,
         }
     }
 }
-
+#if !FTR_SHUT_ENCDEC_MVP
 void enc_pass_av1_mv_pred(TileInfo *tile, ModeDecisionContext *md_context_ptr, BlkStruct *blk_ptr,
                           const BlockGeom *blk_geom, uint16_t blk_origin_x, uint16_t blk_origin_y,
                           PictureControlSet *pcs_ptr, MvReferenceFrame ref_frame,
@@ -1363,7 +1363,7 @@ void enc_pass_av1_mv_pred(TileInfo *tile, ModeDecisionContext *md_context_ptr, B
                         nearmv,
                         ref_mv);
 }
-
+#endif
 void update_av1_mi_map(BlkStruct *blk_ptr, uint32_t blk_origin_x, uint32_t blk_origin_y,
                        const BlockGeom *blk_geom, PictureControlSet *pcs_ptr) {
     uint32_t mi_stride = pcs_ptr->mi_stride;

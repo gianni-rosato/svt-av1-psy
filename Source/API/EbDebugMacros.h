@@ -124,6 +124,18 @@ extern "C" {
 #define OPT_TPL                                1 // Optimise tpl by using PF and SAD for intra_search
 #define OPT_M9_TXT_PRED_DEPTH_PRUNING          1 // optimizations for m9 that include pruning, txt_level off for high-res, pred-depth
 #define OPT_TX_TYPE_SEARCH                     1 // Early exit TXT search
+#define TUNE_M9_SKIP_CTX_DC_SIGN               1 // Skip skip_ctx and dc_sign @ PD2:
+#define TUNE_M9_IFS_SSE_ADAPT_ME_MV_NEAR_WM_TF 1 // Tune M9 for ifs, spatial sse, adaptive me, mv merge near cand, wm, temp f.
+#define FTR_REDUCE_ME_INJECTION                0 // Reduce me candidates
+#define TUNE_REMOVE_INTRA_STATS_TRACKING       1 // Remove INTRA stats tracking
+#define TUNE_REMOVE_TXT_STATS                  1 // Remove TXT stats
+#define TUNE_M9_TF_BASE                        1 // Remove temporal layer 1 checks in TF for 1080p only
+#define FTR_SHUT_ENCDEC_MVP                    1 // Shut EncDec MVP
+#define FTR_SHUT_ENCDEC_CBF_ZERO               1 // Remove EncDec Cbf Zero
+
+
+#define TUNE_M9_GM_DETECTOR                    0 // Check the presence of stationnary block(s) per SB to avoid calling the complex GM detection for clip(s) with no global motion, and distance-based active_th
+
     // ============= END SVT_04 =============
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch

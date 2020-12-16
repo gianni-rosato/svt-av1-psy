@@ -70,9 +70,11 @@ typedef struct EncDecContext {
     EbBool        is_16bit; //enable 10 bit encode in CL
     uint32_t      bit_depth;
     EbColorFormat color_format;
+#if !TUNE_REMOVE_INTRA_STATS_TRACKING
     uint64_t      tot_intra_coded_area;
     uint8_t       intra_coded_area_sb
         [MAX_NUMBER_OF_TREEBLOCKS_PER_PICTURE]; //percentage of intra coded area 0-100%
+#endif
     uint64_t three_quad_energy;
 
     // Needed for DC prediction

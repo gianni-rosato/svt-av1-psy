@@ -2961,7 +2961,7 @@ EbErrorType av1_split_flag_rate(PictureParentControlSet *pcs_ptr, ModeDecisionCo
 
     return return_error;
 }
-
+#if !FTR_SHUT_ENCDEC_CBF_ZERO
 /********************************************
 * txb_calc_cost
 *   Computes TU Cost and generetes TU Cbf
@@ -3041,3 +3041,4 @@ EbErrorType av1_encode_txb_calc_cost(EncDecContext *context_ptr, uint32_t *count
 
     return return_error;
 }
+#endif

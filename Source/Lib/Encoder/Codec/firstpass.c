@@ -752,7 +752,9 @@ EbErrorType first_pass_signal_derivation_me_kernel(SequenceControlSet *       sc
 
     // Set hme-based me sr adjustment level
     set_me_sr_adjustment_ctrls(context_ptr->me_context_ptr, 0);
-
+#if FTR_REDUCE_ME_INJECTION
+    context_ptr->me_context_ptr->prune_me_candidates_th = 0; // No impact on tf
+#endif
     return return_error;
 };
 

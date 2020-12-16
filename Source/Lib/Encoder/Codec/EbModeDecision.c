@@ -2092,8 +2092,12 @@ void inject_mvp_candidates_ii(struct ModeDecisionContext *context_ptr, PictureCo
 
             //NEAR
             max_drl_index = get_max_drl_index(xd->ref_mv_count[frame_type], NEARMV);
-
+#if TUNE_M9_IFS_SSE_ADAPT_ME_MV_NEAR_WM_TF
+            uint8_t cap_max_drl_index = (pcs_ptr->enc_mode <= ENC_M8) ? max_drl_index : MIN(0, max_drl_index);
+            for (drli = 0; drli < cap_max_drl_index; drli++) {
+#else
             for (drli = 0; drli < max_drl_index; drli++) {
+#endif
                 get_av1_mv_pred_drl(
                     context_ptr, blk_ptr, frame_type, 0, NEARMV, drli, nearestmv, nearmv, ref_mv);
 

@@ -275,7 +275,9 @@ typedef struct PictureControlSet {
     EbBool            entropy_coding_pic_reset_flag;
     uint8_t           tile_size_bytes_minus_1;
     EbHandle          intra_mutex;
+#if !TUNE_REMOVE_INTRA_STATS_TRACKING
     uint32_t          intra_coded_area;
+#endif
     uint32_t          tot_seg_searched_cdef;
     EbHandle          cdef_search_mutex;
 
@@ -418,7 +420,9 @@ typedef struct PictureControlSet {
 #if !CLN_NSQ_AND_STATS
     uint32_t pred_depth_count[DEPTH_DELTA_NUM][NUMBER_OF_SHAPES - 1];
 #endif
+#if !TUNE_REMOVE_TXT_STATS
     uint32_t txt_cnt[TXT_DEPTH_DELTA_NUM][TX_TYPES];
+#endif
 } PictureControlSet;
 
 // To optimize based on the max input size
@@ -594,6 +598,9 @@ typedef struct MePcs {
     //TPLData                    tpl_data;
 #if FTR_TPL_TR
     TplControls                tpl_ctrls;
+#endif
+#if TUNE_M9_GM_DETECTOR
+    GmControls                 gm_ctrls;
 #endif
     EbEncMode                  enc_mode;
     EbBool                     enable_hme_flag;

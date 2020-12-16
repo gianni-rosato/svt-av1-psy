@@ -33,11 +33,14 @@ typedef struct EbReferenceObject {
     uint64_t                    ref_poc;
     uint16_t                    qp;
     EB_SLICE                    slice_type;
+#if !TUNE_REMOVE_INTRA_STATS_TRACKING
     uint8_t                     intra_coded_area; //percentage of intra coded area 0-100%
     uint8_t                     intra_coded_area_sb
         [MAX_NUMBER_OF_TREEBLOCKS_PER_PICTURE]; //percentage of intra coded area 0-100%
+#endif
     uint32_t non_moving_index_array
         [MAX_NUMBER_OF_TREEBLOCKS_PER_PICTURE]; //array to hold non-moving blocks in reference frames
+
     uint8_t              tmp_layer_idx;
     EbBool               is_scene_change;
     uint16_t             pic_avg_variance;
@@ -60,7 +63,9 @@ typedef struct EbReferenceObject {
 #if !CLN_NSQ_AND_STATS
     uint32_t             ref_pred_depth_count[DEPTH_DELTA_NUM][NUMBER_OF_SHAPES - 1];
 #endif
+#if !TUNE_REMOVE_TXT_STATS
     uint32_t             ref_txt_cnt[TXT_DEPTH_DELTA_NUM][TX_TYPES];
+#endif
     int32_t              mi_cols;
     int32_t              mi_rows;
 } EbReferenceObject;

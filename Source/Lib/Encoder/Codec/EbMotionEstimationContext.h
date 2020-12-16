@@ -464,7 +464,9 @@ typedef struct MeContext {
     int          tf_block_row;
     int          tf_block_col;
     uint16_t     min_frame_size;
-
+#if FTR_REDUCE_ME_INJECTION
+    int64_t prune_me_candidates_th;
+#endif
 #if FTR_TPL_TR
     MePcs *me_pcs;//PCS wraper for ME
 #endif

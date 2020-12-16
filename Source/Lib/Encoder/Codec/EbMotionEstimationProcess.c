@@ -871,6 +871,12 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
     else
         set_me_sr_adjustment_ctrls(context_ptr->me_context_ptr, 2);
 #endif
+#if FTR_REDUCE_ME_INJECTION
+    if (enc_mode <= ENC_M8)
+        context_ptr->me_context_ptr->prune_me_candidates_th = 0;
+    else
+        context_ptr->me_context_ptr->prune_me_candidates_th = scs_ptr->input_resolution <= INPUT_SIZE_720p_RANGE ? 70 : 40;
+#endif
     return return_error;
 };
 void open_loop_first_pass(struct PictureParentControlSet *ppcs_ptr,
@@ -1259,6 +1265,9 @@ void fill_me_pcs_wraper(
     me_pcs->aligned_height = pcs->aligned_height;
 #if FTR_TPL_TR
     me_pcs->tpl_ctrls = pcs->tpl_ctrls;
+#endif
+#if TUNE_M9_GM_DETECTOR
+    me_pcs->gm_ctrls = pcs->gm_ctrls;
 #endif
     //me_pcs->tpl_data = pcs->tpl_data;
 #if !FTR_TPL_TR

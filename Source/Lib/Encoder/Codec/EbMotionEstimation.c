@@ -3004,6 +3004,11 @@ void construct_me_candidate_array(
 #endif
                                   uint8_t *total_me_candidate_index, uint32_t num_of_list_to_search,
                                   uint32_t pu_index, uint32_t n_idx) {
+#if FTR_REDUCE_ME_INJECTION
+    int64_t best_me_dist = context_ptr->p_sb_best_sad[REF_LIST_0][0][n_idx];
+    int64_t current_to_best_dist_distance = 0;
+    int64_t me_prune_th = context_ptr->prune_me_candidates_th;
+#endif
     for (uint32_t list_index = REF_LIST_0; list_index <= num_of_list_to_search; ++list_index) {
         const uint8_t num_of_ref_pic_to_search = context_ptr->num_of_ref_pic_to_search[list_index];
 
@@ -3013,6 +3018,13 @@ void construct_me_candidate_array(
             //ME was skipped, so do not add this Unipred candidate
             if (context_ptr->hme_results[list_index][ref_pic_index].do_ref == 0)
                 continue;
+#if FTR_REDUCE_ME_INJECTION
+            if (me_prune_th > 0) {
+                current_to_best_dist_distance = (context_ptr->p_sb_best_sad[list_index][ref_pic_index][n_idx] - best_me_dist) * 100;
+                if (current_to_best_dist_distance > (best_me_dist * me_prune_th))
+                    continue;
+            }
+#endif
             MePredUnit *me_candidate = &(
                 context_ptr->me_candidate[*total_me_candidate_index].pu[pu_index]);
             me_candidate->prediction_direction  = list_index;
@@ -3020,6 +3032,9 @@ void construct_me_candidate_array(
             me_candidate->ref0_list  = me_candidate->prediction_direction == 0 ? list_index : 24;
             me_candidate->ref1_list  = me_candidate->prediction_direction == 1 ? list_index : 24;
             me_candidate->distortion = context_ptr->p_sb_best_sad[list_index][ref_pic_index][n_idx];
+#if FTR_REDUCE_ME_INJECTION
+            best_me_dist = me_candidate->distortion < best_me_dist ? me_candidate->distortion : best_me_dist;
+#endif
             (*total_me_candidate_index)++;
         }
     }
@@ -3046,6 +3061,16 @@ void construct_me_candidate_array(
                  second_list_ref_pict_idx++) {
                 if (context_ptr->hme_results[REF_LIST_0][first_list_ref_pict_idx].do_ref &&
                     context_ptr->hme_results[REF_LIST_1][second_list_ref_pict_idx].do_ref) {
+#if FTR_REDUCE_ME_INJECTION
+                    if (me_prune_th > 0) {
+                        current_to_best_dist_distance = (context_ptr->p_sb_best_sad[REF_LIST_0][first_list_ref_pict_idx][n_idx] - best_me_dist) * 100;
+                        if (current_to_best_dist_distance > best_me_dist * me_prune_th)
+                            continue;
+                        current_to_best_dist_distance = (context_ptr->p_sb_best_sad[REF_LIST_1][second_list_ref_pict_idx][n_idx] - best_me_dist) * 100;
+                        if (current_to_best_dist_distance > best_me_dist * me_prune_th)
+                            continue;
+                    }
+#endif
                     MePredUnit *me_candidate = &(
                         context_ptr->me_candidate[*total_me_candidate_index].pu[pu_index]);
                     me_candidate->prediction_direction = BI_PRED;
@@ -3053,7 +3078,9 @@ void construct_me_candidate_array(
                     me_candidate->ref0_list            = (uint8_t)REFERENCE_PIC_LIST_0;
                     me_candidate->ref_index[1]         = (uint8_t)second_list_ref_pict_idx;
                     me_candidate->ref1_list            = (uint8_t)REFERENCE_PIC_LIST_1;
-
+#if FTR_REDUCE_ME_INJECTION
+                    best_me_dist = me_candidate->distortion < best_me_dist ? me_candidate->distortion : best_me_dist;
+#endif
                     (*total_me_candidate_index)++;
                 }
             }
@@ -3069,6 +3096,16 @@ void construct_me_candidate_array(
              first_list_ref_pict_idx++) {
             if (context_ptr->hme_results[REF_LIST_0][0].do_ref &&
                 context_ptr->hme_results[REF_LIST_0][first_list_ref_pict_idx].do_ref) {
+#if FTR_REDUCE_ME_INJECTION
+                if (me_prune_th > 0) {
+                    current_to_best_dist_distance = (context_ptr->p_sb_best_sad[REF_LIST_0][0][n_idx] - best_me_dist) * 100;
+                    if (current_to_best_dist_distance > best_me_dist * me_prune_th)
+                        continue;
+                    current_to_best_dist_distance = (context_ptr->p_sb_best_sad[REF_LIST_0][first_list_ref_pict_idx][n_idx] - best_me_dist) * 100;
+                    if (current_to_best_dist_distance > best_me_dist * me_prune_th)
+                        continue;
+                }
+#endif
                 MePredUnit *me_candidate = &(
                     context_ptr->me_candidate[*total_me_candidate_index].pu[pu_index]);
                 me_candidate->prediction_direction = BI_PRED;
@@ -3076,7 +3113,9 @@ void construct_me_candidate_array(
                 me_candidate->ref0_list            = (uint8_t)REFERENCE_PIC_LIST_0;
                 me_candidate->ref_index[1]         = (uint8_t)first_list_ref_pict_idx;
                 me_candidate->ref1_list            = (uint8_t)REFERENCE_PIC_LIST_0;
-
+#if FTR_REDUCE_ME_INJECTION
+                best_me_dist = me_candidate->distortion < best_me_dist ? me_candidate->distortion : best_me_dist;
+#endif
                 (*total_me_candidate_index)++;
             }
         }
@@ -3087,6 +3126,18 @@ void construct_me_candidate_array(
         if (pcs_ptr->ref_list1_count_try == 3 && context_ptr->hme_results[REF_LIST_1][0].do_ref &&
 #endif
             context_ptr->hme_results[REF_LIST_1][2].do_ref) {
+#if FTR_REDUCE_ME_INJECTION
+            uint8_t inject_cand = 1;
+            if (me_prune_th > 0) {
+                current_to_best_dist_distance = (context_ptr->p_sb_best_sad[REF_LIST_1][0][n_idx] - best_me_dist) * 100;
+                if (current_to_best_dist_distance > best_me_dist * me_prune_th)
+                    inject_cand = 0;
+                current_to_best_dist_distance = (context_ptr->p_sb_best_sad[REF_LIST_1][2][n_idx] - best_me_dist) * 100;
+                if (current_to_best_dist_distance > best_me_dist * me_prune_th)
+                    inject_cand = 0;
+            }
+            if (inject_cand) {
+#endif
             MePredUnit *me_candidate = &(
                 context_ptr->me_candidate[*total_me_candidate_index].pu[pu_index]);
             me_candidate->prediction_direction = BI_PRED;
@@ -3094,8 +3145,13 @@ void construct_me_candidate_array(
             me_candidate->ref0_list            = (uint8_t)REFERENCE_PIC_LIST_1;
             me_candidate->ref_index[1]         = 2;
             me_candidate->ref1_list            = (uint8_t)REFERENCE_PIC_LIST_1;
-
+#if FTR_REDUCE_ME_INJECTION
+            best_me_dist = me_candidate->distortion < best_me_dist ? me_candidate->distortion : best_me_dist;
+#endif
             (*total_me_candidate_index)++;
+#if FTR_REDUCE_ME_INJECTION
+            }
+#endif
         }
     }
 }
@@ -3187,8 +3243,13 @@ EbErrorType motion_estimate_sb(
                                          pu_index,
                                          n_idx);
             MeSbResults *me_pu_result = pcs_ptr->pa_me_data->me_results[sb_index];
+#if FTR_REDUCE_ME_INJECTION
+            me_pu_result->total_me_candidate_index[pu_index] = MIN(total_me_candidate_index,
+                MAX_PA_ME_CAND);
+#else
             me_pu_result->total_me_candidate_index[pu_index] = MIN(total_me_candidate_index,
                                                                    MAX_PA_ME_CAND);
+#endif
             // Assining the ME candidates to the me Results buffer
             for (uint8_t cand_index = 0; cand_index < total_me_candidate_index; ++cand_index) {
                 MePredUnit *me_candidate = &(context_ptr->me_candidate[cand_index].pu[pu_index]);

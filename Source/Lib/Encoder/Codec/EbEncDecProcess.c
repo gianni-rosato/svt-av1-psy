@@ -1629,9 +1629,11 @@ void pad_ref_and_set_flags(PictureControlSet *pcs_ptr, SequenceControlSet *scs_p
 }
 
 void copy_statistics_to_ref_obj_ect(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr) {
+#if !TUNE_REMOVE_INTRA_STATS_TRACKING
     pcs_ptr->intra_coded_area =
         (100 * pcs_ptr->intra_coded_area) /
         (pcs_ptr->parent_pcs_ptr->aligned_width * pcs_ptr->parent_pcs_ptr->aligned_height);
+#endif
 #if !CLN_REMOVE_UNUSED_CODE
     memcpy(((EbReferenceObject *)pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
                     ->ref_part_cnt, pcs_ptr->part_cnt, sizeof(uint32_t) * (NUMBER_OF_SHAPES-1) * FB_NUM *SSEG_NUM);
@@ -1640,13 +1642,17 @@ void copy_statistics_to_ref_obj_ect(PictureControlSet *pcs_ptr, SequenceControlS
     memcpy(((EbReferenceObject *)pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
         ->ref_pred_depth_count, pcs_ptr->pred_depth_count, sizeof(uint32_t) * DEPTH_DELTA_NUM * (NUMBER_OF_SHAPES-1));
 #endif
+#if !TUNE_REMOVE_TXT_STATS
     memcpy(((EbReferenceObject *)pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
             ->ref_txt_cnt, pcs_ptr->txt_cnt, sizeof(uint32_t) * TXT_DEPTH_DELTA_NUM *TX_TYPES);
+#endif
+#if !TUNE_REMOVE_INTRA_STATS_TRACKING
     if (pcs_ptr->slice_type == I_SLICE) pcs_ptr->intra_coded_area = 0;
-
+#endif
+#if !TUNE_REMOVE_INTRA_STATS_TRACKING
     ((EbReferenceObject *)pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
         ->intra_coded_area = (uint8_t)(pcs_ptr->intra_coded_area);
-
+#endif
     uint32_t sb_index;
     for (sb_index = 0; sb_index < pcs_ptr->sb_total_count; ++sb_index)
         ((EbReferenceObject *)pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
@@ -3330,10 +3336,11 @@ void set_txt_controls(ModeDecisionContext *mdctxt, uint8_t txt_level) {
 
         txt_ctrls->txt_group_intra_lt_16x16 = 1;
         txt_ctrls->txt_group_intra_gt_eq_16x16 = 1;
-
+#if !TUNE_REMOVE_TXT_STATS
         txt_ctrls->use_stats = 0;
         txt_ctrls->intra_th = 0;
         txt_ctrls->inter_th = 0;
+#endif
         break;
     case 1:
         txt_ctrls->enabled = 1;
@@ -3343,23 +3350,32 @@ void set_txt_controls(ModeDecisionContext *mdctxt, uint8_t txt_level) {
 
         txt_ctrls->txt_group_intra_lt_16x16 = MAX_TX_TYPE_GROUP;
         txt_ctrls->txt_group_intra_gt_eq_16x16 = MAX_TX_TYPE_GROUP;
-
+#if !TUNE_REMOVE_TXT_STATS
         txt_ctrls->use_stats = 0;
         txt_ctrls->intra_th = 0;
         txt_ctrls->inter_th = 0;
+#endif
         break;
     case 2:
         txt_ctrls->enabled = 1;
+#if TUNE_REMOVE_TXT_STATS
+        txt_ctrls->txt_group_inter_lt_16x16 = MAX_TX_TYPE_GROUP;
+        txt_ctrls->txt_group_inter_gt_eq_16x16 = 5;
 
+        txt_ctrls->txt_group_intra_lt_16x16 = MAX_TX_TYPE_GROUP;
+        txt_ctrls->txt_group_intra_gt_eq_16x16 = MAX_TX_TYPE_GROUP;
+#else
         txt_ctrls->txt_group_inter_lt_16x16 = MAX_TX_TYPE_GROUP;
         txt_ctrls->txt_group_inter_gt_eq_16x16 = MAX_TX_TYPE_GROUP;
 
         txt_ctrls->txt_group_intra_lt_16x16 = MAX_TX_TYPE_GROUP;
         txt_ctrls->txt_group_intra_gt_eq_16x16 = MAX_TX_TYPE_GROUP;
-
+#endif
+#if !TUNE_REMOVE_TXT_STATS
         txt_ctrls->use_stats = 1;
         txt_ctrls->intra_th = 5;
         txt_ctrls->inter_th = 8;
+#endif
         break;
     case 3:
         txt_ctrls->enabled = 1;
@@ -3369,10 +3385,11 @@ void set_txt_controls(ModeDecisionContext *mdctxt, uint8_t txt_level) {
 
         txt_ctrls->txt_group_intra_lt_16x16 = MAX_TX_TYPE_GROUP;
         txt_ctrls->txt_group_intra_gt_eq_16x16 = MAX_TX_TYPE_GROUP;
-
+#if !TUNE_REMOVE_TXT_STATS
         txt_ctrls->use_stats = 0;
         txt_ctrls->intra_th = 0;
         txt_ctrls->inter_th = 0;
+#endif
         break;
     case 4:
         txt_ctrls->enabled = 1;
@@ -3382,10 +3399,11 @@ void set_txt_controls(ModeDecisionContext *mdctxt, uint8_t txt_level) {
 
         txt_ctrls->txt_group_intra_lt_16x16 = MAX_TX_TYPE_GROUP;
         txt_ctrls->txt_group_intra_gt_eq_16x16 = MAX_TX_TYPE_GROUP;
-
+#if !TUNE_REMOVE_TXT_STATS
         txt_ctrls->use_stats = 0;
         txt_ctrls->intra_th = 0;
         txt_ctrls->inter_th = 0;
+#endif
         break;
     case 5:
         txt_ctrls->enabled = 1;
@@ -3395,10 +3413,11 @@ void set_txt_controls(ModeDecisionContext *mdctxt, uint8_t txt_level) {
 
         txt_ctrls->txt_group_intra_lt_16x16 = MAX_TX_TYPE_GROUP;
         txt_ctrls->txt_group_intra_gt_eq_16x16 = 4;
-
+#if !TUNE_REMOVE_TXT_STATS
         txt_ctrls->use_stats = 0;
         txt_ctrls->intra_th = 0;
         txt_ctrls->inter_th = 0;
+#endif
         break;
 #if TUNE_M9_ME_HME_TXT
     case 6:
@@ -3409,11 +3428,11 @@ void set_txt_controls(ModeDecisionContext *mdctxt, uint8_t txt_level) {
 
         txt_ctrls->txt_group_intra_lt_16x16 = 3;
         txt_ctrls->txt_group_intra_gt_eq_16x16 = 1;
-
+#if !TUNE_REMOVE_TXT_STATS
         txt_ctrls->use_stats = 0;
         txt_ctrls->intra_th = 0;
         txt_ctrls->inter_th = 0;
-
+#endif
         break;
 #endif
     default:
@@ -4242,8 +4261,15 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         if (enc_mode <= ENC_M2)
 #endif
             context_ptr->interpolation_search_level = IFS_MDS1;
+#if TUNE_M9_IFS_SSE_ADAPT_ME_MV_NEAR_WM_TF
+        else if (enc_mode <= ENC_M8)
+            context_ptr->interpolation_search_level = IFS_MDS3;
+        else
+            context_ptr->interpolation_search_level = (sequence_control_set_ptr->input_resolution <= INPUT_SIZE_720p_RANGE) ? IFS_MDS3 : IFS_OFF;
+#else
         else
             context_ptr->interpolation_search_level = IFS_MDS3;
+#endif
     // Set Chroma Mode
     // Level                Settings
     // CHROMA_MODE_0  0     Full chroma search @ MD
@@ -4543,8 +4569,13 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     else if (pd_pass == PD_PASS_1)
         context_ptr->spatial_sse_full_loop_level = EB_FALSE;
     else if (sequence_control_set_ptr->static_config.spatial_sse_full_loop_level == DEFAULT)
+#if TUNE_M9_IFS_SSE_ADAPT_ME_MV_NEAR_WM_TF
+        if (enc_mode <= ENC_M8)
+            context_ptr->spatial_sse_full_loop_level = EB_TRUE;
+#else
         if (enc_mode <= ENC_M9)
             context_ptr->spatial_sse_full_loop_level = EB_TRUE;
+#endif
         else
             context_ptr->spatial_sse_full_loop_level = EB_FALSE;
     else
@@ -5210,8 +5241,15 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         else if (enc_mode <= ENC_M3)
             context_ptr->md_sq_mv_search_level = 2;
 #endif
+#if TUNE_M9_IFS_SSE_ADAPT_ME_MV_NEAR_WM_TF
+        else if (enc_mode <= ENC_M8)
+            context_ptr->md_sq_mv_search_level = 4;
+        else
+            context_ptr->md_sq_mv_search_level = 0;
+#else
         else
             context_ptr->md_sq_mv_search_level = 4;
+#endif
 #else
         else if (enc_mode <= ENC_M4)
             context_ptr->md_sq_mv_search_level = 2;
@@ -5393,9 +5431,21 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         context_ptr->shut_skip_ctx_dc_sign_update = enc_mode <= ENC_M5 ? EB_FALSE : EB_TRUE;
 #endif
     else if (pd_pass == PD_PASS_1)
+#if TUNE_M9_SKIP_CTX_DC_SIGN
+        context_ptr->shut_skip_ctx_dc_sign_update = EB_TRUE;
+#else
         context_ptr->shut_skip_ctx_dc_sign_update = EB_FALSE;
+#endif
     else
+#if TUNE_M9_SKIP_CTX_DC_SIGN
+        context_ptr->shut_skip_ctx_dc_sign_update = enc_mode <= ENC_M8 ?
+            EB_FALSE :
+            (pcs_ptr->slice_type == I_SLICE) ?
+                EB_FALSE :
+                EB_TRUE;
+#else
         context_ptr->shut_skip_ctx_dc_sign_update = EB_FALSE;
+#endif
     // Use coeff rate and slit flag rate only (i.e. no fast rate)
     if (pd_pass == PD_PASS_0)
         context_ptr->shut_fast_rate = EB_TRUE;
@@ -5841,6 +5891,7 @@ static void build_cand_block_array(SequenceControlSet *scs_ptr, PictureControlSe
         }
     }
 }
+#if !TUNE_REMOVE_TXT_STATS
 void generate_statistics_txt(
     SequenceControlSet  *scs_ptr,
     PictureControlSet   *pcs_ptr,
@@ -5935,6 +5986,7 @@ void generate_statistics_txt(
         for (uint8_t txs_idx = 0; txs_idx < TX_TYPES; txs_idx++)
             context_ptr->txt_cnt[depth_delta][txs_idx] += part_cnt[depth_delta][txs_idx];
 }
+#endif
 #if !CLN_NSQ_AND_STATS
 Part part_to_shape[NUMBER_OF_SHAPES] = {
     PART_N,
@@ -6167,6 +6219,7 @@ void generate_statistics_nsq(
     }
 }
 #endif
+#if !TUNE_REMOVE_TXT_STATS
 /******************************************************
 * Generate probabilities for the txt_cycles_reduction
 ******************************************************/
@@ -6205,6 +6258,7 @@ void generate_txt_prob(PictureControlSet * pcs_ptr,ModeDecisionContext *context_
         }
     }
 }
+#endif
 const uint32_t sb_class_th[NUMBER_OF_SB_CLASS] = { 0,85,75,65,60,55,50,45,40,
                                                    35,30,25,20,17,14,10,6,3,0 };
 static uint8_t determine_sb_class(
@@ -6835,7 +6889,9 @@ void *mode_decision_kernel(void *input_ptr) {
         uint16_t tile_group_width_in_sb = pcs_ptr->parent_pcs_ptr
                                               ->tile_group_info[context_ptr->tile_group_index]
                                               .tile_group_width_in_sb;
+#if !TUNE_REMOVE_INTRA_STATS_TRACKING
         context_ptr->tot_intra_coded_area       = 0;
+#endif
         // Bypass encdec for the first pass
         if (use_output_stat(scs_ptr)) {
 
@@ -6860,9 +6916,10 @@ void *mode_decision_kernel(void *input_ptr) {
         memset(context_ptr->md_context->pred_depth_count, 0, sizeof(uint32_t) * DEPTH_DELTA_NUM * (NUMBER_OF_SHAPES-1));
         generate_depth_prob(pcs_ptr, context_ptr->md_context);
 #endif
+#if !TUNE_REMOVE_TXT_STATS
         memset( context_ptr->md_context->txt_cnt, 0, sizeof(uint32_t) * TXT_DEPTH_DELTA_NUM * TX_TYPES);
         generate_txt_prob(pcs_ptr, context_ptr->md_context);
-
+#endif
         if (!pcs_ptr->cdf_ctrl.update_mv)
             copy_mv_rate(pcs_ptr, &context_ptr->md_context->rate_est_table);
         if (!pcs_ptr->cdf_ctrl.update_se)
@@ -7158,8 +7215,9 @@ void *mode_decision_kernel(void *input_ptr) {
 #if !CLN_NSQ_AND_STATS
                     generate_statistics_depth(scs_ptr, pcs_ptr, context_ptr->md_context, sb_index);
 #endif
+#if !TUNE_REMOVE_TXT_STATS
                     generate_statistics_txt(scs_ptr, pcs_ptr, context_ptr->md_context, sb_index);
-
+#endif
 #if NO_ENCDEC
                     no_enc_dec_pass(scs_ptr,
                                     pcs_ptr,
@@ -7176,18 +7234,22 @@ void *mode_decision_kernel(void *input_ptr) {
 #endif
 
                     context_ptr->coded_sb_count++;
+#if !TUNE_REMOVE_INTRA_STATS_TRACKING
                     if (pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr != NULL)
                         ((EbReferenceObject *)
                              pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
                             ->intra_coded_area_sb[sb_index] = (uint8_t)(
                             (100 * context_ptr->intra_coded_area_sb[sb_index]) / (64 * 64));
+#endif
                 }
                 x_sb_start_index = (x_sb_start_index > 0) ? x_sb_start_index - 1 : 0;
             }
         }
 
         svt_block_on_mutex(pcs_ptr->intra_mutex);
+#if !TUNE_REMOVE_INTRA_STATS_TRACKING
         pcs_ptr->intra_coded_area += (uint32_t)context_ptr->tot_intra_coded_area;
+#endif
         // Accumulate block selection
 #if !CLN_REMOVE_UNUSED_CODE
         for (uint8_t partidx = 0; partidx < NUMBER_OF_SHAPES-1; partidx++)
@@ -7201,11 +7263,12 @@ void *mode_decision_kernel(void *input_ptr) {
             for (uint8_t part_idx = 0; part_idx < (NUMBER_OF_SHAPES-1); part_idx++)
                 pcs_ptr->pred_depth_count[pred_depth][part_idx] += context_ptr->md_context->pred_depth_count[pred_depth][part_idx];
 #endif
+#if !TUNE_REMOVE_TXT_STATS
         // Accumulate tx_type selection
         for (uint8_t depth_delta = 0; depth_delta < TXT_DEPTH_DELTA_NUM; depth_delta++)
             for (uint8_t txs_idx = 0; txs_idx < TX_TYPES; txs_idx++)
                 pcs_ptr->txt_cnt[depth_delta][txs_idx] += context_ptr->md_context->txt_cnt[depth_delta][txs_idx];
-
+#endif
         pcs_ptr->enc_dec_coded_sb_count += (uint32_t)context_ptr->coded_sb_count;
         EbBool last_sb_flag = (pcs_ptr->sb_total_count_pix == pcs_ptr->enc_dec_coded_sb_count);
         svt_release_mutex(pcs_ptr->intra_mutex);
