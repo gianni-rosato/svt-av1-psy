@@ -27,10 +27,4 @@ race:picture_manager_kernel
 #picture_manager_kernel() use encode_context_ptr: current_input_poc = encode_context_ptr->current_input_poc; after release
 #written in  picture_decision_kernel():encode_context_ptr->current_input_poc = pcs_ptr->picture_number;
 
-#3]
-race:packetization_kernel
-#Not synchronize access to variable:
-#encode_context_ptr->terminating_sequence_flag_received = EB_TRUE;
-#Between: picture_decision_kernel and packetization_kernel
-
 #End of file

@@ -895,11 +895,11 @@ void *picture_manager_kernel(void *input_ptr) {
                                     (ref_poc > current_input_poc)
                                         ? EB_FALSE
                                         : // The Reference has not been received as an Input Picture yet, then its availability is false
-                                        (!encode_context_ptr->terminating_sequence_flag_received &&
                                          (scs_ptr->static_config.rate_control_mode &&
                                           entry_pcs_ptr->slice_type != I_SLICE &&
                                           entry_pcs_ptr->temporal_layer_index == 0 &&
-                                          !reference_entry_ptr->feedback_arrived))
+                                          !reference_entry_ptr->feedback_arrived &&
+                                          !encode_context_ptr->terminating_sequence_flag_received)
                                             ? EB_FALSE
                                             : (entry_pcs_ptr->frame_end_cdf_update_mode &&
                                                !reference_entry_ptr->frame_context_updated)
@@ -944,12 +944,11 @@ void *picture_manager_kernel(void *input_ptr) {
                                             (ref_poc > current_input_poc)
                                                 ? EB_FALSE
                                                 : // The Reference has not been received as an Input Picture yet, then its availability is false
-                                                (!encode_context_ptr
-                                                      ->terminating_sequence_flag_received &&
                                                  (scs_ptr->static_config.rate_control_mode &&
                                                   entry_pcs_ptr->slice_type != I_SLICE &&
                                                   entry_pcs_ptr->temporal_layer_index == 0 &&
-                                                  !reference_entry_ptr->feedback_arrived))
+                                                  !reference_entry_ptr->feedback_arrived &&
+                                                  !encode_context_ptr->terminating_sequence_flag_received)
                                                     ? EB_FALSE
                                                     : (entry_pcs_ptr->frame_end_cdf_update_mode &&
                                                        !reference_entry_ptr->frame_context_updated)

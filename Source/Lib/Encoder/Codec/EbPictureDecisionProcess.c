@@ -5387,13 +5387,11 @@ void* picture_decision_kernel(void *input_ptr)
                             }
                             else
                                 pcs_ptr->decode_order = pcs_ptr->picture_number_alt;
-                            encode_context_ptr->terminating_sequence_flag_received = (pcs_ptr->end_of_sequence_flag == EB_TRUE) ?
-                                EB_TRUE :
-                                encode_context_ptr->terminating_sequence_flag_received;
 
-                            encode_context_ptr->terminating_picture_number = (pcs_ptr->end_of_sequence_flag == EB_TRUE) ?
-                                pcs_ptr->picture_number_alt :
-                                encode_context_ptr->terminating_picture_number;
+                            if (pcs_ptr->end_of_sequence_flag == EB_TRUE) {
+                                encode_context_ptr->terminating_sequence_flag_received = EB_TRUE;
+                                encode_context_ptr->terminating_picture_number = pcs_ptr->picture_number_alt;
+                            }
 
                             // Find the Reference in the Picture Decision PA Reference Queue
                             input_queue_index = encode_context_ptr->picture_decision_pa_reference_queue_head_index;
