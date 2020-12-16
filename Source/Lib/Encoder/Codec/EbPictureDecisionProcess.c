@@ -4579,6 +4579,7 @@ void* picture_decision_kernel(void *input_ptr)
     // Dynamic GOP
     uint32_t                           mini_gop_index;
     uint32_t                           out_stride_diff64;
+    int64_t                            current_input_poc = -1;
 
     EbBool                          window_avail, frame_passthrough;
     uint32_t                           window_index;
@@ -4741,8 +4742,7 @@ void* picture_decision_kernel(void *input_ptr)
                 // Setup the PCS & SCS
                 pcs_ptr = (PictureParentControlSet*)encode_context_ptr->pre_assignment_buffer[encode_context_ptr->pre_assignment_buffer_count]->object_ptr;
                 // Set the POC Number
-                pcs_ptr->picture_number = (encode_context_ptr->current_input_poc + 1) /*& ((1 << scs_ptr->bits_for_picture_order_count)-1)*/;
-                encode_context_ptr->current_input_poc = pcs_ptr->picture_number;
+                pcs_ptr->picture_number = ++current_input_poc;
 
                 pcs_ptr->pred_structure = scs_ptr->static_config.pred_structure;
 

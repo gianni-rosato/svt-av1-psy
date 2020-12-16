@@ -157,7 +157,6 @@ EbErrorType encode_context_ctor(EncodeContext *encode_context_ptr, EbPtr object_
                picture_index);
     }
 
-    encode_context_ptr->current_input_poc = -1;
     encode_context_ptr->initial_picture   = EB_TRUE;
 
     // Sequence Termination Flags

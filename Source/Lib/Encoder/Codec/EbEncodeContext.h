@@ -142,7 +142,6 @@ typedef struct EncodeContext {
     uint32_t pred_struct_position; // Current position within a prediction structure
     uint32_t elapsed_non_idr_count;
     uint32_t elapsed_non_cra_count;
-    int64_t  current_input_poc;
     EbBool   initial_picture;
     uint64_t last_idr_picture; // the most recently occured IDR picture (in decode order)
 
