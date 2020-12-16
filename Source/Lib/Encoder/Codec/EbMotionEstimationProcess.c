@@ -31,6 +31,7 @@
 #include "EbPictureDemuxResults.h"
 #include "EbRateControlTasks.h"
 #include "firstpass.h"
+#include "EbInitialRateControlProcess.h"
 /* --32x32-
 |00||01|
 |02||03|
@@ -1108,6 +1109,10 @@ void *motion_estimation_kernel(void *input_ptr) {
         else {
             // ME Kernel Signal(s) derivation
             first_pass_signal_derivation_me_kernel(scs_ptr, pcs_ptr, context_ptr);
+
+            //For first pass compute_decimated_zz_sad() is skipped, and non_moving_index_array[] become uninitialized
+            init_zz_cost_info((PictureParentControlSet *)
+                                  pcs_ptr->previous_picture_control_set_wrapper_ptr->object_ptr);
 
             // first pass start
             context_ptr->me_context_ptr->me_type = ME_FIRST_PASS;

@@ -24,4 +24,6 @@ EbErrorType initial_rate_control_context_ctor(EbThreadContext *  thread_context_
 
 extern void *initial_rate_control_kernel(void *input_ptr);
 
+void init_zz_cost_info(PictureParentControlSet *pcs_ptr);
+
 #endif // EbInitialRateControl_h
