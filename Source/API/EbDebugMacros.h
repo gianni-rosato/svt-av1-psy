@@ -94,15 +94,6 @@ extern "C" {
 #define TUNE_M4_M8                             1 // Preset optimization: M4-M8
 
 #define FTR_REDUCE_MDS3_COMPLEXITY             1 // Added 3 levels of tuning to reduce MDS3 complexity
-#define TUNE_DEPTH_REMOVAL_PER_RESOLUTION      0 // improve depth removal
-#define FTR_M9_AGRESSIVE_LAST_MD_STAGE         1 // M9 agressive last md stage
-#define FTR_M9_AGRESSICE_EARLY_CAN_ELIMINATION 1 // M9 agressive early candidate elimintation
-#define OPT_RDOQ_FOR_M9                        1 // M9 rdoq
-#define TUNE_M9_TF_LEVEL                       1 // create tf level 5 for m9 where temp_layer ==0 and res<=720p
-#define TUNE_M9_OPT_DEPTH_REMOVAL              1 // Depth removal optimisation
-#define FTR_M9_CDEF                            1 // CDEF optimisation
-#define CLEANUP_CANDIDATE_ELEMINATION_CTR      1 // Cleanup candidate elimination
-
 #define TUNE_10BIT_MD_SETTINGS                 0 // New settings for hbd mode decision
 #define TUNE_NEW_PRESETS_MR_M8                 1 // Tune presets MR to M8
 #define TUNE_SB_SIZE                           1 // New SB size settings for M5 and M6
@@ -110,6 +101,29 @@ extern "C" {
 #define TUNE_IMPROVE_DEPTH_REFINEMENT          1 // Better M7 and better M8 depth refinement level(s)
 #define TUNE_SC_SETTINGS                       1 // New SC settings for depth refinement, MRP, IBC, and depth removal
 
+#define FTR_MODULATE_SRC_REC_TH                1 // Modulate the scr-to-recon TH
+#define FTR_IMPROVE_DEPTH_REMOVAL              1 // Added stage-2 (pd2-based pd2 depth reduction), and more agressive levels for stage-1
+#define TUNE_M9_LEVELS                         1 // Add M9 levels for stage1 depth reduction
+#define TUNE_DEPTH_REMOVAL_PER_RESOLUTION      0 // Improve depth removal
+#define TUNE_PRESETS_AND_PRUNING               1 // Shifted features in M4 and M5, and updated MD pruning levels for M6 and M9
+#define TUNE_M9_FEATURES                       1 // Shifting features from M8 into M9 and remove I_SLICE check from disallow_4x4 in M9
+#define FTR_M9_AGRESSIVE_LAST_MD_STAGE         1 // Agressive last md stage for M9
+#define FTR_M9_AGRESSIVE_EARLY_CAN_ELIMINATION 1 // Agressive early candidate elimintation for M9
+#define OPT_RDOQ_FOR_M9                        1 // RDOQ for M9
+#define TUNE_M9_TF_LEVEL                       1 // create tf level 5 for m9 where temp_layer ==0 and res<=720p
+#define TUNE_CFL_LEVEL_M8_M9                   1 // turn off cfl for non-base layer pictures for M8 and M9
+#define TUNE_M9_OPT_DEPTH_REMOVAL              1 // Depth removal optimisation
+#define TUNE_M9_TF_1080P                       1 // TF level for M9 for res=1080p
+#define TUNE_M9_GM_INTER_COMPOUND              1 // Turn OFF GMV and inter compound mode for M9
+#define TUNE_M9_ME_HME_TXT                     1 // Tune ME/HME and TxT for M9
+#define TUNE_M9_PME                            1 // PME level for M9
+#define FTR_M9_CDEF                            1 // CDEF optimisation
+#define CLN_CANDIDATE_ELEMINATION_CTR          1 // Cleanup candidate elimination
+#define TUNE_M9_ME_HME                         1 // Tune ME/HME for M9, making use of resolution checks to assign different values based on resolution
+#define TUNE_M9_PF                             1 // create PF level for M9
+#define OPT_TPL                                1 // Optimise tpl by using PF and SAD for intra_search
+#define OPT_M9_TXT_PRED_DEPTH_PRUNING          1 // optimizations for m9 that include pruning, txt_level off for high-res, pred-depth
+#define OPT_TX_TYPE_SEARCH                     1 // Early exit TXT search
     // ============= END SVT_04 =============
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch

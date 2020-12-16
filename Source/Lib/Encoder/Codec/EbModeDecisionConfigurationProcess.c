@@ -539,7 +539,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
 #if TUNE_LOWER_PRESETS
 #if TUNE_M4_M8
 #if TUNE_NEW_PRESETS_MR_M8
+#if TUNE_PRESETS_AND_PRUNING
+    if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M5) {
+#else
     if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M4) {
+#endif
 #else
     if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M5) {
 #endif

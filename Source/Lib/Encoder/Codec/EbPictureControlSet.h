@@ -481,9 +481,6 @@ typedef struct TplControls {
     EB_TRANS_COEFF_SHAPE pf_shape;
     uint8_t use_pred_sad_in_intra_search;
 #endif
-#if TPL_REDUCE_NUMBER_OF_REF
-    uint8_t use_pred_sad_in_inter_search;
-#endif
 } TplControls;
 
 /*!

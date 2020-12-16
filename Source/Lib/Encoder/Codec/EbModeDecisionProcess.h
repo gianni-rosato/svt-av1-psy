@@ -262,6 +262,12 @@ typedef struct DepthRemovalCtrls {
     uint8_t disallow_below_16x16;  // remove 8x8 blocks and below based on the sb_64x64 (me_distortion, variance)
 }DepthRemovalCtrls;
 #endif
+#if FTR_IMPROVE_DEPTH_REMOVAL
+typedef struct DepthSkipCtrls {
+    uint8_t enabled;
+    float quand_deviation_th; // do not perform sub_depth if std_deviation of the 4 quadrants src-to-rec dist is less than std_deviation_th
+}DepthSkipCtrls;
+#endif
 typedef struct PfCtrls {
     EB_TRANS_COEFF_SHAPE pf_shape;
 } PfCtrls;
@@ -439,7 +445,7 @@ typedef struct NicPruningCtrls {
 
 } NicPruningCtrls;
 #endif
-#if CLEANUP_CANDIDATE_ELEMINATION_CTR
+#if CLN_CANDIDATE_ELEMINATION_CTR
 typedef struct CandEliminationCtlrs {
     uint32_t enabled;
     uint8_t dc_only;
@@ -732,6 +738,9 @@ typedef struct ModeDecisionContext {
     DepthRemovalCtrls    depth_removal_ctrls;
 #endif
     DepthRefinementCtrls depth_refinement_ctrls;
+#if FTR_IMPROVE_DEPTH_REMOVAL
+    DepthSkipCtrls       depth_skip_ctrls;
+#endif
     uint8_t              pf_level;
     PfCtrls              pf_ctrls;
     // Control signals for MD sparse search (used for increasing ME search for active clips)
@@ -835,7 +844,7 @@ typedef struct ModeDecisionContext {
 #if REDUCE_PME_SEARCH || FTR_PD2_REDUCE_MDS0
     uint32_t md_me_cost[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
     uint32_t md_me_dist;
-#if !CLEANUP_CANDIDATE_ELEMINATION_CTR
+#if !CLN_CANDIDATE_ELEMINATION_CTR
     uint32_t eliminate_candidate_based_on_pme_me_results;
 #endif
     uint8_t inject_new_me;
@@ -848,8 +857,11 @@ typedef struct ModeDecisionContext {
 #if FTR_REF_BITS
     uint64_t estimate_ref_frames_num_bits[MODE_CTX_REF_FRAMES][2]; // [TOTAL_REFS_PER_FRAME + 1][is_compound]
 #endif
-#if CLEANUP_CANDIDATE_ELEMINATION_CTR
+#if CLN_CANDIDATE_ELEMINATION_CTR
     CandEliminationCtlrs cand_elimination_ctrs;
+#endif
+#if OPT_TX_TYPE_SEARCH
+    uint32_t txt_exit_based_on_non_coeff_th;
 #endif
 } ModeDecisionContext;
 

@@ -6389,7 +6389,7 @@ static INLINE void eliminate_candidate_based_on_pme_me_results(ModeDecisionConte
     if (context_ptr->md_pme_ctrls.enabled || context_ptr->md_subpel_me_ctrls.enabled) {
         th = th * context_ptr->blk_geom->bheight * context_ptr->blk_geom->bwidth;
         const uint32_t best_me_distotion = MIN(MIN(context_ptr->pme_res[0][0].dist, context_ptr->pme_res[1][0].dist), context_ptr->md_me_dist);
-#if CLEANUP_CANDIDATE_ELEMINATION_CTR
+#if CLN_CANDIDATE_ELEMINATION_CTR
         if (best_me_distotion < th) {
             *dc_cand_only_flag = context_ptr->cand_elimination_ctrs.dc_only ? 1 : *dc_cand_only_flag;
             context_ptr->inject_new_warp = context_ptr->cand_elimination_ctrs.inject_new_warp ? 0 : context_ptr->inject_new_warp;
@@ -6449,7 +6449,7 @@ EbErrorType generate_md_stage_0_cand(
     context_ptr->inject_new_pme = 1;
     context_ptr->inject_new_warp = 1;
      uint8_t dc_cand_only_flag = context_ptr->dc_cand_only_flag;
-#if CLEANUP_CANDIDATE_ELEMINATION_CTR
+#if CLN_CANDIDATE_ELEMINATION_CTR
      if(context_ptr->cand_elimination_ctrs.enabled)
 #else
     if (context_ptr->eliminate_candidate_based_on_pme_me_results)

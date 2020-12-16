@@ -3621,7 +3621,29 @@ EbErrorType open_loop_intra_search_mb(
                 }
                 // PRED
                 intra_prediction_open_loop_mb(p_angle, ois_intra_mode, cu_origin_x, cu_origin_y, tx_size, above_row, left_col, predictor, 16);
-
+#if OPT_TPL
+                // Distortion
+                int64_t intra_cost;
+                if (pcs_ptr->tpl_ctrls.tpl_opt_flag && pcs_ptr->tpl_ctrls.use_pred_sad_in_intra_search) {
+                    intra_cost = svt_nxm_sad_kernel_sub_sampled(
+                        src,
+                        input_ptr->stride_y,
+                        predictor,
+                        16,
+                        16,
+                        16);
+                }
+                else {
+                    svt_aom_subtract_block(16, 16, src_diff, 16, src, input_ptr->stride_y, predictor, 16);
+#if OPT_TPL
+                    EB_TRANS_COEFF_SHAPE pf_shape = pcs_ptr->tpl_ctrls.tpl_opt_flag ? pcs_ptr->tpl_ctrls.pf_shape : DEFAULT_SHAPE;
+                    svt_av1_wht_fwd_txfm(src_diff, 16, coeff, 2/*TX_16X16*/, pf_shape, 8, 0);
+#else
+                    svt_av1_wht_fwd_txfm(src_diff, 16, coeff, 2/*TX_16X16*/, 8, 0);
+#endif
+                    intra_cost = svt_aom_satd(coeff, 16 * 16);
+                }
+#else
                 // Distortion
                 svt_aom_subtract_block(16, 16, src_diff, 16, src, input_ptr->stride_y, predictor, 16);
 #if OPT_TPL
@@ -3631,7 +3653,7 @@ EbErrorType open_loop_intra_search_mb(
                 svt_av1_wht_fwd_txfm(src_diff, 16, coeff, 2/*TX_16X16*/, 8, 0);
 #endif
                 int64_t intra_cost = svt_aom_satd(coeff, 16 * 16);
-
+#endif
                 // printf("open_loop_intra_search_mb aom_satd mbxy %d %d, mode=%d, satd=%d, dst[0~4]=0x%d,%d,%d,%d\n", cu_origin_x, cu_origin_y, ois_intra_mode, intra_cost, predictor[0], predictor[1], predictor[2], predictor[3]);
                 if (intra_cost < best_intra_cost) {
                     best_intra_cost = intra_cost;

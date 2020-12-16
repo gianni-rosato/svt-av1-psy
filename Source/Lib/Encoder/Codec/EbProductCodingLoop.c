@@ -4829,6 +4829,9 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
     uint64_t txb_full_distortion_txt[TX_TYPES][DIST_CALC_TOTAL] = { { 0 } };
     int tx_type_tot_group = get_tx_type_group(context_ptr, candidate_buffer, only_dct_dct);
     for (int tx_type_group_idx = 0; tx_type_group_idx < tx_type_tot_group; ++tx_type_group_idx) {
+#if OPT_TX_TYPE_SEARCH
+        uint32_t best_tx_non_coeff = 64 * 64;
+#endif
         for (int tx_type_idx = 0; tx_type_idx < TX_TYPES; ++tx_type_idx) {
             if (pcs_ptr->parent_pcs_ptr->sc_content_detected)
                 tx_type = tx_type_group_sc[tx_type_group_idx][tx_type_idx];
@@ -5113,7 +5116,17 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
         if (cost < best_cost_tx_search) {
             best_cost_tx_search = cost;
             best_tx_type        = tx_type;
+#if OPT_TX_TYPE_SEARCH
+            best_tx_non_coeff = y_count_non_zero_coeffs_txt[tx_type];
+#endif
         }
+#if OPT_TX_TYPE_SEARCH
+        uint32_t coeff_th = context_ptr->txt_exit_based_on_non_coeff_th;
+        if (best_tx_non_coeff < coeff_th) {
+            tx_type_idx = TX_TYPES;
+            tx_type_group_idx = tx_type_tot_group;
+        }
+#endif
     }
     }
 #if !FTR_EOB_CUL_LEVEL
@@ -8121,15 +8134,29 @@ void estimate_ref_frames_num_bits(
 #endif
 
 #if FTR_NSQ_RED_USING_RECON
+#if FTR_MODULATE_SRC_REC_TH
+void calc_scr_to_recon_dist_per_quadrant(
+    ModeDecisionContext *context_ptr,
+    EbPictureBufferDesc *input_picture_ptr,
+    const uint32_t input_origin_index,
+    const uint32_t input_cb_origin_in_index,
+    ModeDecisionCandidateBuffer * candidate_buffer,
+    const uint32_t blk_origin_index,
+    const uint32_t blk_chroma_origin_index) {
+#else
 void calc_scr_to_recon_dist_per_quadrant(
     ModeDecisionContext* context_ptr,
     EbPictureBufferDesc* input_picture_ptr,
     const uint32_t input_origin_index,
     ModeDecisionCandidateBuffer* candidate_buffer,
     const uint32_t blk_origin_index) {
-
+#endif
+#if FTR_IMPROVE_DEPTH_REMOVAL
+    if (context_ptr->depth_skip_ctrls.enabled || (!context_ptr->md_disallow_nsq && context_ptr->max_part0_to_part1_dev)) {
+#else
     if (!context_ptr->md_disallow_nsq) {
         if (context_ptr->max_part0_to_part1_dev) {
+#endif
             // if a non-4x4 SQ
             if ((context_ptr->blk_geom->bwidth == context_ptr->blk_geom->bheight) && context_ptr->blk_geom->sq_size > 4) {
 
@@ -8154,11 +8181,41 @@ void calc_scr_to_recon_dist_per_quadrant(
                                 recon_ptr->stride_y,
                                 (uint32_t)quadrant_size,
                                 (uint32_t)quadrant_size);
+#if FTR_MODULATE_SRC_REC_TH
+                        // If quadrant_size == 4 then rec_dist_per_quadrant will have luma only because spatial_full_dist_type_fun does not support smaller than 4x4
+                        if (context_ptr->blk_geom->has_uv && context_ptr->chroma_level <= CHROMA_MODE_1 && quadrant_size > 4) {
+                            context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].rec_dist_per_quadrant[c + (r << 1)] +=
+                                spatial_full_dist_type_fun(
+                                    input_picture_ptr->buffer_cb,
+                                    input_cb_origin_in_index + c * (quadrant_size >> 1) + (r * (quadrant_size >> 1)) * input_picture_ptr->stride_cb,
+                                    input_picture_ptr->stride_cb,
+                                    recon_ptr->buffer_cb,
+                                    blk_chroma_origin_index + c * (quadrant_size >> 1) + (r * (quadrant_size >> 1)) * recon_ptr->stride_cb,
+                                    recon_ptr->stride_cb,
+                                    (uint32_t)(quadrant_size >> 1),
+                                    (uint32_t)(quadrant_size >> 1));
+
+                            context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].rec_dist_per_quadrant[c + (r << 1)] +=
+                                spatial_full_dist_type_fun(
+                                    input_picture_ptr->buffer_cr,
+                                    input_cb_origin_in_index + c * (quadrant_size >> 1) + (r * (quadrant_size >> 1)) * input_picture_ptr->stride_cr,
+                                    input_picture_ptr->stride_cr,
+                                    recon_ptr->buffer_cr,
+                                    blk_chroma_origin_index + c * (quadrant_size >> 1) + (r * (quadrant_size >> 1)) * recon_ptr->stride_cr,
+                                    recon_ptr->stride_cr,
+                                    (uint32_t)(quadrant_size >> 1),
+                                    (uint32_t)(quadrant_size >> 1));
+                        }
+#endif
                     }
                 }
             }
-        }
+#if FTR_IMPROVE_DEPTH_REMOVAL
     }
+#else
+    }
+    }
+#endif
 }
 #endif
 
@@ -8540,6 +8597,17 @@ void md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionContext *context_pt
     av1_perform_inverse_transform_recon(context_ptr, candidate_buffer, context_ptr->blk_geom);
 
 #if FTR_NSQ_RED_USING_RECON
+#if FTR_MODULATE_SRC_REC_TH
+        calc_scr_to_recon_dist_per_quadrant(
+            context_ptr,
+            input_picture_ptr,
+            input_origin_index,
+            input_cb_origin_in_index,
+            candidate_buffer,
+            blk_origin_index,
+            blk_chroma_origin_index);
+#endif
+#else
     calc_scr_to_recon_dist_per_quadrant(
         context_ptr,
         input_picture_ptr,
@@ -8753,10 +8821,45 @@ uint8_t update_skip_nsq_based_on_sq_recon_dist(
         max_part0_to_part1_dev == 0)
         return skip_nsq;
 
+#if FTR_MODULATE_SRC_REC_TH
+    // Derive the distortion/cost ratio
+    uint32_t full_lambda = context_ptr->hbd_mode_decision ?
+        context_ptr->full_lambda_md[EB_10_BIT_MD] :
+        context_ptr->full_lambda_md[EB_8_BIT_MD];
+    uint64_t dist = RDCOST(full_lambda, 0, context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds].full_distortion);
+    uint64_t dist_cost_ratio = (dist * 100) / context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds].cost;
+    uint64_t min_ratio = 0;
+    uint64_t max_ratio = 100;
+    uint64_t modulated_th = (100 * (dist_cost_ratio - min_ratio)) / (max_ratio - min_ratio);
+
+    // increase TH by 25 % when Parent is New (go conservative)
+    if (context_ptr->md_blk_arr_nsq[context_ptr->blk_geom->sqi_mds].pred_mode == NEWMV ||
+        context_ptr->md_blk_arr_nsq[context_ptr->blk_geom->sqi_mds].pred_mode == NEW_NEWMV)
+        max_part0_to_part1_dev = max_part0_to_part1_dev - ((max_part0_to_part1_dev * 25) / 100);
+    else
+        // decrease TH by 25 % when Parent is Nearest-Near (go agressive)
+        if (context_ptr->md_blk_arr_nsq[context_ptr->blk_geom->sqi_mds].pred_mode == NEARESTMV ||
+            context_ptr->md_blk_arr_nsq[context_ptr->blk_geom->sqi_mds].pred_mode == NEAREST_NEARESTMV ||
+            context_ptr->md_blk_arr_nsq[context_ptr->blk_geom->sqi_mds].pred_mode == NEARMV ||
+            context_ptr->md_blk_arr_nsq[context_ptr->blk_geom->sqi_mds].pred_mode == NEAR_NEARMV
+            )
+            max_part0_to_part1_dev = max_part0_to_part1_dev + ((max_part0_to_part1_dev * 25) / 100);
+#endif
+
     if (context_ptr->blk_geom->shape == PART_H ||
         context_ptr->blk_geom->shape == PART_HA ||
         context_ptr->blk_geom->shape == PART_HB || context_ptr->blk_geom->shape == PART_H4) {
 
+#if FTR_MODULATE_SRC_REC_TH
+        // multiply the TH by 4 when Parent is D45 or D135 (diagonal) or when Parent is D67 / V / D113 (H_path)
+        if (context_ptr->md_blk_arr_nsq[context_ptr->blk_geom->sqi_mds].pred_mode == V_PRED
+            || context_ptr->md_blk_arr_nsq[context_ptr->blk_geom->sqi_mds].pred_mode == D67_PRED
+            || context_ptr->md_blk_arr_nsq[context_ptr->blk_geom->sqi_mds].pred_mode == D113_PRED
+            || context_ptr->md_blk_arr_nsq[context_ptr->blk_geom->sqi_mds].pred_mode == D45_PRED
+            || context_ptr->md_blk_arr_nsq[context_ptr->blk_geom->sqi_mds].pred_mode == D135_PRED
+            )
+            max_part0_to_part1_dev = max_part0_to_part1_dev << 2;
+#endif
         uint64_t dist_h0 =
             MAX(1,
                 context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds].rec_dist_per_quadrant[0] +
@@ -8768,7 +8871,23 @@ uint8_t update_skip_nsq_based_on_sq_recon_dist(
                 context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds].rec_dist_per_quadrant[3]);
 
         uint32_t dev = (uint32_t)((ABS((int32_t)(dist_h0 - dist_h1)) * 100) / MIN(dist_h0, dist_h1));
+#if FTR_MODULATE_SRC_REC_TH
+        // TH = TH + TH * Min(dev_0,dev_1); dev_0 is q0 - to - q1 deviation, and dev_1 is q2 - to - q3 deviation
+        uint64_t dist_q0 = MAX(1, context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds].rec_dist_per_quadrant[0]);
+        uint64_t dist_q1 = MAX(1, context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds].rec_dist_per_quadrant[1]);
+        uint64_t dist_q2 = MAX(1, context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds].rec_dist_per_quadrant[2]);
+        uint64_t dist_q3 = MAX(1, context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds].rec_dist_per_quadrant[3]);
 
+        uint32_t quad_dev_t = (uint32_t)((ABS((int32_t)(dist_q0 - dist_q1)) * 100) / MIN(dist_q0, dist_q1));
+        uint32_t quad_dev_b = (uint32_t)((ABS((int32_t)(dist_q2 - dist_q3)) * 100) / MIN(dist_q2, dist_q3));
+        max_part0_to_part1_dev = max_part0_to_part1_dev + ((max_part0_to_part1_dev * MIN(quad_dev_t, quad_dev_b)) / 100);
+
+        max_part0_to_part1_dev = (uint32_t)((dist_cost_ratio <= min_ratio) ?
+            0 :
+            (dist_cost_ratio <= max_ratio) ?
+            (max_part0_to_part1_dev* modulated_th) / 100 :
+            dist_cost_ratio);
+#endif
         if (dev < max_part0_to_part1_dev)
             return EB_TRUE;
     }
@@ -8776,7 +8895,16 @@ uint8_t update_skip_nsq_based_on_sq_recon_dist(
     if (context_ptr->blk_geom->shape == PART_V ||
         context_ptr->blk_geom->shape == PART_VA ||
         context_ptr->blk_geom->shape == PART_VB || context_ptr->blk_geom->shape == PART_V4) {
-
+#if FTR_MODULATE_SRC_REC_TH
+        // multiply the TH by 4 when Parent is D45 or D135 (diagonal) or when Parent is D157 / H / D203 (V_path)
+        if (context_ptr->md_blk_arr_nsq[context_ptr->blk_geom->sqi_mds].pred_mode == H_PRED
+            || context_ptr->md_blk_arr_nsq[context_ptr->blk_geom->sqi_mds].pred_mode == D157_PRED
+            || context_ptr->md_blk_arr_nsq[context_ptr->blk_geom->sqi_mds].pred_mode == D203_PRED
+            || context_ptr->md_blk_arr_nsq[context_ptr->blk_geom->sqi_mds].pred_mode == D45_PRED
+            || context_ptr->md_blk_arr_nsq[context_ptr->blk_geom->sqi_mds].pred_mode == D135_PRED
+            )
+            max_part0_to_part1_dev = max_part0_to_part1_dev << 2;
+#endif
         uint64_t dist_v0 =
             MAX(1,
                 context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds].rec_dist_per_quadrant[0] +
@@ -8789,6 +8917,24 @@ uint8_t update_skip_nsq_based_on_sq_recon_dist(
 
         uint32_t dev = (uint32_t)((ABS((int32_t)(dist_v0 - dist_v1)) * 100) / MIN(dist_v0, dist_v1));
 
+#if FTR_MODULATE_SRC_REC_TH
+        // TH = TH + TH * Min(dev_0,dev_1); dev_0 is q0-to-q2 deviation, and dev_1 is q1-to-q3 deviation
+        uint64_t dist_q0 = MAX(1, context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds].rec_dist_per_quadrant[0]);
+        uint64_t dist_q1 = MAX(1, context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds].rec_dist_per_quadrant[1]);
+        uint64_t dist_q2 = MAX(1, context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds].rec_dist_per_quadrant[2]);
+        uint64_t dist_q3 = MAX(1, context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds].rec_dist_per_quadrant[3]);
+
+        uint32_t quad_dev_l = (uint32_t)((ABS((int32_t)(dist_q0 - dist_q2)) * 100) / MIN(dist_q0, dist_q2));
+        uint32_t quad_dev_r = (uint32_t)((ABS((int32_t)(dist_q1 - dist_q3)) * 100) / MIN(dist_q1, dist_q3));
+
+        max_part0_to_part1_dev = max_part0_to_part1_dev + ((max_part0_to_part1_dev * MIN(quad_dev_l, quad_dev_r)) / 100);
+
+        max_part0_to_part1_dev = (uint32_t)((dist_cost_ratio <= min_ratio) ?
+            0 :
+            (dist_cost_ratio <= max_ratio) ?
+            (max_part0_to_part1_dev* modulated_th) / 100 :
+            dist_cost_ratio);
+#endif
         if (dev < max_part0_to_part1_dev)
             return EB_TRUE;
     }
@@ -9562,7 +9708,110 @@ void process_block(SequenceControlSet *scs, PictureControlSet *pcs,
         }
     }
 }
+#if FTR_IMPROVE_DEPTH_REMOVAL
+/*
+ * Get the number of total block in a branch
+ */
+uint32_t get_number_of_blocks(uint32_t block_idx) {
+    const BlockGeom *blk_geom = get_blk_geom_mds(block_idx);
+    uint32_t         tot_d1_blocks = blk_geom->sq_size == 128
+        ? 17
+        : blk_geom->sq_size > 8 ? 25 : blk_geom->sq_size == 8 ? 5 : 1;
+    return tot_d1_blocks;
+}
+/*
+ * Mark the blocks of the lower depth to be skipped
+ */
+static void set_child_to_be_skipped(ModeDecisionContext *context_ptr, uint32_t blk_index,
+    int32_t sb_size, int8_t depth_step) {
+    const BlockGeom *const blk_geom = get_blk_geom_mds(blk_index);
 
+    if (context_ptr->md_blk_arr_nsq[blk_index].split_flag && blk_geom->sq_size > 4) {
+        //Set first child to be considered
+        uint32_t child_block_idx_1 = blk_index + d1_depth_offset[sb_size == BLOCK_128X128][blk_geom->depth];
+        uint32_t child1_tot_d1_blocks = get_number_of_blocks(child_block_idx_1);
+        for (uint32_t block_1d_idx = 0; block_1d_idx < child1_tot_d1_blocks; block_1d_idx++)
+            context_ptr->md_blk_arr_nsq[child_block_idx_1 + block_1d_idx].do_not_process_block = 1;
+        if (depth_step > 1)
+            set_child_to_be_skipped(context_ptr, child_block_idx_1, sb_size, depth_step - 1);
+        //Set second child to be considered
+        uint32_t child_block_idx_2 = child_block_idx_1 +
+            ns_depth_offset[sb_size == BLOCK_128X128][blk_geom->depth + 1];
+        uint32_t child2_tot_d1_blocks = get_number_of_blocks(child_block_idx_2);
+        for (uint32_t block_1d_idx = 0; block_1d_idx < child2_tot_d1_blocks; block_1d_idx++)
+            context_ptr->md_blk_arr_nsq[child_block_idx_2 + block_1d_idx].do_not_process_block = 1;
+        if (depth_step > 1)
+            set_child_to_be_skipped(context_ptr, child_block_idx_2, sb_size, depth_step - 1);
+        //Set third child to be considered
+        uint32_t child_block_idx_3 = child_block_idx_2 +
+            ns_depth_offset[sb_size == BLOCK_128X128][blk_geom->depth + 1];
+        uint32_t child3_tot_d1_blocks = get_number_of_blocks(child_block_idx_3);
+        for (uint32_t block_1d_idx = 0; block_1d_idx < child3_tot_d1_blocks; block_1d_idx++)
+            context_ptr->md_blk_arr_nsq[child_block_idx_3 + block_1d_idx].do_not_process_block = 1;
+        if (depth_step > 1)
+            set_child_to_be_skipped(context_ptr, child_block_idx_3, sb_size, depth_step - 1);
+        //Set forth child to be considered
+        uint32_t child_block_idx_4 = child_block_idx_3 +
+            ns_depth_offset[sb_size == BLOCK_128X128][blk_geom->depth + 1];
+        uint32_t child4_tot_d1_blocks = get_number_of_blocks(child_block_idx_4);
+        for (uint32_t block_1d_idx = 0; block_1d_idx < child4_tot_d1_blocks; block_1d_idx++)
+            context_ptr->md_blk_arr_nsq[child_block_idx_4 + block_1d_idx].do_not_process_block = 1;
+        if (depth_step > 1)
+            set_child_to_be_skipped(context_ptr, child_block_idx_4, sb_size, depth_step - 1);
+    }
+}
+
+void block_based_depth_reduction(
+    SequenceControlSet *scs_ptr,
+    ModeDecisionContext *context_ptr) {
+
+    uint8_t n = 4;
+    float average, variance, std_deviation, sum = 0, sum1 = 0;
+
+    // Compute the sum of all dist
+    for (uint8_t q_idx = 0; q_idx < n; q_idx++)
+    {
+        sum = sum + context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds].rec_dist_per_quadrant[q_idx];
+    }
+    average = sum / (float)n;
+
+    // Compute variance and standard deviation
+    for (uint8_t q_idx = 0; q_idx < n; q_idx++)
+    {
+        sum1 = sum1 + (float)pow((context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds].rec_dist_per_quadrant[q_idx] - average), 2);
+    }
+    variance = sum1 / (float)n;
+    std_deviation = (float)sqrt(variance);
+
+    // Derive the distortion/cost ratio
+    uint32_t full_lambda = context_ptr->hbd_mode_decision ?
+        context_ptr->full_lambda_md[EB_10_BIT_MD] :
+        context_ptr->full_lambda_md[EB_8_BIT_MD];
+    uint64_t dist = RDCOST(full_lambda, 0, context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds].full_distortion);
+    uint64_t dist_cost_ratio = (dist * 100) / context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds].cost;
+
+    float min_ratio = 50;
+    float max_ratio = 100;
+    float modulated_th = (100 * (dist_cost_ratio - min_ratio)) / (max_ratio - min_ratio);
+
+    float quand_deviation_th =
+        (dist_cost_ratio <= min_ratio) ?
+        0 :
+        (dist_cost_ratio <= max_ratio) ?
+        (context_ptr->depth_skip_ctrls.quand_deviation_th * modulated_th) / 100 :
+        dist_cost_ratio;
+
+    if (std_deviation < quand_deviation_th)
+
+    {
+        set_child_to_be_skipped(
+            context_ptr,
+            context_ptr->blk_geom->sqi_mds,
+            scs_ptr->seq_header.sb_size,
+            1);
+    }
+}
+#endif
 /*
  * Update d1 data (including d1 decision) after each processed block, determine if should use early exit.
  */
@@ -9630,6 +9879,17 @@ void update_d2_decision(SequenceControlSet* scs,
             sb_org_x,
             sb_org_y);
     }
+#if FTR_IMPROVE_DEPTH_REMOVAL
+    // Here d1 is already performed but not d2
+    if (ctx->depth_skip_ctrls.enabled &&
+        ctx->md_blk_arr_nsq[ctx->blk_geom->sqi_mds].split_flag == EB_TRUE &&  // could be further splitted
+        ctx->avail_blk_flag[ctx->blk_geom->sqi_mds]) { // valid block
+
+        block_based_depth_reduction(
+            scs,
+            ctx);
+    }
+#endif
 }
 
 /*

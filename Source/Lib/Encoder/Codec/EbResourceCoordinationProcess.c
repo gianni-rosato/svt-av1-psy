@@ -156,10 +156,6 @@ void set_tpl_controls(
 #if OPT_TPL
         tpl_ctrls->pf_shape = DEFAULT_SHAPE;
         tpl_ctrls->use_pred_sad_in_intra_search = 0;
-#if TPL_REDUCE_NUMBER_OF_REF
-        tpl_ctrls->get_best_ref = 0;
-        tpl_ctrls->use_pred_sad_in_inter_search = 0;
-#endif
 #endif
         break;
     case 1:
@@ -173,12 +169,33 @@ void set_tpl_controls(
 #if OPT_TPL
         tpl_ctrls->pf_shape = DEFAULT_SHAPE;
         tpl_ctrls->use_pred_sad_in_intra_search = 0;
-#if TPL_REDUCE_NUMBER_OF_REF
-        tpl_ctrls->get_best_ref = 0;
-        tpl_ctrls->use_pred_sad_in_inter_search = 0;
-#endif
 #endif
         break;
+#if OPT_TPL
+    case 2:
+        tpl_ctrls->tpl_opt_flag = 1;
+        tpl_ctrls->enable_tpl_qps = 0;
+        tpl_ctrls->disable_intra_pred_nbase = 0;
+        tpl_ctrls->disable_intra_pred_nref = 1;
+        tpl_ctrls->disable_tpl_nref = 1;
+        tpl_ctrls->disable_tpl_pic_dist = 1;
+        tpl_ctrls->get_best_ref = 0;
+        tpl_ctrls->pf_shape = DEFAULT_SHAPE;
+        tpl_ctrls->use_pred_sad_in_intra_search = 0;
+        break;
+    case 3:
+    default:
+        tpl_ctrls->tpl_opt_flag = 1;
+        tpl_ctrls->enable_tpl_qps = 0;
+        tpl_ctrls->disable_intra_pred_nbase = 0;
+        tpl_ctrls->disable_intra_pred_nref = 1;
+        tpl_ctrls->disable_tpl_nref = 1;
+        tpl_ctrls->disable_tpl_pic_dist = 1;
+        tpl_ctrls->get_best_ref = 0;
+        tpl_ctrls->pf_shape = scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? N2_SHAPE : N4_SHAPE;
+        tpl_ctrls->use_pred_sad_in_intra_search = 1;
+        break;
+#else
     case 2:
     default:
         tpl_ctrls->tpl_opt_flag = 1;
@@ -188,15 +205,8 @@ void set_tpl_controls(
         tpl_ctrls->disable_tpl_nref = 1;
         tpl_ctrls->disable_tpl_pic_dist = 1;
         tpl_ctrls->get_best_ref = 0;
-#if OPT_TPL
-        tpl_ctrls->pf_shape = scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? N2_SHAPE : N4_SHAPE;
-        tpl_ctrls->use_pred_sad_in_intra_search = 1;
-#if TPL_REDUCE_NUMBER_OF_REF
-        tpl_ctrls->get_best_ref = 1;
-        tpl_ctrls->use_pred_sad_in_inter_search = 0;
-#endif
-#endif
         break;
+#endif
     }
 }
 #endif
@@ -241,9 +251,16 @@ EbErrorType signal_derivation_pre_analysis_oq_pcs(SequenceControlSet const * con
     else if (pcs_ptr->enc_mode <= ENC_M5)
         tpl_level = 1;
 #endif
+#if OPT_TPL
+    else if (pcs_ptr->enc_mode <= ENC_M8)
+        tpl_level = 2;
+    else
+        tpl_level = 3;
+#else
+
     else
         tpl_level = 2;
-
+#endif
     set_tpl_controls(pcs_ptr, tpl_level);
 #endif
 

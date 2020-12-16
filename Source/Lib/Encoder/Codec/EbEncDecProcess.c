@@ -1812,6 +1812,21 @@ void set_block_based_depth_refinement_controls(ModeDecisionContext* mdctxt, uint
     default:
         assert(0);
         break;
+#if TUNE_M9_LEVELS
+    case 7:
+        depth_refinement_ctrls->enabled = 1;
+        depth_refinement_ctrls->parent_to_current_th = -5;
+        depth_refinement_ctrls->sub_to_current_th = -5;
+        depth_refinement_ctrls->use_pred_block_cost = 2;
+        break;
+
+    case 8:
+        depth_refinement_ctrls->enabled = 1;
+        depth_refinement_ctrls->parent_to_current_th = -15;
+        depth_refinement_ctrls->sub_to_current_th = -15;
+        depth_refinement_ctrls->use_pred_block_cost = 2;
+        break;
+#endif
     }
 }
 #else
@@ -2585,7 +2600,18 @@ void md_pme_search_controls(ModeDecisionContext *mdctxt, uint8_t md_pme_level) {
         md_pme_ctrls->post_fp_pme_to_me_cost_th = 25;
         md_pme_ctrls->post_fp_pme_to_me_mv_th = 32;
         break;
-
+#if TUNE_M9_PME
+    case 4:
+        md_pme_ctrls->enabled = 1;
+        md_pme_ctrls->use_ssd = 0;
+        md_pme_ctrls->full_pel_search_width = 3;
+        md_pme_ctrls->full_pel_search_height = 3;
+        md_pme_ctrls->pre_fp_pme_to_me_cost_th = 25;
+        md_pme_ctrls->pre_fp_pme_to_me_mv_th = 16;
+        md_pme_ctrls->post_fp_pme_to_me_cost_th = 5;
+        md_pme_ctrls->post_fp_pme_to_me_mv_th = 32;
+        break;
+#endif
     default:
         assert(0);
         break;
@@ -2613,6 +2639,41 @@ void set_pf_controls(ModeDecisionContext *mdctxt, uint8_t pf_level) {
         break;
     }
 }
+#if FTR_IMPROVE_DEPTH_REMOVAL
+/*
+ * Control Depth Reduction
+ */
+void set_depth_skip_controls(ModeDecisionContext *mdctxt, uint8_t depth_skip_level) {
+
+    DepthSkipCtrls *depth_skip_ctrls = &mdctxt->depth_skip_ctrls;
+
+    switch (depth_skip_level)
+    {
+    case 0:
+        depth_skip_ctrls->enabled = 0;
+        break;
+
+    case 1:
+        depth_skip_ctrls->enabled = 1;
+        depth_skip_ctrls->quand_deviation_th = 500;
+        break;
+
+    case 2:
+        depth_skip_ctrls->enabled = 1;
+        depth_skip_ctrls->quand_deviation_th = 1000;
+        break;
+
+    case 3:
+        depth_skip_ctrls->enabled = 1;
+        depth_skip_ctrls->quand_deviation_th = 1500;
+        break;
+
+    default:
+        assert(0);
+        break;
+    }
+}
+#endif
 /*
  * Control Adaptive ME search
  */
@@ -2799,7 +2860,7 @@ void md_subpel_pme_controls(ModeDecisionContext *mdctxt, uint8_t md_subpel_pme_l
     default: assert(0); break;
     }
 }
-#if CLEANUP_CANDIDATE_ELEMINATION_CTR
+#if CLN_CANDIDATE_ELEMINATION_CTR
 void set_cand_elimination_controls(ModeDecisionContext *mdctxt, uint8_t eliminate_candidate_based_on_pme_me_results){
     CandEliminationCtlrs *cand_elimination_ctrls = &mdctxt->cand_elimination_ctrs;
     switch (eliminate_candidate_based_on_pme_me_results) {
@@ -3339,6 +3400,22 @@ void set_txt_controls(ModeDecisionContext *mdctxt, uint8_t txt_level) {
         txt_ctrls->intra_th = 0;
         txt_ctrls->inter_th = 0;
         break;
+#if TUNE_M9_ME_HME_TXT
+    case 6:
+        txt_ctrls->enabled = 1;
+
+        txt_ctrls->txt_group_inter_lt_16x16 = 3;
+        txt_ctrls->txt_group_inter_gt_eq_16x16 = 2;
+
+        txt_ctrls->txt_group_intra_lt_16x16 = 3;
+        txt_ctrls->txt_group_intra_gt_eq_16x16 = 1;
+
+        txt_ctrls->use_stats = 0;
+        txt_ctrls->intra_th = 0;
+        txt_ctrls->inter_th = 0;
+
+        break;
+#endif
     default:
         assert(0);
         break;
@@ -3459,7 +3536,16 @@ void set_nic_controls(ModeDecisionContext *mdctxt, uint8_t nic_scaling_level) {
         nic_ctrls->stage2_scaling_num = 2;
         nic_ctrls->stage3_scaling_num = 2;
         break;
+#if TUNE_PRESETS_AND_PRUNING
     case 14:
+        nic_ctrls->stage1_scaling_num = 2;
+        nic_ctrls->stage2_scaling_num = 1;
+        nic_ctrls->stage3_scaling_num = 1;
+        break;
+    case 15:
+#else
+    case 14:
+#endif
         nic_ctrls->stage1_scaling_num = 0;
         nic_ctrls->stage2_scaling_num = 0;
         nic_ctrls->stage3_scaling_num = 0;
@@ -3818,6 +3904,43 @@ void set_nic_pruning_controls(ModeDecisionContext *mdctxt, uint8_t nic_pruning_l
 #endif
         break;
 #endif
+#if TUNE_PRESETS_AND_PRUNING
+    case 9:
+        nic_pruning_ctrls->mds1_class_th = 100;
+        nic_pruning_ctrls->mds1_band_cnt = 16;
+#if OPT_M9_TXT_PRED_DEPTH_PRUNING
+        nic_pruning_ctrls->mds2_class_th = 5;
+#else
+        nic_pruning_ctrls->mds2_class_th = 10;
+#endif
+        nic_pruning_ctrls->mds2_band_cnt = 10;
+
+        nic_pruning_ctrls->mds3_class_th = 10;
+        nic_pruning_ctrls->mds3_band_cnt = 2;
+
+        nic_pruning_ctrls->mds1_cand_base_th = 50;
+        nic_pruning_ctrls->mds2_cand_base_th = 5;
+        nic_pruning_ctrls->mds3_cand_base_th = 1;
+
+        break;
+    case 10:
+        nic_pruning_ctrls->mds1_class_th = 100;
+        nic_pruning_ctrls->mds1_band_cnt = 16;
+#if OPT_M9_TXT_PRED_DEPTH_PRUNING
+        nic_pruning_ctrls->mds2_class_th = 2;
+#else
+        nic_pruning_ctrls->mds2_class_th = 5;
+#endif
+        nic_pruning_ctrls->mds2_band_cnt = 10;
+
+        nic_pruning_ctrls->mds3_class_th = 10;
+        nic_pruning_ctrls->mds3_band_cnt = 2;
+
+        nic_pruning_ctrls->mds1_cand_base_th = 20;
+        nic_pruning_ctrls->mds2_cand_base_th = 1;
+        nic_pruning_ctrls->mds3_cand_base_th = 1;
+        break;
+#endif
     default:
         assert(0);
         break;
@@ -3981,8 +4104,15 @@ EbErrorType signal_derivation_enc_dec_kernel_common(
         block_based_depth_refinement_level = 2;
     else if (enc_mode <= ENC_M7)
         block_based_depth_refinement_level = 3;
+#if TUNE_M9_LEVELS
+    else if (enc_mode <= ENC_M8)
+        block_based_depth_refinement_level = (pcs_ptr->slice_type == I_SLICE) ? 4 : 6;
+    else
+        block_based_depth_refinement_level = 8;
+#else
     else
         block_based_depth_refinement_level = (pcs_ptr->slice_type == I_SLICE) ? 4 : 6;
+#endif
 #else
     else if (enc_mode <= ENC_M7)
         block_based_depth_refinement_level = 2;
@@ -4032,7 +4162,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     EbErrorType return_error = EB_ErrorNone;
     EbEncMode enc_mode = pcs_ptr->enc_mode;
     uint8_t pd_pass = context_ptr->pd_pass;
-#if TUNE_NEW_PRESETS && FTR_M9_AGRESSICE_EARLY_CAN_ELIMINATION
+#if TUNE_NEW_PRESETS && FTR_M9_AGRESSIVE_EARLY_CAN_ELIMINATION
     SequenceControlSet *scs_ptr           = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
 #endif
 #if !FTR_NEW_CYCLES_ALLOC
@@ -4082,8 +4212,20 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #endif
             txt_level = 3;
 #endif
+#if TUNE_M9_ME_HME_TXT
+        else if (enc_mode <= ENC_M8)
+            txt_level = 5;
+        else
+#if OPT_M9_TXT_PRED_DEPTH_PRUNING
+            txt_level = (pcs_ptr->parent_pcs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE) ? 6
+            : 0;
+#else
+            txt_level = 6;
+#endif
+#else
         else
             txt_level = 5;
+#endif
     set_txt_controls(context_ptr, txt_level);
     if (pd_pass == PD_PASS_0)
         context_ptr->interpolation_search_level = IFS_OFF;
@@ -4160,7 +4302,14 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     // 0                    Allow cfl
     // 1                    Disable cfl
 #if TUNE_M4_M8
+#if TUNE_CFL_LEVEL_M8_M9
+    if (enc_mode <= ENC_M7)
+        context_ptr->md_disable_cfl = EB_FALSE;
+    else
+        context_ptr->md_disable_cfl = (pcs_ptr->temporal_layer_index == 0) ? EB_FALSE : EB_TRUE;
+#else
     context_ptr->md_disable_cfl = EB_FALSE;
+#endif
 #else
     if (enc_mode <= ENC_M6)
         context_ptr->md_disable_cfl = EB_FALSE;
@@ -4170,8 +4319,15 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
      // Set disallow_4x4
     if (enc_mode <= ENC_M0)
          context_ptr->disallow_4x4 = EB_FALSE;
+#if TUNE_M9_FEATURES
+    else if (enc_mode <= ENC_M8)
+        context_ptr->disallow_4x4 = (pcs_ptr->slice_type == I_SLICE) ? EB_FALSE : EB_TRUE;
+    else
+        context_ptr->disallow_4x4 = EB_TRUE;
+#else
      else
          context_ptr->disallow_4x4 = (pcs_ptr->slice_type == I_SLICE) ? EB_FALSE : EB_TRUE;
+#endif
      // If SB non-multiple of 4, then disallow_4x4 could not be used
      // SB Stats
      uint32_t sb_width =
@@ -4327,8 +4483,15 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             else  if (enc_mode <= ENC_M6)
                 context_ptr->inter_compound_mode = 5;
 #endif
+#if TUNE_M9_GM_INTER_COMPOUND
+            else if (enc_mode <= ENC_M8)
+                context_ptr->inter_compound_mode = (pcs_ptr->parent_pcs_ptr->input_resolution == INPUT_SIZE_240p_RANGE) ? 5 : 0;
+            else
+                context_ptr->inter_compound_mode = 0;
+#else
             else
                 context_ptr->inter_compound_mode = (pcs_ptr->parent_pcs_ptr->input_resolution == INPUT_SIZE_240p_RANGE) ? 5 : 0;
+#endif
 #else
             else if (enc_mode <= ENC_MR)
                 context_ptr->inter_compound_mode = 1;
@@ -4401,11 +4564,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #if TUNE_M8_TO_MATCH_M7
 #if TUNE_M9_FEATURES
 #if OPT_RDOQ_FOR_M9
-#if TUNE_M9_NOV_26
-        if (enc_mode <= ENC_M9)
-#else
         if (enc_mode <= ENC_M8)
-#endif
 #else
         if (enc_mode <= ENC_M9)
 #endif
@@ -4540,7 +4699,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #if TUNE_NEW_PRESETS_MR_M8
     else if (enc_mode <= ENC_M2)
         parent_sq_coeff_area_based_cycles_reduction_level = pcs_ptr->slice_type == I_SLICE ? 0 : pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? 4 : 7;
+#if TUNE_PRESETS_AND_PRUNING
+    else if (enc_mode <= ENC_M4)
+#else
     else if (enc_mode <= ENC_M3)
+#endif
         parent_sq_coeff_area_based_cycles_reduction_level = pcs_ptr->slice_type == I_SLICE ? 5 : pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? 4 : 7;
     else
         parent_sq_coeff_area_based_cycles_reduction_level = pcs_ptr->slice_type == I_SLICE ? 5 : pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? 6 : 7;
@@ -4750,7 +4913,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 
     uint8_t nic_scaling_level = 1;
     if (pd_pass == PD_PASS_0)
+#if TUNE_PRESETS_AND_PRUNING
+        nic_scaling_level = 15;
+#else
         nic_scaling_level = 14;
+#endif
     else if (pd_pass == PD_PASS_1)
         nic_scaling_level = 12;
     else
@@ -4790,14 +4957,30 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         else if (enc_mode <= ENC_M3)
             nic_scaling_level = 7;
 #endif
+#if TUNE_PRESETS_AND_PRUNING
+        else if (enc_mode <= ENC_M6)
+            nic_scaling_level = 10;
+#endif
 #if FTR_NIC_PRUNING
         else if (enc_mode <= ENC_M7)
 #else
         else if (enc_mode <= ENC_M6)
 #endif
             nic_scaling_level = 11;
+#if TUNE_PRESETS_AND_PRUNING
+        else if (enc_mode <= ENC_M8)
+#else
         else
+#endif
             nic_scaling_level = 12;
+#if TUNE_PRESETS_AND_PRUNING
+        else
+#if OPT_M9_TXT_PRED_DEPTH_PRUNING
+            nic_scaling_level = 15;
+#else
+            nic_scaling_level = 14;
+#endif
+#endif
     set_nic_controls(context_ptr, nic_scaling_level);
 
 #if FTR_NIC_PRUNING
@@ -4828,7 +5011,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             nic_pruning_level = 3;
         else if (enc_mode <= ENC_M2)
             nic_pruning_level = 4;
+#if TUNE_PRESETS_AND_PRUNING
+        else if (enc_mode <= ENC_M6)
+#else
         else if (enc_mode <= ENC_M5)
+#endif
             nic_pruning_level = 5;
 #else
         else if (enc_mode <= ENC_M5)
@@ -4844,7 +5031,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #else
             nic_pruning_level = 4;
 #endif
+#if TUNE_PRESETS_AND_PRUNING
+        else if (enc_mode <= ENC_M8)
+#else
         else
+#endif
 #if TUNE_LOWER_PRESETS
 #if TUNE_M4_M8
             nic_pruning_level = (sequence_control_set_ptr->input_resolution <= INPUT_SIZE_480p_RANGE) ? 7 : 8;
@@ -4853,6 +5044,10 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #endif
 #else
             nic_pruning_level = 5;
+#endif
+#if TUNE_PRESETS_AND_PRUNING
+        else
+        nic_pruning_level = (sequence_control_set_ptr->input_resolution <= INPUT_SIZE_480p_RANGE) ? 9 : 10;
 #endif
     set_nic_pruning_controls(context_ptr, nic_pruning_level);
 #endif
@@ -4955,8 +5150,19 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
                     use_pf_th = RDCOST(fast_lambda, cost_th_rate, sb_size >> 1);
 
                 uint64_t cost_64x64 = RDCOST(fast_lambda, 0, pcs_ptr->parent_pcs_ptr->me_64x64_distortion[context_ptr->sb_index]);
-
+#if TUNE_M9_PF
+                if (enc_mode <= ENC_M8) {
+                    context_ptr->pf_level = (cost_64x64 < use_pf_th) ? 3 : 1;
+                }
+                else {
+                    if (pcs_ptr->parent_pcs_ptr->input_resolution <= INPUT_SIZE_720p_RANGE)
+                        context_ptr->pf_level = (cost_64x64 < ((use_pf_th * 3) >> 1)) ? 3 : 1;
+                    else
+                        context_ptr->pf_level = (cost_64x64 < ((use_pf_th * 5) >> 1)) ? 3 : 1;
+                }
+#else
                 context_ptr->pf_level = (cost_64x64 < use_pf_th) ? 3 : 1;
+#endif
             }
         }
 #else
@@ -4971,6 +5177,27 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         context_ptr->pf_level = 1;
     }
     set_pf_controls(context_ptr, context_ptr->pf_level);
+#if FTR_IMPROVE_DEPTH_REMOVAL
+    uint8_t depth_skip_level;
+    if (pcs_ptr->parent_pcs_ptr->sc_content_detected)
+        depth_skip_level = 0;
+    else if (pd_pass == PD_PASS_0)
+        depth_skip_level = 0;
+    else if (pd_pass == PD_PASS_1)
+        depth_skip_level = 0;
+    else
+        if (enc_mode <= ENC_M6)
+            depth_skip_level = 0;
+#if TUNE_M9_FEATURES
+        else  if (enc_mode <= ENC_M9)
+#else
+        else  if (enc_mode <= ENC_M8)
+#endif
+            depth_skip_level = 1;
+        else
+            depth_skip_level = 2;
+    set_depth_skip_controls(context_ptr, depth_skip_level);
+#endif
     if (pd_pass == PD_PASS_0)
         context_ptr->md_sq_mv_search_level = 0;
     else if (pd_pass == PD_PASS_1)
@@ -5038,8 +5265,15 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             context_ptr->md_pme_level = 1;
         else if (enc_mode <= ENC_M6)
             context_ptr->md_pme_level = 2;
+#if TUNE_M9_PME
+        else if (enc_mode <= ENC_M8)
+            context_ptr->md_pme_level = 3;
+        else
+            context_ptr->md_pme_level = 4;
+#else
         else
             context_ptr->md_pme_level = 3;
+#endif
     md_pme_search_controls(context_ptr, context_ptr->md_pme_level);
 
     if (pd_pass == PD_PASS_0)
@@ -5218,7 +5452,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             context_ptr->early_cand_elimination = 0;
         else
 #if TUNE_M4_M8
-#if OPTIMISE_EARLY_CANDIDATE_ELIMINATION || FTR_M9_AGRESSICE_EARLY_CAN_ELIMINATION
+#if OPTIMISE_EARLY_CANDIDATE_ELIMINATION || FTR_M9_AGRESSIVE_EARLY_CAN_ELIMINATION
 #if TUNE_M9_NOV_26 && !TUNE_M8_M9_NOV27
             if (enc_mode <= ENC_M9)
 #else
@@ -5276,12 +5510,16 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #endif
 #if FTR_USE_VAR_IN_FAST_LOOP
 #if TUNE_NEW_PRESETS_MR_M8
+#if TUNE_PRESETS_AND_PRUNING
+     context_ptr->use_var_in_mds0 = (enc_mode <= ENC_M3) ? 0 : pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? 1 : 0;
+#else
      context_ptr->use_var_in_mds0 = (enc_mode <= ENC_M5) ? 0 : pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? 1 : 0;
+#endif
 #else
      context_ptr->use_var_in_mds0 = (enc_mode <= ENC_M7) ? 0 : pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? 1 : 0;
 #endif
 #endif
-#if CLEANUP_CANDIDATE_ELEMINATION_CTR
+#if CLN_CANDIDATE_ELEMINATION_CTR
      uint8_t eliminate_candidate_based_on_pme_me_results = 0;
 #if FTR_PD2_REDUCE_MDS0
      if (pd_pass == PD_PASS_0)
@@ -5355,6 +5593,12 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #else
              context_ptr->bypass_tx_search_when_zcoef = (enc_mode <= ENC_M7) ? 0 : 1;
 #endif
+#endif
+#if OPT_TX_TYPE_SEARCH
+     if (enc_mode <= ENC_M8)
+         context_ptr->txt_exit_based_on_non_coeff_th = 0;
+     else
+         context_ptr->txt_exit_based_on_non_coeff_th = sequence_control_set_ptr->input_resolution <= INPUT_SIZE_720p_RANGE ? 8 : 32;
 #endif
     return return_error;
 }
@@ -6184,17 +6428,31 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
 #endif
                         else if (pcs_ptr->parent_pcs_ptr->multi_pass_pd_level == MULTI_PASS_PD_LEVEL_0) {
 #if TUNE_NEW_PRESETS_MR_M8
+#if TUNE_PRESETS_AND_PRUNING
+                            if (pcs_ptr->enc_mode <= ENC_M3) {
+#else
                             if (pcs_ptr->enc_mode <= ENC_M5) {
+#endif
 #else
                             if (pcs_ptr->enc_mode <= ENC_M4) {
 #endif
                                 s_depth = pcs_ptr->slice_type == I_SLICE ? -2 : -1;
                                 e_depth = pcs_ptr->slice_type == I_SLICE ?  2 :  1;
                             }
+#if OPT_M9_TXT_PRED_DEPTH_PRUNING
+                            else if (pcs_ptr->enc_mode <= ENC_M8) {
+#else
                             else {
+#endif
                                 s_depth = -1;
                                 e_depth = 1;
                             }
+#if OPT_M9_TXT_PRED_DEPTH_PRUNING
+                        else {
+                            s_depth = 0;
+                            e_depth = 0;
+                        }
+#endif
                         }
                         else {
                             s_depth = 0;
