@@ -21,9 +21,9 @@ Static analysis (cppcheck):
       - .cppcheck
     policy: pull-push
   script:
-    - cmake -B Build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+    - cmake -G"Unix Makefiles" -B Build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
     - mkdir -p .cppcheck
-    - jq '.[]|=with_entries(select(.value | test(".asm") | not))' Build/compile_commands.json > compile_commands.json
+    - jq '.[]|=with_entries(select(.value | test(".asm|/SVT-AV1/Build/cpuinfo") | not)) | unique' Build/compile_commands.json > compile_commands.json
     - |
       cppcheck \
         --project=compile_commands.json \
