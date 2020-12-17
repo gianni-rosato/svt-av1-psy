@@ -31,9 +31,8 @@ file(GLOB all_files
     "*.h"
     "*.c")
 
-#set(asm_files
-#    x86_abi_support.asm)
+set(asm_files subpel_variance_ssse3.asm)
 
 add_library(ENCODER_ASM_SSSE3 OBJECT ${all_files})
 
-#asm_compile_to_target(ENCODER_ASM_SSSE3 ${asm_files})
+asm_compile_to_target(ENCODER_ASM_SSSE3 ${asm_files})

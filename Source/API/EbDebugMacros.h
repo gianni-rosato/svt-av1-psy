@@ -144,7 +144,7 @@ extern "C" {
 #define FTR_USE_SKIP_MD                        1 // Use md skip decision to bypass residual generation, transform, quantization, inverse quant and
                                                  // inverse transform when it is skip
 #define FTR_FAST_RATE_ESTIMATION               1 // Estimate the rate of the first (eob/N) coeff(s) and last coeff only
-// Add #161 here
+#define FTR_PRUNED_SUBPEL_TREE                 1 // Add pruned subpel tree function; this macro adds/removes files
 #define TUNE_M6_FEATURES                       1 // Optimize M6 with features from M5 and M7
 #define OPT_SB_CLASS                           1 // Remove SB class
 #define OPT_REFINEMENT_SIGNALS                 1 // Remove useless block refinement signals

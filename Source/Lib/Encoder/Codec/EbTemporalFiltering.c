@@ -29,7 +29,9 @@
 #endif
 #include "EbObject.h"
 #include "EbEncInterPrediction.h"
+#if 0 //!FTR_PRUNED_SUBPEL_TREE // file was removed as part of this macro's changes
 #include "EbComputeVariance_C.h"
+#endif
 #include "EbLog.h"
 #include <limits.h>
 #undef _MM_HINT_T2

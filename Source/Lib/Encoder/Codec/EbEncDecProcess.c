@@ -2828,19 +2828,44 @@ void md_subpel_me_controls(ModeDecisionContext *mdctxt, uint8_t md_subpel_me_lev
         md_subpel_me_ctrls->subpel_search_type = USE_8_TAPS;
         md_subpel_me_ctrls->subpel_iters_per_step = 2;
         md_subpel_me_ctrls->eight_pel_search_enabled = 1;
+#if FTR_PRUNED_SUBPEL_TREE
+        md_subpel_me_ctrls->subpel_search_method = SUBPEL_TREE;
+#endif
         break;
     case 2:
         md_subpel_me_ctrls->enabled = 1;
         md_subpel_me_ctrls->subpel_search_type = USE_4_TAPS;
         md_subpel_me_ctrls->subpel_iters_per_step = 2;
         md_subpel_me_ctrls->eight_pel_search_enabled = 0;
+#if FTR_PRUNED_SUBPEL_TREE
+        md_subpel_me_ctrls->subpel_search_method = SUBPEL_TREE;
+#endif
         break;
     case 3:
         md_subpel_me_ctrls->enabled = 1;
         md_subpel_me_ctrls->subpel_search_type = USE_4_TAPS;
         md_subpel_me_ctrls->subpel_iters_per_step = 1;
         md_subpel_me_ctrls->eight_pel_search_enabled = 0;
+#if FTR_PRUNED_SUBPEL_TREE
+        md_subpel_me_ctrls->subpel_search_method = SUBPEL_TREE;
+#endif
         break;
+#if FTR_PRUNED_SUBPEL_TREE
+    case 4:
+        md_subpel_me_ctrls->enabled = 1;
+        md_subpel_me_ctrls->subpel_search_type = USE_8_TAPS;
+        md_subpel_me_ctrls->subpel_iters_per_step = 2;
+        md_subpel_me_ctrls->eight_pel_search_enabled = 1;
+        md_subpel_me_ctrls->subpel_search_method = SUBPEL_TREE_PRUNED;
+        break;
+    case 5:
+        md_subpel_me_ctrls->enabled = 1;
+        md_subpel_me_ctrls->subpel_search_type = USE_4_TAPS;
+        md_subpel_me_ctrls->subpel_iters_per_step = 2;
+        md_subpel_me_ctrls->eight_pel_search_enabled = 0;
+        md_subpel_me_ctrls->subpel_search_method = SUBPEL_TREE_PRUNED;
+        break;
+#endif
     default: assert(0); break;
     }
 }
@@ -2860,7 +2885,26 @@ void md_subpel_pme_controls(ModeDecisionContext *mdctxt, uint8_t md_subpel_pme_l
         md_subpel_pme_ctrls->subpel_search_type = USE_8_TAPS;
         md_subpel_pme_ctrls->subpel_iters_per_step = 2;
         md_subpel_pme_ctrls->eight_pel_search_enabled = 1;
+#if FTR_PRUNED_SUBPEL_TREE
+        md_subpel_pme_ctrls->subpel_search_method = SUBPEL_TREE;
+#endif
         break;
+#if FTR_PRUNED_SUBPEL_TREE
+    case 2:
+        md_subpel_pme_ctrls->enabled = 1;
+        md_subpel_pme_ctrls->subpel_search_type = USE_8_TAPS;
+        md_subpel_pme_ctrls->subpel_iters_per_step = 2;
+        md_subpel_pme_ctrls->eight_pel_search_enabled = 1;
+        md_subpel_pme_ctrls->subpel_search_method = SUBPEL_TREE_PRUNED;
+        break;
+    case 3:
+        md_subpel_pme_ctrls->enabled = 1;
+        md_subpel_pme_ctrls->subpel_search_type = USE_4_TAPS;
+        md_subpel_pme_ctrls->subpel_iters_per_step = 1;
+        md_subpel_pme_ctrls->eight_pel_search_enabled = 0;
+        md_subpel_pme_ctrls->subpel_search_method = SUBPEL_TREE;
+        break;
+#else
     case 2:
         md_subpel_pme_ctrls->enabled = 1;
         md_subpel_pme_ctrls->subpel_search_type = USE_4_TAPS;
@@ -2873,6 +2917,7 @@ void md_subpel_pme_controls(ModeDecisionContext *mdctxt, uint8_t md_subpel_pme_l
         md_subpel_pme_ctrls->subpel_iters_per_step = 1;
         md_subpel_pme_ctrls->eight_pel_search_enabled = 0;
         break;
+#endif
     default: assert(0); break;
     }
 }
@@ -5419,9 +5464,17 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         if (enc_mode <= ENC_M4)
 #endif
             context_ptr->md_subpel_me_level = 1;
+#if FTR_PRUNED_SUBPEL_TREE
+        else if (enc_mode <= ENC_M8)
+#else
         else
+#endif
 #if TUNE_NEW_PRESETS_MR_M8
             context_ptr->md_subpel_me_level = pcs_ptr->parent_pcs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? 1 : 2;
+#if FTR_PRUNED_SUBPEL_TREE
+        else
+            context_ptr->md_subpel_me_level = pcs_ptr->parent_pcs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? 4 : 5;
+#endif
 #else
             context_ptr->md_subpel_me_level = 2;
 #endif
@@ -5436,6 +5489,12 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #endif
     else if (pd_pass == PD_PASS_1)
         context_ptr->md_subpel_pme_level = 3;
+#if FTR_PRUNED_SUBPEL_TREE
+    else if (enc_mode <= ENC_M8)
+        context_ptr->md_subpel_pme_level = 1;
+    else
+        context_ptr->md_subpel_pme_level = 2;
+#else
     else
 #if TUNE_M4_M8
         context_ptr->md_subpel_pme_level = 1;
@@ -5444,6 +5503,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             context_ptr->md_subpel_pme_level = 1;
         else
             context_ptr->md_subpel_pme_level = 2;
+#endif
 #endif
     md_subpel_pme_controls(context_ptr, context_ptr->md_subpel_pme_level);
 #if !FTR_NEW_REF_PRUNING_CTRLS

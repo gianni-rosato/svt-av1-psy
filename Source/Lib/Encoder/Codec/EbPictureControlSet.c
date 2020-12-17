@@ -1143,6 +1143,11 @@ static void picture_parent_control_set_dctor(EbPtr ptr) {
     EB_FREE_ARRAY(obj->me_32x32_distortion);
     EB_FREE_ARRAY(obj->me_16x16_distortion);
     EB_FREE_ARRAY(obj->me_8x8_distortion);
+
+    EB_FREE_ARRAY(obj->me_64x64_distortion_trail);
+    EB_FREE_ARRAY(obj->me_32x32_distortion_trail);
+    EB_FREE_ARRAY(obj->me_16x16_distortion_trail);
+    EB_FREE_ARRAY(obj->me_8x8_distortion_trail);
 #endif
 #if TUNE_DEPTH_REMOVAL_PER_RESOLUTION
     EB_FREE_ARRAY(obj->me_8x8_cost_variance);
@@ -1321,6 +1326,11 @@ EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr,
     EB_MALLOC_ARRAY(object_ptr->me_32x32_distortion, object_ptr->sb_total_count);
     EB_MALLOC_ARRAY(object_ptr->me_16x16_distortion, object_ptr->sb_total_count);
     EB_MALLOC_ARRAY(object_ptr->me_8x8_distortion, object_ptr->sb_total_count);
+
+    EB_MALLOC_ARRAY(object_ptr->me_64x64_distortion_trail, object_ptr->sb_total_count);
+    EB_MALLOC_ARRAY(object_ptr->me_32x32_distortion_trail, object_ptr->sb_total_count);
+    EB_MALLOC_ARRAY(object_ptr->me_16x16_distortion_trail, object_ptr->sb_total_count);
+    EB_MALLOC_ARRAY(object_ptr->me_8x8_distortion_trail, object_ptr->sb_total_count);
 #endif
 #if TUNE_DEPTH_REMOVAL_PER_RESOLUTION
     EB_MALLOC_ARRAY(object_ptr->me_8x8_cost_variance, object_ptr->sb_total_count);

@@ -500,6 +500,15 @@ enum {
     USE_8_TAPS,
 } UENUM1BYTE(SUBPEL_SEARCH_TYPE);
 
+#if FTR_PRUNED_SUBPEL_TREE
+enum {
+    SUBPEL_TREE = 0,
+    SUBPEL_TREE_PRUNED = 1,           // Prunes 1/2-pel searches
+    //SUBPEL_TREE_PRUNED_MORE = 2,      // Not supported - (from libaom: Prunes 1/2-pel searches more aggressively)
+    //SUBPEL_TREE_PRUNED_EVENMORE = 3,  // Not supported - (from libaom: Prunes 1/2- and 1/4-pel searches)
+} UENUM1BYTE(SUBPEL_SEARCH_METHODS);
+#endif
+
 typedef struct InterpFilterParams {
     const int16_t *filter_ptr;
     uint16_t       taps;

@@ -142,6 +142,79 @@ static int svt_upsampled_pref_error(MacroBlockD *xd, const struct AV1Common *con
     return besterr;
 }
 
+#if FTR_PRUNED_SUBPEL_TREE
+// Estimates the variance of prediction residue using bilinear filter for fast
+// search.
+static INLINE int svt_estimated_pref_error(
+    const MV *this_mv, const SUBPEL_SEARCH_VAR_PARAMS *var_params,
+    unsigned int *sse) {
+    const AomVarianceFnPtr *vfp = var_params->vfp;
+
+    const MSBuffers *ms_buffers = &var_params->ms_buffers;
+    const uint8_t *src = ms_buffers->src->buf;
+    const uint8_t *ref = svt_get_buf_from_mv(ms_buffers->ref, *this_mv);
+    const int src_stride = ms_buffers->src->stride;
+    const int ref_stride = ms_buffers->ref->stride;
+    //const uint8_t *second_pred = ms_buffers->second_pred;
+    //const uint8_t *mask = ms_buffers->mask;
+    //const int mask_stride = ms_buffers->mask_stride;
+    //const int invert_mask = ms_buffers->inv_mask;
+
+    const int subpel_x_q3 = svt_get_subpel_part(this_mv->col);
+    const int subpel_y_q3 = svt_get_subpel_part(this_mv->row);
+
+    // TODO: port other variance-related functions
+    //if (second_pred == NULL) {
+    return vfp->svf(ref, ref_stride, subpel_x_q3, subpel_y_q3, src, src_stride, sse);
+    //}
+    //else if (mask) {
+    //    return vfp->msvf(ref, ref_stride, subpel_x_q3, subpel_y_q3, src, src_stride,
+    //        second_pred, mask, mask_stride, invert_mask, sse);
+    //}
+    //else {
+    //    return vfp->svaf(ref, ref_stride, subpel_x_q3, subpel_y_q3, src, src_stride,
+    //        sse, second_pred);
+    //}
+}
+
+
+// Estimates whether this_mv is better than best_mv. This function incorporates
+// both prediction error and residue into account. It is suffixed "fast" because
+// it uses bilinear filter to estimate the prediction.
+static INLINE unsigned int svt_check_better_fast(
+    MacroBlockD *xd, const struct AV1Common *const cm, const MV *this_mv, MV *best_mv,
+    const SubpelMvLimits *mv_limits, const SUBPEL_SEARCH_VAR_PARAMS *var_params,
+    const MV_COST_PARAMS *mv_cost_params, unsigned int *besterr,
+    unsigned int *sse1, int *distortion, int *has_better_mv, int is_scaled) {
+    unsigned int cost;
+    if (svt_av1_is_subpelmv_in_range(mv_limits, *this_mv)) {
+        unsigned int sse;
+        int thismse;
+        // TODO: add estimated func
+        if (is_scaled) {
+            thismse = svt_upsampled_pref_error(xd, cm, this_mv, var_params, &sse);
+        }
+        else {
+            thismse = svt_estimated_pref_error(this_mv, var_params, &sse);
+        }
+        cost = svt_mv_err_cost_(this_mv, mv_cost_params);
+        cost += thismse;
+
+        if (cost < *besterr) {
+            *besterr = cost;
+            *best_mv = *this_mv;
+            *distortion = thismse;
+            *sse1 = sse;
+            *has_better_mv |= 1;
+        }
+    }
+    else {
+        cost = INT_MAX;
+    }
+    return cost;
+}
+#endif
+
 // Checks whether this_mv is better than best_mv. This function incorporates
 // both prediction error and residue into account.
 static AOM_FORCE_INLINE unsigned int svt_check_better(
@@ -346,6 +419,282 @@ static INLINE int svt_check_repeated_mv_and_update(int_mv *last_mv_search_list, 
     }
     return 0;
 }
+
+#if FTR_PRUNED_SUBPEL_TREE
+static INLINE MV get_best_diag_step(int step_size, unsigned int left_cost,
+    unsigned int right_cost,
+    unsigned int up_cost,
+    unsigned int down_cost) {
+    const MV diag_step = { up_cost <= down_cost ? -step_size : step_size,
+                           left_cost <= right_cost ? -step_size : step_size };
+
+    return diag_step;
+}
+
+// Searches the four cardinal direction for a better mv, then follows up with a
+// search in the best quadrant. This uses bilinear filter to speed up the
+// calculation.
+static AOM_FORCE_INLINE MV first_level_check_fast(
+    MacroBlockD *xd, const struct AV1Common *const cm, const MV this_mv, MV *best_mv,
+    int hstep, const SubpelMvLimits *mv_limits,
+    const SUBPEL_SEARCH_VAR_PARAMS *var_params,
+    const MV_COST_PARAMS *mv_cost_params, unsigned int *besterr,
+    unsigned int *sse1, int *distortion, int is_scaled) {
+    // Check the four cardinal directions
+    const MV left_mv = { this_mv.row, this_mv.col - hstep };
+    int dummy = 0;
+    const unsigned int left = svt_check_better_fast(
+        xd, cm, &left_mv, best_mv, mv_limits, var_params, mv_cost_params, besterr,
+        sse1, distortion, &dummy, is_scaled);
+
+    const MV right_mv = { this_mv.row, this_mv.col + hstep };
+    const unsigned int right = svt_check_better_fast(
+        xd, cm, &right_mv, best_mv, mv_limits, var_params, mv_cost_params,
+        besterr, sse1, distortion, &dummy, is_scaled);
+
+    const MV top_mv = { this_mv.row - hstep, this_mv.col };
+    const unsigned int up = svt_check_better_fast(
+        xd, cm, &top_mv, best_mv, mv_limits, var_params, mv_cost_params, besterr,
+        sse1, distortion, &dummy, is_scaled);
+
+    const MV bottom_mv = { this_mv.row + hstep, this_mv.col };
+    const unsigned int down = svt_check_better_fast(
+        xd, cm, &bottom_mv, best_mv, mv_limits, var_params, mv_cost_params,
+        besterr, sse1, distortion, &dummy, is_scaled);
+
+    const MV diag_step = get_best_diag_step(hstep, left, right, up, down);
+    const MV diag_mv = { this_mv.row + diag_step.row,
+                         this_mv.col + diag_step.col };
+
+    // Check the diagonal direction with the best mv
+    svt_check_better_fast(xd, cm, &diag_mv, best_mv, mv_limits, var_params,
+        mv_cost_params, besterr, sse1, distortion, &dummy,
+        is_scaled);
+
+    return diag_step;
+}
+
+// Performs a following up search after first_level_check_fast is called. This
+// performs two extra chess pattern searches in the best quadrant.
+static AOM_FORCE_INLINE void second_level_check_fast(
+    MacroBlockD *xd, const struct AV1Common *const cm, const MV this_mv, const MV diag_step,
+    MV *best_mv, int hstep, const SubpelMvLimits *mv_limits,
+    const SUBPEL_SEARCH_VAR_PARAMS *var_params,
+    const MV_COST_PARAMS *mv_cost_params, unsigned int *besterr,
+    unsigned int *sse1, int *distortion, int is_scaled) {
+    assert(diag_step.row == hstep || diag_step.row == -hstep);
+    assert(diag_step.col == hstep || diag_step.col == -hstep);
+    const int tr = this_mv.row;
+    const int tc = this_mv.col;
+    const int br = best_mv->row;
+    const int bc = best_mv->col;
+    int dummy = 0;
+    if (tr != br && tc != bc) {
+        assert(diag_step.col == bc - tc);
+        assert(diag_step.row == br - tr);
+        const MV chess_mv_1 = { br, bc + diag_step.col };
+        const MV chess_mv_2 = { br + diag_step.row, bc };
+        svt_check_better_fast(xd, cm, &chess_mv_1, best_mv, mv_limits, var_params,
+            mv_cost_params, besterr, sse1, distortion, &dummy,
+            is_scaled);
+
+        svt_check_better_fast(xd, cm, &chess_mv_2, best_mv, mv_limits, var_params,
+            mv_cost_params, besterr, sse1, distortion, &dummy,
+            is_scaled);
+    }
+    else if (tr == br && tc != bc) {
+        assert(diag_step.col == bc - tc);
+        // Continue searching in the best direction
+        const MV bottom_long_mv = { br + hstep, bc + diag_step.col };
+        const MV top_long_mv = { br - hstep, bc + diag_step.col };
+        svt_check_better_fast(xd, cm, &bottom_long_mv, best_mv, mv_limits, var_params,
+            mv_cost_params, besterr, sse1, distortion, &dummy,
+            is_scaled);
+        svt_check_better_fast(xd, cm, &top_long_mv, best_mv, mv_limits, var_params,
+            mv_cost_params, besterr, sse1, distortion, &dummy,
+            is_scaled);
+
+        // Search in the direction opposite of the best quadrant
+        const MV rev_mv = { br - diag_step.row, bc };
+        svt_check_better_fast(xd, cm, &rev_mv, best_mv, mv_limits, var_params,
+            mv_cost_params, besterr, sse1, distortion, &dummy,
+            is_scaled);
+    }
+    else if (tr != br && tc == bc) {
+        assert(diag_step.row == br - tr);
+        // Continue searching in the best direction
+        const MV right_long_mv = { br + diag_step.row, bc + hstep };
+        const MV left_long_mv = { br + diag_step.row, bc - hstep };
+        svt_check_better_fast(xd, cm, &right_long_mv, best_mv, mv_limits, var_params,
+            mv_cost_params, besterr, sse1, distortion, &dummy,
+            is_scaled);
+        svt_check_better_fast(xd, cm, &left_long_mv, best_mv, mv_limits, var_params,
+            mv_cost_params, besterr, sse1, distortion, &dummy,
+            is_scaled);
+
+        // Search in the direction opposite of the best quadrant
+        const MV rev_mv = { br, bc - diag_step.col };
+        svt_check_better_fast(xd, cm, &rev_mv, best_mv, mv_limits, var_params,
+            mv_cost_params, besterr, sse1, distortion, &dummy,
+            is_scaled);
+    }
+}
+
+// Combines first level check and second level check when applicable. This first
+// searches the four cardinal directions, and perform several
+// diagonal/chess-pattern searches in the best quadrant.
+static AOM_FORCE_INLINE void two_level_checks_fast(
+    MacroBlockD *xd, const struct AV1Common *const cm, const MV this_mv, MV *best_mv,
+    int hstep, const SubpelMvLimits *mv_limits,
+    const SUBPEL_SEARCH_VAR_PARAMS *var_params,
+    const MV_COST_PARAMS *mv_cost_params, unsigned int *besterr,
+    unsigned int *sse1, int *distortion, int iters, int is_scaled) {
+    const MV diag_step = first_level_check_fast(
+        xd, cm, this_mv, best_mv, hstep, mv_limits, var_params, mv_cost_params,
+        besterr, sse1, distortion, is_scaled);
+    if (iters > 1) {
+        second_level_check_fast(xd, cm, this_mv, diag_step, best_mv, hstep,
+            mv_limits, var_params, mv_cost_params, besterr,
+            sse1, distortion, is_scaled);
+    }
+}
+
+int svt_av1_find_best_sub_pixel_tree_pruned(
+    MacroBlockD *xd, const struct AV1Common *const cm,
+    const SUBPEL_MOTION_SEARCH_PARAMS *ms_params, MV start_mv, MV *bestmv,
+    int *distortion, unsigned int *sse1, int_mv *last_mv_search_list) {
+    (void)cm;
+    const int allow_hp = ms_params->allow_hp;
+    const int forced_stop = ms_params->forced_stop;
+    const int iters_per_step = ms_params->iters_per_step;
+    const int *cost_list = ms_params->cost_list;
+    const SubpelMvLimits *mv_limits = &ms_params->mv_limits;
+    const MV_COST_PARAMS *mv_cost_params = &ms_params->mv_cost_params;
+    const SUBPEL_SEARCH_VAR_PARAMS *var_params = &ms_params->var_params;
+
+    // The iteration we are current searching for. Iter 0 corresponds to fullpel
+    // mv, iter 1 to half pel, and so on
+    int iter = 0;
+    int hstep = INIT_SUBPEL_STEP_SIZE;  // Step size, initialized to 4/8=1/2 pel
+    unsigned int besterr;
+    *bestmv = start_mv;
+
+    const int is_scaled = 0;
+    besterr = svt_upsampled_setup_center_error(xd, cm, bestmv, var_params,
+        mv_cost_params, sse1, distortion);
+    //besterr = setup_center_error_facade(
+    //    xd, cm, bestmv, var_params, mv_cost_params, sse1, distortion, is_scaled);
+
+    // If forced_stop is FULL_PEL, return.
+    if (forced_stop == FULL_PEL) return besterr;
+
+    if (svt_check_repeated_mv_and_update(last_mv_search_list, *bestmv, iter)) {
+        return INT_MAX;
+    }
+    iter++;
+
+    if (cost_list && cost_list[0] != INT_MAX && cost_list[1] != INT_MAX &&
+        cost_list[2] != INT_MAX && cost_list[3] != INT_MAX &&
+        cost_list[4] != INT_MAX) {
+        const unsigned int whichdir = (cost_list[1] < cost_list[3] ? 0 : 1) +
+            (cost_list[2] < cost_list[4] ? 0 : 2);
+
+        const MV left_mv = { start_mv.row, start_mv.col - hstep };
+        const MV right_mv = { start_mv.row, start_mv.col + hstep };
+        const MV bottom_mv = { start_mv.row + hstep, start_mv.col };
+        const MV top_mv = { start_mv.row - hstep, start_mv.col };
+
+        const MV bottom_left_mv = { start_mv.row + hstep, start_mv.col - hstep };
+        const MV bottom_right_mv = { start_mv.row + hstep, start_mv.col + hstep };
+        const MV top_left_mv = { start_mv.row - hstep, start_mv.col - hstep };
+        const MV top_right_mv = { start_mv.row - hstep, start_mv.col + hstep };
+
+        int dummy = 0;
+
+        switch (whichdir) {
+        case 0:  // bottom left quadrant
+            svt_check_better_fast(xd, cm, &left_mv, bestmv, mv_limits, var_params,
+                mv_cost_params, &besterr, sse1, distortion, &dummy,
+                is_scaled);
+            svt_check_better_fast(xd, cm, &bottom_mv, bestmv, mv_limits, var_params,
+                mv_cost_params, &besterr, sse1, distortion, &dummy,
+                is_scaled);
+            svt_check_better_fast(xd, cm, &bottom_left_mv, bestmv, mv_limits,
+                var_params, mv_cost_params, &besterr, sse1,
+                distortion, &dummy, is_scaled);
+            break;
+        case 1:  // bottom right quadrant
+            svt_check_better_fast(xd, cm, &right_mv, bestmv, mv_limits, var_params,
+                mv_cost_params, &besterr, sse1, distortion, &dummy,
+                is_scaled);
+            svt_check_better_fast(xd, cm, &bottom_mv, bestmv, mv_limits, var_params,
+                mv_cost_params, &besterr, sse1, distortion, &dummy,
+                is_scaled);
+            svt_check_better_fast(xd, cm, &bottom_right_mv, bestmv, mv_limits,
+                var_params, mv_cost_params, &besterr, sse1,
+                distortion, &dummy, is_scaled);
+            break;
+        case 2:  // top left quadrant
+            svt_check_better_fast(xd, cm, &left_mv, bestmv, mv_limits, var_params,
+                mv_cost_params, &besterr, sse1, distortion, &dummy,
+                is_scaled);
+            svt_check_better_fast(xd, cm, &top_mv, bestmv, mv_limits, var_params,
+                mv_cost_params, &besterr, sse1, distortion, &dummy,
+                is_scaled);
+            svt_check_better_fast(xd, cm, &top_left_mv, bestmv, mv_limits, var_params,
+                mv_cost_params, &besterr, sse1, distortion, &dummy,
+                is_scaled);
+            break;
+        case 3:  // top right quadrant
+            svt_check_better_fast(xd, cm, &right_mv, bestmv, mv_limits, var_params,
+                mv_cost_params, &besterr, sse1, distortion, &dummy,
+                is_scaled);
+            svt_check_better_fast(xd, cm, &top_mv, bestmv, mv_limits, var_params,
+                mv_cost_params, &besterr, sse1, distortion, &dummy,
+                is_scaled);
+            svt_check_better_fast(xd, cm, &top_right_mv, bestmv, mv_limits, var_params,
+                mv_cost_params, &besterr, sse1, distortion, &dummy,
+                is_scaled);
+            break;
+        }
+    }
+    else {
+        two_level_checks_fast(xd, cm, start_mv, bestmv, hstep, mv_limits,
+            var_params, mv_cost_params, &besterr, sse1,
+            distortion, iters_per_step, is_scaled);
+    }
+
+    // Each subsequent iteration checks at least one point in common with
+    // the last iteration could be 2 ( if diag selected) 1/4 pel
+    if (forced_stop < HALF_PEL) {
+        if (svt_check_repeated_mv_and_update(last_mv_search_list, *bestmv, iter)) {
+            return INT_MAX;
+        }
+        iter++;
+
+        hstep >>= 1;
+        start_mv = *bestmv;
+        two_level_checks_fast(xd, cm, start_mv, bestmv, hstep, mv_limits,
+            var_params, mv_cost_params, &besterr, sse1,
+            distortion, iters_per_step, is_scaled);
+    }
+
+    if (allow_hp && forced_stop == EIGHTH_PEL) {
+        if (svt_check_repeated_mv_and_update(last_mv_search_list, *bestmv, iter)) {
+            return INT_MAX;
+        }
+        iter++;
+
+        hstep >>= 1;
+        start_mv = *bestmv;
+        two_level_checks_fast(xd, cm, start_mv, bestmv, hstep, mv_limits,
+            var_params, mv_cost_params, &besterr, sse1,
+            distortion, iters_per_step, is_scaled);
+    }
+
+    return besterr;
+}
+#endif
 
 int svt_av1_find_best_sub_pixel_tree(MacroBlockD *xd, const struct AV1Common *const cm,
                                      const SUBPEL_MOTION_SEARCH_PARAMS *ms_params, MV start_mv,

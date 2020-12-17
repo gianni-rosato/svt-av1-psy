@@ -278,6 +278,30 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
     SET_AVX2(svt_aom_highbd_10_variance64x128, svt_aom_highbd_10_variance64x128_c, svt_aom_highbd_10_variance64x128_avx2);
     SET_AVX2(svt_aom_highbd_10_variance128x64, svt_aom_highbd_10_variance128x64_c, svt_aom_highbd_10_variance128x64_avx2);
     SET_AVX2(svt_aom_highbd_10_variance128x128, svt_aom_highbd_10_variance128x128_c, svt_aom_highbd_10_variance128x128_avx2);
+#if FTR_PRUNED_SUBPEL_TREE
+    SET_FUNCTIONS(svt_aom_sub_pixel_variance128x128, svt_aom_sub_pixel_variance128x128_c, NULL, NULL, svt_aom_sub_pixel_variance128x128_sse2, NULL, svt_aom_sub_pixel_variance128x128_ssse3, NULL, NULL, NULL, svt_aom_sub_pixel_variance128x128_avx2, NULL);
+    SET_FUNCTIONS(svt_aom_sub_pixel_variance128x64, svt_aom_sub_pixel_variance128x64_c, NULL, NULL, svt_aom_sub_pixel_variance128x64_sse2, NULL, svt_aom_sub_pixel_variance128x64_ssse3, NULL, NULL, NULL, svt_aom_sub_pixel_variance128x64_avx2, NULL);
+    SET_FUNCTIONS(svt_aom_sub_pixel_variance16x16, svt_aom_sub_pixel_variance16x16_c, NULL, NULL, svt_aom_sub_pixel_variance16x16_sse2, NULL, svt_aom_sub_pixel_variance16x16_ssse3, NULL, NULL, NULL, svt_aom_sub_pixel_variance16x16_avx2, NULL);
+    SET_FUNCTIONS(svt_aom_sub_pixel_variance16x32, svt_aom_sub_pixel_variance16x32_c, NULL, NULL, svt_aom_sub_pixel_variance16x32_sse2, NULL, svt_aom_sub_pixel_variance16x32_ssse3, NULL, NULL, NULL, svt_aom_sub_pixel_variance16x32_avx2, NULL);
+    SET_FUNCTIONS(svt_aom_sub_pixel_variance16x4, svt_aom_sub_pixel_variance16x4_c, NULL, NULL, svt_aom_sub_pixel_variance16x4_sse2, NULL, svt_aom_sub_pixel_variance16x4_ssse3, NULL, NULL, NULL, svt_aom_sub_pixel_variance16x4_avx2, NULL);
+    SET_FUNCTIONS(svt_aom_sub_pixel_variance16x64, svt_aom_sub_pixel_variance16x64_c, NULL, NULL, svt_aom_sub_pixel_variance16x64_sse2, NULL, svt_aom_sub_pixel_variance16x64_ssse3, NULL, NULL, NULL, svt_aom_sub_pixel_variance16x64_avx2, NULL);
+    SET_FUNCTIONS(svt_aom_sub_pixel_variance16x8, svt_aom_sub_pixel_variance16x8_c, NULL, NULL, svt_aom_sub_pixel_variance16x8_sse2, NULL, svt_aom_sub_pixel_variance16x8_ssse3, NULL, NULL, NULL, svt_aom_sub_pixel_variance16x8_avx2, NULL);
+    SET_FUNCTIONS(svt_aom_sub_pixel_variance32x16, svt_aom_sub_pixel_variance32x16_c, NULL, NULL, svt_aom_sub_pixel_variance32x16_sse2, NULL, svt_aom_sub_pixel_variance32x16_ssse3, NULL, NULL, NULL, svt_aom_sub_pixel_variance32x16_avx2, NULL);
+    SET_FUNCTIONS(svt_aom_sub_pixel_variance32x32, svt_aom_sub_pixel_variance32x32_c, NULL, NULL, svt_aom_sub_pixel_variance32x32_sse2, NULL, svt_aom_sub_pixel_variance32x32_ssse3, NULL, NULL, NULL, svt_aom_sub_pixel_variance32x32_avx2, NULL);
+    SET_FUNCTIONS(svt_aom_sub_pixel_variance32x64, svt_aom_sub_pixel_variance32x64_c, NULL, NULL, svt_aom_sub_pixel_variance32x64_sse2, NULL, svt_aom_sub_pixel_variance32x64_ssse3, NULL, NULL, NULL, svt_aom_sub_pixel_variance32x64_avx2, NULL);
+    SET_FUNCTIONS(svt_aom_sub_pixel_variance32x8, svt_aom_sub_pixel_variance32x8_c, NULL, NULL, svt_aom_sub_pixel_variance32x8_sse2, NULL, svt_aom_sub_pixel_variance32x8_ssse3, NULL, NULL, NULL, NULL, NULL);
+    SET_FUNCTIONS(svt_aom_sub_pixel_variance4x16, svt_aom_sub_pixel_variance4x16_c, NULL, NULL, svt_aom_sub_pixel_variance4x16_sse2, NULL, svt_aom_sub_pixel_variance4x16_ssse3, NULL, NULL, NULL, NULL, NULL);
+    SET_FUNCTIONS(svt_aom_sub_pixel_variance4x4, svt_aom_sub_pixel_variance4x4_c, NULL, NULL, svt_aom_sub_pixel_variance4x4_sse2, NULL, svt_aom_sub_pixel_variance4x4_ssse3, NULL, NULL, NULL, NULL, NULL);
+    SET_FUNCTIONS(svt_aom_sub_pixel_variance4x8, svt_aom_sub_pixel_variance4x8_c, NULL, NULL, svt_aom_sub_pixel_variance4x8_sse2, NULL, svt_aom_sub_pixel_variance4x8_ssse3, NULL, NULL, NULL, NULL, NULL);
+    SET_FUNCTIONS(svt_aom_sub_pixel_variance64x128, svt_aom_sub_pixel_variance64x128_c, NULL, NULL, svt_aom_sub_pixel_variance64x128_sse2, NULL, svt_aom_sub_pixel_variance64x128_ssse3, NULL, NULL, NULL, svt_aom_sub_pixel_variance64x128_avx2, NULL);
+    SET_FUNCTIONS(svt_aom_sub_pixel_variance64x16, svt_aom_sub_pixel_variance64x16_c, NULL, NULL, svt_aom_sub_pixel_variance64x16_sse2, NULL, svt_aom_sub_pixel_variance64x16_ssse3, NULL, NULL, NULL, NULL, NULL);
+    SET_FUNCTIONS(svt_aom_sub_pixel_variance64x32, svt_aom_sub_pixel_variance64x32_c, NULL, NULL, svt_aom_sub_pixel_variance64x32_sse2, NULL, svt_aom_sub_pixel_variance64x32_ssse3, NULL, NULL, NULL, svt_aom_sub_pixel_variance64x32_avx2, NULL);
+    SET_FUNCTIONS(svt_aom_sub_pixel_variance64x64, svt_aom_sub_pixel_variance64x64_c, NULL, NULL, svt_aom_sub_pixel_variance64x64_sse2, NULL, svt_aom_sub_pixel_variance64x64_ssse3, NULL, NULL, NULL, svt_aom_sub_pixel_variance64x64_avx2, NULL);
+    SET_FUNCTIONS(svt_aom_sub_pixel_variance8x16, svt_aom_sub_pixel_variance8x16_c, NULL, NULL, svt_aom_sub_pixel_variance8x16_sse2, NULL, svt_aom_sub_pixel_variance8x16_ssse3, NULL, NULL, NULL, NULL, NULL);
+    SET_FUNCTIONS(svt_aom_sub_pixel_variance8x32, svt_aom_sub_pixel_variance8x32_c, NULL, NULL, svt_aom_sub_pixel_variance8x32_sse2, NULL, svt_aom_sub_pixel_variance8x32_ssse3, NULL, NULL, NULL, NULL, NULL);
+    SET_FUNCTIONS(svt_aom_sub_pixel_variance8x4, svt_aom_sub_pixel_variance8x4_c, NULL, NULL, svt_aom_sub_pixel_variance8x4_sse2, NULL, svt_aom_sub_pixel_variance8x4_ssse3, NULL, NULL, NULL, NULL, NULL);
+    SET_FUNCTIONS(svt_aom_sub_pixel_variance8x8, svt_aom_sub_pixel_variance8x8_c, NULL, NULL, svt_aom_sub_pixel_variance8x8_sse2, NULL, svt_aom_sub_pixel_variance8x8_ssse3, NULL, NULL, NULL, NULL, NULL);
+#endif
 
     //QIQ
     //transform

@@ -32,6 +32,7 @@ file(GLOB all_files
 
 set(asm_files
     highbd_variance_impl_sse2.asm
+    subpel_variance_sse2.asm
     x64RegisterUtil.asm)
 
 add_library(ENCODER_ASM_SSE2 OBJECT ${all_files})

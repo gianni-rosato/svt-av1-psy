@@ -2512,11 +2512,18 @@ int md_subpel_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_pt
     int not_used = 0;
     MV subpel_start_mv = get_mv_from_fullmv(&best_mv.as_fullmv);
     unsigned int pred_sse = 0; // not used
+#if FTR_PRUNED_SUBPEL_TREE
+    // Assign which subpel search method to use
+    fractional_mv_step_fp* subpel_search_method =
+        md_subpel_ctrls.subpel_search_method == SUBPEL_TREE ? svt_av1_find_best_sub_pixel_tree : svt_av1_find_best_sub_pixel_tree_pruned;
+
+    int besterr = subpel_search_method(xd, (const struct AV1Common *const) cm, ms_params, subpel_start_mv, &best_mv.as_mv, &not_used, &pred_sse, NULL);
+#else
     int besterr = svt_av1_find_best_sub_pixel_tree(
         xd, (const struct AV1Common *const) cm, ms_params, subpel_start_mv, &best_mv.as_mv, &not_used,
         &pred_sse,
         NULL);
-
+#endif
     *me_mv_x = best_mv.as_mv.col;
     *me_mv_y = best_mv.as_mv.row;
 

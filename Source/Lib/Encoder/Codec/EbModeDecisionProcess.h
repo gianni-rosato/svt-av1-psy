@@ -324,6 +324,12 @@ typedef struct MdSubPelSearchCtrls {
         subpel_search_type; // USE_8_TAPS | USE_4_TAPS | USE_2_TAPS | USE_2_TAPS_ORIG (not supported)
     int subpel_iters_per_step; // Maximum number of steps in logarithmic subpel search before giving up.
     uint8_t eight_pel_search_enabled; // 0: OFF; 1: ON
+#if FTR_PRUNED_SUBPEL_TREE
+    SUBPEL_SEARCH_METHODS subpel_search_method;   // Subpel_search_method can only be subpel_tree which does a subpixel
+                                                  // logarithmic search that keeps stepping at 1/2 pixel units until
+                                                  // you stop getting a gain, and then goes on to 1/4 and repeats
+                                                  // the same process. Along the way it skips many diagonals.
+#endif
 } MdSubPelSearchCtrls;
 #if FTR_NEW_CYCLES_ALLOC
 typedef struct ParentSqCoeffAreaBasedCyclesReductionCtrls {
