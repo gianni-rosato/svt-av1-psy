@@ -102,6 +102,15 @@ Linux (GCC 9):
     CC: gcc-9
     CXX: g++-9
 
+Linux (GCC 9, aarch64):
+  extends: .linux-compiler-base
+  variables:
+    CC: aarch64-linux-gnu-gcc
+    CXX: aarch64-linux-gnu-g++
+    EXTRA_CMAKE_FLAGS: -DCMAKE_TOOLCHAIN_FILE=$CI_PROJECT_DIR/aarch64-linux-gnu.cmake
+  before_script:
+    - curl -Ls "https://aomedia.googlesource.com/aom/+/refs/heads/master/build/cmake/toolchains/arm64-linux-gcc.cmake?format=TEXT" | base64 -d > aarch64-linux-gnu.cmake
+
 Linux (GCC 10):
   extends: .linux-compiler-base
   variables:
