@@ -3060,6 +3060,7 @@ static const uint16_t ep_to_pa_block_index[BLOCK_MAX_COUNT_SB_64] = {
     83,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
     84,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0
 };
+#if !OPT_SB_CLASS
 typedef enum ATTRIBUTE_PACKED {
     NONE_CLASS, // Do nothing class
     SB_CLASS_1,
@@ -3082,6 +3083,7 @@ typedef enum ATTRIBUTE_PACKED {
     SB_CLASS_18,
     NUMBER_OF_SB_CLASS, // Total number of SB classes
 } SB_CLASS;
+#endif
 typedef struct _EbEncHandle EbEncHandle;
 typedef struct _EbThreadContext EbThreadContext;
 #ifdef __cplusplus

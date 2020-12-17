@@ -91,8 +91,10 @@ typedef struct MdBlkStruct {
 #if !CLN_NSQ_AND_STATS
     uint8_t   sse_gradian_band[NUMBER_OF_SHAPES];
 #endif
+#if !OPT_REFINEMENT_SIGNALS
     int8_t    pred_depth_refinement;
     int8_t    pred_depth;
+#endif
     // wm
     EbWarpedMotionParams wm_params_l0;
     EbWarpedMotionParams wm_params_l1;
@@ -718,6 +720,9 @@ typedef struct ModeDecisionContext {
     EbBool  disable_angle_z2_intra_flag;
     uint8_t shut_skip_ctx_dc_sign_update;
     uint8_t shut_fast_rate; // use coeff rate and slipt flag rate only (no MVP derivation)
+#if FTR_FAST_RATE_ESTIMATION
+    uint8_t fast_coeff_est_level; // estimate the rate of the first (eob/N) coeff(s) and last coeff only
+#endif
 #if !TUne_TX_TYPE_LEVELS
     uint8_t tx_search_level;
 #endif
@@ -783,7 +788,9 @@ typedef struct ModeDecisionContext {
 #else
     uint8_t           enable_area_based_cycles_allocation;
 #endif
+#if !OPT_SB_CLASS
     uint8_t           sb_class;
+#endif
 #if !FTR_NEW_CYCLES_ALLOC
     uint16_t          coeff_area_based_bypass_nsq_th;
 #endif

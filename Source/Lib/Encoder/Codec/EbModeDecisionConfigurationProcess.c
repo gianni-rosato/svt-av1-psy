@@ -597,7 +597,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
 #endif
             pcs_ptr->parent_pcs_ptr->pic_obmc_level = 1;
 #if FTR_NEW_REF_PRUNING_CTRLS
+#if TUNE_M6_FEATURES
+        else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M6)
+#else
         else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M5)
+#endif
             pcs_ptr->parent_pcs_ptr->pic_obmc_level = 2;
 #else
 #if TUNE_LOWER_PRESETS

@@ -350,8 +350,11 @@ static INLINE int32_t av1_cost_skip_txb(
         update_cdf(ec_ctx->txb_skip_cdf[txs_ctx][txb_skip_ctx], 1, 2);
     return coeff_costs->txb_skip_cost[txb_skip_ctx][1];
 }
-
+#if FTR_FAST_RATE_ESTIMATION
+static INLINE int32_t av1_cost_coeffs_txb_loop_cost_eob(struct ModeDecisionContext *md_ctx, uint16_t eob, const int16_t *const scan,
+#else
 static INLINE int32_t av1_cost_coeffs_txb_loop_cost_eob(uint16_t eob, const int16_t *const scan,
+#endif
                                                         const TranLow *const  qcoeff,
                                                         int8_t *const         coeff_contexts,
                                                         const LvMapCoeffCost *coeff_costs,
@@ -404,9 +407,20 @@ static INLINE int32_t av1_cost_coeffs_txb_loop_cost_eob(uint16_t eob, const int1
             }
         }
     }
+#if FTR_FAST_RATE_ESTIMATION
+    /* Optimized Loop, omitted first (eob - 1) and last (0) index */
+    // If fast_coeff_est_level is > 0, then estimate the rate of the first (eob / N) coeff(s) and last coeff only
+    int32_t c_start = (md_ctx->fast_coeff_est_level == 0)
+        ? eob - 2
+        : (md_ctx->fast_coeff_est_level == 1)
+            ? MIN(eob - 2, eob / 2)
+            : MIN(eob - 2, eob / 4);
 
+    for (c = c_start; c >= 1; --c) {
+#else
     /* Optimized Loop, omitted first (eob - 1) and last (0) index */
     for (c = eob - 2; c >= 1; --c) {
+#endif
         const int32_t pos   = scan[c];
         const int32_t level = abs(qcoeff[pos]);
         if (level > NUM_BASE_LEVELS) {
@@ -581,8 +595,11 @@ uint64_t svt_av1_cost_coeffs_txb(
     }
 
     cost += av1_cost_coeffs_txb_loop_cost_eob(
+#if FTR_FAST_RATE_ESTIMATION
+        ctx, eob, scan, qcoeff, coeff_contexts, coeff_costs, dc_sign_ctx, levels, bwl, transform_type);
+#else
         eob, scan, qcoeff, coeff_contexts, coeff_costs, dc_sign_ctx, levels, bwl, transform_type);
-
+#endif
     return cost;
 }
 int av1_filter_intra_allowed_bsize(uint8_t enable_filter_intra, BlockSize bs);

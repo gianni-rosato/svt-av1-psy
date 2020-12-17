@@ -966,7 +966,11 @@ EbErrorType signal_derivation_multi_processes_oq(
 
             //IBC Modes:   0: OFF 1:Slow   2:Faster   3:Fastest
 #if TUNE_SC_SETTINGS
+#if TUNE_M6_FEATURES
+            if (pcs_ptr->enc_mode <= ENC_M6) {
+#else
             if (pcs_ptr->enc_mode <= ENC_M5) {
+#endif
 #else
             if (pcs_ptr->enc_mode <= ENC_M9)
             {
@@ -1197,7 +1201,11 @@ EbErrorType signal_derivation_multi_processes_oq(
     if (pcs_ptr->enc_mode <= ENC_M2)
         pcs_ptr->gm_level = GM_FULL;
 #if TUNE_NEW_PRESETS_MR_M8
+#if TUNE_M6_FEATURES
+    else if (pcs_ptr->enc_mode <= ENC_M6)
+#else
     else if (pcs_ptr->enc_mode <= ENC_M5)
+#endif
 #else
     else if (pcs_ptr->enc_mode <= ENC_M4)
 #endif
@@ -1231,6 +1239,14 @@ EbErrorType signal_derivation_multi_processes_oq(
     pcs_ptr->tune_tpl_for_chroma = 1;
 #else
     pcs_ptr->tune_tpl_for_chroma = 0;
+#endif
+
+#if FTR_SIMULATE_P_BASE
+    // Use list0 only if BASE (mimik a P)
+    if (pcs_ptr->enc_mode <= ENC_M8)
+        pcs_ptr->list0_only_base = 0;
+    else
+        pcs_ptr->list0_only_base = 1;
 #endif
     return return_error;
 }
@@ -5972,6 +5988,36 @@ void* picture_decision_kernel(void *input_ptr)
                                         pcs_ptr->ref_list1_count_try = pcs_ptr->is_used_as_reference_flag ? MIN(pcs_ptr->ref_list1_count, 2) : MIN(pcs_ptr->ref_list1_count, 1);
 #endif
                                 }
+
+#if FTR_SIMULATE_P_BASE
+                                if (pcs_ptr->list0_only_base) {
+                                    if (picture_type == B_SLICE && pcs_ptr->temporal_layer_index == 0) {
+                                        uint16_t noise_variance_th = (pcs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE)
+                                            ? 250 : 1000;
+
+                                        PictureParentControlSet *prev_pcs_ptr = pcs_ptr->pd_window[0];
+                                        PictureParentControlSet *current_pcs_ptr = pcs_ptr->pd_window[1];
+
+                                        uint32_t ahd = 0;
+
+                                        for (int bin = 0; bin < HISTOGRAM_NUMBER_OF_BINS; ++bin) {
+                                            int32_t prev_sum = 0, current_sum = 0;
+                                            for (uint32_t region_in_picture_width_index = 0; region_in_picture_width_index < scs_ptr->picture_analysis_number_of_regions_per_width; region_in_picture_width_index++) {
+                                                for (uint32_t region_in_picture_height_index = 0; region_in_picture_height_index < scs_ptr->picture_analysis_number_of_regions_per_height; region_in_picture_height_index++) {
+                                                    prev_sum += prev_pcs_ptr->picture_histogram[region_in_picture_width_index][region_in_picture_height_index][0][bin];
+                                                    current_sum += current_pcs_ptr->picture_histogram[region_in_picture_width_index][region_in_picture_height_index][0][bin];
+                                                }
+                                            }
+                                            ahd += ABS(prev_sum - current_sum);
+                                        }
+
+                                        uint32_t ahd_th = (((pcs_ptr->aligned_width * pcs_ptr->aligned_height) * 5) / 100);
+
+                                        pcs_ptr->ref_list1_count_try = (pcs_ptr->pic_avg_variance < noise_variance_th || ahd < ahd_th) ? 0 : pcs_ptr->ref_list1_count_try;
+
+                                    }
+                                }
+#endif
                                 assert(pcs_ptr->ref_list0_count_try <= pcs_ptr->ref_list0_count);
                                 assert(pcs_ptr->ref_list1_count_try <= pcs_ptr->ref_list1_count);
                                 if (!pcs_ptr->is_overlay) {

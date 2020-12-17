@@ -3122,6 +3122,7 @@ void pme_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPictureBuffe
                 post_subpel_pme_mv_cost;
         }
     }
+#if !OPT_PME_RES_PREP
 #if CLN_INIT_OP
     if (ctx->obmc_ctrls.enabled) {
 #endif
@@ -3138,6 +3139,7 @@ void pme_search(PictureControlSet *pcs, ModeDecisionContext *ctx, EbPictureBuffe
     }
 #if CLN_INIT_OP
     }
+#endif
 #endif
 }
 void av1_cost_calc_cfl(PictureControlSet *pcs_ptr, ModeDecisionCandidateBuffer *candidate_buffer,
@@ -8223,6 +8225,9 @@ void calc_scr_to_recon_dist_per_quadrant(
 #endif
 
 void md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
+#if OPT_SB_CLASS
+                     const EbMdcLeafData *const leaf_data_ptr,
+#endif
 #if RFCTR_MD_BLOCK_LOOP
                      EbPictureBufferDesc *        input_picture_ptr) {
 #else
@@ -8329,6 +8334,10 @@ void md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionContext *context_pt
     // Read and (if needed) perform 1/8 Pel ME MVs refinement
         read_refine_me_mvs(
             pcs_ptr, context_ptr, input_picture_ptr);
+#if OPT_PME_RES_PREP
+    // Initialized for eliminate_candidate_based_on_pme_me_results()
+    context_ptr->pme_res[0][0].dist = context_ptr->pme_res[1][0].dist = 0xFFFFFFFF;
+#else
 #if FTR_PD2_REDUCE_MDS0
     for (uint32_t li = 0; li < MAX_NUM_OF_REF_PIC_LIST; ++li) {
         for (uint32_t ri = 0; ri < REF_LIST_MAX_DEPTH; ++ri) {
@@ -8337,6 +8346,7 @@ void md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionContext *context_pt
             context_ptr->pme_res[li][ri].ref_i = ri;
         }
     }
+#endif
 #endif
     // Perform md reference pruning
     if (context_ptr->ref_pruning_ctrls.enabled)
@@ -8601,6 +8611,9 @@ void md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionContext *context_pt
 
 #if FTR_NSQ_RED_USING_RECON
 #if FTR_MODULATE_SRC_REC_TH
+#if OPT_SB_CLASS
+    if (!context_ptr->md_disallow_nsq || leaf_data_ptr->split_flag)
+#endif
         calc_scr_to_recon_dist_per_quadrant(
             context_ptr,
             input_picture_ptr,
@@ -9452,8 +9465,10 @@ void init_block_data(PictureControlSet *pcs, ModeDecisionContext *ctx,
     blk_ptr->av1xd->sb_type = blk_geom->bsize;
     blk_ptr->mds_idx = blk_idx_mds;
     ctx->md_blk_arr_nsq[blk_idx_mds].mdc_split_flag = (uint16_t)leaf_data_ptr->split_flag;
+#if !OPT_REFINEMENT_SIGNALS
     ctx->md_local_blk_unit[blk_idx_mds].pred_depth_refinement = leaf_data_ptr->final_pred_depth_refinement;
     ctx->md_local_blk_unit[blk_idx_mds].pred_depth = leaf_data_ptr->final_pred_depth;
+#endif
     ctx->md_blk_arr_nsq[blk_geom->sqi_mds].split_flag = (uint16_t)leaf_data_ptr->split_flag;
     blk_ptr->split_flag =(uint16_t)leaf_data_ptr->split_flag; //mdc indicates smallest or non valid CUs with split flag=
     blk_ptr->qindex = ctx->qp_index;
@@ -9696,7 +9711,11 @@ void process_block(SequenceControlSet *scs, PictureControlSet *pcs,
         if (!skip_processing_block && pcs->parent_pcs_ptr->sb_geom[sb_addr].block_is_allowed[blk_ptr->mds_idx]) {
 
             // Encode the block
+#if OPT_SB_CLASS
+            md_encode_block(pcs, ctx, leaf_data_ptr, in_pic);
+#else
             md_encode_block(pcs, ctx, in_pic);
+#endif
         }
         else if (!pcs->parent_pcs_ptr->sb_geom[sb_addr].block_is_allowed[blk_ptr->mds_idx]) {
             // If the block is out of the boundaries, MD is not performed.

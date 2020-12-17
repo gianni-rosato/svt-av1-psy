@@ -143,7 +143,15 @@ extern "C" {
 #define TUNE_CDEF2                             0 // Optimize skip decision for CDEF filtering
 #define FTR_USE_SKIP_MD                        1 // Use md skip decision to bypass residual generation, transform, quantization, inverse quant and
                                                  // inverse transform when it is skip
-
+#define FTR_FAST_RATE_ESTIMATION               1 // Estimate the rate of the first (eob/N) coeff(s) and last coeff only
+// Add #161 here
+#define TUNE_M6_FEATURES                       1 // Optimize M6 with features from M5 and M7
+#define OPT_SB_CLASS                           1 // Remove SB class
+#define OPT_REFINEMENT_SIGNALS                 1 // Remove useless block refinement signals
+#define OPT_PME_RES_PREP                       1 // Optimize pme res
+#define OPT_BLK_REFINEMENT_PREP                1 // Faster block refinement
+#define FTR_SIMULATE_P_BASE                    0 // Use list0 only if BASE (mimik a P)
+#define TUNE_M4_M5_DEC2                        1 // Tune for M4 and M5
     // ============= END SVT_04 =============
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
