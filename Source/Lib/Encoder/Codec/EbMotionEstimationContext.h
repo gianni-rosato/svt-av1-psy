@@ -470,6 +470,10 @@ typedef struct MeContext {
 #if FTR_TPL_TR
     MePcs *me_pcs;//PCS wraper for ME
 #endif
+#if TUNE_M9_HME
+    uint8_t reduce_hme_l0_sr_th_min;
+    uint8_t reduce_hme_l0_sr_th_max;
+#endif
 } MeContext;
 
 typedef uint64_t (*EB_ME_DISTORTION_FUNC)(uint8_t *src, uint32_t src_stride, uint8_t *ref,

@@ -866,6 +866,9 @@ typedef struct ModeDecisionContext {
 #if OPT_TX_TYPE_SEARCH
     uint32_t txt_exit_based_on_non_coeff_th;
 #endif
+#if FTR_USE_SKIP_MD
+    uint8_t ep_use_md_skip_decision;
+#endif
 } ModeDecisionContext;
 
 typedef void (*EbAv1LambdaAssignFunc)(PictureControlSet *pcs_ptr, uint32_t *fast_lambda,

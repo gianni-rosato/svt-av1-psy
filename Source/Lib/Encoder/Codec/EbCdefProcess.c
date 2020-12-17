@@ -219,14 +219,19 @@ void cdef_seg_search(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr,
                 vb_step = 2;
             }
 
+#if !TUNE_CDEF2
             // No filtering if the entire filter block is skipped
             if (svt_sb_all_skip(pcs_ptr, cm, fbr * MI_SIZE_64X64, fbc * MI_SIZE_64X64))
                 continue;
-
+#endif
             cdef_count = svt_sb_compute_cdef_list(
                 pcs_ptr, cm, fbr * MI_SIZE_64X64, fbc * MI_SIZE_64X64, dlist, bs);
 
             for (pli = 0; pli < num_planes; pli++) {
+#if TUNE_CDEF2
+                if (pcs_ptr->parent_pcs_ptr->cdef_level == 6)
+                    if (cdef_count < (pli ? 40 : 20)) continue;
+#endif
                 for (int i = 0; i < CDEF_INBUF_SIZE; i++) inbuf[i] = CDEF_VERY_LARGE;
 
                 int32_t yoff  = CDEF_VBORDER * (fbr != 0);
@@ -457,14 +462,19 @@ void cdef_seg_search16bit(PictureControlSet *pcs_ptr, SequenceControlSet *scs_pt
                 vb_step = 2;
             }
 
+#if !TUNE_CDEF2
             // No filtering if the entire filter block is skipped
             if (svt_sb_all_skip(pcs_ptr, cm, fbr * MI_SIZE_64X64, fbc * MI_SIZE_64X64))
                 continue;
-
+#endif
             cdef_count = svt_sb_compute_cdef_list(
                 pcs_ptr, cm, fbr * MI_SIZE_64X64, fbc * MI_SIZE_64X64, dlist, bs);
 
             for (pli = 0; pli < num_planes; pli++) {
+#if TUNE_CDEF2
+                if (pcs_ptr->parent_pcs_ptr->cdef_level == 6)
+                    if (cdef_count < (pli ? 40 : 20)) continue;
+#endif
                 for (int i = 0; i < CDEF_INBUF_SIZE; i++) inbuf[i] = CDEF_VERY_LARGE;
 
                 int32_t yoff  = CDEF_VBORDER * (fbr != 0);

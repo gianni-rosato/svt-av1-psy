@@ -157,6 +157,10 @@ void set_tpl_controls(
         tpl_ctrls->pf_shape = DEFAULT_SHAPE;
         tpl_ctrls->use_pred_sad_in_intra_search = 0;
 #endif
+#if FTR_TPL_REDUCE_NUMBER_OF_REF
+        tpl_ctrls->get_best_ref = 0;
+        tpl_ctrls->use_pred_sad_in_inter_search = 0;
+#endif
         break;
     case 1:
         tpl_ctrls->tpl_opt_flag = 1;
@@ -170,6 +174,10 @@ void set_tpl_controls(
         tpl_ctrls->pf_shape = DEFAULT_SHAPE;
         tpl_ctrls->use_pred_sad_in_intra_search = 0;
 #endif
+#if FTR_TPL_REDUCE_NUMBER_OF_REF
+        tpl_ctrls->get_best_ref = 0;
+        tpl_ctrls->use_pred_sad_in_inter_search = 0;
+#endif
         break;
 #if OPT_TPL
     case 2:
@@ -182,6 +190,10 @@ void set_tpl_controls(
         tpl_ctrls->get_best_ref = 0;
         tpl_ctrls->pf_shape = DEFAULT_SHAPE;
         tpl_ctrls->use_pred_sad_in_intra_search = 0;
+#if FTR_TPL_REDUCE_NUMBER_OF_REF
+        tpl_ctrls->get_best_ref = 0;
+        tpl_ctrls->use_pred_sad_in_inter_search = 0;
+#endif
         break;
     case 3:
     default:
@@ -194,6 +206,10 @@ void set_tpl_controls(
         tpl_ctrls->get_best_ref = 0;
         tpl_ctrls->pf_shape = scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? N2_SHAPE : N4_SHAPE;
         tpl_ctrls->use_pred_sad_in_intra_search = 1;
+#if FTR_TPL_REDUCE_NUMBER_OF_REF
+        tpl_ctrls->get_best_ref = 1;
+        tpl_ctrls->use_pred_sad_in_inter_search = 0;
+#endif
         break;
 #else
     case 2:

@@ -2348,15 +2348,40 @@ static void hme_level0_sb(
                         dist              = ((dist * exp) / 8) + round_up;
                         hme_sr_factor_x   = dist * 100;
                         hme_sr_factor_y   = dist * 100;
+#if TUNE_M9_HME
+                        uint8_t is_hor = 1;
+                        uint8_t is_ver = 1;
+                        if (context_ptr->reduce_hme_l0_sr_th_min || context_ptr->reduce_hme_l0_sr_th_max) {
+                            if (list_index || ref_pic_index) {
+                                int16_t l0_mvx = context_ptr->x_hme_level0_search_center[0][0][search_region_number_in_width][search_region_number_in_height];
+                                int16_t l0_mvy = context_ptr->y_hme_level0_search_center[0][0][search_region_number_in_width][search_region_number_in_height];// Determine whether the computed motion from list0/ref_index0 is in vertical or horizintal direction
+                                is_ver = ((ABS(l0_mvx) < context_ptr->reduce_hme_l0_sr_th_min) && (ABS(l0_mvy) > context_ptr->reduce_hme_l0_sr_th_max));
+                                is_hor = ((ABS(l0_mvx) > context_ptr->reduce_hme_l0_sr_th_max) && (ABS(l0_mvy) < context_ptr->reduce_hme_l0_sr_th_min));
+                            }
+                        }
+#endif
 #if FTR_HME_REF_IDX_RESIZING
                         // reduce HME search area for higher ref indices
                         if (context_ptr->me_sr_adjustment_ctrls.enable_me_sr_adjustment && context_ptr->me_sr_adjustment_ctrls.distance_based_hme_resizing) {
-
+#if TUNE_M9_HME
+                            uint8_t x_offset = 1;
+                            uint8_t y_offset = 1;
+                            if (!is_ver) {
+                                y_offset = 2;
+                            }
+                            if (!is_hor) {
+                                x_offset = 2;
+                            }
+                            context_ptr->hme_level0_total_search_area_width = base_hme_search_width / (x_offset + ref_pic_index);
+                            context_ptr->hme_level0_total_search_area_height = base_hme_search_height / (y_offset + ref_pic_index);
+                            context_ptr->hme_level0_max_total_search_area_width = base_hme_max_search_width / (x_offset + ref_pic_index);
+                            context_ptr->hme_level0_max_total_search_area_height = base_hme_max_search_height / (y_offset + ref_pic_index);
+#else
                             context_ptr->hme_level0_total_search_area_width = base_hme_search_width / (1 + ref_pic_index);
                             context_ptr->hme_level0_total_search_area_height = base_hme_search_height / (1 + ref_pic_index);
                             context_ptr->hme_level0_max_total_search_area_width = base_hme_max_search_width / (1 + ref_pic_index);
                             context_ptr->hme_level0_max_total_search_area_height = base_hme_max_search_height / (1 + ref_pic_index);
-
+#endif
                             context_ptr->hme_level0_max_search_area_in_width_array[0] =
                                 context_ptr->hme_level0_max_search_area_in_width_array[1] =
                                 context_ptr->hme_level0_max_total_search_area_width / context_ptr->number_hme_search_region_in_width;

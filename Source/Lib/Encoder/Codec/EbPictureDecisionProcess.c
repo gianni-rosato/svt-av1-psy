@@ -760,7 +760,11 @@ void set_tf_controls(PictureParentControlSet *pcs_ptr, uint8_t tf_level) {
     case 1:
         tf_ctrls->enabled = 1;
         tf_ctrls->window_size = 7;
+#if TUNE_FIX_TF
+        tf_ctrls->adjust_num_level = 1;
+#else
         tf_ctrls->noise_based_window_adjust = 1;
+#endif
         tf_ctrls->hp = 1;
         tf_ctrls->chroma = 1;
         tf_ctrls->block_32x32_16x16_th = 0;
@@ -771,7 +775,11 @@ void set_tf_controls(PictureParentControlSet *pcs_ptr, uint8_t tf_level) {
     case 2:
         tf_ctrls->enabled = 1;
         tf_ctrls->window_size = 3;
+#if TUNE_FIX_TF
+        tf_ctrls->adjust_num_level = 1;
+#else
         tf_ctrls->noise_based_window_adjust = 1;
+#endif
         tf_ctrls->hp = 1;
         tf_ctrls->chroma = 1;
         tf_ctrls->block_32x32_16x16_th = 0;
@@ -782,7 +790,11 @@ void set_tf_controls(PictureParentControlSet *pcs_ptr, uint8_t tf_level) {
     case 3:
         tf_ctrls->enabled = 1;
         tf_ctrls->window_size = 3;
+#if TUNE_FIX_TF
+        tf_ctrls->adjust_num_level = 1;
+#else
         tf_ctrls->noise_based_window_adjust = 1;
+#endif
         tf_ctrls->hp = 0;
         tf_ctrls->chroma = 1;
         tf_ctrls->block_32x32_16x16_th = 0;
@@ -794,7 +806,11 @@ void set_tf_controls(PictureParentControlSet *pcs_ptr, uint8_t tf_level) {
     case 4:
         tf_ctrls->enabled = 1;
         tf_ctrls->window_size = 3;
+#if TUNE_FIX_TF
+        tf_ctrls->adjust_num_level = 1;
+#else
         tf_ctrls->noise_based_window_adjust = 1;
+#endif
         tf_ctrls->hp = 0;
         tf_ctrls->chroma = 0;
         tf_ctrls->block_32x32_16x16_th = 20 * 32 * 32;
@@ -1045,7 +1061,7 @@ EbErrorType signal_derivation_multi_processes_oq(
             else if (pcs_ptr->enc_mode <= ENC_M8)
                 pcs_ptr->cdef_level = 5;
             else
-#if TUNE_M9_IMPROVE_SLOPE
+#if TUNE_M7_M9
                 pcs_ptr->cdef_level = (pcs_ptr->temporal_layer_index == 0) ? 5 : 6;
 #else
                 pcs_ptr->cdef_level = 6;
@@ -1131,7 +1147,7 @@ EbErrorType signal_derivation_multi_processes_oq(
 #endif
             pcs_ptr->intra_pred_mode = 0;
 #if TUNE_M8_TO_MATCH_M7
-#if TUNE_INTRA_WM_MV_TXT_M9
+#if TUNE_M7_M9
         else if (pcs_ptr->enc_mode <= ENC_M9)
 #else
         else if (pcs_ptr->enc_mode <= ENC_M8)
@@ -4813,6 +4829,37 @@ EbErrorType derive_tf_window_params(
     // we will not change the number of frames for key frame filtering, which is
     // to avoid visual quality drop.
     int adjust_num = 0;
+#if TUNE_FIX_TF
+    if (pcs_ptr->tf_ctrls.adjust_num_level) {
+        if (pcs_ptr->tf_ctrls.adjust_num_level == 1) {
+            if (noise_levels[0] < 0.5) {
+                adjust_num = 6;
+            }
+            else if (noise_levels[0] < 1.0) {
+                adjust_num = 4;
+            }
+            else if (noise_levels[0] < 2.0) {
+                adjust_num = 2;
+            }
+        }
+        else if (pcs_ptr->tf_ctrls.adjust_num_level == 2) {
+            if (noise_levels[0] < 1.0) {
+                adjust_num = 4;
+            }
+            else {
+                adjust_num = 2;
+            }
+        }
+        else if (pcs_ptr->tf_ctrls.adjust_num_level == 3) {
+            if (noise_levels[0] < 0.5) {
+                adjust_num = 2;
+            }
+            else {
+                adjust_num = 0;
+            }
+        }
+    }
+#else
     if (pcs_ptr->tf_ctrls.noise_based_window_adjust) {
     if (noise_levels[0] < 0.5) {
         adjust_num = 6;
@@ -4824,6 +4871,7 @@ EbErrorType derive_tf_window_params(
         adjust_num = 2;
     }
     }
+#endif
     int altref_nframes = MIN(scs_ptr->static_config.altref_nframes, pcs_ptr->tf_ctrls.window_size + adjust_num);
     (void)out_stride_diff64;
     if (is_delayed_intra(pcs_ptr)) {
@@ -5888,14 +5936,19 @@ void* picture_decision_kernel(void *input_ptr)
                                     if (pcs_ptr->enc_mode <= ENC_MRS) {
                                         pcs_ptr->ref_list0_count_try = MIN(pcs_ptr->ref_list0_count, 4);
                                         pcs_ptr->ref_list1_count_try = MIN(pcs_ptr->ref_list1_count, 3);
-                                }
+                                    }
                                     else if (pcs_ptr->enc_mode <= ENC_M2) {
                                         pcs_ptr->ref_list0_count_try = MIN(pcs_ptr->ref_list0_count, 2);
                                         pcs_ptr->ref_list1_count_try = MIN(pcs_ptr->ref_list1_count, 2);
                                     }
                                     else {
+#if TUNE_M7_M9
+                                        pcs_ptr->ref_list0_count_try = MIN(pcs_ptr->ref_list0_count, 1);
+                                        pcs_ptr->ref_list1_count_try = MIN(pcs_ptr->ref_list1_count, 1);
+#else
                                         pcs_ptr->ref_list0_count_try = pcs_ptr->temporal_layer_index == 0 ? MIN(pcs_ptr->ref_list0_count, 2) : MIN(pcs_ptr->ref_list0_count, 1);
                                         pcs_ptr->ref_list1_count_try = pcs_ptr->temporal_layer_index == 0 ? MIN(pcs_ptr->ref_list1_count, 2) : MIN(pcs_ptr->ref_list1_count, 1);
+#endif
                                     }
                                 }
                                 else

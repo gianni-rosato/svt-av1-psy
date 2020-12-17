@@ -133,8 +133,16 @@ extern "C" {
 #define FTR_SHUT_ENCDEC_MVP                    1 // Shut EncDec MVP
 #define FTR_SHUT_ENCDEC_CBF_ZERO               1 // Remove EncDec Cbf Zero
 
-
-#define TUNE_M9_GM_DETECTOR                    0 // Check the presence of stationnary block(s) per SB to avoid calling the complex GM detection for clip(s) with no global motion, and distance-based active_th
+#define TUNE_M9_DEPTH_REMOVAL                  1 // Add 32x32 vs 16x16 cost deviation for depth removal, apply to M9
+#define FTR_TPL_REDUCE_NUMBER_OF_REF           1 // Reduce the number of references to search in tpl
+#define TUNE_M7_M9                             1 // Adjust preset features for M7-M9
+#define TUNE_M9_HME                            1 // Reduce HME search area for low-motion clips
+#define TUNE_M9_GM_DETECTOR                    1 // Check the presence of stationnary block(s) per SB to avoid calling the complex GM detection for
+                                                 // clip(s) with no global motion, and distance-based active_th
+#define TUNE_FIX_TF                            1 // Remove noise_level feature from TF
+#define TUNE_CDEF2                             0 // Optimize skip decision for CDEF filtering
+#define FTR_USE_SKIP_MD                        1 // Use md skip decision to bypass residual generation, transform, quantization, inverse quant and
+                                                 // inverse transform when it is skip
 
     // ============= END SVT_04 =============
 //FOR DEBUGGING - Do not remove

@@ -485,6 +485,9 @@ typedef struct TplControls {
     EB_TRANS_COEFF_SHAPE pf_shape;
     uint8_t use_pred_sad_in_intra_search;
 #endif
+#if FTR_TPL_REDUCE_NUMBER_OF_REF
+    uint8_t use_pred_sad_in_inter_search;
+#endif
 } TplControls;
 
 /*!
@@ -517,8 +520,12 @@ typedef struct {
 typedef struct TfControls {
     uint8_t enabled;
     uint8_t window_size; // 3, 5, 7
+#if TUNE_FIX_TF
+    uint8_t adjust_num_level; // 0: no adjustment (final_window_size = window_size), 1/2/3: final_window_size = window_size + adjust_num and adjust_num = f(noise_level)
+#else
     uint8_t
              noise_based_window_adjust; // add an offset to default window_size based on the noise level; higher the noise, smaller is the offset
+#endif
     uint8_t  hp; // w/o 1/16 pel MV refinement
     uint8_t  chroma; // use chroma
     uint64_t block_32x32_16x16_th; // control tf_16x16 using tf_32x32 pred error

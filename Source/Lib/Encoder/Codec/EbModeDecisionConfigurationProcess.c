@@ -558,7 +558,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M3) {
 #endif
         enable_wm = EB_TRUE;
-#if TUNE_M9_IFS_SSE_ADAPT_ME_MV_NEAR_WM_TF
+#if TUNE_M9_IFS_SSE_ADAPT_ME_MV_NEAR_WM_TF && !TUNE_M7_M9
     }
     else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M8) {
 #else

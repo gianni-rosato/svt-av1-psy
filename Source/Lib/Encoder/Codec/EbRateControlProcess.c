@@ -700,28 +700,71 @@ void tpl_mc_flow_dispenser(
                             << 1;
 
                         MV      best_mv          = {y_curr_mv, x_curr_mv};
+#if FTR_TPL_REDUCE_NUMBER_OF_REF
+                        if (pcs_ptr->tpl_ctrls.tpl_opt_flag && pcs_ptr->tpl_ctrls.use_pred_sad_in_inter_search) {
+                            int32_t ref_origin_index = ref_pic_ptr->origin_x +
+                                (mb_origin_x + (best_mv.col >> 3)) +
+                                (mb_origin_y + (best_mv.row >> 3) +
+                                    ref_pic_ptr->origin_y) * ref_pic_ptr->stride_y;
+                            //sad_1
+                            inter_cost = svt_nxm_sad_kernel_sub_sampled(
+                                src_mb,
+                                input_ptr->stride_y,
+                                ref_pic_ptr->buffer_y + ref_origin_index,
+                                ref_pic_ptr->stride_y,
+                                16,
+                                16);
+                        }
+                        else {
+                            int32_t ref_origin_index = ref_pic_ptr->origin_x +
+                                (mb_origin_x + (best_mv.col >> 3)) +
+                                (mb_origin_y + (best_mv.row >> 3) + ref_pic_ptr->origin_y) *
+                                ref_pic_ptr->stride_y;
+
+                            svt_aom_subtract_block(16,
+                                16,
+                                src_diff,
+                                16,
+                                src_mb,
+                                input_picture_ptr->stride_y,
+                                ref_pic_ptr->buffer_y + ref_origin_index,
+                                ref_pic_ptr->stride_y);
+#if OPT_TPL
+                            EB_TRANS_COEFF_SHAPE pf_shape = pcs_ptr->tpl_ctrls.tpl_opt_flag ? pcs_ptr->tpl_ctrls.pf_shape : DEFAULT_SHAPE;
+                            svt_av1_wht_fwd_txfm(src_diff, 16, coeff, tx_size, pf_shape, 8, 0);
+#else
+                            svt_av1_wht_fwd_txfm(src_diff, 16, coeff, tx_size, 8, 0);
+#endif
+
+                            inter_cost = svt_aom_satd(coeff, 256);
+                        }
+#else
                         int32_t ref_origin_index = ref_pic_ptr->origin_x +
                             (mb_origin_x + (best_mv.col >> 3)) +
                             (mb_origin_y + (best_mv.row >> 3) + ref_pic_ptr->origin_y) *
-                                ref_pic_ptr->stride_y;
+                            ref_pic_ptr->stride_y;
 
                         svt_aom_subtract_block(16,
-                                               16,
-                                               src_diff,
-                                               16,
-                                               src_mb,
-                                               input_picture_ptr->stride_y,
-                                               ref_pic_ptr->buffer_y + ref_origin_index,
-                                               ref_pic_ptr->stride_y);
+                            16,
+                            src_diff,
+                            16,
+                            src_mb,
+                            input_picture_ptr->stride_y,
+                            ref_pic_ptr->buffer_y + ref_origin_index,
+                            ref_pic_ptr->stride_y);
 #if OPT_TPL
                         EB_TRANS_COEFF_SHAPE pf_shape = pcs_ptr->tpl_ctrls.tpl_opt_flag ? pcs_ptr->tpl_ctrls.pf_shape : DEFAULT_SHAPE;
-                        svt_av1_wht_fwd_txfm(src_diff, 16, coeff, tx_size,pf_shape, 8, 0);
+                        svt_av1_wht_fwd_txfm(src_diff, 16, coeff, tx_size, pf_shape, 8, 0);
 #else
                         svt_av1_wht_fwd_txfm(src_diff, 16, coeff, tx_size, 8, 0);
 #endif
 
                         inter_cost = svt_aom_satd(coeff, 256);
+#endif
                         if (inter_cost < best_inter_cost) {
+#if FTR_TPL_REDUCE_NUMBER_OF_REF
+                            if (!(pcs_ptr->tpl_ctrls.tpl_opt_flag && pcs_ptr->tpl_ctrls.use_pred_sad_in_inter_search))
+#endif
                             EB_MEMCPY(best_coeff, coeff, sizeof(best_coeff));
                             best_ref_poc = pcs_ptr->tpl_data
                                                .tpl_ref_ds_ptr_array[list_index][ref_pic_index]
@@ -738,6 +781,28 @@ void tpl_mc_flow_dispenser(
 
                     if (best_mode == NEWMV) {
                         uint16_t eob = 0;
+#if FTR_TPL_REDUCE_NUMBER_OF_REF
+                        if (pcs_ptr->tpl_ctrls.tpl_opt_flag && pcs_ptr->tpl_ctrls.use_pred_sad_in_inter_search) {
+                            uint32_t list_index = best_rf_idx < 4 ? 0 : 1;
+                            uint32_t ref_pic_index = best_rf_idx >= 4 ? (best_rf_idx - 4) : best_rf_idx;
+
+                            ref_pic_ptr = (EbPictureBufferDesc*)pcs_ptr->tpl_data.tpl_ref_ds_ptr_array[list_index][ref_pic_index].picture_ptr;
+
+                            int32_t ref_origin_index = ref_pic_ptr->origin_x +
+                                (mb_origin_x + (final_best_mv.col >> 3)) +
+                                (mb_origin_y + (final_best_mv.row >> 3) +
+                                    ref_pic_ptr->origin_y) * ref_pic_ptr->stride_y;
+                            svt_aom_subtract_block(16, 16, src_diff, 16, src_mb, input_picture_ptr->stride_y,
+                                ref_pic_ptr->buffer_y + ref_origin_index, ref_pic_ptr->stride_y);
+#if OPT_TPL
+                            EB_TRANS_COEFF_SHAPE pf_shape = pcs_ptr->tpl_ctrls.tpl_opt_flag ? pcs_ptr->tpl_ctrls.pf_shape : DEFAULT_SHAPE;
+                            svt_av1_wht_fwd_txfm(src_diff, 16, coeff, tx_size, pf_shape, 8, 0);
+#else
+                            svt_av1_wht_fwd_txfm(src_diff, 16, coeff, tx_size, 8, 0);
+#endif
+                            memcpy(best_coeff, coeff, sizeof(best_coeff));
+                        }
+#endif
                         get_quantize_error(&mb_plane,
                                            best_coeff,
                                            qcoeff,
@@ -755,9 +820,13 @@ void tpl_mc_flow_dispenser(
 #endif
 
                         tpl_stats.srcrf_rate = rate_cost << TPL_DEP_COST_SCALE_LOG2;
+#if FTR_TPL_REDUCE_NUMBER_OF_REF
+                        tpl_stats.srcrf_dist = recon_error << (TPL_DEP_COST_SCALE_LOG2);
+#endif
                     }
+#if !FTR_TPL_REDUCE_NUMBER_OF_REF
                     tpl_stats.srcrf_dist = recon_error << (TPL_DEP_COST_SCALE_LOG2);
-
+#endif
                     if (best_mode == NEWMV) {
                         // inter recon with rec_picture as reference pic
                         uint64_t ref_poc       = best_ref_poc;

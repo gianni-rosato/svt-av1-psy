@@ -1821,16 +1821,26 @@ void set_block_based_depth_refinement_controls(ModeDecisionContext* mdctxt, uint
 #if TUNE_M9_LEVELS
     case 7:
         depth_refinement_ctrls->enabled = 1;
+#if TUNE_M7_M9
+        depth_refinement_ctrls->parent_to_current_th = 5;
+        depth_refinement_ctrls->sub_to_current_th = 5;
+        depth_refinement_ctrls->use_pred_block_cost = 3;
+#else
         depth_refinement_ctrls->parent_to_current_th = -5;
         depth_refinement_ctrls->sub_to_current_th = -5;
         depth_refinement_ctrls->use_pred_block_cost = 2;
+#endif
         break;
 
     case 8:
         depth_refinement_ctrls->enabled = 1;
         depth_refinement_ctrls->parent_to_current_th = -15;
         depth_refinement_ctrls->sub_to_current_th = -15;
+#if TUNE_M7_M9
+        depth_refinement_ctrls->use_pred_block_cost = 4;
+#else
         depth_refinement_ctrls->use_pred_block_cost = 2;
+#endif
         break;
 #endif
     }
@@ -1950,7 +1960,7 @@ void set_depth_removal_level_controls(PictureControlSet *pcs_ptr, ModeDecisionCo
     uint64_t disallow_below_32x32_th = 0;
     uint64_t disallow_below_16x16_th = 0;
     int64_t dev_16x16_to_8x8_th = MAX_SIGNED_VALUE;
-#if OPT_M9_DEPTH_REMOVAL
+#if TUNE_M9_DEPTH_REMOVAL
     int64_t dev_32x32_to_16x16_th = 0;
 #endif
 
@@ -2160,14 +2170,14 @@ void set_depth_removal_level_controls(PictureControlSet *pcs_ptr, ModeDecisionCo
             disallow_below_16x16_th = 0;
         }
         dev_16x16_to_8x8_th = 2;
-#if OPT_M9_DEPTH_REMOVAL
+#if TUNE_M9_DEPTH_REMOVAL
         dev_32x32_to_16x16_th = 1;
 #endif
         if (noise_level < 0.1 )
             dev_16x16_to_8x8_th *=  (dev_16x16_to_8x8_th * 15)/10;
         else if(noise_level < 0.5 )
             dev_16x16_to_8x8_th *= (dev_16x16_to_8x8_th * 12)/10;
-#if OPT_M9_DEPTH_REMOVAL
+#if TUNE_M9_DEPTH_REMOVAL
         if (me_8x8_cost_variance < 9000) {
             dev_16x16_to_8x8_th *= (dev_16x16_to_8x8_th * 50) / 5;
             dev_32x32_to_16x16_th *= (dev_32x32_to_16x16_th * 20) / 5;
@@ -2220,14 +2230,14 @@ void set_depth_removal_level_controls(PictureControlSet *pcs_ptr, ModeDecisionCo
         }
 
         dev_16x16_to_8x8_th = 2;
-#if OPT_M9_DEPTH_REMOVAL
+#if TUNE_M9_DEPTH_REMOVAL
         dev_32x32_to_16x16_th = 1;
 #endif
         if (noise_level < 0.1 )
             dev_16x16_to_8x8_th *=  (dev_16x16_to_8x8_th * 15)/10;
         else if(noise_level < 0.5 )
             dev_16x16_to_8x8_th *= (dev_16x16_to_8x8_th * 12)/10;
-#if OPT_M9_DEPTH_REMOVAL
+#if TUNE_M9_DEPTH_REMOVAL
         if (me_8x8_cost_variance < 9000) {
             dev_16x16_to_8x8_th *= (dev_16x16_to_8x8_th * 50) / 5;
             dev_32x32_to_16x16_th *= (dev_32x32_to_16x16_th * 20) / 5;
@@ -2280,7 +2290,7 @@ void set_depth_removal_level_controls(PictureControlSet *pcs_ptr, ModeDecisionCo
         }
 
         dev_16x16_to_8x8_th = 2;
-#if OPT_M9_DEPTH_REMOVAL
+#if TUNE_M9_DEPTH_REMOVAL
         dev_32x32_to_16x16_th = 1;
 #endif
         if (noise_level < 0.1 )
@@ -2288,7 +2298,7 @@ void set_depth_removal_level_controls(PictureControlSet *pcs_ptr, ModeDecisionCo
         else if(noise_level < 0.5 )
             dev_16x16_to_8x8_th *= (dev_16x16_to_8x8_th * 13)/10;
 
-#if OPT_M9_DEPTH_REMOVAL
+#if TUNE_M9_DEPTH_REMOVAL
         if (me_8x8_cost_variance < 50000) {
             dev_16x16_to_8x8_th *= (dev_16x16_to_8x8_th * 50) / 5;
             dev_32x32_to_16x16_th *= (dev_32x32_to_16x16_th * 20) / 5;
@@ -2328,14 +2338,14 @@ void set_depth_removal_level_controls(PictureControlSet *pcs_ptr, ModeDecisionCo
         disallow_below_32x32_th = RDCOST(fast_lambda, cost_th_rate, (sb_size * 3) >> 1);
         disallow_below_16x16_th = RDCOST(fast_lambda, cost_th_rate, sb_size * 32);
         dev_16x16_to_8x8_th = 4;
-#if OPT_M9_DEPTH_REMOVAL
+#if TUNE_M9_DEPTH_REMOVAL
         dev_32x32_to_16x16_th = 2;
 #endif
         if (noise_level < 0.1 )
             dev_16x16_to_8x8_th *=  (dev_16x16_to_8x8_th * 17)/10;
         else if(noise_level < 0.5 )
             dev_16x16_to_8x8_th *= (dev_16x16_to_8x8_th * 13)/10;
-#if OPT_M9_DEPTH_REMOVAL
+#if TUNE_M9_DEPTH_REMOVAL
         if (me_8x8_cost_variance < 50000) {
             dev_16x16_to_8x8_th *= (dev_16x16_to_8x8_th * 50) / 5;
             dev_32x32_to_16x16_th *= (dev_32x32_to_16x16_th * 10) / 5;
@@ -2381,7 +2391,7 @@ void set_depth_removal_level_controls(PictureControlSet *pcs_ptr, ModeDecisionCo
         uint64_t cost_32x32 = RDCOST(fast_lambda, 0, pcs_ptr->parent_pcs_ptr->me_32x32_distortion[mdctxt->sb_index]);
         uint64_t cost_16x16 = RDCOST(fast_lambda, 0, pcs_ptr->parent_pcs_ptr->me_16x16_distortion[mdctxt->sb_index]);
         uint64_t cost_8x8 = RDCOST(fast_lambda, 0, pcs_ptr->parent_pcs_ptr->me_8x8_distortion[mdctxt->sb_index]);
-#if OPT_M9_DEPTH_REMOVAL
+#if TUNE_M9_DEPTH_REMOVAL
         int64_t dev_32x32_to_16x16 =
             (int64_t)(((int64_t)MAX(cost_32x32, 1) - (int64_t)MAX(cost_16x16, 1)) * 100) /
             (int64_t)MAX(cost_16x16, 1);
@@ -2395,7 +2405,7 @@ void set_depth_removal_level_controls(PictureControlSet *pcs_ptr, ModeDecisionCo
             : 0;
 
         depth_removal_ctrls->disallow_below_32x32 = (sb_params->width % 32 == 0 && sb_params->height % 32 == 0)
-#if OPT_M9_DEPTH_REMOVAL
+#if TUNE_M9_DEPTH_REMOVAL
             ? (cost_32x32 < disallow_below_32x32_th || dev_32x32_to_16x16 < dev_32x32_to_16x16_th)
 #else
             ? (cost_32x32 < disallow_below_32x32_th)
@@ -3557,9 +3567,15 @@ void set_nic_controls(ModeDecisionContext *mdctxt, uint8_t nic_scaling_level) {
         break;
 #if TUNE_PRESETS_AND_PRUNING
     case 14:
+#if TUNE_M7_M9
+        nic_ctrls->stage1_scaling_num = 2;
+        nic_ctrls->stage2_scaling_num = 0;
+        nic_ctrls->stage3_scaling_num = 0;
+#else
         nic_ctrls->stage1_scaling_num = 2;
         nic_ctrls->stage2_scaling_num = 1;
         nic_ctrls->stage3_scaling_num = 1;
+#endif
         break;
     case 15:
 #else
@@ -4121,13 +4137,23 @@ EbErrorType signal_derivation_enc_dec_kernel_common(
 #if TUNE_NEW_PRESETS_MR_M8
     else if (enc_mode <= ENC_M4)
         block_based_depth_refinement_level = 2;
+#if TUNE_M7_M9
+    else if (enc_mode <= ENC_M8)
+#else
     else if (enc_mode <= ENC_M7)
+#endif
         block_based_depth_refinement_level = 3;
 #if TUNE_M9_LEVELS
+#if !TUNE_M7_M9
     else if (enc_mode <= ENC_M8)
         block_based_depth_refinement_level = (pcs_ptr->slice_type == I_SLICE) ? 4 : 6;
+#endif
     else
+#if TUNE_M7_M9
+        block_based_depth_refinement_level = (pcs_ptr->temporal_layer_index == 0) ? 4 : 6;
+#else
         block_based_depth_refinement_level = 8;
+#endif
 #else
     else
         block_based_depth_refinement_level = (pcs_ptr->slice_type == I_SLICE) ? 4 : 6;
@@ -4232,7 +4258,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             txt_level = 3;
 #endif
 #if TUNE_M9_ME_HME_TXT
+#if TUNE_M7_M9
+        else if (enc_mode <= ENC_M9)
+#else
         else if (enc_mode <= ENC_M8)
+#endif
             txt_level = 5;
         else
 #if OPT_M9_TXT_PRED_DEPTH_PRUNING
@@ -4262,7 +4292,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #endif
             context_ptr->interpolation_search_level = IFS_MDS1;
 #if TUNE_M9_IFS_SSE_ADAPT_ME_MV_NEAR_WM_TF
+#if TUNE_M7_M9
+        else if (enc_mode <= ENC_M9)
+#else
         else if (enc_mode <= ENC_M8)
+#endif
             context_ptr->interpolation_search_level = IFS_MDS3;
         else
             context_ptr->interpolation_search_level = (sequence_control_set_ptr->input_resolution <= INPUT_SIZE_720p_RANGE) ? IFS_MDS3 : IFS_OFF;
@@ -4329,7 +4363,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     // 1                    Disable cfl
 #if TUNE_M4_M8
 #if TUNE_CFL_LEVEL_M8_M9
+#if TUNE_M7_M9
+    if (enc_mode <= ENC_M6)
+#else
     if (enc_mode <= ENC_M7)
+#endif
         context_ptr->md_disable_cfl = EB_FALSE;
     else
         context_ptr->md_disable_cfl = (pcs_ptr->temporal_layer_index == 0) ? EB_FALSE : EB_TRUE;
@@ -4346,7 +4384,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     if (enc_mode <= ENC_M0)
          context_ptr->disallow_4x4 = EB_FALSE;
 #if TUNE_M9_FEATURES
+#if TUNE_M7_M9
+    else if (enc_mode <= ENC_M7)
+#else
     else if (enc_mode <= ENC_M8)
+#endif
         context_ptr->disallow_4x4 = (pcs_ptr->slice_type == I_SLICE) ? EB_FALSE : EB_TRUE;
     else
         context_ptr->disallow_4x4 = EB_TRUE;
@@ -4570,7 +4612,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         context_ptr->spatial_sse_full_loop_level = EB_FALSE;
     else if (sequence_control_set_ptr->static_config.spatial_sse_full_loop_level == DEFAULT)
 #if TUNE_M9_IFS_SSE_ADAPT_ME_MV_NEAR_WM_TF
+#if TUNE_M7_M9
+        if (enc_mode <= ENC_M9)
+#else
         if (enc_mode <= ENC_M8)
+#endif
             context_ptr->spatial_sse_full_loop_level = EB_TRUE;
 #else
         if (enc_mode <= ENC_M9)
@@ -4595,7 +4641,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #if TUNE_M8_TO_MATCH_M7
 #if TUNE_M9_FEATURES
 #if OPT_RDOQ_FOR_M9
+#if TUNE_M7_M9
+        if (enc_mode <= ENC_M9)
+#else
         if (enc_mode <= ENC_M8)
+#endif
 #else
         if (enc_mode <= ENC_M9)
 #endif
@@ -5007,7 +5057,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #if TUNE_PRESETS_AND_PRUNING
         else
 #if OPT_M9_TXT_PRED_DEPTH_PRUNING
+#if TUNE_M7_M9
+            nic_scaling_level = 14;
+#else
             nic_scaling_level = 15;
+#endif
 #else
             nic_scaling_level = 14;
 #endif
@@ -5153,7 +5207,15 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             // Only allow PF if using SB_64x64
 #if TUNE_M4_M8
 #if TUNE_NEW_PRESETS_MR_M8
+#if TUNE_M7_M9
+#if TUNE_M6_FEATURES
+            if (enc_mode <= ENC_M5 ||
+#else
+            if (enc_mode <= ENC_M6 ||
+#endif
+#else
             if (enc_mode <= ENC_M7 ||
+#endif
 #else
             if (enc_mode <= ENC_M6 ||
 #endif
@@ -5217,7 +5279,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     else if (pd_pass == PD_PASS_1)
         depth_skip_level = 0;
     else
+#if TUNE_M7_M9
+        if (enc_mode <= ENC_M7)
+#else
         if (enc_mode <= ENC_M6)
+#endif
             depth_skip_level = 0;
 #if TUNE_M9_FEATURES
         else  if (enc_mode <= ENC_M9)
@@ -5242,7 +5308,15 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             context_ptr->md_sq_mv_search_level = 2;
 #endif
 #if TUNE_M9_IFS_SSE_ADAPT_ME_MV_NEAR_WM_TF
+#if TUNE_M7_M9
+#if TUNE_M6_FEATURES
+        else if (enc_mode <= ENC_M5)
+#else
+        else if (enc_mode <= ENC_M6)
+#endif
+#else
         else if (enc_mode <= ENC_M8)
+#endif
             context_ptr->md_sq_mv_search_level = 4;
         else
             context_ptr->md_sq_mv_search_level = 0;
@@ -5325,7 +5399,15 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     else
 #if TUNE_M4_M8
 #if TUNE_NEW_PRESETS_MR_M8
+#if TUNE_M7_M9
+#if TUNE_M6_FEATURES
+        if (enc_mode <= ENC_M5)
+#else
+        if (enc_mode <= ENC_M6)
+#endif
+#else
         if (enc_mode <= ENC_M7)
+#endif
 #else
         if (enc_mode <= ENC_M5)
 #endif
@@ -5503,11 +5585,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         else
 #if TUNE_M4_M8
 #if OPTIMISE_EARLY_CANDIDATE_ELIMINATION || FTR_M9_AGRESSIVE_EARLY_CAN_ELIMINATION
-#if TUNE_M9_NOV_26 && !TUNE_M8_M9_NOV27
-            if (enc_mode <= ENC_M9)
-#else
             if (enc_mode <= ENC_M8)
-#endif
                 context_ptr->early_cand_elimination = 0;
             else
                 context_ptr->early_cand_elimination = pcs_ptr->parent_pcs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? 120 : 102;
@@ -5540,11 +5618,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #if FTR_REDUCE_MDS3_COMPLEXITY
 #if TUNE_NEW_PRESETS_MR_M8
 #if FTR_M9_AGRESSIVE_LAST_MD_STAGE
-#if TUNE_M9_NOV_26 && !TUNE_M8_M9_NOV27
-            context_ptr->reduce_last_md_stage_candidate = (enc_mode <= ENC_M9) ? 0 : 3;
-#else
             context_ptr->reduce_last_md_stage_candidate = (enc_mode <= ENC_M8) ? 0 : 3;
-#endif
 #else
             context_ptr->reduce_last_md_stage_candidate = (enc_mode <= ENC_M8) ? 0 : 2;
 #endif
@@ -5589,7 +5663,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #else
         else
 #if TUNE_M4_M8
-#if TUNE_M7_FEATURES
+#if TUNE_M7_M9
             eliminate_candidate_based_on_pme_me_results = (enc_mode <= ENC_M7) ? 0 : 1;
 #else
             eliminate_candidate_based_on_pme_me_results = (enc_mode <= ENC_M6) ? 0 : 1;
@@ -5628,7 +5702,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
          else
 #if TUNE_M4_M8
 #if TUNE_NEW_PRESETS_MR_M8
-#if TUNE_M7_FEATURES
+#if TUNE_M7_M9
 #if TUNE_M6_FEATURES
              context_ptr->bypass_tx_search_when_zcoef = (enc_mode <= ENC_M5) ? 0 : 1;
 #else
@@ -5649,6 +5723,12 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
          context_ptr->txt_exit_based_on_non_coeff_th = 0;
      else
          context_ptr->txt_exit_based_on_non_coeff_th = sequence_control_set_ptr->input_resolution <= INPUT_SIZE_720p_RANGE ? 8 : 32;
+#endif
+#if FTR_USE_SKIP_MD
+     if (enc_mode <= ENC_M8)
+         context_ptr->ep_use_md_skip_decision = 0;
+     else
+         context_ptr->ep_use_md_skip_decision = 1;
 #endif
     return return_error;
 }
@@ -6483,7 +6563,22 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
                         else if (pcs_ptr->parent_pcs_ptr->multi_pass_pd_level == MULTI_PASS_PD_LEVEL_0) {
 #if TUNE_NEW_PRESETS_MR_M8
 #if TUNE_PRESETS_AND_PRUNING
+#if TUNE_M7_M9
+                            if (pcs_ptr->parent_pcs_ptr->sc_content_detected) {
+                                // Always use at least [-1, +1] refinement for SC
+                                if (pcs_ptr->enc_mode <= ENC_M3) {
+                                    s_depth = pcs_ptr->slice_type == I_SLICE ? -2 : -1;
+                                    e_depth = pcs_ptr->slice_type == I_SLICE ? 2 : 1;
+                                }
+                                else {
+                                    s_depth = -1;
+                                    e_depth = 1;
+                                }
+                        }
+                            else if (pcs_ptr->enc_mode <= ENC_M3) {
+#else
                             if (pcs_ptr->enc_mode <= ENC_M3) {
+#endif
 #else
                             if (pcs_ptr->enc_mode <= ENC_M5) {
 #endif
@@ -6494,7 +6589,11 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
                                 e_depth = pcs_ptr->slice_type == I_SLICE ?  2 :  1;
                             }
 #if OPT_M9_TXT_PRED_DEPTH_PRUNING
+#if TUNE_M7_M9
+                            else if (pcs_ptr->enc_mode <= ENC_M9) {
+#else
                             else if (pcs_ptr->enc_mode <= ENC_M8) {
+#endif
 #else
                             else {
 #endif
@@ -6503,8 +6602,13 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
                             }
 #if OPT_M9_TXT_PRED_DEPTH_PRUNING
                         else {
+#if TUNE_M7_M9
+                            s_depth = pcs_ptr->slice_type == I_SLICE ? -1 : 0;
+                            e_depth = pcs_ptr->slice_type == I_SLICE ? 1 : 0;
+#else
                             s_depth = 0;
                             e_depth = 0;
+#endif
                         }
 #endif
                         }
