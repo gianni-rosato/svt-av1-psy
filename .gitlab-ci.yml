@@ -112,6 +112,15 @@ Linux (GCC 9, aarch64):
   before_script:
     - curl -Ls "https://aomedia.googlesource.com/aom/+/refs/heads/master/build/cmake/toolchains/arm64-linux-gcc.cmake?format=TEXT" | base64 -d > aarch64-linux-gnu.cmake
 
+Linux (GCC 9, powerpc64le):
+  extends: .linux-compiler-base
+  variables:
+    CC: powerpc64le-linux-gnu-gcc
+    CXX: powerpc64le-linux-gnu-g++
+    EXTRA_CMAKE_FLAGS: -DCMAKE_TOOLCHAIN_FILE=$CI_PROJECT_DIR/powerpc64le-linux-gnu.cmake -DCROSS=powerpc64le-linux-gnu-
+  before_script:
+    - curl -Ls "https://aomedia.googlesource.com/aom/+/refs/heads/master/build/cmake/toolchains/ppc-linux-gcc.cmake?format=TEXT" | base64 -d > powerpc64le-linux-gnu.cmake
+
 Linux (GCC 10):
   extends: .linux-compiler-base
   variables:
