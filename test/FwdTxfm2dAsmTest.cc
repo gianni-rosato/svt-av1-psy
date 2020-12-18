@@ -42,6 +42,7 @@
 #include "aom_dsp_rtcd.h"
 #include "EbTransforms.h"
 #include "TxfmCommon.h"
+#include "EbTime.h"
 
 using svt_av1_test_tool::SVTRandom;
 #define TEST_OFFSET 10
@@ -142,7 +143,8 @@ static const FwdTxfm2dFunc fwd_txfm_2d_N4_asm512_func[TX_SIZES_ALL] = {
     NULL, NULL, NULL, NULL, NULL,
     NULL, NULL, NULL, NULL,
 };
-#endif
+#endif /*EN_AVX512_SUPPORT*/
+
 /**
  * @brief Unit test for fwd tx 2d avx2 functions:
  * - svt_av1_fwd_txfm2d_{4, 8, 16, 32, 64}x{4, 8, 16, 32, 64}_avx2
@@ -220,7 +222,6 @@ class FwdTxfm2dAsmTest : public ::testing::TestWithParam<FwdTxfm2dAsmParam> {
         run_speed_test(
             "ASM AND N4 ", fwd_txfm_2d_N4_asm_func[tx_size_], test_func);
     }
-
 #if EN_AVX512_SUPPORT
     void run_match_test_N2_512() {
         FwdTxfm2dFunc test_func_asm = fwd_txfm_2d_N2_asm512_func[tx_size_];
@@ -247,11 +248,10 @@ class FwdTxfm2dAsmTest : public ::testing::TestWithParam<FwdTxfm2dAsmParam> {
             run_speed_test("N4 AVX512 AVX2", test_func, ref_func);
         }
     }
-#endif
+#endif /*EN_AVX512_SUPPORT*/
 
   private:
-
-       void execute_test(FwdTxfm2dFunc test_func, FwdTxfm2dFunc ref_func,
+    void execute_test(FwdTxfm2dFunc test_func, FwdTxfm2dFunc ref_func,
                       EB_TRANS_COEFF_SHAPE shape) {
         if (ref_func == nullptr || test_func == nullptr)
             return;
@@ -317,7 +317,7 @@ class FwdTxfm2dAsmTest : public ::testing::TestWithParam<FwdTxfm2dAsmParam> {
         }
     }
 
-    void run_speed_test(char *name_cmp, FwdTxfm2dFunc test_func,
+    void run_speed_test(const char *name_cmp, FwdTxfm2dFunc test_func,
                         FwdTxfm2dFunc ref_func) {
         double time_c, time_o;
         uint64_t start_time_seconds, start_time_useconds;
