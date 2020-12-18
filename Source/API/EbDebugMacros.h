@@ -94,7 +94,7 @@ extern "C" {
 #define TUNE_M4_M8                             1 // Preset optimization: M4-M8
 
 #define FTR_REDUCE_MDS3_COMPLEXITY             1 // Added 3 levels of tuning to reduce MDS3 complexity
-#define TUNE_10BIT_MD_SETTINGS                 0 // New settings for hbd mode decision
+#define TUNE_10BIT_MD_SETTINGS                 1 // New settings for hbd mode decision
 #define TUNE_NEW_PRESETS_MR_M8                 1 // Tune presets MR to M8
 #define TUNE_SB_SIZE                           1 // New SB size settings for M5 and M6
 #define FTR_NSQ_RED_USING_RECON                1 // Use the deviation recon-to-src distortion to prune H/V
@@ -150,7 +150,7 @@ extern "C" {
 #define OPT_REFINEMENT_SIGNALS                 1 // Remove useless block refinement signals
 #define OPT_PME_RES_PREP                       1 // Optimize pme res
 #define OPT_BLK_REFINEMENT_PREP                1 // Faster block refinement
-#define FTR_SIMULATE_P_BASE                    0 // Use list0 only if BASE (mimik a P)
+#define FTR_SIMULATE_P_BASE                    1 // Use list0 only if BASE (mimik a P)
 #define TUNE_M4_M5_DEC2                        1 // Tune for M4 and M5
 
 #define TUNE_DEPTH_SKIP                        1 // Fix the problematic knob(s) of depth_skip
