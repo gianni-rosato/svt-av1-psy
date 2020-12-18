@@ -1189,8 +1189,8 @@ static void first_pass_setup_me_context(MotionEstimationContext_t *context_ptr,
     // set search method
     context_ptr->me_context_ptr->hme_search_method = SUB_SAD_SEARCH;
 
-    uint8_t *src_ptr = &(input_picture_ptr->buffer_y[buffer_index]);
 #ifdef ARCH_X86_64
+    uint8_t *src_ptr = &(input_picture_ptr->buffer_y[buffer_index]);
     //_MM_HINT_T0     //_MM_HINT_T1    //_MM_HINT_T2    //_MM_HINT_NTA
     uint32_t i;
     for (i = 0; i < sb_height; i++) {

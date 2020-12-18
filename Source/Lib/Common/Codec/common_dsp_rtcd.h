@@ -67,8 +67,10 @@ extern "C" {
 #endif
 
     // Helper Functions
+#ifdef ARCH_X86_64
     CPU_FLAGS get_cpu_flags();
     CPU_FLAGS get_cpu_flags_to_use();
+#endif
     void setup_common_rtcd_internal(CPU_FLAGS flags);
     void svt_aom_blend_a64_vmask_c(uint8_t *dst, uint32_t dst_stride, const uint8_t *src0, uint32_t src0_stride, const uint8_t *src1, uint32_t src1_stride, const uint8_t *mask, int w, int h);
     RTCD_EXTERN void(*svt_aom_blend_a64_vmask)(uint8_t *dst, uint32_t dst_stride, const uint8_t *src0, uint32_t src0_stride, const uint8_t *src1, uint32_t src1_stride, const uint8_t *mask, int w, int h);

@@ -17,8 +17,10 @@
 #include "EbPackUnPack_C.h"
 #include "EbAvcStyleMcp.h"
 
+#ifdef ARCH_X86_64
 // for get_cpu_flags
 #include "cpuinfo.h"
+#endif
 
 /*
  * DSP deprecated flags
@@ -69,7 +71,7 @@ int64_t svt_av1_block_error_c(const TranLow *coeff, const TranLow *dqcoeff,
 /**************************************
  * Instruction Set Support
  **************************************/
-
+#ifdef ARCH_X86_64
 CPU_FLAGS get_cpu_flags() {
     CPU_FLAGS flags = 0;
 
@@ -105,6 +107,7 @@ CPU_FLAGS get_cpu_flags_to_use() {
 #endif
     return flags;
 }
+#endif /*ARCH_X86_64*/
 
 #ifdef ARCH_X86_64
 #ifndef NON_AVX512_SUPPORT

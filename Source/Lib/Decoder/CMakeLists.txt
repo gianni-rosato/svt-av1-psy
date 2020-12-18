@@ -100,7 +100,10 @@ set_target_properties(SvtAv1Dec PROPERTIES SOVERSION ${DEC_VERSION_MAJOR})
 set_target_properties(SvtAv1Dec PROPERTIES C_VISIBILITY_PRESET hidden)
 add_dependencies(SvtAv1Dec EbVersionHeaderGen)
 target_link_libraries(SvtAv1Dec PUBLIC ${PLATFORM_LIBS})
-target_link_libraries(SvtAv1Dec PRIVATE cpuinfo_public)
+if(NOT COMPILE_C_ONLY AND HAVE_X86_PLATFORM)
+    target_link_libraries(SvtAv1Dec PRIVATE cpuinfo_public)
+endif()
+
 set(DEC_PKG_CONFIG_EXTRA_CFLAGS "")
 if (BUILD_SHARED_LIBS)
     target_compile_definitions(SvtAv1Dec
