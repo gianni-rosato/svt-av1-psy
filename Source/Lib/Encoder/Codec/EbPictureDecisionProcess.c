@@ -871,15 +871,28 @@ EbErrorType signal_derivation_multi_processes_oq(
     // to ensure that resources are allocated for the downsampled pictures used in HME
     pcs_ptr->enable_hme_flag        = 1;
     pcs_ptr->enable_hme_level0_flag = 1;
-
+#if TUNE_M10_BYPASS_HME_LEVEL_1_2
+    if (pcs_ptr->enc_mode <= ENC_M9) {
+        pcs_ptr->enable_hme_level1_flag = 1;
+        pcs_ptr->enable_hme_level2_flag = 1;
+    }
+    else {
+        pcs_ptr->enable_hme_level1_flag = 0;
+        pcs_ptr->enable_hme_level2_flag = 0;
+    }
+#else
     pcs_ptr->enable_hme_level1_flag = 1;
     pcs_ptr->enable_hme_level2_flag = 1;
-
+#endif
     pcs_ptr->tf_enable_hme_flag = 1;
     pcs_ptr->tf_enable_hme_level0_flag = 1;
     // Can enable everywhere b/c TF is off for SC anyway; remove fake diff
 #if TUNE_LOWER_PRESETS
+#if TUNE_M5_FEATURES
+    if (pcs_ptr->enc_mode <= ENC_M4) {
+#else
     if (pcs_ptr->enc_mode <= ENC_M5) {
+#endif
 #else
     if (pcs_ptr->enc_mode <= ENC_M4) {
 #endif
@@ -908,7 +921,11 @@ EbErrorType signal_derivation_multi_processes_oq(
     else
         pcs_ptr->disallow_nsq = EB_TRUE;
     // Set disallow_all_nsq_blocks_below_8x8: 8x4, 4x8
+#if FTR_M10
+    if (pcs_ptr->enc_mode <= ENC_M10)
+#else
     if (pcs_ptr->enc_mode <= ENC_M9)
+#endif
         pcs_ptr->disallow_all_nsq_blocks_below_8x8 = EB_FALSE;
     else
         pcs_ptr->disallow_all_nsq_blocks_below_8x8 = EB_TRUE;
@@ -922,7 +939,11 @@ EbErrorType signal_derivation_multi_processes_oq(
     // disallow_all_nsq_blocks_above_32x32
     pcs_ptr->disallow_all_nsq_blocks_above_32x32 = EB_FALSE;
     // disallow_all_nsq_blocks_above_16x16
+#if FTR_M10
+    if (pcs_ptr->enc_mode <= ENC_M10)
+#else
     if (pcs_ptr->enc_mode <= ENC_M9)
+#endif
         pcs_ptr->disallow_all_nsq_blocks_above_16x16 = EB_FALSE;
     else
         pcs_ptr->disallow_all_nsq_blocks_above_16x16 = EB_TRUE;
@@ -957,7 +978,11 @@ EbErrorType signal_derivation_multi_processes_oq(
         frm_hdr->allow_screen_content_tools = pcs_ptr->sc_content_detected;
         if (scs_ptr->static_config.intrabc_mode == DEFAULT) {
             // ENABLE/DISABLE IBC
+#if FTR_M10
+            if (pcs_ptr->enc_mode <= ENC_M10)
+#else
             if (pcs_ptr->enc_mode <= ENC_M9)
+#endif
             {
                 frm_hdr->allow_intrabc =  pcs_ptr->sc_content_detected;
             } else {
@@ -1008,7 +1033,11 @@ EbErrorType signal_derivation_multi_processes_oq(
         if (scs_ptr->static_config.palette_level == -1)//auto mode; if not set by cfg
             pcs_ptr->palette_level =
             (frm_hdr->allow_screen_content_tools) &&
+#if FTR_M10
+            (pcs_ptr->temporal_layer_index == 0 && pcs_ptr->enc_mode <= ENC_M10)
+#else
             (pcs_ptr->temporal_layer_index == 0 && pcs_ptr->enc_mode <= ENC_M9)
+#endif
 
                 ? 6 : 0;
         else
@@ -1064,11 +1093,18 @@ EbErrorType signal_derivation_multi_processes_oq(
 #if FTR_M9_CDEF
             else if (pcs_ptr->enc_mode <= ENC_M8)
                 pcs_ptr->cdef_level = 5;
+#if FTR_M10
+            else if (pcs_ptr->enc_mode <= ENC_M9)
+                pcs_ptr->cdef_level = (pcs_ptr->temporal_layer_index == 0) ? 5 : 6;
+            else
+                pcs_ptr->cdef_level = 0;
+#else
             else
 #if TUNE_M7_M9
                 pcs_ptr->cdef_level = (pcs_ptr->temporal_layer_index == 0) ? 5 : 6;
 #else
                 pcs_ptr->cdef_level = 6;
+#endif
 #endif
 #else
             else
@@ -1145,7 +1181,11 @@ EbErrorType signal_derivation_multi_processes_oq(
         pcs_ptr->intra_pred_mode = 0;
     else {
 #if TUNE_LOWER_PRESETS
+#if TUNE_M2_FEATURES
+        if (pcs_ptr->enc_mode <= ENC_M2)
+#else
         if (pcs_ptr->enc_mode <= ENC_M1)
+#endif
 #else
         if (pcs_ptr->enc_mode <= ENC_M2)
 #endif
@@ -1221,7 +1261,14 @@ EbErrorType signal_derivation_multi_processes_oq(
 #if FTR_TPL_TR
     if (scs_ptr->static_config.logical_processors == 1)
 #if TUNE_M4_M8
+#if TUNE_M10_TPL_TRAILING_FRAME_CNT
+        if (pcs_ptr->enc_mode <= ENC_M9)
+            pcs_ptr->tpl_trailing_frame_count = 6;
+        else
+            pcs_ptr->tpl_trailing_frame_count = 0;
+#else
         pcs_ptr->tpl_trailing_frame_count = 6;
+#endif
 #else
         pcs_ptr->tpl_trailing_frame_count = (pcs_ptr->enc_mode <= ENC_M6) ? 6 : 0;
 #endif
@@ -1245,8 +1292,15 @@ EbErrorType signal_derivation_multi_processes_oq(
     // Use list0 only if BASE (mimik a P)
     if (pcs_ptr->enc_mode <= ENC_M8)
         pcs_ptr->list0_only_base = 0;
+#if TUNE_M10_P_BASE
+    else if (pcs_ptr->enc_mode <= ENC_M9)
+        pcs_ptr->list0_only_base = 1;
+    else
+        pcs_ptr->list0_only_base = 2;
+#else
     else
         pcs_ptr->list0_only_base = 1;
+#endif
 #endif
     return return_error;
 }
@@ -4060,7 +4114,11 @@ void mctf_frame(
 
         }
 #if TUNE_M9_TF_LEVEL
+#if FTR_M10
+        else if (pcs_ptr->enc_mode <= ENC_M9) {
+#else
         else {
+#endif
 #if TUNE_FIX_TF
             if (pcs_ptr->slice_type == I_SLICE)
                 context_ptr->tf_level = 5;
@@ -4102,6 +4160,10 @@ void mctf_frame(
             }
 #endif
         }
+#if FTR_M10
+    else
+        context_ptr->tf_level = 0;
+#endif
 #endif
 
         }
@@ -5990,7 +6052,16 @@ void* picture_decision_kernel(void *input_ptr)
                                 }
 
 #if FTR_SIMULATE_P_BASE
+#if TUNE_M10_P_BASE
+                                if (pcs_ptr->list0_only_base == 2) {
+                                    if (picture_type == B_SLICE && pcs_ptr->temporal_layer_index == 0) {
+                                        pcs_ptr->ref_list1_count_try = 0;
+                                    }
+                                }
+                                else if (pcs_ptr->list0_only_base == 1) {
+#else
                                 if (pcs_ptr->list0_only_base) {
+#endif
                                     if (picture_type == B_SLICE && pcs_ptr->temporal_layer_index == 0) {
                                         uint16_t noise_variance_th = (pcs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE)
                                             ? 250 : 1000;

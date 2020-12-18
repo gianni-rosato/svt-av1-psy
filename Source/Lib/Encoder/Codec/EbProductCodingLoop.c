@@ -5133,8 +5133,21 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
 #endif
         }
 #if OPT_TX_TYPE_SEARCH
-        uint32_t coeff_th = context_ptr->txt_exit_based_on_non_coeff_th;
+
+#if TUNE_TXT_M9
+        uint32_t coeff_th = (context_ptr->early_txt_search_exit_level == 1) ? 4 : 16;
+        uint32_t dist_err_unit = 100;
+        uint32_t dist_err =
+            context_ptr->blk_geom->txsize[context_ptr->tx_depth][context_ptr->txb_itr] *
+            context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr] *
+            dist_err_unit;
+        uint64_t cost_th = RDCOST(full_lambda, 1, dist_err);
+
+        if (context_ptr->early_txt_search_exit_level && (best_tx_non_coeff < coeff_th || best_cost_tx_search < cost_th)) {
+#else
+        uint32_t coeff_th =  context_ptr->txt_exit_based_on_non_coeff_th;
         if (best_tx_non_coeff < coeff_th) {
+#endif
             tx_type_idx = TX_TYPES;
             tx_type_group_idx = tx_type_tot_group;
         }
@@ -9559,7 +9572,14 @@ void check_curr_to_parent_cost(SequenceControlSet *scs,
 
         // compare the cost of the parent to the cost of the already encoded child + an estimated cost for the remaining child @ the current depth
         // if the total child cost is higher than the parent cost then skip the remaining  child @ the current depth
+#if TUNE_M10_MD_EXIT
+        if (parent_depth_cost != MAX_MODE_COST && parent_depth_cost <=
+            current_depth_cost +
+            (current_depth_cost * (4 - ctx->blk_geom->quadi) *
+                ctx->md_exit_th / ctx->blk_geom->quadi / 100)) {
+#else
         if (parent_depth_cost != MAX_MODE_COST && parent_depth_cost <= current_depth_cost) {
+#endif
             *md_early_exit_sq = 1;
             *next_non_skip_blk_idx_mds =
                 parent_depth_idx_mds +

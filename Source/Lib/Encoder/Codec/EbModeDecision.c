@@ -2094,7 +2094,13 @@ void inject_mvp_candidates_ii(struct ModeDecisionContext *context_ptr, PictureCo
             max_drl_index = get_max_drl_index(xd->ref_mv_count[frame_type], NEARMV);
 #if TUNE_M9_IFS_SSE_ADAPT_ME_MV_NEAR_WM_TF
 #if TUNE_M7_M9
+#if CLN_NEAR_CTRLS
+            uint8_t cap_max_drl_index = 0;
+            if (context_ptr->near_count_ctrls.enabled)
+                cap_max_drl_index = MIN(context_ptr->near_count_ctrls.near_count, max_drl_index);
+#else
             uint8_t cap_max_drl_index = (pcs_ptr->enc_mode <= ENC_M9) ? max_drl_index : MIN(0, max_drl_index);
+#endif
 #else
             uint8_t cap_max_drl_index = (pcs_ptr->enc_mode <= ENC_M8) ? max_drl_index : MIN(0, max_drl_index);
 #endif
@@ -2450,7 +2456,15 @@ void inject_mvp_candidates_ii(struct ModeDecisionContext *context_ptr, PictureCo
                     : MD_COMP_TYPES;
 #endif
                 max_drl_index = get_max_drl_index(xd->ref_mv_count[ref_pair], NEAR_NEARMV);
+#if CLN_NEAR_CTRLS
+                uint8_t cap_max_drl_index = 0;
+                if (context_ptr->near_count_ctrls.enabled)
+                    cap_max_drl_index = MIN(context_ptr->near_count_ctrls.near_near_count, max_drl_index);
+
+                for (drli = 0; drli < cap_max_drl_index; drli++) {
+#else
                 for (drli = 0; drli < max_drl_index; drli++) {
+#endif
                     get_av1_mv_pred_drl(context_ptr,
                         blk_ptr,
                         ref_pair,
@@ -3349,6 +3363,13 @@ void inject_warped_motion_candidates(
 #if !FTR_NEW_REF_PRUNING_CTRLS
             if (ref_idx > context_ptr->md_max_ref_count - 1)
                 continue;
+#endif
+#if OPT_WM
+            // Get gm params
+            if (context_ptr->cand_elimination_ctrs.inject_new_warp == 2) {
+                EbWarpedMotionParams *gm_params = &pcs_ptr->parent_pcs_ptr->global_motion[frame_type];
+                if (gm_params->wmtype <= TRANSLATION) continue;
+            }
 #endif
             //NEAREST
             to_inject_mv_x = context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds]
@@ -6565,7 +6586,11 @@ EbErrorType generate_md_stage_0_cand(
         }
 #if CLN_MD_CANDS
         else { // INTER
+#if TUNE_M10_MERGE_INTER_CLASSES
+            if (cand_ptr->pred_mode == NEWMV || cand_ptr->pred_mode == NEW_NEWMV || context_ptr->merge_inter_classes) {
+#else
             if (cand_ptr->pred_mode == NEWMV || cand_ptr->pred_mode == NEW_NEWMV) {
+#endif
                 // MV Prediction
                 cand_ptr->cand_class = CAND_CLASS_1;
                 context_ptr->md_stage_0_count[CAND_CLASS_1]++;

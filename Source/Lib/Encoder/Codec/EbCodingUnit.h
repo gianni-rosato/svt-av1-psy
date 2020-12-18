@@ -450,7 +450,10 @@ typedef struct SuperBlock {
 #if !RFCTR_MD_BLOCK_LOOP
     uint64_t             depth_cost[NUMBER_OF_DEPTH];
 #endif
-    TileInfo             tile_info;
+#if OPT_LF
+    uint16_t       has_coeff_sb;
+#endif
+    TileInfo       tile_info;
 } SuperBlock;
 
 extern EbErrorType largest_coding_unit_ctor(SuperBlock *larget_coding_unit_ptr, uint8_t sb_sz,

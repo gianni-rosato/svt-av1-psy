@@ -507,8 +507,15 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     else if (pcs_ptr->enc_mode <= ENC_M5)
         update_cdf_level = 2;
 #endif
+#if FTR_M10
+    else if (pcs_ptr->enc_mode <= ENC_M9)
+        update_cdf_level = pcs_ptr->slice_type == I_SLICE ? 1 : 0;
+    else
+        update_cdf_level = 0;
+#else
     else
         update_cdf_level = pcs_ptr->slice_type == I_SLICE ? 1 : 0;
+#endif
 
     //set the conrols uisng the required level
     set_cdf_controls(pcs_ptr, update_cdf_level);
@@ -591,14 +598,26 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     //         3        | Even faster level subject to possible constraints | Level 3 everywhere in PD_PASS_3
     if (scs_ptr->static_config.obmc_level == DEFAULT) {
 #if TUNE_LOWER_PRESETS
+#if TUNE_M3_FEATURES
+#if TUNE_M4_FEATURES
+        if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M4)
+#else
+        if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M3)
+#endif
+#else
         if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M2)
+#endif
 #else
         if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M1)
 #endif
             pcs_ptr->parent_pcs_ptr->pic_obmc_level = 1;
 #if FTR_NEW_REF_PRUNING_CTRLS
 #if TUNE_M6_FEATURES
+#if TUNE_M6_M7_FEATURES
+        else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M5)
+#else
         else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M6)
+#endif
 #else
         else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M5)
 #endif
@@ -616,7 +635,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
 #endif
 #endif
 #if TUNE_NEW_PRESETS_MR_M8
+#if TUNE_M8_FEATURES
+        else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M8)
+#else
         else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M7)
+#endif
             pcs_ptr->parent_pcs_ptr->pic_obmc_level = pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? 2 : 0;
 #endif
         else

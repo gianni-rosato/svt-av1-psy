@@ -104,7 +104,7 @@ extern "C" {
 #define FTR_MODULATE_SRC_REC_TH                1 // Modulate the scr-to-recon TH
 #define FTR_IMPROVE_DEPTH_REMOVAL              1 // Added stage-2 (pd2-based pd2 depth reduction), and more agressive levels for stage-1
 #define TUNE_M9_LEVELS                         1 // Add M9 levels for stage1 depth reduction
-#define TUNE_DEPTH_REMOVAL_PER_RESOLUTION      0 // Improve depth removal
+#define TUNE_DEPTH_REMOVAL_PER_RESOLUTION      1 // Improve depth removal
 #define TUNE_PRESETS_AND_PRUNING               1 // Shifted features in M4 and M5, and updated MD pruning levels for M6 and M9
 #define TUNE_M9_FEATURES                       1 // Shifting features from M8 into M9 and remove I_SLICE check from disallow_4x4 in M9
 #define FTR_M9_AGRESSIVE_LAST_MD_STAGE         1 // Agressive last md stage for M9
@@ -152,7 +152,39 @@ extern "C" {
 #define OPT_BLK_REFINEMENT_PREP                1 // Faster block refinement
 #define FTR_SIMULATE_P_BASE                    0 // Use list0 only if BASE (mimik a P)
 #define TUNE_M4_M5_DEC2                        1 // Tune for M4 and M5
-    // ============= END SVT_04 =============
+
+#define TUNE_DEPTH_SKIP                        1 // Fix the problematic knob(s) of depth_skip
+#define OPT_WM                                 1 // Optimize warp
+#define OPT_LF                                 0 // Optimize lf
+#define TUNE_TXT_M9                            1 // Tune txt for m9, add th_cost along with tuning coeff_th
+#define TUNE_DEPTH_REMOVAL_M9                  1 // Tune depth_removal_level with base/nbase and new level 10
+#define TUNE_M3_FEATURES                       1 // Optimize M3 with features from M2 and M4
+#define TUNE_M2_FEATURES                       1 // Optimize M2 with features from M1 and M3
+#define TUNE_M1_FEATURES                       1 // Optimize M1 with features from M0 and M2
+
+#define FIX_DEPTH_REMOVAL_MODULATION           1 // Removed noise_level-based modulation,  added a 32x32 to 8x8 distortion deviation (besides the existing 32x32 to 16x16 distortion deviation check) before disallowing below 32x32, and tuning
+#define FIX_DEPTH_REMOVAL_SETTINGS             1 // Upgrade depth_removal settings
+#define TUNE_MR_M0_FEATURES                    1 // Optimize M0 with features from MR and M1, reduce M0 features by pushing them to MR
+#define FTR_M10                                1 // Create M10
+#define TUNE_M7_SC                             1 // Create a new ME area level for M7 SC
+#define TUNE_M8_FEATURES                       1 // Optimize m8 features dec 15
+#define TUNE_M5_FEATURES                       1 // Optimize m5 features dec 16
+#define TUNE_M4_FEATURES                       1 // Optimize m4 featuers dec 16
+#define TUNE_M6_M7_FEATURES                    1 // Optimize m6 and m7 features dec 16
+#define CLN_NEAR_CTRLS                         1 // Add controsl for near nearest count
+#define FTR_FINAL_M10                          1 // Finalize M10
+#if FTR_FINAL_M10
+#define TUNE_M10_TPL_TRAILING_FRAME_CNT        1
+#define TUNE_M10_SHUT_NEAR_NEAR                1
+#define TUNE_M10_USE_DC_ONLY                   1
+#define TUNE_M10_P_BASE                        1
+#define TUNE_M10_BYPASS_HME_LEVEL_1_2          1
+#define TUNE_M10_NIC_PRUNING                   1
+#define TUNE_M10_MD_EXIT                       1
+#define TUNE_M10_MERGE_INTER_CLASSES           1
+#define TUNE_M10_SUBPEL                        1
+#endif
+// ============= END SVT_04 =============
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
 #define DEBUG_TPL               0 // Prints to debug TPL

@@ -1054,7 +1054,11 @@ void *resource_coordination_kernel(void *input_ptr) {
             // 0                 OFF: No compond mode search : AVG only
             // 1                 ON: full
             if (scs_ptr->static_config.compound_level == DEFAULT) {
+#if FTR_M10
+                scs_ptr->compound_mode = (scs_ptr->static_config.enc_mode <= ENC_M10) ? 1 : 0;
+#else
                 scs_ptr->compound_mode = (scs_ptr->static_config.enc_mode <= ENC_M9) ? 1 : 0;
+#endif
             } else
                 scs_ptr->compound_mode = scs_ptr->static_config.compound_level;
 

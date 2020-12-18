@@ -227,6 +227,15 @@ typedef struct TxsCycleRControls {
     uint16_t inter_th; // Threshold to bypass inter TXS <the higher th the higher speed>
 } TxsCycleRControls;
 
+#if CLN_NEAR_CTRLS
+typedef struct NearCountCtrls {
+    uint8_t enabled;
+
+    uint8_t near_count;       // max # of near to consider
+    uint8_t near_near_count;    // max # of near_near to consider
+}NearCountCtrls;
+#endif
+
 typedef struct RefPruningControls {
     uint8_t enabled; // 0: OFF; 1: use inter to inter distortion deviation to derive best_refs
 #if FTR_NEW_REF_PRUNING_CTRLS
@@ -755,6 +764,9 @@ typedef struct ModeDecisionContext {
 #endif
     uint8_t              pf_level;
     PfCtrls              pf_ctrls;
+#if TUNE_M10_MD_EXIT
+    uint8_t              md_exit_th;
+#endif
     // Control signals for MD sparse search (used for increasing ME search for active clips)
     uint8_t                md_sq_mv_search_level;
     MdSqMotionSearchCtrls  md_sq_me_ctrls;
@@ -783,6 +795,9 @@ typedef struct ModeDecisionContext {
 #if !CLN_NSQ_AND_STATS
     TxsCycleRControls txs_cycles_red_ctrls;
     AMdCycleRControls admd_cycles_red_ctrls;
+#endif
+#if CLN_NEAR_CTRLS
+    NearCountCtrls near_count_ctrls;
 #endif
     RdoqCtrls         rdoq_ctrls;
     uint8_t           disallow_4x4;
@@ -867,6 +882,9 @@ typedef struct ModeDecisionContext {
     uint8_t inject_new_pme;
     uint8_t inject_new_warp;
 #endif
+#if TUNE_M10_MERGE_INTER_CLASSES
+    uint8_t merge_inter_classes;
+#endif
 #if FTR_REDUCE_TXT_BASED_ON_DISTORTION
     uint8_t bypass_tx_search_when_zcoef;
 #endif
@@ -877,10 +895,17 @@ typedef struct ModeDecisionContext {
     CandEliminationCtlrs cand_elimination_ctrs;
 #endif
 #if OPT_TX_TYPE_SEARCH
+#if TUNE_TXT_M9
+    uint32_t early_txt_search_exit_level; // should be moved to txt_ctrls
+#else
     uint32_t txt_exit_based_on_non_coeff_th;
+#endif
 #endif
 #if FTR_USE_SKIP_MD
     uint8_t ep_use_md_skip_decision;
+#endif
+#if OPT_LF
+    uint8_t sb_bypass_dlf;
 #endif
 } ModeDecisionContext;
 

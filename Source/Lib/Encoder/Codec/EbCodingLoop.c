@@ -2360,6 +2360,9 @@ EB_EXTERN void av1_encode_decode(SequenceControlSet *scs_ptr, PictureControlSet 
     uint32_t final_blk_itr    = 0;
     // CU Loop
     uint32_t blk_it = 0;
+#if OPT_LF
+    sb_ptr->has_coeff_sb = 0;
+#endif
     while (blk_it < scs_ptr->max_block_cnt) {
         BlkStruct *blk_ptr = context_ptr->blk_ptr =
             &context_ptr->md_context->md_blk_arr_nsq[blk_it];
@@ -3959,6 +3962,9 @@ EB_EXTERN void av1_encode_decode(SequenceControlSet *scs_ptr, PictureControlSet 
                                y_mis,
                                obj_l0);
         }
+#if OPT_LF
+        sb_ptr->has_coeff_sb += blk_ptr->block_has_coeff;
+#endif
     }
     blk_it +=
         ns_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128][context_ptr->blk_geom->depth];
@@ -3967,7 +3973,15 @@ else blk_it +=
     d1_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128][context_ptr->blk_geom->depth];
 } // CU Loop
 // First Pass Deblocking
+#if OPT_LF
+    uint8_t skip_dlf = 0;
+    if (context_ptr->md_context->sb_bypass_dlf)
+    if (sb_ptr->has_coeff_sb < 1)
+        skip_dlf = 1;
+    if (dlf_enable_flag && pcs_ptr->parent_pcs_ptr->loop_filter_mode == 1 && total_tile_cnt == 1 && !skip_dlf) {
+#else
     if (dlf_enable_flag && pcs_ptr->parent_pcs_ptr->loop_filter_mode == 1 && total_tile_cnt == 1) {
+#endif
         //Jing: Don't work for tile_parallel since the SB of bottom tile comes early than the bottom SB of top tile
     if (pcs_ptr->parent_pcs_ptr->frm_hdr.loop_filter_params.filter_level[0] ||
         pcs_ptr->parent_pcs_ptr->frm_hdr.loop_filter_params.filter_level[1]) {

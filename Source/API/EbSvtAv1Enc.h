@@ -27,7 +27,11 @@ extern "C" {
 #define MAX_HIERARCHICAL_LEVEL 6
 #define REF_LIST_MAX_DEPTH 4
 #if TUNE_M9_LEVELS
+#if FTR_M10
+#define MAX_ENC_PRESET 10
+#else
 #define MAX_ENC_PRESET 9
+#endif
 #else
 #define MAX_ENC_PRESET 8
 #endif

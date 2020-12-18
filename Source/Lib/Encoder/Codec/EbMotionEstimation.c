@@ -3215,8 +3215,13 @@ EbErrorType motion_estimate_sb(
     uint32_t num_of_list_to_search = context_ptr->num_of_list_to_search;
 
     //pruning of the references is not done for alt-ref / when HMeLevel2 not done
+#if TUNE_M10_BYPASS_HME_LEVEL_1_2
+    uint8_t prune_ref = context_ptr->enable_hme_flag &&
+        context_ptr->me_type != ME_MCTF;
+#else
     uint8_t prune_ref = context_ptr->enable_hme_flag && context_ptr->enable_hme_level2_flag &&
         context_ptr->me_type != ME_MCTF;
+#endif
     //init hme results buffer
     for (uint32_t li = 0; li < MAX_NUM_OF_REF_PIC_LIST; li++) {
         for (uint32_t ri = 0; ri < REF_LIST_MAX_DEPTH; ri++) {

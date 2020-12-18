@@ -2148,7 +2148,11 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     // Set down-sampling method     Settings
     // 0                            0: filtering
     // 1                            1: decimation
-        if (scs_ptr->static_config.enc_mode <= ENC_M9)
+#if FTR_M10
+    if (scs_ptr->static_config.enc_mode <= ENC_M10)
+#else
+    if (scs_ptr->static_config.enc_mode <= ENC_M9)
+#endif
             scs_ptr->down_sampling_method_me_search = ME_FILTERED_DOWNSAMPLED;
         else
             scs_ptr->down_sampling_method_me_search = ME_DECIMATED_DOWNSAMPLED;
