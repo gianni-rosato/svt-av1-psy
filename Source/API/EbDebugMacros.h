@@ -191,6 +191,8 @@ extern "C" {
 #define TPL_ENABLE_TPL_KERNEL       1 // ENABLE tpl dispenser kernel
 #define TPL_SEG                     1 // Add segments to tpl dispenser kernel
 #endif
+
+#define TUNE_MATCH_TR                          1 // Make trailing frames settings similar to non-trailing
 // ============= END SVT_04 =============
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
