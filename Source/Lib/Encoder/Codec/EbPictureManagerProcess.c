@@ -1327,8 +1327,16 @@ void *picture_manager_kernel(void *input_ptr) {
                         } else {
                             child_pcs_ptr->parent_pcs_ptr->frm_hdr.primary_ref_frame =
                                 PRIMARY_REF_NONE;
+#if FIX_FE_CDF_UPDATE_CRASH_NBASE
+                            // Tells each frame whether to forward their data to the next frames;
+                            // never disabled so that the feature can be on in higher layers, while off
+                            // in low layers.
+                            child_pcs_ptr->parent_pcs_ptr->refresh_frame_context =
+                                REFRESH_FRAME_CONTEXT_BACKWARD;
+#else
                             child_pcs_ptr->parent_pcs_ptr->refresh_frame_context =
                                 REFRESH_FRAME_CONTEXT_DISABLED;
+#endif
                         }
                         // Increment the sequenceControlSet Wrapper's live count by 1 for only the pictures which are used as reference
                         if (child_pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag) {

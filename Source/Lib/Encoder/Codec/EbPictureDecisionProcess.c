@@ -1178,7 +1178,18 @@ EbErrorType signal_derivation_multi_processes_oq(
     // 5                                            Light OIS based Intra
 
     if (pcs_ptr->slice_type == I_SLICE)
+#if TUNE_INTRA_PRED_MODE_MT
+        if (scs_ptr->static_config.logical_processors == 1)
+            pcs_ptr->intra_pred_mode = 0;
+        else {
+            if (pcs_ptr->enc_mode <= ENC_M8)
+                pcs_ptr->intra_pred_mode = 0;
+            else
+                pcs_ptr->intra_pred_mode = 3;
+        }
+#else
         pcs_ptr->intra_pred_mode = 0;
+#endif
     else {
 #if TUNE_LOWER_PRESETS
 #if TUNE_M2_FEATURES
@@ -1192,7 +1203,11 @@ EbErrorType signal_derivation_multi_processes_oq(
             pcs_ptr->intra_pred_mode = 0;
 #if TUNE_M8_TO_MATCH_M7
 #if TUNE_M7_M9
+#if TUNE_INTRA_PRED_MODE_MT
+        else if (pcs_ptr->enc_mode <= ENC_M8)
+#else
         else if (pcs_ptr->enc_mode <= ENC_M9)
+#endif
 #else
         else if (pcs_ptr->enc_mode <= ENC_M8)
 #endif
@@ -1203,6 +1218,13 @@ EbErrorType signal_derivation_multi_processes_oq(
                 pcs_ptr->intra_pred_mode = 1;
             else
                 pcs_ptr->intra_pred_mode = 3;
+#if TUNE_INTRA_PRED_MODE_MT
+        else if (pcs_ptr->enc_mode <= ENC_M9)
+            if (pcs_ptr->temporal_layer_index == 0)
+                pcs_ptr->intra_pred_mode = (scs_ptr->static_config.logical_processors == 1) ? 1 : 3;
+            else
+                pcs_ptr->intra_pred_mode = 3;
+#endif
         else
             pcs_ptr->intra_pred_mode = 3;
     }
@@ -1224,7 +1246,18 @@ EbErrorType signal_derivation_multi_processes_oq(
         // 0                                     OFF
         // 1                                     ON
         if (scs_ptr->static_config.frame_end_cdf_update == DEFAULT)
+#if DISABLE_FE_CDF_UPDATE_BASE
+            if (scs_ptr->static_config.logical_processors == 1)
+                pcs_ptr->frame_end_cdf_update_mode = 1;
+            else {
+                if (pcs_ptr->enc_mode <= ENC_M8)
+                    pcs_ptr->frame_end_cdf_update_mode = 1;
+                else
+                    pcs_ptr->frame_end_cdf_update_mode = pcs_ptr->temporal_layer_index == 0 ? 0 : 1;
+            }
+#else
             pcs_ptr->frame_end_cdf_update_mode = 1;
+#endif
         else
             pcs_ptr->frame_end_cdf_update_mode = scs_ptr->static_config.frame_end_cdf_update;
 

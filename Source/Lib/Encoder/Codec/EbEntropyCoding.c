@@ -3128,12 +3128,22 @@ static void write_tile_info(const PictureParentControlSet *const pcs_ptr,
 
     if (pcs_ptr->av1_cm->tiles_info.tile_rows * pcs_ptr->av1_cm->tiles_info.tile_cols > 1) {
         // tile id used for cdf update
+#if FIX_FE_CDF_UPDATE_CRASH_NBASE
+        // Force each frame to update their data so future frames can use it,
+        // even if the current frame did not use it.  This enables REF frames to
+        // have the feature off, while NREF frames can have it on.  Used for multi-threading.
+        svt_aom_wb_write_literal(
+            wb,
+            pcs_ptr->av1_cm->tiles_info.tile_rows * pcs_ptr->av1_cm->tiles_info.tile_cols - 1,
+            pcs_ptr->av1_cm->log2_tile_cols + pcs_ptr->av1_cm->log2_tile_rows);
+#else
         svt_aom_wb_write_literal(
             wb,
             pcs_ptr->frame_end_cdf_update_mode
                 ? pcs_ptr->av1_cm->tiles_info.tile_rows * pcs_ptr->av1_cm->tiles_info.tile_cols - 1
                 : 0,
             pcs_ptr->av1_cm->log2_tile_cols + pcs_ptr->av1_cm->log2_tile_rows);
+#endif
 
         // Number of bytes in tile size - 1
         uint32_t max_tile_size = 0;

@@ -713,8 +713,15 @@ void *packetization_kernel(void *input_ptr) {
             (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE &&
             pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr)) {
             if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE &&
+#if FIX_FE_CDF_UPDATE_CRASH_NBASE
+                // Force each frame to update their data so future frames can use it,
+                // even if the current frame did not use it.  This enables REF frames to
+                // have the feature off, while NREF frames can have it on.  Used for multi-threading.
+                pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr) {
+#else
                 pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr &&
                 pcs_ptr->parent_pcs_ptr->frame_end_cdf_update_mode) {
+#endif
                 for (uint16_t tile_idx = 0; tile_idx < tile_cnt; tile_idx++) {
                     svt_av1_reset_cdf_symbol_counters(
                         pcs_ptr->entropy_coding_info[tile_idx]->entropy_coder_ptr->fc);

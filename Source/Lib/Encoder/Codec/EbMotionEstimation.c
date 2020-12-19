@@ -3030,10 +3030,23 @@ void construct_me_candidate_array(
                                   uint8_t *total_me_candidate_index, uint32_t num_of_list_to_search,
                                   uint32_t pu_index, uint32_t n_idx) {
 #if FTR_REDUCE_ME_INJECTION
-    int64_t best_me_dist = context_ptr->p_sb_best_sad[REF_LIST_0][0][n_idx];
     int64_t current_to_best_dist_distance = 0;
     int64_t me_prune_th = context_ptr->prune_me_candidates_th;
+    int64_t best_me_dist = MAX_SAD_VALUE;
+
+    // Determine the best me distortion
+    for (uint32_t list_index = REF_LIST_0; list_index <= num_of_list_to_search; ++list_index) {
+        for (uint32_t ref_pic = 0; ref_pic < context_ptr->num_of_ref_pic_to_search[list_index]; ++ref_pic) {
+
+            if (context_ptr->hme_results[list_index][ref_pic].do_ref == 0)
+                continue;
+
+            best_me_dist = context_ptr->p_sb_best_sad[list_index][ref_pic][n_idx] < best_me_dist ?
+                   context_ptr->p_sb_best_sad[list_index][ref_pic][n_idx] : best_me_dist;
+        }
+    }
 #endif
+
     for (uint32_t list_index = REF_LIST_0; list_index <= num_of_list_to_search; ++list_index) {
         const uint8_t num_of_ref_pic_to_search = context_ptr->num_of_ref_pic_to_search[list_index];
 
@@ -3043,6 +3056,7 @@ void construct_me_candidate_array(
             //ME was skipped, so do not add this Unipred candidate
             if (context_ptr->hme_results[list_index][ref_pic_index].do_ref == 0)
                 continue;
+
 #if FTR_REDUCE_ME_INJECTION
             if (me_prune_th > 0) {
                 current_to_best_dist_distance = (context_ptr->p_sb_best_sad[list_index][ref_pic_index][n_idx] - best_me_dist) * 100;
@@ -3057,9 +3071,6 @@ void construct_me_candidate_array(
             me_candidate->ref0_list  = me_candidate->prediction_direction == 0 ? list_index : 24;
             me_candidate->ref1_list  = me_candidate->prediction_direction == 1 ? list_index : 24;
             me_candidate->distortion = context_ptr->p_sb_best_sad[list_index][ref_pic_index][n_idx];
-#if FTR_REDUCE_ME_INJECTION
-            best_me_dist = me_candidate->distortion < best_me_dist ? me_candidate->distortion : best_me_dist;
-#endif
             (*total_me_candidate_index)++;
         }
     }
@@ -3103,9 +3114,6 @@ void construct_me_candidate_array(
                     me_candidate->ref0_list            = (uint8_t)REFERENCE_PIC_LIST_0;
                     me_candidate->ref_index[1]         = (uint8_t)second_list_ref_pict_idx;
                     me_candidate->ref1_list            = (uint8_t)REFERENCE_PIC_LIST_1;
-#if FTR_REDUCE_ME_INJECTION
-                    best_me_dist = me_candidate->distortion < best_me_dist ? me_candidate->distortion : best_me_dist;
-#endif
                     (*total_me_candidate_index)++;
                 }
             }
@@ -3138,9 +3146,6 @@ void construct_me_candidate_array(
                 me_candidate->ref0_list            = (uint8_t)REFERENCE_PIC_LIST_0;
                 me_candidate->ref_index[1]         = (uint8_t)first_list_ref_pict_idx;
                 me_candidate->ref1_list            = (uint8_t)REFERENCE_PIC_LIST_0;
-#if FTR_REDUCE_ME_INJECTION
-                best_me_dist = me_candidate->distortion < best_me_dist ? me_candidate->distortion : best_me_dist;
-#endif
                 (*total_me_candidate_index)++;
             }
         }
@@ -3170,9 +3175,6 @@ void construct_me_candidate_array(
             me_candidate->ref0_list            = (uint8_t)REFERENCE_PIC_LIST_1;
             me_candidate->ref_index[1]         = 2;
             me_candidate->ref1_list            = (uint8_t)REFERENCE_PIC_LIST_1;
-#if FTR_REDUCE_ME_INJECTION
-            best_me_dist = me_candidate->distortion < best_me_dist ? me_candidate->distortion : best_me_dist;
-#endif
             (*total_me_candidate_index)++;
 #if FTR_REDUCE_ME_INJECTION
             }
@@ -3280,6 +3282,7 @@ EbErrorType motion_estimate_sb(
             me_pu_result->total_me_candidate_index[pu_index] = MIN(total_me_candidate_index,
                                                                    MAX_PA_ME_CAND);
 #endif
+
             // Assining the ME candidates to the me Results buffer
             for (uint8_t cand_index = 0; cand_index < total_me_candidate_index; ++cand_index) {
                 MePredUnit *me_candidate = &(context_ptr->me_candidate[cand_index].pu[pu_index]);

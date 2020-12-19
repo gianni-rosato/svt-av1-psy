@@ -8055,8 +8055,15 @@ void *mode_decision_kernel(void *input_ptr) {
                         ->film_grain_params = pcs_ptr->parent_pcs_ptr->frm_hdr.film_grain_params;
                 }
             }
+#if FIX_FE_CDF_UPDATE_CRASH_NBASE
+            // Force each frame to update their data so future frames can use it,
+            // even if the current frame did not use it.  This enables REF frames to
+            // have the feature off, while NREF frames can have it on.  Used for multi-threading.
+            if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE &&
+#else
             if (pcs_ptr->parent_pcs_ptr->frame_end_cdf_update_mode &&
                 pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE &&
+#endif
                 pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr)
                 for (int frame = LAST_FRAME; frame <= ALTREF_FRAME; ++frame)
                     ((EbReferenceObject *)
