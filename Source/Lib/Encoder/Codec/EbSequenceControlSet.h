@@ -151,6 +151,10 @@ typedef struct SequenceControlSet {
     uint32_t me_segment_row_count_array[MAX_TEMPORAL_LAYERS];
     uint32_t enc_dec_segment_col_count_array[MAX_TEMPORAL_LAYERS];
     uint32_t enc_dec_segment_row_count_array[MAX_TEMPORAL_LAYERS];
+#if TPL_SEG
+    uint32_t tpl_segment_col_count_array;
+    uint32_t tpl_segment_row_count_array;
+#endif
     uint32_t cdef_segment_column_count;
     uint32_t cdef_segment_row_count;
     uint32_t rest_segment_column_count;
@@ -176,6 +180,9 @@ typedef struct SequenceControlSet {
     uint32_t motion_estimation_fifo_init_count;
     uint32_t initial_rate_control_fifo_init_count;
     uint32_t picture_demux_fifo_init_count;
+#if TPL_KERNEL
+    uint32_t tpl_disp_fifo_init_count;
+#endif
     uint32_t in_loop_me_fifo_init_count;
     uint32_t rate_control_tasks_fifo_init_count;
     uint32_t rate_control_fifo_init_count;
@@ -196,6 +203,9 @@ typedef struct SequenceControlSet {
     uint32_t dlf_process_init_count;
     uint32_t cdef_process_init_count;
     uint32_t rest_process_init_count;
+#if TPL_KERNEL
+    uint32_t tpl_disp_process_init_count;
+#endif
     uint32_t inlme_process_init_count;
     uint32_t total_process_init_count;
     int32_t  lap_enabled;

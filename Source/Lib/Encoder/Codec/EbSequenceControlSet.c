@@ -62,6 +62,10 @@ EbErrorType svt_sequence_control_set_ctor(SequenceControlSet *scs_ptr, EbPtr obj
         scs_ptr->enc_dec_segment_col_count_array[segment_index] = 1;
         scs_ptr->enc_dec_segment_row_count_array[segment_index] = 1;
     }
+#if TPL_SEG
+    scs_ptr->tpl_segment_col_count_array = 1;
+    scs_ptr->tpl_segment_row_count_array = 1;
+#endif
 
     // Encode Context
     if (scs_init_data != NULL)
@@ -294,6 +298,10 @@ EbErrorType copy_sequence_control_set(SequenceControlSet *dst, SequenceControlSe
         dst->tile_group_col_count_array[i]      = src->tile_group_col_count_array[i];
         dst->tile_group_row_count_array[i]      = src->tile_group_row_count_array[i];
     }
+#if TPL_SEG
+    dst->tpl_segment_col_count_array  = src->tpl_segment_col_count_array;
+    dst->tpl_segment_row_count_array  = src->tpl_segment_row_count_array;
+#endif
 
     dst->cdef_segment_column_count = src->cdef_segment_column_count;
     dst->cdef_segment_row_count    = src->cdef_segment_row_count;

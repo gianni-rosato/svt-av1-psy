@@ -184,6 +184,13 @@ extern "C" {
 #define TUNE_M10_MERGE_INTER_CLASSES           1
 #define TUNE_M10_SUBPEL                        1
 #endif
+
+#define FTR_TPL_SEGMENTS                       1 // Add segments to TPL dispenser
+#if FTR_TPL_SEGMENTS
+#define TPL_KERNEL                  1 // Infrastrcture to add tpl dispenser kernel
+#define TPL_ENABLE_TPL_KERNEL       1 // ENABLE tpl dispenser kernel
+#define TPL_SEG                     1 // Add segments to tpl dispenser kernel
+#endif
 // ============= END SVT_04 =============
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch

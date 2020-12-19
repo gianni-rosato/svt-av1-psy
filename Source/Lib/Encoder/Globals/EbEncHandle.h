@@ -67,6 +67,9 @@ struct _EbEncHandle {
     EbHandle *motion_estimation_thread_handle_array;
     EbHandle  initial_rate_control_thread_handle;
     EbHandle *source_based_operations_thread_handle_array;
+#if TPL_KERNEL
+    EbHandle *tpl_disp_thread_handle_array;
+#endif
     EbHandle  picture_manager_thread_handle;
     EbHandle *ime_thread_handle_array;
     EbHandle  rate_control_thread_handle;
@@ -86,6 +89,9 @@ struct _EbEncHandle {
     EbThreadContext **motion_estimation_context_ptr_array;
     EbThreadContext * initial_rate_control_context_ptr;
     EbThreadContext **source_based_operations_context_ptr_array;
+#if TPL_KERNEL
+    EbThreadContext **tpl_disp_context_ptr_array;
+#endif
     EbThreadContext * picture_manager_context_ptr;
     EbThreadContext **inlme_context_ptr_array;
     EbThreadContext * rate_control_context_ptr;
@@ -108,6 +114,9 @@ struct _EbEncHandle {
     EbSystemResource * motion_estimation_results_resource_ptr;
     EbSystemResource * initial_rate_control_results_resource_ptr;
     EbSystemResource * picture_demux_results_resource_ptr;
+#if TPL_KERNEL
+    EbSystemResource * tpl_disp_res_srm;
+#endif
     EbSystemResource * pic_mgr_res_srm;
     EbSystemResource * rate_control_tasks_resource_ptr;
     EbSystemResource * rate_control_results_resource_ptr;

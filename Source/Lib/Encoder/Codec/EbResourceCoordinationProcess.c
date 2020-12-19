@@ -648,6 +648,11 @@ static EbErrorType reset_pcs_av1(PictureParentControlSet *pcs_ptr) {
 
    pcs_ptr->ois_mb_results_trail = NULL;
 #endif
+#if TPL_SEG
+
+   pcs_ptr->sb_total_count_pix = pcs_ptr->sb_total_count;
+   pcs_ptr->tpl_disp_coded_sb_count = 0;
+#endif
 
     return EB_ErrorNone;
 }

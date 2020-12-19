@@ -38,6 +38,7 @@
 uint8_t is_tpl_trailing(PictureParentControlSet *base_pcs, PictureParentControlSet *curr_pcs);
 void  dtor_trail_ressources(PictureParentControlSet * pcs);
 #endif
+#if !TPL_KERNEL
 // Generate lambda factor to tune lambda based on TPL stats
 static void generate_lambda_scaling_factor(PictureParentControlSet *pcs_ptr,
                                            int64_t                  mc_dep_cost_base) {
@@ -369,6 +370,601 @@ void get_best_reference(
 #if FTR_TPL_TR
 #undef PictureParentControlSet
 #endif
+
+
+#if  TPL_KERNEL
+#if FTR_TPL_TR
+/*this is a trailing path function. PictureParentControlSet should not be used */
+#define PictureParentControlSet  "TYPE_NOT_ALLOWED"
+#endif
+
+void tpl_mc_flow_dispenser_sb(
+    EncodeContext                   *encode_context_ptr,
+    SequenceControlSet              *scs_ptr,
+    TplPcs                          *pcs_ptr,
+    int32_t                          frame_idx,
+    uint32_t sb_index)
+{
+{
+    uint32_t             picture_width_in_mb = (pcs_ptr->enhanced_picture_ptr->width + 16 - 1) / 16;
+    int16_t              x_curr_mv           = 0;
+    int16_t              y_curr_mv           = 0;
+    uint32_t             me_mb_offset        = 0;
+    TxSize               tx_size             = TX_16X16;
+    EbPictureBufferDesc *ref_pic_ptr;
+    BlockGeom            blk_geom;
+    EbPictureBufferDesc *input_picture_ptr = pcs_ptr->enhanced_picture_ptr;
+    EbPictureBufferDesc *recon_picture_ptr =
+        encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx];
+    TplStats tpl_stats;
+
+    DECLARE_ALIGNED(32, uint8_t, predictor8[256 * 2]);
+    DECLARE_ALIGNED(32, int16_t, src_diff[256]);
+    DECLARE_ALIGNED(32, TranLow, coeff[256]);
+    DECLARE_ALIGNED(32, TranLow, qcoeff[256]);
+    DECLARE_ALIGNED(32, TranLow, dqcoeff[256]);
+    DECLARE_ALIGNED(32, TranLow, best_coeff[256]);
+    uint8_t *predictor = predictor8;
+
+    blk_geom.bwidth  = 16;
+    blk_geom.bheight = 16;
+
+    MacroblockPlane mb_plane;
+    int32_t         qIndex = quantizer_to_qindex[(uint8_t)scs_ptr->static_config.qp];
+#if FTR_TPL_TR
+    if (pcs_ptr->tpl_ctrls.enable_tpl_qps){
+#else
+    if (pcs_ptr->tpl_data.tpl_ctrls.enable_tpl_qps){
+#endif
+        const double delta_rate_new[7][6] = {
+            {1.0, 1.0, 1.0, 1.0, 1.0, 1.0}, // 1L
+            {0.6, 1.0, 1.0, 1.0, 1.0, 1.0}, // 2L
+            {0.6, 0.8, 1.0, 1.0, 1.0, 1.0}, // 3L
+            {0.6, 0.8, 0.9, 1.0, 1.0, 1.0}, // 4L
+            {0.35, 0.6, 0.8, 0.9, 1.0, 1.0}, //5L
+            {0.35, 0.6, 0.8, 0.9, 0.95, 1.0} //6L
+        };
+        double q_val;
+        q_val = svt_av1_convert_qindex_to_q(qIndex, 8);
+        int32_t delta_qindex;
+        if (pcs_ptr->tpl_data.tpl_slice_type == I_SLICE)
+            delta_qindex = svt_av1_compute_qdelta(q_val, q_val * 0.25, 8);
+        else
+            delta_qindex = svt_av1_compute_qdelta(
+                q_val,
+                q_val *
+                    delta_rate_new[pcs_ptr->hierarchical_levels]
+                                  [pcs_ptr->tpl_data.tpl_temporal_layer_index],
+                8);
+        qIndex = (qIndex + delta_qindex);
+    }
+    mb_plane.quant_qtx       = scs_ptr->quants_8bit.y_quant[qIndex];
+    mb_plane.quant_fp_qtx    = scs_ptr->quants_8bit.y_quant_fp[qIndex];
+    mb_plane.round_fp_qtx    = scs_ptr->quants_8bit.y_round_fp[qIndex];
+    mb_plane.quant_shift_qtx = scs_ptr->quants_8bit.y_quant_shift[qIndex];
+    mb_plane.zbin_qtx        = scs_ptr->quants_8bit.y_zbin[qIndex];
+    mb_plane.round_qtx       = scs_ptr->quants_8bit.y_round[qIndex];
+    mb_plane.dequant_qtx     = scs_ptr->deq_8bit.y_dequant_qtx[qIndex];
+
+    EbPictureBufferDesc *input_ptr = pcs_ptr->enhanced_picture_ptr;
+
+
+    SbParams *sb_params    = &scs_ptr->sb_params_array[sb_index];
+    uint32_t  pa_blk_index = 0;
+    while (pa_blk_index < CU_MAX_COUNT) {
+        const CodedBlockStats *blk_stats_ptr;
+        blk_stats_ptr              = get_coded_blk_stats(pa_blk_index);
+        uint8_t bsize              = blk_stats_ptr->size;
+        EbBool  small_boundary_blk = EB_FALSE;
+
+        //if(sb_params->raster_scan_blk_validity[md_scan_to_raster_scan[pa_blk_index]])
+        {
+            uint32_t cu_origin_x = sb_params->origin_x + blk_stats_ptr->origin_x;
+            uint32_t cu_origin_y = sb_params->origin_y + blk_stats_ptr->origin_y;
+            if ((blk_stats_ptr->origin_x % 16) == 0 &&
+                (blk_stats_ptr->origin_y % 16) == 0 &&
+                ((pcs_ptr->enhanced_picture_ptr->width - cu_origin_x) < 16 ||
+                    (pcs_ptr->enhanced_picture_ptr->height - cu_origin_y) < 16))
+                small_boundary_blk = EB_TRUE;
+        }
+        if (bsize != 16 && !small_boundary_blk) {
+            pa_blk_index++;
+            continue;
+        }
+        if (sb_params->raster_scan_blk_validity[md_scan_to_raster_scan[pa_blk_index]]) {
+            uint32_t  mb_origin_x       = sb_params->origin_x + blk_stats_ptr->origin_x;
+            uint32_t  mb_origin_y       = sb_params->origin_y + blk_stats_ptr->origin_y;
+            const int dst_buffer_stride = recon_picture_ptr->stride_y;
+            const int dst_mb_offset     = mb_origin_y * dst_buffer_stride + mb_origin_x;
+            const int dst_basic_offset  = recon_picture_ptr->origin_y *
+                    recon_picture_ptr->stride_y +
+                recon_picture_ptr->origin_x;
+            uint8_t *dst_buffer = recon_picture_ptr->buffer_y + dst_basic_offset +
+                dst_mb_offset;
+
+            int64_t  inter_cost;
+            int64_t  recon_error = 1, sse = 1;
+            uint64_t best_ref_poc    = 0;
+            int32_t  best_rf_idx     = -1;
+            int64_t  best_inter_cost = INT64_MAX;
+            MV       final_best_mv   = {0, 0};
+            uint32_t max_inter_ref   = MAX_PA_ME_MV;
+
+            PredictionMode best_intra_mode = DC_PRED;
+            int64_t        best_intra_cost = INT64_MAX;
+            // Disable intra prediction
+    #if FTR_TPL_TR
+            uint8_t disable_intra_pred  = pcs_ptr->tpl_ctrls.disable_intra_pred_nref ||
+                pcs_ptr->tpl_ctrls.disable_intra_pred_nbase;
+            if (!disable_intra_pred ||
+                (pcs_ptr->tpl_ctrls.disable_intra_pred_nref && pcs_ptr->tpl_data.is_used_as_reference_flag) ||
+                (pcs_ptr->tpl_ctrls.disable_intra_pred_nbase && pcs_ptr->tpl_data.tpl_temporal_layer_index == 0)){
+    #else
+            uint8_t disable_intra_pred =
+                pcs_ptr->tpl_data.tpl_ctrls.disable_intra_pred_nref ||
+                pcs_ptr->tpl_data.tpl_ctrls.disable_intra_pred_nbase;
+            if (!disable_intra_pred ||
+                (pcs_ptr->tpl_data.tpl_ctrls.disable_intra_pred_nref &&
+                    pcs_ptr->tpl_data.is_used_as_reference_flag) ||
+                (pcs_ptr->tpl_data.tpl_ctrls.disable_intra_pred_nbase &&
+                    pcs_ptr->tpl_data.tpl_temporal_layer_index == 0)) {
+    #endif
+                if (scs_ptr->in_loop_ois == 0) {
+                    OisMbResults *ois_mb_results_ptr =
+                        pcs_ptr->ois_mb_results[(mb_origin_y >> 4) * picture_width_in_mb +
+                                                (mb_origin_x >> 4)];
+                    best_intra_mode = ois_mb_results_ptr->intra_mode;
+                    best_intra_cost = ois_mb_results_ptr->intra_cost;
+
+                } else { // ois
+                    // always process as block16x16 even bsize or tx_size is 8x8
+                    bsize = 16;
+                    DECLARE_ALIGNED(16, uint8_t, left0_data[MAX_TX_SIZE * 2 + 32]);
+                    DECLARE_ALIGNED(16, uint8_t, above0_data[MAX_TX_SIZE * 2 + 32]);
+                    DECLARE_ALIGNED(16, uint8_t, left_data[MAX_TX_SIZE * 2 + 32]);
+                    DECLARE_ALIGNED(16, uint8_t, above_data[MAX_TX_SIZE * 2 + 32]);
+
+                    uint8_t *above_row;
+                    uint8_t *left_col;
+                    uint8_t *above0_row;
+                    uint8_t *left0_col;
+                    above0_row = above0_data + 16;
+                    left0_col  = left0_data + 16;
+                    above_row  = above_data + 16;
+                    left_col   = left_data + 16;
+
+                    uint8_t *src = input_ptr->buffer_y +
+                        pcs_ptr->enhanced_picture_ptr->origin_x + mb_origin_x +
+                        (pcs_ptr->enhanced_picture_ptr->origin_y + mb_origin_y) *
+                            input_ptr->stride_y;
+
+                    // Fill Neighbor Arrays
+                    update_neighbor_samples_array_open_loop_mb(above0_row - 1,
+                                                                left0_col - 1,
+                                                                input_ptr,
+                                                                input_ptr->stride_y,
+                                                                mb_origin_x,
+                                                                mb_origin_y,
+                                                                bsize,
+                                                                bsize);
+                    uint8_t ois_intra_mode;
+                    uint8_t intra_mode_start = DC_PRED;
+                    EbBool  enable_paeth  = pcs_ptr->scs_ptr->static_config.enable_paeth ==
+                            DEFAULT
+                            ? EB_TRUE
+                            : (EbBool)pcs_ptr->scs_ptr->static_config.enable_paeth;
+                    EbBool  enable_smooth = pcs_ptr->scs_ptr->static_config.enable_smooth ==
+                            DEFAULT
+                            ? EB_TRUE
+                            : (EbBool)pcs_ptr->scs_ptr->static_config.enable_smooth;
+                    uint8_t intra_mode_end =
+    #if FTR_TPL_TR
+                    pcs_ptr->tpl_ctrls.tpl_opt_flag
+    #else
+                        pcs_ptr->tpl_data.tpl_ctrls.tpl_opt_flag
+    #endif
+
+                        ? DC_PRED
+                        : enable_paeth      ? PAETH_PRED
+                            : enable_smooth ? SMOOTH_H_PRED
+                                            : D67_PRED;
+
+                    for (ois_intra_mode = intra_mode_start;
+                            ois_intra_mode <= intra_mode_end;
+                            ++ois_intra_mode) {
+                        int32_t p_angle = av1_is_directional_mode(
+                                                (PredictionMode)ois_intra_mode)
+                            ? mode_to_angle_map[(PredictionMode)ois_intra_mode]
+                            : 0;
+                        // Edge filter
+                        if (av1_is_directional_mode((PredictionMode)ois_intra_mode) &&
+                            1 /*scs_ptr->seq_header.enable_intra_edge_filter*/) {
+                            EB_MEMCPY(left_data,
+                                        left0_data,
+                                        sizeof(uint8_t) * (MAX_TX_SIZE * 2 + 32));
+                            EB_MEMCPY(above_data,
+                                        above0_data,
+                                        sizeof(uint8_t) * (MAX_TX_SIZE * 2 + 32));
+                            above_row = above_data + 16;
+                            left_col  = left_data + 16;
+                            filter_intra_edge(NULL,
+                                                ois_intra_mode,
+                                                scs_ptr->seq_header.max_frame_width,
+                                                scs_ptr->seq_header.max_frame_height,
+                                                p_angle,
+                                                (int32_t)mb_origin_x,
+                                                (int32_t)mb_origin_y,
+                                                above_row,
+                                                left_col);
+                        } else {
+                            above_row = above0_row;
+                            left_col  = left0_col;
+                        }
+                        // PRED
+                        intra_prediction_open_loop_mb(p_angle,
+                                                        ois_intra_mode,
+                                                        mb_origin_x,
+                                                        mb_origin_y,
+                                                        tx_size,
+                                                        above_row,
+                                                        left_col,
+                                                        predictor,
+                                                        16);
+
+                        // Distortion
+                        svt_aom_subtract_block(
+                            16, 16, src_diff, 16, src, input_ptr->stride_y, predictor, 16);
+    #if OPT_TPL
+                        EB_TRANS_COEFF_SHAPE pf_shape = pcs_ptr->tpl_ctrls.tpl_opt_flag ? pcs_ptr->tpl_ctrls.pf_shape : DEFAULT_SHAPE;
+                        svt_av1_wht_fwd_txfm(src_diff, 16, coeff, tx_size,pf_shape, 8, 0);
+    #else
+                        svt_av1_wht_fwd_txfm(src_diff, 16, coeff, 2 /*TX_16X16*/, 8, 0);
+    #endif
+                        int64_t intra_cost = svt_aom_satd(coeff, 16 * 16);
+
+                        if (intra_cost < best_intra_cost) {
+                            best_intra_cost = intra_cost;
+                            best_intra_mode = ois_intra_mode;
+                        }
+                    }
+                }
+            }
+            uint8_t  best_mode = DC_PRED;
+            uint8_t *src_mb    = input_picture_ptr->buffer_y + input_picture_ptr->origin_x +
+                mb_origin_x +
+                (input_picture_ptr->origin_y + mb_origin_y) * input_picture_ptr->stride_y;
+            memset(&tpl_stats, 0, sizeof(tpl_stats));
+            blk_geom.origin_x = blk_stats_ptr->origin_x;
+            blk_geom.origin_y = blk_stats_ptr->origin_y;
+            me_mb_offset      = get_me_info_index(
+                pcs_ptr->max_number_of_pus_per_sb, &blk_geom, 0, 0);
+
+            uint32_t best_reference = 0;
+    #if FTR_TPL_TR
+            if (pcs_ptr->tpl_ctrls.get_best_ref)
+    #else
+            if (pcs_ptr->tpl_data.tpl_ctrls.get_best_ref)
+    #endif
+                // Reference pruning
+                get_best_reference(pcs_ptr,
+                                    sb_index,
+                                    me_mb_offset,
+                                    mb_origin_x,
+                                    mb_origin_y,
+                                    &best_reference);
+
+            for (uint32_t rf_idx = 0; rf_idx < max_inter_ref; rf_idx++) {
+    #if FTR_TPL_TR
+                if (pcs_ptr->tpl_ctrls.get_best_ref)
+    #else
+                if (pcs_ptr->tpl_data.tpl_ctrls.get_best_ref)
+    #endif
+                    if (rf_idx != best_reference)
+                        continue;
+                uint32_t list_index    = rf_idx < 4 ? 0 : 1;
+                uint32_t ref_pic_index = rf_idx >= 4 ? (rf_idx - 4) : rf_idx;
+                if ((list_index == 0 &&
+                        (ref_pic_index + 1) > pcs_ptr->tpl_data.tpl_ref0_count) ||
+                    (list_index == 1 &&
+                        (ref_pic_index + 1) > pcs_ptr->tpl_data.tpl_ref1_count))
+                    continue;
+                if (!is_me_data_valid(pcs_ptr->pa_me_data->me_results[sb_index],
+                                        me_mb_offset,
+                                        list_index,
+                                        ref_pic_index))
+                    continue;
+                ref_pic_ptr = (EbPictureBufferDesc *)pcs_ptr->tpl_data
+                                    .tpl_ref_ds_ptr_array[list_index][ref_pic_index]
+                                    .picture_ptr;
+                const MeSbResults *me_results = pcs_ptr->pa_me_data->me_results[sb_index];
+                x_curr_mv                     = me_results
+                                ->me_mv_array[me_mb_offset * MAX_PA_ME_MV +
+                                                (list_index ? 4 : 0) + ref_pic_index]
+                                .x_mv
+                    << 1;
+                y_curr_mv = me_results
+                                ->me_mv_array[me_mb_offset * MAX_PA_ME_MV +
+                                                (list_index ? 4 : 0) + ref_pic_index]
+                                .y_mv
+                    << 1;
+
+                MV      best_mv          = {y_curr_mv, x_curr_mv};
+    #if FTR_TPL_REDUCE_NUMBER_OF_REF
+                if (pcs_ptr->tpl_ctrls.tpl_opt_flag && pcs_ptr->tpl_ctrls.use_pred_sad_in_inter_search) {
+                    int32_t ref_origin_index = ref_pic_ptr->origin_x +
+                        (mb_origin_x + (best_mv.col >> 3)) +
+                        (mb_origin_y + (best_mv.row >> 3) +
+                            ref_pic_ptr->origin_y) * ref_pic_ptr->stride_y;
+                    //sad_1
+                    inter_cost = svt_nxm_sad_kernel_sub_sampled(
+                        src_mb,
+                        input_ptr->stride_y,
+                        ref_pic_ptr->buffer_y + ref_origin_index,
+                        ref_pic_ptr->stride_y,
+                        16,
+                        16);
+                }
+                else {
+                    int32_t ref_origin_index = ref_pic_ptr->origin_x +
+                        (mb_origin_x + (best_mv.col >> 3)) +
+                        (mb_origin_y + (best_mv.row >> 3) + ref_pic_ptr->origin_y) *
+                        ref_pic_ptr->stride_y;
+
+                    svt_aom_subtract_block(16,
+                        16,
+                        src_diff,
+                        16,
+                        src_mb,
+                        input_picture_ptr->stride_y,
+                        ref_pic_ptr->buffer_y + ref_origin_index,
+                        ref_pic_ptr->stride_y);
+    #if OPT_TPL
+                    EB_TRANS_COEFF_SHAPE pf_shape = pcs_ptr->tpl_ctrls.tpl_opt_flag ? pcs_ptr->tpl_ctrls.pf_shape : DEFAULT_SHAPE;
+                    svt_av1_wht_fwd_txfm(src_diff, 16, coeff, tx_size, pf_shape, 8, 0);
+    #else
+                    svt_av1_wht_fwd_txfm(src_diff, 16, coeff, tx_size, 8, 0);
+    #endif
+
+                    inter_cost = svt_aom_satd(coeff, 256);
+                }
+    #else
+                int32_t ref_origin_index = ref_pic_ptr->origin_x +
+                    (mb_origin_x + (best_mv.col >> 3)) +
+                    (mb_origin_y + (best_mv.row >> 3) + ref_pic_ptr->origin_y) *
+                    ref_pic_ptr->stride_y;
+
+                svt_aom_subtract_block(16,
+                    16,
+                    src_diff,
+                    16,
+                    src_mb,
+                    input_picture_ptr->stride_y,
+                    ref_pic_ptr->buffer_y + ref_origin_index,
+                    ref_pic_ptr->stride_y);
+    #if OPT_TPL
+                EB_TRANS_COEFF_SHAPE pf_shape = pcs_ptr->tpl_ctrls.tpl_opt_flag ? pcs_ptr->tpl_ctrls.pf_shape : DEFAULT_SHAPE;
+                svt_av1_wht_fwd_txfm(src_diff, 16, coeff, tx_size, pf_shape, 8, 0);
+    #else
+                svt_av1_wht_fwd_txfm(src_diff, 16, coeff, tx_size, 8, 0);
+    #endif
+
+                inter_cost = svt_aom_satd(coeff, 256);
+    #endif
+                if (inter_cost < best_inter_cost) {
+    #if FTR_TPL_REDUCE_NUMBER_OF_REF
+                    if (!(pcs_ptr->tpl_ctrls.tpl_opt_flag && pcs_ptr->tpl_ctrls.use_pred_sad_in_inter_search))
+    #endif
+                    EB_MEMCPY(best_coeff, coeff, sizeof(best_coeff));
+                    best_ref_poc = pcs_ptr->tpl_data
+                                        .tpl_ref_ds_ptr_array[list_index][ref_pic_index]
+                                        .picture_number;
+
+                    best_rf_idx     = rf_idx;
+                    best_inter_cost = inter_cost;
+                    final_best_mv   = best_mv;
+
+                    if (best_inter_cost < best_intra_cost)
+                        best_mode = NEWMV;
+                }
+            } // rf_idx
+
+            if (best_mode == NEWMV) {
+                uint16_t eob = 0;
+    #if FTR_TPL_REDUCE_NUMBER_OF_REF
+                if (pcs_ptr->tpl_ctrls.tpl_opt_flag && pcs_ptr->tpl_ctrls.use_pred_sad_in_inter_search) {
+                    uint32_t list_index = best_rf_idx < 4 ? 0 : 1;
+                    uint32_t ref_pic_index = best_rf_idx >= 4 ? (best_rf_idx - 4) : best_rf_idx;
+
+                    ref_pic_ptr = (EbPictureBufferDesc*)pcs_ptr->tpl_data.tpl_ref_ds_ptr_array[list_index][ref_pic_index].picture_ptr;
+
+                    int32_t ref_origin_index = ref_pic_ptr->origin_x +
+                        (mb_origin_x + (final_best_mv.col >> 3)) +
+                        (mb_origin_y + (final_best_mv.row >> 3) +
+                            ref_pic_ptr->origin_y) * ref_pic_ptr->stride_y;
+                    svt_aom_subtract_block(16, 16, src_diff, 16, src_mb, input_picture_ptr->stride_y,
+                        ref_pic_ptr->buffer_y + ref_origin_index, ref_pic_ptr->stride_y);
+    #if OPT_TPL
+                    EB_TRANS_COEFF_SHAPE pf_shape = pcs_ptr->tpl_ctrls.tpl_opt_flag ? pcs_ptr->tpl_ctrls.pf_shape : DEFAULT_SHAPE;
+                    svt_av1_wht_fwd_txfm(src_diff, 16, coeff, tx_size, pf_shape, 8, 0);
+    #else
+                    svt_av1_wht_fwd_txfm(src_diff, 16, coeff, tx_size, 8, 0);
+    #endif
+                    memcpy(best_coeff, coeff, sizeof(best_coeff));
+                }
+    #endif
+                get_quantize_error(&mb_plane,
+                                    best_coeff,
+                                    qcoeff,
+                                    dqcoeff,
+                                    tx_size,
+                                    &eob,
+                                    &recon_error,
+                                    &sse);
+    #if FTR_TPL_TR
+                int rate_cost = pcs_ptr->tpl_ctrls.tpl_opt_flag ? 0 : rate_estimator(qcoeff, eob, tx_size);
+    #else
+                int rate_cost        = pcs_ptr->tpl_data.tpl_ctrls.tpl_opt_flag
+                            ? 0
+                            : rate_estimator(qcoeff, eob, tx_size);
+    #endif
+
+                tpl_stats.srcrf_rate = rate_cost << TPL_DEP_COST_SCALE_LOG2;
+    #if FTR_TPL_REDUCE_NUMBER_OF_REF
+                tpl_stats.srcrf_dist = recon_error << (TPL_DEP_COST_SCALE_LOG2);
+    #endif
+            }
+    #if !FTR_TPL_REDUCE_NUMBER_OF_REF
+            tpl_stats.srcrf_dist = recon_error << (TPL_DEP_COST_SCALE_LOG2);
+    #endif
+            if (best_mode == NEWMV) {
+                // inter recon with rec_picture as reference pic
+                uint64_t ref_poc       = best_ref_poc;
+                uint32_t list_index    = best_rf_idx < 4 ? 0 : 1;
+                uint32_t ref_pic_index = best_rf_idx >= 4 ? (best_rf_idx - 4) : best_rf_idx;
+                if (pcs_ptr->tpl_data.ref_in_slide_window[list_index][ref_pic_index]) {
+                    uint32_t ref_frame_idx = 0;
+                    while (ref_frame_idx < MAX_TPL_LA_SW &&
+                            encode_context_ptr->poc_map_idx[ref_frame_idx] != ref_poc)
+                        ref_frame_idx++;
+                    assert(ref_frame_idx != MAX_TPL_LA_SW);
+                    ref_pic_ptr =
+                        encode_context_ptr->mc_flow_rec_picture_buffer[ref_frame_idx];
+                } else
+                    ref_pic_ptr = (EbPictureBufferDesc *)pcs_ptr->tpl_data
+                                        .tpl_ref_ds_ptr_array[list_index][ref_pic_index]
+                                        .picture_ptr;
+                int32_t ref_origin_index = ref_pic_ptr->origin_x +
+                    (mb_origin_x + (final_best_mv.col >> 3)) +
+                    (mb_origin_y + (final_best_mv.row >> 3) + ref_pic_ptr->origin_y) *
+                        ref_pic_ptr->stride_y;
+                for (int i = 0; i < 16; ++i)
+                    EB_MEMCPY(dst_buffer + i * dst_buffer_stride,
+                                ref_pic_ptr->buffer_y + ref_origin_index +
+                                    i * ref_pic_ptr->stride_y,
+                                sizeof(uint8_t) * (16));
+            } else {
+                // intra recon
+
+                uint8_t *above_row;
+                uint8_t *left_col;
+                DECLARE_ALIGNED(16, uint8_t, left_data[MAX_TX_SIZE * 2 + 32]);
+                DECLARE_ALIGNED(16, uint8_t, above_data[MAX_TX_SIZE * 2 + 32]);
+
+                above_row             = above_data + 16;
+                left_col              = left_data + 16;
+                uint8_t *recon_buffer = recon_picture_ptr->buffer_y + dst_basic_offset;
+
+                update_neighbor_samples_array_open_loop_mb_recon(above_row - 1,
+                                                                    left_col - 1,
+                                                                    recon_buffer,
+                                                                    dst_buffer_stride,
+                                                                    mb_origin_x,
+                                                                    mb_origin_y,
+                                                                    16,
+                                                                    16,
+                                                                    input_picture_ptr->width,
+                                                                    input_picture_ptr->height);
+                uint8_t ois_intra_mode = best_intra_mode; // ois_mb_results_ptr->intra_mode;
+                int32_t p_angle = av1_is_directional_mode((PredictionMode)ois_intra_mode)
+                    ? mode_to_angle_map[(PredictionMode)ois_intra_mode]
+                    : 0;
+                // Edge filter
+                if (av1_is_directional_mode((PredictionMode)ois_intra_mode) &&
+                    1 /*scs_ptr->seq_header.enable_intra_edge_filter*/) {
+                    filter_intra_edge(NULL,
+                                        ois_intra_mode,
+                                        scs_ptr->seq_header.max_frame_width,
+                                        scs_ptr->seq_header.max_frame_height,
+                                        p_angle,
+                                        mb_origin_x,
+                                        mb_origin_y,
+                                        above_row,
+                                        left_col);
+                }
+                // PRED
+                intra_prediction_open_loop_mb(p_angle,
+                                                ois_intra_mode,
+                                                mb_origin_x,
+                                                mb_origin_y,
+                                                tx_size,
+                                                above_row,
+                                                left_col,
+                                                dst_buffer,
+                                                dst_buffer_stride);
+            }
+
+            svt_aom_subtract_block(16,
+                                    16,
+                                    src_diff,
+                                    16,
+                                    src_mb,
+                                    input_picture_ptr->stride_y,
+                                    dst_buffer,
+                                    dst_buffer_stride);
+    #if OPT_TPL
+            EB_TRANS_COEFF_SHAPE pf_shape = pcs_ptr->tpl_ctrls.tpl_opt_flag ? pcs_ptr->tpl_ctrls.pf_shape : DEFAULT_SHAPE;
+            svt_av1_wht_fwd_txfm(src_diff, 16, coeff, tx_size,pf_shape, 8, 0);
+    #else
+            svt_av1_wht_fwd_txfm(src_diff, 16, coeff, tx_size, 8, 0);
+    #endif
+
+            uint16_t eob = 0;
+
+            get_quantize_error(
+                &mb_plane, coeff, qcoeff, dqcoeff, tx_size, &eob, &recon_error, &sse);
+    #if FTR_TPL_TR
+            int rate_cost = pcs_ptr->tpl_ctrls.tpl_opt_flag ? 0 : rate_estimator(qcoeff, eob, tx_size);
+            // Disable intra prediction
+            disable_intra_pred  = pcs_ptr->tpl_ctrls.disable_intra_pred_nref ||
+                pcs_ptr->tpl_ctrls.disable_intra_pred_nbase;
+    #else
+
+            int rate_cost = pcs_ptr->tpl_data.tpl_ctrls.tpl_opt_flag
+                ? 0
+                : rate_estimator(qcoeff, eob, tx_size);
+            // Disable intra prediction
+            disable_intra_pred = pcs_ptr->tpl_data.tpl_ctrls.disable_intra_pred_nref ||
+                pcs_ptr->tpl_data.tpl_ctrls.disable_intra_pred_nbase;
+    #endif
+            if (!disable_intra_pred || (pcs_ptr->tpl_data.is_used_as_reference_flag))
+                if (eob) {
+                    av1_inv_transform_recon8bit((int32_t *)dqcoeff,
+                                                dst_buffer,
+                                                dst_buffer_stride,
+                                                dst_buffer,
+                                                dst_buffer_stride,
+                                                TX_16X16,
+                                                DCT_DCT,
+                                                PLANE_TYPE_Y,
+                                                eob,
+                                                0);
+                }
+
+            tpl_stats.recrf_dist = recon_error << (TPL_DEP_COST_SCALE_LOG2);
+            tpl_stats.recrf_rate = rate_cost << TPL_DEP_COST_SCALE_LOG2;
+            if (best_mode != NEWMV) {
+                tpl_stats.srcrf_dist = recon_error << (TPL_DEP_COST_SCALE_LOG2);
+                tpl_stats.srcrf_rate = rate_cost << TPL_DEP_COST_SCALE_LOG2;
+            }
+            tpl_stats.recrf_dist = AOMMAX(tpl_stats.srcrf_dist, tpl_stats.recrf_dist);
+            tpl_stats.recrf_rate = AOMMAX(tpl_stats.srcrf_rate, tpl_stats.recrf_rate);
+            if (pcs_ptr->tpl_data.tpl_slice_type != I_SLICE && best_rf_idx != -1) {
+                tpl_stats.mv            = final_best_mv;
+                tpl_stats.ref_frame_poc = best_ref_poc;
+            }
+            // Motion flow dependency dispenser.
+            result_model_store(pcs_ptr, &tpl_stats, mb_origin_x, mb_origin_y);
+        }
+        pa_blk_index++;
+    }
+
+    }
+
+}
+#if FTR_TPL_TR
+#undef PictureParentControlSet
+#endif
+#endif
 /************************************************
 * Genrate TPL MC Flow Dispenser  Based on Lookahead
 ** LAD Window: sliding window size
@@ -460,6 +1056,18 @@ void tpl_mc_flow_dispenser(
     // Walk the first N entries in the sliding window
     for (uint32_t sb_index = 0; sb_index < pcs_ptr->sb_total_count; ++sb_index) {
         {
+#if TPL_KERNEL
+
+        tpl_mc_flow_dispenser_sb(
+            encode_context_ptr,
+            scs_ptr,
+            pcs_ptr,
+            frame_idx,
+            sb_index);
+
+
+
+#else
             SbParams *sb_params    = &scs_ptr->sb_params_array[sb_index];
             uint32_t  pa_blk_index = 0;
             while (pa_blk_index < CU_MAX_COUNT) {
@@ -968,6 +1576,7 @@ void tpl_mc_flow_dispenser(
                 }
                 pa_blk_index++;
             }
+#endif
         }
     }
 
@@ -1588,6 +2197,7 @@ EbErrorType tpl_mc_flow(EncodeContext *encode_context_ptr, SequenceControlSet *s
 #endif
     return EB_ErrorNone;
 }
+#endif
 static const uint32_t rate_percentage_layer_array[EB_MAX_TEMPORAL_LAYERS][EB_MAX_TEMPORAL_LAYERS] =
     {{100, 0, 0, 0, 0, 0},
      {70, 30, 0, 0, 0, 0},
@@ -7563,14 +8173,14 @@ void *rate_control_kernel(void *input_ptr) {
             scs_ptr = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
             FrameHeader *frm_hdr                       = &pcs_ptr->parent_pcs_ptr->frm_hdr;
             pcs_ptr->parent_pcs_ptr->blk_lambda_tuning = EB_FALSE;
-
+#if !TPL_KERNEL
             if (scs_ptr->in_loop_me)
 
                 if (/*scs_ptr->in_loop_me &&*/ scs_ptr->static_config.enable_tpl_la &&
                     pcs_ptr->temporal_layer_index == 0) {
                     tpl_mc_flow(scs_ptr->encode_context_ptr, scs_ptr, pcs_ptr->parent_pcs_ptr);
                 }
-
+#endif
             // Release the down scaled input
             if (scs_ptr->in_loop_me) {
                 svt_release_object(pcs_ptr->parent_pcs_ptr->down_scaled_picture_wrapper_ptr);

@@ -570,7 +570,46 @@ typedef struct {
 #if FTR_TPL_TR
     TplControls  tpl_ctrls;
 #endif
+#if TPL_KERNEL
+
+   // EbObjectWrapper *       p_pcs_wrapper_ptr;
+    EbHandle                tpl_disp_done_semaphore;
+#endif
+#if TPL_SEG
+
+    uint16_t tpl_disp_coded_sb_count;
+
+    EncDecSegments **tpl_disp_segment_ctrl;
+
+    TileGroupInfo *     tile_group_info;
+
+    EbHandle tpl_disp_mutex;
+#endif
 } TplPcs;
+#endif
+#if TPL_KERNEL
+
+
+typedef struct TplDispResults {
+    EbDctor          dctor;
+    EbObjectWrapper *pcs_wrapper_ptr;
+    uint32_t        frame_index;
+#if !TPL_SEG
+    uint32_t        sb_index;
+#endif
+#if TPL_SEG
+    EbFifo *sbo_feedback_fifo_ptr;
+    uint32_t  input_type;
+    int16_t   enc_dec_segment_row;
+    uint16_t  tile_group_index;
+#endif
+#if TPL_KERNEL
+    TplPcs* pcs_ptr;
+    int32_t         qIndex;
+
+#endif
+} TplDispResults;
+
 #endif
 #if FTR_TPL_TR
 /* a local PCS wraper to make ME : PCS agnostic*/
@@ -663,6 +702,9 @@ typedef struct PictureParentControlSet {
     uint8_t             log2_tile_cols;
     uint8_t             log2_sb_sz;
     TileGroupInfo *     tile_group_info;
+#if TPL_KERNEL
+    TileGroupInfo *     tile_group_info_trail;
+#endif
     uint8_t             tile_group_cols;
     uint8_t             tile_group_rows;
 
@@ -987,6 +1029,10 @@ typedef struct PictureParentControlSet {
 
     uint8_t  temp_filt_prep_done;
     uint16_t temp_filt_seg_acc;
+#if TPL_KERNEL
+    EbHandle tpl_disp_done_semaphore;
+    EbHandle tpl_disp_done_semaphore_trail;
+#endif
     // TPL ME
     EbHandle     tpl_me_done_semaphore;
     EbHandle     tpl_me_mutex;
@@ -1081,6 +1127,23 @@ typedef struct PictureParentControlSet {
 #endif
 #if FTR_SIMULATE_P_BASE
     uint8_t                         list0_only_base; // Use list0 only if BASE (mimik a P)
+#endif
+#if TPL_SEG
+
+
+    EbHandle tpl_disp_mutex;
+    EbHandle tpl_disp_mutex_trail;
+    //uint32_t         input_type;
+    int16_t          enc_dec_segment_row;
+    uint16_t         tile_group_index;
+    uint16_t         tpl_disp_coded_sb_count;
+    uint16_t         tpl_disp_coded_sb_count_trail;
+#endif
+#if TPL_SEG
+
+    uint16_t sb_total_count_pix;
+    EncDecSegments **tpl_disp_segment_ctrl;
+    EncDecSegments **tpl_disp_segment_ctrl_trail;
 #endif
 } PictureParentControlSet;
 

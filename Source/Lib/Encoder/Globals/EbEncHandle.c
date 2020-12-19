@@ -462,6 +462,24 @@ EbErrorType load_default_buffer_configuration_settings(
     scs_ptr->enc_dec_segment_col_count_array[3] = enc_dec_seg_w;
     scs_ptr->enc_dec_segment_col_count_array[4] = enc_dec_seg_w;
     scs_ptr->enc_dec_segment_col_count_array[5] = enc_dec_seg_w;
+#if TPL_SEG
+
+    uint32_t tpl_seg_h = (core_count == SINGLE_CORE_COUNT) ? 1 :
+        ((scs_ptr->max_input_luma_height + 32) / 64);
+
+    uint32_t tpl_seg_w = (core_count == SINGLE_CORE_COUNT) ? 1 :
+        ((scs_ptr->max_input_luma_width + 32) / 64);
+
+
+    if ((core_count != SINGLE_CORE_COUNT) && (core_count < (CONS_CORE_COUNT >> 2)))
+    {
+        tpl_seg_h = MAX(1, tpl_seg_h / 2);
+        tpl_seg_w = MAX(1, tpl_seg_w / 2);
+    }
+    scs_ptr->tpl_segment_row_count_array = tpl_seg_h;
+    scs_ptr->tpl_segment_col_count_array = tpl_seg_w;
+
+#endif
 
     scs_ptr->cdef_segment_column_count = me_seg_w;
     scs_ptr->cdef_segment_row_count    = me_seg_h;
@@ -605,6 +623,9 @@ EbErrorType load_default_buffer_configuration_settings(
     scs_ptr->picture_analysis_fifo_init_count            = 300;
     scs_ptr->picture_decision_fifo_init_count            = 300;
     scs_ptr->initial_rate_control_fifo_init_count        = 300;
+#if TPL_KERNEL
+    scs_ptr->tpl_disp_fifo_init_count                    = 300;
+#endif
     scs_ptr->in_loop_me_fifo_init_count                  = 300;
     scs_ptr->picture_demux_fifo_init_count               = 300;
     scs_ptr->rate_control_tasks_fifo_init_count          = 300;
@@ -623,6 +644,10 @@ EbErrorType load_default_buffer_configuration_settings(
         scs_ptr->total_process_init_count += (scs_ptr->picture_analysis_process_init_count            = MAX(MIN(15, core_count >> 1), core_count / 6));
         scs_ptr->total_process_init_count += (scs_ptr->motion_estimation_process_init_count =  MAX(MIN(20, core_count >> 1), core_count / 3));//1);//
         scs_ptr->total_process_init_count += (scs_ptr->source_based_operations_process_init_count = 1);
+#if  TPL_KERNEL
+        // TODO: Tune the count here
+        scs_ptr->total_process_init_count += (scs_ptr->tpl_disp_process_init_count   = MAX(MIN(20, core_count >> 1), core_count / 3));
+#endif
         // TODO: Tune the count here
         scs_ptr->total_process_init_count += (scs_ptr->inlme_process_init_count                       = MAX(MIN(20, core_count >> 1), core_count / 3));
         scs_ptr->total_process_init_count += (scs_ptr->mode_decision_configuration_process_init_count = MAX(MIN(3, core_count >> 1), core_count / 12));
@@ -639,6 +664,9 @@ EbErrorType load_default_buffer_configuration_settings(
         scs_ptr->total_process_init_count += (scs_ptr->picture_analysis_process_init_count            = 1);
         scs_ptr->total_process_init_count += (scs_ptr->motion_estimation_process_init_count           = 1);
         scs_ptr->total_process_init_count += (scs_ptr->source_based_operations_process_init_count     = 1);
+#if TPL_KERNEL
+        scs_ptr->total_process_init_count += (scs_ptr->tpl_disp_process_init_count                    = 1);
+#endif
         scs_ptr->total_process_init_count += (scs_ptr->inlme_process_init_count                       = 1);
         scs_ptr->total_process_init_count += (scs_ptr->mode_decision_configuration_process_init_count = 1);
         scs_ptr->total_process_init_count += (scs_ptr->enc_dec_process_init_count                     = 1);
@@ -757,6 +785,11 @@ static void svt_enc_handle_stop_threads(EbEncHandle *enc_handle_ptr)
     // Source Based Oprations
     EB_DESTROY_THREAD_ARRAY(enc_handle_ptr->source_based_operations_thread_handle_array, control_set_ptr->source_based_operations_process_init_count);
 
+#if TPL_KERNEL
+    // TPL dispenser ME
+    EB_DESTROY_THREAD_ARRAY(enc_handle_ptr->tpl_disp_thread_handle_array, control_set_ptr->tpl_disp_process_init_count);
+#endif
+
     // Picture Manager
     EB_DESTROY_THREAD(enc_handle_ptr->picture_manager_thread_handle);
 
@@ -813,6 +846,9 @@ static void svt_enc_handle_dctor(EbPtr p)
     EB_DELETE(enc_handle_ptr->initial_rate_control_results_resource_ptr);
     EB_DELETE(enc_handle_ptr->picture_demux_results_resource_ptr);
     EB_DELETE(enc_handle_ptr->pic_mgr_res_srm);
+#if TPL_KERNEL
+    EB_DELETE(enc_handle_ptr->tpl_disp_res_srm);
+#endif
     EB_DELETE(enc_handle_ptr->rate_control_tasks_resource_ptr);
     EB_DELETE(enc_handle_ptr->rate_control_results_resource_ptr);
     EB_DELETE(enc_handle_ptr->enc_dec_tasks_resource_ptr);
@@ -825,6 +861,9 @@ static void svt_enc_handle_dctor(EbPtr p)
     EB_DELETE(enc_handle_ptr->resource_coordination_context_ptr);
     EB_DELETE_PTR_ARRAY(enc_handle_ptr->picture_analysis_context_ptr_array, enc_handle_ptr->scs_instance_array[0]->scs_ptr->picture_analysis_process_init_count);
     EB_DELETE_PTR_ARRAY(enc_handle_ptr->motion_estimation_context_ptr_array, enc_handle_ptr->scs_instance_array[0]->scs_ptr->motion_estimation_process_init_count);
+#if TPL_KERNEL
+    EB_DELETE_PTR_ARRAY(enc_handle_ptr->tpl_disp_context_ptr_array, enc_handle_ptr->scs_instance_array[0]->scs_ptr->tpl_disp_process_init_count);
+#endif
     EB_DELETE_PTR_ARRAY(enc_handle_ptr->source_based_operations_context_ptr_array, enc_handle_ptr->scs_instance_array[0]->scs_ptr->source_based_operations_process_init_count);
     EB_DELETE_PTR_ARRAY(enc_handle_ptr->inlme_context_ptr_array, enc_handle_ptr->scs_instance_array[0]->scs_ptr->inlme_process_init_count);
     EB_DELETE_PTR_ARRAY(enc_handle_ptr->mode_decision_configuration_context_ptr_array, enc_handle_ptr->scs_instance_array[0]->scs_ptr->mode_decision_configuration_process_init_count);
@@ -911,6 +950,37 @@ EbErrorType dlf_results_creator(
     return EB_ErrorNone;
 }
 
+#if TPL_KERNEL
+/*
+   TPL results ctor
+*/
+EbErrorType tpl_disp_results_ctor(
+    TplDispResults *context_ptr,
+    EbPtr object_init_data_ptr)
+{
+    (void)context_ptr;
+    (void)object_init_data_ptr;
+
+    return EB_ErrorNone;
+}
+
+/*
+   TPL results creator
+*/
+EbErrorType tpl_disp_results_creator(
+    EbPtr *object_dbl_ptr,
+    EbPtr object_init_data_ptr)
+{
+    TplDispResults* obj;
+
+    *object_dbl_ptr = NULL;
+    EB_NEW(obj, tpl_disp_results_ctor, object_init_data_ptr);
+    *object_dbl_ptr = obj;
+
+    return EB_ErrorNone;
+}
+
+#endif
 EbErrorType cdef_results_ctor(
     CdefResults *context_ptr,
     EbPtr object_init_data_ptr)
@@ -1206,6 +1276,10 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
 
         input_data.enable_tpl_la = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.enable_tpl_la;
         input_data.in_loop_ois = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->in_loop_ois;
+#if TPL_SEG
+        input_data.enc_dec_segment_col = (uint16_t)enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->tpl_segment_col_count_array;
+        input_data.enc_dec_segment_row = (uint16_t)enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->tpl_segment_row_count_array;
+#endif
         EB_NEW(
             enc_handle_ptr->picture_parent_control_set_pool_ptr_array[instance_index],
             svt_system_resource_ctor,
@@ -1465,6 +1539,23 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
 
     }
 
+#if TPL_KERNEL
+    // TPL dispenser Results
+    {
+        EntropyCodingResultsInitData tpl_disp_result_init_data;
+        EB_NEW(
+            enc_handle_ptr->tpl_disp_res_srm,
+            svt_system_resource_ctor,
+            enc_handle_ptr->scs_instance_array[0]->scs_ptr->tpl_disp_fifo_init_count,
+            enc_dec_port_total_count(),
+            enc_handle_ptr->scs_instance_array[0]->scs_ptr->tpl_disp_process_init_count,
+            tpl_disp_results_creator,
+            &tpl_disp_result_init_data,
+            NULL);
+
+    }
+#endif
+
     // Picture Mgr Results
     {
         PictureManagerResultInitData picture_manager_result_init_data;
@@ -1678,6 +1769,20 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
             process_index);
     }
 
+#if TPL_KERNEL
+    // TPL dispenser
+    EB_ALLOC_PTR_ARRAY(enc_handle_ptr->tpl_disp_context_ptr_array, enc_handle_ptr->scs_instance_array[0]->scs_ptr->tpl_disp_process_init_count);
+
+    for (process_index = 0; process_index < enc_handle_ptr->scs_instance_array[0]->scs_ptr->tpl_disp_process_init_count; ++process_index) {
+        EB_NEW(
+            enc_handle_ptr->tpl_disp_context_ptr_array[process_index],
+            tpl_disp_context_ctor,//TODOOMK
+            enc_handle_ptr,
+            process_index,
+            enc_dec_port_lookup(ENCDEC_INPUT_PORT_ENCDEC, process_index)
+        );
+    }
+#endif
     // Picture Manager Context
     EB_NEW(
         enc_handle_ptr->picture_manager_context_ptr,
@@ -1820,6 +1925,12 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
         source_based_operations_kernel,
         enc_handle_ptr->source_based_operations_context_ptr_array);
 
+#if TPL_KERNEL
+    // TPL dispenser
+    EB_CREATE_THREAD_ARRAY(enc_handle_ptr->tpl_disp_thread_handle_array, control_set_ptr->tpl_disp_process_init_count,
+            tpl_disp_kernel,//TODOOMK
+            enc_handle_ptr->tpl_disp_context_ptr_array);
+#endif
     // Picture Manager
     EB_CREATE_THREAD(enc_handle_ptr->picture_manager_thread_handle, picture_manager_kernel, enc_handle_ptr->picture_manager_context_ptr);
 
@@ -1889,6 +2000,9 @@ EB_API EbErrorType svt_av1_enc_deinit(EbComponentType *svt_enc_component){
         svt_shutdown_process(handle->motion_estimation_results_resource_ptr);
         svt_shutdown_process(handle->initial_rate_control_results_resource_ptr);
         svt_shutdown_process(handle->picture_demux_results_resource_ptr);
+#if TPL_KERNEL
+        svt_shutdown_process(handle->tpl_disp_res_srm);
+#endif
         svt_shutdown_process(handle->pic_mgr_res_srm);
         svt_shutdown_process(handle->rate_control_tasks_resource_ptr);
         svt_shutdown_process(handle->rate_control_results_resource_ptr);

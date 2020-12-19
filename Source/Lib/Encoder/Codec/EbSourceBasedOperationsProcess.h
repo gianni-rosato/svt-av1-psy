@@ -18,6 +18,11 @@
 /***************************************
  * Extern Function Declaration
  ***************************************/
+#if TPL_KERNEL
+EbErrorType tpl_disp_context_ctor(EbThreadContext *thread_context_ptr,
+                             const EbEncHandle *enc_handle_ptr, int index, int tasks_index);
+extern void *tpl_disp_kernel(void *input_ptr);
+#endif
 EbErrorType source_based_operations_context_ctor(EbThreadContext *  thread_context_ptr,
                                                  const EbEncHandle *enc_handle_ptr, int index);
 
