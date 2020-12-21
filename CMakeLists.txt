@@ -79,6 +79,15 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_OUTPUT_DIRECTORY})
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_OUTPUT_DIRECTORY})
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_OUTPUT_DIRECTORY})
 
+if(MSVC AND DEFINED SANITIZER)
+    message(WARNING "Sanitizers are not available with MSVC currently")
+    unset(SANITIZER)
+    unset(SANITIZER CACHE)
+else()
+    set(SANITIZER "" CACHE STRING "Sanitizer to enable. Currently known values are Address, Memory, Thread, Undefined, and Integer")
+    set_property(CACHE SANITIZER PROPERTY STRINGS Address Memory Thread Undefined Integer)
+endif()
+
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_CXX_STANDARD 11)
@@ -299,6 +308,35 @@ include_directories(.)
 # Find out if we have threading available
 set(CMAKE_THREAD_PREFER_PTHREADS ON)
 find_package(Threads)
+
+macro(add_clike_and_ld_flags)
+    string(REPLACE ";" " " add_clike_and_ld_flags "${ARGV}")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${add_clike_and_ld_flags}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${add_clike_and_ld_flags}")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${add_clike_and_ld_flags}")
+    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${add_clike_and_ld_flags}")
+endmacro()
+
+string(TOLOWER "${SANITIZER}" SANITIZER)
+
+# Address Memory Thread Undefined
+if(SANITIZER STREQUAL "address")
+    add_clike_and_ld_flags(-fsanitize=address)
+elseif(SANITIZER STREQUAL "memory")
+    add_clike_and_ld_flags(-fsanitize=memory -fsanitize-memory-track-origins)
+elseif(SANITIZER STREQUAL "thread")
+    add_clike_and_ld_flags(-fsanitize=thread)
+elseif(SANITIZER STREQUAL "undefined")
+    add_clike_and_ld_flags(-fsanitize=undefined)
+elseif(SANITIZER STREQUAL "integer")
+    add_clike_and_ld_flags(-fsanitize=integer)
+elseif(SANITIZER)
+    message(FATAL_ERROR "Unknown sanitizer: ${SANITIZER}")
+endif()
+
+if(SANITIZER)
+    check_both_flags_add(-fno-omit-frame-pointer -fno-optimize-sibling-calls)
+endif()
 
 # Add Subdirectories
 add_subdirectory(Source/Lib/Common)
