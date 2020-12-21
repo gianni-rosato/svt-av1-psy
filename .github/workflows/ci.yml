@@ -39,6 +39,10 @@ jobs:
           - packages: gcc-9 g++-9
             CC: gcc-9
             CXX: g++-9
+          - packages: gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+            CC: aarch64-linux-gnu-gcc
+            CXX: aarch64-linux-gnu-g++
+            CMAKE_EFLAGS: -DCMAKE_TOOLCHAIN_FILE=$GITHUB_WORKSPACE/aarch64-linux-gnu.cmake
           - packages: gcc-10 g++-10
             CC: gcc-10
             CXX: g++-10
@@ -77,6 +81,8 @@ jobs:
           printf '%s\n' "CCACHE_DIR=$HOME/.ccache" >> $GITHUB_ENV
           sudo apt-get update
           sudo apt-get install -y ${{ env.native_deps }} ${{ matrix.packages }}
+          curl -Ls "https://aomedia.googlesource.com/aom/+/refs/heads/master/build/cmake/toolchains/arm64-linux-gcc.cmake?format=TEXT" |
+            base64 -d > aarch64-linux-gnu.cmake
       - name: Configure SVT-AV1
         run: cmake -S "$GITHUB_WORKSPACE" -B Build -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF ${{ matrix.CMAKE_EFLAGS }}
       - name: Build and install SVT-AV1
