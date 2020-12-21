@@ -35,4 +35,9 @@ file(GLOB all_files
     "*.c")
 
 add_library(ENCODER_GLOBALS OBJECT ${all_files})
+if (BUILD_SHARED_LIBS)
+        target_compile_definitions(ENCODER_GLOBALS
+                PUBLIC EB_DLL
+                PRIVATE EB_BUILDING_SHARED_LIBS)
+endif()
 add_dependencies(ENCODER_GLOBALS EbVersionHeaderGen)

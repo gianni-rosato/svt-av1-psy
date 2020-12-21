@@ -97,9 +97,17 @@ endif()
 
 set_target_properties(SvtAv1Dec PROPERTIES VERSION ${DEC_VERSION})
 set_target_properties(SvtAv1Dec PROPERTIES SOVERSION ${DEC_VERSION_MAJOR})
+set_target_properties(SvtAv1Dec PROPERTIES C_VISIBILITY_PRESET hidden)
 add_dependencies(SvtAv1Dec EbVersionHeaderGen)
 target_link_libraries(SvtAv1Dec PUBLIC ${PLATFORM_LIBS})
 target_link_libraries(SvtAv1Dec PRIVATE cpuinfo_public)
+set(DEC_PKG_CONFIG_EXTRA_CFLAGS "")
+if (BUILD_SHARED_LIBS)
+    target_compile_definitions(SvtAv1Dec
+        PUBLIC EB_DLL
+        PRIVATE EB_BUILDING_SHARED_LIBS)
+    set(DEC_PKG_CONFIG_EXTRA_CFLAGS " -DEB_DLL")
+endif()
 install(TARGETS SvtAv1Dec DESTINATION "${CMAKE_INSTALL_LIBDIR}")
 
 configure_file(pkg-config.pc.in ${CMAKE_BINARY_DIR}/SvtAv1Dec.pc @ONLY)

@@ -6,4 +6,4 @@ Name: SvtAv1Dec
 Description: SVT (Scalable Video Technology) for AV1 decoder library
 Version: @DEC_VERSION_MAJOR@.@DEC_VERSION_MINOR@.@DEC_VERSION_PATCH@
 Libs: -L${libdir} -lSvtAv1Dec @LIBS_PRIVATE@
-Cflags: -I${includedir}
+Cflags: -I${includedir}@DEC_PKG_CONFIG_EXTRA_CFLAGS@
