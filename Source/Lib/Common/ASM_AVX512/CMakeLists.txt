@@ -22,7 +22,7 @@ include_directories(${PROJECT_SOURCE_DIR}/Source/API/
     ${PROJECT_SOURCE_DIR}/Source/Lib/Common/ASM_AVX512/)
 link_directories(${PROJECT_SOURCE_DIR}/Source/Lib/Common/ASM_SSSE3/)
 
-set(flags_to_test
+check_both_flags_add(
     -mavx2
     -mavx512f
     -mavx512bw
@@ -30,19 +30,17 @@ set(flags_to_test
     -mavx512vl)
 
 if(MSVC)
-    list(APPEND flags_to_test /arch:AVX2)
+    check_both_flags_add(/arch:AVX2)
 endif()
 
 if(CMAKE_C_COMPILER_ID STREQUAL "Intel")
     if(WIN32)
         # Intel Windows (*Note - The Warning level /W0 should be made to /W4 at some point)
-        list(APPEND flags_to_test /Qdiag-disable:10010,10148,10157 /W0)
+        check_both_flags_add(/Qdiag-disable:10010,10148,10157 /W0)
     else()
-        list(APPEND flags_to_test -static-intel -w)
+        check_both_flags_add(-static-intel -w)
     endif()
 endif()
-
-test_apply_compiler_flags(${flags_to_test})
 
 file(GLOB all_files
     "*.h"

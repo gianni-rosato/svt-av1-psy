@@ -17,13 +17,11 @@ include_directories(${PROJECT_SOURCE_DIR}/Source/API/
     ${PROJECT_SOURCE_DIR}/Source/Lib/Common/C_DEFAULT/
     ${PROJECT_SOURCE_DIR}/Source/Lib/Common/ASM_SSE2/)
 
-set(flags_to_test -msse2)
+check_both_flags_add(-msse2)
 
 if(CMAKE_C_COMPILER_ID STREQUAL "Intel" AND NOT WIN32)
-    list(APPEND flags_to_test -static-intel -w)
+    check_both_flags_add(-static-intel -w)
 endif()
-
-test_apply_compiler_flags(${flags_to_test})
 
 file(GLOB all_files
     "*.h"
