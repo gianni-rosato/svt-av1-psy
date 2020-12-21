@@ -150,26 +150,17 @@ Linux (GCC 10, Tests, Static):
 Linux (Address sanitizer):
   extends: .sanitizer compile
   variables:
-    EXTRA_CFLAGS: -fsanitize=address
-    EXTRA_CXXFLAGS: -fsanitize=address
-    LDFLAGS: -fsanitize=address
-    EXTRA_CMAKE_FLAGS: -DCMAKE_OUTPUT_DIRECTORY=address
+    EXTRA_CMAKE_FLAGS: -DCMAKE_OUTPUT_DIRECTORY=address -DSANITIZER=address
 
 Linux (Memory sanitizer):
   extends: .sanitizer compile
   variables:
-    EXTRA_CFLAGS: -fsanitize=memory -fno-omit-frame-pointer -fno-optimize-sibling-calls -fsanitize-memory-track-origins
-    EXTRA_CXXFLAGS: -fsanitize=memory -fno-omit-frame-pointer -fno-optimize-sibling-calls -fsanitize-memory-track-origins
-    LDFLAGS: -fsanitize=memory -fsanitize-memory-track-origins
-    EXTRA_CMAKE_FLAGS: -DCMAKE_OUTPUT_DIRECTORY=memory
+    EXTRA_CMAKE_FLAGS: -DCMAKE_OUTPUT_DIRECTORY=memory -DSANITIZER=memory
 
 Linux (Thread sanitizer):
   extends: .sanitizer compile
   variables:
-    EXTRA_CFLAGS: -fsanitize=thread
-    EXTRA_CXXFLAGS: -fsanitize=thread
-    LDFLAGS: -fsanitize=thread
-    EXTRA_CMAKE_FLAGS: -DCMAKE_OUTPUT_DIRECTORY=thread
+    EXTRA_CMAKE_FLAGS: -DCMAKE_OUTPUT_DIRECTORY=thread -DSANITIZER=thread
 
 .tests:
   stage: test
