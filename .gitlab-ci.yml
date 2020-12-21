@@ -266,6 +266,129 @@ Linux E2E Tests:
     - mv test/vectors/* .
     - ./Bin/Release/SvtAv1E2ETests --gtest_filter=-*DummySrcTest*
 
+Linux (FFmpeg, Static):
+  extends: .tests
+  variables:
+    CC: gcc-10
+    CXX: g++-10
+    CFLAGS: -pipe -O3
+    CXXFLAGS: -pipe -O3
+    LDFLAGS: -pipe -static -static-libgcc -static-libstdc++
+    CCACHE_DIR: $CI_PROJECT_DIR/.ccache
+    PKG_CONFIG_PATH: /usr/local/lib/pkgconfig
+    GIT_DEPTH: 0
+  cache:
+    key: ${CI_JOB_NAME}
+    paths:
+      - .ccache
+    policy: pull-push
+  needs:
+    - 'Linux (GCC 10)'
+  artifacts:
+    untracked: false
+    expire_in: 30 days
+    paths:
+      - ffmpeg
+  script:
+    - ccache -s
+    - git clone https://aomedia.googlesource.com/aom
+    - git clone https://chromium.googlesource.com/webm/libvpx
+    - git clone https://code.videolan.org/videolan/dav1d.git
+    - git clone https://github.com/Netflix/vmaf.git
+    - git clone https://github.com/FFmpeg/FFmpeg.git
+
+    # SVT-AV1
+    - cmake -GNinja -B svtav1-build -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DBUILD_APPS=OFF -DBUILD_DEC=OFF
+    - cmake --build svtav1-build --config Release --target install
+
+    # aom
+    - cmake -S aom -B aom-build -GNinja -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DENABLE_TESTS=0 -DENABLE_EXAMPLES=0 -DENABLE_DOCS=0 -DENABLE_TESTDATA=0 -DENABLE_TOOLS=0
+    - cmake --build aom-build --config Release --target install
+
+    # libvpx
+    - mkdir -p vpx-build && cd vpx-build || exit 1
+    - |
+      ../libvpx/configure \
+        --disable-dependency-tracking \
+        --disable-docs \
+        --disable-examples \
+        --disable-libyuv \
+        --disable-postproc \
+        --disable-shared \
+        --disable-tools \
+        --disable-unit-tests \
+        --disable-webm-io \
+        --enable-postproc \
+        --enable-runtime-cpu-detect \
+        --enable-vp8 --enable-vp9 \
+        --enable-vp9-highbitdepth \
+        --enable-vp9-postproc
+    - make -j $(getconf _NPROCESSORS_ONLN 2>/dev/null || sysctl -n hw.ncpu) install
+    - cd -
+
+    # dav1d
+    - |
+      meson setup \
+        --default-library static \
+        --buildtype release \
+        --libdir lib \
+        -Denable_tests=false \
+        -Denable_examples=false \
+        -Denable_tools=false \
+        dav1d-build dav1d
+    - meson install -C dav1d-build
+
+    # vmaf
+    - curl -Ls "https://github.com/Netflix/vmaf/pull/768.patch" | git -C vmaf apply -3
+    - |
+      meson setup \
+        --default-library static \
+        --buildtype release \
+        --libdir lib \
+        -Denable_tests=false \
+        -Denable_docs=false \
+        -Dbuilt_in_models=true \
+        -Denable_float=true \
+        vmaf-build vmaf/libvmaf
+    - meson install -C vmaf-build
+
+    # symbol conflict tests
+    - |
+      conflicts=$(
+        nm -Ag --defined-only /usr/local/lib/lib{SvtAv1Enc,aom,dav1d,vpx,vmaf}.a 2>/dev/null |
+        sort -k3 |
+        uniq -D -f2 |
+        sed '/:$/d;/^$/d'
+      )
+      if [ -n "$conflicts" ]; then
+        printf 'Conflicts Found!\n%s\n' "$conflicts"
+        exit 1
+      fi
+
+    # FFmpeg
+    # Uses ld=CXX for libvmaf to autolink the stdc++ library
+    - mkdir -p FFmpeg-build && cd FFmpeg-build || exit 1
+    - |
+      ../FFmpeg/configure \
+        --arch=x86_64 \
+        --pkg-config-flags="--static" \
+        --cc="${CC:-ccache gcc}" \
+        --cxx="${CXX:-ccache g++}" \
+        --ld="${CXX:-ccache g++}" \
+        --enable-gpl --enable-static \
+        --enable-libaom \
+        --enable-libdav1d \
+        --enable-libsvtav1 \
+        --enable-libvmaf \
+        --enable-libvpx \
+        --disable-shared || {
+          less ffbuild/config.log
+          exit 1
+        }
+    - make -j $(getconf _NPROCESSORS_ONLN 2>/dev/null || sysctl -n hw.ncpu) install
+    - mv ffmpeg ..
+    - ccache -s
+
 
 #
 # macOS CI Jobs
