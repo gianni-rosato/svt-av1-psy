@@ -954,6 +954,10 @@ EbErrorType signal_derivation_multi_processes_oq(
     if (pcs_ptr->enc_mode <= ENC_M3)
 #endif
         pcs_ptr->disallow_HVA_HVB_HV4 = EB_FALSE;
+#if TUNE_M0_M3_BASE_NBASE
+    else if (pcs_ptr->enc_mode <= ENC_M3)
+        pcs_ptr->disallow_HVA_HVB_HV4 = (pcs_ptr->temporal_layer_index == 0) ? EB_FALSE : EB_TRUE;
+#endif
     else
         pcs_ptr->disallow_HVA_HVB_HV4 = EB_TRUE;
 #else
@@ -1144,6 +1148,10 @@ EbErrorType signal_derivation_multi_processes_oq(
 #endif
 #endif
             cm->sg_filter_mode = 4;
+#if TUNE_M0_M3_BASE_NBASE
+        else if (pcs_ptr->enc_mode <= ENC_M3)
+            cm->sg_filter_mode = (pcs_ptr->temporal_layer_index == 0) ? 4 : 1;
+#endif
         else
             cm->sg_filter_mode = pcs_ptr->slice_type == I_SLICE ? 4 : 1;
     }
@@ -1237,6 +1245,10 @@ EbErrorType signal_derivation_multi_processes_oq(
     if (pcs_ptr->enc_mode <= ENC_M4)
 #endif
         pcs_ptr->tx_size_search_mode = 1;
+#if TUNE_M0_M3_BASE_NBASE
+    else if (pcs_ptr->enc_mode <= ENC_M3)
+        pcs_ptr->tx_size_search_mode = (pcs_ptr->temporal_layer_index == 0) ? 1 : 0;
+#endif
     else if (pcs_ptr->enc_mode <= ENC_M9)
         pcs_ptr->tx_size_search_mode = (pcs_ptr->slice_type == I_SLICE) ? 1 : 0;
         else
@@ -6050,6 +6062,18 @@ void* picture_decision_kernel(void *input_ptr)
                                         pcs_ptr->ref_list0_count_try = MIN(pcs_ptr->ref_list0_count, 2);
                                         pcs_ptr->ref_list1_count_try = MIN(pcs_ptr->ref_list1_count, 2);
                                     }
+#if TUNE_M0_M3_BASE_NBASE
+                                    else if (pcs_ptr->enc_mode <= ENC_M3) {
+                                        if (pcs_ptr->temporal_layer_index == 0) {
+                                            pcs_ptr->ref_list0_count_try = MIN(pcs_ptr->ref_list0_count, 2);
+                                            pcs_ptr->ref_list1_count_try = MIN(pcs_ptr->ref_list1_count, 2);
+                                        }
+                                        else {
+                                            pcs_ptr->ref_list0_count_try = MIN(pcs_ptr->ref_list0_count, 1);
+                                            pcs_ptr->ref_list1_count_try = MIN(pcs_ptr->ref_list1_count, 1);
+                                        }
+                                    }
+#endif
                                     else {
 #if TUNE_M7_M9
                                         pcs_ptr->ref_list0_count_try = MIN(pcs_ptr->ref_list0_count, 1);
