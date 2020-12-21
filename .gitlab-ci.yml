@@ -192,7 +192,7 @@ Valgrind (Pass 1):
   extends: .tests
   image: registry.gitlab.com/aomediacodec/aom-testing/ubuntu2004
   variables:
-    LSAN_OPTIONS: "verbosity=2:color=always:log_threads=1:report_objects=1"
+    LSAN_OPTIONS: "verbosity=2:color=always:log_pointers=1:log_threads=1:report_objects=1"
     ASAN_OPTIONS: "verbosity=2:color=always:print_cmdline=1:strict_string_checks=1"
     MSAN_OPTIONS: "verbosity=2:color=always"
     TSAN_OPTIONS: "verbosity=2:color=always:suppressions=./.github/workflows/sanitizers-known-warnings.txt"
