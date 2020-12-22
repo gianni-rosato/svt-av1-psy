@@ -11,7 +11,7 @@
 
 #include "EbDefinitions.h"
 
-#ifndef NON_AVX512_SUPPORT
+#if EN_AVX512_SUPPORT
 #include <immintrin.h>
 #include "common_dsp_rtcd.h"
 #include "convolve.h"
@@ -2134,4 +2134,4 @@ void svt_av1_jnt_convolve_2d_avx512(const uint8_t *src, int32_t src_stride, uint
         im_block, w, h, filter_params_y, subpel_y_q4, conv_params, dst8, dst8_stride);
 }
 
-#endif // !NON_AVX512_SUPPORT
+#endif // EN_AVX512_SUPPORT

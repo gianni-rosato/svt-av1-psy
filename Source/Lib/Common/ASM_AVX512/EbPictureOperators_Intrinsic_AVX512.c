@@ -10,7 +10,7 @@
 */
 #include "EbDefinitions.h"
 
-#ifndef NON_AVX512_SUPPORT
+#if EN_AVX512_SUPPORT
 
 #include <immintrin.h>
 #include "EbPictureOperators_Inline_AVX2.h"
@@ -365,4 +365,4 @@ uint64_t svt_spatial_full_distortion_kernel_avx512(uint8_t *input, uint32_t inpu
     return hadd32_avx2_intrin(sum);
 }
 
-#endif // !NON_AVX512_SUPPORT
+#endif // EN_AVX512_SUPPORT

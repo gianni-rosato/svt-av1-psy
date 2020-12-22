@@ -293,7 +293,7 @@ TEST(MotionEstimation_avx2, DISABLED_sadMxNx4d_speed) {
     sadMxNx4d_speed_test(aom_sad_4d_avx2_func_ptr_array);
 }
 
-#ifndef NON_AVX512_SUPPORT
+#if EN_AVX512_SUPPORT
 
 //NULL means not implemented
 AomSadFn aom_sad_avx512_func_ptr_array[num_sad] = {
@@ -333,4 +333,4 @@ TEST(MotionEstimation_avx512, DISABLED_sadMxNx4d_speed) {
     sadMxNx4d_speed_test(aom_sad_4d_avx512_func_ptr_array);
 }
 
-#endif  // !NON_AVX512_SUPPORT
+#endif  // EN_AVX512_SUPPORT

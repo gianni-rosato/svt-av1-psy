@@ -101,7 +101,7 @@ CPU_FLAGS get_cpu_flags() {
 
 CPU_FLAGS get_cpu_flags_to_use() {
     CPU_FLAGS flags = get_cpu_flags();
-#ifdef NON_AVX512_SUPPORT
+#if !EN_AVX512_SUPPORT
     /* Remove AVX512 flags. */
     flags &= (CPU_FLAGS_AVX512F - 1);
 #endif
@@ -110,12 +110,12 @@ CPU_FLAGS get_cpu_flags_to_use() {
 #endif /*ARCH_X86_64*/
 
 #ifdef ARCH_X86_64
-#ifndef NON_AVX512_SUPPORT
+#if EN_AVX512_SUPPORT
 #define SET_FUNCTIONS_AVX512(ptr, avx512)                                                         \
     if (((uintptr_t)NULL != (uintptr_t)avx512) && (flags & HAS_AVX512F)) ptr = avx512;
-#else /* NON_AVX512_SUPPORT */
+#else /* EN_AVX512_SUPPORT */
 #define SET_FUNCTIONS_AVX512(ptr, avx512)
-#endif /* NON_AVX512_SUPPORT */
+#endif /* EN_AVX512_SUPPORT */
 
 #define SET_FUNCTIONS_X86(ptr, c, mmx, sse, sse2, sse3, ssse3, sse4_1, sse4_2, avx, avx2, avx512) \
     if (((uintptr_t)NULL != (uintptr_t)mmx)    && (flags & HAS_MMX))    ptr = mmx;                \
@@ -511,7 +511,7 @@ void setup_common_rtcd_internal(CPU_FLAGS flags) {
     /* No C version, use only internal in kerneal: svt_cdef_filter_block_avx2() */
 #ifdef ARCH_X86_64
     if (flags & HAS_AVX2)    svt_cdef_filter_block_8x8_16 = svt_cdef_filter_block_8x8_16_avx2;
-#ifndef NON_AVX512_SUPPORT
+#if EN_AVX512_SUPPORT
     if (flags & HAS_AVX512F) svt_cdef_filter_block_8x8_16 = svt_cdef_filter_block_8x8_16_avx512;
 #endif
 #endif

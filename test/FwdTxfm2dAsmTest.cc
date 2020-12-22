@@ -113,7 +113,7 @@ static const FwdTxfm2dFunc fwd_txfm_2d_N4_c_func[TX_SIZES_ALL] = {
     svt_av1_fwd_txfm2d_64x16_N4_c,
 };
 
-#ifndef NON_AVX512_SUPPORT
+#if EN_AVX512_SUPPORT
 static const FwdTxfm2dFunc fwd_txfm_2d_N2_asm512_func[TX_SIZES_ALL] = {
     NULL,
     NULL,
@@ -221,7 +221,7 @@ class FwdTxfm2dAsmTest : public ::testing::TestWithParam<FwdTxfm2dAsmParam> {
             "ASM AND N4 ", fwd_txfm_2d_N4_asm_func[tx_size_], test_func);
     }
 
-#ifndef NON_AVX512_SUPPORT
+#if EN_AVX512_SUPPORT
     void run_match_test_N2_512() {
         FwdTxfm2dFunc test_func_asm = fwd_txfm_2d_N2_asm512_func[tx_size_];
         FwdTxfm2dFunc ref_func = fwd_txfm_2d_c_func[tx_size_];
@@ -426,7 +426,7 @@ TEST_P(FwdTxfm2dAsmTest, DISABLED_speed_test) {
     speed_test();
 }
 
-#ifndef NON_AVX512_SUPPORT
+#if EN_AVX512_SUPPORT
 TEST_P(FwdTxfm2dAsmTest, match_test_N2_512) {
     if (CPU_FLAGS_AVX512F & get_cpu_flags_to_use()) {
         run_match_test_N2_512();

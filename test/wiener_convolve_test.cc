@@ -107,7 +107,7 @@ static const int test_tap_table[] = {7, 5, 3};
 
 static const WienerConvolveFunc wiener_convolve_func_table[] = {
     svt_av1_wiener_convolve_add_src_avx2,
-#ifndef NON_AVX512_SUPPORT
+#if EN_AVX512_SUPPORT
     svt_av1_wiener_convolve_add_src_avx512
 #endif
 };

@@ -15,7 +15,7 @@
 
 #include "aom_dsp_rtcd.h"
 
-#ifndef NON_AVX512_SUPPORT
+#if EN_AVX512_SUPPORT
 typedef void(*aom_highbd_dc_top_predictor_func)(uint16_t *dst, ptrdiff_t stride, const uint16_t *above, const uint16_t *left, int32_t bd);
 
 static aom_highbd_dc_top_predictor_func aom_highbd_dc_top_funcptr_array_opt[7] = {

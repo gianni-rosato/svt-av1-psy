@@ -11,7 +11,7 @@
 
 #include "EbDefinitions.h"
 
-#ifndef NON_AVX512_SUPPORT
+#if EN_AVX512_SUPPORT
 
 #include <immintrin.h>
 #include "EbCombinedAveragingSAD_Inline_AVX2.h"
@@ -166,4 +166,4 @@ uint32_t combined_averaging_ssd_avx512(uint8_t *src, ptrdiff_t src_stride, uint8
     return _mm_cvtsi128_si32(sum_128);
 }
 
-#endif // !NON_AVX512_SUPPORT
+#endif // EN_AVX512_SUPPORT

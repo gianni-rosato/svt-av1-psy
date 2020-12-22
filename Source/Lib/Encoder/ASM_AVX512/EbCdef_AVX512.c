@@ -11,7 +11,7 @@
 
 #include "EbDefinitions.h"
 
-#ifndef NON_AVX512_SUPPORT
+#if EN_AVX512_SUPPORT
 
 #include <immintrin.h>
 #include "aom_dsp_rtcd.h"
@@ -79,4 +79,4 @@ uint64_t svt_search_one_dual_avx512(int *lev0, int *lev1, int nb_strengths,
     return best_tot_mse;
 }
 
-#endif // !NON_AVX512_SUPPORT
+#endif // EN_AVX512_SUPPORT

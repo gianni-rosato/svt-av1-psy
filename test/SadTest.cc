@@ -570,7 +570,7 @@ typedef std::tuple<Ebsad_LoopKernelNxMType, Ebsad_LoopKernelNxMType> FuncPair;
 FuncPair TEST_FUNC_PAIRS[] = {
     FuncPair(svt_sad_loop_kernel_c, svt_sad_loop_kernel_sse4_1_intrin),
     FuncPair(svt_sad_loop_kernel_c, svt_sad_loop_kernel_avx2_intrin),
-#ifndef NON_AVX512_SUPPORT
+#if EN_AVX512_SUPPORT
     FuncPair(svt_sad_loop_kernel_c, svt_sad_loop_kernel_avx512_intrin),
 #endif
 };
@@ -578,7 +578,7 @@ FuncPair TEST_FUNC_PAIRS[] = {
 FuncPair TEST_FUNC_PAIRS_SMALL[] = {
     FuncPair(svt_sad_loop_kernel_c, svt_sad_loop_kernel_sse4_1_intrin),
     FuncPair(svt_sad_loop_kernel_c, svt_sad_loop_kernel_avx2_intrin),
-#ifndef NON_AVX512_SUPPORT
+#if EN_AVX512_SUPPORT
     FuncPair(svt_sad_loop_kernel_c, svt_sad_loop_kernel_avx512_intrin),
 #endif
 };

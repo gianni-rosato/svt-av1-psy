@@ -15,7 +15,7 @@
 #include "EbUnitTestUtility.h"
 #include "EbUnitTest.h"
 
-#ifndef NON_AVX512_SUPPORT
+#if EN_AVX512_SUPPORT
 
 typedef void(*svt_av1_frwd_txfm_func)(int16_t *input, int32_t *coeff, uint32_t stride, TxType tx_type, uint8_t bitDepth);
 svt_av1_frwd_txfm_func av1_frwd_txfm_func_ptr_array_base[9] = { svt_av1_fwd_txfm2d_16x16_avx2, svt_av1_fwd_txfm2d_32x32_avx2 , svt_av1_fwd_txfm2d_64x64_avx2 , svt_av1_fwd_txfm2d_16x64_avx2, svt_av1_fwd_txfm2d_64x16_avx2 , svt_av1_fwd_txfm2d_32x64_avx2 , svt_av1_fwd_txfm2d_64x32_avx2 , svt_av1_fwd_txfm2d_16x32_avx2 , svt_av1_fwd_txfm2d_32x16_avx2 };

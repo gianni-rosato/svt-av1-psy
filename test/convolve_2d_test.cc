@@ -67,56 +67,56 @@ using lowbd_convolve_func = void (*)(const uint8_t *src, int src_stride,
 
 static const lowbd_convolve_func lowbd_convolve_2d_sr_func_table[] = {
     svt_av1_convolve_2d_sr_avx2,
-#ifndef NON_AVX512_SUPPORT
+#if EN_AVX512_SUPPORT
     svt_av1_convolve_2d_sr_avx512
 #endif
 };
 
 static const lowbd_convolve_func lowbd_convolve_x_sr_func_table[] = {
     svt_av1_convolve_x_sr_avx2,
-#ifndef NON_AVX512_SUPPORT
+#if EN_AVX512_SUPPORT
     svt_av1_convolve_x_sr_avx512
 #endif
 };
 
 static const lowbd_convolve_func lowbd_convolve_y_sr_func_table[] = {
     svt_av1_convolve_y_sr_avx2,
-#ifndef NON_AVX512_SUPPORT
+#if EN_AVX512_SUPPORT
     svt_av1_convolve_y_sr_avx512
 #endif
 };
 
 static const lowbd_convolve_func lowbd_convolve_copy_sr_func_table[] = {
     svt_av1_convolve_2d_copy_sr_avx2,
-#ifndef NON_AVX512_SUPPORT
+#if EN_AVX512_SUPPORT
     svt_av1_convolve_2d_copy_sr_avx512
 #endif
 };
 
 static const lowbd_convolve_func lowbd_jnt_convolve_2d_func_table[] = {
     svt_av1_jnt_convolve_2d_avx2,
-#ifndef NON_AVX512_SUPPORT
+#if EN_AVX512_SUPPORT
     svt_av1_jnt_convolve_2d_avx512
 #endif
 };
 
 static const lowbd_convolve_func lowbd_jnt_convolve_x_func_table[] = {
     svt_av1_jnt_convolve_x_avx2,
-#ifndef NON_AVX512_SUPPORT
+#if EN_AVX512_SUPPORT
     svt_av1_jnt_convolve_x_avx512
 #endif
 };
 
 static const lowbd_convolve_func lowbd_jnt_convolve_y_func_table[] = {
     svt_av1_jnt_convolve_y_avx2,
-#ifndef NON_AVX512_SUPPORT
+#if EN_AVX512_SUPPORT
     svt_av1_jnt_convolve_y_avx512
 #endif
 };
 
 static const lowbd_convolve_func lowbd_jnt_convolve_copy_func_table[] = {
     svt_av1_jnt_convolve_2d_copy_avx2,
-#ifndef NON_AVX512_SUPPORT
+#if EN_AVX512_SUPPORT
     svt_av1_jnt_convolve_2d_copy_avx512
 #endif
 };
@@ -799,7 +799,7 @@ INSTANTIATE_TEST_CASE_P(ConvolveTestY, AV1LbdJntConvolve2DTest,
 INSTANTIATE_TEST_CASE_P(ConvolveTest2D, AV1LbdJntConvolve2DTest,
                         BuildParams(1, 1, 0, 0));
 
-#ifndef NON_AVX512_SUPPORT
+#if EN_AVX512_SUPPORT
 INSTANTIATE_TEST_CASE_P(ConvolveTestCOPY_AVX512, AV1LbdJntConvolve2DTest,
                         BuildParams(0, 0, 1, 0));
 INSTANTIATE_TEST_CASE_P(ConvolveTestX_AVX512, AV1LbdJntConvolve2DTest,
@@ -849,7 +849,7 @@ INSTANTIATE_TEST_CASE_P(ConvolveTestY, AV1LbdSrConvolve2DTest,
 INSTANTIATE_TEST_CASE_P(ConvolveTest2D, AV1LbdSrConvolve2DTest,
                         BuildParams(1, 1, 0, 0));
 
-#ifndef NON_AVX512_SUPPORT
+#if EN_AVX512_SUPPORT
 INSTANTIATE_TEST_CASE_P(ConvolveTestCopy_AVX512, AV1LbdSrConvolve2DTest,
                         BuildParams(0, 0, 1, 0));
 INSTANTIATE_TEST_CASE_P(ConvolveTestX_AVX512, AV1LbdSrConvolve2DTest,

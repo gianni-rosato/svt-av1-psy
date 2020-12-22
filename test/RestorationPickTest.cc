@@ -233,7 +233,7 @@ INSTANTIATE_TEST_CASE_P(
                        ::testing::Values(WIENER_WIN_CHROMA, WIENER_WIN,
                                          WIENER_WIN_3TAP)));
 
-#ifndef NON_AVX512_SUPPORT
+#if EN_AVX512_SUPPORT
 INSTANTIATE_TEST_CASE_P(
     AV1_COMPUTE_STATS_AVX512, av1_compute_stats_test,
     ::testing::Combine(::testing::Range(BLOCK_4X4, BlockSizeS_ALL),
@@ -481,7 +481,7 @@ INSTANTIATE_TEST_CASE_P(
         ::testing::Values(WIENER_WIN_CHROMA, WIENER_WIN, WIENER_WIN_3TAP),
         ::testing::Values(AOM_BITS_8, AOM_BITS_10, AOM_BITS_12)));
 
-#ifndef NON_AVX512_SUPPORT
+#if EN_AVX512_SUPPORT
 INSTANTIATE_TEST_CASE_P(
     AV1_COMPUTE_STATS_HBD_AVX512, av1_compute_stats_test_hbd,
     ::testing::Combine(

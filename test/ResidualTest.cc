@@ -129,7 +129,7 @@ typedef void (*svt_residual_kernel8bit_func)(uint8_t *input, uint32_t input_stri
 
 static const svt_residual_kernel8bit_func residual_kernel8bit_func_table[] = {
     svt_residual_kernel8bit_avx2,
-#ifndef NON_AVX512_SUPPORT
+#if EN_AVX512_SUPPORT
     svt_residual_kernel8bit_avx512
 #endif
 };

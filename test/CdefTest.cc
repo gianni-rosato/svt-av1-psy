@@ -54,7 +54,7 @@ typedef void (*svt_cdef_filter_block_8x8_16_func)(
 static const svt_cdef_filter_block_8x8_16_func
     svt_cdef_filter_block_8x8_16_func_table[] = {
         svt_cdef_filter_block_8x8_16_avx2,
-#ifndef NON_AVX512_SUPPORT
+#if EN_AVX512_SUPPORT
         svt_cdef_filter_block_8x8_16_avx512
 #endif
 };
@@ -684,7 +684,7 @@ typedef uint64_t (*svt_search_one_dual_func)(int *lev0, int *lev1,
 
 static const svt_search_one_dual_func search_one_dual_func_table[] = {
     svt_search_one_dual_avx2,
-#ifndef NON_AVX512_SUPPORT
+#if EN_AVX512_SUPPORT
     svt_search_one_dual_avx512
 #endif
 };

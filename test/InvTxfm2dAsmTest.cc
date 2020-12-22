@@ -118,7 +118,7 @@ static const InvSqrTxfmFuncPair inv_txfm_c_sse4_1_func_pairs[TX_64X64 + 1] = {
     SQR_FUNC_PAIRS(svt_av1_inv_txfm2d_add_64x64, sse4_1, is_tx_type_imp_64x64_sse4),
 };
 
-#ifndef NON_AVX512_SUPPORT
+#if EN_AVX512_SUPPORT
 static const InvSqrTxfmFuncPair inv_txfm_c_avx512_func_pairs[TX_64X64 + 1] = {
     EMPTY_FUNC_PAIRS(svt_av1_inv_txfm2d_add_4x4),
     EMPTY_FUNC_PAIRS(svt_av1_inv_txfm2d_add_8x8),
@@ -151,7 +151,7 @@ static const InvRectTxfm2dType1Func rect_type1_ref_funcs_c[TX_SIZES_ALL] = {
     svt_av1_inv_txfm2d_add_16x64_c,
     svt_av1_inv_txfm2d_add_64x16_c};
 
-#ifndef NON_AVX512_SUPPORT
+#if EN_AVX512_SUPPORT
 static const InvRectTxfm2dType1Func rect_type1_ref_funcs_avx512[TX_SIZES_ALL] = {
     nullptr,
     nullptr,
@@ -259,7 +259,7 @@ class InvTxfm2dAsmTest : public ::testing::TestWithParam<InvTxfm2dParam> {
         const int height = tx_size_high[tx_size];
         InvSqrTxfmFuncPair pair = (is_asm_kernel == 0)
                                       ? inv_txfm_c_avx2_func_pairs[tx_size]
-#ifndef NON_AVX512_SUPPORT
+#if EN_AVX512_SUPPORT
                                       : (is_asm_kernel == 2)
                                       ? inv_txfm_c_avx512_func_pairs[tx_size]
 #endif
@@ -693,7 +693,7 @@ TEST_P(InvTxfm2dAsmTest, sqr_txfm_match_test) {
         const TxSize tx_size = static_cast<TxSize>(i);
         run_sqr_txfm_match_test(tx_size, 0);
         run_sqr_txfm_match_test(tx_size, 1);
-#ifndef NON_AVX512_SUPPORT
+#if EN_AVX512_SUPPORT
         if (get_cpu_flags_to_use() & CPU_FLAGS_AVX512F)
             run_sqr_txfm_match_test(tx_size, 2);
 #endif
@@ -706,7 +706,7 @@ TEST_P(InvTxfm2dAsmTest, rect_type1_txfm_match_test) {
         run_rect_type1_txfm_match_test(tx_size,rect_type1_ref_funcs_c);
     }
 
-#ifndef NON_AVX512_SUPPORT
+#if EN_AVX512_SUPPORT
     if (get_cpu_flags_to_use() & CPU_FLAGS_AVX512F) {
         for (int i = TX_4X8; i < TX_SIZES_ALL; i++) {
             const TxSize tx_size = static_cast<TxSize>(i);

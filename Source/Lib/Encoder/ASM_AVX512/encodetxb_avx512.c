@@ -11,7 +11,7 @@
 
 #include "EbDefinitions.h"
 
-#ifndef NON_AVX512_SUPPORT
+#if EN_AVX512_SUPPORT
 
 #include <immintrin.h> /* AVX2 */
 #include "synonyms.h"
@@ -147,4 +147,4 @@ void svt_av1_txb_init_levels_avx512(const TranLow *const coeff, const int32_t wi
         xx_storeu_128(ls + 2 * 64, x_zeros);
     }
 }
-#endif // !NON_AVX512_SUPPORT
+#endif // EN_AVX512_SUPPORT

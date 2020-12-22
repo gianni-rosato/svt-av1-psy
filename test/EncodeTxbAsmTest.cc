@@ -305,7 +305,7 @@ INSTANTIATE_TEST_CASE_P(
     ::testing::Combine(::testing::Values(&svt_av1_txb_init_levels_avx2),
                        ::testing::Range(0, static_cast<int>(TX_SIZES_ALL), 1)));
 
-#ifndef NON_AVX512_SUPPORT
+#if EN_AVX512_SUPPORT
 INSTANTIATE_TEST_CASE_P(
     EntropyAVX512, EncodeTxbInitLevelTest,
     ::testing::Combine(::testing::Values(&svt_av1_txb_init_levels_avx512),

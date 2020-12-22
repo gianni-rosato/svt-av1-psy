@@ -11,7 +11,7 @@
 
 #include "EbDefinitions.h"
 
-#ifndef NON_AVX512_SUPPORT
+#if EN_AVX512_SUPPORT
 #include <immintrin.h>
 #include "common_dsp_rtcd.h"
 #include "EbBitstreamUnit.h"
@@ -214,4 +214,4 @@ void svt_cdef_filter_block_8x8_16_avx512(const uint16_t *const in, const int32_t
     }
 }
 
-#endif // !NON_AVX512_SUPPORT
+#endif // EN_AVX512_SUPPORT

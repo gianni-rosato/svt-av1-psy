@@ -11,7 +11,7 @@
 
 #include "EbDefinitions.h"
 
-#ifndef NON_AVX512_SUPPORT
+#if EN_AVX512_SUPPORT
 #include <assert.h>
 #include "EbComputeSAD_AVX2.h"
 #include <immintrin.h>
@@ -4930,4 +4930,4 @@ void svt_sad_loop_kernel_avx512_intrin(
     *x_search_center = (int16_t)best_x;
     *y_search_center = (int16_t)best_y;
 }
-#endif // !NON_AVX512_SUPPORT
+#endif // EN_AVX512_SUPPORT

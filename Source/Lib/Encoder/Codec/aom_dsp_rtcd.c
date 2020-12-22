@@ -27,12 +27,12 @@
  **************************************/
 
 #ifdef ARCH_X86_64
-#ifndef NON_AVX512_SUPPORT
+#if EN_AVX512_SUPPORT
 #define SET_FUNCTIONS_AVX512(ptr, avx512)                                                         \
     if (((uintptr_t)NULL != (uintptr_t)avx512) && (flags & HAS_AVX512F)) ptr = avx512;
-#else /* NON_AVX512_SUPPORT */
+#else /* EN_AVX512_SUPPORT */
 #define SET_FUNCTIONS_AVX512(ptr, avx512)
-#endif /* NON_AVX512_SUPPORT */
+#endif /* EN_AVX512_SUPPORT */
 
 #define SET_FUNCTIONS_X86(ptr, c, mmx, sse, sse2, sse3, ssse3, sse4_1, sse4_2, avx, avx2, avx512) \
     if (((uintptr_t)NULL != (uintptr_t)mmx)    && (flags & HAS_MMX))    ptr = mmx;                \

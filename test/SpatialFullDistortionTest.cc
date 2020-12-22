@@ -185,7 +185,7 @@ TEST_P(SpatialFullDistortionTest, DISABLED_Speed) {
 INSTANTIATE_TEST_CASE_P(AVX2, SpatialFullDistortionTest,
     ::testing::Values(svt_spatial_full_distortion_kernel_avx2));
 
-#ifndef NON_AVX512_SUPPORT
+#if EN_AVX512_SUPPORT
 INSTANTIATE_TEST_CASE_P(
     AVX512, SpatialFullDistortionTest,
     ::testing::Values(svt_spatial_full_distortion_kernel_avx512));
@@ -360,7 +360,7 @@ void SpatialFullDistortionKernelFuncTest::RunCheckOutput() {
 TEST_P(SpatialFullDistortionKernelFuncTest, SpatialKernelFuncTest) {
     RunCheckOutput();
 }
-#ifndef NON_AVX512_SUPPORT
+#if EN_AVX512_SUPPORT
 INSTANTIATE_TEST_CASE_P(
     SpatialKernelFunc, SpatialFullDistortionKernelFuncTest,
     ::testing::Combine(

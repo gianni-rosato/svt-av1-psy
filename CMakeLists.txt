@@ -228,9 +228,17 @@ elseif(CMAKE_ASM_NASM_COMPILER MATCHES "yasm")
 endif()
 
 include(CheckSymbolExists)
+
 check_symbol_exists("_mm512_extracti64x4_epi64" "immintrin.h" HAS_AVX512)
-if(NOT HAS_AVX512)
-    add_definitions(-DNON_AVX512_SUPPORT)
+if(HAS_AVX512)
+    option(ENABLE_AVX512 "Enable building avx512 code" OFF)
+else()
+    set(ENABLE_AVX512 OFF CACHE INTERNAL "Enable building avx512 code")
+endif()
+if(ENABLE_AVX512)
+    add_definitions(-DEN_AVX512_SUPPORT=1)
+else()
+    add_definitions(-DEN_AVX512_SUPPORT=0)
 endif()
 
 # ASM compiler macro

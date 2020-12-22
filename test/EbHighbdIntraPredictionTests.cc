@@ -19,7 +19,7 @@
 #include "random.h"
 #include "util.h"
 
-#ifndef NON_AVX512_SUPPORT
+#if EN_AVX512_SUPPORT
 using namespace std;
 int bitdepth[] = { 8, 10, 12 };
 

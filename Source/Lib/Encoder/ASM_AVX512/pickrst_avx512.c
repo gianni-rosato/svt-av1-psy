@@ -11,7 +11,7 @@
 
 #include "EbDefinitions.h"
 
-#ifndef NON_AVX512_SUPPORT
+#if EN_AVX512_SUPPORT
 
 #include <immintrin.h> // AVX2
 #include "synonyms.h"
@@ -3523,4 +3523,4 @@ int64_t svt_av1_lowbd_pixel_proj_error_avx512(const uint8_t *src8, int32_t width
     return err + _mm_cvtsi128_si64(hadd_64_avx2(sum_256));
 }
 
-#endif // !NON_AVX512_SUPPORT
+#endif // EN_AVX512_SUPPORT

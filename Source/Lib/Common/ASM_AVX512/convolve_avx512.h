@@ -21,7 +21,7 @@
 #include "synonyms_avx2.h"
 #include "synonyms_avx512.h"
 
-#ifndef NON_AVX512_SUPPORT
+#if EN_AVX512_SUPPORT
 
 static INLINE __m512i svt_mm512_broadcast_i64x2(const __m128i v) {
 #ifdef _WIN32
@@ -1103,6 +1103,6 @@ static INLINE void jnt_no_avg_round_store_64_avx512(const __m512i res[2], const 
     jnt_no_avg_store_64_avx512(d[0], d[1], dst);
 }
 
-#endif // !NON_AVX512_SUPPORT
+#endif // EN_AVX512_SUPPORT
 
 #endif // AOM_DSP_X86_CONVOLVE_AVX512_H_

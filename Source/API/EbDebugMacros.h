@@ -33,11 +33,6 @@
 extern "C" {
 #endif // __cplusplus
 
-// undefining this macro would allow the AVX512 optimization to be enabled by default
-#ifndef NON_AVX512_SUPPORT
-#define NON_AVX512_SUPPORT
-#endif
-
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
 #define DEBUG_TPL               0 // Prints to debug TPL

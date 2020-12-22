@@ -331,7 +331,7 @@ TEST_P(PixelProjErrorLbdTest, DISABLED_SpeedTest) {
 static const PixelProjErrorTestParam lbd_test_vector[] = {
     make_tuple(svt_av1_lowbd_pixel_proj_error_avx2,
                svt_av1_lowbd_pixel_proj_error_c),
-#ifndef NON_AVX512_SUPPORT
+#if EN_AVX512_SUPPORT
     make_tuple(svt_av1_lowbd_pixel_proj_error_avx512,
                svt_av1_lowbd_pixel_proj_error_c)
 #endif
