@@ -198,6 +198,7 @@ extern "C" {
 #define DISABLE_FE_CDF_UPDATE_BASE             1 // use frame_end_cdf_update for non-BASE pics only for multi-threaded M9
 #define TUNE_INTRA_PRED_MODE_MT                1 // Tune M9 setting of intra_pred_mode for multi-threaded M9
 #define TUNE_M0_M3_BASE_NBASE                  1 // tune preset M0-M3 with base checks
+#define DIS_TRAILING_PICTURES                  1 // turn off trailing pictures for all presets
 // ============= END SVT_04 =============
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch

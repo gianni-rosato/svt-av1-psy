@@ -1308,7 +1308,11 @@ EbErrorType signal_derivation_multi_processes_oq(
 #if TUNE_M4_M8
 #if TUNE_M10_TPL_TRAILING_FRAME_CNT
         if (pcs_ptr->enc_mode <= ENC_M9)
+#if DIS_TRAILING_PICTURES
+            pcs_ptr->tpl_trailing_frame_count = 0;
+#else
             pcs_ptr->tpl_trailing_frame_count = 6;
+#endif
         else
             pcs_ptr->tpl_trailing_frame_count = 0;
 #else
