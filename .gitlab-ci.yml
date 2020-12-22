@@ -152,6 +152,13 @@ Linux (GCC 10, Tests, Static):
       - Bin/Release/SvtAv1ApiTests
       - Bin/Release/SvtAv1E2ETests
 
+Linux (GCC 10, AVX512):
+  extends: .linux-compiler-base
+  variables:
+    CC: gcc-10
+    CXX: g++-10
+    EXTRA_CMAKE_FLAGS: -DENABLE_AVX512=ON
+
 .sanitizer compile:
   extends: .linux-compiler-base
   variables:
