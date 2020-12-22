@@ -79,6 +79,8 @@ Usage: $0 [OPTION] ... -- [OPTIONS FOR CMAKE]
     --no-dec, no-dec    Don't build the decoder app and libs
 -p, --prefix, prefix=*  Set installation prefix
     --release, release  Build release
+    --sanitizer,        Build and enable using sanitizer
+    sanitizer=*
 -s, --target_system,    Set CMake target system
     target_system=*
     --test, test        Build Unit Tests
@@ -243,6 +245,7 @@ parse_options() {
         no-dec) CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS -DBUILD_DEC=OFF" && shift ;;
         prefix=*) CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS -DCMAKE_INSTALL_PREFIX=${1#*=}" && shift ;;
         release) build_release=true && shift ;;
+        sanitizer=*) CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS -DSANITIZER=${1#*=}" && shift ;;
         target_system=*)
             CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS -DCMAKE_SYSTEM_NAME=${1#*=}"
             shift
@@ -306,7 +309,7 @@ else
             toolchain) parse_options toolchain="$2" && shift ;;
             test) parse_options tests && shift ;;
             verbose) parse_options verbose && shift ;;
-            asm | bindir | cc | cxx | gen | jobs | prefix | target_system)
+            asm | bindir | cc | cxx | gen | jobs | prefix | sanitizer | target_system)
                 parse_equal_option "$1" "$2"
                 case $1 in
                 *=*) shift ;;
@@ -416,6 +419,7 @@ else
             shared) parse_options shared && shift ;;
             static) parse_options static && shift ;;
             release) parse_options release && shift ;;
+            sanitizer=*) parse_options sanitizer="${1#*=}" && shift;;
             test) parse_options tests && shift ;;
             toolchain=*) parse_options toolchain="${1#*=}" && shift ;;
             verbose) parse_options verbose && shift ;;
