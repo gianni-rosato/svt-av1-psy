@@ -4569,6 +4569,10 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #endif
 #endif
             txt_level = 1;
+#if TUNE_M4_BASE_NBASE
+        else if (enc_mode <= ENC_M4)
+            txt_level = (pcs_ptr->temporal_layer_index == 0) ? 1 : 3;
+#endif
 #if TUNE_M4_M8
 #if TUNE_NEW_PRESETS_MR_M8
         else if (enc_mode <= ENC_M6)
@@ -5175,6 +5179,12 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #else
         parent_sq_coeff_area_based_cycles_reduction_level = pcs_ptr->slice_type == I_SLICE ? 5 : pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? 4 : 7;
 #endif
+#if TUNE_M4_BASE_NBASE
+    else if (enc_mode <= ENC_M4)
+        parent_sq_coeff_area_based_cycles_reduction_level = pcs_ptr->slice_type == I_SLICE ? 5
+        : (pcs_ptr->temporal_layer_index == 0) ? pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? 4 : 7
+        : pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? 6 : 7;
+#endif
     else
         parent_sq_coeff_area_based_cycles_reduction_level = pcs_ptr->slice_type == I_SLICE ? 5 : pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? 6 : 7;
 #else
@@ -5279,7 +5289,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
                 context_ptr->max_part0_to_part1_dev = 0;
 #if TUNE_M4_FEATURES
             else if (enc_mode <= ENC_M4)
+#if TUNE_M4_BASE_NBASE
+                context_ptr->max_part0_to_part1_dev = (pcs_ptr->temporal_layer_index == 0) ? 0 : 50;
+#else
                 context_ptr->max_part0_to_part1_dev = (pcs_ptr->temporal_layer_index == 0) ? 0 : 100;
+#endif
 #endif
             else
                 context_ptr->max_part0_to_part1_dev = 100;
@@ -7254,6 +7268,18 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
                                     s_depth = pcs_ptr->slice_type == I_SLICE ? -2 : -1;
                                     e_depth = pcs_ptr->slice_type == I_SLICE ? 2 : 1;
                                 }
+#if TUNE_M4_BASE_NBASE
+                                else if (pcs_ptr->enc_mode <= ENC_M4) {
+                                    if (pcs_ptr->temporal_layer_index == 0) {
+                                        s_depth = pcs_ptr->slice_type == I_SLICE ? -2 : -1;
+                                        e_depth = pcs_ptr->slice_type == I_SLICE ? 2 : 1;
+                                    }
+                                    else {
+                                        s_depth = -1;
+                                        e_depth = 1;
+                                    }
+                                }
+#endif
                                 else {
                                     s_depth = -1;
                                     e_depth = 1;
@@ -7272,6 +7298,18 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
                                 s_depth = pcs_ptr->slice_type == I_SLICE ? -2 : -1;
                                 e_depth = pcs_ptr->slice_type == I_SLICE ?  2 :  1;
                             }
+#if TUNE_M4_BASE_NBASE
+                            else if (pcs_ptr->enc_mode <= ENC_M4) {
+                                if (pcs_ptr->temporal_layer_index == 0) {
+                                    s_depth = pcs_ptr->slice_type == I_SLICE ? -2 : -1;
+                                    e_depth = pcs_ptr->slice_type == I_SLICE ? 2 : 1;
+                            }
+                                else {
+                                    s_depth = -1;
+                                    e_depth = 1;
+                                }
+                            }
+#endif
 #if OPT_M9_TXT_PRED_DEPTH_PRUNING
 #if TUNE_M7_M9
                             else if (pcs_ptr->enc_mode <= ENC_M9) {

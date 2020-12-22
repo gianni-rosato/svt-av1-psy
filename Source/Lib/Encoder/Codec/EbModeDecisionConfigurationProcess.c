@@ -503,6 +503,10 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     if (pcs_ptr->enc_mode <= ENC_M3)
 #endif
         update_cdf_level = 1;
+#if TUNE_M4_BASE_NBASE
+    else if (pcs_ptr->enc_mode <= ENC_M4)
+        update_cdf_level = (pcs_ptr->temporal_layer_index == 0) ? 1 : 0;
+#endif
 #if !TUNE_M4_M8
     else if (pcs_ptr->enc_mode <= ENC_M5)
         update_cdf_level = 2;

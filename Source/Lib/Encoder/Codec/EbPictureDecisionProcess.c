@@ -1082,7 +1082,11 @@ EbErrorType signal_derivation_multi_processes_oq(
 #else
             if (pcs_ptr->enc_mode <= ENC_M3)
 #endif
-                    pcs_ptr->cdef_level = 1;
+                pcs_ptr->cdef_level = 1;
+#if TUNE_M4_BASE_NBASE
+            else if (pcs_ptr->enc_mode <= ENC_M4)
+                pcs_ptr->cdef_level = (pcs_ptr->temporal_layer_index == 0) ? 1 : 4;
+#endif
 #if FTR_CDEF_CHROMA_FOLLOWS_LUMA
 #if TUNE_M4_M8
 #if TUNE_NEW_PRESETS_MR_M8
