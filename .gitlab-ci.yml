@@ -283,6 +283,36 @@ Linux E2E Tests:
     - mv test/vectors/* .
     - ./Bin/Release/SvtAv1E2ETests --gtest_filter=-*DummySrcTest*
 
+Linux (Gstreamer, Static):
+  extends: .tests
+  variables:
+    CC: gcc-10
+    CXX: g++-10
+    CFLAGS: -pipe -O3
+    CXXFLAGS: -pipe -O3
+    LDFLAGS: -pipe
+    CCACHE_DIR: $CI_PROJECT_DIR/.ccache
+    PKG_CONFIG_PATH: /usr/local/lib/pkgconfig
+    GIT_DEPTH: 0
+  cache:
+    key: ${CI_JOB_NAME}
+    paths:
+      - .ccache
+    policy: pull-push
+  needs:
+    - 'Linux (GCC 10)'
+  script:
+    - cmake -GNinja -B Build -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=/usr -DBUILD_APPS=OFF -DBUILD_DEC=OFF
+    - cmake --build Build --config Release --target install
+    - meson setup gstreamer-plugin/build gstreamer-plugin -Dprefix=/usr
+    - ninja -C gstreamer-plugin/build install
+    - |
+      gst-launch-1.0 -v filesrc location=akiyo_cif.y4m \
+        ! y4mdec \
+        ! svtav1enc \
+        ! webmmux \
+        ! filesink location=akiyo.mkv
+
 Linux (FFmpeg, Static):
   extends: .tests
   variables:
