@@ -27,6 +27,7 @@
 #include "EbPacketizationProcess.h"
 #include "EbModeDecisionProcess.h"
 #include "EbInterPrediction.h"
+#include "EbSvtAv1Metadata.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -197,6 +198,13 @@ extern int32_t svt_av1_get_pred_context_single_ref_p5(const MacroBlockD *xd);
 // BWDREF_FRAME, knowing that it shall be either of these 2 choices.
 extern int32_t svt_av1_get_pred_context_single_ref_p6(const MacroBlockD *xd);
 
+/*!\brief Writes a valid metadata object to the AV1 bitstream.
+ * \param[in]    bitstream_ptr       AV1 bitstream
+ * \param[in]    metadata            Metadata array object
+ * \param[in]    type                Metadata type descriptor
+ */
+extern EbErrorType write_metadata_av1(Bitstream *bitstream_ptr, SvtMetadataArrayT *metadata,
+                                      const EbAv1MetadataType type);
 extern EbErrorType write_frame_header_av1(Bitstream *bitstream_ptr, SequenceControlSet *scs_ptr,
                                           PictureControlSet *pcs_ptr, uint8_t show_existing);
 extern EbErrorType encode_td_av1(uint8_t *bitstream_ptr);

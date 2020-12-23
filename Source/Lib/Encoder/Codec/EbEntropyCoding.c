@@ -4113,6 +4113,22 @@ static void add_trailing_bits(struct AomWriteBitBuffer *wb) {
         svt_aom_wb_write_bit(wb, 1);
     }
 }
+
+// writes the type and payload of the provided metadata to the address dst as a metadata OBU
+static uint32_t write_obu_metadata(SvtMetadataT *metadata, uint8_t *const dst) {
+    if (!metadata || !metadata->payload)
+        return 0;
+    struct AomWriteBitBuffer wb   = {dst, 0};
+    uint32_t                 size = 0;
+    svt_aom_wb_write_literal(&wb, metadata->type, 8);
+    for (size_t i = 0; i < metadata->sz; ++i) {
+        svt_aom_wb_write_literal(&wb, metadata->payload[i], 8);
+    }
+    add_trailing_bits(&wb);
+    size = svt_aom_wb_bytes_written(&wb);
+    return size;
+}
+
 static void write_bitstream_level(BitstreamLevel bl, struct AomWriteBitBuffer *wb) {
     uint8_t seq_level_idx = major_minor_to_seq_level_idx(bl);
     assert(is_valid_seq_level_idx(seq_level_idx));
@@ -4227,6 +4243,41 @@ static uint32_t write_frame_header_obu(SequenceControlSet *     scs_ptr,
 
     total_size = svt_aom_wb_bytes_written(&wb);
     return total_size;
+}
+
+EbErrorType write_metadata_av1(Bitstream *bitstream_ptr, SvtMetadataArrayT *metadata,
+                               const EbAv1MetadataType type) {
+    EbErrorType return_error = EB_ErrorNone;
+    if (!metadata || !metadata->metadata_array)
+        return EB_ErrorBadParameter;
+
+    OutputBitstreamUnit *output_bitstream_ptr = (OutputBitstreamUnit *)
+                                                    bitstream_ptr->output_bitstream_ptr;
+    uint8_t *data = output_bitstream_ptr->buffer_av1;
+
+    for (size_t i = 0; i < metadata->sz; i++) {
+        SvtMetadataT *current_metadata = metadata->metadata_array[i];
+        if (current_metadata && current_metadata->payload && current_metadata->type == type) {
+            uint32_t      obu_header_size      = 0;
+            int32_t       curr_data_size       = 0;
+            const uint8_t obu_extension_header = 0;
+            // A new tile group begins at this tile.  Write the obu header and
+            // tile group header
+            const ObuType obu_type = OBU_METADATA;
+            curr_data_size         = write_obu_header(obu_type, obu_extension_header, data);
+            obu_header_size        = curr_data_size;
+            curr_data_size += write_obu_metadata(current_metadata, data + curr_data_size);
+            const uint32_t obu_payload_size = curr_data_size - obu_header_size;
+            const size_t length_field_size  = obu_mem_move(obu_header_size, obu_payload_size, data);
+            if (write_uleb_obu_size(obu_header_size, obu_payload_size, data) != AOM_CODEC_OK) {
+                assert(0);
+            }
+            curr_data_size += (int32_t)length_field_size;
+            data += curr_data_size;
+        }
+    }
+    output_bitstream_ptr->buffer_av1 = data;
+    return return_error;
 }
 
 /**************************************************
