@@ -144,6 +144,9 @@ if -%1-==-- (
 ) else if /I "%1"=="c-only" (
     set "cmake_eflags=%cmake_eflags% -DCOMPILE_C_ONLY=ON"
     shift
+) else if /I "%1"=="avx512" (
+    set "cmake_eflags=%cmake_eflags% -DENABLE_AVX512=ON"
+    shift
 )  else (
     echo Unknown argument "%1"
     call :help
@@ -152,6 +155,6 @@ goto :args
 
 :help
     echo Batch file to build SVT-AV1 on Windows
-    echo Usage: build.bat [2019^|2017^|2015^|clean] [release^|debug] [nobuild] [test] [shared^|static] [c-only]
+    echo Usage: build.bat [2019^|2017^|2015^|clean] [release^|debug] [nobuild] [test] [shared^|static] [c-only] [avx512]
     exit
 goto :EOF
