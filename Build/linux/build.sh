@@ -70,6 +70,10 @@ Usage: $0 [OPTION] ... -- [OPTIONS FOR CMAKE]
     --c-only, c-only    Compile only C code
     --clean, clean      Remove build and Bin folders
     --debug, debug      Build debug
+    --disable-avx512,   Disable building avx512 code (Default)
+    disable-avx512
+    --enable-avx512,    Enable building avx512 code (if supported)
+    enable-avx512
     --shared, shared    Build shared libs
 -x, --static, static    Build static libs
 -g, --gen, gen=*        Set CMake generator
@@ -236,6 +240,20 @@ parse_options() {
             shift && ${IN_SCRIPT:-false} && exit
             ;;
         debug) build_debug=true && shift ;;
+        disable*)
+            case ${1#disable-} in
+            avx512) CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS -DENABLE_AVX512=OFF" ;;
+            *) print_message "Unknown option: $1" ;;
+            esac
+            shift
+            ;;
+        enable*)
+            case ${1#enable-} in
+            avx512) CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS -DENABLE_AVX512=ON" ;;
+            *) print_message "Unknown option: $1" ;;
+            esac
+            shift
+            ;;
         shared) CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS -DBUILD_SHARED_LIBS=ON" && shift ;;
         static) CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS -DBUILD_SHARED_LIBS=OFF" && shift ;;
         gen=*) CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS -G${1#*=}" && shift ;;
@@ -292,7 +310,8 @@ else
     while [ -n "$*" ]; do
         case $1 in
         --*) # Handle --* based args
-            case $(printf %s "$1" | cut -c3- | cut -d= -f1 | tr '[:upper:]' '[:lower:]') in
+            match=$(printf %s "${1#--}" | cut -d= -f1 | tr '[:upper:]' '[:lower:]')
+            case $match in
             # Stop on "--", pass the rest to cmake
             "") shift && break ;;
             help) parse_options help && shift ;;
@@ -300,6 +319,7 @@ else
             c-only) parse_options c-only && shift ;;
             clean) parse_options clean && shift ;;
             debug) parse_options debug && shift ;;
+            disable* | enable* ) parse_options "$match" && shift ;;
             install) parse_options install && shift ;;
             no-enc) parse_options no-enc && shift ;;
             no-dec) parse_options no-dec && shift ;;
@@ -399,7 +419,8 @@ else
             done
             ;;
         *) # Handle single word args
-            case $(printf %s "$1" | tr '[:upper:]' '[:lower:]') in
+            match=$(printf %s "$1" | tr '[:upper:]' '[:lower:]')
+            case $match in
             all) parse_options release debug && shift ;;
             asm=*) parse_options asm="${1#*=}" && shift ;;
             bindir=*) parse_options bindir="${1#*=}" && shift ;;
@@ -408,6 +429,7 @@ else
             c-only) parse_options c-only && shift ;;
             clean) parse_options clean && shift ;;
             debug) parse_options debug && shift ;;
+            disable* | enable* ) parse_options "$match" && shift ;;
             gen=*) parse_options gen="${1#*=}" && shift ;;
             help) parse_options help && shift ;;
             install) parse_options install && shift ;;
