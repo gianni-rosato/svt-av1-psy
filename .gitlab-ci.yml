@@ -386,7 +386,6 @@ Linux (FFmpeg, Static):
     - meson install -C dav1d-build
 
     # vmaf
-    - curl -Ls "https://github.com/Netflix/vmaf/pull/768.patch" | git -C vmaf apply -3
     - |
       meson setup \
         --default-library static \

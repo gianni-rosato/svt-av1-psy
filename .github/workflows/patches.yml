@@ -103,7 +103,7 @@ jobs:
           path: vmaf
       - name: Configure libvmaf
         run: |
-          sudo -E meson setup --buildtype release --libdir lib -Denable_{tests,docs}=false -Dbuilt_in_models=false vmaf-build vmaf/libvmaf
+          sudo -E meson setup --buildtype release --libdir lib -Denable_{tests,docs}=false -Dbuilt_in_models=true vmaf-build vmaf/libvmaf
           sudo -E meson install -C vmaf-build
 
       - name: Check for symbol conflicts
