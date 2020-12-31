@@ -27,6 +27,9 @@ static EbErrorType create_stats_buffer(FIRSTPASS_STATS **frame_stats_buffer,
         return EB_ErrorInsufficientResources;
 
     stats_buf_context->stats_in_start   = *frame_stats_buffer;
+#if FTR_VBR_MT
+    stats_buf_context->stats_in_end_write = stats_buf_context->stats_in_start;
+#endif
     stats_buf_context->stats_in_end     = stats_buf_context->stats_in_start;
     stats_buf_context->stats_in_buf_end = stats_buf_context->stats_in_start + size;
 

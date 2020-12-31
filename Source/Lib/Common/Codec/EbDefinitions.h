@@ -118,6 +118,11 @@ enum {
     ALLOW_RECODE_KFARFGF = 2,
     // Allow recode for all frames based on bitrate constraints.
     ALLOW_RECODE = 3,
+#if TUNE_DEFAULT_RECODE_LOOP
+    // Default setting, ALLOW_RECODE_KFARFGF for M0~5 and
+    //                  ALLOW_RECODE_KFMAXBW for M6~8.
+    ALLOW_RECODE_DEFAULT = 4,
+#endif
 } UENUM1BYTE(RecodeLoopType);
 
 /********************************************************/

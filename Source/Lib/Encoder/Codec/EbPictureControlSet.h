@@ -691,6 +691,9 @@ typedef struct PictureParentControlSet {
     EbObjectWrapper *          output_stream_wrapper_ptr;
     Av1Common *                av1_cm;
 
+#if FIX_R2R_10B_LAMBDA
+    uint8_t             hbd_mode_decision;
+#endif
     // Data attached to the picture. This includes data passed from the application, or other data the encoder attaches
     // to the picture.
     EbLinkedListNode *data_ll_head_ptr;
@@ -1105,7 +1108,11 @@ typedef struct PictureParentControlSet {
 #endif
     TfControls tf_ctrls;
     GmControls gm_ctrls;
+#if FTR_VBR_MT
+    // RC related variables
+#else
     // Loop variables
+#endif
     int                             q_low;
     int                             q_high;
     int                             loop_count;
@@ -1144,6 +1151,38 @@ typedef struct PictureParentControlSet {
     uint16_t sb_total_count_pix;
     EncDecSegments **tpl_disp_segment_ctrl;
     EncDecSegments **tpl_disp_segment_ctrl_trail;
+#endif
+#if FTR_VBR_MT
+    // the offsets for STATS_BUFFER_CTX
+    uint64_t                        stats_in_end_offset;
+    // the offsets for stats_in
+    uint64_t                        stats_in_offset;
+#endif
+#if FTR_VBR_MT
+    //GF_GROUP parameters store in PCS
+    int                             update_type;
+    int                             layer_depth;
+    int                             arf_boost;
+    int                             gf_group_size;
+    //RATE_CONTROL parameters store in PCS
+    int                             base_frame_target; // A baseline frame target before adjustment.
+    int                             this_frame_target; // Actual frame target after rc adjustment.
+    int                             projected_frame_size;
+
+    int                             frames_to_key;
+    int                             frames_since_key;
+    int                             is_src_frame_alt_ref;
+    // Total number of stats used only for gfu_boost calculation.
+    int                             num_stats_used_for_gfu_boost;
+    // Total number of stats required by gfu_boost calculation.
+    int                             num_stats_required_for_gfu_boost;
+    int                             top_index;
+    int                             bottom_index;
+    // stores gf group (minigop) length
+    int                             gf_interval;
+    int                             gf_update_due; // thr gf update in RC is due for I, or base frames (except the one after I) or P frames
+    uint8_t                         is_new_gf_group;
+    struct PictureParentControlSet *gf_group[MAX_TPL_GROUP_SIZE];
 #endif
 } PictureParentControlSet;
 

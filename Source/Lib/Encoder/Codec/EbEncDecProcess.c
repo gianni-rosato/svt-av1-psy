@@ -7575,20 +7575,34 @@ static void recode_loop_decision_maker(PictureControlSet *pcs_ptr,
     FrameHeader *frm_hdr = &ppcs_ptr->frm_hdr;
     int32_t q = frm_hdr->quantization_params.base_q_idx;
     if (ppcs_ptr->loop_count == 0) {
+#if FTR_VBR_MT
+        ppcs_ptr->q_low = ppcs_ptr->bottom_index;
+        ppcs_ptr->q_high = ppcs_ptr->top_index;
+#else
         ppcs_ptr->q_low  = rc->bottom_index;
         ppcs_ptr->q_high = rc->top_index;
+#endif
     }
 
     // Update q and decide whether to do a recode loop
     recode_loop_update_q(ppcs_ptr, &loop, &q,
             &ppcs_ptr->q_low, &ppcs_ptr->q_high,
+#if FTR_VBR_MT
+            ppcs_ptr->top_index, ppcs_ptr->bottom_index,
+#else
             rc->top_index, rc->bottom_index,
+#endif
             &ppcs_ptr->undershoot_seen, &ppcs_ptr->overshoot_seen,
             &ppcs_ptr->low_cr_seen, ppcs_ptr->loop_count);
 
     // Special case for overlay frame.
+#if FTR_VBR_MT
+    if (loop && ppcs_ptr->is_src_frame_alt_ref &&
+        ppcs_ptr->projected_frame_size < rc->max_frame_bandwidth) {
+#else
     if (loop && rc->is_src_frame_alt_ref &&
         rc->projected_frame_size < rc->max_frame_bandwidth) {
+#endif
         loop = 0;
     }
     *do_recode = loop == 1;

@@ -1353,6 +1353,32 @@ EbErrorType signal_derivation_multi_processes_oq(
         pcs_ptr->list0_only_base = 1;
 #endif
 #endif
+#if FIX_R2R_10B_LAMBDA
+    if (scs_ptr->static_config.enable_hbd_mode_decision == DEFAULT)
+#if TUNE_10BIT_MD_SETTINGS
+        if (pcs_ptr->enc_mode <= ENC_MR)
+            pcs_ptr->hbd_mode_decision = 1;
+        else if (pcs_ptr->enc_mode <= ENC_M1)
+            pcs_ptr->hbd_mode_decision = pcs_ptr->is_used_as_reference_flag ? 1 : 2;
+        else if (pcs_ptr->enc_mode <= ENC_M4)
+            pcs_ptr->hbd_mode_decision = 2;
+        else if (pcs_ptr->enc_mode <= ENC_M7)
+            pcs_ptr->hbd_mode_decision = pcs_ptr->is_used_as_reference_flag ? 2 : 0;
+        else
+            pcs_ptr->hbd_mode_decision = pcs_ptr->temporal_layer_index == 0 ? 2 : 0;
+#else
+#if TUNE_HBD_MODE_DECISION
+        if (pcs_ptr->enc_mode <= ENC_M1)
+#else
+        if (pcs_ptr->enc_mode <= ENC_M0)
+#endif
+            pcs_ptr->hbd_mode_decision = 1;
+        else
+            pcs_ptr->hbd_mode_decision = 2;
+#endif
+    else
+        pcs_ptr->hbd_mode_decision = scs_ptr->static_config.enable_hbd_mode_decision;
+#endif
     return return_error;
 }
 
@@ -4754,6 +4780,17 @@ void send_picture_out(
             }
         }
     }
+#if FTR_VBR_MT
+    if (scs->lap_enabled || use_input_stat(scs)) {
+        pcs->stats_in_offset = pcs->decode_order;
+        if (scs->lap_enabled)
+            pcs->stats_in_end_offset = MIN((uint64_t)(scs->twopass.stats_buf_ctx->stats_in_end_write - scs->twopass.stats_buf_ctx->stats_in_start),
+                pcs->stats_in_offset + (uint64_t)(1 << scs->static_config.hierarchical_levels) + SCD_LAD - 1);
+        else
+            // for use_input_stat(scs)
+            pcs->stats_in_end_offset = (uint64_t)(scs->twopass.stats_buf_ctx->stats_in_end_write - scs->twopass.stats_buf_ctx->stats_in_start);
+    }
+#endif
     //get a new ME data buffer
     if (pcs->me_data_wrapper_ptr == NULL) {
         svt_get_empty_object(ctx->me_fifo_ptr, &me_wrapper);
@@ -4781,7 +4818,35 @@ void send_picture_out(
     }
 
 }
-
+#if FTR_VBR_MT
+/***************************************************************************************************
+* Store the pcs pointers in the gf group, set the gf_interval and gf_update_due
+***************************************************************************************************/
+void store_gf_group(
+    PictureParentControlSet *pcs,
+    PictureDecisionContext  *ctx,
+    uint32_t                 mg_size) {
+    if (pcs->slice_type == I_SLICE || (!is_delayed_intra(pcs) && pcs->temporal_layer_index == 0) || pcs->slice_type == P_SLICE) {
+        if (is_delayed_intra(pcs)) {
+            pcs->gf_group[0] = (void*)pcs;
+            EB_MEMCPY(&pcs->gf_group[1], ctx->mg_pictures_array, mg_size * sizeof(PictureParentControlSet*));
+            pcs->gf_interval = 1 + mg_size;
+        }
+        else {
+            if (pcs->slice_type == P_SLICE && mg_size > 0 && ctx->mg_pictures_array[mg_size - 1]->idr_flag)
+                mg_size = MAX(0, (int)mg_size - 1);
+            EB_MEMCPY(&pcs->gf_group[0], ctx->mg_pictures_array, mg_size * sizeof(PictureParentControlSet*));
+            pcs->gf_interval = mg_size;
+        }
+        for (int pic_i = 0; pic_i < pcs->gf_interval; ++pic_i) {
+            if (pcs->gf_group[pic_i]->slice_type == I_SLICE || (!is_delayed_intra(pcs) && pcs->gf_group[pic_i]->temporal_layer_index == 0) || pcs->gf_group[pic_i]->slice_type == P_SLICE)
+                pcs->gf_group[pic_i]->gf_update_due = 1;
+            else
+                pcs->gf_group[pic_i]->gf_update_due = 0;
+        }
+    }
+}
+#endif
 void print_pre_ass(EncodeContext *ctxt)
 {
 
@@ -6381,7 +6446,22 @@ void* picture_decision_kernel(void *input_ptr)
                                 }
                             }
                         }
-
+#if FTR_VBR_MT
+                        //Process previous delayed Intra if we have one
+                        pcs_ptr->is_new_gf_group = 0;
+                        if (context_ptr->prev_delayed_intra) {
+                            pcs_ptr = context_ptr->prev_delayed_intra;
+                            store_gf_group(pcs_ptr, context_ptr, mg_size);
+                        }
+                        else {
+                            for (uint32_t pic_i = 0; pic_i < mg_size; ++pic_i) {
+                                pcs_ptr = context_ptr->mg_pictures_array_disp_order[pic_i];
+                                if (is_delayed_intra(pcs_ptr) == EB_FALSE) {
+                                    store_gf_group(pcs_ptr, context_ptr, mg_size);
+                                }
+                            }
+                        }
+#endif
                         //Process previous delayed Intra if we have one
                         if (context_ptr->prev_delayed_intra) {
                             pcs_ptr = context_ptr->prev_delayed_intra;

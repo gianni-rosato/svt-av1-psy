@@ -200,6 +200,19 @@ extern "C" {
 #define TUNE_M0_M3_BASE_NBASE                  1 // tune preset M0-M3 with base checks
 #define DIS_TRAILING_PICTURES                  1 // turn off trailing pictures for all presets
 #define TUNE_M4_BASE_NBASE                     1 // tune preset M4 with base checks
+
+#define TUNE_TPL_USE_PRED_SAD                  1
+#define TUNE_SUPER_BLOCK_SIZE_M4_M5            1 // change superblock size to 64x64 for select resolutions in M4 and M5
+#define TUNE_UPDATE_CDF_LEVEL                  1 // tune update_cdf_level for presets M4-M8 using i-pic/base checks
+#define FIX_R2R_10B_LAMBDA                     1 //tpl lambda/qp calc uses a  random hbd_mode_decision as not beeing set yet.
+
+#define FTR_VBR_MT                             1 // Add supports for RC in multithreaded mode.
+                                          // Move base_frame_target,this_frame_target and projected_frame_size to PCS
+#if FTR_VBR_MT
+#define FTR_VBR_MT_MINIGOP_FIX                 1 // Fix the non 5L minigops
+#define FTR_VBR_MT_REMOVE_DEC_ORDER            1 // Remove the decode order constraint
+#endif
+#define TUNE_DEFAULT_RECODE_LOOP               1 // default recode-loop setting, reenc2 for M0~5 and reenc1 for M6~8
 // ============= END SVT_04 =============
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch

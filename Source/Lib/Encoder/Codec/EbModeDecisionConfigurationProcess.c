@@ -503,13 +503,27 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     if (pcs_ptr->enc_mode <= ENC_M3)
 #endif
         update_cdf_level = 1;
-#if TUNE_M4_BASE_NBASE
+#if TUNE_M4_BASE_NBASE && !TUNE_UPDATE_CDF_LEVEL
     else if (pcs_ptr->enc_mode <= ENC_M4)
         update_cdf_level = (pcs_ptr->temporal_layer_index == 0) ? 1 : 0;
 #endif
 #if !TUNE_M4_M8
     else if (pcs_ptr->enc_mode <= ENC_M5)
         update_cdf_level = 2;
+#endif
+#if TUNE_UPDATE_CDF_LEVEL
+    else if (pcs_ptr->enc_mode <= ENC_M6)
+        update_cdf_level = pcs_ptr->slice_type == I_SLICE
+        ? 1
+        : (pcs_ptr->temporal_layer_index == 0) ? 1 : 3;
+    else if (pcs_ptr->enc_mode <= ENC_M7)
+        update_cdf_level = pcs_ptr->slice_type == I_SLICE
+        ? 1
+        : (pcs_ptr->temporal_layer_index == 0) ? 2 : 3;
+    else if (pcs_ptr->enc_mode <= ENC_M8)
+        update_cdf_level = pcs_ptr->slice_type == I_SLICE
+        ? 1
+        : 3;
 #endif
 #if FTR_M10
     else if (pcs_ptr->enc_mode <= ENC_M9)
@@ -654,6 +668,8 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     // Switchable Motion Mode
     frm_hdr->is_motion_mode_switchable = frm_hdr->is_motion_mode_switchable ||
         pcs_ptr->parent_pcs_ptr->pic_obmc_level;
+
+#if !FIX_R2R_10B_LAMBDA
     if (scs_ptr->static_config.enable_hbd_mode_decision == DEFAULT)
 #if TUNE_10BIT_MD_SETTINGS
         if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_MR)
@@ -678,6 +694,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
 #endif
     else
         pcs_ptr->hbd_mode_decision = scs_ptr->static_config.enable_hbd_mode_decision;
+#endif
     return return_error;
 }
 

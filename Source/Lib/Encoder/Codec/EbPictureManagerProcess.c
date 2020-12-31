@@ -860,7 +860,11 @@ void *picture_manager_kernel(void *input_ptr) {
 
                     availability_flag = EB_TRUE;
                     if (entry_pcs_ptr->decode_order != decode_order &&
-                    (scs_ptr->enable_dec_order || use_input_stat(scs_ptr) || scs_ptr->lap_enabled ))
+#if FTR_VBR_MT_REMOVE_DEC_ORDER
+                        (scs_ptr->enable_dec_order ))
+#else
+                        (scs_ptr->enable_dec_order || use_input_stat(scs_ptr) || scs_ptr->lap_enabled ))
+#endif
                         availability_flag = EB_FALSE;
 
                     //pic mgr starts pictures in dec order (no need to wait for feedback)
@@ -983,6 +987,9 @@ void *picture_manager_kernel(void *input_ptr) {
                         child_pcs_ptr->enc_dec_coded_sb_count = 0;
                         child_pcs_ptr->parent_pcs_ptr->av1_cm->rst_tmpbuf = child_pcs_ptr->rst_tmpbuf;
 
+#if FIX_R2R_10B_LAMBDA
+                        child_pcs_ptr->hbd_mode_decision = entry_pcs_ptr->hbd_mode_decision;
+#endif
                         context_ptr->pmgr_dec_order = child_pcs_ptr->parent_pcs_ptr->decode_order;
                         //3.make all  init for ChildPCS
                         pic_width_in_sb = (uint8_t)((entry_pcs_ptr->aligned_width +

@@ -2139,7 +2139,9 @@ static uint32_t compute_default_look_ahead(
         lad = config->enable_tpl_la == 1 ? TPL_LAD : (2 << config->hierarchical_levels)+1;
     else
         lad = config->intra_period_length;
-
+#if FTR_VBR_MT
+    lad = lad > MAX_LAD ? MAX_LAD : lad; // clip to max allowed lad
+#endif
     return lad;
 }
 
@@ -2212,6 +2214,11 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
         // Only allow re-encoding for 2pass VBR or 1 PASS LAP, otherwise force recode_loop to DISALLOW_RECODE or 0
         scs_ptr->static_config.recode_loop = DISALLOW_RECODE;
     }
+#if TUNE_DEFAULT_RECODE_LOOP
+    else if (scs_ptr->static_config.recode_loop == ALLOW_RECODE_DEFAULT) {
+        scs_ptr->static_config.recode_loop = scs_ptr->static_config.enc_mode <= ENC_M5 ? ALLOW_RECODE_KFARFGF : ALLOW_RECODE_KFMAXBW;
+    }
+#endif
 
     derive_input_resolution(
         &scs_ptr->input_resolution,
@@ -2223,10 +2230,19 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
         scs_ptr->static_config.super_block_size = 64;
     else
 #if TUNE_SB_SIZE
+#if TUNE_SUPER_BLOCK_SIZE_M4_M5
+        if (scs_ptr->static_config.enc_mode <= ENC_M3)
+            scs_ptr->static_config.super_block_size = 128;
+        else if (scs_ptr->static_config.enc_mode <= ENC_M4)
+            scs_ptr->static_config.super_block_size = (scs_ptr->input_resolution <= INPUT_SIZE_360p_RANGE) ? 64 : 128;
+        else if (scs_ptr->static_config.enc_mode <= ENC_M5)
+            scs_ptr->static_config.super_block_size = (scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE) ? 64 : 128;
+#else
         if (scs_ptr->static_config.enc_mode <= ENC_M4)
             scs_ptr->static_config.super_block_size = 128;
         else if (scs_ptr->static_config.enc_mode <= ENC_M5)
             scs_ptr->static_config.super_block_size = (scs_ptr->input_resolution <= INPUT_SIZE_360p_RANGE) ? 64 : 128;
+#endif
 #if !TUNE_M6_FEATURES
         else if (scs_ptr->static_config.enc_mode <= ENC_M6)
             scs_ptr->static_config.super_block_size = (scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE) ? 64 : 128;
@@ -2285,9 +2301,16 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
         scs_ptr->enable_pic_mgr_dec_order = 0;
     // Enforce encoding frame in decode order
     // Wait for feedback from PKT
+#if FTR_VBR_MT_REMOVE_DEC_ORDER
+    if (scs_ptr->static_config.logical_processors == 1 && // LP1
+        ((scs_ptr->in_loop_me == 1 && // inloop ME
+        scs_ptr->static_config.enable_tpl_la) ||
+        (use_input_stat(scs_ptr) || scs_ptr->lap_enabled)))
+#else
     if (scs_ptr->static_config.logical_processors == 1 && // LP1
         scs_ptr->in_loop_me == 1 && // inloop ME
         scs_ptr->static_config.enable_tpl_la)
+#endif
         scs_ptr->enable_dec_order = 1;
     else
         scs_ptr->enable_dec_order = 0;
@@ -2464,6 +2487,12 @@ void copy_api_from_app(
     // Rate Control
     scs_ptr->static_config.scene_change_detection = ((EbSvtAv1EncConfiguration*)config_struct)->scene_change_detection;
     scs_ptr->static_config.rate_control_mode = ((EbSvtAv1EncConfiguration*)config_struct)->rate_control_mode;
+#if FTR_VBR_MT
+    if (scs_ptr->static_config.rate_control_mode == 2) {
+        scs_ptr->static_config.rate_control_mode = 1;
+        SVT_WARN("The CVBR rate control mode (mode 2) is not supported in this branch. RC mode 1 is used instead.\n");
+    }
+#endif
     scs_ptr->static_config.look_ahead_distance = ((EbSvtAv1EncConfiguration*)config_struct)->look_ahead_distance;
     scs_ptr->static_config.frame_rate = ((EbSvtAv1EncConfiguration*)config_struct)->frame_rate;
     scs_ptr->static_config.frame_rate_denominator = ((EbSvtAv1EncConfiguration*)config_struct)->frame_rate_denominator;
@@ -2486,8 +2515,13 @@ void copy_api_from_app(
     scs_ptr->static_config.under_shoot_pct     = ((EbSvtAv1EncConfiguration*)config_struct)->under_shoot_pct;
     scs_ptr->static_config.over_shoot_pct      = ((EbSvtAv1EncConfiguration*)config_struct)->over_shoot_pct;
     scs_ptr->static_config.recode_loop         = ((EbSvtAv1EncConfiguration*)config_struct)->recode_loop;
+#if FTR_VBR_MT
+    if (scs_ptr->static_config.rate_control_mode && !use_output_stat(scs_ptr) && !use_input_stat(scs_ptr) && scs_ptr->static_config.hierarchical_levels > 1)
+        scs_ptr->lap_enabled = 1;
+#else
     if (scs_ptr->static_config.rate_control_mode && !use_output_stat(scs_ptr) && !use_input_stat(scs_ptr))
         scs_ptr->lap_enabled = 0; //turned off temporarily
+#endif
     else
         scs_ptr->lap_enabled = 0;
     //Segmentation
@@ -2547,8 +2581,14 @@ void copy_api_from_app(
     if (scs_ptr->static_config.intra_period_length == -2)
         scs_ptr->intra_period_length = scs_ptr->static_config.intra_period_length = compute_default_intra_period(scs_ptr);
     else if (scs_ptr->static_config.intra_period_length == -1 && (use_input_stat(scs_ptr) || use_output_stat(scs_ptr) || scs_ptr->lap_enabled))
-
-        scs_ptr->intra_period_length = (MAX_NUM_GF_INTERVALS-1)* (1 << (scs_ptr->static_config.hierarchical_levels));
+#if FTR_VBR_MT
+    {
+        scs_ptr->intra_period_length = (scs_ptr->frame_rate >> 16)* MAX_NUM_SEC_INTRA;
+        SVT_LOG("SVT [Warning]: force Intra period to be %d for perf/quality tradeoff\n", scs_ptr->intra_period_length);
+    }
+#else
+        scs_ptr->intra_period_length = (MAX_NUM_GF_INTERVALS - 1)* (1 << (scs_ptr->static_config.hierarchical_levels));
+#endif
     if (scs_ptr->static_config.look_ahead_distance == (uint32_t)~0)
         scs_ptr->static_config.look_ahead_distance = compute_default_look_ahead(&scs_ptr->static_config);
     else
@@ -2811,6 +2851,12 @@ static EbErrorType verify_settings(
         return_error = EB_ErrorBadParameter;
     }
 
+#if TUNE_DEFAULT_RECODE_LOOP
+    if (config->recode_loop > 4) {
+        SVT_LOG("Error Instance %u: The recode_loop must be [0 - 4] \n", channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+#endif
     if (config->rate_control_mode > 2) {
 
         SVT_LOG("Error Instance %u: The rate control mode must be [0 - 2] \n", channel_number + 1);
@@ -3299,7 +3345,11 @@ EbErrorType svt_svt_enc_init_parameter(
     config_ptr->vbr_max_section_pct = 2000;
     config_ptr->under_shoot_pct = 25;
     config_ptr->over_shoot_pct = 25;
+#if TUNE_DEFAULT_RECODE_LOOP
+    config_ptr->recode_loop = ALLOW_RECODE_DEFAULT;
+#else
     config_ptr->recode_loop = ALLOW_RECODE_KFARFGF;
+#endif
 
     // Bitstream options
     //config_ptr->codeVpsSpsPps = 0;

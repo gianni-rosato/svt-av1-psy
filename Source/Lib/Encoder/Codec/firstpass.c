@@ -72,13 +72,21 @@ static EbErrorType realloc_stats_out(SequenceControlSet *scs_ptr, FirstPassStats
             if (frame_number) {
                 stats_in_start_offset = scs_ptr->twopass.stats_buf_ctx->stats_in_start - out->stat;
                 stats_in_offset       = scs_ptr->twopass.stats_in - out->stat;
+#if FTR_VBR_MT
+                stats_in_end_offset   = scs_ptr->twopass.stats_buf_ctx->stats_in_end_write - out->stat;
+#else
                 stats_in_end_offset   = scs_ptr->twopass.stats_buf_ctx->stats_in_end - out->stat;
+#endif
             }
             EB_REALLOC_ARRAY(out->stat, capability);
             // restore the pointers after re-allocation is done
             scs_ptr->twopass.stats_buf_ctx->stats_in_start = out->stat + stats_in_start_offset;
             scs_ptr->twopass.stats_in                      = out->stat + stats_in_offset;
+#if FTR_VBR_MT
+            scs_ptr->twopass.stats_buf_ctx->stats_in_end_write = out->stat + stats_in_end_offset;
+#else
             scs_ptr->twopass.stats_buf_ctx->stats_in_end   = out->stat + stats_in_end_offset;
+#endif
         } else {
             EB_REALLOC_ARRAY(out->stat, capability);
         }
@@ -286,7 +294,11 @@ static void update_firstpass_stats(PictureParentControlSet *pcs_ptr, const FRAME
 
     const uint32_t   mb_cols          = (scs_ptr->seq_header.max_frame_width + 16 - 1) / 16;
     const uint32_t   mb_rows          = (scs_ptr->seq_header.max_frame_height + 16 - 1) / 16;
+#if FTR_VBR_MT
+    FIRSTPASS_STATS *this_frame_stats = twopass->stats_buf_ctx->stats_in_end_write;
+#else
     FIRSTPASS_STATS *this_frame_stats = twopass->stats_buf_ctx->stats_in_end;
+#endif
     FIRSTPASS_STATS  fps;
     // The minimum error here insures some bit allocation to frames even
     // in static regions. The allocation per MB declines for larger formats
@@ -357,12 +369,21 @@ static void update_firstpass_stats(PictureParentControlSet *pcs_ptr, const FRAME
 
     /*In the case of two pass, first pass uses it as a circular buffer,
    * when LAP is enabled it is used as a linear buffer*/
+#if FTR_VBR_MT
+    twopass->stats_buf_ctx->stats_in_end_write++;
+
+    if ((use_output_stat(scs_ptr)) &&
+        (twopass->stats_buf_ctx->stats_in_end_write >= twopass->stats_buf_ctx->stats_in_buf_end)) {
+        twopass->stats_buf_ctx->stats_in_end_write = twopass->stats_buf_ctx->stats_in_start;
+    }
+#else
     twopass->stats_buf_ctx->stats_in_end++;
 
     if ((use_output_stat(scs_ptr)) &&
         (twopass->stats_buf_ctx->stats_in_end >= twopass->stats_buf_ctx->stats_in_buf_end)) {
         twopass->stats_buf_ctx->stats_in_end = twopass->stats_buf_ctx->stats_in_start;
     }
+#endif
 }
 
 static FRAME_STATS accumulate_frame_stats(FRAME_STATS *mb_stats, int mb_rows, int mb_cols) {

@@ -179,10 +179,12 @@ enum {
 typedef struct {
     unsigned char             index;
     /*frame_update_type*/ int update_type[MAX_STATIC_GF_GROUP_LENGTH];
+#if !FTR_VBR_MT
     unsigned char             arf_src_offset[MAX_STATIC_GF_GROUP_LENGTH];
     // The number of frames displayed so far within the GOP at a given coding
     // frame.
     unsigned char cur_frame_idx[MAX_STATIC_GF_GROUP_LENGTH];
+#endif
     unsigned char frame_disp_idx[MAX_STATIC_GF_GROUP_LENGTH];
 
     // TODO(jingning): Unify the data structure used here after the new control
@@ -191,14 +193,20 @@ typedef struct {
     int arf_boost[MAX_STATIC_GF_GROUP_LENGTH];
     int max_layer_depth;
     int max_layer_depth_allowed;
+#if !FTR_VBR_MT
     // This is currently only populated for AOM_Q mode
     unsigned char q_val[MAX_STATIC_GF_GROUP_LENGTH];
+#endif
     int           bit_allocation[MAX_STATIC_GF_GROUP_LENGTH];
     int           size;
 } GF_GROUP;
 
 typedef struct {
     FIRSTPASS_STATS *stats_in_start;
+#if FTR_VBR_MT
+    // used when writing the stat.i.e in the first pass
+    FIRSTPASS_STATS *stats_in_end_write;
+#endif
     FIRSTPASS_STATS *stats_in_end;
     FIRSTPASS_STATS *stats_in_buf_end;
     FIRSTPASS_STATS *total_stats;

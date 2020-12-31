@@ -152,7 +152,9 @@ void set_tpl_controls(
         tpl_ctrls->disable_intra_pred_nref = 0;
         tpl_ctrls->disable_tpl_nref = 0;
         tpl_ctrls->disable_tpl_pic_dist = 0;
+#if !TUNE_TPL_USE_PRED_SAD
         tpl_ctrls->get_best_ref = 0;
+#endif
 #if OPT_TPL
         tpl_ctrls->pf_shape = DEFAULT_SHAPE;
         tpl_ctrls->use_pred_sad_in_intra_search = 0;
@@ -169,7 +171,9 @@ void set_tpl_controls(
         tpl_ctrls->disable_intra_pred_nref = 0;
         tpl_ctrls->disable_tpl_nref = 0;
         tpl_ctrls->disable_tpl_pic_dist = 0;
+#if !TUNE_TPL_USE_PRED_SAD
         tpl_ctrls->get_best_ref = 0;
+#endif
 #if OPT_TPL
         tpl_ctrls->pf_shape = DEFAULT_SHAPE;
         tpl_ctrls->use_pred_sad_in_intra_search = 0;
@@ -187,7 +191,9 @@ void set_tpl_controls(
         tpl_ctrls->disable_intra_pred_nref = 1;
         tpl_ctrls->disable_tpl_nref = 1;
         tpl_ctrls->disable_tpl_pic_dist = 1;
+#if !TUNE_TPL_USE_PRED_SAD
         tpl_ctrls->get_best_ref = 0;
+#endif
         tpl_ctrls->pf_shape = DEFAULT_SHAPE;
         tpl_ctrls->use_pred_sad_in_intra_search = 0;
 #if FTR_TPL_REDUCE_NUMBER_OF_REF
@@ -207,8 +213,12 @@ void set_tpl_controls(
         tpl_ctrls->pf_shape = scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? N2_SHAPE : N4_SHAPE;
         tpl_ctrls->use_pred_sad_in_intra_search = 1;
 #if FTR_TPL_REDUCE_NUMBER_OF_REF
+#if TUNE_TPL_USE_PRED_SAD
+        tpl_ctrls->use_pred_sad_in_inter_search = 1;
+#else
         tpl_ctrls->get_best_ref = 1;
         tpl_ctrls->use_pred_sad_in_inter_search = 0;
+#endif
 #endif
         break;
 #else
@@ -868,6 +878,10 @@ static void setup_two_pass(SequenceControlSet *scs_ptr) {
             scs_ptr->twopass.stats_buf_ctx->stats_in_start =
                 encode_context_ptr->rc_twopass_stats_in.buf;
             scs_ptr->twopass.stats_in = scs_ptr->twopass.stats_buf_ctx->stats_in_start;
+#if FTR_VBR_MT
+            scs_ptr->twopass.stats_buf_ctx->stats_in_end_write =
+                &scs_ptr->twopass.stats_buf_ctx->stats_in_start[packets - 1];
+#endif
             scs_ptr->twopass.stats_buf_ctx->stats_in_end =
                 &scs_ptr->twopass.stats_buf_ctx->stats_in_start[packets - 1];
             svt_av1_init_second_pass(scs_ptr);

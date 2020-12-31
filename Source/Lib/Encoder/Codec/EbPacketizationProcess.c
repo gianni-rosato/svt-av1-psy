@@ -706,10 +706,13 @@ void *packetization_kernel(void *input_ptr) {
                                                        rate_control_tasks_wrapper_ptr->object_ptr;
         rate_control_tasks_ptr->pcs_wrapper_ptr = pcs_ptr->picture_parent_control_set_wrapper_ptr;
         rate_control_tasks_ptr->task_type       = RC_PACKETIZATION_FEEDBACK_RESULT;
-
+#if FTR_VBR_MT_REMOVE_DEC_ORDER
+        if (scs_ptr->enable_dec_order ||
+#else
         if(use_input_stat(scs_ptr) ||
             scs_ptr->lap_enabled ||
             (scs_ptr->enable_dec_order) ||
+#endif
             (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE &&
             pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr)) {
             if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE &&
@@ -866,9 +869,13 @@ void *packetization_kernel(void *input_ptr) {
 
         // Post Rate Control Taks
         svt_post_full_object(rate_control_tasks_wrapper_ptr);
+#if FTR_VBR_MT_REMOVE_DEC_ORDER
+        if (scs_ptr->enable_dec_order ||
+#else
         if (use_input_stat(scs_ptr) ||
             scs_ptr->lap_enabled ||
             (scs_ptr->enable_dec_order) ||
+#endif
             (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE &&
             pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr))
             // Post the Full Results Object
