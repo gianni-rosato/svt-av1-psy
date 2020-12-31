@@ -213,11 +213,13 @@ extern "C" {
 #define FTR_VBR_MT_REMOVE_DEC_ORDER            1 // Remove the decode order constraint
 #endif
 #define TUNE_DEFAULT_RECODE_LOOP               1 // default recode-loop setting, reenc2 for M0~5 and reenc1 for M6~8
+#define TUNE_FIRST_PASS_FRAME                  1 // make first_pass_frame segment based for improving cpu usage
 
 #define TUNE_M0_REPOSITION                     1 // reposition M0 preset
 #define TUNE_M1_REPOSITION                     1 // reposition M1 preset
 #define TUNE_M3_REPOSITION                     1 // reposition M3 preset
 #define TUNE_M4_REPOSITION                     1 // reposition M4 preset
+
 // ============= END SVT_04 =============
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
