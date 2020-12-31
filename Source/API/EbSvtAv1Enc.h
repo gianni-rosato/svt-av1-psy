@@ -26,15 +26,7 @@ extern "C" {
 #define EB_HME_SEARCH_AREA_ROW_MAX_COUNT 2
 #define MAX_HIERARCHICAL_LEVEL 6
 #define REF_LIST_MAX_DEPTH 4
-#if TUNE_M9_LEVELS
-#if FTR_M10
-#define MAX_ENC_PRESET 10
-#else
-#define MAX_ENC_PRESET 9
-#endif
-#else
 #define MAX_ENC_PRESET 8
-#endif
 #if FTR_GM_OPT_BASED_ON_ME
 #define NUM_MV_COMPONENTS 2
 #if TUNE_M9_GM_DETECTOR

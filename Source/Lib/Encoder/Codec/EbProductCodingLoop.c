@@ -8342,6 +8342,31 @@ void md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionContext *context_pt
     // Generate MVP(s)
     if (!context_ptr->shut_fast_rate) {
         if (frm_hdr->allow_intrabc) // pcs_ptr->slice_type == I_SLICE
+#if FIX_SC_MVP_TABLE_GEN
+        {
+            MvReferenceFrame ref_frame = INTRA_FRAME;
+            generate_av1_mvp_table(&context_ptr->sb_ptr->tile_info,
+                                   context_ptr,
+                                   context_ptr->blk_ptr,
+                                   context_ptr->blk_geom,
+                                   context_ptr->blk_origin_x,
+                                   context_ptr->blk_origin_y,
+                                   &ref_frame,
+                                   1,
+                                   pcs_ptr);
+
+        } else if (pcs_ptr->slice_type != I_SLICE) {
+            generate_av1_mvp_table(&context_ptr->sb_ptr->tile_info,
+                                   context_ptr,
+                                   context_ptr->blk_ptr,
+                                   context_ptr->blk_geom,
+                                   context_ptr->blk_origin_x,
+                                   context_ptr->blk_origin_y,
+                                   pcs_ptr->parent_pcs_ptr->ref_frame_type_arr,
+                                   pcs_ptr->parent_pcs_ptr->tot_ref_frame_types,
+                                   pcs_ptr);
+        }
+#else
             generate_av1_mvp_table(&context_ptr->sb_ptr->tile_info,
                                    context_ptr,
                                    context_ptr->blk_ptr,
@@ -8361,6 +8386,7 @@ void md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionContext *context_pt
                                    pcs_ptr->parent_pcs_ptr->ref_frame_type_arr,
                                    pcs_ptr->parent_pcs_ptr->tot_ref_frame_types,
                                    pcs_ptr);
+#endif
     } else {
         init_xd(pcs_ptr, context_ptr);
     }
