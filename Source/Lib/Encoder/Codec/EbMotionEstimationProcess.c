@@ -439,7 +439,11 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
 #if TUNE_M4_M8
 #if TUNE_NEW_PRESETS_MR_M8
 #if TUNE_M3_FEATURES
+#if TUNE_SHIFT_M2_M1
+    if (pcs_ptr->enc_mode <= ENC_M1) {
+#else
     if (pcs_ptr->enc_mode <= ENC_M2) {
+#endif
 #else
     if (pcs_ptr->enc_mode <= ENC_M3) {
 #endif
@@ -467,7 +471,11 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
 #if TUNE_M4_M8
 #if TUNE_NEW_PRESETS_MR_M8
 #if TUNE_M3_FEATURES
+#if TUNE_SHIFT_M2_M1
+    if (pcs_ptr->enc_mode <= ENC_M1) {
+#else
     if (pcs_ptr->enc_mode <= ENC_M2) {
+#endif
 #else
     if (pcs_ptr->enc_mode <= ENC_M3) {
 #endif
@@ -1096,7 +1104,11 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
             gm_level = 2;
 #if TUNE_NEW_PRESETS_MR_M8
 #if TUNE_M3_FEATURES
+#if TUNE_SHIFT_M2_M1
+        else if (enc_mode <= ENC_M1)
+#else
         else if (enc_mode <= ENC_M2)
+#endif
 #else
         else if (enc_mode <= ENC_M3)
 #endif
@@ -1250,7 +1262,11 @@ void *tf_set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet
     // Set the minimum ME search area
 #if TUNE_M4_M8
 #if TUNE_NEW_PRESETS_MR_M8
+#if TUNE_SHIFT_M2_M1
+    if (pcs_ptr->enc_mode <= ENC_M1) {
+#else
     if (pcs_ptr->enc_mode <= ENC_M2) {
+#endif
 #else
     if (pcs_ptr->enc_mode <= ENC_M3) {
 #endif

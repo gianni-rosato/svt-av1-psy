@@ -949,7 +949,11 @@ EbErrorType signal_derivation_multi_processes_oq(
         pcs_ptr->disallow_all_nsq_blocks_above_16x16 = EB_TRUE;
 #if TUNE_M4_M8
 #if TUNE_NEW_PRESETS_MR_M8
+#if TUNE_SHIFT_M2_M1
+    if (pcs_ptr->enc_mode <= ENC_M1)
+#else
     if (pcs_ptr->enc_mode <= ENC_M2)
+#endif
 #else
     if (pcs_ptr->enc_mode <= ENC_M3)
 #endif
@@ -1140,7 +1144,11 @@ EbErrorType signal_derivation_multi_processes_oq(
     if (scs_ptr->static_config.sg_filter_mode == DEFAULT) {
 #if TUNE_M4_M8
 #if TUNE_NEW_PRESETS_MR_M8
+#if TUNE_SHIFT_M2_M1
+        if (pcs_ptr->enc_mode <= ENC_M1)
+#else
         if (pcs_ptr->enc_mode <= ENC_M2)
+#endif
 #else
         if (pcs_ptr->enc_mode <= ENC_M3)
 #endif
@@ -1248,7 +1256,11 @@ EbErrorType signal_derivation_multi_processes_oq(
         // 0                 OFF: no transform partitioning
         // 1                 ON for INTRA blocks
 #if TUNE_LOWER_PRESETS
+#if TUNE_SHIFT_M2_M1
+    if (pcs_ptr->enc_mode <= ENC_M1)
+#else
     if (pcs_ptr->enc_mode <= ENC_M2)
+#endif
 #else
     if (pcs_ptr->enc_mode <= ENC_M4)
 #endif
@@ -1295,7 +1307,11 @@ EbErrorType signal_derivation_multi_processes_oq(
         // GM_FULL                                    Exhaustive search mode.
         // GM_DOWN                                    Downsampled resolution with a downsampling factor of 2 in each dimension
         // GM_TRAN_ONLY                               Translation only using ME MV.
+#if TUNE_SHIFT_M2_M1
+    if (pcs_ptr->enc_mode <= ENC_M1)
+#else
     if (pcs_ptr->enc_mode <= ENC_M2)
+#endif
         pcs_ptr->gm_level = GM_FULL;
 #if TUNE_NEW_PRESETS_MR_M8
 #if TUNE_M6_FEATURES
@@ -6139,7 +6155,11 @@ void* picture_decision_kernel(void *input_ptr)
                                         pcs_ptr->ref_list0_count_try = MIN(pcs_ptr->ref_list0_count, 4);
                                         pcs_ptr->ref_list1_count_try = MIN(pcs_ptr->ref_list1_count, 3);
                                     }
+#if TUNE_SHIFT_M2_M1
+                                    else if (pcs_ptr->enc_mode <= ENC_M1) {
+#else
                                     else if (pcs_ptr->enc_mode <= ENC_M2) {
+#endif
                                         pcs_ptr->ref_list0_count_try = MIN(pcs_ptr->ref_list0_count, 2);
                                         pcs_ptr->ref_list1_count_try = MIN(pcs_ptr->ref_list1_count, 2);
                                     }

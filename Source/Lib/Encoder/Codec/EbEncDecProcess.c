@@ -4682,6 +4682,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         context_ptr->chroma_at_last_md_stage_cfl_th = 130;
     }
 #if TUNE_M0_M3_BASE_NBASE
+#if !TUNE_SHIFT_M2_M1
     else if (enc_mode <= ENC_M2) {
         if (pcs_ptr->temporal_layer_index == 0) {
             context_ptr->chroma_at_last_md_stage = (context_ptr->chroma_level == CHROMA_MODE_0) ? 1 : 0;
@@ -4694,6 +4695,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             context_ptr->chroma_at_last_md_stage_cfl_th = 100;
         }
     }
+#endif
 #endif
     else {
         context_ptr->chroma_at_last_md_stage = (context_ptr->chroma_level == CHROMA_MODE_0) ? 1 : 0;
@@ -4874,7 +4876,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     else if (sequence_control_set_ptr->static_config.bipred_3x3_inject == DEFAULT) {
 #if TUNE_PRESETS_CLEANUP
 #if TUNE_NEW_PRESETS_MR_M8
+#if TUNE_SHIFT_M2_M1
+        if (enc_mode <= ENC_M1)
+#else
         if (enc_mode <= ENC_M2)
+#endif
 #else
         if (enc_mode <= ENC_M0)
 #endif
@@ -4928,7 +4934,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #endif
                 context_ptr->inter_compound_mode = 2;
 #if TUNE_M0_M3_BASE_NBASE
+#if TUNE_SHIFT_M2_M1
+            else if (enc_mode <= ENC_M1)
+#else
             else if (enc_mode <= ENC_M2)
+#endif
                 context_ptr->inter_compound_mode = (pcs_ptr->temporal_layer_index == 0) ? 2 : 3;
 #endif
 #if TUNE_NEW_PRESETS_MR_M8
@@ -5288,7 +5298,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #endif
 #if TUNE_LOWER_PRESETS
 #if TUNE_NEW_PRESETS_MR_M8
+#if TUNE_SHIFT_M2_M1
+                    else if (enc_mode <= ENC_M1)
+#else
                     else if (enc_mode <= ENC_M2)
+#endif
 #else
                     else if (enc_mode <= ENC_M1)
 #endif
@@ -5476,8 +5490,10 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #if TUNE_MR_M0_FEATURES
 #if TUNE_M0_M3_BASE_NBASE
             nic_scaling_level = (pcs_ptr->temporal_layer_index == 0) ? 1 : 2;
+#if !TUNE_SHIFT_M2_M1
         else if (enc_mode <= ENC_M2)
             nic_scaling_level = (pcs_ptr->temporal_layer_index == 0) ? 2 : 6;
+#endif
 #else
             nic_scaling_level = 2;
 #endif
@@ -5863,7 +5879,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     else if (pd_pass == PD_PASS_1)
         context_ptr->md_sq_mv_search_level = 0;
     else
+#if TUNE_SHIFT_M2_M1
+        if (enc_mode <= ENC_M1)
+#else
         if (enc_mode <= ENC_M2)
+#endif
             context_ptr->md_sq_mv_search_level = 1;
 #if TUNE_M4_M8
 #if !TUNE_NEW_PRESETS_MR_M8
@@ -6177,7 +6197,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         context_ptr->skip_intra = 0;
     else if (pd_pass == PD_PASS_0)
 #if TUNE_LOWER_PRESETS
+#if TUNE_SHIFT_M2_M1
+        if (enc_mode <= ENC_M1)
+#else
         if (enc_mode <= ENC_M2)
+#endif
 #else
         if (enc_mode <= ENC_M3)
 #endif
