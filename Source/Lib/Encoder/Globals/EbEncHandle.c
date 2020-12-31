@@ -2216,7 +2216,11 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     }
 #if TUNE_DEFAULT_RECODE_LOOP
     else if (scs_ptr->static_config.recode_loop == ALLOW_RECODE_DEFAULT) {
+#if TUNE_SHIFT_PRESETS_DOWN
+        scs_ptr->static_config.recode_loop = scs_ptr->static_config.enc_mode <= ENC_M4 ? ALLOW_RECODE_KFARFGF : ALLOW_RECODE_KFMAXBW;
+#else
         scs_ptr->static_config.recode_loop = scs_ptr->static_config.enc_mode <= ENC_M5 ? ALLOW_RECODE_KFARFGF : ALLOW_RECODE_KFMAXBW;
+#endif
     }
 #endif
 
@@ -2232,7 +2236,11 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
 #if TUNE_SB_SIZE
 #if TUNE_SUPER_BLOCK_SIZE_M4_M5
 #if TUNE_M4_REPOSITION
+#if TUNE_SHIFT_PRESETS_DOWN
+        if (scs_ptr->static_config.enc_mode <= ENC_M3)
+#else
         if (scs_ptr->static_config.enc_mode <= ENC_M4)
+#endif
             scs_ptr->static_config.super_block_size = 128;
 #else
         if (scs_ptr->static_config.enc_mode <= ENC_M3)
@@ -2240,7 +2248,11 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
         else if (scs_ptr->static_config.enc_mode <= ENC_M4)
             scs_ptr->static_config.super_block_size = (scs_ptr->input_resolution <= INPUT_SIZE_360p_RANGE) ? 64 : 128;
 #endif
+#if TUNE_SHIFT_PRESETS_DOWN
+        else if (scs_ptr->static_config.enc_mode <= ENC_M4)
+#else
         else if (scs_ptr->static_config.enc_mode <= ENC_M5)
+#endif
             scs_ptr->static_config.super_block_size = (scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE) ? 64 : 128;
 #else
         if (scs_ptr->static_config.enc_mode <= ENC_M4)
@@ -2331,7 +2343,11 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     if (use_output_stat(scs_ptr))
         scs_ptr->over_boundary_block_mode = 0;
     if (scs_ptr->static_config.enable_mfmv == DEFAULT)
+#if TUNE_SHIFT_PRESETS_DOWN
+            scs_ptr->mfmv_enabled = (uint8_t)(scs_ptr->static_config.enc_mode <= ENC_M8) ? 1 : 0;
+#else
             scs_ptr->mfmv_enabled = (uint8_t)(scs_ptr->static_config.enc_mode <= ENC_M9) ? 1 : 0;
+#endif
     else
         scs_ptr->mfmv_enabled = scs_ptr->static_config.enable_mfmv;
 

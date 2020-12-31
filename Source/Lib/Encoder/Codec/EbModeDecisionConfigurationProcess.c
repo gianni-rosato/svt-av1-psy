@@ -495,7 +495,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     uint8_t update_cdf_level = 0;
 #if TUNE_LOWER_PRESETS
 #if TUNE_NEW_PRESETS_MR_M8
+#if TUNE_SHIFT_PRESETS_DOWN
+    if (pcs_ptr->enc_mode <= ENC_M2)
+#else
     if (pcs_ptr->enc_mode <= ENC_M3)
+#endif
 #else
     if (pcs_ptr->enc_mode <= ENC_M4)
 #endif
@@ -512,21 +516,37 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         update_cdf_level = 2;
 #endif
 #if TUNE_UPDATE_CDF_LEVEL
+#if TUNE_SHIFT_PRESETS_DOWN
+    else if (pcs_ptr->enc_mode <= ENC_M5)
+#else
     else if (pcs_ptr->enc_mode <= ENC_M6)
+#endif
         update_cdf_level = pcs_ptr->slice_type == I_SLICE
         ? 1
         : (pcs_ptr->temporal_layer_index == 0) ? 1 : 3;
+#if TUNE_SHIFT_PRESETS_DOWN
+    else if (pcs_ptr->enc_mode <= ENC_M6)
+#else
     else if (pcs_ptr->enc_mode <= ENC_M7)
+#endif
         update_cdf_level = pcs_ptr->slice_type == I_SLICE
         ? 1
         : (pcs_ptr->temporal_layer_index == 0) ? 2 : 3;
+#if TUNE_SHIFT_PRESETS_DOWN
+    else if (pcs_ptr->enc_mode <= ENC_M7)
+#else
     else if (pcs_ptr->enc_mode <= ENC_M8)
+#endif
         update_cdf_level = pcs_ptr->slice_type == I_SLICE
         ? 1
         : 3;
 #endif
 #if FTR_M10
+#if TUNE_SHIFT_PRESETS_DOWN
+    else if (pcs_ptr->enc_mode <= ENC_M8)
+#else
     else if (pcs_ptr->enc_mode <= ENC_M9)
+#endif
         update_cdf_level = pcs_ptr->slice_type == I_SLICE ? 1 : 0;
     else
         update_cdf_level = 0;
@@ -547,7 +567,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     if (scs_ptr->static_config.filter_intra_level == DEFAULT) {
         if (scs_ptr->seq_header.filter_intra_level) {
 #if TUNE_M4_M8
+#if TUNE_SHIFT_PRESETS_DOWN
+            if (pcs_ptr->enc_mode <= ENC_M5)
+#else
             if (pcs_ptr->enc_mode <= ENC_M6)
+#endif
 #else
             if (pcs_ptr->enc_mode <= ENC_M5)
 #endif
@@ -569,7 +593,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
 #if TUNE_M4_M8
 #if TUNE_NEW_PRESETS_MR_M8
 #if TUNE_PRESETS_AND_PRUNING
+#if TUNE_SHIFT_PRESETS_DOWN
+    if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M4) {
+#else
     if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M5) {
+#endif
 #else
     if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M4) {
 #endif
@@ -587,7 +615,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     }
     else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M8) {
 #else
+#if TUNE_SHIFT_PRESETS_DOWN
+    } else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M8) {
+#else
     } else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M9) {
+#endif
 #endif
         enable_wm = (pcs_ptr->parent_pcs_ptr->temporal_layer_index == 0) ? EB_TRUE : EB_FALSE;
     } else {
@@ -618,7 +650,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
 #if TUNE_LOWER_PRESETS
 #if TUNE_M3_FEATURES
 #if TUNE_M4_FEATURES
+#if TUNE_SHIFT_PRESETS_DOWN
+        if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M3)
+#else
         if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M4)
+#endif
 #else
         if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M3)
 #endif
@@ -632,7 +668,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
 #if FTR_NEW_REF_PRUNING_CTRLS
 #if TUNE_M6_FEATURES
 #if TUNE_M6_M7_FEATURES
+#if TUNE_SHIFT_PRESETS_DOWN
+        else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M4)
+#else
         else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M5)
+#endif
 #else
         else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M6)
 #endif
@@ -654,7 +694,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
 #endif
 #if TUNE_NEW_PRESETS_MR_M8
 #if TUNE_M8_FEATURES
+#if TUNE_SHIFT_PRESETS_DOWN
+        else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M7)
+#else
         else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M8)
+#endif
 #else
         else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M7)
 #endif

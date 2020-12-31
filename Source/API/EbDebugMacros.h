@@ -220,6 +220,7 @@ extern "C" {
 #define TUNE_M3_REPOSITION                     1 // reposition M3 preset
 #define TUNE_M4_REPOSITION                     1 // reposition M4 preset
 #define TUNE_SHIFT_M2_M1                       1 // shift M2 differences into M1
+#define TUNE_SHIFT_PRESETS_DOWN                1 // shift higher presets down all the way to M2
 // ============= END SVT_04 =============
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch

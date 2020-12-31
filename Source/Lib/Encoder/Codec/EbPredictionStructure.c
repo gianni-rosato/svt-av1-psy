@@ -1809,7 +1809,11 @@ EbErrorType prediction_structure_group_ctor(PredictionStructureGroup *pred_struc
 #if TUNE_LOWER_PRESETS
 #if FTR_NEW_REF_PRUNING_CTRLS
 #if TUNE_NEW_PRESETS_MR_M8
+#if TUNE_SHIFT_PRESETS_DOWN
+    uint8_t ref_count_used = enc_mode <= ENC_M6 ? MAX_REF_IDX : 1;
+#else
     uint8_t ref_count_used = enc_mode <= ENC_M7 ? MAX_REF_IDX : 1;
+#endif
 #else
     uint8_t ref_count_used = enc_mode <= ENC_M6 ? MAX_REF_IDX : enc_mode <= ENC_M7 ? 2 : 1;
 #endif

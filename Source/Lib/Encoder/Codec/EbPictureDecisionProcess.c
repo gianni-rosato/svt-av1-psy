@@ -872,7 +872,11 @@ EbErrorType signal_derivation_multi_processes_oq(
     pcs_ptr->enable_hme_flag        = 1;
     pcs_ptr->enable_hme_level0_flag = 1;
 #if TUNE_M10_BYPASS_HME_LEVEL_1_2
+#if TUNE_SHIFT_PRESETS_DOWN
+    if (pcs_ptr->enc_mode <= ENC_M8) {
+#else
     if (pcs_ptr->enc_mode <= ENC_M9) {
+#endif
         pcs_ptr->enable_hme_level1_flag = 1;
         pcs_ptr->enable_hme_level2_flag = 1;
     }
@@ -889,7 +893,11 @@ EbErrorType signal_derivation_multi_processes_oq(
     // Can enable everywhere b/c TF is off for SC anyway; remove fake diff
 #if TUNE_LOWER_PRESETS
 #if TUNE_M5_FEATURES
+#if TUNE_SHIFT_PRESETS_DOWN
+    if (pcs_ptr->enc_mode <= ENC_M3) {
+#else
     if (pcs_ptr->enc_mode <= ENC_M4) {
+#endif
 #else
     if (pcs_ptr->enc_mode <= ENC_M5) {
 #endif
@@ -910,7 +918,11 @@ EbErrorType signal_derivation_multi_processes_oq(
     // Set disallow_nsq
 #if TUNE_M4_M8
 #if TUNE_NEW_PRESETS_MR_M8
+#if TUNE_SHIFT_PRESETS_DOWN
+    if (pcs_ptr->enc_mode <= ENC_M4)
+#else
     if (pcs_ptr->enc_mode <= ENC_M5)
+#endif
 #else
     if (pcs_ptr->enc_mode <= ENC_M4)
 #endif
@@ -959,7 +971,11 @@ EbErrorType signal_derivation_multi_processes_oq(
 #endif
         pcs_ptr->disallow_HVA_HVB_HV4 = EB_FALSE;
 #if TUNE_M0_M3_BASE_NBASE
+#if TUNE_SHIFT_PRESETS_DOWN
+    else if (pcs_ptr->enc_mode <= ENC_M2)
+#else
     else if (pcs_ptr->enc_mode <= ENC_M3)
+#endif
         pcs_ptr->disallow_HVA_HVB_HV4 = (pcs_ptr->temporal_layer_index == 0) ? EB_FALSE : EB_TRUE;
 #endif
     else
@@ -999,7 +1015,7 @@ EbErrorType signal_derivation_multi_processes_oq(
 
             //IBC Modes:   0: OFF 1:Slow   2:Faster   3:Fastest
 #if TUNE_SC_SETTINGS
-#if TUNE_M6_FEATURES
+#if TUNE_M6_FEATURES && !TUNE_SHIFT_PRESETS_DOWN
             if (pcs_ptr->enc_mode <= ENC_M6) {
 #else
             if (pcs_ptr->enc_mode <= ENC_M5) {
@@ -1057,7 +1073,11 @@ EbErrorType signal_derivation_multi_processes_oq(
 
     if (!pcs_ptr->scs_ptr->static_config.disable_dlf_flag && frm_hdr->allow_intrabc == 0) {
 #if TUNE_NEW_PRESETS_MR_M8
+#if TUNE_SHIFT_PRESETS_DOWN
+        if (pcs_ptr->enc_mode <= ENC_M4)
+#else
         if (pcs_ptr->enc_mode <= ENC_M5)
+#endif
 #else
         if (pcs_ptr->enc_mode <= ENC_M6)
 #endif
@@ -1078,7 +1098,7 @@ EbErrorType signal_derivation_multi_processes_oq(
     if (scs_ptr->seq_header.cdef_level && frm_hdr->allow_intrabc == 0) {
         if (scs_ptr->static_config.cdef_level == DEFAULT) {
 #if TUNE_LOWER_PRESETS
-#if TUNE_NEW_PRESETS_MR_M8 && !TUNE_M4_REPOSITION
+#if TUNE_NEW_PRESETS_MR_M8 && !TUNE_M4_REPOSITION || TUNE_SHIFT_PRESETS_DOWN
             if (pcs_ptr->enc_mode <= ENC_M3)
 #else
             if (pcs_ptr->enc_mode <= ENC_M4)
@@ -1094,7 +1114,11 @@ EbErrorType signal_derivation_multi_processes_oq(
 #if FTR_CDEF_CHROMA_FOLLOWS_LUMA
 #if TUNE_M4_M8
 #if TUNE_NEW_PRESETS_MR_M8
+#if TUNE_SHIFT_PRESETS_DOWN
+            else if (pcs_ptr->enc_mode <= ENC_M6)
+#else
             else if (pcs_ptr->enc_mode <= ENC_M7)
+#endif
 #else
             else if (pcs_ptr->enc_mode <= ENC_M6)
 #endif
@@ -1103,10 +1127,18 @@ EbErrorType signal_derivation_multi_processes_oq(
 #endif
                 pcs_ptr->cdef_level = 4;
 #if FTR_M9_CDEF
+#if TUNE_SHIFT_PRESETS_DOWN
+            else if (pcs_ptr->enc_mode <= ENC_M7)
+#else
             else if (pcs_ptr->enc_mode <= ENC_M8)
+#endif
                 pcs_ptr->cdef_level = 5;
 #if FTR_M10
+#if TUNE_SHIFT_PRESETS_DOWN
+            else if (pcs_ptr->enc_mode <= ENC_M8)
+#else
             else if (pcs_ptr->enc_mode <= ENC_M9)
+#endif
                 pcs_ptr->cdef_level = (pcs_ptr->temporal_layer_index == 0) ? 5 : 6;
             else
                 pcs_ptr->cdef_level = 0;
@@ -1161,7 +1193,11 @@ EbErrorType signal_derivation_multi_processes_oq(
 #endif
             cm->sg_filter_mode = 4;
 #if TUNE_M0_M3_BASE_NBASE
+#if TUNE_SHIFT_PRESETS_DOWN
+        else if (pcs_ptr->enc_mode <= ENC_M2)
+#else
         else if (pcs_ptr->enc_mode <= ENC_M3)
+#endif
             cm->sg_filter_mode = (pcs_ptr->temporal_layer_index == 0) ? 4 : 1;
 #endif
         else
@@ -1178,7 +1214,11 @@ EbErrorType signal_derivation_multi_processes_oq(
 
     if (scs_ptr->static_config.wn_filter_mode == DEFAULT) {
 #if TUNE_NEW_PRESETS_MR_M8
+#if TUNE_SHIFT_PRESETS_DOWN
+        if (pcs_ptr->enc_mode <= ENC_M7)
+#else
         if (pcs_ptr->enc_mode <= ENC_M8)
+#endif
 #else
             if (pcs_ptr->enc_mode <= ENC_M6)
 #endif
@@ -1202,7 +1242,11 @@ EbErrorType signal_derivation_multi_processes_oq(
         if (scs_ptr->static_config.logical_processors == 1)
             pcs_ptr->intra_pred_mode = 0;
         else {
+#if TUNE_SHIFT_PRESETS_DOWN
+            if (pcs_ptr->enc_mode <= ENC_M7)
+#else
             if (pcs_ptr->enc_mode <= ENC_M8)
+#endif
                 pcs_ptr->intra_pred_mode = 0;
             else
                 pcs_ptr->intra_pred_mode = 3;
@@ -1214,7 +1258,11 @@ EbErrorType signal_derivation_multi_processes_oq(
 #if TUNE_LOWER_PRESETS
 #if TUNE_M2_FEATURES
 #if TUNE_M3_REPOSITION
+#if TUNE_SHIFT_PRESETS_DOWN
+        if (pcs_ptr->enc_mode <= ENC_M2)
+#else
         if (pcs_ptr->enc_mode <= ENC_M3)
+#endif
 #else
         if (pcs_ptr->enc_mode <= ENC_M2)
 #endif
@@ -1228,7 +1276,11 @@ EbErrorType signal_derivation_multi_processes_oq(
 #if TUNE_M8_TO_MATCH_M7
 #if TUNE_M7_M9
 #if TUNE_INTRA_PRED_MODE_MT
+#if TUNE_SHIFT_PRESETS_DOWN
+        else if (pcs_ptr->enc_mode <= ENC_M7)
+#else
         else if (pcs_ptr->enc_mode <= ENC_M8)
+#endif
 #else
         else if (pcs_ptr->enc_mode <= ENC_M9)
 #endif
@@ -1243,7 +1295,11 @@ EbErrorType signal_derivation_multi_processes_oq(
             else
                 pcs_ptr->intra_pred_mode = 3;
 #if TUNE_INTRA_PRED_MODE_MT
+#if TUNE_SHIFT_PRESETS_DOWN
+        else if (pcs_ptr->enc_mode <= ENC_M8)
+#else
         else if (pcs_ptr->enc_mode <= ENC_M9)
+#endif
             if (pcs_ptr->temporal_layer_index == 0)
                 pcs_ptr->intra_pred_mode = (scs_ptr->static_config.logical_processors == 1) ? 1 : 3;
             else
@@ -1266,14 +1322,18 @@ EbErrorType signal_derivation_multi_processes_oq(
 #endif
         pcs_ptr->tx_size_search_mode = 1;
 #if TUNE_M0_M3_BASE_NBASE
-#if TUNE_M4_REPOSITION
+#if TUNE_M4_REPOSITION && !TUNE_SHIFT_PRESETS_DOWN
     else if (pcs_ptr->enc_mode <= ENC_M4)
 #else
     else if (pcs_ptr->enc_mode <= ENC_M3)
 #endif
         pcs_ptr->tx_size_search_mode = (pcs_ptr->temporal_layer_index == 0) ? 1 : 0;
 #endif
+#if TUNE_SHIFT_PRESETS_DOWN
+    else if (pcs_ptr->enc_mode <= ENC_M8)
+#else
     else if (pcs_ptr->enc_mode <= ENC_M9)
+#endif
         pcs_ptr->tx_size_search_mode = (pcs_ptr->slice_type == I_SLICE) ? 1 : 0;
         else
             pcs_ptr->tx_size_search_mode = 0;
@@ -1286,7 +1346,11 @@ EbErrorType signal_derivation_multi_processes_oq(
             if (scs_ptr->static_config.logical_processors == 1)
                 pcs_ptr->frame_end_cdf_update_mode = 1;
             else {
+#if TUNE_SHIFT_PRESETS_DOWN
+                if (pcs_ptr->enc_mode <= ENC_M7)
+#else
                 if (pcs_ptr->enc_mode <= ENC_M8)
+#endif
                     pcs_ptr->frame_end_cdf_update_mode = 1;
                 else
                     pcs_ptr->frame_end_cdf_update_mode = pcs_ptr->temporal_layer_index == 0 ? 0 : 1;
@@ -1315,7 +1379,11 @@ EbErrorType signal_derivation_multi_processes_oq(
         pcs_ptr->gm_level = GM_FULL;
 #if TUNE_NEW_PRESETS_MR_M8
 #if TUNE_M6_FEATURES
+#if TUNE_SHIFT_PRESETS_DOWN
+    else if (pcs_ptr->enc_mode <= ENC_M5)
+#else
     else if (pcs_ptr->enc_mode <= ENC_M6)
+#endif
 #else
     else if (pcs_ptr->enc_mode <= ENC_M5)
 #endif
@@ -1365,10 +1433,18 @@ EbErrorType signal_derivation_multi_processes_oq(
 
 #if FTR_SIMULATE_P_BASE
     // Use list0 only if BASE (mimik a P)
+#if TUNE_SHIFT_PRESETS_DOWN
+    if (pcs_ptr->enc_mode <= ENC_M7)
+#else
     if (pcs_ptr->enc_mode <= ENC_M8)
+#endif
         pcs_ptr->list0_only_base = 0;
 #if TUNE_M10_P_BASE
+#if TUNE_SHIFT_PRESETS_DOWN
+    else if (pcs_ptr->enc_mode <= ENC_M8)
+#else
     else if (pcs_ptr->enc_mode <= ENC_M9)
+#endif
         pcs_ptr->list0_only_base = 1;
     else
         pcs_ptr->list0_only_base = 2;
@@ -1384,9 +1460,17 @@ EbErrorType signal_derivation_multi_processes_oq(
             pcs_ptr->hbd_mode_decision = 1;
         else if (pcs_ptr->enc_mode <= ENC_M1)
             pcs_ptr->hbd_mode_decision = pcs_ptr->is_used_as_reference_flag ? 1 : 2;
+#if TUNE_SHIFT_PRESETS_DOWN
+        else if (pcs_ptr->enc_mode <= ENC_M3)
+#else
         else if (pcs_ptr->enc_mode <= ENC_M4)
+#endif
             pcs_ptr->hbd_mode_decision = 2;
+#if TUNE_SHIFT_PRESETS_DOWN
+        else if (pcs_ptr->enc_mode <= ENC_M6)
+#else
         else if (pcs_ptr->enc_mode <= ENC_M7)
+#endif
             pcs_ptr->hbd_mode_decision = pcs_ptr->is_used_as_reference_flag ? 2 : 0;
         else
             pcs_ptr->hbd_mode_decision = pcs_ptr->temporal_layer_index == 0 ? 2 : 0;
@@ -4172,7 +4256,11 @@ void mctf_frame(
         if (scs_ptr->static_config.tf_level == DEFAULT) {
 #if TUNE_M4_M8
 #if TUNE_M6_FEATURES
+#if TUNE_SHIFT_PRESETS_DOWN
+        if (pcs_ptr->enc_mode <= ENC_M5) {
+#else
         if (pcs_ptr->enc_mode <= ENC_M6) {
+#endif
 #else
         if (pcs_ptr->enc_mode <= ENC_M5) {
 #endif
@@ -4185,7 +4273,11 @@ void mctf_frame(
                 context_ptr->tf_level = 0;
         }
 #if TUNE_M4_M8
+#if TUNE_SHIFT_PRESETS_DOWN
+        else if (pcs_ptr->enc_mode <= ENC_M6) {
+#else
         else if (pcs_ptr->enc_mode <= ENC_M7) {
+#endif
 #else
         else if (pcs_ptr->enc_mode <= ENC_M6) {
 #endif
@@ -4195,7 +4287,11 @@ void mctf_frame(
                 context_ptr->tf_level = 0;
         }
 #if TUNE_M9_TF_LEVEL
+#if TUNE_SHIFT_PRESETS_DOWN
+        else if (pcs_ptr->enc_mode <= ENC_M7) {
+#else
         else if (pcs_ptr->enc_mode <= ENC_M8) {
+#endif
 #else
         else {
 #endif
@@ -4216,7 +4312,11 @@ void mctf_frame(
         }
 #if TUNE_M9_TF_LEVEL
 #if FTR_M10
+#if TUNE_SHIFT_PRESETS_DOWN
+        else if (pcs_ptr->enc_mode <= ENC_M8) {
+#else
         else if (pcs_ptr->enc_mode <= ENC_M9) {
+#endif
 #else
         else {
 #endif
@@ -6164,7 +6264,11 @@ void* picture_decision_kernel(void *input_ptr)
                                         pcs_ptr->ref_list1_count_try = MIN(pcs_ptr->ref_list1_count, 2);
                                     }
 #if TUNE_M0_M3_BASE_NBASE
+#if TUNE_SHIFT_PRESETS_DOWN
+                                    else if (pcs_ptr->enc_mode <= ENC_M2) {
+#else
                                     else if (pcs_ptr->enc_mode <= ENC_M3) {
+#endif
                                         if (pcs_ptr->temporal_layer_index == 0) {
                                             pcs_ptr->ref_list0_count_try = MIN(pcs_ptr->ref_list0_count, 2);
                                             pcs_ptr->ref_list1_count_try = MIN(pcs_ptr->ref_list1_count, 2);
@@ -6187,7 +6291,11 @@ void* picture_decision_kernel(void *input_ptr)
                                 }
                                 else
 #endif
+#if TUNE_SHIFT_PRESETS_DOWN
+                                if (pcs_ptr->enc_mode <= ENC_M5) {
+#else
                                 if (pcs_ptr->enc_mode <= ENC_M6) {
+#endif
 #else
                                 if (pcs_ptr->enc_mode <= ENC_M5) {
 #endif

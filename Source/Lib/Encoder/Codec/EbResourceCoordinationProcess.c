@@ -267,7 +267,7 @@ EbErrorType signal_derivation_pre_analysis_oq_pcs(SequenceControlSet const * con
 
 #if FTR_TPL_TR
     uint8_t tpl_level;
-#if TUNE_LOWER_PRESETS
+#if TUNE_LOWER_PRESETS && !TUNE_SHIFT_PRESETS_DOWN
     if (pcs_ptr->enc_mode <= ENC_M5)
 #else
     if (pcs_ptr->enc_mode <= ENC_M4)
@@ -278,7 +278,11 @@ EbErrorType signal_derivation_pre_analysis_oq_pcs(SequenceControlSet const * con
         tpl_level = 1;
 #endif
 #if OPT_TPL
+#if TUNE_SHIFT_PRESETS_DOWN
+    else if (pcs_ptr->enc_mode <= ENC_M7)
+#else
     else if (pcs_ptr->enc_mode <= ENC_M8)
+#endif
         tpl_level = 2;
     else
         tpl_level = 3;
@@ -314,7 +318,11 @@ EbErrorType signal_derivation_pre_analysis_oq_scs(SequenceControlSet * scs_ptr) 
 
     if (scs_ptr->static_config.enable_restoration_filtering == DEFAULT) {
 #if TUNE_NEW_PRESETS_MR_M8
+#if TUNE_SHIFT_PRESETS_DOWN
+        scs_ptr->seq_header.enable_restoration = (scs_ptr->static_config.enc_mode <= ENC_M6) ? 1 : 0;
+#else
         scs_ptr->seq_header.enable_restoration = (scs_ptr->static_config.enc_mode <= ENC_M7) ? 1 : 0;
+#endif
 #else
         scs_ptr->seq_header.enable_restoration = (scs_ptr->static_config.enc_mode <= ENC_M6) ? 1 : 0;
 #endif
@@ -1046,7 +1054,7 @@ void *resource_coordination_kernel(void *input_ptr) {
                 // 0                 OFF
                 // 1                 ON
                 scs_ptr->seq_header.enable_interintra_compound = (scs_ptr->static_config.enc_mode <=
-#if TUNE_M3_REPOSITION
+#if TUNE_M3_REPOSITION && !TUNE_SHIFT_PRESETS_DOWN
                                                                   ENC_M3)
 #else
                                                                   ENC_M2)
@@ -1064,7 +1072,11 @@ void *resource_coordination_kernel(void *input_ptr) {
             if (scs_ptr->static_config.filter_intra_level == DEFAULT)
 #if TUNE_M4_M8
                 scs_ptr->seq_header.filter_intra_level =
+#if TUNE_SHIFT_PRESETS_DOWN
+                (scs_ptr->static_config.enc_mode <= ENC_M5) ? 1 : 0;
+#else
                 (scs_ptr->static_config.enc_mode <= ENC_M6) ? 1 : 0;
+#endif
 #else
                 scs_ptr->seq_header.filter_intra_level = (scs_ptr->static_config.enc_mode <= ENC_M5)
                     ? 1
