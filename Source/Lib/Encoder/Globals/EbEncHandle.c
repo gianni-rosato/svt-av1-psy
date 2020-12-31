@@ -2231,10 +2231,15 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     else
 #if TUNE_SB_SIZE
 #if TUNE_SUPER_BLOCK_SIZE_M4_M5
+#if TUNE_M4_REPOSITION
+        if (scs_ptr->static_config.enc_mode <= ENC_M4)
+            scs_ptr->static_config.super_block_size = 128;
+#else
         if (scs_ptr->static_config.enc_mode <= ENC_M3)
             scs_ptr->static_config.super_block_size = 128;
         else if (scs_ptr->static_config.enc_mode <= ENC_M4)
             scs_ptr->static_config.super_block_size = (scs_ptr->input_resolution <= INPUT_SIZE_360p_RANGE) ? 64 : 128;
+#endif
         else if (scs_ptr->static_config.enc_mode <= ENC_M5)
             scs_ptr->static_config.super_block_size = (scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE) ? 64 : 128;
 #else

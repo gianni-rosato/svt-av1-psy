@@ -7165,10 +7165,20 @@ EbErrorType signal_derivation_block(PictureControlSet *pcs,
         else if (enc_mode <= ENC_M0)
             context_ptr->dist_based_ref_pruning = (pcs->temporal_layer_index == 0) ? 1 : 2;
 #endif
+#if !TUNE_M1_REPOSITION
         else if (enc_mode <= ENC_M1)
             context_ptr->dist_based_ref_pruning = 2;
+#endif
 #if TUNE_M0_M3_BASE_NBASE
+#if TUNE_M3_REPOSITION
+#if TUNE_M4_REPOSITION
+        else if (enc_mode <= ENC_M4)
+#else
+        else if (enc_mode <= ENC_M3)
+#endif
+#else
         else if (enc_mode <= ENC_M2)
+#endif
             context_ptr->dist_based_ref_pruning = (pcs->temporal_layer_index == 0) ? 2 : 4;
 #endif
 #if TUNE_M4_M8

@@ -1046,7 +1046,11 @@ void *resource_coordination_kernel(void *input_ptr) {
                 // 0                 OFF
                 // 1                 ON
                 scs_ptr->seq_header.enable_interintra_compound = (scs_ptr->static_config.enc_mode <=
+#if TUNE_M3_REPOSITION
+                                                                  ENC_M3)
+#else
                                                                   ENC_M2)
+#endif
                     ? 1
                     : 0;
 

@@ -1074,7 +1074,7 @@ EbErrorType signal_derivation_multi_processes_oq(
     if (scs_ptr->seq_header.cdef_level && frm_hdr->allow_intrabc == 0) {
         if (scs_ptr->static_config.cdef_level == DEFAULT) {
 #if TUNE_LOWER_PRESETS
-#if TUNE_NEW_PRESETS_MR_M8
+#if TUNE_NEW_PRESETS_MR_M8 && !TUNE_M4_REPOSITION
             if (pcs_ptr->enc_mode <= ENC_M3)
 #else
             if (pcs_ptr->enc_mode <= ENC_M4)
@@ -1083,7 +1083,7 @@ EbErrorType signal_derivation_multi_processes_oq(
             if (pcs_ptr->enc_mode <= ENC_M3)
 #endif
                 pcs_ptr->cdef_level = 1;
-#if TUNE_M4_BASE_NBASE
+#if TUNE_M4_BASE_NBASE && !TUNE_M4_REPOSITION
             else if (pcs_ptr->enc_mode <= ENC_M4)
                 pcs_ptr->cdef_level = (pcs_ptr->temporal_layer_index == 0) ? 1 : 4;
 #endif
@@ -1205,7 +1205,11 @@ EbErrorType signal_derivation_multi_processes_oq(
     else {
 #if TUNE_LOWER_PRESETS
 #if TUNE_M2_FEATURES
+#if TUNE_M3_REPOSITION
+        if (pcs_ptr->enc_mode <= ENC_M3)
+#else
         if (pcs_ptr->enc_mode <= ENC_M2)
+#endif
 #else
         if (pcs_ptr->enc_mode <= ENC_M1)
 #endif
@@ -1250,7 +1254,11 @@ EbErrorType signal_derivation_multi_processes_oq(
 #endif
         pcs_ptr->tx_size_search_mode = 1;
 #if TUNE_M0_M3_BASE_NBASE
+#if TUNE_M4_REPOSITION
+    else if (pcs_ptr->enc_mode <= ENC_M4)
+#else
     else if (pcs_ptr->enc_mode <= ENC_M3)
+#endif
         pcs_ptr->tx_size_search_mode = (pcs_ptr->temporal_layer_index == 0) ? 1 : 0;
 #endif
     else if (pcs_ptr->enc_mode <= ENC_M9)
