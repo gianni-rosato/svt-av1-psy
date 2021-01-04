@@ -107,34 +107,70 @@ using HbdVarianceParam = std::tuple<uint32_t,            /**< width */
                                     uint32_t,            /**< bit-depth */
                                     HighBdVarianceFunc>; /**< test function */
 
-#define GEN_VAR_FUNC_(w, h, bd) svt_aom_highbd_##bd##_variance##w##x##h##_sse2
-#define GEN_VAR_PARAM_(w, h, bd) \
-    HbdVarianceParam(w, h, bd, GEN_VAR_FUNC_(w, h, bd))
-#define GEN_HBD_PARAM(w, h) \
-    GEN_VAR_PARAM_(w, h, 8), GEN_VAR_PARAM_(w, h, 10), GEN_VAR_PARAM_(w, h, 12)
-#define EXTERN_HBD_FUNC(w, h)                                         \
-    extern "C" uint32_t GEN_VAR_FUNC_(w, h, 8)(                       \
-        const uint8_t*, int32_t, const uint8_t*, int32_t, uint32_t*); \
-    extern "C" uint32_t GEN_VAR_FUNC_(w, h, 10)(                      \
-        const uint8_t*, int32_t, const uint8_t*, int32_t, uint32_t*); \
-    extern "C" uint32_t GEN_VAR_FUNC_(w, h, 12)(                      \
-        const uint8_t*, int32_t, const uint8_t*, int32_t, uint32_t*);
-
-EXTERN_HBD_FUNC(64, 64);
-EXTERN_HBD_FUNC(64, 32);
-EXTERN_HBD_FUNC(32, 64);
-EXTERN_HBD_FUNC(32, 32);
-EXTERN_HBD_FUNC(32, 16);
-EXTERN_HBD_FUNC(16, 32);
-EXTERN_HBD_FUNC(16, 16);
-EXTERN_HBD_FUNC(16, 8);
-EXTERN_HBD_FUNC(8, 16);
-EXTERN_HBD_FUNC(8, 8);
-EXTERN_HBD_FUNC(16, 4);
-EXTERN_HBD_FUNC(8, 32);
-EXTERN_HBD_FUNC(32, 8);
-EXTERN_HBD_FUNC(16, 64);
-EXTERN_HBD_FUNC(64, 16);
+extern "C" {
+unsigned int svt_aom_highbd_8_variance8x8_sse2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
+unsigned int svt_aom_highbd_8_variance8x16_sse2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
+unsigned int svt_aom_highbd_8_variance8x32_sse2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
+unsigned int svt_aom_highbd_8_variance16x4_sse2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
+unsigned int svt_aom_highbd_8_variance16x8_sse2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
+unsigned int svt_aom_highbd_8_variance16x16_sse2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
+unsigned int svt_aom_highbd_8_variance16x32_sse2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
+unsigned int svt_aom_highbd_8_variance16x64_sse2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
+unsigned int svt_aom_highbd_8_variance32x8_sse2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
+unsigned int svt_aom_highbd_8_variance32x16_sse2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
+unsigned int svt_aom_highbd_8_variance32x32_sse2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
+unsigned int svt_aom_highbd_8_variance32x64_sse2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
+unsigned int svt_aom_highbd_8_variance64x16_sse2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
+unsigned int svt_aom_highbd_8_variance64x32_sse2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
+unsigned int svt_aom_highbd_8_variance64x64_sse2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
+unsigned int svt_aom_highbd_10_variance8x8_sse2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
+unsigned int svt_aom_highbd_10_variance8x16_sse2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
+unsigned int svt_aom_highbd_10_variance8x32_sse2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
+unsigned int svt_aom_highbd_10_variance16x4_sse2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
+unsigned int svt_aom_highbd_10_variance16x8_sse2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
+unsigned int svt_aom_highbd_10_variance16x16_sse2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
+unsigned int svt_aom_highbd_10_variance16x32_sse2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
+unsigned int svt_aom_highbd_10_variance16x64_sse2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
+unsigned int svt_aom_highbd_10_variance32x8_sse2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
+unsigned int svt_aom_highbd_10_variance32x16_sse2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
+unsigned int svt_aom_highbd_10_variance32x32_sse2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
+unsigned int svt_aom_highbd_10_variance32x64_sse2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
+unsigned int svt_aom_highbd_10_variance64x16_sse2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
+unsigned int svt_aom_highbd_10_variance64x32_sse2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
+unsigned int svt_aom_highbd_10_variance64x64_sse2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
+unsigned int svt_aom_highbd_10_variance8x8_avx2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
+unsigned int svt_aom_highbd_10_variance8x16_avx2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
+unsigned int svt_aom_highbd_10_variance8x32_avx2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
+unsigned int svt_aom_highbd_10_variance16x8_avx2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
+unsigned int svt_aom_highbd_10_variance16x16_avx2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
+unsigned int svt_aom_highbd_10_variance16x32_avx2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
+unsigned int svt_aom_highbd_10_variance16x64_avx2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
+unsigned int svt_aom_highbd_10_variance32x8_avx2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
+unsigned int svt_aom_highbd_10_variance32x16_avx2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
+unsigned int svt_aom_highbd_10_variance32x32_avx2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
+unsigned int svt_aom_highbd_10_variance32x64_avx2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
+unsigned int svt_aom_highbd_10_variance64x16_avx2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
+unsigned int svt_aom_highbd_10_variance64x32_avx2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
+unsigned int svt_aom_highbd_10_variance64x64_avx2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
+unsigned int svt_aom_highbd_10_variance64x128_avx2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
+unsigned int svt_aom_highbd_10_variance128x64_avx2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
+unsigned int svt_aom_highbd_10_variance128x128_avx2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
+unsigned int svt_aom_highbd_12_variance8x8_sse2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
+unsigned int svt_aom_highbd_12_variance8x16_sse2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
+unsigned int svt_aom_highbd_12_variance8x32_sse2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
+unsigned int svt_aom_highbd_12_variance16x4_sse2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
+unsigned int svt_aom_highbd_12_variance16x8_sse2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
+unsigned int svt_aom_highbd_12_variance16x16_sse2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
+unsigned int svt_aom_highbd_12_variance16x32_sse2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
+unsigned int svt_aom_highbd_12_variance16x64_sse2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
+unsigned int svt_aom_highbd_12_variance32x8_sse2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
+unsigned int svt_aom_highbd_12_variance32x16_sse2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
+unsigned int svt_aom_highbd_12_variance32x32_sse2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
+unsigned int svt_aom_highbd_12_variance32x64_sse2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
+unsigned int svt_aom_highbd_12_variance64x16_sse2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
+unsigned int svt_aom_highbd_12_variance64x32_sse2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
+unsigned int svt_aom_highbd_12_variance64x64_sse2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
+};
 
 /**
  * @brief Unit test for HBD variance
@@ -212,9 +248,11 @@ class HbdVarianceTest : public ::testing::TestWithParam<HbdVarianceParam> {
                                             width_,
                                             &sse_ref);
         ASSERT_EQ(var_tst, var_ref)
-            << "Expect var " << var_ref << " got " << var_tst;
+            << "Expect var " << var_ref << " got " << var_tst
+            << " size: "<< width_ << "x" << height_;
         ASSERT_EQ(sse_tst, sse_ref)
-            << "Expect sse " << sse_ref << " got " << sse_tst;
+            << "Expect sse " << sse_ref << " got " << sse_tst
+            << " size: "<< width_ << "x" << height_;
     }
 
     void run_match_test(int times) {
@@ -238,8 +276,9 @@ class HbdVarianceTest : public ::testing::TestWithParam<HbdVarianceParam> {
                                                 width_,
                                                 &sse_ref);
             ASSERT_EQ(var_tst, var_ref)
-                << "Error at variance test index: " << i;
-            ASSERT_EQ(sse_tst, sse_ref) << "Error at sse test index: " << i;
+                << "Error at variance test index: " << i << " size: "<< width_ << "x" << height_;
+            ASSERT_EQ(sse_tst, sse_ref) << "Error at sse test index: " << i
+                << " size: "<< width_ << "x" << height_;
         }
     }
 
@@ -265,22 +304,70 @@ TEST_P(HbdVarianceTest, MatchTest) {
     run_match_test(10);
 };
 
+
 static const HbdVarianceParam HbdTestVector[] = {
-    GEN_HBD_PARAM(64, 64),
-    GEN_HBD_PARAM(64, 32),
-    GEN_HBD_PARAM(32, 64),
-    GEN_HBD_PARAM(32, 32),
-    GEN_HBD_PARAM(32, 16),
-    GEN_HBD_PARAM(16, 32),
-    GEN_HBD_PARAM(16, 16),
-    GEN_HBD_PARAM(16, 8),
-    GEN_HBD_PARAM(8, 16),
-    GEN_HBD_PARAM(8, 8),
-    GEN_HBD_PARAM(16, 4),
-    GEN_HBD_PARAM(8, 32),
-    GEN_HBD_PARAM(32, 8),
-    GEN_HBD_PARAM(16, 64),
-    GEN_HBD_PARAM(64, 16),
+    HbdVarianceParam(  8,  8, 8, svt_aom_highbd_8_variance8x8_sse2),
+    HbdVarianceParam(  8, 16, 8, svt_aom_highbd_8_variance8x16_sse2),
+    HbdVarianceParam(  8, 32, 8, svt_aom_highbd_8_variance8x32_sse2),
+    HbdVarianceParam( 16,  4, 8, svt_aom_highbd_8_variance16x4_sse2),
+    HbdVarianceParam( 16,  8, 8, svt_aom_highbd_8_variance16x8_sse2),
+    HbdVarianceParam( 16, 16, 8, svt_aom_highbd_8_variance16x16_sse2),
+    HbdVarianceParam( 16, 32, 8, svt_aom_highbd_8_variance16x32_sse2),
+    HbdVarianceParam( 16, 64, 8, svt_aom_highbd_8_variance16x64_sse2),
+    HbdVarianceParam( 32,  8, 8, svt_aom_highbd_8_variance32x8_sse2),
+    HbdVarianceParam( 32, 16, 8, svt_aom_highbd_8_variance32x16_sse2),
+    HbdVarianceParam( 32, 32, 8, svt_aom_highbd_8_variance32x32_sse2),
+    HbdVarianceParam( 32, 64, 8, svt_aom_highbd_8_variance32x64_sse2),
+    HbdVarianceParam( 64, 16, 8, svt_aom_highbd_8_variance64x16_sse2),
+    HbdVarianceParam( 64, 32, 8, svt_aom_highbd_8_variance64x32_sse2),
+    HbdVarianceParam( 64, 64, 8, svt_aom_highbd_8_variance64x64_sse2),
+    HbdVarianceParam(  8,  8, 10, svt_aom_highbd_10_variance8x8_sse2),
+    HbdVarianceParam(  8, 16, 10, svt_aom_highbd_10_variance8x16_sse2),
+    HbdVarianceParam(  8, 32, 10, svt_aom_highbd_10_variance8x32_sse2),
+    HbdVarianceParam( 16,  4, 10, svt_aom_highbd_10_variance16x4_sse2),
+    HbdVarianceParam( 16,  8, 10, svt_aom_highbd_10_variance16x8_sse2),
+    HbdVarianceParam( 16, 16, 10, svt_aom_highbd_10_variance16x16_sse2),
+    HbdVarianceParam( 16, 32, 10, svt_aom_highbd_10_variance16x32_sse2),
+    HbdVarianceParam( 16, 64, 10, svt_aom_highbd_10_variance16x64_sse2),
+    HbdVarianceParam( 32,  8, 10, svt_aom_highbd_10_variance32x8_sse2),
+    HbdVarianceParam( 32, 16, 10, svt_aom_highbd_10_variance32x16_sse2),
+    HbdVarianceParam( 32, 32, 10, svt_aom_highbd_10_variance32x32_sse2),
+    HbdVarianceParam( 32, 64, 10, svt_aom_highbd_10_variance32x64_sse2),
+    HbdVarianceParam( 64, 16, 10, svt_aom_highbd_10_variance64x16_sse2),
+    HbdVarianceParam( 64, 32, 10, svt_aom_highbd_10_variance64x32_sse2),
+    HbdVarianceParam( 64, 64, 10, svt_aom_highbd_10_variance64x64_sse2),
+    HbdVarianceParam(  8,  8, 10, svt_aom_highbd_10_variance8x8_avx2),
+    HbdVarianceParam(  8, 16, 10, svt_aom_highbd_10_variance8x16_avx2),
+    HbdVarianceParam(  8, 32, 10, svt_aom_highbd_10_variance8x32_avx2),
+    HbdVarianceParam( 16,  8, 10, svt_aom_highbd_10_variance16x8_avx2),
+    HbdVarianceParam( 16, 16, 10, svt_aom_highbd_10_variance16x16_avx2),
+    HbdVarianceParam( 16, 32, 10, svt_aom_highbd_10_variance16x32_avx2),
+    HbdVarianceParam( 16, 64, 10, svt_aom_highbd_10_variance16x64_avx2),
+    HbdVarianceParam( 32,  8, 10, svt_aom_highbd_10_variance32x8_avx2),
+    HbdVarianceParam( 32, 16, 10, svt_aom_highbd_10_variance32x16_avx2),
+    HbdVarianceParam( 32, 32, 10, svt_aom_highbd_10_variance32x32_avx2),
+    HbdVarianceParam( 32, 64, 10, svt_aom_highbd_10_variance32x64_avx2),
+    HbdVarianceParam( 64, 16, 10, svt_aom_highbd_10_variance64x16_avx2),
+    HbdVarianceParam( 64, 32, 10, svt_aom_highbd_10_variance64x32_avx2),
+    HbdVarianceParam( 64, 64, 10, svt_aom_highbd_10_variance64x64_avx2),
+    HbdVarianceParam( 64,128, 10, svt_aom_highbd_10_variance64x128_avx2),
+    HbdVarianceParam(128, 64, 10, svt_aom_highbd_10_variance128x64_avx2),
+    HbdVarianceParam(128,128, 10, svt_aom_highbd_10_variance128x128_avx2),
+    HbdVarianceParam(  8,  8, 12, svt_aom_highbd_12_variance8x8_sse2),
+    HbdVarianceParam(  8, 16, 12, svt_aom_highbd_12_variance8x16_sse2),
+    HbdVarianceParam(  8, 32, 12, svt_aom_highbd_12_variance8x32_sse2),
+    HbdVarianceParam( 16,  4, 12, svt_aom_highbd_12_variance16x4_sse2),
+    HbdVarianceParam( 16,  8, 12, svt_aom_highbd_12_variance16x8_sse2),
+    HbdVarianceParam( 16, 16, 12, svt_aom_highbd_12_variance16x16_sse2),
+    HbdVarianceParam( 16, 32, 12, svt_aom_highbd_12_variance16x32_sse2),
+    HbdVarianceParam( 16, 64, 12, svt_aom_highbd_12_variance16x64_sse2),
+    HbdVarianceParam( 32,  8, 12, svt_aom_highbd_12_variance32x8_sse2),
+    HbdVarianceParam( 32, 16, 12, svt_aom_highbd_12_variance32x16_sse2),
+    HbdVarianceParam( 32, 32, 12, svt_aom_highbd_12_variance32x32_sse2),
+    HbdVarianceParam( 32, 64, 12, svt_aom_highbd_12_variance32x64_sse2),
+    HbdVarianceParam( 64, 16, 12, svt_aom_highbd_12_variance64x16_sse2),
+    HbdVarianceParam( 64, 32, 12, svt_aom_highbd_12_variance64x32_sse2),
+    HbdVarianceParam( 64, 64, 12, svt_aom_highbd_12_variance64x64_sse2),
 };
 
 INSTANTIATE_TEST_CASE_P(Variance, HbdVarianceTest,
