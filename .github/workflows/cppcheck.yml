@@ -33,4 +33,5 @@ jobs:
             --enable=all \
             -j $(nproc) \
             --template="::error file={file},line={line},col={column}::{severity}: {message} ({id})\n{file}:{line}" \
-            -ithird_party
+            -ithird_party \
+            --suppress=unusedFunction > /dev/null

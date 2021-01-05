@@ -32,7 +32,8 @@ Static analysis (cppcheck):
         -j 2 \
         -rp=$PWD \
         -ithird_party \
-        --cppcheck-build-dir=.cppcheck
+        --cppcheck-build-dir=.cppcheck \
+        --suppress=unusedFunction > /dev/null
 
 #
 # Linux CI Jobs
