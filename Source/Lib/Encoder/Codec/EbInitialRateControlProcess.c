@@ -384,8 +384,12 @@ void *initial_rate_control_kernel(void *input_ptr) {
                 }
             }
             if (scs_ptr->static_config.enable_tpl_la && scs_ptr->in_loop_me == 0) {
+#if FIX_DDL
+                svt_set_cond_var(&pcs_ptr->me_ready, 1);
+#else
                 svt_post_semaphore(pcs_ptr->pame_done_semaphore);
                 atomic_set_u32(&pcs_ptr->pame_done, 1);
+#endif
             }
             if (scs_ptr->static_config.look_ahead_distance == 0 ||
                 scs_ptr->static_config.enable_tpl_la == 0) {

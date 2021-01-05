@@ -72,7 +72,7 @@ extern uint64_t *        total_lib_memory; // library Memory malloc'd
             SetThreadGroupAffinity(pointer, &group_affinity, NULL);   \
     } while (0)
 
-#elif defined(__linux__)
+#else
 #ifndef __USE_GNU
 #define __USE_GNU
 #endif
@@ -81,6 +81,7 @@ extern uint64_t *        total_lib_memory; // library Memory malloc'd
 #endif
 #include <sched.h>
 #include <pthread.h>
+#if defined(__linux__)
 #define EB_CREATE_THREAD(pointer, thread_function, thread_context)                           \
     do {                                                                                     \
         pointer = svt_create_thread(thread_function, thread_context);                        \
@@ -94,7 +95,7 @@ extern uint64_t *        total_lib_memory; // library Memory malloc'd
         EB_ADD_MEM(pointer, 1, EB_THREAD);                            \
     } while (0)
 #endif
-
+#endif
 #define EB_DESTROY_THREAD(pointer)                   \
     do {                                             \
         if (pointer) {                               \
@@ -120,6 +121,27 @@ extern uint64_t *        total_lib_memory; // library Memory malloc'd
     } while (0)
 
 void atomic_set_u32(AtomicVarU32 *var, uint32_t in);
+
+#if FIX_DDL
+/*
+ Condition variable
+*/
+typedef struct CondVar {
+    int32_t val;
+#ifdef _WIN32
+    CRITICAL_SECTION   cs;
+    CONDITION_VARIABLE cv;
+#else
+    pthread_mutex_t m_mutex;
+    pthread_cond_t  m_cond;
+#endif
+} CondVar;
+
+void svt_set_cond_var(CondVar *cond_var, int32_t newval);
+void svt_wait_cond_var(CondVar *cond_var, int32_t input);
+void svt_create_cond_var(CondVar *cond_var);
+#endif
+
 #ifdef __cplusplus
 }
 #endif

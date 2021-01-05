@@ -1135,12 +1135,17 @@ EbErrorType tpl_mc_flow(EncodeContext *encode_context_ptr, SequenceControlSet *s
     if (scs_ptr->in_loop_me == 0) {
         //wait for PA ME to be done.
         for (uint32_t i = 1; i < pcs_ptr->tpl_group_size; i++) {
+#if FIX_DDL
+            svt_wait_cond_var(&pcs_ptr->tpl_group[i]->me_ready, 0);
+#else
+
             svt_block_on_mutex(pcs_ptr->tpl_group[i]->pame_done.mutex);
 
             if (pcs_ptr->tpl_group[i]->pame_done.obj == 0) {
                 svt_block_on_semaphore(pcs_ptr->tpl_group[i]->pame_done_semaphore);
             }
             svt_release_mutex(pcs_ptr->tpl_group[i]->pame_done.mutex);
+#endif
         }
     }
 
@@ -7805,8 +7810,11 @@ void *rate_control_kernel(void *input_ptr) {
             }
 #endif
             total_number_of_fb_frames++;
-            EB_DESTROY_SEMAPHORE(parentpicture_control_set_ptr->pame_done_semaphore);
+#if FIX_DDL
 
+#else
+            EB_DESTROY_SEMAPHORE(parentpicture_control_set_ptr->pame_done_semaphore);
+#endif
             // Release the SequenceControlSet
             svt_release_object(parentpicture_control_set_ptr->scs_wrapper_ptr);
             // Release the ParentPictureControlSet
