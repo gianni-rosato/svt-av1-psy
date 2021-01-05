@@ -107,6 +107,7 @@ using HbdVarianceParam = std::tuple<uint32_t,            /**< width */
                                     uint32_t,            /**< bit-depth */
                                     HighBdVarianceFunc>; /**< test function */
 
+#if PR_1660
 extern "C" {
 unsigned int svt_aom_highbd_8_variance8x8_sse2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
 unsigned int svt_aom_highbd_8_variance8x16_sse2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
@@ -171,6 +172,36 @@ unsigned int svt_aom_highbd_12_variance64x16_sse2(const uint8_t *src_ptr, int so
 unsigned int svt_aom_highbd_12_variance64x32_sse2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
 unsigned int svt_aom_highbd_12_variance64x64_sse2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
 };
+#else
+#define GEN_VAR_FUNC_(w, h, bd) svt_aom_highbd_##bd##_variance##w##x##h##_sse2
+#define GEN_VAR_PARAM_(w, h, bd) \
+    HbdVarianceParam(w, h, bd, GEN_VAR_FUNC_(w, h, bd))
+#define GEN_HBD_PARAM(w, h) \
+    GEN_VAR_PARAM_(w, h, 8), GEN_VAR_PARAM_(w, h, 10), GEN_VAR_PARAM_(w, h, 12)
+#define EXTERN_HBD_FUNC(w, h)                                         \
+    extern "C" uint32_t GEN_VAR_FUNC_(w, h, 8)(                       \
+        const uint8_t*, int32_t, const uint8_t*, int32_t, uint32_t*); \
+    extern "C" uint32_t GEN_VAR_FUNC_(w, h, 10)(                      \
+        const uint8_t*, int32_t, const uint8_t*, int32_t, uint32_t*); \
+    extern "C" uint32_t GEN_VAR_FUNC_(w, h, 12)(                      \
+        const uint8_t*, int32_t, const uint8_t*, int32_t, uint32_t*);
+
+EXTERN_HBD_FUNC(64, 64);
+EXTERN_HBD_FUNC(64, 32);
+EXTERN_HBD_FUNC(32, 64);
+EXTERN_HBD_FUNC(32, 32);
+EXTERN_HBD_FUNC(32, 16);
+EXTERN_HBD_FUNC(16, 32);
+EXTERN_HBD_FUNC(16, 16);
+EXTERN_HBD_FUNC(16, 8);
+EXTERN_HBD_FUNC(8, 16);
+EXTERN_HBD_FUNC(8, 8);
+EXTERN_HBD_FUNC(16, 4);
+EXTERN_HBD_FUNC(8, 32);
+EXTERN_HBD_FUNC(32, 8);
+EXTERN_HBD_FUNC(16, 64);
+EXTERN_HBD_FUNC(64, 16);
+#endif
 
 /**
  * @brief Unit test for HBD variance
@@ -247,12 +278,19 @@ class HbdVarianceTest : public ::testing::TestWithParam<HbdVarianceParam> {
                                             CONVERT_TO_BYTEPTR(ref_data_),
                                             width_,
                                             &sse_ref);
+#if PR_1660
         ASSERT_EQ(var_tst, var_ref)
             << "Expect var " << var_ref << " got " << var_tst
             << " size: "<< width_ << "x" << height_;
         ASSERT_EQ(sse_tst, sse_ref)
             << "Expect sse " << sse_ref << " got " << sse_tst
             << " size: "<< width_ << "x" << height_;
+#else
+        ASSERT_EQ(var_tst, var_ref)
+            << "Expect var " << var_ref << " got " << var_tst;
+        ASSERT_EQ(sse_tst, sse_ref)
+            << "Expect sse " << sse_ref << " got " << sse_tst;
+#endif
     }
 
     void run_match_test(int times) {
@@ -275,10 +313,16 @@ class HbdVarianceTest : public ::testing::TestWithParam<HbdVarianceParam> {
                                                 CONVERT_TO_BYTEPTR(ref_data_),
                                                 width_,
                                                 &sse_ref);
+#if PR_1660
             ASSERT_EQ(var_tst, var_ref)
                 << "Error at variance test index: " << i << " size: "<< width_ << "x" << height_;
             ASSERT_EQ(sse_tst, sse_ref) << "Error at sse test index: " << i
                 << " size: "<< width_ << "x" << height_;
+#else
+            ASSERT_EQ(var_tst, var_ref)
+                << "Error at variance test index: " << i;
+#endif
+            ASSERT_EQ(sse_tst, sse_ref) << "Error at sse test index: " << i;
         }
     }
 
@@ -304,8 +348,8 @@ TEST_P(HbdVarianceTest, MatchTest) {
     run_match_test(10);
 };
 
-
 static const HbdVarianceParam HbdTestVector[] = {
+#if PR_1660
     HbdVarianceParam(  8,  8, 8, svt_aom_highbd_8_variance8x8_sse2),
     HbdVarianceParam(  8, 16, 8, svt_aom_highbd_8_variance8x16_sse2),
     HbdVarianceParam(  8, 32, 8, svt_aom_highbd_8_variance8x32_sse2),
@@ -368,6 +412,23 @@ static const HbdVarianceParam HbdTestVector[] = {
     HbdVarianceParam( 64, 16, 12, svt_aom_highbd_12_variance64x16_sse2),
     HbdVarianceParam( 64, 32, 12, svt_aom_highbd_12_variance64x32_sse2),
     HbdVarianceParam( 64, 64, 12, svt_aom_highbd_12_variance64x64_sse2),
+#else
+    GEN_HBD_PARAM(64, 64),
+    GEN_HBD_PARAM(64, 32),
+    GEN_HBD_PARAM(32, 64),
+    GEN_HBD_PARAM(32, 32),
+    GEN_HBD_PARAM(32, 16),
+    GEN_HBD_PARAM(16, 32),
+    GEN_HBD_PARAM(16, 16),
+    GEN_HBD_PARAM(16, 8),
+    GEN_HBD_PARAM(8, 16),
+    GEN_HBD_PARAM(8, 8),
+    GEN_HBD_PARAM(16, 4),
+    GEN_HBD_PARAM(8, 32),
+    GEN_HBD_PARAM(32, 8),
+    GEN_HBD_PARAM(16, 64),
+    GEN_HBD_PARAM(64, 16),
+#endif
 };
 
 INSTANTIATE_TEST_CASE_P(Variance, HbdVarianceTest,
