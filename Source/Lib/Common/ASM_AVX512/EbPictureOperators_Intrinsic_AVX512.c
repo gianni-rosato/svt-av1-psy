@@ -350,7 +350,7 @@ uint64_t svt_spatial_full_distortion_kernel_avx512(uint8_t *input, uint32_t inpu
                     leftover_sum64, _mm256_unpackhi_epi32(sum, _mm256_setzero_si256()));
                 sum       = _mm256_add_epi64(sum_L, sum_H);
                 sum       = _mm256_add_epi64(sum, leftover_sum64);
-                __m128i s = _mm_add_epi64(_mm256_castsi256_si128(sum),
+                s = _mm_add_epi64(_mm256_castsi256_si128(sum),
                                           _mm256_extracti128_si256(sum, 1));
                 return _mm_extract_epi64(s, 0) + _mm_extract_epi64(s, 1);
             }
