@@ -644,6 +644,25 @@ static EbErrorType copy_frame_buffer(SequenceControlSet *scs_ptr, uint8_t *dst, 
     }
     return return_error;
 }
+
+/***********************************************
+**** Deep copy of the input metadata buffer
+************************************************/
+static EbErrorType copy_metadata_buffer(EbBufferHeaderType *dst, EbBufferHeaderType *src)
+{
+    EbErrorType return_error = EB_ErrorNone;
+    for (size_t i = 0; i < src->metadata->sz; ++i) {
+        SvtMetadataT *current_metadata = src->metadata->metadata_array[i];
+        const uint32_t type = current_metadata->type;
+        const uint8_t *payload = current_metadata->payload;
+        const size_t sz = current_metadata->sz;
+
+        if (svt_add_metadata(dst, type, payload, sz) != 0)
+            SVT_LOG("Error: Metadata of type %d could not be added to the buffer.\n", type);
+    }
+    return return_error;
+}
+
 static void copy_input_buffer(SequenceControlSet *sequenceControlSet, EbBufferHeaderType *dst,
                               EbBufferHeaderType *src) {
     // Copy the higher level structure
@@ -655,6 +674,12 @@ static void copy_input_buffer(SequenceControlSet *sequenceControlSet, EbBufferHe
     dst->size         = src->size;
     dst->qp           = src->qp;
     dst->pic_type     = src->pic_type;
+
+    // Copy the metadata array
+    if (src->metadata)
+        copy_metadata_buffer(dst, src);
+    else
+        dst->metadata = NULL;
 
     // Copy the picture buffer
     if (src->p_buffer != NULL)

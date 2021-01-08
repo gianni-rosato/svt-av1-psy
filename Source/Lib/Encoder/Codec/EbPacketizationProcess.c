@@ -605,6 +605,19 @@ static inline EbErrorType malloc_p_buffer(EbBufferHeaderType *output_stream_ptr)
     return EB_ErrorNone;
 }
 
+/* Realloc when bitstream pointer size is not enough to write data of size sz */
+static EbErrorType realloc_output_bitstream(Bitstream *bitstream_ptr, uint32_t sz) {
+    if (bitstream_ptr && sz > 0) {
+        OutputBitstreamUnit* output_bitstream_ptr = bitstream_ptr->output_bitstream_ptr;
+        if (output_bitstream_ptr) {
+            output_bitstream_ptr->size = sz;
+            EB_REALLOC_ARRAY(output_bitstream_ptr->buffer_begin_av1, output_bitstream_ptr->size);
+            output_bitstream_ptr->buffer_av1 = output_bitstream_ptr->buffer_begin_av1;
+        }
+    }
+    return EB_ErrorNone;
+}
+
 void *packetization_kernel(void *input_ptr) {
     // Context
     EbThreadContext *     thread_context_ptr = (EbThreadContext *)input_ptr;
@@ -725,12 +738,42 @@ void *packetization_kernel(void *input_ptr) {
         // Reset the Bitstream before writing to it
         bitstream_reset(pcs_ptr->bitstream_ptr);
 
+        size_t metadata_sz = 0;
+
         // Code the SPS
-        if (frm_hdr->frame_type == KEY_FRAME) { encode_sps_av1(pcs_ptr->bitstream_ptr, scs_ptr); }
+        if (frm_hdr->frame_type == KEY_FRAME) {
+            encode_sps_av1(pcs_ptr->bitstream_ptr, scs_ptr);
+            // Add CLL and MDCV meta when frame is keyframe and SPS is written
+            write_metadata_av1(pcs_ptr->bitstream_ptr,
+                               pcs_ptr->parent_pcs_ptr->input_ptr->metadata,
+                               EB_AV1_METADATA_TYPE_HDR_CLL);
+            write_metadata_av1(pcs_ptr->bitstream_ptr,
+                               pcs_ptr->parent_pcs_ptr->input_ptr->metadata,
+                               EB_AV1_METADATA_TYPE_HDR_MDCV);
+        }
+
+        if (frm_hdr->show_frame) {
+            // Add HDR10+ dynamic metadata when show frame flag is enabled
+            write_metadata_av1(pcs_ptr->bitstream_ptr,
+                               pcs_ptr->parent_pcs_ptr->input_ptr->metadata,
+                               EB_AV1_METADATA_TYPE_ITUT_T35);
+            svt_metadata_array_free(&pcs_ptr->parent_pcs_ptr->input_ptr->metadata);
+        } else {
+            // Copy metadata pointer to the queue entry related to current frame number
+            uint64_t                   current_picture_number = pcs_ptr->picture_number;
+            PacketizationReorderEntry *temp_entry =
+                encode_context_ptr
+                    ->packetization_reorder_queue[current_picture_number %
+                                                  PACKETIZATION_REORDER_QUEUE_MAX_DEPTH];
+            temp_entry->metadata = pcs_ptr->parent_pcs_ptr->input_ptr->metadata;
+            pcs_ptr->parent_pcs_ptr->input_ptr->metadata = NULL;
+            metadata_sz = svt_metadata_size(temp_entry->metadata, EB_AV1_METADATA_TYPE_ITUT_T35);
+        }
 
         write_frame_header_av1(pcs_ptr->bitstream_ptr, scs_ptr, pcs_ptr, 0);
 
-        output_stream_ptr->n_alloc_len = bitstream_get_bytes_count(pcs_ptr->bitstream_ptr) + TD_SIZE;
+        output_stream_ptr->n_alloc_len = (uint32_t)(
+            bitstream_get_bytes_count(pcs_ptr->bitstream_ptr) + TD_SIZE + metadata_sz);
         malloc_p_buffer(output_stream_ptr);
 
         assert(output_stream_ptr->p_buffer != NULL && "bit-stream memory allocation failure");
@@ -740,9 +783,26 @@ void *packetization_kernel(void *input_ptr) {
                     output_stream_ptr);
 
         if (pcs_ptr->parent_pcs_ptr->has_show_existing) {
+            uint64_t                   next_picture_number = pcs_ptr->picture_number + 1;
+            PacketizationReorderEntry *temp_entry =
+                encode_context_ptr
+                    ->packetization_reorder_queue[next_picture_number %
+                                                  PACKETIZATION_REORDER_QUEUE_MAX_DEPTH];
+            // Check if the temporal entry has metadata
+            if (temp_entry->metadata) {
+                // Get bitstream from queue entry
+                Bitstream* bitstream_ptr = queue_entry_ptr->bitstream_ptr;
+                size_t current_metadata_sz = svt_metadata_size(temp_entry->metadata, EB_AV1_METADATA_TYPE_ITUT_T35);
+                // 16 bytes for frame header
+                realloc_output_bitstream(bitstream_ptr, (uint32_t)(current_metadata_sz + 16));
+            }
             // Reset the Bitstream before writing to it
             bitstream_reset(queue_entry_ptr->bitstream_ptr);
+            write_metadata_av1(queue_entry_ptr->bitstream_ptr,
+                               temp_entry->metadata,
+                               EB_AV1_METADATA_TYPE_ITUT_T35);
             write_frame_header_av1(queue_entry_ptr->bitstream_ptr, scs_ptr, pcs_ptr, 1);
+            svt_metadata_array_free(&temp_entry->metadata);
         }
 
         // Send the number of bytes per frame to RC
@@ -849,5 +909,4 @@ void *packetization_kernel(void *input_ptr) {
         }
     }
     return NULL;
-
 }
