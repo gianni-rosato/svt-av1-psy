@@ -21,7 +21,7 @@ env:
 
 jobs:
   build:
-    name: build (${{ matrix.CC }})
+    name: build (${{ matrix.CC }}${{ matrix.additional_name }})
     runs-on: ubuntu-18.04
     strategy:
       fail-fast: false
@@ -43,6 +43,12 @@ jobs:
             CC: aarch64-linux-gnu-gcc
             CXX: aarch64-linux-gnu-g++
             CMAKE_EFLAGS: -DCMAKE_TOOLCHAIN_FILE=$GITHUB_WORKSPACE/aarch64-linux-gnu.cmake
+            # AVX512 compilation test
+          - additional_name: ", avx512"
+            packages: gcc-10 g++-10
+            CC: gcc-10
+            CXX: g++-10
+            CMAKE_EFLAGS: -DENABLE_AVX512=ON
           - packages: gcc-10 g++-10
             CC: gcc-10
             CXX: g++-10
@@ -88,10 +94,10 @@ jobs:
       - name: Build and install SVT-AV1
         run: sudo -E cmake --build Build --parallel 4 --target install
       - name: Get test vectors
-        if: matrix.CC == 'gcc-10'
+        if: matrix.CC == 'gcc-10' && matrix.additional_name == ''
         run: cmake --build Build --parallel 4 --target TestVectors
       - name: Upload vectors
-        if: matrix.CC == 'gcc-10'
+        if: matrix.CC == 'gcc-10' && matrix.additional_name == ''
         uses: actions/upload-artifact@v2
         with:
           name: svtav1-vectors-${{ hashFiles('test/e2e_test/test_vector_list.txt') }}
@@ -104,7 +110,7 @@ jobs:
           done
           tar xf video.tar.gz
       - name: Upload binaries SVT-AV1 (ubuntu)
-        if: matrix.CC == 'gcc-10'
+        if: matrix.CC == 'gcc-10' && matrix.additional_name == ''
         uses: actions/upload-artifact@v2
         with:
           name: svtav1-ubuntu-binaries

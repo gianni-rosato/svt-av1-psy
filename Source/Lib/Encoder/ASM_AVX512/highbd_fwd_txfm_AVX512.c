@@ -1379,8 +1379,8 @@ static void fidtx32x32_avx512(const __m512i *input, __m512i *output, const int8_
 typedef void (*TxfmFuncAVX512)(const __m512i *input, __m512i *output, const int8_t cos_bit,
                                const int8_t *stage_range);
 
-static INLINE TxfmFuncAVX512 fwd_txfm_type_to_func(TxfmType TxfmType) {
-    switch (TxfmType) {
+static INLINE TxfmFuncAVX512 fwd_txfm_type_to_func(TxfmType txfmtype) {
+    switch (txfmtype) {
     case TXFM_TYPE_DCT32: return fdct32x32_avx512; break;
     case TXFM_TYPE_IDENTITY32: return fidtx32x32_avx512; break;
     default: assert(0);
