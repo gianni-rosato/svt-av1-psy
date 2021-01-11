@@ -2,7 +2,7 @@
 language: c
 cache: ccache
 os: linux
-dist: bionic
+dist: focal
 git:
   depth: false
   quiet: true
@@ -44,8 +44,6 @@ before_cache:
 
 # Build matrix
 jobs:
-  allow_failures:
-    - arch: s390x
   fast_finish: true
   include:
     # Multiple CPU Architectures
