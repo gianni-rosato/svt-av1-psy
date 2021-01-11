@@ -537,40 +537,150 @@ macOS Enc Test:
 # Window CI Jobs
 #
 .windows-ci-common:
+  image: registry.gitlab.com/aomediacodec/aom-testing/core1809
   tags:
-    - ci
-  before_script:
-    - |
-      $installPath = &"C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe" -latest -property installationpath
-      Import-Module (Join-Path $installPath "Common7\Tools\Microsoft.VisualStudio.DevShell.dll")
-      Enter-VsDevShell -VsInstallPath $installPath -SkipAutomaticLocation
+    - svt-windows-docker
 
-.windows-fetch-testdata: &windows-fetch-testdata |
-  $ProgressPreference = 'SilentlyContinue'
-  Invoke-WebRequest -OutFile video.tar.zst -Uri https://gitlab.com/AOMediaCodec/aom-testing/-/raw/master/video.tar.zst
-  zstd -d video.tar.zst -o video.tar
-  tar -xf video.tar
+.windows-unpack-testdata: &windows-unpack-testdata |
+  Move-Item C:/*.zst .
+  zstd -d *.zst
 
-Win64 (Release, Tests):
+Win64 (Release, GCC, FFmpeg):
   extends: .windows-ci-common
   stage: compile
+  variables:
+    CC: ccache gcc
+    CXX: ccache g++
+    CFLAGS: -pipe -O3
+    CXXFLAGS: -pipe -O3
+    LDFLAGS: -pipe -O3 -static -static-libgcc -static-libstdc++
+    CCACHE_DIR: $CI_PROJECT_DIR/.ccache
+    CMAKE_GENERATOR: Ninja
+    GIT_DEPTH: 0
+  cache:
+    key: ${CI_JOB_NAME}
+    paths:
+      - .ccache
+    policy: pull-push
+  before_script:
+    - ccache -s
+
+    # SVT-AV1 Here to prevent the -dirty suffix
+    - cmake -B svtav1-build -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DBUILD_APPS=OFF -DBUILD_DEC=OFF -DCMAKE_INSTALL_PREFIX=C:/msys64/mingw64
+    - cmake --build svtav1-build --config Release --target install
+
+    - git clone https://aomedia.googlesource.com/aom
+    - git clone https://chromium.googlesource.com/webm/libvpx
+    - git clone https://code.videolan.org/videolan/dav1d.git
+    - git clone https://github.com/Netflix/vmaf.git
+    - git clone https://github.com/FFmpeg/FFmpeg.git
   script:
-    - '&"C:\Program Files\CMake\bin\cmake.exe" -B Build  -DBUILD_TESTING=ON -DCMAKE_BUILD_TYPE=Release -DASM_NASM="C:\Program Files\NASM\nasm.exe"'
-    - '&"C:\Program Files\CMake\bin\cmake.exe" --build Build --config Release'
+    # aom
+    - cmake -S aom -B aom-build -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DENABLE_TESTS=0 -DENABLE_EXAMPLES=0 -DENABLE_DOCS=0 -DENABLE_TESTDATA=0 -DENABLE_TOOLS=0 -DCMAKE_INSTALL_PREFIX=C:/msys64/mingw64
+    - cmake --build aom-build --config Release --target install
+
+    # libvpx
+    - New-Item -type Directory vpx-build
+    - Set-Location vpx-build
+    - |
+      dash ../libvpx/configure `
+        --disable-dependency-tracking `
+        --disable-docs `
+        --disable-examples `
+        --disable-libyuv `
+        --disable-postproc `
+        --disable-shared `
+        --disable-tools `
+        --disable-unit-tests `
+        --disable-webm-io `
+        --enable-postproc `
+        --enable-runtime-cpu-detect `
+        --enable-vp8 --enable-vp9 `
+        --enable-vp9-highbitdepth `
+        --enable-vp9-postproc `
+        --prefix=/mingw64
+    - make -j $((Get-CimInstance Win32_ComputerSystem).NumberOfLogicalProcessors + 2) install
+    - cd ..
+
+    # dav1d
+    - |
+      meson setup `
+        --default-library static `
+        --buildtype release `
+        --libdir lib `
+        -Denable_tests=false `
+        -Denable_examples=false `
+        -Denable_tools=false `
+        --prefix C:/msys64/mingw64 `
+        dav1d-build dav1d
+    - meson install -C dav1d-build
+
+    # vmaf
+    - |
+      meson setup `
+        --default-library static `
+        --buildtype release `
+        --libdir lib `
+        -Denable_tests=false `
+        -Denable_docs=false `
+        -Dbuilt_in_models=true `
+        -Denable_float=true `
+        --prefix C:/msys64/mingw64 `
+        vmaf-build vmaf/libvmaf
+    - meson install -C vmaf-build
+
+    # FFmpeg
+    # Uses ld=CXX for libvmaf to autolink the stdc++ library
+    - New-Item -type Directory FFmpeg-build
+    - Set-Location FFmpeg-build
+    - |
+      dash ../FFmpeg/configure `
+        --arch=x86_64 `
+        --pkg-config-flags="--static" `
+        --cc="${env:CC}" `
+        --cxx="${env:CXX}" `
+        --ld="${env:CXX}" `
+        --enable-gpl --enable-static `
+        --enable-libaom `
+        --enable-libdav1d `
+        --enable-libsvtav1 `
+        --enable-libvmaf `
+        --enable-libvpx `
+        --disable-shared `
+        --prefix=/mingw64
+    - make -j $((Get-CimInstance Win32_ComputerSystem).NumberOfLogicalProcessors + 2) install
+    - Move-Item ffmpeg.exe ..
+    - ccache -s
+
+  artifacts:
+    untracked: false
+    expire_in: 30 day
+    paths:
+      - ffmpeg.exe
+
+Win64 (Release, MSVC, Tests):
+  extends: .windows-ci-common
+  stage: compile
+  variables:
+    CFLAGS: /WX
+    CXXFLAGS: /WX
+  script:
+    - cmake -B Build -DBUILD_TESTING=ON
+    - cmake --build Build --config Release
   artifacts:
     untracked: false
     expire_in: 1 day
     paths:
-      - Bin\Release\Release\*.exe
-      - Bin\Release\Release\*.dll
-      - Bin\Release\Release\*.pdb
+      - Bin\Release\*.exe
+      - Bin\Release\*.dll
+      - Bin\Release\*.pdb
 
 Win64 Unit Tests:
   extends: .windows-ci-common
   stage: test
-  parallel: 50
+  parallel: 10
   variables:
-    GTEST_TOTAL_SHARDS: 50
+    GTEST_TOTAL_SHARDS: 10
     GTEST_OUTPUT: "xml:report.xml"
   artifacts:
     when: always
@@ -578,17 +688,17 @@ Win64 Unit Tests:
       junit: report.xml
   script:
     - $env:GTEST_SHARD_INDEX = $env:CI_NODE_INDEX - 1
-    - '&"Bin\Release\Release\SvtAv1UnitTests.exe" --gtest_filter=-*FFT*'
+    - '&"Bin\Release\SvtAv1UnitTests.exe" --gtest_filter=-*FFT*'
   needs:
-    - 'Win64 (Release, Tests)'
+    - 'Win64 (Release, MSVC, Tests)'
 
 Win64 Enc Test:
   extends: .windows-ci-common
   stage: test
   script:
-    - *windows-fetch-testdata
-    - '&"Bin\Release\Release\SvtAv1EncApp.exe" --preset 0 -i "$env:SVT_ENCTEST_FILENAME" -n 3 -b "test-pr-${env:SVT_ENCTEST_BITNESS}bit-m0.ivf"'
-    - '&"Bin\Release\Release\SvtAv1EncApp.exe" --preset 8 -i "$env:SVT_ENCTEST_FILENAME" -n 120 -b "test-pr-${env:SVT_ENCTEST_BITNESS}bit-m8.ivf"'
+    - *windows-unpack-testdata
+    - '&"Bin\Release\SvtAv1EncApp.exe" --preset 0 -i "$env:SVT_ENCTEST_FILENAME" -n 3 -b "test-pr-${env:SVT_ENCTEST_BITNESS}bit-m0.ivf"'
+    - '&"Bin\Release\SvtAv1EncApp.exe" --preset 8 -i "$env:SVT_ENCTEST_FILENAME" -n 120 -b "test-pr-${env:SVT_ENCTEST_BITNESS}bit-m8.ivf"'
   parallel:
     matrix:
       - SVT_ENCTEST_FILENAME: "akiyo_cif.y4m"
@@ -596,7 +706,7 @@ Win64 Enc Test:
       - SVT_ENCTEST_FILENAME: "Chimera-Aerial_480x264_2997fps_10bit_420_150frames.y4m"
         SVT_ENCTEST_BITNESS: 10
   needs:
-    - 'Win64 (Release, Tests)'
+    - 'Win64 (Release, MSVC, Tests)'
 
 Win64 E2E Tests:
   extends: .windows-ci-common
@@ -611,9 +721,9 @@ Win64 E2E Tests:
       junit: report.xml
   script:
     - '[string]$env:SVT_AV1_TEST_VECTOR_PATH = New-Item -ItemType Directory -Force -Name "testdata"'
-    - '&"C:\Program Files\CMake\bin\cmake.exe" -B Build  -DBUILD_TESTING=ON -DCMAKE_BUILD_TYPE=Release -DASM_NASM="C:\Program Files\NASM\nasm.exe"'
-    - '&"C:\Program Files\CMake\bin\cmake.exe" --build Build --target TestVectors'
+    - cmake -B Build -DBUILD_TESTING=ON
+    - cmake --build Build --target TestVectors
     - $env:GTEST_SHARD_INDEX = $env:CI_NODE_INDEX - 1
-    - '&"Bin\Release\Release\SvtAv1E2ETests.exe" --gtest_filter=-*DummySrcTest*'
+    - '&"Bin\Release\SvtAv1E2ETests.exe" --gtest_filter=-*DummySrcTest*'
   needs:
-    - 'Win64 (Release, Tests)'
+    - 'Win64 (Release, MSVC, Tests)'
