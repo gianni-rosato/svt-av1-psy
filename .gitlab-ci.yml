@@ -193,8 +193,8 @@ Linux (Thread sanitizer):
   stage: test
   image: registry.gitlab.com/aomediacodec/aom-testing/ubuntu2004
   before_script:
-    - zstd -d /video.tar.zst
-    - tar xf /video.tar
+    - cp /*.zst .
+    - zstd -d *.zst
 
 Valgrind:
   extends: .tests
@@ -454,8 +454,9 @@ Linux (FFmpeg, Static):
     - cmake --build Build --config $CMAKE_BUILD_TYPE
 
 .macos-fetch-testdata: &macos-fetch-testdata |
-  curl -f -L -O --silent "https://gitlab.com/AOMediaCodec/aom-testing/-/raw/master/video.tar.zst"
-  zstd --stdout -d video.tar.zst | tar -xf -
+  for file in $TEST_FILES; do
+    curl -fLs "https://gitlab.com/AOMediaCodec/aom-testing/-/raw/master/test-files/$file.zst" | zstd -d - -o $file
+  done
 
 macOS (Xcode):
   extends: .macos-compiler-base
@@ -520,6 +521,8 @@ macOS Enc Test:
   tags:
     - macos-ci
   stage: test
+  variables:
+    TEST_FILES: akiyo_cif.y4m Chimera-Aerial_480x264_2997fps_10bit_420_150frames.y4m
   script:
     - *macos-fetch-testdata
     - ./Bin/Release/SvtAv1EncApp --preset 0 -i "$SVT_ENCTEST_FILENAME" -n 3 -b "test-pr-${SVT_ENCTEST_BITNESS}bit-m0.ivf"
