@@ -630,18 +630,22 @@ macOS FFmpeg (Static):
     - meson install -C vmaf-build
 
     # symbol conflict tests
-    # TODO: Fix syntax to work on macOS
-    #- |
-    #  conflicts=$(
-    #    nm -Ag --defined-only /usr/local/lib/lib{SvtAv1Enc,aom,dav1d,vpx,vmaf}.a 2>/dev/null |
-    #    sort -k3 |
-    #    uniq -D -f2 |
-    #    sed '/:$/d;/^$/d'
-    #  )
-    #  if [ -n "$conflicts" ]; then
-    #    printf 'Conflicts Found!\n%s\n' "$conflicts"
-    #    exit 1
-    #  fi
+    - |
+      conflicts=$(
+        nm -Ag --defined-only ${PREFIX_DIR}/lib/lib{SvtAv1Enc,aom,dav1d,vpx,vmaf}.a 2>/dev/null |
+        cut -d' ' -f 4 |
+        sort |
+        uniq -d
+      )
+      if [ -n "$conflicts" ]; then
+        printf 'Conflicts Found!\n'
+        for conflict in $conflicts; do
+          nm -Ag --defined-only ${PREFIX_DIR}/lib/lib{SvtAv1Enc,aom,dav1d,vpx,vmaf}.a 2>/dev/null |
+          sort -k3 |
+          grep -- " $conflict$"
+        done
+        exit 1
+      fi
 
     # FFmpeg
     # Uses ld=CXX for libvmaf to autolink the stdc++ library
