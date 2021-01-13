@@ -205,9 +205,6 @@ else()
     else()
         check_both_flags_add(-fstack-protector-strong)
     endif()
-endif()
-
-if(CMAKE_C_FLAGS MATCHES ".*-march=native.*" OR CMAKE_CXX_FLAGS MATCHES ".*-march=native.*")
     check_both_flags_add(-mno-avx)
 endif()
 
