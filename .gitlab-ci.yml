@@ -436,6 +436,21 @@ Linux (FFmpeg, Static):
     - mv ffmpeg ..
     - ccache -s
 
+Linux Enc Test:
+  extends: .tests
+  stage: test
+  script:
+    - ./Bin/Release/SvtAv1EncApp --preset 0 -i "$SVT_ENCTEST_FILENAME" -n 3 -b "test-pr-${SVT_ENCTEST_BITNESS}bit-m0.ivf"
+    - ./Bin/Release/SvtAv1EncApp --preset 8 -i "$SVT_ENCTEST_FILENAME" -n 120 -b "test-pr-${SVT_ENCTEST_BITNESS}bit-m8.ivf"
+  parallel:
+    matrix:
+      - SVT_ENCTEST_FILENAME: akiyo_cif.y4m
+        SVT_ENCTEST_BITNESS: 8
+      - SVT_ENCTEST_FILENAME: Chimera-Aerial_480x264_2997fps_10bit_420_150frames.y4m
+        SVT_ENCTEST_BITNESS: 10
+  needs:
+    - 'Linux (GCC 10)'
+
 
 #
 # macOS CI Jobs
