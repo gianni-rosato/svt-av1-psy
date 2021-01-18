@@ -1239,6 +1239,9 @@ EbErrorType signal_derivation_multi_processes_oq(
 
     if (pcs_ptr->slice_type == I_SLICE)
 #if TUNE_INTRA_PRED_MODE_MT
+#if NEW_PRESETS
+        pcs_ptr->intra_pred_mode = 0;
+#else
         if (scs_ptr->static_config.logical_processors == 1)
             pcs_ptr->intra_pred_mode = 0;
         else {
@@ -1251,6 +1254,7 @@ EbErrorType signal_derivation_multi_processes_oq(
             else
                 pcs_ptr->intra_pred_mode = 3;
         }
+#endif
 #else
         pcs_ptr->intra_pred_mode = 0;
 #endif
@@ -1294,6 +1298,10 @@ EbErrorType signal_derivation_multi_processes_oq(
                 pcs_ptr->intra_pred_mode = 1;
             else
                 pcs_ptr->intra_pred_mode = 3;
+#if NEW_PRESETS
+    else
+        pcs_ptr->intra_pred_mode = 3;
+#else
 #if TUNE_INTRA_PRED_MODE_MT
 #if TUNE_SHIFT_PRESETS_DOWN
         else if (pcs_ptr->enc_mode <= ENC_M8)
@@ -1307,6 +1315,7 @@ EbErrorType signal_derivation_multi_processes_oq(
 #endif
         else
             pcs_ptr->intra_pred_mode = 3;
+#endif
     }
         // Set tx size search mode      Settings
         // 0                 OFF: no transform partitioning
@@ -1325,7 +1334,11 @@ EbErrorType signal_derivation_multi_processes_oq(
 #if TUNE_M4_REPOSITION && !TUNE_SHIFT_PRESETS_DOWN
     else if (pcs_ptr->enc_mode <= ENC_M4)
 #else
+#if NEW_PRESETS
+    else if (pcs_ptr->enc_mode <= ENC_M4)
+#else
     else if (pcs_ptr->enc_mode <= ENC_M3)
+#endif
 #endif
         pcs_ptr->tx_size_search_mode = (pcs_ptr->temporal_layer_index == 0) ? 1 : 0;
 #endif
@@ -1342,7 +1355,7 @@ EbErrorType signal_derivation_multi_processes_oq(
         // 0                                     OFF
         // 1                                     ON
         if (scs_ptr->static_config.frame_end_cdf_update == DEFAULT)
-#if DISABLE_FE_CDF_UPDATE_BASE
+#if DISABLE_FE_CDF_UPDATE_BASE && !NEW_PRESETS
             if (scs_ptr->static_config.logical_processors == 1)
                 pcs_ptr->frame_end_cdf_update_mode = 1;
             else {
@@ -4257,7 +4270,11 @@ void mctf_frame(
 #if TUNE_M4_M8
 #if TUNE_M6_FEATURES
 #if TUNE_SHIFT_PRESETS_DOWN
+#if NEW_PRESETS
+        if (pcs_ptr->enc_mode <= ENC_M6) {
+#else
         if (pcs_ptr->enc_mode <= ENC_M5) {
+#endif
 #else
         if (pcs_ptr->enc_mode <= ENC_M6) {
 #endif
@@ -6292,7 +6309,11 @@ void* picture_decision_kernel(void *input_ptr)
                                 else
 #endif
 #if TUNE_SHIFT_PRESETS_DOWN
+#if NEW_PRESETS
+                                if (pcs_ptr->enc_mode <= ENC_M3) {
+#else
                                 if (pcs_ptr->enc_mode <= ENC_M5) {
+#endif
 #else
                                 if (pcs_ptr->enc_mode <= ENC_M6) {
 #endif

@@ -582,7 +582,7 @@ EbErrorType load_default_buffer_configuration_settings(
               mg_size + eos_delay + scs_ptr->scd_delay : 1;
     }
 
-    if (core_count == SINGLE_CORE_COUNT) {
+    if (core_count == SINGLE_CORE_COUNT || MIN_PIC_PARALLELIZATION) {
         scs_ptr->input_buffer_fifo_init_count                  = min_input;
         scs_ptr->picture_control_set_pool_init_count           = min_parent;
         scs_ptr->pa_reference_picture_buffer_init_count        = min_paref;
@@ -2237,7 +2237,11 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
 #if TUNE_SUPER_BLOCK_SIZE_M4_M5
 #if TUNE_M4_REPOSITION
 #if TUNE_SHIFT_PRESETS_DOWN
+#if NEW_PRESETS
+        if (scs_ptr->static_config.enc_mode <= ENC_M2)
+#else
         if (scs_ptr->static_config.enc_mode <= ENC_M3)
+#endif
 #else
         if (scs_ptr->static_config.enc_mode <= ENC_M4)
 #endif
@@ -2248,12 +2252,14 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
         else if (scs_ptr->static_config.enc_mode <= ENC_M4)
             scs_ptr->static_config.super_block_size = (scs_ptr->input_resolution <= INPUT_SIZE_360p_RANGE) ? 64 : 128;
 #endif
+#if !USE_SB64_M3
 #if TUNE_SHIFT_PRESETS_DOWN
         else if (scs_ptr->static_config.enc_mode <= ENC_M4)
 #else
         else if (scs_ptr->static_config.enc_mode <= ENC_M5)
 #endif
             scs_ptr->static_config.super_block_size = (scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE) ? 64 : 128;
+#endif
 #else
         if (scs_ptr->static_config.enc_mode <= ENC_M4)
             scs_ptr->static_config.super_block_size = 128;

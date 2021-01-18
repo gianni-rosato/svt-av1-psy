@@ -4363,7 +4363,11 @@ EbErrorType signal_derivation_enc_dec_kernel_common(
                 else if (scs_ptr->input_resolution < INPUT_SIZE_720p_RANGE)
                     depth_removal_level = 2;
                 else if (scs_ptr->input_resolution < INPUT_SIZE_1080p_RANGE)
+#if NEW_PRESETS
+                    depth_removal_level = 2;
+#else
                     depth_removal_level = 3;
+#endif
                 else
                     depth_removal_level = 4;
             }
@@ -4466,7 +4470,11 @@ EbErrorType signal_derivation_enc_dec_kernel_common(
         block_based_depth_refinement_level = (pcs_ptr->temporal_layer_index == 0) ? 0 : 2;
 #endif
 #if TUNE_SHIFT_PRESETS_DOWN
+#if NEW_PRESETS
+    else if (enc_mode <= ENC_M5)
+#else
     else if (enc_mode <= ENC_M4)
+#endif
 #else
     else if (enc_mode <= ENC_M5)
 #endif
@@ -4604,7 +4612,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             txt_level = 1;
 #if TUNE_M4_BASE_NBASE
 #if TUNE_SHIFT_PRESETS_DOWN
+#if NEW_PRESETS
+        else if (enc_mode <= ENC_M4)
+#else
         else if (enc_mode <= ENC_M3)
+#endif
 #else
         else if (enc_mode <= ENC_M4)
 #endif
@@ -4784,7 +4796,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #if TUNE_M9_FEATURES
 #if TUNE_M7_M9
 #if TUNE_SHIFT_PRESETS_DOWN
+#if NEW_PRESETS
+    else if (enc_mode <= ENC_M7)
+#else
     else if (enc_mode <= ENC_M6)
+#endif
 #else
     else if (enc_mode <= ENC_M7)
 #endif
@@ -5290,6 +5306,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #else
         parent_sq_coeff_area_based_cycles_reduction_level = pcs_ptr->slice_type == I_SLICE ? 0 : pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? 4 : 7;
 #endif
+#if !NEW_PRESETS
 #if TUNE_PRESETS_AND_PRUNING && !TUNE_M4_M5_DEC2
     else if (enc_mode <= ENC_M4)
 #else
@@ -5308,6 +5325,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         : pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? 4 : 7;
 #else
         parent_sq_coeff_area_based_cycles_reduction_level = pcs_ptr->slice_type == I_SLICE ? 5 : pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? 4 : 7;
+#endif
 #endif
 #if TUNE_M4_BASE_NBASE && !TUNE_M4_REPOSITION
     else if (enc_mode <= ENC_M4)
@@ -5749,7 +5767,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #if TUNE_M0_M3_BASE_NBASE
 #if TUNE_M4_REPOSITION
 #if TUNE_SHIFT_PRESETS_DOWN
+#if NEW_PRESETS
+        else if (enc_mode <= ENC_M4)
+#else
         else if (enc_mode <= ENC_M3)
+#endif
 #else
         else if (enc_mode <= ENC_M4)
 #endif
@@ -5935,7 +5957,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #if TUNE_M9_PF
 #if TUNE_M8_FEATURES
 #if TUNE_SHIFT_PRESETS_DOWN
+#if NEW_PRESETS
+                if (enc_mode <= ENC_M7) {
+#else
                 if (enc_mode <= ENC_M6) {
+#endif
 #else
                 if (enc_mode <= ENC_M7) {
 #endif
@@ -5996,7 +6022,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     else
 #if TUNE_M7_M9
 #if TUNE_SHIFT_PRESETS_DOWN
+#if NEW_PRESETS
+        if (enc_mode <= ENC_M7)
+#else
         if (enc_mode <= ENC_M6)
+#endif
 #else
         if (enc_mode <= ENC_M7)
 #endif
@@ -6148,7 +6178,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #endif
             context_ptr->md_pme_level = 1;
 #if TUNE_SHIFT_PRESETS_DOWN
+#if NEW_PRESETS
+        else if (enc_mode <= ENC_M6)
+#else
         else if (enc_mode <= ENC_M5)
+#endif
 #else
         else if (enc_mode <= ENC_M6)
 #endif
@@ -6183,7 +6217,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #if TUNE_M4_M8
 #if TUNE_M6_M7_FEATURES
 #if TUNE_SHIFT_PRESETS_DOWN
+#if NEW_PRESETS
+        context_ptr->md_subpel_me_level = enc_mode <= ENC_M6 ? 3 : 0;
+#else
         context_ptr->md_subpel_me_level = enc_mode <= ENC_M5 ? 3 : 0;
+#endif
 #else
         context_ptr->md_subpel_me_level = enc_mode <= ENC_M6 ? 3 : 0;
 #endif
@@ -6442,7 +6480,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #if TUNE_M0_M3_BASE_NBASE
 #if TUNE_M4_REPOSITION
 #if TUNE_SHIFT_PRESETS_DOWN
+#if NEW_PRESETS
+        else if (enc_mode <= ENC_M4)
+#else
         else if (enc_mode <= ENC_M3)
+#endif
 #else
         else if (enc_mode <= ENC_M4)
 #endif
@@ -7613,7 +7655,11 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
                                 // Always use at least [-1, +1] refinement for SC
 #if TUNE_M4_REPOSITION
 #if TUNE_SHIFT_PRESETS_DOWN
+#if NEW_PRESETS
+                                if (pcs_ptr->enc_mode <= ENC_M2) {
+#else
                                 if (pcs_ptr->enc_mode <= ENC_M3) {
+#endif
 #else
                                 if (pcs_ptr->enc_mode <= ENC_M4) {
 #endif
@@ -7645,7 +7691,11 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
                         }
 #if TUNE_M4_REPOSITION
 #if TUNE_SHIFT_PRESETS_DOWN
+#if NEW_PRESETS
+                            else if (pcs_ptr->enc_mode <= ENC_M2) {
+#else
                             else if (pcs_ptr->enc_mode <= ENC_M3) {
+#endif
 #else
                             else if (pcs_ptr->enc_mode <= ENC_M4) {
 #endif

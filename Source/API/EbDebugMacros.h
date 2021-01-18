@@ -223,6 +223,9 @@ extern "C" {
 #define TUNE_SHIFT_PRESETS_DOWN                1 // shift higher presets down all the way to M2
 #define FIX_SC_MVP_TABLE_GEN                   1 // Fix an invalid input @ the call of generate_av1_mvp_table()
 #define PR_1660                                1 // Fix R2R issue kernel mismatch in kernel svt_aom_highbd_10_variance16x4_avx2()
+
+#define NEW_PRESETS                            1 // New preset changes, designed with fps considerations
+#define USE_SB64_M3                            1 // Use SB 64x64 for M3+ in all resolutions
 // ============= END SVT_04 =============
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
@@ -232,6 +235,7 @@ extern "C" {
 #define FTR_ENABLE_FIXED_QINDEX_OFFSETS 1
 
 #define FIX_DDL                 1 // Fix deadlock issues
+#define MIN_PIC_PARALLELIZATION 1 // Use the minimum amount of picture parallelization
 #ifdef __cplusplus
 }
 #endif // __cplusplus
