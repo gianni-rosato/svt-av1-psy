@@ -114,6 +114,12 @@ typedef struct logicalProcessorGroup {
 static processorGroup           *lp_group = NULL;
 #endif
 
+
+#if FTR_LAD_MG
+extern uint32_t tot_past_refs[];
+uint32_t  get_num_refs_in_one_mg(PredictionStructure *pred_struct_ptr);
+#endif
+
 static const char *get_asm_level_name_str(CPU_FLAGS cpu_flags) {
 
     const struct {
@@ -361,6 +367,9 @@ int32_t set_parent_pcs(EbSvtAv1EncConfiguration*   config, uint32_t core_count, 
     }
 }
 EbErrorType load_default_buffer_configuration_settings(
+#if FTR_LAD_MG
+    EbEncHandle        *enc_handle,
+#endif
     SequenceControlSet       *scs_ptr){
     EbErrorType           return_error = EB_ErrorNone;
     unsigned int lp_count   = get_num_processors();
@@ -538,8 +547,12 @@ EbErrorType load_default_buffer_configuration_settings(
         uint32_t eos_delay = 1;
 
         //Minimum input pictures needed in the pipeline
+#if FTR_LAD_MG
+        uint16_t lad_mg_pictures = (1 + mg_size)*scs_ptr->lad_mg; //Unit= 1(provision for a potential delayI) +  prediction struct
+        return_ppcs = (1 + mg_size) * (scs_ptr->lad_mg + 1)  + scs_ptr->scd_delay + eos_delay;
+#else
         return_ppcs = (mg_size + 1) + eos_delay + scs_ptr->scd_delay + needed_lad_pictures;
-
+#endif
         //scs_ptr->input_buffer_fifo_init_count = return_ppcs;
         min_input = return_ppcs;
 
@@ -555,9 +568,33 @@ EbErrorType load_default_buffer_configuration_settings(
         min_child = 1;
 
         //References. Min to sustain dec order flow (RA-5L-MRP-ON) 7 pictures from previous MGs + 11 needed for curr mini-GoP
+#if FTR_LAD_MG
+        PredictionStructure*pred_struct_ptr = get_prediction_structure(
+            enc_handle->scs_instance_array[0]->encode_context_ptr->prediction_structure_group_ptr,
+            enc_handle->scs_instance_array[0]->scs_ptr->static_config.pred_structure,
+            4,
+            scs_ptr->static_config.hierarchical_levels);
+
+        uint16_t num_ref_from_past_mgs = tot_past_refs[scs_ptr->static_config.hierarchical_levels];
+        uint16_t num_ref_from_cur_mg = get_num_refs_in_one_mg(pred_struct_ptr) + 1 ;//+1: to accomodate one for a delayed-I
+
+        //printf("CUR_MG_REFs:%i \n", num_ref_from_cur_mg);
+
+        uint16_t num_ref_lad_mgs = num_ref_from_cur_mg * scs_ptr->lad_mg;
+        min_ref = num_ref_from_past_mgs + num_ref_from_cur_mg + num_ref_lad_mgs;
+
+#else
         min_ref = 18;
+#endif
 
-
+#if FTR_LAD_MG
+        if (use_output_stat(scs_ptr))
+            min_me = min_parent;
+        else if (scs_ptr->static_config.enable_tpl_la)
+            min_me = mg_size + 1 + lad_mg_pictures;
+        else
+            min_me = 1;
+#else
         if (scs_ptr->static_config.look_ahead_distance > 0)
             min_me = min_parent;
         else if (scs_ptr->static_config.enable_tpl_la)
@@ -565,7 +602,16 @@ EbErrorType load_default_buffer_configuration_settings(
             min_me = mg_size + 1 + SCD_LAD;
         else
             min_me = 1;
+#endif
 
+#if FTR_LAD_MG
+        //PA REF
+        uint16_t num_pa_ref_from_past_mgs = tot_past_refs[scs_ptr->static_config.hierarchical_levels];
+        //printf("TOT_PAST_REFs:%i \n", num_pa_ref_from_past_mgs);
+        uint16_t num_pa_ref_from_cur_mg = mg_size; //ref+nref; nRef PA buffers are processed in PicAnalysis and used in TF
+        uint16_t num_pa_ref_for_cur_mg = num_pa_ref_from_past_mgs + num_pa_ref_from_cur_mg;
+        min_paref = num_pa_ref_for_cur_mg + lad_mg_pictures + scs_ptr->scd_delay + eos_delay ;
+#else
         //Pa-References.Min to sustain flow (RA-5L-MRP-ON) -->TODO: derive numbers for other GOP Structures.
         min_paref = 25 + scs_ptr->scd_delay + eos_delay + (scs_ptr->static_config.enable_tpl_la ? needed_lad_pictures : 0);
 
@@ -573,7 +619,7 @@ EbErrorType load_default_buffer_configuration_settings(
             core_count == SINGLE_CORE_COUNT) {
             min_paref += 8;
         }
-
+#endif
         if (scs_ptr->static_config.enable_overlays)
             min_paref *= 2;
 
@@ -1140,6 +1186,11 @@ static int create_pa_ref_buf_descs(EbEncHandle *enc_handle_ptr, uint32_t instanc
         // Set the SequenceControlSet Picture Pool Fifo Ptrs
         enc_handle_ptr->scs_instance_array[instance_index]->encode_context_ptr->pa_reference_picture_pool_fifo_ptr =
             svt_system_resource_get_producer_fifo(enc_handle_ptr->pa_reference_picture_pool_ptr_array[instance_index], 0);
+
+#if SRM_REPORT
+        enc_handle_ptr->scs_instance_array[instance_index]->encode_context_ptr->pa_reference_picture_pool_fifo_ptr->queue_ptr->log = 0;
+#endif
+
         return 0;
 }
 
@@ -1191,6 +1242,11 @@ static int create_ref_buf_descs(EbEncHandle *enc_handle_ptr, uint32_t instance_i
 
     enc_handle_ptr->scs_instance_array[instance_index]->encode_context_ptr->reference_picture_pool_fifo_ptr =
         svt_system_resource_get_producer_fifo(enc_handle_ptr->reference_picture_pool_ptr_array[instance_index], 0);
+
+#if SRM_REPORT
+    enc_handle_ptr->scs_instance_array[instance_index]->encode_context_ptr->reference_picture_pool_fifo_ptr->queue_ptr->log = 0;
+#endif
+
     return 0;
 }
 
@@ -1289,6 +1345,11 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
             picture_parent_control_set_creator,
             &input_data,
             NULL);
+
+#if SRM_REPORT
+            enc_handle_ptr->picture_parent_control_set_pool_ptr_array[0]->empty_queue->log = 0;
+#endif
+
         EB_NEW(
             enc_handle_ptr->me_pool_ptr_array[instance_index],
             svt_system_resource_ctor,
@@ -1298,6 +1359,11 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
             me_creator,
             &input_data,
             NULL);
+
+#if SRM_REPORT
+        enc_handle_ptr->me_pool_ptr_array[instance_index]->empty_queue->log = 0;
+        dump_srm_content(enc_handle_ptr->me_pool_ptr_array[instance_index], EB_FALSE);
+#endif
     }
 
     /************************************
@@ -2199,7 +2265,11 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
 
     if (use_output_stat(scs_ptr)) {
         scs_ptr->static_config.enc_mode = MAX_ENC_PRESET;
+#if FTR_LAD_MG
+        scs_ptr->static_config.look_ahead_distance = 0;
+#else
         scs_ptr->static_config.look_ahead_distance = 1;
+#endif
         scs_ptr->static_config.enable_tpl_la = 0;
         scs_ptr->static_config.rate_control_mode = 0;
         scs_ptr->static_config.intra_refresh_type = 2;
@@ -2339,6 +2409,14 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
         scs_ptr->enable_dec_order = 0;
    // Open loop intra done with TPL, data is not stored
     scs_ptr->in_loop_ois = 0;
+
+
+#if FTR_LAD_MG
+    //use a number of MGs ahead of current MG
+    scs_ptr->lad_mg = 0;
+#endif
+
+
     // Set over_boundary_block_mode     Settings
     // 0                            0: not allowed
     // 1                            1: allowed
@@ -2628,7 +2706,9 @@ void copy_api_from_app(
         SVT_LOG("SVT [Warning]: force look_ahead_distance to be %d from %d for perf/quality tradeoff when enable_tpl_la=1\n", (uint32_t)TPL_LAD, scs_ptr->static_config.look_ahead_distance);
         scs_ptr->static_config.look_ahead_distance = TPL_LAD;
     }
-
+#if FTR_LAD_MG
+    scs_ptr->static_config.look_ahead_distance = 0;
+#endif
     scs_ptr->static_config.tf_level = config_struct->tf_level;
     scs_ptr->static_config.altref_strength = config_struct->altref_strength;
     scs_ptr->static_config.altref_nframes = config_struct->altref_nframes;
@@ -3483,7 +3563,11 @@ static void print_lib_params(
         SVT_LOG("\nSVT [config]: BRC Mode / %s / LookaheadDistance / SceneChange\t\t\t: %s / %d / %d / %d ", scs->static_config.enable_tpl_la ? "RF" : "QP", scs->static_config.enable_tpl_la ? "CRF" : "CQP", scs->static_config.qp, config->look_ahead_distance, config->scene_change_detection);
 #ifdef DEBUG_BUFFERS
     SVT_LOG("\nSVT [config]: INPUT / OUTPUT \t\t\t\t\t\t\t: %d / %d", scs->input_buffer_fifo_init_count, scs->output_stream_buffer_fifo_init_count);
+#if FTR_LAD_MG
+    SVT_LOG("\nSVT [config]: CPCS / PAREF / REF / ME\t\t\t\t\t\t: %d / %d / %d / %d", scs->picture_control_set_pool_init_count_child, scs->pa_reference_picture_buffer_init_count, scs->reference_picture_buffer_init_count, scs->me_pool_init_count);
+#else
     SVT_LOG("\nSVT [config]: CPCS / PAREF / REF \t\t\t\t\t\t: %d / %d / %d", scs->picture_control_set_pool_init_count_child, scs->pa_reference_picture_buffer_init_count, scs->reference_picture_buffer_init_count);
+#endif
     SVT_LOG("\nSVT [config]: ME_SEG_W0 / ME_SEG_W1 / ME_SEG_W2 / ME_SEG_W3 \t\t\t: %d / %d / %d / %d ",
         scs->me_segment_column_count_array[0],
         scs->me_segment_column_count_array[1],
@@ -3572,6 +3656,9 @@ EB_API EbErrorType svt_av1_enc_set_parameter(
         enc_handle->scs_instance_array[instance_index]->scs_ptr->max_temporal_layers);
 
     return_error = load_default_buffer_configuration_settings(
+#if FTR_LAD_MG
+        enc_handle,
+#endif
         enc_handle->scs_instance_array[instance_index]->scs_ptr);
 
     print_lib_params(

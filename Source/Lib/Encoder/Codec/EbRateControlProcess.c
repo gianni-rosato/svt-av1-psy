@@ -35,7 +35,9 @@
 #include "EbIntraPrediction.h"
 #include "EbMotionEstimation.h"
 #if FTR_TPL_TR
+#if !FTR_LAD_MG
 uint8_t is_tpl_trailing(PictureParentControlSet *base_pcs, PictureParentControlSet *curr_pcs);
+#endif
 void  dtor_trail_ressources(PictureParentControlSet * pcs);
 #endif
 #if !TPL_KERNEL

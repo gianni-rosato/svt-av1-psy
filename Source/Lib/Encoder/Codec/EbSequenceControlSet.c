@@ -320,6 +320,10 @@ EbErrorType copy_sequence_control_set(SequenceControlSet *dst, SequenceControlSe
     dst->enable_pic_mgr_dec_order       = src->enable_pic_mgr_dec_order;
     dst->enable_dec_order               = src->enable_dec_order;
     dst->lap_enabled                    = src->lap_enabled;
+
+#if FTR_LAD_MG
+    dst->lad_mg                         = src->lad_mg;
+#endif
     return EB_ErrorNone;
 }
 

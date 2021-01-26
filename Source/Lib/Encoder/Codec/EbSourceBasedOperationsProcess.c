@@ -2287,9 +2287,9 @@ EbErrorType init_tpl_buffers(
     }
     return EB_ErrorNone;
 }
-
+#if !FTR_LAD_MG
 uint8_t is_tpl_trailing(PictureParentControlSet *base_pcs, PictureParentControlSet *curr_pcs);
-
+#endif
 void  dtor_trail_ressources(PictureParentControlSet * pcs);
 
 
@@ -2434,6 +2434,7 @@ EbErrorType tpl_mc_flow(EncodeContext *encode_context_ptr, SequenceControlSet *s
 #if FTR_TPL_TR
         tpcs->tpl_ctrls = cur_pcs->tpl_ctrls;
 #endif
+#if !FTR_LAD_MG
         if (is_tpl_trailing(pcs_ptr, cur_pcs)) {
 
             tpcs->tpl_data = cur_pcs->tpl_data_trail;
@@ -2460,7 +2461,9 @@ EbErrorType tpl_mc_flow(EncodeContext *encode_context_ptr, SequenceControlSet *s
             tpcs->tile_group_info = cur_pcs->tile_group_info_trail;
 #endif
         }
-        else {
+        else
+#endif
+        {
             tpcs->tpl_data = cur_pcs->tpl_data;
             tpcs->slice_type = cur_pcs->slice_type;
             tpcs->hierarchical_levels = cur_pcs->hierarchical_levels;
@@ -2504,14 +2507,16 @@ EbErrorType tpl_mc_flow(EncodeContext *encode_context_ptr, SequenceControlSet *s
 
         //wait for PA ME to be done.
         for (uint32_t i = 1; i < pcs_ptr->tpl_group_size; i++) {
-
+#if !FTR_LAD_MG
 #if FTR_TPL_TR
             if (is_tpl_trailing(pcs_ptr, pcs_ptr->tpl_group[i])) {
                 svt_block_on_semaphore(pcs_ptr->tpl_group[i]->pame_trail_done_semaphore);
             }
             else {
 #endif
-
+#else
+                {
+#endif
 #if FIX_DDL
                 svt_wait_cond_var(&pcs_ptr->tpl_group[i]->me_ready, 0);
 #else
@@ -2670,8 +2675,12 @@ EbErrorType tpl_mc_flow(EncodeContext *encode_context_ptr, SequenceControlSet *s
     if (scs_ptr->in_loop_me == 0) {
         for (uint32_t i = 0; i < pcs_ptr->tpl_group_size; i++) {
 #if FTR_TPL_TR
+#if FTR_LAD_MG
+            if (pcs_ptr->tpl_group[i]->num_tpl_processed == pcs_ptr->tpl_group[i]->num_tpl_grps){
+#else
             if (pcs_ptr->tpl_group[i]->num_tpl_processed == pcs_ptr->tpl_group[i]->num_tpl_grps
                 && is_tpl_trailing(pcs_ptr, pcs_ptr->tpl_group[i])==0){
+#endif
 #else
             if (pcs_ptr->tpl_group[i]->num_tpl_processed == pcs_ptr->tpl_group[i]->num_tpl_grps) {
 #endif

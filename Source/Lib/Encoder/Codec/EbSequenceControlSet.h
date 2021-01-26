@@ -80,6 +80,15 @@ typedef struct SequenceControlSet {
     /*!< Use in loop motion estimation
          Default is 0. */
     uint8_t in_loop_me;
+
+#if FTR_LAD_MG
+
+    /*  1..15    | 17..31  | 33..47  |
+              16 |       32|       48|
+      lad mg=2: delay the first MG (1-16) until the next 2 MGs(17-48) are gop , TF, and ME ready
+    */
+    uint8_t lad_mg;   //delay all pictures within a given MG, until N future MGs are  gop , TF, and ME ready
+#endif
     uint8_t enable_pic_mgr_dec_order; // if enabled: pic mgr starts pictures in dec order
     uint8_t enable_dec_order; // if enabled: encoding are in dec order
     /*!< Use in loop motion OIS

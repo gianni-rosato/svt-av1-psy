@@ -1096,6 +1096,19 @@ typedef struct PictureParentControlSet {
     void *   pd_window
         [PD_WINDOW_SIZE]; //stores previous, current, future pictures from pd-reord-queue. empty for first I.
     uint8_t pd_window_count;
+
+#if FTR_LAD_MG
+    struct PictureParentControlSet
+        *ext_group[MAX_TPL_EXT_GROUP_SIZE]; //stores pcs pictures needed for lad mg based algorithms
+    uint32_t ext_group_size; //actual size of extended group
+
+    int64_t  ext_mg_id;
+    int64_t  ext_mg_size; //same as mg expect for MGops with [LDP-I] which are split into 2
+
+    struct PictureParentControlSet *ntpl_group[MAX_TPL_EXT_GROUP_SIZE]; //new tpl group formed the extended group
+    uint32_t ntpl_group_size;
+#endif
+
     // For TPL, in addition to frames in the minigop size, we might process extra frames from the next minigop. These frames are
     // called trailing frames. Trailing frames are available because of TF and their minigop is not determined yet. As a result,
     // when used in RC there is a risk of race condition to access the PCS data. To prevent the problem, TplData should be used instead of PCS.

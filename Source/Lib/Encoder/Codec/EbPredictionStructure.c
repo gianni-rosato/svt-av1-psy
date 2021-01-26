@@ -1771,6 +1771,76 @@ static EbErrorType prediction_structure_ctor(
     return EB_ErrorNone;
 }
 
+#if FTR_LAD_MG
+uint32_t tot_past_refs[MAX_TEMPORAL_LAYERS] = {0,0,0,0,0,0};
+/*
+ returns max number of references from past mni-gops
+*/
+void  get_past_refs(PredictionStructureConfig *prediction_structure_config_array)
+{
+/*5L
+  |0|16|32|48| ........ |240|256|
+*/
+
+    for (uint32_t hierarchical=0;   hierarchical < MAX_TEMPORAL_LAYERS; hierarchical++) {
+
+        int steady_state_mg_end = 256; //far enough to reach all  references
+        int steady_state_mg_start = steady_state_mg_end - prediction_structure_config_array[hierarchical].entry_count;
+        int past_ref_arr[128];
+        uint8_t tot_past = 0;
+        for (uint32_t gop_i = 0; gop_i < prediction_structure_config_array[hierarchical].entry_count; ++gop_i) {
+
+            int disp_num = gop_i == 0 ?
+                prediction_structure_config_array[hierarchical].entry_count + steady_state_mg_start :
+                gop_i + steady_state_mg_start;
+
+            for (uint32_t listi = 0; listi < 2; ++listi) {
+
+                int32_t *ref_diff_list = (listi == 0) ?
+                    prediction_structure_config_array[hierarchical].entry_array[gop_i].ref_list0 :
+                    prediction_structure_config_array[hierarchical].entry_array[gop_i].ref_list1;
+
+                for (uint32_t i = 0; i < MAX_REF_IDX; ++i) {
+                    int ref_diff = ref_diff_list[i];
+                    //if the ref is used
+                    if (ref_diff > 0) {
+                        int ref_num = disp_num - ref_diff;
+                        int is_ref_outside_curr_mg = ref_num <= steady_state_mg_start ? 1 : 0;
+                        if (is_ref_outside_curr_mg) {
+                            uint8_t ref_already_there = 0;
+                            for (int j = 0; j < tot_past; j++) {
+                                if (ref_num == past_ref_arr[j]) {
+                                    ref_already_there = 1;
+                                    break;
+                                }
+                            }
+                            if (!ref_already_there)
+                                past_ref_arr[tot_past++] = ref_num;
+                        }
+                    }
+                }
+            }
+        }
+        tot_past_refs[hierarchical] = tot_past;
+    }
+
+
+}
+/* count number of refs in a steady state MG*/
+uint32_t  get_num_refs_in_one_mg(PredictionStructure *pred_struct)
+{
+    uint32_t steady_state_pic_count = pred_struct->pred_struct_period;
+    uint32_t terminating_entry_index = pred_struct->steady_state_index + steady_state_pic_count;
+
+    uint32_t tot_refs = 0;
+    for (uint32_t entry_index = pred_struct->steady_state_index; entry_index < terminating_entry_index; ++entry_index)
+        if(pred_struct->pred_struct_entry_ptr_array[entry_index]->is_referenced)
+            tot_refs++;
+
+    return tot_refs;
+}
+
+#endif
 static void prediction_structure_group_dctor(EbPtr p) {
     PredictionStructureGroup *obj = (PredictionStructureGroup *)p;
     EB_DELETE_PTR_ARRAY(obj->prediction_structure_ptr_array, obj->prediction_structure_count);
@@ -1893,6 +1963,10 @@ EbErrorType prediction_structure_group_ctor(PredictionStructureGroup *pred_struc
             }
         }
     }
+
+#if FTR_LAD_MG
+    get_past_refs(prediction_structure_config_array);
+#endif
 
     // Count the number of Prediction Structures
     while ((prediction_structure_config_array[pred_struct_index].entry_array != 0) &&

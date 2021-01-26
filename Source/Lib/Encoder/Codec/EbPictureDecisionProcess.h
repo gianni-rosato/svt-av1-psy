@@ -47,6 +47,12 @@ void gathering_picture_statistics(SequenceControlSet *scs_ptr, PictureParentCont
 void down_sample_chroma(EbPictureBufferDesc *input_picture_ptr,
                         EbPictureBufferDesc *outputPicturePtr);
 
+
+#if FTR_LAD_MG
+EbBool is_delayed_intra(PictureParentControlSet *pcs);
+#endif
+
+
 /**************************************
  * Context
  **************************************/
@@ -99,6 +105,10 @@ typedef struct PictureDecisionContext {
     PictureParentControlSet *prev_delayed_intra; //Key frame or I of LDP short MG
     uint32_t                 mg_size; //number of active pictures in above array
     PictureParentControlSet *mg_pictures_array_disp_order[1 << MAX_TEMPORAL_LAYERS];
+
+#if FTR_LAD_MG
+    int64_t mg_progress_id;
+#endif
 } PictureDecisionContext;
 
 #endif // EbPictureDecision_h

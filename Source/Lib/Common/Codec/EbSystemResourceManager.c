@@ -15,6 +15,9 @@
 #include "EbSystemResourceManager.h"
 #include "EbDefinitions.h"
 #include "EbThreads.h"
+#if SRM_REPORT
+#include "EbLog.h"
+#endif
 
 static void svt_fifo_dctor(EbPtr p) {
     EbFifo *obj = (EbFifo *)p;
@@ -459,6 +462,10 @@ EbErrorType svt_system_resource_ctor(EbSystemResource *resource_ptr, uint32_t ob
                object_creator,
                object_init_data_ptr,
                object_destroyer);
+#if SRM_REPORT
+        resource_ptr->wrapper_ptr_pool[wrapper_index]->pic_number = 99999999;
+#endif
+
     }
 
     // Initialize the Empty Queue
@@ -472,6 +479,11 @@ EbErrorType svt_system_resource_ctor(EbSystemResource *resource_ptr, uint32_t ob
                                           resource_ptr->wrapper_ptr_pool[wrapper_index]);
     }
 
+#if SRM_REPORT
+    //at init time, the SRM is full
+    resource_ptr->empty_queue->curr_count = resource_ptr->object_total_count;
+    resource_ptr->empty_queue->log = 0;
+#endif
     // Initialize the Full Queue
     if (consumer_process_total_count) {
         EB_NEW(resource_ptr->full_queue,
@@ -576,12 +588,37 @@ EbErrorType svt_release_object(EbObjectWrapper *object_ptr) {
 
         svt_muxing_queue_object_push_front(object_ptr->system_resource_ptr->empty_queue,
                                            object_ptr);
+
+#if SRM_REPORT
+        object_ptr->pic_number = 99999999;
+        //increment the fullness
+        object_ptr->system_resource_ptr->empty_queue->curr_count++;
+        if (object_ptr->system_resource_ptr->empty_queue->log)
+            SVT_LOG("SRM fullness+: %i/%i\n", object_ptr->system_resource_ptr->empty_queue->curr_count, object_ptr->system_resource_ptr->object_total_count);
+#endif
     }
 
     svt_release_mutex(object_ptr->system_resource_ptr->empty_queue->lockout_mutex);
 
     return return_error;
 }
+
+#if SRM_REPORT
+/*
+  dump pictures occuping the SRM
+*/
+EbErrorType dump_srm_content(EbSystemResource *resource_ptr, uint8_t log)
+{
+    EbErrorType return_error = EB_ErrorNone;
+    if (log) {
+        SVT_LOG("SRM content:\n\n");
+        for (uint32_t wrapper_index = 0; wrapper_index < resource_ptr->object_total_count; ++wrapper_index) {
+            SVT_LOG("%lld ", resource_ptr->wrapper_ptr_pool[wrapper_index]->pic_number);
+        }
+    }
+    return return_error;
+}
+#endif
 
 /*********************************************************************
  * EbSystemResourceGetEmptyObject
@@ -612,6 +649,13 @@ EbErrorType svt_get_empty_object(EbFifo *empty_fifo_ptr, EbObjectWrapper **wrapp
 
     // Get the empty object
     svt_fifo_pop_front(empty_fifo_ptr, wrapper_dbl_ptr);
+
+#if SRM_REPORT
+    //decrement the fullness
+    empty_fifo_ptr->queue_ptr->curr_count--;
+    if (empty_fifo_ptr->queue_ptr->log)
+        printf("SRM fullness-: %i/%i\n", empty_fifo_ptr->queue_ptr->curr_count, (*wrapper_dbl_ptr)->system_resource_ptr->object_total_count);
+#endif
 
     // Reset the wrapper's live_count
     (*wrapper_dbl_ptr)->live_count = 0;

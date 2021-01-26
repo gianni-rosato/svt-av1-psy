@@ -226,6 +226,7 @@ extern "C" {
 
 #define NEW_PRESETS                            1 // New preset changes, designed with fps considerations
 #define USE_SB64_M3                            1 // Use SB 64x64 for M3+ in all resolutions
+#define  FTR_LAD_MG                             1 // Add a look-ahead on top of the default re-ordering
 // ============= END SVT_04 =============
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
@@ -236,6 +237,8 @@ extern "C" {
 
 #define FIX_DDL                 1 // Fix deadlock issues
 #define MIN_PIC_PARALLELIZATION 1 // Use the minimum amount of picture parallelization
+#define  SRM_REPORT             0 // Report SRM status
+#define  LAD_MG_PRINT             0 // Report LAD
 #ifdef __cplusplus
 }
 #endif // __cplusplus

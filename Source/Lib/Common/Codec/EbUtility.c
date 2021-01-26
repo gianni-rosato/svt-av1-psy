@@ -21,6 +21,16 @@
 #include "EbUtility.h"
 #include "EbLog.h"
 #include <math.h>
+
+#if FTR_LAD_MG
+/* assert a certain condition and report err if condition not met */
+void assert_err(uint32_t condition, char * err_msg) {
+    assert(condition);
+    if (!condition)
+        SVT_ERROR("\n %s \n", err_msg);
+}
+#endif
+
 /********************************************************************************************
 * faster memcopy for <= 64B blocks, great w/ inlining and size known at compile time (or w/ PGO)
 * THIS NEEDS TO STAY IN A HEADER FOR BEST PERFORMANCE

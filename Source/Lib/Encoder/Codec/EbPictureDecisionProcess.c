@@ -274,6 +274,13 @@ EbErrorType picture_decision_context_ctor(
     context_ptr->reset_running_avg = EB_TRUE;
     context_ptr->me_fifo_ptr = svt_system_resource_get_producer_fifo(
             enc_handle_ptr->me_pool_ptr_array[0], 0);
+
+
+#if FTR_LAD_MG
+    context_ptr->mg_progress_id = 0;
+#endif
+
+
     return EB_ErrorNone;
 }
 
@@ -4482,11 +4489,13 @@ extern void set_tpl_controls(
 }
 #endif
 #if FTR_TPL_TR
+#if !FTR_LAD_MG
 /* this function returns 1 if a picture is a trailing TPL pic*/
 uint8_t is_tpl_trailing(PictureParentControlSet *base_pcs, PictureParentControlSet *curr_pcs )
 {
    return  (!base_pcs->idr_flag) && (curr_pcs->picture_number > base_pcs->picture_number);
 }
+#endif
 /* this function sets up ME refs for a  trailing TPL pic*/
  uint8_t tpl_trailing_setup_me_refs(
     SequenceControlSet              *scs_ptr,
@@ -4705,6 +4714,7 @@ void tpl_prep_info(PictureParentControlSet    *pcs) {
 
          PictureParentControlSet* pcs_tpl = pcs->tpl_group[pic_i];
 
+#if !FTR_LAD_MG
 
 
          if (is_tpl_trailing(pcs, pcs_tpl)) {
@@ -4727,7 +4737,9 @@ void tpl_prep_info(PictureParentControlSet    *pcs) {
 
 
          }
-         else {
+         else
+#endif
+         {
 
              pcs_tpl->tpl_data.tpl_ref0_count = 0;
              pcs_tpl->tpl_data.tpl_ref1_count = 0;
@@ -4752,6 +4764,7 @@ void tpl_prep_info(PictureParentControlSet    *pcs) {
 }
 
 #endif
+#if !FTR_LAD_MG
 #if FTR_TPL_TR
 /* constructs ME jobs for trailing pictures*/
 void send_trail_pictures_out(
@@ -4764,6 +4777,7 @@ void send_trail_pictures_out(
 #endif
     for (uint32_t pic_i = 0; pic_i < pcs->tpl_group_size; ++pic_i) {
         PictureParentControlSet* pcs_tpl = (PictureParentControlSet *)pcs->tpl_group[pic_i];
+#if !FTR_LAD_MG
         if (is_tpl_trailing(pcs, pcs_tpl))
         {
             //contruct TPL ME job
@@ -4808,9 +4822,11 @@ void send_trail_pictures_out(
                 svt_post_full_object(out_results_wrapper);
             }
         }
+#endif
     }
 }
 
+#endif
 #endif
 void store_tpl_pictures(
     PictureParentControlSet *pcs,
@@ -4878,6 +4894,10 @@ void send_picture_out(
         pcs->reference_picture_wrapper_ptr = reference_picture_wrapper;
         // Give the new Reference a nominal live_count of 1
         svt_object_inc_live_count(pcs->reference_picture_wrapper_ptr, 1);
+#if SRM_REPORT
+        pcs->reference_picture_wrapper_ptr->pic_number= pcs->picture_number;
+#endif
+
         }else {
             pcs->reference_picture_wrapper_ptr = NULL;
         }
@@ -4988,42 +5008,30 @@ void store_gf_group(
     }
 }
 #endif
-void print_pre_ass(EncodeContext *ctxt)
+
+#if LAD_MG_PRINT
+/* prints content of pre-assignment buffer */
+void print_pre_ass_buffer(EncodeContext *ctx, PictureParentControlSet *pcs_ptr, uint8_t log)
 {
+    if (log) {
 
-    SVT_LOG("\n Pre-Assign(%i):  ", ctxt->pre_assignment_buffer_count);
-    for (uint32_t pic = 0; pic < ctxt->pre_assignment_buffer_count; pic++) {
+        if (ctx->pre_assignment_buffer_intra_count > 0)
+            SVT_LOG("PRE-ASSIGN INTRA   (%i pictures)  POC:%lld \n", ctx->pre_assignment_buffer_count, pcs_ptr->picture_number);
+        if (ctx->pre_assignment_buffer_count == (uint32_t)(1 << pcs_ptr->scs_ptr->static_config.hierarchical_levels))
+            SVT_LOG("PRE-ASSIGN COMPLETE   (%i pictures)  POC:%lld \n", ctx->pre_assignment_buffer_count, pcs_ptr->picture_number);
+        if (ctx->pre_assignment_buffer_eos_flag == 1)
+            SVT_LOG("PRE-ASSIGN EOS   (%i pictures)  POC:%lld \n", ctx->pre_assignment_buffer_count, pcs_ptr->picture_number);
 
-        PictureParentControlSet *pcs = (PictureParentControlSet*)ctxt->pre_assignment_buffer[pic]->object_ptr;
-        SVT_LOG("%ld ", pcs->picture_number);
+        SVT_LOG("\n Pre-Assign(%i):  ", ctx->pre_assignment_buffer_count);
+        for (uint32_t pic = 0; pic < ctx->pre_assignment_buffer_count; pic++) {
+            PictureParentControlSet *pcs = (PictureParentControlSet*)ctx->pre_assignment_buffer[pic]->object_ptr;
+            SVT_LOG("%ld ", pcs->picture_number);
+        }
+        SVT_LOG("\n");
     }
-    SVT_LOG("\n");
 }
-void print_pd_reord_queue(EncodeContext *ctxt)
-{
-    uint32_t idx = ctxt->picture_decision_reorder_queue_head_index;
-    PictureDecisionReorderEntry   *queue_entry = ctxt->picture_decision_reorder_queue[idx];
+#endif
 
-    while (queue_entry->parent_pcs_wrapper_ptr != NULL) {
-
-        PictureParentControlSet *pcs = (PictureParentControlSet*)queue_entry->parent_pcs_wrapper_ptr->object_ptr;
-        SVT_LOG("%ld  ", pcs->picture_number);
-        queue_entry = ctxt->picture_decision_reorder_queue[++idx];
-    }
-    SVT_LOG("\n");
-}
-
-uint32_t  get_reord_q_size(EncodeContext *ctxt)
-{
-    uint32_t size = 0;
-    uint32_t idx = ctxt->picture_decision_reorder_queue_head_index;
-    PictureDecisionReorderEntry   *queue_entry = ctxt->picture_decision_reorder_queue[idx];
-    while (queue_entry->parent_pcs_wrapper_ptr != NULL) {
-        queue_entry = ctxt->picture_decision_reorder_queue[++idx];
-        size++;
-    }
-    return size;
-}
 /***************************************************************************************************
  * Helper function. Compare two frames: center frame and target frame. Return the summation of
  * absolute difference between the two frames from a histogram of luma values
@@ -5763,6 +5771,13 @@ void* picture_decision_kernel(void *input_ptr)
                     encode_context_ptr->intra_period_position = ((encode_context_ptr->intra_period_position == (uint32_t)scs_ptr->intra_period_length) || (pcs_ptr->scene_change_flag == EB_TRUE)) ? 0 : encode_context_ptr->intra_period_position + 1;
                 }
 
+
+
+#if LAD_MG_PRINT
+                 print_pre_ass_buffer(encode_context_ptr, pcs_ptr, 1);
+#endif
+
+
                 // Determine if Pictures can be released from the Pre-Assignment Buffer
                 if ((encode_context_ptr->pre_assignment_buffer_intra_count > 0) ||
                     (encode_context_ptr->pre_assignment_buffer_count == (uint32_t)(1 << scs_ptr->static_config.hierarchical_levels)) ||
@@ -5770,6 +5785,10 @@ void* picture_decision_kernel(void *input_ptr)
                     (pcs_ptr->pred_structure == EB_PRED_LOW_DELAY_P) ||
                     (pcs_ptr->pred_structure == EB_PRED_LOW_DELAY_B))
                 {
+
+#if LAD_MG_PRINT
+                    print_pre_ass_buffer(encode_context_ptr, pcs_ptr,0);
+#endif
                     // Initialize Picture Block Params
                     context_ptr->mini_gop_start_index[0] = 0;
                     context_ptr->mini_gop_end_index[0] = encode_context_ptr->pre_assignment_buffer_count - 1;
@@ -5824,6 +5843,11 @@ void* picture_decision_kernel(void *input_ptr)
                     generate_mini_gop_rps(
                         context_ptr,
                         encode_context_ptr);
+
+
+#if FTR_LAD_MG
+                   // SVT_LOG(" pre-assign split into  %i MGs \n", context_ptr->total_number_of_mini_gops);
+#endif
 
                     // Loop over Mini GOPs
 
@@ -6647,23 +6671,74 @@ void* picture_decision_kernel(void *input_ptr)
                             send_picture_out(scs_ptr, pcs_ptr, context_ptr);
                         }
 
+
+#if FTR_LAD_MG
+                       //split MG into two for these two special cases
+                       uint8_t ldp_delayi_mg = 0;
+                       uint8_t ldp_i_eos_mg = 0;
+                       if (pcs_ptr->pred_struct_ptr->pred_type == EB_PRED_RANDOM_ACCESS &&
+                           context_ptr->mg_pictures_array[0]->slice_type == P_SLICE) {
+                           if (is_delayed_intra(context_ptr->mg_pictures_array[mg_size - 1]))
+                               ldp_delayi_mg = 1;
+                           else if (context_ptr->mg_pictures_array[mg_size - 1]->slice_type == I_SLICE &&
+                               context_ptr->mg_pictures_array[mg_size - 1]->end_of_sequence_flag)
+                               ldp_i_eos_mg = 1;
+                       }
+
+#endif
+
+
                         for (uint32_t pic_i = 0; pic_i < mg_size; ++pic_i){
 
                             pcs_ptr = context_ptr->mg_pictures_array[pic_i];
                             if (is_delayed_intra(pcs_ptr)) {
                                 context_ptr->prev_delayed_intra = pcs_ptr;
-                            }else{
 
+#if FTR_LAD_MG
+
+                                if(ldp_delayi_mg )
+                                   context_ptr->mg_progress_id++;
+
+                                pcs_ptr->ext_mg_id = context_ptr->mg_progress_id;
+                                pcs_ptr->ext_mg_size = 1;
+#endif
+
+                            }else{
+#if !FTR_LAD_MG
 #if FTR_TPL_TR
 
                                 if (scs_ptr->static_config.enable_tpl_la && pcs_ptr->temporal_layer_index == 0)
                                     send_trail_pictures_out(pcs_ptr, context_ptr);
 #endif
+#endif
+#if FTR_LAD_MG
+                                pcs_ptr->ext_mg_id = context_ptr->mg_progress_id;
+                                pcs_ptr->ext_mg_size = ldp_delayi_mg ? mg_size-1 : mg_size;
+
+                                if (ldp_i_eos_mg) {
+                                    if (pcs_ptr->slice_type == P_SLICE) {
+                                        pcs_ptr->ext_mg_size = mg_size - 1;
+                                    }
+                                    else if (pcs_ptr->slice_type == I_SLICE){
+                                        context_ptr->mg_progress_id++;
+                                        pcs_ptr->ext_mg_id = context_ptr->mg_progress_id;
+                                        pcs_ptr->ext_mg_size =  1 ;
+                                    }
+                                }
+
+
+#endif
+
                                 send_picture_out(scs_ptr, pcs_ptr, context_ptr);
                             }
 
 
                         }
+
+#if FTR_LAD_MG
+                        context_ptr->mg_progress_id++;
+#endif
+
                     } // End MINI GOPs loop
                     // Reset the Pre-Assignment Buffer
                     encode_context_ptr->pre_assignment_buffer_count = 0;
