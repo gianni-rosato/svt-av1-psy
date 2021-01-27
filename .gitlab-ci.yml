@@ -438,14 +438,22 @@ Linux Enc Test:
   extends: .tests
   stage: test
   script:
-    - ./Bin/Release/SvtAv1EncApp --preset 0 -i "$SVT_ENCTEST_FILENAME" -n 3 -b "test-pr-${SVT_ENCTEST_BITNESS}bit-m0.ivf"
-    - ./Bin/Release/SvtAv1EncApp --preset 8 -i "$SVT_ENCTEST_FILENAME" -n 120 -b "test-pr-${SVT_ENCTEST_BITNESS}bit-m8.ivf"
+    - &enc-test-script |
+      for CMAKE_BUILD_TYPE in Release Debug; do
+        ./Bin/Release/SvtAv1EncApp --preset 0 -i "$SVT_ENCTEST_FILENAME" -n 3 -b "test-pr-$(uname)-${CMAKE_BUILD_TYPE}-${SVT_ENCTEST_BITNESS}bit-m0.ivf"
+        ./Bin/Release/SvtAv1EncApp --preset 8 -i "$SVT_ENCTEST_FILENAME" -n 120 -b "test-pr-$(uname)-${CMAKE_BUILD_TYPE}-${SVT_ENCTEST_BITNESS}bit-m8.ivf"
+      done
   parallel:
     matrix:
       - SVT_ENCTEST_FILENAME: akiyo_cif.y4m
         SVT_ENCTEST_BITNESS: 8
       - SVT_ENCTEST_FILENAME: Chimera-Aerial_480x264_2997fps_10bit_420_150frames.y4m
         SVT_ENCTEST_BITNESS: 10
+  artifacts:
+    untracked: false
+    expire_in: 1 days
+    paths:
+      - "test-pr-*-*bit-m*.ivf"
   needs:
     - 'Linux (GCC 10)'
 
