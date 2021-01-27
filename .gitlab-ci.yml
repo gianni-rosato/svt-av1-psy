@@ -188,20 +188,15 @@ Valgrind:
   extends: .tests
   image: registry.gitlab.com/aomediacodec/aom-testing/ubuntu1804
   allow_failure: true
+  parallel:
+    matrix:
+      - PASSES: 2
+      - PASS: 1
   script:
     # --error-limit=no --leak-check=full --show-leak-kinds=all makes the log very huge and takes around 16 minutes
-    - valgrind --error-exitcode=1 --track-origins=yes --suppressions=/usr/lib/valgrind/debian.supp -- ./valgrind/SvtAv1EncApp --preset 6 -i akiyo_cif.y4m -n 10 -b test1.ivf
+    - valgrind --error-exitcode=1 --track-origins=yes --suppressions=/usr/lib/valgrind/debian.supp -- ./valgrind/SvtAv1EncApp --preset 6 ${PASS:+--pass $PASS} -i akiyo_cif.y4m -n 10 -b test1.ivf
   needs:
-    - 'Linux (Valgrind)'
-
-Valgrind (Pass 1):
-  extends: .tests
-  image: registry.gitlab.com/aomediacodec/aom-testing/ubuntu1804
-  allow_failure: true
-  script:
-    - valgrind --error-exitcode=1 --track-origins=yes --suppressions=/usr/lib/valgrind/debian.supp -- ./valgrind/SvtAv1EncApp --preset 6 --pass 1 -i akiyo_cif.y4m -n 10 -b test1.ivf
-  needs:
-    - 'Linux (Valgrind)'
+    - "Linux (Valgrind)"
 
 Linux Sanitizer Test:
   extends: .tests
