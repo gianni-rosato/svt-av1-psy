@@ -274,9 +274,10 @@ Linux Unit Tests:
 
 Linux E2E Tests:
   extends: .unit tests
+  variables:
+    SVT_AV1_TEST_VECTOR_PATH: $CI_PROJECT_DIR
   script:
     - export GTEST_SHARD_INDEX=$((CI_NODE_INDEX - 1))
-    - export SVT_AV1_TEST_VECTOR_PATH=$PWD
     - mkdir -p unittests
     - mv test/vectors/* .
     - ./Bin/Release/SvtAv1E2ETests --gtest_filter=-*DummySrcTest*
