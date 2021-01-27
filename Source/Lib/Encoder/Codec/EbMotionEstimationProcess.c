@@ -711,6 +711,44 @@ void set_me_sr_adjustment_ctrls(MeContext* context_ptr, uint8_t sr_adjustment_le
     }
 #endif
 }
+
+#if PRE_HME
+/*configure PreHme control*/
+void set_prehme_ctrls(MeContext* context, uint8_t level) {
+    PreHmeCtrls* ctrl = &context->prehme_ctrl;
+
+    switch (level)
+    {
+    case 0:
+        ctrl->enable = 0;
+        break;
+    case 1:
+        ctrl->enable = 1;
+        // vertical shape search region
+        ctrl->prehme_sa_cfg[0].sa_min = (SearchArea){8,100};
+        ctrl->prehme_sa_cfg[0].sa_max = (SearchArea){8,400};
+        // horizontal shape search region
+        ctrl->prehme_sa_cfg[1].sa_min = (SearchArea){96 ,3};
+        ctrl->prehme_sa_cfg[1].sa_max = (SearchArea){384,3};
+
+        break;
+    case 2:
+        ctrl->enable = 1;
+        // vertical shape search region
+        ctrl->prehme_sa_cfg[0].sa_min = (SearchArea){8,50};
+        ctrl->prehme_sa_cfg[0].sa_max = (SearchArea){8,200};
+        // horizontal shape search region
+        ctrl->prehme_sa_cfg[1].sa_min = (SearchArea){48 ,3};
+        ctrl->prehme_sa_cfg[1].sa_max = (SearchArea){192,3};
+
+        break;
+
+    default:
+        assert(0);
+        break;
+    }
+}
+#endif
 /******************************************************
 * GM controls
 ******************************************************/
@@ -1215,6 +1253,17 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
     }
     set_gm_controls(pcs_ptr, gm_level);
 
+
+
+
+#if PRE_HME
+    // Set pre-hme level (0-2)
+    uint8_t prehme_level = 0;
+    prehme_level = (enc_mode <= ENC_M4) ? 1: 2;
+
+    set_prehme_ctrls(context_ptr->me_context_ptr, prehme_level);
+#endif
+
     // Set hme/me based reference pruning level (0-4)
 #if TUNE_PRESETS_CLEANUP
     if (enc_mode <= ENC_MRS)
@@ -1467,6 +1516,11 @@ EbErrorType tf_signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr
         context_ptr->me_context_ptr->hme_search_method = FULL_SAD_SEARCH;
     // ME Search Method
         context_ptr->me_context_ptr->me_search_method = SUB_SAD_SEARCH;
+
+#if PRE_HME
+    uint8_t prehme_level = 0;
+    set_prehme_ctrls(context_ptr->me_context_ptr, prehme_level);
+#endif
 
     // Set hme/me based reference pruning level (0-4)
     // Ref pruning is disallowed for TF in motion_estimate_sb()

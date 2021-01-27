@@ -314,6 +314,29 @@ typedef struct MeSrCtrls {
     uint8_t distance_based_hme_resizing; // scale down the HME search area for high ref-indices
 #endif
 } MeSrCtrls;
+
+#if PRE_HME
+#define SEARCH_REGION_COUNT 2
+typedef struct SearchArea {
+    uint16_t   width;  // search area width
+    uint16_t   height; // search area height
+} SearchArea;
+typedef struct SearchAreaMinMax {
+    SearchArea   sa_min;  // min search area
+    SearchArea   sa_max;  // max search area
+} SearchAreaMinMax;
+typedef struct SearchInfo {
+    SearchArea       sa;      // search area sizes
+    IntMv            best_mv; // best mv
+    uint64_t         sad;     // best sad
+} SearchInfo;
+
+typedef struct PreHmeCtrls {
+    uint8_t enable;
+    SearchAreaMinMax   prehme_sa_cfg[SEARCH_REGION_COUNT];
+} PreHmeCtrls;
+#endif
+
 typedef struct HmeResults {
     uint8_t  list_i; // list index of this ref
     uint8_t  ref_i; // ref list index of this ref
@@ -406,6 +429,11 @@ typedef struct MeContext {
     uint8_t    update_hme_search_center_flag;
     HmeResults hme_results[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
     uint32_t   reduce_me_sr_divisor[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
+
+#if PRE_HME
+    SearchInfo         prehme_data[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][SEARCH_REGION_COUNT];
+    PreHmeCtrls     prehme_ctrl;
+#endif
     int16_t    x_hme_level0_search_center[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX]
                                       [EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT]
                                       [EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
