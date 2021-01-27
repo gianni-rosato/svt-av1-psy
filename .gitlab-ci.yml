@@ -134,12 +134,18 @@ Linux (GCC 10):
     CXX: g++-10
     LDFLAGS: -static -static-libgcc -static-libstdc++
     GIT_DEPTH: 0
+  parallel:
+    matrix:
+      - CMAKE_BUILD_TYPE: Release
+      - CMAKE_BUILD_TYPE: Debug
   artifacts:
     untracked: false
     expire_in: 30 days
     paths:
       - Bin/Release/SvtAv1EncApp
       - Bin/Release/SvtAv1DecApp
+      - Bin/Debug/SvtAv1EncApp
+      - Bin/Debug/SvtAv1DecApp
 
 Linux (GCC 10, Tests, Static):
   extends: .linux-compiler-base
