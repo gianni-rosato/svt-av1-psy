@@ -61,17 +61,14 @@ Static analysis (cppcheck):
     - cmake --build Build --config $CMAKE_BUILD_TYPE --target install
     - ccache -s
 
-Linux (Clang 6):
+Linux (Clang):
   extends: .linux-compiler-base
-  variables:
-    CC: clang-6.0
-    CXX: clang++-6.0
-
-Linux (Clang 10):
-  extends: .linux-compiler-base
-  variables:
-    CC: clang-10
-    CXX: clang++-10
+  parallel:
+    matrix:
+      - CC: clang-6.0
+        CXX: clang++-6.0
+      - CC: clang-10
+        CXX: clang++-10
 
 Linux (GCC 4):
   extends: .linux-compiler-base
@@ -91,41 +88,37 @@ Linux (Valgrind):
     paths:
       - valgrind/
 
-Linux (GCC 7):
+Linux (GCC):
   extends: .linux-compiler-base
-  variables:
-    CC: gcc-7
-    CXX: g++-7
-
-Linux (GCC 8):
-  extends: .linux-compiler-base
-  variables:
-    CC: gcc-8
-    CXX: g++-8
-
-Linux (GCC 9):
-  extends: .linux-compiler-base
-  variables:
-    CC: gcc-9
-    CXX: g++-9
-
-Linux (GCC 9, aarch64):
-  extends: .linux-compiler-base
-  variables:
-    CC: aarch64-linux-gnu-gcc
-    CXX: aarch64-linux-gnu-g++
-    EXTRA_CMAKE_FLAGS: -DCMAKE_TOOLCHAIN_FILE=$CI_PROJECT_DIR/aarch64-linux-gnu.cmake
+  parallel:
+    matrix:
+      - CC: gcc-7
+        CXX: g++-7
+      - CC: gcc-8
+        CXX: g++-8
+      - CC: gcc-9
+        CXX: g++-9
+      - CC: gcc-10
+        CXX: g++-10
+        EXTRA_CMAKE_FLAGS: -DENABLE_AVX512=ON
+      - CC: aarch64-linux-gnu-gcc
+        CXX: aarch64-linux-gnu-g++
+        EXTRA_CMAKE_FLAGS: -DCMAKE_TOOLCHAIN_FILE=$CI_PROJECT_DIR/aarch64-linux-gnu.cmake
+      - CC: powerpc64le-linux-gnu-gcc
+        CXX: powerpc64le-linux-gnu-g++
+        EXTRA_CMAKE_FLAGS: -DCMAKE_TOOLCHAIN_FILE=$CI_PROJECT_DIR/powerpc64le-linux-gnu.cmake -DCROSS=powerpc64le-linux-gnu-
   before_script:
-    - curl -Ls "https://aomedia.googlesource.com/aom/+/refs/heads/master/build/cmake/toolchains/arm64-linux-gcc.cmake?format=TEXT" | base64 -d > aarch64-linux-gnu.cmake
-
-Linux (GCC 9, powerpc64le):
-  extends: .linux-compiler-base
-  variables:
-    CC: powerpc64le-linux-gnu-gcc
-    CXX: powerpc64le-linux-gnu-g++
-    EXTRA_CMAKE_FLAGS: -DCMAKE_TOOLCHAIN_FILE=$CI_PROJECT_DIR/powerpc64le-linux-gnu.cmake -DCROSS=powerpc64le-linux-gnu-
-  before_script:
-    - curl -Ls "https://aomedia.googlesource.com/aom/+/refs/heads/master/build/cmake/toolchains/ppc-linux-gcc.cmake?format=TEXT" | base64 -d > powerpc64le-linux-gnu.cmake
+    - |
+      case $CC in
+      aarch64-linux-gnu-gcc)
+        curl -Ls "https://aomedia.googlesource.com/aom/+/refs/heads/master/build/cmake/toolchains/arm64-linux-gcc.cmake?format=TEXT" |
+          base64 -d > aarch64-linux-gnu.cmake
+        ;;
+      powerpc64le-linux-gnu-gcc)
+        curl -Ls "https://aomedia.googlesource.com/aom/+/refs/heads/master/build/cmake/toolchains/ppc-linux-gcc.cmake?format=TEXT" |
+          base64 -d > powerpc64le-linux-gnu.cmake
+        ;;
+      esac
 
 Linux (GCC 10):
   extends: .linux-compiler-base
@@ -163,13 +156,6 @@ Linux (GCC 10, Tests, Static):
       - Bin/Release/SvtAv1UnitTests
       - Bin/Release/SvtAv1ApiTests
       - Bin/Release/SvtAv1E2ETests
-
-Linux (GCC 10, AVX512):
-  extends: .linux-compiler-base
-  variables:
-    CC: gcc-10
-    CXX: g++-10
-    EXTRA_CMAKE_FLAGS: -DENABLE_AVX512=ON
 
 .sanitizer compile:
   extends: .linux-compiler-base
