@@ -46,6 +46,8 @@ Static analysis (cppcheck):
 
 .linux-compiler-base:
   stage: compile
+  tags:
+    - gitlab-org
   image: registry.gitlab.com/aomediacodec/aom-testing/ubuntu2004
   variables: &compiler-variables
     CFLAGS: -Werror -Wshadow -pipe $EXTRA_CFLAGS
@@ -69,6 +71,8 @@ Static analysis (cppcheck):
 
 .linux-test-base:
   stage: test
+  tags:
+    - gitlab-org
   image: registry.gitlab.com/aomediacodec/aom-testing/ubuntu2004
   before_script:
     - &linux-extract-videos |
@@ -334,6 +338,7 @@ Valgrind:
 
 Linux Sanitizer Test:
   extends: .linux-test-base
+  tags:
   image: registry.gitlab.com/aomediacodec/aom-testing/ubuntu2004
   variables:
     LSAN_OPTIONS: verbosity=2:color=always:log_pointers=1:log_threads=1:report_objects=1
