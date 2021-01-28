@@ -41,25 +41,136 @@ Static analysis (cppcheck):
         --suppress=unusedFunction > /dev/null
 
 #
-# Linux CI Jobs
+# Yaml Anchors
 #
+
 .linux-compiler-base:
   stage: compile
   image: registry.gitlab.com/aomediacodec/aom-testing/ubuntu2004
-  variables:
-    CFLAGS: -Werror -Wshadow $EXTRA_CFLAGS
-    CXXFLAGS: -Werror -Wshadow $EXTRA_CXXFLAGS
+  variables: &compiler-variables
+    CFLAGS: -Werror -Wshadow -pipe $EXTRA_CFLAGS
+    CXXFLAGS: -Werror -Wshadow -pipe $EXTRA_CXXFLAGS
+    LDFLAGS: -Werror -Wshadow -pipe $EXTRA_LDFLAGS
     CCACHE_DIR: $CI_PROJECT_DIR/.ccache
   cache:
     key: ${CI_JOB_NAME}
     paths:
       - .ccache
     policy: pull-push
+  script: &compiler-script
+    - |
+      eval cmake \
+        -B Build \
+        -DCMAKE_BUILD_TYPE="${CMAKE_BUILD_TYPE:=Release}" \
+        -DBUILD_SHARED_LIBS="${BUILD_SHARED_LIBS:=OFF}" \
+        -DCMAKE_INSTALL_PREFIX="${PREFIX_DIR:=/usr/local}" \
+        $EXTRA_CMAKE_FLAGS
+    - cmake --build Build --config "$CMAKE_BUILD_TYPE" ${TARGET:+--target $TARGET}
+
+.linux-test-base:
+  stage: test
+  image: registry.gitlab.com/aomediacodec/aom-testing/ubuntu2004
+  before_script:
+    - &linux-extract-videos |
+      cp /*.zst .
+      zstd -d *.zst
+
+.linux-unit-test-base:
+  extends: .linux-test-base
+  parallel: 50
+  variables:
+    GTEST_TOTAL_SHARDS: 50
+    GTEST_OUTPUT: xml:report.xml
+  artifacts:
+    when: always
+    reports:
+      junit: report.xml
+  needs:
+    - Linux (GCC 10, Tests, Static)
+
+.macos-compiler-base:
+  stage: compile
+  tags:
+    - macos-ci
+  variables:
+    <<: *compiler-variables
+  script: *compiler-script
+
+.macos-test-base:
+  stage: test
+  tags:
+    - macos-ci
+  before_script:
+    - |
+      for file in $TEST_FILES; do
+        curl -fLs "https://gitlab.com/AOMediaCodec/aom-testing/-/raw/master/test-files/$file.zst" | zstd -d - -o "$file"
+      done
+
+.macos-unit-test-base:
+  extends: .macos-test-base
+  parallel: 2
+  variables:
+    GTEST_TOTAL_SHARDS: 2
+    GTEST_OUTPUT: xml:report.xml
+  artifacts:
+    when: always
+    reports:
+      junit: report.xml
+  needs:
+    - macOS (Ninja, Static, Tests)
+
+.windows-compiler-base:
+  stage: compile
+  image: registry.gitlab.com/aomediacodec/aom-testing/core1809
+  tags:
+    - svt-windows-docker
   script:
-    - ccache -s
-    - eval cmake -B Build -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE:=Release} -DBUILD_SHARED_LIBS=OFF $EXTRA_CMAKE_FLAGS
-    - cmake --build Build --config $CMAKE_BUILD_TYPE --target install
-    - ccache -s
+    - cmake `
+      -B Build `
+      -DBUILD_SHARED_LIBS=ON `
+      -DBUILD_TESTING=ON `
+      $env:EXTRA_CMAKE_FLAGS
+    - cmake --build Build --config $(if ($env:CMAKE_BUILD_TYPE) {$env:CMAKE_BUILD_TYPE} else {"Release"})
+
+.windows-test-base:
+  stage: test
+  image: registry.gitlab.com/aomediacodec/aom-testing/core1809
+  tags:
+    - svt-windows-docker
+  before_script:
+    - Move-Item C:/*.zst .
+    - zstd -d *.zst
+
+.windows-unit-test-base:
+  extends: .windows-test-base
+  parallel: 2
+  variables:
+    GTEST_TOTAL_SHARDS: 2
+    GTEST_OUTPUT: xml:report.xml
+  artifacts:
+    when: always
+    reports:
+      junit: report.xml
+  needs:
+    - Win64 (MSVC, Tests)
+
+#
+# Compile CI Jobs
+#
+
+Linux (Valgrind):
+  extends: .linux-compiler-base
+  image: registry.gitlab.com/aomediacodec/aom-testing/ubuntu1804
+  variables:
+    EXTRA_CFLAGS: -Wno-error
+    EXTRA_CXXFLAGS: -Wno-error
+    EXTRA_CMAKE_FLAGS: -DCMAKE_OUTPUT_DIRECTORY=valgrind
+    CMAKE_BUILD_TYPE: Debug
+  artifacts:
+    untracked: false
+    expire_in: 1 days
+    paths:
+      - valgrind/
 
 Linux (Clang):
   extends: .linux-compiler-base
@@ -73,20 +184,6 @@ Linux (Clang):
 Linux (GCC 4):
   extends: .linux-compiler-base
   image: registry.gitlab.com/aomediacodec/aom-testing/centos7
-
-Linux (Valgrind):
-  extends: .linux-compiler-base
-  image: registry.gitlab.com/aomediacodec/aom-testing/ubuntu1804
-  variables:
-    EXTRA_CFLAGS: -Wno-error -g
-    EXTRA_CXXFLAGS: -Wno-error -g
-    EXTRA_CMAKE_FLAGS: -DCMAKE_OUTPUT_DIRECTORY=valgrind
-    CMAKE_BUILD_TYPE: Debug
-  artifacts:
-    untracked: false
-    expire_in: 30 days
-    paths:
-      - valgrind/
 
 Linux (GCC):
   extends: .linux-compiler-base
@@ -125,7 +222,7 @@ Linux (GCC 10):
   variables:
     CC: gcc-10
     CXX: g++-10
-    LDFLAGS: -static -static-libgcc -static-libstdc++
+    EXTRA_LDFLAGS: -static -static-libgcc -static-libstdc++
     GIT_DEPTH: 0
   parallel:
     matrix:
@@ -135,10 +232,8 @@ Linux (GCC 10):
     untracked: false
     expire_in: 30 days
     paths:
-      - Bin/Release/SvtAv1EncApp
-      - Bin/Release/SvtAv1DecApp
-      - Bin/Debug/SvtAv1EncApp
-      - Bin/Debug/SvtAv1DecApp
+      - Bin/*/SvtAv1EncApp
+      - Bin/*/SvtAv1DecApp
 
 Linux (GCC 10, Tests, Static):
   extends: .linux-compiler-base
@@ -147,7 +242,7 @@ Linux (GCC 10, Tests, Static):
     CXX: g++-10
     EXTRA_CFLAGS: -Wno-error -g
     EXTRA_CXXFLAGS: -Wno-error -g
-    LDFLAGS: -static -static-libgcc -static-libstdc++
+    EXTRA_LDFLAGS: -static -static-libgcc -static-libstdc++
     EXTRA_CMAKE_FLAGS: -DBUILD_TESTING=ON -DBUILD_APPS=OFF
   artifacts:
     untracked: false
@@ -171,21 +266,60 @@ Linux Sanitizer Compile:
       - SANITIZER: thread
   artifacts:
     untracked: false
-    expire_in: 30 days
+    expire_in: 1 days
     paths:
       - address/
       - memory/
       - thread/
 
-.tests:
-  stage: test
-  image: registry.gitlab.com/aomediacodec/aom-testing/ubuntu2004
-  before_script:
-    - cp /*.zst .
-    - zstd -d *.zst
+macOS (Xcode):
+  extends: .macos-compiler-base
+  variables:
+    CMAKE_GENERATOR: Xcode
+  artifacts:
+    expire_in: 1 day
+    paths:
+      - Bin/Release/SvtAv1EncApp
+      - Bin/Release/SvtAv1DecApp
+
+macOS (Ninja, Static, Tests):
+  extends: .macos-compiler-base
+  variables:
+    EXTRA_CMAKE_FLAGS: -DBUILD_TESTING=ON
+    EXTRA_CFLAGS: -Wno-error -g
+    EXTRA_CXXFLAGS: -Wno-error -g
+    PREFIX_DIR: ${CI_PROJECT_DIR}/SVT-Install/
+    TARGET: install
+  artifacts:
+    expire_in: 1 day
+    paths:
+      - Bin/Release/*
+      - SVT-Install/*
+
+Win64 (MSVC, Tests):
+  extends: .windows-compiler-base
+  variables:
+    CFLAGS: /WX
+    CXXFLAGS: /WX
+    CMAKE_GENERATOR: Visual Studio 16 2019
+  parallel:
+    matrix:
+      - CMAKE_BUILD_TYPE: Release
+      - CMAKE_BUILD_TYPE: Debug
+  artifacts:
+    untracked: false
+    expire_in: 1 day
+    paths:
+      - "Bin/*/*.exe"
+      - "Bin/*/*.dll"
+      - "Bin/*/*.pdb"
+
+#
+# Encoding CI Tests
+#
 
 Valgrind:
-  extends: .tests
+  extends: .linux-test-base
   image: registry.gitlab.com/aomediacodec/aom-testing/ubuntu1804
   allow_failure: true
   parallel:
@@ -196,16 +330,16 @@ Valgrind:
     # --error-limit=no --leak-check=full --show-leak-kinds=all makes the log very huge and takes around 16 minutes
     - valgrind --error-exitcode=1 --track-origins=yes --suppressions=/usr/lib/valgrind/debian.supp -- ./valgrind/SvtAv1EncApp --preset 6 ${PASS:+--pass $PASS} -i akiyo_cif.y4m -n 10 -b test1.ivf
   needs:
-    - "Linux (Valgrind)"
+    - Linux (Valgrind)
 
 Linux Sanitizer Test:
-  extends: .tests
+  extends: .linux-test-base
   image: registry.gitlab.com/aomediacodec/aom-testing/ubuntu2004
   variables:
-    LSAN_OPTIONS: "verbosity=2:color=always:log_pointers=1:log_threads=1:report_objects=1"
-    ASAN_OPTIONS: "verbosity=2:color=always:print_cmdline=1:strict_string_checks=1:symbolize=1:detect_leaks=1:fast_unwind_on_malloc=0:strict_memcmp=0"
-    MSAN_OPTIONS: "verbosity=2:color=always"
-    TSAN_OPTIONS: "verbosity=2:color=always:suppressions=./.github/workflows/sanitizers-known-warnings.txt"
+    LSAN_OPTIONS: verbosity=2:color=always:log_pointers=1:log_threads=1:report_objects=1
+    ASAN_OPTIONS: verbosity=2:color=always:print_cmdline=1:strict_string_checks=1:symbolize=1:detect_leaks=1:fast_unwind_on_malloc=0:strict_memcmp=0
+    MSAN_OPTIONS: verbosity=2:color=always
+    TSAN_OPTIONS: verbosity=2:color=always:suppressions=./.github/workflows/sanitizers-known-warnings.txt
   parallel:
     matrix:
       - SANITIZER: address
@@ -222,44 +356,104 @@ Linux Sanitizer Test:
   needs:
     - Linux Sanitizer Compile
 
-.unit tests:
-  extends: .tests
-  parallel: 50
-  variables:
-    GTEST_TOTAL_SHARDS: 50
-    GTEST_OUTPUT: "xml:report.xml"
-
-  artifacts:
-    when: always
-    reports:
-      junit: report.xml
-  needs:
-    - 'Linux (GCC 10, Tests, Static)'
-
 Linux Unit Tests:
-  extends: .unit tests
+  extends: .linux-unit-test-base
   script:
     - export GTEST_SHARD_INDEX=$((CI_NODE_INDEX - 1))
-    - mkdir -p unittests
     - ./Bin/Release/SvtAv1UnitTests
 
 Linux E2E Tests:
-  extends: .unit tests
+  extends: .linux-unit-test-base
   variables:
     SVT_AV1_TEST_VECTOR_PATH: $CI_PROJECT_DIR
   script:
     - export GTEST_SHARD_INDEX=$((CI_NODE_INDEX - 1))
-    - mkdir -p unittests
-    - mv test/vectors/* .
+    - mv -f test/vectors/* .
+    - ./Bin/Release/SvtAv1E2ETests
+
+macOS Unit Tests:
+  extends: .macos-unit-test-base
+  script:
+    - export GTEST_SHARD_INDEX=$((CI_NODE_INDEX - 1))
+    - ./Bin/Release/SvtAv1UnitTests
+
+macOS E2E Tests:
+  extends: .macos-unit-test-base
+  variables:
+    SVT_AV1_TEST_VECTOR_PATH: $CI_PROJECT_DIR/testvectors
+  script:
+    - export GTEST_SHARD_INDEX=$((CI_NODE_INDEX - 1))
+    - cmake -B Build -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON
+    - cmake --build Build --target TestVectors
+    - ./Bin/Release/SvtAv1E2ETests
+
+Win64 Unit Tests:
+  extends: .windows-unit-test-base
+  script:
+    - $env:GTEST_SHARD_INDEX = $env:CI_NODE_INDEX - 1
+    - ./Bin/Release/SvtAv1UnitTests --gtest_filter=-*FFT*
+
+Win64 E2E Tests:
+  extends: .windows-unit-test-base
+  script:
+    - '[string]$env:SVT_AV1_TEST_VECTOR_PATH = New-Item -ItemType Directory -Force -Name "testdata"'
+    - cmake -B Build -DBUILD_TESTING=ON
+    - cmake --build Build --target TestVectors
+    - $env:GTEST_SHARD_INDEX = $env:CI_NODE_INDEX - 1
     - ./Bin/Release/SvtAv1E2ETests --gtest_filter=-*DummySrcTest*
 
-Linux (Gstreamer, Static):
-  extends: .tests
+Linux Enc Test:
+  extends: .linux-test-base
+  stage: test
+  script:
+    - &enc-test-script |
+      for CMAKE_BUILD_TYPE in Release Debug; do
+        ./Bin/Release/SvtAv1EncApp --preset 0 -i "$SVT_ENCTEST_FILENAME" -n 3 -b "test-${BRANCH:-pr}-$(uname)-${CMAKE_BUILD_TYPE}-${SVT_ENCTEST_BITNESS}bit-m0.ivf"
+        ./Bin/Release/SvtAv1EncApp --preset 8 -i "$SVT_ENCTEST_FILENAME" -n 120 -b "test-${BRANCH:-pr}-$(uname)-${CMAKE_BUILD_TYPE}-${SVT_ENCTEST_BITNESS}bit-m8.ivf"
+      done
+  parallel: &enc-test-parallel
+    matrix:
+      - SVT_ENCTEST_FILENAME: akiyo_cif.y4m
+        SVT_ENCTEST_BITNESS: 8
+      - SVT_ENCTEST_FILENAME: Chimera-Aerial_480x264_2997fps_10bit_420_150frames.y4m
+        SVT_ENCTEST_BITNESS: 10
+  artifacts: &enc-test-artifacts
+    untracked: false
+    expire_in: 1 days
+    paths:
+      - "test-*-*-*bit-m*.ivf"
+  needs:
+    - Linux (GCC 10)
+
+macOS Enc Test:
+  extends: .macos-test-base
+  variables:
+    TEST_FILES: akiyo_cif.y4m Chimera-Aerial_480x264_2997fps_10bit_420_150frames.y4m
+  script: *enc-test-script
+  parallel: *enc-test-parallel
+  artifacts: *enc-test-artifacts
+  needs:
+    - macOS (Ninja, Static, Tests)
+
+Win64 Enc Test:
+  extends: .windows-test-base
+  script:
+    - ./Bin/Release/SvtAv1EncApp.exe --preset 0 -i "$env:SVT_ENCTEST_FILENAME" -n 3 -b "test-pr-Windows-Release-${env:SVT_ENCTEST_BITNESS}bit-m0.ivf"
+    - ./Bin/Release/SvtAv1EncApp.exe --preset 8 -i "$env:SVT_ENCTEST_FILENAME" -n 120 -b "test-pr-Windows-Release-${env:SVT_ENCTEST_BITNESS}bit-m8.ivf"
+    - ./Bin/Debug/SvtAv1EncApp.exe --preset 0 -i "$env:SVT_ENCTEST_FILENAME" -n 3 -b "test-pr-Windows-Debug-${env:SVT_ENCTEST_BITNESS}bit-m0.ivf"
+    - ./Bin/Debug/SvtAv1EncApp.exe --preset 8 -i "$env:SVT_ENCTEST_FILENAME" -n 120 -b "test-pr-Windows-Debug-${env:SVT_ENCTEST_BITNESS}bit-m8.ivf"
+  parallel: *enc-test-parallel
+  artifacts: *enc-test-artifacts
+  needs:
+    - Win64 (MSVC, Tests)
+
+Linux Gstreamer (Static):
+  extends: .linux-test-base
   variables:
     CC: gcc-10
     CXX: g++-10
-    CFLAGS: -pipe -O3
-    CXXFLAGS: -pipe -O3
+    CFLAGS: -pipe
+    CXXFLAGS: -pipe
     LDFLAGS: -pipe
     CCACHE_DIR: $CI_PROJECT_DIR/.ccache
     PKG_CONFIG_PATH: /usr/local/lib/pkgconfig
@@ -270,12 +464,12 @@ Linux (Gstreamer, Static):
       - .ccache
     policy: pull-push
   needs:
-    - 'Linux (GCC 10)'
+    - Linux (GCC 10)
   script:
     - cmake -B Build -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=/usr -DBUILD_APPS=OFF -DBUILD_DEC=OFF
     - cmake --build Build --config Release --target install
-    - meson setup gstreamer-plugin/build gstreamer-plugin -Dprefix=/usr
-    - ninja -C gstreamer-plugin/build install
+    - meson setup -Dprefix=/usr --buildtype release gstreamer-plugin/build gstreamer-plugin
+    - meson install -C gstreamer-plugin/build
     - |
       gst-launch-1.0 -v filesrc location=akiyo_cif.y4m \
         ! y4mdec \
@@ -283,284 +477,63 @@ Linux (Gstreamer, Static):
         ! webmmux \
         ! filesink location=akiyo.mkv
 
-Linux (FFmpeg, Static):
-  extends: .tests
+Linux FFmpeg (Static):
+  extends: .linux-test-base
   variables:
     CC: gcc-10
     CXX: g++-10
-    CFLAGS: -pipe -O3
-    CXXFLAGS: -pipe -O3
+    CFLAGS: -pipe
+    CXXFLAGS: -pipe
     LDFLAGS: -pipe -static -static-libgcc -static-libstdc++
     CCACHE_DIR: $CI_PROJECT_DIR/.ccache
-    PKG_CONFIG_PATH: /usr/local/lib/pkgconfig
     GIT_DEPTH: 0
   cache:
     key: ${CI_JOB_NAME}
     paths:
       - .ccache
     policy: pull-push
-  needs:
-    - 'Linux (GCC 10)'
-  artifacts:
-    untracked: false
-    expire_in: 30 days
-    paths:
-      - ffmpeg
+  before_script:
+    - &ffmpeg-before-script-clone |
+      git clone $PWD svtav1-src
+      git clone https://aomedia.googlesource.com/aom aom-src
+      git clone https://chromium.googlesource.com/webm/libvpx libvpx-src
+      git clone https://code.videolan.org/videolan/dav1d.git dav1d-src
+      git clone https://github.com/Netflix/vmaf.git vmaf-src
+      git clone https://github.com/FFmpeg/FFmpeg.git ffmpeg-src
+    - &ffmpeg-before-script-export |
+      true "${CMAKE_BUILD_TYPE:=Release}" "${BUILD_SHARED_LIBS:=OFF}" "${PREFIX_DIR:=/usr/local}"
+      export PKG_CONFIG_PATH=$PREFIX_DIR/lib/pkgconfig${PKG_CONFIG_PATH:+:PKG_CONFIG_PATH}
   script:
-    - ccache -s
-    - git clone https://aomedia.googlesource.com/aom
-    - git clone https://chromium.googlesource.com/webm/libvpx
-    - git clone https://code.videolan.org/videolan/dav1d.git
-    - git clone https://github.com/Netflix/vmaf.git
-    - git clone https://github.com/FFmpeg/FFmpeg.git
-
     # SVT-AV1
-    - cmake -B svtav1-build -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DBUILD_APPS=OFF -DBUILD_DEC=OFF
-    - cmake --build svtav1-build --config Release --target install
-
+    - &ffmpeg-svtav1-script |
+      cmake \
+        -S svtav1-src \
+        -B svtav1-build \
+        -DCMAKE_BUILD_TYPE="$CMAKE_BUILD_TYPE" \
+        -DBUILD_SHARED_LIBS="$BUILD_SHARED_LIBS" \
+        -DCMAKE_INSTALL_PREFIX="$PREFIX_DIR" \
+        -DBUILD_APPS=OFF \
+        -DBUILD_DEC=OFF
+      cmake --build svtav1-build --config Release --target install
     # aom
-    - cmake -S aom -B aom-build -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DENABLE_TESTS=0 -DENABLE_EXAMPLES=0 -DENABLE_DOCS=0 -DENABLE_TESTDATA=0 -DENABLE_TOOLS=0
-    - cmake --build aom-build --config Release --target install
-
+    - &ffmpeg-aom-script |
+      cmake \
+        -S aom-src \
+        -B aom-build \
+        -DCMAKE_BUILD_TYPE="$CMAKE_BUILD_TYPE" \
+        -DBUILD_SHARED_LIBS="$BUILD_SHARED_LIBS" \
+        -DCMAKE_INSTALL_PREFIX="$PREFIX_DIR" \
+        -DENABLE_TESTS=0 \
+        -DENABLE_EXAMPLES=0 \
+        -DENABLE_DOCS=0 \
+        -DENABLE_TESTDATA=0 \
+        -DENABLE_TOOLS=0
+      cmake --build aom-build --config Release --target install
     # libvpx
-    - mkdir -p vpx-build && cd vpx-build || exit 1
-    - |
-      ../libvpx/configure \
-        --disable-dependency-tracking \
-        --disable-docs \
-        --disable-examples \
-        --disable-libyuv \
-        --disable-postproc \
-        --disable-shared \
-        --disable-tools \
-        --disable-unit-tests \
-        --disable-webm-io \
-        --enable-postproc \
-        --enable-runtime-cpu-detect \
-        --enable-vp8 --enable-vp9 \
-        --enable-vp9-highbitdepth \
-        --enable-vp9-postproc
-    - make -j $(getconf _NPROCESSORS_ONLN 2>/dev/null || sysctl -n hw.ncpu) install
-    - cd -
-
-    # dav1d
-    - |
-      meson setup \
-        --default-library static \
-        --buildtype release \
-        --libdir lib \
-        -Denable_tests=false \
-        -Denable_examples=false \
-        -Denable_tools=false \
-        dav1d-build dav1d
-    - meson install -C dav1d-build
-
-    # vmaf
-    - |
-      meson setup \
-        --default-library static \
-        --buildtype release \
-        --libdir lib \
-        -Denable_tests=false \
-        -Denable_docs=false \
-        -Dbuilt_in_models=true \
-        -Denable_float=true \
-        vmaf-build vmaf/libvmaf
-    - meson install -C vmaf-build
-
-    # symbol conflict tests
-    - |
-      conflicts=$(
-        nm -Ag --defined-only /usr/local/lib/lib{SvtAv1Enc,aom,dav1d,vpx,vmaf}.a 2>/dev/null |
-        sort -k3 |
-        uniq -D -f2 |
-        sed '/:$/d;/^$/d'
-      )
-      if [ -n "$conflicts" ]; then
-        printf 'Conflicts Found!\n%s\n' "$conflicts"
-        exit 1
-      fi
-
-    # FFmpeg
-    # Uses ld=CXX for libvmaf to autolink the stdc++ library
-    - mkdir -p FFmpeg-build && cd FFmpeg-build || exit 1
-    - |
-      ../FFmpeg/configure \
-        --arch=x86_64 \
-        --pkg-config-flags="--static" \
-        --cc="${CC:-ccache gcc}" \
-        --cxx="${CXX:-ccache g++}" \
-        --ld="${CXX:-ccache g++}" \
-        --enable-gpl --enable-static \
-        --enable-libaom \
-        --enable-libdav1d \
-        --enable-libsvtav1 \
-        --enable-libvmaf \
-        --enable-libvpx \
-        --disable-shared || {
-          less ffbuild/config.log
-          exit 1
-        }
-    - make -j $(getconf _NPROCESSORS_ONLN 2>/dev/null || sysctl -n hw.ncpu) install
-    - mv ffmpeg ..
-    - ccache -s
-
-Linux Enc Test:
-  extends: .tests
-  stage: test
-  script:
-    - &enc-test-script |
-      for CMAKE_BUILD_TYPE in Release Debug; do
-        ./Bin/Release/SvtAv1EncApp --preset 0 -i "$SVT_ENCTEST_FILENAME" -n 3 -b "test-pr-$(uname)-${CMAKE_BUILD_TYPE}-${SVT_ENCTEST_BITNESS}bit-m0.ivf"
-        ./Bin/Release/SvtAv1EncApp --preset 8 -i "$SVT_ENCTEST_FILENAME" -n 120 -b "test-pr-$(uname)-${CMAKE_BUILD_TYPE}-${SVT_ENCTEST_BITNESS}bit-m8.ivf"
-      done
-  parallel:
-    matrix:
-      - SVT_ENCTEST_FILENAME: akiyo_cif.y4m
-        SVT_ENCTEST_BITNESS: 8
-      - SVT_ENCTEST_FILENAME: Chimera-Aerial_480x264_2997fps_10bit_420_150frames.y4m
-        SVT_ENCTEST_BITNESS: 10
-  artifacts:
-    untracked: false
-    expire_in: 1 days
-    paths:
-      - "test-pr-*-*bit-m*.ivf"
-  needs:
-    - 'Linux (GCC 10)'
-
-
-#
-# macOS CI Jobs
-#
-.macos-compiler-base:
-  stage: compile
-  tags:
-    - macos-ci
-  variables:
-    VLC_PATH: /Users/videolanci/sandbox/bin
-    CFLAGS: -Werror -Wshadow $EXTRA_CFLAGS
-    CXXFLAGS: -Werror -Wshadow $EXTRA_CXXFLAGS
-  script:
-    - export PATH="${VLC_PATH}:${PATH}"
-    - eval cmake -B Build -DCMAKE_INSTALL_PREFIX=${PREFIX_DIR:=/usr/local} -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE:=Release} $EXTRA_CMAKE_FLAGS
-    - cmake --build Build --config $CMAKE_BUILD_TYPE
-
-.macos-fetch-testdata: &macos-fetch-testdata |
-  for file in $TEST_FILES; do
-    curl -fLs "https://gitlab.com/AOMediaCodec/aom-testing/-/raw/master/test-files/$file.zst" | zstd -d - -o $file
-  done
-
-macOS (Xcode):
-  extends: .macos-compiler-base
-  variables:
-    CMAKE_GENERATOR: Xcode
-  artifacts:
-    expire_in: 1 day
-    paths:
-      - Bin/Release/*
-
-macOS (Ninja, Static, Tests):
-  extends: .macos-compiler-base
-  variables:
-    EXTRA_CMAKE_FLAGS: -DBUILD_SHARED_LIBS=OFF -DBUILD_TESTING=ON
-    EXTRA_CFLAGS: -Wno-error -g
-    EXTRA_CXXFLAGS: -Wno-error -g
-    PREFIX_DIR: ${CI_PROJECT_DIR}/SVT-Install/
-  after_script:
-    - mkdir -p ${PREFIX_DIR}
-    - cmake --build Build --target install
-  artifacts:
-    expire_in: 1 day
-    paths:
-      - Bin/Release/*
-      - ${CI_PROJECT_DIR}/SVT-Install/*
-
-macOS Unit Tests:
-  tags:
-    - macos-ci
-  stage: test
-  parallel: 10
-  variables:
-    GTEST_TOTAL_SHARDS: 10
-    GTEST_OUTPUT: "xml:report.xml"
-  artifacts:
-    when: always
-    reports:
-      junit: report.xml
-  script:
-    - export GTEST_SHARD_INDEX=$((CI_NODE_INDEX - 1))
-    - ./Bin/Release/SvtAv1UnitTests
-  needs:
-    - 'macOS (Ninja, Static, Tests)'
-
-macOS E2E Tests:
-  tags:
-    - macos-ci
-  stage: test
-  parallel: 10
-  variables:
-    GTEST_TOTAL_SHARDS: 10
-    GTEST_OUTPUT: "xml:report.xml"
-  artifacts:
-    when: always
-    reports:
-      junit: report.xml
-  script:
-    - export GTEST_SHARD_INDEX=$((CI_NODE_INDEX - 1))
-    - mkdir -p testvectors && export SVT_AV1_TEST_VECTOR_PATH="$PWD/testvectors"
-    - cmake -GNinja -B Build -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON
-    - cmake --build Build --target TestVectors
-    - ./Bin/Release/SvtAv1E2ETests --gtest_filter=-*DummySrcTest*
-  needs:
-    - 'macOS (Ninja, Static, Tests)'
-
-macOS Enc Test:
-  tags:
-    - macos-ci
-  stage: test
-  variables:
-    TEST_FILES: akiyo_cif.y4m Chimera-Aerial_480x264_2997fps_10bit_420_150frames.y4m
-  script:
-    - *macos-fetch-testdata
-    - ./Bin/Release/SvtAv1EncApp --preset 0 -i "$SVT_ENCTEST_FILENAME" -n 3 -b "test-pr-${SVT_ENCTEST_BITNESS}bit-m0.ivf"
-    - ./Bin/Release/SvtAv1EncApp --preset 8 -i "$SVT_ENCTEST_FILENAME" -n 120 -b "test-pr-${SVT_ENCTEST_BITNESS}bit-m8.ivf"
-  parallel:
-    matrix:
-      - SVT_ENCTEST_FILENAME: "akiyo_cif.y4m"
-        SVT_ENCTEST_BITNESS: 8
-      - SVT_ENCTEST_FILENAME: "Chimera-Aerial_480x264_2997fps_10bit_420_150frames.y4m"
-        SVT_ENCTEST_BITNESS: 10
-  needs:
-    - 'macOS (Ninja, Static, Tests)'
-
-macOS FFmpeg (Static):
-  stage: test
-  tags:
-    - macos-ci
-  variables:
-    PREFIX_DIR: ${CI_PROJECT_DIR}/SVT-Install/
-    PKG_CONFIG_PATH: ${CI_PROJECT_DIR}/SVT-Install/lib/pkgconfig
-    CPPFLAGS: -I${CI_PROJECT_DIR}/SVT-Install/include
-    LDFLAGS: -L${CI_PROJECT_DIR}/SVT-Install/lib
-  script:
-    - git clone https://aomedia.googlesource.com/aom
-    - git clone https://chromium.googlesource.com/webm/libvpx
-    - git clone https://code.videolan.org/videolan/dav1d.git
-    - git clone https://github.com/Netflix/vmaf.git
-    - git clone https://github.com/FFmpeg/FFmpeg.git FFmpeg-src
-
-    # SVT-AV1
-    #- cmake -GNinja -B svtav1-build -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DBUILD_APPS=OFF -DBUILD_DEC=OFF
-    #- cmake --build svtav1-build --config Release --target install
-
-    # aom
-    - cmake -S aom -B aom-build -GNinja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=${PREFIX_DIR} -DBUILD_SHARED_LIBS=OFF -DENABLE_TESTS=0 -DENABLE_EXAMPLES=0 -DENABLE_DOCS=0 -DENABLE_TESTDATA=0 -DENABLE_TOOLS=0
-    - cmake --build aom-build --config Release --target install
-
-    # libvpx
-    - mkdir -p vpx-build && cd vpx-build || exit 1
-    - |
-      ../libvpx/configure \
+    - &ffmpeg-libvpx-script |
+      mkdir vpx-build
+      cd vpx-build
+      dash ../libvpx-src/configure \
         --disable-dependency-tracking \
         --disable-docs \
         --disable-examples \
@@ -575,37 +548,94 @@ macOS FFmpeg (Static):
         --enable-vp8 --enable-vp9 \
         --enable-vp9-highbitdepth \
         --enable-vp9-postproc \
-        --prefix=${PREFIX_DIR}
-    - make -j $(getconf _NPROCESSORS_ONLN 2>/dev/null || sysctl -n hw.ncpu) install
-    - cd -
-
+        --prefix="${PREFIX_DIR}"
+      make -j $(getconf _NPROCESSORS_ONLN 2>/dev/null || sysctl -n hw.ncpu) install
+      cd -
     # dav1d
-    - |
+    - &ffmpeg-dav1d-script |
       meson setup \
         --default-library static \
         --buildtype release \
         --libdir lib \
-        --prefix ${PREFIX_DIR} \
+        --prefix "${PREFIX_DIR}" \
         -Denable_tests=false \
         -Denable_examples=false \
         -Denable_tools=false \
-        dav1d-build dav1d
-    - meson install -C dav1d-build
-
+        dav1d-build dav1d-src
+      meson install -C dav1d-build
     # vmaf
-    - |
+    - &ffmpeg-vmaf-script |
       meson setup \
         --default-library static \
         --buildtype release \
         --libdir lib \
-        --prefix ${PREFIX_DIR} \
+        --prefix "${PREFIX_DIR}" \
         -Denable_tests=false \
         -Denable_docs=false \
         -Dbuilt_in_models=true \
         -Denable_float=true \
-        vmaf-build vmaf/libvmaf
-    - meson install -C vmaf-build
+        vmaf-build vmaf-src/libvmaf
+      meson install -C vmaf-build
+    # symbol conflict tests
+    - |
+      conflicts=$(
+        nm -Ag --defined-only ${PREFIX_DIR}/lib/lib{SvtAv1Enc,aom,dav1d,vpx,vmaf}.a 2>/dev/null |
+        sort -k3 |
+        uniq -D -f2 |
+        sed '/:$/d;/^$/d'
+      )
+      if [ -n "$conflicts" ]; then
+        printf 'Conflicts Found!\n%s\n' "$conflicts"
+        exit 1
+      fi
+    # FFmpeg
+    # Uses ld=CXX for libvmaf to autolink the stdc++ library
+    - &ffmpeg-ffmpeg-script |
+      mkdir ffmpeg-build
+      cd ffmpeg-build
+      dash ../ffmpeg-src/configure \
+        --arch=x86_64 \
+        --pkg-config-flags="--static" \
+        --cc="${CC:-ccache gcc}" \
+        --cxx="${CXX:-ccache g++}" \
+        --ld="${CXX:-ccache g++}" \
+        --enable-gpl --enable-static \
+        --prefix="${PREFIX_DIR}" \
+        --enable-libaom \
+        --enable-libdav1d \
+        --enable-libsvtav1 \
+        --enable-libvmaf \
+        --enable-libvpx \
+        --disable-shared || {
+          less ffbuild/config.log
+          exit 1
+        }
+      make -j $(getconf _NPROCESSORS_ONLN 2>/dev/null || sysctl -n hw.ncpu) install
+      cp ./ffmpeg $CI_PROJECT_DIR
+    - ccache -s
+  artifacts:
+    untracked: false
+    expire_in: 30 days
+    paths:
+      - ffmpeg
 
+macOS FFmpeg (Static):
+  extends: .macos-test-base
+  variables:
+    CFLAGS: -pipe
+    CXXFLAGS: -pipe
+    LDFLAGS: -pipe
+    GIT_DEPTH: 0
+    PREFIX_DIR: ${CI_PROJECT_DIR}/SVT-Install/
+  before_script:
+    - *ffmpeg-before-script-clone
+    - *ffmpeg-before-script-export
+  script:
+    - *ffmpeg-svtav1-script
+    - *ffmpeg-aom-script
+    - *ffmpeg-libvpx-script
+    - *ffmpeg-dav1d-script
+    - *ffmpeg-vmaf-script
     # symbol conflict tests
     - |
       conflicts=$(
@@ -623,88 +653,63 @@ macOS FFmpeg (Static):
         done
         exit 1
       fi
-
-    # FFmpeg
-    # Uses ld=CXX for libvmaf to autolink the stdc++ library
-    - mkdir -p FFmpeg-build && cd FFmpeg-build || exit 1
-    - |
-      ../FFmpeg-src/configure \
-        --arch=x86_64 \
-        --pkg-config-flags="--static" \
-        --cc="${CC:-ccache gcc}" \
-        --cxx="${CXX:-ccache g++}" \
-        --ld="${CXX:-ccache g++}" \
-        --enable-gpl --enable-static \
-        --prefix="${PREFIX_DIR}" \
-        --enable-libaom \
-        --enable-libdav1d \
-        --enable-libsvtav1 \
-        --enable-libvmaf \
-        --enable-libvpx \
-        --disable-shared || {
-          less ffbuild/config.log
-          exit 1
-        }
-    - make -j $(sysctl -n hw.ncpu) install
-    - mv ./ffmpeg $CI_PROJECT_DIR
-  needs:
-    - 'macOS (Ninja, Static, Tests)'
+    - *ffmpeg-ffmpeg-script
+    - ccache -s
   artifacts:
     untracked: false
     expire_in: 30 days
     paths:
       - ffmpeg
 
-#
-# Window CI Jobs
-#
-.windows-ci-common:
-  image: registry.gitlab.com/aomediacodec/aom-testing/core1809
-  tags:
-    - svt-windows-docker
-
-.windows-unpack-testdata: &windows-unpack-testdata |
-  Move-Item C:/*.zst .
-  zstd -d *.zst
-
-Win64 (Release, GCC, FFmpeg):
-  extends: .windows-ci-common
-  stage: compile
+Win64 FFmpeg (Static):
+  extends: .windows-test-base
   variables:
     CC: ccache gcc
     CXX: ccache g++
-    CFLAGS: -pipe -O3
-    CXXFLAGS: -pipe -O3
-    LDFLAGS: -pipe -O3 -static -static-libgcc -static-libstdc++
+    CFLAGS: -pipe
+    CXXFLAGS: -pipe
+    LDFLAGS: -pipe -static -static-libgcc -static-libstdc++
     CCACHE_DIR: $CI_PROJECT_DIR/.ccache
     GIT_DEPTH: 0
+    PREFIX_DIR: C:/msys64/mingw64
   cache:
     key: ${CI_JOB_NAME}
     paths:
       - .ccache
     policy: pull-push
   before_script:
-    - ccache -s
-
-    # SVT-AV1 Here to prevent the -dirty suffix
-    - cmake -B svtav1-build -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DBUILD_APPS=OFF -DBUILD_DEC=OFF -DCMAKE_INSTALL_PREFIX=C:/msys64/mingw64
-    - cmake --build svtav1-build --config Release --target install
-
-    - git clone https://aomedia.googlesource.com/aom
-    - git clone https://chromium.googlesource.com/webm/libvpx
-    - git clone https://code.videolan.org/videolan/dav1d.git
-    - git clone https://github.com/Netflix/vmaf.git
-    - git clone https://github.com/FFmpeg/FFmpeg.git
+    - *ffmpeg-before-script-clone
   script:
-    # aom
-    - cmake -S aom -B aom-build -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DENABLE_TESTS=0 -DENABLE_EXAMPLES=0 -DENABLE_DOCS=0 -DENABLE_TESTDATA=0 -DENABLE_TOOLS=0 -DCMAKE_INSTALL_PREFIX=C:/msys64/mingw64
-    - cmake --build aom-build --config Release --target install
-
-    # libvpx
-    - New-Item -type Directory vpx-build
-    - Set-Location vpx-build
+    # SVT-AV1
     - |
-      dash ../libvpx/configure `
+      cmake `
+        -S svtav1-src `
+        -B svtav1-build `
+        -DCMAKE_BUILD_TYPE=Release `
+        -DBUILD_SHARED_LIBS=OFF `
+        -DCMAKE_INSTALL_PREFIX="$env:PREFIX_DIR" `
+        -DBUILD_APPS=OFF `
+        -DBUILD_DEC=OFF
+      cmake --build svtav1-build --config Release --target install
+    # aom
+    - |
+      cmake `
+        -S aom-src `
+        -B aom-build `
+        -DCMAKE_BUILD_TYPE=Release `
+        -DBUILD_SHARED_LIBS=OFF `
+        -DCMAKE_INSTALL_PREFIX="$env:PREFIX_DIR" `
+        -DENABLE_TESTS=0 `
+        -DENABLE_EXAMPLES=0 `
+        -DENABLE_DOCS=0 `
+        -DENABLE_TESTDATA=0 `
+        -DENABLE_TOOLS=0
+      cmake --build aom-build --config Release --target install
+    # libvpx
+    - |
+      mkdir vpx-build
+      cd vpx-build
+      dash ../libvpx-src/configure `
         --disable-dependency-tracking `
         --disable-docs `
         --disable-examples `
@@ -719,135 +724,59 @@ Win64 (Release, GCC, FFmpeg):
         --enable-vp8 --enable-vp9 `
         --enable-vp9-highbitdepth `
         --enable-vp9-postproc `
-        --prefix=/mingw64
-    - make -j $((Get-CimInstance Win32_ComputerSystem).NumberOfLogicalProcessors + 2) install
-    - cd ..
-
+        --prefix="$env:PREFIX_DIR"
+      make -j $((Get-CimInstance Win32_ComputerSystem).NumberOfLogicalProcessors + 2) install
+      cd ..
     # dav1d
     - |
       meson setup `
         --default-library static `
         --buildtype release `
         --libdir lib `
+        --prefix "$env:PREFIX_DIR" `
         -Denable_tests=false `
         -Denable_examples=false `
         -Denable_tools=false `
-        --prefix C:/msys64/mingw64 `
-        dav1d-build dav1d
-    - meson install -C dav1d-build
-
+        dav1d-build dav1d-src
+      meson install -C dav1d-build
     # vmaf
     - |
       meson setup `
         --default-library static `
         --buildtype release `
         --libdir lib `
+        --prefix "$env:PREFIX_DIR" `
         -Denable_tests=false `
         -Denable_docs=false `
         -Dbuilt_in_models=true `
         -Denable_float=true `
-        --prefix C:/msys64/mingw64 `
-        vmaf-build vmaf/libvmaf
-    - meson install -C vmaf-build
+        vmaf-build vmaf-src/libvmaf
+      meson install -C vmaf-build
 
     # FFmpeg
     # Uses ld=CXX for libvmaf to autolink the stdc++ library
-    - New-Item -type Directory FFmpeg-build
-    - Set-Location FFmpeg-build
     - |
-      dash ../FFmpeg/configure `
+      mkdir ffmpeg-build
+      cd ffmpeg-build
+      dash ../ffmpeg-src/configure `
         --arch=x86_64 `
         --pkg-config-flags="--static" `
         --cc="${env:CC}" `
         --cxx="${env:CXX}" `
         --ld="${env:CXX}" `
         --enable-gpl --enable-static `
+        --prefix="$env:PREFIX_DIR" `
         --enable-libaom `
         --enable-libdav1d `
         --enable-libsvtav1 `
         --enable-libvmaf `
         --enable-libvpx `
-        --disable-shared `
-        --prefix=/mingw64
-    - make -j $((Get-CimInstance Win32_ComputerSystem).NumberOfLogicalProcessors + 2) install
-    - Move-Item ffmpeg.exe ..
+        --disable-shared
+      make -j $((Get-CimInstance Win32_ComputerSystem).NumberOfLogicalProcessors + 2) install
+      cp ./ffmpeg.exe $env:CI_PROJECT_DIR
     - ccache -s
-
   artifacts:
     untracked: false
     expire_in: 30 day
     paths:
       - ffmpeg.exe
-
-Win64 (Release, MSVC, Tests):
-  extends: .windows-ci-common
-  stage: compile
-  variables:
-    CFLAGS: /WX
-    CXXFLAGS: /WX
-    CMAKE_GENERATOR: Visual Studio 16 2019
-  script:
-    - cmake -B Build -DBUILD_TESTING=ON
-    - cmake --build Build --config Release
-  after_script:
-    - Move-Item Bin\Release\* .
-  artifacts:
-    untracked: false
-    expire_in: 1 day
-    paths:
-      - "*.exe"
-      - "*.dll"
-      - "*.pdb"
-
-Win64 Unit Tests:
-  extends: .windows-ci-common
-  stage: test
-  parallel: 10
-  variables:
-    GTEST_TOTAL_SHARDS: 10
-    GTEST_OUTPUT: "xml:report.xml"
-  artifacts:
-    when: always
-    reports:
-      junit: report.xml
-  script:
-    - $env:GTEST_SHARD_INDEX = $env:CI_NODE_INDEX - 1
-    - ./SvtAv1UnitTests.exe --gtest_filter=-*FFT*'
-  needs:
-    - 'Win64 (Release, MSVC, Tests)'
-
-Win64 Enc Test:
-  extends: .windows-ci-common
-  stage: test
-  script:
-    - *windows-unpack-testdata
-    - ./SvtAv1EncApp.exe --preset 0 -i "$env:SVT_ENCTEST_FILENAME" -n 3 -b "test-pr-${env:SVT_ENCTEST_BITNESS}bit-m0.ivf"'
-    - ./SvtAv1EncApp.exe --preset 8 -i "$env:SVT_ENCTEST_FILENAME" -n 120 -b "test-pr-${env:SVT_ENCTEST_BITNESS}bit-m8.ivf"'
-  parallel:
-    matrix:
-      - SVT_ENCTEST_FILENAME: "akiyo_cif.y4m"
-        SVT_ENCTEST_BITNESS: 8
-      - SVT_ENCTEST_FILENAME: "Chimera-Aerial_480x264_2997fps_10bit_420_150frames.y4m"
-        SVT_ENCTEST_BITNESS: 10
-  needs:
-    - 'Win64 (Release, MSVC, Tests)'
-
-Win64 E2E Tests:
-  extends: .windows-ci-common
-  stage: test
-  parallel: 10
-  variables:
-    GTEST_TOTAL_SHARDS: 10
-    GTEST_OUTPUT: "xml:report.xml"
-  artifacts:
-    when: always
-    reports:
-      junit: report.xml
-  script:
-    - '[string]$env:SVT_AV1_TEST_VECTOR_PATH = New-Item -ItemType Directory -Force -Name "testdata"'
-    - cmake -B Build -DBUILD_TESTING=ON
-    - cmake --build Build --target TestVectors
-    - $env:GTEST_SHARD_INDEX = $env:CI_NODE_INDEX - 1
-    - ./SvtAv1E2ETests.exe --gtest_filter=-*DummySrcTest*'
-  needs:
-    - 'Win64 (Release, MSVC, Tests)'
