@@ -227,7 +227,8 @@ extern "C" {
 #define NEW_PRESETS                            1 // New preset changes, designed with fps considerations
 #define USE_SB64_M3                            1 // Use SB 64x64 for M3+ in all resolutions
 #define  FTR_LAD_MG                            1 // Add a look-ahead on top of the default re-ordering
-#define  PRE_HME                               1 // preHME stage to catch vertical and horizontal high motion
+#define  FTR_PRE_HME                           1 // preHME stage to catch vertical and horizontal high motion
+#define  FTR_ALIGN_SC_DETECOR                  1 // Upgrade sc detector to three classes
 // ============= END SVT_04 =============
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch

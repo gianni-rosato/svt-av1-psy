@@ -1006,7 +1006,11 @@ EbErrorType signal_derivation_multi_processes_oq(
     //for now only I frames are allowed to use sc tools.
     //TODO: we can force all frames in GOP with the same detection status of leading I frame.
     if (pcs_ptr->slice_type == I_SLICE) {
+#if FTR_ALIGN_SC_DETECOR
+        frm_hdr->allow_screen_content_tools = pcs_ptr->sc_class1;
+#else
         frm_hdr->allow_screen_content_tools = pcs_ptr->sc_content_detected;
+#endif
         if (scs_ptr->static_config.intrabc_mode == DEFAULT) {
             // ENABLE/DISABLE IBC
 #if FTR_M10
@@ -1015,7 +1019,11 @@ EbErrorType signal_derivation_multi_processes_oq(
             if (pcs_ptr->enc_mode <= ENC_M9)
 #endif
             {
+#if FTR_ALIGN_SC_DETECOR
+                frm_hdr->allow_intrabc =  pcs_ptr->sc_class1;
+#else
                 frm_hdr->allow_intrabc =  pcs_ptr->sc_content_detected;
+#endif
             } else {
                 frm_hdr->allow_intrabc =  0;
             }
@@ -1043,7 +1051,11 @@ EbErrorType signal_derivation_multi_processes_oq(
     }
     else {
         //this will enable sc tools for P frames. hence change Bitstream even if palette mode is OFF
+#if FTR_ALIGN_SC_DETECOR
+        frm_hdr->allow_screen_content_tools = pcs_ptr->sc_class1;
+#else
         frm_hdr->allow_screen_content_tools = pcs_ptr->sc_content_detected;
+#endif
         frm_hdr->allow_intrabc = 0;
         pcs_ptr->ibc_mode = 0; // OFF
     }
@@ -4130,7 +4142,14 @@ void perform_simple_picture_analysis_for_overlay(PictureParentControlSet     *pc
         pa_ref_obj_->sixteenth_decimated_picture_ptr, // Hsan: always use decimated until studying the trade offs
         sb_total_count);
 
+#if FTR_ALIGN_SC_DETECOR
+    pcs_ptr->sc_class0 = pcs_ptr->alt_ref_ppcs_ptr->sc_class0;
+    pcs_ptr->sc_class1 = pcs_ptr->alt_ref_ppcs_ptr->sc_class1;
+    pcs_ptr->sc_class2 = pcs_ptr->alt_ref_ppcs_ptr->sc_class2;
+#else
+
     pcs_ptr->sc_content_detected = pcs_ptr->alt_ref_ppcs_ptr->sc_content_detected;
+#endif
 }
 /***************************************************************************************************
  * Initialize the overlay frame
@@ -4810,7 +4829,13 @@ void send_trail_pictures_out(
                 out_results->lst0_cnt = tpl_data.tpl_ref0_count;
                 out_results->lst1_cnt = tpl_data.tpl_ref1_count;
                 out_results->tmp_layer_idx = 1;// TODO :  tpl_data.tpl_temporal_layer_index;
+#if FTR_ALIGN_SC_DETECOR
+                out_results->sc_class0 = pcs->sc_class0;
+                out_results->sc_class1 = pcs->sc_class1;
+                out_results->sc_class2 = pcs->sc_class2;
+#else
                 out_results->sc_detected_base = pcs->sc_content_detected;
+#endif
                 for (int j = 0; j < tpl_data.tpl_ref0_count; j++) {
                     out_results->ref_ds[0][j] = tpl_data.tpl_ref_ds_ptr_array[0][j];
                 }
@@ -6151,11 +6176,24 @@ void* picture_decision_kernel(void *input_ptr)
                                         pcs_ptr->av1_cm->ref_frame_sign_bias[BWDREF_FRAME] = 0;
                                 }
 
+#if FTR_ALIGN_SC_DETECOR
+                                if (pcs_ptr->slice_type == I_SLICE) {
+                                    context_ptr->last_i_picture_sc_class0 = pcs_ptr->sc_class0;
+                                    context_ptr->last_i_picture_sc_class1 = pcs_ptr->sc_class1;
+                                    context_ptr->last_i_picture_sc_class2 = pcs_ptr->sc_class2;
+                                }
+                                else {
+                                    pcs_ptr->sc_class0 = context_ptr->last_i_picture_sc_class0;
+                                    pcs_ptr->sc_class1 = context_ptr->last_i_picture_sc_class1;
+                                    pcs_ptr->sc_class2 = context_ptr->last_i_picture_sc_class2;
+                                }
+#else
+
                                 if (pcs_ptr->slice_type == I_SLICE)
                                     context_ptr->last_i_picture_sc_detection = pcs_ptr->sc_content_detected;
                                 else
                                     pcs_ptr->sc_content_detected = context_ptr->last_i_picture_sc_detection;
-
+#endif
                                 // TODO: put this in EbMotionEstimationProcess?
                                 // ME Kernel Multi-Processes Signal(s) derivation
                                 if (use_output_stat(scs_ptr))
@@ -6291,7 +6329,11 @@ void* picture_decision_kernel(void *input_ptr)
 #if TUNE_LOWER_PRESETS
 #if FTR_NEW_REF_PRUNING_CTRLS
 #if TUNE_SC_SETTINGS
+#if FTR_ALIGN_SC_DETECOR
+                                if (pcs_ptr->sc_class1) {
+#else
                                 if (pcs_ptr->sc_content_detected) {
+#endif
                                     if (pcs_ptr->enc_mode <= ENC_MRS) {
                                         pcs_ptr->ref_list0_count_try = MIN(pcs_ptr->ref_list0_count, 4);
                                         pcs_ptr->ref_list1_count_try = MIN(pcs_ptr->ref_list1_count, 3);

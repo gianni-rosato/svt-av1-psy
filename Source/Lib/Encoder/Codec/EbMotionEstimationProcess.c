@@ -122,7 +122,11 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
 #endif
 
     // Set the minimum ME search area
+#if FTR_ALIGN_SC_DETECOR
+    if (pcs_ptr->sc_class1)
+#else
     if (pcs_ptr->sc_content_detected)
+#endif
 #if TUNE_LOWER_PRESETS
 #if TUNE_NEW_PRESETS_MR_M8
 #if TUNE_SHIFT_PRESETS_DOWN
@@ -413,7 +417,11 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
         else {
 #if TUNE_M9_ME_HME
 #if TUNE_M7_M9
+#if FTR_ALIGN_SC_DETECOR
+        if (pcs_ptr->sc_class1) {
+#else
         if (pcs_ptr->sc_content_detected) {
+#endif
             me_context_ptr->hme_level0_total_search_area_width = me_context_ptr->hme_level0_total_search_area_height = 32;
             me_context_ptr->hme_level0_max_total_search_area_width = me_context_ptr->hme_level0_max_total_search_area_height = 192;
         }
@@ -474,7 +482,11 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
 #endif
         }
 #endif
+#if FTR_ALIGN_SC_DETECOR
+    if (!pcs_ptr->sc_class1)
+#else
     if (!pcs_ptr->sc_content_detected)
+#endif
         if (use_output_stat(scs_ptr) || (scs_ptr->lap_enabled && !pcs_ptr->first_pass_done)) {
             me_context_ptr->hme_level0_total_search_area_width = me_context_ptr->hme_level0_total_search_area_height  = me_context_ptr->hme_level0_total_search_area_width/2;
             me_context_ptr->hme_level0_max_total_search_area_width = me_context_ptr->hme_level0_max_total_search_area_height =   me_context_ptr->hme_level0_max_total_search_area_width/2;
@@ -556,7 +568,11 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
         me_context_ptr->hme_level2_search_area_in_height_array[0] =
             me_context_ptr->hme_level2_search_area_in_height_array[1] = 3;
     }
+#if FTR_ALIGN_SC_DETECOR
+    if (!pcs_ptr->sc_class1)
+#else
     if (!pcs_ptr->sc_content_detected)
+#endif
         if (use_output_stat(scs_ptr) || (scs_ptr->lap_enabled && !pcs_ptr->first_pass_done)) {
             me_context_ptr->hme_level1_search_area_in_width_array[0] =
                 me_context_ptr->hme_level1_search_area_in_width_array[1] =
@@ -712,7 +728,7 @@ void set_me_sr_adjustment_ctrls(MeContext* context_ptr, uint8_t sr_adjustment_le
 #endif
 }
 
-#if PRE_HME
+#if FTR_PRE_HME
 /*configure PreHme control*/
 void set_prehme_ctrls(MeContext* context, uint8_t level) {
     PreHmeCtrls* ctrl = &context->prehme_ctrl;
@@ -850,7 +866,11 @@ void trail_set_me_hme_params(MeContext *me_context_ptr, MePcs *mepcs,
 #endif
 
     // Set the minimum ME search area
+#if FTR_ALIGN_SC_DETECOR
+    if (mepcs->sc_class1)
+#else
     if (mepcs->sc_content_detected)
+#endif
         if (mepcs->enc_mode <= ENC_M3) {
             me_context_ptr->search_area_width = me_context_ptr->search_area_height = 175;
             me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 750;
@@ -957,7 +977,11 @@ void trail_set_me_hme_params(MeContext *me_context_ptr, MePcs *mepcs,
     }
 #if TUNE_MATCH_TR
     else {
+#if FTR_ALIGN_SC_DETECOR
+        if (mepcs->sc_class1) {
+#else
         if (mepcs->sc_content_detected) {
+#endif
             me_context_ptr->hme_level0_total_search_area_width = me_context_ptr->hme_level0_total_search_area_height = 32;
             me_context_ptr->hme_level0_max_total_search_area_width = me_context_ptr->hme_level0_max_total_search_area_height = 192;
         }
@@ -1256,7 +1280,7 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
 
 
 
-#if PRE_HME
+#if FTR_PRE_HME
     // Set pre-hme level (0-2)
     uint8_t prehme_level = 0;
     prehme_level = (enc_mode <= ENC_M4) ? 1: 2;
@@ -1517,7 +1541,7 @@ EbErrorType tf_signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr
     // ME Search Method
         context_ptr->me_context_ptr->me_search_method = SUB_SAD_SEARCH;
 
-#if PRE_HME
+#if FTR_PRE_HME
     uint8_t prehme_level = 0;
     set_prehme_ctrls(context_ptr->me_context_ptr, prehme_level);
 #endif
@@ -1832,7 +1856,13 @@ void fill_me_pcs_wraper(
         me_pcs->me_8x8_distortion = pcs->me_8x8_distortion_trail;
 #endif
         me_pcs->temporal_layer_index = in_results->tmp_layer_idx;
+#if FTR_ALIGN_SC_DETECOR
+        me_pcs->sc_class0 = in_results->sc_class0;
+        me_pcs->sc_class1 = in_results->sc_class1;
+        me_pcs->sc_class2 = in_results->sc_class2;
+#else
         me_pcs->sc_content_detected = in_results->sc_detected_base;
+#endif
         me_pcs->slice_type = B_SLICE;
 #if FTR_TPL_TR
         if (pcs->non_tf_input)
@@ -1861,7 +1891,13 @@ void fill_me_pcs_wraper(
         me_pcs->me_8x8_distortion   = pcs->me_8x8_distortion;
 #endif
         me_pcs->temporal_layer_index = pcs->temporal_layer_index;
+#if FTR_ALIGN_SC_DETECOR
+        me_pcs->sc_class0 = pcs->sc_class0;
+        me_pcs->sc_class1 = pcs->sc_class1;
+        me_pcs->sc_class2 = pcs->sc_class2;
+#else
         me_pcs->sc_content_detected = pcs->sc_content_detected;
+#endif
         me_pcs->slice_type = pcs->slice_type;
 #if FTR_TPL_TR
         me_pcs->enhanced_picture_ptr = pcs->enhanced_picture_ptr;

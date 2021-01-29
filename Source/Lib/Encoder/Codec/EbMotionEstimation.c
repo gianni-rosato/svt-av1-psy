@@ -2250,7 +2250,7 @@ void me_prune_ref(MeContext* context_ptr) {
     }
 }
 
-#if PRE_HME
+#if FTR_PRE_HME
 /* perform  motion search over a given search area*/
 void prehme_core(
     MeContext *context_ptr,
@@ -2642,7 +2642,7 @@ static void hme_level0_sb(
                 }
 
 
-#if PRE_HME
+#if FTR_PRE_HME
                 if (context_ptr->prehme_ctrl.enable) {
 
                     //get the worst quadrant
@@ -3150,7 +3150,7 @@ void hme_sb(
 ){
 
 
-#if  PRE_HME
+#if  FTR_PRE_HME
 
     if (context_ptr->prehme_ctrl.enable ){
 

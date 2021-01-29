@@ -32,7 +32,13 @@ typedef struct PictureDecisionResults {
     uint8_t          lst1_cnt;
     uint8_t          tmp_layer_idx;
     uint8_t          is_reference;
+#if FTR_ALIGN_SC_DETECOR
+    uint8_t          sc_class0;
+    uint8_t          sc_class1;
+    uint8_t          sc_class2;
+#else
     uint8_t          sc_detected_base;
+#endif
     EbDownScaledBufDescPtrArray ref_ds[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
 #endif
 } PictureDecisionResults;

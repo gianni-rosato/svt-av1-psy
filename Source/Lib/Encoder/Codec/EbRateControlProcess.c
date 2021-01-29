@@ -6495,7 +6495,11 @@ static void adjust_active_best_and_worst_quality_org(PictureControlSet *pcs_ptr,
                                                      pcs_ptr->parent_pcs_ptr->gf_group_index,
                                                      active_worst_quality,
                                                      bit_depth,
+#if FTR_ALIGN_SC_DETECOR
+                                                     pcs_ptr->parent_pcs_ptr->sc_class1);
+#else
                                                      pcs_ptr->parent_pcs_ptr->sc_content_detected);
+#endif
         active_worst_quality = AOMMAX(active_worst_quality + qdelta, active_best_quality);
     }
 
@@ -6522,7 +6526,11 @@ static void adjust_active_best_and_worst_quality(PictureControlSet *pcs_ptr, RAT
                                                      rf_level,
                                                      active_worst_quality,
                                                      bit_depth,
+#if FTR_ALIGN_SC_DETECOR
+                                                     pcs_ptr->parent_pcs_ptr->sc_class1);
+#else
                                                      pcs_ptr->parent_pcs_ptr->sc_content_detected);
+#endif
         active_worst_quality = AOMMAX(active_worst_quality + qdelta, active_best_quality);
     }
 
@@ -7144,7 +7152,11 @@ static void get_intra_q_and_bounds(PictureControlSet *pcs_ptr, int *active_best,
             twopass->kf_zeromotion_pct >= STATIC_KF_GROUP_THRESH) {
             active_best_quality /= 3;
         }
+#if FTR_ALIGN_SC_DETECOR
+        if (pcs_ptr->parent_pcs_ptr->sc_class1 &&
+#else
         if (pcs_ptr->parent_pcs_ptr->sc_content_detected &&
+#endif
             encode_context_ptr->rc_cfg.mode == AOM_VBR)
             active_best_quality /= 2;
         // Allow somewhat lower kf minq with small image formats.
@@ -7293,7 +7305,11 @@ static int get_bits_per_mb(PictureParentControlSet *ppcs_ptr, int use_cyclic_ref
                                                        q,
                                                        correction_factor,
                                                        scs_ptr->static_config.encoder_bit_depth,
+#if FTR_ALIGN_SC_DETECOR
+                                                       ppcs_ptr->sc_class1);
+#else
                                                        ppcs_ptr->sc_content_detected);
+#endif
 }
 
 // Similar to find_qindex_by_rate() function in ratectrl.c, but returns the q
@@ -7528,7 +7544,11 @@ static void av1_rc_update_rate_correction_factors(PictureParentControlSet *ppcs_
             MBs,
             rate_correction_factor,
             scs_ptr->static_config.encoder_bit_depth,
+#if FTR_ALIGN_SC_DETECOR
+            ppcs_ptr->sc_class1);
+#else
             ppcs_ptr->sc_content_detected);
+#endif
     }
     // Work out a size correction factor.
     if (projected_size_based_on_q > FRAME_OVERHEAD_BITS)

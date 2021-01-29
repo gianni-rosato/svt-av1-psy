@@ -315,7 +315,7 @@ typedef struct MeSrCtrls {
 #endif
 } MeSrCtrls;
 
-#if PRE_HME
+#if FTR_PRE_HME
 #define SEARCH_REGION_COUNT 2
 typedef struct SearchArea {
     uint16_t   width;  // search area width
@@ -430,7 +430,7 @@ typedef struct MeContext {
     HmeResults hme_results[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
     uint32_t   reduce_me_sr_divisor[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
 
-#if PRE_HME
+#if FTR_PRE_HME
     SearchInfo         prehme_data[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][SEARCH_REGION_COUNT];
     PreHmeCtrls     prehme_ctrl;
 #endif

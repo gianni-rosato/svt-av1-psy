@@ -3516,7 +3516,11 @@ EbBool is_valid_palette_nb_colors_highbd(const uint16_t *src, int stride,
 
 // Estimate if the source frame is screen content, based on the portion of
 // blocks that have no more than 4 (experimentally selected) luma colors.
+#if FTR_ALIGN_SC_DETECOR
+static void is_screen_content(PictureParentControlSet *pcs_ptr) {
+#else
 static void is_screen_content(PictureParentControlSet *pcs_ptr, int bit_depth) {
+#endif
     const int blk_w = 16;
     const int blk_h = 16;
     // These threshold values are selected experimentally.
@@ -3529,8 +3533,9 @@ static void is_screen_content(PictureParentControlSet *pcs_ptr, int bit_depth) {
     int counts_2 = 0;
 
     const AomVarianceFnPtr *fn_ptr = &mefn_ptr[BLOCK_16X16];
-
+#if !FTR_ALIGN_SC_DETECOR
     EbBool is16bit = bit_depth > EB_8BIT;
+#endif
     EbPictureBufferDesc *input_picture_ptr =
         pcs_ptr->enhanced_picture_ptr;
 
@@ -3538,6 +3543,7 @@ static void is_screen_content(PictureParentControlSet *pcs_ptr, int bit_depth) {
     {
         for (int c = 0; c + blk_w <= input_picture_ptr->width; c += blk_w)
         {
+#if !FTR_ALIGN_SC_DETECOR
             if (is16bit)
             {
                 uint16_t src[BLOCK_SIZE_64 * BLOCK_SIZE_64];
@@ -3572,6 +3578,7 @@ static void is_screen_content(PictureParentControlSet *pcs_ptr, int bit_depth) {
                 }
             }
             else
+#endif
             {
                 uint8_t *src = input_picture_ptr->buffer_y +
                     (input_picture_ptr->origin_y + r) * input_picture_ptr->stride_y +
@@ -3590,6 +3597,20 @@ static void is_screen_content(PictureParentControlSet *pcs_ptr, int bit_depth) {
         }
     }
 
+#if FTR_ALIGN_SC_DETECOR
+    // The threshold values are selected experimentally.
+    pcs_ptr->sc_class0  = (counts_1 * blk_h * blk_w * 10 > input_picture_ptr->width * input_picture_ptr->height);
+
+    // IntraBC would force loop filters off, so we use more strict rules that also
+    // requires that the block has high variance.
+    pcs_ptr->sc_class1 =  pcs_ptr->sc_class0
+       && (counts_2 * blk_h * blk_w * 12 > input_picture_ptr->width * input_picture_ptr->height);
+
+    pcs_ptr->sc_class2 =
+          pcs_ptr->sc_class1  ||
+          (counts_1 * blk_h * blk_w * 10 > input_picture_ptr->width * input_picture_ptr->height * 4 &&
+           counts_2 * blk_h * blk_w * 30 > input_picture_ptr->width * input_picture_ptr->height);
+#else
     // The threshold values are selected experimentally.
     uint8_t color_detection = (counts_1 * blk_h * blk_w * 10 > input_picture_ptr->width * input_picture_ptr->height);
 
@@ -3597,7 +3618,7 @@ static void is_screen_content(PictureParentControlSet *pcs_ptr, int bit_depth) {
     // requires that the block has high variance.
     pcs_ptr->sc_content_detected =  color_detection
        && (counts_2 * blk_h * blk_w * 12 > input_picture_ptr->width * input_picture_ptr->height);
-
+#endif
 }
 
 /************************************************
@@ -4012,10 +4033,18 @@ void *picture_analysis_kernel(void *input_ptr) {
             }
 
             if (scs_ptr->static_config.screen_content_mode == 2) { // auto detect
+#if FTR_ALIGN_SC_DETECOR
+                is_screen_content(pcs_ptr);
+#else
                 is_screen_content(pcs_ptr,
                                   scs_ptr->static_config.encoder_bit_depth);
+#endif
             } else // off / on
+#if FTR_ALIGN_SC_DETECOR
+                pcs_ptr->sc_class0 = pcs_ptr->sc_class1 = pcs_ptr->sc_class2 = scs_ptr->static_config.screen_content_mode;
+#else
                 pcs_ptr->sc_content_detected = scs_ptr->static_config.screen_content_mode;
+#endif
         }
         // Get Empty Results Object
         svt_get_empty_object(context_ptr->picture_analysis_results_output_fifo_ptr,

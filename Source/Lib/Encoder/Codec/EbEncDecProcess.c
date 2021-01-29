@@ -4337,7 +4337,11 @@ EbErrorType signal_derivation_enc_dec_kernel_common(
         // Set depth_removal_level_controls
         uint8_t depth_removal_level;
 #if TUNE_SC_SETTINGS
+#if FTR_ALIGN_SC_DETECOR
+        if (pcs_ptr->parent_pcs_ptr->sc_class1)
+#else
         if (pcs_ptr->parent_pcs_ptr->sc_content_detected)
+#endif
             depth_removal_level = 0;
         else
 #endif
@@ -4442,7 +4446,11 @@ EbErrorType signal_derivation_enc_dec_kernel_common(
 #if TUNE_NEW_PRESETS_MR_M8
 #if TUNE_SC_SETTINGS
     // do not use feature for SC
+#if FTR_ALIGN_SC_DETECOR
+    if (pcs_ptr->parent_pcs_ptr->sc_class1)
+#else
     if (pcs_ptr->parent_pcs_ptr->sc_content_detected)
+#endif
         block_based_depth_refinement_level = 0;
     else
 #endif
@@ -6013,7 +6021,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #endif
 #if FTR_IMPROVE_DEPTH_REMOVAL
     uint8_t depth_skip_level;
+#if FTR_ALIGN_SC_DETECOR
+    if (pcs_ptr->parent_pcs_ptr->sc_class1)
+#else
     if (pcs_ptr->parent_pcs_ptr->sc_content_detected)
+#endif
         depth_skip_level = 0;
     else if (pd_pass == PD_PASS_0)
         depth_skip_level = 0;
@@ -7651,7 +7663,11 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
 #if TUNE_NEW_PRESETS_MR_M8
 #if TUNE_PRESETS_AND_PRUNING
 #if TUNE_M7_M9
+#if FTR_ALIGN_SC_DETECOR
+                            if (pcs_ptr->parent_pcs_ptr->sc_class1) {
+#else
                             if (pcs_ptr->parent_pcs_ptr->sc_content_detected) {
+#endif
                                 // Always use at least [-1, +1] refinement for SC
 #if TUNE_M4_REPOSITION
 #if TUNE_SHIFT_PRESETS_DOWN

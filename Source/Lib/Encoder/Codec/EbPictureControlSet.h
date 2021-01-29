@@ -655,7 +655,13 @@ typedef struct MePcs {
     EbBool                     enable_hme_level0_flag;
     EbBool                     enable_hme_level1_flag;
     EbBool                     enable_hme_level2_flag;
+#if FTR_ALIGN_SC_DETECOR
+    uint8_t                    sc_class0;
+    uint8_t                    sc_class1;
+    uint8_t                    sc_class2;
+#else
     uint8_t                    sc_content_detected;
+#endif
     EbObjectWrapper           *pa_reference_picture_wrapper_ptr;
     EbPictureBufferDesc       *enhanced_unscaled_picture_ptr;
 
@@ -1012,7 +1018,13 @@ typedef struct PictureParentControlSet {
     RestUnitSearchInfo *rusi_picture[3]; //for 3 planes
     int8_t              cdef_level;
     uint8_t             palette_level;
+#if FTR_ALIGN_SC_DETECOR
+    uint8_t             sc_class0;
+    uint8_t             sc_class1;
+    uint8_t             sc_class2;
+#else
     uint8_t             sc_content_detected;
+#endif
     uint8_t             ibc_mode;
     SkipModeInfo        skip_mode_info;
     uint64_t picture_number_alt; // The picture number overlay includes all the overlay frames

@@ -4843,7 +4843,11 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
         uint32_t best_tx_non_coeff = 64 * 64;
 #endif
         for (int tx_type_idx = 0; tx_type_idx < TX_TYPES; ++tx_type_idx) {
+#if FTR_ALIGN_SC_DETECOR
+            if (pcs_ptr->parent_pcs_ptr->sc_class1)
+#else
             if (pcs_ptr->parent_pcs_ptr->sc_content_detected)
+#endif
                 tx_type = tx_type_group_sc[tx_type_group_idx][tx_type_idx];
             else
                 tx_type = tx_type_group[tx_type_group_idx][tx_type_idx];

@@ -93,7 +93,13 @@ typedef struct PictureDecisionContext {
     uint8_t  lay2_toggle; //2 way toggle 0->1
     EbBool
         mini_gop_toggle; //mini GOP toggling since last Key Frame  K-0-1-0-1-0-K-0-1-0-1-K-0-1.....
+#if FTR_ALIGN_SC_DETECOR
+    uint8_t                  last_i_picture_sc_class0;
+    uint8_t                  last_i_picture_sc_class1;
+    uint8_t                  last_i_picture_sc_class2;
+#else
     uint8_t                  last_i_picture_sc_detection;
+#endif
     uint64_t                 key_poc;
     uint8_t                  tf_level;
     PictureParentControlSet *mg_pictures_array[1 << MAX_TEMPORAL_LAYERS];
