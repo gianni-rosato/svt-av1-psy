@@ -430,6 +430,25 @@ Linux Enc Test:
   needs:
     - Linux (GCC 10)
 
+
+Linux Default Branch:
+  extends:
+    - .linux-compiler-base
+    - .linux-test-base
+  stage: test
+  variables:
+    BRANCH: default
+  before_script:
+    - git fetch https://gitlab.com/AOMediaCodec/SVT-AV1.git HEAD
+    - git checkout FETCH_HEAD
+    - *linux-extract-videos
+  script:
+    - *compiler-script
+    - *enc-test-script
+  parallel: *enc-test-parallel
+  artifacts: *enc-test-artifacts
+  needs:
+
 macOS Enc Test:
   extends: .macos-test-base
   variables:
@@ -451,6 +470,29 @@ Win64 Enc Test:
   artifacts: *enc-test-artifacts
   needs:
     - Win64 (MSVC, Tests)
+
+Enc Diff Test:
+  stage: .post
+  image: registry.gitlab.com/aomediacodec/aom-testing/alpine3
+  script:
+    - |
+      success=true
+      for dist in *-8bit-m0.ivf; do
+          case $dist in
+          test-default-Linux-Release-8bit-m0.ivf | test-default-Linux-Release-10bit-m0.ivf) continue ;;
+          test-default-Linux-Release-8bit-m8.ivf | test-default-Linux-Release-10bit-m8.ivf) continue ;;
+          *-8bit-m0.ivf) diff -q test-default-Linux-Release-8bit-m0.ivf "$dist" || success=false ;;
+          *-8bit-m8.ivf) diff -q test-default-Linux-Release-8bit-m8.ivf "$dist" || success=false ;;
+          *-10bit-m0.ivf) diff -q test-default-Linux-Release-10bit-m0.ivf "$dist" || success=false ;;
+          *-10bit-m8.ivf) diff -q test-default-Linux-Release-10bit-m8.ivf "$dist" || success=false ;;
+          esac
+      done
+      $success
+  needs:
+    - Linux Enc Test
+    - macOS Enc Test
+    - Win64 Enc Test
+    - Linux Default Branch
 
 Linux Gstreamer (Static):
   extends: .linux-test-base
