@@ -1189,6 +1189,13 @@ void generate_av1_mvp_table(TileInfo *tile, ModeDecisionContext *context_ptr, Bl
     xd->mi_row            = -xd->mb_to_top_edge / (8 * MI_SIZE);
     xd->mi_col            = -xd->mb_to_left_edge / (8 * MI_SIZE);
 
+#if FIX_ADD_MVP_MEMSET
+    memset(xd->ref_mv_count, 0, sizeof(xd->ref_mv_count));
+    memset(context_ptr->md_local_blk_unit[blk_geom->blkidx_mds].ed_ref_mv_stack,
+           0,
+           sizeof(context_ptr->md_local_blk_unit[blk_geom->blkidx_mds].ed_ref_mv_stack));
+#endif
+
     xd->up_available   = (mi_row > tile->mi_row_start);
     xd->left_available = (mi_col > tile->mi_col_start);
 
