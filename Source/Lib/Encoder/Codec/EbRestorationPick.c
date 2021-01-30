@@ -150,6 +150,29 @@ static int64_t try_restoration_unit_seg(const RestSearchCtxt *       rsc,
 
     const int32_t optimized_lr = 0;
 
+#if CLN_REST_FILTER
+    // If boundaries are enabled for filtering, recon gets updated using setup/restore
+    // processing_stripe_bounadaries.  Many threads doing so will result in race condition.
+    // Only use boundaries during the filter search if a copy of recon is made for each
+    // thread (controlled with scs_ptr->seq_header.use_boundaries_in_rest_search).
+    svt_av1_loop_restoration_filter_unit(cm->use_boundaries_in_rest_search,
+                                         limits,
+                                         rui,
+                                         &rsi->boundaries,
+                                         &rlbs,
+                                         tile_rect,
+                                         rsc->tile_stripe0,
+                                         is_uv && cm->subsampling_x,
+                                         is_uv && cm->subsampling_y,
+                                         highbd,
+                                         bit_depth,
+                                         fts->buffers[plane],
+                                         fts->strides[is_uv],
+                                         rsc->dst->buffers[plane],
+                                         rsc->dst->strides[is_uv],
+                                         rsc->tmpbuf,
+                                         optimized_lr);
+#else
     svt_av1_loop_restoration_filter_unit(1,
                                          limits,
                                          rui,
@@ -167,7 +190,7 @@ static int64_t try_restoration_unit_seg(const RestSearchCtxt *       rsc,
                                          rsc->dst->strides[is_uv],
                                          rsc->tmpbuf,
                                          optimized_lr);
-
+#endif
     return sse_restoration_unit(limits, rsc->src, rsc->dst, plane, highbd);
 }
 

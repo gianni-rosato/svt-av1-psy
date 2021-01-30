@@ -89,6 +89,13 @@ typedef struct SequenceControlSet {
     */
     uint8_t lad_mg;   //delay all pictures within a given MG, until N future MGs are  gop , TF, and ME ready
 #endif
+#if CLN_REST_FILTER
+    /*!< 1: Specifies that loop restoration filter should use boundary pixels in the search.  Must be
+            set at the sequence level because it requires a buffer allocation to copy the pixels
+            to be used in the search.
+         0: Specifies that loop restoration filter should not use boundary pixels in the search.*/
+    uint8_t use_boundaries_in_rest_search;
+#endif
     uint8_t enable_pic_mgr_dec_order; // if enabled: pic mgr starts pictures in dec order
     uint8_t enable_dec_order; // if enabled: encoding are in dec order
     /*!< Use in loop motion OIS

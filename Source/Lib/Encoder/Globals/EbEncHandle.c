@@ -2416,6 +2416,11 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     scs_ptr->lad_mg = 0;
 #endif
 
+#if CLN_REST_FILTER
+    // 1: Use boundary pixels in restoration filter search.
+    // 0: Do not use boundary pixels in the restoration filter search.
+    scs_ptr->use_boundaries_in_rest_search = 0;
+#endif
 
     // Set over_boundary_block_mode     Settings
     // 0                            0: not allowed

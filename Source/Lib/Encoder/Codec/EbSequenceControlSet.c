@@ -324,6 +324,9 @@ EbErrorType copy_sequence_control_set(SequenceControlSet *dst, SequenceControlSe
 #if FTR_LAD_MG
     dst->lad_mg                         = src->lad_mg;
 #endif
+#if CLN_REST_FILTER
+    dst->use_boundaries_in_rest_search  = src->use_boundaries_in_rest_search;
+#endif
     return EB_ErrorNone;
 }
 

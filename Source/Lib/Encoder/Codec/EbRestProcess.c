@@ -79,7 +79,14 @@ static void rest_context_dctor(EbPtr p) {
     EB_DELETE(obj->temp_lf_recon_picture_ptr);
     EB_DELETE(obj->temp_lf_recon_picture16bit_ptr);
     EB_DELETE(obj->trial_frame_rst);
+#if CLN_REST_FILTER
+    // buffer only malloc'd if boundaries are used in rest. search.
+    // see scs_ptr->seq_header.use_boundaries_in_rest_search
+    if (obj->org_rec_frame)
+        EB_DELETE(obj->org_rec_frame);
+#else
     EB_DELETE(obj->org_rec_frame);
+#endif
     EB_FREE_ALIGNED(obj->rst_tmpbuf);
     EB_FREE_ARRAY(obj);
 }
@@ -123,11 +130,20 @@ EbErrorType rest_context_ctor(EbThreadContext *  thread_context_ptr,
         init_data.is_16bit_pipeline  = config->is_16bit_pipeline;
 
         EB_NEW(context_ptr->trial_frame_rst, svt_picture_buffer_desc_ctor, (EbPtr)&init_data);
-
+#if CLN_REST_FILTER
+        if (scs_ptr->use_boundaries_in_rest_search)
+            EB_NEW(context_ptr->org_rec_frame, svt_picture_buffer_desc_ctor, (EbPtr)&init_data);
+        else
+            context_ptr->org_rec_frame = NULL;
+#else
         EB_NEW(context_ptr->org_rec_frame, svt_picture_buffer_desc_ctor, (EbPtr)&init_data);
+#endif
         if (!is_16bit) {
             context_ptr->trial_frame_rst->bit_depth = EB_8BIT;
-            context_ptr->org_rec_frame->bit_depth   = EB_8BIT;
+#if CLN_REST_FILTER
+            if (scs_ptr->use_boundaries_in_rest_search)
+#endif
+                context_ptr->org_rec_frame->bit_depth   = EB_8BIT;
         }
 
         EB_MALLOC_ALIGNED(context_ptr->rst_tmpbuf, RESTORATION_TMPBUF_SIZE);
@@ -159,8 +175,25 @@ EbErrorType rest_context_ctor(EbThreadContext *  thread_context_ptr,
 
     return EB_ErrorNone;
 }
+#if CLN_REST_FILTER
+// If using boundaries during the filter search, copy the recon pic to a new buffer (to
+// avoid race conidition from many threads modifying the same recon pic).
+//
+// If not using boundaries during the filter search, return the input recon picture location
+// to be used in restoration search (save cycles/memory of copying pic to a new buffer).
+// The recon pic should not be modified during the search, otherwise there will be a race
+// condition between threads.
+//
+// Return a pointer to the recon pic to be used during the restoration search.
+EbPictureBufferDesc* get_own_recon(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
+    RestContext *context_ptr, EbBool is_16bit) {
+
+    Av1Common* cm = pcs_ptr->parent_pcs_ptr->av1_cm;
+    cm->use_boundaries_in_rest_search = scs_ptr->use_boundaries_in_rest_search;
+#else
 void get_own_recon(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
                    RestContext *context_ptr, EbBool is_16bit) {
+#endif
     const uint32_t ss_x = scs_ptr->subsampling_x;
     const uint32_t ss_y = scs_ptr->subsampling_y;
 
@@ -172,7 +205,13 @@ void get_own_recon(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
                                     ->reference_picture16bit;
         else
             recon_picture_ptr = pcs_ptr->recon_picture16bit_ptr;
-
+#if CLN_REST_FILTER
+        // if boundaries are not used, don't need to copy pic to new buffer, as the
+        // search will not modify the pic
+        if (!scs_ptr->use_boundaries_in_rest_search) {
+            return recon_picture_ptr;
+        }
+#endif
         uint16_t *rec_ptr = (uint16_t *)recon_picture_ptr->buffer_y + recon_picture_ptr->origin_x +
             recon_picture_ptr->origin_y * recon_picture_ptr->stride_y;
         uint16_t *rec_ptr_cb = (uint16_t *)recon_picture_ptr->buffer_cb +
@@ -210,7 +249,13 @@ void get_own_recon(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
                                     ->reference_picture;
         else
             recon_picture_ptr = pcs_ptr->recon_picture_ptr;
-
+#if CLN_REST_FILTER
+        // if boundaries are not used, don't need to copy pic to new buffer, as the
+        // search will not modify the pic
+        if (!scs_ptr->use_boundaries_in_rest_search) {
+            return recon_picture_ptr;
+        }
+#endif
         uint8_t *rec_ptr    = &((recon_picture_ptr->buffer_y)[recon_picture_ptr->origin_x +
                                                            recon_picture_ptr->origin_y *
                                                                recon_picture_ptr->stride_y]);
@@ -243,6 +288,9 @@ void get_own_recon(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
                        (recon_picture_ptr->width >> ss_x));
         }
     }
+#if CLN_REST_FILTER
+    return context_ptr->org_rec_frame;
+#endif
 }
 
 void set_unscaled_input_16bit(PictureControlSet *pcs_ptr) {
@@ -495,10 +543,12 @@ void *rest_kernel(void *input_ptr) {
                 }
             }
             // ------- end: Normative upscaling - super-resolution tool
+#if !CLN_REST_FILTER
             get_own_recon(scs_ptr,
                           pcs_ptr,
                           context_ptr,
                           scs_ptr->static_config.is_16bit_pipeline || is_16bit);
+#endif
             Yv12BufferConfig cpi_source;
             pcs_ptr->parent_pcs_ptr->enhanced_unscaled_picture_ptr->is_16bit_pipeline =
                 scs_ptr->static_config.is_16bit_pipeline;
@@ -516,14 +566,33 @@ void *rest_kernel(void *input_ptr) {
                                        scs_ptr->max_input_pad_right,
                                        scs_ptr->max_input_pad_bottom,
                                        scs_ptr->static_config.is_16bit_pipeline || is_16bit);
-
+            #if CLN_REST_FILTER
+            // If using boundaries during the filter search, copy the recon pic to a new buffer (to
+            // avoid race conidition from many threads modifying the same recon pic).
+            //
+            // If not using boundaries during the filter search, copy the input recon picture location
+            // to be used in restoration search (save cycles/memory of copying pic to a new buffer).
+            // The recon pic should not be modified during the search, otherwise there will be a race
+            // condition between threads.
+            EbPictureBufferDesc *recon_picture_ptr =
+                get_own_recon(scs_ptr,
+                    pcs_ptr,
+                    context_ptr,
+                    scs_ptr->static_config.is_16bit_pipeline || is_16bit);
+            Yv12BufferConfig org_fts;
+            link_eb_to_aom_buffer_desc(recon_picture_ptr,
+                                       &org_fts,
+                                       scs_ptr->max_input_pad_right,
+                                       scs_ptr->max_input_pad_bottom,
+                                       scs_ptr->static_config.is_16bit_pipeline || is_16bit);
+#else
             Yv12BufferConfig org_fts;
             link_eb_to_aom_buffer_desc(context_ptr->org_rec_frame,
                                        &org_fts,
                                        scs_ptr->max_input_pad_right,
                                        scs_ptr->max_input_pad_bottom,
                                        scs_ptr->static_config.is_16bit_pipeline || is_16bit);
-
+#endif
             restoration_seg_search(context_ptr->rst_tmpbuf,
                                    &org_fts,
                                    &cpi_source,

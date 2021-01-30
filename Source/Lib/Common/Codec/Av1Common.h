@@ -66,6 +66,9 @@ typedef struct Av1Common {
     int32_t sg_frame_ep;
     int8_t  sg_ref_frame_ep[2];
     int8_t  wn_filter_mode;
+#if CLN_REST_FILTER
+    uint8_t use_boundaries_in_rest_search; // Use boundary pixels in restoration filtering search
+#endif
 
     FrameSize    frm_size;
     TilesInfo    tiles_info;
