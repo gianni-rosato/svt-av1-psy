@@ -227,6 +227,10 @@ EbErrorType svt_reference_object_ctor(EbReferenceObject *reference_object,
     hme_desc_init_data.split_mode         = EB_FALSE;
     hme_desc_init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_LUMA_MASK; //Only save 8bit luma
     hme_desc_init_data.bit_depth          = EB_8BIT;
+#if CLN_MEM_REF
+    reference_object->input_picture = NULL;
+    if (ref_init_ptr->hme_quarter_luma_recon)
+#endif
     EB_NEW(
         reference_object->input_picture, svt_picture_buffer_desc_ctor, (EbPtr)&hme_desc_init_data);
     uint32_t mi_rows = reference_object->reference_picture->height >> MI_SIZE_LOG2;

@@ -4926,7 +4926,11 @@ void send_picture_out(
         }else {
             pcs->reference_picture_wrapper_ptr = NULL;
         }
+#if CLN_MEM_REF
+        if (scs->in_loop_me && pcs->is_used_as_reference_flag) {
+#else
         if (pcs->is_used_as_reference_flag) {
+#endif
             EbReferenceObject *reference_object =
         (EbReferenceObject *)pcs->reference_picture_wrapper_ptr->object_ptr;
             // Copy original input to reference->input_picture
