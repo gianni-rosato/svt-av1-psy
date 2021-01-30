@@ -19,7 +19,17 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+#if FIX_KF_BOOST_CAP
+#define FRAMES_TO_CHECK_DECAY 8
+#define KF_MIN_FRAME_BOOST 80.0
+#define KF_MAX_FRAME_BOOST 128.0
+#define MIN_KF_BOOST 600  // Minimum boost for non-static KF interval
+#define MAX_KF_BOOST 3200
+#define MIN_STATIC_KF_BOOST 5400  // Minimum boost for static KF interval
+#define MAX_KF_BOOST_LOW_KI 3000  // Maximum boost for KF with low interval
+#define MAX_KF_BOOST_HIGHT_KI 5000  // Maximum boost for KF with hight interval
+#define KF_INTERVAL_TH 64 // Low/high KF interval threshold
+#endif
 // structure of accumulated stats and features in a gf group
 typedef struct {
     double gf_group_err;

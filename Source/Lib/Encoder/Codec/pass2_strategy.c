@@ -1671,14 +1671,14 @@ static int test_candidate_kf(TWO_PASS *twopass,
   }
   return is_viable_kf;
 }
-
+#if !FIX_KF_BOOST_CAP
 #define FRAMES_TO_CHECK_DECAY 8
 #define KF_MIN_FRAME_BOOST 80.0
 #define KF_MAX_FRAME_BOOST 128.0
 #define MIN_KF_BOOST 600  // Minimum boost for non-static KF interval
 #define MAX_KF_BOOST 3200
 #define MIN_STATIC_KF_BOOST 5400  // Minimum boost for static KF interval
-
+#endif
 static int detect_app_forced_key(PictureParentControlSet *pcs_ptr) {
   SequenceControlSet *scs_ptr = pcs_ptr->scs_ptr;
   EncodeContext *encode_context_ptr = scs_ptr->encode_context_ptr;

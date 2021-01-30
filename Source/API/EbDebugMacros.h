@@ -230,6 +230,7 @@ extern "C" {
 #define  FTR_PRE_HME                           1 // preHME stage to catch vertical and horizontal high motion
 #define  FTR_ALIGN_SC_DETECOR                  1 // Upgrade sc detector to three classes
 #define CLN_MEM_REF                            1 // Clean-up non used src reference
+#define FIX_KF_BOOST_CAP                       1 // Cap kf_boost
 // ============= END SVT_04 =============
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
