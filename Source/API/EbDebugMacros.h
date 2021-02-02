@@ -250,7 +250,10 @@ extern "C" {
 #define CLN_CTRL_INIT_MRP                      1 //  Control MRP settings
 #define CLN_TPL_CONNECT_FLAG                   1 // Connect tpl_opt_flag to the remaining ofptimisation flags, lossless
 
-#define PR_1650 1 //Fix build AVX512
+#define PR_1650                                1 //Fix build AVX512
+#if PR_1650
+#define OPT_AVX512                             1 //Optimize some AVX2 and AVX512 transform, transpose, fdct16x16_avx512, fadst16x16_avx512, av1_fdct64_new_avx512, av1_fdct32_new_avx512, etc
+#endif
 // ============= END SVT_04 =============
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch

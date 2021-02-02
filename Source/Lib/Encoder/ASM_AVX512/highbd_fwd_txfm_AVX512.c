@@ -16,14 +16,19 @@
 #include "aom_dsp_rtcd.h"
 #include "EbTransforms.h"
 #include <immintrin.h>
+#if OPT_AVX512
+#include "transpose_encoder_avx512.h"
+#endif
 
 const int32_t *cospi_arr(int32_t n);
 const int32_t *sinpi_arr(int32_t n);
 
+#if !OPT_AVX512
 #define ZERO (uint8_t)0U
 #define ONE (uint8_t)1U
 #define TWO (uint8_t)2U
 #define THREE (uint8_t)3U
+#endif
 
 void av1_transform_config(TxType tx_type, TxSize tx_size, Txfm2dFlipCfg *cfg);
 
@@ -49,6 +54,7 @@ typedef void (*fwd_transform_1d_avx512)(const __m512i *in, __m512i *out, const i
 #define btf_32_type1_avx512_new(ww0, ww1, in0, in1, out0, out1, r, bit) \
     do { btf_32_type0_avx512_new(ww1, ww0, in1, in0, out0, out1, r, bit); } while (0)
 
+#if !OPT_AVX512
 #define TRANSPOSE_4X4_AVX512(x0, x1, x2, x3, y0, y1, y2, y3) \
     do {                                                     \
         __m512i u0, u1, u2, u3;                              \
@@ -61,6 +67,7 @@ typedef void (*fwd_transform_1d_avx512)(const __m512i *in, __m512i *out, const i
         y2 = _mm512_unpacklo_epi64(u1, u3);                  \
         y3 = _mm512_unpackhi_epi64(u1, u3);                  \
     } while (0)
+#endif /*OPT_AVX512*/
 
 static const int8_t *fwd_txfm_shift_ls[TX_SIZES_ALL] = {
     fwd_shift_4x4,   fwd_shift_8x8,   fwd_shift_16x16, fwd_shift_32x32, fwd_shift_64x64,
@@ -69,6 +76,7 @@ static const int8_t *fwd_txfm_shift_ls[TX_SIZES_ALL] = {
     fwd_shift_8x32,  fwd_shift_32x8,  fwd_shift_16x64, fwd_shift_64x16,
 };
 
+#if !OPT_AVX512
 static INLINE void transpose_16x16_avx512(int32_t stride, const __m512i *in, __m512i *out) {
     __m512i out1[16];
     TRANSPOSE_4X4_AVX512(in[0 * stride],
@@ -217,6 +225,7 @@ static INLINE void transpose_16x16_avx512(int32_t stride, const __m512i *in, __m
     outptr[2] = _mm512_extracti32x4_epi32(out1[11], THREE);
     outptr[3] = _mm512_extracti32x4_epi32(out1[15], THREE);
 }
+#endif /*OPT_AVX512*/
 
 static INLINE void load_buffer_16x16_avx512(const int16_t *input, __m512i *out, int32_t stride,
                                             int32_t flipud, int32_t fliplr, const int8_t shift) {
@@ -973,6 +982,7 @@ void av1_fwd_txfm2d_16x16_avx512(int16_t *input, int32_t *coeff, uint32_t stride
     (void)bd;
 }
 
+#if !OPT_AVX512
 static INLINE void transpose_16nx16n_avx512(int32_t txfm_size, const __m512i *input,
                                             __m512i *output) {
     const int32_t num_per_512 = 16;
@@ -988,6 +998,7 @@ static INLINE void transpose_16nx16n_avx512(int32_t txfm_size, const __m512i *in
         }
     }
 }
+#endif /*OPT_AVX512*/
 
 static void av1_fdct32_new_avx512(const __m512i *input, __m512i *output, const int8_t cos_bit,
                                   const int32_t col_num, const int32_t stride) {
@@ -2337,6 +2348,7 @@ void av1_fwd_txfm2d_64x64_avx512(int16_t *input, int32_t *output, uint32_t strid
     }
 }
 
+#if !OPT_AVX512
 static INLINE void transpose_16nx16m_avx512(const __m512i *in, __m512i *out, const int32_t width,
                                             const int32_t height) {
     const int32_t numcol = height >> 4;
@@ -2492,6 +2504,7 @@ static INLINE void transpose_16nx16m_avx512(const __m512i *in, __m512i *out, con
         }
     }
 }
+#endif /*OPT_AVX512*/
 
 static INLINE void load_buffer_16_avx512(const int16_t *input, __m512i *in, int32_t stride,
                                          int32_t flipud, int32_t fliplr, const int8_t shift) {
@@ -2797,6 +2810,7 @@ void av1_fwd_txfm2d_32x16_avx512(int16_t *input, int32_t *output, uint32_t strid
     (void)bd;
 }
 
+#if !OPT_AVX512
 static AOM_FORCE_INLINE void transpose_16nx16n_N2_half_avx512(int32_t        txfm_size,
                                                               const __m512i *input,
                                                               __m512i *      output) {
@@ -3174,6 +3188,7 @@ static AOM_FORCE_INLINE void transpose_16nx16m_N2_quad_avx512(const __m512i *in,
         }
     }
 }
+#endif /*OPT_AVX512*/
 
 static AOM_FORCE_INLINE void av1_round_shift_array_wxh_N2_avx512(__m512i *input, __m512i *output,
                                                                  const int32_t col_num,
@@ -4533,6 +4548,7 @@ void av1_fwd_txfm2d_64x32_N2_avx512(int16_t *input, int32_t *output, uint32_t st
 /******************************END*N2***************************************/
 
 /********************************N4****************************************/
+#if !OPT_AVX512
 static AOM_FORCE_INLINE void transpose_16nx16n_N4_half_avx512(int32_t        txfm_size,
                                                               const __m512i *input,
                                                               __m512i *      output) {
@@ -4580,6 +4596,7 @@ static AOM_FORCE_INLINE void transpose_16nx16n_N4_quad_avx512(int32_t        txf
         }
     }
 }
+#endif /*OPT_AVX512*/
 
 static AOM_FORCE_INLINE void clear_buffer_64x64_N4_avx512(__m512i *buff) {
     const __m512i zero512 = _mm512_setzero_si512();

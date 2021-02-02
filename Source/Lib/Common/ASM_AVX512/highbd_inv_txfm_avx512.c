@@ -18,19 +18,25 @@
 #include "common_dsp_rtcd.h"
 #include "EbInvTransforms.h"
 #include "synonyms_avx512.h"
+#if OPT_AVX512
+#include "transpose_avx512.h"
+#endif
 
 extern const int8_t *eb_inv_txfm_shift_ls[];
 const int32_t *      cospi_arr(int32_t n);
 const int32_t *      sinpi_arr(int32_t n);
 
+#if !OPT_AVX512
 #define ZERO (uint8_t)0U
 #define ONE (uint8_t)1U
 #define TWO (uint8_t)2U
 #define THREE (uint8_t)3U
+#endif /*OPT_AVX512*/
 
 typedef void (*inv_transform_1d_avx512)(__m512i *in, __m512i *out, const int8_t bit,
                                         int32_t num_cols);
 
+#if !OPT_AVX512
 #define TRANSPOSE_4X4_AVX512(x0, x1, x2, x3, y0, y1, y2, y3) \
     do {                                                     \
         __m512i u0, u1, u2, u3;                              \
@@ -192,6 +198,7 @@ static INLINE void transpose_16x16_avx512(int32_t stride, const __m512i *in, __m
     outptr[2] = _mm512_extracti32x4_epi32(out1[11], THREE);
     outptr[3] = _mm512_extracti32x4_epi32(out1[15], THREE);
 }
+#endif /*OPT_AVX512*/
 
 static void load_buffer_64x64_lower_32x32_avx512(const int32_t *coeff, __m512i *in) {
     int32_t i, j;
@@ -1390,6 +1397,7 @@ static void load_buffer_32x32(const int32_t *coeff, __m512i *in) {
     }
 }
 
+#if !OPT_AVX512
 static INLINE void transpose_16nx16n_avx512(int32_t txfm_size, const __m512i *input,
                                             __m512i *output) {
     const int32_t num_per_512 = 16;
@@ -1405,6 +1413,7 @@ static INLINE void transpose_16nx16n_avx512(int32_t txfm_size, const __m512i *in
         }
     }
 }
+#endif /*OPT_AVX512*/
 
 static void idct32_avx512(__m512i *in, __m512i *out, const int8_t bit, int32_t col_num) {
     const int32_t *cospi    = cospi_arr(bit);
@@ -2636,6 +2645,7 @@ void iidtx32_avx512(__m512i *input, __m512i *output, const int8_t cos_bit, int32
     }
 }
 
+#if !OPT_AVX512
 static INLINE void transpose_16nx16m_inv_avx512(const __m512i *in, __m512i *out,
                                                 const int32_t width, const int32_t height) {
     const int32_t numcol = height >> 4;
@@ -2793,6 +2803,7 @@ static INLINE void transpose_16nx16m_inv_avx512(const __m512i *in, __m512i *out,
         }
     }
 }
+#endif /*OPT_AVX512*/
 
 static void write_buffer_16x16n_avx512(__m512i *in, uint16_t *output_r, int32_t stride_r,
                                        uint16_t *output_w, int32_t stride_w, int32_t fliplr,
