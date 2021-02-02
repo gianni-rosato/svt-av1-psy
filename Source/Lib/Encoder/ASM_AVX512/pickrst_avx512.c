@@ -25,7 +25,11 @@
 #include "transpose_avx2.h"
 
 static INLINE int32_t hadd32_avx512(const __m512i src) {
+#if OPT_AVX512
+    const __m256i src_l = _mm512_castsi512_si256(src);
+#else
     const __m256i src_l = _mm512_extracti64x4_epi64(src, 0);
+#endif
     const __m256i src_h = _mm512_extracti64x4_epi64(src, 1);
     const __m256i sum   = _mm256_add_epi32(src_l, src_h);
 
@@ -130,7 +134,11 @@ static INLINE void add_u16_to_u32_avx512(const __m512i src, __m512i *const sum) 
 }
 
 static INLINE void add_32_to_64_avx512(const __m512i src, __m512i *const sum) {
+#if OPT_AVX512
+    const __m512i s0 = _mm512_cvtepi32_epi64(_mm512_castsi512_si256(src));
+#else
     const __m512i s0 = _mm512_cvtepi32_epi64(_mm512_extracti64x4_epi64(src, 0));
+#endif
     const __m512i s1 = _mm512_cvtepi32_epi64(_mm512_extracti64x4_epi64(src, 1));
     *sum             = _mm512_add_epi64(*sum, s0);
     *sum             = _mm512_add_epi64(*sum, s1);
@@ -253,13 +261,21 @@ static INLINE void sub_avg_block_highbd_avx512(const uint16_t *src, const int32_
 }
 
 static INLINE __m256i add_hi_lo_32_avx512(const __m512i src) {
+#if OPT_AVX512
+    const __m256i s0 = _mm512_castsi512_si256(src);
+#else
     const __m256i s0 = _mm512_extracti64x4_epi64(src, 0);
+#endif
     const __m256i s1 = _mm512_extracti64x4_epi64(src, 1);
     return _mm256_add_epi32(s0, s1);
 }
 
 static INLINE __m256i add_hi_lo_64_avx512(const __m512i src) {
+#if OPT_AVX512
+    const __m256i s0 = _mm512_castsi512_si256(src);
+#else
     const __m256i s0 = _mm512_extracti64x4_epi64(src, 0);
+#endif
     const __m256i s1 = _mm512_extracti64x4_epi64(src, 1);
     return _mm256_add_epi64(s0, s1);
 }

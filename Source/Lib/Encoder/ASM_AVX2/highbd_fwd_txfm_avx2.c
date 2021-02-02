@@ -3430,7 +3430,11 @@ static void av1_fdct64_new_avx2(const __m256i *input, __m256i *output, int8_t co
         x1[32] = _mm256_sub_epi32(in[31 * stride], in[32 * stride]);
 
         // stage 2
+#if OPT_AVX512
+        __m256i x2[54];
+#else
         __m256i x2[48];
+#endif
         x2[0]  = _mm256_add_epi32(x1[0], x1[31]);
         x2[31] = _mm256_sub_epi32(x1[0], x1[31]);
         x2[1]  = _mm256_add_epi32(x1[1], x1[30]);
@@ -3540,6 +3544,532 @@ static void av1_fdct64_new_avx2(const __m256i *input, __m256i *output, int8_t co
         x3[31] = _mm256_add_epi32(x1[56], x2[47]);
 
         // stage 4
+#if OPT_AVX512
+        //__m256i x4[44]; replace with x1
+        x1[0] = _mm256_add_epi32(x3[0], x3[7]);
+        x1[7] = _mm256_sub_epi32(x3[0], x3[7]);
+        x1[1] = _mm256_add_epi32(x3[1], x3[6]);
+        x1[6] = _mm256_sub_epi32(x3[1], x3[6]);
+        x1[2] = _mm256_add_epi32(x3[2], x3[5]);
+        x1[5] = _mm256_sub_epi32(x3[2], x3[5]);
+        x1[3] = _mm256_add_epi32(x3[3], x3[4]);
+        x1[4] = _mm256_sub_epi32(x3[3], x3[4]);
+        btf_32_type0_avx2_new(
+            cospi_m32, cospi_p32, x3[10], x3[13], x1[8], x1[11], __rounding, cos_bit);
+        btf_32_type0_avx2_new(
+            cospi_m32, cospi_p32, x3[11], x3[12], x1[9], x1[10], __rounding, cos_bit);
+        x1[12] = _mm256_add_epi32(x2[16], x3[19]);
+        x1[19] = _mm256_sub_epi32(x2[16], x3[19]);
+        x1[13] = _mm256_add_epi32(x2[17], x3[18]);
+        x1[18] = _mm256_sub_epi32(x2[17], x3[18]);
+        x1[14] = _mm256_add_epi32(x2[18], x3[17]);
+        x1[17] = _mm256_sub_epi32(x2[18], x3[17]);
+        x1[15] = _mm256_add_epi32(x2[19], x3[16]);
+        x1[16] = _mm256_sub_epi32(x2[19], x3[16]);
+        x1[20] = _mm256_sub_epi32(x2[31], x3[20]);
+        x1[27] = _mm256_add_epi32(x2[31], x3[20]);
+        x1[21] = _mm256_sub_epi32(x2[30], x3[21]);
+        x1[26] = _mm256_add_epi32(x2[30], x3[21]);
+        x1[22] = _mm256_sub_epi32(x2[29], x3[22]);
+        x1[25] = _mm256_add_epi32(x2[29], x3[22]);
+        x1[23] = _mm256_sub_epi32(x2[28], x3[23]);
+        x1[24] = _mm256_add_epi32(x2[28], x3[23]);
+        btf_32_type0_avx2_new(
+            cospi_m16, cospi_p48, x3[36], x3[28], x1[28], x1[43], __rounding, cos_bit);
+        btf_32_type0_avx2_new(
+            cospi_m16, cospi_p48, x3[37], x3[29], x1[29], x1[42], __rounding, cos_bit);
+        btf_32_type0_avx2_new(
+            cospi_m16, cospi_p48, x3[38], x3[30], x1[30], x1[41], __rounding, cos_bit);
+        btf_32_type0_avx2_new(
+            cospi_m16, cospi_p48, x3[39], x3[31], x1[31], x1[40], __rounding, cos_bit);
+        btf_32_type0_avx2_new(
+            cospi_m48, cospi_m16, x3[40], x3[55], x1[32], x1[39], __rounding, cos_bit);
+        btf_32_type0_avx2_new(
+            cospi_m48, cospi_m16, x3[41], x3[54], x1[33], x1[38], __rounding, cos_bit);
+        btf_32_type0_avx2_new(
+            cospi_m48, cospi_m16, x3[42], x3[53], x1[34], x1[37], __rounding, cos_bit);
+        btf_32_type0_avx2_new(
+            cospi_m48, cospi_m16, x3[43], x3[52], x1[35], x1[36], __rounding, cos_bit);
+
+        // stage 5
+        //__m256i x5[54]; replace with x2
+        x2[0] = _mm256_add_epi32(x1[0], x1[3]);
+        x2[3] = _mm256_sub_epi32(x1[0], x1[3]);
+        x2[1] = _mm256_add_epi32(x1[1], x1[2]);
+        x2[2] = _mm256_sub_epi32(x1[1], x1[2]);
+        btf_32_type0_avx2_new(
+            cospi_m32, cospi_p32, x1[5], x1[6], x2[4], x2[5], __rounding, cos_bit);
+        x2[6]  = _mm256_add_epi32(x3[8], x1[9]);
+        x2[9]  = _mm256_sub_epi32(x3[8], x1[9]);
+        x2[7]  = _mm256_add_epi32(x3[9], x1[8]);
+        x2[8]  = _mm256_sub_epi32(x3[9], x1[8]);
+        x2[10] = _mm256_sub_epi32(x3[15], x1[10]);
+        x2[13] = _mm256_add_epi32(x3[15], x1[10]);
+        x2[11] = _mm256_sub_epi32(x3[14], x1[11]);
+        x2[12] = _mm256_add_epi32(x3[14], x1[11]);
+        btf_32_type0_avx2_new(
+            cospi_m16, cospi_p48, x1[14], x1[25], x2[14], x2[21], __rounding, cos_bit);
+        btf_32_type0_avx2_new(
+            cospi_m16, cospi_p48, x1[15], x1[24], x2[15], x2[20], __rounding, cos_bit);
+        btf_32_type0_avx2_new(
+            cospi_m48, cospi_m16, x1[16], x1[23], x2[16], x2[19], __rounding, cos_bit);
+        btf_32_type0_avx2_new(
+            cospi_m48, cospi_m16, x1[17], x1[22], x2[17], x2[18], __rounding, cos_bit);
+        x2[22] = _mm256_add_epi32(x3[32], x1[31]);
+        x2[29] = _mm256_sub_epi32(x3[32], x1[31]);
+        x2[23] = _mm256_add_epi32(x3[33], x1[30]);
+        x2[28] = _mm256_sub_epi32(x3[33], x1[30]);
+        x2[24] = _mm256_add_epi32(x3[34], x1[29]);
+        x2[27] = _mm256_sub_epi32(x3[34], x1[29]);
+        x2[25] = _mm256_add_epi32(x3[35], x1[28]);
+        x2[26] = _mm256_sub_epi32(x3[35], x1[28]);
+        x2[30] = _mm256_sub_epi32(x3[47], x1[32]);
+        x2[37] = _mm256_add_epi32(x3[47], x1[32]);
+        x2[31] = _mm256_sub_epi32(x3[46], x1[33]);
+        x2[36] = _mm256_add_epi32(x3[46], x1[33]);
+        x2[32] = _mm256_sub_epi32(x3[45], x1[34]);
+        x2[35] = _mm256_add_epi32(x3[45], x1[34]);
+        x2[33] = _mm256_sub_epi32(x3[44], x1[35]);
+        x2[34] = _mm256_add_epi32(x3[44], x1[35]);
+        x2[38] = _mm256_add_epi32(x3[48], x1[39]);
+        x2[45] = _mm256_sub_epi32(x3[48], x1[39]);
+        x2[39] = _mm256_add_epi32(x3[49], x1[38]);
+        x2[44] = _mm256_sub_epi32(x3[49], x1[38]);
+        x2[40] = _mm256_add_epi32(x3[50], x1[37]);
+        x2[43] = _mm256_sub_epi32(x3[50], x1[37]);
+        x2[41] = _mm256_add_epi32(x3[51], x1[36]);
+        x2[42] = _mm256_sub_epi32(x3[51], x1[36]);
+        x2[46] = _mm256_sub_epi32(x3[24], x1[40]);
+        x2[53] = _mm256_add_epi32(x3[24], x1[40]);
+        x2[47] = _mm256_sub_epi32(x3[25], x1[41]);
+        x2[52] = _mm256_add_epi32(x3[25], x1[41]);
+        x2[48] = _mm256_sub_epi32(x3[26], x1[42]);
+        x2[51] = _mm256_add_epi32(x3[26], x1[42]);
+        x2[49] = _mm256_sub_epi32(x3[27], x1[43]);
+        x2[50] = _mm256_add_epi32(x3[27], x1[43]);
+
+        // stage 6
+        //__m256i x6[40]; replace with x3
+        btf_32_type0_avx2_new(cospi_p32,
+                              cospi_p32,
+                              x2[0],
+                              x2[1],
+                              out[0 * stride],
+                              out[32 * stride],
+                              __rounding,
+                              cos_bit);
+        btf_32_type1_avx2_new(cospi_p48,
+                              cospi_p16,
+                              x2[2],
+                              x2[3],
+                              out[16 * stride],
+                              out[48 * stride],
+                              __rounding,
+                              cos_bit);
+        x3[0] = _mm256_add_epi32(x1[4], x2[4]);
+        x3[1] = _mm256_sub_epi32(x1[4], x2[4]);
+        x3[2] = _mm256_sub_epi32(x1[7], x2[5]);
+        x3[3] = _mm256_add_epi32(x1[7], x2[5]);
+        btf_32_type0_avx2_new(
+            cospi_m16, cospi_p48, x2[7], x2[12], x3[4], x3[7], __rounding, cos_bit);
+        btf_32_type0_avx2_new(
+            cospi_m48, cospi_m16, x2[8], x2[11], x3[5], x3[6], __rounding, cos_bit);
+        x3[8]  = _mm256_add_epi32(x1[12], x2[15]);
+        x3[11] = _mm256_sub_epi32(x1[12], x2[15]);
+        x3[9]  = _mm256_add_epi32(x1[13], x2[14]);
+        x3[10] = _mm256_sub_epi32(x1[13], x2[14]);
+        x3[12] = _mm256_sub_epi32(x1[19], x2[16]);
+        x3[15] = _mm256_add_epi32(x1[19], x2[16]);
+        x3[13] = _mm256_sub_epi32(x1[18], x2[17]);
+        x3[14] = _mm256_add_epi32(x1[18], x2[17]);
+        x3[16] = _mm256_add_epi32(x1[20], x2[19]);
+        x3[19] = _mm256_sub_epi32(x1[20], x2[19]);
+        x3[17] = _mm256_add_epi32(x1[21], x2[18]);
+        x3[18] = _mm256_sub_epi32(x1[21], x2[18]);
+        x3[20] = _mm256_sub_epi32(x1[27], x2[20]);
+        x3[23] = _mm256_add_epi32(x1[27], x2[20]);
+        x3[21] = _mm256_sub_epi32(x1[26], x2[21]);
+        x3[22] = _mm256_add_epi32(x1[26], x2[21]);
+        btf_32_type0_avx2_new(
+            cospi_m08, cospi_p56, x2[24], x2[51], x3[24], x3[39], __rounding, cos_bit);
+        btf_32_type0_avx2_new(
+            cospi_m08, cospi_p56, x2[25], x2[50], x3[25], x3[38], __rounding, cos_bit);
+        btf_32_type0_avx2_new(
+            cospi_m56, cospi_m08, x2[26], x2[49], x3[26], x3[37], __rounding, cos_bit);
+        btf_32_type0_avx2_new(
+            cospi_m56, cospi_m08, x2[27], x2[48], x3[27], x3[36], __rounding, cos_bit);
+        btf_32_type0_avx2_new(
+            cospi_m40, cospi_p24, x2[32], x2[43], x3[28], x3[35], __rounding, cos_bit);
+        btf_32_type0_avx2_new(
+            cospi_m40, cospi_p24, x2[33], x2[42], x3[29], x3[34], __rounding, cos_bit);
+        btf_32_type0_avx2_new(
+            cospi_m24, cospi_m40, x2[34], x2[41], x3[30], x3[33], __rounding, cos_bit);
+        btf_32_type0_avx2_new(
+            cospi_m24, cospi_m40, x2[35], x2[40], x3[31], x3[32], __rounding, cos_bit);
+
+        // stage 7
+        //__m256i x7[48]; replace with x1
+        btf_32_type1_avx2_new(cospi_p56,
+                              cospi_p08,
+                              x3[0],
+                              x3[3],
+                              out[8 * stride],
+                              out[56 * stride],
+                              __rounding,
+                              cos_bit);
+        btf_32_type1_avx2_new(cospi_p24,
+                              cospi_p40,
+                              x3[1],
+                              x3[2],
+                              out[40 * stride],
+                              out[24 * stride],
+                              __rounding,
+                              cos_bit);
+        x1[0] = _mm256_add_epi32(x2[6], x3[4]);
+        x1[1] = _mm256_sub_epi32(x2[6], x3[4]);
+        x1[2] = _mm256_sub_epi32(x2[9], x3[5]);
+        x1[3] = _mm256_add_epi32(x2[9], x3[5]);
+        x1[4] = _mm256_add_epi32(x2[10], x3[6]);
+        x1[5] = _mm256_sub_epi32(x2[10], x3[6]);
+        x1[6] = _mm256_sub_epi32(x2[13], x3[7]);
+        x1[7] = _mm256_add_epi32(x2[13], x3[7]);
+        btf_32_type0_avx2_new(
+            cospi_m08, cospi_p56, x3[9], x3[22], x1[8], x1[15], __rounding, cos_bit);
+        btf_32_type0_avx2_new(
+            cospi_m56, cospi_m08, x3[10], x3[21], x1[9], x1[14], __rounding, cos_bit);
+        btf_32_type0_avx2_new(
+            cospi_m40, cospi_p24, x3[13], x3[18], x1[10], x1[13], __rounding, cos_bit);
+        btf_32_type0_avx2_new(
+            cospi_m24, cospi_m40, x3[14], x3[17], x1[11], x1[12], __rounding, cos_bit);
+        x1[16] = _mm256_add_epi32(x2[22], x3[25]);
+        x1[17] = _mm256_sub_epi32(x2[22], x3[25]);
+        x1[19] = _mm256_add_epi32(x2[23], x3[24]);
+        x1[20] = _mm256_sub_epi32(x2[23], x3[24]);
+        x1[18] = _mm256_sub_epi32(x2[29], x3[26]);
+        x1[21] = _mm256_add_epi32(x2[29], x3[26]);
+        x1[22] = _mm256_sub_epi32(x2[28], x3[27]);
+        x1[23] = _mm256_add_epi32(x2[28], x3[27]);
+        x1[24] = _mm256_add_epi32(x2[30], x3[29]);
+        x1[25] = _mm256_sub_epi32(x2[30], x3[29]);
+        x1[26] = _mm256_add_epi32(x2[31], x3[28]);
+        x1[27] = _mm256_sub_epi32(x2[31], x3[28]);
+        x1[28] = _mm256_sub_epi32(x2[37], x3[30]);
+        x1[29] = _mm256_add_epi32(x2[37], x3[30]);
+        x1[30] = _mm256_sub_epi32(x2[36], x3[31]);
+        x1[31] = _mm256_add_epi32(x2[36], x3[31]);
+        x1[32] = _mm256_add_epi32(x2[38], x3[33]);
+        x1[33] = _mm256_sub_epi32(x2[38], x3[33]);
+        x1[34] = _mm256_add_epi32(x2[39], x3[32]);
+        x1[35] = _mm256_sub_epi32(x2[39], x3[32]);
+        x1[36] = _mm256_sub_epi32(x2[45], x3[34]);
+        x1[37] = _mm256_add_epi32(x2[45], x3[34]);
+        x1[38] = _mm256_sub_epi32(x2[44], x3[35]);
+        x1[39] = _mm256_add_epi32(x2[44], x3[35]);
+        x1[40] = _mm256_add_epi32(x2[46], x3[37]);
+        x1[41] = _mm256_sub_epi32(x2[46], x3[37]);
+        x1[42] = _mm256_add_epi32(x2[47], x3[36]);
+        x1[43] = _mm256_sub_epi32(x2[47], x3[36]);
+        x1[44] = _mm256_sub_epi32(x2[53], x3[38]);
+        x1[45] = _mm256_add_epi32(x2[53], x3[38]);
+        x1[46] = _mm256_sub_epi32(x2[52], x3[39]);
+        x1[47] = _mm256_add_epi32(x2[52], x3[39]);
+
+        // stage 8
+        //__m256i x8[32]; replace with x2
+        btf_32_type1_avx2_new(cospi_p60,
+                              cospi_p04,
+                              x1[0],
+                              x1[7],
+                              out[4 * stride],
+                              out[60 * stride],
+                              __rounding,
+                              cos_bit);
+        btf_32_type1_avx2_new(cospi_p28,
+                              cospi_p36,
+                              x1[1],
+                              x1[6],
+                              out[36 * stride],
+                              out[28 * stride],
+                              __rounding,
+                              cos_bit);
+        btf_32_type1_avx2_new(cospi_p44,
+                              cospi_p20,
+                              x1[2],
+                              x1[5],
+                              out[20 * stride],
+                              out[44 * stride],
+                              __rounding,
+                              cos_bit);
+        btf_32_type1_avx2_new(cospi_p12,
+                              cospi_p52,
+                              x1[3],
+                              x1[4],
+                              out[52 * stride],
+                              out[12 * stride],
+                              __rounding,
+                              cos_bit);
+        x2[0]  = _mm256_add_epi32(x3[8], x1[8]);
+        x2[1]  = _mm256_sub_epi32(x3[8], x1[8]);
+        x2[2]  = _mm256_sub_epi32(x3[11], x1[9]);
+        x2[3]  = _mm256_add_epi32(x3[11], x1[9]);
+        x2[4]  = _mm256_add_epi32(x3[12], x1[10]);
+        x2[5]  = _mm256_sub_epi32(x3[12], x1[10]);
+        x2[6]  = _mm256_sub_epi32(x3[15], x1[11]);
+        x2[7]  = _mm256_add_epi32(x3[15], x1[11]);
+        x2[8]  = _mm256_add_epi32(x3[16], x1[12]);
+        x2[9]  = _mm256_sub_epi32(x3[16], x1[12]);
+        x2[10] = _mm256_sub_epi32(x3[19], x1[13]);
+        x2[11] = _mm256_add_epi32(x3[19], x1[13]);
+        x2[12] = _mm256_add_epi32(x3[20], x1[14]);
+        x2[13] = _mm256_sub_epi32(x3[20], x1[14]);
+        x2[14] = _mm256_sub_epi32(x3[23], x1[15]);
+        x2[15] = _mm256_add_epi32(x3[23], x1[15]);
+        btf_32_type0_avx2_new(
+            cospi_m04, cospi_p60, x1[19], x1[47], x2[16], x2[31], __rounding, cos_bit);
+        btf_32_type0_avx2_new(
+            cospi_m60, cospi_m04, x1[20], x1[46], x2[17], x2[30], __rounding, cos_bit);
+        btf_32_type0_avx2_new(
+            cospi_m36, cospi_p28, x1[22], x1[43], x2[18], x2[29], __rounding, cos_bit);
+        btf_32_type0_avx2_new(
+            cospi_m28, cospi_m36, x1[23], x1[42], x2[19], x2[28], __rounding, cos_bit);
+        btf_32_type0_avx2_new(
+            cospi_m20, cospi_p44, x1[26], x1[39], x2[20], x2[27], __rounding, cos_bit);
+        btf_32_type0_avx2_new(
+            cospi_m44, cospi_m20, x1[27], x1[38], x2[21], x2[26], __rounding, cos_bit);
+        btf_32_type0_avx2_new(
+            cospi_m52, cospi_p12, x1[30], x1[35], x2[22], x2[25], __rounding, cos_bit);
+        btf_32_type0_avx2_new(
+            cospi_m12, cospi_m52, x1[31], x1[34], x2[23], x2[24], __rounding, cos_bit);
+
+        // stage 9
+        //__m256i x9[32]; replace with x3
+        btf_32_type1_avx2_new(cospi_p62,
+                              cospi_p02,
+                              x2[0],
+                              x2[15],
+                              out[2 * stride],
+                              out[62 * stride],
+                              __rounding,
+                              cos_bit);
+        btf_32_type1_avx2_new(cospi_p30,
+                              cospi_p34,
+                              x2[1],
+                              x2[14],
+                              out[34 * stride],
+                              out[30 * stride],
+                              __rounding,
+                              cos_bit);
+        btf_32_type1_avx2_new(cospi_p46,
+                              cospi_p18,
+                              x2[2],
+                              x2[13],
+                              out[18 * stride],
+                              out[46 * stride],
+                              __rounding,
+                              cos_bit);
+        btf_32_type1_avx2_new(cospi_p14,
+                              cospi_p50,
+                              x2[3],
+                              x2[12],
+                              out[50 * stride],
+                              out[14 * stride],
+                              __rounding,
+                              cos_bit);
+        btf_32_type1_avx2_new(cospi_p54,
+                              cospi_p10,
+                              x2[4],
+                              x2[11],
+                              out[10 * stride],
+                              out[54 * stride],
+                              __rounding,
+                              cos_bit);
+        btf_32_type1_avx2_new(cospi_p22,
+                              cospi_p42,
+                              x2[5],
+                              x2[10],
+                              out[42 * stride],
+                              out[22 * stride],
+                              __rounding,
+                              cos_bit);
+        btf_32_type1_avx2_new(cospi_p38,
+                              cospi_p26,
+                              x2[6],
+                              x2[9],
+                              out[26 * stride],
+                              out[38 * stride],
+                              __rounding,
+                              cos_bit);
+        btf_32_type1_avx2_new(cospi_p06,
+                              cospi_p58,
+                              x2[7],
+                              x2[8],
+                              out[58 * stride],
+                              out[6 * stride],
+                              __rounding,
+                              cos_bit);
+        x3[0]  = _mm256_add_epi32(x1[16], x2[16]);
+        x3[1]  = _mm256_sub_epi32(x1[16], x2[16]);
+        x3[2]  = _mm256_sub_epi32(x1[17], x2[17]);
+        x3[3]  = _mm256_add_epi32(x1[17], x2[17]);
+        x3[4]  = _mm256_add_epi32(x1[18], x2[18]);
+        x3[5]  = _mm256_sub_epi32(x1[18], x2[18]);
+        x3[6]  = _mm256_sub_epi32(x1[21], x2[19]);
+        x3[7]  = _mm256_add_epi32(x1[21], x2[19]);
+        x3[8]  = _mm256_add_epi32(x1[24], x2[20]);
+        x3[9]  = _mm256_sub_epi32(x1[24], x2[20]);
+        x3[10] = _mm256_sub_epi32(x1[25], x2[21]);
+        x3[11] = _mm256_add_epi32(x1[25], x2[21]);
+        x3[12] = _mm256_add_epi32(x1[28], x2[22]);
+        x3[13] = _mm256_sub_epi32(x1[28], x2[22]);
+        x3[14] = _mm256_sub_epi32(x1[29], x2[23]);
+        x3[15] = _mm256_add_epi32(x1[29], x2[23]);
+        x3[16] = _mm256_add_epi32(x1[32], x2[24]);
+        x3[17] = _mm256_sub_epi32(x1[32], x2[24]);
+        x3[18] = _mm256_sub_epi32(x1[33], x2[25]);
+        x3[19] = _mm256_add_epi32(x1[33], x2[25]);
+        x3[20] = _mm256_add_epi32(x1[36], x2[26]);
+        x3[21] = _mm256_sub_epi32(x1[36], x2[26]);
+        x3[22] = _mm256_sub_epi32(x1[37], x2[27]);
+        x3[23] = _mm256_add_epi32(x1[37], x2[27]);
+        x3[24] = _mm256_add_epi32(x1[40], x2[28]);
+        x3[25] = _mm256_sub_epi32(x1[40], x2[28]);
+        x3[26] = _mm256_sub_epi32(x1[41], x2[29]);
+        x3[27] = _mm256_add_epi32(x1[41], x2[29]);
+        x3[28] = _mm256_add_epi32(x1[44], x2[30]);
+        x3[29] = _mm256_sub_epi32(x1[44], x2[30]);
+        x3[30] = _mm256_sub_epi32(x1[45], x2[31]);
+        x3[31] = _mm256_add_epi32(x1[45], x2[31]);
+
+        // stage 10
+        btf_32_type1_avx2_new(cospi_p63,
+                              cospi_p01,
+                              x3[0],
+                              x3[31],
+                              out[1 * stride],
+                              out[63 * stride],
+                              __rounding,
+                              cos_bit);
+        btf_32_type1_avx2_new(cospi_p31,
+                              cospi_p33,
+                              x3[1],
+                              x3[30],
+                              out[33 * stride],
+                              out[31 * stride],
+                              __rounding,
+                              cos_bit);
+        btf_32_type1_avx2_new(cospi_p47,
+                              cospi_p17,
+                              x3[2],
+                              x3[29],
+                              out[17 * stride],
+                              out[47 * stride],
+                              __rounding,
+                              cos_bit);
+        btf_32_type1_avx2_new(cospi_p15,
+                              cospi_p49,
+                              x3[3],
+                              x3[28],
+                              out[49 * stride],
+                              out[15 * stride],
+                              __rounding,
+                              cos_bit);
+        btf_32_type1_avx2_new(cospi_p55,
+                              cospi_p09,
+                              x3[4],
+                              x3[27],
+                              out[9 * stride],
+                              out[55 * stride],
+                              __rounding,
+                              cos_bit);
+        btf_32_type1_avx2_new(cospi_p23,
+                              cospi_p41,
+                              x3[5],
+                              x3[26],
+                              out[41 * stride],
+                              out[23 * stride],
+                              __rounding,
+                              cos_bit);
+        btf_32_type1_avx2_new(cospi_p39,
+                              cospi_p25,
+                              x3[6],
+                              x3[25],
+                              out[25 * stride],
+                              out[39 * stride],
+                              __rounding,
+                              cos_bit);
+        btf_32_type1_avx2_new(cospi_p07,
+                              cospi_p57,
+                              x3[7],
+                              x3[24],
+                              out[57 * stride],
+                              out[7 * stride],
+                              __rounding,
+                              cos_bit);
+        btf_32_type1_avx2_new(cospi_p59,
+                              cospi_p05,
+                              x3[8],
+                              x3[23],
+                              out[5 * stride],
+                              out[59 * stride],
+                              __rounding,
+                              cos_bit);
+        btf_32_type1_avx2_new(cospi_p27,
+                              cospi_p37,
+                              x3[9],
+                              x3[22],
+                              out[37 * stride],
+                              out[27 * stride],
+                              __rounding,
+                              cos_bit);
+        btf_32_type1_avx2_new(cospi_p43,
+                              cospi_p21,
+                              x3[10],
+                              x3[21],
+                              out[21 * stride],
+                              out[43 * stride],
+                              __rounding,
+                              cos_bit);
+        btf_32_type1_avx2_new(cospi_p11,
+                              cospi_p53,
+                              x3[11],
+                              x3[20],
+                              out[53 * stride],
+                              out[11 * stride],
+                              __rounding,
+                              cos_bit);
+        btf_32_type1_avx2_new(cospi_p51,
+                              cospi_p13,
+                              x3[12],
+                              x3[19],
+                              out[13 * stride],
+                              out[51 * stride],
+                              __rounding,
+                              cos_bit);
+        btf_32_type1_avx2_new(cospi_p19,
+                              cospi_p45,
+                              x3[13],
+                              x3[18],
+                              out[45 * stride],
+                              out[19 * stride],
+                              __rounding,
+                              cos_bit);
+        btf_32_type1_avx2_new(cospi_p35,
+                              cospi_p29,
+                              x3[14],
+                              x3[17],
+                              out[29 * stride],
+                              out[35 * stride],
+                              __rounding,
+                              cos_bit);
+        btf_32_type1_avx2_new(cospi_p03,
+                              cospi_p61,
+                              x3[15],
+                              x3[16],
+                              out[61 * stride],
+                              out[3 * stride],
+                              __rounding,
+                              cos_bit);
+#else /*OPT_AVX512*/
         __m256i x4[44];
         x4[0] = _mm256_add_epi32(x3[0], x3[7]);
         x4[7] = _mm256_sub_epi32(x3[0], x3[7]);
@@ -4064,6 +4594,7 @@ static void av1_fdct64_new_avx2(const __m256i *input, __m256i *output, int8_t co
                               out[3 * stride],
                               __rounding,
                               cos_bit);
+#endif /*OPT_AVX512*/
     }
 }
 

@@ -249,7 +249,11 @@ static INLINE __m128i dc_sum_16(const uint16_t *const src) {
 
 static INLINE __m128i dc_sum_32(const uint16_t *const src) {
     const __m512i s32 = _mm512_loadu_si512((const __m512i *)src);
+#if OPT_AVX512
+    const __m256i s0  = _mm512_castsi512_si256(s32);
+#else
     const __m256i s0  = _mm512_extracti64x4_epi64(s32, 0);
+#endif
     const __m256i s1  = _mm512_extracti64x4_epi64(s32, 1);
     const __m256i sum = _mm256_add_epi16(s0, s1);
     return dc_sum_large(sum);
@@ -260,7 +264,11 @@ static INLINE __m128i dc_sum_64(const uint16_t *const src) {
     const __m512i s1  = _mm512_loadu_si512((const __m512i *)(src + 0x20));
     const __m512i s01 = _mm512_add_epi16(s0, s1);
 
+#if OPT_AVX512
+    const __m256i s2 = _mm512_castsi512_si256(s01);
+#else
     const __m256i s2 = _mm512_extracti64x4_epi64(s01, 0);
+#endif
     const __m256i s3 = _mm512_extracti64x4_epi64(s01, 1);
 
     const __m256i sum = _mm256_add_epi16(s2, s3);
@@ -457,7 +465,11 @@ void aom_highbd_dc_top_predictor_64x64_avx512(uint16_t *dst, ptrdiff_t stride,
 static INLINE __m128i dc_sum_8_32(const uint16_t *const src_8, const uint16_t *const src_32) {
     const __m128i s_8      = _mm_loadu_si128((const __m128i *)src_8);
     const __m512i s32_01   = _mm512_loadu_si512((const __m512i *)(src_32 + 0x00));
+#if OPT_AVX512
+    const __m256i s_32_0   = _mm512_castsi512_si256(s32_01);
+#else
     const __m256i s_32_0   = _mm512_extracti64x4_epi64(s32_01, 0);
+#endif
     const __m256i s_32_1   = _mm512_extracti64x4_epi64(s32_01, 1);
     const __m256i s_32     = _mm256_add_epi16(s_32_0, s_32_1);
     const __m128i s_lo     = _mm256_extracti128_si256(s_32, 0);
@@ -470,7 +482,11 @@ static INLINE __m128i dc_sum_8_32(const uint16_t *const src_8, const uint16_t *c
 static INLINE __m128i dc_sum_16_32(const uint16_t *const src_16, const uint16_t *const src_32) {
     const __m256i s_16   = _mm256_loadu_si256((const __m256i *)src_16);
     const __m512i s32_01 = _mm512_loadu_si512((const __m512i *)(src_32 + 0x00));
+#if OPT_AVX512
+    const __m256i s_32_0 = _mm512_castsi512_si256(s32_01);
+#else
     const __m256i s_32_0 = _mm512_extracti64x4_epi64(s32_01, 0);
+#endif
     const __m256i s_32_1 = _mm512_extracti64x4_epi64(s32_01, 1);
     const __m256i sum0   = _mm256_add_epi16(s_16, s_32_0);
     const __m256i sum    = _mm256_add_epi16(sum0, s_32_1);
@@ -495,7 +511,11 @@ static INLINE __m128i dc_sum_32_32(const uint16_t *const src0, const uint16_t *c
     const __m512i s_32_0    = _mm512_loadu_si512((const __m512i *)(src0 + 0x00));
     const __m512i s_32_1    = _mm512_loadu_si512((const __m512i *)(src1 + 0x00));
     const __m512i sum_32_01 = _mm512_add_epi16(s_32_0, s_32_1);
+#if OPT_AVX512
+    const __m256i sum_16_0  = _mm512_castsi512_si256(sum_32_01);
+#else
     const __m256i sum_16_0  = _mm512_extracti64x4_epi64(sum_32_01, 0);
+#endif
     const __m256i sum_16_1  = _mm512_extracti64x4_epi64(sum_32_01, 1);
     const __m256i sum       = _mm256_add_epi16(sum_16_0, sum_16_1);
     return dc_sum_large(sum);
@@ -506,7 +526,11 @@ static INLINE __m128i dc_sum_16_64(const uint16_t *const src_16, const uint16_t 
     const __m512i s_64_0    = _mm512_loadu_si512((const __m512i *)(src_64 + 0x00));
     const __m512i s_64_1    = _mm512_loadu_si512((const __m512i *)(src_64 + 0x20));
     const __m512i sum_64_01 = _mm512_add_epi16(s_64_1, s_64_0);
+#if OPT_AVX512
+    const __m256i s1        = _mm512_castsi512_si256(sum_64_01);
+#else
     const __m256i s1        = _mm512_extracti64x4_epi64(sum_64_01, 0);
+#endif
     const __m256i s2        = _mm512_extracti64x4_epi64(sum_64_01, 1);
     const __m256i s3        = _mm256_add_epi16(s1, s_16);
     const __m256i sum       = _mm256_add_epi16(s2, s3);
@@ -521,7 +545,11 @@ static INLINE __m128i dc_sum_32_64(const uint16_t *const src_32, const uint16_t 
     const __m512i sum0 = _mm512_add_epi16(s_32_0, s_64_0);
     const __m512i sum1 = _mm512_add_epi16(sum0, s_64_1);
 
+#if OPT_AVX512
+    const __m256i sum2 = _mm512_castsi512_si256(sum1);
+#else
     const __m256i sum2 = _mm512_extracti64x4_epi64(sum1, 0);
+#endif
     const __m256i sum3 = _mm512_extracti64x4_epi64(sum1, 1);
     const __m256i sum  = _mm256_add_epi16(sum2, sum3);
     return dc_sum_larger(sum);
@@ -537,7 +565,11 @@ static INLINE __m128i dc_sum_64_64(const uint16_t *const src0, const uint16_t *c
     const __m512i sum23 = _mm512_add_epi16(s2, s3);
     const __m512i sum03 = _mm512_add_epi16(sum01, sum23);
 
+#if OPT_AVX512
+    const __m256i sum03_1 = _mm512_castsi512_si256(sum03);
+#else
     const __m256i sum03_1 = _mm512_extracti64x4_epi64(sum03, 0);
+#endif
     const __m256i sum03_2 = _mm512_extracti64x4_epi64(sum03, 1);
 
     const __m256i sum = _mm256_add_epi16(sum03_1, sum03_2);
