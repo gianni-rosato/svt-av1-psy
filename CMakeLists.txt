@@ -196,10 +196,6 @@ else()
     if(NATIVE)
         check_both_flags_add(-march=native)
     endif()
-    if(COVERAGE)
-        check_both_flags_add(--coverage)
-        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --coverage")
-    endif()
     if(MINGW)
         check_both_flags_add(-mxsave -fno-asynchronous-unwind-tables)
     else()
@@ -341,6 +337,10 @@ endif()
 
 if(SANITIZER)
     check_both_flags_add(-fno-omit-frame-pointer -fno-optimize-sibling-calls)
+endif()
+
+if(COVERAGE)
+    add_clike_and_ld_flags(--coverage)
 endif()
 
 # Add Subdirectories
