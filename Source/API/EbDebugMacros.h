@@ -233,6 +233,7 @@ extern "C" {
 #define FIX_KF_BOOST_CAP                       1 // Cap kf_boost
 #define CLN_REST_FILTER                        1 // Remove fixed-cost operations when restoration filtering is on (not lossless)
 #define FIX_ADD_MVP_MEMSET                     1 // Fix bitstream corruption for longer clips
+#define FIX_COMPUTE_MEAN_8X8                   1 // Fix crash when block_mean_calc_prec is set to BLOCK_MEAN_PREC_FULL
 // ============= END SVT_04 =============
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch

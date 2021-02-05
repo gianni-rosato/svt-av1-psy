@@ -14,6 +14,56 @@
 #include "EbMemory_AVX2.h"
 #include "EbMemory_SSE4_1.h"
 /********************************************************************************************************************************/
+#if FIX_COMPUTE_MEAN_8X8
+uint64_t svt_compute_mean8x8_avx2_intrin(
+    uint8_t *input_samples, // input parameter, input samples Ptr
+    uint32_t input_stride, // input parameter, input stride
+    uint32_t input_area_width, // input parameter, input area width
+    uint32_t input_area_height) // input parameter, input area height
+{
+    __m256i  sum, sum2, xmm2, xmm1, sum1, xmm0 = _mm256_setzero_si256();
+    uint64_t result;
+    xmm1 = _mm256_sad_epu8(
+        xmm0,
+        _mm256_set_m128i(_mm_loadl_epi64((__m128i *)(input_samples + input_stride)),
+                         _mm_loadl_epi64((__m128i *)(input_samples))));
+    xmm2 = _mm256_sad_epu8(
+        xmm0,
+        _mm256_set_m128i(_mm_loadl_epi64((__m128i *)(input_samples + 3 * input_stride)),
+                         _mm_loadl_epi64((__m128i *)(input_samples + 2 * input_stride))));
+    sum1 = _mm256_add_epi16(xmm1, xmm2);
+
+    input_samples += 4 * input_stride;
+
+    xmm1 = _mm256_sad_epu8(
+        xmm0,
+        _mm256_set_m128i(_mm_loadl_epi64((__m128i *)(input_samples + input_stride)),
+                         _mm_loadl_epi64((__m128i *)(input_samples))));
+    xmm2 = _mm256_sad_epu8(
+        xmm0,
+        _mm256_set_m128i(_mm_loadl_epi64((__m128i *)(input_samples + 3 * input_stride)),
+                         _mm_loadl_epi64((__m128i *)(input_samples + 2 * input_stride))));
+    sum2 = _mm256_add_epi16(xmm1, xmm2);
+
+    sum   = _mm256_add_epi16(sum1, sum2);
+    __m128i upper = _mm256_extractf128_si256(sum, 1); //extract upper 128 bit
+    upper = _mm_add_epi32(upper,
+                          _mm_srli_si128(upper, 8)); // shift 2nd 16 bits to the 1st and sum both
+
+    __m128i lower = _mm256_extractf128_si256(sum, 0); //extract lower 128 bit
+    lower = _mm_add_epi32(lower,
+                          _mm_srli_si128(lower, 8)); // shift 2nd 16 bits to the 1st and sum both
+
+    __m128i mean = _mm_add_epi32(lower, upper);
+
+    (void)input_area_width;
+    (void)input_area_height;
+
+    result = (uint64_t)_mm_cvtsi128_si32(mean) << 2;
+    return result;
+}
+#endif
+
 void svt_compute_interm_var_four8x8_avx2_intrin(uint8_t *input_samples, uint16_t input_stride,
                                                 uint64_t *mean_of8x8_blocks, // mean of four  8x8
                                                 uint64_t *mean_of_squared8x8_blocks) // meanSquared

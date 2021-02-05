@@ -280,6 +280,32 @@ void calculate_histogram(uint8_t * input_samples, // input parameter, input samp
 
     return;
 }
+
+#if FIX_COMPUTE_MEAN_8X8
+/*******************************************
+ * compute_mean
+ *   returns the mean of a block
+ *******************************************/
+uint64_t svt_compute_mean_c(uint8_t *input_samples, /**< input parameter, input samples Ptr */
+                            uint32_t input_stride, /**< input parameter, input stride */
+                            uint32_t input_area_width, /**< input parameter, input area width */
+                            uint32_t input_area_height) /**< input parameter, input area height */
+{
+    uint32_t hi, vi;
+    uint64_t block_mean = 0;
+    assert(input_area_width > 0);
+    assert(input_area_height > 0);
+
+    for (vi = 0; vi < input_area_height; vi++) {
+        for (hi = 0; hi < input_area_width; hi++) { block_mean += input_samples[hi]; }
+        input_samples += input_stride;
+    }
+
+    block_mean = (block_mean << (VARIANCE_PRECISION >> 1)) / (input_area_width * input_area_height);
+
+    return block_mean;
+}
+#endif
 /*******************************************
  * svt_compute_mean_squared_values_c
  *   returns the Mean of Squared Values
@@ -518,225 +544,225 @@ EbErrorType compute_chroma_block_mean(
     cr_block_index = input_cr_origin_index;
     if (scs_ptr->block_mean_calc_prec == BLOCK_MEAN_PREC_FULL) {
         cb_mean_of_16x16_blocks[0] =
-            compute_mean_8x8(&(input_padded_picture_ptr->buffer_cb[cb_block_index]),
-                             input_padded_picture_ptr->stride_cb,
-                             8,
-                             8);
+            svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_cb[cb_block_index]),
+                                 input_padded_picture_ptr->stride_cb,
+                                 8,
+                                 8);
         cr_mean_of_16x16_blocks[0] =
-            compute_mean_8x8(&(input_padded_picture_ptr->buffer_cr[cr_block_index]),
-                             input_padded_picture_ptr->stride_cr,
-                             8,
-                             8);
+            svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_cr[cr_block_index]),
+                                 input_padded_picture_ptr->stride_cr,
+                                 8,
+                                 8);
 
         // (0,1)
         cb_block_index = cb_block_index + 8;
         cr_block_index = cr_block_index + 8;
         cb_mean_of_16x16_blocks[1] =
-            compute_mean_8x8(&(input_padded_picture_ptr->buffer_cb[cb_block_index]),
-                             input_padded_picture_ptr->stride_cb,
-                             8,
-                             8);
+            svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_cb[cb_block_index]),
+                                 input_padded_picture_ptr->stride_cb,
+                                 8,
+                                 8);
         cr_mean_of_16x16_blocks[1] =
-            compute_mean_8x8(&(input_padded_picture_ptr->buffer_cr[cr_block_index]),
-                             input_padded_picture_ptr->stride_cr,
-                             8,
-                             8);
+            svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_cr[cr_block_index]),
+                                 input_padded_picture_ptr->stride_cr,
+                                 8,
+                                 8);
 
         // (0,2)
         cb_block_index = cb_block_index + 8;
         cr_block_index = cr_block_index + 8;
         cb_mean_of_16x16_blocks[2] =
-            compute_mean_8x8(&(input_padded_picture_ptr->buffer_cb[cb_block_index]),
-                             input_padded_picture_ptr->stride_cb,
-                             8,
-                             8);
+            svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_cb[cb_block_index]),
+                                 input_padded_picture_ptr->stride_cb,
+                                 8,
+                                 8);
         cr_mean_of_16x16_blocks[2] =
-            compute_mean_8x8(&(input_padded_picture_ptr->buffer_cr[cr_block_index]),
-                             input_padded_picture_ptr->stride_cr,
-                             8,
-                             8);
+            svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_cr[cr_block_index]),
+                                 input_padded_picture_ptr->stride_cr,
+                                 8,
+                                 8);
 
         // (0,3)
         cb_block_index = cb_block_index + 8;
         cr_block_index = cr_block_index + 8;
         cb_mean_of_16x16_blocks[3] =
-            compute_mean_8x8(&(input_padded_picture_ptr->buffer_cb[cb_block_index]),
-                             input_padded_picture_ptr->stride_cb,
-                             8,
-                             8);
+            svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_cb[cb_block_index]),
+                                 input_padded_picture_ptr->stride_cb,
+                                 8,
+                                 8);
         cr_mean_of_16x16_blocks[3] =
-            compute_mean_8x8(&(input_padded_picture_ptr->buffer_cr[cr_block_index]),
-                             input_padded_picture_ptr->stride_cr,
-                             8,
-                             8);
+            svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_cr[cr_block_index]),
+                                 input_padded_picture_ptr->stride_cr,
+                                 8,
+                                 8);
 
         // (1,0)
         cb_block_index = input_cb_origin_index + (input_padded_picture_ptr->stride_cb << 3);
         cr_block_index = input_cr_origin_index + (input_padded_picture_ptr->stride_cr << 3);
         cb_mean_of_16x16_blocks[4] =
-            compute_mean_8x8(&(input_padded_picture_ptr->buffer_cb[cb_block_index]),
-                             input_padded_picture_ptr->stride_cb,
-                             8,
-                             8);
+            svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_cb[cb_block_index]),
+                                 input_padded_picture_ptr->stride_cb,
+                                 8,
+                                 8);
         cr_mean_of_16x16_blocks[4] =
-            compute_mean_8x8(&(input_padded_picture_ptr->buffer_cr[cr_block_index]),
-                             input_padded_picture_ptr->stride_cr,
-                             8,
-                             8);
+            svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_cr[cr_block_index]),
+                                 input_padded_picture_ptr->stride_cr,
+                                 8,
+                                 8);
 
         // (1,1)
         cb_block_index = cb_block_index + 8;
         cr_block_index = cr_block_index + 8;
         cb_mean_of_16x16_blocks[5] =
-            compute_mean_8x8(&(input_padded_picture_ptr->buffer_cb[cb_block_index]),
-                             input_padded_picture_ptr->stride_cb,
-                             8,
-                             8);
+            svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_cb[cb_block_index]),
+                                 input_padded_picture_ptr->stride_cb,
+                                 8,
+                                 8);
         cr_mean_of_16x16_blocks[5] =
-            compute_mean_8x8(&(input_padded_picture_ptr->buffer_cr[cr_block_index]),
-                             input_padded_picture_ptr->stride_cr,
-                             8,
-                             8);
+            svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_cr[cr_block_index]),
+                                 input_padded_picture_ptr->stride_cr,
+                                 8,
+                                 8);
 
         // (1,2)
         cb_block_index = cb_block_index + 8;
         cr_block_index = cr_block_index + 8;
         cb_mean_of_16x16_blocks[6] =
-            compute_mean_8x8(&(input_padded_picture_ptr->buffer_cb[cb_block_index]),
-                             input_padded_picture_ptr->stride_cb,
-                             8,
-                             8);
+            svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_cb[cb_block_index]),
+                                 input_padded_picture_ptr->stride_cb,
+                                 8,
+                                 8);
         cr_mean_of_16x16_blocks[6] =
-            compute_mean_8x8(&(input_padded_picture_ptr->buffer_cr[cr_block_index]),
-                             input_padded_picture_ptr->stride_cr,
-                             8,
-                             8);
+            svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_cr[cr_block_index]),
+                                 input_padded_picture_ptr->stride_cr,
+                                 8,
+                                 8);
 
         // (1,3)
         cb_block_index = cb_block_index + 8;
         cr_block_index = cr_block_index + 8;
         cb_mean_of_16x16_blocks[7] =
-            compute_mean_8x8(&(input_padded_picture_ptr->buffer_cb[cb_block_index]),
-                             input_padded_picture_ptr->stride_cb,
-                             8,
-                             8);
+            svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_cb[cb_block_index]),
+                                 input_padded_picture_ptr->stride_cb,
+                                 8,
+                                 8);
         cr_mean_of_16x16_blocks[7] =
-            compute_mean_8x8(&(input_padded_picture_ptr->buffer_cr[cr_block_index]),
-                             input_padded_picture_ptr->stride_cr,
-                             8,
-                             8);
+            svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_cr[cr_block_index]),
+                                 input_padded_picture_ptr->stride_cr,
+                                 8,
+                                 8);
 
         // (2,0)
         cb_block_index = input_cb_origin_index + (input_padded_picture_ptr->stride_cb << 4);
         cr_block_index = input_cr_origin_index + (input_padded_picture_ptr->stride_cr << 4);
         cb_mean_of_16x16_blocks[8] =
-            compute_mean_8x8(&(input_padded_picture_ptr->buffer_cb[cb_block_index]),
-                             input_padded_picture_ptr->stride_cb,
-                             8,
-                             8);
+            svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_cb[cb_block_index]),
+                                 input_padded_picture_ptr->stride_cb,
+                                 8,
+                                 8);
         cr_mean_of_16x16_blocks[8] =
-            compute_mean_8x8(&(input_padded_picture_ptr->buffer_cr[cr_block_index]),
-                             input_padded_picture_ptr->stride_cr,
-                             8,
-                             8);
+            svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_cr[cr_block_index]),
+                                 input_padded_picture_ptr->stride_cr,
+                                 8,
+                                 8);
 
         // (2,1)
         cb_block_index = cb_block_index + 8;
         cr_block_index = cr_block_index + 8;
         cb_mean_of_16x16_blocks[9] =
-            compute_mean_8x8(&(input_padded_picture_ptr->buffer_cb[cb_block_index]),
-                             input_padded_picture_ptr->stride_cb,
-                             8,
-                             8);
+            svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_cb[cb_block_index]),
+                                 input_padded_picture_ptr->stride_cb,
+                                 8,
+                                 8);
         cr_mean_of_16x16_blocks[9] =
-            compute_mean_8x8(&(input_padded_picture_ptr->buffer_cr[cr_block_index]),
-                             input_padded_picture_ptr->stride_cr,
-                             8,
-                             8);
+            svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_cr[cr_block_index]),
+                                 input_padded_picture_ptr->stride_cr,
+                                 8,
+                                 8);
 
         // (2,2)
         cb_block_index = cb_block_index + 8;
         cr_block_index = cr_block_index + 8;
         cb_mean_of_16x16_blocks[10] =
-            compute_mean_8x8(&(input_padded_picture_ptr->buffer_cb[cb_block_index]),
-                             input_padded_picture_ptr->stride_cb,
-                             8,
-                             8);
+            svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_cb[cb_block_index]),
+                                 input_padded_picture_ptr->stride_cb,
+                                 8,
+                                 8);
         cr_mean_of_16x16_blocks[10] =
-            compute_mean_8x8(&(input_padded_picture_ptr->buffer_cr[cr_block_index]),
-                             input_padded_picture_ptr->stride_cr,
-                             8,
-                             8);
+            svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_cr[cr_block_index]),
+                                 input_padded_picture_ptr->stride_cr,
+                                 8,
+                                 8);
 
         // (2,3)
         cb_block_index = cb_block_index + 8;
         cr_block_index = cr_block_index + 8;
         cb_mean_of_16x16_blocks[11] =
-            compute_mean_8x8(&(input_padded_picture_ptr->buffer_cb[cb_block_index]),
-                             input_padded_picture_ptr->stride_cb,
-                             8,
-                             8);
+            svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_cb[cb_block_index]),
+                                 input_padded_picture_ptr->stride_cb,
+                                 8,
+                                 8);
         cr_mean_of_16x16_blocks[11] =
-            compute_mean_8x8(&(input_padded_picture_ptr->buffer_cr[cr_block_index]),
-                             input_padded_picture_ptr->stride_cr,
-                             8,
-                             8);
+            svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_cr[cr_block_index]),
+                                 input_padded_picture_ptr->stride_cr,
+                                 8,
+                                 8);
 
         // (3,0)
         cb_block_index = input_cb_origin_index + (input_padded_picture_ptr->stride_cb * 24);
         cr_block_index = input_cr_origin_index + (input_padded_picture_ptr->stride_cr * 24);
         cb_mean_of_16x16_blocks[12] =
-            compute_mean_8x8(&(input_padded_picture_ptr->buffer_cb[cb_block_index]),
-                             input_padded_picture_ptr->stride_cb,
-                             8,
-                             8);
+            svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_cb[cb_block_index]),
+                                 input_padded_picture_ptr->stride_cb,
+                                 8,
+                                 8);
         cr_mean_of_16x16_blocks[12] =
-            compute_mean_8x8(&(input_padded_picture_ptr->buffer_cr[cr_block_index]),
-                             input_padded_picture_ptr->stride_cr,
-                             8,
-                             8);
+            svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_cr[cr_block_index]),
+                                 input_padded_picture_ptr->stride_cr,
+                                 8,
+                                 8);
 
         // (3,1)
         cb_block_index = cb_block_index + 8;
         cr_block_index = cr_block_index + 8;
         cb_mean_of_16x16_blocks[13] =
-            compute_mean_8x8(&(input_padded_picture_ptr->buffer_cb[cb_block_index]),
-                             input_padded_picture_ptr->stride_cb,
-                             8,
-                             8);
+            svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_cb[cb_block_index]),
+                                 input_padded_picture_ptr->stride_cb,
+                                 8,
+                                 8);
         cr_mean_of_16x16_blocks[13] =
-            compute_mean_8x8(&(input_padded_picture_ptr->buffer_cr[cr_block_index]),
-                             input_padded_picture_ptr->stride_cr,
-                             8,
-                             8);
+            svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_cr[cr_block_index]),
+                                 input_padded_picture_ptr->stride_cr,
+                                 8,
+                                 8);
 
         // (3,2)
         cb_block_index = cb_block_index + 8;
         cr_block_index = cr_block_index + 8;
         cb_mean_of_16x16_blocks[14] =
-            compute_mean_8x8(&(input_padded_picture_ptr->buffer_cb[cb_block_index]),
-                             input_padded_picture_ptr->stride_cb,
-                             8,
-                             8);
+            svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_cb[cb_block_index]),
+                                 input_padded_picture_ptr->stride_cb,
+                                 8,
+                                 8);
         cr_mean_of_16x16_blocks[14] =
-            compute_mean_8x8(&(input_padded_picture_ptr->buffer_cr[cr_block_index]),
-                             input_padded_picture_ptr->stride_cr,
-                             8,
-                             8);
+            svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_cr[cr_block_index]),
+                                 input_padded_picture_ptr->stride_cr,
+                                 8,
+                                 8);
 
         // (3,3)
         cb_block_index = cb_block_index + 8;
         cr_block_index = cr_block_index + 8;
         cb_mean_of_16x16_blocks[15] =
-            compute_mean_8x8(&(input_padded_picture_ptr->buffer_cb[cb_block_index]),
-                             input_padded_picture_ptr->stride_cb,
-                             8,
-                             8);
+            svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_cb[cb_block_index]),
+                                 input_padded_picture_ptr->stride_cb,
+                                 8,
+                                 8);
         cr_mean_of_16x16_blocks[15] =
-            compute_mean_8x8(&(input_padded_picture_ptr->buffer_cr[cr_block_index]),
-                             input_padded_picture_ptr->stride_cr,
-                             8,
-                             8);
+            svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_cr[cr_block_index]),
+                                 input_padded_picture_ptr->stride_cr,
+                                 8,
+                                 8);
     } else {
         const uint16_t stride_cb = input_padded_picture_ptr->stride_cb;
         const uint16_t stride_cr = input_padded_picture_ptr->stride_cr;
@@ -1029,10 +1055,10 @@ EbErrorType compute_block_mean_compute_variance(
     // (0,0)
     block_index = input_luma_origin_index;
     if (scs_ptr->block_mean_calc_prec == BLOCK_MEAN_PREC_FULL) {
-        mean_of8x8_blocks[0] = compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
-                                                input_padded_picture_ptr->stride_y,
-                                                8,
-                                                8);
+        mean_of8x8_blocks[0] = svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
+                                                    input_padded_picture_ptr->stride_y,
+                                                    8,
+                                                    8);
         mean_of_8x8_squared_values_blocks[0] =
             svt_compute_mean_square_values_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
                                                input_padded_picture_ptr->stride_y,
@@ -1041,10 +1067,10 @@ EbErrorType compute_block_mean_compute_variance(
 
         // (0,1)
         block_index          = block_index + 8;
-        mean_of8x8_blocks[1] = compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
-                                                input_padded_picture_ptr->stride_y,
-                                                8,
-                                                8);
+        mean_of8x8_blocks[1] = svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
+                                                    input_padded_picture_ptr->stride_y,
+                                                    8,
+                                                    8);
         mean_of_8x8_squared_values_blocks[1] =
             svt_compute_mean_square_values_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
                                                input_padded_picture_ptr->stride_y,
@@ -1053,10 +1079,10 @@ EbErrorType compute_block_mean_compute_variance(
 
         // (0,2)
         block_index          = block_index + 8;
-        mean_of8x8_blocks[2] = compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
-                                                input_padded_picture_ptr->stride_y,
-                                                8,
-                                                8);
+        mean_of8x8_blocks[2] = svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
+                                                    input_padded_picture_ptr->stride_y,
+                                                    8,
+                                                    8);
         mean_of_8x8_squared_values_blocks[2] =
             svt_compute_mean_square_values_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
                                                input_padded_picture_ptr->stride_y,
@@ -1065,10 +1091,10 @@ EbErrorType compute_block_mean_compute_variance(
 
         // (0,3)
         block_index          = block_index + 8;
-        mean_of8x8_blocks[3] = compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
-                                                input_padded_picture_ptr->stride_y,
-                                                8,
-                                                8);
+        mean_of8x8_blocks[3] = svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
+                                                    input_padded_picture_ptr->stride_y,
+                                                    8,
+                                                    8);
         mean_of_8x8_squared_values_blocks[3] =
             svt_compute_mean_square_values_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
                                                input_padded_picture_ptr->stride_y,
@@ -1077,10 +1103,10 @@ EbErrorType compute_block_mean_compute_variance(
 
         // (0,4)
         block_index          = block_index + 8;
-        mean_of8x8_blocks[4] = compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
-                                                input_padded_picture_ptr->stride_y,
-                                                8,
-                                                8);
+        mean_of8x8_blocks[4] = svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
+                                                    input_padded_picture_ptr->stride_y,
+                                                    8,
+                                                    8);
         mean_of_8x8_squared_values_blocks[4] =
             svt_compute_mean_square_values_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
                                                input_padded_picture_ptr->stride_y,
@@ -1089,10 +1115,10 @@ EbErrorType compute_block_mean_compute_variance(
 
         // (0,5)
         block_index          = block_index + 8;
-        mean_of8x8_blocks[5] = compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
-                                                input_padded_picture_ptr->stride_y,
-                                                8,
-                                                8);
+        mean_of8x8_blocks[5] = svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
+                                                    input_padded_picture_ptr->stride_y,
+                                                    8,
+                                                    8);
         mean_of_8x8_squared_values_blocks[5] =
             svt_compute_mean_square_values_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
                                                input_padded_picture_ptr->stride_y,
@@ -1101,10 +1127,10 @@ EbErrorType compute_block_mean_compute_variance(
 
         // (0,6)
         block_index          = block_index + 8;
-        mean_of8x8_blocks[6] = compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
-                                                input_padded_picture_ptr->stride_y,
-                                                8,
-                                                8);
+        mean_of8x8_blocks[6] = svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
+                                                    input_padded_picture_ptr->stride_y,
+                                                    8,
+                                                    8);
         mean_of_8x8_squared_values_blocks[6] =
             svt_compute_mean_square_values_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
                                                input_padded_picture_ptr->stride_y,
@@ -1113,10 +1139,10 @@ EbErrorType compute_block_mean_compute_variance(
 
         // (0,7)
         block_index          = block_index + 8;
-        mean_of8x8_blocks[7] = compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
-                                                input_padded_picture_ptr->stride_y,
-                                                8,
-                                                8);
+        mean_of8x8_blocks[7] = svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
+                                                    input_padded_picture_ptr->stride_y,
+                                                    8,
+                                                    8);
         mean_of_8x8_squared_values_blocks[7] =
             svt_compute_mean_square_values_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
                                                input_padded_picture_ptr->stride_y,
@@ -1125,10 +1151,10 @@ EbErrorType compute_block_mean_compute_variance(
 
         // (1,0)
         block_index          = input_luma_origin_index + (input_padded_picture_ptr->stride_y << 3);
-        mean_of8x8_blocks[8] = compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
-                                                input_padded_picture_ptr->stride_y,
-                                                8,
-                                                8);
+        mean_of8x8_blocks[8] = svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
+                                                    input_padded_picture_ptr->stride_y,
+                                                    8,
+                                                    8);
         mean_of_8x8_squared_values_blocks[8] =
             svt_compute_mean_square_values_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
                                                input_padded_picture_ptr->stride_y,
@@ -1137,10 +1163,10 @@ EbErrorType compute_block_mean_compute_variance(
 
         // (1,1)
         block_index          = block_index + 8;
-        mean_of8x8_blocks[9] = compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
-                                                input_padded_picture_ptr->stride_y,
-                                                8,
-                                                8);
+        mean_of8x8_blocks[9] = svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
+                                                    input_padded_picture_ptr->stride_y,
+                                                    8,
+                                                    8);
         mean_of_8x8_squared_values_blocks[9] =
             svt_compute_mean_square_values_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
                                                input_padded_picture_ptr->stride_y,
@@ -1149,10 +1175,10 @@ EbErrorType compute_block_mean_compute_variance(
 
         // (1,2)
         block_index           = block_index + 8;
-        mean_of8x8_blocks[10] = compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
-                                                 input_padded_picture_ptr->stride_y,
-                                                 8,
-                                                 8);
+        mean_of8x8_blocks[10] = svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
+                                                     input_padded_picture_ptr->stride_y,
+                                                     8,
+                                                     8);
         mean_of_8x8_squared_values_blocks[10] =
             svt_compute_mean_square_values_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
                                                input_padded_picture_ptr->stride_y,
@@ -1161,10 +1187,10 @@ EbErrorType compute_block_mean_compute_variance(
 
         // (1,3)
         block_index           = block_index + 8;
-        mean_of8x8_blocks[11] = compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
-                                                 input_padded_picture_ptr->stride_y,
-                                                 8,
-                                                 8);
+        mean_of8x8_blocks[11] = svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
+                                                     input_padded_picture_ptr->stride_y,
+                                                     8,
+                                                     8);
         mean_of_8x8_squared_values_blocks[11] =
             svt_compute_mean_square_values_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
                                                input_padded_picture_ptr->stride_y,
@@ -1173,10 +1199,10 @@ EbErrorType compute_block_mean_compute_variance(
 
         // (1,4)
         block_index           = block_index + 8;
-        mean_of8x8_blocks[12] = compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
-                                                 input_padded_picture_ptr->stride_y,
-                                                 8,
-                                                 8);
+        mean_of8x8_blocks[12] = svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
+                                                     input_padded_picture_ptr->stride_y,
+                                                     8,
+                                                     8);
         mean_of_8x8_squared_values_blocks[12] =
             svt_compute_mean_square_values_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
                                                input_padded_picture_ptr->stride_y,
@@ -1185,10 +1211,10 @@ EbErrorType compute_block_mean_compute_variance(
 
         // (1,5)
         block_index           = block_index + 8;
-        mean_of8x8_blocks[13] = compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
-                                                 input_padded_picture_ptr->stride_y,
-                                                 8,
-                                                 8);
+        mean_of8x8_blocks[13] = svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
+                                                     input_padded_picture_ptr->stride_y,
+                                                     8,
+                                                     8);
         mean_of_8x8_squared_values_blocks[13] =
             svt_compute_mean_square_values_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
                                                input_padded_picture_ptr->stride_y,
@@ -1197,10 +1223,10 @@ EbErrorType compute_block_mean_compute_variance(
 
         // (1,6)
         block_index           = block_index + 8;
-        mean_of8x8_blocks[14] = compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
-                                                 input_padded_picture_ptr->stride_y,
-                                                 8,
-                                                 8);
+        mean_of8x8_blocks[14] = svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
+                                                     input_padded_picture_ptr->stride_y,
+                                                     8,
+                                                     8);
         mean_of_8x8_squared_values_blocks[14] =
             svt_compute_mean_square_values_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
                                                input_padded_picture_ptr->stride_y,
@@ -1209,10 +1235,10 @@ EbErrorType compute_block_mean_compute_variance(
 
         // (1,7)
         block_index           = block_index + 8;
-        mean_of8x8_blocks[15] = compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
-                                                 input_padded_picture_ptr->stride_y,
-                                                 8,
-                                                 8);
+        mean_of8x8_blocks[15] = svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
+                                                     input_padded_picture_ptr->stride_y,
+                                                     8,
+                                                     8);
         mean_of_8x8_squared_values_blocks[15] =
             svt_compute_mean_square_values_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
                                                input_padded_picture_ptr->stride_y,
@@ -1221,10 +1247,10 @@ EbErrorType compute_block_mean_compute_variance(
 
         // (2,0)
         block_index           = input_luma_origin_index + (input_padded_picture_ptr->stride_y << 4);
-        mean_of8x8_blocks[16] = compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
-                                                 input_padded_picture_ptr->stride_y,
-                                                 8,
-                                                 8);
+        mean_of8x8_blocks[16] = svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
+                                                     input_padded_picture_ptr->stride_y,
+                                                     8,
+                                                     8);
         mean_of_8x8_squared_values_blocks[16] =
             svt_compute_mean_square_values_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
                                                input_padded_picture_ptr->stride_y,
@@ -1233,10 +1259,10 @@ EbErrorType compute_block_mean_compute_variance(
 
         // (2,1)
         block_index           = block_index + 8;
-        mean_of8x8_blocks[17] = compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
-                                                 input_padded_picture_ptr->stride_y,
-                                                 8,
-                                                 8);
+        mean_of8x8_blocks[17] = svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
+                                                     input_padded_picture_ptr->stride_y,
+                                                     8,
+                                                     8);
         mean_of_8x8_squared_values_blocks[17] =
             svt_compute_mean_square_values_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
                                                input_padded_picture_ptr->stride_y,
@@ -1245,10 +1271,10 @@ EbErrorType compute_block_mean_compute_variance(
 
         // (2,2)
         block_index           = block_index + 8;
-        mean_of8x8_blocks[18] = compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
-                                                 input_padded_picture_ptr->stride_y,
-                                                 8,
-                                                 8);
+        mean_of8x8_blocks[18] = svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
+                                                     input_padded_picture_ptr->stride_y,
+                                                     8,
+                                                     8);
         mean_of_8x8_squared_values_blocks[18] =
             svt_compute_mean_square_values_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
                                                input_padded_picture_ptr->stride_y,
@@ -1257,10 +1283,10 @@ EbErrorType compute_block_mean_compute_variance(
 
         // (2,3)
         block_index           = block_index + 8;
-        mean_of8x8_blocks[19] = compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
-                                                 input_padded_picture_ptr->stride_y,
-                                                 8,
-                                                 8);
+        mean_of8x8_blocks[19] = svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
+                                                     input_padded_picture_ptr->stride_y,
+                                                     8,
+                                                     8);
         mean_of_8x8_squared_values_blocks[19] =
             svt_compute_mean_square_values_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
                                                input_padded_picture_ptr->stride_y,
@@ -1269,10 +1295,10 @@ EbErrorType compute_block_mean_compute_variance(
 
         /// (2,4)
         block_index           = block_index + 8;
-        mean_of8x8_blocks[20] = compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
-                                                 input_padded_picture_ptr->stride_y,
-                                                 8,
-                                                 8);
+        mean_of8x8_blocks[20] = svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
+                                                     input_padded_picture_ptr->stride_y,
+                                                     8,
+                                                     8);
         mean_of_8x8_squared_values_blocks[20] =
             svt_compute_mean_square_values_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
                                                input_padded_picture_ptr->stride_y,
@@ -1281,10 +1307,10 @@ EbErrorType compute_block_mean_compute_variance(
 
         // (2,5)
         block_index           = block_index + 8;
-        mean_of8x8_blocks[21] = compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
-                                                 input_padded_picture_ptr->stride_y,
-                                                 8,
-                                                 8);
+        mean_of8x8_blocks[21] = svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
+                                                     input_padded_picture_ptr->stride_y,
+                                                     8,
+                                                     8);
         mean_of_8x8_squared_values_blocks[21] =
             svt_compute_mean_square_values_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
                                                input_padded_picture_ptr->stride_y,
@@ -1293,10 +1319,10 @@ EbErrorType compute_block_mean_compute_variance(
 
         // (2,6)
         block_index           = block_index + 8;
-        mean_of8x8_blocks[22] = compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
-                                                 input_padded_picture_ptr->stride_y,
-                                                 8,
-                                                 8);
+        mean_of8x8_blocks[22] = svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
+                                                     input_padded_picture_ptr->stride_y,
+                                                     8,
+                                                     8);
         mean_of_8x8_squared_values_blocks[22] =
             svt_compute_mean_square_values_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
                                                input_padded_picture_ptr->stride_y,
@@ -1305,10 +1331,10 @@ EbErrorType compute_block_mean_compute_variance(
 
         // (2,7)
         block_index           = block_index + 8;
-        mean_of8x8_blocks[23] = compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
-                                                 input_padded_picture_ptr->stride_y,
-                                                 8,
-                                                 8);
+        mean_of8x8_blocks[23] = svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
+                                                     input_padded_picture_ptr->stride_y,
+                                                     8,
+                                                     8);
         mean_of_8x8_squared_values_blocks[23] =
             svt_compute_mean_square_values_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
                                                input_padded_picture_ptr->stride_y,
@@ -1318,10 +1344,10 @@ EbErrorType compute_block_mean_compute_variance(
         // (3,0)
         block_index = input_luma_origin_index + (input_padded_picture_ptr->stride_y << 3) +
                       (input_padded_picture_ptr->stride_y << 4);
-        mean_of8x8_blocks[24] = compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
-                                                 input_padded_picture_ptr->stride_y,
-                                                 8,
-                                                 8);
+        mean_of8x8_blocks[24] = svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
+                                                     input_padded_picture_ptr->stride_y,
+                                                     8,
+                                                     8);
         mean_of_8x8_squared_values_blocks[24] =
             svt_compute_mean_square_values_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
                                                input_padded_picture_ptr->stride_y,
@@ -1330,10 +1356,10 @@ EbErrorType compute_block_mean_compute_variance(
 
         // (3,1)
         block_index           = block_index + 8;
-        mean_of8x8_blocks[25] = compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
-                                                 input_padded_picture_ptr->stride_y,
-                                                 8,
-                                                 8);
+        mean_of8x8_blocks[25] = svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
+                                                     input_padded_picture_ptr->stride_y,
+                                                     8,
+                                                     8);
         mean_of_8x8_squared_values_blocks[25] =
             svt_compute_mean_square_values_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
                                                input_padded_picture_ptr->stride_y,
@@ -1342,10 +1368,10 @@ EbErrorType compute_block_mean_compute_variance(
 
         // (3,2)
         block_index           = block_index + 8;
-        mean_of8x8_blocks[26] = compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
-                                                 input_padded_picture_ptr->stride_y,
-                                                 8,
-                                                 8);
+        mean_of8x8_blocks[26] = svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
+                                                     input_padded_picture_ptr->stride_y,
+                                                     8,
+                                                     8);
         mean_of_8x8_squared_values_blocks[26] =
             svt_compute_mean_square_values_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
                                                input_padded_picture_ptr->stride_y,
@@ -1354,10 +1380,10 @@ EbErrorType compute_block_mean_compute_variance(
 
         // (3,3)
         block_index           = block_index + 8;
-        mean_of8x8_blocks[27] = compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
-                                                 input_padded_picture_ptr->stride_y,
-                                                 8,
-                                                 8);
+        mean_of8x8_blocks[27] = svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
+                                                     input_padded_picture_ptr->stride_y,
+                                                     8,
+                                                     8);
         mean_of_8x8_squared_values_blocks[27] =
             svt_compute_mean_square_values_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
                                                input_padded_picture_ptr->stride_y,
@@ -1366,10 +1392,10 @@ EbErrorType compute_block_mean_compute_variance(
 
         // (3,4)
         block_index           = block_index + 8;
-        mean_of8x8_blocks[28] = compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
-                                                 input_padded_picture_ptr->stride_y,
-                                                 8,
-                                                 8);
+        mean_of8x8_blocks[28] = svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
+                                                     input_padded_picture_ptr->stride_y,
+                                                     8,
+                                                     8);
         mean_of_8x8_squared_values_blocks[28] =
             svt_compute_mean_square_values_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
                                                input_padded_picture_ptr->stride_y,
@@ -1378,10 +1404,10 @@ EbErrorType compute_block_mean_compute_variance(
 
         // (3,5)
         block_index           = block_index + 8;
-        mean_of8x8_blocks[29] = compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
-                                                 input_padded_picture_ptr->stride_y,
-                                                 8,
-                                                 8);
+        mean_of8x8_blocks[29] = svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
+                                                     input_padded_picture_ptr->stride_y,
+                                                     8,
+                                                     8);
         mean_of_8x8_squared_values_blocks[29] =
             svt_compute_mean_square_values_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
                                                input_padded_picture_ptr->stride_y,
@@ -1390,10 +1416,10 @@ EbErrorType compute_block_mean_compute_variance(
 
         // (3,6)
         block_index           = block_index + 8;
-        mean_of8x8_blocks[30] = compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
-                                                 input_padded_picture_ptr->stride_y,
-                                                 8,
-                                                 8);
+        mean_of8x8_blocks[30] = svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
+                                                     input_padded_picture_ptr->stride_y,
+                                                     8,
+                                                     8);
         mean_of_8x8_squared_values_blocks[30] =
             svt_compute_mean_square_values_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
                                                input_padded_picture_ptr->stride_y,
@@ -1402,10 +1428,10 @@ EbErrorType compute_block_mean_compute_variance(
 
         // (3,7)
         block_index           = block_index + 8;
-        mean_of8x8_blocks[31] = compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
-                                                 input_padded_picture_ptr->stride_y,
-                                                 8,
-                                                 8);
+        mean_of8x8_blocks[31] = svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
+                                                     input_padded_picture_ptr->stride_y,
+                                                     8,
+                                                     8);
         mean_of_8x8_squared_values_blocks[31] =
             svt_compute_mean_square_values_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
                                                input_padded_picture_ptr->stride_y,
@@ -1414,10 +1440,10 @@ EbErrorType compute_block_mean_compute_variance(
 
         // (4,0)
         block_index           = input_luma_origin_index + (input_padded_picture_ptr->stride_y << 5);
-        mean_of8x8_blocks[32] = compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
-                                                 input_padded_picture_ptr->stride_y,
-                                                 8,
-                                                 8);
+        mean_of8x8_blocks[32] = svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
+                                                     input_padded_picture_ptr->stride_y,
+                                                     8,
+                                                     8);
         mean_of_8x8_squared_values_blocks[32] =
             svt_compute_mean_square_values_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
                                                input_padded_picture_ptr->stride_y,
@@ -1426,10 +1452,10 @@ EbErrorType compute_block_mean_compute_variance(
 
         // (4,1)
         block_index           = block_index + 8;
-        mean_of8x8_blocks[33] = compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
-                                                 input_padded_picture_ptr->stride_y,
-                                                 8,
-                                                 8);
+        mean_of8x8_blocks[33] = svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
+                                                     input_padded_picture_ptr->stride_y,
+                                                     8,
+                                                     8);
         mean_of_8x8_squared_values_blocks[33] =
             svt_compute_mean_square_values_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
                                                input_padded_picture_ptr->stride_y,
@@ -1438,10 +1464,10 @@ EbErrorType compute_block_mean_compute_variance(
 
         // (4,2)
         block_index           = block_index + 8;
-        mean_of8x8_blocks[34] = compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
-                                                 input_padded_picture_ptr->stride_y,
-                                                 8,
-                                                 8);
+        mean_of8x8_blocks[34] = svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
+                                                     input_padded_picture_ptr->stride_y,
+                                                     8,
+                                                     8);
         mean_of_8x8_squared_values_blocks[34] =
             svt_compute_mean_square_values_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
                                                input_padded_picture_ptr->stride_y,
@@ -1450,10 +1476,10 @@ EbErrorType compute_block_mean_compute_variance(
 
         // (4,3)
         block_index           = block_index + 8;
-        mean_of8x8_blocks[35] = compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
-                                                 input_padded_picture_ptr->stride_y,
-                                                 8,
-                                                 8);
+        mean_of8x8_blocks[35] = svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
+                                                     input_padded_picture_ptr->stride_y,
+                                                     8,
+                                                     8);
         mean_of_8x8_squared_values_blocks[35] =
             svt_compute_mean_square_values_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
                                                input_padded_picture_ptr->stride_y,
@@ -1462,10 +1488,10 @@ EbErrorType compute_block_mean_compute_variance(
 
         // (4,4)
         block_index           = block_index + 8;
-        mean_of8x8_blocks[36] = compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
-                                                 input_padded_picture_ptr->stride_y,
-                                                 8,
-                                                 8);
+        mean_of8x8_blocks[36] = svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
+                                                     input_padded_picture_ptr->stride_y,
+                                                     8,
+                                                     8);
         mean_of_8x8_squared_values_blocks[36] =
             svt_compute_mean_square_values_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
                                                input_padded_picture_ptr->stride_y,
@@ -1474,10 +1500,10 @@ EbErrorType compute_block_mean_compute_variance(
 
         // (4,5)
         block_index           = block_index + 8;
-        mean_of8x8_blocks[37] = compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
-                                                 input_padded_picture_ptr->stride_y,
-                                                 8,
-                                                 8);
+        mean_of8x8_blocks[37] = svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
+                                                     input_padded_picture_ptr->stride_y,
+                                                     8,
+                                                     8);
         mean_of_8x8_squared_values_blocks[37] =
             svt_compute_mean_square_values_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
                                                input_padded_picture_ptr->stride_y,
@@ -1486,10 +1512,10 @@ EbErrorType compute_block_mean_compute_variance(
 
         // (4,6)
         block_index           = block_index + 8;
-        mean_of8x8_blocks[38] = compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
-                                                 input_padded_picture_ptr->stride_y,
-                                                 8,
-                                                 8);
+        mean_of8x8_blocks[38] = svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
+                                                     input_padded_picture_ptr->stride_y,
+                                                     8,
+                                                     8);
         mean_of_8x8_squared_values_blocks[38] =
             svt_compute_mean_square_values_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
                                                input_padded_picture_ptr->stride_y,
@@ -1498,10 +1524,10 @@ EbErrorType compute_block_mean_compute_variance(
 
         // (4,7)
         block_index           = block_index + 8;
-        mean_of8x8_blocks[39] = compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
-                                                 input_padded_picture_ptr->stride_y,
-                                                 8,
-                                                 8);
+        mean_of8x8_blocks[39] = svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
+                                                     input_padded_picture_ptr->stride_y,
+                                                     8,
+                                                     8);
         mean_of_8x8_squared_values_blocks[39] =
             svt_compute_mean_square_values_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
                                                input_padded_picture_ptr->stride_y,
@@ -1511,10 +1537,10 @@ EbErrorType compute_block_mean_compute_variance(
         // (5,0)
         block_index = input_luma_origin_index + (input_padded_picture_ptr->stride_y << 3) +
                       (input_padded_picture_ptr->stride_y << 5);
-        mean_of8x8_blocks[40] = compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
-                                                 input_padded_picture_ptr->stride_y,
-                                                 8,
-                                                 8);
+        mean_of8x8_blocks[40] = svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
+                                                     input_padded_picture_ptr->stride_y,
+                                                     8,
+                                                     8);
         mean_of_8x8_squared_values_blocks[40] =
             svt_compute_mean_square_values_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
                                                input_padded_picture_ptr->stride_y,
@@ -1523,10 +1549,10 @@ EbErrorType compute_block_mean_compute_variance(
 
         // (5,1)
         block_index           = block_index + 8;
-        mean_of8x8_blocks[41] = compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
-                                                 input_padded_picture_ptr->stride_y,
-                                                 8,
-                                                 8);
+        mean_of8x8_blocks[41] = svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
+                                                     input_padded_picture_ptr->stride_y,
+                                                     8,
+                                                     8);
         mean_of_8x8_squared_values_blocks[41] =
             svt_compute_mean_square_values_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
                                                input_padded_picture_ptr->stride_y,
@@ -1535,10 +1561,10 @@ EbErrorType compute_block_mean_compute_variance(
 
         // (5,2)
         block_index           = block_index + 8;
-        mean_of8x8_blocks[42] = compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
-                                                 input_padded_picture_ptr->stride_y,
-                                                 8,
-                                                 8);
+        mean_of8x8_blocks[42] = svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
+                                                     input_padded_picture_ptr->stride_y,
+                                                     8,
+                                                     8);
         mean_of_8x8_squared_values_blocks[42] =
             svt_compute_mean_square_values_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
                                                input_padded_picture_ptr->stride_y,
@@ -1547,10 +1573,10 @@ EbErrorType compute_block_mean_compute_variance(
 
         // (5,3)
         block_index           = block_index + 8;
-        mean_of8x8_blocks[43] = compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
-                                                 input_padded_picture_ptr->stride_y,
-                                                 8,
-                                                 8);
+        mean_of8x8_blocks[43] = svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
+                                                     input_padded_picture_ptr->stride_y,
+                                                     8,
+                                                     8);
         mean_of_8x8_squared_values_blocks[43] =
             svt_compute_mean_square_values_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
                                                input_padded_picture_ptr->stride_y,
@@ -1559,10 +1585,10 @@ EbErrorType compute_block_mean_compute_variance(
 
         // (5,4)
         block_index           = block_index + 8;
-        mean_of8x8_blocks[44] = compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
-                                                 input_padded_picture_ptr->stride_y,
-                                                 8,
-                                                 8);
+        mean_of8x8_blocks[44] = svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
+                                                     input_padded_picture_ptr->stride_y,
+                                                     8,
+                                                     8);
         mean_of_8x8_squared_values_blocks[44] =
             svt_compute_mean_square_values_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
                                                input_padded_picture_ptr->stride_y,
@@ -1571,10 +1597,10 @@ EbErrorType compute_block_mean_compute_variance(
 
         // (5,5)
         block_index           = block_index + 8;
-        mean_of8x8_blocks[45] = compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
-                                                 input_padded_picture_ptr->stride_y,
-                                                 8,
-                                                 8);
+        mean_of8x8_blocks[45] = svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
+                                                     input_padded_picture_ptr->stride_y,
+                                                     8,
+                                                     8);
         mean_of_8x8_squared_values_blocks[45] =
             svt_compute_mean_square_values_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
                                                input_padded_picture_ptr->stride_y,
@@ -1583,10 +1609,10 @@ EbErrorType compute_block_mean_compute_variance(
 
         // (5,6)
         block_index           = block_index + 8;
-        mean_of8x8_blocks[46] = compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
-                                                 input_padded_picture_ptr->stride_y,
-                                                 8,
-                                                 8);
+        mean_of8x8_blocks[46] = svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
+                                                     input_padded_picture_ptr->stride_y,
+                                                     8,
+                                                     8);
         mean_of_8x8_squared_values_blocks[46] =
             svt_compute_mean_square_values_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
                                                input_padded_picture_ptr->stride_y,
@@ -1595,10 +1621,10 @@ EbErrorType compute_block_mean_compute_variance(
 
         // (5,7)
         block_index           = block_index + 8;
-        mean_of8x8_blocks[47] = compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
-                                                 input_padded_picture_ptr->stride_y,
-                                                 8,
-                                                 8);
+        mean_of8x8_blocks[47] = svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
+                                                     input_padded_picture_ptr->stride_y,
+                                                     8,
+                                                     8);
         mean_of_8x8_squared_values_blocks[47] =
             svt_compute_mean_square_values_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
                                                input_padded_picture_ptr->stride_y,
@@ -1608,10 +1634,10 @@ EbErrorType compute_block_mean_compute_variance(
         // (6,0)
         block_index = input_luma_origin_index + (input_padded_picture_ptr->stride_y << 4) +
                       (input_padded_picture_ptr->stride_y << 5);
-        mean_of8x8_blocks[48] = compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
-                                                 input_padded_picture_ptr->stride_y,
-                                                 8,
-                                                 8);
+        mean_of8x8_blocks[48] = svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
+                                                     input_padded_picture_ptr->stride_y,
+                                                     8,
+                                                     8);
         mean_of_8x8_squared_values_blocks[48] =
             svt_compute_mean_square_values_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
                                                input_padded_picture_ptr->stride_y,
@@ -1620,10 +1646,10 @@ EbErrorType compute_block_mean_compute_variance(
 
         // (6,1)
         block_index           = block_index + 8;
-        mean_of8x8_blocks[49] = compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
-                                                 input_padded_picture_ptr->stride_y,
-                                                 8,
-                                                 8);
+        mean_of8x8_blocks[49] = svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
+                                                     input_padded_picture_ptr->stride_y,
+                                                     8,
+                                                     8);
         mean_of_8x8_squared_values_blocks[49] =
             svt_compute_mean_square_values_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
                                                input_padded_picture_ptr->stride_y,
@@ -1632,10 +1658,10 @@ EbErrorType compute_block_mean_compute_variance(
 
         // (6,2)
         block_index           = block_index + 8;
-        mean_of8x8_blocks[50] = compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
-                                                 input_padded_picture_ptr->stride_y,
-                                                 8,
-                                                 8);
+        mean_of8x8_blocks[50] = svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
+                                                     input_padded_picture_ptr->stride_y,
+                                                     8,
+                                                     8);
         mean_of_8x8_squared_values_blocks[50] =
             svt_compute_mean_square_values_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
                                                input_padded_picture_ptr->stride_y,
@@ -1644,10 +1670,10 @@ EbErrorType compute_block_mean_compute_variance(
 
         // (6,3)
         block_index           = block_index + 8;
-        mean_of8x8_blocks[51] = compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
-                                                 input_padded_picture_ptr->stride_y,
-                                                 8,
-                                                 8);
+        mean_of8x8_blocks[51] = svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
+                                                     input_padded_picture_ptr->stride_y,
+                                                     8,
+                                                     8);
         mean_of_8x8_squared_values_blocks[51] =
             svt_compute_mean_square_values_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
                                                input_padded_picture_ptr->stride_y,
@@ -1656,10 +1682,10 @@ EbErrorType compute_block_mean_compute_variance(
 
         // (6,4)
         block_index           = block_index + 8;
-        mean_of8x8_blocks[52] = compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
-                                                 input_padded_picture_ptr->stride_y,
-                                                 8,
-                                                 8);
+        mean_of8x8_blocks[52] = svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
+                                                     input_padded_picture_ptr->stride_y,
+                                                     8,
+                                                     8);
         mean_of_8x8_squared_values_blocks[52] =
             svt_compute_mean_square_values_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
                                                input_padded_picture_ptr->stride_y,
@@ -1668,10 +1694,10 @@ EbErrorType compute_block_mean_compute_variance(
 
         // (6,5)
         block_index           = block_index + 8;
-        mean_of8x8_blocks[53] = compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
-                                                 input_padded_picture_ptr->stride_y,
-                                                 8,
-                                                 8);
+        mean_of8x8_blocks[53] = svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
+                                                     input_padded_picture_ptr->stride_y,
+                                                     8,
+                                                     8);
         mean_of_8x8_squared_values_blocks[53] =
             svt_compute_mean_square_values_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
                                                input_padded_picture_ptr->stride_y,
@@ -1680,10 +1706,10 @@ EbErrorType compute_block_mean_compute_variance(
 
         // (6,6)
         block_index           = block_index + 8;
-        mean_of8x8_blocks[54] = compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
-                                                 input_padded_picture_ptr->stride_y,
-                                                 8,
-                                                 8);
+        mean_of8x8_blocks[54] = svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
+                                                     input_padded_picture_ptr->stride_y,
+                                                     8,
+                                                     8);
         mean_of_8x8_squared_values_blocks[54] =
             svt_compute_mean_square_values_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
                                                input_padded_picture_ptr->stride_y,
@@ -1692,10 +1718,10 @@ EbErrorType compute_block_mean_compute_variance(
 
         // (6,7)
         block_index           = block_index + 8;
-        mean_of8x8_blocks[55] = compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
-                                                 input_padded_picture_ptr->stride_y,
-                                                 8,
-                                                 8);
+        mean_of8x8_blocks[55] = svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
+                                                     input_padded_picture_ptr->stride_y,
+                                                     8,
+                                                     8);
         mean_of_8x8_squared_values_blocks[55] =
             svt_compute_mean_square_values_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
                                                input_padded_picture_ptr->stride_y,
@@ -1706,10 +1732,10 @@ EbErrorType compute_block_mean_compute_variance(
         block_index = input_luma_origin_index + (input_padded_picture_ptr->stride_y << 3) +
                       (input_padded_picture_ptr->stride_y << 4) +
                       (input_padded_picture_ptr->stride_y << 5);
-        mean_of8x8_blocks[56] = compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
-                                                 input_padded_picture_ptr->stride_y,
-                                                 8,
-                                                 8);
+        mean_of8x8_blocks[56] = svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
+                                                     input_padded_picture_ptr->stride_y,
+                                                     8,
+                                                     8);
         mean_of_8x8_squared_values_blocks[56] =
             svt_compute_mean_square_values_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
                                                input_padded_picture_ptr->stride_y,
@@ -1718,10 +1744,10 @@ EbErrorType compute_block_mean_compute_variance(
 
         // (7,1)
         block_index           = block_index + 8;
-        mean_of8x8_blocks[57] = compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
-                                                 input_padded_picture_ptr->stride_y,
-                                                 8,
-                                                 8);
+        mean_of8x8_blocks[57] = svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
+                                                     input_padded_picture_ptr->stride_y,
+                                                     8,
+                                                     8);
         mean_of_8x8_squared_values_blocks[57] =
             svt_compute_mean_square_values_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
                                                input_padded_picture_ptr->stride_y,
@@ -1730,10 +1756,10 @@ EbErrorType compute_block_mean_compute_variance(
 
         // (7,2)
         block_index           = block_index + 8;
-        mean_of8x8_blocks[58] = compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
-                                                 input_padded_picture_ptr->stride_y,
-                                                 8,
-                                                 8);
+        mean_of8x8_blocks[58] = svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
+                                                     input_padded_picture_ptr->stride_y,
+                                                     8,
+                                                     8);
         mean_of_8x8_squared_values_blocks[58] =
             svt_compute_mean_square_values_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
                                                input_padded_picture_ptr->stride_y,
@@ -1742,10 +1768,10 @@ EbErrorType compute_block_mean_compute_variance(
 
         // (7,3)
         block_index           = block_index + 8;
-        mean_of8x8_blocks[59] = compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
-                                                 input_padded_picture_ptr->stride_y,
-                                                 8,
-                                                 8);
+        mean_of8x8_blocks[59] = svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
+                                                     input_padded_picture_ptr->stride_y,
+                                                     8,
+                                                     8);
         mean_of_8x8_squared_values_blocks[59] =
             svt_compute_mean_square_values_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
                                                input_padded_picture_ptr->stride_y,
@@ -1754,10 +1780,10 @@ EbErrorType compute_block_mean_compute_variance(
 
         // (7,4)
         block_index           = block_index + 8;
-        mean_of8x8_blocks[60] = compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
-                                                 input_padded_picture_ptr->stride_y,
-                                                 8,
-                                                 8);
+        mean_of8x8_blocks[60] = svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
+                                                     input_padded_picture_ptr->stride_y,
+                                                     8,
+                                                     8);
         mean_of_8x8_squared_values_blocks[60] =
             svt_compute_mean_square_values_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
                                                input_padded_picture_ptr->stride_y,
@@ -1766,10 +1792,10 @@ EbErrorType compute_block_mean_compute_variance(
 
         // (7,5)
         block_index           = block_index + 8;
-        mean_of8x8_blocks[61] = compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
-                                                 input_padded_picture_ptr->stride_y,
-                                                 8,
-                                                 8);
+        mean_of8x8_blocks[61] = svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
+                                                     input_padded_picture_ptr->stride_y,
+                                                     8,
+                                                     8);
         mean_of_8x8_squared_values_blocks[61] =
             svt_compute_mean_square_values_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
                                                input_padded_picture_ptr->stride_y,
@@ -1778,10 +1804,10 @@ EbErrorType compute_block_mean_compute_variance(
 
         // (7,6)
         block_index           = block_index + 8;
-        mean_of8x8_blocks[62] = compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
-                                                 input_padded_picture_ptr->stride_y,
-                                                 8,
-                                                 8);
+        mean_of8x8_blocks[62] = svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
+                                                     input_padded_picture_ptr->stride_y,
+                                                     8,
+                                                     8);
         mean_of_8x8_squared_values_blocks[62] =
             svt_compute_mean_square_values_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
                                                input_padded_picture_ptr->stride_y,
@@ -1790,10 +1816,10 @@ EbErrorType compute_block_mean_compute_variance(
 
         // (7,7)
         block_index           = block_index + 8;
-        mean_of8x8_blocks[63] = compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
-                                                 input_padded_picture_ptr->stride_y,
-                                                 8,
-                                                 8);
+        mean_of8x8_blocks[63] = svt_compute_mean_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
+                                                     input_padded_picture_ptr->stride_y,
+                                                     8,
+                                                     8);
         mean_of_8x8_squared_values_blocks[63] =
             svt_compute_mean_square_values_8x8(&(input_padded_picture_ptr->buffer_y[block_index]),
                                                input_padded_picture_ptr->stride_y,
@@ -3037,7 +3063,7 @@ void calculate_input_average_intensity(SequenceControlSet *     scs_ptr,
                  ++block_index_in_height) {
                 for (block_index_in_width = 0; input_picture_ptr->width >> 3 > block_index_in_width;
                      ++block_index_in_width)
-                    mean += compute_mean_8x8(
+                    mean += svt_compute_mean_8x8(
                         &(input_picture_ptr->buffer_y[(block_index_in_width << 3) +
                                                       (block_index_in_height << 3) *
                                                           input_picture_ptr->stride_y]),
