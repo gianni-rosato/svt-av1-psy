@@ -27,8 +27,10 @@ void svt_av1_loop_restoration_save_boundary_lines(const Yv12BufferConfig *frame,
 static void dlf_context_dctor(EbPtr p) {
     EbThreadContext *thread_context_ptr = (EbThreadContext *)p;
     DlfContext *     obj                = (DlfContext *)thread_context_ptr->priv;
+#if !CLN_DLF_RES_PROCESS
     EB_DELETE(obj->temp_lf_recon_picture_ptr);
     EB_DELETE(obj->temp_lf_recon_picture16bit_ptr);
+#endif
     EB_FREE_ARRAY(obj);
 }
 /******************************************************
@@ -36,10 +38,11 @@ static void dlf_context_dctor(EbPtr p) {
  ******************************************************/
 EbErrorType dlf_context_ctor(EbThreadContext *thread_context_ptr, const EbEncHandle *enc_handle_ptr,
                              int index) {
+#if !CLN_DLF_RES_PROCESS
     const SequenceControlSet *scs_ptr = enc_handle_ptr->scs_instance_array[0]->scs_ptr;
     EbBool        is_16bit     = (EbBool)(scs_ptr->static_config.encoder_bit_depth > EB_8BIT);
     EbColorFormat color_format = scs_ptr->static_config.encoder_color_format;
-
+#endif
     DlfContext *context_ptr;
     EB_CALLOC_ARRAY(context_ptr, 1);
     thread_context_ptr->priv  = context_ptr;
@@ -50,9 +53,10 @@ EbErrorType dlf_context_ctor(EbThreadContext *thread_context_ptr, const EbEncHan
         enc_handle_ptr->enc_dec_results_resource_ptr, index);
     context_ptr->dlf_output_fifo_ptr = svt_system_resource_get_producer_fifo(
         enc_handle_ptr->dlf_results_resource_ptr, index);
-
+#if !CLN_DLF_RES_PROCESS
     context_ptr->temp_lf_recon_picture16bit_ptr = (EbPictureBufferDesc *)NULL;
     context_ptr->temp_lf_recon_picture_ptr      = (EbPictureBufferDesc *)NULL;
+
     EbPictureBufferDescInitData temp_lf_recon_desc_init_data;
     temp_lf_recon_desc_init_data.max_width          = (uint16_t)scs_ptr->max_input_luma_width;
     temp_lf_recon_desc_init_data.max_height         = (uint16_t)scs_ptr->max_input_luma_height;
@@ -79,7 +83,7 @@ EbErrorType dlf_context_ctor(EbThreadContext *thread_context_ptr, const EbEncHan
                svt_recon_picture_buffer_desc_ctor,
                (EbPtr)&temp_lf_recon_desc_init_data);
     }
-
+#endif
     return EB_ErrorNone;
 }
 
@@ -194,14 +198,18 @@ void *dlf_kernel(void *input_ptr) {
 
             if (pcs_ptr->parent_pcs_ptr->loop_filter_mode == 2) {
                 svt_av1_pick_filter_level(
+#if !CLN_DLF_RES_PROCESS
                     context_ptr,
+#endif
                     (EbPictureBufferDesc *)pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr,
                     pcs_ptr,
                     LPF_PICK_FROM_Q);
             }
 
             svt_av1_pick_filter_level(
+#if !CLN_DLF_RES_PROCESS
                 context_ptr,
+#endif
                 (EbPictureBufferDesc *)pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr,
                 pcs_ptr,
                 LPF_PICK_FROM_FULL_IMAGE);

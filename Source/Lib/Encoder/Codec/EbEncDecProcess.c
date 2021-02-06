@@ -140,6 +140,17 @@ EbErrorType enc_dec_context_ctor(EbThreadContext *  thread_context_ptr,
            });
 
     // Mode Decision Context
+#if CLN_MD_CAND_BUFF
+    EB_NEW(context_ptr->md_context,
+           mode_decision_context_ctor,
+           color_format,
+           static_config->super_block_size,
+           static_config->enc_mode,
+           0,
+           0,
+           enable_hbd_mode_decision == DEFAULT ? 2 : enable_hbd_mode_decision ,
+           static_config->screen_content_mode);
+#else
     EB_NEW(context_ptr->md_context,
            mode_decision_context_ctor,
            color_format,
@@ -148,6 +159,7 @@ EbErrorType enc_dec_context_ctor(EbThreadContext *  thread_context_ptr,
            0,
            enable_hbd_mode_decision == DEFAULT ? 2 : enable_hbd_mode_decision ,
            static_config->screen_content_mode);
+#endif
     if (enable_hbd_mode_decision)
         context_ptr->md_context->input_sample16bit_buffer = context_ptr->input_sample16bit_buffer;
 
@@ -3731,7 +3743,12 @@ void set_near_count_ctrls(ModeDecisionContext* mdctxt, uint8_t near_count_level)
 void set_nic_controls(ModeDecisionContext *mdctxt, uint8_t nic_scaling_level) {
 
     NicCtrls* nic_ctrls = &mdctxt->nic_ctrls;
+#if CLN_MD_CAND_BUFF
+        nic_ctrls->stage1_scaling_num = MD_STAGE_NICS_SCAL_NUM[nic_scaling_level][MD_STAGE_1];
+        nic_ctrls->stage2_scaling_num = MD_STAGE_NICS_SCAL_NUM[nic_scaling_level][MD_STAGE_2];
+        nic_ctrls->stage3_scaling_num = MD_STAGE_NICS_SCAL_NUM[nic_scaling_level][MD_STAGE_3];
 
+#else
     switch (nic_scaling_level)
     {
     case 0:
@@ -3847,6 +3864,7 @@ void set_nic_controls(ModeDecisionContext *mdctxt, uint8_t nic_scaling_level) {
         assert(0);
         break;
     }
+#endif
 }
 #if FTR_NIC_PRUNING
 void set_nic_pruning_controls(ModeDecisionContext *mdctxt, uint8_t nic_pruning_level) {
@@ -4565,6 +4583,153 @@ Input   : encoder mode and pd pass
 Output  : EncDec Kernel signal(s)
 ******************************************************/
 #endif
+#if CLN_MD_CAND_BUFF
+/*
+* return the nic scalling level
+  Used by nics control and memory allocation
+*/
+uint8_t  get_nic_scaling_level(PdPass pd_pass, EbEncMode enc_mode ,uint8_t temporal_layer_index ) {
+    uint8_t  nic_scaling_level  = 1 ;
+    if (pd_pass == PD_PASS_0)
+#if TUNE_PRESETS_AND_PRUNING
+        nic_scaling_level = 15;
+#else
+        nic_scaling_level = 14;
+#endif
+    else if (pd_pass == PD_PASS_1)
+        nic_scaling_level = 12;
+    else
+        if (enc_mode <= ENC_MR)
+            nic_scaling_level = 0;
+#if TUNE_MR_M0_FEATURES
+#if !TUNE_M0_REPOSITION
+        else if (enc_mode <= ENC_M0)
+#if TUNE_M0_M3_BASE_NBASE
+            nic_scaling_level = (temporal_layer_index == 0) ? 0 : 1;
+#else
+            nic_scaling_level = 1;
+#endif
+#endif
+#endif
+#if TUNE_NEW_PRESETS_MR_M8
+        else if (enc_mode <= ENC_M1)
+#else
+        else if (enc_mode <= ENC_M0)
+#endif
+#if TUNE_MR_M0_FEATURES
+#if TUNE_M0_M3_BASE_NBASE
+            nic_scaling_level = (temporal_layer_index == 0) ? 1 : 2;
+#if !TUNE_SHIFT_M2_M1
+        else if (enc_mode <= ENC_M2)
+            nic_scaling_level = (temporal_layer_index == 0) ? 2 : 6;
+#endif
+#else
+            nic_scaling_level = 2;
+#endif
+#else
+            nic_scaling_level = 1;
+#endif
+#if TUNE_LOWER_PRESETS
+#if !TUNE_NEW_PRESETS_MR_M8
+        else if (enc_mode <= ENC_M2)
+            nic_scaling_level = 2;
+#endif
+#if TUNE_M5_FEATURES
+#if TUNE_SHIFT_PRESETS_DOWN
+        else if (enc_mode <= ENC_M3)
+#else
+        else if (enc_mode <= ENC_M4)
+#endif
+            nic_scaling_level = 6;
+#endif
+#if TUNE_M4_M8
+#if TUNE_NEW_PRESETS_MR_M8
+#if TUNE_SHIFT_PRESETS_DOWN
+        else if (enc_mode <= ENC_M4)
+#else
+        else if (enc_mode <= ENC_M5)
+#endif
+#else
+        else if (enc_mode <= ENC_M3)
+#endif
+#if TUNE_M5_FEATURES
+            nic_scaling_level = 8;
+#else
+            nic_scaling_level = 6;
+#endif
+#if !TUNE_NEW_PRESETS_MR_M8
+        else if (enc_mode <= ENC_M5)
+            nic_scaling_level = 7;
+#endif
+#else
+        else if (enc_mode <= ENC_M5)
+            nic_scaling_level = 6;
+#endif
+#else
+        else if (enc_mode <= ENC_M1)
+            nic_scaling_level = 4;
+        else if (enc_mode <= ENC_M2)
+            nic_scaling_level = 5;
+        else if (enc_mode <= ENC_M3)
+            nic_scaling_level = 7;
+#endif
+#if TUNE_PRESETS_AND_PRUNING
+#if TUNE_SHIFT_PRESETS_DOWN
+        else if (enc_mode <= ENC_M5)
+#else
+        else if (enc_mode <= ENC_M6)
+#endif
+            nic_scaling_level = 10;
+#endif
+#if FTR_NIC_PRUNING
+#if TUNE_SHIFT_PRESETS_DOWN
+        else if (enc_mode <= ENC_M6)
+#else
+        else if (enc_mode <= ENC_M7)
+#endif
+#else
+        else if (enc_mode <= ENC_M6)
+#endif
+            nic_scaling_level = 11;
+#if TUNE_PRESETS_AND_PRUNING
+#if TUNE_SHIFT_PRESETS_DOWN
+        else if (enc_mode <= ENC_M7)
+#else
+        else if (enc_mode <= ENC_M8)
+#endif
+#else
+        else
+#endif
+            nic_scaling_level = 12;
+#if TUNE_PRESETS_AND_PRUNING
+#if FTR_M10
+#if TUNE_SHIFT_PRESETS_DOWN
+        else if (enc_mode <= ENC_M8)
+#else
+        else if (enc_mode <= ENC_M9)
+#endif
+#else
+        else
+#endif
+#if OPT_M9_TXT_PRED_DEPTH_PRUNING
+#if TUNE_M7_M9
+            nic_scaling_level = 14;
+#if FTR_M10
+        else
+            nic_scaling_level = 15;
+#endif
+#else
+            nic_scaling_level = 15;
+#endif
+#else
+            nic_scaling_level = 14;
+#endif
+#endif
+   return nic_scaling_level ;
+}
+
+#endif
+
 EbErrorType signal_derivation_enc_dec_kernel_oq(
     SequenceControlSet *sequence_control_set_ptr,
     PictureControlSet *pcs_ptr,
@@ -5590,7 +5755,10 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #endif
     else
         context_ptr->md_staging_tx_size_level = 0;
+#if CLN_MD_CAND_BUFF
+    uint8_t nic_scaling_level = get_nic_scaling_level (pd_pass , enc_mode, pcs_ptr->temporal_layer_index);
 
+#else
     uint8_t nic_scaling_level = 1;
     if (pd_pass == PD_PASS_0)
 #if TUNE_PRESETS_AND_PRUNING
@@ -5725,6 +5893,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #endif
 #else
             nic_scaling_level = 14;
+#endif
 #endif
 #endif
     set_nic_controls(context_ptr, nic_scaling_level);

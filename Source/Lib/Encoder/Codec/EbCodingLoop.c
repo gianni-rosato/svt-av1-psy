@@ -371,7 +371,11 @@ static void av1_encode_loop(PictureControlSet *pcs_ptr, EncDecContext *context_p
         if (context_ptr->md_skip_blk) {
             count_non_zero_coeffs[0] = 0;
             eob[0] = 0;
+#if  CLN_SB_DATA
+            context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].quantized_dc[0][context_ptr->txb_itr] = 0;
+#else
             blk_ptr->quantized_dc[0][context_ptr->txb_itr] = 0;
+#endif
         }
         else {
 #endif
@@ -402,7 +406,11 @@ static void av1_encode_loop(PictureControlSet *pcs_ptr, EncDecContext *context_p
                                    .feature_data[context_ptr->blk_ptr->segment_id][SEG_LVL_ALT_Q]
                              : 0;
 
+#if  CLN_SB_DATA
+        context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].quantized_dc[0][context_ptr->txb_itr] = av1_quantize_inv_quantize(
+#else
         blk_ptr->quantized_dc[0][context_ptr->txb_itr] = av1_quantize_inv_quantize(
+#endif
             sb_ptr->pcs_ptr,
             context_ptr->md_context,
             ((TranLow *)transform16bit->buffer_y) + coeff1d_offset,
@@ -526,11 +534,18 @@ static void av1_encode_loop(PictureControlSet *pcs_ptr, EncDecContext *context_p
         if (context_ptr->md_skip_blk) {
             count_non_zero_coeffs[1] = 0;
             eob[1] = 0;
+#if  CLN_SB_DATA
+           context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].quantized_dc[1][context_ptr->txb_itr] = 0;
+#else
             blk_ptr->quantized_dc[1][context_ptr->txb_itr] = 0;
-
+#endif
             count_non_zero_coeffs[2] = 0;
             eob[2] = 0;
+#if  CLN_SB_DATA
+           context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].quantized_dc[2][context_ptr->txb_itr] = 0;
+#else
             blk_ptr->quantized_dc[2][context_ptr->txb_itr] = 0;
+#endif
         }
         else {
 
@@ -580,7 +595,11 @@ static void av1_encode_loop(PictureControlSet *pcs_ptr, EncDecContext *context_p
                                        .feature_data[context_ptr->blk_ptr->segment_id][SEG_LVL_ALT_Q]
                                  : 0;
     #endif
+#if  CLN_SB_DATA
+        context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].quantized_dc[1][context_ptr->txb_itr] = av1_quantize_inv_quantize(
+#else
             blk_ptr->quantized_dc[1][context_ptr->txb_itr] = av1_quantize_inv_quantize(
+#endif
                 sb_ptr->pcs_ptr,
                 context_ptr->md_context,
                 ((TranLow *)transform16bit->buffer_cb) + context_ptr->coded_area_sb_uv,
@@ -638,8 +657,11 @@ static void av1_encode_loop(PictureControlSet *pcs_ptr, EncDecContext *context_p
             txb_ptr->transform_type[PLANE_TYPE_UV],
             PLANE_TYPE_UV,
             context_ptr->md_context->pf_ctrls.pf_shape);
-
+#if  CLN_SB_DATA
+        context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].quantized_dc[2][context_ptr->txb_itr] = av1_quantize_inv_quantize(
+#else
         blk_ptr->quantized_dc[2][context_ptr->txb_itr] = av1_quantize_inv_quantize(
+#endif
             sb_ptr->pcs_ptr,
             context_ptr->md_context,
             ((TranLow *)transform16bit->buffer_cr) + context_ptr->coded_area_sb_uv,
@@ -804,7 +826,11 @@ static void av1_encode_loop_16bit(PictureControlSet *pcs_ptr, EncDecContext *con
             if (context_ptr->md_skip_blk) {
                 count_non_zero_coeffs[0] = 0;
                 eob[0] = 0;
+#if  CLN_SB_DATA
+                context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].quantized_dc[0][context_ptr->txb_itr] = 0;
+#else
                 blk_ptr->quantized_dc[0][context_ptr->txb_itr] = 0;
+#endif
             }
             else {
 #endif
@@ -834,7 +860,11 @@ static void av1_encode_loop_16bit(PictureControlSet *pcs_ptr, EncDecContext *con
                     ? pcs_ptr->parent_pcs_ptr->frm_hdr.segmentation_params
                           .feature_data[context_ptr->blk_ptr->segment_id][SEG_LVL_ALT_Q]
                     : 0;
+#if  CLN_SB_DATA
+            context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].quantized_dc[0][context_ptr->txb_itr] = av1_quantize_inv_quantize(
+#else
             blk_ptr->quantized_dc[0][context_ptr->txb_itr] = av1_quantize_inv_quantize(
+#endif
                 sb_ptr->pcs_ptr,
                 context_ptr->md_context,
                 ((int32_t *)transform16bit->buffer_y) + coeff1d_offset,
@@ -958,11 +988,19 @@ static void av1_encode_loop_16bit(PictureControlSet *pcs_ptr, EncDecContext *con
         if (context_ptr->md_skip_blk) {
             count_non_zero_coeffs[1] = 0;
             eob[1] = 0;
+#if  CLN_SB_DATA
+           context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].quantized_dc[1][context_ptr->txb_itr] = 0;
+#else
             blk_ptr->quantized_dc[1][context_ptr->txb_itr] = 0;
+#endif
 
             count_non_zero_coeffs[2] = 0;
             eob[2] = 0;
+#if  CLN_SB_DATA
+           context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].quantized_dc[2][context_ptr->txb_itr] = 0;
+#else
             blk_ptr->quantized_dc[2][context_ptr->txb_itr] = 0;
+#endif
         }
         else {
             int32_t seg_qp =
@@ -1012,7 +1050,11 @@ static void av1_encode_loop_16bit(PictureControlSet *pcs_ptr, EncDecContext *con
                           .feature_data[context_ptr->blk_ptr->segment_id][SEG_LVL_ALT_Q]
                     : 0;
 #endif
+#if  CLN_SB_DATA
+            context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].quantized_dc[1][context_ptr->txb_itr] = av1_quantize_inv_quantize(
+#else
             blk_ptr->quantized_dc[1][context_ptr->txb_itr] = av1_quantize_inv_quantize(
+#endif
                 sb_ptr->pcs_ptr,
                 context_ptr->md_context,
                 ((int32_t *)transform16bit->buffer_cb) + context_ptr->coded_area_sb_uv,
@@ -1069,8 +1111,11 @@ static void av1_encode_loop_16bit(PictureControlSet *pcs_ptr, EncDecContext *con
                 txb_ptr->transform_type[PLANE_TYPE_UV],
                 PLANE_TYPE_UV,
                 context_ptr->md_context->pf_ctrls.pf_shape);
-
+#if  CLN_SB_DATA
+            context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].quantized_dc[2][context_ptr->txb_itr] = av1_quantize_inv_quantize(
+#else
             blk_ptr->quantized_dc[2][context_ptr->txb_itr] = av1_quantize_inv_quantize(
+#endif
                 sb_ptr->pcs_ptr,
                 context_ptr->md_context,
                 ((int32_t *)transform16bit->buffer_cr) + context_ptr->coded_area_sb_uv,
@@ -1672,8 +1717,11 @@ void perform_intra_coding_loop(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, u
 
         // Update the luma Dc Sign Level Coeff Neighbor Array
         {
+#if  CLN_SB_DATA
+            uint8_t dc_sign_level_coeff = (uint8_t)context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].quantized_dc[0][context_ptr->txb_itr];
+#else
             uint8_t dc_sign_level_coeff = (uint8_t)blk_ptr->quantized_dc[0][context_ptr->txb_itr];
-
+#endif
             neighbor_array_unit_mode_write(
                 pcs_ptr->ep_luma_dc_sign_level_coeff_neighbor_array[tile_idx],
                 (uint8_t *)&dc_sign_level_coeff,
@@ -1987,7 +2035,11 @@ void perform_intra_coding_loop(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, u
 
         // Update the cb Dc Sign Level Coeff Neighbor Array
         {
+#if  CLN_SB_DATA
+            uint8_t dc_sign_level_coeff = (uint8_t)context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].quantized_dc[1][context_ptr->txb_itr];
+#else
             uint8_t dc_sign_level_coeff = (uint8_t)blk_ptr->quantized_dc[1][context_ptr->txb_itr];
+#endif
             neighbor_array_unit_mode_write(
                 pcs_ptr->ep_cb_dc_sign_level_coeff_neighbor_array[tile_idx],
                 (uint8_t *)&dc_sign_level_coeff,
@@ -2000,7 +2052,11 @@ void perform_intra_coding_loop(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, u
 
         // Update the cr DC Sign Level Coeff Neighbor Array
         {
+#if  CLN_SB_DATA
+            uint8_t dc_sign_level_coeff = (uint8_t)context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].quantized_dc[2][context_ptr->txb_itr];
+#else
             uint8_t dc_sign_level_coeff = (uint8_t)blk_ptr->quantized_dc[2][context_ptr->txb_itr];
+#endif
             neighbor_array_unit_mode_write(
                 pcs_ptr->ep_cr_dc_sign_level_coeff_neighbor_array[tile_idx],
                 (uint8_t *)&dc_sign_level_coeff,
@@ -2347,7 +2403,9 @@ EB_EXTERN void av1_encode_decode(SequenceControlSet *scs_ptr, PictureControlSet 
             svt_av1_loop_filter_init(pcs_ptr);
 
             svt_av1_pick_filter_level(
+#if !CLN_DLF_RES_PROCESS
                 0,
+#endif
                 (EbPictureBufferDesc *)pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr,
                 pcs_ptr,
                 LPF_PICK_FROM_Q);
@@ -2804,8 +2862,12 @@ EB_EXTERN void av1_encode_decode(SequenceControlSet *scs_ptr, PictureControlSet 
 
                             // Update the luma Dc Sign Level Coeff Neighbor Array
                             {
+#if  CLN_SB_DATA
+                                    uint8_t dcSignLevelCoeff =
+                                        (uint8_t)context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].quantized_dc[0][context_ptr->txb_itr];
+#else
                                 uint8_t dcSignLevelCoeff = (uint8_t)blk_ptr->quantized_dc[0][context_ptr->txb_itr];
-
+#endif
                                 neighbor_array_unit_mode_write(
                                     pcs_ptr->ep_luma_dc_sign_level_coeff_neighbor_array[tile_idx],
                                     (uint8_t*)&dcSignLevelCoeff,
@@ -2819,7 +2881,12 @@ EB_EXTERN void av1_encode_decode(SequenceControlSet *scs_ptr, PictureControlSet 
                             if (context_ptr->blk_geom->has_uv && uv_pass)
                             {
                                 // Update the cb Dc Sign Level Coeff Neighbor Array
+#if  CLN_SB_DATA
+                                uint8_t dcSignLevelCoeff =
+                                    (uint8_t)context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].quantized_dc[1][context_ptr->txb_itr];
+#else
                                 uint8_t dcSignLevelCoeff = (uint8_t)blk_ptr->quantized_dc[1][context_ptr->txb_itr];
+#endif
                                 neighbor_array_unit_mode_write(
                                     pcs_ptr->ep_cb_dc_sign_level_coeff_neighbor_array[tile_idx],
                                     (uint8_t*)&dcSignLevelCoeff,
@@ -2830,7 +2897,12 @@ EB_EXTERN void av1_encode_decode(SequenceControlSet *scs_ptr, PictureControlSet 
                                     NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
 
                                 // Update the cr DC Sign Level Coeff Neighbor Array
+#if  CLN_SB_DATA
+                                 dcSignLevelCoeff =
+                                    (uint8_t)context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].quantized_dc[2][context_ptr->txb_itr];
+#else
                                 dcSignLevelCoeff = (uint8_t)blk_ptr->quantized_dc[2][context_ptr->txb_itr];
+#endif
                                 neighbor_array_unit_mode_write(
                                     pcs_ptr->ep_cr_dc_sign_level_coeff_neighbor_array[tile_idx],
                                     (uint8_t*)&dcSignLevelCoeff,
@@ -3448,9 +3520,13 @@ EB_EXTERN void av1_encode_decode(SequenceControlSet *scs_ptr, PictureControlSet 
 
                             // Update the luma Dc Sign Level Coeff Neighbor Array
                             {
+#if  CLN_SB_DATA
+                                uint8_t dc_sign_level_coeff =
+                                    (uint8_t)context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].quantized_dc[0][context_ptr->txb_itr];
+#else
                                 uint8_t dc_sign_level_coeff =
                                     (uint8_t)blk_ptr->quantized_dc[0][context_ptr->txb_itr];
-
+#endif
                                 neighbor_array_unit_mode_write(
                                     pcs_ptr->ep_luma_dc_sign_level_coeff_neighbor_array[tile_idx],
                                     (uint8_t *)&dc_sign_level_coeff,
@@ -3465,8 +3541,13 @@ EB_EXTERN void av1_encode_decode(SequenceControlSet *scs_ptr, PictureControlSet 
 
                             if (context_ptr->blk_geom->has_uv && uv_pass) {
                                 // Update the cb Dc Sign Level Coeff Neighbor Array
+#if  CLN_SB_DATA
+                                uint8_t dc_sign_level_coeff =
+                                    (uint8_t)context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].quantized_dc[1][context_ptr->txb_itr];
+#else
                                 uint8_t dc_sign_level_coeff =
                                     (uint8_t)blk_ptr->quantized_dc[1][context_ptr->txb_itr];
+#endif
                                 neighbor_array_unit_mode_write(
                                     pcs_ptr->ep_cb_dc_sign_level_coeff_neighbor_array[tile_idx],
                                     (uint8_t *)&dc_sign_level_coeff,
@@ -3479,8 +3560,13 @@ EB_EXTERN void av1_encode_decode(SequenceControlSet *scs_ptr, PictureControlSet 
                                     NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
 
                                 // Update the cr DC Sign Level Coeff Neighbor Array
+#if  CLN_SB_DATA
+                                 dc_sign_level_coeff =
+                                    (uint8_t)context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].quantized_dc[2][context_ptr->txb_itr];
+#else
                                 dc_sign_level_coeff =
                                     (uint8_t)blk_ptr->quantized_dc[2][context_ptr->txb_itr];
+#endif
                                 neighbor_array_unit_mode_write(
                                     pcs_ptr->ep_cr_dc_sign_level_coeff_neighbor_array[tile_idx],
                                     (uint8_t *)&dc_sign_level_coeff,
@@ -3571,11 +3657,18 @@ EB_EXTERN void av1_encode_decode(SequenceControlSet *scs_ptr, PictureControlSet 
                             context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].u_has_coeff[context_ptr->txb_itr] = EB_FALSE;
                             context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].v_has_coeff[context_ptr->txb_itr] = EB_FALSE;
 
+#if  CLN_SB_DATA
+                            context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].quantized_dc[0][context_ptr->txb_itr] = 0;
+                            context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].quantized_dc[1][context_ptr->txb_itr] = 0;
+                            context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].quantized_dc[2][context_ptr->txb_itr] = 0;
+#else
                             context_ptr->blk_ptr->quantized_dc[0][context_ptr->txb_itr] = 0;
                             context_ptr->blk_ptr->quantized_dc[1][context_ptr->txb_itr] = 0;
                             context_ptr->blk_ptr->quantized_dc[2][context_ptr->txb_itr] = 0;
-                        } else if (context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].merge_flag == EB_TRUE) {
-
+#endif
+                        } else if (context_ptr->md_context
+                                       ->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds]
+                                       .merge_flag == EB_TRUE) {
                             //inter mode  2
 
                             av1_encode_loop_func_table[is_16bit](
@@ -3701,9 +3794,13 @@ EB_EXTERN void av1_encode_decode(SequenceControlSet *scs_ptr, PictureControlSet 
 
                         // Update the luma Dc Sign Level Coeff Neighbor Array
                         {
+#if  CLN_SB_DATA
+                            uint8_t dc_sign_level_coeff =
+                                (uint8_t)context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].quantized_dc[0][context_ptr->txb_itr];
+#else
                             uint8_t dc_sign_level_coeff =
                                 (uint8_t)blk_ptr->quantized_dc[0][context_ptr->txb_itr];
-
+#endif
                             neighbor_array_unit_mode_write(
                                 pcs_ptr->ep_luma_dc_sign_level_coeff_neighbor_array[tile_idx],
                                 (uint8_t *)&dc_sign_level_coeff,
@@ -3718,8 +3815,13 @@ EB_EXTERN void av1_encode_decode(SequenceControlSet *scs_ptr, PictureControlSet 
 
                         // Update the cb Dc Sign Level Coeff Neighbor Array
                         if (context_ptr->blk_geom->has_uv && uv_pass) {
+#if  CLN_SB_DATA
+                            uint8_t dc_sign_level_coeff =
+                                (uint8_t)context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].quantized_dc[1][context_ptr->txb_itr];
+#else
                             uint8_t dc_sign_level_coeff =
                                 (uint8_t)blk_ptr->quantized_dc[1][context_ptr->txb_itr];
+#endif
                             neighbor_array_unit_mode_write(
                                 pcs_ptr->ep_cb_dc_sign_level_coeff_neighbor_array[tile_idx],
                                 (uint8_t *)&dc_sign_level_coeff,
@@ -3731,8 +3833,13 @@ EB_EXTERN void av1_encode_decode(SequenceControlSet *scs_ptr, PictureControlSet 
                                     ->tx_height_uv[blk_ptr->tx_depth][context_ptr->txb_itr],
                                 NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
                             // Update the cr DC Sign Level Coeff Neighbor Array
+#if  CLN_SB_DATA
+                            dc_sign_level_coeff =
+                                (uint8_t)context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].quantized_dc[2][context_ptr->txb_itr];
+#else
                             dc_sign_level_coeff =
                                 (uint8_t)blk_ptr->quantized_dc[2][context_ptr->txb_itr];
+#endif
                             neighbor_array_unit_mode_write(
                                 pcs_ptr->ep_cr_dc_sign_level_coeff_neighbor_array[tile_idx],
                                 (uint8_t *)&dc_sign_level_coeff,

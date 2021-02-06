@@ -239,6 +239,9 @@ extern "C" {
 #define FTR_BYPASS_RDOQ_CHROMA_QP_BASED        1 // Disable rdoq when qp offset is higher than certain th.
 #define FTR_USE_LAD_TPL                        1 // Use extended tpl group
 
+#define CLN_SB_DATA                            1 //  Memory optimizations in final_blk_arr (from svt-01)
+#define CLN_DLF_RES_PROCESS                    1 //  Memory optimizations in DLF and restoration processes
+#define CLN_MD_CAND_BUFF                       1 //  Memory optimizations in MD candidate buffers
 // ============= END SVT_04 =============
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch

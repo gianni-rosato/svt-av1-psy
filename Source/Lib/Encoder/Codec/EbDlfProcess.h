@@ -23,8 +23,10 @@
 typedef struct DlfContext {
     EbFifo *             dlf_input_fifo_ptr;
     EbFifo *             dlf_output_fifo_ptr;
+#if !CLN_DLF_RES_PROCESS
     EbPictureBufferDesc *temp_lf_recon_picture_ptr;
     EbPictureBufferDesc *temp_lf_recon_picture16bit_ptr;
+#endif
 } DlfContext;
 
 /**************************************

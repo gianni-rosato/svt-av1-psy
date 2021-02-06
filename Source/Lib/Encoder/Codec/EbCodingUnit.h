@@ -343,21 +343,18 @@ typedef struct BlkStruct {
     uint8_t tx_depth; // ec
     uint8_t compound_idx; // ec
     uint8_t comp_group_idx; // ec
-#if CLEAN_UP_SB_DATA_4
-    uint8_t prediction_mode_flag; // ec
-    uint8_t block_has_coeff; // ec
-#else
+
     unsigned skip_flag_context : 2; // to do
     unsigned prediction_mode_flag : 2; // ec
     unsigned block_has_coeff : 1; // ec
     unsigned split_flag_context : 2; // to do
-#endif
+
     uint8_t qindex; // ec
-#if !CLEAN_UP_SB_DATA_2
+#if !CLN_SB_DATA
     uint16_t ref_qp;
     int16_t  delta_qp; // can be signed 8bits
 #endif
-#if CLEAN_UP_SB_DATA_9
+#if CLN_SB_DATA
     uint8_t split_flag;
     uint8_t skip_flag; // ec
     uint8_t mdc_split_flag; // ?
@@ -376,7 +373,7 @@ typedef struct BlkStruct {
     EbPictureBufferDesc *recon_tmp;
     uint32_t             cand_buff_index;
 #endif
-#if !CLEAN_UP_SB_DATA_0
+#if !CLN_SB_DATA
     IntMv ref_mvs[MODE_CTX_REF_FRAMES][MAX_MV_REF_CANDIDATES]; //used only for nonCompound modes.
 #endif
     uint8_t drl_index; // ec
@@ -385,31 +382,33 @@ typedef struct BlkStruct {
     int8_t drl_ctx_near[2]; // Store the drl ctx in coding loop to avoid storing
         // final_ref_mv_stack and ref_mv_count for EC
     PredictionMode pred_mode; // ec
-#if !CLEAN_UP_SB_DATA_4
+
     uint8_t  reference_mode_context;
     uint8_t  compoud_reference_type_context;
+#if !CLN_SB_DATA
     int32_t  quantized_dc[3][MAX_TXB_COUNT];
-    uint32_t is_inter_ctx;
 #endif
+    uint32_t is_inter_ctx;
+
     uint8_t       segment_id; // ec
     uint8_t       seg_id_predicted; // valid only when temporal_update is enabled
     PartitionType part;
-#if !CLEAN_UP_SB_DATA_2
+#if !CLN_SB_DATA
     Part shape;
 #endif
-#if !CLEAN_UP_SB_DATA_3
+#if !CLN_SB_DATA
     uint8_t * neigh_left_recon[3]; //only for MD
     uint8_t * neigh_top_recon[3];
     uint16_t *neigh_left_recon_16bit[3];
     uint16_t *neigh_top_recon_16bit[3];
 #endif
-#if !CLEAN_UP_SB_DATA_1
+#if !CLN_SB_DATA
     uint32_t best_d1_blk;
 #endif
     InterIntraMode interintra_mode; // ec
     uint8_t        is_interintra_used; // ec
     uint8_t        use_wedge_interintra; // ec
-#if !CLEAN_UP_SB_DATA_5
+#if !CLN_SB_DATA
     int32_t ii_wedge_sign;
 #endif
     uint8_t  filter_intra_mode; // ec

@@ -6555,7 +6555,13 @@ EbErrorType generate_md_stage_0_cand(
             &cand_total_cnt);
     }
     *candidate_total_count_ptr = cand_total_cnt;
+
+
+#if CLN_MD_CAND_BUFF
+    for (uint32_t index = 0; index < MIN((*candidate_total_count_ptr + CAND_CLASS_TOTAL), context_ptr->max_nics); ++index)
+#else
     for (uint32_t index = 0; index < MIN((*candidate_total_count_ptr + CAND_CLASS_TOTAL), MAX_NFL_BUFF_Y); ++index)
+#endif
         context_ptr->fast_cost_array[index] = MAX_CU_COST;
 #if !CLN_MD_CANDS
     CandClass  cand_class_it;
@@ -6716,8 +6722,13 @@ uint32_t product_full_mode_decision(
     blk_ptr->tx_depth = candidate_ptr->tx_depth;
     blk_ptr->skip_flag = candidate_ptr->skip_flag; // note, the skip flag is re-checked in the ENCDEC process
     blk_ptr->block_has_coeff = ((candidate_ptr->block_has_coeff) > 0) ? EB_TRUE : EB_FALSE;
+#if  CLN_SB_DATA
+    context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].quantized_dc[1][0] = buffer_ptr_array[lowest_cost_index]->candidate_ptr->quantized_dc[1][0];
+    context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].quantized_dc[2][0] = buffer_ptr_array[lowest_cost_index]->candidate_ptr->quantized_dc[2][0];
+#else
     blk_ptr->quantized_dc[1][0] = buffer_ptr_array[lowest_cost_index]->candidate_ptr->quantized_dc[1][0];
     blk_ptr->quantized_dc[2][0] = buffer_ptr_array[lowest_cost_index]->candidate_ptr->quantized_dc[2][0];
+#endif
     context_ptr->md_local_blk_unit[blk_ptr->mds_idx].count_non_zero_coeffs = candidate_ptr->count_non_zero_coeffs;
     blk_ptr->use_intrabc = candidate_ptr->use_intrabc;
     if (blk_ptr->prediction_mode_flag == INTER_MODE && candidate_ptr->is_compound)
@@ -6868,9 +6879,11 @@ uint32_t product_full_mode_decision(
         context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].v_has_coeff[txb_index] = (EbBool)(((candidate_ptr->v_has_coeff) & (1 << txb_index)) > 0);
         txb_ptr->transform_type[PLANE_TYPE_Y] = candidate_ptr->transform_type[txb_index];
         txb_ptr->transform_type[PLANE_TYPE_UV] = candidate_ptr->transform_type_uv;
-
+#if  CLN_SB_DATA
+        context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].quantized_dc[0][txb_index] = candidate_ptr->quantized_dc[0][txb_index];
+#else
         blk_ptr->quantized_dc[0][txb_index] = candidate_ptr->quantized_dc[0][txb_index];
-
+#endif
 #if NO_ENCDEC
 
         if (context_ptr->blk_geom->has_uv) {

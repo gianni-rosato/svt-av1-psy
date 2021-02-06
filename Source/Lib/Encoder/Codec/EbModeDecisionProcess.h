@@ -87,7 +87,11 @@ typedef struct MdBlkStruct {
     uint8_t *neigh_top_recon[3];
     uint16_t *neigh_left_recon_16bit[3];
     uint16_t *neigh_top_recon_16bit[3];
-    uint8_t   merge_flag;
+#if CLN_SB_DATA
+    int32_t quantized_dc[3][MAX_TXB_COUNT];
+
+#endif
+    uint8_t merge_flag;
 #if !CLN_NSQ_AND_STATS
     uint8_t   sse_gradian_band[NUMBER_OF_SHAPES];
 #endif
@@ -552,7 +556,11 @@ typedef struct ModeDecisionContext {
     MdEncPassCuData *md_ep_pipe_sb;
     uint8_t          pu_itr;
     uint8_t          cu_size_log2;
+#if CLN_MD_CAND_BUFF
+    uint32_t         *best_candidate_index_array;
+#else
     uint32_t         best_candidate_index_array[MAX_NFL_BUFF];
+#endif
     uint16_t         blk_origin_x;
     uint16_t         blk_origin_y;
     uint8_t          sb_sz;
@@ -670,7 +678,11 @@ typedef struct ModeDecisionContext {
     DECLARE_ALIGNED(32, int16_t, diff10[MAX_SB_SQUARE]);
     unsigned int prediction_mse;
     MdStage      md_stage;
+#if CLN_MD_CAND_BUFF
+    uint32_t     *cand_buff_indices[CAND_CLASS_TOTAL];
+#else
     uint32_t     cand_buff_indices[CAND_CLASS_TOTAL][MAX_NFL_BUFF];
+#endif
     uint8_t      md_staging_mode;
     uint8_t      bypass_md_stage_1[CAND_CLASS_TOTAL];
     uint8_t      bypass_md_stage_2[CAND_CLASS_TOTAL];
@@ -907,6 +919,10 @@ typedef struct ModeDecisionContext {
 #if OPT_LF
     uint8_t sb_bypass_dlf;
 #endif
+#if CLN_MD_CAND_BUFF
+    uint32_t max_nics ; // Maximum number of candidates MD can support
+    uint32_t max_nics_uv ; // Maximum number of candidates MD can support
+#endif
 } ModeDecisionContext;
 
 typedef void (*EbAv1LambdaAssignFunc)(PictureControlSet *pcs_ptr, uint32_t *fast_lambda,
@@ -918,6 +934,9 @@ typedef void (*EbAv1LambdaAssignFunc)(PictureControlSet *pcs_ptr, uint32_t *fast
      **************************************/
 extern EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr,
                                               EbColorFormat color_format, uint8_t sb_size,
+#if CLN_MD_CAND_BUFF
+                                              uint8_t enc_mode,
+#endif
                                               EbFifo *mode_decision_configuration_input_fifo_ptr,
                                               EbFifo *mode_decision_output_fifo_ptr,
                                               uint8_t enable_hbd_mode_decision,

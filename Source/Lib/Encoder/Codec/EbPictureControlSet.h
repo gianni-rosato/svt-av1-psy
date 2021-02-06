@@ -425,6 +425,12 @@ typedef struct PictureControlSet {
 #if !TUNE_REMOVE_TXT_STATS
     uint32_t txt_cnt[TXT_DEPTH_DELTA_NUM][TX_TYPES];
 #endif
+
+#if CLN_DLF_RES_PROCESS
+    EbPictureBufferDesc *temp_lf_recon_picture_ptr;
+    EbPictureBufferDesc *temp_lf_recon_picture16bit_ptr;
+#endif
+
 } PictureControlSet;
 
 // To optimize based on the max input size

@@ -32,9 +32,10 @@ typedef struct RestContext {
     EbFifo *picture_demux_fifo_ptr;
 
     EbPictureBufferDesc *trial_frame_rst;
-
+#if !CLN_DLF_RES_PROCESS
     EbPictureBufferDesc *temp_lf_recon_picture_ptr;
     EbPictureBufferDesc *temp_lf_recon_picture16bit_ptr;
+#endif
 
     EbPictureBufferDesc *
         org_rec_frame; // while doing the filtering recon gets updated uisng setup/restore processing_stripe_bounadaries
@@ -76,8 +77,10 @@ void save_YUV_to_file(char *filename, EbByte buffer_y, EbByte buffer_u, EbByte b
 static void rest_context_dctor(EbPtr p) {
     EbThreadContext *thread_context_ptr = (EbThreadContext *)p;
     RestContext *    obj                = (RestContext *)thread_context_ptr->priv;
+#if !CLN_DLF_RES_PROCESS
     EB_DELETE(obj->temp_lf_recon_picture_ptr);
     EB_DELETE(obj->temp_lf_recon_picture16bit_ptr);
+#endif
     EB_DELETE(obj->trial_frame_rst);
 #if CLN_REST_FILTER
     // buffer only malloc'd if boundaries are used in rest. search.
@@ -149,6 +152,7 @@ EbErrorType rest_context_ctor(EbThreadContext *  thread_context_ptr,
         EB_MALLOC_ALIGNED(context_ptr->rst_tmpbuf, RESTORATION_TMPBUF_SIZE);
     }
 
+#if !CLN_DLF_RES_PROCESS
     EbPictureBufferDescInitData temp_lf_recon_desc_init_data;
     temp_lf_recon_desc_init_data.max_width          = (uint16_t)scs_ptr->max_input_luma_width;
     temp_lf_recon_desc_init_data.max_height         = (uint16_t)scs_ptr->max_input_luma_height;
@@ -172,7 +176,7 @@ EbErrorType rest_context_ctor(EbThreadContext *  thread_context_ptr,
                svt_recon_picture_buffer_desc_ctor,
                (EbPtr)&temp_lf_recon_desc_init_data);
     }
-
+#endif
     return EB_ErrorNone;
 }
 #if CLN_REST_FILTER

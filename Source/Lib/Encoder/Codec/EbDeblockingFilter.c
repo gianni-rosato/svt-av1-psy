@@ -1189,8 +1189,11 @@ static int32_t search_filter_level(
         *best_cost_ret = (double)best_err; //RDCOST_DBL(x->rdmult, 0, best_err);
     return filt_best;
 }
-
+#if CLN_DLF_RES_PROCESS
+void svt_av1_pick_filter_level(
+#else
 void svt_av1_pick_filter_level(DlfContext *         context_ptr,
+#endif
                                EbPictureBufferDesc *srcBuffer, // source input
                                PictureControlSet *pcs_ptr, LpfPickMethod method) {
     SequenceControlSet *scs_ptr = (SequenceControlSet *)
@@ -1248,8 +1251,13 @@ void svt_av1_pick_filter_level(DlfContext *         context_ptr,
         EbPictureBufferDesc *temp_lf_recon_buffer = (scs_ptr->static_config.is_16bit_pipeline ||
                                                      scs_ptr->static_config.encoder_bit_depth !=
                                                          EB_8BIT)
+#if CLN_DLF_RES_PROCESS
+            ? pcs_ptr->temp_lf_recon_picture16bit_ptr
+            : pcs_ptr->temp_lf_recon_picture_ptr;
+#else
             ? context_ptr->temp_lf_recon_picture16bit_ptr
             : context_ptr->temp_lf_recon_picture_ptr;
+#endif
 
         lf->filter_level[0] = lf->filter_level[1] = search_filter_level(
             srcBuffer,

@@ -177,6 +177,10 @@ void picture_control_set_dctor(EbPtr p) {
     EB_DELETE(obj->recon_picture_ptr);
     EB_DELETE(obj->film_grain_picture16bit_ptr);
     EB_DELETE(obj->film_grain_picture_ptr);
+#if CLN_DLF_RES_PROCESS
+    EB_DELETE(obj->temp_lf_recon_picture_ptr);
+    EB_DELETE(obj->temp_lf_recon_picture16bit_ptr);
+#endif
     EB_DELETE(obj->input_frame16bit);
 
     EB_FREE_ARRAY(obj->mse_seg[0]);
@@ -338,6 +342,40 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
                    (EbPtr)&input_pic_buf_desc_init_data);
         }
     }
+#if CLN_DLF_RES_PROCESS
+
+    EbColorFormat color_format = init_data_ptr->color_format;
+    object_ptr->temp_lf_recon_picture16bit_ptr = (EbPictureBufferDesc *)NULL;
+    object_ptr->temp_lf_recon_picture_ptr      = (EbPictureBufferDesc *)NULL;
+
+    EbPictureBufferDescInitData temp_lf_recon_desc_init_data;
+    temp_lf_recon_desc_init_data.max_width          = (uint16_t)init_data_ptr->picture_width;
+    temp_lf_recon_desc_init_data.max_height         = (uint16_t)init_data_ptr->picture_height;
+    temp_lf_recon_desc_init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK;
+
+    temp_lf_recon_desc_init_data.left_padding  = PAD_VALUE;
+    temp_lf_recon_desc_init_data.right_padding = PAD_VALUE;
+    temp_lf_recon_desc_init_data.top_padding   = PAD_VALUE;
+    temp_lf_recon_desc_init_data.bot_padding   = PAD_VALUE;
+
+    temp_lf_recon_desc_init_data.split_mode   = EB_FALSE;
+    temp_lf_recon_desc_init_data.color_format = color_format;
+
+    if (init_data_ptr->is_16bit_pipeline || is_16bit) {
+        temp_lf_recon_desc_init_data.bit_depth = EB_16BIT;
+        EB_NEW(object_ptr->temp_lf_recon_picture16bit_ptr,
+               svt_recon_picture_buffer_desc_ctor,
+               (EbPtr)&temp_lf_recon_desc_init_data);
+        if (!is_16bit)
+            object_ptr->temp_lf_recon_picture16bit_ptr->bit_depth = EB_8BIT;
+    } else {
+        temp_lf_recon_desc_init_data.bit_depth = EB_8BIT;
+        EB_NEW(object_ptr->temp_lf_recon_picture_ptr,
+               svt_recon_picture_buffer_desc_ctor,
+               (EbPtr)&temp_lf_recon_desc_init_data);
+    }
+#endif
+
 
     if ((is_16bit) || (init_data_ptr->is_16bit_pipeline)) {
         EB_NEW(object_ptr->input_frame16bit,

@@ -157,8 +157,12 @@ void mode_decision_update_neighbor_arrays(PictureControlSet *  pcs_ptr,
 
         uint16_t txb_count = context_ptr->blk_geom->txb_count[context_ptr->blk_ptr->tx_depth];
         for (uint8_t txb_itr = 0; txb_itr < txb_count; txb_itr++) {
+#if  CLN_SB_DATA
+            uint8_t dc_sign_level_coeff =
+                (uint8_t)context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].quantized_dc[0][txb_itr];
+#else
             uint8_t dc_sign_level_coeff = (int32_t)context_ptr->blk_ptr->quantized_dc[0][txb_itr];
-
+#endif
             neighbor_array_unit_mode_write(
                 context_ptr->luma_dc_sign_level_coeff_neighbor_array,
                 (uint8_t *)&dc_sign_level_coeff,
@@ -215,7 +219,12 @@ void mode_decision_update_neighbor_arrays(PictureControlSet *  pcs_ptr,
     if (context_ptr->blk_geom->has_uv && context_ptr->chroma_level <= CHROMA_MODE_1) {
         //  Update chroma CB cbf and Dc context
         {
+#if  CLN_SB_DATA
+            uint8_t dc_sign_level_coeff =
+                (uint8_t)context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].quantized_dc[1][0];
+#else
             uint8_t dc_sign_level_coeff = (int32_t)context_ptr->blk_ptr->quantized_dc[1][0];
+#endif
             neighbor_array_unit_mode_write(context_ptr->cb_dc_sign_level_coeff_neighbor_array,
                                            (uint8_t *)&dc_sign_level_coeff,
                                            blk_origin_x_uv,
@@ -227,7 +236,12 @@ void mode_decision_update_neighbor_arrays(PictureControlSet *  pcs_ptr,
 
         //  Update chroma CR cbf and Dc context
         {
+#if  CLN_SB_DATA
+            uint8_t dc_sign_level_coeff =
+                (uint8_t)context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].quantized_dc[2][0];
+#else
             uint8_t dc_sign_level_coeff = (int32_t)context_ptr->blk_ptr->quantized_dc[2][0];
+#endif
             neighbor_array_unit_mode_write(context_ptr->cr_dc_sign_level_coeff_neighbor_array,
                                            (uint8_t *)&dc_sign_level_coeff,
                                            blk_origin_x_uv,
@@ -1629,8 +1643,11 @@ void scale_nics(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr) {
     uint32_t stage3_scale_num = context_ptr->nic_ctrls.stage3_scaling_num;
 
     // The scaling denominator is 16 for all stages
+#if CLN_MD_CAND_BUFF
+    uint32_t scale_denum = MD_STAGE_NICS_SCAL_DENUM;
+#else
     uint32_t scale_denum = 16;
-
+#endif
     // no NIC setting should be done beyond this point
     for (uint8_t cidx = 0; cidx < CAND_CLASS_TOTAL; ++cidx) {
         context_ptr->md_stage_1_count[cidx] = MAX(min_nics_stage1,
@@ -1656,6 +1673,15 @@ void set_md_stage_counts(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
         memset(context_ptr->bypass_md_stage_2, EB_TRUE, CAND_CLASS_TOTAL);
 
             // Step 2: set md_stage count
+#if CLN_MD_CAND_BUFF
+    uint8_t pic_type = pcs_ptr->slice_type == I_SLICE ? 0 : pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? 1 : 2;
+
+    for (CandClass cand_class_it = CAND_CLASS_0; cand_class_it < CAND_CLASS_TOTAL; cand_class_it++) {
+        context_ptr->md_stage_1_count[cand_class_it] = MD_STAGE_NICS[pic_type][cand_class_it];
+        context_ptr->md_stage_2_count[cand_class_it] = MD_STAGE_NICS[pic_type][cand_class_it] >> 1;
+        context_ptr->md_stage_3_count[cand_class_it] = MD_STAGE_NICS[pic_type][cand_class_it] >> 2;
+    }
+#else
                 context_ptr->md_stage_1_count[CAND_CLASS_0] =
                     (pcs_ptr->slice_type == I_SLICE) ? 64 :
                     (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? 32 : 16;
@@ -1693,6 +1719,8 @@ void set_md_stage_counts(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
                     context_ptr->md_stage_3_count[CAND_CLASS_3] =
                         (pcs_ptr->slice_type == I_SLICE) ? 4 :
                         (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? 2 : 1;
+
+#endif
 
                 // no NIC setting should be done beyond this point
                 // scale nics
@@ -7011,7 +7039,9 @@ void move_blk_data(PictureControlSet *pcs, EncDecContext *context_ptr, BlkStruct
 #endif
     dst_cu->segment_id                     = src_cu->segment_id;
 
+#if ! CLN_SB_DATA
     svt_memcpy(dst_cu->quantized_dc, src_cu->quantized_dc, 3 * MAX_TXB_COUNT * sizeof(int32_t));
+#endif
     //CHKN uint32_t   is_inter_ctx;
     //CHKN uint32_t                     interp_filters;
 
@@ -7094,7 +7124,10 @@ void move_blk_data_redund(PictureControlSet *pcs, ModeDecisionContext *context_p
     dst_cu->reference_mode_context         = src_cu->reference_mode_context;
     dst_cu->compoud_reference_type_context = src_cu->compoud_reference_type_context;
 #endif
+
+    #if ! CLN_SB_DATA
     svt_memcpy(dst_cu->quantized_dc, src_cu->quantized_dc, 3 * MAX_TXB_COUNT * sizeof(int32_t));
+#endif
     //CHKN uint32_t   is_inter_ctx;
     //CHKN uint32_t                     interp_filters;
 
@@ -7269,7 +7302,12 @@ static void search_best_independent_uv_mode(PictureControlSet *  pcs_ptr,
 
     ModeDecisionCandidate *candidate_array          = context_ptr->fast_candidate_array;
     uint32_t               start_fast_buffer_index  = MODE_DECISION_CANDIDATE_MAX_COUNT_Y;
+
+#if CLN_MD_CAND_BUFF
+    uint32_t               start_full_buffer_index  = context_ptr->max_nics;
+#else
     uint32_t               start_full_buffer_index  = MAX_NFL_BUFF_Y;
+#endif
     uint32_t               uv_mode_total_count      = start_fast_buffer_index;
     // Shut RDOQ
     context_ptr->md_staging_skip_rdoq = 0;
@@ -7395,8 +7433,14 @@ static void search_best_independent_uv_mode(PictureControlSet *  pcs_ptr,
     }
 
     // Sort uv_mode (in terms of distortion only)
+#if CLN_MD_CAND_BUFF
+    uint32_t *uv_cand_buff_indices =  (uint32_t *)malloc(context_ptr->max_nics_uv  * sizeof(*uv_cand_buff_indices));
+    memset(uv_cand_buff_indices, 0xFF, context_ptr->max_nics_uv * sizeof(*uv_cand_buff_indices));
+
+#else
     uint32_t uv_cand_buff_indices[MAX_NFL_BUFF_Y];
     memset(uv_cand_buff_indices, 0xFF, MAX_NFL_BUFF_Y * sizeof(*uv_cand_buff_indices));
+#endif
     sort_fast_cost_based_candidates(
         context_ptr,
         start_full_buffer_index,
@@ -7583,6 +7627,10 @@ static void search_best_independent_uv_mode(PictureControlSet *  pcs_ptr,
             }
         }
     }
+
+#if CLN_MD_CAND_BUFF
+    free(uv_cand_buff_indices);
+#endif
 
 }
 void interintra_class_pruning_1(ModeDecisionContext *context_ptr, uint64_t best_md_stage_cost,uint8_t best_md_stage_pred_mode) {
@@ -8483,7 +8531,11 @@ void md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionContext *context_pt
                 : context_ptr->md_stage_1_count[cand_class_it];
 
             buffer_total_count += buffer_count_for_curr_class;
+#if CLN_MD_CAND_BUFF
+            assert_err(buffer_total_count <= context_ptr->max_nics , "not enough cand buffers");
+#else
             assert(buffer_total_count <= MAX_NFL_BUFF && "not enough cand buffers");
+#endif
 
             //Input: md_stage_0_count[cand_class_it]  Output:  md_stage_1_count[cand_class_it]
             context_ptr->target_class = cand_class_it;
@@ -8616,8 +8668,9 @@ void md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionContext *context_pt
     }
 
     interintra_class_pruning_3(context_ptr, best_md_stage_cost);
-
+#if !CLN_MD_CAND_BUFF
     assert(context_ptr->md_stage_3_total_count <= MAX_NFL);
+#endif
     assert(context_ptr->md_stage_3_total_count > 0);
     construct_best_sorted_arrays_md_stage_3(context_ptr,
         candidate_buffer_ptr_array,

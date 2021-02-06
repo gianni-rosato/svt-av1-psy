@@ -152,10 +152,13 @@ enum {
 #define BLOCK_MAX_COUNT_SB_128 4421
 #define BLOCK_MAX_COUNT_SB_64 1101
 #define MAX_TXB_COUNT 16 // Maximum number of transform blocks per depth
+
+#if !CLN_MD_CAND_BUFF
 #define MAX_NFL 250 // Maximum number of candidates MD can support
 #define MAX_NFL_BUFF_Y \
     (MAX_NFL + CAND_CLASS_TOTAL) //need one extra temp buffer for each fast loop call
 #define MAX_NFL_BUFF (MAX_NFL_BUFF_Y + 84) //need one extra temp buffer for each fast loop call
+#endif
 #define MAX_LAD 120 // max lookahead-distance 2x60fps
 #define ROUND_UV(x) (((x) >> 3) << 3)
 #define AV1_PROB_COST_SHIFT 9
@@ -487,6 +490,53 @@ typedef enum MdStagingMode {
     MD_STAGING_MODE_TOTAL
 } MdStagingMode;
 
+#if CLN_MD_CAND_BUFF
+#define NICS_PIC_TYPE  3
+#define NICS_SCALING_LEVELS  16
+static const  uint32_t MD_STAGE_NICS[NICS_PIC_TYPE][CAND_CLASS_TOTAL] =
+
+{
+// C0    C1    C2     C3
+{ 64,     0,     0,    16}, // I SLICE
+{ 32,    32,    32,     8}, // REF FRAMES
+{ 16,    16,    16,     4}, // NON-REF FRAMES
+};
+
+#define  MD_STAGE_NICS_SCAL_DENUM  16
+
+static const  uint32_t MD_STAGE_NICS_SCAL_NUM[NICS_SCALING_LEVELS][MD_STAGE_TOTAL] =
+{
+// S0    S1    S2     S3
+{ 0,    20,    20,    20},   // LEVEL 0
+{ 0,    18,    18,    18},   // LEVEL 1
+{ 0,    16,    16,    16},   // LEVEL 2
+{ 0,    12,    12,    12},   // LEVEL 3
+{ 0,    10,    10,    10},   // LEVEL 4
+{ 0,     8,     8,     8},   // LEVEL 5
+{ 0,     6,     6,     6},   // LEVEL 6
+#if CLN_MD_CAND_BUFF
+{ 0,     4,     5,     5},   // LEVEL 7
+#else
+{ 0,     5,     5,     5},   // LEVEL 7
+#endif
+{ 0,     4,     4,     4},   // LEVEL 8
+#if CLN_MD_CAND_BUFF
+{ 0,     4,     3,     3},   // LEVEL 9
+#else
+{ 0,     5,     3,     3},   // LEVEL 9
+#endif
+{ 0,     3,     3,     3},   // LEVEL 10
+{ 0,     3,     2,     2},   // LEVEL 11
+{ 0,     3,     1,     1},   // LEVEL 12
+#if CLN_MD_CAND_BUFF
+{ 0,     2,     1,     1},   // LEVEL 13
+#else
+{ 0,     2,     2,     2},   // LEVEL 13
+#endif
+{ 0,     2,     0,     0},   // LEVEL 14
+{ 0,     0,     0,     0}    // LEVEL 15
+};
+#endif
 // NICS
 #define MAX_FRAME_TYPE 3 // Max number of frame type allowed for nics
 #define ALL_S0 -1 // Allow all candidates from stage0

@@ -53,8 +53,11 @@ void svt_av1_loop_filter_frame(
         PictureControlSet *pcs_ptr,
         /*MacroBlockD *xd,*/ int32_t plane_start, int32_t plane_end/*,
         int32_t partial_frame*/);
-
+#if CLN_DLF_RES_PROCESS
+void svt_av1_pick_filter_level(
+#else
 void svt_av1_pick_filter_level(DlfContext *         context_ptr,
+#endif
                                EbPictureBufferDesc *srcBuffer, // source input
                                PictureControlSet *pcs_ptr, LpfPickMethod method);
 
