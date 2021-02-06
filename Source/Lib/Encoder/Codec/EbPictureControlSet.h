@@ -490,6 +490,12 @@ typedef struct TplControls {
 #if FTR_TPL_REDUCE_NUMBER_OF_REF
     uint8_t use_pred_sad_in_inter_search;
 #endif
+#if FTR_USE_LAD_TPL
+    uint8_t reduced_tpl_group;
+#endif
+#if FTR_BYPASS_RDOQ_CHROMA_QP_BASED
+    uint8_t skip_rdoq_uv_qp_based_th;
+#endif
 } TplControls;
 
 /*!
@@ -1118,6 +1124,10 @@ typedef struct PictureParentControlSet {
     int64_t  ext_mg_size; //same as mg expect for MGops with [LDP-I] which are split into 2
 
     struct PictureParentControlSet *ntpl_group[MAX_TPL_EXT_GROUP_SIZE]; //new tpl group formed the extended group
+#if FTR_USE_LAD_TPL
+    uint8_t tpl_valid_pic[MAX_TPL_EXT_GROUP_SIZE];
+    uint8_t used_tpl_frame_num;
+#endif
     uint32_t ntpl_group_size;
 #endif
 
@@ -1156,6 +1166,9 @@ typedef struct PictureParentControlSet {
     uint8_t                         first_pass_done;
 #if FTR_TPL_TR
     TplControls                     tpl_ctrls;
+#endif
+#if FIX_ADD_TPL_VALID
+    uint8_t tpl_is_valid;
 #endif
 #if FTR_SIMULATE_P_BASE
     uint8_t                         list0_only_base; // Use list0 only if BASE (mimik a P)

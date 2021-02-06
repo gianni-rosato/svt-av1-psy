@@ -1512,6 +1512,16 @@ int32_t av1_quantize_inv_quantize(
         if ((!is_encode_pass) && (component_type != COMPONENT_LUMA))
             perform_rdoq = 0;
 #endif
+#if FTR_BYPASS_RDOQ_CHROMA_QP_BASED
+    if (pcs_ptr->parent_pcs_ptr->tpl_ctrls.skip_rdoq_uv_qp_based_th) {
+        const int qp_offset_th = pcs_ptr->parent_pcs_ptr->tpl_ctrls.skip_rdoq_uv_qp_based_th;
+        if (component_type == COMPONENT_CHROMA_CB || component_type == COMPONENT_CHROMA_CR) {
+            int diff = q_index - quantizer_to_qindex[pcs_ptr->parent_pcs_ptr->picture_qp];
+            if (diff > qp_offset_th)
+                perform_rdoq = 0;
+        }
+    }
+#endif
     if (perform_rdoq && md_context->rdoq_ctrls.satd_factor != ((uint8_t)~0)) {
 
         int satd = svt_aom_satd(coeff, n_coeffs);

@@ -2413,7 +2413,11 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
 
 #if FTR_LAD_MG
     //use a number of MGs ahead of current MG
+#if FTR_USE_LAD_TPL
+    scs_ptr->lad_mg = 1;
+#else
     scs_ptr->lad_mg = 0;
+#endif
 #endif
 
 #if CLN_REST_FILTER

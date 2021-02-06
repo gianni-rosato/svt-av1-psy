@@ -2187,7 +2187,16 @@ static void generate_r0beta(PictureParentControlSet *pcs_ptr) {
 
     if (mc_dep_cost_base != 0) {
         pcs_ptr->r0 = (double)intra_cost_base / mc_dep_cost_base;
+#if FIX_ADD_TPL_VALID
+        pcs_ptr->tpl_is_valid = 1;
+#endif
     }
+#if FIX_ADD_TPL_VALID
+    else {
+        pcs_ptr->tpl_is_valid = 0;
+    }
+#endif
+
 #if DEBUG_TPL
     SVT_LOG("generate_r0beta ------> poc %ld\t%.0f\t%.0f \t%.5f base_rdmult=%d\n",
             pcs_ptr->picture_number,
@@ -2535,7 +2544,9 @@ EbErrorType tpl_mc_flow(EncodeContext *encode_context_ptr, SequenceControlSet *s
 #endif
         }
     }
-
+#if FIX_ADD_TPL_VALID
+    pcs_ptr->tpl_is_valid = 0;
+#endif
     init_tpl_buffers(encode_context_ptr, pcs_ptr, pcs_array);
 
     if (pcs_array[0]->tpl_data.tpl_temporal_layer_index == 0) {
@@ -2562,23 +2573,30 @@ EbErrorType tpl_mc_flow(EncodeContext *encode_context_ptr, SequenceControlSet *s
                        0,
                        (picture_width_in_mb << shift) * sizeof(TplStats));
             }
-#if FTR_TPL_TR
-            tpl_on = !(pcs_array[0]->tpl_ctrls.disable_tpl_nref);
-#else
-            tpl_on = !(pcs_array[0]->tpl_data.tpl_ctrls.disable_tpl_nref);
+#if FTR_USE_LAD_TPL
+            if(scs_ptr->lad_mg)
+                tpl_on = pcs_ptr->tpl_valid_pic[frame_idx];
+            else {
 #endif
-            tpl_on = (pcs_array[0]->slice_type == I_SLICE) ? 1 : tpl_on;
-            if (tpl_on == 0)
-            {
-                tpl_on = pcs_array[frame_idx]->tpl_data.is_used_as_reference_flag ? 1 :
-                    (ABS((int64_t)pcs_array[0]->picture_number -
-                    (int64_t)pcs_array[frame_idx]->picture_number )
 #if FTR_TPL_TR
-                        <= pcs_array[0]->tpl_ctrls.disable_tpl_pic_dist) ? 1: tpl_on;
+                tpl_on = !(pcs_array[0]->tpl_ctrls.disable_tpl_nref);
 #else
-                        <= pcs_array[0]->tpl_data.tpl_ctrls.disable_tpl_pic_dist) ? 1: tpl_on;
+                tpl_on = !(pcs_array[0]->tpl_data.tpl_ctrls.disable_tpl_nref);
 #endif
+                tpl_on = (pcs_array[0]->slice_type == I_SLICE) ? 1 : tpl_on;
+                if (tpl_on == 0) {
+                    tpl_on = pcs_array[frame_idx]->tpl_data.is_used_as_reference_flag ? 1 :
+                        (ABS((int64_t)pcs_array[0]->picture_number -
+                        (int64_t)pcs_array[frame_idx]->picture_number)
+#if FTR_TPL_TR
+                        <= pcs_array[0]->tpl_ctrls.disable_tpl_pic_dist) ? 1 : tpl_on;
+#else
+                        <= pcs_array[0]->tpl_data.tpl_ctrls.disable_tpl_pic_dist) ? 1 : tpl_on;
+#endif
+                }
+#if FTR_USE_LAD_TPL
             }
+#endif
             if (tpl_on)
 #if FTR_TPL_TR
                 tpl_mc_flow_dispenser(encode_context_ptr, scs_ptr, &pcs_ptr->base_rdmult, pcs_array[frame_idx], frame_idx,context_ptr);
@@ -2594,22 +2612,30 @@ EbErrorType tpl_mc_flow(EncodeContext *encode_context_ptr, SequenceControlSet *s
 
         // synthesizer
         for (frame_idx = frames_in_sw - 1; frame_idx >= 0; frame_idx--) {
-#if FTR_TPL_TR
-            tpl_on = !(pcs_array[0]->tpl_ctrls.disable_tpl_nref);
-#else
-            tpl_on = !(pcs_array[0]->tpl_data.tpl_ctrls.disable_tpl_nref);
+#if FTR_USE_LAD_TPL
+            if(scs_ptr->lad_mg)
+                tpl_on = pcs_ptr->tpl_valid_pic[frame_idx];
+            else {
 #endif
-            tpl_on = (pcs_array[0]->slice_type == I_SLICE) ? 1 : tpl_on;
-            if (tpl_on == 0) {
-                tpl_on = pcs_array[frame_idx]->tpl_data.is_used_as_reference_flag ? 1 :
-                    (ABS((int64_t)pcs_array[0]->picture_number -
-                    (int64_t)pcs_array[frame_idx]->picture_number )
 #if FTR_TPL_TR
-                        <= pcs_array[0]->tpl_ctrls.disable_tpl_pic_dist) ? 1: tpl_on;
+                tpl_on = !(pcs_array[0]->tpl_ctrls.disable_tpl_nref);
 #else
-                        <= pcs_array[0]->tpl_data.tpl_ctrls.disable_tpl_pic_dist) ? 1: tpl_on;
+                tpl_on = !(pcs_array[0]->tpl_data.tpl_ctrls.disable_tpl_nref);
 #endif
+                tpl_on = (pcs_array[0]->slice_type == I_SLICE) ? 1 : tpl_on;
+                if (tpl_on == 0) {
+                    tpl_on = pcs_array[frame_idx]->tpl_data.is_used_as_reference_flag ? 1 :
+                        (ABS((int64_t)pcs_array[0]->picture_number -
+                        (int64_t)pcs_array[frame_idx]->picture_number)
+#if FTR_TPL_TR
+                            <= pcs_array[0]->tpl_ctrls.disable_tpl_pic_dist) ? 1 : tpl_on;
+#else
+                        <= pcs_array[0]->tpl_data.tpl_ctrls.disable_tpl_pic_dist) ? 1 : tpl_on;
+#endif
+                }
+#if FTR_USE_LAD_TPL
             }
+#endif
             if (tpl_on)
                 tpl_mc_flow_synthesizer(pcs_array, frame_idx, frames_in_sw);
         }

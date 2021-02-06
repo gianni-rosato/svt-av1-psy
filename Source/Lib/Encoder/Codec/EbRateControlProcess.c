@@ -6582,7 +6582,11 @@ static int cqp_qindex_calc_tpl_la(PictureControlSet *pcs_ptr, RATE_CONTROL *rc, 
         // As a results, we defined a factor to adjust r0
         if (pcs_ptr->parent_pcs_ptr->frm_hdr.frame_type != KEY_FRAME) {
             double factor;
+#if FTR_USE_LAD_TPL
+            if (pcs_ptr->parent_pcs_ptr->tpl_trailing_frame_count <= 6 && !scs_ptr->lad_mg)
+#else
             if (pcs_ptr->parent_pcs_ptr->tpl_trailing_frame_count <= 6)
+#endif
                 factor = 2;
             else
                 factor = 1;
@@ -6613,7 +6617,12 @@ static int cqp_qindex_calc_tpl_la(PictureControlSet *pcs_ptr, RATE_CONTROL *rc, 
         if (pcs_ptr->parent_pcs_ptr->temporal_layer_index == 0) {
             double div_factor = 1;
             double factor;
-            if (pcs_ptr->parent_pcs_ptr->tpl_trailing_frame_count == 0)
+#if FTR_USE_LAD_TPL
+            if (scs_ptr->lad_mg)
+                factor = pcs_ptr->parent_pcs_ptr->used_tpl_frame_num >= 16 ? 1.4 : 2.2;
+            else
+#endif
+                if (pcs_ptr->parent_pcs_ptr->tpl_trailing_frame_count == 0)
                 factor = 2;
             else if (pcs_ptr->parent_pcs_ptr->tpl_trailing_frame_count <= 6)
                 factor = 1.5;
@@ -6829,29 +6838,46 @@ static void sb_setup_lambda(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr) {
  ******************************************************/
 void sb_qp_derivation_tpl_la(PictureControlSet *pcs_ptr) {
     PictureParentControlSet *ppcs_ptr = pcs_ptr->parent_pcs_ptr;
-    SequenceControlSet *     scs_ptr  = pcs_ptr->parent_pcs_ptr->scs_ptr;
+    SequenceControlSet *     scs_ptr = pcs_ptr->parent_pcs_ptr->scs_ptr;
     SuperBlock *             sb_ptr;
     uint32_t                 sb_addr;
 
+#if FIX_UPDATE_DQPRESENT_FLAG
+    uint32_t non_zero_offset = 0;
+#endif
     pcs_ptr->parent_pcs_ptr->average_qp = 0;
     if (pcs_ptr->temporal_layer_index == 0)
+#if FIX_UPDATE_DQPRESENT_FLAG
+        pcs_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_present = 0;
+#else
         pcs_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_present = 1;
+#endif
     else
         pcs_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_present = 0;
-
+#if FIX_UPDATE_DQPRESENT_FLAG
+#if FIX_ADD_TPL_VALID
+    if ((pcs_ptr->temporal_layer_index == 0) && (pcs_ptr->parent_pcs_ptr->tpl_is_valid == 1)) {
+#else
+    if (pcs_ptr->temporal_layer_index == 0) {
+#endif
+#else
     if (pcs_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_present) {
+#endif
+
         for (sb_addr = 0; sb_addr < scs_ptr->sb_tot_cnt; ++sb_addr) {
-            sb_ptr        = pcs_ptr->sb_ptr_array[sb_addr];
-            double beta   = ppcs_ptr->tpl_beta[sb_addr];
+            sb_ptr = pcs_ptr->sb_ptr_array[sb_addr];
+            double beta = ppcs_ptr->tpl_beta[sb_addr];
             int    offset = svt_av1_get_deltaq_offset(scs_ptr->static_config.encoder_bit_depth,
-                                                   ppcs_ptr->frm_hdr.quantization_params.base_q_idx,
-                                                   beta,
-                                                   pcs_ptr->parent_pcs_ptr->slice_type);
-            offset        = AOMMIN(
+                ppcs_ptr->frm_hdr.quantization_params.base_q_idx,
+                beta,
+                pcs_ptr->parent_pcs_ptr->slice_type);
+            offset = AOMMIN(
                 offset, pcs_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_res * 9 * 4 - 1);
             offset = AOMMAX(
                 offset, -pcs_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_res * 9 * 4 + 1);
-
+#if FIX_UPDATE_DQPRESENT_FLAG
+            non_zero_offset += ABS(offset) > 0 ? 1 : 0;
+#endif
             sb_ptr->qindex = CLIP3(
                 pcs_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_res,
                 255 - pcs_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_res,
@@ -6859,9 +6885,27 @@ void sb_qp_derivation_tpl_la(PictureControlSet *pcs_ptr) {
 
             sb_setup_lambda(pcs_ptr, sb_ptr);
         }
-    } else {
+
+#if FIX_UPDATE_DQPRESENT_FLAG
+        //Update delta_q_present flag.
+        uint32_t affected_sb_percentage = (non_zero_offset * 100) / scs_ptr->sb_tot_cnt;
+        if (affected_sb_percentage > 0) {
+            pcs_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_present = 1;
+        }
+        else{
+            pcs_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_present = 0;
+            for (sb_addr = 0; sb_addr < scs_ptr->sb_tot_cnt; ++sb_addr) {
+                sb_ptr = pcs_ptr->sb_ptr_array[sb_addr];
+                sb_ptr->qindex = quantizer_to_qindex[pcs_ptr->picture_qp];
+                pcs_ptr->parent_pcs_ptr->average_qp += pcs_ptr->picture_qp;
+            }
+        }
+#endif
+
+    }
+    else {
         for (sb_addr = 0; sb_addr < scs_ptr->sb_tot_cnt; ++sb_addr) {
-            sb_ptr         = pcs_ptr->sb_ptr_array[sb_addr];
+            sb_ptr = pcs_ptr->sb_ptr_array[sb_addr];
             sb_ptr->qindex = quantizer_to_qindex[pcs_ptr->picture_qp];
             pcs_ptr->parent_pcs_ptr->average_qp += pcs_ptr->picture_qp;
         }

@@ -415,7 +415,14 @@ void irc_send_picture_out(InitialRateControlContext *ctx, PictureParentControlSe
     out_results_ptr->pcs_wrapper_ptr = pcs->p_pcs_wrapper_ptr;
     svt_post_full_object(out_results_wrapper_ptr);
 }
-
+#if FTR_USE_LAD_TPL
+uint8_t is_frame_already_exists(PictureParentControlSet *pcs, uint32_t end_index, uint64_t pic_num) {
+    for (uint32_t i = 0; i < end_index; i++)
+        if (pcs->tpl_group[i]->picture_number == pic_num)
+            return 1;
+    return 0;
+}
+#endif
 /*
  copy the number of pcs entries from the the output queue to extended  buffer
 */
@@ -511,6 +518,41 @@ void store_extended_group(
                 break;
         }
     }
+#if FTR_USE_LAD_TPL
+    SequenceControlSet *scs_ptr = (SequenceControlSet *)pcs->scs_wrapper_ptr->object_ptr;
+    if (scs_ptr->lad_mg) {
+        pcs->tpl_group_size = pcs->ntpl_group_size;
+        memset(pcs->tpl_valid_pic, 0, MAX_TPL_EXT_GROUP_SIZE * sizeof(uint8_t));
+        pcs->tpl_valid_pic[0] = 1;
+        pcs->used_tpl_frame_num = 0;
+        for (uint32_t i = 0; i < pcs->ntpl_group_size; i++) {
+            pcs->tpl_group[i] = pcs->ntpl_group[i];
+            // Check wether the i-th pic already exists in the tpl group
+            if (!is_frame_already_exists(pcs, i, pcs->tpl_group[i]->picture_number)) {
+                // Discard non-ref pic from the tpl group
+                if (pcs->tpl_group[i]->is_used_as_reference_flag) {
+                    if (pcs->slice_type != I_SLICE) {
+                        // Discard low important pictures from tpl group
+                        if (pcs->tpl_ctrls.reduced_tpl_group) {
+                            if (pcs->tpl_group[i]->temporal_layer_index <= pcs->tpl_ctrls.reduced_tpl_group) {
+                                pcs->tpl_valid_pic[i] = 1;
+                                pcs->used_tpl_frame_num++;
+                            }
+                        }
+                        else {
+                            pcs->tpl_valid_pic[i] = 1;
+                            pcs->used_tpl_frame_num++;
+                        }
+                    }
+                    else {
+                        pcs->tpl_valid_pic[i] = 1;
+                        pcs->used_tpl_frame_num++;
+                    }
+                }
+            }
+        }
+    }
+#endif
 #if LAD_MG_PRINT
     if (log) {
         SVT_LOG("\n NEW TPL group Pic:%lld  size:%i  \n", pcs->picture_number, pcs->ntpl_group_size);

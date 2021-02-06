@@ -234,6 +234,11 @@ extern "C" {
 #define CLN_REST_FILTER                        1 // Remove fixed-cost operations when restoration filtering is on (not lossless)
 #define FIX_ADD_MVP_MEMSET                     1 // Fix bitstream corruption for longer clips
 #define FIX_COMPUTE_MEAN_8X8                   1 // Fix crash when block_mean_calc_prec is set to BLOCK_MEAN_PREC_FULL
+#define FIX_UPDATE_DQPRESENT_FLAG              0 // Disable q_present flag when no qp offset is in ]-th, +th[ intervall
+#define FIX_ADD_TPL_VALID                      1 // Set tpl to invalid state when mc_dep_cost_base is 0
+#define FTR_BYPASS_RDOQ_CHROMA_QP_BASED        1 // Disable rdoq when qp offset is higher than certain th.
+#define FTR_USE_LAD_TPL                        1 // Use extended tpl group
+
 // ============= END SVT_04 =============
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
