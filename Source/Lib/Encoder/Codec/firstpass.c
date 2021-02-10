@@ -921,18 +921,22 @@ static int open_loop_firstpass_inter_prediction(
         EbPictureBufferDesc *last_input_picture_ptr = ppcs_ptr->first_pass_ref_count
             ? ppcs_ptr->first_pass_ref_ppcs_ptr[0]->enhanced_picture_ptr
             : NULL;
-        int32_t ref_origin_index = last_input_picture_ptr->origin_x + (blk_origin_x + mv.col) +
-            (blk_origin_y + mv.row + last_input_picture_ptr->origin_y) *
+        int32_t ref_origin_index;
+        if (last_input_picture_ptr != NULL)
+        {
+            ref_origin_index = last_input_picture_ptr->origin_x + (blk_origin_x + mv.col) +
+                (blk_origin_y + mv.row + last_input_picture_ptr->origin_y) *
                 last_input_picture_ptr->stride_y;
 
-        motion_error = (uint32_t)(spatial_full_dist_type_fun(input_picture_ptr->buffer_y,
-                                                             input_origin_index,
-                                                             input_picture_ptr->stride_y,
-                                                             last_input_picture_ptr->buffer_y,
-                                                             ref_origin_index,
-                                                             last_input_picture_ptr->stride_y,
-                                                             bwidth,
-                                                             bheight));
+            motion_error = (uint32_t)(spatial_full_dist_type_fun(input_picture_ptr->buffer_y,
+                input_origin_index,
+                input_picture_ptr->stride_y,
+                last_input_picture_ptr->buffer_y,
+                ref_origin_index,
+                last_input_picture_ptr->stride_y,
+                bwidth,
+                bheight));
+        }
 
         // Assume 0,0 motion with no mv overhead.
         if (mv.col != 0 && mv.row != 0) {

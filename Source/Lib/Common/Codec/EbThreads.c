@@ -370,41 +370,50 @@ void atomic_set_u32(AtomicVarU32 *var, uint32_t in) {
     a lock(mutex) and enter the sleeping state.
     it could be seen as a combined: wait and release mutex
 */
-void svt_create_cond_var(CondVar *cond_var)
+EbErrorType svt_create_cond_var(CondVar *cond_var)
 {
+    EbErrorType return_error;
     cond_var->val = 0;
 #ifdef _WIN32
     InitializeCriticalSection(&cond_var->cs);
     InitializeConditionVariable(&cond_var->cv);
+    return_error = EB_ErrorNone;
 #else
     pthread_mutex_init(&cond_var->m_mutex, NULL);
-    pthread_cond_init(&cond_var->m_cond, NULL);
+    return_error = pthread_cond_init(&cond_var->m_cond, NULL);
+
 #endif
+    return return_error;
+
 }
 /*
     set a  condition variable to the new value
 */
-void svt_set_cond_var(CondVar *cond_var, int32_t newval)
+EbErrorType svt_set_cond_var(CondVar *cond_var, int32_t newval)
 {
+    EbErrorType return_error;
 #ifdef _WIN32
     EnterCriticalSection(&cond_var->cs);
     cond_var->val = newval;
     WakeAllConditionVariable(&cond_var->cv);
     LeaveCriticalSection(&cond_var->cs);
+    return_error = EB_ErrorNone;
 #else
-    pthread_mutex_lock(&cond_var->m_mutex);
+    return_error = pthread_mutex_lock(&cond_var->m_mutex);
     cond_var->val = newval;
-    pthread_cond_broadcast(&cond_var->m_cond);
-    pthread_mutex_unlock(&cond_var->m_mutex);
+    return_error |= pthread_cond_broadcast(&cond_var->m_cond);
+    return_error |= pthread_mutex_unlock(&cond_var->m_mutex);
 #endif
+    return return_error;
 }
 /*
     wait until the cond variable changes to a value
     different than input
 */
 
-void svt_wait_cond_var(CondVar *cond_var, int32_t input)
+EbErrorType svt_wait_cond_var(CondVar *cond_var, int32_t input)
 {
+    EbErrorType return_error;
 
 #ifdef _WIN32
 
@@ -412,12 +421,13 @@ void svt_wait_cond_var(CondVar *cond_var, int32_t input)
     while (cond_var->val == input)
         SleepConditionVariableCS(&cond_var->cv, &cond_var->cs, INFINITE);
     LeaveCriticalSection(&cond_var->cs);
-
+    return_error = EB_ErrorNone;
 #else
-    pthread_mutex_lock(&cond_var->m_mutex);
+    return_error = pthread_mutex_lock(&cond_var->m_mutex);
     while (cond_var->val == input)
-        pthread_cond_wait(&cond_var->m_cond, &cond_var->m_mutex);
-    pthread_mutex_unlock(&cond_var->m_mutex);
+        return_error = pthread_cond_wait(&cond_var->m_cond, &cond_var->m_mutex);
+    return_error = pthread_mutex_unlock(&cond_var->m_mutex);
 #endif
+    return return_error;
 }
 #endif
