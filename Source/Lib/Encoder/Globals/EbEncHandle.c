@@ -2414,7 +2414,8 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
 #if FTR_LAD_MG
     //use a number of MGs ahead of current MG
 #if FTR_USE_LAD_TPL
-    scs_ptr->lad_mg = 1;
+    uint8_t lad_mg = 1; // Specify the number of mini-gops to be used as LAD. 0: 1 mini-gop, 1: 2 mini-gops and 3: 3 mini-gops
+    scs_ptr->lad_mg = MIN(2,lad_mg);// lad_mg is capped to 2 because tpl was optimised only for 1,2 and 3 mini-gops
 #else
     scs_ptr->lad_mg = 0;
 #endif

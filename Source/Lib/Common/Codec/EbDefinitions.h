@@ -38,17 +38,29 @@ extern "C" {
 #endif
 #define SCD_LAD                                             6  //number of future frames
 #define PD_WINDOW_SIZE                                      (SCD_LAD +2) //adding previous+current to future
+#if FIX_TPL_4MG
+#define MAX_TPL_GROUP_SIZE                                  512 //enough to cover 6L gop
+#else
 #define MAX_TPL_GROUP_SIZE                                  64 //enough to cover 6L gop
+#endif
 
 #if FTR_LAD_MG
+#if FIX_TPL_4MG
+#define MAX_TPL_EXT_GROUP_SIZE                              MAX_TPL_GROUP_SIZE
+#else
 #define MAX_TPL_EXT_GROUP_SIZE                              512
+#endif
 #define OUT_Q_ADVANCE(h) ((h == REFERENCE_QUEUE_MAX_DEPTH - 1) ? 0 : h + 1)
 void assert_err(uint32_t condition, char * err_msg);
 #endif
 
 #define TPL_DEP_COST_SCALE_LOG2 4
 #define MAX_TX_WEIGHT 500
+#if FIX_TPL_4MG
+#define MAX_TPL_LA_SW MAX_TPL_GROUP_SIZE // Max TPL look ahead sliding window size
+#else
 #define MAX_TPL_LA_SW 60 // Max TPL look ahead sliding window size
+#endif
 #define DEPTH_PROB_PRECISION 10000
 #define UPDATED_LINKS 100 //max number of pictures a dep-Cnt-cleanUp triggering picture can process
 #define MAX_TILE_CNTS 128 // Annex A.3

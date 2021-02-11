@@ -139,7 +139,8 @@ EbErrorType resource_coordination_context_ctor(EbThreadContext *thread_contxt_pt
     tpl level control
 */
 #if FTR_USE_LAD_TPL
-void set_tpl32_controls(PictureParentControlSet *pcs_ptr, uint8_t tpl_level) {
+void set_tpl_extended_controls(
+    PictureParentControlSet *pcs_ptr, uint8_t tpl_level) {
     TplControls *tpl_ctrls = &pcs_ptr->tpl_ctrls;
 #if OPT_TPL
     SequenceControlSet* scs_ptr = (SequenceControlSet*)pcs_ptr->scs_wrapper_ptr->object_ptr;
@@ -371,7 +372,7 @@ EbErrorType signal_derivation_pre_analysis_oq_pcs(SequenceControlSet const * con
 
 #if FTR_USE_LAD_TPL
     if (scs_ptr->lad_mg)
-        set_tpl32_controls(pcs_ptr, tpl_level);
+        set_tpl_extended_controls(pcs_ptr,tpl_level);
     else
         set_tpl_controls(pcs_ptr, tpl_level);
 #else

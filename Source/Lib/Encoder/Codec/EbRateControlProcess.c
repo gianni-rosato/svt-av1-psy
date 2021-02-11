@@ -6596,6 +6596,7 @@ static int cqp_qindex_calc_tpl_la(PictureControlSet *pcs_ptr, RATE_CONTROL *rc, 
         rc->kf_boost = get_cqp_kf_boost_from_r0(
             pcs_ptr->parent_pcs_ptr->r0, -1, scs_ptr->input_resolution);
 #if FIX_KF_BOOST_CAP
+        // NM: TODO: replaced by unitary number X * number of pictures in GOP // 93.75 * number of pictures in GOP
         int max_boost = scs_ptr->intra_period_length < KF_INTERVAL_TH ? MAX_KF_BOOST_LOW_KI : MAX_KF_BOOST_HIGHT_KI;
         rc->kf_boost = AOMMIN(rc->kf_boost, max_boost);
 #endif
@@ -6861,7 +6862,11 @@ void sb_qp_derivation_tpl_la(PictureControlSet *pcs_ptr) {
     if (pcs_ptr->temporal_layer_index == 0) {
 #endif
 #else
+#if FIX_ADD_TPL_VALID
+    if ((pcs_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_present) && (pcs_ptr->parent_pcs_ptr->tpl_is_valid == 1)) {
+#else
     if (pcs_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_present) {
+#endif
 #endif
 
         for (sb_addr = 0; sb_addr < scs_ptr->sb_tot_cnt; ++sb_addr) {
