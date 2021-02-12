@@ -4892,8 +4892,9 @@ void store_tpl_pictures(
             //printf("[%ld]: Got me data [TPL] %p\n", pcs_tpl_ptr->picture_number, pcs_tpl_ptr->pa_me_data);
         }
         //printf("====[%ld]: TPL group Base %ld, TPL group size %d\n",pcs->picture_number, pcs_tpl_ptr->picture_number, pcs->tpl_group_size);
-
+#if !FTR_USE_LAD_TPL
         pcs_tpl_ptr->num_tpl_grps++;
+#endif
 #if !FTR_TPL_TR
         set_tpl_controls(pcs_tpl_ptr,pcs_tpl_ptr->enc_mode);
 #endif

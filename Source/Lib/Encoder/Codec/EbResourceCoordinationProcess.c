@@ -135,9 +135,15 @@ EbErrorType resource_coordination_context_ctor(EbThreadContext *thread_contxt_pt
 }
 
 #if FTR_TPL_TR
-/*
-    tpl level control
-*/
+/*************************************************************************************
+tpl level control
+When the flag tpl_opt_flag is active, it implies that the TPL optimization actions
+listed in the tpl_control funtion could be considered
+In addition, only intra DC prediction could be considered and cost would be based
+only on distortion.
+When tpl_opt_flag is set to 0, none of the actions mentioned above could be considered
+0:OFF; 1:ON.
+***************************************************************************************/
 #if FTR_USE_LAD_TPL
 void set_tpl_extended_controls(
     PictureParentControlSet *pcs_ptr, uint8_t tpl_level) {
@@ -727,9 +733,10 @@ static EbErrorType reset_pcs_av1(PictureParentControlSet *pcs_ptr) {
 #endif
 #endif
 
+#if !FTR_USE_LAD_TPL
     pcs_ptr->num_tpl_grps      = 0;
     pcs_ptr->num_tpl_processed = 0;
-
+#endif
 #if  FTR_TPL_TR
    SequenceControlSet *scs_ptr = pcs_ptr->scs_ptr;
    pcs_ptr->me_segments_completion_count = 0;

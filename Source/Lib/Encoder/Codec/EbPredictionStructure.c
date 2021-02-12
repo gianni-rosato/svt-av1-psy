@@ -1847,6 +1847,51 @@ static void prediction_structure_group_dctor(EbPtr p) {
     PredictionStructureConfigArray *array = (PredictionStructureConfigArray *)obj->priv;
     EB_DELETE(array);
 }
+
+#if  CLN_CTRL_INIT_MRP
+typedef struct MrpInitCtrls {
+    EbBool enable;                  // MRP ON/OFF
+    uint8_t ref_count_used_base;    //number of reference to use in each ref list for     base pictures
+    uint8_t ref_count_used_non_base;//number of reference to use in each ref list for non base pictures
+} MrpInitCtrls;
+/*This controls MRP setting at init time. run time setting should be within the init settings*/
+void set_mrp_init_ctrls( MrpInitCtrls* ctrls, uint8_t  level) {
+
+
+    switch (level)
+    {
+    case 0: //OFF
+        ctrls->enable = 0;
+        ctrls->ref_count_used_base = 1;
+        ctrls->ref_count_used_non_base = 1;
+        break;
+    case 1: //FULL ON
+        ctrls->enable = 1;
+        ctrls->ref_count_used_base = MAX_REF_IDX;
+        ctrls->ref_count_used_non_base = MAX_REF_IDX;
+        break;
+    case 2:
+        ctrls->enable = 1;
+        ctrls->ref_count_used_base = MAX_REF_IDX;
+        ctrls->ref_count_used_non_base = 3;
+        break;
+    case 3:
+        ctrls->enable = 1;
+        ctrls->ref_count_used_base = MAX_REF_IDX;
+        ctrls->ref_count_used_non_base = 2;
+        break;
+    case 4:
+        ctrls->enable = 1;
+        ctrls->ref_count_used_base = MAX_REF_IDX;
+        ctrls->ref_count_used_non_base = 1;
+        break;
+
+    default:
+        assert(0);
+        break;
+    }
+}
+#endif
 /*************************************************
  * Prediction Structure Group Ctor
  *
@@ -1876,6 +1921,16 @@ EbErrorType prediction_structure_group_ctor(PredictionStructureGroup *pred_struc
     uint32_t number_of_references;
 
     pred_struct_group_ptr->dctor = prediction_structure_group_dctor;
+
+#if  CLN_CTRL_INIT_MRP
+    uint8_t mrp_init_level =  enc_mode <= ENC_M3 ? 1 : enc_mode <= ENC_M6 ? 3 : 4;
+
+    MrpInitCtrls mrp_init_ctrls;
+    set_mrp_init_ctrls(&mrp_init_ctrls, mrp_init_level);
+    uint8_t ref_count_used = mrp_init_ctrls.ref_count_used_non_base;
+    uint8_t ref_count_used_base = mrp_init_ctrls.ref_count_used_base;
+#else
+
 #if TUNE_LOWER_PRESETS
 #if FTR_NEW_REF_PRUNING_CTRLS
 #if TUNE_NEW_PRESETS_MR_M8
@@ -1897,6 +1952,10 @@ EbErrorType prediction_structure_group_ctor(PredictionStructureGroup *pred_struc
 #else
     uint8_t ref_count_used = enc_mode <= ENC_M4 ? MAX_REF_IDX : enc_mode <= ENC_M5 ? 2 : 1;
 #endif
+
+#endif
+
+
 
     PredictionStructureConfigArray *config_array;
     EB_NEW(config_array, prediction_structure_config_array_ctor);
@@ -1963,6 +2022,22 @@ EbErrorType prediction_structure_group_ctor(PredictionStructureGroup *pred_struc
             }
         }
     }
+
+#if CLN_CTRL_INIT_MRP
+    if (ref_count_used_base < MAX_REF_IDX) {
+        uint8_t gop_i = 0;
+        for (int i = ref_count_used_base; i < MAX_REF_IDX; ++i) {
+            prediction_structure_config_array[3].entry_array[gop_i].ref_list0[i] = 0;
+            prediction_structure_config_array[3].entry_array[gop_i].ref_list1[i] = 0;
+            prediction_structure_config_array[4].entry_array[gop_i].ref_list0[i] = 0;
+            prediction_structure_config_array[4].entry_array[gop_i].ref_list1[i] = 0;
+            prediction_structure_config_array[5].entry_array[gop_i].ref_list0[i] = 0;
+            prediction_structure_config_array[5].entry_array[gop_i].ref_list1[i] = 0;
+
+        }
+    }
+#endif
+
 
 #if FTR_LAD_MG
     get_past_refs(prediction_structure_config_array);

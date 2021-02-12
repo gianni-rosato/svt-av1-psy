@@ -519,6 +519,7 @@ void store_extended_group(
         }
     }
 #if FTR_USE_LAD_TPL
+
     SequenceControlSet *scs_ptr = (SequenceControlSet *)pcs->scs_wrapper_ptr->object_ptr;
     if (scs_ptr->lad_mg) {
         pcs->tpl_group_size = pcs->ntpl_group_size;
@@ -533,7 +534,11 @@ void store_extended_group(
                 if (pcs->tpl_group[i]->is_used_as_reference_flag) {
                     if (pcs->slice_type != I_SLICE) {
                         // Discard low important pictures from tpl group
+#if CLN_TPL_CONNECT_FLAG
+                        if (pcs->tpl_ctrls.tpl_opt_flag && pcs->tpl_ctrls.reduced_tpl_group) {
+#else
                         if (pcs->tpl_ctrls.reduced_tpl_group) {
+#endif
                             if (pcs->tpl_group[i]->temporal_layer_index <= pcs->tpl_ctrls.reduced_tpl_group) {
                                 pcs->tpl_valid_pic[i] = 1;
                                 pcs->used_tpl_frame_num++;
@@ -551,8 +556,16 @@ void store_extended_group(
                 }
             }
         }
+#if !FTR_USE_LAD_TPL
+        uint16_t original_tpl_group = pcs->tpl_group_size;
+        for (pic_i = original_tpl_group; pic_i < pcs->ntpl_group_size; ++pic_i) {
+            PictureParentControlSet* pcs_tpl_ptr = (PictureParentControlSet *)pcs->tpl_group[pic_i];
+            pcs_tpl_ptr->num_tpl_grps++;
+        }
+#endif
     }
 #endif
+
 #if LAD_MG_PRINT
     if (log) {
         SVT_LOG("\n NEW TPL group Pic:%lld  size:%i  \n", pcs->picture_number, pcs->ntpl_group_size);

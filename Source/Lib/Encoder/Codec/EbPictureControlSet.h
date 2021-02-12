@@ -1081,8 +1081,10 @@ typedef struct PictureParentControlSet {
 #else
     EbHandle pame_done_semaphore;
 #endif
+#if !FTR_USE_LAD_TPL
     uint8_t      num_tpl_grps;
     uint8_t      num_tpl_processed;
+#endif
     int16_t      tf_segments_total_count;
     uint8_t      tf_segments_column_count;
     uint8_t      tf_segments_row_count;

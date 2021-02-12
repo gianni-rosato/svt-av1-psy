@@ -1513,7 +1513,11 @@ int32_t av1_quantize_inv_quantize(
             perform_rdoq = 0;
 #endif
 #if FTR_BYPASS_RDOQ_CHROMA_QP_BASED
+#if CLN_TPL_CONNECT_FLAG
+    if (pcs_ptr->parent_pcs_ptr->tpl_ctrls.tpl_opt_flag && pcs_ptr->parent_pcs_ptr->tpl_ctrls.skip_rdoq_uv_qp_based_th) {
+#else
     if (pcs_ptr->parent_pcs_ptr->tpl_ctrls.skip_rdoq_uv_qp_based_th) {
+#endif
         const int qp_offset_th = pcs_ptr->parent_pcs_ptr->tpl_ctrls.skip_rdoq_uv_qp_based_th;
         if (component_type == COMPONENT_CHROMA_CB || component_type == COMPONENT_CHROMA_CR) {
             int diff = q_index - quantizer_to_qindex[pcs_ptr->parent_pcs_ptr->picture_qp];

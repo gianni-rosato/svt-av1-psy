@@ -557,6 +557,9 @@ void tpl_mc_flow_dispenser_sb(
     mb_plane.dequant_qtx     = scs_ptr->deq_8bit.y_dequant_qtx[qIndex];
 
     EbPictureBufferDesc *input_ptr = pcs_ptr->enhanced_picture_ptr;
+#if CLN_TPL_CONNECT_FLAG
+    const uint8_t tpl_opt_flag = pcs_ptr->tpl_ctrls.tpl_opt_flag;
+#endif
 
 
     SbParams *sb_params    = &scs_ptr->sb_params_array[sb_index];
@@ -603,8 +606,13 @@ void tpl_mc_flow_dispenser_sb(
             int64_t        best_intra_cost = INT64_MAX;
             // Disable intra prediction
 #if FTR_TPL_TR
+#if CLN_TPL_CONNECT_FLAG
+            uint8_t disable_intra_pred  = tpl_opt_flag && (pcs_ptr->tpl_ctrls.disable_intra_pred_nref ||
+                pcs_ptr->tpl_ctrls.disable_intra_pred_nbase);
+#else
             uint8_t disable_intra_pred  = pcs_ptr->tpl_ctrls.disable_intra_pred_nref ||
                 pcs_ptr->tpl_ctrls.disable_intra_pred_nbase;
+#endif
             if (!disable_intra_pred ||
                 (pcs_ptr->tpl_ctrls.disable_intra_pred_nref && pcs_ptr->tpl_data.is_used_as_reference_flag) ||
                 (pcs_ptr->tpl_ctrls.disable_intra_pred_nbase && pcs_ptr->tpl_data.tpl_temporal_layer_index == 0)){
@@ -750,7 +758,11 @@ void tpl_mc_flow_dispenser_sb(
 
             uint32_t best_reference = 0;
     #if FTR_TPL_TR
+#if CLN_TPL_CONNECT_FLAG
+            if (pcs_ptr->tpl_ctrls.tpl_opt_flag && pcs_ptr->tpl_ctrls.get_best_ref)
+#else
             if (pcs_ptr->tpl_ctrls.get_best_ref)
+#endif
     #else
             if (pcs_ptr->tpl_data.tpl_ctrls.get_best_ref)
     #endif
@@ -1024,8 +1036,13 @@ void tpl_mc_flow_dispenser_sb(
     #if FTR_TPL_TR
             int rate_cost = pcs_ptr->tpl_ctrls.tpl_opt_flag ? 0 : rate_estimator(qcoeff, eob, tx_size);
             // Disable intra prediction
+#if CLN_TPL_CONNECT_FLAG
+            disable_intra_pred  = tpl_opt_flag && (pcs_ptr->tpl_ctrls.disable_intra_pred_nref ||
+                pcs_ptr->tpl_ctrls.disable_intra_pred_nbase);
+#else
             disable_intra_pred  = pcs_ptr->tpl_ctrls.disable_intra_pred_nref ||
                 pcs_ptr->tpl_ctrls.disable_intra_pred_nbase;
+#endif
     #else
 
             int rate_cost = pcs_ptr->tpl_data.tpl_ctrls.tpl_opt_flag
@@ -2603,10 +2620,12 @@ EbErrorType tpl_mc_flow(EncodeContext *encode_context_ptr, SequenceControlSet *s
 #else
                 tpl_mc_flow_dispenser(encode_context_ptr, scs_ptr, pcs_array[frame_idx], frame_idx);
 #endif
+#if !FTR_USE_LAD_TPL
 #if FTR_TPL_TR
             pcs_ptr->tpl_group[frame_idx]->num_tpl_processed++; //--------OKAY????-------------------
 #else
             pcs_array[frame_idx]->num_tpl_processed++;
+#endif
 #endif
         }
 
@@ -2700,6 +2719,16 @@ EbErrorType tpl_mc_flow(EncodeContext *encode_context_ptr, SequenceControlSet *s
     EB_DELETE(encode_context_ptr->mc_flow_rec_picture_buffer_noref);
     if (scs_ptr->in_loop_me == 0) {
         for (uint32_t i = 0; i < pcs_ptr->tpl_group_size; i++) {
+#if FTR_USE_LAD_TPL
+            if (pcs_ptr->tpl_group[i]->slice_type == P_SLICE) {
+                if (pcs_ptr->tpl_group[i]->ext_mg_id == pcs_ptr->ext_mg_id + 1)
+                    release_pa_reference_objects(scs_ptr, pcs_ptr->tpl_group[i]);
+            }
+            else {
+                if (pcs_ptr->tpl_group[i]->ext_mg_id == pcs_ptr->ext_mg_id)
+                    release_pa_reference_objects(scs_ptr, pcs_ptr->tpl_group[i]);
+            }
+#else
 #if FTR_TPL_TR
 #if FTR_LAD_MG
             if (pcs_ptr->tpl_group[i]->num_tpl_processed == pcs_ptr->tpl_group[i]->num_tpl_grps){
@@ -2712,7 +2741,7 @@ EbErrorType tpl_mc_flow(EncodeContext *encode_context_ptr, SequenceControlSet *s
 #endif
                 release_pa_reference_objects(scs_ptr, pcs_ptr->tpl_group[i]);
             }
-
+#endif
 #if FTR_TPL_TR
             dtor_trail_ressources(pcs_ptr->tpl_group[i]);
 #endif
@@ -2941,10 +2970,12 @@ void *source_based_operations_kernel(void *input_ptr) {
                 tpl_mc_flow(scs_ptr->encode_context_ptr, scs_ptr, pcs_ptr);
 #endif
             }
+#if !FTR_USE_LAD_TPL
             //any picture not belonging to any TPL group should release its PA references
             if (pcs_ptr->num_tpl_grps == 0) {
                 release_pa_reference_objects(scs_ptr, pcs_ptr);
             }
+#endif
         }
 
         /***********************************************SB-based operations************************************************************/

@@ -247,7 +247,8 @@ extern "C" {
 #define CLN_REMOVE_MEAN                        1 //  Remove mean calculation
 #define TUNE_PICT_PARALLEL                     1 //  Tune picture parallelization
 #define CLN_RES_PROCESS                        1 //  Memory optimizations in DLF and restoration processes
-
+#define CLN_CTRL_INIT_MRP                      1 //  Control MRP settings
+#define CLN_TPL_CONNECT_FLAG                   1 // Connect tpl_opt_flag to the remaining ofptimisation flags, lossless
 // ============= END SVT_04 =============
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
