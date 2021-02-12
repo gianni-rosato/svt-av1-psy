@@ -2951,6 +2951,7 @@ void *source_based_operations_kernel(void *input_ptr) {
         for (sb_index = 0; sb_index < sb_total_count; ++sb_index) {
             SbParams *sb_params      = &pcs_ptr->sb_params_array[sb_index];
             EbBool    is_complete_sb = sb_params->is_complete_sb;
+#if !CLN_REMOVE_MEAN
             uint8_t * y_mean_ptr     = pcs_ptr->y_mean[sb_index];
 #ifdef ARCH_X86_64
             _mm_prefetch((const char *)y_mean_ptr, _MM_HINT_T0);
@@ -2964,7 +2965,7 @@ void *source_based_operations_kernel(void *input_ptr) {
             context_ptr->y_mean_ptr  = y_mean_ptr;
             context_ptr->cr_mean_ptr = cr_mean_ptr;
             context_ptr->cb_mean_ptr = cb_mean_ptr;
-
+#endif
             if (is_complete_sb) {
                 context_ptr->complete_sb_count++;
             }

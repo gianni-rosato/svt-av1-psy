@@ -181,6 +181,12 @@ void picture_control_set_dctor(EbPtr p) {
     EB_DELETE(obj->temp_lf_recon_picture_ptr);
     EB_DELETE(obj->temp_lf_recon_picture16bit_ptr);
 #endif
+
+#if CLN_RES_PROCESS
+    EB_FREE_ARRAY(obj->rusi_picture[0]);
+    EB_FREE_ARRAY(obj->rusi_picture[1]);
+    EB_FREE_ARRAY(obj->rusi_picture[2]);
+#endif
     EB_DELETE(obj->input_frame16bit);
 
     EB_FREE_ARRAY(obj->mse_seg[0]);
@@ -376,6 +382,17 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
     }
 #endif
 
+#if CLN_RES_PROCESS
+    int32_t ntiles[2];
+    for (int32_t is_uv = 0; is_uv < 2; ++is_uv)
+        ntiles[is_uv] =
+            init_data_ptr->rst_info[is_uv].units_per_tile; //CHKN res_tiles_in_plane
+
+    assert(ntiles[1] <= ntiles[0]);
+    EB_CALLOC_ARRAY(object_ptr->rusi_picture[0], ntiles[0]);
+    EB_CALLOC_ARRAY(object_ptr->rusi_picture[1], ntiles[1]);
+    EB_CALLOC_ARRAY(object_ptr->rusi_picture[2], ntiles[1]);
+#endif
 
     if ((is_16bit) || (init_data_ptr->is_16bit_pipeline)) {
         EB_NEW(object_ptr->input_frame16bit,
@@ -1131,10 +1148,11 @@ static void picture_parent_control_set_dctor(EbPtr ptr) {
         EB_DELETE(obj->chroma_downsampled_picture_ptr);
 
     EB_FREE_2D(obj->variance);
+#if !CLN_REMOVE_MEAN
     EB_FREE_2D(obj->y_mean);
     EB_FREE_2D(obj->cb_mean);
     EB_FREE_2D(obj->cr_mean);
-
+#endif
     if (obj->picture_histogram) {
         for (int region_in_picture_width_index = 0;
              region_in_picture_width_index < MAX_NUMBER_OF_REGIONS_IN_WIDTH;
@@ -1216,10 +1234,12 @@ static void picture_parent_control_set_dctor(EbPtr ptr) {
         }
         EB_FREE_ARRAY(obj->av1_cm);
     }
+
+#if !CLN_RES_PROCESS
     EB_FREE_ARRAY(obj->rusi_picture[0]);
     EB_FREE_ARRAY(obj->rusi_picture[1]);
     EB_FREE_ARRAY(obj->rusi_picture[2]);
-
+#endif
     EB_FREE_ARRAY(obj->av1x);
     EB_DESTROY_MUTEX(obj->me_processed_sb_mutex);
     EB_DESTROY_MUTEX(obj->rc_distortion_histogram_mutex);
@@ -1309,10 +1329,11 @@ EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr,
     object_ptr->data_ll_head_ptr         = (EbLinkedListNode *)NULL;
     object_ptr->app_out_data_ll_head_ptr = (EbLinkedListNode *)NULL;
     EB_MALLOC_2D(object_ptr->variance, object_ptr->sb_total_count, MAX_ME_PU_COUNT);
+#if !CLN_REMOVE_MEAN
     EB_MALLOC_2D(object_ptr->y_mean, object_ptr->sb_total_count, MAX_ME_PU_COUNT);
     EB_MALLOC_2D(object_ptr->cb_mean, object_ptr->sb_total_count, 21);
     EB_MALLOC_2D(object_ptr->cr_mean, object_ptr->sb_total_count, 21);
-
+#endif
     EB_ALLOC_PTR_ARRAY(object_ptr->picture_histogram, MAX_NUMBER_OF_REGIONS_IN_WIDTH);
 
     for (region_in_picture_width_index = 0;
@@ -1477,6 +1498,7 @@ EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr,
 
     memset(&object_ptr->av1_cm->rst_frame, 0, sizeof(Yv12BufferConfig));
 
+#if !CLN_RES_PROCESS
     int32_t ntiles[2];
     for (int32_t is_uv = 0; is_uv < 2; ++is_uv)
         ntiles[is_uv] =
@@ -1487,7 +1509,7 @@ EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr,
     EB_CALLOC_ARRAY(object_ptr->rusi_picture[0], ntiles[0]);
     EB_CALLOC_ARRAY(object_ptr->rusi_picture[1], ntiles[1]);
     EB_CALLOC_ARRAY(object_ptr->rusi_picture[2], ntiles[1]);
-
+#endif
     EB_MALLOC_ARRAY(object_ptr->av1x, 1);
 
     // Film grain noise model if film grain is applied

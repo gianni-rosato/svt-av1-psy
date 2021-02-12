@@ -61,8 +61,12 @@ void generate_padding(EbByte src_pic, uint32_t src_stride, uint32_t original_src
 void restoration_seg_search(int32_t *rst_tmpbuf, Yv12BufferConfig *org_fts,
                             const Yv12BufferConfig *src, Yv12BufferConfig *trial_frame_rst,
                             PictureControlSet *pcs_ptr, uint32_t segment_index);
+#if CLN_RES_PROCESS
+void rest_finish_search(PictureControlSet *pcs_ptr);
+#else
 void rest_finish_search(PictureParentControlSet *p_pcs_ptr, Macroblock *x, Av1Common *const cm);
 
+#endif
 void svt_av1_upscale_normative_rows(const Av1Common *cm, const uint8_t *src, int src_stride,
                                     uint8_t *dst, int dst_stride, int rows, int sub_x, int bd,
                                     EbBool is_16bit_pipeline);
@@ -611,9 +615,13 @@ void *rest_kernel(void *input_ptr) {
         pcs_ptr->tot_seg_searched_rest++;
         if (pcs_ptr->tot_seg_searched_rest == pcs_ptr->rest_segments_total_count) {
             if (scs_ptr->seq_header.enable_restoration && frm_hdr->allow_intrabc == 0) {
+#if CLN_RES_PROCESS
+                rest_finish_search(pcs_ptr);
+#else
                 rest_finish_search(pcs_ptr->parent_pcs_ptr,
                                    pcs_ptr->parent_pcs_ptr->av1x,
                                    pcs_ptr->parent_pcs_ptr->av1_cm);
+#endif
 
                 if (cm->rst_info[0].frame_restoration_type != RESTORE_NONE ||
                     cm->rst_info[1].frame_restoration_type != RESTORE_NONE ||

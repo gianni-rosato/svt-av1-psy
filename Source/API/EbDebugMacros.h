@@ -243,6 +243,11 @@ extern "C" {
 #define CLN_DLF_RES_PROCESS                    1 //  Memory optimizations in DLF and restoration processes
 #define CLN_MD_CAND_BUFF                       1 //  Memory optimizations in MD candidate buffers
 #define FIX_TPL_4MG                            1 //  Fix the number of allocated pictures when extended tpl is used.
+
+#define CLN_REMOVE_MEAN                        1 //  Remove mean calculation
+#define TUNE_PICT_PARALLEL                     1 //  Tune picture parallelization
+#define CLN_RES_PROCESS                        1 //  Memory optimizations in DLF and restoration processes
+
 // ============= END SVT_04 =============
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
@@ -252,7 +257,7 @@ extern "C" {
 #define FTR_ENABLE_FIXED_QINDEX_OFFSETS 1
 
 #define FIX_DDL                 1 // Fix deadlock issues
-#define MIN_PIC_PARALLELIZATION 1 // Use the minimum amount of picture parallelization
+#define MIN_PIC_PARALLELIZATION 0 // Use the minimum amount of picture parallelization
 #define  SRM_REPORT             0 // Report SRM status
 #define  LAD_MG_PRINT             0 // Report LAD
 #ifdef __cplusplus

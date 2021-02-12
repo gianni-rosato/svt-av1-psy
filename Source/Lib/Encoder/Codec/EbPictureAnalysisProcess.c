@@ -455,6 +455,7 @@ uint8_t get_filtered_types(uint8_t *ptr, uint32_t stride, uint8_t filter_type) {
     return (uint8_t)(a >= 255 ? 255 : a); // CLIP3EQ(0, 255, a)
 }
 
+#if !CLN_REMOVE_MEAN
 EbErrorType zero_out_chroma_block_mean(
     PictureParentControlSet *pcs_ptr, // input parameter, Picture Control Set Ptr
     uint32_t                 sb_coding_order // input parameter, SB address
@@ -509,9 +510,9 @@ EbErrorType zero_out_chroma_block_mean(
     // 64x64 mean
     pcs_ptr->cb_mean[sb_coding_order][ME_TIER_ZERO_PU_64x64] = 0;
     pcs_ptr->cr_mean[sb_coding_order][ME_TIER_ZERO_PU_64x64] = 0;
-
     return return_error;
 }
+
 /*******************************************
 * compute_chroma_block_mean
 *   computes the chroma block mean for 64x64, 32x32 and 16x16 CUs inside the tree block
@@ -929,6 +930,7 @@ EbErrorType compute_chroma_block_mean(
     cr_mean_of_64x64_blocks = (cr_mean_of_32x32_blocks[0] + cr_mean_of_32x32_blocks[1] +
                                cr_mean_of_32x32_blocks[3] + cr_mean_of_32x32_blocks[3]) >>
                               2;
+
     // 16x16 mean
     pcs_ptr->cb_mean[sb_coding_order][ME_TIER_ZERO_PU_16x16_0] =
         (uint8_t)(cb_mean_of_16x16_blocks[0] >> MEAN_PRECISION);
@@ -1023,7 +1025,7 @@ EbErrorType compute_chroma_block_mean(
 
     return return_error;
 }
-
+#endif
 /*******************************************
 * compute_block_mean_compute_variance
 *   computes the variance and the block mean of all CUs inside the tree block
@@ -2135,7 +2137,7 @@ EbErrorType compute_block_mean_compute_variance(
         (mean_of32x32_squared_values_blocks[0] + mean_of32x32_squared_values_blocks[1] +
          mean_of32x32_squared_values_blocks[2] + mean_of32x32_squared_values_blocks[3]) >>
         2;
-
+#if !CLN_REMOVE_MEAN
     // 8x8 means
     pcs_ptr->y_mean[sb_index][ME_TIER_ZERO_PU_8x8_0] =
         (uint8_t)(mean_of8x8_blocks[0] >> MEAN_PRECISION);
@@ -2313,7 +2315,7 @@ EbErrorType compute_block_mean_compute_variance(
     // 64x64 mean
     pcs_ptr->y_mean[sb_index][ME_TIER_ZERO_PU_64x64] =
         (uint8_t)(mean_of_64x64_blocks >> MEAN_PRECISION);
-
+#endif
     // 8x8 variances
     pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_0] = (uint16_t)(
         (mean_of_8x8_squared_values_blocks[0] - (mean_of8x8_blocks[0] * mean_of8x8_blocks[0])) >>
@@ -2954,7 +2956,9 @@ void sub_sample_chroma_generate_pixel_intensity_histogram_bins(
  ************************************************/
 void compute_picture_spatial_statistics(SequenceControlSet *     scs_ptr,
                                         PictureParentControlSet *pcs_ptr,
+#if !CLN_REMOVE_MEAN
                                         EbPictureBufferDesc *    input_picture_ptr,
+#endif
                                         EbPictureBufferDesc *    input_padded_picture_ptr,
                                         uint32_t                 sb_total_count) {
     // Variance
@@ -2969,16 +2973,17 @@ void compute_picture_spatial_statistics(SequenceControlSet *     scs_ptr,
                 input_padded_picture_ptr->stride_y +
             input_padded_picture_ptr->origin_x + sb_origin_x;
 
+#if !CLN_REMOVE_MEAN
         uint32_t input_cb_origin_index = ((input_picture_ptr->origin_y + sb_origin_y) >> 1) *
                 input_picture_ptr->stride_cb +
             ((input_picture_ptr->origin_x + sb_origin_x) >> 1);
         uint32_t input_cr_origin_index = ((input_picture_ptr->origin_y + sb_origin_y) >> 1) *
                 input_picture_ptr->stride_cr +
             ((input_picture_ptr->origin_x + sb_origin_x) >> 1);
-
+#endif
         compute_block_mean_compute_variance(
             scs_ptr, pcs_ptr, input_padded_picture_ptr, sb_index, input_luma_origin_index);
-
+#if !CLN_REMOVE_MEAN
         if (sb_params->is_complete_sb) {
             compute_chroma_block_mean(scs_ptr,
                                       pcs_ptr,
@@ -2989,7 +2994,7 @@ void compute_picture_spatial_statistics(SequenceControlSet *     scs_ptr,
         } else {
             zero_out_chroma_block_mean(pcs_ptr, sb_index);
         }
-
+#endif
         pic_tot_variance += (pcs_ptr->variance[sb_index][RASTER_SCAN_CU_INDEX_64x64]);
     }
 
@@ -3016,16 +3021,17 @@ void compute_picture_spatial_statistics_ime(SequenceControlSet *     scs_ptr,
                                       input_picture_ptr->stride_y +
                                   input_picture_ptr->origin_x + sb_origin_x;
 
+#if !CLN_REMOVE_MEAN
         uint32_t input_cb_origin_index =
             ((input_picture_ptr->origin_y + sb_origin_y) >> 1) * input_picture_ptr->stride_cb +
             ((input_picture_ptr->origin_x + sb_origin_x) >> 1);
         uint32_t input_cr_origin_index =
             ((input_picture_ptr->origin_y + sb_origin_y) >> 1) * input_picture_ptr->stride_cr +
             ((input_picture_ptr->origin_x + sb_origin_x) >> 1);
-
+#endif
         compute_block_mean_compute_variance(
             scs_ptr, pcs_ptr, input_picture_ptr, sb_index, input_luma_origin_index);
-
+#if !CLN_REMOVE_MEAN
         if (sb_params->is_complete_sb) {
             compute_chroma_block_mean(scs_ptr,
                                       pcs_ptr,
@@ -3036,7 +3042,7 @@ void compute_picture_spatial_statistics_ime(SequenceControlSet *     scs_ptr,
         } else {
             zero_out_chroma_block_mean(pcs_ptr, sb_index);
         }
-
+#endif
         pic_tot_variance += (pcs_ptr->variance[sb_index][RASTER_SCAN_CU_INDEX_64x64]);
     }
 
@@ -3144,7 +3150,11 @@ void gathering_picture_statistics(SequenceControlSet *scs_ptr, PictureParentCont
                                       sum_avg_intensity_ttl_regions_cr);
 
     compute_picture_spatial_statistics(
+#if CLN_REMOVE_MEAN
+        scs_ptr, pcs_ptr, input_padded_picture_ptr, sb_total_count);
+#else
         scs_ptr, pcs_ptr, input_picture_ptr, input_padded_picture_ptr, sb_total_count);
+#endif
 
     return;
 }

@@ -431,6 +431,9 @@ typedef struct PictureControlSet {
     EbPictureBufferDesc *temp_lf_recon_picture16bit_ptr;
 #endif
 
+#if CLN_RES_PROCESS
+    RestUnitSearchInfo *rusi_picture[3]; //for 3 planes
+#endif
 } PictureControlSet;
 
 // To optimize based on the max input size
@@ -797,9 +800,11 @@ typedef struct PictureParentControlSet {
     EbObjectWrapper *ref_pa_pic_ptr_array[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
     uint64_t         ref_pic_poc_array[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
     uint16_t **      variance;
+#if !CLN_REMOVE_MEAN
     uint8_t **       y_mean;
     uint8_t **       cb_mean;
     uint8_t **       cr_mean;
+#endif
     uint32_t         pre_assignment_buffer_count;
     uint16_t         pic_avg_variance;
     EbBool           scene_transition_flag[MAX_NUM_OF_REF_PIC_LIST];
@@ -1027,7 +1032,9 @@ typedef struct PictureParentControlSet {
     Macroblock *         av1x;
     int32_t film_grain_params_present; //todo (AN): Do we need this flag at picture level?
     AomDenoiseAndModel *denoise_and_model;
+#if !CLN_RES_PROCESS
     RestUnitSearchInfo *rusi_picture[3]; //for 3 planes
+#endif
     int8_t              cdef_level;
     uint8_t             palette_level;
 #if FTR_ALIGN_SC_DETECOR
@@ -1272,7 +1279,9 @@ typedef struct PictureControlSetInitData {
     uint16_t non_m8_pad_h;
     uint8_t  enable_tpl_la;
     uint8_t  in_loop_ois;
-
+#if CLN_RES_PROCESS
+    RestorationInfo rst_info[MAX_MB_PLANE];
+#endif
 } PictureControlSetInitData;
 
 typedef struct Av1Comp {

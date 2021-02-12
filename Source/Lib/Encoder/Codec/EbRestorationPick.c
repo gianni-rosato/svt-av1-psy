@@ -1549,7 +1549,11 @@ void restoration_seg_search(int32_t *rst_tmpbuf, Yv12BufferConfig *org_fts,
     const int32_t plane_start = AOM_PLANE_Y;
     const int32_t plane_end   = AOM_PLANE_V;
     for (int32_t plane = plane_start; plane <= plane_end; ++plane) {
+#if CLN_RES_PROCESS
+        RestUnitSearchInfo *rusi = pcs_ptr->rusi_picture[plane];
+#else
         RestUnitSearchInfo *rusi = pcs_ptr->parent_pcs_ptr->rusi_picture[plane];
+#endif
 
         init_rsc_seg(org_fts, src, cm, x, plane, rusi, trial_frame_rst, &rsc);
 
@@ -1591,7 +1595,17 @@ void restoration_seg_search(int32_t *rst_tmpbuf, Yv12BufferConfig *org_fts,
                                            segment_index);
     }
 }
+
+#if CLN_RES_PROCESS
+void rest_finish_search(PictureControlSet *pcs_ptr){
+#else
 void rest_finish_search(PictureParentControlSet *p_pcs_ptr, Macroblock *x, Av1Common *const cm) {
+#endif
+#if CLN_RES_PROCESS
+    Macroblock *x = pcs_ptr->parent_pcs_ptr->av1x;
+    Av1Common *const cm = pcs_ptr->parent_pcs_ptr->av1_cm;
+    PictureParentControlSet *p_pcs_ptr = pcs_ptr->parent_pcs_ptr;
+#endif
     RestorationType force_restore_type_d = (cm->wn_filter_mode) ? RESTORE_TYPES : RESTORE_SGRPROJ;
     int32_t         ntiles[2];
     for (int32_t is_uv = 0; is_uv < 2; ++is_uv) ntiles[is_uv] = rest_tiles_in_plane(cm, is_uv);
@@ -1617,7 +1631,11 @@ void rest_finish_search(PictureParentControlSet *p_pcs_ptr, Macroblock *x, Av1Co
         rsc.plane    = plane;
         rsc.rusi     = rusi;
         rsc.pic_num  = (uint32_t)p_pcs_ptr->picture_number;
+#if CLN_RES_PROCESS
+        rsc.rusi_pic = pcs_ptr->rusi_picture[plane];
+#else
         rsc.rusi_pic = p_pcs_ptr->rusi_picture[plane];
+#endif
 
         const int32_t         plane_ntiles = ntiles[plane > 0];
         const RestorationType num_rtypes   = (plane_ntiles > 1) ? RESTORE_TYPES

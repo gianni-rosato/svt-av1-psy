@@ -91,7 +91,9 @@
 #define EB_OUTPUTRECONBUFFERSIZE                                        (MAX_PICTURE_WIDTH_SIZE*MAX_PICTURE_HEIGHT_SIZE*2)   // Recon Slice Size
 #define EB_OUTPUTSTATISTICSBUFFERSIZE                                   0x30            // 6X8 (8 Bytes for Y, U, V, number of bits, picture number, QP)
 #define EOS_NAL_BUFFER_SIZE                                             0x0010 // Bitstream used to code EOS NAL
-
+#if TUNE_PICT_PARALLEL
+#define ENCDEC_INPUT_PORT_TPL                                0
+#endif
 #define ENCDEC_INPUT_PORT_MDC                                0
 #define ENCDEC_INPUT_PORT_ENCDEC                             1
 #define ENCDEC_INPUT_PORT_INVALID                           -1
@@ -653,6 +655,15 @@ EbErrorType load_default_buffer_configuration_settings(
         }
         else
         {
+#if TUNE_PICT_PARALLEL
+            scs_ptr->input_buffer_fifo_init_count = MAX(min_input, 80);
+            scs_ptr->picture_control_set_pool_init_count = MAX(min_parent, 64);
+            scs_ptr->pa_reference_picture_buffer_init_count = MAX(min_paref, 43);
+            scs_ptr->reference_picture_buffer_init_count = MAX(min_ref, 51);
+            scs_ptr->picture_control_set_pool_init_count_child = MAX(min_child, 3);
+            scs_ptr->overlay_input_picture_buffer_init_count = MAX(min_overlay, scs_ptr->overlay_input_picture_buffer_init_count);
+            scs_ptr->me_pool_init_count = MAX(min_me, 64);
+#else
             scs_ptr->input_buffer_fifo_init_count = MAX(min_input, scs_ptr->input_buffer_fifo_init_count);
             scs_ptr->picture_control_set_pool_init_count = MAX(min_parent, scs_ptr->picture_control_set_pool_init_count);
             scs_ptr->pa_reference_picture_buffer_init_count = MAX(min_paref, scs_ptr->pa_reference_picture_buffer_init_count);
@@ -661,6 +672,7 @@ EbErrorType load_default_buffer_configuration_settings(
             scs_ptr->overlay_input_picture_buffer_init_count = MAX(min_overlay, scs_ptr->overlay_input_picture_buffer_init_count);
 
             scs_ptr->me_pool_init_count = MAX(min_me, scs_ptr->picture_control_set_pool_init_count);
+#endif
         }
     }
 
@@ -697,11 +709,19 @@ EbErrorType load_default_buffer_configuration_settings(
         // TODO: Tune the count here
         scs_ptr->total_process_init_count += (scs_ptr->inlme_process_init_count                       = MAX(MIN(20, core_count >> 1), core_count / 3));
         scs_ptr->total_process_init_count += (scs_ptr->mode_decision_configuration_process_init_count = MAX(MIN(3, core_count >> 1), core_count / 12));
+#if TUNE_PICT_PARALLEL
+        scs_ptr->total_process_init_count += (scs_ptr->enc_dec_process_init_count                     = MIN(5, core_count) );
+        scs_ptr->total_process_init_count += (scs_ptr->entropy_coding_process_init_count              = MAX(MIN(3, core_count >> 1), core_count / 12));
+        scs_ptr->total_process_init_count += (scs_ptr->dlf_process_init_count                         = 1);
+        scs_ptr->total_process_init_count += (scs_ptr->cdef_process_init_count                        = MIN(5, core_count) );
+        scs_ptr->total_process_init_count += (scs_ptr->rest_process_init_count                        = MIN(5, core_count) );
+#else
         scs_ptr->total_process_init_count += (scs_ptr->enc_dec_process_init_count                     = MAX(MIN(40, core_count >> 1), core_count));
         scs_ptr->total_process_init_count += (scs_ptr->entropy_coding_process_init_count              = MAX(MIN(3, core_count >> 1), core_count / 12));
         scs_ptr->total_process_init_count += (scs_ptr->dlf_process_init_count                         = MAX(MIN(40, core_count >> 1), core_count));
         scs_ptr->total_process_init_count += (scs_ptr->cdef_process_init_count                        = MAX(MIN(40, core_count >> 1), core_count));
         scs_ptr->total_process_init_count += (scs_ptr->rest_process_init_count                        = MAX(MIN(40, core_count >> 1), core_count));
+#endif
         if (core_count < (CONS_CORE_COUNT >> 2)) {
 
             scs_ptr->total_process_init_count += (scs_ptr->motion_estimation_process_init_count = MAX(core_count, MAX(MIN(20, core_count >> 1), core_count / 3)));
@@ -779,6 +799,33 @@ static EncDecPorts_t enc_dec_ports[] = {
     {ENCDEC_INPUT_PORT_ENCDEC,     0},
     {ENCDEC_INPUT_PORT_INVALID,    0}
 };
+#if TUNE_PICT_PARALLEL
+static EncDecPorts_t tpl_ports[] = {
+    {ENCDEC_INPUT_PORT_TPL,     0},
+    {ENCDEC_INPUT_PORT_INVALID,    0}
+};
+// TPL
+static uint32_t tpl_port_lookup(
+    int32_t  type,
+    uint32_t  port_type_index)
+{
+    uint32_t port_index = 0;
+    uint32_t port_count = 0;
+
+    while ((type != tpl_ports[port_index].type) && (type != ENCDEC_INPUT_PORT_INVALID))
+        port_count += tpl_ports[port_index++].count;
+    return (port_count + port_type_index);
+}
+
+static uint32_t tpl_port_total_count(void){
+    uint32_t port_index = 0;
+    uint32_t total_count = 0;
+
+    while (tpl_ports[port_index].type != ENCDEC_INPUT_PORT_INVALID)
+        total_count += tpl_ports[port_index++].count;
+    return total_count;
+}
+#endif
 
 /*****************************************
  * Input Port Lookup
@@ -1408,6 +1455,12 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
         input_data.tile_row_count = parent_pcs->av1_cm->tiles_info.tile_rows;
         input_data.tile_column_count = parent_pcs->av1_cm->tiles_info.tile_cols;
         input_data.is_16bit_pipeline = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.is_16bit_pipeline;
+#if CLN_RES_PROCESS
+        input_data.rst_info[0] = parent_pcs->av1_cm->rst_info[0] ;
+        input_data.rst_info[1] = parent_pcs->av1_cm->rst_info[1] ;
+        input_data.rst_info[2] = parent_pcs->av1_cm->rst_info[1] ;
+#endif
+
         EB_NEW(
             enc_handle_ptr->picture_control_set_pool_ptr_array[instance_index],
             svt_system_resource_ctor,
@@ -1439,7 +1492,9 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
 
     enc_dec_ports[ENCDEC_INPUT_PORT_MDC].count = enc_handle_ptr->scs_instance_array[0]->scs_ptr->mode_decision_configuration_process_init_count;
     enc_dec_ports[ENCDEC_INPUT_PORT_ENCDEC].count = enc_handle_ptr->scs_instance_array[0]->scs_ptr->enc_dec_process_init_count;
-
+#if TUNE_PICT_PARALLEL
+    tpl_ports[ENCDEC_INPUT_PORT_TPL].count = enc_handle_ptr->scs_instance_array[0]->scs_ptr->tpl_disp_process_init_count;
+#endif
     for (instance_index = 0; instance_index < enc_handle_ptr->encode_instance_total_count; ++instance_index) {
         create_ref_buf_descs(enc_handle_ptr, instance_index);
         if (enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->in_loop_me) {
@@ -1609,6 +1664,17 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
     // TPL dispenser Results
     {
         EntropyCodingResultsInitData tpl_disp_result_init_data;
+#if TUNE_PICT_PARALLEL
+        EB_NEW(
+            enc_handle_ptr->tpl_disp_res_srm,
+            svt_system_resource_ctor,
+            enc_handle_ptr->scs_instance_array[0]->scs_ptr->tpl_disp_fifo_init_count,
+            tpl_port_total_count(),
+            enc_handle_ptr->scs_instance_array[0]->scs_ptr->tpl_disp_process_init_count,
+            tpl_disp_results_creator,
+            &tpl_disp_result_init_data,
+            NULL);
+#else
         EB_NEW(
             enc_handle_ptr->tpl_disp_res_srm,
             svt_system_resource_ctor,
@@ -1619,6 +1685,7 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
             &tpl_disp_result_init_data,
             NULL);
 
+#endif
     }
 #endif
 
@@ -1840,6 +1907,15 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
     EB_ALLOC_PTR_ARRAY(enc_handle_ptr->tpl_disp_context_ptr_array, enc_handle_ptr->scs_instance_array[0]->scs_ptr->tpl_disp_process_init_count);
 
     for (process_index = 0; process_index < enc_handle_ptr->scs_instance_array[0]->scs_ptr->tpl_disp_process_init_count; ++process_index) {
+#if TUNE_PICT_PARALLEL
+        EB_NEW(
+            enc_handle_ptr->tpl_disp_context_ptr_array[process_index],
+            tpl_disp_context_ctor,//TODOOMK
+            enc_handle_ptr,
+            process_index,
+            tpl_port_lookup(ENCDEC_INPUT_PORT_TPL, process_index)
+        );
+#else
         EB_NEW(
             enc_handle_ptr->tpl_disp_context_ptr_array[process_index],
             tpl_disp_context_ctor,//TODOOMK
@@ -1847,6 +1923,7 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
             process_index,
             enc_dec_port_lookup(ENCDEC_INPUT_PORT_ENCDEC, process_index)
         );
+#endif
     }
 #endif
     // Picture Manager Context
