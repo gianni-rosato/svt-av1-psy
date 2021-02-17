@@ -2,11 +2,11 @@
 
 ## Overview
 
-This plugin provides svtav1enc element to GStreamer in order to use the Scalable Video Technology for AV1 Encoder ([SVT-AV1](https://github.com/AOMediaCodec/SVT-AV1)).
+This plugin provides svtav1enc element to GStreamer in order to use the Scalable Video Technology for AV1 Encoder ([SVT-AV1](https://gitlab.com/AOMediaCodec/SVT-AV1)).
 
 ## Requirements
 
-* GStreamer 1.13.1 or later (https://github.com/GStreamer/gst-plugins-good/commit/de8f080a5c04db505dd754820aea1fc479302ee8)
+* GStreamer 1.13.1 or later (<https://github.com/GStreamer/gst-plugins-good/commit/de8f080a5c04db505dd754820aea1fc479302ee8>)
 * Scalable Video Technology for AV1 Encoder
   * `SvtAv1Enc.dll` or `libSvtAv1Enc.so` has to be in the `PATH` or next to the plugin's DLL/.so.
 * Windows or Linux operating system
@@ -43,7 +43,7 @@ If you're not familiar with GStreamer, gst-launch-1.0 is part of GStreamer tools
 * GStreamer and GStreamer-plugins-base dev 1.13.1 or later
   * on Debian/Ubuntu: `sudo apt install libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev`
   * on Windows: [gstreamer-1.0-devel-x86_64-*.msi](https://gstreamer.freedesktop.org/data/pkg/windows/)
-* Scalable Video Technology for AV1 Encoder ([SVT-AV1](https://github.com/AOMediaCodec/SVT-AV1))
+* Scalable Video Technology for AV1 Encoder ([SVT-AV1](https://gitlab.com/AOMediaCodec/SVT-AV1))
 * meson 0.29 or later
   * install python3 and run `pip3 install meson`
 * pkg-config

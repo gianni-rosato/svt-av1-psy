@@ -109,17 +109,17 @@ The SVT-AV1 Encoder library supports the x86 architecture
 ### 1. Build and install SVT-AV1
 
 ``` bash
-   git clone --depth=1 https://github.com/AOMediaCodec/SVT-AV1
-   cd SVT-AV1
-   cd Build
-   cmake .. -G"Unix Makefiles" -DCMAKE_BUILD_TYPE=Release
-   make -j $(nproc)
-   sudo make install
+git clone --depth=1 https://gitlab.com/AOMediaCodec/SVT-AV1.git
+cd SVT-AV1
+cd Build
+cmake .. -G"Unix Makefiles" -DCMAKE_BUILD_TYPE=Release
+make -j $(nproc)
+sudo make install
 ```
 
 ###  2. Enable libsvtav1 in FFmpeg
 
-NOTE: If you wish to use an FFmpeg tag or release before 4.4, please go [here](https://github.com/AOMediaCodec/SVT-AV1/tree/v0.8.4/ffmpeg_plugin) and consult that page to properly patch ffmpeg for use with SVT-AV1.
+NOTE: If you wish to use an FFmpeg tag or release before 4.4, please go [here](https://gitlab.com/AOMediaCodec/SVT-AV1/tree/v0.8.4/ffmpeg_plugin) and consult that page to properly patch ffmpeg for use with SVT-AV1.
 
 ``` bash
    git clone --depth=1 https://github.com/FFmpeg/FFmpeg ffmpeg
@@ -138,7 +138,7 @@ NOTE: If you wish to use an FFmpeg tag or release before 4.4, please go [here](h
 
 ## How to evaluate by ready-to-run executables with docker
 
-Refer to the guide [here](https://github.com/AOMediaCodec/Dockerfiles/blob/master/doc/svt.md#Evaluate-SVT).
+Refer to the guide [here](https://github.com/OpenVisualCloud/Dockerfiles/blob/master/doc/svt.md#Evaluate-SVT).
 
 ## Demo features and limitations
 
@@ -165,7 +165,7 @@ You will be required to execute the appropriate [contributor agreement](http://a
 
 ### How to Report Bugs and Provide Feedback
 
-Use the [Issues](https://github.com/AOMediaCodec/SVT-AV1/issues) tab on Github. To avoid duplicate issues, please make sure you go through the existing issues before logging a new one.
+Use the [Issues](https://gitlab.com/AOMediaCodec/SVT-AV1/issues) tab on Github. To avoid duplicate issues, please make sure you go through the existing issues before logging a new one.
 
 ## IRC
 
@@ -173,4 +173,4 @@ Use the [Issues](https://github.com/AOMediaCodec/SVT-AV1/issues) tab on Github. 
 
 ## Performance tracker
 
-Performance and raw data files available at http://videocodectracker.dev
+Performance and raw data files available at <http://videocodectracker.dev>
