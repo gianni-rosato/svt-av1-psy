@@ -368,3 +368,8 @@ bits 64
   %endif
 %endmacro
 %define NEED_EMMS 1
+
+; This is needed for ELF, otherwise the GNU linker assumes the stack is executable by default.
+%ifdef FORMAT_ELF
+    [SECTION .note.GNU-stack noalloc noexec nowrite progbits]
+%endif
