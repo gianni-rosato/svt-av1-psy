@@ -656,13 +656,23 @@ EbErrorType load_default_buffer_configuration_settings(
         else
         {
 #if TUNE_PICT_PARALLEL
-            scs_ptr->input_buffer_fifo_init_count = MAX(min_input, 80);
-            scs_ptr->picture_control_set_pool_init_count = MAX(min_parent, 64);
-            scs_ptr->pa_reference_picture_buffer_init_count = MAX(min_paref, 43);
-            scs_ptr->reference_picture_buffer_init_count = MAX(min_ref, 51);
-            scs_ptr->picture_control_set_pool_init_count_child = MAX(min_child, 3);
+#if TUNE_PICT_PARALLEL_II
+            scs_ptr->input_buffer_fifo_init_count = MAX(min_input, 60);//Input Src
+            scs_ptr->picture_control_set_pool_init_count = MAX(min_parent, 64);// Parent PCS (Picture Control Set)
+            scs_ptr->pa_reference_picture_buffer_init_count = MAX(min_paref, 40);// Pa ref
+            scs_ptr->reference_picture_buffer_init_count = MAX(min_ref, 30); // Rec Ref
+            scs_ptr->picture_control_set_pool_init_count_child = MAX(min_child, 3); // Child PCS
             scs_ptr->overlay_input_picture_buffer_init_count = MAX(min_overlay, scs_ptr->overlay_input_picture_buffer_init_count);
-            scs_ptr->me_pool_init_count = MAX(min_me, 64);
+            scs_ptr->me_pool_init_count = MAX(min_me, 55); // ME results
+#else
+            scs_ptr->input_buffer_fifo_init_count = MAX(min_input, 80);//Input Src
+            scs_ptr->picture_control_set_pool_init_count = MAX(min_parent, 64);// Parent PCS (Picture Control Set)
+            scs_ptr->pa_reference_picture_buffer_init_count = MAX(min_paref, 43);// Pa ref
+            scs_ptr->reference_picture_buffer_init_count = MAX(min_ref, 51); // Rec Ref
+            scs_ptr->picture_control_set_pool_init_count_child = MAX(min_child, 3); // Child PCS
+            scs_ptr->overlay_input_picture_buffer_init_count = MAX(min_overlay, scs_ptr->overlay_input_picture_buffer_init_count);
+            scs_ptr->me_pool_init_count = MAX(min_me, 64); // ME results
+#endif
 #else
             scs_ptr->input_buffer_fifo_init_count = MAX(min_input, scs_ptr->input_buffer_fifo_init_count);
             scs_ptr->picture_control_set_pool_init_count = MAX(min_parent, scs_ptr->picture_control_set_pool_init_count);
@@ -1254,10 +1264,19 @@ static int create_ref_buf_descs(EbEncHandle *enc_handle_ptr, uint32_t instance_i
     ref_pic_buf_desc_init_data.color_format = scs_ptr->static_config.encoder_color_format;
     ref_pic_buf_desc_init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK;
 
+#if CLN_REC
+    uint16_t padding = scs_ptr->static_config.super_block_size + 32;
+
+    ref_pic_buf_desc_init_data.left_padding = padding;
+    ref_pic_buf_desc_init_data.right_padding = padding;
+    ref_pic_buf_desc_init_data.top_padding = padding;
+    ref_pic_buf_desc_init_data.bot_padding = padding;
+#else
     ref_pic_buf_desc_init_data.left_padding = PAD_VALUE;
     ref_pic_buf_desc_init_data.right_padding = PAD_VALUE;
     ref_pic_buf_desc_init_data.top_padding = PAD_VALUE;
     ref_pic_buf_desc_init_data.bot_padding = PAD_VALUE;
+#endif
     ref_pic_buf_desc_init_data.mfmv = scs_ptr->mfmv_enabled;
     ref_pic_buf_desc_init_data.is_16bit_pipeline = scs_ptr->static_config.is_16bit_pipeline;
     // Hsan: split_mode is set @ eb_reference_object_ctor() as both unpacked reference and packed reference are needed for a 10BIT input; unpacked reference @ MD, and packed reference @ EP
@@ -1383,6 +1402,10 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
         input_data.enc_dec_segment_col = (uint16_t)enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->tpl_segment_col_count_array;
         input_data.enc_dec_segment_row = (uint16_t)enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->tpl_segment_row_count_array;
 #endif
+#if CLN_PPCS
+        input_data.rc_firstpass_stats_out = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.rc_firstpass_stats_out;
+        input_data.rate_control_mode = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.rate_control_mode;
+#endif
         EB_NEW(
             enc_handle_ptr->picture_parent_control_set_pool_ptr_array[instance_index],
             svt_system_resource_ctor,
@@ -1455,12 +1478,17 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
         input_data.tile_row_count = parent_pcs->av1_cm->tiles_info.tile_rows;
         input_data.tile_column_count = parent_pcs->av1_cm->tiles_info.tile_cols;
         input_data.is_16bit_pipeline = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.is_16bit_pipeline;
-#if CLN_RES_PROCESS
+#if CLN_RES_PROCESS && !CLN_BN
         input_data.rst_info[0] = parent_pcs->av1_cm->rst_info[0] ;
         input_data.rst_info[1] = parent_pcs->av1_cm->rst_info[1] ;
         input_data.rst_info[2] = parent_pcs->av1_cm->rst_info[1] ;
 #endif
-
+#if CLN_BN
+        input_data.av1_cm = parent_pcs->av1_cm;
+#endif
+#if CLN_FA
+        input_data.enc_mode = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.enc_mode;
+#endif
         EB_NEW(
             enc_handle_ptr->picture_control_set_pool_ptr_array[instance_index],
             svt_system_resource_ctor,

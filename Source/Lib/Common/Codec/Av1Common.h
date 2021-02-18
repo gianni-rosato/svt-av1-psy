@@ -11,6 +11,9 @@
 
 #include "EbDefinitions.h"
 #include "EbRestoration.h"
+//#if CLN_BN
+//#include "EbPictureControlSet.h"
+//#endif
 
 #ifndef EbAV1Common_h
 #define EbAV1Common_h
@@ -45,10 +48,14 @@ typedef struct Av1Common {
     int32_t         color_format;
     int32_t         subsampling_x;
     int32_t         subsampling_y;
+#if !CLN_BN
     RestorationInfo rst_info[MAX_MB_PLANE];
     // rst_end_stripe[i] is one more than the index of the bottom stripe
     // for tile row i.
     int32_t rst_end_stripe[MAX_TILE_ROWS];
+#else
+   struct PictureControlSet *  child_pcs;
+#endif
     // Output of loop restoration
     Yv12BufferConfig rst_frame;
     // pointer to a scratch buffer used by self-guided restoration

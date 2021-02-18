@@ -622,7 +622,18 @@ void *rest_kernel(void *input_ptr) {
                                    pcs_ptr->parent_pcs_ptr->av1x,
                                    pcs_ptr->parent_pcs_ptr->av1_cm);
 #endif
-
+#if CLN_BN
+                if (pcs_ptr->rst_info[0].frame_restoration_type != RESTORE_NONE ||
+                    pcs_ptr->rst_info[1].frame_restoration_type != RESTORE_NONE ||
+                    pcs_ptr->rst_info[2].frame_restoration_type != RESTORE_NONE) {
+                    svt_av1_loop_restoration_filter_frame(cm->frame_to_show, cm, 0);
+                }
+            } else {
+                pcs_ptr->rst_info[0].frame_restoration_type = RESTORE_NONE;
+                pcs_ptr->rst_info[1].frame_restoration_type = RESTORE_NONE;
+                pcs_ptr->rst_info[2].frame_restoration_type = RESTORE_NONE;
+            }
+#else
                 if (cm->rst_info[0].frame_restoration_type != RESTORE_NONE ||
                     cm->rst_info[1].frame_restoration_type != RESTORE_NONE ||
                     cm->rst_info[2].frame_restoration_type != RESTORE_NONE) {
@@ -633,6 +644,7 @@ void *rest_kernel(void *input_ptr) {
                 cm->rst_info[1].frame_restoration_type = RESTORE_NONE;
                 cm->rst_info[2].frame_restoration_type = RESTORE_NONE;
             }
+#endif
 
             uint8_t best_ep_cnt = 0;
             uint8_t best_ep     = 0;

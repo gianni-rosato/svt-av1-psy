@@ -434,6 +434,13 @@ typedef struct PictureControlSet {
 #if CLN_RES_PROCESS
     RestUnitSearchInfo *rusi_picture[3]; //for 3 planes
 #endif
+
+#if CLN_BN
+    RestorationInfo rst_info[MAX_MB_PLANE];
+    // rst_end_stripe[i] is one more than the index of the bottom stripe
+    // for tile row i.
+    int32_t rst_end_stripe[MAX_TILE_ROWS];
+#endif
 } PictureControlSet;
 
 // To optimize based on the max input size
@@ -1281,8 +1288,17 @@ typedef struct PictureControlSetInitData {
     uint16_t non_m8_pad_h;
     uint8_t  enable_tpl_la;
     uint8_t  in_loop_ois;
-#if CLN_RES_PROCESS
+#if CLN_RES_PROCESS && !CLN_BN
     RestorationInfo rst_info[MAX_MB_PLANE];
+#endif
+
+#if CLN_PPCS
+    uint8_t  rc_firstpass_stats_out;
+    uint32_t rate_control_mode;
+#endif
+#if CLN_BN
+
+    Av1Common *                av1_cm;
 #endif
 } PictureControlSetInitData;
 

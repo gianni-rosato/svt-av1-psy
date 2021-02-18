@@ -862,6 +862,40 @@ void set_tf_controls(PictureParentControlSet *pcs_ptr, uint8_t tf_level) {
         break;
     }
 }
+
+
+#if CLN_FA
+/*
+* return the NSQ level
+  Used by signal_derivation_multi_processes_oq and memory allocation
+*/
+uint8_t get_disallow_nsq(EbEncMode enc_mode){
+
+    uint8_t disallow_nsq;
+// Set disallow_nsq
+#if TUNE_M4_M8
+#if TUNE_NEW_PRESETS_MR_M8
+#if TUNE_SHIFT_PRESETS_DOWN
+    if (enc_mode <= ENC_M4)
+#else
+    if (enc_mode <= ENC_M5)
+#endif
+#else
+    if (enc_mode <= ENC_M4)
+#endif
+#else
+    if (enc_mode <= ENC_M3)
+#endif
+        disallow_nsq = EB_FALSE;
+    else
+        disallow_nsq = EB_TRUE;
+
+    return disallow_nsq;
+    }
+#endif
+
+
+
 /******************************************************
 * Derive Multi-Processes Settings for OQ
 Input   : encoder mode and tune
@@ -921,7 +955,10 @@ EbErrorType signal_derivation_multi_processes_oq(
     // Set the Multi-Pass PD level
     pcs_ptr->multi_pass_pd_level = MULTI_PASS_PD_LEVEL_0;
 
+#if CLN_FA
+    pcs_ptr->disallow_nsq = get_disallow_nsq (pcs_ptr->enc_mode);
 
+#else
     // Set disallow_nsq
 #if TUNE_M4_M8
 #if TUNE_NEW_PRESETS_MR_M8
@@ -939,6 +976,7 @@ EbErrorType signal_derivation_multi_processes_oq(
         pcs_ptr->disallow_nsq = EB_FALSE;
     else
         pcs_ptr->disallow_nsq = EB_TRUE;
+#endif
     // Set disallow_all_nsq_blocks_below_8x8: 8x4, 4x8
 #if FTR_M10
     if (pcs_ptr->enc_mode <= ENC_M10)

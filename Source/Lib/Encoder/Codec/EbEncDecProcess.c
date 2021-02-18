@@ -4730,6 +4730,40 @@ uint8_t  get_nic_scaling_level(PdPass pd_pass, EbEncMode enc_mode ,uint8_t tempo
 
 #endif
 
+     // Set disallow_4x4
+#if CLN_FA
+/*
+* return the 4x4 level
+  Used by signal_derivation_enc_dec_kernel_oq and memory allocation
+*/
+uint8_t get_disallow_4x4(EbEncMode enc_mode, EB_SLICE slice_type) {
+    uint8_t disallow_4x4;
+    if (enc_mode <= ENC_M0)
+        disallow_4x4 = EB_FALSE;
+#if TUNE_M9_FEATURES
+#if TUNE_M7_M9
+#if TUNE_SHIFT_PRESETS_DOWN
+#if NEW_PRESETS
+    else if (enc_mode <= ENC_M7)
+#else
+    else if (enc_mode <= ENC_M6)
+#endif
+#else
+    else if (enc_mode <= ENC_M7)
+#endif
+#else
+    else if (enc_mode <= ENC_M8)
+#endif
+        disallow_4x4 = (slice_type == I_SLICE) ? EB_FALSE : EB_TRUE;
+    else
+        disallow_4x4 = EB_TRUE;
+#else
+    else
+        disallow_4x4 = (slice_type == I_SLICE) ? EB_FALSE : EB_TRUE;
+#endif
+    return disallow_4x4;
+}
+#endif
 EbErrorType signal_derivation_enc_dec_kernel_oq(
     SequenceControlSet *sequence_control_set_ptr,
     PictureControlSet *pcs_ptr,
@@ -4964,6 +4998,9 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         context_ptr->md_disable_cfl = pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? EB_FALSE : EB_TRUE;
 #endif
      // Set disallow_4x4
+#if CLN_FA
+    context_ptr->disallow_4x4 = get_disallow_4x4 (enc_mode, pcs_ptr->slice_type);
+#else
     if (enc_mode <= ENC_M0)
          context_ptr->disallow_4x4 = EB_FALSE;
 #if TUNE_M9_FEATURES
@@ -4986,6 +5023,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #else
      else
          context_ptr->disallow_4x4 = (pcs_ptr->slice_type == I_SLICE) ? EB_FALSE : EB_TRUE;
+#endif
 #endif
      // If SB non-multiple of 4, then disallow_4x4 could not be used
      // SB Stats

@@ -254,6 +254,12 @@ extern "C" {
 #if PR_1650
 #define OPT_AVX512                             1 //Optimize some AVX2 and AVX512 transform, transpose, fdct16x16_avx512, fadst16x16_avx512, av1_fdct64_new_avx512, av1_fdct32_new_avx512, etc
 #endif
+
+#define CLN_PPCS                              1 // Remove 1first pass memory  allocation when first pass is not used
+#define CLN_FA                                1 // Memory optimizations in MD final_blk_arr
+#define CLN_REC                               1 // Update the padding to be function of super_block_size
+#define CLN_BN                                1 // Move RestorationInfo from PPCS to CPCS
+#define TUNE_PICT_PARALLEL_II                 1 // Tune picture parallelization phase 2
 // ============= END SVT_04 =============
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch

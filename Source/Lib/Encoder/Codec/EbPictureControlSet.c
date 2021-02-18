@@ -24,8 +24,12 @@ void *svt_aom_memalign(size_t align, size_t size);
 void  svt_aom_free(void *memblk);
 void *svt_aom_malloc(size_t size);
 
-EbErrorType svt_av1_alloc_restoration_buffers(Av1Common *cm);
+#if CLN_BN
 
+EbErrorType svt_av1_alloc_restoration_buffers(PictureControlSet *pcs , Av1Common *cm);
+#else
+EbErrorType svt_av1_alloc_restoration_buffers(Av1Common *cm);
+#endif
 EbErrorType svt_av1_hash_table_create(HashTable *p_hash_table);
 
 static void set_restoration_unit_size(int32_t width, int32_t height, int32_t sx, int32_t sy,
@@ -182,6 +186,16 @@ void picture_control_set_dctor(EbPtr p) {
     EB_DELETE(obj->temp_lf_recon_picture16bit_ptr);
 #endif
 
+#if CLN_BN
+    const int32_t num_planes = 3; // av1_num_planes(cm);
+    for (int32_t pl = 0; pl < num_planes; ++pl) {
+        RestorationInfo *            ri         = obj->rst_info + pl;
+        RestorationStripeBoundaries *boundaries = &ri->boundaries;
+        EB_FREE_ARRAY(ri->unit_info);
+        EB_FREE(boundaries->stripe_boundary_above);
+        EB_FREE(boundaries->stripe_boundary_below);
+    }
+#endif
 #if CLN_RES_PROCESS
     EB_FREE_ARRAY(obj->rusi_picture[0]);
     EB_FREE_ARRAY(obj->rusi_picture[1]);
@@ -294,12 +308,18 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
     input_pic_buf_desc_init_data.bit_depth          = init_data_ptr->bit_depth;
     input_pic_buf_desc_init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK;
     input_pic_buf_desc_init_data.color_format       = init_data_ptr->color_format;
-
-    input_pic_buf_desc_init_data.left_padding  = PAD_VALUE;
+#if CLN_REC
+    uint16_t padding = init_data_ptr->sb_size_pix + 32;
+    input_pic_buf_desc_init_data.left_padding  = padding; //OMK
+    input_pic_buf_desc_init_data.right_padding = padding;
+    input_pic_buf_desc_init_data.top_padding   = padding;
+    input_pic_buf_desc_init_data.bot_padding   = padding;
+#else
+    input_pic_buf_desc_init_data.left_padding  = PAD_VALUE; //OMK
     input_pic_buf_desc_init_data.right_padding = PAD_VALUE;
     input_pic_buf_desc_init_data.top_padding   = PAD_VALUE;
     input_pic_buf_desc_init_data.bot_padding   = PAD_VALUE;
-
+#endif
     input_pic_buf_desc_init_data.split_mode = EB_FALSE;
 
     coeff_buffer_desc_init_data.max_width          = init_data_ptr->picture_width;
@@ -308,11 +328,17 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
     coeff_buffer_desc_init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK;
     coeff_buffer_desc_init_data.color_format       = init_data_ptr->color_format;
 
-    coeff_buffer_desc_init_data.left_padding  = PAD_VALUE;
+#if CLN_REC
+    coeff_buffer_desc_init_data.left_padding  = padding; //OMK
+    coeff_buffer_desc_init_data.right_padding = padding;
+    coeff_buffer_desc_init_data.top_padding   = padding;
+    coeff_buffer_desc_init_data.bot_padding   = padding;
+#else
+    coeff_buffer_desc_init_data.left_padding   = PAD_VALUE; //OMK
     coeff_buffer_desc_init_data.right_padding = PAD_VALUE;
     coeff_buffer_desc_init_data.top_padding   = PAD_VALUE;
     coeff_buffer_desc_init_data.bot_padding   = PAD_VALUE;
-
+#endif
     coeff_buffer_desc_init_data.split_mode        = EB_FALSE;
     coeff_buffer_desc_init_data.is_16bit_pipeline = init_data_ptr->is_16bit_pipeline;
 
@@ -359,11 +385,17 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
     temp_lf_recon_desc_init_data.max_height         = (uint16_t)init_data_ptr->picture_height;
     temp_lf_recon_desc_init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK;
 
-    temp_lf_recon_desc_init_data.left_padding  = PAD_VALUE;
+#if CLN_REC
+    temp_lf_recon_desc_init_data.left_padding  = padding; //OMK
+    temp_lf_recon_desc_init_data.right_padding = padding;
+    temp_lf_recon_desc_init_data.top_padding   = padding;
+    temp_lf_recon_desc_init_data.bot_padding   = padding;
+#else
+    temp_lf_recon_desc_init_data.left_padding  = PAD_VALUE; //OMK
     temp_lf_recon_desc_init_data.right_padding = PAD_VALUE;
     temp_lf_recon_desc_init_data.top_padding   = PAD_VALUE;
     temp_lf_recon_desc_init_data.bot_padding   = PAD_VALUE;
-
+#endif
     temp_lf_recon_desc_init_data.split_mode   = EB_FALSE;
     temp_lf_recon_desc_init_data.color_format = color_format;
 
@@ -382,12 +414,26 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
     }
 #endif
 
+#if CLN_BN
+    set_restoration_unit_size(init_data_ptr->picture_width,
+                              init_data_ptr->picture_height,
+                              1,
+                              1,
+                              object_ptr->rst_info);
+
+    return_error = svt_av1_alloc_restoration_buffers(object_ptr,init_data_ptr->av1_cm);
+#endif
+
 #if CLN_RES_PROCESS
     int32_t ntiles[2];
     for (int32_t is_uv = 0; is_uv < 2; ++is_uv)
         ntiles[is_uv] =
+#if CLN_BN
+            object_ptr->rst_info[is_uv].units_per_tile; //CHKN res_tiles_in_plane
+#else
             init_data_ptr->rst_info[is_uv].units_per_tile; //CHKN res_tiles_in_plane
 
+#endif
     assert(ntiles[1] <= ntiles[0]);
     EB_CALLOC_ARRAY(object_ptr->rusi_picture[0], ntiles[0]);
     EB_CALLOC_ARRAY(object_ptr->rusi_picture[1], ntiles[1]);
@@ -433,6 +479,16 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
     object_ptr->sb_total_count_pix = all_sb;
 
     for (sb_index = 0; sb_index < all_sb; ++sb_index) {
+#if CLN_FA
+        EB_NEW(object_ptr->sb_ptr_array[sb_index],
+               largest_coding_unit_ctor,
+               (uint8_t)init_data_ptr->sb_size_pix,
+               (uint16_t)(sb_origin_x * max_blk_size),
+               (uint16_t)(sb_origin_y * max_blk_size),
+               (uint16_t)sb_index,
+               init_data_ptr->enc_mode,
+               object_ptr);
+#else
         EB_NEW(object_ptr->sb_ptr_array[sb_index],
                largest_coding_unit_ctor,
                (uint8_t)init_data_ptr->sb_size_pix,
@@ -440,6 +496,7 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
                (uint16_t)(sb_origin_y * max_blk_size),
                (uint16_t)sb_index,
                object_ptr);
+#endif
         // Increment the Order in coding order (Raster Scan Order)
         sb_origin_y = (sb_origin_x == picture_sb_w - 1) ? sb_origin_y + 1 : sb_origin_y;
         sb_origin_x = (sb_origin_x == picture_sb_w - 1) ? 0 : sb_origin_x + 1;
@@ -1220,6 +1277,7 @@ static void picture_parent_control_set_dctor(EbPtr ptr) {
     EB_FREE_ARRAY(obj->sb_depth_mode_array);
 
     if (obj->av1_cm) {
+#if !CLN_BN
         const int32_t num_planes = 3; // av1_num_planes(cm);
         for (int32_t p = 0; p < num_planes; ++p) {
             RestorationInfo *            ri         = obj->av1_cm->rst_info + p;
@@ -1228,6 +1286,7 @@ static void picture_parent_control_set_dctor(EbPtr ptr) {
             EB_FREE(boundaries->stripe_boundary_above);
             EB_FREE(boundaries->stripe_boundary_below);
         }
+#endif
         EB_FREE_ARRAY(obj->av1_cm->frame_to_show);
         if (obj->av1_cm->rst_frame.buffer_alloc_sz) {
             EB_FREE_ARRAY(obj->av1_cm->rst_frame.buffer_alloc);
@@ -1350,6 +1409,9 @@ EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr,
                          HISTOGRAM_NUMBER_OF_BINS);
         }
     }
+#if CLN_PPCS
+    if (init_data_ptr->rc_firstpass_stats_out ||  init_data_ptr->rate_control_mode)
+#endif
     {
         const uint16_t picture_width_in_mb  = (uint16_t)((init_data_ptr->picture_width + 15) / 16);
         const uint16_t picture_height_in_mb = (uint16_t)((init_data_ptr->picture_height + 15) / 16);
@@ -1487,7 +1549,7 @@ EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr,
     object_ptr->av1_cm->mi_rows = init_data_ptr->picture_height >> MI_SIZE_LOG2;
 
     object_ptr->av1_cm->byte_alignment = 0;
-
+#if !CLN_BN
     set_restoration_unit_size(init_data_ptr->picture_width,
                               init_data_ptr->picture_height,
                               1,
@@ -1495,7 +1557,7 @@ EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr,
                               object_ptr->av1_cm->rst_info);
 
     return_error = svt_av1_alloc_restoration_buffers(object_ptr->av1_cm);
-
+#endif
     memset(&object_ptr->av1_cm->rst_frame, 0, sizeof(Yv12BufferConfig));
 
 #if !CLN_RES_PROCESS

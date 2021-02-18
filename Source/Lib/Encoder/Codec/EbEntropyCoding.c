@@ -2718,7 +2718,9 @@ static void write_ref_frames(FRAME_CONTEXT *frame_context, PictureParentControlS
 }
 static void encode_restoration_mode(PictureParentControlSet * pcs_ptr,
                                     struct AomWriteBitBuffer *wb) {
+ #if !CLN_BN
     Av1Common *  cm      = pcs_ptr->av1_cm;
+#endif
     FrameHeader *frm_hdr = &pcs_ptr->frm_hdr;
     //SVT_LOG("ERROR[AN]: encode_restoration_mode might not work. Double check the reference code\n");
     assert(!frm_hdr->all_lossless);
@@ -2734,7 +2736,11 @@ static void encode_restoration_mode(PictureParentControlSet * pcs_ptr,
         //   svt_aom_wb_write_bit(wb, 0);
         //   svt_aom_wb_write_bit(wb, 0);
 
+ #if CLN_BN
+        RestorationInfo *rsi = &pcs_ptr->child_pcs->rst_info[p];
+#else
         RestorationInfo *rsi = &pcs_ptr->av1_cm->rst_info[p];
+#endif
 
         //if (p==0)
         //   SVT_LOG("POC:%i Luma rest_type:%i\n", pcs_ptr->picture_number, rsi->frame_restoration_type);
@@ -2772,8 +2778,11 @@ static void encode_restoration_mode(PictureParentControlSet * pcs_ptr,
         //      cm->seq_params.sb_size == BLOCK_128X128);
         const int32_t sb_size = pcs_ptr->scs_ptr->seq_header.sb_size == BLOCK_128X128 ? 128 : 64;
         ;
+ #if CLN_BN
+        RestorationInfo *rsi = &pcs_ptr->child_pcs->rst_info[0];
+#else
         RestorationInfo *rsi = &pcs_ptr->av1_cm->rst_info[0];
-
+#endif
         assert(rsi->restoration_unit_size >= sb_size);
         assert(RESTORATION_UNITSIZE_MAX == 256);
 
@@ -2782,7 +2791,16 @@ static void encode_restoration_mode(PictureParentControlSet * pcs_ptr,
         if (rsi->restoration_unit_size > 64)
             svt_aom_wb_write_bit(wb, rsi->restoration_unit_size > 128);
     }
-
+ #if CLN_BN
+    if (!chroma_none) {
+        svt_aom_wb_write_bit(
+            wb, pcs_ptr->child_pcs->rst_info[1].restoration_unit_size != pcs_ptr->child_pcs->rst_info[0].restoration_unit_size);
+        assert(pcs_ptr->child_pcs->rst_info[1].restoration_unit_size == pcs_ptr->child_pcs->rst_info[0].restoration_unit_size ||
+               pcs_ptr->child_pcs->rst_info[1].restoration_unit_size ==
+                   (pcs_ptr->child_pcs->rst_info[0].restoration_unit_size >> 1));
+        assert(pcs_ptr->child_pcs->rst_info[2].restoration_unit_size == pcs_ptr->child_pcs->rst_info[1].restoration_unit_size);
+    }
+#else
     if (!chroma_none) {
         svt_aom_wb_write_bit(
             wb, cm->rst_info[1].restoration_unit_size != cm->rst_info[0].restoration_unit_size);
@@ -2791,6 +2809,7 @@ static void encode_restoration_mode(PictureParentControlSet * pcs_ptr,
                    (cm->rst_info[0].restoration_unit_size >> 1));
         assert(cm->rst_info[2].restoration_unit_size == cm->rst_info[1].restoration_unit_size);
     }
+#endif
 }
 
 static void encode_segmentation(PictureParentControlSet *pcsPtr, struct AomWriteBitBuffer *wb) {
@@ -4541,14 +4560,23 @@ static void write_sgrproj_filter(const SgrprojInfo *sgrproj_info, SgrprojInfo *r
 
     svt_memcpy(ref_sgrproj_info, sgrproj_info, sizeof(*sgrproj_info));
 }
+
+#if CLN_BN
+static void loop_restoration_write_sb_coeffs(PictureControlSet     *piCSetPtr, FRAME_CONTEXT           *frame_context,
+#else
 static void loop_restoration_write_sb_coeffs(PictureControlSet     *piCSetPtr, FRAME_CONTEXT           *frame_context, const Av1Common *const cm,
+#endif
     uint16_t tile_idx,
     //MacroBlockD *xd,
     const RestorationUnitInfo *rui,
     AomWriter *const w, int32_t plane/*,
     FRAME_COUNTS *counts*/)
 {
+#if CLN_BN
+    const RestorationInfo *rsi         = piCSetPtr->rst_info + plane;
+#else
     const RestorationInfo *rsi         = cm->rst_info + plane;
+#endif
     RestorationType        frame_rtype = rsi->frame_restoration_type;
     if (frame_rtype == RESTORE_NONE)
         return;
@@ -6188,15 +6216,25 @@ EB_EXTERN EbErrorType write_sb(EntropyCodingContext *context_ptr, SuperBlock *tb
                                                                &rrow0,
                                                                &rrow1,
                                                                &tile_tl_idx)) {
+#if CLN_BN
+                        const int32_t rstride = pcs_ptr->rst_info[plane].horz_units_per_tile;
+#else
                         const int32_t rstride = cm->rst_info[plane].horz_units_per_tile;
+#endif
                         for (int32_t rrow = rrow0; rrow < rrow1; ++rrow) {
                             for (int32_t rcol = rcol0; rcol < rcol1; ++rcol) {
                                 const int32_t runit_idx = tile_tl_idx + rcol + rrow * rstride;
                                 const RestorationUnitInfo *rui =
+#if CLN_BN
+                                    &pcs_ptr->rst_info[plane].unit_info[runit_idx];
+#else
                                     &cm->rst_info[plane].unit_info[runit_idx];
+#endif
                                 loop_restoration_write_sb_coeffs(pcs_ptr,
                                                                  frame_context,
+#if !CLN_BN
                                                                  cm,
+#endif
                                                                  tile_idx,
                                                                  /*xd,*/ rui,
                                                                  ec_writer,

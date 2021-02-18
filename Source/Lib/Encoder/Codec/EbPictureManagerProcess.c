@@ -969,7 +969,10 @@ void *picture_manager_kernel(void *input_ptr) {
                         child_pcs_ptr->parent_pcs_ptr = entry_pcs_ptr;
 
                         child_pcs_ptr->parent_pcs_ptr->child_pcs = child_pcs_ptr;
-
+#if CLN_BN
+                        //1b Link The Child PCS to av1_cm to be used by Restoration
+                        child_pcs_ptr->parent_pcs_ptr->av1_cm->child_pcs = child_pcs_ptr;
+#endif
                         //2. Have some common information between  ChildPCS and ParentPCS.
                         child_pcs_ptr->scs_wrapper_ptr      = entry_pcs_ptr->scs_wrapper_ptr;
                         child_pcs_ptr->picture_qp           = entry_pcs_ptr->picture_qp;
@@ -1025,6 +1028,9 @@ void *picture_manager_kernel(void *input_ptr) {
                                                          (uint16_t)(sb_origin_x * scs_ptr->sb_size_pix),
                                                          (uint16_t)(sb_origin_y * scs_ptr->sb_size_pix),
                                                          (uint16_t)sb_index,
+#if CLN_FA
+                                                         child_pcs_ptr->enc_mode,
+#endif
                                                          child_pcs_ptr);
                                 // Increment the Order in coding order (Raster Scan Order)
                                 sb_origin_y = (sb_origin_x == pic_width_in_sb - 1) ? sb_origin_y + 1 : sb_origin_y;

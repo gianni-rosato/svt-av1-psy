@@ -14,6 +14,9 @@
 
 #include "EbTransformUnit.h"
 #include "EbPictureControlSet.h"
+#if CLN_FA
+#include "EbUtility.h"
+#endif
 
 void largest_coding_unit_dctor(EbPtr p) {
     SuperBlock *obj = (SuperBlock *)p;
@@ -22,6 +25,10 @@ void largest_coding_unit_dctor(EbPtr p) {
     EB_FREE_ARRAY(obj->final_blk_arr);
     EB_FREE_ARRAY(obj->cu_partition_array);
 }
+#if CLN_FA
+    uint8_t get_disallow_nsq(EbEncMode enc_mode);
+    uint8_t get_disallow_4x4(EbEncMode enc_mode, EB_SLICE slice_type);
+#endif
 /*
 Tasks & Questions
     -Need a GetEmptyChain function for testing sub partitions.  Tie it to an Itr?
@@ -33,6 +40,9 @@ Tasks & Questions
 */
 EbErrorType largest_coding_unit_ctor(SuperBlock *larget_coding_unit_ptr, uint8_t sb_size_pix,
                                      uint16_t sb_origin_x, uint16_t sb_origin_y, uint16_t sb_index,
+#if CLN_FA
+                                     uint8_t enc_mode,
+#endif
                                      PictureControlSet *picture_control_set)
 
 {
@@ -50,7 +60,30 @@ EbErrorType largest_coding_unit_ctor(SuperBlock *larget_coding_unit_ptr, uint8_t
     larget_coding_unit_ptr->origin_y = sb_origin_y;
 
     larget_coding_unit_ptr->index = sb_index;
+#if CLN_FA
+    uint8_t disallow_nsq =  get_disallow_nsq( enc_mode);
+    uint8_t disallow_4x4 = 1;
+    for (EB_SLICE slice_type = 0; slice_type < IDR_SLICE + 1 ; slice_type++)
+        disallow_4x4 =  MIN(disallow_4x4 ,get_disallow_4x4 (enc_mode,slice_type));
+
+    uint32_t tot_blk_num ;
+    if (sb_size_pix == 128)
+        if (disallow_4x4 && disallow_nsq)
+            tot_blk_num = 260;
+        else if (disallow_4x4)
+            tot_blk_num = 512;
+        else
+            tot_blk_num = 1024;
+    else
+        if (disallow_4x4 && disallow_nsq)
+            tot_blk_num = 65;
+        else if (disallow_4x4)
+            tot_blk_num = 128;
+        else
+            tot_blk_num = 256;
+#else
     uint32_t tot_blk_num          = sb_size_pix == 128 ? 1024 : 256;
+#endif
     EB_MALLOC_ARRAY(larget_coding_unit_ptr->final_blk_arr, tot_blk_num);
     EB_MALLOC_ARRAY(larget_coding_unit_ptr->av1xd, 1);
     // Do NOT initialize the final_blk_arr here

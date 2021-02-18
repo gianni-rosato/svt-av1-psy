@@ -458,6 +458,9 @@ typedef struct SuperBlock {
 extern EbErrorType largest_coding_unit_ctor(SuperBlock *larget_coding_unit_ptr, uint8_t sb_sz,
                                             uint16_t sb_origin_x, uint16_t sb_origin_y,
                                             uint16_t                  sb_index,
+#if CLN_FA
+                                            uint8_t enc_mode,
+#endif
                                             struct PictureControlSet *picture_control_set);
 
 #ifdef __cplusplus

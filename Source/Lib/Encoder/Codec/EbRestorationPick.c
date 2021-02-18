@@ -104,7 +104,11 @@ static void rsc_on_tile(int32_t tile_row, int32_t tile_col, void *priv) {
     set_default_sgrproj(&rsc->sgrproj);
     set_default_wiener(&rsc->wiener);
 
+#if CLN_BN
+    rsc->tile_stripe0 = (tile_row == 0) ? 0 : rsc->cm->child_pcs->rst_end_stripe[tile_row - 1];
+#else
     rsc->tile_stripe0 = (tile_row == 0) ? 0 : rsc->cm->rst_end_stripe[tile_row - 1];
+#endif
 }
 
 static void reset_rsc(RestSearchCtxt *rsc) {
@@ -141,7 +145,11 @@ static int64_t try_restoration_unit_seg(const RestSearchCtxt *       rsc,
     const Av1Common *const cm    = rsc->cm;
     const int32_t          plane = rsc->plane;
     const int32_t          is_uv = plane > 0;
+#if CLN_BN
+    const RestorationInfo *rsi   = &cm->child_pcs->rst_info[plane];
+#else
     const RestorationInfo *rsi   = &cm->rst_info[plane];
+#endif
     RestorationLineBuffers rlbs;
     const int32_t          bit_depth = cm->bit_depth;
     const int32_t          highbd    = cm->use_highbitdepth;
@@ -1290,7 +1298,11 @@ static void copy_unit_info(RestorationType frame_rtype, const RestUnitSearchInfo
 }
 
 static int32_t rest_tiles_in_plane(const Av1Common *cm, int32_t plane) {
+#if CLN_BN
+    const RestorationInfo *rsi = &cm->child_pcs->rst_info[plane];
+#else
     const RestorationInfo *rsi = &cm->rst_info[plane];
+#endif
     return rsi->units_per_tile;
 }
 
@@ -1658,14 +1670,21 @@ void rest_finish_search(PictureParentControlSet *p_pcs_ptr, Macroblock *x, Av1Co
                 best_rtype = r;
             }
         }
-
+#if CLN_BN
+        cm->child_pcs->rst_info[plane].frame_restoration_type = best_rtype;
+#else
         cm->rst_info[plane].frame_restoration_type = best_rtype;
+#endif
         if (force_restore_type_d != RESTORE_TYPES)
             assert(best_rtype == force_restore_type_d || best_rtype == RESTORE_NONE);
 
         if (best_rtype != RESTORE_NONE) {
             for (int32_t u = 0; u < plane_ntiles; ++u)
+#if CLN_BN
+                copy_unit_info(best_rtype, &rusi[u], &cm->child_pcs->rst_info[plane].unit_info[u]);
+#else
                 copy_unit_info(best_rtype, &rusi[u], &cm->rst_info[plane].unit_info[u]);
+#endif
         }
     }
 
