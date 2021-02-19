@@ -4375,7 +4375,7 @@ EbErrorType signal_derivation_enc_dec_kernel_common(
             depth_removal_level = 0;
         else {
 #if TUNE_DEPTH_REMOVAL_PER_RESOLUTION
-#if TUNE_SHIFT_PRESETS_DOWN
+#if TUNE_SHIFT_PRESETS_DOWN && !TUNE_M0_M8_MEGA_FEB
             if (enc_mode <= ENC_M7) {
 #else
             if (enc_mode <= ENC_M8) {
@@ -4391,16 +4391,20 @@ EbErrorType signal_derivation_enc_dec_kernel_common(
                     depth_removal_level = 3;
 #endif
                 else
+#if TUNE_M0_M8_MEGA_FEB
+                    depth_removal_level = 2;
+#else
                     depth_removal_level = 4;
+#endif
             }
-#if FIX_DEPTH_REMOVAL_SETTINGS
+#if FIX_DEPTH_REMOVAL_SETTINGS && !TUNE_M0_M8_MEGA_FEB
 #if TUNE_SHIFT_PRESETS_DOWN
             else if (enc_mode <= ENC_M8) {
 #else
             else if (enc_mode <= ENC_M9) {
 #endif
 #else
-            } else {
+            else {
 #endif
 #if TUNE_M9_OPT_DEPTH_REMOVAL
 #if TUNE_DEPTH_REMOVAL_M9
@@ -4435,7 +4439,7 @@ EbErrorType signal_derivation_enc_dec_kernel_common(
                     depth_removal_level = 8;
 #endif
             }
-#if FIX_DEPTH_REMOVAL_SETTINGS
+#if FIX_DEPTH_REMOVAL_SETTINGS && !TUNE_M0_M8_MEGA_FEB
             else {
                 if (scs_ptr->input_resolution < INPUT_SIZE_360p_RANGE)
                     depth_removal_level = (pcs_ptr->temporal_layer_index == 0) ? 3 : 4;
@@ -4488,7 +4492,7 @@ EbErrorType signal_derivation_enc_dec_kernel_common(
 #if TUNE_NEW_PRESETS_MR_M8
 #if TUNE_M5_FEATURES
 #if TUNE_M4_FEATURES
-#if TUNE_SHIFT_PRESETS_DOWN
+#if TUNE_SHIFT_PRESETS_DOWN && !TUNE_M0_M8_MEGA_FEB
     else if (enc_mode <= ENC_M3)
 #else
     else if (enc_mode <= ENC_M4)
@@ -4497,7 +4501,11 @@ EbErrorType signal_derivation_enc_dec_kernel_common(
 #endif
 #if TUNE_SHIFT_PRESETS_DOWN
 #if NEW_PRESETS
+#if TUNE_M0_M8_MEGA_FEB
+    else if (enc_mode <= ENC_M6)
+#else
     else if (enc_mode <= ENC_M5)
+#endif
 #else
     else if (enc_mode <= ENC_M4)
 #endif
@@ -4692,7 +4700,7 @@ uint8_t  get_nic_scaling_level(PdPass pd_pass, EbEncMode enc_mode ,uint8_t tempo
 #endif
             nic_scaling_level = 11;
 #if TUNE_PRESETS_AND_PRUNING
-#if TUNE_SHIFT_PRESETS_DOWN
+#if TUNE_SHIFT_PRESETS_DOWN && !TUNE_M0_M8_MEGA_FEB
         else if (enc_mode <= ENC_M7)
 #else
         else if (enc_mode <= ENC_M8)
@@ -4702,7 +4710,7 @@ uint8_t  get_nic_scaling_level(PdPass pd_pass, EbEncMode enc_mode ,uint8_t tempo
 #endif
             nic_scaling_level = 12;
 #if TUNE_PRESETS_AND_PRUNING
-#if FTR_M10
+#if FTR_M10 && !TUNE_M0_M8_MEGA_FEB
 #if TUNE_SHIFT_PRESETS_DOWN
         else if (enc_mode <= ENC_M8)
 #else
@@ -4714,7 +4722,7 @@ uint8_t  get_nic_scaling_level(PdPass pd_pass, EbEncMode enc_mode ,uint8_t tempo
 #if OPT_M9_TXT_PRED_DEPTH_PRUNING
 #if TUNE_M7_M9
             nic_scaling_level = 14;
-#if FTR_M10
+#if FTR_M10 && !TUNE_M0_M8_MEGA_FEB
         else
             nic_scaling_level = 15;
 #endif
@@ -5214,7 +5222,12 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #endif
 #endif
 #if TUNE_M1_REPOSITION
+#if TUNE_M0_M8_MEGA_FEB
+            else if (enc_mode <= ENC_M3)
+#else
             else if (enc_mode <= ENC_M0)
+#endif
+
 #else
             else if (enc_mode <= ENC_M1)
 #endif
@@ -5225,7 +5238,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             else if (enc_mode <= ENC_M0)
 #endif
                 context_ptr->inter_compound_mode = 2;
-#if TUNE_M0_M3_BASE_NBASE
+#if TUNE_M0_M3_BASE_NBASE && !TUNE_M0_M8_MEGA_FEB
 #if TUNE_SHIFT_M2_M1
             else if (enc_mode <= ENC_M1)
 #else
@@ -5601,12 +5614,17 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             if (enc_mode <= ENC_MRS)
                 context_ptr->sq_weight = (uint32_t)~0;
             else
+#if TUNE_M0_M8_MEGA_FEB
+                if (enc_mode <= ENC_M0)
+#else
                 if (enc_mode <= ENC_MR)
+#endif
 #if TUNE_PRESETS_CLEANUP
                     context_ptr->sq_weight = 105;
 #else
                     context_ptr->sq_weight = 115;
 #endif
+#if !TUNE_M0_M8_MEGA_FEB
                 else
                     if (enc_mode <= ENC_M0)
 #if TUNE_PRESETS_CLEANUP
@@ -5618,9 +5636,10 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #else
                         context_ptr->sq_weight = 105;
 #endif
+#endif
 #if TUNE_LOWER_PRESETS
 #if TUNE_NEW_PRESETS_MR_M8
-#if TUNE_SHIFT_M2_M1
+#if TUNE_SHIFT_M2_M1 && !TUNE_M0_M8_MEGA_FEB
                     else if (enc_mode <= ENC_M1)
 #else
                     else if (enc_mode <= ENC_M2)
@@ -5645,7 +5664,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             context_ptr->max_part0_to_part1_dev = 0;
         else
 #if TUNE_M4_FEATURES
-#if TUNE_SHIFT_PRESETS_DOWN
+#if TUNE_SHIFT_PRESETS_DOWN && !TUNE_M0_M8_MEGA_FEB
             if (enc_mode <= ENC_M2)
 #else
             if (enc_mode <= ENC_M3)
@@ -5654,7 +5673,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             if (enc_mode <= ENC_M4)
 #endif
                 context_ptr->max_part0_to_part1_dev = 0;
-#if TUNE_M4_FEATURES
+#if TUNE_M4_FEATURES && !TUNE_M0_M8_MEGA_FEB
 #if TUNE_SHIFT_PRESETS_DOWN
             else if (enc_mode <= ENC_M3)
 #else
@@ -5963,11 +5982,16 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #endif
 #if TUNE_M0_M3_BASE_NBASE
             nic_pruning_level = (pcs_ptr->temporal_layer_index == 0) ? 1 : 3;
+#if TUNE_M0_M8_MEGA_FEB
+        else if (enc_mode <= ENC_M4)
+#else
         else if (enc_mode <= ENC_M1)
+#endif
             nic_pruning_level = (pcs_ptr->temporal_layer_index == 0) ? 3 : 4;
 #else
             nic_pruning_level = 3;
 #endif
+#if !TUNE_M0_M8_MEGA_FEB
 #if TUNE_M3_REPOSITION
 #if TUNE_SHIFT_PRESETS_DOWN
         else if (enc_mode <= ENC_M2)
@@ -5979,11 +6003,16 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         else if (enc_mode <= ENC_M2)
             nic_pruning_level = 4;
 #endif
+#endif
 #if TUNE_M0_M3_BASE_NBASE
 #if TUNE_M4_REPOSITION
 #if TUNE_SHIFT_PRESETS_DOWN
 #if NEW_PRESETS
+#if TUNE_M0_M8_MEGA_FEB
+        else if (enc_mode <= ENC_M5)
+#else
         else if (enc_mode <= ENC_M4)
+#endif
 #else
         else if (enc_mode <= ENC_M3)
 #endif
@@ -5995,6 +6024,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #endif
             nic_pruning_level = (pcs_ptr->temporal_layer_index == 0) ? 4 : 5;
 #endif
+#if !TUNE_M0_M8_MEGA_FEB
 #if TUNE_PRESETS_AND_PRUNING
 #if TUNE_SHIFT_PRESETS_DOWN
         else if (enc_mode <= ENC_M5)
@@ -6005,6 +6035,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         else if (enc_mode <= ENC_M5)
 #endif
             nic_pruning_level = 5;
+#endif
 #else
         else if (enc_mode <= ENC_M5)
             nic_pruning_level = 3;
@@ -6131,7 +6162,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #if TUNE_NEW_PRESETS_MR_M8
 #if TUNE_M7_M9
 #if TUNE_M6_FEATURES
-#if TUNE_SHIFT_PRESETS_DOWN
+#if TUNE_SHIFT_PRESETS_DOWN && !TUNE_M0_M8_MEGA_FEB
             if (enc_mode <= ENC_M4 ||
 #else
             if (enc_mode <= ENC_M5 ||
@@ -6170,7 +6201,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 
                 uint64_t cost_64x64 = RDCOST(fast_lambda, 0, pcs_ptr->parent_pcs_ptr->me_64x64_distortion[context_ptr->sb_index]);
 #if TUNE_M9_PF
-#if TUNE_M8_FEATURES
+#if TUNE_M8_FEATURES && !TUNE_M0_M8_MEGA_FEB
 #if TUNE_SHIFT_PRESETS_DOWN
 #if NEW_PRESETS
                 if (enc_mode <= ENC_M7) {
@@ -6302,7 +6333,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         context_ptr->md_sq_mv_search_level = 0;
     else
 #if TUNE_SHIFT_M2_M1
+#if TUNE_M0_M8_MEGA_FEB
+        if (enc_mode <= ENC_M3)
+#else
         if (enc_mode <= ENC_M1)
+#endif
 #else
         if (enc_mode <= ENC_M2)
 #endif
@@ -6314,7 +6349,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #endif
 #if TUNE_M9_IFS_SSE_ADAPT_ME_MV_NEAR_WM_TF
 #if TUNE_M7_M9
-#if TUNE_M6_FEATURES
+#if TUNE_M6_FEATURES && !TUNE_M0_M8_MEGA_FEB
 #if TUNE_SHIFT_PRESETS_DOWN
         else if (enc_mode <= ENC_M4)
 #else
@@ -6436,7 +6471,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #if TUNE_M4_M8
 #if TUNE_M6_M7_FEATURES
 #if TUNE_SHIFT_PRESETS_DOWN
-#if NEW_PRESETS
+#if NEW_PRESETS && !TUNE_M0_M8_MEGA_FEB
         context_ptr->md_subpel_me_level = enc_mode <= ENC_M6 ? 3 : 0;
 #else
         context_ptr->md_subpel_me_level = enc_mode <= ENC_M5 ? 3 : 0;
@@ -6656,7 +6691,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #if TUNE_M8_FEATURES
 #if TUNE_M6_M7_FEATURES
 #if TUNE_SHIFT_PRESETS_DOWN
+#if TUNE_M0_M8_MEGA_FEB
+        if (enc_mode <= ENC_M3)
+#else
         if (enc_mode <= ENC_M4)
+#endif
 #else
         if (enc_mode <= ENC_M5)
 #endif
@@ -6668,7 +6707,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #endif
             context_ptr->fast_coeff_est_level = 0;
 #if TUNE_SHIFT_PRESETS_DOWN
+#if TUNE_M0_M8_MEGA_FEB
+        else if (enc_mode <= ENC_M7)
+#else
         else if (enc_mode <= ENC_M8)
+#endif
 #else
         else if (enc_mode <= ENC_M9)
 #endif
@@ -6700,7 +6743,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #if TUNE_M4_REPOSITION
 #if TUNE_SHIFT_PRESETS_DOWN
 #if NEW_PRESETS
+#if TUNE_M0_M8_MEGA_FEB
+        else if (enc_mode <= ENC_M7)
+#else
         else if (enc_mode <= ENC_M4)
+#endif
 #else
         else if (enc_mode <= ENC_M3)
 #endif
@@ -6794,7 +6841,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #if FTR_REDUCE_MDS3_COMPLEXITY
 #if TUNE_NEW_PRESETS_MR_M8
 #if FTR_M9_AGRESSIVE_LAST_MD_STAGE
-#if TUNE_SHIFT_PRESETS_DOWN
+#if TUNE_SHIFT_PRESETS_DOWN && !TUNE_M0_M8_MEGA_FEB
             context_ptr->reduce_last_md_stage_candidate = (enc_mode <= ENC_M7) ? 0 : 3;
 #else
             context_ptr->reduce_last_md_stage_candidate = (enc_mode <= ENC_M8) ? 0 : 3;
@@ -6868,7 +6915,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         else if(enc_mode <= ENC_M7)
 #endif
             eliminate_candidate_based_on_pme_me_results = 0;
-#if TUNE_SHIFT_PRESETS_DOWN
+#if TUNE_SHIFT_PRESETS_DOWN && !TUNE_M0_M8_MEGA_FEB
         else if (enc_mode <= ENC_M7)
 #else
         else if(enc_mode <= ENC_M8)
@@ -6921,7 +6968,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #if TUNE_M7_M9
 #if TUNE_M6_FEATURES
 #if TUNE_M5_FEATURES
-#if TUNE_SHIFT_PRESETS_DOWN
+#if TUNE_SHIFT_PRESETS_DOWN && !TUNE_M0_M8_MEGA_FEB
              context_ptr->bypass_tx_search_when_zcoef = (enc_mode <= ENC_M3) ? 0 : 1;
 #else
              context_ptr->bypass_tx_search_when_zcoef = (enc_mode <= ENC_M4) ? 0 : 1;
@@ -6943,7 +6990,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #endif
 #endif
 #if TUNE_TXT_M9
-#if TUNE_SHIFT_PRESETS_DOWN
+#if TUNE_SHIFT_PRESETS_DOWN && !TUNE_M0_M8_MEGA_FEB
      if (enc_mode <= ENC_M7)
 #else
      if (enc_mode <= ENC_M8)

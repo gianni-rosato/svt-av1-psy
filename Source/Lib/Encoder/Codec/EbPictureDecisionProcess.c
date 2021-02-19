@@ -1172,7 +1172,11 @@ EbErrorType signal_derivation_multi_processes_oq(
 #if TUNE_M4_M8
 #if TUNE_NEW_PRESETS_MR_M8
 #if TUNE_SHIFT_PRESETS_DOWN
+#if TUNE_M0_M8_MEGA_FEB
+            else if (pcs_ptr->enc_mode <= ENC_M5)
+#else
             else if (pcs_ptr->enc_mode <= ENC_M6)
+#endif
 #else
             else if (pcs_ptr->enc_mode <= ENC_M7)
 #endif
@@ -1233,7 +1237,7 @@ EbErrorType signal_derivation_multi_processes_oq(
     if (scs_ptr->static_config.sg_filter_mode == DEFAULT) {
 #if TUNE_M4_M8
 #if TUNE_NEW_PRESETS_MR_M8
-#if TUNE_SHIFT_M2_M1
+#if TUNE_SHIFT_M2_M1 && !TUNE_M0_M8_MEGA_FEB
         if (pcs_ptr->enc_mode <= ENC_M1)
 #else
         if (pcs_ptr->enc_mode <= ENC_M2)
@@ -1251,7 +1255,11 @@ EbErrorType signal_derivation_multi_processes_oq(
             cm->sg_filter_mode = 4;
 #if TUNE_M0_M3_BASE_NBASE
 #if TUNE_SHIFT_PRESETS_DOWN
+#if TUNE_M0_M8_MEGA_FEB
+        else if (pcs_ptr->enc_mode <= ENC_M4)
+#else
         else if (pcs_ptr->enc_mode <= ENC_M2)
+#endif
 #else
         else if (pcs_ptr->enc_mode <= ENC_M3)
 #endif
@@ -1337,7 +1345,7 @@ EbErrorType signal_derivation_multi_processes_oq(
 #if TUNE_M8_TO_MATCH_M7
 #if TUNE_M7_M9
 #if TUNE_INTRA_PRED_MODE_MT
-#if TUNE_SHIFT_PRESETS_DOWN
+#if TUNE_SHIFT_PRESETS_DOWN && !TUNE_M0_M8_MEGA_FEB
         else if (pcs_ptr->enc_mode <= ENC_M7)
 #else
         else if (pcs_ptr->enc_mode <= ENC_M8)
@@ -1392,7 +1400,11 @@ EbErrorType signal_derivation_multi_processes_oq(
     else if (pcs_ptr->enc_mode <= ENC_M4)
 #else
 #if NEW_PRESETS
+#if TUNE_M0_M8_MEGA_FEB
+    else if (pcs_ptr->enc_mode <= ENC_M6)
+#else
     else if (pcs_ptr->enc_mode <= ENC_M4)
+#endif
 #else
     else if (pcs_ptr->enc_mode <= ENC_M3)
 #endif
@@ -1449,7 +1461,7 @@ EbErrorType signal_derivation_multi_processes_oq(
         pcs_ptr->gm_level = GM_FULL;
 #if TUNE_NEW_PRESETS_MR_M8
 #if TUNE_M6_FEATURES
-#if TUNE_SHIFT_PRESETS_DOWN
+#if TUNE_SHIFT_PRESETS_DOWN && !TUNE_M0_M8_MEGA_FEB
     else if (pcs_ptr->enc_mode <= ENC_M5)
 #else
     else if (pcs_ptr->enc_mode <= ENC_M6)

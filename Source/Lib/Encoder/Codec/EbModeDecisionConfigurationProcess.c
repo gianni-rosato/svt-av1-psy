@@ -517,7 +517,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
 #endif
 #if TUNE_UPDATE_CDF_LEVEL
 #if TUNE_SHIFT_PRESETS_DOWN
+#if TUNE_M0_M8_MEGA_FEB
+    else if (pcs_ptr->enc_mode <= ENC_M4)
+#else
     else if (pcs_ptr->enc_mode <= ENC_M5)
+#endif
 #else
     else if (pcs_ptr->enc_mode <= ENC_M6)
 #endif
@@ -525,7 +529,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         ? 1
         : (pcs_ptr->temporal_layer_index == 0) ? 1 : 3;
 #if TUNE_SHIFT_PRESETS_DOWN
+#if TUNE_M0_M8_MEGA_FEB
+    else if (pcs_ptr->enc_mode <= ENC_M5)
+#else
     else if (pcs_ptr->enc_mode <= ENC_M6)
+#endif
 #else
     else if (pcs_ptr->enc_mode <= ENC_M7)
 #endif
@@ -667,7 +675,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
             pcs_ptr->parent_pcs_ptr->pic_obmc_level = 1;
 #if FTR_NEW_REF_PRUNING_CTRLS
 #if TUNE_M6_FEATURES
-#if TUNE_M6_M7_FEATURES
+#if TUNE_M6_M7_FEATURES && !TUNE_M0_M8_MEGA_FEB
 #if TUNE_SHIFT_PRESETS_DOWN
 #if NEW_PRESETS
         else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M5)

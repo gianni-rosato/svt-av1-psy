@@ -2391,7 +2391,7 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     }
 #if TUNE_DEFAULT_RECODE_LOOP
     else if (scs_ptr->static_config.recode_loop == ALLOW_RECODE_DEFAULT) {
-#if TUNE_SHIFT_PRESETS_DOWN
+#if TUNE_SHIFT_PRESETS_DOWN && !TUNE_M0_M8_MEGA_FEB
         scs_ptr->static_config.recode_loop = scs_ptr->static_config.enc_mode <= ENC_M4 ? ALLOW_RECODE_KFARFGF : ALLOW_RECODE_KFMAXBW;
 #else
         scs_ptr->static_config.recode_loop = scs_ptr->static_config.enc_mode <= ENC_M5 ? ALLOW_RECODE_KFARFGF : ALLOW_RECODE_KFMAXBW;

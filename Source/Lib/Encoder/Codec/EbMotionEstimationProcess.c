@@ -1155,7 +1155,11 @@ EbErrorType trail_signal_derivation_me_kernel(SequenceControlSet *       scs_ptr
 #endif
 #if FTR_REDUCE_ME_INJECTION
 #if TUNE_M8_FEATURES
+#if TUNE_M0_M8_MEGA_FEB
+        if (enc_mode <= ENC_M6)
+#else
         if (enc_mode <= ENC_M7)
+#endif
 #else
         if (enc_mode <= ENC_M8)
 #endif
@@ -1237,7 +1241,7 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
 #if TUNE_M9_GM_INTER_COMPOUND
 #if TUNE_M7_M9
 #if TUNE_M6_FEATURES
-#if TUNE_SHIFT_PRESETS_DOWN
+#if TUNE_SHIFT_PRESETS_DOWN && !TUNE_M0_M8_MEGA_FEB
         else if (enc_mode <= ENC_M4)
 #else
         else if (enc_mode <= ENC_M5)
@@ -1283,7 +1287,11 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
 #if FTR_PRE_HME
     // Set pre-hme level (0-2)
     uint8_t prehme_level = 0;
+#if TUNE_M0_M8_MEGA_FEB
+    prehme_level = (enc_mode <= ENC_M8) ? 1 : 2;
+#else
     prehme_level = (enc_mode <= ENC_M4) ? 1: 2;
+#endif
 
     set_prehme_ctrls(context_ptr->me_context_ptr, prehme_level);
 #endif
@@ -1296,7 +1304,7 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
 #endif
             set_me_hme_ref_prune_ctrls(context_ptr->me_context_ptr, 0);
 #if TUNE_LOWER_PRESETS
-#if TUNE_NEW_PRESETS_MR_M8
+#if TUNE_NEW_PRESETS_MR_M8 && !TUNE_M0_M8_MEGA_FEB
     else if (enc_mode <= ENC_M0)
 #else
     else if (enc_mode <= ENC_M1)

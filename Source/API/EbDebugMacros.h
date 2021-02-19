@@ -261,6 +261,8 @@ extern "C" {
 #define CLN_BN                                1 // Move RestorationInfo from PPCS to CPCS
 #define TUNE_PICT_PARALLEL_II                 1 // Tune picture parallelization phase 2
 #define OPT_R0_FOR_LOW_MOTION                  1 // Adjust r0 for kf low motion clip
+
+#define TUNE_M0_M8_MEGA_FEB                    1 // tuning for MEGA_FEB testset
 // ============= END SVT_04 =============
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch

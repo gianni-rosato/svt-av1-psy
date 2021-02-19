@@ -7208,8 +7208,12 @@ EbErrorType signal_derivation_block(PictureControlSet *pcs,
 #endif
 #if TUNE_M0_M3_BASE_NBASE
 #if TUNE_M3_REPOSITION
-#if TUNE_M4_REPOSITION && !TUNE_SHIFT_PRESETS_DOWN
+#if TUNE_M4_REPOSITION && (!TUNE_SHIFT_PRESETS_DOWN || TUNE_M0_M8_MEGA_FEB)
+#if TUNE_M0_M8_MEGA_FEB
+        else if (enc_mode <= ENC_M7)
+#else
         else if (enc_mode <= ENC_M4)
+#endif
 #else
         else if (enc_mode <= ENC_M3)
 #endif

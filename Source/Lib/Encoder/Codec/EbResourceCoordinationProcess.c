@@ -411,7 +411,11 @@ EbErrorType signal_derivation_pre_analysis_oq_scs(SequenceControlSet * scs_ptr) 
     if (scs_ptr->static_config.enable_restoration_filtering == DEFAULT) {
 #if TUNE_NEW_PRESETS_MR_M8
 #if TUNE_SHIFT_PRESETS_DOWN
+#if TUNE_M0_M8_MEGA_FEB
+        scs_ptr->seq_header.enable_restoration = (scs_ptr->static_config.enc_mode <= ENC_M5) ? 1 : 0;
+#else
         scs_ptr->seq_header.enable_restoration = (scs_ptr->static_config.enc_mode <= ENC_M6) ? 1 : 0;
+#endif
 #else
         scs_ptr->seq_header.enable_restoration = (scs_ptr->static_config.enc_mode <= ENC_M7) ? 1 : 0;
 #endif
@@ -430,8 +434,8 @@ EbErrorType signal_derivation_pre_analysis_oq_scs(SequenceControlSet * scs_ptr) 
     if (scs_ptr->static_config.enable_warped_motion == DEFAULT) {
         scs_ptr->seq_header.enable_warped_motion = 1;
     } else
-        scs_ptr->seq_header.enable_warped_motion =
-            (uint8_t)scs_ptr->static_config.enable_warped_motion;
+        scs_ptr->seq_header.enable_warped_motion = (uint8_t)
+            scs_ptr->static_config.enable_warped_motion;
 
     return return_error;
 }
