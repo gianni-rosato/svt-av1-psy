@@ -6592,6 +6592,18 @@ static int cqp_qindex_calc_tpl_la(PictureControlSet *pcs_ptr, RATE_CONTROL *rc, 
                 factor = 1;
             pcs_ptr->parent_pcs_ptr->r0 = pcs_ptr->parent_pcs_ptr->r0 / factor;
         }
+#if OPT_R0_FOR_LOW_MOTION
+        if (pcs_ptr->parent_pcs_ptr->frm_hdr.frame_type == KEY_FRAME) {
+            if (scs_ptr->intra_period_length == -1 || scs_ptr->intra_period_length > KF_INTERVAL_TH) {
+                double factor = 1.0;
+                if (pcs_ptr->parent_pcs_ptr->r0 < 0.2){
+                    double mult = 1.0;
+                    factor = (double)(mult * 255.0) / qindex;
+                }
+                pcs_ptr->parent_pcs_ptr->r0 = pcs_ptr->parent_pcs_ptr->r0 / factor;
+            }
+        }
+#endif
         // when frames_to_key not available, i.e. in 1 pass encoding
         rc->kf_boost = get_cqp_kf_boost_from_r0(
             pcs_ptr->parent_pcs_ptr->r0, -1, scs_ptr->input_resolution);
