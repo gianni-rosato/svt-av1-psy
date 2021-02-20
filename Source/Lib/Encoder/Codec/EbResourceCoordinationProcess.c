@@ -1047,7 +1047,7 @@ void *resource_coordination_kernel(void *input_ptr) {
             if (scs_ptr->static_config.use_qp_file == 1) {
                 pcs_ptr->qp_on_the_fly = EB_TRUE;
                 if (pcs_ptr->input_ptr->qp > MAX_QP_VALUE) {
-                    SVT_LOG("SVT [WARNING]: INPUT QP OUTSIDE OF RANGE\n");
+                    SVT_LOG("SVT [WARNING]: INPUT QP/CRF OUTSIDE OF RANGE\n");
                     pcs_ptr->qp_on_the_fly = EB_FALSE;
                 }
                 pcs_ptr->picture_qp = (uint8_t)pcs_ptr->input_ptr->qp;

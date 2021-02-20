@@ -219,6 +219,7 @@
 #define HEIGHT_LONG_TOKEN "--height"
 #define NUMBER_OF_PICTURES_LONG_TOKEN "--frames"
 #define QP_LONG_TOKEN "--qp"
+#define CRF_LONG_TOKEN "--crf"
 #define CLASS_12_NEW_TOKEN "--enable-class-12"
 #define LOOP_FILTER_DISABLE_NEW_TOKEN "--disable-dlf"
 #define DISABLE_CFL_NEW_TOKEN "--disable-cfl"
@@ -425,6 +426,11 @@ static void set_cfg_pred_structure(const char *value, EbConfig *cfg) {
 static void set_cfg_qp(const char *value, EbConfig *cfg) {
     cfg->config.qp = strtoul(value, NULL, 0);
 };
+static void set_cfg_crf(const char *value, EbConfig *cfg) {
+    cfg->config.qp = strtoul(value, NULL, 0);
+    cfg->config.rate_control_mode = 0;
+    cfg->config.enable_tpl_la = 1;
+}
 static void set_cfg_use_qp_file(const char *value, EbConfig *cfg) {
     cfg->config.use_qp_file = (EbBool)strtol(value, NULL, 0);
 };
@@ -905,7 +911,7 @@ ConfigEntry config_entry_rc[] = {
     // Rate Control
     {SINGLE_INPUT,
      RATE_CONTROL_ENABLE_TOKEN,
-     "Rate control mode(0 = CQP , 1 = VBR , 2 = CVBR)",
+     "Rate control mode(0 = CQP if --enable-tpl-la is set to 0, else CRF , 1 = VBR , 2 = CVBR)",
      set_rate_control_mode},
     {SINGLE_INPUT, TARGET_BIT_RATE_TOKEN, "Target Bitrate (kbps)", set_target_bit_rate},
     {SINGLE_INPUT,
@@ -1000,6 +1006,7 @@ ConfigEntry config_entry_specific[] = {
     {SINGLE_INPUT, TILE_COL_TOKEN, "Number of tile columns to use, log2[0-4]", set_tile_col},
     {SINGLE_INPUT, QP_TOKEN, "Constant/Constrained Quality level", set_cfg_qp},
     {SINGLE_INPUT, QP_LONG_TOKEN, "Constant/Constrained Quality level", set_cfg_qp},
+    {SINGLE_INPUT, CRF_LONG_TOKEN, "Constant Rate Factor, equal to --rc 0 --enable-tpl-la 1 --qp x", set_cfg_crf},
 
     {SINGLE_INPUT,
      LOOKAHEAD_NEW_TOKEN,
@@ -1298,6 +1305,7 @@ ConfigEntry config_entry[] = {
      "SceneChangeDetection",
      set_scene_change_detection},
     {SINGLE_INPUT, QP_TOKEN, "QP", set_cfg_qp},
+    {SINGLE_INPUT, CRF_LONG_TOKEN, "CRF", set_cfg_crf},
     {SINGLE_INPUT, USE_QP_FILE_TOKEN, "UseQpFile", set_cfg_use_qp_file},
 #if FTR_ENABLE_FIXED_QINDEX_OFFSETS
     {SINGLE_INPUT, USE_FIXED_QINDEX_OFFSETS_TOKEN, "UseFixedQIndexOffsets", set_cfg_use_fixed_qindex_offsets},
@@ -1511,6 +1519,7 @@ ConfigEntry config_entry[] = {
      "Frame To Be Encoded",
      set_cfg_frames_to_be_encoded},
     {SINGLE_INPUT, QP_LONG_TOKEN, "QP double dash token", set_cfg_qp},
+    {SINGLE_INPUT, CRF_LONG_TOKEN, "CRF double dash token", set_cfg_crf},
     {SINGLE_INPUT, LOOP_FILTER_DISABLE_NEW_TOKEN, "Loop Filter Disable", set_disable_dlf_flag},
 
     {SINGLE_INPUT, DISABLE_CFL_NEW_TOKEN, "Disable CFL", set_disable_cfl_flag},
