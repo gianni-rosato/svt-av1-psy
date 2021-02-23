@@ -1345,7 +1345,7 @@ EbErrorType signal_derivation_multi_processes_oq(
 #if TUNE_M8_TO_MATCH_M7
 #if TUNE_M7_M9
 #if TUNE_INTRA_PRED_MODE_MT
-#if TUNE_SHIFT_PRESETS_DOWN && !TUNE_M0_M8_MEGA_FEB
+#if TUNE_SHIFT_PRESETS_DOWN
         else if (pcs_ptr->enc_mode <= ENC_M7)
 #else
         else if (pcs_ptr->enc_mode <= ENC_M8)

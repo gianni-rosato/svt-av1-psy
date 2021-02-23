@@ -293,7 +293,11 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
         }
     }
 #if TUNE_M9_ME_HME_TXT
+#if TUNE_ME_M9_OPT
+    else if (pcs_ptr->enc_mode <= ENC_M7) {
+#else
     else {
+#endif
         if (use_output_stat(scs_ptr)) {
             me_context_ptr->search_area_width = me_context_ptr->search_area_height = 8;
             me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 8;
@@ -359,6 +363,20 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
 #endif
         }
     }
+#if TUNE_ME_M9_OPT
+    else {
+        if (use_output_stat(scs_ptr)) {
+            me_context_ptr->search_area_width = me_context_ptr->search_area_height = 8;
+            me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 8;
+        }
+        else {
+            me_context_ptr->search_area_width = 16;
+            me_context_ptr->search_area_height = 5;
+            me_context_ptr->max_me_search_width = 24;
+            me_context_ptr->max_me_search_height = 13;
+        }
+    }
+#endif
 #endif
 #else
     else {
@@ -678,6 +696,7 @@ void set_me_sr_adjustment_ctrls(MeContext* context_ptr, uint8_t sr_adjustment_le
         me_sr_adjustment_ctrls->enable_me_sr_adjustment = 0;
         break;
     case 1:
+#if !TUNE_ME_M9_OPT
         me_sr_adjustment_ctrls->enable_me_sr_adjustment = 1;
         me_sr_adjustment_ctrls->reduce_me_sr_based_on_mv_length_th = 0;
         me_sr_adjustment_ctrls->stationary_hme_sad_abs_th = 100;
@@ -689,6 +708,7 @@ void set_me_sr_adjustment_ctrls(MeContext* context_ptr, uint8_t sr_adjustment_le
 #endif
         break;
     case 2:
+#endif
         me_sr_adjustment_ctrls->enable_me_sr_adjustment = 1;
         me_sr_adjustment_ctrls->reduce_me_sr_based_on_mv_length_th = 4;
         me_sr_adjustment_ctrls->stationary_hme_sad_abs_th = 12000;
@@ -700,12 +720,27 @@ void set_me_sr_adjustment_ctrls(MeContext* context_ptr, uint8_t sr_adjustment_le
 #endif
         break;
 #if FTR_HME_REF_IDX_RESIZING
+#if TUNE_ME_M9_OPT
+    case 2:
+#else
     case 3:
+#endif
         me_sr_adjustment_ctrls->enable_me_sr_adjustment = 1;
         me_sr_adjustment_ctrls->reduce_me_sr_based_on_mv_length_th = 4;
         me_sr_adjustment_ctrls->stationary_hme_sad_abs_th = 12000;
         me_sr_adjustment_ctrls->stationary_me_sr_divisor = 8;
         me_sr_adjustment_ctrls->reduce_me_sr_based_on_hme_sad_abs_th = 6000;
+        me_sr_adjustment_ctrls->me_sr_divisor_for_low_hme_sad = 8;
+        me_sr_adjustment_ctrls->distance_based_hme_resizing = 1;
+        break;
+#endif
+#if TUNE_ME_M9_OPT
+    case 3:
+        me_sr_adjustment_ctrls->enable_me_sr_adjustment = 1;
+        me_sr_adjustment_ctrls->reduce_me_sr_based_on_mv_length_th = 4;
+        me_sr_adjustment_ctrls->stationary_hme_sad_abs_th = 12000;
+        me_sr_adjustment_ctrls->stationary_me_sr_divisor = 8;
+        me_sr_adjustment_ctrls->reduce_me_sr_based_on_hme_sad_abs_th = 12000;
         me_sr_adjustment_ctrls->me_sr_divisor_for_low_hme_sad = 8;
         me_sr_adjustment_ctrls->distance_based_hme_resizing = 1;
         break;
@@ -1366,9 +1401,17 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
 #else
     else if (enc_mode <= ENC_M5)
 #endif
+#if TUNE_ME_M9_OPT
+        set_me_sr_adjustment_ctrls(context_ptr->me_context_ptr, 1);
+    else if (enc_mode <= ENC_M8)
         set_me_sr_adjustment_ctrls(context_ptr->me_context_ptr, 2);
     else
         set_me_sr_adjustment_ctrls(context_ptr->me_context_ptr, 3);
+#else
+        set_me_sr_adjustment_ctrls(context_ptr->me_context_ptr, 2);
+    else
+        set_me_sr_adjustment_ctrls(context_ptr->me_context_ptr, 3);
+#endif
 #else
     else
         set_me_sr_adjustment_ctrls(context_ptr->me_context_ptr, 2);
