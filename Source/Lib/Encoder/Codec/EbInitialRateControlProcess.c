@@ -423,6 +423,31 @@ uint8_t is_frame_already_exists(PictureParentControlSet *pcs, uint32_t end_index
     return 0;
 }
 #endif
+
+#if SIM_OLD_REF
+/* decide to inject a frame into the tpl group*/
+uint8_t  inj_to_tpl_group( PictureParentControlSet* pcs)
+{
+    uint8_t inj = 0;
+    if (pcs->hierarchical_levels != 4) {
+        if (pcs->is_used_as_reference_flag)
+            inj = 1;
+        else
+            inj = 0;
+    }
+    else {
+
+        if (pcs->temporal_layer_index < 4)
+            inj = 1;
+        else if (pcs->is_used_as_reference_flag && (pcs->pic_index == 6 || pcs->pic_index == 10))//TODO: could be removed once TPL r0 adapts dyncamically  to TPL group size
+            inj = 1;
+        else
+            inj = 0;
+    }
+
+    return inj;
+}
+#endif
 /*
  copy the number of pcs entries from the the output queue to extended  buffer
 */
@@ -531,7 +556,12 @@ void store_extended_group(
             // Check wether the i-th pic already exists in the tpl group
             if (!is_frame_already_exists(pcs, i, pcs->tpl_group[i]->picture_number)) {
                 // Discard non-ref pic from the tpl group
+#if SIM_OLD_REF
+                uint8_t inject_frame = inj_to_tpl_group(pcs->tpl_group[i]);
+                if (inject_frame) {
+#else
                 if (pcs->tpl_group[i]->is_used_as_reference_flag) {
+#endif
                     if (pcs->slice_type != I_SLICE) {
                         // Discard low important pictures from tpl group
 #if CLN_TPL_CONNECT_FLAG

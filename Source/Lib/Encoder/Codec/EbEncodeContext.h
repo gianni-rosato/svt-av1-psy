@@ -95,7 +95,11 @@ typedef struct EncodeContext {
     PictureDecisionReorderEntry **picture_decision_reorder_queue;
     uint32_t                      picture_decision_reorder_queue_head_index;
     //hold undisplayed frame for show existing frame. It's ordered with pts Descend.
+#if INC_TD
+    EbObjectWrapper *picture_decision_undisplayed_queue[UNDISP_QUEUE_SIZE];
+#else
     EbObjectWrapper *picture_decision_undisplayed_queue[REF_FRAMES];
+#endif
     uint32_t         picture_decision_undisplayed_queue_count;
     // Picture Manager Pre-Assignment Buffer
     uint32_t          pre_assignment_buffer_intra_count;

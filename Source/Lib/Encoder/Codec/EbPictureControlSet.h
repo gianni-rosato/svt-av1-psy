@@ -971,7 +971,9 @@ typedef struct PictureParentControlSet {
     int32_t    ref_frame_map[REF_FRAMES]; /* maps fb_idx to reference slot */
     int32_t    is_skip_mode_allowed;
     int32_t    skip_mode_flag;
-
+#if SIM_OLD_REF
+    uint32_t   pic_index;  //index of picture in the mg
+#endif
     // Flag for a frame used as a reference - not written to the Bitstream
     int32_t is_reference_frame;
 

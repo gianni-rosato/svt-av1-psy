@@ -337,7 +337,11 @@ static int pts_descend(const void *pa, const void*pb) {
 }
 
 static void push_undisplayed_frame(EncodeContext *encode_context_ptr, EbObjectWrapper *wrapper) {
+#if INC_TD
+    if (encode_context_ptr->picture_decision_undisplayed_queue_count >= UNDISP_QUEUE_SIZE) {
+#else
     if (encode_context_ptr->picture_decision_undisplayed_queue_count >= REF_FRAMES) {
+#endif
         SVT_ERROR("bug, too many frames in undisplayed queue");
         return;
     }

@@ -264,6 +264,17 @@ extern "C" {
 
 #define TUNE_M0_M8_MEGA_FEB                    1 // tuning for MEGA_FEB testset
 #define TUNE_ME_M9_OPT                         1 // optimized me for faster m9
+#define FTR_NEW_RPS 1 // New MRP struct keeping top layer as reference
+#if FTR_NEW_RPS
+//to support full MRP, need to enable all below macros
+#define INC_TD       1 //lossles- needed to support new MRP structure
+#define BASE_RPS     0
+#define TOP_LAY_REF  0
+#define ADD_16       0
+#define TOPL 1
+#define TOPL_PLUS    0
+#define SIM_OLD_REF  1 //tune TPL to support new MRP referencing
+#endif
 // ============= END SVT_04 =============
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch

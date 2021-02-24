@@ -1227,6 +1227,9 @@ typedef enum ATTRIBUTE_PACKED {
 #define REF_FRAMES_LOG2 3
 #define REF_FRAMES (1 << REF_FRAMES_LOG2)
 
+#if INC_TD
+#define UNDISP_QUEUE_SIZE  (REF_FRAMES * 10)
+#endif
 // 4 scratch frames for the new frames to support a maximum of 4 cores decoding
 // in parallel, 3 for scaled references on the encoder.
 #define FRAME_BUFFERS (REF_FRAMES + 7)
