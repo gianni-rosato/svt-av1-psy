@@ -275,6 +275,8 @@ extern "C" {
 #define TOPL_PLUS    0
 #define SIM_OLD_REF  1 //tune TPL to support new MRP referencing
 #endif
+
+#define FTR_AOM_QPS_IF_TPL_OFF                 1 // Use identical QPS as aom when TPL is OFF
 // ============= END SVT_04 =============
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
