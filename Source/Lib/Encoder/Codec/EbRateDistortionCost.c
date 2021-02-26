@@ -2279,7 +2279,11 @@ EbErrorType av1_full_cost(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
         }
 
     uint64_t tx_size_bits = 0;
+#if FIX_TXS_RATE_R2R
+    if (!context_ptr->shut_fast_rate && pcs_ptr->parent_pcs_ptr->frm_hdr.tx_mode == TX_MODE_SELECT)
+#else
     if (pcs_ptr->parent_pcs_ptr->frm_hdr.tx_mode == TX_MODE_SELECT)
+#endif
         tx_size_bits = get_tx_size_bits(candidate_buffer_ptr,
                                         context_ptr,
                                         pcs_ptr,

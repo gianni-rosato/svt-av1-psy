@@ -277,6 +277,8 @@ extern "C" {
 #endif
 
 #define FTR_AOM_QPS_IF_TPL_OFF                 1 // Use identical QPS as aom when TPL is OFF
+
+#define FIX_TXS_RATE_R2R    1 // fix R2R related tx size rate estimation
 // ============= END SVT_04 =============
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
