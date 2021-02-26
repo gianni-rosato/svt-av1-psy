@@ -3724,6 +3724,25 @@ void set_near_count_ctrls(ModeDecisionContext* mdctxt, uint8_t near_count_level)
         near_count_ctrls->near_near_count = 3;
 
         break;
+#if TUNE_NEAR_CTRLS
+    case 2:
+        near_count_ctrls->enabled = 1;
+        near_count_ctrls->near_count = 1;
+        near_count_ctrls->near_near_count = 3;
+        break;
+
+    case 3:
+        near_count_ctrls->enabled = 1;
+        near_count_ctrls->near_count = 1;
+        near_count_ctrls->near_near_count = 1;
+        break;
+
+    case 4:
+        near_count_ctrls->enabled = 1;
+        near_count_ctrls->near_count = 0;
+        near_count_ctrls->near_near_count = 0;
+        break;
+#else
     case 2:
         near_count_ctrls->enabled = 1;
 #if TUNE_M10_SHUT_NEAR_NEAR
@@ -3734,6 +3753,7 @@ void set_near_count_ctrls(ModeDecisionContext* mdctxt, uint8_t near_count_level)
         near_count_ctrls->near_near_count = 3;
 #endif
         break;
+#endif
     default:
         assert(0);
         break;
@@ -5107,16 +5127,20 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         near_count_level = 0;
     else
 #if TUNE_SHIFT_PRESETS_DOWN
+#if TUNE_NEAR_CTRLS
+        if (enc_mode <= ENC_M7)
+#else
         if (enc_mode <= ENC_M8)
+#endif
 #else
         if (enc_mode <= ENC_M9)
 #endif
             near_count_level = 1;
         else
             near_count_level = 2;
-
     set_near_count_ctrls(context_ptr, near_count_level);
 #endif
+
 
     // Set warped motion injection
     // Level                Settings

@@ -1442,8 +1442,13 @@ void store16bit_input_src(EbPictureBufferDesc *input_sample16bit_buffer, Picture
                sb_w * 2);
 }
 
+#if FIX_USELESS_ENCDEC_CYCLE
+void update_mi_map_skip_settings(BlkStruct *blk_ptr, uint32_t blk_origin_x, uint32_t blk_origin_y,
+    const BlockGeom *blk_geom, PictureControlSet *pcs_ptr);
+#else
 void update_av1_mi_map(BlkStruct *blk_ptr, uint32_t blk_origin_x, uint32_t blk_origin_y,
                        const BlockGeom *blk_geom, PictureControlSet *pcs_ptr);
+#endif
 
 void move_blk_data(PictureControlSet *pcs, EncDecContext *context_ptr, BlkStruct *src_cu,
                    BlkStruct *dst_cu);
@@ -4001,11 +4006,19 @@ EB_EXTERN void av1_encode_decode(SequenceControlSet *scs_ptr, PictureControlSet 
                         context_ptr->blk_geom->bwidth_uv,
                         context_ptr->blk_geom->bheight_uv);
                 }
+#if FIX_USELESS_ENCDEC_CYCLE
+                update_mi_map_skip_settings(blk_ptr,
+                    context_ptr->blk_origin_x,
+                    context_ptr->blk_origin_y,
+                    blk_geom,
+                    pcs_ptr);
+#else
                 update_av1_mi_map(blk_ptr,
                                   context_ptr->blk_origin_x,
                                   context_ptr->blk_origin_y,
                                   blk_geom,
                                   pcs_ptr);
+#endif
                 if (pcs_ptr->cdf_ctrl.update_se) {
                     // Update the partition Neighbor Array
                     PartitionContext partition;

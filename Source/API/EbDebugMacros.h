@@ -280,6 +280,9 @@ extern "C" {
 
 #define FIX_TXS_RATE_R2R    1 // fix R2R related tx size rate estimation
 #define FIX_SCD                     1 // remove use of scd_delay in TPL
+#define TUNE_NEAR_CTRLS                       1 // Tune near settings
+#define FIX_USELESS_ENCDEC_CYCLE              1 // Remove useless EncDec operations
+#define TUNE_M8_FAST                          1 // tune me, hme, set-me-sr-adjust for m8
 // ============= END SVT_04 =============
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch

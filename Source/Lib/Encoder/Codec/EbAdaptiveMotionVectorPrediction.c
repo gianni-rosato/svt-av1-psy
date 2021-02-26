@@ -1371,20 +1371,28 @@ void enc_pass_av1_mv_pred(TileInfo *tile, ModeDecisionContext *md_context_ptr, B
                         ref_mv);
 }
 #endif
+#if FIX_USELESS_ENCDEC_CYCLE
+void update_mi_map_skip_settings(BlkStruct *blk_ptr, uint32_t blk_origin_x, uint32_t blk_origin_y,
+    const BlockGeom *blk_geom, PictureControlSet *pcs_ptr) {
+#else
 void update_av1_mi_map(BlkStruct *blk_ptr, uint32_t blk_origin_x, uint32_t blk_origin_y,
                        const BlockGeom *blk_geom, PictureControlSet *pcs_ptr) {
+#endif
     uint32_t mi_stride = pcs_ptr->mi_stride;
     int32_t  mi_row    = blk_origin_y >> MI_SIZE_LOG2;
     int32_t  mi_col    = blk_origin_x >> MI_SIZE_LOG2;
 
     const int32_t    offset = mi_row * mi_stride + mi_col;
     ModeInfo *       mi_ptr = *(pcs_ptr->mi_grid_base + offset);
+#if !FIX_USELESS_ENCDEC_CYCLE
     MvReferenceFrame rf[2];
     av1_set_ref_frame(rf, blk_ptr->prediction_unit_array->ref_frame_type);
+#endif
     uint8_t mi_x, mi_y;
 
     for (mi_y = 0; mi_y < (blk_geom->bheight >> MI_SIZE_LOG2); mi_y++) {
         for (mi_x = 0; mi_x < (blk_geom->bwidth >> MI_SIZE_LOG2); mi_x++) {
+#if !FIX_USELESS_ENCDEC_CYCLE
             //these needed for mvPred
             {
                 mi_ptr[mi_x + mi_y * mi_stride].mbmi.block_mi.mode = blk_ptr->pred_mode;
@@ -1445,9 +1453,11 @@ void update_av1_mi_map(BlkStruct *blk_ptr, uint32_t blk_origin_x, uint32_t blk_o
                        &blk_ptr->palette_info.pmi,
                        sizeof(PaletteModeInfo));
             //needed for CDEF
+#endif
             mi_ptr[mi_x + mi_y * mi_stride].mbmi.block_mi.skip = blk_ptr->block_has_coeff ? EB_FALSE
                                                                                           : EB_TRUE;
             mi_ptr[mi_x + mi_y * mi_stride].mbmi.block_mi.skip_mode  = (int8_t)blk_ptr->skip_flag;
+#if !FIX_USELESS_ENCDEC_CYCLE
             mi_ptr[mi_x + mi_y * mi_stride].mbmi.block_mi.segment_id = blk_ptr->segment_id;
             mi_ptr[mi_x + mi_y * mi_stride].mbmi.block_mi.seg_id_predicted =
                 blk_ptr->seg_id_predicted;
@@ -1462,6 +1472,7 @@ void update_av1_mi_map(BlkStruct *blk_ptr, uint32_t blk_origin_x, uint32_t blk_o
                 blk_ptr->prediction_unit_array[0].angle_delta[PLANE_TYPE_Y];
             mi_ptr[mi_x + mi_y * mi_stride].mbmi.block_mi.angle_delta[PLANE_TYPE_UV] =
                 blk_ptr->prediction_unit_array[0].angle_delta[PLANE_TYPE_UV];
+#endif
         }
     }
 }
