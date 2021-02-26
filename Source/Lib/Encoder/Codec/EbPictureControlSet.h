@@ -512,6 +512,9 @@ typedef struct TplControls {
 #if FTR_BYPASS_RDOQ_CHROMA_QP_BASED
     uint8_t skip_rdoq_uv_qp_based_th;
 #endif
+#if FIX_SCD
+    double r0_adjust_factor;
+#endif
 } TplControls;
 
 /*!

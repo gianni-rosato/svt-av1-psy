@@ -6630,23 +6630,36 @@ static int cqp_qindex_calc_tpl_la(PictureControlSet *pcs_ptr, RATE_CONTROL *rc, 
         // As a results, we defined a factor to adjust r0
         if (pcs_ptr->parent_pcs_ptr->temporal_layer_index == 0) {
             double div_factor = 1;
+#if !FIX_SCD
             double factor;
+#endif
 #if FTR_USE_LAD_TPL
             if (scs_ptr->lad_mg)
+#if FIX_SCD
+            {
+                div_factor = pcs_ptr->parent_pcs_ptr->tpl_ctrls.r0_adjust_factor ?
+                    pcs_ptr->parent_pcs_ptr->used_tpl_frame_num * pcs_ptr->parent_pcs_ptr->tpl_ctrls.r0_adjust_factor :
+                    div_factor;
+            }
+#else
                 factor = pcs_ptr->parent_pcs_ptr->used_tpl_frame_num >= 16 ? 1.4 : 2.2;
-            else
 #endif
-                if (pcs_ptr->parent_pcs_ptr->tpl_trailing_frame_count == 0)
+#else
+            else
+
+            if (pcs_ptr->parent_pcs_ptr->tpl_trailing_frame_count == 0)
                 factor = 2;
             else if (pcs_ptr->parent_pcs_ptr->tpl_trailing_frame_count <= 6)
                 factor = 1.5;
             else
                 factor = 1;
-
+#endif
+#if !FIX_SCD
             if (pcs_ptr->parent_pcs_ptr->pd_window_count == scs_ptr->scd_delay)
                 div_factor = factor;
             else if (pcs_ptr->parent_pcs_ptr->pd_window_count <= 1)
                 div_factor = 1.0 / factor;
+#endif
             pcs_ptr->parent_pcs_ptr->r0 = pcs_ptr->parent_pcs_ptr->r0 / div_factor;
         }
 
@@ -7126,17 +7139,36 @@ void process_tpl_stats_frame_kf_gfu_boost(PictureControlSet *pcs_ptr) {
         // As a results, we defined a factor to adjust r0
         if (pcs_ptr->parent_pcs_ptr->slice_type != 2) {
             double div_factor = 1;
+#if !FIX_SCD
             double factor;
+#endif
+#if FTR_USE_LAD_TPL
+            if (scs_ptr->lad_mg)
+#if FIX_SCD
+            {
+                div_factor = pcs_ptr->parent_pcs_ptr->tpl_ctrls.r0_adjust_factor ?
+                    pcs_ptr->parent_pcs_ptr->used_tpl_frame_num * pcs_ptr->parent_pcs_ptr->tpl_ctrls.r0_adjust_factor :
+                    div_factor;
+            }
+#else
+                factor = pcs_ptr->parent_pcs_ptr->used_tpl_frame_num >= 16 ? 1.4 : 2.2;
+#endif
+#else
+            else
+
             if (pcs_ptr->parent_pcs_ptr->tpl_trailing_frame_count == 0)
                 factor = 2;
             else if (pcs_ptr->parent_pcs_ptr->tpl_trailing_frame_count <= 6)
                 factor = 1.5;
             else
                 factor = 1;
+#endif
+#if !FIX_SCD
             if (pcs_ptr->parent_pcs_ptr->pd_window_count == scs_ptr->scd_delay)
                 div_factor = factor;
             else if (pcs_ptr->parent_pcs_ptr->pd_window_count <= 1)
                 div_factor = 1.0 / factor;
+#endif
             pcs_ptr->parent_pcs_ptr->r0 = pcs_ptr->parent_pcs_ptr->r0 / div_factor;
         }
         const int gfu_boost = get_gfu_boost_from_r0_lap(min_boost_factor,

@@ -165,6 +165,9 @@ void set_tpl_extended_controls(
 #if FTR_BYPASS_RDOQ_CHROMA_QP_BASED
         tpl_ctrls->skip_rdoq_uv_qp_based_th = 4;
 #endif
+#if FIX_SCD
+        tpl_ctrls->r0_adjust_factor = 0.1;
+#endif
         break;
     case 1:
         tpl_ctrls->tpl_opt_flag = 1;
@@ -178,6 +181,9 @@ void set_tpl_extended_controls(
         tpl_ctrls->use_pred_sad_in_inter_search = 0;
 #if FTR_BYPASS_RDOQ_CHROMA_QP_BASED
         tpl_ctrls->skip_rdoq_uv_qp_based_th = 4;
+#endif
+#if FIX_SCD
+        tpl_ctrls->r0_adjust_factor = 0.1;
 #endif
         break;
     case 2:
@@ -193,6 +199,9 @@ void set_tpl_extended_controls(
 #if FTR_BYPASS_RDOQ_CHROMA_QP_BASED
         tpl_ctrls->skip_rdoq_uv_qp_based_th = 4;
 #endif
+#if FIX_SCD
+        tpl_ctrls->r0_adjust_factor = 0.30;
+#endif
         break;
     case 3:
     default:
@@ -207,6 +216,9 @@ void set_tpl_extended_controls(
         tpl_ctrls->use_pred_sad_in_inter_search = 1;
 #if FTR_BYPASS_RDOQ_CHROMA_QP_BASED
         tpl_ctrls->skip_rdoq_uv_qp_based_th = 4;
+#endif
+#if FIX_SCD
+        tpl_ctrls->r0_adjust_factor = 0.30;
 #endif
     }
 }
@@ -239,6 +251,9 @@ void set_tpl_controls(
 #if FTR_BYPASS_RDOQ_CHROMA_QP_BASED
         tpl_ctrls->skip_rdoq_uv_qp_based_th = 4;
 #endif
+#if FIX_SCD
+        tpl_ctrls->r0_adjust_factor = 0.0;
+#endif
         break;
     case 1:
         tpl_ctrls->tpl_opt_flag = 1;
@@ -261,6 +276,9 @@ void set_tpl_controls(
 #if FTR_BYPASS_RDOQ_CHROMA_QP_BASED
         tpl_ctrls->skip_rdoq_uv_qp_based_th = 4;
 #endif
+#if FIX_SCD
+        tpl_ctrls->r0_adjust_factor = 0.0;
+#endif
         break;
 #if OPT_TPL
     case 2:
@@ -281,6 +299,9 @@ void set_tpl_controls(
 #endif
 #if FTR_BYPASS_RDOQ_CHROMA_QP_BASED
         tpl_ctrls->skip_rdoq_uv_qp_based_th = 4;
+#endif
+#if FIX_SCD
+        tpl_ctrls->r0_adjust_factor = 0.0;
 #endif
         break;
     case 3:
@@ -304,6 +325,9 @@ void set_tpl_controls(
 #endif
 #if FTR_BYPASS_RDOQ_CHROMA_QP_BASED
         tpl_ctrls->skip_rdoq_uv_qp_based_th = 4;
+#endif
+#if FIX_SCD
+        tpl_ctrls->r0_adjust_factor = 0.0;
 #endif
         break;
 #else
