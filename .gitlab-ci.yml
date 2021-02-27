@@ -10,7 +10,7 @@ variables:
 #
 
 Style check:
-  stage: .pre
+  stage: compile
   image: registry.gitlab.com/aomediacodec/aom-testing/alpine3
   script:
     - ./test/stylecheck.sh
@@ -82,9 +82,7 @@ Static analysis (cppcheck):
 
 .linux-unit-test-base:
   extends: .linux-test-base
-  parallel: 50
   variables:
-    GTEST_TOTAL_SHARDS: 50
     GTEST_OUTPUT: xml:report.xml
   artifacts:
     when: always
@@ -113,16 +111,14 @@ Static analysis (cppcheck):
 
 .macos-unit-test-base:
   extends: .macos-test-base
-  parallel: 2
   variables:
-    GTEST_TOTAL_SHARDS: 2
     GTEST_OUTPUT: xml:report.xml
   artifacts:
     when: always
     reports:
       junit: report.xml
   needs:
-    - macOS (Ninja, Static, Tests)
+    - macOS (Static, Tests)
 
 .windows-compiler-base:
   stage: compile
@@ -148,9 +144,7 @@ Static analysis (cppcheck):
 
 .windows-unit-test-base:
   extends: .windows-test-base
-  parallel: 2
   variables:
-    GTEST_TOTAL_SHARDS: 2
     GTEST_OUTPUT: xml:report.xml
   artifacts:
     when: always
@@ -231,8 +225,7 @@ Linux (GCC 10):
     GIT_DEPTH: 0
   parallel:
     matrix:
-      - CMAKE_BUILD_TYPE: Release
-      - CMAKE_BUILD_TYPE: Debug
+      - CMAKE_BUILD_TYPE: [Release, Debug]
   artifacts:
     untracked: false
     expire_in: 30 days
@@ -266,9 +259,7 @@ Linux Sanitizer Compile:
     EXTRA_CMAKE_FLAGS: -DCMAKE_OUTPUT_DIRECTORY=$SANITIZER -DSANITIZER=$SANITIZER
   parallel:
     matrix:
-      - SANITIZER: address
-      - SANITIZER: memory
-      - SANITIZER: thread
+      - SANITIZER: [address, memory, thread]
   artifacts:
     untracked: false
     expire_in: 1 days
@@ -277,27 +268,24 @@ Linux Sanitizer Compile:
       - memory/
       - thread/
 
-macOS (Xcode):
+macOS (Static, Tests):
   extends: .macos-compiler-base
   variables:
     CMAKE_GENERATOR: Xcode
+  parallel:
+    matrix:
+      - CMAKE_GENERATOR: Xcode
+      - CMAKE_GENERATOR: Ninja
+        EXTRA_CMAKE_FLAGS: -DBUILD_TESTING=ON
+        EXTRA_CFLAGS: -Wno-error -g
+        EXTRA_CXXFLAGS: -Wno-error -g
+        PREFIX_DIR: ${CI_PROJECT_DIR}/SVT-Install/
+        TARGET: install
   artifacts:
     expire_in: 1 day
     paths:
       - Bin/Release/SvtAv1EncApp
       - Bin/Release/SvtAv1DecApp
-
-macOS (Ninja, Static, Tests):
-  extends: .macos-compiler-base
-  variables:
-    EXTRA_CMAKE_FLAGS: -DBUILD_TESTING=ON
-    EXTRA_CFLAGS: -Wno-error -g
-    EXTRA_CXXFLAGS: -Wno-error -g
-    PREFIX_DIR: ${CI_PROJECT_DIR}/SVT-Install/
-    TARGET: install
-  artifacts:
-    expire_in: 1 day
-    paths:
       - Bin/Release/*
       - SVT-Install/*
 
@@ -309,8 +297,7 @@ Win64 (MSVC, Tests):
     CMAKE_GENERATOR: Visual Studio 16 2019
   parallel:
     matrix:
-      - CMAKE_BUILD_TYPE: Release
-      - CMAKE_BUILD_TYPE: Debug
+      - CMAKE_BUILD_TYPE: [Release, Debug]
   artifacts:
     untracked: false
     expire_in: 1 day
@@ -340,6 +327,7 @@ Valgrind:
 Linux Sanitizer Test:
   extends: .linux-test-base
   tags:
+    - gitlab-org
   image: registry.gitlab.com/aomediacodec/aom-testing/ubuntu2004
   variables:
     LSAN_OPTIONS: verbosity=2:color=always:log_pointers=1:log_threads=1:report_objects=1
@@ -364,49 +352,66 @@ Linux Sanitizer Test:
 
 Linux Unit Tests:
   extends: .linux-unit-test-base
-  script:
-    - export GTEST_SHARD_INDEX=$((CI_NODE_INDEX - 1))
-    - ./Bin/Release/SvtAv1UnitTests
-
-Linux E2E Tests:
-  extends: .linux-unit-test-base
+  parallel:
+    matrix:
+      - UNIT_TEST: [SvtAv1UnitTests, SvtAv1E2ETests]
+        GTEST_TOTAL_SHARDS: 10
+        GTEST_SHARD_INDEX: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
   variables:
-    SVT_AV1_TEST_VECTOR_PATH: $CI_PROJECT_DIR
+    SVT_AV1_TEST_VECTOR_PATH: $CI_PROJECT_DIR/test/vectors
+  cache:
+    key: testvectors
+    paths:
+      - test/vectors
+    policy: pull-push
   script:
-    - export GTEST_SHARD_INDEX=$((CI_NODE_INDEX - 1))
-    - mv -f test/vectors/* .
-    - ./Bin/Release/SvtAv1E2ETests
+    - |
+      if [ -n "$SVT_AV1_TEST_VECTOR_PATH" ]; then
+        cmake -B Build -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON
+        cmake --build Build --target TestVectors
+      fi
+    - ./Bin/Release/$UNIT_TEST
 
 macOS Unit Tests:
   extends: .macos-unit-test-base
+  parallel:
+    matrix:
+      - UNIT_TEST: SvtAv1UnitTests
+        GTEST_TOTAL_SHARDS: 4
+        GTEST_SHARD_INDEX: [0, 1, 2, 3]
+      - UNIT_TEST: SvtAv1E2ETests
+        SVT_AV1_TEST_VECTOR_PATH: $CI_PROJECT_DIR/test/vectors
+  cache:
+    key: testvectors
+    paths:
+      - test/vectors
+    policy: pull-push
   script:
-    - export GTEST_SHARD_INDEX=$((CI_NODE_INDEX - 1))
-    - ./Bin/Release/SvtAv1UnitTests
-
-macOS E2E Tests:
-  extends: .macos-unit-test-base
-  variables:
-    SVT_AV1_TEST_VECTOR_PATH: $CI_PROJECT_DIR/testvectors
-  script:
-    - export GTEST_SHARD_INDEX=$((CI_NODE_INDEX - 1))
-    - cmake -B Build -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON
-    - cmake --build Build --target TestVectors
-    - ./Bin/Release/SvtAv1E2ETests
+    - |
+      if [ -n "$SVT_AV1_TEST_VECTOR_PATH" ]; then
+        cmake -B Build -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON
+        cmake --build Build --target TestVectors
+      fi
+    - ./Bin/Release/$UNIT_TEST
 
 Win64 Unit Tests:
   extends: .windows-unit-test-base
+  parallel:
+    matrix:
+      - UNIT_TEST: SvtAv1UnitTests
+        GTEST_TOTAL_SHARDS: 2
+        GTEST_SHARD_INDEX: [0, 1]
+      - UNIT_TEST: SvtAv1E2ETests
+        SVT_AV1_TEST_VECTOR_PATH: $CI_PROJECT_DIR/test/vectors
+  cache:
+    key: testvectors
+    paths:
+      - test/vectors
+    policy: pull-push
   script:
-    - $env:GTEST_SHARD_INDEX = $env:CI_NODE_INDEX - 1
-    - ./Bin/Release/SvtAv1UnitTests --gtest_filter=-*FFT*
-
-Win64 E2E Tests:
-  extends: .windows-unit-test-base
-  script:
-    - '[string]$env:SVT_AV1_TEST_VECTOR_PATH = New-Item -ItemType Directory -Force -Name "testdata"'
-    - cmake -B Build -DBUILD_TESTING=ON
+    - cmake -B Build -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON
     - cmake --build Build --target TestVectors
-    - $env:GTEST_SHARD_INDEX = $env:CI_NODE_INDEX - 1
-    - ./Bin/Release/SvtAv1E2ETests --gtest_filter=-*DummySrcTest*
+    - "& ./Bin/Release/$env:UNIT_TEST --gtest_filter=-*FFT*"
 
 Linux Enc Test:
   extends: .linux-test-base
@@ -436,7 +441,7 @@ Linux Default Branch:
   extends:
     - .linux-compiler-base
     - .linux-test-base
-  stage: test
+  stage: compile
   variables:
     BRANCH: default
   before_script:
@@ -448,7 +453,6 @@ Linux Default Branch:
     - *enc-test-script
   parallel: *enc-test-parallel
   artifacts: *enc-test-artifacts
-  needs:
 
 macOS Enc Test:
   extends: .macos-test-base
@@ -458,7 +462,7 @@ macOS Enc Test:
   parallel: *enc-test-parallel
   artifacts: *enc-test-artifacts
   needs:
-    - macOS (Ninja, Static, Tests)
+    - macOS (Static, Tests)
 
 Win64 Enc Test:
   extends: .windows-test-base
@@ -497,6 +501,7 @@ Enc Diff Test:
 
 Linux Gstreamer (Static):
   extends: .linux-test-base
+  stage: compile
   variables:
     CC: gcc-10
     CXX: g++-10
@@ -511,8 +516,6 @@ Linux Gstreamer (Static):
     paths:
       - .ccache
     policy: pull-push
-  needs:
-    - Linux (GCC 10)
   script:
     - cmake -B Build -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=/usr -DBUILD_APPS=OFF -DBUILD_DEC=OFF
     - cmake --build Build --config Release --target install
@@ -527,6 +530,7 @@ Linux Gstreamer (Static):
 
 Linux FFmpeg (Static):
   extends: .linux-test-base
+  stage: compile
   variables:
     CC: gcc-10
     CXX: g++-10
@@ -669,6 +673,7 @@ Linux FFmpeg (Static):
 
 macOS FFmpeg (Static):
   extends: .macos-test-base
+  stage: compile
   variables:
     CFLAGS: -pipe
     CXXFLAGS: -pipe
@@ -711,6 +716,7 @@ macOS FFmpeg (Static):
 
 Win64 FFmpeg (Static):
   extends: .windows-test-base
+  stage: compile
   variables:
     CC: ccache gcc
     CXX: ccache g++
