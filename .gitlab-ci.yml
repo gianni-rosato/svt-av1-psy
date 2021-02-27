@@ -23,8 +23,6 @@ Static analysis (cppcheck):
     paths:
       - .cppcheck
     policy: pull-push
-  variables:
-    CMAKE_GENERATOR: Unix Makefiles
   script:
     - cmake -B Build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
     - mkdir -p .cppcheck
@@ -54,6 +52,9 @@ Static analysis (cppcheck):
     CXXFLAGS: -Werror -Wshadow -pipe $EXTRA_CXXFLAGS
     LDFLAGS: -Werror -Wshadow -pipe $EXTRA_LDFLAGS
     CCACHE_DIR: $CI_PROJECT_DIR/.ccache
+    CMAKE_BUILD_TYPE: Release
+    BUILD_SHARED_LIBS: "OFF"
+    PREFIX_DIR: /usr/local
   cache:
     key: ${CI_JOB_NAME}
     paths:
@@ -63,9 +64,9 @@ Static analysis (cppcheck):
     - |
       eval cmake \
         -B Build \
-        -DCMAKE_BUILD_TYPE="${CMAKE_BUILD_TYPE:=Release}" \
-        -DBUILD_SHARED_LIBS="${BUILD_SHARED_LIBS:=OFF}" \
-        -DCMAKE_INSTALL_PREFIX="${PREFIX_DIR:=/usr/local}" \
+        -DCMAKE_BUILD_TYPE="$CMAKE_BUILD_TYPE" \
+        -DBUILD_SHARED_LIBS="$BUILD_SHARED_LIBS" \
+        -DCMAKE_INSTALL_PREFIX="$PREFIX_DIR" \
         $EXTRA_CMAKE_FLAGS
     - cmake --build Build --config "$CMAKE_BUILD_TYPE" ${TARGET:+--target $TARGET}
 
