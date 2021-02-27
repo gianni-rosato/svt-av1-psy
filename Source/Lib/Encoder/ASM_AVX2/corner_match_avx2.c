@@ -16,6 +16,9 @@
 
 DECLARE_ALIGNED(16, static const uint8_t, byte_mask[16]) = {
     255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 0, 0, 0};
+#ifndef MATCH_SZ
+#define MATCH_SZ 13
+#endif
 #if MATCH_SZ != 13
 #error "Need to change byte_mask in corner_match_sse4.c if MATCH_SZ != 13"
 #endif

@@ -3923,7 +3923,6 @@ EbErrorType svt_input_buffer_header_creator(
     EbPtr *object_dbl_ptr,
     EbPtr  object_init_data_ptr)
 {
-    EbErrorType return_error = EB_ErrorNone;
     EbBufferHeaderType* input_buffer;
     SequenceControlSet        *scs_ptr = (SequenceControlSet*)object_init_data_ptr;
 
@@ -3933,7 +3932,7 @@ EbErrorType svt_input_buffer_header_creator(
     // Initialize Header
     input_buffer->size = sizeof(EbBufferHeaderType);
 
-    return_error = allocate_frame_buffer(
+    EbErrorType return_error = allocate_frame_buffer(
         scs_ptr,
         input_buffer);
     if (return_error != EB_ErrorNone)

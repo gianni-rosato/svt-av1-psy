@@ -4716,7 +4716,6 @@ void *mode_decision_kernel(void *input_ptr) {
             if (do_recode) {
 
                 pcs_ptr->enc_dec_coded_sb_count = 0;
-                last_sb_flag = EB_FALSE;
                 // Reset MD rate Estimation table to initial values by copying from md_rate_estimation_array
                 if (context_ptr->is_md_rate_estimation_ptr_owner) {
                     EB_FREE_ARRAY(context_ptr->md_rate_estimation_ptr);

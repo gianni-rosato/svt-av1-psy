@@ -2590,17 +2590,11 @@ void frame_level_rc_input_picture_vbr(PictureControlSet *pcs_ptr, SequenceContro
         }
 
         // limiting the QP based on the predicted QP
-        if (scs_ptr->static_config.look_ahead_distance != 0) {
-            pcs_ptr->picture_qp = pcs_ptr->parent_pcs_ptr->end_of_sequence_region
-                ? (uint8_t)CLIP3(
-                      (uint32_t)MAX((int32_t)pcs_ptr->parent_pcs_ptr->best_pred_qp - 8, 0),
-                      (uint32_t)pcs_ptr->parent_pcs_ptr->best_pred_qp + 8,
-                      (uint32_t)pcs_ptr->picture_qp)
-                : (uint8_t)CLIP3(
+        if (scs_ptr->static_config.look_ahead_distance != 0)
+            pcs_ptr->picture_qp = (uint8_t)CLIP3(
                       (uint32_t)MAX((int32_t)pcs_ptr->parent_pcs_ptr->best_pred_qp - 8, 0),
                       (uint32_t)pcs_ptr->parent_pcs_ptr->best_pred_qp + 8,
                       (uint32_t)pcs_ptr->picture_qp);
-        }
         if (pcs_ptr->picture_number != rate_control_param_ptr->first_poc &&
             pcs_ptr->picture_qp == pcs_ptr->parent_pcs_ptr->best_pred_qp &&
             rate_control_param_ptr->virtual_buffer_level > context_ptr->vb_fill_threshold1) {

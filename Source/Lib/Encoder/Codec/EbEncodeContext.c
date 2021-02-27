@@ -23,7 +23,7 @@ static EbErrorType create_stats_buffer(FIRSTPASS_STATS **frame_stats_buffer,
     // *frame_stats_buffer =
     //     (FIRSTPASS_STATS *)aom_calloc(size, sizeof(FIRSTPASS_STATS));
     EB_MALLOC_ARRAY((*frame_stats_buffer), size);
-    if (frame_stats_buffer == NULL)
+    if (*frame_stats_buffer == NULL)
         return EB_ErrorInsufficientResources;
 
     stats_buf_context->stats_in_start   = *frame_stats_buffer;
@@ -82,9 +82,8 @@ EbErrorType encode_context_ctor(EncodeContext *encode_context_ptr, EbPtr object_
 
     encode_context_ptr->dctor = encode_context_dctor;
 
-    object_init_data_ptr = 0;
-    CHECK_REPORT_ERROR(
-        (object_init_data_ptr == 0), encode_context_ptr->app_callback_ptr, EB_ENC_EC_ERROR29);
+    (void)object_init_data_ptr;
+    CHECK_REPORT_ERROR(1, encode_context_ptr->app_callback_ptr, EB_ENC_EC_ERROR29);
 
     EB_CREATE_MUTEX(encode_context_ptr->total_number_of_recon_frame_mutex);
     EB_ALLOC_PTR_ARRAY(encode_context_ptr->picture_decision_reorder_queue,

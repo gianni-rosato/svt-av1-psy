@@ -995,16 +995,13 @@ EbErrorType signal_derivation_multi_processes_oq(
     if (pcs_ptr->slice_type == I_SLICE)
         pcs_ptr->intra_pred_mode = 0;
     else {
-    if (pcs_ptr->enc_mode <= ENC_M2)
+        if (pcs_ptr->enc_mode <= ENC_M2)
             pcs_ptr->intra_pred_mode = 0;
-    else if (pcs_ptr->enc_mode <= ENC_M7)
+        else if (pcs_ptr->enc_mode <= ENC_M7)
             if (pcs_ptr->temporal_layer_index == 0)
                 pcs_ptr->intra_pred_mode = 1;
             else
                 pcs_ptr->intra_pred_mode = 3;
-    else
-        if (pcs_ptr->slice_type == I_SLICE)
-            pcs_ptr->intra_pred_mode = 1;
         else
             pcs_ptr->intra_pred_mode = 3;
     }

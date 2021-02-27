@@ -312,8 +312,6 @@ static const InterpKernel *choose_interp_filter(int in_length, int out_length) {
     int out_length16 = out_length * 16;
     if (out_length16 >= in_length * 16)
         return filteredinterp_filters1000;
-    if (out_length16 >= in_length * 16)
-        return filteredinterp_filters875; // wrong
     else if (out_length16 >= in_length * 13)
         return filteredinterp_filters875;
     else if (out_length16 >= in_length * 11)

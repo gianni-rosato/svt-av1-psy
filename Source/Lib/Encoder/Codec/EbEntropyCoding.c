@@ -4628,10 +4628,9 @@ EbErrorType ec_update_neighbors(PictureControlSet *pcs_ptr, EntropyCodingContext
     NeighborArrayUnit32 *interpolation_type_neighbor_array =
         pcs_ptr->interpolation_type_neighbor_array[tile_idx];
     const BlockGeom *blk_geom   = get_blk_geom_mds(blk_ptr->mds_idx);
-    EbBool           skip_coeff = EB_FALSE;
+    EbBool           skip_coeff = !blk_ptr->block_has_coeff;
     PartitionContext partition;
 
-    skip_coeff = blk_ptr->block_has_coeff ? 0 : 1;
     // Update the Leaf Depth Neighbor Array
     partition.above = partition_context_lookup[bsize].above;
     partition.left  = partition_context_lookup[bsize].left;
@@ -5467,8 +5466,7 @@ EbErrorType write_modes_b(PictureControlSet *pcs_ptr, EntropyCodingContext *cont
     uint32_t           blk_origin_x       = context_ptr->sb_origin_x + blk_geom->origin_x;
     uint32_t           blk_origin_y       = context_ptr->sb_origin_y + blk_geom->origin_y;
     BlockSize          bsize              = blk_geom->bsize;
-    EbBool             skip_coeff         = EB_FALSE;
-    skip_coeff                            = blk_ptr->block_has_coeff ? 0 : 1;
+    EbBool             skip_coeff         = !blk_ptr->block_has_coeff;
 
     assert(bsize < BlockSizeS_ALL);
     int32_t       mi_row    = blk_origin_y >> MI_SIZE_LOG2;
