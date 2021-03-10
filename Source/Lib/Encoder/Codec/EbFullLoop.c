@@ -1225,7 +1225,11 @@ void svt_av1_optimize_b(ModeDecisionContext *md_context, int16_t txb_skip_contex
     const int skip_cost     = txb_costs->txb_skip_cost[txb_skip_context][1];
     const int eob_cost      = get_eob_cost(*eob, txb_eob_costs, txb_costs, tx_class);
 
+#if LOG2_FN_PTR
+    int sq_size_idx = 7 - (int)svt_log2f(md_context->blk_geom->sq_size);
+#else
     int sq_size_idx = 7 - (int)log2f_32(md_context->blk_geom->sq_size);
+#endif
     if (eob_cost < (int)(width * height * sq_size_idx * md_context->rdoq_ctrls.early_exit_th)) {
         if (skip_cost < non_skip_cost) {
             return;
