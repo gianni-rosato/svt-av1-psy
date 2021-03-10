@@ -29,7 +29,7 @@ check_both_flags_add(
     -mavx512vl)
 
 if(MSVC)
-    check_both_flags_add(/arch:AVX2)
+    check_both_flags_add(/arch:AVX512)
 endif()
 
 if(CMAKE_C_COMPILER_ID STREQUAL "Intel")
