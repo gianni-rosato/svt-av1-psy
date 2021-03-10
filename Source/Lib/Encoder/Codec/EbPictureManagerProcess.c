@@ -101,7 +101,11 @@ EbErrorType picture_manager_context_ctor(EbThreadContext *  thread_context_ptr,
         enc_handle_ptr->pic_mgr_res_srm, 0);
     context_ptr->picture_control_set_fifo_ptr = svt_system_resource_get_producer_fifo(
         enc_handle_ptr->picture_control_set_pool_ptr_array[0], 0); //The Child PCS Pool here
+#if CLN_STRUCT
+    context_ptr->recon_coef_fifo_ptr = svt_system_resource_get_producer_fifo(
+        enc_handle_ptr->enc_dec_pool_ptr_array[0], 0); //The Child PCS Pool here
 
+#endif
     return EB_ErrorNone;
 }
 
@@ -603,6 +607,11 @@ void *picture_manager_kernel(void *input_ptr) {
     EbThreadContext *      thread_context_ptr = (EbThreadContext *)input_ptr;
     PictureManagerContext *context_ptr        = (PictureManagerContext *)thread_context_ptr->priv;
 
+#if CLN_STRUCT
+    EbObjectWrapper *        enc_dec_wrapper_ptr;
+    EncDecSet *      enc_dec_ptr;
+
+#endif
     EbObjectWrapper *        child_pcs_wrapper_ptr;
     PictureControlSet *      child_pcs_ptr;
     PictureParentControlSet *pcs_ptr;
@@ -952,6 +961,23 @@ void *picture_manager_kernel(void *input_ptr) {
                     }
 
                     if (availability_flag == EB_TRUE) {
+
+#if CLN_STRUCT
+                        // Get New  Empty recon-coef from recon-coef  Pool
+                        svt_get_empty_object(context_ptr->recon_coef_fifo_ptr,
+                                            &enc_dec_wrapper_ptr);
+                        // Child PCS is released by Packetization
+                        svt_object_inc_live_count(enc_dec_wrapper_ptr, 1);
+                        enc_dec_ptr = (EncDecSet *)enc_dec_wrapper_ptr->object_ptr;
+                        enc_dec_ptr->enc_dec_wrapper_ptr = enc_dec_wrapper_ptr;
+
+                        //1.Link The Child PCS to its Parent
+                         enc_dec_ptr->picture_parent_control_set_wrapper_ptr =
+                            input_entry_ptr->input_object_ptr;
+                         enc_dec_ptr->parent_pcs_ptr = entry_pcs_ptr;
+
+                         enc_dec_ptr->parent_pcs_ptr->enc_dec_ptr = enc_dec_ptr;
+#endif
                         // Get New  Empty Child PCS from PCS Pool
                         svt_get_empty_object(context_ptr->picture_control_set_fifo_ptr,
                                             &child_pcs_wrapper_ptr);
@@ -973,6 +999,7 @@ void *picture_manager_kernel(void *input_ptr) {
                         //1b Link The Child PCS to av1_cm to be used by Restoration
                         child_pcs_ptr->parent_pcs_ptr->av1_cm->child_pcs = child_pcs_ptr;
 #endif
+
                         //2. Have some common information between  ChildPCS and ParentPCS.
                         child_pcs_ptr->scs_wrapper_ptr      = entry_pcs_ptr->scs_wrapper_ptr;
                         child_pcs_ptr->picture_qp           = entry_pcs_ptr->picture_qp;

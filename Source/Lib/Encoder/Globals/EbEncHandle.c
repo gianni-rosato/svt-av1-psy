@@ -514,6 +514,9 @@ EbErrorType load_default_buffer_configuration_settings(
             ((1 << scs_ptr->static_config.hierarchical_levels) + SCD_LAD) * 2 +// minigop formation in PD + SCD_LAD *(normal pictures + potential pictures )
             (1 << scs_ptr->static_config.hierarchical_levels)); // minigop in PM
     scs_ptr->picture_control_set_pool_init_count_child = MAX(MAX(MIN(3, core_count/2), core_count / 6), 1);
+#if CLN_STRUCT
+    scs_ptr->enc_dec_pool_init_count               = MAX(MAX(MIN(3, core_count/2), core_count / 6), 1);
+#endif
     scs_ptr->reference_picture_buffer_init_count       = MAX((uint32_t)(input_pic >> 1),
                                                                           (uint32_t)((1 << scs_ptr->static_config.hierarchical_levels) + 2)) +
                                                                           scs_ptr->static_config.look_ahead_distance + SCD_LAD;
@@ -636,6 +639,9 @@ EbErrorType load_default_buffer_configuration_settings(
         scs_ptr->pa_reference_picture_buffer_init_count        = min_paref;
         scs_ptr->reference_picture_buffer_init_count           = min_ref;
         scs_ptr->picture_control_set_pool_init_count_child     = min_child;
+#if CLN_STRUCT
+        scs_ptr->enc_dec_pool_init_count                    = min_child;
+#endif
         scs_ptr->overlay_input_picture_buffer_init_count       = min_overlay;
 
         scs_ptr->output_recon_buffer_fifo_init_count = scs_ptr->reference_picture_buffer_init_count;
@@ -649,6 +655,9 @@ EbErrorType load_default_buffer_configuration_settings(
             scs_ptr->pa_reference_picture_buffer_init_count = min_paref;
             scs_ptr->reference_picture_buffer_init_count = min_ref;
             scs_ptr->picture_control_set_pool_init_count_child = min_child;
+#if CLN_STRUCT
+            scs_ptr->enc_dec_pool_init_count               = min_child;
+#endif
             scs_ptr->overlay_input_picture_buffer_init_count = min_overlay;
             scs_ptr->output_recon_buffer_fifo_init_count = scs_ptr->reference_picture_buffer_init_count;
             scs_ptr->me_pool_init_count = MAX(min_me, scs_ptr->picture_control_set_pool_init_count);
@@ -662,6 +671,9 @@ EbErrorType load_default_buffer_configuration_settings(
             scs_ptr->pa_reference_picture_buffer_init_count = MAX(min_paref, 40);// Pa ref
             scs_ptr->reference_picture_buffer_init_count = MAX(min_ref, 30); // Rec Ref
             scs_ptr->picture_control_set_pool_init_count_child = MAX(min_child, 3); // Child PCS
+#if CLN_STRUCT
+            scs_ptr->enc_dec_pool_init_count               = MAX(min_child, 3); // Child PCS
+#endif
             scs_ptr->overlay_input_picture_buffer_init_count = MAX(min_overlay, scs_ptr->overlay_input_picture_buffer_init_count);
             scs_ptr->me_pool_init_count = MAX(min_me, 55); // ME results
 #else
@@ -936,6 +948,12 @@ static void svt_enc_handle_dctor(EbPtr p)
     EB_DELETE_PTR_ARRAY(enc_handle_ptr->picture_parent_control_set_pool_ptr_array, enc_handle_ptr->encode_instance_total_count);
     EB_DELETE_PTR_ARRAY(enc_handle_ptr->me_pool_ptr_array, enc_handle_ptr->encode_instance_total_count);
     EB_DELETE_PTR_ARRAY(enc_handle_ptr->picture_control_set_pool_ptr_array, enc_handle_ptr->encode_instance_total_count);
+#if CLN_STRUCT
+
+    EB_DELETE_PTR_ARRAY(enc_handle_ptr->enc_dec_pool_ptr_array, enc_handle_ptr->encode_instance_total_count);
+
+
+#endif
     EB_DELETE_PTR_ARRAY(enc_handle_ptr->pa_reference_picture_pool_ptr_array, enc_handle_ptr->encode_instance_total_count);
     EB_DELETE_PTR_ARRAY(enc_handle_ptr->down_scaled_picture_pool_ptr_array, enc_handle_ptr->encode_instance_total_count);
     EB_DELETE_PTR_ARRAY(enc_handle_ptr->overlay_input_picture_pool_ptr_array, enc_handle_ptr->encode_instance_total_count);
@@ -1436,6 +1454,72 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
 #endif
     }
 
+#if CLN_STRUCT
+    EB_ALLOC_PTR_ARRAY(enc_handle_ptr->enc_dec_pool_ptr_array, enc_handle_ptr->encode_instance_total_count);
+
+    for (instance_index = 0; instance_index < enc_handle_ptr->encode_instance_total_count; ++instance_index) {
+        // The segment Width & Height Arrays are in units of SBs, not samples
+        PictureControlSetInitData input_data;
+        unsigned i;
+        input_data.enc_dec_segment_col = 0;
+        input_data.enc_dec_segment_row = 0;
+        for (i = 0; i <= enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.hierarchical_levels; ++i) {
+            input_data.enc_dec_segment_col = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->enc_dec_segment_col_count_array[i] > input_data.enc_dec_segment_col ?
+                (uint16_t)enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->enc_dec_segment_col_count_array[i] :
+                input_data.enc_dec_segment_col;
+            input_data.enc_dec_segment_row = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->enc_dec_segment_row_count_array[i] > input_data.enc_dec_segment_row ?
+                (uint16_t)enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->enc_dec_segment_row_count_array[i] :
+                input_data.enc_dec_segment_row;
+        }
+
+        input_data.picture_width = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->max_input_luma_width;
+        input_data.picture_height = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->max_input_luma_height;
+        input_data.left_padding = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->left_padding;
+        input_data.right_padding = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->right_padding;
+        input_data.top_padding = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->top_padding;
+        input_data.bot_padding = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->bot_padding;
+        input_data.bit_depth = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->encoder_bit_depth;
+        input_data.film_grain_noise_level = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->film_grain_denoise_strength;
+        input_data.color_format = color_format;
+        input_data.sb_sz = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->sb_sz;
+        input_data.sb_size_pix = scs_init.sb_size;
+        input_data.max_depth = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->max_sb_depth;
+        input_data.hbd_mode_decision = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.enable_hbd_mode_decision;
+        input_data.cdf_mode = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->cdf_mode;
+        input_data.mfmv = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->mfmv_enabled;
+        input_data.cfg_palette = enc_handle_ptr->scs_instance_array[0]->scs_ptr->static_config.screen_content_mode;
+        //Jing: Get tile info from parent_pcs
+        PictureParentControlSet *parent_pcs = (PictureParentControlSet *)enc_handle_ptr->picture_parent_control_set_pool_ptr_array[instance_index]->wrapper_ptr_pool[0]->object_ptr;
+        input_data.tile_row_count = parent_pcs->av1_cm->tiles_info.tile_rows;
+        input_data.tile_column_count = parent_pcs->av1_cm->tiles_info.tile_cols;
+        input_data.is_16bit_pipeline = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.is_16bit_pipeline;
+#if CLN_RES_PROCESS && !CLN_BN
+        input_data.rst_info[0] = parent_pcs->av1_cm->rst_info[0] ;
+        input_data.rst_info[1] = parent_pcs->av1_cm->rst_info[1] ;
+        input_data.rst_info[2] = parent_pcs->av1_cm->rst_info[1] ;
+#endif
+#if CLN_BN
+        input_data.av1_cm = parent_pcs->av1_cm;
+#endif
+#if CLN_FA
+        input_data.enc_mode = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.enc_mode;
+#endif
+
+        EB_NEW(
+            enc_handle_ptr->enc_dec_pool_ptr_array[instance_index],
+            svt_system_resource_ctor,
+            enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->enc_dec_pool_init_count, //EB_PictureControlSetPoolInitCountChild,
+            1,
+            0,
+            recon_coef_creator,
+            &input_data,
+            NULL);
+    }
+
+
+
+
+#endif
     /************************************
     * Picture Control Set: Child
     ************************************/
@@ -2513,7 +2597,11 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     else
         scs_ptr->enable_dec_order = 0;
    // Open loop intra done with TPL, data is not stored
+#if CLN_OIS
+    scs_ptr->in_loop_ois = 1;
+#else
     scs_ptr->in_loop_ois = 0;
+#endif
 
 
 #if FTR_LAD_MG
@@ -2599,7 +2687,11 @@ void copy_api_from_app(
     scs_ptr->static_config.rc_twopass_stats_in = ((EbSvtAv1EncConfiguration*)config_struct)->rc_twopass_stats_in;
     scs_ptr->static_config.rc_firstpass_stats_out = ((EbSvtAv1EncConfiguration*)config_struct)->rc_firstpass_stats_out;
     // Deblock Filter
+#if NOFILTER
+    scs_ptr->static_config.disable_dlf_flag = 1;//((EbSvtAv1EncConfiguration*)config_struct)->disable_dlf_flag;
+#else
     scs_ptr->static_config.disable_dlf_flag = ((EbSvtAv1EncConfiguration*)config_struct)->disable_dlf_flag;
+#endif
 
     // Local Warped Motion
     scs_ptr->static_config.enable_warped_motion = ((EbSvtAv1EncConfiguration*)config_struct)->enable_warped_motion;
@@ -2608,13 +2700,21 @@ void copy_api_from_app(
     scs_ptr->static_config.enable_global_motion = ((EbSvtAv1EncConfiguration*)config_struct)->enable_global_motion;
 
     // CDEF
+#if NOFILTER
+    scs_ptr->static_config.cdef_level = 0;//(EbSvtAv1EncConfiguration*)config_struct)->cdef_level;
+
+    // Restoration filtering
+    scs_ptr->static_config.enable_restoration_filtering = 0;//((EbSvtAv1EncConfiguration*)config_struct)->enable_restoration_filtering;
+    scs_ptr->static_config.sg_filter_mode = 0;//((EbSvtAv1EncConfiguration*)config_struct)->sg_filter_mode;
+    scs_ptr->static_config.wn_filter_mode = 0;//((EbSvtAv1EncConfiguration*)config_struct)->wn_filter_mode;
+#else
     scs_ptr->static_config.cdef_level = ((EbSvtAv1EncConfiguration*)config_struct)->cdef_level;
 
     // Restoration filtering
     scs_ptr->static_config.enable_restoration_filtering = ((EbSvtAv1EncConfiguration*)config_struct)->enable_restoration_filtering;
     scs_ptr->static_config.sg_filter_mode = ((EbSvtAv1EncConfiguration*)config_struct)->sg_filter_mode;
     scs_ptr->static_config.wn_filter_mode = ((EbSvtAv1EncConfiguration*)config_struct)->wn_filter_mode;
-
+#endif
     // motion field motion vector
     scs_ptr->static_config.enable_mfmv                  = ((EbSvtAv1EncConfiguration*)config_struct)->enable_mfmv;
     // redundant block

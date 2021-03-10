@@ -191,8 +191,13 @@ void *dlf_kernel(void *input_ptr) {
                           ->reference_picture;
             else
                 recon_buffer = scs_ptr->static_config.is_16bit_pipeline || is_16bit
+#if CLN_STRUCT
+                    ? pcs_ptr->parent_pcs_ptr->enc_dec_ptr->recon_picture16bit_ptr
+                    : pcs_ptr->parent_pcs_ptr->enc_dec_ptr->recon_picture_ptr;
+#else
                     ? pcs_ptr->recon_picture16bit_ptr
                     : pcs_ptr->recon_picture_ptr;
+#endif
 
             svt_av1_loop_filter_init(pcs_ptr);
 
@@ -234,14 +239,22 @@ void *dlf_kernel(void *input_ptr) {
                                              ->reference_picture_wrapper_ptr->object_ptr)
                                             ->reference_picture16bit;
                 else
+#if CLN_STRUCT
+                    recon_picture_ptr = pcs_ptr->parent_pcs_ptr->enc_dec_ptr->recon_picture16bit_ptr;
+#else
                     recon_picture_ptr = pcs_ptr->recon_picture16bit_ptr;
+#endif
             } else {
                 if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE)
                     recon_picture_ptr = ((EbReferenceObject *)pcs_ptr->parent_pcs_ptr
                                              ->reference_picture_wrapper_ptr->object_ptr)
                                             ->reference_picture;
                 else
+#if CLN_STRUCT
+                    recon_picture_ptr = pcs_ptr->parent_pcs_ptr->enc_dec_ptr->recon_picture_ptr;
+#else
                     recon_picture_ptr = pcs_ptr->recon_picture_ptr;
+#endif
             }
             if (scs_ptr->static_config.is_16bit_pipeline) {
                 if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE) {
@@ -249,7 +262,11 @@ void *dlf_kernel(void *input_ptr) {
                                              ->reference_picture_wrapper_ptr->object_ptr)
                                             ->reference_picture16bit;
                 } else {
+#if CLN_STRUCT
+                    recon_picture_ptr = pcs_ptr->parent_pcs_ptr->enc_dec_ptr->recon_picture16bit_ptr;
+#else
                     recon_picture_ptr = pcs_ptr->recon_picture16bit_ptr;
+#endif
                 }
             }
             link_eb_to_aom_buffer_desc(recon_picture_ptr,

@@ -182,6 +182,9 @@ typedef struct SequenceControlSet {
     uint32_t picture_control_set_pool_init_count;
     uint32_t me_pool_init_count;
     uint32_t picture_control_set_pool_init_count_child;
+#if CLN_STRUCT
+    uint32_t enc_dec_pool_init_count;
+#endif
     uint32_t pa_reference_picture_buffer_init_count;
     uint32_t reference_picture_buffer_init_count;
     uint32_t input_buffer_fifo_init_count;

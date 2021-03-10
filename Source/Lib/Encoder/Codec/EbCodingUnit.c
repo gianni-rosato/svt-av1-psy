@@ -20,7 +20,9 @@
 
 void largest_coding_unit_dctor(EbPtr p) {
     SuperBlock *obj = (SuperBlock *)p;
-    EB_DELETE(obj->quantized_coeff);
+#if !CLN_STRUCT
+    EB_DELETE(obj->quantized_coeff); //OMK2
+#endif
     EB_FREE_ARRAY(obj->av1xd);
     EB_FREE_ARRAY(obj->final_blk_arr);
     EB_FREE_ARRAY(obj->cu_partition_array);
@@ -46,8 +48,10 @@ EbErrorType largest_coding_unit_ctor(SuperBlock *larget_coding_unit_ptr, uint8_t
                                      PictureControlSet *picture_control_set)
 
 {
-    EbPictureBufferDescInitData coeff_init_data;
 
+#if !CLN_STRUCT
+    EbPictureBufferDescInitData coeff_init_data;
+#endif
     larget_coding_unit_ptr->dctor = largest_coding_unit_dctor;
 
     // ************ SB ***************
@@ -93,6 +97,7 @@ EbErrorType largest_coding_unit_ctor(SuperBlock *larget_coding_unit_ptr, uint8_t
 
     EB_MALLOC_ARRAY(larget_coding_unit_ptr->cu_partition_array, max_block_count);
 
+#if !CLN_STRUCT
     coeff_init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK;
     coeff_init_data.max_width          = sb_size_pix;
     coeff_init_data.max_height         = sb_size_pix;
@@ -107,6 +112,6 @@ EbErrorType largest_coding_unit_ctor(SuperBlock *larget_coding_unit_ptr, uint8_t
     EB_NEW(larget_coding_unit_ptr->quantized_coeff,
            svt_picture_buffer_desc_ctor,
            (EbPtr)&coeff_init_data);
-
+#endif
     return EB_ErrorNone;
 }

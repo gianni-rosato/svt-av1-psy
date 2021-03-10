@@ -161,7 +161,11 @@ void cdef_seg_search(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr,
                                  pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
                                 ->reference_picture;
     else
-        recon_picture_ptr = pcs_ptr->recon_picture_ptr;
+#if CLN_STRUCT
+       recon_picture_ptr =  pcs_ptr->parent_pcs_ptr->enc_dec_ptr->recon_picture_ptr;
+#else
+       recon_picture_ptr =  pcs_ptr->recon_picture_ptr;
+#endif
 
     for (pli = 0; pli < num_planes; pli++) {
         int32_t subsampling_x = (pli == 0) ? 0 : 1;
@@ -332,7 +336,11 @@ void cdef_seg_search16bit(PictureControlSet *pcs_ptr, SequenceControlSet *scs_pt
                                           EB_TRUE)
         ? ((EbReferenceObject *)pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
               ->reference_picture16bit
+#if CLN_STRUCT
+        :  pcs_ptr->parent_pcs_ptr->enc_dec_ptr->recon_picture16bit_ptr;
+#else
         : pcs_ptr->recon_picture16bit_ptr;
+#endif
 
     struct PictureParentControlSet *ppcs    = pcs_ptr->parent_pcs_ptr;
     FrameHeader *                   frm_hdr = &ppcs->frm_hdr;

@@ -998,8 +998,13 @@ static int64_t try_filter_frame(
     } else { // non ref pictures
         recon_buffer = (pcs_ptr->parent_pcs_ptr->scs_ptr->static_config.is_16bit_pipeline ||
                         is_16bit)
+#if CLN_STRUCT
+            ? pcs_ptr->parent_pcs_ptr->enc_dec_ptr->recon_picture16bit_ptr
+            : pcs_ptr->parent_pcs_ptr->enc_dec_ptr->recon_picture_ptr;
+#else
             ? pcs_ptr->recon_picture16bit_ptr
             : pcs_ptr->recon_picture_ptr;
+#endif
     }
 
     // set base filters for use of get_filter_level when in DELTA_Q_LF mode
@@ -1066,8 +1071,13 @@ static int32_t search_filter_level(
     } else { // non ref pictures
         recon_buffer = (pcs_ptr->parent_pcs_ptr->scs_ptr->static_config.is_16bit_pipeline ||
                         is_16bit)
+#if CLN_STRUCT
+            ? pcs_ptr->parent_pcs_ptr->enc_dec_ptr->recon_picture16bit_ptr
+            : pcs_ptr->parent_pcs_ptr->enc_dec_ptr->recon_picture_ptr;
+#else
             ? pcs_ptr->recon_picture16bit_ptr
             : pcs_ptr->recon_picture_ptr;
+#endif
     }
     // Sum squared error at each filter level
     int64_t ss_err[MAX_LOOP_FILTER + 1];

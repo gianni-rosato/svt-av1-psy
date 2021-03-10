@@ -236,15 +236,31 @@ typedef struct SpeedFeatures {
     MeshPattern mesh_patterns[MAX_MESH_STEP];
 
 } SpeedFeatures;
+#if CLN_STRUCT
+typedef struct EncDecSet {
+    EbDctor          dctor;
+    EbPictureBufferDesc *recon_picture_ptr;
+    EbPictureBufferDesc *recon_picture16bit_ptr;
+    EbPictureBufferDesc **quantized_coeff;
+    EbObjectWrapper *enc_dec_wrapper_ptr;
+    struct PictureParentControlSet *parent_pcs_ptr; //The parent of this PCS.
+    EbObjectWrapper *               picture_parent_control_set_wrapper_ptr;
 
+    uint16_t sb_total_count_unscaled;
+
+} EncDecSet;
+#endif
 typedef struct PictureControlSet {
     /*!< Pointer to the dtor of the struct*/
     EbDctor          dctor;
     EbObjectWrapper *scs_wrapper_ptr;
-
+#if !CLN_STRUCT
     EbPictureBufferDesc *recon_picture_ptr;
+#endif
     EbPictureBufferDesc *film_grain_picture_ptr;
+#if !CLN_STRUCT
     EbPictureBufferDesc *recon_picture16bit_ptr;
+#endif
     EbPictureBufferDesc *film_grain_picture16bit_ptr;
     EbPictureBufferDesc *input_frame16bit;
 
@@ -1041,6 +1057,9 @@ typedef struct PictureParentControlSet {
     int16_t              tilt_mvy;
     EbWarpedMotionParams global_motion[TOTAL_REFS_PER_FRAME];
     PictureControlSet *  child_pcs;
+#if CLN_STRUCT
+    EncDecSet *  enc_dec_ptr;
+#endif
     Macroblock *         av1x;
     int32_t film_grain_params_present; //todo (AN): Do we need this flag at picture level?
     AomDenoiseAndModel *denoise_and_model;
@@ -1315,7 +1334,9 @@ typedef struct Av1Comp {
      * Extern Function Declarations
      **************************************/
 extern EbErrorType picture_control_set_creator(EbPtr *object_dbl_ptr, EbPtr object_init_data_ptr);
-
+#if CLN_STRUCT
+extern EbErrorType recon_coef_creator(EbPtr *object_dbl_ptr, EbPtr object_init_data_ptr);
+#endif
 extern EbErrorType picture_parent_control_set_creator(EbPtr *object_dbl_ptr,
                                                       EbPtr  object_init_data_ptr);
 extern EbErrorType me_creator(EbPtr *object_dbl_ptr, EbPtr object_init_data_ptr);

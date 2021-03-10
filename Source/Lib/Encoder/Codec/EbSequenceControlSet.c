@@ -257,6 +257,9 @@ EbErrorType copy_sequence_control_set(SequenceControlSet *dst, SequenceControlSe
     dst->picture_control_set_pool_init_count       = src->picture_control_set_pool_init_count;
     dst->me_pool_init_count                        = src->me_pool_init_count;
     dst->picture_control_set_pool_init_count_child = src->picture_control_set_pool_init_count_child;
+#if CLN_STRUCT
+    dst->enc_dec_pool_init_count                 = src->enc_dec_pool_init_count;
+#endif
     dst->pa_reference_picture_buffer_init_count    = src->pa_reference_picture_buffer_init_count;
     dst->reference_picture_buffer_init_count       = src->reference_picture_buffer_init_count;
     dst->input_buffer_fifo_init_count              = src->input_buffer_fifo_init_count;

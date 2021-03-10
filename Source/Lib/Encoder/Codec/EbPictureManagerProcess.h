@@ -27,6 +27,9 @@ typedef struct PictureManagerContext {
     EbFifo * picture_input_fifo_ptr;
     EbFifo * picture_manager_output_fifo_ptr;
     EbFifo * picture_control_set_fifo_ptr;
+#if CLN_STRUCT
+    EbFifo * recon_coef_fifo_ptr;
+#endif
     uint64_t pmgr_dec_order;
 } PictureManagerContext;
 /***************************************

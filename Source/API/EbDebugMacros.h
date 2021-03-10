@@ -283,6 +283,13 @@ extern "C" {
 #define TUNE_NEAR_CTRLS                       1 // Tune near settings
 #define FIX_USELESS_ENCDEC_CYCLE              1 // Remove useless EncDec operations
 #define TUNE_M8_FAST                          1 // tune me, hme, set-me-sr-adjust for m8
+
+#define      CLN_STRUCT                      1 // create new structure for enc-dec for pixel and coeffs
+#define      CLN_REDUCE_TPL_RECON            1 // No recon needed in some levels of TPL
+#define      CLN_DLF                         1 // No recon needed when frame DFL is OFF
+#define      CLN_REST                        1 // No restoration buffers when it is OFF
+#define      CLN_OIS                         1 // Move to in loop OIS (OIS is now done in TPL)
+
 // ============= END SVT_04 =============
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch

@@ -1460,8 +1460,12 @@ void perform_intra_coding_loop(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, u
     uint32_t bit_depth = context_ptr->bit_depth;
     uint8_t is_inter = 0; // set to 0 b/c this is the intra path
     EbPictureBufferDesc *recon_buffer;
+#if CLN_STRUCT
+    EbPictureBufferDesc *coeff_buffer_sb = pcs_ptr->parent_pcs_ptr->enc_dec_ptr->quantized_coeff[sb_addr];
+#else
     EbPictureBufferDesc *coeff_buffer_sb = sb_ptr->quantized_coeff;
 
+#endif
     uint16_t tile_idx = context_ptr->tile_index;
     NeighborArrayUnit *ep_luma_recon_neighbor_array =
         is_16bit ? pcs_ptr->ep_luma_recon_neighbor_array16bit[tile_idx]
@@ -1494,8 +1498,11 @@ void perform_intra_coding_loop(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, u
                                 pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
                                ->reference_picture;
     else // non ref pictures
+#if CLN_STRUCT
+        recon_buffer = is_16bit ? pcs_ptr->parent_pcs_ptr->enc_dec_ptr->recon_picture16bit_ptr : pcs_ptr->parent_pcs_ptr->enc_dec_ptr->recon_picture_ptr;
+#else
         recon_buffer = is_16bit ? pcs_ptr->recon_picture16bit_ptr : pcs_ptr->recon_picture_ptr;
-
+#endif
     uint32_t tot_tu = context_ptr->blk_geom->txb_count[blk_ptr->tx_depth];
 
     // Luma path
@@ -2151,7 +2158,11 @@ EB_EXTERN void av1_encode_decode(SequenceControlSet *scs_ptr, PictureControlSet 
                                uint32_t sb_origin_y, EncDecContext *context_ptr) {
     EbBool               is_16bit = context_ptr->is_16bit;
     EbPictureBufferDesc *recon_buffer;
+#if CLN_STRUCT
+    EbPictureBufferDesc *coeff_buffer_sb = pcs_ptr->parent_pcs_ptr->enc_dec_ptr->quantized_coeff[sb_addr];
+#else
     EbPictureBufferDesc *coeff_buffer_sb = sb_ptr->quantized_coeff;
+#endif
     EbPictureBufferDesc *input_picture;
     ModeDecisionContext *md_context_ptr;
     md_context_ptr = context_ptr->md_context;
@@ -2212,8 +2223,11 @@ EB_EXTERN void av1_encode_decode(SequenceControlSet *scs_ptr, PictureControlSet 
                                 pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
                                ->reference_picture;
     else // non ref pictures
-        recon_buffer = is_16bit ? pcs_ptr->recon_picture16bit_ptr : pcs_ptr->recon_picture_ptr;
-
+#if CLN_STRUCT
+        recon_buffer = is_16bit ? pcs_ptr->parent_pcs_ptr->enc_dec_ptr->recon_picture16bit_ptr : pcs_ptr->parent_pcs_ptr->enc_dec_ptr->recon_picture_ptr;
+#else
+        recon_buffer = is_16bit ? pcs_ptr->recon_picture16bit_ptr :  pcs_ptr->recon_picture_ptr;
+#endif
     if (is_16bit && scs_ptr->static_config.encoder_bit_depth > EB_8BIT) {
         //SB128_TODO change 10bit SB creation
 
@@ -3930,7 +3944,11 @@ EB_EXTERN void av1_encode_decode(SequenceControlSet *scs_ptr, PictureControlSet 
                             ->reference_picture_wrapper_ptr->object_ptr)
                         ->reference_picture16bit;
                     else // non ref pictures
+#if CLN_STRUCT
+                        recon_buffer_16bit = pcs_ptr->parent_pcs_ptr->enc_dec_ptr->recon_picture16bit_ptr;
+#else
                         recon_buffer_16bit = pcs_ptr->recon_picture16bit_ptr;
+#endif
 
                     if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE)
                         //get the 16bit form of the input SB
@@ -3938,7 +3956,11 @@ EB_EXTERN void av1_encode_decode(SequenceControlSet *scs_ptr, PictureControlSet 
                             ->reference_picture_wrapper_ptr->object_ptr)
                         ->reference_picture;
                     else // non ref pictures
+#if CLN_STRUCT
+                        recon_buffer_8bit = pcs_ptr->parent_pcs_ptr->enc_dec_ptr->recon_picture_ptr;
+#else
                         recon_buffer_8bit = pcs_ptr->recon_picture_ptr;
+#endif
 
                     uint32_t pred_buf_x_offest = context_ptr->blk_origin_x;
                     uint32_t pred_buf_y_offest = context_ptr->blk_origin_y;

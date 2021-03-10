@@ -97,7 +97,20 @@ EbErrorType me_sb_results_ctor(MeSbResults *obj_ptr) {
     EB_MALLOC_ARRAY(obj_ptr->total_me_candidate_index, SQUARE_PU_COUNT);
     return EB_ErrorNone;
 }
+#if CLN_STRUCT
+void recon_coef_dctor(EbPtr p) {
+    EncDecSet *obj = (EncDecSet *)p;
 
+    EB_DELETE(obj->recon_picture16bit_ptr);
+    EB_DELETE(obj->recon_picture_ptr);
+
+    for (uint16_t sb_index = 0; sb_index < obj->sb_total_count_unscaled; ++sb_index) {
+        EB_DELETE(obj->quantized_coeff[sb_index]); //OMK2
+
+    }
+        EB_DELETE_PTR_ARRAY(obj->quantized_coeff, obj->sb_total_count_unscaled);
+}
+#endif
 void picture_control_set_dctor(EbPtr p) {
     PictureControlSet *obj      = (PictureControlSet *)p;
     uint16_t           tile_cnt = obj->tile_row_count * obj->tile_column_count;
@@ -177,8 +190,10 @@ void picture_control_set_dctor(EbPtr p) {
     EB_DELETE_PTR_ARRAY(obj->sb_ptr_array, obj->sb_total_count_unscaled);
     EB_DELETE(obj->bitstream_ptr);
     EB_DELETE_PTR_ARRAY(obj->entropy_coding_info, tile_cnt);
+#if !CLN_STRUCT
     EB_DELETE(obj->recon_picture16bit_ptr);
     EB_DELETE(obj->recon_picture_ptr);
+#endif
     EB_DELETE(obj->film_grain_picture16bit_ptr);
     EB_DELETE(obj->film_grain_picture_ptr);
 #if CLN_DLF_RES_PROCESS
@@ -271,6 +286,133 @@ EbErrorType alloc_palette_tokens(SequenceControlSet *scs_ptr, PictureControlSet 
 
     return EB_ErrorNone;
 }
+
+#if CLN_STRUCT
+EbErrorType recon_coef_ctor(EncDecSet *object_ptr, EbPtr object_init_data_ptr) {
+    PictureControlSetInitData *init_data_ptr = (PictureControlSetInitData *)object_init_data_ptr;
+
+    EbPictureBufferDescInitData input_pic_buf_desc_init_data;
+
+    // Max/Min CU Sizes
+
+    // SBs
+    const uint16_t picture_sb_width = (uint16_t)(
+        (init_data_ptr->picture_width + init_data_ptr->sb_sz - 1) / init_data_ptr->sb_sz);
+    const uint16_t picture_sb_height = (uint16_t)(
+        (init_data_ptr->picture_height + init_data_ptr->sb_sz - 1) / init_data_ptr->sb_sz);
+    uint16_t    sb_index;
+    uint16_t    sb_origin_x;
+    uint16_t    sb_origin_y;
+
+    EbBool         is_16bit      = init_data_ptr->bit_depth > 8 ? EB_TRUE : EB_FALSE;
+
+
+
+    //object_ptr->tile_row_count  = init_data_ptr->tile_row_count;
+    //object_ptr->tile_column_count = init_data_ptr->tile_column_count;
+
+    object_ptr->dctor = recon_coef_dctor;
+
+
+
+    // Init Picture Init data
+    input_pic_buf_desc_init_data.max_width          = init_data_ptr->picture_width;
+    input_pic_buf_desc_init_data.max_height         = init_data_ptr->picture_height;
+    input_pic_buf_desc_init_data.bit_depth          = init_data_ptr->bit_depth;
+    input_pic_buf_desc_init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK;
+    input_pic_buf_desc_init_data.color_format       = init_data_ptr->color_format;
+#if CLN_REC
+    uint16_t padding = init_data_ptr->sb_size_pix + 32;
+    input_pic_buf_desc_init_data.left_padding  = padding;
+    input_pic_buf_desc_init_data.right_padding = padding;
+    input_pic_buf_desc_init_data.top_padding   = padding;
+    input_pic_buf_desc_init_data.bot_padding   = padding;
+#else
+    input_pic_buf_desc_init_data.left_padding  = PAD_VALUE;
+    input_pic_buf_desc_init_data.right_padding = PAD_VALUE;
+    input_pic_buf_desc_init_data.top_padding   = PAD_VALUE;
+    input_pic_buf_desc_init_data.bot_padding   = PAD_VALUE;
+#endif
+    input_pic_buf_desc_init_data.split_mode = EB_FALSE;
+
+    //object_ptr->scs_wrapper_ptr = (EbObjectWrapper *)NULL;
+
+    object_ptr->recon_picture16bit_ptr = (EbPictureBufferDesc *)NULL;
+    object_ptr->recon_picture_ptr      = (EbPictureBufferDesc *)NULL; //OMK
+    //object_ptr->color_format           = init_data_ptr->color_format;
+    // Reconstructed Picture Buffer
+    if (is_16bit) {
+        EB_NEW(object_ptr->recon_picture16bit_ptr,
+               svt_recon_picture_buffer_desc_ctor,
+               (EbPtr)&input_pic_buf_desc_init_data);
+    } else {
+        EB_NEW(object_ptr->recon_picture_ptr, //OMK
+               svt_recon_picture_buffer_desc_ctor,
+               (EbPtr)&input_pic_buf_desc_init_data);
+    }
+    if (init_data_ptr->is_16bit_pipeline && !is_16bit) {
+        EB_NEW(object_ptr->recon_picture16bit_ptr,
+               svt_recon_picture_buffer_desc_ctor,
+               (EbPtr)&input_pic_buf_desc_init_data);
+    }
+
+
+    // SB Array
+   // object_ptr->sb_total_count          = picture_sb_width * picture_sb_height;
+    object_ptr->sb_total_count_unscaled = picture_sb_width * picture_sb_height;
+    EB_ALLOC_PTR_ARRAY(object_ptr->quantized_coeff, object_ptr->sb_total_count_unscaled);
+
+    sb_origin_x = 0;
+    sb_origin_y = 0;
+
+    const uint16_t picture_sb_w = (uint16_t)(
+        (init_data_ptr->picture_width + init_data_ptr->sb_size_pix - 1) /
+        init_data_ptr->sb_size_pix);
+    const uint16_t picture_sb_h = (uint16_t)(
+        (init_data_ptr->picture_height + init_data_ptr->sb_size_pix - 1) /
+        init_data_ptr->sb_size_pix);
+    const uint16_t all_sb = picture_sb_w * picture_sb_h;
+
+
+    //object_ptr->sb_total_count_pix = all_sb;
+
+    EbPictureBufferDescInitData coeff_init_data;
+    coeff_init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK;
+    coeff_init_data.max_width          = init_data_ptr->sb_size_pix;
+    coeff_init_data.max_height         = init_data_ptr->sb_size_pix;
+    coeff_init_data.bit_depth          = EB_32BIT;
+    coeff_init_data.color_format       = init_data_ptr->color_format;
+    coeff_init_data.left_padding       = 0;
+    coeff_init_data.right_padding      = 0;
+    coeff_init_data.top_padding        = 0;
+    coeff_init_data.bot_padding        = 0;
+    coeff_init_data.split_mode         = EB_FALSE;
+    for (sb_index = 0; sb_index < all_sb; ++sb_index) {
+
+
+
+    EB_NEW(object_ptr->quantized_coeff[sb_index], //OMK2
+           svt_picture_buffer_desc_ctor,
+           (EbPtr)&coeff_init_data);
+
+        // Increment the Order in coding order (Raster Scan Order)
+        sb_origin_y = (sb_origin_x == picture_sb_w - 1) ? sb_origin_y + 1 : sb_origin_y;
+        sb_origin_x = (sb_origin_x == picture_sb_w - 1) ? 0 : sb_origin_x + 1;
+    }
+
+    return EB_ErrorNone;
+}
+
+#endif
+#if CLN_DLF
+
+uint8_t get_loop_filter_mode(EbEncMode enc_mode, uint8_t is_used_as_reference_flag) ;
+#endif
+#if CLN_REST
+
+uint8_t get_enable_restoration(EbEncMode enc_mode) ;
+#endif
+
 EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object_init_data_ptr) {
     PictureControlSetInitData *init_data_ptr = (PictureControlSetInitData *)object_init_data_ptr;
 
@@ -310,12 +452,12 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
     input_pic_buf_desc_init_data.color_format       = init_data_ptr->color_format;
 #if CLN_REC
     uint16_t padding = init_data_ptr->sb_size_pix + 32;
-    input_pic_buf_desc_init_data.left_padding  = padding; //OMK
+    input_pic_buf_desc_init_data.left_padding  = padding;
     input_pic_buf_desc_init_data.right_padding = padding;
     input_pic_buf_desc_init_data.top_padding   = padding;
     input_pic_buf_desc_init_data.bot_padding   = padding;
 #else
-    input_pic_buf_desc_init_data.left_padding  = PAD_VALUE; //OMK
+    input_pic_buf_desc_init_data.left_padding  = PAD_VALUE;
     input_pic_buf_desc_init_data.right_padding = PAD_VALUE;
     input_pic_buf_desc_init_data.top_padding   = PAD_VALUE;
     input_pic_buf_desc_init_data.bot_padding   = PAD_VALUE;
@@ -329,12 +471,12 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
     coeff_buffer_desc_init_data.color_format       = init_data_ptr->color_format;
 
 #if CLN_REC
-    coeff_buffer_desc_init_data.left_padding  = padding; //OMK
+    coeff_buffer_desc_init_data.left_padding  = padding;
     coeff_buffer_desc_init_data.right_padding = padding;
     coeff_buffer_desc_init_data.top_padding   = padding;
     coeff_buffer_desc_init_data.bot_padding   = padding;
 #else
-    coeff_buffer_desc_init_data.left_padding   = PAD_VALUE; //OMK
+    coeff_buffer_desc_init_data.left_padding  = PAD_VALUE;
     coeff_buffer_desc_init_data.right_padding = PAD_VALUE;
     coeff_buffer_desc_init_data.top_padding   = PAD_VALUE;
     coeff_buffer_desc_init_data.bot_padding   = PAD_VALUE;
@@ -344,10 +486,13 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
 
     object_ptr->scs_wrapper_ptr = (EbObjectWrapper *)NULL;
 
+    #if !CLN_STRUCT
     object_ptr->recon_picture16bit_ptr = (EbPictureBufferDesc *)NULL;
     object_ptr->recon_picture_ptr      = (EbPictureBufferDesc *)NULL;
+#endif
     object_ptr->color_format           = init_data_ptr->color_format;
     // Reconstructed Picture Buffer
+    #if !CLN_STRUCT
     if (is_16bit) {
         EB_NEW(object_ptr->recon_picture16bit_ptr,
                svt_recon_picture_buffer_desc_ctor,
@@ -362,6 +507,7 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
                svt_recon_picture_buffer_desc_ctor,
                (EbPtr)&coeff_buffer_desc_init_data);
     }
+#endif
     // Film Grain Picture Buffer
     if (init_data_ptr->film_grain_noise_level) {
         if (is_16bit) {
@@ -375,23 +521,37 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
         }
     }
 #if CLN_DLF_RES_PROCESS
+#if CLN_DLF
+    uint8_t lf_recon_needed = 0;
+    if (init_data_ptr->tile_row_count > 0 || init_data_ptr->tile_column_count > 0)
+        lf_recon_needed = 1;
+    else
+        for (uint8_t is_used_as_reference_flag = 0; is_used_as_reference_flag < 2; is_used_as_reference_flag++) {
+            lf_recon_needed = get_loop_filter_mode(init_data_ptr->enc_mode, is_used_as_reference_flag) >= 2 ? 1 : 0;
+            if (lf_recon_needed)
+                break;
+        }
+
+#endif
 
     EbColorFormat color_format = init_data_ptr->color_format;
     object_ptr->temp_lf_recon_picture16bit_ptr = (EbPictureBufferDesc *)NULL;
     object_ptr->temp_lf_recon_picture_ptr      = (EbPictureBufferDesc *)NULL;
-
+#if CLN_DLF
+    if (lf_recon_needed){
+#endif
     EbPictureBufferDescInitData temp_lf_recon_desc_init_data;
     temp_lf_recon_desc_init_data.max_width          = (uint16_t)init_data_ptr->picture_width;
     temp_lf_recon_desc_init_data.max_height         = (uint16_t)init_data_ptr->picture_height;
     temp_lf_recon_desc_init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK;
 
 #if CLN_REC
-    temp_lf_recon_desc_init_data.left_padding  = padding; //OMK
+    temp_lf_recon_desc_init_data.left_padding  = padding;
     temp_lf_recon_desc_init_data.right_padding = padding;
     temp_lf_recon_desc_init_data.top_padding   = padding;
     temp_lf_recon_desc_init_data.bot_padding   = padding;
 #else
-    temp_lf_recon_desc_init_data.left_padding  = PAD_VALUE; //OMK
+    temp_lf_recon_desc_init_data.left_padding  = PAD_VALUE;
     temp_lf_recon_desc_init_data.right_padding = PAD_VALUE;
     temp_lf_recon_desc_init_data.top_padding   = PAD_VALUE;
     temp_lf_recon_desc_init_data.bot_padding   = PAD_VALUE;
@@ -412,9 +572,15 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
                svt_recon_picture_buffer_desc_ctor,
                (EbPtr)&temp_lf_recon_desc_init_data);
     }
+#if CLN_DLF
+    }
+#endif
 #endif
 
 #if CLN_BN
+#if CLN_REST
+    if (get_enable_restoration(init_data_ptr->enc_mode)) {
+#endif
     set_restoration_unit_size(init_data_ptr->picture_width,
                               init_data_ptr->picture_height,
                               1,
@@ -438,6 +604,9 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
     EB_CALLOC_ARRAY(object_ptr->rusi_picture[0], ntiles[0]);
     EB_CALLOC_ARRAY(object_ptr->rusi_picture[1], ntiles[1]);
     EB_CALLOC_ARRAY(object_ptr->rusi_picture[2], ntiles[1]);
+#if CLN_REST
+    }
+#endif
 #endif
 
     if ((is_16bit) || (init_data_ptr->is_16bit_pipeline)) {
@@ -1183,10 +1352,29 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
     }
     object_ptr->hash_table.p_lookup_table = NULL;
     svt_av1_hash_table_create(&object_ptr->hash_table);
+#if CLN_REST
+    if (get_enable_restoration(init_data_ptr->enc_mode))
+#endif
     EB_MALLOC_ALIGNED(object_ptr->rst_tmpbuf, RESTORATION_TMPBUF_SIZE);
+
     return EB_ErrorNone;
 }
 
+
+
+
+
+#if CLN_STRUCT
+EbErrorType recon_coef_creator(EbPtr *object_dbl_ptr, EbPtr object_init_data_ptr) {
+    EncDecSet *obj;
+
+    *object_dbl_ptr = NULL;
+    EB_NEW(obj, recon_coef_ctor, object_init_data_ptr);
+    *object_dbl_ptr = obj;
+
+    return EB_ErrorNone;
+}
+#endif
 EbErrorType picture_control_set_creator(EbPtr *object_dbl_ptr, EbPtr object_init_data_ptr) {
     PictureControlSet *obj;
 

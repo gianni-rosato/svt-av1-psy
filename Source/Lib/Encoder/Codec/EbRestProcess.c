@@ -212,7 +212,11 @@ void get_own_recon(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
                                      ->reference_picture_wrapper_ptr->object_ptr)
                                     ->reference_picture16bit;
         else
+#if CLN_STRUCT
+            recon_picture_ptr = pcs_ptr->parent_pcs_ptr->enc_dec_ptr->recon_picture16bit_ptr;
+#else
             recon_picture_ptr = pcs_ptr->recon_picture16bit_ptr;
+#endif
 #if CLN_REST_FILTER
         // if boundaries are not used, don't need to copy pic to new buffer, as the
         // search will not modify the pic
@@ -256,7 +260,11 @@ void get_own_recon(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
                                      ->reference_picture_wrapper_ptr->object_ptr)
                                     ->reference_picture;
         else
-            recon_picture_ptr = pcs_ptr->recon_picture_ptr;
+#if CLN_STRUCT
+            recon_picture_ptr = pcs_ptr->parent_pcs_ptr->enc_dec_ptr->recon_picture_ptr; //OMK
+#else
+            recon_picture_ptr = pcs_ptr->recon_picture_ptr; //OMK
+#endif
 #if CLN_REST_FILTER
         // if boundaries are not used, don't need to copy pic to new buffer, as the
         // search will not modify the pic
@@ -439,14 +447,22 @@ void get_recon_pic(PictureControlSet *pcs_ptr, EbPictureBufferDesc **recon_ptr, 
                               pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
                              ->reference_picture;
         else
-            *recon_ptr = pcs_ptr->recon_picture_ptr;
+#if CLN_STRUCT
+            *recon_ptr = pcs_ptr->parent_pcs_ptr->enc_dec_ptr->recon_picture_ptr; //OMK
+#else
+            *recon_ptr = pcs_ptr->recon_picture_ptr; //OMK
+#endif
     } else {
         if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE)
             *recon_ptr = ((EbReferenceObject *)
                               pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
                              ->reference_picture16bit;
         else
+#if CLN_STRUCT
+            *recon_ptr = pcs_ptr->parent_pcs_ptr->enc_dec_ptr->recon_picture16bit_ptr;
+#else
             *recon_ptr = pcs_ptr->recon_picture16bit_ptr;
+#endif
     }
 }
 

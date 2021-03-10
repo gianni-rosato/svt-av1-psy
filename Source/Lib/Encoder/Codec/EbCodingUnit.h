@@ -445,7 +445,9 @@ typedef struct SuperBlock {
     uint32_t       total_bits;
 
     // Quantized Coefficients
-    EbPictureBufferDesc *quantized_coeff;
+#if !CLN_STRUCT
+    EbPictureBufferDesc *quantized_coeff; //OMK2
+#endif
 #if !RFCTR_MD_BLOCK_LOOP
     uint64_t             depth_cost[NUMBER_OF_DEPTH];
 #endif

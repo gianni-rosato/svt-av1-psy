@@ -345,6 +345,27 @@ void set_tpl_controls(
     }
 }
 #endif
+#if CLN_REST
+/*
+* return the restoration level
+  Used by signal_derivation_pre_analysis_oq and memory allocation
+*/
+uint8_t get_enable_restoration(EbEncMode enc_mode) {
+
+    uint8_t enable_restoration;
+
+#if TUNE_NEW_PRESETS_MR_M8
+#if TUNE_SHIFT_PRESETS_DOWN
+        enable_restoration = (enc_mode <= ENC_M6) ? 1 : 0;
+#else
+        enable_restoration = (enc_mode <= ENC_M7) ? 1 : 0;
+#endif
+#else
+        enable_restoration = (enc_mode <= ENC_M6) ? 1 : 0;
+#endif
+    return  enable_restoration;
+}
+#endif
 /******************************************************
 * Derive Pre-Analysis settings for OQ for pcs
 Input   : encoder mode and tune
@@ -433,6 +454,10 @@ EbErrorType signal_derivation_pre_analysis_oq_scs(SequenceControlSet * scs_ptr) 
         scs_ptr->seq_header.pic_based_rate_est = (uint8_t)scs_ptr->static_config.pic_based_rate_est;
 
     if (scs_ptr->static_config.enable_restoration_filtering == DEFAULT) {
+#if CLN_REST
+        scs_ptr->seq_header.enable_restoration = get_enable_restoration(
+            scs_ptr->static_config.enc_mode);
+#else
 #if TUNE_NEW_PRESETS_MR_M8
 #if TUNE_SHIFT_PRESETS_DOWN
 #if TUNE_M0_M8_MEGA_FEB
@@ -445,6 +470,7 @@ EbErrorType signal_derivation_pre_analysis_oq_scs(SequenceControlSet * scs_ptr) 
 #endif
 #else
         scs_ptr->seq_header.enable_restoration = (scs_ptr->static_config.enc_mode <= ENC_M6) ? 1 : 0;
+#endif
 #endif
     } else
         scs_ptr->seq_header.enable_restoration =

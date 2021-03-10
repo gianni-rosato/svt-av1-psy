@@ -128,13 +128,14 @@ EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr, EbColor
     uint32_t max_nics = 0;
 
     // get max number of NICS
-    for (CandClass pic_type = 0; pic_type < NICS_PIC_TYPE; pic_type++) {
+    for (uint8_t pic_type = 0; pic_type < NICS_PIC_TYPE; pic_type++) {
         uint32_t nics = 0;
         for (CandClass cand_class_it = CAND_CLASS_0; cand_class_it < CAND_CLASS_TOTAL; cand_class_it++) {
             nics += MD_STAGE_NICS[pic_type][cand_class_it];
         }
         max_nics = MAX(max_nics ,nics);
     }
+
 
     // get the min scalling level ( smallest scalling level is the most concervative
     uint8_t min_nic_scaling_level = NICS_SCALING_LEVELS - 1 ;

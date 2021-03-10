@@ -48,7 +48,12 @@ struct _EbEncHandle {
 
     // Full Results
     EbSystemResource **picture_control_set_pool_ptr_array;
+#if CLN_STRUCT
 
+    EbSystemResource **enc_dec_pool_ptr_array;
+
+
+#endif
     //ParentControlSet
     EbSystemResource **picture_parent_control_set_pool_ptr_array;
     EbSystemResource **me_pool_ptr_array;

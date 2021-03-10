@@ -729,6 +729,30 @@ void tpl_mc_flow_dispenser_sb(
                                                         16);
 
                         // Distortion
+#if OPT_TPL
+                        int64_t intra_cost;
+                        if (pcs_ptr->tpl_ctrls.tpl_opt_flag && pcs_ptr->tpl_ctrls.use_pred_sad_in_intra_search) {
+                            intra_cost = svt_nxm_sad_kernel_sub_sampled(
+                                src,
+                                input_ptr->stride_y,
+                                predictor,
+                                16,
+                                16,
+                                16);
+                        }
+                        else {
+                            svt_aom_subtract_block(
+                                16, 16, src_diff, 16, src, input_ptr->stride_y, predictor, 16);
+#if OPT_TPL
+                            EB_TRANS_COEFF_SHAPE pf_shape = pcs_ptr->tpl_ctrls.tpl_opt_flag ? pcs_ptr->tpl_ctrls.pf_shape : DEFAULT_SHAPE;
+                            svt_av1_wht_fwd_txfm(src_diff, 16, coeff, tx_size, pf_shape, 8, 0);
+#else
+                            svt_av1_wht_fwd_txfm(src_diff, 16, coeff, 2 /*TX_16X16*/, 8, 0);
+#endif
+                             intra_cost = svt_aom_satd(coeff, 16 * 16);
+                        }
+
+#else
                         svt_aom_subtract_block(
                             16, 16, src_diff, 16, src, input_ptr->stride_y, predictor, 16);
     #if OPT_TPL
@@ -738,7 +762,7 @@ void tpl_mc_flow_dispenser_sb(
                         svt_av1_wht_fwd_txfm(src_diff, 16, coeff, 2 /*TX_16X16*/, 8, 0);
     #endif
                         int64_t intra_cost = svt_aom_satd(coeff, 16 * 16);
-
+#endif
                         if (intra_cost < best_intra_cost) {
                             best_intra_cost = intra_cost;
                             best_intra_mode = ois_intra_mode;
@@ -2272,11 +2296,15 @@ static void generate_r0beta(PictureParentControlSet *pcs_ptr) {
 ************************************************/
 EbErrorType init_tpl_buffers(
     EncodeContext                   *encode_context_ptr,
+#if CLN_REDUCE_TPL_RECON
+    PictureParentControlSet         *pcs_ptr){
+#else
     PictureParentControlSet         *pcs_ptr,
 #if FTR_TPL_TR
     TplPcs  **pcs_array) {
 #else
     PictureParentControlSet        **pcs_array) {
+#endif
 #endif
     int32_t frames_in_sw = MIN(MAX_TPL_LA_SW, pcs_ptr->tpl_group_size);
     int32_t frame_idx;
@@ -2302,7 +2330,11 @@ EbErrorType init_tpl_buffers(
            (EbPtr)&picture_buffer_desc_init_data);
 
     for (frame_idx = 0; frame_idx < frames_in_sw; frame_idx++) {
+#if CLN_REDUCE_TPL_RECON
+        if (pcs_ptr->tpl_valid_pic[frame_idx]) {
+#else
         if (pcs_array[frame_idx]->tpl_data.is_used_as_reference_flag) {
+#endif
             EB_NEW(encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx],
                    svt_picture_buffer_desc_ctor,
                    (EbPtr)&picture_buffer_desc_init_data);
@@ -2564,7 +2596,11 @@ EbErrorType tpl_mc_flow(EncodeContext *encode_context_ptr, SequenceControlSet *s
 #if FIX_ADD_TPL_VALID
     pcs_ptr->tpl_is_valid = 0;
 #endif
+#if CLN_REDUCE_TPL_RECON
+    init_tpl_buffers(encode_context_ptr, pcs_ptr);
+#else
     init_tpl_buffers(encode_context_ptr, pcs_ptr, pcs_array);
+#endif
 
     if (pcs_array[0]->tpl_data.tpl_temporal_layer_index == 0) {
 
@@ -2792,11 +2828,11 @@ void *tpl_disp_kernel(void *input_ptr) {
 #if TPL_SEG
         context_ptr->coded_sb_count   = 0;
 
-        uint16_t tile_group_width_in_sb = pcs_ptr->tile_group_info[0/*context_ptr->tile_group_index*/] // OMARK 1 tile
+        uint16_t tile_group_width_in_sb = pcs_ptr->tile_group_info[0/*context_ptr->tile_group_index*/] //  1 tile
                                               .tile_group_width_in_sb;
-     EncDecSegments *segments_ptr;
+        EncDecSegments *segments_ptr;
 
-     segments_ptr = pcs_ptr->tpl_disp_segment_ctrl[0/*context_ptr->tile_group_index*/]; // OMARK 1 tile
+        segments_ptr = pcs_ptr->tpl_disp_segment_ctrl[0/*context_ptr->tile_group_index*/]; //  1 tile
     // Segments
     uint16_t        segment_index;
 
@@ -2851,10 +2887,10 @@ void *tpl_disp_kernel(void *input_ptr) {
                     sb_segment_index < sb_start_index + sb_segment_count;
                     ++x_sb_index, ++sb_segment_index) {
                     uint16_t tile_group_y_sb_start =
-                        pcs_ptr->tile_group_info[0/*context_ptr->tile_group_index*/] // OMARK 1 tile
+                        pcs_ptr->tile_group_info[0/*context_ptr->tile_group_index*/] //  1 tile
                         .tile_group_sb_start_y;
                     uint16_t tile_group_x_sb_start =
-                        pcs_ptr->tile_group_info[0/*context_ptr->tile_group_index*/] // OMARK 1 tile
+                        pcs_ptr->tile_group_info[0/*context_ptr->tile_group_index*/] //  1 tile
                         .tile_group_sb_start_x;
 
                     context_ptr->sb_index = (uint16_t)((y_sb_index + tile_group_y_sb_start) * pic_width_in_sb +

@@ -895,6 +895,31 @@ uint8_t get_disallow_nsq(EbEncMode enc_mode){
 #endif
 
 
+#if CLN_DLF
+/*
+* return the  loop filter mode
+  Used by signal_derivation_multi_processes_oq and memory allocation
+*/
+uint8_t get_loop_filter_mode(EbEncMode enc_mode, uint8_t is_used_as_reference_flag) {
+
+    uint8_t loop_filter_mode;
+#if TUNE_NEW_PRESETS_MR_M8
+#if TUNE_SHIFT_PRESETS_DOWN
+    if (enc_mode <= ENC_M4)
+#else
+    if (enc_mode <= ENC_M5)
+#endif
+#else
+    if (enc_mode <= ENC_M6)
+#endif
+        loop_filter_mode = 3;
+    else
+        loop_filter_mode = is_used_as_reference_flag ? 1 : 0;
+
+    return  loop_filter_mode;
+}
+
+#endif
 
 /******************************************************
 * Derive Multi-Processes Settings for OQ
@@ -1129,6 +1154,9 @@ EbErrorType signal_derivation_multi_processes_oq(
     assert(pcs_ptr->palette_level < 7);
 
     if (!pcs_ptr->scs_ptr->static_config.disable_dlf_flag && frm_hdr->allow_intrabc == 0) {
+#if CLN_DLF
+        pcs_ptr->loop_filter_mode = get_loop_filter_mode (pcs_ptr->enc_mode, pcs_ptr->is_used_as_reference_flag);
+#else
 #if TUNE_NEW_PRESETS_MR_M8
 #if TUNE_SHIFT_PRESETS_DOWN
         if (pcs_ptr->enc_mode <= ENC_M4)
@@ -1142,6 +1170,7 @@ EbErrorType signal_derivation_multi_processes_oq(
         else
             pcs_ptr->loop_filter_mode =
             pcs_ptr->is_used_as_reference_flag ? 1 : 0;
+#endif
     }
     else
         pcs_ptr->loop_filter_mode = 0;
