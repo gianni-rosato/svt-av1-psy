@@ -578,6 +578,9 @@ extern "C" {
     uint32_t svt_aom_sub_pixel_variance128x128_sse2(const uint8_t *src_ptr, int source_stride, int xoffset, int  yoffset, const uint8_t *ref_ptr, int ref_stride, uint32_t *sse);
     uint32_t svt_aom_sub_pixel_variance128x128_ssse3(const uint8_t *src_ptr, int source_stride, int xoffset, int  yoffset, const uint8_t *ref_ptr, int ref_stride, uint32_t *sse);
     uint32_t svt_aom_sub_pixel_variance128x128_avx2(const uint8_t *src_ptr, int source_stride, int xoffset, int  yoffset, const uint8_t *ref_ptr, int ref_stride, uint32_t *sse);
+#if SUB_PIXEL_VAR_AVX512
+    uint32_t svt_aom_sub_pixel_variance128x128_avx512(const uint8_t *src_ptr, int source_stride, int xoffset, int  yoffset, const uint8_t *ref_ptr, int ref_stride, uint32_t *sse);
+#endif
 #endif
     RTCD_EXTERN uint32_t(*svt_aom_sub_pixel_variance128x128)(const uint8_t *src_ptr, int source_stride, int xoffset, int  yoffset, const uint8_t *ref_ptr, int ref_stride, uint32_t *sse);
 
@@ -586,6 +589,9 @@ extern "C" {
     uint32_t svt_aom_sub_pixel_variance128x64_sse2(const uint8_t *src_ptr, int source_stride, int xoffset, int  yoffset, const uint8_t *ref_ptr, int ref_stride, uint32_t *sse);
     uint32_t svt_aom_sub_pixel_variance128x64_ssse3(const uint8_t *src_ptr, int source_stride, int xoffset, int  yoffset, const uint8_t *ref_ptr, int ref_stride, uint32_t *sse);
     uint32_t svt_aom_sub_pixel_variance128x64_avx2(const uint8_t *src_ptr, int source_stride, int xoffset, int  yoffset, const uint8_t *ref_ptr, int ref_stride, uint32_t *sse);
+#if SUB_PIXEL_VAR_AVX512
+    uint32_t svt_aom_sub_pixel_variance128x64_avx512(const uint8_t *src_ptr, int source_stride, int xoffset, int  yoffset, const uint8_t *ref_ptr, int ref_stride, uint32_t *sse);
+#endif
 #endif
     RTCD_EXTERN uint32_t(*svt_aom_sub_pixel_variance128x64)(const uint8_t *src_ptr, int source_stride, int xoffset, int  yoffset, const uint8_t *ref_ptr, int ref_stride, uint32_t *sse);
 
@@ -634,6 +640,9 @@ extern "C" {
     uint32_t svt_aom_sub_pixel_variance32x16_sse2(const uint8_t *src_ptr, int source_stride, int xoffset, int  yoffset, const uint8_t *ref_ptr, int ref_stride, uint32_t *sse);
     uint32_t svt_aom_sub_pixel_variance32x16_ssse3(const uint8_t *src_ptr, int source_stride, int xoffset, int  yoffset, const uint8_t *ref_ptr, int ref_stride, uint32_t *sse);
     uint32_t svt_aom_sub_pixel_variance32x16_avx2(const uint8_t *src_ptr, int source_stride, int xoffset, int  yoffset, const uint8_t *ref_ptr, int ref_stride, uint32_t *sse);
+#if SUB_PIXEL_VAR_AVX512
+    uint32_t svt_aom_sub_pixel_variance32x16_avx512(const uint8_t *src_ptr, int source_stride, int xoffset, int  yoffset, const uint8_t *ref_ptr, int ref_stride, uint32_t *sse);
+#endif
 #endif
     RTCD_EXTERN uint32_t(*svt_aom_sub_pixel_variance32x16)(const uint8_t *src_ptr, int source_stride, int xoffset, int  yoffset, const uint8_t *ref_ptr, int ref_stride, uint32_t *sse);
 
@@ -642,6 +651,9 @@ extern "C" {
     uint32_t svt_aom_sub_pixel_variance32x32_sse2(const uint8_t *src_ptr, int source_stride, int xoffset, int  yoffset, const uint8_t *ref_ptr, int ref_stride, uint32_t *sse);
     uint32_t svt_aom_sub_pixel_variance32x32_ssse3(const uint8_t *src_ptr, int source_stride, int xoffset, int  yoffset, const uint8_t *ref_ptr, int ref_stride, uint32_t *sse);
     uint32_t svt_aom_sub_pixel_variance32x32_avx2(const uint8_t *src_ptr, int source_stride, int xoffset, int  yoffset, const uint8_t *ref_ptr, int ref_stride, uint32_t *sse);
+#if SUB_PIXEL_VAR_AVX512
+    uint32_t svt_aom_sub_pixel_variance32x32_avx512(const uint8_t *src_ptr, int source_stride, int xoffset, int  yoffset, const uint8_t *ref_ptr, int ref_stride, uint32_t *sse);
+#endif
 #endif
     RTCD_EXTERN uint32_t(*svt_aom_sub_pixel_variance32x32)(const uint8_t *src_ptr, int source_stride, int xoffset, int  yoffset, const uint8_t *ref_ptr, int ref_stride, uint32_t *sse);
 
@@ -650,6 +662,9 @@ extern "C" {
     uint32_t svt_aom_sub_pixel_variance32x64_sse2(const uint8_t *src_ptr, int source_stride, int xoffset, int  yoffset, const uint8_t *ref_ptr, int ref_stride, uint32_t *sse);
     uint32_t svt_aom_sub_pixel_variance32x64_ssse3(const uint8_t *src_ptr, int source_stride, int xoffset, int  yoffset, const uint8_t *ref_ptr, int ref_stride, uint32_t *sse);
     uint32_t svt_aom_sub_pixel_variance32x64_avx2(const uint8_t *src_ptr, int source_stride, int xoffset, int  yoffset, const uint8_t *ref_ptr, int ref_stride, uint32_t *sse);
+#if SUB_PIXEL_VAR_AVX512
+    uint32_t svt_aom_sub_pixel_variance32x64_avx512(const uint8_t *src_ptr, int source_stride, int xoffset, int  yoffset, const uint8_t *ref_ptr, int ref_stride, uint32_t *sse);
+#endif
 #endif
     RTCD_EXTERN uint32_t(*svt_aom_sub_pixel_variance32x64)(const uint8_t *src_ptr, int source_stride, int xoffset, int  yoffset, const uint8_t *ref_ptr, int ref_stride, uint32_t *sse);
 
@@ -686,6 +701,9 @@ extern "C" {
     uint32_t svt_aom_sub_pixel_variance64x128_sse2(const uint8_t *src_ptr, int source_stride, int xoffset, int  yoffset, const uint8_t *ref_ptr, int ref_stride, uint32_t *sse);
     uint32_t svt_aom_sub_pixel_variance64x128_ssse3(const uint8_t *src_ptr, int source_stride, int xoffset, int  yoffset, const uint8_t *ref_ptr, int ref_stride, uint32_t *sse);
     uint32_t svt_aom_sub_pixel_variance64x128_avx2(const uint8_t *src_ptr, int source_stride, int xoffset, int  yoffset, const uint8_t *ref_ptr, int ref_stride, uint32_t *sse);
+#if SUB_PIXEL_VAR_AVX512
+    uint32_t svt_aom_sub_pixel_variance64x128_avx512(const uint8_t *src_ptr, int source_stride, int xoffset, int  yoffset, const uint8_t *ref_ptr, int ref_stride, uint32_t *sse);
+#endif
 #endif
     RTCD_EXTERN uint32_t(*svt_aom_sub_pixel_variance64x128)(const uint8_t *src_ptr, int source_stride, int xoffset, int  yoffset, const uint8_t *ref_ptr, int ref_stride, uint32_t *sse);
 
@@ -701,6 +719,9 @@ extern "C" {
     uint32_t svt_aom_sub_pixel_variance64x32_sse2(const uint8_t *src_ptr, int source_stride, int xoffset, int  yoffset, const uint8_t *ref_ptr, int ref_stride, uint32_t *sse);
     uint32_t svt_aom_sub_pixel_variance64x32_ssse3(const uint8_t *src_ptr, int source_stride, int xoffset, int  yoffset, const uint8_t *ref_ptr, int ref_stride, uint32_t *sse);
     uint32_t svt_aom_sub_pixel_variance64x32_avx2(const uint8_t *src_ptr, int source_stride, int xoffset, int  yoffset, const uint8_t *ref_ptr, int ref_stride, uint32_t *sse);
+#if SUB_PIXEL_VAR_AVX512
+    uint32_t svt_aom_sub_pixel_variance64x32_avx512(const uint8_t *src_ptr, int source_stride, int xoffset, int  yoffset, const uint8_t *ref_ptr, int ref_stride, uint32_t *sse);
+#endif
 #endif
     RTCD_EXTERN uint32_t(*svt_aom_sub_pixel_variance64x32)(const uint8_t *src_ptr, int source_stride, int xoffset, int  yoffset, const uint8_t *ref_ptr, int ref_stride, uint32_t *sse);
 
@@ -709,6 +730,9 @@ extern "C" {
     uint32_t svt_aom_sub_pixel_variance64x64_sse2(const uint8_t *src_ptr, int source_stride, int xoffset, int  yoffset, const uint8_t *ref_ptr, int ref_stride, uint32_t *sse);
     uint32_t svt_aom_sub_pixel_variance64x64_ssse3(const uint8_t *src_ptr, int source_stride, int xoffset, int  yoffset, const uint8_t *ref_ptr, int ref_stride, uint32_t *sse);
     uint32_t svt_aom_sub_pixel_variance64x64_avx2(const uint8_t *src_ptr, int source_stride, int xoffset, int  yoffset, const uint8_t *ref_ptr, int ref_stride, uint32_t *sse);
+#if SUB_PIXEL_VAR_AVX512
+    uint32_t svt_aom_sub_pixel_variance64x64_avx512(const uint8_t *src_ptr, int source_stride, int xoffset, int  yoffset, const uint8_t *ref_ptr, int ref_stride, uint32_t *sse);
+#endif
 #endif
     RTCD_EXTERN uint32_t(*svt_aom_sub_pixel_variance64x64)(const uint8_t *src_ptr, int source_stride, int xoffset, int  yoffset, const uint8_t *ref_ptr, int ref_stride, uint32_t *sse);
 

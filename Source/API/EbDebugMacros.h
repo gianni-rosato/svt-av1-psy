@@ -311,6 +311,10 @@ extern "C" {
 #define TUNE_REDESIGN_TF_CTRLS                 1 // Improve TF ctrls, and TF performance
 
 #define FIX_GM_R2R                             1 // Fix GM initialization
+
+#if FTR_PRUNED_SUBPEL_TREE
+#define SUB_PIXEL_VAR_AVX512                  1 // svt_aom_sub_pixel_varianceWxH_avx512 for sizes 32x16, 32x32, 32x64, 64x32, 64x64, 64x128, 128x64, 128x128
+#endif
 // ============= END SVT_04 =============
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch

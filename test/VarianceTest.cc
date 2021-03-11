@@ -674,6 +674,23 @@ const TestParams kArraySubpelVariance_avx2[] = {
 INSTANTIATE_TEST_CASE_P(AVX2, AvxSubpelVarianceTest,
     ::testing::ValuesIn(kArraySubpelVariance_avx2));
 
+#if EN_AVX512_SUPPORT
+#if SUB_PIXEL_VAR_AVX512
+const TestParams kArraySubpelVariance_avx512[] = {
+    {7, 7, &svt_aom_sub_pixel_variance128x128_avx512, 0, &svt_aom_sub_pixel_variance128x128_c},
+    {7, 6, &svt_aom_sub_pixel_variance128x64_avx512, 0 , &svt_aom_sub_pixel_variance128x64_c},
+    {6, 7, &svt_aom_sub_pixel_variance64x128_avx512, 0 , &svt_aom_sub_pixel_variance64x128_c},
+    {6, 6, &svt_aom_sub_pixel_variance64x64_avx512, 0  , &svt_aom_sub_pixel_variance64x64_c},
+    {6, 5, &svt_aom_sub_pixel_variance64x32_avx512, 0  , &svt_aom_sub_pixel_variance64x32_c},
+    {5, 6, &svt_aom_sub_pixel_variance32x64_avx512, 0  , &svt_aom_sub_pixel_variance32x64_c},
+    {5, 5, &svt_aom_sub_pixel_variance32x32_avx512, 0  , &svt_aom_sub_pixel_variance32x32_c},
+    {5, 4, &svt_aom_sub_pixel_variance32x16_avx512, 0  , &svt_aom_sub_pixel_variance32x16_c}
+};
+INSTANTIATE_TEST_CASE_P(AVX512, AvxSubpelVarianceTest,
+    ::testing::ValuesIn(kArraySubpelVariance_avx512));
+#endif
+#endif
+
 TEST_P(AvxSubpelVarianceTest, Ref) {
     RefTest();
 }
