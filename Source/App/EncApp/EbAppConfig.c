@@ -2314,17 +2314,24 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncodePass pass[MAX_ENCODE
         return 1;
     }
 
+#if !DIS_2PASS_CRF
     int preset = MAX_ENC_PRESET;
     if (find_token(argc, argv, PRESET_TOKEN, config_string) == 0 ||
         find_token(argc, argv, ENCMODE_TOKEN, config_string) == 0) {
         preset = strtol(config_string, NULL, 0);
     }
+#endif
     int rc_mode = 0;
     if (find_token(argc, argv, RATE_CONTROL_ENABLE_TOKEN, config_string) == 0 ||
         find_token(argc, argv, "--rc", config_string) == 0)
         rc_mode = strtol(config_string, NULL, 0);
 
-    if (preset > 3 && rc_mode == 0) {
+#if DIS_2PASS_CRF
+    if (rc_mode == 0)
+#else
+    if (preset > 3 && rc_mode == 0)
+#endif
+    {
         fprintf(
             stderr,
             "\nWarn: --passes 2 CRF for preset > 3 is not supported yet, force single pass\n\n");

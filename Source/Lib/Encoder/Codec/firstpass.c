@@ -485,8 +485,6 @@ void setup_firstpass_data_seg(PictureParentControlSet *ppcs_ptr, int32_t segment
         for (uint32_t mb_x = (x_b64_start_idx << 2); mb_x < mb_x_end; mb_x++) {
             memset(firstpass_data->mb_stats + mb_x + mb_y * mb_cols, 0, sizeof(*firstpass_data->mb_stats));
             firstpass_data->mb_stats[mb_x + mb_y * mb_cols].image_data_start_row = INVALID_ROW;
-            //if (ppcs_ptr->picture_number==0)
-            //    printf("kelvin mbxy=(%d, %d) segindex=%d\n", mb_x, mb_y, segment_index);
         }
     }
 }
@@ -1166,8 +1164,6 @@ static EbErrorType first_pass_frame_seg(PictureParentControlSet *ppcs_ptr, int32
 
     for (uint32_t blk_index_y = (y_b64_start_idx * blks_in_b64); blk_index_y < blk_index_y_end; blk_index_y++) {
         for (uint32_t blk_index_x = (x_b64_start_idx * blks_in_b64); blk_index_x < blk_index_x_end; blk_index_x++) {
-            //if (ppcs_ptr->picture_number==0)
-            //    printf("kelvin mbxy=(%d, %d) segindex=%d\n", blk_index_x, blk_index_y, segment_index);
             blk_origin_x = blk_index_x * FORCED_BLK_SIZE;
             blk_origin_y = blk_index_y * FORCED_BLK_SIZE;
             me_sb_x      = blk_origin_x / me_sb_size;
@@ -1505,8 +1501,6 @@ void open_loop_first_pass(PictureParentControlSet *  ppcs_ptr,
     first_pass_frame_seg(ppcs_ptr, segment_index);
 #endif
     svt_block_on_mutex(ppcs_ptr->first_pass_mutex);
-    //printf("kelvin ------> open_loop_first_pass segment_index=%d, first_pass_seg_acc=%d, first_pass_seg_total_count=%d\n",
-    //        segment_index, ppcs_ptr->first_pass_seg_acc, ppcs_ptr->first_pass_seg_total_count);
     ppcs_ptr->first_pass_seg_acc++;
     if (ppcs_ptr->first_pass_seg_acc == ppcs_ptr->first_pass_seg_total_count) {
 #if !TUNE_FIRST_PASS_FRAME

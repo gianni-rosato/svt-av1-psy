@@ -6348,7 +6348,11 @@ int svt_av1_get_deltaq_offset(AomBitDepth bit_depth, int qindex, double beta, EB
 int svt_av1_rc_bits_per_mb(FrameType frame_type, int qindex, double correction_factor,
                            const int bit_depth, const int is_screen_content_type) {
     const double q          = svt_av1_convert_qindex_to_q(qindex, bit_depth);
+#if TUNE_VBR
+    int          enumerator = frame_type == KEY_FRAME ? 1400000 : 1000000;
+#else
     int          enumerator = frame_type == KEY_FRAME ? 2000000 : 1500000;
+#endif
     if (is_screen_content_type) {
         enumerator = frame_type == KEY_FRAME ? 1000000 : 750000;
     }
@@ -6448,6 +6452,7 @@ int av1_frame_type_qdelta_org(RATE_CONTROL *rc, GF_GROUP *gf_group, unsigned cha
     double                  rate_factor;
 
     rate_factor = rate_factor_deltas[rf_lvl];
+    //anaghdin: to remove?
     if (rf_lvl == GF_ARF_LOW) {
         rate_factor -= (gf_group->layer_depth[gf_group_index] - 2) * 0.1;
         rate_factor = AOMMAX(rate_factor, 1.0);
@@ -7186,6 +7191,40 @@ void process_tpl_stats_frame_kf_gfu_boost(PictureControlSet *pcs_ptr) {
         // As a results, we defined a factor to adjust r0
         if (pcs_ptr->parent_pcs_ptr->slice_type != 2) {
             double div_factor = 1;
+#if TUNE_TPL_VBR
+#if !FIX_SCD
+            double factor;
+#endif
+#if FTR_USE_LAD_TPL
+            if (scs_ptr->lad_mg)
+#if FIX_SCD
+            {
+                div_factor = pcs_ptr->parent_pcs_ptr->tpl_ctrls.r0_adjust_factor ?
+                    pcs_ptr->parent_pcs_ptr->used_tpl_frame_num * pcs_ptr->parent_pcs_ptr->tpl_ctrls.r0_adjust_factor :
+                    div_factor;
+            }
+#else
+                factor = pcs_ptr->parent_pcs_ptr->used_tpl_frame_num >= 16 ? 1.4 : 2.2;
+#endif
+#else
+        else
+
+            if (pcs_ptr->parent_pcs_ptr->tpl_trailing_frame_count == 0)
+                factor = 2;
+            else if (pcs_ptr->parent_pcs_ptr->tpl_trailing_frame_count <= 6)
+                factor = 1.5;
+            else
+                factor = 1;
+#endif
+#if !FIX_SCD
+        if (pcs_ptr->parent_pcs_ptr->pd_window_count == scs_ptr->scd_delay)
+            div_factor = factor;
+        else if (pcs_ptr->parent_pcs_ptr->pd_window_count <= 1)
+            div_factor = 1.0 / factor;
+#endif
+
+
+#else
             double factor;
             if (pcs_ptr->parent_pcs_ptr->tpl_trailing_frame_count == 0)
                 factor = 2;
@@ -7198,6 +7237,7 @@ void process_tpl_stats_frame_kf_gfu_boost(PictureControlSet *pcs_ptr) {
                 div_factor = factor;
             else if (rc->frames_to_key <= (int)pcs_ptr->parent_pcs_ptr->tpl_group_size)
                 div_factor = 1.0 / factor;
+#endif
             pcs_ptr->parent_pcs_ptr->r0 = pcs_ptr->parent_pcs_ptr->r0 / div_factor;
         } else if (pcs_ptr->parent_pcs_ptr->frm_hdr.frame_type != KEY_FRAME) {
             double factor;
@@ -7601,6 +7641,7 @@ static int rc_pick_q_and_bounds(PictureControlSet *pcs_ptr) {
 
     adjust_active_best_and_worst_quality_org(
         pcs_ptr, rc, &active_worst_quality, &active_best_quality);
+
     q = get_q(pcs_ptr, active_worst_quality, active_best_quality);
     // Special case when we are targeting the max allowed rate.
 #if FTR_VBR_MT
@@ -8837,6 +8878,25 @@ void *rate_control_kernel(void *input_ptr) {
                             (int32_t)scs_ptr->static_config.min_qp_allowed,
                             (int32_t)scs_ptr->static_config.max_qp_allowed,
                             (frm_hdr->quantization_params.base_q_idx + 2) >> 2);
+
+#if TUNE_VBR
+                        //Limiting the QP based on the QP of the Reference frame
+                        if ((int32_t)pcs_ptr->temporal_layer_index != 0) {
+                            uint32_t ref_qp = 0;
+                            if (pcs_ptr->ref_slice_type_array[0][0] != I_SLICE)
+                                ref_qp = pcs_ptr->ref_pic_qp_array[0][0];
+                            if ((pcs_ptr->slice_type == B_SLICE) &&
+                                (pcs_ptr->ref_slice_type_array[1][0] != I_SLICE))
+                                ref_qp = MAX(ref_qp, pcs_ptr->ref_pic_qp_array[1][0]);
+                            if (ref_qp > 0 && pcs_ptr->picture_qp < ref_qp ) {
+                                pcs_ptr->picture_qp = (uint8_t)CLIP3(scs_ptr->static_config.min_qp_allowed,
+                                    scs_ptr->static_config.max_qp_allowed,
+                                    (uint8_t)(ref_qp ));
+
+                                frm_hdr->quantization_params.base_q_idx = quantizer_to_qindex[pcs_ptr->picture_qp];
+                            }
+                        }
+#endif
 
                     } else {
                         frame_level_rc_input_picture_vbr(pcs_ptr,

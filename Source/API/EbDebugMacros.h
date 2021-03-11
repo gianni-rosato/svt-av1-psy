@@ -290,6 +290,9 @@ extern "C" {
 #define      CLN_REST                        1 // No restoration buffers when it is OFF
 #define      CLN_OIS                         1 // Move to in loop OIS (OIS is now done in TPL)
 
+#define TUNE_TPL_VBR                          1 // Tune VBR based on the latest tpl changes
+#define DIS_2PASS_CRF                         1 // Disable 2pass CRF
+#define TUNE_VBR                              1 // Tune VBR to limit qp decrease in non base layer. Update the default rate tables
 // ============= END SVT_04 =============
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
