@@ -436,6 +436,33 @@ INSTANTIATE_TEST_CASE_P(
         VarianceParam(128, 128, &svt_aom_variance128x128_c,
                       &svt_aom_variance128x128_avx2)));
 
+#if EN_AVX512_SUPPORT
+#if VARIANCE_AVX512
+INSTANTIATE_TEST_CASE_P(
+    Variance_AVX512, VarianceTest,
+    ::testing::Values(VarianceParam(32, 8, &svt_aom_variance32x8_c,
+                                    &svt_aom_variance32x8_avx512),
+                      VarianceParam(32, 16, &svt_aom_variance32x16_c,
+                                    &svt_aom_variance32x16_avx512),
+                      VarianceParam(32, 32, &svt_aom_variance32x32_c,
+                                    &svt_aom_variance32x32_avx512),
+                      VarianceParam(32, 64, &svt_aom_variance32x64_c,
+                                    &svt_aom_variance32x64_avx512),
+                      VarianceParam(64, 16, &svt_aom_variance64x16_c,
+                                    &svt_aom_variance64x16_avx512),
+                      VarianceParam(64, 32, &svt_aom_variance64x32_c,
+                                    &svt_aom_variance64x32_avx512),
+                      VarianceParam(64, 64, &svt_aom_variance64x64_c,
+                                    &svt_aom_variance64x64_avx512),
+                      VarianceParam(64, 128, &svt_aom_variance64x128_c,
+                                    &svt_aom_variance64x128_avx512),
+                      VarianceParam(128, 64, &svt_aom_variance128x64_c,
+                                    &svt_aom_variance128x64_avx512),
+                      VarianceParam(128, 128, &svt_aom_variance128x128_c,
+                                    &svt_aom_variance128x128_avx512)));
+#endif
+#endif
+
 #if 1 // FTR_PRUNED_SUBPEL_TREE
 typedef unsigned int(*SubpixVarMxNFunc)(const uint8_t *a, int a_stride,
     int xoffset, int yoffset,

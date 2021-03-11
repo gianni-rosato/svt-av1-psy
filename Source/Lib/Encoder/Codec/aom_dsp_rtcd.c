@@ -254,6 +254,18 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
     SET_AVX2(svt_aom_variance16x16, svt_aom_variance16x16_c, svt_aom_variance16x16_avx2);
     SET_AVX2(svt_aom_variance16x32, svt_aom_variance16x32_c, svt_aom_variance16x32_avx2);
     SET_AVX2(svt_aom_variance16x64, svt_aom_variance16x64_c, svt_aom_variance16x64_avx2);
+#if VARIANCE_AVX512
+    SET_AVX2_AVX512(svt_aom_variance32x8, svt_aom_variance32x8_c, svt_aom_variance32x8_avx2, svt_aom_variance32x8_avx512);
+    SET_AVX2_AVX512(svt_aom_variance32x16, svt_aom_variance32x16_c, svt_aom_variance32x16_avx2, svt_aom_variance32x16_avx512);
+    SET_AVX2_AVX512(svt_aom_variance32x32, svt_aom_variance32x32_c, svt_aom_variance32x32_avx2, svt_aom_variance32x32_avx512);
+    SET_AVX2_AVX512(svt_aom_variance32x64, svt_aom_variance32x64_c, svt_aom_variance32x64_avx2, svt_aom_variance32x64_avx512);
+    SET_AVX2_AVX512(svt_aom_variance64x16, svt_aom_variance64x16_c, svt_aom_variance64x16_avx2, svt_aom_variance64x16_avx512);
+    SET_AVX2_AVX512(svt_aom_variance64x32, svt_aom_variance64x32_c, svt_aom_variance64x32_avx2, svt_aom_variance64x32_avx512);
+    SET_AVX2_AVX512(svt_aom_variance64x64, svt_aom_variance64x64_c, svt_aom_variance64x64_avx2, svt_aom_variance64x64_avx512);
+    SET_AVX2_AVX512(svt_aom_variance64x128, svt_aom_variance64x128_c, svt_aom_variance64x128_avx2, svt_aom_variance64x128_avx512);
+    SET_AVX2_AVX512(svt_aom_variance128x64, svt_aom_variance128x64_c, svt_aom_variance128x64_avx2, svt_aom_variance128x64_avx512);
+    SET_AVX2_AVX512(svt_aom_variance128x128, svt_aom_variance128x128_c, svt_aom_variance128x128_avx2, svt_aom_variance128x128_avx512);
+#else
     SET_AVX2(svt_aom_variance32x8, svt_aom_variance32x8_c, svt_aom_variance32x8_avx2);
     SET_AVX2(svt_aom_variance32x16, svt_aom_variance32x16_c, svt_aom_variance32x16_avx2);
     SET_AVX2(svt_aom_variance32x32, svt_aom_variance32x32_c, svt_aom_variance32x32_avx2);
@@ -264,6 +276,7 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
     SET_AVX2(svt_aom_variance64x128, svt_aom_variance64x128_c, svt_aom_variance64x128_avx2);
     SET_AVX2(svt_aom_variance128x64, svt_aom_variance128x64_c, svt_aom_variance128x64_avx2);
     SET_AVX2(svt_aom_variance128x128, svt_aom_variance128x128_c, svt_aom_variance128x128_avx2);
+#endif
 
     //VARIANCEHBP
     SET_ONLY_C(svt_aom_highbd_10_variance4x4, svt_aom_highbd_10_variance4x4_c);
