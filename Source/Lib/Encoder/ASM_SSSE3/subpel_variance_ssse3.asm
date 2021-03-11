@@ -262,7 +262,7 @@ SECTION .text
 %if %1 == 16
   movu                 m0, [srcq]
   movu                 m4, [srcq+src_strideq]
-  mova                 m1, [dstq]
+  movu                 m1, [dstq]
   pavgb                m0, m4
   punpckhbw            m3, m1, m5
 %if %2 == 1 ; avg
@@ -362,7 +362,7 @@ SECTION .text
 %if %1 == 16
   movu                 m0, [srcq]
   movu                 m4, [srcq+src_strideq]
-  mova                 m1, [dstq]
+  movu                 m1, [dstq]
   punpckhbw            m2, m0, m4
   punpcklbw            m0, m4
   pmaddubsw            m2, filter_y_a
@@ -444,7 +444,7 @@ SECTION .text
 %if %1 == 16
   movu                 m0, [srcq]
   movu                 m4, [srcq+1]
-  mova                 m1, [dstq]
+  movu                 m1, [dstq]
   pavgb                m0, m4
   punpckhbw            m3, m1, m5
 %if %2 == 1 ; avg
@@ -523,7 +523,7 @@ SECTION .text
 .x_half_y_half_loop:
   movu                 m4, [srcq]
   movu                 m3, [srcq+1]
-  mova                 m1, [dstq]
+  movu                 m1, [dstq]
   pavgb                m4, m3
   punpckhbw            m3, m1, m5
   pavgb                m0, m4
@@ -650,7 +650,7 @@ SECTION .text
 .x_half_y_other_loop:
   movu                 m4, [srcq]
   movu                 m2, [srcq+1]
-  mova                 m1, [dstq]
+  movu                 m1, [dstq]
   pavgb                m4, m2
   punpckhbw            m2, m0, m4
   punpcklbw            m0, m4
@@ -767,7 +767,7 @@ SECTION .text
 %if %1 == 16
   movu                 m0, [srcq]
   movu                 m4, [srcq+1]
-  mova                 m1, [dstq]
+  movu                 m1, [dstq]
   punpckhbw            m2, m0, m4
   punpcklbw            m0, m4
   pmaddubsw            m2, filter_x_a
@@ -886,7 +886,7 @@ SECTION .text
 .x_other_y_half_loop:
   movu                 m4, [srcq]
   movu                 m3, [srcq+1]
-  mova                 m1, [dstq]
+  movu                 m1, [dstq]
   punpckhbw            m2, m4, m3
   punpcklbw            m4, m3
   pmaddubsw            m2, filter_x_a
@@ -1030,7 +1030,7 @@ SECTION .text
 .x_other_y_other_loop:
   movu                 m4, [srcq]
   movu                 m3, [srcq+1]
-  mova                 m1, [dstq]
+  movu                 m1, [dstq]
   punpckhbw            m2, m4, m3
   punpcklbw            m4, m3
   pmaddubsw            m2, filter_x_a

@@ -269,7 +269,7 @@ SECTION .text
 %if %1 == 16
   movu                 m0, [srcq]
   movu                 m4, [srcq+src_strideq]
-  mova                 m1, [dstq]
+  movu                 m1, [dstq]
   pavgb                m0, m4
   punpckhbw            m3, m1, m5
 %if %2 == 1 ; avg
@@ -370,7 +370,7 @@ SECTION .text
 %if %1 == 16
   movu                 m0, [srcq]
   movu                 m4, [srcq+src_strideq]
-  mova                 m1, [dstq]
+  movu                 m1, [dstq]
   punpckhbw            m2, m0, m5
   punpckhbw            m3, m4, m5
   punpcklbw            m0, m5
@@ -468,7 +468,7 @@ SECTION .text
 %if %1 == 16
   movu                 m0, [srcq]
   movu                 m4, [srcq+1]
-  mova                 m1, [dstq]
+  movu                 m1, [dstq]
   pavgb                m0, m4
   punpckhbw            m3, m1, m5
 %if %2 == 1 ; avg
@@ -547,7 +547,7 @@ SECTION .text
 .x_half_y_half_loop:
   movu                 m4, [srcq]
   movu                 m3, [srcq+1]
-  mova                 m1, [dstq]
+  movu                 m1, [dstq]
   pavgb                m4, m3
   punpckhbw            m3, m1, m5
   pavgb                m0, m4
@@ -675,7 +675,7 @@ SECTION .text
 .x_half_y_other_loop:
   movu                 m4, [srcq]
   movu                 m2, [srcq+1]
-  mova                 m1, [dstq]
+  movu                 m1, [dstq]
   pavgb                m4, m2
   punpckhbw            m2, m0, m5
   punpckhbw            m3, m4, m5
@@ -804,7 +804,7 @@ SECTION .text
 %if %1 == 16
   movu                 m0, [srcq]
   movu                 m4, [srcq+1]
-  mova                 m1, [dstq]
+  movu                 m1, [dstq]
   punpckhbw            m2, m0, m5
   punpckhbw            m3, m4, m5
   punpcklbw            m0, m5
@@ -954,7 +954,7 @@ SECTION .text
   paddw                m2, filter_rnd
   paddw                m4, m3
   paddw                m2, m1
-  mova                 m1, [dstq]
+  movu                 m1, [dstq]
   psraw                m4, 4
   psraw                m2, 4
   punpckhbw            m3, m1, m5
@@ -1136,7 +1136,7 @@ SECTION .text
   pmullw               m0, filter_y_a
   pmullw               m3, filter_y_b
   paddw                m2, m1
-  mova                 m1, [dstq]
+  movu                 m1, [dstq]
   paddw                m0, filter_rnd
   psraw                m2, 4
   paddw                m0, m3
