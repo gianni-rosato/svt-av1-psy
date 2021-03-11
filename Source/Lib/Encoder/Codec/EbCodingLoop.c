@@ -3011,7 +3011,7 @@ EB_EXTERN void av1_encode_decode(SequenceControlSet *scs_ptr, PictureControlSet 
                     //        INTER
                     //********************************
                     // Perform Merge/Skip Decision if the mode coming from MD is merge. for the First CU in Row merge will remain as is.
-                    if (context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].merge_flag == EB_TRUE) {
+                    if (context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].skip_mode_allowed == EB_TRUE) {
                         is_blk_skip =
                             md_context_ptr->md_ep_pipe_sb[blk_ptr->mds_idx].skip_cost <=
                                     md_context_ptr->md_ep_pipe_sb[blk_ptr->mds_idx].merge_cost
@@ -3271,7 +3271,7 @@ EB_EXTERN void av1_encode_decode(SequenceControlSet *scs_ptr, PictureControlSet 
                                                   ? PICTURE_BUFFER_DESC_FULL_MASK
                                                   : PICTURE_BUFFER_DESC_LUMA_MASK;
 #endif
-                    if (context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].merge_flag == EB_FALSE) {
+                    if (context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].skip_mode_allowed == EB_FALSE) {
                         for (uint16_t tu_it = 0; tu_it < tot_tu; tu_it++) {
                             context_ptr->txb_itr = (uint8_t)tu_it;
                             uint8_t uv_pass =
@@ -3602,9 +3602,9 @@ EB_EXTERN void av1_encode_decode(SequenceControlSet *scs_ptr, PictureControlSet 
                     }
 
                     //Set Final CU data flags after skip/Merge decision.
-                    if (context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].merge_flag == EB_TRUE) {
+                    if (context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].skip_mode_allowed == EB_TRUE) {
                         blk_ptr->skip_flag = (is_blk_skip) ? EB_TRUE : EB_FALSE;
-                        context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].merge_flag =
+                        context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].skip_mode_allowed =
                             (is_blk_skip) ? EB_FALSE : EB_TRUE;
                     }
 
@@ -3685,9 +3685,8 @@ EB_EXTERN void av1_encode_decode(SequenceControlSet *scs_ptr, PictureControlSet 
                             context_ptr->blk_ptr->quantized_dc[1][context_ptr->txb_itr] = 0;
                             context_ptr->blk_ptr->quantized_dc[2][context_ptr->txb_itr] = 0;
 #endif
-                        } else if (context_ptr->md_context
-                                       ->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds]
-                                       .merge_flag == EB_TRUE) {
+                        } else if (context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].skip_mode_allowed == EB_TRUE) {
+
                             //inter mode  2
 
                             av1_encode_loop_func_table[is_16bit](
@@ -3883,7 +3882,7 @@ EB_EXTERN void av1_encode_decode(SequenceControlSet *scs_ptr, PictureControlSet 
                     // Force Skip if MergeFlag == TRUE && RootCbf == 0
 
                     if (blk_ptr->skip_flag == EB_FALSE &&
-                        context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].merge_flag == EB_TRUE &&
+                        context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].skip_mode_allowed == EB_TRUE &&
                         blk_ptr->block_has_coeff == EB_FALSE) {
                         blk_ptr->skip_flag = EB_TRUE;
                     }

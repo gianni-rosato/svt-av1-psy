@@ -80,7 +80,7 @@ typedef struct ModeDecisionCandidate {
     };
 #endif
     uint8_t      skip_flag;
-    EbBool       merge_flag;
+    EbBool       skip_mode_allowed;
     uint16_t     count_non_zero_coeffs;
     uint8_t      type;
     PaletteInfo *palette_info;

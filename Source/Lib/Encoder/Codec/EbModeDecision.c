@@ -1040,7 +1040,7 @@ void unipred_3x3_candidates_injection(const SequenceControlSet *scs_ptr, Picture
                         cand_array[cand_total_cnt].distortion_ready        = 0;
 #endif
                         cand_array[cand_total_cnt].use_intrabc             = 0;
-                        cand_array[cand_total_cnt].merge_flag              = EB_FALSE;
+                        cand_array[cand_total_cnt].skip_mode_allowed              = EB_FALSE;
                         cand_array[cand_total_cnt].prediction_direction[0] = (EbPredDirection)0;
 #if !CLN_MD_CANDS
                         cand_array[cand_total_cnt].inter_mode              = NEWMV;
@@ -1228,7 +1228,7 @@ void unipred_3x3_candidates_injection(const SequenceControlSet *scs_ptr, Picture
                             cand_array[cand_total_cnt].distortion_ready        = 0;
 #endif
                             cand_array[cand_total_cnt].use_intrabc             = 0;
-                            cand_array[cand_total_cnt].merge_flag              = EB_FALSE;
+                            cand_array[cand_total_cnt].skip_mode_allowed              = EB_FALSE;
                             cand_array[cand_total_cnt].prediction_direction[0] = (EbPredDirection)1;
 #if !CLN_MD_CANDS
                             cand_array[cand_total_cnt].inter_mode              = NEWMV;
@@ -1506,7 +1506,7 @@ void bipred_3x3_candidates_injection(const SequenceControlSet *scs_ptr, PictureC
                             cand_array[cand_total_cnt].distortion_ready = 0;
 #endif
                             cand_array[cand_total_cnt].use_intrabc      = 0;
-                            cand_array[cand_total_cnt].merge_flag       = EB_FALSE;
+                            cand_array[cand_total_cnt].skip_mode_allowed       = EB_FALSE;
 #if !CLN_MD_CANDS
                             cand_array[cand_total_cnt].is_new_mv        = 1;
 #endif
@@ -1734,7 +1734,7 @@ void bipred_3x3_candidates_injection(const SequenceControlSet *scs_ptr, PictureC
                             cand_array[cand_total_cnt].distortion_ready = 0;
 #endif
                             cand_array[cand_total_cnt].use_intrabc      = 0;
-                            cand_array[cand_total_cnt].merge_flag       = EB_FALSE;
+                            cand_array[cand_total_cnt].skip_mode_allowed       = EB_FALSE;
 #if !CLN_MD_CANDS
                             cand_array[cand_total_cnt].is_new_mv  = 1;
 #endif
@@ -2006,7 +2006,7 @@ void inject_mvp_candidates_ii(struct ModeDecisionContext *context_ptr, PictureCo
                     cand_array[cand_idx].distortion_ready = 0;
 #endif
                     cand_array[cand_idx].use_intrabc = 0;
-                    cand_array[cand_idx].merge_flag = EB_FALSE;
+                    cand_array[cand_idx].skip_mode_allowed = EB_FALSE;
                     cand_array[cand_idx].prediction_direction[0] = list_idx;
 #if !CLN_MD_CANDS
                     cand_array[cand_idx].is_new_mv = 0;
@@ -2166,7 +2166,7 @@ void inject_mvp_candidates_ii(struct ModeDecisionContext *context_ptr, PictureCo
                         cand_array[cand_idx].distortion_ready = 0;
 #endif
                         cand_array[cand_idx].use_intrabc = 0;
-                        cand_array[cand_idx].merge_flag = EB_FALSE;
+                        cand_array[cand_idx].skip_mode_allowed = EB_FALSE;
                         cand_array[cand_idx].prediction_direction[0] = list_idx;
 #if !CLN_MD_CANDS
                         cand_array[cand_idx].is_new_mv = 0;
@@ -2368,7 +2368,7 @@ void inject_mvp_candidates_ii(struct ModeDecisionContext *context_ptr, PictureCo
                         cand_array[cand_idx].distortion_ready = 0;
 #endif
                         cand_array[cand_idx].use_intrabc = 0;
-                        cand_array[cand_idx].merge_flag =
+                        cand_array[cand_idx].skip_mode_allowed =
                             cur_type == MD_COMP_AVG && is_skip_mode ? EB_TRUE : EB_FALSE;
 
                         cand_array[cand_idx].prediction_direction[0] = BI_PRED;
@@ -2541,7 +2541,7 @@ void inject_mvp_candidates_ii(struct ModeDecisionContext *context_ptr, PictureCo
                             cand_array[cand_idx].distortion_ready = 0;
 #endif
                             cand_array[cand_idx].use_intrabc = 0;
-                            cand_array[cand_idx].merge_flag = EB_FALSE;
+                            cand_array[cand_idx].skip_mode_allowed = EB_FALSE;
                             cand_array[cand_idx].prediction_direction[0] = BI_PRED;
 #if !CLN_MD_CANDS
                             cand_array[cand_idx].is_new_mv = 0;
@@ -2764,7 +2764,7 @@ void inject_new_nearest_new_comb_candidates(const SequenceControlSet *  scs_ptr,
 #endif
                             cand_array[cand_idx].use_intrabc = 0;
 
-                            cand_array[cand_idx].merge_flag = EB_FALSE;
+                            cand_array[cand_idx].skip_mode_allowed = EB_FALSE;
 
                             cand_array[cand_idx].prediction_direction[0] = BI_PRED;
 #if !CLN_MD_CANDS
@@ -2932,7 +2932,7 @@ void inject_new_nearest_new_comb_candidates(const SequenceControlSet *  scs_ptr,
                             cand_array[cand_idx].distortion_ready = 0;
 #endif
                             cand_array[cand_idx].use_intrabc = 0;
-                            cand_array[cand_idx].merge_flag = EB_FALSE;
+                            cand_array[cand_idx].skip_mode_allowed = EB_FALSE;
                             cand_array[cand_idx].prediction_direction[0] = BI_PRED;
 #if !CLN_MD_CANDS
                             cand_array[cand_idx].is_new_mv = 0;
@@ -3091,7 +3091,7 @@ void inject_new_nearest_new_comb_candidates(const SequenceControlSet *  scs_ptr,
                                 cand_array[cand_idx].distortion_ready = 0;
 #endif
                                 cand_array[cand_idx].use_intrabc = 0;
-                                cand_array[cand_idx].merge_flag = EB_FALSE;
+                                cand_array[cand_idx].skip_mode_allowed = EB_FALSE;
 
                                 cand_array[cand_idx].prediction_direction[0] = BI_PRED;
 #if !CLN_MD_CANDS
@@ -3241,7 +3241,7 @@ void inject_new_nearest_new_comb_candidates(const SequenceControlSet *  scs_ptr,
                                 cand_array[cand_idx].distortion_ready = 0;
 #endif
                                 cand_array[cand_idx].use_intrabc = 0;
-                                cand_array[cand_idx].merge_flag = EB_FALSE;
+                                cand_array[cand_idx].skip_mode_allowed = EB_FALSE;
 
                                 cand_array[cand_idx].prediction_direction[0] = BI_PRED;
 #if !CLN_MD_CANDS
@@ -3396,7 +3396,7 @@ void inject_warped_motion_candidates(
                 cand_array[can_idx].distortion_ready = 0;
 #endif
                 cand_array[can_idx].use_intrabc = 0;
-                cand_array[can_idx].merge_flag = EB_FALSE;
+                cand_array[can_idx].skip_mode_allowed = EB_FALSE;
                 cand_array[can_idx].prediction_direction[0] = list_idx;
 #if !CLN_MD_CANDS
                 cand_array[can_idx].is_new_mv = 0;
@@ -3472,7 +3472,7 @@ void inject_warped_motion_candidates(
                     cand_array[can_idx].distortion_ready = 0;
 #endif
                     cand_array[can_idx].use_intrabc = 0;
-                    cand_array[can_idx].merge_flag = EB_FALSE;
+                    cand_array[can_idx].skip_mode_allowed = EB_FALSE;
                     cand_array[can_idx].prediction_direction[0] = list_idx;
 #if !CLN_MD_CANDS
                     cand_array[can_idx].is_new_mv = 0;
@@ -3560,7 +3560,7 @@ void inject_warped_motion_candidates(
                     cand_array[can_idx].distortion_ready = 0;
 #endif
                     cand_array[can_idx].use_intrabc = 0;
-                    cand_array[can_idx].merge_flag = EB_FALSE;
+                    cand_array[can_idx].skip_mode_allowed = EB_FALSE;
                     cand_array[can_idx].prediction_direction[0] = (EbPredDirection)0;
 #if !CLN_MD_CANDS
                     cand_array[can_idx].inter_mode = NEWMV;
@@ -3663,7 +3663,7 @@ void inject_warped_motion_candidates(
                     cand_array[can_idx].distortion_ready = 0;
 #endif
                     cand_array[can_idx].use_intrabc = 0;
-                    cand_array[can_idx].merge_flag = EB_FALSE;
+                    cand_array[can_idx].skip_mode_allowed = EB_FALSE;
                     cand_array[can_idx].prediction_direction[0] = (EbPredDirection)1;
 #if !CLN_MD_CANDS
                     cand_array[can_idx].inter_mode = NEWMV;
@@ -4086,7 +4086,7 @@ void inject_new_candidates(const SequenceControlSet *  scs_ptr,
                     cand_array[cand_total_cnt].distortion_ready        = 0;
 #endif
                     cand_array[cand_total_cnt].use_intrabc             = 0;
-                    cand_array[cand_total_cnt].merge_flag              = EB_FALSE;
+                    cand_array[cand_total_cnt].skip_mode_allowed              = EB_FALSE;
                     cand_array[cand_total_cnt].prediction_direction[0] = (EbPredDirection)0;
 #if !CLN_MD_CANDS
                     cand_array[cand_total_cnt].inter_mode              = NEWMV;
@@ -4256,7 +4256,7 @@ void inject_new_candidates(const SequenceControlSet *  scs_ptr,
                         cand_array[cand_total_cnt].distortion_ready        = 0;
 #endif
                         cand_array[cand_total_cnt].use_intrabc             = 0;
-                        cand_array[cand_total_cnt].merge_flag              = EB_FALSE;
+                        cand_array[cand_total_cnt].skip_mode_allowed              = EB_FALSE;
                         cand_array[cand_total_cnt].prediction_direction[0] = (EbPredDirection)1;
 #if !CLN_MD_CANDS
                         cand_array[cand_total_cnt].inter_mode              = NEWMV;
@@ -4445,7 +4445,7 @@ void inject_new_candidates(const SequenceControlSet *  scs_ptr,
 #endif
                             cand_array[cand_total_cnt].use_intrabc      = 0;
 
-                            cand_array[cand_total_cnt].merge_flag = EB_FALSE;
+                            cand_array[cand_total_cnt].skip_mode_allowed = EB_FALSE;
 #if !CLN_MD_CANDS
                             cand_array[cand_total_cnt].is_new_mv  = 1;
 #endif
@@ -4662,7 +4662,7 @@ void inject_global_candidates(const SequenceControlSet *  scs_ptr,
                     cand_array[cand_total_cnt].distortion_ready = 0;
 #endif
                     cand_array[cand_total_cnt].use_intrabc = 0;
-                    cand_array[cand_total_cnt].merge_flag = EB_FALSE;
+                    cand_array[cand_total_cnt].skip_mode_allowed = EB_FALSE;
                     cand_array[cand_total_cnt].prediction_direction[0] = list_idx;
 #if !CLN_MD_CANDS
                     cand_array[cand_total_cnt].is_new_mv = 0;
@@ -4840,7 +4840,7 @@ void inject_global_candidates(const SequenceControlSet *  scs_ptr,
 #endif
                     cand_array[cand_total_cnt].use_intrabc = 0;
 
-                    cand_array[cand_total_cnt].merge_flag = EB_FALSE;
+                    cand_array[cand_total_cnt].skip_mode_allowed = EB_FALSE;
 
                     cand_array[cand_total_cnt].prediction_direction[0] = BI_PRED;
 #if !CLN_MD_CANDS
@@ -5012,7 +5012,7 @@ void inject_pme_candidates(
                         cand_array[cand_total_cnt].distortion_ready = 0;
 #endif
                         cand_array[cand_total_cnt].use_intrabc = 0;
-                        cand_array[cand_total_cnt].merge_flag = EB_FALSE;
+                        cand_array[cand_total_cnt].skip_mode_allowed = EB_FALSE;
                         cand_array[cand_total_cnt].prediction_direction[0] = list_idx;
 #if !CLN_MD_CANDS
                         cand_array[cand_total_cnt].inter_mode = NEWMV;
@@ -5221,7 +5221,7 @@ void inject_pme_candidates(
                         cand_array[cand_total_cnt].distortion_ready = 0;
 #endif
                         cand_array[cand_total_cnt].use_intrabc = 0;
-                        cand_array[cand_total_cnt].merge_flag = EB_FALSE;
+                        cand_array[cand_total_cnt].skip_mode_allowed = EB_FALSE;
 #if !CLN_MD_CANDS
                         cand_array[cand_total_cnt].is_new_mv = 1;
 #endif
@@ -5778,7 +5778,7 @@ void inject_intra_bc_candidates(PictureControlSet *pcs_ptr, ModeDecisionContext 
         //inter ralated
         cand_array[*cand_cnt].is_compound             = 0;
         cand_array[*cand_cnt].is_interintra_used      = 0;
-        cand_array[*cand_cnt].merge_flag              = EB_FALSE;
+        cand_array[*cand_cnt].skip_mode_allowed              = EB_FALSE;
         cand_array[*cand_cnt].prediction_direction[0] = UNI_PRED_LIST_0;
 #if !CLN_MD_CANDS
         cand_array[*cand_cnt].is_new_mv               = 0;
@@ -5976,7 +5976,7 @@ void  inject_intra_candidates(
                     int32_t  p_angle = mode_to_angle_map[(PredictionMode)open_loop_intra_candidate] + angle_delta * ANGLE_STEP;
                     if (!disable_z2_prediction || (p_angle <= 90 || p_angle >= 180)) {
                         cand_array[cand_total_cnt].type = INTRA_MODE;
-                        cand_array[cand_total_cnt].merge_flag = EB_FALSE;
+                        cand_array[cand_total_cnt].skip_mode_allowed = EB_FALSE;
                         cand_array[cand_total_cnt].palette_info = NULL;
                         cand_array[cand_total_cnt].intra_luma_mode = open_loop_intra_candidate;
 #if !CLN_MD_CANDS
@@ -6049,7 +6049,7 @@ void  inject_intra_candidates(
         }
         else {
             cand_array[cand_total_cnt].type = INTRA_MODE;
-            cand_array[cand_total_cnt].merge_flag = EB_FALSE;
+            cand_array[cand_total_cnt].skip_mode_allowed = EB_FALSE;
             cand_array[cand_total_cnt].palette_info = NULL;
             cand_array[cand_total_cnt].intra_luma_mode = open_loop_intra_candidate;
 #if !CLN_MD_CANDS
@@ -6156,7 +6156,7 @@ void  inject_filter_intra_candidates(
                 continue;
 
             cand_array[cand_total_cnt].type = INTRA_MODE;
-            cand_array[cand_total_cnt].merge_flag = EB_FALSE;
+            cand_array[cand_total_cnt].skip_mode_allowed = EB_FALSE;
             cand_array[cand_total_cnt].intra_luma_mode = DC_PRED;
 #if !CLN_MD_CANDS
             cand_array[cand_total_cnt].distortion_ready = 0;
@@ -6243,7 +6243,7 @@ void inject_zz_backup_candidate(
     cand_array[cand_total_cnt].distortion_ready = 0;
 #endif
     cand_array[cand_total_cnt].use_intrabc = 0;
-    cand_array[cand_total_cnt].merge_flag = EB_FALSE;
+    cand_array[cand_total_cnt].skip_mode_allowed = EB_FALSE;
     cand_array[cand_total_cnt].prediction_direction[0] = (EbPredDirection)0;
 #if !CLN_MD_CANDS
     cand_array[cand_total_cnt].inter_mode = NEWMV;
@@ -6344,7 +6344,7 @@ void  inject_palette_candidates(
         assert(palette_cand_array[cand_i].pmi.palette_size[0] < 9);
         //to re check these fields
         cand_array[can_total_cnt].type = INTRA_MODE;
-        cand_array[can_total_cnt].merge_flag = EB_FALSE;
+        cand_array[can_total_cnt].skip_mode_allowed = EB_FALSE;
         cand_array[can_total_cnt].intra_luma_mode = DC_PRED;
 #if !CLN_MD_CANDS
         cand_array[can_total_cnt].distortion_ready = 0;
@@ -6785,11 +6785,11 @@ uint32_t product_full_mode_decision(
         }
         // Inter Prediction
         pu_ptr->inter_pred_direction_index = candidate_ptr->prediction_direction[0];
-        context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].merge_flag = candidate_ptr->merge_flag;
+        context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].skip_mode_allowed = candidate_ptr->skip_mode_allowed;
         if (blk_ptr->prediction_mode_flag != INTER_MODE && blk_ptr->use_intrabc == 0)
         {
             pu_ptr->inter_pred_direction_index = 0x03;
-            context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].merge_flag = EB_FALSE;
+            context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].skip_mode_allowed = EB_FALSE;
         }
         pu_ptr->mv[REF_LIST_0].x = 0;
         pu_ptr->mv[REF_LIST_0].y = 0;

@@ -3060,8 +3060,11 @@ int32_t is_nontrans_global_motion(BlockSize                    sb_type,
 static INLINE int32_t av1_is_interp_needed(ModeDecisionCandidateBuffer *candidate_buffer_ptr,
                                            PictureControlSet *          picture_control_set_ptr,
                                            BlockSize                    bsize) {
-    if (candidate_buffer_ptr->candidate_ptr->merge_flag) return 0;
-
+#if OPT_IFS_FOR_SKIP_MODE
+    /*Disable check on skip_mode_allowed (i.e. skip_mode).  If IFS is selected, skip_mode will be disabled.*/
+#else
+    if (candidate_buffer_ptr->candidate_ptr->skip_mode_allowed) return 0;
+#endif
     if (candidate_buffer_ptr->candidate_ptr->motion_mode == WARPED_CAUSAL) return 0;
 
     if (is_nontrans_global_motion(bsize, candidate_buffer_ptr, picture_control_set_ptr)) return 0;
@@ -3342,6 +3345,11 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
             candidate_buffer_ptr->candidate_ptr->interp_filters = 0;
             switchable_rate = svt_av1_get_switchable_rate(candidate_buffer_ptr, cm, md_context_ptr);
         }
+#if OPT_IFS_FOR_SKIP_MODE
+        // If filters are non-zero, cannot use skip_mode. Opt to use IFS over skip_mode.
+        if (candidate_buffer_ptr->candidate_ptr->skip_mode_allowed && candidate_buffer_ptr->candidate_ptr->interp_filters != 0)
+            candidate_buffer_ptr->candidate_ptr->skip_mode_allowed = EB_FALSE;
+#endif
         // Update fast_luma_rate to take into account switchable_rate
         candidate_buffer_ptr->candidate_ptr->fast_luma_rate += switchable_rate;
     }

@@ -295,6 +295,9 @@ extern "C" {
 #define TUNE_VBR                              1 // Tune VBR to limit qp decrease in non base layer. Update the default rate tables
 #define VARIANCE_AVX512                       1 // svt_aom_varianceWxH_avx512 for sizes 32x64, 32x32, 32x16, 32x8, 64x16, 64x32, 64x64, 64x128, 128x64, 128x128
 #define LOG2_FN_PTR                           1 //Replace log2f_32() with svt_log2f()
+#define OPT_IFS_FOR_SKIP_MODE                 1 // Check IFS for skip_mode candidates; if IFS selected, disables skip_mode; rename merge_flag to skip_mode_allowed (no macro)
+#define FIX_UPDATE_COEFF_FLAGS                1 // If the cost of not sending coeffs is favourable, update the coeff flags to reflect the decision
+#define FIX_CHROMA_QUANT_MODE                 1 // Fix the prediction mode passed to the quant/inv. quant function for chroma
 // ============= END SVT_04 =============
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch

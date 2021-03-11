@@ -2026,7 +2026,7 @@ uint64_t av1_inter_fast_cost(
         SVT_LOG("av1_inter_fast_cost: Chroma error");
     rate = luma_rate + chroma_rate;
     // Assign fast cost
-    if (candidate_ptr->merge_flag) {
+    if (candidate_ptr->skip_mode_allowed) {
         uint64_t skip_mode_rate =
 #if CLN_FAST_COST
             ctx->md_rate_estimation_ptr->skip_mode_fac_bits[skip_mode_ctx][1];
@@ -2322,6 +2322,11 @@ EbErrorType av1_full_cost(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
             cb_distortion[0]                                     = cb_distortion[1];
             cr_distortion[0]                                     = cr_distortion[1];
             candidate_buffer_ptr->candidate_ptr->block_has_coeff = 0;
+#if FIX_UPDATE_COEFF_FLAGS
+            candidate_buffer_ptr->candidate_ptr->y_has_coeff = 0;
+            candidate_buffer_ptr->candidate_ptr->u_has_coeff = 0;
+            candidate_buffer_ptr->candidate_ptr->v_has_coeff = 0;
+#endif
         }
         // MD assumes skip_coeff_context=0:to evaluate updating skip_coeff_context
         if (candidate_buffer_ptr->candidate_ptr->block_has_coeff)
@@ -2511,11 +2516,20 @@ EbErrorType av1_merge_skip_full_cost(PictureControlSet *pcs_ptr, ModeDecisionCon
     *candidate_buffer_ptr->full_cost_merge_ptr = merge_cost;
     *candidate_buffer_ptr->full_cost_skip_ptr  = skip_cost;
     // Assigne merge flag
-    candidate_buffer_ptr->candidate_ptr->merge_flag = EB_TRUE;
+    candidate_buffer_ptr->candidate_ptr->skip_mode_allowed = EB_TRUE;
     // Assigne skip flag
 
     candidate_buffer_ptr->candidate_ptr->skip_flag = (skip_cost <= merge_cost) ? EB_TRUE : EB_FALSE;
 
+#if FIX_UPDATE_COEFF_FLAGS
+    // If skip_mode is selected, no coeffs can be sent
+    if (candidate_buffer_ptr->candidate_ptr->skip_flag) {
+        candidate_buffer_ptr->candidate_ptr->block_has_coeff = 0;
+        candidate_buffer_ptr->candidate_ptr->y_has_coeff = 0;
+        candidate_buffer_ptr->candidate_ptr->u_has_coeff = 0;
+        candidate_buffer_ptr->candidate_ptr->v_has_coeff = 0;
+    }
+#endif
     //CHKN:  skip_flag context is not accurate as MD does not keep skip info in sync with EncDec.
     candidate_buffer_ptr->candidate_ptr->total_rate      = (skip_cost <= merge_cost) ? skip_rate
                                                                                      : merge_rate;
@@ -2587,7 +2601,7 @@ EbErrorType av1_inter_full_cost(PictureControlSet *pcs_ptr, ModeDecisionContext 
                                 uint64_t *cb_coeff_bits, uint64_t *cr_coeff_bits, BlockSize bsize) {
     EbErrorType return_error = EB_ErrorNone;
 
-    if (candidate_buffer_ptr->candidate_ptr->merge_flag == EB_TRUE) {
+    if (candidate_buffer_ptr->candidate_ptr->skip_mode_allowed == EB_TRUE) {
         av1_merge_skip_full_cost(pcs_ptr,
                                  context_ptr,
                                  candidate_buffer_ptr,

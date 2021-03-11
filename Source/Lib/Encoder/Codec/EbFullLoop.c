@@ -2043,7 +2043,11 @@ void full_loop_r(SuperBlock *sb_ptr, ModeDecisionCandidateBuffer *candidate_buff
                 candidate_buffer,
                 context_ptr->cb_txb_skip_context,
                 context_ptr->cb_dc_sign_context,
+#if FIX_CHROMA_QUANT_MODE
+                candidate_buffer->candidate_ptr->pred_mode,
+#else
                 candidate_buffer->candidate_ptr->pred_mode >= NEARESTMV,
+#endif
                 candidate_buffer->candidate_ptr->use_intrabc,
                 full_lambda,
                 EB_FALSE);
@@ -2134,7 +2138,11 @@ void full_loop_r(SuperBlock *sb_ptr, ModeDecisionCandidateBuffer *candidate_buff
                 candidate_buffer,
                 context_ptr->cr_txb_skip_context,
                 context_ptr->cr_dc_sign_context,
+#if FIX_CHROMA_QUANT_MODE
+                candidate_buffer->candidate_ptr->pred_mode,
+#else
                 candidate_buffer->candidate_ptr->pred_mode >= NEARESTMV,
+#endif
                 candidate_buffer->candidate_ptr->use_intrabc,
                 full_lambda,
                 EB_FALSE);

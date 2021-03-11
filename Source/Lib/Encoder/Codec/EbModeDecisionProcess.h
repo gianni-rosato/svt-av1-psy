@@ -91,7 +91,7 @@ typedef struct MdBlkStruct {
     int32_t quantized_dc[3][MAX_TXB_COUNT];
 
 #endif
-    uint8_t merge_flag;
+    uint8_t   skip_mode_allowed;
 #if !CLN_NSQ_AND_STATS
     uint8_t   sse_gradian_band[NUMBER_OF_SHAPES];
 #endif
