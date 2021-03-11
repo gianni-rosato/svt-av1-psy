@@ -22,6 +22,10 @@ project(svt-av1 VERSION 0.8.6
 if(POLICY CMP0063)
   cmake_policy(SET CMP0063 NEW)
 endif()
+if(POLICY CMP0069)
+    cmake_policy(SET CMP0069 NEW)
+endif()
+
 
 set(CMAKE_C_VISIBILITY_PRESET hidden)
 # Default build type to release if the generator does not has its own set of build types
@@ -184,6 +188,32 @@ macro(check_both_flags_add)
     check_flags_add(CXX "${ARGV}")
 endmacro()
 
+macro(add_clike_and_ld_flags)
+    string(REPLACE ";" " " add_clike_and_ld_flags "${ARGV}")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${add_clike_and_ld_flags}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${add_clike_and_ld_flags}")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${add_clike_and_ld_flags}")
+    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${add_clike_and_ld_flags}")
+endmacro()
+
+
+option(SVT_AV1_LTO "Attempt to enable Link Time Optimization if available" OFF)
+if(SVT_AV1_LTO)
+    if(CMAKE_VERSION GREATER_EQUAL 3.9)
+        include(CheckIPOSupported)
+        check_ipo_supported(RESULT svt_av1_ipo_supported)
+        if(svt_av1_ipo_supported AND NOT DEFINED CMAKE_INTERPROCEDURAL_OPTIMIZATION)
+            set(CMAKE_INTERPROCEDURAL_OPTIMIZATION ON)
+        endif()
+    else()
+        if(MSVC)
+            add_clike_and_ld_flags(/LTCG:INCREMENTAL)
+        else()
+            add_clike_and_ld_flags(-flto)
+        endif()
+    endif()
+endif()
+
 check_both_flags_add(PREPEND -Wextra -Wformat -Wformat-security)
 
 if(MSVC)
@@ -309,14 +339,6 @@ include_directories(.)
 # Find out if we have threading available
 set(CMAKE_THREAD_PREFER_PTHREADS ON)
 find_package(Threads)
-
-macro(add_clike_and_ld_flags)
-    string(REPLACE ";" " " add_clike_and_ld_flags "${ARGV}")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${add_clike_and_ld_flags}")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${add_clike_and_ld_flags}")
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${add_clike_and_ld_flags}")
-    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${add_clike_and_ld_flags}")
-endmacro()
 
 string(TOLOWER "${SANITIZER}" SANITIZER)
 
