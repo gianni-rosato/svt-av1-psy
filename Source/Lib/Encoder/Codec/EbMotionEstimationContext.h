@@ -426,7 +426,9 @@ typedef struct MeContext {
     uint16_t   hme_level2_search_area_in_width_array[EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT];
     uint16_t   hme_level2_search_area_in_height_array[EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
     uint8_t    hme_decimation;
+#if !TUNE_REDESIGN_TF_CTRLS
     uint8_t    update_hme_search_center_flag;
+#endif
     HmeResults hme_results[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
     uint32_t   reduce_me_sr_divisor[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
 
@@ -475,9 +477,13 @@ typedef struct MeContext {
     EbBool                      is_used_as_reference_flag;
     EbDownScaledBufDescPtrArray me_ds_ref_array[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
     // tf
+#if !TUNE_REDESIGN_TF_CTRLS
     uint8_t      tf_hp;
+#endif
     uint8_t      tf_chroma;
+#if !TUNE_REDESIGN_TF_CTRLS
     uint64_t     tf_block_32x32_16x16_th;
+#endif
     int          tf_frame_index;
     int          tf_index_center;
     signed short tf_16x16_mv_x[16];
@@ -491,6 +497,9 @@ typedef struct MeContext {
     int          tf_16x16_search_do[4];
     int          tf_block_row;
     int          tf_block_col;
+#if TUNE_REDESIGN_TF_CTRLS
+    uint32_t idx_32x32;
+#endif
     uint16_t     min_frame_size;
 #if FTR_REDUCE_ME_INJECTION
     int64_t prune_me_candidates_th;

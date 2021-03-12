@@ -645,11 +645,12 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
         me_context_ptr->search_area_height = (me_context_ptr->search_area_height * 3) / 2;
     }
 
+#if !TUNE_REDESIGN_TF_CTRLS
     me_context_ptr->update_hme_search_center_flag = 1;
 
     if (input_resolution <= INPUT_SIZE_480p_RANGE)
         me_context_ptr->update_hme_search_center_flag = 0;
-
+#endif
     return NULL;
 };
 void set_me_hme_ref_prune_ctrls(MeContext* context_ptr, uint8_t prune_level) {
@@ -1124,11 +1125,12 @@ void trail_set_me_hme_params(MeContext *me_context_ptr, MePcs *mepcs,
         me_context_ptr->search_area_height = (me_context_ptr->search_area_height * 3) / 2;
     }
 
+#if !TUNE_REDESIGN_TF_CTRLS
     me_context_ptr->update_hme_search_center_flag = 1;
 
     if (input_resolution <= INPUT_SIZE_480p_RANGE)
         me_context_ptr->update_hme_search_center_flag = 0;
-
+#endif
 };
 #if FTR_TPL_TR
 #undef PictureParentControlSet
@@ -1483,6 +1485,97 @@ EbErrorType first_pass_signal_derivation_me_kernel(
 /************************************************
  * Set ME/HME Params for Altref Temporal Filtering
  ************************************************/
+#if TUNE_REDESIGN_TF_CTRLS
+void *tf_set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *pcs_ptr) {
+
+    switch (pcs_ptr->tf_ctrls.hme_me_level) {
+    case 0:
+        me_context_ptr->number_hme_search_region_in_width         =   2;
+        me_context_ptr->number_hme_search_region_in_height        =   2;
+        me_context_ptr->hme_level0_total_search_area_width        =  30;
+        me_context_ptr->hme_level0_total_search_area_height       =  30;
+        me_context_ptr->hme_level0_max_total_search_area_width    =  60;
+        me_context_ptr->hme_level0_max_total_search_area_height   =  60;
+        me_context_ptr->hme_level1_search_area_in_width_array[0]  =  16;
+        me_context_ptr->hme_level1_search_area_in_width_array[1]  =  16;
+        me_context_ptr->hme_level1_search_area_in_height_array[0] =  16;
+        me_context_ptr->hme_level1_search_area_in_height_array[1] =  16;
+        me_context_ptr->hme_level2_search_area_in_width_array[0]  =  16;
+        me_context_ptr->hme_level2_search_area_in_width_array[1]  =  16;
+        me_context_ptr->hme_level2_search_area_in_height_array[0] =  16;
+        me_context_ptr->hme_level2_search_area_in_height_array[1] =  16;
+        me_context_ptr->hme_decimation                            = TWO_DECIMATION_HME;
+        me_context_ptr->search_area_width                         =  60;
+        me_context_ptr->search_area_height                        =  60;
+        me_context_ptr->max_me_search_width                       = 120;
+        me_context_ptr->max_me_search_height                      = 120;
+        break;
+
+    case 1:
+        me_context_ptr->number_hme_search_region_in_width         =   2;
+        me_context_ptr->number_hme_search_region_in_height        =   2;
+        me_context_ptr->hme_level0_total_search_area_width        =  16;
+        me_context_ptr->hme_level0_total_search_area_height       =  16;
+        me_context_ptr->hme_level0_max_total_search_area_width    =  32;
+        me_context_ptr->hme_level0_max_total_search_area_height   =  32;
+        me_context_ptr->hme_level1_search_area_in_width_array[0]  =  16;
+        me_context_ptr->hme_level1_search_area_in_width_array[1]  =  16;
+        me_context_ptr->hme_level1_search_area_in_height_array[0] =  16;
+        me_context_ptr->hme_level1_search_area_in_height_array[1] =  16;
+        me_context_ptr->hme_level2_search_area_in_width_array[0]  =  16;
+        me_context_ptr->hme_level2_search_area_in_width_array[1]  =  16;
+        me_context_ptr->hme_level2_search_area_in_height_array[0] =  16;
+        me_context_ptr->hme_level2_search_area_in_height_array[1] =  16;
+        me_context_ptr->hme_decimation                            =  TWO_DECIMATION_HME;
+        me_context_ptr->search_area_width                         =  16;
+        me_context_ptr->search_area_height                        =  16;
+        me_context_ptr->max_me_search_width                       =  32;
+        me_context_ptr->max_me_search_height                      =  32;
+        break;
+
+    case 2:
+        me_context_ptr->number_hme_search_region_in_width         =   2;
+        me_context_ptr->number_hme_search_region_in_height        =   2;
+        me_context_ptr->hme_level0_total_search_area_width        =   8;
+        me_context_ptr->hme_level0_total_search_area_height       =   8;
+        me_context_ptr->hme_level0_max_total_search_area_width    =  16;
+        me_context_ptr->hme_level0_max_total_search_area_height   =  16;
+        me_context_ptr->hme_level1_search_area_in_width_array[0]  =  16;
+        me_context_ptr->hme_level1_search_area_in_width_array[1]  =  16;
+        me_context_ptr->hme_level1_search_area_in_height_array[0] =  16;
+        me_context_ptr->hme_level1_search_area_in_height_array[1] =  16;
+        me_context_ptr->hme_level2_search_area_in_width_array[0]  =  16;
+        me_context_ptr->hme_level2_search_area_in_width_array[1]  =  16;
+        me_context_ptr->hme_level2_search_area_in_height_array[0] =  16;
+        me_context_ptr->hme_level2_search_area_in_height_array[1] =  16;
+        me_context_ptr->hme_decimation                            =  TWO_DECIMATION_HME;
+        me_context_ptr->search_area_width                         =   8;
+        me_context_ptr->search_area_height                        =   4;
+        me_context_ptr->max_me_search_width                       =  16;
+        me_context_ptr->max_me_search_height                      =   8;
+        break;
+
+    default:
+        assert(0);
+        break;
+    }
+
+    me_context_ptr->hme_level0_max_search_area_in_width_array[0] =
+        me_context_ptr->hme_level0_max_search_area_in_width_array[1] =
+        me_context_ptr->hme_level0_max_total_search_area_width / me_context_ptr->number_hme_search_region_in_width;
+    me_context_ptr->hme_level0_max_search_area_in_height_array[0] =
+        me_context_ptr->hme_level0_max_search_area_in_height_array[1] =
+        me_context_ptr->hme_level0_max_total_search_area_height / me_context_ptr->number_hme_search_region_in_height;
+    me_context_ptr->hme_level0_search_area_in_width_array[0] =
+        me_context_ptr->hme_level0_search_area_in_width_array[1] =
+        me_context_ptr->hme_level0_total_search_area_width / me_context_ptr->number_hme_search_region_in_width;
+    me_context_ptr->hme_level0_search_area_in_height_array[0] =
+        me_context_ptr->hme_level0_search_area_in_height_array[1] =
+        me_context_ptr->hme_level0_total_search_area_height / me_context_ptr->number_hme_search_region_in_height;
+
+    return NULL;
+};
+#else
 void *tf_set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *pcs_ptr,
                               SequenceControlSet *scs_ptr, EbInputResolution input_resolution) {
     UNUSED(scs_ptr);
@@ -1594,17 +1687,28 @@ void *tf_set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet
         me_context_ptr->hme_level2_search_area_in_height_array[1] = 16;
 
     me_context_ptr->hme_decimation = TWO_DECIMATION_HME;
+#if !TUNE_REDESIGN_TF_CTRLS
     me_context_ptr->update_hme_search_center_flag = 1;
 
     if (input_resolution <= INPUT_SIZE_480p_RANGE)
         me_context_ptr->update_hme_search_center_flag = 0;
+#endif
     return NULL;
 };
+#endif
 /******************************************************
 * Derive ME Settings for OQ for Altref Temporal Filtering
   Input   : encoder mode and tune
   Output  : ME Kernel signal(s)
 ******************************************************/
+#if TUNE_REDESIGN_TF_CTRLS
+EbErrorType tf_signal_derivation_me_kernel_oq(
+    PictureParentControlSet *  pcs_ptr,
+    MotionEstimationContext_t *context_ptr) {
+    EbErrorType return_error = EB_ErrorNone;
+    // Set ME/HME search regions
+    tf_set_me_hme_params_oq(context_ptr->me_context_ptr, pcs_ptr);
+#else
 EbErrorType tf_signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
                                               PictureParentControlSet *  pcs_ptr,
                                               MotionEstimationContext_t *context_ptr) {
@@ -1613,6 +1717,7 @@ EbErrorType tf_signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr
     // Set ME/HME search regions
     tf_set_me_hme_params_oq(
         context_ptr->me_context_ptr, pcs_ptr, scs_ptr, input_resolution);
+#endif
     // Set HME flags
     context_ptr->me_context_ptr->enable_hme_flag        = pcs_ptr->tf_enable_hme_flag;
     context_ptr->me_context_ptr->enable_hme_level0_flag = pcs_ptr->tf_enable_hme_level0_flag;
@@ -2478,8 +2583,11 @@ void *motion_estimation_kernel(void *input_ptr) {
             svt_post_full_object(out_results_wrapper_ptr);
         } else if (in_results_ptr->task_type == 1) {
             // ME Kernel Signal(s) derivation
+#if TUNE_REDESIGN_TF_CTRLS
+            tf_signal_derivation_me_kernel_oq(pcs_ptr, context_ptr);
+#else
             tf_signal_derivation_me_kernel_oq(scs_ptr, pcs_ptr, context_ptr);
-
+#endif
             // temporal filtering start
             context_ptr->me_context_ptr->me_type = ME_MCTF;
             svt_av1_init_temporal_filtering(

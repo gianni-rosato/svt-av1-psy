@@ -68,8 +68,10 @@ typedef struct SequenceControlSet {
     /*!< Number of delay frames needed to implement future window
          for algorithms such as SceneChange or TemporalFiltering */
     uint32_t scd_delay;
+#if !TUNE_REDESIGN_TF_CTRLS
     /*!< Enable the use of altrefs in the stream */
     int8_t tf_level;
+#endif
     /*!<  */
     EbBlockMeanPrec block_mean_calc_prec;
     /*!< CDF (The signal changes per preset; 0: CDF update, 1: no CDF update) Default is 0.*/

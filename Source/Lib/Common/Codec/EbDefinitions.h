@@ -152,7 +152,11 @@ enum {
  * this number can be increased by increasing the constant
  * FUTURE_WINDOW_WIDTH defined in EbPictureDecisionProcess.c
  */
+#if TUNE_REDESIGN_TF_CTRLS
+#define ALTREF_MAX_NFRAMES 33
+#else
 #define ALTREF_MAX_NFRAMES 13
+#endif
 #define ALTREF_MAX_STRENGTH 6
 #define PAD_VALUE (128 + 32)
 #define PAD_VALUE_SCALED (128 + 128 + 32)

@@ -756,6 +756,7 @@ EbErrorType generate_mini_gop_rps(
     return return_error;
 }
 
+#if !TUNE_REDESIGN_TF_CTRLS
 void set_tf_controls(PictureParentControlSet *pcs_ptr, uint8_t tf_level) {
 
     TfControls *tf_ctrls = &pcs_ptr->tf_ctrls;
@@ -862,7 +863,7 @@ void set_tf_controls(PictureParentControlSet *pcs_ptr, uint8_t tf_level) {
         break;
     }
 }
-
+#endif
 
 #if CLN_FA
 /*
@@ -954,6 +955,34 @@ EbErrorType signal_derivation_multi_processes_oq(
     pcs_ptr->enable_hme_level1_flag = 1;
     pcs_ptr->enable_hme_level2_flag = 1;
 #endif
+#if TUNE_REDESIGN_TF_CTRLS
+    switch (pcs_ptr->tf_ctrls.hme_me_level) {
+    case 0:
+        pcs_ptr->tf_enable_hme_flag        = 1;
+        pcs_ptr->tf_enable_hme_level0_flag = 1;
+        pcs_ptr->tf_enable_hme_level1_flag = 1;
+        pcs_ptr->tf_enable_hme_level2_flag = 1;
+        break;
+
+    case 1:
+        pcs_ptr->tf_enable_hme_flag        = 1;
+        pcs_ptr->tf_enable_hme_level0_flag = 1;
+        pcs_ptr->tf_enable_hme_level1_flag = 1;
+        pcs_ptr->tf_enable_hme_level2_flag = 0;
+        break;
+
+    case 2:
+        pcs_ptr->tf_enable_hme_flag       =  1;
+        pcs_ptr->tf_enable_hme_level0_flag = 1;
+        pcs_ptr->tf_enable_hme_level1_flag = 0;
+        pcs_ptr->tf_enable_hme_level2_flag = 0;
+        break;
+
+    default:
+        assert(0);
+        break;
+    }
+#else
     pcs_ptr->tf_enable_hme_flag = 1;
     pcs_ptr->tf_enable_hme_level0_flag = 1;
     // Can enable everywhere b/c TF is off for SC anyway; remove fake diff
@@ -977,6 +1006,7 @@ EbErrorType signal_derivation_multi_processes_oq(
         pcs_ptr->tf_enable_hme_level1_flag = 1;
         pcs_ptr->tf_enable_hme_level2_flag = 0;
     }
+#endif
     // Set the Multi-Pass PD level
     pcs_ptr->multi_pass_pd_level = MULTI_PASS_PD_LEVEL_0;
 
@@ -1606,11 +1636,16 @@ EbErrorType signal_derivation_multi_processes_oq(
 Input   : encoder mode and tune
 Output  : Multi-Processes signal(s)
 ******************************************************/
+#if TUNE_REDESIGN_TF_CTRLS
+EbErrorType first_pass_signal_derivation_multi_processes(
+    SequenceControlSet *scs_ptr,
+    PictureParentControlSet *pcs_ptr);
+#else
 EbErrorType first_pass_signal_derivation_multi_processes(
     SequenceControlSet *scs_ptr,
     PictureParentControlSet *pcs_ptr,
     PictureDecisionContext *context_ptr) ;
-
+#endif
 int8_t av1_ref_frame_type(const MvReferenceFrame *const rf);
 //set the ref frame types used for this picture,
 static void set_all_ref_frame_type(PictureParentControlSet  *parent_pcs_ptr, MvReferenceFrame ref_frame_arr[], uint8_t* tot_ref_frames)
@@ -4481,7 +4516,11 @@ void process_first_pass_frame(
     pcs_ptr->first_pass_seg_row_count = (uint8_t)(scs_ptr->me_segment_row_count_array[0]);
     pcs_ptr->first_pass_seg_total_count = (uint16_t)(pcs_ptr->first_pass_seg_column_count  * pcs_ptr->first_pass_seg_row_count);
     pcs_ptr->first_pass_seg_acc = 0;
+#if TUNE_REDESIGN_TF_CTRLS
+    first_pass_signal_derivation_multi_processes(scs_ptr, pcs_ptr);
+#else
     first_pass_signal_derivation_multi_processes(scs_ptr, pcs_ptr, context_ptr);
+#endif
     if (pcs_ptr->me_data_wrapper_ptr == NULL) {
         EbObjectWrapper               *me_wrapper;
         svt_get_empty_object(context_ptr->me_fifo_ptr, &me_wrapper);
@@ -4521,6 +4560,7 @@ void mctf_frame(
     uint32_t               out_stride_diff64
 )
 {
+#if !TUNE_REDESIGN_TF_CTRLS
     uint8_t perform_filtering =
         (scs_ptr->tf_level && scs_ptr->static_config.pred_structure == EB_PRED_RANDOM_ACCESS && scs_ptr->static_config.hierarchical_levels >= 1)
         ? 1 : 0;
@@ -4672,6 +4712,7 @@ void mctf_frame(
     else
         context_ptr->tf_level = 0;
     set_tf_controls(pcs_ptr, context_ptr->tf_level);
+#endif
     if (pcs_ptr->tf_ctrls.enabled) {
         derive_tf_window_params(
             scs_ptr,
@@ -4690,11 +4731,12 @@ void mctf_frame(
             pcs_ptr->tf_segments_row_count = scs_ptr->tf_segment_row_count;
             pcs_ptr->tf_segments_total_count = (uint16_t)(pcs_ptr->tf_segments_column_count  * pcs_ptr->tf_segments_row_count);
             pcs_ptr->temp_filt_seg_acc = 0;
+#if !TUNE_REDESIGN_TF_CTRLS
             if (pcs_ptr->temporal_layer_index == 0)
                 pcs_ptr->altref_strength = scs_ptr->static_config.altref_strength;
             else
                 pcs_ptr->altref_strength = 2;
-
+#endif
             for (seg_idx = 0; seg_idx < pcs_ptr->tf_segments_total_count; ++seg_idx) {
 
                 EbObjectWrapper               *out_results_wrapper_ptr;
@@ -5401,7 +5443,11 @@ EbErrorType derive_tf_window_params(
             central_picture_ptr->height,
             central_picture_ptr->stride_y,
             encoder_bit_depth);
+#if TUNE_REDESIGN_TF_CTRLS
+        if (pcs_ptr->tf_ctrls.do_chroma) {
+#else
         if (pcs_ptr->tf_ctrls.chroma) {
+#endif
         noise_levels[1] = estimate_noise_highbd(altref_buffer_highbd_start[C_U], // U only
             (central_picture_ptr->width >> 1),
             (central_picture_ptr->height >> 1),
@@ -5433,7 +5479,11 @@ EbErrorType derive_tf_window_params(
             central_picture_ptr->width,
             central_picture_ptr->height,
             central_picture_ptr->stride_y);
+#if TUNE_REDESIGN_TF_CTRLS
+        if (pcs_ptr->tf_ctrls.do_chroma) {
+#else
         if (pcs_ptr->tf_ctrls.chroma) {
+#endif
         noise_levels[1] = estimate_noise(buffer_u, // U
             (central_picture_ptr->width >> ss_x),
             (central_picture_ptr->height >> ss_y),
@@ -5454,6 +5504,17 @@ EbErrorType derive_tf_window_params(
     // to avoid visual quality drop.
     int adjust_num = 0;
 #if TUNE_FIX_TF
+#if TUNE_REDESIGN_TF_CTRLS
+    if (noise_levels[0] < 0.5) {
+        adjust_num = 6;
+    }
+    else if (noise_levels[0] < 1.0) {
+        adjust_num = 4;
+    }
+    else if (noise_levels[0] < 2.0) {
+        adjust_num = 2;
+    }
+#else
     if (pcs_ptr->tf_ctrls.adjust_num_level) {
         if (pcs_ptr->tf_ctrls.adjust_num_level == 1) {
             if (noise_levels[0] < 0.5) {
@@ -5483,6 +5544,7 @@ EbErrorType derive_tf_window_params(
             }
         }
     }
+#endif
 #else
     if (pcs_ptr->tf_ctrls.noise_based_window_adjust) {
     if (noise_levels[0] < 0.5) {
@@ -5496,7 +5558,9 @@ EbErrorType derive_tf_window_params(
     }
     }
 #endif
+#if !TUNE_REDESIGN_TF_CTRLS
     int altref_nframes = MIN(scs_ptr->static_config.altref_nframes, pcs_ptr->tf_ctrls.window_size + adjust_num);
+#endif
     (void)out_stride_diff64;
     if (is_delayed_intra(pcs_ptr)) {
         //initilize list
@@ -5504,7 +5568,12 @@ EbErrorType derive_tf_window_params(
             pcs_ptr->temp_filt_pcs_list[pic_itr] = NULL;
 
         pcs_ptr->temp_filt_pcs_list[0] = pcs_ptr;
+#if TUNE_REDESIGN_TF_CTRLS
+        uint32_t num_future_pics = pcs_ptr->tf_ctrls.num_future_pics + (pcs_ptr->tf_ctrls.noise_adjust_future_pics ? adjust_num : 0);
+        num_future_pics = MIN(pcs_ptr->tf_ctrls.max_num_future_pics, num_future_pics);
+#else
         uint32_t num_future_pics = altref_nframes - 1;
+#endif
 
         uint32_t pic_i;
         for (pic_i = 0; pic_i < num_future_pics; pic_i++) {
@@ -5521,7 +5590,11 @@ EbErrorType derive_tf_window_params(
         uint32_t actual_future_pics = pcs_ptr->future_altref_nframes;
         int pic_itr;
 
+#if TUNE_REDESIGN_TF_CTRLS
+        int ahd_th = (((pcs_ptr->aligned_width * pcs_ptr->aligned_height) *  pcs_ptr->tf_ctrls.activity_adjust_th) / 100);
+#else
         int ahd_th = (((pcs_ptr->aligned_width * pcs_ptr->aligned_height) * AHD_TH_WEIGHT) / 100);
+#endif
 
         // Accumulative histogram absolute differences between the central and future frame
         for (pic_itr = (index_center + actual_future_pics); pic_itr > index_center; pic_itr--) {
@@ -5540,7 +5613,12 @@ EbErrorType derive_tf_window_params(
             pcs_ptr->temp_filt_pcs_list[pic_itr] = NULL;
 
         pcs_ptr->temp_filt_pcs_list[0] = pcs_ptr;
+#if TUNE_REDESIGN_TF_CTRLS
+        uint32_t num_future_pics = pcs_ptr->tf_ctrls.num_future_pics + (pcs_ptr->tf_ctrls.noise_adjust_future_pics ? adjust_num : 0);
+        num_future_pics = MIN(pcs_ptr->tf_ctrls.max_num_future_pics, num_future_pics);
+#else
         uint32_t num_future_pics = altref_nframes - 1;
+#endif
         uint32_t num_past_pics = 0;
         uint32_t pic_i;
         //search reord-queue to get the future pictures
@@ -5561,7 +5639,11 @@ EbErrorType derive_tf_window_params(
         uint32_t actual_future_pics = pcs_ptr->future_altref_nframes;
         int pic_itr;
 
+#if TUNE_REDESIGN_TF_CTRLS
+        int ahd_th = (((pcs_ptr->aligned_width * pcs_ptr->aligned_height) *  pcs_ptr->tf_ctrls.activity_adjust_th) / 100);
+#else
         int ahd_th = (((pcs_ptr->aligned_width * pcs_ptr->aligned_height) * AHD_TH_WEIGHT) / 100);
+#endif
 
         // Accumulative histogram absolute differences between the central and future frame
         for (pic_itr = (index_center + actual_future_pics); pic_itr > index_center; pic_itr--) {
@@ -5574,9 +5656,17 @@ EbErrorType derive_tf_window_params(
     }
     else
     {
+#if TUNE_REDESIGN_TF_CTRLS
+        int num_past_pics = pcs_ptr->tf_ctrls.num_past_pics + (pcs_ptr->tf_ctrls.noise_adjust_past_pics ? (adjust_num >> 1) : 0);
+        num_past_pics = MIN(pcs_ptr->tf_ctrls.max_num_past_pics, num_past_pics);
+
+        int num_future_pics = pcs_ptr->tf_ctrls.num_future_pics + (pcs_ptr->tf_ctrls.noise_adjust_future_pics ? (adjust_num >> 1) : 0);
+        num_future_pics = MIN(pcs_ptr->tf_ctrls.max_num_future_pics, num_future_pics);
+#else
         int num_past_pics = altref_nframes / 2;
         int num_future_pics = altref_nframes - num_past_pics - 1;
         assert(altref_nframes <= ALTREF_MAX_NFRAMES);
+#endif
 
         //initilize list
         for (int pic_itr = 0; pic_itr < ALTREF_MAX_NFRAMES; pic_itr++)
@@ -5623,7 +5713,11 @@ EbErrorType derive_tf_window_params(
         int pic_itr;
         int ahd;
 
+#if TUNE_REDESIGN_TF_CTRLS
+        int ahd_th = (((pcs_ptr->aligned_width * pcs_ptr->aligned_height) *  pcs_ptr->tf_ctrls.activity_adjust_th) / 100);
+#else
         int ahd_th = (((pcs_ptr->aligned_width * pcs_ptr->aligned_height) * AHD_TH_WEIGHT) / 100);
+#endif
 
         // Accumulative histogram absolute differences between the central and past frame
         for (pic_itr = index_center - actual_past_pics; pic_itr < index_center; pic_itr++) {
@@ -5633,9 +5727,10 @@ EbErrorType derive_tf_window_params(
                 break;
         }
         pcs_ptr->past_altref_nframes = actual_past_pics = index_center - pic_itr;
-
+#if !TUNE_REDESIGN_TF_CTRLS
         if (pcs_ptr->temporal_layer_index == 1)
             pcs_ptr->past_altref_nframes = actual_past_pics = MIN(1, pcs_ptr->past_altref_nframes);
+#endif
 
         // Accumulative histogram absolute differences between the central and past frame
         for (pic_itr = (index_center + actual_future_pics); pic_itr > index_center; pic_itr--) {
@@ -5644,11 +5739,12 @@ EbErrorType derive_tf_window_params(
                 break;
         }
         pcs_ptr->future_altref_nframes = pic_itr - index_center;
-
+#if !TUNE_REDESIGN_TF_CTRLS
         if (pcs_ptr->temporal_layer_index == 1)
             pcs_ptr->future_altref_nframes = MIN(1, pcs_ptr->future_altref_nframes);
 
         //SVT_LOG("\nPOC %d\t PAST %d\t FUTURE %d\n", pcs_ptr->picture_number, pcs_ptr->past_altref_nframes, pcs_ptr->future_altref_nframes);
+#endif
 
         // adjust the temporal filtering pcs buffer to remove unused past pictures
         if (actual_past_pics != num_past_pics) {
@@ -5686,6 +5782,78 @@ PaReferenceQueueEntry * search_ref_in_ref_queue_pa(
 
     return NULL;
 }
+#if TUNE_REDESIGN_TF_CTRLS
+/*
+ * Copy TF params: sps -> pcs
+ */
+void copy_tf_params(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_ptr) {
+
+    // Map TF settings sps -> pcs
+    if (pcs_ptr->slice_type == I_SLICE) {
+
+        pcs_ptr->tf_ctrls.enabled                  = scs_ptr->static_config.tf_params_per_type[0].enabled;
+        pcs_ptr->tf_ctrls.num_past_pics            = scs_ptr->static_config.tf_params_per_type[0].num_past_pics;
+        pcs_ptr->tf_ctrls.num_future_pics          = scs_ptr->static_config.tf_params_per_type[0].num_future_pics;
+        pcs_ptr->tf_ctrls.noise_adjust_past_pics   = scs_ptr->static_config.tf_params_per_type[0].noise_adjust_past_pics;
+        pcs_ptr->tf_ctrls.noise_adjust_future_pics = scs_ptr->static_config.tf_params_per_type[0].noise_adjust_future_pics;
+        pcs_ptr->tf_ctrls.activity_adjust_th       = scs_ptr->static_config.tf_params_per_type[0].activity_adjust_th;
+        pcs_ptr->tf_ctrls.max_num_past_pics        = scs_ptr->static_config.tf_params_per_type[0].max_num_past_pics;
+        pcs_ptr->tf_ctrls.max_num_future_pics      = scs_ptr->static_config.tf_params_per_type[0].max_num_future_pics;
+        pcs_ptr->tf_ctrls.hme_me_level             = scs_ptr->static_config.tf_params_per_type[0].hme_me_level;
+        pcs_ptr->tf_ctrls.half_pel_mode            = scs_ptr->static_config.tf_params_per_type[0].half_pel_mode;
+        pcs_ptr->tf_ctrls.quarter_pel_mode         = scs_ptr->static_config.tf_params_per_type[0].quarter_pel_mode;
+        pcs_ptr->tf_ctrls.eight_pel_mode           = scs_ptr->static_config.tf_params_per_type[0].eight_pel_mode;
+        pcs_ptr->tf_ctrls.do_chroma                = scs_ptr->static_config.tf_params_per_type[0].do_chroma;
+        pcs_ptr->tf_ctrls.pred_error_32x32_th      = scs_ptr->static_config.tf_params_per_type[0].pred_error_32x32_th;
+        pcs_ptr->tf_ctrls.me_16x16_to_8x8_dev_th   = scs_ptr->static_config.tf_params_per_type[0].me_16x16_to_8x8_dev_th;
+        pcs_ptr->tf_ctrls.max_64x64_past_pics      = scs_ptr->static_config.tf_params_per_type[0].max_64x64_past_pics;
+        pcs_ptr->tf_ctrls.max_64x64_future_pics    = scs_ptr->static_config.tf_params_per_type[0].max_64x64_future_pics;
+    }
+    else if (pcs_ptr->temporal_layer_index == 0) { // BASE
+
+        pcs_ptr->tf_ctrls.enabled                  = scs_ptr->static_config.tf_params_per_type[1].enabled;
+        pcs_ptr->tf_ctrls.num_past_pics            = scs_ptr->static_config.tf_params_per_type[1].num_past_pics;
+        pcs_ptr->tf_ctrls.num_future_pics          = scs_ptr->static_config.tf_params_per_type[1].num_future_pics;
+        pcs_ptr->tf_ctrls.noise_adjust_past_pics   = scs_ptr->static_config.tf_params_per_type[1].noise_adjust_past_pics;
+        pcs_ptr->tf_ctrls.noise_adjust_future_pics = scs_ptr->static_config.tf_params_per_type[1].noise_adjust_future_pics;
+        pcs_ptr->tf_ctrls.activity_adjust_th       = scs_ptr->static_config.tf_params_per_type[1].activity_adjust_th;
+        pcs_ptr->tf_ctrls.max_num_past_pics        = scs_ptr->static_config.tf_params_per_type[1].max_num_past_pics;
+        pcs_ptr->tf_ctrls.max_num_future_pics      = scs_ptr->static_config.tf_params_per_type[1].max_num_future_pics;
+        pcs_ptr->tf_ctrls.hme_me_level             = scs_ptr->static_config.tf_params_per_type[1].hme_me_level;
+        pcs_ptr->tf_ctrls.half_pel_mode            = scs_ptr->static_config.tf_params_per_type[1].half_pel_mode;
+        pcs_ptr->tf_ctrls.quarter_pel_mode         = scs_ptr->static_config.tf_params_per_type[1].quarter_pel_mode;
+        pcs_ptr->tf_ctrls.eight_pel_mode           = scs_ptr->static_config.tf_params_per_type[1].eight_pel_mode;
+        pcs_ptr->tf_ctrls.do_chroma                = scs_ptr->static_config.tf_params_per_type[1].do_chroma;
+        pcs_ptr->tf_ctrls.pred_error_32x32_th      = scs_ptr->static_config.tf_params_per_type[1].pred_error_32x32_th;
+        pcs_ptr->tf_ctrls.me_16x16_to_8x8_dev_th   = scs_ptr->static_config.tf_params_per_type[1].me_16x16_to_8x8_dev_th;
+        pcs_ptr->tf_ctrls.max_64x64_past_pics      = scs_ptr->static_config.tf_params_per_type[1].max_64x64_past_pics;
+        pcs_ptr->tf_ctrls.max_64x64_future_pics    = scs_ptr->static_config.tf_params_per_type[1].max_64x64_future_pics;
+    }
+    else if (pcs_ptr->temporal_layer_index == 1) { // L1
+
+        pcs_ptr->tf_ctrls.enabled                  = scs_ptr->static_config.tf_params_per_type[2].enabled;
+        pcs_ptr->tf_ctrls.num_past_pics            = scs_ptr->static_config.tf_params_per_type[2].num_past_pics;
+        pcs_ptr->tf_ctrls.num_future_pics          = scs_ptr->static_config.tf_params_per_type[2].num_future_pics;
+        pcs_ptr->tf_ctrls.noise_adjust_past_pics   = scs_ptr->static_config.tf_params_per_type[2].noise_adjust_past_pics;
+        pcs_ptr->tf_ctrls.noise_adjust_future_pics = scs_ptr->static_config.tf_params_per_type[2].noise_adjust_future_pics;
+        pcs_ptr->tf_ctrls.activity_adjust_th       = scs_ptr->static_config.tf_params_per_type[2].activity_adjust_th;
+        pcs_ptr->tf_ctrls.max_num_past_pics        = scs_ptr->static_config.tf_params_per_type[2].max_num_past_pics;
+        pcs_ptr->tf_ctrls.max_num_future_pics      = scs_ptr->static_config.tf_params_per_type[2].max_num_future_pics;
+        pcs_ptr->tf_ctrls.hme_me_level             = scs_ptr->static_config.tf_params_per_type[2].hme_me_level;
+        pcs_ptr->tf_ctrls.half_pel_mode            = scs_ptr->static_config.tf_params_per_type[2].half_pel_mode;
+        pcs_ptr->tf_ctrls.quarter_pel_mode         = scs_ptr->static_config.tf_params_per_type[2].quarter_pel_mode;
+        pcs_ptr->tf_ctrls.eight_pel_mode           = scs_ptr->static_config.tf_params_per_type[2].eight_pel_mode;
+        pcs_ptr->tf_ctrls.do_chroma                = scs_ptr->static_config.tf_params_per_type[2].do_chroma;
+        pcs_ptr->tf_ctrls.pred_error_32x32_th      = scs_ptr->static_config.tf_params_per_type[2].pred_error_32x32_th;
+        pcs_ptr->tf_ctrls.me_16x16_to_8x8_dev_th   = scs_ptr->static_config.tf_params_per_type[2].me_16x16_to_8x8_dev_th;
+        pcs_ptr->tf_ctrls.max_64x64_past_pics      = scs_ptr->static_config.tf_params_per_type[2].max_64x64_past_pics;
+        pcs_ptr->tf_ctrls.max_64x64_future_pics    = scs_ptr->static_config.tf_params_per_type[2].max_64x64_future_pics;
+    }
+    else {
+        pcs_ptr->tf_ctrls.enabled              = 0;
+    }
+}
+#endif
 /* Picture Decision Kernel */
 
 /***************************************************************************************************
@@ -6455,10 +6623,18 @@ void* picture_decision_kernel(void *input_ptr)
                                 else
                                     pcs_ptr->sc_content_detected = context_ptr->last_i_picture_sc_detection;
 #endif
+#if TUNE_REDESIGN_TF_CTRLS
+                                // TODO: put this in EbMotionEstimationProcess?
+                                copy_tf_params(scs_ptr, pcs_ptr);
+#endif
                                 // TODO: put this in EbMotionEstimationProcess?
                                 // ME Kernel Multi-Processes Signal(s) derivation
                                 if (use_output_stat(scs_ptr))
+#if TUNE_REDESIGN_TF_CTRLS
+                                    first_pass_signal_derivation_multi_processes(scs_ptr, pcs_ptr);
+#else
                                     first_pass_signal_derivation_multi_processes(scs_ptr, pcs_ptr, context_ptr);
+#endif
                                 else
                                     signal_derivation_multi_processes_oq(scs_ptr, pcs_ptr, context_ptr);
 

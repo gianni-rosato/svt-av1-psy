@@ -668,12 +668,16 @@ static void set_intrabc_mode(const char *value, EbConfig *cfg) {
 static void set_tf_level(const char *value, EbConfig *cfg) {
     cfg->config.tf_level = (int8_t)strtoul(value, NULL, 0);
 };
+
+#if !TUNE_REDESIGN_TF_CTRLS
 static void set_altref_strength(const char *value, EbConfig *cfg) {
     cfg->config.altref_strength = (uint8_t)strtoul(value, NULL, 0);
 };
+
 static void set_altref_n_frames(const char *value, EbConfig *cfg) {
     cfg->config.altref_nframes = (uint8_t)strtoul(value, NULL, 0);
 };
+#endif
 static void set_enable_overlays(const char *value, EbConfig *cfg) {
     cfg->config.enable_overlays = (EbBool)strtoul(value, NULL, 0);
 };
@@ -1232,11 +1236,15 @@ ConfigEntry config_entry_specific[] = {
      TF_LEVEL,
      "Set altref level(-1: Default; 0: OFF; 1: ON; 2 and 3: Faster levels)",
      set_tf_level},
+
+#if !TUNE_REDESIGN_TF_CTRLS
     {SINGLE_INPUT,
      ALTREF_STRENGTH,
      "AltRef filter strength([0-6], default: 5)",
      set_altref_strength},
+
     {SINGLE_INPUT, ALTREF_NFRAMES, "AltRef max frames([0-10], default: 7)", set_altref_n_frames},
+#endif
     {SINGLE_INPUT,
      ENABLE_OVERLAYS,
      "Enable the insertion of an extra picture called overlayer picture which will be used as an "
@@ -1446,8 +1454,10 @@ ConfigEntry config_entry[] = {
     {SINGLE_INPUT, ASM_TYPE_TOKEN, "Asm", set_asm_type},
     // --- start: ALTREF_FILTERING_SUPPORT
     {SINGLE_INPUT, TF_LEVEL, "TfLevel", set_tf_level},
+#if !TUNE_REDESIGN_TF_CTRLS
     {SINGLE_INPUT, ALTREF_STRENGTH, "AltRefStrength", set_altref_strength},
     {SINGLE_INPUT, ALTREF_NFRAMES, "AltRefNframes", set_altref_n_frames},
+#endif
     {SINGLE_INPUT, ENABLE_OVERLAYS, "EnableOverlays", set_enable_overlays},
     // --- end: ALTREF_FILTERING_SUPPORT
     // Super-resolution support

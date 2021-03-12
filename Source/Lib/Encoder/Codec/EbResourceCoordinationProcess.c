@@ -1191,7 +1191,9 @@ void *resource_coordination_kernel(void *input_ptr) {
 
             sb_params_init(scs_ptr);
             sb_geom_init(scs_ptr);
+#if !TUNE_REDESIGN_TF_CTRLS
             scs_ptr->tf_level = scs_ptr->static_config.tf_level ? 1 : 0;
+#endif
 
             // initialize sequence level enable_superres
             scs_ptr->seq_header.enable_superres = 0;
@@ -1379,8 +1381,10 @@ void *resource_coordination_kernel(void *input_ptr) {
                 first_pass_signal_derivation_pre_analysis_pcs(pcs_ptr);
             else
                 signal_derivation_pre_analysis_oq_pcs(scs_ptr, pcs_ptr);
+#if !TUNE_REDESIGN_TF_CTRLS
             pcs_ptr->filtered_sse    = 0;
             pcs_ptr->filtered_sse_uv = 0;
+#endif
             // Rate Control
             // Set the ME Distortion and OIS Historgrams to zero
             if (scs_ptr->static_config.rate_control_mode) {

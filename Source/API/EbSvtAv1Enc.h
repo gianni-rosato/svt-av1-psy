@@ -59,6 +59,27 @@ typedef struct PredictionStructureConfigEntry {
     int32_t  ref_list1[REF_LIST_MAX_DEPTH];
 } PredictionStructureConfigEntry;
 
+#if TUNE_REDESIGN_TF_CTRLS
+typedef struct TfControls {
+    uint8_t  enabled;
+    uint8_t  num_past_pics;            // Number of frame(s) from past
+    uint8_t  num_future_pics;          // Number of frame(s) from future
+    uint8_t  noise_adjust_past_pics;   // 0: noise-based adjustment OFF | 1: up to 3 additional frame(s) from the past based on the noise level
+    uint8_t  noise_adjust_future_pics; // 0: noise-based adjustment OFF | 1: up to 3 additional frame(s) from the future based on the noise level
+    uint8_t  activity_adjust_th;       // The abs diff between the histogram of the central frame and the reference frame beyond which the reference frame is removed
+    uint8_t  max_num_past_pics;        // Max number of frame(s) from past
+    uint8_t  max_num_future_pics;      // Max number of frame(s) from future
+    uint8_t  hme_me_level;             // HME/ME Search Level
+    uint8_t  half_pel_mode;            // 0: do not perform half-pel refinement     | 1: perform half-pel refinement for the 8-positions    | 2: perform half-pel refinement for only 4-positions (H and V only)
+    uint8_t  quarter_pel_mode;         // 0: do not perform quarter-pel refinement  | 1: perform quarter-pel refinement for the 8-positions | 2: perform half-pel refinement for only 4-positions (H and V only)
+    uint8_t  eight_pel_mode;           // 0: do not perform eight-pel refinement    | 1: perform eight-pel refinement for the 8-positions   | 2: eight half-pel refinement for only 4-positions (H and V only)
+    uint8_t  do_chroma;                // 0: do not filter chroma | 1: filter chroma
+    uint64_t pred_error_32x32_th;      // The 32x32 pred error (post-subpel) under which subpel for the 16x16 block(s) is bypassed
+    int64_t  me_16x16_to_8x8_dev_th;   // The 16x16-to-8x8 me-distortion deviation beyond which the number of reference frames is capped to [max_64x64_past_pics, max_64x64_future_pics] @ the level of a 64x64 Block
+    uint64_t max_64x64_past_pics;      // The max number of past reference frames if me_16x16_to_8x8_dev > me_16x16_to_8x8_dev_th
+    uint64_t max_64x64_future_pics;    // The max number of future reference frames if me_16x16_to_8x8_dev > me_16x16_to_8x8_dev_th
+} TfControls;
+#endif
 // super-res modes
 typedef enum {
     SUPERRES_NONE, // No frame superres allowed.
@@ -712,11 +733,19 @@ typedef struct EbSvtAv1EncConfiguration {
 
     /* Variables to control the use of ALT-REF (temporally filtered frames)
     */
+#if TUNE_REDESIGN_TF_CTRLS
+    // -1: Default; 0: OFF; 1: ON
+    int8_t  tf_level;
+#else
     // -1: Default; 0: OFF; 1: ON; 2 and 3: Faster levels
     int8_t  tf_level;
     uint8_t altref_strength;
     uint8_t altref_nframes;
+#endif
     EbBool  enable_overlays;
+#if TUNE_REDESIGN_TF_CTRLS
+    TfControls tf_params_per_type[3]; // [I_SLICE][BASE][L1]
+#endif
 
     // super-resolution parameters
     uint8_t superres_mode;

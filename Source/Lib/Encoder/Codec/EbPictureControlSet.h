@@ -567,6 +567,7 @@ typedef struct {
     TplControls                 tpl_ctrls;
 #endif
 } TPLData;
+#if !TUNE_REDESIGN_TF_CTRLS
 typedef struct TfControls {
     uint8_t enabled;
     uint8_t window_size; // 3, 5, 7
@@ -583,6 +584,7 @@ typedef struct TfControls {
     uint8_t bypass_halfpel; // bypass 1/2-pel search
 #endif
 } TfControls;
+#endif
 typedef struct GmControls {
     uint8_t enabled;
     uint8_t
@@ -1093,7 +1095,9 @@ typedef struct PictureParentControlSet {
     uint8_t  is_overlay;
     struct PictureParentControlSet *overlay_ppcs_ptr;
     struct PictureParentControlSet *alt_ref_ppcs_ptr;
+#if !TUNE_REDESIGN_TF_CTRLS
     uint8_t                         altref_strength;
+#endif
     double                          noise_levels[MAX_MB_PLANE];
     int32_t                         pic_decision_reorder_queue_idx;
     struct PictureParentControlSet *temp_filt_pcs_list[ALTREF_MAX_NFRAMES];
@@ -1133,9 +1137,11 @@ typedef struct PictureParentControlSet {
     uint8_t      past_altref_nframes;
     uint8_t      future_altref_nframes;
     EbBool       temporal_filtering_on;
+#if !TUNE_REDESIGN_TF_CTRLS
     uint64_t
         filtered_sse; // the normalized SSE between filtered and original alt_ref with 8 bit precision.
     // I Slice has the value of the next ALT_REF picture
+#endif
     uint64_t    filtered_sse_uv;
     FrameHeader frm_hdr;
     uint16_t *  altref_buffer_highbd[3];

@@ -155,12 +155,14 @@ void update_bea_info_over_time(EncodeContext *          encode_context_ptr,
                     ? 0
                     : (uint64_t)temp_pcs_ptr->rc_me_distortion[sb_idx];
             }
+#if !TUNE_REDESIGN_TF_CTRLS
             // Store the filtered_sse of next ALT_REF picture in the I slice to be used in QP Scaling
             if (pcs_ptr->slice_type == I_SLICE && pcs_ptr->filtered_sse == 0 && sb_idx == 0 &&
                 temp_pcs_ptr->temporal_layer_index == 0) {
                 pcs_ptr->filtered_sse    = temp_pcs_ptr->filtered_sse;
                 pcs_ptr->filtered_sse_uv = temp_pcs_ptr->filtered_sse_uv;
             }
+#endif
             non_moving_index_over_sliding_window += temp_pcs_ptr->non_moving_index_array[sb_idx];
 
             // Increment the input_queue_index Iterator

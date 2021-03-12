@@ -579,9 +579,15 @@ void set_tf_controls(PictureParentControlSet *pcs_ptr, uint8_t tf_level);
 Input   : encoder mode and tune
 Output  : Multi-Processes signal(s)
 ******************************************************/
+
+#if TUNE_REDESIGN_TF_CTRLS
+EbErrorType first_pass_signal_derivation_multi_processes(SequenceControlSet *     scs_ptr,
+                                                         PictureParentControlSet *pcs_ptr) {
+#else
 EbErrorType first_pass_signal_derivation_multi_processes(SequenceControlSet *     scs_ptr,
                                                          PictureParentControlSet *pcs_ptr,
                                                          PictureDecisionContext * context_ptr) {
+#endif
     EbErrorType  return_error = EB_ErrorNone;
     FrameHeader *frm_hdr      = &pcs_ptr->frm_hdr;
     // If enabled here, the hme enable flags should also be enabled in ResourceCoordinationProcess
@@ -704,8 +710,10 @@ EbErrorType first_pass_signal_derivation_multi_processes(SequenceControlSet *   
     // 1: ON
     pcs_ptr->tx_size_early_exit = 0;
 
+#if !TUNE_REDESIGN_TF_CTRLS
     context_ptr->tf_level = 0;
     set_tf_controls(pcs_ptr, context_ptr->tf_level);
+#endif
     // MRP control
     // 0: OFF (1,1)  ; override features
     // 1: FULL (4,3) ; override features

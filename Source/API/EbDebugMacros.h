@@ -306,6 +306,10 @@ extern "C" {
 #define OPT6_DEPTH_REFINEMENT                 1 // reduce unnecessary operations when nsq/4x4 are off
 #define OPT7_BUILD_CAND_BLK                   1 // reduce unnecessary operations when nsq/4x4 are off
 #define OPT10_MI_MAP                          1 // cleanup of mi update
+
+
+#define TUNE_REDESIGN_TF_CTRLS                 1 // Improve TF ctrls, and TF performance
+
 // ============= END SVT_04 =============
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
