@@ -171,9 +171,11 @@ struct PredictionUnit;
 typedef struct EbMdcLeafData {
     uint32_t mds_idx;
     uint32_t tot_d1_blocks; //how many d1 bloks every parent square would have
+#if !OPT6_DEPTH_REFINEMENT
     EbBool   split_flag;
     uint8_t  consider_block;
     uint8_t  refined_split_flag;
+#endif
 #if !OPT_REFINEMENT_SIGNALS
     int8_t   pred_depth_refinement;
     int8_t   final_pred_depth_refinement;
@@ -185,6 +187,11 @@ typedef struct EbMdcLeafData {
 typedef struct MdcSbData {
     uint32_t      leaf_count;
     EbMdcLeafData leaf_data_array[BLOCK_MAX_COUNT_SB_128];
+#if OPT6_DEPTH_REFINEMENT
+    EbBool   split_flag[BLOCK_MAX_COUNT_SB_128];
+    uint8_t  consider_block[BLOCK_MAX_COUNT_SB_128];
+    uint8_t  refined_split_flag[BLOCK_MAX_COUNT_SB_128];
+#endif
 } MdcSbData;
 
 /**************************************
@@ -766,7 +773,9 @@ typedef struct PictureParentControlSet {
     uint64_t        picture_number;
     uint32_t        cur_order_hint;
     uint32_t        ref_order_hint[7];
+#if !OPT1_REMOVE_FLAT_NOISE
     EbPicnoiseClass pic_noise_class;
+#endif
     EB_SLICE        slice_type;
     uint8_t         pred_struct_index;
     uint8_t         temporal_layer_index;
@@ -840,7 +849,9 @@ typedef struct PictureParentControlSet {
     int      kf_zeromotion_pct; // percent of zero motion blocks
     uint8_t  fade_out_from_black;
     uint8_t  fade_in_to_black;
+#if !OPT1_REMOVE_FLAT_NOISE
     uint8_t *sb_flat_noise_array;
+#endif
     uint16_t non_moving_index_average; // used by ModeDecisionConfigurationProcess()
     int16_t  non_moving_index_min_distance;
     int16_t  non_moving_index_max_distance;

@@ -1476,7 +1476,136 @@ void update_av1_mi_map(BlkStruct *blk_ptr, uint32_t blk_origin_x, uint32_t blk_o
         }
     }
 }
+#if OPT10_MI_MAP
+void update_mi_map(struct ModeDecisionContext *context_ptr, BlkStruct *blk_ptr,
+                   uint32_t blk_origin_x, uint32_t blk_origin_y, const BlockGeom *blk_geom,
+                   uint8_t avail_blk_flag, PictureControlSet *pcs_ptr) {
+    uint32_t mi_stride = pcs_ptr->mi_stride;
+    int32_t  mi_row    = blk_origin_y >> MI_SIZE_LOG2;
+    int32_t  mi_col    = blk_origin_x >> MI_SIZE_LOG2;
 
+    const int32_t    offset = mi_row * mi_stride + mi_col;
+    ModeInfo *       mi_ptr = *(pcs_ptr->mi_grid_base + offset);
+    MvReferenceFrame rf[2]  = {0, 0};
+    if (avail_blk_flag)
+        av1_set_ref_frame(rf, blk_ptr->prediction_unit_array->ref_frame_type);
+
+    uint8_t mi_x, mi_y;
+    for (mi_y = 0; mi_y < (blk_geom->bheight >> MI_SIZE_LOG2); mi_y++) {
+        for (mi_x = 0; mi_x < (blk_geom->bwidth >> MI_SIZE_LOG2); mi_x++) {
+
+            const int32_t    mi_idx = mi_x + mi_y * mi_stride;
+            MbModeInfo* mbmi = &mi_ptr[mi_idx].mbmi;
+            BlockModeInfo*   block_mi = &mi_ptr[mi_idx].mbmi.block_mi;
+            //these needed for mvPred
+            {
+                block_mi->mode = blk_ptr->pred_mode;
+                block_mi->uv_mode =
+                    blk_ptr->prediction_unit_array->intra_chroma_mode;
+                if (avail_blk_flag && blk_ptr->prediction_mode_flag == INTRA_MODE &&
+                    blk_ptr->pred_mode == INTRA_MODE_4x4) {
+                    mbmi->tx_size          = 0;
+                    block_mi->sb_type = BLOCK_4X4;
+                    mbmi->tx_depth         = blk_ptr->tx_depth;
+                } else {
+                    mbmi->tx_size =
+                        blk_geom->txsize[blk_ptr->tx_depth]
+                                        [0]; // inherit tx_size from 1st transform block
+
+                    block_mi->sb_type = blk_geom->bsize;
+                    mbmi->tx_depth         = blk_ptr->tx_depth;
+                }
+                block_mi->use_intrabc  = blk_ptr->use_intrabc;
+                block_mi->ref_frame[0] = rf[0];
+                block_mi->ref_frame[1] = avail_blk_flag &&
+                        blk_ptr->is_interintra_used
+                    ? INTRA_FRAME
+                    : rf[1];
+
+                if (avail_blk_flag) {
+                    if (blk_ptr->prediction_unit_array->inter_pred_direction_index ==
+                        UNI_PRED_LIST_0) {
+                        block_mi->mv[0].as_mv.col =
+                            blk_ptr->prediction_unit_array->mv[0].x;
+                        block_mi->mv[0].as_mv.row =
+                            blk_ptr->prediction_unit_array->mv[0].y;
+                    } else if (blk_ptr->prediction_unit_array->inter_pred_direction_index ==
+                               UNI_PRED_LIST_1) {
+                        block_mi->mv[0].as_mv.col =
+                            blk_ptr->prediction_unit_array->mv[1].x;
+                        block_mi->mv[0].as_mv.row =
+                            blk_ptr->prediction_unit_array->mv[1].y;
+                    } else {
+                        block_mi->mv[0].as_mv.col =
+                            blk_ptr->prediction_unit_array->mv[0].x;
+                        block_mi->mv[0].as_mv.row =
+                            blk_ptr->prediction_unit_array->mv[0].y;
+                        block_mi->mv[1].as_mv.col =
+                            blk_ptr->prediction_unit_array->mv[1].x;
+                        block_mi->mv[1].as_mv.row =
+                            blk_ptr->prediction_unit_array->mv[1].y;
+                    }
+                }
+
+                block_mi->partition =
+                    from_shape_to_part[blk_geom->shape]; // blk_ptr->part;
+            }
+
+            if (!avail_blk_flag)
+                block_mi->skip = EB_TRUE;
+            else {
+                if (blk_geom->has_uv && context_ptr->chroma_level <= CHROMA_MODE_1)
+                    block_mi->skip =
+                        (context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds]
+                                 .y_has_coeff[0] == 0 &&
+                         context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds]
+                                 .v_has_coeff[0] == 0 &&
+                         context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds]
+                                 .u_has_coeff[0] == 0)
+                        ? EB_TRUE
+                        : EB_FALSE;
+                else
+                    block_mi->skip =
+                        (context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds]
+                             .y_has_coeff[0] == 0)
+                        ? EB_TRUE
+                        : EB_FALSE;
+            }
+
+            block_mi->interp_filters = blk_ptr->interp_filters;
+            mbmi->comp_group_idx          = blk_ptr->comp_group_idx;
+            block_mi->compound_idx   = blk_ptr->compound_idx;
+            block_mi->interintra_mode_params.interintra_mode =
+                blk_ptr->interintra_mode;
+            block_mi->interintra_mode_params.wedge_interintra =
+                blk_ptr->use_wedge_interintra;
+
+            block_mi->interintra_mode_params.interintra_wedge_index =
+                blk_ptr->interintra_wedge_index; //in
+
+            if(pcs_ptr->parent_pcs_ptr->frm_hdr.allow_screen_content_tools)
+                svt_memcpy(&mbmi->palette_mode_info,
+                       &blk_ptr->palette_info.pmi,
+                       sizeof(PaletteModeInfo));
+            block_mi->skip_mode  = (int8_t)blk_ptr->skip_flag;
+            block_mi->segment_id = blk_ptr->segment_id;
+            block_mi->seg_id_predicted =
+                blk_ptr->seg_id_predicted;
+            block_mi->ref_mv_idx = blk_ptr->drl_index;
+            block_mi->motion_mode =
+                blk_ptr->prediction_unit_array[0].motion_mode;
+            block_mi->cfl_alpha_idx =
+                blk_ptr->prediction_unit_array->cfl_alpha_idx;
+            block_mi->cfl_alpha_signs =
+                blk_ptr->prediction_unit_array->cfl_alpha_signs;
+            block_mi->angle_delta[PLANE_TYPE_Y] =
+                blk_ptr->prediction_unit_array[0].angle_delta[PLANE_TYPE_Y];
+            block_mi->angle_delta[PLANE_TYPE_UV] =
+                blk_ptr->prediction_unit_array[0].angle_delta[PLANE_TYPE_UV];
+        }
+    }
+}
+#else
 void update_mi_map(struct ModeDecisionContext *context_ptr, BlkStruct *blk_ptr,
                    uint32_t blk_origin_x, uint32_t blk_origin_y, const BlockGeom *blk_geom,
                    uint8_t avail_blk_flag, PictureControlSet *pcs_ptr) {
@@ -1599,7 +1728,7 @@ void update_mi_map(struct ModeDecisionContext *context_ptr, BlkStruct *blk_ptr,
         }
     }
 }
-
+#endif
 static INLINE void record_samples(MbModeInfo *mbmi, int *pts, int *pts_inref, int row_offset,
                                   int sign_r, int col_offset, int sign_c) {
     uint8_t bw = block_size_wide[mbmi->block_mi.sb_type];

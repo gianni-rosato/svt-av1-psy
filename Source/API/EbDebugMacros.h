@@ -298,6 +298,14 @@ extern "C" {
 #define OPT_IFS_FOR_SKIP_MODE                 1 // Check IFS for skip_mode candidates; if IFS selected, disables skip_mode; rename merge_flag to skip_mode_allowed (no macro)
 #define FIX_UPDATE_COEFF_FLAGS                1 // If the cost of not sending coeffs is favourable, update the coeff flags to reflect the decision
 #define FIX_CHROMA_QUANT_MODE                 1 // Fix the prediction mode passed to the quant/inv. quant function for chroma
+
+
+#define OPT3_DECIMATION                       1 // Unify the use of the downsampling method whether decimation or filtering.
+#define OPT1_REMOVE_FLAT_NOISE                1 // remove flat noise
+#define OPT5_TPL_REDUCE_PAD                   1 // reduce pad in tpl search
+#define OPT6_DEPTH_REFINEMENT                 1 // reduce unnecessary operations when nsq/4x4 are off
+#define OPT7_BUILD_CAND_BLK                   1 // reduce unnecessary operations when nsq/4x4 are off
+#define OPT10_MI_MAP                          1 // cleanup of mi update
 // ============= END SVT_04 =============
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch

@@ -7080,6 +7080,9 @@ void copy_neighbour_arrays(PictureControlSet *pcs_ptr, ModeDecisionContext *cont
 static void set_parent_to_be_considered(MdcSbData *results_ptr, uint32_t blk_index, int32_t sb_size,
                                         int8_t pred_depth,
                                         uint8_t pred_sq_idx,
+#if OPT6_DEPTH_REFINEMENT
+                                        const uint8_t disallow_nsq,
+#endif
                                         int8_t depth_step) {
     const BlockGeom *blk_geom = get_blk_geom_mds(blk_index);
     if (blk_geom->sq_size < ((sb_size == BLOCK_128X128) ? 128 : 64)) {
@@ -7089,20 +7092,35 @@ static void set_parent_to_be_considered(MdcSbData *results_ptr, uint32_t blk_ind
              (blk_geom->quadi - 3) * ns_depth_offset[sb_size == BLOCK_128X128][blk_geom->depth]) -
             parent_depth_offset[sb_size == BLOCK_128X128][blk_geom->depth];
         const BlockGeom *parent_blk_geom = get_blk_geom_mds(parent_depth_idx_mds);
+#if OPT6_DEPTH_REFINEMENT
+        const uint32_t parent_tot_d1_blocks = disallow_nsq ? 1 :
+            parent_blk_geom->sq_size == 128 ? 17 :
+            parent_blk_geom->sq_size > 8 ? 25 :
+            parent_blk_geom->sq_size == 8 ? 5 : 1;
+#else
         uint32_t         parent_tot_d1_blocks =
             parent_blk_geom->sq_size == 128
                 ? 17
                 : parent_blk_geom->sq_size > 8 ? 25 : parent_blk_geom->sq_size == 8 ? 5 : 1;
+#endif
         for (uint32_t block_1d_idx = 0; block_1d_idx < parent_tot_d1_blocks; block_1d_idx++) {
 #if !OPT_REFINEMENT_SIGNALS
             results_ptr->leaf_data_array[parent_depth_idx_mds + block_1d_idx].pred_depth_refinement = parent_blk_geom->depth - pred_depth;
             results_ptr->leaf_data_array[parent_depth_idx_mds + block_1d_idx].pred_depth = pred_sq_idx;
 #endif
+#if OPT6_DEPTH_REFINEMENT
+            results_ptr->consider_block[parent_depth_idx_mds + block_1d_idx] = 1;
+#else
             results_ptr->leaf_data_array[parent_depth_idx_mds + block_1d_idx].consider_block = 1;
+#endif
         }
 
         if (depth_step < -1)
+#if OPT6_DEPTH_REFINEMENT
+            set_parent_to_be_considered(results_ptr, parent_depth_idx_mds, sb_size, pred_depth, pred_sq_idx, disallow_nsq ,depth_step + 1);
+#else
             set_parent_to_be_considered(results_ptr, parent_depth_idx_mds, sb_size, pred_depth, pred_sq_idx, depth_step + 1);
+#endif
     }
 }
 static void set_child_to_be_considered(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr, MdcSbData *results_ptr, uint32_t blk_index, uint32_t sb_index, int32_t sb_size,
@@ -7117,19 +7135,36 @@ static void set_child_to_be_considered(PictureControlSet *pcs_ptr, ModeDecisionC
         : blk_geom->sq_size > 8 ? 25 : blk_geom->sq_size == 8 ? 5 : 1;
     if (blk_geom->sq_size > 4) {
         for (uint32_t block_1d_idx = 0; block_1d_idx < tot_d1_blocks; block_1d_idx++) {
+#if OPT6_DEPTH_REFINEMENT
+            results_ptr->consider_block[blk_index + block_1d_idx]= 1;
+            results_ptr->refined_split_flag[blk_index + block_1d_idx] = EB_TRUE;
+#else
             results_ptr->leaf_data_array[blk_index + block_1d_idx].consider_block     = 1;
             results_ptr->leaf_data_array[blk_index + block_1d_idx].refined_split_flag = EB_TRUE;
+#endif
         }
         //Set first child to be considered
         uint32_t child_block_idx_1 = blk_index +
             d1_depth_offset[sb_size == BLOCK_128X128][blk_geom->depth];
         const BlockGeom *child1_blk_geom = get_blk_geom_mds(child_block_idx_1);
+#if OPT6_DEPTH_REFINEMENT
+        const uint32_t child1_tot_d1_blocks = pcs_ptr->parent_pcs_ptr->disallow_nsq ? 1 :
+            child1_blk_geom->sq_size == 128 ? 17:
+            child1_blk_geom->sq_size > 8 ? 25 :
+            child1_blk_geom->sq_size == 8 ? 5 :
+            1;
+#else
         uint32_t         child1_tot_d1_blocks =
             child1_blk_geom->sq_size == 128
                 ? 17
                 : child1_blk_geom->sq_size > 8 ? 25 : child1_blk_geom->sq_size == 8 ? 5 : 1;
+#endif
 
         for (uint32_t block_1d_idx = 0; block_1d_idx < child1_tot_d1_blocks; block_1d_idx++) {
+#if OPT6_DEPTH_REFINEMENT
+            results_ptr->consider_block[child_block_idx_1 + block_1d_idx] = 1;
+            results_ptr->refined_split_flag[child_block_idx_1 + block_1d_idx] = EB_FALSE;
+#else
             results_ptr->leaf_data_array[child_block_idx_1 + block_1d_idx].consider_block = 1;
 #if !OPT_REFINEMENT_SIGNALS
             results_ptr->leaf_data_array[child_block_idx_1 + block_1d_idx].pred_depth_refinement = child1_blk_geom->depth - pred_depth;
@@ -7137,6 +7172,7 @@ static void set_child_to_be_considered(PictureControlSet *pcs_ptr, ModeDecisionC
 #endif
             results_ptr->leaf_data_array[child_block_idx_1 + block_1d_idx].refined_split_flag =
                 EB_FALSE;
+#endif
         }
         // Add children blocks if more depth to consider (depth_step is > 1), or block not allowed (add next depth)
         if (depth_step > 1 || !pcs_ptr->parent_pcs_ptr->sb_geom[sb_index].block_is_allowed[child_block_idx_1])
@@ -7145,11 +7181,23 @@ static void set_child_to_be_considered(PictureControlSet *pcs_ptr, ModeDecisionC
         uint32_t child_block_idx_2 = child_block_idx_1 +
             ns_depth_offset[sb_size == BLOCK_128X128][blk_geom->depth + 1];
         const BlockGeom *child2_blk_geom = get_blk_geom_mds(child_block_idx_2);
+#if OPT6_DEPTH_REFINEMENT
+        const uint32_t child2_tot_d1_blocks = pcs_ptr->parent_pcs_ptr->disallow_nsq ? 1 :
+            child2_blk_geom->sq_size == 128 ? 17:
+            child2_blk_geom->sq_size > 8 ? 25 :
+            child2_blk_geom->sq_size == 8 ? 5 :
+            1;
+#else
         uint32_t         child2_tot_d1_blocks =
             child2_blk_geom->sq_size == 128
                 ? 17
                 : child2_blk_geom->sq_size > 8 ? 25 : child2_blk_geom->sq_size == 8 ? 5 : 1;
+#endif
         for (uint32_t block_1d_idx = 0; block_1d_idx < child2_tot_d1_blocks; block_1d_idx++) {
+#if OPT6_DEPTH_REFINEMENT
+            results_ptr->consider_block[child_block_idx_2 + block_1d_idx] = 1;
+            results_ptr->refined_split_flag[child_block_idx_2 + block_1d_idx] = EB_FALSE;
+#else
             results_ptr->leaf_data_array[child_block_idx_2 + block_1d_idx].consider_block = 1;
 #if !OPT_REFINEMENT_SIGNALS
             results_ptr->leaf_data_array[child_block_idx_2 + block_1d_idx].pred_depth_refinement = child2_blk_geom->depth - pred_depth;
@@ -7157,6 +7205,7 @@ static void set_child_to_be_considered(PictureControlSet *pcs_ptr, ModeDecisionC
 #endif
             results_ptr->leaf_data_array[child_block_idx_2 + block_1d_idx].refined_split_flag =
                 EB_FALSE;
+#endif
         }
         // Add children blocks if more depth to consider (depth_step is > 1), or block not allowed (add next depth)
         if (depth_step > 1 || !pcs_ptr->parent_pcs_ptr->sb_geom[sb_index].block_is_allowed[child_block_idx_2])
@@ -7165,12 +7214,24 @@ static void set_child_to_be_considered(PictureControlSet *pcs_ptr, ModeDecisionC
         uint32_t child_block_idx_3 = child_block_idx_2 +
             ns_depth_offset[sb_size == BLOCK_128X128][blk_geom->depth + 1];
         const BlockGeom *child3_blk_geom = get_blk_geom_mds(child_block_idx_3);
+#if OPT6_DEPTH_REFINEMENT
+        const uint32_t child3_tot_d1_blocks = pcs_ptr->parent_pcs_ptr->disallow_nsq ? 1 :
+            child3_blk_geom->sq_size == 128 ? 17:
+            child3_blk_geom->sq_size > 8 ? 25 :
+            child3_blk_geom->sq_size == 8 ? 5 :
+            1;
+#else
         uint32_t         child3_tot_d1_blocks =
             child3_blk_geom->sq_size == 128
                 ? 17
                 : child3_blk_geom->sq_size > 8 ? 25 : child3_blk_geom->sq_size == 8 ? 5 : 1;
+#endif
 
         for (uint32_t block_1d_idx = 0; block_1d_idx < child3_tot_d1_blocks; block_1d_idx++) {
+#if OPT6_DEPTH_REFINEMENT
+            results_ptr->consider_block[child_block_idx_3 + block_1d_idx] = 1;
+            results_ptr->refined_split_flag[child_block_idx_3 + block_1d_idx] = EB_FALSE;
+#else
             results_ptr->leaf_data_array[child_block_idx_3 + block_1d_idx].consider_block = 1;
 #if !OPT_REFINEMENT_SIGNALS
             results_ptr->leaf_data_array[child_block_idx_3 + block_1d_idx].pred_depth_refinement = child3_blk_geom->depth - pred_depth;
@@ -7178,6 +7239,7 @@ static void set_child_to_be_considered(PictureControlSet *pcs_ptr, ModeDecisionC
 #endif
             results_ptr->leaf_data_array[child_block_idx_3 + block_1d_idx].refined_split_flag =
                 EB_FALSE;
+#endif
         }
 
         // Add children blocks if more depth to consider (depth_step is > 1), or block not allowed (add next depth)
@@ -7187,11 +7249,23 @@ static void set_child_to_be_considered(PictureControlSet *pcs_ptr, ModeDecisionC
         uint32_t child_block_idx_4 = child_block_idx_3 +
             ns_depth_offset[sb_size == BLOCK_128X128][blk_geom->depth + 1];
         const BlockGeom *child4_blk_geom = get_blk_geom_mds(child_block_idx_4);
+#if OPT6_DEPTH_REFINEMENT
+        const uint32_t child4_tot_d1_blocks = pcs_ptr->parent_pcs_ptr->disallow_nsq ? 1 :
+            child4_blk_geom->sq_size == 128 ? 17:
+            child4_blk_geom->sq_size > 8 ? 25 :
+            child4_blk_geom->sq_size == 8 ? 5 :
+            1;
+#else
         uint32_t         child4_tot_d1_blocks =
             child4_blk_geom->sq_size == 128
                 ? 17
                 : child4_blk_geom->sq_size > 8 ? 25 : child4_blk_geom->sq_size == 8 ? 5 : 1;
+#endif
         for (uint32_t block_1d_idx = 0; block_1d_idx < child4_tot_d1_blocks; block_1d_idx++) {
+#if OPT6_DEPTH_REFINEMENT
+            results_ptr->consider_block[child_block_idx_4 + block_1d_idx] = 1;
+            results_ptr->refined_split_flag[child_block_idx_4 + block_1d_idx] = EB_FALSE;
+#else
             results_ptr->leaf_data_array[child_block_idx_4 + block_1d_idx].consider_block = 1;
 #if !OPT_REFINEMENT_SIGNALS
             results_ptr->leaf_data_array[child_block_idx_4 + block_1d_idx].pred_depth_refinement = child4_blk_geom->depth - pred_depth;
@@ -7199,6 +7273,7 @@ static void set_child_to_be_considered(PictureControlSet *pcs_ptr, ModeDecisionC
 #endif
             results_ptr->leaf_data_array[child_block_idx_4 + block_1d_idx].refined_split_flag =
                 EB_FALSE;
+#endif
         }
         // Add children blocks if more depth to consider (depth_step is > 1), or block not allowed (add next depth)
         if (depth_step > 1 || !pcs_ptr->parent_pcs_ptr->sb_geom[sb_index].block_is_allowed[child_block_idx_4])
@@ -7212,7 +7287,11 @@ void init_allowed_blocks(MdcSbData *results_ptr, ModeDecisionContext *context_pt
         context_ptr->md_blk_arr_nsq[d1_blk_idx].split_flag         = EB_TRUE;
         context_ptr->md_local_blk_unit[d1_blk_idx].tested_blk_flag = EB_FALSE;
         context_ptr->md_blk_arr_nsq[d1_blk_idx].part               = PARTITION_SPLIT;
+#if OPT6_DEPTH_REFINEMENT
+        if (results_ptr->consider_block[d1_blk_idx]) {
+#else
         if (results_ptr->leaf_data_array[d1_blk_idx].consider_block) {
+#endif
             context_ptr->md_local_blk_unit[d1_blk_idx].left_neighbor_partition =
                 INVALID_NEIGHBOR_DATA;
             context_ptr->md_local_blk_unit[d1_blk_idx].above_neighbor_partition =
@@ -7267,7 +7346,12 @@ static void build_cand_block_array(SequenceControlSet *scs_ptr, PictureControlSe
 
         // SQ/NSQ block(s) filter based on the block validity
         if (pcs_ptr->parent_pcs_ptr->sb_geom[sb_index].block_is_inside_md_scan[blk_index] && is_block_tagged) {
+#if OPT7_BUILD_CAND_BLK
+            uint32_t tot_d1_blocks = pcs_ptr->parent_pcs_ptr->disallow_nsq ? 1:
+                (context_ptr->md_disallow_nsq) ||
+#else
             uint32_t tot_d1_blocks = (context_ptr->md_disallow_nsq) ||
+#endif
                 (blk_geom->sq_size >= 64 && pcs_ptr->parent_pcs_ptr->disallow_all_nsq_blocks_above_64x64) ||
                 (blk_geom->sq_size >= 32 && pcs_ptr->parent_pcs_ptr->disallow_all_nsq_blocks_above_32x32) ||
                 (blk_geom->sq_size >= 16 && pcs_ptr->parent_pcs_ptr->disallow_all_nsq_blocks_above_16x16) ||
@@ -7290,11 +7374,19 @@ static void build_cand_block_array(SequenceControlSet *scs_ptr, PictureControlSe
             init_allowed_blocks(results_ptr, context_ptr, blk_index, tot_d1_blocks);
 
             for (d1_block_idx = 0; d1_block_idx < tot_d1_blocks; d1_block_idx++)
+#if OPT6_DEPTH_REFINEMENT
+                d1_blocks_accumlated += results_ptr->consider_block[blk_index + d1_block_idx] ? 1 : 0;
+#else
                 d1_blocks_accumlated +=
                 results_ptr->leaf_data_array[blk_index + d1_block_idx].consider_block ? 1 : 0;
+#endif
 
             for (uint32_t idx = 0; idx < tot_d1_blocks; ++idx) {
+#if OPT6_DEPTH_REFINEMENT
+                if (results_ptr->consider_block[blk_index]) {
+#else
                 if (results_ptr->leaf_data_array[blk_index].consider_block) {
+#endif
 
                     results_ptr->leaf_data_array[results_ptr->leaf_count].mds_idx = blk_index;
                     results_ptr->leaf_data_array[results_ptr->leaf_count].tot_d1_blocks = d1_blocks_accumlated;
@@ -7306,8 +7398,12 @@ static void build_cand_block_array(SequenceControlSet *scs_ptr, PictureControlSe
                     if (results_ptr->leaf_data_array[results_ptr->leaf_count].final_pred_depth == -8)
                         printf("final_pred_depth error\n");
 #endif
+#if OPT6_DEPTH_REFINEMENT
+                    results_ptr->split_flag[results_ptr->leaf_count++] = results_ptr->refined_split_flag[blk_index];
+#else
 
                     results_ptr->leaf_data_array[results_ptr->leaf_count++].split_flag = results_ptr->leaf_data_array[blk_index].refined_split_flag;
+#endif
 
                 }
                 blk_index++;
@@ -7816,12 +7912,20 @@ uint8_t is_child_to_current_deviation_small(SequenceControlSet *scs_ptr,
     ModeDecisionContext *mdctxt, const BlockGeom *blk_geom, uint32_t blk_index, int64_t th_offset) {
 
     int64_t child_to_current_deviation = MIN_SIGNED_VALUE;
-
+#if OPT6_DEPTH_REFINEMENT
+    const uint32_t ns_d1_offset = d1_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128][blk_geom->depth];
+    const uint32_t ns_depth_plus1_offset = ns_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128][blk_geom->depth + 1];
+    const uint32_t child_block_idx_1 = blk_index + ns_d1_offset;
+    const uint32_t child_block_idx_2 = child_block_idx_1 + ns_depth_plus1_offset;
+    const uint32_t child_block_idx_3 = child_block_idx_2 + ns_depth_plus1_offset;
+    const uint32_t child_block_idx_4 = child_block_idx_3 + ns_depth_plus1_offset;
+#else
     uint32_t child_block_idx_1, child_block_idx_2, child_block_idx_3, child_block_idx_4;
     child_block_idx_1 = blk_index + d1_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128][blk_geom->depth];
     child_block_idx_2 = child_block_idx_1 + ns_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128][blk_geom->depth + 1];
     child_block_idx_3 = child_block_idx_2 + ns_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128][blk_geom->depth + 1];
     child_block_idx_4 = child_block_idx_3 + ns_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128][blk_geom->depth + 1];
+#endif
 
     uint64_t child_cost = 0;
     uint8_t child_cnt = 0;
@@ -7860,35 +7964,55 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
     uint32_t   blk_index   = 0;
 #if OPT_BLK_REFINEMENT_PREP
     if (pcs_ptr->parent_pcs_ptr->disallow_nsq) {
+#if OPT6_DEPTH_REFINEMENT
+        if (context_ptr->disallow_4x4) {
+            memset(results_ptr->consider_block, 0, sizeof(uint8_t)*scs_ptr->max_block_cnt);
+            memset(results_ptr->split_flag, 1, sizeof(uint8_t)*scs_ptr->max_block_cnt);
+            memset(results_ptr->refined_split_flag, 1, sizeof(uint8_t)*scs_ptr->max_block_cnt);
+        } else {
+#endif
+            while (blk_index < scs_ptr->max_block_cnt) {
 
-        while (blk_index < scs_ptr->max_block_cnt) {
+                const BlockGeom *blk_geom = get_blk_geom_mds(blk_index); \
 
-            const BlockGeom *blk_geom = get_blk_geom_mds(blk_index); \
+                    EbBool split_flag =
+                    blk_geom->sq_size > 4 ? EB_TRUE : EB_FALSE;
+    #if OPT6_DEPTH_REFINEMENT
+                results_ptr->consider_block[blk_index] = 0;
+                results_ptr->split_flag[blk_index] = blk_geom->sq_size > 4 ? EB_TRUE : EB_FALSE;
+                results_ptr->refined_split_flag[blk_index] = blk_geom->sq_size > 4 ? EB_TRUE : EB_FALSE;
+    #else
+                results_ptr->leaf_data_array[blk_index].consider_block = 0;
+                results_ptr->leaf_data_array[blk_index].split_flag =
+                    blk_geom->sq_size > 4 ? EB_TRUE : EB_FALSE;
+                results_ptr->leaf_data_array[blk_index].refined_split_flag =
+                    blk_geom->sq_size > 4 ? EB_TRUE : EB_FALSE;
+    #endif
 
-                EbBool split_flag =
-                blk_geom->sq_size > 4 ? EB_TRUE : EB_FALSE;
-
-            results_ptr->leaf_data_array[blk_index].consider_block = 0;
-            results_ptr->leaf_data_array[blk_index].split_flag =
-                blk_geom->sq_size > 4 ? EB_TRUE : EB_FALSE;
-            results_ptr->leaf_data_array[blk_index].refined_split_flag =
-                blk_geom->sq_size > 4 ? EB_TRUE : EB_FALSE;
-
-            blk_index +=
-                split_flag
-                ? d1_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128][blk_geom->depth]
-                : ns_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128][blk_geom->depth];
+                blk_index +=
+                    split_flag
+                    ? d1_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128][blk_geom->depth]
+                    : ns_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128][blk_geom->depth];
+            }
+#if OPT6_DEPTH_REFINEMENT
         }
+#endif
     }
     else {
         // Reset mdc_sb_array data to defaults; it will be updated based on the predicted blocks (stored in md_blk_arr_nsq)
         while (blk_index < scs_ptr->max_block_cnt) {
             const BlockGeom *blk_geom = get_blk_geom_mds(blk_index);
+#if OPT6_DEPTH_REFINEMENT
+            results_ptr->consider_block[blk_index] = 0;
+            results_ptr->split_flag[blk_index] = blk_geom->sq_size > 4 ? EB_TRUE : EB_FALSE;
+            results_ptr->refined_split_flag[blk_index] = blk_geom->sq_size > 4 ? EB_TRUE : EB_FALSE;
+#else
             results_ptr->leaf_data_array[blk_index].consider_block = 0;
             results_ptr->leaf_data_array[blk_index].split_flag =
                 blk_geom->sq_size > 4 ? EB_TRUE : EB_FALSE;
             results_ptr->leaf_data_array[blk_index].refined_split_flag =
                 blk_geom->sq_size > 4 ? EB_TRUE : EB_FALSE;
+#endif
 #if !OPT_REFINEMENT_SIGNALS
             results_ptr->leaf_data_array[blk_index].pred_depth_refinement = -8;
             results_ptr->leaf_data_array[blk_index].pred_depth = -8;
@@ -7916,9 +8040,17 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
     blk_index               = 0;
     while (blk_index < scs_ptr->max_block_cnt) {
         const BlockGeom *blk_geom = get_blk_geom_mds(blk_index);
+#if OPT6_DEPTH_REFINEMENT
+        const unsigned   tot_d1_blocks = pcs_ptr->parent_pcs_ptr->disallow_nsq ? 1 :
+            blk_geom->sq_size == 128 ? 17 :
+            blk_geom->sq_size > 8 ? 25 :
+            blk_geom->sq_size == 8 ? 5 :
+            1;
+#else
         const unsigned   tot_d1_blocks = blk_geom->sq_size == 128
             ? 17
             : blk_geom->sq_size > 8 ? 25 : blk_geom->sq_size == 8 ? 5 : 1;
+#endif
 
         // if the parent square is inside inject this block
         uint8_t is_blk_allowed =
@@ -8136,6 +8268,10 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
 #endif
                     // Add current pred depth block(s)
                     for (unsigned block_1d_idx = 0; block_1d_idx < tot_d1_blocks; block_1d_idx++) {
+#if OPT6_DEPTH_REFINEMENT
+                        results_ptr->consider_block[blk_index + block_1d_idx] = 1;
+                        results_ptr->refined_split_flag[blk_index + block_1d_idx] = EB_FALSE;
+#else
                         results_ptr->leaf_data_array[blk_index + block_1d_idx].consider_block = 1;
 #if !OPT_REFINEMENT_SIGNALS
                         results_ptr->leaf_data_array[blk_index + block_1d_idx].pred_depth_refinement = 0;
@@ -8143,6 +8279,7 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
 #endif
                         results_ptr->leaf_data_array[blk_index + block_1d_idx].refined_split_flag =
                             EB_FALSE;
+#endif
                     }
 
                     uint8_t sq_size_idx = 7 - (uint8_t)svt_log2f((uint8_t)blk_geom->sq_size);
@@ -8168,8 +8305,14 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
 #endif
                     if (add_parent_depth)
                     if (s_depth != 0)
+#if OPT6_DEPTH_REFINEMENT
+                        set_parent_to_be_considered(
+                            results_ptr, blk_index, scs_ptr->seq_header.sb_size, (int8_t)blk_geom->depth,sq_size_idx,
+                            pcs_ptr->parent_pcs_ptr->disallow_nsq, s_depth);
+#else
                         set_parent_to_be_considered(
                             results_ptr, blk_index, scs_ptr->seq_header.sb_size, (int8_t)blk_geom->depth,sq_size_idx,  s_depth);
+#endif
                     // Add block indices of lower depth(s)
                     // Block-based depth refinement using cost is applicable for only [s_depth=-1, e_depth=1]
                     uint8_t add_sub_depth = 1;
@@ -8237,7 +8380,12 @@ static void build_starting_cand_block_array(SequenceControlSet *scs_ptr, Picture
 
         // SQ/NSQ block(s) filter based on the block validity
         if (pcs_ptr->parent_pcs_ptr->sb_geom[sb_index].block_is_inside_md_scan[blk_index] && is_block_tagged) {
+#if OPT7_BUILD_CAND_BLK
+            uint32_t tot_d1_blocks = pcs_ptr->parent_pcs_ptr->disallow_nsq ? 1:
+                (context_ptr->md_disallow_nsq) ||
+#else
             uint32_t tot_d1_blocks = (context_ptr->md_disallow_nsq) ||
+#endif
                 (blk_geom->sq_size >= 64 && pcs_ptr->parent_pcs_ptr->disallow_all_nsq_blocks_above_64x64) ||
                 (blk_geom->sq_size >= 32 && pcs_ptr->parent_pcs_ptr->disallow_all_nsq_blocks_above_32x32) ||
                 (blk_geom->sq_size >= 16 && pcs_ptr->parent_pcs_ptr->disallow_all_nsq_blocks_above_16x16) ||
@@ -8266,12 +8414,19 @@ static void build_starting_cand_block_array(SequenceControlSet *scs_ptr, Picture
 #if !OPT_REFINEMENT_SIGNALS
                     results_ptr->leaf_data_array[results_ptr->leaf_count].final_pred_depth_refinement = 0;
 #endif
+#if OPT6_DEPTH_REFINEMENT
+                    if (blk_geom->sq_size > min_sq_size)
+                        results_ptr->split_flag[results_ptr->leaf_count++] = EB_TRUE;
+                    else
+                        results_ptr->split_flag[results_ptr->leaf_count++] = EB_FALSE;
+#else
                     if (blk_geom->sq_size > min_sq_size)
                         results_ptr->leaf_data_array[results_ptr->leaf_count++].split_flag =
                         EB_TRUE;
                     else
                         results_ptr->leaf_data_array[results_ptr->leaf_count++].split_flag =
                         EB_FALSE;
+#endif
                 }
                 blk_index++;
             }

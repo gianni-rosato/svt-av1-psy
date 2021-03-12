@@ -8320,7 +8320,11 @@ void calc_scr_to_recon_dist_per_quadrant(
 
 void md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
 #if OPT_SB_CLASS
+#if OPT6_DEPTH_REFINEMENT
+                     const uint8_t blk_split_flag,
+#else
                      const EbMdcLeafData *const leaf_data_ptr,
+#endif
 #endif
 #if RFCTR_MD_BLOCK_LOOP
                      EbPictureBufferDesc *        input_picture_ptr) {
@@ -8737,7 +8741,11 @@ void md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionContext *context_pt
 #if FTR_NSQ_RED_USING_RECON
 #if FTR_MODULATE_SRC_REC_TH
 #if OPT_SB_CLASS
+#if OPT6_DEPTH_REFINEMENT
+    if (!context_ptr->md_disallow_nsq || blk_split_flag)
+#else
     if (!context_ptr->md_disallow_nsq || leaf_data_ptr->split_flag)
+#endif
 #endif
         calc_scr_to_recon_dist_per_quadrant(
             context_ptr,
@@ -9568,7 +9576,11 @@ void update_neighbour_arrays(PictureControlSet *pcs, ModeDecisionContext *ctx) {
  * is the first d1 block.  Called before process each block.
  */
 void init_block_data(PictureControlSet *pcs, ModeDecisionContext *ctx,
-                     const EbMdcLeafData *const leaf_data_ptr, SuperBlock *sb_ptr,
+                     const EbMdcLeafData *const leaf_data_ptr,
+#if OPT6_DEPTH_REFINEMENT
+                     const uint8_t blk_split_flag,
+#endif
+                     SuperBlock *sb_ptr,
                      uint16_t sb_org_x, uint16_t sb_org_y,
                      uint32_t blk_idx_mds, uint8_t first_d1_blk) {
 
@@ -9589,6 +9601,11 @@ void init_block_data(PictureControlSet *pcs, ModeDecisionContext *ctx,
     ctx->md_ep_pipe_sb[blk_idx_mds].skip_cost = 0;
     blk_ptr->av1xd->sb_type = blk_geom->bsize;
     blk_ptr->mds_idx = blk_idx_mds;
+#if OPT6_DEPTH_REFINEMENT
+    ctx->md_blk_arr_nsq[blk_idx_mds].mdc_split_flag = blk_split_flag;
+    ctx->md_blk_arr_nsq[blk_geom->sqi_mds].split_flag = blk_split_flag;
+    blk_ptr->split_flag =blk_split_flag; //mdc indicates smallest or non valid CUs with split flag=
+#else
     ctx->md_blk_arr_nsq[blk_idx_mds].mdc_split_flag = (uint16_t)leaf_data_ptr->split_flag;
 #if !OPT_REFINEMENT_SIGNALS
     ctx->md_local_blk_unit[blk_idx_mds].pred_depth_refinement = leaf_data_ptr->final_pred_depth_refinement;
@@ -9596,6 +9613,7 @@ void init_block_data(PictureControlSet *pcs, ModeDecisionContext *ctx,
 #endif
     ctx->md_blk_arr_nsq[blk_geom->sqi_mds].split_flag = (uint16_t)leaf_data_ptr->split_flag;
     blk_ptr->split_flag =(uint16_t)leaf_data_ptr->split_flag; //mdc indicates smallest or non valid CUs with split flag=
+#endif
     blk_ptr->qindex = ctx->qp_index;
     ctx->md_local_blk_unit[blk_idx_mds].best_d1_blk = blk_idx_mds;
 
@@ -9770,6 +9788,9 @@ EbBool update_redundant(PictureControlSet *pcs, ModeDecisionContext *ctx) {
  */
 void process_block(SequenceControlSet *scs, PictureControlSet *pcs,
                 ModeDecisionContext *ctx, const EbMdcLeafData *const leaf_data_ptr,
+#if OPT6_DEPTH_REFINEMENT
+                const uint8_t blk_split_flag,
+#endif
                 EbPictureBufferDesc *in_pic,
                 SuperBlock *sb_ptr, uint32_t sb_addr,
                 uint16_t sb_org_x, uint16_t sb_org_y, uint32_t blk_idx_mds,
@@ -9785,6 +9806,9 @@ void process_block(SequenceControlSet *scs, PictureControlSet *pcs,
     init_block_data(pcs,
         ctx,
         leaf_data_ptr,
+#if OPT6_DEPTH_REFINEMENT
+        blk_split_flag,
+#endif
         sb_ptr,
         sb_org_x,
         sb_org_y,
@@ -9844,7 +9868,11 @@ void process_block(SequenceControlSet *scs, PictureControlSet *pcs,
 
             // Encode the block
 #if OPT_SB_CLASS
+#if OPT6_DEPTH_REFINEMENT
+            md_encode_block(pcs, ctx, blk_split_flag, in_pic);
+#else
             md_encode_block(pcs, ctx, leaf_data_ptr, in_pic);
+#endif
 #else
             md_encode_block(pcs, ctx, in_pic);
 #endif
@@ -10093,11 +10121,16 @@ EB_EXTERN EbErrorType mode_decision_sb(SequenceControlSet *scs, PictureControlSe
 
         uint32_t blk_idx_mds = leaf_data_array[blk_idx].mds_idx;
         const EbMdcLeafData *const leaf_data_ptr = &leaf_data_array[blk_idx];
-
+#if OPT6_DEPTH_REFINEMENT
+        const uint8_t blk_split_flag = mdc_sb_data->split_flag[blk_idx];
+#endif
         process_block(scs,
             pcs,
             ctx,
             leaf_data_ptr,
+#if OPT6_DEPTH_REFINEMENT
+            blk_split_flag,
+#endif
             input_pic,
             sb_ptr,
             sb_addr,

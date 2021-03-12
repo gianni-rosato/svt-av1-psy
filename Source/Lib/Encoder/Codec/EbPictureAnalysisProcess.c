@@ -2639,6 +2639,10 @@ EbErrorType denoise_estimate_film_grain(SequenceControlSet *     scs_ptr,
  ************************************************/
 void picture_pre_processing_operations(PictureParentControlSet *pcs_ptr,
                                        SequenceControlSet *scs_ptr) {
+#if OPT1_REMOVE_FLAT_NOISE
+    if (scs_ptr->film_grain_denoise_strength)
+        denoise_estimate_film_grain(scs_ptr, pcs_ptr);
+#else
     if (scs_ptr->film_grain_denoise_strength) {
         denoise_estimate_film_grain(scs_ptr, pcs_ptr);
     } else {
@@ -2648,6 +2652,7 @@ void picture_pre_processing_operations(PictureParentControlSet *pcs_ptr,
         pcs_ptr->pic_noise_class =
             PIC_NOISE_CLASS_INV; //this init is for both REAL-TIME and BEST-QUALITY
     }
+#endif
     return;
 }
 
@@ -4034,12 +4039,14 @@ void *picture_analysis_kernel(void *input_ptr) {
                               sizeof(uint8_t) * input_picture_ptr->width);
                 // Pad input picture to complete border SBs
                 pad_picture_to_multiple_of_sb_dimensions(input_padded_picture_ptr);
+#if !OPT3_DECIMATION
                 // 1/4 & 1/16 input picture decimation
                 downsample_decimation_input_picture(
                         pcs_ptr,
                         input_padded_picture_ptr,
                         (EbPictureBufferDesc *)pa_ref_obj_->quarter_decimated_picture_ptr,
                         (EbPictureBufferDesc *)pa_ref_obj_->sixteenth_decimated_picture_ptr);
+#endif
 
                 // 1/4 & 1/16 input picture downsampling through filtering
                 if (scs_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED) {
@@ -4049,6 +4056,16 @@ void *picture_analysis_kernel(void *input_ptr) {
                             (EbPictureBufferDesc *)pa_ref_obj_->quarter_filtered_picture_ptr,
                             (EbPictureBufferDesc *)pa_ref_obj_->sixteenth_filtered_picture_ptr);
                 }
+#if OPT3_DECIMATION
+                else {
+                    // 1/4 & 1/16 input picture decimation
+                    downsample_decimation_input_picture(
+                        pcs_ptr,
+                        input_padded_picture_ptr,
+                        (EbPictureBufferDesc *)pa_ref_obj_->quarter_decimated_picture_ptr,
+                        (EbPictureBufferDesc *)pa_ref_obj_->sixteenth_decimated_picture_ptr);
+                }
+#endif
                 if (scs_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED) {
                     pcs_ptr->ds_pics.quarter_picture_ptr = pa_ref_obj_->quarter_filtered_picture_ptr;
                     pcs_ptr->ds_pics.sixteenth_picture_ptr = pa_ref_obj_->sixteenth_filtered_picture_ptr;
@@ -4063,8 +4080,13 @@ void *picture_analysis_kernel(void *input_ptr) {
                         pcs_ptr,
                         pcs_ptr->chroma_downsampled_picture_ptr, //420 input_picture_ptr
                         input_padded_picture_ptr,
+#if OPT3_DECIMATION
+                        (scs_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED) ? (EbPictureBufferDesc *)pa_ref_obj_->sixteenth_filtered_picture_ptr :  (EbPictureBufferDesc *)pa_ref_obj_
+                        ->sixteenth_decimated_picture_ptr,
+#else
                         (EbPictureBufferDesc *)pa_ref_obj_
                         ->sixteenth_decimated_picture_ptr, // Hsan: always use decimated until studying the trade offs
+#endif
                         pcs_ptr->sb_total_count);
             }
 

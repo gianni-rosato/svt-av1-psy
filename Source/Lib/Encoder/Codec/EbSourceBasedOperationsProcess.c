@@ -438,6 +438,40 @@ static uint8_t is_me_data_valid(const MeSbResults *me_results, uint32_t me_mb_of
 /*this is a trailing path function. PictureParentControlSet should not be used */
 #define PictureParentControlSet  "TYPE_NOT_ALLOWED"
 #endif
+#if OPT5_TPL_REDUCE_PAD
+void clip_mv_in_pad(
+    EbPictureBufferDesc *ref_pic_ptr,
+    uint32_t mb_origin_x,
+    uint32_t mb_origin_y,
+    int16_t *x_curr_mv,
+    int16_t *y_curr_mv)
+{
+    // Search area adjustment
+    int16_t blk_origin_x = mb_origin_x;
+    int16_t blk_origin_y = mb_origin_y;
+    int16_t bwidth = 16;
+    int16_t bheight = 16;
+    int16_t mvx = *x_curr_mv;
+    int16_t mvy = *y_curr_mv;
+    int16_t padx = TPL_PADX;
+    int16_t pady = TPL_PADY;
+
+    if ((blk_origin_x + (mvx >> 3)) < -padx)
+        mvx = (-padx - blk_origin_x) << 3;
+
+    if ((blk_origin_x + bwidth + (mvx >> 3)) > (padx + ref_pic_ptr->max_width - 1))
+        mvx = ((padx + ref_pic_ptr->max_width - 1) - (blk_origin_x + bwidth)) << 3;
+
+    if ((blk_origin_y + (mvy >> 3)) < -pady)
+        mvy = (-pady - blk_origin_y) << 3;
+
+    if ((blk_origin_y + bheight + (mvy >> 3)) > (pady + ref_pic_ptr->max_height - 1))
+        mvy = ((pady + ref_pic_ptr->max_height - 1) - (blk_origin_y + bheight)) << 3;
+
+    *x_curr_mv = mvx;
+    *y_curr_mv = mvy;
+}
+#endif
 // Reference pruning, Loop over all available references and get the best reference idx based on SAD
 void get_best_reference(
 #if FTR_TPL_TR
@@ -485,7 +519,9 @@ void get_best_reference(
                 ->me_mv_array[me_mb_offset * MAX_PA_ME_MV + (list_index ? 4 : 0) + ref_pic_index]
                 .y_mv
             << 1;
-
+#if OPT5_TPL_REDUCE_PAD
+        clip_mv_in_pad(ref_pic_ptr,mb_origin_x,mb_origin_y,&x_curr_mv,&y_curr_mv);
+#endif
         MV      best_mv          = {y_curr_mv, x_curr_mv};
         int32_t ref_origin_index = ref_pic_ptr->origin_x + (mb_origin_x + (best_mv.col >> 3)) +
             (mb_origin_y + (best_mv.row >> 3) + ref_pic_ptr->origin_y) * ref_pic_ptr->stride_y;
@@ -832,7 +868,9 @@ void tpl_mc_flow_dispenser_sb(
                                                 (list_index ? 4 : 0) + ref_pic_index]
                                 .y_mv
                     << 1;
-
+#if OPT5_TPL_REDUCE_PAD
+                clip_mv_in_pad(ref_pic_ptr,mb_origin_x,mb_origin_y,&x_curr_mv,&y_curr_mv);
+#endif
                 MV      best_mv          = {y_curr_mv, x_curr_mv};
     #if FTR_TPL_REDUCE_NUMBER_OF_REF
                 if (pcs_ptr->tpl_ctrls.tpl_opt_flag && pcs_ptr->tpl_ctrls.use_pred_sad_in_inter_search) {
@@ -2319,10 +2357,17 @@ EbErrorType init_tpl_buffers(
     picture_buffer_desc_init_data.bit_depth          = pcs_ptr->enhanced_picture_ptr->bit_depth;
     picture_buffer_desc_init_data.color_format       = pcs_ptr->enhanced_picture_ptr->color_format;
     picture_buffer_desc_init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_Y_FLAG;
+#if OPT5_TPL_REDUCE_PAD
+    picture_buffer_desc_init_data.left_padding       = TPL_PADX;
+    picture_buffer_desc_init_data.right_padding      = TPL_PADX;
+    picture_buffer_desc_init_data.top_padding        = TPL_PADY;
+    picture_buffer_desc_init_data.bot_padding        = TPL_PADY;
+#else
     picture_buffer_desc_init_data.left_padding       = pcs_ptr->enhanced_picture_ptr->origin_x;
     picture_buffer_desc_init_data.right_padding      = pcs_ptr->enhanced_picture_ptr->origin_x;
     picture_buffer_desc_init_data.top_padding        = pcs_ptr->enhanced_picture_ptr->origin_y;
     picture_buffer_desc_init_data.bot_padding        = pcs_ptr->enhanced_picture_ptr->origin_bot_y;
+#endif
     picture_buffer_desc_init_data.split_mode         = EB_FALSE;
 
     EB_NEW(encode_context_ptr->mc_flow_rec_picture_buffer_noref,

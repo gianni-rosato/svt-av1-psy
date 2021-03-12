@@ -4313,12 +4313,12 @@ void perform_simple_picture_analysis_for_overlay(PictureParentControlSet     *pc
     uint32_t                        sb_total_count;
 
     SequenceControlSet *scs_ptr = (SequenceControlSet*)pcs_ptr->scs_wrapper_ptr->object_ptr;
-    input_picture_ptr               = pcs_ptr->enhanced_picture_ptr;
-    pa_ref_obj_               = (EbPaReferenceObject*)pcs_ptr->pa_reference_picture_wrapper_ptr->object_ptr;
-    input_padded_picture_ptr        = (EbPictureBufferDesc*)pa_ref_obj_->input_padded_picture_ptr;
+    input_picture_ptr = pcs_ptr->enhanced_picture_ptr;
+    pa_ref_obj_ = (EbPaReferenceObject*)pcs_ptr->pa_reference_picture_wrapper_ptr->object_ptr;
+    input_padded_picture_ptr = (EbPictureBufferDesc*)pa_ref_obj_->input_padded_picture_ptr;
     pic_width_in_sb = (pcs_ptr->aligned_width + scs_ptr->sb_sz - 1) / scs_ptr->sb_sz;
-    pic_height_in_sb   = (pcs_ptr->aligned_height + scs_ptr->sb_sz - 1) / scs_ptr->sb_sz;
-    sb_total_count      = pic_width_in_sb * pic_height_in_sb;
+    pic_height_in_sb = (pcs_ptr->aligned_height + scs_ptr->sb_sz - 1) / scs_ptr->sb_sz;
+    sb_total_count = pic_width_in_sb * pic_height_in_sb;
 
     // Pad pictures to multiple min cu size
     pad_picture_to_multiple_of_min_blk_size_dimensions(
@@ -4343,9 +4343,9 @@ void perform_simple_picture_analysis_for_overlay(PictureParentControlSet     *pc
     // R2R FIX: copying input_picture_ptr to input_padded_picture_ptr for motion_estimate_sb needs it
     {
         uint8_t *pa = input_padded_picture_ptr->buffer_y + input_padded_picture_ptr->origin_x +
-                      input_padded_picture_ptr->origin_y * input_padded_picture_ptr->stride_y;
+            input_padded_picture_ptr->origin_y * input_padded_picture_ptr->stride_y;
         uint8_t *in = input_picture_ptr->buffer_y + input_picture_ptr->origin_x +
-                      input_picture_ptr->origin_y * input_picture_ptr->stride_y;
+            input_picture_ptr->origin_y * input_picture_ptr->stride_y;
         for (uint32_t row = 0; row < input_picture_ptr->height; row++)
             svt_memcpy(pa + row * input_padded_picture_ptr->stride_y, in + row * input_picture_ptr->stride_y, sizeof(uint8_t) * input_picture_ptr->width);
     }
@@ -4353,14 +4353,14 @@ void perform_simple_picture_analysis_for_overlay(PictureParentControlSet     *pc
     // Pad input picture to complete border SBs
     pad_picture_to_multiple_of_sb_dimensions(
         input_padded_picture_ptr);
-
+#if !OPT3_DECIMATION
     // 1/4 & 1/16 input picture decimation
     downsample_decimation_input_picture(
         pcs_ptr,
         input_padded_picture_ptr,
         (EbPictureBufferDesc*)pa_ref_obj_->quarter_decimated_picture_ptr,
         (EbPictureBufferDesc*)pa_ref_obj_->sixteenth_decimated_picture_ptr);
-
+#endif
     // 1/4 & 1/16 input picture downsampling through filtering
     if (scs_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED) {
         downsample_filtering_input_picture(
@@ -4369,13 +4369,28 @@ void perform_simple_picture_analysis_for_overlay(PictureParentControlSet     *pc
             (EbPictureBufferDesc*)pa_ref_obj_->quarter_filtered_picture_ptr,
             (EbPictureBufferDesc*)pa_ref_obj_->sixteenth_filtered_picture_ptr);
     }
+#if OPT3_DECIMATION
+    else {
+        // 1/4 & 1/16 input picture decimation
+        downsample_decimation_input_picture(
+            pcs_ptr,
+            input_padded_picture_ptr,
+            (EbPictureBufferDesc*)pa_ref_obj_->quarter_decimated_picture_ptr,
+            (EbPictureBufferDesc*)pa_ref_obj_->sixteenth_decimated_picture_ptr);
+    }
+#endif
     // Gathering statistics of input picture, including Variance Calculation, Histogram Bins
     gathering_picture_statistics(
         scs_ptr,
         pcs_ptr,
         pcs_ptr->chroma_downsampled_picture_ptr, //420 input_picture_ptr
         input_padded_picture_ptr,
+#if OPT3_DECIMATION
+        (scs_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED) ? (EbPictureBufferDesc *)pa_ref_obj_->sixteenth_filtered_picture_ptr :  (EbPictureBufferDesc *)pa_ref_obj_
+                        ->sixteenth_decimated_picture_ptr,
+#else
         pa_ref_obj_->sixteenth_decimated_picture_ptr, // Hsan: always use decimated until studying the trade offs
+#endif
         sb_total_count);
 
 #if FTR_ALIGN_SC_DETECOR

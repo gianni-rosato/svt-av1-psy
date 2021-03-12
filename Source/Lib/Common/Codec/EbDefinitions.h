@@ -2558,7 +2558,7 @@ typedef enum DownSamplingMethod
 
 // Noise detection
 #define  NOISE_VARIANCE_TH                390
-
+#if !OPT1_REMOVE_FLAT_NOISE
 #define  EbPicnoiseClass    uint8_t
 #define  PIC_NOISE_CLASS_INV  0 //not computed
 #define  PIC_NOISE_CLASS_1    1 //No Noise
@@ -2572,7 +2572,7 @@ typedef enum DownSamplingMethod
 #define  PIC_NOISE_CLASS_8    9
 #define  PIC_NOISE_CLASS_9    10
 #define  PIC_NOISE_CLASS_10   11 //Extreme Noise
-
+#endif
 // Intrinisc
 #define INTRINSIC_SSE2                                1
 
