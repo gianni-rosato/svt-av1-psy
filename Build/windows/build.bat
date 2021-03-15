@@ -148,6 +148,9 @@ if -%1-==-- (
 ) else if /I "%1"=="avx512" (
     set "cmake_eflags=%cmake_eflags% -DENABLE_AVX512=ON"
     shift
+) else if /I "%1"=="lto" (
+    set "cmake_eflags=%cmake_eflags% -DSVT_AV1_LTO=ON"
+    shift
 )  else (
     echo Unknown argument "%1"
     call :help
