@@ -310,6 +310,7 @@ extern "C" {
 
 #define TUNE_REDESIGN_TF_CTRLS                 1 // Improve TF ctrls, and TF performance
 
+#define FIX_GM_R2R                             1 // Fix GM initialization
 // ============= END SVT_04 =============
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch

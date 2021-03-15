@@ -48,10 +48,14 @@ void global_motion_estimation(PictureParentControlSet *pcs_ptr,
     // Initilize wmtype to be IDENTITY for all references frames
     // Ref List Loop
     for (uint32_t list_index = REF_LIST_0; list_index <= num_of_list_to_search; ++list_index) {
+#if FIX_GM_R2R
+        uint32_t num_of_ref_pic_to_search = REF_LIST_MAX_DEPTH;
+#else
         uint32_t num_of_ref_pic_to_search = pcs_ptr->slice_type == P_SLICE
             ? pcs_ptr->ref_list0_count_try
             : list_index == REF_LIST_0 ? pcs_ptr->ref_list0_count_try
                                        : pcs_ptr->ref_list1_count_try;
+#endif
         // Ref Picture Loop
         for (uint32_t ref_pic_index = 0; ref_pic_index < num_of_ref_pic_to_search;
              ++ref_pic_index) {
