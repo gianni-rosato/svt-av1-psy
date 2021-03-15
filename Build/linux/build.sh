@@ -74,6 +74,8 @@ Usage: $0 [OPTION] ... -- [OPTIONS FOR CMAKE]
     disable-avx512
     --enable-avx512,    Enable building avx512 code (if supported)
     enable-avx512
+    --enable-lto,       Enable link time optimization
+    enable-lto
     --shared, shared    Build shared libs
 -x, --static, static    Build static libs
 -g, --gen, gen=*        Set CMake generator
@@ -250,6 +252,7 @@ parse_options() {
         enable*)
             case ${1#enable-} in
             avx512) CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS -DENABLE_AVX512=ON" ;;
+            lto) CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS -DSVT_AV1_LTO=ON" ;;
             *) print_message "Unknown option: $1" ;;
             esac
             shift
