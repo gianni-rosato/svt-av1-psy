@@ -28,8 +28,8 @@ float svt_aom_noise_psd_get_default_value(int32_t block_size, float factor) {
 // transformed data and a temporary working buffer to use during the
 // transform.
 struct aom_noise_tx_t {
-    DECLARE_ALIGNED(32, float, *tx_block);
-    DECLARE_ALIGNED(32, float, *temp);
+    float *tx_block;
+    float *temp;
     int32_t block_size;
     void (*fft)(const float *, float *, float *);
     void (*ifft)(const float *, float *, float *);

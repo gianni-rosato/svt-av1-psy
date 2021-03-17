@@ -155,16 +155,21 @@ class HighbdIntraPredTest
     : public AV1IntraPredTest<INTRAPRED_HBD, uint16_t, HBD_PARAMS> {
   protected:
     void Predict() {
+        setup_common_rtcd_internal(get_cpu_flags_to_use());
         const int bit_depth = bd_;
         ref_func_(dst_ref_, stride_, above_row_, left_col_, bit_depth);
         tst_func_(dst_tst_, stride_, above_row_, left_col_, bit_depth);
     }
 };
 
+/** setup_test_env is implemented in test/TestEnv.c */
+extern "C" void setup_test_env();
+
 class LowbdIntraPredTest
     : public AV1IntraPredTest<INTRAPRED_LBD, uint8_t, LBD_PARAMS> {
   protected:
     void Predict() {
+        setup_test_env();
         ref_func_(dst_ref_, stride_, above_row_, left_col_);
         tst_func_(dst_tst_, stride_, above_row_, left_col_);
     }
