@@ -2989,6 +2989,11 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     // Set hbd_mode_decision OFF for high encode modes or bitdepth < 10
     if (scs_ptr->static_config.encoder_bit_depth < 10)
         scs_ptr->static_config.enable_hbd_mode_decision = 0;
+
+
+#if LIMIT_TO_43
+    scs_ptr->mrp_init_level = scs_ptr->static_config.enc_mode <= ENC_M3 ? 1 : scs_ptr->static_config.enc_mode <= ENC_M6 ? 3 : 4;
+#endif
 }
 
 void copy_api_from_app(
@@ -4192,6 +4197,9 @@ EB_API EbErrorType svt_av1_enc_set_parameter(
     // Acquire Config Mutex
     svt_block_on_mutex(enc_handle->scs_instance_array[instance_index]->config_mutex);
 
+
+
+
     set_default_configuration_parameters(
         enc_handle->scs_instance_array[instance_index]->scs_ptr);
 
@@ -4208,11 +4216,20 @@ EB_API EbErrorType svt_av1_enc_set_parameter(
         enc_handle->scs_instance_array[instance_index]->scs_ptr);
 
     // Initialize the Prediction Structure Group
+#if LIMIT_TO_43
+    EB_NO_THROW_NEW(
+        enc_handle->scs_instance_array[instance_index]->encode_context_ptr->prediction_structure_group_ptr,
+        prediction_structure_group_ctor,
+        enc_handle->scs_instance_array[instance_index]->scs_ptr->mrp_init_level,
+        enc_handle->scs_instance_array[instance_index]->scs_ptr->static_config.enc_mode,
+        &(enc_handle->scs_instance_array[instance_index]->scs_ptr->static_config));
+#else
     EB_NO_THROW_NEW(
         enc_handle->scs_instance_array[instance_index]->encode_context_ptr->prediction_structure_group_ptr,
         prediction_structure_group_ctor,
         enc_handle->scs_instance_array[instance_index]->scs_ptr->static_config.enc_mode,
         &(enc_handle->scs_instance_array[instance_index]->scs_ptr->static_config));
+#endif
     if (!enc_handle->scs_instance_array[instance_index]->encode_context_ptr->prediction_structure_group_ptr) {
         svt_release_mutex(enc_handle->scs_instance_array[instance_index]->config_mutex);
         return EB_ErrorInsufficientResources;

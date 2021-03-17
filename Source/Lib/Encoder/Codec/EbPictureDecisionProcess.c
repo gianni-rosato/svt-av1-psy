@@ -2204,21 +2204,37 @@ static void  av1_generate_rps_info(
             //{8, 0, 0, 0},     // GOP Index 0 - Ref List 0
             //{8, 0,  0, 0}      // GOP Index 0 - Ref List 1
             av1_rps->ref_dpb_index[LAST] = base1_idx;
+#if IMP_4L
+            av1_rps->ref_dpb_index[LAST2] = base0_idx;
+#else
             av1_rps->ref_dpb_index[LAST2] = av1_rps->ref_dpb_index[LAST];
+#endif
             av1_rps->ref_dpb_index[LAST3] = av1_rps->ref_dpb_index[LAST];
             av1_rps->ref_dpb_index[GOLD] = av1_rps->ref_dpb_index[LAST];
 
             av1_rps->ref_dpb_index[BWD] = base1_idx;
+#if 0//IMP_4L
+            av1_rps->ref_dpb_index[ALT2] = base2_idx;
+#else
             av1_rps->ref_dpb_index[ALT2] = av1_rps->ref_dpb_index[BWD];
+#endif
             av1_rps->ref_dpb_index[ALT] = av1_rps->ref_dpb_index[BWD];
             gop_i = 0;
             av1_rps->ref_poc_array[LAST] = get_ref_poc(context_ptr, pcs_ptr->picture_number, four_level_hierarchical_pred_struct[gop_i].ref_list0[0]);
+#if IMP_4L
+            av1_rps->ref_poc_array[LAST2] = get_ref_poc(context_ptr, pcs_ptr->picture_number, four_level_hierarchical_pred_struct[gop_i].ref_list0[1]);
+#else
             av1_rps->ref_poc_array[LAST2] = av1_rps->ref_poc_array[LAST];
+#endif
             av1_rps->ref_poc_array[LAST3] = av1_rps->ref_poc_array[LAST];
             av1_rps->ref_poc_array[GOLD] = av1_rps->ref_poc_array[LAST];
 
             av1_rps->ref_poc_array[BWD] = get_ref_poc(context_ptr, pcs_ptr->picture_number, four_level_hierarchical_pred_struct[gop_i].ref_list1[0]);
+#if 0//IMP_4L
+            av1_rps->ref_poc_array[ALT2] = get_ref_poc(context_ptr, pcs_ptr->picture_number, four_level_hierarchical_pred_struct[gop_i].ref_list1[1]);
+#else
             av1_rps->ref_poc_array[ALT2] = av1_rps->ref_poc_array[BWD];
+#endif
             av1_rps->ref_poc_array[ALT] = av1_rps->ref_poc_array[BWD];
 
             av1_rps->refresh_frame_mask = 1 << context_ptr->lay0_toggle;
@@ -2417,10 +2433,24 @@ static void  av1_generate_rps_info(
             }
             else
                 SVT_LOG("Error in GOp indexing\n");
+
+#if IMP_4L
+            if (pcs_ptr->scs_ptr->mrp_init_level == 1) {
+                av1_rps->refresh_frame_mask = 1 << (lay3_idx);
+            }
+            else {
+              if (picture_index == 0)
+                av1_rps->refresh_frame_mask = 1 << (lay3_idx);
+              else
+                av1_rps->refresh_frame_mask = 0;
+            }
+#else
             if (picture_index == 0)
                 av1_rps->refresh_frame_mask = 1 << (lay3_idx);
             else
                 av1_rps->refresh_frame_mask = 0;
+
+#endif
             break;
 
         default:
@@ -2431,7 +2461,18 @@ static void  av1_generate_rps_info(
         prune_refs(pred_position_ptr, av1_rps);
 
         if (!set_frame_display_params(pcs_ptr, context_ptr, mini_gop_index)) {
+
+#if IMP_4L
+            uint8_t no_show;
+            if (pcs_ptr->scs_ptr->mrp_init_level == 1)
+                no_show = pcs_ptr->is_used_as_reference_flag && picture_index != 0 && picture_index != 2 && picture_index != 4 && picture_index != 6;
+            else
+                no_show = pcs_ptr->is_used_as_reference_flag && picture_index != 0;
+
+            if (no_show)
+#else
             if (pcs_ptr->is_used_as_reference_flag && picture_index != 0)
+#endif
             {
                 frm_hdr->show_frame = EB_FALSE;
                 pcs_ptr->has_show_existing = EB_FALSE;
@@ -3018,6 +3059,20 @@ static void  av1_generate_rps_info(
             else
                 SVT_LOG("Error in GOp indexing\n");
 
+#if LIMIT_TO_43
+                uint8_t keep_lay4_as_ref;
+                if (pcs_ptr->scs_ptr->mrp_init_level == 1)
+                    keep_lay4_as_ref = (picture_index == 0 || picture_index == 8 || picture_index == 14 || picture_index == 2 || picture_index == 4 || picture_index == 6 || picture_index == 10 || picture_index == 12);
+                else
+                    keep_lay4_as_ref = (picture_index == 0 || picture_index == 8);
+                if (keep_lay4_as_ref)
+                    av1_rps->refresh_frame_mask = 1 << (lay4_idx);
+                else
+                    av1_rps->refresh_frame_mask = 0;
+#else
+
+
+
 #if TOP_LAY_REF
 #if TOPL
                 if (picture_index == 0 || picture_index == 8 || picture_index == 14 || picture_index == 2 || picture_index == 4 || picture_index == 6 || picture_index == 10 || picture_index == 12)
@@ -3041,7 +3096,7 @@ static void  av1_generate_rps_info(
             else
                 av1_rps->refresh_frame_mask = 0;
 #endif
-
+#endif
             break;
 
         default:
@@ -3054,6 +3109,16 @@ static void  av1_generate_rps_info(
 
         if (!set_frame_display_params(pcs_ptr, context_ptr, mini_gop_index)) {
 
+#if LIMIT_TO_43
+            uint8_t no_show;
+            if (pcs_ptr->scs_ptr->mrp_init_level == 1)
+                no_show = (pcs_ptr->is_used_as_reference_flag && picture_index != 0 && picture_index != 8 && picture_index != 14 && picture_index != 2 && picture_index != 4 && picture_index != 6 && picture_index != 10 && picture_index != 12);
+            else
+                no_show = (pcs_ptr->is_used_as_reference_flag && picture_index != 0 && picture_index != 8);
+            if (no_show)
+#else
+
+
 #if TOP_LAY_REF
 #if TOPL
             if (pcs_ptr->is_used_as_reference_flag && picture_index != 0 && picture_index != 8 && picture_index != 14 && picture_index != 2 && picture_index != 4 && picture_index != 6 && picture_index != 10 && picture_index != 12)
@@ -3065,6 +3130,7 @@ static void  av1_generate_rps_info(
             if (pcs_ptr->is_used_as_reference_flag && picture_index != 0 && picture_index != 8 && picture_index != 14 && picture_index != 2 && picture_index != 4 && picture_index != 6 && picture_index != 10 && picture_index != 12)
 #else
             if (pcs_ptr->is_used_as_reference_flag && picture_index != 0 && picture_index != 8)
+#endif
 #endif
 #endif
             {
@@ -7051,6 +7117,34 @@ void* picture_decision_kernel(void *input_ptr)
 
                             //set the ref frame types used for this picture,
                             set_all_ref_frame_type(pcs_ptr, pcs_ptr->ref_frame_type_arr, &pcs_ptr->tot_ref_frame_types);
+
+
+#if 0//CHKN_DBG
+                            //if (pcs_ptr->picture_number >= 17 && pcs_ptr->picture_number <= 24)
+                            {
+                                printf("Pic %lld  isref %i : ", pcs_ptr->picture_number, pcs_ptr->is_used_as_reference_flag);
+                                for (int ridx = 0; ridx < 4; ++ridx) {
+                                    if (ridx < pcs_ptr->ref_list0_count_try)
+                                        printf(" %lld  ", pcs_ptr->ref_pic_poc_array[REF_LIST_0][ridx]);
+                                    else
+                                        printf("      ");
+
+                                }
+                                printf(" | ");
+                                for (int ridx = 0; ridx < 3; ++ridx) {
+                                    if (ridx < pcs_ptr->ref_list1_count_try)
+                                        printf(" %lld  ", pcs_ptr->ref_pic_poc_array[REF_LIST_1][ridx]);
+                                    else
+                                        printf("      ");
+                                    }
+                                printf(" \n");
+
+                            }
+
+#endif
+
+
+
 #if !FTR_TPL_TR
                             // Initialize Segments
                             pcs_ptr->me_segments_completion_count = 0;

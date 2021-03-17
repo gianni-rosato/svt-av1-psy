@@ -439,12 +439,35 @@ uint8_t  inj_to_tpl_group( PictureParentControlSet* pcs)
     }
     else {
 
+#if  LIMIT_TO_43
+        if (pcs->scs_ptr->mrp_init_level == 1) {
+
+            if (pcs->temporal_layer_index < 4)
+                inj = 1;
+            else if (pcs->is_used_as_reference_flag && (pcs->pic_index == 6 || pcs->pic_index == 10))//TODO: could be removed once TPL r0 adapts dyncamically  to TPL group size
+                inj = 1;
+            else
+                inj = 0;
+
+        }
+        else {
+            if (pcs->temporal_layer_index < 4)
+                inj = 1;
+            else if (pcs->is_used_as_reference_flag && (pcs->pic_index == 0 || pcs->pic_index == 8))
+                inj = 1;
+            else
+                inj = 0;
+
+        }
+#else
+
         if (pcs->temporal_layer_index < 4)
             inj = 1;
         else if (pcs->is_used_as_reference_flag && (pcs->pic_index == 6 || pcs->pic_index == 10))//TODO: could be removed once TPL r0 adapts dyncamically  to TPL group size
             inj = 1;
         else
             inj = 0;
+#endif
     }
 
     return inj;

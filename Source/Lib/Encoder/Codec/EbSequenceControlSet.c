@@ -330,6 +330,9 @@ EbErrorType copy_sequence_control_set(SequenceControlSet *dst, SequenceControlSe
 #if CLN_REST_FILTER
     dst->use_boundaries_in_rest_search  = src->use_boundaries_in_rest_search;
 #endif
+#if LIMIT_TO_43
+    dst->mrp_init_level = src->mrp_init_level;
+#endif
     return EB_ErrorNone;
 }
 

@@ -182,7 +182,11 @@ PredictionStructureConfigEntry four_level_hierarchical_pred_struct[] = {
     {
         0, // GOP Index 0 - Temporal Layer
         0, // GOP Index 0 - Decode Order
+#if IMP_4L
+        { 8, 16, 0, 0 }, // GOP Index 0 - Ref List 0
+#else
         {8, 0, 0, 0}, // GOP Index 0 - Ref List 0
+#endif
         {8, 0, 0, 0} // GOP Index 0 - Ref List 1
     },
     {
@@ -1994,6 +1998,9 @@ void set_mrp_init_ctrls( MrpInitCtrls* ctrls, uint8_t  level) {
         break;
 
     default:
+        ctrls->enable = 0;
+        ctrls->ref_count_used_base = 1;
+        ctrls->ref_count_used_non_base = 1;
         assert(0);
         break;
     }
@@ -2020,6 +2027,9 @@ void set_mrp_init_ctrls( MrpInitCtrls* ctrls, uint8_t  level) {
  *************************************************/
 
 EbErrorType prediction_structure_group_ctor(PredictionStructureGroup *pred_struct_group_ptr,
+#if LIMIT_TO_43
+    uint8_t   mrp_init_level,
+#endif
                                             EbEncMode enc_mode, EbSvtAv1EncConfiguration *config) {
     uint32_t pred_struct_index = 0;
     uint32_t ref_idx;
@@ -2030,8 +2040,9 @@ EbErrorType prediction_structure_group_ctor(PredictionStructureGroup *pred_struc
     pred_struct_group_ptr->dctor = prediction_structure_group_dctor;
 
 #if  CLN_CTRL_INIT_MRP
+#if !LIMIT_TO_43
     uint8_t mrp_init_level =  enc_mode <= ENC_M3 ? 1 : enc_mode <= ENC_M6 ? 3 : 4;
-
+#endif
     MrpInitCtrls mrp_init_ctrls;
     set_mrp_init_ctrls(&mrp_init_ctrls, mrp_init_level);
     uint8_t ref_count_used = mrp_init_ctrls.ref_count_used_non_base;
@@ -2060,6 +2071,67 @@ EbErrorType prediction_structure_group_ctor(PredictionStructureGroup *pred_struc
     uint8_t ref_count_used = enc_mode <= ENC_M4 ? MAX_REF_IDX : enc_mode <= ENC_M5 ? 2 : 1;
 #endif
 
+#endif
+
+
+#if LIMIT_TO_43
+    (void)enc_mode;
+    if (mrp_init_level == 1)
+    {
+
+        {
+            int32_t ref_list0_tmp[] = { 1, 9, 2, 17 }; // GOP Index 1 - Ref List 0
+            memcpy(five_level_hierarchical_pred_struct[1].ref_list0, ref_list0_tmp, REF_LIST_MAX_DEPTH * sizeof(int32_t));
+        }
+        {
+            int32_t ref_list0_tmp[] = { 1, 5, 2, 13 }; // GOP Index 5 - Ref List 0
+            memcpy(five_level_hierarchical_pred_struct[5].ref_list0, ref_list0_tmp, REF_LIST_MAX_DEPTH * sizeof(int32_t));
+        }
+        {
+            int32_t ref_list0_tmp[] = { 1, 3, 2, 7 }; // GOP Index 7 - Ref List 0
+            memcpy(five_level_hierarchical_pred_struct[7].ref_list0, ref_list0_tmp, REF_LIST_MAX_DEPTH * sizeof(int32_t));
+        }
+        {
+            int32_t ref_list0_tmp[] = { 1, 9, 2, 17 }; // GOP Index 9 - Ref List 0
+            memcpy(five_level_hierarchical_pred_struct[9].ref_list0, ref_list0_tmp, REF_LIST_MAX_DEPTH * sizeof(int32_t));
+        }
+        {
+            int32_t ref_list1_tmp[] = { -4, 5, 0, 0 }; // GOP Index 12 - Ref List 1
+            memcpy(five_level_hierarchical_pred_struct[12].ref_list1, ref_list1_tmp, REF_LIST_MAX_DEPTH * sizeof(int32_t));
+        }
+        {
+            int32_t ref_list0_tmp[] = { 1, 5, 2, 13 }; // GOP Index 13 - Ref List 0
+            memcpy(five_level_hierarchical_pred_struct[13].ref_list0, ref_list0_tmp, REF_LIST_MAX_DEPTH * sizeof(int32_t));
+        }
+        {
+            int32_t ref_list1_tmp[] = { -2, 3, 0, 0 }; // GOP Index 14 - Ref List 1
+            memcpy(five_level_hierarchical_pred_struct[14].ref_list1, ref_list1_tmp, REF_LIST_MAX_DEPTH * sizeof(int32_t));
+        }
+        {
+            int32_t ref_list0_tmp[] = { 1, 3, 2, 7 }; // GOP Index 15 - Ref List 0
+            memcpy(five_level_hierarchical_pred_struct[15].ref_list0, ref_list0_tmp, REF_LIST_MAX_DEPTH * sizeof(int32_t));
+        }
+
+
+#if IMP_4L
+
+        {
+            int32_t ref_list0_tmp[] = { 1, 3, 5, 2 };// GOP Index 1 - Ref List 0
+            memcpy(four_level_hierarchical_pred_struct[1].ref_list0, ref_list0_tmp, REF_LIST_MAX_DEPTH * sizeof(int32_t));
+        }
+        {
+            int32_t ref_list0_tmp[] = { 1, 3, 5, 2 };// GOP Index 5 - Ref List 0
+            memcpy(four_level_hierarchical_pred_struct[5].ref_list0, ref_list0_tmp, REF_LIST_MAX_DEPTH * sizeof(int32_t));
+
+        }
+        {
+            int32_t ref_list0_tmp[] = { 1, 3, 5, 2 };// GOP Index 7 - Ref List 0
+            memcpy(four_level_hierarchical_pred_struct[7].ref_list0, ref_list0_tmp, REF_LIST_MAX_DEPTH * sizeof(int32_t));
+
+        }
+#endif
+
+    }
 #endif
 
 

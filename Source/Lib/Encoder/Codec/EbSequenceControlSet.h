@@ -239,6 +239,9 @@ typedef struct SequenceControlSet {
 #if FTR_SCALE_FACTOR
     ScaleFactors sf_identity;
 #endif
+#if LIMIT_TO_43
+    uint8_t  mrp_init_level; //sequence based MRP level
+#endif
 } SequenceControlSet;
 
 typedef struct EbSequenceControlSetInitData {
