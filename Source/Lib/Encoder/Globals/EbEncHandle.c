@@ -527,9 +527,24 @@ EbErrorType load_default_buffer_configuration_settings(
     scs_ptr->overlay_input_picture_buffer_init_count   = scs_ptr->static_config.enable_overlays ?
                                                                           (2 << scs_ptr->static_config.hierarchical_levels) + SCD_LAD : 1;
     //Future frames window in Scene Change Detection (SCD) / TemporalFiltering
+#if TUNE_UPDATE_SCD_DELAY
+    scs_ptr->scd_delay = 0;
+    // Update the scd_delay based on the the number of future frames @ BASE
+    if (scs_ptr->static_config.tf_params_per_type[1].enabled) {
+        scs_ptr->scd_delay =
+            MIN(scs_ptr->static_config.tf_params_per_type[1].num_future_pics + (scs_ptr->static_config.tf_params_per_type[1].noise_adjust_future_pics ? 3 : 0), // number of future picture(s) used for BASE + max picture(s) after noise-based adjustement (=3)
+                scs_ptr->static_config.tf_params_per_type[1].max_num_future_pics);
+    }
+    // Update the scd_delay based on SCD, 1first pass
+    // Delay needed for SCD , 1first pass of (2pass and 1pass VBR)
+    if (scs_ptr->static_config.scene_change_detection || use_output_stat(scs_ptr) || scs_ptr->lap_enabled )
+        scs_ptr->scd_delay = MAX(scs_ptr->scd_delay, 2);
+
+    scs_ptr->scd_delay = MIN(scs_ptr->scd_delay, SCD_LAD);
+#else
     scs_ptr->scd_delay =
         scs_ptr->static_config.tf_level || scs_ptr->static_config.scene_change_detection ? SCD_LAD : 0;
-
+#endif
     // bistream buffer will be allocated at run time. app will free the buffer once written to file.
     scs_ptr->output_stream_buffer_fifo_init_count = PICTURE_DECISION_PA_REFERENCE_QUEUE_MAX_DEPTH;
 
