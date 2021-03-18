@@ -249,7 +249,6 @@ extern "C" {
 #define CLN_RES_PROCESS                        1 //  Memory optimizations in DLF and restoration processes
 #define CLN_CTRL_INIT_MRP                      1 //  Control MRP settings
 #define CLN_TPL_CONNECT_FLAG                   1 // Connect tpl_opt_flag to the remaining ofptimisation flags, lossless
-
 #define PR_1650                                1 //Fix build AVX512
 #if PR_1650
 #define OPT_AVX512                             1 //Optimize some AVX2 and AVX512 transform, transpose, fdct16x16_avx512, fadst16x16_avx512, av1_fdct64_new_avx512, av1_fdct32_new_avx512, etc
@@ -321,6 +320,23 @@ extern "C" {
 #define SUB_PIXEL_VAR_AVX512                  1 // svt_aom_sub_pixel_varianceWxH_avx512 for sizes 32x16, 32x32, 32x64, 64x32, 64x64, 64x128, 128x64, 128x128
 #endif
 #define TUNE_UPDATE_SCD_DELAY                  1 // Update the scd_delay based on the the number of future frames @ BASE
+
+#define  PIC_BASED_MFMV                       1 // Suport for picture based MFMV. Lossless.
+#define RFCTR_MFMV                            1 // Lossless MFMV refactoring
+#if RFCTR_MFMV
+#define  OPT_MFMV       1
+#define  OPT_MFMV_2     1
+#define  OPT_MFMV_3     1
+#define  OPT_MFMV_4     1
+#endif
+#define  PIC_BASED_MFMV_R0                    0 //Use r0  to control MFMV
+#define  PIC_BASED_MFMV_SAD                   0 //Use sad to control MFMV
+
+#define OPT_BUILD_CAND_BLK_2                  1 // Lossless optimization of build_cand_block_array()
+#define OPT_MI_UPDATE                         1 // Lossless opt for updating mode info
+#define OPT12_PD0                             1 // Bypass neighbor update when intra is not allowed in PD0
+#define OPT13_PD0                             1 // Bypass all mds1, mds2 computations in PD0
+#define OPT_INLINE_FILTER_FUNCS               1 // Make funcs inline to improve efficiency
 // ============= END SVT_04 =============
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch

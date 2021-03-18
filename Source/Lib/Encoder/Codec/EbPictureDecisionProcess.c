@@ -1502,12 +1502,28 @@ EbErrorType signal_derivation_multi_processes_oq(
         else
             pcs_ptr->frame_end_cdf_update_mode = scs_ptr->static_config.frame_end_cdf_update;
 
+
+#if PIC_BASED_MFMV
+        //MFMV
+        if (pcs_ptr->slice_type == I_SLICE || scs_ptr->mfmv_enabled == 0) {
+            pcs_ptr->frm_hdr.use_ref_frame_mvs = 0;
+        }
+        else {
+
+            if (pcs_ptr->enc_mode <= ENC_M8) {
+                pcs_ptr->frm_hdr.use_ref_frame_mvs = 1;
+            }
+            else {
+                pcs_ptr->frm_hdr.use_ref_frame_mvs = 1;
+            }
+        }
+#else
         //CHKN: Temporal MVP should be disabled for pictures beloning to 4L MiniGop preceeded by 5L miniGOP. in this case the RPS is wrong(known issue). check RPS construction for more info.
         if (pcs_ptr->slice_type == I_SLICE)
             pcs_ptr->frm_hdr.use_ref_frame_mvs = 0;
         else
             pcs_ptr->frm_hdr.use_ref_frame_mvs = scs_ptr->mfmv_enabled;
-
+#endif
         // Global motion level                        Settings
         // GM_FULL                                    Exhaustive search mode.
         // GM_DOWN                                    Downsampled resolution with a downsampling factor of 2 in each dimension

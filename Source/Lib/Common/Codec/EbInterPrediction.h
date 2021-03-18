@@ -138,9 +138,32 @@ void build_masked_compound_no_round(uint8_t *dst, int dst_stride, const CONV_BUF
                                     uint8_t *seg_mask, BlockSize sb_type, int h, int w,
                                     ConvolveParams *conv_params, uint8_t bd, EbBool is_16bit);
 
+#if OPT_INLINE_FILTER_FUNCS
+static const InterpFilterParams av1_interp_4tap[2] = {
+    {(const int16_t*)sub_pel_filters_4, SUBPEL_TAPS, SUBPEL_SHIFTS, EIGHTTAP_REGULAR},
+    {(const int16_t*)sub_pel_filters_4smooth, SUBPEL_TAPS, SUBPEL_SHIFTS, EIGHTTAP_SMOOTH} };
+
+static INLINE InterpFilterParams av1_get_interp_filter_params_with_block_size(const InterpFilter interp_filter,
+    const int32_t      w) {
+    if (w <= 4 && (interp_filter == MULTITAP_SHARP || interp_filter == EIGHTTAP_REGULAR))
+        return av1_interp_4tap[0];
+    else if (w <= 4 && interp_filter == EIGHTTAP_SMOOTH)
+        return av1_interp_4tap[1];
+
+    return av1_interp_filter_params_list[interp_filter];
+}
+
+static INLINE void av1_get_convolve_filter_params(uint32_t interp_filters, InterpFilterParams* params_x,
+    InterpFilterParams* params_y, int32_t w, int32_t h) {
+    InterpFilter filter_x = av1_extract_interp_filter(interp_filters, 1);
+    InterpFilter filter_y = av1_extract_interp_filter(interp_filters, 0);
+    *params_x = av1_get_interp_filter_params_with_block_size(filter_x, w);
+    *params_y = av1_get_interp_filter_params_with_block_size(filter_y, h);
+};
+#else
 void av1_get_convolve_filter_params(uint32_t interp_filters, InterpFilterParams *params_x,
                                     InterpFilterParams *params_y, int32_t w, int32_t h);
-
+#endif
 /* Mapping of interintra to intra mode for use in the intra component */
 static const PredictionMode interintra_to_intra_mode[INTERINTRA_MODES] = {
     DC_PRED, V_PRED, H_PRED, SMOOTH_PRED};

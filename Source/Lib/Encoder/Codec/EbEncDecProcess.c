@@ -7071,6 +7071,15 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
      else
          context_ptr->sb_bypass_dlf = 1;
 #endif
+#if OPT13_PD0
+     context_ptr->use_best_mds0 = 0;
+     if (pd_pass == PD_PASS_0) {
+         if (enc_mode <= ENC_M8)
+             context_ptr->use_best_mds0 = 0;
+         else
+             context_ptr->use_best_mds0 = 1;
+     }
+#endif
     return return_error;
 }
 void copy_neighbour_arrays(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
@@ -7280,6 +7289,7 @@ static void set_child_to_be_considered(PictureControlSet *pcs_ptr, ModeDecisionC
             set_child_to_be_considered(pcs_ptr, context_ptr, results_ptr, child_block_idx_4, sb_index, sb_size, pred_depth, pred_sq_idx , depth_step > 1 ? depth_step - 1 : 1);
     }
 }
+#if !OPT_BUILD_CAND_BLK_2
 void init_allowed_blocks(MdcSbData *results_ptr, ModeDecisionContext *context_ptr,
                                 uint32_t blk_index, uint32_t tot_d1_blocks) {
     for (uint32_t d1_block_idx = 0; d1_block_idx < tot_d1_blocks; d1_block_idx++) {
@@ -7324,14 +7334,20 @@ void init_allowed_blocks(MdcSbData *results_ptr, ModeDecisionContext *context_pt
         }
     }
 }
+#endif
 static void build_cand_block_array(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
     uint32_t sb_index) {
 
+#if OPT_BUILD_CAND_BLK_2
+    memset(context_ptr->tested_blk_flag, 0, sizeof(uint8_t) * scs_ptr->max_block_cnt);
+    memset(context_ptr->do_not_process_blk, 0, sizeof(uint8_t) * scs_ptr->max_block_cnt);
+#endif
     MdcSbData *results_ptr = context_ptr->mdc_sb_array;
     results_ptr->leaf_count = 0;
     uint32_t blk_index = 0;
+#if !OPT_BUILD_CAND_BLK_2
     uint32_t d1_blocks_accumlated, d1_block_idx;
-
+#endif
     while (blk_index < scs_ptr->max_block_cnt) {
         const BlockGeom *blk_geom = get_blk_geom_mds(blk_index);
 
@@ -7370,6 +7386,7 @@ static void build_cand_block_array(SequenceControlSet *scs_ptr, PictureControlSe
 
             if (pcs_ptr->parent_pcs_ptr->disallow_HV4)
                 tot_d1_blocks = MIN(17, tot_d1_blocks);
+#if !OPT_BUILD_CAND_BLK_2
             d1_blocks_accumlated = 0;
             init_allowed_blocks(results_ptr, context_ptr, blk_index, tot_d1_blocks);
 
@@ -7380,16 +7397,22 @@ static void build_cand_block_array(SequenceControlSet *scs_ptr, PictureControlSe
                 d1_blocks_accumlated +=
                 results_ptr->leaf_data_array[blk_index + d1_block_idx].consider_block ? 1 : 0;
 #endif
-
+#endif
             for (uint32_t idx = 0; idx < tot_d1_blocks; ++idx) {
+#if OPT_BUILD_CAND_BLK_2
+                context_ptr->md_blk_arr_nsq[blk_index].part = PARTITION_SPLIT;
+#endif
 #if OPT6_DEPTH_REFINEMENT
                 if (results_ptr->consider_block[blk_index]) {
 #else
                 if (results_ptr->leaf_data_array[blk_index].consider_block) {
 #endif
-
                     results_ptr->leaf_data_array[results_ptr->leaf_count].mds_idx = blk_index;
+#if OPT_BUILD_CAND_BLK_2
+                    results_ptr->leaf_data_array[results_ptr->leaf_count].tot_d1_blocks = tot_d1_blocks;
+#else
                     results_ptr->leaf_data_array[results_ptr->leaf_count].tot_d1_blocks = d1_blocks_accumlated;
+#endif
 #if !OPT_REFINEMENT_SIGNALS
                     results_ptr->leaf_data_array[results_ptr->leaf_count].final_pred_depth_refinement = results_ptr->leaf_data_array[blk_index].pred_depth_refinement;
                     if (results_ptr->leaf_data_array[results_ptr->leaf_count].final_pred_depth_refinement == -8)
@@ -8334,8 +8357,10 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
 }
 void init_block(ModeDecisionContext *context_ptr, uint32_t blk_index,
                 const BlockGeom *blk_geom) {
+#if !OPT_BUILD_CAND_BLK_2
     context_ptr->md_local_blk_unit[blk_index].left_neighbor_partition  = +INVALID_NEIGHBOR_DATA;
     context_ptr->md_local_blk_unit[blk_index].above_neighbor_partition = +INVALID_NEIGHBOR_DATA;
+#endif
 #if FTR_PD2_BLOCK_REDUCTION
     context_ptr->md_local_blk_unit[blk_index].count_non_zero_coeffs = 0;
 #endif
@@ -8347,12 +8372,20 @@ void init_block(ModeDecisionContext *context_ptr, uint32_t blk_index,
     if (blk_geom->shape == PART_N) {
         context_ptr->md_blk_arr_nsq[blk_index].split_flag         = EB_TRUE;
         context_ptr->md_blk_arr_nsq[blk_index].part               = PARTITION_SPLIT;
+#if !OPT_BUILD_CAND_BLK_2
         context_ptr->md_local_blk_unit[blk_index].tested_blk_flag = EB_FALSE;
+#endif
     }
+#if !OPT_BUILD_CAND_BLK_2
     context_ptr->md_blk_arr_nsq[blk_index].do_not_process_block = 0;
+#endif
 }
 static void build_starting_cand_block_array(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr, uint32_t sb_index) {
 
+#if OPT_BUILD_CAND_BLK_2
+    memset(context_ptr->tested_blk_flag, 0, sizeof(uint8_t) * scs_ptr->max_block_cnt);
+    memset(context_ptr->do_not_process_blk, 0, sizeof(uint8_t) * scs_ptr->max_block_cnt);
+#endif
     MdcSbData *results_ptr = context_ptr->mdc_sb_array;
 
     results_ptr->leaf_count = 0;

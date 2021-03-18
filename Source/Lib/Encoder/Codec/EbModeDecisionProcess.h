@@ -61,7 +61,9 @@ typedef struct {
     int     kmeans_data_buf[2 * MAX_PALETTE_SQUARE];
 } PALETTE_BUFFER;
 typedef struct MdBlkStruct {
+#if !OPT_BUILD_CAND_BLK_2
     unsigned             tested_blk_flag : 1; //tells whether this CU is tested in MD.
+#endif
     unsigned             mdc_array_index : 7;
     unsigned             count_non_zero_coeffs : 12;
     unsigned             top_neighbor_depth : 8;
@@ -494,6 +496,10 @@ typedef struct ModeDecisionContext {
     MdBlkStruct *                  md_local_blk_unit;
     BlkStruct *                    md_blk_arr_nsq;
     uint8_t *                      avail_blk_flag;
+#if OPT_BUILD_CAND_BLK_2
+    uint8_t* tested_blk_flag; //tells whether this CU is tested in MD.
+    uint8_t* do_not_process_blk;
+#endif
     MdcSbData *                    mdc_sb_array;
 
     NeighborArrayUnit *intra_luma_mode_neighbor_array;
@@ -554,6 +560,10 @@ typedef struct ModeDecisionContext {
     PaletteInfo      palette_cand_array[MAX_PAL_CAND];
     // Entropy Coder
     MdEncPassCuData *md_ep_pipe_sb;
+
+#if OPT_MFMV_3
+    uint8_t         sb64_sq_no4xn_geom;   //simple geometry 64x64SB, Sq only, no 4xN
+#endif
     uint8_t          pu_itr;
     uint8_t          cu_size_log2;
 #if CLN_MD_CAND_BUFF
@@ -922,6 +932,9 @@ typedef struct ModeDecisionContext {
 #if CLN_MD_CAND_BUFF
     uint32_t max_nics ; // Maximum number of candidates MD can support
     uint32_t max_nics_uv ; // Maximum number of candidates MD can support
+#endif
+#if OPT13_PD0
+    uint8_t use_best_mds0;
 #endif
 } ModeDecisionContext;
 

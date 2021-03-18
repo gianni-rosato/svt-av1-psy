@@ -901,10 +901,13 @@ static void av1_setup_motion_field(Av1Common *cm, PictureControlSet *pcs_ptr) {
 
     TPL_MV_REF *tpl_mvs_base = pcs_ptr->tpl_mvs;
     int         size         = ((cm->mi_rows + MAX_MIB_SIZE) >> 1) * (cm->mi_stride >> 1);
+
+#if ! PIC_BASED_MFMV
     for (int idx = 0; idx < size; ++idx) {
         tpl_mvs_base[idx].mfmv0.as_int     = INVALID_MV;
         tpl_mvs_base[idx].ref_frame_offset = 0;
     }
+#endif
 
     const int                cur_order_hint = pcs_ptr->parent_pcs_ptr->cur_order_hint;
     const EbReferenceObject *ref_buf[INTER_REFS_PER_FRAME];
@@ -931,6 +934,21 @@ static void av1_setup_motion_field(Av1Common *cm, PictureControlSet *pcs_ptr) {
             pcs_ptr->ref_frame_side[ref_frame] = -1;
     }
 
+#if PIC_BASED_MFMV
+    //for a frame based mfmv, we need to keep computing the ref_frame_side regardless mfmv is used or no
+    if (!pcs_ptr->parent_pcs_ptr->frm_hdr.use_ref_frame_mvs)
+        return;
+
+
+    for (int idx = 0; idx < size; ++idx) {
+        tpl_mvs_base[idx].mfmv0.as_int = INVALID_MV;
+        tpl_mvs_base[idx].ref_frame_offset = 0;
+
+    }
+#endif
+
+
+
     int ref_stamp = MFMV_STACK_SIZE - 1;
 
     if (ref_buf[LAST_FRAME - LAST_FRAME] != NULL) {
@@ -950,11 +968,11 @@ static void av1_setup_motion_field(Av1Common *cm, PictureControlSet *pcs_ptr) {
             --ref_stamp;
     }
 
-    if (get_relative_dist(
-            order_hint_info, ref_order_hint[ALTREF2_FRAME - LAST_FRAME], cur_order_hint) > 0) {
-        if (motion_field_projection(cm, pcs_ptr, ALTREF2_FRAME, 0))
-            --ref_stamp;
-    }
+        if (get_relative_dist(
+                order_hint_info, ref_order_hint[ALTREF2_FRAME - LAST_FRAME], cur_order_hint) > 0) {
+            if (motion_field_projection(cm, pcs_ptr, ALTREF2_FRAME, 0))
+                --ref_stamp;
+        }
 
     if (get_relative_dist(
             order_hint_info, ref_order_hint[ALTREF_FRAME - LAST_FRAME], cur_order_hint) > 0 &&
@@ -1034,7 +1052,41 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
                 pcs_ptr, pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr, pcs_ptr->hbd_mode_decision);
         }
 
+#if PIC_BASED_MFMV_SAD
+        if (pcs_ptr->slice_type != I_SLICE) {
+            uint64_t  total_me_sad = 0;
+            for (uint16_t sb_index = 0; sb_index < pcs_ptr->sb_total_count; ++sb_index) {
+                total_me_sad += pcs_ptr->parent_pcs_ptr->me_16x16_distortion[sb_index];
+
+            }
+            uint32_t average_me_sad = total_me_sad / pcs_ptr->sb_total_count;
+
+            pcs_ptr->parent_pcs_ptr->avg_me_sad = average_me_sad;//only for Inter frames
+
+          //  printf("poc:%i  %i \n", pcs_ptr->picture_number,  pcs_ptr->parent_pcs_ptr->avg_me_sad);
+
+            uint32_t sad_th = 40000;
+            //if(scs_ptr->input_resolution <= INPUT_SIZE_360p_RANGE)
+            //    sad_th+=5000;
+            if (pcs_ptr->parent_pcs_ptr->avg_me_sad > sad_th)
+               pcs_ptr->parent_pcs_ptr->frm_hdr.use_ref_frame_mvs = 0;
+
+
+           // printf("poc:%i  %f\n", pcs_ptr->picture_number, (pcs_ptr->parent_pcs_ptr->base_r0 / (double)scs_ptr->sb_tot_cnt));
+
+          //  if ((pcs_ptr->parent_pcs_ptr->base_r0 / (double)scs_ptr->sb_tot_cnt) > 0.017)
+          //        pcs_ptr->parent_pcs_ptr->frm_hdr.use_ref_frame_mvs = 0;
+
+        }
+#endif
+
+
+
+#if PIC_BASED_MFMV
+        if (pcs_ptr->slice_type != I_SLICE && scs_ptr->mfmv_enabled)
+#else
         if (pcs_ptr->parent_pcs_ptr->frm_hdr.use_ref_frame_mvs)
+#endif
             av1_setup_motion_field(pcs_ptr->parent_pcs_ptr->av1_cm, pcs_ptr);
 
         FrameHeader *frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;

@@ -76,6 +76,10 @@ static void mode_decision_context_dctor(EbPtr p) {
         EB_FREE_ARRAY(obj->md_blk_arr_nsq[0].av1xd);
     }
     EB_FREE_ARRAY(obj->avail_blk_flag);
+#if OPT_BUILD_CAND_BLK_2
+    EB_FREE_ARRAY(obj->tested_blk_flag);
+    EB_FREE_ARRAY(obj->do_not_process_blk);
+#endif
     EB_FREE_ARRAY(obj->md_local_blk_unit);
     EB_FREE_ARRAY(obj->md_blk_arr_nsq);
     EB_FREE_ARRAY(obj->md_ep_pipe_sb);
@@ -252,6 +256,10 @@ EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr, EbColor
     context_ptr->md_blk_arr_nsq[0].av1xd = NULL;
     EB_MALLOC_ARRAY(context_ptr->md_blk_arr_nsq[0].av1xd, block_max_count_sb);
     EB_MALLOC_ARRAY(context_ptr->avail_blk_flag, block_max_count_sb);
+#if OPT_BUILD_CAND_BLK_2
+    EB_MALLOC_ARRAY(context_ptr->tested_blk_flag, block_max_count_sb);
+    EB_MALLOC_ARRAY(context_ptr->do_not_process_blk, block_max_count_sb);
+#endif
     EB_MALLOC_ARRAY(context_ptr->mdc_sb_array, 1);
     for (coded_leaf_index = 0; coded_leaf_index < block_max_count_sb; ++coded_leaf_index) {
         context_ptr->md_blk_arr_nsq[coded_leaf_index].av1xd = context_ptr->md_blk_arr_nsq[0].av1xd +

@@ -53,7 +53,7 @@ typedef uint32_t InterpFilters;
 #define SWITCHABLE_FILTER_CONTEXTS ((SWITCHABLE_FILTERS + 1) * 4)
 #define INTER_FILTER_COMP_OFFSET (SWITCHABLE_FILTERS + 1)
 #define INTER_FILTER_DIR_OFFSET ((SWITCHABLE_FILTERS + 1) * 2)
-
+#if !OPT_INLINE_FILTER_FUNCS
 //typedef struct InterpFilterParams {
 //    const int16_t *filter_ptr;
 //    uint16_t taps;
@@ -63,7 +63,7 @@ typedef uint32_t InterpFilters;
 
 InterpFilterParams av1_get_interp_filter_params_with_block_size(const InterpFilter interp_filter,
                                                                 const int32_t      w);
-
+#endif
 ///---convolve.h
 #define FILTER_BITS 7
 

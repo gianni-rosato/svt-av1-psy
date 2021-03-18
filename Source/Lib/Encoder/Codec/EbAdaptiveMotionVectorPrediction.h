@@ -46,9 +46,14 @@ void enc_pass_av1_mv_pred(TileInfo *tile, struct ModeDecisionContext *md_context
                           MvReferenceFrame ref_frame, uint8_t is_compound, PredictionMode mode,
                           IntMv ref_mv[2]);
 #endif
+#if OPT_MI_UPDATE
+void update_mi_map(BlkStruct* blk_ptr, uint32_t blk_origin_x, uint32_t blk_origin_y,
+                   const BlockGeom* blk_geom, uint8_t avail_blk_flag, PictureControlSet* pcs_ptr);
+#else
 void update_mi_map(struct ModeDecisionContext *context_ptr, BlkStruct *blk_ptr,
                    uint32_t blk_origin_x, uint32_t blk_origin_y, const BlockGeom *blk_geom,
                    uint8_t avail_blk_flag, PictureControlSet *pcs_ptr);
+#endif
 
 uint16_t wm_find_samples(BlkStruct *blk_ptr, const BlockGeom *blk_geom, uint16_t blk_origin_x,
                          uint16_t blk_origin_y, MvReferenceFrame rf0, PictureControlSet *pcs_ptr,

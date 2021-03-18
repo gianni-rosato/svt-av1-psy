@@ -2478,7 +2478,11 @@ void compute_depth_costs(ModeDecisionContext *context_ptr, SequenceControlSet *s
         context_ptr->md_local_blk_unit[curr_depth_blk0_mds].above_neighbor_partition;
 
     // Compute above depth  cost
+#if OPT_BUILD_CAND_BLK_2
+    if (context_ptr->tested_blk_flag[above_depth_mds]) {
+#else
     if (context_ptr->md_local_blk_unit[above_depth_mds].tested_blk_flag == EB_TRUE) {
+#endif
         uint64_t above_non_split_rate = 0;
         *above_depth_cost =
             context_ptr->md_local_blk_unit[above_depth_mds].cost + above_non_split_rate;
@@ -2492,10 +2496,15 @@ void compute_depth_costs(ModeDecisionContext *context_ptr, SequenceControlSet *s
                             full_lambda,
                             context_ptr->md_rate_estimation_ptr,
                             scs_ptr->max_sb_depth);
-    } else
+    }
+    else
         *above_depth_cost = MAX_MODE_COST;
     if (context_ptr->blk_geom->bsize > BLOCK_4X4) {
+#if OPT_BUILD_CAND_BLK_2
+        if (context_ptr->tested_blk_flag[curr_depth_blk0_mds])
+#else
         if (context_ptr->md_local_blk_unit[curr_depth_blk0_mds].tested_blk_flag)
+#endif
             if (context_ptr->md_blk_arr_nsq[curr_depth_blk0_mds].mdc_split_flag == 0)
                 av1_split_flag_rate(pcs_ptr,
                                     context_ptr,
@@ -2506,8 +2515,11 @@ void compute_depth_costs(ModeDecisionContext *context_ptr, SequenceControlSet *s
                                     full_lambda,
                                     context_ptr->md_rate_estimation_ptr,
                                     scs_ptr->max_sb_depth);
-
+#if OPT_BUILD_CAND_BLK_2
+        if (context_ptr->tested_blk_flag[curr_depth_blk1_mds])
+#else
         if (context_ptr->md_local_blk_unit[curr_depth_blk1_mds].tested_blk_flag)
+#endif
             if (context_ptr->md_blk_arr_nsq[curr_depth_blk1_mds].mdc_split_flag == 0)
                 av1_split_flag_rate(pcs_ptr,
                                     context_ptr,
@@ -2518,8 +2530,11 @@ void compute_depth_costs(ModeDecisionContext *context_ptr, SequenceControlSet *s
                                     full_lambda,
                                     context_ptr->md_rate_estimation_ptr,
                                     scs_ptr->max_sb_depth);
-
+#if OPT_BUILD_CAND_BLK_2
+        if (context_ptr->tested_blk_flag[curr_depth_blk2_mds])
+#else
         if (context_ptr->md_local_blk_unit[curr_depth_blk2_mds].tested_blk_flag)
+#endif
             if (context_ptr->md_blk_arr_nsq[curr_depth_blk2_mds].mdc_split_flag == 0)
                 av1_split_flag_rate(pcs_ptr,
                                     context_ptr,
@@ -2530,8 +2545,11 @@ void compute_depth_costs(ModeDecisionContext *context_ptr, SequenceControlSet *s
                                     full_lambda,
                                     context_ptr->md_rate_estimation_ptr,
                                     scs_ptr->max_sb_depth);
-
+#if OPT_BUILD_CAND_BLK_2
+        if (context_ptr->tested_blk_flag[curr_depth_blk3_mds])
+#else
         if (context_ptr->md_local_blk_unit[curr_depth_blk3_mds].tested_blk_flag)
+#endif
             if (context_ptr->md_blk_arr_nsq[curr_depth_blk3_mds].mdc_split_flag == 0)
                 av1_split_flag_rate(pcs_ptr,
                                     context_ptr,
@@ -2649,7 +2667,11 @@ void compute_depth_costs_md_skip(ModeDecisionContext *context_ptr, SequenceContr
         uint32_t curr_depth_cur_blk_mds  = context_ptr->blk_geom->sqi_mds - i * step;
         uint64_t curr_non_split_rate_blk = 0;
         if (context_ptr->blk_geom->bsize > BLOCK_4X4) {
+#if OPT_BUILD_CAND_BLK_2
+            if (context_ptr->tested_blk_flag[curr_depth_cur_blk_mds])
+#else
             if (context_ptr->md_local_blk_unit[curr_depth_cur_blk_mds].tested_blk_flag)
+#endif
                 if (context_ptr->md_blk_arr_nsq[curr_depth_cur_blk_mds].mdc_split_flag == 0)
                     av1_split_flag_rate(pcs_ptr,
                                         context_ptr,
@@ -2687,7 +2709,11 @@ void compute_depth_costs_md_skip(ModeDecisionContext *context_ptr, SequenceContr
         context_ptr->md_local_blk_unit[curr_depth_blk0_mds].above_neighbor_partition;
 
     // Compute above depth  cost
+#if OPT_BUILD_CAND_BLK_2
+    if (context_ptr->tested_blk_flag[above_depth_mds]) {
+#else
     if (context_ptr->md_local_blk_unit[above_depth_mds].tested_blk_flag == EB_TRUE) {
+#endif
         uint64_t above_non_split_rate = 0;
         *above_depth_cost =
             context_ptr->md_local_blk_unit[above_depth_mds].cost + above_non_split_rate;

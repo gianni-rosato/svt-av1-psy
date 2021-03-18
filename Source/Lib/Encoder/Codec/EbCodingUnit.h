@@ -412,7 +412,9 @@ typedef struct BlkStruct {
     int32_t ii_wedge_sign;
 #endif
     uint8_t  filter_intra_mode; // ec
+#if !OPT_BUILD_CAND_BLK_2
     uint8_t  do_not_process_block;
+#endif
     uint8_t  use_intrabc;
     uint64_t total_rate;
 } BlkStruct;

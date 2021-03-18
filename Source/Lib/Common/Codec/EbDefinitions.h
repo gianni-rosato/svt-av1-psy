@@ -473,6 +473,13 @@ static INLINE int av1_num_planes(EbColorConfig *color_info) {
     return color_info->mono_chrome ? 1 : MAX_MB_PLANE;
 }
 
+
+#if OPT_MFMV_3
+#define MI_SIZE_W_8X8    2
+#define MI_SIZE_W_16X16  4
+#define MI_SIZE_W_64X64  16
+#endif
+
 //*********************************************************************************************************************//
 // enums.h
 /*!\brief Decorator indicating that given struct/union/enum is packed */
