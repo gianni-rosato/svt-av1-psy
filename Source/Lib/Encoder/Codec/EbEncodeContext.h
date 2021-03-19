@@ -25,7 +25,9 @@
 #include "EbCabacContextModel.h"
 #include "EbMdRateEstimation.h"
 #include "EbPredictionStructure.h"
+#if !CLN_OLD_RC
 #include "EbRateControlTables.h"
+#endif
 #include "EbObject.h"
 #include "encoder.h"
 #include "firstpass.h"
@@ -135,10 +137,12 @@ typedef struct EncodeContext {
     PicQueueEntry **
         dep_cnt_picture_queue; //buffer to sotre all pictures needing dependent-count clean-up in PicMgr
 
+#if !CLN_OLD_RC
     // High Level Rate Control Histogram Queue
     HlRateControlHistogramEntry **hl_rate_control_historgram_queue;
     uint32_t                      hl_rate_control_historgram_queue_head_index;
     EbHandle                      hl_rate_control_historgram_queue_mutex;
+#endif
 
     // Packetization Reorder Queue
     PacketizationReorderEntry **packetization_reorder_queue;
@@ -161,10 +165,12 @@ typedef struct EncodeContext {
 
     // Prediction Structure
     PredictionStructureGroup *prediction_structure_group_ptr;
+#if !CLN_OLD_RC
     // Rate Control Bit Tables
     RateControlTables *rate_control_tables_array;
     EbBool             rate_control_tables_array_updated;
     EbHandle           rate_table_update_mutex;
+#endif
 
     // Speed Control
     int64_t   sc_buffer;

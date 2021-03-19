@@ -28,6 +28,7 @@ typedef struct InitialRateControlReorderEntry {
 extern EbErrorType initial_rate_control_reorder_entry_ctor(
     InitialRateControlReorderEntry *entry_ptr, uint32_t picture_number);
 
+#if !CLN_OLD_RC
 /************************************************
  * High Level Rate Control Histogram Queue Entry
  ************************************************/
@@ -53,5 +54,6 @@ typedef struct HlRateControlHistogramEntry {
 
 extern EbErrorType hl_rate_control_histogram_entry_ctor(HlRateControlHistogramEntry *entry_ptr,
                                                         uint32_t picture_number);
+#endif
 
 #endif //EbInitialRateControlReorderQueue_h

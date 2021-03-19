@@ -2484,6 +2484,7 @@ void *motion_estimation_kernel(void *input_ptr) {
                     y_sb_start_index,
                     y_sb_end_index);
 
+#if !CLN_OLD_RC
             if (scs_ptr->static_config.rate_control_mode && !use_input_stat(scs_ptr) && !scs_ptr->lap_enabled) {
                 // Calculate the ME Distortion and OIS Historgrams
                 svt_block_on_mutex(pcs_ptr->rc_distortion_histogram_mutex);
@@ -2560,10 +2561,11 @@ void *motion_estimation_kernel(void *input_ptr) {
 
                 svt_release_mutex(pcs_ptr->rc_distortion_histogram_mutex);
 
+            }
+#endif
 #if FTR_TPL_TR
             }
 #endif
-            }
             }
             // Get Empty Results Object
             svt_get_empty_object(context_ptr->motion_estimation_results_output_fifo_ptr,

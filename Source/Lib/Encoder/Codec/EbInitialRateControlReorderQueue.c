@@ -20,6 +20,7 @@ EbErrorType initial_rate_control_reorder_entry_ctor(InitialRateControlReorderEnt
     return EB_ErrorNone;
 }
 
+#if !CLN_OLD_RC
 static void hl_rate_control_histogram_entry_dctor(EbPtr p) {
     HlRateControlHistogramEntry *obj = (HlRateControlHistogramEntry *)p;
     EB_FREE_ARRAY(obj->me_distortion_histogram);
@@ -38,3 +39,4 @@ EbErrorType hl_rate_control_histogram_entry_ctor(HlRateControlHistogramEntry *en
 
     return EB_ErrorNone;
 }
+#endif

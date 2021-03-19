@@ -25,6 +25,7 @@
 #define RC_PRECISION 16
 #define RC_PRECISION_OFFSET (1 << (RC_PRECISION - 1))
 
+#if !CLN_OLD_RC
 #define OVERSHOOT_STAT_PRINT 0
 /* Do not remove
  * For printing overshooting percentages for both RC and fixed QP.
@@ -33,6 +34,7 @@
 */
 #if OVERSHOOT_STAT_PRINT
 #define CODED_FRAMES_STAT_QUEUE_MAX_DEPTH 10000
+#endif
 #endif
 #define RC_PRINTS 0
 #define ADAPTIVE_PERCENTAGE 1
@@ -239,6 +241,7 @@ typedef struct RateControlPorts {
  * Context
  **************************************/
 
+#if !CLN_OLD_RC
 typedef struct RateControlLayerContext {
     EbDctor  dctor;
     uint64_t previous_frame_distortion_me;
@@ -291,6 +294,7 @@ typedef struct RateControlLayerContext {
     int32_t prev_segment_qps[MAX_SEGMENTS];
 
 } RateControlLayerContext;
+#endif
 
 /**************************************
  * Extern Function Declarations

@@ -23,7 +23,9 @@
 #include "EbNeighborArrays.h"
 #include "EbModeDecisionSegments.h"
 #include "EbEncDecSegments.h"
+#if !CLN_OLD_RC
 #include "EbRateControlTables.h"
+#endif
 #include "EbRestoration.h"
 #include "EbObject.h"
 #include "noise_model.h"
@@ -792,11 +794,14 @@ typedef struct PictureParentControlSet {
     MvReferenceFrame ref_frame_type_arr[MODE_CTX_REF_FRAMES];
     uint8_t          tot_ref_frame_types;
     // Rate Control
+#if !CLN_OLD_RC
     uint64_t pred_bits_ref_qp[MAX_REF_QP_NUM];
     uint64_t target_bits_best_pred_qp;
     uint64_t target_bits_rc;
     uint8_t  best_pred_qp;
+#endif
     uint64_t total_num_bits;
+#if !CLN_OLD_RC
     uint8_t  first_frame_in_temporal_layer;
     uint8_t  first_non_intra_frame_in_temporal_layer;
     uint64_t frames_in_interval[EB_MAX_TEMPORAL_LAYERS];
@@ -807,11 +812,16 @@ typedef struct PictureParentControlSet {
     uint32_t target_bit_rate;
     uint32_t vbv_bufsize;
     uint32_t frame_rate;
+#endif
     uint16_t sb_total_count;
     EbBool   end_of_sequence_region;
+#if !CLN_OLD_RC
     EbBool   scene_change_in_gop;
+#endif
     uint8_t  frames_in_sw; // used for Look ahead
+#if !CLN_OLD_RC
     int8_t   historgram_life_count;
+#endif
     EbBool   qp_on_the_fly;
     uint8_t  calculated_qp;
     uint8_t  intra_selected_org_qp;
@@ -931,14 +941,18 @@ typedef struct PictureParentControlSet {
     EbBool               is_global_motion[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
     EbWarpedMotionParams global_motion_estimation[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
 
+#if !CLN_OLD_RC
     // Motion Estimation Distortion and OIS Historgram
     uint16_t *            me_distortion_histogram;
     uint16_t *            ois_distortion_histogram;
     uint32_t *            intra_sad_interval_index;
     uint32_t *            inter_sad_interval_index;
+#endif
     uint16_t              me_processed_sb_count;
     EbHandle              me_processed_sb_mutex;
+#if !CLN_OLD_RC
     EbHandle              rc_distortion_histogram_mutex;
+#endif
     FirstPassData         firstpass_data;
     RefreshFrameFlagsInfo refresh_frame;
     int                   internal_altref_allowed;
@@ -958,7 +972,9 @@ typedef struct PictureParentControlSet {
     // Dynamic GOP
     EbPred   pred_structure;
     uint8_t  hierarchical_levels;
+#if !CLN_OLD_RC
     uint16_t full_sb_count;
+#endif
     EbBool   init_pred_struct_position_flag;
     int8_t   hierarchical_layers_diff;
     //Dep-Cnt Clean up is done using 2 mechanism

@@ -4528,7 +4528,9 @@ void initialize_overlay_frame(PictureParentControlSet     *pcs_ptr) {
     pcs_ptr->scene_change_flag = EB_FALSE;
     pcs_ptr->cra_flag = EB_FALSE;
     pcs_ptr->idr_flag = EB_FALSE;
+#if !CLN_OLD_RC
     pcs_ptr->target_bit_rate = pcs_ptr->alt_ref_ppcs_ptr->target_bit_rate;
+#endif
     pcs_ptr->last_idr_picture = pcs_ptr->alt_ref_ppcs_ptr->last_idr_picture;
     pcs_ptr->pred_structure = pcs_ptr->alt_ref_ppcs_ptr->pred_structure;
     pcs_ptr->pred_struct_ptr = pcs_ptr->alt_ref_ppcs_ptr->pred_struct_ptr;
@@ -6244,7 +6246,9 @@ void* picture_decision_kernel(void *input_ptr)
 
                 pcs_ptr->init_pred_struct_position_flag = EB_FALSE;
 
+#if !CLN_OLD_RC
                 pcs_ptr->target_bit_rate = scs_ptr->static_config.target_bit_rate;
+#endif
 
                 pcs_ptr->self_updated_links = 0;
                 pcs_ptr->other_updated_links_cnt = 0;

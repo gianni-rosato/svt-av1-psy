@@ -1391,6 +1391,7 @@ void *resource_coordination_kernel(void *input_ptr) {
             pcs_ptr->filtered_sse_uv = 0;
 #endif
             // Rate Control
+#if !CLN_OLD_RC
             // Set the ME Distortion and OIS Historgrams to zero
             if (scs_ptr->static_config.rate_control_mode) {
                 EB_MEMSET(pcs_ptr->me_distortion_histogram,
@@ -1401,6 +1402,7 @@ void *resource_coordination_kernel(void *input_ptr) {
                           NUMBER_OF_INTRA_SAD_INTERVALS * sizeof(uint16_t));
             }
             pcs_ptr->full_sb_count = 0;
+#endif
 
             if (scs_ptr->static_config.use_qp_file == 1) {
                 pcs_ptr->qp_on_the_fly = EB_TRUE;

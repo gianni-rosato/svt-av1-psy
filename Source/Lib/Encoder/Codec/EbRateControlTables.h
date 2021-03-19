@@ -12,6 +12,7 @@
 #ifndef EbRateControlTables_h
 #define EbRateControlTables_h
 
+#if !CLN_OLD_RC
 #include "EbDefinitions.h"
 
 /**************************************
@@ -46,5 +47,6 @@ typedef struct InitialRateControlTables {
  * Extern Function Declarations
  **************************************/
 extern EbErrorType rate_control_tables_init(RateControlTables *rate_control_tables_array);
+#endif
 
 #endif //EbRateControlTables_h

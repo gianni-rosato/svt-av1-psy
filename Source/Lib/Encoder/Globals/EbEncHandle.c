@@ -3204,7 +3204,11 @@ void copy_api_from_app(
     scs_ptr->static_config.over_shoot_pct      = ((EbSvtAv1EncConfiguration*)config_struct)->over_shoot_pct;
     scs_ptr->static_config.recode_loop         = ((EbSvtAv1EncConfiguration*)config_struct)->recode_loop;
 #if FTR_VBR_MT
+#if CLN_OLD_RC
+    if (scs_ptr->static_config.rate_control_mode && !use_output_stat(scs_ptr) && !use_input_stat(scs_ptr))
+#else
     if (scs_ptr->static_config.rate_control_mode && !use_output_stat(scs_ptr) && !use_input_stat(scs_ptr) && scs_ptr->static_config.hierarchical_levels > 1)
+#endif
         scs_ptr->lap_enabled = 1;
 #else
     if (scs_ptr->static_config.rate_control_mode && !use_output_stat(scs_ptr) && !use_input_stat(scs_ptr))

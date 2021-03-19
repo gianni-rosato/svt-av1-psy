@@ -258,6 +258,7 @@ InitialRateControlReorderEntry *determine_picture_offset_in_queue(
     return queue_entry_ptr;
 }
 
+#if !CLN_OLD_RC
 void get_histogram_queue_data(SequenceControlSet *scs_ptr, EncodeContext *encode_context_ptr,
                               PictureParentControlSet *pcs_ptr) {
     HlRateControlHistogramEntry *histogram_queue_entry_ptr;
@@ -342,6 +343,7 @@ void update_histogram_queue_entry(SequenceControlSet *scs_ptr, EncodeContext *en
 
     return;
 }
+#endif
 
 void svt_av1_build_quantizer(AomBitDepth bit_depth, int32_t y_dc_delta_q, int32_t u_dc_delta_q,
                              int32_t u_ac_delta_q, int32_t v_dc_delta_q, int32_t v_ac_delta_q,
@@ -842,14 +844,18 @@ void *initial_rate_control_kernel(void *input_ptr) {
             /*In case Look-Ahead is zero there is no need to place pictures in the
               re-order queue. this will cause an artificial delay since pictures come in dec-order*/
             if (scs_ptr->static_config.look_ahead_distance == 0) {
+#if !CLN_OLD_RC
                 for (uint8_t temporal_layer_index = 0;
                      temporal_layer_index < EB_MAX_TEMPORAL_LAYERS;
                      temporal_layer_index++)
                     pcs_ptr->frames_in_interval[temporal_layer_index] = 0;
+#endif
 
                 pcs_ptr->frames_in_sw           = 0;
+#if !CLN_OLD_RC
                 pcs_ptr->historgram_life_count  = 0;
                 pcs_ptr->scene_change_in_gop    = EB_FALSE;
+#endif
                 pcs_ptr->end_of_sequence_region = EB_FALSE;
 
                 init_zz_cost_info(pcs_ptr);
@@ -883,6 +889,7 @@ void *initial_rate_control_kernel(void *input_ptr) {
                 if (!pcs_ptr->is_overlay)
                     // Determine offset from the Head Ptr
                     determine_picture_offset_in_queue(encode_context_ptr, pcs_ptr, in_results_ptr);
+#if !CLN_OLD_RC
                 if (scs_ptr->static_config.rate_control_mode && !use_input_stat(scs_ptr) &&
                     !scs_ptr->lap_enabled)
                     // Getting the Histogram Queue Data
@@ -891,9 +898,12 @@ void *initial_rate_control_kernel(void *input_ptr) {
                      temporal_layer_index < EB_MAX_TEMPORAL_LAYERS;
                      temporal_layer_index++)
                     pcs_ptr->frames_in_interval[temporal_layer_index] = 0;
+#endif
                 pcs_ptr->frames_in_sw          = 0;
+#if !CLN_OLD_RC
                 pcs_ptr->historgram_life_count = 0;
                 pcs_ptr->scene_change_in_gop   = EB_FALSE;
+#endif
                 EbBool move_slide_window_flag  = EB_TRUE;
                 while (move_slide_window_flag) {
                     // Check if the sliding window condition is valid
@@ -1001,6 +1011,7 @@ void *initial_rate_control_kernel(void *input_ptr) {
                                                      [queue_entry_index_temp2]
                                                  ->parent_pcs_wrapper_ptr)
                                          ->object_ptr);
+#if !CLN_OLD_RC
                                 if (scs_ptr->intra_period_length != -1) {
                                     if (pcs_ptr->picture_number %
                                             ((scs_ptr->intra_period_length + 1)) ==
@@ -1013,6 +1024,7 @@ void *initial_rate_control_kernel(void *input_ptr) {
                                 }
 
                                 pcs_ptr_temp->historgram_life_count++;
+#endif
                                 end_of_sequence_flag = pcs_ptr_temp->end_of_sequence_flag;
                                 queue_entry_index_temp++;
                             }
@@ -1022,6 +1034,7 @@ void *initial_rate_control_kernel(void *input_ptr) {
                                 pcs_ptr->end_of_sequence_region = EB_TRUE;
                             else
                                 pcs_ptr->end_of_sequence_region = EB_FALSE;
+#if !CLN_OLD_RC
                             if (scs_ptr->static_config.rate_control_mode &&
                                 !use_input_stat(scs_ptr) && !scs_ptr->lap_enabled)
                                 // Determine offset from the Head Ptr for HLRC histogram queue and set the life count
@@ -1029,6 +1042,7 @@ void *initial_rate_control_kernel(void *input_ptr) {
                                     // Update Histogram Queue Entry Life count
                                     update_histogram_queue_entry(
                                         scs_ptr, encode_context_ptr, pcs_ptr, frames_in_sw);
+#endif
                             // BACKGROUND ENHANCEMENT Part II
                             if (!pcs_ptr->end_of_sequence_flag &&
                                 scs_ptr->static_config.look_ahead_distance != 0) {

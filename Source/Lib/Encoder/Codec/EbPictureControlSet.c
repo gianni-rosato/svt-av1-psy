@@ -1453,11 +1453,13 @@ static void picture_parent_control_set_dctor(EbPtr ptr) {
 #if TUNE_DEPTH_REMOVAL_PER_RESOLUTION
     EB_FREE_ARRAY(obj->me_8x8_cost_variance);
 #endif
+#if !CLN_OLD_RC
     // ME and OIS Distortion Histograms
     EB_FREE_ARRAY(obj->me_distortion_histogram);
     EB_FREE_ARRAY(obj->ois_distortion_histogram);
     EB_FREE_ARRAY(obj->intra_sad_interval_index);
     EB_FREE_ARRAY(obj->inter_sad_interval_index);
+#endif
     // Non moving index array
     EB_FREE_ARRAY(obj->non_moving_index_array);
     // SB noise variance array
@@ -1491,7 +1493,9 @@ static void picture_parent_control_set_dctor(EbPtr ptr) {
 #endif
     EB_FREE_ARRAY(obj->av1x);
     EB_DESTROY_MUTEX(obj->me_processed_sb_mutex);
+#if !CLN_OLD_RC
     EB_DESTROY_MUTEX(obj->rc_distortion_histogram_mutex);
+#endif
     EB_DESTROY_SEMAPHORE(obj->temp_filt_done_semaphore);
     EB_DESTROY_MUTEX(obj->temp_filt_mutex);
     EB_DESTROY_MUTEX(obj->debug_mutex);
@@ -1662,11 +1666,13 @@ EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr,
 #if TUNE_DEPTH_REMOVAL_PER_RESOLUTION
     EB_MALLOC_ARRAY(object_ptr->me_8x8_cost_variance, object_ptr->sb_total_count);
 #endif
+#if !CLN_OLD_RC
     // ME and OIS Distortion Histograms
     EB_MALLOC_ARRAY(object_ptr->me_distortion_histogram, NUMBER_OF_SAD_INTERVALS);
     EB_MALLOC_ARRAY(object_ptr->ois_distortion_histogram, NUMBER_OF_INTRA_SAD_INTERVALS);
     EB_MALLOC_ARRAY(object_ptr->intra_sad_interval_index, object_ptr->sb_total_count);
     EB_MALLOC_ARRAY(object_ptr->inter_sad_interval_index, object_ptr->sb_total_count);
+#endif
     // Non moving index array
     EB_MALLOC_ARRAY(object_ptr->non_moving_index_array, object_ptr->sb_total_count);
     // SB noise variance array
@@ -1674,7 +1680,9 @@ EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr,
     EB_MALLOC_ARRAY(object_ptr->sb_flat_noise_array, object_ptr->sb_total_count);
 #endif
     EB_CREATE_MUTEX(object_ptr->me_processed_sb_mutex);
+#if !CLN_OLD_RC
     EB_CREATE_MUTEX(object_ptr->rc_distortion_histogram_mutex);
+#endif
     EB_MALLOC_ARRAY(object_ptr->sb_depth_mode_array, object_ptr->sb_total_count);
     EB_CREATE_SEMAPHORE(object_ptr->temp_filt_done_semaphore, 0, 1);
     EB_CREATE_MUTEX(object_ptr->temp_filt_mutex);

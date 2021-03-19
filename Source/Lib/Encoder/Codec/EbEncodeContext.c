@@ -55,8 +55,10 @@ static void destroy_stats_buffer(STATS_BUFFER_CTX *stats_buf_context,
 static void encode_context_dctor(EbPtr p) {
     EncodeContext *obj = (EncodeContext *)p;
     EB_DESTROY_MUTEX(obj->total_number_of_recon_frame_mutex);
+#if !CLN_OLD_RC
     EB_DESTROY_MUTEX(obj->hl_rate_control_historgram_queue_mutex);
     EB_DESTROY_MUTEX(obj->rate_table_update_mutex);
+#endif
     EB_DESTROY_MUTEX(obj->sc_buffer_mutex);
     EB_DESTROY_MUTEX(obj->shared_reference_mutex);
     EB_DESTROY_MUTEX(obj->stat_file_mutex);
@@ -71,17 +73,23 @@ static void encode_context_dctor(EbPtr p) {
                         PICTURE_DECISION_PA_REFERENCE_QUEUE_MAX_DEPTH);
     EB_DELETE_PTR_ARRAY(obj->initial_rate_control_reorder_queue,
                         INITIAL_RATE_CONTROL_REORDER_QUEUE_MAX_DEPTH);
+#if !CLN_OLD_RC
     EB_DELETE_PTR_ARRAY(obj->hl_rate_control_historgram_queue,
                         HIGH_LEVEL_RATE_CONTROL_HISTOGRAM_QUEUE_MAX_DEPTH);
+#endif
     EB_DELETE_PTR_ARRAY(obj->packetization_reorder_queue, PACKETIZATION_REORDER_QUEUE_MAX_DEPTH);
+#if !CLN_OLD_RC
     EB_FREE_ARRAY(obj->rate_control_tables_array);
+#endif
     EB_FREE(obj->stats_out.stat);
     destroy_stats_buffer(&obj->stats_buf_context, obj->frame_stats_buffer);
 }
 
 EbErrorType encode_context_ctor(EncodeContext *encode_context_ptr, EbPtr object_init_data_ptr) {
     uint32_t    picture_index;
+#if !CLN_OLD_RC
     EbErrorType return_error = EB_ErrorNone;
+#endif
 
     encode_context_ptr->dctor = encode_context_dctor;
 
@@ -137,6 +145,7 @@ EbErrorType encode_context_ctor(EncodeContext *encode_context_ptr, EbPtr object_
                picture_index);
     }
 
+#if !CLN_OLD_RC
     EB_ALLOC_PTR_ARRAY(encode_context_ptr->hl_rate_control_historgram_queue,
                        HIGH_LEVEL_RATE_CONTROL_HISTOGRAM_QUEUE_MAX_DEPTH);
 
@@ -148,6 +157,7 @@ EbErrorType encode_context_ctor(EncodeContext *encode_context_ptr, EbPtr object_
     }
     // HLRateControl Historgram Queue Mutex
     EB_CREATE_MUTEX(encode_context_ptr->hl_rate_control_historgram_queue_mutex);
+#endif
 
     EB_ALLOC_PTR_ARRAY(encode_context_ptr->packetization_reorder_queue,
                        PACKETIZATION_REORDER_QUEUE_MAX_DEPTH);
@@ -167,6 +177,7 @@ EbErrorType encode_context_ctor(EncodeContext *encode_context_ptr, EbPtr object_
     // Signalling the need for a td structure to be written in the Bitstream - on when the sequence starts
     encode_context_ptr->td_needed = EB_TRUE;
 
+#if !CLN_OLD_RC
     // Rate Control Bit Tables
     EB_MALLOC_ARRAY(encode_context_ptr->rate_control_tables_array,
                     TOTAL_NUMBER_OF_INITIAL_RC_TABLES_ENTRY);
@@ -176,6 +187,7 @@ EbErrorType encode_context_ctor(EncodeContext *encode_context_ptr, EbPtr object_
         return EB_ErrorInsufficientResources;
     // RC Rate Table Update Mutex
     EB_CREATE_MUTEX(encode_context_ptr->rate_table_update_mutex);
+#endif
 
     EB_CREATE_MUTEX(encode_context_ptr->sc_buffer_mutex);
     encode_context_ptr->enc_mode                      = SPEED_CONTROL_INIT_MOD;

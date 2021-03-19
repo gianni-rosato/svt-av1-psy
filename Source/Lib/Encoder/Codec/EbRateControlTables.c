@@ -10,6 +10,7 @@
 * PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
 */
 
+#if !CLN_OLD_RC
 #include "EbRateControlTables.h"
 #include "EbUtility.h"
 
@@ -2232,4 +2233,5 @@ EbErrorType rate_control_tables_init(
     }
     return EB_ErrorNone;
 }
+#endif
 // clang-format on

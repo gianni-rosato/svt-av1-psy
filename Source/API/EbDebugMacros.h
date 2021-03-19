@@ -337,6 +337,7 @@ extern "C" {
 #define OPT12_PD0                             1 // Bypass neighbor update when intra is not allowed in PD0
 #define OPT13_PD0                             1 // Bypass all mds1, mds2 computations in PD0
 #define OPT_INLINE_FILTER_FUNCS               1 // Make funcs inline to improve efficiency
+#define CLN_OLD_RC                            1 // Clean up old useless rate control code
 // ============= END SVT_04 =============
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch

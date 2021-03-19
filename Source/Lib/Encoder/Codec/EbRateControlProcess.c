@@ -2200,6 +2200,7 @@ EbErrorType tpl_mc_flow(EncodeContext *encode_context_ptr, SequenceControlSet *s
     return EB_ErrorNone;
 }
 #endif
+#if !CLN_OLD_RC
 static const uint32_t rate_percentage_layer_array[EB_MAX_TEMPORAL_LAYERS][EB_MAX_TEMPORAL_LAYERS] =
     {{100, 0, 0, 0, 0, 0},
      {70, 30, 0, 0, 0, 0},
@@ -2219,6 +2220,7 @@ static const uint64_t two_to_power_qp_over_three[] = {
     0xCB2FF53,   0x10000000,  0x1428A2FA, 0x1965FEA5, 0x20000000, 0x285145F3, 0x32CBFD4A,
     0x40000000,  0x50A28BE6,  0x6597FA95, 0x80000000, 0xA14517CC, 0xCB2FF52A, 0x100000000,
     0x1428A2F99, 0x1965FEA54, 0x200000000};
+#endif
 
 /**************************************
  * Coded Frames Stats
@@ -2234,6 +2236,7 @@ typedef struct RateControlIntervalParamContext {
     EbDctor                   dctor;
     uint64_t                  first_poc;
     uint64_t                  last_poc;
+#if !CLN_OLD_RC
     EbBool                    in_use;
     EbBool                    was_used;
     uint64_t                  processed_frames_number;
@@ -2253,6 +2256,7 @@ typedef struct RateControlIntervalParamContext {
     EbBool   first_pic_actual_qp_assigned;
     EbBool   scene_change_in_gop;
     int64_t  extra_ap_bit_ratio_i;
+#endif
 
 #if FTR_VBR_MT
     // Projected total bits available for a key frame group of frames
@@ -2262,6 +2266,7 @@ typedef struct RateControlIntervalParamContext {
 #endif
 } RateControlIntervalParamContext;
 
+#if !CLN_OLD_RC
 typedef struct HighLevelRateControlContext {
     EbDctor  dctor;
     uint64_t target_bit_rate;
@@ -2274,14 +2279,18 @@ typedef struct HighLevelRateControlContext {
     uint32_t prev_intra_org_selected_ref_qp;
     uint64_t previous_updated_bit_constraint_per_sw;
 } HighLevelRateControlContext;
+#endif
 
 typedef struct RateControlContext {
     EbFifo *rate_control_input_tasks_fifo_ptr;
     EbFifo *rate_control_output_results_fifo_ptr;
 
+#if !CLN_OLD_RC
     HighLevelRateControlContext *high_level_rate_control_ptr;
+#endif
 
     RateControlIntervalParamContext **rate_control_param_queue;
+#if !CLN_OLD_RC
     uint64_t                          rate_control_param_queue_head_index;
 
     uint64_t frame_rate;
@@ -2326,12 +2335,14 @@ typedef struct RateControlContext {
 
     uint32_t qp_scaling_map[EB_MAX_TEMPORAL_LAYERS][MAX_REF_QP_NUM];
     uint32_t qp_scaling_map_i_slice[MAX_REF_QP_NUM];
+#endif
 } RateControlContext;
 
 // calculate the QP based on the QP scaling
 uint32_t qp_scaling_calc(SequenceControlSet *scs_ptr, EB_SLICE slice_type,
                          uint32_t temporal_layer_index, uint32_t base_qp);
 
+#if !CLN_OLD_RC
 /*****************************
 * Internal Typedefs
 *****************************/
@@ -2479,7 +2490,9 @@ void rate_control_layer_reset(RateControlLayerContext *rate_control_layer_ptr,
         }
     }
 }
+#endif
 
+#if !CLN_OLD_RC
 void rate_control_layer_reset_part2(RateControlContext *     context_ptr,
                                     RateControlLayerContext *rate_control_layer_ptr,
                                     PictureControlSet *      pcs_ptr) {
@@ -2502,19 +2515,25 @@ EbErrorType high_level_rate_control_context_ctor(HighLevelRateControlContext *en
 
     return EB_ErrorNone;
 }
+#endif
 
+#if !CLN_OLD_RC
 EbErrorType rate_control_layer_context_ctor(RateControlLayerContext *entry_ptr) {
     entry_ptr->first_frame           = 1;
     entry_ptr->first_non_intra_frame = 1;
 
     return EB_ErrorNone;
 }
+#endif
 
+#if !CLN_OLD_RC
 static void rate_control_interval_param_context_dctor(EbPtr p) {
     RateControlIntervalParamContext *obj = (RateControlIntervalParamContext *)p;
     EB_DELETE_PTR_ARRAY(obj->rate_control_layer_array, EB_MAX_TEMPORAL_LAYERS);
 }
+#endif
 
+#if !CLN_OLD_RC
 EbErrorType rate_control_interval_param_context_ctor(RateControlIntervalParamContext *entry_ptr) {
     uint32_t temporal_index;
 
@@ -2531,6 +2550,7 @@ EbErrorType rate_control_interval_param_context_ctor(RateControlIntervalParamCon
 
     return EB_ErrorNone;
 }
+#endif
 
 EbErrorType rate_control_coded_frames_stats_context_ctor(CodedFramesStatsEntry *entry_ptr,
                                                          uint64_t               picture_number) {
@@ -2543,11 +2563,18 @@ EbErrorType rate_control_coded_frames_stats_context_ctor(CodedFramesStatsEntry *
 static void rate_control_context_dctor(EbPtr p) {
     EbThreadContext *   thread_context_ptr = (EbThreadContext *)p;
     RateControlContext *obj                = (RateControlContext *)thread_context_ptr->priv;
+#if !CLN_OLD_RC
 #if OVERSHOOT_STAT_PRINT
     EB_DELETE_PTR_ARRAY(obj->coded_frames_stat_queue, CODED_FRAMES_STAT_QUEUE_MAX_DEPTH);
 #endif
+#endif
+#if !CLN_OLD_RC
     EB_DELETE_PTR_ARRAY(obj->rate_control_param_queue, PARALLEL_GOP_MAX_NUMBER);
     EB_DELETE(obj->high_level_rate_control_ptr);
+#else
+    if (obj->rate_control_param_queue)
+        EB_FREE_2D(obj->rate_control_param_queue);
+#endif
     EB_FREE_ARRAY(obj);
 }
 
@@ -2555,8 +2582,10 @@ EbErrorType rate_control_context_ctor(EbThreadContext *  thread_context_ptr,
                                       const EbEncHandle *enc_handle_ptr) {
     uint32_t interval_index;
 
+#if !CLN_OLD_RC
 #if OVERSHOOT_STAT_PRINT
     uint32_t picture_index;
+#endif
 #endif
     int32_t intra_period = enc_handle_ptr->scs_instance_array[0]->scs_ptr->intra_period_length;
 
@@ -2570,20 +2599,27 @@ EbErrorType rate_control_context_ctor(EbThreadContext *  thread_context_ptr,
     context_ptr->rate_control_output_results_fifo_ptr = svt_system_resource_get_producer_fifo(
         enc_handle_ptr->rate_control_results_resource_ptr, 0);
 
+#if !CLN_OLD_RC
     // High level RC
     EB_NEW(context_ptr->high_level_rate_control_ptr, high_level_rate_control_context_ctor);
 
     EB_ALLOC_PTR_ARRAY(context_ptr->rate_control_param_queue, PARALLEL_GOP_MAX_NUMBER);
+#else
+    EB_MALLOC_2D(context_ptr->rate_control_param_queue, (int32_t)PARALLEL_GOP_MAX_NUMBER, 1);
+#endif
 
     for (interval_index = 0; interval_index < PARALLEL_GOP_MAX_NUMBER; interval_index++) {
+#if !CLN_OLD_RC
         EB_NEW(context_ptr->rate_control_param_queue[interval_index],
                rate_control_interval_param_context_ctor);
+#endif
         context_ptr->rate_control_param_queue[interval_index]->first_poc =
             (interval_index * (uint32_t)(intra_period + 1));
         context_ptr->rate_control_param_queue[interval_index]->last_poc =
             ((interval_index + 1) * (uint32_t)(intra_period + 1)) - 1;
     }
 
+#if !CLN_OLD_RC
 #if OVERSHOOT_STAT_PRINT
     EB_ALLOC_PTR_ARRAY(context_ptr->coded_frames_stat_queue, CODED_FRAMES_STAT_QUEUE_MAX_DEPTH);
 
@@ -2595,9 +2631,11 @@ EbErrorType rate_control_context_ctor(EbThreadContext *  thread_context_ptr,
     context_ptr->min_bit_actual_per_gop = 0xfffffffffffff;
 #endif
     context_ptr->intra_coef_rate = 4;
+#endif
 
     return EB_ErrorNone;
 }
+#if !CLN_OLD_RC
 uint64_t predict_bits(EncodeContext *              encode_context_ptr,
                       HlRateControlHistogramEntry *hl_rate_control_histogram_ptr_temp, uint32_t qp,
                       uint32_t area_in_pixel) {
@@ -5678,7 +5716,8 @@ void rate_control_refinement(PictureControlSet *pcs_ptr, SequenceControlSet *scs
     }
 }
 // initialize the rate control parameter at the beginning
-void init_rc(RateControlContext *context_ptr, PictureControlSet *pcs_ptr,
+void init_rc(RateControlContext *context_ptr,
+             PictureControlSet *pcs_ptr,
              SequenceControlSet *scs_ptr) {
     context_ptr->high_level_rate_control_ptr->target_bit_rate =
         scs_ptr->static_config.target_bit_rate;
@@ -5727,7 +5766,8 @@ void init_rc(RateControlContext *context_ptr, PictureControlSet *pcs_ptr,
         context_ptr->vb_fill_threshold2             = (context_ptr->virtual_buffer_size << 3) >> 3;
         context_ptr->base_layer_frames_avg_qp       = scs_ptr->static_config.qp;
         context_ptr->base_layer_intra_frames_avg_qp = scs_ptr->static_config.qp;
-    } else if (scs_ptr->static_config.rate_control_mode == 2) {
+    }
+    else if (scs_ptr->static_config.rate_control_mode == 2) {
         if (scs_ptr->static_config.vbv_bufsize > 0)
             context_ptr->virtual_buffer_size =
                 ((uint64_t)scs_ptr->static_config.vbv_bufsize); // vbv_buf_size);
@@ -5769,6 +5809,7 @@ void init_rc(RateControlContext *context_ptr, PictureControlSet *pcs_ptr,
         }
     }
 }
+#endif
 
 #define MAX_Q_INDEX 255
 #define MIN_Q_INDEX 0
@@ -8566,8 +8607,10 @@ void *rate_control_kernel(void *input_ptr) {
 
     RateControlIntervalParamContext *rate_control_param_ptr;
 
+#if !CLN_OLD_RC
     RateControlIntervalParamContext *prev_gop_rate_control_param_ptr;
     RateControlIntervalParamContext *next_gop_rate_control_param_ptr;
+#endif
 
     PictureControlSet *      pcs_ptr;
     PictureParentControlSet *parentpicture_control_set_ptr;
@@ -8583,7 +8626,9 @@ void *rate_control_kernel(void *input_ptr) {
     EbObjectWrapper *   rate_control_results_wrapper_ptr;
     RateControlResults *rate_control_results_ptr;
 
+#if !CLN_OLD_RC
     RateControlLayerContext *rate_control_layer_ptr;
+#endif
 
     uint64_t total_number_of_fb_frames = 0;
 
@@ -8631,10 +8676,12 @@ void *rate_control_kernel(void *input_ptr) {
                 pcs_ptr->parent_pcs_ptr->down_scaled_picture_wrapper_ptr = NULL;
             }
 
+#if !CLN_OLD_RC
             if (pcs_ptr->picture_number == 0) {
                 //init rate control parameters
                 init_rc(context_ptr, pcs_ptr, scs_ptr);
             }
+#endif
             // SB Loop
             pcs_ptr->parent_pcs_ptr->sad_me = 0;
             if (pcs_ptr->slice_type != 2)
@@ -8647,8 +8694,10 @@ void *rate_control_kernel(void *input_ptr) {
             if (scs_ptr->intra_period_length == -1 ||
                 scs_ptr->static_config.rate_control_mode == 0) {
                 rate_control_param_ptr = context_ptr->rate_control_param_queue[0];
+#if !CLN_OLD_RC
                 prev_gop_rate_control_param_ptr = context_ptr->rate_control_param_queue[0];
                 next_gop_rate_control_param_ptr = context_ptr->rate_control_param_queue[0];
+#endif
             }
             else {
                 uint32_t interval_index_temp = 0;
@@ -8669,6 +8718,7 @@ void *rate_control_kernel(void *input_ptr) {
 
                 rate_control_param_ptr = context_ptr->rate_control_param_queue[interval_index_temp];
 
+#if !CLN_OLD_RC
                 prev_gop_rate_control_param_ptr = (interval_index_temp == 0)
                     ? context_ptr->rate_control_param_queue[PARALLEL_GOP_MAX_NUMBER - 1]
                     : context_ptr->rate_control_param_queue[interval_index_temp - 1];
@@ -8676,10 +8726,13 @@ void *rate_control_kernel(void *input_ptr) {
                     PARALLEL_GOP_MAX_NUMBER - 1)
                     ? context_ptr->rate_control_param_queue[0]
                     : context_ptr->rate_control_param_queue[interval_index_temp + 1];
+#endif
             }
 
+#if !CLN_OLD_RC
             rate_control_layer_ptr =
                 rate_control_param_ptr->rate_control_layer_array[pcs_ptr->temporal_layer_index];
+#endif
 #endif
             if (use_input_stat(scs_ptr) || scs_ptr->lap_enabled) {
                 if (pcs_ptr->picture_number == 0) {
@@ -8697,7 +8750,9 @@ void *rate_control_kernel(void *input_ptr) {
 #if FTR_VBR_MT
                 store_param(pcs_ptr->parent_pcs_ptr, rate_control_param_ptr);
 #endif
-            } else if (scs_ptr->static_config.rate_control_mode) {
+            }
+#if !CLN_OLD_RC
+            else if (scs_ptr->static_config.rate_control_mode) {
                 pcs_ptr->parent_pcs_ptr->intra_selected_org_qp = 0;
                 // High level RC
                 if (scs_ptr->static_config.rate_control_mode == 1)
@@ -8714,6 +8769,7 @@ void *rate_control_kernel(void *input_ptr) {
                                                      context_ptr,
                                                      context_ptr->high_level_rate_control_ptr);
             }
+#endif
 #if !FTR_VBR_MT
             // Frame level RC. Find the ParamPtr for the current GOP
             if (scs_ptr->intra_period_length == -1 ||
@@ -8849,7 +8905,11 @@ void *rate_control_kernel(void *input_ptr) {
                 }
 
                 pcs_ptr->parent_pcs_ptr->picture_qp = pcs_ptr->picture_qp;
+#if CLN_OLD_RC
+                setup_segmentation(pcs_ptr, scs_ptr);
+#else
                 setup_segmentation(pcs_ptr, scs_ptr, rate_control_layer_ptr);
+#endif
             } else {
                 // ***Rate Control***
                 if (scs_ptr->static_config.rate_control_mode == 1) {
@@ -8898,7 +8958,9 @@ void *rate_control_kernel(void *input_ptr) {
                         }
 #endif
 
-                    } else {
+                    }
+#if !CLN_OLD_RC
+                    else {
                         frame_level_rc_input_picture_vbr(pcs_ptr,
                                                          scs_ptr,
                                                          context_ptr,
@@ -8912,13 +8974,17 @@ void *rate_control_kernel(void *input_ptr) {
                                                 prev_gop_rate_control_param_ptr,
                                                 next_gop_rate_control_param_ptr);
                     }
-                } else if (scs_ptr->static_config.rate_control_mode == 2) {
+#endif
+                }
+#if !CLN_OLD_RC
+                else if (scs_ptr->static_config.rate_control_mode == 2) {
                     frame_level_rc_input_picture_cvbr(pcs_ptr,
                                                       scs_ptr,
                                                       context_ptr,
                                                       rate_control_layer_ptr,
                                                       rate_control_param_ptr);
                 }
+#endif
                 pcs_ptr->picture_qp = (uint8_t)CLIP3(scs_ptr->static_config.min_qp_allowed,
                                                      scs_ptr->static_config.max_qp_allowed,
                                                      pcs_ptr->picture_qp);
@@ -8928,6 +8994,7 @@ void *rate_control_kernel(void *input_ptr) {
 
             pcs_ptr->parent_pcs_ptr->picture_qp = pcs_ptr->picture_qp;
 
+#if !CLN_OLD_RC
             if (pcs_ptr->parent_pcs_ptr->temporal_layer_index == 0 &&
                 scs_ptr->static_config.look_ahead_distance != 0)
                 context_ptr->base_layer_frames_avg_qp = (3 * context_ptr->base_layer_frames_avg_qp +
@@ -8961,6 +9028,7 @@ void *rate_control_kernel(void *input_ptr) {
                     }
                 }
             }
+#endif
             // 2pass QPM with tpl_la
             if (scs_ptr->static_config.enable_adaptive_quantization == 2 &&
                 !use_output_stat(scs_ptr) && (use_input_stat(scs_ptr) || scs_ptr->lap_enabled) &&
@@ -9005,6 +9073,7 @@ void *rate_control_kernel(void *input_ptr) {
             scs_ptr = (SequenceControlSet *)
                           parentpicture_control_set_ptr->scs_wrapper_ptr->object_ptr;
 
+#if !CLN_OLD_RC
             // Frame level RC
             if (scs_ptr->intra_period_length == -1 ||
                 scs_ptr->static_config.rate_control_mode == 0) {
@@ -9043,6 +9112,7 @@ void *rate_control_kernel(void *input_ptr) {
                     ? context_ptr->rate_control_param_queue[PARALLEL_GOP_MAX_NUMBER - 1]
                     : context_ptr->rate_control_param_queue[interval_index_temp - 1];
             }
+#endif
 #if FTR_VBR_MT
             restore_gf_group_param(parentpicture_control_set_ptr);
 #endif
@@ -9052,6 +9122,7 @@ void *rate_control_kernel(void *input_ptr) {
                 svt_av1_twopass_postencode_update(parentpicture_control_set_ptr);
             }
             if (scs_ptr->static_config.rate_control_mode != 0) {
+#if !CLN_OLD_RC
                 context_ptr->previous_virtual_buffer_level = context_ptr->virtual_buffer_level;
 
                 context_ptr->virtual_buffer_level = (int64_t)
@@ -9063,13 +9134,16 @@ void *rate_control_kernel(void *input_ptr) {
                     ;
                 } else
                     high_level_rc_feed_back_picture(parentpicture_control_set_ptr, scs_ptr);
+#endif
                 if (scs_ptr->static_config.rate_control_mode == 1)
                     if (use_input_stat(scs_ptr) || scs_ptr->lap_enabled) {
                         av1_rc_postencode_update(
                             parentpicture_control_set_ptr,
                             (parentpicture_control_set_ptr->total_num_bits + 7) >> 3);
                         svt_av1_twopass_postencode_update(parentpicture_control_set_ptr);
-                    } else
+                    }
+#if !CLN_OLD_RC
+                    else
                         frame_level_rc_feedback_picture_vbr(
                             parentpicture_control_set_ptr, scs_ptr, context_ptr);
                 else if (scs_ptr->static_config.rate_control_mode == 2)
@@ -9094,9 +9168,11 @@ void *rate_control_kernel(void *input_ptr) {
                         rate_control_param_ptr->extra_ap_bit_ratio_i += (int64_t)delta_ap_qp * 15;
                     }
                 }
+#endif
             }
 
             // Queue variables
+#if !CLN_OLD_RC
 #if OVERSHOOT_STAT_PRINT
             if (scs_ptr->intra_period_length != -1) {
                 int32_t                queue_entry_index;
@@ -9262,6 +9338,7 @@ void *rate_control_kernel(void *input_ptr) {
                     }
                 }
             }
+#endif
 #endif
             total_number_of_fb_frames++;
 #if FTR_TPL_TR
