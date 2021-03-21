@@ -234,7 +234,7 @@ for this command line, corresponding qindex are:
 | **EncoderMode** | --preset | [0 - 8] | 8 | Encoder Preset [0,1,2,3,4,5,6,7,8] 0 = highest quality, 8 = highest speed |
 | **CompressedTenBitFormat** | --compressed-ten-bit-format | [0-1] | 0 | Offline packing of the 2bits: requires two bits packed input (0: OFF, 1: ON) |
 | **TileRow** | --tile-rows | [0-6] | 0 | log2 of tile rows |
-| **TileCol** | --tile-columns | [0-6] | 0 | log2 of tile columns |
+| **TileCol** | --tile-columns | [0-4] | 0 | log2 of tile columns |
 | **LookAheadDistance** | --lookahead | [0 - 120] | 33 | When RateControlMode is set to 1 or 2 it's strongly recommended to set this parameter to be equal to the Intra period value (such is the default set by the encoder). When RateControlMode  is set to 0, it is recommended for this value to be set to a size of a minigop (e.g. 16 for --hierarchichal-levels 4) |
 | **LoopFilterDisable** | --disable-dlf | [0-1] | 0 | Disable loop filter(0: loop filter enabled[default] ,1: loop filter disabled) |
 | **EnableTPLModel** | --enable-tpl-la | [0-1] | 1 | RDO based on frame temporal dependency (0: off, 1: backward source based)|
