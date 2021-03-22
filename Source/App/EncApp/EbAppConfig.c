@@ -1298,6 +1298,28 @@ ConfigEntry config_entry_color_description[] = {
     // Termination
     {SINGLE_INPUT, NULL, NULL, NULL}};
 
+ConfigEntry config_entry_color_description[] = {
+    // Color description
+    {SINGLE_INPUT,
+     COLOR_PRIMARIES_NEW_TOKEN,
+     "Color primaries (2: DEFAULT)",
+     set_cfg_color_primaries},
+    {SINGLE_INPUT,
+     TRANSFER_CHARACTERISTICS_NEW_TOKEN,
+     "Transfer characteristics (2: DEFAULT)",
+     set_cfg_transfer_characteristics},
+    {SINGLE_INPUT,
+     MATRIX_COEFFICIENTS_NEW_TOKEN,
+     "Matrix coefficients (2: DEFAULT)",
+     set_cfg_matrix_coefficients},
+    {SINGLE_INPUT,
+     COLOR_RANGE_NEW_TOKEN,
+     "Color range, 0: Studio (default), 1: Full",
+     set_cfg_color_range},
+
+    // Termination
+    {SINGLE_INPUT, NULL, NULL, NULL}};
+
 ConfigEntry config_entry[] = {
     // File I/O
     {SINGLE_INPUT, INPUT_FILE_TOKEN, "InputFile", set_cfg_input_file},
