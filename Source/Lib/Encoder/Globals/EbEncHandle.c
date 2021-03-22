@@ -2938,6 +2938,13 @@ void copy_api_from_app(
         }
     }
 
+    // Color description
+    scs_ptr->static_config.color_description_present_flag = config_struct->color_description_present_flag;
+    scs_ptr->static_config.color_primaries = config_struct->color_primaries;
+    scs_ptr->static_config.transfer_characteristics = config_struct->transfer_characteristics;
+    scs_ptr->static_config.matrix_coefficients = config_struct->matrix_coefficients;
+    scs_ptr->static_config.color_range = config_struct->color_range;
+
     return;
 }
 
@@ -3498,6 +3505,28 @@ static EbErrorType verify_settings(
         return_error = EB_ErrorBadParameter;
     }
 
+    // color description
+    if (config->color_primaries == 0 || config->color_primaries == 3 ||
+        (config->color_primaries >= 13 && config->color_primaries <= 21) ||
+        config->color_primaries > 22) {
+        SVT_WARN("Warning instance %u: value %u for color_primaries is reserved and not recommended for usage.\n",
+            channel_number + 1, config->color_primaries);
+    }
+    if (config->transfer_characteristics == 0 || config->transfer_characteristics == 3 ||
+        config->transfer_characteristics > 18) {
+        SVT_WARN("Warning instance %u: value %u for transfer_characteristics is reserved and not recommended for usage.\n",
+            channel_number + 1, config->transfer_characteristics);
+    }
+    if (config->matrix_coefficients == 0 && config->encoder_color_format != EB_YUV444) {
+        SVT_LOG("Error instance %u: Identity matrix (matrix_coefficient = 0) may be used only with 4:4:4 color format.\n",
+            channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+    if (config->matrix_coefficients == 3 || config->matrix_coefficients > 14) {
+        SVT_WARN("Warning instance %u: value %u for matrix_coefficients is reserved and not recommended for usage.\n",
+            channel_number + 1, config->matrix_coefficients);
+    }
+
     /* Warnings about the use of features that are incomplete */
     if (config->rc_twopass_stats_in.sz || config->rc_firstpass_stats_out) {
         SVT_WARN("The 2-pass encoding support is a work-in-progress, it is only available for experimental and further development uses and should not be used for benchmarking until fully implemented.\n");
@@ -3675,7 +3704,12 @@ EbErrorType svt_svt_enc_init_parameter(
     config_ptr->superres_kf_denom = 8;
     config_ptr->superres_qthres = 43; // random threshold, change
 
-    config_ptr->manual_pred_struct_entry_num = 0;
+    // Color description default values
+    config_ptr->color_description_present_flag = EB_FALSE;
+    config_ptr->color_primaries = 2;
+    config_ptr->transfer_characteristics = 2;
+    config_ptr->matrix_coefficients = 2;
+    config_ptr->color_range = 0;
 
     return return_error;
 }

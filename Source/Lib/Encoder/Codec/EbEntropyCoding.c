@@ -3044,15 +3044,15 @@ static void write_color_config(SequenceControlSet *      scs_ptr /*Av1Common *co
     //    svt_aom_wb_write_bit(wb, is_monochrome);
     //else
     //    assert(!is_monochrome);
-    if (1/*cm->color_primaries == AOM_CICP_CP_UNSPECIFIED &&
-         cm->transfer_characteristics == AOM_CICP_TC_UNSPECIFIED &&
-         cm->matrix_coefficients == AOM_CICP_MC_UNSPECIFIED*/) {
+    if (scs_ptr->static_config.color_primaries == AOM_CICP_CP_UNSPECIFIED &&
+        scs_ptr->static_config.transfer_characteristics == AOM_CICP_TC_UNSPECIFIED &&
+        scs_ptr->static_config.matrix_coefficients == AOM_CICP_MC_UNSPECIFIED) {
         svt_aom_wb_write_bit(wb, 0); // No color description present
     } else {
-        //svt_aom_wb_write_bit(wb, 1);  // Color description present
-        //svt_aom_wb_write_literal(wb, cm->color_primaries, 8);
-        //svt_aom_wb_write_literal(wb, cm->transfer_characteristics, 8);
-        //svt_aom_wb_write_literal(wb, cm->matrix_coefficients, 8);
+        svt_aom_wb_write_bit(wb, 1);  // Color description present
+        svt_aom_wb_write_literal(wb, scs_ptr->static_config.color_primaries, 8);
+        svt_aom_wb_write_literal(wb, scs_ptr->static_config.transfer_characteristics, 8);
+        svt_aom_wb_write_literal(wb, scs_ptr->static_config.matrix_coefficients, 8);
     }
     //if (is_monochrome) {
     //    SVT_LOG("ERROR[AN]: is_monochrome not supported yet\n");
@@ -3068,8 +3068,7 @@ static void write_color_config(SequenceControlSet *      scs_ptr /*Av1Common *co
         //    (cm->profile == PROFILE_2 && cm->bit_depth == AOM_BITS_12));
     } else {
         // 0: [16, 235] (i.e. xvYCC), 1: [0, 255]
-        svt_aom_wb_write_bit(wb, 0);
-        //svt_aom_wb_write_bit(wb, cm->color_range);
+        svt_aom_wb_write_bit(wb, scs_ptr->static_config.color_range);
 
         //if (cm->profile == PROFILE_0) {
         //    // 420 only

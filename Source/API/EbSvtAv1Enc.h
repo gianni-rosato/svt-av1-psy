@@ -738,6 +738,34 @@ typedef struct EbSvtAv1EncConfiguration {
    *
    * Default is 0. */
     int32_t manual_pred_struct_entry_num;
+
+    // Color description
+    /* Color description present flag
+    *
+    * It is not necessary to set this parameter manually.
+    * It is set internally to true once one of the color_primaries, transfer_characteristics or
+    * matrix coefficients is set to non-default value.
+    *
+    Default is false. */
+    EbBool color_description_present_flag;
+    /* Color primaries
+    *
+    Default is 2 (CP_UNSPECIFIED). */
+    uint8_t color_primaries;
+    /* Transfer characteristics
+    *
+    Default is 2 (TC_UNSPECIFIED). */
+    uint8_t transfer_characteristics;
+    /* Matrix coefficients
+    *
+    Default is 2 (MC_UNSPECIFIED). */
+    uint8_t matrix_coefficients;
+    /* Color range
+    *
+    * 0: studio swing.
+    * 1: full swing.
+    Default is 0. */
+    uint8_t color_range;
 } EbSvtAv1EncConfiguration;
 
 /* STEP 1: Call the library to construct a Component Handle.

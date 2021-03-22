@@ -1037,6 +1037,76 @@ static const vector<uint8_t> default_superres_kf_denom = {8};
 static const vector<uint8_t> valid_superres_kf_denom = {8, 9, 10, 11, 12, 13, 14, 15, 16};
 static const vector<uint8_t> invalid_superres_kf_denom = {7};
 
+// Color description
+/* Color range
+ */
+static const vector<uint32_t> default_color_range = {0};
+static const vector<uint32_t> valid_color_range = {0, 1};
+static const vector<uint32_t> invalid_color_range = {};
+
+/* Color primaries
+ */
+static const vector<uint32_t> default_color_primaries = {2};
+static const vector<uint32_t> valid_color_primaries = {
+    1,
+    2,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    22,
+};
+static const vector<uint32_t> invalid_color_primaries = {/*none*/};
+
+/* Transfer characteristics
+ */
+static const vector<uint32_t> default_transfer_characteristics = {2};
+static const vector<uint32_t> valid_transfer_characteristics = {
+    1,
+    2,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+};
+static const vector<uint32_t> invalid_transfer_characteristics = {/*none*/};
+
+/* Matrix coeffricients
+ */
+static const vector<uint32_t> default_matrix_coefficients = {2};
+static const vector<uint32_t> valid_matrix_coefficients = {
+    1,
+    2,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+};
+static const vector<uint32_t> invalid_matrix_coefficients = {0}; // not actually invalid, but requires 4:4:4
+
 }  // namespace svt_av1_test_params
 
 /** @} */  // end of svt_av1_test_params

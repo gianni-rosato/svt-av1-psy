@@ -224,6 +224,11 @@
 #define SMOOTH_NEW_TOKEN "--enable-smooth"
 #define MRP_LEVEL_TOKEN "--mrp-level"
 
+#define COLOR_PRIMARIES_NEW_TOKEN "--color-primaries"
+#define TRANSFER_CHARACTERISTICS_NEW_TOKEN "--transfer-characteristics"
+#define MATRIX_COEFFICIENTS_NEW_TOKEN "--matrix-coefficients"
+#define COLOR_RANGE_NEW_TOKEN "--color-range"
+
 #ifdef _WIN32
 static HANDLE get_file_handle(FILE *fp) { return (HANDLE)_get_osfhandle(_fileno(fp)); }
 #endif
@@ -771,6 +776,18 @@ static void set_target_socket(const char *value, EbConfig *cfg) {
 static void set_unrestricted_motion_vector(const char *value, EbConfig *cfg) {
     cfg->config.unrestricted_motion_vector = (EbBool)strtol(value, NULL, 0);
 };
+static void set_cfg_color_primaries(const char *value, EbConfig *cfg) {
+    cfg->config.color_primaries = (uint8_t)strtoul(value, NULL, 0);
+}
+static void set_cfg_transfer_characteristics(const char *value, EbConfig *cfg) {
+    cfg->config.transfer_characteristics = (uint8_t)strtoul(value, NULL, 0);
+}
+static void set_cfg_matrix_coefficients(const char *value, EbConfig *cfg) {
+    cfg->config.matrix_coefficients = (uint8_t)strtoul(value, NULL, 0);
+}
+static void set_cfg_color_range(const char *value, EbConfig *cfg) {
+    cfg->config.color_range = (uint8_t)strtoul(value, NULL, 0);
+}
 
 enum CfgType {
     SINGLE_INPUT, // Configuration parameters that have only 1 value input
@@ -1249,6 +1266,28 @@ ConfigEntry config_entry_specific[] = {
     // Termination
     {SINGLE_INPUT, NULL, NULL, NULL}};
 
+ConfigEntry config_entry_color_description[] = {
+    // Color description
+    {SINGLE_INPUT,
+     COLOR_PRIMARIES_NEW_TOKEN,
+     "Color primaries (2: DEFAULT)",
+     set_cfg_color_primaries},
+    {SINGLE_INPUT,
+     TRANSFER_CHARACTERISTICS_NEW_TOKEN,
+     "Transfer characteristics (2: DEFAULT)",
+     set_cfg_transfer_characteristics},
+    {SINGLE_INPUT,
+     MATRIX_COEFFICIENTS_NEW_TOKEN,
+     "Matrix coefficients (2: DEFAULT)",
+     set_cfg_matrix_coefficients},
+    {SINGLE_INPUT,
+     COLOR_RANGE_NEW_TOKEN,
+     "Color range, 0: Studio (default), 1: Full",
+     set_cfg_color_range},
+
+    // Termination
+    {SINGLE_INPUT, NULL, NULL, NULL}};
+
 ConfigEntry config_entry[] = {
     // File I/O
     {SINGLE_INPUT, INPUT_FILE_TOKEN, "InputFile", set_cfg_input_file},
@@ -1514,6 +1553,24 @@ ConfigEntry config_entry[] = {
     {SINGLE_INPUT, INTRA_ANGLE_DELTA_NEW_TOKEN, "Intra Angle Delta", set_intra_angle_delta_flag},
     {SINGLE_INPUT, PAETH_NEW_TOKEN, "Paeth New Token", set_enable_paeth_flag},
     {SINGLE_INPUT, SMOOTH_NEW_TOKEN, "Smooth New Token", set_enable_smooth_flag},
+
+    // Color description
+    {SINGLE_INPUT,
+     COLOR_PRIMARIES_NEW_TOKEN,
+     "ColorPrimaries",
+     set_cfg_color_primaries},
+    {SINGLE_INPUT,
+     TRANSFER_CHARACTERISTICS_NEW_TOKEN,
+     "TransferCharacteristics",
+     set_cfg_transfer_characteristics},
+    {SINGLE_INPUT,
+     MATRIX_COEFFICIENTS_NEW_TOKEN,
+     "MatrixCoefficients",
+     set_cfg_matrix_coefficients},
+    {SINGLE_INPUT,
+     COLOR_RANGE_NEW_TOKEN,
+     "ColorRange",
+     set_cfg_color_range},
 
     // Termination
     {SINGLE_INPUT, NULL, NULL, NULL}};
@@ -2237,6 +2294,24 @@ uint32_t get_help(int32_t argc, char *const argv[]) {
                                                    : "      -%-25s   %-25s\n",
                    sp_token_index->token,
                    sp_token_index->name);
+        }
+    }
+    printf("\nColor Description Options:\n");
+    for (ConfigEntry* cd_token_index = config_entry_color_description; cd_token_index->token;
+        ++cd_token_index) {
+        switch (check_long(*cd_token_index, cd_token_index[1])) {
+        case 1:
+            printf("  %s, %-25s    %-25s\n",
+                   cd_token_index->token,
+                   cd_token_index[1].token,
+                   cd_token_index->name);
+            ++cd_token_index;
+            break;
+        default:
+            printf(cd_token_index->token[1] == '-' ? "      %-25s    %-25s\n"
+                                                   : "      -%-25s   %-25s\n",
+                   cd_token_index->token,
+                   cd_token_index->name);
         }
     }
     return 1;

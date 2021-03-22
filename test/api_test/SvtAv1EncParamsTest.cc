@@ -410,4 +410,20 @@ PARAM_TEST(EncParamEnableAltRefsTest);
 DEFINE_PARAM_TEST_CLASS(EncParamEnableOverlaysTest, enable_overlays);
 PARAM_TEST(EncParamEnableOverlaysTest);
 
+/** Test case for color_range*/
+DEFINE_PARAM_TEST_CLASS(EncParamColorRangeTest, color_range);
+PARAM_TEST(EncParamColorRangeTest);
+
+/** Test case for color_primaries*/
+DEFINE_PARAM_TEST_CLASS(EncParamColorPrimariesTest, color_primaries);
+PARAM_TEST(EncParamColorPrimariesTest);
+
+/** Test case for transfer_characteristics*/
+DEFINE_PARAM_TEST_CLASS(EncParamTransferCharacteristicsTest, transfer_characteristics);
+PARAM_TEST(EncParamTransferCharacteristicsTest);
+
+/** Test case for matrix_coefficients*/
+DEFINE_PARAM_TEST_CLASS(EncParamMatrixCoefficientsTest, matrix_coefficients);
+PARAM_TEST(EncParamMatrixCoefficientsTest);
+
 }  // namespace
