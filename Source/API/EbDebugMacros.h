@@ -338,6 +338,7 @@ extern "C" {
 #define OPT13_PD0                             1 // Bypass all mds1, mds2 computations in PD0
 #define OPT_INLINE_FILTER_FUNCS               1 // Make funcs inline to improve efficiency
 #define CLN_OLD_RC                            1 // Clean up old useless rate control code
+#define FIX_SCD_DELAY                         1 // Fix the run2run issue caused by scd_delay
 // ============= END SVT_04 =============
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch

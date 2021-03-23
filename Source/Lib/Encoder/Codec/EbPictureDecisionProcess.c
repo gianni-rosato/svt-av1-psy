@@ -6131,7 +6131,12 @@ void* picture_decision_kernel(void *input_ptr)
             previous_entry_index = QUEUE_GET_PREVIOUS_SPOT(encode_context_ptr->picture_decision_reorder_queue_head_index);
 
             if (use_output_stat(scs_ptr) || scs_ptr->lap_enabled) {
-                for (window_index = 0; window_index < scs_ptr->scd_delay; window_index++) {
+#if FIX_SCD_DELAY
+                for (window_index = 0; window_index < scs_ptr->scd_delay + 1; window_index++)
+#else
+                for (window_index = 0; window_index < scs_ptr->scd_delay; window_index++)
+#endif
+                {
                     entry_index = QUEUE_GET_NEXT_SPOT(encode_context_ptr->picture_decision_reorder_queue_head_index, window_index);
                     PictureDecisionReorderEntry   *first_pass_queue_entry = encode_context_ptr->picture_decision_reorder_queue[entry_index];
                     if (first_pass_queue_entry->parent_pcs_wrapper_ptr == NULL) {
