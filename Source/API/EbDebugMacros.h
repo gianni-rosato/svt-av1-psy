@@ -339,7 +339,9 @@ extern "C" {
 #define OPT_INLINE_FILTER_FUNCS               1 // Make funcs inline to improve efficiency
 #define CLN_OLD_RC                            1 // Clean up old useless rate control code
 #define FIX_SCD_DELAY                         1 // Fix the run2run issue caused by scd_delay
+#define GET_NZ_MAP_CONTEXTS_AVX2 1 // Implementation of avx2 kernel get_nz_map_contexts_avx2()
 // ============= END SVT_04 =============
+
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
 #define DEBUG_TPL               0 // Prints to debug TPL
