@@ -2130,6 +2130,30 @@ void *motion_estimation_kernel(void *input_ptr) {
             in_results_ptr->task_type == 1 ? ME_MCTF :
             in_results_ptr->task_type == 0 ? ME_OPEN_LOOP : ME_FIRST_PASS;
 #endif
+#if TUNE_M9_GM_DETECTOR
+        // ME Kernel Signal(s) derivation
+#if FTR_TPL_TR
+        if (in_results_ptr->task_type == TASK_TPL_TR_ME) {
+            MePcs *me_pcs_null =  me_ctx->me_pcs;
+            trail_signal_derivation_me_kernel(scs_ptr, me_pcs_null, context_ptr); // TPL trailing broken
+        }
+        else
+#endif
+        if (in_results_ptr->task_type == TASK_PAME)
+            if (use_output_stat(scs_ptr))
+                first_pass_signal_derivation_me_kernel(scs_ptr, pcs_ptr, context_ptr);
+            else
+                signal_derivation_me_kernel_oq(scs_ptr, pcs_ptr, context_ptr);
+
+        else if (in_results_ptr->task_type == TASK_TFME)
+#if TUNE_REDESIGN_TF_CTRLS
+            tf_signal_derivation_me_kernel_oq(pcs_ptr, context_ptr);
+#else
+            tf_signal_derivation_me_kernel_oq(scs_ptr, pcs_ptr, context_ptr);
+#endif
+        else  // TASK_FIRST_PASS_ME
+            first_pass_signal_derivation_me_kernel(scs_ptr, pcs_ptr, context_ptr);
+#endif
 #if FTR_TPL_TR
         MePcs *me_pcs = me_ctx->me_pcs;
         fill_me_pcs_wraper(pcs_ptr, me_pcs, in_results_ptr->task_type == TASK_TPL_TR_ME, in_results_ptr);
@@ -2163,6 +2187,7 @@ void *motion_estimation_kernel(void *input_ptr) {
 #else
         if (in_results_ptr->task_type == 0) {
 #endif
+#if !TUNE_M9_GM_DETECTOR
 #if FTR_TPL_TR
             if(in_results_ptr->task_type == TASK_TPL_TR_ME)
                 trail_signal_derivation_me_kernel(scs_ptr, me_pcs, context_ptr);
@@ -2173,6 +2198,7 @@ void *motion_estimation_kernel(void *input_ptr) {
                 first_pass_signal_derivation_me_kernel(scs_ptr, pcs_ptr, context_ptr);
             else
                 signal_derivation_me_kernel_oq(scs_ptr, pcs_ptr, context_ptr);
+#endif
             EbPictureBufferDesc *sixteenth_picture_ptr = NULL;
             EbPictureBufferDesc *quarter_picture_ptr = NULL;
             EbPictureBufferDesc *input_padded_picture_ptr = NULL;
@@ -2584,11 +2610,14 @@ void *motion_estimation_kernel(void *input_ptr) {
             // Post the Full Results Object
             svt_post_full_object(out_results_wrapper_ptr);
         } else if (in_results_ptr->task_type == 1) {
+
+#if !TUNE_M9_GM_DETECTOR
             // ME Kernel Signal(s) derivation
 #if TUNE_REDESIGN_TF_CTRLS
             tf_signal_derivation_me_kernel_oq(pcs_ptr, context_ptr);
 #else
             tf_signal_derivation_me_kernel_oq(scs_ptr, pcs_ptr, context_ptr);
+#endif
 #endif
             // temporal filtering start
             context_ptr->me_context_ptr->me_type = ME_MCTF;
@@ -2599,8 +2628,10 @@ void *motion_estimation_kernel(void *input_ptr) {
             svt_release_object(in_results_wrapper_ptr);
         }
         else {
+#if !TUNE_M9_GM_DETECTOR
             // ME Kernel Signal(s) derivation
             first_pass_signal_derivation_me_kernel(scs_ptr, pcs_ptr, context_ptr);
+#endif
 
             //For first pass compute_decimated_zz_sad() is skipped, and non_moving_index_array[] become uninitialized
             init_zz_cost_info((PictureParentControlSet *)

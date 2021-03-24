@@ -1333,6 +1333,9 @@ typedef struct PictureControlSetInitData {
     uint16_t  enc_dec_segment_col;
     uint16_t  enc_dec_segment_row;
     EbEncMode enc_mode;
+#if CLN_REST
+    EbSvtAv1EncConfiguration static_config;
+#endif
     uint8_t   speed_control;
     int8_t    hbd_mode_decision;
     uint16_t  film_grain_noise_level;

@@ -579,7 +579,7 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
 
 #if CLN_BN
 #if CLN_REST
-    if (get_enable_restoration(init_data_ptr->enc_mode)) {
+    if (get_enable_restoration(init_data_ptr->enc_mode) || init_data_ptr->static_config.enable_restoration_filtering > 0) {
 #endif
     set_restoration_unit_size(init_data_ptr->picture_width,
                               init_data_ptr->picture_height,
@@ -1353,7 +1353,7 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
     object_ptr->hash_table.p_lookup_table = NULL;
     svt_av1_hash_table_create(&object_ptr->hash_table);
 #if CLN_REST
-    if (get_enable_restoration(init_data_ptr->enc_mode))
+    if (get_enable_restoration(init_data_ptr->enc_mode)|| init_data_ptr->static_config.enable_restoration_filtering > 0)
 #endif
     EB_MALLOC_ALIGNED(object_ptr->rst_tmpbuf, RESTORATION_TMPBUF_SIZE);
 

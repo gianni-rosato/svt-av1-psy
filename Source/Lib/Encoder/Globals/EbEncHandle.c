@@ -529,18 +529,31 @@ EbErrorType load_default_buffer_configuration_settings(
     //Future frames window in Scene Change Detection (SCD) / TemporalFiltering
 #if TUNE_UPDATE_SCD_DELAY
     scs_ptr->scd_delay = 0;
+
+    // Update the scd_delay based on the the number of future frames @ ISLICE
+    // This case is needed for non-delayed Intra (intra_period_length == 0)
+    uint32_t scd_delay_islice  = 0;
+    if (scs_ptr->static_config.intra_period_length == 0)
+        if (scs_ptr->static_config.tf_params_per_type[0].enabled)
+            scd_delay_islice =
+                MIN(scs_ptr->static_config.tf_params_per_type[0].num_future_pics + (scs_ptr->static_config.tf_params_per_type[0].noise_adjust_future_pics ? 3 : 0), // number of future picture(s) used for ISLICE + max picture(s) after noise-based adjustement (=3)
+                    scs_ptr->static_config.tf_params_per_type[0].max_num_future_pics);
+
+
     // Update the scd_delay based on the the number of future frames @ BASE
-    if (scs_ptr->static_config.tf_params_per_type[1].enabled) {
-        scs_ptr->scd_delay =
+    uint32_t scd_delay_base  = 0;
+    if (scs_ptr->static_config.tf_params_per_type[1].enabled)
+        scd_delay_base =
             MIN(scs_ptr->static_config.tf_params_per_type[1].num_future_pics + (scs_ptr->static_config.tf_params_per_type[1].noise_adjust_future_pics ? 3 : 0), // number of future picture(s) used for BASE + max picture(s) after noise-based adjustement (=3)
                 scs_ptr->static_config.tf_params_per_type[1].max_num_future_pics);
-    }
+
+    scs_ptr->scd_delay = MAX(scd_delay_islice,scd_delay_base);
+
     // Update the scd_delay based on SCD, 1first pass
     // Delay needed for SCD , 1first pass of (2pass and 1pass VBR)
     if (scs_ptr->static_config.scene_change_detection || use_output_stat(scs_ptr) || scs_ptr->lap_enabled )
         scs_ptr->scd_delay = MAX(scs_ptr->scd_delay, 2);
 
-    scs_ptr->scd_delay = MIN(scs_ptr->scd_delay, SCD_LAD);
 #else
     scs_ptr->scd_delay =
         scs_ptr->static_config.tf_level || scs_ptr->static_config.scene_change_detection ? SCD_LAD : 0;
@@ -1587,6 +1600,9 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
 #endif
 #if CLN_FA
         input_data.enc_mode = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.enc_mode;
+#endif
+#if CLN_REST
+        input_data.static_config = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config;
 #endif
         EB_NEW(
             enc_handle_ptr->picture_control_set_pool_ptr_array[instance_index],
