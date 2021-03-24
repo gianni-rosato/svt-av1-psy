@@ -81,16 +81,26 @@ typedef struct EbReferenceObjectDescInitData {
 typedef struct EbPaReferenceObject {
     EbDctor              dctor;
     EbPictureBufferDesc *input_padded_picture_ptr;
+#if OPT_ONE_BUFFER_DOWNSAMPLED
+    EbPictureBufferDesc *quarter_downsampled_picture_ptr;
+    EbPictureBufferDesc *sixteenth_downsampled_picture_ptr;
+#else
     EbPictureBufferDesc *quarter_decimated_picture_ptr;
     EbPictureBufferDesc *sixteenth_decimated_picture_ptr;
     EbPictureBufferDesc *quarter_filtered_picture_ptr;
     EbPictureBufferDesc *sixteenth_filtered_picture_ptr;
+#endif
     // downscaled reference pointers
     EbPictureBufferDesc *downscaled_input_padded_picture_ptr[NUM_SCALES];
+#if OPT_ONE_BUFFER_DOWNSAMPLED
+    EbPictureBufferDesc *downscaled_quarter_downsampled_picture_ptr[NUM_SCALES];
+    EbPictureBufferDesc *downscaled_sixteenth_downsampled_picture_ptr[NUM_SCALES];
+#else
     EbPictureBufferDesc *downscaled_quarter_decimated_picture_ptr[NUM_SCALES];
     EbPictureBufferDesc *downscaled_sixteenth_decimated_picture_ptr[NUM_SCALES];
     EbPictureBufferDesc *downscaled_quarter_filtered_picture_ptr[NUM_SCALES];
     EbPictureBufferDesc *downscaled_sixteenth_filtered_picture_ptr[NUM_SCALES];
+#endif
 
     uint64_t picture_number;
     uint8_t  dummy_obj;

@@ -2211,6 +2211,10 @@ void *motion_estimation_kernel(void *input_ptr) {
                 pa_ref_obj_ = (EbPaReferenceObject *)pcs_ptr->pa_reference_picture_wrapper_ptr->object_ptr;
 #endif
                 // Set 1/4 and 1/16 ME input buffer(s); filtered or decimated
+#if OPT_ONE_BUFFER_DOWNSAMPLED
+                quarter_picture_ptr = (EbPictureBufferDesc *)pa_ref_obj_->quarter_downsampled_picture_ptr;
+                sixteenth_picture_ptr = (EbPictureBufferDesc *)pa_ref_obj_->sixteenth_downsampled_picture_ptr;
+#else
                 quarter_picture_ptr =
                     (scs_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED)
                     ? (EbPictureBufferDesc *)pa_ref_obj_->quarter_filtered_picture_ptr
@@ -2220,6 +2224,7 @@ void *motion_estimation_kernel(void *input_ptr) {
                     (scs_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED)
                     ? (EbPictureBufferDesc *)pa_ref_obj_->sixteenth_filtered_picture_ptr
                     : (EbPictureBufferDesc *)pa_ref_obj_->sixteenth_decimated_picture_ptr;
+#endif
                 input_padded_picture_ptr = (EbPictureBufferDesc *)pa_ref_obj_->input_padded_picture_ptr;
             }
 #if FTR_TPL_TR
@@ -2393,6 +2398,12 @@ void *motion_estimation_kernel(void *input_ptr) {
                                     (EbPaReferenceObject *)pcs_ptr->ref_pa_pic_ptr_array[i][j]->object_ptr;
                                 context_ptr->me_context_ptr->me_ds_ref_array[i][j].picture_ptr =
                                     reference_object->input_padded_picture_ptr;
+#if OPT_ONE_BUFFER_DOWNSAMPLED
+                                context_ptr->me_context_ptr->me_ds_ref_array[i][j].quarter_picture_ptr =
+                                    reference_object->quarter_downsampled_picture_ptr;
+                                context_ptr->me_context_ptr->me_ds_ref_array[i][j].sixteenth_picture_ptr =
+                                    reference_object->sixteenth_downsampled_picture_ptr;
+#else
                                 if (scs_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED) {
                                     context_ptr->me_context_ptr->me_ds_ref_array[i][j].quarter_picture_ptr =
                                         reference_object->quarter_filtered_picture_ptr;
@@ -2404,6 +2415,7 @@ void *motion_estimation_kernel(void *input_ptr) {
                                     context_ptr->me_context_ptr->me_ds_ref_array[i][j].sixteenth_picture_ptr =
                                         reference_object->sixteenth_decimated_picture_ptr;
                                 }
+#endif
                                 context_ptr->me_context_ptr->me_ds_ref_array[i][j].picture_number = reference_object->picture_number;
                             }
                         }
@@ -2491,8 +2503,12 @@ void *motion_estimation_kernel(void *input_ptr) {
                 compute_decimated_zz_sad(
                     context_ptr,
                     pcs_ptr,
+#if OPT_ONE_BUFFER_DOWNSAMPLED
+                    (EbPictureBufferDesc *)pa_ref_obj_->sixteenth_downsampled_picture_ptr,
+#else
                     (EbPictureBufferDesc *)pa_ref_obj_
                         ->sixteenth_decimated_picture_ptr, // Hsan: always use decimated for ZZ SAD derivation until studying the trade offs and regenerating the activity threshold
+#endif
                     x_sb_start_index,
                     x_sb_end_index,
                     y_sb_start_index,

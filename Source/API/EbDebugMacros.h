@@ -339,7 +339,11 @@ extern "C" {
 #define OPT_INLINE_FILTER_FUNCS               1 // Make funcs inline to improve efficiency
 #define CLN_OLD_RC                            1 // Clean up old useless rate control code
 #define FIX_SCD_DELAY                         1 // Fix the run2run issue caused by scd_delay
-#define GET_NZ_MAP_CONTEXTS_AVX2 1 // Implementation of avx2 kernel get_nz_map_contexts_avx2()
+#define GET_NZ_MAP_CONTEXTS_AVX2              1 // Implementation of avx2 kernel get_nz_map_contexts_avx2()
+#define FIX_RDOQ_LVL                          1 // Fix inter/intra mix-up for fast rdoq features (not currently used)
+#define OPT_BYPASS_ME_CAND                    1 // Remove ME candidate array construction; copy directly to final buffers
+#define CLN_ME_HME_PATH                       1 // Remove unnecessary operations in ME/HME; clean up functions
+#define OPT_ONE_BUFFER_DOWNSAMPLED            1 // Use one buffer for the decimated/filter downsampled picture, since only one downsampling method should be used
 // ============= END SVT_04 =============
 
 //FOR DEBUGGING - Do not remove

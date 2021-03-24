@@ -1159,12 +1159,19 @@ static EbErrorType allocate_downscaled_reference_pics(
  */
 static EbErrorType allocate_downscaled_source_reference_pics(
     EbPictureBufferDesc **input_padded_picture_ptr,
+#if OPT_ONE_BUFFER_DOWNSAMPLED
+    EbPictureBufferDesc **quarter_downsampled_picture_ptr,
+    EbPictureBufferDesc **sixteenth_downsampled_picture_ptr,
+    EbPictureBufferDesc *picture_ptr_for_reference,
+    superres_params_type spr_params) {
+#else
     EbPictureBufferDesc **quarter_decimated_picture_ptr,
     EbPictureBufferDesc **quarter_filtered_picture_ptr,
     EbPictureBufferDesc **sixteenth_decimated_picture_ptr,
     EbPictureBufferDesc **sixteenth_filtered_picture_ptr,
     EbPictureBufferDesc *picture_ptr_for_reference, superres_params_type spr_params,
     uint8_t down_sampling_method_me_search) {
+#endif
     EbPictureBufferDescInitData initData;
 
     initData.buffer_enable_mask = PICTURE_BUFFER_DESC_LUMA_MASK;
@@ -1180,6 +1187,33 @@ static EbErrorType allocate_downscaled_source_reference_pics(
 
     EB_NEW(*input_padded_picture_ptr, svt_picture_buffer_desc_ctor, (EbPtr)&initData);
 
+#if OPT_ONE_BUFFER_DOWNSAMPLED
+    initData.buffer_enable_mask = PICTURE_BUFFER_DESC_LUMA_MASK;
+    initData.max_width = spr_params.encoding_width >> 1;
+    initData.max_height = spr_params.encoding_height >> 1;
+    initData.bit_depth = picture_ptr_for_reference->bit_depth;
+    initData.color_format = picture_ptr_for_reference->color_format;
+    initData.split_mode = EB_TRUE;
+    initData.left_padding = picture_ptr_for_reference->origin_x >> 1;
+    initData.right_padding = picture_ptr_for_reference->origin_x >> 1;
+    initData.top_padding = picture_ptr_for_reference->origin_y >> 1;
+    initData.bot_padding = picture_ptr_for_reference->origin_y >> 1;
+
+    EB_NEW(*quarter_downsampled_picture_ptr, svt_picture_buffer_desc_ctor, (EbPtr)&initData);
+
+    initData.buffer_enable_mask = PICTURE_BUFFER_DESC_LUMA_MASK;
+    initData.max_width = spr_params.encoding_width >> 2;
+    initData.max_height = spr_params.encoding_height >> 2;
+    initData.bit_depth = picture_ptr_for_reference->bit_depth;
+    initData.color_format = picture_ptr_for_reference->color_format;
+    initData.split_mode = EB_TRUE;
+    initData.left_padding = picture_ptr_for_reference->origin_x >> 2;
+    initData.right_padding = picture_ptr_for_reference->origin_x >> 2;
+    initData.top_padding = picture_ptr_for_reference->origin_y >> 2;
+    initData.bot_padding = picture_ptr_for_reference->origin_y >> 2;
+
+    EB_NEW(*sixteenth_downsampled_picture_ptr, svt_picture_buffer_desc_ctor, (EbPtr)&initData);
+#else
     initData.buffer_enable_mask = PICTURE_BUFFER_DESC_LUMA_MASK;
     initData.max_width          = spr_params.encoding_width >> 1;
     initData.max_height         = spr_params.encoding_height >> 1;
@@ -1233,7 +1267,7 @@ static EbErrorType allocate_downscaled_source_reference_pics(
 
         EB_NEW(*sixteenth_filtered_picture_ptr, svt_picture_buffer_desc_ctor, (EbPtr)&initData);
     }
-
+#endif
     return EB_ErrorNone;
 }
 
@@ -1278,6 +1312,14 @@ void scale_source_references(SequenceControlSet *scs_ptr, PictureParentControlSe
                                                        scs_ptr->static_config.superres_mode};
 
                     // Allocate downsampled reference picture buffer descriptors
+#if OPT_ONE_BUFFER_DOWNSAMPLED
+                    allocate_downscaled_source_reference_pics(
+                        &reference_object->downscaled_input_padded_picture_ptr[denom_idx],
+                        &reference_object->downscaled_quarter_downsampled_picture_ptr[denom_idx],
+                        &reference_object->downscaled_sixteenth_downsampled_picture_ptr[denom_idx],
+                        ref_pic_ptr,
+                        spr_params);
+#else
                     allocate_downscaled_source_reference_pics(
                         &reference_object->downscaled_input_padded_picture_ptr[denom_idx],
                         &reference_object->downscaled_quarter_decimated_picture_ptr[denom_idx],
@@ -1287,7 +1329,7 @@ void scale_source_references(SequenceControlSet *scs_ptr, PictureParentControlSe
                         ref_pic_ptr,
                         spr_params,
                         scs_ptr->down_sampling_method_me_search);
-
+#endif
                     EbPictureBufferDesc *down_ref_pic_ptr =
                         reference_object->downscaled_input_padded_picture_ptr[denom_idx];
 
@@ -1308,6 +1350,23 @@ void scale_source_references(SequenceControlSet *scs_ptr, PictureParentControlSe
                                      down_ref_pic_ptr->origin_x,
                                      down_ref_pic_ptr->origin_y);
 
+#if OPT_ONE_BUFFER_DOWNSAMPLED
+                    // 1/4 & 1/16 input picture downsampling
+                    if (scs_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED) {
+                        downsample_filtering_input_picture(
+                            pcs_ptr,
+                            down_ref_pic_ptr,
+                            reference_object->downscaled_quarter_downsampled_picture_ptr[denom_idx],
+                            reference_object->downscaled_sixteenth_downsampled_picture_ptr[denom_idx]);
+                    }
+                    else {
+                        downsample_decimation_input_picture(
+                            pcs_ptr,
+                            down_ref_pic_ptr,
+                            reference_object->downscaled_quarter_downsampled_picture_ptr[denom_idx],
+                            reference_object->downscaled_sixteenth_downsampled_picture_ptr[denom_idx]);
+                    }
+#else
                     downsample_decimation_input_picture(
                         pcs_ptr,
                         down_ref_pic_ptr,
@@ -1322,6 +1381,7 @@ void scale_source_references(SequenceControlSet *scs_ptr, PictureParentControlSe
                             reference_object->downscaled_quarter_filtered_picture_ptr[denom_idx],
                             reference_object->downscaled_sixteenth_filtered_picture_ptr[denom_idx]);
                     }
+#endif
                 }
             }
         }
@@ -1344,6 +1404,14 @@ static void scale_input_references(PictureParentControlSet *pcs_ptr,
 
     if (src_object->downscaled_input_padded_picture_ptr[denom_idx] == NULL) {
         // Allocate downsampled reference picture buffer descriptors
+#if OPT_ONE_BUFFER_DOWNSAMPLED
+        allocate_downscaled_source_reference_pics(
+            &src_object->downscaled_input_padded_picture_ptr[denom_idx],
+            &src_object->downscaled_quarter_downsampled_picture_ptr[denom_idx],
+            &src_object->downscaled_sixteenth_downsampled_picture_ptr[denom_idx],
+            padded_pic_ptr,
+            superres_params);
+#else
         allocate_downscaled_source_reference_pics(
             &src_object->downscaled_input_padded_picture_ptr[denom_idx],
             &src_object->downscaled_quarter_decimated_picture_ptr[denom_idx],
@@ -1353,6 +1421,7 @@ static void scale_input_references(PictureParentControlSet *pcs_ptr,
             padded_pic_ptr,
             superres_params,
             pcs_ptr->scs_ptr->down_sampling_method_me_search);
+#endif
     }
 
     padded_pic_ptr = src_object->downscaled_input_padded_picture_ptr[denom_idx];
@@ -1372,6 +1441,23 @@ static void scale_input_references(PictureParentControlSet *pcs_ptr,
                   input_picture_ptr->buffer_y + row * input_picture_ptr->stride_y,
                   sizeof(uint8_t) * input_picture_ptr->stride_y);
 
+#if OPT_ONE_BUFFER_DOWNSAMPLED
+    // 1/4 & 1/16 downsampled input picture
+    if (pcs_ptr->scs_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED) {
+        downsample_filtering_input_picture(
+            pcs_ptr,
+            padded_pic_ptr,
+            src_object->downscaled_quarter_downsampled_picture_ptr[denom_idx],
+            src_object->downscaled_sixteenth_downsampled_picture_ptr[denom_idx]);
+    }
+    else {
+        downsample_decimation_input_picture(
+            pcs_ptr,
+            padded_pic_ptr,
+            src_object->downscaled_quarter_downsampled_picture_ptr[denom_idx],
+            src_object->downscaled_sixteenth_downsampled_picture_ptr[denom_idx]);
+    }
+#else
     // 1/4 & 1/16 input picture decimation
     downsample_decimation_input_picture(
         pcs_ptr,
@@ -1386,6 +1472,7 @@ static void scale_input_references(PictureParentControlSet *pcs_ptr,
             padded_pic_ptr,
             src_object->downscaled_quarter_filtered_picture_ptr[denom_idx],
             src_object->downscaled_sixteenth_filtered_picture_ptr[denom_idx]);
+#endif
 }
 
 /*
@@ -1542,6 +1629,10 @@ void use_scaled_source_refs_if_needed(PictureParentControlSet *pcs_ptr,
         assert(ref_obj->downscaled_input_padded_picture_ptr[denom_idx] != NULL);
 
         *ref_pic_ptr           = ref_obj->downscaled_input_padded_picture_ptr[denom_idx];
+#if OPT_ONE_BUFFER_DOWNSAMPLED
+        *quarter_ref_pic_ptr = ref_obj->downscaled_quarter_downsampled_picture_ptr[denom_idx];
+        *sixteenth_ref_pic_ptr = ref_obj->downscaled_sixteenth_downsampled_picture_ptr[denom_idx];
+#else
         *quarter_ref_pic_ptr   = (pcs_ptr->scs_ptr->down_sampling_method_me_search ==
                                 ME_FILTERED_DOWNSAMPLED)
               ? ref_obj->downscaled_quarter_filtered_picture_ptr[denom_idx]
@@ -1550,6 +1641,7 @@ void use_scaled_source_refs_if_needed(PictureParentControlSet *pcs_ptr,
                                   ME_FILTERED_DOWNSAMPLED)
             ? ref_obj->downscaled_sixteenth_filtered_picture_ptr[denom_idx]
             : ref_obj->downscaled_sixteenth_decimated_picture_ptr[denom_idx];
+#endif
     }
     assert((*ref_pic_ptr)->width == input_picture_ptr->width);
 }

@@ -32,15 +32,22 @@ void global_motion_estimation(PictureParentControlSet *pcs_ptr,
     EbPictureBufferDesc *quarter_picture_ptr;
     EbPictureBufferDesc *sixteenth_ref_pic_ptr;
     EbPictureBufferDesc *sixteenth_picture_ptr;
+#if !OPT_ONE_BUFFER_DOWNSAMPLED
     SequenceControlSet * scs_ptr = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
+#endif
     pa_reference_object          = (EbPaReferenceObject *)
                               pcs_ptr->pa_reference_picture_wrapper_ptr->object_ptr;
+#if OPT_ONE_BUFFER_DOWNSAMPLED
+    quarter_picture_ptr = (EbPictureBufferDesc *)pa_reference_object->quarter_downsampled_picture_ptr;
+    sixteenth_picture_ptr = (EbPictureBufferDesc *)pa_reference_object->sixteenth_downsampled_picture_ptr;
+#else
     quarter_picture_ptr   = (scs_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED)
           ? (EbPictureBufferDesc *)pa_reference_object->quarter_filtered_picture_ptr
           : (EbPictureBufferDesc *)pa_reference_object->quarter_decimated_picture_ptr;
     sixteenth_picture_ptr = (scs_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED)
         ? (EbPictureBufferDesc *)pa_reference_object->sixteenth_filtered_picture_ptr
         : (EbPictureBufferDesc *)pa_reference_object->sixteenth_decimated_picture_ptr;
+#endif
     uint32_t num_of_list_to_search = (pcs_ptr->slice_type == P_SLICE) ? (uint32_t)REF_LIST_0
                                                                       : (uint32_t)REF_LIST_1;
     // Initilize global motion to be OFF for all references frames.
@@ -130,18 +137,26 @@ void global_motion_estimation(PictureParentControlSet *pcs_ptr,
                 // Set the source and the reference picture to be used by the global motion search
                 // based on the input search mode
                 if (pcs_ptr->gm_level == GM_DOWN16) {
+#if OPT_ONE_BUFFER_DOWNSAMPLED
+                    sixteenth_ref_pic_ptr = (EbPictureBufferDesc *)reference_object->sixteenth_downsampled_picture_ptr;
+#else
                     sixteenth_ref_pic_ptr = (scs_ptr->down_sampling_method_me_search ==
                                              ME_FILTERED_DOWNSAMPLED)
                         ? (EbPictureBufferDesc *)reference_object->sixteenth_filtered_picture_ptr
                         : (EbPictureBufferDesc *)reference_object->sixteenth_decimated_picture_ptr;
+#endif
                     ref_picture_ptr       = sixteenth_ref_pic_ptr;
                     input_picture_ptr     = sixteenth_picture_ptr;
 
                 } else if (pcs_ptr->gm_level == GM_DOWN) {
+#if OPT_ONE_BUFFER_DOWNSAMPLED
+                    quarter_ref_pic_ptr = (EbPictureBufferDesc *)reference_object->quarter_downsampled_picture_ptr;
+#else
                     quarter_ref_pic_ptr = (scs_ptr->down_sampling_method_me_search ==
                                            ME_FILTERED_DOWNSAMPLED)
                         ? (EbPictureBufferDesc *)reference_object->quarter_filtered_picture_ptr
                         : (EbPictureBufferDesc *)reference_object->quarter_decimated_picture_ptr;
+#endif
                     ref_picture_ptr     = quarter_ref_pic_ptr;
                     input_picture_ptr   = quarter_picture_ptr;
                 } else {

@@ -276,6 +276,7 @@ typedef struct IntraReferenceSamplesOpenLoop {
     EbBool  left_ready_flag_y;
 } IntraReferenceSamplesOpenLoop;
 
+#if !OPT_BYPASS_ME_CAND
 typedef struct MePredUnit {
     uint8_t         ref_index[MAX_NUM_OF_REF_PIC_LIST];
     uint8_t         ref0_list;
@@ -287,6 +288,7 @@ typedef struct MePredUnit {
 typedef struct MotionEstimationTierZero {
     MePredUnit pu[SQUARE_PU_COUNT];
 } MotionEstimationTierZero;
+#endif
 typedef struct MeHmeRefPruneCtrls {
     EbBool enable_me_hme_ref_pruning;
     uint16_t
@@ -349,7 +351,11 @@ typedef struct MeContext {
     EbDctor dctor;
     // Search region stride
     uint32_t                  interpolated_full_stride[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX];
+#if OPT_BYPASS_ME_CAND
+    uint32_t me_distortion[SQUARE_PU_COUNT];
+#else
     MotionEstimationTierZero *me_candidate;
+#endif
     // Intermediate SB-sized buffer to retain the input samples
     uint8_t * sb_buffer;
     uint8_t * sb_buffer_ptr;

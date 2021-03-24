@@ -15,19 +15,22 @@
 #include "EbMotionEstimationContext.h"
 #include "EbUtility.h"
 
+#if !OPT_BYPASS_ME_CAND
 void motion_estimation_pred_unit_ctor(MePredUnit *pu) {
     pu->distortion = 0xFFFFFFFFull;
 
     pu->prediction_direction = UNI_PRED_LIST_0;
     return;
 }
-
+#endif
 static void me_context_dctor(EbPtr p) {
     MeContext *obj = (MeContext *)p;
     EB_FREE_ALIGNED_ARRAY(obj->quarter_sb_buffer);
 
     EB_FREE_ARRAY(obj->mvd_bits_array);
+#if !OPT_BYPASS_ME_CAND
     EB_FREE_ARRAY(obj->me_candidate);
+#endif
     EB_FREE_ARRAY(obj->p_eight_pos_sad16x16);
     EB_FREE_ALIGNED_ARRAY(obj->sixteenth_sb_buffer);
     EB_FREE_ALIGNED_ARRAY(obj->sb_buffer);
@@ -36,9 +39,10 @@ static void me_context_dctor(EbPtr p) {
 #endif
 }
 EbErrorType me_context_ctor(MeContext *object_ptr) {
+#if !OPT_BYPASS_ME_CAND
     uint32_t pu_index;
     uint32_t me_candidate_index;
-
+#endif
     object_ptr->dctor = me_context_dctor;
 #if FTR_TPL_TR
     EB_MALLOC(object_ptr->me_pcs, sizeof(MePcs));
@@ -56,6 +60,7 @@ EbErrorType me_context_ctor(MeContext *object_ptr) {
                             (BLOCK_SIZE_64 >> 2) * object_ptr->sixteenth_sb_buffer_stride);
     EB_MEMSET(
         object_ptr->sb_buffer, 0, sizeof(uint8_t) * BLOCK_SIZE_64 * object_ptr->sb_buffer_stride);
+#if !OPT_BYPASS_ME_CAND
     EB_MALLOC_ARRAY(object_ptr->me_candidate, MAX_PA_ME_CAND);
     for (pu_index = 0; pu_index < SQUARE_PU_COUNT; pu_index++) {
         for (me_candidate_index = 0; me_candidate_index < MAX_PA_ME_CAND; me_candidate_index++) {
@@ -63,6 +68,7 @@ EbErrorType me_context_ctor(MeContext *object_ptr) {
                 &(object_ptr->me_candidate[me_candidate_index]).pu[pu_index]);
         }
     }
+#endif
     EB_MALLOC_ARRAY(object_ptr->p_eight_pos_sad16x16,
                     8 * 16); //16= 16 16x16 blocks in a SB.       8=8search points
 

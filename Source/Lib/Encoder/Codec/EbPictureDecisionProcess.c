@@ -4478,6 +4478,23 @@ void perform_simple_picture_analysis_for_overlay(PictureParentControlSet     *pc
         (EbPictureBufferDesc*)pa_ref_obj_->quarter_decimated_picture_ptr,
         (EbPictureBufferDesc*)pa_ref_obj_->sixteenth_decimated_picture_ptr);
 #endif
+#if OPT_ONE_BUFFER_DOWNSAMPLED
+    // 1/4 & 1/16 input picture downsampling through filtering
+    if (scs_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED) {
+        downsample_filtering_input_picture(
+            pcs_ptr,
+            input_padded_picture_ptr,
+            (EbPictureBufferDesc*)pa_ref_obj_->quarter_downsampled_picture_ptr,
+            (EbPictureBufferDesc*)pa_ref_obj_->sixteenth_downsampled_picture_ptr);
+    }
+    else {
+        downsample_decimation_input_picture(
+            pcs_ptr,
+            input_padded_picture_ptr,
+            (EbPictureBufferDesc*)pa_ref_obj_->quarter_downsampled_picture_ptr,
+            (EbPictureBufferDesc*)pa_ref_obj_->sixteenth_downsampled_picture_ptr);
+    }
+#else
     // 1/4 & 1/16 input picture downsampling through filtering
     if (scs_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED) {
         downsample_filtering_input_picture(
@@ -4496,6 +4513,7 @@ void perform_simple_picture_analysis_for_overlay(PictureParentControlSet     *pc
             (EbPictureBufferDesc*)pa_ref_obj_->sixteenth_decimated_picture_ptr);
     }
 #endif
+#endif
     // Gathering statistics of input picture, including Variance Calculation, Histogram Bins
     gathering_picture_statistics(
         scs_ptr,
@@ -4503,8 +4521,12 @@ void perform_simple_picture_analysis_for_overlay(PictureParentControlSet     *pc
         pcs_ptr->chroma_downsampled_picture_ptr, //420 input_picture_ptr
         input_padded_picture_ptr,
 #if OPT3_DECIMATION
+#if OPT_ONE_BUFFER_DOWNSAMPLED
+        pa_ref_obj_->sixteenth_downsampled_picture_ptr,
+#else
         (scs_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED) ? (EbPictureBufferDesc *)pa_ref_obj_->sixteenth_filtered_picture_ptr :  (EbPictureBufferDesc *)pa_ref_obj_
                         ->sixteenth_decimated_picture_ptr,
+#endif
 #else
         pa_ref_obj_->sixteenth_decimated_picture_ptr, // Hsan: always use decimated until studying the trade offs
 #endif

@@ -4011,9 +4011,13 @@ void *picture_analysis_kernel(void *input_ptr) {
                 // When moving the TPL logic from iRC to RC, should use input picture directly and remove the codes here
                 pa_ref_obj_ = (EbPaReferenceObject *)pcs_ptr->pa_reference_picture_wrapper_ptr->object_ptr;
                 pa_ref_obj_->input_padded_picture_ptr = input_picture_ptr;
+#if OPT_ONE_BUFFER_DOWNSAMPLED
+                pa_ref_obj_->quarter_downsampled_picture_ptr = ds_obj->quarter_picture_ptr;
+                pa_ref_obj_->sixteenth_downsampled_picture_ptr = ds_obj->sixteenth_picture_ptr;
+#else
                 pa_ref_obj_->quarter_decimated_picture_ptr = pa_ref_obj_->quarter_filtered_picture_ptr = ds_obj->quarter_picture_ptr;
                 pa_ref_obj_->sixteenth_decimated_picture_ptr = pa_ref_obj_->sixteenth_filtered_picture_ptr = ds_obj->sixteenth_picture_ptr;
-
+#endif
             } else {
                 if (scs_ptr->in_loop_me == 0){
                   //not passing through the DS pool, so 1/4 and 1/16 are not used
@@ -4049,6 +4053,25 @@ void *picture_analysis_kernel(void *input_ptr) {
 #endif
 
                 // 1/4 & 1/16 input picture downsampling through filtering
+#if OPT_ONE_BUFFER_DOWNSAMPLED
+                if (scs_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED) {
+                    downsample_filtering_input_picture(
+                        pcs_ptr,
+                        input_padded_picture_ptr,
+                        (EbPictureBufferDesc *)pa_ref_obj_->quarter_downsampled_picture_ptr,
+                        (EbPictureBufferDesc *)pa_ref_obj_->sixteenth_downsampled_picture_ptr);
+                }
+                else {
+                    downsample_decimation_input_picture(
+                        pcs_ptr,
+                        input_padded_picture_ptr,
+                        (EbPictureBufferDesc *)pa_ref_obj_->quarter_downsampled_picture_ptr,
+                        (EbPictureBufferDesc *)pa_ref_obj_->sixteenth_downsampled_picture_ptr);
+                }
+
+                pcs_ptr->ds_pics.quarter_picture_ptr = pa_ref_obj_->quarter_downsampled_picture_ptr;
+                pcs_ptr->ds_pics.sixteenth_picture_ptr = pa_ref_obj_->sixteenth_downsampled_picture_ptr;
+#else
                 if (scs_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED) {
                     downsample_filtering_input_picture(
                             pcs_ptr,
@@ -4074,6 +4097,7 @@ void *picture_analysis_kernel(void *input_ptr) {
                     pcs_ptr->ds_pics.quarter_picture_ptr = pa_ref_obj_->quarter_decimated_picture_ptr;
                     pcs_ptr->ds_pics.sixteenth_picture_ptr = pa_ref_obj_->sixteenth_decimated_picture_ptr;
                 }
+#endif
                 // Gathering statistics of input picture, including Variance Calculation, Histogram Bins
                 gathering_picture_statistics(
                         scs_ptr,
@@ -4081,8 +4105,12 @@ void *picture_analysis_kernel(void *input_ptr) {
                         pcs_ptr->chroma_downsampled_picture_ptr, //420 input_picture_ptr
                         input_padded_picture_ptr,
 #if OPT3_DECIMATION
+#if OPT_ONE_BUFFER_DOWNSAMPLED
+                        (EbPictureBufferDesc *)pa_ref_obj_->sixteenth_downsampled_picture_ptr,
+#else
                         (scs_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED) ? (EbPictureBufferDesc *)pa_ref_obj_->sixteenth_filtered_picture_ptr :  (EbPictureBufferDesc *)pa_ref_obj_
                         ->sixteenth_decimated_picture_ptr,
+#endif
 #else
                         (EbPictureBufferDesc *)pa_ref_obj_
                         ->sixteenth_decimated_picture_ptr, // Hsan: always use decimated until studying the trade offs

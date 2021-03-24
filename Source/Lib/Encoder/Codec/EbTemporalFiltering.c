@@ -362,9 +362,15 @@ static void create_me_context_and_picture_control(
     EbPaReferenceObject *src_object = (EbPaReferenceObject *)picture_control_set_ptr_central
                                           ->pa_reference_picture_wrapper_ptr->object_ptr;
     EbPictureBufferDesc *padded_pic_ptr = src_object->input_padded_picture_ptr;
+#if !OPT_ONE_BUFFER_DOWNSAMPLED
     SequenceControlSet * scs_ptr        = (SequenceControlSet *)
                                       picture_control_set_ptr_central->scs_wrapper_ptr->object_ptr;
+#endif
     // Set 1/4 and 1/16 ME reference buffer(s); filtered or decimated
+#if OPT_ONE_BUFFER_DOWNSAMPLED
+    EbPictureBufferDesc *quarter_pic_ptr = src_object->quarter_downsampled_picture_ptr;
+    EbPictureBufferDesc *sixteenth_pic_ptr = src_object->sixteenth_downsampled_picture_ptr;
+#else
     EbPictureBufferDesc *quarter_pic_ptr = (scs_ptr->down_sampling_method_me_search ==
                                             ME_FILTERED_DOWNSAMPLED)
         ? src_object->quarter_filtered_picture_ptr
@@ -374,6 +380,7 @@ static void create_me_context_and_picture_control(
                                               ME_FILTERED_DOWNSAMPLED)
         ? src_object->sixteenth_filtered_picture_ptr
         : src_object->sixteenth_decimated_picture_ptr;
+#endif
     // Parts from MotionEstimationKernel()
     uint32_t sb_origin_x = (uint32_t)(blk_col * BW);
     uint32_t sb_origin_y = (uint32_t)(blk_row * BH);
@@ -2736,6 +2743,12 @@ static EbErrorType produce_temporally_filtered_pic(
                             (EbPaReferenceObject *)context_ptr->alt_ref_reference_ptr;
                         context_ptr->me_ds_ref_array[0][0].picture_ptr =
                             reference_object->input_padded_picture_ptr;
+#if OPT_ONE_BUFFER_DOWNSAMPLED
+                        context_ptr->me_ds_ref_array[0][0].sixteenth_picture_ptr =
+                            reference_object->sixteenth_downsampled_picture_ptr;
+                        context_ptr->me_ds_ref_array[0][0].quarter_picture_ptr =
+                            reference_object->quarter_downsampled_picture_ptr;
+#else
                         context_ptr->me_ds_ref_array[0][0].sixteenth_picture_ptr =
                             (scs_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED)
                             ? reference_object->sixteenth_filtered_picture_ptr
@@ -2744,6 +2757,7 @@ static EbErrorType produce_temporally_filtered_pic(
                             (scs_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED)
                             ? reference_object->quarter_filtered_picture_ptr
                             : reference_object->quarter_decimated_picture_ptr;
+#endif
                         context_ptr->me_ds_ref_array[0][0].picture_number =
                             reference_object->picture_number;
                     }
@@ -3193,7 +3207,21 @@ void pad_and_decimate_filtered_pic(PictureParentControlSet *picture_control_set_
                      padded_pic_ptr->origin_x,
                      padded_pic_ptr->origin_y);
 
-    // 1/4 & 1/16 input picture decimation
+    // 1/4 & 1/16 input picture downsampling
+#if OPT_ONE_BUFFER_DOWNSAMPLED
+    if (scs_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED) {
+        downsample_filtering_input_picture(picture_control_set_ptr_central,
+            padded_pic_ptr,
+            src_object->quarter_downsampled_picture_ptr,
+            src_object->sixteenth_downsampled_picture_ptr);
+    }
+    else {
+        downsample_decimation_input_picture(picture_control_set_ptr_central,
+            padded_pic_ptr,
+            src_object->quarter_downsampled_picture_ptr,
+            src_object->sixteenth_downsampled_picture_ptr);
+    }
+#else
     downsample_decimation_input_picture(picture_control_set_ptr_central,
                                         padded_pic_ptr,
                                         src_object->quarter_decimated_picture_ptr,
@@ -3205,6 +3233,7 @@ void pad_and_decimate_filtered_pic(PictureParentControlSet *picture_control_set_
                                            padded_pic_ptr,
                                            src_object->quarter_filtered_picture_ptr,
                                            src_object->sixteenth_filtered_picture_ptr);
+#endif
 }
 
 // save original enchanced_picture_ptr buffer in a separate buffer (to be replaced by the temporally filtered pic)
