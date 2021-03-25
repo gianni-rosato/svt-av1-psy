@@ -498,13 +498,30 @@ PredictionStructureConfigEntry six_level_hierarchical_pred_struct[] = {
     {
         0, // GOP Index 0 - Temporal Layer
         0, // GOP Index 0 - Decode Order
+#if TUNE_MRP_6L_2BASE
+#if TUNE_MRP_6L_ADD1
+        {32, 64, 48, 0}, // GOP Index 0 - Ref List 0
+#else
+        {32, 64, 0, 0}, // GOP Index 0 - Ref List 0
+#endif
+        {32, 0, 0, 0} // GOP Index 0 - Ref List 1
+#else
         {32, 64, 96, 0}, // GOP Index 0 - Ref List 0
         {32, 0, 0, 0} // GOP Index 0 - Ref List 1
+#endif
     },
     {
         5, // GOP Index 1 - Temporal Layer
         5, // GOP Index 1 - Decode Order
+#if TUNE_MRP_6L_2BASE
+#if TUNE_MRP_6L_ADD_TOP
+        {1, 17, 2, 0}, // GOP Index 1 - Ref List 0
+#else
+        {1, 17, 0, 0}, // GOP Index 1 - Ref List 0
+#endif
+#else
         {1, 17, 33, 0}, // GOP Index 1 - Ref List 0
+#endif
         {-1, -3, -7, 0} // GOP Index 1 - Ref List 1
     },
     {
@@ -516,19 +533,31 @@ PredictionStructureConfigEntry six_level_hierarchical_pred_struct[] = {
     {
         5, // GOP Index 3 - Temporal Layer
         6, // GOP Index 3 - Decode Order
+#if TUNE_MRP_6L_ADD_TOP
+        {1, 3, 2, 19}, // GOP Index 3 - Ref List 0
+#else
         {1, 3, 19, 0}, // GOP Index 3 - Ref List 0
+#endif
         {-1, -5, -13, 0} // GOP Index 3 - Ref List 1
     },
     {
         3, // GOP Index 4 - Temporal Layer
         3, // GOP Index 4 - Decode Order
+#if TUNE_MRP_6L_2BASE
+        {4, 8, 20, 0}, // GOP Index 4 - Ref List 0
+#else
         {4, 8, 20, 36}, // GOP Index 4 - Ref List 0
+#endif
         {-4, -12, -28, 0} // GOP Index 4 - Ref List 1
     },
     {
         5, // GOP Index 5 - Temporal Layer
         8, // GOP Index 5 - Decode Order
+#if TUNE_MRP_6L_ADD_TOP
+        {1, 5, 2, 21}, // GOP Index 5 - Ref List 0
+#else
         {1, 5, 21, 0}, // GOP Index 5 - Ref List 0
+#endif
         {-1, -3, -11, 0} // GOP Index 5 - Ref List 1
     },
     {
@@ -540,19 +569,35 @@ PredictionStructureConfigEntry six_level_hierarchical_pred_struct[] = {
     {
         5, // GOP Index 7 - Temporal Layer
         9, // GOP Index 7 - Decode Order
+#if TUNE_MRP_6L_ADD_TOP
+        {1, 3, 2, 7}, // GOP Index 7 - Ref List 0
+#else
         {1, 3, 7, 23}, // GOP Index 7 - Ref List 0
+#endif
         {-1, -9, -25, 0} // GOP Index 7 - Ref List 1
     },
     {
         2, // GOP Index 8 - Temporal Layer
         2, // GOP Index 8 - Decode Order
+#if TUNE_MRP_6L_2BASE
+        {8, 16, 24, 0}, // GOP Index 8 - Ref List 0
+#else
         {8, 16, 24, 40}, // GOP Index 8 - Ref List 0
+#endif
+#if TUNE_MRP_6L_ADD_L2
+        {-8, -24, 12, 0} // GOP Index 8 - Ref List 1
+#else
         {-8, -24, 0, 0} // GOP Index 8 - Ref List 1
+#endif
     },
     {
         5, // GOP Index 9 - Temporal Layer
         12, // GOP Index 9 - Decode Order
+#if TUNE_MRP_6L_ADD_TOP
+        {1, 9, 2, 25}, // GOP Index 9 - Ref List 0
+#else
         {1, 9, 25, 0}, // GOP Index 9 - Ref List 0
+#endif
         {-1, -3, -7, 0} // GOP Index 9 - Ref List 1
     },
     {
@@ -564,43 +609,83 @@ PredictionStructureConfigEntry six_level_hierarchical_pred_struct[] = {
     {
         5, // GOP Index 11 - Temporal Layer
         13, // GOP Index 11 - Decode Order
+#if TUNE_MRP_6L_ADD_TOP
+        {1, 3, 2, 11}, // GOP Index 11 - Ref List 0
+#else
         {1, 3, 11, 27}, // GOP Index 11 - Ref List 0
+#endif
         {-1, -5, -21, 0} // GOP Index 11 - Ref List 1
     },
     {
         3, // GOP Index 12 - Temporal Layer
         10, // GOP Index 12 - Decode Order
         {4, 8, 12, 28}, // GOP Index 12 - Ref List 0
+#if TUNE_MRP_6L_ADD_L3
+        {-4, -20, 5, 0} // GOP Index 12 - Ref List 1
+#else
         {-4, -20, 0, 0} // GOP Index 12 - Ref List 1
+#endif
     },
     {
         5, // GOP Index 13 - Temporal Layer
         15, // GOP Index 13 - Decode Order
+#if TUNE_MRP_6L_ADD_TOP
+        {1, 5, 2 ,13}, // GOP Index 13 - Ref List 0
+#else
         {1, 5, 13, 29}, // GOP Index 13 - Ref List 0
+#endif
         {-1, -3, -19, 0} // GOP Index 13 - Ref List 1
     },
     {
         4, // GOP Index 14 - Temporal Layer
         14, // GOP Index 14 - Decode Order
         {2, 4, 6, 14}, // GOP Index 14 - Ref List 0
+#if TUNE_MRP_6L_ADD_L4
+        {-2, -18, 3, 0} // GOP Index 14 - Ref List 1
+#else
         {-2, -18, 0, 0} // GOP Index 14 - Ref List 1
+#endif
     },
     {
         5, // GOP Index 15 - Temporal Layer
         16, // GOP Index 15 - Decode Order
+#if TUNE_MRP_6L_ADD_TOP
+#if TUNE_MRP_6L_ADD_L5
+        {1, 3, 2, 7}, // GOP Index 15 - Ref List 0
+#else
+        {1, 3, 2, 15}, // GOP Index 15 - Ref List 0
+#endif
+#else
         {1, 3, 7, 15}, // GOP Index 15 - Ref List 0
+#endif
+#if TUNE_MRP_6L_ADD_L5
+        {-1, -17, 15, 0} // GOP Index 15 - Ref List 1
+#else
         {-1, -17, 0, 0} // GOP Index 15 - Ref List 1
+#endif
     },
     {
         1, // GOP Index 16 - Temporal Layer
         1, // GOP Index 16 - Decode Order
+#if TUNE_MRP_6L_2BASE
+        {16, 32, 0, 0}, // GOP Index 16 - Ref List 0
+#else
         {16, 32, 48, 0}, // GOP Index 16 - Ref List 0
+#endif
+#if TUNE_MRP_6L_ADD_L1
+        {-16, 24, 20, 0} // GOP Index 16 - Ref List 1
+#else
         {-16, 0, 0, 0} // GOP Index 16 - Ref List 1
+#endif
     },
     {
         5, // GOP Index 17 - Temporal Layer
         20, // GOP Index 17 - Decode Order
+#if TUNE_MRP_6L_ADD_TOP
+        {1, 17, 2, 33}, // GOP Index 17 - Ref List 0
+#else
         {1, 17, 33, 0}, // GOP Index 17 - Ref List 0
+#endif
         {-1, -3, -7, 0} // GOP Index 17 - Ref List 1
     },
     {
@@ -612,7 +697,11 @@ PredictionStructureConfigEntry six_level_hierarchical_pred_struct[] = {
     {
         5, // GOP Index 19 - Temporal Layer
         21, // GOP Index 19 - Decode Order
+#if TUNE_MRP_6L_ADD_TOP
+        {1, 3, 2, 19}, // GOP Index 19 - Ref List 0
+#else
         {1, 3, 19, 35}, // GOP Index 19 - Ref List 0
+#endif
         {-1, -5, -13, 0} // GOP Index 19 - Ref List 1
     },
     {
@@ -624,7 +713,11 @@ PredictionStructureConfigEntry six_level_hierarchical_pred_struct[] = {
     {
         5, // GOP Index 21 - Temporal Layer
         23, // GOP Index 21 - Decode Order
+#if TUNE_MRP_6L_ADD_TOP
+        {1, 5, 2, 21}, // GOP Index 21 - Ref List 0
+#else
         {1, 5, 21, 37}, // GOP Index 21 - Ref List 0
+#endif
         {-1, -3, -11, 0} // GOP Index 21 - Ref List 1
     },
     {
@@ -636,19 +729,31 @@ PredictionStructureConfigEntry six_level_hierarchical_pred_struct[] = {
     {
         5, // GOP Index 23 - Temporal Layer
         24, // GOP Index 23 - Decode Order
+#if TUNE_MRP_6L_ADD_TOP
+        {1, 3, 2, 7}, // GOP Index 23 - Ref List 0
+#else
         {1, 3, 7, 23}, // GOP Index 23 - Ref List 0
+#endif
         {-1, -9, 0, 0} // GOP Index 23 - Ref List 1
     },
     {
         2, // GOP Index 24 - Temporal Layer
         17, // GOP Index 24 - Decode Order
         {8, 16, 24, 0}, // GOP Index 24 - Ref List 0
+#if TUNE_MRP_6L_ADD_L2
+        {-8, 10, 9, 0} // GOP Index 24 - Ref List 1
+#else
         {-8, 0, 0, 0} // GOP Index 24 - Ref List 1
+#endif
     },
     {
         5, // GOP Index 25 - Temporal Layer
         27, // GOP Index 25 - Decode Order
+#if TUNE_MRP_6L_ADD_TOP
+        {1, 9, 2, 25}, // GOP Index 25 - Ref List 0
+#else
         {1, 9, 25, 0}, // GOP Index 25 - Ref List 0
+#endif
         {-1, -3, -7, 0} // GOP Index 25 - Ref List 1
     },
     {
@@ -660,32 +765,56 @@ PredictionStructureConfigEntry six_level_hierarchical_pred_struct[] = {
     {
         5, // GOP Index 27 - Temporal Layer
         28, // GOP Index 27 - Decode Order
+#if TUNE_MRP_6L_ADD_TOP
+        {1, 3, 2, 11}, // GOP Index 27 - Ref List 0
+#else
         {1, 3, 11, 27}, // GOP Index 27 - Ref List 0
+#endif
         {-1, -5, 0, 0} // GOP Index 27 - Ref List 1
     },
     {
         3, // GOP Index 28 - Temporal Layer
         25, // GOP Index 28 - Decode Order
         {4, 8, 12, 28}, // GOP Index 28 - Ref List 0
+#if TUNE_MRP_6L_ADD_L3
+        {-4, 5, 0, 0} // GOP Index 28 - Ref List 1
+#else
         {-4, 0, 0, 0} // GOP Index 28 - Ref List 1
+#endif
     },
     {
         5, // GOP Index 29 - Temporal Layer
         30, // GOP Index 29 - Decode Order
+#if TUNE_MRP_6L_ADD_TOP
+        {1, 5, 2 ,13}, // GOP Index 29 - Ref List 0
+#else
         {1, 5, 13, 29}, // GOP Index 29 - Ref List 0
+#endif
         {-1, -3, 0, 0} // GOP Index 29 - Ref List 1
     },
     {
         4, // GOP Index 30 - Temporal Layer
         29, // GOP Index 30 - Decode Order
         {2, 4, 6, 14}, // GOP Index 30 - Ref List 0
+#if TUNE_MRP_6L_ADD_L4
+        {-2, 3, 0, 0} // GOP Index 30 - Ref List 1
+#else
         {-2, 0, 0, 0} // GOP Index 30 - Ref List 1
+#endif
     },
     {
         5, // GOP Index 31 - Temporal Layer
         31, // GOP Index 31 - Decode Order
+#if TUNE_MRP_6L_ADD_TOP
+        {1, 3, 2, 7}, // GOP Index 31 - Ref List 0
+#else
         {1, 3, 7, 15}, // GOP Index 31 - Ref List 0
+#endif
+#if TUNE_MRP_6L_ADD_L5
+        {-1, 15, 0, 0} // GOP Index 31 - Ref List 1
+#else
         {-1, 0, 0, 0} // GOP Index 31 - Ref List 1
+#endif
     }};
 
 /************************************************

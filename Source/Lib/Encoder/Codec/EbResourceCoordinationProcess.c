@@ -221,6 +221,11 @@ void set_tpl_extended_controls(
         tpl_ctrls->r0_adjust_factor = 0.30;
 #endif
     }
+
+#if TUNE_6L_4L_TPL
+    if(scs_ptr->static_config.hierarchical_levels < 4)
+        tpl_ctrls->r0_adjust_factor = 0.1;
+#endif
 }
 #endif
 void set_tpl_controls(

@@ -434,10 +434,17 @@ uint8_t  inj_to_tpl_group( PictureParentControlSet* pcs)
 {
     uint8_t inj = 0;
     if (pcs->hierarchical_levels != 4) {
+#if TUNE_6L_4L_TPL
+        if (pcs->temporal_layer_index < pcs->hierarchical_levels)
+            inj = 1;
+        else
+            inj = 0;
+#else
         if (pcs->is_used_as_reference_flag)
             inj = 1;
         else
             inj = 0;
+#endif
     }
     else {
 
@@ -596,7 +603,11 @@ void store_extended_group(
 #else
                         if (pcs->tpl_ctrls.reduced_tpl_group) {
 #endif
+#if TUNE_6L_4L_TPL
+                            if (pcs->tpl_group[i]->temporal_layer_index <= pcs->tpl_ctrls.reduced_tpl_group + (pcs->hierarchical_levels == 5 ? 1 : 0)) {
+#else
                             if (pcs->tpl_group[i]->temporal_layer_index <= pcs->tpl_ctrls.reduced_tpl_group) {
+#endif
                                 pcs->tpl_valid_pic[i] = 1;
                                 pcs->used_tpl_frame_num++;
                             }

@@ -309,5 +309,4 @@ EbErrorType rate_control_context_ctor(EbThreadContext *  thread_context_ptr,
                                       const EbEncHandle *enc_handle_ptr);
 
 extern void *rate_control_kernel(void *input_ptr);
-
 #endif // EbRateControl_h

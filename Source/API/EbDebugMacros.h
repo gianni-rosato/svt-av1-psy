@@ -344,6 +344,19 @@ extern "C" {
 #define OPT_BYPASS_ME_CAND                    1 // Remove ME candidate array construction; copy directly to final buffers
 #define CLN_ME_HME_PATH                       1 // Remove unnecessary operations in ME/HME; clean up functions
 #define OPT_ONE_BUFFER_DOWNSAMPLED            1 // Use one buffer for the decimated/filter downsampled picture, since only one downsampling method should be used
+
+#define TUNE_6L_4L_TPL                        1 // Tune tpl for 6L and 4L
+#define TUNE_MRP_6L                           1 // Tune MRP of 6L
+#if TUNE_MRP_6L
+#define TUNE_MRP_6L_2BASE                     1 // Use only two base layer frame
+#define TUNE_MRP_6L_ADD1                     1 // Use L1 frames instead of L0 which was removed
+#define TUNE_MRP_6L_ADD_TOP                   1 // Tune MRP for 6L: Add top layer as reference
+#define TUNE_MRP_6L_ADD_L1                   1 // Tune MRP for 6L: Add more references for L1
+#define TUNE_MRP_6L_ADD_L2                   1 // Tune MRP for 6L: Add more references for L2
+#define TUNE_MRP_6L_ADD_L3                   1 // Tune MRP for 6L: Add more references for L3
+#define TUNE_MRP_6L_ADD_L4                   1 // Tune MRP for 6L: Add more references for L4
+#define TUNE_MRP_6L_ADD_L5                   1 // Tune MRP for 6L: Add more references for L5
+#endif
 // ============= END SVT_04 =============
 
 //FOR DEBUGGING - Do not remove

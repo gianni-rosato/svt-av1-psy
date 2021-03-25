@@ -34,6 +34,10 @@
 #include "EbLog.h"
 #include "EbIntraPrediction.h"
 #include "EbMotionEstimation.h"
+#if TUNE_6L_4L_TPL
+static const double tpl_hl_islice_div_factor[EB_MAX_TEMPORAL_LAYERS] = { 1, 1, 1, 2, 1, 0.8 };
+static const double tpl_hl_base_frame_div_factor[EB_MAX_TEMPORAL_LAYERS] = { 1, 1, 1, 3, 1, 0.7 };
+#endif
 #if FTR_TPL_TR
 #if !FTR_LAD_MG
 uint8_t is_tpl_trailing(PictureParentControlSet *base_pcs, PictureParentControlSet *curr_pcs);
@@ -6639,6 +6643,9 @@ static int cqp_qindex_calc_tpl_la(PictureControlSet *pcs_ptr, RATE_CONTROL *rc, 
                 factor = 1;
             pcs_ptr->parent_pcs_ptr->r0 = pcs_ptr->parent_pcs_ptr->r0 / factor;
         }
+#if TUNE_6L_4L_TPL
+        pcs_ptr->parent_pcs_ptr->r0 = pcs_ptr->parent_pcs_ptr->r0 / tpl_hl_islice_div_factor[scs_ptr->static_config.hierarchical_levels];
+#endif
 #if OPT_R0_FOR_LOW_MOTION
         if (pcs_ptr->parent_pcs_ptr->frm_hdr.frame_type == KEY_FRAME) {
             if (scs_ptr->intra_period_length == -1 || scs_ptr->intra_period_length > KF_INTERVAL_TH) {
@@ -6707,6 +6714,9 @@ static int cqp_qindex_calc_tpl_la(PictureControlSet *pcs_ptr, RATE_CONTROL *rc, 
                 div_factor = 1.0 / factor;
 #endif
             pcs_ptr->parent_pcs_ptr->r0 = pcs_ptr->parent_pcs_ptr->r0 / div_factor;
+#if TUNE_6L_4L_TPL
+            pcs_ptr->parent_pcs_ptr->r0 = pcs_ptr->parent_pcs_ptr->r0 / tpl_hl_base_frame_div_factor[scs_ptr->static_config.hierarchical_levels];
+#endif
         }
 
         int num_stats_required_for_gfu_boost = pcs_ptr->parent_pcs_ptr->tpl_group_size +
