@@ -429,7 +429,7 @@ static int add_tpl_ref_mv(const Av1Common *cm, PictureControlSet *pcs_ptr, const
 #if  OPT_MFMV
                           uint8_t two_symetric_refs, IntMv   *mv_ref0,
 #endif
-#if OPT_MFMV_2
+#if OPT_MFMV
                           int cur_offset_0, int cur_offset_1,
 #endif
 
@@ -446,7 +446,7 @@ static int add_tpl_ref_mv(const Av1Common *cm, PictureControlSet *pcs_ptr, const
     if (prev_frame_mvs->mfmv0.as_int == INVALID_MV)
         return 0;
 
-#if OPT_MFMV_2
+#if OPT_MFMV
     const uint16_t     weight_unit = 1;
 #else
     MvReferenceFrame rf[2];
@@ -525,7 +525,7 @@ static int add_tpl_ref_mv(const Av1Common *cm, PictureControlSet *pcs_ptr, const
 
 
 
-#if OPT_MFMV_2
+#if OPT_MFMV
     //single ref case could be detected by ref_frame
     if (ref_frame < LAST_BWD_FRAME) {
 #else
@@ -551,7 +551,7 @@ static int add_tpl_ref_mv(const Av1Common *cm, PictureControlSet *pcs_ptr, const
         }
     } else {
         // Process compound inter mode
-#if !OPT_MFMV_2
+#if !OPT_MFMV
 
         EbReferenceObject *buf_1 =
             (EbReferenceObject *)pcs_ptr->ref_pic_ptr_array[list_idx1][ref_idx_l1]->object_ptr;
@@ -660,7 +660,7 @@ void setup_ref_mv_list(PictureControlSet *pcs_ptr, const Av1Common *cm, const Ma
         max_col_offset = find_valid_col_offset(tile, mi_col, max_col_offset);
     }
 
-#if  OPT_MFMV_4
+#if  OPT_MFMV
     uint8_t ref_match_count[MODE_CTX_REF_FRAMES];
     uint8_t col_match_count[MODE_CTX_REF_FRAMES];
     uint8_t row_match_count[MODE_CTX_REF_FRAMES];
@@ -746,7 +746,7 @@ void setup_ref_mv_list(PictureControlSet *pcs_ptr, const Av1Common *cm, const Ma
         int       is_available = 0;
 
 
-#if OPT_MFMV_3
+#if OPT_MFMV
          int blk_row_end ,blk_col_end,step_w, step_h , allow_extension;
         if (ctx->sb64_sq_no4xn_geom) {
              blk_row_end = xd->n4_w;
@@ -789,7 +789,7 @@ void setup_ref_mv_list(PictureControlSet *pcs_ptr, const Av1Common *cm, const Ma
 #endif
 
 
-#if OPT_MFMV_2
+#if OPT_MFMV
         int cur_offset_0;
         int cur_offset_1 = 0;
         uint8_t list_idx0, list_idx1, ref_idx_l0, ref_idx_l1;
@@ -838,7 +838,7 @@ void setup_ref_mv_list(PictureControlSet *pcs_ptr, const Av1Common *cm, const Ma
                                          symteric_refs,
                                          mv_ref0,
 #endif
-#if OPT_MFMV_2
+#if OPT_MFMV
                                          cur_offset_0,  cur_offset_1,
 #endif
                                          ref_mv_stack[ref_frame],
@@ -858,7 +858,7 @@ void setup_ref_mv_list(PictureControlSet *pcs_ptr, const Av1Common *cm, const Ma
             mode_context[ref_frame] |= (1 << GLOBALMV_OFFSET);
 
 
-#if OPT_MFMV_3
+#if OPT_MFMV
         if (allow_extension) {
 
             int voffset, hoffset;
@@ -899,7 +899,7 @@ void setup_ref_mv_list(PictureControlSet *pcs_ptr, const Av1Common *cm, const Ma
                 symteric_refs,
                 mv_ref0,
 #endif
-#if OPT_MFMV_2
+#if OPT_MFMV
                 cur_offset_0, cur_offset_1,
 #endif
                 ref_mv_stack[ref_frame],
@@ -912,14 +912,14 @@ void setup_ref_mv_list(PictureControlSet *pcs_ptr, const Av1Common *cm, const Ma
 
             }
 
-#if OPT_MFMV_3
+#if OPT_MFMV
         }
 #endif
 
     }
 
     //CHKN------------- TOP-LEFT
-#if  OPT_MFMV_4
+#if  OPT_MFMV
     uint8_t dummy_newmv_count[MODE_CTX_REF_FRAMES] ;
     dummy_newmv_count[ref_frame] = 0;
 #else
@@ -1396,7 +1396,7 @@ void generate_av1_mvp_table(TileInfo *tile, ModeDecisionContext *context_ptr, Bl
     xd->mb_to_right_edge  = ((cm->mi_cols - bw - mi_col) * MI_SIZE) * 8;
     xd->mi_row            = -xd->mb_to_top_edge / (8 * MI_SIZE);
     xd->mi_col            = -xd->mb_to_left_edge / (8 * MI_SIZE);
-#if  !OPT_MFMV_4
+#if  !OPT_MFMV
 #if FIX_ADD_MVP_MEMSET
     memset(xd->ref_mv_count, 0, sizeof(xd->ref_mv_count));
     memset(context_ptr->md_local_blk_unit[blk_geom->blkidx_mds].ed_ref_mv_stack,
@@ -1452,7 +1452,7 @@ void generate_av1_mvp_table(TileInfo *tile, ModeDecisionContext *context_ptr, Bl
     for (ref_it = 0; ref_it < tot_refs; ++ref_it) {
         MvReferenceFrame ref_frame = ref_frames[ref_it];
 
-#if OPT_MFMV_4
+#if OPT_MFMV
         xd->ref_mv_count[ref_frame] = 0;
         memset(context_ptr->md_local_blk_unit[blk_geom->blkidx_mds].ed_ref_mv_stack[ref_frame],
             0,  sizeof(CandidateMv)*MAX_REF_MV_STACK_SIZE);

@@ -561,7 +561,7 @@ typedef struct ModeDecisionContext {
     // Entropy Coder
     MdEncPassCuData *md_ep_pipe_sb;
 
-#if OPT_MFMV_3
+#if OPT_MFMV
     uint8_t         sb64_sq_no4xn_geom;   //simple geometry 64x64SB, Sq only, no 4xN
 #endif
     uint8_t          pu_itr;
@@ -933,7 +933,7 @@ typedef struct ModeDecisionContext {
     uint32_t max_nics ; // Maximum number of candidates MD can support
     uint32_t max_nics_uv ; // Maximum number of candidates MD can support
 #endif
-#if OPT13_PD0
+#if OPT_LOSSLESS_1
     uint8_t use_best_mds0;
 #endif
 } ModeDecisionContext;

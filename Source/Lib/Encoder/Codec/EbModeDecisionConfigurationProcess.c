@@ -1052,34 +1052,6 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
                 pcs_ptr, pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr, pcs_ptr->hbd_mode_decision);
         }
 
-#if PIC_BASED_MFMV_SAD
-        if (pcs_ptr->slice_type != I_SLICE) {
-            uint64_t  total_me_sad = 0;
-            for (uint16_t sb_index = 0; sb_index < pcs_ptr->sb_total_count; ++sb_index) {
-                total_me_sad += pcs_ptr->parent_pcs_ptr->me_16x16_distortion[sb_index];
-
-            }
-            uint32_t average_me_sad = total_me_sad / pcs_ptr->sb_total_count;
-
-            pcs_ptr->parent_pcs_ptr->avg_me_sad = average_me_sad;//only for Inter frames
-
-          //  printf("poc:%i  %i \n", pcs_ptr->picture_number,  pcs_ptr->parent_pcs_ptr->avg_me_sad);
-
-            uint32_t sad_th = 40000;
-            //if(scs_ptr->input_resolution <= INPUT_SIZE_360p_RANGE)
-            //    sad_th+=5000;
-            if (pcs_ptr->parent_pcs_ptr->avg_me_sad > sad_th)
-               pcs_ptr->parent_pcs_ptr->frm_hdr.use_ref_frame_mvs = 0;
-
-
-           // printf("poc:%i  %f\n", pcs_ptr->picture_number, (pcs_ptr->parent_pcs_ptr->base_r0 / (double)scs_ptr->sb_tot_cnt));
-
-          //  if ((pcs_ptr->parent_pcs_ptr->base_r0 / (double)scs_ptr->sb_tot_cnt) > 0.017)
-          //        pcs_ptr->parent_pcs_ptr->frm_hdr.use_ref_frame_mvs = 0;
-
-        }
-#endif
-
 
 
 #if PIC_BASED_MFMV

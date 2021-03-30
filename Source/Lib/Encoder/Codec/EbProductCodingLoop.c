@@ -7293,7 +7293,7 @@ static void md_stage_3(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct
          full_loop_candidate_index < fullCandidateTotalCount;
          ++full_loop_candidate_index) {
         uint32_t cand_index = context_ptr->best_candidate_index_array[full_loop_candidate_index];
-#if OPT13_PD0
+#if OPT_LOSSLESS_1
         if (context_ptr->use_best_mds0)
             cand_index = context_ptr->mds0_best_idx;
 #endif
@@ -9086,7 +9086,7 @@ for (uint32_t li = 0; li < MAX_NUM_OF_REF_PIC_LIST; ++li) {
             buffer_start_idx += buffer_count_for_curr_class; //for next iteration.
         }
     }
-#if OPT13_PD0
+#if OPT_LOSSLESS_1
     if (context_ptr->use_best_mds0) {
         for (cand_class_it = CAND_CLASS_0; cand_class_it < CAND_CLASS_TOTAL; cand_class_it++) {
             //number of next level candidates could not exceed number of curr level candidates
@@ -9187,7 +9187,7 @@ for (uint32_t li = 0; li < MAX_NUM_OF_REF_PIC_LIST; ++li) {
         }
 
         interintra_class_pruning_3(context_ptr, best_md_stage_cost);
-#if OPT13_PD0
+#if OPT_LOSSLESS_1
     }
 #endif
 #if !CLN_MD_CAND_BUFF
@@ -9272,7 +9272,7 @@ for (uint32_t li = 0; li < MAX_NUM_OF_REF_PIC_LIST; ++li) {
 calc_scr_to_recon_dist_per_quadrant(context_ptr, input_picture_ptr, input_origin_index,
                                     candidate_buffer, blk_origin_index);
 #endif
-#if OPT12_PD0
+#if OPT_LOSSLESS_1
     if (!context_ptr->skip_intra) {
 #endif
         if (!context_ptr->blk_geom->has_uv) {
@@ -9296,7 +9296,9 @@ calc_scr_to_recon_dist_per_quadrant(context_ptr, input_picture_ptr, input_origin
                         context_ptr->blk_geom->bwidth);
             }
         }
+#if OPT_LOSSLESS_1
     }
+#endif
     //copy neigh recon data in blk_ptr
     EbPictureBufferDesc *recon_ptr       = candidate_buffer->recon_ptr;
     uint32_t             rec_luma_offset = context_ptr->blk_geom->origin_x +
@@ -9398,7 +9400,7 @@ calc_scr_to_recon_dist_per_quadrant(context_ptr, input_picture_ptr, input_origin
                                                1 + j * recon_ptr->stride_cr];
             }
         }
-#if OPT12_PD0
+#if OPT_LOSSLESS_1
     }
 #endif
 #if NO_ENCDEC
@@ -10161,7 +10163,7 @@ void init_block_data(PictureControlSet *pcs, ModeDecisionContext *ctx,
     ctx->md_local_blk_unit[blk_idx_mds].left_neighbor_partition  = INVALID_NEIGHBOR_DATA;
     ctx->md_local_blk_unit[blk_idx_mds].above_neighbor_partition = INVALID_NEIGHBOR_DATA;
 #endif
-#if OPT_MFMV_3
+#if OPT_MFMV
     ctx->sb64_sq_no4xn_geom = 0;
     if (pcs->parent_pcs_ptr->scs_ptr->static_config.super_block_size == 64 &&
         blk_geom->bwidth == blk_geom->bheight && blk_geom->bsize > BLOCK_8X4)

@@ -7071,7 +7071,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
      else
          context_ptr->sb_bypass_dlf = 1;
 #endif
-#if OPT13_PD0
+#if OPT_LOSSLESS_1
      context_ptr->use_best_mds0 = 0;
      if (pd_pass == PD_PASS_0) {
          if (enc_mode <= ENC_M8)

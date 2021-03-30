@@ -923,9 +923,6 @@ typedef struct PictureParentControlSet {
     uint8_t *     rc_me_allow_gm;
 #endif
 
-#if PIC_BASED_MFMV_SAD
-    uint32_t avg_me_sad;
-#endif
 
 
 #if TUNE_DEPTH_REMOVAL_PER_RESOLUTION
@@ -961,9 +958,6 @@ typedef struct PictureParentControlSet {
     TplStats **           tpl_stats;
     int32_t               is_720p_or_larger;
     int32_t               base_rdmult;
-#if PIC_BASED_MFMV_R0
-    double                base_r0;
-#endif
     double                r0;
     double *              tpl_beta;
     double *              tpl_rdmult_scaling_factors;

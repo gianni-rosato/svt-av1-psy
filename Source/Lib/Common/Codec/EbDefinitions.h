@@ -474,7 +474,7 @@ static INLINE int av1_num_planes(EbColorConfig *color_info) {
 }
 
 
-#if OPT_MFMV_3
+#if OPT_MFMV
 #define MI_SIZE_W_8X8    2
 #define MI_SIZE_W_16X16  4
 #define MI_SIZE_W_64X64  16

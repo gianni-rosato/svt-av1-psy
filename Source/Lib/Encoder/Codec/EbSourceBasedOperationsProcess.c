@@ -2790,10 +2790,6 @@ EbErrorType tpl_mc_flow(EncodeContext *encode_context_ptr, SequenceControlSet *s
 #endif
 
 
-#if   PIC_BASED_MFMV_R0
-        for (uint32_t fidx = 0; fidx < pcs_ptr->tpl_group_size; fidx++)
-             pcs_ptr->tpl_group[fidx]->base_r0 = pcs_ptr->r0;
-#endif
 
     }
 

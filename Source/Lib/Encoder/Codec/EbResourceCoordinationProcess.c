@@ -825,9 +825,6 @@ static EbErrorType reset_pcs_av1(PictureParentControlSet *pcs_ptr) {
 #endif
 
 
-#if PIC_BASED_MFMV_R0
-       pcs_ptr->base_r0 = 0;
-#endif
 
     return EB_ErrorNone;
 }

@@ -322,20 +322,12 @@ extern "C" {
 #define TUNE_UPDATE_SCD_DELAY                  1 // Update the scd_delay based on the the number of future frames @ BASE
 
 #define  PIC_BASED_MFMV                       1 // Suport for picture based MFMV. Lossless.
-#define RFCTR_MFMV                            1 // Lossless MFMV refactoring
-#if RFCTR_MFMV
-#define  OPT_MFMV       1
-#define  OPT_MFMV_2     1
-#define  OPT_MFMV_3     1
-#define  OPT_MFMV_4     1
-#endif
-#define  PIC_BASED_MFMV_R0                    0 //Use r0  to control MFMV
-#define  PIC_BASED_MFMV_SAD                   0 //Use sad to control MFMV
+#define OPT_MFMV                              1 // Lossless MFMV refactoring
 
 #define OPT_BUILD_CAND_BLK_2                  1 // Lossless optimization of build_cand_block_array()
 #define OPT_MI_UPDATE                         1 // Lossless opt for updating mode info
-#define OPT12_PD0                             1 // Bypass neighbor update when intra is not allowed in PD0
-#define OPT13_PD0                             1 // Bypass all mds1, mds2 computations in PD0
+#define OPT_LOSSLESS_1                        1 // Bypass neighbor update when intra is not allowed in PD0
+                                                // Bypass all mds1, mds2 computations in PD0
 #define OPT_INLINE_FILTER_FUNCS               1 // Make funcs inline to improve efficiency
 #define CLN_OLD_RC                            1 // Clean up old useless rate control code
 #define FIX_SCD_DELAY                         1 // Fix the run2run issue caused by scd_delay
