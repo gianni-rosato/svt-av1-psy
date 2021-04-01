@@ -1526,6 +1526,9 @@ static void picture_parent_control_set_dctor(EbPtr ptr) {
     EB_DELETE_PTR_ARRAY(obj->tpl_disp_segment_ctrl, tile_cnt);
     EB_DELETE_PTR_ARRAY(obj->tpl_disp_segment_ctrl_trail, tile_cnt);
 #endif
+#if FIX_VBR_MISMACTH
+    EB_DESTROY_MUTEX(obj->pcs_total_rate_mutex);
+#endif
 }
 EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr,
                                             EbPtr                    object_init_data_ptr) {
@@ -1814,7 +1817,9 @@ EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr,
     object_ptr->overshoot_seen  = 0;
     object_ptr->undershoot_seen = 0;
     object_ptr->low_cr_seen     = 0;
-
+#if FIX_VBR_MISMACTH
+    EB_CREATE_MUTEX(object_ptr->pcs_total_rate_mutex);
+#endif
     return return_error;
 }
 static void me_dctor(EbPtr p) {

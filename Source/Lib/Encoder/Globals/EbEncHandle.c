@@ -2962,6 +2962,9 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
         scs_ptr->enable_pic_mgr_dec_order = 0;
     // Enforce encoding frame in decode order
     // Wait for feedback from PKT
+#if RC_NO_R2R
+    scs_ptr->enable_dec_order = 1;
+#else
 #if FTR_VBR_MT_REMOVE_DEC_ORDER
     if (scs_ptr->static_config.logical_processors == 1 && // LP1
         ((scs_ptr->in_loop_me == 1 && // inloop ME
@@ -2975,6 +2978,7 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
         scs_ptr->enable_dec_order = 1;
     else
         scs_ptr->enable_dec_order = 0;
+#endif
    // Open loop intra done with TPL, data is not stored
 #if CLN_OIS
     scs_ptr->in_loop_ois = 1;
@@ -4057,8 +4061,13 @@ EbErrorType svt_svt_enc_init_parameter(
     config_ptr->vbr_bias_pct = 50;
     config_ptr->vbr_min_section_pct = 0;
     config_ptr->vbr_max_section_pct = 2000;
+#if TUNE_VBR_RATE_MATCHING
+    config_ptr->under_shoot_pct = 100;
+    config_ptr->over_shoot_pct = 25;
+#else
     config_ptr->under_shoot_pct = 25;
     config_ptr->over_shoot_pct = 25;
+#endif
 #if TUNE_DEFAULT_RECODE_LOOP
     config_ptr->recode_loop = ALLOW_RECODE_DEFAULT;
 #else

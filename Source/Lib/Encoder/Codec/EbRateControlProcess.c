@@ -9081,8 +9081,10 @@ void *rate_control_kernel(void *input_ptr) {
             parentpicture_control_set_ptr = (PictureParentControlSet *)
                                                 rate_control_tasks_ptr->pcs_wrapper_ptr->object_ptr;
             scs_ptr = (SequenceControlSet *)
-                          parentpicture_control_set_ptr->scs_wrapper_ptr->object_ptr;
-
+                parentpicture_control_set_ptr->scs_wrapper_ptr->object_ptr;
+#if TUNE_VBR_RATE_MATCHING
+            if (!use_output_stat(scs_ptr)) {
+#endif
 #if !CLN_OLD_RC
             // Frame level RC
             if (scs_ptr->intra_period_length == -1 ||
@@ -9180,7 +9182,9 @@ void *rate_control_kernel(void *input_ptr) {
                 }
 #endif
             }
-
+#if TUNE_VBR_RATE_MATCHING
+        }
+#endif
             // Queue variables
 #if !CLN_OLD_RC
 #if OVERSHOOT_STAT_PRINT

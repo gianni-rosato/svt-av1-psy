@@ -1237,6 +1237,9 @@ typedef struct PictureParentControlSet {
     int                             undershoot_seen;
     int                             low_cr_seen;
     uint64_t                        pcs_total_rate;
+#if FIX_VBR_MISMACTH
+    EbHandle                        pcs_total_rate_mutex;
+#endif
     int16_t                         first_pass_seg_total_count;
     uint8_t                         first_pass_seg_column_count;
     uint8_t                         first_pass_seg_row_count;

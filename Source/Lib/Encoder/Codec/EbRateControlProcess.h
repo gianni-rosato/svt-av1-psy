@@ -18,6 +18,11 @@
 #include "EbPictureControlSet.h"
 #include "EbObject.h"
 
+#if TUNE_VBR_RATE_MATCHING
+#define MINQ_ADJ_LIMIT 48
+#define MINQ_ADJ_LIMIT_CQ 20
+#define HIGH_UNDERSHOOT_RATIO 2
+#endif
 #define CCOEFF_INIT_FACT 2
 #define SAD_CLIP_COEFF 5
 // 88 + 3*16*8

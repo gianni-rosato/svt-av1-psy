@@ -5824,6 +5824,14 @@ void store_gf_group(
                 pcs->gf_group[pic_i]->gf_update_due = 1;
             else
                 pcs->gf_group[pic_i]->gf_update_due = 0;
+#if FIX_VBR_MISMACTH
+            // For P picture that come after I, we need to set the gf_group pictures. It is used later in RC
+            if (pcs->slice_type == I_SLICE && pcs->gf_group[pic_i]->slice_type == P_SLICE) {
+                pcs->gf_group[pic_i]->gf_interval = pcs->gf_interval - 1;
+                EB_MEMCPY(&pcs->gf_group[pic_i]->gf_group[0], &ctx->mg_pictures_array[1], pcs->gf_group[pic_i]->gf_interval * sizeof(PictureParentControlSet*));
+                pcs->gf_group[pic_i]->gf_update_due = 0;
+            }
+#endif
         }
     }
 }

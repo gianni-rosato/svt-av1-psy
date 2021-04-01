@@ -2519,8 +2519,13 @@ EB_EXTERN void av1_encode_decode(SequenceControlSet *scs_ptr, PictureControlSet 
                 } else {
                     blk_ptr->qindex = sb_ptr->qindex;
                 }
-
+#if FIX_VBR_MISMACTH
+                svt_block_on_mutex(pcs_ptr->parent_pcs_ptr->pcs_total_rate_mutex);
                 pcs_ptr->parent_pcs_ptr->pcs_total_rate += blk_ptr->total_rate;
+                svt_release_mutex(pcs_ptr->parent_pcs_ptr->pcs_total_rate_mutex);
+#else
+                pcs_ptr->parent_pcs_ptr->pcs_total_rate += blk_ptr->total_rate;
+#endif
                 if (blk_ptr->prediction_mode_flag == INTRA_MODE) {
                     context_ptr->is_inter = blk_ptr->use_intrabc;
 #if !TUNE_REMOVE_INTRA_STATS_TRACKING

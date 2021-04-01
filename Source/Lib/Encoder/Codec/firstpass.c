@@ -782,6 +782,9 @@ void *set_me_hme_params_from_config(SequenceControlSet *scs_ptr, MeContext *me_c
 void  set_me_hme_ref_prune_ctrls(MeContext *context_ptr, uint8_t prune_level);
 void  set_me_sr_adjustment_ctrls(MeContext *context_ptr, uint8_t sr_adjustment_level);
 void  set_gm_controls(PictureParentControlSet *pcs_ptr, uint8_t gm_level);
+#if FIX_VBR_MISMACTH
+void  set_prehme_ctrls(MeContext* context, uint8_t level);
+#endif
 /******************************************************
 * Derive ME Settings for first pass
   Input   : encoder mode and tune
@@ -821,6 +824,9 @@ EbErrorType first_pass_signal_derivation_me_kernel(SequenceControlSet *       sc
     set_me_sr_adjustment_ctrls(context_ptr->me_context_ptr, 0);
 #if FTR_REDUCE_ME_INJECTION
     context_ptr->me_context_ptr->prune_me_candidates_th = 0; // No impact on tf
+#endif
+#if FIX_VBR_MISMACTH
+    set_prehme_ctrls(context_ptr->me_context_ptr, 0);
 #endif
     return return_error;
 };

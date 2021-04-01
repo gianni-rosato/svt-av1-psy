@@ -2300,7 +2300,13 @@ static void is_new_gf_group(PictureParentControlSet *pcs_ptr) {
         pcs_ptr->is_new_gf_group = pcs_ptr->gf_update_due;
     else {
         for (int pic_i = 0; pic_i < pcs_ptr->gf_interval; ++pic_i)
+#if FIX_VBR_MISMACTH
+            // For P-pictures, since the pictures might get released and replaced by other pictures, we check the POC difference
+            if (pcs_ptr->gf_group[pic_i] && (int)ABS((int64_t)pcs_ptr->gf_group[pic_i]->picture_number - (int64_t)pcs_ptr->picture_number) <= pcs_ptr->gf_interval &&
+                pcs_ptr->gf_group[pic_i]->slice_type == P_SLICE && pcs_ptr->gf_group[pic_i]->gf_update_due)
+#else
             if (pcs_ptr->gf_group[pic_i] && pcs_ptr->gf_group[pic_i]->slice_type == P_SLICE && pcs_ptr->gf_group[pic_i]->gf_update_due)
+#endif
                 pcs_ptr->is_new_gf_group = 1;
         if (pcs_ptr->is_new_gf_group)
             for (int pic_i = 0; pic_i < pcs_ptr->gf_interval; ++pic_i)
@@ -2691,10 +2697,11 @@ int frame_is_kf_gf_arf(PictureParentControlSet *ppcs_ptr) {
   return frame_is_intra_only(ppcs_ptr) || update_type == ARF_UPDATE ||
          update_type == GF_UPDATE;
 }
-
+#if !TUNE_VBR_RATE_MATCHING
 #define MINQ_ADJ_LIMIT 48
 #define MINQ_ADJ_LIMIT_CQ 20
 #define HIGH_UNDERSHOOT_RATIO 2
+#endif
 void svt_av1_twopass_postencode_update(PictureParentControlSet *ppcs_ptr) {
   SequenceControlSet *scs_ptr = ppcs_ptr->scs_ptr;
   EncodeContext *encode_context_ptr = scs_ptr->encode_context_ptr;
