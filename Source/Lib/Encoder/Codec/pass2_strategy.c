@@ -111,7 +111,9 @@ static void subtract_stats(FIRSTPASS_STATS *section,
   section->frame -= frame->frame;
   section->weight -= frame->weight;
   section->intra_error -= frame->intra_error;
+#if !TUNE_FIRSTPASS_LOSSLESS
   section->frame_avg_wavelet_energy -= frame->frame_avg_wavelet_energy;
+#endif
   section->coded_error -= frame->coded_error;
   section->sr_coded_error -= frame->sr_coded_error;
   section->pcnt_inter -= frame->pcnt_inter;
@@ -418,7 +420,9 @@ static void accumulate_next_frame_stats(const FIRSTPASS_STATS *stats,
   gf_stats->avg_pcnt_second_ref += stats->pcnt_second_ref;
   gf_stats->avg_pcnt_third_ref += stats->pcnt_third_ref;
   gf_stats->avg_new_mv_count += stats->new_mv_count;
+#if !TUNE_FIRSTPASS_LOSSLESS
   gf_stats->avg_wavelet_energy += stats->frame_avg_wavelet_energy;
+#endif
   if (fabs(stats->raw_error_stdev) > 0.000001) {
     gf_stats->non_zero_stdev_count++;
     gf_stats->avg_raw_err_stdev += stats->raw_error_stdev;
@@ -458,7 +462,9 @@ static void average_gf_stats(const int total_frame,
     }
     gf_stats->avg_pcnt_third_ref /= total_frame;
     gf_stats->avg_new_mv_count /= total_frame;
+#if !TUNE_FIRSTPASS_LOSSLESS
     gf_stats->avg_wavelet_energy /= total_frame;
+#endif
   }
 
   if (gf_stats->non_zero_stdev_count)
@@ -987,7 +993,9 @@ static void init_gf_stats(GF_GROUP_STATS *gf_stats) {
   gf_stats->avg_pcnt_third_ref = 0.0;
   gf_stats->avg_pcnt_third_ref_nolast = 0.0;
   gf_stats->avg_new_mv_count = 0.0;
+#if !TUNE_FIRSTPASS_LOSSLESS
   gf_stats->avg_wavelet_energy = 0.0;
+#endif
   gf_stats->avg_raw_err_stdev = 0.0;
   gf_stats->non_zero_stdev_count = 0;
 }
@@ -1877,8 +1885,10 @@ static int calc_avg_stats(PictureParentControlSet *pcs_ptr, FIRSTPASS_STATS *avg
   // Average the total stat
   avg_frame_stat->weight = avg_frame_stat->weight / num_frames;
   avg_frame_stat->intra_error = avg_frame_stat->intra_error / num_frames;
+#if !TUNE_FIRSTPASS_LOSSLESS
   avg_frame_stat->frame_avg_wavelet_energy =
       avg_frame_stat->frame_avg_wavelet_energy / num_frames;
+#endif
   avg_frame_stat->coded_error = avg_frame_stat->coded_error / num_frames;
   avg_frame_stat->sr_coded_error = avg_frame_stat->sr_coded_error / num_frames;
   avg_frame_stat->pcnt_inter = avg_frame_stat->pcnt_inter / num_frames;
@@ -2261,8 +2271,10 @@ static void process_first_pass_stats(PictureParentControlSet *pcs_ptr,
     // The multiplication by 256 reverses a scaling factor of (>> 8)
     // applied when combining MB error values for the frame.
     twopass->mb_av_energy = log1p(this_frame->intra_error / num_mbs);
+#if !TUNE_FIRSTPASS_LOSSLESS
     twopass->frame_avg_haar_energy =
         log1p(this_frame->frame_avg_wavelet_energy / num_mbs);
+#endif
   }
 
   // Update the total stats remaining structure.

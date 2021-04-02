@@ -692,7 +692,12 @@ void tpl_mc_flow_dispenser_sb(
                             input_ptr->stride_y;
 
                     // Fill Neighbor Arrays
-                    update_neighbor_samples_array_open_loop_mb(above0_row - 1,
+                    update_neighbor_samples_array_open_loop_mb(
+#if TUNE_FIRSTPASS_LOSSLESS
+                                                                1, // use_top_righ_bottom_left
+                                                                1, // update_top_neighbor
+#endif
+                                                                above0_row - 1,
                                                                 left0_col - 1,
                                                                 input_ptr,
                                                                 input_ptr->stride_y,
@@ -700,6 +705,7 @@ void tpl_mc_flow_dispenser_sb(
                                                                 mb_origin_y,
                                                                 bsize,
                                                                 bsize);
+
                     uint8_t ois_intra_mode;
                     uint8_t intra_mode_start = DC_PRED;
                     EbBool  enable_paeth  = pcs_ptr->scs_ptr->static_config.enable_paeth ==
@@ -1037,7 +1043,12 @@ void tpl_mc_flow_dispenser_sb(
                 left_col              = left_data + 16;
                 uint8_t *recon_buffer = recon_picture_ptr->buffer_y + dst_basic_offset;
 
-                update_neighbor_samples_array_open_loop_mb_recon(above_row - 1,
+                update_neighbor_samples_array_open_loop_mb_recon(
+#if TUNE_FIRSTPASS_LOSSLESS
+                                                                    1, // use_top_righ_bottom_left
+                                                                    1, // update_top_neighbor
+#endif
+                                                                    above_row - 1,
                                                                     left_col - 1,
                                                                     recon_buffer,
                                                                     dst_buffer_stride,
@@ -1047,6 +1058,7 @@ void tpl_mc_flow_dispenser_sb(
                                                                     16,
                                                                     input_picture_ptr->width,
                                                                     input_picture_ptr->height);
+
                 uint8_t ois_intra_mode = best_intra_mode; // ois_mb_results_ptr->intra_mode;
                 int32_t p_angle = av1_is_directional_mode((PredictionMode)ois_intra_mode)
                     ? mode_to_angle_map[(PredictionMode)ois_intra_mode]

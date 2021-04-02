@@ -366,8 +366,22 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
 #if TUNE_ME_M9_OPT
     else {
         if (use_output_stat(scs_ptr)) {
+#if TUNE_FIRSTPASS_ME
+            if (pcs_ptr->scs_ptr->enc_mode_2ndpass <= ENC_M4) {
+                me_context_ptr->search_area_width = me_context_ptr->search_area_height = 8;
+                me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 8;
+            }
+            else {
+                me_context_ptr->search_area_width = 8;
+                me_context_ptr->search_area_height = 3;
+                me_context_ptr->max_me_search_width = 8;
+                me_context_ptr->max_me_search_height = 5;
+
+            }
+#else
             me_context_ptr->search_area_width = me_context_ptr->search_area_height = 8;
             me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 8;
+#endif
         }
         else {
 #if TUNE_M8_FAST

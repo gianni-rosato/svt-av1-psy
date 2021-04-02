@@ -333,6 +333,9 @@ EbErrorType copy_sequence_control_set(SequenceControlSet *dst, SequenceControlSe
 #if LIMIT_TO_43
     dst->mrp_init_level = src->mrp_init_level;
 #endif
+#if TUNE_FIRSTPASS_LOSSLESS
+    dst->enc_mode_2ndpass = src->enc_mode_2ndpass;
+#endif
     return EB_ErrorNone;
 }
 

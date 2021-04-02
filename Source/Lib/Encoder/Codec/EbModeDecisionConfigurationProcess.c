@@ -1122,9 +1122,15 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
                                  pcs_ptr->slice_type == I_SLICE ? EB_TRUE : EB_FALSE,
                                  &pcs_ptr->md_frame_context);
         // Initial Rate Estimation of the Motion vectors
+#if TUNE_FIRSTPASS_LOSSLESS
+        if (!use_output_stat(scs_ptr)){
+#endif
         av1_estimate_mv_rate(pcs_ptr, md_rate_estimation_array, &pcs_ptr->md_frame_context);
         // Initial Rate Estimation of the quantized coefficients
         av1_estimate_coefficients_rate(md_rate_estimation_array, &pcs_ptr->md_frame_context);
+#if TUNE_FIRSTPASS_LOSSLESS
+        }
+#endif
         if (frm_hdr->allow_intrabc) {
             int            i;
             int            speed          = 1;

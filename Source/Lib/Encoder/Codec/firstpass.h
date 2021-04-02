@@ -62,10 +62,12 @@ typedef struct {
    * Intra prediction error.
    */
     double intra_error;
+#if !TUNE_FIRSTPASS_LOSSLESS
     /*!
    * Average wavelet energy computed using Discrete Wavelet Transform (DWT).
    */
     double frame_avg_wavelet_energy;
+#endif
     /*!
    * Best of intra pred error and inter pred error using last frame as ref.
    */
@@ -234,7 +236,9 @@ typedef struct {
     double                 modified_error_max;
     double                 modified_error_left;
     double                 mb_av_energy;
+#if !TUNE_FIRSTPASS_LOSSLESS
     double                 frame_avg_haar_energy;
+#endif
 
     // An indication of the content type of the current frame
     FRAME_CONTENT_TYPE fr_content_type;
@@ -269,8 +273,10 @@ typedef struct {
 typedef struct {
     // Intra prediction error.
     int64_t intra_error;
+#if !TUNE_FIRSTPASS_LOSSLESS
     // Average wavelet energy computed using Discrete Wavelet Transform (DWT).
     int64_t frame_avg_wavelet_energy;
+#endif
     // Best of intra pred error and inter pred error using last frame as ref.
     int64_t coded_error;
     // Best of intra pred error and inter pred error using golden frame as ref.

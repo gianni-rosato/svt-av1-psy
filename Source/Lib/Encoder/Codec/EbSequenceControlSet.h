@@ -30,6 +30,10 @@ typedef struct SequenceControlSet {
     EbDctor dctor;
     /*!< Encoding context pointer containing the handle pointer */
     EncodeContext *encode_context_ptr;
+#if TUNE_FIRSTPASS_LOSSLESS
+     /*!< 2ndpass enc mode, available at firstpass encoder */
+     int8_t enc_mode_2ndpass;
+#endif
 
     /*!< API structure */
     EbSvtAv1EncConfiguration static_config;

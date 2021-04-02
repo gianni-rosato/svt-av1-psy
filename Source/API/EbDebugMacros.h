@@ -352,6 +352,15 @@ extern "C" {
 #define TUNE_VBR_RATE_MATCHING                1 // Tune VBR rate matching
 #define FIX_VBR_MISMACTH                      1 // Added missing parts to first pass ME initialization.
                                                 // Added mutex for frame level rate estimation used in RC.
+#define TUNE_FIRSTPASS_LOSSLESS                 1 // firstpass optimizations: lossless
+#define TUNE_FIRSTPASS_HME                      1 // firstpass optimizations: turn OFF hme LVL
+#define TUNE_FIRSTPASS_SC                       1 // firstpass optimizations: turn OFF SC
+#define TUNE_FIRSTPASS_INTRA                    1 // firstpass optimizations: Intra prediction TU size
+
+#define TUNE_FIRSTPASS_LOSSLESS_ME              1 // firstpass optimizations: lossless
+#define TUNE_FIRSTPASS_CENTER0                  1 // firstpass optimizations: turn OFF 0,0 check
+#define TUNE_FIRSTPASS_ME                       1 // firstpass optimizations: ME size
+#define TUNE_FIRSTPASS_SKIP_FRAME               1 // firstpass optimizations: skip frames
 // ============= END SVT_04 =============
 
 //FOR DEBUGGING - Do not remove

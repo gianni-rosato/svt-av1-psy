@@ -685,6 +685,9 @@ void *rest_kernel(void *input_ptr) {
             }
 
             // Pad the reference picture and set ref POC
+#if TUNE_FIRSTPASS_LOSSLESS
+            if (!use_output_stat(scs_ptr))
+#endif
             if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE)
                 pad_ref_and_set_flags(pcs_ptr, scs_ptr);
             if (scs_ptr->static_config.recon_enabled) {

@@ -1986,6 +1986,9 @@ void integer_search_sb(
 #else
             search_area_height = MAX(1, (search_area_height / context_ptr->reduce_me_sr_divisor[list_index][ref_pic_index]));
 #endif
+#if TUNE_FIRSTPASS_CENTER0
+            if (scs_ptr->enc_mode_2ndpass <= ENC_M4  || context_ptr->me_type != ME_FIRST_PASS)
+#endif
             if ((x_search_center != 0 || y_search_center != 0) &&
                 (context_ptr->is_used_as_reference_flag == EB_TRUE)) {
                 check_00_center(ref_pic_ptr,
@@ -4056,6 +4059,9 @@ EbErrorType motion_estimate_sb(
 #endif
         }
 #if CLN_ME_HME_PATH
+#if TUNE_FIRSTPASS_LOSSLESS_ME
+        if (context_ptr->me_type != ME_FIRST_PASS)
+#endif
         // Save the distortion per block size
         compute_distortion(pcs_ptr, sb_index, context_ptr);
 
@@ -4490,7 +4496,12 @@ EbErrorType open_loop_intra_search_mb(
                            (pcs_ptr->enhanced_picture_ptr->origin_y + cu_origin_y) * input_ptr->stride_y;
 
             // Fill Neighbor Arrays
-            update_neighbor_samples_array_open_loop_mb(above0_row - 1, left0_col - 1,
+            update_neighbor_samples_array_open_loop_mb(
+#if TUNE_FIRSTPASS_LOSSLESS
+                                                        1, // use_top_righ_bottom_left
+                                                        1, // update_top_neighbor
+#endif
+                                                       above0_row - 1, left0_col - 1,
                                                        input_ptr, input_ptr->stride_y, cu_origin_x, cu_origin_y, bsize, bsize);
             uint8_t ois_intra_mode;
             uint8_t intra_mode_start = DC_PRED;

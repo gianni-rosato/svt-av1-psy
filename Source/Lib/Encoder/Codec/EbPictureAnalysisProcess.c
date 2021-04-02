@@ -4099,6 +4099,9 @@ void *picture_analysis_kernel(void *input_ptr) {
                 }
 #endif
                 // Gathering statistics of input picture, including Variance Calculation, Histogram Bins
+#if TUNE_FIRSTPASS_LOSSLESS
+            if (!use_output_stat(scs_ptr))
+#endif
                 gathering_picture_statistics(
                         scs_ptr,
                         pcs_ptr,
@@ -4118,6 +4121,14 @@ void *picture_analysis_kernel(void *input_ptr) {
                         pcs_ptr->sb_total_count);
             }
 
+#if TUNE_FIRSTPASS_SC
+            // SC detection is OFF for first pass in M8
+            uint8_t disable_sc_detection = scs_ptr->enc_mode_2ndpass <= ENC_M7 ? 0 : use_output_stat(scs_ptr) ? 1 : 0;
+
+            if (disable_sc_detection)
+                scs_ptr->static_config.screen_content_mode = 0;
+            else
+#endif
             if (scs_ptr->static_config.screen_content_mode == 2) { // auto detect
 #if FTR_ALIGN_SC_DETECOR
                 is_screen_content(pcs_ptr);

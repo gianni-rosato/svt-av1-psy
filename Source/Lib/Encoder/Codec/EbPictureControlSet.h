@@ -775,6 +775,9 @@ typedef struct PictureParentControlSet {
     EbBool          end_of_sequence_flag;
     uint8_t         picture_qp;
     uint64_t        picture_number;
+#if TUNE_FIRSTPASS_SKIP_FRAME
+    uint8_t         skip_frame;
+#endif
     uint32_t        cur_order_hint;
     uint32_t        ref_order_hint[7];
 #if !OPT1_REMOVE_FLAT_NOISE

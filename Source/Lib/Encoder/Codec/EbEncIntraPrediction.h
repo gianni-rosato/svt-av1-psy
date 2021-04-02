@@ -29,12 +29,22 @@ extern EbErrorType svt_av1_intra_prediction_cl(uint8_t                      hbd_
                                                struct ModeDecisionContext * context_ptr,
                                                PictureControlSet *          pcs_ptr,
                                                ModeDecisionCandidateBuffer *candidate_buffer_ptr);
-extern EbErrorType update_neighbor_samples_array_open_loop_mb(uint8_t *above_ref, uint8_t *left_ref,
+
+extern EbErrorType update_neighbor_samples_array_open_loop_mb(
+#if TUNE_FIRSTPASS_LOSSLESS
+                                                              uint8_t use_top_righ_bottom_left,
+                                                              uint8_t update_top_neighbor,
+#endif
+                                                              uint8_t *above_ref, uint8_t *left_ref,
                                                               EbPictureBufferDesc *input_ptr,
                                                               uint32_t stride, uint32_t srcOriginX,
                                                               uint32_t srcOriginY, uint8_t bwidth,
                                                               uint8_t bheight);
 extern EbErrorType update_neighbor_samples_array_open_loop_mb_recon(
+#if TUNE_FIRSTPASS_LOSSLESS
+        uint8_t                            use_top_righ_bottom_left,
+        uint8_t                            update_top_neighbor,
+#endif
     uint8_t *above_ref, uint8_t *left_ref, uint8_t *recon_ptr, uint32_t stride,
     uint32_t src_origin_x, uint32_t src_origin_y, uint8_t bwidth, uint8_t bheight, uint32_t width,
     uint32_t height);

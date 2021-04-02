@@ -1199,7 +1199,12 @@ EbErrorType  intra_luma_prediction_for_interintra(
     return return_error;
 }
 
+
 EbErrorType update_neighbor_samples_array_open_loop_mb(
+#if TUNE_FIRSTPASS_LOSSLESS
+        uint8_t                            use_top_righ_bottom_left,
+        uint8_t                            update_top_neighbor,
+#endif
         uint8_t                            *above_ref,
         uint8_t                            *left_ref,
         EbPictureBufferDesc                *input_ptr,
@@ -1218,14 +1223,23 @@ EbErrorType update_neighbor_samples_array_open_loop_mb(
 
     uint32_t width = input_ptr->width;
     uint32_t height = input_ptr->height;
+#if TUNE_FIRSTPASS_LOSSLESS
+    uint32_t block_width_neigh = use_top_righ_bottom_left ? bwidth << 1 : bwidth;
+    uint32_t block_height_neigh = use_top_righ_bottom_left ? bheight << 1 : bheight;
+#else
     uint32_t block_size_half = bwidth << 1;
-
+#endif
     // Adjust the Source ptr to start at the origin of the block being updated
     src_ptr = input_ptr->buffer_y + (((src_origin_y + input_ptr->origin_y) * stride) + (src_origin_x + input_ptr->origin_x));
 
     //Initialise the Luma Intra Reference Array to the mid range value 128 (for CUs at the picture boundaries)
+#if TUNE_FIRSTPASS_LOSSLESS
+    EB_MEMSET(above_ref, 127, block_width_neigh + 1);
+    EB_MEMSET(left_ref, 129, block_height_neigh + 1);
+#else
     EB_MEMSET(above_ref, 127, (bwidth << 1) + 1);
     EB_MEMSET(left_ref, 129, (bheight << 1) + 1);
+#endif
 
     // Get the upper left sample
     if (src_origin_x != 0 && src_origin_y != 0) {
@@ -1240,7 +1254,11 @@ EbErrorType update_neighbor_samples_array_open_loop_mb(
         above_ref++;
     }
     // Get the left-column
+#if TUNE_FIRSTPASS_LOSSLESS
+    count = block_width_neigh;
+#else
     count = block_size_half;
+#endif
     if (src_origin_x != 0) {
         read_ptr = src_ptr - 1;
         if(src_origin_y == 0)
@@ -1251,7 +1269,14 @@ EbErrorType update_neighbor_samples_array_open_loop_mb(
             read_ptr += stride;
             left_ref++;
         }
+#if TUNE_FIRSTPASS_LOSSLESS
+        left_ref += (block_width_neigh - count);
+#else
         left_ref += (block_size_half - count);
+#endif
+#if TUNE_FIRSTPASS_LOSSLESS
+        if (use_top_righ_bottom_left)
+#endif
         // pading unknown left bottom pixels with value at(-1, -15)
         for(idx = 0; idx < bheight; idx++)
             *(left_ref - bheight + idx) = *(left_ref - bheight - 1);
@@ -1263,12 +1288,25 @@ EbErrorType update_neighbor_samples_array_open_loop_mb(
         left_ref += count;
 
     // Get the top-row
+#if TUNE_FIRSTPASS_LOSSLESS
+    count = block_width_neigh;
+#else
     count = block_size_half;
+#endif
     if (src_origin_y != 0) {
+#if TUNE_FIRSTPASS_LOSSLESS
+        if (update_top_neighbor){
+#endif
         read_ptr = src_ptr - stride;
         count = ((src_origin_x + count) > width) ? count - ((src_origin_x + count) - width) : count;
         EB_MEMCPY(above_ref, read_ptr, count);
+#if TUNE_FIRSTPASS_LOSSLESS
+        }
+#endif
         // pading unknown top right pixels with value at(15, -1)
+#if TUNE_FIRSTPASS_LOSSLESS
+        if (use_top_righ_bottom_left)
+#endif
         if(src_origin_x != 0)
             for(idx = 0; idx < bwidth; idx++)
                 *(above_ref + bwidth + idx) = *(above_ref + bwidth - 1);
@@ -1281,6 +1319,10 @@ EbErrorType update_neighbor_samples_array_open_loop_mb(
 }
 
 EbErrorType update_neighbor_samples_array_open_loop_mb_recon(
+#if TUNE_FIRSTPASS_LOSSLESS
+        uint8_t                            use_top_righ_bottom_left,
+        uint8_t                            update_top_neighbor,
+#endif
     uint8_t *above_ref, uint8_t *left_ref, uint8_t *recon_ptr, uint32_t stride,
     uint32_t src_origin_x, uint32_t src_origin_y, uint8_t bwidth, uint8_t bheight, uint32_t width,
     uint32_t height)
@@ -1291,16 +1333,23 @@ EbErrorType update_neighbor_samples_array_open_loop_mb_recon(
     uint8_t  *src_ptr;
     uint8_t  *read_ptr;
     uint32_t count;
-
+#if TUNE_FIRSTPASS_LOSSLESS
+    uint32_t block_width_neigh = use_top_righ_bottom_left ? bwidth << 1 : bwidth;
+    uint32_t block_height_neigh = use_top_righ_bottom_left ? bheight << 1 : bheight;
+#else
     uint32_t block_size_half = bwidth << 1;
-
+#endif
     // Adjust the Source ptr to start at the origin of the block being updated
     src_ptr = recon_ptr + (src_origin_y  * stride + src_origin_x );
 
     //Initialise the Luma Intra Reference Array to the mid range value 128 (for CUs at the picture boundaries)
+#if TUNE_FIRSTPASS_LOSSLESS
+    EB_MEMSET(above_ref, 127, block_width_neigh + 1);
+    EB_MEMSET(left_ref, 129, block_height_neigh + 1);
+#else
     EB_MEMSET(above_ref, 127, (bwidth << 1) + 1);
     EB_MEMSET(left_ref, 129, (bheight << 1) + 1);
-
+#endif
     // Get the upper left sample
     if (src_origin_x != 0 && src_origin_y != 0) {
         read_ptr = src_ptr - stride - 1;
@@ -1315,7 +1364,11 @@ EbErrorType update_neighbor_samples_array_open_loop_mb_recon(
         above_ref++;
     }
     // Get the left-column
+#if TUNE_FIRSTPASS_LOSSLESS
+    count = block_width_neigh;
+#else
     count = block_size_half;
+#endif
     if (src_origin_x != 0) {
         read_ptr = src_ptr - 1;
         if (src_origin_y == 0)
@@ -1326,8 +1379,15 @@ EbErrorType update_neighbor_samples_array_open_loop_mb_recon(
             read_ptr += stride;
             left_ref++;
         }
+#if TUNE_FIRSTPASS_LOSSLESS
+        left_ref += (block_width_neigh - count);
+#else
         left_ref += (block_size_half - count);
+#endif
         // pading unknown left bottom pixels with value at(-1, -15)
+#if TUNE_FIRSTPASS_LOSSLESS
+        if (use_top_righ_bottom_left)
+#endif
         for (idx = 0; idx < bheight; idx++)
             *(left_ref - bheight + idx) = *(left_ref - bheight - 1);
     }
@@ -1341,12 +1401,25 @@ EbErrorType update_neighbor_samples_array_open_loop_mb_recon(
             left_ref += count;
 
     // Get the top-row
+#if TUNE_FIRSTPASS_LOSSLESS
+    count = block_width_neigh;
+#else
     count = block_size_half;
+#endif
     if (src_origin_y != 0) {
+#if TUNE_FIRSTPASS_LOSSLESS
+        if (update_top_neighbor){
+#endif
         read_ptr = src_ptr - stride;
         count = ((src_origin_x + count) > width) ? count - ((src_origin_x + count) - width) : count;
         EB_MEMCPY(above_ref, read_ptr, count);
+#if TUNE_FIRSTPASS_LOSSLESS
+        }
+#endif
         // pading unknown top right pixels with value at(15, -1)
+#if TUNE_FIRSTPASS_LOSSLESS
+        if (use_top_righ_bottom_left)
+#endif
         if (src_origin_x != 0)
             for (idx = 0; idx < bwidth; idx++)
                 *(above_ref + bwidth + idx) = *(above_ref + bwidth - 1);

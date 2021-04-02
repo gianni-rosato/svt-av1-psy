@@ -52,7 +52,9 @@ typedef struct {
     double avg_pcnt_third_ref;
     double avg_pcnt_third_ref_nolast;
     double avg_new_mv_count;
+#if !TUNE_FIRSTPASS_LOSSLESS
     double avg_wavelet_energy;
+#endif
     double avg_raw_err_stdev;
     int    non_zero_stdev_count;
 } GF_GROUP_STATS;

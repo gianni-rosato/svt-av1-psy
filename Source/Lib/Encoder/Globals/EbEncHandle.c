@@ -2825,6 +2825,9 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     scs_ptr->static_config.source_width = scs_ptr->max_input_luma_width;
     scs_ptr->static_config.source_height = scs_ptr->max_input_luma_height;
 
+#if TUNE_FIRSTPASS_LOSSLESS
+        scs_ptr->enc_mode_2ndpass = scs_ptr->static_config.enc_mode ;
+#endif
     if (use_output_stat(scs_ptr)) {
         scs_ptr->static_config.enc_mode = MAX_ENC_PRESET;
 #if FTR_LAD_MG
