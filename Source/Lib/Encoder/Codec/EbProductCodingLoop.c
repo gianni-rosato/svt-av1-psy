@@ -8829,20 +8829,11 @@ void md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionContext *context_pt
         context_ptr->candidate_buffer_ptr_array;
     ModeDecisionCandidateBuffer **candidate_buffer_ptr_array;
     const BlockGeom *             blk_geom = context_ptr->blk_geom;
-    ModeDecisionCandidateBuffer * candidate_buffer;
-    ModeDecisionCandidate *       fast_candidate_array = context_ptr->fast_candidate_array;
-    uint32_t                      candidate_index;
-    uint32_t                      fast_candidate_total_count;
-    const uint32_t input_origin_index = (context_ptr->blk_origin_y + input_picture_ptr->origin_y) *
-            input_picture_ptr->stride_y +
-        (context_ptr->blk_origin_x + input_picture_ptr->origin_x);
 
     const uint32_t input_cb_origin_in_index = ((context_ptr->round_origin_y >> 1) +
                                                (input_picture_ptr->origin_y >> 1)) *
             input_picture_ptr->stride_cb +
         ((context_ptr->round_origin_x >> 1) + (input_picture_ptr->origin_x >> 1));
-    const uint32_t blk_origin_index = blk_geom->origin_x +
-        blk_geom->origin_y * context_ptr->sb_size;
     const uint32_t blk_chroma_origin_index = ROUND_UV(blk_geom->origin_x) / 2 +
         ROUND_UV(blk_geom->origin_y) / 2 * (context_ptr->sb_size >> 1);
     BlkStruct *blk_ptr             = context_ptr->blk_ptr;
@@ -8990,6 +8981,7 @@ for (uint32_t li = 0; li < MAX_NUM_OF_REF_PIC_LIST; ++li) {
             precompute_intra_pred_for_inter_intra(pcs_ptr, context_ptr);
     }
 
+    uint32_t                      fast_candidate_total_count;
     generate_md_stage_0_cand(
         context_ptr->sb_ptr, context_ptr, &fast_candidate_total_count, pcs_ptr);
 #if FTR_REF_BITS
@@ -9017,6 +9009,11 @@ for (uint32_t li = 0; li < MAX_NUM_OF_REF_PIC_LIST; ++li) {
     context_ptr->mds1_best_idx      = 0;
     context_ptr->mds1_best_class_it = 0;
 #endif
+    const uint32_t input_origin_index = (context_ptr->blk_origin_y + input_picture_ptr->origin_y) *
+        input_picture_ptr->stride_y +
+        (context_ptr->blk_origin_x + input_picture_ptr->origin_x);
+    const uint32_t blk_origin_index = blk_geom->origin_x +
+        blk_geom->origin_y * context_ptr->sb_size;
     for (cand_class_it = CAND_CLASS_0; cand_class_it < CAND_CLASS_TOTAL; cand_class_it++) {
         //number of next level candidates could not exceed number of curr level candidates
         context_ptr->md_stage_1_count[cand_class_it] = MIN(
@@ -9036,15 +9033,13 @@ for (uint32_t li = 0; li < MAX_NUM_OF_REF_PIC_LIST; ++li) {
 #else
         assert(buffer_total_count <= MAX_NFL_BUFF && "not enough cand buffers");
 #endif
-
             //Input: md_stage_0_count[cand_class_it]  Output:  md_stage_1_count[cand_class_it]
             context_ptr->target_class = cand_class_it;
-
             md_stage_0(
                 pcs_ptr,
                 context_ptr,
                 candidate_buffer_ptr_array_base,
-                fast_candidate_array,
+                context_ptr->fast_candidate_array,
                 0,
                 fast_candidate_total_count - 1,
                 input_picture_ptr,
@@ -9226,12 +9221,12 @@ for (uint32_t li = 0; li < MAX_NUM_OF_REF_PIC_LIST; ++li) {
                context_ptr->md_stage_3_total_count);
 
     // Full Mode Decision (choose the best mode)
-    candidate_index  = product_full_mode_decision(context_ptr,
+    uint32_t candidate_index  = product_full_mode_decision(context_ptr,
                                                  blk_ptr,
                                                  candidate_buffer_ptr_array,
                                                  context_ptr->md_stage_3_total_count,
                                                  context_ptr->best_candidate_index_array);
-    candidate_buffer = candidate_buffer_ptr_array[candidate_index];
+    ModeDecisionCandidateBuffer * candidate_buffer = candidate_buffer_ptr_array[candidate_index];
 #if !RFCTR_MD_BLOCK_LOOP
     bestcandidate_buffers[0] = candidate_buffer;
 #endif
