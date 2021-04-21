@@ -446,7 +446,7 @@ Linux Default Branch:
     BRANCH: default
   before_script:
     - git fetch https://gitlab.com/AOMediaCodec/SVT-AV1.git HEAD
-    - git checkout FETCH_HEAD
+    - git checkout ${CI_MERGE_REQUEST_TARGET_BRANCH_NAME:-FETCH_HEAD}
     - *linux-extract-videos
   script:
     - *compiler-script
@@ -476,20 +476,19 @@ Win64 Enc Test:
   needs:
     - Win64 (MSVC, Tests)
 
-Enc Diff Test:
+Enc OS Diff Test:
   stage: .post
   image: registry.gitlab.com/aomediacodec/aom-testing/alpine3
   script:
     - |
       success=true
-      for dist in *-8bit-m0.ivf; do
+      for dist in *.ivf; do
           case $dist in
-          test-default-Linux-Release-8bit-m0.ivf | test-default-Linux-Release-10bit-m0.ivf) continue ;;
-          test-default-Linux-Release-8bit-m8.ivf | test-default-Linux-Release-10bit-m8.ivf) continue ;;
-          *-8bit-m0.ivf) diff -q test-default-Linux-Release-8bit-m0.ivf "$dist" || success=false ;;
-          *-8bit-m8.ivf) diff -q test-default-Linux-Release-8bit-m8.ivf "$dist" || success=false ;;
-          *-10bit-m0.ivf) diff -q test-default-Linux-Release-10bit-m0.ivf "$dist" || success=false ;;
-          *-10bit-m8.ivf) diff -q test-default-Linux-Release-10bit-m8.ivf "$dist" || success=false ;;
+          test-pr-Linux-Release-*bit-*.ivf) continue ;;
+          *-8bit-m0.ivf) diff -q test-pr-Linux-Release-8bit-m0.ivf "$dist" || success=false ;;
+          *-8bit-m8.ivf) diff -q test-pr-Linux-Release-8bit-m8.ivf "$dist" || success=false ;;
+          *-10bit-m0.ivf) diff -q test-pr-Linux-Release-10bit-m0.ivf "$dist" || success=false ;;
+          *-10bit-m8.ivf) diff -q test-pr-Linux-Release-10bit-m8.ivf "$dist" || success=false ;;
           esac
       done
       $success
@@ -497,6 +496,26 @@ Enc Diff Test:
     - Linux Enc Test
     - macOS Enc Test
     - Win64 Enc Test
+
+Enc Default Diff test:
+  stage: .post
+  image: registry.gitlab.com/aomediacodec/aom-testing/alpine3
+  allow_failure: true
+  script:
+    - |
+      success=true
+      for dist in *.ivf; do
+          case $dist in
+          test-pr-Linux-Release-*bit-*.ivf) continue ;;
+          *-8bit-m0.ivf) diff -q test-pr-Linux-Release-8bit-m0.ivf "$dist" || success=false ;;
+          *-8bit-m8.ivf) diff -q test-pr-Linux-Release-8bit-m8.ivf "$dist" || success=false ;;
+          *-10bit-m0.ivf) diff -q test-pr-Linux-Release-10bit-m0.ivf "$dist" || success=false ;;
+          *-10bit-m8.ivf) diff -q test-pr-Linux-Release-10bit-m8.ivf "$dist" || success=false ;;
+          esac
+      done
+      $success
+  needs:
+    - Linux Enc Test
     - Linux Default Branch
 
 Linux Gstreamer (Static):
