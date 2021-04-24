@@ -1279,7 +1279,11 @@ static EbErrorType prediction_structure_ctor(
             // AV1 supports 4 forward and 3 backward maximum.
             // For low delay b case, will use the first 3 refs in L0 as refs in L0 and L1.
             predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
+#if FIX_MRP_LOW_DELAY_P
+                ->ref_list0.reference_list_count = (predType == EB_PRED_LOW_DELAY_B || predType == EB_PRED_LOW_DELAY_P)
+#else
                 ->ref_list0.reference_list_count = (predType == EB_PRED_LOW_DELAY_B)
+#endif
                 ? MIN(3, ref_index)
                 : ref_index;
 
@@ -1423,7 +1427,11 @@ static EbErrorType prediction_structure_ctor(
                 ++ref_index;
             // Set Reference List 0 Count
             predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
+#if FIX_MRP_LOW_DELAY_P
+                ->ref_list0.reference_list_count = (predType == EB_PRED_LOW_DELAY_B || predType == EB_PRED_LOW_DELAY_P)
+#else
                 ->ref_list0.reference_list_count = (predType == EB_PRED_LOW_DELAY_B)
+#endif
                 ? MIN(3, ref_index)
                 : ref_index;
 

@@ -361,6 +361,7 @@ extern "C" {
 #define TUNE_FIRSTPASS_CENTER0                  1 // firstpass optimizations: turn OFF 0,0 check
 #define TUNE_FIRSTPASS_ME                       1 // firstpass optimizations: ME size
 #define TUNE_FIRSTPASS_SKIP_FRAME               1 // firstpass optimizations: skip frames
+#define FIX_MRP_LOW_DELAY_P                     1 // Fix deadlock in 2L
 // ============= END SVT_04 =============
 
 //FOR DEBUGGING - Do not remove
