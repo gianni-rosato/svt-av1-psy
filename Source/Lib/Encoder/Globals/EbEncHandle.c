@@ -3067,6 +3067,7 @@ EbErrorType svt_svt_enc_init_parameter(
     config_ptr->frame_rate_numerator = 0;
     config_ptr->frame_rate_denominator = 0;
     config_ptr->encoder_bit_depth = 8;
+    config_ptr->is_16bit_pipeline = EB_FALSE;
     config_ptr->ten_bit_format = 0;
     config_ptr->compressed_ten_bit_format = 0;
     config_ptr->source_width = 0;
@@ -3098,6 +3099,7 @@ EbErrorType svt_svt_enc_init_parameter(
     config_ptr->intra_refresh_type = 2;
     config_ptr->hierarchical_levels = 4;
     config_ptr->pred_structure = EB_PRED_RANDOM_ACCESS;
+    config_ptr->enable_qp_scaling_flag = 1;
     config_ptr->disable_dlf_flag = EB_FALSE;
     config_ptr->enable_warped_motion = DEFAULT;
     config_ptr->enable_global_motion = EB_TRUE;
@@ -3214,6 +3216,8 @@ EbErrorType svt_svt_enc_init_parameter(
     config_ptr->superres_denom = 8;
     config_ptr->superres_kf_denom = 8;
     config_ptr->superres_qthres = 43; // random threshold, change
+
+    config_ptr->manual_pred_struct_entry_num = 0;
 
     return return_error;
 }
