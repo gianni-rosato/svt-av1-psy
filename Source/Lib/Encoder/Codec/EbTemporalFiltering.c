@@ -1321,15 +1321,19 @@ static void tf_16x16_sub_pel_search(PictureParentControlSet *pcs_ptr, MeContext 
 
     if (!is_highbd) {
         assert(src[C_Y] != NULL);
-        assert(src[C_U] != NULL);
-        assert(src[C_V] != NULL);
+        if (context_ptr->tf_chroma) {
+            assert(src[C_U] != NULL);
+            assert(src[C_V] != NULL);
+        }
         prediction_ptr.buffer_y  = pred[C_Y];
         prediction_ptr.buffer_cb = pred[C_U];
         prediction_ptr.buffer_cr = pred[C_V];
     } else {
         assert(src_16bit[C_Y] != NULL);
-        assert(src_16bit[C_U] != NULL);
-        assert(src_16bit[C_V] != NULL);
+        if (context_ptr->tf_chroma) {
+            assert(src_16bit[C_U] != NULL);
+            assert(src_16bit[C_V] != NULL);
+        }
         prediction_ptr.buffer_y  = (uint8_t *)pred_16bit[C_Y];
         prediction_ptr.buffer_cb = (uint8_t *)pred_16bit[C_U];
         prediction_ptr.buffer_cr = (uint8_t *)pred_16bit[C_V];
@@ -1807,15 +1811,19 @@ static void tf_32x32_sub_pel_search(PictureParentControlSet *pcs_ptr, MeContext 
 
     if (!is_highbd) {
         assert(src[C_Y] != NULL);
-        assert(src[C_U] != NULL);
-        assert(src[C_V] != NULL);
+        if (context_ptr->tf_chroma) {
+            assert(src[C_U] != NULL);
+            assert(src[C_V] != NULL);
+        }
         prediction_ptr.buffer_y  = pred[C_Y];
         prediction_ptr.buffer_cb = pred[C_U];
         prediction_ptr.buffer_cr = pred[C_V];
     } else {
         assert(src_16bit[C_Y] != NULL);
-        assert(src_16bit[C_U] != NULL);
-        assert(src_16bit[C_V] != NULL);
+        if (context_ptr->tf_chroma) {
+            assert(src_16bit[C_U] != NULL);
+            assert(src_16bit[C_V] != NULL);
+        }
         prediction_ptr.buffer_y  = (uint8_t *)pred_16bit[C_Y];
         prediction_ptr.buffer_cb = (uint8_t *)pred_16bit[C_U];
         prediction_ptr.buffer_cr = (uint8_t *)pred_16bit[C_V];
