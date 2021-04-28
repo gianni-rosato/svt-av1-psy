@@ -237,6 +237,10 @@ static void svt_ext_eight_sad_calculation_8x8_16x16(uint8_t *src, uint32_t src_s
     const uint32_t start_8x8_pos = 4 * start_16x16_pos;
     int16_t        x_mv, y_mv;
 
+#if OPT_ME_RES_SAD_LOOP
+    (void)p_eight_sad8x8;
+#endif
+
     p_best_sad_8x8 += start_8x8_pos;
     p_best_mv8x8 += start_8x8_pos;
     p_best_sad_16x16 += start_16x16_pos;
@@ -246,7 +250,11 @@ static void svt_ext_eight_sad_calculation_8x8_16x16(uint8_t *src, uint32_t src_s
         uint32_t       src_stride_sub = (src_stride << 1);
         uint32_t       ref_stride_sub = (ref_stride << 1);
         for (int search_index = 0; search_index < 8; search_index++) {
+#if OPT_ME_RES_SAD_LOOP
+            uint32_t sad8x8_0 =
+#else
             uint32_t sad8x8_0 = p_eight_sad8x8[0 + start_8x8_pos][search_index] =
+#endif
                 (compute8x4_sad_kernel_c(src, src_stride_sub, ref + search_index, ref_stride_sub)) << 1;
             if (sad8x8_0 < p_best_sad_8x8[0]) {
                 p_best_sad_8x8[0] = (uint32_t)sad8x8_0;
@@ -255,7 +263,11 @@ static void svt_ext_eight_sad_calculation_8x8_16x16(uint8_t *src, uint32_t src_s
                 p_best_mv8x8[0] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
             }
 
+#if OPT_ME_RES_SAD_LOOP
+            uint32_t sad8x8_1 =
+#else
             uint32_t sad8x8_1 = p_eight_sad8x8[1 + start_8x8_pos][search_index] =
+#endif
                 (compute8x4_sad_kernel_c(
                     src + 8, src_stride_sub, ref + 8 + search_index, ref_stride_sub))
                 << 1;
@@ -266,7 +278,11 @@ static void svt_ext_eight_sad_calculation_8x8_16x16(uint8_t *src, uint32_t src_s
                 p_best_mv8x8[1] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
             }
 
+#if OPT_ME_RES_SAD_LOOP
+            uint32_t sad8x8_2 =
+#else
             uint32_t sad8x8_2 = p_eight_sad8x8[2 + start_8x8_pos][search_index] =
+#endif
                 (compute8x4_sad_kernel_c(src + (src_stride << 3),
                     src_stride_sub,
                     ref + (ref_stride << 3) + search_index,
@@ -279,7 +295,11 @@ static void svt_ext_eight_sad_calculation_8x8_16x16(uint8_t *src, uint32_t src_s
                 p_best_mv8x8[2] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
             }
 
+#if OPT_ME_RES_SAD_LOOP
+            uint32_t sad8x8_3 =
+#else
             uint32_t sad8x8_3 = p_eight_sad8x8[3 + start_8x8_pos][search_index] =
+#endif
                 (compute8x4_sad_kernel_c(src + (src_stride << 3) + 8,
                     src_stride_sub,
                     ref + (ref_stride << 3) + 8 + search_index,
@@ -304,7 +324,11 @@ static void svt_ext_eight_sad_calculation_8x8_16x16(uint8_t *src, uint32_t src_s
     else
     {
         for (int search_index = 0; search_index < 8; search_index++) {
+#if OPT_ME_RES_SAD_LOOP
+            uint32_t sad8x8_0 =
+#else
             uint32_t sad8x8_0 = p_eight_sad8x8[0 + start_8x8_pos][search_index] =
+#endif
                 compute8x8_sad_kernel_c(src, src_stride, ref + search_index, ref_stride);
             if (sad8x8_0 < p_best_sad_8x8[0]) {
                 p_best_sad_8x8[0] = (uint32_t)sad8x8_0;
@@ -313,7 +337,11 @@ static void svt_ext_eight_sad_calculation_8x8_16x16(uint8_t *src, uint32_t src_s
                 p_best_mv8x8[0] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
             }
 
+#if OPT_ME_RES_SAD_LOOP
+            uint32_t sad8x8_1 =
+#else
             uint32_t sad8x8_1 = p_eight_sad8x8[1 + start_8x8_pos][search_index] =
+#endif
                 (compute8x8_sad_kernel_c(
                     src + 8, src_stride, ref + 8 + search_index, ref_stride));
             if (sad8x8_1 < p_best_sad_8x8[1]) {
@@ -323,7 +351,11 @@ static void svt_ext_eight_sad_calculation_8x8_16x16(uint8_t *src, uint32_t src_s
                 p_best_mv8x8[1] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
             }
 
+#if OPT_ME_RES_SAD_LOOP
+            uint32_t sad8x8_2 =
+#else
             uint32_t sad8x8_2 = p_eight_sad8x8[2 + start_8x8_pos][search_index] =
+#endif
                 (compute8x8_sad_kernel_c(src + (src_stride << 3),
                     src_stride,
                     ref + (ref_stride << 3) + search_index,
@@ -335,7 +367,11 @@ static void svt_ext_eight_sad_calculation_8x8_16x16(uint8_t *src, uint32_t src_s
                 p_best_mv8x8[2] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
             }
 
+#if OPT_ME_RES_SAD_LOOP
+            uint32_t sad8x8_3 =
+#else
             uint32_t sad8x8_3 = p_eight_sad8x8[3 + start_8x8_pos][search_index] =
+#endif
                 (compute8x8_sad_kernel_c(src + (src_stride << 3) + 8,
                     src_stride,
                     ref + (ref_stride << 3) + 8 + search_index,
@@ -1005,7 +1041,11 @@ void hme_level_0(
     // Put the first search location into level0 results
     svt_sad_loop_kernel(
                 &context_ptr->sixteenth_sb_buffer[0],
+#if SS_OPT_TF2_ME_COPY
+                context_ptr->hme_search_method == FULL_SAD_SEARCH ? context_ptr->sixteenth_sb_buffer_stride : context_ptr->sixteenth_sb_buffer_stride*2,
+#else
                 context_ptr->sixteenth_sb_buffer_stride,
+#endif
                 &sixteenth_ref_pic_ptr->buffer_y[search_region_index],
                 (context_ptr->hme_search_method == FULL_SAD_SEARCH)
                     ? sixteenth_ref_pic_ptr->stride_y
@@ -2368,7 +2408,11 @@ void prehme_core(
 
     svt_sad_loop_kernel(
         &context_ptr->sixteenth_sb_buffer[0],
+#if SS_OPT_TF2_ME_COPY
+        context_ptr->hme_search_method == FULL_SAD_SEARCH ? context_ptr->sixteenth_sb_buffer_stride : context_ptr->sixteenth_sb_buffer_stride * 2,
+#else
         context_ptr->sixteenth_sb_buffer_stride,
+#endif
         &sixteenth_ref_pic_ptr->buffer_y[search_region_index],
         (context_ptr->hme_search_method == FULL_SAD_SEARCH)
         ? sixteenth_ref_pic_ptr->stride_y

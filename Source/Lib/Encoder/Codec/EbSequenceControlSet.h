@@ -246,6 +246,11 @@ typedef struct SequenceControlSet {
 #if LIMIT_TO_43
     uint8_t  mrp_init_level; //sequence based MRP level
 #endif
+#if FTR_REDUCE_MVEST
+    int32_t nmv_vec_cost[MV_JOINTS];
+    int32_t nmv_costs[2][MV_VALS];
+    uint8_t mvrate_set;
+#endif
 } SequenceControlSet;
 
 typedef struct EbSequenceControlSetInitData {

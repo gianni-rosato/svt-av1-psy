@@ -2310,6 +2310,7 @@ void *motion_estimation_kernel(void *input_ptr) {
                         uint32_t sb_index = (uint16_t)(x_sb_index + y_sb_index * pic_width_in_sb);
                         uint32_t sb_origin_x = x_sb_index * scs_ptr->sb_sz;
                         uint32_t sb_origin_y = y_sb_index * scs_ptr->sb_sz;
+#if !SS_OPT_TF2_ME_COPY
 #if FTR_TPL_TR
                         uint32_t sb_width = (me_pcs->aligned_width - sb_origin_x) < BLOCK_SIZE_64
                             ? me_pcs->aligned_width - sb_origin_x : BLOCK_SIZE_64;
@@ -2318,11 +2319,14 @@ void *motion_estimation_kernel(void *input_ptr) {
                             ? pcs_ptr->aligned_width - sb_origin_x
                             : BLOCK_SIZE_64;
 #endif
+#endif
 
                         // Load the SB from the input to the intermediate SB buffer
                         uint32_t buffer_index = (input_picture_ptr->origin_y + sb_origin_y) *
                                 input_picture_ptr->stride_y +
                             input_picture_ptr->origin_x + sb_origin_x;
+
+#if !OPT_ME_RES_SAD_LOOP
                         for (unsigned sb_row = 0; sb_row < BLOCK_SIZE_64; sb_row++) {
                             svt_memcpy(
                                 &(context_ptr->me_context_ptr->sb_buffer[sb_row * BLOCK_SIZE_64]),
@@ -2331,6 +2335,7 @@ void *motion_estimation_kernel(void *input_ptr) {
                                                  sb_row * input_picture_ptr->stride_y]),
                                 sizeof(uint8_t) * BLOCK_SIZE_64);
                         }
+#endif
 #ifdef ARCH_X86_64
                         uint8_t *src_ptr   = &input_padded_picture_ptr->buffer_y[buffer_index];
 #if FTR_TPL_TR
@@ -2359,7 +2364,10 @@ void *motion_estimation_kernel(void *input_ptr) {
                             buffer_index = (quarter_picture_ptr->origin_y + (sb_origin_y >> 1)) *
                                     quarter_picture_ptr->stride_y +
                                 quarter_picture_ptr->origin_x + (sb_origin_x >> 1);
-
+#if SS_OPT_TF2_ME_COPY
+                            context_ptr->me_context_ptr->quarter_sb_buffer = &quarter_picture_ptr->buffer_y[buffer_index];
+                            context_ptr->me_context_ptr->quarter_sb_buffer_stride = quarter_picture_ptr->stride_y;
+#else
                             for (unsigned sb_row = 0; sb_row < (BLOCK_SIZE_64 >> 1); sb_row++) {
                                 svt_memcpy(
                                     &(context_ptr->me_context_ptr->quarter_sb_buffer
@@ -2370,6 +2378,7 @@ void *motion_estimation_kernel(void *input_ptr) {
                                                      sb_row * quarter_picture_ptr->stride_y]),
                                     sizeof(uint8_t) * (sb_width >> 1));
                             }
+#endif
                         }
 
                         // Load the 1/16 decimated SB from the 1/16 decimated input to the 1/16 intermediate SB buffer
@@ -2378,6 +2387,10 @@ void *motion_estimation_kernel(void *input_ptr) {
                                     sixteenth_picture_ptr->stride_y +
                                 sixteenth_picture_ptr->origin_x + (sb_origin_x >> 2);
 
+#if SS_OPT_TF2_ME_COPY
+                            context_ptr->me_context_ptr->sixteenth_sb_buffer = &sixteenth_picture_ptr->buffer_y[buffer_index];
+                            context_ptr->me_context_ptr->sixteenth_sb_buffer_stride = sixteenth_picture_ptr->stride_y;
+#else
                             uint8_t *frame_ptr = &sixteenth_picture_ptr->buffer_y[buffer_index];
                             uint8_t *local_ptr = context_ptr->me_context_ptr->sixteenth_sb_buffer;
                             for (unsigned sb_row = 0; sb_row < (BLOCK_SIZE_64 >> 2);
@@ -2391,6 +2404,7 @@ void *motion_estimation_kernel(void *input_ptr) {
                                     << (context_ptr->me_context_ptr->hme_search_method !=
                                         FULL_SAD_SEARCH);
                             }
+#endif
                         }
                         context_ptr->me_context_ptr->me_type = ME_OPEN_LOOP;
 

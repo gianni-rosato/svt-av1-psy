@@ -2634,7 +2634,11 @@ EbErrorType av1_inter_full_cost(PictureControlSet *pcs_ptr, ModeDecisionContext 
 /************************************************************
 * Coding Loop Context Generation
 ************************************************************/
+#if OPT_INIT_XD
+void coding_loop_context_generation(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr, BlkStruct *blk_ptr,
+#else
 void coding_loop_context_generation(ModeDecisionContext *context_ptr, BlkStruct *blk_ptr,
+#endif
                                     uint32_t blk_origin_x, uint32_t blk_origin_y,
 #if !CLN_MDC_CTX
                                    uint32_t sb_sz,
@@ -2771,6 +2775,9 @@ if (!context_ptr->shut_fast_rate) {
         blk_origin_x, blk_origin_y, mode_type_neighbor_array, inter_pred_dir_neighbor_array);
 #endif
     //Collect Neighbor ref cout
+#if OPT_INIT_XD
+    if (pcs_ptr->slice_type != I_SLICE || pcs_ptr->parent_pcs_ptr->frm_hdr.allow_intrabc)
+#endif
     av1_collect_neighbors_ref_counts_new(blk_ptr->av1xd);
 
     return;

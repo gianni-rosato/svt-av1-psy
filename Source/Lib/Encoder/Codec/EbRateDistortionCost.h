@@ -37,7 +37,11 @@ extern uint64_t svt_av1_cost_coeffs_txb(
                                         TxType transform_type, int16_t txb_skip_ctx,
                                         int16_t dc_sign_ctx, EbBool reduced_transform_set_flag);
 
+#if OPT_INIT_XD
+extern void coding_loop_context_generation(PictureControlSet *pcs_ptr,
+#else
 extern void coding_loop_context_generation(
+#endif
     ModeDecisionContext *context_ptr, BlkStruct *blk_ptr, uint32_t blk_origin_x,
     uint32_t blk_origin_y,
 #if !CLN_MDC_CTX

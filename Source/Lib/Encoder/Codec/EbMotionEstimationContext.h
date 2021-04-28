@@ -356,10 +356,13 @@ typedef struct MeContext {
 #else
     MotionEstimationTierZero *me_candidate;
 #endif
+
+#if  !OPT_ME_RES_SAD_LOOP
     // Intermediate SB-sized buffer to retain the input samples
     uint8_t * sb_buffer;
     uint8_t * sb_buffer_ptr;
     uint32_t  sb_buffer_stride;
+#endif
     uint8_t * sb_src_ptr;
     uint32_t  sb_src_stride;
     uint8_t * quarter_sb_buffer;

@@ -49,7 +49,9 @@ EbErrorType svt_sequence_control_set_ctor(SequenceControlSet *scs_ptr, EbPtr obj
     EbSequenceControlSetInitData *scs_init_data = (EbSequenceControlSetInitData *)
         object_init_data_ptr;
     uint32_t segment_index;
-
+#if FTR_REDUCE_MVEST
+    scs_ptr->mvrate_set = 0;
+#endif
     scs_ptr->dctor = svt_sequence_control_set_dctor;
 
     scs_ptr->static_config.sb_sz           = 64;

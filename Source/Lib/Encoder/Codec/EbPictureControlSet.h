@@ -515,6 +515,11 @@ typedef struct MotionEstimationData {
     EbDctor       dctor;
     MeSbResults **me_results;
     uint16_t      sb_total_count_unscaled;
+#if OPT_ME
+    uint8_t       max_cand;//total max me candidates given the active references
+    uint8_t       max_refs;//total max active references
+    uint8_t       max_l0;  //max active refs in L0
+#endif
 } MotionEstimationData;
 typedef struct TplControls {
     uint8_t tpl_opt_flag; // 0:OFF 1:ON - TPL optimizations : no rate, only DC
@@ -1310,6 +1315,9 @@ typedef struct PictureParentControlSet {
     uint8_t                         is_new_gf_group;
     struct PictureParentControlSet *gf_group[MAX_TPL_GROUP_SIZE];
 #endif
+#if FTR_REDUCE_MVEST
+    uint8_t bypass_cost_table_gen;
+#endif
 } PictureParentControlSet;
 
 typedef struct PictureControlSetInitData {
@@ -1369,6 +1377,10 @@ typedef struct PictureControlSetInitData {
 
     Av1Common *                av1_cm;
 #endif
+
+#if OPT_ME
+   uint8_t mrp_level;
+#endif
 } PictureControlSetInitData;
 
 typedef struct Av1Comp {
@@ -1385,7 +1397,11 @@ extern EbErrorType recon_coef_creator(EbPtr *object_dbl_ptr, EbPtr object_init_d
 extern EbErrorType picture_parent_control_set_creator(EbPtr *object_dbl_ptr,
                                                       EbPtr  object_init_data_ptr);
 extern EbErrorType me_creator(EbPtr *object_dbl_ptr, EbPtr object_init_data_ptr);
+#if  OPT_ME
+extern EbErrorType me_sb_results_ctor(MeSbResults *obj_ptr,PictureControlSetInitData *init_data_ptr);
+#else
 extern EbErrorType me_sb_results_ctor(MeSbResults *obj_ptr);
+#endif
 #ifdef __cplusplus
 }
 #endif

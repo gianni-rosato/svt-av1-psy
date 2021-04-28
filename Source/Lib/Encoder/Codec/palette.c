@@ -331,7 +331,10 @@ void search_palette_luma(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
           (context_ptr->blk_origin_y + src_pic->origin_y) * src_pic->stride_y)
          << is16bit);
     int block_width, block_height, rows, cols;
-
+#if OPT_INIT_XD_2
+    MacroBlockD *xd = context_ptr->blk_ptr->av1xd;
+    BlockSize    bsize = context_ptr->blk_geom->bsize;
+#else
     Av1Common *  cm       = pcs_ptr->parent_pcs_ptr->av1_cm;
     MacroBlockD *xd       = context_ptr->blk_ptr->av1xd;
     TileInfo *   tile     = &context_ptr->sb_ptr->tile_info;
@@ -377,7 +380,7 @@ void search_palette_luma(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
         xd->left_mbmi = &mi_ptr[-1].mbmi;
     } else
         xd->left_mbmi = NULL;
-
+#endif
     av1_get_block_dimensions(context_ptr->blk_geom->bsize,
                              0,
                              context_ptr->blk_ptr->av1xd,

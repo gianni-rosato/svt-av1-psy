@@ -65,7 +65,9 @@ static void build_intra_predictors(
         int32_t n_left_px, int32_t n_bottomleft_px,
         int32_t plane)
 {
+#if !OPT_INIT_XD
     (void)xd;
+#endif
     int32_t i;
 
     int32_t ref_stride = 1;
@@ -428,10 +430,16 @@ static void build_intra_predictors_high(
 
 
 void svt_av1_predict_intra_block(
+#if !OPT_INIT_XD_2
         TileInfo * tile,
+#endif
         STAGE       stage,
         const BlockGeom * blk_geom,
+#if OPT_INIT_XD_2
+        MacroBlockD *xd,
+#else
         const Av1Common *cm,
+#endif
         int32_t wpx,
         int32_t hpx,
         TxSize tx_size,
@@ -453,14 +461,18 @@ void svt_av1_predict_intra_block(
         uint32_t bl_org_y_pict,
         uint32_t bl_org_x_mb,
         uint32_t bl_org_y_mb,
+#if !OPT_INIT_XD_2
         ModeInfo **mi_grid_base,
+#endif
         SeqHeader *seq_header_ptr)
 {
+#if !OPT_INIT_XD_2
     MacroBlockD xd_s;
     MacroBlockD *xd = &xd_s;
 
     xd_s.chroma_left_mbmi = 0;
     xd_s.chroma_above_mbmi = 0;
+#endif
 
     uint32_t  pred_buf_x_offest;
     uint32_t  pred_buf_y_offest;
@@ -477,6 +489,7 @@ void svt_av1_predict_intra_block(
     // Adjust mirow , micol ;
     // All plane have the same values
 
+#if !OPT_INIT_XD_2
     int32_t mirow = bl_org_y_pict >> 2;
     int32_t micol = bl_org_x_pict >> 2;
     xd->up_available   = (mirow > tile->mi_row_start);
@@ -504,6 +517,8 @@ void svt_av1_predict_intra_block(
 
     if (xd->n8_w > xd->n8_h)
         if (mirow & (xd->n8_w - 1)) xd->is_sec_rect = 1;
+
+#endif
     uint8_t  *dst;
     int32_t dst_stride;
     if (plane == 0) {
@@ -519,6 +534,7 @@ void svt_av1_predict_intra_block(
         dst_stride = recon_buffer->stride_cr;
     }
 
+#if !OPT_INIT_XD_2
     int32_t chroma_up_available = xd->up_available;
     int32_t chroma_left_available = xd->left_available;
     const int32_t ss_x = plane == 0 ? 0 : 1; //CHKN
@@ -560,11 +576,18 @@ void svt_av1_predict_intra_block(
         // prediction. We want to point to the chroma reference block in that
         // region, which is the bottom-right-most mi unit.
         // This leads to the following offsets:
+#if OPT_D2_COPIES
+        xd->chroma_above_mbmi = chroma_up_available ? &xd->mi[-(mirow & ss_y) * mi_stride - (micol & ss_x) - mi_stride + ss_x]->mbmi : NULL;
+
+        xd->chroma_left_mbmi = chroma_left_available ? &xd->mi[-(mirow & ss_y) * mi_stride - (micol & ss_x) + ss_y * mi_stride - 1]->mbmi : NULL;
+#else
         xd->chroma_above_mbmi = chroma_up_available ? &mi_ptr[-mi_stride + ss_x].mbmi : NULL;
 
         xd->chroma_left_mbmi = chroma_left_available ? &mi_ptr[ss_y * mi_stride - 1].mbmi : NULL;
+#endif
     }
 
+#endif
     //CHKN  const MbModeInfo *const mbmi = xd->mi[0];
     const int32_t txwpx = tx_size_wide[tx_size];
     const int32_t txhpx = tx_size_high[tx_size];
@@ -590,11 +613,19 @@ void svt_av1_predict_intra_block(
         pd->subsampling_x = pd->subsampling_y = 1;
     const int32_t txw = tx_size_wide_unit[tx_size];
     const int32_t txh = tx_size_high_unit[tx_size];
+#if OPT_INIT_XD_2
+    const int32_t have_top = row_off || (pd->subsampling_y ? xd->chroma_up_available
+                                                           : xd->up_available);
+    const int32_t have_left =
+            col_off ||
+            (pd->subsampling_x ? xd->chroma_left_available : xd->left_available);
+#else
     const int32_t have_top = row_off || (pd->subsampling_y ? /*xd->*/chroma_up_available
                                                            : xd->up_available);
     const int32_t have_left =
             col_off ||
             (pd->subsampling_x ? /*xd->*/chroma_left_available : xd->left_available);
+#endif
     const int32_t mi_row = -xd->mb_to_top_edge >> (3 + MI_SIZE_LOG2);
     const int32_t mi_col = -xd->mb_to_left_edge >> (3 + MI_SIZE_LOG2);
     const int32_t xr_chr_offset = 0;
@@ -657,10 +688,16 @@ void svt_av1_predict_intra_block(
 
 void svt_av1_predict_intra_block_16bit(
         EbBitDepthEnum bit_depth,
+#if !OPT_INIT_XD_2
         TileInfo * tile,
+#endif
         STAGE       stage,
         const BlockGeom * blk_geom,
+#if OPT_INIT_XD_2
+        MacroBlockD* xd,
+#else
         const Av1Common *cm,
+#endif
         int32_t wpx,
         int32_t hpx,
         TxSize tx_size,
@@ -682,14 +719,18 @@ void svt_av1_predict_intra_block_16bit(
         uint32_t bl_org_y_pict,
         uint32_t bl_org_x_mb,
         uint32_t bl_org_y_mb,
+#if !OPT_INIT_XD_2
         ModeInfo **mi_grid_base,
+#endif
         SeqHeader *seq_header_ptr)
 {
+#if !OPT_INIT_XD_2
     MacroBlockD xd_s;
     MacroBlockD *xd = &xd_s;
 
     xd_s.chroma_left_mbmi = 0;
     xd_s.chroma_above_mbmi = 0;
+#endif
 
     uint32_t  pred_buf_x_offest;
     uint32_t  pred_buf_y_offest;
@@ -702,8 +743,14 @@ void svt_av1_predict_intra_block_16bit(
         pred_buf_y_offest = bl_org_y_mb;
     }
 
+
+#if !OPT_INIT_XD_2
     int32_t mirow = bl_org_y_pict >> 2;
     int32_t micol = bl_org_x_pict >> 2;
+#if OPT_INIT_XD_2
+    const int32_t bw = mi_size_wide[bsize];
+    const int32_t bh = mi_size_high[bsize];
+#else
     xd->up_available = (mirow > tile->mi_row_start);
     xd->left_available = (micol > tile->mi_col_start);
 
@@ -730,6 +777,8 @@ void svt_av1_predict_intra_block_16bit(
 
     if (xd->n8_w > xd->n8_h)
         if (mirow & (xd->n8_w - 1)) xd->is_sec_rect = 1;
+#endif
+#endif
 
     // Adjust prediction pointers
     uint16_t *dst;
@@ -746,7 +795,7 @@ void svt_av1_predict_intra_block_16bit(
         dst = (uint16_t*)(recon_buffer->buffer_cr) + (pred_buf_x_offest + recon_buffer->origin_x / 2 + (pred_buf_y_offest + recon_buffer->origin_y / 2)*recon_buffer->stride_cr);
         dst_stride = recon_buffer->stride_cr;
     }
-
+#if !OPT_INIT_XD_2
     int32_t chroma_up_available = xd->up_available;
     int32_t chroma_left_available = xd->left_available;
 
@@ -789,10 +838,15 @@ void svt_av1_predict_intra_block_16bit(
         // prediction. We want to point to the chroma reference block in that
         // region, which is the bottom-right-most mi unit.
         // This leads to the following offsets:
+#if OPT_D2_COPIES
+        xd->chroma_above_mbmi = chroma_up_available ? &xd->mi[-(mirow & ss_y) * mi_stride - (micol & ss_x) - mi_stride + ss_x]->mbmi : NULL;
+        xd->chroma_left_mbmi = chroma_left_available ? &xd->mi[-(mirow & ss_y) * mi_stride - (micol & ss_x) + ss_y * mi_stride - 1]->mbmi : NULL;
+#else
         xd->chroma_above_mbmi = chroma_up_available ? &mi_ptr[-mi_stride + ss_x].mbmi : NULL;
         xd->chroma_left_mbmi = chroma_left_available ? &mi_ptr[ss_y * mi_stride - 1].mbmi : NULL;
+#endif
     }
-
+#endif
     //CHKN  const MbModeInfo *const mbmi = xd->mi[0];
     const int32_t txwpx = tx_size_wide[tx_size];
     const int32_t txhpx = tx_size_high[tx_size];
@@ -819,11 +873,19 @@ void svt_av1_predict_intra_block_16bit(
         pd->subsampling_x = pd->subsampling_y = 1;
     const int32_t txw = tx_size_wide_unit[tx_size];
     const int32_t txh = tx_size_high_unit[tx_size];
+#if OPT_INIT_XD_2
+    const int32_t have_top = row_off || (pd->subsampling_y ? xd->chroma_up_available
+                                                           : xd->up_available);
+    const int32_t have_left =
+            col_off ||
+            (pd->subsampling_x ? xd->chroma_left_available : xd->left_available);
+#else
     const int32_t have_top = row_off || (pd->subsampling_y ? /*xd->*/chroma_up_available
                                                            : xd->up_available);
     const int32_t have_left =
             col_off ||
             (pd->subsampling_x ? /*xd->*/chroma_left_available : xd->left_available);
+#endif
     const int32_t mi_row = -xd->mb_to_top_edge >> (3 + MI_SIZE_LOG2);
     const int32_t mi_col = -xd->mb_to_left_edge >> (3 + MI_SIZE_LOG2);
     const int32_t xr_chr_offset = 0;
@@ -968,10 +1030,16 @@ EbErrorType svt_av1_intra_prediction_cl(
                 mode = candidate_buffer_ptr->candidate_ptr->pred_mode;
 
             svt_av1_predict_intra_block(
+#if !OPT_INIT_XD_2
                     &md_context_ptr->sb_ptr->tile_info,
+#endif
                     !ED_STAGE,
                     md_context_ptr->blk_geom,
+#if OPT_INIT_XD_2
+                    md_context_ptr->blk_ptr->av1xd,
+#else
                     pcs_ptr->parent_pcs_ptr->av1_cm,                                      //const Av1Common *cm,
+#endif
                     plane ? md_context_ptr->blk_geom->bwidth_uv : md_context_ptr->blk_geom->bwidth,          //int32_t wpx,
                     plane ? md_context_ptr->blk_geom->bheight_uv : md_context_ptr->blk_geom->bheight,          //int32_t hpx,
                     plane ? tx_size_chroma : tx_size,                                               //TxSize tx_size,
@@ -995,7 +1063,9 @@ EbErrorType svt_av1_intra_prediction_cl(
                     md_context_ptr->blk_origin_y,                  //uint32_t cuOrgY
                     plane ? ((md_context_ptr->blk_geom->origin_x >> 3) << 3) / 2 : md_context_ptr->blk_geom->origin_x,  //uint32_t cuOrgX used only for prediction Ptr
                     plane ? ((md_context_ptr->blk_geom->origin_y >> 3) << 3) / 2 : md_context_ptr->blk_geom->origin_y,   //uint32_t cuOrgY used only for prediction Ptr
+#if !OPT_INIT_XD_2
                     pcs_ptr->mi_grid_base,
+#endif
                     &((SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr)->seq_header
             );
         }
@@ -1045,10 +1115,16 @@ EbErrorType svt_av1_intra_prediction_cl(
 
             svt_av1_predict_intra_block_16bit(
                     EB_10BIT,
+#if !OPT_INIT_XD_2
                     &md_context_ptr->sb_ptr->tile_info,
+#endif
                     !ED_STAGE,
                     md_context_ptr->blk_geom,
+#if OPT_INIT_XD_2
+                    md_context_ptr->blk_ptr->av1xd,
+#else
                     pcs_ptr->parent_pcs_ptr->av1_cm,                                      //const Av1Common *cm,
+#endif
                     plane ? md_context_ptr->blk_geom->bwidth_uv : md_context_ptr->blk_geom->bwidth,          //int32_t wpx,
                     plane ? md_context_ptr->blk_geom->bheight_uv : md_context_ptr->blk_geom->bheight,          //int32_t hpx,
                     plane ? tx_size_chroma : tx_size,                                               //TxSize tx_size,
@@ -1071,7 +1147,9 @@ EbErrorType svt_av1_intra_prediction_cl(
                     md_context_ptr->blk_origin_y,                  //uint32_t cuOrgY
                     plane ? ((md_context_ptr->blk_geom->origin_x >> 3) << 3) / 2 : md_context_ptr->blk_geom->origin_x,  //uint32_t cuOrgX used only for prediction Ptr
                     plane ? ((md_context_ptr->blk_geom->origin_y >> 3) << 3) / 2 : md_context_ptr->blk_geom->origin_y,   //uint32_t cuOrgY used only for prediction Ptr
+#if !OPT_INIT_XD_2
                     pcs_ptr->mi_grid_base,
+#endif
                     &((SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr)->seq_header
             );
         }
@@ -1125,10 +1203,16 @@ EbErrorType  intra_luma_prediction_for_interintra(
             top_neigh_array[0] = left_neigh_array[0] = md_context_ptr->luma_recon_neighbor_array->top_left_array[MAX_PICTURE_HEIGHT_SIZE + md_context_ptr->blk_origin_x - md_context_ptr->blk_origin_y];
 
         svt_av1_predict_intra_block(
+#if !OPT_INIT_XD_2
                 &md_context_ptr->sb_ptr->tile_info,
+#endif
                 !ED_STAGE,
                 md_context_ptr->blk_geom,
+#if OPT_INIT_XD_2
+                md_context_ptr->blk_ptr->av1xd,
+#else
                 pcs_ptr->parent_pcs_ptr->av1_cm,        //const Av1Common *cm,
+#endif
                 md_context_ptr->blk_geom->bwidth,                       //int32_t wpx,
                 md_context_ptr->blk_geom->bheight,                      //int32_t hpx,
                 tx_size,                                                //TxSize tx_size,
@@ -1150,7 +1234,9 @@ EbErrorType  intra_luma_prediction_for_interintra(
                 md_context_ptr->blk_origin_y,                            //uint32_t cuOrgY
                 0,                                                      //cuOrgX used only for prediction Ptr
                 0,                                                       //cuOrgY used only for prediction Ptr
+#if !OPT_INIT_XD_2
                 pcs_ptr->mi_grid_base,
+#endif
                 &((SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr)->seq_header
         );
     } else {
@@ -1166,10 +1252,16 @@ EbErrorType  intra_luma_prediction_for_interintra(
 
         svt_av1_predict_intra_block_16bit(
                 EB_10BIT,
+#if !OPT_INIT_XD_2
                 &md_context_ptr->sb_ptr->tile_info,
+#endif
                 !ED_STAGE,
                 md_context_ptr->blk_geom,
+#if OPT_INIT_XD_2
+                md_context_ptr->blk_ptr->av1xd,
+#else
                 pcs_ptr->parent_pcs_ptr->av1_cm,        //const Av1Common *cm,
+#endif
                 md_context_ptr->blk_geom->bwidth,                       //int32_t wpx,
                 md_context_ptr->blk_geom->bheight,                      //int32_t hpx,
                 tx_size,                                                //TxSize tx_size,
@@ -1191,7 +1283,9 @@ EbErrorType  intra_luma_prediction_for_interintra(
                 md_context_ptr->blk_origin_y,                            //uint32_t cuOrgY
                 0,                                                      //cuOrgX used only for prediction Ptr
                 0,                                                      //cuOrgY used only for prediction Ptr
+#if !OPT_INIT_XD_2
                 pcs_ptr->mi_grid_base,
+#endif
                 &((SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr)->seq_header
         );
     }

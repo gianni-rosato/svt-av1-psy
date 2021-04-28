@@ -1442,6 +1442,9 @@ void store16bit_input_src(EbPictureBufferDesc *input_sample16bit_buffer, Picture
                sb_w * 2);
 }
 
+#if OPT_D2_COPIES
+void update_mi_map_skip_settings(BlkStruct *blk_ptr);
+#else
 #if FIX_USELESS_ENCDEC_CYCLE
 void update_mi_map_skip_settings(BlkStruct *blk_ptr, uint32_t blk_origin_x, uint32_t blk_origin_y,
     const BlockGeom *blk_geom, PictureControlSet *pcs_ptr);
@@ -1449,7 +1452,7 @@ void update_mi_map_skip_settings(BlkStruct *blk_ptr, uint32_t blk_origin_x, uint
 void update_av1_mi_map(BlkStruct *blk_ptr, uint32_t blk_origin_x, uint32_t blk_origin_y,
                        const BlockGeom *blk_geom, PictureControlSet *pcs_ptr);
 #endif
-
+#endif
 void move_blk_data(PictureControlSet *pcs, EncDecContext *context_ptr, BlkStruct *src_cu,
                    BlkStruct *dst_cu);
 
@@ -1552,10 +1555,16 @@ void perform_intra_coding_loop(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, u
 
             svt_av1_predict_intra_block_16bit(
                 bit_depth,
+#if !OPT_INIT_XD_2
                 &sb_ptr->tile_info,
+#endif
                 ED_STAGE,
                 context_ptr->blk_geom,
+#if OPT_INIT_XD_2
+                context_ptr->blk_ptr->av1xd,
+#else
                 pcs_ptr->parent_pcs_ptr->av1_cm,
+#endif
                 context_ptr->blk_geom->bwidth,
                 context_ptr->blk_geom->bheight,
                 tx_size,
@@ -1581,7 +1590,9 @@ void perform_intra_coding_loop(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, u
                 context_ptr->blk_origin_y,
                 0,
                 0,
+#if !OPT_INIT_XD_2
                 pcs_ptr->mi_grid_base,
+#endif
                 &((SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr)->seq_header);
         } else {
             uint8_t        top_neigh_array[64 * 2 + 1];
@@ -1612,10 +1623,16 @@ void perform_intra_coding_loop(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, u
             // Hsan: if CHROMA_MODE_2, then CFL will be evaluated @ EP as no CHROMA @ MD
             // If that's the case then you should ensure than the 1st chroma prediction uses UV_DC_PRED (that's the default configuration for CHROMA_MODE_2 if CFL applicable (set @ fast loop candidates injection) then MD assumes chroma mode always UV_DC_PRED)
             svt_av1_predict_intra_block(
+#if !OPT_INIT_XD_2
                 &sb_ptr->tile_info,
+#endif
                 ED_STAGE,
                 context_ptr->blk_geom,
+#if OPT_INIT_XD_2
+                blk_ptr->av1xd,
+#else
                 pcs_ptr->parent_pcs_ptr->av1_cm,
+#endif
                 context_ptr->blk_geom->bwidth,
                 context_ptr->blk_geom->bheight,
                 tx_size,
@@ -1641,7 +1658,9 @@ void perform_intra_coding_loop(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, u
                 context_ptr->blk_origin_y,
                 0,
                 0,
+#if !OPT_INIT_XD_2
                 pcs_ptr->mi_grid_base,
+#endif
                 &((SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr)->seq_header );
         }
         // Encode Transform Unit -INTRA-
@@ -1832,10 +1851,16 @@ void perform_intra_coding_loop(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, u
 
                 svt_av1_predict_intra_block_16bit(
                     bit_depth,
+#if !OPT_INIT_XD_2
                     &sb_ptr->tile_info,
+#endif
                     ED_STAGE,
                     context_ptr->blk_geom,
+#if OPT_INIT_XD_2
+                    context_ptr->blk_ptr->av1xd,
+#else
                     pcs_ptr->parent_pcs_ptr->av1_cm,
+#endif
                     plane ? context_ptr->blk_geom->bwidth_uv : context_ptr->blk_geom->bwidth,
                     plane ? context_ptr->blk_geom->bheight_uv : context_ptr->blk_geom->bheight,
                     tx_size,
@@ -1865,7 +1890,9 @@ void perform_intra_coding_loop(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, u
                     context_ptr->blk_origin_y,
                     0,
                     0,
+#if !OPT_INIT_XD_2
                     pcs_ptr->mi_grid_base,
+#endif
                     &((SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr)->seq_header);
             }
         } else {
@@ -1923,10 +1950,16 @@ void perform_intra_coding_loop(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, u
                 // Hsan: if CHROMA_MODE_2, then CFL will be evaluated @ EP as no CHROMA @ MD
                 // If that's the case then you should ensure than the 1st chroma prediction uses UV_DC_PRED (that's the default configuration for CHROMA_MODE_2 if CFL applicable (set @ fast loop candidates injection) then MD assumes chroma mode always UV_DC_PRED)
                 svt_av1_predict_intra_block(
+#if !OPT_INIT_XD_2
                     &sb_ptr->tile_info,
+#endif
                     ED_STAGE,
                     context_ptr->blk_geom,
+#if OPT_INIT_XD_2
+                    blk_ptr->av1xd,
+#else
                     pcs_ptr->parent_pcs_ptr->av1_cm,
+#endif
                     plane ? context_ptr->blk_geom->bwidth_uv : context_ptr->blk_geom->bwidth,
                     plane ? context_ptr->blk_geom->bheight_uv : context_ptr->blk_geom->bheight,
                     tx_size,
@@ -1956,7 +1989,9 @@ void perform_intra_coding_loop(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, u
                     context_ptr->blk_origin_y,
                     0,
                     0,
+#if !OPT_INIT_XD_2
                     pcs_ptr->mi_grid_base,
+#endif
                     &((SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr)->seq_header);
             }
         }
@@ -2681,7 +2716,9 @@ EB_EXTERN void av1_encode_decode(SequenceControlSet *scs_ptr, PictureControlSet 
                                         0,
                                         1,
                                         &blk_ptr->interinter_comp,
+#if !OPT_INIT_XD_2
                                         &sb_ptr->tile_info,
+#endif
                                         ep_luma_recon_neighbor_array,
                                         ep_cb_recon_neighbor_array,
                                         ep_cr_recon_neighbor_array,
@@ -2716,7 +2753,9 @@ EB_EXTERN void av1_encode_decode(SequenceControlSet *scs_ptr, PictureControlSet 
                                         0,
                                         1,
                                         &blk_ptr->interinter_comp,
+#if !OPT_INIT_XD_2
                                         &sb_ptr->tile_info,
+#endif
                                         ep_luma_recon_neighbor_array,
                                         ep_cb_recon_neighbor_array,
                                         ep_cr_recon_neighbor_array,
@@ -3201,7 +3240,9 @@ EB_EXTERN void av1_encode_decode(SequenceControlSet *scs_ptr, PictureControlSet 
                                     0,
                                     blk_ptr->compound_idx,
                                     &blk_ptr->interinter_comp,
+#if !OPT_INIT_XD_2
                                     &sb_ptr->tile_info,
+#endif
                                     ep_luma_recon_neighbor_array,
                                     ep_cb_recon_neighbor_array,
                                     ep_cr_recon_neighbor_array,
@@ -3236,7 +3277,9 @@ EB_EXTERN void av1_encode_decode(SequenceControlSet *scs_ptr, PictureControlSet 
                                     0,
                                     blk_ptr->compound_idx,
                                     &blk_ptr->interinter_comp,
+#if !OPT_INIT_XD_2
                                     &sb_ptr->tile_info,
+#endif
                                     ep_luma_recon_neighbor_array,
                                     ep_cb_recon_neighbor_array,
                                     ep_cr_recon_neighbor_array,
@@ -4033,11 +4076,15 @@ EB_EXTERN void av1_encode_decode(SequenceControlSet *scs_ptr, PictureControlSet 
                         context_ptr->blk_geom->bheight_uv);
                 }
 #if FIX_USELESS_ENCDEC_CYCLE
+#if OPT_D2_COPIES
+                update_mi_map_skip_settings(blk_ptr);
+#else
                 update_mi_map_skip_settings(blk_ptr,
                     context_ptr->blk_origin_x,
                     context_ptr->blk_origin_y,
                     blk_geom,
                     pcs_ptr);
+#endif
 #else
                 update_av1_mi_map(blk_ptr,
                                   context_ptr->blk_origin_x,
@@ -4133,8 +4180,12 @@ else blk_it +=
         pcs_ptr->parent_pcs_ptr->frm_hdr.loop_filter_params.filter_level[1]) {
         uint8_t last_col =
             ((sb_origin_x) + sb_width == pcs_ptr->parent_pcs_ptr->aligned_width) ? 1 : 0;
+#if CLN_DLF_GET_TX_SIZE
+        loop_filter_sb(recon_buffer, pcs_ptr, sb_origin_y >> 2, sb_origin_x >> 2, 0, 3, last_col);
+#else
         loop_filter_sb(
             recon_buffer, pcs_ptr, NULL, sb_origin_y >> 2, sb_origin_x >> 2, 0, 3, last_col);
+#endif
     }
 }
 

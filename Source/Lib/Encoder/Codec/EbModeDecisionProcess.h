@@ -260,6 +260,9 @@ typedef struct DepthRefinementCtrls {
 
     int64_t sub_to_current_th; // decrease towards a more agressive level
     int64_t parent_to_current_th; // decrease towards a more agressive level
+#if FTR_IMPROVE_DEPTH_REFINEMENT
+    uint8_t up_to_2_depth;                        // when 1, a maximum of 2 depth per block (PRED+Parent or PRED+Sub), 0: no restriction(s)
+#endif
     uint8_t
         use_pred_block_cost; // add an offset to sub_to_current_th and parent_to_current_th on the cost range of the predicted block; use default ths for high cost(s) and more aggressive TH(s) for low cost(s)
 #if !FTR_EARLY_DEPTH_REMOVAL
@@ -280,11 +283,44 @@ typedef struct DepthRemovalCtrls {
     uint8_t disallow_below_16x16;  // remove 8x8 blocks and below based on the sb_64x64 (me_distortion, variance)
 }DepthRemovalCtrls;
 #endif
+#if CLN_MOVE_DEPTH_REFINE_SIGS
+typedef struct DepthCtrls {
+    int8_t s_depth; // start depth; 0: consider no parent blocks; else number of parent blocks to consider, specified as a negative number (e.g. -2 means consider 2 parents)
+    int8_t e_depth; // end depth; 0: consider no child blocks; else number of child blocks to consider, specified as a positive number (e.g. 2 means consider 2 children)
+}DepthCtrls;
+#endif
+#if OPT_REFACTOR_IN_DEPTH_CTRLS
+#define MAX_RANGE_CNT 8
+typedef struct InDepthBlockSkipCtrls {
+    uint16_t base_weight;                      // 0: in-depth-block-skip OFF; 1: in-depth-block-skip ON
+                                               // higher towards more aggressive level(s)
+                                               // 0: the estimated cost for the next children is not taken into account and the action will be lossless compared to no in - depth - block - skip
+                                               // 100 : the normalized cost of next children is assumed to be equal to the normalized cost of past children
+
+    uint8_t  cost_band_based_modulation;       // whether to amplify the base_weight based on the cost range of the parent block or not
+    uint16_t max_cost_multiplier;              // the max cost beyond which the base_weight is zeroed out
+    uint8_t  max_band_cnt;                     // the number of band(s)
+    uint16_t weight_per_band[MAX_RANGE_CNT];   // the weight per band
+
+    uint8_t  child_cnt_based_modulation;       // whether to modulate based on the child count
+    uint16_t cnt_based_weight[3];              // to specify the weight per child cnt
+
+} InDepthBlockSkipCtrls;
+#endif
+#if LOWER_DEPTH_EXIT_CTRL
+typedef struct LowerDepthBlockSkipCtrls {
+    uint8_t enabled;
+    float min_distortion_cost_ratio; // the distortion-to-cost ratio under wich the quad_deviation_th is zeroed out (feature is disabled)
+    float quad_deviation_th;         // do not perform sub_depth if std_deviation of the 4 quadrants src-to-rec dist is less than std_deviation_th
+    uint8_t skip_all;                // whether to skip all or only next depth; 0: skip only next depth; 1: skip all lower depths
+}LowerDepthBlockSkipCtrls;
+#else
 #if FTR_IMPROVE_DEPTH_REMOVAL
 typedef struct DepthSkipCtrls {
     uint8_t enabled;
     float quand_deviation_th; // do not perform sub_depth if std_deviation of the 4 quadrants src-to-rec dist is less than std_deviation_th
 }DepthSkipCtrls;
+#endif
 #endif
 typedef struct PfCtrls {
     EB_TRANS_COEFF_SHAPE pf_shape;
@@ -565,7 +601,9 @@ typedef struct ModeDecisionContext {
     uint8_t         sb64_sq_no4xn_geom;   //simple geometry 64x64SB, Sq only, no 4xN
 #endif
     uint8_t          pu_itr;
+#if !OPT_INIT
     uint8_t          cu_size_log2;
+#endif
 #if CLN_MD_CAND_BUFF
     uint32_t         *best_candidate_index_array;
 #else
@@ -573,7 +611,9 @@ typedef struct ModeDecisionContext {
 #endif
     uint16_t         blk_origin_x;
     uint16_t         blk_origin_y;
+#if !OPT_INIT
     uint8_t          sb_sz;
+#endif
     uint32_t         sb_origin_x;
     uint32_t         sb_origin_y;
     uint32_t         round_origin_x;
@@ -780,9 +820,24 @@ typedef struct ModeDecisionContext {
 #if FTR_EARLY_DEPTH_REMOVAL
     DepthRemovalCtrls    depth_removal_ctrls;
 #endif
+#if OPT_REFACTOR_IN_DEPTH_CTRLS
+    InDepthBlockSkipCtrls in_depth_block_skip_ctrls;
+#endif
+#if CLN_MOVE_DEPTH_REFINE_SIGS
+    DepthCtrls           depth_ctrls; // control which depths can be considered in PD1
+#endif
+#if LOWER_DEPTH_EXIT_CTRL
+    LowerDepthBlockSkipCtrls lower_depth_block_skip_ctrls;
+#endif
     DepthRefinementCtrls depth_refinement_ctrls;
+#if FTR_IMPROVE_DEPTH_REFINEMENT
+    int64_t parent_to_current_deviation;
+    int64_t child_to_current_deviation;
+#endif
+#if !LOWER_DEPTH_EXIT_CTRL
 #if FTR_IMPROVE_DEPTH_REMOVAL
     DepthSkipCtrls       depth_skip_ctrls;
+#endif
 #endif
     uint8_t              pf_level;
     PfCtrls              pf_ctrls;

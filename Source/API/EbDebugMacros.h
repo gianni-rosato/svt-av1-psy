@@ -362,6 +362,24 @@ extern "C" {
 #define TUNE_FIRSTPASS_ME                       1 // firstpass optimizations: ME size
 #define TUNE_FIRSTPASS_SKIP_FRAME               1 // firstpass optimizations: skip frames
 #define FIX_MRP_LOW_DELAY_P                     1 // Fix deadlock in 2L
+
+
+
+#define FTR_IMPROVE_DEPTH_REFINEMENT           1 // Add the ability to use a maximum of 2 depth per block (PRED+Parent or PRED+Sub)
+#define LOWER_DEPTH_EXIT_CTRL                  1 // Refactor lower_depth_skip_ctrls
+#define OPT_REFACTOR_IN_DEPTH_CTRLS            1 // Refactor in_depth_skip_ctrls
+#define CLN_MOVE_DEPTH_REFINE_SIGS             1 // Move depth refinement signals into their own control struct in a signal derivation kernel
+#define CLN_DLF_GET_TX_SIZE                    1 // Clean up get_transform_size()
+#define OPT_D2_COPIES                          1 // Avoid copying redundant block_mi data; change pointers instead
+#define FTR_REDUCE_MVEST                       1 // Bypass nmv_cost table generation
+#define OPT_INIT_XD                            1 // Move init of blk_ptr->avx1d to one place (affects PD0 + PD1)
+#define OPT_INIT_XD_2                          1  // Move init of blk_ptr->avx1d to one place (affects PD0 + PD1)
+#define OPT_INIT                               1 // Reduce number of data initializations (PD0 + PD1)
+#define OPT_BUILD_CAND_BLK_3                   1 // Lossless optimization of build_cand_block_array()
+#define SS_OPT_TF2_ME_COPY                     1 //avoid TF accum init. Lossless all presets ; avoid temp buffer copying in ME. Lossless all presets
+#define OPT_ME_RES_SAD_LOOP                    1 //Lossless ME optimization
+
+
 // ============= END SVT_04 =============
 
 //FOR DEBUGGING - Do not remove

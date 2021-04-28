@@ -266,8 +266,15 @@ typedef struct MacroBlockD {
     uint8_t     ref_mv_count[MODE_CTX_REF_FRAMES];
     CandidateMv final_ref_mv_stack[MAX_REF_MV_STACK_SIZE];
     uint8_t     is_sec_rect;
+#if OPT_INIT_XD_2
+    int8_t      up_available;
+    int8_t      left_available;
+    int8_t      chroma_up_available;
+    int8_t      chroma_left_available;
+#else
     int32_t     up_available;
     int32_t     left_available;
+#endif
     TileInfo    tile;
     int32_t     mi_stride;
     ModeInfo ** mi;

@@ -5526,11 +5526,19 @@ EbErrorType write_modes_b(PictureControlSet *pcs_ptr, EntropyCodingContext *cont
     blk_ptr->av1xd->up_available      = (mi_row > tb_ptr->tile_info.mi_row_start);
     blk_ptr->av1xd->left_available    = (mi_col > tb_ptr->tile_info.mi_col_start);
     if (blk_ptr->av1xd->up_available)
+#if OPT_D2_COPIES
+        blk_ptr->av1xd->above_mbmi = &blk_ptr->av1xd->mi[-mi_stride]->mbmi;
+#else
         blk_ptr->av1xd->above_mbmi = &mi_ptr[-mi_stride].mbmi;
+#endif
     else
         blk_ptr->av1xd->above_mbmi = NULL;
     if (blk_ptr->av1xd->left_available)
+#if OPT_D2_COPIES
+        blk_ptr->av1xd->left_mbmi = &blk_ptr->av1xd->mi[-1]->mbmi;
+#else
         blk_ptr->av1xd->left_mbmi = &mi_ptr[-1].mbmi;
+#endif
     else
         blk_ptr->av1xd->left_mbmi = NULL;
     blk_ptr->av1xd->tile_ctx = frame_context;

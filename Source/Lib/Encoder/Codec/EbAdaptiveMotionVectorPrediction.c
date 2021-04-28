@@ -1368,20 +1368,76 @@ void init_xd(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr) {
 
     xd->mi_stride        = pcs_ptr->mi_stride;
     const int32_t offset = mi_row * xd->mi_stride + mi_col;
+#if OPT_D2_COPIES
+    pcs_ptr->mi_grid_base[offset] = pcs_ptr->mip + offset;
+#endif
     xd->mi               = pcs_ptr->mi_grid_base + offset;
 
+#if OPT_INIT_XD
+#if OPT_D2_COPIES
+    //ModeInfo *mi_ptr = xd->mi[-(xd->mi_stride)]; /*&xd->mi[-xd->mi_stride]->mbmi*/
+    xd->above_mbmi = (xd->up_available) ? &xd->mi[-(xd->mi_stride)]->mbmi : NULL;
+    //mi_ptr = xd->mi[-1];
+    xd->left_mbmi = (xd->left_available) ? &xd->mi[-1]->mbmi : NULL;
+#else
+    ModeInfo *mi_ptr = *xd->mi;
+    xd->above_mbmi = (xd->up_available) ? &mi_ptr[-(xd->mi_stride)].mbmi : NULL;
+    xd->left_mbmi = (xd->left_available) ? &mi_ptr[-1].mbmi : NULL;
+#endif
+#endif
+#if OPT_INIT_XD
+    if (!context_ptr->skip_intra) {
+        const uint8_t ss_x = 1, ss_y = 1;
+        xd->chroma_up_available = bh < 2 /*mi_size_wide[BLOCK_8X8]*/ ? (mi_row - 1) > xd->tile.mi_row_start : xd->up_available;
+        xd->chroma_left_available = bw < 2 /*mi_size_high[BLOCK_8X8]*/ ? (mi_col - 1) > xd->tile.mi_col_start : xd->left_available;
+
+        const int chroma_ref = ((mi_row & 0x01) || !(bh & 0x01)) &&
+                               ((mi_col & 0x01) || !(bw & 0x01));
+
+        // To help calculate the "above" and "left" chroma blocks, note that the
+        // current block may cover multiple luma blocks (eg, if partitioned into
+        // 4x4 luma blocks).
+        // First, find the top-left-most luma block covered by this chroma block
+        int32_t base_mbmi_offset = -(mi_row & ss_y) * xd->mi_stride - (mi_col & ss_x);
+
+        // Then, we consider the luma region covered by the left or above 4x4 chroma
+        // prediction. We want to point to the chroma reference block in that
+        // region, which is the bottom-right-most mi unit.
+        // This leads to the following offsets:
+        xd->chroma_above_mbmi = (xd->chroma_up_available && chroma_ref)
+            ? &xd->mi[base_mbmi_offset - xd->mi_stride + ss_x]->mbmi
+            : NULL;
+
+        xd->chroma_left_mbmi = (xd->chroma_left_available && chroma_ref)
+            ? &xd->mi[base_mbmi_offset + ss_y * xd->mi_stride - 1]->mbmi
+            : NULL;
+    }
+#endif
     xd->mi[0]->mbmi.block_mi.partition = from_shape_to_part[context_ptr->blk_geom->shape];
 }
 
+#if OPT_INIT_XD
+void generate_av1_mvp_table(ModeDecisionContext *context_ptr, BlkStruct *blk_ptr,
+                            const BlockGeom *blk_geom, uint16_t blk_origin_x, uint16_t blk_origin_y,
+                            MvReferenceFrame *ref_frames, uint32_t tot_refs,
+                            PictureControlSet *pcs_ptr) {
+#else
 void generate_av1_mvp_table(TileInfo *tile, ModeDecisionContext *context_ptr, BlkStruct *blk_ptr,
                             const BlockGeom *blk_geom, uint16_t blk_origin_x, uint16_t blk_origin_y,
                             MvReferenceFrame *ref_frames, uint32_t tot_refs,
                             PictureControlSet *pcs_ptr) {
+#endif
     int32_t      mi_row  = blk_origin_y >> MI_SIZE_LOG2;
     int32_t      mi_col  = blk_origin_x >> MI_SIZE_LOG2;
     Av1Common *  cm      = pcs_ptr->parent_pcs_ptr->av1_cm;
     FrameHeader *frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
     MacroBlockD *xd      = blk_ptr->av1xd;
+#if OPT_INIT_XD
+    BlockSize    bsize   = blk_geom->bsize;
+#if !OPT_INIT_XD_2
+    init_xd(pcs_ptr, context_ptr);
+#endif
+#else
     xd->n8_w             = blk_geom->bwidth >> MI_SIZE_LOG2;
     xd->n8_h             = blk_geom->bheight >> MI_SIZE_LOG2;
     xd->n4_w             = blk_geom->bwidth >> MI_SIZE_LOG2;
@@ -1430,10 +1486,14 @@ void generate_av1_mvp_table(TileInfo *tile, ModeDecisionContext *context_ptr, Bl
 
     xd->mi_stride        = pcs_ptr->mi_stride;
     const int32_t offset = mi_row * xd->mi_stride + mi_col;
+#if OPT_D2_COPIES
+    pcs_ptr->mi_grid_base[offset] = pcs_ptr->mip + offset;
+#endif
     xd->mi               = pcs_ptr->mi_grid_base + offset;
 
     xd->mi[0]->mbmi.block_mi.partition = from_shape_to_part[blk_geom->shape];
 
+#endif
 
 #if   OPT_MFMV
     uint8_t symteric_refs = 0;
@@ -1606,6 +1666,15 @@ void enc_pass_av1_mv_pred(TileInfo *tile, ModeDecisionContext *md_context_ptr, B
                         ref_mv);
 }
 #endif
+#if OPT_D2_COPIES
+void update_mi_map_skip_settings(BlkStruct *blk_ptr) {
+
+    // Update only the data in the top left block of the partition, because all other mi_blocks
+    // point to the top left mi block of the partition
+    blk_ptr->av1xd->mi[0]->mbmi.block_mi.skip = blk_ptr->block_has_coeff ? EB_FALSE : EB_TRUE;
+    blk_ptr->av1xd->mi[0]->mbmi.block_mi.skip_mode = (int8_t)blk_ptr->skip_flag;
+}
+#else
 #if FIX_USELESS_ENCDEC_CYCLE
 void update_mi_map_skip_settings(BlkStruct *blk_ptr, uint32_t blk_origin_x, uint32_t blk_origin_y,
     const BlockGeom *blk_geom, PictureControlSet *pcs_ptr) {
@@ -1711,6 +1780,7 @@ void update_av1_mi_map(BlkStruct *blk_ptr, uint32_t blk_origin_x, uint32_t blk_o
         }
     }
 }
+#endif
 #if OPT10_MI_MAP
 #if OPT_MI_UPDATE
 void update_mi_map(BlkStruct* blk_ptr, uint32_t blk_origin_x, uint32_t blk_origin_y,
@@ -1725,6 +1795,10 @@ void update_mi_map(struct ModeDecisionContext *context_ptr, BlkStruct *blk_ptr,
     int32_t  mi_col    = blk_origin_x >> MI_SIZE_LOG2;
 
     const int32_t    offset = mi_row * mi_stride + mi_col;
+#if OPT_D2_COPIES
+    // Reset the mi_grid (needs to be done here in case it was changed for NSQ blocks during MD - init_xd())
+    pcs_ptr->mi_grid_base[offset] = pcs_ptr->mip + offset;
+#endif
     ModeInfo *       mi_ptr = *(pcs_ptr->mi_grid_base + offset);
     MvReferenceFrame rf[2]  = {0, 0};
     if (avail_blk_flag)
@@ -1736,6 +1810,12 @@ void update_mi_map(struct ModeDecisionContext *context_ptr, BlkStruct *blk_ptr,
         for (mi_x = 0; mi_x < (blk_geom->bwidth >> MI_SIZE_LOG2); mi_x++) {
 
             const int32_t    mi_idx = mi_x + mi_y * mi_stride;
+#if OPT_D2_COPIES
+            if (mi_idx != 0) {
+                pcs_ptr->mi_grid_base[offset + mi_idx] = pcs_ptr->mi_grid_base[offset];
+                continue;
+            }
+#endif
             MbModeInfo* mbmi = &mi_ptr[mi_idx].mbmi;
             BlockModeInfo*   block_mi = &mi_ptr[mi_idx].mbmi.block_mi;
 #if OPT_MI_UPDATE

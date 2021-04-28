@@ -130,6 +130,25 @@ void svt_av1_setup_dst_planes(struct MacroblockdPlane *planes, BlockSize bsize,
 }
 
 //***************************************************************************************************//
+#if CLN_DLF_GET_TX_SIZE
+static INLINE TxSize get_transform_size(const MbModeInfo *const mbmi, const EdgeDir edge_dir,
+    const int32_t plane, const struct MacroblockdPlane *plane_ptr, const EbBool is_skip) {
+    assert(mbmi != NULL);
+
+    TxSize tx_size = (plane == COMPONENT_LUMA)
+        ? (is_skip
+            ? tx_depth_to_tx_size[0][mbmi->block_mi.sb_type]
+            : tx_depth_to_tx_size[mbmi->tx_depth][mbmi->block_mi.sb_type]) // use max_tx_size
+        : av1_get_max_uv_txsize(mbmi->block_mi.sb_type, plane_ptr->subsampling_x, plane_ptr->subsampling_y);
+    assert(tx_size < TX_SIZES_ALL);
+
+    // since in case of chrominance or non-square transorm need to convert
+    // transform size into transform size in particular direction.
+    // for vertical edge, filter direction is horizontal, for horizontal
+    // edge, filter direction is vertical.
+    return (VERT_EDGE == edge_dir) ? txsize_horz_map[tx_size] : txsize_vert_map[tx_size];
+}
+#else
 
 static TxSize get_transform_size(const MacroBlockD *const xd, const MbModeInfo *const mbmi,
                                  const EdgeDir edge_dir, const int32_t mi_row, const int32_t mi_col,
@@ -162,14 +181,23 @@ static TxSize get_transform_size(const MacroBlockD *const xd, const MbModeInfo *
     tx_size = (VERT_EDGE == edge_dir) ? txsize_horz_map[tx_size] : txsize_vert_map[tx_size];
     return tx_size;
 }
+#endif
 
 // Return TxSize from get_transform_size(), so it is plane and direction
 // awared
+#if CLN_DLF_GET_TX_SIZE
+static TxSize set_lpf_parameters(Av1DeblockingParameters *const params, const uint64_t mode_step,
+                                 const PictureControlSet *const pcs_ptr,
+                                 const EdgeDir edge_dir, const uint32_t x,
+                                 const uint32_t y, const int32_t plane,
+                                 const struct MacroblockdPlane *const plane_ptr) {
+#else
 static TxSize set_lpf_parameters(Av1DeblockingParameters *const params, const uint64_t mode_step,
                                  const PictureControlSet *const pcs_ptr,
                                  const MacroBlockD *const xd, const EdgeDir edge_dir,
                                  const uint32_t x, const uint32_t y, const int32_t plane,
                                  const struct MacroblockdPlane *const plane_ptr) {
+#endif
     FrameHeader *          frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
     const LoopFilterInfoN *lfi_n   = &pcs_ptr->parent_pcs_ptr->lf_info;
 
@@ -204,9 +232,14 @@ static TxSize set_lpf_parameters(Av1DeblockingParameters *const params, const ui
     // it not set up.
     if (mbmi == NULL)
         return TX_INVALID;
-
+#if CLN_DLF_GET_TX_SIZE
+    const int32_t curr_skipped = mbmi->block_mi.skip &&
+        is_inter_block_no_intrabc(mbmi->block_mi.ref_frame[0]);
+    const TxSize ts = get_transform_size(mbmi, edge_dir, plane, plane_ptr, curr_skipped);
+#else
     const TxSize ts = get_transform_size(
         xd, mbmi /*mi[0]*/, edge_dir, mi_row, mi_col, plane, plane_ptr);
+#endif
     assert(ts < TX_SIZES_ALL);
 
     {
@@ -237,8 +270,10 @@ static TxSize set_lpf_parameters(Av1DeblockingParameters *const params, const ui
                                        [mbmi->block_mi.ref_frame[0]][mode_lf_lut[mode]];
             }
 
+#if !CLN_DLF_GET_TX_SIZE
             const int32_t curr_skipped = mbmi->block_mi.skip &&
                 is_inter_block_no_intrabc(mbmi->block_mi.ref_frame[0]);
+#endif
 
             uint32_t level = curr_level;
             if (coord) {
@@ -248,13 +283,18 @@ static TxSize set_lpf_parameters(Av1DeblockingParameters *const params, const ui
                 //
                 if (mi_prev == NULL)
                     return TX_INVALID;
+#if CLN_DLF_GET_TX_SIZE
+                const int32_t pv_skip = mi_prev->block_mi.skip &&
+                    is_inter_block_no_intrabc(mi_prev->block_mi.ref_frame[0]);
+                const TxSize  pv_ts = get_transform_size(mi_prev, edge_dir, plane, plane_ptr, pv_skip);
+#else
                 const int32_t pv_row = (VERT_EDGE == edge_dir) ? (mi_row)
                                                                : (mi_row - (1 << scale_vert));
                 const int32_t pv_col = (VERT_EDGE == edge_dir) ? (mi_col - (1 << scale_horz))
                                                                : (mi_col);
                 const TxSize  pv_ts  = get_transform_size(
                     xd, mi_prev, edge_dir, pv_row, pv_col, plane, plane_ptr);
-
+#endif
                 uint32_t pv_lvl;
                 mode = (mi_prev->block_mi.mode == INTRA_MODE_4x4) ? DC_PRED
                                                                   : mi_prev->block_mi.mode;
@@ -271,8 +311,10 @@ static TxSize set_lpf_parameters(Av1DeblockingParameters *const params, const ui
                     pv_lvl = lfi_n->lvl[plane][0 /*segment_id*/][edge_dir]
                                        [mi_prev->block_mi.ref_frame[0]][mode_lf_lut[mode]];
                 }
+#if !CLN_DLF_GET_TX_SIZE
                 const int32_t pv_skip = mi_prev->block_mi.skip &&
                     is_inter_block_no_intrabc(mi_prev->block_mi.ref_frame[0]);
+#endif
 
                 const BlockSize bsize = get_plane_block_size(
                     mbmi->block_mi.sb_type, plane_ptr->subsampling_x, plane_ptr->subsampling_y);
@@ -287,6 +329,10 @@ static TxSize set_lpf_parameters(Av1DeblockingParameters *const params, const ui
                     const TxSize min_ts = AOMMIN(ts, pv_ts);
                     if (TX_4X4 >= min_ts)
                         params->filter_length = 4;
+#if CLN_DLF_GET_TX_SIZE
+                    else
+                        params->filter_length = (plane != 0) ? 6 : (TX_8X8 == min_ts) ? 8 : 14;
+#else
                     else if (TX_8X8 == min_ts) {
                         if (plane != 0)
                             params->filter_length = 6;
@@ -298,7 +344,7 @@ static TxSize set_lpf_parameters(Av1DeblockingParameters *const params, const ui
                         if (plane != 0)
                             params->filter_length = 6;
                     }
-
+#endif
                     // update the level if the current block is skipped,
                     // but the previous one is not
                     level = (curr_level) ? (curr_level) : (pv_lvl);
@@ -319,7 +365,10 @@ static TxSize set_lpf_parameters(Av1DeblockingParameters *const params, const ui
 }
 
 void svt_av1_filter_block_plane_vert(const PictureControlSet *const pcs_ptr,
-                                     const MacroBlockD *const xd, const int32_t plane,
+#if !CLN_DLF_GET_TX_SIZE
+                                     const MacroBlockD *const xd,
+#endif
+                                     const int32_t plane,
                                      const MacroblockdPlane *const plane_ptr, const uint32_t mi_row,
                                      const uint32_t mi_col) {
     SequenceControlSet *scs_ptr = (SequenceControlSet *)
@@ -383,7 +432,9 @@ void svt_av1_filter_block_plane_vert(const PictureControlSet *const pcs_ptr,
             tx_size = set_lpf_parameters(&params,
                                          ((uint64_t)1 << scale_horz),
                                          pcs_ptr,
+#if !CLN_DLF_GET_TX_SIZE
                                          xd,
+#endif
                                          VERT_EDGE,
                                          curr_x,
                                          curr_y,
@@ -461,7 +512,10 @@ void svt_av1_filter_block_plane_vert(const PictureControlSet *const pcs_ptr,
 }
 
 void svt_av1_filter_block_plane_horz(const PictureControlSet *const pcs_ptr,
-                                     const MacroBlockD *const xd, const int32_t plane,
+#if !CLN_DLF_GET_TX_SIZE
+                                     const MacroBlockD *const xd,
+#endif
+                                     const int32_t plane,
                                      const MacroblockdPlane *const plane_ptr, const uint32_t mi_row,
                                      const uint32_t mi_col) {
     SequenceControlSet *scs_ptr = (SequenceControlSet *)
@@ -528,7 +582,9 @@ void svt_av1_filter_block_plane_horz(const PictureControlSet *const pcs_ptr,
                 //(pcs_ptr->parent_pcs_ptr->av1_cm->mi_stride << scale_vert),
                 (mi_stride << scale_vert),
                 pcs_ptr,
+#if !CLN_DLF_GET_TX_SIZE
                 xd,
+#endif
                 HORZ_EDGE,
                 curr_x,
                 curr_y,
@@ -613,7 +669,11 @@ void svt_av1_filter_block_plane_horz(const PictureControlSet *const pcs_ptr,
 // New function to filter each sb (64x64)
 void loop_filter_sb(EbPictureBufferDesc *frame_buffer, //reconpicture,
                     //Yv12BufferConfig *frame_buffer,
-                    PictureControlSet *pcs_ptr, MacroBlockD *xd, int32_t mi_row, int32_t mi_col,
+                    PictureControlSet *pcs_ptr,
+#if !CLN_DLF_GET_TX_SIZE
+                    MacroBlockD *xd,
+#endif
+                    int32_t mi_row, int32_t mi_col,
                     int32_t plane_start, int32_t plane_end, uint8_t last_col) {
     FrameHeader *           frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
     struct MacroblockdPlane pd[3];
@@ -654,7 +714,11 @@ void loop_filter_sb(EbPictureBufferDesc *frame_buffer, //reconpicture,
                                      mi_col,
                                      plane,
                                      plane + 1);
+#if CLN_DLF_GET_TX_SIZE
+            svt_av1_filter_block_plane_vert(pcs_ptr, plane, &pd[plane], mi_row, mi_col);
+#else
             svt_av1_filter_block_plane_vert(pcs_ptr, xd, plane, &pd[plane], mi_row, mi_col);
+#endif
             // filter horizontal edges
             int32_t max_mib_size = pcs_ptr->parent_pcs_ptr->scs_ptr->seq_header.sb_size ==
                     BLOCK_128X128
@@ -669,8 +733,13 @@ void loop_filter_sb(EbPictureBufferDesc *frame_buffer, //reconpicture,
                                          mi_col - max_mib_size,
                                          plane,
                                          plane + 1);
+#if CLN_DLF_GET_TX_SIZE
+                svt_av1_filter_block_plane_horz(
+                    pcs_ptr, plane, &pd[plane], mi_row, mi_col - max_mib_size);
+#else
                 svt_av1_filter_block_plane_horz(
                     pcs_ptr, xd, plane, &pd[plane], mi_row, mi_col - max_mib_size);
+#endif
             }
             // Filter the horizontal edges of the last sb in each row
             if (last_col) {
@@ -681,7 +750,11 @@ void loop_filter_sb(EbPictureBufferDesc *frame_buffer, //reconpicture,
                                          mi_col,
                                          plane,
                                          plane + 1);
+#if CLN_DLF_GET_TX_SIZE
+                svt_av1_filter_block_plane_horz(pcs_ptr, plane, &pd[plane], mi_row, mi_col);
+#else
                 svt_av1_filter_block_plane_horz(pcs_ptr, xd, plane, &pd[plane], mi_row, mi_col);
+#endif
             }
         } else {
             // filter all vertical edges in every 64x64 super block
@@ -693,7 +766,11 @@ void loop_filter_sb(EbPictureBufferDesc *frame_buffer, //reconpicture,
                                      plane,
                                      plane + 1);
 
+#if CLN_DLF_GET_TX_SIZE
+            svt_av1_filter_block_plane_vert(pcs_ptr, plane, &pd[plane], mi_row, mi_col);
+#else
             svt_av1_filter_block_plane_vert(pcs_ptr, xd, plane, &pd[plane], mi_row, mi_col);
+#endif
 
             // filter all horizontal edges in every 64x64 super block
             svt_av1_setup_dst_planes(pd,
@@ -703,7 +780,11 @@ void loop_filter_sb(EbPictureBufferDesc *frame_buffer, //reconpicture,
                                      mi_col,
                                      plane,
                                      plane + 1);
+#if CLN_DLF_GET_TX_SIZE
+            svt_av1_filter_block_plane_horz(pcs_ptr, plane, &pd[plane], mi_row, mi_col);
+#else
             svt_av1_filter_block_plane_horz(pcs_ptr, xd, plane, &pd[plane], mi_row, mi_col);
+#endif
         }
     }
 }
@@ -742,7 +823,9 @@ void svt_av1_loop_filter_frame(EbPictureBufferDesc *frame_buffer, PictureControl
 
             loop_filter_sb(frame_buffer,
                            pcs_ptr,
+#if !CLN_DLF_GET_TX_SIZE
                            NULL,
+#endif
                            sb_origin_y >> 2,
                            sb_origin_x >> 2,
                            plane_start,

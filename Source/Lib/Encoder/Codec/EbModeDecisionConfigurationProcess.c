@@ -751,6 +751,22 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     else
         pcs_ptr->hbd_mode_decision = scs_ptr->static_config.enable_hbd_mode_decision;
 #endif
+#if FTR_REDUCE_MVEST
+    pcs_ptr->parent_pcs_ptr->bypass_cost_table_gen = 0;
+    if(scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE)
+         pcs_ptr->parent_pcs_ptr->bypass_cost_table_gen = 0;
+#if TUNE_M7_M10_MT
+    else if(pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M7)
+#else
+    else if(pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M8)
+#endif
+        pcs_ptr->parent_pcs_ptr->bypass_cost_table_gen = 0;
+    //else if(pcs_ptr->slice_type == I_SLICE)
+    else if(pcs_ptr->picture_number == 0)
+        pcs_ptr->parent_pcs_ptr->bypass_cost_table_gen = 0;
+    else
+        pcs_ptr->parent_pcs_ptr->bypass_cost_table_gen = 1;
+#endif
     return return_error;
 }
 

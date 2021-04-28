@@ -31,10 +31,17 @@ extern EbErrorType clip_mv(uint32_t blk_origin_x, uint32_t blk_origin_y, int16_t
                            int16_t *mv_y, uint32_t picture_width, uint32_t picture_height,
                            uint32_t tb_size);
 void               init_xd(PictureControlSet *pcs_ptr, struct ModeDecisionContext *context_ptr);
+#if OPT_INIT_XD
+void               generate_av1_mvp_table(struct ModeDecisionContext *context_ptr,
+                                          BlkStruct *blk_ptr, const BlockGeom *blk_geom, uint16_t blk_origin_x,
+                                          uint16_t blk_origin_y, MvReferenceFrame *ref_frames, uint32_t tot_refs,
+                                          PictureControlSet *pcs_ptr);
+#else
 void               generate_av1_mvp_table(TileInfo *tile, struct ModeDecisionContext *context_ptr,
                                           BlkStruct *blk_ptr, const BlockGeom *blk_geom, uint16_t blk_origin_x,
                                           uint16_t blk_origin_y, MvReferenceFrame *ref_frames, uint32_t tot_refs,
                                           PictureControlSet *pcs_ptr);
+#endif
 
 void get_av1_mv_pred_drl(struct ModeDecisionContext *context_ptr, BlkStruct *blk_ptr,
                          MvReferenceFrame ref_frame, uint8_t is_compound, PredictionMode mode,

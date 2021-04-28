@@ -403,7 +403,9 @@ void inter_intra_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context
         0,
         1, //compound_idx not used
         NULL, // interinter_comp not used
+#if !OPT_INIT_XD_2
         NULL,
+#endif
         NULL,
         NULL,
         NULL,
@@ -4006,6 +4008,10 @@ void inject_new_candidates(const SequenceControlSet *  scs_ptr,
         ? MD_COMP_DIST
         : MD_COMP_TYPES;
 #endif
+#if OPT_ME
+    const uint8_t max_refs = pcs_ptr->parent_pcs_ptr->pa_me_data->max_refs;
+    const uint8_t max_l0 = pcs_ptr->parent_pcs_ptr->pa_me_data->max_l0;
+#endif
     for (uint8_t me_candidate_index = 0; me_candidate_index < total_me_cnt; ++me_candidate_index) {
         const MeCandidate *me_block_results_ptr = &me_block_results[me_candidate_index];
         const uint8_t      inter_direction      = me_block_results_ptr->direction;
@@ -6859,7 +6865,9 @@ uint32_t product_full_mode_decision(
     uint32_t txb_itr;
     uint32_t txb_index;
     uint32_t tu_total_count;
+#if !OPT_INIT
     uint32_t cu_size_log2 = context_ptr->cu_size_log2;
+#endif
     tu_total_count = context_ptr->blk_geom->txb_count[blk_ptr->tx_depth];
     txb_index = 0;
     txb_itr = 0;
@@ -6956,7 +6964,9 @@ uint32_t product_full_mode_decision(
         ++txb_index;
         ++txb_itr;
     } while (txb_itr < tu_total_count);
+#if !OPT_INIT
     UNUSED(cu_size_log2);
+#endif
     return lowest_cost_index;
 }
 uint32_t get_blk_tuned_full_lambda(struct ModeDecisionContext *context_ptr, PictureControlSet *pcs_ptr,

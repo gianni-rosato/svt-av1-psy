@@ -909,6 +909,24 @@ void model_rd_for_sb_with_curvfit(PictureControlSet *  picture_control_set_ptr,
 int  get_comp_index_context_enc(PictureParentControlSet *pcs_ptr, int cur_frame_index,
                                 int bck_frame_index, int fwd_frame_index, const MacroBlockD *xd);
 
+#if OPT_INIT_XD_2
+extern void svt_av1_predict_intra_block(
+        STAGE stage, const BlockGeom *blk_geom, MacroBlockD *xd, int32_t wpx,
+        int32_t hpx, TxSize tx_size, PredictionMode mode, int32_t angle_delta, int32_t use_palette,
+        PaletteInfo *palette_info, FilterIntraMode filter_intra_mode, uint8_t *topNeighArray,
+        uint8_t *leftNeighArray, EbPictureBufferDesc *recon_buffer, int32_t col_off, int32_t row_off,
+        int32_t plane, BlockSize bsize, uint32_t tu_org_x_pict, uint32_t tu_org_y_pict,
+        uint32_t bl_org_x_pict, uint32_t bl_org_y_pict, uint32_t bl_org_x_mb, uint32_t bl_org_y_mb,
+        SeqHeader *seq_header_ptr);
+extern void svt_av1_predict_intra_block_16bit(
+        EbBitDepthEnum bit_depth, STAGE stage, const BlockGeom *blk_geom, MacroBlockD *xd, int32_t wpx,
+        int32_t hpx, TxSize tx_size, PredictionMode mode, int32_t angle_delta, int32_t use_palette,
+        PaletteInfo *palette_info, FilterIntraMode filter_intra_mode, uint16_t *topNeighArray,
+        uint16_t *leftNeighArray, EbPictureBufferDesc *recon_buffer, int32_t col_off, int32_t row_off,
+        int32_t plane, BlockSize bsize, uint32_t tu_org_x_pict, uint32_t tu_org_y_pict,
+        uint32_t bl_org_x_pict, uint32_t bl_org_y_pict, uint32_t bl_org_x_mb, uint32_t bl_org_y_mb,
+        SeqHeader *seq_header_ptr);
+#else
 extern void svt_av1_predict_intra_block(
         TileInfo *tile, STAGE stage, const BlockGeom *blk_geom, const Av1Common *cm, int32_t wpx,
         int32_t hpx, TxSize tx_size, PredictionMode mode, int32_t angle_delta, int32_t use_palette,
@@ -925,6 +943,7 @@ extern void svt_av1_predict_intra_block_16bit(
         int32_t plane, BlockSize bsize, uint32_t tu_org_x_pict, uint32_t tu_org_y_pict,
         uint32_t bl_org_x_pict, uint32_t bl_org_y_pict, uint32_t bl_org_x_mb, uint32_t bl_org_y_mb,
         ModeInfo **mi_grid_base, SeqHeader *seq_header_ptr);
+#endif
 
 struct build_prediction_ctxt {
     const AV1_COMMON *cm;
@@ -3162,7 +3181,9 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
                         md_context_ptr,
                         candidate_buffer_ptr->candidate_ptr->compound_idx,
                         &candidate_buffer_ptr->candidate_ptr->interinter_comp,
+#if !OPT_INIT_XD_2
                         &md_context_ptr->sb_ptr->tile_info,
+#endif
                         luma_recon_neighbor_array,
                         cb_recon_neighbor_array,
                         cr_recon_neighbor_array,
@@ -3230,7 +3251,9 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
                         md_context_ptr,
                         candidate_buffer_ptr->candidate_ptr->compound_idx,
                         &candidate_buffer_ptr->candidate_ptr->interinter_comp,
+#if !OPT_INIT_XD_2
                         &md_context_ptr->sb_ptr->tile_info,
+#endif
                         luma_recon_neighbor_array,
                         cb_recon_neighbor_array,
                         cr_recon_neighbor_array,
@@ -3298,7 +3321,9 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
                         md_context_ptr,
                         candidate_buffer_ptr->candidate_ptr->compound_idx,
                         &candidate_buffer_ptr->candidate_ptr->interinter_comp,
+#if !OPT_INIT_XD_2
                         &md_context_ptr->sb_ptr->tile_info,
+#endif
                         luma_recon_neighbor_array,
                         cb_recon_neighbor_array,
                         cr_recon_neighbor_array,
@@ -4103,7 +4128,11 @@ EbErrorType av1_inter_prediction(
         PictureControlSet *picture_control_set_ptr, uint32_t interp_filters, BlkStruct *blk_ptr,
         uint8_t ref_frame_type, MvUnit *mv_unit, uint8_t use_intrabc, MotionMode motion_mode,
         uint8_t use_precomputed_obmc, struct ModeDecisionContext *md_context, uint8_t compound_idx,
+#if OPT_INIT_XD_2
+        InterInterCompoundData *interinter_comp,
+#else
         InterInterCompoundData *interinter_comp, TileInfo *tile,
+#endif
         NeighborArrayUnit *luma_recon_neighbor_array, NeighborArrayUnit *cb_recon_neighbor_array,
         NeighborArrayUnit *cr_recon_neighbor_array, uint8_t is_interintra_used,
         InterIntraMode interintra_mode, uint8_t use_wedge_interintra, int32_t interintra_wedge_index,
@@ -4219,16 +4248,43 @@ EbErrorType av1_inter_prediction(
         UNUSED(bw);
         UNUSED(bh);
 
+#if !OPT_D2_COPIES
         uint32_t mi_x = pu_origin_x; //these are luma picture wise
         uint32_t mi_y = pu_origin_y;
+#endif
 
         MacroBlockD *xd      = blk_ptr->av1xd;
+#if !OPT_D2_COPIES
         xd->mi_stride        = picture_control_set_ptr->mi_stride;
         const int32_t offset = (mi_y >> MI_SIZE_LOG2) * xd->mi_stride + (mi_x >> MI_SIZE_LOG2);
         xd->mi               = picture_control_set_ptr->mi_grid_base + offset;
+#endif
 
         //CHKN fill current mi from current block
         {
+#if OPT_D2_COPIES
+            MvReferenceFrame rf[2];
+            av1_set_ref_frame(rf, ref_frame_type);
+
+            // only need to update top left mbmi for partition b/c all other MI blocks will reference the top left
+            ModeInfo* mi_ptr = xd->mi[0];
+            mi_ptr->mbmi.block_mi.use_intrabc = use_intrabc;
+            mi_ptr->mbmi.block_mi.ref_frame[0] = rf[0];
+            if (mv_unit->pred_direction == UNI_PRED_LIST_0) {
+                mi_ptr->mbmi.block_mi.mv[0].as_mv.col = mv_unit->mv[REF_LIST_0].x;
+                mi_ptr->mbmi.block_mi.mv[0].as_mv.row = mv_unit->mv[REF_LIST_0].y;
+            }
+            else if (mv_unit->pred_direction == UNI_PRED_LIST_1) {
+                mi_ptr->mbmi.block_mi.mv[0].as_mv.col = mv_unit->mv[REF_LIST_1].x;
+                mi_ptr->mbmi.block_mi.mv[0].as_mv.row = mv_unit->mv[REF_LIST_1].y;
+            }
+            else {
+                mi_ptr->mbmi.block_mi.mv[0].as_mv.col = mv_unit->mv[REF_LIST_0].x;
+                mi_ptr->mbmi.block_mi.mv[0].as_mv.row = mv_unit->mv[REF_LIST_0].y;
+                mi_ptr->mbmi.block_mi.mv[1].as_mv.col = mv_unit->mv[REF_LIST_1].x;
+                mi_ptr->mbmi.block_mi.mv[1].as_mv.row = mv_unit->mv[REF_LIST_1].y;
+            }
+#else
             ModeInfo *       miPtr = *xd->mi;
             uint8_t          miX, miY;
             MvReferenceFrame rf[2];
@@ -4259,6 +4315,7 @@ EbErrorType av1_inter_prediction(
                     }
                 }
             }
+#endif
         }
 
         const BlockSize bsize = blk_geom->bsize; //mi->sb_type;
@@ -4279,9 +4336,13 @@ EbErrorType av1_inter_prediction(
         if (sub8x8_inter) {
             for (int32_t row = row_start; row <= 0 && sub8x8_inter; ++row) {
                 for (int32_t col = col_start; col <= 0; ++col) {
+#if OPT_D2_COPIES
+                    //ModeInfo *        miPtr = *xd->mi;
+                    const MbModeInfo *this_mbmi = &xd->mi[row * xd->mi_stride + col]->mbmi;
+#else
                     ModeInfo *        miPtr     = *xd->mi;
                     const MbModeInfo *this_mbmi = &miPtr[row * xd->mi_stride + col].mbmi;
-
+#endif
                     if (!is_inter_block(&this_mbmi->block_mi)) sub8x8_inter = 0;
                 }
             }
@@ -4302,12 +4363,17 @@ EbErrorType av1_inter_prediction(
             for (int32_t y = 0; y < b8_h; y += b4_h) {
                 int32_t col = col_start;
                 for (int32_t x = 0; x < b8_w; x += b4_w) {
+#if OPT_D2_COPIES
+                    //ModeInfo *miPtr = *xd->mi;
+                    const MbModeInfo *this_mbmi = &xd->mi[row * xd->mi_stride + col]->mbmi;
+#else
                     ModeInfo *miPtr = *xd->mi;
 
                     const MbModeInfo *this_mbmi = &miPtr[row * xd->mi_stride + col].mbmi;
 
                     int32_t tmp_dst_stride = 8;
                     UNUSED(tmp_dst_stride);
+#endif
                     assert(bw < 8 || bh < 8);
 
                     conv_params = get_conv_params_no_round(
@@ -4991,10 +5057,16 @@ EbErrorType av1_inter_prediction(
             if (is16bit)
                 svt_av1_predict_intra_block_16bit(
                         bit_depth,
+#if !OPT_INIT_XD_2
                         tile,
+#endif
                         !ED_STAGE,
                         blk_geom,
+#if OPT_INIT_XD_2
+                        blk_ptr->av1xd,
+#else
                         picture_control_set_ptr->parent_pcs_ptr->av1_cm,    //const Av1Common *cm,
+#endif
                         plane ? blk_geom->bwidth_uv : blk_geom->bwidth,     //int32_t wpx,
                         plane ? blk_geom->bheight_uv : blk_geom->bheight,   //int32_t hpx,
                         plane ? tx_size_Chroma : tx_size,                   //TxSize tx_size,
@@ -5017,14 +5089,22 @@ EbErrorType av1_inter_prediction(
                         pu_origin_y,
                         0,                                                  //uint32_t cuOrgX used only for prediction Ptr
                         0,                                                   //uint32_t cuOrgY used only for prediction Ptr
+#if !OPT_INIT_XD_2
                         picture_control_set_ptr->mi_grid_base,
+#endif
                         &((SequenceControlSet *)picture_control_set_ptr->scs_wrapper_ptr->object_ptr)->seq_header);
             else
                 svt_av1_predict_intra_block(
+#if !OPT_INIT_XD_2
                         tile,
+#endif
                         !ED_STAGE,
                         blk_geom,
+#if OPT_INIT_XD_2
+                        blk_ptr->av1xd,
+#else
                         picture_control_set_ptr->parent_pcs_ptr->av1_cm,    //const Av1Common *cm,
+#endif
                         plane ? blk_geom->bwidth_uv : blk_geom->bwidth,     //int32_t wpx,
                         plane ? blk_geom->bheight_uv : blk_geom->bheight,   //int32_t hpx,
                         plane ? tx_size_Chroma : tx_size,                   //TxSize tx_size,
@@ -5047,7 +5127,9 @@ EbErrorType av1_inter_prediction(
                         pu_origin_y,
                         0,                                                  //uint32_t cuOrgX used only for prediction Ptr
                         0,                                                   //uint32_t cuOrgY used only for prediction Ptr
+#if !OPT_INIT_XD_2
                         picture_control_set_ptr->mi_grid_base,
+#endif
                         &((SequenceControlSet *)picture_control_set_ptr->scs_wrapper_ptr->object_ptr)->seq_header);
 
             //combine_interintra
@@ -5167,7 +5249,11 @@ EbErrorType av1_inter_prediction_16bit_pipeline(
     PictureControlSet *picture_control_set_ptr, uint32_t interp_filters, BlkStruct *blk_ptr,
     uint8_t ref_frame_type, MvUnit *mv_unit, uint8_t use_intrabc, MotionMode motion_mode,
     uint8_t use_precomputed_obmc, struct ModeDecisionContext *md_context, uint8_t compound_idx,
+#if OPT_INIT_XD_2
+    InterInterCompoundData *interinter_comp,
+#else
     InterInterCompoundData *interinter_comp, TileInfo *tile,
+#endif
     NeighborArrayUnit *luma_recon_neighbor_array, NeighborArrayUnit *cb_recon_neighbor_array,
     NeighborArrayUnit *cr_recon_neighbor_array, uint8_t is_interintra_used,
     InterIntraMode interintra_mode, uint8_t use_wedge_interintra, int32_t interintra_wedge_index,
@@ -5218,12 +5304,37 @@ EbErrorType av1_inter_prediction_16bit_pipeline(
         uint32_t mi_y = pu_origin_y;
 
         MacroBlockD *xd = blk_ptr->av1xd;
+#if !OPT_D2_COPIES
         xd->mi_stride = picture_control_set_ptr->mi_stride;
         const int32_t offset = (mi_y >> MI_SIZE_LOG2) * xd->mi_stride + (mi_x >> MI_SIZE_LOG2);
         xd->mi = picture_control_set_ptr->mi_grid_base + offset;
+#endif
 
         //CHKN fill current mi from current block
         {
+#if OPT_D2_COPIES
+            MvReferenceFrame rf[2];
+            av1_set_ref_frame(rf, ref_frame_type);
+
+            // only need to update top left mi block, as all other blocks in the partition will point to the top left
+            ModeInfo* mi_ptr = xd->mi[0];
+            mi_ptr->mbmi.block_mi.use_intrabc = use_intrabc;
+            mi_ptr->mbmi.block_mi.ref_frame[0] = rf[0];
+            if (mv_unit->pred_direction == UNI_PRED_LIST_0) {
+                mi_ptr->mbmi.block_mi.mv[0].as_mv.col = mv_unit->mv[REF_LIST_0].x;
+                mi_ptr->mbmi.block_mi.mv[0].as_mv.row = mv_unit->mv[REF_LIST_0].y;
+            }
+            else if (mv_unit->pred_direction == UNI_PRED_LIST_1) {
+                mi_ptr->mbmi.block_mi.mv[0].as_mv.col = mv_unit->mv[REF_LIST_1].x;
+                mi_ptr->mbmi.block_mi.mv[0].as_mv.row = mv_unit->mv[REF_LIST_1].y;
+            }
+            else {
+                mi_ptr->mbmi.block_mi.mv[0].as_mv.col = mv_unit->mv[REF_LIST_0].x;
+                mi_ptr->mbmi.block_mi.mv[0].as_mv.row = mv_unit->mv[REF_LIST_0].y;
+                mi_ptr->mbmi.block_mi.mv[1].as_mv.col = mv_unit->mv[REF_LIST_1].x;
+                mi_ptr->mbmi.block_mi.mv[1].as_mv.row = mv_unit->mv[REF_LIST_1].y;
+            }
+#else
             ModeInfo *       miPtr = *xd->mi;
             uint8_t          miX, miY;
             MvReferenceFrame rf[2];
@@ -5256,6 +5367,7 @@ EbErrorType av1_inter_prediction_16bit_pipeline(
                     }
                 }
             }
+#endif
         }
 
         const BlockSize bsize = blk_geom->bsize; //mi->sb_type;
@@ -5281,9 +5393,13 @@ EbErrorType av1_inter_prediction_16bit_pipeline(
         if (sub8x8_inter) {
             for (int32_t row = row_start; row <= 0 && sub8x8_inter; ++row) {
                 for (int32_t col = col_start; col <= 0; ++col) {
+#if OPT_D2_COPIES
+                    //ModeInfo *        miPtr = *xd->mi;
+                    const MbModeInfo *this_mbmi = &xd->mi[row * xd->mi_stride + col]->mbmi;
+#else
                     ModeInfo *        miPtr = *xd->mi;
                     const MbModeInfo *this_mbmi = &miPtr[row * xd->mi_stride + col].mbmi;
-
+#endif
                     if (!is_inter_block(&this_mbmi->block_mi)) sub8x8_inter = 0;
                 }
             }
@@ -5304,11 +5420,16 @@ EbErrorType av1_inter_prediction_16bit_pipeline(
             for (int32_t y = 0; y < b8_h; y += b4_h) {
                 int32_t col = col_start;
                 for (int32_t x = 0; x < b8_w; x += b4_w) {
+#if OPT_D2_COPIES // TODO: is this looping necessary
+                    //ModeInfo *        miPtr = *xd->mi;
+                    const MbModeInfo *this_mbmi = &xd->mi[row * xd->mi_stride + col]->mbmi;
+#else
                     ModeInfo *        miPtr = *xd->mi;
                     const MbModeInfo *this_mbmi = &miPtr[row * xd->mi_stride + col].mbmi;
 
                     int32_t tmp_dst_stride = 8;
                     UNUSED(tmp_dst_stride);
+#endif
                     assert(bw < 8 || bh < 8);
 
                     conv_params = get_conv_params_no_round(
@@ -5930,10 +6051,16 @@ EbErrorType av1_inter_prediction_16bit_pipeline(
 
             svt_av1_predict_intra_block_16bit(
                 bit_depth,
+#if !OPT_INIT_XD_2
                 tile,
+#endif
                 !ED_STAGE,
                 blk_geom,
+#if OPT_INIT_XD_2
+                blk_ptr->av1xd,
+#else
                 picture_control_set_ptr->parent_pcs_ptr->av1_cm, //const Av1Common *cm,
+#endif
                 plane ? blk_geom->bwidth_uv : blk_geom->bwidth, //int32_t wpx,
                 plane ? blk_geom->bheight_uv : blk_geom->bheight, //int32_t hpx,
                 plane ? tx_size_Chroma : tx_size, //TxSize tx_size,
@@ -5956,7 +6083,9 @@ EbErrorType av1_inter_prediction_16bit_pipeline(
                 pu_origin_y,
                 0, //uint32_t cuOrgX used only for prediction Ptr
                 0, //uint32_t cuOrgY used only for prediction Ptr
+#if !OPT_INIT_XD_2
                 picture_control_set_ptr->mi_grid_base,
+#endif
                 &((SequenceControlSet *)picture_control_set_ptr->scs_wrapper_ptr->object_ptr)
                 ->seq_header);
             //combine_interintra_highbd
@@ -6161,7 +6290,9 @@ void calc_pred_masked_compound(PictureControlSet *    pcs_ptr,
             0,
             1, //compound_idx not used
             NULL, // interinter_comp not used
+#if !OPT_INIT_XD_2
             NULL,
+#endif
             NULL,
             NULL,
             NULL,
@@ -6201,7 +6332,9 @@ void calc_pred_masked_compound(PictureControlSet *    pcs_ptr,
             0,
             1, //compound_idx not used
             NULL, // interinter_comp not useds
+#if !OPT_INIT_XD_2
             NULL,
+#endif
             NULL,
             NULL,
             NULL,
@@ -6353,7 +6486,9 @@ EbErrorType inter_pu_prediction_av1(uint8_t hbd_mode_decision, ModeDecisionConte
                 0,
                 1, //1 for avg
                 &candidate_buffer_ptr->candidate_ptr->interinter_comp,
+#if !OPT_INIT_XD_2
                 NULL,
+#endif
                 NULL,
                 NULL,
                 NULL,
@@ -6534,7 +6669,9 @@ EbErrorType inter_pu_prediction_av1(uint8_t hbd_mode_decision, ModeDecisionConte
             md_context_ptr,
             candidate_buffer_ptr->candidate_ptr->compound_idx,
             &candidate_buffer_ptr->candidate_ptr->interinter_comp,
+#if !OPT_INIT_XD_2
             &md_context_ptr->sb_ptr->tile_info,
+#endif
             luma_recon_neighbor_array,
             cb_recon_neighbor_array,
             cr_recon_neighbor_array,

@@ -350,7 +350,9 @@ static void create_me_context_and_picture_control(
     PictureParentControlSet *picture_control_set_ptr_central,
     EbPictureBufferDesc *input_picture_ptr_central, int blk_row, int blk_col, uint32_t ss_x,
     uint32_t ss_y) {
+#if  !SS_OPT_TF2_ME_COPY
     uint32_t sb_row;
+#endif
 
     // set reference picture for alt-refs
     context_ptr->me_context_ptr->alt_ref_reference_ptr =
@@ -384,13 +386,14 @@ static void create_me_context_and_picture_control(
     // Parts from MotionEstimationKernel()
     uint32_t sb_origin_x = (uint32_t)(blk_col * BW);
     uint32_t sb_origin_y = (uint32_t)(blk_row * BH);
-
+#if ! SS_OPT_TF2_ME_COPY
     uint32_t sb_width  = (input_picture_ptr_central->width - sb_origin_x) < BLOCK_SIZE_64
          ? input_picture_ptr_central->width - sb_origin_x
          : BLOCK_SIZE_64;
     uint32_t sb_height = (input_picture_ptr_central->height - sb_origin_y) < BLOCK_SIZE_64
         ? input_picture_ptr_central->height - sb_origin_y
         : BLOCK_SIZE_64;
+#endif
 
     // Load the SB from the input to the intermediate SB buffer
     int buffer_index = (input_picture_ptr_central->origin_y + sb_origin_y) *
@@ -403,6 +406,8 @@ static void create_me_context_and_picture_control(
     context_ptr->me_context_ptr->lambda =
         lambda_mode_decision_ra_sad[picture_control_set_ptr_central->picture_qp];
 
+
+#if  !OPT_ME_RES_SAD_LOOP
     // populate src block buffers: sb_buffer, quarter_sb_buffer and sixteenth_sb_buffer
     for (sb_row = 0; sb_row < BLOCK_SIZE_64; sb_row++) {
         svt_memcpy((&(context_ptr->me_context_ptr->sb_buffer[sb_row * BLOCK_SIZE_64])),
@@ -410,10 +415,16 @@ static void create_me_context_and_picture_control(
                           ->buffer_y[buffer_index + sb_row * input_picture_ptr_central->stride_y])),
                    BLOCK_SIZE_64 * sizeof(uint8_t));
     }
+#endif
 #ifdef ARCH_X86_64
     {
         uint8_t *src_ptr = &(padded_pic_ptr->buffer_y[buffer_index]);
 
+#if SS_OPT_TF2_ME_COPY
+        uint32_t sb_height = (input_picture_ptr_central->height - sb_origin_y) < BLOCK_SIZE_64
+            ? input_picture_ptr_central->height - sb_origin_y
+            : BLOCK_SIZE_64;
+#endif
         //_MM_HINT_T0     //_MM_HINT_T1    //_MM_HINT_T2    //_MM_HINT_NTA
         uint32_t i;
         for (i = 0; i < sb_height; i++) {
@@ -431,6 +442,10 @@ static void create_me_context_and_picture_control(
     buffer_index = (quarter_pic_ptr->origin_y + (sb_origin_y >> ss_y)) * quarter_pic_ptr->stride_y +
         quarter_pic_ptr->origin_x + (sb_origin_x >> ss_x);
 
+#if SS_OPT_TF2_ME_COPY
+    context_ptr->me_context_ptr->quarter_sb_buffer = &quarter_pic_ptr->buffer_y[buffer_index];
+    context_ptr->me_context_ptr->quarter_sb_buffer_stride = quarter_pic_ptr->stride_y;
+#else
     for (sb_row = 0; sb_row < (sb_height >> ss_y); sb_row++) {
         svt_memcpy(
             (&(context_ptr->me_context_ptr
@@ -439,11 +454,17 @@ static void create_me_context_and_picture_control(
             (&(quarter_pic_ptr->buffer_y[buffer_index + sb_row * quarter_pic_ptr->stride_y])),
             (sb_width >> ss_x) * sizeof(uint8_t));
     }
+#endif
 
     // Load the 1/16 decimated SB from the 1/16 decimated input to the 1/16 intermediate SB buffer
     buffer_index = (sixteenth_pic_ptr->origin_y + (sb_origin_y >> 2)) *
             sixteenth_pic_ptr->stride_y +
         sixteenth_pic_ptr->origin_x + (sb_origin_x >> 2);
+
+#if SS_OPT_TF2_ME_COPY
+    context_ptr->me_context_ptr->sixteenth_sb_buffer = &sixteenth_pic_ptr->buffer_y[buffer_index];
+    context_ptr->me_context_ptr->sixteenth_sb_buffer_stride = sixteenth_pic_ptr->stride_y;
+#else
 
     {
         uint8_t *frame_ptr = &(sixteenth_pic_ptr->buffer_y[buffer_index]);
@@ -463,6 +484,7 @@ static void create_me_context_and_picture_control(
             }
         }
     }
+#endif
 }
 
 static void create_me_context_and_picture_control_inl(
@@ -603,8 +625,13 @@ static void apply_filtering_central(MeContext *context_ptr, EbPictureBufferDesc 
     // Luma
     for (uint16_t k = 0, i = 0; i < blk_height_y; i++) {
         for (uint16_t j = 0; j < blk_width_y; j++) {
+#if   SS_OPT_TF2_ME_COPY
+            accum[C_Y][k] = modifier * src[C_Y][i * src_stride_y + j];
+            count[C_Y][k] = modifier;
+#else
             accum[C_Y][k] += modifier * src[C_Y][i * src_stride_y + j];
             count[C_Y][k] += modifier;
+#endif
             ++k;
         }
     }
@@ -613,11 +640,19 @@ static void apply_filtering_central(MeContext *context_ptr, EbPictureBufferDesc 
     if (context_ptr->tf_chroma)
         for (uint16_t k = 0, i = 0; i < blk_height_ch; i++) {
             for (uint16_t j = 0; j < blk_width_ch; j++) {
+#if   SS_OPT_TF2_ME_COPY
+                accum[C_U][k] = modifier * src[C_U][i * src_stride_ch + j];
+                count[C_U][k] = modifier;
+
+                accum[C_V][k] = modifier * src[C_V][i * src_stride_ch + j];
+                count[C_V][k] = modifier;
+#else
                 accum[C_U][k] += modifier * src[C_U][i * src_stride_ch + j];
                 count[C_U][k] += modifier;
 
                 accum[C_V][k] += modifier * src[C_V][i * src_stride_ch + j];
                 count[C_V][k] += modifier;
+#endif
                 ++k;
             }
         }
@@ -639,8 +674,13 @@ static void apply_filtering_central_highbd(MeContext *context_ptr, EbPictureBuff
     // Luma
     for (uint16_t k = 0, i = 0; i < blk_height_y; i++) {
         for (uint16_t j = 0; j < blk_width_y; j++) {
+#if   SS_OPT_TF2_ME_COPY
+            accum[C_Y][k] = modifier * src_16bit[C_Y][i * src_stride_y + j];
+            count[C_Y][k] = modifier;
+#else
             accum[C_Y][k] += modifier * src_16bit[C_Y][i * src_stride_y + j];
             count[C_Y][k] += modifier;
+#endif
             ++k;
         }
     }
@@ -649,11 +689,19 @@ static void apply_filtering_central_highbd(MeContext *context_ptr, EbPictureBuff
     if (context_ptr->tf_chroma)
         for (uint16_t k = 0, i = 0; i < blk_height_ch; i++) {
             for (uint16_t j = 0; j < blk_width_ch; j++) {
+#if   SS_OPT_TF2_ME_COPY
+                accum[C_U][k] = modifier * src_16bit[C_U][i * src_stride_ch + j];
+                count[C_U][k] = modifier;
+
+                accum[C_V][k] = modifier * src_16bit[C_V][i * src_stride_ch + j];
+                count[C_V][k] = modifier;
+#else
                 accum[C_U][k] += modifier * src_16bit[C_U][i * src_stride_ch + j];
                 count[C_U][k] += modifier;
 
                 accum[C_V][k] += modifier * src_16bit[C_V][i * src_stride_ch + j];
                 count[C_V][k] += modifier;
+#endif
                 ++k;
             }
         }
@@ -1382,7 +1430,9 @@ static void tf_16x16_sub_pel_search(PictureParentControlSet *pcs_ptr, MeContext 
                         0,
                         1, //compound_idx not used
                         NULL, // interinter_comp not used
+#if !OPT_INIT_XD_2
                         NULL,
+#endif
                         NULL,
                         NULL,
                         NULL,
@@ -1469,7 +1519,9 @@ static void tf_16x16_sub_pel_search(PictureParentControlSet *pcs_ptr, MeContext 
                                 0,
                                 1, //compound_idx not used
                                 NULL, // interinter_comp not used
+#if !OPT_INIT_XD_2
                                 NULL,
+#endif
                                 NULL,
                                 NULL,
                                 NULL,
@@ -1560,7 +1612,9 @@ static void tf_16x16_sub_pel_search(PictureParentControlSet *pcs_ptr, MeContext 
                                              0,
                                              1, //compound_idx not used
                                              NULL, // interinter_comp not used
+#if !OPT_INIT_XD_2
                                              NULL,
+#endif
                                              NULL,
                                              NULL,
                                              NULL,
@@ -1651,7 +1705,9 @@ static void tf_16x16_sub_pel_search(PictureParentControlSet *pcs_ptr, MeContext 
                                                  0,
                                                  1, //compound_idx not used
                                                  NULL, // interinter_comp not used
+#if !OPT_INIT_XD_2
                                                  NULL,
+#endif
                                                  NULL,
                                                  NULL,
                                                  NULL,
@@ -1836,7 +1892,9 @@ static void tf_32x32_sub_pel_search(PictureParentControlSet *pcs_ptr, MeContext 
                 0,
                 1, //compound_idx not used
                 NULL, // interinter_comp not used
+#if !OPT_INIT_XD_2
                 NULL,
+#endif
                 NULL,
                 NULL,
                 NULL,
@@ -1920,7 +1978,9 @@ static void tf_32x32_sub_pel_search(PictureParentControlSet *pcs_ptr, MeContext 
                         0,
                         1, //compound_idx not used
                         NULL, // interinter_comp not used
+#if !OPT_INIT_XD_2
                         NULL,
+#endif
                         NULL,
                         NULL,
                         NULL,
@@ -2007,7 +2067,9 @@ static void tf_32x32_sub_pel_search(PictureParentControlSet *pcs_ptr, MeContext 
                                      0,
                                      1, //compound_idx not used
                                      NULL, // interinter_comp not used
+#if !OPT_INIT_XD_2
                                      NULL,
+#endif
                                      NULL,
                                      NULL,
                                      NULL,
@@ -2089,7 +2151,9 @@ static void tf_32x32_sub_pel_search(PictureParentControlSet *pcs_ptr, MeContext 
                                          0,
                                          1, //compound_idx not used
                                          NULL, // interinter_comp not used
-                                         NULL,
+#if !OPT_INIT_XD_2
+                                        NULL,
+#endif
                                          NULL,
                                          NULL,
                                          NULL,
@@ -2263,7 +2327,9 @@ static void tf_inter_prediction(PictureParentControlSet *pcs_ptr, MeContext *con
                                      0,
                                      1, //compound_idx not used
                                      NULL, // interinter_comp not used
-                                     NULL,
+#if !OPT_INIT_XD_2
+                                    NULL,
+#endif
                                      NULL,
                                      NULL,
                                      NULL,
@@ -2329,7 +2395,9 @@ static void tf_inter_prediction(PictureParentControlSet *pcs_ptr, MeContext *con
                                  0,
                                  1, //compound_idx not used
                                  NULL, // interinter_comp not used
+#if !OPT_INIT_XD_2
                                  NULL,
+#endif
                                  NULL,
                                  NULL,
                                  NULL,
@@ -2614,11 +2682,58 @@ static EbErrorType produce_temporally_filtered_pic(
             memset(accumulator, 0, BLK_PELS * COLOR_CHANNELS * sizeof(accumulator[0]));
             memset(counter, 0, BLK_PELS * COLOR_CHANNELS * sizeof(counter[0]));
 
+#if   SS_OPT_TF2_ME_COPY
+            EbByte    src_center_ptr[COLOR_CHANNELS]           = {NULL};
+            uint16_t *altref_buffer_highbd_ptr[COLOR_CHANNELS] = {NULL};
+            if (!is_highbd) {
+                src_center_ptr[C_Y] = src_center_ptr_start[C_Y] + blk_y_src_offset;
+                if (context_ptr->tf_chroma) {
+                    src_center_ptr[C_U] = src_center_ptr_start[C_U] + blk_ch_src_offset;
+                    src_center_ptr[C_V] = src_center_ptr_start[C_V] + blk_ch_src_offset;
+                }
+            }
+            else {
+                altref_buffer_highbd_ptr[C_Y] = altref_buffer_highbd_start[C_Y] +
+                    blk_y_src_offset;
+                if (context_ptr->tf_chroma) {
+                    altref_buffer_highbd_ptr[C_U] = altref_buffer_highbd_start[C_U] +
+                        blk_ch_src_offset;
+                    altref_buffer_highbd_ptr[C_V] = altref_buffer_highbd_start[C_V] +
+                        blk_ch_src_offset;
+                }
+            }
+
+            if (!is_highbd)
+                apply_filtering_central(
+                    context_ptr,
+                    input_picture_ptr_central,
+                    src_center_ptr,
+                    accum,
+                    count,
+                    BW,
+                    BH,
+                    ss_x,
+                    ss_y);
+            else
+                apply_filtering_central_highbd(
+                    context_ptr,
+                    input_picture_ptr_central,
+                    altref_buffer_highbd_ptr,
+                    accum,
+                    count,
+                    BW,
+                    BH,
+                    ss_x,
+                    ss_y);
+#endif
+
             // for every frame to filter
             for (int frame_index = 0;
                  frame_index < (picture_control_set_ptr_central->past_altref_nframes +
                                 picture_control_set_ptr_central->future_altref_nframes + 1);
                  frame_index++) {
+
+#if  ! SS_OPT_TF2_ME_COPY
                 EbByte    src_center_ptr[COLOR_CHANNELS]           = {NULL};
                 uint16_t *altref_buffer_highbd_ptr[COLOR_CHANNELS] = {NULL};
                 if (!is_highbd) {
@@ -2633,7 +2748,7 @@ static EbErrorType produce_temporally_filtered_pic(
                     altref_buffer_highbd_ptr[C_V] = altref_buffer_highbd_start[C_V] +
                         blk_ch_src_offset;
                 }
-
+#endif
                 // ------------
                 // Step 1: motion estimation + compensation
                 // ------------
@@ -2641,6 +2756,7 @@ static EbErrorType produce_temporally_filtered_pic(
                 me_context_ptr->me_context_ptr->tf_index_center = index_center;
                 // if frame to process is the center frame
                 if (frame_index == index_center) {
+ #if !  SS_OPT_TF2_ME_COPY
 #if TUNE_REDESIGN_TF_CTRLS
                     if (!is_highbd)
                         apply_filtering_central(
@@ -2664,6 +2780,7 @@ static EbErrorType produce_temporally_filtered_pic(
                             BH,
                             ss_x,
                             ss_y);
+#endif
 #else
                     // skip MC (central frame)
                     if (!is_highbd) {

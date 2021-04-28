@@ -809,6 +809,9 @@ EbErrorType first_pass_signal_derivation_mode_decision_config_kernel(PictureCont
 
     // HBD Mode
     pcs_ptr->hbd_mode_decision = EB_8_BIT_MD; //first pass hard coded to 8bit
+#if FTR_REDUCE_MVEST
+    pcs_ptr->parent_pcs_ptr->bypass_cost_table_gen = 0;
+#endif
     return return_error;
 }
 void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *pcs_ptr,
@@ -1482,12 +1485,14 @@ static void first_pass_setup_me_context(MotionEstimationContext_t *context_ptr,
     uint32_t sb_origin_x = (uint32_t)(blk_col * BLOCK_SIZE_64);
     uint32_t sb_origin_y = (uint32_t)(blk_row * BLOCK_SIZE_64);
 
+#if !SS_OPT_TF2_ME_COPY
     uint32_t sb_width  = (input_picture_ptr->width - sb_origin_x) < BLOCK_SIZE_64
          ? input_picture_ptr->width - sb_origin_x
-         : BLOCK_SIZE_64;
+         : BLOCK_SIZE_64
     uint32_t sb_height = (input_picture_ptr->height - sb_origin_y) < BLOCK_SIZE_64
         ? input_picture_ptr->height - sb_origin_y
         : BLOCK_SIZE_64;
+#endif
     // Load the SB from the input to the intermediate SB buffer
     int buffer_index = (input_picture_ptr->origin_y + sb_origin_y) * input_picture_ptr->stride_y +
         input_picture_ptr->origin_x + sb_origin_x;
@@ -1497,6 +1502,12 @@ static void first_pass_setup_me_context(MotionEstimationContext_t *context_ptr,
 
 #ifdef ARCH_X86_64
     uint8_t *src_ptr = &(input_picture_ptr->buffer_y[buffer_index]);
+
+#if SS_OPT_TF2_ME_COPY
+    uint32_t sb_height = (input_picture_ptr->height - sb_origin_y) < BLOCK_SIZE_64
+        ? input_picture_ptr->height - sb_origin_y
+        : BLOCK_SIZE_64;
+#endif
     //_MM_HINT_T0     //_MM_HINT_T1    //_MM_HINT_T2    //_MM_HINT_NTA
     uint32_t i;
     for (i = 0; i < sb_height; i++) {
@@ -1511,18 +1522,27 @@ static void first_pass_setup_me_context(MotionEstimationContext_t *context_ptr,
     buffer_index = (quarter_pic_ptr->origin_y + (sb_origin_y >> ss_y)) * quarter_pic_ptr->stride_y +
         quarter_pic_ptr->origin_x + (sb_origin_x >> ss_x);
 
+#if SS_OPT_TF2_ME_COPY
+    context_ptr->me_context_ptr->quarter_sb_buffer = &quarter_pic_ptr->buffer_y[buffer_index];
+    context_ptr->me_context_ptr->quarter_sb_buffer_stride = quarter_pic_ptr->stride_y;
+#else
     for (uint32_t sb_row = 0; sb_row < (sb_height >> ss_y); sb_row++) {
         EB_MEMCPY((&(context_ptr->me_context_ptr->quarter_sb_buffer
                          [sb_row * context_ptr->me_context_ptr->quarter_sb_buffer_stride])),
                   (&(quarter_pic_ptr->buffer_y[buffer_index + sb_row * quarter_pic_ptr->stride_y])),
                   (sb_width >> ss_x) * sizeof(uint8_t));
     }
+#endif
 
     // Load the 1/16 decimated SB from the 1/16 decimated input to the 1/16 intermediate SB buffer
     buffer_index = (sixteenth_pic_ptr->origin_y + (sb_origin_y >> 2)) *
             sixteenth_pic_ptr->stride_y +
         sixteenth_pic_ptr->origin_x + (sb_origin_x >> 2);
 
+#if SS_OPT_TF2_ME_COPY
+    context_ptr->me_context_ptr->sixteenth_sb_buffer = &sixteenth_pic_ptr->buffer_y[buffer_index];
+    context_ptr->me_context_ptr->sixteenth_sb_buffer_stride = sixteenth_pic_ptr->stride_y;
+#else
     uint8_t *frame_ptr = &(sixteenth_pic_ptr->buffer_y[buffer_index]);
     uint8_t *local_ptr = context_ptr->me_context_ptr->sixteenth_sb_buffer;
 
@@ -1539,6 +1559,7 @@ static void first_pass_setup_me_context(MotionEstimationContext_t *context_ptr,
             frame_ptr += sixteenth_pic_ptr->stride_y << 1;
         }
     }
+#endif
 }
 /***************************************************************************
 * Perform the motion estimation for first pass.

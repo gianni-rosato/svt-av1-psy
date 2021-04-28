@@ -25,15 +25,21 @@ void motion_estimation_pred_unit_ctor(MePredUnit *pu) {
 #endif
 static void me_context_dctor(EbPtr p) {
     MeContext *obj = (MeContext *)p;
+#if !SS_OPT_TF2_ME_COPY
     EB_FREE_ALIGNED_ARRAY(obj->quarter_sb_buffer);
+#endif
 
     EB_FREE_ARRAY(obj->mvd_bits_array);
 #if !OPT_BYPASS_ME_CAND
     EB_FREE_ARRAY(obj->me_candidate);
 #endif
     EB_FREE_ARRAY(obj->p_eight_pos_sad16x16);
+#if !SS_OPT_TF2_ME_COPY
     EB_FREE_ALIGNED_ARRAY(obj->sixteenth_sb_buffer);
+#endif
+#if  !OPT_ME_RES_SAD_LOOP
     EB_FREE_ALIGNED_ARRAY(obj->sb_buffer);
+#endif
 #if FTR_TPL_TR
     EB_FREE(obj->me_pcs);
 #endif
@@ -47,10 +53,15 @@ EbErrorType me_context_ctor(MeContext *object_ptr) {
 #if FTR_TPL_TR
     EB_MALLOC(object_ptr->me_pcs, sizeof(MePcs));
 #endif
+#if  !OPT_ME_RES_SAD_LOOP
     // Intermediate SB-sized buffer to retain the input samples
     object_ptr->sb_buffer_stride = BLOCK_SIZE_64;
     EB_MALLOC_ALIGNED_ARRAY(object_ptr->sb_buffer, BLOCK_SIZE_64 * object_ptr->sb_buffer_stride);
+#endif
 
+
+
+#if !SS_OPT_TF2_ME_COPY
     object_ptr->quarter_sb_buffer_stride = (BLOCK_SIZE_64 >> 1);
     EB_MALLOC_ALIGNED_ARRAY(object_ptr->quarter_sb_buffer,
                             (BLOCK_SIZE_64 >> 1) * object_ptr->quarter_sb_buffer_stride);
@@ -58,8 +69,11 @@ EbErrorType me_context_ctor(MeContext *object_ptr) {
     object_ptr->sixteenth_sb_buffer_stride = (BLOCK_SIZE_64 >> 2);
     EB_MALLOC_ALIGNED_ARRAY(object_ptr->sixteenth_sb_buffer,
                             (BLOCK_SIZE_64 >> 2) * object_ptr->sixteenth_sb_buffer_stride);
+#endif
+#if !OPT_ME_RES_SAD_LOOP
     EB_MEMSET(
         object_ptr->sb_buffer, 0, sizeof(uint8_t) * BLOCK_SIZE_64 * object_ptr->sb_buffer_stride);
+#endif
 #if !OPT_BYPASS_ME_CAND
     EB_MALLOC_ARRAY(object_ptr->me_candidate, MAX_PA_ME_CAND);
     for (pu_index = 0; pu_index < SQUARE_PU_COUNT; pu_index++) {

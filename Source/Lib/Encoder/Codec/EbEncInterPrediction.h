@@ -40,7 +40,11 @@ EbErrorType av1_inter_prediction(
     PictureControlSet *pcs_ptr, uint32_t interp_filters, BlkStruct *blk_ptr, uint8_t ref_frame_type,
     MvUnit *mv_unit, uint8_t use_intrabc, MotionMode motion_mode, uint8_t use_precomputed_obmc,
     struct ModeDecisionContext *md_context, uint8_t compound_idx,
+#if OPT_INIT_XD_2
+    InterInterCompoundData *interinter_comp,
+#else
     InterInterCompoundData *interinter_comp, TileInfo *tile,
+#endif
     NeighborArrayUnit *luma_recon_neighbor_array, NeighborArrayUnit *cb_recon_neighbor_array,
     NeighborArrayUnit *cr_recon_neighbor_array, uint8_t is_interintra_used,
     InterIntraMode interintra_mode, uint8_t use_wedge_interintra, int32_t interintra_wedge_index,
@@ -53,7 +57,11 @@ EbErrorType av1_inter_prediction_16bit_pipeline(
     PictureControlSet *pcs_ptr, uint32_t interp_filters, BlkStruct *blk_ptr, uint8_t ref_frame_type,
     MvUnit *mv_unit, uint8_t use_intrabc, MotionMode motion_mode, uint8_t use_precomputed_obmc,
     struct ModeDecisionContext *md_context, uint8_t compound_idx,
+#if OPT_INIT_XD_2
+    InterInterCompoundData *interinter_comp,
+#else
     InterInterCompoundData *interinter_comp, TileInfo *tile,
+#endif
     NeighborArrayUnit *luma_recon_neighbor_array, NeighborArrayUnit *cb_recon_neighbor_array,
     NeighborArrayUnit *cr_recon_neighbor_array, uint8_t is_interintra_used,
     InterIntraMode interintra_mode, uint8_t use_wedge_interintra, int32_t interintra_wedge_index,
