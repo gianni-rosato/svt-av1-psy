@@ -528,6 +528,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         update_cdf_level = pcs_ptr->slice_type == I_SLICE
         ? 1
         : (pcs_ptr->temporal_layer_index == 0) ? 1 : 3;
+#if !TUNE_FINAL_M4_M8
 #if TUNE_SHIFT_PRESETS_DOWN
 #if TUNE_M0_M8_MEGA_FEB
     else if (pcs_ptr->enc_mode <= ENC_M5)
@@ -540,8 +541,13 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         update_cdf_level = pcs_ptr->slice_type == I_SLICE
         ? 1
         : (pcs_ptr->temporal_layer_index == 0) ? 2 : 3;
+#endif
 #if TUNE_SHIFT_PRESETS_DOWN
+#if TUNE_FINAL_M4_M8
+    else if (pcs_ptr->enc_mode <= ENC_M6)
+#else
     else if (pcs_ptr->enc_mode <= ENC_M7)
+#endif
 #else
     else if (pcs_ptr->enc_mode <= ENC_M8)
 #endif
@@ -602,7 +608,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
 #if TUNE_NEW_PRESETS_MR_M8
 #if TUNE_PRESETS_AND_PRUNING
 #if TUNE_SHIFT_PRESETS_DOWN
+#if TUNE_FINAL_M4_M8
+    if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M3) {
+#else
     if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M4) {
+#endif
 #else
     if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M5) {
 #endif
@@ -686,7 +696,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M5)
 #endif
 #else
+#if TUNE_FINAL_M4_M8
+        else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M5)
+#else
         else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M6)
+#endif
 #endif
 #else
         else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M5)
@@ -755,7 +769,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     pcs_ptr->parent_pcs_ptr->bypass_cost_table_gen = 0;
     if(scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE)
          pcs_ptr->parent_pcs_ptr->bypass_cost_table_gen = 0;
-#if TUNE_M7_M10_MT
+#if TUNE_FINAL_M4_M8
     else if(pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M7)
 #else
     else if(pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M8)

@@ -908,7 +908,7 @@ uint8_t get_loop_filter_mode(EbEncMode enc_mode, uint8_t is_used_as_reference_fl
 
     uint8_t loop_filter_mode;
 #if TUNE_NEW_PRESETS_MR_M8
-#if TUNE_SHIFT_PRESETS_DOWN
+#if TUNE_SHIFT_PRESETS_DOWN && !TUNE_FINAL_M4_M8
     if (enc_mode <= ENC_M4)
 #else
     if (enc_mode <= ENC_M5)
@@ -1463,7 +1463,11 @@ EbErrorType signal_derivation_multi_processes_oq(
 #else
 #if NEW_PRESETS
 #if TUNE_M0_M8_MEGA_FEB
+#if TUNE_FINAL_M4_M8
+    else if (pcs_ptr->enc_mode <= ENC_M7)
+#else
     else if (pcs_ptr->enc_mode <= ENC_M6)
+#endif
 #else
     else if (pcs_ptr->enc_mode <= ENC_M4)
 #endif
@@ -1594,7 +1598,11 @@ EbErrorType signal_derivation_multi_processes_oq(
 #if FTR_SIMULATE_P_BASE
     // Use list0 only if BASE (mimik a P)
 #if TUNE_SHIFT_PRESETS_DOWN
+#if TUNE_FINAL_M4_M8
+    if (pcs_ptr->enc_mode <= ENC_M6)
+#else
     if (pcs_ptr->enc_mode <= ENC_M7)
+#endif
 #else
     if (pcs_ptr->enc_mode <= ENC_M8)
 #endif

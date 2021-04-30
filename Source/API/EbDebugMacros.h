@@ -364,7 +364,6 @@ extern "C" {
 #define FIX_MRP_LOW_DELAY_P                     1 // Fix deadlock in 2L
 
 
-
 #define FTR_IMPROVE_DEPTH_REFINEMENT           1 // Add the ability to use a maximum of 2 depth per block (PRED+Parent or PRED+Sub)
 #define LOWER_DEPTH_EXIT_CTRL                  1 // Refactor lower_depth_skip_ctrls
 #define OPT_REFACTOR_IN_DEPTH_CTRLS            1 // Refactor in_depth_skip_ctrls
@@ -379,7 +378,7 @@ extern "C" {
 #define SS_OPT_TF2_ME_COPY                     1 //avoid TF accum init. Lossless all presets ; avoid temp buffer copying in ME. Lossless all presets
 #define OPT_ME_RES_SAD_LOOP                    1 //Lossless ME optimization
 
-
+#define TUNE_FINAL_M4_M8                        1 // final tuning of the branch m4-m8
 // ============= END SVT_04 =============
 
 //FOR DEBUGGING - Do not remove

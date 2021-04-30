@@ -2778,7 +2778,7 @@ void derive_tf_params(SequenceControlSet *scs_ptr) {
     else if (scs_ptr->static_config.enc_mode <= ENC_M5) {
         tf_level = 2;
     }
-#if !TUNE_M0_M7_MEGA_FEB
+#if !TUNE_FINAL_M4_M8
     else if (scs_ptr->static_config.enc_mode <= ENC_M6) {
         tf_level = 3;
     }
@@ -3030,7 +3030,11 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
 
 
 #if LIMIT_TO_43
+#if TUNE_FINAL_M4_M8
+    scs_ptr->mrp_init_level = scs_ptr->static_config.enc_mode <= ENC_M4 ? 1 : scs_ptr->static_config.enc_mode <= ENC_M6 ? 3 : 4;
+#else
     scs_ptr->mrp_init_level = scs_ptr->static_config.enc_mode <= ENC_M3 ? 1 : scs_ptr->static_config.enc_mode <= ENC_M6 ? 3 : 4;
+#endif
 #endif
 }
 
