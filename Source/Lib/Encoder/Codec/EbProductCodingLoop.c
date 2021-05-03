@@ -2097,6 +2097,7 @@ void md_stage_0(
 #if !CLN_MD_CANDS
             }
 #endif
+
             if (context_ptr->early_cand_elimination) {
                 if (*candidate_buffer->fast_cost_ptr < context_ptr->mds0_best_cost) {
                     context_ptr->mds0_best_cost = *candidate_buffer->fast_cost_ptr;

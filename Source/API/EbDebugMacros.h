@@ -377,6 +377,7 @@ extern "C" {
 #define OPT_BUILD_CAND_BLK_3                   1 // Lossless optimization of build_cand_block_array()
 #define SS_OPT_TF2_ME_COPY                     1 //avoid TF accum init. Lossless all presets ; avoid temp buffer copying in ME. Lossless all presets
 #define OPT_ME_RES_SAD_LOOP                    1 //Lossless ME optimization
+#define FIX_INTER_INTRA_COMP                   1 // Fix conformance issue when Inter-intra and global motion is selected
 
 #define TUNE_FINAL_M4_M8                        1 // final tuning of the branch m4-m8
 // ============= END SVT_04 =============

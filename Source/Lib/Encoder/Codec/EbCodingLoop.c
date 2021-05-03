@@ -3177,6 +3177,12 @@ EB_EXTERN void av1_encode_decode(SequenceControlSet *scs_ptr, PictureControlSet 
                                     recon_buffer,
                                     context_ptr->blk_origin_x,
                                     context_ptr->blk_origin_y,
+#if FIX_INTER_INTRA_COMP
+                                    ep_luma_recon_neighbor_array,
+                                    ep_cb_recon_neighbor_array,
+                                    ep_cr_recon_neighbor_array,
+                                    NULL,
+#endif
                                     &context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].wm_params_l0,
                                     &context_ptr->md_context->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].wm_params_l1,
                                     (uint8_t)scs_ptr->static_config.encoder_bit_depth,

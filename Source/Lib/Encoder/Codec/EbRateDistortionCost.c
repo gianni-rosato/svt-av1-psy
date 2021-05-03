@@ -2368,6 +2368,7 @@ EbErrorType av1_full_cost(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
     *(candidate_buffer_ptr->full_cost_ptr)               = RDCOST(lambda, rate, total_distortion);
     candidate_buffer_ptr->candidate_ptr->total_rate      = rate;
     candidate_buffer_ptr->candidate_ptr->full_distortion = total_distortion;
+
     return return_error;
 }
 

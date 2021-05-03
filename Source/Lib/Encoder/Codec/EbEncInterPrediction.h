@@ -90,7 +90,12 @@ EbErrorType warped_motion_prediction(
     InterInterCompoundData *interinter_comp, uint16_t pu_origin_x, uint16_t pu_origin_y,
     BlkStruct *blk_ptr, const BlockGeom *blk_geom, EbPictureBufferDesc *ref_pic_list0,
     EbPictureBufferDesc *ref_pic_list1, EbPictureBufferDesc *prediction_ptr, uint16_t dst_origin_x,
-    uint16_t dst_origin_y, EbWarpedMotionParams *wm_params_l0, EbWarpedMotionParams *wm_params_l1,
+    uint16_t dst_origin_y,
+#if FIX_INTER_INTRA_COMP
+    NeighborArrayUnit *luma_recon_neighbor_array, NeighborArrayUnit *cb_recon_neighbor_array,
+    NeighborArrayUnit *cr_recon_neighbor_array,ModeDecisionCandidate *candidate_ptr,
+#endif
+    EbWarpedMotionParams *wm_params_l0, EbWarpedMotionParams *wm_params_l1,
     uint8_t bit_depth, EbBool perform_chroma, EbBool is_encode_pass);
 
 const uint8_t *svt_av1_get_obmc_mask(int length);

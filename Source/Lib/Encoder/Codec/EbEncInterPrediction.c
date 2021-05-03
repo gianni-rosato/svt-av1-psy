@@ -3381,6 +3381,255 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
 }
 
 
+#if FIX_INTER_INTRA_COMP
+/*
+    compound inter-intra:
+    perform intra prediction and inter-intra blending
+*/
+void inter_intra_prediction(
+    PictureControlSet *picture_control_set_ptr,
+    EbPictureBufferDesc *prediction_ptr,
+    InterIntraMode interintra_mode,
+    uint8_t use_wedge_interintra,
+    int32_t interintra_wedge_index,
+    NeighborArrayUnit *luma_recon_neighbor_array,
+    NeighborArrayUnit *cb_recon_neighbor_array,
+    NeighborArrayUnit *cr_recon_neighbor_array,
+    BlkStruct *blk_ptr,
+    const BlockGeom *blk_geom,
+    int16_t pu_origin_x,
+    uint16_t pu_origin_y,
+    uint16_t dst_origin_x,
+    uint16_t dst_origin_y,
+    EbBool perform_chroma,
+    uint8_t bit_depth,
+    EbBool is16bit){
+
+    uint8_t *dst_ptr;
+    int32_t  dst_stride;
+    int32_t start_plane = 0;
+    int32_t end_plane   = perform_chroma && blk_geom->has_uv ? MAX_MB_PLANE : 1;
+    // temp buffer for intra pred
+    DECLARE_ALIGNED(16, uint8_t, intra_pred[MAX_SB_SQUARE]);
+    DECLARE_ALIGNED(16, uint8_t, intra_pred_cb[MAX_SB_SQUARE]);
+    DECLARE_ALIGNED(16, uint8_t, intra_pred_cr[MAX_SB_SQUARE]);
+
+    int32_t intra_stride;
+
+    for (int32_t plane = start_plane; plane < end_plane; ++plane) {
+        EbPictureBufferDesc intra_pred_desc;
+        intra_pred_desc.origin_x = intra_pred_desc.origin_y = 0;
+        intra_pred_desc.stride_y                            = blk_geom->bwidth;
+        intra_pred_desc.stride_cb                           = blk_geom->bwidth / 2;
+        intra_pred_desc.stride_cr                           = blk_geom->bwidth / 2;
+        intra_pred_desc.buffer_y                            = intra_pred;
+        intra_pred_desc.buffer_cb                           = intra_pred_cb;
+        intra_pred_desc.buffer_cr                           = intra_pred_cr;
+
+        const int       ssx         = plane ? 1 : 0;
+        const int       ssy         = plane ? 1 : 0;
+        const BlockSize plane_bsize = get_plane_block_size(blk_geom->bsize, ssx, ssy);
+        //av1_build_interintra_predictors_sbp
+        uint8_t    topNeighArray[(64 * 2 + 1) << 1];
+        uint8_t    leftNeighArray[(64 * 2 + 1) << 1];
+
+        uint32_t blk_originx_uv = (pu_origin_x >> 3 << 3) >> 1;
+        uint32_t blk_originy_uv = (pu_origin_y >> 3 << 3) >> 1;
+
+        if (plane == 0) {
+            dst_ptr = prediction_ptr->buffer_y +
+                        ((prediction_ptr->origin_x + dst_origin_x +
+                        (prediction_ptr->origin_y + dst_origin_y)
+                        * prediction_ptr->stride_y) << is16bit);
+            dst_stride = prediction_ptr->stride_y;
+            intra_stride = intra_pred_desc.stride_y;
+
+            if (pu_origin_y != 0)
+                svt_memcpy(topNeighArray + ((uint64_t)1 << is16bit),
+                        luma_recon_neighbor_array->top_array + ((uint64_t)pu_origin_x << is16bit),
+                        blk_geom->bwidth * 2 << is16bit);
+
+            if (pu_origin_x != 0)
+                svt_memcpy(leftNeighArray + ((uint64_t)1 << is16bit),
+                        luma_recon_neighbor_array->left_array + ((uint64_t)pu_origin_y << is16bit),
+                        blk_geom->bheight * 2 << is16bit);
+
+            if (pu_origin_y != 0 && pu_origin_x != 0)
+                topNeighArray[0] = leftNeighArray[0] =
+                        luma_recon_neighbor_array->top_left_array[(MAX_PICTURE_HEIGHT_SIZE
+                                                                    + pu_origin_x - pu_origin_y) << is16bit];
+
+        }
+
+        else if (plane == 1) {
+            dst_ptr = prediction_ptr->buffer_cb +
+                        (((prediction_ptr->origin_x + ((dst_origin_x >> 3) << 3)) / 2 +
+                        (prediction_ptr->origin_y + ((dst_origin_y >> 3) << 3)) / 2 *
+                        prediction_ptr->stride_cb) << is16bit);
+            dst_stride = prediction_ptr->stride_cb;
+            intra_stride = intra_pred_desc.stride_cb;
+
+            if (blk_originy_uv != 0)
+                svt_memcpy(topNeighArray + ((uint64_t)1 << is16bit),
+                        cb_recon_neighbor_array->top_array + ((uint64_t)blk_originx_uv << is16bit),
+                        blk_geom->bwidth_uv * 2 << is16bit);
+
+            if (blk_originx_uv != 0)
+                svt_memcpy(leftNeighArray + ((uint64_t)1 << is16bit),
+                        cb_recon_neighbor_array->left_array + ((uint64_t)blk_originy_uv << is16bit),
+                        blk_geom->bheight_uv * 2 << is16bit);
+
+            if (blk_originy_uv != 0 && blk_originx_uv != 0)
+                topNeighArray[0] = leftNeighArray[0] =
+                        cb_recon_neighbor_array->top_left_array[(MAX_PICTURE_HEIGHT_SIZE / 2
+                                                                    + blk_originx_uv - blk_originy_uv / 2) << is16bit];
+        }
+        else {
+            dst_ptr = prediction_ptr->buffer_cr +
+                        (((prediction_ptr->origin_x + ((dst_origin_x >> 3) << 3)) / 2 +
+                        (prediction_ptr->origin_y + ((dst_origin_y >> 3) << 3)) / 2 *
+                        prediction_ptr->stride_cr) << is16bit);
+            dst_stride = prediction_ptr->stride_cr;
+            intra_stride = intra_pred_desc.stride_cr;
+
+            if (blk_originy_uv != 0)
+                svt_memcpy(topNeighArray + ((uint64_t)1 << is16bit),
+                        cr_recon_neighbor_array->top_array + ((uint64_t)blk_originx_uv << is16bit),
+                        blk_geom->bwidth_uv * 2 << is16bit);
+
+            if (blk_originx_uv != 0)
+                svt_memcpy(leftNeighArray + ((uint64_t)1 << is16bit),
+                        cr_recon_neighbor_array->left_array + ((uint64_t)blk_originy_uv << is16bit),
+                        blk_geom->bheight_uv * 2 << is16bit);
+
+            if (blk_originy_uv != 0 && blk_originx_uv != 0)
+                topNeighArray[0] = leftNeighArray[0] =
+                        cr_recon_neighbor_array->top_left_array[(MAX_PICTURE_HEIGHT_SIZE / 2
+                                                                    + blk_originx_uv - blk_originy_uv / 2) << is16bit];
+        }
+        TxSize tx_size        = blk_geom->txsize[0][0]; // Nader - Intra 128x128 not supported
+        TxSize tx_size_Chroma = blk_geom->txsize_uv[0][0]; //Nader - Intra 128x128 not supported
+
+        if (is16bit)
+            svt_av1_predict_intra_block_16bit(
+                    bit_depth,
+#if !OPT_INIT_XD_2
+                    tile,
+#endif
+                    !ED_STAGE,
+                    blk_geom,
+#if OPT_INIT_XD_2
+                    blk_ptr->av1xd,
+#else
+                    picture_control_set_ptr->parent_pcs_ptr->av1_cm,    //const Av1Common *cm,
+#endif
+                    plane ? blk_geom->bwidth_uv : blk_geom->bwidth,     //int32_t wpx,
+                    plane ? blk_geom->bheight_uv : blk_geom->bheight,   //int32_t hpx,
+                    plane ? tx_size_Chroma : tx_size,                   //TxSize tx_size,
+                    interintra_to_intra_mode[interintra_mode],          //PredictionMode mode,
+                    0,
+                    0,                                                  //int32_t use_palette,
+                    NULL,
+                    FILTER_INTRA_MODES,                                 // FilterIntraMode filter_intra_mode,
+                    (uint16_t *)topNeighArray + 1,
+                    (uint16_t *)leftNeighArray + 1,
+                    &intra_pred_desc,                                   //uint8_t *dst,
+                    //int32_t dst_stride,
+                    0,                                                  //int32_t col_off,
+                    0,                                                  //int32_t row_off,
+                    plane,                                              //int32_t plane,
+                    blk_geom->bsize,                                    //uint32_t puSize,
+                    dst_origin_x,
+                    dst_origin_y,
+                    pu_origin_x,
+                    pu_origin_y,
+                    0,                                                  //uint32_t cuOrgX used only for prediction Ptr
+                    0,                                                   //uint32_t cuOrgY used only for prediction Ptr
+#if !OPT_INIT_XD_2
+                    picture_control_set_ptr->mi_grid_base,
+#endif
+                    &((SequenceControlSet *)picture_control_set_ptr->scs_wrapper_ptr->object_ptr)->seq_header);
+        else
+            svt_av1_predict_intra_block(
+#if !OPT_INIT_XD_2
+                    tile,
+#endif
+                    !ED_STAGE,
+                    blk_geom,
+#if OPT_INIT_XD_2
+                    blk_ptr->av1xd,
+#else
+                    picture_control_set_ptr->parent_pcs_ptr->av1_cm,    //const Av1Common *cm,
+#endif
+                    plane ? blk_geom->bwidth_uv : blk_geom->bwidth,     //int32_t wpx,
+                    plane ? blk_geom->bheight_uv : blk_geom->bheight,   //int32_t hpx,
+                    plane ? tx_size_Chroma : tx_size,                   //TxSize tx_size,
+                    interintra_to_intra_mode[interintra_mode],          //PredictionMode mode,
+                    0,
+                    0,                                                  //int32_t use_palette,
+                    NULL,
+                    FILTER_INTRA_MODES,                                 // FilterIntraMode filter_intra_mode,
+                    topNeighArray + 1,
+                    leftNeighArray + 1,
+                    &intra_pred_desc,                                   //uint8_t *dst,
+                    //int32_t dst_stride,
+                    0,                                                  //int32_t col_off,
+                    0,                                                  //int32_t row_off,
+                    plane,                                              //int32_t plane,
+                    blk_geom->bsize,                                    //uint32_t puSize,
+                    dst_origin_x,
+                    dst_origin_y,
+                    pu_origin_x,
+                    pu_origin_y,
+                    0,                                                  //uint32_t cuOrgX used only for prediction Ptr
+                    0,                                                   //uint32_t cuOrgY used only for prediction Ptr
+#if !OPT_INIT_XD_2
+                    picture_control_set_ptr->mi_grid_base,
+#endif
+                    &((SequenceControlSet *)picture_control_set_ptr->scs_wrapper_ptr->object_ptr)->seq_header);
+
+        //combine_interintra
+
+        if (is16bit)
+            combine_interintra_highbd(
+                    interintra_mode,
+                    use_wedge_interintra,
+                    interintra_wedge_index,
+                    INTERINTRA_WEDGE_SIGN,
+                    blk_geom->bsize,
+                    plane_bsize,
+                    dst_ptr,
+                    dst_stride,
+                    dst_ptr, // Inter pred buff
+                    dst_stride, // Inter pred stride
+                    (plane == 0) ? intra_pred
+                                    : (plane == 1) ? intra_pred_cb : intra_pred_cr, // Intra pred buff
+                    intra_stride, // Intra pred stride
+                    bit_depth);
+        else
+            combine_interintra(
+                    interintra_mode,
+                    use_wedge_interintra,
+                    interintra_wedge_index,
+                    INTERINTRA_WEDGE_SIGN,
+                    blk_geom->bsize,
+                    plane_bsize,
+                    dst_ptr,
+                    dst_stride,
+                    dst_ptr, // Inter pred buff
+                    dst_stride, // Inter pred stride
+                    (plane == 0) ? intra_pred
+                                    : (plane == 1) ? intra_pred_cb : intra_pred_cr, // Intra pred buff
+                    intra_stride); // Intra pred stride
+    }
+}
+
+
+#endif
+
+
+
+
 EbErrorType warped_motion_prediction(PictureControlSet *picture_control_set_ptr, MvUnit *mv_unit,
                                      uint8_t ref_frame_type, uint8_t compound_idx,
                                      InterInterCompoundData *interinter_comp, uint16_t pu_origin_x,
@@ -3388,7 +3637,14 @@ EbErrorType warped_motion_prediction(PictureControlSet *picture_control_set_ptr,
                                      const BlockGeom *blk_geom, EbPictureBufferDesc *ref_pic_list0,
                                      EbPictureBufferDesc *ref_pic_list1,
                                      EbPictureBufferDesc *prediction_ptr, uint16_t dst_origin_x,
-                                     uint16_t dst_origin_y, EbWarpedMotionParams *wm_params_l0,
+                                     uint16_t dst_origin_y,
+#if FIX_INTER_INTRA_COMP
+                                     NeighborArrayUnit *luma_recon_neighbor_array,
+                                     NeighborArrayUnit *cb_recon_neighbor_array,
+                                     NeighborArrayUnit *cr_recon_neighbor_array,
+                                    ModeDecisionCandidate *candidate_ptr,
+#endif
+                                     EbWarpedMotionParams *wm_params_l0,
                                      EbWarpedMotionParams *wm_params_l1, uint8_t bit_depth,
                                      EbBool perform_chroma, EbBool is_encode_pass) {
     EbErrorType return_error = EB_ErrorNone;
@@ -3654,6 +3910,51 @@ EbErrorType warped_motion_prediction(PictureControlSet *picture_control_set_ptr,
                                                          is16bit);
         }
     }
+
+#if FIX_INTER_INTRA_COMP
+    uint8_t is_interintra_used;
+    InterIntraMode interintra_mode;
+    uint8_t use_wedge_interintra;
+    int32_t interintra_wedge_index;
+    if (is_encode_pass) {
+        is_interintra_used = blk_ptr->is_interintra_used;
+        interintra_mode = blk_ptr->interintra_mode;
+        use_wedge_interintra = blk_ptr->use_wedge_interintra;
+        interintra_wedge_index = blk_ptr->interintra_wedge_index;
+    }else{
+        is_interintra_used = candidate_ptr->is_interintra_used;
+        interintra_mode = candidate_ptr->interintra_mode;
+        use_wedge_interintra = candidate_ptr->use_wedge_interintra;
+        interintra_wedge_index = candidate_ptr->interintra_wedge_index;
+    }
+
+        if (is_interintra_used) {
+
+
+            inter_intra_prediction(
+                picture_control_set_ptr,
+                prediction_ptr,
+                interintra_mode,
+                use_wedge_interintra,
+                interintra_wedge_index,
+                luma_recon_neighbor_array,
+                cb_recon_neighbor_array,
+                cr_recon_neighbor_array,
+                blk_ptr,
+                blk_geom,
+                pu_origin_x,
+                pu_origin_y,
+                dst_origin_x,
+                dst_origin_y,
+                perform_chroma,
+                bit_depth,
+                is16bit);
+
+
+    }
+
+
+#endif
 
     return return_error;
 }
@@ -4951,6 +5252,31 @@ EbErrorType av1_inter_prediction(
     }
 
     if (is_interintra_used) {
+
+
+
+#if FIX_INTER_INTRA_COMP
+
+        inter_intra_prediction(
+            picture_control_set_ptr,
+            prediction_ptr,
+            interintra_mode,
+            use_wedge_interintra,
+            interintra_wedge_index,
+            luma_recon_neighbor_array,
+            cb_recon_neighbor_array,
+            cr_recon_neighbor_array,
+            blk_ptr,
+            blk_geom,
+            pu_origin_x,
+            pu_origin_y,
+            dst_origin_x,
+            dst_origin_y,
+            perform_chroma,
+            bit_depth,
+            is16bit);
+
+#else
         int32_t start_plane = 0;
         int32_t end_plane   = perform_chroma && blk_geom->has_uv ? MAX_MB_PLANE : 1;
         // temp buffer for intra pred
@@ -5166,6 +5492,7 @@ EbErrorType av1_inter_prediction(
                                      : (plane == 1) ? intra_pred_cb : intra_pred_cr, // Intra pred buff
                         intra_stride); // Intra pred stride
         }
+#endif
     }
 
     if (motion_mode == OBMC_CAUSAL) {
@@ -6569,6 +6896,21 @@ EbErrorType inter_pu_prediction_av1(uint8_t hbd_mode_decision, ModeDecisionConte
         bit_depth = scs_ptr->static_config.encoder_bit_depth;
 
     if (candidate_ptr->motion_mode == WARPED_CAUSAL) {
+#if FIX_INTER_INTRA_COMP
+        NeighborArrayUnit *luma_recon_neighbor_array;
+        NeighborArrayUnit *cb_recon_neighbor_array;
+        NeighborArrayUnit *cr_recon_neighbor_array;
+
+        if (bit_depth == EB_8BIT) {
+            luma_recon_neighbor_array = md_context_ptr->luma_recon_neighbor_array;
+            cb_recon_neighbor_array   = md_context_ptr->cb_recon_neighbor_array;
+            cr_recon_neighbor_array   = md_context_ptr->cr_recon_neighbor_array;
+        } else {
+            luma_recon_neighbor_array = md_context_ptr->luma_recon_neighbor_array16bit;
+            cb_recon_neighbor_array   = md_context_ptr->cb_recon_neighbor_array16bit;
+            cr_recon_neighbor_array   = md_context_ptr->cr_recon_neighbor_array16bit;
+        }
+#endif
         warped_motion_prediction(picture_control_set_ptr,
                                  &mv_unit,
                                  candidate_ptr->ref_frame_type,
@@ -6583,6 +6925,12 @@ EbErrorType inter_pu_prediction_av1(uint8_t hbd_mode_decision, ModeDecisionConte
                                  candidate_buffer_ptr->prediction_ptr,
                                  md_context_ptr->blk_geom->origin_x,
                                  md_context_ptr->blk_geom->origin_y,
+#if FIX_INTER_INTRA_COMP
+                                 luma_recon_neighbor_array,
+                                 cb_recon_neighbor_array,
+                                 cr_recon_neighbor_array,
+                                 candidate_ptr,
+#endif
                                  &candidate_ptr->wm_params_l0,
                                  &candidate_ptr->wm_params_l1,
                                  bit_depth,
