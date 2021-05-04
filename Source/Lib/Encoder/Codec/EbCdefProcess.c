@@ -167,7 +167,7 @@ void cdef_seg_search(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr,
         for (fbc = x_b64_start_idx; fbc < x_b64_end_idx; ++fbc) {
 
             uint64_t best_sse[2] = { MAX_MODE_COST , MAX_MODE_COST };
-            int32_t best_gi[2];
+            int32_t best_gi[2] = { 0,0 };
             int32_t gi_offset[2] = { 6,2 };
             int32_t nvb, nhb;
             int32_t gi;
@@ -382,7 +382,7 @@ void cdef_seg_search16bit(PictureControlSet *pcs_ptr, SequenceControlSet *scs_pt
     for (fbr = y_b64_start_idx; fbr < y_b64_end_idx; ++fbr) {
         for (fbc = x_b64_start_idx; fbc < x_b64_end_idx; ++fbc) {
             uint64_t best_sse[2] = { MAX_MODE_COST , MAX_MODE_COST };
-            int32_t best_gi[2];
+            int32_t best_gi[2] = { 0,0 };
             int32_t gi_offset[2] = { 6,2 };
             int32_t nvb, nhb;
             int32_t gi;

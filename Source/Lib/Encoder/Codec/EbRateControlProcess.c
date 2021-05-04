@@ -1001,7 +1001,7 @@ static int cqp_qindex_calc(PictureControlSet *pcs_ptr, RATE_CONTROL *rc, int qin
     else if (pcs_ptr->slice_type == I_SLICE)
         offset_idx = 0;
     else
-        offset_idx = MIN(pcs_ptr->temporal_layer_index + 1, FIXED_QP_OFFSET_COUNT);
+        offset_idx = MIN(pcs_ptr->temporal_layer_index + 1, FIXED_QP_OFFSET_COUNT-1);
 
     const double q_val_target = (offset_idx == -1) ?
         q_val :

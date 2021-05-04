@@ -3577,6 +3577,8 @@ EbErrorType warped_motion_prediction(PictureControlSet *picture_control_set_ptr,
     uint8_t *dst_ptr;
     if (mv_unit->pred_direction == UNI_PRED_LIST_0 || mv_unit->pred_direction == BI_PRED) {
         assert(ref_pic_list0 != NULL);
+        if (is_compound)
+            assert(ref_pic_list1 != NULL);
         // Y
         src_ptr_l0 = ref_pic_list0->buffer_y + (is16bit ? 2 : 1)
                                                * (ref_pic_list0->origin_x + ref_pic_list0->origin_y * ref_pic_list0->stride_y);
@@ -4754,7 +4756,7 @@ EbErrorType av1_inter_prediction(
                 interp_filters, &filter_params_x, &filter_params_y, bwidth, bheight);
 
         DECLARE_ALIGNED(16, uint8_t, seg_mask[2 * MAX_SB_SQUARE]);
-
+        assert(picture_control_set_ptr != NULL);
         //the luma data is applied to chroma below
         svt_av1_dist_wtd_comp_weight_assign(
                 &picture_control_set_ptr->parent_pcs_ptr->scs_ptr->seq_header,
@@ -5034,7 +5036,7 @@ EbErrorType av1_inter_prediction(
     }
 
     if (is_interintra_used) {
-
+        assert(picture_control_set_ptr != NULL);
         inter_intra_prediction(
             picture_control_set_ptr,
             prediction_ptr,

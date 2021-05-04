@@ -7832,6 +7832,10 @@ EbBool update_redundant(PictureControlSet *pcs, ModeDecisionContext *ctx) {
     uint16_t         redundant_blk_mds;
     const BlockGeom *blk_geom = ctx->blk_geom;
     BlkStruct *      blk_ptr  = ctx->blk_ptr;
+    uint8_t bwidth = blk_geom->bwidth;
+    uint8_t bheight = blk_geom->bheight;
+    uint8_t bwidth_uv = blk_geom->bwidth_uv;
+    uint8_t bheight_uv = blk_geom->bheight_uv;
 
     if (!ctx->md_disallow_nsq)
         check_redundant_block(blk_geom, ctx, &redundant_blk_avail, &redundant_blk_mds);
@@ -7854,42 +7858,42 @@ EbBool update_redundant(PictureControlSet *pcs, ModeDecisionContext *ctx) {
         if (!ctx->hbd_mode_decision) {
             memcpy(&ctx->md_local_blk_unit[blk_geom->blkidx_mds].neigh_left_recon[0],
                    &ctx->md_local_blk_unit[redundant_blk_mds].neigh_left_recon[0],
-                   128);
+                    bheight);
             memcpy(&ctx->md_local_blk_unit[blk_geom->blkidx_mds].neigh_left_recon[1],
                    &ctx->md_local_blk_unit[redundant_blk_mds].neigh_left_recon[1],
-                   128);
+                    bheight_uv);
             memcpy(&ctx->md_local_blk_unit[blk_geom->blkidx_mds].neigh_left_recon[2],
                    &ctx->md_local_blk_unit[redundant_blk_mds].neigh_left_recon[2],
-                   128);
+                    bheight_uv);
             memcpy(&ctx->md_local_blk_unit[blk_geom->blkidx_mds].neigh_top_recon[0],
                    &ctx->md_local_blk_unit[redundant_blk_mds].neigh_top_recon[0],
-                   128);
+                    bwidth);
             memcpy(&ctx->md_local_blk_unit[blk_geom->blkidx_mds].neigh_top_recon[1],
                    &ctx->md_local_blk_unit[redundant_blk_mds].neigh_top_recon[1],
-                   128);
+                    bwidth_uv);
             memcpy(&ctx->md_local_blk_unit[blk_geom->blkidx_mds].neigh_top_recon[2],
                    &ctx->md_local_blk_unit[redundant_blk_mds].neigh_top_recon[2],
-                   128);
+                    bwidth_uv);
         } else {
             uint16_t sz = sizeof(uint16_t);
             memcpy(&ctx->md_local_blk_unit[blk_geom->blkidx_mds].neigh_left_recon_16bit[0],
                    &ctx->md_local_blk_unit[redundant_blk_mds].neigh_left_recon_16bit[0],
-                   128 * sz);
+                    bheight * sz);
             memcpy(&ctx->md_local_blk_unit[blk_geom->blkidx_mds].neigh_left_recon_16bit[1],
                    &ctx->md_local_blk_unit[redundant_blk_mds].neigh_left_recon_16bit[1],
-                   128 * sz);
+                    bheight_uv * sz);
             memcpy(&ctx->md_local_blk_unit[blk_geom->blkidx_mds].neigh_left_recon_16bit[2],
                    &ctx->md_local_blk_unit[redundant_blk_mds].neigh_left_recon_16bit[2],
-                   128 * sz);
+                    bheight_uv * sz);
             memcpy(&ctx->md_local_blk_unit[blk_geom->blkidx_mds].neigh_top_recon_16bit[0],
                    &ctx->md_local_blk_unit[redundant_blk_mds].neigh_top_recon_16bit[0],
-                   128 * sz);
+                    bwidth * sz);
             memcpy(&ctx->md_local_blk_unit[blk_geom->blkidx_mds].neigh_top_recon_16bit[1],
                    &ctx->md_local_blk_unit[redundant_blk_mds].neigh_top_recon_16bit[1],
-                   128 * sz);
+                    bwidth_uv * sz);
             memcpy(&ctx->md_local_blk_unit[blk_geom->blkidx_mds].neigh_top_recon_16bit[2],
                    &ctx->md_local_blk_unit[redundant_blk_mds].neigh_top_recon_16bit[2],
-                   128 * sz);
+                    bwidth_uv * sz);
         }
 
         memcpy(&ctx->md_ep_pipe_sb[blk_ptr->mds_idx],
