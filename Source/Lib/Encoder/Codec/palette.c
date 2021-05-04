@@ -331,56 +331,8 @@ void search_palette_luma(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
           (context_ptr->blk_origin_y + src_pic->origin_y) * src_pic->stride_y)
          << is16bit);
     int block_width, block_height, rows, cols;
-#if OPT_INIT_XD_2
     MacroBlockD *xd = context_ptr->blk_ptr->av1xd;
     BlockSize    bsize = context_ptr->blk_geom->bsize;
-#else
-    Av1Common *  cm       = pcs_ptr->parent_pcs_ptr->av1_cm;
-    MacroBlockD *xd       = context_ptr->blk_ptr->av1xd;
-    TileInfo *   tile     = &context_ptr->sb_ptr->tile_info;
-    BlockSize    bsize    = context_ptr->blk_geom->bsize;
-    int32_t      mirow    = context_ptr->blk_origin_y >> 2;
-    int32_t      micol    = context_ptr->blk_origin_x >> 2;
-    xd->up_available      = (mirow > tile->mi_row_start);
-    xd->left_available    = (micol > tile->mi_col_start);
-    const int32_t bw      = mi_size_wide[bsize];
-    const int32_t bh      = mi_size_high[bsize];
-    xd->mb_to_top_edge    = -((mirow * MI_SIZE) * 8);
-    xd->mb_to_bottom_edge = ((cm->mi_rows - bh - mirow) * MI_SIZE) * 8;
-    xd->mb_to_left_edge   = -((micol * MI_SIZE) * 8);
-    xd->mb_to_right_edge  = ((cm->mi_cols - bw - micol) * MI_SIZE) * 8;
-    xd->tile.mi_col_start = tile->mi_col_start;
-    xd->tile.mi_col_end   = tile->mi_col_end;
-    xd->tile.mi_row_start = tile->mi_row_start;
-    xd->tile.mi_row_end   = tile->mi_row_end;
-    xd->n8_h              = bh;
-    xd->n8_w              = bw;
-    xd->is_sec_rect       = 0;
-    if (xd->n8_w < xd->n8_h) {
-        // Only mark is_sec_rect as 1 for the last block.
-        // For PARTITION_VERT_4, it would be (0, 0, 0, 1);
-        // For other partitions, it would be (0, 1).
-        if (!((micol + xd->n8_w) & (xd->n8_h - 1)))
-            xd->is_sec_rect = 1;
-    }
-
-    if (xd->n8_w > xd->n8_h)
-        if (mirow & (xd->n8_w - 1))
-            xd->is_sec_rect = 1;
-
-    int           mi_stride = cm->mi_stride;
-    const int32_t offset    = mirow * mi_stride + micol;
-    xd->mi                  = pcs_ptr->mi_grid_base + offset;
-    ModeInfo *mi_ptr        = *xd->mi;
-    if (xd->up_available) {
-        xd->above_mbmi = &mi_ptr[-mi_stride].mbmi;
-    } else
-        xd->above_mbmi = NULL;
-    if (xd->left_available) {
-        xd->left_mbmi = &mi_ptr[-1].mbmi;
-    } else
-        xd->left_mbmi = NULL;
-#endif
     av1_get_block_dimensions(context_ptr->blk_geom->bsize,
                              0,
                              context_ptr->blk_ptr->av1xd,

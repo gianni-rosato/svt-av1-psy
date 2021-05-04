@@ -27,10 +27,6 @@ void svt_av1_loop_restoration_save_boundary_lines(const Yv12BufferConfig *frame,
 static void dlf_context_dctor(EbPtr p) {
     EbThreadContext *thread_context_ptr = (EbThreadContext *)p;
     DlfContext *     obj                = (DlfContext *)thread_context_ptr->priv;
-#if !CLN_DLF_RES_PROCESS
-    EB_DELETE(obj->temp_lf_recon_picture_ptr);
-    EB_DELETE(obj->temp_lf_recon_picture16bit_ptr);
-#endif
     EB_FREE_ARRAY(obj);
 }
 /******************************************************
@@ -38,11 +34,6 @@ static void dlf_context_dctor(EbPtr p) {
  ******************************************************/
 EbErrorType dlf_context_ctor(EbThreadContext *thread_context_ptr, const EbEncHandle *enc_handle_ptr,
                              int index) {
-#if !CLN_DLF_RES_PROCESS
-    const SequenceControlSet *scs_ptr = enc_handle_ptr->scs_instance_array[0]->scs_ptr;
-    EbBool        is_16bit     = (EbBool)(scs_ptr->static_config.encoder_bit_depth > EB_8BIT);
-    EbColorFormat color_format = scs_ptr->static_config.encoder_color_format;
-#endif
     DlfContext *context_ptr;
     EB_CALLOC_ARRAY(context_ptr, 1);
     thread_context_ptr->priv  = context_ptr;
@@ -53,37 +44,6 @@ EbErrorType dlf_context_ctor(EbThreadContext *thread_context_ptr, const EbEncHan
         enc_handle_ptr->enc_dec_results_resource_ptr, index);
     context_ptr->dlf_output_fifo_ptr = svt_system_resource_get_producer_fifo(
         enc_handle_ptr->dlf_results_resource_ptr, index);
-#if !CLN_DLF_RES_PROCESS
-    context_ptr->temp_lf_recon_picture16bit_ptr = (EbPictureBufferDesc *)NULL;
-    context_ptr->temp_lf_recon_picture_ptr      = (EbPictureBufferDesc *)NULL;
-
-    EbPictureBufferDescInitData temp_lf_recon_desc_init_data;
-    temp_lf_recon_desc_init_data.max_width          = (uint16_t)scs_ptr->max_input_luma_width;
-    temp_lf_recon_desc_init_data.max_height         = (uint16_t)scs_ptr->max_input_luma_height;
-    temp_lf_recon_desc_init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK;
-
-    temp_lf_recon_desc_init_data.left_padding  = PAD_VALUE;
-    temp_lf_recon_desc_init_data.right_padding = PAD_VALUE;
-    temp_lf_recon_desc_init_data.top_padding   = PAD_VALUE;
-    temp_lf_recon_desc_init_data.bot_padding   = PAD_VALUE;
-
-    temp_lf_recon_desc_init_data.split_mode   = EB_FALSE;
-    temp_lf_recon_desc_init_data.color_format = color_format;
-
-    if (scs_ptr->static_config.is_16bit_pipeline || is_16bit) {
-        temp_lf_recon_desc_init_data.bit_depth = EB_16BIT;
-        EB_NEW(context_ptr->temp_lf_recon_picture16bit_ptr,
-               svt_recon_picture_buffer_desc_ctor,
-               (EbPtr)&temp_lf_recon_desc_init_data);
-        if (!is_16bit)
-            context_ptr->temp_lf_recon_picture16bit_ptr->bit_depth = EB_8BIT;
-    } else {
-        temp_lf_recon_desc_init_data.bit_depth = EB_8BIT;
-        EB_NEW(context_ptr->temp_lf_recon_picture_ptr,
-               svt_recon_picture_buffer_desc_ctor,
-               (EbPtr)&temp_lf_recon_desc_init_data);
-    }
-#endif
     return EB_ErrorNone;
 }
 
@@ -191,30 +151,19 @@ void *dlf_kernel(void *input_ptr) {
                           ->reference_picture;
             else
                 recon_buffer = scs_ptr->static_config.is_16bit_pipeline || is_16bit
-#if CLN_STRUCT
                     ? pcs_ptr->parent_pcs_ptr->enc_dec_ptr->recon_picture16bit_ptr
                     : pcs_ptr->parent_pcs_ptr->enc_dec_ptr->recon_picture_ptr;
-#else
-                    ? pcs_ptr->recon_picture16bit_ptr
-                    : pcs_ptr->recon_picture_ptr;
-#endif
 
             svt_av1_loop_filter_init(pcs_ptr);
 
             if (pcs_ptr->parent_pcs_ptr->loop_filter_mode == 2) {
                 svt_av1_pick_filter_level(
-#if !CLN_DLF_RES_PROCESS
-                    context_ptr,
-#endif
                     (EbPictureBufferDesc *)pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr,
                     pcs_ptr,
                     LPF_PICK_FROM_Q);
             }
 
             svt_av1_pick_filter_level(
-#if !CLN_DLF_RES_PROCESS
-                context_ptr,
-#endif
                 (EbPictureBufferDesc *)pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr,
                 pcs_ptr,
                 LPF_PICK_FROM_FULL_IMAGE);
@@ -239,22 +188,14 @@ void *dlf_kernel(void *input_ptr) {
                                              ->reference_picture_wrapper_ptr->object_ptr)
                                             ->reference_picture16bit;
                 else
-#if CLN_STRUCT
                     recon_picture_ptr = pcs_ptr->parent_pcs_ptr->enc_dec_ptr->recon_picture16bit_ptr;
-#else
-                    recon_picture_ptr = pcs_ptr->recon_picture16bit_ptr;
-#endif
             } else {
                 if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE)
                     recon_picture_ptr = ((EbReferenceObject *)pcs_ptr->parent_pcs_ptr
                                              ->reference_picture_wrapper_ptr->object_ptr)
                                             ->reference_picture;
                 else
-#if CLN_STRUCT
                     recon_picture_ptr = pcs_ptr->parent_pcs_ptr->enc_dec_ptr->recon_picture_ptr;
-#else
-                    recon_picture_ptr = pcs_ptr->recon_picture_ptr;
-#endif
             }
             if (scs_ptr->static_config.is_16bit_pipeline) {
                 if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE) {
@@ -262,11 +203,7 @@ void *dlf_kernel(void *input_ptr) {
                                              ->reference_picture_wrapper_ptr->object_ptr)
                                             ->reference_picture16bit;
                 } else {
-#if CLN_STRUCT
                     recon_picture_ptr = pcs_ptr->parent_pcs_ptr->enc_dec_ptr->recon_picture16bit_ptr;
-#else
-                    recon_picture_ptr = pcs_ptr->recon_picture16bit_ptr;
-#endif
                 }
             }
             link_eb_to_aom_buffer_desc(recon_picture_ptr,

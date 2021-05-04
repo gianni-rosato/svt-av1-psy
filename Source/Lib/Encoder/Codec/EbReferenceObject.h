@@ -33,11 +33,6 @@ typedef struct EbReferenceObject {
     uint64_t                    ref_poc;
     uint16_t                    qp;
     EB_SLICE                    slice_type;
-#if !TUNE_REMOVE_INTRA_STATS_TRACKING
-    uint8_t                     intra_coded_area; //percentage of intra coded area 0-100%
-    uint8_t                     intra_coded_area_sb
-        [MAX_NUMBER_OF_TREEBLOCKS_PER_PICTURE]; //percentage of intra coded area 0-100%
-#endif
     uint32_t non_moving_index_array
         [MAX_NUMBER_OF_TREEBLOCKS_PER_PICTURE]; //array to hold non-moving blocks in reference frames
 
@@ -57,15 +52,6 @@ typedef struct EbReferenceObject {
     EbHandle             referenced_area_mutex;
     uint64_t             referenced_area_avg;
     double               r0;
-#if !CLN_REMOVE_UNUSED_CODE
-    uint32_t             ref_part_cnt[NUMBER_OF_SHAPES - 1][FB_NUM][SSEG_NUM];
-#endif
-#if !CLN_NSQ_AND_STATS
-    uint32_t             ref_pred_depth_count[DEPTH_DELTA_NUM][NUMBER_OF_SHAPES - 1];
-#endif
-#if !TUNE_REMOVE_TXT_STATS
-    uint32_t             ref_txt_cnt[TXT_DEPTH_DELTA_NUM][TX_TYPES];
-#endif
     int32_t              mi_cols;
     int32_t              mi_rows;
 } EbReferenceObject;
@@ -81,26 +67,12 @@ typedef struct EbReferenceObjectDescInitData {
 typedef struct EbPaReferenceObject {
     EbDctor              dctor;
     EbPictureBufferDesc *input_padded_picture_ptr;
-#if OPT_ONE_BUFFER_DOWNSAMPLED
     EbPictureBufferDesc *quarter_downsampled_picture_ptr;
     EbPictureBufferDesc *sixteenth_downsampled_picture_ptr;
-#else
-    EbPictureBufferDesc *quarter_decimated_picture_ptr;
-    EbPictureBufferDesc *sixteenth_decimated_picture_ptr;
-    EbPictureBufferDesc *quarter_filtered_picture_ptr;
-    EbPictureBufferDesc *sixteenth_filtered_picture_ptr;
-#endif
     // downscaled reference pointers
     EbPictureBufferDesc *downscaled_input_padded_picture_ptr[NUM_SCALES];
-#if OPT_ONE_BUFFER_DOWNSAMPLED
     EbPictureBufferDesc *downscaled_quarter_downsampled_picture_ptr[NUM_SCALES];
     EbPictureBufferDesc *downscaled_sixteenth_downsampled_picture_ptr[NUM_SCALES];
-#else
-    EbPictureBufferDesc *downscaled_quarter_decimated_picture_ptr[NUM_SCALES];
-    EbPictureBufferDesc *downscaled_sixteenth_decimated_picture_ptr[NUM_SCALES];
-    EbPictureBufferDesc *downscaled_quarter_filtered_picture_ptr[NUM_SCALES];
-    EbPictureBufferDesc *downscaled_sixteenth_filtered_picture_ptr[NUM_SCALES];
-#endif
 
     uint64_t picture_number;
     uint8_t  dummy_obj;

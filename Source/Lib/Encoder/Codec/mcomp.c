@@ -142,7 +142,6 @@ static int svt_upsampled_pref_error(MacroBlockD *xd, const struct AV1Common *con
     return besterr;
 }
 
-#if FTR_PRUNED_SUBPEL_TREE
 // Estimates the variance of prediction residue using bilinear filter for fast
 // search.
 static INLINE int svt_estimated_pref_error(
@@ -213,7 +212,6 @@ static INLINE unsigned int svt_check_better_fast(
     }
     return cost;
 }
-#endif
 
 // Checks whether this_mv is better than best_mv. This function incorporates
 // both prediction error and residue into account.
@@ -420,7 +418,6 @@ static INLINE int svt_check_repeated_mv_and_update(int_mv *last_mv_search_list, 
     return 0;
 }
 
-#if FTR_PRUNED_SUBPEL_TREE
 static INLINE MV get_best_diag_step(int step_size, unsigned int left_cost,
     unsigned int right_cost,
     unsigned int up_cost,
@@ -694,7 +691,6 @@ int svt_av1_find_best_sub_pixel_tree_pruned(
 
     return besterr;
 }
-#endif
 
 int svt_av1_find_best_sub_pixel_tree(MacroBlockD *xd, const struct AV1Common *const cm,
                                      const SUBPEL_MOTION_SEARCH_PARAMS *ms_params, MV start_mv,

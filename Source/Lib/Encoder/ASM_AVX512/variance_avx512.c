@@ -15,8 +15,6 @@
 
 #include <immintrin.h>
 
-#if SUB_PIXEL_VAR_AVX512
-
  /* clang-format off */
 DECLARE_ALIGNED(32, static const uint8_t, bilinear_filters_avx2[512]) = {
   16,  0, 16,  0, 16,  0, 16,  0, 16,  0, 16,  0, 16,  0, 16,  0,
@@ -707,9 +705,6 @@ AOM_SUB_PIXEL_VAR_AVX512(32, 64, 32, 5, 6);
 AOM_SUB_PIXEL_VAR_AVX512(32, 32, 32, 5, 5);
 AOM_SUB_PIXEL_VAR_AVX512(32, 16, 32, 5, 4);
 
-#endif /*SUB_PIXEL_VAR_AVX512*/
-#if VARIANCE_AVX512
-
 static INLINE __m128i mm512_add_hi_lo_epi16(const __m512i val) {
     const __m256i val_lo = _mm512_castsi512_si256(val);
     const __m256i val_hi = _mm512_extracti64x4_epi64(val, 1);
@@ -890,7 +885,5 @@ AOM_VAR_NO_LOOP_AVX512(32, 64, 11, 2048);
 
 AOM_VAR_NO_LOOP_AVX512(64, 16, 10, 1024);
 AOM_VAR_NO_LOOP_AVX512(64, 32, 11, 2048);
-
-#endif // VARIANCE_AVX512
 
 #endif // !EN_AVX512_SUPPORT

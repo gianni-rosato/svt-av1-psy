@@ -1510,11 +1510,7 @@ MotionMode motion_mode_allowed(const PictureControlSet *pcs_ptr, const BlkStruct
 static void write_motion_mode(FRAME_CONTEXT *frame_context, AomWriter *ec_writer, BlockSize bsize,
                               MotionMode motion_mode, MvReferenceFrame rf0, MvReferenceFrame rf1,
                               BlkStruct *blk_ptr, PictureControlSet *pcs_ptr) {
-#if CLN_MD_CANDS
     const PredictionMode mode = blk_ptr->pred_mode;
-#else
-    const PredictionMode mode = blk_ptr->prediction_unit_array[0].inter_mode;
-#endif
     MotionMode last_motion_mode_allowed = motion_mode_allowed(
         pcs_ptr, blk_ptr, bsize, rf0, rf1, mode);
 
@@ -2718,9 +2714,6 @@ static void write_ref_frames(FRAME_CONTEXT *frame_context, PictureParentControlS
 }
 static void encode_restoration_mode(PictureParentControlSet * pcs_ptr,
                                     struct AomWriteBitBuffer *wb) {
- #if !CLN_BN
-    Av1Common *  cm      = pcs_ptr->av1_cm;
-#endif
     FrameHeader *frm_hdr = &pcs_ptr->frm_hdr;
     //SVT_LOG("ERROR[AN]: encode_restoration_mode might not work. Double check the reference code\n");
     assert(!frm_hdr->all_lossless);
@@ -2736,11 +2729,7 @@ static void encode_restoration_mode(PictureParentControlSet * pcs_ptr,
         //   svt_aom_wb_write_bit(wb, 0);
         //   svt_aom_wb_write_bit(wb, 0);
 
- #if CLN_BN
         RestorationInfo *rsi = &pcs_ptr->child_pcs->rst_info[p];
-#else
-        RestorationInfo *rsi = &pcs_ptr->av1_cm->rst_info[p];
-#endif
 
         //if (p==0)
         //   SVT_LOG("POC:%i Luma rest_type:%i\n", pcs_ptr->picture_number, rsi->frame_restoration_type);
@@ -2778,11 +2767,7 @@ static void encode_restoration_mode(PictureParentControlSet * pcs_ptr,
         //      cm->seq_params.sb_size == BLOCK_128X128);
         const int32_t sb_size = pcs_ptr->scs_ptr->seq_header.sb_size == BLOCK_128X128 ? 128 : 64;
         ;
- #if CLN_BN
         RestorationInfo *rsi = &pcs_ptr->child_pcs->rst_info[0];
-#else
-        RestorationInfo *rsi = &pcs_ptr->av1_cm->rst_info[0];
-#endif
         assert(rsi->restoration_unit_size >= sb_size);
         assert(RESTORATION_UNITSIZE_MAX == 256);
 
@@ -2791,7 +2776,6 @@ static void encode_restoration_mode(PictureParentControlSet * pcs_ptr,
         if (rsi->restoration_unit_size > 64)
             svt_aom_wb_write_bit(wb, rsi->restoration_unit_size > 128);
     }
- #if CLN_BN
     if (!chroma_none) {
         svt_aom_wb_write_bit(
             wb, pcs_ptr->child_pcs->rst_info[1].restoration_unit_size != pcs_ptr->child_pcs->rst_info[0].restoration_unit_size);
@@ -2800,16 +2784,6 @@ static void encode_restoration_mode(PictureParentControlSet * pcs_ptr,
                    (pcs_ptr->child_pcs->rst_info[0].restoration_unit_size >> 1));
         assert(pcs_ptr->child_pcs->rst_info[2].restoration_unit_size == pcs_ptr->child_pcs->rst_info[1].restoration_unit_size);
     }
-#else
-    if (!chroma_none) {
-        svt_aom_wb_write_bit(
-            wb, cm->rst_info[1].restoration_unit_size != cm->rst_info[0].restoration_unit_size);
-        assert(cm->rst_info[1].restoration_unit_size == cm->rst_info[0].restoration_unit_size ||
-               cm->rst_info[1].restoration_unit_size ==
-                   (cm->rst_info[0].restoration_unit_size >> 1));
-        assert(cm->rst_info[2].restoration_unit_size == cm->rst_info[1].restoration_unit_size);
-    }
-#endif
 }
 
 static void encode_segmentation(PictureParentControlSet *pcsPtr, struct AomWriteBitBuffer *wb) {
@@ -3147,7 +3121,6 @@ static void write_tile_info(const PictureParentControlSet *const pcs_ptr,
 
     if (pcs_ptr->av1_cm->tiles_info.tile_rows * pcs_ptr->av1_cm->tiles_info.tile_cols > 1) {
         // tile id used for cdf update
-#if FIX_FE_CDF_UPDATE_CRASH_NBASE
         // Force each frame to update their data so future frames can use it,
         // even if the current frame did not use it.  This enables REF frames to
         // have the feature off, while NREF frames can have it on.  Used for multi-threading.
@@ -3155,14 +3128,6 @@ static void write_tile_info(const PictureParentControlSet *const pcs_ptr,
             wb,
             pcs_ptr->av1_cm->tiles_info.tile_rows * pcs_ptr->av1_cm->tiles_info.tile_cols - 1,
             pcs_ptr->av1_cm->log2_tile_cols + pcs_ptr->av1_cm->log2_tile_rows);
-#else
-        svt_aom_wb_write_literal(
-            wb,
-            pcs_ptr->frame_end_cdf_update_mode
-                ? pcs_ptr->av1_cm->tiles_info.tile_rows * pcs_ptr->av1_cm->tiles_info.tile_cols - 1
-                : 0,
-            pcs_ptr->av1_cm->log2_tile_cols + pcs_ptr->av1_cm->log2_tile_rows);
-#endif
 
         // Number of bytes in tile size - 1
         uint32_t max_tile_size = 0;
@@ -4561,22 +4526,14 @@ static void write_sgrproj_filter(const SgrprojInfo *sgrproj_info, SgrprojInfo *r
     svt_memcpy(ref_sgrproj_info, sgrproj_info, sizeof(*sgrproj_info));
 }
 
-#if CLN_BN
 static void loop_restoration_write_sb_coeffs(PictureControlSet     *piCSetPtr, FRAME_CONTEXT           *frame_context,
-#else
-static void loop_restoration_write_sb_coeffs(PictureControlSet     *piCSetPtr, FRAME_CONTEXT           *frame_context, const Av1Common *const cm,
-#endif
     uint16_t tile_idx,
     //MacroBlockD *xd,
     const RestorationUnitInfo *rui,
     AomWriter *const w, int32_t plane/*,
     FRAME_COUNTS *counts*/)
 {
-#if CLN_BN
     const RestorationInfo *rsi         = piCSetPtr->rst_info + plane;
-#else
-    const RestorationInfo *rsi         = cm->rst_info + plane;
-#endif
     RestorationType        frame_rtype = rsi->frame_restoration_type;
     if (frame_rtype == RESTORE_NONE)
         return;
@@ -4662,10 +4619,6 @@ EbErrorType ec_update_neighbors(PictureControlSet *pcs_ptr, EntropyCodingContext
         pcs_ptr->cr_dc_sign_level_coeff_neighbor_array[tile_idx];
     NeighborArrayUnit *cb_dc_sign_level_coeff_neighbor_array =
         pcs_ptr->cb_dc_sign_level_coeff_neighbor_array[tile_idx];
-#if !CLN_MDC_CTX
-    NeighborArrayUnit *inter_pred_dir_neighbor_array =
-        pcs_ptr->inter_pred_dir_neighbor_array[tile_idx];
-#endif
     NeighborArrayUnit *ref_frame_type_neighbor_array =
         pcs_ptr->ref_frame_type_neighbor_array[tile_idx];
     NeighborArrayUnit32 *interpolation_type_neighbor_array =
@@ -4752,20 +4705,6 @@ EbErrorType ec_update_neighbors(PictureControlSet *pcs_ptr, EntropyCodingContext
         }
         context_ptr->coded_area_sb += blk_geom->bwidth * blk_geom->bheight;
     }
-#if !CLN_MDC_CTX
-    // Update the Inter Pred Type Neighbor Array
-    {
-        uint8_t inter_pred_direction_index =
-            (uint8_t)blk_ptr->prediction_unit_array->inter_pred_direction_index;
-        neighbor_array_unit_mode_write(inter_pred_dir_neighbor_array,
-                                       (uint8_t *)&(inter_pred_direction_index),
-                                       blk_origin_x,
-                                       blk_origin_y,
-                                       blk_geom->bwidth,
-                                       blk_geom->bheight,
-                                       NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
-    }
-#endif
     // Update the refFrame Type Neighbor Array
     {
         uint8_t ref_frame_type = (uint8_t)blk_ptr->prediction_unit_array[0].ref_frame_type;
@@ -5526,19 +5465,11 @@ EbErrorType write_modes_b(PictureControlSet *pcs_ptr, EntropyCodingContext *cont
     blk_ptr->av1xd->up_available      = (mi_row > tb_ptr->tile_info.mi_row_start);
     blk_ptr->av1xd->left_available    = (mi_col > tb_ptr->tile_info.mi_col_start);
     if (blk_ptr->av1xd->up_available)
-#if OPT_D2_COPIES
         blk_ptr->av1xd->above_mbmi = &blk_ptr->av1xd->mi[-mi_stride]->mbmi;
-#else
-        blk_ptr->av1xd->above_mbmi = &mi_ptr[-mi_stride].mbmi;
-#endif
     else
         blk_ptr->av1xd->above_mbmi = NULL;
     if (blk_ptr->av1xd->left_available)
-#if OPT_D2_COPIES
         blk_ptr->av1xd->left_mbmi = &blk_ptr->av1xd->mi[-1]->mbmi;
-#else
-        blk_ptr->av1xd->left_mbmi = &mi_ptr[-1].mbmi;
-#endif
     else
         blk_ptr->av1xd->left_mbmi = NULL;
     blk_ptr->av1xd->tile_ctx = frame_context;
@@ -5874,12 +5805,7 @@ EbErrorType write_modes_b(PictureControlSet *pcs_ptr, EntropyCodingContext *cont
                 MvReferenceFrame rf[2];
                 av1_set_ref_frame(rf, blk_ptr->prediction_unit_array[0].ref_frame_type);
                 int16_t        mode_ctx = av1_mode_context_analyzer(blk_ptr->inter_mode_ctx, rf);
-#if CLN_MD_CANDS
                 PredictionMode inter_mode = (PredictionMode)blk_ptr->pred_mode;
-#else
-                PredictionMode inter_mode =
-                    (PredictionMode)blk_ptr->prediction_unit_array[0].inter_mode;
-#endif
                 const int32_t is_compound =
                     (blk_ptr->prediction_unit_array[0].inter_pred_direction_index == BI_PRED);
 
@@ -6224,25 +6150,14 @@ EB_EXTERN EbErrorType write_sb(EntropyCodingContext *context_ptr, SuperBlock *tb
                                                                &rrow0,
                                                                &rrow1,
                                                                &tile_tl_idx)) {
-#if CLN_BN
                         const int32_t rstride = pcs_ptr->rst_info[plane].horz_units_per_tile;
-#else
-                        const int32_t rstride = cm->rst_info[plane].horz_units_per_tile;
-#endif
                         for (int32_t rrow = rrow0; rrow < rrow1; ++rrow) {
                             for (int32_t rcol = rcol0; rcol < rcol1; ++rcol) {
                                 const int32_t runit_idx = tile_tl_idx + rcol + rrow * rstride;
                                 const RestorationUnitInfo *rui =
-#if CLN_BN
                                     &pcs_ptr->rst_info[plane].unit_info[runit_idx];
-#else
-                                    &cm->rst_info[plane].unit_info[runit_idx];
-#endif
                                 loop_restoration_write_sb_coeffs(pcs_ptr,
                                                                  frame_context,
-#if !CLN_BN
-                                                                 cm,
-#endif
                                                                  tile_idx,
                                                                  /*xd,*/ rui,
                                                                  ec_writer,

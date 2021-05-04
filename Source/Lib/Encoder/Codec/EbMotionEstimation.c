@@ -237,9 +237,7 @@ static void svt_ext_eight_sad_calculation_8x8_16x16(uint8_t *src, uint32_t src_s
     const uint32_t start_8x8_pos = 4 * start_16x16_pos;
     int16_t        x_mv, y_mv;
 
-#if OPT_ME_RES_SAD_LOOP
     (void)p_eight_sad8x8;
-#endif
 
     p_best_sad_8x8 += start_8x8_pos;
     p_best_mv8x8 += start_8x8_pos;
@@ -250,11 +248,7 @@ static void svt_ext_eight_sad_calculation_8x8_16x16(uint8_t *src, uint32_t src_s
         uint32_t       src_stride_sub = (src_stride << 1);
         uint32_t       ref_stride_sub = (ref_stride << 1);
         for (int search_index = 0; search_index < 8; search_index++) {
-#if OPT_ME_RES_SAD_LOOP
             uint32_t sad8x8_0 =
-#else
-            uint32_t sad8x8_0 = p_eight_sad8x8[0 + start_8x8_pos][search_index] =
-#endif
                 (compute8x4_sad_kernel_c(src, src_stride_sub, ref + search_index, ref_stride_sub)) << 1;
             if (sad8x8_0 < p_best_sad_8x8[0]) {
                 p_best_sad_8x8[0] = (uint32_t)sad8x8_0;
@@ -263,11 +257,7 @@ static void svt_ext_eight_sad_calculation_8x8_16x16(uint8_t *src, uint32_t src_s
                 p_best_mv8x8[0] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
             }
 
-#if OPT_ME_RES_SAD_LOOP
             uint32_t sad8x8_1 =
-#else
-            uint32_t sad8x8_1 = p_eight_sad8x8[1 + start_8x8_pos][search_index] =
-#endif
                 (compute8x4_sad_kernel_c(
                     src + 8, src_stride_sub, ref + 8 + search_index, ref_stride_sub))
                 << 1;
@@ -278,11 +268,7 @@ static void svt_ext_eight_sad_calculation_8x8_16x16(uint8_t *src, uint32_t src_s
                 p_best_mv8x8[1] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
             }
 
-#if OPT_ME_RES_SAD_LOOP
             uint32_t sad8x8_2 =
-#else
-            uint32_t sad8x8_2 = p_eight_sad8x8[2 + start_8x8_pos][search_index] =
-#endif
                 (compute8x4_sad_kernel_c(src + (src_stride << 3),
                     src_stride_sub,
                     ref + (ref_stride << 3) + search_index,
@@ -295,11 +281,7 @@ static void svt_ext_eight_sad_calculation_8x8_16x16(uint8_t *src, uint32_t src_s
                 p_best_mv8x8[2] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
             }
 
-#if OPT_ME_RES_SAD_LOOP
             uint32_t sad8x8_3 =
-#else
-            uint32_t sad8x8_3 = p_eight_sad8x8[3 + start_8x8_pos][search_index] =
-#endif
                 (compute8x4_sad_kernel_c(src + (src_stride << 3) + 8,
                     src_stride_sub,
                     ref + (ref_stride << 3) + 8 + search_index,
@@ -324,11 +306,7 @@ static void svt_ext_eight_sad_calculation_8x8_16x16(uint8_t *src, uint32_t src_s
     else
     {
         for (int search_index = 0; search_index < 8; search_index++) {
-#if OPT_ME_RES_SAD_LOOP
             uint32_t sad8x8_0 =
-#else
-            uint32_t sad8x8_0 = p_eight_sad8x8[0 + start_8x8_pos][search_index] =
-#endif
                 compute8x8_sad_kernel_c(src, src_stride, ref + search_index, ref_stride);
             if (sad8x8_0 < p_best_sad_8x8[0]) {
                 p_best_sad_8x8[0] = (uint32_t)sad8x8_0;
@@ -337,11 +315,7 @@ static void svt_ext_eight_sad_calculation_8x8_16x16(uint8_t *src, uint32_t src_s
                 p_best_mv8x8[0] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
             }
 
-#if OPT_ME_RES_SAD_LOOP
             uint32_t sad8x8_1 =
-#else
-            uint32_t sad8x8_1 = p_eight_sad8x8[1 + start_8x8_pos][search_index] =
-#endif
                 (compute8x8_sad_kernel_c(
                     src + 8, src_stride, ref + 8 + search_index, ref_stride));
             if (sad8x8_1 < p_best_sad_8x8[1]) {
@@ -351,11 +325,7 @@ static void svt_ext_eight_sad_calculation_8x8_16x16(uint8_t *src, uint32_t src_s
                 p_best_mv8x8[1] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
             }
 
-#if OPT_ME_RES_SAD_LOOP
             uint32_t sad8x8_2 =
-#else
-            uint32_t sad8x8_2 = p_eight_sad8x8[2 + start_8x8_pos][search_index] =
-#endif
                 (compute8x8_sad_kernel_c(src + (src_stride << 3),
                     src_stride,
                     ref + (ref_stride << 3) + search_index,
@@ -367,11 +337,7 @@ static void svt_ext_eight_sad_calculation_8x8_16x16(uint8_t *src, uint32_t src_s
                 p_best_mv8x8[2] = ((uint16_t)y_mv << 16) | ((uint16_t)x_mv);
             }
 
-#if OPT_ME_RES_SAD_LOOP
             uint32_t sad8x8_3 =
-#else
-            uint32_t sad8x8_3 = p_eight_sad8x8[3 + start_8x8_pos][search_index] =
-#endif
                 (compute8x8_sad_kernel_c(src + (src_stride << 3) + 8,
                     src_stride,
                     ref + (ref_stride << 3) + 8 + search_index,
@@ -885,16 +851,10 @@ static void open_loop_me_fullpel_search_sblock(MeContext *context_ptr, uint32_t 
     }
 }
 
-#if FTR_TPL_TR
 /*this is a trailing path function. PictureParentControlSet should not be used */
 #define PictureParentControlSet  "TYPE_NOT_ALLOWED"
-#endif
 void hme_level_0(
-#if FTR_TPL_TR
     MePcs *pcs_ptr,
-#else
-    PictureParentControlSet *pcs_ptr,
-#endif
     MeContext *              context_ptr, // input/output parameter, ME context Ptr, used to
     // get/update ME results
     int16_t origin_x, // input parameter, SB position in the horizontal
@@ -1041,11 +1001,7 @@ void hme_level_0(
     // Put the first search location into level0 results
     svt_sad_loop_kernel(
                 &context_ptr->sixteenth_sb_buffer[0],
-#if SS_OPT_TF2_ME_COPY
                 context_ptr->hme_search_method == FULL_SAD_SEARCH ? context_ptr->sixteenth_sb_buffer_stride : context_ptr->sixteenth_sb_buffer_stride*2,
-#else
-                context_ptr->sixteenth_sb_buffer_stride,
-#endif
                 &sixteenth_ref_pic_ptr->buffer_y[search_region_index],
                 (context_ptr->hme_search_method == FULL_SAD_SEARCH)
                     ? sixteenth_ref_pic_ptr->stride_y
@@ -1072,9 +1028,7 @@ void hme_level_0(
 
     return;
 }
-#if FTR_TPL_TR
 #undef PictureParentControlSet
-#endif
 void hme_level_1(
     MeContext *context_ptr, // input/output parameter, ME context Ptr, used to
     // get/update ME results
@@ -1224,16 +1178,10 @@ void hme_level_1(
     return;
 }
 
-#if FTR_TPL_TR
 /*this is a trailing path function. PictureParentControlSet should not be used */
 #define PictureParentControlSet  "TYPE_NOT_ALLOWED"
-#endif
 void hme_level_2(
-#if FTR_TPL_TR
                  MePcs *pcs_ptr, // input parameter, Picture control set Ptr
-#else
-                 PictureParentControlSet *pcs_ptr, // input parameter, Picture control set Ptr
-#endif
                  MeContext *context_ptr, // input/output parameter, ME context Ptr, used to
                  // get/update ME results
                  int16_t  origin_x, // input parameter, SB position in the horizontal direction
@@ -1374,9 +1322,7 @@ void hme_level_2(
 
     return;
 }
-#if FTR_TPL_TR
 #undef PictureParentControlSet
-#endif
 // Nader - to be replaced by loock-up table
 /*******************************************
  * get_me_info_index
@@ -1480,444 +1426,12 @@ EbErrorType check_00_center(EbPictureBufferDesc *ref_pic_ptr, MeContext *context
 
     return return_error;
 }
-#if !CLN_ME_HME_PATH
-EbErrorType su_pel_enable(MeContext *context_ptr, PictureParentControlSet *pcs_ptr,
-                          uint32_t list_index, uint32_t ref_pic_index,
-                          EbBool *enable_half_pel_32x32, EbBool *enable_half_pel_16x16,
-                          EbBool *enable_half_pel_8x8) {
-    EbErrorType return_error = EB_ErrorNone;
-
-    uint32_t mv_mag_32x32  = 0;
-    uint32_t mv_mag_16x16  = 0;
-    uint32_t mv_mag_8x8    = 0;
-    uint32_t avgsad_32x32  = 0;
-    uint32_t avgsad_16x16  = 0;
-    uint32_t avgsad_8x8    = 0;
-    uint32_t avg_mvx_32x32 = 0;
-    uint32_t avg_mvy_32x32 = 0;
-    uint32_t avg_mvx_16x16 = 0;
-    uint32_t avg_mvy_16x16 = 0;
-    uint32_t avg_mvx_8x8   = 0;
-    uint32_t avg_mvy_8x8   = 0;
-
-    avg_mvx_32x32 =
-        (_MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_32x32_0]) +
-         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_32x32_1]) +
-         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_32x32_2]) +
-         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_32x32_3])) >>
-        2;
-    avg_mvy_32x32 =
-        (_MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_32x32_0]) +
-         _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_32x32_1]) +
-         _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_32x32_2]) +
-         _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_32x32_3])) >>
-        2;
-    mv_mag_32x32 = SQR(avg_mvx_32x32) + SQR(avg_mvy_32x32);
-
-    avg_mvx_16x16 =
-        (_MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_16x16_0]) +
-         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_16x16_1]) +
-         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_16x16_2]) +
-         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_16x16_3]) +
-         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_16x16_4]) +
-         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_16x16_5]) +
-         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_16x16_6]) +
-         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_16x16_7]) +
-         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_16x16_8]) +
-         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_16x16_9]) +
-         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_16x16_10]) +
-         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_16x16_11]) +
-         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_16x16_12]) +
-         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_16x16_13]) +
-         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_16x16_14]) +
-         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_16x16_15])) >>
-        4;
-    avg_mvy_16x16 =
-        (_MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_16x16_0]) +
-         _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_16x16_1]) +
-         _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_16x16_2]) +
-         _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_16x16_3]) +
-         _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_16x16_4]) +
-         _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_16x16_5]) +
-         _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_16x16_6]) +
-         _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_16x16_7]) +
-         _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_16x16_8]) +
-         _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_16x16_9]) +
-         _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_16x16_10]) +
-         _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_16x16_11]) +
-         _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_16x16_12]) +
-         _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_16x16_13]) +
-         _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_16x16_14]) +
-         _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_16x16_15])) >>
-        4;
-    mv_mag_16x16 = SQR(avg_mvx_16x16) + SQR(avg_mvy_16x16);
-
-    avg_mvx_8x8 =
-        (_MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_0]) +
-         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_1]) +
-         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_2]) +
-         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_3]) +
-         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_4]) +
-         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_5]) +
-         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_6]) +
-         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_7]) +
-         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_8]) +
-         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_9]) +
-         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_10]) +
-         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_11]) +
-         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_12]) +
-         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_13]) +
-         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_14]) +
-         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_15]) +
-         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_16]) +
-         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_17]) +
-         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_18]) +
-         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_19]) +
-         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_20]) +
-         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_21]) +
-         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_22]) +
-         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_23]) +
-         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_24]) +
-         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_25]) +
-         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_26]) +
-         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_27]) +
-         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_28]) +
-         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_29]) +
-         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_30]) +
-         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_31]) +
-         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_32]) +
-         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_33]) +
-         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_34]) +
-         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_35]) +
-         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_36]) +
-         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_37]) +
-         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_38]) +
-         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_39]) +
-         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_40]) +
-         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_41]) +
-         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_42]) +
-         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_43]) +
-         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_44]) +
-         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_45]) +
-         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_46]) +
-         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_47]) +
-         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_48]) +
-         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_49]) +
-         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_50]) +
-         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_51]) +
-         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_52]) +
-         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_53]) +
-         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_54]) +
-         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_55]) +
-         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_56]) +
-         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_57]) +
-         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_58]) +
-         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_59]) +
-         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_60]) +
-         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_61]) +
-         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_62]) +
-         _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_63])) >>
-        6;
-    avg_mvy_8x8 =
-        (_MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_0]) +
-         _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_1]) +
-         _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_2]) +
-         _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_3]) +
-         _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_4]) +
-         _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_5]) +
-         _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_6]) +
-         _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_7]) +
-         _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_8]) +
-         _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_9]) +
-         _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_10]) +
-         _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_11]) +
-         _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_12]) +
-         _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_13]) +
-         _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_14]) +
-         _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_15]) +
-         _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_16]) +
-         _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_17]) +
-         _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_18]) +
-         _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_19]) +
-         _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_20]) +
-         _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_21]) +
-         _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_22]) +
-         _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_23]) +
-         _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_24]) +
-         _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_25]) +
-         _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_26]) +
-         _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_27]) +
-         _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_28]) +
-         _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_29]) +
-         _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_30]) +
-         _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_31]) +
-         _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_32]) +
-         _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_33]) +
-         _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_34]) +
-         _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_35]) +
-         _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_36]) +
-         _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_37]) +
-         _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_38]) +
-         _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_39]) +
-         _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_40]) +
-         _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_41]) +
-         _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_42]) +
-         _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_43]) +
-         _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_44]) +
-         _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_45]) +
-         _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_46]) +
-         _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_47]) +
-         _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_48]) +
-         _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_49]) +
-         _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_50]) +
-         _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_51]) +
-         _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_52]) +
-         _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_53]) +
-         _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_54]) +
-         _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_55]) +
-         _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_56]) +
-         _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_57]) +
-         _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_58]) +
-         _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_59]) +
-         _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_60]) +
-         _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_61]) +
-         _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_62]) +
-         _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_63])) >>
-        6;
-    mv_mag_8x8 = SQR(avg_mvx_8x8) + SQR(avg_mvy_8x8);
-
-    avgsad_32x32 =
-        (context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_32x32_0] +
-         context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_32x32_1] +
-         context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_32x32_2] +
-         context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_32x32_3]) >>
-        2;
-    avgsad_16x16 =
-        (context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_16x16_0] +
-         context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_16x16_1] +
-         context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_16x16_2] +
-         context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_16x16_3] +
-         context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_16x16_4] +
-         context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_16x16_5] +
-         context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_16x16_6] +
-         context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_16x16_7] +
-         context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_16x16_8] +
-         context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_16x16_9] +
-         context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_16x16_10] +
-         context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_16x16_11] +
-         context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_16x16_12] +
-         context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_16x16_13] +
-         context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_16x16_14] +
-         context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_16x16_15]) >>
-        4;
-    avgsad_8x8 = (context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_0] +
-                  context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_1] +
-                  context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_2] +
-                  context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_3] +
-                  context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_4] +
-                  context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_5] +
-                  context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_6] +
-                  context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_7] +
-                  context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_8] +
-                  context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_9] +
-                  context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_10] +
-                  context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_11] +
-                  context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_12] +
-                  context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_13] +
-                  context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_14] +
-                  context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_15] +
-                  context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_16] +
-                  context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_17] +
-                  context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_18] +
-                  context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_19] +
-                  context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_20] +
-                  context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_21] +
-                  context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_22] +
-                  context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_23] +
-                  context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_24] +
-                  context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_25] +
-                  context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_26] +
-                  context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_27] +
-                  context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_28] +
-                  context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_29] +
-                  context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_30] +
-                  context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_31] +
-                  context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_32] +
-                  context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_33] +
-                  context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_34] +
-                  context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_35] +
-                  context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_36] +
-                  context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_37] +
-                  context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_38] +
-                  context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_39] +
-                  context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_40] +
-                  context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_41] +
-                  context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_42] +
-                  context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_43] +
-                  context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_44] +
-                  context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_45] +
-                  context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_46] +
-                  context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_47] +
-                  context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_48] +
-                  context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_49] +
-                  context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_50] +
-                  context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_51] +
-                  context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_52] +
-                  context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_53] +
-                  context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_54] +
-                  context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_55] +
-                  context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_56] +
-                  context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_57] +
-                  context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_58] +
-                  context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_59] +
-                  context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_60] +
-                  context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_61] +
-                  context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_62] +
-                  context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_63]) >>
-                 6;
-
-    if (pcs_ptr->temporal_layer_index == 0) {
-        // 32x32
-        if ((mv_mag_32x32 < SQR(48)) && (avgsad_32x32 < 32 * 32 * 6))
-            *enable_half_pel_32x32 = EB_TRUE; // CLASS_0
-        else if ((mv_mag_32x32 < SQR(48)) && !(avgsad_32x32 < 32 * 32 * 6))
-            *enable_half_pel_32x32 = EB_FALSE; // CLASS_1
-        else if (!(mv_mag_32x32 < SQR(48)) && (avgsad_32x32 < 32 * 32 * 6))
-            *enable_half_pel_32x32 = EB_TRUE; // CLASS_2
-        else
-            *enable_half_pel_32x32 = EB_FALSE; // CLASS_3
-        // 16x16
-        if ((mv_mag_16x16 < SQR(48)) && (avgsad_16x16 < 16 * 16 * 2))
-            *enable_half_pel_16x16 = EB_FALSE; // CLASS_0
-        else if ((mv_mag_16x16 < SQR(48)) && !(avgsad_16x16 < 16 * 16 * 2))
-            *enable_half_pel_16x16 = EB_TRUE; // CLASS_1
-        else if (!(mv_mag_16x16 < SQR(48)) && (avgsad_16x16 < 16 * 16 * 2))
-            *enable_half_pel_16x16 = EB_FALSE; // CLASS_2
-        else
-            *enable_half_pel_16x16 = EB_TRUE; // CLASS_3
-        // 8x8
-        if ((mv_mag_8x8 < SQR(48)) && (avgsad_8x8 < 8 * 8 * 2))
-            *enable_half_pel_8x8 = EB_FALSE; // CLASS_0
-        else if ((mv_mag_8x8 < SQR(48)) && !(avgsad_8x8 < 8 * 8 * 2))
-            *enable_half_pel_8x8 = EB_TRUE; // CLASS_1
-        else if (!(mv_mag_8x8 < SQR(48)) && (avgsad_8x8 < 8 * 8 * 2))
-            *enable_half_pel_8x8 = EB_FALSE; // CLASS_2
-        else
-            *enable_half_pel_8x8 = EB_TRUE; // CLASS_3
-    }
-
-    else if (pcs_ptr->temporal_layer_index == 1) {
-        // 32x32
-        if ((mv_mag_32x32 < SQR(32)) && (avgsad_32x32 < 32 * 32 * 6))
-            *enable_half_pel_32x32 = EB_TRUE; // CLASS_0
-        else if ((mv_mag_32x32 < SQR(32)) && !(avgsad_32x32 < 32 * 32 * 6))
-            *enable_half_pel_32x32 = EB_FALSE; // CLASS_1
-        else if (!(mv_mag_32x32 < SQR(32)) && (avgsad_32x32 < 32 * 32 * 6))
-            *enable_half_pel_32x32 = EB_TRUE; // CLASS_2
-        else
-            *enable_half_pel_32x32 = EB_TRUE; // CLASS_3
-        // 16x16
-        if ((mv_mag_16x16 < SQR(32)) && (avgsad_16x16 < 16 * 16 * 2))
-            *enable_half_pel_16x16 = EB_FALSE; // CLASS_0
-        else if ((mv_mag_16x16 < SQR(32)) && !(avgsad_16x16 < 16 * 16 * 2))
-            *enable_half_pel_16x16 = EB_TRUE; // CLASS_1
-        else if (!(mv_mag_16x16 < SQR(32)) && (avgsad_16x16 < 16 * 16 * 2))
-            *enable_half_pel_16x16 = EB_FALSE; // CLASS_2
-        else
-            *enable_half_pel_16x16 = EB_TRUE; // CLASS_3
-        // 8x8
-        if ((mv_mag_8x8 < SQR(32)) && (avgsad_8x8 < 8 * 8 * 2))
-            *enable_half_pel_8x8 = EB_FALSE; // CLASS_0
-        else if ((mv_mag_8x8 < SQR(32)) && !(avgsad_8x8 < 8 * 8 * 2))
-            *enable_half_pel_8x8 = EB_TRUE; // CLASS_1
-        else if (!(mv_mag_8x8 < SQR(32)) && (avgsad_8x8 < 8 * 8 * 2))
-            *enable_half_pel_8x8 = EB_FALSE; // CLASS_2
-        else
-            *enable_half_pel_8x8 = EB_TRUE; // CLASS_3
-    } else if (pcs_ptr->temporal_layer_index == 2) {
-        // 32x32
-        if ((mv_mag_32x32 < SQR(80)) && (avgsad_32x32 < 32 * 32 * 6))
-            *enable_half_pel_32x32 = EB_TRUE; // CLASS_0
-        else if ((mv_mag_32x32 < SQR(80)) && !(avgsad_32x32 < 32 * 32 * 6))
-            *enable_half_pel_32x32 = EB_FALSE; // CLASS_1
-        else if (!(mv_mag_32x32 < SQR(80)) && (avgsad_32x32 < 32 * 32 * 6))
-            *enable_half_pel_32x32 = EB_TRUE; // CLASS_2
-        else
-            *enable_half_pel_32x32 = EB_FALSE; // CLASS_3
-        // 16x16
-        if ((mv_mag_16x16 < SQR(80)) && (avgsad_16x16 < 16 * 16 * 2))
-            *enable_half_pel_16x16 = EB_FALSE; // CLASS_0
-        else if ((mv_mag_16x16 < SQR(80)) && !(avgsad_16x16 < 16 * 16 * 2))
-            *enable_half_pel_16x16 = EB_TRUE; // CLASS_1
-        else if (!(mv_mag_16x16 < SQR(80)) && (avgsad_16x16 < 16 * 16 * 2))
-            *enable_half_pel_16x16 = EB_FALSE; // CLASS_2
-        else
-            *enable_half_pel_16x16 = EB_TRUE; // CLASS_3
-        // 8x8
-        if ((mv_mag_8x8 < SQR(80)) && (avgsad_8x8 < 8 * 8 * 2))
-            *enable_half_pel_8x8 = EB_FALSE; // CLASS_0
-        else if ((mv_mag_8x8 < SQR(80)) && !(avgsad_8x8 < 8 * 8 * 2))
-            *enable_half_pel_8x8 = EB_TRUE; // CLASS_1
-        else if (!(mv_mag_8x8 < SQR(80)) && (avgsad_8x8 < 8 * 8 * 2))
-            *enable_half_pel_8x8 = EB_FALSE; // CLASS_2
-        else
-            *enable_half_pel_8x8 = EB_TRUE; // CLASS_3
-    } else {
-        // 32x32
-        if ((mv_mag_32x32 < SQR(48)) && (avgsad_32x32 < 32 * 32 * 6))
-            *enable_half_pel_32x32 = EB_TRUE; // CLASS_0
-        else if ((mv_mag_32x32 < SQR(48)) && !(avgsad_32x32 < 32 * 32 * 6))
-            *enable_half_pel_32x32 = EB_TRUE; // CLASS_1
-        else if (!(mv_mag_32x32 < SQR(48)) && (avgsad_32x32 < 32 * 32 * 6))
-            *enable_half_pel_32x32 = EB_TRUE; // CLASS_2
-        else
-            *enable_half_pel_32x32 = EB_FALSE; // CLASS_3
-        // 16x16
-        if ((mv_mag_16x16 < SQR(48)) && (avgsad_16x16 < 16 * 16 * 2))
-            *enable_half_pel_16x16 = EB_FALSE; // CLASS_0
-        else if ((mv_mag_16x16 < SQR(48)) && !(avgsad_16x16 < 16 * 16 * 2))
-            *enable_half_pel_16x16 = EB_TRUE; // CLASS_1
-        else if (!(mv_mag_16x16 < SQR(48)) && (avgsad_16x16 < 16 * 16 * 2))
-            *enable_half_pel_16x16 = EB_FALSE; // CLASS_2
-        else
-            *enable_half_pel_16x16 = EB_TRUE; // CLASS_3
-        // 8x8
-        if ((mv_mag_8x8 < SQR(48)) && (avgsad_8x8 < 8 * 8 * 2))
-            *enable_half_pel_8x8 = EB_FALSE; // CLASS_0
-        else if ((mv_mag_8x8 < SQR(48)) && !(avgsad_8x8 < 8 * 8 * 2))
-            *enable_half_pel_8x8 = EB_TRUE; // CLASS_1
-        else if (!(mv_mag_8x8 < SQR(48)) && (avgsad_8x8 < 8 * 8 * 2))
-            *enable_half_pel_8x8 = EB_FALSE; // CLASS_2
-        else
-            *enable_half_pel_8x8 = EB_FALSE; // EB_TRUE; //CLASS_3
-    }
-
-    return return_error;
-}
-#endif
-#if !OPT_BYPASS_ME_CAND
-/*
- swap the content of two MePredUnit structures
-*/
-void swap_me_candidate(MePredUnit *a, MePredUnit *b) {
-    MePredUnit temp_ptr;
-    temp_ptr = *a;
-    *a       = *b;
-    *b       = temp_ptr;
-}
-#endif
 // get ME references based on level:
 // level: 0 => sixteenth, 1 => quarter, 2 => original
-#if FTR_TPL_TR
 /*this is a trailing path function. PictureParentControlSet should not be used */
 #define PictureParentControlSet  "TYPE_NOT_ALLOWED"
-#endif
 static EbPictureBufferDesc* get_me_reference(
-#if FTR_TPL_TR
     MePcs   *pcs_ptr,
-#else
-    PictureParentControlSet   *pcs_ptr,
-#endif
     MeContext                 *context_ptr,
     uint8_t                   list_index,
     uint8_t                   ref_pic_index,
@@ -1933,35 +1447,23 @@ static EbPictureBufferDesc* get_me_reference(
     return ref_pic_ptr;
 }
 
-#if FTR_TPL_TR
 #undef PictureParentControlSet
-#endif
 
 /*******************************************
  *   performs integer search motion estimation for
  all avaiable references frames
  *******************************************/
-#if FTR_TPL_TR
 /*this is a trailing path function. PictureParentControlSet should not be used */
 #define PictureParentControlSet  "TYPE_NOT_ALLOWED"
-#endif
 void integer_search_sb(
-#if FTR_TPL_TR
     MePcs   *pcs_ptr,
-#else
-    PictureParentControlSet   *pcs_ptr,
-#endif
     uint32_t                   sb_index,
     uint32_t                   sb_origin_x,
     uint32_t                   sb_origin_y,
     MeContext                 *context_ptr,
     EbPictureBufferDesc       *input_ptr) {
 
-#if FTR_TPL_TR
     SequenceControlSet *scs_ptr = pcs_ptr->scs_ptr;
-#else
-    SequenceControlSet *scs_ptr = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
-#endif
     int16_t picture_width = pcs_ptr->aligned_width;
     int16_t picture_height = pcs_ptr->aligned_height;
     uint32_t sb_width = (input_ptr->width - sb_origin_x) < BLOCK_SIZE_64
@@ -2021,14 +1523,8 @@ void integer_search_sb(
             // Constrain x_ME to be a multiple of 8 (round up)
             // Update ME search reagion size based on hme-data
             search_area_width = ((search_area_width / context_ptr->reduce_me_sr_divisor[list_index][ref_pic_index]) + 7) & ~0x07;
-#if TUNE_ME_M9_OPT
             search_area_height = MAX(3, (search_area_height / context_ptr->reduce_me_sr_divisor[list_index][ref_pic_index]));
-#else
-            search_area_height = MAX(1, (search_area_height / context_ptr->reduce_me_sr_divisor[list_index][ref_pic_index]));
-#endif
-#if TUNE_FIRSTPASS_CENTER0
             if (scs_ptr->enc_mode_2ndpass <= ENC_M4  || context_ptr->me_type != ME_FIRST_PASS)
-#endif
             if ((x_search_center != 0 || y_search_center != 0) &&
                 (context_ptr->is_used_as_reference_flag == EB_TRUE)) {
                 check_00_center(ref_pic_ptr,
@@ -2208,20 +1704,6 @@ void integer_search_sb(
                         context_ptr->p_best_mv8x8 =
                             &(context_ptr
                                   ->p_sb_best_mv[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_0]);
-#if !CLN_REMOVE_ME_SSD_CALCS
-                        context_ptr->p_best_ssd64x64 = &(
-                            context_ptr
-                                ->p_sb_best_ssd[list_index][ref_pic_index][ME_TIER_ZERO_PU_64x64]);
-                        context_ptr->p_best_ssd32x32 =
-                            &(context_ptr->p_sb_best_ssd[list_index][ref_pic_index]
-                                                        [ME_TIER_ZERO_PU_32x32_0]);
-                        context_ptr->p_best_ssd16x16 =
-                            &(context_ptr->p_sb_best_ssd[list_index][ref_pic_index]
-                                                        [ME_TIER_ZERO_PU_16x16_0]);
-                        context_ptr->p_best_ssd8x8 = &(
-                            context_ptr
-                                ->p_sb_best_ssd[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_0]);
-#endif
                         open_loop_me_fullpel_search_sblock(context_ptr,
                                                            list_index,
                                                            ref_pic_index,
@@ -2233,34 +1715,17 @@ void integer_search_sb(
     }
 }
 
-#if FTR_TPL_TR
 #undef PictureParentControlSet
-#endif
 /*
   using previous stage ME results (Integer Search) for each reference
   frame. keep only the references that are close to the best reference.
 */
 void me_prune_ref(MeContext* context_ptr) {
-#if !CLN_ME_HME_PATH
-    HmeResults sorted[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
-    uint32_t num_of_cand_to_sort = MAX_NUM_OF_REF_PIC_LIST * REF_LIST_MAX_DEPTH;
-    uint8_t list_index, ref_pic_index;
-    uint32_t idx;
-    uint32_t pu_index;
-#endif
     uint8_t num_of_list_to_search = context_ptr->num_of_list_to_search;
-#if CLN_ME_HME_PATH
     for (uint8_t list_index = REF_LIST_0; list_index <= num_of_list_to_search; ++list_index) {
-#else
-    for (list_index = REF_LIST_0; list_index <= num_of_list_to_search; ++list_index) {
-#endif
         uint8_t num_of_ref_pic_to_search = context_ptr->num_of_ref_pic_to_search[list_index];
         // Ref Picture Loop
-#if CLN_ME_HME_PATH
         for (uint8_t ref_pic_index = 0; ref_pic_index < num_of_ref_pic_to_search; ++ref_pic_index) {
-#else
-        for (ref_pic_index = 0; ref_pic_index < num_of_ref_pic_to_search; ++ref_pic_index) {
-#endif
             context_ptr->hme_results[list_index][ref_pic_index].hme_sad = 0;
             // Get hme results
             if (context_ptr->hme_results[list_index][ref_pic_index].do_ref == 0) {
@@ -2269,20 +1734,12 @@ void me_prune_ref(MeContext* context_ptr) {
             }
             context_ptr->p_best_sad_8x8 = &(context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_0]);
             // 8x8   [64 partitions]
-#if CLN_ME_HME_PATH
             for (uint32_t pu_index = 0; pu_index < 64; ++pu_index) {
                 uint32_t idx = tab8x8[pu_index];
                 context_ptr->hme_results[list_index][ref_pic_index].hme_sad += context_ptr->p_best_sad_8x8[idx];
             }
-#else
-            for (pu_index = 0; pu_index < 64; ++pu_index) {
-                idx = tab8x8[pu_index];
-                context_ptr->hme_results[list_index][ref_pic_index].hme_sad += context_ptr->p_best_sad_8x8[idx];
-            }
-#endif
         }
     }
-#if CLN_ME_HME_PATH
     uint64_t best = (uint64_t)~0;
     for (int i = 0; i < MAX_NUM_OF_REF_PIC_LIST; ++i) {
         for (int j = 0; j < REF_LIST_MAX_DEPTH; ++j) {
@@ -2291,29 +1748,12 @@ void me_prune_ref(MeContext* context_ptr) {
             }
         }
     }
-#else
-    svt_memcpy(sorted, context_ptr->hme_results, sizeof(HmeResults)*MAX_NUM_OF_REF_PIC_LIST*REF_LIST_MAX_DEPTH);
-    HmeResults     * res_p = sorted[0];
-    uint32_t i, j;
-    for (i = 0; i < num_of_cand_to_sort - 1; ++i) {
-        for (j = i + 1; j < num_of_cand_to_sort; ++j) {
-            if (res_p[j].hme_sad < res_p[i].hme_sad) {
-                HmeResults temp = res_p[i];
-                res_p[i] = res_p[j];
-                res_p[j]= temp;
-            }
-        }
-    }
-    uint64_t best = sorted[0][0].hme_sad;//is this always the best?
-#endif
     for (uint32_t li = 0; li < MAX_NUM_OF_REF_PIC_LIST; li++) {
         for (uint32_t ri = 0; ri < REF_LIST_MAX_DEPTH; ri++){
             // Prune references based on ME sad
             uint16_t prune_ref_th = context_ptr->me_hme_prune_ctrls.prune_ref_if_me_sad_dev_bigger_than_th;
             if (context_ptr->me_hme_prune_ctrls.enable_me_hme_ref_pruning &&
-#if FTR_ME_HME_PROTECT_CLOSEST_REF
                 (!context_ptr->me_hme_prune_ctrls.protect_closest_refs || ri > 0) &&
-#endif
                 (prune_ref_th != (uint16_t)~0) &&
                 (context_ptr->hme_results[li][ri].hme_sad - best) * 100 > (prune_ref_th * best))
             {
@@ -2323,7 +1763,6 @@ void me_prune_ref(MeContext* context_ptr) {
     }
 }
 
-#if FTR_PRE_HME
 /* perform  motion search over a given search area*/
 void prehme_core(
     MeContext *context_ptr,
@@ -2408,11 +1847,7 @@ void prehme_core(
 
     svt_sad_loop_kernel(
         &context_ptr->sixteenth_sb_buffer[0],
-#if SS_OPT_TF2_ME_COPY
         context_ptr->hme_search_method == FULL_SAD_SEARCH ? context_ptr->sixteenth_sb_buffer_stride : context_ptr->sixteenth_sb_buffer_stride * 2,
-#else
-        context_ptr->sixteenth_sb_buffer_stride,
-#endif
         &sixteenth_ref_pic_ptr->buffer_y[search_region_index],
         (context_ptr->hme_search_method == FULL_SAD_SEARCH)
         ? sixteenth_ref_pic_ptr->stride_y
@@ -2503,22 +1938,15 @@ static void prehme_sb(
         }
     }
 }
-#endif
 
 
 /*******************************************
  *   performs hierarchical ME level 0
  *******************************************/
-#if FTR_TPL_TR
 /*this is a trailing path function. PictureParentControlSet should not be used */
 #define PictureParentControlSet  "TYPE_NOT_ALLOWED"
-#endif
 static void hme_level0_sb(
-#if FTR_TPL_TR
                          MePcs *pcs_ptr, uint32_t sb_origin_x,
-#else
-                         PictureParentControlSet *pcs_ptr, uint32_t sb_origin_x,
-#endif
                           uint32_t sb_origin_y, MeContext *context_ptr,
                           EbPictureBufferDesc *input_ptr) {
     const uint32_t      sb_width = (input_ptr->width - sb_origin_x) < BLOCK_SIZE_64
@@ -2529,25 +1957,17 @@ static void hme_level0_sb(
         : BLOCK_SIZE_64;
     const int16_t origin_x = (int16_t)sb_origin_x;
     const int16_t origin_y = (int16_t)sb_origin_y;
-#if !CLN_ME_HME_PATH
-    // Configure HME level 0, level 1 and level 2 from static config parameters
-    const EbBool enable_hme_level0_flag = context_ptr->hme_decimation <= ONE_DECIMATION_HME
-        ? 0
-        : context_ptr->enable_hme_level0_flag;
-#endif
     const int num_of_list_to_search = context_ptr->num_of_list_to_search;
 
     // HME
     uint32_t search_region_number_in_width  = 0;
     uint32_t search_region_number_in_height = 0;
 
-#if FTR_HME_REF_IDX_RESIZING
     // store base HME sizes, to be used if using ref-index based HME resizing
     uint16_t base_hme_search_width = context_ptr->hme_level0_total_search_area_width;
     uint16_t base_hme_search_height = context_ptr->hme_level0_total_search_area_height;
     uint16_t base_hme_max_search_width = context_ptr->hme_level0_max_total_search_area_width;
     uint16_t base_hme_max_search_height = context_ptr->hme_level0_max_total_search_area_height;
-#endif
 
     // Uni-Prediction motion estimation loop
     // List Loop
@@ -2563,41 +1983,6 @@ static void hme_level0_sb(
             if (context_ptr->temporal_layer_index > 0 || list_index == 0) {
                 int16_t x_search_center = 0;
                 int16_t y_search_center = 0;
-#if !CLN_ME_HME_PATH
-                // B - NO HME in boundaries
-                if (context_ptr->enable_hme_flag) {
-                    while (search_region_number_in_height <
-                           context_ptr->number_hme_search_region_in_height) {
-                        while (search_region_number_in_width <
-                               context_ptr->number_hme_search_region_in_width) {
-                            context_ptr->x_hme_level0_search_center
-                                [list_index][ref_pic_index][search_region_number_in_width]
-                                [search_region_number_in_height] = x_search_center;
-                            context_ptr->y_hme_level0_search_center
-                                [list_index][ref_pic_index][search_region_number_in_width]
-                                [search_region_number_in_height] = y_search_center;
-
-                            context_ptr->x_hme_level1_search_center
-                                [list_index][ref_pic_index][search_region_number_in_width]
-                                [search_region_number_in_height] = x_search_center;
-                            context_ptr->y_hme_level1_search_center
-                                [list_index][ref_pic_index][search_region_number_in_width]
-                                [search_region_number_in_height] = y_search_center;
-
-                            context_ptr->x_hme_level2_search_center
-                                [list_index][ref_pic_index][search_region_number_in_width]
-                                [search_region_number_in_height] = x_search_center;
-                            context_ptr->y_hme_level2_search_center
-                                [list_index][ref_pic_index][search_region_number_in_width]
-                                [search_region_number_in_height] = y_search_center;
-                            search_region_number_in_width++;
-                        }
-                        search_region_number_in_width = 0;
-                        search_region_number_in_height++;
-                    }
-                    // HME: Level0 search
-                    if (enable_hme_level0_flag) {
-#endif
                         search_region_number_in_height = 0;
                         search_region_number_in_width  = 0;
                         int32_t hme_sr_factor_x, hme_sr_factor_y;
@@ -2607,7 +1992,6 @@ static void hme_level0_sb(
                         dist              = ((dist * exp) / 8) + round_up;
                         hme_sr_factor_x   = dist * 100;
                         hme_sr_factor_y   = dist * 100;
-#if TUNE_M9_HME
                         uint8_t is_hor = 1;
                         uint8_t is_ver = 1;
                         if (context_ptr->reduce_hme_l0_sr_th_min || context_ptr->reduce_hme_l0_sr_th_max) {
@@ -2618,11 +2002,8 @@ static void hme_level0_sb(
                                 is_hor = ((ABS(l0_mvx) > context_ptr->reduce_hme_l0_sr_th_max) && (ABS(l0_mvy) < context_ptr->reduce_hme_l0_sr_th_min));
                             }
                         }
-#endif
-#if FTR_HME_REF_IDX_RESIZING
                         // reduce HME search area for higher ref indices
                         if (context_ptr->me_sr_adjustment_ctrls.enable_me_sr_adjustment && context_ptr->me_sr_adjustment_ctrls.distance_based_hme_resizing) {
-#if TUNE_M9_HME
                             uint8_t x_offset = 1;
                             uint8_t y_offset = 1;
                             if (!is_ver) {
@@ -2635,12 +2016,6 @@ static void hme_level0_sb(
                             context_ptr->hme_level0_total_search_area_height = base_hme_search_height / (y_offset + ref_pic_index);
                             context_ptr->hme_level0_max_total_search_area_width = base_hme_max_search_width / (x_offset + ref_pic_index);
                             context_ptr->hme_level0_max_total_search_area_height = base_hme_max_search_height / (y_offset + ref_pic_index);
-#else
-                            context_ptr->hme_level0_total_search_area_width = base_hme_search_width / (1 + ref_pic_index);
-                            context_ptr->hme_level0_total_search_area_height = base_hme_search_height / (1 + ref_pic_index);
-                            context_ptr->hme_level0_max_total_search_area_width = base_hme_max_search_width / (1 + ref_pic_index);
-                            context_ptr->hme_level0_max_total_search_area_height = base_hme_max_search_height / (1 + ref_pic_index);
-#endif
                             context_ptr->hme_level0_max_search_area_in_width_array[0] =
                                 context_ptr->hme_level0_max_search_area_in_width_array[1] =
                                 context_ptr->hme_level0_max_total_search_area_width / context_ptr->number_hme_search_region_in_width;
@@ -2654,7 +2029,6 @@ static void hme_level0_sb(
                                 context_ptr->hme_level0_search_area_in_height_array[1] =
                                 context_ptr->hme_level0_total_search_area_height / context_ptr->number_hme_search_region_in_height;
                         }
-#endif
                         while (search_region_number_in_height <
                                context_ptr->number_hme_search_region_in_height) {
                             while (search_region_number_in_width <
@@ -2687,7 +2061,6 @@ static void hme_level0_sb(
                             search_region_number_in_width = 0;
                             search_region_number_in_height++;
                         }
-#if FTR_HME_REF_IDX_RESIZING
                         // reset base HME area
                         if (context_ptr->me_sr_adjustment_ctrls.enable_me_sr_adjustment && context_ptr->me_sr_adjustment_ctrls.distance_based_hme_resizing) {
                             context_ptr->hme_level0_total_search_area_width = base_hme_search_width;
@@ -2708,21 +2081,6 @@ static void hme_level0_sb(
                                 context_ptr->hme_level0_search_area_in_height_array[1] =
                                 context_ptr->hme_level0_total_search_area_height / context_ptr->number_hme_search_region_in_height;
                         }
-#endif
-#if !CLN_ME_HME_PATH
-                    }
-                } else {
-                    context_ptr->x_hme_level0_search_center[list_index][ref_pic_index]
-                                                           [search_region_number_in_width]
-                                                           [search_region_number_in_height] =
-                        x_search_center;
-                    context_ptr->y_hme_level0_search_center[list_index][ref_pic_index]
-                                                           [search_region_number_in_width]
-                                                           [search_region_number_in_height] =
-                        y_search_center;
-                }
-#endif
-#if FTR_PRE_HME
                 if (context_ptr->prehme_ctrl.enable) {
 
                     //get the worst quadrant
@@ -2753,7 +2111,6 @@ static void hme_level0_sb(
 
                     }
                 }
-#endif
 
 
 
@@ -2762,22 +2119,14 @@ static void hme_level0_sb(
         }
     }
 }
-#if FTR_TPL_TR
 #undef PictureParentControlSet
-#endif
 /*******************************************
  *   performs hierarchical ME level 1
  *******************************************/
-#if FTR_TPL_TR
 /*this is a trailing path function. PictureParentControlSet should not be used */
 #define PictureParentControlSet  "TYPE_NOT_ALLOWED"
-#endif
 void hme_level1_sb(
-#if FTR_TPL_TR
     MePcs   *pcs_ptr,
-#else
-    PictureParentControlSet   *pcs_ptr,
-#endif
     uint32_t                   sb_origin_x,
     uint32_t                   sb_origin_y,
     MeContext                 *context_ptr,
@@ -2795,13 +2144,6 @@ void hme_level1_sb(
     // HME
     uint32_t search_region_number_in_width = 0;
     uint32_t search_region_number_in_height = 0;
-#if !CLN_ME_HME_PATH
-    // Configure HME level 0, level 1 and level 2 from static config parameters
-    const uint8_t enable_hme_level1_flag = context_ptr->hme_decimation == ONE_DECIMATION_HME
-        ? context_ptr->enable_hme_level0_flag
-        : context_ptr->hme_decimation == ZERO_DECIMATION_HME ? 0
-                                                             : context_ptr->enable_hme_level1_flag;
-#endif
     const uint32_t num_of_list_to_search = context_ptr->num_of_list_to_search;
 
     // Uni-Prediction motion estimation loop
@@ -2816,12 +2158,6 @@ void hme_level1_sb(
                                            context_ptr, list_index, ref_pic_index,
                                            1, &dist);
             if (context_ptr->temporal_layer_index > 0 || list_index == 0) {
-#if !CLN_ME_HME_PATH
-                // B - NO HME in boundaries
-                if (context_ptr->enable_hme_flag) {
-                    // HME: Level1 search
-                    if (enable_hme_level1_flag) {
-#endif
                         search_region_number_in_height = 0;
                         search_region_number_in_width = 0;
 
@@ -2876,37 +2212,19 @@ void hme_level1_sb(
                             search_region_number_in_width = 0;
                             search_region_number_in_height++;
                         }
-#if !CLN_ME_HME_PATH
-                    }
-                }
-#endif
             }
-#if !CLN_ME_HME_PATH
-            else {
-                 context_ptr->x_hme_level1_search_center[list_index][ref_pic_index][search_region_number_in_width][search_region_number_in_height] = 0;
-                 context_ptr->y_hme_level1_search_center[list_index][ref_pic_index][search_region_number_in_width][search_region_number_in_height] = 0;
-            }
-#endif
         }
     }
 }
-#if FTR_TPL_TR
 #undef PictureParentControlSet
-#endif
 /*******************************************
  *   performs hierarchical ME level 2
  *******************************************/
 
-#if FTR_TPL_TR
 /*this is a trailing path function. PictureParentControlSet should not be used */
 #define PictureParentControlSet  "TYPE_NOT_ALLOWED"
-#endif
 static void hme_level2_sb(
-#if FTR_TPL_TR
                           MePcs *pcs_ptr, uint32_t sb_origin_x, uint32_t sb_origin_y,
-#else
-                          PictureParentControlSet *pcs_ptr, uint32_t sb_origin_x, uint32_t sb_origin_y,
-#endif
                    MeContext *context_ptr, EbPictureBufferDesc *input_ptr) {
     const uint32_t sb_width = (input_ptr->width - sb_origin_x) < BLOCK_SIZE_64
         ? input_ptr->width - sb_origin_x
@@ -2919,12 +2237,6 @@ static void hme_level2_sb(
     // HME
     uint32_t search_region_number_in_width  = 0;
     uint32_t search_region_number_in_height = 0;
-#if !CLN_ME_HME_PATH
-    // Configure HME level 0, level 1 and level 2 from static config parameters
-    const EbBool enable_hme_level2_flag = context_ptr->hme_decimation == ZERO_DECIMATION_HME
-        ? context_ptr->enable_hme_level0_flag
-        : context_ptr->enable_hme_level2_flag;
-#endif
     const int num_of_list_to_search = context_ptr->num_of_list_to_search;
     // Uni-Prediction motion estimation loop
     // List Loop
@@ -2938,9 +2250,6 @@ static void hme_level2_sb(
                                            2, &dist);
 
             if (context_ptr->temporal_layer_index > 0 || list_index == 0) {
-#if !CLN_ME_HME_PATH
-                if (context_ptr->enable_hme_flag && enable_hme_level2_flag) {
-#endif
                     // HME: Level2 search
                     search_region_number_in_height = 0;
                     search_region_number_in_width  = 0;
@@ -3023,38 +2332,18 @@ static void hme_level2_sb(
                         search_region_number_in_width = 0;
                         search_region_number_in_height++;
                     }
-#if CLN_ME_HME_PATH
             }
-#else
-                }
-            } else {
-                context_ptr->x_hme_level2_search_center[list_index][ref_pic_index]
-                                                       [search_region_number_in_width]
-                                                       [search_region_number_in_height] = 0;
-                context_ptr->y_hme_level2_search_center[list_index][ref_pic_index]
-                                                       [search_region_number_in_width]
-                                                       [search_region_number_in_height] = 0;
-            }
-#endif
         }
     }
 }
-#if FTR_TPL_TR
 #undef PictureParentControlSet
-#endif
 /*******************************************
  *   Set the final search centre
  *******************************************/
-#if FTR_TPL_TR
 /*this is a trailing path function. PictureParentControlSet should not be used */
 #define PictureParentControlSet  "TYPE_NOT_ALLOWED"
-#endif
 void set_final_seach_centre_sb(
-#if FTR_TPL_TR
     MePcs   *pcs_ptr,
-#else
-    PictureParentControlSet   *pcs_ptr,
-#endif
     MeContext                 *context_ptr
 ) {
     UNUSED(pcs_ptr);
@@ -3220,30 +2509,20 @@ void set_final_seach_centre_sb(
     }
 }
 
-#if FTR_TPL_TR
 #undef PictureParentControlSet
-#endif
 /*******************************************
  *   performs hierarchical ME for every ref frame
  *******************************************/
-#if FTR_TPL_TR
 /*this is a trailing path function. PictureParentControlSet should not be used */
 #define PictureParentControlSet  "TYPE_NOT_ALLOWED"
-#endif
 void hme_sb(
-#if FTR_TPL_TR
     MePcs   *pcs_ptr,
-#else
-    PictureParentControlSet   *pcs_ptr,
-#endif
     uint32_t                   sb_origin_x,
     uint32_t                   sb_origin_y,
     MeContext                 *context_ptr,
     EbPictureBufferDesc       *input_ptr
 ){
 
-
-#if  FTR_PRE_HME
 
     if (context_ptr->prehme_ctrl.enable ){
 
@@ -3255,74 +2534,58 @@ void hme_sb(
             context_ptr,
             input_ptr);
     }
-#endif
 
 
 
     // perform hierarchical ME level 0
-#if CLN_ME_HME_PATH
     // Configure HME level 0, level 1 and level 2 from static config parameters
     const EbBool enable_hme_level0_flag = context_ptr->hme_decimation <= ONE_DECIMATION_HME
         ? 0
         : context_ptr->enable_hme_level0_flag;
     if (context_ptr->enable_hme_flag && enable_hme_level0_flag) {
-#endif
     hme_level0_sb(
         pcs_ptr,
         sb_origin_x,
         sb_origin_y,
         context_ptr,
         input_ptr);
-#if CLN_ME_HME_PATH
     }
-#endif
     // prune hierarchical ME level 0
     // perform hierarchical ME level 1
-#if CLN_ME_HME_PATH
     const EbBool enable_hme_level1_flag = context_ptr->hme_decimation == ONE_DECIMATION_HME
         ? context_ptr->enable_hme_level0_flag
         : context_ptr->hme_decimation == ZERO_DECIMATION_HME ? 0
         : context_ptr->enable_hme_level1_flag;
     if (context_ptr->enable_hme_flag && enable_hme_level1_flag) {
-#endif
     hme_level1_sb(
         pcs_ptr,
         sb_origin_x,
         sb_origin_y,
         context_ptr,
         input_ptr);
-#if CLN_ME_HME_PATH
     }
-#endif
     // prune hierarchical ME level 1
     // perform hierarchical ME level 2
-#if CLN_ME_HME_PATH
     const EbBool enable_hme_level2_flag = context_ptr->hme_decimation == ZERO_DECIMATION_HME
         ? context_ptr->enable_hme_level0_flag
         : context_ptr->enable_hme_level2_flag;
     if (context_ptr->enable_hme_flag && enable_hme_level2_flag) {
-#endif
     hme_level2_sb(
         pcs_ptr,
         sb_origin_x,
         sb_origin_y,
         context_ptr,
         input_ptr);
-#if CLN_ME_HME_PATH
     }
-#endif
     // set final mv centre
     set_final_seach_centre_sb(
         pcs_ptr,
         context_ptr);
 }
-#if FTR_TPL_TR
 #undef PictureParentControlSet
-#endif
 
 
 void hme_prune_ref_and_adjust_sr(MeContext* context_ptr) {
-#if CLN_ME_HME_PATH
     uint64_t best = (uint64_t)~0;
     for (int i = 0; i < MAX_NUM_OF_REF_PIC_LIST; ++i) {
         for (int j = 0; j < REF_LIST_MAX_DEPTH; ++j) {
@@ -3331,23 +2594,6 @@ void hme_prune_ref_and_adjust_sr(MeContext* context_ptr) {
             }
         }
     }
-#else
-    HmeResults    sorted[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
-    uint32_t      num_of_cand_to_sort = MAX_NUM_OF_REF_PIC_LIST * REF_LIST_MAX_DEPTH;
-    svt_memcpy(sorted, context_ptr->hme_results, sizeof(HmeResults)*MAX_NUM_OF_REF_PIC_LIST*REF_LIST_MAX_DEPTH);
-    HmeResults     * res_p = sorted[0];
-    uint32_t i, j;
-    for (i = 0; i < num_of_cand_to_sort - 1; ++i) {
-        for (j = i + 1; j < num_of_cand_to_sort; ++j) {
-            if (res_p[j].hme_sad < res_p[i].hme_sad) {
-                HmeResults temp = res_p[i];
-                res_p[i] = res_p[j];
-                res_p[j]= temp;
-            }
-        }
-    }
-    uint64_t best = sorted[0][0].hme_sad;//is this always the best?
-#endif
     uint16_t prune_ref_th = context_ptr->me_hme_prune_ctrls.prune_ref_if_hme_sad_dev_bigger_than_th;
     uint16_t mv_length_th = context_ptr->me_sr_adjustment_ctrls.reduce_me_sr_based_on_mv_length_th;
     uint16_t stationary_hme_sad_abs_th = context_ptr->me_sr_adjustment_ctrls.stationary_hme_sad_abs_th;
@@ -3356,9 +2602,7 @@ void hme_prune_ref_and_adjust_sr(MeContext* context_ptr) {
         for (uint32_t ri = 0; ri < REF_LIST_MAX_DEPTH; ri++){
             // Prune references based on HME sad
             if (context_ptr->me_hme_prune_ctrls.enable_me_hme_ref_pruning &&
-#if FTR_ME_HME_PROTECT_CLOSEST_REF
                 (!context_ptr->me_hme_prune_ctrls.protect_closest_refs || ri > 0) &&
-#endif
                 (prune_ref_th != (uint16_t)~0) &&
                 ((context_ptr->hme_results[li][ri].hme_sad - best) * 100 > (prune_ref_th * best)))
             {
@@ -3381,11 +2625,8 @@ void hme_prune_ref_and_adjust_sr(MeContext* context_ptr) {
     }
 }
 
-#if FTR_TPL_TR
 /*this is a trailing path function. PictureParentControlSet should not be used */
 #define PictureParentControlSet  "TYPE_NOT_ALLOWED"
-#endif
-#if OPT_BYPASS_ME_CAND
 void construct_me_candidate_array(
     MePcs *pcs_ptr, MeContext *context_ptr,
     uint32_t num_of_list_to_search,
@@ -3545,197 +2786,17 @@ void construct_me_candidate_array(
     pcs_ptr->pa_me_data->me_results[sb_index]->total_me_candidate_index[pu_index] =
         MIN((me_cand_offset - pu_index * MAX_PA_ME_CAND), MAX_PA_ME_CAND);
 }
-#else
-void construct_me_candidate_array(
-#if FTR_TPL_TR
-#if FTR_TPL_TR
-                                  MeContext *context_ptr,
-#else
-                                  MePcs *pcs_ptr, MeContext *context_ptr,
-#endif
-#else
-                                  PictureParentControlSet *pcs_ptr, MeContext *context_ptr,
-#endif
-                                  uint8_t *total_me_candidate_index, uint32_t num_of_list_to_search,
-                                  uint32_t pu_index, uint32_t n_idx) {
-#if FTR_REDUCE_ME_INJECTION
-    int64_t current_to_best_dist_distance = 0;
-    int64_t me_prune_th = context_ptr->prune_me_candidates_th;
-    int64_t best_me_dist = MAX_SAD_VALUE;
-
-    // Determine the best me distortion
-    for (uint32_t list_index = REF_LIST_0; list_index <= num_of_list_to_search; ++list_index) {
-        for (uint32_t ref_pic = 0; ref_pic < context_ptr->num_of_ref_pic_to_search[list_index]; ++ref_pic) {
-
-            if (context_ptr->hme_results[list_index][ref_pic].do_ref == 0)
-                continue;
-
-            best_me_dist = context_ptr->p_sb_best_sad[list_index][ref_pic][n_idx] < best_me_dist ?
-                   context_ptr->p_sb_best_sad[list_index][ref_pic][n_idx] : best_me_dist;
-        }
-    }
-#endif
-
-    for (uint32_t list_index = REF_LIST_0; list_index <= num_of_list_to_search; ++list_index) {
-        const uint8_t num_of_ref_pic_to_search = context_ptr->num_of_ref_pic_to_search[list_index];
-
-        // Ref Picture Loop
-        for (uint32_t ref_pic_index = 0; ref_pic_index < num_of_ref_pic_to_search;
-             ++ref_pic_index) {
-            //ME was skipped, so do not add this Unipred candidate
-            if (context_ptr->hme_results[list_index][ref_pic_index].do_ref == 0)
-                continue;
-
-#if FTR_REDUCE_ME_INJECTION
-            if (me_prune_th > 0) {
-                current_to_best_dist_distance = (context_ptr->p_sb_best_sad[list_index][ref_pic_index][n_idx] - best_me_dist) * 100;
-                if (current_to_best_dist_distance > (best_me_dist * me_prune_th))
-                    continue;
-            }
-#endif
-            MePredUnit *me_candidate = &(
-                context_ptr->me_candidate[*total_me_candidate_index].pu[pu_index]);
-            me_candidate->prediction_direction  = list_index;
-            me_candidate->ref_index[list_index] = ref_pic_index;
-            me_candidate->ref0_list  = me_candidate->prediction_direction == 0 ? list_index : 24;
-            me_candidate->ref1_list  = me_candidate->prediction_direction == 1 ? list_index : 24;
-            me_candidate->distortion = context_ptr->p_sb_best_sad[list_index][ref_pic_index][n_idx];
-            (*total_me_candidate_index)++;
-        }
-    }
-
-    if (num_of_list_to_search) {
-        // 1st set of BIPRED cand
-        // (LAST ,BWD), (LAST,ALT ), (LAST,ALT2 )
-        // (LAST2,BWD), (LAST2,ALT), (LAST2,ALT2)
-        // (LAST3,BWD), (LAST3,ALT), (LAST3,ALT2)
-        // (GOLD ,BWD), (GOLD,ALT ), (GOLD,ALT2 )
-        for (uint32_t first_list_ref_pict_idx = 0;
-#if FTR_TPL_TR
-            first_list_ref_pict_idx < context_ptr->num_of_ref_pic_to_search[REF_LIST_0];
-#else
-             first_list_ref_pict_idx < pcs_ptr->ref_list0_count_try;
-#endif
-             first_list_ref_pict_idx++) {
-            for (uint32_t second_list_ref_pict_idx = 0;
-#if FTR_TPL_TR
-                second_list_ref_pict_idx < context_ptr->num_of_ref_pic_to_search[REF_LIST_1];
-#else
-                 second_list_ref_pict_idx < pcs_ptr->ref_list1_count_try;
-#endif
-                 second_list_ref_pict_idx++) {
-                if (context_ptr->hme_results[REF_LIST_0][first_list_ref_pict_idx].do_ref &&
-                    context_ptr->hme_results[REF_LIST_1][second_list_ref_pict_idx].do_ref) {
-#if FTR_REDUCE_ME_INJECTION
-                    if (me_prune_th > 0) {
-                        current_to_best_dist_distance = (context_ptr->p_sb_best_sad[REF_LIST_0][first_list_ref_pict_idx][n_idx] - best_me_dist) * 100;
-                        if (current_to_best_dist_distance > best_me_dist * me_prune_th)
-                            continue;
-                        current_to_best_dist_distance = (context_ptr->p_sb_best_sad[REF_LIST_1][second_list_ref_pict_idx][n_idx] - best_me_dist) * 100;
-                        if (current_to_best_dist_distance > best_me_dist * me_prune_th)
-                            continue;
-                    }
-#endif
-                    MePredUnit *me_candidate = &(
-                        context_ptr->me_candidate[*total_me_candidate_index].pu[pu_index]);
-                    me_candidate->prediction_direction = BI_PRED;
-                    me_candidate->ref_index[0]         = (uint8_t)first_list_ref_pict_idx;
-                    me_candidate->ref0_list            = (uint8_t)REFERENCE_PIC_LIST_0;
-                    me_candidate->ref_index[1]         = (uint8_t)second_list_ref_pict_idx;
-                    me_candidate->ref1_list            = (uint8_t)REFERENCE_PIC_LIST_1;
-                    (*total_me_candidate_index)++;
-                }
-            }
-        }
-
-        // 2nd set of BIPRED cand: (LAST,LAST2) (LAST,LAST3) (LAST,GOLD)
-        for (uint32_t first_list_ref_pict_idx = 1;
-#if FTR_TPL_TR
-             first_list_ref_pict_idx < context_ptr->num_of_ref_pic_to_search[REF_LIST_0];
-#else
-             first_list_ref_pict_idx < pcs_ptr->ref_list0_count_try;
-#endif
-             first_list_ref_pict_idx++) {
-            if (context_ptr->hme_results[REF_LIST_0][0].do_ref &&
-                context_ptr->hme_results[REF_LIST_0][first_list_ref_pict_idx].do_ref) {
-#if FTR_REDUCE_ME_INJECTION
-                if (me_prune_th > 0) {
-                    current_to_best_dist_distance = (context_ptr->p_sb_best_sad[REF_LIST_0][0][n_idx] - best_me_dist) * 100;
-                    if (current_to_best_dist_distance > best_me_dist * me_prune_th)
-                        continue;
-                    current_to_best_dist_distance = (context_ptr->p_sb_best_sad[REF_LIST_0][first_list_ref_pict_idx][n_idx] - best_me_dist) * 100;
-                    if (current_to_best_dist_distance > best_me_dist * me_prune_th)
-                        continue;
-                }
-#endif
-                MePredUnit *me_candidate = &(
-                    context_ptr->me_candidate[*total_me_candidate_index].pu[pu_index]);
-                me_candidate->prediction_direction = BI_PRED;
-                me_candidate->ref_index[0]         = (uint8_t)0;
-                me_candidate->ref0_list            = (uint8_t)REFERENCE_PIC_LIST_0;
-                me_candidate->ref_index[1]         = (uint8_t)first_list_ref_pict_idx;
-                me_candidate->ref1_list            = (uint8_t)REFERENCE_PIC_LIST_0;
-                (*total_me_candidate_index)++;
-            }
-        }
-        // 3rd set of BIPRED cand: (BWD, ALT)
-#if FTR_TPL_TR
-        if (context_ptr->num_of_ref_pic_to_search[REF_LIST_1] == 3 && context_ptr->hme_results[REF_LIST_1][0].do_ref &&
-#else
-        if (pcs_ptr->ref_list1_count_try == 3 && context_ptr->hme_results[REF_LIST_1][0].do_ref &&
-#endif
-            context_ptr->hme_results[REF_LIST_1][2].do_ref) {
-#if FTR_REDUCE_ME_INJECTION
-            uint8_t inject_cand = 1;
-            if (me_prune_th > 0) {
-                current_to_best_dist_distance = (context_ptr->p_sb_best_sad[REF_LIST_1][0][n_idx] - best_me_dist) * 100;
-                if (current_to_best_dist_distance > best_me_dist * me_prune_th)
-                    inject_cand = 0;
-                current_to_best_dist_distance = (context_ptr->p_sb_best_sad[REF_LIST_1][2][n_idx] - best_me_dist) * 100;
-                if (current_to_best_dist_distance > best_me_dist * me_prune_th)
-                    inject_cand = 0;
-            }
-            if (inject_cand) {
-#endif
-            MePredUnit *me_candidate = &(
-                context_ptr->me_candidate[*total_me_candidate_index].pu[pu_index]);
-            me_candidate->prediction_direction = BI_PRED;
-            me_candidate->ref_index[0]         = 0;
-            me_candidate->ref0_list            = (uint8_t)REFERENCE_PIC_LIST_1;
-            me_candidate->ref_index[1]         = 2;
-            me_candidate->ref1_list            = (uint8_t)REFERENCE_PIC_LIST_1;
-            (*total_me_candidate_index)++;
-#if FTR_REDUCE_ME_INJECTION
-            }
-#endif
-        }
-    }
-}
-#endif
-#if FTR_TPL_TR
 #undef PictureParentControlSet
-#endif
-#if CLN_ME_HME_PATH
-#if FTR_TPL_TR
 /*this is a trailing path function. PictureParentControlSet should not be used */
 #define PictureParentControlSet  "TYPE_NOT_ALLOWED"
-#endif
 // Active and stationary detection for global motion
 void perform_gm_detection(
-#if FTR_TPL_TR
     MePcs                   *pcs_ptr, // input parameter, Picture Control Set Ptr
-#else
-    PictureParentControlSet *pcs_ptr, // input parameter, Picture Control Set Ptr
-#endif
     uint32_t                 sb_index, // input parameter, SB Index
     MeContext* context_ptr // input parameter, ME Context Ptr, used to store decimated/interpolated SB/SR
 ) {
 
-#if FTR_TPL_TR
     SequenceControlSet *scs_ptr = pcs_ptr->scs_ptr;
-#else
-    SequenceControlSet *scs_ptr = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
-#endif
     uint64_t stationary_cnt = 0;
     uint64_t per_sig_cnt[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH][NUM_MV_COMPONENTS][NUM_MV_HIST];
     uint64_t tot_cnt = 0;
@@ -3822,29 +2883,17 @@ void perform_gm_detection(
     }
 
 }
-#if FTR_TPL_TR
 #undef PictureParentControlSet
-#endif
 
-#if FTR_TPL_TR
 /*this is a trailing path function. PictureParentControlSet should not be used */
 #define PictureParentControlSet  "TYPE_NOT_ALLOWED"
-#endif
 // Compute the distortion per block size based on the ME results
 void compute_distortion(
-#if FTR_TPL_TR
     MePcs                   *pcs_ptr, // input parameter, Picture Control Set Ptr
-#else
-    PictureParentControlSet *pcs_ptr, // input parameter, Picture Control Set Ptr
-#endif
     uint32_t                 sb_index, // input parameter, SB Index
     MeContext* context_ptr // input parameter, ME Context Ptr, used to store decimated/interpolated SB/SR
 ) {
-#if FTR_TPL_TR
     SequenceControlSet *scs_ptr = pcs_ptr->scs_ptr;
-#else
-    SequenceControlSet *scs_ptr = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
-#endif
     // Determine sb_64x64_me_class
     SbParams *sb_params = &pcs_ptr->sb_params_array[sb_index];
     uint32_t sb_size = 64 * 64;
@@ -3888,13 +2937,9 @@ void compute_distortion(
     pcs_ptr->me_8x8_distortion[sb_index] = (dist_8x8 * sb_size) / (sb_params->width * sb_params->height);
 
 }
-#if FTR_TPL_TR
 #undef PictureParentControlSet
-#endif
-#if FTR_TPL_TR
 /*this is a trailing path function. PictureParentControlSet should not be used */
 #define PictureParentControlSet  "TYPE_NOT_ALLOWED"
-#endif
 // Initalize data used in ME/HME
 static INLINE void init_me_hme_data(MeContext* context_ptr) {
 
@@ -3939,24 +2984,15 @@ static INLINE void init_me_hme_data(MeContext* context_ptr) {
     }
 
 }
-#if FTR_TPL_TR
 #undef PictureParentControlSet
-#endif
-#endif
 /*******************************************
  * motion_estimate_sb
  *   performs ME (SB)
  *******************************************/
-#if FTR_TPL_TR
 /*this is a trailing path function. PictureParentControlSet should not be used */
 #define PictureParentControlSet  "TYPE_NOT_ALLOWED"
-#endif
 EbErrorType motion_estimate_sb(
-#if FTR_TPL_TR
     MePcs                   *pcs_ptr, // input parameter, Picture Control Set Ptr
-#else
-    PictureParentControlSet *pcs_ptr, // input parameter, Picture Control Set Ptr
-#endif
     uint32_t                 sb_index, // input parameter, SB Index
     uint32_t                 sb_origin_x, // input parameter, SB Origin X
     uint32_t                 sb_origin_y, // input parameter, SB Origin X
@@ -3966,44 +3002,14 @@ EbErrorType motion_estimate_sb(
 
 {
     EbErrorType         return_error = EB_ErrorNone;
-#if !CLN_ME_HME_PATH
-#if FTR_TPL_TR
-    SequenceControlSet *scs_ptr = pcs_ptr->scs_ptr;
-#else
-    SequenceControlSet *scs_ptr      = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
-#endif
-#endif
     uint32_t            max_number_of_pus_per_sb = pcs_ptr->max_number_of_pus_per_sb;
     uint32_t num_of_list_to_search = context_ptr->num_of_list_to_search;
 
     //pruning of the references is not done for alt-ref / when HMeLevel2 not done
-#if TUNE_M10_BYPASS_HME_LEVEL_1_2
     uint8_t prune_ref = context_ptr->enable_hme_flag &&
         context_ptr->me_type != ME_MCTF;
-#else
-    uint8_t prune_ref = context_ptr->enable_hme_flag && context_ptr->enable_hme_level2_flag &&
-        context_ptr->me_type != ME_MCTF;
-#endif
-#if CLN_ME_HME_PATH
     // Initialize ME/HME buffers
     init_me_hme_data(context_ptr);
-#else
-    //init hme results buffer
-    for (uint32_t li = 0; li < MAX_NUM_OF_REF_PIC_LIST; li++) {
-        for (uint32_t ri = 0; ri < REF_LIST_MAX_DEPTH; ri++) {
-            if (context_ptr->me_type != ME_MCTF)
-            context_ptr->hme_results[li][ri].list_i   = li;
-            context_ptr->hme_results[li][ri].ref_i    = ri;
-            context_ptr->hme_results[li][ri].do_ref   = 1;
-            context_ptr->hme_results[li][ri].hme_sad  = 0xFFFFFFFF;
-            context_ptr->reduce_me_sr_divisor[li][ri] = 1;
-            // R2R FIX: no winner integer MV is set in special case like initial p_sb_best_mv for overlay case,
-            // then it sends dirty p_sb_best_mv to MD, initializing it is necessary
-            for (uint32_t pi = 0; pi < SQUARE_PU_COUNT; pi++)
-                context_ptr->p_sb_best_mv[li][ri][pi] = 0;
-        }
-    }
-#endif
     // HME: Perform Hierachical Motion Estimation for all refrence frames.
     hme_sb(pcs_ptr, sb_origin_x, sb_origin_y, context_ptr, input_ptr);
     // prune the refrence frames based on the HME outputs.
@@ -4022,90 +3028,14 @@ EbErrorType motion_estimate_sb(
     if (context_ptr->me_type != ME_MCTF) {
         // Bi-Prediction motion estimation loop
         for (uint32_t pu_index = 0; pu_index < max_number_of_pus_per_sb; ++pu_index) {
-#if OPT_BYPASS_ME_CAND
             construct_me_candidate_array(
                 pcs_ptr,
                 context_ptr,
                 num_of_list_to_search,
                 pu_index,
                 sb_index);
-#else
-            uint32_t n_idx;
-            if (pu_index > 20)
-                n_idx = tab8x8[pu_index - 21] + 21;
-            else if (pu_index > 4)
-                n_idx = tab16x16[pu_index - 5] + 5;
-            else
-                n_idx = pu_index;
-            uint8_t total_me_candidate_index = 0;
-            construct_me_candidate_array(
-#if !FTR_TPL_TR
-                                         pcs_ptr,
-#endif
-                                         context_ptr,
-                                         &total_me_candidate_index,
-                                         num_of_list_to_search,
-                                         pu_index,
-                                         n_idx);
-            MeSbResults *me_pu_result = pcs_ptr->pa_me_data->me_results[sb_index];
-#if FTR_REDUCE_ME_INJECTION
-            me_pu_result->total_me_candidate_index[pu_index] = MIN(total_me_candidate_index,
-                MAX_PA_ME_CAND);
-#else
-            me_pu_result->total_me_candidate_index[pu_index] = MIN(total_me_candidate_index,
-                                                                   MAX_PA_ME_CAND);
-#endif
-
-            // Assining the ME candidates to the me Results buffer
-            for (uint8_t cand_index = 0; cand_index < total_me_candidate_index; ++cand_index) {
-                MePredUnit *me_candidate = &(context_ptr->me_candidate[cand_index].pu[pu_index]);
-                uint32_t    me_cand_off  = pu_index * MAX_PA_ME_CAND + cand_index;
-                pcs_ptr->pa_me_data->me_results[sb_index]
-                    ->me_candidate_array[me_cand_off]
-                    .direction = me_candidate->prediction_direction;
-                pcs_ptr->pa_me_data->me_results[sb_index]
-                    ->me_candidate_array[me_cand_off]
-                    .ref_idx_l0 = me_candidate->ref_index[0];
-                pcs_ptr->pa_me_data->me_results[sb_index]
-                    ->me_candidate_array[me_cand_off]
-                    .ref_idx_l1 = me_candidate->ref_index[1];
-                pcs_ptr->pa_me_data->me_results[sb_index]
-                    ->me_candidate_array[me_cand_off]
-                    .ref0_list = me_candidate->ref0_list;
-                pcs_ptr->pa_me_data->me_results[sb_index]
-                    ->me_candidate_array[me_cand_off]
-                    .ref1_list = me_candidate->ref1_list;
-            }
-
-            for (uint32_t list_index = REF_LIST_0; list_index <= num_of_list_to_search;
-                 ++list_index) {
-                uint8_t num_of_ref_pic_to_search = context_ptr->num_of_ref_pic_to_search[list_index];
-
-                // Ref Picture Loop
-                for (uint8_t ref_pic_index = 0; ref_pic_index < num_of_ref_pic_to_search;
-                     ++ref_pic_index) {
-                    pcs_ptr->pa_me_data->me_results[sb_index]
-                        ->me_mv_array[pu_index * MAX_PA_ME_MV + (list_index ? 4 : 0) +
-                                      ref_pic_index]
-                        .x_mv = _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][n_idx]);
-
-                    pcs_ptr->pa_me_data->me_results[sb_index]
-                        ->me_mv_array[pu_index * MAX_PA_ME_MV + (list_index ? 4 : 0) +
-                                      ref_pic_index]
-                        .y_mv = _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][n_idx]);
-                    //check if final MV is within AV1 limits
-                    check_mv_validity(
-                        _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][n_idx]),
-                        _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][n_idx]),
-                        1);
-                }
-            }
-#endif
         }
-#if CLN_ME_HME_PATH
-#if TUNE_FIRSTPASS_LOSSLESS_ME
         if (context_ptr->me_type != ME_FIRST_PASS)
-#endif
         // Save the distortion per block size
         compute_distortion(pcs_ptr, sb_index, context_ptr);
 
@@ -4115,374 +3045,20 @@ EbErrorType motion_estimate_sb(
 
         if (pcs_ptr->gm_ctrls.enabled)
             perform_gm_detection(pcs_ptr, sb_index, context_ptr);
-#else
-#if FTR_EARLY_DEPTH_REMOVAL
-        // Determine sb_64x64_me_class
-        SbParams *sb_params = &pcs_ptr->sb_params_array[sb_index];
-        uint32_t sb_size = 64 * 64;
-        uint32_t dist_64x64 = 0, dist_32x32 = 0, dist_16x16 = 0, dist_8x8 = 0;
-
-#if OPT_BYPASS_ME_CAND
-        // 64x64
-        {
-            dist_64x64 = context_ptr->me_distortion[0];
-        }
-
-        // 32x32
-        for (unsigned i = 0; i < 4; i++) {
-            dist_32x32 += context_ptr->me_distortion[1 + i];
-        }
-
-        // 16x16
-        for (unsigned i = 0; i < 16; i++) {
-            dist_16x16 += context_ptr->me_distortion[5 + i];
-        }
-
-        // 8x8
-        for (unsigned i = 0; i < 64; i++) {
-            dist_8x8 += context_ptr->me_distortion[21 + i];
-        }
-
-        // Compute the sum of the distortion of all 16 16x16 (720 and above) and
-        // 64 8x8 (for lower resolutions) blocks in the SB
-        pcs_ptr->rc_me_distortion[sb_index] = (scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE) ? dist_8x8 : dist_16x16;
-
-        uint64_t mean_dist_8x8 = dist_8x8 / 64;
-        uint64_t sum_ofsq_dist_8x8 = 0;
-        for (unsigned i = 0; i < 64; i++) {
-            sum_ofsq_dist_8x8 += (context_ptr->me_distortion[21 + i] - mean_dist_8x8) * (context_ptr->me_distortion[21 + i] - mean_dist_8x8);
-        }
-        pcs_ptr->me_8x8_cost_variance[sb_index] = (uint32_t)(sum_ofsq_dist_8x8 / 64);
-#else
-        // 64x64
-        {
-            MePredUnit *me_candidate = &(context_ptr->me_candidate[0].pu[0]);
-            dist_64x64 = me_candidate->distortion;
-        }
-
-        // 32x32
-        for (unsigned i = 0; i < 4; i++) {
-            MePredUnit *me_candidate = &(context_ptr->me_candidate[0].pu[1 + i]);
-            dist_32x32 += me_candidate->distortion;
-        }
-
-        // 16x16
-        for (unsigned i = 0; i < 16; i++) {
-            MePredUnit *me_candidate = &(context_ptr->me_candidate[0].pu[5 + i]);
-            dist_16x16 += me_candidate->distortion;
-        }
-
-        // 8x8
-        for (unsigned i = 0; i < 64; i++) {
-            MePredUnit *me_candidate = &(context_ptr->me_candidate[0].pu[21 + i]);
-            dist_8x8 += me_candidate->distortion;
-        }
-#if TUNE_DEPTH_REMOVAL_PER_RESOLUTION
-        uint64_t mean_dist_8x8 = dist_8x8 / 64;
-        uint64_t sum_ofsq_dist_8x8 = 0;
-        for (unsigned i = 0; i < 64; i++) {
-            MePredUnit *me_candidate = &(context_ptr->me_candidate[0].pu[21 + i]);
-            sum_ofsq_dist_8x8 += (me_candidate->distortion - mean_dist_8x8) * (me_candidate->distortion - mean_dist_8x8);
-        }
-        pcs_ptr->me_8x8_cost_variance[sb_index] = (uint32_t) (sum_ofsq_dist_8x8/ 64);
-#endif
-#endif
-        // Normalize
-        pcs_ptr->me_64x64_distortion[sb_index] = (dist_64x64 * sb_size) / (sb_params->width * sb_params->height);
-        pcs_ptr->me_32x32_distortion[sb_index] = (dist_32x32 * sb_size) / (sb_params->width * sb_params->height);
-        pcs_ptr->me_16x16_distortion[sb_index] = (dist_16x16 * sb_size) / (sb_params->width * sb_params->height);
-        pcs_ptr->me_8x8_distortion[sb_index] = (dist_8x8 * sb_size) / (sb_params->width * sb_params->height);
-#endif
-#if !OPT_BYPASS_ME_CAND
-        pcs_ptr->rc_me_distortion[sb_index] = 0;
-        // Compute the sum of the distortion of all 16 16x16 (720 and above) and
-        // 64 8x8 (for lower resolutions) blocks in the SB
-#endif
-#if FTR_GM_OPT_BASED_ON_ME
-#if TUNE_M9_GM_DETECTOR
-        uint64_t stationary_cnt = 0;
-#endif
-        uint64_t per_sig_cnt[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH][NUM_MV_COMPONENTS][NUM_MV_HIST];
-        uint64_t tot_cnt = 0;
-        memset(per_sig_cnt, 0, sizeof(uint64_t) * MAX_MV_HIST_SIZE);
-#if !TUNE_M9_GM_DETECTOR
-        int gm_th = scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? 4 : 32;
-        int still_th = 4;
-        pcs_ptr->rc_me_allow_gm[sb_index] = 0;
-#endif
-#endif
-        if (scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE)
-            for (unsigned i = 0; i < 64; i++) {
-#if OPT_BYPASS_ME_CAND
-                MeCandidate* me_candidate = &(pcs_ptr->pa_me_data->me_results[sb_index]->me_candidate_array[(21 + i) * MAX_PA_ME_CAND]);
-                //MePredUnit *me_candidate = &(context_ptr->me_candidate[0].pu[21 + i]);
-                //pcs_ptr->rc_me_distortion[sb_index] += context_ptr->me_distortion[21 + i];
-#else
-                MePredUnit *me_candidate = &(context_ptr->me_candidate[0].pu[21 + i]);
-                pcs_ptr->rc_me_distortion[sb_index] += me_candidate->distortion;
-#endif
-#if FTR_GM_OPT_BASED_ON_ME
-                int n_idx = 21 + i;
-                uint32_t list_index, ref_pic_index;
-#if OPT_BYPASS_ME_CAND
-                if (me_candidate->direction == 0 || me_candidate->direction == 2) {
-                    list_index = me_candidate->ref0_list;
-                    ref_pic_index = me_candidate->ref_idx_l0;
-#else
-                if (me_candidate->prediction_direction == 0 || me_candidate->prediction_direction == 2) {
-                    list_index = me_candidate->ref0_list;
-                    ref_pic_index = me_candidate->ref_index[0];
-#endif
-
-#if TUNE_M9_GM_DETECTOR
-                    // Active block detection
-                    uint16_t dist = ABS((int16_t)(pcs_ptr->picture_number - context_ptr->me_ds_ref_array[list_index][ref_pic_index].picture_number));
-                    int active_th = (pcs_ptr->gm_ctrls.use_distance_based_active_th) ?
-                        MAX(dist >> 1, 4) :
-                        4;
-                    int mx = _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][n_idx]);
-                    if (mx < -active_th)
-                        per_sig_cnt[list_index][ref_pic_index][0][0]++;
-                    else if (mx > active_th)
-                        per_sig_cnt[list_index][ref_pic_index][0][1]++;
-                    int my = _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][n_idx]);
-                    if (my < -active_th)
-                        per_sig_cnt[list_index][ref_pic_index][1][0]++;
-                    else if (my > active_th)
-                        per_sig_cnt[list_index][ref_pic_index][1][1]++;
-
-                    // Stationary block detection
-                    int stationary_th = 0;
-                    if (abs(mx) <= stationary_th && abs(my) <= stationary_th)
-                        stationary_cnt++;
-#else
-                    int mx = _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][n_idx]);
-                    if(mx < -gm_th)
-                        per_sig_cnt[list_index][ref_pic_index][0][0]++;
-                    else if(mx > gm_th)
-                        per_sig_cnt[list_index][ref_pic_index][0][2]++;
-                    else if((mx > -still_th) && (mx < still_th))
-                        per_sig_cnt[list_index][ref_pic_index][0][1]++;
-                    int my = _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][n_idx]);
-                    if(my < -gm_th)
-                        per_sig_cnt[list_index][ref_pic_index][1][0]++;
-                    else if(my > gm_th)
-                        per_sig_cnt[list_index][ref_pic_index][1][2]++;
-                    else if((my > -still_th) && (my < still_th))
-                        per_sig_cnt[list_index][ref_pic_index][1][1]++;
-#endif
-#if OPT_BYPASS_ME_CAND
-                }
-                else if (me_candidate->direction == 1 || me_candidate->direction == 2) {
-                    list_index = me_candidate->ref1_list;
-                    ref_pic_index = me_candidate->ref_idx_l1;
-#else
-                }else if (me_candidate->prediction_direction == 1 || me_candidate->prediction_direction == 2) {
-                    list_index = me_candidate->ref1_list;
-                    ref_pic_index = me_candidate->ref_index[1];
-#endif
-#if TUNE_M9_GM_DETECTOR
-                    // Active block detection
-                    uint16_t dist = ABS((int16_t)(pcs_ptr->picture_number - context_ptr->me_ds_ref_array[list_index][ref_pic_index].picture_number));
-                    int active_th = (pcs_ptr->gm_ctrls.use_distance_based_active_th) ?
-                        MAX(dist >> 1, 4) :
-                        4;
-                    int mx = _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][n_idx]);
-                    if (mx < -active_th)
-                        per_sig_cnt[list_index][ref_pic_index][0][0]++;
-                    else if (mx > active_th)
-                        per_sig_cnt[list_index][ref_pic_index][0][1]++;
-                    int my = _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][n_idx]);
-                    if (my < -active_th)
-                        per_sig_cnt[list_index][ref_pic_index][1][0]++;
-                    else if (my > active_th)
-                        per_sig_cnt[list_index][ref_pic_index][1][1]++;
-
-                    // Stationary block detection
-                    int stationary_th = 0;
-                    if (abs(mx) <= stationary_th && abs(my) <= stationary_th)
-                        stationary_cnt++;
-#else
-                    int mx = _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][n_idx]);
-                    if(mx < -gm_th)
-                        per_sig_cnt[list_index][ref_pic_index][0][0]++;
-                    else if(mx > gm_th)
-                        per_sig_cnt[list_index][ref_pic_index][0][2]++;
-                    else if((mx > -still_th) && (mx < still_th))
-                        per_sig_cnt[list_index][ref_pic_index][0][1]++;
-                    int my = _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][n_idx]);
-                    if(my < -gm_th)
-                        per_sig_cnt[list_index][ref_pic_index][1][0]++;
-                    else if(my > gm_th)
-                        per_sig_cnt[list_index][ref_pic_index][1][2]++;
-                    else if((my > -still_th) && (my < still_th))
-                        per_sig_cnt[list_index][ref_pic_index][1][1]++;
-#endif
-                }
-                tot_cnt++;
-#endif
-            }
-        else
-            for (unsigned i = 0; i < 16; i++) {
-#if OPT_BYPASS_ME_CAND
-                MeCandidate* me_candidate = &(pcs_ptr->pa_me_data->me_results[sb_index]->me_candidate_array[(5 + i) * MAX_PA_ME_CAND]);
-                //pcs_ptr->rc_me_distortion[sb_index] += context_ptr->me_distortion[5 + i];
-#else
-                MePredUnit *me_candidate = &(context_ptr->me_candidate[0].pu[5 + i]);
-                pcs_ptr->rc_me_distortion[sb_index] += me_candidate->distortion;
-#endif
-#if FTR_GM_OPT_BASED_ON_ME
-                int n_idx = 5 + i;
-                uint32_t list_index, ref_pic_index;
-#if OPT_BYPASS_ME_CAND
-                if (me_candidate->direction == 0 || me_candidate->direction == 2) {
-                    list_index = me_candidate->ref0_list;
-                    ref_pic_index = me_candidate->ref_idx_l0;
-#else
-                if (me_candidate->prediction_direction == 0 || me_candidate->prediction_direction == 2) {
-                    list_index = me_candidate->ref0_list;
-                    ref_pic_index = me_candidate->ref_index[0];
-#endif
-#if TUNE_M9_GM_DETECTOR
-                    // Active block detection
-                    uint16_t dist = ABS((int16_t)(pcs_ptr->picture_number - context_ptr->me_ds_ref_array[list_index][ref_pic_index].picture_number));
-                    int active_th = (pcs_ptr->gm_ctrls.use_distance_based_active_th) ?
-                        MAX(dist * 16, 32) :
-                        32;
-                    int mx = _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][n_idx]);
-                    if (mx < -active_th)
-                        per_sig_cnt[list_index][ref_pic_index][0][0]++;
-                    else if (mx > active_th)
-                        per_sig_cnt[list_index][ref_pic_index][0][1]++;
-                    int my = _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][n_idx]);
-                    if (my < -active_th)
-                        per_sig_cnt[list_index][ref_pic_index][1][0]++;
-                    else if (my > active_th)
-                        per_sig_cnt[list_index][ref_pic_index][1][1]++;
-
-                    // Stationary block detection
-                    int stationary_th = 4;
-                    if (abs(mx) <= stationary_th && abs(my) <= stationary_th)
-                        stationary_cnt++;
-#else
-                    int mx = _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][n_idx]);
-                    if(mx < -gm_th)
-                        per_sig_cnt[list_index][ref_pic_index][0][0]++;
-                    else if(mx > gm_th)
-                        per_sig_cnt[list_index][ref_pic_index][0][2]++;
-                    else if((mx > -still_th) && (mx < still_th))
-                        per_sig_cnt[list_index][ref_pic_index][0][1]++;
-                    int my = _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][n_idx]);
-                    if(my < -gm_th)
-                        per_sig_cnt[list_index][ref_pic_index][1][0]++;
-                    else if(my > gm_th)
-                        per_sig_cnt[list_index][ref_pic_index][1][2]++;
-                    else if((my > -still_th) && (my < still_th))
-                        per_sig_cnt[list_index][ref_pic_index][1][1]++;
-#endif
-#if OPT_BYPASS_ME_CAND
-                }
-                else if (me_candidate->direction == 1 || me_candidate->direction == 2) {
-                    list_index = me_candidate->ref1_list;
-                    ref_pic_index = me_candidate->ref_idx_l1;
-#else
-                }else if (me_candidate->prediction_direction == 1 || me_candidate->prediction_direction == 2) {
-                    list_index = me_candidate->ref1_list;
-                    ref_pic_index = me_candidate->ref_index[1];
-#endif
-#if TUNE_M9_GM_DETECTOR
-                    // Active block detection
-                    uint16_t dist = ABS((int16_t)(pcs_ptr->picture_number - context_ptr->me_ds_ref_array[list_index][ref_pic_index].picture_number));
-                    int active_th = (pcs_ptr->gm_ctrls.use_distance_based_active_th) ?
-                        MAX(dist * 16, 32) :
-                        32;
-                    int mx = _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][n_idx]);
-                    if (mx < -active_th)
-                        per_sig_cnt[list_index][ref_pic_index][0][0]++;
-                    else if (mx > active_th)
-                        per_sig_cnt[list_index][ref_pic_index][0][1]++;
-                    int my = _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][n_idx]);
-                    if (my < -active_th)
-                        per_sig_cnt[list_index][ref_pic_index][1][0]++;
-                    else if (my > active_th)
-                        per_sig_cnt[list_index][ref_pic_index][1][1]++;
-
-                    // Stationary block detection
-                    int stationary_th = 4;
-                    if (abs(mx) <= stationary_th && abs(my) <= stationary_th)
-                        stationary_cnt++;
-#else
-                    int mx = _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][n_idx]);
-                    if(mx < -gm_th)
-                        per_sig_cnt[list_index][ref_pic_index][0][0]++;
-                    else if(mx > gm_th)
-                        per_sig_cnt[list_index][ref_pic_index][0][2]++;
-                    else if((mx > -still_th) && (mx < still_th))
-                        per_sig_cnt[list_index][ref_pic_index][0][1]++;
-                    int my = _MVYT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][n_idx]);
-                    if(my < -gm_th)
-                        per_sig_cnt[list_index][ref_pic_index][1][0]++;
-                    else if(my > gm_th)
-                        per_sig_cnt[list_index][ref_pic_index][1][2]++;
-                    else if((my > -still_th) && (my < still_th))
-                        per_sig_cnt[list_index][ref_pic_index][1][1]++;
-#endif
-                }
-                tot_cnt++;
-#endif
-            }
-#if FTR_GM_OPT_BASED_ON_ME
-#if TUNE_M9_GM_DETECTOR
-            pcs_ptr->stationary_block_present_sb[sb_index] = 0;
-            // Set stationary_block_present_sb to 1 if stationary_cnt is higher than 5%
-            if (stationary_cnt > ((tot_cnt * 5)/100))
-                pcs_ptr->stationary_block_present_sb[sb_index] = 1;
-            pcs_ptr->rc_me_allow_gm[sb_index] = 0;
-#endif
-            for (int l = 0; l < MAX_NUM_OF_REF_PIC_LIST; l++) {
-                for (int r = 0; r < REF_LIST_MAX_DEPTH; r++) {
-                    for (int c = 0; c < NUM_MV_COMPONENTS; c++) {
-#if FTR_GM_OPT_BASED_ON_ME
-#if TUNE_M9_GM_DETECTOR
-                        for (int s = 0; s < NUM_MV_HIST; s ++) {
-#else
-                        for (int s = 0; s < NUM_MV_HIST; s += 2) {
-#endif
-                            if (per_sig_cnt[l][r][c][s] > (tot_cnt / 2))
-                                pcs_ptr->rc_me_allow_gm[sb_index] = 1;
-                        }
-#endif
-                    }
-                }
-            }
-#endif
-#endif
     }
 
     return return_error;
 }
-#if FTR_TPL_TR
 #undef PictureParentControlSet
-#endif
 
-#if FTR_TPL_TR
 /*this is a trailing path function. PictureParentControlSet should not be used */
 #define PictureParentControlSet  "TYPE_NOT_ALLOWED"
-#endif
 EbErrorType open_loop_intra_search_mb(
-#if FTR_TPL_TR
     MePcs *pcs_ptr, uint32_t sb_index,
-#else
-    PictureParentControlSet *pcs_ptr, uint32_t sb_index,
-#endif
     EbPictureBufferDesc *input_ptr)
 {
     EbErrorType return_error = EB_ErrorNone;
-#if FTR_TPL_TR
     SequenceControlSet *scs_ptr =  pcs_ptr->scs_ptr;
-#else
-    SequenceControlSet *scs_ptr = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
-#endif
 
     uint32_t cu_origin_x;
     uint32_t cu_origin_y;
@@ -4541,10 +3117,8 @@ EbErrorType open_loop_intra_search_mb(
 
             // Fill Neighbor Arrays
             update_neighbor_samples_array_open_loop_mb(
-#if TUNE_FIRSTPASS_LOSSLESS
                                                         1, // use_top_righ_bottom_left
                                                         1, // update_top_neighbor
-#endif
                                                        above0_row - 1, left0_col - 1,
                                                        input_ptr, input_ptr->stride_y, cu_origin_x, cu_origin_y, bsize, bsize);
             uint8_t ois_intra_mode;
@@ -4552,11 +3126,7 @@ EbErrorType open_loop_intra_search_mb(
             EbBool   enable_paeth                = pcs_ptr->scs_ptr->static_config.enable_paeth == DEFAULT ? EB_TRUE : (EbBool) pcs_ptr->scs_ptr->static_config.enable_paeth;
             EbBool   enable_smooth               = pcs_ptr->scs_ptr->static_config.enable_smooth == DEFAULT ? EB_TRUE : (EbBool) pcs_ptr->scs_ptr->static_config.enable_smooth;
             uint8_t intra_mode_end =
-#if FTR_TPL_TR
                 pcs_ptr->tpl_ctrls.tpl_opt_flag
-#else
-                pcs_ptr->tpl_data.tpl_ctrls.tpl_opt_flag
-#endif
                     ? DC_PRED
                     : enable_paeth ? PAETH_PRED : enable_smooth ? SMOOTH_H_PRED : D67_PRED;
             PredictionMode best_mode       = DC_PRED;
@@ -4577,7 +3147,6 @@ EbErrorType open_loop_intra_search_mb(
                 }
                 // PRED
                 intra_prediction_open_loop_mb(p_angle, ois_intra_mode, cu_origin_x, cu_origin_y, tx_size, above_row, left_col, predictor, 16);
-#if OPT_TPL
                 // Distortion
                 int64_t intra_cost;
                 if (pcs_ptr->tpl_ctrls.tpl_opt_flag && pcs_ptr->tpl_ctrls.use_pred_sad_in_intra_search) {
@@ -4591,25 +3160,10 @@ EbErrorType open_loop_intra_search_mb(
                 }
                 else {
                     svt_aom_subtract_block(16, 16, src_diff, 16, src, input_ptr->stride_y, predictor, 16);
-#if OPT_TPL
                     EB_TRANS_COEFF_SHAPE pf_shape = pcs_ptr->tpl_ctrls.tpl_opt_flag ? pcs_ptr->tpl_ctrls.pf_shape : DEFAULT_SHAPE;
                     svt_av1_wht_fwd_txfm(src_diff, 16, coeff, 2/*TX_16X16*/, pf_shape, 8, 0);
-#else
-                    svt_av1_wht_fwd_txfm(src_diff, 16, coeff, 2/*TX_16X16*/, 8, 0);
-#endif
                     intra_cost = svt_aom_satd(coeff, 16 * 16);
                 }
-#else
-                // Distortion
-                svt_aom_subtract_block(16, 16, src_diff, 16, src, input_ptr->stride_y, predictor, 16);
-#if OPT_TPL
-                EB_TRANS_COEFF_SHAPE pf_shape = pcs_ptr->tpl_ctrls.tpl_opt_flag ? pcs_ptr->tpl_ctrls.pf_shape : DEFAULT_SHAPE;
-                svt_av1_wht_fwd_txfm(src_diff, 16, coeff, 2/*TX_16X16*/, pf_shape, 8, 0);
-#else
-                svt_av1_wht_fwd_txfm(src_diff, 16, coeff, 2/*TX_16X16*/, 8, 0);
-#endif
-                int64_t intra_cost = svt_aom_satd(coeff, 16 * 16);
-#endif
                 // printf("open_loop_intra_search_mb aom_satd mbxy %d %d, mode=%d, satd=%d, dst[0~4]=0x%d,%d,%d,%d\n", cu_origin_x, cu_origin_y, ois_intra_mode, intra_cost, predictor[0], predictor[1], predictor[2], predictor[3]);
                 if (intra_cost < best_intra_cost) {
                     best_intra_cost = intra_cost;
@@ -4626,6 +3180,4 @@ EbErrorType open_loop_intra_search_mb(
     }
     return return_error;
 }
-#if FTR_TPL_TR
 #undef PictureParentControlSet
-#endif

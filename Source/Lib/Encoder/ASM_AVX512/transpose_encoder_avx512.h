@@ -14,7 +14,6 @@
 #define AOM_DSP_X86_TRANSPOSE_ENCODER_AVX512_H_
 
 #include "transpose_avx512.h"
-#if OPT_AVX512
 
 static INLINE void transpose_16nx16m_avx512(const __m512i *in, __m512i *out,
                                             const int32_t width,
@@ -543,5 +542,4 @@ static AOM_FORCE_INLINE void transpose_16nx16n_N4_quad_avx512(int32_t        txf
         }
     }
 }
-#endif /*OPT_AVX512*/
 #endif // AOM_DSP_X86_TRANSPOSE_ENCODER_AVX512_H_

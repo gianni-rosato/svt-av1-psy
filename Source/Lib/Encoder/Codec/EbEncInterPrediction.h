@@ -34,17 +34,11 @@ void svt_av1_build_inter_predictor(Av1Common *cm, const uint8_t *src, int src_st
                                    int dst_stride, const MV *src_mv, int pix_col, int pix_row,
                                    InterPredParams *inter_pred_params);
 EbErrorType av1_inter_prediction(
-#if FTR_SCALE_FACTOR
     SequenceControlSet *scs_ptr,
-#endif
     PictureControlSet *pcs_ptr, uint32_t interp_filters, BlkStruct *blk_ptr, uint8_t ref_frame_type,
     MvUnit *mv_unit, uint8_t use_intrabc, MotionMode motion_mode, uint8_t use_precomputed_obmc,
     struct ModeDecisionContext *md_context, uint8_t compound_idx,
-#if OPT_INIT_XD_2
     InterInterCompoundData *interinter_comp,
-#else
-    InterInterCompoundData *interinter_comp, TileInfo *tile,
-#endif
     NeighborArrayUnit *luma_recon_neighbor_array, NeighborArrayUnit *cb_recon_neighbor_array,
     NeighborArrayUnit *cr_recon_neighbor_array, uint8_t is_interintra_used,
     InterIntraMode interintra_mode, uint8_t use_wedge_interintra, int32_t interintra_wedge_index,
@@ -57,11 +51,7 @@ EbErrorType av1_inter_prediction_16bit_pipeline(
     PictureControlSet *pcs_ptr, uint32_t interp_filters, BlkStruct *blk_ptr, uint8_t ref_frame_type,
     MvUnit *mv_unit, uint8_t use_intrabc, MotionMode motion_mode, uint8_t use_precomputed_obmc,
     struct ModeDecisionContext *md_context, uint8_t compound_idx,
-#if OPT_INIT_XD_2
     InterInterCompoundData *interinter_comp,
-#else
-    InterInterCompoundData *interinter_comp, TileInfo *tile,
-#endif
     NeighborArrayUnit *luma_recon_neighbor_array, NeighborArrayUnit *cb_recon_neighbor_array,
     NeighborArrayUnit *cr_recon_neighbor_array, uint8_t is_interintra_used,
     InterIntraMode interintra_mode, uint8_t use_wedge_interintra, int32_t interintra_wedge_index,
@@ -72,13 +62,8 @@ EbErrorType av1_inter_prediction_16bit_pipeline(
 
 void search_compound_diff_wedge(PictureControlSet *pcs_ptr, struct ModeDecisionContext *context_ptr,
                                 ModeDecisionCandidate *candidate_ptr);
-#if FTR_UPGRADE_COMP_LEVELS
 EbBool calc_pred_masked_compound(PictureControlSet *pcs_ptr, struct ModeDecisionContext *context_ptr,
                                  ModeDecisionCandidate *candidate_ptr);
-#else
-void calc_pred_masked_compound(PictureControlSet *pcs_ptr, struct ModeDecisionContext *context_ptr,
-                               ModeDecisionCandidate *candidate_ptr);
-#endif
 
 EbErrorType inter_pu_prediction_av1(uint8_t                      hbd_mode_decision,
                                     struct ModeDecisionContext * md_context_ptr,
@@ -91,10 +76,8 @@ EbErrorType warped_motion_prediction(
     BlkStruct *blk_ptr, const BlockGeom *blk_geom, EbPictureBufferDesc *ref_pic_list0,
     EbPictureBufferDesc *ref_pic_list1, EbPictureBufferDesc *prediction_ptr, uint16_t dst_origin_x,
     uint16_t dst_origin_y,
-#if FIX_INTER_INTRA_COMP
     NeighborArrayUnit *luma_recon_neighbor_array, NeighborArrayUnit *cb_recon_neighbor_array,
     NeighborArrayUnit *cr_recon_neighbor_array,ModeDecisionCandidate *candidate_ptr,
-#endif
     EbWarpedMotionParams *wm_params_l0, EbWarpedMotionParams *wm_params_l1,
     uint8_t bit_depth, EbBool perform_chroma, EbBool is_encode_pass);
 

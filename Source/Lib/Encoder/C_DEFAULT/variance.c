@@ -320,7 +320,6 @@ uint32_t variance_highbd_c(const uint16_t *a, int a_stride, const uint16_t *b, i
         return *sse - (uint32_t)(((int64_t)sum * sum) / (W * H));                        \
     }
 
-#if FTR_PRUNED_SUBPEL_TREE
 #define SUBPIX_VAR(W, H)                                                      \
   uint32_t svt_aom_sub_pixel_variance##W##x##H##_c(                               \
       const uint8_t *a, int a_stride, int xoffset, int yoffset,               \
@@ -340,11 +339,6 @@ uint32_t variance_highbd_c(const uint16_t *a, int a_stride, const uint16_t *b, i
 #define VARIANCES(W, H) \
   VAR(W, H)             \
   SUBPIX_VAR(W, H)
-#else
-/* All the variance are available in the same sizes. */
-#define VARIANCES(W, H) \
-  VAR(W, H)
-#endif
 VARIANCES(128, 128)
 VARIANCES(128, 64)
 VARIANCES(64, 128)

@@ -297,7 +297,6 @@ AOM_VAR_LOOP_AVX2(64, 128, 13, 32); // 64x32 * (128/32)
 AOM_VAR_LOOP_AVX2(128, 64, 13, 16); // 128x16 * ( 64/16)
 AOM_VAR_LOOP_AVX2(128, 128, 14, 16); // 128x16 * (128/16)
 
-#if FTR_PRUNED_SUBPEL_TREE
 unsigned int svt_aom_sub_pixel_variance32xh_avx2(const uint8_t *src, int src_stride,
     int x_offset, int y_offset,
     const uint8_t *dst, int dst_stride,
@@ -349,4 +348,3 @@ AOM_SUB_PIXEL_VAR_AVX2(16, 32, 16, 4, 5);
 AOM_SUB_PIXEL_VAR_AVX2(16, 16, 16, 4, 4);
 AOM_SUB_PIXEL_VAR_AVX2(16, 8, 16, 4, 3);
 AOM_SUB_PIXEL_VAR_AVX2(16, 4, 16, 4, 2);
-#endif

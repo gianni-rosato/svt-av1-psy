@@ -304,11 +304,7 @@ void svt_av1_cdef_frame(EncDecContext *context_ptr, SequenceControlSet *scs_ptr,
             ((EbReferenceObject *)pCs->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
                 ->reference_picture;
     else
-#if CLN_STRUCT
         recon_picture_ptr = pCs->parent_pcs_ptr->enc_dec_ptr->recon_picture_ptr;
-#else
-        recon_picture_ptr = pCs->recon_picture_ptr;
-#endif
 
     EbByte recon_buffer_y = &(
         (recon_picture_ptr->buffer_y)[recon_picture_ptr->origin_x +
@@ -679,11 +675,7 @@ void av1_cdef_frame16bit(EncDecContext *context_ptr, SequenceControlSet *scs_ptr
                 ->reference_picture16bit;
 
     else
-#if CLN_STRUCT
         recon_picture_ptr = pCs->parent_pcs_ptr->enc_dec_ptr->recon_picture16bit_ptr;
-#else
-        recon_picture_ptr = pCs->recon_picture16bit_ptr;
-#endif
 
     uint16_t *recon_buffer_y = (uint16_t *)recon_picture_ptr->buffer_y +
         (recon_picture_ptr->origin_x + recon_picture_ptr->origin_y * recon_picture_ptr->stride_y);
@@ -1195,16 +1187,7 @@ void finish_cdef_search(EncDecContext *context_ptr, PictureControlSet *pcs_ptr,
     int32_t          end_gi;
     CDEF_PICK_METHOD pick_method = pcs_ptr->parent_pcs_ptr->cdef_level == 2 ? CDEF_FAST_SEARCH_LVL1
         : pcs_ptr->parent_pcs_ptr->cdef_level == 3                          ? CDEF_FAST_SEARCH_LVL2
-#if FTR_CDEF_CHROMA_FOLLOWS_LUMA
-#if FTR_M9_CDEF
         : pcs_ptr->parent_pcs_ptr->cdef_level > 3 ?  CDEF_FAST_SEARCH_LVL3 : 0;
-#else
-        : pcs_ptr->parent_pcs_ptr->cdef_level == 4 || pcs_ptr->parent_pcs_ptr->cdef_level == 5 ?  CDEF_FAST_SEARCH_LVL3 : 0;
-#endif
-#else
-        : pcs_ptr->parent_pcs_ptr->cdef_level == 4                          ? CDEF_FAST_SEARCH_LVL3
-                                                                            : 0;
-#endif
 
     const int fast = (pick_method >= CDEF_FAST_SEARCH_LVL1 && pick_method <= CDEF_FAST_SEARCH_LVL3);
     assert(sb_index != NULL);

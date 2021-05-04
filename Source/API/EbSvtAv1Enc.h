@@ -27,15 +27,9 @@ extern "C" {
 #define MAX_HIERARCHICAL_LEVEL 6
 #define REF_LIST_MAX_DEPTH 4
 #define MAX_ENC_PRESET 8
-#if FTR_GM_OPT_BASED_ON_ME
 #define NUM_MV_COMPONENTS 2
-#if TUNE_M9_GM_DETECTOR
 #define NUM_MV_HIST 2
-#else
-#define NUM_MV_HIST 3
-#endif
 #define MAX_MV_HIST_SIZE  2 * REF_LIST_MAX_DEPTH * NUM_MV_COMPONENTS * NUM_MV_HIST
-#endif
 #define DEFAULT -1
 
 #define EB_BUFFERFLAG_EOS 0x00000001 // signals the last packet of the stream
@@ -59,7 +53,6 @@ typedef struct PredictionStructureConfigEntry {
     int32_t  ref_list1[REF_LIST_MAX_DEPTH];
 } PredictionStructureConfigEntry;
 
-#if TUNE_REDESIGN_TF_CTRLS
 typedef struct TfControls {
     uint8_t  enabled;
     uint8_t  num_past_pics;            // Number of frame(s) from past
@@ -79,7 +72,6 @@ typedef struct TfControls {
     uint64_t max_64x64_past_pics;      // The max number of past reference frames if me_16x16_to_8x8_dev > me_16x16_to_8x8_dev_th
     uint64_t max_64x64_future_pics;    // The max number of future reference frames if me_16x16_to_8x8_dev > me_16x16_to_8x8_dev_th
 } TfControls;
-#endif
 // super-res modes
 typedef enum {
     SUPERRES_NONE, // No frame superres allowed.
@@ -733,19 +725,10 @@ typedef struct EbSvtAv1EncConfiguration {
 
     /* Variables to control the use of ALT-REF (temporally filtered frames)
     */
-#if TUNE_REDESIGN_TF_CTRLS
     // -1: Default; 0: OFF; 1: ON
     int8_t  tf_level;
-#else
-    // -1: Default; 0: OFF; 1: ON; 2 and 3: Faster levels
-    int8_t  tf_level;
-    uint8_t altref_strength;
-    uint8_t altref_nframes;
-#endif
     EbBool  enable_overlays;
-#if TUNE_REDESIGN_TF_CTRLS
     TfControls tf_params_per_type[3]; // [I_SLICE][BASE][L1]
-#endif
 
     // super-resolution parameters
     uint8_t superres_mode;

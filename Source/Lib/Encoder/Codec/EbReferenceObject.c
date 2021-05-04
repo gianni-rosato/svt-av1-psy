@@ -227,10 +227,8 @@ EbErrorType svt_reference_object_ctor(EbReferenceObject *reference_object,
     hme_desc_init_data.split_mode         = EB_FALSE;
     hme_desc_init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_LUMA_MASK; //Only save 8bit luma
     hme_desc_init_data.bit_depth          = EB_8BIT;
-#if CLN_MEM_REF
     reference_object->input_picture = NULL;
     if (ref_init_ptr->hme_quarter_luma_recon)
-#endif
     EB_NEW(
         reference_object->input_picture, svt_picture_buffer_desc_ctor, (EbPtr)&hme_desc_init_data);
     uint32_t mi_rows = reference_object->reference_picture->height >> MI_SIZE_LOG2;
@@ -320,27 +318,13 @@ static void svt_pa_reference_object_dctor(EbPtr p) {
     if (obj->dummy_obj)
         return;
     EB_DELETE(obj->input_padded_picture_ptr);
-#if OPT_ONE_BUFFER_DOWNSAMPLED
     EB_DELETE(obj->quarter_downsampled_picture_ptr);
     EB_DELETE(obj->sixteenth_downsampled_picture_ptr);
-#else
-    EB_DELETE(obj->quarter_decimated_picture_ptr);
-    EB_DELETE(obj->sixteenth_decimated_picture_ptr);
-    EB_DELETE(obj->quarter_filtered_picture_ptr);
-    EB_DELETE(obj->sixteenth_filtered_picture_ptr);
-#endif
     for (uint8_t denom_idx = 0; denom_idx < NUM_SCALES; denom_idx++) {
         if (obj->downscaled_input_padded_picture_ptr[denom_idx] != NULL) {
             EB_DELETE(obj->downscaled_input_padded_picture_ptr[denom_idx]);
-#if OPT_ONE_BUFFER_DOWNSAMPLED
             EB_DELETE(obj->downscaled_quarter_downsampled_picture_ptr[denom_idx]);
             EB_DELETE(obj->downscaled_sixteenth_downsampled_picture_ptr[denom_idx]);
-#else
-            EB_DELETE(obj->downscaled_quarter_decimated_picture_ptr[denom_idx]);
-            EB_DELETE(obj->downscaled_quarter_filtered_picture_ptr[denom_idx]);
-            EB_DELETE(obj->downscaled_sixteenth_decimated_picture_ptr[denom_idx]);
-            EB_DELETE(obj->downscaled_sixteenth_filtered_picture_ptr[denom_idx]);
-#endif
         }
     }
 }
@@ -367,7 +351,6 @@ EbErrorType svt_pa_reference_object_ctor(EbPaReferenceObject *pa_ref_obj_,
     EB_NEW(pa_ref_obj_->input_padded_picture_ptr,
            svt_picture_buffer_desc_ctor,
            (EbPtr)picture_buffer_desc_init_data_ptr);
-#if OPT_ONE_BUFFER_DOWNSAMPLED
     // Downsampled reference picture constructor
     EB_NEW(pa_ref_obj_->quarter_downsampled_picture_ptr,
         svt_picture_buffer_desc_ctor,
@@ -375,39 +358,11 @@ EbErrorType svt_pa_reference_object_ctor(EbPaReferenceObject *pa_ref_obj_,
     EB_NEW(pa_ref_obj_->sixteenth_downsampled_picture_ptr,
         svt_picture_buffer_desc_ctor,
         (EbPtr)(picture_buffer_desc_init_data_ptr + 2));
-#else
-    // Quarter Decim reference picture constructor
-    EB_NEW(pa_ref_obj_->quarter_decimated_picture_ptr,
-           svt_picture_buffer_desc_ctor,
-           (EbPtr)(picture_buffer_desc_init_data_ptr + 1));
-    EB_NEW(pa_ref_obj_->sixteenth_decimated_picture_ptr,
-           svt_picture_buffer_desc_ctor,
-           (EbPtr)(picture_buffer_desc_init_data_ptr + 2));
-    // Quarter Filtered reference picture constructor
-    if ((picture_buffer_desc_init_data_ptr + 1)->down_sampled_filtered) {
-        EB_NEW(pa_ref_obj_->quarter_filtered_picture_ptr,
-               svt_picture_buffer_desc_ctor,
-               (EbPtr)(picture_buffer_desc_init_data_ptr + 1));
-    }
-    // Sixteenth Filtered reference picture constructor
-    if ((picture_buffer_desc_init_data_ptr + 2)->down_sampled_filtered) {
-        EB_NEW(pa_ref_obj_->sixteenth_filtered_picture_ptr,
-               svt_picture_buffer_desc_ctor,
-               (EbPtr)(picture_buffer_desc_init_data_ptr + 2));
-    }
-#endif
     // set all supplemental downscaled reference picture pointers to NULL
     for (uint8_t down_idx = 0; down_idx < NUM_SCALES; down_idx++) {
         pa_ref_obj_->downscaled_input_padded_picture_ptr[down_idx]        = NULL;
-#if OPT_ONE_BUFFER_DOWNSAMPLED
         pa_ref_obj_->downscaled_quarter_downsampled_picture_ptr[down_idx] = NULL;
         pa_ref_obj_->downscaled_sixteenth_downsampled_picture_ptr[down_idx] = NULL;
-#else
-        pa_ref_obj_->downscaled_quarter_decimated_picture_ptr[down_idx]   = NULL;
-        pa_ref_obj_->downscaled_quarter_filtered_picture_ptr[down_idx]    = NULL;
-        pa_ref_obj_->downscaled_sixteenth_decimated_picture_ptr[down_idx] = NULL;
-        pa_ref_obj_->downscaled_sixteenth_filtered_picture_ptr[down_idx]  = NULL;
-#endif
     }
 
     return EB_ErrorNone;

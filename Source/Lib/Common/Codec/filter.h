@@ -81,17 +81,6 @@ static INLINE InterpFilter av1_unswitchable_filter(InterpFilter filter) {
 #define INTER_FILTER_COMP_OFFSET (SWITCHABLE_FILTERS + 1)
 #define INTER_FILTER_DIR_OFFSET ((SWITCHABLE_FILTERS + 1) * 2)
 
-#if !OPT_INLINE_FILTER_FUNCS
-//typedef struct InterpFilterParams {
-//  const int16_t *filter_ptr;
-//  uint16_t taps;
-//  uint16_t subpel_shifts;
-//  InterpFilter interp_filter;
-//} InterpFilterParams;
-
-InterpFilterParams av1_get_interp_filter_params_with_block_size(const InterpFilter interp_filter,
-                                                                const int32_t      w);
-#endif
 static INLINE const int16_t *av1_get_interp_filter_subpel_kernel(
     const InterpFilterParams filter_params, const int32_t subpel) {
     return filter_params.filter_ptr + filter_params.taps * subpel;

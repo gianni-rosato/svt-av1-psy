@@ -20,14 +20,11 @@
 #include "EbReferenceObject.h"
 #include "EbResize.h"
 #include "common_dsp_rtcd.h"
-#if FTR_LAD_MG
 #include "EbLog.h"
 #include "EbPictureDecisionProcess.h"
-#endif
 /**************************************
  * Context
  **************************************/
-#if FTR_LAD_MG
 typedef struct LadQueueEntry {
     EbDctor dctor;
     PictureParentControlSet *pcs;
@@ -45,15 +42,12 @@ EbErrorType lad_queue_entry_ctor(LadQueueEntry *entry_ptr) {
     entry_ptr->pcs = NULL;
     return EB_ErrorNone;
 }
-#endif
 
 
 typedef struct InitialRateControlContext {
     EbFifo *motion_estimation_results_input_fifo_ptr;
     EbFifo *initialrate_control_results_output_fifo_ptr;
-#if FTR_LAD_MG
     LadQueue         *lad_queue;
-#endif
 
 } InitialRateControlContext;
 
@@ -64,10 +58,8 @@ static void initial_rate_control_context_dctor(EbPtr p) {
     EbThreadContext *          thread_context_ptr = (EbThreadContext *)p;
     InitialRateControlContext *obj = (InitialRateControlContext *)thread_context_ptr->priv;
 
-#if FTR_LAD_MG
     EB_DELETE_PTR_ARRAY(obj->lad_queue->cir_buf, REFERENCE_QUEUE_MAX_DEPTH);
     EB_FREE(obj->lad_queue);
-#endif
     EB_FREE_ARRAY(obj);
 }
 
@@ -87,7 +79,6 @@ EbErrorType initial_rate_control_context_ctor(EbThreadContext *  thread_context_
         svt_system_resource_get_producer_fifo(
             enc_handle_ptr->initial_rate_control_results_resource_ptr, 0);
 
-#if FTR_LAD_MG
     EB_MALLOC(context_ptr->lad_queue, sizeof(LadQueue));
 
     EB_ALLOC_PTR_ARRAY(context_ptr->lad_queue->cir_buf, REFERENCE_QUEUE_MAX_DEPTH);
@@ -96,7 +87,6 @@ EbErrorType initial_rate_control_context_ctor(EbThreadContext *  thread_context_
     }
     context_ptr->lad_queue->head = 0;
     context_ptr->lad_queue->tail = 0;
-#endif
 
     return EB_ErrorNone;
 }
@@ -155,14 +145,6 @@ void update_bea_info_over_time(EncodeContext *          encode_context_ptr,
                     ? 0
                     : (uint64_t)temp_pcs_ptr->rc_me_distortion[sb_idx];
             }
-#if !TUNE_REDESIGN_TF_CTRLS
-            // Store the filtered_sse of next ALT_REF picture in the I slice to be used in QP Scaling
-            if (pcs_ptr->slice_type == I_SLICE && pcs_ptr->filtered_sse == 0 && sb_idx == 0 &&
-                temp_pcs_ptr->temporal_layer_index == 0) {
-                pcs_ptr->filtered_sse    = temp_pcs_ptr->filtered_sse;
-                pcs_ptr->filtered_sse_uv = temp_pcs_ptr->filtered_sse_uv;
-            }
-#endif
             non_moving_index_over_sliding_window += temp_pcs_ptr->non_moving_index_array[sb_idx];
 
             // Increment the input_queue_index Iterator
@@ -258,100 +240,12 @@ InitialRateControlReorderEntry *determine_picture_offset_in_queue(
     return queue_entry_ptr;
 }
 
-#if !CLN_OLD_RC
-void get_histogram_queue_data(SequenceControlSet *scs_ptr, EncodeContext *encode_context_ptr,
-                              PictureParentControlSet *pcs_ptr) {
-    HlRateControlHistogramEntry *histogram_queue_entry_ptr;
-    int32_t                      histogram_queue_entry_index;
-
-    // Determine offset from the Head Ptr for HLRC histogram queue
-    svt_block_on_mutex(scs_ptr->encode_context_ptr->hl_rate_control_historgram_queue_mutex);
-    histogram_queue_entry_index = (int32_t)(
-        pcs_ptr->picture_number -
-        encode_context_ptr
-            ->hl_rate_control_historgram_queue[encode_context_ptr
-                                                   ->hl_rate_control_historgram_queue_head_index]
-            ->picture_number);
-    histogram_queue_entry_index += encode_context_ptr->hl_rate_control_historgram_queue_head_index;
-    histogram_queue_entry_index = (histogram_queue_entry_index >
-                                   HIGH_LEVEL_RATE_CONTROL_HISTOGRAM_QUEUE_MAX_DEPTH - 1)
-        ? histogram_queue_entry_index - HIGH_LEVEL_RATE_CONTROL_HISTOGRAM_QUEUE_MAX_DEPTH
-        : (histogram_queue_entry_index < 0)
-        ? histogram_queue_entry_index + HIGH_LEVEL_RATE_CONTROL_HISTOGRAM_QUEUE_MAX_DEPTH
-        : histogram_queue_entry_index;
-    histogram_queue_entry_ptr =
-        encode_context_ptr->hl_rate_control_historgram_queue[histogram_queue_entry_index];
-
-    //histogram_queue_entry_ptr->parent_pcs_wrapper_ptr  = in_results_ptr->pcs_wrapper_ptr;
-    histogram_queue_entry_ptr->picture_number       = pcs_ptr->picture_number;
-    histogram_queue_entry_ptr->end_of_sequence_flag = pcs_ptr->end_of_sequence_flag;
-    histogram_queue_entry_ptr->slice_type           = pcs_ptr->slice_type;
-    histogram_queue_entry_ptr->temporal_layer_index = pcs_ptr->temporal_layer_index;
-    histogram_queue_entry_ptr->full_sb_count        = pcs_ptr->full_sb_count;
-    histogram_queue_entry_ptr->life_count           = 0;
-    histogram_queue_entry_ptr->passed_to_hlrc       = EB_FALSE;
-    histogram_queue_entry_ptr->is_coded             = EB_FALSE;
-    histogram_queue_entry_ptr->total_num_bits_coded = 0;
-    histogram_queue_entry_ptr->frames_in_sw         = 0;
-    svt_memcpy(histogram_queue_entry_ptr->me_distortion_histogram,
-               pcs_ptr->me_distortion_histogram,
-               sizeof(uint16_t) * NUMBER_OF_SAD_INTERVALS);
-
-    svt_memcpy(histogram_queue_entry_ptr->ois_distortion_histogram,
-               pcs_ptr->ois_distortion_histogram,
-               sizeof(uint16_t) * NUMBER_OF_INTRA_SAD_INTERVALS);
-
-    svt_release_mutex(scs_ptr->encode_context_ptr->hl_rate_control_historgram_queue_mutex);
-    //SVT_LOG("Test1 POC: %d\t POC: %d\t LifeCount: %d\n", histogram_queue_entry_ptr->picture_number, pcs_ptr->picture_number,  histogram_queue_entry_ptr->life_count);
-
-    return;
-}
-
-void update_histogram_queue_entry(SequenceControlSet *scs_ptr, EncodeContext *encode_context_ptr,
-                                  PictureParentControlSet *pcs_ptr, uint32_t frames_in_sw) {
-    HlRateControlHistogramEntry *histogram_queue_entry_ptr;
-    int32_t                      histogram_queue_entry_index;
-
-    svt_block_on_mutex(scs_ptr->encode_context_ptr->hl_rate_control_historgram_queue_mutex);
-
-    histogram_queue_entry_index = (int32_t)(
-        pcs_ptr->picture_number -
-        encode_context_ptr
-            ->hl_rate_control_historgram_queue[encode_context_ptr
-                                                   ->hl_rate_control_historgram_queue_head_index]
-            ->picture_number);
-    histogram_queue_entry_index += encode_context_ptr->hl_rate_control_historgram_queue_head_index;
-    histogram_queue_entry_index = (histogram_queue_entry_index >
-                                   HIGH_LEVEL_RATE_CONTROL_HISTOGRAM_QUEUE_MAX_DEPTH - 1)
-        ? histogram_queue_entry_index - HIGH_LEVEL_RATE_CONTROL_HISTOGRAM_QUEUE_MAX_DEPTH
-        : (histogram_queue_entry_index < 0)
-        ? histogram_queue_entry_index + HIGH_LEVEL_RATE_CONTROL_HISTOGRAM_QUEUE_MAX_DEPTH
-        : histogram_queue_entry_index;
-    histogram_queue_entry_ptr =
-        encode_context_ptr->hl_rate_control_historgram_queue[histogram_queue_entry_index];
-    histogram_queue_entry_ptr->passed_to_hlrc = EB_TRUE;
-
-    if (scs_ptr->static_config.rate_control_mode == 2)
-        histogram_queue_entry_ptr->life_count +=
-            (int16_t)(scs_ptr->static_config.intra_period_length + 1) -
-            3; // FramelevelRC does not decrease the life count for first picture in each temporal layer
-    else
-        histogram_queue_entry_ptr->life_count += pcs_ptr->historgram_life_count;
-
-    histogram_queue_entry_ptr->frames_in_sw = frames_in_sw;
-    svt_release_mutex(scs_ptr->encode_context_ptr->hl_rate_control_historgram_queue_mutex);
-
-    return;
-}
-#endif
-
 void svt_av1_build_quantizer(AomBitDepth bit_depth, int32_t y_dc_delta_q, int32_t u_dc_delta_q,
                              int32_t u_ac_delta_q, int32_t v_dc_delta_q, int32_t v_ac_delta_q,
                              Quants *const quants, Dequants *const deq);
 
 
 
-#if FTR_LAD_MG
 /*
  get size  of the  lad queue
 */
@@ -419,36 +313,25 @@ void irc_send_picture_out(InitialRateControlContext *ctx, PictureParentControlSe
     out_results_ptr->pcs_wrapper_ptr = pcs->p_pcs_wrapper_ptr;
     svt_post_full_object(out_results_wrapper_ptr);
 }
-#if FTR_USE_LAD_TPL
 uint8_t is_frame_already_exists(PictureParentControlSet *pcs, uint32_t end_index, uint64_t pic_num) {
     for (uint32_t i = 0; i < end_index; i++)
         if (pcs->tpl_group[i]->picture_number == pic_num)
             return 1;
     return 0;
 }
-#endif
 
-#if SIM_OLD_REF
 /* decide to inject a frame into the tpl group*/
 uint8_t  inj_to_tpl_group( PictureParentControlSet* pcs)
 {
     uint8_t inj = 0;
     if (pcs->hierarchical_levels != 4) {
-#if TUNE_6L_4L_TPL
         if (pcs->temporal_layer_index < pcs->hierarchical_levels)
             inj = 1;
         else
             inj = 0;
-#else
-        if (pcs->is_used_as_reference_flag)
-            inj = 1;
-        else
-            inj = 0;
-#endif
     }
     else {
 
-#if  LIMIT_TO_43
         if (pcs->scs_ptr->mrp_init_level == 1) {
 
             if (pcs->temporal_layer_index < 4)
@@ -468,20 +351,10 @@ uint8_t  inj_to_tpl_group( PictureParentControlSet* pcs)
                 inj = 0;
 
         }
-#else
-
-        if (pcs->temporal_layer_index < 4)
-            inj = 1;
-        else if (pcs->is_used_as_reference_flag && (pcs->pic_index == 6 || pcs->pic_index == 10))//TODO: could be removed once TPL r0 adapts dyncamically  to TPL group size
-            inj = 1;
-        else
-            inj = 0;
-#endif
     }
 
     return inj;
 }
-#endif
 /*
  copy the number of pcs entries from the the output queue to extended  buffer
 */
@@ -577,7 +450,6 @@ void store_extended_group(
                 break;
         }
     }
-#if FTR_USE_LAD_TPL
 
     SequenceControlSet *scs_ptr = (SequenceControlSet *)pcs->scs_wrapper_ptr->object_ptr;
     if (scs_ptr->lad_mg) {
@@ -590,24 +462,12 @@ void store_extended_group(
             // Check wether the i-th pic already exists in the tpl group
             if (!is_frame_already_exists(pcs, i, pcs->tpl_group[i]->picture_number)) {
                 // Discard non-ref pic from the tpl group
-#if SIM_OLD_REF
                 uint8_t inject_frame = inj_to_tpl_group(pcs->tpl_group[i]);
                 if (inject_frame) {
-#else
-                if (pcs->tpl_group[i]->is_used_as_reference_flag) {
-#endif
                     if (pcs->slice_type != I_SLICE) {
                         // Discard low important pictures from tpl group
-#if CLN_TPL_CONNECT_FLAG
                         if (pcs->tpl_ctrls.tpl_opt_flag && pcs->tpl_ctrls.reduced_tpl_group) {
-#else
-                        if (pcs->tpl_ctrls.reduced_tpl_group) {
-#endif
-#if TUNE_6L_4L_TPL
                             if (pcs->tpl_group[i]->temporal_layer_index <= pcs->tpl_ctrls.reduced_tpl_group + (pcs->hierarchical_levels == 5 ? 1 : 0)) {
-#else
-                            if (pcs->tpl_group[i]->temporal_layer_index <= pcs->tpl_ctrls.reduced_tpl_group) {
-#endif
                                 pcs->tpl_valid_pic[i] = 1;
                                 pcs->used_tpl_frame_num++;
                             }
@@ -624,15 +484,7 @@ void store_extended_group(
                 }
             }
         }
-#if !FTR_USE_LAD_TPL
-        uint16_t original_tpl_group = pcs->tpl_group_size;
-        for (pic_i = original_tpl_group; pic_i < pcs->ntpl_group_size; ++pic_i) {
-            PictureParentControlSet* pcs_tpl_ptr = (PictureParentControlSet *)pcs->tpl_group[pic_i];
-            pcs_tpl_ptr->num_tpl_grps++;
-        }
-#endif
     }
-#endif
 
 #if LAD_MG_PRINT
     if (log) {
@@ -736,7 +588,6 @@ void process_lad_queue(
     }
 
 }
-#endif
 
 
 /* Initial Rate Control Kernel */
@@ -788,7 +639,6 @@ void *initial_rate_control_kernel(void *input_ptr) {
                                                in_results_ptr->pcs_wrapper_ptr->object_ptr;
 
         // Set the segment counter
-#if FTR_TPL_TR
         if (in_results_ptr->task_type == TASK_TPL_TR_ME)
         {
             pcs_ptr->me_trailing_segments_completion_count++;
@@ -802,7 +652,6 @@ void *initial_rate_control_kernel(void *input_ptr) {
         }
         else {
 
-#endif
         pcs_ptr->me_segments_completion_count++;
 
         // If the picture is complete, proceed
@@ -855,42 +704,19 @@ void *initial_rate_control_kernel(void *input_ptr) {
             /*In case Look-Ahead is zero there is no need to place pictures in the
               re-order queue. this will cause an artificial delay since pictures come in dec-order*/
             if (scs_ptr->static_config.look_ahead_distance == 0) {
-#if !CLN_OLD_RC
-                for (uint8_t temporal_layer_index = 0;
-                     temporal_layer_index < EB_MAX_TEMPORAL_LAYERS;
-                     temporal_layer_index++)
-                    pcs_ptr->frames_in_interval[temporal_layer_index] = 0;
-#endif
 
                 pcs_ptr->frames_in_sw           = 0;
-#if !CLN_OLD_RC
-                pcs_ptr->historgram_life_count  = 0;
-                pcs_ptr->scene_change_in_gop    = EB_FALSE;
-#endif
                 pcs_ptr->end_of_sequence_region = EB_FALSE;
 
                 init_zz_cost_info(pcs_ptr);
 
 
-#if FTR_LAD_MG
                 push_to_lad_queue(pcs_ptr, context_ptr);
 #if LAD_MG_PRINT
                 print_lad_queue(context_ptr,0);
 #endif
                 uint8_t lad_queue_pass_thru = !scs_ptr->static_config.enable_tpl_la;
                 process_lad_queue(context_ptr, lad_queue_pass_thru);
-#else
-
-                // Get Empty Results Object
-                svt_get_empty_object(context_ptr->initialrate_control_results_output_fifo_ptr,
-                                     &out_results_wrapper_ptr);
-
-                InitialRateControlResults *out_results_ptr =
-                    (InitialRateControlResults *)out_results_wrapper_ptr->object_ptr;
-
-                out_results_ptr->pcs_wrapper_ptr = pcs_ptr->p_pcs_wrapper_ptr;
-                svt_post_full_object(out_results_wrapper_ptr);
-#endif
 
             } else {
                 //****************************************************
@@ -900,21 +726,7 @@ void *initial_rate_control_kernel(void *input_ptr) {
                 if (!pcs_ptr->is_overlay)
                     // Determine offset from the Head Ptr
                     determine_picture_offset_in_queue(encode_context_ptr, pcs_ptr, in_results_ptr);
-#if !CLN_OLD_RC
-                if (scs_ptr->static_config.rate_control_mode && !use_input_stat(scs_ptr) &&
-                    !scs_ptr->lap_enabled)
-                    // Getting the Histogram Queue Data
-                    get_histogram_queue_data(scs_ptr, encode_context_ptr, pcs_ptr);
-                for (uint8_t temporal_layer_index = 0;
-                     temporal_layer_index < EB_MAX_TEMPORAL_LAYERS;
-                     temporal_layer_index++)
-                    pcs_ptr->frames_in_interval[temporal_layer_index] = 0;
-#endif
                 pcs_ptr->frames_in_sw          = 0;
-#if !CLN_OLD_RC
-                pcs_ptr->historgram_life_count = 0;
-                pcs_ptr->scene_change_in_gop   = EB_FALSE;
-#endif
                 EbBool move_slide_window_flag  = EB_TRUE;
                 while (move_slide_window_flag) {
                     // Check if the sliding window condition is valid
@@ -1022,20 +834,6 @@ void *initial_rate_control_kernel(void *input_ptr) {
                                                      [queue_entry_index_temp2]
                                                  ->parent_pcs_wrapper_ptr)
                                          ->object_ptr);
-#if !CLN_OLD_RC
-                                if (scs_ptr->intra_period_length != -1) {
-                                    if (pcs_ptr->picture_number %
-                                            ((scs_ptr->intra_period_length + 1)) ==
-                                        0) {
-                                        pcs_ptr->frames_in_interval[pcs_ptr_temp
-                                                                        ->temporal_layer_index]++;
-                                        if (pcs_ptr_temp->scene_change_flag)
-                                            pcs_ptr->scene_change_in_gop = EB_TRUE;
-                                    }
-                                }
-
-                                pcs_ptr_temp->historgram_life_count++;
-#endif
                                 end_of_sequence_flag = pcs_ptr_temp->end_of_sequence_flag;
                                 queue_entry_index_temp++;
                             }
@@ -1045,15 +843,6 @@ void *initial_rate_control_kernel(void *input_ptr) {
                                 pcs_ptr->end_of_sequence_region = EB_TRUE;
                             else
                                 pcs_ptr->end_of_sequence_region = EB_FALSE;
-#if !CLN_OLD_RC
-                            if (scs_ptr->static_config.rate_control_mode &&
-                                !use_input_stat(scs_ptr) && !scs_ptr->lap_enabled)
-                                // Determine offset from the Head Ptr for HLRC histogram queue and set the life count
-                                if (scs_ptr->static_config.look_ahead_distance != 0)
-                                    // Update Histogram Queue Entry Life count
-                                    update_histogram_queue_entry(
-                                        scs_ptr, encode_context_ptr, pcs_ptr, frames_in_sw);
-#endif
                             // BACKGROUND ENHANCEMENT Part II
                             if (!pcs_ptr->end_of_sequence_flag &&
                                 scs_ptr->static_config.look_ahead_distance != 0) {
@@ -1141,9 +930,7 @@ void *initial_rate_control_kernel(void *input_ptr) {
                 }
             }
         }
-#if FTR_TPL_TR
         }
-#endif
         // Release the Input Results
         svt_release_object(in_results_wrapper_ptr);
     }

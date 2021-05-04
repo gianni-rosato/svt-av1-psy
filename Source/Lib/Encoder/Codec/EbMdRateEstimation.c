@@ -365,7 +365,6 @@ void av1_estimate_mv_rate(PictureControlSet *      pcs_ptr,
     nmvcost[1]    = &md_rate_estimation_array->nmv_costs[1][MV_MAX];
     nmvcost_hp[0] = &md_rate_estimation_array->nmv_costs_hp[0][MV_MAX];
     nmvcost_hp[1] = &md_rate_estimation_array->nmv_costs_hp[1][MV_MAX];
-#if FTR_REDUCE_MVEST
     uint8_t allow_high_precision_mv = pcs_ptr->parent_pcs_ptr->bypass_cost_table_gen ? 0 : frm_hdr->allow_high_precision_mv;
     if (!pcs_ptr->parent_pcs_ptr->bypass_cost_table_gen) {
         svt_av1_build_nmv_cost_table(md_rate_estimation_array->nmv_vec_cost, //out
@@ -390,18 +389,6 @@ void av1_estimate_mv_rate(PictureControlSet *      pcs_ptr,
         md_rate_estimation_array->nmvcoststack[0] = &pcs_ptr->parent_pcs_ptr->scs_ptr->nmv_costs[0][MV_MAX];
         md_rate_estimation_array->nmvcoststack[1] = &pcs_ptr->parent_pcs_ptr->scs_ptr->nmv_costs[1][MV_MAX];
     }
-#else
-    svt_av1_build_nmv_cost_table(md_rate_estimation_array->nmv_vec_cost, //out
-                                 frm_hdr->allow_high_precision_mv ? nmvcost_hp : nmvcost, //out
-                                 &fc->nmvc,
-                                 frm_hdr->allow_high_precision_mv);
-    md_rate_estimation_array->nmvcoststack[0] = frm_hdr->allow_high_precision_mv
-        ? &md_rate_estimation_array->nmv_costs_hp[0][MV_MAX]
-        : &md_rate_estimation_array->nmv_costs[0][MV_MAX];
-    md_rate_estimation_array->nmvcoststack[1] = frm_hdr->allow_high_precision_mv
-        ? &md_rate_estimation_array->nmv_costs_hp[1][MV_MAX]
-        : &md_rate_estimation_array->nmv_costs[1][MV_MAX];
-#endif
     if (frm_hdr->allow_intrabc) {
         int32_t *dvcost[2] = {&md_rate_estimation_array->dv_cost[0][MV_MAX],
                               &md_rate_estimation_array->dv_cost[1][MV_MAX]};

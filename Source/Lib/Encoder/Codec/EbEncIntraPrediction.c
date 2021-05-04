@@ -65,9 +65,6 @@ static void build_intra_predictors(
         int32_t n_left_px, int32_t n_bottomleft_px,
         int32_t plane)
 {
-#if !OPT_INIT_XD
-    (void)xd;
-#endif
     int32_t i;
 
     int32_t ref_stride = 1;
@@ -430,16 +427,9 @@ static void build_intra_predictors_high(
 
 
 void svt_av1_predict_intra_block(
-#if !OPT_INIT_XD_2
-        TileInfo * tile,
-#endif
         STAGE       stage,
         const BlockGeom * blk_geom,
-#if OPT_INIT_XD_2
         MacroBlockD *xd,
-#else
-        const Av1Common *cm,
-#endif
         int32_t wpx,
         int32_t hpx,
         TxSize tx_size,
@@ -461,18 +451,8 @@ void svt_av1_predict_intra_block(
         uint32_t bl_org_y_pict,
         uint32_t bl_org_x_mb,
         uint32_t bl_org_y_mb,
-#if !OPT_INIT_XD_2
-        ModeInfo **mi_grid_base,
-#endif
         SeqHeader *seq_header_ptr)
 {
-#if !OPT_INIT_XD_2
-    MacroBlockD xd_s;
-    MacroBlockD *xd = &xd_s;
-
-    xd_s.chroma_left_mbmi = 0;
-    xd_s.chroma_above_mbmi = 0;
-#endif
 
     uint32_t  pred_buf_x_offest;
     uint32_t  pred_buf_y_offest;
@@ -489,36 +469,6 @@ void svt_av1_predict_intra_block(
     // Adjust mirow , micol ;
     // All plane have the same values
 
-#if !OPT_INIT_XD_2
-    int32_t mirow = bl_org_y_pict >> 2;
-    int32_t micol = bl_org_x_pict >> 2;
-    xd->up_available   = (mirow > tile->mi_row_start);
-    xd->left_available = (micol > tile->mi_col_start);
-    const int32_t bw = mi_size_wide[bsize];
-    const int32_t bh = mi_size_high[bsize];
-
-    xd->mb_to_top_edge = -((mirow * MI_SIZE) * 8);
-    xd->mb_to_bottom_edge = ((cm->mi_rows - bh - mirow) * MI_SIZE) * 8;
-    xd->mb_to_left_edge = -((micol * MI_SIZE) * 8);
-    xd->mb_to_right_edge = ((cm->mi_cols - bw - micol) * MI_SIZE) * 8;
-    xd->tile.mi_col_start = tile->mi_col_start;
-    xd->tile.mi_col_end = tile->mi_col_end;
-    xd->tile.mi_row_start = tile->mi_row_start;
-    xd->tile.mi_row_end = tile->mi_row_end;
-    xd->n8_h = bh;
-    xd->n8_w = bw;
-    xd->is_sec_rect = 0;
-    if (xd->n8_w < xd->n8_h) {
-        // Only mark is_sec_rect as 1 for the last block.
-        // For PARTITION_VERT_4, it would be (0, 0, 0, 1);
-        // For other partitions, it would be (0, 1).
-        if (!((micol + xd->n8_w) & (xd->n8_h - 1))) xd->is_sec_rect = 1;
-    }
-
-    if (xd->n8_w > xd->n8_h)
-        if (mirow & (xd->n8_w - 1)) xd->is_sec_rect = 1;
-
-#endif
     uint8_t  *dst;
     int32_t dst_stride;
     if (plane == 0) {
@@ -534,60 +484,6 @@ void svt_av1_predict_intra_block(
         dst_stride = recon_buffer->stride_cr;
     }
 
-#if !OPT_INIT_XD_2
-    int32_t chroma_up_available = xd->up_available;
-    int32_t chroma_left_available = xd->left_available;
-    const int32_t ss_x = plane == 0 ? 0 : 1; //CHKN
-    const int32_t ss_y = plane == 0 ? 0 : 1;
-
-    if (ss_x && bw < mi_size_wide[BLOCK_8X8])
-        chroma_left_available = (micol - 1) > tile->mi_col_start;
-    if (ss_y && bh < mi_size_high[BLOCK_8X8])
-        chroma_up_available = (mirow - 1) > tile->mi_row_start;
-
-    int mi_stride = cm->mi_stride;
-    const int32_t offset = mirow * mi_stride + micol;
-    xd->mi = mi_grid_base + offset;
-    ModeInfo *mi_ptr = *xd->mi;
-
-    if (xd->up_available) {
-        // xd->above_mbmi = xd->mi[-xd->mi_stride].mbmi;
-        xd->above_mbmi = &mi_ptr[-mi_stride].mbmi;
-    }
-    else
-        xd->above_mbmi = NULL;
-    if (xd->left_available) {
-        //xd->left_mbmi = xd->mi[-1].mbmi;
-        xd->left_mbmi = &mi_ptr[-1].mbmi;
-    }
-    else
-        xd->left_mbmi = NULL;
-    const int chroma_ref = ((mirow & 0x01) || !(bh & 0x01) || !ss_y) &&
-                           ((micol & 0x01) || !(bw & 0x01) || !ss_x);
-    if (chroma_ref) {
-        // To help calculate the "above" and "left" chroma blocks, note that the
-        // current block may cover multiple luma blocks (eg, if partitioned into
-        // 4x4 luma blocks).
-        // First, find the top-left-most luma block covered by this chroma block
-
-        mi_ptr = xd->mi[-(mirow & ss_y) * mi_stride - (micol & ss_x)];
-
-        // Then, we consider the luma region covered by the left or above 4x4 chroma
-        // prediction. We want to point to the chroma reference block in that
-        // region, which is the bottom-right-most mi unit.
-        // This leads to the following offsets:
-#if OPT_D2_COPIES
-        xd->chroma_above_mbmi = chroma_up_available ? &xd->mi[-(mirow & ss_y) * mi_stride - (micol & ss_x) - mi_stride + ss_x]->mbmi : NULL;
-
-        xd->chroma_left_mbmi = chroma_left_available ? &xd->mi[-(mirow & ss_y) * mi_stride - (micol & ss_x) + ss_y * mi_stride - 1]->mbmi : NULL;
-#else
-        xd->chroma_above_mbmi = chroma_up_available ? &mi_ptr[-mi_stride + ss_x].mbmi : NULL;
-
-        xd->chroma_left_mbmi = chroma_left_available ? &mi_ptr[ss_y * mi_stride - 1].mbmi : NULL;
-#endif
-    }
-
-#endif
     //CHKN  const MbModeInfo *const mbmi = xd->mi[0];
     const int32_t txwpx = tx_size_wide[tx_size];
     const int32_t txhpx = tx_size_high[tx_size];
@@ -613,19 +509,11 @@ void svt_av1_predict_intra_block(
         pd->subsampling_x = pd->subsampling_y = 1;
     const int32_t txw = tx_size_wide_unit[tx_size];
     const int32_t txh = tx_size_high_unit[tx_size];
-#if OPT_INIT_XD_2
     const int32_t have_top = row_off || (pd->subsampling_y ? xd->chroma_up_available
                                                            : xd->up_available);
     const int32_t have_left =
             col_off ||
             (pd->subsampling_x ? xd->chroma_left_available : xd->left_available);
-#else
-    const int32_t have_top = row_off || (pd->subsampling_y ? /*xd->*/chroma_up_available
-                                                           : xd->up_available);
-    const int32_t have_left =
-            col_off ||
-            (pd->subsampling_x ? /*xd->*/chroma_left_available : xd->left_available);
-#endif
     const int32_t mi_row = -xd->mb_to_top_edge >> (3 + MI_SIZE_LOG2);
     const int32_t mi_col = -xd->mb_to_left_edge >> (3 + MI_SIZE_LOG2);
     const int32_t xr_chr_offset = 0;
@@ -688,16 +576,9 @@ void svt_av1_predict_intra_block(
 
 void svt_av1_predict_intra_block_16bit(
         EbBitDepthEnum bit_depth,
-#if !OPT_INIT_XD_2
-        TileInfo * tile,
-#endif
         STAGE       stage,
         const BlockGeom * blk_geom,
-#if OPT_INIT_XD_2
         MacroBlockD* xd,
-#else
-        const Av1Common *cm,
-#endif
         int32_t wpx,
         int32_t hpx,
         TxSize tx_size,
@@ -719,18 +600,8 @@ void svt_av1_predict_intra_block_16bit(
         uint32_t bl_org_y_pict,
         uint32_t bl_org_x_mb,
         uint32_t bl_org_y_mb,
-#if !OPT_INIT_XD_2
-        ModeInfo **mi_grid_base,
-#endif
         SeqHeader *seq_header_ptr)
 {
-#if !OPT_INIT_XD_2
-    MacroBlockD xd_s;
-    MacroBlockD *xd = &xd_s;
-
-    xd_s.chroma_left_mbmi = 0;
-    xd_s.chroma_above_mbmi = 0;
-#endif
 
     uint32_t  pred_buf_x_offest;
     uint32_t  pred_buf_y_offest;
@@ -743,42 +614,6 @@ void svt_av1_predict_intra_block_16bit(
         pred_buf_y_offest = bl_org_y_mb;
     }
 
-
-#if !OPT_INIT_XD_2
-    int32_t mirow = bl_org_y_pict >> 2;
-    int32_t micol = bl_org_x_pict >> 2;
-#if OPT_INIT_XD_2
-    const int32_t bw = mi_size_wide[bsize];
-    const int32_t bh = mi_size_high[bsize];
-#else
-    xd->up_available = (mirow > tile->mi_row_start);
-    xd->left_available = (micol > tile->mi_col_start);
-
-    const int32_t bw = mi_size_wide[bsize];
-    const int32_t bh = mi_size_high[bsize];
-
-    xd->mb_to_top_edge = -((mirow * MI_SIZE) * 8);
-    xd->mb_to_bottom_edge = ((cm->mi_rows - bh - mirow) * MI_SIZE) * 8;
-    xd->mb_to_left_edge = -((micol * MI_SIZE) * 8);
-    xd->mb_to_right_edge = ((cm->mi_cols - bw - micol) * MI_SIZE) * 8;
-    xd->tile.mi_col_start = tile->mi_col_start;
-    xd->tile.mi_col_end = tile->mi_col_end;
-    xd->tile.mi_row_start = tile->mi_row_start;
-    xd->tile.mi_row_end = tile->mi_row_end;
-    xd->n8_h = bh;
-    xd->n8_w = bw;
-    xd->is_sec_rect = 0;
-    if (xd->n8_w < xd->n8_h) {
-        // Only mark is_sec_rect as 1 for the last block.
-        // For PARTITION_VERT_4, it would be (0, 0, 0, 1);
-        // For other partitions, it would be (0, 1).
-        if (!((micol + xd->n8_w) & (xd->n8_h - 1))) xd->is_sec_rect = 1;
-    }
-
-    if (xd->n8_w > xd->n8_h)
-        if (mirow & (xd->n8_w - 1)) xd->is_sec_rect = 1;
-#endif
-#endif
 
     // Adjust prediction pointers
     uint16_t *dst;
@@ -795,58 +630,6 @@ void svt_av1_predict_intra_block_16bit(
         dst = (uint16_t*)(recon_buffer->buffer_cr) + (pred_buf_x_offest + recon_buffer->origin_x / 2 + (pred_buf_y_offest + recon_buffer->origin_y / 2)*recon_buffer->stride_cr);
         dst_stride = recon_buffer->stride_cr;
     }
-#if !OPT_INIT_XD_2
-    int32_t chroma_up_available = xd->up_available;
-    int32_t chroma_left_available = xd->left_available;
-
-    const int32_t ss_x = plane == 0 ? 0 : 1;
-    const int32_t ss_y = plane == 0 ? 0 : 1;
-
-    if (ss_x && bw < mi_size_wide[BLOCK_8X8])
-        chroma_left_available = (micol - 1) > tile->mi_col_start;
-    if (ss_y && bh < mi_size_high[BLOCK_8X8])
-        chroma_up_available = (mirow - 1) > tile->mi_row_start;
-
-    int mi_stride = cm->mi_stride;
-    const int32_t offset = mirow * mi_stride + micol;
-    xd->mi = mi_grid_base + offset;
-    ModeInfo *mi_ptr = *xd->mi;
-
-    if (xd->up_available) {
-        // xd->above_mbmi = xd->mi[-xd->mi_stride].mbmi;
-        xd->above_mbmi = &mi_ptr[-mi_stride].mbmi;
-    }
-    else
-        xd->above_mbmi = NULL;
-    if (xd->left_available) {
-        //xd->left_mbmi = xd->mi[-1].mbmi;
-        xd->left_mbmi = &mi_ptr[-1].mbmi;
-    }
-    else
-        xd->left_mbmi = NULL;
-    const int chroma_ref = ((mirow & 0x01) || !(bh & 0x01) || !ss_y) &&
-                           ((micol & 0x01) || !(bw & 0x01) || !ss_x);
-    if (chroma_ref) {
-        // To help calculate the "above" and "left" chroma blocks, note that the
-        // current block may cover multiple luma blocks (eg, if partitioned into
-        // 4x4 luma blocks).
-        // First, find the top-left-most luma block covered by this chroma block
-
-        mi_ptr = xd->mi[-(mirow & ss_y) * mi_stride - (micol & ss_x)];
-
-        // Then, we consider the luma region covered by the left or above 4x4 chroma
-        // prediction. We want to point to the chroma reference block in that
-        // region, which is the bottom-right-most mi unit.
-        // This leads to the following offsets:
-#if OPT_D2_COPIES
-        xd->chroma_above_mbmi = chroma_up_available ? &xd->mi[-(mirow & ss_y) * mi_stride - (micol & ss_x) - mi_stride + ss_x]->mbmi : NULL;
-        xd->chroma_left_mbmi = chroma_left_available ? &xd->mi[-(mirow & ss_y) * mi_stride - (micol & ss_x) + ss_y * mi_stride - 1]->mbmi : NULL;
-#else
-        xd->chroma_above_mbmi = chroma_up_available ? &mi_ptr[-mi_stride + ss_x].mbmi : NULL;
-        xd->chroma_left_mbmi = chroma_left_available ? &mi_ptr[ss_y * mi_stride - 1].mbmi : NULL;
-#endif
-    }
-#endif
     //CHKN  const MbModeInfo *const mbmi = xd->mi[0];
     const int32_t txwpx = tx_size_wide[tx_size];
     const int32_t txhpx = tx_size_high[tx_size];
@@ -873,19 +656,11 @@ void svt_av1_predict_intra_block_16bit(
         pd->subsampling_x = pd->subsampling_y = 1;
     const int32_t txw = tx_size_wide_unit[tx_size];
     const int32_t txh = tx_size_high_unit[tx_size];
-#if OPT_INIT_XD_2
     const int32_t have_top = row_off || (pd->subsampling_y ? xd->chroma_up_available
                                                            : xd->up_available);
     const int32_t have_left =
             col_off ||
             (pd->subsampling_x ? xd->chroma_left_available : xd->left_available);
-#else
-    const int32_t have_top = row_off || (pd->subsampling_y ? /*xd->*/chroma_up_available
-                                                           : xd->up_available);
-    const int32_t have_left =
-            col_off ||
-            (pd->subsampling_x ? /*xd->*/chroma_left_available : xd->left_available);
-#endif
     const int32_t mi_row = -xd->mb_to_top_edge >> (3 + MI_SIZE_LOG2);
     const int32_t mi_col = -xd->mb_to_left_edge >> (3 + MI_SIZE_LOG2);
     const int32_t xr_chr_offset = 0;
@@ -959,14 +734,6 @@ EbErrorType svt_av1_intra_prediction_cl(
     uint32_t intra_luma_mode_top_neighbor_index = get_neighbor_array_unit_top_index(
             md_context_ptr->intra_luma_mode_neighbor_array,
             md_context_ptr->blk_origin_x);
-#if !CLN_MDC_CTX
-    uint32_t intra_chroma_mode_left_neighbor_index = get_neighbor_array_unit_left_index(
-            md_context_ptr->intra_chroma_mode_neighbor_array,
-            md_context_ptr->round_origin_y >> 1);
-    uint32_t intra_chroma_mode_top_neighbor_index = get_neighbor_array_unit_top_index(
-            md_context_ptr->intra_chroma_mode_neighbor_array,
-            md_context_ptr->round_origin_x >> 1);
-#endif
     md_context_ptr->intra_luma_left_mode = (uint32_t)(
             (md_context_ptr->mode_type_neighbor_array->left_array[mode_type_left_neighbor_index] != INTRA_MODE) ? DC_PRED/*EB_INTRA_DC*/ :
             (uint32_t)md_context_ptr->intra_luma_mode_neighbor_array->left_array[intra_luma_mode_left_neighbor_index]);
@@ -974,15 +741,6 @@ EbErrorType svt_av1_intra_prediction_cl(
     md_context_ptr->intra_luma_top_mode = (uint32_t)(
             (md_context_ptr->mode_type_neighbor_array->top_array[mode_type_top_neighbor_index] != INTRA_MODE) ? DC_PRED/*EB_INTRA_DC*/ :
             (uint32_t)md_context_ptr->intra_luma_mode_neighbor_array->top_array[intra_luma_mode_top_neighbor_index]);       //   use DC. This seems like we could use a SB-width
-#if !CLN_MDC_CTX
-    md_context_ptr->intra_chroma_left_mode = (uint32_t)(
-            (md_context_ptr->mode_type_neighbor_array->left_array[mode_type_left_neighbor_index] != INTRA_MODE) ? UV_DC_PRED :
-            (uint32_t)md_context_ptr->intra_chroma_mode_neighbor_array->left_array[intra_chroma_mode_left_neighbor_index]);
-
-    md_context_ptr->intra_chroma_top_mode = (uint32_t)(
-            (md_context_ptr->mode_type_neighbor_array->top_array[mode_type_top_neighbor_index] != INTRA_MODE) ? UV_DC_PRED :
-            (uint32_t)md_context_ptr->intra_chroma_mode_neighbor_array->top_array[intra_chroma_mode_top_neighbor_index]);       //   use DC. This seems like we could use a SB-width
-#endif
     TxSize  tx_size = md_context_ptr->blk_geom->txsize[candidate_buffer_ptr->candidate_ptr->tx_depth][0]; // Nader - Intra 128x128 not supported
     TxSize  tx_size_chroma = md_context_ptr->blk_geom->txsize_uv[candidate_buffer_ptr->candidate_ptr->tx_depth][0]; //Nader - Intra 128x128 not supported
 
@@ -1030,16 +788,9 @@ EbErrorType svt_av1_intra_prediction_cl(
                 mode = candidate_buffer_ptr->candidate_ptr->pred_mode;
 
             svt_av1_predict_intra_block(
-#if !OPT_INIT_XD_2
-                    &md_context_ptr->sb_ptr->tile_info,
-#endif
                     !ED_STAGE,
                     md_context_ptr->blk_geom,
-#if OPT_INIT_XD_2
                     md_context_ptr->blk_ptr->av1xd,
-#else
-                    pcs_ptr->parent_pcs_ptr->av1_cm,                                      //const Av1Common *cm,
-#endif
                     plane ? md_context_ptr->blk_geom->bwidth_uv : md_context_ptr->blk_geom->bwidth,          //int32_t wpx,
                     plane ? md_context_ptr->blk_geom->bheight_uv : md_context_ptr->blk_geom->bheight,          //int32_t hpx,
                     plane ? tx_size_chroma : tx_size,                                               //TxSize tx_size,
@@ -1063,9 +814,6 @@ EbErrorType svt_av1_intra_prediction_cl(
                     md_context_ptr->blk_origin_y,                  //uint32_t cuOrgY
                     plane ? ((md_context_ptr->blk_geom->origin_x >> 3) << 3) / 2 : md_context_ptr->blk_geom->origin_x,  //uint32_t cuOrgX used only for prediction Ptr
                     plane ? ((md_context_ptr->blk_geom->origin_y >> 3) << 3) / 2 : md_context_ptr->blk_geom->origin_y,   //uint32_t cuOrgY used only for prediction Ptr
-#if !OPT_INIT_XD_2
-                    pcs_ptr->mi_grid_base,
-#endif
                     &((SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr)->seq_header
             );
         }
@@ -1115,16 +863,9 @@ EbErrorType svt_av1_intra_prediction_cl(
 
             svt_av1_predict_intra_block_16bit(
                     EB_10BIT,
-#if !OPT_INIT_XD_2
-                    &md_context_ptr->sb_ptr->tile_info,
-#endif
                     !ED_STAGE,
                     md_context_ptr->blk_geom,
-#if OPT_INIT_XD_2
                     md_context_ptr->blk_ptr->av1xd,
-#else
-                    pcs_ptr->parent_pcs_ptr->av1_cm,                                      //const Av1Common *cm,
-#endif
                     plane ? md_context_ptr->blk_geom->bwidth_uv : md_context_ptr->blk_geom->bwidth,          //int32_t wpx,
                     plane ? md_context_ptr->blk_geom->bheight_uv : md_context_ptr->blk_geom->bheight,          //int32_t hpx,
                     plane ? tx_size_chroma : tx_size,                                               //TxSize tx_size,
@@ -1147,9 +888,6 @@ EbErrorType svt_av1_intra_prediction_cl(
                     md_context_ptr->blk_origin_y,                  //uint32_t cuOrgY
                     plane ? ((md_context_ptr->blk_geom->origin_x >> 3) << 3) / 2 : md_context_ptr->blk_geom->origin_x,  //uint32_t cuOrgX used only for prediction Ptr
                     plane ? ((md_context_ptr->blk_geom->origin_y >> 3) << 3) / 2 : md_context_ptr->blk_geom->origin_y,   //uint32_t cuOrgY used only for prediction Ptr
-#if !OPT_INIT_XD_2
-                    pcs_ptr->mi_grid_base,
-#endif
                     &((SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr)->seq_header
             );
         }
@@ -1203,16 +941,9 @@ EbErrorType  intra_luma_prediction_for_interintra(
             top_neigh_array[0] = left_neigh_array[0] = md_context_ptr->luma_recon_neighbor_array->top_left_array[MAX_PICTURE_HEIGHT_SIZE + md_context_ptr->blk_origin_x - md_context_ptr->blk_origin_y];
 
         svt_av1_predict_intra_block(
-#if !OPT_INIT_XD_2
-                &md_context_ptr->sb_ptr->tile_info,
-#endif
                 !ED_STAGE,
                 md_context_ptr->blk_geom,
-#if OPT_INIT_XD_2
                 md_context_ptr->blk_ptr->av1xd,
-#else
-                pcs_ptr->parent_pcs_ptr->av1_cm,        //const Av1Common *cm,
-#endif
                 md_context_ptr->blk_geom->bwidth,                       //int32_t wpx,
                 md_context_ptr->blk_geom->bheight,                      //int32_t hpx,
                 tx_size,                                                //TxSize tx_size,
@@ -1234,9 +965,6 @@ EbErrorType  intra_luma_prediction_for_interintra(
                 md_context_ptr->blk_origin_y,                            //uint32_t cuOrgY
                 0,                                                      //cuOrgX used only for prediction Ptr
                 0,                                                       //cuOrgY used only for prediction Ptr
-#if !OPT_INIT_XD_2
-                pcs_ptr->mi_grid_base,
-#endif
                 &((SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr)->seq_header
         );
     } else {
@@ -1252,16 +980,9 @@ EbErrorType  intra_luma_prediction_for_interintra(
 
         svt_av1_predict_intra_block_16bit(
                 EB_10BIT,
-#if !OPT_INIT_XD_2
-                &md_context_ptr->sb_ptr->tile_info,
-#endif
                 !ED_STAGE,
                 md_context_ptr->blk_geom,
-#if OPT_INIT_XD_2
                 md_context_ptr->blk_ptr->av1xd,
-#else
-                pcs_ptr->parent_pcs_ptr->av1_cm,        //const Av1Common *cm,
-#endif
                 md_context_ptr->blk_geom->bwidth,                       //int32_t wpx,
                 md_context_ptr->blk_geom->bheight,                      //int32_t hpx,
                 tx_size,                                                //TxSize tx_size,
@@ -1283,9 +1004,6 @@ EbErrorType  intra_luma_prediction_for_interintra(
                 md_context_ptr->blk_origin_y,                            //uint32_t cuOrgY
                 0,                                                      //cuOrgX used only for prediction Ptr
                 0,                                                      //cuOrgY used only for prediction Ptr
-#if !OPT_INIT_XD_2
-                pcs_ptr->mi_grid_base,
-#endif
                 &((SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr)->seq_header
         );
     }
@@ -1295,10 +1013,8 @@ EbErrorType  intra_luma_prediction_for_interintra(
 
 
 EbErrorType update_neighbor_samples_array_open_loop_mb(
-#if TUNE_FIRSTPASS_LOSSLESS
         uint8_t                            use_top_righ_bottom_left,
         uint8_t                            update_top_neighbor,
-#endif
         uint8_t                            *above_ref,
         uint8_t                            *left_ref,
         EbPictureBufferDesc                *input_ptr,
@@ -1317,23 +1033,14 @@ EbErrorType update_neighbor_samples_array_open_loop_mb(
 
     uint32_t width = input_ptr->width;
     uint32_t height = input_ptr->height;
-#if TUNE_FIRSTPASS_LOSSLESS
     uint32_t block_width_neigh = use_top_righ_bottom_left ? bwidth << 1 : bwidth;
     uint32_t block_height_neigh = use_top_righ_bottom_left ? bheight << 1 : bheight;
-#else
-    uint32_t block_size_half = bwidth << 1;
-#endif
     // Adjust the Source ptr to start at the origin of the block being updated
     src_ptr = input_ptr->buffer_y + (((src_origin_y + input_ptr->origin_y) * stride) + (src_origin_x + input_ptr->origin_x));
 
     //Initialise the Luma Intra Reference Array to the mid range value 128 (for CUs at the picture boundaries)
-#if TUNE_FIRSTPASS_LOSSLESS
     EB_MEMSET(above_ref, 127, block_width_neigh + 1);
     EB_MEMSET(left_ref, 129, block_height_neigh + 1);
-#else
-    EB_MEMSET(above_ref, 127, (bwidth << 1) + 1);
-    EB_MEMSET(left_ref, 129, (bheight << 1) + 1);
-#endif
 
     // Get the upper left sample
     if (src_origin_x != 0 && src_origin_y != 0) {
@@ -1348,11 +1055,7 @@ EbErrorType update_neighbor_samples_array_open_loop_mb(
         above_ref++;
     }
     // Get the left-column
-#if TUNE_FIRSTPASS_LOSSLESS
     count = block_width_neigh;
-#else
-    count = block_size_half;
-#endif
     if (src_origin_x != 0) {
         read_ptr = src_ptr - 1;
         if(src_origin_y == 0)
@@ -1363,14 +1066,8 @@ EbErrorType update_neighbor_samples_array_open_loop_mb(
             read_ptr += stride;
             left_ref++;
         }
-#if TUNE_FIRSTPASS_LOSSLESS
         left_ref += (block_width_neigh - count);
-#else
-        left_ref += (block_size_half - count);
-#endif
-#if TUNE_FIRSTPASS_LOSSLESS
         if (use_top_righ_bottom_left)
-#endif
         // pading unknown left bottom pixels with value at(-1, -15)
         for(idx = 0; idx < bheight; idx++)
             *(left_ref - bheight + idx) = *(left_ref - bheight - 1);
@@ -1382,25 +1079,15 @@ EbErrorType update_neighbor_samples_array_open_loop_mb(
         left_ref += count;
 
     // Get the top-row
-#if TUNE_FIRSTPASS_LOSSLESS
     count = block_width_neigh;
-#else
-    count = block_size_half;
-#endif
     if (src_origin_y != 0) {
-#if TUNE_FIRSTPASS_LOSSLESS
         if (update_top_neighbor){
-#endif
         read_ptr = src_ptr - stride;
         count = ((src_origin_x + count) > width) ? count - ((src_origin_x + count) - width) : count;
         EB_MEMCPY(above_ref, read_ptr, count);
-#if TUNE_FIRSTPASS_LOSSLESS
         }
-#endif
         // pading unknown top right pixels with value at(15, -1)
-#if TUNE_FIRSTPASS_LOSSLESS
         if (use_top_righ_bottom_left)
-#endif
         if(src_origin_x != 0)
             for(idx = 0; idx < bwidth; idx++)
                 *(above_ref + bwidth + idx) = *(above_ref + bwidth - 1);
@@ -1413,10 +1100,8 @@ EbErrorType update_neighbor_samples_array_open_loop_mb(
 }
 
 EbErrorType update_neighbor_samples_array_open_loop_mb_recon(
-#if TUNE_FIRSTPASS_LOSSLESS
         uint8_t                            use_top_righ_bottom_left,
         uint8_t                            update_top_neighbor,
-#endif
     uint8_t *above_ref, uint8_t *left_ref, uint8_t *recon_ptr, uint32_t stride,
     uint32_t src_origin_x, uint32_t src_origin_y, uint8_t bwidth, uint8_t bheight, uint32_t width,
     uint32_t height)
@@ -1427,23 +1112,14 @@ EbErrorType update_neighbor_samples_array_open_loop_mb_recon(
     uint8_t  *src_ptr;
     uint8_t  *read_ptr;
     uint32_t count;
-#if TUNE_FIRSTPASS_LOSSLESS
     uint32_t block_width_neigh = use_top_righ_bottom_left ? bwidth << 1 : bwidth;
     uint32_t block_height_neigh = use_top_righ_bottom_left ? bheight << 1 : bheight;
-#else
-    uint32_t block_size_half = bwidth << 1;
-#endif
     // Adjust the Source ptr to start at the origin of the block being updated
     src_ptr = recon_ptr + (src_origin_y  * stride + src_origin_x );
 
     //Initialise the Luma Intra Reference Array to the mid range value 128 (for CUs at the picture boundaries)
-#if TUNE_FIRSTPASS_LOSSLESS
     EB_MEMSET(above_ref, 127, block_width_neigh + 1);
     EB_MEMSET(left_ref, 129, block_height_neigh + 1);
-#else
-    EB_MEMSET(above_ref, 127, (bwidth << 1) + 1);
-    EB_MEMSET(left_ref, 129, (bheight << 1) + 1);
-#endif
     // Get the upper left sample
     if (src_origin_x != 0 && src_origin_y != 0) {
         read_ptr = src_ptr - stride - 1;
@@ -1458,11 +1134,7 @@ EbErrorType update_neighbor_samples_array_open_loop_mb_recon(
         above_ref++;
     }
     // Get the left-column
-#if TUNE_FIRSTPASS_LOSSLESS
     count = block_width_neigh;
-#else
-    count = block_size_half;
-#endif
     if (src_origin_x != 0) {
         read_ptr = src_ptr - 1;
         if (src_origin_y == 0)
@@ -1473,15 +1145,9 @@ EbErrorType update_neighbor_samples_array_open_loop_mb_recon(
             read_ptr += stride;
             left_ref++;
         }
-#if TUNE_FIRSTPASS_LOSSLESS
         left_ref += (block_width_neigh - count);
-#else
-        left_ref += (block_size_half - count);
-#endif
         // pading unknown left bottom pixels with value at(-1, -15)
-#if TUNE_FIRSTPASS_LOSSLESS
         if (use_top_righ_bottom_left)
-#endif
         for (idx = 0; idx < bheight; idx++)
             *(left_ref - bheight + idx) = *(left_ref - bheight - 1);
     }
@@ -1495,25 +1161,15 @@ EbErrorType update_neighbor_samples_array_open_loop_mb_recon(
             left_ref += count;
 
     // Get the top-row
-#if TUNE_FIRSTPASS_LOSSLESS
     count = block_width_neigh;
-#else
-    count = block_size_half;
-#endif
     if (src_origin_y != 0) {
-#if TUNE_FIRSTPASS_LOSSLESS
         if (update_top_neighbor){
-#endif
         read_ptr = src_ptr - stride;
         count = ((src_origin_x + count) > width) ? count - ((src_origin_x + count) - width) : count;
         EB_MEMCPY(above_ref, read_ptr, count);
-#if TUNE_FIRSTPASS_LOSSLESS
         }
-#endif
         // pading unknown top right pixels with value at(15, -1)
-#if TUNE_FIRSTPASS_LOSSLESS
         if (use_top_righ_bottom_left)
-#endif
         if (src_origin_x != 0)
             for (idx = 0; idx < bwidth; idx++)
                 *(above_ref + bwidth + idx) = *(above_ref + bwidth - 1);

@@ -16,7 +16,6 @@
 
 #include "synonyms.h"
 
-#if FTR_PRUNED_SUBPEL_TREE
 // The 2 unused parameters are place holders for PIC enabled build.
 // These definitions are for functions defined in subpel_variance.asm
 #define DECL(w)                                                           \
@@ -99,7 +98,6 @@ FN(16, 64, 16, 4, 6, (int64_t), (int64_t));
 FN(64, 16, 16, 6, 4, (int64_t), (int64_t));
 
 #undef FN
-#endif
 
 void svt_aom_var_filter_block2d_bil_first_pass_ssse3(
     const uint8_t *a, uint16_t *b, unsigned int src_pixels_per_line, unsigned int pixel_step,

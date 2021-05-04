@@ -49,9 +49,7 @@ EbErrorType svt_sequence_control_set_ctor(SequenceControlSet *scs_ptr, EbPtr obj
     EbSequenceControlSetInitData *scs_init_data = (EbSequenceControlSetInitData *)
         object_init_data_ptr;
     uint32_t segment_index;
-#if FTR_REDUCE_MVEST
     scs_ptr->mvrate_set = 0;
-#endif
     scs_ptr->dctor = svt_sequence_control_set_dctor;
 
     scs_ptr->static_config.sb_sz           = 64;
@@ -64,10 +62,8 @@ EbErrorType svt_sequence_control_set_ctor(SequenceControlSet *scs_ptr, EbPtr obj
         scs_ptr->enc_dec_segment_col_count_array[segment_index] = 1;
         scs_ptr->enc_dec_segment_row_count_array[segment_index] = 1;
     }
-#if TPL_SEG
     scs_ptr->tpl_segment_col_count_array = 1;
     scs_ptr->tpl_segment_row_count_array = 1;
-#endif
 
     // Encode Context
     if (scs_init_data != NULL)
@@ -259,9 +255,7 @@ EbErrorType copy_sequence_control_set(SequenceControlSet *dst, SequenceControlSe
     dst->picture_control_set_pool_init_count       = src->picture_control_set_pool_init_count;
     dst->me_pool_init_count                        = src->me_pool_init_count;
     dst->picture_control_set_pool_init_count_child = src->picture_control_set_pool_init_count_child;
-#if CLN_STRUCT
     dst->enc_dec_pool_init_count                 = src->enc_dec_pool_init_count;
-#endif
     dst->pa_reference_picture_buffer_init_count    = src->pa_reference_picture_buffer_init_count;
     dst->reference_picture_buffer_init_count       = src->reference_picture_buffer_init_count;
     dst->input_buffer_fifo_init_count              = src->input_buffer_fifo_init_count;
@@ -303,10 +297,8 @@ EbErrorType copy_sequence_control_set(SequenceControlSet *dst, SequenceControlSe
         dst->tile_group_col_count_array[i]      = src->tile_group_col_count_array[i];
         dst->tile_group_row_count_array[i]      = src->tile_group_row_count_array[i];
     }
-#if TPL_SEG
     dst->tpl_segment_col_count_array  = src->tpl_segment_col_count_array;
     dst->tpl_segment_row_count_array  = src->tpl_segment_row_count_array;
-#endif
 
     dst->cdef_segment_column_count = src->cdef_segment_column_count;
     dst->cdef_segment_row_count    = src->cdef_segment_row_count;
@@ -326,18 +318,10 @@ EbErrorType copy_sequence_control_set(SequenceControlSet *dst, SequenceControlSe
     dst->enable_dec_order               = src->enable_dec_order;
     dst->lap_enabled                    = src->lap_enabled;
 
-#if FTR_LAD_MG
     dst->lad_mg                         = src->lad_mg;
-#endif
-#if CLN_REST_FILTER
     dst->use_boundaries_in_rest_search  = src->use_boundaries_in_rest_search;
-#endif
-#if LIMIT_TO_43
     dst->mrp_init_level = src->mrp_init_level;
-#endif
-#if TUNE_FIRSTPASS_LOSSLESS
     dst->enc_mode_2ndpass = src->enc_mode_2ndpass;
-#endif
     return EB_ErrorNone;
 }
 

@@ -48,9 +48,7 @@ void down_sample_chroma(EbPictureBufferDesc *input_picture_ptr,
                         EbPictureBufferDesc *outputPicturePtr);
 
 
-#if FTR_LAD_MG
 EbBool is_delayed_intra(PictureParentControlSet *pcs);
-#endif
 
 
 /**************************************
@@ -93,13 +91,9 @@ typedef struct PictureDecisionContext {
     uint8_t  lay2_toggle; //2 way toggle 0->1
     EbBool
         mini_gop_toggle; //mini GOP toggling since last Key Frame  K-0-1-0-1-0-K-0-1-0-1-K-0-1.....
-#if FTR_ALIGN_SC_DETECOR
     uint8_t                  last_i_picture_sc_class0;
     uint8_t                  last_i_picture_sc_class1;
     uint8_t                  last_i_picture_sc_class2;
-#else
-    uint8_t                  last_i_picture_sc_detection;
-#endif
     uint64_t                 key_poc;
     uint8_t                  tf_level;
     PictureParentControlSet *mg_pictures_array[1 << MAX_TEMPORAL_LAYERS];
@@ -112,9 +106,7 @@ typedef struct PictureDecisionContext {
     uint32_t                 mg_size; //number of active pictures in above array
     PictureParentControlSet *mg_pictures_array_disp_order[1 << MAX_TEMPORAL_LAYERS];
 
-#if FTR_LAD_MG
     int64_t mg_progress_id;
-#endif
 } PictureDecisionContext;
 
 #endif // EbPictureDecision_h

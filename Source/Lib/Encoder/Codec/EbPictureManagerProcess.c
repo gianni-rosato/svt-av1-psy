@@ -101,11 +101,9 @@ EbErrorType picture_manager_context_ctor(EbThreadContext *  thread_context_ptr,
         enc_handle_ptr->pic_mgr_res_srm, 0);
     context_ptr->picture_control_set_fifo_ptr = svt_system_resource_get_producer_fifo(
         enc_handle_ptr->picture_control_set_pool_ptr_array[0], 0); //The Child PCS Pool here
-#if CLN_STRUCT
     context_ptr->recon_coef_fifo_ptr = svt_system_resource_get_producer_fifo(
         enc_handle_ptr->enc_dec_pool_ptr_array[0], 0); //The Child PCS Pool here
 
-#endif
     return EB_ErrorNone;
 }
 
@@ -607,11 +605,9 @@ void *picture_manager_kernel(void *input_ptr) {
     EbThreadContext *      thread_context_ptr = (EbThreadContext *)input_ptr;
     PictureManagerContext *context_ptr        = (PictureManagerContext *)thread_context_ptr->priv;
 
-#if CLN_STRUCT
     EbObjectWrapper *        enc_dec_wrapper_ptr;
     EncDecSet *      enc_dec_ptr;
 
-#endif
     EbObjectWrapper *        child_pcs_wrapper_ptr;
     PictureControlSet *      child_pcs_ptr;
     PictureParentControlSet *pcs_ptr;
@@ -869,11 +865,7 @@ void *picture_manager_kernel(void *input_ptr) {
 
                     availability_flag = EB_TRUE;
                     if (entry_pcs_ptr->decode_order != decode_order &&
-#if FTR_VBR_MT_REMOVE_DEC_ORDER
                         (scs_ptr->enable_dec_order ))
-#else
-                        (scs_ptr->enable_dec_order || use_input_stat(scs_ptr) || scs_ptr->lap_enabled ))
-#endif
                         availability_flag = EB_FALSE;
 
                     //pic mgr starts pictures in dec order (no need to wait for feedback)
@@ -962,7 +954,6 @@ void *picture_manager_kernel(void *input_ptr) {
 
                     if (availability_flag == EB_TRUE) {
 
-#if CLN_STRUCT
                         // Get New  Empty recon-coef from recon-coef  Pool
                         svt_get_empty_object(context_ptr->recon_coef_fifo_ptr,
                                             &enc_dec_wrapper_ptr);
@@ -977,7 +968,6 @@ void *picture_manager_kernel(void *input_ptr) {
                          enc_dec_ptr->parent_pcs_ptr = entry_pcs_ptr;
 
                          enc_dec_ptr->parent_pcs_ptr->enc_dec_ptr = enc_dec_ptr;
-#endif
                         // Get New  Empty Child PCS from PCS Pool
                         svt_get_empty_object(context_ptr->picture_control_set_fifo_ptr,
                                             &child_pcs_wrapper_ptr);
@@ -995,10 +985,8 @@ void *picture_manager_kernel(void *input_ptr) {
                         child_pcs_ptr->parent_pcs_ptr = entry_pcs_ptr;
 
                         child_pcs_ptr->parent_pcs_ptr->child_pcs = child_pcs_ptr;
-#if CLN_BN
                         //1b Link The Child PCS to av1_cm to be used by Restoration
                         child_pcs_ptr->parent_pcs_ptr->av1_cm->child_pcs = child_pcs_ptr;
-#endif
 
                         //2. Have some common information between  ChildPCS and ParentPCS.
                         child_pcs_ptr->scs_wrapper_ptr      = entry_pcs_ptr->scs_wrapper_ptr;
@@ -1017,9 +1005,7 @@ void *picture_manager_kernel(void *input_ptr) {
                         child_pcs_ptr->enc_dec_coded_sb_count = 0;
                         child_pcs_ptr->parent_pcs_ptr->av1_cm->rst_tmpbuf = child_pcs_ptr->rst_tmpbuf;
 
-#if FIX_R2R_10B_LAMBDA
                         child_pcs_ptr->hbd_mode_decision = entry_pcs_ptr->hbd_mode_decision;
-#endif
                         context_ptr->pmgr_dec_order = child_pcs_ptr->parent_pcs_ptr->decode_order;
                         //3.make all  init for ChildPCS
                         pic_width_in_sb = (uint8_t)((entry_pcs_ptr->aligned_width +
@@ -1055,9 +1041,7 @@ void *picture_manager_kernel(void *input_ptr) {
                                                          (uint16_t)(sb_origin_x * scs_ptr->sb_size_pix),
                                                          (uint16_t)(sb_origin_y * scs_ptr->sb_size_pix),
                                                          (uint16_t)sb_index,
-#if CLN_FA
                                                          child_pcs_ptr->enc_mode,
-#endif
                                                          child_pcs_ptr);
                                 // Increment the Order in coding order (Raster Scan Order)
                                 sb_origin_y = (sb_origin_x == pic_width_in_sb - 1) ? sb_origin_y + 1 : sb_origin_y;
@@ -1367,16 +1351,11 @@ void *picture_manager_kernel(void *input_ptr) {
                         } else {
                             child_pcs_ptr->parent_pcs_ptr->frm_hdr.primary_ref_frame =
                                 PRIMARY_REF_NONE;
-#if FIX_FE_CDF_UPDATE_CRASH_NBASE
                             // Tells each frame whether to forward their data to the next frames;
                             // never disabled so that the feature can be on in higher layers, while off
                             // in low layers.
                             child_pcs_ptr->parent_pcs_ptr->refresh_frame_context =
                                 REFRESH_FRAME_CONTEXT_BACKWARD;
-#else
-                            child_pcs_ptr->parent_pcs_ptr->refresh_frame_context =
-                                REFRESH_FRAME_CONTEXT_DISABLED;
-#endif
                         }
                         // Increment the sequenceControlSet Wrapper's live count by 1 for only the pictures which are used as reference
                         if (child_pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag) {

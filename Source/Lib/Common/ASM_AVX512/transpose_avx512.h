@@ -14,7 +14,6 @@
 #define AOM_DSP_X86_TRANSPOSE_AVX512_H_
 
 #include "EbDefinitions.h"
-#if OPT_AVX512
 #include <immintrin.h> // AVX2
 
 
@@ -448,5 +447,4 @@ static INLINE void transpose_16nx16m_inv_avx512(const __m512i *in, __m512i *out,
     }
 }
 
-#endif /*OPT_AVX512*/
 #endif // AOM_DSP_X86_TRANSPOSE_AVX512_H_

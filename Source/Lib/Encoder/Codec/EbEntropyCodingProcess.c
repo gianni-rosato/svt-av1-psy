@@ -69,9 +69,6 @@ static void entropy_coding_reset_neighbor_arrays(PictureControlSet *pcs_ptr, uin
     neighbor_array_unit_reset(pcs_ptr->luma_dc_sign_level_coeff_neighbor_array[tile_idx]);
     neighbor_array_unit_reset(pcs_ptr->cb_dc_sign_level_coeff_neighbor_array[tile_idx]);
     neighbor_array_unit_reset(pcs_ptr->cr_dc_sign_level_coeff_neighbor_array[tile_idx]);
-#if !CLN_MDC_CTX
-    neighbor_array_unit_reset(pcs_ptr->inter_pred_dir_neighbor_array[tile_idx]);
-#endif
     neighbor_array_unit_reset(pcs_ptr->ref_frame_type_neighbor_array[tile_idx]);
 
     neighbor_array_unit_reset(pcs_ptr->intra_luma_mode_neighbor_array[tile_idx]);
@@ -413,11 +410,7 @@ void *entropy_coding_kernel(void *input_ptr) {
                              : pcs_ptr->entropy_coding_info[tile_idx]
                                   ->entropy_coder_ptr->ec_writer.ec.offs; //residual_bc.pos
 
-#if CLN_STRUCT
                         EbPictureBufferDesc *coeff_picture_ptr = pcs_ptr->parent_pcs_ptr->enc_dec_ptr->quantized_coeff[sb_index];
-#else
-                        EbPictureBufferDesc *coeff_picture_ptr = sb_ptr->quantized_coeff;
-#endif
                         write_sb(context_ptr,
                                  sb_ptr,
                                  pcs_ptr,

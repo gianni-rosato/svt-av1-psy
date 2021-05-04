@@ -110,7 +110,6 @@ AOM_VAR_NO_LOOP_SSE2(8, 8, 6, 128);
 AOM_VAR_NO_LOOP_SSE2(8, 16, 7, 128);
 AOM_VAR_NO_LOOP_SSE2(8, 32, 8, 256);
 
-#if FTR_PRUNED_SUBPEL_TREE
 // The 2 unused parameters are place holders for PIC enabled build.
 // These definitions are for functions defined in subpel_variance.asm
 #define DECL(w)                                                                \
@@ -178,7 +177,6 @@ FN(64, 16, 16, 6, 4, (int64_t), (int64_t))
 
 #undef FN
 
-#endif
 static INLINE const int16_t *av1_get_interp_filter_subpel_kernel(
     const InterpFilterParams filter_params, const int32_t subpel) {
     return filter_params.filter_ptr + filter_params.taps * subpel;

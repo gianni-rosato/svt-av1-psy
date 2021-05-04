@@ -123,7 +123,6 @@ uint64_t svt_compute_mean_of_squared_values8x8_sse2_intrin(
     return (uint64_t)_mm_cvtsi128_si32(xmm_block_mean) << 10;
 }
 
-#if FIX_COMPUTE_MEAN_8X8
 uint64_t svt_compute_mean8x8_sse2_intrin(
     uint8_t *input_samples, // input parameter, input samples Ptr
     uint32_t input_stride, // input parameter, input stride
@@ -151,7 +150,6 @@ uint64_t svt_compute_mean8x8_sse2_intrin(
 
     return (uint64_t)_mm_cvtsi128_si32(xmm_sum2) << 2;
 }
-#endif
 
 void svt_compute_interm_var_four8x8_helper_sse2(uint8_t *input_samples, uint16_t input_stride,
                                                 uint64_t *mean_of8x8_blocks, // mean of four  8x8

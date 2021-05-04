@@ -437,7 +437,6 @@ INSTANTIATE_TEST_CASE_P(
                       &svt_aom_variance128x128_avx2)));
 
 #if EN_AVX512_SUPPORT
-#if VARIANCE_AVX512
 INSTANTIATE_TEST_CASE_P(
     Variance_AVX512, VarianceTest,
     ::testing::Values(VarianceParam(32, 8, &svt_aom_variance32x8_c,
@@ -460,7 +459,6 @@ INSTANTIATE_TEST_CASE_P(
                                     &svt_aom_variance128x64_avx512),
                       VarianceParam(128, 128, &svt_aom_variance128x128_c,
                                     &svt_aom_variance128x128_avx512)));
-#endif
 #endif
 
 #if 1 // FTR_PRUNED_SUBPEL_TREE
@@ -675,7 +673,6 @@ INSTANTIATE_TEST_CASE_P(AVX2, AvxSubpelVarianceTest,
     ::testing::ValuesIn(kArraySubpelVariance_avx2));
 
 #if EN_AVX512_SUPPORT
-#if SUB_PIXEL_VAR_AVX512
 const TestParams kArraySubpelVariance_avx512[] = {
     {7, 7, &svt_aom_sub_pixel_variance128x128_avx512, 0, &svt_aom_sub_pixel_variance128x128_c},
     {7, 6, &svt_aom_sub_pixel_variance128x64_avx512, 0 , &svt_aom_sub_pixel_variance128x64_c},
@@ -688,7 +685,6 @@ const TestParams kArraySubpelVariance_avx512[] = {
 };
 INSTANTIATE_TEST_CASE_P(AVX512, AvxSubpelVarianceTest,
     ::testing::ValuesIn(kArraySubpelVariance_avx512));
-#endif
 #endif
 
 TEST_P(AvxSubpelVarianceTest, Ref) {

@@ -1247,29 +1247,6 @@ DECLARE_ALIGNED(256, const InterpKernel, sub_pel_filters_4smooth[SUBPEL_SHIFTS])
     {0, 0, 4, 40, 62, 22, 0, 0},
     {0, 0, 4, 36, 62, 26, 0, 0},
     {0, 0, 2, 34, 62, 30, 0, 0}};
-#if !OPT_INLINE_FILTER_FUNCS
-static const InterpFilterParams av1_interp_4tap[2] = {
-    {(const int16_t *)sub_pel_filters_4, SUBPEL_TAPS, SUBPEL_SHIFTS, EIGHTTAP_REGULAR},
-    {(const int16_t *)sub_pel_filters_4smooth, SUBPEL_TAPS, SUBPEL_SHIFTS, EIGHTTAP_SMOOTH},};
-
-InterpFilterParams av1_get_interp_filter_params_with_block_size(const InterpFilter interp_filter,
-                                                                const int32_t      w) {
-    if (w <= 4 && (interp_filter == MULTITAP_SHARP || interp_filter == EIGHTTAP_REGULAR))
-        return av1_interp_4tap[0];
-    else if (w <= 4 && interp_filter == EIGHTTAP_SMOOTH)
-        return av1_interp_4tap[1];
-
-    return av1_interp_filter_params_list[interp_filter];
-}
-
-void av1_get_convolve_filter_params(uint32_t interp_filters, InterpFilterParams *params_x,
-                                    InterpFilterParams *params_y, int32_t w, int32_t h) {
-    InterpFilter filter_x = av1_extract_interp_filter(interp_filters, 1);
-    InterpFilter filter_y = av1_extract_interp_filter(interp_filters, 0);
-    *params_x             = av1_get_interp_filter_params_with_block_size(filter_x, w);
-    *params_y             = av1_get_interp_filter_params_with_block_size(filter_y, h);
-}
-#endif
 BlockSize scale_chroma_bsize(BlockSize bsize, int32_t subsampling_x, int32_t subsampling_y);
 
 void convolve_2d_for_intrabc(const uint8_t *src, int src_stride, uint8_t *dst,

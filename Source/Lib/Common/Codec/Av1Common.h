@@ -48,14 +48,7 @@ typedef struct Av1Common {
     int32_t         color_format;
     int32_t         subsampling_x;
     int32_t         subsampling_y;
-#if !CLN_BN
-    RestorationInfo rst_info[MAX_MB_PLANE];
-    // rst_end_stripe[i] is one more than the index of the bottom stripe
-    // for tile row i.
-    int32_t rst_end_stripe[MAX_TILE_ROWS];
-#else
    struct PictureControlSet *  child_pcs;
-#endif
     // Output of loop restoration
     Yv12BufferConfig rst_frame;
     // pointer to a scratch buffer used by self-guided restoration
@@ -73,9 +66,7 @@ typedef struct Av1Common {
     int32_t sg_frame_ep;
     int8_t  sg_ref_frame_ep[2];
     int8_t  wn_filter_mode;
-#if CLN_REST_FILTER
     uint8_t use_boundaries_in_rest_search; // Use boundary pixels in restoration filtering search
-#endif
 
     FrameSize    frm_size;
     TilesInfo    tiles_info;

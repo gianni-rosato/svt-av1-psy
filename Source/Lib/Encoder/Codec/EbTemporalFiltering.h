@@ -88,9 +88,6 @@
 #define THRES_DIFF_HIGH 12000
 
 #define OD_DIVU_DMAX (1024)
-#if !TUNE_REDESIGN_TF_CTRLS
-#define AHD_TH_WEIGHT 33
-#endif
 #ifdef __cplusplus
 extern "C" {
 #endif

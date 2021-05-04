@@ -276,28 +276,13 @@ typedef struct IntraReferenceSamplesOpenLoop {
     EbBool  left_ready_flag_y;
 } IntraReferenceSamplesOpenLoop;
 
-#if !OPT_BYPASS_ME_CAND
-typedef struct MePredUnit {
-    uint8_t         ref_index[MAX_NUM_OF_REF_PIC_LIST];
-    uint8_t         ref0_list;
-    uint8_t         ref1_list;
-    uint32_t        distortion;
-    EbPredDirection prediction_direction;
-} MePredUnit;
-
-typedef struct MotionEstimationTierZero {
-    MePredUnit pu[SQUARE_PU_COUNT];
-} MotionEstimationTierZero;
-#endif
 typedef struct MeHmeRefPruneCtrls {
     EbBool enable_me_hme_ref_pruning;
     uint16_t
         prune_ref_if_hme_sad_dev_bigger_than_th; // TH used to prune references based on hme sad deviation
     uint16_t
         prune_ref_if_me_sad_dev_bigger_than_th; // TH used to prune references based on me sad deviation
-#if FTR_ME_HME_PROTECT_CLOSEST_REF
     EbBool  protect_closest_refs; // if true, do not prune closest ref frames
-#endif
 } MeHmeRefPruneCtrls;
 
 typedef struct MeSrCtrls {
@@ -312,12 +297,9 @@ typedef struct MeSrCtrls {
         reduce_me_sr_based_on_hme_sad_abs_th; // reduce the ME search region if HME sad is small
     uint16_t
         me_sr_divisor_for_low_hme_sad; // Reduction factor for the ME search region if HME sad is small
-#if FTR_HME_REF_IDX_RESIZING
     uint8_t distance_based_hme_resizing; // scale down the HME search area for high ref-indices
-#endif
 } MeSrCtrls;
 
-#if FTR_PRE_HME
 #define SEARCH_REGION_COUNT 2
 typedef struct SearchArea {
     uint16_t   width;  // search area width
@@ -337,7 +319,6 @@ typedef struct PreHmeCtrls {
     uint8_t enable;
     SearchAreaMinMax   prehme_sa_cfg[SEARCH_REGION_COUNT];
 } PreHmeCtrls;
-#endif
 
 typedef struct HmeResults {
     uint8_t  list_i; // list index of this ref
@@ -351,18 +332,8 @@ typedef struct MeContext {
     EbDctor dctor;
     // Search region stride
     uint32_t                  interpolated_full_stride[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX];
-#if OPT_BYPASS_ME_CAND
     uint32_t me_distortion[SQUARE_PU_COUNT];
-#else
-    MotionEstimationTierZero *me_candidate;
-#endif
 
-#if  !OPT_ME_RES_SAD_LOOP
-    // Intermediate SB-sized buffer to retain the input samples
-    uint8_t * sb_buffer;
-    uint8_t * sb_buffer_ptr;
-    uint32_t  sb_buffer_stride;
-#endif
     uint8_t * sb_src_ptr;
     uint32_t  sb_src_stride;
     uint8_t * quarter_sb_buffer;
@@ -388,13 +359,6 @@ typedef struct MeContext {
     uint32_t *p_best_full_pel_mv32x32;
     uint32_t *p_best_full_pel_mv64x64;
     uint8_t   full_quarter_pel_refinement;
-#if !CLN_REMOVE_ME_SSD_CALCS
-    uint32_t  p_sb_best_ssd[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][SQUARE_PU_COUNT];
-    uint32_t *p_best_ssd8x8;
-    uint32_t *p_best_ssd16x16;
-    uint32_t *p_best_ssd32x32;
-    uint32_t *p_best_ssd64x64;
-#endif
     uint16_t *p_eight_pos_sad16x16;
     EB_ALIGN(64) uint32_t p_eight_sad32x32[4][8];
     EB_ALIGN(64) uint32_t p_eight_sad16x16[16][8];
@@ -435,16 +399,11 @@ typedef struct MeContext {
     uint16_t   hme_level2_search_area_in_width_array[EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT];
     uint16_t   hme_level2_search_area_in_height_array[EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
     uint8_t    hme_decimation;
-#if !TUNE_REDESIGN_TF_CTRLS
-    uint8_t    update_hme_search_center_flag;
-#endif
     HmeResults hme_results[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
     uint32_t   reduce_me_sr_divisor[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
 
-#if FTR_PRE_HME
     SearchInfo         prehme_data[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][SEARCH_REGION_COUNT];
     PreHmeCtrls     prehme_ctrl;
-#endif
     int16_t    x_hme_level0_search_center[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX]
                                       [EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT]
                                       [EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
@@ -486,13 +445,7 @@ typedef struct MeContext {
     EbBool                      is_used_as_reference_flag;
     EbDownScaledBufDescPtrArray me_ds_ref_array[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
     // tf
-#if !TUNE_REDESIGN_TF_CTRLS
-    uint8_t      tf_hp;
-#endif
     uint8_t      tf_chroma;
-#if !TUNE_REDESIGN_TF_CTRLS
-    uint64_t     tf_block_32x32_16x16_th;
-#endif
     int          tf_frame_index;
     int          tf_index_center;
     signed short tf_16x16_mv_x[16];
@@ -506,20 +459,12 @@ typedef struct MeContext {
     int          tf_16x16_search_do[4];
     int          tf_block_row;
     int          tf_block_col;
-#if TUNE_REDESIGN_TF_CTRLS
     uint32_t idx_32x32;
-#endif
     uint16_t     min_frame_size;
-#if FTR_REDUCE_ME_INJECTION
     int64_t prune_me_candidates_th;
-#endif
-#if FTR_TPL_TR
     MePcs *me_pcs;//PCS wraper for ME
-#endif
-#if TUNE_M9_HME
     uint8_t reduce_hme_l0_sr_th_min;
     uint8_t reduce_hme_l0_sr_th_max;
-#endif
 } MeContext;
 
 typedef uint64_t (*EB_ME_DISTORTION_FUNC)(uint8_t *src, uint32_t src_stride, uint8_t *ref,

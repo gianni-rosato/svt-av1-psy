@@ -15,9 +15,7 @@
 #include "EbDefinitions.h"
 #include "EbSystemResourceManager.h"
 #include "EbObject.h"
-#if FTR_TPL_TR
 #include "EbPictureControlSet.h"
-#endif
 
 /**************************************
  * Process Results
@@ -27,20 +25,14 @@ typedef struct PictureDecisionResults {
     EbObjectWrapper *pcs_wrapper_ptr;
     uint32_t         segment_index;
     uint8_t          task_type; //0:ME   1:Temporal Filtering
-#if FTR_TPL_TR
     uint8_t          lst0_cnt;
     uint8_t          lst1_cnt;
     uint8_t          tmp_layer_idx;
     uint8_t          is_reference;
-#if FTR_ALIGN_SC_DETECOR
     uint8_t          sc_class0;
     uint8_t          sc_class1;
     uint8_t          sc_class2;
-#else
-    uint8_t          sc_detected_base;
-#endif
     EbDownScaledBufDescPtrArray ref_ds[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
-#endif
 } PictureDecisionResults;
 
 typedef struct PictureDecisionResultInitData {

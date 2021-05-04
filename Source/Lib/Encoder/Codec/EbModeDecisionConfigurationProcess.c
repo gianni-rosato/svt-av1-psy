@@ -346,23 +346,7 @@ void set_reference_sg_ep(PictureControlSet *pcs_ptr) {
 void mode_decision_configuration_init_qp_update(PictureControlSet *pcs_ptr) {
     FrameHeader *frm_hdr                = &pcs_ptr->parent_pcs_ptr->frm_hdr;
     pcs_ptr->parent_pcs_ptr->average_qp = 0;
-#if !TUNE_REMOVE_INTRA_STATS_TRACKING
-    pcs_ptr->intra_coded_area           = 0;
-#endif
     // Init block selection
-#if !CLN_REMOVE_UNUSED_CODE
-    memset(pcs_ptr->part_cnt, 0, sizeof(uint32_t) * (NUMBER_OF_SHAPES - 1) * FB_NUM * SSEG_NUM);
-#endif
-#if !CLN_NSQ_AND_STATS
-    // Init pred_depth selection
-    memset(
-        pcs_ptr->pred_depth_count, 0, sizeof(uint32_t) * DEPTH_DELTA_NUM * (NUMBER_OF_SHAPES - 1));
-#endif
-#if !TUNE_REMOVE_TXT_STATS
-    // Init tx_type selection
-    memset(pcs_ptr->txt_cnt, 0, sizeof(uint32_t) * TXT_DEPTH_DELTA_NUM * TX_TYPES);
-    // Compute Tc, and Beta offsets for a given picture
-#endif
     // Set reference sg ep
     set_reference_sg_ep(pcs_ptr);
     set_global_motion_field(pcs_ptr);
@@ -402,14 +386,6 @@ static void mode_decision_configuration_context_dctor(EbPtr p) {
 
     if (obj->is_md_rate_estimation_ptr_owner)
         EB_FREE_ARRAY(obj->md_rate_estimation_ptr);
-#if! CLN_CLEANUP_MDC_CTX
-    EB_FREE_ARRAY(obj->sb_score_array);
-    EB_FREE_ARRAY(obj->sb_cost_array);
-    EB_FREE_ARRAY(obj->mdc_candidate_ptr);
-    EB_FREE_ARRAY(obj->mdc_ref_mv_stack);
-    EB_FREE_ARRAY(obj->mdc_blk_ptr->av1xd);
-    EB_FREE_ARRAY(obj->mdc_blk_ptr);
-#endif
     EB_FREE_ARRAY(obj);
 }
 /******************************************************
@@ -418,12 +394,6 @@ static void mode_decision_configuration_context_dctor(EbPtr p) {
 EbErrorType mode_decision_configuration_context_ctor(EbThreadContext *  thread_context_ptr,
                                                      const EbEncHandle *enc_handle_ptr,
                                                      int input_index, int output_index) {
-#if! CLN_CLEANUP_MDC_CTX
-    const SequenceControlSet *scs_ptr = enc_handle_ptr->scs_instance_array[0]->scs_ptr;
-    uint32_t sb_total_count           = ((scs_ptr->max_input_luma_width + BLOCK_SIZE_64 - 1) /
-                               BLOCK_SIZE_64) *
-        ((scs_ptr->max_input_luma_height + BLOCK_SIZE_64 - 1) / BLOCK_SIZE_64);
-#endif
     ModeDecisionConfigurationContext *context_ptr;
     EB_CALLOC_ARRAY(context_ptr, 1);
     thread_context_ptr->priv  = context_ptr;
@@ -438,18 +408,6 @@ EbErrorType mode_decision_configuration_context_ctor(EbThreadContext *  thread_c
     // Rate estimation
     EB_MALLOC_ARRAY(context_ptr->md_rate_estimation_ptr, 1);
     context_ptr->is_md_rate_estimation_ptr_owner = EB_TRUE;
-#if! CLN_CLEANUP_MDC_CTX
-    // Adaptive Depth Partitioning
-    EB_MALLOC_ARRAY(context_ptr->sb_score_array, sb_total_count);
-    EB_MALLOC_ARRAY(context_ptr->sb_cost_array, sb_total_count);
-
-    // Open Loop Partitioning
-    EB_MALLOC_ARRAY(context_ptr->mdc_candidate_ptr, 1);
-    EB_MALLOC_ARRAY(context_ptr->mdc_ref_mv_stack, 1);
-    EB_MALLOC_ARRAY(context_ptr->mdc_blk_ptr, 1);
-    context_ptr->mdc_blk_ptr->av1xd = NULL;
-    EB_MALLOC_ARRAY(context_ptr->mdc_blk_ptr->av1xd, 1);
-#endif
     return EB_ErrorNone;
 }
 
@@ -493,81 +451,20 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     EbErrorType return_error = EB_ErrorNone;
 
     uint8_t update_cdf_level = 0;
-#if TUNE_LOWER_PRESETS
-#if TUNE_NEW_PRESETS_MR_M8
-#if TUNE_SHIFT_PRESETS_DOWN
     if (pcs_ptr->enc_mode <= ENC_M2)
-#else
-    if (pcs_ptr->enc_mode <= ENC_M3)
-#endif
-#else
-    if (pcs_ptr->enc_mode <= ENC_M4)
-#endif
-#else
-    if (pcs_ptr->enc_mode <= ENC_M3)
-#endif
         update_cdf_level = 1;
-#if TUNE_M4_BASE_NBASE && !TUNE_UPDATE_CDF_LEVEL
     else if (pcs_ptr->enc_mode <= ENC_M4)
-        update_cdf_level = (pcs_ptr->temporal_layer_index == 0) ? 1 : 0;
-#endif
-#if !TUNE_M4_M8
-    else if (pcs_ptr->enc_mode <= ENC_M5)
-        update_cdf_level = 2;
-#endif
-#if TUNE_UPDATE_CDF_LEVEL
-#if TUNE_SHIFT_PRESETS_DOWN
-#if TUNE_M0_M8_MEGA_FEB
-    else if (pcs_ptr->enc_mode <= ENC_M4)
-#else
-    else if (pcs_ptr->enc_mode <= ENC_M5)
-#endif
-#else
-    else if (pcs_ptr->enc_mode <= ENC_M6)
-#endif
         update_cdf_level = pcs_ptr->slice_type == I_SLICE
         ? 1
         : (pcs_ptr->temporal_layer_index == 0) ? 1 : 3;
-#if !TUNE_FINAL_M4_M8
-#if TUNE_SHIFT_PRESETS_DOWN
-#if TUNE_M0_M8_MEGA_FEB
-    else if (pcs_ptr->enc_mode <= ENC_M5)
-#else
     else if (pcs_ptr->enc_mode <= ENC_M6)
-#endif
-#else
-    else if (pcs_ptr->enc_mode <= ENC_M7)
-#endif
-        update_cdf_level = pcs_ptr->slice_type == I_SLICE
-        ? 1
-        : (pcs_ptr->temporal_layer_index == 0) ? 2 : 3;
-#endif
-#if TUNE_SHIFT_PRESETS_DOWN
-#if TUNE_FINAL_M4_M8
-    else if (pcs_ptr->enc_mode <= ENC_M6)
-#else
-    else if (pcs_ptr->enc_mode <= ENC_M7)
-#endif
-#else
-    else if (pcs_ptr->enc_mode <= ENC_M8)
-#endif
         update_cdf_level = pcs_ptr->slice_type == I_SLICE
         ? 1
         : 3;
-#endif
-#if FTR_M10
-#if TUNE_SHIFT_PRESETS_DOWN
     else if (pcs_ptr->enc_mode <= ENC_M8)
-#else
-    else if (pcs_ptr->enc_mode <= ENC_M9)
-#endif
         update_cdf_level = pcs_ptr->slice_type == I_SLICE ? 1 : 0;
     else
         update_cdf_level = 0;
-#else
-    else
-        update_cdf_level = pcs_ptr->slice_type == I_SLICE ? 1 : 0;
-#endif
 
     //set the conrols uisng the required level
     set_cdf_controls(pcs_ptr, update_cdf_level);
@@ -580,15 +477,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     // 1                      | ON
     if (scs_ptr->static_config.filter_intra_level == DEFAULT) {
         if (scs_ptr->seq_header.filter_intra_level) {
-#if TUNE_M4_M8
-#if TUNE_SHIFT_PRESETS_DOWN
             if (pcs_ptr->enc_mode <= ENC_M5)
-#else
-            if (pcs_ptr->enc_mode <= ENC_M6)
-#endif
-#else
-            if (pcs_ptr->enc_mode <= ENC_M5)
-#endif
                 pcs_ptr->pic_filter_intra_level = 1;
             else
                 pcs_ptr->pic_filter_intra_level = 0;
@@ -603,42 +492,9 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         ? 1
         : 0;
     EbBool enable_wm;
-#if TUNE_LOWER_PRESETS
-#if TUNE_M4_M8
-#if TUNE_NEW_PRESETS_MR_M8
-#if TUNE_PRESETS_AND_PRUNING
-#if TUNE_SHIFT_PRESETS_DOWN
-#if TUNE_FINAL_M4_M8
     if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M3) {
-#else
-    if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M4) {
-#endif
-#else
-    if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M5) {
-#endif
-#else
-    if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M4) {
-#endif
-#else
-    if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M5) {
-#endif
-#else
-    if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M4) {
-#endif
-#else
-    if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M3) {
-#endif
         enable_wm = EB_TRUE;
-#if TUNE_M9_IFS_SSE_ADAPT_ME_MV_NEAR_WM_TF && !TUNE_M7_M9
-    }
-    else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M8) {
-#else
-#if TUNE_SHIFT_PRESETS_DOWN
     } else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M8) {
-#else
-    } else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M9) {
-#endif
-#endif
         enable_wm = (pcs_ptr->parent_pcs_ptr->temporal_layer_index == 0) ? EB_TRUE : EB_FALSE;
     } else {
         enable_wm = EB_FALSE;
@@ -665,71 +521,12 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     //         2        | Faster level subject to possible constraints      | Level 2 everywhere in PD_PASS_2
     //         3        | Even faster level subject to possible constraints | Level 3 everywhere in PD_PASS_3
     if (scs_ptr->static_config.obmc_level == DEFAULT) {
-#if TUNE_LOWER_PRESETS
-#if TUNE_M3_FEATURES
-#if TUNE_M4_FEATURES
-#if TUNE_SHIFT_PRESETS_DOWN
         if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M3)
-#else
-        if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M4)
-#endif
-#else
-        if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M3)
-#endif
-#else
-        if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M2)
-#endif
-#else
-        if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M1)
-#endif
             pcs_ptr->parent_pcs_ptr->pic_obmc_level = 1;
-#if FTR_NEW_REF_PRUNING_CTRLS
-#if TUNE_M6_FEATURES
-#if TUNE_M6_M7_FEATURES && !TUNE_M0_M8_MEGA_FEB
-#if TUNE_SHIFT_PRESETS_DOWN
-#if NEW_PRESETS
         else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M5)
-#else
-        else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M4)
-#endif
-#else
-        else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M5)
-#endif
-#else
-#if TUNE_FINAL_M4_M8
-        else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M5)
-#else
-        else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M6)
-#endif
-#endif
-#else
-        else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M5)
-#endif
             pcs_ptr->parent_pcs_ptr->pic_obmc_level = 2;
-#else
-#if TUNE_LOWER_PRESETS
-        else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M5)
-#else
-        else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M4)
-#endif
-            pcs_ptr->parent_pcs_ptr->pic_obmc_level = 2;
-#if !TUNE_LOWER_PRESETS
-        else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M5)
-            pcs_ptr->parent_pcs_ptr->pic_obmc_level = 3;
-#endif
-#endif
-#if TUNE_NEW_PRESETS_MR_M8
-#if TUNE_M8_FEATURES
-#if TUNE_SHIFT_PRESETS_DOWN
         else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M7)
-#else
-        else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M8)
-#endif
-#else
-        else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M7)
-#endif
             pcs_ptr->parent_pcs_ptr->pic_obmc_level = pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? 2 : 0;
-#endif
         else
             pcs_ptr->parent_pcs_ptr->pic_obmc_level = 0;
     } else
@@ -739,48 +536,16 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     frm_hdr->is_motion_mode_switchable = frm_hdr->is_motion_mode_switchable ||
         pcs_ptr->parent_pcs_ptr->pic_obmc_level;
 
-#if !FIX_R2R_10B_LAMBDA
-    if (scs_ptr->static_config.enable_hbd_mode_decision == DEFAULT)
-#if TUNE_10BIT_MD_SETTINGS
-        if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_MR)
-            pcs_ptr->hbd_mode_decision = 1;
-        else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M1)
-            pcs_ptr->hbd_mode_decision = pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? 1 : 2;
-        else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M4)
-            pcs_ptr->hbd_mode_decision = 2;
-        else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M7)
-            pcs_ptr->hbd_mode_decision = pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? 2 : 0;
-        else
-            pcs_ptr->hbd_mode_decision = pcs_ptr->parent_pcs_ptr->temporal_layer_index == 0 ? 2 : 0;
-#else
-#if TUNE_HBD_MODE_DECISION
-        if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M1)
-#else
-        if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M0)
-#endif
-            pcs_ptr->hbd_mode_decision = 1;
-        else
-            pcs_ptr->hbd_mode_decision = 2;
-#endif
-    else
-        pcs_ptr->hbd_mode_decision = scs_ptr->static_config.enable_hbd_mode_decision;
-#endif
-#if FTR_REDUCE_MVEST
     pcs_ptr->parent_pcs_ptr->bypass_cost_table_gen = 0;
     if(scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE)
          pcs_ptr->parent_pcs_ptr->bypass_cost_table_gen = 0;
-#if TUNE_FINAL_M4_M8
     else if(pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M7)
-#else
-    else if(pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M8)
-#endif
         pcs_ptr->parent_pcs_ptr->bypass_cost_table_gen = 0;
     //else if(pcs_ptr->slice_type == I_SLICE)
     else if(pcs_ptr->picture_number == 0)
         pcs_ptr->parent_pcs_ptr->bypass_cost_table_gen = 0;
     else
         pcs_ptr->parent_pcs_ptr->bypass_cost_table_gen = 1;
-#endif
     return return_error;
 }
 
@@ -932,13 +697,6 @@ static void av1_setup_motion_field(Av1Common *cm, PictureControlSet *pcs_ptr) {
     TPL_MV_REF *tpl_mvs_base = pcs_ptr->tpl_mvs;
     int         size         = ((cm->mi_rows + MAX_MIB_SIZE) >> 1) * (cm->mi_stride >> 1);
 
-#if ! PIC_BASED_MFMV
-    for (int idx = 0; idx < size; ++idx) {
-        tpl_mvs_base[idx].mfmv0.as_int     = INVALID_MV;
-        tpl_mvs_base[idx].ref_frame_offset = 0;
-    }
-#endif
-
     const int                cur_order_hint = pcs_ptr->parent_pcs_ptr->cur_order_hint;
     const EbReferenceObject *ref_buf[INTER_REFS_PER_FRAME];
     int                      ref_order_hint[INTER_REFS_PER_FRAME];
@@ -964,7 +722,6 @@ static void av1_setup_motion_field(Av1Common *cm, PictureControlSet *pcs_ptr) {
             pcs_ptr->ref_frame_side[ref_frame] = -1;
     }
 
-#if PIC_BASED_MFMV
     //for a frame based mfmv, we need to keep computing the ref_frame_side regardless mfmv is used or no
     if (!pcs_ptr->parent_pcs_ptr->frm_hdr.use_ref_frame_mvs)
         return;
@@ -975,7 +732,6 @@ static void av1_setup_motion_field(Av1Common *cm, PictureControlSet *pcs_ptr) {
         tpl_mvs_base[idx].ref_frame_offset = 0;
 
     }
-#endif
 
 
 
@@ -1084,11 +840,7 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
 
 
 
-#if PIC_BASED_MFMV
         if (pcs_ptr->slice_type != I_SLICE && scs_ptr->mfmv_enabled)
-#else
-        if (pcs_ptr->parent_pcs_ptr->frm_hdr.use_ref_frame_mvs)
-#endif
             av1_setup_motion_field(pcs_ptr->parent_pcs_ptr->av1_cm, pcs_ptr);
 
         FrameHeader *frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
@@ -1100,24 +852,7 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
             signal_derivation_mode_decision_config_kernel_oq(scs_ptr, pcs_ptr);
 
         pcs_ptr->parent_pcs_ptr->average_qp = 0;
-#if !TUNE_REMOVE_INTRA_STATS_TRACKING
-        pcs_ptr->intra_coded_area           = 0;
-#endif
         // Init block selection
-#if !CLN_REMOVE_UNUSED_CODE
-        memset(pcs_ptr->part_cnt, 0, sizeof(uint32_t) * (NUMBER_OF_SHAPES - 1) * FB_NUM * SSEG_NUM);
-#endif
-#if !CLN_NSQ_AND_STATS
-        // Init pred_depth selection
-        memset(pcs_ptr->pred_depth_count,
-               0,
-               sizeof(uint32_t) * DEPTH_DELTA_NUM * (NUMBER_OF_SHAPES - 1));
-#endif
-#if !TUNE_REMOVE_TXT_STATS
-        // Init tx_type selection
-        memset(pcs_ptr->txt_cnt, 0, sizeof(uint32_t) * TXT_DEPTH_DELTA_NUM * TX_TYPES);
-        // Compute Tc, and Beta offsets for a given picture
-#endif
         // Set reference sg ep
         set_reference_sg_ep(pcs_ptr);
         set_global_motion_field(pcs_ptr);
@@ -1152,15 +887,11 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
                                  pcs_ptr->slice_type == I_SLICE ? EB_TRUE : EB_FALSE,
                                  &pcs_ptr->md_frame_context);
         // Initial Rate Estimation of the Motion vectors
-#if TUNE_FIRSTPASS_LOSSLESS
         if (!use_output_stat(scs_ptr)){
-#endif
         av1_estimate_mv_rate(pcs_ptr, md_rate_estimation_array, &pcs_ptr->md_frame_context);
         // Initial Rate Estimation of the quantized coefficients
         av1_estimate_coefficients_rate(md_rate_estimation_array, &pcs_ptr->md_frame_context);
-#if TUNE_FIRSTPASS_LOSSLESS
         }
-#endif
         if (frm_hdr->allow_intrabc) {
             int            i;
             int            speed          = 1;

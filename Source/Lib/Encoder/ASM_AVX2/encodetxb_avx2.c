@@ -15,10 +15,8 @@
 #include "synonyms.h"
 #include "synonyms_avx2.h"
 
-#if GET_NZ_MAP_CONTEXTS_AVX2
 #include "EbCabacContextModel.h"
 #include "EbFullLoop.h"
-#endif
 
 static INLINE __m256i txb_init_levels_avx2(const TranLow *const coeff) {
     const __m256i idx   = _mm256_setr_epi32(0, 4, 1, 5, 2, 6, 3, 7);
@@ -122,8 +120,6 @@ void svt_av1_txb_init_levels_avx2(const TranLow *const coeff, const int32_t widt
         xx_storeu_128(ls + 4 * 32, x_zeros);
     }
 }
-
-#if GET_NZ_MAP_CONTEXTS_AVX2
 
 static INLINE __m256i set_128x2(__m128i val_lo, __m128i val_hi) {
     return _mm256_inserti128_si256(_mm256_castsi128_si256(val_lo), val_hi, 1);
@@ -828,4 +824,3 @@ void svt_av1_get_nz_map_contexts_avx2(const uint8_t *const levels, const int16_t
     else
         coeff_contexts[pos] = 3;
 }
-#endif

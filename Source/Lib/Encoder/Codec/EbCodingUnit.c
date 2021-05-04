@@ -14,23 +14,16 @@
 
 #include "EbTransformUnit.h"
 #include "EbPictureControlSet.h"
-#if CLN_FA
 #include "EbUtility.h"
-#endif
 
 void largest_coding_unit_dctor(EbPtr p) {
     SuperBlock *obj = (SuperBlock *)p;
-#if !CLN_STRUCT
-    EB_DELETE(obj->quantized_coeff); //OMK2
-#endif
     EB_FREE_ARRAY(obj->av1xd);
     EB_FREE_ARRAY(obj->final_blk_arr);
     EB_FREE_ARRAY(obj->cu_partition_array);
 }
-#if CLN_FA
     uint8_t get_disallow_nsq(EbEncMode enc_mode);
     uint8_t get_disallow_4x4(EbEncMode enc_mode, EB_SLICE slice_type);
-#endif
 /*
 Tasks & Questions
     -Need a GetEmptyChain function for testing sub partitions.  Tie it to an Itr?
@@ -42,16 +35,11 @@ Tasks & Questions
 */
 EbErrorType largest_coding_unit_ctor(SuperBlock *larget_coding_unit_ptr, uint8_t sb_size_pix,
                                      uint16_t sb_origin_x, uint16_t sb_origin_y, uint16_t sb_index,
-#if CLN_FA
                                      uint8_t enc_mode,
-#endif
                                      PictureControlSet *picture_control_set)
 
 {
 
-#if !CLN_STRUCT
-    EbPictureBufferDescInitData coeff_init_data;
-#endif
     larget_coding_unit_ptr->dctor = largest_coding_unit_dctor;
 
     // ************ SB ***************
@@ -64,7 +52,6 @@ EbErrorType largest_coding_unit_ctor(SuperBlock *larget_coding_unit_ptr, uint8_t
     larget_coding_unit_ptr->origin_y = sb_origin_y;
 
     larget_coding_unit_ptr->index = sb_index;
-#if CLN_FA
     uint8_t disallow_nsq =  get_disallow_nsq( enc_mode);
     uint8_t disallow_4x4 = 1;
     for (EB_SLICE slice_type = 0; slice_type < IDR_SLICE + 1 ; slice_type++)
@@ -85,9 +72,6 @@ EbErrorType largest_coding_unit_ctor(SuperBlock *larget_coding_unit_ptr, uint8_t
             tot_blk_num = 128;
         else
             tot_blk_num = 256;
-#else
-    uint32_t tot_blk_num          = sb_size_pix == 128 ? 1024 : 256;
-#endif
     EB_MALLOC_ARRAY(larget_coding_unit_ptr->final_blk_arr, tot_blk_num);
     EB_MALLOC_ARRAY(larget_coding_unit_ptr->av1xd, 1);
     // Do NOT initialize the final_blk_arr here
@@ -97,21 +81,5 @@ EbErrorType largest_coding_unit_ctor(SuperBlock *larget_coding_unit_ptr, uint8_t
 
     EB_MALLOC_ARRAY(larget_coding_unit_ptr->cu_partition_array, max_block_count);
 
-#if !CLN_STRUCT
-    coeff_init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK;
-    coeff_init_data.max_width          = sb_size_pix;
-    coeff_init_data.max_height         = sb_size_pix;
-    coeff_init_data.bit_depth          = EB_32BIT;
-    coeff_init_data.color_format       = picture_control_set->color_format;
-    coeff_init_data.left_padding       = 0;
-    coeff_init_data.right_padding      = 0;
-    coeff_init_data.top_padding        = 0;
-    coeff_init_data.bot_padding        = 0;
-    coeff_init_data.split_mode         = EB_FALSE;
-
-    EB_NEW(larget_coding_unit_ptr->quantized_coeff,
-           svt_picture_buffer_desc_ctor,
-           (EbPtr)&coeff_init_data);
-#endif
     return EB_ErrorNone;
 }

@@ -30,37 +30,21 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#if FTR_TPL_TR
 #define  TASK_PAME   0
 #define  TASK_TFME   1
 #define  TASK_FIRST_PASS_ME  2
 #define  TASK_TPL_TR_ME  3
-#endif
 #define SCD_LAD                                             6  //number of future frames
 #define PD_WINDOW_SIZE                                      (SCD_LAD +2) //adding previous+current to future
-#if FIX_TPL_4MG
 #define MAX_TPL_GROUP_SIZE                                  512 //enough to cover 6L gop
-#else
-#define MAX_TPL_GROUP_SIZE                                  64 //enough to cover 6L gop
-#endif
 
-#if FTR_LAD_MG
-#if FIX_TPL_4MG
 #define MAX_TPL_EXT_GROUP_SIZE                              MAX_TPL_GROUP_SIZE
-#else
-#define MAX_TPL_EXT_GROUP_SIZE                              512
-#endif
 #define OUT_Q_ADVANCE(h) ((h == REFERENCE_QUEUE_MAX_DEPTH - 1) ? 0 : h + 1)
 void assert_err(uint32_t condition, char * err_msg);
-#endif
 
 #define TPL_DEP_COST_SCALE_LOG2 4
 #define MAX_TX_WEIGHT 500
-#if FIX_TPL_4MG
 #define MAX_TPL_LA_SW MAX_TPL_GROUP_SIZE // Max TPL look ahead sliding window size
-#else
-#define MAX_TPL_LA_SW 60 // Max TPL look ahead sliding window size
-#endif
 #define DEPTH_PROB_PRECISION 10000
 #define UPDATED_LINKS 100 //max number of pictures a dep-Cnt-cleanUp triggering picture can process
 #define MAX_TILE_CNTS 128 // Annex A.3
@@ -108,10 +92,8 @@ typedef struct {
 #define SSEG_NUM 2 // number of sse_gradient bands
 #define DEPTH_DELTA_NUM 5 // number of depth refinement 0: Pred-2, 1:  Pred-1, 2:  Pred, 3:  Pred+1, 4:  Pred+2,
 #define TXT_DEPTH_DELTA_NUM   3 // negative, pred, positive
-#if FTR_NEW_CYCLES_ALLOC
 #define UNUSED_HIGH_FREQ_BAND_TH 200
 #define UNUSED_LOW_FREQ_BAND_TH 0
-#endif
 
 /*!\brief force enum to be unsigned 1 byte*/
 #define UENUM1BYTE(enumvar) \
@@ -137,11 +119,9 @@ enum {
     ALLOW_RECODE_KFARFGF = 2,
     // Allow recode for all frames based on bitrate constraints.
     ALLOW_RECODE = 3,
-#if TUNE_DEFAULT_RECODE_LOOP
     // Default setting, ALLOW_RECODE_KFARFGF for M0~5 and
     //                  ALLOW_RECODE_KFMAXBW for M6~8.
     ALLOW_RECODE_DEFAULT = 4,
-#endif
 } UENUM1BYTE(RecodeLoopType);
 
 /********************************************************/
@@ -152,11 +132,7 @@ enum {
  * this number can be increased by increasing the constant
  * FUTURE_WINDOW_WIDTH defined in EbPictureDecisionProcess.c
  */
-#if TUNE_REDESIGN_TF_CTRLS
 #define ALTREF_MAX_NFRAMES 33
-#else
-#define ALTREF_MAX_NFRAMES 13
-#endif
 #define ALTREF_MAX_STRENGTH 6
 #define PAD_VALUE (128 + 32)
 #define PAD_VALUE_SCALED (128 + 128 + 32)
@@ -169,12 +145,6 @@ enum {
 #define BLOCK_MAX_COUNT_SB_64 1101
 #define MAX_TXB_COUNT 16 // Maximum number of transform blocks per depth
 
-#if !CLN_MD_CAND_BUFF
-#define MAX_NFL 250 // Maximum number of candidates MD can support
-#define MAX_NFL_BUFF_Y \
-    (MAX_NFL + CAND_CLASS_TOTAL) //need one extra temp buffer for each fast loop call
-#define MAX_NFL_BUFF (MAX_NFL_BUFF_Y + 84) //need one extra temp buffer for each fast loop call
-#endif
 #define MAX_LAD 120 // max lookahead-distance 2x60fps
 #define ROUND_UV(x) (((x) >> 3) << 3)
 #define AV1_PROB_COST_SHIFT 9
@@ -474,11 +444,9 @@ static INLINE int av1_num_planes(EbColorConfig *color_info) {
 }
 
 
-#if OPT_MFMV
 #define MI_SIZE_W_8X8    2
 #define MI_SIZE_W_16X16  4
 #define MI_SIZE_W_64X64  16
-#endif
 
 //*********************************************************************************************************************//
 // enums.h
@@ -513,7 +481,6 @@ typedef enum MdStagingMode {
     MD_STAGING_MODE_TOTAL
 } MdStagingMode;
 
-#if CLN_MD_CAND_BUFF
 #define NICS_PIC_TYPE  3
 #define NICS_SCALING_LEVELS  16
 static const  uint32_t MD_STAGE_NICS[NICS_PIC_TYPE][CAND_CLASS_TOTAL] =
@@ -537,29 +504,16 @@ static const  uint32_t MD_STAGE_NICS_SCAL_NUM[NICS_SCALING_LEVELS][MD_STAGE_TOTA
 { 0,    10,    10,    10},   // LEVEL 4
 { 0,     8,     8,     8},   // LEVEL 5
 { 0,     6,     6,     6},   // LEVEL 6
-#if CLN_MD_CAND_BUFF
 { 0,     4,     5,     5},   // LEVEL 7
-#else
-{ 0,     5,     5,     5},   // LEVEL 7
-#endif
 { 0,     4,     4,     4},   // LEVEL 8
-#if CLN_MD_CAND_BUFF
 { 0,     4,     3,     3},   // LEVEL 9
-#else
-{ 0,     5,     3,     3},   // LEVEL 9
-#endif
 { 0,     3,     3,     3},   // LEVEL 10
 { 0,     3,     2,     2},   // LEVEL 11
 { 0,     3,     1,     1},   // LEVEL 12
-#if CLN_MD_CAND_BUFF
 { 0,     2,     1,     1},   // LEVEL 13
-#else
-{ 0,     2,     2,     2},   // LEVEL 13
-#endif
 { 0,     2,     0,     0},   // LEVEL 14
 { 0,     0,     0,     0}    // LEVEL 15
 };
-#endif
 // NICS
 #define MAX_FRAME_TYPE 3 // Max number of frame type allowed for nics
 #define ALL_S0 -1 // Allow all candidates from stage0
@@ -585,14 +539,12 @@ enum {
     USE_8_TAPS,
 } UENUM1BYTE(SUBPEL_SEARCH_TYPE);
 
-#if FTR_PRUNED_SUBPEL_TREE
 enum {
     SUBPEL_TREE = 0,
     SUBPEL_TREE_PRUNED = 1,           // Prunes 1/2-pel searches
     //SUBPEL_TREE_PRUNED_MORE = 2,      // Not supported - (from libaom: Prunes 1/2-pel searches more aggressively)
     //SUBPEL_TREE_PRUNED_EVENMORE = 3,  // Not supported - (from libaom: Prunes 1/2- and 1/4-pel searches)
 } UENUM1BYTE(SUBPEL_SEARCH_METHODS);
-#endif
 
 typedef struct InterpFilterParams {
     const int16_t *filter_ptr;
@@ -1238,9 +1190,7 @@ typedef enum ATTRIBUTE_PACKED {
 #define REF_FRAMES_LOG2 3
 #define REF_FRAMES (1 << REF_FRAMES_LOG2)
 
-#if INC_TD
 #define UNDISP_QUEUE_SIZE  (REF_FRAMES * 10)
-#endif
 // 4 scratch frames for the new frames to support a maximum of 4 cores decoding
 // in parallel, 3 for scaled references on the encoder.
 #define FRAME_BUFFERS (REF_FRAMES + 7)
@@ -2569,21 +2519,6 @@ typedef enum DownSamplingMethod
 
 // Noise detection
 #define  NOISE_VARIANCE_TH                390
-#if !OPT1_REMOVE_FLAT_NOISE
-#define  EbPicnoiseClass    uint8_t
-#define  PIC_NOISE_CLASS_INV  0 //not computed
-#define  PIC_NOISE_CLASS_1    1 //No Noise
-#define  PIC_NOISE_CLASS_2    2
-#define  PIC_NOISE_CLASS_3    3
-#define  PIC_NOISE_CLASS_3_1  4
-#define  PIC_NOISE_CLASS_4    5
-#define  PIC_NOISE_CLASS_5    6
-#define  PIC_NOISE_CLASS_6    7
-#define  PIC_NOISE_CLASS_7    8
-#define  PIC_NOISE_CLASS_8    9
-#define  PIC_NOISE_CLASS_9    10
-#define  PIC_NOISE_CLASS_10   11 //Extreme Noise
-#endif
 // Intrinisc
 #define INTRINSIC_SSE2                                1
 
@@ -3157,30 +3092,6 @@ static const uint16_t ep_to_pa_block_index[BLOCK_MAX_COUNT_SB_64] = {
     83,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
     84,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0
 };
-#if !OPT_SB_CLASS
-typedef enum ATTRIBUTE_PACKED {
-    NONE_CLASS, // Do nothing class
-    SB_CLASS_1,
-    SB_CLASS_2,
-    SB_CLASS_3,
-    SB_CLASS_4,
-    SB_CLASS_5,
-    SB_CLASS_6,
-    SB_CLASS_7,
-    SB_CLASS_8,
-    SB_CLASS_9,
-    SB_CLASS_10,
-    SB_CLASS_11,
-    SB_CLASS_12,
-    SB_CLASS_13,
-    SB_CLASS_14,
-    SB_CLASS_15,
-    SB_CLASS_16,
-    SB_CLASS_17,
-    SB_CLASS_18,
-    NUMBER_OF_SB_CLASS, // Total number of SB classes
-} SB_CLASS;
-#endif
 typedef struct _EbEncHandle EbEncHandle;
 typedef struct _EbThreadContext EbThreadContext;
 #ifdef __cplusplus

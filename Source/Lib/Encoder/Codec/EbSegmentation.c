@@ -95,30 +95,17 @@ void apply_segmentation_based_quantization(const BlockGeom *blk_geom, PictureCon
     blk_ptr->qindex = q_index;
 }
 
-#if CLN_OLD_RC
 void setup_segmentation(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr) {
-#else
-void setup_segmentation(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr,
-                        RateControlLayerContext *rateControlLayerPtr) {
-#endif
     SegmentationParams *segmentation_params = &pcs_ptr->parent_pcs_ptr->frm_hdr.segmentation_params;
     segmentation_params->segmentation_enabled = (EbBool)(
         scs_ptr->static_config.enable_adaptive_quantization == 1);
     if (segmentation_params->segmentation_enabled) {
-#if !CLN_OLD_RC
-        int32_t segment_qps[MAX_SEGMENTS] = {0};
-#endif
         segmentation_params->segmentation_update_data =
             1; //always updating for now. Need to set this based on actual deltas
         segmentation_params->segmentation_update_map = 1;
         segmentation_params->segmentation_temporal_update =
             EB_FALSE; //!(pcs_ptr->parent_pcs_ptr->av1FrameType == KEY_FRAME || pcs_ptr->parent_pcs_ptr->av1FrameType == INTRA_ONLY_FRAME);
         find_segment_qps(segmentation_params, pcs_ptr);
-#if !CLN_OLD_RC
-        temporally_update_qps(segment_qps,
-                              rateControlLayerPtr->prev_segment_qps,
-                              segmentation_params->segmentation_temporal_update);
-#endif
         for (int i = 0; i < MAX_SEGMENTS; i++)
             segmentation_params->feature_enabled[i][SEG_LVL_ALT_Q] = 1;
 
@@ -178,13 +165,3 @@ void find_segment_qps(SegmentationParams *segmentation_params,
     }
 }
 
-#if !CLN_OLD_RC
-void temporally_update_qps(int32_t *segment_qp_ptr, int32_t *prev_segment_qp_ptr,
-                           EbBool temporal_update) {
-    for (int i = 0; i < MAX_SEGMENTS; i++) {
-        int32_t diff           = segment_qp_ptr[i] - prev_segment_qp_ptr[i];
-        prev_segment_qp_ptr[i] = segment_qp_ptr[i];
-        segment_qp_ptr[i]      = temporal_update ? diff : segment_qp_ptr[i];
-    }
-}
-#endif

@@ -266,15 +266,10 @@ typedef struct MacroBlockD {
     uint8_t     ref_mv_count[MODE_CTX_REF_FRAMES];
     CandidateMv final_ref_mv_stack[MAX_REF_MV_STACK_SIZE];
     uint8_t     is_sec_rect;
-#if OPT_INIT_XD_2
     int8_t      up_available;
     int8_t      left_available;
     int8_t      chroma_up_available;
     int8_t      chroma_left_available;
-#else
-    int32_t     up_available;
-    int32_t     left_available;
-#endif
     TileInfo    tile;
     int32_t     mi_stride;
     ModeInfo ** mi;
@@ -357,31 +352,14 @@ typedef struct BlkStruct {
     unsigned split_flag_context : 2; // to do
 
     uint8_t qindex; // ec
-#if !CLN_SB_DATA
-    uint16_t ref_qp;
-    int16_t  delta_qp; // can be signed 8bits
-#endif
-#if CLN_SB_DATA
     uint8_t split_flag;
     uint8_t skip_flag; // ec
     uint8_t mdc_split_flag; // ?
-#else
-    // Coded Tree
-    struct {
-        unsigned leaf_index : 8;
-        unsigned split_flag : 1;
-        unsigned skip_flag : 1;
-        unsigned mdc_split_flag : 1;
-    };
-#endif
 #if NO_ENCDEC
     EbPictureBufferDesc *quant_tmp;
     EbPictureBufferDesc *coeff_tmp;
     EbPictureBufferDesc *recon_tmp;
     uint32_t             cand_buff_index;
-#endif
-#if !CLN_SB_DATA
-    IntMv ref_mvs[MODE_CTX_REF_FRAMES][MAX_MV_REF_CANDIDATES]; //used only for nonCompound modes.
 #endif
     uint8_t drl_index; // ec
     int8_t  drl_ctx[2]; // Store the drl ctx in coding loop to avoid storing
@@ -392,36 +370,15 @@ typedef struct BlkStruct {
 
     uint8_t  reference_mode_context;
     uint8_t  compoud_reference_type_context;
-#if !CLN_SB_DATA
-    int32_t  quantized_dc[3][MAX_TXB_COUNT];
-#endif
     uint32_t is_inter_ctx;
 
     uint8_t       segment_id; // ec
     uint8_t       seg_id_predicted; // valid only when temporal_update is enabled
     PartitionType part;
-#if !CLN_SB_DATA
-    Part shape;
-#endif
-#if !CLN_SB_DATA
-    uint8_t * neigh_left_recon[3]; //only for MD
-    uint8_t * neigh_top_recon[3];
-    uint16_t *neigh_left_recon_16bit[3];
-    uint16_t *neigh_top_recon_16bit[3];
-#endif
-#if !CLN_SB_DATA
-    uint32_t best_d1_blk;
-#endif
     InterIntraMode interintra_mode; // ec
     uint8_t        is_interintra_used; // ec
     uint8_t        use_wedge_interintra; // ec
-#if !CLN_SB_DATA
-    int32_t ii_wedge_sign;
-#endif
     uint8_t  filter_intra_mode; // ec
-#if !OPT_BUILD_CAND_BLK_2
-    uint8_t  do_not_process_block;
-#endif
     uint8_t  use_intrabc;
     uint64_t total_rate;
 } BlkStruct;
@@ -454,24 +411,13 @@ typedef struct SuperBlock {
     uint32_t       total_bits;
 
     // Quantized Coefficients
-#if !CLN_STRUCT
-    EbPictureBufferDesc *quantized_coeff; //OMK2
-#endif
-#if !RFCTR_MD_BLOCK_LOOP
-    uint64_t             depth_cost[NUMBER_OF_DEPTH];
-#endif
-#if OPT_LF
-    uint16_t       has_coeff_sb;
-#endif
     TileInfo       tile_info;
 } SuperBlock;
 
 extern EbErrorType largest_coding_unit_ctor(SuperBlock *larget_coding_unit_ptr, uint8_t sb_sz,
                                             uint16_t sb_origin_x, uint16_t sb_origin_y,
                                             uint16_t                  sb_index,
-#if CLN_FA
                                             uint8_t enc_mode,
-#endif
                                             struct PictureControlSet *picture_control_set);
 
 #ifdef __cplusplus

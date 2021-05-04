@@ -131,14 +131,7 @@ class EncParamTestBase : public ::testing::Test {
             ctxt_.enc_params.rate_control_mode = 1;
         } else if (!param_name_str_.compare("injector_frame_rate")) {
             ctxt_.enc_params.speed_control_flag = 1;
-#if TUNE_REDESIGN_TF_CTRLS
         }
-#else
-        } else if (!param_name_str_.compare("altref_strength") ||
-                   !param_name_str_.compare("altref_nframes")) {
-            ctxt_.enc_params.tf_level = 1;
-        }
-#endif
     }
 
   protected:
@@ -421,15 +414,6 @@ PARAM_TEST(EncParamScreenContentModeTest);
 DEFINE_PARAM_TEST_CLASS(EncParamEnableAltRefsTest, tf_level);
 PARAM_TEST(EncParamEnableAltRefsTest);
 
-#if !TUNE_REDESIGN_TF_CTRLS
-/** Test case for altref_strength*/
-DEFINE_PARAM_TEST_CLASS(EncParamAltRefsStrengthTest
-/** Test case for altref_nframes*/
-DEFINE_PARAM_TEST_CLASS(EncParamAltRefsFramesNumTest, altref_nframes);
-PARAM_TEST(EncParamAltRefsFramesNumTest);, altref_strength);
-
-PARAM_TEST(EncParamAltRefsStrengthTest);
-#endif
 /** Test case for enable_overlays*/
 DEFINE_PARAM_TEST_CLASS(EncParamEnableOverlaysTest, enable_overlays);
 PARAM_TEST(EncParamEnableOverlaysTest);

@@ -15,9 +15,7 @@
 #include "EbUtility.h"
 #include "EbLog.h"
 #include "EbIntraPrediction.h"
-#if CLN_BN
 #include "EbPictureControlSet.h"
-#endif
 
 void svt_av1_upscale_normative_rows(const Av1Common *cm, const uint8_t *src, int src_stride,
                                     uint8_t *dst, int dst_stride, int rows, int sub_x, int bd,
@@ -53,17 +51,6 @@ typedef uint32_t InterpFilters;
 #define SWITCHABLE_FILTER_CONTEXTS ((SWITCHABLE_FILTERS + 1) * 4)
 #define INTER_FILTER_COMP_OFFSET (SWITCHABLE_FILTERS + 1)
 #define INTER_FILTER_DIR_OFFSET ((SWITCHABLE_FILTERS + 1) * 2)
-#if !OPT_INLINE_FILTER_FUNCS
-//typedef struct InterpFilterParams {
-//    const int16_t *filter_ptr;
-//    uint16_t taps;
-//    uint16_t subpel_shifts;
-//    InterpFilter interp_filter;
-//} InterpFilterParams;
-
-InterpFilterParams av1_get_interp_filter_params_with_block_size(const InterpFilter interp_filter,
-                                                                const int32_t      w);
-#endif
 ///---convolve.h
 #define FILTER_BITS 7
 
@@ -1266,11 +1253,7 @@ typedef struct {
 static void filter_frame_on_tile(int32_t tile_row, int32_t tile_col, void *priv) {
     (void)tile_col;
     FilterFrameCtxt *ctxt = (FilterFrameCtxt *)priv;
-#if CLN_BN
     ctxt->tile_stripe0    = (tile_row == 0) ? 0 : ctxt->cm->child_pcs->rst_end_stripe[tile_row - 1];
-#else
-    ctxt->tile_stripe0    = (tile_row == 0) ? 0 : ctxt->cm->rst_end_stripe[tile_row - 1];
-#endif
 }
 
 static void filter_frame_on_unit(const RestorationTileLimits *limits, const Av1PixelRect *tile_rect,
@@ -1327,11 +1310,7 @@ void svt_av1_loop_restoration_filter_frame(Yv12BufferConfig *frame, Av1Common *c
     const int32_t          highbd    = cm->use_highbitdepth;
 
     for (int32_t plane = 0; plane < num_planes; ++plane) {
- #if CLN_BN
         RestorationInfo *rsi   = &cm->child_pcs->rst_info[plane];
-#else
-        RestorationInfo *rsi   = &cm->rst_info[plane];
-#endif
         RestorationType  rtype = rsi->frame_restoration_type;
         rsi->optimized_lr      = optimized_lr;
 
@@ -1426,11 +1405,7 @@ void av1_foreach_rest_unit_in_frame(Av1Common *cm, int32_t plane, RestTileStartV
     const int32_t is_uv = plane > 0;
     const int32_t ss_y  = is_uv && cm->subsampling_y;
 
- #if CLN_BN
     const RestorationInfo *rsi = &cm->child_pcs->rst_info[plane];
-#else
-    const RestorationInfo *rsi = &cm->rst_info[plane];
-#endif
 
     const Av1PixelRect tile_rect = whole_frame_rect(
         &cm->frm_size, cm->subsampling_x, cm->subsampling_y, is_uv);
@@ -1534,11 +1509,7 @@ void av1_foreach_rest_unit_in_frame_seg(Av1Common *cm, int32_t plane, RestTileSt
     const int32_t is_uv = plane > 0;
     const int32_t ss_y  = is_uv && cm->subsampling_y;
 
- #if CLN_BN
     const RestorationInfo *rsi = &cm->child_pcs->rst_info[plane];
-#else
-    const RestorationInfo *rsi = &cm->rst_info[plane];
-#endif
 
     const Av1PixelRect tile_rect = whole_frame_rect(
         &cm->frm_size, cm->subsampling_x, cm->subsampling_y, is_uv);
@@ -1570,11 +1541,7 @@ int32_t svt_av1_loop_restoration_corners_in_sb(Av1Common *cm, SeqHeader *seq_hea
     assert(rcol0 && rcol1 && rrow0 && rrow1);
     if (bsize != seq_header_p->sb_size)
         return 0;
- #if CLN_BN
     if (cm->child_pcs->rst_info[plane].frame_restoration_type == RESTORE_NONE)
-#else
-    if (cm->rst_info[plane].frame_restoration_type == RESTORE_NONE)
-#endif
         return 0;
 
     // assert(!cm->all_lossless);
@@ -1596,11 +1563,7 @@ int32_t svt_av1_loop_restoration_corners_in_sb(Av1Common *cm, SeqHeader *seq_hea
     const int32_t mi_rel_row1 = mi_rel_row0 + mi_size_high[bsize];
     const int32_t mi_rel_col1 = mi_rel_col0 + mi_size_wide[bsize];
 
- #if CLN_BN
     const RestorationInfo *rsi  = &cm->child_pcs->rst_info[plane];
-#else
-    const RestorationInfo *rsi  = &cm->rst_info[plane];
-#endif
     const int32_t          size = rsi->restoration_unit_size;
 
     // Calculate the number of restoration units in this tile (which might be
@@ -1878,11 +1841,7 @@ void svt_av1_loop_restoration_save_boundary_lines(const Yv12BufferConfig *frame,
         int32_t                      crop_height = frame->crop_heights[is_uv];
         uint8_t *                    src_buf     = REAL_PTR(use_highbd, frame->buffers[p]);
         int32_t                      src_stride  = frame->strides[is_uv];
- #if CLN_BN
         RestorationStripeBoundaries *boundaries  = &cm->child_pcs->rst_info[p].boundaries;
-#else
-        RestorationStripeBoundaries *boundaries  = &cm->rst_info[p].boundaries;
-#endif
 
         save_tile_row_boundary_lines(src_buf,
                                      src_stride,
@@ -1896,7 +1855,6 @@ void svt_av1_loop_restoration_save_boundary_lines(const Yv12BufferConfig *frame,
     }
 }
 
-#if CLN_BN
 // Assumes cm->rst_info[p].restoration_unit_size is already initialized
 EbErrorType svt_av1_alloc_restoration_buffers(PictureControlSet *pcs , Av1Common *cm) {
     EbErrorType   return_error = EB_ErrorNone;
@@ -1946,53 +1904,3 @@ EbErrorType svt_av1_alloc_restoration_buffers(PictureControlSet *pcs , Av1Common
     return return_error;
 }
 
-#else
-// Assumes cm->rst_info[p].restoration_unit_size is already initialized
-EbErrorType svt_av1_alloc_restoration_buffers(Av1Common *cm) {
-    EbErrorType   return_error = EB_ErrorNone;
-    const int32_t num_planes   = 3; // av1_num_planes(cm);
-    for (int32_t p = 0; p < num_planes; ++p)
-        return_error = svt_av1_alloc_restoration_struct(cm, &cm->rst_info[p], p > 0);
-
-    // For striped loop restoration, we divide each row of tiles into "stripes",
-    // of height 64 luma pixels but with an offset by RESTORATION_UNIT_OFFSET
-    // luma pixels to match the output from CDEF. We will need to store 2 *
-    // RESTORATION_CTX_VERT lines of data for each stripe, and also need to be
-    // able to quickly answer the question "Where is the <n>'th stripe for tile
-    // row <m>?" To make that efficient, we generate the rst_last_stripe array.
-    int32_t num_stripes = 0;
-    for (int32_t i = 0; i < 1 /*cm->tile_rows*/; ++i) {
-        //TileInfo tile_info;
-        //svt_av1_tile_set_row(&tile_info, cm, i);
-
-        const int32_t mi_h         = cm->mi_rows; // tile_info.mi_row_end - tile_info.mi_row_start;
-        const int32_t ext_h        = RESTORATION_UNIT_OFFSET + (mi_h << MI_SIZE_LOG2);
-        const int32_t tile_stripes = (ext_h + 63) / 64;
-        num_stripes += tile_stripes;
-        cm->rst_end_stripe[i] = num_stripes;
-    }
-
-    // Now we need to allocate enough space to store the line buffers for the
-    // stripes
-    const int32_t frame_w = cm->frm_size.superres_upscaled_width;
-
-    for (int32_t p = 0; p < num_planes; ++p) {
-        const int32_t is_uv    = p > 0;
-        const int32_t ss_x     = is_uv && cm->subsampling_x;
-        const int32_t plane_w  = ((frame_w + ss_x) >> ss_x) + 2 * RESTORATION_EXTRA_HORZ;
-        const int32_t stride   = ALIGN_POWER_OF_TWO(plane_w, 5);
-        const int32_t buf_size = num_stripes * stride * RESTORATION_CTX_VERT << 1;
-        RestorationStripeBoundaries *boundaries = &cm->rst_info[p].boundaries;
-
-        {
-            EB_MALLOC(boundaries->stripe_boundary_above, buf_size);
-            EB_MALLOC(boundaries->stripe_boundary_below, buf_size);
-
-            boundaries->stripe_boundary_size = buf_size;
-        }
-        boundaries->stripe_boundary_stride = stride;
-    }
-
-    return return_error;
-}
-#endif

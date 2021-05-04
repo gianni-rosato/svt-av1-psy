@@ -1403,7 +1403,6 @@ void svt_sad_loop_kernel_avx2_intrin(
         break;
     case 16:
 
-#if OPT_ME_RES_SAD_LOOP
         if (block_height == 8) {
 
                __m256i ss2_tab[4];
@@ -1559,7 +1558,6 @@ void svt_sad_loop_kernel_avx2_intrin(
 
         }
         else
-#endif
         if (block_height <= 16) {
             for (i = 0; i < search_area_height; i++) {
                 for (j = 0; j <= search_area_width - 8; j += 8) {
@@ -4610,22 +4608,7 @@ void svt_ext_all_sad_calculation_8x8_16x16_avx2(uint8_t *src, uint32_t src_strid
                 }
             }
 
-#if OPT_ME_RES_SAD_LOOP
             (void)p_eight_sad8x8;
-#else
-            const __m256i sad0202 = _mm256_permute4x64_epi64(sad02, 0xD8);
-            const __m256i sad1313 = _mm256_permute4x64_epi64(sad13, 0xD8);
-            const __m256i sad00   = _mm256_unpacklo_epi16(sad0202, _mm256_setzero_si256());
-            const __m256i sad11   = _mm256_unpacklo_epi16(sad1313, _mm256_setzero_si256());
-            const __m256i sad22   = _mm256_unpackhi_epi16(sad0202, _mm256_setzero_si256());
-            const __m256i sad33   = _mm256_unpackhi_epi16(sad1313, _mm256_setzero_si256());
-
-            _mm256_storeu_si256((__m256i *)(p_eight_sad8x8[0 + start_8x8_pos]), sad00);
-            _mm256_storeu_si256((__m256i *)(p_eight_sad8x8[1 + start_8x8_pos]), sad11);
-            _mm256_storeu_si256((__m256i *)(p_eight_sad8x8[2 + start_8x8_pos]), sad22);
-            _mm256_storeu_si256((__m256i *)(p_eight_sad8x8[3 + start_8x8_pos]), sad33);
-
-#endif
             const __m128i sad0 = _mm256_castsi256_si128(sad02);
             const __m128i sad1 = _mm256_castsi256_si128(sad13);
             const __m128i sad2 = _mm256_extracti128_si256(sad02, 1);

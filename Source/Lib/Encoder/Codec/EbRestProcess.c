@@ -32,10 +32,6 @@ typedef struct RestContext {
     EbFifo *picture_demux_fifo_ptr;
 
     EbPictureBufferDesc *trial_frame_rst;
-#if !CLN_DLF_RES_PROCESS
-    EbPictureBufferDesc *temp_lf_recon_picture_ptr;
-    EbPictureBufferDesc *temp_lf_recon_picture16bit_ptr;
-#endif
 
     EbPictureBufferDesc *
         org_rec_frame; // while doing the filtering recon gets updated uisng setup/restore processing_stripe_bounadaries
@@ -61,12 +57,7 @@ void generate_padding(EbByte src_pic, uint32_t src_stride, uint32_t original_src
 void restoration_seg_search(int32_t *rst_tmpbuf, Yv12BufferConfig *org_fts,
                             const Yv12BufferConfig *src, Yv12BufferConfig *trial_frame_rst,
                             PictureControlSet *pcs_ptr, uint32_t segment_index);
-#if CLN_RES_PROCESS
 void rest_finish_search(PictureControlSet *pcs_ptr);
-#else
-void rest_finish_search(PictureParentControlSet *p_pcs_ptr, Macroblock *x, Av1Common *const cm);
-
-#endif
 void svt_av1_upscale_normative_rows(const Av1Common *cm, const uint8_t *src, int src_stride,
                                     uint8_t *dst, int dst_stride, int rows, int sub_x, int bd,
                                     EbBool is_16bit_pipeline);
@@ -81,19 +72,11 @@ void save_YUV_to_file(char *filename, EbByte buffer_y, EbByte buffer_u, EbByte b
 static void rest_context_dctor(EbPtr p) {
     EbThreadContext *thread_context_ptr = (EbThreadContext *)p;
     RestContext *    obj                = (RestContext *)thread_context_ptr->priv;
-#if !CLN_DLF_RES_PROCESS
-    EB_DELETE(obj->temp_lf_recon_picture_ptr);
-    EB_DELETE(obj->temp_lf_recon_picture16bit_ptr);
-#endif
     EB_DELETE(obj->trial_frame_rst);
-#if CLN_REST_FILTER
     // buffer only malloc'd if boundaries are used in rest. search.
     // see scs_ptr->seq_header.use_boundaries_in_rest_search
     if (obj->org_rec_frame)
         EB_DELETE(obj->org_rec_frame);
-#else
-    EB_DELETE(obj->org_rec_frame);
-#endif
     EB_FREE_ALIGNED(obj->rst_tmpbuf);
     EB_FREE_ARRAY(obj);
 }
@@ -137,53 +120,21 @@ EbErrorType rest_context_ctor(EbThreadContext *  thread_context_ptr,
         init_data.is_16bit_pipeline  = config->is_16bit_pipeline;
 
         EB_NEW(context_ptr->trial_frame_rst, svt_picture_buffer_desc_ctor, (EbPtr)&init_data);
-#if CLN_REST_FILTER
         if (scs_ptr->use_boundaries_in_rest_search)
             EB_NEW(context_ptr->org_rec_frame, svt_picture_buffer_desc_ctor, (EbPtr)&init_data);
         else
             context_ptr->org_rec_frame = NULL;
-#else
-        EB_NEW(context_ptr->org_rec_frame, svt_picture_buffer_desc_ctor, (EbPtr)&init_data);
-#endif
         if (!is_16bit) {
             context_ptr->trial_frame_rst->bit_depth = EB_8BIT;
-#if CLN_REST_FILTER
             if (scs_ptr->use_boundaries_in_rest_search)
-#endif
                 context_ptr->org_rec_frame->bit_depth   = EB_8BIT;
         }
 
         EB_MALLOC_ALIGNED(context_ptr->rst_tmpbuf, RESTORATION_TMPBUF_SIZE);
     }
 
-#if !CLN_DLF_RES_PROCESS
-    EbPictureBufferDescInitData temp_lf_recon_desc_init_data;
-    temp_lf_recon_desc_init_data.max_width          = (uint16_t)scs_ptr->max_input_luma_width;
-    temp_lf_recon_desc_init_data.max_height         = (uint16_t)scs_ptr->max_input_luma_height;
-    temp_lf_recon_desc_init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK;
-
-    temp_lf_recon_desc_init_data.left_padding  = PAD_VALUE;
-    temp_lf_recon_desc_init_data.right_padding = PAD_VALUE;
-    temp_lf_recon_desc_init_data.top_padding   = PAD_VALUE;
-    temp_lf_recon_desc_init_data.bot_padding   = PAD_VALUE;
-    temp_lf_recon_desc_init_data.split_mode    = EB_FALSE;
-    temp_lf_recon_desc_init_data.color_format  = color_format;
-
-    if (config->is_16bit_pipeline || is_16bit) {
-        temp_lf_recon_desc_init_data.bit_depth = EB_16BIT;
-        EB_NEW(context_ptr->temp_lf_recon_picture16bit_ptr,
-               svt_recon_picture_buffer_desc_ctor,
-               (EbPtr)&temp_lf_recon_desc_init_data);
-    } else {
-        temp_lf_recon_desc_init_data.bit_depth = EB_8BIT;
-        EB_NEW(context_ptr->temp_lf_recon_picture_ptr,
-               svt_recon_picture_buffer_desc_ctor,
-               (EbPtr)&temp_lf_recon_desc_init_data);
-    }
-#endif
     return EB_ErrorNone;
 }
-#if CLN_REST_FILTER
 // If using boundaries during the filter search, copy the recon pic to a new buffer (to
 // avoid race conidition from many threads modifying the same recon pic).
 //
@@ -198,10 +149,6 @@ EbPictureBufferDesc* get_own_recon(SequenceControlSet *scs_ptr, PictureControlSe
 
     Av1Common* cm = pcs_ptr->parent_pcs_ptr->av1_cm;
     cm->use_boundaries_in_rest_search = scs_ptr->use_boundaries_in_rest_search;
-#else
-void get_own_recon(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
-                   RestContext *context_ptr, EbBool is_16bit) {
-#endif
     const uint32_t ss_x = scs_ptr->subsampling_x;
     const uint32_t ss_y = scs_ptr->subsampling_y;
 
@@ -212,18 +159,12 @@ void get_own_recon(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
                                      ->reference_picture_wrapper_ptr->object_ptr)
                                     ->reference_picture16bit;
         else
-#if CLN_STRUCT
             recon_picture_ptr = pcs_ptr->parent_pcs_ptr->enc_dec_ptr->recon_picture16bit_ptr;
-#else
-            recon_picture_ptr = pcs_ptr->recon_picture16bit_ptr;
-#endif
-#if CLN_REST_FILTER
         // if boundaries are not used, don't need to copy pic to new buffer, as the
         // search will not modify the pic
         if (!scs_ptr->use_boundaries_in_rest_search) {
             return recon_picture_ptr;
         }
-#endif
         uint16_t *rec_ptr = (uint16_t *)recon_picture_ptr->buffer_y + recon_picture_ptr->origin_x +
             recon_picture_ptr->origin_y * recon_picture_ptr->stride_y;
         uint16_t *rec_ptr_cb = (uint16_t *)recon_picture_ptr->buffer_cb +
@@ -260,18 +201,12 @@ void get_own_recon(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
                                      ->reference_picture_wrapper_ptr->object_ptr)
                                     ->reference_picture;
         else
-#if CLN_STRUCT
             recon_picture_ptr = pcs_ptr->parent_pcs_ptr->enc_dec_ptr->recon_picture_ptr; //OMK
-#else
-            recon_picture_ptr = pcs_ptr->recon_picture_ptr; //OMK
-#endif
-#if CLN_REST_FILTER
         // if boundaries are not used, don't need to copy pic to new buffer, as the
         // search will not modify the pic
         if (!scs_ptr->use_boundaries_in_rest_search) {
             return recon_picture_ptr;
         }
-#endif
         uint8_t *rec_ptr    = &((recon_picture_ptr->buffer_y)[recon_picture_ptr->origin_x +
                                                            recon_picture_ptr->origin_y *
                                                                recon_picture_ptr->stride_y]);
@@ -304,9 +239,7 @@ void get_own_recon(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
                        (recon_picture_ptr->width >> ss_x));
         }
     }
-#if CLN_REST_FILTER
     return context_ptr->org_rec_frame;
-#endif
 }
 
 void set_unscaled_input_16bit(PictureControlSet *pcs_ptr) {
@@ -447,22 +380,14 @@ void get_recon_pic(PictureControlSet *pcs_ptr, EbPictureBufferDesc **recon_ptr, 
                               pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
                              ->reference_picture;
         else
-#if CLN_STRUCT
             *recon_ptr = pcs_ptr->parent_pcs_ptr->enc_dec_ptr->recon_picture_ptr; //OMK
-#else
-            *recon_ptr = pcs_ptr->recon_picture_ptr; //OMK
-#endif
     } else {
         if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE)
             *recon_ptr = ((EbReferenceObject *)
                               pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
                              ->reference_picture16bit;
         else
-#if CLN_STRUCT
             *recon_ptr = pcs_ptr->parent_pcs_ptr->enc_dec_ptr->recon_picture16bit_ptr;
-#else
-            *recon_ptr = pcs_ptr->recon_picture16bit_ptr;
-#endif
     }
 }
 
@@ -567,12 +492,6 @@ void *rest_kernel(void *input_ptr) {
                 }
             }
             // ------- end: Normative upscaling - super-resolution tool
-#if !CLN_REST_FILTER
-            get_own_recon(scs_ptr,
-                          pcs_ptr,
-                          context_ptr,
-                          scs_ptr->static_config.is_16bit_pipeline || is_16bit);
-#endif
             Yv12BufferConfig cpi_source;
             pcs_ptr->parent_pcs_ptr->enhanced_unscaled_picture_ptr->is_16bit_pipeline =
                 scs_ptr->static_config.is_16bit_pipeline;
@@ -590,7 +509,6 @@ void *rest_kernel(void *input_ptr) {
                                        scs_ptr->max_input_pad_right,
                                        scs_ptr->max_input_pad_bottom,
                                        scs_ptr->static_config.is_16bit_pipeline || is_16bit);
-            #if CLN_REST_FILTER
             // If using boundaries during the filter search, copy the recon pic to a new buffer (to
             // avoid race conidition from many threads modifying the same recon pic).
             //
@@ -609,14 +527,6 @@ void *rest_kernel(void *input_ptr) {
                                        scs_ptr->max_input_pad_right,
                                        scs_ptr->max_input_pad_bottom,
                                        scs_ptr->static_config.is_16bit_pipeline || is_16bit);
-#else
-            Yv12BufferConfig org_fts;
-            link_eb_to_aom_buffer_desc(context_ptr->org_rec_frame,
-                                       &org_fts,
-                                       scs_ptr->max_input_pad_right,
-                                       scs_ptr->max_input_pad_bottom,
-                                       scs_ptr->static_config.is_16bit_pipeline || is_16bit);
-#endif
             restoration_seg_search(context_ptr->rst_tmpbuf,
                                    &org_fts,
                                    &cpi_source,
@@ -631,14 +541,7 @@ void *rest_kernel(void *input_ptr) {
         pcs_ptr->tot_seg_searched_rest++;
         if (pcs_ptr->tot_seg_searched_rest == pcs_ptr->rest_segments_total_count) {
             if (scs_ptr->seq_header.enable_restoration && frm_hdr->allow_intrabc == 0) {
-#if CLN_RES_PROCESS
                 rest_finish_search(pcs_ptr);
-#else
-                rest_finish_search(pcs_ptr->parent_pcs_ptr,
-                                   pcs_ptr->parent_pcs_ptr->av1x,
-                                   pcs_ptr->parent_pcs_ptr->av1_cm);
-#endif
-#if CLN_BN
                 if (pcs_ptr->rst_info[0].frame_restoration_type != RESTORE_NONE ||
                     pcs_ptr->rst_info[1].frame_restoration_type != RESTORE_NONE ||
                     pcs_ptr->rst_info[2].frame_restoration_type != RESTORE_NONE) {
@@ -649,18 +552,6 @@ void *rest_kernel(void *input_ptr) {
                 pcs_ptr->rst_info[1].frame_restoration_type = RESTORE_NONE;
                 pcs_ptr->rst_info[2].frame_restoration_type = RESTORE_NONE;
             }
-#else
-                if (cm->rst_info[0].frame_restoration_type != RESTORE_NONE ||
-                    cm->rst_info[1].frame_restoration_type != RESTORE_NONE ||
-                    cm->rst_info[2].frame_restoration_type != RESTORE_NONE) {
-                    svt_av1_loop_restoration_filter_frame(cm->frame_to_show, cm, 0);
-                }
-            } else {
-                cm->rst_info[0].frame_restoration_type = RESTORE_NONE;
-                cm->rst_info[1].frame_restoration_type = RESTORE_NONE;
-                cm->rst_info[2].frame_restoration_type = RESTORE_NONE;
-            }
-#endif
 
             uint8_t best_ep_cnt = 0;
             uint8_t best_ep     = 0;
@@ -685,9 +576,7 @@ void *rest_kernel(void *input_ptr) {
             }
 
             // Pad the reference picture and set ref POC
-#if TUNE_FIRSTPASS_LOSSLESS
             if (!use_output_stat(scs_ptr))
-#endif
             if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE)
                 pad_ref_and_set_flags(pcs_ptr, scs_ptr);
             if (scs_ptr->static_config.recon_enabled) {
