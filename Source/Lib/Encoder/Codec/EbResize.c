@@ -18,7 +18,7 @@
 #include <string.h>
 #include "EbResize.h"
 
-#define DEBUG_SCALING 0
+
 #define DIVIDE_AND_ROUND(x, y) (((x) + ((y) >> 1)) / (y))
 
 // Filters for factor of 2 downsampling.
@@ -767,7 +767,7 @@ void pack_highbd_pic(const EbPictureBufferDesc *pic_ptr, uint16_t *buffer_16bit[
 
 void unpack_highbd_pic(uint16_t *buffer_highbd[3], EbPictureBufferDesc *pic_ptr, uint32_t ss_x,
                        uint32_t ss_y, EbBool include_padding);
-
+#if DEBUG_SCALING
 void save_YUV_to_file(char *filename, EbByte buffer_y, EbByte buffer_u, EbByte buffer_v,
                       uint16_t width, uint16_t height, uint16_t stride_y, uint16_t stride_u,
                       uint16_t stride_v, uint16_t origin_y, uint16_t origin_x, uint32_t ss_x,
@@ -777,6 +777,7 @@ void save_YUV_to_file_highbd(char *filename, uint16_t *buffer_y, uint16_t *buffe
                              uint16_t *buffer_v, uint16_t width, uint16_t height, uint16_t stride_y,
                              uint16_t stride_u, uint16_t stride_v, uint16_t origin_y,
                              uint16_t origin_x, uint32_t ss_x, uint32_t ss_y);
+#endif
 
 /*
  * Resize frame according to dst resolution.

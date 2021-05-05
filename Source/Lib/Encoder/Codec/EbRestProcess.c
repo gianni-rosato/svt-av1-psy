@@ -20,7 +20,7 @@
 #include "EbReferenceObject.h"
 #include "EbPictureControlSet.h"
 
-#define DEBUG_UPSCALING 0
+
 
 /**************************************
  * Rest Context
