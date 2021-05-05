@@ -38,21 +38,17 @@ extern "C" {
 #define DEBUG_TPL               0 // Prints to debug TPL
 #define DETAILED_FRAME_OUTPUT   0 // Prints detailed frame output from the library for debugging
 #define TUNE_CHROMA_SSIM        0 // Allows for Chroma and SSIM BDR-based Tuning
-#define FTR_ENABLE_FIXED_QINDEX_OFFSETS 1
 
-#define FIX_DDL                 1 // Fix deadlock issues
 #define MIN_PIC_PARALLELIZATION 0 // Use the minimum amount of picture parallelization
-#define  SRM_REPORT             0 // Report SRM status
-#define  LAD_MG_PRINT             0 // Report LAD
+#define TUNE_PICT_PARALLEL      0 //  Tune picture parallelization
+#define SRM_REPORT              0 // Report SRM status
+#define LAD_MG_PRINT            0 // Report LAD
 #define RC_NO_R2R               0 // This is a debugging flag for RC and makes encoder to run with no R2R in RC mode
                                   // Note that the speed might impacted significantly
-
-#define TUNE_PICT_PARALLEL 0 //  Tune picture parallelization
-#define TUNE_PICT_PARALLEL_II 0 // Tune picture parallelization phase 2
-
-#define DEBUG_SCALING       0
-#define DEBUG_TF 0
-#define DEBUG_UPSCALING 0
+// Super-resolution debugging code
+#define DEBUG_SCALING           0
+#define DEBUG_TF                0
+#define DEBUG_UPSCALING         0
 #ifdef __cplusplus
 }
 #endif // __cplusplus

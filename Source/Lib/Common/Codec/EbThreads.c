@@ -360,7 +360,6 @@ void atomic_set_u32(AtomicVarU32 *var, uint32_t in) {
     svt_release_mutex(var->mutex);
 }
 
-#if FIX_DDL
 /*
     create condition variable
 
@@ -430,4 +429,3 @@ EbErrorType svt_wait_cond_var(CondVar *cond_var, int32_t input)
 #endif
     return return_error;
 }
-#endif

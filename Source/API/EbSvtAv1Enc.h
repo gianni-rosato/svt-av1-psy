@@ -247,7 +247,7 @@ typedef struct EbSvtAv1EncConfiguration {
     *
     * Default is 0.*/
     EbBool use_qp_file;
-#if FTR_ENABLE_FIXED_QINDEX_OFFSETS
+
     /* use fixed qp offset for every picture based on temporal layer index
     *
     * Default is 0.*/
@@ -256,7 +256,7 @@ typedef struct EbSvtAv1EncConfiguration {
     int32_t key_frame_chroma_qindex_offset;
     int32_t key_frame_qindex_offset;
     int32_t chroma_qindex_offsets[EB_MAX_TEMPORAL_LAYERS];
-#endif
+
     /* input buffer for the second pass */
     SvtAv1FixedBuf rc_twopass_stats_in;
     /* generate first pass stats output.
@@ -562,13 +562,9 @@ typedef struct EbSvtAv1EncConfiguration {
      * ALLOW_RECODE_KFMAXBW = 1, Allow recode for KF and exceeding maximum frame bandwidth.
      * ALLOW_RECODE_KFARFGF = 2, Allow recode only for KF/ARF/GF frames.
      * ALLOW_RECODE = 3, Allow recode for all frames based on bitrate constraints.
-#if TUNE_DEFAULT_RECODE_LOOP
      * ALLOW_RECODE_DEFAULT = 4, Default setting, ALLOW_RECODE_KFARFGF for M0~5 and
      *                                            ALLOW_RECODE_KFMAXBW for M6~8.
      * default is 4
-#else
-     * default is 2
-#endif
      */
     uint32_t recode_loop;
 

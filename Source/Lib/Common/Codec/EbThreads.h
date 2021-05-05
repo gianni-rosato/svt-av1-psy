@@ -122,7 +122,6 @@ extern uint64_t *        total_lib_memory; // library Memory malloc'd
 
 void atomic_set_u32(AtomicVarU32 *var, uint32_t in);
 
-#if FIX_DDL
 /*
  Condition variable
 */
@@ -140,7 +139,6 @@ typedef struct CondVar {
 EbErrorType svt_set_cond_var(CondVar *cond_var, int32_t newval);
 EbErrorType svt_wait_cond_var(CondVar *cond_var, int32_t input);
 EbErrorType svt_create_cond_var(CondVar *cond_var);
-#endif
 
 #ifdef __cplusplus
 }

@@ -2967,10 +2967,7 @@ void inject_new_candidates(const SequenceControlSet *  scs_ptr,
         (context_ptr->inter_comp_ctrls.do_me == 0)
         ? MD_COMP_DIST
         : MD_COMP_TYPES;
-#if OPT_ME
-    const uint8_t max_refs = pcs_ptr->parent_pcs_ptr->pa_me_data->max_refs;
-    const uint8_t max_l0 = pcs_ptr->parent_pcs_ptr->pa_me_data->max_l0;
-#endif
+
     for (uint8_t me_candidate_index = 0; me_candidate_index < total_me_cnt; ++me_candidate_index) {
         const MeCandidate *me_block_results_ptr = &me_block_results[me_candidate_index];
         const uint8_t      inter_direction      = me_block_results_ptr->direction;

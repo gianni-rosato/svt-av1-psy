@@ -216,8 +216,6 @@ source picture is stored in an additional buffer.
 | **Flag**         | **Level (sequence/Picture)** | **Description**    |
 | ---------------- | ------------- | ------------ |
 | tf\_level        | Sequence                     | High-level flag to enable/disable temporally filtered pictures (default: enabled)                              |
-| altref\_nframes  | Picture                      | Number of frames to use for the temporally filtering (default: 7, {0, 10}) - Can be modified on a frame-basis  |
-| altref\_strength | Picture                      | Filtering strength to use for the temporally filtering (default: 5, {0, 6}) - Can be modified on a frame-basis |
 | enable\_overlays | Sequence                     | Enable overlay frames (default: on)      |
 
 

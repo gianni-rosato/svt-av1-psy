@@ -2552,7 +2552,6 @@ void *rate_control_kernel(void *input_ptr) {
                 // QP scaling based on POC number for Flat IPPP structure
                 frm_hdr->quantization_params.base_q_idx = quantizer_to_qindex[pcs_ptr->picture_qp];
 
-#if FTR_ENABLE_FIXED_QINDEX_OFFSETS
                 if (scs_ptr->static_config.use_fixed_qindex_offsets == 1) {
                     pcs_ptr->picture_qp = scs_ptr->static_config.qp;
                     int32_t qindex = quantizer_to_qindex[(uint8_t)scs_ptr->static_config.qp];
@@ -2594,7 +2593,7 @@ void *rate_control_kernel(void *input_ptr) {
 */
                 }
                 else
-#endif
+
                 if (scs_ptr->static_config.enable_qp_scaling_flag &&
                     pcs_ptr->parent_pcs_ptr->qp_on_the_fly == EB_FALSE) {
                     const int32_t qindex = quantizer_to_qindex[(uint8_t)scs_ptr->static_config.qp];
@@ -2766,11 +2765,7 @@ void *rate_control_kernel(void *input_ptr) {
             // Queue variables
             total_number_of_fb_frames++;
             EB_DESTROY_SEMAPHORE(parentpicture_control_set_ptr->pame_trail_done_semaphore);
-#if FIX_DDL
 
-#else
-            EB_DESTROY_SEMAPHORE(parentpicture_control_set_ptr->pame_done_semaphore);
-#endif
 
             // Release the SequenceControlSet
             svt_release_object(parentpicture_control_set_ptr->scs_wrapper_ptr);

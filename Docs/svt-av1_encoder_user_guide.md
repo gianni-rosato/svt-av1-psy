@@ -92,7 +92,7 @@ The intra period defines the interval of frames after which you insert an Intra 
 
 `--rc integer` **[Optional]**
 
-This token sets the bitrate control encoding mode [1: Variable Bitrate, 0: Constant QP OR Constant Rate Factor]. When `--rc` is set to 1, it is best to match the `--lookahead` (lookahead distance described in the next section) parameter to the `--keyint`.
+This token sets the bitrate control encoding mode [1: Variable Bitrate, 0: Constant QP OR Constant Rate Factor]. When `--rc` is set to 1.
 
 With `--rc` set to 0, if `--crf` is used then enable-tpl-la is forced to 1, however, if `-q`/`--qp` is used then the encoder will work in CRF mode if `--enable-tpl-la` is set to 1 and in CQP mode (fixed qp offsets regardless of the content) when `--enable-tpl-la` is set to 0.
 
@@ -111,20 +111,20 @@ Here are some sample encode command lines
 #### 1 pass CRF at maximum speed from 24fps yuv 1920x1080 input
 `SvtAv1EncApp -i input.yuv -w 1920 -h 1080 --fps 24 --crf 30 --preset 8 -b output.ivf`
 
-#### 1 pass VBR 10000 Kbps at medium speed from 24fps yuv 1920x1080 input
-`SvtAv1EncApp -i input.yuv -w 1920 -h 1080 --fps 24 --rc 2 --tbr 10000 --preset 5 -b output.ivf`
+#### 1 pass VBR 1000 Kbps at medium speed from 24fps yuv 1920x1080 input
+`SvtAv1EncApp -i input.yuv -w 1920 -h 1080 --fps 24 --rc 2 --tbr 1000 --preset 5 -b output.ivf`
 
-#### 2 pass CRF at maximum quality from 24fps yuv 1920x1080 input
+#### 2 pass VBR 1000 Kbps at maximum quality from 24fps yuv 1920x1080 input
 1 command line :
 
-`SvtAv1EncApp -i input.yuv -w 1920 -h 1080 --fps 24 --rc 0 -q 30 --preset 0 --irefresh-type 2 --passes 2 --stats stat_file.stat -b output.ivf`
+`SvtAv1EncApp -i input.yuv -w 1920 -h 1080 --fps 24 --rc 2 --tbr 1000 --preset 0 --irefresh-type 2 --passes 2 --stats stat_file.stat -b output.ivf`
 
 or
 
 2 command lines :
 
-`SvtAv1EncApp -i input.yuv -w 1920 -h 1080 --fps 24 --rc 0 -q 30 --preset 8 --irefresh-type 2 --pass 1 --stats stat_file.stat`
-`SvtAv1EncApp -i input.yuv -w 1920 -h 1080 --fps 24 --rc 0 -q 30 --preset 0 --irefresh-type 2 --pass 2 --stats stat_file.stat -b output.ivf`
+`SvtAv1EncApp -i input.yuv -w 1920 -h 1080 --fps 24 --rc 2 --tbr 1000 --preset 8 --irefresh-type 2 --pass 1 --stats stat_file.stat`
+`SvtAv1EncApp -i input.yuv -w 1920 -h 1080 --fps 24 --rc 2 --tbr 1000 --preset 0 --irefresh-type 2 --pass 2 --stats stat_file.stat -b output.ivf`
 
 ### List of all configuration parameters
 
@@ -141,6 +141,8 @@ The encoder parameters present in the `Sample.cfg` file are listed in this table
 | **StatFile** | --stat-file | any string | Null | Path to statistics file if specified and StatReport is set to 1, per picture statistics are outputted in the file|
 | **Progress** | --progress | [0,1,2] | 1 | Use `--progress 0` to disable printing of frame processed when encoding, `--progress 1` for default printing, and `--progress 2` for aomenc style printing |
 | **NoProgress** | --no-progress | [0,1] | 0 | `--no-progress 1` is equivalent to `--progress 0` and `--no-progress 0` is equivalent to `--progress 1` |
+| **EncoderMode** | --preset | [-2,-1, 0 - 8] | 8 | Encoder Preset [-2, -1, 0,1,2,3,4,5,6,7,8] -2=debug preset, -1=debug preset 0 = highest quality, 8 = highest speed |
+| **ChannelNumber** | --nch | [1 - 6] | 1 | Number of simultaneous encoding instances |
 
 #### Encoder Global Options
 | **Configuration file parameter** | **Command line** | **Range** | **Default** | **Description** |
@@ -149,16 +151,19 @@ The encoder parameters present in the `Sample.cfg` file are listed in this table
 | **SourceHeight** | -h | [0 - 2304] | None | Input source height |
 | **FrameToBeEncoded** | -n | [0 - 2^64 -1] | 0 | Number of frames to be encoded, if number of frames is > number of frames in file, the encoder will loop to the beginning and continue the encode. Use -1 to not buffer. |
 | **BufferedInput** | --nb | [-1, 1 to 2^31 -1] | -1 | number of frames to preload to the RAM before the start of the encode If --nb = 100 and -n 1000 -- > the encoder will encode the first 100 frames of the video 10 times |
-| **EncoderColorFormat** | --color-format | [0-3] | 1 | Set encoder color format(EB_YUV400, EB_YUV420, EB_YUV422, EB_YUV444) |
+| **EncoderColorFormat** | --color-format | [0-3] | 1 | Set encoder color format(YUV400, YUV420, YUV422, YUV444 : YUV420 [default]) |
 | **Profile** | --profile | [0-2] | 0 | Bitstream profile number to use (0: main profile[default], 1: high profile, 2: professional profile) |
 | **FrameRate** | --fps | [0 - 2^64 -1] | 25 | If the number is less than 1000, the input frame rate is an integer number between 1 and 60, else the input number is in Q16 format (shifted by 16 bits) [Max allowed is 240 fps] |
 | **FrameRateNumerator** | --fps-num | [0 - 2^64 -1] | 0 | Frame rate numerator e.g. 6000 |
 | **FrameRateDenominator** | --fps-denom | [0 - 2^64 -1] | 0 | Frame rate denominator e.g. 100 |
 | **EncoderBitDepth** | --input-depth | [8 , 10] | 8 | specifies the bit depth of the input video |
 | **Encoder16BitPipeline** | --16bit-pipeline | [0 , 1] | 0 | Bit depth for enc-dec(0: lbd[default], 1: hbd) |
+| **CompressedTenBitFormat** | --compressed-ten-bit-format | [0-1] | 0 | Offline packing of the 2bits: requires two bits packed input (0: OFF, 1: ON) |
 | **HierarchicalLevels** | --hierarchical-levels | [0 - 5] | 4 | 0 : Flat4: 5-Level HierarchyMinigop Size = (2^HierarchicalLevels) (e.g. 0 == > 0B pyramid, 1 == > 1B pyramid, 2 == > 3B pyramid, 3 == > 7B pyramid, 4 == > 15B Pyramid) |
 | **PredStructure** | --pred-struct | [0-2] | 2 | Set prediction structure( 0: low delay P, 1: low delay B, 2: random access [default]) |
-| **HighDynamicRangeInput** | --enable-hdr | [0-1] | 0 | Enable high dynamic range(0: OFF[default], ON: 1) |
+| **Injector** | --inj | [0-1] | 0 | Inject pictures at defined frame rate(0: OFF[default],1: ON) |
+| **InjectorFrameRate** | --inj-frm-rt | Null | Null | Set injector frame rate |
+| **StatReport** | --enable-stat-report | [0-1] | 0 | When set to 1, calculates and outputs average PSNR values |
 | **Asm** | --asm |  [0 - 11] or [c, mmx, sse, sse2, sse3, ssse3, sse4_1, sse4_2, avx, avx2, avx512, max] | 11 or max | Limit assembly instruction set ("0" is equivalent to "c", "1" is "mmx" etc, max value is "11" or "max"), by default select highest assembly instruction that is supported by CPU |
 | **LogicalProcessorNumber** | --lp | [0, total number of logical processor] | 0 | The number of logical processor which encoder threads run on.Refer to Appendix A.1 |
 | **UnpinExecution** | --unpin | [0, 1] | 1 | Allows the execution to be pined/unpined to/from a specific number of cores.--unpin is overwritten to 0 when --ss is set to 0 or 1. 0=OFF, 1= ON |
@@ -167,14 +172,14 @@ The encoder parameters present in the `Sample.cfg` file are listed in this table
 #### Rate Control Options
 | **Configuration file parameter** | **Command line** | **Range** | **Default** | **Description** |
 | --- | --- | --- | --- | --- |
-| **RateControlMode** | --rc | [0 - 2] | 0 | 0 = CQP , 1 = VBR , 2 = CVBR |
+| **RateControlMode** | --rc | [0 - 1] | 0 | Rate control mode(0 = CQP if --enable-tpl-la is set to 0, else CRF , 1 = VBR)|
 | **QP** | -q | [0 - 63] | 50 | Quantization parameter used when RateControl is set to 0 and EnableTPLModel is set to 0, also represents the CRF value if EnableTPLModel is set to 0 |
 | **CRF** | --crf | [0 - 63] | 50 | Rate control parameter used to set CRF and forces RateControlMode to 0 and EnableTPLModel to 1 |
 | **TargetBitRate** | --tbr | [1 - 4294967] | 7000 | Target bitrate in kilobits per second when RateControlMode is set to 1, or 2 |
 | **UseQpFile** | --use-q-file | [0-1] | 0 | When set to 1, overwrite the picture qp assignment using qp values in QpFile, can be used for initial crf values as well if EnableTPLModel is set to 1, the encoder may still change crf per block |
 | **QpFile** | --qpfile | any string | Null | Path to qp file |
-| **MaxQpAllowed** | --max-qp | [0 - 63] | Null | Maximum (worst) quantizer[0-63] |
-| **MinQpAllowed** | --min-qp | [0 - 63] | Null | Minimum (best) quantizer[0-63] |
+| **MaxQpAllowed** | --max-qp | [0 - 63] | Null | Maximum (worst) quantizer[0-63] only applicable  when --rc > 0 |
+| **MinQpAllowed** | --min-qp | [0 - 63] | Null | Minimum (best) quantizer[0-63] only applicable  when --rc > 0 |
 | **AdaptiveQuantization** | --adaptive-quantization | [0 - 2] | 0 | 0 = OFF , 1 = variance base using segments , 2 = Deltaq pred efficiency (default) |
 | **VBVBufSize** | --vbv-bufsize | [1 - 4294967] | 1 second TargetBitRate | VBV Buffer Size when RateControl is 2. |
 | **UseFixedQIndexOffsets** | --use-fixed-qindex-offsets | [0 - 1] | 0 | 0 = OFF, 1 = enable fixed qindex offset based on temporal layer and frame type when rc mode is 0. qindex offsets are specified by the following arguments |
@@ -210,32 +215,29 @@ for this command line, corresponding qindex are:
 #### Twopass Options
 | **Configuration file parameter** | **Command line** | **Range** | **Default** | **Description** |
 | --- | --- | --- | --- | --- |
-| **Passes** | --passes | [1-2] | 1 | Number of passes (1: one pass encode, 2: two passes encode) |
+| **Passes** | --passes | [1-2] | 1 | Number of passes (1: one pass encode, 2: two passes encode) applicable only for rc > 0 |
 | **Pass** | --pass | [1-2] | Null | Specify which pass the run is on (1=First Pass, 2=Second Pass) |
 | **Stats** | --stats | any string | Null | Output stat file containing information from first pass |
 | **OutputStatFile** | --output-stat-file | any string | Null | Output stat file for first pass|
 | **InputStatFile** | --input-stat-file | any string | Null | Input stat file for second pass|
-| **VBRBiasPct** | --bias-pct | [0 - 100] | 50 | 2pass CBR/VBR bias percent (0=CBR, 100=VBR) |
+| **VBRBiasPct** | --bias-pct | [0 - 100] | 50 | 2pass CBR/VBR bias percent (0=CBR-like, 100=VBR-like) |
 | **MinSectionPct** | --minsection-pct | [0 - ] | 0 | 2pass VBR GOP min bitrate (percent of target) |
 | **MaxSectionPct** | --maxsection-pct | [0 - ] | 2000 | 2pass VBR GOP max bitrate (percent of target) |
 | **UnderShortPct** | --undershoot-pct | [0 - 100] | 25 | Datarate undershoot (min) target (percent) |
 | **OverShortPct** | --overshoot-pct | [0 - 100] | 25 | Datarate overshoot (max) target (percent) |
-| **RecodeLoop** | --recode-loop | [0 - 3] | 2 | Recode loop levels for 2pass VBR (0=disable reencode, 1=reencode key frames, 2=reencode base layer frames, 3=reencode all frames) |
+| **RecodeLoop** | --recode-loop | [0 - 4] | 4 | Recode loop levels for 2pass VBR (0=disable reencode, 1=reencode key frames, 2=reencode base layer frames, 3=reencode all frames, 4=preset based decision [Default]) |
 
-#### Keyframe Placement Options
+#### GOP size and type Options
 | **Configuration file parameter** | **Command line** | **Range** | **Default** | **Description** |
 | --- | --- | --- | --- | --- |
 | **IntraPeriod** | --keyint | [-2 - 2^31-2] | -2 | Intra period interval(frames) -2: default intra period , -1: No intra update or an integer >= 0. if RateControlMode >= 1 intra-period limited to [-2, 255] |
-| **IntraRefreshType** | --irefresh-type | [1 - 2] | 2 | 1: CRA (Open GOP), 2: IDR (Closed GOP)[default] |
+| **IntraRefreshType** | --irefresh-type | [1 - 2] | 2 | Intra refresh type (1: FWD Frame (Open GOP), 2: KEY Frame (Closed GOP)[default]) |
 
 #### AV1 Specific Options
 | **Configuration file parameter** | **Command line** | **Range** | **Default** | **Description** |
 | --- | --- | --- | --- | --- |
-| **EncoderMode** | --preset | [0 - 8] | 8 | Encoder Preset [0,1,2,3,4,5,6,7,8] 0 = highest quality, 8 = highest speed |
-| **CompressedTenBitFormat** | --compressed-ten-bit-format | [0-1] | 0 | Offline packing of the 2bits: requires two bits packed input (0: OFF, 1: ON) |
 | **TileRow** | --tile-rows | [0-6] | 0 | log2 of tile rows |
 | **TileCol** | --tile-columns | [0-4] | 0 | log2 of tile columns |
-| **LookAheadDistance** | --lookahead | [0 - 120] | 33 | When RateControlMode is set to 1 or 2 it's strongly recommended to set this parameter to be equal to the Intra period value (such is the default set by the encoder). When RateControlMode  is set to 0, it is recommended for this value to be set to a size of a minigop (e.g. 16 for --hierarchichal-levels 4) |
 | **LoopFilterDisable** | --disable-dlf | [0-1] | 0 | Disable loop filter(0: loop filter enabled[default] ,1: loop filter disabled) |
 | **EnableTPLModel** | --enable-tpl-la | [0-1] | 1 | RDO based on frame temporal dependency (0: off, 1: backward source based)|
 | **CDEFLevel** | --cdef-level | [0-5] | -1 | CDEF Level, 0: OFF, 1-5: ON with 64,16,8,4,1 step refinement, -1: DEFAULT|
@@ -274,22 +276,16 @@ for this command line, corresponding qindex are:
 | **ExtBlockFlag** | --ext-block | [0-1] | Depends on --preset | Enable the non-square block 0=OFF, 1= ON |
 | **SearchAreaWidth** | --search-w | [1 - 480] | Depends on input resolution | Search Area in Width |
 | **SearchAreaHeight** | --search-h | [1 - 480] | Depends on input resolution | Search Area in Height |
-| **ScreenContentMode** | --scm | [0 - 2] | 0 | Enable Screen Content Optimization mode (0: OFF, 1: ON, 2: Content Based Detection) |
+| **ScreenContentMode** | --scm | [0 - 2] | 2 | Enable Screen Content Optimization mode (0: OFF, 1: ON, 2: Content Based Detection) |
 | **IntraBCMode** | --intrabc-mode | [-1 - 3]] | -1 | IntraBC mode (0 = OFF, 1 = ON slow, 1 = ON faster, 2 = ON fastest, -1 = DEFAULT) |
 | **HighBitDepthModeDecision** | --hbd-md | [0-2] | 1 | Enable high bit depth mode decision(0: OFF, 1: ON partially[default],2: fully ON) |
 | **PaletteLevel** | --palette-level | [-1 - 6] | -1 | Enable Palette mode (-1: DEFAULT (ON at level6 when SC is detected), 0: OFF 1: ON Level 1, ...6: ON Level6 ) |
 | **UnrestrictedMotionVector** | --umv | [0-1] | 1 | Enables or disables unrestriced motion vectors, 0 = OFF(motion vectors are constrained within tile boundary), 1 = ON. For MCTS support, set --umv 0 |
-| **Injector** | --inj | [0-1] | 0 | Inject pictures at defined frame rate(0: OFF[default],1: ON) |
-| **InjectorFrameRate** | --inj-frm-rt | Null | Null | Set injector frame rate |
-| **SpeedControlFlag** | --speed-ctrl | [0-1] | 0 | Enable speed control(0: OFF[default], 1: ON) |
 | **FilmGrain** | --film-grain | [0-50] | 0 | Enable film grain(0: OFF[default], 1 - 50: Level of denoising for film grain) |
-| **AltRefLevel** | --tf-level | [0-3] | -1 | Enable automatic alt reference frames(-1: Default; 0: OFF; 1: ON; 2 and 3: Faster levels) |
-| **AltRefStrength** | --altref-strength | [0-6] | 5 | AltRef filter strength([0-6], default: 5) |
-| **AltRefNframes** | --altref-nframes | [0-10] | 7 | AltRef max frames([0-10], default: 7) |
+| **AltRefLevel** | --tf-level | [-1 - 1] | -1 | Enable automatic alt reference frames(-1: Default; 0: OFF; 1: ON) |
 | **EnableOverlays** | --enable-overlays | [0-1] | 0 | Enable the insertion of an extra picture called overlayer picture which will be used as an extra reference frame for the base-layer picture(0: OFF[default], 1: ON) |
 | **SquareWeight** | --sqw | 0 for off and any whole number percentage | 100 | Weighting applied to square/h/v shape costs when deciding if a and b shapes could be skipped. Set to 100 for neutral weighting, lesser than 100 for faster encode and BD-Rate loss, and greater than 100 for slower encode and BD-Rate gain|
-| **ChannelNumber** | --nch | [1 - 6] | 1 | Number of encode instances |
-| **StatReport** | --enable-stat-report | [0-1] | 0 | When set to 1, calculates and outputs average PSNR values |
+
 
 
 the DEFAULT option would allow the encoder to choose adaptively any of the values in the range for that option whether on a preset, picture, or SB level.

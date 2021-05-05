@@ -651,14 +651,8 @@ static EbErrorType reset_pcs_av1(PictureParentControlSet *pcs_ptr) {
     pcs_ptr->max_number_of_pus_per_sb        = SQUARE_PU_COUNT;
 
     atomic_set_u32(&pcs_ptr->pame_done, 0);
-#if FIX_DDL
     svt_create_cond_var(&pcs_ptr->me_ready);
 
-#else
-    EB_CREATE_SEMAPHORE(pcs_ptr->pame_done_semaphore, 0, 1);
-    EB_CREATE_SEMAPHORE(pcs_ptr->pame_trail_done_semaphore, 0, 1);
-    pcs_ptr->non_tf_input = NULL;
-#endif
 
    SequenceControlSet *scs_ptr = pcs_ptr->scs_ptr;
    pcs_ptr->me_segments_completion_count = 0;
