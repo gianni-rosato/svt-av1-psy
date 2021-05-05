@@ -123,30 +123,6 @@ int svt_av1_haar_ac_sad(tran_low_t *output, int bw, int bh, int stride) {
     return acsad;
 }
 
-uint64_t svt_av1_dct_ac_sad(tran_low_t *output, int bw, int bh, int stride) {
-    uint64_t acsad = 0;
-
-    for (int r = 0; r < bh; ++r)
-        for (int c = 0; c < bw; ++c) {
-            if (r > 0 || c > 0)
-                acsad += abs(output[r * stride + c]);
-        }
-
-    return acsad;
-}
-
-uint32_t svt_av1_variance(uint8_t *input, int bw, int bh, int stride) {
-    int      sum = 0;
-    uint32_t sse = 0;
-
-    for (int r = 0; r < bh; ++r)
-        for (int c = 0; c < bw; ++c) {
-            sum += input[r * stride + c];
-            sse += input[r * stride + c] * input[r * stride + c];
-        }
-    return sse - (uint32_t)(((int64_t)sum * sum) / (bw * bh));
-}
-
 int svt_av1_haar_ac_sad_8x8_uint8_input_c(uint8_t *input, int stride, int hbd) {
     tran_low_t output[64];
 

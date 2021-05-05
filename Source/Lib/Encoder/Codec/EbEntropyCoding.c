@@ -113,15 +113,6 @@ int get_comp_group_idx_context_enc(const MacroBlockD *xd) {
     return AOMMIN(5, above_ctx + left_ctx);
 }
 
-/************************************************
-* CABAC Encoder Constructor
-************************************************/
-void cabac_ctor(CabacEncodeContext *cabacEncContextPtr) {
-    EB_MEMSET(cabacEncContextPtr, 0, sizeof(CabacEncodeContext));
-
-    return;
-}
-
 static INLINE int32_t does_level_match(int32_t width, int32_t height, double fps, int32_t lvl_width,
                                        int32_t lvl_height, double lvl_fps, int32_t lvl_dim_mult) {
     const int64_t lvl_luma_pels           = (int64_t)lvl_width * lvl_height;
@@ -1991,93 +1982,6 @@ static void write_inter_compound_mode(FRAME_CONTEXT *frame_context, AomWriter *e
                      frame_context->inter_compound_mode_cdf[mode_ctx],
                      INTER_COMPOUND_MODES);
 }
-
-int32_t svt_av1_get_reference_mode_context(uint32_t blk_origin_x, uint32_t blk_origin_y,
-                                           NeighborArrayUnit *mode_type_neighbor_array,
-                                           NeighborArrayUnit *inter_pred_dir_neighbor_array) {
-    uint32_t mode_type_left_neighbor_index = get_neighbor_array_unit_left_index(
-        mode_type_neighbor_array, blk_origin_y);
-    uint32_t mode_type_top_neighbor_index = get_neighbor_array_unit_top_index(
-        mode_type_neighbor_array, blk_origin_x);
-
-    int32_t ctx = 0;
-
-    // Note:
-    // The mode info data structure has a one element border above and to the
-    // left of the entries corresponding to real macroblocks.
-    // The prediction flags in these dummy entries are initialized to 0.
-    if (mode_type_neighbor_array->left_array[mode_type_left_neighbor_index] !=
-            (uint8_t)INVALID_MODE &&
-        mode_type_neighbor_array->top_array[mode_type_top_neighbor_index] !=
-            (uint8_t)INVALID_MODE) { // both edges available
-        const int32_t top_intra =
-            (mode_type_neighbor_array->top_array[mode_type_top_neighbor_index] ==
-             (uint8_t)INTRA_MODE);
-        const int32_t left_intra =
-            (mode_type_neighbor_array->left_array[mode_type_left_neighbor_index] ==
-             (uint8_t)INTRA_MODE);
-        //if (has_above && has_left) {  // both edges available
-        if (!(inter_pred_dir_neighbor_array->top_array[mode_type_top_neighbor_index] == BI_PRED &&
-              !top_intra) &&
-            !(inter_pred_dir_neighbor_array->left_array[mode_type_left_neighbor_index] == BI_PRED &&
-              !left_intra)) {
-            // neither edge uses comp pred (0/1)
-            ctx = (inter_pred_dir_neighbor_array->top_array[mode_type_top_neighbor_index] ==
-                   UNI_PRED_LIST_1) ^
-                (inter_pred_dir_neighbor_array->left_array[mode_type_left_neighbor_index] ==
-                 UNI_PRED_LIST_1);
-        } else if (!(inter_pred_dir_neighbor_array->top_array[mode_type_top_neighbor_index] ==
-                         BI_PRED &&
-                     !top_intra) /*has_second_ref(above_mbmi)*/) {
-            // one of two edges uses comp pred (2/3)
-            ctx = 2 +
-                ((inter_pred_dir_neighbor_array->top_array[mode_type_top_neighbor_index] ==
-                  UNI_PRED_LIST_1) ||
-                 top_intra);
-        } else if (!(inter_pred_dir_neighbor_array->left_array[mode_type_left_neighbor_index] ==
-                         BI_PRED &&
-                     !left_intra) /*has_second_ref(left_mbmi)*/) {
-            // one of two edges uses comp pred (2/3)
-            ctx = 2 +
-                ((inter_pred_dir_neighbor_array->left_array[mode_type_left_neighbor_index] ==
-                  UNI_PRED_LIST_1) ||
-                 left_intra);
-        } else { // both edges use comp pred (4){
-            ctx = 4;
-        }
-    } else if (mode_type_neighbor_array->left_array[mode_type_left_neighbor_index] !=
-               (uint8_t)INVALID_MODE) { // one edge available
-
-        if (!(inter_pred_dir_neighbor_array->left_array[mode_type_left_neighbor_index] == BI_PRED &&
-              mode_type_neighbor_array->left_array[mode_type_left_neighbor_index] !=
-                  (uint8_t)INTRA_MODE) /*has_second_ref(edge_mbmi)*/) {
-            // edge does not use comp pred (0/1)
-            ctx = (inter_pred_dir_neighbor_array->left_array[mode_type_left_neighbor_index] ==
-                   UNI_PRED_LIST_1);
-        } else {
-            // edge uses comp pred (3)
-            ctx = 3;
-        }
-    } else if (mode_type_neighbor_array->top_array[mode_type_top_neighbor_index] !=
-               (uint8_t)INVALID_MODE) { // one edge available
-
-        if (!(inter_pred_dir_neighbor_array->top_array[mode_type_top_neighbor_index] == BI_PRED &&
-              mode_type_neighbor_array->top_array[mode_type_top_neighbor_index] !=
-                  (uint8_t)INTRA_MODE) /*has_second_ref(edge_mbmi)*/) {
-            // edge does not use comp pred (0/1)
-            ctx = (inter_pred_dir_neighbor_array->top_array[mode_type_top_neighbor_index] ==
-                   UNI_PRED_LIST_1);
-        } else {
-            // edge uses comp pred (3)
-            ctx = 3;
-        }
-    } else { // no edges available (1)
-        ctx = 1;
-    }
-
-    assert(ctx >= 0 && ctx < COMP_INTER_CONTEXTS);
-    return ctx;
-}
 int         svt_av1_get_intra_inter_context(const MacroBlockD *xd);
 int         av1_get_reference_mode_context_new(const MacroBlockD *xd);
 AomCdfProb *av1_get_reference_mode_cdf(const MacroBlockD *xd) {
@@ -2344,99 +2248,6 @@ INLINE void av1_collect_neighbors_ref_counts_new(MacroBlockD *const xd) {
             ref_counts[left_mbmi->block_mi.ref_frame[1]]++;
     }
 }
-
-int32_t svt_av1_get_comp_reference_type_context(uint32_t blk_origin_x, uint32_t blk_origin_y,
-                                                NeighborArrayUnit *mode_type_neighbor_array,
-                                                NeighborArrayUnit *inter_pred_dir_neighbor_array) {
-    int32_t pred_context = 0;
-
-    uint32_t mode_type_left_neighbor_index = get_neighbor_array_unit_left_index(
-        mode_type_neighbor_array, blk_origin_y);
-    uint32_t mode_type_top_neighbor_index = get_neighbor_array_unit_top_index(
-        mode_type_neighbor_array, blk_origin_x);
-
-    if (mode_type_neighbor_array->left_array[mode_type_left_neighbor_index] !=
-            (uint8_t)INVALID_MODE &&
-        mode_type_neighbor_array->top_array[mode_type_top_neighbor_index] !=
-            (uint8_t)INVALID_MODE) { // both edges available
-        const int32_t above_intra =
-            (mode_type_neighbor_array->top_array[mode_type_top_neighbor_index] ==
-             (uint8_t)INTRA_MODE);
-        const int32_t left_intra =
-            (mode_type_neighbor_array->left_array[mode_type_left_neighbor_index] ==
-             (uint8_t)INTRA_MODE);
-
-        if (above_intra && left_intra) { // intra/intra
-            pred_context = 2;
-        } else if (left_intra) { // Intra & Inter. Left is Intra, check Top
-
-            if (inter_pred_dir_neighbor_array->top_array[mode_type_top_neighbor_index] !=
-                BI_PRED) // single pred
-                pred_context = 2;
-            else // comp pred
-                pred_context = 1 + 2 * 0 /* has_uni_comp_refs(inter_mbmi)*/;
-        } else if (above_intra) { // Intra & Inter. Top is Intra, check Left
-
-            if (inter_pred_dir_neighbor_array->left_array[mode_type_left_neighbor_index] !=
-                BI_PRED) // single pred
-                pred_context = 2;
-            else // comp pred
-                pred_context = 1 + 2 * 0 /* has_uni_comp_refs(inter_mbmi)*/;
-        } else { // inter/inter
-            const int32_t a_sg =
-                (inter_pred_dir_neighbor_array->top_array[mode_type_top_neighbor_index] != BI_PRED);
-            const int32_t l_sg =
-                (inter_pred_dir_neighbor_array->left_array[mode_type_left_neighbor_index] !=
-                 BI_PRED);
-            //const MvReferenceFrame frfa = above_mbmi->ref_frame[0];
-            //const MvReferenceFrame frfl = left_mbmi->ref_frame[0];
-
-            if (a_sg && l_sg) // single/single
-                pred_context = 1 +
-                    2 *
-                        (!((inter_pred_dir_neighbor_array
-                                ->top_array[mode_type_top_neighbor_index] == UNI_PRED_LIST_1) ^
-                           (inter_pred_dir_neighbor_array
-                                ->left_array[mode_type_left_neighbor_index] == UNI_PRED_LIST_1)));
-            else if (l_sg || a_sg) // single/comp
-                pred_context = 1;
-            else // comp/comp
-                pred_context = 0;
-        }
-    } else if (mode_type_neighbor_array->left_array[mode_type_left_neighbor_index] !=
-               (uint8_t)INVALID_MODE) { // one edge available
-
-        if (mode_type_neighbor_array->left_array[mode_type_left_neighbor_index] ==
-            (uint8_t)INTRA_MODE) { // intra
-            pred_context = 2;
-        } else { // inter
-            if (inter_pred_dir_neighbor_array->left_array[mode_type_left_neighbor_index] !=
-                BI_PRED) // single pred
-                pred_context = 2;
-            else // comp pred
-                pred_context = 4 * 0 /*has_uni_comp_refs(edge_mbmi)*/;
-        }
-    } else if (mode_type_neighbor_array->top_array[mode_type_top_neighbor_index] !=
-               (uint8_t)INVALID_MODE) { // one edge available
-
-        if (mode_type_neighbor_array->top_array[mode_type_top_neighbor_index] ==
-            (uint8_t)INTRA_MODE) { // intra
-            pred_context = 2;
-        } else { // inter
-            if (inter_pred_dir_neighbor_array->top_array[mode_type_top_neighbor_index] !=
-                BI_PRED) // single pred
-                pred_context = 2;
-            else // comp pred
-                pred_context = 4 * 0 /*has_uni_comp_refs(edge_mbmi)*/;
-        }
-    } else { // no edges available
-        pred_context = 2;
-    }
-
-    //assert(pred_context >= 0 && pred_context < COMP_REF_TYPE_CONTEXTS);
-    return pred_context;
-}
-
 #define WRITE_REF_BIT(bname, pname) aom_write_symbol(w, bname, av1_get_pred_cdf_##pname(xd), 2)
 /***************************************************************************************/
 

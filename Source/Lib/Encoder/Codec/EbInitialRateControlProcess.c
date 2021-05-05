@@ -245,7 +245,7 @@ void svt_av1_build_quantizer(AomBitDepth bit_depth, int32_t y_dc_delta_q, int32_
                              Quants *const quants, Dequants *const deq);
 
 
-
+#if LAD_MG_PRINT
 /*
  get size  of the  lad queue
 */
@@ -260,7 +260,7 @@ uint32_t  get_lad_q_size(InitialRateControlContext *ctx)
     }
     return size;
 }
-#if LAD_MG_PRINT
+
 /*
  dump the content of the  queue for debug purpose
 */

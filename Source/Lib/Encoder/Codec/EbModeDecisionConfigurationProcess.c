@@ -101,10 +101,6 @@ static uint8_t intrabc_max_mesh_pct[MAX_MESH_SPEED + 1] = {100, 100, 100, 25, 25
 #define MAX_LUMINOSITY_BOOST 10
 int32_t budget_per_sb_boost[MAX_SUPPORTED_MODES] = {55, 55, 55, 55, 55, 55, 5, 5, 0, 0, 0, 0, 0};
 
-static INLINE int32_t aom_get_qmlevel(int32_t qindex, int32_t first, int32_t last) {
-    return first + (qindex * (last + 1 - first)) / QINDEX_RANGE;
-}
-
 void set_global_motion_field(PictureControlSet *pcs_ptr) {
     // Init Global Motion Vector
     uint8_t frame_index;
@@ -162,45 +158,6 @@ void set_global_motion_field(PictureControlSet *pcs_ptr) {
     }
 }
 
-void svt_av1_set_quantizer(PictureParentControlSet *pcs_ptr, int32_t q) {
-    // quantizer has to be reinitialized with av1_init_quantizer() if any
-    // delta_q changes.
-    FrameHeader *frm_hdr = &pcs_ptr->frm_hdr;
-
-    frm_hdr->quantization_params.using_qmatrix = 0;
-    pcs_ptr->min_qmlevel                       = 5;
-    pcs_ptr->max_qmlevel                       = 9;
-
-    frm_hdr->quantization_params.base_q_idx = AOMMAX(frm_hdr->delta_q_params.delta_q_present, q);
-#if FTR_ENABLE_FIXED_QINDEX_OFFSETS
-    if (!pcs_ptr->scs_ptr->static_config.use_fixed_qindex_offsets)
-#endif
-    {
-        frm_hdr->quantization_params.delta_q_dc[AOM_PLANE_Y] = 0;
-        frm_hdr->quantization_params.delta_q_ac[AOM_PLANE_Y] = 0;
-        frm_hdr->quantization_params.delta_q_ac[AOM_PLANE_U] = 0;
-        frm_hdr->quantization_params.delta_q_dc[AOM_PLANE_U] = 0;
-        frm_hdr->quantization_params.delta_q_ac[AOM_PLANE_V] = 0;
-        frm_hdr->quantization_params.delta_q_dc[AOM_PLANE_V] = 0;
-    }
-
-    frm_hdr->quantization_params.qm[AOM_PLANE_Y]         = aom_get_qmlevel(
-        frm_hdr->quantization_params.base_q_idx, pcs_ptr->min_qmlevel, pcs_ptr->max_qmlevel);
-    frm_hdr->quantization_params.qm[AOM_PLANE_U] = aom_get_qmlevel(
-        frm_hdr->quantization_params.base_q_idx +
-            frm_hdr->quantization_params.delta_q_ac[AOM_PLANE_U],
-        pcs_ptr->min_qmlevel,
-        pcs_ptr->max_qmlevel);
-
-    if (!pcs_ptr->separate_uv_delta_q)
-        frm_hdr->quantization_params.qm[AOM_PLANE_V] = frm_hdr->quantization_params.qm[AOM_PLANE_U];
-    else
-        frm_hdr->quantization_params.qm[AOM_PLANE_V] = aom_get_qmlevel(
-            frm_hdr->quantization_params.base_q_idx +
-                frm_hdr->quantization_params.delta_q_ac[AOM_PLANE_V],
-            pcs_ptr->min_qmlevel,
-            pcs_ptr->max_qmlevel);
-}
 
 void svt_av1_build_quantizer(AomBitDepth bit_depth, int32_t y_dc_delta_q, int32_t u_dc_delta_q,
                              int32_t u_ac_delta_q, int32_t v_dc_delta_q, int32_t v_ac_delta_q,

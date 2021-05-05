@@ -7661,7 +7661,4 @@ void svt_av1_fwd_txfm2d_4x8_N4_c(int16_t *input, int32_t *output, uint32_t input
     av1_tranform_two_d_core_N4_c(
         input, input_stride, output, &cfg, intermediate_transform_buffer, bit_depth);
 }
-/*********************************************************************
- * Map Chroma QP
- *********************************************************************/
-uint8_t map_chroma_qp(uint8_t qp) { return qp; }
+

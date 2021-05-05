@@ -141,9 +141,6 @@ extern void* svt_aom_memalign(size_t align, size_t size);
 extern void* svt_aom_malloc(size_t size);
 extern void  svt_aom_free(void* memblk);
 extern void* svt_aom_memset16(void* dest, int32_t val, size_t length);
-
-extern uint64_t log2f_high_precision(uint64_t x, uint8_t precision);
-
 extern const CodedBlockStats* get_coded_blk_stats(const uint32_t cu_idx);
 
 #define PU_ORIGIN_ADJUST(cu_origin, cu_size, offset) ((((cu_size) * (offset)) >> 2) + (cu_origin))

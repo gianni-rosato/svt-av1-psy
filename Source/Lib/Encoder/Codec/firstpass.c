@@ -402,31 +402,6 @@ static FRAME_STATS accumulate_frame_stats(FRAME_STATS *mb_stats, int mb_rows, in
     return stats;
 }
 /**************************************************
-* average_non_16x16_stats
-* Handle stat for non 16x16 blocks. For non 16x16 blocks, some of the stats are increased multiple times
-* First find the last block in the 16x16 area and then devide the stats by the number of small blocks
- **************************************************/
-// Handle stat for non 16x16 blocks. For non 16x16 blocks, some of the stats are increased multiple times
-// First find the last block in the 16x16 area and then devide the stats by the number of small blocks
-void average_non_16x16_stats(FRAME_STATS *mb_stats, int blk_num) {
-    mb_stats->brightness_factor /= blk_num;
-    mb_stats->inter_count /= blk_num;
-    mb_stats->intra_skip_count /= blk_num;
-    mb_stats->mv_count /= blk_num;
-    mb_stats->neutral_count /= blk_num;
-    mb_stats->new_mv_count /= blk_num;
-    mb_stats->second_ref_count /= blk_num;
-    mb_stats->sum_in_vectors /= blk_num;
-    mb_stats->sum_mvc /= blk_num;
-    mb_stats->sum_mvc_abs /= blk_num;
-    mb_stats->sum_mvcs /= blk_num;
-    mb_stats->sum_mvr /= blk_num;
-    mb_stats->sum_mvr_abs /= blk_num;
-    mb_stats->sum_mvrs /= blk_num;
-    mb_stats->third_ref_count /= blk_num;
-    mb_stats->intra_factor /= blk_num;
-}
-/**************************************************
  * Reset first pass stat
  **************************************************/
 void setup_firstpass_data_seg(PictureParentControlSet *ppcs_ptr, int32_t segment_index) {

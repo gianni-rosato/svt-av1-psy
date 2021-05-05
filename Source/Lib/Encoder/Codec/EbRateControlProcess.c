@@ -44,7 +44,6 @@ void  dtor_trail_ressources(PictureParentControlSet * pcs);
 typedef struct CodedFramesStatsEntry {
     EbDctor  dctor;
     uint64_t picture_number;
-    int64_t  frame_total_bit_actual;
     EbBool   end_of_sequence_flag;
 } CodedFramesStatsEntry;
 
@@ -65,18 +64,6 @@ typedef struct RateControlContext {
 
     RateControlIntervalParamContext **rate_control_param_queue;
 } RateControlContext;
-
-// calculate the QP based on the QP scaling
-uint32_t qp_scaling_calc(SequenceControlSet *scs_ptr, EB_SLICE slice_type,
-                         uint32_t temporal_layer_index, uint32_t base_qp);
-
-EbErrorType rate_control_coded_frames_stats_context_ctor(CodedFramesStatsEntry *entry_ptr,
-                                                         uint64_t               picture_number) {
-    entry_ptr->picture_number         = picture_number;
-    entry_ptr->frame_total_bit_actual = -1;
-
-    return EB_ErrorNone;
-}
 
 static void rate_control_context_dctor(EbPtr p) {
     EbThreadContext *   thread_context_ptr = (EbThreadContext *)p;
@@ -151,39 +138,6 @@ int32_t svt_av1_compute_qdelta(double qstart, double qtarget, AomBitDepth bit_de
     }
 
     return target_index - start_index;
-}
-// calculate the QP based on the QP scaling
-uint32_t qp_scaling_calc(SequenceControlSet *scs_ptr, EB_SLICE slice_type,
-                         uint32_t temporal_layer_index, uint32_t base_qp) {
-    // AMIR to fix
-    uint32_t scaled_qp = 0;
-    int      base_qindex;
-
-    const double delta_rate_new[2][6] = {{0.40, 0.7, 0.85, 1.0, 1.0, 1.0},
-                                         {0.35, 0.6, 0.8, 0.9, 1.0, 1.0}};
-
-    int          qindex = quantizer_to_qindex[base_qp];
-    const double q      = svt_av1_convert_qindex_to_q(
-        qindex, (AomBitDepth)scs_ptr->static_config.encoder_bit_depth);
-    int delta_qindex;
-
-    if (slice_type == I_SLICE) {
-        delta_qindex = svt_av1_compute_qdelta(
-            q, q * 0.25, (AomBitDepth)scs_ptr->static_config.encoder_bit_depth);
-    } else {
-        delta_qindex = svt_av1_compute_qdelta(
-            q,
-            q *
-                delta_rate_new[scs_ptr->static_config.hierarchical_levels == 4]
-                              [temporal_layer_index], // RC does not support 5L
-            //q* delta_rate_new[0][temporal_layer_index], // RC does not support 5L
-            (AomBitDepth)scs_ptr->static_config.encoder_bit_depth);
-    }
-
-    base_qindex = MAX(qindex + delta_qindex, MIN_Q_INDEX);
-    scaled_qp   = (uint32_t)(base_qindex) >> 2;
-
-    return scaled_qp;
 }
 #define STATIC_MOTION_THRESH 95
 

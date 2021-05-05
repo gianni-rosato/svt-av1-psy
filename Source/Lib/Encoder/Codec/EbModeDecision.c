@@ -4265,10 +4265,6 @@ static const uint8_t gradient_to_angle_bin[2][7][16] = {
 };
 
 /* clang-format off */
-static const uint8_t mode_to_angle_bin[INTRA_MODES] = {
-  0, 2, 6, 0, 4, 3, 5, 7, 1, 0,
-  0,
-};
 void svt_av1_get_gradient_hist_c(const uint8_t *src, int src_stride, int rows,
     int cols, uint64_t *hist) {
     src += src_stride;
@@ -4292,44 +4288,6 @@ void svt_av1_get_gradient_hist_c(const uint8_t *src, int src_stride, int rows,
             hist[index] += temp;
         }
         src += src_stride;
-    }
-}
- void angle_estimation(
-    const uint8_t *src,
-    int src_stride,
-    int rows,
-    int cols,
-    //BLOCK_SIZE bsize,
-    uint8_t *directional_mode_skip_mask)
-{
-    // Check if angle_delta is used
-    //if (!av1_use_angle_delta(bsize, need access to context)) return;
-
-    uint64_t hist[DIRECTIONAL_MODES] = { 0 };
-    //if (is_hbd)
-    //    get_highbd_gradient_hist(src, src_stride, rows, cols, hist);
-    //else
-    svt_av1_get_gradient_hist(src, src_stride, rows, cols, hist);
-
-    int i;
-    uint64_t hist_sum = 0;
-    for (i = 0; i < DIRECTIONAL_MODES; ++i) hist_sum += hist[i];
-    for (i = 0; i < INTRA_MODES; ++i) {
-        if (av1_is_directional_mode(i)) {
-            const uint8_t angle_bin = mode_to_angle_bin[i];
-            uint64_t score = 2 * hist[angle_bin];
-            int weight = 2;
-            if (angle_bin > 0) {
-                score += hist[angle_bin - 1];
-                ++weight;
-            }
-            if (angle_bin < DIRECTIONAL_MODES - 1) {
-                score += hist[angle_bin + 1];
-                ++weight;
-            }
-            const int thresh = 10;
-            if (score * thresh < hist_sum * weight) directional_mode_skip_mask[i] = 1;
-        }
     }
 }
 // END of Function Declarations

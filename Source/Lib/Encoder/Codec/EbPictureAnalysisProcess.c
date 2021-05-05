@@ -402,57 +402,6 @@ void svt_compute_interm_var_four8x8_c(uint8_t *input_samples, uint16_t input_str
         compute_sub_mean_squared_values_c(input_samples + block_index, input_stride, 8, 8);
 }
 
-uint8_t get_filtered_types(uint8_t *ptr, uint32_t stride, uint8_t filter_type) {
-    uint8_t *p = ptr - 1 - stride;
-
-    uint32_t a = 0;
-
-    switch (filter_type) {
-    case 0:
-        //Luma
-        a = (p[1] + p[0 + stride] + 4 * p[1 + stride] + p[2 + stride] + p[1 + 2 * stride]) / 8;
-        break;
-    case 1:
-        a = (2 * p[1] + 2 * p[0 + stride] + 4 * p[1 + stride] + 2 * p[2 + stride] +
-             2 * p[1 + 2 * stride]);
-        a = (((uint32_t)((a * 2730) >> 14) + 1) >> 1) & 0xFFFF;
-        //fixed point version of a=a/12 to mimic x86 instruction _mm256_mulhrs_epi16;
-        //a= (a*2730)>>15;
-        break;
-    case 2:
-        a = (4 * p[1] + 4 * p[0 + stride] + 4 * p[1 + stride] + 4 * p[2 + stride] +
-             4 * p[1 + 2 * stride]) /
-            20;
-        break;
-    case 3:
-        a = (1 * p[0] + 1 * p[1] + 1 * p[2] + 1 * p[0 + stride] + 4 * p[1 + stride] +
-             1 * p[2 + stride] + 1 * p[0 + 2 * stride] + 1 * p[1 + 2 * stride] +
-             1 * p[2 + 2 * stride]) /
-            12;
-        break;
-    case 4:
-        //gaussian matrix(Chroma)
-        a = (1 * p[0] + 2 * p[1] + 1 * p[2] + 2 * p[0 + stride] + 4 * p[1 + stride] +
-             2 * p[2 + stride] + 1 * p[0 + 2 * stride] + 2 * p[1 + 2 * stride] +
-             1 * p[2 + 2 * stride]) /
-            16;
-        break;
-    case 5:
-        a = (2 * p[0] + 2 * p[1] + 2 * p[2] + 2 * p[0 + stride] + 4 * p[1 + stride] +
-             2 * p[2 + stride] + 2 * p[0 + 2 * stride] + 2 * p[1 + 2 * stride] +
-             2 * p[2 + 2 * stride]) /
-            20;
-        break;
-    case 6:
-        a = (4 * p[0] + 4 * p[1] + 4 * p[2] + 4 * p[0 + stride] + 4 * p[1 + stride] +
-             4 * p[2 + stride] + 4 * p[0 + 2 * stride] + 4 * p[1 + 2 * stride] +
-             4 * p[2 + 2 * stride]) /
-            36;
-    }
-
-    return (uint8_t)(a >= 255 ? 255 : a); // CLIP3EQ(0, 255, a)
-}
-
 /*******************************************
 * compute_block_mean_compute_variance
 *   computes the variance and the block mean of all CUs inside the tree block
@@ -2642,24 +2591,6 @@ const uint8_t eb_av1_var_offs[MAX_SB_SIZE] = {
     128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
     128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128};
 
-static const uint16_t eb_AV1_HIGH_VAR_OFFS_10[MAX_SB_SIZE] = {
-  128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4,
-  128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4,
-  128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4,
-  128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4,
-  128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4,
-  128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4,
-  128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4,
-  128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4,
-  128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4,
-  128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4,
-  128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4,
-  128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4,
-  128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4,
-  128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4,
-  128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4,
-  128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4, 128 * 4
-};
 
 unsigned int svt_av1_get_sby_perpixel_variance(const AomVarianceFnPtr *fn_ptr, //const AV1_COMP *cpi,
                                                const uint8_t *         src,
@@ -2671,18 +2602,6 @@ unsigned int svt_av1_get_sby_perpixel_variance(const AomVarianceFnPtr *fn_ptr, /
         fn_ptr->vf(src, stride, eb_av1_var_offs, 0, &sse);
     return ROUND_POWER_OF_TWO(var, num_pels_log2_lookup[bs]);
 }
-
-unsigned int svt_av1_high_get_sby_perpixel_variance(const AomVarianceFnPtr *fn_ptr,
-                                                    const uint16_t *src, int stride,
-                                                    BlockSize bs) {
-  unsigned int sse;
-  const unsigned int var =
-     fn_ptr->vf_hbd_10(CONVERT_TO_BYTEPTR(src), stride,
-                       CONVERT_TO_BYTEPTR(eb_AV1_HIGH_VAR_OFFS_10),
-                       0, &sse);
-  return ROUND_POWER_OF_TWO(var, num_pels_log2_lookup[bs]);
-}
-
 
 // Check if the number of color of a block is superior to 1 and inferior
 // to a given threshold.
@@ -2713,36 +2632,6 @@ EbBool is_valid_palette_nb_colors(const uint8_t *src, int stride,
 
     return EB_TRUE;
 }
-
-EbBool is_valid_palette_nb_colors_highbd(const uint16_t *src, int stride,
-                                         int rows, int cols,
-                                         int nb_colors_threshold,
-                                         int bit_depth)
-{
-    EbBool has_color[1 << 12]; // Maximum (1 << 12) color levels.
-    memset(has_color, 0, ((size_t)1 << bit_depth) * sizeof(*has_color));
-    int nb_colors = 0;
-
-    for (int r = 0; r < rows; ++r)
-    {
-        for (int c = 0; c < cols; ++c)
-        {
-            const int this_val = src[r * stride + c];
-            if (has_color[this_val] == 0)
-            {
-                has_color[this_val] = 1;
-                nb_colors++;
-                if (nb_colors > nb_colors_threshold)
-                    return EB_FALSE;
-            }
-        }
-    }
-    if (nb_colors <= 1)
-        return EB_FALSE;
-
-    return EB_TRUE;
-}
-
 
 // Estimate if the source frame is screen content, based on the portion of
 // blocks that have no more than 4 (experimentally selected) luma colors.
