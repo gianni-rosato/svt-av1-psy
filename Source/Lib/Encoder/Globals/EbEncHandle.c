@@ -646,7 +646,6 @@ EbErrorType load_default_buffer_configuration_settings(
         else
         {
 #if TUNE_PICT_PARALLEL
-#if TUNE_PICT_PARALLEL_II
             scs_ptr->input_buffer_fifo_init_count = MAX(min_input, 60);//Input Src
             scs_ptr->picture_control_set_pool_init_count = MAX(min_parent, 64);// Parent PCS (Picture Control Set)
             scs_ptr->pa_reference_picture_buffer_init_count = MAX(min_paref, 40);// Pa ref
@@ -655,15 +654,6 @@ EbErrorType load_default_buffer_configuration_settings(
             scs_ptr->enc_dec_pool_init_count               = MAX(min_child, 3); // Child PCS
             scs_ptr->overlay_input_picture_buffer_init_count = MAX(min_overlay, scs_ptr->overlay_input_picture_buffer_init_count);
             scs_ptr->me_pool_init_count = MAX(min_me, 55); // ME results
-#else
-            scs_ptr->input_buffer_fifo_init_count = MAX(min_input, 80);//Input Src
-            scs_ptr->picture_control_set_pool_init_count = MAX(min_parent, 64);// Parent PCS (Picture Control Set)
-            scs_ptr->pa_reference_picture_buffer_init_count = MAX(min_paref, 43);// Pa ref
-            scs_ptr->reference_picture_buffer_init_count = MAX(min_ref, 51); // Rec Ref
-            scs_ptr->picture_control_set_pool_init_count_child = MAX(min_child, 3); // Child PCS
-            scs_ptr->overlay_input_picture_buffer_init_count = MAX(min_overlay, scs_ptr->overlay_input_picture_buffer_init_count);
-            scs_ptr->me_pool_init_count = MAX(min_me, 64); // ME results
-#endif
 #else
             scs_ptr->input_buffer_fifo_init_count = MAX(min_input, scs_ptr->input_buffer_fifo_init_count);
             scs_ptr->picture_control_set_pool_init_count = MAX(min_parent, scs_ptr->picture_control_set_pool_init_count);
@@ -2860,7 +2850,6 @@ void copy_api_from_app(
     scs_ptr->intra_refresh_type = scs_ptr->static_config.intra_refresh_type;
     scs_ptr->max_temporal_layers = scs_ptr->static_config.hierarchical_levels;
     scs_ptr->static_config.use_qp_file = ((EbSvtAv1EncConfiguration*)config_struct)->use_qp_file;
-#if FTR_ENABLE_FIXED_QINDEX_OFFSETS
     scs_ptr->static_config.use_fixed_qindex_offsets = ((EbSvtAv1EncConfiguration*)config_struct)->use_fixed_qindex_offsets;
     scs_ptr->static_config.key_frame_chroma_qindex_offset = ((EbSvtAv1EncConfiguration*)config_struct)->key_frame_chroma_qindex_offset;
     scs_ptr->static_config.key_frame_qindex_offset = ((EbSvtAv1EncConfiguration*)config_struct)->key_frame_qindex_offset;
@@ -2872,7 +2861,6 @@ void copy_api_from_app(
         memcpy(scs_ptr->static_config.chroma_qindex_offsets, ((EbSvtAv1EncConfiguration*)config_struct)->chroma_qindex_offsets,
             MAX_TEMPORAL_LAYERS * sizeof(int32_t));
     }
-#endif
     scs_ptr->static_config.rc_twopass_stats_in = ((EbSvtAv1EncConfiguration*)config_struct)->rc_twopass_stats_in;
     scs_ptr->static_config.rc_firstpass_stats_out = ((EbSvtAv1EncConfiguration*)config_struct)->rc_firstpass_stats_out;
     // Deblock Filter
@@ -3728,8 +3716,8 @@ EbErrorType svt_svt_enc_init_parameter(
     }
 
     config_ptr->frame_rate = 30 << 16;
-    config_ptr->frame_rate_numerator = 0;
-    config_ptr->frame_rate_denominator = 0;
+    config_ptr->frame_rate_numerator = 30000;
+    config_ptr->frame_rate_denominator = 1000;
     config_ptr->encoder_bit_depth = 8;
     config_ptr->is_16bit_pipeline = EB_FALSE;
     config_ptr->ten_bit_format = 0;
@@ -3742,13 +3730,13 @@ EbErrorType svt_svt_enc_init_parameter(
 
     config_ptr->qp = 50;
     config_ptr->use_qp_file = EB_FALSE;
-#if FTR_ENABLE_FIXED_QINDEX_OFFSETS
+
     config_ptr->use_fixed_qindex_offsets = EB_FALSE;
     memset(config_ptr->qindex_offsets, 0, sizeof(config_ptr->qindex_offsets));
     config_ptr->key_frame_chroma_qindex_offset = 0;
     config_ptr->key_frame_qindex_offset = 0;
     memset(config_ptr->chroma_qindex_offsets, 0, sizeof(config_ptr->chroma_qindex_offsets));
-#endif
+
     config_ptr->scene_change_detection = 0;
     config_ptr->rate_control_mode = 0;
     config_ptr->look_ahead_distance = (uint32_t)~0;
