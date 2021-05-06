@@ -112,19 +112,19 @@ Here are some sample encode command lines
 `SvtAv1EncApp -i input.yuv -w 1920 -h 1080 --fps 24 --crf 30 --preset 8 -b output.ivf`
 
 #### 1 pass VBR 1000 Kbps at medium speed from 24fps yuv 1920x1080 input
-`SvtAv1EncApp -i input.yuv -w 1920 -h 1080 --fps 24 --rc 2 --tbr 1000 --preset 5 -b output.ivf`
+`SvtAv1EncApp -i input.yuv -w 1920 -h 1080 --fps 24 --rc 1 --tbr 1000 --preset 5 -b output.ivf`
 
 #### 2 pass VBR 1000 Kbps at maximum quality from 24fps yuv 1920x1080 input
 1 command line :
 
-`SvtAv1EncApp -i input.yuv -w 1920 -h 1080 --fps 24 --rc 2 --tbr 1000 --preset 0 --irefresh-type 2 --passes 2 --stats stat_file.stat -b output.ivf`
+`SvtAv1EncApp -i input.yuv -w 1920 -h 1080 --fps 24 --rc 1 --tbr 1000 --preset 0 --irefresh-type 2 --passes 2 --stats stat_file.stat -b output.ivf`
 
 or
 
 2 command lines :
 
-`SvtAv1EncApp -i input.yuv -w 1920 -h 1080 --fps 24 --rc 2 --tbr 1000 --preset 8 --irefresh-type 2 --pass 1 --stats stat_file.stat`
-`SvtAv1EncApp -i input.yuv -w 1920 -h 1080 --fps 24 --rc 2 --tbr 1000 --preset 0 --irefresh-type 2 --pass 2 --stats stat_file.stat -b output.ivf`
+`SvtAv1EncApp -i input.yuv -w 1920 -h 1080 --fps 24 --rc 1 --tbr 1000 --preset 8 --irefresh-type 2 --pass 1 --stats stat_file.stat`
+`SvtAv1EncApp -i input.yuv -w 1920 -h 1080 --fps 24 --rc 1 --tbr 1000 --preset 0 --irefresh-type 2 --pass 2 --stats stat_file.stat -b output.ivf`
 
 ### List of all configuration parameters
 
