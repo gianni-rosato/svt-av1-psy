@@ -112,3 +112,7 @@ The relevant flags of the frame header OBU that are associated with the segmenta
 | `segmentation_update_data`                                   | 1: Indicates that new parameters are about to be specified for each segment. <br/>0: Indicates that the segmentation parameters should keep their existing values. |
 | `feature_enabled[i][j]` <br/> 0 ≤ i < `MAX_SEGMENTS` <br/> 0 ≤ j < `SEG_LVL_MAX` | 0: Indicates the feature j disabled for segment i. <br/>1: Indicates the feature j disabled for segment i. |
 | `feature_data[i][j]` <br/> 0 ≤ i < `MAX_SEGMENTS` <br/> 0 ≤ j < `SEG_LVL_MAX` | Specifies the j<sup>th</sup> feature data for segment i.     |
+
+## Notes
+
+The feature settings that are described in this document were compiled at v0.8.3 of the code and may not reflect the current status of the code. The description in this document represents an example showing  how features would interact with the SVT architecture. For the most up-to-date settings, it's recommended to review the section of the code implementing this feature.

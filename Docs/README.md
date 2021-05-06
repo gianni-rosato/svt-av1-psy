@@ -24,4 +24,3 @@
   * [TX Search Appendix](Appendix-TX-Search.md)
   * [SQ Weight Appendix](Appendix-SQ-Weight.md)
   * [Variance Based Adaptive Quantization Appendix](Appendix-Variance-Based-Adaptive-Quantization.md)
-  * [Notices](Notices.md)

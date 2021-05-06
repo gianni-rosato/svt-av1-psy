@@ -332,6 +332,10 @@ frame header OBU:
 In contrast, the temporally filtered key-frame will have ```showable_frame```
 = 1 and no Overlay picture.
 
+## Notes
+
+The feature settings that are described in this document were compiled at v0.8.3 of the code and may not reflect the current status of the code. The description in this document represents an example showing  how features would interact with the SVT architecture. For the most up-to-date settings, it's recommended to review the section of the code implementing this feature.
+
 ## References
 
 <a name = "ref-1"> </a>

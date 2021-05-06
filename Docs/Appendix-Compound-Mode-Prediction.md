@@ -493,6 +493,10 @@ threshold (```inter_inter_wedge_variance_th```), then ```MD_COMP_WEDGE``` is
 not considered in the search and the compound modes to try are limited
 to at most to ```MD_COMP_DIST``` and ```MD_COMP_DIFF0```.
 
+## Notes
+
+The feature settings that are described in this document were compiled at v0.8.3 of the code and may not reflect the current status of the code. The description in this document represents an example showing  how features would interact with the SVT architecture. For the most up-to-date settings, it's recommended to review the section of the code implementing this feature.
+
 ## References
 
 \[1\] Cheng Chen, Jingning Han, and Yaowu Xu, “A Hybrid Weighted Compound

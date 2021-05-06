@@ -151,3 +151,7 @@ The main signal that is sent in the bitsream to enable IBC is
 ```allow_intrabc``` that is sent in the frame header. Note that IBC is only
 allowed for Intra coded frames. At the sequence header screen content
 tools have to be enabled in order to use IBC at the frame level.
+
+## Notes
+
+The feature settings that are described in this document were compiled at v0.8.3 of the code and may not reflect the current status of the code. The description in this document represents an example showing  how features would interact with the SVT architecture. For the most up-to-date settings, it's recommended to review the section of the code implementing this feature.

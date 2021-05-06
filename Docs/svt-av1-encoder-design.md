@@ -1287,3 +1287,7 @@ The following appendices highlight the design and implementation of features in 
 - [Transform Search Appendix](Appendix-TX-Search.md)
 - [Variance Based Adaptive Quantization Appendix](Appendix-Variance-Based-Adaptive-Quantization.md)
 
+
+## Notes
+
+The information in this document was compiled at v0.8.3 may not reflect the latest status of the encoder design. For the most up-to-date settings and implementation, it's recommended to visit the section of the code implementing the feature / section in question.

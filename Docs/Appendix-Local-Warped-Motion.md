@@ -313,6 +313,10 @@ use of LW is signaled by the syntax element *motion\_mode,* which
 indicates the type of motion for a block: simple translation, OBMC,
 or warped motion.
 
+## Notes
+
+The feature settings that are described in this document were compiled at v0.8.3 of the code and may not reflect the current status of the code. The description in this document represents an example showing  how features would interact with the SVT architecture. For the most up-to-date settings, it's recommended to review the section of the code implementing this feature.
+
 ## Reference
 [1] Sarah Parker, Yue Chen, David Barker, Peter de Rivaz, Debargha Mukherjee,
 “Global and Locally Adaptive Warped Motion Compensation in Video Compression,”  IEEE International Conference on Image Processing (ICIP), pp. 275-279, 2017.

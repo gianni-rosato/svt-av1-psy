@@ -270,3 +270,7 @@ description of the flag settings is given in Table 10.
 | 1                         | Feature ON      |
 
 The flag ```tx_size_early_exit``` is set to 1.
+
+## Notes
+
+The feature settings that are described in this document were compiled at v0.8.3 of the code and may not reflect the current status of the code. The description in this document represents an example showing  how features would interact with the SVT architecture. For the most up-to-date settings, it's recommended to review the section of the code implementing this feature.

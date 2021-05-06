@@ -386,6 +386,10 @@ The optimization proceeds as follows:
 | wiener\_info                      | Vertical and horizontal filter coefficient array vfilter and hfilter. |
 | sgrproj\_info                     | epsilon, projection parameters xqd\[0\] and xqd\[1\]                  |
 
+## Notes
+
+The feature settings that are described in this document were compiled at v0.8.3 of the code and may not reflect the current status of the code. The description in this document represents an example showing  how features would interact with the SVT architecture. For the most up-to-date settings, it's recommended to review the section of the code implementing this feature.
+
 ## References
 
 [1] Debargha Mukherjee, Shunyao Li, Yue Chen, Aamir Anis, Sarah Parker and
