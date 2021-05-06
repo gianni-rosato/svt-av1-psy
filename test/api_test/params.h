@@ -560,19 +560,7 @@ static const vector<EbBool> invalid_ext_block_flag = {
     // none
 };
 
-/* Flag to enable the use of recon pictures for motion estimation
- *
- * Default is 0. */
-static const vector<EbBool> default_in_loop_me_flag = {
-    EB_FALSE,
-};
-static const vector<EbBool> valid_in_loop_me_flag = {
-    EB_FALSE,
-    EB_TRUE,
-};
-static const vector<EbBool> invalid_in_loop_me_flag = {
-    // none
-};
+
 
 // ME Parameters
 /* Number of search positions in the horizontal direction.
@@ -657,30 +645,6 @@ static const vector<uint32_t> invalid_scene_change_detection = {
     2,
 };
 
-/* When RateControlMode is set to 1 it's best to set this parameter to be
- * equal to the Intra period value (such is the default set by the encoder).
- * When CQP is chosen, then a (2 * minigopsize +1) look ahead is recommended.
- *
- * Default depends on rate control mode.*/
-static const vector<uint32_t> default_look_ahead_distance = {
-    (uint32_t)~0,
-};
-static const vector<uint32_t> valid_look_ahead_distance = {
-    (uint32_t)~0,
-    0,
-    1,
-    10,
-    24,
-    25,
-    30,
-    60,
-    MAX_LAD,
-};
-static const vector<uint32_t> invalid_look_ahead_distance = {
-    /* look_ahead_distance override in code
-    MAX_LAD + 1, ((uint32_t)~0 - 1)
-    */
-    };
 
 /* Target bitrate in bits/second, only apllicable when rate control mode is
  * set to 1.

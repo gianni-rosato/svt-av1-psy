@@ -458,12 +458,6 @@ typedef struct EbSvtAv1EncConfiguration {
     *
     * Default is 1. */
     EbBool ext_block_flag;
-
-    /* Flag to enable the use of recon pictures for motion estimation
-    *
-    * Default is 1. */
-    EbBool in_loop_me_flag;
-
     // ME Parameters
     /* Number of search positions in the horizontal direction.
      *
@@ -503,6 +497,7 @@ typedef struct EbSvtAv1EncConfiguration {
      *
      * Default is 1. */
     uint32_t scene_change_detection;
+
     /* When RateControlMode is set to 1 it's best to set this parameter to be
      * equal to the Intra period value (such is the default set by the encoder).
      * When CQP is chosen, then a (2 * minigopsize +1) look ahead is recommended.
@@ -510,7 +505,7 @@ typedef struct EbSvtAv1EncConfiguration {
      * Default depends on rate control mode.*/
     uint32_t look_ahead_distance;
 
-    /* Enable TPL in look ahead, only works when look_ahead_distance>0
+    /* Enable TPL in look ahead
      * 0 = disable TPL in look ahead
      * 1 = enable TPL in look ahead
      * Default is 0  */

@@ -462,7 +462,6 @@ typedef struct MeContext {
     uint32_t idx_32x32;
     uint16_t     min_frame_size;
     int64_t prune_me_candidates_th;
-    MePcs *me_pcs;//PCS wraper for ME
     uint8_t reduce_hme_l0_sr_th_min;
     uint8_t reduce_hme_l0_sr_th_max;
 } MeContext;

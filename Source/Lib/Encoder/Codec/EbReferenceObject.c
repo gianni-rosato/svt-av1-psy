@@ -167,8 +167,6 @@ EbErrorType svt_reference_object_ctor(EbReferenceObject *reference_object,
     EbPictureBufferDescInitData picture_buffer_desc_init_data_16bit_ptr =
         *picture_buffer_desc_init_data_ptr;
 
-    EbPictureBufferDescInitData hme_desc_init_data = *picture_buffer_desc_init_data_ptr;
-
     reference_object->dctor = svt_reference_object_dctor;
     //TODO:12bit
     if (picture_buffer_desc_init_data_16bit_ptr.bit_depth == EB_10BIT) {
@@ -219,18 +217,8 @@ EbErrorType svt_reference_object_ctor(EbReferenceObject *reference_object,
             reference_object->reference_picture16bit->bit_depth = EB_8BIT;
         }
     }
-
-    hme_desc_init_data.left_padding       = 68;
-    hme_desc_init_data.right_padding      = 68;
-    hme_desc_init_data.top_padding        = 68;
-    hme_desc_init_data.bot_padding        = 68;
-    hme_desc_init_data.split_mode         = EB_FALSE;
-    hme_desc_init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_LUMA_MASK; //Only save 8bit luma
-    hme_desc_init_data.bit_depth          = EB_8BIT;
     reference_object->input_picture = NULL;
-    if (ref_init_ptr->hme_quarter_luma_recon)
-    EB_NEW(
-        reference_object->input_picture, svt_picture_buffer_desc_ctor, (EbPtr)&hme_desc_init_data);
+
     uint32_t mi_rows = reference_object->reference_picture->height >> MI_SIZE_LOG2;
     uint32_t mi_cols = reference_object->reference_picture->width >> MI_SIZE_LOG2;
 
@@ -241,50 +229,7 @@ EbErrorType svt_reference_object_ctor(EbReferenceObject *reference_object,
     }
     reference_object->quarter_reference_picture   = NULL;
     reference_object->sixteenth_reference_picture = NULL;
-    if (ref_init_ptr->hme_quarter_luma_recon) {
-        hme_desc_init_data.max_width    = picture_buffer_desc_init_data_16bit_ptr.max_width >> 1;
-        hme_desc_init_data.max_height   = picture_buffer_desc_init_data_16bit_ptr.max_height >> 1;
-        hme_desc_init_data.bit_depth    = EB_8BIT;
-        hme_desc_init_data.color_format = EB_YUV420;
-        hme_desc_init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_LUMA_MASK;
-        hme_desc_init_data.left_padding       = 64 >> 1;
-        hme_desc_init_data.right_padding      = 64 >> 1;
-        hme_desc_init_data.top_padding        = 64 >> 1;
-        hme_desc_init_data.bot_padding        = 64 >> 1;
-        hme_desc_init_data.split_mode         = EB_FALSE;
-        EB_NEW(reference_object->quarter_reference_picture,
-               svt_picture_buffer_desc_ctor,
-               (EbPtr)&hme_desc_init_data);
-        hme_desc_init_data.left_padding  = 64 >> 1;
-        hme_desc_init_data.right_padding = 64 >> 1;
-        hme_desc_init_data.top_padding   = 64 >> 1;
-        hme_desc_init_data.bot_padding   = 64 >> 1;
-        EB_NEW(reference_object->quarter_input_picture,
-               svt_picture_buffer_desc_ctor,
-               (EbPtr)&hme_desc_init_data);
-    }
-    if (ref_init_ptr->hme_sixteenth_luma_recon) {
-        hme_desc_init_data.max_width    = picture_buffer_desc_init_data_16bit_ptr.max_width >> 2;
-        hme_desc_init_data.max_height   = picture_buffer_desc_init_data_16bit_ptr.max_height >> 2;
-        hme_desc_init_data.bit_depth    = EB_8BIT;
-        hme_desc_init_data.color_format = EB_YUV420;
-        hme_desc_init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_LUMA_MASK;
-        hme_desc_init_data.left_padding       = 64 >> 2;
-        hme_desc_init_data.right_padding      = 64 >> 2;
-        hme_desc_init_data.top_padding        = 64 >> 2;
-        hme_desc_init_data.bot_padding        = 64 >> 2;
-        hme_desc_init_data.split_mode         = EB_FALSE;
-        EB_NEW(reference_object->sixteenth_reference_picture,
-               svt_picture_buffer_desc_ctor,
-               (EbPtr)&hme_desc_init_data);
-        hme_desc_init_data.left_padding  = 64 >> 2;
-        hme_desc_init_data.right_padding = 64 >> 2;
-        hme_desc_init_data.top_padding   = 64 >> 2;
-        hme_desc_init_data.bot_padding   = 64 >> 2;
-        EB_NEW(reference_object->sixteenth_input_picture,
-               svt_picture_buffer_desc_ctor,
-               (EbPtr)&hme_desc_init_data);
-    }
+
     reference_object->ds_pics.picture_ptr           = reference_object->reference_picture;
     reference_object->ds_pics.quarter_picture_ptr   = reference_object->quarter_reference_picture;
     reference_object->ds_pics.sixteenth_picture_ptr = reference_object->sixteenth_reference_picture;
@@ -341,11 +286,6 @@ EbErrorType svt_pa_reference_object_ctor(EbPaReferenceObject *pa_ref_obj_,
         object_init_data_ptr;
 
     pa_ref_obj_->dctor                                    = svt_pa_reference_object_dctor;
-    EbPaReferenceObjectDescInitData *pa_ref_init_data_ptr = (EbPaReferenceObjectDescInitData *)
-        object_init_data_ptr;
-    pa_ref_obj_->dummy_obj = pa_ref_init_data_ptr->empty_pa_buffers;
-    if (pa_ref_init_data_ptr->empty_pa_buffers)
-        return EB_ErrorNone;
 
     // Reference picture constructor
     EB_NEW(pa_ref_obj_->input_padded_picture_ptr,

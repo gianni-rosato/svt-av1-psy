@@ -29,20 +29,3 @@ EbErrorType picture_results_creator(EbPtr *object_dbl_ptr, EbPtr object_init_dat
 
     return EB_ErrorNone;
 }
-EbErrorType picture_manager_result_ctor(PictureManagerResults *object_ptr,
-                                        EbPtr                  object_init_data_ptr) {
-    (void)object_ptr;
-    (void)object_init_data_ptr;
-
-    return EB_ErrorNone;
-}
-
-EbErrorType picture_manager_result_creator(EbPtr *object_dbl_ptr, EbPtr object_init_data_ptr) {
-    PictureManagerResults *obj;
-
-    *object_dbl_ptr = NULL;
-    EB_NEW(obj, picture_manager_result_ctor, object_init_data_ptr);
-    *object_dbl_ptr = obj;
-
-    return EB_ErrorNone;
-}

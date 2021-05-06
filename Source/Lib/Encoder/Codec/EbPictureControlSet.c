@@ -1264,11 +1264,6 @@ static void picture_parent_control_set_dctor(EbPtr ptr) {
     EB_FREE_ARRAY(obj->me_32x32_distortion);
     EB_FREE_ARRAY(obj->me_16x16_distortion);
     EB_FREE_ARRAY(obj->me_8x8_distortion);
-
-    EB_FREE_ARRAY(obj->me_64x64_distortion_trail);
-    EB_FREE_ARRAY(obj->me_32x32_distortion_trail);
-    EB_FREE_ARRAY(obj->me_16x16_distortion_trail);
-    EB_FREE_ARRAY(obj->me_8x8_distortion_trail);
     EB_FREE_ARRAY(obj->me_8x8_cost_variance);
     // Non moving index array
     EB_FREE_ARRAY(obj->non_moving_index_array);
@@ -1289,10 +1284,6 @@ static void picture_parent_control_set_dctor(EbPtr ptr) {
     EB_DESTROY_MUTEX(obj->temp_filt_mutex);
     EB_DESTROY_MUTEX(obj->debug_mutex);
     EB_FREE_ARRAY(obj->tile_group_info);
-    EB_FREE_ARRAY(obj->tile_group_info_trail);
-    EB_DESTROY_SEMAPHORE(obj->tpl_me_done_semaphore);
-    EB_DESTROY_MUTEX(obj->tpl_me_mutex);
-    //  EB_DESTROY_SEMAPHORE(obj->pame_done_semaphore);
     EB_DESTROY_MUTEX(obj->pame_done.mutex);
     EB_DESTROY_SEMAPHORE(obj->first_pass_done_semaphore);
     EB_DESTROY_MUTEX(obj->first_pass_mutex);
@@ -1301,12 +1292,9 @@ static void picture_parent_control_set_dctor(EbPtr ptr) {
         EB_DELETE(obj->enhanced_picture_ptr);
     }
     EB_DESTROY_SEMAPHORE(obj->tpl_disp_done_semaphore);
-    EB_DESTROY_SEMAPHORE(obj->tpl_disp_done_semaphore_trail);
     EB_DESTROY_MUTEX(obj->tpl_disp_mutex);
-    EB_DESTROY_MUTEX(obj->tpl_disp_mutex_trail);
     uint16_t tile_cnt = 1;/*obj->tile_row_count * obj->tile_column_count;*/
     EB_DELETE_PTR_ARRAY(obj->tpl_disp_segment_ctrl, tile_cnt);
-    EB_DELETE_PTR_ARRAY(obj->tpl_disp_segment_ctrl_trail, tile_cnt);
     EB_DESTROY_MUTEX(obj->pcs_total_rate_mutex);
 }
 EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr,
@@ -1428,10 +1416,6 @@ EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr,
     EB_MALLOC_ARRAY(object_ptr->me_16x16_distortion, object_ptr->sb_total_count);
     EB_MALLOC_ARRAY(object_ptr->me_8x8_distortion, object_ptr->sb_total_count);
 
-    EB_MALLOC_ARRAY(object_ptr->me_64x64_distortion_trail, object_ptr->sb_total_count);
-    EB_MALLOC_ARRAY(object_ptr->me_32x32_distortion_trail, object_ptr->sb_total_count);
-    EB_MALLOC_ARRAY(object_ptr->me_16x16_distortion_trail, object_ptr->sb_total_count);
-    EB_MALLOC_ARRAY(object_ptr->me_8x8_distortion_trail, object_ptr->sb_total_count);
     EB_MALLOC_ARRAY(object_ptr->me_8x8_cost_variance, object_ptr->sb_total_count);
     // Non moving index array
     EB_MALLOC_ARRAY(object_ptr->non_moving_index_array, object_ptr->sb_total_count);
@@ -1443,26 +1427,16 @@ EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr,
     EB_CREATE_MUTEX(object_ptr->debug_mutex);
     EB_MALLOC_ARRAY(object_ptr->av1_cm, 1);
 
-    EB_CREATE_SEMAPHORE(object_ptr->tpl_me_done_semaphore, 0, 1);
-    EB_CREATE_MUTEX(object_ptr->tpl_me_mutex);
-
     EB_CREATE_MUTEX(object_ptr->pame_done.mutex);
     EB_CREATE_SEMAPHORE(object_ptr->first_pass_done_semaphore, 0, 1);
     EB_CREATE_MUTEX(object_ptr->first_pass_mutex);
 
     EB_CREATE_SEMAPHORE(object_ptr->tpl_disp_done_semaphore, 0, 1);
-    EB_CREATE_SEMAPHORE(object_ptr->tpl_disp_done_semaphore_trail, 0, 1);
     EB_CREATE_MUTEX(object_ptr->tpl_disp_mutex);
-    EB_CREATE_MUTEX(object_ptr->tpl_disp_mutex_trail);
 
     EB_MALLOC_ARRAY(object_ptr->tpl_disp_segment_ctrl, 1);
-    EB_MALLOC_ARRAY(object_ptr->tpl_disp_segment_ctrl_trail, 1);
     for (uint32_t tile_idx = 0; tile_idx < 1; tile_idx++) {
         EB_NEW(object_ptr->tpl_disp_segment_ctrl[tile_idx],
-                enc_dec_segments_ctor,
-                init_data_ptr->enc_dec_segment_col,
-                init_data_ptr->enc_dec_segment_row);
-        EB_NEW(object_ptr->tpl_disp_segment_ctrl_trail[tile_idx],
                 enc_dec_segments_ctor,
                 init_data_ptr->enc_dec_segment_col,
                 init_data_ptr->enc_dec_segment_row);
@@ -1524,9 +1498,7 @@ EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr,
     EB_MALLOC_ARRAY(
         object_ptr->tile_group_info,
         (object_ptr->av1_cm->tiles_info.tile_rows * object_ptr->av1_cm->tiles_info.tile_cols));
-    EB_MALLOC_ARRAY(
-        object_ptr->tile_group_info_trail,
-        (object_ptr->av1_cm->tiles_info.tile_rows * object_ptr->av1_cm->tiles_info.tile_cols));
+
     object_ptr->frame_superres_enabled = EB_FALSE;
     object_ptr->aligned_width          = init_data_ptr->picture_width;
     object_ptr->aligned_height         = init_data_ptr->picture_height;

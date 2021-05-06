@@ -149,10 +149,6 @@ static const std::vector<EncTestSetting> default_enc_settings = {
     // test scene change detection, default is 1
     {"SCDTest1", {{"SceneChangeDetection", "0"}}, default_test_vectors},
 
-    // test look_ahead_distance, try other values than default value,
-    // the default value should be 2 * 4 + 1 = 9
-    {"LookAheadTest", {{"RateControlMode", "0"}, {"LookAheadDistance", "6"}, {"IntraPeriod", "4"}},
-     default_test_vectors},
 
     // test ScreenContentMode, default 2 auto detection mode;
     {"ScreenToolTest1", {{"ScreenContentMode", "0"}}, default_test_vectors},

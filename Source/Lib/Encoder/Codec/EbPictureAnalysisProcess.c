@@ -2170,33 +2170,6 @@ void compute_picture_spatial_statistics(SequenceControlSet *     scs_ptr,
     return;
 }
 
-// compute mean & variance
-void compute_picture_spatial_statistics_ime(SequenceControlSet *     scs_ptr,
-                                        PictureParentControlSet *pcs_ptr,
-                                        EbPictureBufferDesc *    input_picture_ptr) {
-    uint64_t pic_tot_variance;
-
-    // Variance
-    pic_tot_variance = 0;
-
-    for (uint16_t sb_index = 0; sb_index < pcs_ptr->sb_total_count; ++sb_index) {
-        SbParams *sb_params = &pcs_ptr->sb_params_array[sb_index];
-
-        uint16_t sb_origin_x             = sb_params->origin_x;
-        uint16_t sb_origin_y             = sb_params->origin_y;
-        uint32_t input_luma_origin_index = (input_picture_ptr->origin_y + sb_origin_y) *
-                                      input_picture_ptr->stride_y +
-                                  input_picture_ptr->origin_x + sb_origin_x;
-
-        compute_block_mean_compute_variance(
-            scs_ptr, pcs_ptr, input_picture_ptr, sb_index, input_luma_origin_index);
-        pic_tot_variance += (pcs_ptr->variance[sb_index][RASTER_SCAN_CU_INDEX_64x64]);
-    }
-
-    pcs_ptr->pic_avg_variance = (uint16_t)(pic_tot_variance / pcs_ptr->sb_total_count);
-
-    return;
-}
 
 void calculate_input_average_intensity(SequenceControlSet *     scs_ptr,
                                        PictureParentControlSet *pcs_ptr,
@@ -2302,39 +2275,6 @@ void gathering_picture_statistics(SequenceControlSet *scs_ptr, PictureParentCont
     return;
 }
 
-// calculate picture statistics
-// mean , variance , Luma intensity, Histogram
-static void gathering_picture_statistics_ime(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_ptr,
-                                  EbPictureBufferDesc *input_picture_ptr) {
- uint64_t sum_avg_intensity_ttl_regions_luma = 0;
-    uint64_t sum_avg_intensity_ttl_regions_cb   = 0;
-    uint64_t sum_avg_intensity_ttl_regions_cr   = 0;
-
-    // Histogram bins
-    // Use 1/16 Luma for Histogram generation
-    sub_sample_luma_generate_pixel_intensity_histogram_bins_ime(
-        scs_ptr, pcs_ptr,input_picture_ptr, &sum_avg_intensity_ttl_regions_luma, 4);
-
-    // Use 1/16 Chroma for Histogram generation
-    sub_sample_chroma_generate_pixel_intensity_histogram_bins(scs_ptr,
-                                                              pcs_ptr,
-                                                              input_picture_ptr,
-                                                              &sum_avg_intensity_ttl_regions_cb,
-                                                              &sum_avg_intensity_ttl_regions_cr,
-                                                              4);
-
-     // Calculate the LUMA average intensity
-    calculate_input_average_intensity(scs_ptr,
-                                      pcs_ptr,
-                                      input_picture_ptr,
-                                      sum_avg_intensity_ttl_regions_luma,
-                                      sum_avg_intensity_ttl_regions_cb,
-                                      sum_avg_intensity_ttl_regions_cr);
-
-    compute_picture_spatial_statistics_ime(
-        scs_ptr, pcs_ptr, input_picture_ptr);
-
-}
 
 /************************************************
  * Pad Picture at the right and bottom sides
@@ -2961,7 +2901,6 @@ void *picture_analysis_kernel(void *input_ptr) {
     ResourceCoordinationResults *in_results_ptr;
     EbObjectWrapper *            out_results_wrapper_ptr;
     EbPaReferenceObject *        pa_ref_obj_;
-    EbDownScaledObject*          ds_obj;
 
     EbPictureBufferDesc *input_padded_picture_ptr;
     EbPictureBufferDesc *input_picture_ptr;
@@ -2998,91 +2937,49 @@ void *picture_analysis_kernel(void *input_ptr) {
             } else
                 pcs_ptr->chroma_downsampled_picture_ptr = input_picture_ptr;
 
-            if (scs_ptr->in_loop_me) {
-                ds_obj =
-                    (EbDownScaledObject*)pcs_ptr->down_scaled_picture_wrapper_ptr->object_ptr;
+            //not passing through the DS pool, so 1/4 and 1/16 are not used
+            pcs_ptr->ds_pics.picture_ptr = input_picture_ptr;
+            pcs_ptr->ds_pics.quarter_picture_ptr = NULL;
+            pcs_ptr->ds_pics.sixteenth_picture_ptr = NULL;
+            pcs_ptr->ds_pics.picture_number = pcs_ptr->picture_number;
 
-                //ds_obj->picture_ptr = input_picture_ptr; // Save original picture pointer
-                //ds_obj->picture_number = pcs_ptr->picture_number;
-                //pcs_ptr->downscaled_input_pic = ds_obj;
+            // Original path
+            // Get PA ref, copy 8bit luma to pa_ref->input_padded_picture_ptr
+            pa_ref_obj_ =
+                (EbPaReferenceObject *)pcs_ptr->pa_reference_picture_wrapper_ptr->object_ptr;
+            pa_ref_obj_->picture_number = pcs_ptr->picture_number;
+            input_padded_picture_ptr = (EbPictureBufferDesc *)pa_ref_obj_->input_padded_picture_ptr;
+            uint8_t *pa =
+                input_padded_picture_ptr->buffer_y + input_padded_picture_ptr->origin_x +
+                input_padded_picture_ptr->origin_y * input_padded_picture_ptr->stride_y;
+            uint8_t *in = input_picture_ptr->buffer_y + input_picture_ptr->origin_x +
+                            input_picture_ptr->origin_y * input_picture_ptr->stride_y;
+            for (uint32_t row = 0; row < input_picture_ptr->height; row++)
+                EB_MEMCPY(pa + row * input_padded_picture_ptr->stride_y,
+                            in + row * input_picture_ptr->stride_y,
+                            sizeof(uint8_t) * input_picture_ptr->width);
+            // Pad input picture to complete border SBs
+            pad_picture_to_multiple_of_sb_dimensions(input_padded_picture_ptr);
 
-                pcs_ptr->ds_pics.picture_ptr = input_picture_ptr;
-                pcs_ptr->ds_pics.quarter_picture_ptr = ds_obj->quarter_picture_ptr;
-                pcs_ptr->ds_pics.sixteenth_picture_ptr = ds_obj->sixteenth_picture_ptr;
-                pcs_ptr->ds_pics.picture_number = pcs_ptr->picture_number;
+            // 1/4 & 1/16 input picture downsampling through filtering
+            if (scs_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED) {
+                downsample_filtering_input_picture(
+                    pcs_ptr,
+                    input_padded_picture_ptr,
+                    (EbPictureBufferDesc *)pa_ref_obj_->quarter_downsampled_picture_ptr,
+                    (EbPictureBufferDesc *)pa_ref_obj_->sixteenth_downsampled_picture_ptr);
+            }
+            else {
+                downsample_decimation_input_picture(
+                    pcs_ptr,
+                    input_padded_picture_ptr,
+                    (EbPictureBufferDesc *)pa_ref_obj_->quarter_downsampled_picture_ptr,
+                    (EbPictureBufferDesc *)pa_ref_obj_->sixteenth_downsampled_picture_ptr);
+            }
 
-                // Get the 1/2, 1/4 of input picture, only used for global motion
-                // TODO: Check for global motion whether we need these
-                if (scs_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED) {
-                    downsample_filtering_input_picture_ime(
-                            input_picture_ptr,
-                            (EbPictureBufferDesc *)ds_obj->quarter_picture_ptr,
-                            (EbPictureBufferDesc *)ds_obj->sixteenth_picture_ptr);
-                } else {
-                    downsample_decimation_input_picture_ime(
-                            input_picture_ptr,
-                            (EbPictureBufferDesc *)ds_obj->quarter_picture_ptr,
-                            (EbPictureBufferDesc *)ds_obj->sixteenth_picture_ptr);
-                }
-
-                // TODO: Refine this function
-                // Gathering statistics of input picture, including Variance Calculation, Histogram Bins
-                gathering_picture_statistics_ime(
-                        scs_ptr, pcs_ptr,
-                        pcs_ptr->chroma_downsampled_picture_ptr);
-
-                // Save pointer of raw input to PA
-                // TODO: This is just to make it work for current TPL in iRC
-                // When moving the TPL logic from iRC to RC, should use input picture directly and remove the codes here
-                pa_ref_obj_ = (EbPaReferenceObject *)pcs_ptr->pa_reference_picture_wrapper_ptr->object_ptr;
-                pa_ref_obj_->input_padded_picture_ptr = input_picture_ptr;
-                pa_ref_obj_->quarter_downsampled_picture_ptr = ds_obj->quarter_picture_ptr;
-                pa_ref_obj_->sixteenth_downsampled_picture_ptr = ds_obj->sixteenth_picture_ptr;
-            } else {
-                if (scs_ptr->in_loop_me == 0){
-                  //not passing through the DS pool, so 1/4 and 1/16 are not used
-                  pcs_ptr->ds_pics.picture_ptr = input_picture_ptr;
-                  pcs_ptr->ds_pics.quarter_picture_ptr = NULL;
-                  pcs_ptr->ds_pics.sixteenth_picture_ptr = NULL;
-                  pcs_ptr->ds_pics.picture_number = pcs_ptr->picture_number;
-                  }
-                // Original path
-                // Get PA ref, copy 8bit luma to pa_ref->input_padded_picture_ptr
-                pa_ref_obj_ =
-                    (EbPaReferenceObject *)pcs_ptr->pa_reference_picture_wrapper_ptr->object_ptr;
-                pa_ref_obj_->picture_number = pcs_ptr->picture_number;
-                input_padded_picture_ptr = (EbPictureBufferDesc *)pa_ref_obj_->input_padded_picture_ptr;
-                uint8_t *pa =
-                    input_padded_picture_ptr->buffer_y + input_padded_picture_ptr->origin_x +
-                    input_padded_picture_ptr->origin_y * input_padded_picture_ptr->stride_y;
-                uint8_t *in = input_picture_ptr->buffer_y + input_picture_ptr->origin_x +
-                              input_picture_ptr->origin_y * input_picture_ptr->stride_y;
-                for (uint32_t row = 0; row < input_picture_ptr->height; row++)
-                    EB_MEMCPY(pa + row * input_padded_picture_ptr->stride_y,
-                              in + row * input_picture_ptr->stride_y,
-                              sizeof(uint8_t) * input_picture_ptr->width);
-                // Pad input picture to complete border SBs
-                pad_picture_to_multiple_of_sb_dimensions(input_padded_picture_ptr);
-
-                // 1/4 & 1/16 input picture downsampling through filtering
-                if (scs_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED) {
-                    downsample_filtering_input_picture(
-                        pcs_ptr,
-                        input_padded_picture_ptr,
-                        (EbPictureBufferDesc *)pa_ref_obj_->quarter_downsampled_picture_ptr,
-                        (EbPictureBufferDesc *)pa_ref_obj_->sixteenth_downsampled_picture_ptr);
-                }
-                else {
-                    downsample_decimation_input_picture(
-                        pcs_ptr,
-                        input_padded_picture_ptr,
-                        (EbPictureBufferDesc *)pa_ref_obj_->quarter_downsampled_picture_ptr,
-                        (EbPictureBufferDesc *)pa_ref_obj_->sixteenth_downsampled_picture_ptr);
-                }
-
-                pcs_ptr->ds_pics.quarter_picture_ptr = pa_ref_obj_->quarter_downsampled_picture_ptr;
-                pcs_ptr->ds_pics.sixteenth_picture_ptr = pa_ref_obj_->sixteenth_downsampled_picture_ptr;
-                // Gathering statistics of input picture, including Variance Calculation, Histogram Bins
+            pcs_ptr->ds_pics.quarter_picture_ptr = pa_ref_obj_->quarter_downsampled_picture_ptr;
+            pcs_ptr->ds_pics.sixteenth_picture_ptr = pa_ref_obj_->sixteenth_downsampled_picture_ptr;
+            // Gathering statistics of input picture, including Variance Calculation, Histogram Bins
             if (!use_output_stat(scs_ptr))
                 gathering_picture_statistics(
                         scs_ptr,
@@ -3091,7 +2988,6 @@ void *picture_analysis_kernel(void *input_ptr) {
                         input_padded_picture_ptr,
                         (EbPictureBufferDesc *)pa_ref_obj_->sixteenth_downsampled_picture_ptr,
                         pcs_ptr->sb_total_count);
-            }
 
             // SC detection is OFF for first pass in M8
             uint8_t disable_sc_detection = scs_ptr->enc_mode_2ndpass <= ENC_M7 ? 0 : use_output_stat(scs_ptr) ? 1 : 0;

@@ -33,8 +33,6 @@ typedef struct RateControlTasks {
     EbDctor              dctor;
     RateControlTaskTypes task_type;
     EbObjectWrapper *    pcs_wrapper_ptr;
-    uint32_t             segment_index;
-
     // Following are valid for RC_ENTROPY_CODING_ROW_FEEDBACK_RESULT only
     uint64_t picture_number;
     uint32_t row_number;

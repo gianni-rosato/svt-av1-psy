@@ -399,7 +399,7 @@ EbErrorType load_default_buffer_configuration_settings(
         return EB_ErrorInsufficientResources;
 
     uint32_t input_pic = (uint32_t)return_ppcs;
-    scs_ptr->input_buffer_fifo_init_count = input_pic + SCD_LAD + scs_ptr->static_config.look_ahead_distance;
+    scs_ptr->input_buffer_fifo_init_count = input_pic + SCD_LAD;
     uint32_t enc_dec_seg_h = (core_count == SINGLE_CORE_COUNT) ? 1 :
         (scs_ptr->static_config.super_block_size == 128) ?
         ((scs_ptr->max_input_luma_height + 64) / 128) :
@@ -499,21 +499,20 @@ EbErrorType load_default_buffer_configuration_settings(
     scs_ptr->tf_segment_column_count = me_seg_w;//1;//
     scs_ptr->tf_segment_row_count =  me_seg_h;//1;//
     //#====================== Data Structures and Picture Buffers ======================
-    scs_ptr->picture_control_set_pool_init_count       = input_pic + SCD_LAD + scs_ptr->static_config.look_ahead_distance;
+    scs_ptr->picture_control_set_pool_init_count       = input_pic + SCD_LAD ;
     if (scs_ptr->static_config.enable_overlays)
         scs_ptr->picture_control_set_pool_init_count = MAX(scs_ptr->picture_control_set_pool_init_count,
-            scs_ptr->static_config.look_ahead_distance + // frames in the LAD
-            scs_ptr->static_config.look_ahead_distance / (1 << scs_ptr->static_config.hierarchical_levels) + 1 +  // number of overlayes in the LAD
+             (uint32_t)(1 +  // number of overlayes in the LAD
             ((1 << scs_ptr->static_config.hierarchical_levels) + SCD_LAD) * 2 +// minigop formation in PD + SCD_LAD *(normal pictures + potential pictures )
-            (1 << scs_ptr->static_config.hierarchical_levels)); // minigop in PM
+            (1 << scs_ptr->static_config.hierarchical_levels))); // minigop in PM
     scs_ptr->picture_control_set_pool_init_count_child = MAX(MAX(MIN(3, core_count/2), core_count / 6), 1);
     scs_ptr->enc_dec_pool_init_count               = MAX(MAX(MIN(3, core_count/2), core_count / 6), 1);
     scs_ptr->reference_picture_buffer_init_count       = MAX((uint32_t)(input_pic >> 1),
                                                                           (uint32_t)((1 << scs_ptr->static_config.hierarchical_levels) + 2)) +
-                                                                          scs_ptr->static_config.look_ahead_distance + SCD_LAD;
+                                                                          SCD_LAD;
     scs_ptr->pa_reference_picture_buffer_init_count    = MAX((uint32_t)(input_pic >> 1),
                                                                           (uint32_t)((1 << scs_ptr->static_config.hierarchical_levels) + 2)) +
-                                                                          scs_ptr->static_config.look_ahead_distance + SCD_LAD;
+                                                                          SCD_LAD;
     scs_ptr->output_recon_buffer_fifo_init_count       = scs_ptr->reference_picture_buffer_init_count;
     scs_ptr->overlay_input_picture_buffer_init_count   = scs_ptr->static_config.enable_overlays ?
                                                                           (2 << scs_ptr->static_config.hierarchical_levels) + SCD_LAD : 1;
@@ -553,12 +552,7 @@ EbErrorType load_default_buffer_configuration_settings(
         /*Look-Ahead. Picture-Decision outputs pictures by group of mini-gops so
           the needed pictures for a certain look-ahead distance (LAD) should be rounded up to the next multiple of MiniGopSize.*/
         uint32_t mg_size = 1 << scs_ptr->static_config.hierarchical_levels;
-        uint32_t needed_lad_pictures = ((scs_ptr->static_config.look_ahead_distance + mg_size - 1) / mg_size) * mg_size;
-
-
-        if (scs_ptr->static_config.look_ahead_distance > 0)
-            if (((scs_ptr->static_config.intra_period_length + 1) % mg_size) > 0)
-                 needed_lad_pictures += mg_size;
+        uint32_t needed_lad_pictures = ((mg_size - 1) / mg_size) * mg_size;
 
         /*To accomodate FFMPEG EOS, 1 frame delay is needed in Resource coordination.
            note that we have the option to not add 1 frame delay of Resource Coordination. In this case we have wait for first I frame
@@ -673,7 +667,6 @@ EbErrorType load_default_buffer_configuration_settings(
     scs_ptr->picture_decision_fifo_init_count            = 300;
     scs_ptr->initial_rate_control_fifo_init_count        = 300;
     scs_ptr->tpl_disp_fifo_init_count                    = 300;
-    scs_ptr->in_loop_me_fifo_init_count                  = 300;
     scs_ptr->picture_demux_fifo_init_count               = 300;
     scs_ptr->rate_control_tasks_fifo_init_count          = 300;
     scs_ptr->rate_control_fifo_init_count                = 301;
@@ -694,7 +687,6 @@ EbErrorType load_default_buffer_configuration_settings(
         // TODO: Tune the count here
         scs_ptr->total_process_init_count += (scs_ptr->tpl_disp_process_init_count   = MAX(MIN(20, core_count >> 1), core_count / 3));
         // TODO: Tune the count here
-        scs_ptr->total_process_init_count += (scs_ptr->inlme_process_init_count                       = MAX(MIN(20, core_count >> 1), core_count / 3));
         scs_ptr->total_process_init_count += (scs_ptr->mode_decision_configuration_process_init_count = MAX(MIN(3, core_count >> 1), core_count / 12));
 #if TUNE_PICT_PARALLEL
         scs_ptr->total_process_init_count += (scs_ptr->enc_dec_process_init_count                     = MIN(5, core_count) );
@@ -718,7 +710,6 @@ EbErrorType load_default_buffer_configuration_settings(
         scs_ptr->total_process_init_count += (scs_ptr->motion_estimation_process_init_count           = 1);
         scs_ptr->total_process_init_count += (scs_ptr->source_based_operations_process_init_count     = 1);
         scs_ptr->total_process_init_count += (scs_ptr->tpl_disp_process_init_count                    = 1);
-        scs_ptr->total_process_init_count += (scs_ptr->inlme_process_init_count                       = 1);
         scs_ptr->total_process_init_count += (scs_ptr->mode_decision_configuration_process_init_count = 1);
         scs_ptr->total_process_init_count += (scs_ptr->enc_dec_process_init_count                     = 1);
         scs_ptr->total_process_init_count += (scs_ptr->entropy_coding_process_init_count              = 1);
@@ -869,9 +860,6 @@ static void svt_enc_handle_stop_threads(EbEncHandle *enc_handle_ptr)
     // Picture Manager
     EB_DESTROY_THREAD(enc_handle_ptr->picture_manager_thread_handle);
 
-    // Inloop ME
-    EB_DESTROY_THREAD_ARRAY(enc_handle_ptr->ime_thread_handle_array, control_set_ptr->inlme_process_init_count);
-
     // Rate Control
     EB_DESTROY_THREAD(enc_handle_ptr->rate_control_thread_handle);
 
@@ -914,7 +902,6 @@ static void svt_enc_handle_dctor(EbPtr p)
 
 
     EB_DELETE_PTR_ARRAY(enc_handle_ptr->pa_reference_picture_pool_ptr_array, enc_handle_ptr->encode_instance_total_count);
-    EB_DELETE_PTR_ARRAY(enc_handle_ptr->down_scaled_picture_pool_ptr_array, enc_handle_ptr->encode_instance_total_count);
     EB_DELETE_PTR_ARRAY(enc_handle_ptr->overlay_input_picture_pool_ptr_array, enc_handle_ptr->encode_instance_total_count);
     EB_DELETE(enc_handle_ptr->input_buffer_resource_ptr);
     EB_DELETE_PTR_ARRAY(enc_handle_ptr->output_stream_buffer_resource_ptr_array, enc_handle_ptr->encode_instance_total_count);
@@ -925,7 +912,6 @@ static void svt_enc_handle_dctor(EbPtr p)
     EB_DELETE(enc_handle_ptr->motion_estimation_results_resource_ptr);
     EB_DELETE(enc_handle_ptr->initial_rate_control_results_resource_ptr);
     EB_DELETE(enc_handle_ptr->picture_demux_results_resource_ptr);
-    EB_DELETE(enc_handle_ptr->pic_mgr_res_srm);
     EB_DELETE(enc_handle_ptr->tpl_disp_res_srm);
     EB_DELETE(enc_handle_ptr->rate_control_tasks_resource_ptr);
     EB_DELETE(enc_handle_ptr->rate_control_results_resource_ptr);
@@ -941,7 +927,6 @@ static void svt_enc_handle_dctor(EbPtr p)
     EB_DELETE_PTR_ARRAY(enc_handle_ptr->motion_estimation_context_ptr_array, enc_handle_ptr->scs_instance_array[0]->scs_ptr->motion_estimation_process_init_count);
     EB_DELETE_PTR_ARRAY(enc_handle_ptr->tpl_disp_context_ptr_array, enc_handle_ptr->scs_instance_array[0]->scs_ptr->tpl_disp_process_init_count);
     EB_DELETE_PTR_ARRAY(enc_handle_ptr->source_based_operations_context_ptr_array, enc_handle_ptr->scs_instance_array[0]->scs_ptr->source_based_operations_process_init_count);
-    EB_DELETE_PTR_ARRAY(enc_handle_ptr->inlme_context_ptr_array, enc_handle_ptr->scs_instance_array[0]->scs_ptr->inlme_process_init_count);
     EB_DELETE_PTR_ARRAY(enc_handle_ptr->mode_decision_configuration_context_ptr_array, enc_handle_ptr->scs_instance_array[0]->scs_ptr->mode_decision_configuration_process_init_count);
     EB_DELETE_PTR_ARRAY(enc_handle_ptr->enc_dec_context_ptr_array, enc_handle_ptr->scs_instance_array[0]->scs_ptr->enc_dec_process_init_count);
     EB_DELETE_PTR_ARRAY(enc_handle_ptr->dlf_context_ptr_array, enc_handle_ptr->scs_instance_array[0]->scs_ptr->dlf_process_init_count);
@@ -1101,66 +1086,10 @@ EbErrorType rest_results_creator(
     return EB_ErrorNone;
 }
 
-static int create_down_scaled_buf_descs(EbEncHandle *enc_handle_ptr, uint32_t instance_index)
-{
-    SequenceControlSet* scs_ptr = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr;
-    EbPictureBufferDescInitData       quart_pic_buf_desc_init_data;
-    EbPictureBufferDescInitData       sixteenth_pic_buf_desc_init_data;
-    EbDownScaledObjectDescInitData eb_down_scale_obj_init_data;
-    quart_pic_buf_desc_init_data.max_width = scs_ptr->max_input_luma_width >> 1;
-    quart_pic_buf_desc_init_data.max_height = scs_ptr->max_input_luma_height >> 1;
-    quart_pic_buf_desc_init_data.bit_depth = EB_8BIT;
-    quart_pic_buf_desc_init_data.color_format = EB_YUV420;
-    quart_pic_buf_desc_init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_LUMA_MASK;
-    quart_pic_buf_desc_init_data.left_padding = scs_ptr->sb_sz >> 1;
-    quart_pic_buf_desc_init_data.right_padding = scs_ptr->sb_sz >> 1;
-    quart_pic_buf_desc_init_data.top_padding = scs_ptr->sb_sz >> 1;
-    quart_pic_buf_desc_init_data.bot_padding = scs_ptr->sb_sz >> 1;
-    quart_pic_buf_desc_init_data.split_mode = EB_FALSE;
-    //useless, don't need to store two, just use one
-    quart_pic_buf_desc_init_data.down_sampled_filtered = EB_FALSE;
-    quart_pic_buf_desc_init_data.mfmv = 0;
-    quart_pic_buf_desc_init_data.is_16bit_pipeline=EB_FALSE;
-
-    sixteenth_pic_buf_desc_init_data.max_width = scs_ptr->max_input_luma_width >> 2;
-    sixteenth_pic_buf_desc_init_data.max_height = scs_ptr->max_input_luma_height >> 2;
-    sixteenth_pic_buf_desc_init_data.bit_depth = EB_8BIT;
-    sixteenth_pic_buf_desc_init_data.color_format = EB_YUV420;
-    sixteenth_pic_buf_desc_init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_LUMA_MASK;
-    sixteenth_pic_buf_desc_init_data.left_padding = scs_ptr->sb_sz >> 2;
-    sixteenth_pic_buf_desc_init_data.right_padding = scs_ptr->sb_sz >> 2;
-    sixteenth_pic_buf_desc_init_data.top_padding = scs_ptr->sb_sz >> 2;
-    sixteenth_pic_buf_desc_init_data.bot_padding = scs_ptr->sb_sz >> 2;
-    sixteenth_pic_buf_desc_init_data.split_mode = EB_FALSE;
-    //useless
-    sixteenth_pic_buf_desc_init_data.down_sampled_filtered = EB_FALSE;
-    sixteenth_pic_buf_desc_init_data.mfmv = 0;
-    sixteenth_pic_buf_desc_init_data.is_16bit_pipeline = EB_FALSE;
-
-    eb_down_scale_obj_init_data.quarter_picture_desc_init_data = quart_pic_buf_desc_init_data;
-    eb_down_scale_obj_init_data.sixteenth_picture_desc_init_data = sixteenth_pic_buf_desc_init_data;
-    //TODO: Need 1/4 and 1/16 for alt-ref
-    eb_down_scale_obj_init_data.enable_quarter_luma_input = 1;//(scs_ptr->gm_level == GM_DOWN) ? 1 : 0;
-    eb_down_scale_obj_init_data.enable_sixteenth_luma_input = 1;//(scs_ptr->gm_level == GM_DOWN16) ? 1 : 0;
-    EB_NEW(enc_handle_ptr->down_scaled_picture_pool_ptr_array[instance_index],
-            svt_system_resource_ctor,
-            scs_ptr->input_buffer_fifo_init_count,
-            EB_PictureDecisionProcessInitCount,
-            0,
-            svt_down_scaled_object_creator,
-            &(eb_down_scale_obj_init_data),
-            NULL);
-    // Set the SequenceControlSet Picture Pool Fifo Ptrs
-    enc_handle_ptr->scs_instance_array[instance_index]->encode_context_ptr->down_scaled_picture_pool_fifo_ptr =
-        svt_system_resource_get_producer_fifo(enc_handle_ptr->down_scaled_picture_pool_ptr_array[instance_index], 0);
-    return 0;
-}
-
-static int create_pa_ref_buf_descs(EbEncHandle *enc_handle_ptr, uint32_t instance_index, uint8_t in_loop_me)
+static int create_pa_ref_buf_descs(EbEncHandle *enc_handle_ptr, uint32_t instance_index)
 {
         SequenceControlSet* scs_ptr = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr;
         EbPaReferenceObjectDescInitData   eb_pa_ref_obj_ect_desc_init_data_structure;
-        eb_pa_ref_obj_ect_desc_init_data_structure.empty_pa_buffers = in_loop_me;
         EbPictureBufferDescInitData       ref_pic_buf_desc_init_data;
         EbPictureBufferDescInitData       quart_pic_buf_desc_init_data;
         EbPictureBufferDescInitData       sixteenth_pic_buf_desc_init_data;
@@ -1254,10 +1183,6 @@ static int create_ref_buf_descs(EbEncHandle *enc_handle_ptr, uint32_t instance_i
     eb_ref_obj_ect_desc_init_data_structure.reference_picture_desc_init_data = ref_pic_buf_desc_init_data;
     eb_ref_obj_ect_desc_init_data_structure.hbd_mode_decision =
         scs_ptr->static_config.enable_hbd_mode_decision;
-
-    // TODO: Need to put hme_decimation/enable_hme_flag into init stage to figure out whether we need down scaled_recon or not
-    eb_ref_obj_ect_desc_init_data_structure.hme_quarter_luma_recon = scs_ptr->in_loop_me;
-    eb_ref_obj_ect_desc_init_data_structure.hme_sixteenth_luma_recon = scs_ptr->in_loop_me;
 
     // Reference Picture Buffers
     EB_NEW(
@@ -1513,14 +1438,12 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
 
     // Allocate Resource Arrays
     EB_ALLOC_PTR_ARRAY(enc_handle_ptr->reference_picture_pool_ptr_array, enc_handle_ptr->encode_instance_total_count);
-    if (enc_handle_ptr->scs_instance_array[0]->scs_ptr->in_loop_me)
-        EB_ALLOC_PTR_ARRAY(enc_handle_ptr->down_scaled_picture_pool_ptr_array, enc_handle_ptr->encode_instance_total_count);
+
     EB_ALLOC_PTR_ARRAY(enc_handle_ptr->pa_reference_picture_pool_ptr_array, enc_handle_ptr->encode_instance_total_count);
 
     EB_ALLOC_PTR_ARRAY(enc_handle_ptr->overlay_input_picture_pool_ptr_array, enc_handle_ptr->encode_instance_total_count);
 
     // Rate Control
-    rate_control_ports[0].count = enc_handle_ptr->scs_instance_array[0]->scs_ptr->inlme_process_init_count;
     rate_control_ports[1].count = EB_PacketizationProcessInitCount;
     rate_control_ports[2].count = enc_handle_ptr->scs_instance_array[0]->scs_ptr->entropy_coding_process_init_count;
     rate_control_ports[3].count = 0;
@@ -1532,12 +1455,9 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
 #endif
     for (instance_index = 0; instance_index < enc_handle_ptr->encode_instance_total_count; ++instance_index) {
         create_ref_buf_descs(enc_handle_ptr, instance_index);
-        if (enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->in_loop_me) {
-            create_down_scaled_buf_descs(enc_handle_ptr, instance_index);
-            create_pa_ref_buf_descs(enc_handle_ptr, instance_index, 1); // create dummy pa surfaces
-        } else {
-            create_pa_ref_buf_descs(enc_handle_ptr, instance_index, 0);
-        }
+
+        create_pa_ref_buf_descs(enc_handle_ptr, instance_index);
+
         if (enc_handle_ptr->scs_instance_array[0]->scs_ptr->static_config.enable_overlays) {
             // Overlay Input Picture Buffers
             EB_NEW(
@@ -1720,21 +1640,6 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
             NULL);
 
 #endif
-    }
-
-    // Picture Mgr Results
-    {
-        PictureManagerResultInitData picture_manager_result_init_data;
-        EB_NEW(
-            enc_handle_ptr->pic_mgr_res_srm,
-            svt_system_resource_ctor,
-            enc_handle_ptr->scs_instance_array[0]->scs_ptr->in_loop_me_fifo_init_count,
-            1, // One Producer = PicMgr
-            enc_handle_ptr->scs_instance_array[0]->scs_ptr->inlme_process_init_count,
-            picture_manager_result_creator,
-            &picture_manager_result_init_data,
-            NULL);
-
     }
 
     // Rate Control Tasks
@@ -1963,18 +1868,6 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
         picture_manager_context_ctor,
         enc_handle_ptr,
         0);
-
-    // In-Loop ME Context
-    EB_ALLOC_PTR_ARRAY(enc_handle_ptr->inlme_context_ptr_array, enc_handle_ptr->scs_instance_array[0]->scs_ptr->inlme_process_init_count);
-
-    for (process_index = 0; process_index < enc_handle_ptr->scs_instance_array[0]->scs_ptr->inlme_process_init_count; ++process_index) {
-        EB_NEW(
-            enc_handle_ptr->inlme_context_ptr_array[process_index],
-            ime_context_ctor,
-            enc_handle_ptr,
-            process_index);
-    }
-
     // Rate Control Context
     EB_NEW(
         enc_handle_ptr->rate_control_context_ptr,
@@ -2105,12 +1998,6 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
             enc_handle_ptr->tpl_disp_context_ptr_array);
     // Picture Manager
     EB_CREATE_THREAD(enc_handle_ptr->picture_manager_thread_handle, picture_manager_kernel, enc_handle_ptr->picture_manager_context_ptr);
-
-    // Close Loop Motion Estimation
-    EB_CREATE_THREAD_ARRAY(enc_handle_ptr->ime_thread_handle_array, control_set_ptr->inlme_process_init_count,
-            inloop_me_kernel,
-            enc_handle_ptr->inlme_context_ptr_array);
-
     // Rate Control
     EB_CREATE_THREAD(enc_handle_ptr->rate_control_thread_handle, rate_control_kernel, enc_handle_ptr->rate_control_context_ptr);
 
@@ -2173,7 +2060,6 @@ EB_API EbErrorType svt_av1_enc_deinit(EbComponentType *svt_enc_component){
         svt_shutdown_process(handle->initial_rate_control_results_resource_ptr);
         svt_shutdown_process(handle->picture_demux_results_resource_ptr);
         svt_shutdown_process(handle->tpl_disp_res_srm);
-        svt_shutdown_process(handle->pic_mgr_res_srm);
         svt_shutdown_process(handle->rate_control_tasks_resource_ptr);
         svt_shutdown_process(handle->rate_control_results_resource_ptr);
         svt_shutdown_process(handle->enc_dec_tasks_resource_ptr);
@@ -2302,39 +2188,6 @@ void set_default_configuration_parameters(
     return;
 }
 
-static uint32_t compute_default_look_ahead(
-    EbSvtAv1EncConfiguration*   config){
-    int32_t lad = 0;
-    if (config->rate_control_mode == 0 || config->intra_period_length < 0)
-        lad = config->enable_tpl_la == 1 ? TPL_LAD : (2 << config->hierarchical_levels)+1;
-    else
-        lad = config->intra_period_length;
-    lad = lad > MAX_LAD ? MAX_LAD : lad; // clip to max allowed lad
-    return lad;
-}
-
-// Only use the maximum look ahead needed if
-static uint32_t cap_look_ahead_distance(
-    EbSvtAv1EncConfiguration*   config){
-    uint32_t lad = 0;
-
-    if(config){
-        uint32_t fps = config->frame_rate < 1000 ?
-                      config->frame_rate :
-                      config->frame_rate >> 16;
-        uint32_t max_cqp_lad = (2 << config->hierarchical_levels) + 1;
-        uint32_t max_rc_lad  = fps << 1;
-        lad = config->look_ahead_distance;
-        if (config->rate_control_mode == 0 && lad > max_cqp_lad)
-            lad = max_cqp_lad;
-        else if (config->rate_control_mode != 0 && lad > max_rc_lad)
-            lad = max_rc_lad;
-    }
-
-    lad = lad > MAX_LAD ? MAX_LAD: lad; // clip to max allowed lad
-
-    return lad;
-}
 
 /*
  * Control TF
@@ -2703,7 +2556,6 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
         scs_ptr->enc_mode_2ndpass = scs_ptr->static_config.enc_mode ;
     if (use_output_stat(scs_ptr)) {
         scs_ptr->static_config.enc_mode = MAX_ENC_PRESET;
-        scs_ptr->static_config.look_ahead_distance = 0;
         scs_ptr->static_config.enable_tpl_la = 0;
         scs_ptr->static_config.rate_control_mode = 0;
         scs_ptr->static_config.intra_refresh_type = 2;
@@ -2763,14 +2615,9 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
         else
             scs_ptr->down_sampling_method_me_search = ME_DECIMATED_DOWNSAMPLED;
 
-    if (scs_ptr->static_config.rate_control_mode != 0 && !use_input_stat(scs_ptr))
-        scs_ptr->in_loop_me = 0;
-    else
-        scs_ptr->in_loop_me = 0 ;
     // Enforce starting frame in decode order (at PicMgr)
     // Does not wait for feedback from PKT
     if (scs_ptr->static_config.logical_processors == 1 && // LP1
-        scs_ptr->in_loop_me == 0 && // PAME
         scs_ptr->static_config.enable_tpl_la)
         scs_ptr->enable_pic_mgr_dec_order = 1;
     else
@@ -2780,13 +2627,7 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
 #if RC_NO_R2R
     scs_ptr->enable_dec_order = 1;
 #else
-    if (scs_ptr->static_config.logical_processors == 1 && // LP1
-        ((scs_ptr->in_loop_me == 1 && // inloop ME
-        scs_ptr->static_config.enable_tpl_la) ||
-        (use_input_stat(scs_ptr) || scs_ptr->lap_enabled)))
-        scs_ptr->enable_dec_order = 1;
-    else
-        scs_ptr->enable_dec_order = 0;
+    scs_ptr->enable_dec_order = 0;
 #endif
    // Open loop intra done with TPL, data is not stored
     scs_ptr->in_loop_ois = 1;
@@ -2988,7 +2829,6 @@ void copy_api_from_app(
         scs_ptr->static_config.rate_control_mode = 1;
         SVT_WARN("The CVBR rate control mode (mode 2) is not supported in this branch. RC mode 1 is used instead.\n");
     }
-    scs_ptr->static_config.look_ahead_distance = ((EbSvtAv1EncConfiguration*)config_struct)->look_ahead_distance;
     scs_ptr->static_config.frame_rate = ((EbSvtAv1EncConfiguration*)config_struct)->frame_rate;
     scs_ptr->static_config.frame_rate_denominator = ((EbSvtAv1EncConfiguration*)config_struct)->frame_rate_denominator;
     scs_ptr->static_config.frame_rate_numerator = ((EbSvtAv1EncConfiguration*)config_struct)->frame_rate_numerator;
@@ -3075,19 +2915,7 @@ void copy_api_from_app(
         scs_ptr->intra_period_length = (scs_ptr->frame_rate >> 16)* MAX_NUM_SEC_INTRA;
         SVT_LOG("SVT [Warning]: force Intra period to be %d for perf/quality tradeoff\n", scs_ptr->intra_period_length);
     }
-    if (scs_ptr->static_config.look_ahead_distance == (uint32_t)~0)
-        scs_ptr->static_config.look_ahead_distance = compute_default_look_ahead(&scs_ptr->static_config);
-    else
-        scs_ptr->static_config.look_ahead_distance = cap_look_ahead_distance(&scs_ptr->static_config);
-    if (scs_ptr->static_config.enable_tpl_la &&
-        scs_ptr->static_config.look_ahead_distance > (uint32_t)0 &&
-        scs_ptr->static_config.look_ahead_distance != (uint32_t)TPL_LAD &&
-        (scs_ptr->static_config.rate_control_mode == 0 || use_input_stat(scs_ptr) || scs_ptr->lap_enabled)) {
 
-        SVT_LOG("SVT [Warning]: force look_ahead_distance to be %d from %d for perf/quality tradeoff when enable_tpl_la=1\n", (uint32_t)TPL_LAD, scs_ptr->static_config.look_ahead_distance);
-        scs_ptr->static_config.look_ahead_distance = TPL_LAD;
-    }
-    scs_ptr->static_config.look_ahead_distance = 0;
     scs_ptr->static_config.tf_level = config_struct->tf_level;
     scs_ptr->static_config.enable_overlays = config_struct->enable_overlays;
 
@@ -3344,15 +3172,11 @@ static EbErrorType verify_settings(
         SVT_LOG("Error Instance %u: The rate control mode must be [0 - 2] \n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
-    if ((config->rate_control_mode == 3|| config->rate_control_mode == 2) && config->look_ahead_distance != (uint32_t)config->intra_period_length && config->intra_period_length >= 0) {
+    if ((config->rate_control_mode == 3|| config->rate_control_mode == 2) && config->intra_period_length >= 0) {
         SVT_LOG("Error Instance %u: The rate control mode 2/3 LAD must be equal to intra_period \n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
-    if (config->look_ahead_distance > MAX_LAD && config->look_ahead_distance != (uint32_t)~0) {
-        SVT_LOG("Error Instance %u: The lookahead distance must be [0 - %d] \n", channel_number + 1, MAX_LAD);
 
-        return_error = EB_ErrorBadParameter;
-    }
     if ((unsigned)config->tile_rows > 6 || (unsigned)config->tile_columns > 6) {
         SVT_LOG("Error Instance %u: Log2Tile rows/cols must be [0 - 6] \n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
@@ -3739,7 +3563,7 @@ EbErrorType svt_svt_enc_init_parameter(
 
     config_ptr->scene_change_detection = 0;
     config_ptr->rate_control_mode = 0;
-    config_ptr->look_ahead_distance = (uint32_t)~0;
+    config_ptr->look_ahead_distance = 0;
     config_ptr->enable_tpl_la = 1;
     config_ptr->target_bit_rate = 7000000;
     config_ptr->max_qp_allowed = 63;
@@ -3914,11 +3738,11 @@ static void print_lib_params(
         SVT_LOG("\nSVT [config]: FrameRate / Gop Size\t\t\t\t\t\t: %d / %d ", config->frame_rate > 1000 ? config->frame_rate >> 16 : config->frame_rate, config->intra_period_length + 1);
     SVT_LOG("\nSVT [config]: HierarchicalLevels  / PredStructure\t\t\t\t: %d / %d", config->hierarchical_levels, config->pred_structure);
     if (config->rate_control_mode == 1)
-        SVT_LOG("\nSVT [config]: RCMode / TargetBitrate (kbps)/ LookaheadDistance / SceneChange\t\t: VBR / %d / %d / %d ", (int)config->target_bit_rate/1000, config->look_ahead_distance, config->scene_change_detection);
+        SVT_LOG("\nSVT [config]: RCMode / TargetBitrate (kbps)/ SceneChange\t\t: VBR / %d /  %d ", (int)config->target_bit_rate/1000, config->scene_change_detection);
     else if (config->rate_control_mode == 2)
-        SVT_LOG("\nSVT [config]: RCMode / TargetBitrate (kbps)/ LookaheadDistance / SceneChange\t\t: Constraint VBR / %d / %d / %d ", (int)config->target_bit_rate/1000, config->look_ahead_distance, config->scene_change_detection);
+        SVT_LOG("\nSVT [config]: RCMode / TargetBitrate (kbps)/ SceneChange\t\t: Constraint VBR / %d /  %d ", (int)config->target_bit_rate/1000,  config->scene_change_detection);
     else
-        SVT_LOG("\nSVT [config]: BRC Mode / %s / LookaheadDistance / SceneChange\t\t\t: %s / %d / %d / %d ", scs->static_config.enable_tpl_la ? "RF" : "QP", scs->static_config.enable_tpl_la ? "CRF" : "CQP", scs->static_config.qp, config->look_ahead_distance, config->scene_change_detection);
+        SVT_LOG("\nSVT [config]: BRC Mode / %s / SceneChange\t\t\t: %s / %d / %d ", scs->static_config.enable_tpl_la ? "RF" : "QP", scs->static_config.enable_tpl_la ? "CRF" : "CQP", scs->static_config.qp, config->scene_change_detection);
 #ifdef DEBUG_BUFFERS
     SVT_LOG("\nSVT [config]: INPUT / OUTPUT \t\t\t\t\t\t\t: %d / %d", scs->input_buffer_fifo_init_count, scs->output_stream_buffer_fifo_init_count);
     SVT_LOG("\nSVT [config]: CPCS / PAREF / REF / ME\t\t\t\t\t\t: %d / %d / %d / %d", scs->picture_control_set_pool_init_count_child, scs->pa_reference_picture_buffer_init_count, scs->reference_picture_buffer_init_count, scs->me_pool_init_count);

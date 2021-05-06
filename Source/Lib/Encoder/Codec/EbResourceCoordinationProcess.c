@@ -642,7 +642,6 @@ static EbErrorType reset_pcs_av1(PictureParentControlSet *pcs_ptr) {
     frm_hdr->frame_refs_short_signaling = 0;
     pcs_ptr->allow_comp_inter_inter     = 0;
     //  int32_t all_one_sided_refs;
-    pcs_ptr->tpl_me_done                     = 0;
     pcs_ptr->me_data_wrapper_ptr             = NULL;
     pcs_ptr->down_scaled_picture_wrapper_ptr = NULL;
     pcs_ptr->ds_pics.picture_ptr             = NULL;
@@ -651,30 +650,16 @@ static EbErrorType reset_pcs_av1(PictureParentControlSet *pcs_ptr) {
     pcs_ptr->max_number_of_pus_per_sb        = SQUARE_PU_COUNT;
 
     atomic_set_u32(&pcs_ptr->pame_done, 0);
-    svt_create_cond_var(&pcs_ptr->me_ready);
 
+    svt_create_cond_var(&pcs_ptr->me_ready);
 
    SequenceControlSet *scs_ptr = pcs_ptr->scs_ptr;
    pcs_ptr->me_segments_completion_count = 0;
-   pcs_ptr->inloop_me_segments_completion_count = 0;
-
-   pcs_ptr->inloop_me_segments_column_count = 1;
-   pcs_ptr->inloop_me_segments_row_count = 1;
    pcs_ptr->me_segments_column_count = (uint8_t)(scs_ptr->me_segment_column_count_array[0]);
    pcs_ptr->me_segments_row_count = (uint8_t)(scs_ptr->me_segment_row_count_array[0]);
-   if (scs_ptr->in_loop_me) {
-       pcs_ptr->inloop_me_segments_column_count =
-           (uint8_t)(scs_ptr->me_segment_column_count_array[0]);
-       pcs_ptr->inloop_me_segments_row_count =
-           (uint8_t)(scs_ptr->me_segment_row_count_array[0]);
-   }
+
    pcs_ptr->me_segments_total_count =
        (uint16_t)(pcs_ptr->me_segments_column_count * pcs_ptr->me_segments_row_count);
-   pcs_ptr->inloop_me_segments_total_count =
-       (uint16_t)(pcs_ptr->inloop_me_segments_column_count * pcs_ptr->inloop_me_segments_row_count);
-
-   pcs_ptr->ois_mb_results_trail = NULL;
-
    pcs_ptr->sb_total_count_pix = pcs_ptr->sb_total_count;
    pcs_ptr->tpl_disp_coded_sb_count = 0;
 
@@ -1311,12 +1296,7 @@ void *resource_coordination_kernel(void *input_ptr) {
                     ppcs_out->alt_ref_ppcs_ptr->end_of_sequence_flag = EB_TRUE;
 
                 reset_pcs_av1(ppcs_out);
-                if (scs_ptr->in_loop_me) {
-                    EbObjectWrapper *ds_wrapper;
-                    svt_get_empty_object(scs_ptr->encode_context_ptr->down_scaled_picture_pool_fifo_ptr,
-                            &ds_wrapper);
-                    ppcs_out->down_scaled_picture_wrapper_ptr = ds_wrapper;
-                }
+
                 svt_get_empty_object(context_ptr->resource_coordination_results_output_fifo_ptr,
                                      &output_wrapper_ptr);
                 out_results_ptr = (ResourceCoordinationResults *)output_wrapper_ptr->object_ptr;

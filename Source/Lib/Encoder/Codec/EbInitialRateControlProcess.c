@@ -91,81 +91,6 @@ EbErrorType initial_rate_control_context_ctor(EbThreadContext *  thread_context_
     return EB_ErrorNone;
 }
 
-/************************************************
-* Update BEA Information Based on Lookahead
-** Average zzCost of Collocated SB throughout lookahead frames
-** Set isMostOfPictureNonMoving based on number of non moving SBs
-** LAD Window: min (2xmgpos+1 or sliding window size)
-************************************************/
-
-void update_bea_info_over_time(EncodeContext *          encode_context_ptr,
-                               PictureParentControlSet *pcs_ptr) {
-    uint64_t non_moving_index_sum = 0;
-
-    SequenceControlSet *scs_ptr = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
-    // Update motionIndexArray of the current picture by averaging the motionIndexArray of the N future pictures
-    // Determine number of frames to check N
-    uint32_t update_non_moving_index_array_frames_to_check = MIN(
-        MIN(((pcs_ptr->pred_struct_ptr->pred_struct_period << 1) + 1), pcs_ptr->frames_in_sw),
-        scs_ptr->static_config.look_ahead_distance);
-    uint64_t me_dist           = 0;
-    uint8_t  me_dist_pic_count = 0;
-    uint32_t complete_sb_count = 0;
-    // SB Loop
-    for (uint16_t sb_idx = 0; sb_idx < pcs_ptr->sb_total_count; ++sb_idx) {
-        uint16_t  non_moving_index_over_sliding_window = pcs_ptr->non_moving_index_array[sb_idx];
-        uint16_t  frames_to_check_index;
-        SbParams *sb_params = &pcs_ptr->sb_params_array[sb_idx];
-        complete_sb_count++;
-
-        // Walk the first N entries in the sliding window starting picture + 1
-        uint32_t input_queue_index =
-            encode_context_ptr->initial_rate_control_reorder_queue_head_index ==
-                INITIAL_RATE_CONTROL_REORDER_QUEUE_MAX_DEPTH - 1
-            ? 0
-            : encode_context_ptr->initial_rate_control_reorder_queue_head_index + 1;
-        for (frames_to_check_index = 0;
-             frames_to_check_index < update_non_moving_index_array_frames_to_check - 1;
-             frames_to_check_index++) {
-            InitialRateControlReorderEntry *temp_queue_entry_ptr =
-                encode_context_ptr->initial_rate_control_reorder_queue[input_queue_index];
-            PictureParentControlSet *temp_pcs_ptr =
-                (PictureParentControlSet *)(temp_queue_entry_ptr->parent_pcs_wrapper_ptr)
-                    ->object_ptr;
-
-            if (temp_pcs_ptr->slice_type == I_SLICE || temp_pcs_ptr->end_of_sequence_flag)
-                break;
-            // Limit the distortion to lower layers 0, 1 and 2 only. Higher layers have close temporal distance and lower distortion that might contaminate the data
-            if (sb_params->is_complete_sb &&
-                temp_pcs_ptr->temporal_layer_index <
-                    MAX((int8_t)pcs_ptr->hierarchical_levels - 1, 2)) {
-                if (sb_idx == 0)
-                    me_dist_pic_count++;
-                me_dist += (temp_pcs_ptr->slice_type == I_SLICE)
-                    ? 0
-                    : (uint64_t)temp_pcs_ptr->rc_me_distortion[sb_idx];
-            }
-            non_moving_index_over_sliding_window += temp_pcs_ptr->non_moving_index_array[sb_idx];
-
-            // Increment the input_queue_index Iterator
-            input_queue_index = (input_queue_index ==
-                                 INITIAL_RATE_CONTROL_REORDER_QUEUE_MAX_DEPTH - 1)
-                ? 0
-                : input_queue_index + 1;
-        }
-        pcs_ptr->non_moving_index_array[sb_idx] = (uint8_t)(non_moving_index_over_sliding_window /
-                                                            (frames_to_check_index + 1));
-
-        non_moving_index_sum += pcs_ptr->non_moving_index_array[sb_idx];
-    }
-    assert(complete_sb_count > 0);
-    pcs_ptr->non_moving_index_average = (uint16_t)non_moving_index_sum / pcs_ptr->sb_total_count;
-    me_dist_pic_count                 = MAX(me_dist_pic_count, 1);
-    pcs_ptr->qp_scaling_average_complexity = (uint16_t)((uint64_t)me_dist / complete_sb_count /
-                                                        256 / me_dist_pic_count);
-    return;
-}
-
 /****************************************
 * Init ZZ Cost array to default values
 ** Used when no Lookahead is available
@@ -180,43 +105,6 @@ void init_zz_cost_info(PictureParentControlSet *pcs_ptr) {
     return;
 }
 
-/************************************************
-* Update uniform motion field
-** Update Uniformly moving SBs using
-** collocated SBs infor in lookahead pictures
-** LAD Window: min (2xmgpos+1 or sliding window size)
-************************************************/
-void update_motion_field_uniformity_over_time(EncodeContext *          encode_context_ptr,
-                                              SequenceControlSet *     scs_ptr,
-                                              PictureParentControlSet *pcs_ptr) {
-    //SVT_LOG("To update POC %d\tframesInSw = %d\n", pcs_ptr->picture_number, pcs_ptr->frames_in_sw);
-    // Determine number of frames to check N
-    uint32_t no_frames_to_check = MIN(
-        MIN(((pcs_ptr->pred_struct_ptr->pred_struct_period << 1) + 1), pcs_ptr->frames_in_sw),
-        scs_ptr->static_config.look_ahead_distance);
-
-    // Walk the first N entries in the sliding window starting picture + 1
-    uint32_t input_queue_index =
-        (encode_context_ptr->initial_rate_control_reorder_queue_head_index ==
-         INITIAL_RATE_CONTROL_REORDER_QUEUE_MAX_DEPTH - 1)
-        ? 0
-        : encode_context_ptr->initial_rate_control_reorder_queue_head_index;
-    for (uint32_t frames_to_check_index = 0; frames_to_check_index < no_frames_to_check - 1;
-         frames_to_check_index++) {
-        InitialRateControlReorderEntry *temp_queue_entry_ptr =
-            encode_context_ptr->initial_rate_control_reorder_queue[input_queue_index];
-        PictureParentControlSet *temp_pcs_ptr =
-            ((PictureParentControlSet *)(temp_queue_entry_ptr->parent_pcs_wrapper_ptr)->object_ptr);
-
-        if (temp_pcs_ptr->end_of_sequence_flag)
-            break;
-        // Increment the input_queue_index Iterator
-        input_queue_index = (input_queue_index == INITIAL_RATE_CONTROL_REORDER_QUEUE_MAX_DEPTH - 1)
-            ? 0
-            : input_queue_index + 1;
-    }
-    return;
-}
 InitialRateControlReorderEntry *determine_picture_offset_in_queue(
     EncodeContext *encode_context_ptr, PictureParentControlSet *pcs_ptr,
     MotionEstimationResults *in_results_ptr) {
@@ -623,10 +511,6 @@ void *initial_rate_control_kernel(void *input_ptr) {
 
     EbObjectWrapper *in_results_wrapper_ptr;
 
-    EbObjectWrapper *out_results_wrapper_ptr;
-
-    EbObjectWrapper *reference_picture_wrapper_ptr;
-
     // Segments
     for (;;) {
         // Get Input Full Object
@@ -639,26 +523,12 @@ void *initial_rate_control_kernel(void *input_ptr) {
                                                in_results_ptr->pcs_wrapper_ptr->object_ptr;
 
         // Set the segment counter
-        if (in_results_ptr->task_type == TASK_TPL_TR_ME)
-        {
-            pcs_ptr->me_trailing_segments_completion_count++;
-            if (pcs_ptr->me_trailing_segments_completion_count == pcs_ptr->me_segments_total_count) {
-#if DEBUG_TR
-                printf("[%ld]: iRC in \n", pcs_ptr->picture_number);
-#endif
-                svt_post_semaphore(pcs_ptr->pame_trail_done_semaphore);
-
-            }
-        }
-        else {
-
         pcs_ptr->me_segments_completion_count++;
 
         // If the picture is complete, proceed
         if (pcs_ptr->me_segments_completion_count == pcs_ptr->me_segments_total_count) {
             SequenceControlSet *scs_ptr = (SequenceControlSet *)
                                               pcs_ptr->scs_wrapper_ptr->object_ptr;
-            EncodeContext *encode_context_ptr = (EncodeContext *)scs_ptr->encode_context_ptr;
             if (pcs_ptr->picture_number == 0) {
                 Quants *const   quants_8bit = &scs_ptr->quants_8bit;
                 Dequants *const deq_8bit    = &scs_ptr->deq_8bit;
@@ -686,245 +556,30 @@ void *initial_rate_control_kernel(void *input_ptr) {
                         deq_bd);
                 }
             }
-            if (scs_ptr->static_config.enable_tpl_la && scs_ptr->in_loop_me == 0) {
+            if (scs_ptr->static_config.enable_tpl_la) {
                 svt_set_cond_var(&pcs_ptr->me_ready, 1);
             }
-            if (scs_ptr->static_config.look_ahead_distance == 0 ||
-                scs_ptr->static_config.enable_tpl_la == 0) {
-                // Release Pa Ref pictures when not needed
-                // Release Pa ref after when TPL is OFF
-                if (!scs_ptr->in_loop_me && scs_ptr->static_config.enable_tpl_la == 0)
-                    release_pa_reference_objects(scs_ptr, pcs_ptr);
-            }
+
+            // Release Pa Ref pictures when not needed
+            // Release Pa ref after when TPL is OFF
+            if (scs_ptr->static_config.enable_tpl_la == 0)
+                release_pa_reference_objects(scs_ptr, pcs_ptr);
+
             /*In case Look-Ahead is zero there is no need to place pictures in the
               re-order queue. this will cause an artificial delay since pictures come in dec-order*/
-            if (scs_ptr->static_config.look_ahead_distance == 0) {
+            pcs_ptr->frames_in_sw           = 0;
+            pcs_ptr->end_of_sequence_region = EB_FALSE;
 
-                pcs_ptr->frames_in_sw           = 0;
-                pcs_ptr->end_of_sequence_region = EB_FALSE;
-
-                init_zz_cost_info(pcs_ptr);
+            init_zz_cost_info(pcs_ptr);
 
 
-                push_to_lad_queue(pcs_ptr, context_ptr);
+            push_to_lad_queue(pcs_ptr, context_ptr);
 #if LAD_MG_PRINT
-                print_lad_queue(context_ptr,0);
+            print_lad_queue(context_ptr,0);
 #endif
-                uint8_t lad_queue_pass_thru = !scs_ptr->static_config.enable_tpl_la;
-                process_lad_queue(context_ptr, lad_queue_pass_thru);
+            uint8_t lad_queue_pass_thru = !scs_ptr->static_config.enable_tpl_la;
+            process_lad_queue(context_ptr, lad_queue_pass_thru);
 
-            } else {
-                //****************************************************
-                // Input Motion Analysis Results into Reordering Queue
-                //****************************************************
-
-                if (!pcs_ptr->is_overlay)
-                    // Determine offset from the Head Ptr
-                    determine_picture_offset_in_queue(encode_context_ptr, pcs_ptr, in_results_ptr);
-                pcs_ptr->frames_in_sw          = 0;
-                EbBool move_slide_window_flag  = EB_TRUE;
-                while (move_slide_window_flag) {
-                    // Check if the sliding window condition is valid
-                    uint32_t queue_entry_index_temp =
-                        encode_context_ptr->initial_rate_control_reorder_queue_head_index;
-                    EbBool end_of_sequence_flag =
-                        encode_context_ptr
-                            ->initial_rate_control_reorder_queue[queue_entry_index_temp]
-                            ->parent_pcs_wrapper_ptr
-                        ? (((PictureParentControlSet
-                                 *)(encode_context_ptr
-                                        ->initial_rate_control_reorder_queue[queue_entry_index_temp]
-                                        ->parent_pcs_wrapper_ptr)
-                                ->object_ptr))
-                              ->end_of_sequence_flag
-                        : EB_FALSE;
-                    uint8_t frames_in_sw = 0;
-                    while (move_slide_window_flag && !end_of_sequence_flag &&
-                           queue_entry_index_temp <=
-                               encode_context_ptr->initial_rate_control_reorder_queue_head_index +
-                                   scs_ptr->static_config.look_ahead_distance) {
-                        // frames_in_sw <= scs_ptr->static_config.look_ahead_distance){
-                        frames_in_sw++;
-
-                        uint32_t queue_entry_index_temp2 =
-                            (queue_entry_index_temp >
-                             INITIAL_RATE_CONTROL_REORDER_QUEUE_MAX_DEPTH - 1)
-                            ? queue_entry_index_temp - INITIAL_RATE_CONTROL_REORDER_QUEUE_MAX_DEPTH
-                            : queue_entry_index_temp;
-
-                        if (encode_context_ptr
-                                ->initial_rate_control_reorder_queue[queue_entry_index_temp2]
-                                ->parent_pcs_wrapper_ptr != NULL) {
-                            PictureParentControlSet *pcs =
-                                (PictureParentControlSet *)(encode_context_ptr
-                                                                ->initial_rate_control_reorder_queue
-                                                                    [queue_entry_index_temp2]
-                                                                ->parent_pcs_wrapper_ptr)
-                                    ->object_ptr;
-                            if (pcs->is_next_frame_intra)
-                                break;
-                        }
-
-                        move_slide_window_flag = (EbBool)(
-                            move_slide_window_flag &&
-                            (encode_context_ptr
-                                 ->initial_rate_control_reorder_queue[queue_entry_index_temp2]
-                                 ->parent_pcs_wrapper_ptr != NULL));
-                        if (encode_context_ptr
-                                ->initial_rate_control_reorder_queue[queue_entry_index_temp2]
-                                ->parent_pcs_wrapper_ptr != NULL) {
-                            // check if it is the last frame. If we have reached the last frame, we would output the buffered frames in the Queue.
-                            end_of_sequence_flag = ((PictureParentControlSet
-                                                         *)(encode_context_ptr
-                                                                ->initial_rate_control_reorder_queue
-                                                                    [queue_entry_index_temp2]
-                                                                ->parent_pcs_wrapper_ptr)
-                                                        ->object_ptr)
-                                                       ->end_of_sequence_flag;
-                        } else
-                            end_of_sequence_flag = EB_FALSE;
-                        queue_entry_index_temp++;
-                    }
-
-                    if (move_slide_window_flag) {
-                        //get a new entry spot
-                        InitialRateControlReorderEntry *queue_entry_ptr =
-                            encode_context_ptr->initial_rate_control_reorder_queue
-                                [encode_context_ptr->initial_rate_control_reorder_queue_head_index];
-                        pcs_ptr =
-                            ((PictureParentControlSet *)(queue_entry_ptr->parent_pcs_wrapper_ptr)
-                                 ->object_ptr);
-                        scs_ptr = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
-                        // overlay picture was not added to the queue. For the alt_ref picture with an overlay picture, it loops on both alt ref and overlay pictures
-                        uint8_t has_overlay = pcs_ptr->is_alt_ref ? 1 : 0;
-                        for (uint8_t loop_index = 0; loop_index <= has_overlay; loop_index++) {
-                            if (loop_index)
-                                pcs_ptr = pcs_ptr->overlay_ppcs_ptr;
-                            pcs_ptr->frames_in_sw = frames_in_sw;
-                            queue_entry_index_temp =
-                                encode_context_ptr->initial_rate_control_reorder_queue_head_index;
-                            end_of_sequence_flag = EB_FALSE;
-                            // find the frames_in_interval for the peroid I frames
-                            while (!end_of_sequence_flag &&
-                                   queue_entry_index_temp <=
-                                       encode_context_ptr
-                                               ->initial_rate_control_reorder_queue_head_index +
-                                           scs_ptr->static_config.look_ahead_distance) {
-                                uint32_t queue_entry_index_temp2 =
-                                    (queue_entry_index_temp >
-                                     INITIAL_RATE_CONTROL_REORDER_QUEUE_MAX_DEPTH - 1)
-                                    ? queue_entry_index_temp -
-                                        INITIAL_RATE_CONTROL_REORDER_QUEUE_MAX_DEPTH
-                                    : queue_entry_index_temp;
-                                //exit if we hit a non valid entry
-                                if (encode_context_ptr
-                                        ->initial_rate_control_reorder_queue
-                                            [queue_entry_index_temp2]
-                                        ->parent_pcs_wrapper_ptr == NULL)
-                                    break;
-                                PictureParentControlSet *pcs_ptr_temp =
-                                    ((PictureParentControlSet
-                                          *)(encode_context_ptr
-                                                 ->initial_rate_control_reorder_queue
-                                                     [queue_entry_index_temp2]
-                                                 ->parent_pcs_wrapper_ptr)
-                                         ->object_ptr);
-                                end_of_sequence_flag = pcs_ptr_temp->end_of_sequence_flag;
-                                queue_entry_index_temp++;
-                            }
-
-                            if ((scs_ptr->static_config.look_ahead_distance != 0) &&
-                                (frames_in_sw < (scs_ptr->static_config.look_ahead_distance + 1)))
-                                pcs_ptr->end_of_sequence_region = EB_TRUE;
-                            else
-                                pcs_ptr->end_of_sequence_region = EB_FALSE;
-                            // BACKGROUND ENHANCEMENT Part II
-                            if (!pcs_ptr->end_of_sequence_flag &&
-                                scs_ptr->static_config.look_ahead_distance != 0) {
-                                // Update BEA information based on Lookahead information
-                                update_bea_info_over_time(encode_context_ptr, pcs_ptr);
-                            } else {
-                                // Reset zzCost information to default When there's no lookahead available
-                                init_zz_cost_info(pcs_ptr);
-                            }
-
-                            // Use the temporal layer 0 is_sb_motion_field_non_uniform array for all the other layer pictures in the mini GOP
-                            if (!pcs_ptr->end_of_sequence_flag &&
-                                scs_ptr->static_config.look_ahead_distance != 0) {
-                                // Updat uniformly moving SBs based on Collocated SBs in LookAhead window
-                                update_motion_field_uniformity_over_time(
-                                    encode_context_ptr, scs_ptr, pcs_ptr);
-                            }
-                            if (pcs_ptr->is_used_as_reference_flag) {
-                                // Get Empty Reference Picture Object
-                                svt_get_empty_object(
-                                    scs_ptr->encode_context_ptr->reference_picture_pool_fifo_ptr,
-                                    &reference_picture_wrapper_ptr);
-                                if (loop_index) {
-                                    pcs_ptr->reference_picture_wrapper_ptr =
-                                        reference_picture_wrapper_ptr;
-                                    // Give the new Reference a nominal live_count of 1
-                                    svt_object_inc_live_count(
-                                        pcs_ptr->reference_picture_wrapper_ptr, 1);
-                                } else {
-                                    ((PictureParentControlSet
-                                          *)(queue_entry_ptr->parent_pcs_wrapper_ptr->object_ptr))
-                                        ->reference_picture_wrapper_ptr =
-                                        reference_picture_wrapper_ptr;
-                                    // Give the new Reference a nominal live_count of 1
-                                    svt_object_inc_live_count(
-                                        ((PictureParentControlSet *)(queue_entry_ptr
-                                                                         ->parent_pcs_wrapper_ptr
-                                                                         ->object_ptr))
-                                            ->reference_picture_wrapper_ptr,
-                                        1);
-                                }
-                            } else {
-                                pcs_ptr->reference_picture_wrapper_ptr = NULL;
-                            }
-                            // Get Empty Results Object
-                            svt_get_empty_object(
-                                context_ptr->initialrate_control_results_output_fifo_ptr,
-                                &out_results_wrapper_ptr);
-
-                            InitialRateControlResults *out_results_ptr =
-                                (InitialRateControlResults *)out_results_wrapper_ptr->object_ptr;
-
-                            if (loop_index)
-                                out_results_ptr->pcs_wrapper_ptr = pcs_ptr->p_pcs_wrapper_ptr;
-                            else
-                                out_results_ptr->pcs_wrapper_ptr =
-                                    queue_entry_ptr->parent_pcs_wrapper_ptr;
-                            if (scs_ptr->static_config.look_ahead_distance != 0 &&
-                                scs_ptr->static_config.enable_tpl_la &&
-                                ((has_overlay == 0 && loop_index == 0) ||
-                                 (has_overlay == 1 && loop_index == 1))) {
-                                // Release Pa Ref pictures when not needed
-                                release_pa_reference_objects(scs_ptr, pcs_ptr);
-                                //loop_index ? pcs_ptr : queueEntryPtr);
-                            }
-                            // Post the Full Results Object
-                            svt_post_full_object(out_results_wrapper_ptr);
-                        }
-                        // Reset the Reorder Queue Entry
-                        queue_entry_ptr->picture_number +=
-                            INITIAL_RATE_CONTROL_REORDER_QUEUE_MAX_DEPTH;
-                        queue_entry_ptr->parent_pcs_wrapper_ptr = (EbObjectWrapper *)NULL;
-
-                        // Increment the Reorder Queue head Ptr
-                        encode_context_ptr->initial_rate_control_reorder_queue_head_index =
-                            (encode_context_ptr->initial_rate_control_reorder_queue_head_index ==
-                             INITIAL_RATE_CONTROL_REORDER_QUEUE_MAX_DEPTH - 1)
-                            ? 0
-                            : encode_context_ptr->initial_rate_control_reorder_queue_head_index + 1;
-
-                        queue_entry_ptr =
-                            encode_context_ptr->initial_rate_control_reorder_queue
-                                [encode_context_ptr->initial_rate_control_reorder_queue_head_index];
-                    }
-                }
-            }
-        }
         }
         // Release the Input Results
         svt_release_object(in_results_wrapper_ptr);

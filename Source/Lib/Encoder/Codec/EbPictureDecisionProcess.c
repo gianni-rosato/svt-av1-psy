@@ -1071,15 +1071,6 @@ EbErrorType signal_derivation_multi_processes_oq(
         // 1: ON
     pcs_ptr->tx_size_early_exit = 1;
     (void)context_ptr;
-        // Suggested values are 6 and 0. To go beyond 6, SCD_LAD must be updated too (might cause stablity issues to go beyong 6)
-    if (scs_ptr->static_config.logical_processors == 1)
-        if (pcs_ptr->enc_mode <= ENC_M9)
-            pcs_ptr->tpl_trailing_frame_count = 0;
-        else
-            pcs_ptr->tpl_trailing_frame_count = 0;
-    else
-        pcs_ptr->tpl_trailing_frame_count = 0;
-    pcs_ptr->tpl_trailing_frame_count = MIN(pcs_ptr->tpl_trailing_frame_count, SCD_LAD);
 
     // Tune TPL for better chroma.Only for 240P. 0 is OFF
 #if TUNE_CHROMA_SSIM
@@ -3925,157 +3916,6 @@ void mctf_frame(
         pcs_ptr->temporal_filtering_on = EB_FALSE; // set temporal filtering flag OFF for current picture
 }
 
-/* this function sets up ME refs for a  trailing TPL pic*/
- uint8_t tpl_trailing_setup_me_refs(
-    SequenceControlSet              *scs_ptr,
-    PictureParentControlSet         *base_pcs,
-    PictureParentControlSet         *cur_pcs,
-    TPLData                         *tpl_data)
-{
-    //Since GOP implmentation is not yet done for trailing pictures,
-    //Manually derive a temp prediction struture for such pictures
-    PredictionStructure* base_pred_struct_ptr = get_prediction_structure(
-        scs_ptr->encode_context_ptr->prediction_structure_group_ptr,
-        base_pcs->pred_structure,
-        scs_ptr->reference_count,
-        base_pcs->hierarchical_levels);
-    uint32_t init_idx = base_pred_struct_ptr->init_pic_index;
-    uint64_t curr_poc = cur_pcs->picture_number;
-    uint64_t base_poc = base_pcs->picture_number;
-    uint32_t tpl_base_minigop = base_pred_struct_ptr->pred_struct_period;
-    uint32_t curr_minigop_entry_idx = (curr_poc > base_poc) ?
-        (uint32_t)(curr_poc - base_poc) :
-        (uint32_t)(curr_poc + tpl_base_minigop - base_poc);
-    uint32_t pred_struct_idx = curr_minigop_entry_idx + init_idx;
-
-    if (pred_struct_idx + tpl_base_minigop < base_pred_struct_ptr->pred_struct_entry_count)
-        pred_struct_idx += tpl_base_minigop;
-
-    PredictionStructureEntry *frame_pred_entry = base_pred_struct_ptr->pred_struct_entry_ptr_array[pred_struct_idx];
-
-    //TODO ADD initlization to NULL and some Error Checks if filing fails
-
-    //limit to 2 refs and use List0 only for trailing frames
-    uint32_t ref_list_count =  frame_pred_entry->ref_list0.reference_list_count;
-    ref_list_count = MIN(ref_list_count, 2);
-
-    for (uint8_t ref_idx = 0; ref_idx < ref_list_count; ref_idx++) {
-
-        int32_t delta_poc = frame_pred_entry->ref_list0.reference_list[ref_idx];
-        uint64_t ref_poc = cur_pcs->picture_number - delta_poc;
-
-        //printf("\t L0: %ld=>%ld, use input, ref_count %d\n",  curr_poc, ref_poc, ref_list_count);
-
-        for (uint32_t j = 0; j < base_pcs->tpl_group_size; j++) {
-            if (ref_poc == base_pcs->tpl_group[j]->picture_number) {
-                tpl_data->tpl_ref_ds_ptr_array[REF_LIST_0][ref_idx] = base_pcs->tpl_group[j]->ds_pics;
-                tpl_data->ref_in_slide_window[REF_LIST_0][ref_idx] = EB_TRUE;
-
-
-                break;
-            }
-        }
-    }
-
-    tpl_data->tpl_ref0_count = ref_list_count;
-    tpl_data->tpl_ref1_count = 0;
-
-    tpl_data->tpl_temporal_layer_index =  frame_pred_entry->temporal_layer_index;
-    tpl_data->is_used_as_reference_flag =  frame_pred_entry->is_referenced;
-
-    //decode order not accurate enough when at the end of bitstream where minigop switch happens
-    //and there's no way to detect the accurate dependancy/ref and decode order without caching a lot of frames
-    tpl_data->tpl_decode_order =  base_pcs->picture_number + frame_pred_entry->decode_order + 1;
-
-    return 0;
-}
-
-/*the 4th Trailing frame might coincide with a layer1 4L frame,
-  which will undergo TF. Need to use non Tf to pretect from Race-Condition
-*/
-EbErrorType save_trail_non_filtered(
-    PictureParentControlSet *pcs_tpl)
-{
-
-    EbPictureBufferDescInitData init_data = {
-        .buffer_enable_mask = PICTURE_BUFFER_DESC_Y_FLAG,
-        .max_width = pcs_tpl->enhanced_picture_ptr->width,
-        .max_height = pcs_tpl->enhanced_picture_ptr->height,
-        .bit_depth = EB_8BIT,
-        .color_format = pcs_tpl->enhanced_picture_ptr->color_format,
-        .left_padding = pcs_tpl->enhanced_picture_ptr->origin_x,
-        .right_padding = pcs_tpl->enhanced_picture_ptr->origin_x,
-        .top_padding = pcs_tpl->enhanced_picture_ptr->origin_y,
-        .bot_padding = pcs_tpl->enhanced_picture_ptr->origin_y,
-        .split_mode = EB_FALSE,
-    };
-    EB_NEW(pcs_tpl->non_tf_input, svt_picture_buffer_desc_ctor, &init_data);
-
-    pic_copy_kernel_8bit(
-        pcs_tpl->enhanced_picture_ptr->buffer_y,
-        pcs_tpl->enhanced_picture_ptr->stride_y,
-        pcs_tpl->non_tf_input->buffer_y,
-        pcs_tpl->non_tf_input->stride_y,
-        pcs_tpl->enhanced_picture_ptr->stride_y,
-        pcs_tpl->enhanced_picture_ptr->height + 2 * pcs_tpl->enhanced_picture_ptr->origin_y);
-
-    return EB_ErrorNone;
-}
-
-/*
-  create special ressources for trailing frames
-*/
-EbErrorType create_trail_ressources(PictureParentControlSet *pcs, PictureParentControlSet * pcs_tpl)
-{
-
-    const uint16_t picture_width_in_mb = (uint16_t)((pcs->scs_ptr->max_input_luma_width + 15) / 16);
-    const uint16_t picture_height_in_mb = (uint16_t)((pcs->scs_ptr->max_input_luma_height + 15) / 16);
-    EB_MALLOC_2D(pcs_tpl->ois_mb_results_trail, (uint32_t)(picture_width_in_mb * picture_height_in_mb), 1);
-
-    EB_MALLOC(pcs_tpl->pa_me_data_trail, sizeof(MotionEstimationData));
-    uint32_t sb_total_count = picture_width_in_mb * picture_height_in_mb;
-    pcs_tpl->pa_me_data_trail->sb_total_count_unscaled = sb_total_count;
-    EB_ALLOC_PTR_ARRAY(pcs_tpl->pa_me_data_trail->me_results, sb_total_count);
-    for (uint32_t sb_index = 0; sb_index < sb_total_count; ++sb_index) {
-        EB_NEW(pcs_tpl->pa_me_data_trail->me_results[sb_index],
-            me_sb_results_ctor);
-    }
-    EB_MALLOC_ARRAY(pcs_tpl->rc_me_distortion_trail, sb_total_count);
-    EB_MALLOC_ARRAY(pcs_tpl->stationary_block_present_sb_trail, sb_total_count);
-    EB_MALLOC_ARRAY(pcs_tpl->rc_me_allow_gm_trail, sb_total_count);
-    EB_MALLOC_ARRAY(pcs_tpl->me_8x8_cost_variance_trail, sb_total_count);
-    // could be move to ME segment 0, to increase //
-    if (pcs_tpl->picture_number == pcs->picture_number + 4) {
-        EbErrorType err = save_trail_non_filtered(pcs_tpl);
-        if (err != EB_ErrorNone)
-            SVT_ERROR("not enough memory for memory trail pic");
-    }
-
-    return EB_ErrorNone;
-}
-/*
-  free memory for  trailing frames
-*/
-void  dtor_trail_ressources(PictureParentControlSet * pcs)
-{
-    if (pcs->ois_mb_results_trail) {
-        EB_FREE_2D(pcs->ois_mb_results_trail);
-        for (uint32_t sb_index = 0; sb_index < pcs->pa_me_data_trail->sb_total_count_unscaled; ++sb_index) {
-             EB_FREE_ARRAY(pcs->pa_me_data_trail->me_results[sb_index]->me_candidate_array);
-             EB_FREE_ARRAY(pcs->pa_me_data_trail->me_results[sb_index]->me_mv_array);
-             EB_FREE_ARRAY(pcs->pa_me_data_trail->me_results[sb_index]->total_me_candidate_index);
-        }
-        EB_FREE_PTR_ARRAY(pcs->pa_me_data_trail->me_results, pcs->pa_me_data_trail->sb_total_count_unscaled);
-        EB_FREE(pcs->pa_me_data_trail);
-        EB_FREE_ARRAY(pcs->rc_me_distortion_trail);
-        EB_FREE_ARRAY(pcs->stationary_block_present_sb_trail);
-        EB_FREE_ARRAY(pcs->rc_me_allow_gm_trail);
-        EB_FREE_ARRAY(pcs->me_8x8_cost_variance_trail);
-    }
-
-}
-
-
 /* this function sets up ME refs for a regular pic*/
 void tpl_regular_setup_me_refs(
     PictureParentControlSet         *base_pcs,
@@ -4166,16 +4006,6 @@ void store_tpl_pictures(
     else {
         EB_MEMCPY(&pcs->tpl_group[0], ctx->mg_pictures_array, mg_size * sizeof(PictureParentControlSet*));
         pcs->tpl_group_size = mg_size;
-        //add 6 future pictures from PD future window
-        for (uint32_t pic_i = 0; pic_i < pcs->tpl_trailing_frame_count; ++pic_i) {
-            if (pcs->pd_window[2 + pic_i]) {
-                pcs->tpl_group[mg_size + pic_i] = pcs->pd_window[2 + pic_i];
-                pcs->tpl_group_size++;
-            }
-            else
-                break;
-        }
-
     }
 
     for (uint32_t pic_i = 0; pic_i < pcs->tpl_group_size; ++pic_i) {
@@ -4201,63 +4031,23 @@ void send_picture_out(
     EbObjectWrapper               *out_results_wrapper;
 
 
-    if (scs->static_config.look_ahead_distance == 0) {
-        if (pcs->is_used_as_reference_flag) {
-        EbObjectWrapper* reference_picture_wrapper;
-        // Get Empty Reference Picture Object
-        svt_get_empty_object(
-            scs->encode_context_ptr->reference_picture_pool_fifo_ptr,
-            &reference_picture_wrapper);
-        pcs->reference_picture_wrapper_ptr = reference_picture_wrapper;
-        // Give the new Reference a nominal live_count of 1
-        svt_object_inc_live_count(pcs->reference_picture_wrapper_ptr, 1);
+    if (pcs->is_used_as_reference_flag) {
+    EbObjectWrapper* reference_picture_wrapper;
+    // Get Empty Reference Picture Object
+    svt_get_empty_object(
+        scs->encode_context_ptr->reference_picture_pool_fifo_ptr,
+        &reference_picture_wrapper);
+    pcs->reference_picture_wrapper_ptr = reference_picture_wrapper;
+    // Give the new Reference a nominal live_count of 1
+    svt_object_inc_live_count(pcs->reference_picture_wrapper_ptr, 1);
 #if SRM_REPORT
-        pcs->reference_picture_wrapper_ptr->pic_number= pcs->picture_number;
+    pcs->reference_picture_wrapper_ptr->pic_number= pcs->picture_number;
 #endif
 
-        }else {
-            pcs->reference_picture_wrapper_ptr = NULL;
-        }
-        if (scs->in_loop_me && pcs->is_used_as_reference_flag) {
-            EbReferenceObject *reference_object =
-        (EbReferenceObject *)pcs->reference_picture_wrapper_ptr->object_ptr;
-            // Copy original input to reference->input_picture
-            EbPictureBufferDesc *src_ptr = pcs->enhanced_picture_ptr;
-            uint16_t luma_height = (uint16_t)(src_ptr->height - scs->max_input_pad_bottom);
-            uint32_t src_offset = (src_ptr->stride_y*src_ptr->origin_y + src_ptr->origin_x);
-            uint16_t src_stride = src_ptr->stride_y;
-            uint8_t *src = src_ptr->buffer_y + src_offset;
-
-            EbPictureBufferDesc *dst_ptr = reference_object->input_picture;
-            uint32_t dst_offset = (dst_ptr->stride_y*dst_ptr->origin_y + dst_ptr->origin_x);
-            uint16_t dst_stride = dst_ptr->stride_y;
-            uint8_t *dst = dst_ptr->buffer_y + dst_offset;
-            for (int i = 0; i < luma_height; i++) {
-                EB_MEMCPY(dst, src, src_stride);
-                src += src_stride;
-                dst += dst_stride;
-            }
-            pad_input_pictures(scs, dst_ptr);
-
-            if (scs->in_loop_me ) {
-                // Generate 1/4 and 1/16 for reference->quarter_input_picture and reference->sixteenth_input_picture
-                if (scs->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED) {
-                    downsample_filtering_input_picture(
-                        pcs,
-                        reference_object->input_picture,
-                        reference_object->quarter_input_picture,
-                        reference_object->sixteenth_input_picture);
-                }
-                else {
-                    downsample_decimation_input_picture(
-                        pcs,
-                        reference_object->input_picture,
-                        reference_object->quarter_input_picture,
-                        reference_object->sixteenth_input_picture);
-                }
-            }
-        }
+    }else {
+        pcs->reference_picture_wrapper_ptr = NULL;
     }
+
     if (scs->lap_enabled || use_input_stat(scs)) {
         pcs->stats_in_offset = pcs->decode_order;
         if (scs->lap_enabled)

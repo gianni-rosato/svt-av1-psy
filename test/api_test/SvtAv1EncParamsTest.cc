@@ -307,10 +307,6 @@ PARAM_TEST(EncParamEnableHmeTest);
 DEFINE_PARAM_TEST_CLASS(EncParamExtBlockTest, ext_block_flag);
 PARAM_TEST(EncParamExtBlockTest);
 
-/** Test case for in_loop_me_flag*/
-DEFINE_PARAM_TEST_CLASS(EncParamInLoopMeTest, in_loop_me_flag);
-PARAM_TEST(EncParamInLoopMeTest);
-
 /** Test case for search_area_width*/
 DEFINE_PARAM_TEST_CLASS(EncParamSearchAreaWidthTest, search_area_width);
 PARAM_TEST(EncParamSearchAreaWidthTest);
@@ -330,10 +326,6 @@ PARAM_TEST(EncParamRateCtrlModeTest);
 /** Test case for scene_change_detection*/
 DEFINE_PARAM_TEST_CLASS(EncParamSceneChangeDectTest, scene_change_detection);
 PARAM_TEST(EncParamSceneChangeDectTest);
-
-/** Test case for look_ahead_distance*/
-DEFINE_PARAM_TEST_CLASS(EncParamLookAheadDistanceTest, look_ahead_distance);
-PARAM_TEST(EncParamLookAheadDistanceTest);
 
 /** Test case for target_bit_rate*/
 DEFINE_PARAM_TEST_CLASS(EncParamTargetBitRateTest, target_bit_rate);

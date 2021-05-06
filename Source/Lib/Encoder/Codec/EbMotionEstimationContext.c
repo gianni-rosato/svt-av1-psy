@@ -20,11 +20,11 @@ static void me_context_dctor(EbPtr p) {
 
     EB_FREE_ARRAY(obj->mvd_bits_array);
     EB_FREE_ARRAY(obj->p_eight_pos_sad16x16);
-    EB_FREE(obj->me_pcs);
+
 }
 EbErrorType me_context_ctor(MeContext *object_ptr) {
     object_ptr->dctor = me_context_dctor;
-    EB_MALLOC(object_ptr->me_pcs, sizeof(MePcs));
+
 
 
 

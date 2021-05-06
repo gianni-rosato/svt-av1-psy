@@ -36,7 +36,7 @@
 #include "EbMotionEstimation.h"
 static const double tpl_hl_islice_div_factor[EB_MAX_TEMPORAL_LAYERS] = { 1, 1, 1, 2, 1, 0.8 };
 static const double tpl_hl_base_frame_div_factor[EB_MAX_TEMPORAL_LAYERS] = { 1, 1, 1, 3, 1, 0.7 };
-void  dtor_trail_ressources(PictureParentControlSet * pcs);
+
 
 /**************************************
  * Coded Frames Stats
@@ -813,7 +813,7 @@ static int cqp_qindex_calc_tpl_la(PictureControlSet *pcs_ptr, RATE_CONTROL *rc, 
         // As a results, we defined a factor to adjust r0
         if (pcs_ptr->parent_pcs_ptr->frm_hdr.frame_type != KEY_FRAME) {
             double factor;
-            if (pcs_ptr->parent_pcs_ptr->tpl_trailing_frame_count <= 6 && !scs_ptr->lad_mg)
+            if (!scs_ptr->lad_mg)
                 factor = 2;
             else
                 factor = 1;
@@ -1295,11 +1295,7 @@ void process_tpl_stats_frame_kf_gfu_boost(PictureControlSet *pcs_ptr) {
 
             pcs_ptr->parent_pcs_ptr->r0 = pcs_ptr->parent_pcs_ptr->r0 / div_factor;
         } else if (pcs_ptr->parent_pcs_ptr->frm_hdr.frame_type != KEY_FRAME) {
-            double factor;
-            if (pcs_ptr->parent_pcs_ptr->tpl_trailing_frame_count <= 6)
-                factor = 2;
-            else
-                factor = 1;
+            double factor = 2;
             pcs_ptr->parent_pcs_ptr->r0 = pcs_ptr->parent_pcs_ptr->r0 / factor;
         }
         rc->gfu_boost = get_gfu_boost_from_r0_lap(MIN_BOOST_COMBINE_FACTOR,
@@ -2481,25 +2477,9 @@ void *rate_control_kernel(void *input_ptr) {
         case RC_INPUT:
             pcs_ptr = (PictureControlSet *)rate_control_tasks_ptr->pcs_wrapper_ptr->object_ptr;
 
-            // Set the segment counter
-            pcs_ptr->parent_pcs_ptr->inloop_me_segments_completion_count++;
-
-            // If the picture is complete, proceed
-            if (!(pcs_ptr->parent_pcs_ptr->inloop_me_segments_completion_count ==
-                  pcs_ptr->parent_pcs_ptr->inloop_me_segments_total_count)) {
-                svt_release_object(rate_control_tasks_wrapper_ptr);
-                continue;
-            }
-
-            pcs_ptr = (PictureControlSet *)rate_control_tasks_ptr->pcs_wrapper_ptr->object_ptr;
             scs_ptr = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
             FrameHeader *frm_hdr                       = &pcs_ptr->parent_pcs_ptr->frm_hdr;
             pcs_ptr->parent_pcs_ptr->blk_lambda_tuning = EB_FALSE;
-            // Release the down scaled input
-            if (scs_ptr->in_loop_me) {
-                svt_release_object(pcs_ptr->parent_pcs_ptr->down_scaled_picture_wrapper_ptr);
-                pcs_ptr->parent_pcs_ptr->down_scaled_picture_wrapper_ptr = NULL;
-            }
 
             // SB Loop
             pcs_ptr->parent_pcs_ptr->sad_me = 0;
@@ -2764,7 +2744,6 @@ void *rate_control_kernel(void *input_ptr) {
         }
             // Queue variables
             total_number_of_fb_frames++;
-            EB_DESTROY_SEMAPHORE(parentpicture_control_set_ptr->pame_trail_done_semaphore);
 
 
             // Release the SequenceControlSet

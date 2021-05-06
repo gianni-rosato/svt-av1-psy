@@ -59,9 +59,6 @@ typedef struct EbReferenceObject {
 typedef struct EbReferenceObjectDescInitData {
     EbPictureBufferDescInitData reference_picture_desc_init_data;
     int8_t                      hbd_mode_decision;
-    // whether enable 1/4,1/16 8bit luma for inloop me
-    uint8_t hme_quarter_luma_recon;
-    uint8_t hme_sixteenth_luma_recon;
 } EbReferenceObjectDescInitData;
 
 typedef struct EbPaReferenceObject {
@@ -82,7 +79,6 @@ typedef struct EbPaReferenceObjectDescInitData {
     EbPictureBufferDescInitData reference_picture_desc_init_data;
     EbPictureBufferDescInitData quarter_picture_desc_init_data;
     EbPictureBufferDescInitData sixteenth_picture_desc_init_data;
-    uint8_t                     empty_pa_buffers;
 } EbPaReferenceObjectDescInitData;
 
 /**************************************

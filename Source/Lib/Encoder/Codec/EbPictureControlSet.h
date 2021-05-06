@@ -515,95 +515,7 @@ typedef struct GmControls {
     uint8_t use_stationary_block; // 0: do not consider stationary_block info @ me-based bypass, 1: consider stationary_block info @ me-based bypass (only if bypass_based_on_me=1)
     uint8_t use_distance_based_active_th; // 0: used default active_th,1: increase active_th baed on distance to ref (only if bypass_based_on_me=1)
 } GmControls;
-/* a local PCS wraper to make TPL : PCS agnostic*/
-typedef struct {
-    TPLData          tpl_data;
-    uint64_t         picture_number;
-    TplStats       **tpl_stats;
-    EB_SLICE         slice_type;
-    EbPictureBufferDesc *enhanced_picture_ptr;
-    uint8_t          hierarchical_levels;
-    uint16_t         sb_total_count;
-    OisMbResults   **ois_mb_results;
-    struct SequenceControlSet *scs_ptr;
-    uint8_t           max_number_of_pus_per_sb;
-    MotionEstimationData *pa_me_data;
-    Av1Common *                av1_cm;
-    int32_t                    is_720p_or_larger;
-    uint16_t                   aligned_width;
 
-    TplControls  tpl_ctrls;
-
-   // EbObjectWrapper *       p_pcs_wrapper_ptr;
-    EbHandle                tpl_disp_done_semaphore;
-
-    uint16_t tpl_disp_coded_sb_count;
-
-    EncDecSegments **tpl_disp_segment_ctrl;
-
-    TileGroupInfo *     tile_group_info;
-
-    EbHandle tpl_disp_mutex;
-} TplPcs;
-
-
-typedef struct TplDispResults {
-    EbDctor          dctor;
-    EbObjectWrapper *pcs_wrapper_ptr;
-    uint32_t        frame_index;
-    EbFifo *sbo_feedback_fifo_ptr;
-    uint32_t  input_type;
-    int16_t   enc_dec_segment_row;
-    uint16_t  tile_group_index;
-    TplPcs* pcs_ptr;
-    int32_t         qIndex;
-
-} TplDispResults;
-
-/* a local PCS wraper to make ME : PCS agnostic*/
-typedef struct MePcs {
-
-    uint64_t                   picture_number;
-    uint16_t                   sb_total_count;
-    uint32_t                   temporal_layer_index;
-    uint8_t                    picture_qp;
-    uint8_t                    max_number_of_pus_per_sb;
-    uint32_t                  *rc_me_distortion;
-    uint8_t *     stationary_block_present_sb; // 1 when a % of the SB is stationary relative to reference frame(s) ((0,0) MV: decode order), 0 otherwise
-    uint8_t *     rc_me_allow_gm;
-    uint32_t                  *me_64x64_distortion;
-    uint32_t                  *me_32x32_distortion;
-    uint32_t                  *me_16x16_distortion;
-    uint32_t                  *me_8x8_distortion;
-    uint32_t *me_8x8_cost_variance;
-    SbParams                  *sb_params_array;
-    uint16_t                   aligned_width;
-    uint16_t                   aligned_height;
-    MotionEstimationData      *pa_me_data;
-    EbPictureBufferDesc       *enhanced_picture_ptr;
-    OisMbResults             **ois_mb_results;
-    struct SequenceControlSet *scs_ptr;
-    //TPLData                    tpl_data;
-    TplControls                tpl_ctrls;
-    GmControls                 gm_ctrls;
-    EbEncMode                  enc_mode;
-    EbBool                     enable_hme_flag;
-    EbBool                     enable_hme_level0_flag;
-    EbBool                     enable_hme_level1_flag;
-    EbBool                     enable_hme_level2_flag;
-    uint8_t                    sc_class0;
-    uint8_t                    sc_class1;
-    uint8_t                    sc_class2;
-    EbObjectWrapper           *pa_reference_picture_wrapper_ptr;
-    EbPictureBufferDesc       *enhanced_unscaled_picture_ptr;
-
-    uint16_t                   me_segments_total_count;
-    uint8_t                    me_segments_column_count;
-    uint8_t                    me_segments_row_count;
-
-    EB_SLICE                   slice_type;
-
-} MePcs;
 //CHKN
 // Add the concept of PictureParentControlSet which is a subset of the old PictureControlSet.
 // It actually holds only high level Picture based control data:(GOP management,when to start a picture, when to release the PCS, ....).
@@ -640,7 +552,6 @@ typedef struct PictureParentControlSet {
     uint8_t             log2_tile_cols;
     uint8_t             log2_sb_sz;
     TileGroupInfo *     tile_group_info;
-    TileGroupInfo *     tile_group_info_trail;
     uint8_t             tile_group_cols;
     uint8_t             tile_group_rows;
 
@@ -719,27 +630,8 @@ typedef struct PictureParentControlSet {
     uint8_t  me_segments_column_count;
     uint8_t  me_segments_row_count;
     uint16_t me_segments_completion_count;
-    uint64_t              me_trailing_segments_completion_count;
-    EbHandle              pame_trail_done_semaphore;
-    TPLData               tpl_data_trail;
-    uint8_t               hierarchical_levels_trail;
-    OisMbResults        **ois_mb_results_trail;
-    MotionEstimationData *pa_me_data_trail;
-    uint32_t             *rc_me_distortion_trail;
-    uint8_t *     stationary_block_present_sb_trail; // 1 when a % of the SB is stationary relative to reference frame(s) ((0,0) MV: decode order), 0 otherwise
-    uint8_t *     rc_me_allow_gm_trail;
-    uint32_t             *me_64x64_distortion_trail;
-    uint32_t             *me_32x32_distortion_trail;
-    uint32_t             *me_16x16_distortion_trail;
-    uint32_t             *me_8x8_distortion_trail;
-    uint32_t *me_8x8_cost_variance_trail;
+
     EbPictureBufferDesc       *non_tf_input;
-
-    uint16_t inloop_me_segments_total_count;
-    uint8_t  inloop_me_segments_column_count;
-    uint8_t  inloop_me_segments_row_count;
-    uint16_t inloop_me_segments_completion_count;
-
     // Motion Estimation Results
     uint8_t   max_number_of_pus_per_sb;
     uint32_t *rc_me_distortion;
@@ -921,15 +813,7 @@ typedef struct PictureParentControlSet {
     uint8_t  temp_filt_prep_done;
     uint16_t temp_filt_seg_acc;
     EbHandle tpl_disp_done_semaphore;
-    EbHandle tpl_disp_done_semaphore_trail;
-    // TPL ME
-    EbHandle     tpl_me_done_semaphore;
-    EbHandle     tpl_me_mutex;
-    uint16_t     tpl_me_seg_acc;
-    int16_t      tpl_me_segments_total_count;
-    uint8_t      tpl_me_segments_column_count;
-    uint8_t      tpl_me_segments_row_count;
-    uint8_t      tpl_me_done;
+
     AtomicVarU32 pame_done; //set when PA ME is done.
     CondVar me_ready;
 
@@ -987,10 +871,6 @@ typedef struct PictureParentControlSet {
     uint8_t used_tpl_frame_num;
     uint32_t ntpl_group_size;
 
-    // For TPL, in addition to frames in the minigop size, we might process extra frames from the next minigop. These frames are
-    // called trailing frames. Trailing frames are available because of TF and their minigop is not determined yet. As a result,
-    // when used in RC there is a risk of race condition to access the PCS data. To prevent the problem, TplData should be used instead of PCS.
-    uint8_t tpl_trailing_frame_count;
     // Tune TPL for better chroma.Only for 240P
     uint8_t    tune_tpl_for_chroma;
     uint8_t    is_next_frame_intra;
@@ -1021,16 +901,13 @@ typedef struct PictureParentControlSet {
 
 
     EbHandle tpl_disp_mutex;
-    EbHandle tpl_disp_mutex_trail;
     //uint32_t         input_type;
     int16_t          enc_dec_segment_row;
     uint16_t         tile_group_index;
     uint16_t         tpl_disp_coded_sb_count;
-    uint16_t         tpl_disp_coded_sb_count_trail;
 
     uint16_t sb_total_count_pix;
     EncDecSegments **tpl_disp_segment_ctrl;
-    EncDecSegments **tpl_disp_segment_ctrl_trail;
     // the offsets for STATS_BUFFER_CTX
     uint64_t                        stats_in_end_offset;
     // the offsets for stats_in
@@ -1061,6 +938,21 @@ typedef struct PictureParentControlSet {
     struct PictureParentControlSet *gf_group[MAX_TPL_GROUP_SIZE];
     uint8_t bypass_cost_table_gen;
 } PictureParentControlSet;
+
+
+typedef struct TplDispResults {
+    EbDctor          dctor;
+    EbObjectWrapper *pcs_wrapper_ptr;
+    uint32_t        frame_index;
+    EbFifo *sbo_feedback_fifo_ptr;
+    uint32_t  input_type;
+    int16_t   enc_dec_segment_row;
+    uint16_t  tile_group_index;
+    PictureParentControlSet* pcs_ptr;
+    int32_t         qIndex;
+
+} TplDispResults;
+
 
 typedef struct PictureControlSetInitData {
     uint16_t       picture_width;

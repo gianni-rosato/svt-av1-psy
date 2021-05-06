@@ -39,11 +39,6 @@
 
 #include "EbPictureDecisionResults.h"
 
-void fill_me_pcs_wraper(
-    PictureParentControlSet *pcs,
-    MePcs *me_pcs,
-    uint32_t                 trail_path,
-    PictureDecisionResults  *in_results);
 static const uint32_t subblock_xy_16x16[N_16X16_BLOCKS][2] = {{0, 0},
                                                               {0, 1},
                                                               {0, 2},
@@ -397,96 +392,6 @@ static void create_me_context_and_picture_control(
     context_ptr->me_context_ptr->sixteenth_sb_buffer_stride = sixteenth_pic_ptr->stride_y;
 }
 
-static void create_me_context_and_picture_control_inl(
-    MotionEstimationContext_t *context_ptr, PictureParentControlSet *picture_control_set_ptr_frame,
-    PictureParentControlSet *picture_control_set_ptr_central,
-    EbPictureBufferDesc *input_picture_ptr_central, int blk_row, int blk_col, uint32_t ss_x,
-    uint32_t ss_y) {
-    // set reference picture for alt-refs
-    context_ptr->me_context_ptr->me_ds_ref_array[0][0] = picture_control_set_ptr_frame->ds_pics;
-    context_ptr->me_context_ptr->me_type               = ME_MCTF;
-
-    // set the buffers with the original, quarter and sixteenth pixels version of the source frame
-    EbDownScaledObject *src_ds_object = (EbDownScaledObject *)picture_control_set_ptr_central
-                                            ->down_scaled_picture_wrapper_ptr->object_ptr;
-
-    // Set 1/4 and 1/16 ME reference buffer(s); filtered or decimated
-    EbPictureBufferDesc *quarter_pic_ptr = src_ds_object->quarter_picture_ptr;
-
-    EbPictureBufferDesc *sixteenth_pic_ptr = src_ds_object->sixteenth_picture_ptr;
-
-    // Parts from MotionEstimationKernel()
-    uint32_t sb_origin_x = (uint32_t)(blk_col * BW);
-    uint32_t sb_origin_y = (uint32_t)(blk_row * BH);
-
-    uint32_t sb_width  = (input_picture_ptr_central->width - sb_origin_x) < BLOCK_SIZE_64
-         ? input_picture_ptr_central->width - sb_origin_x
-         : BLOCK_SIZE_64;
-    uint32_t sb_height = (input_picture_ptr_central->height - sb_origin_y) < BLOCK_SIZE_64
-        ? input_picture_ptr_central->height - sb_origin_y
-        : BLOCK_SIZE_64;
-    // Load the SB from the input to the intermediate SB buffer
-    int buffer_index = (input_picture_ptr_central->origin_y + sb_origin_y) *
-            input_picture_ptr_central->stride_y +
-        input_picture_ptr_central->origin_x + sb_origin_x;
-
-    // set search method
-    context_ptr->me_context_ptr->hme_search_method = FULL_SAD_SEARCH;
-
-    // set Lambda
-    context_ptr->me_context_ptr->lambda =
-        lambda_mode_decision_ra_sad[picture_control_set_ptr_central->picture_qp];
-
-#ifdef ARCH_X86_64
-    {
-        uint8_t *src_ptr = &(input_picture_ptr_central->buffer_y[buffer_index]);
-
-        //_MM_HINT_T0     //_MM_HINT_T1    //_MM_HINT_T2    //_MM_HINT_NTA
-        uint32_t i;
-        for (i = 0; i < sb_height; i++) {
-            char const *p = (char const *)(src_ptr + i * input_picture_ptr_central->stride_y);
-            _mm_prefetch(p, _MM_HINT_T2);
-        }
-    }
-#endif
-    context_ptr->me_context_ptr->sb_src_ptr = &(input_picture_ptr_central->buffer_y[buffer_index]);
-    context_ptr->me_context_ptr->sb_src_stride = input_picture_ptr_central->stride_y;
-
-    // Load the 1/4 decimated SB from the 1/4 decimated input to the 1/4 intermediate SB buffer
-    buffer_index = (quarter_pic_ptr->origin_y + (sb_origin_y >> ss_y)) * quarter_pic_ptr->stride_y +
-        quarter_pic_ptr->origin_x + (sb_origin_x >> ss_x);
-
-    for (uint32_t sb_row = 0; sb_row < (sb_height >> ss_y); sb_row++) {
-        EB_MEMCPY((&(context_ptr->me_context_ptr->quarter_sb_buffer
-                         [sb_row * context_ptr->me_context_ptr->quarter_sb_buffer_stride])),
-                  (&(quarter_pic_ptr->buffer_y[buffer_index + sb_row * quarter_pic_ptr->stride_y])),
-                  (sb_width >> ss_x) * sizeof(uint8_t));
-    }
-
-    // Load the 1/16 decimated SB from the 1/16 decimated input to the 1/16 intermediate SB buffer
-    buffer_index = (sixteenth_pic_ptr->origin_y + (sb_origin_y >> 2)) *
-            sixteenth_pic_ptr->stride_y +
-        sixteenth_pic_ptr->origin_x + (sb_origin_x >> 2);
-
-    {
-        uint8_t *frame_ptr = &(sixteenth_pic_ptr->buffer_y[buffer_index]);
-        uint8_t *local_ptr = context_ptr->me_context_ptr->sixteenth_sb_buffer;
-
-        if (context_ptr->me_context_ptr->hme_search_method == FULL_SAD_SEARCH) {
-            for (uint32_t sb_row = 0; sb_row < (sb_height >> 2); sb_row += 1) {
-                EB_MEMCPY(local_ptr, frame_ptr, (sb_width >> 2) * sizeof(uint8_t));
-                local_ptr += 16;
-                frame_ptr += sixteenth_pic_ptr->stride_y;
-            }
-        } else {
-            for (uint32_t sb_row = 0; sb_row < (sb_height >> 2); sb_row += 2) {
-                EB_MEMCPY(local_ptr, frame_ptr, (sb_width >> 2) * sizeof(uint8_t));
-                local_ptr += 16;
-                frame_ptr += sixteenth_pic_ptr->stride_y << 1;
-            }
-        }
-    }
-}
 static INLINE void calculate_squared_errors(const uint8_t *s, int s_stride, const uint8_t *p,
                                             int p_stride, uint16_t *diff_sse, unsigned int w,
                                             unsigned int h) {
@@ -2207,8 +2112,6 @@ static EbErrorType produce_temporally_filtered_pic(
     int encoder_bit_depth =
         (int)picture_control_set_ptr_central->scs_ptr->static_config.encoder_bit_depth;
 
-    SequenceControlSet *scs_ptr = (SequenceControlSet *)picture_control_set_ptr_central->scs_ptr;
-
     // chroma subsampling
     uint32_t ss_x          = picture_control_set_ptr_central->scs_ptr->subsampling_x;
     uint32_t ss_y          = picture_control_set_ptr_central->scs_ptr->subsampling_y;
@@ -2389,27 +2292,16 @@ static EbErrorType produce_temporally_filtered_pic(
 
                 } else {
                     // Initialize ME context
-                    // When in_loop_me is on, we should not use any PA related stuff
-                    if (scs_ptr->in_loop_me)
-                        create_me_context_and_picture_control_inl(
-                            me_context_ptr,
-                            list_picture_control_set_ptr[frame_index],
-                            list_picture_control_set_ptr[index_center],
-                            input_picture_ptr_central,
-                            blk_row,
-                            blk_col,
-                            ss_x,
-                            ss_y);
-                    else
-                        create_me_context_and_picture_control(
-                            me_context_ptr,
-                            list_picture_control_set_ptr[frame_index],
-                            list_picture_control_set_ptr[index_center],
-                            input_picture_ptr_central,
-                            blk_row,
-                            blk_col,
-                            ss_x,
-                            ss_y);
+                    create_me_context_and_picture_control(
+                        me_context_ptr,
+                        list_picture_control_set_ptr[frame_index],
+                        list_picture_control_set_ptr[index_center],
+                        input_picture_ptr_central,
+                        blk_row,
+                        blk_col,
+                        ss_x,
+                        ss_y);
+
                     context_ptr->num_of_list_to_search       = 0;
                     context_ptr->num_of_ref_pic_to_search[0] = 1;
                     context_ptr->num_of_ref_pic_to_search[1] = 0;
@@ -2418,25 +2310,21 @@ static EbErrorType produce_temporally_filtered_pic(
                     context_ptr->is_used_as_reference_flag =
                         picture_control_set_ptr_central->is_used_as_reference_flag;
 
-                    if (!scs_ptr->in_loop_me) {
-                        EbPaReferenceObject *reference_object =
-                            (EbPaReferenceObject *)context_ptr->alt_ref_reference_ptr;
-                        context_ptr->me_ds_ref_array[0][0].picture_ptr =
-                            reference_object->input_padded_picture_ptr;
-                        context_ptr->me_ds_ref_array[0][0].sixteenth_picture_ptr =
-                            reference_object->sixteenth_downsampled_picture_ptr;
-                        context_ptr->me_ds_ref_array[0][0].quarter_picture_ptr =
-                            reference_object->quarter_downsampled_picture_ptr;
-                        context_ptr->me_ds_ref_array[0][0].picture_number =
-                            reference_object->picture_number;
-                    }
+                    EbPaReferenceObject *reference_object =
+                        (EbPaReferenceObject *)context_ptr->alt_ref_reference_ptr;
+                    context_ptr->me_ds_ref_array[0][0].picture_ptr =
+                        reference_object->input_padded_picture_ptr;
+                    context_ptr->me_ds_ref_array[0][0].sixteenth_picture_ptr =
+                        reference_object->sixteenth_downsampled_picture_ptr;
+                    context_ptr->me_ds_ref_array[0][0].quarter_picture_ptr =
+                        reference_object->quarter_downsampled_picture_ptr;
+                    context_ptr->me_ds_ref_array[0][0].picture_number =
+                        reference_object->picture_number;
 
                     // Perform ME - context_ptr will store the outputs (MVs, buffers, etc)
                     // Block-based MC using open-loop HME + refinement
-                    MePcs *me_pcs = context_ptr->me_pcs;
-                    fill_me_pcs_wraper(picture_control_set_ptr_central, me_pcs,0,0);
                     motion_estimate_sb(
-                        me_pcs,
+                        picture_control_set_ptr_central,
                         (uint32_t)blk_row * blk_cols + blk_col,
                         (uint32_t)blk_col * BW, // x block
                         (uint32_t)blk_row * BH, // y block
@@ -2631,32 +2519,6 @@ double estimate_noise_highbd(const uint16_t *src, int width, int height, int str
     return sigma;
 }
 
-
-//  Inloop padding + decimation
-static void pad_and_decimate_filtered_pic_inl(
-    PictureParentControlSet *picture_control_set_ptr_central) {
-    // reference structures (padded pictures + downsampled versions)
-    SequenceControlSet *scs_ptr = (SequenceControlSet *)
-                                      picture_control_set_ptr_central->scs_wrapper_ptr->object_ptr;
-    EbPictureBufferDesc *input_picture_ptr = picture_control_set_ptr_central->enhanced_picture_ptr;
-
-    pad_input_pictures(scs_ptr, input_picture_ptr);
-
-    EbDownScaledObject *ds_obj = (EbDownScaledObject *)picture_control_set_ptr_central
-                                     ->down_scaled_picture_wrapper_ptr->object_ptr;
-
-    if (scs_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED) {
-        downsample_filtering_input_picture(picture_control_set_ptr_central,
-                                           input_picture_ptr,
-                                           (EbPictureBufferDesc *)ds_obj->quarter_picture_ptr,
-                                           (EbPictureBufferDesc *)ds_obj->sixteenth_picture_ptr);
-    } else {
-        downsample_decimation_input_picture(picture_control_set_ptr_central,
-                                            input_picture_ptr,
-                                            (EbPictureBufferDesc *)ds_obj->quarter_picture_ptr,
-                                            (EbPictureBufferDesc *)ds_obj->sixteenth_picture_ptr);
-    }
-}
 void pad_and_decimate_filtered_pic(PictureParentControlSet *picture_control_set_ptr_central) {
     // reference structures (padded pictures + downsampled versions)
     SequenceControlSet *scs_ptr = (SequenceControlSet *)
@@ -2955,10 +2817,7 @@ EbErrorType svt_av1_init_temporal_filtering(
         }
 
         // padding + decimation: even if highbd src, this is only performed on the 8 bit buffer (excluding the LSBs)
-        if (picture_control_set_ptr_central->scs_ptr->in_loop_me)
-            pad_and_decimate_filtered_pic_inl(picture_control_set_ptr_central);
-        else
-            pad_and_decimate_filtered_pic(picture_control_set_ptr_central);
+        pad_and_decimate_filtered_pic(picture_control_set_ptr_central);
 
         // signal that temp filt is done
         svt_post_semaphore(picture_control_set_ptr_central->temp_filt_done_semaphore);

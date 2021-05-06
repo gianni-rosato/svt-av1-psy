@@ -65,7 +65,4 @@ typedef struct PictureManagerResults {
 typedef struct PictureManagerResultInitData {
     int32_t junk;
 } PictureManagerResultInitData;
-
-extern EbErrorType picture_manager_result_creator(EbPtr *object_dbl_ptr,
-                                                  EbPtr  object_init_data_ptr);
 #endif //EbPictureResults_h

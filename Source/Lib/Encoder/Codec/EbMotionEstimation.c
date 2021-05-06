@@ -851,10 +851,10 @@ static void open_loop_me_fullpel_search_sblock(MeContext *context_ptr, uint32_t 
     }
 }
 
-/*this is a trailing path function. PictureParentControlSet should not be used */
-#define PictureParentControlSet  "TYPE_NOT_ALLOWED"
+
+
 void hme_level_0(
-    MePcs *pcs_ptr,
+    PictureParentControlSet *pcs_ptr,
     MeContext *              context_ptr, // input/output parameter, ME context Ptr, used to
     // get/update ME results
     int16_t origin_x, // input parameter, SB position in the horizontal
@@ -1028,7 +1028,7 @@ void hme_level_0(
 
     return;
 }
-#undef PictureParentControlSet
+
 void hme_level_1(
     MeContext *context_ptr, // input/output parameter, ME context Ptr, used to
     // get/update ME results
@@ -1178,10 +1178,10 @@ void hme_level_1(
     return;
 }
 
-/*this is a trailing path function. PictureParentControlSet should not be used */
-#define PictureParentControlSet  "TYPE_NOT_ALLOWED"
+
+
 void hme_level_2(
-                 MePcs *pcs_ptr, // input parameter, Picture control set Ptr
+                 PictureParentControlSet *pcs_ptr, // input parameter, Picture control set Ptr
                  MeContext *context_ptr, // input/output parameter, ME context Ptr, used to
                  // get/update ME results
                  int16_t  origin_x, // input parameter, SB position in the horizontal direction
@@ -1322,7 +1322,7 @@ void hme_level_2(
 
     return;
 }
-#undef PictureParentControlSet
+
 // Nader - to be replaced by loock-up table
 /*******************************************
  * get_me_info_index
@@ -1428,10 +1428,10 @@ EbErrorType check_00_center(EbPictureBufferDesc *ref_pic_ptr, MeContext *context
 }
 // get ME references based on level:
 // level: 0 => sixteenth, 1 => quarter, 2 => original
-/*this is a trailing path function. PictureParentControlSet should not be used */
-#define PictureParentControlSet  "TYPE_NOT_ALLOWED"
+
+
 static EbPictureBufferDesc* get_me_reference(
-    MePcs   *pcs_ptr,
+    PictureParentControlSet   *pcs_ptr,
     MeContext                 *context_ptr,
     uint8_t                   list_index,
     uint8_t                   ref_pic_index,
@@ -1447,16 +1447,16 @@ static EbPictureBufferDesc* get_me_reference(
     return ref_pic_ptr;
 }
 
-#undef PictureParentControlSet
+
 
 /*******************************************
  *   performs integer search motion estimation for
  all avaiable references frames
  *******************************************/
-/*this is a trailing path function. PictureParentControlSet should not be used */
-#define PictureParentControlSet  "TYPE_NOT_ALLOWED"
+
+
 void integer_search_sb(
-    MePcs   *pcs_ptr,
+    PictureParentControlSet   *pcs_ptr,
     uint32_t                   sb_index,
     uint32_t                   sb_origin_x,
     uint32_t                   sb_origin_y,
@@ -1715,7 +1715,7 @@ void integer_search_sb(
     }
 }
 
-#undef PictureParentControlSet
+
 /*
   using previous stage ME results (Integer Search) for each reference
   frame. keep only the references that are close to the best reference.
@@ -1875,7 +1875,7 @@ void prehme_core(
 }
 /* Pre HME for one Block 64x64*/
 static void prehme_sb(
-    MePcs *pcs_ptr, uint32_t sb_origin_x,
+    PictureParentControlSet *pcs_ptr, uint32_t sb_origin_x,
     uint32_t sb_origin_y, MeContext *ctx,
     EbPictureBufferDesc *input_ptr)
 {
@@ -1943,10 +1943,10 @@ static void prehme_sb(
 /*******************************************
  *   performs hierarchical ME level 0
  *******************************************/
-/*this is a trailing path function. PictureParentControlSet should not be used */
-#define PictureParentControlSet  "TYPE_NOT_ALLOWED"
+
+
 static void hme_level0_sb(
-                         MePcs *pcs_ptr, uint32_t sb_origin_x,
+                         PictureParentControlSet *pcs_ptr, uint32_t sb_origin_x,
                           uint32_t sb_origin_y, MeContext *context_ptr,
                           EbPictureBufferDesc *input_ptr) {
     const uint32_t      sb_width = (input_ptr->width - sb_origin_x) < BLOCK_SIZE_64
@@ -2119,14 +2119,14 @@ static void hme_level0_sb(
         }
     }
 }
-#undef PictureParentControlSet
+
 /*******************************************
  *   performs hierarchical ME level 1
  *******************************************/
-/*this is a trailing path function. PictureParentControlSet should not be used */
-#define PictureParentControlSet  "TYPE_NOT_ALLOWED"
+
+
 void hme_level1_sb(
-    MePcs   *pcs_ptr,
+    PictureParentControlSet   *pcs_ptr,
     uint32_t                   sb_origin_x,
     uint32_t                   sb_origin_y,
     MeContext                 *context_ptr,
@@ -2216,15 +2216,15 @@ void hme_level1_sb(
         }
     }
 }
-#undef PictureParentControlSet
+
 /*******************************************
  *   performs hierarchical ME level 2
  *******************************************/
 
-/*this is a trailing path function. PictureParentControlSet should not be used */
-#define PictureParentControlSet  "TYPE_NOT_ALLOWED"
+
+
 static void hme_level2_sb(
-                          MePcs *pcs_ptr, uint32_t sb_origin_x, uint32_t sb_origin_y,
+                          PictureParentControlSet *pcs_ptr, uint32_t sb_origin_x, uint32_t sb_origin_y,
                    MeContext *context_ptr, EbPictureBufferDesc *input_ptr) {
     const uint32_t sb_width = (input_ptr->width - sb_origin_x) < BLOCK_SIZE_64
         ? input_ptr->width - sb_origin_x
@@ -2336,14 +2336,14 @@ static void hme_level2_sb(
         }
     }
 }
-#undef PictureParentControlSet
+
 /*******************************************
  *   Set the final search centre
  *******************************************/
-/*this is a trailing path function. PictureParentControlSet should not be used */
-#define PictureParentControlSet  "TYPE_NOT_ALLOWED"
+
+
 void set_final_seach_centre_sb(
-    MePcs   *pcs_ptr,
+    PictureParentControlSet   *pcs_ptr,
     MeContext                 *context_ptr
 ) {
     UNUSED(pcs_ptr);
@@ -2509,14 +2509,14 @@ void set_final_seach_centre_sb(
     }
 }
 
-#undef PictureParentControlSet
+
 /*******************************************
  *   performs hierarchical ME for every ref frame
  *******************************************/
-/*this is a trailing path function. PictureParentControlSet should not be used */
-#define PictureParentControlSet  "TYPE_NOT_ALLOWED"
+
+
 void hme_sb(
-    MePcs   *pcs_ptr,
+    PictureParentControlSet   *pcs_ptr,
     uint32_t                   sb_origin_x,
     uint32_t                   sb_origin_y,
     MeContext                 *context_ptr,
@@ -2582,7 +2582,7 @@ void hme_sb(
         pcs_ptr,
         context_ptr);
 }
-#undef PictureParentControlSet
+
 
 
 void hme_prune_ref_and_adjust_sr(MeContext* context_ptr) {
@@ -2625,10 +2625,10 @@ void hme_prune_ref_and_adjust_sr(MeContext* context_ptr) {
     }
 }
 
-/*this is a trailing path function. PictureParentControlSet should not be used */
-#define PictureParentControlSet  "TYPE_NOT_ALLOWED"
+
+
 void construct_me_candidate_array(
-    MePcs *pcs_ptr, MeContext *context_ptr,
+    PictureParentControlSet *pcs_ptr, MeContext *context_ptr,
     uint32_t num_of_list_to_search,
     uint32_t pu_index, uint32_t sb_index) {
 
@@ -2786,12 +2786,12 @@ void construct_me_candidate_array(
     pcs_ptr->pa_me_data->me_results[sb_index]->total_me_candidate_index[pu_index] =
         MIN((me_cand_offset - pu_index * MAX_PA_ME_CAND), MAX_PA_ME_CAND);
 }
-#undef PictureParentControlSet
-/*this is a trailing path function. PictureParentControlSet should not be used */
-#define PictureParentControlSet  "TYPE_NOT_ALLOWED"
+
+
+
 // Active and stationary detection for global motion
 void perform_gm_detection(
-    MePcs                   *pcs_ptr, // input parameter, Picture Control Set Ptr
+    PictureParentControlSet *pcs_ptr, // input parameter, Picture Control Set Ptr
     uint32_t                 sb_index, // input parameter, SB Index
     MeContext* context_ptr // input parameter, ME Context Ptr, used to store decimated/interpolated SB/SR
 ) {
@@ -2883,13 +2883,13 @@ void perform_gm_detection(
     }
 
 }
-#undef PictureParentControlSet
 
-/*this is a trailing path function. PictureParentControlSet should not be used */
-#define PictureParentControlSet  "TYPE_NOT_ALLOWED"
+
+
+
 // Compute the distortion per block size based on the ME results
 void compute_distortion(
-    MePcs                   *pcs_ptr, // input parameter, Picture Control Set Ptr
+    PictureParentControlSet *pcs_ptr, // input parameter, Picture Control Set Ptr
     uint32_t                 sb_index, // input parameter, SB Index
     MeContext* context_ptr // input parameter, ME Context Ptr, used to store decimated/interpolated SB/SR
 ) {
@@ -2937,9 +2937,9 @@ void compute_distortion(
     pcs_ptr->me_8x8_distortion[sb_index] = (dist_8x8 * sb_size) / (sb_params->width * sb_params->height);
 
 }
-#undef PictureParentControlSet
-/*this is a trailing path function. PictureParentControlSet should not be used */
-#define PictureParentControlSet  "TYPE_NOT_ALLOWED"
+
+
+
 // Initalize data used in ME/HME
 static INLINE void init_me_hme_data(MeContext* context_ptr) {
 
@@ -2984,15 +2984,15 @@ static INLINE void init_me_hme_data(MeContext* context_ptr) {
     }
 
 }
-#undef PictureParentControlSet
+
 /*******************************************
  * motion_estimate_sb
  *   performs ME (SB)
  *******************************************/
-/*this is a trailing path function. PictureParentControlSet should not be used */
-#define PictureParentControlSet  "TYPE_NOT_ALLOWED"
+
+
 EbErrorType motion_estimate_sb(
-    MePcs                   *pcs_ptr, // input parameter, Picture Control Set Ptr
+    PictureParentControlSet *pcs_ptr, // input parameter, Picture Control Set Ptr
     uint32_t                 sb_index, // input parameter, SB Index
     uint32_t                 sb_origin_x, // input parameter, SB Origin X
     uint32_t                 sb_origin_y, // input parameter, SB Origin X
@@ -3049,12 +3049,12 @@ EbErrorType motion_estimate_sb(
 
     return return_error;
 }
-#undef PictureParentControlSet
 
-/*this is a trailing path function. PictureParentControlSet should not be used */
-#define PictureParentControlSet  "TYPE_NOT_ALLOWED"
+
+
+
 EbErrorType open_loop_intra_search_mb(
-    MePcs *pcs_ptr, uint32_t sb_index,
+    PictureParentControlSet *pcs_ptr, uint32_t sb_index,
     EbPictureBufferDesc *input_ptr)
 {
     EbErrorType return_error = EB_ErrorNone;
@@ -3180,4 +3180,3 @@ EbErrorType open_loop_intra_search_mb(
     }
     return return_error;
 }
-#undef PictureParentControlSet

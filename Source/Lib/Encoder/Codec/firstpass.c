@@ -32,11 +32,6 @@
 #include "EbMotionEstimation.h"
 #include "EbPictureDecisionResults.h"
 
-void fill_me_pcs_wraper(
-    PictureParentControlSet *pcs,
-    MePcs *me_pcs,
-    uint32_t                 trail_path,
-    PictureDecisionResults  *in_results);
 //#include "EbMotionEstimationProcess.h"
 #undef _MM_HINT_T2
 #define _MM_HINT_T2 1
@@ -648,20 +643,6 @@ EbErrorType first_pass_signal_derivation_multi_processes(SequenceControlSet *   
     // 1: ON
     pcs_ptr->tx_size_early_exit = 0;
 
-    // MRP control
-    // 0: OFF (1,1)  ; override features
-    // 1: FULL (4,3) ; override features
-    // 2: (4,3) ; No-override features
-    // 3: (3,3) ; No-override features
-    // 4: (3,2) ; No-override features
-    // 5: (2,3) ; No-override features
-    // 6: (2,2) ; No-override features
-    // 7: (2,1) ; No-override features
-    // 8: (1,2) ; No-override features
-    // 9: (1,1) ; No-override features
-    // Level 0 , 1  : set ref_list0_count_try and ref_list1_count_try and Override MRP-related features
-    // Level 2 .. 9 : Only set ref_list0_count_try and ref_list1_count_try
-    pcs_ptr->tpl_trailing_frame_count = 0;
     return return_error;
 }
 /******************************************************
@@ -1296,10 +1277,8 @@ static EbErrorType first_pass_me(PictureParentControlSet *  ppcs_ptr,
                 me_context_ptr, ppcs_ptr, input_picture_ptr, blk_row, blk_col, ss_x, ss_y);
             // Perform ME - context_ptr will store the outputs (MVs, buffers, etc)
             // Block-based MC using open-loop HME + refinement
-            MePcs *me_pcs = context_ptr->me_pcs;
-            fill_me_pcs_wraper(ppcs_ptr, me_pcs,0,0);
             motion_estimate_sb(
-                                me_pcs, // source picture control set -> references come from here
+                                ppcs_ptr, // source picture control set -> references come from here
                                (uint32_t)blk_row * blk_cols + blk_col,
                                (uint32_t)blk_col * BLOCK_SIZE_64, // x block
                                (uint32_t)blk_row * BLOCK_SIZE_64, // y block

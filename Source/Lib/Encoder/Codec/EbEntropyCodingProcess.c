@@ -446,8 +446,6 @@ void *entropy_coding_kernel(void *input_ptr) {
                     rate_control_task_ptr->bit_count      = row_total_bits;
 
                     rate_control_task_ptr->pcs_wrapper_ptr = 0;
-                    rate_control_task_ptr->segment_index   = ~0u;
-
                     // Post EncDec Results
                     svt_post_full_object(rate_control_task_wrapper_ptr);
                 }
