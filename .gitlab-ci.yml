@@ -320,7 +320,7 @@ Valgrind:
       - PASS: 1
   script:
     # --error-limit=no --leak-check=full --show-leak-kinds=all makes the log very huge and takes around 16 minutes
-    - valgrind --error-exitcode=1 --track-origins=yes --suppressions=/usr/lib/valgrind/debian.supp -- ./valgrind/SvtAv1EncApp --preset 6 ${PASS:+--pass $PASS} -i akiyo_cif.y4m -n 10 -b test1.ivf
+    - valgrind --error-exitcode=1 --track-origins=yes --suppressions=/usr/lib/valgrind/debian.supp -- ./valgrind/SvtAv1EncApp --preset 6 ${PASS:+--pass $PASS} -i akiyo_cif.y4m --rc 1 --tbr 500 -n 10 -b test1.ivf
   needs:
     - Linux (Valgrind)
 
@@ -333,7 +333,7 @@ Linux Sanitizer Test:
     LSAN_OPTIONS: verbosity=2:color=always:log_pointers=1:log_threads=1:report_objects=1
     ASAN_OPTIONS: verbosity=2:color=always:print_cmdline=1:strict_string_checks=1:symbolize=1:detect_leaks=1:fast_unwind_on_malloc=0:strict_memcmp=0
     MSAN_OPTIONS: verbosity=2:color=always
-    TSAN_OPTIONS: verbosity=2:color=always:suppressions=./.github/workflows/sanitizers-known-warnings.txt
+    TSAN_OPTIONS: verbosity=2:color=always:suppressions=./.gitlab/sanitizers-known-warnings.txt
   parallel:
     matrix:
       - SANITIZER: address
