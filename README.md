@@ -1,10 +1,5 @@
 # Scalable Video Technology for AV1 (SVT-AV1 Encoder and Decoder)
 
-[![CI](https://github.com/AOMediaCodec/SVT-AV1/workflows/CI/badge.svg)](https://github.com/AOMediaCodec/SVT-AV1/actions?query=workflow%3ACI+branch%3Amaster)
-[![MSVC builds](https://github.com/AOMediaCodec/SVT-AV1/workflows/MSVC%20builds/badge.svg)](https://github.com/AOMediaCodec/SVT-AV1/actions?query=workflow%3A%22MSVC+builds%22+branch%3Amaster)
-[![macOS](https://github.com/AOMediaCodec/SVT-AV1/workflows/macOS/badge.svg)](https://github.com/AOMediaCodec/SVT-AV1/actions?query=workflow%3AmacOS+branch%3Amaster)
-[![Travis Build Status](https://travis-ci.com/AOMediaCodec/SVT-AV1.svg?branch=master)](https://travis-ci.com/AOMediaCodec/SVT-AV1)
-
 The Scalable Video Technology for AV1 (SVT-AV1 Encoder and Decoder) is an AV1-compliant encoder/decoder library core. The SVT-AV1 encoder development is a work-in-progress targeting performance levels applicable to both VOD and Live encoding / transcoding video applications. The SVT-AV1 decoder implementation is targeting future codec research activities.
 
 ## License
