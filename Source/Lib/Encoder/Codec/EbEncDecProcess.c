@@ -3190,10 +3190,8 @@ EbErrorType signal_derivation_enc_dec_kernel_common(
     }
     else if(enc_mode <= ENC_M2)
         depth_level = pcs_ptr->slice_type == I_SLICE ? 1 : 2;
-    else if (enc_mode <= ENC_M9)
-        depth_level = 2;
     else
-        depth_level = 0;
+        depth_level = 2;
 
     set_depth_ctrls(ctx, depth_level);
 
@@ -3541,9 +3539,6 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     EbErrorType return_error = EB_ErrorNone;
     EbEncMode enc_mode = pcs_ptr->enc_mode;
     uint8_t pd_pass = context_ptr->pd_pass;
-#if TUNE_NEW_PRESETS && FTR_M9_AGRESSIVE_EARLY_CAN_ELIMINATION
-    SequenceControlSet *scs_ptr           = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
-#endif
     uint8_t txt_level = 0;
     if (pd_pass == PD_PASS_0)
         txt_level = 0;
@@ -3845,10 +3840,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     else
         if (sequence_control_set_ptr->static_config.enable_redundant_blk ==
             DEFAULT)
-            if (enc_mode <= ENC_M10)
-                context_ptr->redundant_blk = EB_TRUE;
-            else
-                context_ptr->redundant_blk = EB_FALSE;
+            context_ptr->redundant_blk = EB_TRUE;
         else
             context_ptr->redundant_blk =
             sequence_control_set_ptr->static_config.enable_redundant_blk;
@@ -4080,14 +4072,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     if (pcs_ptr->parent_pcs_ptr->sc_class1)
         in_depth_block_skip_level = 0;
     else if (context_ptr->pd_pass == PD_PASS_0)
-        if (enc_mode <= ENC_M9)
-            in_depth_block_skip_level = 0;
-        else
-#if OPT_IN_DEPTH_SKIP_M9
-            in_depth_block_skip_level = (pcs_ptr->parent_pcs_ptr->temporal_layer_index == 0) ? 0 : 1;
-#else
-            in_depth_block_skip_level = (pcs_ptr->parent_pcs_ptr->temporal_layer_index == 0) ? 0 : 2;
-#endif
+        in_depth_block_skip_level = 0;
     else if (context_ptr->pd_pass == PD_PASS_1)
         in_depth_block_skip_level = 0;
     else
@@ -4104,34 +4089,12 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     else {
         if (enc_mode <= ENC_M7)
             lower_depth_block_skip_level = 0;
-        else if (enc_mode <= ENC_M9)
-            lower_depth_block_skip_level = 1;
         else
-            lower_depth_block_skip_level = 2;
+            lower_depth_block_skip_level = 1;
     }
 
     set_lower_depth_block_skip_ctrls(context_ptr, lower_depth_block_skip_level);
-#if FEATURE_IMPROVE_DEPTH_REMOVAL
-    uint8_t stage2_depth_reduction_level;
-    if (pcs_ptr->parent_pcs_ptr->sc_content_detected)
-        stage2_depth_reduction_level = 0;
-    else if (pd_pass == PD_PASS_0)
-        stage2_depth_reduction_level = 0;
-    else if (pd_pass == PD_PASS_1)
-        stage2_depth_reduction_level = 0;
-    else
-#if TUNE_M7_FEATURES
-        if (enc_mode <= ENC_M7)
-#else
-        if (enc_mode <= ENC_M6)
-#endif
-            stage2_depth_reduction_level = 0;
-        else if (enc_mode <= ENC_M10)
-            stage2_depth_reduction_level = 1;
-        else
-            stage2_depth_reduction_level = 2;
-    set_stage2_depth_reduction_controls(context_ptr, stage2_depth_reduction_level);
-#endif
+
     if (pd_pass == PD_PASS_0)
         context_ptr->md_sq_mv_search_level = 0;
     else if (pd_pass == PD_PASS_1)
@@ -4503,9 +4466,7 @@ static void build_cand_block_array(SequenceControlSet *scs_ptr, PictureControlSe
     MdcSbData *results_ptr = context_ptr->mdc_sb_array;
     results_ptr->leaf_count = 0;
     uint32_t blk_index = 0;
-#if !LIGHT_PD0
     const BlockSize sb_size = scs_ptr->seq_header.sb_size;
-#endif
     const uint16_t max_block_cnt = scs_ptr->max_block_cnt;
     int32_t min_sq_size;
     //if (context_ptr->pred_depth_only)
@@ -4547,24 +4508,13 @@ static void build_cand_block_array(SequenceControlSet *scs_ptr, PictureControlSe
                     results_ptr->split_flag[results_ptr->leaf_count++] = results_ptr->refined_split_flag[idx];
                 }
             }
-#if LIGHT_PD0
-            blk_index += blk_geom->d1_depth_offset;
-#else
             blk_index += d1_depth_offset[sb_size == BLOCK_128X128][blk_geom->depth];
-#endif
         }
         else {
-#if LIGHT_PD0
-            blk_index +=
-                (blk_geom->sq_size > min_sq_size)
-                ? blk_geom->d1_depth_offset
-                : blk_geom->ns_depth_offset;
-#else
             blk_index +=
                 (blk_geom->sq_size > min_sq_size)
                 ? d1_depth_offset[sb_size == BLOCK_128X128][blk_geom->depth]
                 : ns_depth_offset[sb_size == BLOCK_128X128][blk_geom->depth];
-#endif
         }
     }
 }
@@ -4808,9 +4758,7 @@ static void build_starting_cand_block_array(SequenceControlSet *scs_ptr, Picture
     MdcSbData *results_ptr = context_ptr->mdc_sb_array;
     results_ptr->leaf_count = 0;
     uint32_t blk_index = 0;
-#if !LIGHT_PD0
     const BlockSize sb_size = scs_ptr->seq_header.sb_size;
-#endif
     const uint16_t max_block_cnt = scs_ptr->max_block_cnt;
     const int32_t min_sq_size =
         (context_ptr->depth_removal_ctrls.enabled && context_ptr->depth_removal_ctrls.disallow_below_64x64)
@@ -4845,24 +4793,13 @@ static void build_starting_cand_block_array(SequenceControlSet *scs_ptr, Picture
                     results_ptr->split_flag[results_ptr->leaf_count++] = (blk_geom->sq_size > min_sq_size) ? EB_TRUE : EB_FALSE;
                 }
             }
-#if LIGHT_PD0
-            blk_index += blk_geom->d1_depth_offset;
-#else
             blk_index += d1_depth_offset[sb_size == BLOCK_128X128][blk_geom->depth];
-#endif
         }
         else {
-#if LIGHT_PD0
-            blk_index +=
-                (blk_geom->sq_size > min_sq_size)
-                ? blk_geom->d1_depth_offset
-                : blk_geom->ns_depth_offset;
-#else
             blk_index +=
                 (blk_geom->sq_size > min_sq_size)
                 ? d1_depth_offset[sb_size == BLOCK_128X128][blk_geom->depth]
                 : ns_depth_offset[sb_size == BLOCK_128X128][blk_geom->depth];
-#endif
         }
     }
 }

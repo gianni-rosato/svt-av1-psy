@@ -2610,10 +2610,7 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     // Set down-sampling method     Settings
     // 0                            0: filtering
     // 1                            1: decimation
-    if (scs_ptr->static_config.enc_mode <= ENC_M10)
-            scs_ptr->down_sampling_method_me_search = ME_FILTERED_DOWNSAMPLED;
-        else
-            scs_ptr->down_sampling_method_me_search = ME_DECIMATED_DOWNSAMPLED;
+    scs_ptr->down_sampling_method_me_search = ME_FILTERED_DOWNSAMPLED;
 
     // Enforce starting frame in decode order (at PicMgr)
     // Does not wait for feedback from PKT
@@ -2705,11 +2702,7 @@ void copy_api_from_app(
     scs_ptr->static_config.rc_twopass_stats_in = ((EbSvtAv1EncConfiguration*)config_struct)->rc_twopass_stats_in;
     scs_ptr->static_config.rc_firstpass_stats_out = ((EbSvtAv1EncConfiguration*)config_struct)->rc_firstpass_stats_out;
     // Deblock Filter
-#if NOFILTER
-    scs_ptr->static_config.disable_dlf_flag = 1;//((EbSvtAv1EncConfiguration*)config_struct)->disable_dlf_flag;
-#else
     scs_ptr->static_config.disable_dlf_flag = ((EbSvtAv1EncConfiguration*)config_struct)->disable_dlf_flag;
-#endif
 
     // Local Warped Motion
     scs_ptr->static_config.enable_warped_motion = ((EbSvtAv1EncConfiguration*)config_struct)->enable_warped_motion;
@@ -2718,21 +2711,12 @@ void copy_api_from_app(
     scs_ptr->static_config.enable_global_motion = ((EbSvtAv1EncConfiguration*)config_struct)->enable_global_motion;
 
     // CDEF
-#if NOFILTER
-    scs_ptr->static_config.cdef_level = 0;//(EbSvtAv1EncConfiguration*)config_struct)->cdef_level;
-
-    // Restoration filtering
-    scs_ptr->static_config.enable_restoration_filtering = 0;//((EbSvtAv1EncConfiguration*)config_struct)->enable_restoration_filtering;
-    scs_ptr->static_config.sg_filter_mode = 0;//((EbSvtAv1EncConfiguration*)config_struct)->sg_filter_mode;
-    scs_ptr->static_config.wn_filter_mode = 0;//((EbSvtAv1EncConfiguration*)config_struct)->wn_filter_mode;
-#else
     scs_ptr->static_config.cdef_level = ((EbSvtAv1EncConfiguration*)config_struct)->cdef_level;
 
     // Restoration filtering
     scs_ptr->static_config.enable_restoration_filtering = ((EbSvtAv1EncConfiguration*)config_struct)->enable_restoration_filtering;
     scs_ptr->static_config.sg_filter_mode = ((EbSvtAv1EncConfiguration*)config_struct)->sg_filter_mode;
     scs_ptr->static_config.wn_filter_mode = ((EbSvtAv1EncConfiguration*)config_struct)->wn_filter_mode;
-#endif
     // motion field motion vector
     scs_ptr->static_config.enable_mfmv                  = ((EbSvtAv1EncConfiguration*)config_struct)->enable_mfmv;
     // redundant block

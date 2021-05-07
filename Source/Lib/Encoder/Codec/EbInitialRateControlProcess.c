@@ -284,14 +284,12 @@ void store_extended_group(
         }
         SVT_LOG("\n");
     }
-#endif
-
 #if 0 //force test
-   if( pcs->tpl_group_size != pcs->ext_group_size)
-       printf("asfafs");
+    if (pcs->tpl_group_size != pcs->ext_group_size)
+        printf("asfafs");
     for (uint32_t i = 0; i < pcs->ext_group_size; i++)
-       if(pcs->tpl_group[i]!=pcs->ext_group[i])
-           printf("asfafs");
+        if (pcs->tpl_group[i] != pcs->ext_group[i])
+            printf("asfafs");
 
 
     pcs->tpl_group_size = pcs->ext_group_size;
@@ -299,7 +297,7 @@ void store_extended_group(
     for (uint32_t i = 0; i < pcs->ext_group_size; i++)
         pcs->tpl_group[i] = pcs->ext_group[i];
 #endif
-
+#endif
 
     //new tpl group needs to stop at the second I
     pcs->ntpl_group_size = 0;

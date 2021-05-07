@@ -99,7 +99,7 @@ static uint8_t intrabc_max_mesh_pct[MAX_MESH_SPEED + 1] = {100, 100, 100, 25, 25
 #define MEDIUM_SB_SCORE 16000
 #define LOW_SB_SCORE 6000
 #define MAX_LUMINOSITY_BOOST 10
-int32_t budget_per_sb_boost[MAX_SUPPORTED_MODES] = {55, 55, 55, 55, 55, 55, 5, 5, 0, 0, 0, 0, 0};
+int32_t budget_per_sb_boost[MAX_SUPPORTED_MODES] = {55, 55, 55, 55, 55, 55, 5, 5, 0};
 
 void set_global_motion_field(PictureControlSet *pcs_ptr) {
     // Init Global Motion Vector

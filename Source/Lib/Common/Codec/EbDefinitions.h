@@ -2061,12 +2061,8 @@ typedef enum EbIntraRefreshType
 #define ENC_M6          6
 #define ENC_M7          7
 #define ENC_M8          8
-#define ENC_M9          9
-#define ENC_M10         10
-#define ENC_M11         11
-#define ENC_M12         12
 
-#define MAX_SUPPORTED_MODES 13
+#define MAX_SUPPORTED_MODES 9
 
 #define SPEED_CONTROL_INIT_MOD ENC_M4;
 /** The EB_TUID type is used to identify a TU within a CU.

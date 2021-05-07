@@ -841,10 +841,7 @@ EbErrorType signal_derivation_multi_processes_oq(
     pcs_ptr->disallow_nsq = get_disallow_nsq (pcs_ptr->enc_mode);
 
     // Set disallow_all_nsq_blocks_below_8x8: 8x4, 4x8
-    if (pcs_ptr->enc_mode <= ENC_M10)
-        pcs_ptr->disallow_all_nsq_blocks_below_8x8 = EB_FALSE;
-    else
-        pcs_ptr->disallow_all_nsq_blocks_below_8x8 = EB_TRUE;
+    pcs_ptr->disallow_all_nsq_blocks_below_8x8 = EB_FALSE;
 
     // Set disallow_all_nsq_blocks_below_16x16: 16x8, 8x16, 16x4, 4x16
     pcs_ptr->disallow_all_nsq_blocks_below_16x16 = EB_FALSE;
@@ -855,10 +852,8 @@ EbErrorType signal_derivation_multi_processes_oq(
     // disallow_all_nsq_blocks_above_32x32
     pcs_ptr->disallow_all_nsq_blocks_above_32x32 = EB_FALSE;
     // disallow_all_nsq_blocks_above_16x16
-    if (pcs_ptr->enc_mode <= ENC_M10)
-        pcs_ptr->disallow_all_nsq_blocks_above_16x16 = EB_FALSE;
-    else
-        pcs_ptr->disallow_all_nsq_blocks_above_16x16 = EB_TRUE;
+    pcs_ptr->disallow_all_nsq_blocks_above_16x16 = EB_FALSE;
+
     if (pcs_ptr->enc_mode <= ENC_M1)
         pcs_ptr->disallow_HVA_HVB_HV4 = EB_FALSE;
     else if (pcs_ptr->enc_mode <= ENC_M2)
@@ -884,12 +879,7 @@ EbErrorType signal_derivation_multi_processes_oq(
         frm_hdr->allow_screen_content_tools = pcs_ptr->sc_class1;
         if (scs_ptr->static_config.intrabc_mode == DEFAULT) {
             // ENABLE/DISABLE IBC
-            if (pcs_ptr->enc_mode <= ENC_M10)
-            {
-                frm_hdr->allow_intrabc =  pcs_ptr->sc_class1;
-            } else {
-                frm_hdr->allow_intrabc =  0;
-            }
+            frm_hdr->allow_intrabc =  pcs_ptr->sc_class1;
 
             //IBC Modes:   0: OFF 1:Slow   2:Faster   3:Fastest
             if (pcs_ptr->enc_mode <= ENC_M5) {
@@ -926,7 +916,7 @@ EbErrorType signal_derivation_multi_processes_oq(
         if (scs_ptr->static_config.palette_level == -1)//auto mode; if not set by cfg
             pcs_ptr->palette_level =
             (frm_hdr->allow_screen_content_tools) &&
-            (pcs_ptr->temporal_layer_index == 0 && pcs_ptr->enc_mode <= ENC_M10)
+            (pcs_ptr->temporal_layer_index == 0)
 
                 ? 6 : 0;
         else
@@ -1680,11 +1670,7 @@ static void  av1_generate_rps_info(
             av1_rps->ref_dpb_index[GOLD] = av1_rps->ref_dpb_index[LAST];
 
             av1_rps->ref_dpb_index[BWD] = base1_idx;
-#if 0//IMP_4L
-            av1_rps->ref_dpb_index[ALT2] = base2_idx;
-#else
             av1_rps->ref_dpb_index[ALT2] = av1_rps->ref_dpb_index[BWD];
-#endif
             av1_rps->ref_dpb_index[ALT] = av1_rps->ref_dpb_index[BWD];
             gop_i = 0;
             av1_rps->ref_poc_array[LAST] = get_ref_poc(context_ptr, pcs_ptr->picture_number, four_level_hierarchical_pred_struct[gop_i].ref_list0[0]);
@@ -1693,11 +1679,7 @@ static void  av1_generate_rps_info(
             av1_rps->ref_poc_array[GOLD] = av1_rps->ref_poc_array[LAST];
 
             av1_rps->ref_poc_array[BWD] = get_ref_poc(context_ptr, pcs_ptr->picture_number, four_level_hierarchical_pred_struct[gop_i].ref_list1[0]);
-#if 0//IMP_4L
-            av1_rps->ref_poc_array[ALT2] = get_ref_poc(context_ptr, pcs_ptr->picture_number, four_level_hierarchical_pred_struct[gop_i].ref_list1[1]);
-#else
             av1_rps->ref_poc_array[ALT2] = av1_rps->ref_poc_array[BWD];
-#endif
             av1_rps->ref_poc_array[ALT] = av1_rps->ref_poc_array[BWD];
 
             av1_rps->refresh_frame_mask = 1 << context_ptr->lay0_toggle;
@@ -5671,34 +5653,6 @@ void* picture_decision_kernel(void *input_ptr)
 
                             //set the ref frame types used for this picture,
                             set_all_ref_frame_type(pcs_ptr, pcs_ptr->ref_frame_type_arr, &pcs_ptr->tot_ref_frame_types);
-
-
-#if 0//CHKN_DBG
-                            //if (pcs_ptr->picture_number >= 17 && pcs_ptr->picture_number <= 24)
-                            {
-                                printf("Pic %lld  isref %i : ", pcs_ptr->picture_number, pcs_ptr->is_used_as_reference_flag);
-                                for (int ridx = 0; ridx < 4; ++ridx) {
-                                    if (ridx < pcs_ptr->ref_list0_count_try)
-                                        printf(" %lld  ", pcs_ptr->ref_pic_poc_array[REF_LIST_0][ridx]);
-                                    else
-                                        printf("      ");
-
-                                }
-                                printf(" | ");
-                                for (int ridx = 0; ridx < 3; ++ridx) {
-                                    if (ridx < pcs_ptr->ref_list1_count_try)
-                                        printf(" %lld  ", pcs_ptr->ref_pic_poc_array[REF_LIST_1][ridx]);
-                                    else
-                                        printf("      ");
-                                    }
-                                printf(" \n");
-
-                            }
-
-#endif
-
-
-
                             pcs_ptr->me_processed_sb_count = 0;
 
                             //****************************************************

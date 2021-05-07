@@ -1065,13 +1065,10 @@ void *resource_coordination_kernel(void *input_ptr) {
             // 0                 OFF: No compond mode search : AVG only
             // 1                 ON: full
             if (scs_ptr->static_config.compound_level == DEFAULT) {
-                scs_ptr->compound_mode = (scs_ptr->static_config.enc_mode <= ENC_M10) ? 1 : 0;
+                scs_ptr->compound_mode = 1;
             } else
                 scs_ptr->compound_mode = scs_ptr->static_config.compound_level;
 
-#if M8_NEW_REF
-            scs_ptr->compound_mode = 1;
-#endif
             if (scs_ptr->compound_mode) {
                 scs_ptr->seq_header.order_hint_info.enable_jnt_comp = 1; //DISTANCE
                 scs_ptr->seq_header.enable_masked_compound          = 1; //DIFF+WEDGE

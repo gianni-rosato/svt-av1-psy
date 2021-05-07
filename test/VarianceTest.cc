@@ -461,7 +461,6 @@ INSTANTIATE_TEST_CASE_P(
                                     &svt_aom_variance128x128_avx512)));
 #endif
 
-#if 1 // FTR_PRUNED_SUBPEL_TREE
 typedef unsigned int(*SubpixVarMxNFunc)(const uint8_t *a, int a_stride,
     int xoffset, int yoffset,
     const uint8_t *b, int b_stride,
@@ -693,5 +692,4 @@ TEST_P(AvxSubpelVarianceTest, Ref) {
 TEST_P(AvxSubpelVarianceTest, ExtremeRef) {
     ExtremeRefTest();
 }
-#endif
 }  // namespace

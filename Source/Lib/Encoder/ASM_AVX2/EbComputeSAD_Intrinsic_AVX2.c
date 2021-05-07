@@ -1431,15 +1431,6 @@ void svt_sad_loop_kernel_avx2_intrin(
 
                 for (i = 0; i < search_area_height; i++) {
 
-#if FTR_PREHME_SUB
-                    if (skip_search_line) {
-                        if ((i & 1) == 0) {
-                            ref += src_stride_raw;
-                            continue;
-                        }
-                    }
-#endif
-
                     for (j = 0; j <= search_area_width - 8; j += 8) {
                         p_src = src;
                         p_ref = ref + j;

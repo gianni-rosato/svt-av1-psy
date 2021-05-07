@@ -267,7 +267,7 @@ void svt_aom_upsampled_pred_c(MacroBlockD *                 xd,
                                  height);
     }
 }
-#if 1 //FTR_PRUNED_SUBPEL_TREE - functions are from deleted file, associated with this macro
+// functions are from deleted file, associated with this macro
 // Moved from EbComputeVariance_C.c
 static void variance_c(const uint8_t *a, int a_stride, const uint8_t *b, int b_stride, int w, int h,
     uint32_t *sse, int *sum) {
@@ -364,7 +364,6 @@ VARIANCES(8, 32)
 VARIANCES(32, 8)
 VARIANCES(16, 64)
 VARIANCES(64, 16)
-#endif
 static INLINE void obmc_variance(const uint8_t *pre, int pre_stride, const int32_t *wsrc,
                                  const int32_t *mask, int w, int h, unsigned int *sse, int *sum) {
     int i, j;

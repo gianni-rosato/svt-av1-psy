@@ -1073,10 +1073,6 @@ int frame_is_kf_gf_arf(PictureParentControlSet *ppcs_ptr);
  * \param[in]    this_frame      First pass statistics structure
  * \param[in]    frame_params    Structure with frame parameters
  * \param[in]    max_gop_length  Maximum length of the GF group
-#if !FTR_VBR_MT
- * \param[in]    is_final_pass   Whether this is the final pass for the
- *                               GF group, or a trial (non-zero)
-#endif
  *
  * \return Nothing is returned. Instead, encode_context_ptr->gf_group is changed.
  */

@@ -11,9 +11,6 @@
 
 #include "EbDefinitions.h"
 #include "EbRestoration.h"
-//#if CLN_BN
-//#include "EbPictureControlSet.h"
-//#endif
 
 #ifndef EbAV1Common_h
 #define EbAV1Common_h

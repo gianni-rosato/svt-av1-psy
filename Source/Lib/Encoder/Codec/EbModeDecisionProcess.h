@@ -605,9 +605,6 @@ typedef struct ModeDecisionContext {
     uint8_t shut_skip_ctx_dc_sign_update;
     uint8_t shut_fast_rate; // use coeff rate and slipt flag rate only (no MVP derivation)
     uint8_t fast_coeff_est_level; // estimate the rate of the first (eob/N) coeff(s) and last coeff only
-#if !TUne_TX_TYPE_LEVELS
-    uint8_t tx_search_level;
-#endif
     uint8_t              interpolation_search_level;
     uint8_t              md_tx_size_search_mode;
     uint8_t              md_pic_obmc_level;
