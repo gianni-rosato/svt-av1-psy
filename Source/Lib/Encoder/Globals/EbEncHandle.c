@@ -2624,7 +2624,11 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
 #if RC_NO_R2R
     scs_ptr->enable_dec_order = 1;
 #else
-    scs_ptr->enable_dec_order = 0;
+    if (scs_ptr->static_config.logical_processors == 1 && // LP1
+        (use_input_stat(scs_ptr) || scs_ptr->lap_enabled))
+        scs_ptr->enable_dec_order = 1;
+    else
+        scs_ptr->enable_dec_order = 0;
 #endif
    // Open loop intra done with TPL, data is not stored
     scs_ptr->in_loop_ois = 1;
@@ -3744,7 +3748,7 @@ static void print_lib_params(
     if (config->rc_firstpass_stats_out)
         SVT_LOG("\nSVT [config]: Preset \t\t\t\t\t\t\t\t: Pass 1 ");
     else
-        SVT_LOG("\nSVT [config]: Preset \t\t\t\t\t\t\t: %d ", config->enc_mode);
+        SVT_LOG("\nSVT [config]: Preset \t\t\t\t\t\t\t\t: %d ", config->enc_mode);
     SVT_LOG("\nSVT [config]: EncoderBitDepth / EncoderColorFormat / CompressedTenBitFormat\t: %d / %d / %d", config->encoder_bit_depth, config->encoder_color_format, config->compressed_ten_bit_format);
     SVT_LOG("\nSVT [config]: SourceWidth / SourceHeight\t\t\t\t\t: %d / %d ", config->source_width, config->source_height);
     if (config->frame_rate_denominator != 0 && config->frame_rate_numerator != 0)
@@ -3759,7 +3763,7 @@ static void print_lib_params(
     else if (config->rate_control_mode == 2)
         SVT_LOG("\nSVT [config]: RCMode / TargetBitrate (kbps)/ SceneChange\t\t: Constraint VBR / %d /  %d ", (int)config->target_bit_rate/1000,  config->scene_change_detection);
     else
-        SVT_LOG("\nSVT [config]: BRC Mode / %s / SceneChange\t\t\t: %s / %d / %d ", scs->static_config.enable_tpl_la ? "RF" : "QP", scs->static_config.enable_tpl_la ? "CRF" : "CQP", scs->static_config.qp, config->scene_change_detection);
+        SVT_LOG("\nSVT [config]: BRC Mode / %s / SceneChange\t\t\t\t: %s / %d / %d ", scs->static_config.enable_tpl_la ? "Rate Factor" : "CQP Assignment", scs->static_config.enable_tpl_la ? "CRF" : "CQP", scs->static_config.qp, config->scene_change_detection);
 #ifdef DEBUG_BUFFERS
     SVT_LOG("\nSVT [config]: INPUT / OUTPUT \t\t\t\t\t\t\t: %d / %d", scs->input_buffer_fifo_init_count, scs->output_stream_buffer_fifo_init_count);
     SVT_LOG("\nSVT [config]: CPCS / PAREF / REF / ME\t\t\t\t\t\t: %d / %d / %d / %d", scs->picture_control_set_pool_init_count_child, scs->pa_reference_picture_buffer_init_count, scs->reference_picture_buffer_init_count, scs->me_pool_init_count);

@@ -147,6 +147,7 @@
 #define OVER_SHOOT_PCT_TOKEN "-overshoot-pct"
 #define RECODE_LOOP_TOKEN "-recode-loop"
 #define ADAPTIVE_QP_ENABLE_TOKEN "-adaptive-quantization"
+#define LOOK_AHEAD_DIST_TOKEN "-lad"
 #define ENABLE_TPL_LA_TOKEN "-enable-tpl-la"
 #define SUPER_BLOCK_SIZE_TOKEN "-sb-size"
 #define TILE_ROW_TOKEN "-tile-rows"
@@ -188,6 +189,7 @@
 #define QP_FILE_NEW_TOKEN "--qpfile"
 #define INPUT_DEPTH_TOKEN "--input-depth"
 #define KEYINT_TOKEN "--keyint"
+#define LOOKAHEAD_NEW_TOKEN "--lookahead"
 
 #define STAT_REPORT_NEW_TOKEN "--enable-stat-report"
 #define RESTORATION_ENABLE_NEW_TOKEN "--enable-restoration-filtering"
@@ -425,6 +427,9 @@ static void set_cfg_intra_period(const char *value, EbConfig *cfg) {
 };
 static void set_cfg_intra_refresh_type(const char *value, EbConfig *cfg) {
     cfg->config.intra_refresh_type = strtol(value, NULL, 0);
+};
+static void set_look_ahead_distance(const char *value, EbConfig *cfg) {
+    cfg->config.look_ahead_distance = strtol(value, NULL, 0);
 };
 static void set_hierarchical_levels(const char *value, EbConfig *cfg) {
     cfg->config.hierarchical_levels = strtol(value, NULL, 0);
@@ -1030,7 +1035,18 @@ ConfigEntry config_entry_intra_refresh[] = {
     {SINGLE_INPUT,
      INTRA_REFRESH_TYPE_TOKEN,
      "Intra refresh type (1: FWD Frame (Open GOP), 2: KEY Frame (Closed GOP)[default])",
-     set_tile_row},
+    set_cfg_intra_refresh_type },
+    { SINGLE_INPUT,
+    LOOKAHEAD_NEW_TOKEN,
+    "The lookahead option is currently disabled (forced to 0) until further work is done on "
+    "rate control",
+    set_look_ahead_distance },
+    { SINGLE_INPUT,
+    LOOK_AHEAD_DIST_TOKEN,
+    "The lookahead option is currently disabled (forced to 0) until further work is done on "
+    "rate control",
+    set_look_ahead_distance },
+
     // Termination
     {SINGLE_INPUT, NULL, NULL, NULL}};
 ConfigEntry config_entry_specific[] = {
@@ -1256,12 +1272,6 @@ ConfigEntry config_entry_specific[] = {
      INTRA_ANGLE_DELTA_NEW_TOKEN,
      "Enable intra angle delta filtering filtering (0: OFF, 1: ON, -1: DEFAULT)",
      set_intra_angle_delta_flag},
-
-    // double dash
-    //{SINGLE_INPUT,
-    //NX4_4XN_MV_INJECT_NEW_TOKEN,
-    // "nx4ParentMvInjection",
-    // set_nx4_4xn_parent_mv_inject_flag},
 
     // Termination
     {SINGLE_INPUT, NULL, NULL, NULL}};
@@ -1491,7 +1501,16 @@ ConfigEntry config_entry[] = {
      "Intra period interval(frames) (-2: default intra period, -1: No intra update or [0 - "
      "2^31-2]; [-2 - 255] if RateControlMode>=1)",
      set_cfg_intra_period},
-
+    { SINGLE_INPUT,
+        LOOKAHEAD_NEW_TOKEN,
+        "The lookahead option is currently disabled (forced to 0) until further work is done on "
+        "rate control",
+        set_look_ahead_distance },
+    { SINGLE_INPUT,
+        LOOK_AHEAD_DIST_TOKEN,
+        "The lookahead option is currently disabled (forced to 0) until further work is done on "
+        "rate control",
+        set_look_ahead_distance },
     {SINGLE_INPUT, STAT_REPORT_NEW_TOKEN, "Stat Report", set_stat_report},
     {SINGLE_INPUT,
      RESTORATION_ENABLE_NEW_TOKEN,
