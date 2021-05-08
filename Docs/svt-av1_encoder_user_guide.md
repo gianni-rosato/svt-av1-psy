@@ -180,7 +180,7 @@ The encoder parameters present in the `Sample.cfg` file are listed in this table
 | **QpFile** | --qpfile | any string | Null | Path to qp file |
 | **MaxQpAllowed** | --max-qp | [0 - 63] | Null | Maximum (worst) quantizer[0-63] only applicable  when --rc > 0 |
 | **MinQpAllowed** | --min-qp | [0 - 63] | Null | Minimum (best) quantizer[0-63] only applicable  when --rc > 0 |
-| **AdaptiveQuantization** | --adaptive-quantization | [0 - 2] | 0 | 0 = OFF , 1 = variance base using segments , 2 = Deltaq pred efficiency (default) |
+| **AdaptiveQuantization** | --adaptive-quantization | [0 - 2] | 2 | 0 = OFF , 1 = variance base using segments , 2 = Deltaq pred efficiency (default) |
 | **VBVBufSize** | --vbv-bufsize | [1 - 4294967] | 1 second TargetBitRate | VBV Buffer Size when RateControl is 2. |
 | **UseFixedQIndexOffsets** | --use-fixed-qindex-offsets | [0 - 1] | 0 | 0 = OFF, 1 = enable fixed qindex offset based on temporal layer and frame type when rc mode is 0. qindex offsets are specified by the following arguments |
 | **QIndexOffsets** | --qindex-offsets | [v0,v1,..,vn] | [0,0,..,0] | list of qindex offsets vi, enclosed in [], seperated by ,. vi is in the range of [-256,255]. this argument should be used after hierarchical-levels, the number of qindex offsets equals to hierarchical-levels + 1 |

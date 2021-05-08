@@ -2678,8 +2678,6 @@ const char *handle_warnings(const char *token, char *print_message, uint8_t doub
         linked_token = GLOBAL_MOTION_ENABLE_NEW_TOKEN;
     if (strcmp(token, RDOQ_TOKEN) == 0)
         linked_token = RDOQ_NEW_TOKEN;
-    if (strcmp(token, FILTER_INTRA_TOKEN) == 0)
-        linked_token = FILTER_INTRA_NEW_TOKEN;
     if (strcmp(token, HDR_INPUT_TOKEN) == 0)
         linked_token = HDR_INPUT_NEW_TOKEN;
     if (strcmp(token, ADAPTIVE_QP_ENABLE_TOKEN) == 0)
