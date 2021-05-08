@@ -1,5 +1,28 @@
 # Changelog
 
+## [0.8.7] - 2021-05-08
+
+Encoder
+- Feature optimizations: creating new mode decision / encode-decode feature levels allowing better speed / quality trade-off granularity
+- Preset repositioning after adopting new levels
+- Preset 8 achieving similar speed levels as x265 medium tuned for VOD operating mode
+- New 1-pass and 2-pass VBR implementation ported from libaom and adapted to the SVT architecture - still a WIP
+- Cleaned up old VBR and CVBR RC code along with the lookahead mechanism associated with them
+- 2-pass encoding is only available for VBR mode and 1-pass with lookahead is used for CRF
+- Improvements for TPL algorithm to handle long clips and easy content
+- Memory optimizations, cleaning up data structures to reduce memory usage up to 2x memory reduction in multi-threaded VBR environment
+- Additional AVX2 and AVX512 optimizations
+- Cleaned up unused command line parameters and left the config params that are linked to ffmpeg / gst
+- Update documentation accordingly
+- Added HDR support and color primaries signalling (off by default until integrated with ffmpeg)
+
+Build and Testing
+- Bug fixes
+- Improve CI coverage
+- Improve Unit Test Coverage
+- Address C vs asm mismatches
+- Fix static analysis warnings / errors
+
 ## [0.8.6] - 2020-11-28
 
 Encoder
