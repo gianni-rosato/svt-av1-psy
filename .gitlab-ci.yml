@@ -692,6 +692,29 @@ Linux FFmpeg (Static):
     paths:
       - ffmpeg
 
+Decoder Test:
+  extends: .linux-test-base
+  stage: .post
+  # parallel:
+  #   matrix:
+  #     - threads: [1, 2]
+  allow_failure: true
+  before_script:
+    - "true"
+  script:
+    - ./Bin/Release/SvtAv1DecApp ${threads:+-threads $threads} -i test-pr-Linux-Release-8bit-m8.ivf -o decout8.yuv
+    - ./ffmpeg -i test-pr-Linux-Release-8bit-m8.ivf ffmpegout8.yuv
+    - echo Testing 8bit decoding
+    - diff decout8.yuv ffmpegout8.yuv
+    - ./Bin/Release/SvtAv1DecApp ${threads:+-threads $threads} -i test-pr-Linux-Release-10bit-m8.ivf -o decout10.yuv
+    - ./ffmpeg -i test-pr-Linux-Release-10bit-m8.ivf ffmpegout10.yuv
+    - echo Testing 10bit decoding
+    - diff decout10.yuv ffmpegout10.yuv
+  needs:
+    - Linux Enc Test
+    - Linux (GCC 10)
+    - Linux FFmpeg (Static)
+
 macOS FFmpeg (Static):
   extends: .macos-test-base
   stage: compile
