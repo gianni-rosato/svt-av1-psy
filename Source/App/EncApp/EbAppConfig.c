@@ -140,6 +140,9 @@
 #define HDR_INPUT_TOKEN "-hdr"
 #define RATE_CONTROL_ENABLE_TOKEN "-rc"
 #define TARGET_BIT_RATE_TOKEN "-tbr"
+#if FTR_RC_CAP
+#define MAX_BIT_RATE_TOKEN "-mbr"
+#endif
 #define MAX_QP_TOKEN "-max-qp"
 #define VBV_BUFSIZE_TOKEN "-vbv-bufsize"
 #define MIN_QP_TOKEN "-min-qp"
@@ -625,6 +628,11 @@ static void set_rate_control_mode(const char *value, EbConfig *cfg) {
 static void set_target_bit_rate(const char *value, EbConfig *cfg) {
     cfg->config.target_bit_rate = 1000 * strtoul(value, NULL, 0);
 };
+#if FTR_RC_CAP
+static void set_max_bit_rate(const char *value, EbConfig *cfg) {
+    cfg->config.max_bit_rate = 1000 * strtoul(value, NULL, 0);
+};
+#endif
 static void set_vbv_buf_size(const char *value, EbConfig *cfg) {
     cfg->config.vbv_bufsize = 1000 * strtoul(value, NULL, 0);
 };
@@ -962,6 +970,9 @@ ConfigEntry config_entry_rc[] = {
      "Rate control mode(0 = CQP if --enable-tpl-la is set to 0, else CRF , 1 = VBR)",
      set_rate_control_mode},
     {SINGLE_INPUT, TARGET_BIT_RATE_TOKEN, "Target Bitrate (kbps)", set_target_bit_rate},
+#if FTR_RC_CAP
+    {SINGLE_INPUT, MAX_BIT_RATE_TOKEN, "Maximum Bitrate (kbps)", set_max_bit_rate},
+#endif
     {SINGLE_INPUT,
      USE_QP_FILE_TOKEN,
      "Overwrite QP assignment using qp values in QP file",
@@ -1390,6 +1401,9 @@ ConfigEntry config_entry[] = {
     {SINGLE_INPUT, RATE_CONTROL_ENABLE_TOKEN, "RateControlMode", set_rate_control_mode},
     {SINGLE_INPUT, ENABLE_TPL_LA_TOKEN, "EnableTplLA", set_enable_tpl_la},
     {SINGLE_INPUT, TARGET_BIT_RATE_TOKEN, "TargetBitRate", set_target_bit_rate},
+#if FTR_RC_CAP
+    {SINGLE_INPUT, MAX_BIT_RATE_TOKEN, "MaxBitRate", set_max_bit_rate},
+#endif
     {SINGLE_INPUT, MAX_QP_TOKEN, "MaxQpAllowed", set_max_qp_allowed},
     {SINGLE_INPUT, MIN_QP_TOKEN, "MinQpAllowed", set_min_qp_allowed},
     {SINGLE_INPUT, VBV_BUFSIZE_TOKEN, "VBVBufSize", set_vbv_buf_size},

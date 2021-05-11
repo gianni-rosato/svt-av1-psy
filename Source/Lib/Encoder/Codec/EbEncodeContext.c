@@ -70,6 +70,9 @@ static void encode_context_dctor(EbPtr p) {
     EB_DELETE_PTR_ARRAY(obj->packetization_reorder_queue, PACKETIZATION_REORDER_QUEUE_MAX_DEPTH);
     EB_FREE(obj->stats_out.stat);
     destroy_stats_buffer(&obj->stats_buf_context, obj->frame_stats_buffer);
+#if FTR_RC_CAP
+    EB_DELETE_PTR_ARRAY(obj->rc.coded_frames_stat_queue, CODED_FRAMES_STAT_QUEUE_MAX_DEPTH);
+#endif
 }
 
 EbErrorType encode_context_ctor(EncodeContext *encode_context_ptr, EbPtr object_init_data_ptr) {
@@ -160,5 +163,15 @@ EbErrorType encode_context_ctor(EncodeContext *encode_context_ptr, EbPtr object_
     create_stats_buffer(&encode_context_ptr->frame_stats_buffer,
                         &encode_context_ptr->stats_buf_context,
                         *num_lap_buffers);
+#if FTR_RC_CAP
+    EB_ALLOC_PTR_ARRAY(encode_context_ptr->rc.coded_frames_stat_queue, CODED_FRAMES_STAT_QUEUE_MAX_DEPTH);
+
+    for (picture_index = 0; picture_index < CODED_FRAMES_STAT_QUEUE_MAX_DEPTH; ++picture_index) {
+        EB_NEW(encode_context_ptr->rc.coded_frames_stat_queue[picture_index],
+            rate_control_coded_frames_stats_context_ctor,
+            picture_index);
+    }
+    encode_context_ptr->rc.min_bit_actual_per_gop = 0xfffffffffffff;
+#endif
     return EB_ErrorNone;
 }

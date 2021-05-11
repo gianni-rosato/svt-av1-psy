@@ -71,7 +71,23 @@ typedef enum rate_factor_level {
     KF_STD             = 5,
     RATE_FACTOR_LEVELS = 6
 } rate_factor_level;
+#if FTR_RC_CAP
+// max bit rate average period in second. default is set to 2 second
+#define MAX_RATE_AVG_PERIOD_IN_SEC        2
+#define CODED_FRAMES_STAT_QUEUE_MAX_DEPTH 2000
+/**************************************
+ * Coded Frames Stats
+ **************************************/
+typedef struct coded_frames_stats_entry {
+    EbDctor  dctor;
+    uint64_t picture_number;
+    int64_t  frame_total_bit_actual;
+    EbBool   end_of_sequence_flag;
+} coded_frames_stats_entry;
 
+extern EbErrorType rate_control_coded_frames_stats_context_ctor(coded_frames_stats_entry *entry_ptr,
+    uint64_t               picture_number);
+#endif
 typedef struct {
     int sb64_target_rate;
     int last_q[FRAME_TYPES]; // Separate values for Intra/Inter
@@ -181,6 +197,19 @@ typedef struct {
     int enable_scenecut_detection;
     int use_arf_in_this_kf_group;
     int next_is_fwd_key;
+#if FTR_RC_CAP
+    // Rate Control stat Queue
+    coded_frames_stats_entry **coded_frames_stat_queue;
+    uint32_t                coded_frames_stat_queue_head_index;
+    uint32_t                coded_frames_stat_queue_tail_index;
+
+    uint64_t total_bit_actual_per_sw;
+    uint64_t max_bit_actual_per_sw;
+    uint64_t max_bit_actual_per_gop;
+    uint64_t min_bit_actual_per_gop;
+    uint64_t avg_bit_actual_per_gop;
+    uint64_t rate_average_periodin_frames;
+#endif
 } RATE_CONTROL;
 
 /**************************************

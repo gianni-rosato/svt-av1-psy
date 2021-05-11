@@ -2614,11 +2614,20 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     }
 
     if (scs_ptr->static_config.recode_loop > 0 &&
+#if FTR_RC_CAP
+        (!scs_ptr->static_config.rate_control_mode && scs_ptr->static_config.max_bit_rate == 0) &&
+#endif
         (!scs_ptr->static_config.rate_control_mode || (!scs_ptr->lap_enabled && !use_input_stat(scs_ptr)))) {
         // Only allow re-encoding for 2pass VBR or 1 PASS LAP, otherwise force recode_loop to DISALLOW_RECODE or 0
         scs_ptr->static_config.recode_loop = DISALLOW_RECODE;
     }
     else if (scs_ptr->static_config.recode_loop == ALLOW_RECODE_DEFAULT) {
+#if FTR_RC_CAP
+        // capped CRF has reencde enabled for base layer frames for all presets
+        if (!scs_ptr->static_config.rate_control_mode && scs_ptr->static_config.max_bit_rate)
+            scs_ptr->static_config.recode_loop = ALLOW_RECODE_KFARFGF;
+        else
+#endif
         scs_ptr->static_config.recode_loop = scs_ptr->static_config.enc_mode <= ENC_M5 ? ALLOW_RECODE_KFARFGF : ALLOW_RECODE_KFMAXBW;
     }
 
@@ -2870,7 +2879,13 @@ void copy_api_from_app(
     scs_ptr->static_config.frame_rate_numerator = ((EbSvtAv1EncConfiguration*)config_struct)->frame_rate_numerator;
 
     scs_ptr->static_config.target_bit_rate = ((EbSvtAv1EncConfiguration*)config_struct)->target_bit_rate;
-
+#if FTR_RC_CAP
+    scs_ptr->static_config.max_bit_rate = ((EbSvtAv1EncConfiguration*)config_struct)->max_bit_rate;
+    if (((EbSvtAv1EncConfiguration*)config_struct)->enable_tpl_la == 0 && scs_ptr->static_config.max_bit_rate) {
+        scs_ptr->static_config.max_bit_rate = 0;
+        SVT_WARN("Maximum bit rate only supported with tpl on. max bit rate 0 is used instead.\n");
+    }
+#endif
     scs_ptr->static_config.vbv_bufsize = ((EbSvtAv1EncConfiguration*)config_struct)->vbv_bufsize;
 
     scs_ptr->static_config.max_qp_allowed = (scs_ptr->static_config.rate_control_mode) ?
@@ -3651,6 +3666,9 @@ EbErrorType svt_svt_enc_init_parameter(
     config_ptr->look_ahead_distance = 0;
     config_ptr->enable_tpl_la = 1;
     config_ptr->target_bit_rate = 7000000;
+#if FTR_RC_CAP
+    config_ptr->max_bit_rate = 0;
+#endif
     config_ptr->max_qp_allowed = 63;
     config_ptr->min_qp_allowed = 1;
 

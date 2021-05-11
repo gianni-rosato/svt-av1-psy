@@ -556,7 +556,13 @@ typedef struct EbSvtAv1EncConfiguration {
      *
      * Default is 7000000. */
     uint32_t target_bit_rate;
-
+#if FTR_RC_CAP
+    /* maximum bitrate in bits/second, only apllicable when rate control mode is
+     * set to 0.
+     *
+     * Default is 0. */
+    uint32_t max_bit_rate;
+#endif
     /* VBV Buffer size */
     uint32_t vbv_bufsize;
 

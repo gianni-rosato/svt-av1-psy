@@ -1247,6 +1247,10 @@ void *resource_coordination_kernel(void *input_ptr) {
                     read_stat(scs_ptr);
                 if (use_input_stat(scs_ptr) || use_output_stat(scs_ptr) || scs_ptr->lap_enabled)
                     setup_two_pass(scs_ptr);
+#if FTR_RC_CAP
+                else
+                    set_rc_param(scs_ptr);
+#endif
             }
             pcs_ptr->ts_duration = (int64_t)10000000 * (1 << 16) / scs_ptr->frame_rate;
             scs_ptr->encode_context_ptr->initial_picture = EB_FALSE;

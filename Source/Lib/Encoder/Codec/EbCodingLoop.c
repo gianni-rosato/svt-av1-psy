@@ -2247,8 +2247,12 @@ EB_EXTERN void av1_encode_decode(SequenceControlSet *scs_ptr, PictureControlSet 
                               (sb_origin_y + blk_geom->origin_y) >> MI_SIZE_LOG2,
                               (sb_origin_x + blk_geom->origin_x) >> MI_SIZE_LOG2);
         }
+#if FTR_RC_CAP
+        if (blk_it == 0 && sb_origin_x == 0 && blk_geom->origin_x == 0 && sb_origin_y == 0 && blk_geom->origin_y == 0) {
+#else
         if ((use_input_stat(scs_ptr) || scs_ptr->lap_enabled ) &&
             blk_it == 0 && sb_origin_x == 0 && blk_geom->origin_x == 0 && sb_origin_y == 0 && blk_geom->origin_y == 0) {
+#endif
             pcs_ptr->parent_pcs_ptr->pcs_total_rate = 0;
         }
         if (part != PARTITION_SPLIT && pcs_ptr->parent_pcs_ptr->sb_geom[sb_addr].block_is_allowed[blk_it]) {

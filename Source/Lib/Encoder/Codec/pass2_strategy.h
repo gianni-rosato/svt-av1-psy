@@ -68,7 +68,10 @@ void svt_av1_new_framerate(struct SequenceControlSet *scs_ptr, double framerate)
 void svt_av1_get_second_pass_params(struct PictureParentControlSet *pcs_ptr);
 
 void svt_av1_twopass_postencode_update(struct PictureParentControlSet *ppcs_ptr);
-
+#if FTR_RC_CAP
+extern void crf_assign_max_rate(PictureParentControlSet *ppcs_ptr);
+extern void set_rc_param(struct SequenceControlSet *scs_ptr);
+#endif
 int frame_is_kf_gf_arf(PictureParentControlSet *ppcs_ptr);
 #ifdef __cplusplus
 } // extern "C"

@@ -4872,8 +4872,10 @@ static void recode_loop_decision_maker(PictureControlSet *pcs_ptr,
 
         // 2pass QPM with tpl_la
         if (scs_ptr->static_config.enable_adaptive_quantization == 2 &&
+#if !FTR_RC_CAP
             !use_output_stat(scs_ptr) &&
             (use_input_stat(scs_ptr) || scs_ptr->lap_enabled) &&
+#endif
             scs_ptr->static_config.enable_tpl_la &&
             ppcs_ptr->r0 != 0)
             sb_qp_derivation_tpl_la(pcs_ptr);
@@ -5332,7 +5334,11 @@ void *mode_decision_kernel(void *input_ptr) {
             if (last_sb_flag) {
                 EbBool do_recode = EB_FALSE;
                 scs_ptr->encode_context_ptr->recode_loop = scs_ptr->static_config.recode_loop;
+#if FTR_RC_CAP
+                if ((use_input_stat(scs_ptr) || scs_ptr->lap_enabled || scs_ptr->static_config.max_bit_rate != 0) &&
+#else
                 if ((use_input_stat(scs_ptr) || scs_ptr->lap_enabled) &&
+#endif
                     scs_ptr->encode_context_ptr->recode_loop != DISALLOW_RECODE) {
                     recode_loop_decision_maker(pcs_ptr, scs_ptr, &do_recode);
                 }

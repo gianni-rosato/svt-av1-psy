@@ -41,7 +41,7 @@
 static const double tpl_hl_islice_div_factor[EB_MAX_TEMPORAL_LAYERS] = { 1, 1, 1, 2, 1, 0.8 };
 static const double tpl_hl_base_frame_div_factor[EB_MAX_TEMPORAL_LAYERS] = { 1, 1, 1, 3, 1, 0.7 };
 
-
+#if !FTR_RC_CAP
 /**************************************
  * Coded Frames Stats
  **************************************/
@@ -49,7 +49,7 @@ typedef struct CodedFramesStatsEntry {
     EbDctor  dctor;
     uint64_t picture_number;
 } CodedFramesStatsEntry;
-
+#endif
 typedef struct RateControlIntervalParamContext {
     EbDctor  dctor;
     uint64_t first_poc;
@@ -70,7 +70,15 @@ typedef struct RateControlContext {
 
     RateControlIntervalParamContext **rate_control_param_queue;
 } RateControlContext;
+#if FTR_RC_CAP
+EbErrorType rate_control_coded_frames_stats_context_ctor(coded_frames_stats_entry *entry_ptr,
+    uint64_t               picture_number) {
+    entry_ptr->picture_number = picture_number;
+    entry_ptr->frame_total_bit_actual = -1;
 
+    return EB_ErrorNone;
+}
+#endif
 static void rate_control_context_dctor(EbPtr p) {
     EbThreadContext *   thread_context_ptr = (EbThreadContext *)p;
     RateControlContext *obj                = (RateControlContext *)thread_context_ptr->priv;
@@ -931,11 +939,20 @@ static int cqp_qindex_calc_tpl_la(PictureControlSet *pcs_ptr, RATE_CONTROL *rc, 
     } else
         active_best_quality = cq_level;
 
+#if FTR_RC_CAP
+    if (pcs_ptr->parent_pcs_ptr->temporal_layer_index)
+        active_best_quality = MAX(active_best_quality, rc->arf_q);
+#endif
     adjust_active_best_and_worst_quality(
         pcs_ptr, rc, rf_level, &active_worst_quality, &active_best_quality);
     q = active_best_quality;
     clamp(q, active_best_quality, active_worst_quality);
-
+#if FTR_RC_CAP
+    pcs_ptr->parent_pcs_ptr->top_index = active_worst_quality;
+    pcs_ptr->parent_pcs_ptr->bottom_index = active_best_quality;
+    assert(pcs_ptr->parent_pcs_ptr->top_index <= rc->worst_quality && pcs_ptr->parent_pcs_ptr->top_index >= rc->best_quality);
+    assert(pcs_ptr->parent_pcs_ptr->bottom_index <= rc->worst_quality && pcs_ptr->parent_pcs_ptr->bottom_index >= rc->best_quality);
+#endif
     return q;
 }
 
@@ -2127,8 +2144,15 @@ static void av1_rc_compute_frame_size_bounds(PictureParentControlSet *ppcs_ptr, 
     RATE_CONTROL *const         rc                 = &(encode_context_ptr->rc);
     const RateControlCfg *const rc_cfg             = &encode_context_ptr->rc_cfg;
     if (rc_cfg->mode == AOM_Q) {
+#if FTR_RC_CAP
+        const int tolerance = (int)AOMMAX(
+            100, ((int64_t)encode_context_ptr->recode_tolerance * ppcs_ptr->max_frame_size) / 100);
+        *frame_under_shoot_limit = ppcs_ptr->loop_count ? AOMMAX(ppcs_ptr->max_frame_size - tolerance, 0) : 0;
+        *frame_over_shoot_limit = AOMMIN(ppcs_ptr->max_frame_size + tolerance, INT_MAX);
+#else
         *frame_under_shoot_limit = 0;
         *frame_over_shoot_limit  = INT_MAX;
+#endif
     } else {
         // For very small rate targets where the fractional adjustment
         // may be tiny make sure there is at least a minimum range.
@@ -2224,15 +2248,24 @@ void recode_loop_update_q(PictureParentControlSet *ppcs_ptr, int *const loop, in
     EncodeContext *const        encode_context_ptr = scs_ptr->encode_context_ptr;
     RATE_CONTROL *const         rc                 = &(encode_context_ptr->rc);
     const RateControlCfg *const rc_cfg             = &encode_context_ptr->rc_cfg;
+#if FTR_RC_CAP
+    const int do_dummy_pack = (scs_ptr->encode_context_ptr->recode_loop >= ALLOW_RECODE_KFMAXBW &&
+        !(rc_cfg->mode == AOM_Q && scs_ptr->static_config.max_bit_rate == 0)) ||
+#else
     const int do_dummy_pack = (scs_ptr->encode_context_ptr->recode_loop >= ALLOW_RECODE_KFMAXBW &&
                                rc_cfg->mode != AOM_Q) ||
+#endif
         rc_cfg->min_cr > 0;
     ppcs_ptr->projected_frame_size = do_dummy_pack
         ? (int)(((ppcs_ptr->pcs_total_rate + (1 << (AV1_PROB_COST_SHIFT - 1))) >>
             AV1_PROB_COST_SHIFT) +
             ((ppcs_ptr->frm_hdr.frame_type == KEY_FRAME) ? 13 : 0))
         : 0;
+#if FTR_RC_CAP
+    if (ppcs_ptr->loop_count && rc_cfg->mode != AOM_Q) {
+#else
     if (ppcs_ptr->loop_count) {
+#endif
         // scale rc->projected_frame_size with *0.8 for loop_count>=1
         ppcs_ptr->projected_frame_size = (ppcs_ptr->projected_frame_size * 8) / 10;
     }
@@ -2263,10 +2296,74 @@ void recode_loop_update_q(PictureParentControlSet *ppcs_ptr, int *const loop, in
         if (*low_cr_seen)
             return;
     }
+#if FTR_RC_CAP
+    // Used for capped CRF. Update the active worse quality
+    if (rc_cfg->mode == AOM_Q && scs_ptr->static_config.max_bit_rate) {
+        if (ppcs_ptr->temporal_layer_index == 0 && ppcs_ptr->slice_type != 2) {
+            ppcs_ptr->gf_group_index = 1;
+            scs_ptr->encode_context_ptr->gf_group.update_type[ppcs_ptr->gf_group_index] = 6;
+        }
+#if DEBUG_RC_CAP_LOG
+        if (ppcs_ptr->temporal_layer_index <= 0 && ppcs_ptr->projected_frame_size < ppcs_ptr->max_frame_size && ppcs_ptr->loop_count)
+            printf("Reencode POC:%lld\tQindex:%d\t%d\t%d\tWorseActive%d\t%d\t%d\n",
+                ppcs_ptr->picture_number,
+                ppcs_ptr->frm_hdr.quantization_params.base_q_idx,
+                ppcs_ptr->projected_frame_size,
+                ppcs_ptr->max_frame_size,
+                rc->active_worst_quality,
+                ppcs_ptr->bottom_index,
+                ppcs_ptr->top_index);
+#endif
+        int worst_quality = rc_cfg->mode == AOM_Q ? (int32_t)quantizer_to_qindex[scs_ptr->static_config.max_qp_allowed] : rc->worst_quality;
+        if (*q < worst_quality && ppcs_ptr->projected_frame_size > ppcs_ptr->max_frame_size &&
+            ppcs_ptr->temporal_layer_index <= 0) {
+            // Increase the active worse quality based on the projected frame size and max frame size
+            if (ppcs_ptr->projected_frame_size > 2 * ppcs_ptr->max_frame_size)
+                rc->active_worst_quality = rc->active_worst_quality + 4;
+            else if (ppcs_ptr->projected_frame_size > 15 * ppcs_ptr->max_frame_size / 10)
+                rc->active_worst_quality = rc->active_worst_quality + 2;
+            else
+                rc->active_worst_quality = rc->active_worst_quality + 1;
 
+            rc->active_worst_quality = CLIP3(
+                (int32_t)quantizer_to_qindex[scs_ptr->static_config.min_qp_allowed],
+                (int32_t)quantizer_to_qindex[scs_ptr->static_config.max_qp_allowed],
+                rc->active_worst_quality);
+#if DEBUG_RC_CAP_LOG
+            if (ppcs_ptr->temporal_layer_index <= 0)
+                printf("Reencode POC:%lld\tQindex:%d\t%d\t%d\tWorseActive%d\t%d\t%d\n",
+                    ppcs_ptr->picture_number,
+                    ppcs_ptr->frm_hdr.quantization_params.base_q_idx,
+                    ppcs_ptr->projected_frame_size,
+                    ppcs_ptr->max_frame_size,
+                    rc->active_worst_quality,
+                    ppcs_ptr->bottom_index,
+                    ppcs_ptr->top_index);
+#endif
+
+        }
+        // Decrease the active worse quality based on the projected frame size and max frame size
+        else if (ppcs_ptr->projected_frame_size < ppcs_ptr->max_frame_size &&
+            ppcs_ptr->temporal_layer_index <= 0 && ppcs_ptr->loop_count == 0 &&
+            rc->active_worst_quality > quantizer_to_qindex[(uint8_t)scs_ptr->static_config.qp]) {
+            if (ppcs_ptr->projected_frame_size < 5 * ppcs_ptr->max_frame_size / 10)
+                rc->active_worst_quality = rc->active_worst_quality - 4;
+            else if (ppcs_ptr->projected_frame_size < 2 * ppcs_ptr->max_frame_size / 3)
+                rc->active_worst_quality = rc->active_worst_quality - 2;
+            else
+                rc->active_worst_quality = rc->active_worst_quality - 1;
+            rc->active_worst_quality = CLIP3(
+                (int32_t)quantizer_to_qindex[scs_ptr->static_config.min_qp_allowed],
+                (int32_t)quantizer_to_qindex[scs_ptr->static_config.max_qp_allowed],
+                rc->active_worst_quality);
+        }
+        else if (ppcs_ptr->temporal_layer_index > 0)
+            return;
+    }
+#else
     if (rc_cfg->mode == AOM_Q)
         return;
-
+#endif
     const int last_q                 = *q;
     int       frame_over_shoot_limit = 0, frame_under_shoot_limit = 0;
     av1_rc_compute_frame_size_bounds(
@@ -2480,6 +2577,138 @@ static void store_param(PictureParentControlSet *ppcs_ptr,
     store_two_pass_param(ppcs_ptr, rate_control_param_ptr);
     store_gf_group_param(ppcs_ptr);
 }
+#if FTR_RC_CAP
+/************************************************************************************************
+* Calculates the stat of coded frames over the averaging period
+*************************************************************************************************/
+static void coded_frames_stat_calc(PictureParentControlSet *ppcs_ptr) {
+    int32_t                   queue_entry_index;
+    uint32_t                  queue_entry_index_temp;
+    uint32_t                  queue_entry_index_temp2;
+    coded_frames_stats_entry *queue_entry_ptr;
+    EbBool                    move_slide_window_flag = EB_TRUE;
+    EbBool                    end_of_sequence_flag = EB_TRUE;
+    uint32_t                  frames_in_sw;
+
+    SequenceControlSet *scs_ptr = (SequenceControlSet *)ppcs_ptr->scs_wrapper_ptr->object_ptr;
+    EncodeContext *     encode_context_ptr = scs_ptr->encode_context_ptr;
+    RATE_CONTROL *      rc = &encode_context_ptr->rc;
+    // Determine offset from the Head Ptr
+    queue_entry_index = (int32_t)(
+        ppcs_ptr->picture_number -
+        rc->coded_frames_stat_queue[rc->coded_frames_stat_queue_head_index]->picture_number);
+    queue_entry_index += rc->coded_frames_stat_queue_head_index;
+    queue_entry_index = (queue_entry_index > CODED_FRAMES_STAT_QUEUE_MAX_DEPTH - 1)
+        ? queue_entry_index - CODED_FRAMES_STAT_QUEUE_MAX_DEPTH
+        : queue_entry_index;
+    queue_entry_ptr = rc->coded_frames_stat_queue[queue_entry_index];
+
+    queue_entry_ptr->frame_total_bit_actual = (uint64_t)ppcs_ptr->total_num_bits;
+    queue_entry_ptr->picture_number = ppcs_ptr->picture_number;
+    queue_entry_ptr->end_of_sequence_flag = ppcs_ptr->end_of_sequence_flag;
+
+    move_slide_window_flag = EB_TRUE;
+    while (move_slide_window_flag) {
+        // Check if the sliding window condition is valid
+        queue_entry_index_temp = rc->coded_frames_stat_queue_head_index;
+        if (rc->coded_frames_stat_queue[queue_entry_index_temp]->frame_total_bit_actual != -1)
+            end_of_sequence_flag =
+            rc->coded_frames_stat_queue[queue_entry_index_temp]->end_of_sequence_flag;
+        else
+            end_of_sequence_flag = EB_FALSE;
+        while (move_slide_window_flag && !end_of_sequence_flag &&
+            queue_entry_index_temp <
+            rc->coded_frames_stat_queue_head_index + rc->rate_average_periodin_frames) {
+            queue_entry_index_temp2 = (queue_entry_index_temp >
+                CODED_FRAMES_STAT_QUEUE_MAX_DEPTH - 1)
+                ? queue_entry_index_temp - CODED_FRAMES_STAT_QUEUE_MAX_DEPTH
+                : queue_entry_index_temp;
+
+            move_slide_window_flag = (EbBool)(
+                move_slide_window_flag &&
+                (rc->coded_frames_stat_queue[queue_entry_index_temp2]->frame_total_bit_actual != -1));
+
+            if (rc->coded_frames_stat_queue[queue_entry_index_temp2]->frame_total_bit_actual != -1) {
+                // check if it is the last frame. If we have reached the last frame, we would output the buffered frames in the Queue.
+                end_of_sequence_flag =
+                    rc->coded_frames_stat_queue[queue_entry_index_temp2]->end_of_sequence_flag;
+            }
+            else
+                end_of_sequence_flag = EB_FALSE;
+            queue_entry_index_temp++;
+        }
+
+        if (move_slide_window_flag) {
+            //get a new entry spot
+            queue_entry_ptr = (rc->coded_frames_stat_queue[rc->coded_frames_stat_queue_head_index]);
+            queue_entry_index_temp = rc->coded_frames_stat_queue_head_index;
+            // This is set to false, so the last frame would go inside the loop
+            end_of_sequence_flag = EB_FALSE;
+            frames_in_sw = 0;
+            rc->total_bit_actual_per_sw = 0;
+
+            while (!end_of_sequence_flag &&
+                queue_entry_index_temp <
+                rc->coded_frames_stat_queue_head_index + rc->rate_average_periodin_frames) {
+                frames_in_sw++;
+
+                queue_entry_index_temp2 = (queue_entry_index_temp >
+                    CODED_FRAMES_STAT_QUEUE_MAX_DEPTH - 1)
+                    ? queue_entry_index_temp - CODED_FRAMES_STAT_QUEUE_MAX_DEPTH
+                    : queue_entry_index_temp;
+
+                rc->total_bit_actual_per_sw +=
+                    rc->coded_frames_stat_queue[queue_entry_index_temp2]->frame_total_bit_actual;
+                end_of_sequence_flag =
+                    rc->coded_frames_stat_queue[queue_entry_index_temp2]->end_of_sequence_flag;
+
+                queue_entry_index_temp++;
+            }
+            uint32_t frame_rate = ((scs_ptr->frame_rate + (1 << (RC_PRECISION - 1))) >>
+                RC_PRECISION);
+            if (frames_in_sw == (uint32_t)rc->rate_average_periodin_frames) {
+                rc->max_bit_actual_per_sw = MAX(
+                    rc->max_bit_actual_per_sw,
+                    rc->total_bit_actual_per_sw * frame_rate / frames_in_sw / 1000);
+                if (queue_entry_ptr->picture_number % ((rc->rate_average_periodin_frames)) == 0) {
+                    rc->max_bit_actual_per_gop = MAX(
+                        rc->max_bit_actual_per_gop,
+                        rc->total_bit_actual_per_sw * frame_rate / frames_in_sw / 1000);
+                    rc->min_bit_actual_per_gop = MIN(
+                        rc->min_bit_actual_per_gop,
+                        rc->total_bit_actual_per_sw * frame_rate / frames_in_sw / 1000);
+#if DEBUG_RC_CAP_LOG
+                    SVT_LOG("POC:%d\t%.0f\t%.2f%% \n",
+                        (int)queue_entry_ptr->picture_number,
+                        (double)((int64_t)rc->total_bit_actual_per_sw * frame_rate /
+                            frames_in_sw / 1000),
+                            (double)(100 * (double)rc->total_bit_actual_per_sw * frame_rate /
+                                frames_in_sw / MAX((double)scs_ptr->static_config.max_bit_rate, 1.0)) -
+                        100);
+#endif
+                }
+            }
+#if DEBUG_RC_CAP_LOG
+            if (frames_in_sw == rc->rate_average_periodin_frames - 1) {
+                SVT_LOG("\n%d GopMax\t", (int32_t)rc->max_bit_actual_per_gop);
+                SVT_LOG("%d GopMin\n", (int32_t)rc->min_bit_actual_per_gop);
+            }
+#endif
+            // Reset the Queue Entry
+            queue_entry_ptr->picture_number += CODED_FRAMES_STAT_QUEUE_MAX_DEPTH;
+            queue_entry_ptr->frame_total_bit_actual = -1;
+
+            // Increment the Queue head Ptr
+            rc->coded_frames_stat_queue_head_index = (rc->coded_frames_stat_queue_head_index ==
+                CODED_FRAMES_STAT_QUEUE_MAX_DEPTH - 1)
+                ? 0
+                : rc->coded_frames_stat_queue_head_index + 1;
+
+            queue_entry_ptr = (rc->coded_frames_stat_queue[rc->coded_frames_stat_queue_head_index]);
+        }
+    }
+}
+#endif
 void *rate_control_kernel(void *input_ptr) {
     // Context
     EbThreadContext *   thread_context_ptr = (EbThreadContext *)input_ptr;
@@ -2504,8 +2733,11 @@ void *rate_control_kernel(void *input_ptr) {
     uint64_t total_number_of_fb_frames = 0;
 
     RateControlTaskTypes task_type;
+#if FTR_RC_CAP
+    RATE_CONTROL         *rc;
+#else
     RATE_CONTROL         rc;
-
+#endif
     for (;;) {
         // Get RateControl Task
         EB_GET_FULL_OBJECT(context_ptr->rate_control_input_tasks_fifo_ptr,
@@ -2526,7 +2758,12 @@ void *rate_control_kernel(void *input_ptr) {
 
             scs_ptr = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
             FrameHeader *frm_hdr                       = &pcs_ptr->parent_pcs_ptr->frm_hdr;
-
+#if FTR_RC_CAP
+            rc = &scs_ptr->encode_context_ptr->rc;
+            rc->rate_average_periodin_frames = ((scs_ptr->frame_rate + (1 << (RC_PRECISION - 1))) >>
+                RC_PRECISION) *
+                MAX_RATE_AVG_PERIOD_IN_SEC;
+#endif
             if (!is_superres_recode_task) {
                 pcs_ptr->parent_pcs_ptr->blk_lambda_tuning = EB_FALSE;
             }
@@ -2637,7 +2874,17 @@ void *rate_control_kernel(void *input_ptr) {
                         // Content adaptive qp assignment
                         // 1pass QPS with tpl_la
                         if (!use_input_stat(scs_ptr) && scs_ptr->static_config.enable_tpl_la)
+#if FTR_RC_CAP
+                        {
+                            if (pcs_ptr->picture_number == 0) {
+                                rc->active_worst_quality = quantizer_to_qindex[(uint8_t)scs_ptr->static_config.qp];
+                                av1_rc_init(scs_ptr);
+                            }
+                            new_qindex = cqp_qindex_calc_tpl_la(pcs_ptr, rc, rc->active_worst_quality);
+                        }
+#else
                             new_qindex = cqp_qindex_calc_tpl_la(pcs_ptr, &rc, qindex);
+#endif
                         else if (use_input_stat(scs_ptr)) {
                             int32_t update_type =
                                 scs_ptr->encode_context_ptr->gf_group
@@ -2653,7 +2900,11 @@ void *rate_control_kernel(void *input_ptr) {
                             // VBR Qindex calculating
                             new_qindex = rc_pick_q_and_bounds(pcs_ptr);
                         } else
+#if FTR_RC_CAP
+                            new_qindex = cqp_qindex_calc(pcs_ptr, rc, qindex);
+#else
                             new_qindex = cqp_qindex_calc(pcs_ptr, &rc, qindex);
+#endif
                     } else {
                         new_qindex = find_fp_qindex(
                             (AomBitDepth)scs_ptr->static_config.encoder_bit_depth);
@@ -2667,6 +2918,11 @@ void *rate_control_kernel(void *input_ptr) {
                         (int32_t)scs_ptr->static_config.min_qp_allowed,
                         (int32_t)scs_ptr->static_config.max_qp_allowed,
                         (frm_hdr->quantization_params.base_q_idx + 2) >> 2);
+#if FTR_RC_CAP
+                    // max bit rate is only active for 1 pass CRF
+                    if (scs_ptr->static_config.rate_control_mode == 0 && scs_ptr->static_config.max_bit_rate)
+                        crf_assign_max_rate(pcs_ptr->parent_pcs_ptr);
+#endif
                 }
                 else if (pcs_ptr->parent_pcs_ptr->qp_on_the_fly == EB_TRUE) {
                     pcs_ptr->picture_qp = (uint8_t)CLIP3(
@@ -2889,6 +3145,10 @@ void *rate_control_kernel(void *input_ptr) {
             }
         }
             // Queue variables
+#if FTR_RC_CAP
+            if (scs_ptr->static_config.max_bit_rate)
+                coded_frames_stat_calc(parentpicture_control_set_ptr);
+#endif
             total_number_of_fb_frames++;
 
 

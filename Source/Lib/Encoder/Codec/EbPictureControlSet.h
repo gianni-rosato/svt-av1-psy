@@ -928,6 +928,9 @@ typedef struct PictureParentControlSet {
     int                             base_frame_target; // A baseline frame target before adjustment.
     int                             this_frame_target; // Actual frame target after rc adjustment.
     int                             projected_frame_size;
+#if FTR_RC_CAP
+    int                             max_frame_size;
+#endif
 
     int                             frames_to_key;
     int                             frames_since_key;
