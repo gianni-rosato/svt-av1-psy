@@ -126,6 +126,12 @@ or
 `SvtAv1EncApp -i input.yuv -w 1920 -h 1080 --fps 24 --rc 1 --tbr 1000 --preset 8 --irefresh-type 2 --pass 1 --stats stat_file.stat`
 `SvtAv1EncApp -i input.yuv -w 1920 -h 1080 --fps 24 --rc 1 --tbr 1000 --preset 0 --irefresh-type 2 --pass 2 --stats stat_file.stat -b output.ivf`
 
+#### 1 pass CRF at maximum speed from 24fps yuv 1920x1080 input with full range video signal
+`SvtAv1EncApp -i input.yuv -w 1920 -h 1080 --fps 24 --crf 30 --preset 8 --color-range 1 -b output.ivf`
+
+#### 1 pass CRF at maximum speed from 24fps yuv 1920x1080 input with colorimetry set to BT.709
+`SvtAv1EncApp -i input.yuv -w 1920 -h 1080 --fps 24 --crf 30 --preset 8 --color-primaries 1 --transfer-characteristics 1 --matrix-coefficients 1 -b output.ivf`
+
 ### List of all configuration parameters
 
 The encoder parameters present in the `Sample.cfg` file are listed in this table below along with their status of support, command line parameter and the range of values that the parameters can take.
