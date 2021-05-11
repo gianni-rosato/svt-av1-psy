@@ -60,7 +60,7 @@ IF(NOT CMAKE_SYSTEM_PROCESSOR)
       "cpuinfo will compile, but cpuinfo_initialize() will always fail.")
     SET(CPUINFO_SUPPORTED_PLATFORM FALSE)
   ENDIF()
-ELSEIF(NOT CMAKE_SYSTEM_PROCESSOR MATCHES "^(i[3-6]86|AMD64|x86(_64)?|armv[5-8].*|aarch64|arm64)$")
+ELSEIF(NOT CMAKE_SYSTEM_PROCESSOR MATCHES "^(i[3-6]86|AMD64|amd64|x86(_64)?|armv[5-8].*|aarch64|arm64)$")
   MESSAGE(WARNING
     "Target processor architecture \"${CMAKE_SYSTEM_PROCESSOR}\" is not supported in cpuinfo. "
     "cpuinfo will compile, but cpuinfo_initialize() will always fail.")
@@ -72,7 +72,7 @@ IF(NOT CMAKE_SYSTEM_NAME)
       "Target operating system is not specified. "
       "cpuinfo will compile, but cpuinfo_initialize() will always fail.")
   SET(CPUINFO_SUPPORTED_PLATFORM FALSE)
-ELSEIF(NOT CMAKE_SYSTEM_NAME MATCHES "^(Windows|CYGWIN|MSYS|Darwin|Linux|Android)$")
+ELSEIF(NOT CMAKE_SYSTEM_NAME MATCHES "^(Windows|CYGWIN|MSYS|Darwin|Linux|Android|DragonFly|FreeBSD|NetBSD|OpenBSD)$")
   IF(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.14" AND NOT CMAKE_SYSTEM_NAME STREQUAL "iOS")
     MESSAGE(WARNING
       "Target operating system \"${CMAKE_SYSTEM_NAME}\" is not supported in cpuinfo. "
@@ -87,7 +87,7 @@ SET(CPUINFO_SRCS
   src/api.c)
 
 IF(CPUINFO_SUPPORTED_PLATFORM)
-  IF(NOT CMAKE_SYSTEM_NAME STREQUAL "Emscripten" AND (CMAKE_SYSTEM_PROCESSOR MATCHES "^(i[3-6]86|AMD64|x86(_64)?)$" OR IOS_ARCH MATCHES "^(i386|x86_64)$"))
+  IF(NOT CMAKE_SYSTEM_NAME STREQUAL "Emscripten" AND (CMAKE_SYSTEM_PROCESSOR MATCHES "^(i[3-6]86|AMD64|amd64|x86(_64)?)$" OR IOS_ARCH MATCHES "^(i386|x86_64)$"))
     LIST(APPEND CPUINFO_SRCS
       src/x86/x86_init.c
       src/x86/vendor.c
@@ -95,6 +95,8 @@ IF(CPUINFO_SUPPORTED_PLATFORM)
     IF(CMAKE_SYSTEM_NAME STREQUAL "Linux" OR CMAKE_SYSTEM_NAME STREQUAL "Android")
       LIST(APPEND CPUINFO_SRCS
         src/x86/linux/init.c)
+    ELSEIF(CMAKE_SYSTEM_NAME MATCHES "^(DragonFly|FreeBSD|NetBSD|OpenBSD)$")
+      LIST(APPEND CPUINFO_SRCS src/x86/bsd/init.c)
     ELSEIF(CMAKE_SYSTEM_NAME STREQUAL "Darwin" OR CMAKE_SYSTEM_NAME STREQUAL "iOS")
       LIST(APPEND CPUINFO_SRCS src/x86/mach/x86_mach_init.c)
     ELSEIF(CMAKE_SYSTEM_NAME MATCHES "^(Windows|CYGWIN|MSYS)$")
@@ -102,7 +104,7 @@ IF(CPUINFO_SUPPORTED_PLATFORM)
     ENDIF()
   ENDIF()
 
-  IF(CMAKE_SYSTEM_NAME STREQUAL "Linux" OR CMAKE_SYSTEM_NAME STREQUAL "Android")
+  IF(CMAKE_SYSTEM_NAME STREQUAL "Linux" OR CMAKE_SYSTEM_NAME STREQUAL "Android" OR CMAKE_SYSTEM_NAME MATCHES "^(DragonFly|FreeBSD|NetBSD|OpenBSD)$")
     SET(CMAKE_THREAD_PREFER_PTHREAD TRUE)
     SET(THREADS_PREFER_PTHREAD_FLAG TRUE)
     FIND_PACKAGE(Threads REQUIRED)

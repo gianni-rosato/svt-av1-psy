@@ -29,6 +29,8 @@ bool CPUINFO_ABI cpuinfo_initialize(void) {
         pthread_once(&init_guard, &cpuinfo_x86_linux_init);
     #elif defined(_WIN32) || defined(__CYGWIN__)
         InitOnceExecuteOnce(&init_guard, &cpuinfo_x86_windows_init, NULL, NULL);
+    #elif defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__bsdi__) || defined(__DragonFly__)
+        pthread_once(&init_guard, &cpuinfo_x86_bsd_init);
     #else
         cpuinfo_log_error("operating system is not supported in cpuinfo");
     #endif

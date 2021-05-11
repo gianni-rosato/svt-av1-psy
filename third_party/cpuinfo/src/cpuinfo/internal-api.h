@@ -50,6 +50,7 @@ extern CPUINFO_INTERNAL uint32_t cpuinfo_max_cache_size;
 
 CPUINFO_PRIVATE void cpuinfo_x86_mach_init(void);
 CPUINFO_PRIVATE void cpuinfo_x86_linux_init(void);
+CPUINFO_PRIVATE void cpuinfo_x86_bsd_init(void);
 #if defined(_WIN32) || defined(__CYGWIN__)
     CPUINFO_PRIVATE BOOL CALLBACK cpuinfo_x86_windows_init(PINIT_ONCE init_once, PVOID parameter, PVOID* context);
 #endif
