@@ -77,7 +77,8 @@ EbErrorType rate_control_context_ctor(EbThreadContext *  thread_context_ptr,
                                       const EbEncHandle *enc_handle_ptr) {
     uint32_t interval_index;
 
-    int32_t intra_period = enc_handle_ptr->scs_instance_array[0]->scs_ptr->intra_period_length;
+    int32_t intra_period =
+         enc_handle_ptr->scs_instance_array[0]->scs_ptr->static_config.intra_period_length;
 
     RateControlContext *context_ptr;
     EB_CALLOC_ARRAY(context_ptr, 1);
@@ -821,7 +822,7 @@ static int cqp_qindex_calc_tpl_la(PictureControlSet *pcs_ptr, RATE_CONTROL *rc, 
         }
         pcs_ptr->parent_pcs_ptr->r0 = pcs_ptr->parent_pcs_ptr->r0 / tpl_hl_islice_div_factor[scs_ptr->static_config.hierarchical_levels];
         if (pcs_ptr->parent_pcs_ptr->frm_hdr.frame_type == KEY_FRAME) {
-            if (scs_ptr->intra_period_length == -1 || scs_ptr->intra_period_length > KF_INTERVAL_TH) {
+            if (scs_ptr->static_config.intra_period_length == -1 || scs_ptr->static_config.intra_period_length > KF_INTERVAL_TH) {
                 double factor = 1.0;
                 if (pcs_ptr->parent_pcs_ptr->r0 < 0.2){
                     double mult = 1.0;
@@ -834,7 +835,7 @@ static int cqp_qindex_calc_tpl_la(PictureControlSet *pcs_ptr, RATE_CONTROL *rc, 
         rc->kf_boost = get_cqp_kf_boost_from_r0(
             pcs_ptr->parent_pcs_ptr->r0, -1, scs_ptr->input_resolution);
         // NM: TODO: replaced by unitary number X * number of pictures in GOP // 93.75 * number of pictures in GOP
-        int max_boost = scs_ptr->intra_period_length < KF_INTERVAL_TH ? MAX_KF_BOOST_LOW_KI : MAX_KF_BOOST_HIGHT_KI;
+        int max_boost = scs_ptr->static_config.intra_period_length < KF_INTERVAL_TH ? MAX_KF_BOOST_LOW_KI : MAX_KF_BOOST_HIGHT_KI;
         rc->kf_boost = AOMMIN(rc->kf_boost, max_boost);
         // Baseline value derived from cpi->active_worst_quality and kf boost.
         active_best_quality = get_kf_active_quality_tpl(rc, active_worst_quality, bit_depth);
@@ -2489,7 +2490,7 @@ void *rate_control_kernel(void *input_ptr) {
                         pcs_ptr->parent_pcs_ptr->rc_me_distortion[sb_addr];
                 }
             // Frame level RC. Find the ParamPtr for the current GOP
-            if (scs_ptr->intra_period_length == -1 ||
+            if (scs_ptr->static_config.intra_period_length == -1 ||
                 scs_ptr->static_config.rate_control_mode == 0) {
                 rate_control_param_ptr = context_ptr->rate_control_param_queue[0];
             }

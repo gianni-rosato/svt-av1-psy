@@ -95,8 +95,6 @@ EbErrorType svt_sequence_control_set_ctor(SequenceControlSet *scs_ptr, EbPtr obj
     scs_ptr->min_blk_size   = 8;
     scs_ptr->max_intra_size = 32;
     scs_ptr->min_intra_size = 8;
-    // Rate Control
-    scs_ptr->target_bitrate = 0x1000;
     // Quantization
     scs_ptr->static_config.qp = 20;
     // Initialize SB params
@@ -239,8 +237,6 @@ EbErrorType copy_sequence_control_set(SequenceControlSet *dst, SequenceControlSe
     dst->subsampling_x                             = src->subsampling_x;
     dst->subsampling_y                             = src->subsampling_y;
     dst->pred_struct_ptr                           = src->pred_struct_ptr;
-    dst->intra_period_length                       = src->intra_period_length;
-    dst->intra_refresh_type                        = src->intra_refresh_type;
     dst->max_ref_count                             = src->max_ref_count;
     dst->sb_sz                                     = src->sb_sz;
     dst->max_sb_depth                              = src->max_sb_depth;
@@ -248,9 +244,7 @@ EbErrorType copy_sequence_control_set(SequenceControlSet *dst, SequenceControlSe
     dst->min_blk_size                              = src->min_blk_size;
     dst->max_intra_size                            = src->max_intra_size;
     dst->min_intra_size                            = src->min_intra_size;
-    dst->target_bitrate                            = src->target_bitrate;
     dst->static_config.qp                          = src->static_config.qp;
-    dst->film_grain_denoise_strength               = src->film_grain_denoise_strength;
     dst->seq_header.film_grain_params_present      = src->seq_header.film_grain_params_present;
     dst->picture_control_set_pool_init_count       = src->picture_control_set_pool_init_count;
     dst->me_pool_init_count                        = src->me_pool_init_count;

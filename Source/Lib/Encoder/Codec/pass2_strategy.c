@@ -2320,7 +2320,7 @@ void set_rc_param(SequenceControlSet *scs_ptr) {
     encode_context_ptr->kf_cfg.sframe_dist = 0; // not supported yet
     encode_context_ptr->kf_cfg.sframe_mode = 0; // not supported yet
     encode_context_ptr->kf_cfg.auto_key = 0;
-    encode_context_ptr->kf_cfg.key_freq_max = scs_ptr->intra_period_length + 1;
+    encode_context_ptr->kf_cfg.key_freq_max = scs_ptr->static_config.intra_period_length + 1;
 }
 
 void svt_av1_init_single_pass_lap(SequenceControlSet *scs_ptr) {

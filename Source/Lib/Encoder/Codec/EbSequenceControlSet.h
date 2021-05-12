@@ -55,12 +55,6 @@ typedef struct SequenceControlSet {
     uint32_t max_ref_count;
     /*!< Maximum number of references that a picture can have within the stream */
     uint32_t reference_count;
-    /*!< The frequency of intra pictures */
-    int32_t intra_period_length;
-    /*!< Intra refresh type 2= key frame, 1= fwd key frame */
-    uint32_t intra_refresh_type;
-    /*!< Target bitrate in bits per seconds */
-    uint32_t target_bitrate;
     /*!< Maximum number of allowed temporal layers */
     uint32_t max_temporal_layers;
     /*!< Overflow bits used for the picture order count increments */
@@ -96,8 +90,6 @@ typedef struct SequenceControlSet {
     /*!< Allow the usage of motion field motion vector in the stream
         (The signal changes per preset; 0: Enabled, 1: Disabled) Default is 1. */
     uint8_t mfmv_enabled;
-    /*!< Film grain strenght */
-    int32_t film_grain_denoise_strength;
     /*!< Film grain seed */
     uint16_t film_grain_random_seed;
     /*!< over_boundary_block: pad resolution to a multiple of SB for smaller overhead

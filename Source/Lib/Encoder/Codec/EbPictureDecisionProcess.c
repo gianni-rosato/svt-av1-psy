@@ -1946,9 +1946,9 @@ static void  av1_generate_rps_info(
             //layer2 toggle for low delay b/P case
             if ((scs_ptr->static_config.pred_structure == EB_PRED_LOW_DELAY_P ||
                   scs_ptr->static_config.pred_structure == EB_PRED_LOW_DELAY_B) &&
-                    scs_ptr->intra_period_length != -1 &&
+                    scs_ptr->static_config.intra_period_length != -1 &&
                     pcs_ptr->cra_flag) {
-                int32_t trailing_count = (scs_ptr->intra_period_length % 8);
+                int32_t trailing_count = (scs_ptr->static_config.intra_period_length % 8);
                 if (trailing_count >=2 && trailing_count <= 5) {
                     context_ptr->lay2_toggle = 1 - context_ptr->lay2_toggle;
                 }
@@ -4775,14 +4775,14 @@ void* picture_decision_kernel(void *input_ptr)
                     if (pcs_ptr->pd_window[2 + window_index])
                     {
                         uint8_t is_frame_intra = 0;
-                        if (scs_ptr->intra_period_length == 0)
+                        if (scs_ptr->static_config.intra_period_length == 0)
                             is_frame_intra = 1;
-                        else if (scs_ptr->intra_period_length == -1)
+                        else if (scs_ptr->static_config.intra_period_length == -1)
                             is_frame_intra = 0;
                         else
                             is_frame_intra =
                             (((PictureParentControlSet *)pcs_ptr->pd_window[2 + window_index])->picture_number %
-                            (scs_ptr->intra_period_length + 1)) ? 0 : 1;
+                            (scs_ptr->static_config.intra_period_length + 1)) ? 0 : 1;
                         if (is_frame_intra)
                             break;
                         else
@@ -4843,33 +4843,33 @@ void* picture_decision_kernel(void *input_ptr)
                     encode_context_ptr);
 
                 // If the Intra period length is 0, then introduce an intra for every picture
-                if (scs_ptr->intra_period_length == 0)
+                if (scs_ptr->static_config.intra_period_length == 0)
                     pcs_ptr->cra_flag = EB_TRUE;
                 // If an #IntraPeriodLength has passed since the last Intra, then introduce a CRA or IDR based on Intra Refresh type
-                else if (scs_ptr->intra_period_length != -1) {
+                else if (scs_ptr->static_config.intra_period_length != -1) {
                     pcs_ptr->cra_flag =
-                        (scs_ptr->intra_refresh_type != CRA_REFRESH) ?
+                        (scs_ptr->static_config.intra_refresh_type != CRA_REFRESH) ?
                         pcs_ptr->cra_flag :
-                        (encode_context_ptr->intra_period_position == (uint32_t)scs_ptr->intra_period_length) ?
+                        (encode_context_ptr->intra_period_position == (uint32_t)scs_ptr->static_config.intra_period_length) ?
                         EB_TRUE :
                         pcs_ptr->cra_flag;
 
                     pcs_ptr->idr_flag =
-                        (scs_ptr->intra_refresh_type != IDR_REFRESH) ?
+                        (scs_ptr->static_config.intra_refresh_type != IDR_REFRESH) ?
                         pcs_ptr->idr_flag :
-                        (encode_context_ptr->intra_period_position == (uint32_t)scs_ptr->intra_period_length) ?
+                        (encode_context_ptr->intra_period_position == (uint32_t)scs_ptr->static_config.intra_period_length) ?
                         EB_TRUE :
                         pcs_ptr->idr_flag;
                 }
 
 
                 //TODO: scene change update
-                if (scs_ptr->intra_period_length == 0)
+                if (scs_ptr->static_config.intra_period_length == 0)
                     pcs_ptr->is_next_frame_intra = 1;
-                else if (scs_ptr->intra_period_length == -1)
+                else if (scs_ptr->static_config.intra_period_length == -1)
                     pcs_ptr->is_next_frame_intra = 0;
                 else
-                    pcs_ptr->is_next_frame_intra = (int32_t)(encode_context_ptr->intra_period_position + 1) == scs_ptr->intra_period_length;
+                    pcs_ptr->is_next_frame_intra = (int32_t)(encode_context_ptr->intra_period_position + 1) == scs_ptr->static_config.intra_period_length;
                 encode_context_ptr->pre_assignment_buffer_eos_flag = (pcs_ptr->end_of_sequence_flag) ? (uint32_t)EB_TRUE : encode_context_ptr->pre_assignment_buffer_eos_flag;
 
                 // Increment the Pre-Assignment Buffer Intra Count
@@ -4880,12 +4880,12 @@ void* picture_decision_kernel(void *input_ptr)
                 if (scs_ptr->static_config.rate_control_mode)
                 {
                     // Increment the Intra Period Position
-                    encode_context_ptr->intra_period_position = (encode_context_ptr->intra_period_position == (uint32_t)scs_ptr->intra_period_length) ? 0 : encode_context_ptr->intra_period_position + 1;
+                    encode_context_ptr->intra_period_position = (encode_context_ptr->intra_period_position == (uint32_t)scs_ptr->static_config.intra_period_length) ? 0 : encode_context_ptr->intra_period_position + 1;
                 }
                 else
                 {
                     // Increment the Intra Period Position
-                    encode_context_ptr->intra_period_position = ((encode_context_ptr->intra_period_position == (uint32_t)scs_ptr->intra_period_length) || (pcs_ptr->scene_change_flag == EB_TRUE)) ? 0 : encode_context_ptr->intra_period_position + 1;
+                    encode_context_ptr->intra_period_position = ((encode_context_ptr->intra_period_position == (uint32_t)scs_ptr->static_config.intra_period_length) || (pcs_ptr->scene_change_flag == EB_TRUE)) ? 0 : encode_context_ptr->intra_period_position + 1;
                 }
 
 

@@ -1817,7 +1817,7 @@ EbErrorType denoise_estimate_film_grain(SequenceControlSet *     scs_ptr,
     EbPictureBufferDesc *input_picture_ptr = pcs_ptr->enhanced_picture_ptr;
     frm_hdr->film_grain_params.apply_grain = 0;
 
-    if (scs_ptr->film_grain_denoise_strength) {
+    if (scs_ptr->static_config.film_grain_denoise_strength) {
         if (apply_denoise_2d(scs_ptr, pcs_ptr, input_picture_ptr) < 0) return 1;
     }
 
@@ -1836,7 +1836,7 @@ EbErrorType denoise_estimate_film_grain(SequenceControlSet *     scs_ptr,
  ************************************************/
 void picture_pre_processing_operations(PictureParentControlSet *pcs_ptr,
                                        SequenceControlSet *scs_ptr) {
-    if (scs_ptr->film_grain_denoise_strength)
+    if (scs_ptr->static_config.film_grain_denoise_strength)
         denoise_estimate_film_grain(scs_ptr, pcs_ptr);
     return;
 }
