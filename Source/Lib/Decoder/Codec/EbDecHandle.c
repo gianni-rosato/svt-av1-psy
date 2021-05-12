@@ -465,7 +465,9 @@ static EbErrorType init_svt_av1_decoder_handle(EbComponentType *hComponent) {
     SVT_LOG("SVT [build]  :\tunknown compiler");
 #endif
     SVT_LOG(" %zu bit\n", sizeof(void *) * 8);
+#if !REPRODUCIBLE_BUILDS
     SVT_LOG("LIB Build date: %s %s\n", __DATE__, __TIME__);
+#endif
     SVT_LOG("-------------------------------------------\n");
 
     dec_switch_to_real_time();

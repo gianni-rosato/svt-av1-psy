@@ -64,6 +64,7 @@ Static analysis (cppcheck):
     - |
       eval cmake \
         -B Build \
+        -DREPRODUCIBLE_BUILDS=ON \
         -DCMAKE_BUILD_TYPE="$CMAKE_BUILD_TYPE" \
         -DBUILD_SHARED_LIBS="$BUILD_SHARED_LIBS" \
         -DCMAKE_INSTALL_PREFIX="$PREFIX_DIR" \
@@ -128,6 +129,7 @@ Static analysis (cppcheck):
   script:
     - cmake `
       -B Build `
+      -DREPRODUCIBLE_BUILDS=ON `
       -DBUILD_SHARED_LIBS=ON `
       -DBUILD_TESTING=ON `
       $env:EXTRA_CMAKE_FLAGS

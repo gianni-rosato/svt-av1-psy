@@ -4342,7 +4342,9 @@ EbErrorType init_svt_av1_encoder_handle(
     SVT_LOG("SVT [build]  :\tunknown compiler");
 #endif
     SVT_LOG(" %zu bit\n", sizeof(void*) * 8);
+#if !REPRODUCIBLE_BUILDS
     SVT_LOG("LIB Build date: %s %s\n", __DATE__, __TIME__);
+#endif
     SVT_LOG("-------------------------------------------\n");
 
     enc_switch_to_real_time();
