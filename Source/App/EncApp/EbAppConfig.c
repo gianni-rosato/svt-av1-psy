@@ -151,6 +151,11 @@
 #define VBR_MAX_SECTION_PCT_TOKEN "-maxsection-pct"
 #define UNDER_SHOOT_PCT_TOKEN "-undershoot-pct"
 #define OVER_SHOOT_PCT_TOKEN "-overshoot-pct"
+#if FTR_2PASS_CBR || FTR_1PASS_CBR
+#define BUFFER_SIZE_TOKEN "-buf-sz"
+#define BUFFER_INITIAL_SIZE_TOKEN "-buf-initial-sz"
+#define BUFFER_OPTIMAL_SIZE_TOKEN "-buf-optimal-sz"
+#endif
 #define RECODE_LOOP_TOKEN "-recode-loop"
 #define ADAPTIVE_QP_ENABLE_TOKEN "-adaptive-quantization"
 #define LOOK_AHEAD_DIST_TOKEN "-lad"
@@ -657,6 +662,17 @@ static void set_under_shoot_pct(const char *value, EbConfig *cfg) {
 static void set_over_shoot_pct(const char *value, EbConfig *cfg) {
     cfg->config.over_shoot_pct = strtoul(value, NULL, 0);
 };
+#if FTR_2PASS_CBR || FTR_1PASS_CBR
+static void set_buf_sz(const char *value, EbConfig *cfg) {
+    cfg->config.maximum_buffer_size_ms = strtoul(value, NULL, 0);
+};
+static void set_buf_initial_sz(const char *value, EbConfig *cfg) {
+    cfg->config.starting_buffer_level_ms = strtoul(value, NULL, 0);
+};
+static void set_buf_optimal_sz(const char *value, EbConfig *cfg) {
+    cfg->config.optimal_buffer_level_ms = strtoul(value, NULL, 0);
+};
+#endif
 static void set_recode_loop(const char *value, EbConfig *cfg) {
     cfg->config.recode_loop = strtoul(value, NULL, 0);
 };
@@ -967,7 +983,11 @@ ConfigEntry config_entry_rc[] = {
     // Rate Control
     {SINGLE_INPUT,
      RATE_CONTROL_ENABLE_TOKEN,
+#if FTR_2PASS_CBR || FTR_1PASS_CBR
+     "Rate control mode(0 = CQP if --enable-tpl-la is set to 0, else CRF , 1 = VBR, 2 = CBR)",
+#else
      "Rate control mode(0 = CQP if --enable-tpl-la is set to 0, else CRF , 1 = VBR)",
+#endif
      set_rate_control_mode},
     {SINGLE_INPUT, TARGET_BIT_RATE_TOKEN, "Target Bitrate (kbps)", set_target_bit_rate},
 #if FTR_RC_CAP
@@ -1019,6 +1039,11 @@ ConfigEntry config_entry_rc[] = {
      "Datarate undershoot (min) target (%)",
      set_under_shoot_pct},
     {SINGLE_INPUT, OVER_SHOOT_PCT_TOKEN, "Datarate overshoot (max) target (%)", set_over_shoot_pct},
+#if FTR_2PASS_CBR || FTR_1PASS_CBR
+    {SINGLE_INPUT, BUFFER_SIZE_TOKEN, "Client buffer size (ms)", set_buf_sz},
+    {SINGLE_INPUT, BUFFER_INITIAL_SIZE_TOKEN, "Client initial buffer size (ms)", set_buf_initial_sz},
+    {SINGLE_INPUT, BUFFER_OPTIMAL_SIZE_TOKEN, "Client optimal buffer size (ms)", set_buf_optimal_sz},
+#endif
     {SINGLE_INPUT,
      RECODE_LOOP_TOKEN,
      "Recode loop levels    (0 : OFF, 1: Allow recode for KF and exceeding maximum frame bandwidth, 2:Allow recode only for KF/ARF/GF frames, 3: Allow recode for all frames based on bitrate constraints, 4: preset based decision [Default])",
@@ -1422,6 +1447,11 @@ ConfigEntry config_entry[] = {
      "Datarate undershoot (min) target (%)",
      set_under_shoot_pct},
     {SINGLE_INPUT, OVER_SHOOT_PCT_TOKEN, "Datarate overshoot (max) target (%)", set_over_shoot_pct},
+#if FTR_2PASS_CBR || FTR_1PASS_CBR
+    {SINGLE_INPUT, BUFFER_SIZE_TOKEN, "Client buffer size (ms)", set_buf_sz},
+    {SINGLE_INPUT, BUFFER_INITIAL_SIZE_TOKEN, "Client initial buffer size (ms)", set_buf_initial_sz},
+    {SINGLE_INPUT, BUFFER_OPTIMAL_SIZE_TOKEN, "Client optimal buffer size (ms)", set_buf_optimal_sz},
+#endif
     {SINGLE_INPUT, RECODE_LOOP_TOKEN, "Recode loop levels ", set_recode_loop},
 
     // DLF

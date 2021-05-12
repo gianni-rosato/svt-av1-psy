@@ -231,6 +231,9 @@ for this command line, corresponding qindex are:
 | **MaxSectionPct** | --maxsection-pct | [0 - ] | 2000 | 2pass VBR GOP max bitrate (percent of target) |
 | **UnderShortPct** | --undershoot-pct | [0 - 100] | 25 | Datarate undershoot (min) target (percent) |
 | **OverShortPct** | --overshoot-pct | [0 - 100] | 25 | Datarate overshoot (max) target (percent) |
+| **BufSz** | --buf-sz | [0 - ] | 6000 | Client (max) buffer size (ms) |
+| **BufInitialSz** | --buf-initial-sz | [0 - ] | 4000 | Client initial buffer size (ms) |
+| **BufOptimalSz** | --buf-optimal-sz | [0 - ] | 5000 | Client optimal buffer size (ms) |
 | **RecodeLoop** | --recode-loop | [0 - 4] | 4 | Recode loop levels for 2pass VBR (0=disable reencode, 1=reencode key frames, 2=reencode base layer frames, 3=reencode all frames, 4=preset based decision [Default]) |
 
 #### GOP size and type Options

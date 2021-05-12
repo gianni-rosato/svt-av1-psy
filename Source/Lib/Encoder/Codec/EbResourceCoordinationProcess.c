@@ -616,6 +616,13 @@ static EbErrorType reset_pcs_av1(PictureParentControlSet *pcs_ptr) {
     pcs_ptr->frame_context_idx = 0; /* Context to use/update */
     for (int32_t i = 0; i < REF_FRAMES; i++) pcs_ptr->fb_of_context_type[i] = 0;
     frm_hdr->primary_ref_frame               = PRIMARY_REF_NONE;
+#if FTR_1PASS_CBR
+    if (pcs_ptr->scs_ptr->static_config.rate_control_mode == 2 &&
+       !use_output_stat(pcs_ptr->scs_ptr) && !use_input_stat(pcs_ptr->scs_ptr)) {
+        pcs_ptr->frame_offset = pcs_ptr->picture_number %
+            (pcs_ptr->scs_ptr->static_config.intra_period_length + 1);
+    } else
+#endif
     pcs_ptr->frame_offset                    = pcs_ptr->picture_number;
     frm_hdr->error_resilient_mode            = 0;
     cm->tiles_info.uniform_tile_spacing_flag = 1;
@@ -1250,6 +1257,14 @@ void *resource_coordination_kernel(void *input_ptr) {
 #if FTR_RC_CAP
                 else
                     set_rc_param(scs_ptr);
+#endif
+#if FTR_1PASS_CBR
+                if (!use_input_stat(scs_ptr) && !use_output_stat(scs_ptr) && scs_ptr->static_config.rate_control_mode == 2) {
+                    setup_two_pass(scs_ptr);
+#if !FTR_RC_CAP
+                    set_rc_param(scs_ptr);
+#endif
+                }
 #endif
             }
             pcs_ptr->ts_duration = (int64_t)10000000 * (1 << 16) / scs_ptr->frame_rate;

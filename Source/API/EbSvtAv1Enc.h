@@ -597,6 +597,18 @@ typedef struct EbSvtAv1EncConfiguration {
      * and is used as a trigger threshold for more agressive adaptation of Q. Its
      * value can range from 0-1000. */
     uint32_t over_shoot_pct;
+#if FTR_2PASS_CBR || FTR_1PASS_CBR
+    /* Indicates the amount of data that will be buffered by the decoding
+     * application prior to beginning playback, and is expressed in units of
+     * time(milliseconds). */
+    int64_t starting_buffer_level_ms;
+    /* Indicates the amount of data that the encoder should try to maintain in the
+     * decoder's buffer, and is expressed in units of time(milliseconds). */
+    int64_t optimal_buffer_level_ms;
+    /* Indicates the maximum amount of data that may be buffered by the decoding
+     * application, and is expressed in units of time(milliseconds).*/
+    int64_t maximum_buffer_size_ms;
+#endif
 
     /* recode_loop indicates the recode levels,
      * DISALLOW_RECODE = 0, No recode.

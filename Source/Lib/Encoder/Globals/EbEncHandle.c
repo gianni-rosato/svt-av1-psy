@@ -2618,7 +2618,11 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
         (!scs_ptr->static_config.rate_control_mode && scs_ptr->static_config.max_bit_rate == 0) &&
 #endif
         (!scs_ptr->static_config.rate_control_mode || (!scs_ptr->lap_enabled && !use_input_stat(scs_ptr)))) {
+#if FTR_2PASS_CBR
+        // Only allow re-encoding for 2pass VBR/CBR or 1 PASS LAP, otherwise force recode_loop to DISALLOW_RECODE or 0
+#else
         // Only allow re-encoding for 2pass VBR or 1 PASS LAP, otherwise force recode_loop to DISALLOW_RECODE or 0
+#endif
         scs_ptr->static_config.recode_loop = DISALLOW_RECODE;
     }
     else if (scs_ptr->static_config.recode_loop == ALLOW_RECODE_DEFAULT) {
@@ -2748,7 +2752,9 @@ void copy_api_from_app(
     scs_ptr->static_config.intra_refresh_type = ((EbSvtAv1EncConfiguration*)config_struct)->intra_refresh_type;
     scs_ptr->static_config.hierarchical_levels = ((EbSvtAv1EncConfiguration*)config_struct)->hierarchical_levels;
     scs_ptr->static_config.enc_mode = ((EbSvtAv1EncConfiguration*)config_struct)->enc_mode;
+#if !FTR_1PASS_CBR
     scs_ptr->max_temporal_layers = scs_ptr->static_config.hierarchical_levels;
+#endif
     scs_ptr->static_config.use_qp_file = ((EbSvtAv1EncConfiguration*)config_struct)->use_qp_file;
     scs_ptr->static_config.use_fixed_qindex_offsets = ((EbSvtAv1EncConfiguration*)config_struct)->use_fixed_qindex_offsets;
     scs_ptr->static_config.key_frame_chroma_qindex_offset = ((EbSvtAv1EncConfiguration*)config_struct)->key_frame_chroma_qindex_offset;
@@ -2870,10 +2876,17 @@ void copy_api_from_app(
     // Rate Control
     scs_ptr->static_config.scene_change_detection = ((EbSvtAv1EncConfiguration*)config_struct)->scene_change_detection;
     scs_ptr->static_config.rate_control_mode = ((EbSvtAv1EncConfiguration*)config_struct)->rate_control_mode;
+#if !FTR_2PASS_CBR
     if (scs_ptr->static_config.rate_control_mode == 2) {
         scs_ptr->static_config.rate_control_mode = 1;
         SVT_WARN("The CVBR rate control mode (mode 2) is not supported in this branch. RC mode 1 is used instead.\n");
     }
+#endif
+#if FTR_1PASS_CBR
+    if (scs_ptr->static_config.rate_control_mode == 2 && !use_output_stat(scs_ptr) && !use_input_stat(scs_ptr))
+        scs_ptr->static_config.hierarchical_levels = 0;
+    scs_ptr->max_temporal_layers = scs_ptr->static_config.hierarchical_levels;
+#endif
     scs_ptr->static_config.frame_rate = ((EbSvtAv1EncConfiguration*)config_struct)->frame_rate;
     scs_ptr->static_config.frame_rate_denominator = ((EbSvtAv1EncConfiguration*)config_struct)->frame_rate_denominator;
     scs_ptr->static_config.frame_rate_numerator = ((EbSvtAv1EncConfiguration*)config_struct)->frame_rate_numerator;
@@ -2900,8 +2913,17 @@ void copy_api_from_app(
     scs_ptr->static_config.vbr_max_section_pct = ((EbSvtAv1EncConfiguration*)config_struct)->vbr_max_section_pct;
     scs_ptr->static_config.under_shoot_pct     = ((EbSvtAv1EncConfiguration*)config_struct)->under_shoot_pct;
     scs_ptr->static_config.over_shoot_pct      = ((EbSvtAv1EncConfiguration*)config_struct)->over_shoot_pct;
+#if FTR_2PASS_CBR || FTR_1PASS_CBR
+    scs_ptr->static_config.maximum_buffer_size_ms   = ((EbSvtAv1EncConfiguration*)config_struct)->maximum_buffer_size_ms;
+    scs_ptr->static_config.starting_buffer_level_ms = ((EbSvtAv1EncConfiguration*)config_struct)->starting_buffer_level_ms;
+    scs_ptr->static_config.optimal_buffer_level_ms  = ((EbSvtAv1EncConfiguration*)config_struct)->optimal_buffer_level_ms;
+#endif
     scs_ptr->static_config.recode_loop         = ((EbSvtAv1EncConfiguration*)config_struct)->recode_loop;
+#if FTR_1PASS_CBR
+    if (scs_ptr->static_config.rate_control_mode == 1 && !use_output_stat(scs_ptr) && !use_input_stat(scs_ptr))
+#else
     if (scs_ptr->static_config.rate_control_mode && !use_output_stat(scs_ptr) && !use_input_stat(scs_ptr))
+#endif
         scs_ptr->lap_enabled = 1;
     else
         scs_ptr->lap_enabled = 0;
@@ -3172,10 +3194,17 @@ static EbErrorType verify_settings(
         return_error = EB_ErrorBadParameter;
     }
 
+#if FTR_2PASS_CBR
+    if (config->rate_control_mode > 2 && (config->rc_firstpass_stats_out || config->rc_twopass_stats_in.buf)) {
+        SVT_LOG("Error Instance %u: Only rate control mode 0~2 are supported for 2-pass \n", channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+#else
     if (config->rate_control_mode > 1 && (config->rc_firstpass_stats_out || config->rc_twopass_stats_in.buf)) {
         SVT_LOG("Error Instance %u: Only rate control mode 0 and 1 are supported for 2-pass \n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
+#endif
 
     if (config->enable_hme_flag) {
         if ((config->number_hme_search_region_in_width > (uint32_t)EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT) || (config->number_hme_search_region_in_width == 0)) {
@@ -3235,10 +3264,12 @@ static EbErrorType verify_settings(
         SVT_LOG("Error Instance %u: The rate control mode must be [0 - 2] \n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
+#if !FTR_2PASS_CBR
     if ((config->rate_control_mode == 3|| config->rate_control_mode == 2) && config->intra_period_length >= 0) {
         SVT_LOG("Error Instance %u: The rate control mode 2/3 LAD must be equal to intra_period \n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
+#endif
 
     if ((unsigned)config->tile_rows > 6 || (unsigned)config->tile_columns > 6) {
         SVT_LOG("Error Instance %u: Log2Tile rows/cols must be [0 - 6] \n", channel_number + 1);
@@ -3606,7 +3637,11 @@ static EbErrorType verify_settings(
     }
 
     if (config->rate_control_mode == 1 || config->rate_control_mode == 2) {
+#if FTR_2PASS_CBR
+        SVT_WARN("The VBR and CBR rate control modes are a work-in-progress projects, and are only available for demos, experimental and further development uses and should not be used for benchmarking until fully implemented.\n");
+#else
         SVT_WARN("The VBR and CVBR rate control modes are a work-in-progress projects, and are only available for demos, experimental and further development uses and should not be used for benchmarking until fully implemented.\n");
+#endif
     }
 
     if (config->film_grain_denoise_strength > 0 && config->enc_mode > 3) {
@@ -3743,6 +3778,11 @@ EbErrorType svt_svt_enc_init_parameter(
     config_ptr->vbr_max_section_pct = 2000;
     config_ptr->under_shoot_pct = 100;
     config_ptr->over_shoot_pct = 25;
+#if FTR_2PASS_CBR || FTR_1PASS_CBR
+    config_ptr->maximum_buffer_size_ms   = 6000;
+    config_ptr->starting_buffer_level_ms = 4000;
+    config_ptr->optimal_buffer_level_ms  = 5000;
+#endif
     config_ptr->recode_loop = ALLOW_RECODE_DEFAULT;
 
     // Bitstream options

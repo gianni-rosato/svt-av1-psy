@@ -32,9 +32,11 @@
 #ifdef __cplusplus
 extern "C" {
 #endif // __cplusplus
-#define FTR_RC_CAP         1 // Add support for Capped CRF
+#define FTR_RC_CAP             1 // Add support for Capped CRF
                                  // Add the support to re-encode when max bitrate is specified for CRF
                                  // Add the rate stat queue for the storing rate data
+#define FTR_2PASS_CBR          1 // to support 2pass CBR
+#define FTR_1PASS_CBR          1 // to support 1pass CBR
 
 #define FIX_PA_REF_RELEASE_HANG               1 // Fix a hang that occured for incomplete MGs when MRP is ON
 #define FIX_QUANT_COEFF_BUFF                  1 // Fix how the quant coeff buffer is released, and cleanup the init

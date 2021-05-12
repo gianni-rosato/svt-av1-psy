@@ -61,6 +61,9 @@ typedef struct {
     double frame_tr_coded_error;
 } GF_FRAME_STATS;
 
+#if FTR_1PASS_CBR && !FTR_RC_CAP
+void set_rc_param(struct SequenceControlSet *scs_ptr);
+#endif
 void svt_av1_init_second_pass(struct SequenceControlSet *scs_ptr);
 void svt_av1_init_single_pass_lap(struct SequenceControlSet *scs_ptr);
 void svt_av1_new_framerate(struct SequenceControlSet *scs_ptr, double framerate);

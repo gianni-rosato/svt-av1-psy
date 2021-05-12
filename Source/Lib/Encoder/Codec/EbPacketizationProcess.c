@@ -571,7 +571,12 @@ void *packetization_kernel(void *input_ptr) {
             }
 
             // Delayed call from Rate Control process for multiple coding loop frames
+#if FTR_1PASS_CBR
+            if (use_input_stat(scs_ptr) || scs_ptr->lap_enabled ||
+                (!use_input_stat(scs_ptr) && !use_output_stat(scs_ptr) && scs_ptr->static_config.rate_control_mode == 2))
+#else
             if (use_input_stat(scs_ptr) || scs_ptr->lap_enabled)
+#endif
                 update_rc_counts(parent_pcs_ptr);
 
             // Release pa me ptr. For non-superres-recode, it's released in mode_decision_kernel
