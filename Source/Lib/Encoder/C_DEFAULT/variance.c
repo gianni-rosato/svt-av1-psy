@@ -355,15 +355,13 @@ VARIANCES(8, 8)
 VARIANCES(8, 4)
 VARIANCES(4, 8)
 VARIANCES(4, 4)
-VARIANCES(4, 2)
-VARIANCES(2, 4)
-VARIANCES(2, 2)
 VARIANCES(4, 16)
 VARIANCES(16, 4)
 VARIANCES(8, 32)
 VARIANCES(32, 8)
 VARIANCES(16, 64)
 VARIANCES(64, 16)
+
 static INLINE void obmc_variance(const uint8_t *pre, int pre_stride, const int32_t *wsrc,
                                  const int32_t *mask, int w, int h, unsigned int *sse, int *sum) {
     int i, j;

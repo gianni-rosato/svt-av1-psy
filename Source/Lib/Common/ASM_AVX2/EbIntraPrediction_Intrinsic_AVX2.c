@@ -5091,19 +5091,3 @@ void svt_aom_highbd_paeth_predictor_4x16_avx2(uint16_t *dst, ptrdiff_t stride,
     }
 }
 
-void svt_aom_highbd_paeth_predictor_2x2_avx2(uint16_t *dst, ptrdiff_t stride, const uint16_t *above,
-                                             const uint16_t *left, int bd) {
-    (void)bd;
-    __m256i tl = _mm256_set1_epi16(above[-1]);
-    __m256i t0 = _mm256_set1_epi32(((uint32_t *)above)[0]);
-
-    /* l16 = left: 0, 0, 1, 1, 0, 0, 0, 0 */
-    __m256i gg  = _mm256_cvtepi16_epi32(_mm_cvtsi32_si128(*(uint32_t const *)(left)));
-    __m256i ss  = _mm256_slli_epi64(gg, 16);
-    __m256i l16 = _mm256_or_si256(gg, ss);
-
-    __m256i row = paeth_pred(&l16, &t0, &tl);
-
-    *(uint32_t *)&dst[0]      = _mm256_extract_epi32(row, 0);
-    *(uint32_t *)&dst[stride] = _mm256_extract_epi32(row, 1);
-}

@@ -13,20 +13,12 @@
  * @file PsnrTest.cc
  *
  * @brief Unit test of PSNR calculation:
- * - svt_aom_sse_to_psnr
  * - svt_aom_get_y_sse_part
- * - svt_aom_get_y_sse
  * - svt_aom_get_u_sse_part
- * - svt_aom_get_u_sse
  * - svt_aom_get_v_sse_part
- * - svt_aom_get_v_sse
  * - svt_aom_highbd_get_y_sse_part
- * - svt_aom_highbd_get_y_sse
  * - svt_aom_highbd_get_u_sse_part
- * - svt_aom_highbd_get_u_sse
  * - svt_aom_highbd_get_v_sse_part
- * - svt_aom_highbd_get_v_sse
- * - aom_psnrhvs
  *
  * @author Cidana-Edmond
  *
@@ -58,8 +50,6 @@ extern "C" int32_t svt_aom_realloc_frame_buffer(
 /** setup_test_env is implemented in test/TestEnv.c */
 extern "C" void setup_test_env();
 
-using SseCalcFunc = int64_t (*)(const Yv12BufferConfig*,
-                                const Yv12BufferConfig*);
 using SseCalcPartFunc = int64_t (*)(const Yv12BufferConfig*,
                                     const Yv12BufferConfig*, int32_t, int32_t,
                                     int32_t, int32_t);
@@ -70,9 +60,6 @@ using PsnrCalcHbdParam = std::tuple<PsnrCalcParam, /**< basic params */
                                     uint32_t       /**< bit-depth */
                                     >;
 using PsnrCalcFuncs = struct {
-    SseCalcFunc y_sse_func;
-    SseCalcFunc u_sse_func;
-    SseCalcFunc v_sse_func;
     SseCalcPartFunc y_sse_part_func;
     SseCalcPartFunc u_sse_part_func;
     SseCalcPartFunc v_sse_part_func;
@@ -146,24 +133,6 @@ class PsnrCalcTest : public ::testing::TestWithParam<ParamType> {
             0);
     }
 
-    void run_zero_check() {
-        fill_buffer(&tst_src_);
-        copy_buffer(&tst_src_, &tst_ref_);
-
-        double y_sse =
-            static_cast<double>(calc_.y_sse_func(&tst_src_, &tst_ref_));
-        double u_sse =
-            static_cast<double>(calc_.u_sse_func(&tst_src_, &tst_ref_));
-        double v_sse =
-            static_cast<double>(calc_.v_sse_func(&tst_src_, &tst_ref_));
-
-        uint32_t peak = (1 << bd_) - 1;
-        double size = (double)width_ * height_;
-        ASSERT_DOUBLE_EQ(svt_aom_sse_to_psnr(size, peak, y_sse), MAX_PSNR);
-        ASSERT_DOUBLE_EQ(svt_aom_sse_to_psnr(size / 4, peak, u_sse), MAX_PSNR);
-        ASSERT_DOUBLE_EQ(svt_aom_sse_to_psnr(size / 4, peak, v_sse), MAX_PSNR);
-    }
-
     /**< fill video frame buffer with random value */
     void fill_buffer(Yv12BufferConfig* ybf) {
         for (int32_t i = 0; i < 3; i++) {
@@ -234,18 +203,11 @@ class PsnrCalcLbdTest : public PsnrCalcTest<uint8_t, PsnrCalcParam> {
     PsnrCalcLbdTest() {
         width_ = TEST_GET_PARAM(0);
         height_ = TEST_GET_PARAM(1);
-        calc_.y_sse_func = svt_aom_get_y_sse;
-        calc_.u_sse_func = svt_aom_get_u_sse;
-        calc_.v_sse_func = svt_aom_get_v_sse;
         calc_.y_sse_part_func = svt_aom_get_y_sse_part;
         calc_.u_sse_part_func = svt_aom_get_u_sse_part;
         calc_.v_sse_part_func = svt_aom_get_v_sse_part;
     }
 };
-
-TEST_P(PsnrCalcLbdTest, RunZeroCheck) {
-    run_zero_check();
-}
 
 static const PsnrCalcParam psnr_lbd_test_vector[] = {
     PsnrCalcParam(3840, 2160),
@@ -273,9 +235,6 @@ class PsnrCalcHbdTest : public PsnrCalcTest<uint16_t, PsnrCalcHbdParam> {
         height_ = std::get<1>(TEST_GET_PARAM(0));
         bd_ = TEST_GET_PARAM(1);
         use_hbd_ = 1;
-        calc_.y_sse_func = svt_aom_highbd_get_y_sse;
-        calc_.u_sse_func = svt_aom_highbd_get_u_sse;
-        calc_.v_sse_func = svt_aom_highbd_get_v_sse;
         calc_.y_sse_part_func = svt_aom_highbd_get_y_sse_part;
         calc_.u_sse_part_func = svt_aom_highbd_get_u_sse_part;
         calc_.v_sse_part_func = svt_aom_highbd_get_v_sse_part;
@@ -290,77 +249,44 @@ class PsnrCalcHbdTest : public PsnrCalcTest<uint16_t, PsnrCalcHbdParam> {
         copy_buffer(&lbd_ref_, &tst_ref_);
         if (part_w)
             calc_psnr_part_and_check(part_w, part_h);
-        else
-            calc_psnr_and_check();
 
         /** this test subtracts a lot of distortion in dst buffer*/
         fill_buffer(&lbd_ref_, 128, DistortionHigh, false);
         copy_buffer(&lbd_ref_, &tst_ref_);
         if (part_w)
             calc_psnr_part_and_check(part_w, part_h);
-        else
-            calc_psnr_and_check();
 
         /** this test adds less distortion in dst buffer*/
         fill_buffer(&lbd_ref_, 128, DistortionMid, true);
         copy_buffer(&lbd_ref_, &tst_ref_);
         if (part_w)
             calc_psnr_part_and_check(part_w, part_h);
-        else
-            calc_psnr_and_check();
 
         /** this test subtracts less distortion in dst buffer*/
         fill_buffer(&lbd_ref_, 128, DistortionMid, false);
         copy_buffer(&lbd_ref_, &tst_ref_);
         if (part_w)
             calc_psnr_part_and_check(part_w, part_h);
-        else
-            calc_psnr_and_check();
 
         /** this test adds a little distortion in dst buffer*/
         fill_buffer(&lbd_ref_, 128, DistortionLow, true);
         copy_buffer(&lbd_ref_, &tst_ref_);
         if (part_w)
             calc_psnr_part_and_check(part_w, part_h);
-        else
-            calc_psnr_and_check();
 
         /** this test subtracts a little distortion in dst buffer*/
         fill_buffer(&lbd_ref_, 128, DistortionLow, false);
         copy_buffer(&lbd_ref_, &tst_ref_);
         if (part_w)
             calc_psnr_part_and_check(part_w, part_h);
-        else
-            calc_psnr_and_check();
     }
 
-    /**< calculate psnr and check if the difference is less than threshold */
-    void calc_psnr_and_check() {
-        double ref_y_sse =
-            static_cast<double>(svt_aom_get_y_sse(&lbd_src_, &lbd_ref_));
-        double ref_u_sse =
-            static_cast<double>(svt_aom_get_u_sse(&lbd_src_, &lbd_ref_));
-        double ref_v_sse =
-            static_cast<double>(svt_aom_get_v_sse(&lbd_src_, &lbd_ref_));
-        double y_sse =
-            static_cast<double>(calc_.y_sse_func(&tst_src_, &tst_ref_));
-        double u_sse =
-            static_cast<double>(calc_.u_sse_func(&tst_src_, &tst_ref_));
-        double v_sse =
-            static_cast<double>(calc_.v_sse_func(&tst_src_, &tst_ref_));
-
-        uint32_t peak = (1 << bd_) - 1;
-        double size = (double)width_ * height_;
-        const double threshold = 0.3f;
-        ASSERT_LE(fabs(svt_aom_sse_to_psnr(size, 255.0f, ref_y_sse) -
-                       svt_aom_sse_to_psnr(size, peak, y_sse)),
-                  threshold);
-        ASSERT_LE(fabs(svt_aom_sse_to_psnr(size / 4, 255.0f, ref_u_sse) -
-                       svt_aom_sse_to_psnr(size / 4, peak, u_sse)),
-                  threshold);
-        ASSERT_LE(fabs(svt_aom_sse_to_psnr(size / 4, 255.0f, ref_v_sse) -
-                       svt_aom_sse_to_psnr(size / 4, peak, v_sse)),
-                  threshold);
+    double sse_to_psnr(double samples, double peak, double sse) {
+        if (sse > 0.0) {
+            const double psnr = 10.0 * log10(samples * peak * peak / sse);
+            return psnr > MAX_PSNR ? MAX_PSNR : psnr;
+        } else
+            return MAX_PSNR;
     }
 
     /**< calculate psnr of partial video frame and check if the difference is
@@ -391,16 +317,16 @@ class PsnrCalcHbdTest : public PsnrCalcTest<uint16_t, PsnrCalcHbdParam> {
                 uint32_t peak = (1 << bd_) - 1;
                 double size = (double)part_h * part_w;
                 const double threshold = 0.3f;
-                ASSERT_LE(fabs(svt_aom_sse_to_psnr(size, 255.0f, ref_y_sse) -
-                               svt_aom_sse_to_psnr(size, peak, y_sse)),
+                ASSERT_LE(fabs(sse_to_psnr(size, 255.0f, ref_y_sse) -
+                               sse_to_psnr(size, peak, y_sse)),
                           threshold)
                     << "sse y error found in (" << w << "," << h << ")";
-                ASSERT_LE(fabs(svt_aom_sse_to_psnr(size / 4, 255.0f, ref_u_sse) -
-                               svt_aom_sse_to_psnr(size / 4, peak, u_sse)),
+                ASSERT_LE(fabs(sse_to_psnr(size / 4, 255.0f, ref_u_sse) -
+                               sse_to_psnr(size / 4, peak, u_sse)),
                           threshold)
                     << "sse u error found in (" << w << "," << h << ")";
-                ASSERT_LE(fabs(svt_aom_sse_to_psnr(size / 4, 255.0f, ref_v_sse) -
-                               svt_aom_sse_to_psnr(size / 4, peak, v_sse)),
+                ASSERT_LE(fabs(sse_to_psnr(size / 4, 255.0f, ref_v_sse) -
+                               sse_to_psnr(size / 4, peak, v_sse)),
                           threshold)
                     << "sse v error found in (" << w << "," << h << ")";
             }
@@ -442,14 +368,6 @@ class PsnrCalcHbdTest : public PsnrCalcTest<uint16_t, PsnrCalcHbdParam> {
         }
     }
 };
-
-TEST_P(PsnrCalcHbdTest, RunZeroCheck) {
-    run_zero_check();
-}
-
-TEST_P(PsnrCalcHbdTest, RunAccuracyCheck) {
-    run_accuracy_check();
-}
 
 TEST_P(PsnrCalcHbdTest, RunPartialAccuracyCheck) {
     int32_t part_w = width_ >> 1;

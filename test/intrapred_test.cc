@@ -287,7 +287,7 @@ const HBD_PARAMS HighbdIntraPredTestVectorAsm[] = {
     hbd_entry(paeth, 8, 4, avx2),      hbd_entry(paeth, 8, 8, avx2),
     hbd_entry(paeth, 8, 16, avx2),     hbd_entry(paeth, 8, 32, avx2),
     hbd_entry(paeth, 4, 4, avx2),      hbd_entry(paeth, 4, 8, avx2),
-    hbd_entry(paeth, 4, 16, avx2),     hbd_entry(paeth, 2, 2, avx2),
+    hbd_entry(paeth, 4, 16, avx2),
 };
 
 INSTANTIATE_TEST_CASE_P(intrapred, HighbdIntraPredTest,

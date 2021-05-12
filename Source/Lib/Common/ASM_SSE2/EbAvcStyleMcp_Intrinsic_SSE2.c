@@ -8,20 +8,10 @@
 * Media Patent License 1.0 was not distributed with this source code in the
 * PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
 */
-#include "EbAvcStyleMcp_SSE2.h"
+#include "EbDefinitions.h"
 #include "EbMcp_SSE2.h" // THIS SHOULD BE _SSE2 in the future
 #include <emmintrin.h>
 #include "common_dsp_rtcd.h"
-void avc_style_copy_sse2(EbByte ref_pic, uint32_t src_stride, EbByte dst, uint32_t dst_stride,
-                         uint32_t pu_width, uint32_t pu_height, EbByte temp_buf,
-                         uint32_t frac_pos) {
-    (void)temp_buf;
-    (void)frac_pos;
-
-    picture_copy_kernel_sse2(ref_pic, src_stride, dst, dst_stride, pu_width, pu_height);
-}
-
-//This function should be removed and replace by avc_style_copy_sse2
 
 void svt_picture_average_kernel_sse2_intrin(EbByte src0, uint32_t src0_stride, EbByte src1,
                                             uint32_t src1_stride, EbByte dst, uint32_t dst_stride,

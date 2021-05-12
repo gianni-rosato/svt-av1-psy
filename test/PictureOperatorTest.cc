@@ -186,36 +186,6 @@ class PictureOperatorTest : public ::testing::Test,
             << " at func: [picture average 1line] ";
     }
 
-    void run_copy_test() {
-        prepare_data();
-        picture_copy_kernel_sse2(tst1_aligned_,
-                                 tst_stride_,
-                                 dst1_aligned_,
-                                 tst_stride_,
-                                 pu_width_,
-                                 pu_height_);
-        picture_copy_kernel(tst1_aligned_,
-                            tst_stride_,
-                            dst2_aligned_,
-                            tst_stride_,
-                            pu_width_,
-                            pu_height_,
-                            1);
-
-        int fail_pixel_count = 0;
-        for (uint16_t j = 0; j < pu_height_; j++) {
-            for (uint16_t k = 0; k < pu_width_; k++) {
-                if (dst1_aligned_[k + j * tst_stride_] !=
-                    dst2_aligned_[k + j * tst_stride_])
-                    fail_pixel_count++;
-            }
-        }
-        EXPECT_EQ(0, fail_pixel_count)
-            << "compare picture copy result error"
-            << "in pu for " << fail_pixel_count << "times,"
-            << " at func: [picture copy] ";
-    }
-
     int tst_size;
     uint32_t pu_width_, pu_height_;
     TestPattern test_pattern_;
@@ -226,10 +196,6 @@ class PictureOperatorTest : public ::testing::Test,
 
 TEST_P(PictureOperatorTest, AvgTest) {
     run_avg_test();
-};
-
-TEST_P(PictureOperatorTest, CopyTest) {
-    run_copy_test();
 };
 
 INSTANTIATE_TEST_CASE_P(PictureOperator, PictureOperatorTest,

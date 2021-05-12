@@ -108,21 +108,6 @@ using HbdVarianceParam = std::tuple<uint32_t,            /**< width */
                                     HighBdVarianceFunc>; /**< test function */
 
 extern "C" {
-unsigned int svt_aom_highbd_8_variance8x8_sse2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
-unsigned int svt_aom_highbd_8_variance8x16_sse2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
-unsigned int svt_aom_highbd_8_variance8x32_sse2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
-unsigned int svt_aom_highbd_8_variance16x4_sse2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
-unsigned int svt_aom_highbd_8_variance16x8_sse2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
-unsigned int svt_aom_highbd_8_variance16x16_sse2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
-unsigned int svt_aom_highbd_8_variance16x32_sse2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
-unsigned int svt_aom_highbd_8_variance16x64_sse2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
-unsigned int svt_aom_highbd_8_variance32x8_sse2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
-unsigned int svt_aom_highbd_8_variance32x16_sse2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
-unsigned int svt_aom_highbd_8_variance32x32_sse2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
-unsigned int svt_aom_highbd_8_variance32x64_sse2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
-unsigned int svt_aom_highbd_8_variance64x16_sse2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
-unsigned int svt_aom_highbd_8_variance64x32_sse2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
-unsigned int svt_aom_highbd_8_variance64x64_sse2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
 unsigned int svt_aom_highbd_10_variance8x8_sse2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
 unsigned int svt_aom_highbd_10_variance8x16_sse2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
 unsigned int svt_aom_highbd_10_variance8x32_sse2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
@@ -155,21 +140,6 @@ unsigned int svt_aom_highbd_10_variance64x64_avx2(const uint8_t *src_ptr, int so
 unsigned int svt_aom_highbd_10_variance64x128_avx2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
 unsigned int svt_aom_highbd_10_variance128x64_avx2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
 unsigned int svt_aom_highbd_10_variance128x128_avx2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
-unsigned int svt_aom_highbd_12_variance8x8_sse2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
-unsigned int svt_aom_highbd_12_variance8x16_sse2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
-unsigned int svt_aom_highbd_12_variance8x32_sse2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
-unsigned int svt_aom_highbd_12_variance16x4_sse2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
-unsigned int svt_aom_highbd_12_variance16x8_sse2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
-unsigned int svt_aom_highbd_12_variance16x16_sse2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
-unsigned int svt_aom_highbd_12_variance16x32_sse2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
-unsigned int svt_aom_highbd_12_variance16x64_sse2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
-unsigned int svt_aom_highbd_12_variance32x8_sse2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
-unsigned int svt_aom_highbd_12_variance32x16_sse2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
-unsigned int svt_aom_highbd_12_variance32x32_sse2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
-unsigned int svt_aom_highbd_12_variance32x64_sse2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
-unsigned int svt_aom_highbd_12_variance64x16_sse2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
-unsigned int svt_aom_highbd_12_variance64x32_sse2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
-unsigned int svt_aom_highbd_12_variance64x64_sse2(const uint8_t *src_ptr, int source_stride, const uint8_t *ref_ptr, int ref_stride, unsigned int *sse);
 };
 
 /**
@@ -306,21 +276,6 @@ TEST_P(HbdVarianceTest, MatchTest) {
 };
 
 static const HbdVarianceParam HbdTestVector[] = {
-    HbdVarianceParam(  8,  8, 8, svt_aom_highbd_8_variance8x8_sse2),
-    HbdVarianceParam(  8, 16, 8, svt_aom_highbd_8_variance8x16_sse2),
-    HbdVarianceParam(  8, 32, 8, svt_aom_highbd_8_variance8x32_sse2),
-    HbdVarianceParam( 16,  4, 8, svt_aom_highbd_8_variance16x4_sse2),
-    HbdVarianceParam( 16,  8, 8, svt_aom_highbd_8_variance16x8_sse2),
-    HbdVarianceParam( 16, 16, 8, svt_aom_highbd_8_variance16x16_sse2),
-    HbdVarianceParam( 16, 32, 8, svt_aom_highbd_8_variance16x32_sse2),
-    HbdVarianceParam( 16, 64, 8, svt_aom_highbd_8_variance16x64_sse2),
-    HbdVarianceParam( 32,  8, 8, svt_aom_highbd_8_variance32x8_sse2),
-    HbdVarianceParam( 32, 16, 8, svt_aom_highbd_8_variance32x16_sse2),
-    HbdVarianceParam( 32, 32, 8, svt_aom_highbd_8_variance32x32_sse2),
-    HbdVarianceParam( 32, 64, 8, svt_aom_highbd_8_variance32x64_sse2),
-    HbdVarianceParam( 64, 16, 8, svt_aom_highbd_8_variance64x16_sse2),
-    HbdVarianceParam( 64, 32, 8, svt_aom_highbd_8_variance64x32_sse2),
-    HbdVarianceParam( 64, 64, 8, svt_aom_highbd_8_variance64x64_sse2),
     HbdVarianceParam(  8,  8, 10, svt_aom_highbd_10_variance8x8_sse2),
     HbdVarianceParam(  8, 16, 10, svt_aom_highbd_10_variance8x16_sse2),
     HbdVarianceParam(  8, 32, 10, svt_aom_highbd_10_variance8x32_sse2),
@@ -353,204 +308,10 @@ static const HbdVarianceParam HbdTestVector[] = {
     HbdVarianceParam( 64,128, 10, svt_aom_highbd_10_variance64x128_avx2),
     HbdVarianceParam(128, 64, 10, svt_aom_highbd_10_variance128x64_avx2),
     HbdVarianceParam(128,128, 10, svt_aom_highbd_10_variance128x128_avx2),
-    HbdVarianceParam(  8,  8, 12, svt_aom_highbd_12_variance8x8_sse2),
-    HbdVarianceParam(  8, 16, 12, svt_aom_highbd_12_variance8x16_sse2),
-    HbdVarianceParam(  8, 32, 12, svt_aom_highbd_12_variance8x32_sse2),
-    HbdVarianceParam( 16,  4, 12, svt_aom_highbd_12_variance16x4_sse2),
-    HbdVarianceParam( 16,  8, 12, svt_aom_highbd_12_variance16x8_sse2),
-    HbdVarianceParam( 16, 16, 12, svt_aom_highbd_12_variance16x16_sse2),
-    HbdVarianceParam( 16, 32, 12, svt_aom_highbd_12_variance16x32_sse2),
-    HbdVarianceParam( 16, 64, 12, svt_aom_highbd_12_variance16x64_sse2),
-    HbdVarianceParam( 32,  8, 12, svt_aom_highbd_12_variance32x8_sse2),
-    HbdVarianceParam( 32, 16, 12, svt_aom_highbd_12_variance32x16_sse2),
-    HbdVarianceParam( 32, 32, 12, svt_aom_highbd_12_variance32x32_sse2),
-    HbdVarianceParam( 32, 64, 12, svt_aom_highbd_12_variance32x64_sse2),
-    HbdVarianceParam( 64, 16, 12, svt_aom_highbd_12_variance64x16_sse2),
-    HbdVarianceParam( 64, 32, 12, svt_aom_highbd_12_variance64x32_sse2),
-    HbdVarianceParam( 64, 64, 12, svt_aom_highbd_12_variance64x64_sse2),
 };
 
 INSTANTIATE_TEST_CASE_P(Variance, HbdVarianceTest,
                         ::testing::ValuesIn(HbdTestVector));
-#define svt_aom_highbd_8_get8x8var_sse2 svt_aom_highbd_get8x8var_sse2
-#define svt_aom_highbd_8_get16x16var_sse2 svt_aom_highbd_get16x16var_sse2
-#define GEN_GET_VAR_FUNC_(S, bd) svt_aom_highbd_##bd##_get##S##x##S##var_sse2
-#define GEN_SQUARE_VAR_PARAM_(S, bd) \
-    HbdSquareVarianceParam(S, bd, GEN_GET_VAR_FUNC_(S, bd))
-#define GEN_HBD_SQUARE_VAR_PARAM(S)                            \
-    GEN_SQUARE_VAR_PARAM_(S, 8), GEN_SQUARE_VAR_PARAM_(S, 10), \
-        GEN_SQUARE_VAR_PARAM_(S, 12)
-#define EXTERN_HBD_SQUARE_VAR_FUNC(S)                        \
-    extern "C" void GEN_GET_VAR_FUNC_(S, 8)(const uint8_t*,  \
-                                            int32_t,         \
-                                            const uint8_t*,  \
-                                            int32_t,         \
-                                            uint32_t*,       \
-                                            int32_t*);       \
-    extern "C" void GEN_GET_VAR_FUNC_(S, 10)(const uint8_t*, \
-                                             int32_t,        \
-                                             const uint8_t*, \
-                                             int32_t,        \
-                                             uint32_t*,      \
-                                             int32_t*);      \
-    extern "C" void GEN_GET_VAR_FUNC_(S, 12)(const uint8_t*, \
-                                             int32_t,        \
-                                             const uint8_t*, \
-                                             int32_t,        \
-                                             uint32_t*,      \
-                                             int32_t*);
-
-EXTERN_HBD_SQUARE_VAR_FUNC(8);
-EXTERN_HBD_SQUARE_VAR_FUNC(16);
-
-// High bit-depth square variance test
-using HbdSquareVarianceParam =
-    std::tuple<uint32_t,               /**< square length */
-               uint32_t,               /**< bit-depth */
-               HighBdGetVarianceFunc>; /**< test function */
-
-/**
- * @brief Unit test for HBD variance
- * functions:
- * - svt_aom_highbd_BD{8,10,12}_getS{8,16}xS{8,16}var_sse2
- *
- * Test strategy:
- *  This test case use random source, max source, zero source as test
- * pattern.
- *
- *
- * Expected result:
- *  Results come from reference function and target function are
- * equal.
- *
- * Test cases:
- * - ZeroTest
- * - MaximumTest
- * - MatchTest
- */
-class HbdSquareVarianceTest
-    : public ::testing::TestWithParam<HbdSquareVarianceParam> {
-  public:
-    HbdSquareVarianceTest()
-        : rnd_(16, false),
-          length_(TEST_GET_PARAM(0)),
-          bd_(TEST_GET_PARAM(1)),
-          tst_func_(TEST_GET_PARAM(2)) {
-        src_data_ = reinterpret_cast<uint16_t*>(
-            svt_aom_memalign(32, 2 * MAX_BLOCK_SIZE));
-        ref_data_ = reinterpret_cast<uint16_t*>(
-            svt_aom_memalign(32, 2 * MAX_BLOCK_SIZE));
-    }
-
-    ~HbdSquareVarianceTest() {
-        svt_aom_free(src_data_);
-        src_data_ = nullptr;
-        svt_aom_free(ref_data_);
-        ref_data_ = nullptr;
-    }
-
-    void run_zero_test(int times) {
-        for (int i = 0; i < times; ++i) {
-            for (int j = 0; j < MAX_BLOCK_SIZE; ++j) {
-                src_data_[j] = rnd_.random() & ((1 << bd_) - 1);
-                ref_data_[j] = src_data_[j];
-            }
-            int32_t sum_tst = 0;
-            uint32_t sse_tst = 0;
-            tst_func_(CONVERT_TO_BYTEPTR(src_data_),
-                      length_,
-                      CONVERT_TO_BYTEPTR(ref_data_),
-                      length_,
-                      &sse_tst,
-                      &sum_tst);
-            ASSERT_EQ(sse_tst, 0u) << "Expect 0 sse, got: " << sse_tst;
-            ASSERT_EQ(sum_tst, 0) << "Expect 0 sum, got: " << sum_tst;
-        }
-    }
-
-    void run_maximum_test() {
-        for (int j = 0; j < MAX_BLOCK_SIZE; ++j) {
-            src_data_[j] = 0;
-            ref_data_[j] = (1 << bd_) - 1;
-        }
-        uint32_t sse_tst = 0, sse_ref = 0;
-        int32_t sum_tst = 0, sum_ref = 0;
-        tst_func_(CONVERT_TO_BYTEPTR(src_data_),
-                  length_,
-                  CONVERT_TO_BYTEPTR(ref_data_),
-                  length_,
-                  &sse_tst,
-                  &sum_tst);
-        hbd_get_variance_ref(length_,
-                             length_,
-                             bd_,
-                             CONVERT_TO_BYTEPTR(src_data_),
-                             length_,
-                             CONVERT_TO_BYTEPTR(ref_data_),
-                             length_,
-                             &sse_ref,
-                             &sum_ref);
-        ASSERT_EQ(sum_tst, sum_ref) << "Error at see in variance test";
-        ASSERT_EQ(sse_tst, sse_ref) << "Error at error sum in variance test";
-    }
-
-    void run_match_test(int times) {
-        for (int i = 0; i < times; ++i) {
-            for (int j = 0; j < MAX_BLOCK_SIZE; ++j) {
-                src_data_[j] = rnd_.random() & ((1 << bd_) - 1);
-                ref_data_[j] = rnd_.random() & ((1 << bd_) - 1);
-            }
-            uint32_t sse_tst = 0, sse_ref = 0;
-            int32_t sum_tst = 0, sum_ref = 0;
-            tst_func_(CONVERT_TO_BYTEPTR(src_data_),
-                      length_,
-                      CONVERT_TO_BYTEPTR(ref_data_),
-                      length_,
-                      &sse_tst,
-                      &sum_tst);
-            hbd_get_variance_ref(length_,
-                                 length_,
-                                 bd_,
-                                 CONVERT_TO_BYTEPTR(src_data_),
-                                 length_,
-                                 CONVERT_TO_BYTEPTR(ref_data_),
-                                 length_,
-                                 &sse_ref,
-                                 &sum_ref);
-            ASSERT_EQ(sum_tst, sum_ref) << "Error at error sum index: " << i;
-            ASSERT_EQ(sse_tst, sse_ref) << "Error at sse index: " << i;
-        }
-    }
-
-  private:
-    SVTRandom rnd_;
-    uint16_t* src_data_;
-    uint16_t* ref_data_;
-    uint32_t length_;
-    uint32_t bd_;
-    HighBdGetVarianceFunc tst_func_;
-};
-
-TEST_P(HbdSquareVarianceTest, ZeroTest) {
-    run_zero_test(10);
-};
-
-TEST_P(HbdSquareVarianceTest, MaximumTest) {
-    run_maximum_test();
-};
-
-TEST_P(HbdSquareVarianceTest, MatchTest) {
-    run_match_test(10);
-};
-
-static const HbdSquareVarianceParam HbdSquareVarTestVector[] = {
-    GEN_HBD_SQUARE_VAR_PARAM(8),
-    GEN_HBD_SQUARE_VAR_PARAM(16),
-};
-
-INSTANTIATE_TEST_CASE_P(Variance, HbdSquareVarianceTest,
-                        ::testing::ValuesIn(HbdSquareVarTestVector));
-
 
 /**
  * @brief Unit test for different implementation of HBD variance with size 16x16 and 32x32
