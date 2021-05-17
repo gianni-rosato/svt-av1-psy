@@ -101,16 +101,6 @@ class QuantizeTest : public ::testing::TestWithParam<ParamType> {
 
     virtual void QuantizeRun(bool is_loop, int q = 0, int test_num = 1) = 0;
 
-    void CompareResults(const TranLow *buf_ref, const TranLow *buf, int size,
-                        const char *text, int q, int number) {
-        int i;
-        for (i = 0; i < size; ++i) {
-            ASSERT_EQ(buf_ref[i], buf[i])
-                << text << " mismatch on test: " << number
-                << " at position: " << i << " Q: " << q;
-        }
-    }
-
     int coeff_num() const {
         return av1_get_max_eob(tx_size_);
     }
@@ -140,11 +130,6 @@ class QuantizeTest : public ::testing::TestWithParam<ParamType> {
 
     void FillCoeffZero() {
         FillCoeff(0);
-    }
-
-    void FillCoeffConstant() {
-        TranLow c = GetRandomCoeff();
-        FillCoeff(c);
     }
 
     void FillDcOnly() {

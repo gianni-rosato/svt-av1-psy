@@ -233,34 +233,6 @@ class CodingOptionTest : public SvtAv1E2ETestFramework {
         EXPECT_EQ(stream_info->enable_warped_motion,
                   config->enable_warped_motion);
     }
-
-    bool is_valid_profile_setting() {
-        /** check the color format according to spec 6.4.1 */
-        if (av1enc_ctx_.enc_params.profile == 0) {
-            /** main profile requires YUV420 or YUV400 Annex A */
-            if (av1enc_ctx_.enc_params.encoder_bit_depth == 12)
-                return false;
-            if (av1enc_ctx_.enc_params.encoder_color_format != EB_YUV420 &&
-                av1enc_ctx_.enc_params.encoder_color_format != EB_YUV400) {
-                return false;
-            }
-        } else if (av1enc_ctx_.enc_params.profile == 1) {
-            /** high profile requires 8bit/10bit YUV444 */
-            if (av1enc_ctx_.enc_params.encoder_bit_depth == 12)
-                return false;
-            if (av1enc_ctx_.enc_params.encoder_color_format != EB_YUV444)
-                return false;
-        } else if (av1enc_ctx_.enc_params.profile == 2) {
-            /** professional profile requires 8-bit/10-bit YUV422 or 12-bit
-             *  YUV400, YUV420, YUV422 and YUV444
-             */
-            if (av1enc_ctx_.enc_params.encoder_bit_depth != 12 &&
-                av1enc_ctx_.enc_params.encoder_color_format != EB_YUV422) {
-                return false;
-            }
-        }
-        return true;
-    }
 };
 
 TEST_P(CodingOptionTest, CheckEncOptionsUsingBitstream) {

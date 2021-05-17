@@ -239,49 +239,10 @@ class SADTestBase : public ::testing::Test {
         }
     }
 
-    void fill_buf_with_value_16b(uint16_t *buf, int num, uint32_t value) {
-        for (int i = 0; i < num; ++i)
-            buf[i] = value;
-    }
 
     void fill_buf_with_value(uint32_t *buf, int num, uint32_t value) {
         for (int i = 0; i < num; ++i)
             buf[i] = value;
-    }
-
-    void prepare_sad_data_16b(uint32_t best_sad32x32[4]) {
-        const int32_t max = (1 << 16) - 1;
-        SVTRandom rnd1(0, 4 * max);
-
-        for (int i = 0; i < 4; i++)
-            best_sad32x32[i] = rnd1.random();
-
-        switch (test_sad_pattern_) {
-        case BUF_MAX: {
-            fill_buf_with_value_16b(&sad16x16_16b[0][0], 16 * 8, max);
-            break;
-        }
-        case BUF_MIN: {
-            fill_buf_with_value_16b(&sad16x16_16b[0][0], 16 * 8, 0);
-            break;
-        }
-        case BUF_SMALL: {
-            const int32_t mask = 256;
-            SVTRandom rnd_small(0, mask);
-            for (int i = 0; i < 16; i++)
-                for (int j = 0; j < 8; j++)
-                    sad16x16_16b[i][j] = rnd_small.random();
-            break;
-        }
-        case BUF_RANDOM: {
-            SVTRandom rnd(0, max);
-            for (int i = 0; i < 16; i++)
-                for (int j = 0; j < 8; j++)
-                    sad16x16_16b[i][j] = rnd.random();
-            break;
-        }
-        default: break;
-        }
     }
 
     void prepare_sad_data_32b() {
@@ -313,74 +274,12 @@ class SADTestBase : public ::testing::Test {
         }
     }
 
-    void prepare_nsq_sad_data() {
-        const int32_t mask = (1 << 8) - 1;
-        SVTRandom rnd(0, mask);
-        switch (test_sad_pattern_) {
-        case BUF_MAX: {
-            fill_buf_with_value(&sad8x8[0][0], 64 * 8, mask);
-            fill_buf_with_value(&sad16x16_32b[0][0], 16 * 8, mask);
-            fill_buf_with_value(&sad32x32[0][0], 4 * 8, mask);
-            break;
-        }
-        case BUF_MIN: {
-            fill_buf_with_value(&sad8x8[0][0], 64 * 8, 0);
-            fill_buf_with_value(&sad16x16_32b[0][0], 16 * 8, 0);
-            fill_buf_with_value(&sad32x32[0][0], 4 * 8, 0);
-            break;
-        }
-        case BUF_SMALL: {
-            SVTRandom rnd_small(0, 256);
-            for (int i = 0; i < 64; i++)
-                for (int j = 0; j < 8; j++)
-                    sad8x8[i][j] = rnd_small.random();
-
-            for (int i = 0; i < 16; i++)
-                for (int j = 0; j < 8; j++)
-                    sad16x16_32b[i][j] = rnd_small.random();
-
-            for (int i = 0; i < 4; i++)
-                for (int j = 0; j < 8; j++)
-                    sad32x32[i][j] = rnd_small.random();
-            break;
-        }
-        case BUF_RANDOM: {
-            for (int i = 0; i < 64; i++)
-                for (int j = 0; j < 8; j++)
-                    sad8x8[i][j] = rnd.random();
-
-            for (int i = 0; i < 16; i++)
-                for (int j = 0; j < 8; j++)
-                    sad16x16_32b[i][j] = rnd.random();
-
-            for (int i = 0; i < 4; i++)
-                for (int j = 0; j < 8; j++)
-                    sad32x32[i][j] = rnd.random();
-            break;
-        }
-        default: break;
-        }
-    }
-
     uint32_t reference_sad() {
         unsigned int sad = 0;
         for (int h = 0; h < height_; ++h) {
             for (int w = 0; w < width_; ++w) {
                 sad += abs(src_aligned_[h * src_stride_ + w] -
                            ref1_aligned_[h * ref1_stride_ + w]);
-            }
-        }
-        return sad;
-    }
-
-    unsigned int reference_sad_avg() {
-        unsigned int sad = 0;
-        for (int h = 0; h < height_; ++h) {
-            for (int w = 0; w < width_; ++w) {
-                const int tmp = ref2_aligned_[h * ref2_stride_ + w] +
-                                ref1_aligned_[h * ref1_stride_ + w];
-                const uint8_t comp_pred = ROUND_POWER_OF_TWO(tmp, 1);
-                sad += abs(src_aligned_[h * src_stride_ + w] - comp_pred);
             }
         }
         return sad;

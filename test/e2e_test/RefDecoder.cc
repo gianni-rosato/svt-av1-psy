@@ -400,11 +400,6 @@ RefDecoder::RefDecoderErr RefDecoder::get_frame(VideoFrame& frame) {
     return REF_CODEC_OK;
 }
 
-void RefDecoder::set_resolution(const uint32_t width, const uint32_t height) {
-    video_param_.width = width;
-    video_param_.height = height;
-}
-
 void RefDecoder::trans_video_frame(const void* image_handle,
                                    VideoFrame& frame) {
     if (image_handle == nullptr)

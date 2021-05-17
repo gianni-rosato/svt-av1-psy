@@ -21,7 +21,6 @@
 #include "EbPictureManagerQueue.h"
 #include "EbPacketizationReorderQueue.h"
 #include "EbInitialRateControlReorderQueue.h"
-#include "EbPictureManagerReorderQueue.h"
 #include "EbCabacContextModel.h"
 #include "EbMdRateEstimation.h"
 #include "EbPredictionStructure.h"

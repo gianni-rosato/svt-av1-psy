@@ -111,12 +111,6 @@ class FrameQueue {
      * @param frame  the video frame to distroy
      */
     virtual void delete_frame(VideoFrame* frame) = 0;
-    /** Interface of get whether the queue is compeletely filled
-     * @return
-     * true -- the queue is filled
-     * false -- the queue is still available
-     */
-    virtual bool is_compelete() = 0;
     /** Interface of compare with other frame queue
      * @param other  other frame queue to compare
      * @return

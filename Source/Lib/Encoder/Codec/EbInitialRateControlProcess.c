@@ -105,28 +105,6 @@ void init_zz_cost_info(PictureParentControlSet *pcs_ptr) {
     return;
 }
 
-InitialRateControlReorderEntry *determine_picture_offset_in_queue(
-    EncodeContext *encode_context_ptr, PictureParentControlSet *pcs_ptr,
-    MotionEstimationResults *in_results_ptr) {
-    InitialRateControlReorderEntry *queue_entry_ptr;
-    int32_t                         queue_entry_index;
-
-    queue_entry_index = (int32_t)(
-        pcs_ptr->picture_number -
-        encode_context_ptr
-            ->initial_rate_control_reorder_queue
-                [encode_context_ptr->initial_rate_control_reorder_queue_head_index]
-            ->picture_number);
-    queue_entry_index += encode_context_ptr->initial_rate_control_reorder_queue_head_index;
-    queue_entry_index = (queue_entry_index > INITIAL_RATE_CONTROL_REORDER_QUEUE_MAX_DEPTH - 1)
-        ? queue_entry_index - INITIAL_RATE_CONTROL_REORDER_QUEUE_MAX_DEPTH
-        : queue_entry_index;
-    queue_entry_ptr   = encode_context_ptr->initial_rate_control_reorder_queue[queue_entry_index];
-    queue_entry_ptr->parent_pcs_wrapper_ptr = in_results_ptr->pcs_wrapper_ptr;
-    queue_entry_ptr->picture_number         = pcs_ptr->picture_number;
-
-    return queue_entry_ptr;
-}
 
 void svt_av1_build_quantizer(AomBitDepth bit_depth, int32_t y_dc_delta_q, int32_t u_dc_delta_q,
                              int32_t u_ac_delta_q, int32_t v_dc_delta_q, int32_t v_ac_delta_q,

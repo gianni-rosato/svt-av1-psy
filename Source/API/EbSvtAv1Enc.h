@@ -811,14 +811,6 @@ EB_API EbErrorType svt_av1_enc_stream_header(EbComponentType *    svt_enc_compon
      * @ *stream_header_ptr  stream header buffer. */
 EB_API EbErrorType svt_av1_enc_stream_header_release(EbBufferHeaderType *stream_header_ptr);
 
-/* OPTIONAL: Get the end of sequence Network Abstraction Layer.
-     *
-     * Parameter:
-     * @ *svt_enc_component  Encoder handler.
-     * @ **output_stream_ptr  Output stream. */
-EB_API EbErrorType svt_av1_enc_eos_nal(EbComponentType *    svt_enc_component,
-                                       EbBufferHeaderType **output_stream_ptr);
-
 /* STEP 4: Send the picture.
      *
      * Parameter:

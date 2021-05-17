@@ -142,14 +142,6 @@ class FrameQueueFile : public FrameQueue {
     void delete_frame(VideoFrame *frame) override {
         delete frame;
     }
-    bool is_compelete() override {
-        if (record_list_.size() < frame_count_)
-            return false;
-        std::sort(record_list_.begin(), record_list_.end());
-        if (record_list_.at(frame_count_ - 1) != frame_count_ - 1)
-            return false;
-        return true;
-    }
 
   public:
     FILE *recon_file_; /**< file handle to dave reconstructed video frames, set
@@ -212,15 +204,6 @@ class FrameQueueBuffer : public FrameQueue {
             frame_list_.erase(it);
         } else  // only delete the video frame not in list
             delete frame;
-    }
-    bool is_compelete() override {
-        if (frame_list_.size() < frame_count_)
-            return false;
-
-        VideoFrame *frame = frame_list_.at(frame_count_ - 1);
-        if (frame == nullptr || frame->timestamp != frame_count_ - 1)
-            return false;
-        return true;
     }
 
   protected:

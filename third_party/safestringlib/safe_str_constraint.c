@@ -89,6 +89,7 @@ static constraint_handler_t str_handler = NULL;
  * ALSO SEE
  *    set_str_constraint_handler_s()
  */
+#if 0
 constraint_handler_t set_str_constraint_handler_s(constraint_handler_t handler) {
     constraint_handler_t prev_handler = str_handler;
     if (NULL == handler) {
@@ -99,6 +100,7 @@ constraint_handler_t set_str_constraint_handler_s(constraint_handler_t handler) 
     return prev_handler;
 }
 EXPORT_SYMBOL(set_str_constraint_handler_s)
+#endif
 
 /**
  * NAME

@@ -89,10 +89,7 @@ TEST(EncApiTest, check_null_pointer) {
     //          nullptr));
     // open encoder with null pointer
     EXPECT_EQ(EB_ErrorBadParameter, svt_av1_enc_init(nullptr));
-    // get stream header with null pointer
-    EXPECT_EQ(EB_ErrorBadParameter, svt_av1_enc_stream_header(nullptr, nullptr));
     // get end of sequence NAL with null pointer
-    //EXPECT_EQ(EB_ErrorBadParameter, svt_av1_enc_eos_nal(nullptr, nullptr));
     // EXPECT_EQ(EB_ErrorBadParameter, svt_av1_enc_send_picture(nullptr,
     // nullptr)); EXPECT_EQ(EB_ErrorBadParameter, svt_av1_enc_get_packet(nullptr,
     // nullptr, 0)); EXPECT_EQ(EB_ErrorBadParameter, svt_av1_get_recon(nullptr,

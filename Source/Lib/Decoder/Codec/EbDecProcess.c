@@ -64,12 +64,6 @@ void save_cdef_boundary_lines(uint8_t *src_buf, int32_t src_stride, int32_t src_
                               int32_t use_highbd, int32_t is_above,
                               RestorationStripeBoundaries *boundaries);
 
-EbErrorType dec_dummy_ctor(DecMtNode *context_ptr, EbPtr object_init_data_ptr) {
-    context_ptr->node_index = *(uint32_t *)object_init_data_ptr;
-
-    return EB_ErrorNone;
-}
-
 #if MT_WAIT_PROFILE
 void dec_timer_start(struct EbDecTimer *t) {
 #if defined(_WIN32)

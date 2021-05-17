@@ -88,8 +88,6 @@ extern EbErrorType svt_reference_object_creator(EbPtr *object_dbl_ptr, EbPtr obj
 
 extern EbErrorType svt_pa_reference_object_creator(EbPtr *object_dbl_ptr,
                                                    EbPtr  object_init_data_ptr);
-extern EbErrorType svt_down_scaled_object_creator(EbPtr *object_dbl_ptr,
-                                                  EbPtr  object_init_data_ptr);
 void release_pa_reference_objects(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_ptr);
 
 #endif //EbReferenceObject_h

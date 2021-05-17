@@ -317,43 +317,6 @@ EbErrorType svt_pa_reference_object_creator(EbPtr *object_dbl_ptr, EbPtr object_
 
     return EB_ErrorNone;
 }
-static void svt_down_scaled_object_dctor(EbPtr p) {
-    EbDownScaledObject *ds_obj = (EbDownScaledObject *)p;
-    EB_DELETE(ds_obj->quarter_picture_ptr);
-    EB_DELETE(ds_obj->sixteenth_picture_ptr);
-}
-
-static EbErrorType svt_down_scaled_object_ctor(EbDownScaledObject *ds_obj,
-                                               EbPtr               object_init_data_ptr) {
-    EbDownScaledObjectDescInitData *ds_desc_init_data_ptr = (EbDownScaledObjectDescInitData *)
-        object_init_data_ptr;
-
-    ds_obj->dctor = svt_down_scaled_object_dctor;
-
-    //ds_obj->picture_ptr = NULL;
-    if (ds_desc_init_data_ptr->enable_quarter_luma_input) {
-        EB_NEW(ds_obj->quarter_picture_ptr,
-               svt_picture_buffer_desc_ctor,
-               (EbPtr)(&ds_desc_init_data_ptr->quarter_picture_desc_init_data));
-    }
-
-    if (ds_desc_init_data_ptr->enable_sixteenth_luma_input) {
-        EB_NEW(ds_obj->sixteenth_picture_ptr,
-               svt_picture_buffer_desc_ctor,
-               (EbPtr)(&ds_desc_init_data_ptr->sixteenth_picture_desc_init_data));
-    }
-    return EB_ErrorNone;
-}
-
-EbErrorType svt_down_scaled_object_creator(EbPtr *object_dbl_ptr, EbPtr object_init_data_ptr) {
-    EbDownScaledObject *obj;
-
-    *object_dbl_ptr = NULL;
-    EB_NEW(obj, svt_down_scaled_object_ctor, object_init_data_ptr);
-    *object_dbl_ptr = obj;
-
-    return EB_ErrorNone;
-}
 
 /************************************************
 * Release Pa Reference Objects

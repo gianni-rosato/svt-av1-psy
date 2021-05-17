@@ -178,13 +178,6 @@ class RefDecoder {
         return &stream_info_;
     }
 
-    /** Setup resolution, for initialization for inspection frame before first
-     * frame
-     * @param width  width of source video frame
-     * @param height  height of source video frame
-     */
-    void set_resolution(const uint32_t width, const uint32_t height);
-
     void set_invert_tile_decoding_order();
     void control(int ctrl_id, int arg);
 

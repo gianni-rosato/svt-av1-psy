@@ -237,15 +237,6 @@ void SvtAv1E2ETestFramework::init_test(TestVideoVector &test_vector) {
     ASSERT_EQ(return_error, EB_ErrorNone)
         << "svt_av1_enc_init return error:" << return_error;
 
-    // Get ivf header
-    return_error = svt_av1_enc_stream_header(av1enc_ctx_.enc_handle,
-                                            &av1enc_ctx_.output_stream_buffer);
-    ASSERT_EQ(return_error, EB_ErrorNone)
-        << "svt_av1_enc_stream_header return error:" << return_error;
-    ASSERT_NE(av1enc_ctx_.output_stream_buffer, nullptr)
-        << "svt_av1_enc_stream_header return null output buffer."
-        << return_error;
-
 #if TILES_PARALLEL
     EbBool has_tiles = (EbBool)(av1enc_ctx_.enc_params.tile_columns ||
                                 av1enc_ctx_.enc_params.tile_rows);

@@ -3930,17 +3930,6 @@ EB_API EbErrorType svt_av1_enc_stream_header_release(
 
     return return_error;
 }
-//
-EB_API EbErrorType svt_av1_enc_eos_nal(
-    EbComponentType           *svt_enc_component,
-    EbBufferHeaderType       **output_stream_ptr
-)
-{
-    EbErrorType           return_error = EB_ErrorNone;
-    UNUSED(svt_enc_component);
-    UNUSED(output_stream_ptr);
-    return return_error;
-}
 
 /***********************************************
 **** Copy the input buffer from the

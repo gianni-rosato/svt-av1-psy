@@ -44,33 +44,6 @@ static INLINE MV clamp_mv_to_umv_border_sb(const MacroBlockD *xd, const MV *src_
     return clamped_mv;
 }
 
-void svt_av1_make_inter_predictor(const uint8_t *src, int src_stride, uint8_t *dst,
-                                  int dst_stride,
-                                  InterPredParams *inter_pred_params,
-                                  const SubpelParams *subpel_params) {
-  assert(IMPLIES(inter_pred_params->conv_params.is_compound,
-                 inter_pred_params->conv_params.dst != NULL));
-
-  if (inter_pred_params->mode == WARP_PRED) {
-    svt_av1_warp_plane(
-        &inter_pred_params->warp_params, inter_pred_params->use_hbd_buf,
-        inter_pred_params->bit_depth, inter_pred_params->ref_frame_buf.buf0,
-        inter_pred_params->ref_frame_buf.width,
-        inter_pred_params->ref_frame_buf.height,
-        inter_pred_params->ref_frame_buf.stride, dst,
-        inter_pred_params->pix_col, inter_pred_params->pix_row,
-        inter_pred_params->block_width, inter_pred_params->block_height,
-        dst_stride, inter_pred_params->subsampling_x,
-        inter_pred_params->subsampling_y, &inter_pred_params->conv_params);
-  } else if (inter_pred_params->mode == UNIFORM_PRED) {
-    uint32_t interp_filters = (EIGHTTAP_REGULAR << 16) | EIGHTTAP_REGULAR;
-    svt_inter_predictor(
-        src, src_stride, dst, dst_stride, subpel_params,
-        inter_pred_params->scale_factors, inter_pred_params->block_width,
-        inter_pred_params->block_height, &inter_pred_params->conv_params,
-        interp_filters, 0);
-  }
-}
 static void av1_make_masked_inter_predictor(uint8_t *src_ptr, uint32_t src_stride, uint8_t *dst_ptr,
                                      uint32_t dst_stride, const BlockGeom *blk_geom, uint8_t bwidth,
                                      uint8_t bheight, InterpFilterParams *filter_params_x,

@@ -52,10 +52,10 @@
 #define SAFE_STR_PASSWORD_MIN_LENGTH (6)
 #define SAFE_STR_PASSWORD_MAX_LENGTH (32)
 
+#if 0
+
 /* set string constraint handler */
 extern constraint_handler_t set_str_constraint_handler_s(constraint_handler_t handler);
-
-#if 0
 
 /* string compare */
 extern errno_t strcasecmp_s(const char *dest, rsize_t dmax, const char *src, int *indicator);
