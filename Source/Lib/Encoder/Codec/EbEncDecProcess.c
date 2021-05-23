@@ -579,9 +579,9 @@ void recon_output(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr) {
 // Calculate Frame SSIM
 /************************************/
 
-void aom_ssim_parms_8x8_c(const uint8_t *s, int sp, const uint8_t *r, int rp,
-                          uint32_t *sum_s, uint32_t *sum_r, uint32_t *sum_sq_s,
-                          uint32_t *sum_sq_r, uint32_t *sum_sxr) {
+static void svt_aom_ssim_parms_8x8_c(const uint8_t *s, int sp, const uint8_t *r, int rp,
+                                     uint32_t *sum_s, uint32_t *sum_r, uint32_t *sum_sq_s,
+                                     uint32_t *sum_sq_r, uint32_t *sum_sxr) {
   int i, j;
   for (i = 0; i < 8; i++, s += sp, r += rp) {
     for (j = 0; j < 8; j++) {
@@ -594,10 +594,10 @@ void aom_ssim_parms_8x8_c(const uint8_t *s, int sp, const uint8_t *r, int rp,
   }
 }
 
-void aom_highbd_ssim_parms_8x8_c(const uint8_t *s, int sp, const uint8_t *sinc, int spinc, const uint16_t *r,
-                                 int rp, uint32_t *sum_s, uint32_t *sum_r,
-                                 uint32_t *sum_sq_s, uint32_t *sum_sq_r,
-                                 uint32_t *sum_sxr) {
+static void svt_aom_highbd_ssim_parms_8x8_c(const uint8_t *s, int sp, const uint8_t *sinc, int spinc, const uint16_t *r,
+                                            int rp, uint32_t *sum_s, uint32_t *sum_r,
+                                            uint32_t *sum_sq_s, uint32_t *sum_sq_r,
+                                            uint32_t *sum_sxr) {
   int i, j;
   uint32_t ss;
   for (i = 0; i < 8; i++, s += sp, sinc += spinc, r += rp) {
@@ -652,14 +652,14 @@ static double similarity(uint32_t sum_s, uint32_t sum_r, uint32_t sum_sq_s,
 
 static double ssim_8x8(const uint8_t *s, int sp, const uint8_t *r, int rp) {
   uint32_t sum_s = 0, sum_r = 0, sum_sq_s = 0, sum_sq_r = 0, sum_sxr = 0;
-  aom_ssim_parms_8x8_c(s, sp, r, rp, &sum_s, &sum_r, &sum_sq_s, &sum_sq_r, &sum_sxr);
+  svt_aom_ssim_parms_8x8_c(s, sp, r, rp, &sum_s, &sum_r, &sum_sq_s, &sum_sq_r, &sum_sxr);
   return similarity(sum_s, sum_r, sum_sq_s, sum_sq_r, sum_sxr, 64, 8);
 }
 
 static double highbd_ssim_8x8(const uint8_t *s, int sp, const uint8_t *sinc, int spinc, const uint16_t *r,
                               int rp, uint32_t bd, uint32_t shift) {
   uint32_t sum_s = 0, sum_r = 0, sum_sq_s = 0, sum_sq_r = 0, sum_sxr = 0;
-  aom_highbd_ssim_parms_8x8_c(s, sp, sinc, spinc, r, rp, &sum_s, &sum_r, &sum_sq_s, &sum_sq_r, &sum_sxr);
+  svt_aom_highbd_ssim_parms_8x8_c(s, sp, sinc, spinc, r, rp, &sum_s, &sum_r, &sum_sq_s, &sum_sq_r, &sum_sxr);
   return similarity(sum_s >> shift, sum_r >> shift, sum_sq_s >> (2 * shift),
                     sum_sq_r >> (2 * shift), sum_sxr >> (2 * shift), 64, bd);
 }
