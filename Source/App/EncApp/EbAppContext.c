@@ -19,8 +19,6 @@
 #include "EbAppContext.h"
 #include "EbAppConfig.h"
 
-#define IS_16_BIT(bit_depth) (bit_depth == 10 ? 1 : 0)
-
 /***************************************
  * Variables Defining a memory table
  *  hosting all allocated pointers
