@@ -2220,10 +2220,6 @@ typedef struct EbMemoryMapEntry
 // Display Total Memory at the end of the memory allocations
 #define DISPLAY_MEMORY                              0
 
-extern    EbMemoryMapEntry          *app_memory_map;            // App Memory table
-extern    uint32_t                  *app_memory_map_index;       // App Memory index
-extern    uint64_t                  *total_app_memory;          // App Memory malloc'd
-
 extern    EbMemoryMapEntry          *memory_map;               // library Memory table
 extern    uint32_t                  *memory_map_index;          // library memory index
 extern    uint64_t                  *total_lib_memory;          // library Memory malloc'd
@@ -2233,32 +2229,7 @@ extern    uint32_t                   lib_thread_count;
 extern    uint32_t                   lib_semaphore_count;
 extern    uint32_t                   lib_mutex_count;
 
-extern    uint32_t                   app_malloc_count;
-
 #define ALVALUE 64
-
-#define EB_ADD_APP_MEM(pointer, size, pointer_class, count, release, return_type) \
-    do { \
-        if (!pointer) return return_type; \
-        if (*(app_memory_map_index) >= MAX_APP_NUM_PTR) { \
-            SVT_LOG("Malloc has failed due to insuffucient resources"); \
-            release(pointer); \
-            return return_type; \
-        } \
-        app_memory_map[*(app_memory_map_index)].ptr_type = pointer_class; \
-        app_memory_map[(*(app_memory_map_index))++].ptr = pointer; \
-        *total_app_memory += (size + 7) / 8; \
-        count++; \
-    } while (0)
-
-#define EB_APP_MALLOC(type, pointer, n_elements, pointer_class, return_type) \
-    pointer = (type)malloc(n_elements); \
-    EB_ADD_APP_MEM(pointer, n_elements, pointer_class, app_malloc_count, return_type);
-
-
-#define EB_APP_MALLOC_NR(type, pointer, n_elements, pointer_class,return_type) \
-    pointer = (type)malloc(n_elements); \
-    EB_ADD_APP_MEM(pointer, n_elements, pointer_class, app_malloc_count, return_type);
 
 #define EB_CREATE_SEMAPHORE(pointer, initial_count, max_count) \
     do { \
@@ -2297,10 +2268,6 @@ SVT_LOG("Total Number of Threads in Library: %d\n", lib_thread_count); \
 SVT_LOG("Total Number of Semaphore in Library: %d\n", lib_semaphore_count); \
 SVT_LOG("Total Number of Mutex in Library: %d\n", lib_mutex_count); \
 SVT_LOG("Total Library Memory: %.2lf KB\n\n",*total_lib_memory/(double)1024);
-
-#define EB_APP_MEMORY() \
-SVT_LOG("Total Number of Mallocs in App: %d\n", app_malloc_count); \
-SVT_LOG("Total App Memory: %.2lf KB\n\n",*total_app_memory/(double)1024);
 
 #ifndef _ERRNO_T_DEFINED
 #define _ERRNO_T_DEFINED
