@@ -250,6 +250,7 @@ void        enc_channel_dctor(EncChannel *c, uint32_t inst_cnt);
 
 extern EbErrorType read_command_line(int32_t argc, char *const argv[], EncChannel *channels,
                                      uint32_t num_channels, char *warning_str[WARNING_LENGTH]);
+int get_version(int argc, char *argv[]);
 extern uint32_t    get_help(int32_t argc, char *const argv[]);
 extern uint32_t    get_number_of_channels(int32_t argc, char *const argv[]);
 uint32_t           get_passes(int32_t argc, char *const argv[], EncodePass pass[]);

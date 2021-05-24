@@ -768,6 +768,18 @@ typedef struct EbSvtAv1EncConfiguration {
     uint8_t color_range;
 } EbSvtAv1EncConfiguration;
 
+/**
+ * Returns a string containing "v$tag-$commit_count-g$hash${dirty:+-dirty}"
+ * @param[out] SVT_AV1_CVS_VERSION
+ */
+EB_API const char *svt_av1_get_version(void);
+
+/**
+ * Prints the version header and build information to the file
+ * specified by the SVT_LOG_FILE environment variable or stderr
+ */
+EB_API void svt_av1_print_version(void);
+
 /* STEP 1: Call the library to construct a Component Handle.
      *
      * Parameter:

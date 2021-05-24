@@ -34,6 +34,7 @@
  **********************************/
 #define HELP_TOKEN "-help"
 #define HELP_LONG_TOKEN "--help"
+#define VERSION_TOKEN "--version"
 #define CHANNEL_NUMBER_TOKEN "-nch"
 #define COMMAND_LINE_MAX_SIZE 2048
 #define CONFIG_FILE_TOKEN "-c"
@@ -815,6 +816,7 @@ typedef struct config_entry_s {
 ConfigEntry config_entry_options[] = {
     // File I/O
     {SINGLE_INPUT, HELP_TOKEN, "Show usage options and exit", set_cfg_input_file},
+    {SINGLE_INPUT, VERSION_TOKEN, "Show version and exit", set_cfg_input_file},
     {SINGLE_INPUT, INPUT_FILE_TOKEN, "Input filename", set_cfg_input_file},
     {SINGLE_INPUT, INPUT_FILE_LONG_TOKEN, "Input filename", set_cfg_input_file},
 
@@ -2190,6 +2192,18 @@ int32_t find_token_multiple_inputs(int32_t argc, char *const argv[], const char 
 
 static int check_long(ConfigEntry cfg_entry, ConfigEntry cfg_entry_next) {
     return cfg_entry_next.name ? !strcmp(cfg_entry.name, cfg_entry_next.name) : 0;
+}
+
+int get_version(int argc, char *argv[]) {
+#ifdef NDEBUG
+    static int debug_build = 1;
+#else
+    static int debug_build = 0;
+#endif
+    if (find_token(argc, argv, VERSION_TOKEN, NULL))
+        return 0;
+    printf("SVT-AV1 %s (%s)\n", svt_av1_get_version(), debug_build ? "release" : "debug");
+    return 1;
 }
 
 uint32_t get_help(int32_t argc, char *const argv[]) {

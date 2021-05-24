@@ -4306,17 +4306,14 @@ void lib_svt_encoder_send_error_exit(
 
     svt_post_full_object(eb_wrapper_ptr);
 }
-/**********************************
-* Encoder Handle Initialization
-**********************************/
-EbErrorType init_svt_av1_encoder_handle(
-    EbComponentType * hComponent)
-{
-    EbErrorType       return_error = EB_ErrorNone;
-    EbComponentType  *svt_enc_component = (EbComponentType*)hComponent;
-    EbEncHandle      *handle;
-    SVT_LOG("-------------------------------------------\n");
-    SVT_LOG("SVT [version]:\tSVT-AV1 Encoder Lib %s\n", SVT_AV1_CVS_VERSION);
+
+EB_API const char *svt_av1_get_version(void) {
+    return SVT_AV1_CVS_VERSION;
+}
+
+EB_API void svt_av1_print_version(void) {
+    SVT_LOG("-------------------------------------------\n"
+        "SVT [version]:\tSVT-AV1 Encoder Lib " SVT_AV1_CVS_VERSION "\n");
 #if defined( _MSC_VER ) && (_MSC_VER >= 1920)
     SVT_LOG("SVT [build]  :\tVisual Studio 2019");
 #elif defined( _MSC_VER ) && (_MSC_VER >= 1910)
@@ -4335,6 +4332,18 @@ EbErrorType init_svt_av1_encoder_handle(
     SVT_LOG("LIB Build date: %s %s\n", __DATE__, __TIME__);
 #endif
     SVT_LOG("-------------------------------------------\n");
+}
+
+/**********************************
+* Encoder Handle Initialization
+**********************************/
+EbErrorType init_svt_av1_encoder_handle(
+    EbComponentType * hComponent)
+{
+    EbErrorType       return_error = EB_ErrorNone;
+    EbComponentType  *svt_enc_component = (EbComponentType*)hComponent;
+    EbEncHandle      *handle;
+    svt_av1_print_version();
 
     enc_switch_to_real_time();
 

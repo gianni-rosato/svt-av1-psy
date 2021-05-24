@@ -420,6 +420,9 @@ int32_t main(int32_t argc, char* argv[]) {
     EncContext  enc_context;
 
     signal(SIGINT, event_handler);
+    if (get_version(argc, argv))
+        return 0;
+
     if (get_help(argc, argv))
         return 0;
 
