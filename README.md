@@ -164,7 +164,7 @@ Use the [Issues](https://gitlab.com/AOMediaCodec/SVT-AV1/issues) tab on Github. 
 
 ## IRC
 
-`#svt` on Freenode. Join via [Freenode Webchat](https://webchat.freenode.net/?channels=svt) or use your favorite IRC client. A [public log](https://freenode.logbot.info/svt) is available.
+`#svt` on Freenode. Join via [Freenode Webchat](https://webchat.freenode.net/?channels=svt) or use your favorite IRC client.
 
 ## Performance tracker
 
