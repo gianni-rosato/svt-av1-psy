@@ -54,7 +54,9 @@ static void set_colour_space(const char *value, EbSvtAv1DecConfiguration *cfg) {
     cfg->max_color_format = parse_name(value, csp_names);
 };
 static void set_num_thread(const char *value, EbSvtAv1DecConfiguration *cfg) {
-    cfg->threads = strtoul(value, NULL, 0);
+    // cfg->threads = strtoul(value, NULL, 0);
+    (void)value;
+    (void)cfg;
 };
 static void set_num_pframes(const char *value, EbSvtAv1DecConfiguration *cfg) {
     cfg->num_p_frames = strtoul(value, NULL, 0);
@@ -96,7 +98,7 @@ static void show_help() {
     H0(" -w <arg>                  Input picture width \n");
     H0(" -h <arg>                  Input picture height \n");
     H0(" -colour-space <arg>       Input picture colour space. [400, 420, 422, 444]\n");
-    H0(" -threads <arg>            Number of threads to be launched \n");
+    H0(" -threads <arg>            Disabled for now \n");
     H0(" -parallel-frames <arg>    Number of frames to be processed in parallel \n");
     H0(" -md5                      MD5 support flag \n");
     H0(" -fps-frm                  Show fps after each frame decoded\n");
