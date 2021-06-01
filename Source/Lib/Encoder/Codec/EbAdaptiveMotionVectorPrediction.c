@@ -1456,7 +1456,7 @@ void setup_ref_mv_list(PictureControlSet *pcs_ptr, const Av1Common *cm, const Ma
                 if (blk_row == 0 && blk_col == 0)
                     is_available = ret;
 
-                    mv_ref0++;
+                mv_ref0++;
 
             }
         }

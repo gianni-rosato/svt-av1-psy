@@ -2568,7 +2568,7 @@ void recode_loop_update_q(PictureParentControlSet *ppcs_ptr, int *const loop, in
             scs_ptr->encode_context_ptr->gf_group.update_type[ppcs_ptr->gf_group_index] = 6;
         }
 #if DEBUG_RC_CAP_LOG
-        if (ppcs_ptr->temporal_layer_index <= 0 && ppcs_ptr->projected_frame_size < ppcs_ptr->max_frame_size && ppcs_ptr->loop_count)
+        if (ppcs_ptr->temporal_layer_index == 0 && ppcs_ptr->projected_frame_size < ppcs_ptr->max_frame_size && ppcs_ptr->loop_count)
             printf("Reencode POC:%lld\tQindex:%d\t%d\t%d\tWorseActive%d\t%d\t%d\n",
                 ppcs_ptr->picture_number,
                 ppcs_ptr->frm_hdr.quantization_params.base_q_idx,
@@ -2580,7 +2580,7 @@ void recode_loop_update_q(PictureParentControlSet *ppcs_ptr, int *const loop, in
 #endif
         int worst_quality = rc_cfg->mode == AOM_Q ? (int32_t)quantizer_to_qindex[scs_ptr->static_config.max_qp_allowed] : rc->worst_quality;
         if (*q < worst_quality && ppcs_ptr->projected_frame_size > ppcs_ptr->max_frame_size &&
-            ppcs_ptr->temporal_layer_index <= 0) {
+            ppcs_ptr->temporal_layer_index == 0) {
             // Increase the active worse quality based on the projected frame size and max frame size
             if (ppcs_ptr->projected_frame_size > 2 * ppcs_ptr->max_frame_size)
                 rc->active_worst_quality = rc->active_worst_quality + 4;
@@ -2608,7 +2608,7 @@ void recode_loop_update_q(PictureParentControlSet *ppcs_ptr, int *const loop, in
         }
         // Decrease the active worse quality based on the projected frame size and max frame size
         else if (ppcs_ptr->projected_frame_size < ppcs_ptr->max_frame_size &&
-            ppcs_ptr->temporal_layer_index <= 0 && ppcs_ptr->loop_count == 0 &&
+            ppcs_ptr->temporal_layer_index == 0 && ppcs_ptr->loop_count == 0 &&
             rc->active_worst_quality > quantizer_to_qindex[(uint8_t)scs_ptr->static_config.qp]) {
             if (ppcs_ptr->projected_frame_size < 5 * ppcs_ptr->max_frame_size / 10)
                 rc->active_worst_quality = rc->active_worst_quality - 4;
@@ -2860,12 +2860,9 @@ static void store_param(PictureParentControlSet *ppcs_ptr,
 *************************************************************************************************/
 static void coded_frames_stat_calc(PictureParentControlSet *ppcs_ptr) {
     int32_t                   queue_entry_index;
-    uint32_t                  queue_entry_index_temp;
-    uint32_t                  queue_entry_index_temp2;
     coded_frames_stats_entry *queue_entry_ptr;
     EbBool                    move_slide_window_flag = EB_TRUE;
     EbBool                    end_of_sequence_flag = EB_TRUE;
-    uint32_t                  frames_in_sw;
 
     SequenceControlSet *scs_ptr = (SequenceControlSet *)ppcs_ptr->scs_wrapper_ptr->object_ptr;
     EncodeContext *     encode_context_ptr = scs_ptr->encode_context_ptr;
@@ -2887,7 +2884,7 @@ static void coded_frames_stat_calc(PictureParentControlSet *ppcs_ptr) {
     move_slide_window_flag = EB_TRUE;
     while (move_slide_window_flag) {
         // Check if the sliding window condition is valid
-        queue_entry_index_temp = rc->coded_frames_stat_queue_head_index;
+        uint32_t queue_entry_index_temp = rc->coded_frames_stat_queue_head_index;
         if (rc->coded_frames_stat_queue[queue_entry_index_temp]->frame_total_bit_actual != -1)
             end_of_sequence_flag =
             rc->coded_frames_stat_queue[queue_entry_index_temp]->end_of_sequence_flag;
@@ -2896,8 +2893,8 @@ static void coded_frames_stat_calc(PictureParentControlSet *ppcs_ptr) {
         while (move_slide_window_flag && !end_of_sequence_flag &&
             queue_entry_index_temp <
             rc->coded_frames_stat_queue_head_index + rc->rate_average_periodin_frames) {
-            queue_entry_index_temp2 = (queue_entry_index_temp >
-                CODED_FRAMES_STAT_QUEUE_MAX_DEPTH - 1)
+            uint32_t queue_entry_index_temp2 = (queue_entry_index_temp >
+                                                CODED_FRAMES_STAT_QUEUE_MAX_DEPTH - 1)
                 ? queue_entry_index_temp - CODED_FRAMES_STAT_QUEUE_MAX_DEPTH
                 : queue_entry_index_temp;
 
@@ -2921,7 +2918,7 @@ static void coded_frames_stat_calc(PictureParentControlSet *ppcs_ptr) {
             queue_entry_index_temp = rc->coded_frames_stat_queue_head_index;
             // This is set to false, so the last frame would go inside the loop
             end_of_sequence_flag = EB_FALSE;
-            frames_in_sw = 0;
+            uint32_t frames_in_sw       = 0;
             rc->total_bit_actual_per_sw = 0;
 
             while (!end_of_sequence_flag &&
@@ -2929,8 +2926,8 @@ static void coded_frames_stat_calc(PictureParentControlSet *ppcs_ptr) {
                 rc->coded_frames_stat_queue_head_index + rc->rate_average_periodin_frames) {
                 frames_in_sw++;
 
-                queue_entry_index_temp2 = (queue_entry_index_temp >
-                    CODED_FRAMES_STAT_QUEUE_MAX_DEPTH - 1)
+                uint32_t queue_entry_index_temp2 = (queue_entry_index_temp >
+                                                    CODED_FRAMES_STAT_QUEUE_MAX_DEPTH - 1)
                     ? queue_entry_index_temp - CODED_FRAMES_STAT_QUEUE_MAX_DEPTH
                     : queue_entry_index_temp;
 

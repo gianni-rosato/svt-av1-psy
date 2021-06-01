@@ -7950,6 +7950,8 @@ EbErrorType signal_derivation_block(PictureControlSet *pcs,
                 context_ptr->spatial_sse_full_loop_level = EB_FALSE;
         }
     }
+#else
+    (void)pcs;
 #endif
     // set compound_types_to_try
     set_inter_comp_controls(context_ptr, context_ptr->inter_compound_mode);
