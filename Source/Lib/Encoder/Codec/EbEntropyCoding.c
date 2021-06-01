@@ -25,6 +25,9 @@
 #include "EbLog.h"
 #include "EbFullLoop.h"
 #include "aom_dsp_rtcd.h"
+#if OPT_INLINE_FUNCS
+#include "EbInterPrediction.h"
+#endif
 
 #define S32 32 * 32
 #define S16 16 * 16
@@ -53,7 +56,11 @@ int     has_uni_comp_refs(const MbModeInfo *mbmi) {
         (!((mbmi->block_mi.ref_frame[0] >= BWDREF_FRAME) ^
            (mbmi->block_mi.ref_frame[1] >= BWDREF_FRAME)));
 }
+#if OPT_MEMORY_MIP
+int32_t is_inter_block(const BlockModeInfoEnc *mbmi);
+#else
 int32_t is_inter_block(const BlockModeInfo *mbmi);
+#endif
 #if (CHAR_BIT != 8)
 #undef CHAR_BIT
 #define CHAR_BIT 8 /* number of bits in a char */
@@ -66,8 +73,9 @@ int32_t is_inter_block(const BlockModeInfo *mbmi);
 //                                               int32_t mi_col, BlockSize bsize, int32_t *rcol0,
 //                                               int32_t *rcol1, int32_t *rrow0, int32_t *rrow1,
 //                                               int32_t *tile_tl_idx);
-
+#if !OPT_INLINE_FUNCS
 extern void av1_set_ref_frame(MvReferenceFrame *rf, int8_t ref_frame_type);
+#endif
 int         get_relative_dist_enc(SeqHeader *seq_header, int ref_hint, int order_hint);
 int         get_comp_index_context_enc(PictureParentControlSet *pcs_ptr, int cur_frame_index,
                                        int bck_frame_index, int fwd_frame_index, const MacroBlockD *xd) {
@@ -1518,7 +1526,9 @@ static void write_motion_mode(FRAME_CONTEXT *frame_context, AomWriter *ec_writer
     return;
 }
 //****************************************************************************************************//
+#if !OPT_INLINE_FUNCS
 extern int8_t av1_ref_frame_type(const MvReferenceFrame *const rf);
+#endif
 uint16_t      compound_mode_ctx_map[3][COMP_NEWMV_CTXS] = {
     {0, 1, 1, 1, 1},
     {1, 2, 3, 4, 4},
@@ -1930,6 +1940,58 @@ static int32_t av1_is_interp_needed(MvReferenceFrame rf0, MvReferenceFrame rf1, 
     return 1;
 }
 
+#if OPT_NA_IFS
+#if OPT_MEMORY_MIP
+ InterpFilter get_ref_filter_type(const BlockModeInfoEnc *ref_mbmi, int dir,
+    MvReferenceFrame ref_frame);
+#else
+static InterpFilter get_ref_filter_type(const BlockModeInfo *ref_mbmi, int dir,
+    MvReferenceFrame ref_frame) {
+    return ((ref_mbmi->ref_frame[0] == ref_frame || ref_mbmi->ref_frame[1] == ref_frame)
+        ? av1_extract_interp_filter(ref_mbmi->interp_filters, dir & 0x01)
+        : SWITCHABLE_FILTERS);
+}
+#endif
+/* determine Interpolation Filter  rate*/
+int32_t svt_av1_get_pred_context_switchable_interp_v2(
+    MvReferenceFrame rf0, MvReferenceFrame rf1, MacroBlockD *xd, int32_t dir)
+{
+
+    //const MbModeInfo *const mbmi = xd->mi[0];
+    const int32_t    ctx_offset = (rf1 > INTRA_FRAME) * INTER_FILTER_COMP_OFFSET;
+    MvReferenceFrame ref_frame = (dir < 2) ? rf0 : rf1;
+    // Note:
+    // The mode info data structure has a one element border above and to the
+    // left of the entries corresponding to real macroblocks.
+    // The prediction flags in these dummy entries are initialized to 0.
+    int32_t filter_type_ctx = ctx_offset + (dir & 0x01) * INTER_FILTER_DIR_OFFSET;
+    int32_t left_type = SWITCHABLE_FILTERS;
+    int32_t above_type = SWITCHABLE_FILTERS;
+
+    if (xd->left_available)
+        left_type = get_ref_filter_type(&xd->mi[-1]->mbmi.block_mi, dir, ref_frame);
+
+    if (xd->up_available)
+        above_type = get_ref_filter_type(&xd->mi[-xd->mi_stride]->mbmi.block_mi, dir, ref_frame);
+
+
+    if (left_type == above_type)
+        filter_type_ctx += left_type;
+    else if (left_type == SWITCHABLE_FILTERS) {
+        assert(above_type != SWITCHABLE_FILTERS);
+        filter_type_ctx += above_type;
+    }
+    else if (above_type == SWITCHABLE_FILTERS) {
+        assert(left_type != SWITCHABLE_FILTERS);
+        filter_type_ctx += left_type;
+    }
+    else
+        filter_type_ctx += SWITCHABLE_FILTERS;
+
+
+    return filter_type_ctx;
+}
+#endif
 void write_mb_interp_filter(NeighborArrayUnit *ref_frame_type_neighbor_array, BlockSize bsize,
                             MvReferenceFrame rf0, MvReferenceFrame rf1,
                             PictureParentControlSet *pcs_ptr, AomWriter *ec_writer,
@@ -6114,11 +6176,19 @@ EB_EXTERN EbErrorType write_sb(EntropyCodingContext *context_ptr, SuperBlock *tb
 
             if (tb_ptr->cu_partition_array[blk_index] != PARTITION_SPLIT) {
                 final_blk_index++;
+#if LIGHT_PD0
+                blk_index += blk_geom->ns_depth_offset;
+#else
                 blk_index +=
                     ns_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128][blk_geom->depth];
+#endif
             } else
+#if LIGHT_PD0
+                blk_index += blk_geom->d1_depth_offset;
+#else
                 blk_index +=
                     d1_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128][blk_geom->depth];
+#endif
         } else
             ++blk_index;
     } while (blk_index < scs_ptr->max_block_cnt);

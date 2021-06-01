@@ -102,6 +102,9 @@ void svt_sad_loop_kernel_sse4_1_intrin(
     uint32_t  block_width, // input parameter, block width (N)
     uint64_t *best_sad, int16_t *x_search_center, int16_t *y_search_center,
     uint32_t src_stride_raw, // input parameter, source stride (no line skipping)
+#if FTR_PREHME_SUB
+    uint8_t skip_search_line,
+#endif
     int16_t search_area_width, int16_t search_area_height) {
     int16_t        x_best = *x_search_center, y_best = *y_search_center;
     uint32_t       low_sum = 0xffffff;
@@ -2039,6 +2042,9 @@ void svt_sad_loop_kernel_sse4_1_intrin(
                               x_search_center,
                               y_search_center,
                               src_stride_raw,
+#if FTR_PREHME_SUB
+                             skip_search_line,
+#endif
                               search_area_width,
                               search_area_height);
         return;

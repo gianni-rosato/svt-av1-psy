@@ -388,6 +388,16 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
     SET_SSE41_AVX2_AVX512(svt_sad_loop_kernel, svt_sad_loop_kernel_c, svt_sad_loop_kernel_sse4_1_intrin, svt_sad_loop_kernel_avx2_intrin, svt_sad_loop_kernel_avx512_intrin);
     SET_AVX2(svt_av1_apply_temporal_filter_planewise, svt_av1_apply_temporal_filter_planewise_c, svt_av1_apply_temporal_filter_planewise_avx2);
     SET_AVX2(svt_av1_apply_temporal_filter_planewise_hbd, svt_av1_apply_temporal_filter_planewise_hbd_c, svt_av1_apply_temporal_filter_planewise_hbd_avx2);
+#if OPT_TFILTER
+    SET_AVX2(svt_av1_apply_temporal_filter_planewise_fast, svt_av1_apply_temporal_filter_planewise_fast_c, svt_av1_apply_temporal_filter_planewise_fast_avx2);
+    SET_AVX2(svt_av1_apply_temporal_filter_planewise_fast_hbd, svt_av1_apply_temporal_filter_planewise_fast_hbd_c, svt_av1_apply_temporal_filter_planewise_fast_hbd_avx2);
+#endif
+    SET_AVX2(get_final_filtered_pixels, get_final_filtered_pixels_c, get_final_filtered_pixels_avx2);
+    SET_AVX2(apply_filtering_central, apply_filtering_central_c, apply_filtering_central_avx2);
+    SET_AVX2(apply_filtering_central_highbd, apply_filtering_central_highbd_c, apply_filtering_central_highbd_avx2);
+#if DOWNSAMPLE_2D_AVX2
+    SET_AVX2(downsample_2d, downsample_2d_c, downsample_2d_avx2);
+#endif
     SET_AVX2(svt_ext_sad_calculation_8x8_16x16, svt_ext_sad_calculation_8x8_16x16_c, svt_ext_sad_calculation_8x8_16x16_avx2_intrin);
     SET_SSE41(svt_ext_sad_calculation_32x32_64x64, svt_ext_sad_calculation_32x32_64x64_c, svt_ext_sad_calculation_32x32_64x64_sse4_intrin);
     SET_AVX2(svt_ext_all_sad_calculation_8x8_16x16, svt_ext_all_sad_calculation_8x8_16x16_c, svt_ext_all_sad_calculation_8x8_16x16_avx2);
@@ -407,5 +417,8 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
     SET_AVX2(svt_av1_calc_indices_dim2, svt_av1_calc_indices_dim2_c, svt_av1_calc_indices_dim2_avx2);
     SET_AVX2(variance_highbd, variance_highbd_c, variance_highbd_avx2);
     SET_AVX2(svt_av1_haar_ac_sad_8x8_uint8_input, svt_av1_haar_ac_sad_8x8_uint8_input_c, svt_av1_haar_ac_sad_8x8_uint8_input_avx2);
+#if FTR_USE_PSAD
+    SET_AVX2(svt_pme_sad_loop_kernel, svt_pme_sad_loop_kernel_c, svt_pme_sad_loop_kernel_avx2);
+#endif
 }
 // clang-format on

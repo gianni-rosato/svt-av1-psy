@@ -696,11 +696,19 @@ static int32_t count_sgrproj_bits(SgrprojInfo *sgrproj_info, SgrprojInfo *ref_sg
 int8_t get_sg_step(int8_t sg_filter_mode) {
     int8_t step;
     switch (sg_filter_mode) {
+#if TUNE_SG_FILTER_LVLS
+        case 1: step = 16; break;
+        case 2: step = 4; break;
+        case 3: step = 1; break;
+        case 4: step = 0; break;
+        default: step = 16; break;
+#else
     case 1: step = 0; break;
     case 2: step = 1; break;
     case 3: step = 4; break;
     case 4: step = 16; break;
     default: step = 16; break;
+#endif
     }
     return step;
 }
@@ -1096,18 +1104,32 @@ static int64_t finer_tile_search_wiener_seg(const RestSearchCtxt *       rsc,
                                             const RestorationTileLimits *limits,
                                             const Av1PixelRect *tile, RestorationUnitInfo *rui,
                                             int32_t wiener_win) {
+#if FTR_NEW_WN_LVLS
+    const Av1Common *const cm = rsc->cm;
+#endif
     const int32_t plane_off = (WIENER_WIN - wiener_win) >> 1;
     int64_t       err       = try_restoration_unit_seg(rsc, limits, tile, rui);
 #if USE_WIENER_REFINEMENT_SEARCH
+#if !FTR_NEW_WN_LVLS
     int64_t err2;
     int32_t tap_min[] = {WIENER_FILT_TAP0_MINV, WIENER_FILT_TAP1_MINV, WIENER_FILT_TAP2_MINV};
     int32_t tap_max[] = {WIENER_FILT_TAP0_MAXV, WIENER_FILT_TAP1_MAXV, WIENER_FILT_TAP2_MAXV};
-
+#endif
     WienerInfo *plane_wiener = &rui->wiener_info;
 
     // SVT_LOG("err  pre = %"PRId64"\n", err);
+#if FTR_NEW_WN_LVLS
+    if (cm->wn_filter_ctrls.use_refinement) {
+        const int32_t start_step = 4;
+        const int32_t end_step = cm->wn_filter_ctrls.max_one_refinement_step ? 4 : 1;
+        int64_t err2;
+        int32_t tap_min[] = {WIENER_FILT_TAP0_MINV, WIENER_FILT_TAP1_MINV, WIENER_FILT_TAP2_MINV};
+        int32_t tap_max[] = {WIENER_FILT_TAP0_MAXV, WIENER_FILT_TAP1_MAXV, WIENER_FILT_TAP2_MAXV};
+        for (int32_t s = start_step; s >= end_step; s >>= 1) {
+#else
     const int32_t start_step = 4;
     for (int32_t s = start_step; s >= 1; s >>= 1) {
+#endif
         for (int32_t p = plane_off; p < WIENER_HALFWIN; ++p) {
             int32_t skip = 0;
             do {
@@ -1124,8 +1146,13 @@ static int64_t finer_tile_search_wiener_seg(const RestSearchCtxt *       rsc,
                         err  = err2;
                         skip = 1;
                         // At the highest step size continue moving in the same direction
-                        if (s == start_step)
-                            continue;
+#if FTR_NEW_WN_LVLS
+                            if (s == start_step && !cm->wn_filter_ctrls.max_one_refinement_step)
+                                continue;
+#else
+                            if (s == start_step)
+                                continue;
+#endif
                     }
                 }
                 break;
@@ -1145,8 +1172,13 @@ static int64_t finer_tile_search_wiener_seg(const RestSearchCtxt *       rsc,
                     } else {
                         err = err2;
                         // At the highest step size continue moving in the same direction
-                        if (s == start_step)
-                            continue;
+#if FTR_NEW_WN_LVLS
+                            if (s == start_step && !cm->wn_filter_ctrls.max_one_refinement_step)
+                                continue;
+#else
+                            if (s == start_step)
+                                continue;
+#endif
                     }
                 }
                 break;
@@ -1168,8 +1200,13 @@ static int64_t finer_tile_search_wiener_seg(const RestSearchCtxt *       rsc,
                         err  = err2;
                         skip = 1;
                         // At the highest step size continue moving in the same direction
-                        if (s == start_step)
-                            continue;
+#if FTR_NEW_WN_LVLS
+                            if (s == start_step && !cm->wn_filter_ctrls.max_one_refinement_step)
+                                continue;
+#else
+                            if (s == start_step)
+                                continue;
+#endif
                     }
                 }
                 break;
@@ -1189,14 +1226,22 @@ static int64_t finer_tile_search_wiener_seg(const RestSearchCtxt *       rsc,
                     } else {
                         err = err2;
                         // At the highest step size continue moving in the same direction
-                        if (s == start_step)
-                            continue;
+#if FTR_NEW_WN_LVLS
+                            if (s == start_step && !cm->wn_filter_ctrls.max_one_refinement_step)
+                                continue;
+#else
+                            if (s == start_step)
+                                continue;
+#endif
+                        }
                     }
-                }
-                break;
-            } while (1);
+                    break;
+                } while (1);
+            }
         }
+#if FTR_NEW_WN_LVLS
     }
+#endif
     // SVT_LOG("err post = %"PRId64"\n", err);
 #endif // USE_WIENER_REFINEMENT_SEARCH
     return err;
@@ -1355,12 +1400,32 @@ static void search_wiener_seg(const RestorationTileLimits *limits, const Av1Pixe
     RestSearchCtxt *       rsc        = (RestSearchCtxt *)priv;
     RestUnitSearchInfo *   rusi       = &rsc->rusi[rest_unit_idx];
     const Av1Common *const cm         = rsc->cm;
-    int32_t                wn_luma    = cm->wn_filter_mode == 1 ? WIENER_WIN_3TAP
-                          : cm->wn_filter_mode == 2             ? WIENER_WIN_CHROMA
-                                                                : WIENER_WIN;
+#if FTR_NEW_WN_LVLS
+    int32_t wn_luma = cm->wn_filter_ctrls.filter_tap_lvl == 1 ? WIENER_WIN
+                    : cm->wn_filter_ctrls.filter_tap_lvl == 2 ? WIENER_WIN_CHROMA
+                    : WIENER_WIN_3TAP;
+
+    const int32_t wiener_win = (rsc->plane == AOM_PLANE_Y) ? wn_luma : MIN(wn_luma, WIENER_WIN_CHROMA);
+
+    RestorationUnitInfo rui;
+    memset(&rui, 0, sizeof(rui));
+    rui.restoration_type = RESTORE_WIENER;
+    // Check whether you can use the filter coeffs from previous frames; if not, must generate new coeffs
+    if (cm->wn_filter_ctrls.use_prev_frame_coeffs &&
+        (cm->current_frame.frame_type != KEY_FRAME && cm->current_frame.frame_type != INTRA_ONLY_FRAME) &&
+        cm->child_pcs->rst_info[rsc->plane].unit_info[rest_unit_idx].restoration_type == RESTORE_WIENER) {
+        // Copy filter info, stored from previous frame(s)
+        rui.wiener_info = cm->child_pcs->rst_info[rsc->plane].unit_info[rest_unit_idx].wiener_info;
+    }
+    else {
+#else
+    int32_t                wn_luma = cm->wn_filter_mode == 1 ? WIENER_WIN_3TAP
+        : cm->wn_filter_mode == 2 ? WIENER_WIN_CHROMA
+        : WIENER_WIN;
     const int32_t          wiener_win = cm->wn_filter_mode == 1 ? WIENER_WIN_3TAP
-                 : (rsc->plane == AOM_PLANE_Y)                  ? wn_luma
-                                                                : WIENER_WIN_CHROMA;
+        : (rsc->plane == AOM_PLANE_Y) ? wn_luma
+        : WIENER_WIN_CHROMA;
+#endif
     EB_ALIGN(32) int64_t   M[WIENER_WIN2];
     EB_ALIGN(32) int64_t   H[WIENER_WIN2 * WIENER_WIN2];
     int32_t                vfilterd[WIENER_WIN], hfilterd[WIENER_WIN];
@@ -1397,10 +1462,11 @@ static void search_wiener_seg(const RestorationTileLimits *limits, const Av1Pixe
         rusi->sse[RESTORE_WIENER]            = INT64_MAX;
         return;
     }
-
+#if !FTR_NEW_WN_LVLS
     RestorationUnitInfo rui;
     memset(&rui, 0, sizeof(rui));
     rui.restoration_type = RESTORE_WIENER;
+#endif
     finalize_sym_filter(wiener_win, vfilterd, rui.wiener_info.vfilter);
     finalize_sym_filter(wiener_win, hfilterd, rui.wiener_info.hfilter);
 
@@ -1415,7 +1481,9 @@ static void search_wiener_seg(const RestorationTileLimits *limits, const Av1Pixe
 #ifdef ARCH_X86_64
     aom_clear_system_state();
 #endif
-
+#if FTR_NEW_WN_LVLS
+    }
+#endif
     rusi->sse[RESTORE_WIENER] = finer_tile_search_wiener_seg(
         rsc, limits, tile_rect, &rui, wiener_win);
     rusi->wiener = rui.wiener_info;
@@ -1432,13 +1500,19 @@ static void search_wiener_finish(const RestorationTileLimits *limits, const Av1P
     RestSearchCtxt *       rsc        = (RestSearchCtxt *)priv;
     RestUnitSearchInfo *   rusi       = &rsc->rusi[rest_unit_idx];
     const Av1Common *const cm         = rsc->cm;
+#if FTR_NEW_WN_LVLS
+    int32_t wn_luma = cm->wn_filter_ctrls.filter_tap_lvl == 1 ? WIENER_WIN
+                    : cm->wn_filter_ctrls.filter_tap_lvl == 2 ? WIENER_WIN_CHROMA
+                    : WIENER_WIN_3TAP;
+    const int32_t wiener_win = (rsc->plane == AOM_PLANE_Y) ? wn_luma : MIN(wn_luma, WIENER_WIN_CHROMA);
+#else
     int32_t                wn_luma    = cm->wn_filter_mode == 1 ? WIENER_WIN_3TAP
                           : cm->wn_filter_mode == 2             ? WIENER_WIN_CHROMA
                                                                 : WIENER_WIN;
     const int32_t          wiener_win = cm->wn_filter_mode == 1 ? WIENER_WIN_3TAP
                  : (rsc->plane == AOM_PLANE_Y)                  ? wn_luma
                                                                 : WIENER_WIN_CHROMA;
-
+#endif
     const Macroblock *const x         = rsc->x;
     const int64_t           bits_none = x->wiener_restore_cost[0];
 
@@ -1560,7 +1634,11 @@ void restoration_seg_search(int32_t *rst_tmpbuf, Yv12BufferConfig *org_fts,
                                            pcs_ptr->rest_segments_column_count,
                                            pcs_ptr->rest_segments_row_count,
                                            segment_index);
+#if FTR_NEW_WN_LVLS
+        if (cm->wn_filter_ctrls.enabled)
+#else
         if (cm->wn_filter_mode)
+#endif
             av1_foreach_rest_unit_in_frame_seg(rsc_p->cm,
                                                rsc_p->plane,
                                                rsc_on_tile,
@@ -1569,15 +1647,17 @@ void restoration_seg_search(int32_t *rst_tmpbuf, Yv12BufferConfig *org_fts,
                                                pcs_ptr->rest_segments_column_count,
                                                pcs_ptr->rest_segments_row_count,
                                                segment_index);
+#if TUNE_SG_FILTER_LVLS
         if (cm->sg_filter_mode)
-            av1_foreach_rest_unit_in_frame_seg(rsc_p->cm,
-                                               rsc_p->plane,
-                                               rsc_on_tile,
-                                               search_sgrproj_seg,
-                                               rsc_p,
-                                               pcs_ptr->rest_segments_column_count,
-                                               pcs_ptr->rest_segments_row_count,
-                                               segment_index);
+#endif
+        av1_foreach_rest_unit_in_frame_seg(rsc_p->cm,
+                                           rsc_p->plane,
+                                           rsc_on_tile,
+                                           search_sgrproj_seg,
+                                           rsc_p,
+                                           pcs_ptr->rest_segments_column_count,
+                                           pcs_ptr->rest_segments_row_count,
+                                           segment_index);
     }
 }
 
@@ -1585,7 +1665,21 @@ void rest_finish_search(PictureControlSet *pcs_ptr){
     Macroblock *x = pcs_ptr->parent_pcs_ptr->av1x;
     Av1Common *const cm = pcs_ptr->parent_pcs_ptr->av1_cm;
     PictureParentControlSet *p_pcs_ptr = pcs_ptr->parent_pcs_ptr;
+#if TUNE_SG_FILTER_LVLS
+#if FTR_NEW_WN_LVLS
+    RestorationType force_restore_type_d = (cm->wn_filter_ctrls.enabled) ? ((cm->sg_filter_mode) ? RESTORE_TYPES : RESTORE_WIENER) :
+                                                                           ((cm->sg_filter_mode) ? RESTORE_SGRPROJ : RESTORE_NONE);
+#else
+    RestorationType force_restore_type_d = (cm->wn_filter_mode) ? ((cm->sg_filter_mode) ? RESTORE_TYPES : RESTORE_WIENER) :
+                                                                  ((cm->sg_filter_mode) ? RESTORE_SGRPROJ : RESTORE_NONE);
+#endif
+#else
+
+
+
+
     RestorationType force_restore_type_d = (cm->wn_filter_mode) ? RESTORE_TYPES : RESTORE_SGRPROJ;
+#endif
     int32_t         ntiles[2];
     for (int32_t is_uv = 0; is_uv < 2; ++is_uv) ntiles[is_uv] = rest_tiles_in_plane(cm, is_uv);
 

@@ -18,7 +18,11 @@
  * Extern Function Declarations
  **************************************/
 extern EbErrorType rest_context_ctor(EbThreadContext *  thread_context_ptr,
+#if OPT_MEMORY_REST
+                                     const EbEncHandle *enc_handle_ptr,EbPtr object_init_data_ptr,  int index,int demux_index);
+#else
                                      const EbEncHandle *enc_handle_ptr, int index, int demux_index);
+#endif
 
 extern void *rest_kernel(void *input_ptr);
 

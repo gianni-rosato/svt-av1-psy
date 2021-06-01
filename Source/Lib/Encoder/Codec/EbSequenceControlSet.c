@@ -112,14 +112,17 @@ EbErrorType svt_sequence_control_set_ctor(SequenceControlSet *scs_ptr, EbPtr obj
     if (scs_init_data && scs_init_data->sb_size == 128) {
         scs_ptr->seq_header.sb_size = BLOCK_128X128;
         scs_ptr->sb_size_pix        = 128;
+#if !CLN_GEOM
         scs_ptr->max_block_cnt      = 4421;
-
+#endif
         scs_ptr->seq_header.sb_mi_size   = 32; // Size of the superblock in units of MI blocks
         scs_ptr->seq_header.sb_size_log2 = 5;
     } else {
         scs_ptr->seq_header.sb_size = BLOCK_64X64;
         scs_ptr->sb_size_pix        = 64;
+#if !CLN_GEOM
         scs_ptr->max_block_cnt      = 1101;
+#endif
 
         scs_ptr->seq_header.sb_mi_size   = 16; // Size of the superblock in units of MI blocks
         scs_ptr->seq_header.sb_size_log2 = 4;
@@ -313,6 +316,10 @@ EbErrorType copy_sequence_control_set(SequenceControlSet *dst, SequenceControlSe
     dst->lad_mg                         = src->lad_mg;
     dst->use_boundaries_in_rest_search  = src->use_boundaries_in_rest_search;
     dst->mrp_init_level = src->mrp_init_level;
+#if CLN_GEOM
+    dst->geom_idx = src->geom_idx;
+    dst->max_block_cnt = src->max_block_cnt;
+#endif
     dst->enc_mode_2ndpass = src->enc_mode_2ndpass;
     return EB_ErrorNone;
 }

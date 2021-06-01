@@ -434,7 +434,12 @@ void svt_cdef_block(EbDecHandle *dec_handle, int32_t *mi_wide_l2, int32_t *mi_hi
                                sec_strength,
                                pri_damping,
                                sec_damping,
+#if FTR_SKIP_LINES_CDEF_SEARCH
+                               coeff_shift,
+                               1); // no subsampling
+#else
                                coeff_shift);
+#endif
         }
         /*Cdef filter calling function for 8 bit depth */
         else
@@ -455,7 +460,12 @@ void svt_cdef_block(EbDecHandle *dec_handle, int32_t *mi_wide_l2, int32_t *mi_hi
                                sec_strength,
                                pri_damping,
                                sec_damping,
+#if FTR_SKIP_LINES_CDEF_SEARCH
+                               coeff_shift,
+                               1); // no subsampling
+#else
                                coeff_shift);
+#endif
     } /*cdef plane loop ending*/
     //CHKN filtered data is written back directy to recFrame.
     *cdef_left = 1;

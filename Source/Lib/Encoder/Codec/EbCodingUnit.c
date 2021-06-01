@@ -36,6 +36,9 @@ Tasks & Questions
 EbErrorType largest_coding_unit_ctor(SuperBlock *larget_coding_unit_ptr, uint8_t sb_size_pix,
                                      uint16_t sb_origin_x, uint16_t sb_origin_y, uint16_t sb_index,
                                      uint8_t enc_mode,
+#if CLN_GEOM
+                                     uint16_t max_block_cnt,
+#endif
                                      PictureControlSet *picture_control_set)
 
 {
@@ -77,9 +80,12 @@ EbErrorType largest_coding_unit_ctor(SuperBlock *larget_coding_unit_ptr, uint8_t
     // Do NOT initialize the final_blk_arr here
     // Malloc maximum but only initialize it only when actually used.
     // This will help to same actually memory usage
+#if CLN_GEOM
+    EB_MALLOC_ARRAY(larget_coding_unit_ptr->cu_partition_array, max_block_cnt);
+#else
     uint32_t max_block_count = sb_size_pix == 128 ? BLOCK_MAX_COUNT_SB_128 : BLOCK_MAX_COUNT_SB_64;
 
     EB_MALLOC_ARRAY(larget_coding_unit_ptr->cu_partition_array, max_block_count);
-
+#endif
     return EB_ErrorNone;
 }

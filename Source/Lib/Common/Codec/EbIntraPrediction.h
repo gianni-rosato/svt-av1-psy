@@ -140,8 +140,12 @@ static const uint32_t mode_to_angle_map[] = {
     0,
 };
 
+#if OPT_MEMORY_MIP
+int is_smooth(const BlockModeInfoEnc *mbmi, int plane);
+int is_smooth_dec(const BlockModeInfo *mbmi, int plane);
+#else
 int is_smooth(const BlockModeInfo *mbmi, int plane);
-
+#endif
 extern const uint8_t extend_modes[INTRA_MODES];
 
 /* TODO: Need to harmonize with fun from EbAdaptiveMotionVectorPrediction.c */

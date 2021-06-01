@@ -29,7 +29,19 @@ void dec_init_intra_predictors_12b_internal(void) {
 /*TODO: Remove replication and harmonize with encoder after data str. harmonization */
 int32_t dec_get_filt_type(const PartitionInfo *part_info, int32_t plane) {
     int ab_sm, le_sm;
-
+#if OPT_MEMORY_MIP
+    if (plane == 0) {
+        const BlockModeInfo *ab = part_info->above_mbmi;
+        const BlockModeInfo *le = part_info->left_mbmi;
+        ab_sm                   = ab ? is_smooth_dec(ab, plane) : 0;
+        le_sm                   = le ? is_smooth_dec(le, plane) : 0;
+    } else {
+        const BlockModeInfo *ab = part_info->chroma_above_mbmi;
+        const BlockModeInfo *le = part_info->chroma_left_mbmi;
+        ab_sm                   = ab ? is_smooth_dec(ab, plane) : 0;
+        le_sm                   = le ? is_smooth_dec(le, plane) : 0;
+    }
+#else
     if (plane == 0) {
         const BlockModeInfo *ab = part_info->above_mbmi;
         const BlockModeInfo *le = part_info->left_mbmi;
@@ -41,7 +53,7 @@ int32_t dec_get_filt_type(const PartitionInfo *part_info, int32_t plane) {
         ab_sm                   = ab ? is_smooth(ab, plane) : 0;
         le_sm                   = le ? is_smooth(le, plane) : 0;
     }
-
+#endif
     return (ab_sm || le_sm) ? 1 : 0;
 }
 

@@ -35,6 +35,11 @@ typedef struct EbReferenceObject {
     uint64_t                    ref_poc;
     uint16_t                    qp;
     EB_SLICE                    slice_type;
+#if  FTR_INTRA_DETECTOR
+    uint8_t                     intra_coded_area; //percentage of intra coded area 0-100%
+    uint8_t                     intra_coded_area_sb
+        [MAX_NUMBER_OF_TREEBLOCKS_PER_PICTURE]; //percentage of intra coded area 0-100%
+#endif
     uint32_t non_moving_index_array
         [MAX_NUMBER_OF_TREEBLOCKS_PER_PICTURE]; //array to hold non-moving blocks in reference frames
 
@@ -54,8 +59,15 @@ typedef struct EbReferenceObject {
     EbHandle             referenced_area_mutex;
     uint64_t             referenced_area_avg;
     double               r0;
+#if MS_CDEF_OPT3
+    uint32_t            ref_cdef_strengths_num;
+    uint8_t             ref_cdef_strengths[2][TOTAL_STRENGTHS];
+#endif
     int32_t              mi_cols;
     int32_t              mi_rows;
+#if FTR_NEW_WN_LVLS
+    WienerUnitInfo** unit_info; // per plane, per rest. unit; used for fwding wiener info to future frames
+#endif
 } EbReferenceObject;
 
 typedef struct EbReferenceObjectDescInitData {

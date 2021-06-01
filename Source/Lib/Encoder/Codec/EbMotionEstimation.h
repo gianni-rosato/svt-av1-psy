@@ -44,7 +44,11 @@ extern "C" {
         uint32_t                   decim_stride,
         uint32_t                   decim_step);
 
+#if DOWNSAMPLE_2D_AVX2
+    extern void downsample_2d_c(
+#else
     extern void downsample_2d(
+#endif
         uint8_t                   *input_samples,
         uint32_t                   input_stride,
         uint32_t                   input_area_width,
@@ -169,6 +173,9 @@ extern "C" {
         uint8_t *ref,
         uint32_t ref_stride,
         uint32_t mv,
+#if OPT_TFILTER
+        uint8_t out_8x8,
+#endif
         uint32_t *p_best_sad_8x8,
         uint32_t *p_best_sad_16x16,
         uint32_t *p_best_mv8x8,

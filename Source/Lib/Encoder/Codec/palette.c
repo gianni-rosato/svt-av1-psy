@@ -538,8 +538,13 @@ static int cost_and_tokenize_map(Av1ColorMapParam *param, TOKENEXTRA **t, int pl
         for (int j = AOMMIN(k, cols - 1); j >= AOMMAX(0, k - rows + 1); --j) {
             int       i = k - j;
             int       color_new_idx;
+#if SS_OPT_PALETTE_COST
+            const int color_ctx = av1_get_palette_color_index_context_optimized(
+                color_map, plane_block_width, i, j, &color_new_idx);
+#else
             const int color_ctx = av1_get_palette_color_index_context_optimized(
                 color_map, plane_block_width, i, j, n, &color_new_idx);
+#endif
             assert(color_new_idx >= 0 && color_new_idx < n);
             if (calc_rate) {
                 this_rate += (*color_cost)[palette_size_idx][color_ctx][color_new_idx];

@@ -1343,6 +1343,45 @@ void highbd_convolve_2d_for_intrabc(const uint16_t *src, int src_stride, uint16_
     }
 }
 
+#if LIGHT_PD0
+/*
+*/
+void svt_inter_predictor_light_pd0(const uint8_t *src, int32_t src_stride, uint8_t *dst, int32_t dst_stride,
+    int32_t w, int32_t h, ConvolveParams *conv_params)
+{
+    convolve[0][0][conv_params->is_compound](src,
+        src_stride,
+        dst,
+        dst_stride,
+        w,
+        h,
+        0,
+        0,
+        0,
+        0,
+        conv_params);
+}
+void svt_highbd_inter_predictor_light_pd0(const uint16_t *src, int32_t src_stride, uint16_t *dst,
+    int32_t dst_stride, int32_t w, int32_t h,
+    ConvolveParams *conv_params, int32_t bd)
+{
+
+    convolveHbd[0][0][conv_params->is_compound](src,
+
+        src_stride,
+        dst,
+        dst_stride,
+        w,
+        h,
+        0,
+        0,
+        0,
+        0,
+        conv_params,
+        bd);
+
+}
+#endif
 void svt_inter_predictor(const uint8_t *src, int32_t src_stride, uint8_t *dst, int32_t dst_stride,
                          const SubpelParams *subpel_params, const ScaleFactors *sf, int32_t w,
                          int32_t h, ConvolveParams *conv_params, InterpFilters interp_filters,
@@ -1968,7 +2007,7 @@ void av1_find_ref_dv(IntMv *ref_dv, const TileInfo *const tile, int mib_size, in
     ref_dv->as_mv.row *= 8;
     ref_dv->as_mv.col *= 8;
 }
-
+#if !OPT_INLINE_FUNCS
 #define n_elements(x) (int32_t)(sizeof(x) / sizeof(x[0]))
 
 MvReferenceFrame comp_ref0(int32_t ref_idx) {
@@ -2067,7 +2106,7 @@ void av1_set_ref_frame(MvReferenceFrame *rf, int8_t ref_frame_type) {
         // assert(ref_frame_type > NONE_FRAME); AMIR
     }
 }
-
+#endif
 int svt_av1_skip_u4x4_pred_in_obmc(BlockSize bsize, int dir, int subsampling_x, int subsampling_y) {
     assert(is_motion_variation_allowed_bsize(bsize));
 

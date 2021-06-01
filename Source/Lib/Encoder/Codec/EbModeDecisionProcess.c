@@ -18,8 +18,13 @@
 int         svt_av1_allow_palette(int allow_palette, BlockSize sb_type);
 static void mode_decision_context_dctor(EbPtr p) {
     ModeDecisionContext *obj                = (ModeDecisionContext *)p;
+
+#if CLN_GEOM
+    uint32_t block_max_count_sb = obj->init_max_block_cnt;
+#else
     uint32_t             block_max_count_sb = (obj->sb_size == MAX_SB_SIZE) ? BLOCK_MAX_COUNT_SB_128
                                                                             : BLOCK_MAX_COUNT_SB_64;
+#endif
     for (int cd = 0; cd < MAX_PAL_CAND; cd++)
         if (obj->palette_cand_array[cd].color_idx_map)
             EB_FREE_ARRAY(obj->palette_cand_array[cd].color_idx_map);
@@ -37,6 +42,12 @@ static void mode_decision_context_dctor(EbPtr p) {
 
     EB_FREE_ARRAY(obj->above_txfm_context);
     EB_FREE_ARRAY(obj->left_txfm_context);
+#if FTR_BYPASS_ENCDEC
+    for (uint32_t coded_leaf_index = 0; coded_leaf_index < block_max_count_sb; ++coded_leaf_index) {
+        EB_DELETE(obj->md_blk_arr_nsq[coded_leaf_index].coeff_tmp);
+        EB_DELETE(obj->md_blk_arr_nsq[coded_leaf_index].recon_tmp);
+}
+#endif
 #if NO_ENCDEC //SB128_TODO to upgrade
     int coded_leaf_index;
     for (coded_leaf_index = 0; coded_leaf_index < BLOCK_MAX_COUNT_SB_128; ++coded_leaf_index) {
@@ -58,8 +69,10 @@ static void mode_decision_context_dctor(EbPtr p) {
     EB_FREE_ARRAY(obj->fast_candidate_ptr_array);
     EB_FREE_ARRAY(obj->fast_cost_array);
     EB_FREE_ARRAY(obj->full_cost_array);
+#if !CLN_MOVE_SKIP_MODE_CHECK
     EB_FREE_ARRAY(obj->full_cost_skip_ptr);
     EB_FREE_ARRAY(obj->full_cost_merge_ptr);
+#endif
     if (obj->md_local_blk_unit) {
         EB_FREE_ARRAY(obj->md_local_blk_unit[0].neigh_left_recon_16bit[0]);
         EB_FREE_ARRAY(obj->md_local_blk_unit[0].neigh_top_recon_16bit[0]);
@@ -79,10 +92,18 @@ static void mode_decision_context_dctor(EbPtr p) {
     for (uint32_t txt_itr = 0; txt_itr < TX_TYPES; ++txt_itr) {
         EB_DELETE(obj->recon_coeff_ptr[txt_itr]);
         EB_DELETE(obj->recon_ptr[txt_itr]);
+#if REFCTR_ADD_QUANT_COEFF_BUFF_MD
+        EB_DELETE(obj->quant_coeff_ptr[txt_itr]);
+#endif
     }
+#if OPT_INTER_PRED
+    EB_DELETE(obj->scratch_prediction_ptr);
+#else
     EB_DELETE(obj->cfl_temp_prediction_ptr);
+#endif
+#if !REFCTR_ADD_QUANT_COEFF_BUFF_MD
     EB_DELETE(obj->residual_quant_coeff_ptr);
-
+#endif
     EB_DELETE(obj->temp_residual_ptr);
     EB_DELETE(obj->temp_recon_ptr);
 }
@@ -96,13 +117,23 @@ uint8_t  get_nic_scaling_level(PdPass pd_pass, EbEncMode enc_mode ,uint8_t tempo
 EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr, EbColorFormat color_format,
                                        uint8_t sb_size,
                                         uint8_t enc_mode,
+#if CLN_GEOM
+                                        uint16_t max_block_cnt,
+#endif
                                        EbFifo *mode_decision_configuration_input_fifo_ptr,
                                        EbFifo *mode_decision_output_fifo_ptr,
                                        uint8_t enable_hbd_mode_decision, uint8_t cfg_palette) {
     uint32_t buffer_index;
     uint32_t cand_index;
+
+#if CLN_GEOM
+    context_ptr->init_max_block_cnt = max_block_cnt;
+    uint32_t block_max_count_sb = max_block_cnt;
+#else
     uint32_t block_max_count_sb = (sb_size == MAX_SB_SIZE) ? BLOCK_MAX_COUNT_SB_128
                                                            : BLOCK_MAX_COUNT_SB_64;
+#endif
+
     context_ptr->sb_size        = sb_size;
     (void)color_format;
 
@@ -178,9 +209,10 @@ EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr, EbColor
     // Cost Arrays
     EB_MALLOC_ARRAY(context_ptr->fast_cost_array,  context_ptr->max_nics_uv);
     EB_MALLOC_ARRAY(context_ptr->full_cost_array,  context_ptr->max_nics_uv);
+#if !CLN_MOVE_SKIP_MODE_CHECK
     EB_MALLOC_ARRAY(context_ptr->full_cost_skip_ptr,  context_ptr->max_nics_uv);
     EB_MALLOC_ARRAY(context_ptr->full_cost_merge_ptr,  context_ptr->max_nics_uv);
-
+#endif
     // Candidate Buffers
     EB_NEW(context_ptr->candidate_buffer_tx_depth_1,
            mode_decision_scratch_candidate_buffer_ctor,
@@ -245,6 +277,41 @@ EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr, EbColor
                 MAX_PALETTE_SQUARE);
         else
             context_ptr->md_blk_arr_nsq[coded_leaf_index].palette_info.color_idx_map = NULL;
+#if FTR_BYPASS_ENCDEC
+        {
+            EbPictureBufferDescInitData init_data;
+
+            init_data.buffer_enable_mask    = PICTURE_BUFFER_DESC_FULL_MASK;
+            init_data.max_width             = blk_geom->bwidth;
+            init_data.max_height            = blk_geom->bheight;
+            init_data.bit_depth             = EB_32BIT;
+            init_data.color_format          = (blk_geom->bwidth > 4 && blk_geom->bheight > 4) ? EB_YUV420 : EB_YUV444; // PW - must have at least 4x4 for chroma coeffs
+            init_data.left_padding          = 0;
+            init_data.right_padding         = 0;
+            init_data.top_padding           = 0;
+            init_data.bot_padding           = 0;
+            init_data.split_mode            = EB_FALSE;
+
+            EB_NEW(context_ptr->md_blk_arr_nsq[coded_leaf_index].coeff_tmp,
+                svt_picture_buffer_desc_ctor,
+                (EbPtr)&init_data);
+
+            init_data.buffer_enable_mask    = PICTURE_BUFFER_DESC_FULL_MASK;
+            init_data.max_width             = blk_geom->bwidth;
+            init_data.max_height            = blk_geom->bheight;
+            init_data.bit_depth             = context_ptr->hbd_mode_decision ? EB_10BIT : EB_8BIT;;
+            init_data.color_format          = (blk_geom->bwidth > 4 && blk_geom->bheight > 4) ? EB_YUV420 : EB_YUV444;
+            init_data.left_padding          = 0;
+            init_data.right_padding         = 0;
+            init_data.top_padding           = 0;
+            init_data.bot_padding           = 0;
+            init_data.split_mode            = EB_FALSE;
+
+            EB_NEW(context_ptr->md_blk_arr_nsq[coded_leaf_index].recon_tmp,
+                svt_picture_buffer_desc_ctor,
+                (EbPtr)&init_data);
+    }
+#endif
 #if NO_ENCDEC //SB128_TODO to upgrade
         {
             EbPictureBufferDescInitData init_data;
@@ -323,15 +390,26 @@ EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr, EbColor
         EB_NEW(context_ptr->recon_ptr[txt_itr],
                svt_picture_buffer_desc_ctor,
                (EbPtr)&picture_buffer_desc_init_data);
+#if REFCTR_ADD_QUANT_COEFF_BUFF_MD
+        EB_NEW(context_ptr->quant_coeff_ptr[txt_itr],
+            svt_picture_buffer_desc_ctor,
+            (EbPtr)&thirty_two_width_picture_buffer_desc_init_data);
+#endif
     }
+#if !REFCTR_ADD_QUANT_COEFF_BUFF_MD
     EB_NEW(context_ptr->residual_quant_coeff_ptr,
            svt_picture_buffer_desc_ctor,
            (EbPtr)&thirty_two_width_picture_buffer_desc_init_data);
-
+#endif
+#if OPT_INTER_PRED
+    EB_NEW(context_ptr->scratch_prediction_ptr,
+        svt_picture_buffer_desc_ctor,
+        (EbPtr)&picture_buffer_desc_init_data);
+#else
     EB_NEW(context_ptr->cfl_temp_prediction_ptr,
            svt_picture_buffer_desc_ctor,
            (EbPtr)&picture_buffer_desc_init_data);
-
+#endif
     EbPictureBufferDescInitData double_width_picture_buffer_desc_init_data;
     double_width_picture_buffer_desc_init_data.max_width          = sb_size;
     double_width_picture_buffer_desc_init_data.max_height         = sb_size;
@@ -357,6 +435,17 @@ EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr, EbColor
     EB_ALLOC_PTR_ARRAY(context_ptr->candidate_buffer_ptr_array, context_ptr->max_nics_uv);
 
     for (buffer_index = 0; buffer_index <  context_ptr->max_nics; ++buffer_index) {
+#if CLN_MOVE_SKIP_MODE_CHECK
+        EB_NEW(context_ptr->candidate_buffer_ptr_array[buffer_index],
+            mode_decision_candidate_buffer_ctor,
+            context_ptr->hbd_mode_decision ? EB_10BIT : EB_8BIT,
+            sb_size,
+            PICTURE_BUFFER_DESC_FULL_MASK,
+            context_ptr->temp_residual_ptr,
+            context_ptr->temp_recon_ptr,
+            &(context_ptr->fast_cost_array[buffer_index]),
+            &(context_ptr->full_cost_array[buffer_index]));
+#else
         EB_NEW(context_ptr->candidate_buffer_ptr_array[buffer_index],
                mode_decision_candidate_buffer_ctor,
                context_ptr->hbd_mode_decision ? EB_10BIT : EB_8BIT,
@@ -368,9 +457,21 @@ EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr, EbColor
                &(context_ptr->full_cost_array[buffer_index]),
                &(context_ptr->full_cost_skip_ptr[buffer_index]),
                &(context_ptr->full_cost_merge_ptr[buffer_index]));
+#endif
     }
 
     for (buffer_index = max_nics; buffer_index <  context_ptr->max_nics_uv; ++buffer_index) {
+#if CLN_MOVE_SKIP_MODE_CHECK
+        EB_NEW(context_ptr->candidate_buffer_ptr_array[buffer_index],
+            mode_decision_candidate_buffer_ctor,
+            context_ptr->hbd_mode_decision ? EB_10BIT : EB_8BIT,
+            sb_size,
+            PICTURE_BUFFER_DESC_CHROMA_MASK,
+            context_ptr->temp_residual_ptr,
+            context_ptr->temp_recon_ptr,
+            &(context_ptr->fast_cost_array[buffer_index]),
+            &(context_ptr->full_cost_array[buffer_index]));
+#else
         EB_NEW(context_ptr->candidate_buffer_ptr_array[buffer_index],
                mode_decision_candidate_buffer_ctor,
                context_ptr->hbd_mode_decision ? EB_10BIT : EB_8BIT,
@@ -382,6 +483,7 @@ EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr, EbColor
                &(context_ptr->full_cost_array[buffer_index]),
                &(context_ptr->full_cost_skip_ptr[buffer_index]),
                &(context_ptr->full_cost_merge_ptr[buffer_index]));
+#endif
     }
     return EB_ErrorNone;
 }

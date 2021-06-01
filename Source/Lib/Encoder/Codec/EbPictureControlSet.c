@@ -73,6 +73,35 @@ static void me_sb_results_dctor(EbPtr p) {
     EB_FREE_ARRAY(obj->me_mv_array);
     EB_FREE_ARRAY(obj->total_me_candidate_index);
 }
+#if  OPT_ME
+/*
+  controls how many references are needed for ME results allocation
+*/
+void  get_max_allocated_me_refs(uint8_t mrp_level, uint8_t* max_ref_to_alloc, uint8_t* max_cand_to_alloc) {
+
+    if (mrp_level == 4) {
+        *max_ref_to_alloc = 4;
+        *max_cand_to_alloc = 9;
+    }
+    else {//specify more cases if need be
+        *max_ref_to_alloc = MAX_PA_ME_MV;
+        *max_cand_to_alloc = MAX_PA_ME_CAND;
+    }
+}
+EbErrorType me_sb_results_ctor(MeSbResults *obj_ptr, PictureControlSetInitData *init_data_ptr){
+
+    obj_ptr->dctor = me_sb_results_dctor;
+
+
+    uint8_t max_ref_to_alloc, max_cand_to_alloc;
+
+    get_max_allocated_me_refs(init_data_ptr->mrp_level, &max_ref_to_alloc, &max_cand_to_alloc);
+
+
+    EB_MALLOC_ARRAY(obj_ptr->me_mv_array, SQUARE_PU_COUNT * max_ref_to_alloc);
+    EB_MALLOC_ARRAY(obj_ptr->me_candidate_array, SQUARE_PU_COUNT * max_cand_to_alloc);
+
+#else
 EbErrorType me_sb_results_ctor(MeSbResults *obj_ptr) {
     uint32_t pu_index;
     obj_ptr->dctor = me_sb_results_dctor;
@@ -89,6 +118,7 @@ EbErrorType me_sb_results_ctor(MeSbResults *obj_ptr) {
         obj_ptr->me_candidate_array[pu_index * MAX_PA_ME_CAND + 1].direction  = 1;
         obj_ptr->me_candidate_array[pu_index * MAX_PA_ME_CAND + 2].direction  = 2;
     }
+#endif
     EB_MALLOC_ARRAY(obj_ptr->total_me_candidate_index, SQUARE_PU_COUNT);
     return EB_ErrorNone;
 }
@@ -123,6 +153,11 @@ void picture_control_set_dctor(EbPtr p) {
     EB_DELETE_PTR_ARRAY(obj->ep_luma_dc_sign_level_coeff_neighbor_array, tile_cnt);
     EB_DELETE_PTR_ARRAY(obj->ep_cb_dc_sign_level_coeff_neighbor_array, tile_cnt);
     EB_DELETE_PTR_ARRAY(obj->ep_cr_dc_sign_level_coeff_neighbor_array, tile_cnt);
+#if REFCTR_SEP_ENCDEC
+    EB_DELETE_PTR_ARRAY(obj->ep_luma_dc_sign_level_coeff_neighbor_array_update, tile_cnt);
+    EB_DELETE_PTR_ARRAY(obj->ep_cb_dc_sign_level_coeff_neighbor_array_update, tile_cnt);
+    EB_DELETE_PTR_ARRAY(obj->ep_cr_dc_sign_level_coeff_neighbor_array_update, tile_cnt);
+#endif
     EB_DELETE_PTR_ARRAY(obj->mode_type_neighbor_array, tile_cnt);
     EB_DELETE_PTR_ARRAY(obj->partition_context_neighbor_array, tile_cnt);
     EB_DELETE_PTR_ARRAY(obj->skip_flag_neighbor_array, tile_cnt);
@@ -191,11 +226,15 @@ void picture_control_set_dctor(EbPtr p) {
 
     EB_FREE_ARRAY(obj->mse_seg[0]);
     EB_FREE_ARRAY(obj->mse_seg[1]);
-
+#if MS_CDEF_OPT1
+    EB_FREE_ARRAY(obj->skip_cdef_seg);
+#endif
     EB_FREE_ARRAY(obj->mi_grid_base);
     EB_FREE_ARRAY(obj->mip);
     EB_FREE_ARRAY(obj->md_rate_estimation_array);
+#if !OPT_MEMORY_CDF
     EB_FREE_ARRAY(obj->ec_ctx_array);
+#endif
     EB_DESTROY_MUTEX(obj->entropy_coding_pic_mutex);
     EB_DESTROY_MUTEX(obj->intra_mutex);
     EB_DESTROY_MUTEX(obj->cdef_search_mutex);
@@ -370,7 +409,12 @@ EbErrorType recon_coef_ctor(EncDecSet *object_ptr, EbPtr object_init_data_ptr) {
     return EB_ErrorNone;
 }
 
+#if CLN_DLF_SIGNALS
+uint8_t get_dlf_level(EbEncMode enc_mode, uint8_t is_used_as_reference_flag);
+#else
+
 uint8_t get_loop_filter_mode(EbEncMode enc_mode, uint8_t is_used_as_reference_flag) ;
+#endif
 
 uint8_t get_enable_restoration(EbEncMode enc_mode) ;
 
@@ -431,7 +475,11 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
         lf_recon_needed = 1;
     else
         for (uint8_t is_used_as_reference_flag = 0; is_used_as_reference_flag < 2; is_used_as_reference_flag++) {
+#if CLN_DLF_SIGNALS
+            lf_recon_needed = get_dlf_level(init_data_ptr->enc_mode, is_used_as_reference_flag) == 1 ? 1 : 0;
+#else
             lf_recon_needed = get_loop_filter_mode(init_data_ptr->enc_mode, is_used_as_reference_flag) >= 2 ? 1 : 0;
+#endif
             if (lf_recon_needed)
                 break;
         }
@@ -523,6 +571,17 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
     object_ptr->sb_total_count_pix = all_sb;
 
     for (sb_index = 0; sb_index < all_sb; ++sb_index) {
+#if CLN_GEOM
+            EB_NEW(object_ptr->sb_ptr_array[sb_index],
+                largest_coding_unit_ctor,
+                (uint8_t)init_data_ptr->sb_size_pix,
+                (uint16_t)(sb_origin_x * max_blk_size),
+                (uint16_t)(sb_origin_y * max_blk_size),
+                (uint16_t)sb_index,
+                init_data_ptr->enc_mode,
+                init_data_ptr->init_max_block_cnt,
+                object_ptr);
+#else
         EB_NEW(object_ptr->sb_ptr_array[sb_index],
                largest_coding_unit_ctor,
                (uint8_t)init_data_ptr->sb_size_pix,
@@ -531,6 +590,7 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
                (uint16_t)sb_index,
                init_data_ptr->enc_mode,
                object_ptr);
+#endif
         // Increment the Order in coding order (Raster Scan Order)
         sb_origin_y = (sb_origin_x == picture_sb_w - 1) ? sb_origin_y + 1 : sb_origin_y;
         sb_origin_x = (sb_origin_x == picture_sb_w - 1) ? 0 : sb_origin_x + 1;
@@ -538,7 +598,9 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
     // MD Rate Estimation Array
     EB_MALLOC_ARRAY(object_ptr->md_rate_estimation_array, 1);
     memset(object_ptr->md_rate_estimation_array, 0, sizeof(MdRateEstimationContext));
+#if !OPT_MEMORY_CDF
     EB_MALLOC_ARRAY(object_ptr->ec_ctx_array, all_sb);
+#endif
     if (init_data_ptr->hbd_mode_decision == DEFAULT)
         object_ptr->hbd_mode_decision = init_data_ptr->hbd_mode_decision = 2;
     else
@@ -811,6 +873,11 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
     EB_ALLOC_PTR_ARRAY(object_ptr->ep_luma_dc_sign_level_coeff_neighbor_array, total_tile_cnt);
     EB_ALLOC_PTR_ARRAY(object_ptr->ep_cb_dc_sign_level_coeff_neighbor_array, total_tile_cnt);
     EB_ALLOC_PTR_ARRAY(object_ptr->ep_cr_dc_sign_level_coeff_neighbor_array, total_tile_cnt);
+#if REFCTR_SEP_ENCDEC
+    EB_ALLOC_PTR_ARRAY(object_ptr->ep_luma_dc_sign_level_coeff_neighbor_array_update, total_tile_cnt);
+    EB_ALLOC_PTR_ARRAY(object_ptr->ep_cb_dc_sign_level_coeff_neighbor_array_update, total_tile_cnt);
+    EB_ALLOC_PTR_ARRAY(object_ptr->ep_cr_dc_sign_level_coeff_neighbor_array_update, total_tile_cnt);
+#endif
     EB_ALLOC_PTR_ARRAY(object_ptr->ep_partition_context_neighbor_array, total_tile_cnt);
 
     //Entropy
@@ -937,6 +1004,38 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
                 PU_NEIGHBOR_ARRAY_GRANULARITY,
                 NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK,
             },
+#if REFCTR_SEP_ENCDEC
+            // for each 4x4
+            {
+                &object_ptr->ep_luma_dc_sign_level_coeff_neighbor_array_update[tile_idx],
+                MAX_PICTURE_WIDTH_SIZE,
+                MAX_PICTURE_HEIGHT_SIZE,
+                sizeof(uint8_t),
+                PU_NEIGHBOR_ARRAY_GRANULARITY,
+                PU_NEIGHBOR_ARRAY_GRANULARITY,
+                NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK,
+            },
+            // for each 4x4
+            {
+                &object_ptr->ep_cb_dc_sign_level_coeff_neighbor_array_update[tile_idx],
+                MAX_PICTURE_WIDTH_SIZE,
+                MAX_PICTURE_HEIGHT_SIZE,
+                sizeof(uint8_t),
+                PU_NEIGHBOR_ARRAY_GRANULARITY,
+                PU_NEIGHBOR_ARRAY_GRANULARITY,
+                NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK,
+            },
+            // for each 4x4
+            {
+                &object_ptr->ep_cr_dc_sign_level_coeff_neighbor_array_update[tile_idx],
+                MAX_PICTURE_WIDTH_SIZE,
+                MAX_PICTURE_HEIGHT_SIZE,
+                sizeof(uint8_t),
+                PU_NEIGHBOR_ARRAY_GRANULARITY,
+                PU_NEIGHBOR_ARRAY_GRANULARITY,
+                NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK,
+            },
+#endif
             // Encode pass partition neighbor array
             {
                 &object_ptr->ep_partition_context_neighbor_array[tile_idx],
@@ -1133,7 +1232,9 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
 
     EB_MALLOC_ARRAY(object_ptr->mse_seg[0], picture_sb_width * picture_sb_height);
     EB_MALLOC_ARRAY(object_ptr->mse_seg[1], picture_sb_width * picture_sb_height);
-
+#if MS_CDEF_OPT1
+    EB_MALLOC_ARRAY(object_ptr->skip_cdef_seg, picture_sb_width * picture_sb_height);
+#endif
     EB_CREATE_MUTEX(object_ptr->rest_search_mutex);
 
     //the granularity is 4x4
@@ -1163,8 +1264,10 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
 
         EB_CALLOC_ALIGNED_ARRAY(object_ptr->tpl_mvs, mem_size);
     }
+#if !OPT_MEMORY_HASH_TABLE
     object_ptr->hash_table.p_lookup_table = NULL;
     svt_av1_hash_table_create(&object_ptr->hash_table);
+#endif
     if (get_enable_restoration(init_data_ptr->enc_mode)|| init_data_ptr->static_config.enable_restoration_filtering > 0)
     EB_MALLOC_ALIGNED(object_ptr->rst_tmpbuf, RESTORATION_TMPBUF_SIZE);
 
@@ -1242,7 +1345,9 @@ static void picture_parent_control_set_dctor(EbPtr ptr) {
     EB_FREE_ARRAY(obj->me_32x32_distortion);
     EB_FREE_ARRAY(obj->me_16x16_distortion);
     EB_FREE_ARRAY(obj->me_8x8_distortion);
+
     EB_FREE_ARRAY(obj->me_8x8_cost_variance);
+
     // Non moving index array
     EB_FREE_ARRAY(obj->non_moving_index_array);
     // SB noise variance array
@@ -1397,6 +1502,7 @@ EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr,
     EB_MALLOC_ARRAY(object_ptr->me_8x8_distortion, object_ptr->sb_total_count);
 
     EB_MALLOC_ARRAY(object_ptr->me_8x8_cost_variance, object_ptr->sb_total_count);
+
     // Non moving index array
     EB_MALLOC_ARRAY(object_ptr->non_moving_index_array, object_ptr->sb_total_count);
     // SB noise variance array
@@ -1504,7 +1610,11 @@ EbErrorType me_ctor(MotionEstimationData *object_ptr, EbPtr object_init_data_ptr
     EB_ALLOC_PTR_ARRAY(object_ptr->me_results, sb_total_count);
 
     for (sb_index = 0; sb_index < sb_total_count; ++sb_index) {
+#if OPT_ME
+        EB_NEW(object_ptr->me_results[sb_index], me_sb_results_ctor, init_data_ptr);
+#else
         EB_NEW(object_ptr->me_results[sb_index], me_sb_results_ctor);
+#endif
     }
 
     return return_error;

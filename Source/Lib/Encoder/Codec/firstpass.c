@@ -515,6 +515,12 @@ extern EbErrorType first_pass_signal_derivation_pre_analysis_scs(SequenceControl
 #define LOW_MOTION_ERROR_THRESH 25
 #define MOTION_ERROR_THRESH 500
 void set_tf_controls(PictureParentControlSet *pcs_ptr, uint8_t tf_level);
+#if FTR_NEW_WN_LVLS
+void set_wn_filter_ctrls(Av1Common* cm, uint8_t wn_filter_lvl);
+#endif
+#if CLN_DLF_SIGNALS
+void set_dlf_controls(PictureParentControlSet *pcs_ptr, uint8_t dlf_level);
+#endif
 /******************************************************
 * Derive Multi-Processes Settings for first pass
 Input   : encoder mode and tune
@@ -577,13 +583,16 @@ EbErrorType first_pass_signal_derivation_multi_processes(SequenceControlSet *   
     //    5:        NIC=4/2/1 + No K means for Inter frame
     //    6:        Fastest NIC=4/2/1 + No K means for non base + step for non base for most dominent
     pcs_ptr->palette_level = 0;
+#if CLN_DLF_SIGNALS
+    set_dlf_controls(pcs_ptr, 0);
+#else
     // Loop filter Level                            Settings
     // 0                                            OFF
     // 1                                            CU-BASED
     // 2                                            LIGHT FRAME-BASED
     // 3                                            FULL FRAME-BASED
     pcs_ptr->loop_filter_mode = 0;
-
+#endif
     // CDEF Level                                   Settings
     // 0                                            OFF
     // 1                                            1 step refinement
@@ -602,13 +611,18 @@ EbErrorType first_pass_signal_derivation_multi_processes(SequenceControlSet *   
     Av1Common *cm      = pcs_ptr->av1_cm;
     cm->sg_filter_mode = 0;
 
+#if FTR_NEW_WN_LVLS
+    set_wn_filter_ctrls(cm, 0);
+#else
     // WN Level                                     Settings
     // 0                                            OFF
     // 1                                            3-Tap luma/ 3-Tap chroma
     // 2                                            5-Tap luma/ 5-Tap chroma
     // 3                                            7-Tap luma/ 5-Tap chroma
     cm->wn_filter_mode = 0;
+#endif
 
+#if !TUNE_INTRA_LEVELS
     // Intra prediction modes                       Settings
     // 0                                            FULL
     // 1                                            LIGHT per block : disable_z2_prediction && disable_angle_refinement  for 64/32/4
@@ -616,6 +630,7 @@ EbErrorType first_pass_signal_derivation_multi_processes(SequenceControlSet *   
     // 3                                            OFF : disable_angle_prediction
     // 4                                            OIS based Intra
     // 5                                            Light OIS based Intra
+#endif
     pcs_ptr->intra_pred_mode = 3;
 
     // Set Tx Search     Settings
@@ -639,12 +654,12 @@ EbErrorType first_pass_signal_derivation_multi_processes(SequenceControlSet *   
     // downsampling factor of 2 in each dimension GM_TRAN_ONLY Translation only
     // using ME MV.
     pcs_ptr->gm_level = GM_DOWN;
-
+#if !OPT_TXS_SEARCH
     // Exit TX size search when all coefficients are zero
     // 0: OFF
     // 1: ON
     pcs_ptr->tx_size_early_exit = 0;
-
+#endif
     return return_error;
 }
 /******************************************************
@@ -678,11 +693,17 @@ EbErrorType first_pass_signal_derivation_mode_decision_config_kernel(PictureCont
     // The latter determines the OBMC settings in the function set_obmc_controls.
     // Please check the definitions of the flags/variables in the function
     // set_obmc_controls corresponding to the pic_obmc_level settings.
+#if FIX_REMOVE_PD1
+    //  pic_obmc_level  | Default Encoder Settings
+    //         0        | OFF subject to possible constraints
+    //       > 1        | Faster level subject to possible constraints
+#else
     //  pic_obmc_level  |              Default Encoder Settings             |     Command Line Settings
     //         0        | OFF subject to possible constraints               | OFF everywhere in encoder
     //         1        | ON subject to possible constraints                | Fully ON in PD_PASS_2
     //         2        | Faster level subject to possible constraints      | Level 2 everywhere in PD_PASS_2
     //         3        | Even faster level subject to possible constraints | Level 3 everywhere in PD_PASS_3
+#endif
     pcs_ptr->parent_pcs_ptr->pic_obmc_level = 0;
 
     // Switchable Motion Mode
@@ -691,7 +712,13 @@ EbErrorType first_pass_signal_derivation_mode_decision_config_kernel(PictureCont
 
     // HBD Mode
     pcs_ptr->hbd_mode_decision = EB_8_BIT_MD; //first pass hard coded to 8bit
+#if OPT9_RATE_ESTIMATION
+    pcs_ptr->parent_pcs_ptr->partition_contexts = PARTITION_CONTEXTS;
+#endif
     pcs_ptr->parent_pcs_ptr->bypass_cost_table_gen = 0;
+#if  FTR_SIMPLIFIED_MV_COST
+    pcs_ptr->use_low_precision_cost_estimation = 0;
+#endif
     return return_error;
 }
 void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *pcs_ptr,
@@ -723,7 +750,11 @@ EbErrorType first_pass_signal_derivation_me_kernel(SequenceControlSet *       sc
     context_ptr->me_context_ptr->enable_hme_flag        = pcs_ptr->enable_hme_flag;
     context_ptr->me_context_ptr->enable_hme_level0_flag = pcs_ptr->enable_hme_level0_flag;
     context_ptr->me_context_ptr->enable_hme_level1_flag = pcs_ptr->enable_hme_level1_flag;
+#if TUNE_FIRSTPASS_HME2
+    context_ptr->me_context_ptr->enable_hme_level2_flag = scs_ptr->enc_mode_2ndpass <= ENC_M4 ? pcs_ptr->enable_hme_level2_flag : 0;
+#else
     context_ptr->me_context_ptr->enable_hme_level2_flag = scs_ptr->enc_mode_2ndpass <= ENC_M7 ? pcs_ptr->enable_hme_level2_flag : 0;
+#endif
 
     // HME Search Method
     context_ptr->me_context_ptr->hme_search_method = SUB_SAD_SEARCH;
@@ -765,7 +796,11 @@ static int open_loop_firstpass_intra_prediction(PictureParentControlSet *ppcs_pt
     int32_t   mb_col      = blk_origin_x >> 4;
     const int use_dc_pred = (mb_col || mb_row) && (!mb_col || !mb_row);
     uint8_t  use8blk = 0;
+#if FIX_PRESET_TUNING
+    if (ppcs_ptr->scs_ptr->enc_mode_2ndpass <= ENC_M4) {
+#else
     if (ppcs_ptr->scs_ptr->enc_mode_2ndpass <= ENC_M7) {
+#endif
         use8blk = 0;
     }
     else {
@@ -910,8 +945,17 @@ static int open_loop_firstpass_inter_prediction(
         blk_geom.bwidth               = FORCED_BLK_SIZE;
         blk_geom.bheight              = FORCED_BLK_SIZE;
         me_mb_offset       = get_me_info_index(ppcs_ptr->max_number_of_pus_per_sb, &blk_geom, 0, 0);
+#if !OPT_ME
         uint8_t list_index = 0;
+#endif
         uint8_t ref_pic_index = 0;
+
+#if OPT_ME
+
+            mv.col = (me_results->me_mv_array[me_mb_offset*ppcs_ptr->pa_me_data->max_refs + ref_pic_index].x_mv) >> 2;
+            mv.row = (me_results->me_mv_array[me_mb_offset*ppcs_ptr->pa_me_data->max_refs + ref_pic_index].y_mv) >> 2;
+
+#else
         mv.col =
             me_results
                 ->me_mv_array[me_mb_offset * MAX_PA_ME_MV + (list_index ? 4 : 0) + ref_pic_index]
@@ -922,7 +966,7 @@ static int open_loop_firstpass_inter_prediction(
                 ->me_mv_array[me_mb_offset * MAX_PA_ME_MV + (list_index ? 4 : 0) + ref_pic_index]
                 .y_mv >>
             2;
-
+#endif
         EbPictureBufferDesc *last_input_picture_ptr = ppcs_ptr->first_pass_ref_count
             ? ppcs_ptr->first_pass_ref_ppcs_ptr[0]->enhanced_picture_ptr
             : NULL;
@@ -952,9 +996,17 @@ static int open_loop_firstpass_inter_prediction(
         if (ppcs_ptr->first_pass_ref_count > 1 &&
             me_results->total_me_candidate_index[me_mb_offset] > 1) {
             // To convert full-pel MV
+#if !OPT_ME
             list_index    = 0;
+#endif
             ref_pic_index = 1;
             FULLPEL_MV gf_mv;
+#if OPT_ME
+
+            gf_mv.col = (me_results->me_mv_array[me_mb_offset*ppcs_ptr->pa_me_data->max_refs + ref_pic_index].x_mv) >> 2;
+            gf_mv.row = (me_results->me_mv_array[me_mb_offset*ppcs_ptr->pa_me_data->max_refs + ref_pic_index].y_mv) >> 2;
+
+#else
             gf_mv.col = me_results
                             ->me_mv_array[me_mb_offset * MAX_PA_ME_MV + (list_index ? 4 : 0) +
                                           ref_pic_index]
@@ -965,6 +1017,7 @@ static int open_loop_firstpass_inter_prediction(
                                           ref_pic_index]
                             .y_mv >>
                 2;
+#endif
             EbPictureBufferDesc *golden_input_picture_ptr =
                 ppcs_ptr->first_pass_ref_ppcs_ptr[1]->enhanced_picture_ptr;
             ref_origin_index = golden_input_picture_ptr->origin_x + (blk_origin_x + gf_mv.col) +

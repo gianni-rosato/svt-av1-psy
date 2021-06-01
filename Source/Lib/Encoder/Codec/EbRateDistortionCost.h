@@ -38,8 +38,13 @@ extern uint64_t svt_av1_cost_coeffs_txb(
 extern void coding_loop_context_generation(PictureControlSet *pcs_ptr,
     ModeDecisionContext *context_ptr, BlkStruct *blk_ptr, uint32_t blk_origin_x,
     uint32_t blk_origin_y,
+#if !OPT_NA_SKIP
     NeighborArrayUnit *skip_flag_neighbor_array,
-    NeighborArrayUnit *mode_type_neighbor_array, NeighborArrayUnit *leaf_partition_neighbor_array);
+#endif
+#if !OPT_NA_ISINTER
+    NeighborArrayUnit *mode_type_neighbor_array,
+#endif
+    NeighborArrayUnit *leaf_partition_neighbor_array);
 
 extern EbErrorType av1_txb_calc_cost(
     ModeDecisionCandidate *candidate_ptr, // input parameter, prediction result Ptr
@@ -72,11 +77,13 @@ extern EbErrorType txb_calc_cost(
     uint64_t cr_txb_distortion[DIST_CALC_TOTAL], uint32_t component_mask,
     uint64_t *y_txb_coeff_bits, uint64_t *cb_txb_coeff_bits, uint64_t *cr_txb_coeff_bits,
     uint32_t qp, uint64_t lambda, uint64_t lambda_chroma);
+#if !OPT_TX_PATH
 extern EbErrorType av1_txb_calc_cost_luma(
     uint64_t y_txb_distortion[DIST_CALC_TOTAL], // input parameter, Y distortion for both Normal and Cbf zero modes
     uint64_t *y_txb_coeff_bits,                 // input parameter, Y quantized coefficients rate
     uint64_t *y_full_cost,
     uint64_t lambda);                           // input parameter, lambda for Luma
+#endif
 extern EbErrorType intra_luma_mode_context(BlkStruct *blk_ptr, uint32_t luma_mode,
                                            int32_t *prediction_index);
 extern EbErrorType intra2_nx2_n_fast_cost_islice(
@@ -125,6 +132,12 @@ extern uint64_t av1_inter_fast_cost(
                                     uint8_t enable_inter_intra,
                                     uint32_t left_neighbor_mode, uint32_t top_neighbor_mode);
 
+#if LIGHT_PD0
+EbErrorType av1_full_cost_light_pd0(ModeDecisionContext *context_ptr,
+    struct ModeDecisionCandidateBuffer *candidate_buffer_ptr,
+    uint64_t *y_distortion, uint64_t lambda, uint64_t *y_coeff_bits
+);
+#endif
 extern EbErrorType av1_intra_full_cost(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
                                        struct ModeDecisionCandidateBuffer *candidate_buffer_ptr,
                                        BlkStruct *blk_ptr, uint64_t *y_distortion,

@@ -33,6 +33,7 @@
 /********************************************
  * Constants
  ********************************************/
+#if !CLN_REMOVE_CHECK_MV_VALIDITY
 void check_mv_validity(int16_t x_mv, int16_t y_mv, uint8_t need_shift) {
     MV mv;
     //go to 1/8th if input is 1/4pel
@@ -51,6 +52,7 @@ void check_mv_validity(int16_t x_mv, int16_t y_mv, uint8_t need_shift) {
             MV_UPP);
 
 }
+#endif
 
 #define MAX_INTRA_IN_MD 9
 #define REFERENCE_PIC_LIST_0 0
@@ -362,12 +364,18 @@ static void svt_ext_eight_sad_calculation_8x8_16x16(uint8_t *src, uint32_t src_s
 }
 
 void svt_ext_all_sad_calculation_8x8_16x16_c(uint8_t *src, uint32_t src_stride, uint8_t *ref,
-                                             uint32_t ref_stride, uint32_t mv, uint32_t *p_best_sad_8x8,
+                                             uint32_t ref_stride, uint32_t mv,
+#if OPT_TFILTER
+    uint8_t out_8x8,
+#endif
+    uint32_t *p_best_sad_8x8,
                                              uint32_t *p_best_sad_16x16, uint32_t *p_best_mv8x8,
                                              uint32_t *p_best_mv16x16, uint32_t p_eight_sad16x16[16][8],
                                              uint32_t p_eight_sad8x8[64][8], EbBool sub_sad) {
     static const char offsets[16] = {0, 1, 4, 5, 2, 3, 6, 7, 8, 9, 12, 13, 10, 11, 14, 15};
-
+#if OPT_TFILTER
+    (void)out_8x8;
+#endif
     //---- 16x16 : 0, 1, 4, 5, 2, 3, 6, 7, 8, 9, 12, 13, 10, 11, 14, 15
     for (int y = 0; y < 4; y++) {
         for (int x = 0; x < 4; x++) {
@@ -488,6 +496,9 @@ static void open_loop_me_get_eight_search_point_results_block(
                                           ref_ptr,
                                           ref_luma_stride,
                                           curr_mv,
+#if OPT_TFILTER
+                                          context_ptr->me_type!=ME_MCTF,
+#endif
                                           context_ptr->p_best_sad_8x8,
                                           context_ptr->p_best_sad_16x16,
                                           context_ptr->p_best_mv8x8,
@@ -1014,6 +1025,13 @@ void hme_level_0(
                 yLevel0SearchCenter,
                 /* range */
                 sixteenth_ref_pic_ptr->stride_y,
+#if FTR_PREHME_SUB
+#if TUNE_HME_SUB
+                context_ptr->skip_search_line_hme0,
+#else
+                0,
+#endif
+#endif
                 search_area_width,
                 search_area_height);
 
@@ -1163,6 +1181,9 @@ void hme_level_1(
         yLevel1SearchCenter,
         /* range */
         quarter_ref_pic_ptr->stride_y,
+#if FTR_PREHME_SUB
+        0,
+#endif
         search_area_width,
         search_area_height);
 
@@ -1310,6 +1331,9 @@ void hme_level_2(
         yLevel2SearchCenter,
         /* range */
         ref_pic_ptr->stride_y,
+#if FTR_PREHME_SUB
+        0,
+#endif
         search_area_width,
         search_area_height);
 
@@ -1352,12 +1376,18 @@ uint32_t get_me_info_index(uint32_t max_me_block, const BlockGeom *blk_geom, uin
     (me_pu_result)->distortion_direction[(num)].distortion = (dist); \
     (me_pu_result)->distortion_direction[(num)].direction  = (dir);
 
+#if FTR_ADJUST_SR_FOR_STILL
+uint16_t check_00_center(EbPictureBufferDesc *ref_pic_ptr, MeContext *context_ptr,
+#else
 EbErrorType check_00_center(EbPictureBufferDesc *ref_pic_ptr, MeContext *context_ptr,
+#endif
                             uint32_t sb_origin_x, uint32_t sb_origin_y, uint32_t sb_width,
                             uint32_t sb_height, int16_t *x_search_center, int16_t *y_search_center)
 
 {
+#if !FTR_ADJUST_SR_FOR_STILL
     EbErrorType return_error = EB_ErrorNone;
+#endif
     uint32_t    search_region_index, zero_mv_sad, hme_mv_sad, hme_mvd_rate;
     uint64_t    hme_mv_cost, zero_mv_cost, search_center_cost;
     int16_t     origin_x      = (int16_t)sb_origin_x;
@@ -1423,8 +1453,11 @@ EbErrorType check_00_center(EbPictureBufferDesc *ref_pic_ptr, MeContext *context
 
     *x_search_center = (search_center_cost == zero_mv_cost) ? 0 : *x_search_center;
     *y_search_center = (search_center_cost == zero_mv_cost) ? 0 : *y_search_center;
-
+#if FTR_ADJUST_SR_FOR_STILL
+    return hme_mv_sad;
+#else
     return return_error;
+#endif
 }
 // get ME references based on level:
 // level: 0 => sixteenth, 1 => quarter, 2 => original
@@ -1538,10 +1571,22 @@ void integer_search_sb(
             // Update ME search reagion size based on hme-data
             search_area_width = ((search_area_width / context_ptr->reduce_me_sr_divisor[list_index][ref_pic_index]) + 7) & ~0x07;
             search_area_height = MAX(3, (search_area_height / context_ptr->reduce_me_sr_divisor[list_index][ref_pic_index]));
+#if FTR_ADJUST_SR_USING_LIST0
+            int16_t search_area_height_before_sr_reduction = search_area_height;
+            int16_t search_area_width_before_sr_reduction = search_area_width;
+#endif
+#if FTR_ADJUST_SR_FOR_STILL
+            uint8_t  hme_is_accuarte = 1;
+            uint64_t best_hme_sad = (uint64_t)~0;
+#endif
             if (scs_ptr->enc_mode_2ndpass <= ENC_M4  || context_ptr->me_type != ME_FIRST_PASS)
             if ((x_search_center != 0 || y_search_center != 0) &&
                 (context_ptr->is_used_as_reference_flag == EB_TRUE)) {
+#if FTR_ADJUST_SR_FOR_STILL
+                best_hme_sad = check_00_center(ref_pic_ptr,
+#else
                 check_00_center(ref_pic_ptr,
+#endif
                                 context_ptr,
                                 sb_origin_x,
                                 sb_origin_y,
@@ -1549,7 +1594,31 @@ void integer_search_sb(
                                 sb_height,
                                 &x_search_center,
                                 &y_search_center);
+#if FTR_ADJUST_SR_FOR_STILL
+                if (x_search_center == 0 && y_search_center == 0)
+                    hme_is_accuarte = 0;
+#endif
             }
+#if FTR_ADJUST_SR_FOR_STILL
+            if (context_ptr->me_sr_adjustment_ctrls.enable_me_sr_adjustment == 2) {
+                if ((hme_is_accuarte && (best_hme_sad < (24 * 24))) ||
+                    (context_ptr->is_used_as_reference_flag && context_ptr->hme_results[list_index][ref_pic_index].hme_sad < (24 * 24))) {
+                    search_area_height = search_area_height / 2;
+                }
+            }
+#endif
+#if FTR_ADJUST_SR_USING_LIST0
+            if (context_ptr->me_sr_adjustment_ctrls.enable_me_sr_adjustment == 2) {
+                if (list_index || ref_pic_index) {
+                    if (context_ptr->p_sb_best_sad[0][0][0] < 5000)
+                        if (search_area_height == search_area_height_before_sr_reduction && search_area_width == search_area_width_before_sr_reduction) {
+                            search_area_height = search_area_height >> 1;
+                            search_area_width = search_area_width >> 1;
+                        }
+                }
+            }
+#endif
+
             x_search_area_origin = x_search_center - (search_area_width >> 1);
             y_search_area_origin = y_search_center - (search_area_height >> 1);
 
@@ -1878,6 +1947,9 @@ void prehme_core(
         &prehme_data->best_mv.as_mv.col,
         &prehme_data->best_mv.as_mv.row,
         sixteenth_ref_pic_ptr->stride_y,
+#if FTR_PREHME_SUB
+         context_ptr->prehme_ctrl.skip_search_line,
+#endif
         search_area_width,
         search_area_height);
 
@@ -2019,12 +2091,18 @@ static void hme_level0_sb(
                         hme_sr_factor_y   = dist * 100;
                         uint8_t is_hor = 1;
                         uint8_t is_ver = 1;
+#if FTR_ADJUST_SR_FOR_STILL
+                        uint8_t is_still = 0;
+#endif
                         if (context_ptr->reduce_hme_l0_sr_th_min || context_ptr->reduce_hme_l0_sr_th_max) {
                             if (list_index || ref_pic_index) {
                                 int16_t l0_mvx = context_ptr->x_hme_level0_search_center[0][0][search_region_number_in_width][search_region_number_in_height];
                                 int16_t l0_mvy = context_ptr->y_hme_level0_search_center[0][0][search_region_number_in_width][search_region_number_in_height];// Determine whether the computed motion from list0/ref_index0 is in vertical or horizintal direction
                                 is_ver = ((ABS(l0_mvx) < context_ptr->reduce_hme_l0_sr_th_min) && (ABS(l0_mvy) > context_ptr->reduce_hme_l0_sr_th_max));
                                 is_hor = ((ABS(l0_mvx) > context_ptr->reduce_hme_l0_sr_th_max) && (ABS(l0_mvy) < context_ptr->reduce_hme_l0_sr_th_min));
+#if FTR_ADJUST_SR_FOR_STILL
+                                is_still = ((ABS(l0_mvx) < (context_ptr->reduce_hme_l0_sr_th_min * 3)) && (ABS(l0_mvy) < (context_ptr->reduce_hme_l0_sr_th_min * 3)));
+#endif
                             }
                         }
                         // reduce HME search area for higher ref indices
@@ -2037,6 +2115,14 @@ static void hme_level0_sb(
                             if (!is_hor) {
                                 x_offset = 2;
                             }
+#if FTR_ADJUST_SR_FOR_STILL
+                            if (context_ptr->me_sr_adjustment_ctrls.enable_me_sr_adjustment == 2) {
+                                if (is_still) {
+                                    x_offset = 4;
+                                    y_offset = 4;
+                                }
+                            }
+#endif
                             context_ptr->hme_level0_total_search_area_width = base_hme_search_width / (x_offset + ref_pic_index);
                             context_ptr->hme_level0_total_search_area_height = base_hme_search_height / (y_offset + ref_pic_index);
                             context_ptr->hme_level0_max_total_search_area_width = base_hme_max_search_width / (x_offset + ref_pic_index);
@@ -2660,8 +2746,286 @@ void hme_prune_ref_and_adjust_sr(MeContext* context_ptr) {
     }
 }
 
+#if OPT_ME
+const uint8_t z_to_raster[85] =
+{
+    0,
+    1,2,
+    3,4,
+
+    5,6,9,10,
+    7,8,11,12,
+    13,14,17,18,
+    15,16,19,20,
+
+    21,22,29,30,
+    23,24,31,32,
+    37,38,45,46,
+    39,40,47,48,
+
+    25,26,33,34,
+    27,28,35,36,
+    41,42,49,50,
+    43,44,51,52,
+
+    53,54,61,62,
+    55,56,63,64,
+    69,70,77,78,
+    71,72,79,80,
+
+    57,58,65,66,
+    59,60,67,68,
+    73,74,81,82,
+    75,76,83,84
 
 
+};
+#endif
+#if OPT_ME
+#if SS_CLN_ME_CAND_ARRAY
+void construct_me_candidate_array_mrp_off(
+    PictureParentControlSet *pcs_ptr, MeContext *context_ptr,
+    uint32_t num_of_list_to_search,
+    uint32_t sb_index)
+{
+    // This function should only be called if there is one ref frame in each list
+    assert(context_ptr->num_of_ref_pic_to_search[0] == 1);
+    assert(context_ptr->num_of_ref_pic_to_search[1] == 1);
+    const uint8_t ref_pic_idx = 0;
+
+    // Set whether the reference from each list is allowed
+    uint8_t blk_do_ref_org[MAX_NUM_OF_REF_PIC_LIST];
+    blk_do_ref_org[REF_LIST_0] = context_ptr->hme_results[REF_LIST_0][0].do_ref;
+    blk_do_ref_org[REF_LIST_1] = (num_of_list_to_search == 0) ? 0 : context_ptr->hme_results[REF_LIST_1][0].do_ref;
+    num_of_list_to_search &= context_ptr->hme_results[REF_LIST_1][0].do_ref;
+
+    const uint32_t me_prune_th = (blk_do_ref_org[0] && blk_do_ref_org[1]) ? context_ptr->prune_me_candidates_th : 0;
+
+    // Set the count to 1 for all PUs using memset, which is faster than setting at the end of each loop.  The count will only need
+    // to be updated if both reference frames are allowed.
+    memset(pcs_ptr->pa_me_data->me_results[sb_index]->total_me_candidate_index, 1, pcs_ptr->max_number_of_pus_per_sb);
+
+    for (uint8_t n_idx = 0; n_idx < pcs_ptr->max_number_of_pus_per_sb; ++n_idx) {
+
+        const uint8_t pu_index = z_to_raster[n_idx];
+        uint8_t me_cand_offset = 0;
+
+        MeCandidate* me_candidate_array = &pcs_ptr->pa_me_data->me_results[sb_index]->me_candidate_array[pu_index * pcs_ptr->pa_me_data->max_cand];
+        uint8_t blk_do_ref[MAX_NUM_OF_REF_PIC_LIST] = { blk_do_ref_org[REF_LIST_0] , blk_do_ref_org[REF_LIST_1] };
+        uint32_t best_me_dist = (me_prune_th > 0) ? MIN(context_ptr->p_sb_best_sad[REF_LIST_0][ref_pic_idx][n_idx], context_ptr->p_sb_best_sad[REF_LIST_1][ref_pic_idx][n_idx]) : (uint32_t)~0;
+
+        // Unipred candidates
+        for (uint32_t list_index = REF_LIST_0; list_index <= num_of_list_to_search; ++list_index) {
+
+                //ME was skipped, so do not add this Unipred candidate
+                if (blk_do_ref[list_index] == 0)
+                    continue;
+
+                if (me_prune_th > 0) {
+                    uint32_t current_to_best_dist_distance = (context_ptr->p_sb_best_sad[list_index][ref_pic_idx][n_idx] - best_me_dist) * 100;
+                    if (current_to_best_dist_distance > (best_me_dist * me_prune_th))
+                    {
+                        blk_do_ref[list_index] = 0;
+                        continue;
+                    }
+
+                }
+
+                if (me_cand_offset == 0)
+                    context_ptr->me_distortion[pu_index] = context_ptr->p_sb_best_sad[list_index][ref_pic_idx][n_idx];
+
+                me_candidate_array[me_cand_offset].direction = list_index;
+                me_candidate_array[me_cand_offset].ref_idx_l0 = ref_pic_idx;
+                me_candidate_array[me_cand_offset].ref_idx_l1 = ref_pic_idx;
+                me_candidate_array[me_cand_offset].ref0_list = list_index == 0 ? list_index : 24;
+                me_candidate_array[me_cand_offset].ref1_list = list_index == 1 ? list_index : 24;
+
+                pcs_ptr->pa_me_data->me_results[sb_index]->me_mv_array[pu_index * pcs_ptr->pa_me_data->max_refs + (list_index ? pcs_ptr->pa_me_data->max_l0 : 0) + ref_pic_idx].as_int =
+                    context_ptr->p_sb_best_mv[list_index][ref_pic_idx][n_idx];
+
+                me_cand_offset++;
+        }
+
+        // Can have up to one bipred cand (LAST ,BWD)
+        if (blk_do_ref[REF_LIST_0] && blk_do_ref[REF_LIST_1]) {
+            // If get here, will have 3 candidates, since both unipred directions are valid
+            assert(num_of_list_to_search);
+            me_candidate_array[2].direction = BI_PRED;
+            me_candidate_array[2].ref_idx_l0 = ref_pic_idx;
+            me_candidate_array[2].ref_idx_l1 = ref_pic_idx;
+            me_candidate_array[2].ref0_list = REFERENCE_PIC_LIST_0;
+            me_candidate_array[2].ref1_list = REFERENCE_PIC_LIST_1;
+
+            // store total me candidate count
+            pcs_ptr->pa_me_data->me_results[sb_index]->total_me_candidate_index[pu_index] = 3;
+        }
+    }
+}
+#endif
+void construct_me_candidate_array(
+    PictureParentControlSet *pcs_ptr, MeContext *context_ptr,
+    uint32_t num_of_list_to_search,
+    uint32_t sb_index)
+{
+
+
+    for (uint32_t n_idx = 0; n_idx < pcs_ptr->max_number_of_pus_per_sb; ++n_idx)
+    {
+#if SS_CLN_ME_CAND_ARRAY
+        uint8_t pu_index = (n_idx > 4) ? z_to_raster[n_idx] : n_idx;
+        uint8_t me_cand_offset = 0;
+#else
+        uint32_t pu_index;
+        if (n_idx > 4)
+            pu_index = z_to_raster[n_idx];
+        else
+            pu_index = n_idx;
+
+        uint32_t me_cand_offset = 0;
+#endif
+
+    #if OPT_ME
+        MeCandidate* me_candidate_array = &pcs_ptr->pa_me_data->me_results[sb_index]->me_candidate_array[pu_index * pcs_ptr->pa_me_data->max_cand];
+    #else
+        MeCandidate* me_candidate_array = &pcs_ptr->pa_me_data->me_results[sb_index]->me_candidate_array[pu_index * MAX_PA_ME_CAND];
+    #endif
+        uint8_t blk_do_ref[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX];
+        uint32_t current_to_best_dist_distance;
+#if SS_CLN_ME_CAND_ARRAY
+        const uint32_t me_prune_th = context_ptr->prune_me_candidates_th; //to change to 32bit
+#else
+        const uint32_t me_prune_th = (uint32_t)context_ptr->prune_me_candidates_th; //to change to 32bit
+#endif
+        uint32_t best_me_dist = ~0;
+
+
+        //add a fast path for 2 references at the end
+
+        // Determine the best me distortion
+        if (me_prune_th > 0) {
+            for (uint32_t list_index = REF_LIST_0; list_index <= num_of_list_to_search; ++list_index) {
+                for (uint32_t ref_pic = 0; ref_pic < context_ptr->num_of_ref_pic_to_search[list_index]; ++ref_pic) {
+
+                    if (context_ptr->hme_results[list_index][ref_pic].do_ref == 0) // TODO: make this a local variable
+                        continue;
+
+                    best_me_dist = context_ptr->p_sb_best_sad[list_index][ref_pic][n_idx] < best_me_dist ?
+                        context_ptr->p_sb_best_sad[list_index][ref_pic][n_idx] : best_me_dist;
+                }
+            }
+        }
+
+        // Unipred candidates
+        for (uint32_t list_index = REF_LIST_0; list_index <= num_of_list_to_search; ++list_index) {
+            const uint8_t num_of_ref_pic_to_search = context_ptr->num_of_ref_pic_to_search[list_index];
+
+            for (uint32_t ref_pic_index = 0; ref_pic_index < num_of_ref_pic_to_search; ++ref_pic_index) {
+
+
+                blk_do_ref[list_index][ref_pic_index] = context_ptr->hme_results[list_index][ref_pic_index].do_ref;
+
+
+                //ME was skipped, so do not add this Unipred candidate
+                if (context_ptr->hme_results[list_index][ref_pic_index].do_ref == 0)
+                    continue;
+
+                if (me_prune_th > 0) {
+                    current_to_best_dist_distance = (context_ptr->p_sb_best_sad[list_index][ref_pic_index][n_idx] - best_me_dist) * 100;
+                    if (current_to_best_dist_distance > (best_me_dist * me_prune_th))
+                    {
+                        blk_do_ref[list_index][ref_pic_index] = 0;
+                        continue;
+                    }
+
+                }
+
+
+                if (me_cand_offset == 0)
+                    context_ptr->me_distortion[pu_index] = context_ptr->p_sb_best_sad[list_index][ref_pic_index][n_idx];
+
+                me_candidate_array[me_cand_offset].direction = list_index;
+                me_candidate_array[me_cand_offset].ref_idx_l0 = ref_pic_index;
+                me_candidate_array[me_cand_offset].ref_idx_l1 = ref_pic_index;
+                me_candidate_array[me_cand_offset].ref0_list = list_index == 0 ? list_index : 24;
+                me_candidate_array[me_cand_offset].ref1_list = list_index == 1 ? list_index : 24;
+
+    #if OPT_ME
+                pcs_ptr->pa_me_data->me_results[sb_index]->me_mv_array[pu_index * pcs_ptr->pa_me_data->max_refs + (list_index ? pcs_ptr->pa_me_data->max_l0 : 0) + ref_pic_index].as_int =
+                    context_ptr->p_sb_best_mv[list_index][ref_pic_index][n_idx];
+    #else
+                pcs_ptr->pa_me_data->me_results[sb_index]->me_mv_array[pu_index * MAX_PA_ME_MV + (list_index ? 4 : 0) + ref_pic_index].as_int =
+                    context_ptr->p_sb_best_mv[list_index][ref_pic_index][n_idx];
+    #endif
+
+                me_cand_offset++;
+            }
+        }
+
+        if (num_of_list_to_search) {
+            // 1st set of BIPRED cand
+            // (LAST ,BWD), (LAST,ALT ), (LAST,ALT2 )
+            // (LAST2,BWD), (LAST2,ALT), (LAST2,ALT2)
+            // (LAST3,BWD), (LAST3,ALT), (LAST3,ALT2)
+            // (GOLD ,BWD), (GOLD,ALT ), (GOLD,ALT2 )
+            for (uint32_t first_list_ref_pict_idx = 0;
+                first_list_ref_pict_idx < context_ptr->num_of_ref_pic_to_search[REF_LIST_0];
+                first_list_ref_pict_idx++) {
+                for (uint32_t second_list_ref_pict_idx = 0;
+                    second_list_ref_pict_idx < context_ptr->num_of_ref_pic_to_search[REF_LIST_1];
+                    second_list_ref_pict_idx++) {
+
+                    if (blk_do_ref[REF_LIST_0][first_list_ref_pict_idx] &&
+                        blk_do_ref[REF_LIST_1][second_list_ref_pict_idx]) {
+
+                        me_candidate_array[me_cand_offset].direction = BI_PRED;
+                        me_candidate_array[me_cand_offset].ref_idx_l0 = first_list_ref_pict_idx;
+                        me_candidate_array[me_cand_offset].ref_idx_l1 = second_list_ref_pict_idx;
+                        me_candidate_array[me_cand_offset].ref0_list = REFERENCE_PIC_LIST_0;
+                        me_candidate_array[me_cand_offset].ref1_list = REFERENCE_PIC_LIST_1;
+                        me_cand_offset++;
+                    }
+                    }
+                }
+
+            // 2nd set of BIPRED cand: (LAST,LAST2) (LAST,LAST3) (LAST,GOLD)
+            for (uint32_t first_list_ref_pict_idx = 1;
+                first_list_ref_pict_idx < context_ptr->num_of_ref_pic_to_search[REF_LIST_0];
+                first_list_ref_pict_idx++) {
+
+                if (blk_do_ref[REF_LIST_0][0] &&
+                    blk_do_ref[REF_LIST_0][first_list_ref_pict_idx]) {
+
+                    me_candidate_array[me_cand_offset].direction = BI_PRED;
+                    me_candidate_array[me_cand_offset].ref_idx_l0 = 0;
+                    me_candidate_array[me_cand_offset].ref_idx_l1 = first_list_ref_pict_idx;
+                    me_candidate_array[me_cand_offset].ref0_list = REFERENCE_PIC_LIST_0;
+                    me_candidate_array[me_cand_offset].ref1_list = REFERENCE_PIC_LIST_0;
+                    me_cand_offset++;
+                }
+                }
+
+            // 3rd set of BIPRED cand: (BWD, ALT)
+
+            if (context_ptr->num_of_ref_pic_to_search[REF_LIST_1] == 3 && blk_do_ref[REF_LIST_1][0] &&
+                blk_do_ref[REF_LIST_1][2]) {
+                {
+                    me_candidate_array[me_cand_offset].direction = BI_PRED;
+                    me_candidate_array[me_cand_offset].ref_idx_l0 = 0;
+                    me_candidate_array[me_cand_offset].ref_idx_l1 = 2;
+                    me_candidate_array[me_cand_offset].ref0_list = REFERENCE_PIC_LIST_1;
+                    me_candidate_array[me_cand_offset].ref1_list = REFERENCE_PIC_LIST_1;
+                    me_cand_offset++;
+                }
+            }
+        }
+
+
+        // store total me candidate count
+        pcs_ptr->pa_me_data->me_results[sb_index]->total_me_candidate_index[pu_index] = me_cand_offset;
+    }
+
+}
+#else
 void construct_me_candidate_array(
     PictureParentControlSet *pcs_ptr, MeContext *context_ptr,
     uint32_t num_of_list_to_search,
@@ -2821,7 +3185,7 @@ void construct_me_candidate_array(
     pcs_ptr->pa_me_data->me_results[sb_index]->total_me_candidate_index[pu_index] =
         MIN((me_cand_offset - pu_index * MAX_PA_ME_CAND), MAX_PA_ME_CAND);
 }
-
+#endif
 
 
 // Active and stationary detection for global motion
@@ -2840,7 +3204,11 @@ void perform_gm_detection(
     if (scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE) {
         for (unsigned i = 0; i < 64; i++) {
             uint8_t n_idx = 21 + i;
+#if OPT_ME
+            MeCandidate* me_candidate = &(pcs_ptr->pa_me_data->me_results[sb_index]->me_candidate_array[n_idx * pcs_ptr->pa_me_data->max_cand]);
+#else
             MeCandidate* me_candidate = &(pcs_ptr->pa_me_data->me_results[sb_index]->me_candidate_array[n_idx * MAX_PA_ME_CAND]);
+#endif
 
             uint32_t list_index = (me_candidate->direction == 0 || me_candidate->direction == 2) ? me_candidate->ref0_list : me_candidate->ref1_list;
             uint32_t ref_pic_index = (me_candidate->direction == 0 || me_candidate->direction == 2) ? me_candidate->ref_idx_l0 : me_candidate->ref_idx_l1;
@@ -2871,7 +3239,11 @@ void perform_gm_detection(
     else {
         for (unsigned i = 0; i < 16; i++) {
             uint8_t n_idx = 5 + i;
+#if OPT_ME
+            MeCandidate* me_candidate = &(pcs_ptr->pa_me_data->me_results[sb_index]->me_candidate_array[n_idx * pcs_ptr->pa_me_data->max_cand]);
+#else
             MeCandidate* me_candidate = &(pcs_ptr->pa_me_data->me_results[sb_index]->me_candidate_array[n_idx * MAX_PA_ME_CAND]);
+#endif
 
             uint32_t list_index = (me_candidate->direction == 0 || me_candidate->direction == 2) ? me_candidate->ref0_list : me_candidate->ref1_list;
             uint32_t ref_pic_index = (me_candidate->direction == 0 || me_candidate->direction == 2) ? me_candidate->ref_idx_l0 : me_candidate->ref_idx_l1;
@@ -2957,10 +3329,26 @@ void compute_distortion(
     uint64_t mean_dist_8x8 = dist_8x8 / 64;
     uint64_t sum_ofsq_dist_8x8 = 0;
     for (unsigned i = 0; i < 64; i++) {
+#if FTR_BIAS_STAT
+        const  int64_t diff = (context_ptr->me_distortion[21 + i] - mean_dist_8x8);
+        sum_ofsq_dist_8x8 += diff * diff;
+#else
         sum_ofsq_dist_8x8 += (context_ptr->me_distortion[21 + i] - mean_dist_8x8) * (context_ptr->me_distortion[21 + i] - mean_dist_8x8);
+#endif
     }
-    pcs_ptr->me_8x8_cost_variance[sb_index] = (uint32_t)(sum_ofsq_dist_8x8 / 64);
 
+    pcs_ptr->me_8x8_cost_variance[sb_index] = (uint32_t)(sum_ofsq_dist_8x8 / 64);
+#if FTR_BIAS_STAT
+    // Compute the sum of the distortion of all 16 16x16 (720 and above) and
+    // 64 8x8 (for lower resolutions) blocks in the SB
+    pcs_ptr->rc_me_distortion[sb_index] = (scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE) ? dist_8x8 : dist_16x16;
+    const uint32_t pix_num = sb_params->width * sb_params->height;
+    // Normalize
+    pcs_ptr->me_64x64_distortion[sb_index] = (((dist_64x64 * sb_size) / (pix_num)) * context_ptr->stat_factor) / 100;
+    pcs_ptr->me_32x32_distortion[sb_index] = (((dist_32x32 * sb_size) / (pix_num)) * context_ptr->stat_factor) / 100;
+    pcs_ptr->me_16x16_distortion[sb_index] = (((dist_16x16 * sb_size) / (pix_num)) * context_ptr->stat_factor) / 100;
+    pcs_ptr->me_8x8_distortion[sb_index] = (((dist_8x8 * sb_size) / (pix_num)) * context_ptr->stat_factor) / 100;
+#else
     // Compute the sum of the distortion of all 16 16x16 (720 and above) and
     // 64 8x8 (for lower resolutions) blocks in the SB
     pcs_ptr->rc_me_distortion[sb_index] = (scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE) ? dist_8x8 : dist_16x16;
@@ -2970,7 +3358,7 @@ void compute_distortion(
     pcs_ptr->me_32x32_distortion[sb_index] = (dist_32x32 * sb_size) / (sb_params->width * sb_params->height);
     pcs_ptr->me_16x16_distortion[sb_index] = (dist_16x16 * sb_size) / (sb_params->width * sb_params->height);
     pcs_ptr->me_8x8_distortion[sb_index] = (dist_8x8 * sb_size) / (sb_params->width * sb_params->height);
-
+#endif
 }
 
 
@@ -3037,7 +3425,10 @@ EbErrorType motion_estimate_sb(
 
 {
     EbErrorType         return_error = EB_ErrorNone;
+
+#if! OPT_ME
     uint32_t            max_number_of_pus_per_sb = pcs_ptr->max_number_of_pus_per_sb;
+#endif
     uint32_t num_of_list_to_search = context_ptr->num_of_list_to_search;
 
     //pruning of the references is not done for alt-ref / when HMeLevel2 not done
@@ -3061,13 +3452,30 @@ EbErrorType motion_estimate_sb(
     }
 
     if (context_ptr->me_type != ME_MCTF) {
+
+#if OPT_ME
+        {
+#else
         // Bi-Prediction motion estimation loop
         for (uint32_t pu_index = 0; pu_index < max_number_of_pus_per_sb; ++pu_index) {
+#endif
+#if SS_CLN_ME_CAND_ARRAY
+            if (context_ptr->num_of_ref_pic_to_search[REF_LIST_0] == 1 &&
+                context_ptr->num_of_ref_pic_to_search[REF_LIST_1] == 1)
+                construct_me_candidate_array_mrp_off(
+                    pcs_ptr,
+                    context_ptr,
+                    num_of_list_to_search,
+                    sb_index);
+            else
+#endif
             construct_me_candidate_array(
                 pcs_ptr,
                 context_ptr,
                 num_of_list_to_search,
+#if !OPT_ME
                 pu_index,
+#endif
                 sb_index);
         }
         if (context_ptr->me_type != ME_FIRST_PASS)
@@ -3194,10 +3602,27 @@ EbErrorType open_loop_intra_search_mb(
                         16);
                 }
                 else {
+#if FTR_TPL_TX_SUBSAMPLE
+                    TxSize cost_tx_size = pcs_ptr->tpl_ctrls.subsample_tx ? TX_16X8 : TX_16X16;
+                    svt_aom_subtract_block(16 >> pcs_ptr->tpl_ctrls.subsample_tx,
+                        16,
+                        src_diff,
+                        16 << pcs_ptr->tpl_ctrls.subsample_tx,
+                        src,
+                        input_ptr->stride_y << pcs_ptr->tpl_ctrls.subsample_tx,
+                        predictor,
+                        16 << pcs_ptr->tpl_ctrls.subsample_tx);
+
+                    EB_TRANS_COEFF_SHAPE pf_shape = pcs_ptr->tpl_ctrls.tpl_opt_flag ? pcs_ptr->tpl_ctrls.pf_shape : DEFAULT_SHAPE;
+                    svt_av1_wht_fwd_txfm(src_diff, 16 << pcs_ptr->tpl_ctrls.subsample_tx, coeff, cost_tx_size, pf_shape, 8, 0);
+
+                    intra_cost = svt_aom_satd(coeff, 256 >> pcs_ptr->tpl_ctrls.subsample_tx) << pcs_ptr->tpl_ctrls.subsample_tx;
+#else
                     svt_aom_subtract_block(16, 16, src_diff, 16, src, input_ptr->stride_y, predictor, 16);
                     EB_TRANS_COEFF_SHAPE pf_shape = pcs_ptr->tpl_ctrls.tpl_opt_flag ? pcs_ptr->tpl_ctrls.pf_shape : DEFAULT_SHAPE;
                     svt_av1_wht_fwd_txfm(src_diff, 16, coeff, 2/*TX_16X16*/, pf_shape, 8, 0);
                     intra_cost = svt_aom_satd(coeff, 16 * 16);
+#endif
                 }
                 // printf("open_loop_intra_search_mb aom_satd mbxy %d %d, mode=%d, satd=%d, dst[0~4]=0x%d,%d,%d,%d\n", cu_origin_x, cu_origin_y, ois_intra_mode, intra_cost, predictor[0], predictor[1], predictor[2], predictor[3]);
                 if (intra_cost < best_intra_cost) {

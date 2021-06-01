@@ -859,3 +859,268 @@ INSTANTIATE_TEST_CASE_P(
     ::testing::Combine(
         ::testing::Values(svt_av1_apply_temporal_filter_planewise_hbd_c),
         ::testing::Values(svt_av1_apply_temporal_filter_planewise_hbd_avx2)));
+#if TUNE_REDESIGN_TF_CTRLS
+class TemporalFilterTestGetFinalFilteredPixels : public ::testing::Test {
+private:
+    uint32_t width;
+    uint32_t height;
+    uint32_t width_stride[3];
+    EbByte org_src_center_ptr_start[3];
+    EbByte ref_src_center_ptr_start[3];
+    size_t src_center_ptr_start_size;
+    uint16_t* org_altref_buffer_highbd_start[3];
+    uint16_t* ref_altref_buffer_highbd_start[3];
+    size_t altref_buffer_highbd_start_size;
+
+    uint32_t *accum[3];
+    uint16_t *count[3];
+    MeContext *context_ptr;
+  public:
+    TemporalFilterTestGetFinalFilteredPixels(){
+        width = BW;
+        height = BH;
+        src_center_ptr_start_size = height *  (width + 5) ;
+        altref_buffer_highbd_start_size = height *  (width + 5);
+        context_ptr = (MeContext *)malloc(sizeof(*context_ptr));
+
+        for (int color_channel = 0; color_channel < 3; ++color_channel) {
+            width_stride[color_channel] = width + 5;
+            org_src_center_ptr_start[color_channel] = (EbByte)malloc(src_center_ptr_start_size * sizeof(uint8_t));
+            ref_src_center_ptr_start[color_channel] = (EbByte)malloc(src_center_ptr_start_size * sizeof(uint8_t));
+            org_altref_buffer_highbd_start[color_channel] = (uint16_t*)malloc(altref_buffer_highbd_start_size * sizeof(uint16_t));
+            ref_altref_buffer_highbd_start[color_channel] = (uint16_t*)malloc(altref_buffer_highbd_start_size * sizeof(uint16_t));
+            memset(org_src_center_ptr_start[color_channel], 1, src_center_ptr_start_size * sizeof(uint8_t));
+            memset(ref_src_center_ptr_start[color_channel], 1, src_center_ptr_start_size * sizeof(uint8_t));
+            memset(org_altref_buffer_highbd_start[color_channel], 1, src_center_ptr_start_size * sizeof(uint16_t));
+            memset(ref_altref_buffer_highbd_start[color_channel], 1, src_center_ptr_start_size * sizeof(uint16_t));
+            accum[color_channel] = (uint32_t *)malloc(BW*BH*sizeof(uint32_t));
+            count[color_channel] = (uint16_t *)malloc(BW*BH*sizeof(uint16_t));
+        }
+    }
+
+    ~TemporalFilterTestGetFinalFilteredPixels() {
+        free(context_ptr);
+        for (int color_channel = 0; color_channel < 3; ++color_channel) {
+            free(org_src_center_ptr_start[color_channel]);
+            free(ref_src_center_ptr_start[color_channel]);
+            free(org_altref_buffer_highbd_start[color_channel]);
+            free(ref_altref_buffer_highbd_start[color_channel]);
+            free(accum[color_channel]);
+            free(count[color_channel]);
+        }
+    }
+
+     void SetRandData() {
+        for (int color_channel = 0; color_channel < 3; ++color_channel) {
+            for (int i = 0; i < BH * BW; ++i) {
+               accum[color_channel][i] = rand()%1024;//(uint8_t)(rand() % 256);;
+               uint16_t rand16 = rand()%256;
+               if (rand16 == 0) {
+                   rand16 = 1;
+               }
+               count[color_channel][i] = rand16; //Never 0
+            }
+        }
+
+        memset(context_ptr, 0, sizeof(*context_ptr));
+        context_ptr->tf_chroma = rand() % 2;
+    }
+
+    void RunTest(EbBool is_highbd) {
+        int blk_y_src_offset = 1;
+        int blk_ch_src_offset = 2;
+        uint16_t blk_width_ch = 48;
+        uint16_t blk_height_ch = 61;
+
+        SetRandData();
+
+        get_final_filtered_pixels_c(context_ptr,
+                                     org_src_center_ptr_start,
+                                     org_altref_buffer_highbd_start,
+                                     accum,
+                                     count,
+                                     width_stride,
+                                     blk_y_src_offset,
+                                     blk_ch_src_offset,
+                                     blk_width_ch,
+                                     blk_height_ch,
+                                     is_highbd);
+
+        get_final_filtered_pixels_avx2(context_ptr,
+                                     ref_src_center_ptr_start,
+                                     ref_altref_buffer_highbd_start,
+                                     accum,
+                                     count,
+                                     width_stride,
+                                     blk_y_src_offset,
+                                     blk_ch_src_offset,
+                                     blk_width_ch,
+                                     blk_height_ch,
+                                     is_highbd);
+
+        for (int color_channel = 0; color_channel < 3; ++color_channel) {
+
+            EXPECT_EQ(memcmp(org_src_center_ptr_start[color_channel],
+                ref_src_center_ptr_start[color_channel],
+                src_center_ptr_start_size) , 0);
+
+            EXPECT_EQ(memcmp(org_altref_buffer_highbd_start[color_channel],
+                ref_altref_buffer_highbd_start[color_channel],
+                altref_buffer_highbd_start_size) , 0);
+        }
+
+    }
+};
+
+TEST_F(TemporalFilterTestGetFinalFilteredPixels, test_lbd) {
+    for (int i = 0; i < 100; ++i) {
+        RunTest(false);
+    }
+}
+
+TEST_F(TemporalFilterTestGetFinalFilteredPixels, test_hbd) {
+    for (int i = 0; i < 100; ++i) {
+        RunTest(true);
+    }
+}
+
+#if SS_OPT_TF2_ME_COPY
+
+class TemporalFilterTestApplyFilteringCentral : public ::testing::Test {
+private:
+    uint32_t width;
+    uint32_t height;
+    EbByte src[3];
+    size_t src_size;
+    uint16_t* src_highbd[3];
+    size_t src_highbd_size;
+
+    uint32_t *org_accum[3];
+    uint32_t *ref_accum[3];
+    uint16_t *org_count[3];
+    uint16_t *ref_count[3];
+    MeContext *context_ptr;
+    EbPictureBufferDesc input_picture_central;
+  public:
+    TemporalFilterTestApplyFilteringCentral() {
+        width = BW;
+        height = BH;
+        src_size = height *  (width + 5);
+        src_highbd_size = height *  (width + 5);
+        context_ptr = (MeContext*)malloc(sizeof(*context_ptr));
+
+        for (int color_channel = 0; color_channel < 3; ++color_channel) {
+            src[color_channel] = (EbByte)malloc(src_size * sizeof(uint8_t));
+            src_highbd[color_channel] = (uint16_t*)malloc(src_highbd_size * sizeof(uint16_t));
+            org_accum[color_channel] = (uint32_t *)malloc(BW*BH*sizeof(uint32_t));
+            ref_accum[color_channel] = (uint32_t *)malloc(BW*BH*sizeof(uint32_t));
+            org_count[color_channel] = (uint16_t *)malloc(BW*BH*sizeof(uint16_t));
+            ref_count[color_channel] = (uint16_t *)malloc(BW*BH*sizeof(uint16_t));
+            memset(org_accum[color_channel], 1, BW*BH*sizeof(uint32_t));
+            memset(ref_accum[color_channel], 1, BW*BH*sizeof(uint32_t));
+            memset(org_count[color_channel], 1, BW*BH*sizeof(uint16_t));
+            memset(ref_count[color_channel], 1, BW*BH*sizeof(uint16_t));
+        }
+    }
+
+    ~TemporalFilterTestApplyFilteringCentral() {
+        free(context_ptr);
+        for (int color_channel = 0; color_channel < 3; ++color_channel) {
+            free(src[color_channel]);
+            free(src_highbd[color_channel]);
+            free(org_accum[color_channel]);
+            free(ref_accum[color_channel]);
+            free(org_count[color_channel]);
+            free(ref_count[color_channel]);
+        }
+    }
+
+     void SetRandData() {
+        for (int color_channel = 0; color_channel < 3; ++color_channel) {
+            for (int i = 0; i < src_size; ++i) {
+                src[color_channel][i] = rand();
+                src_highbd[color_channel][i] = rand();
+            }
+        }
+
+        memset(context_ptr, 0, sizeof(*context_ptr));
+        context_ptr->tf_chroma = rand() % 2;
+
+        memset(&input_picture_central, 0, sizeof(input_picture_central));
+        input_picture_central.stride_y = BW + 5;
+    }
+
+    void RunTest(EbBool is_highbd) {
+        int blk_y_src_offset = 1;
+        int blk_ch_src_offset = 2;
+        uint16_t blk_width_ch = 48;
+        uint16_t blk_height_ch = 61;
+        uint32_t ss_x = rand() % 2;
+        uint32_t ss_y = rand() % 2;
+        SetRandData();
+
+        if (!is_highbd) {
+            apply_filtering_central_c(context_ptr,
+                                      &input_picture_central,
+                                      src,
+                                      org_accum,
+                                      org_count,
+                                      blk_width_ch,
+                                      blk_height_ch,
+                                      ss_x,
+                                      ss_y);
+            apply_filtering_central_avx2(context_ptr,
+                                      &input_picture_central,
+                                      src,
+                                      ref_accum,
+                                      ref_count,
+                                      blk_width_ch,
+                                      blk_height_ch,
+                                      ss_x,
+                                      ss_y);
+        } else {
+            apply_filtering_central_highbd_c(context_ptr,
+                                      &input_picture_central,
+                                      src_highbd,
+                                      org_accum,
+                                      org_count,
+                                      blk_width_ch,
+                                      blk_height_ch,
+                                      ss_x,
+                                      ss_y);
+            apply_filtering_central_highbd_avx2(context_ptr,
+                                      &input_picture_central,
+                                      src_highbd,
+                                      ref_accum,
+                                      ref_count,
+                                      blk_width_ch,
+                                      blk_height_ch,
+                                      ss_x,
+                                      ss_y);
+        }
+
+        for (int color_channel = 0; color_channel < 3; ++color_channel) {
+            EXPECT_EQ(memcmp(org_accum[color_channel],
+                    ref_accum[color_channel],
+                    BW*BH*sizeof(uint32_t)) , 0);
+
+            EXPECT_EQ(memcmp(org_count[color_channel],
+                    ref_count[color_channel],
+                    BW*BH*sizeof(uint16_t)) , 0);
+        }
+    }
+};
+
+TEST_F(TemporalFilterTestApplyFilteringCentral, test_lbd) {
+    for (int i = 0; i < 100; ++i) {
+        RunTest(false);
+    }
+}
+
+TEST_F(TemporalFilterTestApplyFilteringCentral, test_hbd) {
+    for (int i = 0; i < 100; ++i) {
+        RunTest(true);
+    }
+}
+#endif /*SS_OPT_TF2_ME_COPY*/
+#endif /*TUNE_REDESIGN_TF_CTRLS*/

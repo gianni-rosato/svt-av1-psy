@@ -42,8 +42,13 @@
 #define PICTURE_MANAGER_REORDER_QUEUE_MAX_DEPTH 2048
 #define HIGH_LEVEL_RATE_CONTROL_HISTOGRAM_QUEUE_MAX_DEPTH 2048
 #define PACKETIZATION_REORDER_QUEUE_MAX_DEPTH 2048
+#if FIX_PRESET_TUNING
+#define TPL_PADX 16
+#define TPL_PADY 16
+#else
 #define TPL_PADX 20
 #define TPL_PADY 20
+#endif
 // RC Groups: They should be a power of 2, so we can replace % by &.
 // Instead of using x % y, we use x && (y-1)
 #define PARALLEL_GOP_MAX_NUMBER 256

@@ -44,7 +44,24 @@
 using ::testing::make_tuple;
 using svt_av1_test_tool::SVTRandom;
 namespace {
+#if FTR_CDEF_SUBSAMPLING
+typedef void (*svt_cdef_filter_block_8xn_16_func)(
+    const uint16_t *const in, const int32_t pri_strength,
+    const int32_t sec_strength, const int32_t dir, int32_t pri_damping,
+    int32_t sec_damping, const int32_t coeff_shift, uint16_t *const dst,
+    const int32_t dstride, uint8_t height, uint8_t subsampling_factor);
 
+static const svt_cdef_filter_block_8xn_16_func
+    svt_cdef_filter_block_8xn_16_func_table[] = {
+        svt_cdef_filter_block_8xn_16_avx2,
+#ifndef EN_AVX512_SUPPORT
+        svt_cdef_filter_block_8xn_16_avx512
+#endif
+};
+using cdef_dir_param_t =
+    ::testing::tuple<CdefFilterBlockFunc, CdefFilterBlockFunc, BlockSize,
+                     int, int, svt_cdef_filter_block_8xn_16_func>;
+#else
 typedef void (*svt_cdef_filter_block_8x8_16_func)(
     const uint16_t *const in, const int32_t pri_strength,
     const int32_t sec_strength, const int32_t dir, int32_t pri_damping,
@@ -62,7 +79,7 @@ static const svt_cdef_filter_block_8x8_16_func
 using cdef_dir_param_t =
     ::testing::tuple<CdefFilterBlockFunc, CdefFilterBlockFunc, BlockSize,
                      int, int, svt_cdef_filter_block_8x8_16_func>;
-
+#endif
 /**
  * @brief Unit test for svt_cdef_filter_block_avx2
  *
@@ -99,7 +116,11 @@ class CDEFBlockTest : public ::testing::TestWithParam<cdef_dir_param_t> {
         bsize_ = TEST_GET_PARAM(2);
         boundary_ = TEST_GET_PARAM(3);
         bd_ = TEST_GET_PARAM(4);
+#if FTR_CDEF_SUBSAMPLING
+        svt_cdef_filter_block_8xn_16 = TEST_GET_PARAM(5);
+#else
         svt_cdef_filter_block_8x8_16 = TEST_GET_PARAM(5);
+#endif
 
         memset(dst_ref_, 0, sizeof(dst_ref_));
         memset(dst_tst_, 0, sizeof(dst_tst_));
@@ -138,7 +159,11 @@ class CDEFBlockTest : public ::testing::TestWithParam<cdef_dir_param_t> {
         }
     }
 
+#if FTR_CDEF_SUBSAMPLING
+    void run_test(int pri_damping, int sec_damping, uint8_t subsampling_factor) {
+#else
     void run_test(int pri_damping, int sec_damping) {
+#endif
         int pri_strength, sec_strength;
         int dir;
         unsigned int pos = 0;
@@ -157,6 +182,32 @@ class CDEFBlockTest : public ::testing::TestWithParam<cdef_dir_param_t> {
                      sec_strength += 1 << (bd_ - 8)) {
                     if (sec_strength == 3 << (bd_ - 8))
                         continue;
+#if FTR_CDEF_SUBSAMPLING
+                    cdef_ref_(bd_ == 8 ? (uint8_t *)dst_ref_ : 0,
+                        dst_ref_,
+                        size_,
+                        src_ + CDEF_HBORDER + CDEF_VBORDER * CDEF_BSTRIDE,
+                        pri_strength,
+                        sec_strength,
+                        dir,
+                        pri_damping,
+                        sec_damping,
+                        bsize_,
+                        bd_ - 8,
+                        subsampling_factor);
+                    cdef_tst_(bd_ == 8 ? (uint8_t *)dst_tst_ : 0,
+                        dst_tst_,
+                        size_,
+                        src_ + CDEF_HBORDER + CDEF_VBORDER * CDEF_BSTRIDE,
+                        pri_strength,
+                        sec_strength,
+                        dir,
+                        pri_damping,
+                        sec_damping,
+                        bsize_,
+                        bd_ - 8,
+                        subsampling_factor);
+#else
                     cdef_ref_(bd_ == 8 ? (uint8_t *)dst_ref_ : 0,
                               dst_ref_,
                               size_,
@@ -179,7 +230,7 @@ class CDEFBlockTest : public ::testing::TestWithParam<cdef_dir_param_t> {
                               sec_damping,
                               bsize_,
                               bd_ - 8);
-
+#endif
                     for (pos = 0; pos < max_pos; pos++) {
                         ASSERT_EQ(dst_ref_[pos], dst_tst_[pos])
                             << "Error: CDEFBlockTest, SIMD and C mismatch."
@@ -218,7 +269,21 @@ class CDEFBlockTest : public ::testing::TestWithParam<cdef_dir_param_t> {
                          level += (2 + 6 * scale) << (bd_ - 8)) {
                         for (bits = 1; bits <= bd_; bits += 1 + 3 * scale) {
                             prepare_data(level, bits);
+#if FTR_CDEF_SUBSAMPLING
+                            // Allowable subsampling values are: 1, 2
+                            run_test(pri_damping, sec_damping, 1);
+
+                            /*
+                            The 2x subsampled avx2 kernel for 4x4 blocks is the same as the non-subsampled kernel
+                            because all values can be filtered at once, so subsampling would not give a speed gain.
+                            Therefore, the C/AVX2 kernels for 4x4 2x subsampled blocks will produce different
+                            outputs (expected), and are not tested.
+                            */
+                            if (bsize_ > BLOCK_4X4)
+                                run_test(pri_damping, sec_damping, 2);
+#else
                             run_test(pri_damping, sec_damping);
+#endif
                         }
                     }
                 }
@@ -256,6 +321,21 @@ class CDEFBlockTest : public ::testing::TestWithParam<cdef_dir_param_t> {
                          sec_strength += 1 << (bd_ - 8)) {
                         if (sec_strength == 3 << (bd_ - 8))
                             continue;
+#if FTR_CDEF_SUBSAMPLING
+                        cdef_ref_(
+                            bd_ == 8 ? (uint8_t *)dst_ref_ : 0,
+                            dst_ref_,
+                            size_,
+                            src_ + CDEF_HBORDER + CDEF_VBORDER * CDEF_BSTRIDE,
+                            pri_strength,
+                            sec_strength,
+                            dir,
+                            pri_damping,
+                            sec_damping,
+                            bsize_,
+                            bd_ - 8,
+                            1); // subsampling - test only non-subsampled for the speed
+#else
                         cdef_ref_(
                             bd_ == 8 ? (uint8_t *)dst_ref_ : 0,
                             dst_ref_,
@@ -268,6 +348,7 @@ class CDEFBlockTest : public ::testing::TestWithParam<cdef_dir_param_t> {
                             sec_damping,
                             bsize_,
                             bd_ - 8);
+#endif
                     }
                 }
             }
@@ -289,6 +370,21 @@ class CDEFBlockTest : public ::testing::TestWithParam<cdef_dir_param_t> {
                          sec_strength += 1 << (bd_ - 8)) {
                         if (sec_strength == 3 << (bd_ - 8))
                             continue;
+#if FTR_CDEF_SUBSAMPLING
+                        cdef_tst_(
+                            bd_ == 8 ? (uint8_t *)dst_tst_ : 0,
+                            dst_tst_,
+                            size_,
+                            src_ + CDEF_HBORDER + CDEF_VBORDER * CDEF_BSTRIDE,
+                            pri_strength,
+                            sec_strength,
+                            dir,
+                            pri_damping,
+                            sec_damping,
+                            bsize_,
+                            bd_ - 8,
+                            1); // subsampling - test only non-subsampled for the speed
+#else
                         cdef_tst_(
                             bd_ == 8 ? (uint8_t *)dst_tst_ : 0,
                             dst_tst_,
@@ -301,6 +397,7 @@ class CDEFBlockTest : public ::testing::TestWithParam<cdef_dir_param_t> {
                             sec_damping,
                             bsize_,
                             bd_ - 8);
+#endif
                     }
                 }
             }
@@ -351,7 +448,16 @@ TEST_P(CDEFBlockTest, DISABLED_SpeedTest) {
 // structs as arguments, which makes the v256 type of the intrinsics
 // hard to support, so optimizations for this target are disabled.
 #if defined(_WIN64) || !defined(_MSC_VER) || defined(__clang__)
-
+#if FTR_CDEF_SUBSAMPLING
+INSTANTIATE_TEST_CASE_P(
+    Cdef, CDEFBlockTest,
+    ::testing::Combine(
+        ::testing::Values(&svt_cdef_filter_block_avx2),
+        ::testing::Values(&svt_cdef_filter_block_c),
+        ::testing::Values(BLOCK_4X4, BLOCK_4X8, BLOCK_8X4, BLOCK_8X8),
+        ::testing::Range(0, 16), ::testing::Range(8, 13, 2),
+        ::testing::ValuesIn(svt_cdef_filter_block_8xn_16_func_table)));
+#else
 INSTANTIATE_TEST_CASE_P(
     Cdef, CDEFBlockTest,
     ::testing::Combine(
@@ -360,6 +466,7 @@ INSTANTIATE_TEST_CASE_P(
         ::testing::Values(BLOCK_4X4, BLOCK_4X8, BLOCK_8X4, BLOCK_8X8),
         ::testing::Range(0, 16), ::testing::Range(8, 13, 2),
         ::testing::ValuesIn(svt_cdef_filter_block_8x8_16_func_table)));
+#endif
 
 #endif  // defined(_WIN64) || !defined(_MSC_VER)
 
@@ -569,6 +676,28 @@ TEST(CdefToolTest, ComputeCdefDistMatchTest) {
                 BLOCK_4X4, BLOCK_4X8, BLOCK_8X4, BLOCK_8X8};
             for (int i = 0; i < 4; ++i) {
                 for (int plane = 0; plane < 3; ++plane) {
+#if FTR_CDEF_SUBSAMPLING
+                    // Allowable subsampling values are: 1, 2
+                    for (uint8_t subsampling = 1; subsampling <= 2; subsampling <<= 1){
+                        const uint64_t c_mse = compute_cdef_dist_c(dst_data_,
+                                                                   stride,
+                                                                   src_data_,
+                                                                   dlist,
+                                                                   cdef_count,
+                                                                   test_bs[i],
+                                                                   coeff_shift,
+                                                                   plane,
+                                                                   subsampling);
+                        const uint64_t avx_mse = compute_cdef_dist_16bit_avx2(dst_data_,
+                                                                              stride,
+                                                                              src_data_,
+                                                                              dlist,
+                                                                              cdef_count,
+                                                                              test_bs[i],
+                                                                              coeff_shift,
+                                                                              plane,
+                                                                              subsampling);
+#else
                     const uint64_t c_mse = compute_cdef_dist_c(dst_data_,
                                                                stride,
                                                                src_data_,
@@ -585,10 +714,14 @@ TEST(CdefToolTest, ComputeCdefDistMatchTest) {
                                                                           test_bs[i],
                                                                           coeff_shift,
                                                                           plane);
-                    ASSERT_EQ(c_mse, avx_mse)
-                        << "compute_cdef_dist_16bit_avx2 failed "
-                        << "bitdepth: " << bd << " plane: " << plane
-                        << " BlockSize " << test_bs[i] << " loop: " << k;
+#endif
+                        ASSERT_EQ(c_mse, avx_mse)
+                            << "compute_cdef_dist_16bit_avx2 failed "
+                            << "bitdepth: " << bd << " plane: " << plane
+                            << " BlockSize " << test_bs[i] << " loop: " << k;
+#if FTR_CDEF_SUBSAMPLING
+                    }
+#endif
                 }
             }
         }
@@ -632,6 +765,29 @@ TEST(CdefToolTest, ComputeCdefDist8bitMatchTest) {
                 BLOCK_4X4, BLOCK_4X8, BLOCK_8X4, BLOCK_8X8};
             for (int i = 0; i < 4; ++i) {
                 for (int plane = 0; plane < 3; ++plane) {
+#if FTR_CDEF_SUBSAMPLING
+                    // Allowable subsampling values are: 1, 2
+                    for (uint8_t subsampling = 1; subsampling <= 2; subsampling <<= 1) {
+                        const uint64_t c_mse = compute_cdef_dist_8bit_c(dst_data_,
+                                                                        stride,
+                                                                        src_data_,
+                                                                        dlist,
+                                                                        cdef_count,
+                                                                        test_bs[i],
+                                                                        coeff_shift,
+                                                                        plane,
+                                                                        subsampling);
+                        const uint64_t avx_mse =
+                            compute_cdef_dist_8bit_avx2(dst_data_,
+                                                        stride,
+                                                        src_data_,
+                                                        dlist,
+                                                        cdef_count,
+                                                        test_bs[i],
+                                                        coeff_shift,
+                                                        plane,
+                                                        subsampling);
+#else
                     const uint64_t c_mse = compute_cdef_dist_8bit_c(dst_data_,
                                                                     stride,
                                                                     src_data_,
@@ -649,10 +805,14 @@ TEST(CdefToolTest, ComputeCdefDist8bitMatchTest) {
                                                     test_bs[i],
                                                     coeff_shift,
                                                     plane);
-                    ASSERT_EQ(c_mse, avx_mse)
-                        << "compute_cdef_dist_8bit_avx2 failed "
+#endif
+                        ASSERT_EQ(c_mse, avx_mse)
+                            << "compute_cdef_dist_8bit_avx2 failed "
                         << "bitdepth: " << bd << " plane: " << plane
-                        << " BlockSize " << test_bs[i] << " loop: " << k;
+                            << " BlockSize " << test_bs[i] << " loop: " << k;
+#if FTR_CDEF_SUBSAMPLING
+                    }
+#endif
                 }
             }
         }
@@ -677,10 +837,15 @@ TEST(CdefToolTest, ComputeCdefDist8bitMatchTest) {
  * end_gi: TOTAL_STRENGTHS
  *
  */
-
+#if SS_OPT_CDEF
+typedef uint64_t(*svt_search_one_dual_func)(int *lev0, int *lev1,
+    int nb_strengths, uint64_t** mse[2],
+    int sb_count, int start_gi, int end_gi);
+#else
 typedef uint64_t (*svt_search_one_dual_func)(int *lev0, int *lev1,
     int nb_strengths, uint64_t (**mse)[64],
     int sb_count, int start_gi, int end_gi);
+#endif
 
 static const svt_search_one_dual_func search_one_dual_func_table[] = {
     svt_search_one_dual_avx2,
@@ -696,9 +861,19 @@ TEST(CdefToolTest, SearchOneDualMatchTest) {
     const int end_gi = TOTAL_STRENGTHS;
     int lvl_luma_ref[CDEF_MAX_STRENGTHS], lvl_chroma_ref[CDEF_MAX_STRENGTHS];
     int lvl_luma_tst[CDEF_MAX_STRENGTHS], lvl_chroma_tst[CDEF_MAX_STRENGTHS];
+#if SS_OPT_CDEF
+    uint64_t** mse[2];
+    mse[0] = (uint64_t**)svt_aom_memalign(32, sizeof(*mse[0]) * sb_count);
+    mse[1] = (uint64_t**)svt_aom_memalign(32, sizeof(*mse[1]) * sb_count);
+    for (int i = 0; i < sb_count; i++) {
+        mse[0][i] = (uint64_t*)svt_aom_memalign(32, sizeof(**mse[0]) * 64);
+        mse[1][i] = (uint64_t*)svt_aom_memalign(32, sizeof(**mse[1]) * 64);
+    }
+#else
     uint64_t(*mse[2])[TOTAL_STRENGTHS];
     mse[0] = (uint64_t(*)[64])svt_aom_memalign(32, sizeof(**mse) * sb_count);
     mse[1] = (uint64_t(*)[64])svt_aom_memalign(32, sizeof(**mse) * sb_count);
+#endif
 
     SVTRandom rnd_(10, false);
     for (int k = 0; k < 100; ++k) {
@@ -753,7 +928,12 @@ TEST(CdefToolTest, SearchOneDualMatchTest) {
             }
         }
     }
-
+#if SS_OPT_CDEF
+    for (int i = 0; i < sb_count; i++) {
+        svt_aom_free(mse[0][i]);
+        svt_aom_free(mse[1][i]);
+    }
+#endif
     svt_aom_free(mse[0]);
     svt_aom_free(mse[1]);
 }
@@ -766,10 +946,19 @@ TEST(CdefToolTest, DISABLED_SearchOneDualSpeedTest) {
     const int nb_strengths = 8;
     int lvl_luma_ref[CDEF_MAX_STRENGTHS], lvl_chroma_ref[CDEF_MAX_STRENGTHS];
     int lvl_luma_tst[CDEF_MAX_STRENGTHS], lvl_chroma_tst[CDEF_MAX_STRENGTHS];
+#if SS_OPT_CDEF
+    uint64_t** mse[2];
+    mse[0] = (uint64_t**)svt_aom_memalign(32, sizeof(*mse[0]) * sb_count);
+    mse[1] = (uint64_t**)svt_aom_memalign(32, sizeof(*mse[1]) * sb_count);
+    for (int i = 0; i < sb_count; i++) {
+        mse[0][i] = (uint64_t*)svt_aom_memalign(32, sizeof(**mse[0]) * 64);
+        mse[1][i] = (uint64_t*)svt_aom_memalign(32, sizeof(**mse[1]) * 64);
+    }
+#else
     uint64_t(*mse[2])[TOTAL_STRENGTHS];
     mse[0] = (uint64_t(*)[64])svt_aom_memalign(32, sizeof(**mse) * sb_count);
     mse[1] = (uint64_t(*)[64])svt_aom_memalign(32, sizeof(**mse) * sb_count);
-
+#endif
     SVTRandom rnd_(10, false);
 
     // generate mse randomly
@@ -856,6 +1045,12 @@ TEST(CdefToolTest, DISABLED_SearchOneDualSpeedTest) {
         }
     }
 
+#if SS_OPT_CDEF
+    for (int i = 0; i < sb_count; i++) {
+        svt_aom_free(mse[0][i]);
+        svt_aom_free(mse[1][i]);
+    }
+#endif
     svt_aom_free(mse[0]);
     svt_aom_free(mse[1]);
 }

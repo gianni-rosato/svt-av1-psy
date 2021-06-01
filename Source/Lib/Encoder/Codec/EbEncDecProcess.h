@@ -70,6 +70,9 @@ typedef struct EncDecContext {
     EbBool        is_16bit; //enable 10 bit encode in CL
     uint32_t      bit_depth;
     EbColorFormat color_format;
+#if  FTR_INTRA_DETECTOR
+    uint64_t      tot_intra_coded_area;
+#endif
     uint64_t three_quad_energy;
 
     // Needed for DC prediction

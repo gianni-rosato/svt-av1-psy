@@ -70,11 +70,19 @@ static INLINE int get_tx_size_context(const PartitionInfo *xd, ParseCtxt *parse_
         max_tx_high;
 
     if (has_above)
+#if OPT_MEMORY_MIP
+        if (is_inter_block_dec(above_mbmi))
+#else
         if (is_inter_block(above_mbmi))
+#endif
             above = block_size_wide[above_mbmi->sb_type] >= max_tx_wide;
 
     if (has_left)
+#if OPT_MEMORY_MIP
+        if (is_inter_block_dec(left_mbmi))
+#else
         if (is_inter_block(left_mbmi))
+#endif
             left = block_size_high[left_mbmi->sb_type] >= max_tx_high;
 
     if (has_above && has_left)
@@ -100,7 +108,11 @@ void update_tx_context(ParseCtxt *parse_ctxt, PartitionInfo *pi, BlockSize bsize
     ParseAboveNbr4x4Ctxt *above_parse_ctx = parse_ctxt->parse_above_nbr4x4_ctxt;
     ParseLeftNbr4x4Ctxt * left_parse_ctx  = parse_ctxt->parse_left_nbr4x4_ctxt;
     BlockSize             b_size          = bsize;
+#if OPT_MEMORY_MIP
+    if (is_inter_block_dec(pi->mi))
+#else
     if (is_inter_block(pi->mi))
+#endif
         b_size = txsize_to_bsize[tx_size];
     uint8_t *const above_ctx = above_parse_ctx->above_tx_wd +
         (mi_col - parse_ctxt->cur_tile_info.mi_col_start + blk_col);
@@ -136,6 +148,16 @@ int get_intra_inter_context(PartitionInfo *xd) {
     const int                  has_above  = xd->up_available;
     const int                  has_left   = xd->left_available;
 
+#if OPT_MEMORY_MIP
+    if (has_above && has_left) { // both edges available
+        const int above_intra = !is_inter_block_dec(above_mbmi);
+        const int left_intra  = !is_inter_block_dec(left_mbmi);
+        return left_intra && above_intra ? 3 : left_intra || above_intra;
+    } else if (has_above || has_left) { // one edge available
+        return 2 * !is_inter_block_dec(has_above ? above_mbmi : left_mbmi);
+    } else
+        return 0;
+#else
     if (has_above && has_left) { // both edges available
         const int above_intra = !is_inter_block(above_mbmi);
         const int left_intra  = !is_inter_block(left_mbmi);
@@ -144,6 +166,7 @@ int get_intra_inter_context(PartitionInfo *xd) {
         return 2 * !is_inter_block(has_above ? above_mbmi : left_mbmi);
     } else
         return 0;
+#endif
 }
 
 PredictionMode read_intra_mode(SvtReader *r, AomCdfProb *cdf) {
@@ -222,9 +245,13 @@ int get_comp_reference_type_context(const PartitionInfo *xd) {
     const int                  left_in_image  = xd->left_available;
 
     if (above_in_image && left_in_image) { // both edges available
+#if OPT_MEMORY_MIP
+        const int above_intra = !is_inter_block_dec(above_mbmi);
+        const int left_intra  = !is_inter_block_dec(left_mbmi);
+#else
         const int above_intra = !is_inter_block(above_mbmi);
         const int left_intra  = !is_inter_block(left_mbmi);
-
+#endif
         if (above_intra && left_intra) { // intra/intra
             pred_context = 2;
         } else if (above_intra || left_intra) { // intra/inter
@@ -267,7 +294,11 @@ int get_comp_reference_type_context(const PartitionInfo *xd) {
     } else if (above_in_image || left_in_image) { // one edge available
         const BlockModeInfo *edge_mbmi = above_in_image ? above_mbmi : left_mbmi;
 
+#if OPT_MEMORY_MIP
+        if (!is_inter_block_dec(edge_mbmi)) { // intra
+#else
         if (!is_inter_block(edge_mbmi)) { // intra
+#endif
             pred_context = 2;
         } else { // inter
             if (!has_second_ref(edge_mbmi)) // single pred

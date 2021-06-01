@@ -32,6 +32,9 @@ void     svt_sad_loop_kernel_c(
         uint32_t  block_width, // input parameter, block width (N)
         uint64_t *best_sad, int16_t *x_search_center, int16_t *y_search_center,
         uint32_t src_stride_raw, // input parameter, source stride (no line skipping)
+#if FTR_PREHME_SUB
+        uint8_t skip_search_line,
+#endif
         int16_t search_area_width, int16_t search_area_height);
 
 uint32_t svt_nxm_sad_kernel_helper_c(const uint8_t *src, uint32_t src_stride, const uint8_t *ref,

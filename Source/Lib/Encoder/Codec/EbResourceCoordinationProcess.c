@@ -155,42 +155,151 @@ void set_tpl_extended_controls(
         tpl_ctrls->enable_tpl_qps = 0;
         tpl_ctrls->disable_intra_pred_nbase = 0;
         tpl_ctrls->disable_intra_pred_nref = 0;
+#if OPT5_TPL_REDUCE_PIC
+        tpl_ctrls->reduced_tpl_group = -1;
+#else
         tpl_ctrls->reduced_tpl_group = 0;
+#endif
         tpl_ctrls->pf_shape = DEFAULT_SHAPE;
         tpl_ctrls->use_pred_sad_in_intra_search = 0;
         tpl_ctrls->get_best_ref = 0;
         tpl_ctrls->use_pred_sad_in_inter_search = 0;
         tpl_ctrls->skip_rdoq_uv_qp_based_th = 4;
         tpl_ctrls->r0_adjust_factor = 0.1;
+#if FTR_QP_BASED_DEPTH_REMOVAL
+        tpl_ctrls->modulate_depth_removal_level = 1;
+#endif
+#if FTR_TPL_TX_SUBSAMPLE
+        tpl_ctrls->subsample_tx = 0;
+#endif
         break;
     case 1:
         tpl_ctrls->tpl_opt_flag = 1;
         tpl_ctrls->enable_tpl_qps = 0;
         tpl_ctrls->disable_intra_pred_nbase = 0;
         tpl_ctrls->disable_intra_pred_nref = 0;
+#if OPT5_TPL_REDUCE_PIC
+        tpl_ctrls->reduced_tpl_group = -1;
+#else
         tpl_ctrls->reduced_tpl_group = 0;
+#endif
         tpl_ctrls->pf_shape = DEFAULT_SHAPE;
         tpl_ctrls->use_pred_sad_in_intra_search = 0;
         tpl_ctrls->get_best_ref = 0;
         tpl_ctrls->use_pred_sad_in_inter_search = 0;
         tpl_ctrls->skip_rdoq_uv_qp_based_th = 4;
         tpl_ctrls->r0_adjust_factor = 0.1;
+#if FTR_QP_BASED_DEPTH_REMOVAL
+        tpl_ctrls->modulate_depth_removal_level = 1;
+#endif
+#if FTR_TPL_TX_SUBSAMPLE
+        tpl_ctrls->subsample_tx = 0;
+#endif
         break;
     case 2:
         tpl_ctrls->tpl_opt_flag = 1;
         tpl_ctrls->enable_tpl_qps = 0;
         tpl_ctrls->disable_intra_pred_nbase = 0;
         tpl_ctrls->disable_intra_pred_nref = 1;
+#if TPL_CLEANUP
+        tpl_ctrls->reduced_tpl_group = pcs_ptr->hierarchical_levels == 5 ? 3 : 2;
+#else
         tpl_ctrls->reduced_tpl_group = 2;
+#endif
         tpl_ctrls->pf_shape = DEFAULT_SHAPE;
         tpl_ctrls->use_pred_sad_in_intra_search = 0;
         tpl_ctrls->get_best_ref = 0;
         tpl_ctrls->use_pred_sad_in_inter_search = 0;
         tpl_ctrls->skip_rdoq_uv_qp_based_th = 4;
         tpl_ctrls->r0_adjust_factor = 0.30;
+#if FTR_QP_BASED_DEPTH_REMOVAL
+        tpl_ctrls->modulate_depth_removal_level = 1;
+#endif
+#if FTR_TPL_TX_SUBSAMPLE
+        tpl_ctrls->subsample_tx = 0;
+#endif
         break;
     case 3:
+#if !FTR_QP_BASED_DEPTH_REMOVAL
     default:
+#endif
+        tpl_ctrls->tpl_opt_flag = 1;
+        tpl_ctrls->enable_tpl_qps = 0;
+        tpl_ctrls->disable_intra_pred_nbase = 0;
+        tpl_ctrls->disable_intra_pred_nref = 1;
+#if TPL_CLEANUP
+        tpl_ctrls->reduced_tpl_group = pcs_ptr->hierarchical_levels == 5 ? 3 : 2;
+#else
+        tpl_ctrls->reduced_tpl_group = 2;
+#endif
+        tpl_ctrls->get_best_ref = 0;
+        tpl_ctrls->pf_shape = scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? N2_SHAPE : N4_SHAPE;
+        tpl_ctrls->use_pred_sad_in_intra_search = 1;
+        tpl_ctrls->use_pred_sad_in_inter_search = 1;
+        tpl_ctrls->skip_rdoq_uv_qp_based_th = 4;
+#if FTR_QP_BASED_DEPTH_REMOVAL
+        tpl_ctrls->modulate_depth_removal_level = 1;
+#if FTR_TPL_TX_SUBSAMPLE
+        tpl_ctrls->subsample_tx = 0;
+#endif
+        tpl_ctrls->r0_adjust_factor = 0.30;
+        break;
+#if FTR_TPL_TX_SUBSAMPLE
+    case 4:
+        tpl_ctrls->tpl_opt_flag = 1;
+        tpl_ctrls->enable_tpl_qps = 0;
+        tpl_ctrls->disable_intra_pred_nbase = 0;
+        tpl_ctrls->disable_intra_pred_nref = 1;
+#if TUNE_M9_TPL_ME_HME
+#if TPL_CLEANUP
+        tpl_ctrls->reduced_tpl_group = pcs_ptr->hierarchical_levels == 5 ?
+            (scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? 3 : 2) :
+            (scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? 2 : 1);
+#else
+        tpl_ctrls->reduced_tpl_group = scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? 2 : 1;
+#endif
+#else
+        tpl_ctrls->reduced_tpl_group = 2;
+#endif
+        tpl_ctrls->get_best_ref = 0;
+        tpl_ctrls->pf_shape = scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? N2_SHAPE : N4_SHAPE;
+        tpl_ctrls->use_pred_sad_in_intra_search = 1;
+        tpl_ctrls->use_pred_sad_in_inter_search = 1;
+        tpl_ctrls->skip_rdoq_uv_qp_based_th = 4;
+        tpl_ctrls->modulate_depth_removal_level = 1;
+        tpl_ctrls->subsample_tx = 1;
+#if OPT14_TPL
+        tpl_ctrls->r0_adjust_factor = scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? 0.30 : 0.70;
+#else
+        tpl_ctrls->r0_adjust_factor = 0.3;
+#endif
+        break;
+    case 5:
+#else
+    case 4:
+#endif
+    default:
+#if OPT5_TPL_REDUCE_PIC
+        tpl_ctrls->tpl_opt_flag = 1;
+        tpl_ctrls->enable_tpl_qps = 0;
+        tpl_ctrls->disable_intra_pred_nbase = 0;
+        tpl_ctrls->disable_intra_pred_nref = 1;
+#if TPL_CLEANUP
+        tpl_ctrls->reduced_tpl_group = pcs_ptr->hierarchical_levels == 5 ?
+            (scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? 3 : 1) :
+            (scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? 2 : 0);
+#else
+        tpl_ctrls->reduced_tpl_group = scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? 2 : 0;
+#endif
+        tpl_ctrls->get_best_ref = 0;
+        tpl_ctrls->pf_shape = scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? N2_SHAPE : N4_SHAPE;
+        tpl_ctrls->use_pred_sad_in_intra_search = 1;
+        tpl_ctrls->use_pred_sad_in_inter_search = 1;
+        tpl_ctrls->skip_rdoq_uv_qp_based_th = 4;
+        tpl_ctrls->modulate_depth_removal_level = 1;
+        tpl_ctrls->subsample_tx = 1;
+        tpl_ctrls->r0_adjust_factor = scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? 0.3 : 2.0;
+#else
         tpl_ctrls->tpl_opt_flag = 1;
         tpl_ctrls->enable_tpl_qps = 0;
         tpl_ctrls->disable_intra_pred_nbase = 0;
@@ -202,6 +311,16 @@ void set_tpl_extended_controls(
         tpl_ctrls->use_pred_sad_in_inter_search = 1;
         tpl_ctrls->skip_rdoq_uv_qp_based_th = 4;
         tpl_ctrls->r0_adjust_factor = 0.30;
+        tpl_ctrls->modulate_depth_removal_level = 0;
+#if FTR_TPL_TX_SUBSAMPLE
+        tpl_ctrls->subsample_tx = 1;
+#endif
+#endif
+        break;
+#else
+        tpl_ctrls->r0_adjust_factor = 0.30;
+        break;
+#endif
     }
 
     if(scs_ptr->static_config.hierarchical_levels < 4)
@@ -225,6 +344,12 @@ void set_tpl_controls(
         tpl_ctrls->use_pred_sad_in_inter_search = 0;
         tpl_ctrls->skip_rdoq_uv_qp_based_th = 4;
         tpl_ctrls->r0_adjust_factor = 0.0;
+#if FTR_QP_BASED_DEPTH_REMOVAL
+        tpl_ctrls->modulate_depth_removal_level = 1;
+#endif
+#if FTR_TPL_TX_SUBSAMPLE
+        tpl_ctrls->subsample_tx = 0;
+#endif
         break;
     case 1:
         tpl_ctrls->tpl_opt_flag = 1;
@@ -239,6 +364,12 @@ void set_tpl_controls(
         tpl_ctrls->use_pred_sad_in_inter_search = 0;
         tpl_ctrls->skip_rdoq_uv_qp_based_th = 4;
         tpl_ctrls->r0_adjust_factor = 0.0;
+#if FTR_QP_BASED_DEPTH_REMOVAL
+        tpl_ctrls->modulate_depth_removal_level = 1;
+#endif
+#if FTR_TPL_TX_SUBSAMPLE
+        tpl_ctrls->subsample_tx = 0;
+#endif
         break;
     case 2:
         tpl_ctrls->tpl_opt_flag = 1;
@@ -253,8 +384,58 @@ void set_tpl_controls(
         tpl_ctrls->use_pred_sad_in_inter_search = 0;
         tpl_ctrls->skip_rdoq_uv_qp_based_th = 4;
         tpl_ctrls->r0_adjust_factor = 0.0;
+#if FTR_QP_BASED_DEPTH_REMOVAL
+        tpl_ctrls->modulate_depth_removal_level = 1;
+#endif
+#if FTR_TPL_TX_SUBSAMPLE
+        tpl_ctrls->subsample_tx = 0;
+#endif
         break;
     case 3:
+#if !FTR_QP_BASED_DEPTH_REMOVAL
+    default:
+#endif
+        tpl_ctrls->tpl_opt_flag = 1;
+        tpl_ctrls->enable_tpl_qps = 0;
+        tpl_ctrls->disable_intra_pred_nbase = 0;
+        tpl_ctrls->disable_intra_pred_nref = 1;
+        tpl_ctrls->disable_tpl_nref = 1;
+        tpl_ctrls->disable_tpl_pic_dist = 1;
+        tpl_ctrls->get_best_ref = 0;
+        tpl_ctrls->pf_shape = scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? N2_SHAPE : N4_SHAPE;
+        tpl_ctrls->use_pred_sad_in_intra_search = 1;
+        tpl_ctrls->use_pred_sad_in_inter_search = 1;
+        tpl_ctrls->skip_rdoq_uv_qp_based_th = 4;
+#if FTR_QP_BASED_DEPTH_REMOVAL
+        tpl_ctrls->modulate_depth_removal_level = 1;
+#endif
+#if FTR_TPL_TX_SUBSAMPLE
+        tpl_ctrls->subsample_tx = 0;
+#endif
+        tpl_ctrls->r0_adjust_factor = 0.0;
+        break;
+#if FTR_QP_BASED_DEPTH_REMOVAL
+#if FTR_TPL_TX_SUBSAMPLE
+    case 4:
+        tpl_ctrls->tpl_opt_flag = 1;
+        tpl_ctrls->enable_tpl_qps = 0;
+        tpl_ctrls->disable_intra_pred_nbase = 0;
+        tpl_ctrls->disable_intra_pred_nref = 1;
+        tpl_ctrls->disable_tpl_nref = 1;
+        tpl_ctrls->disable_tpl_pic_dist = 1;
+        tpl_ctrls->get_best_ref = 0;
+        tpl_ctrls->pf_shape = scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? N2_SHAPE : N4_SHAPE;
+        tpl_ctrls->use_pred_sad_in_intra_search = 1;
+        tpl_ctrls->use_pred_sad_in_inter_search = 1;
+        tpl_ctrls->skip_rdoq_uv_qp_based_th = 4;
+        tpl_ctrls->modulate_depth_removal_level = 1;
+        tpl_ctrls->subsample_tx = 1;
+        tpl_ctrls->r0_adjust_factor = 0.0;
+        break;
+    case 5:
+#else
+    case 4:
+#endif
     default:
         tpl_ctrls->tpl_opt_flag = 1;
         tpl_ctrls->enable_tpl_qps = 0;
@@ -268,7 +449,12 @@ void set_tpl_controls(
         tpl_ctrls->use_pred_sad_in_inter_search = 1;
         tpl_ctrls->skip_rdoq_uv_qp_based_th = 4;
         tpl_ctrls->r0_adjust_factor = 0.0;
+        tpl_ctrls->modulate_depth_removal_level = 0;
+#if FTR_TPL_TX_SUBSAMPLE
+        tpl_ctrls->subsample_tx = 1;
+#endif
         break;
+#endif
     }
 }
 /*
@@ -279,7 +465,11 @@ uint8_t get_enable_restoration(EbEncMode enc_mode) {
 
     uint8_t enable_restoration;
 
+#if FIX_PRESET_TUNING
+        enable_restoration = (enc_mode <= ENC_M7) ? 1 : 0;
+#else
         enable_restoration = (enc_mode <= ENC_M6) ? 1 : 0;
+#endif
     return  enable_restoration;
 }
 /******************************************************
@@ -311,13 +501,63 @@ EbErrorType signal_derivation_pre_analysis_oq_pcs(SequenceControlSet const * con
     pcs_ptr->tf_enable_hme_level1_flag = 1;
     pcs_ptr->tf_enable_hme_level2_flag = 1;
 
+
+
+
     uint8_t tpl_level;
+#if TUNE_LOWER_PRESETS && !TUNE_SHIFT_PRESETS_DOWN || TUNE_MEGA_M9_M4
+    if (pcs_ptr->enc_mode <= ENC_M5)
+#else
     if (pcs_ptr->enc_mode <= ENC_M4)
+#endif
         tpl_level = 0;
     else if (pcs_ptr->enc_mode <= ENC_M7)
         tpl_level = 2;
+#if FTR_TPL_TX_SUBSAMPLE
+#if TUNE_M9_M10_MAR && ! OPT14_TPL
+    else if (pcs_ptr->enc_mode <= ENC_M10)
+        tpl_level = 3;
+#else
+    else if (pcs_ptr->enc_mode <= ENC_M8)
+        tpl_level = 3;
+#if !OPT14_TPL
+#if OPT5_TPL_REDUCE_PIC
+    else if (pcs_ptr->enc_mode <= ENC_M8)
+#else
+    else if (pcs_ptr->enc_mode <= ENC_M10)
+#endif
+        tpl_level = 4;
+#endif
+#endif
+#if TUNE_NEW_M10_M11
+    else if (pcs_ptr->enc_mode <= ENC_M9)
+#else
+    else
+#endif
+#if OPT14_TPL
+        tpl_level = 4;
+#else
+        tpl_level = 5;
+#endif
+#if TUNE_NEW_M10_M11
+    else
+        tpl_level = 5;
+#endif
+#else
+#if FTR_QP_BASED_DEPTH_REMOVAL
+#if TUNE_M7_M10_PRESETS
+    else if (pcs_ptr->enc_mode <= ENC_M10)
+#else
+    else if (pcs_ptr->enc_mode <= ENC_M9)
+#endif
+        tpl_level = 3;
+    else
+        tpl_level = 4;
+#else
     else
         tpl_level = 3;
+#endif
+#endif
 
     if (scs_ptr->lad_mg)
         set_tpl_extended_controls(pcs_ptr,tpl_level);
@@ -347,8 +587,7 @@ EbErrorType signal_derivation_pre_analysis_oq_scs(SequenceControlSet * scs_ptr) 
         scs_ptr->seq_header.pic_based_rate_est = (uint8_t)scs_ptr->static_config.pic_based_rate_est;
 
     if (scs_ptr->static_config.enable_restoration_filtering == DEFAULT) {
-        scs_ptr->seq_header.enable_restoration = get_enable_restoration(
-            scs_ptr->static_config.enc_mode);
+        scs_ptr->seq_header.enable_restoration = get_enable_restoration(scs_ptr->static_config.enc_mode);
     } else
         scs_ptr->seq_header.enable_restoration =
             (uint8_t)scs_ptr->static_config.enable_restoration_filtering;
@@ -362,7 +601,7 @@ EbErrorType signal_derivation_pre_analysis_oq_scs(SequenceControlSet * scs_ptr) 
         scs_ptr->seq_header.enable_warped_motion = 1;
     } else
         scs_ptr->seq_header.enable_warped_motion = (uint8_t)
-            scs_ptr->static_config.enable_warped_motion;
+                                                       scs_ptr->static_config.enable_warped_motion;
 
     return return_error;
 }
@@ -1080,6 +1319,7 @@ void *resource_coordination_kernel(void *input_ptr) {
             if (scs_ptr->static_config.filter_intra_level == DEFAULT)
                 scs_ptr->seq_header.filter_intra_level =
                 (scs_ptr->static_config.enc_mode <= ENC_M5) ? 1 : 0;
+
             else
                 scs_ptr->seq_header.filter_intra_level =
                     (scs_ptr->static_config.filter_intra_level == 0) ? 0 : 1;
@@ -1087,10 +1327,17 @@ void *resource_coordination_kernel(void *input_ptr) {
             // 0                 OFF: No compond mode search : AVG only
             // 1                 ON: full
             if (scs_ptr->static_config.compound_level == DEFAULT) {
-                scs_ptr->compound_mode = 1;
+#if TUNE_NEW_M11
+                scs_ptr->compound_mode = (scs_ptr->static_config.enc_mode <= ENC_M11) ? 1 : 0;
+#else
+                scs_ptr->compound_mode = (scs_ptr->static_config.enc_mode <= ENC_M10) ? 1 : 0;
+#endif
             } else
                 scs_ptr->compound_mode = scs_ptr->static_config.compound_level;
 
+#if M8_NEW_REF
+            scs_ptr->compound_mode = 1;
+#endif
             if (scs_ptr->compound_mode) {
                 scs_ptr->seq_header.order_hint_info.enable_jnt_comp = 1; //DISTANCE
                 scs_ptr->seq_header.enable_masked_compound          = 1; //DIFF+WEDGE

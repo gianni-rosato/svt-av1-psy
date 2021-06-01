@@ -30,12 +30,22 @@ typedef struct MeCandidate {
     uint8_t ref0_list : 1;
     uint8_t ref1_list : 1;
 } MeCandidate;
+#if OPT_ME
+
+typedef union MvCandidate {
+    uint32_t as_int;
+    struct {
+        signed short x_mv;
+        signed short y_mv;
+    };
+} MvCandidate;
+#else
 
 typedef struct MvCandidate {
     signed short x_mv;
     signed short y_mv;
 } MvCandidate;
-
+#endif
 // move this to a new file with ctor & dtor
 typedef struct MeSbResults {
     EbDctor      dctor;

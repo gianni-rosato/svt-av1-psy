@@ -134,6 +134,9 @@ static void svt_reference_object_dctor(EbPtr p) {
     EbReferenceObject *obj = (EbReferenceObject *)p;
     EB_DELETE(obj->reference_picture16bit);
     EB_DELETE(obj->reference_picture);
+#if FTR_NEW_WN_LVLS
+    EB_FREE_2D(obj->unit_info);
+#endif
     EB_FREE_ALIGNED_ARRAY(obj->mvs);
     EB_DESTROY_MUTEX(obj->referenced_area_mutex);
 
@@ -222,6 +225,10 @@ EbErrorType svt_reference_object_ctor(EbReferenceObject *reference_object,
 
     uint32_t mi_rows = reference_object->reference_picture->height >> MI_SIZE_LOG2;
     uint32_t mi_cols = reference_object->reference_picture->width >> MI_SIZE_LOG2;
+#if FTR_NEW_WN_LVLS
+    // there should be one unit info per plane and per rest unit
+    EB_MALLOC_2D(reference_object->unit_info, MAX_MB_PLANE, picture_buffer_desc_init_data_ptr->rest_units_per_tile);
+#endif
 
     if (picture_buffer_desc_init_data_ptr->mfmv) {
         //MFMV map is 8x8 based.

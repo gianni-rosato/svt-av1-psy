@@ -60,6 +60,16 @@ EbErrorType        av1_txb_estimate_coeff_bits(
            TxSize txsize, TxSize txsize_uv, TxType tx_type, TxType tx_type_uv,
            COMPONENT_TYPE component_type);
 
+#if LIGHT_PD0_2
+EbErrorType av1_txb_estimate_coeff_bits_light_pd0(
+    struct ModeDecisionContext *md_context,
+    struct ModeDecisionCandidateBuffer *candidate_buffer_ptr,
+    uint32_t txb_origin_index,
+    EbPictureBufferDesc *coeff_buffer_sb,
+    uint32_t y_eob,
+    uint64_t *y_txb_coeff_bits,
+    TxSize txsize);
+#endif
 //**********************************************************************************************************//
 //onyxc_int.h
 static INLINE int32_t frame_is_intra_only(const PictureParentControlSet *const pcs_ptr) {

@@ -40,10 +40,10 @@ extern "C" {
 #define REFMVS_LIMIT ((1 << 12) - 1)
 
 static const MV k_zero_mv = {0, 0};
-
+#if !OPT_INLINE_FUNCS
 extern int8_t av1_ref_frame_type(const MvReferenceFrame *const rf);
 extern void   av1_set_ref_frame(MvReferenceFrame *rf, int8_t ref_frame_type);
-
+#endif
 void inter_block_mode_info(EbDecHandle *dec_handle, ParseCtxt *parse_ctxt, PartitionInfo *pi);
 
 void svt_av1_find_mv_refs(EbDecHandle *dec_handle, PartitionInfo *pi, ParseCtxt *parse_ctx,

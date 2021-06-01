@@ -71,6 +71,9 @@ typedef struct SequenceControlSet {
     /*!< Down-sampling method @ ME and alt-ref temporal filtering
         (The signal changes per preset; 0: filtering, 1: decimation) Default is 0. */
     uint8_t down_sampling_method_me_search;
+#if CLN_GEOM
+    uint32_t geom_idx;   //geometry type
+#endif
 
     /*  1..15    | 17..31  | 33..47  |
               16 |       32|       48|
@@ -131,7 +134,10 @@ typedef struct SequenceControlSet {
     uint16_t sb_size_pix;
     uint16_t sb_tot_cnt;
     uint16_t max_block_cnt;
-
+#if FTR_NEW_WN_LVLS
+    /*!< Restoration Unit parameters set for the stream */
+    int32_t rest_units_per_tile;
+#endif
     /*!< Block limits */
     uint8_t max_blk_size;
     uint8_t min_blk_size;

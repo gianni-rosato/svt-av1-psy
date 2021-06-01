@@ -31,10 +31,16 @@ enum {
     MV_COST_L1_LOWRES, // Use the l1 norm of the mv as the cost (<480p)
     MV_COST_L1_MIDRES, // Use the l1 norm of the mv as the cost (>=480p)
     MV_COST_L1_HDRES, // Use the l1 norm of the mv as the cost (>=720p)
+#if OPT_SUBPEL
+    MV_COST_OPT,
+#endif
     MV_COST_NONE // Use 0 as as cost irrespective of the current mv
 } UENUM1BYTE(MV_COST_TYPE);
-
+#if FTR_USE_PSAD
+typedef struct svt_mv_cost_param {
+#else
 typedef struct {
+#endif
     // The reference mv used to compute the mv cost
     const MV *   ref_mv;
     FULLPEL_MV   full_ref_mv;
@@ -42,6 +48,9 @@ typedef struct {
     const int *  mvjcost;
     const int *  mvcost[2];
     int          error_per_bit;
+#if OPT_SUBPEL
+    int          early_exit_th;
+#endif
     // A multiplier used to convert rate to sad cost
     int sad_per_bit;
 } MV_COST_PARAMS;
@@ -51,7 +60,9 @@ typedef struct {
 // =============================================================================
 extern struct svt_buf_2d {
     uint8_t *buf;
+#if !SS_OPT_SUBPEL_PATH
     uint8_t *buf0;
+#endif
     int      width;
     int      height;
     int      stride;
@@ -63,6 +74,7 @@ typedef struct {
 
     // The source and predictors/mask used by translational search
     struct svt_buf_2d *src;
+#if !SS_OPT_SUBPEL_PATH
     uint8_t *          second_pred;
     uint8_t *          mask;
     int                mask_stride;
@@ -71,8 +83,9 @@ typedef struct {
     // The weighted source and mask used by OBMC
     int32_t *wsrc;
     int32_t *obmc_mask;
+#endif
 } MSBuffers;
-
+#if !SS_OPT_SUBPEL_PATH
 static INLINE void svt_av1_set_ms_compound_refs(MSBuffers *ms_buffers, uint8_t *second_pred,
                                                 uint8_t *mask, int mask_stride, int invert_mask) {
     ms_buffers->second_pred = second_pred;
@@ -80,12 +93,13 @@ static INLINE void svt_av1_set_ms_compound_refs(MSBuffers *ms_buffers, uint8_t *
     ms_buffers->mask_stride = mask_stride;
     ms_buffers->inv_mask    = invert_mask;
 }
-
+#endif
 // =============================================================================
 //  Subpixel Motion Search
 // =============================================================================
+#if !TUNE_CTR_QUARTER_PEL
 enum { EIGHTH_PEL, QUARTER_PEL, HALF_PEL, FULL_PEL } UENUM1BYTE(SUBPEL_FORCE_STOP);
-
+#endif
 typedef struct {
     const AomVarianceFnPtr *vfp;
 
@@ -102,9 +116,14 @@ typedef struct {
 typedef struct {
     // High level motion search settings
     int               allow_hp;
+#if !SS_OPT_SUBPEL_PATH
     const int *       cost_list;
+#endif
     SUBPEL_FORCE_STOP forced_stop;
     int               iters_per_step;
+#if OPT11_SUBPEL
+    uint8_t skip_diag_refinement;
+#endif
 
     SubpelMvLimits mv_limits;
 
@@ -115,12 +134,16 @@ typedef struct {
     SUBPEL_SEARCH_VAR_PARAMS var_params;
 
 } SUBPEL_MOTION_SEARCH_PARAMS;
-
+#if SS_OPT_SUBPEL_PATH
+typedef int(fractional_mv_step_fp)(MacroBlockD *xd, const struct AV1Common *const cm,
+                                   const SUBPEL_MOTION_SEARCH_PARAMS *ms_params, MV start_mv,
+                                   MV *bestmv, int *distortion, unsigned int *sse1);
+#else
 typedef int(fractional_mv_step_fp)(MacroBlockD *xd, const struct AV1Common *const cm,
                                    const SUBPEL_MOTION_SEARCH_PARAMS *ms_params, MV start_mv,
                                    MV *bestmv, int *distortion, unsigned int *sse1,
                                    int_mv *last_mv_search_list);
-
+#endif
 extern fractional_mv_step_fp svt_av1_find_best_sub_pixel_tree;
 extern fractional_mv_step_fp svt_av1_find_best_sub_pixel_tree_pruned;
 

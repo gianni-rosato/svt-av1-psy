@@ -89,6 +89,9 @@ int svt_av1_full_pixel_search(struct PictureControlSet *pcs, IntraBcContext /*MA
                               const MV *ref_mv, int var_max, int rd, int x_pos, int y_pos,
                               int intra);
 int mv_err_cost(const MV *mv, const MV *ref, const int *mvjcost, int *mvcost[2], int error_per_bit);
+#if  FTR_SIMPLIFIED_MV_COST
+int mv_err_cost_light(const MV *mv, const MV *ref);
+#endif
 #ifdef __cplusplus
 } // extern "C"
 #endif

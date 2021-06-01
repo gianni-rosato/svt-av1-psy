@@ -107,6 +107,10 @@ typedef struct PictureDecisionContext {
     PictureParentControlSet *mg_pictures_array_disp_order[1 << MAX_TEMPORAL_LAYERS];
 
     int64_t mg_progress_id;
+
+#if OPT_NOISE_LEVEL
+    double                          last_i_noise_levels[MAX_MB_PLANE];
+#endif
 } PictureDecisionContext;
 
 #endif // EbPictureDecision_h

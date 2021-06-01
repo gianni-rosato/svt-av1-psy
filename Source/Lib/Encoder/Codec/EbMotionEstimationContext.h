@@ -318,6 +318,9 @@ typedef struct SearchInfo {
 typedef struct PreHmeCtrls {
     uint8_t enable;
     SearchAreaMinMax   prehme_sa_cfg[SEARCH_REGION_COUNT];
+#if FTR_PREHME_SUB
+    uint8_t skip_search_line; //if 1 skips every other search region line
+#endif
 } PreHmeCtrls;
 
 typedef struct HmeResults {
@@ -333,6 +336,12 @@ typedef struct MeContext {
     // Search region stride
     uint32_t                  interpolated_full_stride[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX];
     uint32_t me_distortion[SQUARE_PU_COUNT];
+
+
+#if OPT_TFILTER
+    double tf_decay_factor;
+    TfControls tf_ctrls;
+#endif
 
     uint8_t * sb_src_ptr;
     uint32_t  sb_src_stride;
@@ -368,6 +377,9 @@ typedef struct MeContext {
     uint8_t        hme_search_method;
     uint8_t        me_search_method;
 
+#if TUNE_HME_SUB
+    uint8_t            skip_search_line_hme0;
+#endif
     EbBool             enable_hme_flag;
     EbBool             enable_hme_level0_flag;
     EbBool             enable_hme_level1_flag;
@@ -461,9 +473,16 @@ typedef struct MeContext {
     int          tf_block_col;
     uint32_t idx_32x32;
     uint16_t     min_frame_size;
+#if SS_CLN_ME_CAND_ARRAY
+    int32_t prune_me_candidates_th;
+#else
     int64_t prune_me_candidates_th;
+#endif
     uint8_t reduce_hme_l0_sr_th_min;
     uint8_t reduce_hme_l0_sr_th_max;
+#if FTR_BIAS_STAT
+    uint8_t stat_factor;
+#endif
 } MeContext;
 
 typedef uint64_t (*EB_ME_DISTORTION_FUNC)(uint8_t *src, uint32_t src_stride, uint8_t *ref,

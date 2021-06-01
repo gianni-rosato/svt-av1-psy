@@ -234,7 +234,11 @@ void compute_global_motion(PictureParentControlSet *pcs_ptr, EbPictureBufferDesc
                         input_pic->width,
                         input_pic->height,
                         input_pic->stride_y,
+#if FTR_LIMIT_GM_REFINEMENT
+                        pcs_ptr->gm_ctrls.params_refinement_steps,
+#else
                         5,
+#endif
                         best_warp_error);
                     if (warp_error < best_warp_error) {
                         best_warp_error = warp_error;

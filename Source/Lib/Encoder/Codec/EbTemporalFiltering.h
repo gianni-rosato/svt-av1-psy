@@ -97,6 +97,17 @@ int svt_av1_init_temporal_filtering(PictureParentControlSet ** list_picture_cont
                                     MotionEstimationContext_t *me_context_ptr,
                                     int32_t                    segment_index);
 
+#if OPT_TFILTER
+void svt_av1_apply_temporal_filter_planewise_fast_c(
+    struct MeContext *context_ptr, const uint8_t *y_src, int y_src_stride, const uint8_t *y_pre,
+    int y_pre_stride, unsigned int block_width,
+    unsigned int block_height, uint32_t *y_accum, uint16_t *y_count);
+
+void svt_av1_apply_temporal_filter_planewise_fast_hbd_c(
+    struct MeContext *context_ptr, const uint16_t *y_src, int y_src_stride, const uint16_t *y_pre,
+    int y_pre_stride, unsigned int block_width,
+    unsigned int block_height, uint32_t *y_accum, uint16_t *y_count);
+#endif
 void svt_av1_apply_temporal_filter_planewise_c(
     struct MeContext *context_ptr, const uint8_t *y_src, int y_src_stride, const uint8_t *y_pre,
     int y_pre_stride, const uint8_t *u_src, const uint8_t *v_src, int uv_src_stride,
@@ -114,6 +125,42 @@ void svt_av1_apply_temporal_filter_planewise_hbd_c(
 double estimate_noise(const uint8_t *src, uint16_t width, uint16_t height, uint16_t stride_y);
 
 double estimate_noise_highbd(const uint16_t *src, int width, int height, int stride, int bd);
+#if OPT_TF
+typedef struct {
+    uint8_t subpel_pel_mode;
+    signed short xd;
+    signed short yd;
+    signed short mv_x;
+    signed short mv_y;
+    uint32_t interp_filters;
+    uint16_t pu_origin_x;
+    uint16_t pu_origin_y;
+    uint16_t local_origin_x;
+    uint16_t local_origin_y;
+    uint32_t bsize;
+    uint8_t  is_highbd;
+    uint8_t encoder_bit_depth;
+    uint8_t subsampling_shift;
+    uint32_t idx_x;
+    uint32_t idx_y;
+} TF_SUBPEL_SEARCH_PARAMS;
+uint64_t svt_check_position(
+    TF_SUBPEL_SEARCH_PARAMS tf_sp_param,
+    PictureParentControlSet *pcs_ptr,
+    MeContext *context_ptr,
+    BlkStruct   blk_ptr,
+    MvUnit mv_unit,
+    EbPictureBufferDesc *pic_ptr_ref,
+    EbPictureBufferDesc prediction_ptr,
+    EbByte *pred,
+    uint16_t **pred_16bit,
+    uint32_t *stride_pred,
+    EbByte *src,
+    uint16_t **src_16bit,
+    uint32_t *stride_src,
+    signed short *best_mv_x,
+    signed short *best_mv_y);
+#endif
 #ifdef __cplusplus
 }
 #endif

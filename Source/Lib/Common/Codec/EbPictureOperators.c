@@ -230,6 +230,40 @@ void svt_full_distortion_kernel_cbf_zero32_bits_c(int32_t *coeff, uint32_t coeff
     distortion_result[DIST_CALC_PREDICTION] = prediction_distortion;
 }
 
+#if CLN_SSE
+void  picture_full_distortion32_bits_single(
+    int32_t *coeff,
+    int32_t *recon_coeff,
+    uint32_t stride,
+    uint32_t bwidth, uint32_t bheight,
+    uint64_t* distortion, uint32_t count_non_zero_coeffs)
+{
+
+    distortion[0] = 0;
+    distortion[1] = 0;
+
+    if (count_non_zero_coeffs) {
+        svt_full_distortion_kernel32_bits(
+            coeff,
+            stride,
+            recon_coeff,
+            stride,
+            distortion,
+            bwidth,
+            bheight);
+    }
+    else {
+        svt_full_distortion_kernel_cbf_zero32_bits(
+            coeff,
+            stride,
+            distortion,
+            bwidth,
+            bheight);
+    }
+
+
+}
+#else
 EbErrorType picture_full_distortion32_bits(
     EbPictureBufferDesc *coeff, uint32_t coeff_luma_origin_index,
     uint32_t coeff_chroma_origin_index, EbPictureBufferDesc *recon_coeff,
@@ -319,6 +353,7 @@ EbErrorType picture_full_distortion32_bits(
 
     return return_error;
 }
+#endif
 void un_pack2d(uint16_t *in16_bit_buffer, uint32_t in_stride, uint8_t *out8_bit_buffer,
                uint32_t out8_stride, uint8_t *outn_bit_buffer, uint32_t outn_stride, uint32_t width,
                uint32_t height) {

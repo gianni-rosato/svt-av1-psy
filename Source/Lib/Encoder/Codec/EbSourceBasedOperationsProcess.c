@@ -389,11 +389,19 @@ extern void filter_intra_edge(OisMbResults *ois_mb_results_ptr, uint8_t mode,
 
 //Given one reference frame identified by the pair (list_index,ref_index)
 //indicate if ME data is valid
-static uint8_t is_me_data_valid(const MeSbResults *me_results, uint32_t me_mb_offset,
-                                uint8_t list_idx, uint8_t ref_idx) {
+static uint8_t is_me_data_valid(
+#if OPT_ME
+    MotionEstimationData *pa_me_data,
+#endif
+    const MeSbResults *me_results, uint32_t me_mb_offset,
+    uint8_t list_idx, uint8_t ref_idx) {
     uint8_t            total_me_cnt = me_results->total_me_candidate_index[me_mb_offset];
     const MeCandidate *me_block_results =
+#if OPT_ME
+        &me_results->me_candidate_array[me_mb_offset * pa_me_data->max_cand];
+#else
         &me_results->me_candidate_array[me_mb_offset * MAX_PA_ME_CAND];
+#endif
 
     for (uint32_t me_cand_i = 0; me_cand_i < total_me_cnt; ++me_cand_i) {
         const MeCandidate *me_cand = &me_block_results[me_cand_i];
@@ -469,6 +477,9 @@ void get_best_reference(
             (list_index == 1 && (ref_pic_index + 1) > pcs_ptr->tpl_data.tpl_ref1_count))
             continue;
         if (!is_me_data_valid(
+#if OPT_ME
+               pcs_ptr->pa_me_data,
+#endif
                 pcs_ptr->pa_me_data->me_results[sb_index], me_mb_offset, list_index, ref_pic_index))
             continue;
         ref_pic_ptr = (EbPictureBufferDesc *)pcs_ptr->tpl_data
@@ -476,6 +487,17 @@ void get_best_reference(
                           .picture_ptr;
 
         const MeSbResults *me_results = pcs_ptr->pa_me_data->me_results[sb_index];
+
+#if OPT_ME
+        if (list_index) {
+            x_curr_mv = (me_results->me_mv_array[me_mb_offset*pcs_ptr->pa_me_data->max_refs + pcs_ptr->pa_me_data->max_l0 + ref_pic_index].x_mv) << 1;
+            y_curr_mv = (me_results->me_mv_array[me_mb_offset*pcs_ptr->pa_me_data->max_refs + pcs_ptr->pa_me_data->max_l0 + ref_pic_index].y_mv) << 1;
+        }
+        else {
+            x_curr_mv = (me_results->me_mv_array[me_mb_offset*pcs_ptr->pa_me_data->max_refs  + ref_pic_index].x_mv) << 1;
+            y_curr_mv = (me_results->me_mv_array[me_mb_offset*pcs_ptr->pa_me_data->max_refs  + ref_pic_index].y_mv) << 1;
+        }
+#else
         x_curr_mv =
             me_results
                 ->me_mv_array[me_mb_offset * MAX_PA_ME_MV + (list_index ? 4 : 0) + ref_pic_index]
@@ -486,6 +508,7 @@ void get_best_reference(
                 ->me_mv_array[me_mb_offset * MAX_PA_ME_MV + (list_index ? 4 : 0) + ref_pic_index]
                 .y_mv
             << 1;
+#endif
         clip_mv_in_pad(ref_pic_ptr,mb_origin_x,mb_origin_y,&x_curr_mv,&y_curr_mv);
         MV      best_mv          = {y_curr_mv, x_curr_mv};
         int32_t ref_origin_index = ref_pic_ptr->origin_x + (mb_origin_x + (best_mv.col >> 3)) +
@@ -524,7 +547,12 @@ void tpl_mc_flow_dispenser_sb(
     int16_t              x_curr_mv           = 0;
     int16_t              y_curr_mv           = 0;
     uint32_t             me_mb_offset        = 0;
+#if FTR_TPL_TX_SUBSAMPLE
+    TplControls*         tpl_ctrls           = &(pcs_ptr->tpl_ctrls);
+    TxSize               tx_size             = tpl_ctrls->subsample_tx ? TX_16X8 : TX_16X16;
+#else
     TxSize               tx_size             = TX_16X16;
+#endif
     EbPictureBufferDesc *ref_pic_ptr;
     BlockGeom            blk_geom;
     EbPictureBufferDesc *input_picture_ptr = pcs_ptr->enhanced_picture_ptr;
@@ -700,13 +728,44 @@ void tpl_mc_flow_dispenser_sb(
                                                         ois_intra_mode,
                                                         mb_origin_x,
                                                         mb_origin_y,
+#if FTR_TPL_TX_SUBSAMPLE
+                                                        TX_16X16, // use full block for prediction
+#else
                                                         tx_size,
+#endif
                                                         above_row,
                                                         left_col,
                                                         predictor,
                                                         16);
 
                         // Distortion
+#if FTR_TPL_TX_SUBSAMPLE
+                        int64_t intra_cost;
+                        if (pcs_ptr->tpl_ctrls.tpl_opt_flag && pcs_ptr->tpl_ctrls.use_pred_sad_in_intra_search) {
+                            intra_cost = svt_nxm_sad_kernel_sub_sampled(
+                                src,
+                                input_ptr->stride_y,
+                                predictor,
+                                16,
+                                16,
+                                16);
+                        }
+                        else {
+                            svt_aom_subtract_block(16 >> tpl_ctrls->subsample_tx,
+                                16,
+                                src_diff,
+                                16 << tpl_ctrls->subsample_tx,
+                                src,
+                                input_ptr->stride_y << tpl_ctrls->subsample_tx,
+                                predictor,
+                                16 << tpl_ctrls->subsample_tx);
+
+                            EB_TRANS_COEFF_SHAPE pf_shape = pcs_ptr->tpl_ctrls.tpl_opt_flag ? pcs_ptr->tpl_ctrls.pf_shape : DEFAULT_SHAPE;
+                            svt_av1_wht_fwd_txfm(src_diff, 16 << tpl_ctrls->subsample_tx, coeff, tx_size, pf_shape, 8, 0);
+
+                            intra_cost = svt_aom_satd(coeff, 256 >> tpl_ctrls->subsample_tx) << tpl_ctrls->subsample_tx;
+                        }
+#else
                         int64_t intra_cost;
                         if (pcs_ptr->tpl_ctrls.tpl_opt_flag && pcs_ptr->tpl_ctrls.use_pred_sad_in_intra_search) {
                             intra_cost = svt_nxm_sad_kernel_sub_sampled(
@@ -724,7 +783,7 @@ void tpl_mc_flow_dispenser_sb(
                             svt_av1_wht_fwd_txfm(src_diff, 16, coeff, tx_size, pf_shape, 8, 0);
                              intra_cost = svt_aom_satd(coeff, 16 * 16);
                         }
-
+#endif
                         if (intra_cost < best_intra_cost) {
                             best_intra_cost = intra_cost;
                             best_intra_mode = ois_intra_mode;
@@ -763,7 +822,12 @@ void tpl_mc_flow_dispenser_sb(
                     (list_index == 1 &&
                         (ref_pic_index + 1) > pcs_ptr->tpl_data.tpl_ref1_count))
                     continue;
-                if (!is_me_data_valid(pcs_ptr->pa_me_data->me_results[sb_index],
+                if (!is_me_data_valid(
+#if OPT_ME
+                    pcs_ptr->pa_me_data,
+#endif
+
+                    pcs_ptr->pa_me_data->me_results[sb_index],
                                         me_mb_offset,
                                         list_index,
                                         ref_pic_index))
@@ -772,6 +836,18 @@ void tpl_mc_flow_dispenser_sb(
                                     .tpl_ref_ds_ptr_array[list_index][ref_pic_index]
                                     .picture_ptr;
                 const MeSbResults *me_results = pcs_ptr->pa_me_data->me_results[sb_index];
+
+#if OPT_ME
+                if (list_index) {
+                    x_curr_mv = (me_results->me_mv_array[me_mb_offset*pcs_ptr->pa_me_data->max_refs + pcs_ptr->pa_me_data->max_l0 + ref_pic_index].x_mv) << 1;
+                    y_curr_mv = (me_results->me_mv_array[me_mb_offset*pcs_ptr->pa_me_data->max_refs + pcs_ptr->pa_me_data->max_l0 + ref_pic_index].y_mv) << 1;
+                }
+                else {
+                    x_curr_mv = (me_results->me_mv_array[me_mb_offset*pcs_ptr->pa_me_data->max_refs + ref_pic_index].x_mv) << 1;
+                    y_curr_mv = (me_results->me_mv_array[me_mb_offset*pcs_ptr->pa_me_data->max_refs + ref_pic_index].y_mv) << 1;
+                }
+#else
+
                 x_curr_mv                     = me_results
                                 ->me_mv_array[me_mb_offset * MAX_PA_ME_MV +
                                                 (list_index ? 4 : 0) + ref_pic_index]
@@ -782,6 +858,7 @@ void tpl_mc_flow_dispenser_sb(
                                                 (list_index ? 4 : 0) + ref_pic_index]
                                 .y_mv
                     << 1;
+#endif
                 clip_mv_in_pad(ref_pic_ptr,mb_origin_x,mb_origin_y,&x_curr_mv,&y_curr_mv);
                 MV      best_mv          = {y_curr_mv, x_curr_mv};
                 if (pcs_ptr->tpl_ctrls.tpl_opt_flag && pcs_ptr->tpl_ctrls.use_pred_sad_in_inter_search) {
@@ -803,7 +880,21 @@ void tpl_mc_flow_dispenser_sb(
                         (mb_origin_x + (best_mv.col >> 3)) +
                         (mb_origin_y + (best_mv.row >> 3) + ref_pic_ptr->origin_y) *
                         ref_pic_ptr->stride_y;
+#if FTR_TPL_TX_SUBSAMPLE
+                    svt_aom_subtract_block(16 >> tpl_ctrls->subsample_tx,
+                        16,
+                        src_diff,
+                        16 << tpl_ctrls->subsample_tx,
+                        src_mb,
+                        input_picture_ptr->stride_y << tpl_ctrls->subsample_tx,
+                        ref_pic_ptr->buffer_y + ref_origin_index,
+                        ref_pic_ptr->stride_y << tpl_ctrls->subsample_tx);
 
+                    EB_TRANS_COEFF_SHAPE pf_shape = pcs_ptr->tpl_ctrls.tpl_opt_flag ? pcs_ptr->tpl_ctrls.pf_shape : DEFAULT_SHAPE;
+                    svt_av1_wht_fwd_txfm(src_diff, 16 << tpl_ctrls->subsample_tx, coeff, tx_size, pf_shape, 8, 0);
+
+                    inter_cost = svt_aom_satd(coeff, 256 >> tpl_ctrls->subsample_tx) << tpl_ctrls->subsample_tx;
+#else
                     svt_aom_subtract_block(16,
                         16,
                         src_diff,
@@ -816,6 +907,7 @@ void tpl_mc_flow_dispenser_sb(
                     svt_av1_wht_fwd_txfm(src_diff, 16, coeff, tx_size, pf_shape, 8, 0);
 
                     inter_cost = svt_aom_satd(coeff, 256);
+#endif
                 }
                 if (inter_cost < best_inter_cost) {
                     if (!(pcs_ptr->tpl_ctrls.tpl_opt_flag && pcs_ptr->tpl_ctrls.use_pred_sad_in_inter_search))
@@ -845,10 +937,24 @@ void tpl_mc_flow_dispenser_sb(
                         (mb_origin_x + (final_best_mv.col >> 3)) +
                         (mb_origin_y + (final_best_mv.row >> 3) +
                             ref_pic_ptr->origin_y) * ref_pic_ptr->stride_y;
+#if FTR_TPL_TX_SUBSAMPLE
+                    svt_aom_subtract_block(16 >> tpl_ctrls->subsample_tx,
+                        16,
+                        src_diff,
+                        16 << tpl_ctrls->subsample_tx,
+                        src_mb,
+                        input_picture_ptr->stride_y << tpl_ctrls->subsample_tx,
+                        ref_pic_ptr->buffer_y + ref_origin_index,
+                        ref_pic_ptr->stride_y << tpl_ctrls->subsample_tx);
+
+                    EB_TRANS_COEFF_SHAPE pf_shape = pcs_ptr->tpl_ctrls.tpl_opt_flag ? pcs_ptr->tpl_ctrls.pf_shape : DEFAULT_SHAPE;
+                    svt_av1_wht_fwd_txfm(src_diff, 16 << tpl_ctrls->subsample_tx, coeff, tx_size, pf_shape, 8, 0);
+#else
                     svt_aom_subtract_block(16, 16, src_diff, 16, src_mb, input_picture_ptr->stride_y,
                         ref_pic_ptr->buffer_y + ref_origin_index, ref_pic_ptr->stride_y);
                     EB_TRANS_COEFF_SHAPE pf_shape = pcs_ptr->tpl_ctrls.tpl_opt_flag ? pcs_ptr->tpl_ctrls.pf_shape : DEFAULT_SHAPE;
                     svt_av1_wht_fwd_txfm(src_diff, 16, coeff, tx_size, pf_shape, 8, 0);
+#endif
                     memcpy(best_coeff, coeff, sizeof(best_coeff));
                 }
                 get_quantize_error(&mb_plane,
@@ -860,9 +966,13 @@ void tpl_mc_flow_dispenser_sb(
                                     &recon_error,
                                     &sse);
                 int rate_cost = pcs_ptr->tpl_ctrls.tpl_opt_flag ? 0 : rate_estimator(qcoeff, eob, tx_size);
-
+#if FTR_TPL_TX_SUBSAMPLE
+                tpl_stats.srcrf_rate = (rate_cost << TPL_DEP_COST_SCALE_LOG2) << tpl_ctrls->subsample_tx;
+                tpl_stats.srcrf_dist = (recon_error << (TPL_DEP_COST_SCALE_LOG2)) << tpl_ctrls->subsample_tx;
+#else
                 tpl_stats.srcrf_rate = rate_cost << TPL_DEP_COST_SCALE_LOG2;
                 tpl_stats.srcrf_dist = recon_error << (TPL_DEP_COST_SCALE_LOG2);
+#endif
             }
             if (best_mode == NEWMV) {
                 // inter recon with rec_picture as reference pic
@@ -938,13 +1048,28 @@ void tpl_mc_flow_dispenser_sb(
                                                 ois_intra_mode,
                                                 mb_origin_x,
                                                 mb_origin_y,
+#if FTR_TPL_TX_SUBSAMPLE
+                                                TX_16X16, // use full block for prediction
+#else
                                                 tx_size,
+#endif
                                                 above_row,
                                                 left_col,
                                                 dst_buffer,
                                                 dst_buffer_stride);
             }
-
+#if FTR_TPL_TX_SUBSAMPLE
+            svt_aom_subtract_block(16 >> tpl_ctrls->subsample_tx,
+                                   16,
+                                   src_diff,
+                                   16 << tpl_ctrls->subsample_tx,
+                                   src_mb,
+                                   input_picture_ptr->stride_y << tpl_ctrls->subsample_tx,
+                                   dst_buffer,
+                                   dst_buffer_stride << tpl_ctrls->subsample_tx);
+            EB_TRANS_COEFF_SHAPE pf_shape = pcs_ptr->tpl_ctrls.tpl_opt_flag ? pcs_ptr->tpl_ctrls.pf_shape : DEFAULT_SHAPE;
+            svt_av1_wht_fwd_txfm(src_diff, 16 << tpl_ctrls->subsample_tx, coeff, tx_size,pf_shape, 8, 0);
+#else
             svt_aom_subtract_block(16,
                                     16,
                                     src_diff,
@@ -955,7 +1080,7 @@ void tpl_mc_flow_dispenser_sb(
                                     dst_buffer_stride);
             EB_TRANS_COEFF_SHAPE pf_shape = pcs_ptr->tpl_ctrls.tpl_opt_flag ? pcs_ptr->tpl_ctrls.pf_shape : DEFAULT_SHAPE;
             svt_av1_wht_fwd_txfm(src_diff, 16, coeff, tx_size,pf_shape, 8, 0);
-
+#endif
             uint16_t eob = 0;
 
             get_quantize_error(
@@ -966,6 +1091,27 @@ void tpl_mc_flow_dispenser_sb(
                 pcs_ptr->tpl_ctrls.disable_intra_pred_nbase);
             if (!disable_intra_pred || (pcs_ptr->tpl_data.is_used_as_reference_flag))
                 if (eob) {
+#if FTR_TPL_TX_SUBSAMPLE
+                    av1_inv_transform_recon8bit((int32_t *)dqcoeff,
+                                                dst_buffer,
+                                                dst_buffer_stride << tpl_ctrls->subsample_tx,
+                                                dst_buffer,
+                                                dst_buffer_stride << tpl_ctrls->subsample_tx,
+                                                tx_size,
+                                                DCT_DCT,
+                                                PLANE_TYPE_Y,
+                                                eob,
+                                                0);
+
+                    // If subsampling is used for the TX, need to populate the missing rows in recon with a copy of the neighbouring rows
+                    if (tpl_ctrls->subsample_tx) {
+                        for (int i = 0; i < 16; i += 2) {
+                            EB_MEMCPY(dst_buffer + (i + 1) * dst_buffer_stride,
+                                      dst_buffer + i * dst_buffer_stride,
+                                      sizeof(uint8_t) * (16));
+                        }
+                    }
+#else
                     av1_inv_transform_recon8bit((int32_t *)dqcoeff,
                                                 dst_buffer,
                                                 dst_buffer_stride,
@@ -976,14 +1122,23 @@ void tpl_mc_flow_dispenser_sb(
                                                 PLANE_TYPE_Y,
                                                 eob,
                                                 0);
+#endif
                 }
-
+#if FTR_TPL_TX_SUBSAMPLE
+            tpl_stats.recrf_dist = (recon_error << (TPL_DEP_COST_SCALE_LOG2)) << tpl_ctrls->subsample_tx;
+            tpl_stats.recrf_rate = (rate_cost << TPL_DEP_COST_SCALE_LOG2) << tpl_ctrls->subsample_tx;
+            if (best_mode != NEWMV) {
+                tpl_stats.srcrf_dist = (recon_error << (TPL_DEP_COST_SCALE_LOG2)) << tpl_ctrls->subsample_tx;
+                tpl_stats.srcrf_rate = (rate_cost << TPL_DEP_COST_SCALE_LOG2) << tpl_ctrls->subsample_tx;
+            }
+#else
             tpl_stats.recrf_dist = recon_error << (TPL_DEP_COST_SCALE_LOG2);
             tpl_stats.recrf_rate = rate_cost << TPL_DEP_COST_SCALE_LOG2;
             if (best_mode != NEWMV) {
                 tpl_stats.srcrf_dist = recon_error << (TPL_DEP_COST_SCALE_LOG2);
                 tpl_stats.srcrf_rate = rate_cost << TPL_DEP_COST_SCALE_LOG2;
             }
+#endif
             tpl_stats.recrf_dist = AOMMAX(tpl_stats.srcrf_dist, tpl_stats.recrf_dist);
             tpl_stats.recrf_rate = AOMMAX(tpl_stats.srcrf_rate, tpl_stats.recrf_rate);
             if (pcs_ptr->tpl_data.tpl_slice_type != I_SLICE && best_rf_idx != -1) {

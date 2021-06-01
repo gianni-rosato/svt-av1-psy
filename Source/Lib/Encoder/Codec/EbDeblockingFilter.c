@@ -1012,7 +1012,7 @@ static int32_t search_filter_level(
         sd, temp_lf_recon_buffer, pcs_ptr, filt_mid, partial_frame, plane, dir);
     filt_best        = filt_mid;
     ss_err[filt_mid] = best_err;
-
+#if !CLN_DLF_SIGNALS
     if (pcs_ptr->parent_pcs_ptr->loop_filter_mode <= 2) {
         filter_step             = 2;
         const int32_t filt_high = AOMMIN(filt_mid + filter_step, max_filter_level);
@@ -1056,6 +1056,7 @@ static int32_t search_filter_level(
                 filt_best = filt_high;
         }
     } else {
+#endif
         while (filter_step > 0) {
             const int32_t filt_high = AOMMIN(filt_mid + filter_step, max_filter_level);
             const int32_t filt_low  = AOMMAX(filt_mid - filter_step, min_filter_level);
@@ -1109,7 +1110,9 @@ static int32_t search_filter_level(
                 filt_mid       = filt_best;
             }
         }
+#if !CLN_DLF_SIGNALS
     }
+#endif
     // Update best error
     best_err = ss_err[filt_best];
 

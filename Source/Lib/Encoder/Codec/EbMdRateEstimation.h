@@ -189,6 +189,15 @@ extern "C" {
     extern void av1_estimate_syntax_rate(
         MdRateEstimationContext      *md_rate_estimation_array,
         EbBool                          is_i_slice,
+#if OPT8_MDC
+        uint8_t pic_filter_intra_level,
+        uint8_t allow_screen_content_tools,
+        uint8_t enable_restoration,
+        uint8_t allow_intrabc,
+#if OPT9_RATE_ESTIMATION
+        uint8_t partition_contexts,
+#endif
+#endif
         FRAME_CONTEXT                  *fc);
     /**************************************************************************
     * Estimate the rate of the quantised coefficient

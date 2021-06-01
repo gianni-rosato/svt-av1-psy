@@ -20,7 +20,11 @@
 #include "synonyms_avx512.h"
 
 uint64_t svt_search_one_dual_avx512(int *lev0, int *lev1, int nb_strengths,
+#if SS_OPT_CDEF
+                                    uint64_t** mse[2], int sb_count, int start_gi,
+#else
                                     uint64_t (**mse)[TOTAL_STRENGTHS], int sb_count, int start_gi,
+#endif
                                     int end_gi) {
     const int start        = start_gi & ~7;
     uint64_t  best_tot_mse = (uint64_t)1 << 63;

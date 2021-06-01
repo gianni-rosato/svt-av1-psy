@@ -111,7 +111,7 @@ void svt_av1_build_quantizer(AomBitDepth bit_depth, int32_t y_dc_delta_q, int32_
                              Quants *const quants, Dequants *const deq);
 
 
-#if LAD_MG_PRINT
+
 /*
  get size  of the  lad queue
 */
@@ -126,7 +126,7 @@ uint32_t  get_lad_q_size(InitialRateControlContext *ctx)
     }
     return size;
 }
-
+#if LAD_MG_PRINT
 /*
  dump the content of the  queue for debug purpose
 */
@@ -263,6 +263,8 @@ void store_extended_group(
         }
         SVT_LOG("\n");
     }
+#endif
+
 #if 0 //force test
     if (pcs->tpl_group_size != pcs->ext_group_size)
         printf("asfafs");
@@ -276,7 +278,7 @@ void store_extended_group(
     for (uint32_t i = 0; i < pcs->ext_group_size; i++)
         pcs->tpl_group[i] = pcs->ext_group[i];
 #endif
-#endif
+
 
     //new tpl group needs to stop at the second I
     pcs->ntpl_group_size = 0;
@@ -331,8 +333,16 @@ void store_extended_group(
                 if (inject_frame) {
                     if (pcs->slice_type != I_SLICE) {
                         // Discard low important pictures from tpl group
+#if OPT5_TPL_REDUCE_PIC
+                        if (pcs->tpl_ctrls.tpl_opt_flag && (pcs->tpl_ctrls.reduced_tpl_group >= 0)) {
+#else
                         if (pcs->tpl_ctrls.tpl_opt_flag && pcs->tpl_ctrls.reduced_tpl_group) {
+#endif
+#if !TPL_CLEANUP
                             if (pcs->tpl_group[i]->temporal_layer_index <= pcs->tpl_ctrls.reduced_tpl_group + (pcs->hierarchical_levels == 5 ? 1 : 0)) {
+#else
+                            if (pcs->tpl_group[i]->temporal_layer_index <= pcs->tpl_ctrls.reduced_tpl_group) {
+#endif
                                 pcs->tpl_valid_pic[i] = 1;
                                 pcs->used_tpl_frame_num++;
                             }

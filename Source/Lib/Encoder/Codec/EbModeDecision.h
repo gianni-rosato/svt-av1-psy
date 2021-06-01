@@ -165,6 +165,9 @@ typedef struct ModeDecisionCandidateBuffer {
     EbPictureBufferDesc *prediction_ptr;
     EbPictureBufferDesc *recon_coeff_ptr;
     EbPictureBufferDesc *residual_ptr;
+#if REFCTR_ADD_QUANT_COEFF_BUFF_MD
+    EbPictureBufferDesc *quant_coeff_ptr;
+#endif
 
     // *Note - We should be able to combine the recon_coeff_ptr & recon_ptr pictures (they aren't needed at the same time)
     EbPictureBufferDesc *recon_ptr;
@@ -172,24 +175,40 @@ typedef struct ModeDecisionCandidateBuffer {
     // Costs
     uint64_t *fast_cost_ptr;
     uint64_t *full_cost_ptr;
+#if !CLN_MOVE_SKIP_MODE_CHECK
     uint64_t *full_cost_skip_ptr;
     uint64_t *full_cost_merge_ptr;
-
+#endif
 } ModeDecisionCandidateBuffer;
 
 /**************************************
     * Extern Function Declarations
     **************************************/
+#if CLN_MOVE_SKIP_MODE_CHECK
+extern EbErrorType mode_decision_candidate_buffer_ctor(
+    ModeDecisionCandidateBuffer *buffer_ptr, EbBitDepthEnum max_bitdepth, uint8_t sb_size,
+    uint32_t buffer_mask, EbPictureBufferDesc *temp_residual_ptr,
+    EbPictureBufferDesc *temp_recon_ptr, uint64_t *fast_cost_ptr, uint64_t *full_cost_ptr);
+#else
 extern EbErrorType mode_decision_candidate_buffer_ctor(
     ModeDecisionCandidateBuffer *buffer_ptr, EbBitDepthEnum max_bitdepth, uint8_t sb_size,
     uint32_t buffer_mask, EbPictureBufferDesc *temp_residual_ptr,
     EbPictureBufferDesc *temp_recon_ptr, uint64_t *fast_cost_ptr, uint64_t *full_cost_ptr,
     uint64_t *full_cost_skip_ptr, uint64_t *full_cost_merge_ptr);
+#endif
 
 extern EbErrorType mode_decision_scratch_candidate_buffer_ctor(
     ModeDecisionCandidateBuffer *buffer_ptr, uint8_t sb_size, EbBitDepthEnum max_bitdepth);
 
+#if LIGHT_PD0
+uint32_t product_full_mode_decision_light_pd0(struct ModeDecisionContext *context_ptr, BlkStruct *blk_ptr,
+                                    ModeDecisionCandidateBuffer **buffer_ptr_array);
+#endif
 uint32_t product_full_mode_decision(struct ModeDecisionContext *context_ptr, BlkStruct *blk_ptr,
+#if FTR_BYPASS_ENCDEC
+                                    PictureControlSet *pcs,
+                                    uint32_t sb_addr,
+#endif
                                     ModeDecisionCandidateBuffer **buffer_ptr_array,
                                     uint32_t                      candidate_total_count,
                                     uint32_t *                    best_candidate_index_array);

@@ -142,7 +142,10 @@ enum {
 //  Delta QP support
 #define ADD_DELTA_QP_SUPPORT 1 // Add delta QP support
 #define BLOCK_MAX_COUNT_SB_128 4421
+
+#if !CLN_GEOM
 #define BLOCK_MAX_COUNT_SB_64 1101
+#endif
 #define MAX_TXB_COUNT 16 // Maximum number of transform blocks per depth
 
 #define MAX_LAD 120 // max lookahead-distance 2x60fps
@@ -443,6 +446,12 @@ static INLINE int av1_num_planes(EbColorConfig *color_info) {
     return color_info->mono_chrome ? 1 : MAX_MB_PLANE;
 }
 
+#if  OPT_NA_INTRA
+typedef struct IntraSize {
+    uint8_t top;
+    uint8_t left;
+} IntraSize;
+#endif
 
 #define MI_SIZE_W_8X8    2
 #define MI_SIZE_W_16X16  4
@@ -458,12 +467,20 @@ static INLINE int av1_num_planes(EbColorConfig *color_info) {
 #define ATTRIBUTE_PACKED
 #endif
 #endif /* ATTRIBUTE_PACKED */
+#if FIX_REMOVE_PD1
+typedef enum PdPass {
+    PD_PASS_0,
+    PD_PASS_1,
+    PD_PASS_TOTAL,
+} PdPass;
+#else
 typedef enum PdPass {
     PD_PASS_0,
     PD_PASS_1,
     PD_PASS_2,
     PD_PASS_TOTAL,
 } PdPass;
+#endif
 typedef enum CandClass {
     CAND_CLASS_0,
     CAND_CLASS_1,
@@ -545,7 +562,9 @@ enum {
     //SUBPEL_TREE_PRUNED_MORE = 2,      // Not supported - (from libaom: Prunes 1/2-pel searches more aggressively)
     //SUBPEL_TREE_PRUNED_EVENMORE = 3,  // Not supported - (from libaom: Prunes 1/2- and 1/4-pel searches)
 } UENUM1BYTE(SUBPEL_SEARCH_METHODS);
-
+#if TUNE_CTR_QUARTER_PEL
+enum { EIGHTH_PEL, QUARTER_PEL, HALF_PEL, FULL_PEL } UENUM1BYTE(SUBPEL_FORCE_STOP);
+#endif
 typedef struct InterpFilterParams {
     const int16_t *filter_ptr;
     uint16_t       taps;
@@ -628,7 +647,11 @@ typedef enum ATTRIBUTE_PACKED {
     PARTITION_INVALID = 255
 } PartitionType;
 
+#if CLN_GEOM
+#define MAX_NUM_BLOCKS_ALLOC 4421
+#else
 #define MAX_NUM_BLOCKS_ALLOC 7493 //max number of blocks assuming 128x128-4x4 all partitions.
+#endif
 
 typedef enum ATTRIBUTE_PACKED {
     PART_N,
@@ -1053,6 +1076,10 @@ typedef struct {
 
     /*!< Specifies the type of mask to be used during blending. */
     DIFFWTD_MASK_TYPE mask_type;
+#if CLN_INTER_PRED
+    // Temp buffer used for inter prediction
+    uint8_t *seg_mask;
+#endif
 } InterInterCompoundData;
 
 #define InterIntraMode InterIntraMode
@@ -2062,8 +2089,12 @@ typedef enum EbIntraRefreshType
 #define ENC_M6          6
 #define ENC_M7          7
 #define ENC_M8          8
+#define ENC_M9          9
+#define ENC_M10         10
+#define ENC_M11         11
+#define ENC_M12         12
 
-#define MAX_SUPPORTED_MODES 9
+#define MAX_SUPPORTED_MODES 13
 
 #define SPEED_CONTROL_INIT_MOD ENC_M4;
 /** The EB_TUID type is used to identify a TU within a CU.
@@ -2606,6 +2637,14 @@ static const uint8_t intra_area_th_class_1[MAX_HIERARCHICAL_LEVEL][MAX_TEMPORAL_
 
 // Multi-Pass Partitioning Depth(Multi - Pass PD) performs multiple PD stages for the same SB towards 1 final Partitioning Structure
 // As we go from PDn to PDn + 1, the prediction accuracy of the MD feature(s) increases while the number of block(s) decreases
+#if FIX_REMOVE_PD1
+typedef enum MultiPassPdLevel
+{
+    MULTI_PASS_PD_OFF     = 0, // Multi-Pass PD OFF = 1-single PD Pass
+    MULTI_PASS_PD_ON      = 1, // Multi-Pass PD ON  = PD0 | PD0_REFINEMENT | PD1
+    MULTI_PASS_PD_INVALID = 0, // Invalid Multi-Pass PD Mode
+} MultiPassPdLevel;
+#else
 typedef enum MultiPassPdLevel
 {
     MULTI_PASS_PD_OFF     = 0, // Multi-Pass PD OFF = 1-single PD Pass (e.g. I_SLICE, SC)
@@ -2624,6 +2663,7 @@ typedef enum AdpLevel
     ADP_LEVEL_2 = 2, // read @ ADP budget derivation (e.g. moderate budget_boost)
     ADP_LEVEL_3 = 3, // read @ ADP budget derivation (e.g. low budget_boost)
 } AdpLevel;
+#endif
 #define EB_SB_DEPTH_MODE              uint8_t
 #define SB_SQ_BLOCKS_DEPTH_MODE             1
 #define SB_SQ_NON4_BLOCKS_DEPTH_MODE        2
@@ -2949,6 +2989,7 @@ typedef enum HmeDecimation
     ONE_DECIMATION_HME = 1, // HME search on quarter-res picture; 1 refinement level
     TWO_DECIMATION_HME = 2, // HME search on sixteenth-res picture; 2 refinement level
 } HmeDecimation;
+#if !CLN_GEOM
 static const uint16_t ep_to_pa_block_index[BLOCK_MAX_COUNT_SB_64] = {
     0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
     1 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
@@ -3036,6 +3077,7 @@ static const uint16_t ep_to_pa_block_index[BLOCK_MAX_COUNT_SB_64] = {
     83,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
     84,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0
 };
+#endif
 typedef struct _EbEncHandle EbEncHandle;
 typedef struct _EbThreadContext EbThreadContext;
 #ifdef __cplusplus

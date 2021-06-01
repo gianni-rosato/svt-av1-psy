@@ -336,6 +336,14 @@ uint32_t max_depth = 5;
 uint32_t max_part  = 9;
 uint32_t max_num_active_blocks;
 
+#if CLN_GEOM
+GeomIndex geom_idx;
+//TODO need to remove above globals for multi-channel support
+#endif
+
+#if OPT_INLINE_FUNCS
+BlockGeom blk_geom_mds[MAX_NUM_BLOCKS_ALLOC]; // to access geom info of a particular block; use this table if you have the block index in md scan
+#else
 //data could be  organized in 2 forms: depth scan (dps) or MD scan (mds):
 //dps: all depth0 - all depth1 - all depth2 - all depth3.
 //     within a depth: square blk0 in raster scan (followed by all its ns blcoks),
@@ -390,7 +398,7 @@ uint32_t search_matching_from_mds(uint32_t depth, uint32_t part, uint32_t x, uin
 
     return matched;
 }
-
+#endif
 static INLINE TxSize av1_get_tx_size(BlockSize sb_type, int32_t plane /*, const MacroBlockD *xd*/) {
     UNUSED(plane);
     //const MbModeInfo *mbmi = xd->mi[0];
@@ -446,16 +454,36 @@ void md_scan_all_blks(uint32_t* idx_mds, uint32_t sq_size, uint32_t x, uint32_t 
 
             blk_geom_mds[*idx_mds].d1i     = d1_it++;
             blk_geom_mds[*idx_mds].sqi_mds = sqi_mds;
+#if CLN_GEOM
+
+            blk_geom_mds[*idx_mds]. geom_idx = geom_idx;
+
+            blk_geom_mds[*idx_mds].parent_depth_idx_mds = sqi_mds == 0 ? 0 :
+                (sqi_mds - (quad_it - 3) * ns_depth_offset[geom_idx][blk_geom_mds[*idx_mds].depth])
+                - parent_depth_offset[geom_idx][blk_geom_mds[*idx_mds].depth];
+            blk_geom_mds[*idx_mds].d1_depth_offset = d1_depth_offset[geom_idx][blk_geom_mds[*idx_mds].depth];
+            blk_geom_mds[*idx_mds].ns_depth_offset = ns_depth_offset[geom_idx][blk_geom_mds[*idx_mds].depth];
+#else
+
+    #if LIGHT_PD0
+                blk_geom_mds[*idx_mds].parent_depth_idx_mds = sqi_mds == 0 ? 0 :
+                    (sqi_mds - (quad_it - 3) * ns_depth_offset[max_sb == 128][blk_geom_mds[*idx_mds].depth])
+                    - parent_depth_offset[max_sb == 128][blk_geom_mds[*idx_mds].depth];
+                blk_geom_mds[*idx_mds].d1_depth_offset = d1_depth_offset[max_sb == 128][blk_geom_mds[*idx_mds].depth];
+                blk_geom_mds[*idx_mds].ns_depth_offset = ns_depth_offset[max_sb == 128][blk_geom_mds[*idx_mds].depth];
+    #endif
+
+#endif
             blk_geom_mds[*idx_mds].totns   = tot_num_ns_per_part;
             blk_geom_mds[*idx_mds].nsi     = nsq_it;
-
+#if !OPT_INLINE_FUNCS
             uint32_t matched = search_matching_from_dps(blk_geom_mds[*idx_mds].depth,
                                                         blk_geom_mds[*idx_mds].shape,
                                                         blk_geom_mds[*idx_mds].origin_x,
                                                         blk_geom_mds[*idx_mds].origin_y);
 
             blk_geom_mds[*idx_mds].blkidx_dps = blk_geom_dps[matched].blkidx_dps;
-
+#endif
             blk_geom_mds[*idx_mds].bwidth  = quartsize * ns_quarter_size_mult[part_it][0][nsq_it];
             blk_geom_mds[*idx_mds].bheight = quartsize * ns_quarter_size_mult[part_it][1][nsq_it];
             blk_geom_mds[*idx_mds].bwidth_log2  = svt_log2f(blk_geom_mds[*idx_mds].bwidth);
@@ -1337,6 +1365,7 @@ void md_scan_all_blks(uint32_t* idx_mds, uint32_t sq_size, uint32_t x, uint32_t 
     }
 }
 
+#if !OPT_INLINE_FUNCS
 void depth_scan_all_blks() {
     uint32_t depth_it, sq_it_y, sq_it_x, part_it, nsq_it;
     uint32_t sq_orgx, sq_orgy;
@@ -1425,7 +1454,7 @@ void finish_depth_scan_all_blks() {
         }
     }
 }
-
+#endif
 uint32_t count_total_num_of_active_blks() {
     uint32_t depth_it, sq_it_y, sq_it_x, part_it, nsq_it;
 
@@ -1492,34 +1521,69 @@ void log_redundancy_similarity(uint32_t max_block_count) {
         }
     }
 }
+
+#if CLN_GEOM
+/*
+  Build Block Geometry
+*/
+void build_blk_geom(GeomIndex geom) {
+
+    uint32_t max_block_count;
+    geom_idx = geom;
+    if (geom == GEOM_0) {
+        max_sb = 64;
+        max_depth = 4;
+        max_part = 1;
+        max_block_count = 85;
+    }
+    else if (geom == GEOM_1) {
+        max_sb = 64;
+        max_depth = 5;
+        max_part = 9;
+        max_block_count = 1101;
+    }
+    else {
+        max_sb = 128;
+        max_depth = 6;
+        max_part = 9;
+        max_block_count = 4421;
+    }
+
+#else
 void build_blk_geom(int32_t use_128x128) {
     max_sb                   = use_128x128 ? 128 : 64;
     max_depth                = use_128x128 ? 6 : 5;
     uint32_t max_block_count = use_128x128 ? BLOCK_MAX_COUNT_SB_128 : BLOCK_MAX_COUNT_SB_64;
-
+#endif
     //(0)compute total number of blocks using the information provided
     max_num_active_blocks = count_total_num_of_active_blks();
     if (max_num_active_blocks != max_block_count)
         SVT_LOG(" \n\n Error %i blocks\n\n ", max_num_active_blocks);
-
+#if !OPT_INLINE_FUNCS
     //(1) Construct depth scan blk_geom_dps
     depth_scan_all_blks();
-
+#endif
     //(2) Construct md scan blk_geom_mds:  use info from dps
     uint32_t idx_mds = 0;
     md_scan_all_blks(&idx_mds, max_sb, 0, 0, 0, 0);
-
+#if !OPT_INLINE_FUNCS
     //(3) Fill more info from mds to dps - print using dps
     finish_depth_scan_all_blks();
-
+#endif
     log_redundancy_similarity(max_block_count);
 }
-
+#if !OPT_INLINE_FUNCS
 //need to finish filling dps by inherting data from mds
 const BlockGeom* get_blk_geom_mds(uint32_t bidx_mds) { return &blk_geom_mds[bidx_mds]; }
-
+#endif
 uint32_t get_mds_idx(uint32_t orgx, uint32_t orgy, uint32_t size, uint32_t use_128x128) {
+
+#if CLN_GEOM
+    (void)use_128x128;
+    uint32_t max_block_count = max_num_active_blocks;
+#else
     uint32_t max_block_count = use_128x128 ? BLOCK_MAX_COUNT_SB_128 : BLOCK_MAX_COUNT_SB_64;
+#endif
     uint32_t mds             = 0;
 
     for (uint32_t blk_it = 0; blk_it < max_block_count; blk_it++) {

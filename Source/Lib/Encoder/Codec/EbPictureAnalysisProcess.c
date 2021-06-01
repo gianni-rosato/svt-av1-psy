@@ -220,7 +220,11 @@ void decimation_2d(uint8_t *input_samples, // input parameter, input samples Ptr
  *      downsamples the input
  * Alternative implementation to decimation_2d that performs filtering (2x2, 0-phase)
  ********************************************/
+#if DOWNSAMPLE_2D_AVX2
+void downsample_2d_c(uint8_t *input_samples, // input parameter, input samples Ptr
+#else
 void downsample_2d(uint8_t *input_samples, // input parameter, input samples Ptr
+#endif
                    uint32_t input_stride, // input parameter, input stride
                    uint32_t input_area_width, // input parameter, input area width
                    uint32_t input_area_height, // input parameter, input area height
@@ -2507,7 +2511,11 @@ EbBool is_valid_palette_nb_colors(const uint8_t *src, int stride,
 
 // Estimate if the source frame is screen content, based on the portion of
 // blocks that have no more than 4 (experimentally selected) luma colors.
+#if SS_OPT_MOVE_SC_DETECTION
+void is_screen_content(PictureParentControlSet *pcs_ptr) {
+#else
 static void is_screen_content(PictureParentControlSet *pcs_ptr) {
+#endif
     const int blk_w = 16;
     const int blk_h = 16;
     // These threshold values are selected experimentally.
@@ -2807,8 +2815,16 @@ void *picture_analysis_kernel(void *input_ptr) {
                         (EbPictureBufferDesc *)pa_ref_obj_->sixteenth_downsampled_picture_ptr,
                         pcs_ptr->sb_total_count);
 
-            // SC detection is OFF for first pass in M8
-            uint8_t disable_sc_detection = scs_ptr->enc_mode_2ndpass <= ENC_M7 ? 0 : use_output_stat(scs_ptr) ? 1 : 0;
+#if SS_OPT_MOVE_SC_DETECTION
+            // If running multi-threaded mode, perform SC detection in picture_analysis_kernel, else in picture_decision_kernel
+            if (scs_ptr->static_config.logical_processors != 1) {
+#endif
+                // SC detection is OFF for first pass in M8
+#if FIX_PRESET_TUNING
+                uint8_t disable_sc_detection = scs_ptr->enc_mode_2ndpass <= ENC_M4 ? 0 : use_output_stat(scs_ptr) ? 1 : 0;
+#else
+                uint8_t disable_sc_detection = scs_ptr->enc_mode_2ndpass <= ENC_M7 ? 0 : use_output_stat(scs_ptr) ? 1 : 0;
+#endif
 
             if (disable_sc_detection)
                 scs_ptr->static_config.screen_content_mode = 0;
@@ -2817,6 +2833,9 @@ void *picture_analysis_kernel(void *input_ptr) {
                 is_screen_content(pcs_ptr);
             } else // off / on
                 pcs_ptr->sc_class0 = pcs_ptr->sc_class1 = pcs_ptr->sc_class2 = scs_ptr->static_config.screen_content_mode;
+#if SS_OPT_MOVE_SC_DETECTION
+            }
+#endif
         }
         // Get Empty Results Object
         svt_get_empty_object(context_ptr->picture_analysis_results_output_fifo_ptr,

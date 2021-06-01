@@ -33,8 +33,13 @@ extern "C" {
 16 bytes (8 x 16 bits) to make vectorization easier. */
 #define CDEF_HBORDER (8)
 #define CDEF_BSTRIDE ALIGN_POWER_OF_TWO((1 << MAX_SB_SIZE_LOG2) + 2 * CDEF_HBORDER, 3)
-
+#if OPT_REDUCE_CDEF_MEMSET
+// Value is chosen so that memset can be used in cdef_seg_search().  Must be a large
+// int16_t value.
+#define CDEF_VERY_LARGE ((uint8_t)~0 >> 1 | ((uint8_t)~0 >> 1) << 8)
+#else
 #define CDEF_VERY_LARGE (16384)
+#endif
 #define CDEF_INBUF_SIZE (CDEF_BSTRIDE * ((1 << MAX_SB_SIZE_LOG2) + 2 * CDEF_VBORDER))
 
 extern const int32_t eb_cdef_pri_taps[2][2];
@@ -55,12 +60,19 @@ void copy_sb8_16(uint16_t *dst, int32_t dstride, const uint8_t *src, int32_t src
 
 void copy_rect(uint16_t *dst, int32_t dstride, const uint16_t *src, int32_t sstride, int32_t v,
                int32_t h);
-
+#if FTR_SKIP_LINES_CDEF_SEARCH
+void svt_cdef_filter_fb(uint8_t *dst8, uint16_t *dst16, int32_t dstride, uint16_t *in, int32_t xdec,
+                        int32_t ydec, int32_t dir[CDEF_NBLOCKS][CDEF_NBLOCKS], int32_t *dirinit,
+                        int32_t var[CDEF_NBLOCKS][CDEF_NBLOCKS], int32_t pli, CdefList *dlist,
+                        int32_t cdef_count, int32_t level, int32_t sec_strength,
+                        int32_t pri_damping, int32_t sec_damping, int32_t coeff_shift, uint8_t subsampling_factor);
+#else
 void svt_cdef_filter_fb(uint8_t *dst8, uint16_t *dst16, int32_t dstride, uint16_t *in, int32_t xdec,
                         int32_t ydec, int32_t dir[CDEF_NBLOCKS][CDEF_NBLOCKS], int32_t *dirinit,
                         int32_t var[CDEF_NBLOCKS][CDEF_NBLOCKS], int32_t pli, CdefList *dlist,
                         int32_t cdef_count, int32_t level, int32_t sec_strength,
                         int32_t pri_damping, int32_t sec_damping, int32_t coeff_shift);
+#endif
 
 #ifdef __cplusplus
 }

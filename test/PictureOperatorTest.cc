@@ -40,6 +40,10 @@
 #include "random.h"
 #include "util.h"
 #include "common_dsp_rtcd.h"
+#if DOWNSAMPLE_2D_AVX2
+#include "aom_dsp_rtcd.h"
+#include "EbMotionEstimation.h"
+#endif
 using svt_av1_test_tool::SVTRandom;  // to generate the random
 
 namespace {
@@ -202,4 +206,88 @@ INSTANTIATE_TEST_CASE_P(PictureOperator, PictureOperatorTest,
                         ::testing::Combine(::testing::ValuesIn(TEST_PU_SIZES),
                                            ::testing::ValuesIn(TEST_PATTERNS)));
 
+#if DOWNSAMPLE_2D_AVX2
+uint32_t DECIM_STEPS[] = {2, 4, 8};
+PUSize DOWNSAMPLE_SIZES[] = {
+    PUSize(1920, 1080), PUSize(960, 540), PUSize(176, 144), PUSize(88, 72)};
+
+typedef std::tuple<PUSize, uint32_t> Downsample2DParam;
+
+class Downsample2DTest : public ::testing::Test,
+                         public ::testing::WithParamInterface<Downsample2DParam> {
+  public:
+    Downsample2DTest()
+        : pu_width(std::get<0>(TEST_GET_PARAM(0))),
+          pu_height(std::get<1>(TEST_GET_PARAM(0))),
+          decim_step(TEST_GET_PARAM(1)) {
+        max_size = sizeof(uint8_t) * (1920 + 3) * (1080 + 3);
+        stride = pu_width + 3;
+        decim_stride = (pu_width / decim_step) + 3;
+        src_ptr = (uint8_t *)malloc(max_size);
+        dst_ref_ptr = (uint8_t *)malloc(max_size);
+        dst_tst_ptr = (uint8_t *)malloc(max_size);
+    }
+
+    void TearDown() override {
+        if (src_ptr)
+            free(src_ptr);
+        if (dst_ref_ptr)
+            free(dst_ref_ptr);
+        if (dst_tst_ptr)
+            free(dst_tst_ptr);
+    }
+
+  protected:
+    void prepare_data() {
+        const int32_t mask = (1 << 8) - 1;
+        SVTRandom rnd(0, mask);
+        for (int i = 0; i < max_size; i++) {
+            src_ptr[i] = rnd.random();
+        }
+        uint8_t val = rnd.random();
+        memset(dst_ref_ptr, val, max_size);
+        memset(dst_tst_ptr, val, max_size);
+    }
+
+    void run_test() {
+        prepare_data();
+        downsample_2d_c(src_ptr,
+                        stride,
+                        pu_width,
+                        pu_height,
+                        dst_ref_ptr,
+                        decim_stride,
+                        decim_step);
+
+        downsample_2d_avx2(src_ptr,
+                           stride,
+                           pu_width,
+                           pu_height,
+                           dst_tst_ptr,
+                           decim_stride,
+                           decim_step);
+
+        EXPECT_EQ(memcmp(dst_ref_ptr, dst_tst_ptr, max_size), 0);
+    }
+
+    int max_size;
+    uint32_t pu_width, pu_height;
+    uint32_t decim_step;
+    uint32_t decim_stride;
+    uint32_t stride;
+    uint8_t *src_ptr;
+    uint8_t *dst_ref_ptr, *dst_tst_ptr;
+};
+
+TEST_P(Downsample2DTest, test) {
+    for (int i = 0; i < 20; i++) {
+        run_test();
+    }
+};
+
+INSTANTIATE_TEST_CASE_P(
+    Downsample2D, Downsample2DTest,
+    ::testing::Combine(::testing::ValuesIn(DOWNSAMPLE_SIZES),
+                       ::testing::ValuesIn(DECIM_STEPS)));
+#endif
 }  // namespace

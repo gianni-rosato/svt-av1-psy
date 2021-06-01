@@ -1540,7 +1540,11 @@ static INLINE void set_txfm_ctxs(ParseCtxt *parse_ctx, TxSize tx_size, int n4_w,
 void read_block_tx_size(ParseCtxt *parse_ctx, PartitionInfo *part_info, BlockSize bsize) {
     BlockModeInfo *mbmi           = part_info->mi;
     SBInfo *       sb_info        = part_info->sb_info;
+#if OPT_MEMORY_MIP
+    int            inter_block_tx = is_inter_block_dec(mbmi);
+#else
     int            inter_block_tx = is_inter_block(mbmi);
+#endif
 
     if (parse_ctx->frame_header->tx_mode == TX_MODE_SELECT && bsize > BLOCK_4X4 && !mbmi->skip &&
         inter_block_tx && !parse_ctx->frame_header->lossless_array[mbmi->segment_id]) {
@@ -1576,8 +1580,11 @@ void read_block_tx_size(ParseCtxt *parse_ctx, PartitionInfo *part_info, BlockSiz
         int b4_h = mi_size_high[mbmi->sb_type];
 
         set_txfm_ctxs(
+#if OPT_MEMORY_MIP
+            parse_ctx, tx_size, b4_w, b4_h, mbmi->skip && is_inter_block_dec(mbmi), part_info);
+#else
             parse_ctx, tx_size, b4_w, b4_h, mbmi->skip && is_inter_block(mbmi), part_info);
-
+#endif
         /* Update Flat Transform Info */
         update_flat_trans_info(parse_ctx, part_info, bsize, tx_size);
     }
@@ -1601,7 +1608,11 @@ void parse_transform_type(ParseCtxt *parse_ctxt, PartitionInfo *xd, TxSize tx_si
     if (qindex == 0)
         return;
 
+#if OPT_MEMORY_MIP
+    const int       inter_block = is_inter_block_dec(mbmi);
+#else
     const int       inter_block = is_inter_block(mbmi);
+#endif
     const TxSetType tx_set_type = get_ext_tx_set_type(
         tx_size, inter_block, parse_ctxt->frame_header->reduced_tx_set);
     if (av1_num_ext_tx_set[tx_set_type] > 1) {
@@ -1635,18 +1646,29 @@ TxType compute_tx_type(PlaneType plane_type, const PartitionInfo *xd, TxSize tx_
                        int reduced_tx_set, uint8_t *lossless_array, TransformInfo_t *trans_info) {
     const BlockModeInfo *const mbmi        = xd->mi;
     const TxSetType            tx_set_type = get_ext_tx_set_type(
+#if OPT_MEMORY_MIP
+        tx_size, is_inter_block_dec(mbmi), reduced_tx_set);
+#else
         tx_size, is_inter_block(mbmi), reduced_tx_set);
-
+#endif
     TxType tx_type = DCT_DCT;
     if (lossless_array[mbmi->segment_id] || txsize_sqr_up_map[tx_size] > TX_32X32)
         tx_type = DCT_DCT;
     else {
+#if OPT_MEMORY_MIP
+        if (plane_type == PLANE_TYPE_Y || is_inter_block_dec(mbmi)) {
+#else
         if (plane_type == PLANE_TYPE_Y || is_inter_block(mbmi)) {
+#endif
             tx_type = trans_info->txk_type;
         } else {
             // In intra mode, uv planes don't share the same prediction mode as y
             // plane, so the tx_type should not be shared
+#if OPT_MEMORY_MIP
+            tx_type = intra_mode_to_tx_type_dec(mbmi, PLANE_TYPE_UV);
+#else
             tx_type = intra_mode_to_tx_type(mbmi, PLANE_TYPE_UV);
+#endif
         }
     }
     assert(tx_type < TX_TYPES);
@@ -1873,7 +1895,11 @@ uint16_t parse_coeffs(ParseCtxt *parse_ctxt, PartitionInfo *xd, uint32_t blk_row
         parse_transform_type(parse_ctxt, xd, tx_size, trans_info);
 
     uint8_t *        lossless_array = &parse_ctxt->frame_header->lossless_array[0];
+#if OPT_MEMORY_MIP
+    TransformInfo_t *trans_buf = (is_inter_block_dec(xd->mi) && plane) ? parse_ctxt->inter_trans_chroma
+#else
     TransformInfo_t *trans_buf = (is_inter_block(xd->mi) && plane) ? parse_ctxt->inter_trans_chroma
+#endif
                                                                    : trans_info;
     trans_info->txk_type       = compute_tx_type(plane_type,
                                            xd,
@@ -2333,7 +2359,11 @@ void parse_residual(ParseCtxt *parse_ctx, PartitionInfo *pi, BlockSize mi_size) 
                 if (plane && !pi->is_chroma_ref)
                     continue;
 
+#if OPT_MEMORY_MIP
+                if (is_inter_block_dec(mode) && !plane)
+#else
                 if (is_inter_block(mode) && !plane)
+#endif
                     parse_ctx->inter_trans_chroma = trans_info[plane];
                 if (lossless_block) {
                     int unit_height = ROUND_POWER_OF_TWO(
@@ -2483,7 +2513,11 @@ void parse_block(EbDecHandle *dec_handle, ParseCtxt *parse_ctx, uint32_t mi_row,
     ZERO_ARRAY(parse_ctx->num_tus[AOM_PLANE_U], 4);
     ZERO_ARRAY(parse_ctx->num_tus[AOM_PLANE_V], 4);
 
+#if OPT_MEMORY_MIP
+    if (!is_inter_block_dec(mode))
+#else
     if (!is_inter_block(mode))
+#endif
         palette_tokens(dec_handle, parse_ctx, &part_info);
 
     read_block_tx_size(parse_ctx, &part_info, subsize);

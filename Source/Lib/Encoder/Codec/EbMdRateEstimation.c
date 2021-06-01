@@ -18,6 +18,9 @@
 #include "EbEntropyCoding.h"
 #include "EbBitstreamUnit.h"
 #include "EbRateDistortionCost.h"
+#if OPT_INLINE_FUNCS
+#include "EbInterPrediction.h"
+#endif
 
 static INLINE int32_t get_interinter_wedge_bits(BlockSize sb_type) {
     const int32_t wbits = get_wedge_params_bits(sb_type);
@@ -70,20 +73,38 @@ int av1_filter_intra_allowed_bsize(uint8_t enable_filter_intra, BlockSize bs);
 * all scenarios based on the frame CDF
 **************************************************************/
 void av1_estimate_syntax_rate(MdRateEstimationContext *md_rate_estimation_array, EbBool is_i_slice,
-                              FRAME_CONTEXT *fc) {
+#if OPT8_MDC
+    uint8_t pic_filter_intra_level,
+    uint8_t allow_screen_content_tools,
+    uint8_t enable_restoration,
+    uint8_t allow_intrabc,
+#endif
+#if OPT9_RATE_ESTIMATION
+    uint8_t partition_contexts,
+#endif
+    FRAME_CONTEXT *fc) {
     int32_t i, j;
 
     md_rate_estimation_array->initialized = 1;
-
+#if OPT9_RATE_ESTIMATION
+    for (i = 0; i < partition_contexts; ++i)
+        av1_get_syntax_rate_from_cdf(
+            md_rate_estimation_array->partition_fac_bits[i], fc->partition_cdf[i], NULL);
+#else
     for (i = 0; i < PARTITION_CONTEXTS; ++i)
         av1_get_syntax_rate_from_cdf(
             md_rate_estimation_array->partition_fac_bits[i], fc->partition_cdf[i], NULL);
+#endif
 
+#if !OPT8_MDC
     //if (cm->skip_mode_flag) { // NM - Hardcoded to true
+#endif
     for (i = 0; i < SKIP_CONTEXTS; ++i)
         av1_get_syntax_rate_from_cdf(
             md_rate_estimation_array->skip_mode_fac_bits[i], fc->skip_mode_cdfs[i], NULL);
+#if !OPT8_MDC
     //}
+#endif
 
     for (i = 0; i < SKIP_CONTEXTS; ++i)
         av1_get_syntax_rate_from_cdf(
@@ -103,19 +124,26 @@ void av1_estimate_syntax_rate(MdRateEstimationContext *md_rate_estimation_array,
                                          fc->uv_mode_cdf[i][j],
                                          NULL);
     }
-
-    av1_get_syntax_rate_from_cdf(
-        md_rate_estimation_array->filter_intra_mode_fac_bits, fc->filter_intra_mode_cdf, NULL);
-    for (i = 0; i < BlockSizeS_ALL; ++i) {
-        if (av1_filter_intra_allowed_bsize(1, i))
-            av1_get_syntax_rate_from_cdf(
-                md_rate_estimation_array->filter_intra_fac_bits[i], fc->filter_intra_cdfs[i], NULL);
+#if OPT8_MDC
+    if (pic_filter_intra_level) {
+#endif
+        av1_get_syntax_rate_from_cdf(
+            md_rate_estimation_array->filter_intra_mode_fac_bits, fc->filter_intra_mode_cdf, NULL);
+        for (i = 0; i < BlockSizeS_ALL; ++i) {
+            if (av1_filter_intra_allowed_bsize(1, i))
+                av1_get_syntax_rate_from_cdf(
+                    md_rate_estimation_array->filter_intra_fac_bits[i], fc->filter_intra_cdfs[i], NULL);
+        }
+#if OPT8_MDC
     }
+#endif
     for (i = 0; i < SWITCHABLE_FILTER_CONTEXTS; ++i)
         av1_get_syntax_rate_from_cdf(md_rate_estimation_array->switchable_interp_fac_bitss[i],
                                      fc->switchable_interp_cdf[i],
                                      NULL);
-
+#if OPT8_MDC
+    if (allow_screen_content_tools) {
+#endif
     for (i = 0; i < PALATTE_BSIZE_CTXS; ++i) {
         av1_get_syntax_rate_from_cdf(
             md_rate_estimation_array->palette_ysize_fac_bits[i], fc->palette_y_size_cdf[i], NULL);
@@ -142,7 +170,9 @@ void av1_estimate_syntax_rate(MdRateEstimationContext *md_rate_estimation_array,
                                          NULL);
         }
     }
-
+#if OPT8_MDC
+    }
+#endif
     int32_t sign_fac_bits[CFL_JOINT_SIGNS];
     av1_get_syntax_rate_from_cdf(sign_fac_bits, fc->cfl_sign_cdf, NULL);
     for (int32_t joint_sign = 0; joint_sign < CFL_JOINT_SIGNS; joint_sign++) {
@@ -197,13 +227,19 @@ void av1_estimate_syntax_rate(MdRateEstimationContext *md_rate_estimation_array,
     for (i = 0; i < DIRECTIONAL_MODES; ++i)
         av1_get_syntax_rate_from_cdf(
             md_rate_estimation_array->angle_delta_fac_bits[i], fc->angle_delta_cdf[i], NULL);
+#if OPT8_MDC
+    if(enable_restoration && allow_intrabc == 0) {
+#endif
     av1_get_syntax_rate_from_cdf(
         md_rate_estimation_array->switchable_restore_fac_bits, fc->switchable_restore_cdf, NULL);
     av1_get_syntax_rate_from_cdf(
         md_rate_estimation_array->wiener_restore_fac_bits, fc->wiener_restore_cdf, NULL);
     av1_get_syntax_rate_from_cdf(
         md_rate_estimation_array->sgrproj_restore_fac_bits, fc->sgrproj_restore_cdf, NULL);
-    av1_get_syntax_rate_from_cdf(md_rate_estimation_array->intrabc_fac_bits, fc->intrabc_cdf, NULL);
+        av1_get_syntax_rate_from_cdf(md_rate_estimation_array->intrabc_fac_bits, fc->intrabc_cdf, NULL);
+#if OPT8_MDC
+    }
+#endif
 
     if (!is_i_slice) { // NM - Hardcoded to true
         for (i = 0; i < COMP_INTER_CONTEXTS; ++i)
@@ -357,6 +393,16 @@ void av1_estimate_mv_rate(PictureControlSet *      pcs_ptr,
                           MdRateEstimationContext *md_rate_estimation_array, FRAME_CONTEXT *fc)
 
 {
+#if  FTR_SIMPLIFIED_MV_COST
+    if (pcs_ptr->use_low_precision_cost_estimation) {
+        memset(md_rate_estimation_array->nmv_vec_cost, 0, sizeof(int32_t) *MV_JOINTS);
+        memset(pcs_ptr->parent_pcs_ptr->scs_ptr->nmv_vec_cost, 0, sizeof(int32_t) *MV_JOINTS);
+        memset(pcs_ptr->parent_pcs_ptr->scs_ptr->nmv_costs, 0, sizeof(int32_t) *MV_VALS * 2);
+        md_rate_estimation_array->nmvcoststack[0] = &pcs_ptr->parent_pcs_ptr->scs_ptr->nmv_costs[0][MV_MAX];
+        md_rate_estimation_array->nmvcoststack[1] = &pcs_ptr->parent_pcs_ptr->scs_ptr->nmv_costs[1][MV_MAX];
+        return;
+    }
+#endif
     int32_t *    nmvcost[2];
     int32_t *    nmvcost_hp[2];
     FrameHeader *frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
@@ -575,7 +621,11 @@ uint8_t av1_drl_ctx(const CandidateMv *ref_mv_stack, int32_t ref_idx);
 
 int32_t have_newmv_in_inter_mode(PredictionMode mode);
 //Returns a context number for the given MB prediction signal
+#if OPT_MEMORY_MIP
+/*static*/ InterpFilter get_ref_filter_type(const BlockModeInfoEnc *ref_mbmi, int dir,
+#else
 static InterpFilter get_ref_filter_type(const BlockModeInfo *ref_mbmi, int dir,
+#endif
                                         MvReferenceFrame ref_frame) {
     return ((ref_mbmi->ref_frame[0] == ref_frame || ref_mbmi->ref_frame[1] == ref_frame)
                 ? av1_extract_interp_filter(ref_mbmi->interp_filters, dir & 0x01)
@@ -589,7 +639,11 @@ int av1_filter_intra_allowed(uint8_t enable_filter_intra, BlockSize bsize, uint8
 INLINE int32_t is_chroma_reference(int32_t mi_row, int32_t mi_col, BlockSize bsize,
                                    int32_t subsampling_x, int32_t subsampling_y);
 
+#if OPT_MEMORY_MIP
+int32_t is_inter_block(const BlockModeInfoEnc *mbmi);
+#else
 int32_t is_inter_block(const BlockModeInfo *mbmi);
+#endif
 
 int av1_allow_palette(int allow_screen_content_tools, BlockSize sb_type);
 
@@ -597,8 +651,9 @@ int av1_get_palette_bsize_ctx(BlockSize bsize);
 
 int av1_get_palette_mode_ctx(const MacroBlockD *xd);
 
+#if !OPT_INLINE_FUNCS
 extern void av1_set_ref_frame(MvReferenceFrame *rf, int8_t ref_frame_type);
-
+#endif
 static INLINE InterpFilter av1_extract_interp_filter(InterpFilters filters, int32_t x_filter);
 
 /*******************************************************************************
@@ -626,7 +681,9 @@ int svt_av1_get_intra_inter_context(const MacroBlockD *xd) {
         return 0;
     }
 }
+#if !OPT_INLINE_FUNCS
 extern int8_t av1_ref_frame_type(const MvReferenceFrame *const rf);
+#endif
 uint16_t      compound_mode_ctx_map_[3][COMP_NEWMV_CTXS] = {
     {0, 1, 1, 1, 1},
     {1, 2, 3, 4, 4},

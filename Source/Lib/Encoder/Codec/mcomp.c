@@ -58,6 +58,14 @@ static INLINE int svt_mv_err_cost(const MV *mv, const MV *ref_mv, const int *mvj
     case MV_COST_L1_LOWRES: return (SSE_LAMBDA_LOWRES * (abs_diff.row + abs_diff.col)) >> 3;
     case MV_COST_L1_MIDRES: return (SSE_LAMBDA_MIDRES * (abs_diff.row + abs_diff.col)) >> 3;
     case MV_COST_L1_HDRES: return (SSE_LAMBDA_HDRES * (abs_diff.row + abs_diff.col)) >> 3;
+#if OPT_SUBPEL
+    case MV_COST_OPT:
+    {
+        return (int)ROUND_POWER_OF_TWO_64(
+            (int64_t)((abs_diff.row + abs_diff.col) << 8) * error_per_bit,
+            RDDIV_BITS + AV1_PROB_COST_SHIFT - RD_EPB_SHIFT + PIXEL_TRANSFORM_ERROR_SCALE);
+    }
+#endif
     case MV_COST_NONE: return 0;
     default: assert(0 && "Invalid rd_cost_type"); return 0;
     }
@@ -189,6 +197,14 @@ static INLINE unsigned int svt_check_better_fast(
     if (svt_av1_is_subpelmv_in_range(mv_limits, *this_mv)) {
         unsigned int sse;
         int thismse;
+#if OPT_SUBPEL
+        cost = svt_mv_err_cost_(this_mv, mv_cost_params);
+        if (mv_cost_params->mv_cost_type == MV_COST_OPT) {
+            unsigned int bestcost = *distortion + cost;
+            if (bestcost > ((*besterr * mv_cost_params->early_exit_th) / 1000))
+                return bestcost;
+        }
+#endif
         // TODO: add estimated func
         if (is_scaled) {
             thismse = svt_upsampled_pref_error(xd, cm, this_mv, var_params, &sse);
@@ -196,7 +212,9 @@ static INLINE unsigned int svt_check_better_fast(
         else {
             thismse = svt_estimated_pref_error(this_mv, var_params, &sse);
         }
+#if !OPT_SUBPEL
         cost = svt_mv_err_cost_(this_mv, mv_cost_params);
+#endif
         cost += thismse;
 
         if (cost < *besterr) {
@@ -391,6 +409,18 @@ static AOM_FORCE_INLINE void svt_second_level_check_v2(
 }
 
 // Gets the error at the beginning when the mv has fullpel precision
+#if SS_OPT_SUBPEL_PATH
+static unsigned int svt_upsampled_setup_center_error(const MV *                      bestmv,
+                                                     const SUBPEL_SEARCH_VAR_PARAMS *var_params,
+                                                     const MV_COST_PARAMS *          mv_cost_params,
+                                                     unsigned int *distortion) {
+
+    const MSBuffers *ms_buffers = &var_params->ms_buffers;
+    const uint8_t *  ref = svt_get_buf_from_mv(ms_buffers->ref, *bestmv);
+    *distortion = var_params->vfp->vf(ref, ms_buffers->ref->stride, ms_buffers->src->buf, ms_buffers->src->stride, distortion);
+    return *distortion + svt_mv_err_cost_(bestmv, mv_cost_params);
+}
+#else
 static unsigned int svt_upsampled_setup_center_error(MacroBlockD *                   xd,
                                                      const struct AV1Common *const   cm,
                                                      const MV *                      bestmv,
@@ -417,6 +447,7 @@ static INLINE int svt_check_repeated_mv_and_update(int_mv *last_mv_search_list, 
     }
     return 0;
 }
+#endif
 
 static INLINE MV get_best_diag_step(int step_size, unsigned int left_cost,
     unsigned int right_cost,
@@ -435,7 +466,11 @@ static AOM_FORCE_INLINE MV first_level_check_fast(
     MacroBlockD *xd, const struct AV1Common *const cm, const MV this_mv, MV *best_mv,
     int hstep, const SubpelMvLimits *mv_limits,
     const SUBPEL_SEARCH_VAR_PARAMS *var_params,
+#if OPT11_SUBPEL
+    const MV_COST_PARAMS *mv_cost_params, unsigned int *besterr,unsigned int orgerr,
+#else
     const MV_COST_PARAMS *mv_cost_params, unsigned int *besterr,
+#endif
     unsigned int *sse1, int *distortion, int is_scaled) {
     // Check the four cardinal directions
     const MV left_mv = { this_mv.row, this_mv.col - hstep };
@@ -462,7 +497,10 @@ static AOM_FORCE_INLINE MV first_level_check_fast(
     const MV diag_step = get_best_diag_step(hstep, left, right, up, down);
     const MV diag_mv = { this_mv.row + diag_step.row,
                          this_mv.col + diag_step.col };
-
+#if OPT11_SUBPEL
+    if(*besterr >= orgerr)
+        return diag_step;
+#endif
     // Check the diagonal direction with the best mv
     svt_check_better_fast(xd, cm, &diag_mv, best_mv, mv_limits, var_params,
         mv_cost_params, besterr, sse1, distortion, &dummy,
@@ -477,7 +515,11 @@ static AOM_FORCE_INLINE void second_level_check_fast(
     MacroBlockD *xd, const struct AV1Common *const cm, const MV this_mv, const MV diag_step,
     MV *best_mv, int hstep, const SubpelMvLimits *mv_limits,
     const SUBPEL_SEARCH_VAR_PARAMS *var_params,
+#if OPT11_SUBPEL
     const MV_COST_PARAMS *mv_cost_params, unsigned int *besterr,
+#else
+    const MV_COST_PARAMS *mv_cost_params, unsigned int *besterr,
+#endif
     unsigned int *sse1, int *distortion, int is_scaled) {
     assert(diag_step.row == hstep || diag_step.row == -hstep);
     assert(diag_step.col == hstep || diag_step.col == -hstep);
@@ -544,8 +586,25 @@ static AOM_FORCE_INLINE void two_level_checks_fast(
     MacroBlockD *xd, const struct AV1Common *const cm, const MV this_mv, MV *best_mv,
     int hstep, const SubpelMvLimits *mv_limits,
     const SUBPEL_SEARCH_VAR_PARAMS *var_params,
+#if OPT11_SUBPEL
+    const MV_COST_PARAMS *mv_cost_params, unsigned int *besterr, unsigned int orgerr,
+#else
     const MV_COST_PARAMS *mv_cost_params, unsigned int *besterr,
+#endif
     unsigned int *sse1, int *distortion, int iters, int is_scaled) {
+#if OPT11_SUBPEL
+    const MV diag_step = first_level_check_fast(
+        xd, cm, this_mv, best_mv, hstep, mv_limits, var_params, mv_cost_params,
+        besterr, orgerr,sse1, distortion, is_scaled);
+#if OPT11_SUBPEL
+    if(*besterr < orgerr)
+#endif
+    if (iters > 1) {
+        second_level_check_fast(xd, cm, this_mv, diag_step, best_mv, hstep,
+            mv_limits, var_params, mv_cost_params, besterr,
+            sse1, distortion, is_scaled);
+    }
+#else
     const MV diag_step = first_level_check_fast(
         xd, cm, this_mv, best_mv, hstep, mv_limits, var_params, mv_cost_params,
         besterr, sse1, distortion, is_scaled);
@@ -554,34 +613,79 @@ static AOM_FORCE_INLINE void two_level_checks_fast(
             mv_limits, var_params, mv_cost_params, besterr,
             sse1, distortion, is_scaled);
     }
+#endif
 }
 
 int svt_av1_find_best_sub_pixel_tree_pruned(
     MacroBlockD *xd, const struct AV1Common *const cm,
     const SUBPEL_MOTION_SEARCH_PARAMS *ms_params, MV start_mv, MV *bestmv,
+#if SS_OPT_SUBPEL_PATH
+    int *distortion, unsigned int *sse1) {
+#else
     int *distortion, unsigned int *sse1, int_mv *last_mv_search_list) {
+#endif
     (void)cm;
     const int allow_hp = ms_params->allow_hp;
     const int forced_stop = ms_params->forced_stop;
     const int iters_per_step = ms_params->iters_per_step;
+#if !SS_OPT_SUBPEL_PATH
     const int *cost_list = ms_params->cost_list;
+#endif
     const SubpelMvLimits *mv_limits = &ms_params->mv_limits;
     const MV_COST_PARAMS *mv_cost_params = &ms_params->mv_cost_params;
     const SUBPEL_SEARCH_VAR_PARAMS *var_params = &ms_params->var_params;
-
+#if !SS_OPT_SUBPEL_PATH
     // The iteration we are current searching for. Iter 0 corresponds to fullpel
     // mv, iter 1 to half pel, and so on
     int iter = 0;
+#endif
     int hstep = INIT_SUBPEL_STEP_SIZE;  // Step size, initialized to 4/8=1/2 pel
     unsigned int besterr;
+#if OPT11_SUBPEL
+    unsigned int org_error;
+#endif
     *bestmv = start_mv;
 
     const int is_scaled = 0;
+#if SS_OPT_SUBPEL_PATH
+    besterr = svt_upsampled_setup_center_error(bestmv, var_params, mv_cost_params, (unsigned int*)distortion);
+#else
     besterr = svt_upsampled_setup_center_error(xd, cm, bestmv, var_params,
         mv_cost_params, sse1, distortion);
+#endif
     //besterr = setup_center_error_facade(
     //    xd, cm, bestmv, var_params, mv_cost_params, sse1, distortion, is_scaled);
+#if OPT11_SUBPEL
+#if FTR_LOW_AC_SUBPEL
+#if OPT_SUBPEL
+    unsigned int demo = ms_params->skip_diag_refinement >= 2 ? ((var_params->w >= 64 || var_params->h >= 64) ? 2 : 1) : 1;
+#else
+    unsigned int demo = ms_params->skip_diag_refinement == 2 ? ((var_params->w >= 64 || var_params->h >= 64) ? 2 : 1) : 1;
+#endif
+#else
+    unsigned int demo = 1;
+#endif
+    org_error = ms_params->skip_diag_refinement ? besterr /demo : INT_MAX;
+#endif
+#if SS_OPT_SUBPEL_PATH
+    // How many steps to take. A round of 0 means fullpel search only, 1 means
+    // half-pel, and so on.
+    const int round = AOMMIN(FULL_PEL - forced_stop, 3 - !allow_hp);
 
+    // If forced_stop is FULL_PEL, return.
+    if (!round)
+        return besterr;
+
+    for (int iter = 0; iter < round; ++iter) {
+        two_level_checks_fast(xd, cm, start_mv, bestmv, hstep, mv_limits,
+            var_params, mv_cost_params, &besterr, org_error, sse1,
+            distortion, iters_per_step, is_scaled);
+        hstep >>= 1;
+        start_mv = *bestmv;
+        if (ms_params->skip_diag_refinement && iter < QUARTER_PEL)
+            org_error = MIN(org_error, besterr);
+    }
+#else
     // If forced_stop is FULL_PEL, return.
     if (forced_stop == FULL_PEL) return besterr;
 
@@ -656,11 +760,19 @@ int svt_av1_find_best_sub_pixel_tree_pruned(
         }
     }
     else {
+#if OPT11_SUBPEL
+        two_level_checks_fast(xd, cm, start_mv, bestmv, hstep, mv_limits,
+            var_params, mv_cost_params, &besterr, org_error,sse1,
+            distortion, iters_per_step, is_scaled);
+#else
         two_level_checks_fast(xd, cm, start_mv, bestmv, hstep, mv_limits,
             var_params, mv_cost_params, &besterr, sse1,
             distortion, iters_per_step, is_scaled);
+#endif
     }
-
+#if OPT11_SUBPEL
+    org_error = ms_params->skip_diag_refinement ? MIN(org_error, besterr) : INT_MAX;
+#endif
     // Each subsequent iteration checks at least one point in common with
     // the last iteration could be 2 ( if diag selected) 1/4 pel
     if (forced_stop < HALF_PEL) {
@@ -671,9 +783,15 @@ int svt_av1_find_best_sub_pixel_tree_pruned(
 
         hstep >>= 1;
         start_mv = *bestmv;
+#if OPT11_SUBPEL
+        two_level_checks_fast(xd, cm, start_mv, bestmv, hstep, mv_limits,
+            var_params, mv_cost_params, &besterr,org_error, sse1,
+            distortion, iters_per_step, is_scaled);
+#else
         two_level_checks_fast(xd, cm, start_mv, bestmv, hstep, mv_limits,
             var_params, mv_cost_params, &besterr, sse1,
             distortion, iters_per_step, is_scaled);
+#endif
     }
 
     if (allow_hp && forced_stop == EIGHTH_PEL) {
@@ -684,18 +802,28 @@ int svt_av1_find_best_sub_pixel_tree_pruned(
 
         hstep >>= 1;
         start_mv = *bestmv;
+#if OPT11_SUBPEL
+        two_level_checks_fast(xd, cm, start_mv, bestmv, hstep, mv_limits,
+            var_params, mv_cost_params, &besterr,org_error, sse1,
+            distortion, iters_per_step, is_scaled);
+#else
         two_level_checks_fast(xd, cm, start_mv, bestmv, hstep, mv_limits,
             var_params, mv_cost_params, &besterr, sse1,
             distortion, iters_per_step, is_scaled);
+#endif
     }
-
+#endif
     return besterr;
 }
 
 int svt_av1_find_best_sub_pixel_tree(MacroBlockD *xd, const struct AV1Common *const cm,
                                      const SUBPEL_MOTION_SEARCH_PARAMS *ms_params, MV start_mv,
+#if SS_OPT_SUBPEL_PATH
+                                     MV *bestmv, int *distortion, unsigned int *sse1) {
+#else
                                      MV *bestmv, int *distortion, unsigned int *sse1,
                                      int_mv *last_mv_search_list) {
+#endif
     const int allow_hp       = ms_params->allow_hp;
     const int forced_stop    = ms_params->forced_stop;
     const int iters_per_step = ms_params->iters_per_step;
@@ -713,19 +841,23 @@ int svt_av1_find_best_sub_pixel_tree(MacroBlockD *xd, const struct AV1Common *co
 
     *bestmv             = start_mv;
     const int is_scaled = 0;
+#if SS_OPT_SUBPEL_PATH
+    besterr = svt_upsampled_setup_center_error(bestmv, var_params, mv_cost_params, (unsigned int*)distortion);
+#else
     besterr             = svt_upsampled_setup_center_error(
         xd, cm, bestmv, var_params, mv_cost_params, sse1, distortion);
-
+#endif
     // If forced_stop is FULL_PEL, return.
     if (!round)
         return besterr;
 
     for (int iter = 0; iter < round; ++iter) {
         MV iter_center_mv = *bestmv;
+#if !SS_OPT_SUBPEL_PATH
         if (svt_check_repeated_mv_and_update(last_mv_search_list, iter_center_mv, iter)) {
             return INT_MAX;
         }
-
+#endif
         MV diag_step;
         diag_step = svt_first_level_check(xd,
                                           cm,

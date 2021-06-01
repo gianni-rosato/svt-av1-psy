@@ -518,6 +518,7 @@ class InvTxfm2dAsmTest : public ::testing::TestWithParam<InvTxfm2dParam> {
 
             ASSERT_EQ(energy_ref, energy_asm);
 
+#if !LIGHT_PD0_2
             for (int i = 0; i < MAX_TX_SIZE; i++) {
                 for (int j = 0; j < MAX_TX_SIZE; j++) {
                     ASSERT_EQ(input_[i * MAX_TX_SIZE + j],
@@ -525,6 +526,7 @@ class InvTxfm2dAsmTest : public ::testing::TestWithParam<InvTxfm2dParam> {
                         << " tx_size: " << tx_size << " " << j << " x " << i;
                 }
             }
+#endif
         }
     }
 

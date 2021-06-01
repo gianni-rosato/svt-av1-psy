@@ -26,7 +26,11 @@ extern "C" {
 #define EB_HME_SEARCH_AREA_ROW_MAX_COUNT 2
 #define MAX_HIERARCHICAL_LEVEL 6
 #define REF_LIST_MAX_DEPTH 4
-#define MAX_ENC_PRESET 8
+#if TUNE_NEW_M11
+#define MAX_ENC_PRESET 11
+#else
+#define MAX_ENC_PRESET 10
+#endif
 #define NUM_MV_COMPONENTS 2
 #define NUM_MV_HIST 2
 #define MAX_MV_HIST_SIZE  2 * REF_LIST_MAX_DEPTH * NUM_MV_COMPONENTS * NUM_MV_HIST
@@ -103,6 +107,19 @@ typedef struct TfControls {
     int64_t  me_16x16_to_8x8_dev_th;   // The 16x16-to-8x8 me-distortion deviation beyond which the number of reference frames is capped to [max_64x64_past_pics, max_64x64_future_pics] @ the level of a 64x64 Block
     uint64_t max_64x64_past_pics;      // The max number of past reference frames if me_16x16_to_8x8_dev > me_16x16_to_8x8_dev_th
     uint64_t max_64x64_future_pics;    // The max number of future reference frames if me_16x16_to_8x8_dev > me_16x16_to_8x8_dev_th
+#if OPT_TF
+    uint8_t sub_sampling_shift;         // Use subsampled prediction and sse;
+#endif
+#if OPT_TFILTER
+    uint8_t use_fast_filter;  //simple filter using fixed weight per block, no MV based correction, approximated exp
+#endif
+#if OPT_TFILTER
+    uint8_t avoid_2d_qpel;    //avoid 2d qpel positions in 32x32 search
+    uint8_t use_2tap;         //use bilinear sub pel filter in 32x32 search
+#endif
+#if OPT_NOISE_LEVEL
+    uint8_t use_intra_for_noise_est; //use I frame for noise estimation
+#endif
 } TfControls;
 // super-res modes
 typedef enum {
@@ -389,12 +406,17 @@ typedef struct EbSvtAv1EncConfiguration {
     *
     * Default is -1. */
     int enable_redundant_blk;
-
+#if FIX_REMOVE_PD1
+    /* spatial sse in full loop
+    *
+    * -1: Default, 0: OFF, 1: ON. */
+    int spatial_sse_full_loop_level;
+#else
     /* spatial sse in full loop
     *
     * -1: Default, 0: OFF in PD_PASS_2, 1: Fully ON in PD_PASS_2. */
     int spatial_sse_full_loop_level;
-
+#endif
     /* over boundry block
     *
     * Default is -1. */
@@ -443,7 +465,20 @@ typedef struct EbSvtAv1EncConfiguration {
      *
      * Default is -1 (auto) */
     int disable_cfl_flag;
-
+#if FIX_REMOVE_PD1
+        /* obmc_level specifies the level of the OBMC feature that would be
+     * considered when the level is specified in the command line instruction (CLI).
+     * The meaning of the feature level in the CLI is different from that for
+     * the default settings. See description of pic_obmc_level for the full details.
+     *
+     * The table below specifies the meaning of obmc_level when specified in the CLI.
+     *     obmc_level   | Command Line Settings
+     *        -1        | Default settings (auto)
+     *         0        | OFF everywhere in encoder
+     *         1        | ON
+     *
+     * Default is -1 (auto). */
+#else
     /* obmc_level specifies the level of the OBMC feature that would be
      * considered when the level is specified in the command line instruction (CLI).
      * The meaning of the feature level in the CLI is different from that for
@@ -458,13 +493,28 @@ typedef struct EbSvtAv1EncConfiguration {
      *         3        | Level 3 everywhere in PD_PASS_3
      *
      * Default is -1 (auto). */
+#endif
     int8_t obmc_level;
-
+#if FIX_REMOVE_PD1
+    /* RDOQ
+    *
+    * -1: Default, 0: OFF, 1: ON. */
+#else
     /* RDOQ
     *
     * -1: Default, 0: OFF in PD_PASS_2, 1: Fully ON in PD_PASS_2. */
+#endif
     int rdoq_level;
-
+#if FIX_REMOVE_PD1
+    /* Filter intra prediction
+    *
+    * The table below specifies the meaning of filter_intra_level when specified in the CLI.
+    * filter_intra_level | Command Line Settings
+    *        -1          | Default settings (auto)
+    *         0          | OFF everywhere in encoder
+    *         1          | ON */
+    int8_t filter_intra_level;
+#else
     /* Filter intra prediction
     *
     * The table below specifies the meaning of filter_intra_level when specified in the CLI.
@@ -473,7 +523,7 @@ typedef struct EbSvtAv1EncConfiguration {
     *         0          | OFF everywhere in encoder
     *         1          | Fully ON in PD_PASS_2, Default settings in PD_PASS_0 */
     int8_t filter_intra_level;
-
+#endif
     /* Intra Edge Filter
     *
     * Default is -1. */
@@ -517,13 +567,18 @@ typedef struct EbSvtAv1EncConfiguration {
      *
     * Default is 1. */
     int8_t enable_hbd_mode_decision;
-
+#if FIX_REMOVE_PD1
+    /* Palette Mode
+    *
+    * -1: Default, 0: OFF, 1: Fully ON, 2 ... 6: Faster levels */
+    int32_t palette_level;
+#else
     /* Palette Mode
     *
     * -1: Default, 0: OFF, 1: Fully ON, 2 ... 6: Faster levels
     * Levels 0 - 6 apply only to PD_PASS_2 */
     int32_t palette_level;
-
+#endif
     // Rate Control
 
     /* Rate control mode.

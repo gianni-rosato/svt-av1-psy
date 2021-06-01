@@ -894,8 +894,13 @@ static INLINE void partition_gather_vert_alike(AomCdfProb *out, const AomCdfProb
 // onyxc_int.h
 
 /**********************************************************************************************************************/
+#if SS_OPT_PALETTE_COST
+int av1_get_palette_color_index_context_optimized(const uint8_t *color_map, int stride, int r,
+                                                  int c, int *color_idx);
+#else
 int av1_get_palette_color_index_context_optimized(const uint8_t *color_map, int stride, int r,
                                                   int c, int palette_size, int *color_idx);
+#endif
 /**********************************************************************************************************************/
 /**********************************************************************************************************************/
 

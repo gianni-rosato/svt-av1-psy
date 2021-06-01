@@ -19,7 +19,11 @@
 #include "EbModeDecisionProcess.h"
 #include "common_dsp_rtcd.h"
 
+#if OPT_MEMORY_MIP
+int32_t is_inter_block(const BlockModeInfoEnc *mbmi);
+#else
 int32_t is_inter_block(const BlockModeInfo *mbmi);
+#endif
 // Weights are quadratic from '1' to '1 / BlockSize', scaled by
 // 2^sm_weight_log2_scale.
 static const int32_t sm_weight_log2_scale = 8;
@@ -57,6 +61,42 @@ static const uint8_t sm_weight_arrays[2 * MAX_BLOCK_DIM] = {
 #define MIDRANGE_VALUE_8BIT    128
 #define MIDRANGE_VALUE_10BIT   512
 
+#if OPT_MEMORY_MIP
+int is_smooth(const BlockModeInfoEnc *block_mi, int plane)
+{
+    if (plane == 0) {
+        const PredictionMode mode = block_mi->mode;
+        return (mode == SMOOTH_PRED || mode == SMOOTH_V_PRED ||
+            mode == SMOOTH_H_PRED);
+    }
+    else {
+        // uv_mode is not set for inter blocks, so need to explicitly
+        // detect that case.
+        if (is_inter_block(block_mi)) return 0;
+
+        const UvPredictionMode uv_mode = block_mi->uv_mode;
+        return (uv_mode == UV_SMOOTH_PRED || uv_mode == UV_SMOOTH_V_PRED ||
+            uv_mode == UV_SMOOTH_H_PRED);
+    }
+}
+int is_smooth_dec(const BlockModeInfo *block_mi, int plane)
+{
+    if (plane == 0) {
+        const PredictionMode mode = block_mi->mode;
+        return (mode == SMOOTH_PRED || mode == SMOOTH_V_PRED ||
+            mode == SMOOTH_H_PRED);
+    }
+    else {
+        // uv_mode is not set for inter blocks, so need to explicitly
+        // detect that case.
+        if (is_inter_block_dec(block_mi)) return 0;
+
+        const UvPredictionMode uv_mode = block_mi->uv_mode;
+        return (uv_mode == UV_SMOOTH_PRED || uv_mode == UV_SMOOTH_V_PRED ||
+            uv_mode == UV_SMOOTH_H_PRED);
+    }
+}
+#else
 int is_smooth(const BlockModeInfo *block_mi, int plane)
 {
     if (plane == 0) {
@@ -74,6 +114,7 @@ int is_smooth(const BlockModeInfo *block_mi, int plane)
             uv_mode == UV_SMOOTH_H_PRED);
     }
 }
+#endif
 
 int32_t use_intra_edge_upsample(int32_t bs0, int32_t bs1, int32_t delta, int32_t type)
 {

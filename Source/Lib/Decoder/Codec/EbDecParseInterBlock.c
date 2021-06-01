@@ -41,14 +41,22 @@ static INLINE void svt_collect_neighbors_ref_counts(PartitionInfo *pi) {
     const int                  left_in_image  = pi->left_available;
 
     // Above neighbor
+#if OPT_MEMORY_MIP
+    if (above_in_image && is_inter_block_dec(above_mbmi)) {
+#else
     if (above_in_image && is_inter_block(above_mbmi)) {
+#endif
         ref_counts[above_mbmi->ref_frame[0]]++;
         if (has_second_ref(above_mbmi))
             ref_counts[above_mbmi->ref_frame[1]]++;
     }
 
     // Left neighbor
+#if OPT_MEMORY_MIP
+    if (left_in_image && is_inter_block_dec(left_mbmi)) {
+#else
     if (left_in_image && is_inter_block(left_mbmi)) {
+#endif
         ref_counts[left_mbmi->ref_frame[0]]++;
         if (has_second_ref(left_mbmi))
             ref_counts[left_mbmi->ref_frame[1]]++;
@@ -79,11 +87,19 @@ static int get_reference_mode_context(const PartitionInfo *xd) {
         else if (!has_second_ref(above_mbmi))
             // one of two edges uses comp pred (2/3)
             ctx = 2 +
+#if OPT_MEMORY_MIP
+                (IS_BACKWARD_REF_FRAME(above_mbmi->ref_frame[0]) || !is_inter_block_dec(above_mbmi));
+#else
                 (IS_BACKWARD_REF_FRAME(above_mbmi->ref_frame[0]) || !is_inter_block(above_mbmi));
+#endif
         else if (!has_second_ref(left_mbmi))
             // one of two edges uses comp pred (2/3)
             ctx = 2 +
+#if OPT_MEMORY_MIP
+                (IS_BACKWARD_REF_FRAME(left_mbmi->ref_frame[0]) || !is_inter_block_dec(left_mbmi));
+#else
                 (IS_BACKWARD_REF_FRAME(left_mbmi->ref_frame[0]) || !is_inter_block(left_mbmi));
+#endif
         else // both edges use comp pred (4)
             ctx = 4;
     } else if (has_above || has_left) { // one edge available
@@ -389,7 +405,11 @@ static void add_ref_mv_candidate(EbDecHandle *dec_handle, const BlockModeInfo *c
                                  const MvReferenceFrame rf[2], uint8_t *num_mv_found,
                                  uint8_t *found_match, uint8_t *newmv_count,
                                  CandidateMv *ref_mv_stack, IntMv *gm_mv_candidates, int weight) {
+#if OPT_MEMORY_MIP
+    if (!is_inter_block_dec(candidate))
+#else
     if (!is_inter_block(candidate))
+#endif
         return; // for intrabc
     assert(weight % 2 == 0);
 
@@ -1766,7 +1786,11 @@ int has_overlappable_cand(EbDecHandle *dec_handle, ParseCtxt *parse_ctx, Partiti
             BlockModeInfo *top_nb_mode = get_cur_mode_info(
                 dec_handle, mi_row - 1, x4 | 1, pi->sb_info);
             x4 += AOMMAX(2, mi_size_wide[top_nb_mode->sb_type] >> 2);
+#if OPT_MEMORY_MIP
+            if (is_inter_block_dec(top_nb_mode))
+#else
             if (is_inter_block(top_nb_mode))
+#endif
                 return 1;
         }
     }
@@ -1777,7 +1801,11 @@ int has_overlappable_cand(EbDecHandle *dec_handle, ParseCtxt *parse_ctx, Partiti
             BlockModeInfo *left_nb_mode = get_cur_mode_info(
                 dec_handle, y4 | 1, mi_col - 1, pi->sb_info);
             y4 += AOMMAX(2, mi_size_high[left_nb_mode->sb_type] >> 2);
+#if OPT_MEMORY_MIP
+            if (is_inter_block_dec(left_nb_mode))
+#else
             if (is_inter_block(left_nb_mode))
+#endif
                 return 1;
         }
     }

@@ -31,6 +31,16 @@ extern "C" {
 #define SEGMENT_END_IDX(index, pic_size_in_sb, num_of_seg) \
     ((((index) + 1) * (pic_size_in_sb)) / (num_of_seg))
 
+#if FTR_NEW_WN_LVLS
+typedef struct WnFilterCtrls {
+    EbBool enabled;
+    uint8_t filter_tap_lvl;         // [1-3], 1 is Y-7tap, UV-5tap; 2 is Y-5tap, UV-5tap; 3 is Y-3tap, UV-3tap
+    EbBool use_refinement;          // If true, perform a refinement search around initial filter coeff values
+    EbBool max_one_refinement_step; // Limit refinement search to one step
+    EbBool use_prev_frame_coeffs;   // Skip coeff generation and use the filter params from the colocated rest. unit on the previous frame, if available, else generate new
+                                    // Requires that previous frames saved their params (only true if this flag is on for all frames)
+} WnFilterCtrls;
+#endif
 typedef struct Av1Common {
     int32_t      mi_rows;
     int32_t      mi_cols;
@@ -62,7 +72,11 @@ typedef struct Av1Common {
     int32_t sg_frame_ep_cnt[SGRPROJ_PARAMS];
     int32_t sg_frame_ep;
     int8_t  sg_ref_frame_ep[2];
+#if FTR_NEW_WN_LVLS
+    WnFilterCtrls  wn_filter_ctrls;
+#else
     int8_t  wn_filter_mode;
+#endif
     uint8_t use_boundaries_in_rest_search; // Use boundary pixels in restoration filtering search
 
     FrameSize    frm_size;

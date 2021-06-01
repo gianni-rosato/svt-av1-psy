@@ -19,7 +19,14 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+#if CLN_SSE
+void picture_full_distortion32_bits_single(
+    int32_t *coeff,
+    int32_t *recon_coeff,
+    uint32_t stride,
+    uint32_t bwidth, uint32_t bheight,
+    uint64_t* distortion, uint32_t count_non_zero_coeffs);
+#else
 extern EbErrorType picture_full_distortion32_bits(
     EbPictureBufferDesc *coeff, uint32_t coeff_luma_origin_index,
     uint32_t coeff_chroma_origin_index, EbPictureBufferDesc *recon_coeff,
@@ -29,6 +36,7 @@ extern EbErrorType picture_full_distortion32_bits(
     uint64_t cr_distortion[DIST_CALC_TOTAL], uint32_t y_count_non_zero_coeffs,
     uint32_t cb_count_non_zero_coeffs, uint32_t cr_count_non_zero_coeffs,
     COMPONENT_TYPE component_type);
+#endif
 //Residual Data
 
 void compressed_pack_sb(uint8_t *in8_bit_buffer, uint32_t in8_stride, uint8_t *inn_bit_buffer,

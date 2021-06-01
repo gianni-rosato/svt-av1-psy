@@ -326,6 +326,9 @@ typedef struct IntraBcContext {
     uint8_t        is_exhaustive_allowed;
     CRC_CALCULATOR crc_calculator1;
     CRC_CALCULATOR crc_calculator2;
+#if  FTR_SIMPLIFIED_MV_COST
+    uint8_t use_low_precision_cost_estimation;
+#endif
 } IntraBcContext;
 
 typedef struct BlkStruct {
@@ -355,6 +358,10 @@ typedef struct BlkStruct {
     uint8_t split_flag;
     uint8_t skip_flag; // ec
     uint8_t mdc_split_flag; // ?
+#if FTR_BYPASS_ENCDEC
+    EbPictureBufferDesc *coeff_tmp; // buffer to store quantized coeffs from MD for the final mode of each block
+    EbPictureBufferDesc *recon_tmp; // buffer to store recon from MD for the final mode of each block
+#endif
 #if NO_ENCDEC
     EbPictureBufferDesc *quant_tmp;
     EbPictureBufferDesc *coeff_tmp;
@@ -373,8 +380,14 @@ typedef struct BlkStruct {
     uint32_t is_inter_ctx;
 
     uint8_t       segment_id; // ec
+
+#if !OPT_MEMORY_MIP
     uint8_t       seg_id_predicted; // valid only when temporal_update is enabled
+#endif
     PartitionType part;
+#if CLN_ENC_DEC
+    uint32_t best_d1_blk;
+#endif
     InterIntraMode interintra_mode; // ec
     uint8_t        is_interintra_used; // ec
     uint8_t        use_wedge_interintra; // ec
@@ -418,6 +431,9 @@ extern EbErrorType largest_coding_unit_ctor(SuperBlock *larget_coding_unit_ptr, 
                                             uint16_t sb_origin_x, uint16_t sb_origin_y,
                                             uint16_t                  sb_index,
                                             uint8_t enc_mode,
+#if CLN_GEOM
+    uint16_t max_block_cnt,
+#endif
                                             struct PictureControlSet *picture_control_set);
 
 #ifdef __cplusplus

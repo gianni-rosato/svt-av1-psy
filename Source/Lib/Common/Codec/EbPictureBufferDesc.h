@@ -284,14 +284,22 @@ typedef struct EbPictureBufferDescInitData {
     EbBitDepthEnum bit_depth;
     EbColorFormat  color_format;
     uint32_t       buffer_enable_mask;
+#if FTR_NEW_WN_LVLS
+    int32_t        rest_units_per_tile;
+#endif
     uint16_t       left_padding;
     uint16_t       right_padding;
     uint16_t       top_padding;
     uint16_t       bot_padding;
     EbBool         split_mode; //ON: allocate 8bit data seperately from nbit data
+
     EbBool         down_sampled_filtered;
+
     uint8_t        mfmv;
     EbBool         is_16bit_pipeline;
+#if OPT_MEMORY_REST
+        int8_t enc_mode;
+#endif
 } EbPictureBufferDescInitData;
 
 /**************************************

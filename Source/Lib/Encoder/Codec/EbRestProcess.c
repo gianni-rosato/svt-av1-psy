@@ -80,16 +80,24 @@ static void rest_context_dctor(EbPtr p) {
     EB_FREE_ALIGNED(obj->rst_tmpbuf);
     EB_FREE_ARRAY(obj);
 }
-
+#if OPT_MEMORY_REST
+uint8_t get_enable_restoration(EbEncMode enc_mode);
+#endif
 /******************************************************
  * Rest Context Constructor
  ******************************************************/
 EbErrorType rest_context_ctor(EbThreadContext *  thread_context_ptr,
+#if OPT_MEMORY_REST
+                              const EbEncHandle *enc_handle_ptr, EbPtr object_init_data_ptr, int index,int demux_index) {
+#else
                               const EbEncHandle *enc_handle_ptr, int index, int demux_index) {
+#endif
     const SequenceControlSet *      scs_ptr      = enc_handle_ptr->scs_instance_array[0]->scs_ptr;
     const EbSvtAv1EncConfiguration *config       = &scs_ptr->static_config;
     EbColorFormat                   color_format = config->encoder_color_format;
-
+#if OPT_MEMORY_REST
+    EbPictureBufferDescInitData *init_data_ptr    = (EbPictureBufferDescInitData *)object_init_data_ptr;
+#endif
     RestContext *context_ptr;
     EB_CALLOC_ARRAY(context_ptr, 1);
     thread_context_ptr->priv  = context_ptr;
@@ -104,7 +112,11 @@ EbErrorType rest_context_ctor(EbThreadContext *  thread_context_ptr,
         enc_handle_ptr->picture_demux_results_resource_ptr, demux_index);
 
     EbBool is_16bit = scs_ptr->static_config.is_16bit_pipeline;
+#if OPT_MEMORY_REST
+    if (get_enable_restoration(init_data_ptr->enc_mode)) {
+#else
     {
+#endif
         EbPictureBufferDescInitData init_data;
 
         init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK;
@@ -582,6 +594,19 @@ void *rest_kernel(void *input_ptr) {
                                        scs_ptr->max_input_pad_right,
                                        scs_ptr->max_input_pad_bottom,
                                        is_16bit);
+#if FTR_NEW_WN_LVLS
+            if (pcs_ptr->parent_pcs_ptr->slice_type != I_SLICE && cm->wn_filter_ctrls.enabled && cm->wn_filter_ctrls.use_prev_frame_coeffs) {
+                EbReferenceObject* ref_obj_l0 = (EbReferenceObject*)pcs_ptr->ref_pic_ptr_array[REF_LIST_0][0]->object_ptr;
+                for (int32_t plane = 0; plane < MAX_MB_PLANE; ++plane) {
+                    int32_t ntiles = pcs_ptr->rst_info[plane].units_per_tile;
+                    for (int32_t u = 0; u < ntiles; ++u) {
+                        pcs_ptr->rst_info[plane].unit_info[u].restoration_type = ref_obj_l0->unit_info[plane][u].restoration_type;
+                        if (ref_obj_l0->unit_info[plane][u].restoration_type == RESTORE_WIENER)
+                            pcs_ptr->rst_info[plane].unit_info[u].wiener_info = ref_obj_l0->unit_info[plane][u].wiener_info;
+                    }
+                }
+            }
+#endif
             restoration_seg_search(context_ptr->rst_tmpbuf,
                                    &org_fts,
                                    &cpi_source,

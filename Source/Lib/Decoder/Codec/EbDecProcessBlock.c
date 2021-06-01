@@ -63,7 +63,11 @@ CflAllowedType store_cfl_required(const EbColorConfig *cc, PartitionInfo *xd,
 
     // If this block has chroma information, we know whether we're
     // actually going to perform a CfL prediction
+#if OPT_MEMORY_MIP
+    return (CflAllowedType)(!is_inter_block_dec(mbmi) && mbmi->uv_mode == UV_CFL_PRED);
+#else
     return (CflAllowedType)(!is_inter_block(mbmi) && mbmi->uv_mode == UV_CFL_PRED);
+#endif
 }
 
 void decode_block(DecModCtxt *dec_mod_ctxt, BlockModeInfo *mode_info, int32_t mi_row,
@@ -76,8 +80,11 @@ void decode_block(DecModCtxt *dec_mod_ctxt, BlockModeInfo *mode_info, int32_t mi
 
     int num_planes = av1_num_planes(color_config);
 
+#if OPT_MEMORY_MIP
+    bool inter_block = is_inter_block_dec(mode_info);
+#else
     bool inter_block = is_inter_block(mode_info);
-
+#endif
     EbBool is16b = dec_handle->is_16bit_pipeline;
 #if MODE_INFO_DBG
     assert(mode_info->mi_row == mi_row);
