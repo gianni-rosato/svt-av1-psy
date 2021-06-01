@@ -373,13 +373,8 @@ static EbErrorType encode(EncApp* enc_app, EncContext* enc_context) {
 
     EncodePass pass = enc_context->pass;
     // Start the Encoder
-    for (uint32_t inst_cnt = 0; inst_cnt < num_channels; ++inst_cnt) {
+    for (uint32_t inst_cnt = 0; inst_cnt < num_channels; ++inst_cnt)
         enc_channel_start(enc_context->channels + inst_cnt);
-
-#if DISPLAY_MEMORY
-        EB_APP_MEMORY();
-#endif
-    }
     print_warnnings(enc_context);
 
     fprintf(stderr, "%sEncoding          ", get_pass_name(pass));

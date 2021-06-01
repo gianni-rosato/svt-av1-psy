@@ -2035,9 +2035,6 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
     // Packetization
     EB_CREATE_THREAD(enc_handle_ptr->packetization_thread_handle, packetization_kernel, enc_handle_ptr->packetization_context_ptr);
 
-#if DISPLAY_MEMORY
-    EB_MEMORY();
-#endif
     svt_print_memory_usage();
 
     return return_error;

@@ -60,15 +60,6 @@ uint64_t *        svt_dec_total_lib_memory;
 
 uint32_t svt_dec_lib_malloc_count = 0;
 
-//TODO: Should be removed! Check
-EbMemoryMapEntry *memory_map;
-uint32_t *        memory_map_index;
-uint64_t *        total_lib_memory;
-
-uint32_t lib_malloc_count    = 0;
-uint32_t lib_semaphore_count = 0;
-uint32_t lib_mutex_count     = 0;
-
 /* Track address for memory during change in resoultion*/
 EbMemoryMapEntry *memory_map_start_address;
 EbMemoryMapEntry *memory_map_end_address;

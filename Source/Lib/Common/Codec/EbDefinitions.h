@@ -2217,17 +2217,6 @@ typedef struct EbMemoryMapEntry
 // Rate Control
 #define THRESHOLD1QPINCREASE     1
 #define THRESHOLD2QPINCREASE     2
-// Display Total Memory at the end of the memory allocations
-#define DISPLAY_MEMORY                              0
-
-extern    EbMemoryMapEntry          *memory_map;               // library Memory table
-extern    uint32_t                  *memory_map_index;          // library memory index
-extern    uint64_t                  *total_lib_memory;          // library Memory malloc'd
-
-extern    uint32_t                   lib_malloc_count;
-extern    uint32_t                   lib_thread_count;
-extern    uint32_t                   lib_semaphore_count;
-extern    uint32_t                   lib_mutex_count;
 
 #define ALVALUE 64
 
@@ -2260,14 +2249,6 @@ extern    uint32_t                   lib_mutex_count;
             pointer = NULL; \
         } \
     } while (0)
-
-
-#define EB_MEMORY() \
-SVT_LOG("Total Number of Mallocs in Library: %d\n", lib_malloc_count); \
-SVT_LOG("Total Number of Threads in Library: %d\n", lib_thread_count); \
-SVT_LOG("Total Number of Semaphore in Library: %d\n", lib_semaphore_count); \
-SVT_LOG("Total Number of Mutex in Library: %d\n", lib_mutex_count); \
-SVT_LOG("Total Library Memory: %.2lf KB\n\n",*total_lib_memory/(double)1024);
 
 #ifndef _ERRNO_T_DEFINED
 #define _ERRNO_T_DEFINED

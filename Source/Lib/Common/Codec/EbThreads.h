@@ -54,9 +54,6 @@ extern EbHandle          svt_create_mutex(void);
 extern EbErrorType       svt_release_mutex(EbHandle mutex_handle);
 extern EbErrorType       svt_block_on_mutex(EbHandle mutex_handle);
 extern EbErrorType       svt_destroy_mutex(EbHandle mutex_handle);
-extern EbMemoryMapEntry *memory_map; // library Memory table
-extern uint32_t *        memory_map_index; // library memory index
-extern uint64_t *        total_lib_memory; // library Memory malloc'd
 #ifdef _WIN32
 
 #define EB_CREATE_THREAD(pointer, thread_function, thread_context)    \
