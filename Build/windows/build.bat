@@ -151,6 +151,10 @@ if -%1-==-- (
 ) else if /I "%1"=="lto" (
     set "cmake_eflags=%cmake_eflags% -DSVT_AV1_LTO=ON"
     shift
+) else if /I "%1"=="debug-macros" (
+    set "cmake_eflags=%cmake_eflags% -DSVT_AV1_DEBUG_MACROS_APPEND=%2"
+    shift
+    shift
 )  else (
     echo Unknown argument "%1"
     call :help
@@ -160,6 +164,6 @@ goto :args
 
 :help
     echo Batch file to build SVT-AV1 on Windows
-    echo Usage: build.bat [2019^|2017^|2015^|clean] [release^|debug] [nobuild] [test] [shared^|static] [c-only] [avx512]
+    echo Usage: build.bat [2019^|2017^|2015^|clean] [release^|debug] [nobuild] [test] [shared^|static] [c-only] [avx512] [debug-macros MACROS]
     exit /b 1
 goto :EOF
