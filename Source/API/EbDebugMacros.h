@@ -447,6 +447,7 @@ NOTE : PART OF LIGHT_PD0_2  code was committed to svt-04-final-rebased under OPT
 #define FTR_TPL_SYNTH                         1 // Make TPL sythn to support 32x32
 #define ME_8X8                                1 // memory optimization for me data arrays when 8x8 blocks are disallowed
 #define TUNE_M7_MT                            1 // tune m7 using multi-threaded framework
+#define FIX_TEMPORAL_FILTER_PLANEWISE         1 //Fix calculation for hbd fast, and mismatch exp C and AVX2
 #endif
 
 #if !PRIVATE_MACROS

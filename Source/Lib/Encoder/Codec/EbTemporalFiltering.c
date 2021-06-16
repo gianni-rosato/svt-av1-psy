@@ -589,6 +589,53 @@ double expf_tab[] = {
 };
 
 #endif
+
+#if FIX_TEMPORAL_FILTER_PLANEWISE && SIMD_APPROX_EXPF
+static float exp_ps_c(float _x) {
+    float   t, f, p, r;
+    int32_t i, j;
+
+    const float l2e = 1.442695041f; /* log2(e) */
+    const float l2h = -6.93145752e-1f; /* -log(2)_hi */
+    const float l2l = -1.42860677e-6f; /* -log(2)_lo */
+    /* coefficients for core approximation to exp() in [-log(2)/2, log(2)/2] */
+    const float c0 = 0.008301110f;
+    const float c1 = 0.041906696f;
+    const float c2 = 0.166674897f;
+    const float c3 = 0.499990642f;
+    const float c4 = 0.999999762f;
+    const float c5 = 1.000000000f;
+
+    /* exp(x) = 2^i * e^f; i = rint (log2(e) * x), f = x - log(2) * i */
+    t = _x * l2e; /* t = log2(e) * x */
+    r = rintf(t);
+
+    f = (float)((double)(r) * l2h +_x);
+    f = (float)((double)(r) * l2l + f);
+
+    i = (int32_t)rint(t);
+
+    /* p ~= exp (f), -log(2)/2 <= f <= log(2)/2 */
+    p = c0; /* c0 */
+
+    p = (float)((double)(p) * f + c1);
+    p = (float)((double)(p) * f + c2);
+    p = (float)((double)(p) * f + c3);
+    p = (float)((double)(p) * f + c4);
+    p = (float)((double)(p) * f + c5);
+
+    /* exp(x) = 2^i * p */
+    j = i << 23; /* i << 23 */
+
+    int32_t d;
+    memcpy(&d,&p, sizeof(d));
+    d += j;
+    memcpy(&r, &d, sizeof(r));
+    return r;
+}
+#endif /*FIX_TEMPORAL_FILTER_PLANEWISE && SIMD_APPROX_EXPF*/
+
+
 /***************************************************************************************************
 * Applies temporal filter plane by plane.
 * Inputs:
@@ -711,7 +758,12 @@ void svt_av1_apply_temporal_filter_planewise_c(
             double scaled_diff = AOMMIN(
                 combined_error * d_factor / (2 * n_decay * n_decay) / q_decay / s_decay, 7);
 #endif
+
+#if FIX_TEMPORAL_FILTER_PLANEWISE && SIMD_APPROX_EXPF
+            int adjusted_weight = (int)(exp_ps_c((float)(-scaled_diff)) * TF_WEIGHT_SCALE);
+#else
             int adjusted_weight = (int)(expf((float)(-scaled_diff)) * TF_WEIGHT_SCALE);
+#endif
             k                   = i * y_pre_stride + j;
             y_count[k] += adjusted_weight;
             y_accum[k] += adjusted_weight * pixel_value;
@@ -767,7 +819,12 @@ void svt_av1_apply_temporal_filter_planewise_c(
                     scaled_diff = AOMMIN(
                         combined_error * d_factor / (2 * n_decay * n_decay) / q_decay / s_decay, 7);
 #endif
+
+#if FIX_TEMPORAL_FILTER_PLANEWISE && SIMD_APPROX_EXPF
+                    adjusted_weight = (int)(exp_ps_c((float)(-scaled_diff)) * TF_WEIGHT_SCALE);
+#else
                     adjusted_weight = (int)(expf((float)(-scaled_diff)) * TF_WEIGHT_SCALE);
+#endif
                     u_count[m] += adjusted_weight;
                     u_accum[m] += adjusted_weight * u_pixel_value;
 
@@ -789,7 +846,12 @@ void svt_av1_apply_temporal_filter_planewise_c(
                     scaled_diff = AOMMIN(
                         combined_error * d_factor / (2 * n_decay * n_decay) / q_decay / s_decay, 7);
 #endif
+
+#if FIX_TEMPORAL_FILTER_PLANEWISE && SIMD_APPROX_EXPF
+                    adjusted_weight = (int)(exp_ps_c((float)(-scaled_diff)) * TF_WEIGHT_SCALE);
+#else
                     adjusted_weight = (int)(expf((float)(-scaled_diff)) * TF_WEIGHT_SCALE);
+#endif
                     v_count[m] += adjusted_weight;
                     v_accum[m] += adjusted_weight * v_pixel_value;
                 }
@@ -923,7 +985,12 @@ void svt_av1_apply_temporal_filter_planewise_hbd_c(
             double scaled_diff = AOMMIN(
                 combined_error * d_factor / (2 * n_decay * n_decay) / q_decay / s_decay, 7);
 #endif
+
+#if FIX_TEMPORAL_FILTER_PLANEWISE && SIMD_APPROX_EXPF
+            int adjusted_weight = (int)(exp_ps_c((float)-scaled_diff) * TF_WEIGHT_SCALE);
+#else
             int adjusted_weight = (int)(expf((float)-scaled_diff) * TF_WEIGHT_SCALE);
+#endif
             k                   = i * y_pre_stride + j;
             y_count[k] += adjusted_weight;
             y_accum[k] += adjusted_weight * pixel_value;
@@ -982,7 +1049,12 @@ void svt_av1_apply_temporal_filter_planewise_hbd_c(
                     scaled_diff = AOMMIN(
                         combined_error * d_factor / (2 * n_decay * n_decay) / q_decay / s_decay, 7);
 #endif
+
+#if FIX_TEMPORAL_FILTER_PLANEWISE && SIMD_APPROX_EXPF
+                    adjusted_weight = (int)(exp_ps_c((float)-scaled_diff) * TF_WEIGHT_SCALE);
+#else
                     adjusted_weight = (int)(expf((float)-scaled_diff) * TF_WEIGHT_SCALE);
+#endif
                     u_count[m] += adjusted_weight;
                     u_accum[m] += adjusted_weight * u_pixel_value;
 
@@ -1004,7 +1076,12 @@ void svt_av1_apply_temporal_filter_planewise_hbd_c(
                     scaled_diff = AOMMIN(
                         combined_error * d_factor / (2 * n_decay * n_decay) / q_decay / s_decay, 7);
 #endif
+
+#if FIX_TEMPORAL_FILTER_PLANEWISE && SIMD_APPROX_EXPF
+                    adjusted_weight = (int)(exp_ps_c((float)-scaled_diff) * TF_WEIGHT_SCALE);
+#else
                     adjusted_weight = (int)(expf((float)-scaled_diff) * TF_WEIGHT_SCALE);
+#endif
                     v_count[m] += adjusted_weight;
                     v_accum[m] += adjusted_weight * v_pixel_value;
                 }
@@ -1024,13 +1101,21 @@ uint32_t calculate_squared_errors_sum(const uint8_t *s, int s_stride, const uint
             sum += diff * diff;
         }
     }
+#if FIX_TEMPORAL_FILTER_PLANEWISE
+    return sum;
+#else
     return sum / (w*h);
+#endif
 }
 
 /* calculates SSE for 10bit*/
 uint32_t  calculate_squared_errors_sum_highbd(const uint16_t *s, int s_stride,
     const uint16_t *p, int p_stride,
+#if FIX_TEMPORAL_FILTER_PLANEWISE
+    unsigned int w, unsigned int h, int shift_factor) {
+#else
     unsigned int w, unsigned int h) {
+#endif
     unsigned int i, j;
     uint32_t sum = 0;
     for (i = 0; i < h; i++) {
@@ -1039,7 +1124,11 @@ uint32_t  calculate_squared_errors_sum_highbd(const uint16_t *s, int s_stride,
             sum += diff * diff;
         }
     }
+#if FIX_TEMPORAL_FILTER_PLANEWISE
+    return (sum >> shift_factor);
+#else
     return sum / (w*h);
+#endif
 }
 /*
 apply fast TF filter
@@ -1049,15 +1138,23 @@ void svt_av1_apply_temporal_filter_planewise_fast_c(
     int y_pre_stride, unsigned int block_width,
     unsigned int block_height, uint32_t *y_accum, uint16_t *y_count) {
 
-
+#if FIX_TEMPORAL_FILTER_PLANEWISE
+    //to add chroma if need be
+    uint32_t avg_err = calculate_squared_errors_sum(
+        y_src, y_src_stride, y_pre, y_pre_stride, block_width, block_height)
+        / (block_width * block_height);
+#else
     //to add chroma if need be
     uint32_t avg_err = calculate_squared_errors_sum(
         y_src, y_src_stride, y_pre, y_pre_stride, block_width, block_height);
+#endif
+
 #if FTR_TF_STRENGTH_PER_QP
     double scaled_diff = AOMMIN(avg_err / context_ptr->tf_decay_factor[0], 7);
 #else
     double scaled_diff = AOMMIN(avg_err / context_ptr->tf_decay_factor, 7);
 #endif
+
     int    adjusted_weight = (int)(expf_tab[(int)(scaled_diff * 10)] * TF_WEIGHT_SCALE);
 
     if (adjusted_weight) {
@@ -1078,12 +1175,24 @@ apply fast TF filter for 10bit
 void svt_av1_apply_temporal_filter_planewise_fast_hbd_c(
     struct MeContext *context_ptr, const uint16_t *y_src, int y_src_stride, const uint16_t *y_pre,
     int y_pre_stride, unsigned int block_width,
+#if FIX_TEMPORAL_FILTER_PLANEWISE
+    unsigned int block_height, uint32_t *y_accum, uint16_t *y_count, uint32_t encoder_bit_depth) {
+#else
     unsigned int block_height, uint32_t *y_accum, uint16_t *y_count) {
+#endif
 
-
+#if FIX_TEMPORAL_FILTER_PLANEWISE
+    int shift_factor  = ((encoder_bit_depth - 8) * 2);
+    //to add chroma if need be
+    uint32_t avg_err = calculate_squared_errors_sum_highbd(
+        y_src, y_src_stride, y_pre, y_pre_stride, block_width, block_height, shift_factor)
+        / (block_width * block_height);
+#else
     //to add chroma if need be
     uint32_t avg_err = calculate_squared_errors_sum_highbd(
         y_src, y_src_stride, y_pre, y_pre_stride, block_width, block_height);
+#endif
+
 #if FTR_TF_STRENGTH_PER_QP
     double scaled_diff = AOMMIN(avg_err / context_ptr->tf_decay_factor[0], 7);
 #else
@@ -1234,7 +1343,12 @@ static void apply_filtering_block_plane_wise(
                 (unsigned int)block_width,
                 (unsigned int)block_height,
                 accum_ptr[C_Y],
+#if FIX_TEMPORAL_FILTER_PLANEWISE
+                count_ptr[C_Y],
+                encoder_bit_depth);
+#else
                 count_ptr[C_Y]);
+#endif
         else
 #endif
         svt_av1_apply_temporal_filter_planewise_hbd(context_ptr,

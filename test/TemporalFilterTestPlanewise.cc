@@ -131,6 +131,22 @@ static void TemporalFilterFillMeContexts(MeContext *cnt1, MeContext *cnt2) {
     cnt1->min_frame_size = 1080;
     *cnt2 = *cnt1;
     cnt2->tf_block_col = 1;
+
+#if OPT_TFILTER
+#if FIX_TEMPORAL_FILTER_PLANEWISE
+#if FTR_TF_STRENGTH_PER_QP
+    cnt1->tf_decay_factor[0] = 20000;
+    cnt2->tf_decay_factor[0] = 15000;
+    cnt1->tf_decay_factor[1] = 20000;
+    cnt2->tf_decay_factor[1] = 15000;
+    cnt1->tf_decay_factor[2] = 20000;
+    cnt2->tf_decay_factor[2] = 15000;
+#else
+    cnt1->tf_decay_factor = 20000;
+    cnt2->tf_decay_factor = 15000;
+#endif
+#endif
+#endif
 }
 
 class TemporalFilterTestPlanewise
@@ -206,15 +222,34 @@ class TemporalFilterTestPlanewise
     void RunTest(int width, int height, int run_times);
 
     void GenRandomData(int width, int height, int stride, int stride2) {
+#if FIX_TEMPORAL_FILTER_PLANEWISE
+        int mode = rnd_.Rand8() < 128;
+#endif
+
         for (int ii = 0; ii < height; ii++) {
             for (int jj = 0; jj < width; jj++) {
                 src_ptr[C_Y][ii * stride + jj] = rnd_.Rand8();
                 src_ptr[C_U][ii * stride + jj] = rnd_.Rand8();
                 src_ptr[C_V][ii * stride + jj] = rnd_.Rand8();
 
+#if FIX_TEMPORAL_FILTER_PLANEWISE
+                if (mode) {
+                    int val1 = -16 + src_ptr[C_Y][ii * stride + jj] + rnd_.Rand8() % 32;
+                    int val2 = -16 + src_ptr[C_U][ii * stride + jj] + rnd_.Rand8() % 32;
+                    int val3 = -16 + src_ptr[C_V][ii * stride + jj] + rnd_.Rand8() % 32;
+                    pred_ptr[C_Y][ii * stride2 + jj] = MAX(0, val1);
+                    pred_ptr[C_U][ii * stride2 + jj] = MAX(0, val2);
+                    pred_ptr[C_V][ii * stride2 + jj] = MAX(0, val3);
+                } else {
+                    pred_ptr[C_Y][ii * stride2 + jj] = rnd_.Rand8();
+                    pred_ptr[C_U][ii * stride2 + jj] = rnd_.Rand8();
+                    pred_ptr[C_V][ii * stride2 + jj] = rnd_.Rand8();
+                }
+#else
                 pred_ptr[C_Y][ii * stride2 + jj] = rnd_.Rand8();
                 pred_ptr[C_U][ii * stride2 + jj] = rnd_.Rand8();
                 pred_ptr[C_V][ii * stride2 + jj] = rnd_.Rand8();
+#endif
             }
         }
     }
@@ -457,6 +492,62 @@ INSTANTIATE_TEST_CASE_P(
     ::testing::Combine(::testing::Values(svt_av1_apply_temporal_filter_planewise_c),
                        ::testing::Values(svt_av1_apply_temporal_filter_planewise_avx2)));
 
+#if FIX_TEMPORAL_FILTER_PLANEWISE
+void svt_av1_apply_temporal_filter_planewise_fast_c_wraper(
+    struct MeContext *context_ptr, const uint8_t *y_src, int y_src_stride,
+    const uint8_t *y_pre, int y_pre_stride, const uint8_t *u_src,
+    const uint8_t *v_src, int uv_src_stride, const uint8_t *u_pre,
+    const uint8_t *v_pre, int uv_pre_stride, unsigned int block_width,
+    unsigned int block_height, int ss_x, int ss_y,
+#if !FTR_TF_STRENGTH_PER_QP
+    const double *noise_levels,
+    const int decay_control,
+#endif
+    uint32_t *y_accum, uint16_t *y_count,
+    uint32_t *u_accum, uint16_t *u_count, uint32_t *v_accum,
+    uint16_t *v_count) {
+        svt_av1_apply_temporal_filter_planewise_fast_c(
+            context_ptr,
+            y_src,
+            y_src_stride,
+            y_pre,
+            y_pre_stride,
+            block_width,
+            block_height,
+            y_accum,
+            y_count);
+}
+
+void svt_av1_apply_temporal_filter_planewise_fast_avx2_wraper(
+    struct MeContext *context_ptr, const uint8_t *y_src, int y_src_stride,
+    const uint8_t *y_pre, int y_pre_stride, const uint8_t *u_src,
+    const uint8_t *v_src, int uv_src_stride, const uint8_t *u_pre,
+    const uint8_t *v_pre, int uv_pre_stride, unsigned int block_width,
+    unsigned int block_height, int ss_x, int ss_y,
+#if !FTR_TF_STRENGTH_PER_QP
+    const double *noise_levels,
+    const int decay_control,
+#endif
+    uint32_t *y_accum, uint16_t *y_count,
+    uint32_t *u_accum, uint16_t *u_count, uint32_t *v_accum,
+    uint16_t *v_count) {
+    svt_av1_apply_temporal_filter_planewise_fast_avx2(
+            context_ptr,
+            y_src,
+            y_src_stride,
+            y_pre,
+            y_pre_stride,
+            block_width,
+            block_height,
+            y_accum,
+            y_count);
+}
+
+INSTANTIATE_TEST_CASE_P(
+    AVX2_fast, TemporalFilterTestPlanewise,
+    ::testing::Combine(::testing::Values(svt_av1_apply_temporal_filter_planewise_fast_c_wraper),
+                       ::testing::Values(svt_av1_apply_temporal_filter_planewise_fast_avx2_wraper)));
+#endif
 
 class TemporalFilterTestPlanewiseHbd
     : public ::testing::TestWithParam<TemporalFilterWithParamHbd> {
@@ -526,15 +617,33 @@ class TemporalFilterTestPlanewiseHbd
     void RunTest(int width, int height, int run_times);
 
     void GenRandomData(int width, int height, int stride, int stride2) {
+#if FIX_TEMPORAL_FILTER_PLANEWISE
+        int mode = rnd_.Rand8() < 128;
+#endif
         for (int ii = 0; ii < height; ii++) {
             for (int jj = 0; jj < width; jj++) {
                 src_ptr[C_Y][ii * stride + jj] = rnd_.random();
                 src_ptr[C_U][ii * stride + jj] = rnd_.random();
                 src_ptr[C_V][ii * stride + jj] = rnd_.random();
 
+#if FIX_TEMPORAL_FILTER_PLANEWISE
+                if (mode) {
+                    int val1 = -512 + src_ptr[C_Y][ii * stride + jj] + rnd_.random() % 1024;
+                    int val2 = -512 + src_ptr[C_U][ii * stride + jj] + rnd_.random() % 1024;
+                    int val3 = -512 + src_ptr[C_V][ii * stride + jj] + rnd_.random() % 1024;
+                    pred_ptr[C_Y][ii * stride2 + jj] = MAX(0, val1);
+                    pred_ptr[C_U][ii * stride2 + jj] = MAX(0, val2);
+                    pred_ptr[C_V][ii * stride2 + jj] = MAX(0, val3);
+                } else {
+                    pred_ptr[C_Y][ii * stride2 + jj] = rnd_.random();
+                    pred_ptr[C_U][ii * stride2 + jj] = rnd_.random();
+                    pred_ptr[C_V][ii * stride2 + jj] = rnd_.random();
+                }
+#else
                 pred_ptr[C_Y][ii * stride2 + jj] = rnd_.random();
                 pred_ptr[C_U][ii * stride2 + jj] = rnd_.random();
                 pred_ptr[C_V][ii * stride2 + jj] = rnd_.random();
+#endif
             }
         }
     }
@@ -943,6 +1052,62 @@ INSTANTIATE_TEST_CASE_P(
     ::testing::Combine(
         ::testing::Values(svt_av1_apply_temporal_filter_planewise_hbd_c),
         ::testing::Values(svt_av1_apply_temporal_filter_planewise_hbd_avx2)));
+
+#if FIX_TEMPORAL_FILTER_PLANEWISE
+void svt_av1_apply_temporal_filter_planewise_fast_hbd_c_wraper(
+    struct MeContext *context_ptr, const uint16_t *y_src, int y_src_stride, const uint16_t *y_pre,
+    int y_pre_stride, const uint16_t *u_src, const uint16_t *v_src, int uv_src_stride,
+    const uint16_t *u_pre, const uint16_t *v_pre, int uv_pre_stride, unsigned int block_width,
+    unsigned int block_height, int ss_x, int ss_y,
+#if !FTR_TF_STRENGTH_PER_QP
+    const double *noise_levels,
+    const int decay_control,
+#endif
+    uint32_t *y_accum, uint16_t *y_count, uint32_t *u_accum,
+    uint16_t *u_count, uint32_t *v_accum, uint16_t *v_count, uint32_t encoder_bit_depth) {
+    svt_av1_apply_temporal_filter_planewise_fast_hbd_c(
+            context_ptr,
+            y_src,
+            y_src_stride,
+            y_pre,
+            y_pre_stride,
+            block_width,
+            block_height,
+            y_accum,
+            y_count,
+            encoder_bit_depth);
+}
+void svt_av1_apply_temporal_filter_planewise_fast_hbd_avx2_wraper(
+    struct MeContext *context_ptr, const uint16_t *y_src, int y_src_stride, const uint16_t *y_pre,
+    int y_pre_stride, const uint16_t *u_src, const uint16_t *v_src, int uv_src_stride,
+    const uint16_t *u_pre, const uint16_t *v_pre, int uv_pre_stride, unsigned int block_width,
+    unsigned int block_height, int ss_x, int ss_y,
+#if !FTR_TF_STRENGTH_PER_QP
+    const double *noise_levels,
+    const int decay_control,
+#endif
+    uint32_t *y_accum, uint16_t *y_count, uint32_t *u_accum,
+    uint16_t *u_count, uint32_t *v_accum, uint16_t *v_count, uint32_t encoder_bit_depth) {
+    svt_av1_apply_temporal_filter_planewise_fast_hbd_avx2(
+            context_ptr,
+            y_src,
+            y_src_stride,
+            y_pre,
+            y_pre_stride,
+            block_width,
+            block_height,
+            y_accum,
+            y_count,
+            encoder_bit_depth);
+}
+
+INSTANTIATE_TEST_CASE_P(
+    AVX2_fast, TemporalFilterTestPlanewiseHbd,
+    ::testing::Combine(
+        ::testing::Values(svt_av1_apply_temporal_filter_planewise_fast_hbd_c_wraper),
+        ::testing::Values(svt_av1_apply_temporal_filter_planewise_fast_hbd_avx2_wraper)));
+#endif
+
 #if TUNE_REDESIGN_TF_CTRLS
 class TemporalFilterTestGetFinalFilteredPixels : public ::testing::Test {
 private:

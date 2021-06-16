@@ -391,7 +391,11 @@ static void apply_temporal_filter_planewise(struct MeContext *context_ptr, const
 
             //count[i * stride2 + j] += adjusted_weight;
             __m128i count_array = _mm_loadu_si128((__m128i *)(count + i * stride2 + j));
+#if FIX_TEMPORAL_FILTER_PLANEWISE
+            count_array         = _mm_add_epi16(count_array, adjusted_weight_int16);
+#else
             count_array         = _mm_adds_epu16(count_array, adjusted_weight_int16);
+#endif
             _mm_storeu_si128((__m128i *)(count + i * stride2 + j), count_array);
 
             //accumulator[i * stride2 + j] += adjusted_weight * frame2[i * stride2 + j];
@@ -764,7 +768,12 @@ static void apply_temporal_filter_planewise_hbd(
 
             //count[i * stride2 + j] += adjusted_weight;
             __m128i count_array = _mm_loadu_si128((__m128i *)(count + i * stride2 + j));
+#if FIX_TEMPORAL_FILTER_PLANEWISE
+            count_array         = _mm_add_epi16(count_array, adjusted_weight_int16);
+#else
             count_array         = _mm_adds_epu16(count_array, adjusted_weight_int16);
+#endif
+
             _mm_storeu_si128((__m128i *)(count + i * stride2 + j), count_array);
 
             //accumulator[i * stride2 + j] += adjusted_weight * frame2[i * stride2 + j];
@@ -859,12 +868,20 @@ uint32_t calculate_squared_errors_sum_avx2(const uint8_t *s, int s_stride, const
     sum_128 = _mm_hadd_epi32(sum_128, sum_128);
     sum_128 = _mm_hadd_epi32(sum_128, sum_128);
 
+#if FIX_TEMPORAL_FILTER_PLANEWISE
+    return _mm_cvtsi128_si32(sum_128);
+#else
     return _mm_cvtsi128_si32(sum_128) / (w * h);
+#endif
 }
 
 uint32_t  calculate_squared_errors_sum_highbd_avx2(const uint16_t *s, int s_stride,
     const uint16_t *p, int p_stride,
+#if FIX_TEMPORAL_FILTER_PLANEWISE
+    unsigned int w, unsigned int h, int shift_factor) {
+#else
     unsigned int w, unsigned int h) {
+#endif
     assert(w % 16 == 0 && "block width must be multiple of 16");
     unsigned int i, j;
 
@@ -885,7 +902,11 @@ uint32_t  calculate_squared_errors_sum_highbd_avx2(const uint16_t *s, int s_stri
     sum_128 = _mm_hadd_epi32(sum_128, sum_128);
     sum_128 = _mm_hadd_epi32(sum_128, sum_128);
 
+#if FIX_TEMPORAL_FILTER_PLANEWISE
+    return (_mm_cvtsi128_si32(sum_128) >> shift_factor);
+#else
     return _mm_cvtsi128_si32(sum_128) / (w * h);
+#endif
 }
 
 //exp(-x) for x in [0..7]
@@ -979,11 +1000,16 @@ void svt_av1_apply_temporal_filter_planewise_fast_avx2(
         int y_pre_stride, unsigned int block_width,
         unsigned int block_height, uint32_t *y_accum, uint16_t *y_count)
 {
-
-
+#if FIX_TEMPORAL_FILTER_PLANEWISE
+    //to add chroma if need be
+    uint32_t avg_err = calculate_squared_errors_sum_avx2(
+        y_src, y_src_stride, y_pre, y_pre_stride, block_width, block_height) / (block_width * block_height);
+#else
     //to add chroma if need be
     uint32_t avg_err = calculate_squared_errors_sum_avx2(
         y_src, y_src_stride, y_pre, y_pre_stride, block_width, block_height);
+#endif
+
 #if FTR_TF_STRENGTH_PER_QP
     double scaled_diff = AOMMIN(avg_err / context_ptr->tf_decay_factor[0], 7);
 #else
@@ -1000,7 +1026,11 @@ void svt_av1_apply_temporal_filter_planewise_fast_avx2(
 
                 //y_count[k] += adjusted_weight;
                 __m128i count_array = _mm_loadu_si128((__m128i *)(y_count + k));
+#if FIX_TEMPORAL_FILTER_PLANEWISE
+                count_array = _mm_add_epi16(count_array, adjusted_weight_int16);
+#else
                 count_array = _mm_adds_epu16(count_array, adjusted_weight_int16);
+#endif
                 _mm_storeu_si128((__m128i *)(y_count + k), count_array);
 
                 //y_accum[k] += adjusted_weight * pixel_value;
@@ -1020,13 +1050,24 @@ void svt_av1_apply_temporal_filter_planewise_fast_avx2(
 void svt_av1_apply_temporal_filter_planewise_fast_hbd_avx2(
     struct MeContext *context_ptr, const uint16_t *y_src, int y_src_stride, const uint16_t *y_pre,
     int y_pre_stride, unsigned int block_width,
+#if FIX_TEMPORAL_FILTER_PLANEWISE
+    unsigned int block_height, uint32_t *y_accum, uint16_t *y_count, uint32_t encoder_bit_depth)
+#else
     unsigned int block_height, uint32_t *y_accum, uint16_t *y_count)
+#endif
 {
-
-
+#if FIX_TEMPORAL_FILTER_PLANEWISE
+    int shift_factor  = ((encoder_bit_depth - 8) * 2);
+    //to add chroma if need be
+    uint32_t avg_err = calculate_squared_errors_sum_highbd_avx2(
+        y_src, y_src_stride, y_pre, y_pre_stride, block_width, block_height, shift_factor)
+            / (block_width * block_height);
+#else
     //to add chroma if need be
     uint32_t avg_err = calculate_squared_errors_sum_highbd_avx2(
         y_src, y_src_stride, y_pre, y_pre_stride, block_width, block_height);
+#endif
+
 #if FTR_TF_STRENGTH_PER_QP
     double scaled_diff = AOMMIN(avg_err / context_ptr->tf_decay_factor[0], 7);
 #else
@@ -1044,7 +1085,11 @@ void svt_av1_apply_temporal_filter_planewise_fast_hbd_avx2(
 
                 //y_count[k] += adjusted_weight;
                 __m128i count_array = _mm_loadu_si128((__m128i *)(y_count + k));
+#if FIX_TEMPORAL_FILTER_PLANEWISE
+                count_array = _mm_add_epi16(count_array, adjusted_weight_int16);
+#else
                 count_array = _mm_adds_epu16(count_array, adjusted_weight_int16);
+#endif
                 _mm_storeu_si128((__m128i *)(y_count + k), count_array);
 
                 //y_accum[k] += adjusted_weight * pixel_value;

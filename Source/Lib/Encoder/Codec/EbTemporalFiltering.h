@@ -118,8 +118,13 @@ void svt_av1_apply_temporal_filter_planewise_fast_c(
 void svt_av1_apply_temporal_filter_planewise_fast_hbd_c(
     struct MeContext *context_ptr, const uint16_t *y_src, int y_src_stride, const uint16_t *y_pre,
     int y_pre_stride, unsigned int block_width,
+#if FIX_TEMPORAL_FILTER_PLANEWISE
+    unsigned int block_height, uint32_t *y_accum, uint16_t *y_count, uint32_t encoder_bit_depth);
+#else
     unsigned int block_height, uint32_t *y_accum, uint16_t *y_count);
 #endif
+#endif
+
 void svt_av1_apply_temporal_filter_planewise_c(
     struct MeContext *context_ptr, const uint8_t *y_src, int y_src_stride, const uint8_t *y_pre,
     int y_pre_stride, const uint8_t *u_src, const uint8_t *v_src, int uv_src_stride,
