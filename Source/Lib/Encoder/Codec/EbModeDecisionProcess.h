@@ -110,12 +110,21 @@ struct ModeDecisionCandidateBuffer;
 struct InterPredictionContext;
 
 typedef struct RefResults {
+#if SS_CLN_REF_PRUNE
+    uint8_t  do_ref; // to process this ref or not
+#else
     uint8_t  list_i; // list index of this ref
     uint8_t  ref_i; // ref list index of this ref
     uint32_t dist; // distortion
     uint8_t  do_ref; // to process this ref  or not
     EbBool   valid_ref;
+#endif
 } RefResults;
+#if SS_CLN_REF_PRUNE
+typedef struct PmeResults {
+    uint32_t dist; // distortion
+} PmeResults;
+#endif
 typedef enum InterCandGroup {
     // elementary-groups
     PA_ME_GROUP,
@@ -333,6 +342,11 @@ typedef struct MdSubPelSearchCtrls {
                                                   // logarithmic search that keeps stepping at 1/2 pixel units until
                                                   // you stop getting a gain, and then goes on to 1/4 and repeats
                                                   // the same process. Along the way it skips many diagonals.
+#if OPT_M11_SUBPEL
+    int pred_variance_th;
+    uint8_t abs_th_mult;
+    int round_dev_th;
+#endif
 #if OPT11_SUBPEL
     uint8_t skip_diag_refinement;
 #endif
@@ -491,6 +505,11 @@ typedef struct InterpolationSearchCtrls {
     IfsLevel interpolation_search_level; // set the interpolation search level for md stage
     uint8_t quarter_pel_only; // IFS only on for quarter-pel
     uint8_t modulate_filter_per_resolution; // use regular+smooth filters for >=720p, and regular+sharp for <=480p
+#if OPT_IFS
+    uint8_t early_skip; // Early skip the cheking of the filter based on cost of the syntax
+    uint8_t subsampled_distortion; // use subsambped distortion for block_height greater than 16
+    uint8_t skip_sse_rd_model; // bypass rd model
+#endif
 } InterpolationSearchCtrls;
 #endif
 #if TUNE_BLOCK_SIZE
@@ -511,6 +530,25 @@ typedef struct RedundantCandCtrls {
     int score_th;
     int mag_th;
 } RedundantCandCtrls;
+#endif
+#if OPT_EARLY_CAND_ELIM
+typedef struct EarlyCandElimCtrls {
+    uint8_t enabled;
+    uint16_t mds0_distortion_th; // TH used to compare candidate distortion to best cost; higher is safer
+} EarlyCandElimCtrls;
+#endif
+#if OPT_USE_INTRA_NEIGHBORING
+typedef struct UseNeighbouringModeCtrls {
+    uint8_t enabled;
+} UseNeighbouringModeCtrls;
+#endif
+#if LIGHT_PD1
+typedef struct BlockLocation {
+    uint32_t input_origin_index;        //luma   block location in picture
+    uint32_t input_cb_origin_in_index;  //chroma block location in picture
+    uint32_t blk_origin_index;          //luma   block location in SB
+    uint32_t blk_chroma_origin_index;   //chroma block location in SB
+} BlockLocation;
 #endif
 typedef struct ModeDecisionContext {
     EbDctor  dctor;
@@ -836,7 +874,11 @@ typedef struct ModeDecisionContext {
     MdSubPelSearchCtrls    md_subpel_me_ctrls;
     uint8_t                md_subpel_pme_level;
     MdSubPelSearchCtrls    md_subpel_pme_ctrls;
+#if SS_CLN_REF_PRUNE
+    PmeResults             pme_res[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
+#else
     RefResults             pme_res[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
+#endif
     ObmcControls           obmc_ctrls;
     InterCompCtrls         inter_comp_ctrls;
     InterIntraCompCtrls    inter_intra_comp_ctrls;
@@ -890,7 +932,11 @@ typedef struct ModeDecisionContext {
     uint8_t         use_prev_mds_res;
 #endif
     uint16_t        sb_index;
+#if OPT_EARLY_CAND_ELIM
+    EarlyCandElimCtrls early_cand_elimination_ctrls;
+#else
     uint8_t         early_cand_elimination;
+#endif
     uint64_t        mds0_best_cost;
     uint8_t         mds0_best_class;
     uint8_t reduce_last_md_stage_candidate;
@@ -898,7 +944,11 @@ typedef struct ModeDecisionContext {
     CandClass mds0_best_class_it;
     uint32_t mds1_best_idx;
     CandClass mds1_best_class_it;
+#if SS_OPT_MDS0
+    uint8_t mds0_dist_type;
+#else
     uint8_t use_var_in_mds0;
+#endif
     uint32_t md_me_cost[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
     uint32_t md_me_dist;
     uint8_t inject_new_me;
@@ -906,7 +956,11 @@ typedef struct ModeDecisionContext {
     uint8_t inject_new_warp;
     uint8_t merge_inter_classes;
     uint8_t bypass_tx_search_when_zcoef;
+#if OPT_ESTIMATE_REF_BITS
+    uint64_t estimate_ref_frames_num_bits[MODE_CTX_REF_FRAMES]; // [TOTAL_REFS_PER_FRAME + 1]
+#else
     uint64_t estimate_ref_frames_num_bits[MODE_CTX_REF_FRAMES][2]; // [TOTAL_REFS_PER_FRAME + 1][is_compound]
+#endif
     CandEliminationCtlrs cand_elimination_ctrs;
 #if !TUNE_NEW_TXT_LVLS
     uint32_t early_txt_search_exit_level; // should be moved to txt_ctrls
@@ -926,7 +980,11 @@ typedef struct ModeDecisionContext {
 #if LIGHT_PD0
     EbBool use_light_pd0; // Use light PD0 path.  Assumes one class, no NSQ, no 4x4, TXT off, TXS off, PME off, etc.
 #endif
+#if LIGHT_PD1
+    EbBool use_light_pd1; // Use light PD1 path.
+#else
     uint8_t use_best_mds0;
+#endif
 #if TUNE_BLOCK_SIZE
     SpatialSSECtrls      spatial_sse_ctrls;
 #endif
@@ -947,14 +1005,30 @@ typedef struct ModeDecisionContext {
     uint8_t enable_psad; // Enable pSad
 #endif
 #if FTR_PD_EARLY_EXIT
+#if SS_CLN_LIGHT_PD0_PATH
+    uint32_t pd0_early_exit_th;
+    uint32_t pd0_inter_depth_bias;
+#else
     uint64_t pd0_early_exit_th;
     uint64_t pd0_inter_depth_bias;
+#endif
 #endif
 #if OPT_SUBPEL && !OPT_SUBPEL_SKIP_TH
     uint8_t resolution;
 #endif
 #if REMOVE_CLOSE_MVS
     RedundantCandCtrls redundant_cand_ctrls;
+#endif
+#if FTR_FASTER_CFL
+    uint8_t cfl_itr_th;
+#endif
+#if FTR_REDUCE_UNI_PRED
+    uint8_t reduce_unipred_candidates;
+#endif
+#if OPT_USE_INTRA_NEIGHBORING
+    UseNeighbouringModeCtrls use_neighbouring_mode_ctrls;
+    uint8_t is_intra_bordered;
+    uint8_t updated_enable_pme;
 #endif
 } ModeDecisionContext;
 

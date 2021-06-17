@@ -306,7 +306,7 @@ NOTE : PART OF LIGHT_PD0_2  code was committed to svt-04-final-rebased under OPT
 #define SS_OPT_MD                             1 // Opt MD path
 #define FTR_SIMPLIFIED_MV_COST                1 // Simplified MV cost estimation
 #define SS_OPT_PALETTE_COST                   1 // Optimize Palette fast cost computation
-#define SS_OPT_INTRABC                        1
+#define SS_OPT_INTRABC                        1 // Remove unnecessary hash table initializations
 
 #define OPT_MVP_READ                          1 // MVP selection
 #define OPT_COMP_MODE_CHECK                   1 // Compound type validity check
@@ -325,6 +325,92 @@ NOTE : PART OF LIGHT_PD0_2  code was committed to svt-04-final-rebased under OPT
 
 #define FIX_PRESET_TUNING       1
 
+#define SS_CLN_REF_PRUNE                      1 // Cleanup/optimize MD reference pruning
+#define SS_OPT_MDS0                           1 // Optimize MDS0 scratch buffer sorting
+#define SS_OPT_TXT_OFF_PATH                   1 // Create special transform path for TXT/TXS off
+
+#define OPT_ESTIMATE_REF_BITS                 1 // Moved the redundant context derivation(s) @ estimate_ref_frames_num_bits() to be done per block instead of per frame-type
+#define OPT_IFS                               1 // Speed up interpolation filter search
+#define SS_OPT_TPL                            1 // Loosless optimization of TPL
+#define SS_OPT_SET_LAMDA                      1 // Optimize labmda update for when block tuning is used
+#define OPT_EARLY_CAND_ELIM                   1 // Upgrade early_cand_elimination feature
+#define SS_CLN_LIGHT_PD0_PATH                 1 // Remove unnecessary opts from light-pd0 path
+#define FIX_LIGHT_PD0_BEST_COST               1 // Correctly set MDS0 best cost for light-PD0
+#define SS_OPT_SORTING                        1 // bypass fast cost sorting if MDS1 has only 1 candidate (can merge with SS_OPT_MDS0)
+
+#define SHUT_8x8_IF_NON_ISLICE                1 // shut 8x8(s) if non-ISLICE
+
+#define SS_OPT_INIT                           1    // Loosless optimization of init time (there is an R2R for M3 and below)
+#if SS_OPT_INIT
+#define  SIM_OLD_TPL 1
+#endif
+#define  FIX_TPL_NON_VALID_REF  0
+
+#define TUNE_M11_2                            1 // tuning m11
+#define FTR_COEFF_DETECTOR                    1 // use detector based on the skipped area % in the reference picture
+#define FTR_PREHME_OPT                        1 // reduce the complexity of the prehme list1 search based on list0 results
+
+#define OPT_UPGRADE_TF                        1 // Added a 64x64 compensation path @ TF
+#define TUNE_M9_SLOW                          1 // slowing down m9
+#define FTR_FASTER_CFL                        1 // faster cfl
+#define FTR_CDEF_BIAS_ZERO_COST               1 // Bias the cost of the (0,0) filter strength for CDEF
+#if OPT_UPGRADE_TF
+#define OPT_EARLY_TF_ME_EXIT                  1 // Early ME_TF exit; exit after HME if low distortion, then call the 64x64 path
+#endif
+#define TUNE_SC_ME_SR_ADJUST                  1 // set_me_sr_adjustment_ctrls to most aggresive level for sc for all presets
+
+#define SS_OPT_CDEF_APPL                      1 // Save CDEF directional search results from search to use in application; remove unneeded copies in application
+#define TUNE_SUBRES_TX                        1 // New settings for M11 subres tx
+#if OPT_UPGRADE_TF
+#define OPT_TUNE_DECAY_UN_8_10_M11            1 // Tune the decay value for fast_tf_filtering, use a more agressive abs_th to exit search, unify TF for 8Bit and 10BIT for M11: both to use the same search and filtering methods
+#endif
+#define FTR_16X16_TPL_MAP                     1 // Use a 16x16 based TPL map
+#define SS_MORE_OPT_TPL                       1 // Loosless optimization of TPL
+#define FTR_HME_ME_EARLY_EXIT                 1 // Uss zz sad  to early exit prehme/hme/me.
+#define OPT_M11_PME                           1 // M11 level for PME
+#define TUNE_ADD_SUBRESS_FACTOR4              1 // Add the ability to use a factor of 4 @ subres
+#define TUNE_M10_M0                           1 // tuning m10-m0
+#define FTR_TUNE_PRUNING                      1
+
+#define OPT_M11_SUBPEL                        1 // Do not perform 1/4-Pel if the 1/2-Pel-to-fp-Pel error deviation is not high (could be also used to skip 1/8-Pel; skip next round if current round-to-previous-round deviation is not high) and use the central error to skip sub-Pel search
+#define OPT_NIC_PRUNING                       1 // Skip class pruning step for best class; allows class pruning TH to be 0
+#define TUNE_MDS0_SAD                         1 // Tune MDS0 metric for high presets in light-PD0
+#define FTR_LIMIT_ME_CANDS                    1 // Add ability to limit the number of ME cands when MRP is off
+#define OPT_FAST_MDS0_PD0                     1 // Skip distortion calc in light-PD0 MDS0 if only one cand
+#define FTR_REDUCE_UNI_PRED                   1 // Reduce uni pred candidate
+#define OPT_SUPEL_VAR_CHECK                   1 // Exit subpel search if the variance of the full-pel predicted block is low (i.e. where likely interpolation will not modify the integer samples)
+#if OPT_UPGRADE_TF
+#define FIX_SVT_POSITION_CHECK_CPP            1 // Fix the cpp error caused by svt_check_position()
+#endif
+
+#define OPT_DEPTH_REMOVAL_I_SLICE             1 // 1st depth_removal for I_SLICE using the variance of 64x64(s)
+#define OPT_USE_INTRA_NEIGHBORING             1 // Fast INTER @ PD1 if left and above are coded as INTRA
+#define TUNE_TXS_M11                          1 // tuning txs for m11
+#define OPT_CDEF                              1 // Use skip are percentage ofthe ref to disable cdef
+#define TUNE_M7_11                            1 // Tuning M7 to 11 at the end of May
+#define OPT_TPL_64X64_32X32                   1 // Add the ability to search 32x32 block(s) and 64x64 block(s) @ tpl_dispenser(), and the ability to subsample the residual by 4 @ tpl_dispenser().
+#if OPT_TPL_64X64_32X32
+#define OPT_TPL_ALL32X32            1
+#define OPT_TPL_ALL64X64            0
+#endif
+#define OPT_COMBINE_TPL_FOR_LAD               1 // Harmonize tpl for lad_mg 0 and lad_mg 1
+
+#define SS_CLN_INIT_IFS_MDS0                  1 // Move IFS init to MDS0
+#define LIGHT_PD1                             0 // Add a light-PD1 path
+#define CLN_DECPL_TX_FEATS                    1 // Decouple mds1 skipping tx shortcuts and reduce_last_md_stage_candidate
+
+#define FTR_PD0_OPT                           1 // optimize pd0
+
+#define SS_MEM_VAR                            1 // Optimize the variance array
+#define SS_MEM_HIS                            1 // Optimize the histogram array
+#define SS_MEM_DLF                            1 // Run time FDL scratch buffer
+
+#define FTR_LPD1_DETECTOR                     0 // Add a detector for using light-PD1.  Set signal before depth refinement so you can use the detector to force pred depth
+#define OPT_LPD1_MRP                          0 // Enable light-PD1 for BASE (when WM and MRP are on).  NB light-PD1 does not do reference pruning
+
+#define SS_MEM_TPL                            1 // Optimize TPL when lad_mg is zero
+#define TUNE_M8_M10                           1 // tuning m8-m10 using lad_mg = 0 and light_pd1 on
+#define FIX_LAD_MG_0_HANG                     1 // fixing the hang in M11 when lad_mg = 0, the original fix was using FTR_USE_LAD_TPL as the macro
 #endif
 
 #if !PRIVATE_MACROS
@@ -351,8 +437,41 @@ NOTE : PART OF LIGHT_PD0_2  code was committed to svt-04-final-rebased under OPT
 #undef FTR_CDEF_SEARCH_BEST_REF
 
 #undef SS_ITXF
+#undef SS_OPT_MD
 
-
+#undef SS_OPT_MDS0
+#undef OPT_EARLY_CAND_ELIM
+#undef SS_CLN_LIGHT_PD0_PATH
+#undef FIX_LIGHT_PD0_BEST_COST
+#undef SIM_OLD_TPL
+#undef FIX_TPL_NON_VALID_REF
+#undef TUNE_M11_2
+#undef FTR_COEFF_DETECTOR
+#undef OPT_UPGRADE_TF
+#undef TUNE_M9_SLOW
+#undef FTR_CDEF_BIAS_ZERO_COST
+#undef OPT_EARLY_TF_ME_EXIT
+#undef SS_OPT_CDEF_APPL
+#undef FTR_16X16_TPL_MAP
+#undef SS_MORE_OPT_TPL
+#undef TUNE_ADD_SUBRESS_FACTOR4
+#undef TUNE_M10_M0
+#undef OPT_M11_SUBPEL
+#undef TUNE_MDS0_SAD
+#undef OPT_FAST_MDS0_PD0
+#undef OPT_SUPEL_VAR_CHECK
+#undef OPT_USE_INTRA_NEIGHBORING
+#undef OPT_CDEF
+#undef TUNE_M7_11
+#undef OPT_TPL_64X64_32X32
+#undef OPT_TPL_ALL32X32
+#undef OPT_TPL_ALL64X64
+#undef OPT_COMBINE_TPL_FOR_LAD
+#undef LIGHT_PD1
+#undef FTR_PD0_OPT
+#undef FTR_LPD1_DETECTOR
+#undef OPT_LPD1_MRP
+#undef TUNE_M8_M10
 #endif
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch

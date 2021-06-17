@@ -159,13 +159,21 @@ static INLINE void array_reverse_transpose_8x8(__m128i *in, __m128i *res) {
     res[1] = _mm_unpacklo_epi64(tr1_6, tr1_7);
     res[0] = _mm_unpackhi_epi64(tr1_6, tr1_7);
 }
-
+#if SS_OPT_CDEF_APPL
+uint8_t svt_cdef_find_dir_avx2(const uint16_t *img, int32_t stride, int32_t *var,
+                               int32_t coeff_shift) {
+    int32_t cost[8];
+    int32_t best_cost = 0;
+    uint8_t i;
+    uint8_t best_dir = 0;
+#else
 int32_t svt_cdef_find_dir_avx2(const uint16_t *img, int32_t stride, int32_t *var,
                                int32_t coeff_shift) {
     int32_t i;
     int32_t cost[8];
     int32_t best_cost = 0;
     int32_t best_dir  = 0;
+#endif
     __m128i lines[8];
     __m128i const_128 = _mm_set1_epi16(128);
     for (i = 0; i < 8; i++) {

@@ -469,9 +469,13 @@ INSTANTIATE_TEST_CASE_P(
 #endif
 
 #endif  // defined(_WIN64) || !defined(_MSC_VER)
-
+#if SS_OPT_CDEF_APPL
+using FindDirFunc = uint8_t (*)(const uint16_t *img, int stride, int32_t *var,
+                            int coeff_shift);
+#else
 using FindDirFunc = int (*)(const uint16_t *img, int stride, int32_t *var,
                             int coeff_shift);
+#endif
 using TestFindDirParam = ::testing::tuple<FindDirFunc, FindDirFunc>;
 
 /**
@@ -517,7 +521,11 @@ class CDEFFindDirTest : public ::testing::TestWithParam<TestFindDirParam> {
 
     void test_finddir() {
         int depth, bits, level, count;
+#if SS_OPT_CDEF_APPL
+        uint8_t res_ref = 0, res_tst = 0;
+#else
         int res_ref = 0, res_tst = 0;
+#endif
         int32_t var_ref = 0, var_tst = 0;
 
         for (depth = 8; depth <= 12; depth += 2) {

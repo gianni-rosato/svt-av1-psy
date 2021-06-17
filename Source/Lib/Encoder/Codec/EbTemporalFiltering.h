@@ -144,6 +144,7 @@ typedef struct {
     uint32_t idx_x;
     uint32_t idx_y;
 } TF_SUBPEL_SEARCH_PARAMS;
+#if !FIX_SVT_POSITION_CHECK_CPP
 uint64_t svt_check_position(
     TF_SUBPEL_SEARCH_PARAMS tf_sp_param,
     PictureParentControlSet *pcs_ptr,
@@ -160,6 +161,7 @@ uint64_t svt_check_position(
     uint32_t *stride_src,
     signed short *best_mv_x,
     signed short *best_mv_y);
+#endif
 #endif
 #ifdef __cplusplus
 }

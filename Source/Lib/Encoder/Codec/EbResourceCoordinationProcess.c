@@ -136,6 +136,48 @@ EbErrorType resource_coordination_context_ctor(EbThreadContext *thread_contxt_pt
     return EB_ErrorNone;
 }
 
+#if FTR_16X16_TPL_MAP
+/*
+   determine TPL level
+*/
+uint8_t  get_tpl_level(int8_t enc_mode)
+{
+    uint8_t tpl_level;
+    if (enc_mode <= ENC_M5){
+        tpl_level = 0;
+    }else if (enc_mode <= ENC_M7){
+        tpl_level = 2;
+    }else if (enc_mode <= ENC_M8){
+        tpl_level = 3;
+    }else if (enc_mode <= ENC_M9){
+        tpl_level = 4;
+#if OPT_TPL_64X64_32X32
+    }else if (enc_mode <= ENC_M10) {
+        tpl_level = 5;
+    } else {
+        tpl_level = 6;
+    }
+#else
+    }else{
+       tpl_level = 5;
+    }
+#endif
+    return tpl_level;
+}
+
+/* Warapper function to compute TPL Synthesizer block size: Used in init memory allocation and TPL Controls*/
+uint8_t  get_tpl_synthesizer_block_size(int8_t tpl_level,uint32_t picture_width, uint32_t picture_height)
+{
+    uint8_t  blk_size;
+    if(tpl_level <=4)
+        blk_size = AOMMIN(picture_width, picture_height) >= 720 ? 16 : 8;
+    else
+        blk_size =  16;
+
+    return blk_size;
+}
+#endif
+
 /*************************************************************************************
 tpl level control
 When the flag tpl_opt_flag is active, it implies that the TPL optimization actions
@@ -169,8 +211,14 @@ void set_tpl_extended_controls(
 #if FTR_QP_BASED_DEPTH_REMOVAL
         tpl_ctrls->modulate_depth_removal_level = 1;
 #endif
+#if OPT_TPL_64X64_32X32
+        tpl_ctrls->dispenser_search_level = 0;
+#endif
 #if FTR_TPL_TX_SUBSAMPLE
         tpl_ctrls->subsample_tx = 0;
+#endif
+#if FTR_16X16_TPL_MAP
+        tpl_ctrls->synth_blk_size = get_tpl_synthesizer_block_size(tpl_level,pcs_ptr->aligned_width, pcs_ptr->aligned_height);
 #endif
         break;
     case 1:
@@ -192,8 +240,14 @@ void set_tpl_extended_controls(
 #if FTR_QP_BASED_DEPTH_REMOVAL
         tpl_ctrls->modulate_depth_removal_level = 1;
 #endif
+#if OPT_TPL_64X64_32X32
+        tpl_ctrls->dispenser_search_level = 0;
+#endif
 #if FTR_TPL_TX_SUBSAMPLE
         tpl_ctrls->subsample_tx = 0;
+#endif
+#if FTR_16X16_TPL_MAP
+        tpl_ctrls->synth_blk_size = get_tpl_synthesizer_block_size(tpl_level, pcs_ptr->aligned_width, pcs_ptr->aligned_height);
 #endif
         break;
     case 2:
@@ -215,8 +269,14 @@ void set_tpl_extended_controls(
 #if FTR_QP_BASED_DEPTH_REMOVAL
         tpl_ctrls->modulate_depth_removal_level = 1;
 #endif
+#if OPT_TPL_64X64_32X32
+        tpl_ctrls->dispenser_search_level = 0;
+#endif
 #if FTR_TPL_TX_SUBSAMPLE
         tpl_ctrls->subsample_tx = 0;
+#endif
+#if FTR_16X16_TPL_MAP
+        tpl_ctrls->synth_blk_size = get_tpl_synthesizer_block_size(tpl_level, pcs_ptr->aligned_width, pcs_ptr->aligned_height);
 #endif
         break;
     case 3:
@@ -239,10 +299,16 @@ void set_tpl_extended_controls(
         tpl_ctrls->skip_rdoq_uv_qp_based_th = 4;
 #if FTR_QP_BASED_DEPTH_REMOVAL
         tpl_ctrls->modulate_depth_removal_level = 1;
+#if OPT_TPL_64X64_32X32
+        tpl_ctrls->dispenser_search_level = 0;
+#endif
 #if FTR_TPL_TX_SUBSAMPLE
         tpl_ctrls->subsample_tx = 0;
 #endif
         tpl_ctrls->r0_adjust_factor = 0.30;
+#if FTR_16X16_TPL_MAP
+        tpl_ctrls->synth_blk_size = get_tpl_synthesizer_block_size(tpl_level, pcs_ptr->aligned_width, pcs_ptr->aligned_height);
+#endif
         break;
 #if FTR_TPL_TX_SUBSAMPLE
     case 4:
@@ -267,18 +333,26 @@ void set_tpl_extended_controls(
         tpl_ctrls->use_pred_sad_in_inter_search = 1;
         tpl_ctrls->skip_rdoq_uv_qp_based_th = 4;
         tpl_ctrls->modulate_depth_removal_level = 1;
+#if OPT_TPL_64X64_32X32
+        tpl_ctrls->dispenser_search_level = 0;
+#endif
         tpl_ctrls->subsample_tx = 1;
 #if OPT14_TPL
         tpl_ctrls->r0_adjust_factor = scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? 0.30 : 0.70;
 #else
         tpl_ctrls->r0_adjust_factor = 0.3;
 #endif
+#if FTR_16X16_TPL_MAP
+        tpl_ctrls->synth_blk_size = get_tpl_synthesizer_block_size(tpl_level, pcs_ptr->aligned_width, pcs_ptr->aligned_height);
+#endif
         break;
     case 5:
 #else
     case 4:
 #endif
+#if !OPT_TPL_64X64_32X32
     default:
+#endif
 #if OPT5_TPL_REDUCE_PIC
         tpl_ctrls->tpl_opt_flag = 1;
         tpl_ctrls->enable_tpl_qps = 0;
@@ -297,8 +371,14 @@ void set_tpl_extended_controls(
         tpl_ctrls->use_pred_sad_in_inter_search = 1;
         tpl_ctrls->skip_rdoq_uv_qp_based_th = 4;
         tpl_ctrls->modulate_depth_removal_level = 1;
+#if OPT_TPL_64X64_32X32
+        tpl_ctrls->dispenser_search_level = 0;
+#endif
         tpl_ctrls->subsample_tx = 1;
         tpl_ctrls->r0_adjust_factor = scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? 0.3 : 2.0;
+#if FTR_16X16_TPL_MAP
+        tpl_ctrls->synth_blk_size = get_tpl_synthesizer_block_size(tpl_level, pcs_ptr->aligned_width, pcs_ptr->aligned_height);
+#endif
 #else
         tpl_ctrls->tpl_opt_flag = 1;
         tpl_ctrls->enable_tpl_qps = 0;
@@ -317,15 +397,42 @@ void set_tpl_extended_controls(
 #endif
 #endif
         break;
+#if OPT_TPL_64X64_32X32
+    case 6:
+    default:
+        tpl_ctrls->tpl_opt_flag = 1;
+        tpl_ctrls->enable_tpl_qps = 0;
+        tpl_ctrls->disable_intra_pred_nbase = 0;
+        tpl_ctrls->disable_intra_pred_nref = 1;
+
+        tpl_ctrls->reduced_tpl_group = pcs_ptr->hierarchical_levels == 5 ?
+            (scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? 3 : 1) :
+            (scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? 2 : 0);
+        tpl_ctrls->get_best_ref = 0;
+        tpl_ctrls->pf_shape = scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? N2_SHAPE : N4_SHAPE;
+        tpl_ctrls->use_pred_sad_in_intra_search = 1;
+        tpl_ctrls->use_pred_sad_in_inter_search = 1;
+        tpl_ctrls->skip_rdoq_uv_qp_based_th = 4;
+        tpl_ctrls->modulate_depth_removal_level = 1;
+        tpl_ctrls->dispenser_search_level = 1;
+        tpl_ctrls->subsample_tx = 2;
+        tpl_ctrls->r0_adjust_factor = scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? 0.3 : 2.0;
+        tpl_ctrls->synth_blk_size = get_tpl_synthesizer_block_size(tpl_level, pcs_ptr->aligned_width, pcs_ptr->aligned_height);
+        break;
+#endif
 #else
         tpl_ctrls->r0_adjust_factor = 0.30;
         break;
 #endif
     }
-
+#if OPT_COMBINE_TPL_FOR_LAD
+    if (!scs_ptr->lad_mg)
+        tpl_ctrls->r0_adjust_factor *= 3;
+#endif
     if(scs_ptr->static_config.hierarchical_levels < 4)
         tpl_ctrls->r0_adjust_factor = 0.1;
 }
+#if !OPT_COMBINE_TPL_FOR_LAD
 void set_tpl_controls(
     PictureParentControlSet *pcs_ptr, uint8_t tpl_level) {
     TplControls *tpl_ctrls = &pcs_ptr->tpl_ctrls;
@@ -347,8 +454,14 @@ void set_tpl_controls(
 #if FTR_QP_BASED_DEPTH_REMOVAL
         tpl_ctrls->modulate_depth_removal_level = 1;
 #endif
+#if OPT_TPL_64X64_32X32
+        tpl_ctrls->dispenser_search_level = 0;
+#endif
 #if FTR_TPL_TX_SUBSAMPLE
         tpl_ctrls->subsample_tx = 0;
+#endif
+#if FTR_16X16_TPL_MAP
+        tpl_ctrls->synth_blk_size = get_tpl_synthesizer_block_size(tpl_level, pcs_ptr->aligned_width, pcs_ptr->aligned_height);
 #endif
         break;
     case 1:
@@ -367,8 +480,14 @@ void set_tpl_controls(
 #if FTR_QP_BASED_DEPTH_REMOVAL
         tpl_ctrls->modulate_depth_removal_level = 1;
 #endif
+#if OPT_TPL_64X64_32X32
+        tpl_ctrls->dispenser_search_level = 0;
+#endif
 #if FTR_TPL_TX_SUBSAMPLE
         tpl_ctrls->subsample_tx = 0;
+#endif
+#if FTR_16X16_TPL_MAP
+        tpl_ctrls->synth_blk_size = get_tpl_synthesizer_block_size(tpl_level, pcs_ptr->aligned_width, pcs_ptr->aligned_height);
 #endif
         break;
     case 2:
@@ -386,6 +505,9 @@ void set_tpl_controls(
         tpl_ctrls->r0_adjust_factor = 0.0;
 #if FTR_QP_BASED_DEPTH_REMOVAL
         tpl_ctrls->modulate_depth_removal_level = 1;
+#endif
+#if OPT_TPL_64X64_32X32
+        tpl_ctrls->dispenser_search_level = 0;
 #endif
 #if FTR_TPL_TX_SUBSAMPLE
         tpl_ctrls->subsample_tx = 0;
@@ -409,10 +531,16 @@ void set_tpl_controls(
 #if FTR_QP_BASED_DEPTH_REMOVAL
         tpl_ctrls->modulate_depth_removal_level = 1;
 #endif
+#if OPT_TPL_64X64_32X32
+        tpl_ctrls->dispenser_search_level = 0;
+#endif
 #if FTR_TPL_TX_SUBSAMPLE
         tpl_ctrls->subsample_tx = 0;
 #endif
         tpl_ctrls->r0_adjust_factor = 0.0;
+#if FTR_16X16_TPL_MAP
+        tpl_ctrls->synth_blk_size = get_tpl_synthesizer_block_size(tpl_level, pcs_ptr->aligned_width, pcs_ptr->aligned_height);
+#endif
         break;
 #if FTR_QP_BASED_DEPTH_REMOVAL
 #if FTR_TPL_TX_SUBSAMPLE
@@ -429,14 +557,22 @@ void set_tpl_controls(
         tpl_ctrls->use_pred_sad_in_inter_search = 1;
         tpl_ctrls->skip_rdoq_uv_qp_based_th = 4;
         tpl_ctrls->modulate_depth_removal_level = 1;
+#if OPT_TPL_64X64_32X32
+        tpl_ctrls->dispenser_search_level = 0;
+#endif
         tpl_ctrls->subsample_tx = 1;
         tpl_ctrls->r0_adjust_factor = 0.0;
+#if FTR_16X16_TPL_MAP
+        tpl_ctrls->synth_blk_size = get_tpl_synthesizer_block_size(tpl_level, pcs_ptr->aligned_width, pcs_ptr->aligned_height);
+#endif
         break;
     case 5:
 #else
     case 4:
 #endif
+#if !OPT_TPL_64X64_32X32
     default:
+#endif
         tpl_ctrls->tpl_opt_flag = 1;
         tpl_ctrls->enable_tpl_qps = 0;
         tpl_ctrls->disable_intra_pred_nbase = 0;
@@ -451,12 +587,40 @@ void set_tpl_controls(
         tpl_ctrls->r0_adjust_factor = 0.0;
         tpl_ctrls->modulate_depth_removal_level = 0;
 #if FTR_TPL_TX_SUBSAMPLE
+#if OPT_TPL_64X64_32X32
+        tpl_ctrls->dispenser_search_level = 0;
+#endif
         tpl_ctrls->subsample_tx = 1;
 #endif
+#if FTR_16X16_TPL_MAP
+        tpl_ctrls->synth_blk_size = get_tpl_synthesizer_block_size(tpl_level, pcs_ptr->aligned_width, pcs_ptr->aligned_height);
+#endif
+        break;
+#endif
+#if OPT_TPL_64X64_32X32
+    case 6:
+    default:
+        tpl_ctrls->tpl_opt_flag = 1;
+        tpl_ctrls->enable_tpl_qps = 0;
+        tpl_ctrls->disable_intra_pred_nbase = 0;
+        tpl_ctrls->disable_intra_pred_nref = 1;
+        tpl_ctrls->disable_tpl_nref = 1;
+        tpl_ctrls->disable_tpl_pic_dist = 1;
+        tpl_ctrls->get_best_ref = 0;
+        tpl_ctrls->pf_shape = scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? N2_SHAPE : N4_SHAPE;
+        tpl_ctrls->use_pred_sad_in_intra_search = 1;
+        tpl_ctrls->use_pred_sad_in_inter_search = 1;
+        tpl_ctrls->skip_rdoq_uv_qp_based_th = 4;
+        tpl_ctrls->r0_adjust_factor = 0.0;
+        tpl_ctrls->modulate_depth_removal_level = 0;
+        tpl_ctrls->dispenser_search_level = 1;
+        tpl_ctrls->subsample_tx = 2;
+        tpl_ctrls->synth_blk_size = get_tpl_synthesizer_block_size(tpl_level, pcs_ptr->aligned_width, pcs_ptr->aligned_height);
         break;
 #endif
     }
 }
+#endif
 /*
 * return the restoration level
   Used by signal_derivation_pre_analysis_oq and memory allocation
@@ -502,7 +666,10 @@ EbErrorType signal_derivation_pre_analysis_oq_pcs(SequenceControlSet const * con
     pcs_ptr->tf_enable_hme_level2_flag = 1;
 
 
-
+#if FTR_16X16_TPL_MAP
+    //TPL level should not be modified outside of this function
+    uint8_t tpl_level = get_tpl_level(pcs_ptr->enc_mode);
+#else
 
     uint8_t tpl_level;
 #if TUNE_LOWER_PRESETS && !TUNE_SHIFT_PRESETS_DOWN || TUNE_MEGA_M9_M4
@@ -558,11 +725,19 @@ EbErrorType signal_derivation_pre_analysis_oq_pcs(SequenceControlSet const * con
         tpl_level = 3;
 #endif
 #endif
-
+#endif
+#if OPT_COMBINE_TPL_FOR_LAD
+    set_tpl_extended_controls(pcs_ptr, tpl_level);
+#else
     if (scs_ptr->lad_mg)
         set_tpl_extended_controls(pcs_ptr,tpl_level);
     else
         set_tpl_controls(pcs_ptr, tpl_level);
+#endif
+
+#if FTR_16X16_TPL_MAP
+      assert_err(pcs_ptr->is_720p_or_larger == (pcs_ptr->tpl_ctrls.synth_blk_size == 16), "TPL Synth Size Error");
+#endif
 
     return return_error;
 }
@@ -911,7 +1086,9 @@ static EbErrorType reset_pcs_av1(PictureParentControlSet *pcs_ptr) {
    pcs_ptr->sb_total_count_pix = pcs_ptr->sb_total_count;
    pcs_ptr->tpl_disp_coded_sb_count = 0;
 
-
+#if SS_OPT_TPL
+     pcs_ptr->tpl_src_data_ready = 0;
+#endif
 
     return EB_ErrorNone;
 }

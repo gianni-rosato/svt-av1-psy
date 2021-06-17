@@ -54,7 +54,12 @@ void svt_av1_loop_filter_frame(
         PictureControlSet *pcs_ptr,
         /*MacroBlockD *xd,*/ int32_t plane_start, int32_t plane_end/*,
         int32_t partial_frame*/);
+
+#if SS_MEM_DLF
+EbErrorType  svt_av1_pick_filter_level(
+#else
 void svt_av1_pick_filter_level(
+#endif
                                EbPictureBufferDesc *srcBuffer, // source input
                                PictureControlSet *pcs_ptr, LpfPickMethod method);
 

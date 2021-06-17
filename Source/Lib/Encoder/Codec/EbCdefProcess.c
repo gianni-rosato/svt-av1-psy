@@ -123,8 +123,10 @@ void cdef_seg_search(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr,
     uint8_t *src[3];
     uint8_t *ref_coeff[3];
     CdefList dlist[MI_SIZE_128X128 * MI_SIZE_128X128];
+#if !SS_OPT_CDEF_APPL
     int32_t  dir[CDEF_NBLOCKS][CDEF_NBLOCKS] = { {0} };
     int32_t  var[CDEF_NBLOCKS][CDEF_NBLOCKS] = { {0} };
+#endif
     int32_t  stride_src[3];
     int32_t  stride_ref[3];
     int32_t  bsize[3];
@@ -226,6 +228,10 @@ void cdef_seg_search(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr,
             cdef_count = svt_sb_compute_cdef_list(
                 pcs_ptr, cm, fbr * MI_SIZE_64X64, fbc * MI_SIZE_64X64, dlist, bs);
 #endif
+#if SS_OPT_CDEF_APPL
+            uint8_t(* dir)[CDEF_NBLOCKS] = (uint8_t(*)[CDEF_NBLOCKS])&(pcs_ptr->cdef_dir_data[fb_idx].dir[0][0]);
+            int32_t(* var)[CDEF_NBLOCKS] = (int32_t(*)[CDEF_NBLOCKS])&(pcs_ptr->cdef_dir_data[fb_idx].var[0][0]);
+#endif
             for (pli = 0; pli < num_planes; pli++) {
 #if OPT_REDUCE_CDEF_MEMSET
                 /* We avoid filtering the pixels for which some of the pixels to
@@ -280,7 +286,11 @@ void cdef_seg_search(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr,
 
                         svt_cdef_filter_fb(tmp_dst,
                             NULL,
+#if SS_OPT_CDEF_APPL
+                            0,
+#else
                             CDEF_BSTRIDE,
+#endif
                             in,
                             xdec[pli],
                             ydec[pli],
@@ -356,7 +366,11 @@ void cdef_seg_search(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr,
 
                         svt_cdef_filter_fb(tmp_dst,
                             NULL,
+#if SS_OPT_CDEF_APPL
+                            0,
+#else
                             CDEF_BSTRIDE,
+#endif
                             in,
                             xdec[pli],
                             ydec[pli],
@@ -463,8 +477,10 @@ void cdef_seg_search16bit(PictureControlSet *pcs_ptr, SequenceControlSet *scs_pt
     uint16_t *       src[3];
     uint16_t *       ref_coeff[3];
     CdefList         dlist[MI_SIZE_128X128 * MI_SIZE_128X128];
+#if !SS_OPT_CDEF_APPL
     int32_t          dir[CDEF_NBLOCKS][CDEF_NBLOCKS] = { {0} };
     int32_t          var[CDEF_NBLOCKS][CDEF_NBLOCKS] = { {0} };
+#endif
     int32_t          stride_src[3];
     int32_t          stride_ref[3];
     int32_t          bsize[3];
@@ -555,6 +571,10 @@ void cdef_seg_search16bit(PictureControlSet *pcs_ptr, SequenceControlSet *scs_pt
             cdef_count = svt_sb_compute_cdef_list(
                 pcs_ptr, cm, fbr * MI_SIZE_64X64, fbc * MI_SIZE_64X64, dlist, bs);
 #endif
+#if SS_OPT_CDEF_APPL
+            uint8_t(*dir)[CDEF_NBLOCKS] = (uint8_t(*)[CDEF_NBLOCKS])&(pcs_ptr->cdef_dir_data[fb_idx].dir[0][0]);
+            int32_t(*var)[CDEF_NBLOCKS] = (int32_t(*)[CDEF_NBLOCKS])&(pcs_ptr->cdef_dir_data[fb_idx].var[0][0]);
+#endif
             for (pli = 0; pli < num_planes; pli++) {
 #if OPT_REDUCE_CDEF_MEMSET
                 /* We avoid filtering the pixels for which some of the pixels to
@@ -614,7 +634,11 @@ void cdef_seg_search16bit(PictureControlSet *pcs_ptr, SequenceControlSet *scs_pt
 
                         svt_cdef_filter_fb(NULL,
                             tmp_dst,
+#if SS_OPT_CDEF_APPL
+                            0,
+#else
                             CDEF_BSTRIDE,
+#endif
                             in,
                             xdec[pli],
                             ydec[pli],
@@ -691,7 +715,11 @@ void cdef_seg_search16bit(PictureControlSet *pcs_ptr, SequenceControlSet *scs_pt
 
                         svt_cdef_filter_fb(NULL,
                             tmp_dst,
+#if SS_OPT_CDEF_APPL
+                            0,
+#else
                             CDEF_BSTRIDE,
+#endif
                             in,
                             xdec[pli],
                             ydec[pli],

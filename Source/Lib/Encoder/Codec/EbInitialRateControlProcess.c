@@ -317,9 +317,11 @@ void store_extended_group(
                 break;
         }
     }
-
+#if !OPT_COMBINE_TPL_FOR_LAD
     SequenceControlSet *scs_ptr = (SequenceControlSet *)pcs->scs_wrapper_ptr->object_ptr;
-    if (scs_ptr->lad_mg) {
+    if (scs_ptr->lad_mg)
+#endif
+    {
         pcs->tpl_group_size = pcs->ntpl_group_size;
         memset(pcs->tpl_valid_pic, 0, MAX_TPL_EXT_GROUP_SIZE * sizeof(uint8_t));
         pcs->tpl_valid_pic[0] = 1;
@@ -594,12 +596,19 @@ void *initial_rate_control_kernel(void *input_ptr) {
             //   1. TPL is OFF and
             //   2. super-res mode is NONE or FIXED or RANDOM.
             //     For other super-res modes, pa_ref_objs are needed in TASK_SUPERRES_RE_ME task
-            EbBool release_pa_ref = (scs_ptr->static_config.enable_tpl_la == 0) &&
-                (scs_ptr->static_config.superres_mode <= SUPERRES_RANDOM) ?
-                EB_TRUE : EB_FALSE;
-            if (release_pa_ref) {
+#if FIX_LAD_MG_0_HANG
+            // Release Pa Ref if mg_lad is 0 and P slice (not belonging to any TPL group)
+            uint8_t release_pa_ref = 0;
+            if (scs_ptr->static_config.enable_tpl_la == 0 && scs_ptr->static_config.superres_mode <= SUPERRES_RANDOM)
+                release_pa_ref =1;
+            else if (scs_ptr->lad_mg == 0 && pcs_ptr->slice_type == P_SLICE)
+                release_pa_ref =1;
+
+            if (release_pa_ref)
+#else
+            if (scs_ptr->static_config.enable_tpl_la == 0 && scs_ptr->static_config.superres_mode <= SUPERRES_RANDOM)
+#endif
                 release_pa_reference_objects(scs_ptr, pcs_ptr);
-            }
 
             /*In case Look-Ahead is zero there is no need to place pictures in the
               re-order queue. this will cause an artificial delay since pictures come in dec-order*/

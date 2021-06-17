@@ -93,7 +93,11 @@ void svt_cdef_block(EbDecHandle *dec_handle, int32_t *mi_wide_l2, int32_t *mi_hi
     const int32_t nvfb = (frame_info->mi_rows + MI_SIZE_64X64 - 1) / MI_SIZE_64X64;
     const int32_t nhfb = (frame_info->mi_cols + MI_SIZE_64X64 - 1) / MI_SIZE_64X64;
     CdefList      dlist[MI_SIZE_64X64 * MI_SIZE_64X64];
+#if SS_OPT_CDEF_APPL
+    uint8_t       dir[CDEF_NBLOCKS][CDEF_NBLOCKS] = { {0} };
+#else
     int32_t       dir[CDEF_NBLOCKS][CDEF_NBLOCKS] = {{0}};
+#endif
     int32_t       var[CDEF_NBLOCKS][CDEF_NBLOCKS] = {{0}};
     /* Logic for getting SBinfo,
     SbInfo points to every super block.*/

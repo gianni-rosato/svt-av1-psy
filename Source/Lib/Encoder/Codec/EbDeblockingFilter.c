@@ -1120,7 +1120,11 @@ static int32_t search_filter_level(
         *best_cost_ret = (double)best_err; //RDCOST_DBL(x->rdmult, 0, best_err);
     return filt_best;
 }
+#if SS_MEM_DLF
+EbErrorType  svt_av1_pick_filter_level(
+#else
 void svt_av1_pick_filter_level(
+#endif
                                EbPictureBufferDesc *srcBuffer, // source input
                                PictureControlSet *pcs_ptr, LpfPickMethod method) {
     SequenceControlSet *scs_ptr = (SequenceControlSet *)
@@ -1160,7 +1164,11 @@ void svt_av1_pick_filter_level(
             assert(0 &&
                    "bit_depth should be AOM_BITS_8, AOM_BITS_10 "
                    "or AOM_BITS_12");
+#if SS_MEM_DLF
+            return EB_ErrorNone;
+#else
             return;
+#endif
         }
         if (scs_ptr->static_config.encoder_bit_depth != EB_8BIT && frm_hdr->frame_type == KEY_FRAME)
             filt_guess -= 4;
@@ -1173,6 +1181,34 @@ void svt_av1_pick_filter_level(
         lf->filter_level_u  = clamp(filt_guess_chroma, min_filter_level, max_filter_level);
         lf->filter_level_v  = clamp(filt_guess_chroma, min_filter_level, max_filter_level);
     } else {
+#if SS_MEM_DLF
+            uint16_t padding = scs_ptr->static_config.super_block_size + 32;
+    EbPictureBufferDescInitData temp_lf_recon_desc_init_data;
+    temp_lf_recon_desc_init_data.max_width          = (uint16_t)scs_ptr->max_input_luma_width;
+    temp_lf_recon_desc_init_data.max_height         = (uint16_t)scs_ptr->max_input_luma_height;
+    temp_lf_recon_desc_init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK;
+
+    temp_lf_recon_desc_init_data.left_padding  = padding;
+    temp_lf_recon_desc_init_data.right_padding = padding;
+    temp_lf_recon_desc_init_data.top_padding   = padding;
+    temp_lf_recon_desc_init_data.bot_padding   = padding;
+    temp_lf_recon_desc_init_data.split_mode   = EB_FALSE;
+    temp_lf_recon_desc_init_data.color_format = scs_ptr->static_config.encoder_color_format;
+    EbBool         is_16bit      = scs_ptr->static_config.encoder_bit_depth > 8 ? EB_TRUE : EB_FALSE;
+    if (scs_ptr->static_config.is_16bit_pipeline || is_16bit) {
+        temp_lf_recon_desc_init_data.bit_depth = EB_16BIT;
+        EB_NEW(pcs_ptr->temp_lf_recon_picture16bit_ptr,
+               svt_recon_picture_buffer_desc_ctor,
+               (EbPtr)&temp_lf_recon_desc_init_data);
+        if (!is_16bit)
+            pcs_ptr->temp_lf_recon_picture16bit_ptr->bit_depth = EB_8BIT;
+    } else {
+        temp_lf_recon_desc_init_data.bit_depth = EB_8BIT;
+        EB_NEW(pcs_ptr->temp_lf_recon_picture_ptr,
+               svt_recon_picture_buffer_desc_ctor,
+               (EbPtr)&temp_lf_recon_desc_init_data);
+    }
+#endif
         const int32_t last_frame_filter_level[4] = {
             lf->filter_level[0], lf->filter_level[1], lf->filter_level_u, lf->filter_level_v};
         EbPictureBufferDesc* temp_lf_recon_buffer = scs_ptr->static_config.is_16bit_pipeline
@@ -1205,5 +1241,13 @@ void svt_av1_pick_filter_level(
                                                  NULL,
                                                  2,
                                                  0);
+#if SS_MEM_DLF
+    EB_DELETE(pcs_ptr->temp_lf_recon_picture_ptr);
+    EB_DELETE(pcs_ptr->temp_lf_recon_picture16bit_ptr);
+#endif
     }
+#if SS_MEM_DLF
+
+    return EB_ErrorNone;
+#endif
 }

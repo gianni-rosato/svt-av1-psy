@@ -103,6 +103,10 @@ typedef struct TfControls {
     uint8_t  quarter_pel_mode;         // 0: do not perform quarter-pel refinement  | 1: perform quarter-pel refinement for the 8-positions | 2: perform half-pel refinement for only 4-positions (H and V only)
     uint8_t  eight_pel_mode;           // 0: do not perform eight-pel refinement    | 1: perform eight-pel refinement for the 8-positions   | 2: eight half-pel refinement for only 4-positions (H and V only)
     uint8_t  do_chroma;                // 0: do not filter chroma | 1: filter chroma
+#if OPT_UPGRADE_TF
+    uint8_t  use_pred_64x64_only_th;   // 0: subpel/pred error for 32x32(s) or/and 16x16(s) | > 0: subpel/pred error for 64x64 only if 64x64-to-32x32 dist deviation less than use_pred_64x64_only_th
+    uint32_t me_exit_th;               // early exit ME_TF if HME distortion < me_exit_th
+#endif
     uint64_t pred_error_32x32_th;      // The 32x32 pred error (post-subpel) under which subpel for the 16x16 block(s) is bypassed
     int64_t  me_16x16_to_8x8_dev_th;   // The 16x16-to-8x8 me-distortion deviation beyond which the number of reference frames is capped to [max_64x64_past_pics, max_64x64_future_pics] @ the level of a 64x64 Block
     uint64_t max_64x64_past_pics;      // The max number of past reference frames if me_16x16_to_8x8_dev > me_16x16_to_8x8_dev_th

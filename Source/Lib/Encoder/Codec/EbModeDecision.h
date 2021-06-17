@@ -204,6 +204,13 @@ extern EbErrorType mode_decision_scratch_candidate_buffer_ctor(
 uint32_t product_full_mode_decision_light_pd0(struct ModeDecisionContext *context_ptr, BlkStruct *blk_ptr,
                                     ModeDecisionCandidateBuffer **buffer_ptr_array);
 #endif
+#if LIGHT_PD1
+uint32_t product_full_mode_decision_light_pd1(struct ModeDecisionContext *context_ptr, BlkStruct *blk_ptr,
+                                    PictureControlSet *pcs,
+                                    uint32_t sb_addr,
+                                    ModeDecisionCandidateBuffer **buffer_ptr_array,
+                                    uint32_t                      lowest_cost_index);
+#endif
 uint32_t product_full_mode_decision(struct ModeDecisionContext *context_ptr, BlkStruct *blk_ptr,
 #if FTR_BYPASS_ENCDEC
                                     PictureControlSet *pcs,
@@ -212,8 +219,10 @@ uint32_t product_full_mode_decision(struct ModeDecisionContext *context_ptr, Blk
                                     ModeDecisionCandidateBuffer **buffer_ptr_array,
                                     uint32_t                      candidate_total_count,
                                     uint32_t *                    best_candidate_index_array);
+#if !SS_OPT_SET_LAMDA
 uint32_t get_blk_tuned_full_lambda(struct ModeDecisionContext *context_ptr,
                                    PictureControlSet *pcs_ptr, uint32_t pic_full_lambda);
+#endif
 void     set_tuned_blk_lambda(struct ModeDecisionContext *context_ptr, PictureControlSet *pcs_ptr);
 
 typedef EbErrorType (*EB_INTRA_4x4_FAST_LUMA_COST_FUNC)(

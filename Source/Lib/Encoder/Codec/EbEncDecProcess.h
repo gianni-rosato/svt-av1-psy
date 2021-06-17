@@ -73,6 +73,9 @@ typedef struct EncDecContext {
 #if  FTR_INTRA_DETECTOR
     uint64_t      tot_intra_coded_area;
 #endif
+#if FTR_COEFF_DETECTOR
+    uint64_t      tot_skip_coded_area;
+#endif
     uint64_t three_quad_energy;
 
     // Needed for DC prediction

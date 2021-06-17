@@ -848,6 +848,9 @@ void set_cdef_controls(PictureParentControlSet *pcs_ptr, uint8_t cdef_level) {
 #if MS_CDEF_OPT3
     cdef_ctrls->use_reference_cdef_fs = 0;
 #endif
+#if OPT_CDEF
+    cdef_ctrls->use_skip_detector = 0;
+#endif
     switch (cdef_level)
     {
         // OFF
@@ -900,6 +903,9 @@ void set_cdef_controls(PictureParentControlSet *pcs_ptr, uint8_t cdef_level) {
 #if FTR_CDEF_SUBSAMPLING
         cdef_ctrls->subsampling_factor = 1;
 #endif
+#if FTR_CDEF_BIAS_ZERO_COST
+        cdef_ctrls->zero_fs_cost_bias = 0;
+#endif
         break;
     case 2: // N
         // pf_set {0,1,2,4,5,6,8,9,10,12,13,14}
@@ -943,6 +949,9 @@ void set_cdef_controls(PictureParentControlSet *pcs_ptr, uint8_t cdef_level) {
 #if FTR_CDEF_SUBSAMPLING
         cdef_ctrls->subsampling_factor = 1;
 #endif
+#if FTR_CDEF_BIAS_ZERO_COST
+        cdef_ctrls->zero_fs_cost_bias = 0;
+#endif
         break;
     case 3:
         // pf_set {0,2,4,6,8,10,12,14}
@@ -982,6 +991,9 @@ void set_cdef_controls(PictureParentControlSet *pcs_ptr, uint8_t cdef_level) {
 #if FTR_CDEF_SUBSAMPLING
         cdef_ctrls->subsampling_factor = 1;
 #endif
+#if FTR_CDEF_BIAS_ZERO_COST
+        cdef_ctrls->zero_fs_cost_bias = 0;
+#endif
         break;
     case 4:
         // pf_set {0,4,8,12,15}
@@ -1018,6 +1030,9 @@ void set_cdef_controls(PictureParentControlSet *pcs_ptr, uint8_t cdef_level) {
 #if FTR_CDEF_SUBSAMPLING
         cdef_ctrls->subsampling_factor = 1;
 #endif
+#if FTR_CDEF_BIAS_ZERO_COST
+        cdef_ctrls->zero_fs_cost_bias = 0;
+#endif
         break;
     case 5:
         // pf_set {0,5,10,15}
@@ -1053,6 +1068,9 @@ void set_cdef_controls(PictureParentControlSet *pcs_ptr, uint8_t cdef_level) {
 #if FTR_CDEF_SUBSAMPLING
         cdef_ctrls->subsampling_factor = 1;
 #endif
+#if FTR_CDEF_BIAS_ZERO_COST
+        cdef_ctrls->zero_fs_cost_bias = 0;
+#endif
         break;
     case 6:
         // pf_set {0,7,15}
@@ -1087,6 +1105,9 @@ void set_cdef_controls(PictureParentControlSet *pcs_ptr, uint8_t cdef_level) {
 #if FTR_CDEF_SUBSAMPLING
         cdef_ctrls->subsampling_factor = 1;
 #endif
+#if FTR_CDEF_BIAS_ZERO_COST
+        cdef_ctrls->zero_fs_cost_bias = 0;
+#endif
         break;
     case 7:
         // pf_set {0,7,15}
@@ -1120,6 +1141,9 @@ void set_cdef_controls(PictureParentControlSet *pcs_ptr, uint8_t cdef_level) {
 #if FTR_CDEF_SUBSAMPLING
         cdef_ctrls->subsampling_factor = 1;
 #endif
+#if FTR_CDEF_BIAS_ZERO_COST
+        cdef_ctrls->zero_fs_cost_bias = 0;
+#endif
         break;
     case 8:
         // pf_set {0,7,15}
@@ -1150,7 +1174,176 @@ void set_cdef_controls(PictureParentControlSet *pcs_ptr, uint8_t cdef_level) {
 #if FTR_CDEF_SUBSAMPLING
         cdef_ctrls->subsampling_factor = 1;
 #endif
+#if FTR_CDEF_BIAS_ZERO_COST
+        cdef_ctrls->zero_fs_cost_bias = 0;
+#endif
         break;
+#if FTR_CDEF_BIAS_ZERO_COST
+        case 9:
+        // pf_set {0,15}
+        // sf_set {0,2}
+        cdef_ctrls->enabled = 1;
+        cdef_ctrls->first_pass_fs_num = 2;
+        second_pass_fs_num = 1;
+        cdef_ctrls->default_second_pass_fs_num = cdef_ctrls->first_pass_fs_num * second_pass_fs_num;
+        cdef_ctrls->default_first_pass_fs[0] = pf_gi[0];
+        cdef_ctrls->default_first_pass_fs[1] = pf_gi[15];
+
+        cdef_ctrls->default_second_pass_fs[0] = pf_gi[0] + 2;
+        cdef_ctrls->default_second_pass_fs[1] = pf_gi[15] + 2;
+        cdef_ctrls->default_first_pass_fs_uv[0] = cdef_ctrls->default_first_pass_fs[0];
+        cdef_ctrls->default_first_pass_fs_uv[1] = cdef_ctrls->default_first_pass_fs[1];
+        cdef_ctrls->default_first_pass_fs_uv[2] = -1;// if using search_best_ref_fs, set at least 3 filters
+        cdef_ctrls->default_second_pass_fs_uv[0] = -1; // cdef_ctrls->default_second_pass_fs[0];
+        cdef_ctrls->default_second_pass_fs_uv[1] = -1; // cdef_ctrls->default_second_pass_fs[1];
+        cdef_ctrls->use_reference_cdef_fs = 0;
+        cdef_ctrls->search_best_ref_fs = 0;
+        cdef_ctrls->subsampling_factor = 4;
+        cdef_ctrls->zero_fs_cost_bias = 0;
+        break;
+    case 10:
+        // pf_set {0,15}
+        // sf_set {0,2}
+        cdef_ctrls->enabled = 1;
+        cdef_ctrls->first_pass_fs_num = 2;
+        second_pass_fs_num = 1;
+        cdef_ctrls->default_second_pass_fs_num = cdef_ctrls->first_pass_fs_num * second_pass_fs_num;
+        cdef_ctrls->default_first_pass_fs[0] = pf_gi[0];
+        cdef_ctrls->default_first_pass_fs[1] = pf_gi[15];
+
+        cdef_ctrls->default_second_pass_fs[0] = pf_gi[0] + 2;
+        cdef_ctrls->default_second_pass_fs[1] = pf_gi[15] + 2;
+
+        cdef_ctrls->default_first_pass_fs_uv[0] = cdef_ctrls->default_first_pass_fs[0];
+        cdef_ctrls->default_first_pass_fs_uv[1] = cdef_ctrls->default_first_pass_fs[1];
+        cdef_ctrls->default_first_pass_fs_uv[2] = -1;// when using search_best_ref_fs, set at least 3 filters
+        cdef_ctrls->default_second_pass_fs_uv[0] = -1;
+        cdef_ctrls->default_second_pass_fs_uv[1] = -1;
+
+        cdef_ctrls->use_reference_cdef_fs = 0;
+        cdef_ctrls->search_best_ref_fs = 1;
+        cdef_ctrls->subsampling_factor = 4;
+        cdef_ctrls->zero_fs_cost_bias = 0;
+        break;
+    case 11:
+        // pf_set {0,15}
+        // sf_set {0,2}
+        cdef_ctrls->enabled = 1;
+        cdef_ctrls->first_pass_fs_num = 2;
+        second_pass_fs_num = 1;
+        cdef_ctrls->default_second_pass_fs_num = cdef_ctrls->first_pass_fs_num * second_pass_fs_num;
+        cdef_ctrls->default_first_pass_fs[0] = pf_gi[0];
+        cdef_ctrls->default_first_pass_fs[1] = pf_gi[15];
+
+        cdef_ctrls->default_second_pass_fs[0] = pf_gi[0] + 2;
+        cdef_ctrls->default_second_pass_fs[1] = pf_gi[15] + 2;
+
+        cdef_ctrls->default_first_pass_fs_uv[0] = cdef_ctrls->default_first_pass_fs[0];
+        cdef_ctrls->default_first_pass_fs_uv[1] = cdef_ctrls->default_first_pass_fs[1];
+        cdef_ctrls->default_first_pass_fs_uv[2] = -1;// if using search_best_ref_fs, set at least 3 filters
+        cdef_ctrls->default_second_pass_fs_uv[0] = -1;
+        cdef_ctrls->default_second_pass_fs_uv[1] = -1;
+        cdef_ctrls->use_reference_cdef_fs = 1;
+        cdef_ctrls->search_best_ref_fs = 1;
+        cdef_ctrls->subsampling_factor = 4;
+        cdef_ctrls->zero_fs_cost_bias = 0;
+        break;
+    case 12:
+        // pf_set {0,15}
+        // sf_set {0,2}
+        cdef_ctrls->enabled = 1;
+        cdef_ctrls->first_pass_fs_num = 2;
+        second_pass_fs_num = 1;
+        cdef_ctrls->default_second_pass_fs_num = cdef_ctrls->first_pass_fs_num * second_pass_fs_num;
+        cdef_ctrls->default_first_pass_fs[0] = pf_gi[0];
+        cdef_ctrls->default_first_pass_fs[1] = pf_gi[15];
+
+        cdef_ctrls->default_second_pass_fs[0] = pf_gi[0] + 2;
+        cdef_ctrls->default_second_pass_fs[1] = pf_gi[15] + 2;
+        cdef_ctrls->default_first_pass_fs_uv[0] = cdef_ctrls->default_first_pass_fs[0];
+        cdef_ctrls->default_first_pass_fs_uv[1] = cdef_ctrls->default_first_pass_fs[1];
+        cdef_ctrls->default_first_pass_fs_uv[2] = -1;// if using search_best_ref_fs, set at least 3 filters
+        cdef_ctrls->default_second_pass_fs_uv[0] = -1; // cdef_ctrls->default_second_pass_fs[0];
+        cdef_ctrls->default_second_pass_fs_uv[1] = -1; // cdef_ctrls->default_second_pass_fs[1];
+        cdef_ctrls->use_reference_cdef_fs = 0;
+        cdef_ctrls->search_best_ref_fs = 0;
+        cdef_ctrls->subsampling_factor = 4;
+        cdef_ctrls->zero_fs_cost_bias = 62;
+#if OPT_CDEF
+        cdef_ctrls->use_skip_detector = 1;
+#endif
+        break;
+    case 13:
+        // pf_set {0,15}
+        // sf_set {0,2}
+        cdef_ctrls->enabled = 1;
+        cdef_ctrls->first_pass_fs_num = 2;
+        second_pass_fs_num = 1;
+        cdef_ctrls->default_second_pass_fs_num = cdef_ctrls->first_pass_fs_num * second_pass_fs_num;
+        cdef_ctrls->default_first_pass_fs[0] = pf_gi[0];
+        cdef_ctrls->default_first_pass_fs[1] = pf_gi[15];
+
+        cdef_ctrls->default_second_pass_fs[0] = pf_gi[0] + 2;
+        cdef_ctrls->default_second_pass_fs[1] = pf_gi[15] + 2;
+
+        cdef_ctrls->default_first_pass_fs_uv[0] = cdef_ctrls->default_first_pass_fs[0];
+        cdef_ctrls->default_first_pass_fs_uv[1] = cdef_ctrls->default_first_pass_fs[1];
+        cdef_ctrls->default_first_pass_fs_uv[2] = -1;// when using search_best_ref_fs, set at least 3 filters
+        cdef_ctrls->default_second_pass_fs_uv[0] = -1;
+        cdef_ctrls->default_second_pass_fs_uv[1] = -1;
+
+        cdef_ctrls->use_reference_cdef_fs = 0;
+        cdef_ctrls->search_best_ref_fs = 1;
+        cdef_ctrls->subsampling_factor = 4;
+        cdef_ctrls->zero_fs_cost_bias = 62;
+#if OPT_CDEF
+        cdef_ctrls->use_skip_detector = 1;
+#endif
+        break;
+    case 14:
+        // pf_set {0,15}
+        // sf_set {0,2}
+        cdef_ctrls->enabled = 1;
+        cdef_ctrls->first_pass_fs_num = 2;
+        second_pass_fs_num = 1;
+        cdef_ctrls->default_second_pass_fs_num = cdef_ctrls->first_pass_fs_num * second_pass_fs_num;
+        cdef_ctrls->default_first_pass_fs[0] = pf_gi[0];
+        cdef_ctrls->default_first_pass_fs[1] = pf_gi[15];
+
+        cdef_ctrls->default_second_pass_fs[0] = pf_gi[0] + 2;
+        cdef_ctrls->default_second_pass_fs[1] = pf_gi[15] + 2;
+
+        cdef_ctrls->default_first_pass_fs_uv[0] = cdef_ctrls->default_first_pass_fs[0];
+        cdef_ctrls->default_first_pass_fs_uv[1] = cdef_ctrls->default_first_pass_fs[1];
+        cdef_ctrls->default_first_pass_fs_uv[2] = -1;// if using search_best_ref_fs, set at least 3 filters
+        cdef_ctrls->default_second_pass_fs_uv[0] = -1;
+        cdef_ctrls->default_second_pass_fs_uv[1] = -1;
+        cdef_ctrls->use_reference_cdef_fs = 1;
+        cdef_ctrls->search_best_ref_fs = 1;
+        cdef_ctrls->subsampling_factor = 4;
+        cdef_ctrls->zero_fs_cost_bias = 62;
+#if OPT_CDEF
+        cdef_ctrls->use_skip_detector = 1;
+#endif
+        break;
+    case 15:
+        // pf_set {0}
+        // sf_set {0}
+        cdef_ctrls->enabled = 1;
+        cdef_ctrls->first_pass_fs_num = 1;
+        second_pass_fs_num = 0;
+        cdef_ctrls->default_second_pass_fs_num = cdef_ctrls->first_pass_fs_num*second_pass_fs_num;
+        cdef_ctrls->default_first_pass_fs[0] = pf_gi[0];
+        cdef_ctrls->default_first_pass_fs_uv[0] = cdef_ctrls->default_first_pass_fs[0];
+        cdef_ctrls->use_reference_cdef_fs = 1;
+        cdef_ctrls->search_best_ref_fs = 1;
+        cdef_ctrls->subsampling_factor = 4;
+        cdef_ctrls->zero_fs_cost_bias = 62;
+#if OPT_CDEF
+        cdef_ctrls->use_skip_detector = 1;
+#endif
+        break;
+#else
     case 9:
         // pf_set {0,15}
         // sf_set {0,2}
@@ -1292,6 +1485,7 @@ void set_cdef_controls(PictureParentControlSet *pcs_ptr, uint8_t cdef_level) {
 #endif
 #endif
         break;
+#endif
 #if !OPT_CDEF_LEVELS
     case 12:
         // pf_set {0}
@@ -1442,7 +1636,7 @@ uint8_t get_dlf_level(EbEncMode enc_mode, uint8_t is_used_as_reference_flag) {
     if (enc_mode <= ENC_M4)
 #endif
         dlf_level = 1;
-#if TUNE_M7_M10_MT
+#if TUNE_M7_M10_MT && !TUNE_M10_M0
     else if (enc_mode <= ENC_M6)
 #else
     else if (enc_mode <= ENC_M7)
@@ -1780,14 +1974,22 @@ EbErrorType signal_derivation_multi_processes_oq(
 
     if (scs_ptr->seq_header.cdef_level && frm_hdr->allow_intrabc == 0) {
         if (scs_ptr->static_config.cdef_level == DEFAULT) {
+#if TUNE_M10_M0
+            if (pcs_ptr->enc_mode <= ENC_M1)
+#else
             if (pcs_ptr->enc_mode <= ENC_M2)
+#endif
                 pcs_ptr->cdef_level = 1;
             else if (pcs_ptr->enc_mode <= ENC_M3)
                 pcs_ptr->cdef_level = 2;
 #if TUNE_M0_M7_MEGA_FEB && !TUNE_M5_M6
             else if (pcs_ptr->enc_mode <= ENC_M6)
 #else
+#if TUNE_M10_M0
+            else if (pcs_ptr->enc_mode <= ENC_M6)
+#else
             else if (pcs_ptr->enc_mode <= ENC_M5)
+#endif
 #endif
                 pcs_ptr->cdef_level = 4;
 #if !TUNE_M0_M7_MEGA_FEB
@@ -1801,8 +2003,16 @@ EbErrorType signal_derivation_multi_processes_oq(
 #endif
                 pcs_ptr->cdef_level = 8;
 #if TUNE_M10_M7
+#if TUNE_M10_M0 && !TUNE_M8_M10
+            else if (pcs_ptr->enc_mode <= ENC_M9)
+#else
             else if (pcs_ptr->enc_mode <= ENC_M8)
+#endif
                 pcs_ptr->cdef_level = (scs_ptr->input_resolution <= INPUT_SIZE_720p_RANGE) ? 8 : 9;
+#endif
+#if TUNE_M8_M10
+            else if (pcs_ptr->enc_mode <= ENC_M9)
+                pcs_ptr->cdef_level = (scs_ptr->input_resolution <= INPUT_SIZE_720p_RANGE) ? (pcs_ptr->temporal_layer_index == 0 ? 9 : pcs_ptr->is_used_as_reference_flag ? 10 : 11) : 9;
 #endif
 #if TUNE_NEW_M11
 #if OPT_CDEF_LEVELS
@@ -1810,7 +2020,7 @@ EbErrorType signal_derivation_multi_processes_oq(
             else if (pcs_ptr->enc_mode <= ENC_M9)
                 pcs_ptr->cdef_level = 9;
 #endif
-#if TUNE_NEW_M11_2
+#if TUNE_NEW_M11_2 && !FTR_CDEF_BIAS_ZERO_COST
             else if (pcs_ptr->enc_mode <= ENC_M11)
 #else
             else if (pcs_ptr->enc_mode <= ENC_M10)
@@ -1819,6 +2029,10 @@ EbErrorType signal_derivation_multi_processes_oq(
                 pcs_ptr->cdef_level = pcs_ptr->temporal_layer_index == 0 ? 9 : pcs_ptr->is_used_as_reference_flag ? 10 : 11;
 #else
                 pcs_ptr->cdef_level = pcs_ptr->is_used_as_reference_flag ? 9 : 10;
+#endif
+#if FTR_CDEF_BIAS_ZERO_COST
+            else if (pcs_ptr->enc_mode <= ENC_M11)
+                pcs_ptr->cdef_level = pcs_ptr->temporal_layer_index == 0 ? 12 : pcs_ptr->is_used_as_reference_flag ? 13 : 14;
 #endif
 #if !TUNE_NEW_M11_2
             else if (pcs_ptr->enc_mode <= ENC_M11)
@@ -1979,7 +2193,7 @@ EbErrorType signal_derivation_multi_processes_oq(
     }
 #if TUNE_MEGA_M9_M4
 #if TUNE_M5_M6
-#if TUNE_M10_M3_1
+#if TUNE_M10_M3_1 && !TUNE_M10_M0
     else if (pcs_ptr->enc_mode <= ENC_M4) {
 #else
     else if (pcs_ptr->enc_mode <= ENC_M5) {
@@ -1995,7 +2209,11 @@ EbErrorType signal_derivation_multi_processes_oq(
         else
             pcs_ptr->intra_pred_mode = 5;
     }
+#if TUNE_M10_M0
+    else if (pcs_ptr->enc_mode <= ENC_M9) {
+#else
     else if (pcs_ptr->enc_mode <= ENC_M8) {
+#endif
         if (pcs_ptr->slice_type == I_SLICE)
             pcs_ptr->intra_pred_mode = 1;
         else if (pcs_ptr->temporal_layer_index == 0)
@@ -5040,6 +5258,9 @@ void tpl_regular_setup_me_refs(
             for (uint32_t j = 0; j < base_pcs->tpl_group_size; j++) {
                 if (ref_poc == base_pcs->tpl_group[j]->picture_number) {
                     cur_pcs->tpl_data.ref_in_slide_window[list_index][ref_idx] = EB_TRUE;
+#if FIX_TPL_NON_VALID_REF
+                    cur_pcs->tpl_data.ref_tpl_group_idx[list_index][ref_idx] = j;
+#endif
                     break;
                 }
             }

@@ -616,9 +616,9 @@ int     get_comp_index_context_enc(PictureParentControlSet *pcs_ptr, int cur_fra
                                    int bck_frame_index, int fwd_frame_index, const MacroBlockD *xd);
 int32_t is_nontrans_global_motion_ec(MvReferenceFrame rf0, MvReferenceFrame rf1, BlkStruct *blk_ptr,
                                      BlockSize sb_type, PictureParentControlSet *pcs_ptr);
-
+#if !LIGHT_PD1
 uint8_t av1_drl_ctx(const CandidateMv *ref_mv_stack, int32_t ref_idx);
-
+#endif
 int32_t have_newmv_in_inter_mode(PredictionMode mode);
 //Returns a context number for the given MB prediction signal
 #if OPT_MEMORY_MIP
@@ -1141,7 +1141,11 @@ void update_stats(PictureControlSet *pcs_ptr, BlkStruct *blk_ptr, int mi_row, in
             const uint8_t ref_frame_type = av1_ref_frame_type(mbmi->block_mi.ref_frame);
             for (int idx = 0; idx < 2; ++idx) {
                 if (xd->ref_mv_count[ref_frame_type] > idx + 1) {
+#if LIGHT_PD1
+                    const uint8_t drl_ctx = blk_ptr->drl_ctx[idx];
+#else
                     const uint8_t drl_ctx = av1_drl_ctx(xd->final_ref_mv_stack, idx);
+#endif
                     update_cdf(fc->drl_cdf[drl_ctx], mbmi->block_mi.ref_mv_idx != idx, 2);
                     if (mbmi->block_mi.ref_mv_idx == idx)
                         break;
@@ -1153,7 +1157,11 @@ void update_stats(PictureControlSet *pcs_ptr, BlkStruct *blk_ptr, int mi_row, in
             const uint8_t ref_frame_type = av1_ref_frame_type(mbmi->block_mi.ref_frame);
             for (int idx = 1; idx < 3; ++idx) {
                 if (xd->ref_mv_count[ref_frame_type] > idx + 1) {
+#if LIGHT_PD1
+                    const uint8_t drl_ctx = blk_ptr->drl_ctx_near[idx - 1];
+#else
                     const uint8_t drl_ctx = av1_drl_ctx(xd->final_ref_mv_stack, idx);
+#endif
                     update_cdf(fc->drl_cdf[drl_ctx], mbmi->block_mi.ref_mv_idx != idx - 1, 2);
                     if (mbmi->block_mi.ref_mv_idx == idx - 1)
                         break;

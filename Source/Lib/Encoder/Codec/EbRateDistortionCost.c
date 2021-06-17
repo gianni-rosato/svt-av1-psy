@@ -43,7 +43,7 @@ void av1_get_block_dimensions(BlockSize bsize, int plane, const MacroBlockD *xd,
                               int *height, int *rows_within_bounds, int *cols_within_bounds);
 int  av1_allow_palette(int allow_screen_content_tools, BlockSize sb_type);
 int  av1_allow_intrabc(const FrameHeader *frm_hdr, EB_SLICE slice_type);
-
+#if !LIGHT_PD1
 uint8_t av1_drl_ctx(const CandidateMv *ref_mv_stack, int32_t ref_idx) {
     if (ref_mv_stack[ref_idx].weight >= REF_CAT_LEVEL &&
         ref_mv_stack[ref_idx + 1].weight >= REF_CAT_LEVEL)
@@ -59,7 +59,7 @@ uint8_t av1_drl_ctx(const CandidateMv *ref_mv_stack, int32_t ref_idx) {
 
     return 0;
 }
-
+#endif
 /* Symbols for coding which components are zero jointly */
 //#define MV_JOINTS 4
 //typedef enum {
@@ -857,11 +857,19 @@ static INLINE int has_uni_comp_refs(const MbModeInfo *mbmi) {
 
 // This function encodes the reference frame
 #if SS_OPT_EST_REF_TYPE
-uint64_t estimate_ref_frame_type_bits(PictureControlSet *pcs_ptr,
+uint64_t estimate_ref_frame_type_bits(
+#if !OPT_ESTIMATE_REF_BITS
+    PictureControlSet *pcs_ptr,
+#endif
     struct ModeDecisionContext *ctx, BlkStruct *blk_ptr,
-    uint32_t bwidth, uint32_t bheight, uint8_t ref_frame_type,
+#if !OPT_ESTIMATE_REF_BITS
+    uint32_t bwidth, uint32_t bheight,
+#endif
+    uint8_t ref_frame_type,
     EbBool is_compound) {
+#if !OPT_ESTIMATE_REF_BITS
     FrameHeader *frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
+#endif
     uint64_t     ref_rate_bits = 0;
 
     // const MbModeInfo *const mbmi = &blk_ptr->av1xd->mi[0]->mbmi;
@@ -872,6 +880,7 @@ uint64_t estimate_ref_frame_type_bits(PictureControlSet *pcs_ptr,
     mbmi->block_mi.ref_frame[1] = ref_type[1];
     //const int is_compound = has_second_ref(mbmi);
     {
+#if !OPT_ESTIMATE_REF_BITS
         // does the feature use compound prediction or not
         // (if not specified at the frame/segment level)
         if (frm_hdr->reference_mode == REFERENCE_MODE_SELECT) {
@@ -885,7 +894,7 @@ uint64_t estimate_ref_frame_type_bits(PictureControlSet *pcs_ptr,
         else {
             assert((!is_compound) == (frm_hdr->reference_mode == SINGLE_REFERENCE));
         }
-
+#endif
         if (is_compound) {
             const CompReferenceType comp_ref_type = has_uni_comp_refs(mbmi)
                 ? UNIDIR_COMP_REFERENCE
@@ -1428,7 +1437,11 @@ uint64_t av1_inter_fast_cost_light(
     av1_set_ref_frame(rf, candidate_ptr->ref_frame_type);
     const uint32_t mode_context = av1_mode_context_analyzer(blk_ptr->inter_mode_ctx, rf);
     uint64_t reference_picture_bits_num = 0;
+#if OPT_ESTIMATE_REF_BITS
+    reference_picture_bits_num = ctx->estimate_ref_frames_num_bits[candidate_ptr->ref_frame_type];
+#else
     reference_picture_bits_num = ctx->estimate_ref_frames_num_bits[candidate_ptr->ref_frame_type][candidate_ptr->is_compound];
+#endif
     if (candidate_ptr->is_compound) {
         assert(INTER_COMPOUND_OFFSET(inter_mode) < INTER_COMPOUND_MODES);
         inter_mode_bits_num += r->inter_compound_mode_fac_bits[mode_context][INTER_COMPOUND_OFFSET(inter_mode)];
@@ -1631,7 +1644,11 @@ uint64_t av1_inter_fast_cost(
     uint64_t reference_picture_bits_num = 0;
 
     //Reference Type and Mode Bit estimation
+#if OPT_ESTIMATE_REF_BITS
+    reference_picture_bits_num = ctx->estimate_ref_frames_num_bits[candidate_ptr->ref_frame_type];
+#else
     reference_picture_bits_num = ctx->estimate_ref_frames_num_bits[candidate_ptr->ref_frame_type][candidate_ptr->is_compound];
+#endif
     if (candidate_ptr->is_compound) {
         assert(INTER_COMPOUND_OFFSET(inter_mode) < INTER_COMPOUND_MODES);
         inter_mode_bits_num +=

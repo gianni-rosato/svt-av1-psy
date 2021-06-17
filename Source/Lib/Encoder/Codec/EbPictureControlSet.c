@@ -208,8 +208,10 @@ void picture_control_set_dctor(EbPtr p) {
     EB_DELETE_PTR_ARRAY(obj->sb_ptr_array, obj->sb_total_count_unscaled);
     EB_DELETE(obj->bitstream_ptr);
     EB_DELETE_PTR_ARRAY(obj->entropy_coding_info, tile_cnt);
+#if !SS_MEM_DLF
     EB_DELETE(obj->temp_lf_recon_picture_ptr);
     EB_DELETE(obj->temp_lf_recon_picture16bit_ptr);
+#endif
 
     const int32_t num_planes = 3; // av1_num_planes(cm);
     for (int32_t pl = 0; pl < num_planes; ++pl) {
@@ -228,6 +230,9 @@ void picture_control_set_dctor(EbPtr p) {
     EB_FREE_ARRAY(obj->mse_seg[1]);
 #if MS_CDEF_OPT1
     EB_FREE_ARRAY(obj->skip_cdef_seg);
+#endif
+#if SS_OPT_CDEF_APPL
+    EB_FREE_ARRAY(obj->cdef_dir_data);
 #endif
     EB_FREE_ARRAY(obj->mi_grid_base);
     EB_FREE_ARRAY(obj->mip);
@@ -483,11 +488,13 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
             if (lf_recon_needed)
                 break;
         }
-
+#if !SS_MEM_DLF
     EbColorFormat color_format = init_data_ptr->color_format;
+#endif
     object_ptr->temp_lf_recon_picture16bit_ptr = (EbPictureBufferDesc *)NULL;
     object_ptr->temp_lf_recon_picture_ptr      = (EbPictureBufferDesc *)NULL;
     if (lf_recon_needed){
+#if !SS_MEM_DLF
     EbPictureBufferDescInitData temp_lf_recon_desc_init_data;
     temp_lf_recon_desc_init_data.max_width          = (uint16_t)init_data_ptr->picture_width;
     temp_lf_recon_desc_init_data.max_height         = (uint16_t)init_data_ptr->picture_height;
@@ -511,6 +518,7 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
                svt_recon_picture_buffer_desc_ctor,
                (EbPtr)&temp_lf_recon_desc_init_data);
     }
+#endif
     }
 
     if (get_enable_restoration(init_data_ptr->enc_mode) || init_data_ptr->static_config.enable_restoration_filtering > 0) {
@@ -1235,6 +1243,9 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
 #if MS_CDEF_OPT1
     EB_MALLOC_ARRAY(object_ptr->skip_cdef_seg, picture_sb_width * picture_sb_height);
 #endif
+#if SS_OPT_CDEF_APPL
+    EB_MALLOC_ARRAY(object_ptr->cdef_dir_data, picture_sb_width * picture_sb_height);
+#endif
     EB_CREATE_MUTEX(object_ptr->rest_search_mutex);
 
     //the granularity is 4x4
@@ -1338,6 +1349,11 @@ static void picture_parent_control_set_dctor(EbPtr ptr) {
         EB_FREE_ARRAY(obj->tpl_rdmult_scaling_factors);
     if (obj->tpl_sb_rdmult_scaling_factors)
         EB_FREE_ARRAY(obj->tpl_sb_rdmult_scaling_factors);
+
+#if SS_OPT_TPL
+    if (obj->tpl_src_stats)
+       EB_FREE_ARRAY(obj->tpl_src_stats);
+#endif
     EB_FREE_ARRAY(obj->rc_me_distortion);
     EB_FREE_ARRAY(obj->stationary_block_present_sb);
     EB_FREE_ARRAY(obj->rc_me_allow_gm);
@@ -1436,8 +1452,20 @@ EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr,
 
     object_ptr->data_ll_head_ptr         = (EbLinkedListNode *)NULL;
     object_ptr->app_out_data_ll_head_ptr = (EbLinkedListNode *)NULL;
+#if SS_MEM_VAR
+    uint8_t block_count;
+    if (init_data_ptr->enable_adaptive_quantization == 1)
+        block_count = 85 ;
+    else
+        block_count =1 ;
+    EB_MALLOC_2D(object_ptr->variance, object_ptr->sb_total_count, block_count);
+#else
     EB_MALLOC_2D(object_ptr->variance, object_ptr->sb_total_count, MAX_ME_PU_COUNT);
+#endif
     EB_ALLOC_PTR_ARRAY(object_ptr->picture_histogram, MAX_NUMBER_OF_REGIONS_IN_WIDTH);
+#if SS_MEM_HIS
+    uint8_t plane = init_data_ptr->scene_change_detection ?  3 : 1;
+#endif
 
     for (region_in_picture_width_index = 0;
          region_in_picture_width_index < MAX_NUMBER_OF_REGIONS_IN_WIDTH;
@@ -1447,10 +1475,17 @@ EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr,
         for (region_in_picture_height_index = 0;
              region_in_picture_height_index < MAX_NUMBER_OF_REGIONS_IN_HEIGHT;
              region_in_picture_height_index++) {
+#if SS_MEM_HIS
+            EB_MALLOC_2D(object_ptr->picture_histogram[region_in_picture_width_index]
+                                                      [region_in_picture_height_index],
+                         plane,
+                         HISTOGRAM_NUMBER_OF_BINS);
+#else
             EB_MALLOC_2D(object_ptr->picture_histogram[region_in_picture_width_index]
                                                       [region_in_picture_height_index],
                          3,
                          HISTOGRAM_NUMBER_OF_BINS);
+#endif
         }
     }
     if (init_data_ptr->rc_firstpass_stats_out ||  init_data_ptr->rate_control_mode)
@@ -1466,8 +1501,12 @@ EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr,
         const uint16_t picture_width_in_mb  = (uint16_t)((init_data_ptr->picture_width + 15) / 16);
         const uint16_t picture_height_in_mb = (uint16_t)((init_data_ptr->picture_height + 15) / 16);
         object_ptr->r0                      = 0;
+#if FTR_16X16_TPL_MAP
+        object_ptr->is_720p_or_larger = init_data_ptr->tpl_synth_size == 16 ? 1 : 0;
+#else
         object_ptr->is_720p_or_larger       = AOMMIN(init_data_ptr->picture_width,
                                                init_data_ptr->picture_height) >= 720;
+#endif
         if (init_data_ptr->in_loop_ois == 0)
             EB_MALLOC_2D(object_ptr->ois_mb_results,
                          (uint32_t)(picture_width_in_mb * picture_height_in_mb),
@@ -1478,6 +1517,17 @@ EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr,
                      (uint32_t)((picture_width_in_mb << (1 - object_ptr->is_720p_or_larger)) *
                                 (picture_height_in_mb << (1 - object_ptr->is_720p_or_larger))),
                      1);
+#if SS_OPT_TPL
+
+#if SS_MEM_TPL
+        if (init_data_ptr->lad_mg > 0)
+#endif
+        EB_MALLOC_ARRAY(object_ptr->tpl_src_stats, (uint32_t)picture_width_in_mb * (uint32_t)picture_height_in_mb );
+#if SS_MEM_TPL
+        else
+            object_ptr->tpl_src_stats = NULL;
+#endif
+#endif
         EB_MALLOC_ARRAY(object_ptr->tpl_beta, object_ptr->sb_total_count);
         EB_MALLOC_ARRAY(object_ptr->tpl_rdmult_scaling_factors,
                         picture_width_in_mb * picture_height_in_mb);
@@ -1491,6 +1541,9 @@ EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr,
         object_ptr->tpl_beta                      = NULL;
         object_ptr->tpl_rdmult_scaling_factors    = NULL;
         object_ptr->tpl_sb_rdmult_scaling_factors = NULL;
+#if SS_OPT_TPL
+        object_ptr->tpl_src_stats = NULL;
+#endif
     }
 
     EB_MALLOC_ARRAY(object_ptr->rc_me_distortion, object_ptr->sb_total_count);

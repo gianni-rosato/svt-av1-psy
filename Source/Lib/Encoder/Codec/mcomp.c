@@ -615,12 +615,33 @@ static AOM_FORCE_INLINE void two_level_checks_fast(
     }
 #endif
 }
-
+#if OPT_SUPEL_VAR_CHECK
+static const  uint8_t eb_av1_var_offs[MAX_SB_SIZE] = {
+    128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
+    128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
+    128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
+    128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
+    128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
+    128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,
+    128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128 };
+#endif
 int svt_av1_find_best_sub_pixel_tree_pruned(
     MacroBlockD *xd, const struct AV1Common *const cm,
     const SUBPEL_MOTION_SEARCH_PARAMS *ms_params, MV start_mv, MV *bestmv,
 #if SS_OPT_SUBPEL_PATH
+#if OPT_M11_SUBPEL
+#if OPT_SUPEL_VAR_CHECK
+#if OPT_USE_INTRA_NEIGHBORING
+    int *distortion, unsigned int *sse1, int qp, BlockSize bsize, uint8_t early_neigh_check_exit) {
+#else
+    int *distortion, unsigned int *sse1, int qp, BlockSize bsize) {
+#endif
+#else
+    int *distortion, unsigned int *sse1, int qp) {
+#endif
+#else
     int *distortion, unsigned int *sse1) {
+#endif
 #else
     int *distortion, unsigned int *sse1, int_mv *last_mv_search_list) {
 #endif
@@ -653,6 +674,28 @@ int svt_av1_find_best_sub_pixel_tree_pruned(
     besterr = svt_upsampled_setup_center_error(xd, cm, bestmv, var_params,
         mv_cost_params, sse1, distortion);
 #endif
+#if OPT_USE_INTRA_NEIGHBORING // subpel
+    if (early_neigh_check_exit)
+        return besterr;
+#endif
+#if OPT_SUPEL_VAR_CHECK
+    // Exit subpel search if the variance of the full-pel predicted samples is low (i.e. where likely interpolation will not modify the integer samples)
+    const MSBuffers *ms_buffers = &var_params->ms_buffers;
+    const uint8_t *  ref = svt_get_buf_from_mv(ms_buffers->ref, *bestmv);
+    unsigned int sse;
+    const unsigned int var = var_params->vfp->vf(ref, ms_buffers->ref->stride, eb_av1_var_offs, 0, &sse);
+    int block_var = ROUND_POWER_OF_TWO(var, num_pels_log2_lookup[bsize]);
+
+    if(block_var < ms_params->pred_variance_th)
+        return besterr;
+#endif
+
+#if OPT_M11_SUBPEL
+    uint64_t th_normalizer = (((var_params->w * var_params->h) >> 3) * ms_params->abs_th_mult * (qp >> 1));
+    if (besterr < th_normalizer)
+        return besterr;
+#endif
+
     //besterr = setup_center_error_facade(
     //    xd, cm, bestmv, var_params, mv_cost_params, sse1, distortion, is_scaled);
 #if OPT11_SUBPEL
@@ -677,6 +720,9 @@ int svt_av1_find_best_sub_pixel_tree_pruned(
         return besterr;
 
     for (int iter = 0; iter < round; ++iter) {
+#if OPT_M11_SUBPEL // --
+        unsigned int prev_besterr = besterr;
+#endif
         two_level_checks_fast(xd, cm, start_mv, bestmv, hstep, mv_limits,
             var_params, mv_cost_params, &besterr, org_error, sse1,
             distortion, iters_per_step, is_scaled);
@@ -684,6 +730,11 @@ int svt_av1_find_best_sub_pixel_tree_pruned(
         start_mv = *bestmv;
         if (ms_params->skip_diag_refinement && iter < QUARTER_PEL)
             org_error = MIN(org_error, besterr);
+#if OPT_M11_SUBPEL // --
+        int deviation = ((int)((int)MAX(besterr, 1) - (int)MAX(prev_besterr, 1)) * 100) / (int) MAX(prev_besterr, 1);
+        if (deviation >= ms_params->round_dev_th)
+            return besterr;
+#endif
     }
 #else
     // If forced_stop is FULL_PEL, return.
@@ -819,7 +870,19 @@ int svt_av1_find_best_sub_pixel_tree_pruned(
 int svt_av1_find_best_sub_pixel_tree(MacroBlockD *xd, const struct AV1Common *const cm,
                                      const SUBPEL_MOTION_SEARCH_PARAMS *ms_params, MV start_mv,
 #if SS_OPT_SUBPEL_PATH
+#if OPT_M11_SUBPEL
+#if OPT_SUPEL_VAR_CHECK
+#if OPT_USE_INTRA_NEIGHBORING
+                                     MV *bestmv, int *distortion, unsigned int *sse1, int qp, BlockSize bsize, uint8_t early_neigh_check_exit) {
+#else
+                                     MV *bestmv, int *distortion, unsigned int *sse1, int qp, BlockSize bsize) {
+#endif
+#else
+                                     MV *bestmv, int *distortion, unsigned int *sse1, int qp) {
+#endif
+#else
                                      MV *bestmv, int *distortion, unsigned int *sse1) {
+#endif
 #else
                                      MV *bestmv, int *distortion, unsigned int *sse1,
                                      int_mv *last_mv_search_list) {
@@ -846,6 +909,26 @@ int svt_av1_find_best_sub_pixel_tree(MacroBlockD *xd, const struct AV1Common *co
 #else
     besterr             = svt_upsampled_setup_center_error(
         xd, cm, bestmv, var_params, mv_cost_params, sse1, distortion);
+#endif
+#if OPT_USE_INTRA_NEIGHBORING // subpel
+    if (early_neigh_check_exit)
+        return besterr;
+#endif
+#if OPT_SUPEL_VAR_CHECK
+    // Exit subpel search if the variance of the full-pel predicted samples is low (i.e. where likely interpolation will not modify the integer samples)
+    const MSBuffers *ms_buffers = &var_params->ms_buffers;
+    const uint8_t *  ref = svt_get_buf_from_mv(ms_buffers->ref, *bestmv);
+    unsigned int sse;
+    const unsigned int var = var_params->vfp->vf(ref, ms_buffers->ref->stride, eb_av1_var_offs, 0, &sse);
+    int block_var = ROUND_POWER_OF_TWO(var, num_pels_log2_lookup[bsize]);
+
+    if (block_var < ms_params->pred_variance_th)
+        return besterr;
+#endif
+#if OPT_M11_SUBPEL
+    uint64_t th_normalizer = (((var_params->w * var_params->h) >> 2) * ms_params->abs_th_mult * (qp >> 1));
+    if (besterr < th_normalizer)
+        return besterr;
 #endif
     // If forced_stop is FULL_PEL, return.
     if (!round)

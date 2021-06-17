@@ -241,6 +241,12 @@ typedef struct EncDecSet {
     uint16_t sb_total_count_unscaled;
 
 } EncDecSet;
+#if SS_OPT_CDEF_APPL
+typedef struct CdefDirData {
+    uint8_t dir[CDEF_NBLOCKS][CDEF_NBLOCKS];
+    int32_t var[CDEF_NBLOCKS][CDEF_NBLOCKS];
+} CdefDirData;
+#endif
 typedef struct PictureControlSet {
     /*!< Pointer to the dtor of the struct*/
     EbDctor          dctor;
@@ -279,6 +285,9 @@ typedef struct PictureControlSet {
 #if FTR_INTRA_DETECTOR
     uint32_t          intra_coded_area;
 #endif
+#if FTR_COEFF_DETECTOR
+    uint64_t          skip_coded_area;
+#endif
     uint32_t          tot_seg_searched_cdef;
     EbHandle          cdef_search_mutex;
 
@@ -289,6 +298,9 @@ typedef struct PictureControlSet {
     uint64_t (*mse_seg[2])[TOTAL_STRENGTHS];
 #if MS_CDEF_OPT1
     uint8_t *skip_cdef_seg;
+#endif
+#if SS_OPT_CDEF_APPL
+    CdefDirData *cdef_dir_data;
 #endif
 
     uint16_t *src[3]; //dlfed recon in 16bit form
@@ -489,10 +501,18 @@ typedef struct TplControls {
     uint8_t tpl_opt_flag; // 0:OFF 1:ON - TPL optimizations : no rate, only DC
     uint8_t enable_tpl_qps; // 0:OFF 1:ON - QPS in TPL
     uint8_t disable_intra_pred_nref; // 0:OFF 1:ON - Disable intra prediction in NREF
+#if SS_OPT_TPL
+    uint8_t disable_intra_pred_nbase; // Depricated . to remove
+#else
     uint8_t disable_intra_pred_nbase; // 0:OFF 1:ON - Disable intra prediction in NBASE
+#endif
     uint8_t disable_tpl_nref; // 0:OFF 1:ON - Disable tpl in NREF
     uint8_t disable_tpl_pic_dist; // 16: OFF - 0: ON
+#if SS_OPT_TPL
+    uint8_t get_best_ref; //Depricated.to remove
+#else
     uint8_t get_best_ref; // Reference pruning, get best reference
+#endif
     EB_TRANS_COEFF_SHAPE pf_shape;
     uint8_t use_pred_sad_in_intra_search;
     uint8_t use_pred_sad_in_inter_search;
@@ -506,8 +526,20 @@ typedef struct TplControls {
 #if FTR_QP_BASED_DEPTH_REMOVAL
     uint8_t modulate_depth_removal_level; // Modulate depth_removal level @ BASE based on the qp_offset band (towards better quality only)
 #endif
+#if OPT_TPL_64X64_32X32
+    uint8_t dispenser_search_level; // 0: use 16x16 block(s), 1: use 32x32 block(s), 2: use 64x64 block(s)  (for incomplete 64x64, dispenser_search_level is set to 0)
+                                    // it is recommended to use subsample_tx=2, when dispenser_search_level is set to 1
+#endif
 #if FTR_TPL_TX_SUBSAMPLE
+#if OPT_TPL_64X64_32X32
+    uint8_t subsample_tx; // 0: OFF, use full TX size; 1: subsample the transforms in TPL by 2; 2: subsample the transforms in TPL by 4
+#else
     uint8_t subsample_tx; // 0: OFF, use full TX size; 1: subsample the transforms in TPL by 2
+#endif
+#endif
+#if FTR_16X16_TPL_MAP
+    uint8_t synth_blk_size; //syntheszier block size, support 8x8 and 16x16 for now. NOTE: this field must be
+                            //modified inside the get_ function, as it is linked to memory allocation at init time
 #endif
 } TplControls;
 
@@ -532,6 +564,9 @@ typedef struct {
     uint8_t                     tpl_ref1_count;
     uint64_t                    tpl_decode_order;
     EbBool                      ref_in_slide_window[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
+#if FIX_TPL_NON_VALID_REF
+    uint32_t                    ref_tpl_group_idx[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];//tpl group index of all ref pictures
+#endif
     EbBool                      is_used_as_reference_flag;
     EbDownScaledBufDescPtrArray tpl_ref_ds_ptr_array[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
 } TPLData;
@@ -581,6 +616,12 @@ typedef struct CdefControls {
 #endif
 #if FTR_CDEF_SEARCH_BEST_REF
     uint8_t search_best_ref_fs; // Only search best filter strengths of the nearest ref frames (skips the search if the filters of list0/list1 are the same).
+#endif
+#if FTR_CDEF_BIAS_ZERO_COST
+    uint16_t zero_fs_cost_bias; // 0: OFF, higher is safer. Scaling factor to decrease the zero filter strength cost: : <x>/64
+#endif
+#if OPT_CDEF
+    uint8_t use_skip_detector;
 #endif
 } CdefControls;
 #endif
@@ -742,6 +783,10 @@ typedef struct PictureParentControlSet {
     int64_t               ts_duration;
     OisMbResults **       ois_mb_results;
     TplStats **           tpl_stats;
+#if SS_OPT_TPL
+    TplSrcStats *         tpl_src_stats;      //tpl src based stats
+    uint8_t               tpl_src_data_ready; //track pictures that are processd in two different TPL groups
+#endif
     int32_t               is_720p_or_larger;
     int32_t               base_rdmult;
     double                r0;
@@ -1110,6 +1155,9 @@ typedef struct PictureControlSetInitData {
     uint16_t non_m8_pad_w;
     uint16_t non_m8_pad_h;
     uint8_t  enable_tpl_la;
+#if FTR_16X16_TPL_MAP
+    uint8_t  tpl_synth_size;
+#endif
     uint8_t  in_loop_ois;
 
     uint8_t  rc_firstpass_stats_out;
@@ -1122,6 +1170,18 @@ typedef struct PictureControlSetInitData {
 
 #if OPT_ME
    uint8_t mrp_level;
+#endif
+#if SS_MEM_VAR
+
+  uint8_t  enable_adaptive_quantization;
+#endif
+#if SS_MEM_HIS
+
+  uint8_t  scene_change_detection;
+#endif
+#if SS_MEM_TPL
+    uint8_t lad_mg;
+
 #endif
 } PictureControlSetInitData;
 

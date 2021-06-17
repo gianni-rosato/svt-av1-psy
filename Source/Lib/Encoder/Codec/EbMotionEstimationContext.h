@@ -321,6 +321,9 @@ typedef struct PreHmeCtrls {
 #if FTR_PREHME_SUB
     uint8_t skip_search_line; //if 1 skips every other search region line
 #endif
+#if FTR_PREHME_OPT
+    uint8_t l1_early_exit;
+#endif
 } PreHmeCtrls;
 
 typedef struct HmeResults {
@@ -460,6 +463,11 @@ typedef struct MeContext {
     uint8_t      tf_chroma;
     int          tf_frame_index;
     int          tf_index_center;
+#if OPT_UPGRADE_TF
+    signed short tf_64x64_mv_x;
+    signed short tf_64x64_mv_y;
+    uint64_t     tf_64x64_block_error;
+#endif
     signed short tf_16x16_mv_x[16];
     signed short tf_16x16_mv_y[16];
     uint64_t     tf_16x16_block_error[16];
@@ -478,10 +486,25 @@ typedef struct MeContext {
 #else
     int64_t prune_me_candidates_th;
 #endif
+#if FTR_LIMIT_ME_CANDS
+    uint8_t use_best_unipred_cand_only; // Use only the best unipred candidate when MRP is off
+#endif
     uint8_t reduce_hme_l0_sr_th_min;
     uint8_t reduce_hme_l0_sr_th_max;
 #if FTR_BIAS_STAT
     uint8_t stat_factor;
+#endif
+#if OPT_EARLY_TF_ME_EXIT
+    uint16_t tf_me_exit_th;
+    uint8_t tf_use_pred_64x64_only_th;
+#endif
+#if FTR_HME_ME_EARLY_EXIT
+    uint32_t zz_sad[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
+    uint32_t me_early_exit_th;
+#endif
+#if FTR_TUNE_PRUNING
+    uint8_t input_resolution;
+    uint8_t clip_class;
 #endif
 } MeContext;
 

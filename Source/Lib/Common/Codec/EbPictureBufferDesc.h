@@ -308,6 +308,10 @@ typedef struct EbPictureBufferDescInitData {
 extern EbErrorType svt_picture_buffer_desc_ctor(EbPictureBufferDesc *object_ptr,
                                                 const EbPtr          object_init_data_ptr);
 
+#if SIM_OLD_TPL
+extern EbErrorType svt_picture_buffer_desc_ctor_zeroout(EbPictureBufferDesc *object_ptr,
+    const EbPtr          object_init_data_ptr);
+#endif
 extern EbErrorType svt_recon_picture_buffer_desc_ctor(EbPictureBufferDesc *object_ptr,
                                                       EbPtr                object_init_data_ptr);
 

@@ -121,6 +121,11 @@ typedef struct {
 #endif
     SUBPEL_FORCE_STOP forced_stop;
     int               iters_per_step;
+#if OPT_M11_SUBPEL
+    int pred_variance_th;
+    uint8_t abs_th_mult;
+    int round_dev_th;
+#endif
 #if OPT11_SUBPEL
     uint8_t skip_diag_refinement;
 #endif
@@ -135,9 +140,23 @@ typedef struct {
 
 } SUBPEL_MOTION_SEARCH_PARAMS;
 #if SS_OPT_SUBPEL_PATH
+#if OPT_M11_SUBPEL
+typedef int(fractional_mv_step_fp)(MacroBlockD *xd, const struct AV1Common *const cm,
+                                   const SUBPEL_MOTION_SEARCH_PARAMS *ms_params, MV start_mv,
+#if OPT_SUPEL_VAR_CHECK
+#if OPT_USE_INTRA_NEIGHBORING
+                                   MV *bestmv, int *distortion, unsigned int *sse1, int qp, BlockSize bsize, uint8_t is_intra_bordered);
+#else
+                                   MV *bestmv, int *distortion, unsigned int *sse1, int qp, BlockSize bsize);
+#endif
+#else
+                                   MV *bestmv, int *distortion, unsigned int *sse1,int qp);
+#endif
+#else
 typedef int(fractional_mv_step_fp)(MacroBlockD *xd, const struct AV1Common *const cm,
                                    const SUBPEL_MOTION_SEARCH_PARAMS *ms_params, MV start_mv,
                                    MV *bestmv, int *distortion, unsigned int *sse1);
+#endif
 #else
 typedef int(fractional_mv_step_fp)(MacroBlockD *xd, const struct AV1Common *const cm,
                                    const SUBPEL_MOTION_SEARCH_PARAMS *ms_params, MV start_mv,

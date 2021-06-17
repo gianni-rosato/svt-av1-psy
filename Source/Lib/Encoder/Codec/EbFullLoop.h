@@ -22,6 +22,18 @@
 extern "C" {
 #endif
 
+#if LIGHT_PD1
+    void full_loop_chroma_light_pd1(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
+        ModeDecisionCandidateBuffer *candidate_buffer,
+        EbPictureBufferDesc *input_picture_ptr,
+        uint32_t input_cb_origin_in_index,
+        uint32_t blk_chroma_origin_index,
+        COMPONENT_TYPE component_type, uint32_t chroma_qindex,
+        uint64_t cb_full_distortion[DIST_CALC_TOTAL],
+        uint64_t cr_full_distortion[DIST_CALC_TOTAL],
+        uint64_t *cb_coeff_bits,
+        uint64_t *cr_coeff_bits);
+#endif
 #if OPT_CHROMA_PATH
 void full_loop_r(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
                  ModeDecisionCandidateBuffer *candidate_buffer,

@@ -1651,13 +1651,117 @@ static void tf_16x16_sub_pel_search(PictureParentControlSet *pcs_ptr, MeContext 
                 context_ptr->tf_16x16_mv_y[idx_32x32 * 4 + idx_16x16] = best_mv_y;
             }
 }
+
+#if OPT_UPGRADE_TF
+uint64_t svt_check_position_64x64(
+    TF_SUBPEL_SEARCH_PARAMS tf_sp_param,
+    PictureParentControlSet *pcs_ptr,
+    MeContext *context_ptr,
+#if FIX_SVT_POSITION_CHECK_CPP
+    BlkStruct *blk_ptr,
+#else
+    BlkStruct   blk_ptr,
+#endif
+    MvUnit mv_unit,
+    EbPictureBufferDesc *pic_ptr_ref,
+    EbPictureBufferDesc prediction_ptr,
+    EbByte *pred,
+    uint16_t **pred_16bit,
+    uint32_t *stride_pred,
+    EbByte *src,
+    uint16_t **src_16bit,
+    uint32_t *stride_src,
+    signed short *best_mv_x,
+    signed short *best_mv_y) {
+    if (tf_sp_param.subpel_pel_mode == 2 && tf_sp_param.xd != 0 && tf_sp_param.yd != 0)
+        return UINT_MAX;
+    // if previously checked position is good enough then quit.
+#if OPT_TUNE_DECAY_UN_8_10_M11 //----
+    uint64_t th = ((tf_sp_param.bsize * tf_sp_param.bsize) << 2) << tf_sp_param.is_highbd;
+    if (context_ptr->tf_64x64_block_error < th)
+        return UINT_MAX;
+#else
+    uint64_t th = (64 * 64) / 100;
+    if (context_ptr->tf_64x64_block_error < th)
+        return UINT_MAX;
+#endif
+    SequenceControlSet *scs_ptr =
+        (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
+
+    mv_unit.mv->x = tf_sp_param.mv_x + tf_sp_param.xd;
+    mv_unit.mv->y = tf_sp_param.mv_y + tf_sp_param.yd;
+
+    av1_simple_luma_unipred(
+        scs_ptr->sf_identity,
+        tf_sp_param.interp_filters,
+#if FIX_SVT_POSITION_CHECK_CPP
+        blk_ptr,
+#else
+        &blk_ptr,
+#endif
+        0, //ref_frame_type,
+        &mv_unit,
+        tf_sp_param.pu_origin_x,
+        tf_sp_param.pu_origin_y,
+        tf_sp_param.bsize,
+        tf_sp_param.bsize,
+        pic_ptr_ref,
+        &prediction_ptr,
+        tf_sp_param.local_origin_x,
+        tf_sp_param.local_origin_y,
+        (uint8_t)tf_sp_param.encoder_bit_depth,
+        tf_sp_param.xd == 0 && tf_sp_param.yd == 0 ? tf_sp_param.subsampling_shift : 0);
+
+    uint64_t distortion;
+    if (!tf_sp_param.is_highbd) {
+        uint8_t *pred_y_ptr = pred[C_Y] + tf_sp_param.bsize * tf_sp_param.idx_y * stride_pred[C_Y] + tf_sp_param.bsize * tf_sp_param.idx_x;
+        uint8_t *src_y_ptr = src[C_Y] + tf_sp_param.bsize * tf_sp_param.idx_y * stride_src[C_Y] + tf_sp_param.bsize * tf_sp_param.idx_x;
+        const AomVarianceFnPtr *fn_ptr = tf_sp_param.subsampling_shift ? &mefn_ptr[BLOCK_64X32] : &mefn_ptr[BLOCK_64X64];
+        unsigned int sse;
+        distortion = fn_ptr->vf(pred_y_ptr,
+            stride_pred[C_Y] << tf_sp_param.subsampling_shift,
+            src_y_ptr,
+            stride_src[C_Y] << tf_sp_param.subsampling_shift, &sse) << tf_sp_param.subsampling_shift;
+    }
+    else {
+        uint16_t *pred_y_ptr = pred_16bit[C_Y] + tf_sp_param.bsize * tf_sp_param.idx_y * stride_pred[C_Y] +
+            tf_sp_param.bsize * tf_sp_param.idx_x;
+        uint16_t *src_y_ptr = src_16bit[C_Y] + tf_sp_param.bsize * tf_sp_param.idx_y * stride_src[C_Y] +
+            tf_sp_param.bsize * tf_sp_param.idx_x;
+#if OPT_TUNE_DECAY_UN_8_10_M11 //----
+        const AomVarianceFnPtr *fn_ptr = tf_sp_param.subsampling_shift ? &mefn_ptr[BLOCK_64X32] : &mefn_ptr[BLOCK_64X64];
+
+        unsigned int sse;
+
+        distortion = fn_ptr->vf_hbd_10(CONVERT_TO_BYTEPTR(pred_y_ptr),
+            stride_pred[C_Y] << tf_sp_param.subsampling_shift,
+            CONVERT_TO_BYTEPTR(src_y_ptr),
+            stride_src[C_Y] << tf_sp_param.subsampling_shift, &sse) << tf_sp_param.subsampling_shift;
+#else
+        unsigned int sse;
+        distortion = variance_highbd(
+            pred_y_ptr, stride_pred[C_Y] << tf_sp_param.subsampling_shift, src_y_ptr, stride_src[C_Y] << tf_sp_param.subsampling_shift, 64, 64 >> tf_sp_param.subsampling_shift, &sse) << tf_sp_param.subsampling_shift;
+#endif
+    }
+    if (distortion < context_ptr->tf_64x64_block_error) {
+        context_ptr->tf_64x64_block_error = distortion;
+        *best_mv_x = mv_unit.mv->x;
+        *best_mv_y = mv_unit.mv->y;
+    }
+    return distortion;
+}
+#endif
 #if OPT_TF
 uint64_t svt_check_position(
     TF_SUBPEL_SEARCH_PARAMS tf_sp_param,
     PictureParentControlSet *pcs_ptr,
     MeContext *context_ptr,
+#if FIX_SVT_POSITION_CHECK_CPP
+    BlkStruct *blk_ptr,
+#else
     BlkStruct   blk_ptr,
-     MvUnit mv_unit,
+#endif
+    MvUnit mv_unit,
     EbPictureBufferDesc *pic_ptr_ref,
     EbPictureBufferDesc prediction_ptr,
     EbByte *pred,
@@ -1683,7 +1787,11 @@ uint64_t svt_check_position(
     av1_simple_luma_unipred(
         scs_ptr->sf_identity,
         tf_sp_param.interp_filters,
+#if FIX_SVT_POSITION_CHECK_CPP
+        blk_ptr,
+#else
         &blk_ptr,
+#endif
         0, //ref_frame_type,
         &mv_unit,
         tf_sp_param.pu_origin_x,
@@ -1713,9 +1821,20 @@ uint64_t svt_check_position(
             tf_sp_param.bsize * tf_sp_param.idx_x;
         uint16_t *src_y_ptr = src_16bit[C_Y] + tf_sp_param.bsize * tf_sp_param.idx_y * stride_src[C_Y] +
             tf_sp_param.bsize * tf_sp_param.idx_x;
+#if OPT_TUNE_DECAY_UN_8_10_M11 // ----
+        const AomVarianceFnPtr *fn_ptr = tf_sp_param.subsampling_shift ? &mefn_ptr[BLOCK_32X16] : &mefn_ptr[BLOCK_32X32];
+
+        unsigned int sse;
+
+        distortion = fn_ptr->vf_hbd_10(CONVERT_TO_BYTEPTR(pred_y_ptr),
+            stride_pred[C_Y] << tf_sp_param.subsampling_shift,
+            CONVERT_TO_BYTEPTR(src_y_ptr),
+            stride_src[C_Y] << tf_sp_param.subsampling_shift, &sse) << tf_sp_param.subsampling_shift;
+#else
         unsigned int sse;
         distortion = variance_highbd(
             pred_y_ptr, stride_pred[C_Y] << tf_sp_param.subsampling_shift, src_y_ptr, stride_src[C_Y] << tf_sp_param.subsampling_shift, 32, 32 >> tf_sp_param.subsampling_shift, &sse) << tf_sp_param.subsampling_shift;
+#endif
     }
     if (distortion < context_ptr->tf_32x32_block_error[context_ptr->idx_32x32]) {
         context_ptr->tf_32x32_block_error[context_ptr->idx_32x32] = distortion;
@@ -1724,6 +1843,547 @@ uint64_t svt_check_position(
     }
     return distortion;
 }
+#if OPT_UPGRADE_TF
+static void tf_64x64_sub_pel_search(PictureParentControlSet *pcs_ptr, MeContext *context_ptr,
+    PictureParentControlSet *pcs_ref,
+    EbPictureBufferDesc *pic_ptr_ref, EbByte *pred,
+    uint16_t **pred_16bit, uint32_t *stride_pred, EbByte *src,
+    uint16_t **src_16bit, uint32_t *stride_src,
+    uint32_t sb_origin_x, uint32_t sb_origin_y, uint32_t ss_x,
+    int encoder_bit_depth) {
+
+#if OPT_TFILTER
+    InterpFilters interp_filters;
+    if (context_ptr->tf_ctrls.use_2tap)
+        interp_filters = av1_make_interp_filters(BILINEAR, BILINEAR);
+    else
+        interp_filters = av1_make_interp_filters(EIGHTTAP_REGULAR, EIGHTTAP_REGULAR);
+#else
+    InterpFilters interp_filters = av1_make_interp_filters(EIGHTTAP_REGULAR, EIGHTTAP_REGULAR);
+#endif
+
+
+
+    EbBool is_highbd = (encoder_bit_depth == 8) ? (uint8_t)EB_FALSE : (uint8_t)EB_TRUE;
+#if FIX_SVT_POSITION_CHECK_CPP
+    BlkStruct blk_struct;
+#else
+    BlkStruct   blk_ptr;
+#endif
+    MacroBlockD av1xd;
+#if FIX_SVT_POSITION_CHECK_CPP
+    blk_struct.av1xd = &av1xd;
+#else
+    blk_ptr.av1xd = &av1xd;
+#endif
+    MvUnit mv_unit;
+    mv_unit.pred_direction = UNI_PRED_LIST_0;
+    EbPictureBufferDesc reference_ptr;
+    EbPictureBufferDesc prediction_ptr;
+    UNUSED(ss_x);
+    prediction_ptr.origin_x = 0;
+    prediction_ptr.origin_y = 0;
+    prediction_ptr.stride_y = BW;
+    prediction_ptr.stride_cb = (uint16_t)BW >> ss_x;
+    prediction_ptr.stride_cr = (uint16_t)BW >> ss_x;
+    if (!is_highbd) {
+        assert(src[C_Y] != NULL);
+        if (context_ptr->tf_chroma) {
+            assert(src[C_U] != NULL);
+            assert(src[C_V] != NULL);
+        }
+        prediction_ptr.buffer_y = pred[C_Y];
+        prediction_ptr.buffer_cb = pred[C_U];
+        prediction_ptr.buffer_cr = pred[C_V];
+    }
+    else {
+        assert(src_16bit[C_Y] != NULL);
+        if (context_ptr->tf_chroma) {
+            assert(src_16bit[C_U] != NULL);
+            assert(src_16bit[C_V] != NULL);
+        }
+        prediction_ptr.buffer_y = (uint8_t *)pred_16bit[C_Y];
+        prediction_ptr.buffer_cb = (uint8_t *)pred_16bit[C_U];
+        prediction_ptr.buffer_cr = (uint8_t *)pred_16bit[C_V];
+        reference_ptr.buffer_y = (uint8_t *)pcs_ref->altref_buffer_highbd[C_Y];
+        reference_ptr.buffer_cb = (uint8_t *)pcs_ref->altref_buffer_highbd[C_U];
+        reference_ptr.buffer_cr = (uint8_t *)pcs_ref->altref_buffer_highbd[C_V];
+        reference_ptr.origin_x = pic_ptr_ref->origin_x;
+        reference_ptr.origin_y = pic_ptr_ref->origin_y;
+        reference_ptr.stride_y = pic_ptr_ref->stride_y;
+        reference_ptr.stride_cb = pic_ptr_ref->stride_cb;
+        reference_ptr.stride_cr = pic_ptr_ref->stride_cr;
+        reference_ptr.width = pic_ptr_ref->width;
+        reference_ptr.height = pic_ptr_ref->height;
+    }
+    uint32_t bsize = 64;
+
+    uint16_t local_origin_x = 0;
+    uint16_t local_origin_y = 0;
+    uint16_t pu_origin_x = sb_origin_x + local_origin_x;
+    uint16_t pu_origin_y = sb_origin_y + local_origin_y;
+    uint32_t mirow = pu_origin_y >> MI_SIZE_LOG2;
+    uint32_t micol = pu_origin_x >> MI_SIZE_LOG2;
+
+#if OPT_EARLY_TF_ME_EXIT
+#if FIX_SVT_POSITION_CHECK_CPP
+    blk_struct.mds_idx = 0;
+    const int32_t bw = mi_size_wide[BLOCK_64X64];
+    const int32_t bh = mi_size_high[BLOCK_64X64];
+    blk_struct.av1xd->mb_to_top_edge = -(int32_t)((mirow * MI_SIZE) * 8);
+    blk_struct.av1xd->mb_to_bottom_edge = ((pcs_ptr->av1_cm->mi_rows - bw - mirow) * MI_SIZE) * 8;
+    blk_struct.av1xd->mb_to_left_edge = -(int32_t)((micol * MI_SIZE) * 8);
+    blk_struct.av1xd->mb_to_right_edge = ((pcs_ptr->av1_cm->mi_cols - bh - micol) * MI_SIZE) * 8;
+    context_ptr->tf_64x64_block_error = INT_MAX;
+
+    signed short mv_x = mv_unit.mv->x = (context_ptr->tf_use_pred_64x64_only_th == (uint8_t)~0) ?
+        context_ptr->hme_results[0][0].hme_sc_x << 3 :
+        (_MVXT(context_ptr->p_best_mv64x64[0])) << 1;
+
+    signed short mv_y = mv_unit.mv->y = (context_ptr->tf_use_pred_64x64_only_th == (uint8_t)~0) ?
+        context_ptr->hme_results[0][0].hme_sc_y << 3 :
+        (_MVYT(context_ptr->p_best_mv64x64[0])) << 1;
+
+    BlkStruct *blk_ptr = &blk_struct;
+#else
+    blk_ptr.mds_idx = 0;
+    const int32_t bw = mi_size_wide[BLOCK_64X64];
+    const int32_t bh = mi_size_high[BLOCK_64X64];
+    blk_ptr.av1xd->mb_to_top_edge = -(int32_t)((mirow * MI_SIZE) * 8);
+    blk_ptr.av1xd->mb_to_bottom_edge = ((pcs_ptr->av1_cm->mi_rows - bw - mirow) * MI_SIZE) * 8;
+    blk_ptr.av1xd->mb_to_left_edge = -(int32_t)((micol * MI_SIZE) * 8);
+    blk_ptr.av1xd->mb_to_right_edge = ((pcs_ptr->av1_cm->mi_cols - bh - micol) * MI_SIZE) * 8;
+    context_ptr->tf_64x64_block_error = INT_MAX;
+
+    signed short mv_x = mv_unit.mv->x = (context_ptr->tf_use_pred_64x64_only_th == (uint8_t) ~0 ) ?
+        context_ptr->hme_results[0][0].hme_sc_x << 3 :
+        (_MVXT(context_ptr->p_best_mv64x64[0])) << 1;
+
+    signed short mv_y = mv_unit.mv->y = (context_ptr->tf_use_pred_64x64_only_th == (uint8_t) ~0 ) ?
+        context_ptr->hme_results[0][0].hme_sc_y << 3 :
+        (_MVYT(context_ptr->p_best_mv64x64[0])) << 1;
+#endif
+#else
+    blk_ptr.mds_idx = get_mds_idx(local_origin_x,
+        local_origin_y,
+        bsize,
+        pcs_ptr->scs_ptr->seq_header.sb_size == BLOCK_128X128);
+
+    const int32_t bw = mi_size_wide[BLOCK_64X64];
+    const int32_t bh = mi_size_high[BLOCK_64X64];
+    blk_ptr.av1xd->mb_to_top_edge = -(int32_t)((mirow * MI_SIZE) * 8);
+    blk_ptr.av1xd->mb_to_bottom_edge = ((pcs_ptr->av1_cm->mi_rows - bw - mirow) * MI_SIZE) * 8;
+    blk_ptr.av1xd->mb_to_left_edge = -(int32_t)((micol * MI_SIZE) * 8);
+    blk_ptr.av1xd->mb_to_right_edge = ((pcs_ptr->av1_cm->mi_cols - bh - micol) * MI_SIZE) * 8;
+
+    mv_unit.mv->x = _MVXT(context_ptr->p_best_mv64x64[0]);
+    mv_unit.mv->y = _MVYT(context_ptr->p_best_mv64x64[0]);
+    // AV1 MVs are always in 1/8th pel precision.
+    mv_unit.mv->x = mv_unit.mv->x << 1;
+    mv_unit.mv->y = mv_unit.mv->y << 1;
+    context_ptr->tf_64x64_block_error = INT_MAX;
+    signed short mv_x = (_MVXT(context_ptr->p_best_mv64x64[0])) << 1;
+    signed short mv_y = (_MVYT(context_ptr->p_best_mv64x64[0])) << 1;
+#endif
+    signed short best_mv_x = mv_x;
+    signed short best_mv_y = mv_y;
+    TF_SUBPEL_SEARCH_PARAMS tf_sp_param;
+#if OPT_TUNE_DECAY_UN_8_10_M11
+    tf_sp_param.subsampling_shift = pcs_ptr->tf_ctrls.sub_sampling_shift;
+#else
+    tf_sp_param.subsampling_shift = is_highbd ? 0 : pcs_ptr->tf_ctrls.sub_sampling_shift;
+#endif
+    uint64_t center_err = UINT_MAX;
+    uint64_t min_error = UINT_MAX;
+    uint64_t left_bottom_err = UINT_MAX;
+    uint64_t left_top_err = UINT_MAX;
+    uint64_t top_right_err = UINT_MAX;
+    uint64_t bottom_right_err = UINT_MAX;
+
+#if OPT_TFILTER
+    uint8_t best_direction = 0;//horz
+#endif
+    // No refinement.
+    if (!pcs_ptr->tf_ctrls.half_pel_mode && !pcs_ptr->tf_ctrls.quarter_pel_mode && !pcs_ptr->tf_ctrls.eight_pel_mode) {
+        tf_sp_param.subpel_pel_mode = pcs_ptr->tf_ctrls.half_pel_mode;
+        tf_sp_param.mv_x = mv_x;
+        tf_sp_param.mv_y = mv_y;
+        tf_sp_param.interp_filters = (uint32_t)interp_filters;
+        tf_sp_param.pu_origin_x = pu_origin_x;
+        tf_sp_param.pu_origin_y = pu_origin_y;
+        tf_sp_param.local_origin_x = local_origin_x;
+        tf_sp_param.local_origin_y = local_origin_y;
+        tf_sp_param.bsize = bsize;
+        tf_sp_param.is_highbd = is_highbd;
+        tf_sp_param.encoder_bit_depth = encoder_bit_depth;
+        tf_sp_param.idx_x = 0;
+        tf_sp_param.idx_y = 0;
+        tf_sp_param.xd = 0;
+        tf_sp_param.yd = 0;
+        center_err = svt_check_position_64x64(tf_sp_param, pcs_ptr, context_ptr,
+            blk_ptr, mv_unit, !is_highbd ? pic_ptr_ref : &reference_ptr, prediction_ptr,
+            pred, pred_16bit, stride_pred, src, src_16bit, stride_src,
+            &best_mv_x, &best_mv_y);
+    }
+
+    // Perform 1/2 Pel MV Refinement
+    if (pcs_ptr->tf_ctrls.half_pel_mode) {
+        tf_sp_param.subpel_pel_mode = pcs_ptr->tf_ctrls.half_pel_mode;
+        tf_sp_param.mv_x = mv_x;
+        tf_sp_param.mv_y = mv_y;
+        tf_sp_param.interp_filters = (uint32_t)interp_filters;
+        tf_sp_param.pu_origin_x = pu_origin_x;
+        tf_sp_param.pu_origin_y = pu_origin_y;
+        tf_sp_param.local_origin_x = local_origin_x;
+        tf_sp_param.local_origin_y = local_origin_y;
+        tf_sp_param.bsize = bsize;
+        tf_sp_param.is_highbd = is_highbd;
+        tf_sp_param.encoder_bit_depth = encoder_bit_depth;
+        tf_sp_param.idx_x = 0;
+        tf_sp_param.idx_y = 0;
+        if (pcs_ptr->tf_ctrls.half_pel_mode == 1) {
+            for (signed short i = -4; i <= 4; i = i + 4) {
+                for (signed short j = -4; j <= 4; j = j + 4) {
+                    tf_sp_param.xd = i;
+                    tf_sp_param.yd = j;
+                    uint64_t cur_err = svt_check_position_64x64(tf_sp_param, pcs_ptr, context_ptr,
+                        blk_ptr, mv_unit, !is_highbd ? pic_ptr_ref : &reference_ptr, prediction_ptr,
+                        pred, pred_16bit, stride_pred, src, src_16bit, stride_src,
+                        &best_mv_x, &best_mv_y);
+                    if (cur_err < min_error)
+                        min_error = cur_err;
+                }
+            }
+        }
+        else {
+            //check center
+            tf_sp_param.xd = 0;
+            tf_sp_param.yd = 0;
+            center_err = svt_check_position_64x64(tf_sp_param, pcs_ptr, context_ptr,
+                blk_ptr, mv_unit, !is_highbd ? pic_ptr_ref : &reference_ptr, prediction_ptr,
+                pred, pred_16bit, stride_pred, src, src_16bit, stride_src,
+                &best_mv_x, &best_mv_y);
+
+            //check left
+            tf_sp_param.xd = -4;
+            tf_sp_param.yd = 0;
+            uint64_t left_err = svt_check_position_64x64(tf_sp_param, pcs_ptr, context_ptr,
+                blk_ptr, mv_unit, !is_highbd ? pic_ptr_ref : &reference_ptr, prediction_ptr,
+                pred, pred_16bit, stride_pred, src, src_16bit, stride_src,
+                &best_mv_x, &best_mv_y);
+
+            //check top
+            tf_sp_param.xd = 0;
+            tf_sp_param.yd = -4;
+            uint64_t top_err = svt_check_position_64x64(tf_sp_param, pcs_ptr, context_ptr,
+                blk_ptr, mv_unit, !is_highbd ? pic_ptr_ref : &reference_ptr, prediction_ptr,
+                pred, pred_16bit, stride_pred, src, src_16bit, stride_src,
+                &best_mv_x, &best_mv_y);
+
+            //check right
+            tf_sp_param.xd = 4;
+            tf_sp_param.yd = 0;
+            uint64_t right_err = svt_check_position_64x64(tf_sp_param, pcs_ptr, context_ptr,
+                blk_ptr, mv_unit, !is_highbd ? pic_ptr_ref : &reference_ptr, prediction_ptr,
+                pred, pred_16bit, stride_pred, src, src_16bit, stride_src,
+                &best_mv_x, &best_mv_y);
+
+            //check bottom
+            tf_sp_param.xd = 0;
+            tf_sp_param.yd = 4;
+            uint64_t bottom_err = svt_check_position_64x64(tf_sp_param, pcs_ptr, context_ptr,
+                blk_ptr, mv_unit, !is_highbd ? pic_ptr_ref : &reference_ptr, prediction_ptr,
+                pred, pred_16bit, stride_pred, src, src_16bit, stride_src,
+                &best_mv_x, &best_mv_y);
+
+            min_error = MIN(left_err, MIN(top_err, MIN(right_err, bottom_err)));
+
+#if OPT_TFILTER
+            if (min_error == top_err || min_error == bottom_err)
+                best_direction = 1;//vert
+#endif
+
+            if (min_error == left_err) {
+                //check left_top
+                tf_sp_param.xd = -4;
+                tf_sp_param.yd = -4;
+                left_top_err = svt_check_position_64x64(tf_sp_param, pcs_ptr, context_ptr,
+                    blk_ptr, mv_unit, !is_highbd ? pic_ptr_ref : &reference_ptr, prediction_ptr,
+                    pred, pred_16bit, stride_pred, src, src_16bit, stride_src,
+                    &best_mv_x, &best_mv_y);
+                //check left_bottom
+                tf_sp_param.xd = -4;
+                tf_sp_param.yd = 4;
+                left_bottom_err = svt_check_position_64x64(tf_sp_param, pcs_ptr, context_ptr,
+                    blk_ptr, mv_unit, !is_highbd ? pic_ptr_ref : &reference_ptr, prediction_ptr,
+                    pred, pred_16bit, stride_pred, src, src_16bit, stride_src,
+                    &best_mv_x, &best_mv_y);
+            }
+            else if (min_error == top_err) {
+                //check left_top
+                tf_sp_param.xd = -4;
+                tf_sp_param.yd = -4;
+                left_top_err = svt_check_position_64x64(tf_sp_param, pcs_ptr, context_ptr,
+                    blk_ptr, mv_unit, !is_highbd ? pic_ptr_ref : &reference_ptr, prediction_ptr,
+                    pred, pred_16bit, stride_pred, src, src_16bit, stride_src,
+                    &best_mv_x, &best_mv_y);
+                //check top_right
+                tf_sp_param.xd = 4;
+                tf_sp_param.yd = -4;
+                top_right_err = svt_check_position_64x64(tf_sp_param, pcs_ptr, context_ptr,
+                    blk_ptr, mv_unit, !is_highbd ? pic_ptr_ref : &reference_ptr, prediction_ptr,
+                    pred, pred_16bit, stride_pred, src, src_16bit, stride_src,
+                    &best_mv_x, &best_mv_y);
+            }
+            else if (min_error == right_err) {
+                //check top_right
+                tf_sp_param.xd = 4;
+                tf_sp_param.yd = -4;
+                top_right_err = svt_check_position_64x64(tf_sp_param, pcs_ptr, context_ptr,
+                    blk_ptr, mv_unit, !is_highbd ? pic_ptr_ref : &reference_ptr, prediction_ptr,
+                    pred, pred_16bit, stride_pred, src, src_16bit, stride_src,
+                    &best_mv_x, &best_mv_y);
+                //check bottom_right
+                tf_sp_param.xd = 4;
+                tf_sp_param.yd = 4;
+                bottom_right_err = svt_check_position_64x64(tf_sp_param, pcs_ptr, context_ptr,
+                    blk_ptr, mv_unit, !is_highbd ? pic_ptr_ref : &reference_ptr, prediction_ptr,
+                    pred, pred_16bit, stride_pred, src, src_16bit, stride_src,
+                    &best_mv_x, &best_mv_y);
+            }
+            else if (min_error == bottom_err) {
+                //check bottom_left
+                tf_sp_param.xd = -4;
+                tf_sp_param.yd = 4;
+                left_bottom_err = svt_check_position_64x64(tf_sp_param, pcs_ptr, context_ptr,
+                    blk_ptr, mv_unit, !is_highbd ? pic_ptr_ref : &reference_ptr, prediction_ptr,
+                    pred, pred_16bit, stride_pred, src, src_16bit, stride_src,
+                    &best_mv_x, &best_mv_y);
+                //check bottom_right
+                tf_sp_param.xd = 4;
+                tf_sp_param.yd = 4;
+                bottom_right_err = svt_check_position_64x64(tf_sp_param, pcs_ptr, context_ptr,
+                    blk_ptr, mv_unit, !is_highbd ? pic_ptr_ref : &reference_ptr, prediction_ptr,
+                    pred, pred_16bit, stride_pred, src, src_16bit, stride_src,
+                    &best_mv_x, &best_mv_y);
+            }
+        }
+        min_error = MIN(min_error, MIN(left_top_err, MIN(left_bottom_err, MIN(top_right_err, bottom_right_err))));
+    }
+
+    mv_x = best_mv_x;
+    mv_y = best_mv_y;
+    // Perform 1/4 Pel MV Refinement
+    if (pcs_ptr->tf_ctrls.quarter_pel_mode) {
+        tf_sp_param.subpel_pel_mode = pcs_ptr->tf_ctrls.quarter_pel_mode;
+        tf_sp_param.mv_x = mv_x;
+        tf_sp_param.mv_y = mv_y;
+        tf_sp_param.interp_filters = (uint32_t)interp_filters;
+        tf_sp_param.pu_origin_x = pu_origin_x;
+        tf_sp_param.pu_origin_y = pu_origin_y;
+        tf_sp_param.local_origin_x = local_origin_x;
+        tf_sp_param.local_origin_y = local_origin_y;
+        tf_sp_param.bsize = bsize;
+        tf_sp_param.is_highbd = is_highbd;
+        tf_sp_param.encoder_bit_depth = encoder_bit_depth;
+        tf_sp_param.idx_x = 0;
+        tf_sp_param.idx_y = 0;
+        if (pcs_ptr->tf_ctrls.quarter_pel_mode == 1) {
+            for (signed short i = -2; i <= 2; i = i + 2) {
+                for (signed short j = -2; j <= 2; j = j + 2) {
+                    tf_sp_param.xd = i;
+                    tf_sp_param.yd = j;
+                    center_err = svt_check_position_64x64(tf_sp_param, pcs_ptr, context_ptr,
+                        blk_ptr, mv_unit, !is_highbd ? pic_ptr_ref : &reference_ptr, prediction_ptr,
+                        pred, pred_16bit, stride_pred, src, src_16bit, stride_src,
+                        &best_mv_x, &best_mv_y);
+                }
+            }
+        }
+        else if (min_error < center_err) {
+            //check center
+            tf_sp_param.xd = 0;
+            tf_sp_param.yd = 0;
+
+#if OPT_TFILTER
+            uint64_t left_err = UINT_MAX; uint64_t right_err = UINT_MAX;  uint64_t top_err = UINT_MAX; uint64_t bottom_err = UINT_MAX;
+            if (best_direction == 0 || !context_ptr->tf_ctrls.avoid_2d_qpel)//horz
+            {
+                //check left
+                tf_sp_param.xd = -2;
+                tf_sp_param.yd = 0;
+                left_err = svt_check_position_64x64(tf_sp_param, pcs_ptr, context_ptr,
+                    blk_ptr, mv_unit, !is_highbd ? pic_ptr_ref : &reference_ptr, prediction_ptr,
+                    pred, pred_16bit, stride_pred, src, src_16bit, stride_src,
+                    &best_mv_x, &best_mv_y);
+
+                //check right
+                tf_sp_param.xd = 2;
+                tf_sp_param.yd = 0;
+                right_err = svt_check_position_64x64(tf_sp_param, pcs_ptr, context_ptr,
+                    blk_ptr, mv_unit, !is_highbd ? pic_ptr_ref : &reference_ptr, prediction_ptr,
+                    pred, pred_16bit, stride_pred, src, src_16bit, stride_src,
+                    &best_mv_x, &best_mv_y);
+            }
+
+            if (best_direction == 1 || !context_ptr->tf_ctrls.avoid_2d_qpel)//vert
+            {
+
+                //check top
+                tf_sp_param.xd = 0;
+                tf_sp_param.yd = -2;
+                top_err = svt_check_position_64x64(tf_sp_param, pcs_ptr, context_ptr,
+                    blk_ptr, mv_unit, !is_highbd ? pic_ptr_ref : &reference_ptr, prediction_ptr,
+                    pred, pred_16bit, stride_pred, src, src_16bit, stride_src,
+                    &best_mv_x, &best_mv_y);
+
+                //check bottom
+                tf_sp_param.xd = 0;
+                tf_sp_param.yd = 2;
+                bottom_err = svt_check_position_64x64(tf_sp_param, pcs_ptr, context_ptr,
+                    blk_ptr, mv_unit, !is_highbd ? pic_ptr_ref : &reference_ptr, prediction_ptr,
+                    pred, pred_16bit, stride_pred, src, src_16bit, stride_src,
+                    &best_mv_x, &best_mv_y);
+            }
+
+#else
+
+
+            //check left
+            tf_sp_param.xd = -2;
+            tf_sp_param.yd = 0;
+            uint64_t left_err = svt_check_position(tf_sp_param, pcs_ptr, context_ptr,
+                blk_ptr, mv_unit, !is_highbd ? pic_ptr_ref : &reference_ptr, prediction_ptr,
+                pred, pred_16bit, stride_pred, src, src_16bit, stride_src,
+                &best_mv_x, &best_mv_y);
+
+            //check top
+            tf_sp_param.xd = 0;
+            tf_sp_param.yd = -2;
+            uint64_t top_err = svt_check_position(tf_sp_param, pcs_ptr, context_ptr,
+                blk_ptr, mv_unit, !is_highbd ? pic_ptr_ref : &reference_ptr, prediction_ptr,
+                pred, pred_16bit, stride_pred, src, src_16bit, stride_src,
+                &best_mv_x, &best_mv_y);
+
+            //check right
+            tf_sp_param.xd = 2;
+            tf_sp_param.yd = 0;
+            uint64_t right_err = svt_check_position(tf_sp_param, pcs_ptr, context_ptr,
+                blk_ptr, mv_unit, !is_highbd ? pic_ptr_ref : &reference_ptr, prediction_ptr,
+                pred, pred_16bit, stride_pred, src, src_16bit, stride_src,
+                &best_mv_x, &best_mv_y);
+
+            //check bottom
+            tf_sp_param.xd = 0;
+            tf_sp_param.yd = 2;
+            uint64_t bottom_err = svt_check_position(tf_sp_param, pcs_ptr, context_ptr,
+                blk_ptr, mv_unit, !is_highbd ? pic_ptr_ref : &reference_ptr, prediction_ptr,
+                pred, pred_16bit, stride_pred, src, src_16bit, stride_src,
+                &best_mv_x, &best_mv_y);
+#endif
+
+            min_error = MIN(left_err, MIN(top_err, MIN(right_err, bottom_err)));
+            if (min_error == left_err) {
+                //check left_top
+                tf_sp_param.xd = -2;
+                tf_sp_param.yd = -2;
+                svt_check_position_64x64(tf_sp_param, pcs_ptr, context_ptr,
+                    blk_ptr, mv_unit, !is_highbd ? pic_ptr_ref : &reference_ptr, prediction_ptr,
+                    pred, pred_16bit, stride_pred, src, src_16bit, stride_src,
+                    &best_mv_x, &best_mv_y);
+                //check left_bottom
+                tf_sp_param.xd = -2;
+                tf_sp_param.yd = 2;
+                svt_check_position_64x64(tf_sp_param, pcs_ptr, context_ptr,
+                    blk_ptr, mv_unit, !is_highbd ? pic_ptr_ref : &reference_ptr, prediction_ptr,
+                    pred, pred_16bit, stride_pred, src, src_16bit, stride_src,
+                    &best_mv_x, &best_mv_y);
+            }
+            else if (min_error == top_err) {
+                //check left_top
+                tf_sp_param.xd = -2;
+                tf_sp_param.yd = -2;
+                svt_check_position_64x64(tf_sp_param, pcs_ptr, context_ptr,
+                    blk_ptr, mv_unit, !is_highbd ? pic_ptr_ref : &reference_ptr, prediction_ptr,
+                    pred, pred_16bit, stride_pred, src, src_16bit, stride_src,
+                    &best_mv_x, &best_mv_y);
+                //check top_right
+                tf_sp_param.xd = 2;
+                tf_sp_param.yd = -2;
+                svt_check_position_64x64(tf_sp_param, pcs_ptr, context_ptr,
+                    blk_ptr, mv_unit, !is_highbd ? pic_ptr_ref : &reference_ptr, prediction_ptr,
+                    pred, pred_16bit, stride_pred, src, src_16bit, stride_src,
+                    &best_mv_x, &best_mv_y);
+            }
+            else if (min_error == right_err) {
+                //check top_right
+                tf_sp_param.xd = 2;
+                tf_sp_param.yd = -2;
+                svt_check_position_64x64(tf_sp_param, pcs_ptr, context_ptr,
+                    blk_ptr, mv_unit, !is_highbd ? pic_ptr_ref : &reference_ptr, prediction_ptr,
+                    pred, pred_16bit, stride_pred, src, src_16bit, stride_src,
+                    &best_mv_x, &best_mv_y);
+                //check bottom_right
+                tf_sp_param.xd = 2;
+                tf_sp_param.yd = 2;
+                svt_check_position_64x64(tf_sp_param, pcs_ptr, context_ptr,
+                    blk_ptr, mv_unit, !is_highbd ? pic_ptr_ref : &reference_ptr, prediction_ptr,
+                    pred, pred_16bit, stride_pred, src, src_16bit, stride_src,
+                    &best_mv_x, &best_mv_y);
+            }
+            else if (min_error == bottom_err) {
+                //check bottom_left
+                tf_sp_param.xd = -2;
+                tf_sp_param.yd = 2;
+                svt_check_position_64x64(tf_sp_param, pcs_ptr, context_ptr,
+                    blk_ptr, mv_unit, !is_highbd ? pic_ptr_ref : &reference_ptr, prediction_ptr,
+                    pred, pred_16bit, stride_pred, src, src_16bit, stride_src,
+                    &best_mv_x, &best_mv_y);
+                //check bottom_right
+                tf_sp_param.xd = 2;
+                tf_sp_param.yd = 2;
+                svt_check_position_64x64(tf_sp_param, pcs_ptr, context_ptr,
+                    blk_ptr, mv_unit, !is_highbd ? pic_ptr_ref : &reference_ptr, prediction_ptr,
+                    pred, pred_16bit, stride_pred, src, src_16bit, stride_src,
+                    &best_mv_x, &best_mv_y);
+            }
+        }
+    }
+
+    mv_x = best_mv_x;
+    mv_y = best_mv_y;
+    // Perform 1/8 Pel MV Refinement
+    if (pcs_ptr->tf_ctrls.eight_pel_mode) {
+        tf_sp_param.subpel_pel_mode = pcs_ptr->tf_ctrls.eight_pel_mode;
+        tf_sp_param.mv_x = mv_x;
+        tf_sp_param.mv_y = mv_y;
+        tf_sp_param.interp_filters = (uint32_t)interp_filters;
+        tf_sp_param.pu_origin_x = pu_origin_x;
+        tf_sp_param.pu_origin_y = pu_origin_y;
+        tf_sp_param.local_origin_x = local_origin_x;
+        tf_sp_param.local_origin_y = local_origin_y;
+        tf_sp_param.bsize = bsize;
+        tf_sp_param.is_highbd = is_highbd;
+        tf_sp_param.encoder_bit_depth = encoder_bit_depth;
+        tf_sp_param.idx_x = 0;
+        tf_sp_param.idx_y = 0;
+        for (signed short i = -1; i <= 1; i++) {
+            for (signed short j = -1; j <= 1; j++) {
+                tf_sp_param.xd = i;
+                tf_sp_param.yd = j;
+                svt_check_position_64x64(tf_sp_param, pcs_ptr, context_ptr,
+                    blk_ptr, mv_unit, !is_highbd ? pic_ptr_ref : &reference_ptr, prediction_ptr,
+                    pred, pred_16bit, stride_pred, src, src_16bit, stride_src,
+                    &best_mv_x, &best_mv_y);
+            }
+        }
+    }
+
+    context_ptr->tf_64x64_mv_x = best_mv_x;
+    context_ptr->tf_64x64_mv_y = best_mv_y;
+
+}
+#endif
 static void tf_32x32_sub_pel_search(PictureParentControlSet *pcs_ptr, MeContext *context_ptr,
                                     PictureParentControlSet *pcs_ref,
                                     EbPictureBufferDesc *pic_ptr_ref, EbByte *pred,
@@ -1745,9 +2405,17 @@ static void tf_32x32_sub_pel_search(PictureParentControlSet *pcs_ptr, MeContext 
 
 
     EbBool is_highbd = (encoder_bit_depth == 8) ? (uint8_t)EB_FALSE : (uint8_t)EB_TRUE;
+#if FIX_SVT_POSITION_CHECK_CPP
+    BlkStruct blk_struct;
+#else
     BlkStruct   blk_ptr;
+#endif
     MacroBlockD av1xd;
+#if FIX_SVT_POSITION_CHECK_CPP
+    blk_struct.av1xd = &av1xd;
+#else
     blk_ptr.av1xd = &av1xd;
+#endif
     MvUnit mv_unit;
     mv_unit.pred_direction = UNI_PRED_LIST_0;
     EbPictureBufferDesc reference_ptr;
@@ -1797,6 +2465,21 @@ static void tf_32x32_sub_pel_search(PictureParentControlSet *pcs_ptr, MeContext 
     uint16_t pu_origin_y    = sb_origin_y + local_origin_y;
     uint32_t mirow          = pu_origin_y >> MI_SIZE_LOG2;
     uint32_t micol          = pu_origin_x >> MI_SIZE_LOG2;
+#if FIX_SVT_POSITION_CHECK_CPP
+    blk_struct.mds_idx = get_mds_idx(local_origin_x,
+        local_origin_y,
+        bsize,
+        pcs_ptr->scs_ptr->seq_header.sb_size == BLOCK_128X128);
+
+    const int32_t bw = mi_size_wide[BLOCK_32X32];
+    const int32_t bh = mi_size_high[BLOCK_32X32];
+    blk_struct.av1xd->mb_to_top_edge = -(int32_t)((mirow * MI_SIZE) * 8);
+    blk_struct.av1xd->mb_to_bottom_edge = ((pcs_ptr->av1_cm->mi_rows - bw - mirow) * MI_SIZE) * 8;
+    blk_struct.av1xd->mb_to_left_edge = -(int32_t)((micol * MI_SIZE) * 8);
+    blk_struct.av1xd->mb_to_right_edge = ((pcs_ptr->av1_cm->mi_cols - bh - micol) * MI_SIZE) * 8;
+
+    BlkStruct *blk_ptr = &blk_struct;
+#else
     blk_ptr.mds_idx         = get_mds_idx(local_origin_x,
                                     local_origin_y,
                                     bsize,
@@ -1808,6 +2491,7 @@ static void tf_32x32_sub_pel_search(PictureParentControlSet *pcs_ptr, MeContext 
     blk_ptr.av1xd->mb_to_bottom_edge = ((pcs_ptr->av1_cm->mi_rows - bw - mirow) * MI_SIZE) * 8;
     blk_ptr.av1xd->mb_to_left_edge   = -(int32_t)((micol * MI_SIZE) * 8);
     blk_ptr.av1xd->mb_to_right_edge  = ((pcs_ptr->av1_cm->mi_cols - bh - micol) * MI_SIZE) * 8;
+#endif
     uint32_t mv_index = idx_32x32;
     mv_unit.mv->x     = _MVXT(context_ptr->p_best_mv32x32[mv_index]);
     mv_unit.mv->y     = _MVYT(context_ptr->p_best_mv32x32[mv_index]);
@@ -1820,7 +2504,11 @@ static void tf_32x32_sub_pel_search(PictureParentControlSet *pcs_ptr, MeContext 
     signed short best_mv_x = mv_x;
     signed short best_mv_y = mv_y;
     TF_SUBPEL_SEARCH_PARAMS tf_sp_param;
+#if OPT_TUNE_DECAY_UN_8_10_M11
+    tf_sp_param.subsampling_shift = pcs_ptr->tf_ctrls.sub_sampling_shift;
+#else
     tf_sp_param.subsampling_shift = is_highbd ? 0 : pcs_ptr->tf_ctrls.sub_sampling_shift;
+#endif
     uint64_t center_err = UINT_MAX;
     uint64_t min_error = UINT_MAX;
     uint64_t left_bottom_err = UINT_MAX;
@@ -2617,6 +3305,117 @@ static void tf_32x32_sub_pel_search(PictureParentControlSet *pcs_ptr, MeContext 
         context_ptr->tf_32x32_mv_y[idx_32x32] = best_mv_y;
 }
 #endif
+
+#if OPT_UPGRADE_TF
+static void tf_64x64_inter_prediction(PictureParentControlSet *pcs_ptr, MeContext *context_ptr,
+    PictureParentControlSet *pcs_ref, EbPictureBufferDesc *pic_ptr_ref,
+    EbByte *pred, uint16_t **pred_16bit,
+    uint32_t sb_origin_x,
+    uint32_t sb_origin_y, uint32_t ss_x, int encoder_bit_depth) {
+
+    SequenceControlSet *scs_ptr =
+        (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
+
+    const InterpFilters interp_filters = av1_make_interp_filters(MULTITAP_SHARP, MULTITAP_SHARP);
+
+    EbBool is_highbd = (encoder_bit_depth == 8) ? (uint8_t)EB_FALSE : (uint8_t)EB_TRUE;
+
+    BlkStruct   blk_ptr;
+    MacroBlockD av1xd;
+    blk_ptr.av1xd = &av1xd;
+    MvUnit mv_unit;
+    mv_unit.pred_direction = UNI_PRED_LIST_0;
+
+    EbPictureBufferDesc reference_ptr;
+    EbPictureBufferDesc prediction_ptr;
+
+    prediction_ptr.origin_x = 0;
+    prediction_ptr.origin_y = 0;
+    prediction_ptr.stride_y = BW;
+    prediction_ptr.stride_cb = (uint16_t)BW >> ss_x;
+    prediction_ptr.stride_cr = (uint16_t)BW >> ss_x;
+
+    if (!is_highbd) {
+        prediction_ptr.buffer_y = pred[C_Y];
+        prediction_ptr.buffer_cb = pred[C_U];
+        prediction_ptr.buffer_cr = pred[C_V];
+    }
+    else {
+        prediction_ptr.buffer_y = (uint8_t *)pred_16bit[C_Y];
+        prediction_ptr.buffer_cb = (uint8_t *)pred_16bit[C_U];
+        prediction_ptr.buffer_cr = (uint8_t *)pred_16bit[C_V];
+        reference_ptr.buffer_y = (uint8_t *)pcs_ref->altref_buffer_highbd[C_Y];
+        reference_ptr.buffer_cb = (uint8_t *)pcs_ref->altref_buffer_highbd[C_U];
+        reference_ptr.buffer_cr = (uint8_t *)pcs_ref->altref_buffer_highbd[C_V];
+        reference_ptr.origin_x = pic_ptr_ref->origin_x;
+        reference_ptr.origin_y = pic_ptr_ref->origin_y;
+        reference_ptr.stride_y = pic_ptr_ref->stride_y;
+        reference_ptr.stride_cb = pic_ptr_ref->stride_cb;
+        reference_ptr.stride_cr = pic_ptr_ref->stride_cr;
+        reference_ptr.width = pic_ptr_ref->width;
+        reference_ptr.height = pic_ptr_ref->height;
+    }
+
+    uint32_t bsize = 64;
+
+    uint16_t local_origin_x = 0;
+    uint16_t local_origin_y = 0;
+    uint16_t pu_origin_x = sb_origin_x + local_origin_x;
+    uint16_t pu_origin_y = sb_origin_y + local_origin_y;
+    uint32_t mirow = pu_origin_y >> MI_SIZE_LOG2;
+    uint32_t micol = pu_origin_x >> MI_SIZE_LOG2;
+    blk_ptr.mds_idx = get_mds_idx(local_origin_x,
+        local_origin_y,
+        bsize,
+        pcs_ptr->scs_ptr->seq_header.sb_size == BLOCK_128X128);
+
+    const int32_t bw = mi_size_wide[BLOCK_32X32];
+    const int32_t bh = mi_size_high[BLOCK_32X32];
+    blk_ptr.av1xd->mb_to_top_edge = -(int32_t)((mirow * MI_SIZE) * 8);
+    blk_ptr.av1xd->mb_to_bottom_edge = ((pcs_ptr->av1_cm->mi_rows - bw - mirow) * MI_SIZE) *
+        8;
+    blk_ptr.av1xd->mb_to_left_edge = -(int32_t)((micol * MI_SIZE) * 8);
+    blk_ptr.av1xd->mb_to_right_edge = ((pcs_ptr->av1_cm->mi_cols - bh - micol) * MI_SIZE) *
+        8;
+
+    // Perform final pass using the 1/8 MV
+    // AV1 MVs are always in 1/8th pel precision.
+    mv_unit.mv->x = context_ptr->tf_64x64_mv_x;
+    mv_unit.mv->y = context_ptr->tf_64x64_mv_y;
+
+    av1_inter_prediction(
+        scs_ptr,
+        NULL, //pcs_ptr,
+        (uint32_t)interp_filters,
+        &blk_ptr,
+        0, //ref_frame_type,
+        &mv_unit,
+        0, //use_intrabc,
+        SIMPLE_TRANSLATION,
+        0,
+        0,
+        1, //compound_idx not used
+        NULL, // interinter_comp not used
+        NULL,
+        NULL,
+        NULL,
+        0,
+        0,
+        0,
+        0,
+        pu_origin_x,
+        pu_origin_y,
+        bsize,
+        bsize,
+        !is_highbd ? pic_ptr_ref : &reference_ptr,
+        NULL, //ref_pic_list1,
+        &prediction_ptr,
+        local_origin_x,
+        local_origin_y,
+        context_ptr->tf_chroma ? PICTURE_BUFFER_DESC_FULL_MASK : PICTURE_BUFFER_DESC_LUMA_MASK,
+        (uint8_t)encoder_bit_depth);
+}
+#endif
 static void tf_32x32_inter_prediction(PictureParentControlSet *pcs_ptr, MeContext *context_ptr,
                                 PictureParentControlSet *pcs_ref, EbPictureBufferDesc *pic_ptr_ref,
                                 EbByte *pred, uint16_t **pred_16bit, uint32_t sb_origin_x,
@@ -2894,6 +3693,35 @@ int8_t skip_this_reference_frame(PictureParentControlSet *picture_control_set_pt
     }
     return 0;
 }
+#if OPT_UPGRADE_TF
+/*
+* Check whether to perform 64x64 pred only
+*/
+#if OPT_EARLY_TF_ME_EXIT
+int8_t tf_use_64x64_pred(MeContext *context_ptr) {
+#else
+int8_t tf_use_64x64_pred(PictureParentControlSet *picture_control_set_ptr_central, MeContext *context_ptr) {
+#endif
+    uint32_t  dist_32x32 = 0;
+
+    // 32x32
+    for (unsigned i = 0; i < 4; i++) {
+        dist_32x32 += context_ptr->p_best_sad_32x32[i];
+    }
+
+    int64_t dev_64x64_to_32x32 =
+        (int64_t)(((int64_t)MAX(context_ptr->p_best_sad_64x64[0], 1) - (int64_t)MAX(dist_32x32, 1)) * 100) /
+        (int64_t)MAX(dist_32x32, 1);
+#if OPT_EARLY_TF_ME_EXIT
+    if (dev_64x64_to_32x32 < context_ptr->tf_use_pred_64x64_only_th)
+#else
+    if (dev_64x64_to_32x32 < picture_control_set_ptr_central->tf_ctrls.use_pred_64x64_only_th)
+#endif
+        return 1;
+    else
+        return 0;
+}
+#endif
 // Produce the filtered alt-ref picture
 // - core function
 static EbErrorType produce_temporally_filtered_pic(
@@ -2987,10 +3815,19 @@ static EbErrorType produce_temporally_filtered_pic(
     };
 
     // Hyper-parameter for filter weight adjustment.
+#if OPT_TUNE_DECAY_UN_8_10_M11
+    int decay_control =
+        (context_ptr->tf_ctrls.use_fast_filter)
+        ? 5 :
+        (picture_control_set_ptr_central->scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE)
+            ? 3
+            : 4;
+#else
     int decay_control = (picture_control_set_ptr_central->scs_ptr->input_resolution <=
         INPUT_SIZE_480p_RANGE)
         ? 3
         : 4;
+#endif
     // Decrease the filter strength for low QPs
     if (picture_control_set_ptr_central->scs_ptr->static_config.qp <= ALT_REF_QP_THRESH)
         decay_control--;
@@ -3138,7 +3975,10 @@ static EbErrorType produce_temporally_filtered_pic(
                         reference_object->quarter_downsampled_picture_ptr;
                     context_ptr->me_ds_ref_array[0][0].picture_number =
                         reference_object->picture_number;
-
+#if OPT_EARLY_TF_ME_EXIT
+                    context_ptr->tf_me_exit_th = picture_control_set_ptr_central->tf_ctrls.me_exit_th;;
+                    context_ptr->tf_use_pred_64x64_only_th = picture_control_set_ptr_central->tf_ctrls.use_pred_64x64_only_th;
+#endif
                     // Perform ME - context_ptr will store the outputs (MVs, buffers, etc)
                     // Block-based MC using open-loop HME + refinement
                     motion_estimate_sb(
@@ -3150,9 +3990,140 @@ static EbErrorType produce_temporally_filtered_pic(
                         input_picture_ptr_central); // source picture
 
                     // Check whether to consider this reference frame (frame_index) @ the level of each 64x64 based on ME results
+#if OPT_EARLY_TF_ME_EXIT
+#if OPT_EARLY_TF_ME_EXIT
+                    if (context_ptr->tf_use_pred_64x64_only_th != (uint8_t)~0 && skip_this_reference_frame(picture_control_set_ptr_central, list_picture_control_set_ptr, context_ptr, frame_index))
+#else
+                    if (picture_control_set_ptr_central->tf_ctrls.use_pred_64x64_only_th != (uint8_t) ~0 && skip_this_reference_frame(picture_control_set_ptr_central, list_picture_control_set_ptr, context_ptr, frame_index))
+#endif
+#else
                     if (skip_this_reference_frame(picture_control_set_ptr_central, list_picture_control_set_ptr, context_ptr, frame_index))
+#endif
                         continue;
 
+#if OPT_UPGRADE_TF
+#if OPT_EARLY_TF_ME_EXIT
+                    if (context_ptr->tf_use_pred_64x64_only_th && (context_ptr->tf_use_pred_64x64_only_th == (uint8_t)~0 || tf_use_64x64_pred(context_ptr))) {
+#else
+                    if (picture_control_set_ptr_central->tf_ctrls.use_pred_64x64_only_th && (picture_control_set_ptr_central->tf_ctrls.use_pred_64x64_only_th == (uint8_t)~0 || tf_use_64x64_pred(picture_control_set_ptr_central, context_ptr))) {
+#endif
+                        tf_64x64_sub_pel_search(picture_control_set_ptr_central,
+                            context_ptr,
+                            list_picture_control_set_ptr[frame_index],
+                            list_input_picture_ptr[frame_index],
+                            pred,
+                            pred_16bit,
+                            stride_pred,
+                            src_center_ptr,
+                            altref_buffer_highbd_ptr,
+                            stride,
+                            (uint32_t)blk_col * BW,
+                            (uint32_t)blk_row * BH,
+                            ss_x,
+                            encoder_bit_depth);
+
+                        // Perform MC using the information acquired using the ME step
+                        tf_64x64_inter_prediction(picture_control_set_ptr_central,
+                            context_ptr,
+                            list_picture_control_set_ptr[frame_index],
+                            list_input_picture_ptr[frame_index],
+                            pred,
+                            pred_16bit,
+                            (uint32_t)blk_col * BW,
+                            (uint32_t)blk_row * BH,
+                            ss_x,
+                            encoder_bit_depth);
+
+                    }
+                    else {
+                        // split filtering function into 32x32 blocks
+                        // TODO: implement a 64x64 SIMD version
+                        for (int block_row = 0; block_row < 2; block_row++) {
+                            for (int block_col = 0; block_col < 2; block_col++) {
+
+                                context_ptr->idx_32x32 = block_col + (block_row << 1);
+
+                                // Perform TF sub-pel search for 32x32 blocks
+                                tf_32x32_sub_pel_search(picture_control_set_ptr_central,
+                                    context_ptr,
+                                    list_picture_control_set_ptr[frame_index],
+                                    list_input_picture_ptr[frame_index],
+                                    pred,
+                                    pred_16bit,
+                                    stride_pred,
+                                    src_center_ptr,
+                                    altref_buffer_highbd_ptr,
+                                    stride,
+                                    (uint32_t)blk_col * BW,
+                                    (uint32_t)blk_row * BH,
+                                    ss_x,
+                                    encoder_bit_depth);
+
+                                // Perform TF sub-pel search for 16x16 blocks
+                                tf_16x16_sub_pel_search(picture_control_set_ptr_central,
+                                    context_ptr,
+                                    list_picture_control_set_ptr[frame_index],
+                                    list_input_picture_ptr[frame_index],
+                                    pred,
+                                    pred_16bit,
+                                    stride_pred,
+                                    src_center_ptr,
+                                    altref_buffer_highbd_ptr,
+                                    stride,
+                                    (uint32_t)blk_col * BW,
+                                    (uint32_t)blk_row * BH,
+                                    ss_x,
+                                    encoder_bit_depth);
+
+
+                                // Derive tf_32x32_block_split_flag
+                                if (context_ptr->tf_16x16_search_do[context_ptr->idx_32x32]) {
+                                    derive_tf_32x32_block_split_flag(context_ptr);
+                                }
+                                else {
+                                    context_ptr->tf_32x32_block_split_flag[context_ptr->idx_32x32] = 0;
+                                }
+
+                                // Perform MC using the information acquired using the ME step
+                                tf_32x32_inter_prediction(picture_control_set_ptr_central,
+                                    context_ptr,
+                                    list_picture_control_set_ptr[frame_index],
+                                    list_input_picture_ptr[frame_index],
+                                    pred,
+                                    pred_16bit,
+                                    (uint32_t)blk_col * BW,
+                                    (uint32_t)blk_row * BH,
+                                    ss_x,
+                                    encoder_bit_depth);
+                            }
+                        }
+                    }
+
+                    for (int block_row = 0; block_row < 2; block_row++) {
+                        for (int block_col = 0; block_col < 2; block_col++) {
+                            context_ptr->tf_block_col = block_col;
+                            context_ptr->tf_block_row = block_row;
+                            apply_filtering_block_plane_wise(context_ptr,
+                                block_row,
+                                block_col,
+                                src_center_ptr,
+                                altref_buffer_highbd_ptr,
+                                pred,
+                                pred_16bit,
+                                accum,
+                                count,
+                                stride,
+                                stride_pred,
+                                BW >> 1,
+                                BH >> 1,
+                                ss_x,
+                                ss_y,
+                                noise_levels,
+                                decay_control,
+                                encoder_bit_depth);
+                    }
+                }
+#else
                     // split filtering function into 32x32 blocks
                     // TODO: implement a 64x64 SIMD version
                     for (int block_row = 0; block_row < 2; block_row++) {
@@ -3234,6 +4205,7 @@ static EbErrorType produce_temporally_filtered_pic(
                                 encoder_bit_depth);
                         }
                     }
+#endif
                 }
             }
 

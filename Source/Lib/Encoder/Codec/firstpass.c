@@ -770,6 +770,9 @@ EbErrorType first_pass_signal_derivation_me_kernel(SequenceControlSet *       sc
     // Set hme-based me sr adjustment level
     set_me_sr_adjustment_ctrls(context_ptr->me_context_ptr, 0);
     context_ptr->me_context_ptr->prune_me_candidates_th = 0; // No impact on tf
+#if FTR_LIMIT_ME_CANDS
+    context_ptr->me_context_ptr->use_best_unipred_cand_only = 0; // No impact on tf
+#endif
     set_prehme_ctrls(context_ptr->me_context_ptr, 0);
     return return_error;
 };

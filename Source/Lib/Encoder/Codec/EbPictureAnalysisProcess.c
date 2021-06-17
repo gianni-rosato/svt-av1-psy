@@ -1518,6 +1518,9 @@ EbErrorType compute_block_mean_compute_variance(
          mean_of32x32_squared_values_blocks[2] + mean_of32x32_squared_values_blocks[3]) >>
         2;
     // 8x8 variances
+#if SS_MEM_VAR
+    if (scs_ptr->static_config.enable_adaptive_quantization == 1){
+#endif
     pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_8x8_0] = (uint16_t)(
         (mean_of_8x8_squared_values_blocks[0] - (mean_of8x8_blocks[0] * mean_of8x8_blocks[0])) >>
         VARIANCE_PRECISION);
@@ -1794,7 +1797,9 @@ EbErrorType compute_block_mean_compute_variance(
         (uint16_t)((mean_of32x32_squared_values_blocks[3] -
                     (mean_of_32x32_blocks[3] * mean_of_32x32_blocks[3])) >>
                    VARIANCE_PRECISION);
-
+#if SS_MEM_VAR
+   }
+#endif
     // 64x64 variance
     pcs_ptr->variance[sb_index][ME_TIER_ZERO_PU_64x64] = (uint16_t)(
         (mean_of64x64_squared_values_blocks - (mean_of_64x64_blocks * mean_of_64x64_blocks)) >>
@@ -1972,7 +1977,9 @@ void sub_sample_chroma_generate_pixel_intensity_histogram_bins(
              region_in_picture_height_index <
              scs_ptr->picture_analysis_number_of_regions_per_height;
              region_in_picture_height_index++) { // loop over vertical regions
-
+#if SS_MEM_HIS
+            if (scs_ptr->static_config.scene_change_detection){
+#endif
             // Initialize bins to 1
             svt_initialize_buffer_32bits(pcs_ptr->picture_histogram[region_in_picture_width_index]
                                                                [region_in_picture_height_index][1],
@@ -1984,6 +1991,10 @@ void sub_sample_chroma_generate_pixel_intensity_histogram_bins(
                                          64,
                                          0,
                                          1);
+
+#if SS_MEM_HIS
+            }
+#endif
 
             region_width_offset =
                 (region_in_picture_width_index ==
@@ -2187,6 +2198,10 @@ void gathering_picture_statistics(SequenceControlSet *scs_ptr, PictureParentCont
     // 1/16 input ready
     sub_sample_luma_generate_pixel_intensity_histogram_bins(
         scs_ptr, pcs_ptr, sixteenth_decimated_picture_ptr, &sum_avg_intensity_ttl_regions_luma);
+
+#if SS_MEM_HIS
+            if (scs_ptr->static_config.scene_change_detection)
+#endif
 
     // Use 1/4 Chroma for Histogram generation
     // 1/4 input not ready => perform operation on the fly

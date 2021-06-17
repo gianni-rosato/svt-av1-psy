@@ -49,7 +49,9 @@ typedef struct MvCandidate {
 // move this to a new file with ctor & dtor
 typedef struct MeSbResults {
     EbDctor      dctor;
+#if !OPT_TPL_64X64_32X32
     uint32_t     sb_distortion;
+#endif
     uint8_t *    total_me_candidate_index;
     MvCandidate *me_mv_array;
     MeCandidate *me_candidate_array;

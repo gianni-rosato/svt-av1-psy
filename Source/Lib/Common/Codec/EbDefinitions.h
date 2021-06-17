@@ -578,6 +578,14 @@ typedef enum IfsLevel {
     IFS_MDS2, // IFS @ md_stage_2()
     IFS_MDS3, // IFS @ md_stage_3()
 } IfsLevel;
+#if SS_OPT_MDS0
+typedef enum Mds0DistortionType {
+    MDS0_SAD, // Use SAD at MDS0
+    MDS0_VAR, // Use variance at MDS0
+    MDS0_SSD, // Use SSD at MDS0
+    MDS0_DIST_TYPES
+} Mds0DistortionType;
+#else
 typedef enum NsqSearchLevel {
     NSQ_SEARCH_OFF,
     NSQ_SEARCH_LEVEL1,
@@ -593,7 +601,7 @@ typedef enum NsqSearchLevel {
 typedef enum CompoundDistWeightMode {
     DIST,
 } CompoundDistWeightMode;
-
+#endif
 // Profile 0.  8-bit and 10-bit 4:2:0 and 4:0:0 only.
 // Profile 1.  8-bit and 10-bit 4:4:4
 // Profile 2.  8-bit and 10-bit 4:2:2

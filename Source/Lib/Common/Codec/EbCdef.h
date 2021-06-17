@@ -62,7 +62,11 @@ void copy_rect(uint16_t *dst, int32_t dstride, const uint16_t *src, int32_t sstr
                int32_t h);
 #if FTR_SKIP_LINES_CDEF_SEARCH
 void svt_cdef_filter_fb(uint8_t *dst8, uint16_t *dst16, int32_t dstride, uint16_t *in, int32_t xdec,
+#if SS_OPT_CDEF_APPL
+                        int32_t ydec, uint8_t dir[CDEF_NBLOCKS][CDEF_NBLOCKS], int32_t *dirinit,
+#else
                         int32_t ydec, int32_t dir[CDEF_NBLOCKS][CDEF_NBLOCKS], int32_t *dirinit,
+#endif
                         int32_t var[CDEF_NBLOCKS][CDEF_NBLOCKS], int32_t pli, CdefList *dlist,
                         int32_t cdef_count, int32_t level, int32_t sec_strength,
                         int32_t pri_damping, int32_t sec_damping, int32_t coeff_shift, uint8_t subsampling_factor);

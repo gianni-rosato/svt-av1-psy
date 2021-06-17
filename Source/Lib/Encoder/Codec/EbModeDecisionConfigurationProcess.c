@@ -306,6 +306,9 @@ void mode_decision_configuration_init_qp_update(PictureControlSet *pcs_ptr) {
 #if  FTR_INTRA_DETECTOR
     pcs_ptr->intra_coded_area           = 0;
 #endif
+#if FTR_COEFF_DETECTOR
+    pcs_ptr->skip_coded_area = 0;
+#endif
     // Init block selection
     // Set reference sg ep
     set_reference_sg_ep(pcs_ptr);
@@ -457,8 +460,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         update_cdf_level = pcs_ptr->slice_type == I_SLICE
         ? 1
         : (pcs_ptr->temporal_layer_index == 0) ? 1 : 3;
-
+#if TUNE_M7_11
+    else if (pcs_ptr->enc_mode <= ENC_M7)
+#else
     else if (pcs_ptr->enc_mode <= ENC_M6)
+#endif
 
         update_cdf_level = pcs_ptr->slice_type == I_SLICE
         ? 1
@@ -616,7 +622,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         pcs_ptr->parent_pcs_ptr->bypass_cost_table_gen = 1;
 #if FTR_SELECTIVE_DLF
 #if TUNE_NEW_M11_2
+#if TUNE_M10_M0
+    uint8_t use_selective_dlf_th = pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M10 ? (uint8_t)~0 : 120;
+#else
     uint8_t use_selective_dlf_th = pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M9 ? (uint8_t)~0 : (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M10 ? 80 : 120);
+#endif
     if (use_selective_dlf_th != (uint8_t)~0){
         if (pcs_ptr->parent_pcs_ptr->temporal_layer_index) {
             uint8_t dlf_th = 100;
@@ -654,13 +664,25 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
 #if  FTR_SIMPLIFIED_MV_COST
 #if FTR_LOW_AC_COST_EST
 #if OPT_PD0_TXT
+#if TUNE_M9_SLOW
+#if TUNE_M10_M0
+    if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M10)
+#else
+    if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M9)
+#endif
+#else
     if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M8)
+#endif
 #else
     if (enc_mode <= ENC_M9)
 #endif
         pcs_ptr->use_low_precision_cost_estimation = 0;
     else
+#if FTR_PD0_OPT
+        pcs_ptr->use_low_precision_cost_estimation = 2;
+#else
         pcs_ptr->use_low_precision_cost_estimation = 1;
+#endif
 #endif
 #endif
     return return_error;
@@ -890,6 +912,9 @@ static void av1_setup_motion_field(Av1Common *cm, PictureControlSet *pcs_ptr) {
 #if OPT_MEMORY_HASH_TABLE
 EbErrorType svt_av1_hash_table_create(HashTable *p_hash_table);
 #endif
+#if OPT_CDEF
+extern uint8_t ref_is_high_skip(PictureControlSet *pcs_ptr, uint8_t *skip_area);
+#endif
 /* Mode Decision Configuration Kernel */
 
 /*********************************************************************************
@@ -978,6 +1003,9 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
         pcs_ptr->parent_pcs_ptr->average_qp = 0;
 #if  FTR_INTRA_DETECTOR
         pcs_ptr->intra_coded_area           = 0;
+#endif
+#if FTR_COEFF_DETECTOR
+        pcs_ptr->skip_coded_area = 0;
 #endif
         // Init block selection
         // Set reference sg ep
@@ -1200,6 +1228,13 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
         }
 #if MS_CDEF_OPT3
         CdefControls *cdef_ctrls = &pcs_ptr->parent_pcs_ptr->cdef_ctrls;
+#if OPT_CDEF
+        uint8_t skip_area = 0;
+        ref_is_high_skip(pcs_ptr, &skip_area);
+        if (skip_area > 150 && cdef_ctrls->use_skip_detector)
+            pcs_ptr->parent_pcs_ptr->cdef_level = 0;
+        else {
+#endif
         if (cdef_ctrls->use_reference_cdef_fs) {
             if (pcs_ptr->slice_type != I_SLICE) {
                 uint8_t lowest_sg = TOTAL_STRENGTHS - 1;
@@ -1284,6 +1319,9 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
             }
 
         }
+#if OPT_CDEF
+        }
+#endif
 #endif
 #endif
         // Post the results to the MD processes

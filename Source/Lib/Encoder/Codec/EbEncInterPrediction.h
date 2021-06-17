@@ -37,6 +37,21 @@ EbErrorType av1_simple_luma_unipred(
     uint16_t dst_origin_x, uint16_t dst_origin_y,
     uint8_t bit_depth,uint8_t subsampling_shift);
 #endif
+#if LIGHT_PD1
+EbErrorType av1_inter_prediction_light_pd1(
+    MvUnit *mv_unit,
+    struct ModeDecisionContext *md_context,
+    uint16_t pu_origin_x,
+    uint16_t pu_origin_y,
+    uint8_t bwidth,
+    uint8_t bheight,
+    EbPictureBufferDesc *ref_pic_list0,
+    EbPictureBufferDesc *ref_pic_list1,
+    EbPictureBufferDesc *pred_pic,
+    uint16_t dst_origin_x,
+    uint16_t dst_origin_y,
+    uint32_t component_mask);
+#endif
 EbErrorType av1_inter_prediction(
     SequenceControlSet *scs_ptr,
     PictureControlSet *pcs_ptr, uint32_t interp_filters, BlkStruct *blk_ptr, uint8_t ref_frame_type,
@@ -80,6 +95,12 @@ EbBool calc_pred_masked_compound(PictureControlSet *pcs_ptr, struct ModeDecision
 
 #if LIGHT_PD0
 EbErrorType inter_pu_prediction_av1_light_pd0(uint8_t                      hbd_mode_decision,
+    struct ModeDecisionContext * md_context_ptr,
+    PictureControlSet *          pcs_ptr,
+    ModeDecisionCandidateBuffer *candidate_buffer_ptr);
+#endif
+#if LIGHT_PD1
+EbErrorType inter_pu_prediction_av1_light_pd1(uint8_t                      hbd_mode_decision,
     struct ModeDecisionContext * md_context_ptr,
     PictureControlSet *          pcs_ptr,
     ModeDecisionCandidateBuffer *candidate_buffer_ptr);

@@ -474,8 +474,12 @@ void svt_av1_cdef_frame(EncDecContext *context_ptr, SequenceControlSet *scs_ptr,
     CdefList  dlist[MI_SIZE_64X64 * MI_SIZE_64X64];
     uint8_t * row_cdef, *prev_row_cdef, *curr_row_cdef;
     int32_t   cdef_count;
+#if SS_OPT_CDEF_APPL
+    const uint32_t sb_size = scs_ptr->static_config.super_block_size;
+#else
     int32_t   dir[CDEF_NBLOCKS][CDEF_NBLOCKS] = {{0}};
     int32_t   var[CDEF_NBLOCKS][CDEF_NBLOCKS] = {{0}};
+#endif
     int32_t   mi_wide_l2[3];
     int32_t   mi_high_l2[3];
     int32_t   xdec[3];
@@ -508,11 +512,12 @@ void svt_av1_cdef_frame(EncDecContext *context_ptr, SequenceControlSet *scs_ptr,
     }
 
     for (int32_t fbr = 0; fbr < nvfb; fbr++) {
+#if !SS_OPT_CDEF_APPL
         for (int32_t pli = 0; pli < num_planes; pli++) {
             const int32_t block_height = (MI_SIZE_64X64 << mi_high_l2[pli]) + 2 * CDEF_VBORDER;
             fill_rect(colbuf[pli], CDEF_HBORDER, block_height, CDEF_HBORDER, CDEF_VERY_LARGE);
         }
-
+#endif
         int32_t cdef_left = 1;
         for (int32_t fbc = 0; fbc < nhfb; fbc++) {
             int32_t level, sec_strength;
@@ -520,7 +525,10 @@ void svt_av1_cdef_frame(EncDecContext *context_ptr, SequenceControlSet *scs_ptr,
             int32_t nhb, nvb;
             int32_t cstart     = 0;
             curr_row_cdef[fbc] = 0;
-
+#if SS_OPT_CDEF_APPL
+            assert(pCs->mi_grid_base[MI_SIZE_64X64 * fbr * cm->mi_stride + MI_SIZE_64X64 * fbc] != NULL && "CDEF ERROR: Skipping Current FB");
+            assert(pCs->mi_grid_base[MI_SIZE_64X64 * fbr * cm->mi_stride + MI_SIZE_64X64 * fbc]->mbmi.cdef_strength != -1 && "CDEF ERROR: Skipping Current FB");
+#else
             //WAHT IS THIS  ?? CHKN -->for
             if (pCs->mi_grid_base[MI_SIZE_64X64 * fbr * cm->mi_stride + MI_SIZE_64X64 * fbc] ==
                     NULL ||
@@ -530,7 +538,7 @@ void svt_av1_cdef_frame(EncDecContext *context_ptr, SequenceControlSet *scs_ptr,
                 SVT_LOG("\n\n\nCDEF ERROR: Skipping Current FB\n\n\n");
                 continue;
             }
-
+#endif
             if (!cdef_left)
                 cstart =
                     -CDEF_HBORDER; //CHKN if the left block has not been filtered, then we can use samples on the left as input.
@@ -582,6 +590,27 @@ void svt_av1_cdef_frame(EncDecContext *context_ptr, SequenceControlSet *scs_ptr,
                 continue;
             }
 
+#if SS_OPT_CDEF_APPL
+            int dirinit = !(ppcs->cdef_ctrls.use_reference_cdef_fs);
+            // When SB 128 is used, the search for certain blocks is skipped, so dir/var info is not generated
+            // In those cases, must generate info here
+            if (sb_size == 128) {
+                const uint32_t lc = MI_SIZE_64X64 * fbc;
+                const uint32_t lr = MI_SIZE_64X64 * fbr;
+                ModeInfo **mi = pCs->mi_grid_base + lr * cm->mi_stride + lc;
+                const MbModeInfo *mbmi = &mi[0]->mbmi;
+                const BlockSize  sb_type = mbmi->block_mi.sb_type;
+                if (((fbc & 1) &&
+                    (sb_type == BLOCK_128X128 ||
+                        sb_type == BLOCK_128X64)) ||
+                        ((fbr & 1) &&
+                    (sb_type == BLOCK_128X128 ||
+                        sb_type == BLOCK_64X128)))
+                    dirinit = 0;
+            }
+            uint8_t(*dir)[CDEF_NBLOCKS] = (uint8_t(*)[CDEF_NBLOCKS])&(pCs->cdef_dir_data[fbr * nhfb + fbc].dir[0][0]);
+            int32_t(*var)[CDEF_NBLOCKS] = (int32_t(*)[CDEF_NBLOCKS])&(pCs->cdef_dir_data[fbr * nhfb + fbc].var[0][0]);
+#endif
             curr_row_cdef[fbc] = 1;
             for (int32_t pli = 0; pli < num_planes; pli++) {
                 int32_t coffset;
@@ -590,12 +619,12 @@ void svt_av1_cdef_frame(EncDecContext *context_ptr, SequenceControlSet *scs_ptr,
                 int32_t sec_damping = pri_damping;
                 int32_t hsize       = nhb << mi_wide_l2[pli];
                 int32_t vsize       = nvb << mi_high_l2[pli];
-
+#if !SS_OPT_CDEF_APPL
                 if (pli) {
                     level        = uv_level;
                     sec_strength = uv_sec_strength;
                 }
-
+#endif
                 if (fbc == nhfb - 1)
                     cend = hsize;
                 else
@@ -607,6 +636,7 @@ void svt_av1_cdef_frame(EncDecContext *context_ptr, SequenceControlSet *scs_ptr,
                     rend = vsize + CDEF_VBORDER;
 
                 coffset = fbc * MI_SIZE_64X64 << mi_wide_l2[pli];
+#if !SS_OPT_CDEF_APPL
                 if (fbc == nhfb - 1) {
                     /* On the last superblock column, fill in the right border with
                        CDEF_VERY_LARGE to avoid filtering with the outside. */
@@ -625,7 +655,7 @@ void svt_av1_cdef_frame(EncDecContext *context_ptr, SequenceControlSet *scs_ptr,
                               hsize + 2 * CDEF_HBORDER,
                               CDEF_VERY_LARGE);
                 }
-
+#endif
                 uint8_t *rec_buff   = 0;
                 uint32_t rec_stride = 0;
 
@@ -637,11 +667,18 @@ void svt_av1_cdef_frame(EncDecContext *context_ptr, SequenceControlSet *scs_ptr,
                 case 1:
                     rec_buff   = recon_buffer_cb;
                     rec_stride = recon_picture_ptr->stride_cb;
-
+#if SS_OPT_CDEF_APPL
+                    level        = uv_level;
+                    sec_strength = uv_sec_strength;
+#endif
                     break;
                 case 2:
                     rec_buff   = recon_buffer_cr;
                     rec_stride = recon_picture_ptr->stride_cr;
+#if SS_OPT_CDEF_APPL
+                    level        = uv_level;
+                    sec_strength = uv_sec_strength;
+#endif
                     break;
                 }
 
@@ -773,7 +810,11 @@ void svt_av1_cdef_frame(EncDecContext *context_ptr, SequenceControlSet *scs_ptr,
                               CDEF_HBORDER,
                               CDEF_VERY_LARGE);
                 }
-
+#if SS_OPT_CDEF_APPL
+                // if ppcs->cdef_ctrls.use_reference_cdef_fs is true, then search was not performed
+                // Therefore, need to make sure dir and var are initialized
+                if (level || sec_strength || !dirinit)
+#endif
                 {
                     svt_cdef_filter_fb(
                         &rec_buff[rec_stride * (MI_SIZE_64X64 * fbr << mi_high_l2[pli]) +
@@ -784,7 +825,11 @@ void svt_av1_cdef_frame(EncDecContext *context_ptr, SequenceControlSet *scs_ptr,
                         xdec[pli],
                         ydec[pli],
                         dir,
+#if SS_OPT_CDEF_APPL
+                        &dirinit,
+#else
                         NULL,
+#endif
                         var,
                         pli,
                         dlist,
@@ -842,8 +887,12 @@ void av1_cdef_frame16bit(EncDecContext *context_ptr, SequenceControlSet *scs_ptr
     CdefList  dlist[MI_SIZE_64X64 * MI_SIZE_64X64];
     uint8_t * row_cdef, *prev_row_cdef, *curr_row_cdef;
     int32_t   cdef_count;
+#if SS_OPT_CDEF_APPL
+    const uint32_t sb_size = scs_ptr->static_config.super_block_size;
+#else
     int32_t   dir[CDEF_NBLOCKS][CDEF_NBLOCKS] = {{0}};
     int32_t   var[CDEF_NBLOCKS][CDEF_NBLOCKS] = {{0}};
+#endif
     int32_t   mi_wide_l2[3];
     int32_t   mi_high_l2[3];
     int32_t   xdec[3];
@@ -875,11 +924,12 @@ void av1_cdef_frame16bit(EncDecContext *context_ptr, SequenceControlSet *scs_ptr
     }
 
     for (int32_t fbr = 0; fbr < nvfb; fbr++) {
+#if !SS_OPT_CDEF_APPL
         for (int32_t pli = 0; pli < num_planes; pli++) {
             const int32_t block_height = (MI_SIZE_64X64 << mi_high_l2[pli]) + 2 * CDEF_VBORDER;
             fill_rect(colbuf[pli], CDEF_HBORDER, block_height, CDEF_HBORDER, CDEF_VERY_LARGE);
         }
-
+#endif
         int32_t cdef_left = 1;
         for (int32_t fbc = 0; fbc < nhfb; fbc++) {
             int32_t level, sec_strength;
@@ -888,6 +938,10 @@ void av1_cdef_frame16bit(EncDecContext *context_ptr, SequenceControlSet *scs_ptr
             int32_t cstart     = 0;
             curr_row_cdef[fbc] = 0;
 
+#if SS_OPT_CDEF_APPL
+            assert(pCs->mi_grid_base[MI_SIZE_64X64 * fbr * cm->mi_stride + MI_SIZE_64X64 * fbc] != NULL && "CDEF ERROR: Skipping Current FB");
+            assert(pCs->mi_grid_base[MI_SIZE_64X64 * fbr * cm->mi_stride + MI_SIZE_64X64 * fbc]->mbmi.cdef_strength != -1 && "CDEF ERROR: Skipping Current FB");
+#else
             //WAHT IS THIS  ?? CHKN -->for
             if (pCs->mi_grid_base[MI_SIZE_64X64 * fbr * cm->mi_stride + MI_SIZE_64X64 * fbc] ==
                     NULL ||
@@ -897,7 +951,7 @@ void av1_cdef_frame16bit(EncDecContext *context_ptr, SequenceControlSet *scs_ptr
                 SVT_LOG("\n\n\nCDEF ERROR: Skipping Current FB\n\n\n");
                 continue;
             }
-
+#endif
             if (!cdef_left)
                 cstart =
                     -CDEF_HBORDER; //CHKN if the left block has not been filtered, then we can use samples on the left as input.
@@ -949,6 +1003,27 @@ void av1_cdef_frame16bit(EncDecContext *context_ptr, SequenceControlSet *scs_ptr
                 continue;
             }
 
+#if SS_OPT_CDEF_APPL
+            int dirinit = !(ppcs->cdef_ctrls.use_reference_cdef_fs);
+            // When SB 128 is used, the search for certain blocks is skipped, so dir/var info is not generated
+            // In those cases, must generate info here
+            if (sb_size == 128) {
+                const uint32_t lc = MI_SIZE_64X64 * fbc;
+                const uint32_t lr = MI_SIZE_64X64 * fbr;
+                ModeInfo **mi = pCs->mi_grid_base + lr * cm->mi_stride + lc;
+                const MbModeInfo *mbmi = &mi[0]->mbmi;
+                const BlockSize  sb_type = mbmi->block_mi.sb_type;
+                if (((fbc & 1) &&
+                    (sb_type == BLOCK_128X128 ||
+                        sb_type == BLOCK_128X64)) ||
+                        ((fbr & 1) &&
+                    (sb_type == BLOCK_128X128 ||
+                        sb_type == BLOCK_64X128)))
+                    dirinit = 0;
+            }
+            uint8_t(*dir)[CDEF_NBLOCKS] = (uint8_t(*)[CDEF_NBLOCKS])&(pCs->cdef_dir_data[fbr * nhfb + fbc].dir[0][0]);
+            int32_t(*var)[CDEF_NBLOCKS] = (int32_t(*)[CDEF_NBLOCKS])&(pCs->cdef_dir_data[fbr * nhfb + fbc].var[0][0]);
+#endif
             curr_row_cdef[fbc] = 1;
             for (int32_t pli = 0; pli < num_planes; pli++) {
                 int32_t coffset;
@@ -957,12 +1032,12 @@ void av1_cdef_frame16bit(EncDecContext *context_ptr, SequenceControlSet *scs_ptr
                 int32_t sec_damping = pri_damping;
                 int32_t hsize       = nhb << mi_wide_l2[pli];
                 int32_t vsize       = nvb << mi_high_l2[pli];
-
+#if !SS_OPT_CDEF_APPL
                 if (pli) {
                     level        = uv_level;
                     sec_strength = uv_sec_strength;
                 }
-
+#endif
                 if (fbc == nhfb - 1)
                     cend = hsize;
                 else
@@ -974,6 +1049,7 @@ void av1_cdef_frame16bit(EncDecContext *context_ptr, SequenceControlSet *scs_ptr
                     rend = vsize + CDEF_VBORDER;
 
                 coffset = fbc * MI_SIZE_64X64 << mi_wide_l2[pli];
+#if !SS_OPT_CDEF_APPL
                 if (fbc == nhfb - 1) {
                     /* On the last superblock column, fill in the right border with
                     CDEF_VERY_LARGE to avoid filtering with the outside. */
@@ -992,7 +1068,7 @@ void av1_cdef_frame16bit(EncDecContext *context_ptr, SequenceControlSet *scs_ptr
                               hsize + 2 * CDEF_HBORDER,
                               CDEF_VERY_LARGE);
                 }
-
+#endif
                 uint16_t *rec_buff   = 0;
                 uint32_t  rec_stride = 0;
 
@@ -1004,11 +1080,18 @@ void av1_cdef_frame16bit(EncDecContext *context_ptr, SequenceControlSet *scs_ptr
                 case 1:
                     rec_buff   = recon_buffer_cb;
                     rec_stride = recon_picture_ptr->stride_cb;
-
+#if SS_OPT_CDEF_APPL
+                    level        = uv_level;
+                    sec_strength = uv_sec_strength;
+#endif
                     break;
                 case 2:
                     rec_buff   = recon_buffer_cr;
                     rec_stride = recon_picture_ptr->stride_cr;
+#if SS_OPT_CDEF_APPL
+                    level        = uv_level;
+                    sec_strength = uv_sec_strength;
+#endif
                     break;
                 }
 
@@ -1141,6 +1224,11 @@ void av1_cdef_frame16bit(EncDecContext *context_ptr, SequenceControlSet *scs_ptr
                               CDEF_VERY_LARGE);
                 }
 
+#if SS_OPT_CDEF_APPL
+                // if ppcs->cdef_ctrls.use_reference_cdef_fs is true, then search was not performed
+                // Therefore, need to make sure dir and var are initialized
+                if (level || sec_strength || !dirinit)
+#endif
                 svt_cdef_filter_fb(NULL,
                                    &rec_buff[rec_stride * (MI_SIZE_64X64 * fbr << mi_high_l2[pli]) +
                                              (fbc * MI_SIZE_64X64 << mi_wide_l2[pli])],
@@ -1149,7 +1237,11 @@ void av1_cdef_frame16bit(EncDecContext *context_ptr, SequenceControlSet *scs_ptr
                                    xdec[pli],
                                    ydec[pli],
                                    dir,
+#if SS_OPT_CDEF_APPL
+                                   &dirinit,
+#else
                                    NULL,
+#endif
                                    var,
                                    pli,
                                    dlist,
@@ -1529,6 +1621,17 @@ void finish_cdef_search(EncDecContext *context_ptr, PictureControlSet *pcs_ptr,
     }
 
     nb_strength_bits = 0;
+#if FTR_CDEF_BIAS_ZERO_COST
+    // Scale down the cost of the (0,0) filter strength to bias selection towards off.
+    // When off, can save the cost of the application.
+    if (cdef_ctrls->zero_fs_cost_bias) {
+        const uint16_t factor = cdef_ctrls->zero_fs_cost_bias;
+        for (i = 0; i < sb_count; i++) {
+            mse[0][i][0] = (factor * mse[0][i][0]) >> 6;
+            mse[1][i][0] = (factor * mse[1][i][0]) >> 6;
+        }
+    }
+#endif
     /* Search for different number of signalling bits. */
     for (i = 0; i <= 3; i++) {
 #if SS_OPT_CDEF

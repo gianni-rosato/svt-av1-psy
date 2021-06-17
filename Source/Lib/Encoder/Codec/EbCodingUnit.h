@@ -264,7 +264,9 @@ typedef struct MacroBlockD {
     uint8_t     n8_w, n8_h;
     uint8_t     n4_w, n4_h; // for warped motion
     uint8_t     ref_mv_count[MODE_CTX_REF_FRAMES];
+#if !LIGHT_PD1
     CandidateMv final_ref_mv_stack[MAX_REF_MV_STACK_SIZE];
+#endif
     uint8_t     is_sec_rect;
     int8_t      up_available;
     int8_t      left_available;
@@ -406,6 +408,18 @@ typedef struct TplStats {
     MV       mv;
     uint64_t ref_frame_poc;
 } TplStats;
+
+#if SS_OPT_TPL
+typedef struct TplSrcStats {
+    int64_t  srcrf_dist;
+    int64_t  srcrf_rate;
+    uint64_t ref_frame_poc;
+    MV       mv;
+    uint8_t  best_mode;
+    int32_t  best_rf_idx;
+    PredictionMode best_intra_mode;
+} TplSrcStats;
+#endif
 typedef struct SuperBlock {
     EbDctor                   dctor;
     struct PictureControlSet *pcs_ptr;

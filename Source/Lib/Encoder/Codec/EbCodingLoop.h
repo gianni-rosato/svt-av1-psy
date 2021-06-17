@@ -30,6 +30,12 @@ extern EbErrorType mode_decision_sb_light_pd0(SequenceControlSet *scs_ptr, Pictu
     uint16_t sb_origin_x, uint16_t sb_origin_y, uint32_t sb_addr,
     ModeDecisionContext *context_ptr);
 #endif
+#if LIGHT_PD1
+extern void mode_decision_sb_light_pd1(PictureControlSet *pcs_ptr,
+                                    const MdcSbData *const mdcResultTbPtr, SuperBlock *sb_ptr,
+                                    uint16_t sb_origin_x, uint16_t sb_origin_y, uint32_t sb_addr,
+                                    ModeDecisionContext *context_ptr);
+#endif
 extern EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
                                     const MdcSbData *const mdcResultTbPtr, SuperBlock *sb_ptr,
                                     uint16_t sb_origin_x, uint16_t sb_origin_y, uint32_t sb_addr,

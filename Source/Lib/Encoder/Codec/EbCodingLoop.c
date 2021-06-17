@@ -30,7 +30,9 @@
 #if !OPT_INLINE_FUNCS
 void av1_set_ref_frame(MvReferenceFrame *rf, int8_t ref_frame_type);
 #endif
+#if !LIGHT_PD1
 uint8_t av1_drl_ctx(const CandidateMv *ref_mv_stack, int32_t ref_idx);
+#endif
 extern void get_recon_pic(PictureControlSet* pcs_ptr, EbPictureBufferDesc** recon_ptr, EbBool is_highbd);
 
 /*******************************************
@@ -3158,6 +3160,10 @@ EB_EXTERN void av1_encdec_update(SequenceControlSet *scs, PictureControlSet *pcs
 #if FTR_INTRA_DETECTOR
             if (blk_ptr->prediction_mode_flag == INTRA_MODE)
                 ctx->tot_intra_coded_area += blk_geom->bwidth * blk_geom->bheight;
+#endif
+#if FTR_COEFF_DETECTOR
+            if (blk_ptr->block_has_coeff == 0)
+                ctx->tot_skip_coded_area += blk_geom->bwidth * blk_geom->bheight;
 #endif
             pcs->parent_pcs_ptr->pcs_total_rate += blk_ptr->total_rate;
 #if FTR_BYPASS_ENCDEC
