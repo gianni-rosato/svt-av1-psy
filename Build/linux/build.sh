@@ -72,8 +72,6 @@ For each enable-*, there is a disable-* option, and vice versa.
     --c-only, c-only    Compile only C code
     --clean, clean      Remove build and Bin folders
     --debug, debug      Build debug
-    --debug-macros,     Macros to pass to SVT_AV1_DEBUG_MACROS_APPEND
-    debug-macros=*
     --disable-avx512,   Disable building avx512 code (Default)
     disable-avx512
     --enable-avx512,    Enable building avx512 code (if supported)
@@ -269,7 +267,6 @@ parse_options() {
             shift && ${IN_SCRIPT:-false} && exit
             ;;
         debug) build_debug=true && shift ;;
-        debug-macros=*) CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS -DSVT_AV1_DEBUG_MACROS_APPEND=${1#*=}" && shift ;;
         disable*)
             case ${1#disable-} in
             avx512) CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS -DENABLE_AVX512=OFF" ;;
@@ -378,7 +375,7 @@ else
             toolchain) parse_options toolchain="$2" && shift ;;
             test) parse_options tests && shift ;;
             verbose) parse_options verbose && shift ;;
-            asm | bindir | cc | cxx | debug-macros | gen | jobs | pgo-dir | pgo-videos | prefix | sanitizer | target_system)
+            asm | bindir | cc | cxx | gen | jobs | pgo-dir | pgo-videos | prefix | sanitizer | target_system)
                 parse_equal_option "$1" "$2"
                 case $1 in
                 *=*) shift ;;
@@ -478,7 +475,6 @@ else
             c-only) parse_options c-only && shift ;;
             clean) parse_options clean && shift ;;
             debug) parse_options debug && shift ;;
-            debug-macros=*) parse_options debug-macros="${1#*=}" && shift;;
             disable* | enable*) parse_options "$match" && shift ;;
             gen=*) parse_options gen="${1#*=}" && shift ;;
             help) parse_options help && shift ;;
