@@ -80,6 +80,9 @@ typedef struct SequenceControlSet {
       lad mg=2: delay the first MG (1-16) until the next 2 MGs(17-48) are gop , TF, and ME ready
     */
     uint8_t lad_mg;   //delay all pictures within a given MG, until N future MGs are  gop , TF, and ME ready
+#if FTR_LAD_INPUT
+    uint8_t tpl_lad_mg;   //delay all pictures within a given MG, until N future MGs are  gop , TF, and ME ready used for tpl
+#endif
     /*!< 1: Specifies that loop restoration filter should use boundary pixels in the search.  Must be
             set at the sequence level because it requires a buffer allocation to copy the pixels
             to be used in the search.

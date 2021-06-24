@@ -1575,7 +1575,11 @@ EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr,
 #if SS_OPT_TPL
 
 #if SS_MEM_TPL
+#if FTR_LAD_INPUT
+        if (init_data_ptr->tpl_lad_mg > 0)
+#else
         if (init_data_ptr->lad_mg > 0)
+#endif
 #endif
         EB_MALLOC_ARRAY(object_ptr->tpl_src_stats, (uint32_t)picture_width_in_mb * (uint32_t)picture_height_in_mb );
 #if SS_MEM_TPL

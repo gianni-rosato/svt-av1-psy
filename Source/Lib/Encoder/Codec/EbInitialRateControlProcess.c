@@ -288,7 +288,14 @@ void store_extended_group(
     uint8_t is_gop_end = 0;
     int64_t last_intra_mg_id;
 #if FTR_1PAS_VBR
+#if FTR_LAD_INPUT
+    uint32_t mg_size                = 1 << pcs->scs_ptr->static_config.hierarchical_levels;
+    uint32_t limited_tpl_group_size = pcs->slice_type == I_SLICE
+        ? MIN(1 + (pcs->scs_ptr->tpl_lad_mg + 1) * mg_size, pcs->ext_group_size)
+        : MIN((pcs->scs_ptr->tpl_lad_mg + 1) * mg_size, pcs->ext_group_size);
+#else
     uint32_t limited_tpl_group_size = pcs->slice_type == I_SLICE ? MIN(33, pcs->ext_group_size) : MIN(32, pcs->ext_group_size);
+#endif
     for (uint32_t i = 0; i < limited_tpl_group_size; i++) {
 #else
     for (uint32_t i = 0; i < pcs->ext_group_size; i++) {

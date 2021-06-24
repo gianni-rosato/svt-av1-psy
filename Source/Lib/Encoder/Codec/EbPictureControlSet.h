@@ -1205,8 +1205,11 @@ typedef struct PictureControlSetInitData {
   uint8_t  scene_change_detection;
 #endif
 #if SS_MEM_TPL
-    uint8_t lad_mg;
-
+#if FTR_LAD_INPUT
+  uint8_t tpl_lad_mg;
+#else
+  uint8_t lad_mg;
+#endif
 #endif
 } PictureControlSetInitData;
 

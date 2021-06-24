@@ -1419,7 +1419,11 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
 
 #endif
 #if SS_MEM_TPL
+#if FTR_LAD_INPUT
+        input_data.tpl_lad_mg = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->tpl_lad_mg;
+#else
         input_data.lad_mg = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->lad_mg;
+#endif
 #endif
 
         EB_NEW(
@@ -2437,15 +2441,15 @@ static void update_look_ahead(SequenceControlSet *scs_ptr) {
     picture_in_future = MAX(0, (int32_t)(picture_in_future - (1 + mg_size)));
     // Specify the number of mini-gops to be used in the sliding window. 0: 1 mini-gop, 1: 2 mini-gops and 3: 3 mini-gops
     scs_ptr->lad_mg = (picture_in_future + (mg_size + 1) / 2) / (mg_size + 1);
-    // Since TPL is tuned for 1,2 and 3 mini-gops, we make sure lad_mg is larger MIN_LAD_MG
-    if (scs_ptr->lad_mg < MIN_LAD_MG) {
-        scs_ptr->lad_mg = MIN_LAD_MG;
+    // Since TPL is tuned for 0, 1 and 2 mini-gops, we make sure lad_mg is not smaller than tpl_lad_mg
+    if (scs_ptr->lad_mg < scs_ptr->tpl_lad_mg) {
+        scs_ptr->lad_mg = scs_ptr->tpl_lad_mg;
         scs_ptr->static_config.look_ahead_distance = (1 + mg_size) * (scs_ptr->lad_mg + 1) + scs_ptr->scd_delay + eos_delay;
         SVT_LOG("SVT [Warning]: Lookahead distance is not long enough to get best bdrate trade off. Force the look_ahead_distance to be %d\n",
             scs_ptr->static_config.look_ahead_distance);
     }
-    else if (scs_ptr->lad_mg > MIN_LAD_MG && (scs_ptr->static_config.rate_control_mode == 0 || use_input_stat(scs_ptr))) {
-        scs_ptr->lad_mg = MIN_LAD_MG;
+    else if (scs_ptr->lad_mg > scs_ptr->tpl_lad_mg && (scs_ptr->static_config.rate_control_mode == 0 || use_input_stat(scs_ptr))) {
+        scs_ptr->lad_mg = scs_ptr->tpl_lad_mg;
         scs_ptr->static_config.look_ahead_distance = (1 + mg_size) * (scs_ptr->lad_mg + 1) + scs_ptr->scd_delay + eos_delay;
         SVT_LOG("SVT [Warning]: For CRF or 2PASS RC mode, the maximum needed Lookahead distance is %d. Force the look_ahead_distance to be %d\n",
             scs_ptr->static_config.look_ahead_distance,
@@ -3419,23 +3423,25 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
 #if FIX_LOW_DELAY
     // no future minigop is used for lowdelay prediction structure
     if (scs_ptr->static_config.pred_structure == EB_PRED_LOW_DELAY_P)
-        scs_ptr->lad_mg = 0;
+        scs_ptr->lad_mg = scs_ptr->tpl_lad_mg = 0;
     else
 #endif
-    if (scs_ptr->static_config.rate_control_mode == 0) {
+     {
 #if OPT_COMBINE_TPL_FOR_LAD
-        uint8_t lad_mg = 1; // Specify the number of mini-gops to be used as LAD. 0: 1 mini-gop, 1: 2 mini-gops and 3: 3 mini-gops
+        uint8_t tpl_lad_mg = 1; // Specify the number of mini-gops to be used as LAD. 0: 1 mini-gop, 1: 2 mini-gops and 3: 3 mini-gops
         if (scs_ptr->static_config.enc_mode <= ENC_M10)
-            lad_mg = 1;
+            tpl_lad_mg = 1;
         else
-            lad_mg = 0;
+            tpl_lad_mg = 0;
+        scs_ptr->tpl_lad_mg = MIN(2, tpl_lad_mg);// lad_mg is capped to 2 because tpl was optimised only for 1,2 and 3 mini-gops
 #else
         uint8_t lad_mg = 1; // Specify the number of mini-gops to be used as LAD. 0: 1 mini-gop, 1: 2 mini-gops and 3: 3 mini-gops
 #endif
-        scs_ptr->lad_mg = MIN(2, lad_mg);// lad_mg is capped to 2 because tpl was optimised only for 1,2 and 3 mini-gops
-    } else {
-        // update the look ahead size
-        update_look_ahead(scs_ptr);
+        if (scs_ptr->static_config.rate_control_mode == 0)
+            scs_ptr->lad_mg = scs_ptr->tpl_lad_mg;
+        else
+            // update the look ahead size
+            update_look_ahead(scs_ptr);
     }
 #endif
     // In two pass encoding, the first pass uses sb size=64. Also when tpl is used

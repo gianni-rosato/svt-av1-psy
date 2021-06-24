@@ -1800,7 +1800,11 @@ void tpl_mc_flow_dispenser_sb_generic(
 
             }
 #if SS_MEM_TPL
+#if FTR_LAD_INPUT
+            if (scs_ptr->tpl_lad_mg > 0) {
+#else
             if (scs_ptr->lad_mg > 0){
+#endif
 #endif
             //store src based stats
             tpl_src_stats->srcrf_dist = tpl_stats.srcrf_dist;
@@ -3584,7 +3588,11 @@ EbErrorType tpl_mc_flow(EncodeContext *encode_context_ptr, SequenceControlSet *s
 
 
 #if SS_MEM_TPL
+#if FTR_LAD_INPUT
+        if (scs_ptr->tpl_lad_mg > 0)
+#else
         if (scs_ptr->lad_mg > 0)
+#endif
 #endif
             if (tpl_on)
                 pcs_ptr->tpl_group[frame_idx]->tpl_src_data_ready = 1;
