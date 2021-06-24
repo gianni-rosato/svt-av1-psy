@@ -103,6 +103,10 @@ typedef struct {
     int min_gf_interval;
     int max_gf_interval;
     int static_scene_max_gf_interval;
+#if FTR_1PASS_CBR_RT
+    int frames_till_gf_update_due;
+    int onepass_cbr_mode; // 0: not 1pass cbr, 1: 1pass cbr normal, 2: 1pass cbr real time
+#endif
     int baseline_gf_interval;
     int constrained_gf_group;
     int frames_to_key;
@@ -211,7 +215,20 @@ typedef struct {
     uint64_t rate_average_periodin_frames;
 #endif
 } RATE_CONTROL;
+#if FTR_1PAS_VBR
+typedef struct RateControlIntervalParamContext {
+    EbDctor  dctor;
+    uint64_t first_poc;
+    uint64_t last_poc;
 
+    // Projected total bits available for a key frame group of frames
+    int64_t kf_group_bits;
+    // Error score of frames still to be coded in kf group
+    int64_t kf_group_error_left;
+    int32_t processed_frame_number;
+    uint8_t end_of_seq_seen;
+} RateControlIntervalParamContext;
+#endif
 /**************************************
  * Input Port Types
  **************************************/

@@ -270,7 +270,12 @@ void accumulate_mv_stats(const MV best_mv, const FULLPEL_MV mv, const int mb_row
 //                                         update its value and its position
 //                                         in the buffer.
 static void update_firstpass_stats(PictureParentControlSet *pcs_ptr, const FRAME_STATS *const stats,
-                                   const double raw_err_stdev, const int64_t ts_duration) {
+                                   const double raw_err_stdev,
+#if FTR_2PASS_1PASS_UNIFICATION
+                                    const double ts_duration) {
+#else
+                                    const int64_t ts_duration) {
+#endif
     SequenceControlSet *scs_ptr = pcs_ptr->scs_ptr;
     TWO_PASS *          twopass = &scs_ptr->twopass;
 
@@ -348,10 +353,13 @@ static void update_firstpass_stats(PictureParentControlSet *pcs_ptr, const FRAME
                  twopass->stats_buf_ctx,
                  offsetof(STATS_BUFFER_CTX, stats_in_end_write),
                  pcs_ptr->picture_number);
+#if FTR_1PAS_VBR
+    if (twopass->stats_buf_ctx->total_stats != NULL && use_output_stat(scs_ptr)) {
+#else
     if (twopass->stats_buf_ctx->total_stats != NULL) {
+#endif
         svt_av1_accumulate_stats(twopass->stats_buf_ctx->total_stats, &fps);
     }
-
     /*In the case of two pass, first pass uses it as a circular buffer,
    * when LAP is enabled it is used as a linear buffer*/
     twopass->stats_buf_ctx->stats_in_end_write++;
@@ -436,8 +444,11 @@ void setup_firstpass_data_seg(PictureParentControlSet *ppcs_ptr, int32_t segment
         }
     }
 }
-
+#if FTR_2PASS_1PASS_UNIFICATION
+void first_pass_frame_end(PictureParentControlSet *pcs_ptr, const double ts_duration) {
+#else
 void first_pass_frame_end(PictureParentControlSet *pcs_ptr, const int64_t ts_duration) {
+#endif
     SequenceControlSet *scs_ptr = pcs_ptr->scs_ptr;
     const uint32_t      mb_cols = (scs_ptr->seq_header.max_frame_width + 16 - 1) / 16;
     const uint32_t      mb_rows = (scs_ptr->seq_header.max_frame_height + 16 - 1) / 16;
@@ -721,8 +732,94 @@ EbErrorType first_pass_signal_derivation_mode_decision_config_kernel(PictureCont
 #endif
     return return_error;
 }
+#if FTR_2PASS_1PASS_UNIFICATION
+/************************************************
+ * Set ME/HME Params for the first pass encoding
+ ************************************************/
+void *set_first_pass_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *pcs_ptr,
+    SequenceControlSet *scs_ptr, EbInputResolution input_resolution) {
+    UNUSED(scs_ptr);
+    // HME/ME default settings
+    me_context_ptr->number_hme_search_region_in_width = 2;
+    me_context_ptr->number_hme_search_region_in_height = 2;
+    me_context_ptr->reduce_hme_l0_sr_th_min = 0;
+    me_context_ptr->reduce_hme_l0_sr_th_max = 0;
+
+    // Set the minimum ME search area
+    if (pcs_ptr->scs_ptr->enc_mode_2ndpass <= ENC_M4) {
+        me_context_ptr->search_area_width = me_context_ptr->search_area_height = 8;
+        me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 8;
+    }
+    else {
+        me_context_ptr->search_area_width = 8;
+        me_context_ptr->search_area_height = 3;
+        me_context_ptr->max_me_search_width = 8;
+        me_context_ptr->max_me_search_height = 5;
+    }
+
+    if (pcs_ptr->input_resolution < INPUT_SIZE_1080p_RANGE) {
+        me_context_ptr->hme_level0_total_search_area_width = me_context_ptr->hme_level0_total_search_area_height = 8;
+        me_context_ptr->hme_level0_max_total_search_area_width = me_context_ptr->hme_level0_max_total_search_area_height = 192;
+    }
+    else {
+        me_context_ptr->hme_level0_total_search_area_width = me_context_ptr->hme_level0_total_search_area_height = 16;
+        me_context_ptr->hme_level0_max_total_search_area_width = me_context_ptr->hme_level0_max_total_search_area_height = 192;
+    }
+    me_context_ptr->hme_level0_total_search_area_width = me_context_ptr->hme_level0_total_search_area_height = me_context_ptr->hme_level0_total_search_area_width / 2;
+    me_context_ptr->hme_level0_max_total_search_area_width = me_context_ptr->hme_level0_max_total_search_area_height = me_context_ptr->hme_level0_max_total_search_area_width / 2;
+
+    me_context_ptr->hme_level0_max_search_area_in_width_array[0] =
+        me_context_ptr->hme_level0_max_search_area_in_width_array[1] =
+        me_context_ptr->hme_level0_max_total_search_area_width / me_context_ptr->number_hme_search_region_in_width;
+    me_context_ptr->hme_level0_max_search_area_in_height_array[0] =
+        me_context_ptr->hme_level0_max_search_area_in_height_array[1] =
+        me_context_ptr->hme_level0_max_total_search_area_height / me_context_ptr->number_hme_search_region_in_height;
+    me_context_ptr->hme_level0_search_area_in_width_array[0] =
+        me_context_ptr->hme_level0_search_area_in_width_array[1] =
+        me_context_ptr->hme_level0_total_search_area_width / me_context_ptr->number_hme_search_region_in_width;
+    me_context_ptr->hme_level0_search_area_in_height_array[0] =
+        me_context_ptr->hme_level0_search_area_in_height_array[1] =
+        me_context_ptr->hme_level0_total_search_area_height / me_context_ptr->number_hme_search_region_in_height;
+
+    me_context_ptr->hme_level1_search_area_in_width_array[0] =
+        me_context_ptr->hme_level1_search_area_in_width_array[1] = 8;
+    me_context_ptr->hme_level1_search_area_in_height_array[0] =
+        me_context_ptr->hme_level1_search_area_in_height_array[1] = 3;
+
+    me_context_ptr->hme_level2_search_area_in_width_array[0] =
+        me_context_ptr->hme_level2_search_area_in_width_array[1] = 8;
+
+    me_context_ptr->hme_level2_search_area_in_height_array[0] =
+        me_context_ptr->hme_level2_search_area_in_height_array[1] = 3;
+
+    me_context_ptr->hme_level1_search_area_in_width_array[0] =
+        me_context_ptr->hme_level1_search_area_in_width_array[1] =
+        me_context_ptr->hme_level1_search_area_in_height_array[0] =
+        me_context_ptr->hme_level1_search_area_in_height_array[1] = 16 / 2;
+
+    me_context_ptr->hme_level2_search_area_in_width_array[0] =
+        me_context_ptr->hme_level2_search_area_in_width_array[1] =
+        me_context_ptr->hme_level2_search_area_in_height_array[0] =
+        me_context_ptr->hme_level2_search_area_in_height_array[1] = 16 / 2;
+
+    if (input_resolution <= INPUT_SIZE_720p_RANGE)
+        me_context_ptr->hme_decimation = pcs_ptr->enc_mode <= ENC_MRS ? ONE_DECIMATION_HME : TWO_DECIMATION_HME;
+    else
+        me_context_ptr->hme_decimation = TWO_DECIMATION_HME;
+
+    // Scale up the MIN ME area if low frame rate
+    uint8_t  low_frame_rate_flag = (scs_ptr->static_config.frame_rate >> 16) < 50 ? 1 : 0;
+    if (low_frame_rate_flag) {
+        me_context_ptr->search_area_width = (me_context_ptr->search_area_width * 3) / 2;
+        me_context_ptr->search_area_height = (me_context_ptr->search_area_height * 3) / 2;
+    }
+
+    return NULL;
+};
+#else
 void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *pcs_ptr,
                            SequenceControlSet *scs_ptr, EbInputResolution input_resolution);
+#endif
 void *set_me_hme_params_from_config(SequenceControlSet *scs_ptr, MeContext *me_context_ptr);
 void  set_me_hme_ref_prune_ctrls(MeContext *context_ptr, uint8_t prune_level);
 void  set_me_sr_adjustment_ctrls(MeContext *context_ptr, uint8_t sr_adjustment_level);
@@ -741,8 +838,13 @@ EbErrorType first_pass_signal_derivation_me_kernel(SequenceControlSet *       sc
     // Set ME/HME search regions
 
     if (scs_ptr->static_config.use_default_me_hme)
+#if FTR_2PASS_1PASS_UNIFICATION
+        set_first_pass_me_hme_params_oq(
+            context_ptr->me_context_ptr, pcs_ptr, scs_ptr, scs_ptr->input_resolution);
+#else
         set_me_hme_params_oq(
             context_ptr->me_context_ptr, pcs_ptr, scs_ptr, scs_ptr->input_resolution);
+#endif
     else
         set_me_hme_params_from_config(scs_ptr, context_ptr->me_context_ptr);
 

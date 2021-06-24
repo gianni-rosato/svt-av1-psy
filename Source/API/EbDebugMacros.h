@@ -39,6 +39,17 @@ extern "C" {
 #define FTR_1PASS_CBR          1 // to support 1pass CBR
 #define SVT_05          1
 #define PRIVATE_MACROS   1
+#define FTR_1PASS_CBR_RT       1 // to support 1pass CBR real time mode
+#define FTR_1PAS_VBR                1 // 1 PASS VBR with ability to use LAD stats
+                                      // Calculate stat total in 1 pass VBR based on the look ahead
+#define FTR_LAD_INPUT               1 // Add look ahead as an input to the encoder
+#define FTR_2PASS_1PASS_UNIFICATION 1 // Unifty the VBR algorithms between 2 pass and 1 pass
+                                      // Create a ME functions for the IPPP processing of 2PASS and 1 PASS VBR/CBR
+
+#define FIX_LOW_DELAY               1 // Fix the 6L, 5L and 4L with LOW_DELAY_P
+
+#define SVT_05          1
+#define PRIVATE_MACROS   1
 
 #define FIX_PA_REF_RELEASE_HANG               1 // Fix a hang that occured for incomplete MGs when MRP is ON
 #define FIX_QUANT_COEFF_BUFF                  1 // Fix how the quant coeff buffer is released, and cleanup the init

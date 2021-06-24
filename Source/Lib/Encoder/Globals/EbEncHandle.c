@@ -97,8 +97,9 @@
 #define ENCDEC_INPUT_PORT_MDC                                0
 #define ENCDEC_INPUT_PORT_ENCDEC                             1
 #define ENCDEC_INPUT_PORT_INVALID                           -1
+#if !FTR_LAD_INPUT
 #define TPL_LAD                                              0
-
+#endif
 /**************************************
  * Globals
  **************************************/
@@ -531,6 +532,7 @@ EbErrorType load_default_buffer_configuration_settings(
     scs_ptr->output_recon_buffer_fifo_init_count       = scs_ptr->reference_picture_buffer_init_count;
     scs_ptr->overlay_input_picture_buffer_init_count   = scs_ptr->static_config.enable_overlays ?
                                                                           (2 << scs_ptr->static_config.hierarchical_levels) + SCD_LAD : 1;
+#if !FTR_LAD_INPUT 
     //Future frames window in Scene Change Detection (SCD) / TemporalFiltering
     scs_ptr->scd_delay = 0;
 
@@ -557,7 +559,7 @@ EbErrorType load_default_buffer_configuration_settings(
     // Delay needed for SCD , 1first pass of (2pass and 1pass VBR)
     if (scs_ptr->static_config.scene_change_detection || use_output_stat(scs_ptr) || scs_ptr->lap_enabled )
         scs_ptr->scd_delay = MAX(scs_ptr->scd_delay, 2);
-
+#endif
     // bistream buffer will be allocated at run time. app will free the buffer once written to file.
     scs_ptr->output_stream_buffer_fifo_init_count = PICTURE_DECISION_PA_REFERENCE_QUEUE_MAX_DEPTH;
 
@@ -2384,8 +2386,74 @@ void set_default_configuration_parameters(
 
     return;
 }
+#if FTR_LAD_INPUT
+/*
+Calculates the default LAD value
+*/
+static uint32_t compute_default_look_ahead(
+    EbSvtAv1EncConfiguration*   config) {
+    int32_t lad;
+    uint32_t mg_size = 1 << config->hierarchical_levels;
 
+    /*To accomodate FFMPEG EOS, 1 frame delay is needed in Resource coordination.
+       note that we have the option to not add 1 frame delay of Resource Coordination. In this case we have wait for first I frame
+       to be released back to be able to start first base(16). Anyway poc16 needs to wait for poc0 to finish.*/
+    uint32_t eos_delay = 1;
+    uint32_t max_tf_delay = 6;
 
+    if (config->rate_control_mode == 0)
+        lad = (1 + mg_size) * (1 + MIN_LAD_MG) + max_tf_delay + eos_delay;
+    else
+        lad = (1 + mg_size) * (1 + RC_DEFAULT_LAD_MG) + max_tf_delay + eos_delay;
+
+    lad = lad > MAX_LAD ? MAX_LAD : lad; // clip to max allowed lad
+    return lad;
+}
+/*
+Updates the LAD value
+*/
+static void update_look_ahead(SequenceControlSet *scs_ptr) {
+
+    /*To accomodate FFMPEG EOS, 1 frame delay is needed in Resource coordination.
+           note that we have the option to not add 1 frame delay of Resource Coordination. In this case we have wait for first I frame
+           to be released back to be able to start first base(16). Anyway poc16 needs to wait for poc0 to finish.*/
+    uint32_t eos_delay = 1;
+
+    uint32_t mg_size = 1 << scs_ptr->static_config.hierarchical_levels;
+    if (scs_ptr->static_config.look_ahead_distance - (eos_delay + scs_ptr->scd_delay) < mg_size + 1) {
+        // Not enough pictures to form the minigop. update mg_size
+        scs_ptr->static_config.look_ahead_distance = mg_size + 1 + (eos_delay + scs_ptr->scd_delay);
+        SVT_LOG("SVT [Warning]: Minimum lookahead distance to run %dL with TF %d is %d. Force the look_ahead_distance to be %d\n",
+            scs_ptr->static_config.hierarchical_levels + 1,
+            scs_ptr->static_config.tf_level == 0 ? 0 : 1,
+            scs_ptr->static_config.look_ahead_distance,
+            scs_ptr->static_config.look_ahead_distance);
+    }
+
+    int32_t picture_in_future = scs_ptr->static_config.look_ahead_distance;
+    // Subtract pictures used for scd_delay and eos_delay
+    picture_in_future = MAX(0, (int32_t)(picture_in_future - eos_delay - scs_ptr->scd_delay));
+    // Subtract pictures used for minigop formation. Unit= 1(provision for a potential delayI)
+    picture_in_future = MAX(0, (int32_t)(picture_in_future - (1 + mg_size)));
+    // Specify the number of mini-gops to be used in the sliding window. 0: 1 mini-gop, 1: 2 mini-gops and 3: 3 mini-gops
+    scs_ptr->lad_mg = (picture_in_future + (mg_size + 1) / 2) / (mg_size + 1);
+    // Since TPL is tuned for 1,2 and 3 mini-gops, we make sure lad_mg is larger MIN_LAD_MG
+    if (scs_ptr->lad_mg < MIN_LAD_MG) {
+        scs_ptr->lad_mg = MIN_LAD_MG;
+        scs_ptr->static_config.look_ahead_distance = (1 + mg_size) * (scs_ptr->lad_mg + 1) + scs_ptr->scd_delay + eos_delay;
+        SVT_LOG("SVT [Warning]: Lookahead distance is not long enough to get best bdrate trade off. Force the look_ahead_distance to be %d\n",
+            scs_ptr->static_config.look_ahead_distance);
+    }
+    else if (scs_ptr->lad_mg > MIN_LAD_MG && (scs_ptr->static_config.rate_control_mode == 0 || use_input_stat(scs_ptr))) {
+        scs_ptr->lad_mg = MIN_LAD_MG;
+        scs_ptr->static_config.look_ahead_distance = (1 + mg_size) * (scs_ptr->lad_mg + 1) + scs_ptr->scd_delay + eos_delay;
+        SVT_LOG("SVT [Warning]: For CRF or 2PASS RC mode, the maximum needed Lookahead distance is %d. Force the look_ahead_distance to be %d\n",
+            scs_ptr->static_config.look_ahead_distance,
+            scs_ptr->static_config.look_ahead_distance);
+
+    }
+}
+#endif
 /*
  * Control TF
  */
@@ -3125,6 +3193,11 @@ void tf_controls(SequenceControlSet *scs_ptr, uint8_t tf_level) {
         assert(0);
         break;
     }
+#if FIX_LOW_DELAY
+    // Limit the future frames used in TF for lowdelay prediction structure
+    if (scs_ptr->static_config.pred_structure == EB_PRED_LOW_DELAY_P)
+        scs_ptr->static_config.tf_params_per_type[1].max_num_future_pics = 0;
+#endif
 }
 /*
  * Derive TF Params
@@ -3133,7 +3206,11 @@ void derive_tf_params(SequenceControlSet *scs_ptr) {
 
     // Do not perform TF if LD or 1 Layer or 1st pass
     uint8_t do_tf =
+#if FIX_LOW_DELAY
+        (scs_ptr->static_config.tf_level && scs_ptr->static_config.hierarchical_levels >= 1 && !use_output_stat(scs_ptr))
+#else
         (scs_ptr->static_config.tf_level && scs_ptr->static_config.pred_structure == EB_PRED_RANDOM_ACCESS && scs_ptr->static_config.hierarchical_levels >= 1 && !use_output_stat(scs_ptr))
+#endif
         ? 1 : 0;
 
     uint8_t tf_level = 0;
@@ -3234,6 +3311,9 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
         scs_ptr->enc_mode_2ndpass = scs_ptr->static_config.enc_mode ;
     if (use_output_stat(scs_ptr)) {
         scs_ptr->static_config.enc_mode = MAX_ENC_PRESET;
+#if FTR_LAD_INPUT
+        scs_ptr->static_config.look_ahead_distance = 0;
+#endif
         scs_ptr->static_config.enable_tpl_la = 0;
         scs_ptr->static_config.rate_control_mode = 0;
         scs_ptr->static_config.intra_refresh_type = 2;
@@ -3306,6 +3386,58 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
         scs_ptr->seq_header.max_frame_width*scs_ptr->seq_header.max_frame_height);
     // Set TF level
     derive_tf_params(scs_ptr);
+#if FTR_LAD_INPUT
+    if (use_output_stat(scs_ptr))
+        scs_ptr->static_config.hierarchical_levels = 0;
+    //Future frames window in Scene Change Detection (SCD) / TemporalFiltering
+    scs_ptr->scd_delay = 0;
+
+    // Update the scd_delay based on the the number of future frames @ ISLICE
+    // This case is needed for non-delayed Intra (intra_period_length == 0)
+    uint32_t scd_delay_islice = 0;
+    if (scs_ptr->static_config.intra_period_length == 0)
+        if (scs_ptr->static_config.tf_params_per_type[0].enabled)
+            scd_delay_islice =
+            MIN(scs_ptr->static_config.tf_params_per_type[0].num_future_pics + (scs_ptr->static_config.tf_params_per_type[0].noise_adjust_future_pics ? 3 : 0), // number of future picture(s) used for ISLICE + max picture(s) after noise-based adjustement (=3)
+                scs_ptr->static_config.tf_params_per_type[0].max_num_future_pics);
+
+
+    // Update the scd_delay based on the the number of future frames @ BASE
+    uint32_t scd_delay_base = 0;
+    if (scs_ptr->static_config.tf_params_per_type[1].enabled)
+        scd_delay_base =
+        MIN(scs_ptr->static_config.tf_params_per_type[1].num_future_pics + (scs_ptr->static_config.tf_params_per_type[1].noise_adjust_future_pics ? 3 : 0), // number of future picture(s) used for BASE + max picture(s) after noise-based adjustement (=3)
+            scs_ptr->static_config.tf_params_per_type[1].max_num_future_pics);
+
+    scs_ptr->scd_delay = MAX(scd_delay_islice, scd_delay_base);
+
+    // Update the scd_delay based on SCD, 1first pass
+    // Delay needed for SCD , 1first pass of (2pass and 1pass VBR)
+    if (scs_ptr->static_config.scene_change_detection || use_output_stat(scs_ptr) || scs_ptr->lap_enabled)
+        scs_ptr->scd_delay = MAX(scs_ptr->scd_delay, 2);
+
+#if FIX_LOW_DELAY
+    // no future minigop is used for lowdelay prediction structure
+    if (scs_ptr->static_config.pred_structure == EB_PRED_LOW_DELAY_P)
+        scs_ptr->lad_mg = 0;
+    else
+#endif
+    if (scs_ptr->static_config.rate_control_mode == 0) {
+#if OPT_COMBINE_TPL_FOR_LAD
+        uint8_t lad_mg = 1; // Specify the number of mini-gops to be used as LAD. 0: 1 mini-gop, 1: 2 mini-gops and 3: 3 mini-gops
+        if (scs_ptr->static_config.enc_mode <= ENC_M10)
+            lad_mg = 1;
+        else
+            lad_mg = 0;
+#else
+        uint8_t lad_mg = 1; // Specify the number of mini-gops to be used as LAD. 0: 1 mini-gop, 1: 2 mini-gops and 3: 3 mini-gops
+#endif
+        scs_ptr->lad_mg = MIN(2, lad_mg);// lad_mg is capped to 2 because tpl was optimised only for 1,2 and 3 mini-gops
+    } else {
+        // update the look ahead size
+        update_look_ahead(scs_ptr);
+    }
+#endif
     // In two pass encoding, the first pass uses sb size=64. Also when tpl is used
     // in 240P resolution, sb size is set to 64
     if (use_output_stat(scs_ptr) ||
@@ -3344,10 +3476,11 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     }
     //printf("\n\nGEOM:%i \n", scs_ptr->geom_idx);
 #endif
+#if !FTR_LAD_INPUT
    // scs_ptr->static_config.hierarchical_levels = (scs_ptr->static_config.rate_control_mode > 1) ? 3 : scs_ptr->static_config.hierarchical_levels;
     if (use_output_stat(scs_ptr))
         scs_ptr->static_config.hierarchical_levels = 0;
-
+#endif
     // Configure the padding
     scs_ptr->left_padding = BLOCK_SIZE_64 + 4;
     scs_ptr->top_padding = BLOCK_SIZE_64 + 4;
@@ -3387,7 +3520,7 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
    // Open loop intra done with TPL, data is not stored
     scs_ptr->in_loop_ois = 1;
 
-
+#if !FTR_LAD_INPUT
     //use a number of MGs ahead of current MG
 #if OPT_COMBINE_TPL_FOR_LAD
     uint8_t lad_mg = 1; // Specify the number of mini-gops to be used as LAD. 0: 1 mini-gop, 1: 2 mini-gops and 3: 3 mini-gops
@@ -3405,6 +3538,7 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
 #endif
     scs_ptr->lad_mg = MIN(2,lad_mg);// lad_mg is capped to 2 because tpl was optimised only for 1,2 and 3 mini-gops
 
+#endif
     // 1: Use boundary pixels in restoration filter search.
     // 0: Do not use boundary pixels in the restoration filter search.
     scs_ptr->use_boundaries_in_rest_search = 0;
@@ -3464,7 +3598,16 @@ void copy_api_from_app(
     scs_ptr->max_input_luma_height = config_struct->source_height;
     scs_ptr->frame_rate = ((EbSvtAv1EncConfiguration*)config_struct)->frame_rate;
     // SB Definitions
+#if FIX_LOW_DELAY
+    scs_ptr->static_config.pred_structure = ((EbSvtAv1EncConfiguration*)config_struct)->pred_structure;
+    // Tpl is disabled in low delay applications
+    if (scs_ptr->static_config.pred_structure == 0) {
+        ((EbSvtAv1EncConfiguration*)config_struct)->enable_tpl_la = 0;
+        SVT_WARN("TPL is disabled in low delay applications.\n");
+    }
+#else
     scs_ptr->static_config.pred_structure = 2; // Hardcoded(Cleanup)
+#endif
     scs_ptr->static_config.enable_qp_scaling_flag = 1;
     scs_ptr->max_blk_size = (uint8_t)64;
     scs_ptr->min_blk_size = (uint8_t)8;
@@ -3610,9 +3753,25 @@ void copy_api_from_app(
     }
 #endif
 #if FTR_1PASS_CBR
-    if (scs_ptr->static_config.rate_control_mode == 2 && !use_output_stat(scs_ptr) && !use_input_stat(scs_ptr))
-        scs_ptr->static_config.hierarchical_levels = 0;
+#if FIX_LOW_DELAY
+    if (scs_ptr->static_config.rate_control_mode == 2 && !use_output_stat(scs_ptr) && !use_input_stat(scs_ptr) &&
+        scs_ptr->static_config.pred_structure != 0) {
+        scs_ptr->static_config.pred_structure = 0;
+        SVT_WARN("Forced 1pass CBR to be always low delay mode.\n");
+        if(((EbSvtAv1EncConfiguration*)config_struct)->enable_tpl_la) {
+            ((EbSvtAv1EncConfiguration*)config_struct)->enable_tpl_la = 0;
+            SVT_WARN("TPL is disabled in low delay applications.\n");
+        }
+    }
+#endif
+    // for 1pass CBR not real time mode
+    //if (scs_ptr->static_config.rate_control_mode == 2 && !use_output_stat(scs_ptr) && !use_input_stat(scs_ptr))
+    //    scs_ptr->static_config.hierarchical_levels = 0;
+
     scs_ptr->max_temporal_layers = scs_ptr->static_config.hierarchical_levels;
+#endif
+#if FTR_LAD_INPUT
+    scs_ptr->static_config.look_ahead_distance = ((EbSvtAv1EncConfiguration*)config_struct)->look_ahead_distance;
 #endif
     scs_ptr->static_config.frame_rate = ((EbSvtAv1EncConfiguration*)config_struct)->frame_rate;
     scs_ptr->static_config.frame_rate_denominator = ((EbSvtAv1EncConfiguration*)config_struct)->frame_rate_denominator;
@@ -3711,6 +3870,10 @@ void copy_api_from_app(
     if (scs_ptr->static_config.intra_period_length == -2)
         scs_ptr->static_config.intra_period_length = compute_default_intra_period(scs_ptr);
 
+#if FTR_LAD_INPUT
+    if (scs_ptr->static_config.look_ahead_distance == (uint32_t)~0)
+        scs_ptr->static_config.look_ahead_distance = compute_default_look_ahead(&scs_ptr->static_config);
+#endif
     scs_ptr->static_config.tf_level = config_struct->tf_level;
     scs_ptr->static_config.enable_overlays = config_struct->enable_overlays;
 
@@ -3829,11 +3992,17 @@ static EbErrorType verify_settings(
         SVT_LOG("Error instance %u: Source Width must be at least 64\n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
-
+#if FIX_LOW_DELAY
+    if (config->pred_structure != 2 && config->pred_structure != 0) {
+        SVT_LOG("Error instance %u: Pred Structure must be [0 or 2]\n", channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+#else
     if (config->pred_structure != 2) {
         SVT_LOG("Error instance %u: Pred Structure must be [2]\n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
+#endif
     if (scs_ptr->max_input_luma_width % 8 && scs_ptr->static_config.compressed_ten_bit_format == 1) {
         SVT_LOG("Error Instance %u: Only multiple of 8 width is supported for compressed 10-bit inputs \n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
@@ -3997,7 +4166,13 @@ static EbErrorType verify_settings(
         return_error = EB_ErrorBadParameter;
     }
 #endif
+#if FTR_LAD_INPUT
+    if (config->look_ahead_distance > MAX_LAD && config->look_ahead_distance != (uint32_t)~0) {
+        SVT_LOG("Error Instance %u: The lookahead distance must be [0 - %d] \n", channel_number + 1, MAX_LAD);
 
+        return_error = EB_ErrorBadParameter;
+    }
+#endif
     if ((unsigned)config->tile_rows > 6 || (unsigned)config->tile_columns > 6) {
         SVT_LOG("Error Instance %u: Log2Tile rows/cols must be [0 - 6] \n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
@@ -4425,7 +4600,11 @@ EbErrorType svt_svt_enc_init_parameter(
 
     config_ptr->scene_change_detection = 0;
     config_ptr->rate_control_mode = 0;
+#if FTR_LAD_INPUT
+    config_ptr->look_ahead_distance = (uint32_t)~0;
+#else
     config_ptr->look_ahead_distance = 0;
+#endif
     config_ptr->enable_tpl_la = 1;
     config_ptr->target_bit_rate = 7000000;
 #if FTR_RC_CAP

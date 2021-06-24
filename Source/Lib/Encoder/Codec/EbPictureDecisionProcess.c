@@ -5261,7 +5261,11 @@ int32_t search_this_pic(PictureParentControlSet**buf, uint32_t buf_size, uint64_
   Tells if an Intra picture should be delayed to get next mini-gop
 */
 EbBool is_delayed_intra(PictureParentControlSet *pcs) {
+#if FIX_LOW_DELAY
+    if ((pcs->idr_flag || pcs->cra_flag) && pcs->pred_structure != EB_PRED_LOW_DELAY_P) {
+#else
     if (pcs->idr_flag || pcs->cra_flag) {
+#endif
         if (pcs->scs_ptr->static_config.intra_period_length == 0 || pcs->end_of_sequence_flag)
             return 0;
         else if (pcs->idr_flag || (pcs->cra_flag && pcs->pre_assignment_buffer_count < pcs->pred_struct_ptr->pred_struct_period))
@@ -5505,6 +5509,7 @@ void send_picture_out(
         pcs->reference_picture_wrapper_ptr = NULL;
     }
 
+#if !FTR_1PAS_VBR
     if (scs->lap_enabled || use_input_stat(scs)) {
         pcs->stats_in_offset = pcs->decode_order;
         if (scs->lap_enabled)
@@ -5514,6 +5519,7 @@ void send_picture_out(
             // for use_input_stat(scs)
             pcs->stats_in_end_offset = (uint64_t)(scs->twopass.stats_buf_ctx->stats_in_end_write - scs->twopass.stats_buf_ctx->stats_in_start);
     }
+#endif
     //get a new ME data buffer
     if (pcs->me_data_wrapper_ptr == NULL) {
         svt_get_empty_object(ctx->me_fifo_ptr, &me_wrapper);

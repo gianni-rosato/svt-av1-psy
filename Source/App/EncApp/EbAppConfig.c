@@ -1095,13 +1095,23 @@ ConfigEntry config_entry_intra_refresh[] = {
      set_scene_change_detection},
     { SINGLE_INPUT,
     LOOKAHEAD_NEW_TOKEN,
+#if FTR_LAD_INPUT
+        "The lookahead is the total number of frames in future used by the encoder, including"
+        " frames to form a minigop, temporal filtering and rate control. [0 - 300]",
+#else
     "The lookahead option is currently disabled (forced to 0) until further work is done on "
     "rate control",
+#endif
     set_look_ahead_distance },
     { SINGLE_INPUT,
     LOOK_AHEAD_DIST_TOKEN,
+#if FTR_LAD_INPUT
+        "The lookahead is the total number of frames in future used by the encoder, including"
+        " frames to form a minigop, temporal filtering and rate control. [0 - 300]",
+#else
     "The lookahead option is currently disabled (forced to 0) until further work is done on "
     "rate control",
+#endif
     set_look_ahead_distance },
 
     // Termination
@@ -1579,13 +1589,23 @@ ConfigEntry config_entry[] = {
      set_cfg_intra_period},
     { SINGLE_INPUT,
         LOOKAHEAD_NEW_TOKEN,
+#if FTR_LAD_INPUT
+        "The lookahead is the total number of frames in future used by the encoder, including"
+        " frames to form a minigop, temporal filtering and rate control. [0 - 300]",
+#else
         "The lookahead option is currently disabled (forced to 0) until further work is done on "
         "rate control",
+#endif
         set_look_ahead_distance },
     { SINGLE_INPUT,
         LOOK_AHEAD_DIST_TOKEN,
+#if FTR_LAD_INPUT
+        "The lookahead is the total number of frames in future used by the encoder, including"
+        " frames to form a minigop, temporal filtering and rate control. [0 - 300]",
+#else
         "The lookahead option is currently disabled (forced to 0) until further work is done on "
         "rate control",
+#endif
         set_look_ahead_distance },
     {SINGLE_INPUT, STAT_REPORT_NEW_TOKEN, "Stat Report", set_stat_report},
     {SINGLE_INPUT,
@@ -2501,7 +2521,11 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncodePass pass[MAX_ENCODE
     {
         fprintf(
             stderr,
+#if FTR_2PASS_1PASS_UNIFICATION
+            "\nWarning: --passes 2 CRF is not supported, force single pass\n\n");
+#else
             "\nWarn: --passes 2 CRF for preset > 3 is not supported yet, force single pass\n\n");
+#endif
         pass[0] = ENCODE_SINGLE_PASS;
         return 1;
     }

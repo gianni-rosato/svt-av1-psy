@@ -195,6 +195,9 @@ typedef struct {
     FIRSTPASS_STATS *stats_in_buf_end;
     FIRSTPASS_STATS *total_stats;
     FIRSTPASS_STATS *total_left_stats;
+#if FTR_1PAS_VBR
+    int64_t last_frame_accumulated;
+#endif
 } STATS_BUFFER_CTX;
 
 /*!\endcond */

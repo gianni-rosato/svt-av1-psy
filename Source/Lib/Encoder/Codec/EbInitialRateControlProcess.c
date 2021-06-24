@@ -22,6 +22,9 @@
 #include "common_dsp_rtcd.h"
 #include "EbLog.h"
 #include "EbPictureDecisionProcess.h"
+#if FTR_1PAS_VBR
+#include "firstpass.h"
+#endif
 /**************************************
  * Context
  **************************************/
@@ -284,9 +287,12 @@ void store_extended_group(
     pcs->ntpl_group_size = 0;
     uint8_t is_gop_end = 0;
     int64_t last_intra_mg_id;
-
+#if FTR_1PAS_VBR
+    uint32_t limited_tpl_group_size = pcs->slice_type == I_SLICE ? MIN(33, pcs->ext_group_size) : MIN(32, pcs->ext_group_size);
+    for (uint32_t i = 0; i < limited_tpl_group_size; i++) {
+#else
     for (uint32_t i = 0; i < pcs->ext_group_size; i++) {
-
+#endif
         PictureParentControlSet *cur_pcs = pcs->ext_group[i];
         if (cur_pcs->slice_type == I_SLICE) {
             if (is_delayed_intra(cur_pcs)) {
@@ -416,7 +422,10 @@ void process_lad_queue(
                         //adjust the lad if we hit an EOS
                         if (tmp_pcs->end_of_sequence_flag)
                             target_mgs = MIN(target_mgs, (uint8_t)(tmp_pcs->ext_mg_id - head_pcs->ext_mg_id + 1));//+1: to include the MG where the head belongs
-
+#if FTR_1PAS_VBR
+                        if (tmp_pcs->end_of_sequence_flag)
+                            head_pcs->end_of_sequence_region = EB_TRUE;
+#endif
                         if (tmp_pcs->ext_mg_id >= cur_mg) {
 
                             if (tmp_pcs->ext_mg_id > cur_mg)
@@ -452,6 +461,28 @@ void process_lad_queue(
         }
 
         if (send_out) {
+#if FTR_1PAS_VBR
+            if (head_pcs->scs_ptr->lap_enabled || use_input_stat(head_pcs->scs_ptr)) {
+                head_pcs->stats_in_offset = head_pcs->decode_order;
+                head_pcs->stats_in_end_offset = head_pcs->ext_group_size && !use_input_stat(head_pcs->scs_ptr) ?
+                    MIN((uint64_t)(head_pcs->scs_ptr->twopass.stats_buf_ctx->stats_in_end_write - head_pcs->scs_ptr->twopass.stats_buf_ctx->stats_in_start),
+                      head_pcs->stats_in_offset + (uint64_t)head_pcs->ext_group_size + 1) :
+                    (uint64_t)(head_pcs->scs_ptr->twopass.stats_buf_ctx->stats_in_end_write - head_pcs->scs_ptr->twopass.stats_buf_ctx->stats_in_start);
+                head_pcs->frames_in_sw = (int)(head_pcs->stats_in_end_offset - head_pcs->stats_in_offset);
+
+                if (head_pcs->scs_ptr->lap_enabled && head_pcs->temporal_layer_index == 0) {
+                    FIRSTPASS_STATS *cur_frame;
+
+                    for (uint64_t num_frames = head_pcs->stats_in_offset; num_frames < head_pcs->stats_in_end_offset; ++num_frames) {
+                        cur_frame = head_pcs->scs_ptr->twopass.stats_buf_ctx->stats_in_start + num_frames;
+                        if ((int64_t)cur_frame->frame > head_pcs->scs_ptr->twopass.stats_buf_ctx->last_frame_accumulated) {
+                            svt_av1_accumulate_stats(head_pcs->scs_ptr->twopass.stats_buf_ctx->total_stats, cur_frame);
+                            head_pcs->scs_ptr->twopass.stats_buf_ctx->last_frame_accumulated = (int64_t)cur_frame->frame;
+                        }
+                    }
+                }
+            }
+#endif
             //take the picture out from iRc process
             irc_send_picture_out(ctx, head_pcs, EB_FALSE);
             //advance the head

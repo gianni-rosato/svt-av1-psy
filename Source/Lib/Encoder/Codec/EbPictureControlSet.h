@@ -710,7 +710,12 @@ typedef struct PictureParentControlSet {
     uint64_t total_num_bits;
     uint16_t sb_total_count;
     EbBool   end_of_sequence_region;
+#if FTR_1PAS_VBR
+int  frames_in_sw; // used for Look ahead
+    struct RateControlIntervalParamContext *rate_control_param_ptr;
+#else
     uint8_t  frames_in_sw; // used for Look ahead
+#endif
     EbBool   qp_on_the_fly;
     uint8_t  calculated_qp;
     uint8_t  intra_selected_org_qp;
@@ -785,7 +790,11 @@ typedef struct PictureParentControlSet {
     FirstPassData         firstpass_data;
     RefreshFrameFlagsInfo refresh_frame;
     int                   internal_altref_allowed;
+#if FTR_2PASS_1PASS_UNIFICATION
+    double                ts_duration;
+#else
     int64_t               ts_duration;
+#endif
     OisMbResults **       ois_mb_results;
     TplStats **           tpl_stats;
 #if SS_OPT_TPL

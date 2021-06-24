@@ -40,6 +40,10 @@ extern "C" {
 
 #define MAX_TPL_EXT_GROUP_SIZE                              MAX_TPL_GROUP_SIZE
 #define OUT_Q_ADVANCE(h) ((h == REFERENCE_QUEUE_MAX_DEPTH - 1) ? 0 : h + 1)
+#if FTR_LAD_INPUT
+#define MIN_LAD_MG              1
+#define RC_DEFAULT_LAD_MG       3
+#endif
 void assert_err(uint32_t condition, char * err_msg);
 
 #define TPL_DEP_COST_SCALE_LOG2 4
@@ -147,8 +151,11 @@ enum {
 #define BLOCK_MAX_COUNT_SB_64 1101
 #endif
 #define MAX_TXB_COUNT 16 // Maximum number of transform blocks per depth
-
+#if FTR_LAD_INPUT
+#define MAX_LAD 300 // max lookahead-distance 5x60fps
+#else
 #define MAX_LAD 120 // max lookahead-distance 2x60fps
+#endif
 #define ROUND_UV(x) (((x) >> 3) << 3)
 #define AV1_PROB_COST_SHIFT 9
 #define AOMINNERBORDERINPIXELS 160

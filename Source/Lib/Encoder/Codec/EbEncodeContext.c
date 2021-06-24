@@ -41,6 +41,9 @@ static EbErrorType create_stats_buffer(FIRSTPASS_STATS **frame_stats_buffer,
     if (stats_buf_context->total_stats == NULL)
         return EB_ErrorInsufficientResources;
     svt_av1_twopass_zero_stats(stats_buf_context->total_stats);
+#if FTR_1PAS_VBR
+    stats_buf_context->last_frame_accumulated = -1;
+#endif
     return res;
 }
 

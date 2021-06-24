@@ -1739,7 +1739,11 @@ void *resource_coordination_kernel(void *input_ptr) {
                 }
 #endif
             }
+#if FTR_2PASS_1PASS_UNIFICATION
+            pcs_ptr->ts_duration = (double)10000000 * (1 << 16) / scs_ptr->frame_rate;
+#else
             pcs_ptr->ts_duration = (int64_t)10000000 * (1 << 16) / scs_ptr->frame_rate;
+#endif
             scs_ptr->encode_context_ptr->initial_picture = EB_FALSE;
 
             // Get Empty Reference Picture Object
