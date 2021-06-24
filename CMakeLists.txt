@@ -77,79 +77,6 @@ include(GNUInstallDirs)
 include(CheckCCompilerFlag)
 include(CheckCXXCompilerFlag)
 
-set(SVT_AV1_DEBUG_MACROS
-    # Individual development macros, to modify add
-    # `-DSVT_AV1_DEBUG_MACROS_APPEND='<MACRO>:<VALUE>'`
-    # to your cmake line
-
-    SVT_05
-    PRIVATE_MACROS)
-set(SVT_AV1_DEBUG_MACROS_APPEND
-    ""
-    CACHE STRING
-    "List of defines to append for debuging in the MACRO:VALUE format")
-
-if(SVT_AV1_DEBUG_MACROS_APPEND)
-    list(INSERT SVT_AV1_DEBUG_MACROS_APPEND 0 "USER_MACROS:1:User Set macros")
-endif()
-
-
-foreach(macro IN LISTS SVT_AV1_DEBUG_MACROS SVT_AV1_DEBUG_MACROS_APPEND)
-    set(value 1)
-    unset(help_text)
-    set(output_help_text "\n")
-
-    string(REPLACE ":" ";" macro_list "${macro}")
-
-    # First value is always the macro
-    list(GET macro_list 0 macro)
-
-    list(LENGTH macro_list macro_list_len)
-    if(macro_list_len GREATER 2)
-        # If we have a MACRO:VALUE:HELP triplet
-        list(GET macro_list 1 value)
-        list(GET macro_list 2 help_text)
-    elseif(macro_list_len EQUAL 2)
-        # If we have a MACRO:VALUE or MACRO:HELP double
-        list(GET macro_list 1 macro_list_argv1)
-        if(macro_list_argv1 MATCHES "^[0-9]+$")
-            # MACRO:VALUE
-            set(value "${macro_list_argv1}")
-        else()
-            # MACRO:HELP
-            set(help_text "${macro_list_argv1}")
-        endif()
-        unset(macro_list_argv1)
-    endif()
-    unset(macro_list_len)
-
-    set(${macro} ${value})
-
-    string(REPLACE "\n" ";" help_text "${help_text}")
-    # Remove empty lines
-    list(REMOVE_ITEM help_text "")
-    list(REMOVE_ITEM help_text "\n")
-
-    foreach(line IN LISTS help_text)
-        string(STRIP "${line}" line)
-        string(LENGTH "${line}" line_len)
-        if(NOT line_len EQUAL 0)
-            string(APPEND output_help_text "// ${line}\n")
-        endif()
-        unset(line_len)
-        unset(line)
-    endforeach()
-
-    if(SVT_AV1_DEBUG_MACROS_OUTPUT)
-        string(APPEND SVT_AV1_DEBUG_MACROS_OUTPUT "\n")
-    endif()
-
-    string(APPEND SVT_AV1_DEBUG_MACROS_OUTPUT "${output_help_text}#undef ${macro}\n#define ${macro} ${value}")
-endforeach()
-
-configure_file(Source/API/EbDebugMacros.h.in EbDebugMacros.h @ONLY)
-include_directories(${CMAKE_CURRENT_BINARY_DIR})
-
 set(CMAKE_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/Bin/${CMAKE_BUILD_TYPE}/" CACHE PATH "Location to write the resulting binaries to")
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_OUTPUT_DIRECTORY})
@@ -586,4 +513,3 @@ if(NOT COMPILE_C_ONLY AND HAVE_X86_PLATFORM)
 endif()
 
 install(DIRECTORY ${PROJECT_SOURCE_DIR}/Source/API/ DESTINATION "${CMAKE_INSTALL_FULL_INCLUDEDIR}/svt-av1" FILES_MATCHING PATTERN "*.h")
-install(FILES ${CMAKE_BINARY_DIR}/EbDebugMacros.h DESTINATION "${CMAKE_INSTALL_FULL_INCLUDEDIR}/svt-av1")
