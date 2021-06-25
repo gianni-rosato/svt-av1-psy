@@ -314,6 +314,9 @@ EbErrorType copy_sequence_control_set(SequenceControlSet *dst, SequenceControlSe
     dst->lap_enabled                    = src->lap_enabled;
 
     dst->lad_mg                         = src->lad_mg;
+#if FTR_LAD_INPUT
+    dst->tpl_lad_mg                     = src->tpl_lad_mg;
+#endif
     dst->use_boundaries_in_rest_search  = src->use_boundaries_in_rest_search;
     dst->mrp_init_level = src->mrp_init_level;
 #if CLN_GEOM
