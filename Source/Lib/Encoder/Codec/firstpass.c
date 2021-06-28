@@ -36,7 +36,7 @@
 #undef _MM_HINT_T2
 #define _MM_HINT_T2 1
 
-#define OUTPUT_FPF 0
+#define OUTPUT_FPF 1
 
 #define INTRA_MODE_PENALTY 1024
 #define NEW_MV_MODE_PENALTY 32
