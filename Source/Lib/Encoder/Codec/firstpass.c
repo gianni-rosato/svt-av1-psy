@@ -36,7 +36,7 @@
 #undef _MM_HINT_T2
 #define _MM_HINT_T2 1
 
-#define OUTPUT_FPF 0
+#define OUTPUT_FPF 1
 
 #define INTRA_MODE_PENALTY 1024
 #define NEW_MV_MODE_PENALTY 32
@@ -739,6 +739,10 @@ EbErrorType first_pass_signal_derivation_mode_decision_config_kernel(PictureCont
 void *set_first_pass_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *pcs_ptr,
     SequenceControlSet *scs_ptr, EbInputResolution input_resolution) {
     UNUSED(scs_ptr);
+
+#if FTR_BIAS_STAT
+    me_context_ptr->stat_factor = 100;
+#endif
     // HME/ME default settings
     me_context_ptr->number_hme_search_region_in_width = 2;
     me_context_ptr->number_hme_search_region_in_height = 2;
@@ -813,7 +817,9 @@ void *set_first_pass_me_hme_params_oq(MeContext *me_context_ptr, PictureParentCo
         me_context_ptr->search_area_width = (me_context_ptr->search_area_width * 3) / 2;
         me_context_ptr->search_area_height = (me_context_ptr->search_area_height * 3) / 2;
     }
-
+#if FTR_HME_ME_EARLY_EXIT
+    me_context_ptr->me_early_exit_th = 0;
+#endif
     return NULL;
 };
 #else
@@ -834,7 +840,11 @@ EbErrorType first_pass_signal_derivation_me_kernel(SequenceControlSet *       sc
                                                    PictureParentControlSet *  pcs_ptr,
                                                    MotionEstimationContext_t *context_ptr) {
     EbErrorType return_error = EB_ErrorNone;
-
+#if FTR_TUNE_PRUNING
+    EbInputResolution input_resolution = scs_ptr->input_resolution;
+    context_ptr->me_context_ptr->input_resolution = input_resolution;
+    context_ptr->me_context_ptr->clip_class = pcs_ptr->sc_class1;
+#endif
     // Set ME/HME search regions
 
     if (scs_ptr->static_config.use_default_me_hme)
@@ -863,8 +873,18 @@ EbErrorType first_pass_signal_derivation_me_kernel(SequenceControlSet *       sc
 
     // ME Search Method
     context_ptr->me_context_ptr->me_search_method = SUB_SAD_SEARCH;
+
+#if TUNE_HME_SUB
+    // skip search line hme level0
+    context_ptr->me_context_ptr->skip_search_line_hme0 = 0;
+#endif
+
     uint8_t gm_level                              = 0;
     set_gm_controls(pcs_ptr, gm_level);
+
+    // Set pre-hme level (0-2)
+    uint8_t prehme_level = 0;
+    set_prehme_ctrls(context_ptr->me_context_ptr, prehme_level);
 
     // Set hme/me based reference pruning level (0-4)
     set_me_hme_ref_prune_ctrls(context_ptr->me_context_ptr, 0);
