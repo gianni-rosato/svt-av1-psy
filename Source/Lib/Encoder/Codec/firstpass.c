@@ -1312,7 +1312,12 @@ static EbErrorType first_pass_me(PictureParentControlSet *  ppcs_ptr,
     uint32_t ss_y     = ppcs_ptr->scs_ptr->subsampling_y;
 
     MeContext *context_ptr = me_context_ptr->me_context_ptr;
-
+#if OPT_ME
+     // assume max 2 references for first pass
+     ppcs_ptr->pa_me_data->max_cand = 3;
+     ppcs_ptr->pa_me_data->max_refs = 2;
+     ppcs_ptr->pa_me_data->max_l0 = 1;
+#endif
     uint32_t x_seg_idx;
     uint32_t y_seg_idx;
     uint32_t picture_width_in_b64  = blk_cols;
