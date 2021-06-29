@@ -532,7 +532,7 @@ EbErrorType load_default_buffer_configuration_settings(
     scs_ptr->output_recon_buffer_fifo_init_count       = scs_ptr->reference_picture_buffer_init_count;
     scs_ptr->overlay_input_picture_buffer_init_count   = scs_ptr->static_config.enable_overlays ?
                                                                           (2 << scs_ptr->static_config.hierarchical_levels) + SCD_LAD : 1;
-#if !FTR_LAD_INPUT 
+#if !FTR_LAD_INPUT
     //Future frames window in Scene Change Detection (SCD) / TemporalFiltering
     scs_ptr->scd_delay = 0;
 
