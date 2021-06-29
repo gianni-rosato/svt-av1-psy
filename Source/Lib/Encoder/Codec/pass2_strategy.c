@@ -2441,9 +2441,7 @@ static int set_gf_interval_update_onepass_rt(PictureParentControlSet *pcs_ptr,
   int gf_update = 0;
   // GF update based on frames_till_gf_update_due, also
   // force upddate on resize pending frame or for scene change.
-  if ((/*resize_pending || rc->high_source_sad ||*/
-       rc->frames_till_gf_update_due == 0) /*&&
-      cpi->svc.temporal_layer_id == 0 && cpi->svc.spatial_layer_id == 0*/) {
+  if (rc->frames_till_gf_update_due == 0) {
     rc->baseline_gf_interval = MAX_GF_INTERVAL;
     if (rc->baseline_gf_interval > rc->frames_to_key)
       rc->baseline_gf_interval = rc->frames_to_key;
@@ -2474,11 +2472,7 @@ void svt_av1_get_one_pass_rt_params(PictureParentControlSet *pcs_ptr) {
 
   int target = 0;
   // Set frame type.
-  if ((/*!cpi->use_svc &&*/ rc->frames_to_key == 0)/* ||
-      (cpi->use_svc && svc->spatial_layer_id == 0 &&
-       (cpi->oxcf.kf_cfg.key_freq_max == 0 ||
-        svc->current_superframe % cpi->oxcf.kf_cfg.key_freq_max == 0)) ||
-      (frame_flags & FRAMEFLAGS_KEY)*/) {
+  if (rc->frames_to_key == 0) {
     frame_params->frame_type = KEY_FRAME;
     rc->this_key_frame_forced =
         current_frame->frame_number != 0 && rc->frames_to_key == 0;

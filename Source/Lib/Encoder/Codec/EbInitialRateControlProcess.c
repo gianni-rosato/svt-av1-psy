@@ -639,7 +639,11 @@ void *initial_rate_control_kernel(void *input_ptr) {
             uint8_t release_pa_ref = 0;
             if (scs_ptr->static_config.enable_tpl_la == 0 && scs_ptr->static_config.superres_mode <= SUPERRES_RANDOM)
                 release_pa_ref =1;
+#if FTR_LAD_INPUT
+            else if (scs_ptr->tpl_lad_mg == 0 && pcs_ptr->slice_type == P_SLICE)
+#else
             else if (scs_ptr->lad_mg == 0 && pcs_ptr->slice_type == P_SLICE)
+#endif
                 release_pa_ref =1;
 
             if (release_pa_ref)
