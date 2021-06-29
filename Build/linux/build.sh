@@ -139,7 +139,14 @@ build() (
         *) break ;;
         esac
     done
-    cmake --build $build_type --config $build_type ${clean:+--clean-first} "$@"
+    if cmake --build 2>&1 | grep -q parallel; then
+        cmake --build $build_type --config $build_type ${clean:+--clean-first} --parallel "$jobs" "$@"
+    elif [ -f "$build_type/Makefile" ]; then
+        ${clean:+make -C "$build_type" clean}
+        make -C "$build_type" -j "$jobs" "$@"
+    else
+        cmake --build $build_type --config $build_type ${clean:+--clean-first} "$@"
+    fi
 )
 
 check_executable() (
