@@ -2372,15 +2372,15 @@ static void  av1_generate_rps_info(
             else
                 SVT_LOG("Error in GOp indexing\n");
 
-                uint8_t keep_lay4_as_ref;
-                if (pcs_ptr->scs_ptr->mrp_init_level == 1)
-                    keep_lay4_as_ref = (picture_index == 0 || picture_index == 8 || picture_index == 14 || picture_index == 2 || picture_index == 4 || picture_index == 6 || picture_index == 10 || picture_index == 12);
-                else
-                    keep_lay4_as_ref = (picture_index == 0 || picture_index == 8);
-                if (keep_lay4_as_ref)
-                    av1_rps->refresh_frame_mask = 1 << (lay4_idx);
-                else
-                    av1_rps->refresh_frame_mask = 0;
+            uint8_t keep_lay4_as_ref;
+            if (pcs_ptr->scs_ptr->mrp_init_level == 1)
+                keep_lay4_as_ref = (picture_index == 0 || picture_index == 8 || picture_index == 14 || picture_index == 2 || picture_index == 4 || picture_index == 6 || picture_index == 10 || picture_index == 12);
+            else
+                keep_lay4_as_ref = (picture_index == 0 || picture_index == 8);
+            if (keep_lay4_as_ref)
+                av1_rps->refresh_frame_mask = 1 << (lay4_idx);
+            else
+                av1_rps->refresh_frame_mask = 0;
             break;
 
         default:
