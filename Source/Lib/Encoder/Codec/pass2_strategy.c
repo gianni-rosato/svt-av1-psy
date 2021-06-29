@@ -1195,18 +1195,8 @@ static void define_gf_group_pass0(PictureParentControlSet *pcs_ptr,
   int target = 0;
 
   assert(rc_cfg->mode == AOM_CBR);
-#if 0
-  if (oxcf->q_cfg.aq_mode == CYCLIC_REFRESH_AQ) {
-    av1_cyclic_refresh_set_golden_update(cpi);
-  } else
-  {
-    rc->baseline_gf_interval = rc->gf_intervals[rc->cur_gf_index];
-    rc->intervals_till_gf_calculate_due--;
-    rc->cur_gf_index++;
-  }
-#else
-    rc->baseline_gf_interval = rc->gf_interval;
-#endif
+
+  rc->baseline_gf_interval = rc->gf_interval;
 
   // correct frames_to_key when lookahead queue is flushing
   // correct_frames_to_key(cpi); //TODO
@@ -1242,15 +1232,6 @@ static void define_gf_group_pass0(PictureParentControlSet *pcs_ptr,
         target = av1_calc_pframe_target_size_one_pass_cbr(pcs_ptr, cur_update_type);
       }
     }
-#if 0
-    else {
-      if (cur_update_type == KF_UPDATE) {
-        target = av1_calc_iframe_target_size_one_pass_vbr(cpi);
-      } else {
-        target = av1_calc_pframe_target_size_one_pass_vbr(cpi, cur_update_type);
-      }
-    }
-#endif
     gf_group->bit_allocation[cur_index] = target;
   }
 }
@@ -2124,15 +2105,7 @@ static void find_next_key_frame(PictureParentControlSet *pcs_ptr, FIRSTPASS_STAT
 
 #if FTR_1PASS_CBR
     if ((!use_input_stat(scs_ptr) && !use_output_stat(scs_ptr) && rc_cfg->mode == AOM_CBR)) {
-#if 0
-        int num_frames_to_app_forced_key = detect_app_forced_key(cpi);
-        rc->this_key_frame_forced =
-            current_frame->frame_number != 0 && rc->frames_to_key == 0;
-        if (num_frames_to_app_forced_key != -1)
-            rc->frames_to_key = num_frames_to_app_forced_key;
-        else
-#endif
-            rc->frames_to_key = AOMMAX(1, kf_cfg->key_freq_max);
+        rc->frames_to_key = AOMMAX(1, kf_cfg->key_freq_max);
         //correct_frames_to_key(cpi);
         rc->kf_boost = DEFAULT_KF_BOOST;
         gf_group->update_type[0] = KF_UPDATE;
@@ -2465,30 +2438,13 @@ static int set_gf_interval_update_onepass_rt(PictureParentControlSet *pcs_ptr,
   EncodeContext *encode_context_ptr = scs_ptr->encode_context_ptr;
   RATE_CONTROL *const rc = &encode_context_ptr->rc;
   GF_GROUP *const gf_group = &encode_context_ptr->gf_group;
-  //EncodeFrameParams temp_frame_params, *frame_params = &temp_frame_params;
-  //pcs_ptr->gf_group_index = gf_group->index;
-#if 1
   int gf_update = 0;
-#else
-  ResizePendingParams *const resize_pending_params =
-      &cpi->resize_pending_params;
-  int gf_update = 0;
-  const int resize_pending =
-      (resize_pending_params->width && resize_pending_params->height &&
-       (cpi->common.width != resize_pending_params->width ||
-        cpi->common.height != resize_pending_params->height));
-#endif
   // GF update based on frames_till_gf_update_due, also
   // force upddate on resize pending frame or for scene change.
   if ((/*resize_pending || rc->high_source_sad ||*/
        rc->frames_till_gf_update_due == 0) /*&&
       cpi->svc.temporal_layer_id == 0 && cpi->svc.spatial_layer_id == 0*/) {
-#if 0
-    if (cpi->oxcf.q_cfg.aq_mode == CYCLIC_REFRESH_AQ)
-      av1_cyclic_refresh_set_golden_update(cpi);
-    else
-#endif
-      rc->baseline_gf_interval = MAX_GF_INTERVAL;
+    rc->baseline_gf_interval = MAX_GF_INTERVAL;
     if (rc->baseline_gf_interval > rc->frames_to_key)
       rc->baseline_gf_interval = rc->frames_to_key;
     rc->gfu_boost = DEFAULT_GF_BOOST_RT;
@@ -2535,33 +2491,6 @@ void svt_av1_get_one_pass_rt_params(PictureParentControlSet *pcs_ptr) {
     gf_group->update_type[pcs_ptr->gf_group_index] = LF_UPDATE;
     //gf_group->frame_type[pcs_ptr->gf_group_index] = INTER_FRAME;
   }
-#if 0
-  // Check for scene change, for non-SVC for now.
-  if (!cpi->use_svc && cpi->sf.rt_sf.check_scene_detection)
-    rc_scene_detection_onepass_rt(cpi);
-  // Check for dynamic resize, for single spatial layer for now.
-  // For temporal layers only check on base temporal layer.
-  if (cpi->oxcf.resize_cfg.resize_mode == RESIZE_DYNAMIC) {
-    if (svc->number_spatial_layers == 1 && svc->temporal_layer_id == 0)
-      dynamic_resize_one_pass_cbr(cpi);
-    if (rc->resize_state == THREE_QUARTER) {
-      resize_pending_params->width = (3 + cpi->oxcf.frm_dim_cfg.width * 3) >> 2;
-      resize_pending_params->height =
-          (3 + cpi->oxcf.frm_dim_cfg.height * 3) >> 2;
-    } else if (rc->resize_state == ONE_HALF) {
-      resize_pending_params->width = (1 + cpi->oxcf.frm_dim_cfg.width) >> 1;
-      resize_pending_params->height = (1 + cpi->oxcf.frm_dim_cfg.height) >> 1;
-    } else {
-      resize_pending_params->width = cpi->oxcf.frm_dim_cfg.width;
-      resize_pending_params->height = cpi->oxcf.frm_dim_cfg.height;
-    }
-  } else if (resize_pending_params->width && resize_pending_params->height &&
-             (cpi->common.width != resize_pending_params->width ||
-              cpi->common.height != resize_pending_params->height)) {
-    resize_reset_rc(cpi, resize_pending_params->width,
-                    resize_pending_params->height, cm->width, cm->height);
-  }
-#endif
   // Set the GF interval and update flag.
   set_gf_interval_update_onepass_rt(pcs_ptr, frame_params->frame_type);
   // Set target size.
@@ -2572,16 +2501,6 @@ void svt_av1_get_one_pass_rt_params(PictureParentControlSet *pcs_ptr) {
       target = av1_calc_pframe_target_size_one_pass_cbr(pcs_ptr, gf_group->update_type[pcs_ptr->gf_group_index]);
     }
   }
-#if 0
-  else {
-    if (frame_params->frame_type == KEY_FRAME) {
-      target = av1_calc_iframe_target_size_one_pass_vbr(cpi);
-    } else {
-      target = av1_calc_pframe_target_size_one_pass_vbr(
-          cpi, gf_group->update_type[pcs_ptr->gf_group_index]);
-    }
-  }
-#endif
   if (encode_context_ptr->rc_cfg.mode == AOM_Q)
     rc->active_worst_quality = encode_context_ptr->rc_cfg.cq_level;
 
