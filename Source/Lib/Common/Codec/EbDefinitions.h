@@ -2997,6 +2997,21 @@ typedef enum HmeDecimation
     ONE_DECIMATION_HME = 1, // HME search on quarter-res picture; 1 refinement level
     TWO_DECIMATION_HME = 2, // HME search on sixteenth-res picture; 2 refinement level
 } HmeDecimation;
+#if ME_8X8
+static const uint8_t me_idx_85_8x8_to_16x16_conversion[] = {
+    5,5,      6,6,      7,7,      8,8,
+    5,5,      6,6,      7,7,      8,8,
+
+    9,9,      10,10,    11,11,    12,12,
+    9,9,      10,10,    11,11,    12,12,
+
+    13,13,    14,14,    15,15,    16,16,
+    13,13,    14,14,    15,15,    16,16,
+
+    17,17,    18,18,    19,19,    20,20,
+    17,17,    18,18,    19,19,    20,20
+};
+#endif
 #if !CLN_GEOM
 static const uint16_t ep_to_pa_block_index[BLOCK_MAX_COUNT_SB_64] = {
     0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,

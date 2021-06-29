@@ -350,6 +350,9 @@ typedef struct MdSubPelSearchCtrls {
 #if OPT11_SUBPEL
     uint8_t skip_diag_refinement;
 #endif
+#if OPT_SKIP_SUBPEL_ZZ
+    uint8_t skip_zz_mv;                          // don't perform subpel for (0,0) MVs
+#endif
 } MdSubPelSearchCtrls;
 typedef struct ParentSqCoeffAreaBasedCyclesReductionCtrls {
     EbBool enabled;
@@ -470,6 +473,9 @@ typedef struct CandEliminationCtlrs {
     uint8_t inject_new_me;
     uint8_t inject_new_pme;
     uint8_t inject_new_warp;
+#if OPT_EARLY_ELIM_TH
+    uint8_t th_multiplier;      // factor to scale base TH by for distortion check
+#endif
 }CandEliminationCtlrs;
 #if OPT_TXS_SEARCH
 typedef struct TxsControls {
@@ -549,6 +555,22 @@ typedef struct BlockLocation {
     uint32_t blk_origin_index;          //luma   block location in SB
     uint32_t blk_chroma_origin_index;   //chroma block location in SB
 } BlockLocation;
+#endif
+#if FTR_LPD1_DETECTOR
+typedef struct Lpd1Ctrls {
+    EbBool enabled;             // Whether light-PD1 can be used for an SB
+    EbBool use_light_pd1;       // Whether light-PD1 is set to be used for an SB (the detector may change this)
+    EbBool use_lpd1_detector;   // Whether to use a detector; if use_light_pd1 is set to 1, the detector will protect tough SBs;
+                                // if use_light_pd1 is set to 0, the detector will select easy SBs to use light-PD1 for (not yet implemented)
+    uint16_t cost_th_dist;      // Distortion value used in cost TH for detector
+    uint16_t coeff_th;          // Num non-zero coeffs used in detector
+#if OPT_USE_MVS_LPD1_DETECTOR
+    uint16_t max_mv_length;     // Max MV length TH used in the detector: 0 - (0,0) MV only; (uint16_t)~0 means no MV check (higher is more aggressive)
+#endif
+#if OPT_LIGHT_PD1_USE_ME_DIST_VAR
+    uint32_t me_8x8_cost_variance_th; // me_8x8_cost_variance_th beyond which the PD1 is used (instead of light-PD1)
+#endif
+} Lpd1Ctrls;
 #endif
 typedef struct ModeDecisionContext {
     EbDctor  dctor;
@@ -949,7 +971,9 @@ typedef struct ModeDecisionContext {
 #else
     uint8_t use_var_in_mds0;
 #endif
+#if !CLN_MISC_CLEANUP
     uint32_t md_me_cost[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
+#endif
     uint32_t md_me_dist;
     uint8_t inject_new_me;
     uint8_t inject_new_pme;
@@ -981,7 +1005,11 @@ typedef struct ModeDecisionContext {
     EbBool use_light_pd0; // Use light PD0 path.  Assumes one class, no NSQ, no 4x4, TXT off, TXS off, PME off, etc.
 #endif
 #if LIGHT_PD1
+#if FTR_LPD1_DETECTOR
+    Lpd1Ctrls lpd1_ctrls;
+#else
     EbBool use_light_pd1; // Use light PD1 path.
+#endif
 #else
     uint8_t use_best_mds0;
 #endif
@@ -1030,6 +1058,15 @@ typedef struct ModeDecisionContext {
     uint8_t is_intra_bordered;
     uint8_t updated_enable_pme;
 #endif
+#if FTR_SKIP_COST_ZERO_COEFF
+    uint16_t lpd1_zero_y_coeff_exit; // skip cost calc and chroma TX/compensation if there are zero luma coeffs
+#endif
+#if CHROMA_DETECTOR
+    COMPONENT_TYPE lpd1_chroma_comp; // chroma components to compensate at MDS3 of LPD1
+#endif
+#if FIX_DO_NOT_TEST_CORRUPTED_MVS
+    uint8_t corrupted_mv_check;
+#endif
 } ModeDecisionContext;
 
 typedef void (*EbAv1LambdaAssignFunc)(PictureControlSet *pcs_ptr, uint32_t *fast_lambda,
@@ -1060,6 +1097,14 @@ static const uint8_t quantizer_to_qindex[] = {
     128, 132, 136, 140, 144, 148, 152, 156, 160, 164, 168, 172, 176, 180, 184, 188,
     192, 196, 200, 204, 208, 212, 216, 220, 224, 228, 232, 236, 240, 244, 249, 255};
 
+#if FTR_6L_QPS
+#define FIXED_QP_OFFSET_COUNT 6
+static const int percents[2][FIXED_QP_OFFSET_COUNT] =
+{
+    { 75, 70, 60, 20, 15, 0 },
+    { 76, 60, 30, 15,  8, 4 } // libaom offsets
+};
+#endif
 extern void reset_mode_decision(SequenceControlSet *scs_ptr, ModeDecisionContext *context_ptr,
                                 PictureControlSet *pcs_ptr, uint16_t tile_row_idx,
                                 uint32_t segment_index);

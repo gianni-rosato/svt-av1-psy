@@ -162,16 +162,27 @@ void tpl_prep_info(PictureParentControlSet    *pcs) ;
 static void generate_lambda_scaling_factor(PictureParentControlSet *pcs_ptr,
                                            int64_t                  mc_dep_cost_base) {
     Av1Common *cm         = pcs_ptr->av1_cm;
+#if FTR_TPL_SYNTH
+    uint8_t tpl_synth_size_offset = pcs_ptr->tpl_ctrls.synth_blk_size == 8 ? 1 : pcs_ptr->tpl_ctrls.synth_blk_size == 16 ? 2 : 3;
+    const int  step       = 1 << (tpl_synth_size_offset);
+#else
     const int  step       = 1 << (pcs_ptr->is_720p_or_larger ? 2 : 1);
-    // According to AOM function av1_tpl_rdmult_setup, unscaled size should be used here.
-    const int    mi_cols_sr = ((pcs_ptr->enhanced_unscaled_picture_ptr->width + 15) / 16) << 2;
-
+#endif
+    const int  mi_cols_sr = ((pcs_ptr->enhanced_unscaled_picture_ptr->width + 15) / 16) << 2;
+#if FTR_TPL_SYNTH
+    const int    block_size = pcs_ptr->tpl_ctrls.synth_blk_size == 32 ? BLOCK_32X32 : BLOCK_16X16;
+#else
     const int    block_size = BLOCK_16X16;
+#endif
     const int    num_mi_w   = mi_size_wide[block_size];
     const int    num_mi_h   = mi_size_high[block_size];
     const int    num_cols   = (mi_cols_sr + num_mi_w - 1) / num_mi_w;
     const int    num_rows   = (cm->mi_rows + num_mi_h - 1) / num_mi_h;
+#if FTR_TPL_SYNTH
+    const int    stride     = mi_cols_sr >> tpl_synth_size_offset;
+#else
     const int    stride     = mi_cols_sr >> (1 + pcs_ptr->is_720p_or_larger);
+#endif
     const double c          = 1.2;
 
     for (int row = 0; row < num_rows; row++) {
@@ -184,8 +195,13 @@ static void generate_lambda_scaling_factor(PictureParentControlSet *pcs_ptr,
                     if (mi_row >= cm->mi_rows || mi_col >= mi_cols_sr)
                         continue;
 
+#if FTR_TPL_SYNTH
+                    const int index1 = (mi_row >> (tpl_synth_size_offset)) * stride +
+                        (mi_col >> (tpl_synth_size_offset));
+#else
                     const int index1 = (mi_row >> (1 + pcs_ptr->is_720p_or_larger)) * stride +
                         (mi_col >> (1 + pcs_ptr->is_720p_or_larger));
+#endif
                     TplStats *tpl_stats_ptr = pcs_ptr->tpl_stats[index1];
                     int64_t   mc_dep_delta  = RDCOST(pcs_ptr->base_rdmult,
                                                   tpl_stats_ptr->mc_dep_rate,
@@ -266,9 +282,52 @@ static void result_model_store(PictureParentControlSet *pcs_ptr, TplStats  *tpl_
     tpl_stats_ptr->recrf_dist = AOMMAX(1, tpl_stats_ptr->recrf_dist);
     tpl_stats_ptr->srcrf_rate = AOMMAX(1, tpl_stats_ptr->srcrf_rate);
     tpl_stats_ptr->recrf_rate = AOMMAX(1, tpl_stats_ptr->recrf_rate);
+#if FTR_TPL_SYNTH
+    if (pcs_ptr->tpl_ctrls.synth_blk_size == 32) {
+        const int stride = (((pcs_ptr->aligned_width + 31) / 32) );
+        TplStats *dst_ptr = pcs_ptr->tpl_stats[(mb_origin_y >> 5) * stride + (mb_origin_x >> 5)];
 
+        //write to a 16x16 grid
+#if OPT_TPL_ALL64X64
+        if (size == 64) {
+            dst_ptr[0] = *tpl_stats_ptr;
+            dst_ptr[1] = *tpl_stats_ptr;
+            dst_ptr[2] = *tpl_stats_ptr;
+            dst_ptr[3] = *tpl_stats_ptr;
+
+            dst_ptr[stride] = *tpl_stats_ptr;
+            dst_ptr[stride + 1] = *tpl_stats_ptr;
+            dst_ptr[stride + 2] = *tpl_stats_ptr;
+            dst_ptr[stride + 3] = *tpl_stats_ptr;
+
+            dst_ptr[(stride * 2)] = *tpl_stats_ptr;
+            dst_ptr[(stride * 2) + 1] = *tpl_stats_ptr;
+            dst_ptr[(stride * 2) + 2] = *tpl_stats_ptr;
+            dst_ptr[(stride * 2) + 3] = *tpl_stats_ptr;
+
+            dst_ptr[(stride * 3)] = *tpl_stats_ptr;
+            dst_ptr[(stride * 3) + 1] = *tpl_stats_ptr;
+            dst_ptr[(stride * 3) + 2] = *tpl_stats_ptr;
+            dst_ptr[(stride * 3) + 3] = *tpl_stats_ptr;
+        }
+        else
+#endif
+            *dst_ptr = *tpl_stats_ptr;
+        /*if (size == 32) {
+            *dst_ptr = *tpl_stats_ptr;
+        }
+        else if (size == 16) {
+            dst_ptr[0] = *tpl_stats_ptr;
+            dst_ptr[1] = *tpl_stats_ptr;
+            dst_ptr[stride] = *tpl_stats_ptr;
+            dst_ptr[stride + 1] = *tpl_stats_ptr;
+        }*/
+    }
+    else if(pcs_ptr->tpl_ctrls.synth_blk_size  == 16) {
+
+#else
     if (pcs_ptr->is_720p_or_larger) {
-
+#endif
         const int stride = ((pcs_ptr->aligned_width + 15) / 16);
         TplStats *dst_ptr = pcs_ptr->tpl_stats[(mb_origin_y >> 4) * stride + (mb_origin_x >> 4)];
 
@@ -2913,7 +2972,11 @@ static AOM_INLINE void tpl_model_update_b(PictureParentControlSet *ref_pcs_ptr, 
     const int mi_height  = mi_size_high[bsize];
     const int mi_width   = mi_size_wide[bsize];
     const int pix_num    = bw * bh;
+#if FTR_TPL_SYNTH
+    const int shift      = pcs_ptr->tpl_ctrls.synth_blk_size == 8 ? 1 : pcs_ptr->tpl_ctrls.synth_blk_size == 16 ? 2 : 3;
+#else
     const int shift      = pcs_ptr->is_720p_or_larger ? 2 : 1;
+#endif
     const int mi_cols_sr = ((ref_pcs_ptr->aligned_width + 15) / 16) << 2;
 
     // top-left on grid block location in pixel
@@ -2944,7 +3007,11 @@ static AOM_INLINE void tpl_model_update_b(PictureParentControlSet *ref_pcs_ptr, 
                 grid_pos_row, grid_pos_col, ref_pos_row, ref_pos_col, block, bsize);
             int       ref_mi_row = round_floor(grid_pos_row, bh) * mi_height;
             int       ref_mi_col = round_floor(grid_pos_col, bw) * mi_width;
+#if FTR_TPL_SYNTH
+            const int step       = 1 << (shift);
+#else
             const int step       = 1 << (pcs_ptr->is_720p_or_larger ? 2 : 1);
+#endif
 
             for (int idy = 0; idy < mi_height; idy += step) {
                 for (int idx = 0; idx < mi_width; idx += step) {
@@ -3061,10 +3128,15 @@ static AOM_INLINE void tpl_model_update(
         return;
     }
 #endif
-
+#if FTR_TPL_SYNTH
+    const int /*BLOCK_SIZE*/ block_size = pcs_ptr->tpl_ctrls.synth_blk_size == 8 ? BLOCK_8X8 : pcs_ptr->tpl_ctrls.synth_blk_size == 16 ?   BLOCK_16X16 : BLOCK_32X32;
+    const int                shift      = pcs_ptr->tpl_ctrls.synth_blk_size == 8 ? 1 : pcs_ptr->tpl_ctrls.synth_blk_size == 16 ?   2 : 3 ;
+    const int                step       = 1 << (shift);
+#else
     const int /*BLOCK_SIZE*/ block_size = pcs_ptr->is_720p_or_larger ? BLOCK_16X16 : BLOCK_8X8;
     const int                step       = 1 << (pcs_ptr->is_720p_or_larger ? 2 : 1);
     const int                shift      = pcs_ptr->is_720p_or_larger ? 2 : 1;
+#endif
     const int                mi_cols_sr = ((pcs_ptr->aligned_width + 15) / 16) << 2;
     int                      i          = 0;
 
@@ -3097,7 +3169,11 @@ void tpl_mc_flow_synthesizer(
     uint8_t                          frames_in_sw)
 {
     Av1Common *              cm        = pcs_array[frame_idx]->av1_cm;
+#if FTR_TPL_SYNTH
+    const int /*BLOCK_SIZE*/ bsize     = pcs_array[frame_idx]->tpl_ctrls.synth_blk_size == 32  ? BLOCK_32X32 : BLOCK_16X16;
+#else
     const int /*BLOCK_SIZE*/ bsize     = BLOCK_16X16;
+#endif
     const int                mi_height = mi_size_high[bsize];
     const int                mi_width  = mi_size_wide[bsize];
 
@@ -3115,12 +3191,21 @@ static void generate_r0beta(PictureParentControlSet *pcs_ptr) {
     SequenceControlSet *scs_ptr          = pcs_ptr->scs_ptr;
     int64_t             intra_cost_base  = 0;
     int64_t             mc_dep_cost_base = 0;
-    const int32_t       step = 1 << (pcs_ptr->is_720p_or_larger ? 2 : 1);
-    const int32_t       col_step_sr = coded_to_superres_mi(step, pcs_ptr->superres_denom);
-    // According to AOM function process_tpl_stats_frame, unscaled size should be used here.
-    const int32_t       mi_cols_sr = ((pcs_ptr->enhanced_unscaled_picture_ptr->width + 15) / 16) << 2;  // picture column boundary
-    const int32_t       mi_rows = ((pcs_ptr->enhanced_unscaled_picture_ptr->height + 15) / 16) << 2; // picture row boundary
-    const int32_t       shift = pcs_ptr->is_720p_or_larger ? 2 : 1;
+#if FTR_TPL_SYNTH
+    const int32_t       shift            = pcs_ptr->tpl_ctrls.synth_blk_size  == 8 ? 1 : pcs_ptr->tpl_ctrls.synth_blk_size  == 16 ?   2 : 3 ;
+    const int32_t       step             = 1 << (shift);
+    const int32_t       col_step_sr      = coded_to_superres_mi(step, pcs_ptr->superres_denom);
+    // Super-res upscaled size should be used here.
+    const int32_t       mi_cols_sr       = ((pcs_ptr->enhanced_unscaled_picture_ptr->width + 15) / 16) << 2;  // picture column boundary
+    const int32_t       mi_rows          = ((pcs_ptr->enhanced_unscaled_picture_ptr->height + 15) / 16) << 2; // picture row boundary
+#else
+    const int32_t       shift            = pcs_ptr->is_720p_or_larger ? 2 : 1;
+    const int32_t       step             = 1 << (pcs_ptr->is_720p_or_larger ? 2 : 1);
+    const int32_t       col_step_sr      = coded_to_superres_mi(step, pcs_ptr->superres_denom);
+    // Super-res upscaled size should be used here.
+    const int32_t       mi_cols_sr       = ((pcs_ptr->enhanced_unscaled_picture_ptr->width + 15) / 16) << 2;  // picture column boundary
+    const int32_t       mi_rows          = ((pcs_ptr->enhanced_unscaled_picture_ptr->height + 15) / 16) << 2; // picture row boundary
+#endif
 
     for (int row = 0; row < cm->mi_rows; row += step) {
         for (int col = 0; col < mi_cols_sr; col += col_step_sr) {
@@ -3368,10 +3453,23 @@ EbErrorType tpl_mc_flow(EncodeContext *encode_context_ptr, SequenceControlSet *s
 
     int32_t  frames_in_sw = MIN(MAX_TPL_LA_SW, pcs_ptr->tpl_group_size);
     int32_t  frame_idx;
+#if FTR_TPL_SYNTH
+   uint32_t picture_width_in_mb  = (pcs_ptr->enhanced_picture_ptr->width + 16 - 1) / 16  ;
+   uint32_t picture_height_in_mb = (pcs_ptr->enhanced_picture_ptr->height + 16 - 1) / 16 ;
+
+    if (pcs_ptr->tpl_ctrls.synth_blk_size  == 8) {
+        picture_width_in_mb =  picture_width_in_mb  << 1;
+        picture_height_in_mb = picture_height_in_mb << 1;
+    }
+    else if (pcs_ptr->tpl_ctrls.synth_blk_size  == 32) {
+            picture_width_in_mb  = (pcs_ptr->enhanced_picture_ptr->width + 31) / 32  ;
+            picture_height_in_mb = (pcs_ptr->enhanced_picture_ptr->height + 31) / 32 ;
+    }
+#else
     uint32_t shift                = pcs_ptr->is_720p_or_larger ? 0 : 1;
     uint32_t picture_width_in_mb  = (pcs_ptr->enhanced_picture_ptr->width + 16 - 1) / 16;
     uint32_t picture_height_in_mb = (pcs_ptr->enhanced_picture_ptr->height + 16 - 1) / 16;
-
+#endif
     //wait for PA ME to be done.
     for (uint32_t i = 1; i < pcs_ptr->tpl_group_size; i++) {
         svt_wait_cond_var(&pcs_ptr->tpl_group[i]->me_ready, 0);
@@ -3450,11 +3548,19 @@ EbErrorType tpl_mc_flow(EncodeContext *encode_context_ptr, SequenceControlSet *s
         encode_context_ptr->poc_map_idx[0] = pcs_ptr->tpl_group[0]->picture_number;
         for (frame_idx = 0; frame_idx < frames_in_sw; frame_idx++) {
             encode_context_ptr->poc_map_idx[frame_idx] = pcs_ptr->tpl_group[frame_idx]->picture_number;
+#if FTR_TPL_SYNTH
+            for (uint32_t blky = 0; blky < (picture_height_in_mb); blky++) {
+                memset(pcs_ptr->tpl_group[frame_idx]->tpl_stats[blky * (picture_width_in_mb)],
+                        0,
+                        (picture_width_in_mb) * sizeof(TplStats));
+            }
+#else
             for (uint32_t blky = 0; blky < (picture_height_in_mb << shift); blky++) {
                 memset(pcs_ptr->tpl_group[frame_idx]->tpl_stats[blky * (picture_width_in_mb << shift)],
                         0,
                         (picture_width_in_mb << shift) * sizeof(TplStats));
             }
+#endif
 #if OPT_COMBINE_TPL_FOR_LAD
             tpl_on = pcs_ptr->tpl_valid_pic[frame_idx];
 #else

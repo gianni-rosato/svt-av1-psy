@@ -28,7 +28,11 @@
 #include "common_dsp_rtcd.h"
 #include "EbResize.h"
 typedef struct ResourceCoordinationContext {
+#if OPT_PA_REF
+    EbFifo *                       input_cmd_fifo_ptr;
+#else
     EbFifo *                       input_buffer_fifo_ptr;
+#endif
     EbFifo *                       resource_coordination_results_output_fifo_ptr;
     EbFifo **                      picture_control_set_fifo_ptr_array;
     EbSequenceControlSetInstance **scs_instance_array;
@@ -94,9 +98,13 @@ EbErrorType resource_coordination_context_ctor(EbThreadContext *thread_contxt_pt
         context_ptr->picture_control_set_fifo_ptr_array[i] = svt_system_resource_get_producer_fifo(
             enc_handle_ptr->picture_parent_control_set_pool_ptr_array[i], 0);
     }
-
+#if OPT_PA_REF
+    context_ptr->input_cmd_fifo_ptr = svt_system_resource_get_consumer_fifo(
+        enc_handle_ptr->input_cmd_resource_ptr, 0);
+#else
     context_ptr->input_buffer_fifo_ptr = svt_system_resource_get_consumer_fifo(
         enc_handle_ptr->input_buffer_resource_ptr, 0);
+#endif
     context_ptr->resource_coordination_results_output_fifo_ptr =
         svt_system_resource_get_producer_fifo(
             enc_handle_ptr->resource_coordination_results_resource_ptr, 0);
@@ -147,13 +155,20 @@ uint8_t  get_tpl_level(int8_t enc_mode)
         tpl_level = 0;
     }else if (enc_mode <= ENC_M7){
         tpl_level = 2;
+#if TUNE_M8_M11_MT
+    }else if (enc_mode <= ENC_M9){
+        tpl_level = 3;
+#else
     }else if (enc_mode <= ENC_M8){
         tpl_level = 3;
     }else if (enc_mode <= ENC_M9){
         tpl_level = 4;
+#endif
 #if OPT_TPL_64X64_32X32
+#if !TUNE_M9_M10
     }else if (enc_mode <= ENC_M10) {
         tpl_level = 5;
+#endif
     } else {
         tpl_level = 6;
     }
@@ -171,8 +186,15 @@ uint8_t  get_tpl_synthesizer_block_size(int8_t tpl_level,uint32_t picture_width,
     uint8_t  blk_size;
     if(tpl_level <=4)
         blk_size = AOMMIN(picture_width, picture_height) >= 720 ? 16 : 8;
+#if FTR_TPL_SYNTH
+    if(tpl_level <=5)
+        blk_size =  16;
+    else
+        blk_size = AOMMIN(picture_width, picture_height) >= 720 ? 32 : 16;
+#else
     else
         blk_size =  16;
+#endif
 
     return blk_size;
 }
@@ -629,7 +651,7 @@ uint8_t get_enable_restoration(EbEncMode enc_mode) {
 
     uint8_t enable_restoration;
 
-#if FIX_PRESET_TUNING
+#if FIX_PRESET_TUNING && !TUNE_M7_MT
         enable_restoration = (enc_mode <= ENC_M7) ? 1 : 0;
 #else
         enable_restoration = (enc_mode <= ENC_M6) ? 1 : 0;
@@ -736,7 +758,7 @@ EbErrorType signal_derivation_pre_analysis_oq_pcs(SequenceControlSet const * con
 #endif
 
 #if FTR_16X16_TPL_MAP
-      assert_err(pcs_ptr->is_720p_or_larger == (pcs_ptr->tpl_ctrls.synth_blk_size == 16), "TPL Synth Size Error");
+      //assert_err(pcs_ptr->is_720p_or_larger == (pcs_ptr->tpl_ctrls.synth_blk_size == 16), "TPL Synth Size Error");
 #endif
 
     return return_error;
@@ -1374,7 +1396,10 @@ void *resource_coordination_kernel(void *input_ptr) {
     EbBufferHeaderType *         eb_input_ptr;
     EbObjectWrapper *            output_wrapper_ptr;
     ResourceCoordinationResults *out_results_ptr;
-
+#if OPT_PA_REF
+    EbObjectWrapper *eb_input_cmd_wrapper;
+    InputCommand *input_cmd_obj;
+#endif
     EbObjectWrapper *input_picture_wrapper_ptr;
     EbObjectWrapper *reference_picture_wrapper_ptr;
 
@@ -1387,11 +1412,26 @@ void *resource_coordination_kernel(void *input_ptr) {
         // Tie instance_index to zero for now...
         uint32_t            instance_index = 0;
         SequenceControlSet *scs_tmp;
+#if OPT_PA_REF
+        // Get the input command containing 2 input buffers: y8b & rest(uv8b+yuvbitInc)
+        EB_GET_FULL_OBJECT(context_ptr->input_cmd_fifo_ptr, &eb_input_cmd_wrapper);
 
+        input_cmd_obj = (InputCommand*)eb_input_cmd_wrapper->object_ptr;
+
+        EbObjectWrapper *eb_y8b_wrapper_ptr = input_cmd_obj->eb_y8b_wrapper_ptr;
+        EbBufferHeaderType *y8b_header = (EbBufferHeaderType *)eb_y8b_wrapper_ptr->object_ptr;
+        uint8_t *buff_y8b = ((EbPictureBufferDesc *)y8b_header->p_buffer)->buffer_y;
+        eb_input_wrapper_ptr = input_cmd_obj->eb_input_wrapper_ptr;
+        eb_input_ptr = (EbBufferHeaderType *)eb_input_wrapper_ptr->object_ptr;
+
+        //static  int rc_count = 0;
+       // printf("rc count %i \n", rc_count++);
+#else
         // Get the Next svt Input Buffer [BLOCKING]
         EB_GET_FULL_OBJECT(context_ptr->input_buffer_fifo_ptr, &eb_input_wrapper_ptr);
 
         eb_input_ptr = (EbBufferHeaderType *)eb_input_wrapper_ptr->object_ptr;
+#endif
 
         // If config changes occured since the last picture began encoding, then
         //   prepare a new scs_ptr containing the new changes and update the state
@@ -1597,6 +1637,10 @@ void *resource_coordination_kernel(void *input_ptr) {
             // *Note - Assumes 4:2:0 planar
             input_picture_wrapper_ptr     = eb_input_wrapper_ptr;
             pcs_ptr->enhanced_picture_ptr = (EbPictureBufferDesc *)eb_input_ptr->p_buffer;
+#if OPT_PA_REF
+            //make pcs input buffer access the luma8bit part from the Luma8bit Pool
+            pcs_ptr->enhanced_picture_ptr->buffer_y = buff_y8b;
+#endif
             pcs_ptr->input_ptr            = eb_input_ptr;
             end_of_sequence_flag = (pcs_ptr->input_ptr->flags & EB_BUFFERFLAG_EOS) ? EB_TRUE
                                                                                    : EB_FALSE;
@@ -1611,6 +1655,10 @@ void *resource_coordination_kernel(void *input_ptr) {
                 context_ptr->sequence_control_set_active_array[instance_index];
             pcs_ptr->scs_ptr                   = scs_ptr;
             pcs_ptr->input_picture_wrapper_ptr = input_picture_wrapper_ptr;
+#if OPT_PA_REF
+            //store the y8b warapper to be used for release later
+            pcs_ptr->eb_y8b_wrapper_ptr = eb_y8b_wrapper_ptr;
+#endif
             pcs_ptr->end_of_sequence_flag      = end_of_sequence_flag;
             pcs_ptr->is_superres_none = (scs_ptr->static_config.superres_mode == SUPERRES_NONE);
             if (loop_index == 1) {
@@ -1699,12 +1747,23 @@ void *resource_coordination_kernel(void *input_ptr) {
                                  &reference_picture_wrapper_ptr);
 
             pcs_ptr->pa_reference_picture_wrapper_ptr = reference_picture_wrapper_ptr;
+#if OPT_PA_REF
+            //make pa_ref full sample buffer access the luma8bit part from the y8b Pool
+            EbPaReferenceObject *pa_ref_obj = (EbPaReferenceObject *)pcs_ptr->pa_reference_picture_wrapper_ptr->object_ptr;
+            EbPictureBufferDesc *input_padded_picture_ptr = (EbPictureBufferDesc *)pa_ref_obj->input_padded_picture_ptr;
+            input_padded_picture_ptr->buffer_y = buff_y8b;
+#endif
             // Since overlay pictures are not added to PA_Reference queue in PD and not released there, the life count is only set to 1
             if (pcs_ptr->is_overlay)
                 // Give the new Reference a nominal live_count of 1
                 svt_object_inc_live_count(pcs_ptr->pa_reference_picture_wrapper_ptr, 1);
             else
                 svt_object_inc_live_count(pcs_ptr->pa_reference_picture_wrapper_ptr, 2);
+#if OPT_PA_REF
+            // y8b follows longest life cycle of pa ref and input. so it needs to build on top of live count of pa ref
+            if (!pcs_ptr->is_overlay)
+                svt_object_inc_live_count(pcs_ptr->eb_y8b_wrapper_ptr, 2);
+#endif
             if (scs_ptr->static_config.unrestricted_motion_vector == 0) {
                 struct PictureParentControlSet *ppcs_ptr        = pcs_ptr;
                 Av1Common *const                cm              = ppcs_ptr->av1_cm;
@@ -1772,6 +1831,10 @@ void *resource_coordination_kernel(void *input_ptr) {
             }
             prev_pcs_wrapper_ptr = pcs_wrapper_ptr;
         }
+#if OPT_PA_REF
+        // Release the Input Command
+        svt_release_object(eb_input_cmd_wrapper);
+#endif
     }
 
     return NULL;

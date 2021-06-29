@@ -88,6 +88,29 @@ void  get_max_allocated_me_refs(uint8_t mrp_level, uint8_t* max_ref_to_alloc, ui
         *max_cand_to_alloc = MAX_PA_ME_CAND;
     }
 }
+#if ME_8X8
+/*
+if disallow_below_16x16 is turned ON then enable_me_8x8 should be turned OFF for the same preset in order to save memory and cycles as enable_me_8x8 OFF will optimize the me_candidate_array,
+me_mv_array and the total_me_candidate_index arrays when 8x8 blocks are not used
+
+if any check other than an I-SLICE check is used on disallow_below_16x16 then the enable_me_8x8 should be turned ON for the entire preset because without the 8x8 me data the non I-SLICE pictures
+that use 8x8 blocks will lose significant BD-Rate as the parent 16x16 me data will be used for the 8x8 blocks
+*/
+uint8_t get_enable_me_8x8(EbEncMode enc_mode,  EbInputResolution input_resolution ) {
+
+    uint8_t enable_me_8x8;
+
+    if (enc_mode <= ENC_M9)
+        enable_me_8x8 = 1;
+    else if (enc_mode <= ENC_M10)
+        enable_me_8x8 = (input_resolution <= INPUT_SIZE_720p_RANGE) ? 1 : 0;
+    else
+         enable_me_8x8 = 0;
+
+    return  enable_me_8x8;
+}
+#endif
+
 EbErrorType me_sb_results_ctor(MeSbResults *obj_ptr, PictureControlSetInitData *init_data_ptr){
 
     obj_ptr->dctor = me_sb_results_dctor;
@@ -96,10 +119,17 @@ EbErrorType me_sb_results_ctor(MeSbResults *obj_ptr, PictureControlSetInitData *
     uint8_t max_ref_to_alloc, max_cand_to_alloc;
 
     get_max_allocated_me_refs(init_data_ptr->mrp_level, &max_ref_to_alloc, &max_cand_to_alloc);
+#if ME_8X8
+    EbInputResolution resolution;
+    derive_input_resolution(&resolution, init_data_ptr->picture_width * init_data_ptr->picture_height);
+    uint8_t number_of_pus = get_enable_me_8x8(init_data_ptr->enc_mode, resolution) ? SQUARE_PU_COUNT : MAX_SB64_PU_COUNT_NO_8X8;
 
-
+    EB_MALLOC_ARRAY(obj_ptr->me_mv_array, number_of_pus * max_ref_to_alloc);
+    EB_MALLOC_ARRAY(obj_ptr->me_candidate_array, number_of_pus * max_cand_to_alloc);
+#else
     EB_MALLOC_ARRAY(obj_ptr->me_mv_array, SQUARE_PU_COUNT * max_ref_to_alloc);
     EB_MALLOC_ARRAY(obj_ptr->me_candidate_array, SQUARE_PU_COUNT * max_cand_to_alloc);
+#endif
 
 #else
 EbErrorType me_sb_results_ctor(MeSbResults *obj_ptr) {
@@ -119,7 +149,11 @@ EbErrorType me_sb_results_ctor(MeSbResults *obj_ptr) {
         obj_ptr->me_candidate_array[pu_index * MAX_PA_ME_CAND + 2].direction  = 2;
     }
 #endif
+#if ME_8X8
+    EB_MALLOC_ARRAY(obj_ptr->total_me_candidate_index, number_of_pus);
+#else
     EB_MALLOC_ARRAY(obj_ptr->total_me_candidate_index, SQUARE_PU_COUNT);
+#endif
     return EB_ErrorNone;
 }
 void recon_coef_dctor(EbPtr p) {
@@ -1502,7 +1536,21 @@ EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr,
         const uint16_t picture_height_in_mb = (uint16_t)((init_data_ptr->picture_height + 15) / 16);
         object_ptr->r0                      = 0;
 #if FTR_16X16_TPL_MAP
+#if FTR_TPL_SYNTH
+        uint16_t adaptive_picture_width_in_mb  = (uint16_t)((init_data_ptr->picture_width + 15) / 16) ;
+        uint16_t adaptive_picture_height_in_mb = (uint16_t)((init_data_ptr->picture_height + 15) / 16) ;
+
+        if (init_data_ptr->tpl_synth_size == 8) {
+            adaptive_picture_width_in_mb =  adaptive_picture_width_in_mb  << 1;
+            adaptive_picture_height_in_mb = adaptive_picture_height_in_mb << 1;
+        }
+        else if (init_data_ptr->tpl_synth_size == 32) {
+            adaptive_picture_width_in_mb  = (uint16_t)((init_data_ptr->picture_width + 31) / 32) ;
+            adaptive_picture_height_in_mb = (uint16_t)((init_data_ptr->picture_height + 31) / 32) ;
+        }
+#else
         object_ptr->is_720p_or_larger = init_data_ptr->tpl_synth_size == 16 ? 1 : 0;
+#endif
 #else
         object_ptr->is_720p_or_larger       = AOMMIN(init_data_ptr->picture_width,
                                                init_data_ptr->picture_height) >= 720;
@@ -1513,10 +1561,17 @@ EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr,
                          1);
         else
             object_ptr->ois_mb_results = NULL;
+#if FTR_TPL_SYNTH
+        EB_MALLOC_2D(object_ptr->tpl_stats,
+                     (uint32_t)((adaptive_picture_width_in_mb ) *
+                                (adaptive_picture_height_in_mb )),
+                     1);
+#else
         EB_MALLOC_2D(object_ptr->tpl_stats,
                      (uint32_t)((picture_width_in_mb << (1 - object_ptr->is_720p_or_larger)) *
                                 (picture_height_in_mb << (1 - object_ptr->is_720p_or_larger))),
                      1);
+#endif
 #if SS_OPT_TPL
 
 #if SS_MEM_TPL
@@ -1529,13 +1584,22 @@ EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr,
 #endif
 #endif
         EB_MALLOC_ARRAY(object_ptr->tpl_beta, object_ptr->sb_total_count);
+#if FTR_TPL_SYNTH
+        EB_MALLOC_ARRAY(object_ptr->tpl_rdmult_scaling_factors,
+                       adaptive_picture_width_in_mb * adaptive_picture_height_in_mb);
+        EB_MALLOC_ARRAY(object_ptr->tpl_sb_rdmult_scaling_factors,
+                        adaptive_picture_width_in_mb * adaptive_picture_height_in_mb);
+#else
         EB_MALLOC_ARRAY(object_ptr->tpl_rdmult_scaling_factors,
                         picture_width_in_mb * picture_height_in_mb);
         EB_MALLOC_ARRAY(object_ptr->tpl_sb_rdmult_scaling_factors,
                         picture_width_in_mb * picture_height_in_mb);
+#endif
     } else {
         object_ptr->r0                            = 0;
+#if !FTR_TPL_SYNTH
         object_ptr->is_720p_or_larger             = 0;
+#endif
         object_ptr->ois_mb_results                = NULL;
         object_ptr->tpl_stats                     = NULL;
         object_ptr->tpl_beta                      = NULL;
@@ -1640,6 +1704,11 @@ EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr,
     object_ptr->undershoot_seen = 0;
     object_ptr->low_cr_seen     = 0;
     EB_CREATE_MUTEX(object_ptr->pcs_total_rate_mutex);
+#if ME_8X8
+    EbInputResolution resolution;
+    derive_input_resolution(&resolution, init_data_ptr->picture_width * init_data_ptr->picture_height);
+    object_ptr->enable_me_8x8 = get_enable_me_8x8(init_data_ptr->enc_mode, resolution);
+#endif
     return return_error;
 }
 static void me_dctor(EbPtr p) {

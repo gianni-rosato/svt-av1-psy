@@ -18,6 +18,15 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#if OPT_PA_REF
+typedef struct InputCommand {
+    EbDctor            dctor;
+    EbObjectWrapper   *eb_input_wrapper_ptr;
+    EbObjectWrapper   *eb_y8b_wrapper_ptr;
+} InputCommand;
+#endif
+
 /**************************************
      * Process Results
      **************************************/

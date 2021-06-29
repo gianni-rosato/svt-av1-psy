@@ -191,7 +191,11 @@ static INLINE int svt_av1_is_subpelmv_in_range(const SubpelMvLimits *mv_limits, 
 // JOINT_MV, and comp_cost covers the cost of transmitting the actual motion
 // vector.
 static INLINE int svt_mv_cost(const MV *mv, const int *joint_cost, const int *const comp_cost[2]) {
+#if FIX_DO_NOT_TEST_CORRUPTED_MVS
+    return joint_cost[svt_av1_get_mv_joint(mv)] + comp_cost[0][CLIP3(MV_LOW, MV_UPP, mv->row)] + comp_cost[1][CLIP3(MV_LOW, MV_UPP, mv->col)];
+#else
     return joint_cost[svt_av1_get_mv_joint(mv)] + comp_cost[0][mv->row] + comp_cost[1][mv->col];
+#endif
 }
 
 #ifdef __cplusplus

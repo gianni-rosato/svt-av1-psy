@@ -26,8 +26,12 @@ typedef void (*TemporalFilterFunc)(
     const uint8_t *y_pre, int y_pre_stride, const uint8_t *u_src,
     const uint8_t *v_src, int uv_src_stride, const uint8_t *u_pre,
     const uint8_t *v_pre, int uv_pre_stride, unsigned int block_width,
-    unsigned int block_height, int ss_x, int ss_y, const double *noise_levels,
-    const int decay_control, uint32_t *y_accum, uint16_t *y_count,
+    unsigned int block_height, int ss_x, int ss_y,
+#if !FTR_TF_STRENGTH_PER_QP
+    const double *noise_levels,
+    const int decay_control,
+#endif
+    uint32_t *y_accum, uint16_t *y_count,
     uint32_t *u_accum, uint16_t *u_count, uint32_t *v_accum, uint16_t *v_count);
 
 typedef void (*TemporalFilterFuncHbd)(
@@ -35,8 +39,12 @@ typedef void (*TemporalFilterFuncHbd)(
     const uint16_t *y_pre, int y_pre_stride, const uint16_t *u_src,
     const uint16_t *v_src, int uv_src_stride, const uint16_t *u_pre,
     const uint16_t *v_pre, int uv_pre_stride, unsigned int block_width,
-    unsigned int block_height, int ss_x, int ss_y, const double *noise_levels,
-    const int decay_control, uint32_t *y_accum, uint16_t *y_count,
+    unsigned int block_height, int ss_x, int ss_y,
+#if !FTR_TF_STRENGTH_PER_QP
+    const double *noise_levels,
+    const int decay_control,
+#endif
+    uint32_t *y_accum, uint16_t *y_count,
     uint32_t *u_accum, uint16_t *u_count, uint32_t *v_accum, uint16_t *v_count, uint32_t encoder_bit_depth);
 
 #define MAX_STRIDE 256
@@ -171,10 +179,15 @@ class TemporalFilterTestPlanewise
             stride[color_channel] = MAX_STRIDE;
             stride_pred[color_channel] = MAX_STRIDE;
 
+#if FTR_TF_STRENGTH_PER_QP
+            tf_decay_factor[color_channel] = 1;
+#else
             noise_levels[color_channel] = 2.1002103677063437;
+#endif
         }
-
+#if !FTR_TF_STRENGTH_PER_QP
         decay_control = 7;
+#endif
     }
 
     void TearDown() {
@@ -220,8 +233,12 @@ class TemporalFilterTestPlanewise
 
     uint32_t stride[COLOR_CHANNELS];
     uint32_t stride_pred[COLOR_CHANNELS];
+#if FTR_TF_STRENGTH_PER_QP
+    int tf_decay_factor[COLOR_CHANNELS];
+#else
     double noise_levels[COLOR_CHANNELS];
     int decay_control;
+#endif
 };
 
 void TemporalFilterTestPlanewise::RunTest(int width, int height,
@@ -238,6 +255,11 @@ void TemporalFilterTestPlanewise::RunTest(int width, int height,
             } else {
                 context_ptr = &context2;
             }
+#if FTR_TF_STRENGTH_PER_QP
+            context_ptr->tf_decay_factor[C_Y] = tf_decay_factor[C_Y];
+            context_ptr->tf_decay_factor[C_U] = tf_decay_factor[C_U];
+            context_ptr->tf_decay_factor[C_V] = tf_decay_factor[C_V];
+#endif
             ref_func(
                      context_ptr,
                      src_ptr[C_Y],
@@ -254,8 +276,10 @@ void TemporalFilterTestPlanewise::RunTest(int width, int height,
                      height,
                      1,  // subsampling
                      1,  // subsampling
+#if !FTR_TF_STRENGTH_PER_QP
                      noise_levels,
                      decay_control,
+#endif
                      accum_ref_ptr[C_Y],
                      count_ref_ptr[C_Y],
                      accum_ref_ptr[C_U],
@@ -279,8 +303,10 @@ void TemporalFilterTestPlanewise::RunTest(int width, int height,
                      height,
                      1,  // subsampling
                      1,  // subsampling
+#if !FTR_TF_STRENGTH_PER_QP
                      noise_levels,
                      decay_control,
+#endif
                      accum_tst_ptr[C_Y],
                      count_tst_ptr[C_Y],
                      accum_tst_ptr[C_U],
@@ -315,6 +341,11 @@ void TemporalFilterTestPlanewise::RunTest(int width, int height,
             } else {
                 context_ptr = &context2;
             }
+#if FTR_TF_STRENGTH_PER_QP
+            context_ptr->tf_decay_factor[C_Y] = tf_decay_factor[C_Y];
+            context_ptr->tf_decay_factor[C_U] = tf_decay_factor[C_U];
+            context_ptr->tf_decay_factor[C_V] = tf_decay_factor[C_V];
+#endif
             ref_func(
                      context_ptr,
                      src_ptr[C_Y],
@@ -331,8 +362,10 @@ void TemporalFilterTestPlanewise::RunTest(int width, int height,
                      height,
                      1,  // subsampling
                      1,  // subsampling
+#if !FTR_TF_STRENGTH_PER_QP
                      noise_levels,
                      decay_control,
+#endif
                      accum_ref_ptr[C_Y],
                      count_ref_ptr[C_Y],
                      accum_ref_ptr[C_U],
@@ -348,6 +381,11 @@ void TemporalFilterTestPlanewise::RunTest(int width, int height,
             } else {
                 context_ptr = &context2;
             }
+#if FTR_TF_STRENGTH_PER_QP
+            context_ptr->tf_decay_factor[C_Y] = tf_decay_factor[C_Y];
+            context_ptr->tf_decay_factor[C_U] = tf_decay_factor[C_U];
+            context_ptr->tf_decay_factor[C_V] = tf_decay_factor[C_V];
+#endif
             tst_func(
                      context_ptr,
                      src_ptr[C_Y],
@@ -364,8 +402,10 @@ void TemporalFilterTestPlanewise::RunTest(int width, int height,
                      height,
                      1,  // subsampling
                      1,  // subsampling
+#if !FTR_TF_STRENGTH_PER_QP
                      noise_levels,
                      decay_control,
+#endif
                      accum_tst_ptr[C_Y],
                      count_tst_ptr[C_Y],
                      accum_tst_ptr[C_U],
@@ -460,11 +500,15 @@ class TemporalFilterTestPlanewiseHbd
 
             stride[color_channel] = MAX_STRIDE;
             stride_pred[color_channel] = MAX_STRIDE;
-
+#if FTR_TF_STRENGTH_PER_QP
+            tf_decay_factor[color_channel] = 1;
+#else
             noise_levels[color_channel] = 2.1002103677063437;
+#endif
         }
-
+#if !FTR_TF_STRENGTH_PER_QP
         decay_control = 7;
+#endif
     }
 
     void TearDown() {
@@ -509,8 +553,12 @@ class TemporalFilterTestPlanewiseHbd
 
     uint32_t stride[COLOR_CHANNELS];
     uint32_t stride_pred[COLOR_CHANNELS];
+#if FTR_TF_STRENGTH_PER_QP
+    int tf_decay_factor[COLOR_CHANNELS];
+#else
     double noise_levels[COLOR_CHANNELS];
     int decay_control;
+#endif
     uint32_t encoder_bit_depth;
 };
 
@@ -529,6 +577,11 @@ void TemporalFilterTestPlanewiseHbd::RunTest(int width, int height,
                 context_ptr = &context2;
             }
             encoder_bit_depth = 10;
+#if FTR_TF_STRENGTH_PER_QP
+            context_ptr->tf_decay_factor[C_Y] = tf_decay_factor[C_Y];
+            context_ptr->tf_decay_factor[C_U] = tf_decay_factor[C_U];
+            context_ptr->tf_decay_factor[C_V] = tf_decay_factor[C_V];
+#endif
             ref_func(
                      context_ptr,
                      src_ptr[C_Y],
@@ -545,8 +598,10 @@ void TemporalFilterTestPlanewiseHbd::RunTest(int width, int height,
                      height,
                      1,  // subsampling
                      1,  // subsampling
+#if !FTR_TF_STRENGTH_PER_QP
                      noise_levels,
                      decay_control,
+#endif
                      accum_ref_ptr[C_Y],
                      count_ref_ptr[C_Y],
                      accum_ref_ptr[C_U],
@@ -571,8 +626,10 @@ void TemporalFilterTestPlanewiseHbd::RunTest(int width, int height,
                      height,
                      1,  // subsampling
                      1,  // subsampling
+#if !FTR_TF_STRENGTH_PER_QP
                      noise_levels,
                      decay_control,
+#endif
                      accum_tst_ptr[C_Y],
                      count_tst_ptr[C_Y],
                      accum_tst_ptr[C_U],
@@ -594,6 +651,11 @@ void TemporalFilterTestPlanewiseHbd::RunTest(int width, int height,
                           0);
             }
             encoder_bit_depth = 12;
+#if FTR_TF_STRENGTH_PER_QP
+            context_ptr->tf_decay_factor[C_Y] = tf_decay_factor[C_Y];
+            context_ptr->tf_decay_factor[C_U] = tf_decay_factor[C_U];
+            context_ptr->tf_decay_factor[C_V] = tf_decay_factor[C_V];
+#endif
             ref_func(
                 context_ptr,
                 src_ptr[C_Y],
@@ -610,8 +672,10 @@ void TemporalFilterTestPlanewiseHbd::RunTest(int width, int height,
                 height,
                 1,  // subsampling
                 1,  // subsampling
+#if !FTR_TF_STRENGTH_PER_QP
                 noise_levels,
                 decay_control,
+#endif
                 accum_ref_ptr[C_Y],
                 count_ref_ptr[C_Y],
                 accum_ref_ptr[C_U],
@@ -636,8 +700,10 @@ void TemporalFilterTestPlanewiseHbd::RunTest(int width, int height,
                 height,
                 1,  // subsampling
                 1,  // subsampling
+#if !FTR_TF_STRENGTH_PER_QP
                 noise_levels,
                 decay_control,
+#endif
                 accum_tst_ptr[C_Y],
                 count_tst_ptr[C_Y],
                 accum_tst_ptr[C_U],
@@ -673,6 +739,11 @@ void TemporalFilterTestPlanewiseHbd::RunTest(int width, int height,
             } else {
                 context_ptr = &context2;
             }
+#if FTR_TF_STRENGTH_PER_QP
+            context_ptr->tf_decay_factor[C_Y] = tf_decay_factor[C_Y];
+            context_ptr->tf_decay_factor[C_U] = tf_decay_factor[C_U];
+            context_ptr->tf_decay_factor[C_V] = tf_decay_factor[C_V];
+#endif
             ref_func(
                      context_ptr,
                      src_ptr[C_Y],
@@ -689,8 +760,10 @@ void TemporalFilterTestPlanewiseHbd::RunTest(int width, int height,
                      height,
                      1,  // subsampling
                      1,  // subsampling
+#if !FTR_TF_STRENGTH_PER_QP
                      noise_levels,
                      decay_control,
+#endif
                      accum_ref_ptr[C_Y],
                      count_ref_ptr[C_Y],
                      accum_ref_ptr[C_U],
@@ -718,8 +791,10 @@ void TemporalFilterTestPlanewiseHbd::RunTest(int width, int height,
                      height,
                      1,  // subsampling
                      1,  // subsampling
+#if !FTR_TF_STRENGTH_PER_QP
                      noise_levels,
                      decay_control,
+#endif
                      accum_tst_ptr[C_Y],
                      count_tst_ptr[C_Y],
                      accum_tst_ptr[C_U],
@@ -761,6 +836,11 @@ void TemporalFilterTestPlanewiseHbd::RunTest(int width, int height,
             else {
                 context_ptr = &context2;
             }
+#if FTR_TF_STRENGTH_PER_QP
+            context_ptr->tf_decay_factor[C_Y] = tf_decay_factor[C_Y];
+            context_ptr->tf_decay_factor[C_U] = tf_decay_factor[C_U];
+            context_ptr->tf_decay_factor[C_V] = tf_decay_factor[C_V];
+#endif
             ref_func(
                 context_ptr,
                 src_ptr[C_Y],
@@ -777,8 +857,10 @@ void TemporalFilterTestPlanewiseHbd::RunTest(int width, int height,
                 height,
                 1,  // subsampling
                 1,  // subsampling
+#if !FTR_TF_STRENGTH_PER_QP
                 noise_levels,
                 decay_control,
+#endif
                 accum_ref_ptr[C_Y],
                 count_ref_ptr[C_Y],
                 accum_ref_ptr[C_U],
@@ -806,8 +888,10 @@ void TemporalFilterTestPlanewiseHbd::RunTest(int width, int height,
                 height,
                 1,  // subsampling
                 1,  // subsampling
+#if !FTR_TF_STRENGTH_PER_QP
                 noise_levels,
                 decay_control,
+#endif
                 accum_tst_ptr[C_Y],
                 count_tst_ptr[C_Y],
                 accum_tst_ptr[C_U],
@@ -920,6 +1004,9 @@ private:
                }
                count[color_channel][i] = rand16; //Never 0
             }
+#if FTR_TF_STRENGTH_PER_QP
+            context_ptr->tf_decay_factor[color_channel] = 1;
+#endif
         }
 
         memset(context_ptr, 0, sizeof(*context_ptr));
@@ -1041,6 +1128,9 @@ private:
                 src[color_channel][i] = rand();
                 src_highbd[color_channel][i] = rand();
             }
+#if FTR_TF_STRENGTH_PER_QP
+            context_ptr->tf_decay_factor[color_channel] = 1;
+#endif
         }
 
         memset(context_ptr, 0, sizeof(*context_ptr));

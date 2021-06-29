@@ -2790,6 +2790,7 @@ void *picture_analysis_kernel(void *input_ptr) {
                 (EbPaReferenceObject *)pcs_ptr->pa_reference_picture_wrapper_ptr->object_ptr;
             pa_ref_obj_->picture_number = pcs_ptr->picture_number;
             input_padded_picture_ptr = (EbPictureBufferDesc *)pa_ref_obj_->input_padded_picture_ptr;
+#if !OPT_PA_REF
             uint8_t *pa =
                 input_padded_picture_ptr->buffer_y + input_padded_picture_ptr->origin_x +
                 input_padded_picture_ptr->origin_y * input_padded_picture_ptr->stride_y;
@@ -2801,7 +2802,7 @@ void *picture_analysis_kernel(void *input_ptr) {
                             sizeof(uint8_t) * input_picture_ptr->width);
             // Pad input picture to complete border SBs
             pad_picture_to_multiple_of_sb_dimensions(input_padded_picture_ptr);
-
+#endif
             // 1/4 & 1/16 input picture downsampling through filtering
             if (scs_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED) {
                 downsample_filtering_input_picture(

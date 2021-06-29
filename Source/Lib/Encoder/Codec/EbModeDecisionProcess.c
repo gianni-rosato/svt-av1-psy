@@ -111,6 +111,44 @@ static void mode_decision_context_dctor(EbPtr p) {
 
 uint8_t  get_nic_scaling_level(PdPass pd_pass, EbEncMode enc_mode ,uint8_t temporal_layer_index );
 
+#if TUNE_MDS0
+/*
+* return the max canidate count for MDS0
+  Used by candidate injection and memory allocation
+*/
+uint16_t  get_max_can_count(EbEncMode enc_mode ) {
+    uint16_t  max_can_count ;
+
+
+    if (enc_mode <= ENC_M0)
+        max_can_count = 900;
+    else if (enc_mode <= ENC_M1)
+        max_can_count =  720;
+    else if (enc_mode <= ENC_M2)
+        max_can_count = 576;
+    else if (enc_mode <= ENC_M3)
+        max_can_count = 461;
+    else if (enc_mode <= ENC_M4)
+        max_can_count = 369;
+    else if (enc_mode <= ENC_M5)
+        max_can_count = 295;
+    else if (enc_mode <= ENC_M6)
+        max_can_count = 236;
+    else if (enc_mode <= ENC_M7)
+        max_can_count = 190;
+    else if (enc_mode <= ENC_M8)
+        max_can_count = 120;
+    else if (enc_mode <= ENC_M9)
+        max_can_count = 120;
+    else if (enc_mode <= ENC_M10)
+        max_can_count = 100;
+    else
+        max_can_count = 80;
+
+   return max_can_count ;
+}
+
+#endif
 /******************************************************
  * Mode Decision Context Constructor
  ******************************************************/
@@ -189,6 +227,18 @@ EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr, EbColor
     EB_MALLOC_ARRAY(context_ptr->md_blk_arr_nsq, block_max_count_sb);
     EB_MALLOC_ARRAY(context_ptr->md_ep_pipe_sb, block_max_count_sb);
     // Fast Candidate Array
+#if TUNE_MDS0
+    uint16_t max_can_count = get_max_can_count (enc_mode) + 84 ;//chroma search;
+    EB_MALLOC_ARRAY(context_ptr->fast_candidate_array, max_can_count);
+
+    EB_MALLOC_ARRAY(context_ptr->fast_candidate_ptr_array, max_can_count);
+
+    for (cand_index = 0; cand_index < max_can_count; ++cand_index) {
+        context_ptr->fast_candidate_ptr_array[cand_index] =
+            &context_ptr->fast_candidate_array[cand_index];
+        context_ptr->fast_candidate_ptr_array[cand_index]->palette_info = NULL;
+    }
+#else
     EB_MALLOC_ARRAY(context_ptr->fast_candidate_array, MODE_DECISION_CANDIDATE_MAX_COUNT);
 
     EB_MALLOC_ARRAY(context_ptr->fast_candidate_ptr_array, MODE_DECISION_CANDIDATE_MAX_COUNT);
@@ -198,6 +248,7 @@ EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr, EbColor
             &context_ptr->fast_candidate_array[cand_index];
         context_ptr->fast_candidate_ptr_array[cand_index]->palette_info = NULL;
     }
+#endif
     for (int cd = 0; cd < MAX_PAL_CAND; cd++)
         if (cfg_palette)
             EB_MALLOC_ARRAY(context_ptr->palette_cand_array[cd].color_idx_map, MAX_PALETTE_SQUARE);

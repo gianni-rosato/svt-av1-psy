@@ -211,7 +211,7 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
     }
 #if TUNE_M8_M9_FEB24
 #if TUNE_M9_SLOW
-#if TUNE_M10_M0
+#if TUNE_M10_M0 && !TUNE_M9_M10 || TUNE_M8_M11_MT
     else if (pcs_ptr->enc_mode <= ENC_M10) {
 #else
     else if (pcs_ptr->enc_mode <= ENC_M9) {
@@ -569,7 +569,11 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
     }
 #if FTR_HME_ME_EARLY_EXIT
 #if TUNE_M10_M0
+#if TUNE_M7_M8
+    if(pcs_ptr->enc_mode <= ENC_M7)
+#else
     if(pcs_ptr->enc_mode <= ENC_M8)
+#endif
 #else
     if(pcs_ptr->enc_mode <= ENC_M10)
 #endif
@@ -978,7 +982,7 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
 #endif
 #if TUNE_PREHME_M10
     {
-#if TUNE_M10_M0
+#if TUNE_M10_M0 && !TUNE_M7_MT
         if (enc_mode <= ENC_M7)
 #else
         if (enc_mode <= ENC_M6)
@@ -989,7 +993,11 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
 #else
         else if (enc_mode <= ENC_M9)
 #endif
+#if TUNE_4K_M8_M11
+            prehme_level = scs_ptr->input_resolution <= INPUT_SIZE_1080p_RANGE ? 2 : 1;
+#else
             prehme_level = 2;
+#endif
         else if (enc_mode <= ENC_M11)
             prehme_level = 3;
         else
@@ -1050,7 +1058,7 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
 #endif
         set_me_sr_adjustment_ctrls(context_ptr->me_context_ptr, 2);
 #if FTR_ADJUST_SR_FOR_STILL || FTR_ADJUST_SR_USING_LIST0
-#if TUNE_M10_M0
+#if TUNE_M10_M0 && !TUNE_M9_M10 || TUNE_M8_M11_MT
     else if (enc_mode <= ENC_M10)
 #else
     else if (enc_mode <= ENC_M9)
@@ -1064,7 +1072,11 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
         set_me_sr_adjustment_ctrls(context_ptr->me_context_ptr, 3);
 #endif
 #if  TUNE_M7_M10_MT
+#if TUNE_M7_M8
+    if (enc_mode <= ENC_M6)
+#else
     if (enc_mode <= ENC_M8)
+#endif
 #else
     if (enc_mode <= ENC_M7)
 #endif

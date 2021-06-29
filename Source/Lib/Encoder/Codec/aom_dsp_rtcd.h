@@ -819,15 +819,23 @@ extern "C" {
         struct MeContext *context_ptr, const uint8_t *y_src, int y_src_stride, const uint8_t *y_pre, int y_pre_stride,
         const uint8_t *u_src, const uint8_t *v_src, int uv_src_stride, const uint8_t *u_pre,
         const uint8_t *v_pre, int uv_pre_stride, unsigned int block_width, unsigned int block_height,
-        int ss_x, int ss_y, const double *noise_levels, const int decay_control, uint32_t *y_accum,
+        int ss_x, int ss_y,
+#if !FTR_TF_STRENGTH_PER_QP
+        const double *noise_levels, const int decay_control,
+#endif
+        uint32_t *y_accum,
         uint16_t *y_count, uint32_t *u_accum, uint16_t *u_count, uint32_t *v_accum, uint16_t *v_count);
 
     RTCD_EXTERN void(*svt_av1_apply_temporal_filter_planewise_hbd)(
         struct MeContext *context_ptr, const uint16_t *y_src, int y_src_stride, const uint16_t *y_pre,
         int y_pre_stride, const uint16_t *u_src, const uint16_t *v_src, int uv_src_stride,
         const uint16_t *u_pre, const uint16_t *v_pre, int uv_pre_stride, unsigned int block_width,
-        unsigned int block_height, int ss_x, int ss_y, const double *noise_levels,
-        const int decay_control, uint32_t *y_accum, uint16_t *y_count, uint32_t *u_accum,
+        unsigned int block_height, int ss_x, int ss_y,
+#if !FTR_TF_STRENGTH_PER_QP
+        const double *noise_levels,
+        const int decay_control,
+#endif
+        uint32_t *y_accum, uint16_t *y_count, uint32_t *u_accum,
         uint16_t *u_count, uint32_t *v_accum, uint16_t *v_count, uint32_t encoder_bit_depth);
     struct MeContext;
     void get_final_filtered_pixels_c(struct MeContext *context_ptr, EbByte *src_center_ptr_start, uint16_t **altref_buffer_highbd_start, uint32_t **accum, uint16_t **count, const uint32_t *stride, int blk_y_src_offset, int blk_ch_src_offset, uint16_t blk_width_ch, uint16_t blk_height_ch, EbBool is_highbd);
@@ -1512,15 +1520,23 @@ extern "C" {
         struct MeContext *context_ptr, const uint8_t *y_src, int y_src_stride, const uint8_t *y_pre,
         int y_pre_stride, const uint8_t *u_src, const uint8_t *v_src, int uv_src_stride,
         const uint8_t *u_pre, const uint8_t *v_pre, int uv_pre_stride, unsigned int block_width,
-        unsigned int block_height, int ss_x, int ss_y, const double *noise_levels,
-        const int decay_control, uint32_t *y_accum, uint16_t *y_count, uint32_t *u_accum,
+        unsigned int block_height, int ss_x, int ss_y,
+#if !FTR_TF_STRENGTH_PER_QP
+        const double *noise_levels,
+        const int decay_control,
+#endif
+        uint32_t *y_accum, uint16_t *y_count, uint32_t *u_accum,
         uint16_t *u_count, uint32_t *v_accum, uint16_t *v_count);
     void svt_av1_apply_temporal_filter_planewise_hbd_avx2(
         struct MeContext *context_ptr, const uint16_t *y_src, int y_src_stride, const uint16_t *y_pre,
         int y_pre_stride, const uint16_t *u_src, const uint16_t *v_src, int uv_src_stride,
         const uint16_t *u_pre, const uint16_t *v_pre, int uv_pre_stride, unsigned int block_width,
-        unsigned int block_height, int ss_x, int ss_y, const double *noise_levels,
-        const int decay_control, uint32_t *y_accum, uint16_t *y_count, uint32_t *u_accum,
+        unsigned int block_height, int ss_x, int ss_y,
+#if !FTR_TF_STRENGTH_PER_QP
+        const double *noise_levels,
+        const int decay_control,
+#endif
+        uint32_t *y_accum, uint16_t *y_count, uint32_t *u_accum,
         uint16_t *u_count, uint32_t *v_accum, uint16_t *v_count, uint32_t encoder_bit_depth);
     uint32_t variance_highbd_avx2(const uint16_t *a, int a_stride, const uint16_t *b, int b_stride,
                               int w, int h, uint32_t *sse);

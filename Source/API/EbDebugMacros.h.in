@@ -319,7 +319,7 @@ NOTE : PART OF LIGHT_PD0_2  code was committed to svt-04-final-rebased under OPT
 #define OPT_TXT_COPY                          1 // Copied txt search data to cand_buffer for DCT  case, then bypassed txt_data_cpy if DCT is the winner
 
 #define TUNE_M10_M3_1                         1 // tuning m10-m3
-#define OPT_MEMORY                            0 // Optimize memory footprint
+#define OPT_MEMORY                            1 // Optimize memory footprint
 #if OPT_MEMORY
 #define OPT_MEMORY_REST         1  // RestProcess
 #define OPT_MEMORY_CDF          1  // CDF
@@ -369,7 +369,7 @@ NOTE : PART OF LIGHT_PD0_2  code was committed to svt-04-final-rebased under OPT
 #define OPT_TUNE_DECAY_UN_8_10_M11            1 // Tune the decay value for fast_tf_filtering, use a more agressive abs_th to exit search, unify TF for 8Bit and 10BIT for M11: both to use the same search and filtering methods
 #endif
 #define FTR_16X16_TPL_MAP                     1 // Use a 16x16 based TPL map
-#define SS_MORE_OPT_TPL                       1 // Loosless optimization of TPL
+#define SS_MORE_OPT_TPL                       0 // Loosless optimization of TPL
 #define FTR_HME_ME_EARLY_EXIT                 1 // Uss zz sad  to early exit prehme/hme/me.
 #define OPT_M11_PME                           1 // M11 level for PME
 #define TUNE_ADD_SUBRESS_FACTOR4              1 // Add the ability to use a factor of 4 @ subres
@@ -400,7 +400,7 @@ NOTE : PART OF LIGHT_PD0_2  code was committed to svt-04-final-rebased under OPT
 #define OPT_COMBINE_TPL_FOR_LAD               1 // Harmonize tpl for lad_mg 0 and lad_mg 1
 
 #define SS_CLN_INIT_IFS_MDS0                  1 // Move IFS init to MDS0
-#define LIGHT_PD1                             0 // Add a light-PD1 path
+#define LIGHT_PD1                             1 // Add a light-PD1 path
 #define CLN_DECPL_TX_FEATS                    1 // Decouple mds1 skipping tx shortcuts and reduce_last_md_stage_candidate
 
 #define FTR_PD0_OPT                           1 // optimize pd0
@@ -409,12 +409,48 @@ NOTE : PART OF LIGHT_PD0_2  code was committed to svt-04-final-rebased under OPT
 #define SS_MEM_HIS                            1 // Optimize the histogram array
 #define SS_MEM_DLF                            1 // Run time FDL scratch buffer
 
-#define FTR_LPD1_DETECTOR                     0 // Add a detector for using light-PD1.  Set signal before depth refinement so you can use the detector to force pred depth
-#define OPT_LPD1_MRP                          0 // Enable light-PD1 for BASE (when WM and MRP are on).  NB light-PD1 does not do reference pruning
+#if LIGHT_PD1
+#define FTR_LPD1_DETECTOR           1 // Add a detector for using light-PD1.  Set signal before depth refinement so you can use the detector to force pred depth
+#define OPT_LPD1_MRP                1 // Enable light-PD1 for BASE (when WM and MRP are on).  NB light-PD1 does not do reference pruning
+#define OPT_LPD1_PME                1 // Add PME to light-PD1
+#endif
 
 #define SS_MEM_TPL                            1 // Optimize TPL when lad_mg is zero
 #define TUNE_M8_M10                           1 // tuning m8-m10 using lad_mg = 0 and light_pd1 on
 #define FIX_LAD_MG_0_HANG                     1 // fixing the hang in M11 when lad_mg = 0, the original fix was using FTR_USE_LAD_TPL as the macro
+#define FTR_INCREASE_QP_BY_8                  1 // Increasing QP by 8
+#define CLN_PME_BLK_SIZE                      1 // Clean up PME block size modulation
+#define OPT_USE_MVS_LPD1_DETECTOR             1 // Use MV length in light-PD1 detector
+#define OPT_REMOVE_TXT_LPD1                   1 // Remove TXT from light-PD1
+#define TUNE_M7_M8                            1 // tuning m8-m7 to make them faster
+#define FTR_SKIP_COST_ZERO_COEFF              1 // Skip cost computation if zero luma coeffs
+#define TUNE_M11_SUBPEL                       1 // Tune M11 subpel level
+#if FTR_SKIP_COST_ZERO_COEFF
+#define CHROMA_DETECTOR                       1 // Add detector for chroma complexity when skipping chroma TX/compensation
+#endif
+#define TUNE_M9_M10                           1 // tuning m10-m9 to make them faster
+#define CLN_MISC_CLEANUP                      1 // Do some miscellaneous cleanup
+#define ADJUST_LAMBDA                         1 // Adjust lambda based on deltaqp
+#define OPT_REDUCE_COPIES_LPD1                1 // Reduce copying recon in LPD1
+#define CLN_READ_REFINE_MVS                   1 // Create read_refine_me_mvs() func for LPD1
+#define FIX_LAD_MG_WHEN_NO_TPL                1 // Set lad_mg to 0 if no TPL
+#define FIX_DO_NOT_TEST_CORRUPTED_MVS         1 // Ignore corrupted MV(s) @ MD
+#define FTR_6L_QPS                            1 // Improve the QPS offsets for 6L (used when TPL is OFF)
+#define FTR_TF_STRENGTH_PER_QP                1 // Use the picture QP @ the strength derivation of TF
+#define OPT_SKIP_SUBPEL_ZZ                    1 // Skip subpel for (0,0) MVs
+#define OPT_EARLY_ELIM_TH                     1 // Add ability to control TH used for cand elimination
+#define OPT_LIGHT_PD1                         1 // Use a more aggressive light_pd1 classifier
+
+#define OPT_PA_REF                            1 // Memory Optimization of PA REF - remove the storage redundancy with input luma
+#define TUNE_REMOVE_CDEF_COST_BIAS            1 // set cost bias to zero for cdef
+#define TUNE_MDS0                             1 // Tune max number of candidate
+#define FIX_HME_ME_EARLY_EXIT                 1 // Fix hme_me_early_exit r2r
+#define OPT_LIGHT_PD1_USE_ME_DIST_VAR         1 // Force the use of PD1 if the variance of the 8x8 distortions is high
+#define TUNE_M8_M11_MT                        1 // tune M8-M11 using multi-threaded framework
+#define TUNE_4K_M8_M11                        1 // tuning 4k for m8-m11
+#define FTR_TPL_SYNTH                         1 // Make TPL sythn to support 32x32
+#define ME_8X8                                1 // memory optimization for me data arrays when 8x8 blocks are disallowed
+#define TUNE_M7_MT                            1 // tune m7 using multi-threaded framework
 #endif
 
 #if !PRIVATE_MACROS
@@ -475,7 +511,19 @@ NOTE : PART OF LIGHT_PD0_2  code was committed to svt-04-final-rebased under OPT
 #undef FTR_PD0_OPT
 #undef FTR_LPD1_DETECTOR
 #undef OPT_LPD1_MRP
+#undef OPT_LPD1_PME
 #undef TUNE_M8_M10
+#undef TUNE_M7_M8
+#undef CLN_MISC_CLEANUP
+#undef CLN_READ_REFINE_MVS
+#undef FTR_TF_STRENGTH_PER_QP
+#undef OPT_LIGHT_PD1
+#undef TUNE_REMOVE_CDEF_COST_BIAS
+#undef OPT_LIGHT_PD1_USE_ME_DIST_VAR
+#undef TUNE_M8_M11_MT
+#undef TUNE_4K_M8_M11
+#undef FTR_TPL_SYNTH
+#undef TUNE_M7_MT
 #endif
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch

@@ -22,6 +22,9 @@
 typedef struct PaReferenceQueueEntry {
     EbDctor          dctor;
     EbObjectWrapper *input_object_ptr;
+#if OPT_PA_REF
+    EbObjectWrapper*eb_y8b_wrapper_ptr;
+#endif
     uint64_t         picture_number;
     uint32_t         dependent_count;
     ReferenceList *  list0_ptr;

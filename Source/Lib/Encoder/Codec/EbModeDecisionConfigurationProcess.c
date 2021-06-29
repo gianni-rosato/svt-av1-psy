@@ -461,7 +461,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         ? 1
         : (pcs_ptr->temporal_layer_index == 0) ? 1 : 3;
 #if TUNE_M7_11
+#if TUNE_M7_M8
+    else if (pcs_ptr->enc_mode <= ENC_M6)
+#else
     else if (pcs_ptr->enc_mode <= ENC_M7)
+#endif
 #else
     else if (pcs_ptr->enc_mode <= ENC_M6)
 #endif
@@ -665,7 +669,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
 #if FTR_LOW_AC_COST_EST
 #if OPT_PD0_TXT
 #if TUNE_M9_SLOW
-#if TUNE_M10_M0
+#if TUNE_M10_M0 && !TUNE_M9_M10
     if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M10)
 #else
     if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M9)

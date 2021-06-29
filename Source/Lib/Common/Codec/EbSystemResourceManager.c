@@ -603,6 +603,48 @@ EbErrorType svt_release_object(EbObjectWrapper *object_ptr) {
     return return_error;
 }
 
+#if OPT_PA_REF
+EbErrorType svt_release_dual_object(EbObjectWrapper *object_ptr, EbObjectWrapper *sec_object_ptr) {
+    EbErrorType return_error = EB_ErrorNone;
+
+    svt_block_on_mutex(object_ptr->system_resource_ptr->empty_queue->lockout_mutex);
+
+    // Decrement live_count
+    object_ptr->live_count = (object_ptr->live_count == 0) ? object_ptr->live_count
+        : object_ptr->live_count - 1;
+
+    if ((object_ptr->release_enable == EB_TRUE) && (object_ptr->live_count == 0)) {
+
+        //release the second object
+        svt_release_object(sec_object_ptr);
+
+
+        // Set live_count to EB_ObjectWrapperReleasedValue
+        object_ptr->live_count = EB_ObjectWrapperReleasedValue;
+
+        svt_muxing_queue_object_push_front(object_ptr->system_resource_ptr->empty_queue,
+            object_ptr);
+
+#if SRM_REPORT
+
+        if (object_ptr->system_resource_ptr->empty_queue->log)
+            SVT_LOG("SRM RELEASE: %lld\n", object_ptr->pic_number);
+
+
+        object_ptr->pic_number = 99999999;
+        //increment the fullness
+        object_ptr->system_resource_ptr->empty_queue->curr_count++;
+        //  if (object_ptr->system_resource_ptr->empty_queue->log)
+        //      SVT_LOG("SRM fullness+: %i/%i\n", object_ptr->system_resource_ptr->empty_queue->curr_count, object_ptr->system_resource_ptr->object_total_count);
+#endif
+    }
+
+    svt_release_mutex(object_ptr->system_resource_ptr->empty_queue->lockout_mutex);
+
+    return return_error;
+}
+#endif
+
 #if SRM_REPORT
 /*
   dump pictures occuping the SRM

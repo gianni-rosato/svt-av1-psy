@@ -651,6 +651,9 @@ typedef struct PictureParentControlSet {
     EbDctor              dctor;
     EbObjectWrapper *    scs_wrapper_ptr;
     EbObjectWrapper *    input_picture_wrapper_ptr;
+#if OPT_PA_REF
+    EbObjectWrapper *    eb_y8b_wrapper_ptr;
+#endif
     EbObjectWrapper *    reference_picture_wrapper_ptr;
     EbObjectWrapper *    pa_reference_picture_wrapper_ptr;
     EbPictureBufferDesc *enhanced_picture_ptr;
@@ -728,7 +731,9 @@ typedef struct PictureParentControlSet {
     EbDownScaledBufDescPtrArray ds_pics; // Pointer array for down scaled pictures
 
     TPLData tpl_data;
-
+#if OPT_PA_REF
+    EbObjectWrapper *ref_y8b_array[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
+#endif
     // Pre Analysis
     EbObjectWrapper *ref_pa_pic_ptr_array[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
     uint64_t         ref_pic_poc_array[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
@@ -787,7 +792,9 @@ typedef struct PictureParentControlSet {
     TplSrcStats *         tpl_src_stats;      //tpl src based stats
     uint8_t               tpl_src_data_ready; //track pictures that are processd in two different TPL groups
 #endif
+#if !FTR_TPL_SYNTH
     int32_t               is_720p_or_larger;
+#endif
     int32_t               base_rdmult;
     double                r0;
     double *              tpl_beta;
@@ -1096,6 +1103,15 @@ typedef struct PictureParentControlSet {
     uint8_t partition_contexts;
 #endif
     uint8_t bypass_cost_table_gen;
+#if ADJUST_LAMBDA
+    uint8_t adjust_lambda_sb;
+#endif
+#if TUNE_MDS0
+    uint16_t max_can_count;
+#endif
+#if ME_8X8
+    uint8_t enable_me_8x8;
+#endif
 } PictureParentControlSet;
 
 

@@ -932,6 +932,21 @@ static void svt_enc_handle_dctor(EbPtr p)
 
     EB_DELETE_PTR_ARRAY(enc_handle_ptr->pa_reference_picture_pool_ptr_array, enc_handle_ptr->encode_instance_total_count);
     EB_DELETE_PTR_ARRAY(enc_handle_ptr->overlay_input_picture_pool_ptr_array, enc_handle_ptr->encode_instance_total_count);
+#if OPT_PA_REF
+    EB_DELETE(enc_handle_ptr->input_cmd_resource_ptr);
+    EB_DELETE(enc_handle_ptr->input_y8b_buffer_resource_ptr);
+
+    //all buffer_y have been redirected to y8b location that just got released.
+    //to prevent releasing twice, we need to reset the buffer back to NULL
+    if (enc_handle_ptr->input_buffer_resource_ptr) {
+        for (uint32_t w_i = 0; w_i < enc_handle_ptr->input_buffer_resource_ptr->object_total_count; ++w_i) {
+            EbObjectWrapper *wrp = enc_handle_ptr->input_buffer_resource_ptr->wrapper_ptr_pool[w_i];
+            EbBufferHeaderType*obj = (EbBufferHeaderType*)wrp->object_ptr;
+            EbPictureBufferDesc *desc = (EbPictureBufferDesc *)obj->p_buffer;
+            desc->buffer_y = 0;
+        }
+    }
+#endif
     EB_DELETE(enc_handle_ptr->input_buffer_resource_ptr);
     EB_DELETE_PTR_ARRAY(enc_handle_ptr->output_stream_buffer_resource_ptr_array, enc_handle_ptr->encode_instance_total_count);
     EB_DELETE_PTR_ARRAY(enc_handle_ptr->output_recon_buffer_resource_ptr_array, enc_handle_ptr->encode_instance_total_count);
@@ -1016,6 +1031,37 @@ void svt_input_buffer_header_destroyer(    EbPtr p);
 void svt_output_recon_buffer_header_destroyer(    EbPtr p);
 void svt_output_buffer_header_destroyer(    EbPtr p);
 
+#if OPT_PA_REF
+
+EbErrorType svt_input_y8b_creator(EbPtr *object_dbl_ptr, EbPtr  object_init_data_ptr);
+void svt_input_y8b_destroyer(EbPtr p);
+
+EbErrorType in_cmd_ctor(
+    InputCommand *context_ptr,
+    EbPtr object_init_data_ptr)
+{
+    (void)context_ptr;
+    (void)object_init_data_ptr;
+
+    return EB_ErrorNone;
+}
+/*
+* Input Command Constructor
+*/
+EbErrorType svt_input_cmd_creator(
+    EbPtr *object_dbl_ptr,
+    EbPtr  object_init_data_ptr)
+{
+
+    InputCommand* obj;
+
+    *object_dbl_ptr = NULL;
+    EB_NEW(obj, in_cmd_ctor, object_init_data_ptr);
+    *object_dbl_ptr = obj;
+
+    return EB_ErrorNone;
+}
+#endif
 
 EbErrorType dlf_results_ctor(
     DlfResults *context_ptr,
@@ -1128,7 +1174,13 @@ static int create_pa_ref_buf_descs(EbEncHandle *enc_handle_ptr, uint32_t instanc
         ref_pic_buf_desc_init_data.max_height = scs_ptr->max_input_luma_height;
         ref_pic_buf_desc_init_data.bit_depth = EB_8BIT;
         ref_pic_buf_desc_init_data.color_format = EB_YUV420; //use 420 for picture analysis
+#if OPT_PA_REF
+        //No full-resolution pixel data is allocated for PA REF,
+        // it points directly to the Luma input samples of the app data
+        ref_pic_buf_desc_init_data.buffer_enable_mask = 0;
+#else
         ref_pic_buf_desc_init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_LUMA_MASK;
+#endif
         ref_pic_buf_desc_init_data.left_padding = scs_ptr->sb_sz + ME_FILTER_TAP;
         ref_pic_buf_desc_init_data.right_padding = scs_ptr->sb_sz + ME_FILTER_TAP;
         ref_pic_buf_desc_init_data.top_padding = scs_ptr->sb_sz + ME_FILTER_TAP;
@@ -1563,7 +1615,49 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
     /************************************
     * System Resource Managers & Fifos
     ************************************/
+#if OPT_PA_REF
 
+    //SRM to link App to Ress-Coordination via Input commands. an Input Command holds 2 picture buffers: y8bit and rest(uv8b + yuv2b)
+    EB_NEW(
+        enc_handle_ptr->input_cmd_resource_ptr,
+        svt_system_resource_ctor,
+        enc_handle_ptr->scs_instance_array[0]->scs_ptr->resource_coordination_fifo_init_count,
+        1,
+        EB_ResourceCoordinationProcessInitCount,
+        svt_input_cmd_creator,
+        enc_handle_ptr->scs_instance_array[0]->scs_ptr,
+        NULL);
+    enc_handle_ptr->input_cmd_producer_fifo_ptr = svt_system_resource_get_producer_fifo(enc_handle_ptr->input_cmd_resource_ptr, 0);
+
+    //Picture Buffer SRM to hold (uv8b + yuv2b)
+    EB_NEW(
+        enc_handle_ptr->input_buffer_resource_ptr,
+        svt_system_resource_ctor,
+        enc_handle_ptr->scs_instance_array[0]->scs_ptr->input_buffer_fifo_init_count,
+        1,
+        0, //1/2 SRM; no consumer FIFO
+        svt_input_buffer_header_creator,
+        enc_handle_ptr->scs_instance_array[0]->scs_ptr,
+        svt_input_buffer_header_destroyer);
+    enc_handle_ptr->input_buffer_producer_fifo_ptr = svt_system_resource_get_producer_fifo(enc_handle_ptr->input_buffer_resource_ptr, 0);
+
+    //Picture Buffer SRM to hold y8b to be shared by Pcs->enhanced and Pa_ref
+    EB_NEW(
+        enc_handle_ptr->input_y8b_buffer_resource_ptr,
+        svt_system_resource_ctor,
+        MAX(enc_handle_ptr->scs_instance_array[0]->scs_ptr->input_buffer_fifo_init_count, enc_handle_ptr->scs_instance_array[0]->scs_ptr->pa_reference_picture_buffer_init_count),
+        1,
+        0, //1/2 SRM; no consumer FIFO
+        svt_input_y8b_creator,
+        enc_handle_ptr->scs_instance_array[0]->scs_ptr,
+        svt_input_y8b_destroyer);
+
+#if SRM_REPORT
+    enc_handle_ptr->input_y8b_buffer_resource_ptr->empty_queue->log = 1;
+#endif
+    enc_handle_ptr->input_y8b_buffer_producer_fifo_ptr = svt_system_resource_get_producer_fifo(enc_handle_ptr->input_y8b_buffer_resource_ptr, 0);
+
+#else
     // EbBufferHeaderType Input
     EB_NEW(
         enc_handle_ptr->input_buffer_resource_ptr,
@@ -1576,7 +1670,7 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
         svt_input_buffer_header_destroyer);
 
     enc_handle_ptr->input_buffer_producer_fifo_ptr = svt_system_resource_get_producer_fifo(enc_handle_ptr->input_buffer_resource_ptr, 0);
-
+#endif
 
     // EbBufferHeaderType Output Stream
     EB_ALLOC_PTR_ARRAY(enc_handle_ptr->output_stream_buffer_resource_ptr_array, enc_handle_ptr->encode_instance_total_count);
@@ -2153,6 +2247,9 @@ EB_API EbErrorType svt_av1_enc_deinit(EbComponentType *svt_enc_component){
     EbEncHandle *handle = (EbEncHandle*)svt_enc_component->p_component_private;
     if (handle) {
         svt_shutdown_process(handle->input_buffer_resource_ptr);
+#if OPT_PA_REF
+        svt_shutdown_process(handle->input_cmd_resource_ptr);
+#endif
         svt_shutdown_process(handle->resource_coordination_results_resource_ptr);
         svt_shutdown_process(handle->picture_analysis_results_resource_ptr);
         svt_shutdown_process(handle->picture_decision_results_resource_ptr);
@@ -3294,7 +3391,12 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     //use a number of MGs ahead of current MG
 #if OPT_COMBINE_TPL_FOR_LAD
     uint8_t lad_mg = 1; // Specify the number of mini-gops to be used as LAD. 0: 1 mini-gop, 1: 2 mini-gops and 3: 3 mini-gops
+#if FIX_LAD_MG_WHEN_NO_TPL
+    // lad_mg > 0 is useless when no TPL
+    if (scs_ptr->static_config.enable_tpl_la && scs_ptr->static_config.enc_mode <= ENC_M10)
+#else
     if (scs_ptr->static_config.enc_mode <= ENC_M10)
+#endif
         lad_mg = 1;
     else
         lad_mg = 0;
@@ -3324,7 +3426,11 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
             scs_ptr->mfmv_enabled = (uint8_t)(scs_ptr->static_config.enc_mode <= ENC_M10) ? 1 : 0;
 #else
 #if FTR_SELECTIVE_MFMV
+#if TUNE_4K_M8_M11
+            scs_ptr->mfmv_enabled = (uint8_t)(scs_ptr->static_config.enc_mode <= ENC_M9) ? 1 : ((scs_ptr->static_config.enc_mode <= ENC_M10) ? (scs_ptr->input_resolution <= INPUT_SIZE_1080p_RANGE ? 1 : 0) : 0);
+#else
             scs_ptr->mfmv_enabled = (uint8_t)(scs_ptr->static_config.enc_mode <= ENC_M10) ? 1 : 0;
+#endif
 #else
             scs_ptr->mfmv_enabled = (uint8_t)(scs_ptr->static_config.enc_mode <= ENC_M9) ? 1 : 0;
 #endif
@@ -4690,6 +4796,202 @@ EB_API EbErrorType svt_av1_enc_stream_header_release(
 **** Copy the input buffer from the
 **** sample application to the library buffers
 ************************************************/
+#if OPT_PA_REF
+/*
+ Copy the input buffer
+from the sample application to the library buffers
+*/
+
+static EbErrorType copy_frame_buffer(
+    SequenceControlSet            *scs_ptr,
+    uint8_t                       *destination,
+    uint8_t                       *destination_y8b,
+    uint8_t                       *source)
+{
+    EbSvtAv1EncConfiguration          *config = &scs_ptr->static_config;
+    EbErrorType                      return_error = EB_ErrorNone;
+
+    EbPictureBufferDesc           *input_picture_ptr = (EbPictureBufferDesc*)destination;
+    EbPictureBufferDesc           *y8b_input_picture_ptr = (EbPictureBufferDesc*)destination_y8b;
+    EbSvtIOFormat                   *input_ptr = (EbSvtIOFormat*)source;
+    uint16_t                         input_row_index;
+    EbBool                           is_16bit_input = (EbBool)(config->encoder_bit_depth > EB_8BIT);
+
+    uint8_t                         *src, *dst;
+
+    // Need to include for Interlacing on the fly with pictureScanType = 1
+
+    if (!is_16bit_input) {
+        uint32_t     luma_buffer_offset = (input_picture_ptr->stride_y*scs_ptr->top_padding + scs_ptr->left_padding) << is_16bit_input;
+        uint32_t     chroma_buffer_offset = (input_picture_ptr->stride_cr*(scs_ptr->top_padding >> 1) + (scs_ptr->left_padding >> 1)) << is_16bit_input;
+        uint16_t     luma_stride = input_picture_ptr->stride_y << is_16bit_input;
+        uint16_t     chroma_stride = input_picture_ptr->stride_cb << is_16bit_input;
+        uint16_t     luma_height = (uint16_t)(input_picture_ptr->height - scs_ptr->max_input_pad_bottom);
+
+        uint16_t     source_luma_stride = (uint16_t)(input_ptr->y_stride);
+        uint16_t     source_cr_stride = (uint16_t)(input_ptr->cr_stride);
+        uint16_t     source_cb_stride = (uint16_t)(input_ptr->cb_stride);
+        uint16_t source_chroma_height =
+            (luma_height >> (input_picture_ptr->color_format == EB_YUV420));
+
+        src = input_ptr->luma;
+        dst = y8b_input_picture_ptr->buffer_y + luma_buffer_offset;
+        for (unsigned i = 0; i < luma_height; i++) {
+            svt_memcpy(dst, src, source_luma_stride);
+            src += source_luma_stride;
+            dst += luma_stride;
+        }
+
+
+        src = input_ptr->cb;
+        dst = input_picture_ptr->buffer_cb + chroma_buffer_offset;
+        for (unsigned i = 0; i < source_chroma_height; i++) {
+            svt_memcpy(dst, src, source_cb_stride);
+            src += source_cb_stride;
+            dst += chroma_stride;
+        }
+
+        src = input_ptr->cr;
+        dst = input_picture_ptr->buffer_cr + chroma_buffer_offset;
+        for (unsigned i = 0; i < source_chroma_height; i++) {
+            svt_memcpy(dst, src, source_cr_stride);
+            src += source_cr_stride;
+            dst += chroma_stride;
+        }
+    }
+
+    else if (config->compressed_ten_bit_format == 1)
+    {
+        {
+            uint32_t  luma_buffer_offset = (input_picture_ptr->stride_y*scs_ptr->top_padding + scs_ptr->left_padding);
+            uint32_t  chroma_buffer_offset = (input_picture_ptr->stride_cr*(scs_ptr->top_padding >> 1) + (scs_ptr->left_padding >> 1));
+            uint16_t  luma_stride = input_picture_ptr->stride_y;
+            uint16_t  chroma_stride = input_picture_ptr->stride_cb;
+            uint16_t  luma_height = (uint16_t)(input_picture_ptr->height - scs_ptr->max_input_pad_bottom);
+
+            uint16_t  source_luma_stride = (uint16_t)(input_ptr->y_stride);
+            uint16_t  source_cr_stride = (uint16_t)(input_ptr->cr_stride);
+            uint16_t  source_cb_stride = (uint16_t)(input_ptr->cb_stride);
+            uint16_t source_chroma_height =
+                (luma_height >> (input_picture_ptr->color_format == EB_YUV420));
+
+            src = input_ptr->luma;
+            dst = input_picture_ptr->buffer_y + luma_buffer_offset;
+            for (unsigned i = 0; i < luma_height; i++) {
+                svt_memcpy(dst, src, source_luma_stride);
+                src += source_luma_stride;
+                dst += luma_stride;
+            }
+
+            src = input_ptr->cb;
+            dst = input_picture_ptr->buffer_cb + chroma_buffer_offset;
+            for (unsigned i = 0; i < source_chroma_height; i++) {
+                svt_memcpy(dst, src, source_cb_stride);
+                src += source_cb_stride;
+                dst += chroma_stride;
+            }
+
+            src = input_ptr->cr;
+            dst = input_picture_ptr->buffer_cr + chroma_buffer_offset;
+            for (unsigned i = 0; i < source_chroma_height; i++) {
+                svt_memcpy(dst, src, source_cr_stride);
+                src += source_cr_stride;
+                dst += chroma_stride;
+            }
+            //efficient copy - final
+            //compressed 2Bit in 1D format
+            {
+                uint16_t luma_2bit_width = scs_ptr->max_input_luma_width / 4;
+                luma_height = scs_ptr->max_input_luma_height;
+
+                uint16_t source_luma_2bit_stride = source_luma_stride / 4;
+                uint16_t source_chroma_2bit_stride = source_luma_2bit_stride >> 1;
+
+                for (input_row_index = 0; input_row_index < luma_height; input_row_index++) {
+                    svt_memcpy(input_picture_ptr->buffer_bit_inc_y + luma_2bit_width * input_row_index, input_ptr->luma_ext + source_luma_2bit_stride * input_row_index, luma_2bit_width);
+                }
+                for (input_row_index = 0; input_row_index < luma_height >> 1; input_row_index++) {
+                    svt_memcpy(input_picture_ptr->buffer_bit_inc_cb + (luma_2bit_width >> 1)*input_row_index, input_ptr->cb_ext + source_chroma_2bit_stride * input_row_index, luma_2bit_width >> 1);
+                }
+                for (input_row_index = 0; input_row_index < luma_height >> 1; input_row_index++) {
+                    svt_memcpy(input_picture_ptr->buffer_bit_inc_cr + (luma_2bit_width >> 1)*input_row_index, input_ptr->cr_ext + source_chroma_2bit_stride * input_row_index, luma_2bit_width >> 1);
+                }
+            }
+        }
+    }
+    else { // 10bit packed
+
+        uint32_t luma_offset = 0, chroma_offset = 0;
+        uint32_t luma_buffer_offset = (input_picture_ptr->stride_y*scs_ptr->top_padding + scs_ptr->left_padding);
+        uint32_t chroma_buffer_offset = (input_picture_ptr->stride_cr*(scs_ptr->top_padding >> 1) + (scs_ptr->left_padding >> 1));
+        uint16_t luma_width = (uint16_t)(input_picture_ptr->width - scs_ptr->max_input_pad_right);
+        uint16_t chroma_width = (luma_width >> 1);
+        uint16_t luma_height = (uint16_t)(input_picture_ptr->height - scs_ptr->max_input_pad_bottom);
+
+        uint16_t source_luma_stride = (uint16_t)(input_ptr->y_stride);
+        uint16_t source_cr_stride = (uint16_t)(input_ptr->cr_stride);
+        uint16_t source_cb_stride = (uint16_t)(input_ptr->cb_stride);
+
+        un_pack2d(
+            (uint16_t*)(input_ptr->luma + luma_offset),
+            source_luma_stride,
+            y8b_input_picture_ptr->buffer_y + luma_buffer_offset,
+            y8b_input_picture_ptr->stride_y,
+            input_picture_ptr->buffer_bit_inc_y + luma_buffer_offset,
+            input_picture_ptr->stride_bit_inc_y,
+            luma_width,
+            luma_height);
+
+        un_pack2d(
+            (uint16_t*)(input_ptr->cb + chroma_offset),
+            source_cb_stride,
+            input_picture_ptr->buffer_cb + chroma_buffer_offset,
+            input_picture_ptr->stride_cb,
+            input_picture_ptr->buffer_bit_inc_cb + chroma_buffer_offset,
+            input_picture_ptr->stride_bit_inc_cb,
+            chroma_width,
+            (luma_height >> 1));
+
+        un_pack2d(
+            (uint16_t*)(input_ptr->cr + chroma_offset),
+            source_cr_stride,
+            input_picture_ptr->buffer_cr + chroma_buffer_offset,
+            input_picture_ptr->stride_cr,
+            input_picture_ptr->buffer_bit_inc_cr + chroma_buffer_offset,
+            input_picture_ptr->stride_bit_inc_cr,
+            chroma_width,
+            (luma_height >> 1));
+    }
+    return return_error;
+}
+/*
+ Copy the input buffer header content
+from the sample application to the library buffers
+*/
+static void copy_input_buffer(
+    SequenceControlSet*    sequenceControlSet,
+    EbBufferHeaderType*     dst,
+    EbBufferHeaderType*     dst_y8b,
+    EbBufferHeaderType*     src
+)
+{
+    // Copy the higher level structure
+    dst->n_alloc_len = src->n_alloc_len;
+    dst->n_filled_len = src->n_filled_len;
+    dst->flags = src->flags;
+    dst->pts = src->pts;
+    dst->n_tick_count = src->n_tick_count;
+    dst->size = src->size;
+    dst->qp = src->qp;
+    dst->pic_type = src->pic_type;
+
+
+
+    // Copy the picture buffer
+    if (src->p_buffer != NULL)
+        copy_frame_buffer(sequenceControlSet, dst->p_buffer, dst_y8b->p_buffer, src->p_buffer);
+}
+#else
 static EbErrorType copy_frame_buffer(
     SequenceControlSet            *scs_ptr,
     uint8_t                          *dst,
@@ -4847,7 +5149,7 @@ static EbErrorType copy_frame_buffer(
     }
     return return_error;
 }
-
+#endif
 /***********************************************
 **** Deep copy of the input metadata buffer
 ************************************************/
@@ -4865,7 +5167,7 @@ static EbErrorType copy_metadata_buffer(EbBufferHeaderType *dst, EbBufferHeaderT
     }
     return return_error;
 }
-
+#if !OPT_PA_REF
 static void copy_input_buffer(
     SequenceControlSet*    sequenceControlSet,
     EbBufferHeaderType*     dst,
@@ -4892,10 +5194,61 @@ static void copy_input_buffer(
     if (src->p_buffer != NULL)
         copy_frame_buffer(sequenceControlSet, dst->p_buffer, src->p_buffer);
 }
-
+#endif
 /**********************************
 * Empty This Buffer
 **********************************/
+#if OPT_PA_REF
+EB_API EbErrorType svt_av1_enc_send_picture(
+    EbComponentType      *svt_enc_component,
+    EbBufferHeaderType   *p_buffer)
+{
+    EbEncHandle          *enc_handle_ptr = (EbEncHandle*)svt_enc_component->p_component_private;
+    EbObjectWrapper      *eb_wrapper_ptr;
+    EbBufferHeaderType   *app_hdr = p_buffer;
+
+    // Get new Luma-8b buffer & a new (Chroma-8b + Luma-Chroma-2bit) buffers; Lib will release once done.
+    EbObjectWrapper  *eb_y8b_wrapper_ptr;
+    svt_get_empty_object(
+        enc_handle_ptr->input_y8b_buffer_producer_fifo_ptr,
+        &eb_y8b_wrapper_ptr);
+    //set live count to 1 to be decremented at the end of the encode in RC
+    svt_object_inc_live_count(eb_y8b_wrapper_ptr, 1);
+
+   // svt_object_inc_live_count(eb_y8b_wrapper_ptr, 1);
+
+    svt_get_empty_object(
+        enc_handle_ptr->input_buffer_producer_fifo_ptr,
+        &eb_wrapper_ptr);
+
+    if (p_buffer != NULL) {
+
+
+        //copy the Luma 8bit part into y8b buffer and the rest of samples into the regular buffer
+        EbBufferHeaderType *lib_y8b_hdr = (EbBufferHeaderType*)eb_y8b_wrapper_ptr->object_ptr;
+        EbBufferHeaderType *lib_reg_hdr = (EbBufferHeaderType*)eb_wrapper_ptr->object_ptr;
+        copy_input_buffer(
+            enc_handle_ptr->scs_instance_array[0]->scs_ptr,
+            lib_reg_hdr,
+            lib_y8b_hdr,
+            app_hdr);
+    }
+
+    //Take a new App-RessCoord command
+    EbObjectWrapper *input_cmd_wrp;
+    svt_get_empty_object(
+        enc_handle_ptr->input_cmd_producer_fifo_ptr,
+        &input_cmd_wrp);
+    InputCommand *input_cmd_obj = (InputCommand*)input_cmd_wrp->object_ptr;
+    //Fill the command with two picture buffers
+    input_cmd_obj->eb_input_wrapper_ptr = eb_wrapper_ptr;
+    input_cmd_obj->eb_y8b_wrapper_ptr = eb_y8b_wrapper_ptr;
+    //Send to Lib
+    svt_post_full_object(input_cmd_wrp);
+
+    return EB_ErrorNone;
+}
+#else
 EB_API EbErrorType svt_av1_enc_send_picture(
     EbComponentType      *svt_enc_component,
     EbBufferHeaderType   *p_buffer)
@@ -4922,6 +5275,7 @@ EB_API EbErrorType svt_av1_enc_send_picture(
 
     return EB_ErrorNone;
 }
+#endif
 static void copy_output_recon_buffer(
     EbBufferHeaderType   *dst,
     EbBufferHeaderType   *src
@@ -5154,10 +5508,17 @@ static EbErrorType allocate_frame_buffer(
     // Enhanced Picture Buffer
     {
         EbPictureBufferDesc* buf;
+#if OPT_PA_REF
+        EB_NEW(
+            buf,
+                svt_picture_buffer_desc_ctor_noy8b,
+                (EbPtr)&input_pic_buf_desc_init_data);
+#else
         EB_NEW(
             buf,
             svt_picture_buffer_desc_ctor,
             (EbPtr)&input_pic_buf_desc_init_data);
+#endif
         input_buffer->p_buffer = (uint8_t*)buf;
 
         if (is_16bit && config->compressed_ten_bit_format == 1) {
@@ -5176,6 +5537,105 @@ static EbErrorType allocate_frame_buffer(
 
     return return_error;
 }
+
+#if OPT_PA_REF
+/*
+  allocate an input sample Luma-8bit buffer
+*/
+static EbErrorType allocate_y8b_frame_buffer(
+    SequenceControlSet       *scs_ptr,
+    EbBufferHeaderType        *input_buffer)
+{
+    EbErrorType   return_error = EB_ErrorNone;
+    EbPictureBufferDescInitData input_pic_buf_desc_init_data;
+    EbSvtAv1EncConfiguration   * config = &scs_ptr->static_config;
+    uint8_t is_16bit = 0;
+
+    input_pic_buf_desc_init_data.max_width =
+        !(scs_ptr->max_input_luma_width % 8) ?
+        scs_ptr->max_input_luma_width :
+        scs_ptr->max_input_luma_width + (scs_ptr->max_input_luma_width % 8);
+
+    input_pic_buf_desc_init_data.max_height =
+        !(scs_ptr->max_input_luma_height % 8) ?
+        scs_ptr->max_input_luma_height :
+        scs_ptr->max_input_luma_height + (scs_ptr->max_input_luma_height % 8);
+#if OPT_PA_REF
+    input_pic_buf_desc_init_data.bit_depth = EB_8BIT;
+#else
+    input_pic_buf_desc_init_data.bit_depth = (EbBitDepthEnum)config->encoder_bit_depth;
+#endif
+    input_pic_buf_desc_init_data.color_format = (EbColorFormat)config->encoder_color_format;
+
+    input_pic_buf_desc_init_data.left_padding = scs_ptr->left_padding;
+    input_pic_buf_desc_init_data.right_padding = scs_ptr->right_padding;
+    input_pic_buf_desc_init_data.top_padding = scs_ptr->top_padding;
+    input_pic_buf_desc_init_data.bot_padding = scs_ptr->bot_padding;
+
+    input_pic_buf_desc_init_data.split_mode = is_16bit ? EB_TRUE : EB_FALSE;
+
+    input_pic_buf_desc_init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_LUMA_MASK; //allocate for 8bit Luma only
+    input_pic_buf_desc_init_data.is_16bit_pipeline = 0;
+
+
+    // Enhanced Picture Buffer
+    {
+        EbPictureBufferDesc* buf;
+        EB_NEW(
+            buf,
+            svt_picture_buffer_desc_ctor,
+            (EbPtr)&input_pic_buf_desc_init_data);
+        input_buffer->p_buffer = (uint8_t*)buf;
+
+
+    }
+
+    return return_error;
+}
+/*
+  create a luma 8bit buffer descriptor
+*/
+EbErrorType svt_input_y8b_creator(
+    EbPtr *object_dbl_ptr,
+    EbPtr  object_init_data_ptr)
+{
+    EbBufferHeaderType* input_buffer;
+    SequenceControlSet        *scs_ptr = (SequenceControlSet*)object_init_data_ptr;
+
+    *object_dbl_ptr = NULL;
+    EB_CALLOC(input_buffer, 1, sizeof(EbBufferHeaderType));
+    *object_dbl_ptr = (EbPtr)input_buffer;
+    // Initialize Header
+    input_buffer->size = sizeof(EbBufferHeaderType);
+
+    EbErrorType return_error = allocate_y8b_frame_buffer(
+        scs_ptr,
+        input_buffer);
+    if (return_error != EB_ErrorNone)
+        return return_error;
+
+    input_buffer->p_app_private = NULL;
+
+    return EB_ErrorNone;
+}
+/*
+  free a luma 8bit buffer descriptor
+*/
+void svt_input_y8b_destroyer(EbPtr p)
+{
+    EbBufferHeaderType *obj = (EbBufferHeaderType*)p;
+    EbPictureBufferDesc* buf = (EbPictureBufferDesc*)obj->p_buffer;
+    if (buf) {
+        EB_FREE_ALIGNED_ARRAY(buf->buffer_bit_inc_y);
+        EB_FREE_ALIGNED_ARRAY(buf->buffer_bit_inc_cb);
+        EB_FREE_ALIGNED_ARRAY(buf->buffer_bit_inc_cr);
+    }
+
+    EB_DELETE(buf);
+    EB_FREE(obj);
+}
+#endif
+
 /**************************************
 * EbBufferHeaderType Constructor
 **************************************/

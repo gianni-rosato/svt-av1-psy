@@ -954,7 +954,11 @@ static int open_loop_firstpass_inter_prediction(
         uint8_t ref_pic_index = 0;
 
 #if OPT_ME
-
+#if ME_8X8
+        if (!ppcs_ptr->enable_me_8x8)
+            if (me_mb_offset >= MAX_SB64_PU_COUNT_NO_8X8)
+                me_mb_offset = me_idx_85_8x8_to_16x16_conversion[me_mb_offset - MAX_SB64_PU_COUNT_NO_8X8];
+#endif
             mv.col = (me_results->me_mv_array[me_mb_offset*ppcs_ptr->pa_me_data->max_refs + ref_pic_index].x_mv) >> 2;
             mv.row = (me_results->me_mv_array[me_mb_offset*ppcs_ptr->pa_me_data->max_refs + ref_pic_index].y_mv) >> 2;
 

@@ -305,6 +305,11 @@ typedef struct EbPictureBufferDescInitData {
 /**************************************
      * Extern Function Declarations
      **************************************/
+
+#if OPT_PA_REF
+extern EbErrorType svt_picture_buffer_desc_ctor_noy8b(EbPictureBufferDesc *object_ptr,
+    const EbPtr          object_init_data_ptr);
+#endif
 extern EbErrorType svt_picture_buffer_desc_ctor(EbPictureBufferDesc *object_ptr,
                                                 const EbPtr          object_init_data_ptr);
 

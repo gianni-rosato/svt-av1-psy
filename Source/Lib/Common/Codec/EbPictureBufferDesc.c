@@ -134,6 +134,97 @@ EbErrorType svt_picture_buffer_desc_ctor_zeroout(EbPictureBufferDesc *pictureBuf
  *  values that are fixed for the life of
  *  the descriptor.
  *****************************************/
+#if OPT_PA_REF
+EbErrorType svt_picture_buffer_desc_ctor_noy8b(EbPictureBufferDesc *pictureBufferDescPtr,
+    const EbPtr          object_init_data_ptr) {
+    const EbPictureBufferDescInitData *picture_buffer_desc_init_data_ptr =
+        (EbPictureBufferDescInitData *)object_init_data_ptr;
+
+    uint32_t       bytes_per_pixel = (picture_buffer_desc_init_data_ptr->bit_depth == EB_8BIT) ? 1
+        : (picture_buffer_desc_init_data_ptr->bit_depth <= EB_16BIT) ? 2
+        : 4;
+    const uint16_t subsampling_x =
+        (picture_buffer_desc_init_data_ptr->color_format == EB_YUV444 ? 1 : 2) - 1;
+
+    pictureBufferDescPtr->dctor = svt_picture_buffer_desc_dctor;
+
+    if (picture_buffer_desc_init_data_ptr->bit_depth > EB_8BIT &&
+        picture_buffer_desc_init_data_ptr->bit_depth <= EB_16BIT &&
+        picture_buffer_desc_init_data_ptr->split_mode == EB_TRUE)
+        bytes_per_pixel = 1;
+
+    // Set the Picture Buffer Static variables
+    pictureBufferDescPtr->max_width = picture_buffer_desc_init_data_ptr->max_width;
+    pictureBufferDescPtr->max_height = picture_buffer_desc_init_data_ptr->max_height;
+    pictureBufferDescPtr->width = picture_buffer_desc_init_data_ptr->max_width;
+    pictureBufferDescPtr->height = picture_buffer_desc_init_data_ptr->max_height;
+    pictureBufferDescPtr->bit_depth = picture_buffer_desc_init_data_ptr->bit_depth;
+    pictureBufferDescPtr->is_16bit_pipeline = picture_buffer_desc_init_data_ptr->is_16bit_pipeline;
+    pictureBufferDescPtr->color_format = picture_buffer_desc_init_data_ptr->color_format;
+    pictureBufferDescPtr->stride_y = picture_buffer_desc_init_data_ptr->max_width +
+        picture_buffer_desc_init_data_ptr->left_padding +
+        picture_buffer_desc_init_data_ptr->right_padding;
+    pictureBufferDescPtr->stride_cb = pictureBufferDescPtr->stride_cr =
+        pictureBufferDescPtr->stride_y >> subsampling_x;
+    pictureBufferDescPtr->origin_x = picture_buffer_desc_init_data_ptr->left_padding;
+    pictureBufferDescPtr->origin_y = picture_buffer_desc_init_data_ptr->top_padding;
+    pictureBufferDescPtr->origin_bot_y = picture_buffer_desc_init_data_ptr->bot_padding;
+
+    pictureBufferDescPtr->luma_size = (picture_buffer_desc_init_data_ptr->max_width +
+        picture_buffer_desc_init_data_ptr->left_padding +
+        picture_buffer_desc_init_data_ptr->right_padding) *
+        (picture_buffer_desc_init_data_ptr->max_height +
+            picture_buffer_desc_init_data_ptr->top_padding +
+            picture_buffer_desc_init_data_ptr->bot_padding);
+    pictureBufferDescPtr->chroma_size = pictureBufferDescPtr->luma_size >>
+        (3 - picture_buffer_desc_init_data_ptr->color_format);
+    pictureBufferDescPtr->packed_flag = EB_FALSE;
+
+    if (picture_buffer_desc_init_data_ptr->split_mode == EB_TRUE) {
+        pictureBufferDescPtr->stride_bit_inc_y = pictureBufferDescPtr->stride_y;
+        pictureBufferDescPtr->stride_bit_inc_cb = pictureBufferDescPtr->stride_cb;
+        pictureBufferDescPtr->stride_bit_inc_cr = pictureBufferDescPtr->stride_cr;
+    }
+    pictureBufferDescPtr->buffer_enable_mask =
+        picture_buffer_desc_init_data_ptr->buffer_enable_mask;
+
+    pictureBufferDescPtr->buffer_y = 0;
+
+    // Allocate the Picture Buffers (luma & chroma)
+    if (picture_buffer_desc_init_data_ptr->buffer_enable_mask & PICTURE_BUFFER_DESC_Y_FLAG) {
+        //EB_CALLOC_ALIGNED_ARRAY(pictureBufferDescPtr->buffer_y,
+        //    pictureBufferDescPtr->luma_size * bytes_per_pixel);
+
+        pictureBufferDescPtr->buffer_bit_inc_y = 0;
+        if (picture_buffer_desc_init_data_ptr->split_mode == EB_TRUE) {
+            EB_CALLOC_ALIGNED_ARRAY(pictureBufferDescPtr->buffer_bit_inc_y,
+                pictureBufferDescPtr->luma_size * bytes_per_pixel);
+        }
+    }
+
+    if (picture_buffer_desc_init_data_ptr->buffer_enable_mask & PICTURE_BUFFER_DESC_Cb_FLAG) {
+        EB_CALLOC_ALIGNED_ARRAY(pictureBufferDescPtr->buffer_cb,
+            pictureBufferDescPtr->chroma_size * bytes_per_pixel);
+        pictureBufferDescPtr->buffer_bit_inc_cb = 0;
+        if (picture_buffer_desc_init_data_ptr->split_mode == EB_TRUE) {
+            EB_CALLOC_ALIGNED_ARRAY(pictureBufferDescPtr->buffer_bit_inc_cb,
+                pictureBufferDescPtr->chroma_size * bytes_per_pixel);
+        }
+    }
+
+    if (picture_buffer_desc_init_data_ptr->buffer_enable_mask & PICTURE_BUFFER_DESC_Cr_FLAG) {
+        EB_CALLOC_ALIGNED_ARRAY(pictureBufferDescPtr->buffer_cr,
+            pictureBufferDescPtr->chroma_size * bytes_per_pixel);
+        pictureBufferDescPtr->buffer_bit_inc_cr = 0;
+        if (picture_buffer_desc_init_data_ptr->split_mode == EB_TRUE) {
+            EB_CALLOC_ALIGNED_ARRAY(pictureBufferDescPtr->buffer_bit_inc_cr,
+                pictureBufferDescPtr->chroma_size * bytes_per_pixel);
+        }
+    }
+
+    return EB_ErrorNone;
+}
+#endif
 EbErrorType svt_picture_buffer_desc_ctor(EbPictureBufferDesc *pictureBufferDescPtr,
                                          const EbPtr          object_init_data_ptr) {
     const EbPictureBufferDescInitData *picture_buffer_desc_init_data_ptr =

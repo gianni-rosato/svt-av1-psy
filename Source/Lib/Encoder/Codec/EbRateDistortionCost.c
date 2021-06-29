@@ -77,8 +77,11 @@ MvJointType svt_av1_get_mv_joint(const MV *mv) {
 }
 int32_t mv_cost(const MV *mv, const int32_t *joint_cost, int32_t *const comp_cost[2]) {
     int32_t jn_c = svt_av1_get_mv_joint(mv);
+#if FIX_DO_NOT_TEST_CORRUPTED_MVS
+    int32_t res = joint_cost[jn_c] + comp_cost[0][CLIP3(MV_LOW, MV_UPP, mv->row)] + comp_cost[1][CLIP3(MV_LOW, MV_UPP, mv->col)];
+#else
     int32_t res  = joint_cost[jn_c] + comp_cost[0][mv->row] + comp_cost[1][mv->col];
-
+#endif
     return res;
 }
 #if  FTR_SIMPLIFIED_MV_COST

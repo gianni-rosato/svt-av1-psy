@@ -101,6 +101,10 @@ struct _EbEncHandle {
 
     // System Resource Managers
     EbSystemResource * input_buffer_resource_ptr;
+#if OPT_PA_REF
+    EbSystemResource * input_y8b_buffer_resource_ptr;
+    EbSystemResource * input_cmd_resource_ptr;
+#endif
     EbSystemResource **output_stream_buffer_resource_ptr_array;
     EbSystemResource **output_recon_buffer_resource_ptr_array;
     EbSystemResource **output_statistics_buffer_resource_ptr_array;
@@ -124,6 +128,10 @@ struct _EbEncHandle {
     EbCallback **app_callback_ptr_array;
 
     EbFifo *input_buffer_producer_fifo_ptr;
+#if OPT_PA_REF
+    EbFifo *input_cmd_producer_fifo_ptr;
+    EbFifo *input_y8b_buffer_producer_fifo_ptr;
+#endif
     EbFifo *output_stream_buffer_consumer_fifo_ptr;
     EbFifo *output_recon_buffer_consumer_fifo_ptr;
 };

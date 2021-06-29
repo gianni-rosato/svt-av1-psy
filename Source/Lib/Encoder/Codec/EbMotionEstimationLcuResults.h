@@ -23,6 +23,10 @@ extern "C" {
 #define MAX_PA_ME_MV 7 // 1 per ref = up 7 = up 4+ up to 3
 #define MAX_PA_ME_CAND 23 // [Single Ref = 7] + [BiDir = 12 = 3*4 ] + [4 = 3+1]
 #define SQUARE_PU_COUNT 85
+#if ME_8X8
+#define  MAX_SB64_PU_COUNT_NO_8X8   21 //num,ber of square PUs from 64x64 to 16x16
+#endif
+
 typedef struct MeCandidate {
     uint8_t direction : 2;
     uint8_t ref_idx_l0 : 2; // allows for up to 4 references

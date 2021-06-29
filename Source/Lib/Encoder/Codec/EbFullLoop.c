@@ -1838,10 +1838,21 @@ void full_loop_chroma_light_pd1(
         if (use_pfn4_cond)
             pf_shape = N4_SHAPE;
     }
-
+#if !OPT_REMOVE_TXT_LPD1
     context_ptr->cb_txb_skip_context = 0;
     context_ptr->cb_dc_sign_context = 0;
-
+#endif
+#if CHROMA_DETECTOR
+    const int32_t chroma_shift = (MAX_TX_SCALE - av1_get_tx_scale_tab[tx_size_uv]) * 2;
+    uint32_t bwidth = context_ptr->blk_geom->tx_width_uv[0][0];
+    uint32_t bheight = context_ptr->blk_geom->tx_height_uv[0][0];
+    if (pf_shape)
+    {
+        bwidth = MAX((bwidth >> pf_shape), 4);
+        bheight = (bheight >> pf_shape);
+    }
+    if (component_type == COMPONENT_CHROMA || component_type == COMPONENT_CHROMA_CB) {
+#endif
     residual_kernel(
         input_picture_ptr->buffer_cb,
         input_cb_origin_in_index,
@@ -1895,7 +1906,7 @@ void full_loop_chroma_light_pd1(
         context_ptr->full_lambda_md[EB_8_BIT_MD],
         EB_FALSE);
 
-
+#if !CHROMA_DETECTOR
     uint32_t bwidth = context_ptr->blk_geom->tx_width_uv[0][0];
     uint32_t bheight = context_ptr->blk_geom->tx_height_uv[0][0];
     if (pf_shape)
@@ -1903,7 +1914,7 @@ void full_loop_chroma_light_pd1(
         bwidth = MAX((bwidth >> pf_shape), 4);
         bheight = (bheight >> pf_shape);
     }
-
+#endif
     picture_full_distortion32_bits_single(
         &(((int32_t*)context_ptr->trans_quant_buffers_ptr->txb_trans_coeff2_nx2_n_ptr->buffer_cb)[0]),
         &(((int32_t*)candidate_buffer->recon_coeff_ptr->buffer_cb)[0]),
@@ -1912,14 +1923,18 @@ void full_loop_chroma_light_pd1(
         bheight,
         cb_full_distortion,
         candidate_buffer->candidate_ptr->eob[1][0]);
-
+#if !CHROMA_DETECTOR
     const int32_t chroma_shift = (MAX_TX_SCALE - av1_get_tx_scale_tab[tx_size_uv]) * 2;
+#endif
     cb_full_distortion[DIST_CALC_RESIDUAL]   = RIGHT_SIGNED_SHIFT(cb_full_distortion[DIST_CALC_RESIDUAL], chroma_shift);
     cb_full_distortion[DIST_CALC_PREDICTION] = RIGHT_SIGNED_SHIFT(cb_full_distortion[DIST_CALC_PREDICTION], chroma_shift);
 
     candidate_buffer->candidate_ptr->u_has_coeff = (candidate_buffer->candidate_ptr->eob[1][0] > 0);
+#if CHROMA_DETECTOR
+    }
 
-
+    if (component_type == COMPONENT_CHROMA || component_type == COMPONENT_CHROMA_CR) {
+#endif
     //Cr Residual
     residual_kernel(input_picture_ptr->buffer_cr,
         input_cb_origin_in_index,
@@ -1933,10 +1948,10 @@ void full_loop_chroma_light_pd1(
         0,
         context_ptr->blk_geom->bwidth_uv,
         context_ptr->blk_geom->bheight_uv);
-
+#if !OPT_REMOVE_TXT_LPD1
     context_ptr->cr_txb_skip_context = 0;
     context_ptr->cr_dc_sign_context = 0;
-
+#endif
     // Cr Transform
     av1_estimate_transform(
         &(((int16_t *)candidate_buffer->residual_ptr->buffer_cr)[blk_chroma_origin_index]),
@@ -1990,6 +2005,9 @@ void full_loop_chroma_light_pd1(
 
     candidate_buffer->candidate_ptr->v_has_coeff = (candidate_buffer->candidate_ptr->eob[2][0] > 0);
 
+#if CHROMA_DETECTOR
+    }
+#endif
 
     //CHROMA-ONLY
     av1_txb_estimate_coeff_bits(context_ptr,

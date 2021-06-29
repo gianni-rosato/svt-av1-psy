@@ -72,6 +72,18 @@
 //    then the actual threshold will be 720 * 0.1 = 72. Similarly, the threshold
 //    for 360p videos will be 360 * 0.1 = 36.
 #define TF_SEARCH_DISTANCE_THRESHOLD 0.1
+#if FTR_TF_STRENGTH_PER_QP
+// 6. Threshold to identify if the q is in a relative high range.
+//    Above this cutoff q, a stronger filtering is applied.
+//    For a high q, the quantization throws away more information, and thus a
+//    stronger filtering is less likely to distort the encoded quality, while a
+//    stronger filtering could reduce bit rates.
+//    Ror a low q, more details are expected to be retained. Filtering is thus
+//    more conservative.
+#define TF_QINDEX_CUTOFF 128
+
+#define TF_FILTER_STRENGTH 5
+#endif
 #define N_16X16_BLOCKS 16
 #define N_32X32_BLOCKS 4
 
@@ -112,15 +124,23 @@ void svt_av1_apply_temporal_filter_planewise_c(
     struct MeContext *context_ptr, const uint8_t *y_src, int y_src_stride, const uint8_t *y_pre,
     int y_pre_stride, const uint8_t *u_src, const uint8_t *v_src, int uv_src_stride,
     const uint8_t *u_pre, const uint8_t *v_pre, int uv_pre_stride, unsigned int block_width,
-    unsigned int block_height, int ss_x, int ss_y, const double *noise_levels,
-    const int decay_control, uint32_t *y_accum, uint16_t *y_count, uint32_t *u_accum,
+    unsigned int block_height, int ss_x, int ss_y,
+#if !FTR_TF_STRENGTH_PER_QP
+    const double *noise_levels,
+    const int decay_control,
+#endif
+    uint32_t *y_accum, uint16_t *y_count, uint32_t *u_accum,
     uint16_t *u_count, uint32_t *v_accum, uint16_t *v_count);
 void svt_av1_apply_temporal_filter_planewise_hbd_c(
     struct MeContext *context_ptr, const uint16_t *y_src, int y_src_stride, const uint16_t *y_pre,
     int y_pre_stride, const uint16_t *u_src, const uint16_t *v_src, int uv_src_stride,
     const uint16_t *u_pre, const uint16_t *v_pre, int uv_pre_stride, unsigned int block_width,
-    unsigned int block_height, int ss_x, int ss_y, const double *noise_levels,
-    const int decay_control, uint32_t *y_accum, uint16_t *y_count, uint32_t *u_accum,
+    unsigned int block_height, int ss_x, int ss_y,
+#if !FTR_TF_STRENGTH_PER_QP
+    const double *noise_levels,
+    const int decay_control,
+#endif
+    uint32_t *y_accum, uint16_t *y_count, uint32_t *u_accum,
     uint16_t *u_count, uint32_t *v_accum, uint16_t *v_count, uint32_t encoder_bit_depth);
 double estimate_noise(const uint8_t *src, uint16_t width, uint16_t height, uint16_t stride_y);
 

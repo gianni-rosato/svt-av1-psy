@@ -678,6 +678,20 @@ int svt_av1_find_best_sub_pixel_tree_pruned(
     if (early_neigh_check_exit)
         return besterr;
 #endif
+#if CLN_MISC_CLEANUP
+    uint64_t th_normalizer = (((var_params->w * var_params->h) >> 3) * ms_params->abs_th_mult * (qp >> 1));
+    if (besterr < th_normalizer)
+        return besterr;
+#endif
+#if CLN_MISC_CLEANUP
+    // How many steps to take. A round of 0 means fullpel search only, 1 means
+    // half-pel, and so on.
+    const int round = AOMMIN(FULL_PEL - forced_stop, 3 - !allow_hp);
+
+    // If forced_stop is FULL_PEL, return.
+    if (!round)
+        return besterr;
+#endif
 #if OPT_SUPEL_VAR_CHECK
     // Exit subpel search if the variance of the full-pel predicted samples is low (i.e. where likely interpolation will not modify the integer samples)
     const MSBuffers *ms_buffers = &var_params->ms_buffers;
@@ -689,13 +703,22 @@ int svt_av1_find_best_sub_pixel_tree_pruned(
     if(block_var < ms_params->pred_variance_th)
         return besterr;
 #endif
-
+#if !CLN_MISC_CLEANUP
 #if OPT_M11_SUBPEL
     uint64_t th_normalizer = (((var_params->w * var_params->h) >> 3) * ms_params->abs_th_mult * (qp >> 1));
     if (besterr < th_normalizer)
         return besterr;
 #endif
-
+#endif
+#if TUNE_M11_SUBPEL
+    if (ms_params->skip_diag_refinement >= 4) {
+        org_error = 0;
+    }
+    else {
+        unsigned int demo = ms_params->skip_diag_refinement >= 2 ? ((var_params->w >= 64 || var_params->h >= 64) ? 2 : 1) : 1;
+        org_error = ms_params->skip_diag_refinement ? besterr / demo : INT_MAX;
+    }
+#else
     //besterr = setup_center_error_facade(
     //    xd, cm, bestmv, var_params, mv_cost_params, sse1, distortion, is_scaled);
 #if OPT11_SUBPEL
@@ -710,7 +733,9 @@ int svt_av1_find_best_sub_pixel_tree_pruned(
 #endif
     org_error = ms_params->skip_diag_refinement ? besterr /demo : INT_MAX;
 #endif
+#endif
 #if SS_OPT_SUBPEL_PATH
+#if !CLN_MISC_CLEANUP
     // How many steps to take. A round of 0 means fullpel search only, 1 means
     // half-pel, and so on.
     const int round = AOMMIN(FULL_PEL - forced_stop, 3 - !allow_hp);
@@ -718,7 +743,7 @@ int svt_av1_find_best_sub_pixel_tree_pruned(
     // If forced_stop is FULL_PEL, return.
     if (!round)
         return besterr;
-
+#endif
     for (int iter = 0; iter < round; ++iter) {
 #if OPT_M11_SUBPEL // --
         unsigned int prev_besterr = besterr;

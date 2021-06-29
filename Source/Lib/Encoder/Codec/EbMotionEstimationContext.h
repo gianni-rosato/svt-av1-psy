@@ -342,7 +342,11 @@ typedef struct MeContext {
 
 
 #if OPT_TFILTER
+#if FTR_TF_STRENGTH_PER_QP
+    double tf_decay_factor[3];
+#else
     double tf_decay_factor;
+#endif
     TfControls tf_ctrls;
 #endif
 

@@ -970,8 +970,10 @@ static int cqp_qindex_calc_tpl_la(PictureControlSet *pcs_ptr, RATE_CONTROL *rc, 
 
 #define DEFAULT_KF_BOOST 2700
 #define DEFAULT_GF_BOOST 1350
+#if !FTR_6L_QPS
 #define FIXED_QP_OFFSET_COUNT 5
 static const int percents[FIXED_QP_OFFSET_COUNT] = { 76, 60, 30, 15, 8 };
+#endif
 /******************************************************
  * cqp_qindex_calc
  * Assign the q_index per frame.
@@ -1003,8 +1005,11 @@ static int cqp_qindex_calc(PictureControlSet *pcs_ptr, RATE_CONTROL *rc, int qin
 
     const double q_val_target = (offset_idx == -1) ?
         q_val :
+#if FTR_6L_QPS
+        MAX(q_val - (q_val * percents[pcs_ptr->parent_pcs_ptr->hierarchical_levels <= 4][offset_idx] / 100), 0.0);
+#else
         MAX(q_val - (q_val * percents[offset_idx] / 100), 0.0);
-
+#endif
     const int32_t delta_qindex = svt_av1_compute_qdelta(
         q_val,
         q_val_target,
@@ -1016,7 +1021,9 @@ static int cqp_qindex_calc(PictureControlSet *pcs_ptr, RATE_CONTROL *rc, int qin
 
     return q;
 }
-
+#if ADJUST_LAMBDA
+const int64_t q_factor[6] = { 100,110,120,138,140,150 };
+#endif
 // The table we use is modified from libaom; here is the original, from libaom:
 // static const int rd_frame_type_factor[FRAME_UPDATE_TYPES] = { 128, 144, 128,
 //                                                               128, 144, 144,
@@ -1042,12 +1049,20 @@ int compute_rdmult_sse(PictureControlSet *pcs_ptr, uint8_t q_index, uint8_t bit_
                                                            : LF_UPDATE;
         rdmult                 = (rdmult * rd_frame_type_factor[gf_update_type]) >> 7;
     }
+#if ADJUST_LAMBDA
+    if (pcs_ptr->parent_pcs_ptr->adjust_lambda_sb) {
+        int qdiff = q_index - quantizer_to_qindex[pcs_ptr->parent_pcs_ptr->picture_qp];
+        int8_t qidx = (qdiff < -8) ? 0 : (qdiff < -4) ? 1 : (qdiff < -2) ? 2 : (qdiff <= 4) ? 3 : 4;
+        rdmult = (rdmult * q_factor[qidx]) >> 7;
+    }
+#endif
     return (int)rdmult;
 }
 static void sb_setup_lambda(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr) {
     const Av1Common *const   cm         = pcs_ptr->parent_pcs_ptr->av1_cm;
     PictureParentControlSet *ppcs_ptr   = pcs_ptr->parent_pcs_ptr;
     SequenceControlSet *     scs_ptr    = ppcs_ptr->scs_ptr;
+<<<<<<< HEAD
 
     int       mi_col = sb_ptr->origin_x / 4;
     int       mi_row = sb_ptr->origin_y / 4;
@@ -1066,6 +1081,18 @@ static void sb_setup_lambda(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr) {
     const int                num_cols = (mi_cols_sr + num_mi_w - 1) / num_mi_w;
     const int                num_rows = (cm->mi_rows + num_mi_h - 1) / num_mi_h;
     const int num_bcols = (sb_mi_width_sr + num_mi_w - 1) / num_mi_w;
+=======
+        #if FTR_TPL_SYNTH
+    const int                bsize_base = ppcs_ptr->tpl_ctrls.synth_blk_size == 32 ? BLOCK_32X32 : BLOCK_16X16;
+#else
+    const int                bsize_base = BLOCK_16X16;
+#endif
+    const int                num_mi_w   = mi_size_wide[bsize_base];
+    const int                num_mi_h   = mi_size_high[bsize_base];
+    const int                num_cols   = (cm->mi_cols + num_mi_w - 1) / num_mi_w;
+    const int                num_rows   = (cm->mi_rows + num_mi_h - 1) / num_mi_h;
+    const int num_bcols = (mi_size_wide[scs_ptr->seq_header.sb_size] + num_mi_w - 1) / num_mi_w;
+>>>>>>> 613e22b0 (Lookahead, adaptive quantization assignment quality optimizations, memory optimizations, adapting existing mode decision to new quality levels and the corresponding preset optimizations)
     const int num_brows = (mi_size_high[scs_ptr->seq_header.sb_size] + num_mi_h - 1) / num_mi_h;
 
     int       row, col;
@@ -3486,6 +3513,12 @@ void *rate_control_kernel(void *input_ptr) {
             // Release the SequenceControlSet
             svt_release_object(parentpicture_control_set_ptr->scs_wrapper_ptr);
             // Release the ParentPictureControlSet
+#if OPT_PA_REF
+            //y8b needs to get decremented at the same time of regular input
+           //  svt_release_object_with_call_stack(parentpicture_control_set_ptr->eb_y8b_wrapper_ptr, 3000, parentpicture_control_set_ptr->picture_number);
+           svt_release_object(parentpicture_control_set_ptr->eb_y8b_wrapper_ptr);
+
+#endif
             svt_release_object(parentpicture_control_set_ptr->input_picture_wrapper_ptr);
             svt_release_object(rate_control_tasks_ptr->pcs_wrapper_ptr);
 

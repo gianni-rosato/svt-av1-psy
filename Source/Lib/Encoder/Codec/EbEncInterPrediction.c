@@ -4751,7 +4751,9 @@ EbErrorType av1_inter_prediction_light_pd1(
     DECLARE_ALIGNED(32, uint16_t, tmp_dst_y[128 * 128]);
     MV mv;
     const BlockGeom *blk_geom = md_context->blk_geom;
-
+#if CHROMA_DETECTOR
+    uint8_t * src_mod;
+#endif
     // Luma prediction
     if (component_mask & PICTURE_BUFFER_DESC_LUMA_MASK) {
 
@@ -4778,8 +4780,11 @@ EbErrorType av1_inter_prediction_light_pd1(
             subpel_params.subpel_y = (mv_q4.row & SUBPEL_MASK);
             pos_y = pu_origin_y + (mv_q4.row >> SUBPEL_BITS);
             pos_x = pu_origin_x + (mv_q4.col >> SUBPEL_BITS);
-
+#if CHROMA_DETECTOR
+            src_mod = ref_pic_list0->buffer_y + ref_pic_list0->origin_x + pos_x + (ref_pic_list0->origin_y + pos_y) * ref_pic_list0->stride_y;
+#else
             uint8_t * src_mod = ref_pic_list0->buffer_y + ref_pic_list0->origin_x + pos_x + (ref_pic_list0->origin_y + pos_y) * ref_pic_list0->stride_y;
+#endif
 
             convolve[subpel_params.subpel_x != 0][subpel_params.subpel_y != 0][conv_params_y.is_compound](
                 src_mod,
@@ -4819,9 +4824,11 @@ EbErrorType av1_inter_prediction_light_pd1(
             subpel_params.subpel_y = (mv_q4.row & SUBPEL_MASK);
             pos_y = pu_origin_y + (mv_q4.row >> SUBPEL_BITS);
             pos_x = pu_origin_x + (mv_q4.col >> SUBPEL_BITS);
-
+#if CHROMA_DETECTOR
+            src_mod = ref_pic_list1->buffer_y + ref_pic_list1->origin_x + pos_x + (ref_pic_list1->origin_y + pos_y) * ref_pic_list1->stride_y;
+#else
             uint8_t * src_mod = ref_pic_list1->buffer_y + ref_pic_list1->origin_x + pos_x + (ref_pic_list1->origin_y + pos_y) * ref_pic_list1->stride_y;
-
+#endif
             convolve[subpel_params.subpel_x != 0][subpel_params.subpel_y != 0][conv_params_y.is_compound](
                 src_mod,
                 ref_pic_list1->stride_y,
@@ -4840,8 +4847,11 @@ EbErrorType av1_inter_prediction_light_pd1(
 
 
     // Chroma prediction
+#if CHROMA_DETECTOR
+    if (component_mask & PICTURE_BUFFER_DESC_CHROMA_MASK) {
+#else
     if (blk_geom->has_uv && (component_mask & PICTURE_BUFFER_DESC_CHROMA_MASK)) {
-
+#endif
         uint16_t* tmp_dst_cb = tmp_dst_y;
         uint16_t* tmp_dst_cr = &tmp_dst_y[64 * 64];
 
@@ -4876,7 +4886,41 @@ EbErrorType av1_inter_prediction_light_pd1(
             subpel_params.subpel_y = (mv_q4.row & SUBPEL_MASK);
             pos_y = pu_origin_y_chroma + (mv_q4.row >> SUBPEL_BITS);
             pos_x = pu_origin_x_chroma + (mv_q4.col >> SUBPEL_BITS);
+#if CHROMA_DETECTOR
+            if (component_mask & PICTURE_BUFFER_DESC_Cb_FLAG) {
+                src_mod = ref_pic_list0->buffer_cb + ref_pic_list0->origin_x / 2 + pos_x + (ref_pic_list0->origin_y / 2 + pos_y) * ref_pic_list0->stride_cb;
 
+                convolve[subpel_params.subpel_x != 0][subpel_params.subpel_y != 0][conv_params_cb.is_compound](
+                    src_mod,
+                    ref_pic_list0->stride_cb,
+                    dst_ptr_cb,
+                    pred_pic->stride_cb,
+                    blk_geom->bwidth_uv,
+                    blk_geom->bheight_uv,
+                    &filter_params_x,
+                    &filter_params_y,
+                    subpel_params.subpel_x,
+                    subpel_params.subpel_y,
+                    &conv_params_cb);
+            }
+
+            if (component_mask & PICTURE_BUFFER_DESC_Cr_FLAG) {
+                src_mod = ref_pic_list0->buffer_cr + ref_pic_list0->origin_x / 2 + pos_x + (ref_pic_list0->origin_y / 2 + pos_y) * ref_pic_list0->stride_cr;
+
+                convolve[subpel_params.subpel_x != 0][subpel_params.subpel_y != 0][conv_params_cr.is_compound](
+                    src_mod,
+                    ref_pic_list0->stride_cr,
+                    dst_ptr_cr,
+                    pred_pic->stride_cr,
+                    blk_geom->bwidth_uv,
+                    blk_geom->bheight_uv,
+                    &filter_params_x,
+                    &filter_params_y,
+                    subpel_params.subpel_x,
+                    subpel_params.subpel_y,
+                    &conv_params_cr);
+            }
+#else
             uint8_t * src_mod = ref_pic_list0->buffer_cb + ref_pic_list0->origin_x / 2 + pos_x + (ref_pic_list0->origin_y / 2 + pos_y) * ref_pic_list0->stride_cb;
 
             convolve[subpel_params.subpel_x != 0][subpel_params.subpel_y != 0][conv_params_cb.is_compound](
@@ -4906,6 +4950,7 @@ EbErrorType av1_inter_prediction_light_pd1(
                 subpel_params.subpel_x,
                 subpel_params.subpel_y,
                 &conv_params_cr);
+#endif
         }
 
         if (mv_unit->pred_direction == UNI_PRED_LIST_1 || mv_unit->pred_direction == BI_PRED) {
@@ -4932,7 +4977,41 @@ EbErrorType av1_inter_prediction_light_pd1(
             subpel_params.subpel_y = (mv_q4.row & SUBPEL_MASK);
             pos_y = pu_origin_y_chroma + (mv_q4.row >> SUBPEL_BITS);
             pos_x = pu_origin_x_chroma + (mv_q4.col >> SUBPEL_BITS);
+#if CHROMA_DETECTOR
+            if (component_mask & PICTURE_BUFFER_DESC_Cb_FLAG) {
+                src_mod = ref_pic_list1->buffer_cb + ref_pic_list1->origin_x / 2 + pos_x + (ref_pic_list1->origin_y / 2 + pos_y) * ref_pic_list1->stride_cb;
 
+                convolve[subpel_params.subpel_x != 0][subpel_params.subpel_y != 0][conv_params_cb.is_compound](
+                    src_mod,
+                    ref_pic_list1->stride_cb,
+                    dst_ptr_cb,
+                    pred_pic->stride_cb,
+                    blk_geom->bwidth_uv,
+                    blk_geom->bheight_uv,
+                    &filter_params_x,
+                    &filter_params_y,
+                    subpel_params.subpel_x,
+                    subpel_params.subpel_y,
+                    &conv_params_cb);
+            }
+
+            if (component_mask & PICTURE_BUFFER_DESC_Cr_FLAG) {
+                src_mod = ref_pic_list1->buffer_cr + ref_pic_list1->origin_x / 2 + pos_x + (ref_pic_list1->origin_y / 2 + pos_y) * ref_pic_list1->stride_cr;
+
+                convolve[subpel_params.subpel_x != 0][subpel_params.subpel_y != 0][conv_params_cr.is_compound](
+                    src_mod,
+                    ref_pic_list1->stride_cr,
+                    dst_ptr_cr,
+                    pred_pic->stride_cr,
+                    blk_geom->bwidth_uv,
+                    blk_geom->bheight_uv,
+                    &filter_params_x,
+                    &filter_params_y,
+                    subpel_params.subpel_x,
+                    subpel_params.subpel_y,
+                    &conv_params_cr);
+            }
+#else
             uint8_t * src_mod = ref_pic_list1->buffer_cb + ref_pic_list1->origin_x / 2 + pos_x + (ref_pic_list1->origin_y / 2 + pos_y) * ref_pic_list1->stride_cb;
 
             convolve[subpel_params.subpel_x != 0][subpel_params.subpel_y != 0][conv_params_cb.is_compound](
@@ -4962,6 +5041,7 @@ EbErrorType av1_inter_prediction_light_pd1(
                 subpel_params.subpel_x,
                 subpel_params.subpel_y,
                 &conv_params_cr);
+#endif
         }
     }
 
@@ -6953,8 +7033,14 @@ EbErrorType inter_pu_prediction_av1_light_pd1(uint8_t hbd_mode_decision, ModeDec
     }
 #endif
     //for light PD1 inter prediction is Luma only for MDS0 and Chroma only for MDS3
+#if CHROMA_DETECTOR
+    uint32_t component_mask = md_context_ptr->md_stage == MD_STAGE_0 ? PICTURE_BUFFER_DESC_LUMA_MASK :
+        md_context_ptr->lpd1_chroma_comp == COMPONENT_CHROMA ? PICTURE_BUFFER_DESC_CHROMA_MASK :
+        md_context_ptr->lpd1_chroma_comp == COMPONENT_CHROMA_CB ? PICTURE_BUFFER_DESC_Cb_FLAG :
+        PICTURE_BUFFER_DESC_Cr_FLAG;
+#else
     uint32_t component_mask = md_context_ptr->md_stage == MD_STAGE_0 ? PICTURE_BUFFER_DESC_LUMA_MASK : PICTURE_BUFFER_DESC_CHROMA_MASK;
-
+#endif
     av1_inter_prediction_light_pd1(
         &mv_unit,
         md_context_ptr,

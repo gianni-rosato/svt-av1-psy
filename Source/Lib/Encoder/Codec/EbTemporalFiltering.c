@@ -22,6 +22,9 @@
 #include "EbMotionEstimationContext.h"
 #include "EbLambdaRateTables.h"
 #include "EbPictureAnalysisProcess.h"
+#if FTR_TF_STRENGTH_PER_QP
+#include "EbModeDecisionProcess.h"
+#endif
 #include "EbMcp.h"
 #include "av1me.h"
 #ifdef ARCH_X86_64
@@ -60,6 +63,9 @@ static const uint32_t idx_32x32_to_idx_16x16[4][4] = {
 
 extern AomVarianceFnPtr mefn_ptr[BlockSizeS_ALL];
 int32_t get_frame_update_type(SequenceControlSet* scs_ptr, PictureParentControlSet* pcs_ptr);
+#if FTR_TF_STRENGTH_PER_QP
+int32_t svt_av1_compute_qdelta(double qstart, double qtarget, AomBitDepth bit_depth);
+#endif
 #if DEBUG_SCALING
 // save YUV to file - auxiliary function for debug
 void save_YUV_to_file(char *filename, EbByte buffer_y, EbByte buffer_u, EbByte buffer_v,
@@ -603,8 +609,12 @@ void svt_av1_apply_temporal_filter_planewise_c(
     struct MeContext *context_ptr, const uint8_t *y_src, int y_src_stride, const uint8_t *y_pre,
     int y_pre_stride, const uint8_t *u_src, const uint8_t *v_src, int uv_src_stride,
     const uint8_t *u_pre, const uint8_t *v_pre, int uv_pre_stride, unsigned int block_width,
-    unsigned int block_height, int ss_x, int ss_y, const double *noise_levels,
-    const int decay_control, uint32_t *y_accum, uint16_t *y_count, uint32_t *u_accum,
+    unsigned int block_height, int ss_x, int ss_y,
+#if !FTR_TF_STRENGTH_PER_QP
+    const double *noise_levels,
+    const int decay_control,
+#endif
+    uint32_t *y_accum, uint16_t *y_count, uint32_t *u_accum,
     uint16_t *u_count, uint32_t *v_accum, uint16_t *v_count) {
     unsigned int       i, j, k, m;
     int                idx, idy;
@@ -665,7 +675,7 @@ void svt_av1_apply_temporal_filter_planewise_c(
 
             double combined_error = (TF_WINDOW_BLOCK_BALANCE_WEIGHT * window_error + block_error) /
                 (TF_WINDOW_BLOCK_BALANCE_WEIGHT + 1);
-
+#if !FTR_TF_STRENGTH_PER_QP
             // Decay factors for non-local mean approach.
             // Larger noise -> larger filtering weight.
             double n_decay = (double)decay_control * (0.7 + log1p(noise_levels[0]));
@@ -677,6 +687,7 @@ void svt_av1_apply_temporal_filter_planewise_c(
             // CLIP(
             //    pow((double)filter_strength / TF_STRENGTH_THRESHOLD, 2), 1e-5, 1);
             // Larger motion vector -> smaller filtering weight.
+#endif
             MV mv;
             if (context_ptr->tf_32x32_block_split_flag[idx_32x32]) {
                 // 16x16
@@ -693,8 +704,13 @@ void svt_av1_apply_temporal_filter_planewise_c(
             const double d_factor = AOMMAX(distance / distance_threshold, 1);
 
             // Compute filter weight.
+#if FTR_TF_STRENGTH_PER_QP
+            double scaled_diff = AOMMIN(
+                combined_error * d_factor / context_ptr->tf_decay_factor[0], 7);
+#else
             double scaled_diff = AOMMIN(
                 combined_error * d_factor / (2 * n_decay * n_decay) / q_decay / s_decay, 7);
+#endif
             int adjusted_weight = (int)(expf((float)(-scaled_diff)) * TF_WEIGHT_SCALE);
             k                   = i * y_pre_stride + j;
             y_count[k] += adjusted_weight;
@@ -739,12 +755,18 @@ void svt_av1_apply_temporal_filter_planewise_c(
                     combined_error = (TF_WINDOW_BLOCK_BALANCE_WEIGHT * window_error + block_error) /
                         (TF_WINDOW_BLOCK_BALANCE_WEIGHT + 1);
 
+#if FTR_TF_STRENGTH_PER_QP
+                    // Compute filter weight.
+                    scaled_diff = AOMMIN(
+                        combined_error * d_factor / context_ptr->tf_decay_factor[1], 7);
+#else
                     // Decay factors for non-local mean approach.
                     // Larger noise -> larger filtering weight.
                     n_decay = (double)decay_control * (0.7 + log1p(noise_levels[1]));
                     // Compute filter weight.
                     scaled_diff = AOMMIN(
                         combined_error * d_factor / (2 * n_decay * n_decay) / q_decay / s_decay, 7);
+#endif
                     adjusted_weight = (int)(expf((float)(-scaled_diff)) * TF_WEIGHT_SCALE);
                     u_count[m] += adjusted_weight;
                     u_accum[m] += adjusted_weight * u_pixel_value;
@@ -754,6 +776,11 @@ void svt_av1_apply_temporal_filter_planewise_c(
                     combined_error = (TF_WINDOW_BLOCK_BALANCE_WEIGHT * window_error + block_error) /
                         (TF_WINDOW_BLOCK_BALANCE_WEIGHT + 1);
 
+#if FTR_TF_STRENGTH_PER_QP
+                    // Compute filter weight.
+                    scaled_diff = AOMMIN(
+                        combined_error * d_factor / context_ptr->tf_decay_factor[2], 7);
+#else
                     // Decay factors for non-local mean approach.
                     // Larger noise -> larger filtering weight.
                     n_decay = (double)decay_control * (0.7 + log1p(noise_levels[2]));
@@ -761,6 +788,7 @@ void svt_av1_apply_temporal_filter_planewise_c(
                     // Compute filter weight.
                     scaled_diff = AOMMIN(
                         combined_error * d_factor / (2 * n_decay * n_decay) / q_decay / s_decay, 7);
+#endif
                     adjusted_weight = (int)(expf((float)(-scaled_diff)) * TF_WEIGHT_SCALE);
                     v_count[m] += adjusted_weight;
                     v_accum[m] += adjusted_weight * v_pixel_value;
@@ -789,8 +817,12 @@ void svt_av1_apply_temporal_filter_planewise_hbd_c(
     struct MeContext *context_ptr, const uint16_t *y_src, int y_src_stride, const uint16_t *y_pre,
     int y_pre_stride, const uint16_t *u_src, const uint16_t *v_src, int uv_src_stride,
     const uint16_t *u_pre, const uint16_t *v_pre, int uv_pre_stride, unsigned int block_width,
-    unsigned int block_height, int ss_x, int ss_y, const double *noise_levels,
-    const int decay_control, uint32_t *y_accum, uint16_t *y_count, uint32_t *u_accum,
+    unsigned int block_height, int ss_x, int ss_y,
+#if !FTR_TF_STRENGTH_PER_QP
+    const double *noise_levels,
+    const int decay_control,
+#endif
+    uint32_t *y_accum, uint16_t *y_count, uint32_t *u_accum,
     uint16_t *u_count, uint32_t *v_accum, uint16_t *v_count, uint32_t encoder_bit_depth) {
     unsigned int       i, j, k, m;
     int                idx, idy;
@@ -855,7 +887,7 @@ void svt_av1_apply_temporal_filter_planewise_hbd_c(
 
             double combined_error = (TF_WINDOW_BLOCK_BALANCE_WEIGHT * window_error + block_error) /
                 (TF_WINDOW_BLOCK_BALANCE_WEIGHT + 1);
-
+#if !FTR_TF_STRENGTH_PER_QP
             // Decay factors for non-local mean approach.
             // Larger noise -> larger filtering weight.
             double n_decay = (double)decay_control * (0.7 + log1p(noise_levels[0]));
@@ -867,6 +899,7 @@ void svt_av1_apply_temporal_filter_planewise_hbd_c(
             // CLIP(
             //    pow((double)filter_strength / TF_STRENGTH_THRESHOLD, 2), 1e-5, 1);
             // Larger motion vector -> smaller filtering weight.
+#endif
             MV mv;
             if (context_ptr->tf_32x32_block_split_flag[idx_32x32]) {
                 // 16x16
@@ -883,8 +916,13 @@ void svt_av1_apply_temporal_filter_planewise_hbd_c(
             const double d_factor = AOMMAX(distance / distance_threshold, 1);
 
             // Compute filter weight.
+#if FTR_TF_STRENGTH_PER_QP
+            double scaled_diff = AOMMIN(
+                combined_error * d_factor / context_ptr->tf_decay_factor[0], 7);
+#else
             double scaled_diff = AOMMIN(
                 combined_error * d_factor / (2 * n_decay * n_decay) / q_decay / s_decay, 7);
+#endif
             int adjusted_weight = (int)(expf((float)-scaled_diff) * TF_WEIGHT_SCALE);
             k                   = i * y_pre_stride + j;
             y_count[k] += adjusted_weight;
@@ -932,12 +970,18 @@ void svt_av1_apply_temporal_filter_planewise_hbd_c(
                     combined_error = (TF_WINDOW_BLOCK_BALANCE_WEIGHT * window_error + block_error) /
                         (TF_WINDOW_BLOCK_BALANCE_WEIGHT + 1);
 
+#if FTR_TF_STRENGTH_PER_QP
+                    // Compute filter weight.
+                    scaled_diff = AOMMIN(
+                        combined_error * d_factor / context_ptr->tf_decay_factor[1], 7);
+#else
                     // Decay factors for non-local mean approach.
                     // Larger noise -> larger filtering weight.
                     n_decay = (double)decay_control * (0.7 + log1p(noise_levels[1]));
                     // Compute filter weight.
                     scaled_diff = AOMMIN(
                         combined_error * d_factor / (2 * n_decay * n_decay) / q_decay / s_decay, 7);
+#endif
                     adjusted_weight = (int)(expf((float)-scaled_diff) * TF_WEIGHT_SCALE);
                     u_count[m] += adjusted_weight;
                     u_accum[m] += adjusted_weight * u_pixel_value;
@@ -947,6 +991,11 @@ void svt_av1_apply_temporal_filter_planewise_hbd_c(
                     combined_error = (TF_WINDOW_BLOCK_BALANCE_WEIGHT * window_error + block_error) /
                         (TF_WINDOW_BLOCK_BALANCE_WEIGHT + 1);
 
+#if FTR_TF_STRENGTH_PER_QP
+                    // Compute filter weight.
+                    scaled_diff = AOMMIN(
+                        combined_error * d_factor / context_ptr->tf_decay_factor[2], 7);
+#else
                     // Decay factors for non-local mean approach.
                     // Larger noise -> larger filtering weight.
                     n_decay = (double)decay_control * (0.7 + log1p(noise_levels[2]));
@@ -954,6 +1003,7 @@ void svt_av1_apply_temporal_filter_planewise_hbd_c(
                     // Compute filter weight.
                     scaled_diff = AOMMIN(
                         combined_error * d_factor / (2 * n_decay * n_decay) / q_decay / s_decay, 7);
+#endif
                     adjusted_weight = (int)(expf((float)-scaled_diff) * TF_WEIGHT_SCALE);
                     v_count[m] += adjusted_weight;
                     v_accum[m] += adjusted_weight * v_pixel_value;
@@ -1003,8 +1053,11 @@ void svt_av1_apply_temporal_filter_planewise_fast_c(
     //to add chroma if need be
     uint32_t avg_err = calculate_squared_errors_sum(
         y_src, y_src_stride, y_pre, y_pre_stride, block_width, block_height);
-
+#if FTR_TF_STRENGTH_PER_QP
+    double scaled_diff = AOMMIN(avg_err / context_ptr->tf_decay_factor[0], 7);
+#else
     double scaled_diff = AOMMIN(avg_err / context_ptr->tf_decay_factor, 7);
+#endif
     int    adjusted_weight = (int)(expf_tab[(int)(scaled_diff * 10)] * TF_WEIGHT_SCALE);
 
     if (adjusted_weight) {
@@ -1031,9 +1084,11 @@ void svt_av1_apply_temporal_filter_planewise_fast_hbd_c(
     //to add chroma if need be
     uint32_t avg_err = calculate_squared_errors_sum_highbd(
         y_src, y_src_stride, y_pre, y_pre_stride, block_width, block_height);
-
+#if FTR_TF_STRENGTH_PER_QP
+    double scaled_diff = AOMMIN(avg_err / context_ptr->tf_decay_factor[0], 7);
+#else
     double scaled_diff = AOMMIN(avg_err / context_ptr->tf_decay_factor, 7);
-
+#endif
     int adjusted_weight = (int)(expf_tab[(int)(scaled_diff * 10)] * TF_WEIGHT_SCALE);
     if (adjusted_weight) {
         unsigned int       i, j, k;
@@ -1073,7 +1128,10 @@ static void apply_filtering_block_plane_wise(
     MeContext *context_ptr, int block_row, int block_col, EbByte *src, uint16_t **src_16bit,
     EbByte *pred, uint16_t **pred_16bit, uint32_t **accum, uint16_t **count, uint32_t *stride,
     uint32_t *stride_pred, int block_width, int block_height, uint32_t ss_x, uint32_t ss_y,
-    const double *noise_levels, const int decay_control, uint32_t encoder_bit_depth) {
+#if !FTR_TF_STRENGTH_PER_QP
+    const double *noise_levels, const int decay_control,
+#endif
+    uint32_t encoder_bit_depth) {
     int blk_h               = block_height;
     int blk_w               = block_width;
     int offset_src_buffer_Y = block_row * blk_h * stride[C_Y] + block_col * blk_w;
@@ -1141,8 +1199,10 @@ static void apply_filtering_block_plane_wise(
                                                 (unsigned int)block_height,
                                                 ss_x,
                                                 ss_y,
+#if !FTR_TF_STRENGTH_PER_QP
                                                 noise_levels,
                                                 decay_control,
+#endif
                                                 accum_ptr[C_Y],
                                                 count_ptr[C_Y],
                                                 accum_ptr[C_U],
@@ -1192,8 +1252,10 @@ static void apply_filtering_block_plane_wise(
                                                     (unsigned int)block_height,
                                                     ss_x,
                                                     ss_y,
+#if !FTR_TF_STRENGTH_PER_QP
                                                     noise_levels,
                                                     decay_control,
+#endif
                                                     accum_ptr[C_Y],
                                                     count_ptr[C_Y],
                                                     accum_ptr[C_U],
@@ -3831,13 +3893,71 @@ static EbErrorType produce_temporally_filtered_pic(
     // Decrease the filter strength for low QPs
     if (picture_control_set_ptr_central->scs_ptr->static_config.qp <= ALT_REF_QP_THRESH)
         decay_control--;
+#if FTR_TF_STRENGTH_PER_QP
+    // Adjust filtering based on q.
+    // Larger q -> stronger filtering -> larger weight.
+    // Smaller q -> weaker filtering -> smaller weight.
+
+    // Fixed-QP offsets are use here since final picture QP(s) are not generated @ this early stage
+    const int bit_depth = picture_control_set_ptr_central->scs_ptr->static_config.encoder_bit_depth;
+    int       active_best_quality = 0;
+    int       active_worst_quality = quantizer_to_qindex[(uint8_t)picture_control_set_ptr_central->scs_ptr->static_config.qp];
+    int       q;
+    double q_val = svt_av1_convert_qindex_to_q(active_worst_quality, bit_depth);
+
+    int offset_idx = -1;
+    if (!picture_control_set_ptr_central->is_used_as_reference_flag)
+        offset_idx = -1;
+    else if (picture_control_set_ptr_central->slice_type == I_SLICE)
+        offset_idx = 0;
+    else
+        offset_idx = MIN(picture_control_set_ptr_central->temporal_layer_index + 1, FIXED_QP_OFFSET_COUNT - 1);
+
+    const double q_val_target = (offset_idx == -1) ?
+        q_val :
+        MAX(q_val - (q_val * percents[picture_control_set_ptr_central->hierarchical_levels <= 4][offset_idx] / 100), 0.0);
+
+    const int32_t delta_qindex = svt_av1_compute_qdelta(
+        q_val,
+        q_val_target,
+        bit_depth);
+
+    active_best_quality = (int32_t)(active_worst_quality + delta_qindex);
+    q = active_best_quality;
+    clamp(q, active_best_quality, active_worst_quality);
+
+    double q_decay = pow((double)q / TF_Q_DECAY_THRESHOLD, 2);
+    q_decay = CLIP(q_decay, 1e-5, 1);
+    if (q >= TF_QINDEX_CUTOFF) {
+        // Max q_factor is 255, therefore the upper bound of q_decay is 8.
+        // We do not need a clip here.
+        q_decay = 0.5 * pow((double)q / 64, 2);
+    }
+
+    // Smaller strength -> smaller filtering weight.
+    double s_decay = pow((double)TF_FILTER_STRENGTH / TF_STRENGTH_THRESHOLD, 2);
+    s_decay = CLIP(s_decay, 1e-5, 1);
+#endif
+#if FTR_TF_STRENGTH_PER_QP
+    double n_decay;
+    n_decay = (double)decay_control * (0.7 + log1p(noise_levels[0]));
+    context_ptr->tf_decay_factor[C_Y] = 2 * n_decay * n_decay * q_decay * s_decay;
+
+    if (context_ptr->tf_chroma) {
+        n_decay = (double)decay_control * (0.7 + log1p(noise_levels[1]));
+        context_ptr->tf_decay_factor[C_U] = 2 * n_decay * n_decay* q_decay * s_decay;
+
+        n_decay = (double)decay_control * (0.7 + log1p(noise_levels[2]));
+        context_ptr->tf_decay_factor[C_V] = 2 * n_decay * n_decay* q_decay * s_decay;
+    }
+#else
 #if OPT_TFILTER
     if (context_ptr->tf_ctrls.use_fast_filter){
          double n_decay = (double)decay_control * (0.7 + log1p(noise_levels[0]));
          context_ptr->tf_decay_factor = 2 * n_decay * n_decay;
     }
 #endif
-
+#endif
     for (uint32_t blk_row = y_b64_start_idx; blk_row < y_b64_end_idx; blk_row++) {
         for (uint32_t blk_col = x_b64_start_idx; blk_col < x_b64_end_idx; blk_col++) {
             int blk_y_src_offset  = (blk_col * BW) + (blk_row * BH) * stride[C_Y];
@@ -4118,8 +4238,10 @@ static EbErrorType produce_temporally_filtered_pic(
                                 BH >> 1,
                                 ss_x,
                                 ss_y,
+#if !FTR_TF_STRENGTH_PER_QP
                                 noise_levels,
                                 decay_control,
+#endif
                                 encoder_bit_depth);
                     }
                 }

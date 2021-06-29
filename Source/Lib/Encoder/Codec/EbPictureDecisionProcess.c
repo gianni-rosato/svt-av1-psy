@@ -1248,7 +1248,8 @@ void set_cdef_controls(PictureParentControlSet *pcs_ptr, uint8_t cdef_level) {
         cdef_ctrls->subsampling_factor = 4;
         cdef_ctrls->zero_fs_cost_bias = 0;
         break;
-    case 12:
+#if TUNE_REMOVE_CDEF_COST_BIAS
+        case 12:
         // pf_set {0,15}
         // sf_set {0,2}
         cdef_ctrls->enabled = 1;
@@ -1268,7 +1269,7 @@ void set_cdef_controls(PictureParentControlSet *pcs_ptr, uint8_t cdef_level) {
         cdef_ctrls->use_reference_cdef_fs = 0;
         cdef_ctrls->search_best_ref_fs = 0;
         cdef_ctrls->subsampling_factor = 4;
-        cdef_ctrls->zero_fs_cost_bias = 62;
+        cdef_ctrls->zero_fs_cost_bias = 0;
 #if OPT_CDEF
         cdef_ctrls->use_skip_detector = 1;
 #endif
@@ -1295,7 +1296,7 @@ void set_cdef_controls(PictureParentControlSet *pcs_ptr, uint8_t cdef_level) {
         cdef_ctrls->use_reference_cdef_fs = 0;
         cdef_ctrls->search_best_ref_fs = 1;
         cdef_ctrls->subsampling_factor = 4;
-        cdef_ctrls->zero_fs_cost_bias = 62;
+        cdef_ctrls->zero_fs_cost_bias = 0;
 #if OPT_CDEF
         cdef_ctrls->use_skip_detector = 1;
 #endif
@@ -1321,12 +1322,107 @@ void set_cdef_controls(PictureParentControlSet *pcs_ptr, uint8_t cdef_level) {
         cdef_ctrls->use_reference_cdef_fs = 1;
         cdef_ctrls->search_best_ref_fs = 1;
         cdef_ctrls->subsampling_factor = 4;
+        cdef_ctrls->zero_fs_cost_bias = 0;
+#if OPT_CDEF
+        cdef_ctrls->use_skip_detector = 1;
+#endif
+        break;
+#endif
+#if TUNE_REMOVE_CDEF_COST_BIAS
+    case 15:
+#else
+    case 12:
+#endif
+        // pf_set {0,15}
+        // sf_set {0,2}
+        cdef_ctrls->enabled = 1;
+        cdef_ctrls->first_pass_fs_num = 2;
+        second_pass_fs_num = 1;
+        cdef_ctrls->default_second_pass_fs_num = cdef_ctrls->first_pass_fs_num * second_pass_fs_num;
+        cdef_ctrls->default_first_pass_fs[0] = pf_gi[0];
+        cdef_ctrls->default_first_pass_fs[1] = pf_gi[15];
+
+        cdef_ctrls->default_second_pass_fs[0] = pf_gi[0] + 2;
+        cdef_ctrls->default_second_pass_fs[1] = pf_gi[15] + 2;
+        cdef_ctrls->default_first_pass_fs_uv[0] = cdef_ctrls->default_first_pass_fs[0];
+        cdef_ctrls->default_first_pass_fs_uv[1] = cdef_ctrls->default_first_pass_fs[1];
+        cdef_ctrls->default_first_pass_fs_uv[2] = -1;// if using search_best_ref_fs, set at least 3 filters
+        cdef_ctrls->default_second_pass_fs_uv[0] = -1; // cdef_ctrls->default_second_pass_fs[0];
+        cdef_ctrls->default_second_pass_fs_uv[1] = -1; // cdef_ctrls->default_second_pass_fs[1];
+        cdef_ctrls->use_reference_cdef_fs = 0;
+        cdef_ctrls->search_best_ref_fs = 0;
+        cdef_ctrls->subsampling_factor = 4;
         cdef_ctrls->zero_fs_cost_bias = 62;
 #if OPT_CDEF
         cdef_ctrls->use_skip_detector = 1;
 #endif
         break;
+#if TUNE_REMOVE_CDEF_COST_BIAS
+    case 16:
+#else
+    case 13:
+#endif
+        // pf_set {0,15}
+        // sf_set {0,2}
+        cdef_ctrls->enabled = 1;
+        cdef_ctrls->first_pass_fs_num = 2;
+        second_pass_fs_num = 1;
+        cdef_ctrls->default_second_pass_fs_num = cdef_ctrls->first_pass_fs_num * second_pass_fs_num;
+        cdef_ctrls->default_first_pass_fs[0] = pf_gi[0];
+        cdef_ctrls->default_first_pass_fs[1] = pf_gi[15];
+
+        cdef_ctrls->default_second_pass_fs[0] = pf_gi[0] + 2;
+        cdef_ctrls->default_second_pass_fs[1] = pf_gi[15] + 2;
+
+        cdef_ctrls->default_first_pass_fs_uv[0] = cdef_ctrls->default_first_pass_fs[0];
+        cdef_ctrls->default_first_pass_fs_uv[1] = cdef_ctrls->default_first_pass_fs[1];
+        cdef_ctrls->default_first_pass_fs_uv[2] = -1;// when using search_best_ref_fs, set at least 3 filters
+        cdef_ctrls->default_second_pass_fs_uv[0] = -1;
+        cdef_ctrls->default_second_pass_fs_uv[1] = -1;
+
+        cdef_ctrls->use_reference_cdef_fs = 0;
+        cdef_ctrls->search_best_ref_fs = 1;
+        cdef_ctrls->subsampling_factor = 4;
+        cdef_ctrls->zero_fs_cost_bias = 62;
+#if OPT_CDEF
+        cdef_ctrls->use_skip_detector = 1;
+#endif
+        break;
+#if TUNE_REMOVE_CDEF_COST_BIAS
+    case 17:
+#else
+    case 14:
+#endif
+        // pf_set {0,15}
+        // sf_set {0,2}
+        cdef_ctrls->enabled = 1;
+        cdef_ctrls->first_pass_fs_num = 2;
+        second_pass_fs_num = 1;
+        cdef_ctrls->default_second_pass_fs_num = cdef_ctrls->first_pass_fs_num * second_pass_fs_num;
+        cdef_ctrls->default_first_pass_fs[0] = pf_gi[0];
+        cdef_ctrls->default_first_pass_fs[1] = pf_gi[15];
+
+        cdef_ctrls->default_second_pass_fs[0] = pf_gi[0] + 2;
+        cdef_ctrls->default_second_pass_fs[1] = pf_gi[15] + 2;
+
+        cdef_ctrls->default_first_pass_fs_uv[0] = cdef_ctrls->default_first_pass_fs[0];
+        cdef_ctrls->default_first_pass_fs_uv[1] = cdef_ctrls->default_first_pass_fs[1];
+        cdef_ctrls->default_first_pass_fs_uv[2] = -1;// if using search_best_ref_fs, set at least 3 filters
+        cdef_ctrls->default_second_pass_fs_uv[0] = -1;
+        cdef_ctrls->default_second_pass_fs_uv[1] = -1;
+        cdef_ctrls->use_reference_cdef_fs = 1;
+        cdef_ctrls->search_best_ref_fs = 1;
+        cdef_ctrls->subsampling_factor = 4;
+        cdef_ctrls->zero_fs_cost_bias = 62;
+#if OPT_CDEF
+        cdef_ctrls->use_skip_detector = 1;
+#endif
+        break;
+#if TUNE_REMOVE_CDEF_COST_BIAS
+    case 18:
+#else
     case 15:
+#endif
         // pf_set {0}
         // sf_set {0}
         cdef_ctrls->enabled = 1;
@@ -1639,7 +1735,11 @@ uint8_t get_dlf_level(EbEncMode enc_mode, uint8_t is_used_as_reference_flag) {
 #if TUNE_M7_M10_MT && !TUNE_M10_M0
     else if (enc_mode <= ENC_M6)
 #else
+#if TUNE_M7_M8
+    else if (enc_mode <= ENC_M8)
+#else
     else if (enc_mode <= ENC_M7)
+#endif
 #endif
         dlf_level = 2;
 #if TUNE_M10_FASTER && !TUNE_M10_M9_1
@@ -1718,6 +1818,11 @@ void set_dlf_controls(PictureParentControlSet* pcs_ptr, uint8_t dlf_level) {
     }
 }
 #endif
+#if TUNE_MDS0
+
+uint16_t  get_max_can_count(EbEncMode enc_mode );
+
+#endif
 /******************************************************
 * Derive Multi-Processes Settings for OQ
 Input   : encoder mode and tune
@@ -1739,7 +1844,11 @@ EbErrorType signal_derivation_multi_processes_oq(
         pcs_ptr->enable_hme_level1_flag = 1;
         pcs_ptr->enable_hme_level2_flag = 1;
     }
+#if TUNE_M7_M8
+    else if (pcs_ptr->enc_mode <= ENC_M6) {
+#else
     else if (pcs_ptr->enc_mode <= ENC_M8) {
+#endif
 #else
 #if TUNE_SHIFT_PRESETS_DOWN && !TUNE_NEW_M9_LEVEL || TUNE_M8_M9_FEB24
 #if TUNE_MEGA_M9_M4 && !TUNE_M10_M7
@@ -1881,6 +1990,9 @@ EbErrorType signal_derivation_multi_processes_oq(
         frm_hdr->allow_intrabc = 0;
         pcs_ptr->ibc_mode = 0; // OFF
     }
+#if ADJUST_LAMBDA
+    pcs_ptr->adjust_lambda_sb = (pcs_ptr->enc_mode <= ENC_M9) ? (!frm_hdr->allow_intrabc ? 1 : 0) : 0;
+#endif
 #if FIX_REMOVE_PD1
     // Set palette_level
 #else
@@ -1996,12 +2108,18 @@ EbErrorType signal_derivation_multi_processes_oq(
             else if (pcs_ptr->enc_mode <= ENC_M7)
                 pcs_ptr->cdef_level = 6;
 #endif
+#if !TUNE_M7_MT
 #if TUNE_MEGA_M9_M4
             else if (pcs_ptr->enc_mode <= ENC_M7)
 #else
             else if (pcs_ptr->enc_mode <= ENC_M8)
 #endif
+#if TUNE_4K_M8_M11
+                pcs_ptr->cdef_level = (scs_ptr->input_resolution <= INPUT_SIZE_1080p_RANGE) ? 8 : 9;
+#else
                 pcs_ptr->cdef_level = 8;
+#endif
+#endif
 #if TUNE_M10_M7
 #if TUNE_M10_M0 && !TUNE_M8_M10
             else if (pcs_ptr->enc_mode <= ENC_M9)
@@ -2010,7 +2128,7 @@ EbErrorType signal_derivation_multi_processes_oq(
 #endif
                 pcs_ptr->cdef_level = (scs_ptr->input_resolution <= INPUT_SIZE_720p_RANGE) ? 8 : 9;
 #endif
-#if TUNE_M8_M10
+#if TUNE_M8_M10 && !TUNE_M9_M10
             else if (pcs_ptr->enc_mode <= ENC_M9)
                 pcs_ptr->cdef_level = (scs_ptr->input_resolution <= INPUT_SIZE_720p_RANGE) ? (pcs_ptr->temporal_layer_index == 0 ? 9 : pcs_ptr->is_used_as_reference_flag ? 10 : 11) : 9;
 #endif
@@ -2032,7 +2150,11 @@ EbErrorType signal_derivation_multi_processes_oq(
 #endif
 #if FTR_CDEF_BIAS_ZERO_COST
             else if (pcs_ptr->enc_mode <= ENC_M11)
+#if TUNE_REMOVE_CDEF_COST_BIAS
+                pcs_ptr->cdef_level = (scs_ptr->input_resolution <= INPUT_SIZE_1080p_RANGE) ? (pcs_ptr->temporal_layer_index == 0 ? 15 : pcs_ptr->is_used_as_reference_flag ? 16 : 17) : (pcs_ptr->temporal_layer_index == 0 ? 12 : pcs_ptr->is_used_as_reference_flag ? 13 : 14);
+#else
                 pcs_ptr->cdef_level = pcs_ptr->temporal_layer_index == 0 ? 12 : pcs_ptr->is_used_as_reference_flag ? 13 : 14;
+#endif
 #endif
 #if !TUNE_NEW_M11_2
             else if (pcs_ptr->enc_mode <= ENC_M11)
@@ -2209,7 +2331,7 @@ EbErrorType signal_derivation_multi_processes_oq(
         else
             pcs_ptr->intra_pred_mode = 5;
     }
-#if TUNE_M10_M0
+#if TUNE_M10_M0 && !TUNE_M9_M10
     else if (pcs_ptr->enc_mode <= ENC_M9) {
 #else
     else if (pcs_ptr->enc_mode <= ENC_M8) {
@@ -2342,7 +2464,11 @@ EbErrorType signal_derivation_multi_processes_oq(
 #if TUNE_M0_M7_MEGA_FEB && !TUNE_M10_M7
     if (pcs_ptr->enc_mode <= ENC_M6)
 #else
+#if TUNE_M7_M8 && !TUNE_M7_MT
+    if (pcs_ptr->enc_mode <= ENC_M6)
+#else
     if (pcs_ptr->enc_mode <= ENC_M7)
+#endif
 #endif
         list0_only_base = 0;
     else if (pcs_ptr->enc_mode <= ENC_M8)
@@ -2417,6 +2543,9 @@ EbErrorType signal_derivation_multi_processes_oq(
             pcs_ptr->hbd_mode_decision = pcs_ptr->temporal_layer_index == 0 ? 2 : 0;
     else
         pcs_ptr->hbd_mode_decision = scs_ptr->static_config.enable_hbd_mode_decision;
+#if TUNE_MDS0
+    pcs_ptr->max_can_count = get_max_can_count(pcs_ptr->enc_mode );
+#endif
     return return_error;
 }
 
@@ -6850,6 +6979,9 @@ void* picture_decision_kernel(void *input_ptr)
                                     input_entry_ptr->input_object_ptr = pcs_ptr->pa_reference_picture_wrapper_ptr;
                                     input_entry_ptr->picture_number = pcs_ptr->picture_number;
                                     input_entry_ptr->is_alt_ref = pcs_ptr->is_alt_ref;
+#if OPT_PA_REF
+                                    input_entry_ptr->eb_y8b_wrapper_ptr = pcs_ptr->eb_y8b_wrapper_ptr;
+#endif
                                     encode_context_ptr->picture_decision_pa_reference_queue_tail_index =
                                         (encode_context_ptr->picture_decision_pa_reference_queue_tail_index == PICTURE_DECISION_PA_REFERENCE_QUEUE_MAX_DEPTH - 1) ? 0 : encode_context_ptr->picture_decision_pa_reference_queue_tail_index + 1;
 
@@ -6981,7 +7113,10 @@ void* picture_decision_kernel(void *input_ptr)
                                 // Reset the PA Reference Lists
                                 EB_MEMSET(pcs_ptr->ref_pa_pic_ptr_array[REF_LIST_0], 0, REF_LIST_MAX_DEPTH * sizeof(EbObjectWrapper*));
                                 EB_MEMSET(pcs_ptr->ref_pa_pic_ptr_array[REF_LIST_1], 0, REF_LIST_MAX_DEPTH * sizeof(EbObjectWrapper*));
-
+#if OPT_PA_REF
+                                EB_MEMSET(pcs_ptr->ref_y8b_array[REF_LIST_0], 0, REF_LIST_MAX_DEPTH * sizeof(EbObjectWrapper*));
+                                EB_MEMSET(pcs_ptr->ref_y8b_array[REF_LIST_1], 0, REF_LIST_MAX_DEPTH * sizeof(EbObjectWrapper*));
+#endif
                                 EB_MEMSET(pcs_ptr->ref_pic_poc_array[REF_LIST_0], 0, REF_LIST_MAX_DEPTH * sizeof(uint64_t));
                                 EB_MEMSET(pcs_ptr->ref_pic_poc_array[REF_LIST_1], 0, REF_LIST_MAX_DEPTH * sizeof(uint64_t));
                             }
@@ -7036,6 +7171,10 @@ void* picture_decision_kernel(void *input_ptr)
 
                             EB_MEMSET(pcs_ptr->ref_pa_pic_ptr_array[REF_LIST_0], 0, REF_LIST_MAX_DEPTH * sizeof(EbObjectWrapper*));
                             EB_MEMSET(pcs_ptr->ref_pa_pic_ptr_array[REF_LIST_1], 0, REF_LIST_MAX_DEPTH * sizeof(EbObjectWrapper*));
+#if OPT_PA_REF
+                            EB_MEMSET(pcs_ptr->ref_y8b_array[REF_LIST_0], 0, REF_LIST_MAX_DEPTH * sizeof(EbObjectWrapper*));
+                            EB_MEMSET(pcs_ptr->ref_y8b_array[REF_LIST_1], 0, REF_LIST_MAX_DEPTH * sizeof(EbObjectWrapper*));
+#endif
                             EB_MEMSET(pcs_ptr->ref_pic_poc_array[REF_LIST_0], 0, REF_LIST_MAX_DEPTH * sizeof(uint64_t));
                             EB_MEMSET(pcs_ptr->ref_pic_poc_array[REF_LIST_1], 0, REF_LIST_MAX_DEPTH * sizeof(uint64_t));
                             CHECK_REPORT_ERROR(
@@ -7074,6 +7213,15 @@ void* picture_decision_kernel(void *input_ptr)
                                         svt_object_inc_live_count(
                                             pa_reference_entry_ptr->input_object_ptr,
                                             1);
+#if OPT_PA_REF
+
+                                         pcs_ptr->ref_y8b_array[REF_LIST_0][ref_pic_index] = pa_reference_entry_ptr->eb_y8b_wrapper_ptr;
+
+                                        //y8b follows longest life cycle of pa ref and input. so it needs to build on top of live count of pa ref
+                                        svt_object_inc_live_count(
+                                            pa_reference_entry_ptr->eb_y8b_wrapper_ptr,
+                                            1);
+#endif
                                         --pa_reference_entry_ptr->dependent_count;
                                     }
                                 }
@@ -7103,6 +7251,14 @@ void* picture_decision_kernel(void *input_ptr)
                                         svt_object_inc_live_count(
                                             pa_reference_entry_ptr->input_object_ptr,
                                             1);
+#if OPT_PA_REF
+                                        pcs_ptr->ref_y8b_array[REF_LIST_1][ref_pic_index] = pa_reference_entry_ptr->eb_y8b_wrapper_ptr;
+
+                                        //y8b follows longest life cycle of pa ref and input. so it needs to build on top of live count of pa ref
+                                        svt_object_inc_live_count(
+                                            pa_reference_entry_ptr->eb_y8b_wrapper_ptr,
+                                            1);
+#endif
                                         --pa_reference_entry_ptr->dependent_count;
                                     }
                                 }
@@ -7262,6 +7418,11 @@ void* picture_decision_kernel(void *input_ptr)
                         // Release the nominal live_count value
                         //assert((int32_t)input_entry_ptr->input_object_ptr->live_count > 0);
                         svt_release_object(input_entry_ptr->input_object_ptr);
+#if OPT_PA_REF
+                        //y8b needs to get decremented at the same time of pa ref
+                        //  svt_release_object_with_call_stack(input_entry_ptr->eb_y8b_wrapper_ptr,1000, input_entry_ptr->picture_number);
+                      svt_release_object(input_entry_ptr->eb_y8b_wrapper_ptr);
+#endif
                         input_entry_ptr->input_object_ptr = (EbObjectWrapper*)NULL;
                     }
 
