@@ -253,7 +253,7 @@ extern EbErrorType read_command_line(int32_t argc, char *const argv[], EncChanne
 int get_version(int argc, char *argv[]);
 extern uint32_t    get_help(int32_t argc, char *const argv[]);
 extern uint32_t    get_number_of_channels(int32_t argc, char *const argv[]);
-uint32_t           get_passes(int32_t argc, char *const argv[], EncodePass pass[]);
+uint32_t           get_passes(int32_t argc, char *const argv[], EncodePass pass[MAX_ENCODE_PASS]);
 EbErrorType        set_two_passes_stats(EbConfig *config, EncodePass pass,
                                         const SvtAv1FixedBuf *rc_twopass_stats_in,
                                         uint32_t              channel_number);
