@@ -9598,7 +9598,7 @@ void svt_av1_fwd_txfm2d_8x16_N2_avx2(int16_t *input, int32_t *output, uint32_t s
 /* call this function for all 16 transform types */
 void svt_av1_fwd_txfm2d_16x8_N2_avx2(int16_t *input, int32_t *output, uint32_t stride,
                                      TxType tx_type, uint8_t bd) {
-    __m256i       in[16], out[16];
+    __m256i       in[16], out[16] = {_mm256_setzero_si256()};
     __m256i *     outcoef256 = (__m256i *)output;
     const int8_t *shift      = fwd_txfm_shift_ls[TX_16X8];
     const int32_t txw_idx    = get_txw_idx(TX_16X8);
@@ -13269,7 +13269,7 @@ static AOM_FORCE_INLINE void col_txfm_8x4_N4_rounding(__m256i *in, int32_t shift
 
 void svt_av1_fwd_txfm2d_8x8_N4_avx2(int16_t *input, int32_t *coeff, uint32_t stride, TxType tx_type,
                                     uint8_t bd) {
-    __m256i       in[8], out[8];
+    __m256i       in[8], out[8] = {_mm256_setzero_si256()};
     const int8_t *shift   = fwd_txfm_shift_ls[TX_8X8];
     const int32_t txw_idx = get_txw_idx(TX_8X8);
     const int32_t txh_idx = get_txh_idx(TX_8X8);
@@ -14025,7 +14025,7 @@ void svt_av1_fwd_txfm2d_8x16_N4_avx2(int16_t *input, int32_t *output, uint32_t s
 /* call this function for all 16 transform types */
 void svt_av1_fwd_txfm2d_16x8_N4_avx2(int16_t *input, int32_t *output, uint32_t stride,
                                      TxType tx_type, uint8_t bd) {
-    __m256i       in[16], out[16];
+    __m256i       in[16], out[16] = {_mm256_setzero_si256()};
     __m256i *     outcoef256 = (__m256i *)output;
     const int8_t *shift      = fwd_txfm_shift_ls[TX_16X8];
     const int32_t txw_idx    = get_txw_idx(TX_16X8);
