@@ -1348,12 +1348,12 @@ static void av1_rc_init(SequenceControlSet *scs_ptr) {
 #if FTR_1PASS_CBR
     if (!use_input_stat(scs_ptr) && !use_output_stat(scs_ptr) && rc_cfg->mode == AOM_CBR) {
         if (scs_ptr->static_config.pred_structure == EB_PRED_LOW_DELAY_P) {
-           rc->onepass_cbr_mode = 2;
+            rc->onepass_cbr_mode = 2;
+        } else {
+            rc->onepass_cbr_mode = 1;
+        }
     } else {
-           rc->onepass_cbr_mode = 1;
-    }
-    } else {
-    rc->onepass_cbr_mode = 0;
+        rc->onepass_cbr_mode = 0;
     }
 #endif
 #if FTR_1PASS_CBR

@@ -2472,18 +2472,19 @@ void svt_av1_get_one_pass_rt_params(PictureParentControlSet *pcs_ptr) {
 
   int target = 0;
   // Set frame type.
-  if (rc->frames_to_key == 0) {
-    frame_params->frame_type = KEY_FRAME;
-    rc->this_key_frame_forced =
-        current_frame->frame_number != 0 && rc->frames_to_key == 0;
-    rc->frames_to_key = encode_context_ptr->kf_cfg.key_freq_max;
+  if (frame_is_intra_only(pcs_ptr)) {
     rc->kf_boost = DEFAULT_KF_BOOST_RT;
     gf_group->update_type[pcs_ptr->gf_group_index] = KF_UPDATE;
-    //gf_group->frame_type[pcs_ptr->gf_group_index] = KEY_FRAME;
+    frame_params->frame_type = KEY_FRAME;
   } else {
     frame_params->frame_type = INTER_FRAME;
     gf_group->update_type[pcs_ptr->gf_group_index] = LF_UPDATE;
-    //gf_group->frame_type[pcs_ptr->gf_group_index] = INTER_FRAME;
+  }
+
+  if (rc->frames_to_key == 0) {
+    rc->this_key_frame_forced =
+        current_frame->frame_number != 0 && rc->frames_to_key == 0;
+    rc->frames_to_key = encode_context_ptr->kf_cfg.key_freq_max;
   }
   // Set the GF interval and update flag.
   set_gf_interval_update_onepass_rt(pcs_ptr, frame_params->frame_type);

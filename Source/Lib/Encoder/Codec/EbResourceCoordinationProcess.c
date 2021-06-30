@@ -757,10 +757,6 @@ EbErrorType signal_derivation_pre_analysis_oq_pcs(SequenceControlSet const * con
         set_tpl_controls(pcs_ptr, tpl_level);
 #endif
 
-#if FTR_16X16_TPL_MAP
-      //assert_err(pcs_ptr->is_720p_or_larger == (pcs_ptr->tpl_ctrls.synth_blk_size == 16), "TPL Synth Size Error");
-#endif
-
     return return_error;
 }
 
