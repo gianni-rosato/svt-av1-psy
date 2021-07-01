@@ -84,6 +84,7 @@ For each enable-*, there is a disable-* option, and vice versa.
     enable-pgo
     --shared, shared    Build shared libs
 -x, --static, static    Build static libs
+    --native, native    Build for native performance (march=native)
 -g, --gen, gen=*        Set CMake generator
 -i, --install, install  Install build [Default release]
 -j, --jobs, jobs=*      Set number of jobs for make/CMake [$jobs]
@@ -294,6 +295,7 @@ parse_options() {
             ;;
         shared) CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS -DBUILD_SHARED_LIBS=ON" && shift ;;
         static) CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS -DBUILD_SHARED_LIBS=OFF" && shift ;;
+        native) CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS -DNATIVE=ON" && shift ;;
         gen=*) CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS -G${1#*=}" && shift ;;
         install) build_install=true && shift ;;
         jobs=*) jobs="${1#*=}" && shift ;;
@@ -372,6 +374,7 @@ else
             release) parse_options release && shift ;;
             shared) parse_options shared && shift ;;
             static) parse_options static && shift ;;
+            native) parse_options native && shift ;;
             toolchain) parse_options toolchain="$2" && shift ;;
             test) parse_options tests && shift ;;
             verbose) parse_options verbose && shift ;;
@@ -490,6 +493,7 @@ else
             target_system=*) parse_options target_system="${1#*=}" && shift ;;
             shared) parse_options shared && shift ;;
             static) parse_options static && shift ;;
+            native) parse_options native && shift ;;
             release) parse_options release && shift ;;
             sanitizer=*) parse_options sanitizer="${1#*=}" && shift ;;
             test) parse_options tests && shift ;;
