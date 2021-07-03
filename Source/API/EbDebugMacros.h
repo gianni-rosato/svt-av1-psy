@@ -37,8 +37,6 @@ extern "C" {
                                  // Add the rate stat queue for the storing rate data
 #define FTR_2PASS_CBR          1 // to support 2pass CBR
 #define FTR_1PASS_CBR          1 // to support 1pass CBR
-#define SVT_05          1
-#define PRIVATE_MACROS   1
 #define FTR_1PASS_CBR_RT       1 // to support 1pass CBR real time mode
 #define FTR_1PAS_VBR                1 // 1 PASS VBR with ability to use LAD stats
                                       // Calculate stat total in 1 pass VBR based on the look ahead
