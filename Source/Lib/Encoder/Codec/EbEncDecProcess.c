@@ -7022,6 +7022,7 @@ void signal_derivation_enc_dec_kernel_oq_light_pd1(
     // subres not used in MDS3 of PD1 (light-PD1 has no MDS1)
     set_subres_controls(context_ptr, 0);
 
+    context_ptr->subres_ctrls.odd_to_even_deviation_th = 0;
 
 #if !CLN_READ_REFINE_MVS
     context_ptr->md_sq_mv_search_level = 0;

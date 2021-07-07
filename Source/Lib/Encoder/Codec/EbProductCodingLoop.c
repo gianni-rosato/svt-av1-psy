@@ -1449,7 +1449,7 @@ void fast_loop_core_light_pd1(ModeDecisionCandidateBuffer *candidate_buffer, Pic
             context_ptr->blk_geom,
             context_ptr->blk_origin_y >> MI_SIZE_LOG2,
             context_ptr->blk_origin_x >> MI_SIZE_LOG2,
-            context_ptr->inter_intra_comp_ctrls.enabled,
+            0, // inter-intra enabled
             context_ptr->intra_luma_left_mode,
             context_ptr->intra_luma_top_mode);
     }
@@ -12836,7 +12836,6 @@ void process_block_light_pd1(PictureControlSet *pcs,
         blk_idx_mds,
         1); // first_d1_blk - NSQ off
 
-    signal_derivation_block(pcs, ctx);
 
     // Encode the block
     if (pcs->parent_pcs_ptr->sb_geom[sb_addr].block_is_allowed[blk_idx_mds]) {
