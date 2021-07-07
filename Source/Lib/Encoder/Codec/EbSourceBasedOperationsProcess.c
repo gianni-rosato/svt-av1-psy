@@ -811,6 +811,27 @@ uint8_t cu16x16_idx_tab[2][16] =
 /*
 neigh array for DC prediction and avail references
 */
+#if OPT_TPL_64X64_32X32
+static inline void  get_neighbor_samples_dc(
+    uint8_t  *src,
+    uint32_t  src_stride,
+    uint8_t  *above0_row,
+    uint8_t  *left0_col,
+    uint8_t   bsize)
+{
+    //top left
+    above0_row[-1] = left0_col[-1] = src[-(int)src_stride - 1];
+    //top
+    memcpy(above0_row, src - src_stride, bsize);
+    //left
+    uint8_t  *read_ptr = src - 1;
+    for (uint32_t idx = 0; idx < bsize; ++idx) {
+        left0_col[idx] = *read_ptr;
+        read_ptr += src_stride;
+    }
+
+}
+#else
 static inline void  get_neighbor_samples_dc(
          uint8_t   *src ,
          uint32_t   src_stride,
@@ -829,6 +850,7 @@ static inline void  get_neighbor_samples_dc(
     }
 
 }
+#endif
 #if !OPT_TPL_64X64_32X32
 /*
    Encode a 64x64 block for TPL purpose
@@ -1530,11 +1552,21 @@ void tpl_mc_flow_dispenser_sb_generic(
 
                         const uint8_t mb_inside = (mb_origin_x + size <= pcs_ptr->enhanced_picture_ptr->width) && (mb_origin_y + size <= pcs_ptr->enhanced_picture_ptr->height);
                         if (mb_origin_x > 0 && mb_origin_y > 0 && mb_inside)
+
+#if OPT_TPL_64X64_32X32
+                            get_neighbor_samples_dc(
+                                src_mb,
+                                src_stride,
+                                above0_row,
+                                left0_col,
+                                bsize);
+#else
                             get_neighbor_samples_dc(
                                 src_mb,
                                 src_stride,
                                 above0_row,
                                 left0_col);
+#endif
                         else
                             update_neighbor_samples_array_open_loop_mb(
                                 1,
@@ -1872,11 +1904,20 @@ void tpl_mc_flow_dispenser_sb_generic(
 
                 const uint8_t mb_inside = (mb_origin_x + size <= pcs_ptr->enhanced_picture_ptr->width) && (mb_origin_y + size <= pcs_ptr->enhanced_picture_ptr->height);
                 if (mb_origin_x > 0 && mb_origin_y > 0 && mb_inside)
+#if OPT_TPL_64X64_32X32
+                    get_neighbor_samples_dc(
+                        recon_buffer + mb_origin_x + mb_origin_y * dst_buffer_stride,
+                        dst_buffer_stride,
+                        above_row,
+                        left_col,
+                        bsize);
+#else
                     get_neighbor_samples_dc(
                         recon_buffer + mb_origin_x + mb_origin_y * dst_buffer_stride,
                         dst_buffer_stride,
                         above_row,
                         left_col);
+#endif
                 else
                     update_neighbor_samples_array_open_loop_mb_recon(
                         1, // use_top_righ_bottom_left

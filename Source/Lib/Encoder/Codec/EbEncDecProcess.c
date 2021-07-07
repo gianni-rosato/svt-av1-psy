@@ -6661,10 +6661,13 @@ EbErrorType signal_derivation_enc_dec_kernel_oq_light_pd0(
             }
             else
 #if TUNE_ADD_SUBRESS_FACTOR4
-                subres_level = (ctx->depth_removal_ctrls.enabled &&
+                if (pcs->slice_type == I_SLICE)
+                    subres_level = 1;
+                else
+                    subres_level = (ctx->depth_removal_ctrls.enabled &&
                     ((ctx->depth_removal_ctrls.disallow_below_16x16 && cost_64x64 < use_subres_th) ||
                         ctx->depth_removal_ctrls.disallow_below_32x32 ||
-                     ctx->depth_removal_ctrls.disallow_below_64x64)) ? 2 : 1;
+                        ctx->depth_removal_ctrls.disallow_below_64x64)) ? 2 : 1;
 #else
                 subres_level = 1;
 #endif
@@ -6685,6 +6688,9 @@ EbErrorType signal_derivation_enc_dec_kernel_oq_light_pd0(
 #endif
 #if FTR_PD_EARLY_EXIT
     ctx->pd0_inter_depth_bias = enc_mode <= ENC_M8 ? 0 : 1003;
+#endif
+#if FTR_REDUCE_UNI_PRED
+    ctx->reduce_unipred_candidates = enc_mode <= ENC_M8 ? 0 : 1;
 #endif
     return return_error;
 }
@@ -6973,7 +6979,6 @@ void signal_derivation_enc_dec_kernel_oq_light_pd1(
 #else
     context_ptr->reduce_unipred_candidates = enc_mode <= ENC_M9 ? 0 : 1;
 #endif
-
     uint8_t use_neighbouring_mode = 0;
     if (enc_mode <= ENC_M9)
         use_neighbouring_mode = 0;
@@ -6998,6 +7003,8 @@ void signal_derivation_enc_dec_kernel_oq_light_pd1(
     context_ptr->md_disallow_nsq = pcs_ptr->parent_pcs_ptr->disallow_nsq;
 
     context_ptr->new_nearest_injection = 1;
+
+    context_ptr->inject_inter_candidates = 1;
 
     // compound off; sigs set in signal_derivation_block
     context_ptr->inter_compound_mode = 0;
@@ -11240,7 +11247,10 @@ void *mode_decision_kernel(void *input_ptr) {
                                     /* Use the cost and coeffs of the 64x64 block to avoid looping over all tested blocks to find
                                     the selected partitioning. */
                                     const uint64_t pd0_cost = md_ctx->md_local_blk_unit[0].cost;
-                                    const uint32_t nz_coeffs = md_ctx->md_local_blk_unit[0].count_non_zero_coeffs;
+                                    // If block was not tested in PD0, won't have coeff info, so set to max and base detection on cost only (which is set
+                                    // even if 64x64 block is not tested)
+                                    const uint32_t nz_coeffs = md_ctx->avail_blk_flag[0] == EB_TRUE ? md_ctx->md_local_blk_unit[0].count_non_zero_coeffs : (uint32_t)~0;
+
                                     const uint32_t lambda = md_ctx->full_sb_lambda_md[EB_8_BIT_MD]; // light-PD1 assumes 8-bit MD
                                     const uint32_t rate = md_ctx->lpd1_ctrls.coeff_th;
                                     const uint32_t dist = md_ctx->lpd1_ctrls.cost_th_dist;
@@ -11255,7 +11265,9 @@ void *mode_decision_kernel(void *input_ptr) {
                                     }
 #if OPT_USE_MVS_LPD1_DETECTOR
                                     // If the best PD0 mode was INTER, check the MV length
-                                    if (md_ctx->md_blk_arr_nsq[0].prediction_mode_flag == INTER_MODE && md_ctx->lpd1_ctrls.max_mv_length != (uint16_t)~0) {
+                                    if (md_ctx->md_blk_arr_nsq[0].prediction_mode_flag == INTER_MODE && md_ctx->lpd1_ctrls.max_mv_length != (uint16_t)~0 &&
+                                        md_ctx->avail_blk_flag[0] == EB_TRUE) {
+
 
                                         PredictionUnit* pu_ptr = md_ctx->md_blk_arr_nsq[0].prediction_unit_array;
                                         const uint16_t max_mv_length = md_ctx->lpd1_ctrls.max_mv_length;
