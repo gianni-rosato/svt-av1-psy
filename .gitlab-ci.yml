@@ -415,6 +415,36 @@ Win64 Unit Tests:
     - cmake --build Build --target TestVectors
     - "& ./Bin/Release/$env:UNIT_TEST --gtest_filter=-*FFT*"
 
+Linux RC Test:
+  extends: .linux-test-base
+  stage: test
+  variables:
+    SVT_AV1_CLIP_TARGETS: akiyo_cif.y4m::71.18 Chimera-Aerial_480x264_2997fps_10bit_420_150frames.y4m::241.02
+  script:
+    - |
+      ret=true
+      for ct in $SVT_AV1_CLIP_TARGETS; do
+        clip=${ct%%::*}
+        target=${ct##*::}
+        [ -f "$clip" ] || continue
+        printf 'Testing clip %s\n' "$clip"
+        bitrate=$(
+          ./Bin/Release/SvtAv1EncApp \
+            --preset 8 \
+            -i "$clip" \
+            --undershoot-pct 10 \
+            --overshoot-pct 5 2>&1 |
+            awk '$1" "$2 == "Total Frames" {getline; print $5}'
+        )
+        [ 1 = "$(echo "$target*0.9 < $bitrate && $bitrate < $target*1.1" | bc -l)" ] || {
+          ret=false
+          printf 'Clip %s failed to stay within 10%% of target %s with bitrate %s\n' "$clip" "$target" "$bitrate"
+        }
+      done
+      $ret
+  needs:
+    - Linux (GCC 10)
+
 Linux Enc Test:
   extends: .linux-test-base
   stage: test
