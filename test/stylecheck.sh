@@ -7,6 +7,8 @@ if ! type git > /dev/null 2>&1; then
     exit 1
 fi
 
+git fetch --all -pf
+
 echo "Checking for tabs" >&2
 ! git --no-pager grep -InP --heading "\t" -- . ':!third_party/**/*' || ret=1
 
@@ -28,7 +30,7 @@ fi
 # default to master if we have no origin remote
 : "${FETCH_HEAD:=master}"
 
-if ! git merge-tree "$(git merge-base HEAD "$FETCH_HEAD")" HEAD "$FETCH_HEAD"; then
+if ! git merge-tree "$(git merge-base HEAD "$FETCH_HEAD")" HEAD "$FETCH_HEAD" > /dev/null 2>&1; then
     echo "ERROR: failed to simulate a merge, check to see if a merge is possible" >&2
 fi
 
