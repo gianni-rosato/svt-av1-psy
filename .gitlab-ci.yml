@@ -538,7 +538,7 @@ Linux Gstreamer (Static):
       - .ccache
     policy: pull-push
   script:
-    - cmake -B Build -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=/usr -DBUILD_APPS=OFF -DBUILD_DEC=OFF
+    - cmake -B Build -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=/usr -DBUILD_APPS=OFF -DBUILD_DEC=OFF -DREPRODUCIBLE_BUILDS=ON
     - cmake --build Build --config Release --target install
     - meson setup -Dprefix=/usr --buildtype release gstreamer-plugin/build gstreamer-plugin
     - meson install -C gstreamer-plugin/build
@@ -586,7 +586,8 @@ Linux FFmpeg (Static):
         -DBUILD_SHARED_LIBS="$BUILD_SHARED_LIBS" \
         -DCMAKE_INSTALL_PREFIX="$PREFIX_DIR" \
         -DBUILD_APPS=OFF \
-        -DBUILD_DEC=OFF
+        -DBUILD_DEC=OFF \
+        -DREPRODUCIBLE_BUILDS=ON
       cmake --build svtav1-build --config Release --target install
     # aom
     - &ffmpeg-aom-script |
@@ -787,7 +788,8 @@ Win64 FFmpeg (Static):
         -DBUILD_SHARED_LIBS=OFF `
         -DCMAKE_INSTALL_PREFIX="$env:PREFIX_DIR" `
         -DBUILD_APPS=OFF `
-        -DBUILD_DEC=OFF
+        -DBUILD_DEC=OFF `
+        -DREPRODUCIBLE_BUILDS=ON
       cmake --build svtav1-build --config Release --target install
     # aom
     - |
