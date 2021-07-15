@@ -44,7 +44,6 @@ static const double tpl_hl_base_frame_div_factor[EB_MAX_TEMPORAL_LAYERS] = { 1, 
 typedef struct CodedFramesStatsEntry {
     EbDctor  dctor;
     uint64_t picture_number;
-    EbBool   end_of_sequence_flag;
 } CodedFramesStatsEntry;
 
 typedef struct RateControlIntervalParamContext {
