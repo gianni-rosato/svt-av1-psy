@@ -478,10 +478,9 @@ void process_lad_queue(
                 head_pcs->frames_in_sw = (int)(head_pcs->stats_in_end_offset - head_pcs->stats_in_offset);
 
                 if (head_pcs->scs_ptr->lap_enabled && head_pcs->temporal_layer_index == 0) {
-                    FIRSTPASS_STATS *cur_frame;
-
                     for (uint64_t num_frames = head_pcs->stats_in_offset; num_frames < head_pcs->stats_in_end_offset; ++num_frames) {
-                        cur_frame = head_pcs->scs_ptr->twopass.stats_buf_ctx->stats_in_start + num_frames;
+                        FIRSTPASS_STATS *cur_frame =
+                            head_pcs->scs_ptr->twopass.stats_buf_ctx->stats_in_start + num_frames;
                         if ((int64_t)cur_frame->frame > head_pcs->scs_ptr->twopass.stats_buf_ctx->last_frame_accumulated) {
                             svt_av1_accumulate_stats(head_pcs->scs_ptr->twopass.stats_buf_ctx->total_stats, cur_frame);
                             head_pcs->scs_ptr->twopass.stats_buf_ctx->last_frame_accumulated = (int64_t)cur_frame->frame;
