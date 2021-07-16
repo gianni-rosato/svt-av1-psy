@@ -211,6 +211,10 @@ typedef struct EncodeContext {
     // This feature controls the tolerence vs target used in deciding whether to
     // recode a frame. It has no meaning if recode is disabled.
     int recode_tolerance;
+#if FTR_1PASS_CBR_RT_MT
+    int32_t frame_updated;
+    EbHandle frame_updated_mutex;
+#endif
 } EncodeContext;
 
 typedef struct EncodeContextInitData {

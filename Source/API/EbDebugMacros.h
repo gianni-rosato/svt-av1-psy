@@ -37,7 +37,9 @@ extern "C" {
                                  // Add the rate stat queue for the storing rate data
 #define FTR_2PASS_CBR          1 // to support 2pass CBR
 #define FTR_1PASS_CBR          1 // to support 1pass CBR
+#define FTR_1PASS_CBR_FIX      1 // 1pass CBR fix for pcs_total_rate
 #define FTR_1PASS_CBR_RT       1 // to support 1pass CBR real time mode
+#define FTR_1PASS_CBR_RT_MT    1 // to improve quality for 1pass CBR real time multi thread
 #define FTR_1PAS_VBR                1 // 1 PASS VBR with ability to use LAD stats
                                       // Calculate stat total in 1 pass VBR based on the look ahead
 #define FTR_LAD_INPUT               1 // Add look ahead as an input to the encoder

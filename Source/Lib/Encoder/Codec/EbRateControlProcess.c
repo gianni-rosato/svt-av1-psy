@@ -1932,7 +1932,15 @@ static int calc_active_worst_quality_no_stats_cbr(PictureParentControlSet *ppcs_
   // to worst_quality and updated with (3/4, 1/4) average in postencode_update.
   // So for first few frames following key, the qp of that key frame is weighted
   // into the active_worst_quality setting.
+#if FTR_1PASS_CBR_RT_MT
+  int32_t frame_updated = 0;
+  svt_block_on_mutex(encode_context_ptr->frame_updated_mutex);
+  frame_updated = encode_context_ptr->frame_updated;
+  svt_release_mutex(encode_context_ptr->frame_updated_mutex);
+  ambient_qp = (frame_updated < 4)
+#else
   ambient_qp = (ppcs_ptr->frame_offset < 5)
+#endif
                    ? AOMMIN(rc->avg_frame_qindex[INTER_FRAME],
                             rc->avg_frame_qindex[KEY_FRAME])
                    : rc->avg_frame_qindex[INTER_FRAME];
@@ -2342,7 +2350,17 @@ static void av1_rc_postencode_update(PictureParentControlSet *ppcs_ptr, uint64_t
         rc->last_q[KEY_FRAME]           = qindex;
         rc->avg_frame_qindex[KEY_FRAME] = ROUND_POWER_OF_TWO(
             3 * rc->avg_frame_qindex[KEY_FRAME] + qindex, 2);
+#if FTR_1PASS_CBR_RT_MT
+        svt_block_on_mutex(encode_context_ptr->frame_updated_mutex);
+        encode_context_ptr->frame_updated = 0;
+        svt_release_mutex(encode_context_ptr->frame_updated_mutex);
+#endif
     } else {
+#if FTR_1PASS_CBR_RT_MT
+        svt_block_on_mutex(encode_context_ptr->frame_updated_mutex);
+        encode_context_ptr->frame_updated++;
+        svt_release_mutex(encode_context_ptr->frame_updated_mutex);
+#endif
         if (/*(cpi->use_svc && cpi->oxcf.rc_cfg.mode == AOM_CBR) ||*/
             (!rc->is_src_frame_alt_ref &&
              !(refresh_frame_flags->golden_frame || is_intrnl_arf ||
@@ -2708,11 +2726,24 @@ void recode_loop_update_q(PictureParentControlSet *ppcs_ptr, int *const loop, in
                                rc_cfg->mode != AOM_Q) ||
 #endif
         rc_cfg->min_cr > 0;
+#if FTR_1PASS_CBR_RT
+    if (do_dummy_pack) {
+        svt_block_on_mutex(ppcs_ptr->pcs_total_rate_mutex);
+        ppcs_ptr->projected_frame_size =
+          (int)(((ppcs_ptr->pcs_total_rate + (1 << (AV1_PROB_COST_SHIFT - 1))) >>
+            AV1_PROB_COST_SHIFT) +
+            ((ppcs_ptr->frm_hdr.frame_type == KEY_FRAME) ? 13 : 0));
+	svt_release_mutex(ppcs_ptr->pcs_total_rate_mutex);
+    } else {
+        ppcs_ptr->projected_frame_size = 0;
+    }
+#else
     ppcs_ptr->projected_frame_size = do_dummy_pack
         ? (int)(((ppcs_ptr->pcs_total_rate + (1 << (AV1_PROB_COST_SHIFT - 1))) >>
             AV1_PROB_COST_SHIFT) +
             ((ppcs_ptr->frm_hdr.frame_type == KEY_FRAME) ? 13 : 0))
         : 0;
+#endif
 #if FTR_RC_CAP
     if (ppcs_ptr->loop_count && rc_cfg->mode != AOM_Q) {
 #else

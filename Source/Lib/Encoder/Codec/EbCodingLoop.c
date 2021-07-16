@@ -3124,8 +3124,12 @@ EB_EXTERN void av1_encdec_update(SequenceControlSet *scs, PictureControlSet *pcs
                 (sb_org_y + blk_geom->origin_y) >> MI_SIZE_LOG2,
                 (sb_org_x + blk_geom->origin_x) >> MI_SIZE_LOG2);
         }
+#if FTR_1PASS_CBR_FIX
+        if (blk_it == 0 && sb_org_x == 0 && blk_geom->origin_x == 0 && sb_org_y == 0 && blk_geom->origin_y == 0) {
+#else
         if ((use_input_stat(scs) || scs->lap_enabled) &&
             blk_it == 0 && sb_org_x == 0 && blk_geom->origin_x == 0 && sb_org_y == 0 && blk_geom->origin_y == 0) {
+#endif
             pcs->parent_pcs_ptr->pcs_total_rate = 0;
         }
 
@@ -3165,7 +3169,13 @@ EB_EXTERN void av1_encdec_update(SequenceControlSet *scs, PictureControlSet *pcs
             if (blk_ptr->block_has_coeff == 0)
                 ctx->tot_skip_coded_area += blk_geom->bwidth * blk_geom->bheight;
 #endif
+#if FTR_1PASS_CBR_FIX
+            svt_block_on_mutex(pcs->parent_pcs_ptr->pcs_total_rate_mutex);
+#endif
             pcs->parent_pcs_ptr->pcs_total_rate += blk_ptr->total_rate;
+#if FTR_1PASS_CBR_FIX
+            svt_release_mutex(pcs->parent_pcs_ptr->pcs_total_rate_mutex);
+#endif
 #if FTR_BYPASS_ENCDEC
             // Copy recon to EncDec buffers if EncDec was bypassed;  if used pred depth only and NSQ is OFF data was copied directly to EncDec buffers in MD
             if (md_ctx->bypass_encdec && !(md_ctx->pred_depth_only && md_ctx->md_disallow_nsq)) {

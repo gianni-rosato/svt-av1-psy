@@ -59,6 +59,9 @@ static void encode_context_dctor(EbPtr p) {
     EB_DESTROY_MUTEX(obj->sc_buffer_mutex);
     EB_DESTROY_MUTEX(obj->shared_reference_mutex);
     EB_DESTROY_MUTEX(obj->stat_file_mutex);
+#if FTR_1PASS_CBR_RT_MT
+    EB_DESTROY_MUTEX(obj->frame_updated_mutex);
+#endif
     EB_DELETE(obj->prediction_structure_group_ptr);
     EB_DELETE_PTR_ARRAY(obj->picture_decision_reorder_queue,
                         PICTURE_DECISION_REORDER_QUEUE_MAX_DEPTH);
@@ -87,6 +90,9 @@ EbErrorType encode_context_ctor(EncodeContext *encode_context_ptr, EbPtr object_
     CHECK_REPORT_ERROR(1, encode_context_ptr->app_callback_ptr, EB_ENC_EC_ERROR29);
 
     EB_CREATE_MUTEX(encode_context_ptr->total_number_of_recon_frame_mutex);
+#if FTR_1PASS_CBR_RT_MT
+    EB_CREATE_MUTEX(encode_context_ptr->frame_updated_mutex);
+#endif
     EB_ALLOC_PTR_ARRAY(encode_context_ptr->picture_decision_reorder_queue,
                        PICTURE_DECISION_REORDER_QUEUE_MAX_DEPTH);
 
