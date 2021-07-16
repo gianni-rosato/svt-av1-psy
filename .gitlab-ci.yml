@@ -420,9 +420,10 @@ Linux Enc Test:
   stage: test
   script:
     - &enc-test-script |
-      for CMAKE_BUILD_TYPE in Release Debug; do
-        ./Bin/Release/SvtAv1EncApp --preset 0 -i "$SVT_ENCTEST_FILENAME" -n 3 -b "test-${BRANCH:-pr}-$(uname)-${CMAKE_BUILD_TYPE}-${SVT_ENCTEST_BITNESS}bit-m0.ivf"
-        ./Bin/Release/SvtAv1EncApp --preset 8 -i "$SVT_ENCTEST_FILENAME" -n 120 -b "test-${BRANCH:-pr}-$(uname)-${CMAKE_BUILD_TYPE}-${SVT_ENCTEST_BITNESS}bit-m8.ivf"
+      for CMAKE_BUILD_TYPE in Debug Release; do
+        test -e "./Bin/$CMAKE_BUILD_TYPE/SvtAv1EncApp" || continue
+        ./Bin/$CMAKE_BUILD_TYPE/SvtAv1EncApp --preset 0 -i "$SVT_ENCTEST_FILENAME" -n 3 -b "test-${BRANCH:-pr}-$(uname)-${CMAKE_BUILD_TYPE}-${SVT_ENCTEST_BITNESS}bit-m0.ivf"
+        ./Bin/$CMAKE_BUILD_TYPE/SvtAv1EncApp --preset 8 -i "$SVT_ENCTEST_FILENAME" -n 120 -b "test-${BRANCH:-pr}-$(uname)-${CMAKE_BUILD_TYPE}-${SVT_ENCTEST_BITNESS}bit-m8.ivf"
       done
   parallel: &enc-test-parallel
     matrix:
