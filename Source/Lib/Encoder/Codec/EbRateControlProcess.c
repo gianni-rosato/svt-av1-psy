@@ -2035,8 +2035,15 @@ static int calc_active_best_quality_no_stats_cbr(PictureParentControlSet *ppcs_p
     active_best_quality = get_gf_active_quality_tpl_la(rc, q, bit_depth);
   } else {
     // Use the lower of active_worst_quality and recent/average Q.
+#if FTR_1PASS_CBR_RT_MT_TUNE
+    svt_block_on_mutex(encode_context_ptr->frame_updated_mutex);
+    FRAME_TYPE frame_type =
+        (encode_context_ptr->frame_updated > 0) ? INTER_FRAME : KEY_FRAME;
+    svt_release_mutex(encode_context_ptr->frame_updated_mutex);
+#else
     FRAME_TYPE frame_type =
         (ppcs_ptr->frame_offset > 1) ? INTER_FRAME : KEY_FRAME;
+#endif
     if (rc->avg_frame_qindex[frame_type] < active_worst_quality)
       active_best_quality = rtc_minq[rc->avg_frame_qindex[frame_type]];
     else
@@ -2733,7 +2740,7 @@ void recode_loop_update_q(PictureParentControlSet *ppcs_ptr, int *const loop, in
           (int)(((ppcs_ptr->pcs_total_rate + (1 << (AV1_PROB_COST_SHIFT - 1))) >>
             AV1_PROB_COST_SHIFT) +
             ((ppcs_ptr->frm_hdr.frame_type == KEY_FRAME) ? 13 : 0));
-	svt_release_mutex(ppcs_ptr->pcs_total_rate_mutex);
+        svt_release_mutex(ppcs_ptr->pcs_total_rate_mutex);
     } else {
         ppcs_ptr->projected_frame_size = 0;
     }

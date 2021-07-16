@@ -2441,7 +2441,11 @@ static int set_gf_interval_update_onepass_rt(PictureParentControlSet *pcs_ptr,
   int gf_update = 0;
   // GF update based on frames_till_gf_update_due, also
   // force upddate on resize pending frame or for scene change.
+#if FTR_1PASS_CBR_RT_MT_TUNE
+  if ((pcs_ptr->frame_offset % MAX_GF_INTERVAL) == 0) {
+#else
   if (rc->frames_till_gf_update_due == 0) {
+#endif
     rc->baseline_gf_interval = MAX_GF_INTERVAL;
     if (rc->baseline_gf_interval > rc->frames_to_key)
       rc->baseline_gf_interval = rc->frames_to_key;
@@ -2481,7 +2485,11 @@ void svt_av1_get_one_pass_rt_params(PictureParentControlSet *pcs_ptr) {
     gf_group->update_type[pcs_ptr->gf_group_index] = LF_UPDATE;
   }
 
+#if FTR_1PASS_CBR_RT_MT_TUNE
+  if (frame_is_intra_only(pcs_ptr)) {
+#else
   if (rc->frames_to_key == 0) {
+#endif
     rc->this_key_frame_forced =
         current_frame->frame_number != 0 && rc->frames_to_key == 0;
     rc->frames_to_key = encode_context_ptr->kf_cfg.key_freq_max;
