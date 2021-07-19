@@ -1,13 +1,14 @@
 /*
-* Copyright(c) 2019 Netflix, Inc.
-*
-* This source code is subject to the terms of the BSD 2 Clause License and
-* the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
-* was not distributed with this source code in the LICENSE file, you can
-* obtain it at https://www.aomedia.org/license/software-license. If the Alliance for Open
-* Media Patent License 1.0 was not distributed with this source code in the
-* PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
-*/
+ * Copyright(c) 2019 Netflix, Inc.
+ *
+ * This source code is subject to the terms of the BSD 2 Clause License and
+ * the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
+ * was not distributed with this source code in the LICENSE file, you can
+ * obtain it at https://www.aomedia.org/license/software-license. If the
+ * Alliance for Open Media Patent License 1.0 was not distributed with this
+ * source code in the PATENTS file, you can obtain it at
+ * https://www.aomedia.org/license/patent-license.
+ */
 
 /******************************************************************************
  * @file VideoSource.h
@@ -92,6 +93,10 @@ class VideoSource {
     const std::string &get_src_name() {
         return src_name_;
     }
+    /*!\brief Set insert blank frame for intense screen flash */
+    void set_blank_frame(const int interval) {
+        blank_frame_interval_ = interval;
+    }
 
   protected:
     virtual EbErrorType init_frame_buffer();
@@ -117,6 +122,8 @@ class VideoSource {
     int width_downsize_;
     int height_downsize_;
     int bytes_per_sample_;
+    int blank_frame_interval_; /**<-- interval of insertion of blank frame:
+                                  0--no_insertion, positive--interval*/
 };
 
 /**
@@ -130,7 +137,7 @@ class VideoFileSource : public VideoSource {
                     const bool use_compressed_2bit_plane_output);
     virtual ~VideoFileSource();
     /**
-     * @brief      Use this funcion to get vector path defined by envrionment
+     * @brief      Use this function to get vector path defined by environment
      * variable SVT_AV1_TEST_VECTOR_PATH, or it will return a default path.
      *
      * @return     The vectors path.

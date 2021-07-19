@@ -1,13 +1,14 @@
 /*
-* Copyright(c) 2019 Netflix, Inc.
-*
-* This source code is subject to the terms of the BSD 2 Clause License and
-* the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
-* was not distributed with this source code in the LICENSE file, you can
-* obtain it at https://www.aomedia.org/license/software-license. If the Alliance for Open
-* Media Patent License 1.0 was not distributed with this source code in the
-* PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
-*/
+ * Copyright(c) 2019 Netflix, Inc.
+ *
+ * This source code is subject to the terms of the BSD 2 Clause License and
+ * the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
+ * was not distributed with this source code in the LICENSE file, you can
+ * obtain it at https://www.aomedia.org/license/software-license. If the
+ * Alliance for Open Media Patent License 1.0 was not distributed with this
+ * source code in the PATENTS file, you can obtain it at
+ * https://www.aomedia.org/license/patent-license.
+ */
 
 /******************************************************************************
  * @file VideoSource.cc
@@ -40,7 +41,8 @@ VideoSource::VideoSource(const VideoColorFormat format, const uint32_t width,
       image_format_(format),
       width_downsize_(0),
       height_downsize_(0),
-      bytes_per_sample_(1) {
+      bytes_per_sample_(1),
+      blank_frame_interval_(0) {
     if (bit_depth_ > 8 && use_compressed_2bit_plane_output)
         svt_compressed_2bit_plane_ = true;
     else
@@ -355,6 +357,33 @@ uint32_t VideoFileSource::read_input_frame() {
             eb_ext_input_ptr += frame_buffer_->cr_stride / 4;
             filled_len += frame_buffer_->cr_stride * 5 / 4;
         }
+    }
+
+    if (blank_frame_interval_ > 0 &&
+        current_frame_index_ % blank_frame_interval_ == 0) {
+        memset(frame_buffer_->luma,
+               0,
+               frame_buffer_->y_stride * bytes_per_sample_ * height_);
+        memset(frame_buffer_->cb,
+               0,
+               frame_buffer_->cb_stride * bytes_per_sample_ *
+                   (height_ >> height_downsize_));
+        memset(frame_buffer_->cr,
+               0,
+               frame_buffer_->cr_stride * bytes_per_sample_ *
+                   (height_ >> height_downsize_));
+        if (frame_buffer_->luma_ext)
+            memset(frame_buffer_->luma_ext,
+                   0,
+                   frame_buffer_->y_stride * bytes_per_sample_ * height_ / 4);
+        if (frame_buffer_->cb_ext)
+            memset(frame_buffer_->cb_ext,
+                   0,
+                   frame_buffer_->cb_stride * bytes_per_sample_ * height_ / 4);
+        if (frame_buffer_->cr_ext)
+            memset(frame_buffer_->cr_ext,
+                   0,
+                   frame_buffer_->cr_stride * bytes_per_sample_ * height_ / 4);
     }
 
     return filled_len;

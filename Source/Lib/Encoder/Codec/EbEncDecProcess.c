@@ -463,7 +463,8 @@ void recon_output(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr) {
 
             // FGN: Create a buffer if needed, copy the reconstructed picture and run the film grain synthesis algorithm
 
-            if (scs_ptr->seq_header.film_grain_params_present) {
+            if (scs_ptr->seq_header.film_grain_params_present
+                && pcs_ptr->parent_pcs_ptr->frm_hdr.film_grain_params.apply_grain) {
                 EbPictureBufferDesc *intermediate_buffer_ptr;
                 {
                     if (is_16bit)

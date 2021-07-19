@@ -1043,8 +1043,8 @@ AomNoiseStatus svt_aom_noise_model_update(AomNoiseModel *const noise_model,
             if (is_chroma) {
                 set_chroma_coefficient_fallback_soln(&noise_model->latest_state[channel].eqns);
             } else {
-                SVT_ERROR("Solving latest noise equation system failed %d!\n", channel);
-                return AOM_NOISE_STATUS_INTERNAL_ERROR;
+                SVT_INFO("Solving latest noise equation system failed %d!\n", channel);
+                return AOM_NOISE_STATUS_INSUFFICIENT_NOISE_PIXELS;
             }
         }
 

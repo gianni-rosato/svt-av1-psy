@@ -1,13 +1,14 @@
 /*
-* Copyright (c) 2019, Alliance for Open Media. All rights reserved
-*
-* This source code is subject to the terms of the BSD 2 Clause License and
-* the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
-* was not distributed with this source code in the LICENSE file, you can
-* obtain it at https://www.aomedia.org/license/software-license. If the Alliance for Open
-* Media Patent License 1.0 was not distributed with this source code in the
-* PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
-*/
+ * Copyright (c) 2019, Alliance for Open Media. All rights reserved
+ *
+ * This source code is subject to the terms of the BSD 2 Clause License and
+ * the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
+ * was not distributed with this source code in the LICENSE file, you can
+ * obtain it at https://www.aomedia.org/license/software-license. If the
+ * Alliance for Open Media Patent License 1.0 was not distributed with this
+ * source code in the PATENTS file, you can obtain it at
+ * https://www.aomedia.org/license/patent-license.
+ */
 
 /******************************************************************************
  * @file SvtAv1E2ETest.cc
@@ -134,6 +135,9 @@ static const std::vector<EncTestSetting> default_enc_settings = {
 
     // test film_grain_denoise_strength, default is 0
     {"FilmGrainTest1", {{"FilmGrain", "1"}}, default_test_vectors},
+    {"FilmGrainTest2", {{"FilmGrain", "0"}, {"BlankFrame", "10"}}, default_test_vectors},
+    {"FilmGrainTest3", {{"FilmGrain", "6"}, {"BlankFrame", "10"}}, default_test_vectors},
+    {"FilmGrainTest4", {{"FilmGrain", "50"}, {"BlankFrame", "10"}}, default_test_vectors},
 
     // Skip enable_denoise_flag, enable_warped_motion, in_loop_me_flag
     // partition_depth and ext_block_flag, since they are

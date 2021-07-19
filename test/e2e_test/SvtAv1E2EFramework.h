@@ -1,13 +1,14 @@
 /*
-* Copyright(c) 2019 Netflix, Inc.
-*
-* This source code is subject to the terms of the BSD 2 Clause License and
-* the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
-* was not distributed with this source code in the LICENSE file, you can
-* obtain it at https://www.aomedia.org/license/software-license. If the Alliance for Open
-* Media Patent License 1.0 was not distributed with this source code in the
-* PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
-*/
+ * Copyright(c) 2019 Netflix, Inc.
+ *
+ * This source code is subject to the terms of the BSD 2 Clause License and
+ * the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
+ * was not distributed with this source code in the LICENSE file, you can
+ * obtain it at https://www.aomedia.org/license/software-license. If the
+ * Alliance for Open Media Patent License 1.0 was not distributed with this
+ * source code in the PATENTS file, you can obtain it at
+ * https://www.aomedia.org/license/patent-license.
+ */
 
 /******************************************************************************
  * @file SvtAv1E2EFramework.h
@@ -185,6 +186,8 @@ class SvtAv1E2ETestFramework : public ::testing::TestWithParam<EncTestSetting> {
                             params */
     bool enable_invert_tile_decoding;
     void *enc_config_; /**< handle of encoder configuration data structure */
+    int insert_blank_interval; /**< interval of inserting blank frame in
+                                  source*/
 };
 
 }  // namespace svt_av1_e2e_test

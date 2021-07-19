@@ -1,13 +1,14 @@
 /*
-* Copyright(c) 2019 Netflix, Inc.
-*
-* This source code is subject to the terms of the BSD 2 Clause License and
-* the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
-* was not distributed with this source code in the LICENSE file, you can
-* obtain it at https://www.aomedia.org/license/software-license. If the Alliance for Open
-* Media Patent License 1.0 was not distributed with this source code in the
-* PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
-*/
+ * Copyright(c) 2019 Netflix, Inc.
+ *
+ * This source code is subject to the terms of the BSD 2 Clause License and
+ * the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
+ * was not distributed with this source code in the LICENSE file, you can
+ * obtain it at https://www.aomedia.org/license/software-license. If the
+ * Alliance for Open Media Patent License 1.0 was not distributed with this
+ * source code in the PATENTS file, you can obtain it at
+ * https://www.aomedia.org/license/patent-license.
+ */
 
 /******************************************************************************
  * @file SvtAv1E2EFramework.cc
@@ -110,6 +111,7 @@ SvtAv1E2ETestFramework::SvtAv1E2ETestFramework() : enc_setting(GetParam()) {
     enable_analyzer = false;
     enable_config = false;
     enc_config_ = create_enc_config();
+    insert_blank_interval = 0;
 }
 
 SvtAv1E2ETestFramework::~SvtAv1E2ETestFramework() {
@@ -128,7 +130,10 @@ void SvtAv1E2ETestFramework::config_test() {
     if (enable_config) {
         // iterate the mappings and update config
         for (auto &x : enc_setting.setting) {
-            set_enc_config(enc_config_, x.first.c_str(), x.second.c_str());
+            if (x.first == "BlankFrame")
+                insert_blank_interval = std::stoi(x.second);
+            else
+                set_enc_config(enc_config_, x.first.c_str(), x.second.c_str());
             printf("EncSetting: %s = %s\n", x.first.c_str(), x.second.c_str());
         }
     }
@@ -169,6 +174,8 @@ void SvtAv1E2ETestFramework::init_test(TestVideoVector &test_vector) {
     ASSERT_GT(height, 0u) << "Video vector height error.";
     ASSERT_TRUE(bit_depth == 10 || bit_depth == 8)
         << "Video vector bitDepth error.";
+
+    video_src_->set_blank_frame(insert_blank_interval);
 
     //
     // Init handle
@@ -228,7 +235,7 @@ void SvtAv1E2ETestFramework::init_test(TestVideoVector &test_vector) {
 
     // set the parameter to encoder
     return_error = svt_av1_enc_set_parameter(av1enc_ctx_.enc_handle,
-                                            &av1enc_ctx_.enc_params);
+                                             &av1enc_ctx_.enc_params);
     ASSERT_EQ(return_error, EB_ErrorNone)
         << "svt_av1_enc_set_parameter return error:" << return_error;
 
