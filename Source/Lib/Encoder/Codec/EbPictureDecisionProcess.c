@@ -645,7 +645,8 @@ EbErrorType update_base_layer_reference_queue_dependent_count(
 
                 diff_n =
                     (input_entry_ptr->list0.list_count + input_entry_ptr->list1.list_count) - //depCnt after clean up
-                    (input_entry_ptr->dep_list0_count + input_entry_ptr->dep_list1_count); //depCnt from org prediction struct
+                    (input_entry_ptr->dep_list0_count + input_entry_ptr->dep_list1_count) +  //depCnt from org prediction struct
+                    ((input_entry_ptr->is_alt_ref) ? 1 : 0);
 
 
                 //these refs are defintely not in the pre-assignment buffer
@@ -4629,7 +4630,6 @@ void* picture_decision_kernel(void *input_ptr)
     PictureDecisionContext        *context_ptr = (PictureDecisionContext*)thread_context_ptr->priv;
 
     PictureParentControlSet       *pcs_ptr;
-    FrameHeader                   *frm_hdr;
 
     EncodeContext                 *encode_context_ptr;
     SequenceControlSet            *scs_ptr;
@@ -4985,7 +4985,6 @@ void* picture_decision_kernel(void *input_ptr)
                             EbBool is_trailing_frame = EB_FALSE;
                             pcs_ptr = (PictureParentControlSet*)encode_context_ptr->pre_assignment_buffer[out_stride_diff64]->object_ptr;
                             scs_ptr = (SequenceControlSet*)pcs_ptr->scs_wrapper_ptr->object_ptr;
-                            frm_hdr = &pcs_ptr->frm_hdr;
                             // Keep track of the mini GOP size to which the input picture belongs - needed @ PictureManagerProcess()
                             pcs_ptr->pre_assignment_buffer_count = context_ptr->mini_gop_length[mini_gop_index];
 
@@ -5081,7 +5080,7 @@ void* picture_decision_kernel(void *input_ptr)
                                 // is_alt_ref flag is set for non-slice base layer pictures
                                 if (pred_position_ptr->temporal_layer_index == 0 && picture_type != I_SLICE) {
                                     pcs_ptr->is_alt_ref = 1;
-                                    frm_hdr->show_frame = 0;
+                                    pcs_ptr->frm_hdr.show_frame = 0;
                                     ((PictureParentControlSet*)encode_context_ptr->pre_assignment_buffer[out_stride_diff64 - 1]->object_ptr)->has_show_existing = EB_FALSE;
                                 }
                                 // release the overlay PCS for non alt ref pictures. First picture does not have overlay PCS
@@ -5180,7 +5179,7 @@ void* picture_decision_kernel(void *input_ptr)
                                 // Film grain (assigning the random-seed)
                                 {
                                     uint16_t *fgn_random_seed_ptr = &pcs_ptr->scs_ptr->film_grain_random_seed;
-                                    frm_hdr->film_grain_params.random_seed = *fgn_random_seed_ptr;
+                                    pcs_ptr->frm_hdr.film_grain_params.random_seed = *fgn_random_seed_ptr;
                                     *fgn_random_seed_ptr += 3381;  // Changing random seed for film grain
                                     if (!(*fgn_random_seed_ptr))     // Random seed should not be zero
                                         *fgn_random_seed_ptr += 7391;
@@ -5216,21 +5215,21 @@ void* picture_decision_kernel(void *input_ptr)
                                 pcs_ptr->allow_comp_inter_inter = 0;
                                 pcs_ptr->is_skip_mode_allowed = 0;
 
-                                frm_hdr->reference_mode = (ReferenceMode)0xFF;
+                                pcs_ptr->frm_hdr.reference_mode = (ReferenceMode)0xFF;
 
                                 if (pcs_ptr->slice_type != I_SLICE) {
                                     pcs_ptr->allow_comp_inter_inter = 1;
                                     if (pcs_ptr->slice_type == P_SLICE) {
                                         pcs_ptr->is_skip_mode_allowed = 0;
-                                        frm_hdr->reference_mode = SINGLE_REFERENCE;
+                                        pcs_ptr->frm_hdr.reference_mode = SINGLE_REFERENCE;
                                         pcs_ptr->skip_mode_flag = 0;
                                     }
                                     else if (pcs_ptr->temporal_layer_index == 0) {
-                                        frm_hdr->reference_mode = REFERENCE_MODE_SELECT;
-                                        frm_hdr->skip_mode_params.skip_mode_flag = 0;
+                                        pcs_ptr->frm_hdr.reference_mode = REFERENCE_MODE_SELECT;
+                                        pcs_ptr->frm_hdr.skip_mode_params.skip_mode_flag = 0;
                                     }
                                     else {
-                                        frm_hdr->reference_mode = REFERENCE_MODE_SELECT;
+                                        pcs_ptr->frm_hdr.reference_mode = REFERENCE_MODE_SELECT;
                                         pcs_ptr->is_skip_mode_allowed = 1;
                                         pcs_ptr->skip_mode_flag = 1;
                                     }
@@ -5241,7 +5240,7 @@ void* picture_decision_kernel(void *input_ptr)
 
                                 //Jing: For low delay b/P case, don't alter the bias
                                 memset(pcs_ptr->av1_cm->ref_frame_sign_bias, 0, 8 * sizeof(int32_t));
-                                if (frm_hdr->reference_mode == REFERENCE_MODE_SELECT &&
+                                if (pcs_ptr->frm_hdr.reference_mode == REFERENCE_MODE_SELECT &&
                                         pcs_ptr->temporal_layer_index &&
                                         scs_ptr->static_config.pred_structure == EB_PRED_RANDOM_ACCESS)
                                 {
@@ -5249,7 +5248,7 @@ void* picture_decision_kernel(void *input_ptr)
                                         pcs_ptr->av1_cm->ref_frame_sign_bias[ALTREF2_FRAME] =
                                         pcs_ptr->av1_cm->ref_frame_sign_bias[BWDREF_FRAME] = 1;
                                 }
-                                if (frm_hdr->reference_mode == REFERENCE_MODE_SELECT &&
+                                if (pcs_ptr->frm_hdr.reference_mode == REFERENCE_MODE_SELECT &&
                                     pcs_ptr->temporal_layer_index &&
                                     scs_ptr->static_config.pred_structure == EB_PRED_RANDOM_ACCESS)
                                 {
@@ -5288,10 +5287,10 @@ void* picture_decision_kernel(void *input_ptr)
                                 else
                                     signal_derivation_multi_processes_oq(scs_ptr, pcs_ptr, context_ptr);
 
-                            // Set tx_mode
-                            frm_hdr->tx_mode = (pcs_ptr->tx_size_search_mode) ?
-                                TX_MODE_SELECT :
-                                TX_MODE_LARGEST;
+                                // Set tx_mode
+                                pcs_ptr->frm_hdr.tx_mode = (pcs_ptr->tx_size_search_mode) ?
+                                    TX_MODE_SELECT :
+                                    TX_MODE_LARGEST;
                                 // Update the Dependant List Count - If there was an I-frame or Scene Change, then cleanup the Picture Decision PA Reference Queue Dependent Counts
                                 if (pcs_ptr->slice_type == I_SLICE)
                                 {
@@ -5532,11 +5531,9 @@ void* picture_decision_kernel(void *input_ptr)
                             // Assign the overlay pcs. Since Overlay picture is not added to the picture_decision_pa_reference_queue, in the next stage, the loop finds the alt_ref picture. The reference for overlay frame is hardcoded later
                             if (has_overlay && out_stride_diff64 == context_ptr->mini_gop_end_index[mini_gop_index] + has_overlay) {
                                 pcs_ptr = ((PictureParentControlSet*)encode_context_ptr->pre_assignment_buffer[context_ptr->mini_gop_end_index[mini_gop_index]]->object_ptr)->overlay_ppcs_ptr;
-                                frm_hdr = &pcs_ptr->frm_hdr;
                             }
                             else {
                                 pcs_ptr = (PictureParentControlSet*)encode_context_ptr->pre_assignment_buffer[out_stride_diff64]->object_ptr;
-                                frm_hdr = &pcs_ptr->frm_hdr;
                             }
                             pcs_ptr->picture_number_alt = encode_context_ptr->picture_number_alt++;
 
@@ -5640,7 +5637,7 @@ void* picture_decision_kernel(void *input_ptr)
 
                             svt_av1_setup_skip_mode_allowed(pcs_ptr);
 
-                            pcs_ptr->is_skip_mode_allowed = frm_hdr->skip_mode_params.skip_mode_allowed;
+                            pcs_ptr->is_skip_mode_allowed = pcs_ptr->frm_hdr.skip_mode_params.skip_mode_allowed;
                             pcs_ptr->skip_mode_flag = pcs_ptr->is_skip_mode_allowed;
                             //SVT_LOG("POC:%i  skip_mode_allowed:%i  REF_SKIP_0: %i   REF_SKIP_1: %i \n",pcs_ptr->picture_number, pcs_ptr->skip_mode_info.skip_mode_allowed, pcs_ptr->skip_mode_info.ref_frame_idx_0, pcs_ptr->skip_mode_info.ref_frame_idx_1);
 

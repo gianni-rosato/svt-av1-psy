@@ -612,6 +612,14 @@ EbErrorType load_default_buffer_configuration_settings(
               mg_size + eos_delay + scs_ptr->scd_delay : 1;
     }
 
+    // workaround for hang issue if "--lp 1 --enable-overlays 1" or "--lp 2 --enable-overlays 1"
+    if (core_count == SINGLE_CORE_COUNT || core_count == (SINGLE_CORE_COUNT << 1) || MIN_PIC_PARALLELIZATION) {
+        if (scs_ptr->static_config.enable_overlays) {
+            min_parent = scs_ptr->picture_control_set_pool_init_count;
+            min_me = scs_ptr->picture_control_set_pool_init_count;
+        }
+    }
+
     if (core_count == SINGLE_CORE_COUNT || MIN_PIC_PARALLELIZATION) {
         scs_ptr->input_buffer_fifo_init_count                  = min_input;
         scs_ptr->picture_control_set_pool_init_count           = min_parent;

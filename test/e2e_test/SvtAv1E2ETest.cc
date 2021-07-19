@@ -201,6 +201,10 @@ static const std::vector<EncTestSetting> default_enc_settings = {
      {{"PaletteMode", "0"}, {"ScreenContentMode", "1"}, {"EncoderMode", "1"}},
      screen_test_vectors},
 
+    // test overlay frame
+    {"OverlayTest1", {{"EnableOverlays", "1"}}, default_test_vectors},
+    {"OverlayTest2", {{"EnableOverlays", "1"}, {"LogicalProcessors", "1"}}, default_test_vectors},
+
     // test by using a dummy source of color bar
     {"DummySrcTest1", {{"EncoderMode", "8"}}, dummy_test_vectors},
 

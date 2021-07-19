@@ -322,8 +322,11 @@ static EbErrorType encode_tu(EncodeContext *encode_context_ptr, int frames, uint
         memmove(dst, src_stream_ptr->p_buffer, size);
         //1. The last frame is a displayable frame, others are undisplayed.
         //2. We do not push alt ref frame since the overlay frame will carry the pts.
+        //3. Release alt ref stream buffer here for it will not be sent out
         if (i != frames - 1 && !queue_entry_ptr->is_alt_ref)
             push_undisplayed_frame(encode_context_ptr, wrapper);
+        else if (queue_entry_ptr->is_alt_ref)
+            EB_FREE(src_stream_ptr->p_buffer);
     }
     if (frames > 1)
         sort_undisplayed_frame(encode_context_ptr);
