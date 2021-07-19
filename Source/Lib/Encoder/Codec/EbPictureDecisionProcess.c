@@ -6100,6 +6100,33 @@ void copy_tf_params(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_pt
 #if SS_OPT_MOVE_SC_DETECTION
 void is_screen_content(PictureParentControlSet *pcs_ptr);
 #endif
+#if GOP_BASED_DYNAMIC_MINIGOP
+void set_mini_gop_size(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_ptr) {
+    if (use_input_stat(scs_ptr)) {
+        double pcnt_motion = 0.0;
+        double count = 0.0;
+        double mv_in_out_count = 0.0;
+        TWO_PASS *const twopass = &scs_ptr->twopass;
+        FIRSTPASS_STATS *this_frame = (FIRSTPASS_STATS *)twopass->stats_buf_ctx->stats_in_start + pcs_ptr->picture_number;
+        uint64_t next_idr_poc = MIN((uint64_t)(twopass->stats_buf_ctx->total_stats->count - 1), pcs_ptr->picture_number + scs_ptr->static_config.intra_period_length);
+        while (this_frame < (FIRSTPASS_STATS *)twopass->stats_buf_ctx->stats_in_start + next_idr_poc) {
+            pcnt_motion += this_frame->pcnt_motion;
+            mv_in_out_count += this_frame->mv_in_out_count;
+            count++;
+            this_frame++;
+        }
+        mv_in_out_count = ABS(mv_in_out_count / count);
+        pcnt_motion = pcnt_motion / count;
+        uint32_t min_gop_level = (pcnt_motion > 0.8) && mv_in_out_count > 0.6 ? scs_ptr->static_config.max_heirachical_level - 2 : scs_ptr->static_config.max_heirachical_level;
+        min_gop_level = MIN(scs_ptr->static_config.max_heirachical_level, min_gop_level);
+        //printf("\nold: %d\t", scs_ptr->static_config.hierarchical_levels);
+        scs_ptr->static_config.hierarchical_levels = min_gop_level;
+        //scs_ptr->max_temporal_layers = scs_ptr->static_config.hierarchical_levels;
+        //printf("new: %d\n", scs_ptr->static_config.hierarchical_levels);
+        //scs_ptr->static_config.hierarchical_levels = scs_ptr->static_config.max_heirachical_level;
+    }
+}
+#endif
 /* Picture Decision Kernel */
 
 /***************************************************************************************************
@@ -6438,7 +6465,11 @@ void* picture_decision_kernel(void *input_ptr)
                         pcs_ptr->idr_flag;
                 }
 
-
+#if GOP_BASED_DYNAMIC_MINIGOP
+                if (scs_ptr->static_config.enable_adaptive_mini_gop > 1)
+                    if (pcs_ptr->idr_flag == EB_TRUE)
+                        set_mini_gop_size(scs_ptr, pcs_ptr);
+#endif
                 //TODO: scene change update
                 if (scs_ptr->static_config.intra_period_length == 0)
                     pcs_ptr->is_next_frame_intra = 1;
@@ -6848,12 +6879,15 @@ void* picture_decision_kernel(void *input_ptr)
 #if SS_OPT_MOVE_SC_DETECTION
                                     // If running multi-threaded mode, perform SC detection in picture_analysis_kernel, else in picture_decision_kernel
                                     if (scs_ptr->static_config.logical_processors == 1) {
+#if !FIX_DATA_RACE_2PASS
                                         // SC detection is OFF for first pass in M8
                                         uint8_t disable_sc_detection = scs_ptr->enc_mode_2ndpass <= ENC_M4 ? 0 : use_output_stat(scs_ptr) ? 1 : 0;
 
                                         if (disable_sc_detection)
                                             scs_ptr->static_config.screen_content_mode = 0;
-                                        else if (scs_ptr->static_config.screen_content_mode == 2) // auto detect
+                                        else
+#endif
+                                        if (scs_ptr->static_config.screen_content_mode == 2) // auto detect
                                             is_screen_content(pcs_ptr);
                                         else
                                             pcs_ptr->sc_class0 = pcs_ptr->sc_class1 = pcs_ptr->sc_class2 = scs_ptr->static_config.screen_content_mode;

@@ -451,8 +451,19 @@ void set_tpl_extended_controls(
     if (!scs_ptr->lad_mg)
         tpl_ctrls->r0_adjust_factor *= 3;
 #endif
+#if FIX_DATA_RACE_2PASS
+    if (pcs_ptr->scs_ptr->static_config.enable_adaptive_mini_gop == 0) {
+        if(scs_ptr->static_config.hierarchical_levels < 4)
+            tpl_ctrls->r0_adjust_factor = 0.1;
+    }
+    else {
+         if(pcs_ptr->hierarchical_levels < 4)
+             tpl_ctrls->r0_adjust_factor = 0.1;
+    }
+#else
     if(scs_ptr->static_config.hierarchical_levels < 4)
         tpl_ctrls->r0_adjust_factor = 0.1;
+#endif
 }
 #if !OPT_COMBINE_TPL_FOR_LAD
 void set_tpl_controls(
@@ -1303,13 +1314,20 @@ static void copy_input_buffer(SequenceControlSet *sequenceControlSet, EbBufferHe
 /******************************************************
  * Read Stat from File
  ******************************************************/
+#if CLIP_BASED_DYNAMIC_MINIGOP
+void read_stat(SequenceControlSet *scs_ptr) {
+#else
 static void read_stat(SequenceControlSet *scs_ptr) {
+#endif
     EncodeContext *encode_context_ptr = scs_ptr->encode_context_ptr;
 
     encode_context_ptr->rc_twopass_stats_in = scs_ptr->static_config.rc_twopass_stats_in;
 }
-
+#if CLIP_BASED_DYNAMIC_MINIGOP
+void setup_two_pass(SequenceControlSet *scs_ptr) {
+#else
 static void setup_two_pass(SequenceControlSet *scs_ptr) {
+#endif
     EncodeContext *encode_context_ptr = scs_ptr->encode_context_ptr;
 
     int num_lap_buffers = 0;

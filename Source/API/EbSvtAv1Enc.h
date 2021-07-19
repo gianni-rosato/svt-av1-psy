@@ -893,6 +893,13 @@ typedef struct EbSvtAv1EncConfiguration {
     * values are from set using svt_aom_parse_content_light_level()
     */
     struct EbContentLightLevel content_light_level;
+#if GOP_BASED_DYNAMIC_MINIGOP
+    uint8_t enable_adaptive_mini_gop;
+    uint8_t max_heirachical_level;
+#endif
+#if OPT_FIRST_PASS
+    uint8_t final_pass_rc_mode;
+#endif
 } EbSvtAv1EncConfiguration;
 
 /**

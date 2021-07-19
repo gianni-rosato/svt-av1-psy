@@ -5863,9 +5863,13 @@ that use 8x8 blocks will lose significant BD-Rate as the parent 16x16 me data wi
 #endif
         set_depth_removal_level_controls(pcs_ptr, ctx, depth_removal_level);
     }
-
+#if OPTIMIZE_L6
+    // Set block_based_depth_refinement_level
+    int8_t block_based_depth_refinement_level;
+#else
     // Set block_based_depth_refinement_level
     uint8_t block_based_depth_refinement_level;
+#endif
 #if OPT_REFACTOR_DEPTH_REFINEMENT_CTRLS
     // do not use feature for SC
     if (pcs_ptr->parent_pcs_ptr->sc_class1)
@@ -5906,7 +5910,14 @@ that use 8x8 blocks will lose significant BD-Rate as the parent 16x16 me data wi
         block_based_depth_refinement_level = (pcs_ptr->temporal_layer_index == 0) ? 6 : 8;
 #if TUNE_M7_M8
     else if (enc_mode <= ENC_M8)
+ #if OPTIMIZE_L6
+        block_based_depth_refinement_level = (scs_ptr->static_config.hierarchical_levels == (EB_MAX_TEMPORAL_LAYERS - 1)) ?
+        ((pcs_ptr->temporal_layer_index == 0) ? 6 : 8):
+        ((pcs_ptr->parent_pcs_ptr->input_resolution <= INPUT_SIZE_720p_RANGE) ? (pcs_ptr->temporal_layer_index == 0) ? 6 : 10 : (pcs_ptr->temporal_layer_index == 0) ? 6 : 11);
+
+#else
         block_based_depth_refinement_level = (pcs_ptr->parent_pcs_ptr->input_resolution <= INPUT_SIZE_720p_RANGE) ? (pcs_ptr->temporal_layer_index == 0) ? 6 : 10 : (pcs_ptr->temporal_layer_index == 0) ? 6 : 11;
+#endif
 #endif
 #if TUNE_M10_M0
     else if (enc_mode <= ENC_M10)
@@ -5951,6 +5962,10 @@ that use 8x8 blocks will lose significant BD-Rate as the parent 16x16 me data wi
         block_based_depth_refinement_level = 3;
     else
         block_based_depth_refinement_level = (pcs_ptr->temporal_layer_index == 0) ? 5 : 7;
+#endif
+#if OPTIMIZE_L6
+    if (scs_ptr->static_config.hierarchical_levels == (EB_MAX_TEMPORAL_LAYERS - 1))
+        block_based_depth_refinement_level = MAX(0, block_based_depth_refinement_level - 1);
 #endif
     set_block_based_depth_refinement_controls(ctx, block_based_depth_refinement_level);
 #if  FTR_SIMPLIFIED_MV_COST

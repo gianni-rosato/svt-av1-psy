@@ -7731,7 +7731,15 @@ uint32_t get_blk_tuned_full_lambda(struct ModeDecisionContext *context_ptr, Pict
     // This function's counterpart in AOM, av1_get_hier_tpl_rdmult, will encounter division by zero
     if (base_block_count == 0) {
         // return a large number to indicate invalid state
+#if SS_OPT_SET_LAMDA
+        context_ptr->full_lambda_md[EB_8_BIT_MD] = SUPERRES_INVALID_STATE;
+        context_ptr->full_lambda_md[EB_10_BIT_MD] = SUPERRES_INVALID_STATE;
+
+        context_ptr->fast_lambda_md[EB_8_BIT_MD] = SUPERRES_INVALID_STATE;
+        context_ptr->fast_lambda_md[EB_10_BIT_MD] = SUPERRES_INVALID_STATE;
+#else
         return SUPERRES_INVALID_STATE;
+#endif
     }
 
     geom_mean_of_scale = exp(geom_mean_of_scale / base_block_count);

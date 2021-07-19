@@ -101,7 +101,6 @@ EbErrorType initial_rate_control_context_ctor(EbThreadContext *  thread_context_
 void init_zz_cost_info(PictureParentControlSet *pcs_ptr) {
     uint16_t sb_idx;
     pcs_ptr->non_moving_index_average = INVALID_ZZ_COST;
-
     // SB Loop
     for (sb_idx = 0; sb_idx < pcs_ptr->sb_total_count; ++sb_idx)
         pcs_ptr->non_moving_index_array[sb_idx] = INVALID_ZZ_COST;
@@ -289,7 +288,11 @@ void store_extended_group(
     int64_t last_intra_mg_id;
 #if FTR_1PAS_VBR
 #if FTR_LAD_INPUT
+#if FIX_DATA_RACE_2PASS
+    uint32_t mg_size                = 1 << pcs->hierarchical_levels;
+#else
     uint32_t mg_size                = 1 << pcs->scs_ptr->static_config.hierarchical_levels;
+#endif
     uint32_t limited_tpl_group_size = pcs->slice_type == I_SLICE
         ? MIN(1 + (pcs->scs_ptr->tpl_lad_mg + 1) * mg_size, pcs->ext_group_size)
         : MIN((pcs->scs_ptr->tpl_lad_mg + 1) * mg_size, pcs->ext_group_size);

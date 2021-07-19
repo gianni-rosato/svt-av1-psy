@@ -22,6 +22,19 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+#if CLIP_BASED_DYNAMIC_MINIGOP
+    typedef struct MiniGopSizeCtrls {
+        EbBool adptive_enable; // 0: Off, 1: Switch at clip level, 2: Switch at GOP level
+        double short_shot_th; // Threshold to determine short scene.
+        double animation_type_th; // Threshold to determine animation scene
+        double lm_th; // Threshold to determine low motion scene
+        double hm_th; // Threshold to determine high motion scene
+        double lfr_th; // Threshold to determine low frame rate scene
+        double hsa_th; // Threshold to determine high static area scene
+        double hmv_di_th; // Threshold to determine high mv direction scene
+        double lmv_di_th; // Threshold to determine low mv direction scene
+    } MiniGopSizeCtrls;
+#endif
 /************************************
      * Sequence Control Set
      ************************************/
@@ -222,6 +235,9 @@ typedef struct SequenceControlSet {
     int32_t nmv_vec_cost[MV_JOINTS];
     int32_t nmv_costs[2][MV_VALS];
     uint8_t mvrate_set;
+#if CLIP_BASED_DYNAMIC_MINIGOP
+    MiniGopSizeCtrls mgs_ctls;
+#endif
 } SequenceControlSet;
 
 typedef struct EbSequenceControlSetInitData {

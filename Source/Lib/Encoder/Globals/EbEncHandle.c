@@ -1559,6 +1559,7 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
         input_data.av1_cm = parent_pcs->av1_cm;
         input_data.enc_mode = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.enc_mode;
         input_data.static_config = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config;
+
         EB_NEW(
             enc_handle_ptr->picture_control_set_pool_ptr_array[instance_index],
             svt_system_resource_ctor,
@@ -3595,7 +3596,107 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
 
 #endif
 }
+#if CLIP_BASED_DYNAMIC_MINIGOP
+/******************************************************
+ * Read Stat from File
+ ******************************************************/
+extern void read_stat(SequenceControlSet *scs_ptr);
 
+extern void setup_two_pass(SequenceControlSet *scs_ptr);
+#endif
+#if CLIP_BASED_DYNAMIC_MINIGOP
+void set_mini_gop_size_controls(MiniGopSizeCtrls *mgs_ctls, uint8_t mg_level) {
+    switch (mg_level) {
+    case 0:
+        mgs_ctls->adptive_enable = 0;
+        break;
+    case 1:
+        mgs_ctls->adptive_enable = 1;
+        mgs_ctls->animation_type_th = 0.15;
+        mgs_ctls->hm_th = 0.95;
+        mgs_ctls->hsa_th = 0.5;
+        mgs_ctls->lfr_th = 50;
+        mgs_ctls->lm_th = 0.0001;
+        mgs_ctls->short_shot_th = 3;
+        mgs_ctls->hmv_di_th = 0.75;
+        mgs_ctls->lmv_di_th = 0.5;
+        break;
+#if GOP_BASED_DYNAMIC_MINIGOP
+    case 2:
+        mgs_ctls->adptive_enable = 2;
+        mgs_ctls->animation_type_th = 0.15;
+        mgs_ctls->hm_th = 0.95;
+        mgs_ctls->hsa_th = 0.5;
+        mgs_ctls->lfr_th = 50;
+        mgs_ctls->lm_th = 0.0001;
+        mgs_ctls->short_shot_th = 3;
+        mgs_ctls->hmv_di_th = 0.75;
+        mgs_ctls->lmv_di_th = 0.5;
+        break;
+    default:
+        mgs_ctls->adptive_enable = 0;
+#endif
+    }
+}
+void set_max_mini_gop_size(SequenceControlSet *scs_ptr, MiniGopSizeCtrls *mgs_ctls) {
+    if (use_input_stat(scs_ptr)) {
+        read_stat(scs_ptr);
+        setup_two_pass(scs_ptr);
+        const double resolution_offset[INPUT_SIZE_COUNT] = { 0.3,0.1,0.0,0.0,0.0,0.0,0.0 };
+        FIRSTPASS_STATS * stat = scs_ptr->twopass.stats_buf_ctx->total_stats;
+        double high_inter_propagation = (stat->pcnt_inter / (stat->count - 1)) > mgs_ctls->hm_th ? 1 : 0;
+        double low_motion_clip = (stat->pcnt_inter - stat->pcnt_motion) / (stat->count - 1);
+        double content_type = (stat->intra_skip_pct / (stat->count - 1)) >= mgs_ctls->animation_type_th ? FC_GRAPHICS_ANIMATION : FC_NORMAL;
+        double inactive_zone_rows = (stat->inactive_zone_rows / (stat->count - 1));
+        double inactive_zone_cols = (stat->inactive_zone_cols / (stat->count - 1));
+        // Avoid long gop for animation contents with low static area.
+        double avoid_long_gop = content_type == FC_GRAPHICS_ANIMATION ? 1 : 0;
+        avoid_long_gop = high_inter_propagation || (inactive_zone_rows && inactive_zone_rows > mgs_ctls->hsa_th) || (inactive_zone_cols && inactive_zone_cols > mgs_ctls->hsa_th) ? 0 : avoid_long_gop;
+        // Avoid long_gop for short clips
+        avoid_long_gop = stat->count < (mgs_ctls->short_shot_th * 32) ? 1 : avoid_long_gop;
+        double lm_th = (0.6 + resolution_offset[scs_ptr->input_resolution]);
+        uint32_t fps = (uint32_t)((scs_ptr->static_config.frame_rate > 1000) ?
+            scs_ptr->static_config.frame_rate >> 16 :
+            scs_ptr->static_config.frame_rate);
+        double short_shot = (stat->count < (mgs_ctls->short_shot_th * 32)) ? 1 : 0;
+        double unid_motion = ((stat->mv_in_out_count / (stat->count - 1)) > mgs_ctls->lmv_di_th) && ((stat->mv_in_out_count / (stat->count - 1)) < mgs_ctls->hmv_di_th) ? 1 : 0;
+        double low_frame_rate = (fps < mgs_ctls->lfr_th) ? 1 : 0;
+        double lm_th_offset = (short_shot && unid_motion && low_frame_rate ? 0.065 : 0.0);
+        double hm_th = (mgs_ctls->lm_th + lm_th_offset);
+        uint32_t  min_gop_size = ((low_motion_clip > lm_th) && !avoid_long_gop) ? 32 : low_motion_clip > hm_th ? 16 : 8;
+        switch (min_gop_size) {
+        case 1:
+            scs_ptr->static_config.hierarchical_levels = 0;
+            break;
+        case 2:
+            scs_ptr->static_config.hierarchical_levels = 1;
+            break;
+        case 4:
+            scs_ptr->static_config.hierarchical_levels = 2;
+            break;
+        case 8:
+            scs_ptr->static_config.hierarchical_levels = 3;
+            break;
+        case 16:
+            scs_ptr->static_config.hierarchical_levels = 4;
+            break;
+        case 32:
+            scs_ptr->static_config.hierarchical_levels = 5;
+            break;
+        default:
+            scs_ptr->static_config.hierarchical_levels = 4;
+            break;
+        }
+        scs_ptr->max_temporal_layers = scs_ptr->static_config.hierarchical_levels;
+
+
+    }
+#if GOP_BASED_DYNAMIC_MINIGOP
+    scs_ptr->static_config.enable_adaptive_mini_gop = mgs_ctls->adptive_enable;
+    scs_ptr->static_config.max_heirachical_level = scs_ptr->static_config.hierarchical_levels;
+#endif
+}
+#endif
 void copy_api_from_app(
     SequenceControlSet       *scs_ptr,
     EbSvtAv1EncConfiguration   *config_struct){
@@ -3753,6 +3854,9 @@ void copy_api_from_app(
     // Rate Control
     scs_ptr->static_config.scene_change_detection = ((EbSvtAv1EncConfiguration*)config_struct)->scene_change_detection;
     scs_ptr->static_config.rate_control_mode = ((EbSvtAv1EncConfiguration*)config_struct)->rate_control_mode;
+#if OPT_FIRST_PASS
+    scs_ptr->static_config.final_pass_rc_mode = ((EbSvtAv1EncConfiguration*)config_struct)->rate_control_mode;
+#endif
 #if !FTR_2PASS_CBR
     if (scs_ptr->static_config.rate_control_mode == 2) {
         scs_ptr->static_config.rate_control_mode = 1;
@@ -3843,7 +3947,14 @@ void copy_api_from_app(
     // Thresholds
     scs_ptr->static_config.high_dynamic_range_input = ((EbSvtAv1EncConfiguration*)config_struct)->high_dynamic_range_input;
     scs_ptr->static_config.screen_content_mode = ((EbSvtAv1EncConfiguration*)config_struct)->screen_content_mode;
-
+#if FIX_DATA_RACE_2PASS
+    // SC detection is OFF for first pass in M8
+#if FIX_PRESET_TUNING
+    uint8_t disable_sc_detection = scs_ptr->enc_mode_2ndpass <= ENC_M4 ? 0 : use_output_stat(scs_ptr) ? 1 : 0;
+#endif
+    if (disable_sc_detection)
+        scs_ptr->static_config.screen_content_mode = 0;
+#endif
     scs_ptr->static_config.intrabc_mode = ((EbSvtAv1EncConfiguration*)config_struct)->intrabc_mode;
 
     // Annex A parameters
@@ -4883,7 +4994,28 @@ EB_API EbErrorType svt_av1_enc_set_parameter(
         return EB_ErrorBadParameter;
     set_param_based_on_input(
         enc_handle->scs_instance_array[instance_index]->scs_ptr);
-
+#if CLIP_BASED_DYNAMIC_MINIGOP
+    MiniGopSizeCtrls *mgs_ctls = &enc_handle->scs_instance_array[instance_index]->scs_ptr->mgs_ctls;
+#if GOP_BASED_DYNAMIC_MINIGOP
+    // mg_level 1: Determine the best mini-gop size for the whole clip and it is used only in case of two-passes encoding.
+    // mg_level 2: Determine the best max_mini-gop size for the whole clip and refine the final min-gop at each IDR frame
+    //             and it is used only in case of two-passes encoding with closed gop.
+    uint8_t mg_level = use_input_stat(enc_handle->scs_instance_array[instance_index]->scs_ptr) ?
+        (enc_handle->scs_instance_array[instance_index]->scs_ptr->static_config.intra_refresh_type == 2 ? 2 : 1) : 0;
+    // Disable Dynamic Gop for non-CRF mode
+    if (enc_handle->scs_instance_array[instance_index]->scs_ptr->static_config.final_pass_rc_mode)
+        mg_level = 0;
+#else
+    uint8_t mg_level = (use_input_stat(enc_handle->scs_instance_array[instance_index]->scs_ptr)) ? 1 : 0;
+#endif
+#if GOP_BASED_DYNAMIC_MINIGOP
+    enc_handle->scs_instance_array[instance_index]->scs_ptr->static_config.enable_adaptive_mini_gop = 0;
+#endif
+    set_mini_gop_size_controls(mgs_ctls, mg_level);
+    if (mgs_ctls->adptive_enable)
+        set_max_mini_gop_size(
+            enc_handle->scs_instance_array[instance_index]->scs_ptr, mgs_ctls);
+#endif
     // Initialize the Prediction Structure Group
     EB_NO_THROW_NEW(
         enc_handle->scs_instance_array[instance_index]->encode_context_ptr->prediction_structure_group_ptr,

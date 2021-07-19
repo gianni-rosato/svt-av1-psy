@@ -1491,6 +1491,11 @@ void open_loop_first_pass(PictureParentControlSet *  ppcs_ptr,
     if (ppcs_ptr->scs_ptr->enc_mode_2ndpass <= ENC_M4)
         ppcs_ptr->skip_frame =0;
     else {
+#if OPT_FIRST_PASS
+        if ((ppcs_ptr->scs_ptr->static_config.final_pass_rc_mode == 0) && (ppcs_ptr->picture_number % 8 > 0))
+            ppcs_ptr->skip_frame = 1;
+        else
+#endif
         if (ppcs_ptr->picture_number > 3 && ppcs_ptr->picture_number % 4 > 0)
             ppcs_ptr->skip_frame = 1;
         else

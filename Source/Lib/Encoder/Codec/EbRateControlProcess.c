@@ -38,8 +38,13 @@
 #include "EbPictureDecisionResults.h"
 #include "EbResize.h"
 
+#if OPTIMIZE_L6
+static const double tpl_hl_islice_div_factor[EB_MAX_TEMPORAL_LAYERS] = { 1, 1, 1, 2, 1, 0.7 };
+static const double tpl_hl_base_frame_div_factor[EB_MAX_TEMPORAL_LAYERS] = { 1, 1, 1, 3, 1, 0.9 };
+#else
 static const double tpl_hl_islice_div_factor[EB_MAX_TEMPORAL_LAYERS] = { 1, 1, 1, 2, 1, 0.8 };
 static const double tpl_hl_base_frame_div_factor[EB_MAX_TEMPORAL_LAYERS] = { 1, 1, 1, 3, 1, 0.7 };
+#endif
 
 #if !FTR_RC_CAP
 /**************************************
@@ -1449,9 +1454,32 @@ void process_tpl_stats_frame_kf_gfu_boost(PictureControlSet *pcs_ptr) {
 #if !FTR_2PASS_1PASS_UNIFICATION
     }
 #endif
+#if FIX_2PASS_CRF
+    if (pcs_ptr->parent_pcs_ptr->slice_type == I_SLICE && scs_ptr->static_config.rate_control_mode == 0) {
+        const int32_t qindex = quantizer_to_qindex[(uint8_t)scs_ptr->static_config.qp];
+        pcs_ptr->parent_pcs_ptr->r0 = pcs_ptr->parent_pcs_ptr->r0 / tpl_hl_islice_div_factor[scs_ptr->static_config.hierarchical_levels];
+        if (pcs_ptr->parent_pcs_ptr->frm_hdr.frame_type == KEY_FRAME) {
+            if (scs_ptr->static_config.intra_period_length == -1 || scs_ptr->static_config.intra_period_length > KF_INTERVAL_TH) {
+                double factor = 1.0;
+                if (pcs_ptr->parent_pcs_ptr->r0 < 0.2) {
+                    double mult = 1.0;
+                    factor = (double)(mult * 255.0) / qindex;
+                }
+                pcs_ptr->parent_pcs_ptr->r0 = pcs_ptr->parent_pcs_ptr->r0 / factor;
+            }
+        }
+        // when frames_to_key not available, i.e. in 1 pass encoding
+        rc->kf_boost = get_cqp_kf_boost_from_r0(
+            pcs_ptr->parent_pcs_ptr->r0, -1, scs_ptr->input_resolution);
+        // NM: TODO: replaced by unitary number X * number of pictures in GOP // 93.75 * number of pictures in GOP
+        int max_boost = scs_ptr->static_config.intra_period_length < KF_INTERVAL_TH ? MAX_KF_BOOST_LOW_KI : MAX_KF_BOOST_HIGHT_KI;
+        rc->kf_boost = AOMMIN(rc->kf_boost, max_boost);
+    }
+#else
     if (scs_ptr->static_config.rate_control_mode == 0)
         rc->kf_boost = get_cqp_kf_boost_from_r0(
             pcs_ptr->parent_pcs_ptr->r0, rc->frames_to_key, scs_ptr->input_resolution);
+#endif
 }
 
 static void get_intra_q_and_bounds(PictureControlSet *pcs_ptr, int *active_best, int *active_worst,
@@ -1586,12 +1614,12 @@ static int get_active_best_quality(PictureControlSet *pcs_ptr, const int active_
         }
         return active_best_quality;
     }
-
+#if !FIX_2PASS_CRF
     // TODO(chengchen): can we remove this condition?
     if (rc_mode == AOM_Q && !refresh_frame_flags->alt_ref_frame && !is_intrl_arf_boost) {
         return cq_level;
     }
-
+#endif
     // Determine active_best_quality for frames that are not leaf or overlay.
     int q = active_worst_quality;
     // Use the lower of active_worst_quality and recent
@@ -3352,8 +3380,12 @@ void *rate_control_kernel(void *input_ptr) {
                     int32_t new_qindex;
                     if (!use_output_stat(scs_ptr)) {
                         // Content adaptive qp assignment
+#if FIX_2PASS_CRF
+                        if (scs_ptr->static_config.enable_tpl_la)
+#else
                         // 1pass QPS with tpl_la
                         if (!use_input_stat(scs_ptr) && scs_ptr->static_config.enable_tpl_la)
+#endif
 #if FTR_RC_CAP
                         {
                             if (pcs_ptr->picture_number == 0) {

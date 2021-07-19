@@ -2246,6 +2246,7 @@ static EbErrorType verify_settings(EbConfig *config, uint32_t channel_number) {
             return EB_ErrorBadParameter;
         }
     }
+#if !FIX_2PASS_CRF
     if (pass != DEFAULT && config->config.rate_control_mode == 0) {
         fprintf(
             config->error_log_file,
@@ -2253,6 +2254,7 @@ static EbErrorType verify_settings(EbConfig *config, uint32_t channel_number) {
             channel_number + 1);
         return EB_ErrorBadParameter;
     }
+#endif
     return return_error;
 }
 
@@ -2492,15 +2494,54 @@ static EbBool check_two_pass_conflicts(int32_t argc, char *const argv[]) {
     }
     return EB_FALSE;
 }
-
+#if FIX_2PASS_CRF
+#define ENC_M6 6
+#endif
 uint32_t get_passes(int32_t argc, char *const argv[], EncodePass pass[MAX_ENCODE_PASS]) {
     char     config_string[COMMAND_LINE_MAX_SIZE];
+#if FIX_2PASS_CRF
+    int32_t passes = -1; // Default mode is used
+#else
     uint32_t passes;
+#endif
+#if FIX_2PASS_CRF
+    int rc_mode = 0;
+    if (find_token(argc, argv, RATE_CONTROL_ENABLE_TOKEN, config_string) == 0 ||
+        find_token(argc, argv, "--rc", config_string) == 0)
+        rc_mode = strtol(config_string, NULL, 0);
+    if (rc_mode == 0) { // CRF mode
+        int enc_mode = 0;
+        if (passes == -1) {
+            if (find_token(argc, argv, ENCMODE_TOKEN, config_string) == 0 ||
+                find_token(argc, argv, "-enc-mode", config_string) == 0 ||
+                find_token(argc, argv, "--preset", config_string) == 0)
+                enc_mode = strtol(config_string, NULL, 0);
+            passes = (enc_mode < ENC_M6) ? 2 : 1;
+        }
+        if (find_token(argc, argv, PASSES_TOKEN, config_string) != 0) {
+        }
+        else {
+            int input_passes = strtol(config_string, NULL, 0);
+            if((enc_mode < ENC_M6) && (input_passes == 1))
+                fprintf(stderr,"\nWarning: --passes 1 CRF is not supported for preset %d\n\n", enc_mode);
+            else if ((enc_mode >= ENC_M6) && (input_passes == 2))
+                fprintf(stderr, "\nWarning: --passes 2 CRF is not supported for preset %d\n\n", enc_mode);
+        }
+    }
+    else {
+        if (find_token(argc, argv, PASSES_TOKEN, config_string) != 0) {
+            pass[0] = ENCODE_SINGLE_PASS;
+            return 1;
+        }
+        passes = strtol(config_string, NULL, 0);
+    }
+#else
     if (find_token(argc, argv, PASSES_TOKEN, config_string) != 0) {
         pass[0] = ENCODE_SINGLE_PASS;
         return 1;
     }
     passes = strtol(config_string, NULL, 0);
+#endif
     if (passes == 0 || passes > 2) {
         fprintf(stderr,
                 "Error: The number of passes has to be within the range [1,%u]\n",
@@ -2511,8 +2552,9 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncodePass pass[MAX_ENCODE
         pass[0] = ENCODE_SINGLE_PASS;
         return 1;
     }
-
+#if !FIX_2PASS_CRF
     int rc_mode = 0;
+
     if (find_token(argc, argv, RATE_CONTROL_ENABLE_TOKEN, config_string) == 0 ||
         find_token(argc, argv, "--rc", config_string) == 0)
         rc_mode = strtol(config_string, NULL, 0);
@@ -2529,6 +2571,7 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncodePass pass[MAX_ENCODE
         pass[0] = ENCODE_SINGLE_PASS;
         return 1;
     }
+#endif
     if (check_two_pass_conflicts(argc, argv))
         return 0;
 

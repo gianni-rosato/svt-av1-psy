@@ -2835,6 +2835,7 @@ void *picture_analysis_kernel(void *input_ptr) {
             // If running multi-threaded mode, perform SC detection in picture_analysis_kernel, else in picture_decision_kernel
             if (scs_ptr->static_config.logical_processors != 1) {
 #endif
+#if !FIX_DATA_RACE_2PASS
                 // SC detection is OFF for first pass in M8
 #if FIX_PRESET_TUNING
                 uint8_t disable_sc_detection = scs_ptr->enc_mode_2ndpass <= ENC_M4 ? 0 : use_output_stat(scs_ptr) ? 1 : 0;
@@ -2845,6 +2846,7 @@ void *picture_analysis_kernel(void *input_ptr) {
             if (disable_sc_detection)
                 scs_ptr->static_config.screen_content_mode = 0;
             else
+#endif
             if (scs_ptr->static_config.screen_content_mode == 2) { // auto detect
                 is_screen_content(pcs_ptr);
             } else // off / on

@@ -457,6 +457,14 @@ NOTE : PART OF LIGHT_PD0_2  code was committed to svt-04-final-rebased under OPT
 #define ME_8X8                                1 // memory optimization for me data arrays when 8x8 blocks are disallowed
 #define TUNE_M7_MT                            1 // tune m7 using multi-threaded framework
 #define FIX_TEMPORAL_FILTER_PLANEWISE         1 //Fix calculation for hbd fast, and mismatch exp C and AVX2
+
+// DYNAMIC GOP
+#define FIX_2PASS_CRF                         1 // Fix 2pass crf
+#define CLIP_BASED_DYNAMIC_MINIGOP            1 // Ajust minigop size based on the first pass statistics for each clip
+#define GOP_BASED_DYNAMIC_MINIGOP             1 // Ajust minigop size based on the first pass statistics at gop level
+#define OPT_FIRST_PASS                        1 // Reduce the compexity of the first pass
+#define OPTIMIZE_L6                           1
+#define FIX_DATA_RACE_2PASS                   1 // fixing data race issues with the 2pass
 #endif
 
 #if !PRIVATE_MACROS
