@@ -502,9 +502,10 @@ EbErrorType load_default_buffer_configuration_settings(
     scs_ptr->picture_control_set_pool_init_count       = input_pic + SCD_LAD ;
     if (scs_ptr->static_config.enable_overlays)
         scs_ptr->picture_control_set_pool_init_count = MAX(scs_ptr->picture_control_set_pool_init_count,
-             (uint32_t)(1 +  // number of overlayes in the LAD
-            ((1 << scs_ptr->static_config.hierarchical_levels) + SCD_LAD) * 2 +// minigop formation in PD + SCD_LAD *(normal pictures + potential pictures )
-            (1 << scs_ptr->static_config.hierarchical_levels))); // minigop in PM
+            (uint32_t)(1 + // number of overlays in the LAD
+            ((1 << scs_ptr->static_config.hierarchical_levels) + SCD_LAD) * 2 + // minigop formation in PD + SCD_LAD *(normal pictures + potential pictures )
+            (1 << scs_ptr->static_config.hierarchical_levels)) + // minigop in PM
+            1); //  key frame of first minigop
     scs_ptr->picture_control_set_pool_init_count_child = MAX(MAX(MIN(3, core_count/2), core_count / 6), 1);
     scs_ptr->enc_dec_pool_init_count               = MAX(MAX(MIN(3, core_count/2), core_count / 6), 1);
     scs_ptr->reference_picture_buffer_init_count       = MAX((uint32_t)(input_pic >> 1),

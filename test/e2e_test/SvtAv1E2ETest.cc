@@ -204,6 +204,7 @@ static const std::vector<EncTestSetting> default_enc_settings = {
     // test overlay frame
     {"OverlayTest1", {{"EnableOverlays", "1"}}, default_test_vectors},
     {"OverlayTest2", {{"EnableOverlays", "1"}, {"LogicalProcessors", "1"}}, default_test_vectors},
+    {"OverlayTest3", {{"EnableOverlays", "1"}, {"EncoderMode", "5"}}, default_test_vectors},
 
     // test by using a dummy source of color bar
     {"DummySrcTest1", {{"EncoderMode", "8"}}, dummy_test_vectors},
@@ -213,9 +214,47 @@ static const std::vector<EncTestSetting> default_enc_settings = {
     //{"DummySrcTest3", {{"EncoderMode", "8"}, {"Profile", "1"}}, dummy_444_test_vectors},
 };
 
+static const std::vector<EncTestSetting> overlay_preset_settings = {
+    {"OverlayPresetTest1", {{"EncoderMode", "0"}, {"EnableOverlays", "1"}}, default_test_vectors},
+    {"OverlayPresetTest2", {{"EncoderMode", "1"}, {"EnableOverlays", "1"}}, default_test_vectors},
+    {"OverlayPresetTest3", {{"EncoderMode", "2"}, {"EnableOverlays", "1"}}, default_test_vectors},
+    {"OverlayPresetTest4", {{"EncoderMode", "3"}, {"EnableOverlays", "1"}}, default_test_vectors},
+    {"OverlayPresetTest5", {{"EncoderMode", "4"}, {"EnableOverlays", "1"}}, default_test_vectors},
+    {"OverlayPresetTest6", {{"EncoderMode", "5"}, {"EnableOverlays", "1"}}, default_test_vectors},
+    {"OverlayPresetTest7", {{"EncoderMode", "6"}, {"EnableOverlays", "1"}}, default_test_vectors},
+    {"OverlayPresetTest8", {{"EncoderMode", "7"}, {"EnableOverlays", "1"}}, default_test_vectors},
+};
+
 /* clang-format on */
 INSTANTIATE_TEST_CASE_P(SvtAv1, ConformanceDeathTest,
                         ::testing::ValuesIn(default_enc_settings),
+                        EncTestSetting::GetSettingName);
+
+/**
+ * @brief SVT-AV1 encoder E2E test with comparing the reconstructed frame with
+ * output frame from decoder buffer list when enabled overlay frames both with
+ * different preset parameters
+ *
+ * Test strategy:
+ * Setup SVT-AV1 encoder with different preset parameter, and encode the input
+ * YUV data frames. Do the decode and collect the reconstructed frames and
+ * compared them with reference decoder output.
+ *
+ * Expected result:
+ * No error is reported in encoding progress. The reconstructed frame data is
+ * same as the output frame from reference decoder,which proved tiles are
+ * considered independent and the test passes.
+ *
+ * Test coverage:
+ * All test vectors of 640*480, default disabled */
+class OverlayPresetConformanceTest : public ConformanceDeathTest {};
+
+TEST_P(OverlayPresetConformanceTest, DISABLED_OverlayPresetTest) {
+    run_death_test();
+}
+
+INSTANTIATE_TEST_CASE_P(SvtAv1, OverlayPresetConformanceTest,
+                        ::testing::ValuesIn(overlay_preset_settings),
                         EncTestSetting::GetSettingName);
 
 class LongtimeConformanceTest : public ConformanceDeathTest {};
