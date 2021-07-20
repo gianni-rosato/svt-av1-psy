@@ -422,7 +422,7 @@ Linux Enc Test:
     - &enc-test-script |
       for CMAKE_BUILD_TYPE in Debug Release; do
         test -e "./Bin/$CMAKE_BUILD_TYPE/SvtAv1EncApp" || continue
-        ./Bin/$CMAKE_BUILD_TYPE/SvtAv1EncApp --preset 0 -i "$SVT_ENCTEST_FILENAME" -n 3 -b "test-${BRANCH:-pr}-$(uname)-${CMAKE_BUILD_TYPE}-${SVT_ENCTEST_BITNESS}bit-m0.ivf"
+        ./Bin/$CMAKE_BUILD_TYPE/SvtAv1EncApp --preset 2 -i "$SVT_ENCTEST_FILENAME" -n 17 -b "test-${BRANCH:-pr}-$(uname)-${CMAKE_BUILD_TYPE}-${SVT_ENCTEST_BITNESS}bit-m2.ivf"
         ./Bin/$CMAKE_BUILD_TYPE/SvtAv1EncApp --preset 8 -i "$SVT_ENCTEST_FILENAME" -n 120 -b "test-${BRANCH:-pr}-$(uname)-${CMAKE_BUILD_TYPE}-${SVT_ENCTEST_BITNESS}bit-m8.ivf"
       done
   parallel: &enc-test-parallel
@@ -470,9 +470,9 @@ macOS Enc Test:
 Win64 Enc Test:
   extends: .windows-test-base
   script:
-    - ./Bin/Release/SvtAv1EncApp.exe --preset 0 -i "$env:SVT_ENCTEST_FILENAME" -n 3 -b "test-pr-Windows-Release-${env:SVT_ENCTEST_BITNESS}bit-m0.ivf"
+    - ./Bin/Release/SvtAv1EncApp.exe --preset 2 -i "$env:SVT_ENCTEST_FILENAME" -n 17 -b "test-pr-Windows-Release-${env:SVT_ENCTEST_BITNESS}bit-m2.ivf"
     - ./Bin/Release/SvtAv1EncApp.exe --preset 8 -i "$env:SVT_ENCTEST_FILENAME" -n 120 -b "test-pr-Windows-Release-${env:SVT_ENCTEST_BITNESS}bit-m8.ivf"
-    - ./Bin/Debug/SvtAv1EncApp.exe --preset 0 -i "$env:SVT_ENCTEST_FILENAME" -n 3 -b "test-pr-Windows-Debug-${env:SVT_ENCTEST_BITNESS}bit-m0.ivf"
+    - ./Bin/Debug/SvtAv1EncApp.exe --preset 2 -i "$env:SVT_ENCTEST_FILENAME" -n 17 -b "test-pr-Windows-Debug-${env:SVT_ENCTEST_BITNESS}bit-m2.ivf"
     - ./Bin/Debug/SvtAv1EncApp.exe --preset 8 -i "$env:SVT_ENCTEST_FILENAME" -n 120 -b "test-pr-Windows-Debug-${env:SVT_ENCTEST_BITNESS}bit-m8.ivf"
   parallel: *enc-test-parallel
   artifacts: *enc-test-artifacts
@@ -488,9 +488,9 @@ Enc OS Diff Test:
       for dist in *.ivf; do
           case $dist in
           test-pr-Linux-Release-*bit-*.ivf) continue ;;
-          *-8bit-m0.ivf) diff -q test-pr-Linux-Release-8bit-m0.ivf "$dist" || success=false ;;
+          *-8bit-m2.ivf) diff -q test-pr-Linux-Release-8bit-m2.ivf "$dist" || success=false ;;
           *-8bit-m8.ivf) diff -q test-pr-Linux-Release-8bit-m8.ivf "$dist" || success=false ;;
-          *-10bit-m0.ivf) diff -q test-pr-Linux-Release-10bit-m0.ivf "$dist" || success=false ;;
+          *-10bit-m2.ivf) diff -q test-pr-Linux-Release-10bit-m2.ivf "$dist" || success=false ;;
           *-10bit-m8.ivf) diff -q test-pr-Linux-Release-10bit-m8.ivf "$dist" || success=false ;;
           esac
       done
@@ -510,9 +510,9 @@ Enc Default Diff test:
       for dist in *.ivf; do
           case $dist in
           test-pr-Linux-Release-*bit-*.ivf) continue ;;
-          *-8bit-m0.ivf) diff -q test-pr-Linux-Release-8bit-m0.ivf "$dist" || success=false ;;
+          *-8bit-m2.ivf) diff -q test-pr-Linux-Release-8bit-m2.ivf "$dist" || success=false ;;
           *-8bit-m8.ivf) diff -q test-pr-Linux-Release-8bit-m8.ivf "$dist" || success=false ;;
-          *-10bit-m0.ivf) diff -q test-pr-Linux-Release-10bit-m0.ivf "$dist" || success=false ;;
+          *-10bit-m2.ivf) diff -q test-pr-Linux-Release-10bit-m2.ivf "$dist" || success=false ;;
           *-10bit-m8.ivf) diff -q test-pr-Linux-Release-10bit-m8.ivf "$dist" || success=false ;;
           esac
       done
