@@ -2495,7 +2495,21 @@ static EbBool check_two_pass_conflicts(int32_t argc, char *const argv[]) {
     return EB_FALSE;
 }
 #if FIX_2PASS_CRF
-#define ENC_M6 6
+#define ENC_MRS         -2 // Highest quality research mode (slowest)
+#define ENC_MR          -1 //Research mode with higher quality than M0
+#define ENC_M0          0
+#define ENC_M1          1
+#define ENC_M2          2
+#define ENC_M3          3
+#define ENC_M4          4
+#define ENC_M5          5
+#define ENC_M6          6
+#define ENC_M7          7
+#define ENC_M8          8
+#define ENC_M9          9
+#define ENC_M10         10
+#define ENC_M11         11
+#define ENC_M12         12
 #endif
 uint32_t get_passes(int32_t argc, char *const argv[], EncodePass pass[MAX_ENCODE_PASS]) {
     char     config_string[COMMAND_LINE_MAX_SIZE];
@@ -2516,15 +2530,15 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncodePass pass[MAX_ENCODE
                 find_token(argc, argv, "-enc-mode", config_string) == 0 ||
                 find_token(argc, argv, "--preset", config_string) == 0)
                 enc_mode = strtol(config_string, NULL, 0);
-            passes = (enc_mode < ENC_M6) ? 2 : 1;
+            passes = (enc_mode <= ENC_M3) ? 2 : 1;
         }
         if (find_token(argc, argv, PASSES_TOKEN, config_string) != 0) {
         }
         else {
             int input_passes = strtol(config_string, NULL, 0);
-            if((enc_mode < ENC_M6) && (input_passes == 1))
+            if((enc_mode <= ENC_M3) && (input_passes == 1))
                 fprintf(stderr,"\nWarning: --passes 1 CRF is not supported for preset %d\n\n", enc_mode);
-            else if ((enc_mode >= ENC_M6) && (input_passes == 2))
+            else if ((enc_mode > ENC_M3) && (input_passes == 2))
                 fprintf(stderr, "\nWarning: --passes 2 CRF is not supported for preset %d\n\n", enc_mode);
         }
     }

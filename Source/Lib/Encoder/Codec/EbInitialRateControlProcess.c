@@ -289,7 +289,13 @@ void store_extended_group(
 #if FTR_1PAS_VBR
 #if FTR_LAD_INPUT
 #if FIX_DATA_RACE_2PASS
-    uint32_t mg_size                = 1 << pcs->hierarchical_levels;
+    uint32_t mg_size;
+    if (pcs->scs_ptr->static_config.enable_adaptive_mini_gop == 0) {
+        mg_size = 1 << pcs->scs_ptr->static_config.hierarchical_levels;
+    }
+    else {
+        mg_size = 1 << pcs->hierarchical_levels;
+    }
 #else
     uint32_t mg_size                = 1 << pcs->scs_ptr->static_config.hierarchical_levels;
 #endif
