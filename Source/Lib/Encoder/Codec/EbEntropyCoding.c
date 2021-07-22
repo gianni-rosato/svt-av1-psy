@@ -3022,8 +3022,8 @@ static void write_profile(BitstreamProfile profile, struct AomWriteBitBuffer *wb
     svt_aom_wb_write_literal(wb, profile, PROFILE_BITS);
 }
 
-static void write_bitdepth(SequenceControlSet *      scs_ptr /*Av1Common *const cm*/,
-                           struct AomWriteBitBuffer *wb) {
+static AOM_INLINE void write_bitdepth(const SequenceControlSet *const scs_ptr,
+                                      struct AomWriteBitBuffer *      wb) {
     // Profile 0/1: [0] for 8 bit, [1]  10-bit
     // Profile   2: [0] for 8 bit, [10] 10-bit, [11] - 12-bit
     svt_aom_wb_write_bit(wb, scs_ptr->static_config.encoder_bit_depth == EB_8BIT ? 0 : 1);
@@ -3033,78 +3033,69 @@ static void write_bitdepth(SequenceControlSet *      scs_ptr /*Av1Common *const 
         svt_aom_wb_write_bit(wb, scs_ptr->static_config.encoder_bit_depth == EB_10BIT ? 0 : 1);
     }
 }
-static void write_color_config(SequenceControlSet *      scs_ptr /*Av1Common *const cm*/,
-                               struct AomWriteBitBuffer *wb) {
-    //write_bitdepth(cm, wb);
+
+static AOM_INLINE void write_color_config(const SequenceControlSet *const scs_ptr,
+                                          struct AomWriteBitBuffer *      wb) {
     write_bitdepth(scs_ptr, wb);
-    const int32_t is_monochrome = 0; // cm->seq_params.monochrome;
+    const int is_monochrome = 0; // monochrome is not supported yet
     // monochrome bit
-    svt_aom_wb_write_bit(wb, is_monochrome);
-    //if (cm->profile != PROFILE_1)
-    //    svt_aom_wb_write_bit(wb, is_monochrome);
-    //else
-    //    assert(!is_monochrome);
+    if (scs_ptr->static_config.profile != PROFILE_1)
+        svt_aom_wb_write_bit(wb, is_monochrome);
+    else
+        assert(!is_monochrome);
     if (scs_ptr->static_config.color_primaries == AOM_CICP_CP_UNSPECIFIED &&
         scs_ptr->static_config.transfer_characteristics == AOM_CICP_TC_UNSPECIFIED &&
         scs_ptr->static_config.matrix_coefficients == AOM_CICP_MC_UNSPECIFIED) {
         svt_aom_wb_write_bit(wb, 0); // No color description present
     } else {
-        svt_aom_wb_write_bit(wb, 1);  // Color description present
+        svt_aom_wb_write_bit(wb, 1); // Color description present
         svt_aom_wb_write_literal(wb, scs_ptr->static_config.color_primaries, 8);
         svt_aom_wb_write_literal(wb, scs_ptr->static_config.transfer_characteristics, 8);
         svt_aom_wb_write_literal(wb, scs_ptr->static_config.matrix_coefficients, 8);
     }
-    //if (is_monochrome) {
-    //    SVT_LOG("ERROR[AN]: is_monochrome not supported yet\n");
-    //    return;
-    //}
-    if (0/*cm->color_primaries == EB_CICP_CP_BT_709 &&
-         cm->transfer_characteristics == EB_CICP_TC_SRGB &&
-         cm->matrix_coefficients ==
-         AOM_CICP_MC_IDENTITY*/) {  // it would be better to remove this
-        // dependency too
-        //assert(cm->subsampling_x == 0 && cm->subsampling_y == 0);
-        //assert(cm->profile == PROFILE_1 ||
-        //    (cm->profile == PROFILE_2 && cm->bit_depth == AOM_BITS_12));
+    /* if (is_monochrome) {
+        // 0: [16, 235] (i.e. xvYCC), 1: [0, 255]
+        svt_aom_wb_write_bit(wb, scs_ptr->static_config.color_range);
+        return;
+    } */
+    if (scs_ptr->static_config.color_primaries == AOM_CICP_CP_BT_709 &&
+        scs_ptr->static_config.transfer_characteristics == AOM_CICP_TC_SRGB &&
+        scs_ptr->static_config.matrix_coefficients == AOM_CICP_MC_IDENTITY) {
+        /* assert(scs_ptr->subsampling_x == 0 && scs_ptr->subsampling_y == 0);
+        assert(scs_ptr->static_config.profile == PROFILE_1 ||
+               (scs_ptr->static_config.profile == PROFILE_2 && scs_ptr->encoder_bit_depth == AOM_BITS_12)); */
     } else {
         // 0: [16, 235] (i.e. xvYCC), 1: [0, 255]
         svt_aom_wb_write_bit(wb, scs_ptr->static_config.color_range);
-
-        //if (cm->profile == PROFILE_0) {
-        //    // 420 only
-        //    assert(cm->subsampling_x == 1 && cm->subsampling_y == 1);
-        //}
-        //else if (cm->profile == PROFILE_1) {
-        //    // 444 only
-        //    assert(cm->subsampling_x == 0 && cm->subsampling_y == 0);
-        //}
-        //else if (cm->profile == PROFILE_2) {
-        //    if (cm->bit_depth == AOM_BITS_12) {
-        //        // 420, 444 or 422
-        //        svt_aom_wb_write_bit(wb, cm->subsampling_x);
-        //        if (cm->subsampling_x == 0) {
-        //            assert(cm->subsampling_y == 0 &&
-        //                "4:4:0 subsampling not allowed in AV1");
-        //        }
-        //        else {
-        //            svt_aom_wb_write_bit(wb, cm->subsampling_y);
-        //        }
-        //    }
-        //    else {
-        //        // 422 only
-        //        assert(cm->subsampling_x == 1 && cm->subsampling_y == 0);
-        //    }
-        //}
-        //if (cm->matrix_coefficients == AOM_CICP_MC_IDENTITY) {
-        //    assert(cm->subsampling_x == 0 && cm->subsampling_y == 0);
-        //}
-        svt_aom_wb_write_literal(wb, 0, 2);
-        //if (cm->subsampling_x == 1 && cm->subsampling_y == 1) {
-        //    svt_aom_wb_write_literal(wb, cm->chroma_sample_position, 2);
-        //}
+        if (scs_ptr->static_config.profile == PROFILE_0) {
+            // 420 only
+            assert(scs_ptr->subsampling_x == 1 && scs_ptr->subsampling_y == 1);
+        } else if (scs_ptr->static_config.profile == PROFILE_1) {
+            // 444 only
+            assert(scs_ptr->subsampling_x == 0 && scs_ptr->subsampling_y == 0);
+        } else if (scs_ptr->static_config.profile == PROFILE_2) {
+            if (scs_ptr->encoder_bit_depth == AOM_BITS_12) {
+                // 420, 444 or 422
+                svt_aom_wb_write_bit(wb, scs_ptr->subsampling_x);
+                if (scs_ptr->subsampling_x == 0) {
+                    assert(scs_ptr->subsampling_y == 0 && "4:4:0 subsampling not allowed in AV1");
+                } else {
+                    svt_aom_wb_write_bit(wb, scs_ptr->subsampling_y);
+                }
+            } else {
+                // 422 only
+                assert(scs_ptr->subsampling_x == 1 && scs_ptr->subsampling_y == 0);
+            }
+        }
+        if (scs_ptr->static_config.matrix_coefficients == AOM_CICP_MC_IDENTITY) {
+            assert(scs_ptr->subsampling_x == 0 && scs_ptr->subsampling_y == 0);
+        }
+        if (scs_ptr->subsampling_x == 1 && scs_ptr->subsampling_y == 1) {
+            svt_aom_wb_write_literal(
+                wb, scs_ptr->seq_header.color_config.chroma_sample_position, 2);
+        }
     }
-    svt_aom_wb_write_bit(wb, 0);
-    //svt_aom_wb_write_bit(wb, cm->separate_uv_delta_q);
+    svt_aom_wb_write_bit(wb, scs_ptr->seq_header.color_config.separate_uv_delta_q);
 }
 
 void write_sequence_header(SequenceControlSet *scs_ptr, struct AomWriteBitBuffer *wb) {
