@@ -749,19 +749,19 @@ typedef struct EbSvtAv1EncConfiguration {
     Default is false. */
     EbBool color_description_present_flag;
     /* Color primaries
-    *
+    * values are from EbColorPrimaries
     Default is 2 (CP_UNSPECIFIED). */
     uint8_t color_primaries;
     /* Transfer characteristics
-    *
+    * values are from EbTransferCharacteristics
     Default is 2 (TC_UNSPECIFIED). */
     uint8_t transfer_characteristics;
     /* Matrix coefficients
-    *
+    * values are from EbMatrixCoefficients
     Default is 2 (MC_UNSPECIFIED). */
     uint8_t matrix_coefficients;
     /* Color range
-    *
+    * values are from EbColorRange
     * 0: studio swing.
     * 1: full swing.
     Default is 0. */
