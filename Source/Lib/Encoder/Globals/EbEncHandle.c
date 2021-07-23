@@ -3323,6 +3323,15 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
         scs_ptr->static_config.rate_control_mode = 0;
         scs_ptr->static_config.intra_refresh_type = 2;
     }
+#if FTR_MULTI_PASS_API
+    else if (scs_ptr->static_config.rc_middlepass_stats_out) {
+        scs_ptr->static_config.enc_mode = MAX_ENC_PRESET;
+        scs_ptr->static_config.enable_tpl_la = 1;
+        scs_ptr->static_config.rate_control_mode = 0;
+        scs_ptr->static_config.qp = 43;
+        scs_ptr->static_config.intra_refresh_type = 2;
+    }
+#endif
     else if (use_input_stat(scs_ptr) || scs_ptr->lap_enabled) {
         scs_ptr->static_config.enable_tpl_la = 1;
         scs_ptr->static_config.intra_refresh_type = 2;
@@ -3747,6 +3756,10 @@ void copy_api_from_app(
     }
     scs_ptr->static_config.rc_twopass_stats_in = ((EbSvtAv1EncConfiguration*)config_struct)->rc_twopass_stats_in;
     scs_ptr->static_config.rc_firstpass_stats_out = ((EbSvtAv1EncConfiguration*)config_struct)->rc_firstpass_stats_out;
+#if FTR_MULTI_PASS_API
+    scs_ptr->static_config.rc_middlepass_stats_out = ((EbSvtAv1EncConfiguration*)config_struct)->rc_middlepass_stats_out;
+    scs_ptr->static_config.passes = ((EbSvtAv1EncConfiguration*)config_struct)->passes;
+#endif
     // Deblock Filter
     scs_ptr->static_config.disable_dlf_flag = ((EbSvtAv1EncConfiguration*)config_struct)->disable_dlf_flag;
 
@@ -4808,7 +4821,6 @@ EbErrorType svt_svt_enc_init_parameter(
     config_ptr->optimal_buffer_level_ms  = 5000;
 #endif
     config_ptr->recode_loop = ALLOW_RECODE_DEFAULT;
-
     // Bitstream options
     //config_ptr->codeVpsSpsPps = 0;
     //config_ptr->codeEosNal = 0;

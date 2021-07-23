@@ -2988,7 +2988,15 @@ static const uint32_t md_scan_to_ois_32x32_scan[CU_MAX_COUNT] =
     /*83 */3,
     /*84 */3,
 };
-
+#if FTR_NEW_MULTI_PASS
+typedef struct StatStruct
+{
+    uint64_t   poc;
+    uint64_t   total_num_bits;
+    uint8_t    qindex;
+    uint8_t    worst_qindex;
+} StatStruct;
+#else
 typedef struct StatStruct
 {
     uint32_t                        referenced_area[MAX_NUMBER_OF_TREEBLOCKS_PER_PICTURE];
@@ -2996,6 +3004,7 @@ typedef struct StatStruct
 #define TWO_PASS_IR_THRSHLD 40  // Intra refresh threshold used to reduce the reference area.
                                 // If the periodic Intra refresh is less than the threshold,
                                 // the referenced area is normalized
+#endif
 #define SC_MAX_LEVEL 2 // 2 sets of HME/ME settings are used depending on the scene content mode
 
 typedef enum HmeDecimation

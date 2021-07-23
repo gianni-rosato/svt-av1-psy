@@ -82,17 +82,27 @@ typedef struct EncContext {
     char*      warning[MAX_NUM_TOKENS];
 
     EncodePass pass;
+#if FTR_MULTI_PASS_API
+    int32_t passes;
+#endif
     int32_t    total_frames;
 } EncContext;
 
 static EbErrorType enc_context_ctor(EncApp* enc_app, EncContext* enc_context, int32_t argc,
+#if FTR_MULTI_PASS_API
+                                    char* argv[], EncodePass pass, int32_t passes) {
+#else
                                     char* argv[], EncodePass pass) {
+#endif
     memset(enc_context, 0, sizeof(*enc_context));
     uint32_t num_channels = get_number_of_channels(argc, argv);
     if (num_channels == 0)
         return EB_ErrorBadParameter;
 
-    enc_context->pass        = pass;
+    enc_context->pass = pass;
+#if FTR_MULTI_PASS_API
+    enc_context->passes        = passes;
+#endif
     EbErrorType return_error = EB_ErrorNone;
 
     enc_context->num_channels = num_channels;
@@ -134,7 +144,9 @@ static EbErrorType enc_context_ctor(EncApp* enc_app, EncContext* enc_context, in
 
             app_svt_av1_get_time(&config->performance_context.lib_start_time[0],
                                  &config->performance_context.lib_start_time[1]);
-
+#if FTR_MULTI_PASS_API
+            config->config.passes = passes;
+#endif
             c->return_error = set_two_passes_stats(
                 config, pass, &enc_app->rc_twopasses_stats, num_channels);
             if (c->return_error == EB_ErrorNone) {
@@ -343,7 +355,23 @@ static void enc_channel_step(EncChannel* c, EncApp* enc_app, EncContext* enc_con
             c->exit_cond = (AppExitConditionType)(c->exit_cond_output | c->exit_cond_input);
     }
 }
-
+#if FTR_MULTI_PASS_API
+static const char* get_pass_name(EncodePass pass, int32_t passes) {
+    if (passes == 3)
+        switch (pass) {
+        case ENCODE_FIRST_PASS: return "Pass 1/3 ";
+        case ENCODE_MIDDLE_PASS: return "Pass 2/3 ";
+        case ENCODE_LAST_PASS: return "Pass 3/3 ";
+        default: return "";
+        }
+    else // passes == 2
+        switch (pass) {
+            case ENCODE_FIRST_PASS: return "Pass 1/2 ";
+            case ENCODE_LAST_PASS: return "Pass 2/2 ";
+            default: return "";
+        }
+}
+#else
 static const char* get_pass_name(EncodePass pass) {
     switch (pass) {
     case ENCODE_FIRST_PASS: return "Pass 1/2 ";
@@ -351,7 +379,7 @@ static const char* get_pass_name(EncodePass pass) {
     default: return "";
     }
 }
-
+#endif
 static void enc_channel_start(EncChannel* c) {
     if (c->return_error == EB_ErrorNone) {
         EbConfig* config    = c->config;
@@ -376,8 +404,11 @@ static EbErrorType encode(EncApp* enc_app, EncContext* enc_context) {
     for (uint32_t inst_cnt = 0; inst_cnt < num_channels; ++inst_cnt)
         enc_channel_start(enc_context->channels + inst_cnt);
     print_warnnings(enc_context);
-
+#if FTR_MULTI_PASS_API
+    fprintf(stderr, "%sEncoding          ", get_pass_name(pass, enc_context->passes));
+#else
     fprintf(stderr, "%sEncoding          ", get_pass_name(pass));
+#endif
 
     while (has_active_channel(enc_context)) {
         for (uint32_t inst_cnt = 0; inst_cnt < num_channels; ++inst_cnt) {
@@ -424,7 +455,11 @@ int32_t main(int32_t argc, char* argv[]) {
     enc_app_ctor(&enc_app);
     passes = get_passes(argc, argv, pass);
     for (uint32_t i = 0; i < passes; i++) {
+#if FTR_MULTI_PASS_API
+        return_error = enc_context_ctor(&enc_app, &enc_context, argc, argv, pass[i], passes);
+#else
         return_error = enc_context_ctor(&enc_app, &enc_context, argc, argv, pass[i]);
+#endif
 
         if (return_error == EB_ErrorNone)
             return_error = encode(&enc_app, &enc_context);

@@ -317,7 +317,6 @@ typedef struct EbSvtAv1EncConfiguration {
     int32_t key_frame_chroma_qindex_offset;
     int32_t key_frame_qindex_offset;
     int32_t chroma_qindex_offsets[EB_MAX_TEMPORAL_LAYERS];
-
     /* input buffer for the second pass */
     SvtAv1FixedBuf rc_twopass_stats_in;
     /* generate first pass stats output.
@@ -330,6 +329,10 @@ typedef struct EbSvtAv1EncConfiguration {
     *
     * Default is 0.*/
     EbBool rc_firstpass_stats_out;
+#if FTR_MULTI_PASS_API
+    EbBool rc_middlepass_stats_out;
+    uint8_t    passes;
+#endif
     /* Enable picture QP scaling between hierarchical levels
     *
     * Default is null.*/

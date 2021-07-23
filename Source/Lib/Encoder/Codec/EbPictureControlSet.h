@@ -267,7 +267,9 @@ typedef struct PictureControlSet {
 
     uint8_t  ref_pic_qp_array[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
     EB_SLICE ref_slice_type_array[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
+#if !FTR_NEW_MULTI_PASS
     uint64_t ref_pic_referenced_area_avg_array[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
+#endif
     double   ref_pic_r0[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
     // GOP
     uint64_t         picture_number;
@@ -1108,6 +1110,9 @@ int  frames_in_sw; // used for Look ahead
     int                             gf_update_due; // thr gf update in RC is due for I, or base frames (except the one after I) or P frames
     uint8_t                         is_new_gf_group;
     struct PictureParentControlSet *gf_group[MAX_TPL_GROUP_SIZE];
+#if FTR_NEW_MULTI_PASS
+    StatStruct                      stat_struct;
+#endif
 #if OPT9_RATE_ESTIMATION
     uint8_t partition_contexts;
 #endif

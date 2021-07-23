@@ -365,7 +365,6 @@ static void set_passes(const char *value, EbConfig *cfg) {
     /* empty function, we will handle passes at higher level*/
     return;
 }
-
 static void set_cfg_stat_file(const char *value, EbConfig *cfg) {
     if (cfg->stat_file) {
         fclose(cfg->stat_file);
@@ -1387,7 +1386,6 @@ ConfigEntry config_entry[] = {
     // two pass
     {SINGLE_INPUT, PASS_TOKEN, "Pass", set_pass},
     {SINGLE_INPUT, TWO_PASS_STATS_TOKEN, "Two pass stat", set_two_pass_stats},
-
     {SINGLE_INPUT, INPUT_PREDSTRUCT_FILE_TOKEN, "PredStructFile", set_pred_struct_file},
     // Picture Dimensions
     {SINGLE_INPUT, WIDTH_TOKEN, "SourceWidth", set_cfg_source_width},
@@ -2094,6 +2092,19 @@ EbErrorType set_two_passes_stats(EbConfig *config, EncodePass pass,
         config->config.rc_firstpass_stats_out = EB_TRUE;
         break;
     }
+#if FTR_MULTI_PASS_API
+    case ENCODE_MIDDLE_PASS: {
+        if (!rc_twopass_stats_in->sz) {
+            fprintf(config->error_log_file,
+                "Error instance %u: bug, combined  multi passes need stats in for middle pass \n",
+                channel_number + 1);
+            return EB_ErrorBadParameter;
+        }
+        config->config.rc_middlepass_stats_out = EB_TRUE;
+        config->config.rc_twopass_stats_in = *rc_twopass_stats_in;
+        break;
+    }
+#endif
     case ENCODE_LAST_PASS: {
         if (!rc_twopass_stats_in->sz) {
             fprintf(config->error_log_file,
@@ -2518,6 +2529,55 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncodePass pass[MAX_ENCODE
 #else
     uint32_t passes;
 #endif
+#if FTR_MULTI_PASS_API
+#if FIX_2PASS_CRF
+    int rc_mode = 0;
+    int enc_mode = 0;
+    if (find_token(argc, argv, RATE_CONTROL_ENABLE_TOKEN, config_string) == 0 ||
+        find_token(argc, argv, "--rc", config_string) == 0)
+        rc_mode = strtol(config_string, NULL, 0);
+
+    if (find_token(argc, argv, ENCMODE_TOKEN, config_string) == 0 ||
+        find_token(argc, argv, "-enc-mode", config_string) == 0 ||
+        find_token(argc, argv, "--preset", config_string) == 0)
+        enc_mode = strtol(config_string, NULL, 0);
+
+    if (rc_mode == 0) { // CRF mode
+        if (passes == -1)
+            passes = (enc_mode <= ENC_M3) ? 2 : 1;
+        if (find_token(argc, argv, PASSES_TOKEN, config_string) != 0) {
+        }
+        else {
+            int input_passes = strtol(config_string, NULL, 0);
+            if ((enc_mode <= ENC_M3) && (input_passes == 1))
+                fprintf(stderr, "\nWarning: --passes 1 CRF is not supported for preset %d\n\n", enc_mode);
+            else if ((enc_mode > ENC_M3) && (input_passes == 2))
+                fprintf(stderr, "\nWarning: --passes 2 CRF is not supported for preset %d\n\n", enc_mode);
+        }
+    }
+    else {
+        if (find_token(argc, argv, PASSES_TOKEN, config_string) != 0) {
+            pass[0] = ENCODE_SINGLE_PASS;
+            return 1;
+        }
+        passes = strtol(config_string, NULL, 0);
+        if (enc_mode > ENC_M7  && passes == 3) {
+            passes = 2;
+            fprintf(stderr, "\nWarning: --passes 3 VBR is not supported for preset %d. Switching to 2-pass encoding\n\n", enc_mode);
+        }
+        else if (rc_mode > 1 && passes == 3) {
+            passes = 2;
+            fprintf(stderr, "\nWarning: --passes 3 CBR is not supported. Switching to 2-pass encoding\n\n");
+        }
+    }
+#else
+    if (find_token(argc, argv, PASSES_TOKEN, config_string) != 0) {
+        pass[0] = ENCODE_SINGLE_PASS;
+        return 1;
+    }
+    passes = strtol(config_string, NULL, 0);
+#endif
+#else
 #if FIX_2PASS_CRF
     int rc_mode = 0;
     if (find_token(argc, argv, RATE_CONTROL_ENABLE_TOKEN, config_string) == 0 ||
@@ -2556,7 +2616,12 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncodePass pass[MAX_ENCODE
     }
     passes = strtol(config_string, NULL, 0);
 #endif
+#endif
+#if FTR_MULTI_PASS_API
+    if (passes == 0 || passes > MAX_ENCODE_PASS) {
+#else
     if (passes == 0 || passes > 2) {
+#endif
         fprintf(stderr,
                 "Error: The number of passes has to be within the range [1,%u]\n",
                 (uint32_t)MAX_ENCODE_PASS);
@@ -2588,10 +2653,22 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncodePass pass[MAX_ENCODE
 #endif
     if (check_two_pass_conflicts(argc, argv))
         return 0;
-
+#if FTR_MULTI_PASS_API
+    if (passes == 2) {
+        pass[0] = ENCODE_FIRST_PASS;
+        pass[1] = ENCODE_LAST_PASS;
+    }
+    else { // passes == 3
+        pass[0] = ENCODE_FIRST_PASS;
+        pass[1] = ENCODE_MIDDLE_PASS;
+        pass[2] = ENCODE_LAST_PASS;
+    }
+    return passes;
+#else
     pass[0] = ENCODE_FIRST_PASS;
     pass[1] = ENCODE_LAST_PASS;
     return 2;
+#endif
 }
 
 void mark_token_as_read(const char *token, char *cmd_copy[], int32_t *cmd_token_cnt) {

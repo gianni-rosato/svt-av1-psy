@@ -58,9 +58,11 @@ typedef struct EbReferenceObject {
     FrameType            frame_type;
     uint32_t             order_hint;
     uint32_t             ref_order_hint[7];
+#if !FTR_NEW_MULTI_PASS
     StatStruct           stat_struct;
     EbHandle             referenced_area_mutex;
     uint64_t             referenced_area_avg;
+#endif
     double               r0;
 #if MS_CDEF_OPT3
     uint32_t            ref_cdef_strengths_num;

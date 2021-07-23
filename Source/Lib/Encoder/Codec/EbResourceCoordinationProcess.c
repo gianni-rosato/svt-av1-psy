@@ -1334,7 +1334,9 @@ static void setup_two_pass(SequenceControlSet *scs_ptr) {
     int size            = get_stats_buf_size(num_lap_buffers, MAX_LAG_BUFFERS);
     for (int i = 0; i < size; i++)
         scs_ptr->twopass.frame_stats_arr[i] = &encode_context_ptr->frame_stats_buffer[i];
-
+#if FTR_NEW_MULTI_PASS
+    scs_ptr->twopass.passes = scs_ptr->static_config.passes;
+#endif
     scs_ptr->twopass.stats_buf_ctx = &encode_context_ptr->stats_buf_context;
     scs_ptr->twopass.stats_in      = scs_ptr->twopass.stats_buf_ctx->stats_in_start;
     if (use_input_stat(scs_ptr)) {
@@ -1760,6 +1762,13 @@ void *resource_coordination_kernel(void *input_ptr) {
                 }
 #endif
             }
+#if FTR_MULTI_PASS_API
+            if (scs_ptr->static_config.passes == 3 && !end_of_sequence_flag && use_input_stat(scs_ptr) && !is_middle_pass(scs_ptr) && scs_ptr->static_config.rate_control_mode) {
+                pcs_ptr->stat_struct = (scs_ptr->twopass.stats_buf_ctx->stats_in_start + pcs_ptr->picture_number)->stat_struct;
+                if (pcs_ptr->stat_struct.poc != pcs_ptr->picture_number)
+                    SVT_LOG("Error reading data in multi pass encoding\n");
+            }
+#endif
 #if FTR_2PASS_1PASS_UNIFICATION
             pcs_ptr->ts_duration = (double)10000000 * (1 << 16) / scs_ptr->frame_rate;
 #else

@@ -48,6 +48,9 @@ extern "C" {
                                       // Create a ME functions for the IPPP processing of 2PASS and 1 PASS VBR/CBR
 
 #define FIX_LOW_DELAY               1 // Fix the 6L, 5L and 4L with LOW_DELAY_P
+// Multi pass encode
+#define FTR_NEW_MULTI_PASS          1 // New multipass VBR
+#define FTR_MULTI_PASS_API          1 // the API needed to run multi pass (3 or 2) VBR
 
 #define SVT_05          1
 #define PRIVATE_MACROS   1

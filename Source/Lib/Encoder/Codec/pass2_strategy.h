@@ -31,6 +31,9 @@ extern "C" {
 // structure of accumulated stats and features in a gf group
 typedef struct {
     double gf_group_err;
+#if FTR_NEW_MULTI_PASS
+    StatStruct gf_stat_struct;
+#endif
     double gf_group_raw_error;
     double gf_group_skip_pct;
     double gf_group_inactive_zone_rows;

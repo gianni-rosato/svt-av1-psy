@@ -138,8 +138,9 @@ static void svt_reference_object_dctor(EbPtr p) {
     EB_FREE_2D(obj->unit_info);
 #endif
     EB_FREE_ALIGNED_ARRAY(obj->mvs);
+#if !FTR_NEW_MULTI_PASS
     EB_DESTROY_MUTEX(obj->referenced_area_mutex);
-
+#endif
     for (uint8_t denom_idx = 0; denom_idx < NUM_SCALES; denom_idx++) {
         if (obj->downscaled_reference_picture[denom_idx] != NULL) {
             EB_DELETE(obj->downscaled_reference_picture[denom_idx]);
@@ -242,8 +243,9 @@ EbErrorType svt_reference_object_ctor(EbReferenceObject *reference_object,
     reference_object->ds_pics.quarter_picture_ptr   = reference_object->quarter_reference_picture;
     reference_object->ds_pics.sixteenth_picture_ptr = reference_object->sixteenth_reference_picture;
     memset(&reference_object->film_grain_params, 0, sizeof(reference_object->film_grain_params));
+#if !FTR_NEW_MULTI_PASS
     EB_CREATE_MUTEX(reference_object->referenced_area_mutex);
-
+#endif
     // set all supplemental downscaled reference picture pointers to NULL
     for (uint8_t down_idx = 0; down_idx < NUM_SCALES; down_idx++) {
         reference_object->downscaled_reference_picture[down_idx]      = NULL;

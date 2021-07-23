@@ -1455,22 +1455,34 @@ void process_tpl_stats_frame_kf_gfu_boost(PictureControlSet *pcs_ptr) {
     }
 #endif
 #if FIX_2PASS_CRF
+#if FTR_NEW_MULTI_PASS
+    if (pcs_ptr->parent_pcs_ptr->frm_hdr.frame_type == KEY_FRAME) {
+#else
     if (pcs_ptr->parent_pcs_ptr->slice_type == I_SLICE && scs_ptr->static_config.rate_control_mode == 0) {
         const int32_t qindex = quantizer_to_qindex[(uint8_t)scs_ptr->static_config.qp];
+#endif
         pcs_ptr->parent_pcs_ptr->r0 = pcs_ptr->parent_pcs_ptr->r0 / tpl_hl_islice_div_factor[scs_ptr->static_config.hierarchical_levels];
         if (pcs_ptr->parent_pcs_ptr->frm_hdr.frame_type == KEY_FRAME) {
             if (scs_ptr->static_config.intra_period_length == -1 || scs_ptr->static_config.intra_period_length > KF_INTERVAL_TH) {
                 double factor = 1.0;
                 if (pcs_ptr->parent_pcs_ptr->r0 < 0.2) {
                     double mult = 1.0;
+#if FTR_NEW_MULTI_PASS
+                    factor = (double)(mult * 255.0) / rc->active_worst_quality;
+#else
                     factor = (double)(mult * 255.0) / qindex;
+#endif
                 }
                 pcs_ptr->parent_pcs_ptr->r0 = pcs_ptr->parent_pcs_ptr->r0 / factor;
             }
         }
         // when frames_to_key not available, i.e. in 1 pass encoding
         rc->kf_boost = get_cqp_kf_boost_from_r0(
+#if FTR_NEW_MULTI_PASS
+            pcs_ptr->parent_pcs_ptr->r0, rc->frames_to_key, scs_ptr->input_resolution);
+#else
             pcs_ptr->parent_pcs_ptr->r0, -1, scs_ptr->input_resolution);
+#endif
         // NM: TODO: replaced by unitary number X * number of pictures in GOP // 93.75 * number of pictures in GOP
         int max_boost = scs_ptr->static_config.intra_period_length < KF_INTERVAL_TH ? MAX_KF_BOOST_LOW_KI : MAX_KF_BOOST_HIGHT_KI;
         rc->kf_boost = AOMMIN(rc->kf_boost, max_boost);
@@ -1543,7 +1555,7 @@ static void get_intra_q_and_bounds(PictureControlSet *pcs_ptr, int *active_best,
         }
         if (pcs_ptr->parent_pcs_ptr->sc_class1 &&
 #if FTR_2PASS_CBR
-            (encode_context_ptr->rc_cfg.mode == AOM_VBR || encode_context_ptr->rc_cfg.mode == AOM_CBR))
+            (encode_context_ptr->rc_cfg.mode == AOM_VBR || encode_context_ptr->rc_cfg.mode == AOM_CBR))//anaghdin: impacting slideshow
 #else
             encode_context_ptr->rc_cfg.mode == AOM_VBR)
 #endif
@@ -1755,7 +1767,7 @@ static int get_bits_per_mb(PictureParentControlSet *ppcs_ptr, int use_cyclic_ref
                                                        ppcs_ptr->sc_class1);
 #endif
 }
-
+//anaghdin --> update this if desired is less than cur_bit_diff by far
 // Similar to find_qindex_by_rate() function in ratectrl.c, but returns the q
 // index with rate just above or below the desired rate, depending on which of
 // the two rates is closer to the desired rate.

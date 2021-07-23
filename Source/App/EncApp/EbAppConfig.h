@@ -36,13 +36,22 @@ typedef enum AppExitConditionType {
 the App.
 */
 typedef enum AppPortActiveType { APP_PortActive = 0, APP_PortInactive } AppPortActiveType;
-
+#if FTR_MULTI_PASS_API
+typedef enum EncodePass {
+    ENCODE_SINGLE_PASS, //single pass mode
+    ENCODE_FIRST_PASS, // first pass of multi pass mode
+    ENCODE_MIDDLE_PASS, // middle pass of multi pass mode
+    ENCODE_LAST_PASS, // last pass of multi pass mode
+    MAX_ENCODE_PASS = 3,
+} EncodePass;
+#else
 typedef enum EncodePass {
     ENCODE_SINGLE_PASS, //single pass mode
     ENCODE_FIRST_PASS, // first pass of multi pass mode
     ENCODE_LAST_PASS, // last pass of multi pass mode
     MAX_ENCODE_PASS = 2,
 } EncodePass;
+#endif
 
 /** The EbPtr type is intended to be used to pass pointers to and from the svt
 API.  This is a 32 bit pointer and is aligned on a 32 bit word boundary.
@@ -180,7 +189,6 @@ typedef struct EbConfig {
     const char *stats;
     FILE *      input_stat_file;
     FILE *      output_stat_file;
-
     FILE *        input_pred_struct_file;
     char *        input_pred_struct_filename;
     EbBool        y4m_input;

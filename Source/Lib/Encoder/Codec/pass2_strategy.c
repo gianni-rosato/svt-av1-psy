@@ -24,7 +24,7 @@
 #include "firstpass.h"
 #include "EbSequenceControlSet.h"
 #include "EbEntropyCoding.h"
-//#define INT_MAX 0x7fffffff
+  //#define INT_MAX 0x7fffffff
 
 #define DEFAULT_KF_BOOST 2300
 #define DEFAULT_GF_BOOST 2000
@@ -69,6 +69,10 @@ static double calculate_modified_err(const FrameInfo *frame_info,
   // blocks of complexity X.
   modified_error *=
       pow(calculate_active_area(frame_info, this_frame), ACT_AREA_CORRECTION);
+#if FTR_NEW_MULTI_PASS
+  if (twopass->passes == 3)
+      return (double )this_frame->stat_struct.total_num_bits;
+#endif
 
   return fclamp(modified_error, twopass->modified_error_min,
                 twopass->modified_error_max);
@@ -753,7 +757,19 @@ static int calculate_boost_bits(int frame_count, int boost,
   return AOMMAX((int)(((int64_t)boost * total_group_bits) / allocation_chunks),
                 0);
 }
+#if FTR_NEW_MULTI_PASS
+static void av1_gop_bit_allocation_two_pass(PictureParentControlSet *pcs, GF_GROUP *gf_group,
+                                            int64_t gf_group_bits, GF_GROUP_STATS gf_stats) {
+    // For key frames the frame target rate is already set and it
+    // is also the golden frame.
+    int frame_index = 0;
 
+    for (int idx = frame_index; idx < pcs->gf_interval; ++idx) {
+        uint8_t gf_group_index = pcs->slice_type == I_SLICE ? idx : idx + 1;
+        gf_group->bit_allocation[gf_group_index] = (int)(gf_group_bits * pcs->gf_group[idx]->stat_struct.total_num_bits / gf_stats.gf_group_err);
+    }
+}
+#endif
 // Allocate bits to each frame in a GF / ARF group
 static double layer_fraction[MAX_ARF_LAYERS + 1] = { 1.0,  0.70, 0.55, 0.60,
                                               0.60, 1.0,  1.0 };
@@ -858,8 +874,13 @@ static INLINE int is_almost_static(double gf_zero_motion, int kf_zero_motion,
 }
 
 #if GROUP_ADAPTIVE_MAXQ
+#if FTR_NEW_MULTI_PASS
+#define RC_FACTOR_MIN 1
+#define RC_FACTOR_MAX 1.5
+#else
 #define RC_FACTOR_MIN 0.75
 #define RC_FACTOR_MAX 1.25
+#endif
 #endif  // GROUP_ADAPTIVE_MAXQ
 #define MIN_FWD_KF_INTERVAL 8
 static INLINE void set_baseline_gf_interval(PictureParentControlSet *pcs_ptr, int arf_position,
@@ -907,6 +928,12 @@ static INLINE void set_baseline_gf_interval(PictureParentControlSet *pcs_ptr, in
 // initialize GF_GROUP_STATS
 static void init_gf_stats(GF_GROUP_STATS *gf_stats) {
   gf_stats->gf_group_err = 0.0;
+#if FTR_NEW_MULTI_PASS
+  gf_stats->gf_stat_struct.poc = 0;
+  gf_stats->gf_stat_struct.total_num_bits = 1;
+  gf_stats->gf_stat_struct.qindex = 172;
+  gf_stats->gf_stat_struct.worst_qindex = 172;
+#endif
   gf_stats->gf_group_raw_error = 0.0;
   gf_stats->gf_group_skip_pct = 0.0;
   gf_stats->gf_group_inactive_zone_rows = 0.0;
@@ -1236,7 +1263,6 @@ static void define_gf_group_pass0(PictureParentControlSet *pcs_ptr,
   }
 }
 #endif
-
 static void av1_gop_bit_allocation(RATE_CONTROL *const rc,
                             GF_GROUP *gf_group, int is_key_frame,
                             int gf_interval,
@@ -1353,7 +1379,11 @@ static void define_gf_group(PictureParentControlSet *pcs_ptr, FIRSTPASS_STATS *t
     // accumulate stats for next frame
     accumulate_next_frame_stats(&next_frame, frame_info, flash_detected,
                                 rc->frames_since_key, i, &gf_stats);
-
+#if FTR_NEW_MULTI_PASS
+    //store the stat of the base frame under gf_stats
+    if (twopass->passes == 3 && i == rc->gf_interval)
+        gf_stats.gf_stat_struct = this_frame->stat_struct;
+#endif
     *this_frame = next_frame;
   }
 
@@ -1489,10 +1519,36 @@ static void define_gf_group(PictureParentControlSet *pcs_ptr, FIRSTPASS_STATS *t
     tmp_q = get_twopass_worst_quality(
         pcs_ptr, group_av_err, (group_av_skip_pct + group_av_inactive_zone),
         vbr_group_bits_per_frame, rc_factor);
+#if FTR_NEW_MULTI_PASS
+    if (twopass->passes == 3) {
+        int ref_qindex = gf_stats.gf_stat_struct.worst_qindex;
+        const double ref_q = svt_av1_convert_qindex_to_q(ref_qindex, scs_ptr->encoder_bit_depth);
+        int64_t ref_gf_group_bits = (int64_t)(gf_stats.gf_group_err);
+        int64_t target_gf_group_bits = gf_group_bits;
+        {
+            int low = rc->best_quality;
+            int high = rc->worst_quality;
+
+            while (low < high) {
+                const int mid = (low + high) >> 1;
+                const double q = svt_av1_convert_qindex_to_q(mid, scs_ptr->encoder_bit_depth);
+                const int mid_bits =
+                    (int)(ref_gf_group_bits *ref_q *rc_factor / q);
+
+                if (mid_bits > target_gf_group_bits) {
+                    low = mid + 1;
+                }
+                else {
+                    high = mid;
+                }
+            }
+            tmp_q = low;
+        }
+     }
+#endif
     rc->active_worst_quality = AOMMAX(tmp_q, rc->active_worst_quality >> 1);
   }
 #endif
-
   // Adjust KF group bits and error remaining.
     twopass->kf_group_error_left -= (int64_t)gf_stats.gf_group_err;
   // Set up the structure of this Group-Of-Pictures (same as GF_GROUP)
@@ -1512,10 +1568,18 @@ static void define_gf_group(PictureParentControlSet *pcs_ptr, FIRSTPASS_STATS *t
   twopass->rolling_arf_group_target_bits = 1;
   twopass->rolling_arf_group_actual_bits = 1;
 
+#if FTR_NEW_MULTI_PASS
+  if (twopass->passes == 3 && use_input_stat(scs_ptr))
+      av1_gop_bit_allocation_two_pass(pcs_ptr, gf_group, gf_group_bits, gf_stats);
+  else
+#endif
   av1_gop_bit_allocation(
-      rc, gf_group, frame_params->frame_type == KEY_FRAME,
+      rc,
+      gf_group,
+      frame_params->frame_type == KEY_FRAME,
       (1 << scs_ptr->static_config.hierarchical_levels),
-      use_alt_ref, gf_group_bits);
+      use_alt_ref,
+      gf_group_bits);
 }
 
 // #define FIXED_ARF_BITS
@@ -1845,10 +1909,19 @@ static int define_kf_interval(PictureParentControlSet *pcs_ptr, FIRSTPASS_STATS 
   FIRSTPASS_STATS last_frame;
   double decay_accumulator = 1.0;
   int j;
+#if FTR_NEW_MULTI_PASS
+  int frames_to_key = 0;
+  int frames_since_key = rc->frames_since_key;
+#else
   int frames_to_key = 1;
   int frames_since_key = rc->frames_since_key + 1;
+#endif
   FrameInfo *const frame_info = &encode_context_ptr->frame_info;
+#if FTR_NEW_MULTI_PASS
+  int num_stats_used_for_kf_boost = 0;
+#else
   int num_stats_used_for_kf_boost = 1;
+#endif
   int scenecut_detected = 0;
 
   int num_frames_to_next_key = detect_app_forced_key(pcs_ptr);
@@ -2283,7 +2356,10 @@ static void find_next_key_frame(PictureParentControlSet *pcs_ptr, FIRSTPASS_STAT
     kf_bits = calculate_boost_bits(
         AOMMIN(rc->frames_to_key, frames_to_key_clipped) - 1, rc->kf_boost,
         AOMMIN(twopass->kf_group_bits, kf_group_bits_clipped));
-
+#if FTR_NEW_MULTI_PASS
+    if (twopass->passes == 3)
+        kf_bits = (int)(twopass->kf_group_bits*(twopass->stats_in-1)->stat_struct.total_num_bits / kf_group_err);
+#endif
     twopass->kf_group_bits -= kf_bits;
 
     // Save the bits to spend on the key frame.
@@ -2762,7 +2838,26 @@ void set_rc_param(SequenceControlSet *scs_ptr) {
     encode_context_ptr->kf_cfg.auto_key = 0;
     encode_context_ptr->kf_cfg.key_freq_max = scs_ptr->static_config.intra_period_length + 1;
 }
+#if FTR_NEW_MULTI_PASS
+/******************************************************
+ * Read Stat from File
+ * reads StatStruct per frame from the file and stores under pcs_ptr
+ ******************************************************/
+static void read_stat_from_file(SequenceControlSet *scs_ptr) {
 
+    TWO_PASS *const twopass = &scs_ptr->twopass;
+    FIRSTPASS_STATS *this_frame = (FIRSTPASS_STATS *)twopass->stats_in;
+    uint64_t   total_num_bits = 0;
+
+    while (this_frame < twopass->stats_buf_ctx->stats_in_end){
+#if FTR_MULTI_PASS_API
+        total_num_bits += this_frame->stat_struct.total_num_bits;
+#endif
+        this_frame ++;
+    }
+    twopass->stats_buf_ctx->total_stats->stat_struct.total_num_bits = total_num_bits;
+}
+#endif
 void svt_av1_init_single_pass_lap(SequenceControlSet *scs_ptr) {
     TWO_PASS *const twopass = &scs_ptr->twopass;
     EncodeContext *encode_context_ptr = scs_ptr->encode_context_ptr;
@@ -2822,7 +2917,12 @@ void svt_av1_init_second_pass(SequenceControlSet *scs_ptr) {
 
   // This variable monitors how far behind the second ref update is lagging.
   twopass->sr_update_lag = 1;
-
+#if FTR_NEW_MULTI_PASS
+#if FTR_MULTI_PASS_API
+  if (twopass->passes == 3 && !is_middle_pass(scs_ptr))
+#endif
+      read_stat_from_file(scs_ptr);
+#endif
   // Scan the first pass file and calculate a modified total error based upon
   // the bias/power function used to allocate bits.
   {

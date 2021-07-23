@@ -161,6 +161,9 @@ typedef struct {
    * standard deviation for (0, 0) motion prediction error
    */
     double raw_error_stdev;
+#if FTR_NEW_MULTI_PASS
+    StatStruct stat_struct;
+#endif
 } FIRSTPASS_STATS;
 
 /*!\cond */
@@ -245,6 +248,9 @@ typedef struct {
     int extend_minq;
     int extend_maxq;
     int extend_minq_fast;
+#if FTR_NEW_MULTI_PASS
+    uint8_t    passes;
+#endif
     /*!\endcond */
 } TWO_PASS;
 

@@ -1016,12 +1016,14 @@ void *picture_manager_kernel(void *input_ptr) {
                         EB_MEMSET(child_pcs_ptr->ref_slice_type_array[REF_LIST_1],
                                   0,
                                   REF_LIST_MAX_DEPTH * sizeof(EB_SLICE));
+#if !FTR_NEW_MULTI_PASS
                         EB_MEMSET(child_pcs_ptr->ref_pic_referenced_area_avg_array[REF_LIST_0],
                                   0,
                                   REF_LIST_MAX_DEPTH * sizeof(uint64_t));
                         EB_MEMSET(child_pcs_ptr->ref_pic_referenced_area_avg_array[REF_LIST_1],
                                   0,
                                   REF_LIST_MAX_DEPTH * sizeof(uint64_t));
+#endif
                         EB_MEMSET(child_pcs_ptr->ref_pic_r0[REF_LIST_0],
                             0,
                             REF_LIST_MAX_DEPTH * sizeof(double));
@@ -1089,11 +1091,13 @@ void *picture_manager_kernel(void *input_ptr) {
                                         ((EbReferenceObject *)
                                              reference_entry_ptr->reference_object_ptr->object_ptr)
                                             ->slice_type;
+#if !FTR_NEW_MULTI_PASS
                                     child_pcs_ptr
                                         ->ref_pic_referenced_area_avg_array[REF_LIST_0][ref_idx] =
                                         ((EbReferenceObject *)
                                              reference_entry_ptr->reference_object_ptr->object_ptr)
                                             ->referenced_area_avg;
+#endif
                                     child_pcs_ptr
                                         ->ref_pic_r0[REF_LIST_0][ref_idx] =
                                         ((EbReferenceObject *)
@@ -1185,11 +1189,13 @@ void *picture_manager_kernel(void *input_ptr) {
                                         ((EbReferenceObject *)
                                              reference_entry_ptr->reference_object_ptr->object_ptr)
                                             ->slice_type;
+#if !FTR_NEW_MULTI_PASS
                                     child_pcs_ptr
                                         ->ref_pic_referenced_area_avg_array[REF_LIST_1][ref_idx] =
                                         ((EbReferenceObject *)
                                              reference_entry_ptr->reference_object_ptr->object_ptr)
                                             ->referenced_area_avg;
+#endif
                                     child_pcs_ptr
                                         ->ref_pic_r0[REF_LIST_1][ref_idx] =
                                         ((EbReferenceObject *)

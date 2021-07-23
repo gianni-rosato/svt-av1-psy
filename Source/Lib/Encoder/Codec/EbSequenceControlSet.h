@@ -45,7 +45,6 @@ typedef struct SequenceControlSet {
     EncodeContext *encode_context_ptr;
      /*!< 2ndpass enc mode, available at firstpass encoder */
      int8_t enc_mode_2ndpass;
-
     /*!< API structure */
     EbSvtAv1EncConfiguration static_config;
     /*!< Pointer to prediction structure containing the mini-gop information */
@@ -279,7 +278,11 @@ inline static EbBool use_input_stat(const SequenceControlSet *scs_ptr) {
 inline static EbBool use_output_stat(const SequenceControlSet *scs_ptr) {
     return scs_ptr->static_config.rc_firstpass_stats_out;
 }
-
+#if FTR_MULTI_PASS_API
+inline static EbBool is_middle_pass(const SequenceControlSet *scs_ptr) {
+    return scs_ptr->static_config.rc_middlepass_stats_out;
+}
+#endif
 #ifdef __cplusplus
 }
 #endif

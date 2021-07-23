@@ -156,6 +156,9 @@ void svt_av1_twopass_zero_stats(FIRSTPASS_STATS *section) {
     section->raw_error_stdev          = 0.0;
     section->pcnt_third_ref           = 0.0;
     section->tr_coded_error           = 0.0;
+#if FTR_NEW_MULTI_PASS
+    memset(&section->stat_struct, 0, sizeof(StatStruct));
+#endif
 }
 void svt_av1_accumulate_stats(FIRSTPASS_STATS *section, const FIRSTPASS_STATS *frame) {
     section->frame += frame->frame;
@@ -346,6 +349,9 @@ static void update_firstpass_stats(PictureParentControlSet *pcs_ptr, const FRAME
     // cpi->source_time_stamp.
     fps.duration = (double)ts_duration;
     }
+#if FTR_NEW_MULTI_PASS
+    memset(&fps.stat_struct, 0, sizeof(StatStruct));
+#endif
     // We will store the stats inside the persistent twopass struct (and NOT the
     // local variable 'fps'), and then cpi->output_pkt_list will point to it.
     *this_frame_stats = fps;

@@ -8,7 +8,6 @@
 * Media Patent License 1.0 was not distributed with this source code in the
 * PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
 */
-
 #include <stdlib.h>
 
 #include "EbEncHandle.h"
@@ -421,7 +420,6 @@ static EbErrorType realloc_output_bitstream(Bitstream *bitstream_ptr, uint32_t s
     }
     return EB_ErrorNone;
 }
-
 void *packetization_kernel(void *input_ptr) {
     // Context
     EbThreadContext *     thread_context_ptr = (EbThreadContext *)input_ptr;
@@ -820,6 +818,16 @@ void *packetization_kernel(void *input_ptr) {
 
         // Send the number of bytes per frame to RC
         pcs_ptr->parent_pcs_ptr->total_num_bits = output_stream_ptr->n_filled_len << 3;
+#if FTR_MULTI_PASS_API
+        if (scs_ptr->static_config.passes == 3 && is_middle_pass(scs_ptr)) {
+            StatStruct stat_struct;
+            stat_struct.poc = pcs_ptr->picture_number;
+            stat_struct.total_num_bits = pcs_ptr->parent_pcs_ptr->total_num_bits;
+            stat_struct.qindex = frm_hdr->quantization_params.base_q_idx;
+            stat_struct.worst_qindex = quantizer_to_qindex[(uint8_t)scs_ptr->static_config.qp];
+            (scs_ptr->twopass.stats_buf_ctx->stats_in_start + pcs_ptr->parent_pcs_ptr->picture_number)->stat_struct = stat_struct;
+        }
+#endif
         queue_entry_ptr->total_num_bits         = pcs_ptr->parent_pcs_ptr->total_num_bits;
         queue_entry_ptr->frame_type = frm_hdr->frame_type;
         queue_entry_ptr->poc        = pcs_ptr->picture_number;
