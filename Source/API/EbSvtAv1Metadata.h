@@ -19,6 +19,7 @@ extern "C" {
 #include <stdio.h>
 #include <string.h> //for 'memcpy'
 #include "EbSvtAv1.h"
+#include "EbSvtAv1Enc.h"
 
 struct EbBufferHeaderType;
 
@@ -110,6 +111,19 @@ EB_API int svt_add_metadata(struct EbBufferHeaderType *buffer, const uint32_t ty
  * \param[in]    type           Metadata type descriptor
  */
 EB_API size_t svt_metadata_size(SvtMetadataArrayT *metadata, const EbAv1MetadataType type);
+
+/*!\brief Parse string into EbSvtAv1MasteringDisplayInfo struct.
+ *
+ * Splits a string in the format of "G(x,y)B(x,y)R(x,Y)WP(x,y)L(max,min)" into
+ * a EbSvtAv1MasteringDisplayInfo struct.
+ *
+ * \param[in]    mdi           Pointer to EbSvtAv1MasteringDisplayInfo struct
+ * \param[in]    md_str       String to parse
+ *
+ * \return Returns 1 on success. 0 on failure.
+ */
+EB_API int svt_aom_parse_mastering_display(struct EbSvtAv1MasteringDisplayInfo *mdi,
+                                           const char *md_str);
 
 #ifdef __cplusplus
 }

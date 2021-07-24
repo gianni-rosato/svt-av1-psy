@@ -40,6 +40,28 @@ extern "C" {
 #define EB_BUFFERFLAG_ERROR_MASK \
     0xFFFFFFF0 // mask for signalling error assuming top flags fit in 4 bits. To be changed, if more flags are added.
 
+/*
+ * Struct for storing x and y chroma points, values are stored in BE format
+ */
+struct EbSvtAv1ChromaPoints {
+    uint16_t x;
+    uint16_t y;
+};
+
+/*
+ * Struct for storing mastering-display information
+ * values are stored in BE format
+ * Refer to the AV1 specification 6.7.4 for more details
+ */
+struct EbSvtAv1MasteringDisplayInfo {
+    struct EbSvtAv1ChromaPoints r;
+    struct EbSvtAv1ChromaPoints g;
+    struct EbSvtAv1ChromaPoints b;
+    struct EbSvtAv1ChromaPoints white_point;
+    uint32_t                    max_luma;
+    uint32_t                    min_luma;
+};
+
 /************************************************
  * Prediction Structure Config Entry
  *   Contains the basic reference lists and
@@ -766,6 +788,10 @@ typedef struct EbSvtAv1EncConfiguration {
     * 1: full swing.
     Default is 0. */
     uint8_t color_range;
+    /* Mastering display metadata
+    * values are from set using svt_aom_parse_mastering_display()
+    */
+    struct EbSvtAv1MasteringDisplayInfo mastering_display;
 } EbSvtAv1EncConfiguration;
 
 /**

@@ -9,9 +9,14 @@
 * PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
 */
 
+#include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
+#include <string.h>
 
 #include "EbSvtAv1Metadata.h"
+#include "EbSvtAv1Enc.h"
+#include "EbLog.h"
 
 EB_API SvtMetadataT *svt_metadata_alloc(
     const uint32_t type, const uint8_t *data, const size_t sz) {
@@ -105,4 +110,82 @@ EB_API size_t svt_metadata_size(SvtMetadataArrayT *metadata, const EbAv1Metadata
         }
     }
     return sz;
+}
+
+static inline uint16_t swap16(uint16_t x) { return x << 8 | x >> 8; }
+static inline uint32_t swap32(uint32_t x) {
+    return x >> 24 | (x >> 8 & 0xff00) | (x << 8 & 0xff0000) | x << 24;
+}
+static inline uint16_t clip16be(double x) { return swap16(x > 65535 ? 65535 : (uint16_t)x); }
+
+// Parses "(d1,d2)" into two double values and returns the pointer to after the closing parenthesis.
+// returns NULL if it fails
+static inline char *parse_double(const char *p, double *d1, double *d2) {
+    char *endptr;
+    if (*p != '(')
+        return NULL;
+    *d1 = strtod(p + 1, &endptr);
+    if (*endptr != ',')
+        return NULL;
+    *d2 = strtod(endptr + 1, &endptr);
+    return *endptr == ')' ? endptr + 1 : NULL;
+}
+
+EB_API int svt_aom_parse_mastering_display(struct EbSvtAv1MasteringDisplayInfo *mdi,
+                                           const char *                         md_str) {
+    if (!mdi || !md_str)
+        return 0;
+    double gx = 0, gy = 0, bx = 0, by = 0, rx = 0, ry = 0, wx = 0, wy = 0, max_luma = 0,
+           min_luma = 0;
+    while (md_str && *md_str) {
+        switch (*md_str) {
+        case 'G':
+        case 'g': md_str = parse_double(md_str + 1, &gx, &gy); break;
+        case 'B':
+        case 'b': md_str = parse_double(md_str + 1, &bx, &by); break;
+        case 'R':
+        case 'r': md_str = parse_double(md_str + 1, &rx, &ry); break;
+        case 'W':
+        case 'w': md_str = parse_double(md_str + 2, &wx, &wy); break;
+        case 'L':
+        case 'l': md_str = parse_double(md_str + 1, &max_luma, &min_luma); break;
+        default: break;
+        }
+    }
+#define between1(x) (x >= 0.0 && x <= 1.0)
+    if (!between1(gx) || !between1(gy) || !between1(bx) || !between1(by) || !between1(rx) ||
+        !between1(ry) || !between1(wx) || !between1(wy))
+        SVT_WARN("Invalid mastering display info will be clipped to 0.0 to 1.0\n");
+#undef between1
+    memset(mdi, 0, sizeof(*mdi));
+    rx       = round(rx * (1 << 16));
+    ry       = round(ry * (1 << 16));
+    gx       = round(gx * (1 << 16));
+    gy       = round(gy * (1 << 16));
+    bx       = round(bx * (1 << 16));
+    by       = round(by * (1 << 16));
+    wx       = round(wx * (1 << 16));
+    wy       = round(wy * (1 << 16));
+    max_luma = round(max_luma * (1 << 8));
+    min_luma = round(min_luma * (1 << 14));
+
+    mdi->r = (struct EbSvtAv1ChromaPoints){
+        .x = clip16be(rx),
+        .y = clip16be(ry),
+    };
+    mdi->g = (struct EbSvtAv1ChromaPoints){
+        .x = clip16be(gx),
+        .y = clip16be(gy),
+    };
+    mdi->b = (struct EbSvtAv1ChromaPoints){
+        .x = clip16be(bx),
+        .y = clip16be(by),
+    };
+    mdi->white_point = (struct EbSvtAv1ChromaPoints){
+        .x = clip16be(wx),
+        .y = clip16be(wy),
+    };
+    mdi->max_luma = swap32((uint32_t)max_luma);
+    mdi->min_luma = swap32((uint32_t)min_luma);
+    return 1;
 }

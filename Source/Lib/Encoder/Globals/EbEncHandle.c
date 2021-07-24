@@ -2978,6 +2978,7 @@ void copy_api_from_app(
     scs_ptr->static_config.transfer_characteristics = config_struct->transfer_characteristics;
     scs_ptr->static_config.matrix_coefficients = config_struct->matrix_coefficients;
     scs_ptr->static_config.color_range = config_struct->color_range;
+    scs_ptr->static_config.mastering_display = config_struct->mastering_display;
 
     return;
 }
@@ -3744,6 +3745,7 @@ EbErrorType svt_svt_enc_init_parameter(
     config_ptr->transfer_characteristics = 2;
     config_ptr->matrix_coefficients = 2;
     config_ptr->color_range = 0;
+    memset(&config_ptr->mastering_display, 0, sizeof(config_ptr->mastering_display));
 
     return return_error;
 }

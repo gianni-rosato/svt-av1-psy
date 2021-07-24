@@ -14,6 +14,7 @@
 #include <string.h>
 #include <sys/stat.h>
 
+#include "EbSvtAv1Metadata.h"
 #include "EbAppConfig.h"
 #include "EbAppContext.h"
 #include "EbAppInputy4m.h"
@@ -231,6 +232,7 @@
 #define TRANSFER_CHARACTERISTICS_NEW_TOKEN "--transfer-characteristics"
 #define MATRIX_COEFFICIENTS_NEW_TOKEN "--matrix-coefficients"
 #define COLOR_RANGE_NEW_TOKEN "--color-range"
+#define MASTERING_DISPLAY_TOKEN "--mastering-display"
 
 #ifdef _WIN32
 static HANDLE get_file_handle(FILE *fp) { return (HANDLE)_get_osfhandle(_fileno(fp)); }
@@ -794,6 +796,10 @@ static void set_cfg_matrix_coefficients(const char *value, EbConfig *cfg) {
 static void set_cfg_color_range(const char *value, EbConfig *cfg) {
     cfg->config.color_range = (uint8_t)strtoul(value, NULL, 0);
 }
+static void set_cfg_mastering_display(const char *value, EbConfig *cfg) {
+    if (!svt_aom_parse_mastering_display(&cfg->config.mastering_display, value))
+        fprintf(stderr, "Failed to parse mastering-display info properly\n");
+}
 
 enum CfgType {
     SINGLE_INPUT, // Configuration parameters that have only 1 value input
@@ -1297,6 +1303,11 @@ ConfigEntry config_entry_color_description[] = {
      "Color range, [0-1], 0: Studio (default), 1: Full",
      set_cfg_color_range},
 
+    {SINGLE_INPUT,
+     MASTERING_DISPLAY_TOKEN,
+     "String in the format of G(x,y)B(x,y)R(x,y)WP(x,y)L(max,min)",
+     set_cfg_mastering_display},
+
     // Termination
     {SINGLE_INPUT, NULL, NULL, NULL}};
 
@@ -1592,6 +1603,11 @@ ConfigEntry config_entry[] = {
      COLOR_RANGE_NEW_TOKEN,
      "ColorRange",
      set_cfg_color_range},
+
+    {SINGLE_INPUT,
+     MASTERING_DISPLAY_TOKEN,
+     "MasteringDisplay",
+     set_cfg_mastering_display},
 
     // Termination
     {SINGLE_INPUT, NULL, NULL, NULL}};

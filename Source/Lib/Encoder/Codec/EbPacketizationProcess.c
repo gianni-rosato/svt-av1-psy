@@ -453,6 +453,14 @@ void *packetization_kernel(void *input_ptr) {
         EbBufferHeaderType *output_stream_ptr = (EbBufferHeaderType *)
                                                     output_stream_wrapper_ptr->object_ptr;
 
+        if (frm_hdr->frame_type == KEY_FRAME) {
+            if (scs_ptr->static_config.mastering_display.max_luma)
+                svt_add_metadata(pcs_ptr->parent_pcs_ptr->input_ptr,
+                                 EB_AV1_METADATA_TYPE_HDR_MDCV,
+                                 (const uint8_t *)&scs_ptr->static_config.mastering_display,
+                                 sizeof(scs_ptr->static_config.mastering_display));  
+        }
+
         output_stream_ptr->flags = 0;
         output_stream_ptr->flags |=
             (encode_context_ptr->terminating_sequence_flag_received == EB_TRUE &&
