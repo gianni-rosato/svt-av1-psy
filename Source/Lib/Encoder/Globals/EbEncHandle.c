@@ -553,7 +553,8 @@ EbErrorType load_default_buffer_configuration_settings(
         /*Look-Ahead. Picture-Decision outputs pictures by group of mini-gops so
           the needed pictures for a certain look-ahead distance (LAD) should be rounded up to the next multiple of MiniGopSize.*/
         uint32_t mg_size = 1 << scs_ptr->static_config.hierarchical_levels;
-        uint32_t needed_lad_pictures = ((mg_size - 1) / mg_size) * mg_size;
+        // uint32_t needed_lad_pictures = ((mg_size - 1) / mg_size) * mg_size; // remove because always 0
+        uint32_t overlay = scs_ptr->static_config.enable_overlays ? 1 : 0;
 
         /*To accomodate FFMPEG EOS, 1 frame delay is needed in Resource coordination.
            note that we have the option to not add 1 frame delay of Resource Coordination. In this case we have wait for first I frame
@@ -561,18 +562,18 @@ EbErrorType load_default_buffer_configuration_settings(
         uint32_t eos_delay = 1;
 
         //Minimum input pictures needed in the pipeline
-        uint16_t lad_mg_pictures = (1 + mg_size)*scs_ptr->lad_mg; //Unit= 1(provision for a potential delayI) +  prediction struct
+        uint16_t lad_mg_pictures = (1 + mg_size + overlay) * scs_ptr->lad_mg; //Unit= 1(provision for a potential delayI) + prediction struct + potential overlay
         return_ppcs = (1 + mg_size) * (scs_ptr->lad_mg + 1)  + scs_ptr->scd_delay + eos_delay;
         //scs_ptr->input_buffer_fifo_init_count = return_ppcs;
         min_input = return_ppcs;
 
         if (scs_ptr->static_config.enable_overlays)
             //scs_ptr->picture_control_set_pool_init_count =
-            min_parent =  ((mg_size + 1) + eos_delay + scs_ptr->scd_delay) * 2 + //min to get a mini-gop in PD - release all and keep one.
-                needed_lad_pictures +
-                needed_lad_pictures / mg_size + 1;// Number of overlays in the look-ahead window
+            min_parent = (mg_size + eos_delay + scs_ptr->scd_delay) * 2 + //min to get a mini-gop in PD - release all and keep one.
+                         mg_size + 1 + // minigop in PM (+ 1 for key frame in the first minigop)
+                         overlay;      // overlay frame of minigop in PM
         else
-           min_parent = return_ppcs;
+            min_parent = return_ppcs;
 
         //Pic-Manager will inject one child at a time.
         min_child = 1;
@@ -594,8 +595,11 @@ EbErrorType load_default_buffer_configuration_settings(
 
         if (use_output_stat(scs_ptr))
             min_me = min_parent;
-        else if (scs_ptr->static_config.enable_tpl_la)
-            min_me = mg_size + 1 + lad_mg_pictures;
+        else if (scs_ptr->static_config.enable_tpl_la) {
+            // PictureDecisionContext.mg_size = mg_size + overlay; see EbPictureDecisionProcess.c line 5680
+            min_me = lad_mg_pictures +      // 1 + 16 + 1 ME data used in store_tpl_pictures() at line 5717
+                     (mg_size + overlay);   //     16 + 1 ME data used in store_tpl_pictures() at line 5729
+        }
         else
             min_me = 1;
 
@@ -611,14 +615,6 @@ EbErrorType load_default_buffer_configuration_settings(
         //Overlays
         min_overlay = scs_ptr->static_config.enable_overlays ?
               mg_size + eos_delay + scs_ptr->scd_delay : 1;
-    }
-
-    // workaround for hang issue if "--lp 1 --enable-overlays 1" or "--lp 2 --enable-overlays 1"
-    if (core_count == SINGLE_CORE_COUNT || core_count == (SINGLE_CORE_COUNT << 1) || MIN_PIC_PARALLELIZATION) {
-        if (scs_ptr->static_config.enable_overlays) {
-            min_parent = scs_ptr->picture_control_set_pool_init_count;
-            min_me = scs_ptr->picture_control_set_pool_init_count;
-        }
     }
 
     if (core_count == SINGLE_CORE_COUNT || MIN_PIC_PARALLELIZATION) {
