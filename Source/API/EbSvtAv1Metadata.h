@@ -125,6 +125,19 @@ EB_API size_t svt_metadata_size(SvtMetadataArrayT *metadata, const EbAv1Metadata
 EB_API int svt_aom_parse_mastering_display(struct EbSvtAv1MasteringDisplayInfo *mdi,
                                            const char *md_str);
 
+/*!\brief Parse string into EbContentLightLevel struct.
+ *
+ * Splits a string in the format of "max_cll,max_fall" into
+ * a EbContentLightLevel struct.
+ *
+ * \param[in]    cll           Pointer to EbContentLightLevel struct
+ * \param[in]    cll_str       String to parse
+ *
+ * \return Returns 1 on success. 0 on failure.
+ */
+EB_API int svt_aom_parse_content_light_level(struct EbContentLightLevel *cll,
+                                             const char *cll_str);
+
 #ifdef __cplusplus
 }
 #endif // __cplusplus

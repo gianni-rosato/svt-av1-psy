@@ -41,6 +41,16 @@ extern "C" {
     0xFFFFFFF0 // mask for signalling error assuming top flags fit in 4 bits. To be changed, if more flags are added.
 
 /*
+ * Struct for storing content light level information
+ * Values are stored in BE format
+ * Refer to the AV1 specification 6.7.3 for more details
+ */
+struct EbContentLightLevel {
+    uint16_t max_cll;
+    uint16_t max_fall;
+};
+
+/*
  * Struct for storing x and y chroma points, values are stored in BE format
  */
 struct EbSvtAv1ChromaPoints {
@@ -792,6 +802,10 @@ typedef struct EbSvtAv1EncConfiguration {
     * values are from set using svt_aom_parse_mastering_display()
     */
     struct EbSvtAv1MasteringDisplayInfo mastering_display;
+    /* Content light level
+    * values are from set using svt_aom_parse_content_light_level()
+    */
+    struct EbContentLightLevel content_light_level;
 } EbSvtAv1EncConfiguration;
 
 /**

@@ -189,3 +189,22 @@ EB_API int svt_aom_parse_mastering_display(struct EbSvtAv1MasteringDisplayInfo *
     mdi->min_luma = swap32((uint32_t)min_luma);
     return 1;
 }
+
+EB_API int svt_aom_parse_content_light_level(struct EbContentLightLevel *cll, const char *cll_str) {
+    if (!cll || !cll_str)
+        return 0;
+    char * endptr;
+    double max_cll = strtod(cll_str, &endptr);
+    if (*endptr != ',')
+        goto fail;
+    double max_fall = strtod(endptr + 1, &endptr);
+    if (*endptr)
+        goto fail;
+    cll->max_cll  = clip16be(max_cll);
+    cll->max_fall = clip16be(max_fall);
+    return 1;
+
+fail:
+    SVT_WARN("Invalid cll provided\n");
+    return 0;
+}

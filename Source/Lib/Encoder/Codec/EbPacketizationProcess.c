@@ -458,7 +458,12 @@ void *packetization_kernel(void *input_ptr) {
                 svt_add_metadata(pcs_ptr->parent_pcs_ptr->input_ptr,
                                  EB_AV1_METADATA_TYPE_HDR_MDCV,
                                  (const uint8_t *)&scs_ptr->static_config.mastering_display,
-                                 sizeof(scs_ptr->static_config.mastering_display));  
+                                 sizeof(scs_ptr->static_config.mastering_display));
+            if (scs_ptr->static_config.content_light_level.max_cll)
+                svt_add_metadata(pcs_ptr->parent_pcs_ptr->input_ptr,
+                                 EB_AV1_METADATA_TYPE_HDR_CLL,
+                                 (const uint8_t *)&scs_ptr->static_config.content_light_level,
+                                 sizeof(scs_ptr->static_config.content_light_level));
         }
 
         output_stream_ptr->flags = 0;

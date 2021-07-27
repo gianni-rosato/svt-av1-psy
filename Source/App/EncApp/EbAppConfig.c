@@ -233,6 +233,7 @@
 #define MATRIX_COEFFICIENTS_NEW_TOKEN "--matrix-coefficients"
 #define COLOR_RANGE_NEW_TOKEN "--color-range"
 #define MASTERING_DISPLAY_TOKEN "--mastering-display"
+#define CONTENT_LIGHT_LEVEL_TOKEN "--content-light"
 
 #ifdef _WIN32
 static HANDLE get_file_handle(FILE *fp) { return (HANDLE)_get_osfhandle(_fileno(fp)); }
@@ -800,6 +801,10 @@ static void set_cfg_mastering_display(const char *value, EbConfig *cfg) {
     if (!svt_aom_parse_mastering_display(&cfg->config.mastering_display, value))
         fprintf(stderr, "Failed to parse mastering-display info properly\n");
 }
+static void set_cfg_content_light(const char *value, EbConfig *cfg) {
+    if (!svt_aom_parse_content_light_level(&cfg->config.content_light_level, value))
+        fprintf(stderr, "Failed to parse content light level info properly\n");
+}
 
 enum CfgType {
     SINGLE_INPUT, // Configuration parameters that have only 1 value input
@@ -1308,6 +1313,11 @@ ConfigEntry config_entry_color_description[] = {
      "String in the format of G(x,y)B(x,y)R(x,y)WP(x,y)L(max,min)",
      set_cfg_mastering_display},
 
+    {SINGLE_INPUT,
+     CONTENT_LIGHT_LEVEL_TOKEN,
+     "String in the format of max_cll,max_fall",
+     set_cfg_content_light},
+
     // Termination
     {SINGLE_INPUT, NULL, NULL, NULL}};
 
@@ -1608,6 +1618,11 @@ ConfigEntry config_entry[] = {
      MASTERING_DISPLAY_TOKEN,
      "MasteringDisplay",
      set_cfg_mastering_display},
+
+     {SINGLE_INPUT,
+     CONTENT_LIGHT_LEVEL_TOKEN,
+     "ContentLightLevel",
+     set_cfg_content_light},
 
     // Termination
     {SINGLE_INPUT, NULL, NULL, NULL}};
