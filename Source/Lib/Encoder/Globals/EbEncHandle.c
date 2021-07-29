@@ -609,8 +609,12 @@ EbErrorType load_default_buffer_configuration_settings(
         uint16_t num_pa_ref_from_cur_mg = mg_size; //ref+nref; nRef PA buffers are processed in PicAnalysis and used in TF
         uint16_t num_pa_ref_for_cur_mg = num_pa_ref_from_past_mgs + num_pa_ref_from_cur_mg;
         min_paref = num_pa_ref_for_cur_mg + lad_mg_pictures + scs_ptr->scd_delay + eos_delay ;
-        if (scs_ptr->static_config.enable_overlays)
-            min_paref *= 2;
+        if (scs_ptr->static_config.enable_overlays) {
+            // the additional paref count for overlay is mg_size + scs_ptr->scd_delay.
+            // in resource_coordination, allocate 1 additional paref for each potential overlay picture in minigop. (line 1259)
+            // in picture_decision, for each minigop, keep 1 paref for the real overlay picture and release others. (line 5109)
+            min_paref += mg_size + scs_ptr->scd_delay; // min_paref *= 2;
+        }
 
         //Overlays
         min_overlay = scs_ptr->static_config.enable_overlays ?
