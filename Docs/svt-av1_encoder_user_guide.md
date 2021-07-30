@@ -294,10 +294,12 @@ for this command line, corresponding qindex are:
 the DEFAULT option would allow the encoder to choose adaptively any of the values in the range for that option whether on a preset, picture, or SB level.
 | **ChannelNumber** | --nch | [1 - 6] | 1 | Number of encode instances |
 | **StatReport** | --enable-stat-report | [0-1] | 0 | When set to 1, calculates and outputs average PSNR values |
-| **ColorPrimaries** | --color-primaries | [0-12, 22] | 2 | Set color primaries, please see the subsection 6.4.2 of the [AV1 Bitstream & Decoding Process Specification](https://aomediacodec.github.io/av1-spec/av1-spec.pdf) for details |
-| **TransferCharacteristics** | --transfer-characteristics | [0-22] | 2 | Set transfer characteristics, please see the subsection 6.4.2 of the [AV1 Bitstream & Decoding Process Specification](https://aomediacodec.github.io/av1-spec/av1-spec.pdf) for details |
-| **MatrixCoefficients** | --matrix-coefficients | [0-14] | 2 | Set matrix coefficients, please see the subsection 6.4.2 of the [AV1 Bitstream &; Decoding Process Specification](https://aomediacodec.github.io/av1-spec/av1-spec.pdf) for details |
-| **ColorRange** | --color-range | [0-1] | 0 | Set color range, please see the subsection 6.4.2 of the [AV1 Bitstream &; Decoding Process Specification](https://aomediacodec.github.io/av1-spec/av1-spec.pdf) for details |
+| **ColorPrimaries** | --color-primaries | [0-12, 22] | 2 | Set color primaries, please see the subsection 6.4.2 of the [AV1 Bitstream & Decoding Process Specification](https://aomediacodec.github.io/av1-spec/av1-spec.pdf) for details. Refer to Appendix A.2 for an example |
+| **TransferCharacteristics** | --transfer-characteristics | [0-22] | 2 | Set transfer characteristics, please see the subsection 6.4.2 of the [AV1 Bitstream & Decoding Process Specification](https://aomediacodec.github.io/av1-spec/av1-spec.pdf) for details. Refer to Appendix A.2 for an example |
+| **MatrixCoefficients** | --matrix-coefficients | [0-14] | 2 | Set matrix coefficients, please see the subsection 6.4.2 of the [AV1 Bitstream &; Decoding Process Specification](https://aomediacodec.github.io/av1-spec/av1-spec.pdf) for details. Refer to Appendix A.2 for an example |
+| **ColorRange** | --color-range | [0-1] | 0 | Set color range, please see the subsection 6.4.2 of the [AV1 Bitstream &; Decoding Process Specification](https://aomediacodec.github.io/av1-spec/av1-spec.pdf) for details. Refer to Appendix A.2 for an example |
+| **MasteringDisplay** | --mastering-display | any string | none | Set mastering display metadata in the format of "G(x,y)B(x,y)R(x,y)WP(x,y)L(max,min)", please see the subsection 6.7.4 of the [AV1 Bitstream &; Decoding Process Specification](https://aomediacodec.github.io/av1-spec/av1-spec.pdf) for details. Refer to Appendix A.2 for an example |
+| **ContentLightLevel** | --content-light | any string | none | Set content light level in the format of "max_cll,max_fall", please see the subsection 6.7.3 of the [AV1 Bitstream &; Decoding Process Specification](https://aomediacodec.github.io/av1-spec/av1-spec.pdf) for details. Refer to Appendix A.2 for an example |
 
 ## Appendix A Encoder Parameters
 
@@ -338,3 +340,34 @@ Example: 72 core machine:
 18 jobs x --lp 4 --unpin 1
 
 (`-ss`) and (`-unpin 1`) is not a valid combination.(`-unpin`) is overwritten to 0 when (`-ss`) is used.
+
+### 2. AV1 metadata
+
+MasteringDisplay (`--mastering-display`) and ContentLightLevel (`--content-light`) parameters are used to set the mastering display and content light level in the AV1 bitstream.
+MasteringDisplay takes the format of `G(x,y)B(x,y)R(x,y)WP(x,y)L(max,min)` where `G(x,y)` is the green channel of the mastering display, `B(x,y)` is the blue channel of the mastering display, `R(x,y)` is the red channel of the mastering display, `WP(x,y)` is the white point of the mastering display, and `L(max,min)` is the light level of the mastering display.
+the x and y values can be coordinates from 0.0 to 1.0 as specified in CIE 1931 while the min,max values can be floating point values representing candelas per square meter.
+
+Examples:
+
+```bash
+SvtAv1EncApp -i int.y4m -b out.ivf \
+    --mastering-display "G(0.2649,0.6900)B(0.1500,0.0600)R(0.6800,0.3200)WP(0.3127,0.3290)L(1000.0,1)" \
+    --content-light 100,50 \
+    --color-primaries 9 \
+    --transfer-characteristics 16 \
+    --matrix-coefficients 9
+    # Color primary 9 is BT.2020, BT.2100
+    # Transfer characteristic 16 is SMPTE ST 2084, ITU BT.2100 PQ
+    # matrix coefficients 9 is BT.2020 non-constant luminance, BT.2100 YCbCr
+
+# or
+
+ffmpeg -i in.mp4 -strict -1 -f yuv4mpegpipe - |
+  SvtAv1EncApp -i stdin -b stdout \
+    --mastering-display "G(0.2649,0.6900)B(0.1500,0.0600)R(0.6800,0.3200)WP(0.3127,0.3290)L(1000.0,1)" \
+    --content-light 100,50 \
+    --color-primaries 9 \
+    --transfer-characteristics 16 \
+    --matrix-coefficients 9 |
+  ffmpeg -y -i - -i audio.ogg -c copy out.mp4
+```
