@@ -134,10 +134,11 @@ static const std::vector<EncTestSetting> default_enc_settings = {
     {"DlfTest1", {{"LoopFilterDisable", "1"}}, default_test_vectors},
 
     // test film_grain_denoise_strength, default is 0
-    {"FilmGrainTest1", {{"FilmGrain", "1"}}, default_test_vectors},
-    {"FilmGrainTest2", {{"FilmGrain", "0"}, {"BlankFrame", "10"}}, default_test_vectors},
+    {"FilmGrainTest1", {{"FilmGrain", "0"}, {"BlankFrame", "10"}}, default_test_vectors},
+    {"FilmGrainTest2", {{"FilmGrain", "1"}, {"BlankFrame", "10"}}, default_test_vectors},
     {"FilmGrainTest3", {{"FilmGrain", "6"}, {"BlankFrame", "10"}}, default_test_vectors},
-    {"FilmGrainTest4", {{"FilmGrain", "50"}, {"BlankFrame", "10"}}, default_test_vectors},
+    {"FilmGrainTest4", {{"FilmGrain", "10"}, {"BlankFrame", "10"}}, default_test_vectors},
+    {"FilmGrainTest5", {{"FilmGrain", "50"}, {"BlankFrame", "10"}}, default_test_vectors},
 
     // Skip enable_denoise_flag, enable_warped_motion, in_loop_me_flag
     // partition_depth and ext_block_flag, since they are
