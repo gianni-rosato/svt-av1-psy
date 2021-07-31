@@ -2606,8 +2606,7 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     scs_ptr->right_padding = BLOCK_SIZE_64 + 4;
     scs_ptr->bot_padding = scs_ptr->static_config.super_block_size + 4;
     scs_ptr->static_config.enable_overlays = scs_ptr->static_config.tf_level == 0 ||
-        (scs_ptr->static_config.rate_control_mode > 0) ||
-        scs_ptr->static_config.encoder_bit_depth != EB_8BIT ?
+        (scs_ptr->static_config.rate_control_mode > 0) ?
         0 : scs_ptr->static_config.enable_overlays;
     //0: ON
     //1: OFF
