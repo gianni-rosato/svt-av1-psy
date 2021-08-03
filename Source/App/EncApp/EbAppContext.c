@@ -195,11 +195,21 @@ EbErrorType allocate_output_recon_buffers(EbConfig *config, EbAppContext *callba
     // Initialize Header
     callback_data->recon_buffer->size = sizeof(EbBufferHeaderType);
 
+#if CLN_RTIME_MEM_ALLOC
+    if (config->config.recon_enabled) {
+        EB_APP_MALLOC(uint8_t *,
+            callback_data->recon_buffer->p_buffer,
+            frame_size,
+            EB_N_PTR,
+            EB_ErrorInsufficientResources);
+    }
+#else
     EB_APP_MALLOC(uint8_t *,
                   callback_data->recon_buffer->p_buffer,
                   frame_size,
                   EB_N_PTR,
                   EB_ErrorInsufficientResources);
+#endif
 
     callback_data->recon_buffer->n_alloc_len   = (uint32_t)frame_size;
     callback_data->recon_buffer->p_app_private = NULL;

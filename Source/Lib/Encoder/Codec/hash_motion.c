@@ -95,7 +95,11 @@ void svt_av1_hash_table_destroy(HashTable *p_hash_table) {
     p_hash_table->p_lookup_table = NULL;
 }
 
+#if CLN_RTIME_MEM_ALLOC
+EbErrorType rtime_alloc_svt_av1_hash_table_create(HashTable *p_hash_table) {
+#else
 EbErrorType svt_av1_hash_table_create(HashTable *p_hash_table) {
+#endif
     EbErrorType err_code = EB_ErrorNone;
     ;
 
@@ -250,7 +254,11 @@ void svt_av1_generate_block_hash_value(const Yv12BufferConfig *picture, int bloc
     }
 }
 
+#if CLN_RTIME_MEM_ALLOC
+void rtime_alloc_svt_av1_add_to_hash_map_by_row_with_precal_data(HashTable *p_hash_table, uint32_t *pic_hash[2],
+#else
 void svt_av1_add_to_hash_map_by_row_with_precal_data(HashTable *p_hash_table, uint32_t *pic_hash[2],
+#endif
                                                      int8_t *pic_is_same, int pic_width,
                                                      int pic_height, int block_size) {
     const int x_end = pic_width - block_size + 1;

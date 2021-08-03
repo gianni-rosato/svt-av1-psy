@@ -57,6 +57,9 @@ extern PredictionStructureConfigEntry six_level_hierarchical_pred_struct[];
 void  get_max_allocated_me_refs(uint8_t mrp_level, uint8_t* max_ref_to_alloc, uint8_t* max_cand_to_alloc);
 #endif
 void init_resize_picture(SequenceControlSet* scs_ptr, PictureParentControlSet* pcs_ptr);
+#if OPT_IBC_HASH_SEARCH
+uint8_t get_disallow_4x4(EbEncMode enc_mode, EB_SLICE slice_type);
+#endif
 
 uint64_t  get_ref_poc(PictureDecisionContext *context, uint64_t curr_picture_number, int32_t delta_poc)
 {
@@ -1823,6 +1826,50 @@ void set_dlf_controls(PictureParentControlSet* pcs_ptr, uint8_t dlf_level) {
 uint16_t  get_max_can_count(EbEncMode enc_mode );
 
 #endif
+#if OPT_IBC_HASH_SEARCH
+void set_intrabc_level(PictureParentControlSet* pcs_ptr, SequenceControlSet *scs_ptr, uint8_t ibc_level) {
+    IntraBCCtrls* intraBC_ctrls = &pcs_ptr->intraBC_ctrls;
+
+    switch (ibc_level) {
+    case 0:
+        intraBC_ctrls->enabled = 0;
+        break;
+    case 1:
+        intraBC_ctrls->enabled = pcs_ptr->sc_class1;
+        intraBC_ctrls->ibc_mode = 1;
+        intraBC_ctrls->hash_4x4_blocks = !get_disallow_4x4(pcs_ptr->enc_mode, pcs_ptr->slice_type);
+        intraBC_ctrls->max_block_size_hash = scs_ptr->static_config.super_block_size;
+        break;
+    case 2:
+        intraBC_ctrls->enabled = pcs_ptr->sc_class1;
+        intraBC_ctrls->ibc_mode = 2;
+        intraBC_ctrls->hash_4x4_blocks = !get_disallow_4x4(pcs_ptr->enc_mode, pcs_ptr->slice_type);
+        intraBC_ctrls->max_block_size_hash = scs_ptr->static_config.super_block_size;
+        break;
+    case 3:
+        intraBC_ctrls->enabled = pcs_ptr->sc_class1;
+        intraBC_ctrls->ibc_mode = 2;
+        intraBC_ctrls->hash_4x4_blocks = !get_disallow_4x4(pcs_ptr->enc_mode, pcs_ptr->slice_type);
+        intraBC_ctrls->max_block_size_hash = block_size_wide[BLOCK_16X16];
+        break;
+    case 4:
+        intraBC_ctrls->enabled = pcs_ptr->sc_class1;
+        intraBC_ctrls->ibc_mode = 2;
+        intraBC_ctrls->hash_4x4_blocks = !get_disallow_4x4(pcs_ptr->enc_mode, pcs_ptr->slice_type);
+        intraBC_ctrls->max_block_size_hash = block_size_wide[BLOCK_8X8];
+        break;
+    case 5:
+        intraBC_ctrls->enabled = pcs_ptr->sc_class1;
+        intraBC_ctrls->ibc_mode = 3;
+        intraBC_ctrls->hash_4x4_blocks = !get_disallow_4x4(pcs_ptr->enc_mode, pcs_ptr->slice_type);
+        intraBC_ctrls->max_block_size_hash = block_size_wide[BLOCK_8X8];
+        break;
+    default:
+        assert(0);
+        break;
+    }
+}
+#endif
 /******************************************************
 * Derive Multi-Processes Settings for OQ
 Input   : encoder mode and tune
@@ -1960,6 +2007,19 @@ EbErrorType signal_derivation_multi_processes_oq(
     if (pcs_ptr->slice_type == I_SLICE) {
         frm_hdr->allow_screen_content_tools = pcs_ptr->sc_class1;
         if (scs_ptr->static_config.intrabc_mode == DEFAULT) {
+#if OPT_IBC_HASH_SEARCH
+            uint8_t intrabc_level = 0;
+            if (pcs_ptr->enc_mode <= ENC_M5)
+                intrabc_level = 1;
+            else if (pcs_ptr->enc_mode <= ENC_M7)
+                intrabc_level = 3;
+            else if (pcs_ptr->enc_mode <= ENC_M11)
+                intrabc_level = 4;
+            else
+                intrabc_level = 5;
+            set_intrabc_level(pcs_ptr, scs_ptr, intrabc_level);
+            frm_hdr->allow_intrabc = pcs_ptr->intraBC_ctrls.enabled;
+#else
             // ENABLE/DISABLE IBC
 #if TUNE_M11
             if (pcs_ptr->enc_mode <= ENC_M11)
@@ -1978,17 +2038,26 @@ EbErrorType signal_derivation_multi_processes_oq(
             } else {
                 pcs_ptr->ibc_mode = 2; // Faster
             }
-
+#endif
         } else {
+#if OPT_IBC_HASH_SEARCH
+            frm_hdr->allow_intrabc =  (uint8_t)(scs_ptr->static_config.intrabc_mode > 0);
+            pcs_ptr->intraBC_ctrls.hash_4x4_blocks = !get_disallow_4x4(pcs_ptr->enc_mode, pcs_ptr->slice_type);
+            pcs_ptr->intraBC_ctrls.ibc_mode = (uint8_t)scs_ptr->static_config.intrabc_mode;
+            pcs_ptr->intraBC_ctrls.max_block_size_hash = scs_ptr->static_config.super_block_size;
+#else
             frm_hdr->allow_intrabc =  (uint8_t)(scs_ptr->static_config.intrabc_mode > 0);
             pcs_ptr->ibc_mode = (uint8_t)scs_ptr->static_config.intrabc_mode;
+#endif
         }
     }
     else {
         //this will enable sc tools for P frames. hence change Bitstream even if palette mode is OFF
         frm_hdr->allow_screen_content_tools = pcs_ptr->sc_class1;
         frm_hdr->allow_intrabc = 0;
+#if !OPT_IBC_HASH_SEARCH
         pcs_ptr->ibc_mode = 0; // OFF
+#endif
     }
 #if ADJUST_LAMBDA
     pcs_ptr->adjust_lambda_sb = (pcs_ptr->enc_mode <= ENC_M9) ? (!frm_hdr->allow_intrabc ? 1 : 0) : 0;
@@ -2097,7 +2166,7 @@ EbErrorType signal_derivation_multi_processes_oq(
 #if TUNE_M0_M7_MEGA_FEB && !TUNE_M5_M6
             else if (pcs_ptr->enc_mode <= ENC_M6)
 #else
-#if TUNE_M10_M0
+#if TUNE_M10_M0 && !TUNE_M6_MT
             else if (pcs_ptr->enc_mode <= ENC_M6)
 #else
             else if (pcs_ptr->enc_mode <= ENC_M5)
@@ -2151,7 +2220,11 @@ EbErrorType signal_derivation_multi_processes_oq(
 #if FTR_CDEF_BIAS_ZERO_COST
             else if (pcs_ptr->enc_mode <= ENC_M11)
 #if TUNE_REMOVE_CDEF_COST_BIAS
+#if TUNE_4K_M11
+                pcs_ptr->cdef_level = (scs_ptr->input_resolution <= INPUT_SIZE_1080p_RANGE) ? (pcs_ptr->temporal_layer_index == 0 ? 15 : pcs_ptr->is_used_as_reference_flag ? 16 : 17) : (pcs_ptr->temporal_layer_index == 0 ? 13 : pcs_ptr->is_used_as_reference_flag ? 13 : 14);
+#else
                 pcs_ptr->cdef_level = (scs_ptr->input_resolution <= INPUT_SIZE_1080p_RANGE) ? (pcs_ptr->temporal_layer_index == 0 ? 15 : pcs_ptr->is_used_as_reference_flag ? 16 : 17) : (pcs_ptr->temporal_layer_index == 0 ? 12 : pcs_ptr->is_used_as_reference_flag ? 13 : 14);
+#endif
 #else
                 pcs_ptr->cdef_level = pcs_ptr->temporal_layer_index == 0 ? 12 : pcs_ptr->is_used_as_reference_flag ? 13 : 14;
 #endif
@@ -2480,6 +2553,10 @@ EbErrorType signal_derivation_multi_processes_oq(
             list0_only_base = 0;
         else if (scs_ptr->input_resolution <= INPUT_SIZE_1080p_RANGE)
             list0_only_base = 3;
+#if TUNE_M8_M10_4K_SUPER
+        else
+            list0_only_base = 4;
+#endif
     }
 #else
     {
@@ -2545,6 +2622,12 @@ EbErrorType signal_derivation_multi_processes_oq(
         pcs_ptr->hbd_mode_decision = scs_ptr->static_config.enable_hbd_mode_decision;
 #if TUNE_MDS0
     pcs_ptr->max_can_count = get_max_can_count(pcs_ptr->enc_mode );
+#endif
+#if FTR_MVP_BEST_ME_LIST
+    if (pcs_ptr->enc_mode <= ENC_M9)
+        pcs_ptr->use_best_me_unipred_cand_only = 0;
+    else
+        pcs_ptr->use_best_me_unipred_cand_only = 1;
 #endif
     return return_error;
 }
@@ -5388,6 +5471,9 @@ void tpl_regular_setup_me_refs(
 
             uint64_t ref_poc = cur_pcs->ref_pic_poc_array[list_index][ref_idx];
 
+#if FIX_TPL_NON_VALID_REF
+            cur_pcs->tpl_data.ref_tpl_group_idx[list_index][ref_idx] = -1;
+#endif
             for (uint32_t j = 0; j < base_pcs->tpl_group_size; j++) {
                 if (ref_poc == base_pcs->tpl_group[j]->picture_number) {
                     cur_pcs->tpl_data.ref_in_slide_window[list_index][ref_idx] = EB_TRUE;
@@ -5432,6 +5518,9 @@ void tpl_prep_info(PictureParentControlSet    *pcs) {
              pcs_tpl->tpl_data.is_used_as_reference_flag = pcs_tpl->is_used_as_reference_flag;
              pcs_tpl->tpl_data.tpl_decode_order = pcs_tpl->decode_order;
 
+#if FIX_TPL_NON_VALID_REF
+             pcs_tpl->tpl_data.base_pcs = pcs;
+#endif
 
              if (pcs_tpl->tpl_data.tpl_slice_type != I_SLICE) {
                 tpl_regular_setup_me_refs(
@@ -7386,7 +7475,11 @@ void* picture_decision_kernel(void *input_ptr)
                             context_ptr->prev_delayed_intra = NULL;
                             send_picture_out(scs_ptr, pcs_ptr, context_ptr);
                         }
-
+#if FIX_SANITIZER_RACE_CONDS
+                        if (pcs_ptr->reference_picture_wrapper_ptr != NULL)
+                            ((EbReferenceObject *)pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->average_intensity =
+                            pcs_ptr->average_intensity[0];
+#endif
 
                        //split MG into two for these two special cases
                        uint8_t ldp_delayi_mg = 0;

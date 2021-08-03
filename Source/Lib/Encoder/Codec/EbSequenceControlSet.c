@@ -445,6 +445,12 @@ extern EbErrorType sb_params_init(SequenceControlSet *scs_ptr) {
     return return_error;
 }
 
+#if CLN_RTIME_MEM_ALLOC
+EbErrorType rtime_alloc_sb_geom(SequenceControlSet* scs_ptr, uint32_t size) {
+    EB_MALLOC_ARRAY(scs_ptr->sb_geom, size);
+    return EB_ErrorNone;
+}
+#endif
 EbErrorType sb_geom_init(SequenceControlSet *scs_ptr) {
     uint16_t sb_index;
     uint16_t md_scan_block_index;
@@ -454,7 +460,11 @@ EbErrorType sb_geom_init(SequenceControlSet *scs_ptr) {
         scs_ptr->sb_size_pix;
 
     EB_FREE_ARRAY(scs_ptr->sb_geom);
+#if CLN_RTIME_MEM_ALLOC
+    rtime_alloc_sb_geom(scs_ptr, picture_sb_width * picture_sb_height);
+#else
     EB_MALLOC_ARRAY(scs_ptr->sb_geom, picture_sb_width * picture_sb_height);
+#endif
 
     for (sb_index = 0; sb_index < picture_sb_width * picture_sb_height; ++sb_index) {
         scs_ptr->sb_geom[sb_index].horizontal_index = sb_index % picture_sb_width;

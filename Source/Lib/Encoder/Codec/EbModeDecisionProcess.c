@@ -249,6 +249,7 @@ EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr, EbColor
         context_ptr->fast_candidate_ptr_array[cand_index]->palette_info = NULL;
     }
 #endif
+
     for (int cd = 0; cd < MAX_PAL_CAND; cd++)
         if (cfg_palette)
             EB_MALLOC_ARRAY(context_ptr->palette_cand_array[cd].color_idx_map, MAX_PALETTE_SQUARE);

@@ -3028,6 +3028,14 @@ static const uint8_t me_idx_85_8x8_to_16x16_conversion[] = {
     17,17,    18,18,    19,19,    20,20
 };
 #endif
+#if OPT_IBC_HASH_SEARCH
+typedef enum IntrabcMotionDirection
+{
+    IBC_MOTION_ABOVE,
+    IBC_MOTION_LEFT,
+    IBC_MOTION_DIRECTIONS
+} IntrabcMotionDirection;
+#endif
 #if !CLN_GEOM
 static const uint16_t ep_to_pa_block_index[BLOCK_MAX_COUNT_SB_64] = {
     0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,

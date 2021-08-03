@@ -1332,7 +1332,11 @@ int svt_av1_full_pixel_search(PictureControlSet *pcs, IntraBcContext *x, BlockSi
 
     int32_t ibc_shift = 0;
     //IBC Modes:   0: OFF 1:Slow   2:Faster   3:Fastest
+#if OPT_IBC_HASH_SEARCH
+    if (pcs->parent_pcs_ptr->intraBC_ctrls.ibc_mode > 1)
+#else
     if (pcs->parent_pcs_ptr->ibc_mode > 1)
+#endif
         ibc_shift = 1;
 
     SpeedFeatures *sf              = &pcs->sf;
@@ -1419,7 +1423,11 @@ int svt_av1_full_pixel_search(PictureControlSet *pcs, IntraBcContext *x, BlockSi
         // get block size and original buffer of current block
         const int block_height = block_size_high[bsize];
         const int block_width  = block_size_wide[bsize];
+#if OPT_IBC_HASH_SEARCH
+        if (block_height == block_width && x_pos >= 0 && y_pos >= 0 && block_width <= pcs->parent_pcs_ptr->intraBC_ctrls.max_block_size_hash) {
+#else
         if (block_height == block_width && x_pos >= 0 && y_pos >= 0) {
+#endif
             if (block_width == 4 || block_width == 8 || block_width == 16 || block_width == 32 ||
                 block_width == 64 || block_width == 128) {
                 uint8_t * what        = x->plane[0].src.buf;

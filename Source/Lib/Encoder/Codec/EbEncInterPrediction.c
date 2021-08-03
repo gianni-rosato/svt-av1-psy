@@ -4743,10 +4743,19 @@ EbErrorType av1_inter_prediction_light_pd1(
     EbPictureBufferDesc *pred_pic,
     uint16_t dst_origin_x,
     uint16_t dst_origin_y,
+#if FTR_10BIT_MDS3_LPD1
+    uint32_t component_mask,
+    uint8_t hbd_mode_decision)
+#else
     uint32_t component_mask
 )
+#endif
 {
     EbErrorType return_error = EB_ErrorNone;
+#if FTR_10BIT_MDS3_LPD1
+    int32_t bit_depth = hbd_mode_decision ? EB_10BIT : EB_8BIT;
+    uint8_t is_16bit = hbd_mode_decision ? 1 : 0;
+#endif
     uint8_t     is_compound = (mv_unit->pred_direction == BI_PRED) ? 1 : 0;
     DECLARE_ALIGNED(32, uint16_t, tmp_dst_y[128 * 128]);
     MV mv;
@@ -4756,10 +4765,17 @@ EbErrorType av1_inter_prediction_light_pd1(
 #endif
     // Luma prediction
     if (component_mask & PICTURE_BUFFER_DESC_LUMA_MASK) {
-
+#if FTR_10BIT_MDS3_LPD1
+        ConvolveParams conv_params_y = get_conv_params_no_round(0, 0, 0, tmp_dst_y, 128, is_compound, bit_depth);
+#else
         ConvolveParams conv_params_y = get_conv_params_no_round(0, 0, 0, tmp_dst_y, 128, is_compound, EB_8BIT);
+#endif
         InterpFilterParams filter_params = av1_interp_filter_params_list[EIGHTTAP_REGULAR];
+#if FTR_10BIT_MDS3_LPD1
+        uint8_t* dst_ptr_y = pred_pic->buffer_y + ((pred_pic->origin_x + dst_origin_x + (pred_pic->origin_y + dst_origin_y) * pred_pic->stride_y) << is_16bit);
+#else
         uint8_t* dst_ptr_y = pred_pic->buffer_y + pred_pic->origin_x + dst_origin_x + (pred_pic->origin_y + dst_origin_y) * pred_pic->stride_y;
+#endif
 
         if (mv_unit->pred_direction == UNI_PRED_LIST_0 || mv_unit->pred_direction == BI_PRED) {
             assert(ref_pic_list0 != NULL);
@@ -4781,11 +4797,29 @@ EbErrorType av1_inter_prediction_light_pd1(
             pos_y = pu_origin_y + (mv_q4.row >> SUBPEL_BITS);
             pos_x = pu_origin_x + (mv_q4.col >> SUBPEL_BITS);
 #if CHROMA_DETECTOR
+#if FTR_10BIT_MDS3_LPD1
+            src_mod = ref_pic_list0->buffer_y + ((ref_pic_list0->origin_x + pos_x + (ref_pic_list0->origin_y + pos_y) * ref_pic_list0->stride_y) << is_16bit);
+#else
             src_mod = ref_pic_list0->buffer_y + ref_pic_list0->origin_x + pos_x + (ref_pic_list0->origin_y + pos_y) * ref_pic_list0->stride_y;
+#endif
 #else
             uint8_t * src_mod = ref_pic_list0->buffer_y + ref_pic_list0->origin_x + pos_x + (ref_pic_list0->origin_y + pos_y) * ref_pic_list0->stride_y;
 #endif
-
+#if FTR_10BIT_MDS3_LPD1
+            svt_inter_predictor_light_pd1(
+                src_mod,
+                ref_pic_list0->stride_y,
+                dst_ptr_y,
+                pred_pic->stride_y,
+                bwidth,
+                bheight,
+                &filter_params,
+                &filter_params,
+                subpel_params.subpel_x,
+                subpel_params.subpel_y,
+                &conv_params_y,
+                bit_depth);
+#else
             convolve[subpel_params.subpel_x != 0][subpel_params.subpel_y != 0][conv_params_y.is_compound](
                 src_mod,
                 ref_pic_list0->stride_y,
@@ -4798,7 +4832,7 @@ EbErrorType av1_inter_prediction_light_pd1(
                 subpel_params.subpel_x,
                 subpel_params.subpel_y,
                 &conv_params_y);
-
+#endif
         }
 
         if (mv_unit->pred_direction == UNI_PRED_LIST_1 || mv_unit->pred_direction == BI_PRED) {
@@ -4825,10 +4859,29 @@ EbErrorType av1_inter_prediction_light_pd1(
             pos_y = pu_origin_y + (mv_q4.row >> SUBPEL_BITS);
             pos_x = pu_origin_x + (mv_q4.col >> SUBPEL_BITS);
 #if CHROMA_DETECTOR
+#if FTR_10BIT_MDS3_LPD1
+            src_mod = ref_pic_list1->buffer_y + ((ref_pic_list1->origin_x + pos_x + (ref_pic_list1->origin_y + pos_y) * ref_pic_list1->stride_y) << is_16bit);
+#else
             src_mod = ref_pic_list1->buffer_y + ref_pic_list1->origin_x + pos_x + (ref_pic_list1->origin_y + pos_y) * ref_pic_list1->stride_y;
+#endif
 #else
             uint8_t * src_mod = ref_pic_list1->buffer_y + ref_pic_list1->origin_x + pos_x + (ref_pic_list1->origin_y + pos_y) * ref_pic_list1->stride_y;
 #endif
+#if FTR_10BIT_MDS3_LPD1
+            svt_inter_predictor_light_pd1(
+                src_mod,
+                ref_pic_list1->stride_y,
+                dst_ptr_y,
+                pred_pic->stride_y,
+                bwidth,
+                bheight,
+                &filter_params,
+                &filter_params,
+                subpel_params.subpel_x,
+                subpel_params.subpel_y,
+                &conv_params_y,
+                bit_depth);
+#else
             convolve[subpel_params.subpel_x != 0][subpel_params.subpel_y != 0][conv_params_y.is_compound](
                 src_mod,
                 ref_pic_list1->stride_y,
@@ -4841,7 +4894,7 @@ EbErrorType av1_inter_prediction_light_pd1(
                 subpel_params.subpel_x,
                 subpel_params.subpel_y,
                 &conv_params_y);
-
+#endif
         }
     }
 
@@ -4854,16 +4907,20 @@ EbErrorType av1_inter_prediction_light_pd1(
 #endif
         uint16_t* tmp_dst_cb = tmp_dst_y;
         uint16_t* tmp_dst_cr = &tmp_dst_y[64 * 64];
-
+#if FTR_10BIT_MDS3_LPD1
+        uint8_t* dst_ptr_cb = pred_pic->buffer_cb + (((pred_pic->origin_x + dst_origin_x) / 2 + (pred_pic->origin_y + dst_origin_y) / 2 * pred_pic->stride_cb) << is_16bit);
+        uint8_t* dst_ptr_cr = pred_pic->buffer_cr + (((pred_pic->origin_x + dst_origin_x) / 2 + (pred_pic->origin_y + dst_origin_y) / 2 * pred_pic->stride_cr) << is_16bit);
+        ConvolveParams conv_params_cb = get_conv_params_no_round(0, 0, 0, tmp_dst_cb, 64, is_compound, bit_depth);
+        ConvolveParams conv_params_cr = get_conv_params_no_round(0, 0, 0, tmp_dst_cr, 64, is_compound, bit_depth);
+#else
         uint8_t* dst_ptr_cb = pred_pic->buffer_cb + (pred_pic->origin_x + dst_origin_x) / 2 + (pred_pic->origin_y + dst_origin_y) / 2 * pred_pic->stride_cb;
         uint8_t* dst_ptr_cr = pred_pic->buffer_cr + (pred_pic->origin_x + dst_origin_x) / 2 + (pred_pic->origin_y + dst_origin_y) / 2 * pred_pic->stride_cr;
-
-        ConvolveParams conv_params_cb = get_conv_params_no_round(0, 0, 0, tmp_dst_cb, 64, is_compound, EB_8BIT );
-        ConvolveParams conv_params_cr = get_conv_params_no_round(0, 0, 0, tmp_dst_cr, 64, is_compound, EB_8BIT );
+        ConvolveParams conv_params_cb = get_conv_params_no_round(0, 0, 0, tmp_dst_cb, 64, is_compound, EB_8BIT);
+        ConvolveParams conv_params_cr = get_conv_params_no_round(0, 0, 0, tmp_dst_cr, 64, is_compound, EB_8BIT);
+#endif
 
         const int16_t pu_origin_y_chroma = pu_origin_y  / 2;
         const int16_t pu_origin_x_chroma = pu_origin_x  / 2;
-
         InterpFilterParams filter_params_x, filter_params_y;
         av1_get_convolve_filter_params(EIGHTTAP_REGULAR , &filter_params_x, &filter_params_y, blk_geom->bwidth_uv, blk_geom->bheight_uv);
 
@@ -4888,8 +4945,27 @@ EbErrorType av1_inter_prediction_light_pd1(
             pos_x = pu_origin_x_chroma + (mv_q4.col >> SUBPEL_BITS);
 #if CHROMA_DETECTOR
             if (component_mask & PICTURE_BUFFER_DESC_Cb_FLAG) {
+#if FTR_10BIT_MDS3_LPD1
+                src_mod = ref_pic_list0->buffer_cb + ((ref_pic_list0->origin_x / 2 + pos_x + (ref_pic_list0->origin_y / 2 + pos_y) * ref_pic_list0->stride_cb) << is_16bit);
+#else
                 src_mod = ref_pic_list0->buffer_cb + ref_pic_list0->origin_x / 2 + pos_x + (ref_pic_list0->origin_y / 2 + pos_y) * ref_pic_list0->stride_cb;
+#endif
 
+#if FTR_10BIT_MDS3_LPD1
+                svt_inter_predictor_light_pd1(
+                    src_mod,
+                    ref_pic_list0->stride_cb,
+                    dst_ptr_cb,
+                    pred_pic->stride_cb,
+                    blk_geom->bwidth_uv,
+                    blk_geom->bheight_uv,
+                    &filter_params_x,
+                    &filter_params_y,
+                    subpel_params.subpel_x,
+                    subpel_params.subpel_y,
+                    &conv_params_cb,
+                    bit_depth);
+#else
                 convolve[subpel_params.subpel_x != 0][subpel_params.subpel_y != 0][conv_params_cb.is_compound](
                     src_mod,
                     ref_pic_list0->stride_cb,
@@ -4902,11 +4978,30 @@ EbErrorType av1_inter_prediction_light_pd1(
                     subpel_params.subpel_x,
                     subpel_params.subpel_y,
                     &conv_params_cb);
+#endif
             }
 
             if (component_mask & PICTURE_BUFFER_DESC_Cr_FLAG) {
+#if FTR_10BIT_MDS3_LPD1
+                src_mod = ref_pic_list0->buffer_cr + ((ref_pic_list0->origin_x / 2 + pos_x + (ref_pic_list0->origin_y / 2 + pos_y) * ref_pic_list0->stride_cr) << is_16bit);
+#else
                 src_mod = ref_pic_list0->buffer_cr + ref_pic_list0->origin_x / 2 + pos_x + (ref_pic_list0->origin_y / 2 + pos_y) * ref_pic_list0->stride_cr;
-
+#endif
+#if FTR_10BIT_MDS3_LPD1
+                svt_inter_predictor_light_pd1(
+                    src_mod,
+                    ref_pic_list0->stride_cr,
+                    dst_ptr_cr,
+                    pred_pic->stride_cr,
+                    blk_geom->bwidth_uv,
+                    blk_geom->bheight_uv,
+                    &filter_params_x,
+                    &filter_params_y,
+                    subpel_params.subpel_x,
+                    subpel_params.subpel_y,
+                    &conv_params_cr,
+                    bit_depth);
+#else
                 convolve[subpel_params.subpel_x != 0][subpel_params.subpel_y != 0][conv_params_cr.is_compound](
                     src_mod,
                     ref_pic_list0->stride_cr,
@@ -4919,6 +5014,7 @@ EbErrorType av1_inter_prediction_light_pd1(
                     subpel_params.subpel_x,
                     subpel_params.subpel_y,
                     &conv_params_cr);
+#endif
             }
 #else
             uint8_t * src_mod = ref_pic_list0->buffer_cb + ref_pic_list0->origin_x / 2 + pos_x + (ref_pic_list0->origin_y / 2 + pos_y) * ref_pic_list0->stride_cb;
@@ -4979,8 +5075,26 @@ EbErrorType av1_inter_prediction_light_pd1(
             pos_x = pu_origin_x_chroma + (mv_q4.col >> SUBPEL_BITS);
 #if CHROMA_DETECTOR
             if (component_mask & PICTURE_BUFFER_DESC_Cb_FLAG) {
+#if FTR_10BIT_MDS3_LPD1
+                src_mod = ref_pic_list1->buffer_cb + ((ref_pic_list1->origin_x / 2 + pos_x + (ref_pic_list1->origin_y / 2 + pos_y) * ref_pic_list1->stride_cb) << is_16bit);
+#else
                 src_mod = ref_pic_list1->buffer_cb + ref_pic_list1->origin_x / 2 + pos_x + (ref_pic_list1->origin_y / 2 + pos_y) * ref_pic_list1->stride_cb;
-
+#endif
+#if FTR_10BIT_MDS3_LPD1
+                svt_inter_predictor_light_pd1(
+                    src_mod,
+                    ref_pic_list1->stride_cb,
+                    dst_ptr_cb,
+                    pred_pic->stride_cb,
+                    blk_geom->bwidth_uv,
+                    blk_geom->bheight_uv,
+                    &filter_params_x,
+                    &filter_params_y,
+                    subpel_params.subpel_x,
+                    subpel_params.subpel_y,
+                    &conv_params_cb,
+                    bit_depth);
+#else
                 convolve[subpel_params.subpel_x != 0][subpel_params.subpel_y != 0][conv_params_cb.is_compound](
                     src_mod,
                     ref_pic_list1->stride_cb,
@@ -4993,11 +5107,30 @@ EbErrorType av1_inter_prediction_light_pd1(
                     subpel_params.subpel_x,
                     subpel_params.subpel_y,
                     &conv_params_cb);
+#endif
             }
 
             if (component_mask & PICTURE_BUFFER_DESC_Cr_FLAG) {
+#if FTR_10BIT_MDS3_LPD1
+                src_mod = ref_pic_list1->buffer_cr + ((ref_pic_list1->origin_x / 2 + pos_x + (ref_pic_list1->origin_y / 2 + pos_y) * ref_pic_list1->stride_cr) << is_16bit);
+#else
                 src_mod = ref_pic_list1->buffer_cr + ref_pic_list1->origin_x / 2 + pos_x + (ref_pic_list1->origin_y / 2 + pos_y) * ref_pic_list1->stride_cr;
-
+#endif
+#if FTR_10BIT_MDS3_LPD1
+                svt_inter_predictor_light_pd1(
+                    src_mod,
+                    ref_pic_list1->stride_cr,
+                    dst_ptr_cr,
+                    pred_pic->stride_cr,
+                    blk_geom->bwidth_uv,
+                    blk_geom->bheight_uv,
+                    &filter_params_x,
+                    &filter_params_y,
+                    subpel_params.subpel_x,
+                    subpel_params.subpel_y,
+                    &conv_params_cr,
+                    bit_depth);
+#else
                 convolve[subpel_params.subpel_x != 0][subpel_params.subpel_y != 0][conv_params_cr.is_compound](
                     src_mod,
                     ref_pic_list1->stride_cr,
@@ -5010,6 +5143,7 @@ EbErrorType av1_inter_prediction_light_pd1(
                     subpel_params.subpel_x,
                     subpel_params.subpel_y,
                     &conv_params_cr);
+#endif
             }
 #else
             uint8_t * src_mod = ref_pic_list1->buffer_cb + ref_pic_list1->origin_x / 2 + pos_x + (ref_pic_list1->origin_y / 2 + pos_y) * ref_pic_list1->stride_cb;
@@ -5585,6 +5719,10 @@ EbErrorType av1_inter_prediction(
 
         uint8_t* dst_ptr;
         int32_t dst_stride, intra_stride;
+#if SANITIZER_FIX
+    uint32_t        sb_size_luma   = scs_ptr->sb_size_pix;
+    uint32_t        sb_size_chroma = scs_ptr->sb_size_pix >> 1;
+#endif
 
         for (int32_t plane = start_plane; plane < end_plane; ++plane) {
             EbPictureBufferDesc intra_pred_desc;
@@ -5619,10 +5757,19 @@ EbErrorType av1_inter_prediction(
                            luma_recon_neighbor_array->top_array + ((uint64_t)pu_origin_x << is16bit),
                            blk_geom->bwidth * 2 << is16bit);
 
+#if SANITIZER_FIX
+                if (pu_origin_x != 0){
+                    uint16_t multipler = (pu_origin_y % sb_size_luma + blk_geom->bheight * 2) > sb_size_luma ? 1 : 2;
+                    svt_memcpy(leftNeighArray + ((uint64_t)1 << is16bit),
+                           luma_recon_neighbor_array->left_array + ((uint64_t)pu_origin_y << is16bit),
+                           blk_geom->bheight * multipler << is16bit);
+                    }
+#else
                 if (pu_origin_x != 0)
                     svt_memcpy(leftNeighArray + ((uint64_t)1 << is16bit),
                            luma_recon_neighbor_array->left_array + ((uint64_t)pu_origin_y << is16bit),
                            blk_geom->bheight * 2 << is16bit);
+#endif
 
                 if (pu_origin_y != 0 && pu_origin_x != 0)
                     topNeighArray[0] = leftNeighArray[0] =
@@ -5644,10 +5791,19 @@ EbErrorType av1_inter_prediction(
                            cb_recon_neighbor_array->top_array + ((uint64_t)blk_originx_uv << is16bit),
                            blk_geom->bwidth_uv * 2 << is16bit);
 
+#if SANITIZER_FIX
+                if (blk_originx_uv != 0){
+                    uint16_t multipler = (blk_originy_uv % sb_size_chroma + blk_geom->bheight_uv * 2) > sb_size_chroma ? 1 : 2;
+                    svt_memcpy(leftNeighArray + ((uint64_t)1 << is16bit),
+                           cb_recon_neighbor_array->left_array + ((uint64_t)blk_originy_uv << is16bit),
+                           blk_geom->bheight_uv * multipler << is16bit);
+                }
+#else
                 if (blk_originx_uv != 0)
                     svt_memcpy(leftNeighArray + ((uint64_t)1 << is16bit),
                            cb_recon_neighbor_array->left_array + ((uint64_t)blk_originy_uv << is16bit),
                            blk_geom->bheight_uv * 2 << is16bit);
+#endif
 
                 if (blk_originy_uv != 0 && blk_originx_uv != 0)
                     topNeighArray[0] = leftNeighArray[0] =
@@ -5667,10 +5823,19 @@ EbErrorType av1_inter_prediction(
                            cr_recon_neighbor_array->top_array + ((uint64_t)blk_originx_uv << is16bit),
                            blk_geom->bwidth_uv * 2 << is16bit);
 
+#if SANITIZER_FIX
+                if (blk_originx_uv != 0){
+                    uint16_t multipler = (blk_originy_uv % sb_size_chroma + blk_geom->bheight_uv * 2) > sb_size_chroma ? 1 : 2;
+                    svt_memcpy(leftNeighArray + ((uint64_t)1 << is16bit),
+                           cr_recon_neighbor_array->left_array + ((uint64_t)blk_originy_uv << is16bit),
+                           blk_geom->bheight_uv * multipler << is16bit);
+                }
+#else
                 if (blk_originx_uv != 0)
                     svt_memcpy(leftNeighArray + ((uint64_t)1 << is16bit),
                            cr_recon_neighbor_array->left_array + ((uint64_t)blk_originy_uv << is16bit),
                            blk_geom->bheight_uv * 2 << is16bit);
+#endif
 
                 if (blk_originy_uv != 0 && blk_originx_uv != 0)
                     topNeighArray[0] = leftNeighArray[0] =
@@ -6684,6 +6849,7 @@ EbErrorType av1_inter_prediction(
 
     return return_error;
 }
+#endif
 
 EbBool calc_pred_masked_compound(PictureControlSet *pcs_ptr,
     ModeDecisionContext *  context_ptr,
@@ -6989,7 +7155,9 @@ EbErrorType inter_pu_prediction_av1_light_pd1(uint8_t hbd_mode_decision, ModeDec
     PictureControlSet *          picture_control_set_ptr,
     ModeDecisionCandidateBuffer *candidate_buffer_ptr)
 {
+#if !FTR_10BIT_MDS3_LPD1
     (void)hbd_mode_decision;
+#endif
     EbPictureBufferDesc *        ref_pic_list0 = (EbPictureBufferDesc *)NULL;
     EbPictureBufferDesc *        ref_pic_list1 = (EbPictureBufferDesc *)NULL;
     ModeDecisionCandidate *const candidate_ptr = candidate_buffer_ptr->candidate_ptr;
@@ -7008,16 +7176,34 @@ EbErrorType inter_pu_prediction_av1_light_pd1(uint8_t hbd_mode_decision, ModeDec
     const int8_t list_idx_first = get_list_idx(rf[0]);
 
     if (rf[1] == NONE_FRAME) {
+#if FTR_10BIT_MDS3_LPD1
+        if (list_idx_first == 0)
+            ref_pic_list0 = hbd_mode_decision ? ((EbReferenceObject *)picture_control_set_ptr->ref_pic_ptr_array[0][ref_idx_first]->object_ptr)->reference_picture16bit
+            : ((EbReferenceObject *)picture_control_set_ptr->ref_pic_ptr_array[0][ref_idx_first]->object_ptr)->reference_picture;
+        else
+            ref_pic_list1 = hbd_mode_decision ? ((EbReferenceObject *)picture_control_set_ptr->ref_pic_ptr_array[1][ref_idx_first]->object_ptr)->reference_picture16bit
+            : ((EbReferenceObject *)picture_control_set_ptr->ref_pic_ptr_array[1][ref_idx_first]->object_ptr)->reference_picture;
+#else
         if (list_idx_first == 0)
             ref_pic_list0 = ((EbReferenceObject *)picture_control_set_ptr->ref_pic_ptr_array[0][ref_idx_first]->object_ptr)->reference_picture;
         else
             ref_pic_list1 = ((EbReferenceObject *)picture_control_set_ptr->ref_pic_ptr_array[1][ref_idx_first]->object_ptr)->reference_picture;
+#endif
     }
     else {
+#if FTR_10BIT_MDS3_LPD1
+        ref_pic_list0 = hbd_mode_decision ? ((EbReferenceObject *)picture_control_set_ptr->ref_pic_ptr_array[list_idx_first][ref_idx_first]->object_ptr)->reference_picture16bit
+            : ((EbReferenceObject *)picture_control_set_ptr->ref_pic_ptr_array[list_idx_first][ref_idx_first]->object_ptr)->reference_picture;
+        const int8_t ref_idx_sec = get_ref_frame_idx(rf[1]);
+        const int8_t list_idx_sec = get_list_idx(rf[1]);
+        ref_pic_list1 = hbd_mode_decision ? ((EbReferenceObject *)picture_control_set_ptr->ref_pic_ptr_array[list_idx_sec][ref_idx_sec]->object_ptr)->reference_picture16bit
+            : ((EbReferenceObject *)picture_control_set_ptr->ref_pic_ptr_array[list_idx_sec][ref_idx_sec]->object_ptr)->reference_picture;
+#else
         ref_pic_list0 = ((EbReferenceObject *)picture_control_set_ptr->ref_pic_ptr_array[list_idx_first][ref_idx_first]->object_ptr)->reference_picture;
         const int8_t ref_idx_sec = get_ref_frame_idx(rf[1]);
         const int8_t list_idx_sec = get_list_idx(rf[1]);
         ref_pic_list1 = ((EbReferenceObject *)picture_control_set_ptr->ref_pic_ptr_array[list_idx_sec][ref_idx_sec]->object_ptr)->reference_picture;
+#endif
     }
 #if OPT_LPD1_MRP
     // WM disallowed in light-PD1 path so motion mode is always SIMPLE_TRANSLATION
@@ -7053,7 +7239,12 @@ EbErrorType inter_pu_prediction_av1_light_pd1(uint8_t hbd_mode_decision, ModeDec
         candidate_buffer_ptr->prediction_ptr,
         md_context_ptr->blk_geom->origin_x,
         md_context_ptr->blk_geom->origin_y,
+#if FTR_10BIT_MDS3_LPD1
+        component_mask,
+        hbd_mode_decision);
+#else
         component_mask);
+#endif
 
     return EB_ErrorNone;
 }
@@ -7381,7 +7572,11 @@ EbErrorType inter_pu_prediction_av1(uint8_t hbd_mode_decision, ModeDecisionConte
     // Skip luma prediction if
     if (md_context_ptr->md_stage >= MD_STAGE_1 && interp_filters_0 == interp_filters_1) { // already performed and IFS did not change it
 #if LIGHT_PD1
+#if FTR_10BIT_MDS3_REG_PD1
+        if (component_mask == PICTURE_BUFFER_DESC_FULL_MASK && !md_context_ptr->need_hbd_comp_mds3) {
+#else
         if (component_mask == PICTURE_BUFFER_DESC_FULL_MASK && md_context_ptr->hbd_mode_decision == EB_8_BIT_MD) {  // not 10BIT path
+#endif
 #else
         if (component_mask == PICTURE_BUFFER_DESC_FULL_MASK && scs_ptr->static_config.encoder_bit_depth == EB_8BIT) {  // not 10BIT path
 #endif
@@ -7400,7 +7595,12 @@ EbErrorType inter_pu_prediction_av1(uint8_t hbd_mode_decision, ModeDecisionConte
             &mv_unit,
             candidate_buffer_ptr->candidate_ptr->use_intrabc,
             candidate_buffer_ptr->candidate_ptr->motion_mode, //MD
+#if FTR_10BIT_MDS3_REG_PD1
+            // If using 8bit MD for HBD content, can't use pre-computed OBMC to generate conformant recon
+            md_context_ptr->need_hbd_comp_mds3 ? 0 : 1,
+#else
             1,
+#endif
             md_context_ptr,
             candidate_buffer_ptr->candidate_ptr->compound_idx,
             &candidate_buffer_ptr->candidate_ptr->interinter_comp,

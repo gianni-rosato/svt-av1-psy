@@ -82,21 +82,8 @@ uint8_t is_me_data_present(
     const MeSbResults           *me_results,
     uint8_t                      list_idx,
     uint8_t                      ref_idx){
-#if ME_8X8
-    uint32_t me_block_offset = context_ptr->me_block_offset;
-    uint32_t me_cand_offset = context_ptr->me_cand_offset;
-
-    if (!context_ptr->sb_ptr->pcs_ptr->parent_pcs_ptr->enable_me_8x8)
-        if (me_block_offset >= MAX_SB64_PU_COUNT_NO_8X8) {
-            me_block_offset = me_idx_85_8x8_to_16x16_conversion[me_block_offset - MAX_SB64_PU_COUNT_NO_8X8];
-            me_cand_offset = me_block_offset * (context_ptr->me_cand_offset / context_ptr->me_block_offset);
-        }
-    uint8_t total_me_cnt = me_results->total_me_candidate_index[me_block_offset];
-    const MeCandidate *me_block_results = &me_results->me_candidate_array[me_cand_offset];
-#else
     uint8_t total_me_cnt = me_results->total_me_candidate_index[context_ptr->me_block_offset];
     const MeCandidate *me_block_results = &me_results->me_candidate_array[context_ptr->me_cand_offset];
-#endif
     for (uint32_t me_cand_i = 0; me_cand_i < total_me_cnt; ++me_cand_i){
         const MeCandidate *me_cand = &me_block_results[me_cand_i];
         assert(me_cand->direction <= 2);
@@ -1022,20 +1009,8 @@ void unipred_3x3_candidates_injection(const SequenceControlSet *scs_ptr, Picture
     uint32_t           cand_total_cnt = (*candidate_total_cnt);
     FrameHeader *      frm_hdr        = &pcs_ptr->parent_pcs_ptr->frm_hdr;
     MeSbResults *me_results = pcs_ptr->parent_pcs_ptr->pa_me_data->me_results[me_sb_addr];
-#if ME_8X8
-    uint32_t me_block_offset = context_ptr->me_block_offset;
-    uint32_t me_cand_offset = context_ptr->me_cand_offset;
-    if (!pcs_ptr->parent_pcs_ptr->enable_me_8x8)
-        if (me_block_offset >= MAX_SB64_PU_COUNT_NO_8X8) {
-            me_block_offset = me_idx_85_8x8_to_16x16_conversion[me_block_offset - MAX_SB64_PU_COUNT_NO_8X8];
-            me_cand_offset = me_block_offset * pcs_ptr->parent_pcs_ptr->pa_me_data->max_cand;
-        }
-    uint8_t total_me_cnt = me_results->total_me_candidate_index[me_block_offset];
-    const MeCandidate *me_block_results = &me_results->me_candidate_array[me_cand_offset];
-#else
     uint8_t total_me_cnt = me_results->total_me_candidate_index[context_ptr->me_block_offset];
     const MeCandidate *me_block_results = &me_results->me_candidate_array[context_ptr->me_cand_offset];
-#endif
     ModeDecisionCandidate *cand_array   = context_ptr->fast_candidate_array;
     EbBool       is_compound_enabled    = (frm_hdr->reference_mode == SINGLE_REFERENCE) ? 0 : 1;
     IntMv        best_pred_mv[2]        = {{0}, {0}};
@@ -1341,20 +1316,8 @@ void bipred_3x3_candidates_injection(const SequenceControlSet *scs_ptr, PictureC
     uint32_t           cand_total_cnt = (*candidate_total_cnt);
     FrameHeader *      frm_hdr        = &pcs_ptr->parent_pcs_ptr->frm_hdr;
     const MeSbResults *me_results = pcs_ptr->parent_pcs_ptr->pa_me_data->me_results[me_sb_addr];
-#if ME_8X8
-    uint32_t me_block_offset = context_ptr->me_block_offset;
-    uint32_t me_cand_offset = context_ptr->me_cand_offset;
-    if (!pcs_ptr->parent_pcs_ptr->enable_me_8x8)
-        if (me_block_offset >= MAX_SB64_PU_COUNT_NO_8X8) {
-            me_block_offset = me_idx_85_8x8_to_16x16_conversion[me_block_offset - MAX_SB64_PU_COUNT_NO_8X8];
-            me_cand_offset = me_block_offset * pcs_ptr->parent_pcs_ptr->pa_me_data->max_cand;
-        }
-    uint8_t total_me_cnt = me_results->total_me_candidate_index[me_block_offset];
-    const MeCandidate *me_block_results = &me_results->me_candidate_array[me_cand_offset];
-#else
     uint8_t total_me_cnt = me_results->total_me_candidate_index[context_ptr->me_block_offset];
     const MeCandidate *me_block_results = &me_results->me_candidate_array[context_ptr->me_cand_offset];
-#endif
     ModeDecisionCandidate *cand_array   = context_ptr->fast_candidate_array;
     EbBool       is_compound_enabled    = (frm_hdr->reference_mode == SINGLE_REFERENCE) ? 0 : 1;
     IntMv        best_pred_mv[2]        = {{0}, {0}};
@@ -1742,7 +1705,16 @@ void inject_mvp_candidates_ii_light_pd1 (PictureControlSet *pcs, ModeDecisionCon
         if (rf[1] == NONE_FRAME) {
             MvReferenceFrame frame_type = rf[0];
             uint8_t          list_idx = get_list_idx(rf[0]);
-
+#if FTR_MVP_BEST_ME_LIST
+            if (ctx->lpd1_mvp_best_me_list) {
+                const MeSbResults *me_results = pcs->parent_pcs_ptr->pa_me_data->me_results[ctx->me_sb_addr];
+                const uint8_t      total_me_cnt = me_results->total_me_candidate_index[ctx->me_block_offset];
+                const MeCandidate *me_block_results = &me_results->me_candidate_array[ctx->me_cand_offset];
+                const MeCandidate *me_block_results_ptr = &me_block_results[0];
+                const uint8_t      inter_direction = me_block_results_ptr->direction;
+                if (total_me_cnt && list_idx != inter_direction) continue;
+            }
+#endif
             //NEAREST
             // Don't check if MV is already injected b/c NEAREST is the first INTER MV injected
             int16_t to_inject_mv_x = ctx->md_local_blk_unit[ctx->blk_geom->blkidx_mds].ed_ref_mv_stack[frame_type][0].this_mv.as_mv.col;
@@ -3092,20 +3064,8 @@ void inject_warped_motion_candidates(
 #endif
     IntMv  best_pred_mv[2] = { {0}, {0} };
 
-#if ME_8X8
-    uint32_t me_block_offset = context_ptr->me_block_offset;
-    uint32_t me_cand_offset = context_ptr->me_cand_offset;
-    if (!pcs_ptr->parent_pcs_ptr->enable_me_8x8)
-        if (me_block_offset >= MAX_SB64_PU_COUNT_NO_8X8) {
-            me_block_offset = me_idx_85_8x8_to_16x16_conversion[me_block_offset - MAX_SB64_PU_COUNT_NO_8X8];
-            me_cand_offset = me_block_offset * pcs_ptr->parent_pcs_ptr->pa_me_data->max_cand;
-        }
-    uint8_t total_me_cnt = me_results->total_me_candidate_index[me_block_offset];
-    const MeCandidate *me_block_results = &me_results->me_candidate_array[me_cand_offset];
-#else
     uint8_t total_me_cnt = me_results->total_me_candidate_index[context_ptr->me_block_offset];
     const MeCandidate *me_block_results = &me_results->me_candidate_array[context_ptr->me_cand_offset];
-#endif
 
     for (uint8_t me_candidate_index = 0; me_candidate_index < total_me_cnt; ++me_candidate_index)
     {
@@ -3528,23 +3488,11 @@ void inject_new_candidates_light_pd0(struct ModeDecisionContext *context_ptr, Pi
     EbBool is_compound_enabled, EbBool allow_bipred, uint32_t me_sb_addr,
     uint32_t me_block_offset, uint32_t *candidate_total_cnt)
 {
-#if ME_8X8
-    uint32_t me_cand_offset = context_ptr->me_cand_offset;
-    if (!pcs_ptr->parent_pcs_ptr->enable_me_8x8)
-        if (me_block_offset >= MAX_SB64_PU_COUNT_NO_8X8) {
-            me_block_offset = me_idx_85_8x8_to_16x16_conversion[me_block_offset - MAX_SB64_PU_COUNT_NO_8X8];
-            me_cand_offset = me_block_offset * pcs_ptr->parent_pcs_ptr->pa_me_data->max_cand;
-        }
-#endif
     ModeDecisionCandidate *cand_array = context_ptr->fast_candidate_array;
     uint32_t               cand_total_cnt = (*candidate_total_cnt);
     const MeSbResults *me_results = pcs_ptr->parent_pcs_ptr->pa_me_data->me_results[me_sb_addr];
     uint8_t            total_me_cnt = me_results->total_me_candidate_index[me_block_offset];
-#if ME_8X8
-    const MeCandidate *me_block_results = &me_results->me_candidate_array[me_cand_offset];
-#else
     const MeCandidate *me_block_results = &me_results->me_candidate_array[context_ptr->me_cand_offset];
-#endif
 
 #if OPT_ME
     const uint8_t max_refs = pcs_ptr->parent_pcs_ptr->pa_me_data->max_refs;
@@ -3759,24 +3707,12 @@ void inject_new_candidates_light_pd1(PictureControlSet *pcs, struct ModeDecision
                            EbBool is_compound_enabled, EbBool allow_bipred, uint32_t me_sb_addr,
                            uint32_t me_block_offset, uint32_t *candidate_total_cnt) {
 
-#if ME_8X8
-    uint32_t me_cand_offset = ctx->me_cand_offset;
-    if (!pcs->parent_pcs_ptr->enable_me_8x8)
-        if (me_block_offset >= MAX_SB64_PU_COUNT_NO_8X8) {
-            me_block_offset = me_idx_85_8x8_to_16x16_conversion[me_block_offset - MAX_SB64_PU_COUNT_NO_8X8];
-            me_cand_offset = me_block_offset * pcs->parent_pcs_ptr->pa_me_data->max_cand;
-        }
-#endif
     ModeDecisionCandidate *cand_array      = ctx->fast_candidate_array;
     IntMv                  best_pred_mv[2] = {{0}, {0}};
     uint32_t               cand_total_cnt  = (*candidate_total_cnt);
     const MeSbResults *me_results          = pcs->parent_pcs_ptr->pa_me_data->me_results[me_sb_addr];
     const uint8_t      total_me_cnt        = me_results->total_me_candidate_index[me_block_offset];
-#if ME_8X8
-    const MeCandidate *me_block_results    = &me_results->me_candidate_array[me_cand_offset];
-#else
     const MeCandidate *me_block_results    = &me_results->me_candidate_array[ctx->me_cand_offset];
-#endif
 
     for (uint8_t me_candidate_index = 0; me_candidate_index < total_me_cnt; ++me_candidate_index) {
         const MeCandidate *me_block_results_ptr = &me_block_results[me_candidate_index];
@@ -3984,25 +3920,13 @@ void inject_new_candidates(const SequenceControlSet *  scs_ptr,
                            struct ModeDecisionContext *context_ptr, PictureControlSet *pcs_ptr,
                            EbBool is_compound_enabled, EbBool allow_bipred, uint32_t me_sb_addr,
                            uint32_t me_block_offset, uint32_t *candidate_total_cnt) {
-#if ME_8X8
-    uint32_t me_cand_offset = context_ptr->me_cand_offset;
-    if (!pcs_ptr->parent_pcs_ptr->enable_me_8x8)
-        if (me_block_offset >= MAX_SB64_PU_COUNT_NO_8X8) {
-            me_block_offset = me_idx_85_8x8_to_16x16_conversion[me_block_offset - MAX_SB64_PU_COUNT_NO_8X8];
-            me_cand_offset = me_block_offset * pcs_ptr->parent_pcs_ptr->pa_me_data->max_cand;
-        }
-#endif
     ModeDecisionCandidate *cand_array      = context_ptr->fast_candidate_array;
     IntMv                  best_pred_mv[2] = {{0}, {0}};
     uint32_t               cand_total_cnt  = (*candidate_total_cnt);
     const MeSbResults *me_results =
         pcs_ptr->parent_pcs_ptr->pa_me_data->me_results[me_sb_addr];
     uint8_t            total_me_cnt     = me_results->total_me_candidate_index[me_block_offset];
-#if ME_8X8
-    const MeCandidate *me_block_results = &me_results->me_candidate_array[me_cand_offset];
-#else
     const MeCandidate *me_block_results = &me_results->me_candidate_array[context_ptr->me_cand_offset];
-#endif
     MacroBlockD *      xd               = context_ptr->blk_ptr->av1xd;
     int                inside_tile      = 1;
     int                umv0tile         = (scs_ptr->static_config.unrestricted_motion_vector == 0);
@@ -5470,13 +5394,17 @@ void intra_bc_search(PictureControlSet *pcs, ModeDecisionContext *context_ptr,
     for (int i = 0; i < num_planes; ++i) x->xdplane[i].pre[0] = yv12_mb[i]; //ref in ME
     //setup src for DV search same as ref
     x->plane[0].src = x->xdplane[0].pre[0];
-
+#if !OPT_IBC_HASH_SEARCH
     enum IntrabcMotionDirection { IBC_MOTION_ABOVE, IBC_MOTION_LEFT, IBC_MOTION_DIRECTIONS };
-
+#endif
     //up to two dv candidates will be generated
     //IBC Modes:   0: OFF 1:Slow   2:Faster   3:Fastest
     enum IntrabcMotionDirection max_dir =
+#if OPT_IBC_HASH_SEARCH
+        pcs->parent_pcs_ptr->intraBC_ctrls.ibc_mode > 2 ? IBC_MOTION_LEFT : IBC_MOTION_DIRECTIONS;
+#else
         pcs->parent_pcs_ptr->ibc_mode > 2 ? IBC_MOTION_LEFT : IBC_MOTION_DIRECTIONS;
+#endif
 
     for (enum IntrabcMotionDirection dir = IBC_MOTION_ABOVE; dir < max_dir; ++dir) {
         const MvLimits tmp_mv_limits = x->mv_limits;
@@ -6884,7 +6812,11 @@ uint32_t product_full_mode_decision(
         blk_ptr->total_rate = candidate_ptr->total_rate;
     }
 #if LIGHT_PD1
+#if FIX_COST_CALC_CHECK
+    if (!(context_ptr->pd_pass == PD_PASS_1 && context_ptr->pred_depth_only && context_ptr->md_disallow_nsq)) {
+#else
     if (!(context_ptr->pd_pass == PD_PASS_1 && context_ptr->pred_depth_only)) {
+#endif
 #endif
         if (context_ptr->blk_lambda_tuning) {
             // When lambda tuning is on, lambda of each block is set separately, however at interdepth decision the sb lambda is used

@@ -444,6 +444,12 @@ void get_ref_intra_percentage(PictureControlSet *pcs_ptr, uint8_t *iperc){
     }
 }
 #endif
+#if CLN_RTIME_MEM_ALLOC
+EbErrorType rtime_alloc_ec_ctx_array(PictureControlSet * pcs_ptr, uint16_t all_sb) {
+    EB_MALLOC_ARRAY(pcs_ptr->ec_ctx_array, all_sb);
+    return EB_ErrorNone;
+}
+#endif
 EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet *scs_ptr,
                                                              PictureControlSet * pcs_ptr) {
     UNUSED(scs_ptr);
@@ -502,7 +508,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         const uint16_t picture_sb_w = pcs_ptr->parent_pcs_ptr->picture_sb_width;
         const uint16_t picture_sb_h = pcs_ptr->parent_pcs_ptr->picture_sb_height;
         const uint16_t all_sb = picture_sb_w * picture_sb_h;
+#if CLN_RTIME_MEM_ALLOC
+        rtime_alloc_ec_ctx_array(pcs_ptr, all_sb);
+#else
         EB_MALLOC_ARRAY(pcs_ptr->ec_ctx_array, all_sb);
+#endif
     }
 #endif
     //Filter Intra Mode : 0: OFF  1: ON
@@ -523,7 +533,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     } else
         pcs_ptr->pic_filter_intra_level = scs_ptr->static_config.filter_intra_level;
 #if OPT9_RATE_ESTIMATION
-#if TUNE_MEGA_M9_M4
+#if TUNE_MEGA_M9_M4 && !TUNE_M6_MT
     if (pcs_ptr->enc_mode <= ENC_M5)
 #else
     if (pcs_ptr->enc_mode <= ENC_M6)
@@ -652,7 +662,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
 #endif
 #endif
 #if FTR_SELECTIVE_MFMV
+#if TUNE_M8_M10_4K_SUPER
+    uint8_t use_selective_mfmv_th = pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M8 ? (uint8_t)~0 : ((pcs_ptr->parent_pcs_ptr->enc_mode == ENC_M9) && (pcs_ptr->parent_pcs_ptr->input_resolution > INPUT_SIZE_1080p_RANGE)) ? (uint8_t)~0 : 70; // This is a % [0-100]
+#else
     uint8_t use_selective_mfmv_th = pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M8 ? (uint8_t)~0 : 70; // This is a % [0-100]
+#endif
     if (use_selective_mfmv_th != (uint8_t)~0) {
         if (pcs_ptr->slice_type == I_SLICE)
             pcs_ptr->parent_pcs_ptr->frm_hdr.use_ref_frame_mvs = 0;
@@ -919,6 +933,11 @@ EbErrorType svt_av1_hash_table_create(HashTable *p_hash_table);
 #if OPT_CDEF
 extern uint8_t ref_is_high_skip(PictureControlSet *pcs_ptr, uint8_t *skip_area);
 #endif
+#if CLN_RTIME_MEM_ALLOC
+void* rtime_alloc_block_hash_block_is_same(size_t size) {
+        return malloc(size);
+    }
+#endif
 /* Mode Decision Configuration Kernel */
 
 /*********************************************************************************
@@ -1104,13 +1123,23 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
 
                 for (k = 0; k < 2; k++) {
                     for (j = 0; j < 2; j++)
+#if CLN_RTIME_MEM_ALLOC
+                        block_hash_values[k][j] = rtime_alloc_block_hash_block_is_same(sizeof(uint32_t) * pic_width * pic_height);
+                    for (j = 0; j < 3; j++)
+                        is_block_same[k][j] = rtime_alloc_block_hash_block_is_same(sizeof(int8_t) * pic_width * pic_height);
+#else
                         block_hash_values[k][j] = malloc(sizeof(uint32_t) * pic_width * pic_height);
                     for (j = 0; j < 3; j++)
                         is_block_same[k][j] = malloc(sizeof(int8_t) * pic_width * pic_height);
+#endif
                 }
 #if OPT_MEMORY_HASH_TABLE
                 pcs_ptr->hash_table.p_lookup_table = NULL;
+#if CLN_RTIME_MEM_ALLOC
+                rtime_alloc_svt_av1_hash_table_create(&pcs_ptr->hash_table);
+#else
                 svt_av1_hash_table_create(&pcs_ptr->hash_table);
+#endif
 #endif
                 Yv12BufferConfig cpi_source;
                 link_eb_to_aom_buffer_desc_8bit(pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr,
@@ -1123,7 +1152,11 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
                     &cpi_source, block_hash_values[0], is_block_same[0], pcs_ptr);
 #if SS_OPT_INTRABC
                 uint8_t src_idx = 0;
+#if OPT_IBC_HASH_SEARCH
+                const uint8_t max_sb_size = pcs_ptr->parent_pcs_ptr->intraBC_ctrls.max_block_size_hash;
+#else
                 const uint16_t max_sb_size = (uint16_t)scs_ptr->static_config.super_block_size;
+#endif
                 for (int size = 4; size <= max_sb_size; size <<= 1, src_idx = !src_idx) {
                     const uint8_t dst_idx = !src_idx;
                     svt_av1_generate_block_hash_value(&cpi_source,
@@ -1133,12 +1166,24 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
                                                       is_block_same[src_idx],
                                                       is_block_same[dst_idx],
                                                       pcs_ptr);
+#if CLN_RTIME_MEM_ALLOC
+#if OPT_IBC_HASH_SEARCH
+                    if (size != 4 || pcs_ptr->parent_pcs_ptr->intraBC_ctrls.hash_4x4_blocks)
+#endif
+                    rtime_alloc_svt_av1_add_to_hash_map_by_row_with_precal_data(&pcs_ptr->hash_table,
+                        block_hash_values[dst_idx],
+                        is_block_same[dst_idx][2],
+                        pic_width,
+                        pic_height,
+                        size);
+#else
                     svt_av1_add_to_hash_map_by_row_with_precal_data(&pcs_ptr->hash_table,
                                                                     block_hash_values[dst_idx],
                                                                     is_block_same[dst_idx][2],
                                                                     pic_width,
                                                                     pic_height,
                                                                     size);
+#endif
                 }
 #else
                 svt_av1_generate_block_hash_value(&cpi_source,

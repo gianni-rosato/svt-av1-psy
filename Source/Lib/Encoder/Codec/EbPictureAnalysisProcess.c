@@ -52,16 +52,20 @@ typedef struct PictureAnalysisContext {
     EB_ALIGN(64) uint8_t local_cache[64];
     EbFifo *             resource_coordination_results_input_fifo_ptr;
     EbFifo *             picture_analysis_results_output_fifo_ptr;
+#if !SS_CLN_NOISE_DENOISE_BUFFERS
     EbPictureBufferDesc *denoised_picture_ptr;
     EbPictureBufferDesc *noise_picture_ptr;
     double               pic_noise_variance_float;
+#endif
 } PictureAnalysisContext;
 
 static void picture_analysis_context_dctor(EbPtr p) {
     EbThreadContext *       thread_context_ptr = (EbThreadContext *)p;
     PictureAnalysisContext *obj                = (PictureAnalysisContext *)thread_context_ptr->priv;
+#if !SS_CLN_NOISE_DENOISE_BUFFERS
     EB_DELETE(obj->noise_picture_ptr);
     EB_DELETE(obj->denoised_picture_ptr);
+#endif
     EB_FREE_ARRAY(obj);
 }
 /************************************************
@@ -69,7 +73,9 @@ static void picture_analysis_context_dctor(EbPtr p) {
 ************************************************/
 EbErrorType picture_analysis_context_ctor(EbThreadContext *  thread_context_ptr,
                                           const EbEncHandle *enc_handle_ptr, int index) {
+#if !SS_CLN_NOISE_DENOISE_BUFFERS
     EbBool denoise_flag = EB_TRUE;
+#endif
 
     PictureAnalysisContext *context_ptr;
     EB_CALLOC_ARRAY(context_ptr, 1);
@@ -81,7 +87,7 @@ EbErrorType picture_analysis_context_ctor(EbThreadContext *  thread_context_ptr,
             enc_handle_ptr->resource_coordination_results_resource_ptr, index);
     context_ptr->picture_analysis_results_output_fifo_ptr = svt_system_resource_get_producer_fifo(
         enc_handle_ptr->picture_analysis_results_resource_ptr, index);
-
+#if !SS_CLN_NOISE_DENOISE_BUFFERS
     if (denoise_flag == EB_TRUE) {
         EbPictureBufferDescInitData desc;
         const SequenceControlSet *  scs_ptr = enc_handle_ptr->scs_instance_array[0]->scs_ptr;
@@ -116,6 +122,7 @@ EbErrorType picture_analysis_context_ctor(EbThreadContext *  thread_context_ptr,
 
         EB_NEW(context_ptr->noise_picture_ptr, svt_picture_buffer_desc_ctor, (EbPtr)&desc);
     }
+#endif
     return EB_ErrorNone;
 }
 void down_sample_chroma(EbPictureBufferDesc *input_picture_ptr,

@@ -358,7 +358,15 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
 #else
             me_context_ptr->max_me_search_width = 16;
 #endif
+#if TUNE_4K_M11
+            me_context_ptr->max_me_search_height = (pcs_ptr->input_resolution < INPUT_SIZE_720p_RANGE)
+                ? 9
+                : (pcs_ptr->input_resolution < INPUT_SIZE_4K_RANGE)
+                ? 7
+                : 1;
+#else
             me_context_ptr->max_me_search_height = (pcs_ptr->input_resolution < INPUT_SIZE_720p_RANGE) ? 9 : 7;
+#endif
 #if !FTR_2PASS_1PASS_UNIFICATION
         }
 #endif
@@ -491,13 +499,22 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
                 me_context_ptr->hme_level0_max_total_search_area_width = me_context_ptr->hme_level0_max_total_search_area_height = 192;
             }
             else {
+#if TUNE_4K_M11
+                if (pcs_ptr->input_resolution < INPUT_SIZE_4K_RANGE) {
+#endif
                 me_context_ptr->hme_level0_total_search_area_width = me_context_ptr->hme_level0_total_search_area_height = 8;
 #if TUNE_M11
                 me_context_ptr->hme_level0_max_total_search_area_width = me_context_ptr->hme_level0_max_total_search_area_height = 96;
 #else
                 me_context_ptr->hme_level0_max_total_search_area_width = me_context_ptr->hme_level0_max_total_search_area_height = 192;
 #endif
-
+#if TUNE_4K_M11
+                }
+                else {
+                    me_context_ptr->hme_level0_total_search_area_width = me_context_ptr->hme_level0_total_search_area_height = 16;
+                    me_context_ptr->hme_level0_max_total_search_area_width = me_context_ptr->hme_level0_max_total_search_area_height = 96;
+                }
+#endif
                 if (pcs_ptr->input_resolution <= INPUT_SIZE_720p_RANGE) {
                     me_context_ptr->reduce_hme_l0_sr_th_min = 8;
                     me_context_ptr->reduce_hme_l0_sr_th_max = 200;
@@ -1030,7 +1047,7 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
         if (enc_mode <= ENC_M6)
 #endif
             prehme_level = 1;
-#if TUNE_M10_M0
+#if TUNE_M10_M0 && !TUNE_M8_M10_4K_SUPER
         else if (enc_mode <= ENC_M8)
 #else
         else if (enc_mode <= ENC_M9)
@@ -1133,6 +1150,10 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
         context_ptr->me_context_ptr->prune_me_candidates_th = scs_ptr->input_resolution <= INPUT_SIZE_720p_RANGE ? 65 : 30;
 #endif
 #if FTR_LIMIT_ME_CANDS
+#if FTR_MVP_BEST_ME_LIST
+    // Set signal at picture level b/c may check signal in MD
+    context_ptr->me_context_ptr->use_best_unipred_cand_only = pcs_ptr->use_best_me_unipred_cand_only;
+#else
 #if TUNE_M10_M0
     if (enc_mode <= ENC_M9)
 #else
@@ -1141,6 +1162,7 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
         context_ptr->me_context_ptr->use_best_unipred_cand_only = 0;
     else
         context_ptr->me_context_ptr->use_best_unipred_cand_only = 1;
+#endif
 #endif
     return return_error;
 };

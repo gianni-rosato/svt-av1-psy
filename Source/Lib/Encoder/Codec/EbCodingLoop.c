@@ -1375,6 +1375,10 @@ void perform_intra_coding_loop(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, u
     get_recon_pic(pcs_ptr, &recon_buffer, is_16bit);
 
     uint32_t tot_tu = context_ptr->blk_geom->txb_count[blk_ptr->tx_depth];
+#if SANITIZER_FIX
+    uint32_t        sb_size_luma   = pcs_ptr->parent_pcs_ptr->scs_ptr->sb_size_pix;
+    uint32_t        sb_size_chroma = pcs_ptr->parent_pcs_ptr->scs_ptr->sb_size_pix >> 1;
+#endif
 
     // Luma path
     for (context_ptr->txb_itr = 0; context_ptr->txb_itr < tot_tu; context_ptr->txb_itr++) {
@@ -1397,6 +1401,7 @@ void perform_intra_coding_loop(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, u
                     context_ptr->blk_geom->txsize[blk_ptr->tx_depth][context_ptr->txb_itr],
                     &context_ptr->md_context->luma_txb_skip_context,
                     &context_ptr->md_context->luma_dc_sign_context);
+
         if (is_16bit) {
             uint16_t       top_neigh_array[64 * 2 + 1];
             uint16_t       left_neigh_array[64 * 2 + 1];
@@ -1409,11 +1414,22 @@ void perform_intra_coding_loop(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, u
                        (uint16_t *)(ep_luma_recon_neighbor_array->top_array) + txb_origin_x,
                        context_ptr->blk_geom->tx_width[blk_ptr->tx_depth][context_ptr->txb_itr] *
                            2 * sizeof(uint16_t));
+#if SANITIZER_FIX
+            if (txb_origin_x != 0) {
+                uint16_t tx_height = context_ptr->blk_geom->tx_height[blk_ptr->tx_depth][context_ptr->txb_itr];
+                uint16_t multipler = (txb_origin_y % sb_size_luma + tx_height * 2) > sb_size_luma ? 1 : 2;
+                svt_memcpy(left_neigh_array + 1,
+                       (uint16_t *)(ep_luma_recon_neighbor_array->left_array) + txb_origin_y,
+                       context_ptr->blk_geom->tx_height[blk_ptr->tx_depth][context_ptr->txb_itr] *
+                           multipler * sizeof(uint16_t));
+            }
+#else
             if (txb_origin_x != 0)
                 svt_memcpy(left_neigh_array + 1,
                        (uint16_t *)(ep_luma_recon_neighbor_array->left_array) + txb_origin_y,
                        context_ptr->blk_geom->tx_height[blk_ptr->tx_depth][context_ptr->txb_itr] *
                            2 * sizeof(uint16_t));
+#endif
             if (txb_origin_y != 0 && txb_origin_x != 0)
                 top_neigh_array[0] = left_neigh_array[0] =
                     ((uint16_t *)(ep_luma_recon_neighbor_array->top_left_array) +
@@ -1465,11 +1481,22 @@ void perform_intra_coding_loop(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, u
                     ep_luma_recon_neighbor_array->top_array + txb_origin_x,
                     context_ptr->blk_geom->tx_width[blk_ptr->tx_depth][context_ptr->txb_itr] * 2);
 
+#if SANITIZER_FIX
+            if (txb_origin_x != 0) {
+                uint16_t tx_height = context_ptr->blk_geom->tx_height[blk_ptr->tx_depth][context_ptr->txb_itr];
+                uint16_t multipler = (txb_origin_y % sb_size_luma + tx_height * 2) > sb_size_luma ? 1 : 2;
+                svt_memcpy(left_neigh_array + 1,
+                           ep_luma_recon_neighbor_array->left_array + txb_origin_y,
+                           tx_height * multipler);
+            }
+
+#else
             if (txb_origin_x != 0)
                 svt_memcpy(
                     left_neigh_array + 1,
                     ep_luma_recon_neighbor_array->left_array + txb_origin_y,
                     context_ptr->blk_geom->tx_height[blk_ptr->tx_depth][context_ptr->txb_itr] * 2);
+#endif
 
             if (txb_origin_y != 0 && txb_origin_x != 0)
                 top_neigh_array[0] = left_neigh_array[0] =
@@ -1606,7 +1633,6 @@ void perform_intra_coding_loop(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, u
                 context_ptr->blk_geom->tx_height[blk_ptr->tx_depth][context_ptr->txb_itr],
                 NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
         }
-
     } // Transform Loop
 
     // Chroma path
@@ -1666,10 +1692,19 @@ void perform_intra_coding_loop(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, u
                         svt_memcpy(top_neigh_array + 1,
                                (uint16_t *)(ep_cb_recon_neighbor_array->top_array) + blk_originx_uv,
                                context_ptr->blk_geom->bwidth_uv * 2 * sizeof(uint16_t));
+#if SANITIZER_FIX
+                    if (blk_originx_uv != 0) {
+                        uint16_t multipler = (blk_originy_uv % sb_size_chroma + context_ptr->blk_geom->bheight_uv * 2) > sb_size_chroma ? 1 : 2;
+                        svt_memcpy(left_neigh_array + 1,
+                               (uint16_t *)(ep_cb_recon_neighbor_array->left_array) + blk_originy_uv,
+                               context_ptr->blk_geom->bheight_uv * multipler * sizeof(uint16_t));
+                    }
+#else
                     if (blk_originx_uv != 0)
                         svt_memcpy(left_neigh_array + 1,
                                (uint16_t *)(ep_cb_recon_neighbor_array->left_array) + blk_originy_uv,
                                context_ptr->blk_geom->bheight_uv * 2 * sizeof(uint16_t));
+#endif
                     if (blk_originy_uv != 0 && blk_originx_uv != 0)
                         top_neigh_array[0] = left_neigh_array[0] =
                             ((uint16_t *)(ep_cb_recon_neighbor_array->top_left_array) +
@@ -1679,10 +1714,19 @@ void perform_intra_coding_loop(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, u
                         svt_memcpy(top_neigh_array + 1,
                                (uint16_t *)(ep_cr_recon_neighbor_array->top_array) + blk_originx_uv,
                                context_ptr->blk_geom->bwidth_uv * 2 * sizeof(uint16_t));
+#if SANITIZER_FIX
+                    if (blk_originx_uv != 0) {
+                        uint16_t multipler = (blk_originy_uv % sb_size_chroma + context_ptr->blk_geom->bheight_uv * 2) > sb_size_chroma ? 1 : 2;
+                        svt_memcpy(left_neigh_array + 1,
+                               (uint16_t *)(ep_cr_recon_neighbor_array->left_array) + blk_originy_uv,
+                               context_ptr->blk_geom->bheight_uv * multipler * sizeof(uint16_t));
+                    }
+#else
                     if (blk_originx_uv != 0)
                         svt_memcpy(left_neigh_array + 1,
                                (uint16_t *)(ep_cr_recon_neighbor_array->left_array) + blk_originy_uv,
                                context_ptr->blk_geom->bheight_uv * 2 * sizeof(uint16_t));
+#endif
                     if (blk_originy_uv != 0 && blk_originx_uv != 0)
                         top_neigh_array[0] = left_neigh_array[0] =
                             ((uint16_t *)(ep_cr_recon_neighbor_array->top_left_array) +
@@ -1749,10 +1793,19 @@ void perform_intra_coding_loop(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, u
                                ep_cb_recon_neighbor_array->top_array + blk_originx_uv,
                                context_ptr->blk_geom->bwidth_uv * 2);
 
+#if SANITIZER_FIX
+                    if (blk_originx_uv != 0) {
+                        uint16_t multipler = (blk_originy_uv % sb_size_chroma + context_ptr->blk_geom->bheight_uv * 2) > sb_size_chroma ? 1 : 2;
+                        svt_memcpy(left_neigh_array + 1,
+                                   ep_cb_recon_neighbor_array->left_array + blk_originy_uv,
+                                   context_ptr->blk_geom->bheight_uv * multipler);
+                    }
+#else
                     if (blk_originx_uv != 0)
                         svt_memcpy(left_neigh_array + 1,
                                ep_cb_recon_neighbor_array->left_array + blk_originy_uv,
                                context_ptr->blk_geom->bheight_uv * 2);
+#endif
 
                     if (blk_originy_uv != 0 && blk_originx_uv != 0)
                         top_neigh_array[0] = left_neigh_array[0] =
@@ -1765,10 +1818,19 @@ void perform_intra_coding_loop(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, u
                                ep_cr_recon_neighbor_array->top_array + blk_originx_uv,
                                context_ptr->blk_geom->bwidth_uv * 2);
 
+#if SANITIZER_FIX
+                    if (blk_originx_uv != 0) {
+                        uint16_t multipler = (blk_originy_uv % sb_size_chroma + context_ptr->blk_geom->bheight_uv * 2) > sb_size_chroma ? 1 : 2;
+                        svt_memcpy(left_neigh_array + 1,
+                                   ep_cr_recon_neighbor_array->left_array + blk_originy_uv,
+                                   context_ptr->blk_geom->bheight_uv * multipler);
+                    }
+#else
                     if (blk_originx_uv != 0)
                         svt_memcpy(left_neigh_array + 1,
                                ep_cr_recon_neighbor_array->left_array + blk_originy_uv,
                                context_ptr->blk_geom->bheight_uv * 2);
+#endif
 
                     if (blk_originy_uv != 0 && blk_originx_uv != 0)
                         top_neigh_array[0] = left_neigh_array[0] =
@@ -1929,7 +1991,6 @@ void perform_intra_coding_loop(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, u
                 context_ptr->blk_geom->tx_height_uv[blk_ptr->tx_depth][context_ptr->txb_itr],
                 NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
         }
-
     } // Transform Loop
     for (context_ptr->txb_itr = 0; context_ptr->txb_itr < tot_tu; context_ptr->txb_itr++) {
         uint8_t uv_pass = blk_ptr->tx_depth && context_ptr->txb_itr ? 0 : 1;
@@ -2229,7 +2290,6 @@ void perform_inter_coding_loop(SequenceControlSet *scs, PictureControlSet *pcs,
             EB_TRUE,
             EB_TRUE);
     } else {
-
         if (is_16bit && !(scs->static_config.superres_mode > SUPERRES_NONE)) {
             av1_inter_prediction_16bit_pipeline(
                 pcs,
@@ -3179,8 +3239,47 @@ EB_EXTERN void av1_encdec_update(SequenceControlSet *scs, PictureControlSet *pcs
 #if FTR_BYPASS_ENCDEC
             // Copy recon to EncDec buffers if EncDec was bypassed;  if used pred depth only and NSQ is OFF data was copied directly to EncDec buffers in MD
             if (md_ctx->bypass_encdec && !(md_ctx->pred_depth_only && md_ctx->md_disallow_nsq)) {
+#if FTR_10BIT_MDS3_REG_PD1
+                if (md_ctx->encoder_bit_depth > EB_8BIT) {
+                    uint32_t recon_luma_offset = (recon_buffer->origin_y + ctx->blk_origin_y) * recon_buffer->stride_y + (recon_buffer->origin_x + ctx->blk_origin_x);
+                    uint16_t* ep_recon = ((uint16_t*)(recon_buffer->buffer_y)) + recon_luma_offset;
+                    uint16_t* md_recon = (uint16_t*)(blk_ptr->recon_tmp->buffer_y);
 
+                    for (uint32_t i = 0; i < blk_geom->bheight; i++)
+                        svt_memcpy(ep_recon + i * recon_buffer->stride_y, md_recon + i * blk_ptr->recon_tmp->stride_y, blk_geom->bwidth * sizeof(uint16_t));
+
+                    if (blk_geom->has_uv) {
+                        uint32_t round_origin_x = (ctx->blk_origin_x >> 3) << 3; // for Chroma blocks with size of 4
+                        uint32_t round_origin_y = (ctx->blk_origin_y >> 3) << 3; // for Chroma blocks with size of 4
+
+                        // Cr
+                        uint32_t recon_cr_offset =
+                            (((recon_buffer->origin_y + round_origin_y) >> 1) * recon_buffer->stride_cr) +
+                            ((recon_buffer->origin_x + round_origin_x) >> 1);
+                        uint16_t* ep_recon_cr = ((uint16_t*)(recon_buffer->buffer_cr)) + recon_cr_offset;
+                        uint16_t* md_recon_cr = (uint16_t*)(blk_ptr->recon_tmp->buffer_cr);
+
+                        for (uint32_t i = 0; i < blk_geom->bheight_uv; i++)
+                            svt_memcpy(ep_recon_cr + i * recon_buffer->stride_cr, md_recon_cr + i * blk_ptr->recon_tmp->stride_cr, blk_geom->bwidth_uv * sizeof(uint16_t));
+
+                        // Cb
+                        uint32_t recon_cb_offset =
+                            (((recon_buffer->origin_y + round_origin_y) >> 1) * recon_buffer->stride_cb) +
+                            ((recon_buffer->origin_x + round_origin_x) >> 1);
+                        uint16_t* ep_recon_cb = ((uint16_t*)(recon_buffer->buffer_cb)) + recon_cb_offset;
+                        uint16_t* md_recon_cb = (uint16_t*)(blk_ptr->recon_tmp->buffer_cb);
+
+                        for (uint32_t i = 0; i < blk_geom->bheight_uv; i++)
+                            svt_memcpy(ep_recon_cb + i * recon_buffer->stride_cb, md_recon_cb + i * blk_ptr->recon_tmp->stride_cb, blk_geom->bwidth_uv * sizeof(uint16_t));
+                    }
+                }
+                else {
+#endif
+#if FTR_10BIT_MDS3_REG_PD1
+                    uint32_t recon_luma_offset = (recon_buffer->origin_y + ctx->blk_origin_y) * recon_buffer->stride_y + (recon_buffer->origin_x + ctx->blk_origin_x);
+#else
                     uint32_t recon_luma_offset = (recon_buffer->origin_y + ctx->blk_origin_y) * recon_buffer->stride_y + (recon_buffer->origin_x + +ctx->blk_origin_x);
+#endif
                     uint8_t* ep_recon = recon_buffer->buffer_y + recon_luma_offset;
                     uint8_t* md_recon = blk_ptr->recon_tmp->buffer_y;
 
@@ -3211,6 +3310,9 @@ EB_EXTERN void av1_encdec_update(SequenceControlSet *scs, PictureControlSet *pcs
                         for (uint32_t i = 0; i < blk_geom->bheight_uv; i++)
                             svt_memcpy(ep_recon_cb + i * recon_buffer->stride_cb, md_recon_cb + i * blk_ptr->recon_tmp->stride_cb, blk_geom->bwidth_uv * sizeof(uint8_t));
                     }
+#if FTR_10BIT_MDS3_REG_PD1
+                }
+#endif
             } // END COPY RECON
 
             // Loop over TX units only if needed

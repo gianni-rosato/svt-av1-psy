@@ -50,7 +50,12 @@ EbErrorType av1_inter_prediction_light_pd1(
     EbPictureBufferDesc *pred_pic,
     uint16_t dst_origin_x,
     uint16_t dst_origin_y,
+#if FTR_10BIT_MDS3_LPD1
+    uint32_t component_mask,
+    uint8_t hbd_mode_decision);
+#else
     uint32_t component_mask);
+#endif
 #endif
 EbErrorType av1_inter_prediction(
     SequenceControlSet *scs_ptr,

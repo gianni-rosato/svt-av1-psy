@@ -2163,6 +2163,123 @@ void update_mi_map_skip_settings(BlkStruct *blk_ptr) {
     blk_ptr->av1xd->mi[0]->mbmi.block_mi.skip = blk_ptr->block_has_coeff ? EB_FALSE : EB_TRUE;
     blk_ptr->av1xd->mi[0]->mbmi.block_mi.skip_mode = (int8_t)blk_ptr->skip_flag;
 }
+#if OPT_UPDATE_MI_MAP
+void copy_mi_map_grid(ModeInfo** mi_grid_ptr, uint32_t mi_stride, uint8_t num_rows, uint8_t num_cols) {
+
+    ModeInfo* target = mi_grid_ptr[0];
+    if (num_cols == 1) {
+        for (uint8_t mi_y = 0; mi_y < num_rows; mi_y++) {
+            const int32_t mi_idx = 0 + mi_y * mi_stride;
+            // width is 1 block (corresponds to block width 4)
+            mi_grid_ptr[mi_idx] = target;
+        }
+    }
+    else if (num_cols == 2) {
+        for (uint8_t mi_y = 0; mi_y < num_rows; mi_y++) {
+            const int32_t mi_idx = 0 + mi_y * mi_stride;
+            // width is 2 blocks, so can copy 2 at once (corresponds to block width 8)
+            mi_grid_ptr[mi_idx] = target;
+            mi_grid_ptr[mi_idx + 1] = target;
+        }
+    }
+    else {
+        for (uint8_t mi_y = 0; mi_y < num_rows; mi_y++) {
+            for (uint8_t mi_x = 0; mi_x < num_cols; mi_x += 4) {
+
+                const int32_t mi_idx = mi_x + mi_y * mi_stride;
+                // width is >=4 blocks, so can copy 4 at once; (corresponds to block width >=16).
+                // All blocks >= 16 have widths that are divisible by 16, so it is ok to copy 4 blocks at once
+                mi_grid_ptr[mi_idx] = target;
+                mi_grid_ptr[mi_idx + 1] = target;
+                mi_grid_ptr[mi_idx + 2] = target;
+                mi_grid_ptr[mi_idx + 3] = target;
+            }
+        }
+    }
+}
+
+void update_mi_map(BlkStruct *blk_ptr, uint32_t blk_origin_x, uint32_t blk_origin_y,
+    const BlockGeom *blk_geom, PictureControlSet *pcs_ptr) {
+
+    uint32_t mi_stride = pcs_ptr->mi_stride;
+    int32_t  mi_row = blk_origin_y >> MI_SIZE_LOG2;
+    int32_t  mi_col = blk_origin_x >> MI_SIZE_LOG2;
+
+    const int32_t    offset = mi_row * mi_stride + mi_col;
+
+    // Reset the mi_grid (needs to be done here in case it was changed for NSQ blocks during MD - init_xd())
+    pcs_ptr->mi_grid_base[offset] = pcs_ptr->mip + offset;
+
+    MvReferenceFrame rf[2];
+    av1_set_ref_frame(rf, blk_ptr->prediction_unit_array->ref_frame_type);
+
+    ModeInfo *       mi_ptr = *(pcs_ptr->mi_grid_base + offset);
+    // use idx 0 as that's the first mbmmi in the block
+    MbModeInfo* mbmi = &mi_ptr[0].mbmi;
+    BlockModeInfoEnc*   block_mi = &mi_ptr[0].mbmi.block_mi;
+
+    // copy mbmi data
+    mbmi->tx_size = (blk_ptr->prediction_mode_flag == INTRA_MODE && blk_ptr->pred_mode == INTRA_MODE_4x4)
+        ? 0 :
+        blk_geom->txsize[blk_ptr->tx_depth][0]; // inherit tx_size from 1st transform block;
+
+    mbmi->tx_depth = blk_ptr->tx_depth;
+    mbmi->comp_group_idx = blk_ptr->comp_group_idx;
+    if (pcs_ptr->parent_pcs_ptr->palette_level) {
+        svt_memcpy(&mbmi->palette_mode_info,
+            &blk_ptr->palette_info.pmi,
+            sizeof(PaletteModeInfo));
+    }
+    else {
+        mbmi->palette_mode_info.palette_size[0] = mbmi->palette_mode_info.palette_size[1] = 0;
+    }
+
+    block_mi->sb_type = (blk_ptr->prediction_mode_flag == INTRA_MODE && blk_ptr->pred_mode == INTRA_MODE_4x4) ? BLOCK_4X4 : blk_geom->bsize;
+    block_mi->mode = blk_ptr->pred_mode;
+    block_mi->skip = (blk_ptr->block_has_coeff) ? EB_FALSE : EB_TRUE;
+    block_mi->partition = from_shape_to_part[blk_geom->shape];
+    block_mi->skip_mode = (int8_t)blk_ptr->skip_flag;
+    block_mi->uv_mode = blk_ptr->prediction_unit_array->intra_chroma_mode;
+    block_mi->use_intrabc = blk_ptr->use_intrabc;
+    block_mi->ref_frame[0] = rf[0];
+    block_mi->ref_frame[1] = (blk_ptr->is_interintra_used) ? INTRA_FRAME : rf[1];
+    if (blk_ptr->prediction_mode_flag == INTER_MODE || block_mi->use_intrabc) {
+
+        if (blk_ptr->prediction_unit_array->inter_pred_direction_index == UNI_PRED_LIST_0) {
+            block_mi->mv[0].as_mv.col = blk_ptr->prediction_unit_array->mv[0].x;
+            block_mi->mv[0].as_mv.row = blk_ptr->prediction_unit_array->mv[0].y;
+        }
+        else if (blk_ptr->prediction_unit_array->inter_pred_direction_index == UNI_PRED_LIST_1) {
+            block_mi->mv[0].as_mv.col = blk_ptr->prediction_unit_array->mv[1].x;
+            block_mi->mv[0].as_mv.row = blk_ptr->prediction_unit_array->mv[1].y;
+        }
+        else {
+            block_mi->mv[0].as_mv.col = blk_ptr->prediction_unit_array->mv[0].x;
+            block_mi->mv[0].as_mv.row = blk_ptr->prediction_unit_array->mv[0].y;
+            block_mi->mv[1].as_mv.col = blk_ptr->prediction_unit_array->mv[1].x;
+            block_mi->mv[1].as_mv.row = blk_ptr->prediction_unit_array->mv[1].y;
+        }
+
+        block_mi->ref_mv_idx = blk_ptr->drl_index;
+
+        block_mi->motion_mode = blk_ptr->prediction_unit_array[0].motion_mode;
+        block_mi->compound_idx = blk_ptr->compound_idx;
+        block_mi->interp_filters = blk_ptr->interp_filters;
+    }
+
+    if (blk_ptr->prediction_mode_flag == INTRA_MODE) {
+        block_mi->cfl_alpha_idx = blk_ptr->prediction_unit_array->cfl_alpha_idx;
+        block_mi->cfl_alpha_signs = blk_ptr->prediction_unit_array->cfl_alpha_signs;
+        block_mi->angle_delta[PLANE_TYPE_Y] = blk_ptr->prediction_unit_array[0].angle_delta[PLANE_TYPE_Y];
+        block_mi->angle_delta[PLANE_TYPE_UV] = blk_ptr->prediction_unit_array[0].angle_delta[PLANE_TYPE_UV];
+    }
+
+    // The data copied into each mi block is the same; therefore, copy the data from the blk_ptr only for the first block_mi
+    // then use change the mi block pointers of the remaining blocks ot point to the first block_mi. All data that
+    // is used from block_mi should be updated above.
+    copy_mi_map_grid((pcs_ptr->mi_grid_base + offset), mi_stride, (blk_geom->bheight >> MI_SIZE_LOG2), (blk_geom->bwidth >> MI_SIZE_LOG2));
+}
+#else
 #if SS_OPT_MD
 void update_mi_map(BlkStruct *blk_ptr, uint32_t blk_origin_x, uint32_t blk_origin_y,
     const BlockGeom *blk_geom, PictureControlSet *pcs_ptr) {
@@ -2341,6 +2458,7 @@ void update_mi_map(BlkStruct *blk_ptr, uint32_t blk_origin_x, uint32_t blk_origi
         }
     }
 }
+#endif
 static INLINE void record_samples(MbModeInfo *mbmi, int *pts, int *pts_inref, int row_offset,
                                   int sign_r, int col_offset, int sign_c) {
     uint8_t bw = block_size_wide[mbmi->block_mi.sb_type];

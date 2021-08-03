@@ -1720,6 +1720,12 @@ void tpl_mc_flow_dispenser_sb_generic(
 
                 const uint32_t list_index = me_cand->direction;
                 const uint32_t ref_pic_index = list_index == 0 ? me_cand->ref_idx_l0 : me_cand->ref_idx_l1;
+#if FIX_TPL_NON_VALID_REF
+                //exclude this cand if the reference is within the sliding window and does not have valid TPL recon data
+                const int32_t ref_grp_idx = pcs_ptr->tpl_data.ref_tpl_group_idx[list_index][ref_pic_index];
+                if (ref_grp_idx>0 && pcs_ptr->tpl_data.base_pcs->tpl_valid_pic[ref_grp_idx]==0)
+                    continue;
+#endif
                 const uint32_t rf_idx = svt_get_ref_frame_type(list_index, ref_pic_index) - 1;
                 const uint32_t me_offset = me_mb_offset * pcs_ptr->pa_me_data->max_refs + (list_index ? pcs_ptr->pa_me_data->max_l0 : 0) + ref_pic_index;
                 x_curr_mv = (me_results->me_mv_array[me_offset].x_mv) << 1;
@@ -3325,6 +3331,13 @@ static void generate_r0beta(PictureParentControlSet *pcs_ptr) {
     }
     return;
 }
+
+#if CLN_RTIME_MEM_ALLOC
+EbErrorType rtime_alloc_mc_flow_rec_picture_buffer_noref(EncodeContext* encode_context_ptr, EbPictureBufferDescInitData *picture_buffer_desc_init_data) {
+    EB_NEW(encode_context_ptr->mc_flow_rec_picture_buffer_noref, svt_picture_buffer_desc_ctor, (EbPtr)picture_buffer_desc_init_data);
+    return EB_ErrorNone;
+}
+#endif
 /************************************************
 * Allocate and initialize buffers needed for tpl
 ************************************************/
@@ -3341,7 +3354,11 @@ EbErrorType init_tpl_buffers(
     EbPictureBufferDescInitData picture_buffer_desc_init_data;
     picture_buffer_desc_init_data.max_width          = pcs_ptr->enhanced_picture_ptr->max_width;
     picture_buffer_desc_init_data.max_height         = pcs_ptr->enhanced_picture_ptr->max_height;
+#if SS_CLN_10BIT_TPL_BUFFER
+    picture_buffer_desc_init_data.bit_depth          = EB_8BIT;
+#else
     picture_buffer_desc_init_data.bit_depth          = pcs_ptr->enhanced_picture_ptr->bit_depth;
+#endif
     picture_buffer_desc_init_data.color_format       = pcs_ptr->enhanced_picture_ptr->color_format;
     picture_buffer_desc_init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_Y_FLAG;
     picture_buffer_desc_init_data.left_padding       = TPL_PADX;
@@ -3355,13 +3372,25 @@ EbErrorType init_tpl_buffers(
             svt_picture_buffer_desc_ctor_zeroout,
             (EbPtr)&picture_buffer_desc_init_data);
 #else
+#if CLN_RTIME_MEM_ALLOC
+    rtime_alloc_mc_flow_rec_picture_buffer_noref(encode_context_ptr, &picture_buffer_desc_init_data);
+#else
     EB_NEW(encode_context_ptr->mc_flow_rec_picture_buffer_noref,
            svt_picture_buffer_desc_ctor,
            (EbPtr)&picture_buffer_desc_init_data);
 #endif
+#endif
 
     for (frame_idx = 0; frame_idx < frames_in_sw; frame_idx++) {
+        // printf("TPL Base:%lld   Picture:%lld  valid:%i \n", pcs_ptr->picture_number, pcs_ptr->tpl_group[frame_idx]->picture_number, pcs_ptr->tpl_valid_pic[frame_idx]);
+#if SS_OPT_TPL_REC
+        if (pcs_ptr->tpl_valid_pic[frame_idx] && pcs_ptr->tpl_group[frame_idx]->is_used_as_reference_flag) {
+
+             encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx] =
+                   ((EbReferenceObject *)pcs_ptr->tpl_group[frame_idx]->reference_picture_wrapper_ptr->object_ptr)->reference_picture;
+#else
         if (pcs_ptr->tpl_valid_pic[frame_idx]) {
+
 #if SIM_OLD_TPL
             EB_NEW(encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx],
                 svt_picture_buffer_desc_ctor_zeroout,
@@ -3370,6 +3399,7 @@ EbErrorType init_tpl_buffers(
             EB_NEW(encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx],
                    svt_picture_buffer_desc_ctor,
                    (EbPtr)&picture_buffer_desc_init_data);
+#endif
 #endif
         } else {
             encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx] =
@@ -3497,7 +3527,9 @@ EbErrorType tpl_mc_flow(EncodeContext *encode_context_ptr, SequenceControlSet *s
                         PictureParentControlSet *pcs_ptr,  SourceBasedOperationsContext    *context_ptr) {
 
     int32_t  frames_in_sw = MIN(MAX_TPL_LA_SW, pcs_ptr->tpl_group_size);
+#if !SS_OPT_TPL_REC
     int32_t  frame_idx;
+#endif
 #if FTR_TPL_SYNTH
    uint32_t picture_width_in_mb  = (pcs_ptr->enhanced_picture_ptr->width + 16 - 1) / 16  ;
    uint32_t picture_height_in_mb = (pcs_ptr->enhanced_picture_ptr->height + 16 - 1) / 16 ;
@@ -3522,60 +3554,6 @@ EbErrorType tpl_mc_flow(EncodeContext *encode_context_ptr, SequenceControlSet *s
     pcs_ptr->tpl_is_valid = 0;
     init_tpl_buffers(encode_context_ptr, pcs_ptr);
 
-#if FIX_TPL_NON_VALID_REF
-
-    //determine for every valid pic in TPL group, if each of its reference is also a valid tpl picture (dispencer is done, and TPL recon sample are available)
-
-
-    for (uint32_t fidx = 0; fidx < pcs_ptr->tpl_group_size; fidx++) {
-
-        PictureParentControlSet  *base_pcs = pcs_ptr;
-        PictureParentControlSet  *cur_pcs  = pcs_ptr->tpl_group[fidx];
-
-        if (!pcs_ptr->tpl_valid_pic[fidx])
-            continue;
-
-
-        for (uint8_t list_index = REF_LIST_0; list_index < TOTAL_NUM_OF_REF_LISTS; list_index++) {
-
-            uint8_t  ref_list_count = (list_index == REF_LIST_0) ?
-                cur_pcs->ref_list0_count_try:
-                cur_pcs->ref_list1_count_try;
-
-            for (uint8_t ref_idx = 0; ref_idx < ref_list_count; ref_idx++) {
-
-                //uint64_t ref_poc = cur_pcs->ref_pic_poc_array[list_index][ref_idx];
-                //
-                //for (uint32_t j = 0; j < base_pcs->tpl_group_size; j++) {
-                //    if (ref_poc == base_pcs->tpl_group[j]->picture_number) {
-                //        cur_pcs->tpl_data.ref_in_slide_window[list_index][ref_idx] = EB_TRUE;
-                //        break;
-                //    }
-                //}
-                //
-                //EbPaReferenceObject *ref_obj = (EbPaReferenceObject *)cur_pcs->ref_pa_pic_ptr_array[list_index][ref_idx]->object_ptr;
-                //
-                //cur_pcs->tpl_data.tpl_ref_ds_ptr_array[list_index][ref_idx].picture_number = ref_obj->picture_number;
-                //cur_pcs->tpl_data.tpl_ref_ds_ptr_array[list_index][ref_idx].picture_ptr = ref_obj->input_padded_picture_ptr;
-
-
-                uint64_t ref_poc = cur_pcs->ref_pic_poc_array[list_index][ref_idx];
-
-                for (uint32_t j = 0; j < base_pcs->tpl_group_size; j++) {
-                    if (ref_poc == base_pcs->tpl_group[j]->picture_number) {
-                        cur_pcs->tpl_data.ref_in_slide_window[list_index][ref_idx] = EB_TRUE;
-                        break;
-                    }
-                }
-               // if(cur_pcs->tpl_data.ref_in_slide_window[list_index][ref_idx])
-               //     if()
-
-            }
-        }
-    }
-
-#endif
-
     if (pcs_ptr->tpl_group[0]->tpl_data.tpl_temporal_layer_index == 0) {
 
 
@@ -3591,7 +3569,11 @@ EbErrorType tpl_mc_flow(EncodeContext *encode_context_ptr, SequenceControlSet *s
 
         uint8_t tpl_on;
         encode_context_ptr->poc_map_idx[0] = pcs_ptr->tpl_group[0]->picture_number;
+#if SS_OPT_TPL_REC
+        for (int32_t frame_idx = 0; frame_idx < frames_in_sw; frame_idx++) {
+#else
         for (frame_idx = 0; frame_idx < frames_in_sw; frame_idx++) {
+#endif
             encode_context_ptr->poc_map_idx[frame_idx] = pcs_ptr->tpl_group[frame_idx]->picture_number;
 #if FTR_TPL_SYNTH
             for (uint32_t blky = 0; blky < (picture_height_in_mb); blky++) {
@@ -3642,7 +3624,11 @@ EbErrorType tpl_mc_flow(EncodeContext *encode_context_ptr, SequenceControlSet *s
         }
 
         // synthesizer
+#if SS_OPT_TPL_REC
+        for (int32_t frame_idx = frames_in_sw - 1; frame_idx >= 0; frame_idx--) {
+#else
         for (frame_idx = frames_in_sw - 1; frame_idx >= 0; frame_idx--) {
+#endif
 #if OPT_COMBINE_TPL_FOR_LAD
             tpl_on = pcs_ptr->tpl_valid_pic[frame_idx];
 #else
@@ -3667,17 +3653,17 @@ EbErrorType tpl_mc_flow(EncodeContext *encode_context_ptr, SequenceControlSet *s
         generate_r0beta(pcs_ptr);
 #if DEBUG_TPL
         SVT_LOG("LOG displayorder:%ld\n",
-            pcs_array[0]->picture_number);
+            pcs_ptr->picture_number);
         for (frame_idx = 0; frame_idx < frames_in_sw; frame_idx++)
         {
-            PictureParentControlSet *pcs_ptr_tmp = pcs_array[frame_idx];
+            PictureParentControlSet *pcs_ptr_tmp = pcs_ptr->tpl_group[frame_idx];
             Av1Common *cm = pcs_ptr->av1_cm;
             SequenceControlSet *scs_ptr = pcs_ptr_tmp->scs_ptr;
             int64_t intra_cost_base = 0;
             int64_t mc_dep_cost_base = 0;
-            const int step = 1 << (pcs_ptr_tmp->is_720p_or_larger ? 2 : 1);
+            const int step = 2;// 1 << (pcs_ptr_tmp->is_720p_or_larger ? 2 : 1);
             const int mi_cols_sr = ((pcs_ptr_tmp->aligned_width + 15) / 16) << 2;
-            const int shift = pcs_ptr_tmp->is_720p_or_larger ? 2 : 1;
+            const int shift = 2;// pcs_ptr_tmp->is_720p_or_larger ? 2 : 1;
 
             for (int row = 0; row < cm->mi_rows; row += step) {
                 for (int col = 0; col < mi_cols_sr; col += step) {
@@ -3698,12 +3684,14 @@ EbErrorType tpl_mc_flow(EncodeContext *encode_context_ptr, SequenceControlSet *s
 
     }
 
+#if !SS_OPT_TPL_REC
     for (frame_idx = 0; frame_idx < frames_in_sw; frame_idx++) {
         if (encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx] &&
             encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx] !=
                 encode_context_ptr->mc_flow_rec_picture_buffer_noref)
             EB_DELETE(encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx]);
     }
+#endif
     EB_DELETE(encode_context_ptr->mc_flow_rec_picture_buffer_noref);
 
     // When super-res recode is actived, don't release pa_ref_objs until final loop is finished

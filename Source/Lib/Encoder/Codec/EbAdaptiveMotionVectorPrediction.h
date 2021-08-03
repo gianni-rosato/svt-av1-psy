@@ -39,7 +39,7 @@ void               generate_av1_mvp_table(struct ModeDecisionContext *context_pt
 void get_av1_mv_pred_drl(struct ModeDecisionContext *context_ptr, BlkStruct *blk_ptr,
                          MvReferenceFrame ref_frame, uint8_t is_compound, PredictionMode mode,
                          uint8_t drl_index, IntMv nearestmv[2], IntMv nearmv[2], IntMv ref_mv[2]);
-#if SS_OPT_MD
+#if SS_OPT_MD || OPT_UPDATE_MI_MAP
 void update_mi_map(BlkStruct *blk_ptr, uint32_t blk_origin_x, uint32_t blk_origin_y,
                    const BlockGeom *blk_geom, PictureControlSet *pcs_ptr);
 #else

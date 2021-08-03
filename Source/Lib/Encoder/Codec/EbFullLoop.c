@@ -1820,6 +1820,11 @@ void full_loop_chroma_light_pd1(
         uint64_t *cb_coeff_bits,
         uint64_t *cr_coeff_bits)
 {
+#if FTR_10BIT_MDS3_LPD1
+    uint32_t full_lambda = context_ptr->hbd_mode_decision
+        ? context_ptr->full_lambda_md[EB_10_BIT_MD]
+        : context_ptr->full_lambda_md[EB_8_BIT_MD];
+#endif
     uint32_t nz_count_dummy;
     const TxSize tx_size_uv = context_ptr->blk_geom->txsize_uv[0][0];
 
@@ -1863,7 +1868,11 @@ void full_loop_chroma_light_pd1(
         (int16_t *)candidate_buffer->residual_ptr->buffer_cb,
         blk_chroma_origin_index,
         candidate_buffer->residual_ptr->stride_cb,
+#if FTR_10BIT_MDS3_LPD1
+        context_ptr->hbd_mode_decision,
+#else
         0,
+#endif
         context_ptr->blk_geom->bwidth_uv,
         context_ptr->blk_geom->bheight_uv);
 
@@ -1875,7 +1884,11 @@ void full_loop_chroma_light_pd1(
         NOT_USED_VALUE,
         tx_size_uv,
         &context_ptr->three_quad_energy,
+#if FTR_10BIT_MDS3_LPD1
+        context_ptr->hbd_mode_decision ? EB_10BIT : EB_8BIT,
+#else
         EB_8BIT,
+#endif
         candidate_buffer->candidate_ptr->transform_type_uv,
         PLANE_TYPE_UV,
         pf_shape);
@@ -1896,14 +1909,22 @@ void full_loop_chroma_light_pd1(
         &candidate_buffer->candidate_ptr->eob[1][0],
         &nz_count_dummy,
         COMPONENT_CHROMA_CB,
+#if FTR_10BIT_MDS3_LPD1
+        context_ptr->hbd_mode_decision ? EB_10BIT : EB_8BIT,
+#else
         EB_8BIT,
+#endif
         candidate_buffer->candidate_ptr->transform_type_uv,
         candidate_buffer,
         0,
         0,
         candidate_buffer->candidate_ptr->pred_mode,
         0,
+#if FTR_10BIT_MDS3_LPD1
+        full_lambda,
+#else
         context_ptr->full_lambda_md[EB_8_BIT_MD],
+#endif
         EB_FALSE);
 
 #if !CHROMA_DETECTOR
@@ -1945,7 +1966,11 @@ void full_loop_chroma_light_pd1(
         (int16_t *)candidate_buffer->residual_ptr->buffer_cr,
         blk_chroma_origin_index,
         candidate_buffer->residual_ptr->stride_cr,
+#if FTR_10BIT_MDS3_LPD1
+        context_ptr->hbd_mode_decision,
+#else
         0,
+#endif
         context_ptr->blk_geom->bwidth_uv,
         context_ptr->blk_geom->bheight_uv);
 #if !OPT_REMOVE_TXT_LPD1
@@ -1960,7 +1985,11 @@ void full_loop_chroma_light_pd1(
         NOT_USED_VALUE,
         tx_size_uv,
         &context_ptr->three_quad_energy,
+#if FTR_10BIT_MDS3_LPD1
+        context_ptr->hbd_mode_decision ? EB_10BIT : EB_8BIT,
+#else
         EB_8BIT,
+#endif
         candidate_buffer->candidate_ptr->transform_type_uv,
         PLANE_TYPE_UV,
         pf_shape);
@@ -1980,14 +2009,22 @@ void full_loop_chroma_light_pd1(
         &candidate_buffer->candidate_ptr->eob[2][0],
         &nz_count_dummy,
         COMPONENT_CHROMA_CR,
+#if FTR_10BIT_MDS3_LPD1
+        context_ptr->hbd_mode_decision ? EB_10BIT : EB_8BIT,
+#else
         EB_8BIT,
+#endif
         candidate_buffer->candidate_ptr->transform_type_uv,
         candidate_buffer,
         0,
         0,
         candidate_buffer->candidate_ptr->pred_mode,
         0,
+#if FTR_10BIT_MDS3_LPD1
+        full_lambda,
+#else
         context_ptr->full_lambda_md[EB_8_BIT_MD],
+#endif
         EB_FALSE);
 
 

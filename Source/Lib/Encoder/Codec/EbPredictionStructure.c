@@ -1053,6 +1053,7 @@ static EbErrorType prediction_structure_ctor(
                 ? MIN(3, ref_index)
                 : ref_index;
 #endif
+
             // Allocate the Leading Picture Reference List 0
             if (predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
                     ->ref_list0.reference_list_count) {
@@ -1205,6 +1206,7 @@ static EbErrorType prediction_structure_ctor(
                 ? MIN(3, ref_index)
                 : ref_index;
 #endif
+
             // Allocate Reference List 0
             EB_MALLOC_ARRAY(predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
                                 ->ref_list0.reference_list,

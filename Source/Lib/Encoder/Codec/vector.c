@@ -28,7 +28,11 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "vector.h"
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
+#if OPT_IBC_HASH_SEARCH
+int svt_aom_vector_setup(Vector *vector, uint32_t capacity, uint32_t element_size) {
+#else
 int svt_aom_vector_setup(Vector *vector, size_t capacity, size_t element_size) {
+#endif
     assert(vector != NULL);
 
     if (vector == NULL)
@@ -126,7 +130,11 @@ int _vector_adjust_capacity(Vector *vector) {
     return _vector_reallocate(vector, MAX(1, vector->size * VECTOR_GROWTH_FACTOR));
 }
 
+#if OPT_IBC_HASH_SEARCH
+int _vector_reallocate(Vector *vector, uint32_t new_capacity) {
+#else
 int _vector_reallocate(Vector *vector, size_t new_capacity) {
+#endif
     size_t new_capacity_in_bytes;
     void * old;
     assert(vector != NULL);

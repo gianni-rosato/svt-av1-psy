@@ -3194,6 +3194,69 @@ void tf_controls(SequenceControlSet *scs_ptr, uint8_t tf_level) {
         scs_ptr->static_config.tf_params_per_type[2].enabled                  = 0;
         break;
 #endif
+#if TUNE_4K_M11
+    case 9:
+        // I_SLICE TF Params
+        scs_ptr->static_config.tf_params_per_type[0].enabled                  = 1;
+        scs_ptr->static_config.tf_params_per_type[0].num_future_pics          = 2;
+        scs_ptr->static_config.tf_params_per_type[0].noise_adjust_future_pics = 0;
+        scs_ptr->static_config.tf_params_per_type[0].activity_adjust_th       = 20;
+        scs_ptr->static_config.tf_params_per_type[0].max_num_future_pics      = MIN((1 << scs_ptr->static_config.hierarchical_levels), 16);
+        scs_ptr->static_config.tf_params_per_type[0].hme_me_level             = 2;
+        scs_ptr->static_config.tf_params_per_type[0].half_pel_mode            = 2;
+        scs_ptr->static_config.tf_params_per_type[0].quarter_pel_mode         = 3;
+        scs_ptr->static_config.tf_params_per_type[0].eight_pel_mode           = 0;
+        scs_ptr->static_config.tf_params_per_type[0].do_chroma                = 0;
+        scs_ptr->static_config.tf_params_per_type[0].use_pred_64x64_only_th   = 35;
+        scs_ptr->static_config.tf_params_per_type[0].me_exit_th               = 16*16;
+        scs_ptr->static_config.tf_params_per_type[0].pred_error_32x32_th      = (uint64_t)~0;
+        scs_ptr->static_config.tf_params_per_type[0].me_16x16_to_8x8_dev_th   = 20;
+        scs_ptr->static_config.tf_params_per_type[0].max_64x64_past_pics      = 0;
+        scs_ptr->static_config.tf_params_per_type[0].max_64x64_future_pics    = 1;
+        scs_ptr->static_config.tf_params_per_type[0].sub_sampling_shift       = 1;
+#if OPT_TUNE_DECAY_UN_8_10_M11
+        scs_ptr->static_config.tf_params_per_type[0].use_fast_filter          = 1;
+#else
+        scs_ptr->static_config.tf_params_per_type[0].use_fast_filter          = scs_ptr->static_config.encoder_bit_depth == EB_8BIT ? 1 : 0;
+#endif
+        scs_ptr->static_config.tf_params_per_type[0].avoid_2d_qpel            = 1;
+        scs_ptr->static_config.tf_params_per_type[0].use_2tap                 = 1;
+        scs_ptr->static_config.tf_params_per_type[0].use_intra_for_noise_est  = 1;
+
+        // BASE TF Params
+        scs_ptr->static_config.tf_params_per_type[1].enabled                  = 1;
+        scs_ptr->static_config.tf_params_per_type[1].num_past_pics            = 1;
+        scs_ptr->static_config.tf_params_per_type[1].num_future_pics          = 1;
+        scs_ptr->static_config.tf_params_per_type[1].noise_adjust_past_pics   = 0;
+        scs_ptr->static_config.tf_params_per_type[1].noise_adjust_future_pics = 0;
+        scs_ptr->static_config.tf_params_per_type[1].activity_adjust_th       = 20;
+        scs_ptr->static_config.tf_params_per_type[1].max_num_past_pics        = MIN((1 << scs_ptr->static_config.hierarchical_levels), 3);
+        scs_ptr->static_config.tf_params_per_type[1].max_num_future_pics      = MIN((1 << scs_ptr->static_config.hierarchical_levels), 6);
+        scs_ptr->static_config.tf_params_per_type[1].hme_me_level             = 2;
+        scs_ptr->static_config.tf_params_per_type[1].half_pel_mode            = 2;
+        scs_ptr->static_config.tf_params_per_type[1].quarter_pel_mode         = 3;
+        scs_ptr->static_config.tf_params_per_type[1].eight_pel_mode           = 0;
+        scs_ptr->static_config.tf_params_per_type[1].do_chroma                = 0;
+        scs_ptr->static_config.tf_params_per_type[1].use_pred_64x64_only_th   = 35;
+        scs_ptr->static_config.tf_params_per_type[1].pred_error_32x32_th      = (uint64_t)~0;
+        scs_ptr->static_config.tf_params_per_type[1].me_exit_th               = 16*16;
+        scs_ptr->static_config.tf_params_per_type[1].me_16x16_to_8x8_dev_th   = 20;
+        scs_ptr->static_config.tf_params_per_type[1].max_64x64_past_pics      = 0;
+        scs_ptr->static_config.tf_params_per_type[1].max_64x64_future_pics    = 1;
+        scs_ptr->static_config.tf_params_per_type[1].sub_sampling_shift       = 1;
+#if OPT_TUNE_DECAY_UN_8_10_M11
+        scs_ptr->static_config.tf_params_per_type[1].use_fast_filter = 1;
+#else
+        scs_ptr->static_config.tf_params_per_type[1].use_fast_filter          = scs_ptr->static_config.encoder_bit_depth == EB_8BIT ? 1 : 0;
+#endif
+        scs_ptr->static_config.tf_params_per_type[1].avoid_2d_qpel            = 1;
+        scs_ptr->static_config.tf_params_per_type[1].use_2tap                 = 1;
+        scs_ptr->static_config.tf_params_per_type[1].use_intra_for_noise_est  = 1;
+
+        // L1 TF Params
+        scs_ptr->static_config.tf_params_per_type[2].enabled                  = 0;
+        break;
+#endif
     default:
         assert(0);
         break;
@@ -3232,7 +3295,7 @@ void derive_tf_params(SequenceControlSet *scs_ptr) {
     else if (scs_ptr->static_config.enc_mode <= ENC_M7) {
         tf_level = 4;
     }
-#if !TUNE_M8_M10
+#if !TUNE_M8_M10 || TUNE_M7_M8_2
     else if (scs_ptr->static_config.enc_mode <= ENC_M8) {
         tf_level = 5;
     }
@@ -3265,8 +3328,20 @@ void derive_tf_params(SequenceControlSet *scs_ptr) {
     }
 #endif
 #if OPT_UPGRADE_TF
-    else if (scs_ptr->static_config.enc_mode <= ENC_M11) {
+#if TUNE_4K_M11
+    else if (scs_ptr->static_config.enc_mode <= ENC_M10) {
         tf_level = 8;
+    }
+#endif
+    else if (scs_ptr->static_config.enc_mode <= ENC_M11) {
+#if TUNE_4K_M11
+        if (scs_ptr->input_resolution < INPUT_SIZE_4K_RANGE)
+            tf_level = 8;
+        else
+            tf_level = 9;
+#else
+        tf_level = 8;
+#endif
     }
 #endif
     else {
@@ -3394,6 +3469,9 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
         scs_ptr->static_config.recode_loop = scs_ptr->static_config.enc_mode <= ENC_M5 ? ALLOW_RECODE_KFARFGF : ALLOW_RECODE_KFMAXBW;
 #endif
     }
+#if FIX_SANITIZER_RACE_CONDS
+    scs_ptr->encode_context_ptr->recode_loop = scs_ptr->static_config.recode_loop;
+#endif
 
     derive_input_resolution(
         &scs_ptr->input_resolution,
@@ -3439,7 +3517,11 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
      {
 #if OPT_COMBINE_TPL_FOR_LAD
         uint8_t tpl_lad_mg = 1; // Specify the number of mini-gops to be used as LAD. 0: 1 mini-gop, 1: 2 mini-gops and 3: 3 mini-gops
+#if TUNE_M8_M10_4K_SUPER
+        if (scs_ptr->static_config.enc_mode <= ENC_M9)
+#else
         if (scs_ptr->static_config.enc_mode <= ENC_M10)
+#endif
             tpl_lad_mg = 1;
         else
             tpl_lad_mg = 0;

@@ -123,6 +123,11 @@ void svt_highbd_inter_predictor_light_pd0(const uint16_t *src, int32_t src_strid
     int32_t dst_stride, int32_t w, int32_t h,
     ConvolveParams *conv_params, int32_t bd);
 #endif
+#if FTR_10BIT_MDS3_LPD1
+void svt_inter_predictor_light_pd1(uint8_t *src, int32_t src_stride, uint8_t *dst,
+    int32_t dst_stride, int32_t w, int32_t h, InterpFilterParams* filter_x, InterpFilterParams* filter_y,
+    int32_t mv_x, int32_t mv_y, ConvolveParams *conv_params, int32_t bd);
+#endif
 void svt_inter_predictor(const uint8_t *src, int32_t src_stride, uint8_t *dst, int32_t dst_stride,
                          const SubpelParams *subpel_params, const ScaleFactors *sf, int32_t w,
                          int32_t h, ConvolveParams *conv_params, InterpFilters interp_filters,

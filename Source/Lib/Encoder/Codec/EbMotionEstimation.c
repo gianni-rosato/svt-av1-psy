@@ -3494,11 +3494,6 @@ void perform_gm_detection(
     else {
         for (unsigned i = 0; i < 16; i++) {
             uint8_t n_idx = 5 + i;
-#if ME_8X8
-            if (!pcs_ptr->enable_me_8x8)
-                if (n_idx >= MAX_SB64_PU_COUNT_NO_8X8)
-                    n_idx = me_idx_85_8x8_to_16x16_conversion[n_idx - MAX_SB64_PU_COUNT_NO_8X8];
-#endif
 #if OPT_ME
             MeCandidate* me_candidate = &(pcs_ptr->pa_me_data->me_results[sb_index]->me_candidate_array[n_idx * pcs_ptr->pa_me_data->max_cand]);
 #else

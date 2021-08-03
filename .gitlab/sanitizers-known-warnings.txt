@@ -4,8 +4,6 @@
 
 #Race warnings (data races and use-after-free reports):
 #1]
-race:svt_memcpy_small
-race:svt_memcpy_sse
 race:mode_decision_kernel
 #mode_decision_kernel() is run two times with that same pcs_ptr in separated tasks,
 #when: enc_dec_tasks_ptr->input_type is ENCDEC_TASKS_MDC_INPUT or ENCDEC_TASKS_ENCDEC_INPUT.

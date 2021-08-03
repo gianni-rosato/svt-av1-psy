@@ -1382,6 +1382,44 @@ void svt_highbd_inter_predictor_light_pd0(const uint16_t *src, int32_t src_strid
 
 }
 #endif
+#if FTR_10BIT_MDS3_LPD1
+void svt_inter_predictor_light_pd1(uint8_t *src, int32_t src_stride, uint8_t *dst,
+    int32_t dst_stride, int32_t w, int32_t h, InterpFilterParams* filter_x, InterpFilterParams* filter_y,
+    int32_t mv_x, int32_t mv_y, ConvolveParams *conv_params, int32_t bd)
+{
+    if (bd > EB_8BIT) {
+        uint16_t* src16 = (uint16_t*)src;
+        uint16_t* dst16 = (uint16_t*)dst;
+        convolveHbd[mv_x != 0][mv_y != 0][conv_params->is_compound](
+            src16,
+            src_stride,
+            dst16,
+            dst_stride,
+            w,
+            h,
+            filter_x,
+            filter_y,
+            mv_x,
+            mv_y,
+            conv_params,
+            bd);
+    }
+    else {
+        convolve[mv_x != 0][mv_y != 0][conv_params->is_compound](
+            src,
+            src_stride,
+            dst,
+            dst_stride,
+            w,
+            h,
+            filter_x,
+            filter_y,
+            mv_x,
+            mv_y,
+            conv_params);
+    }
+}
+#endif
 void svt_inter_predictor(const uint8_t *src, int32_t src_stride, uint8_t *dst, int32_t dst_stride,
                          const SubpelParams *subpel_params, const ScaleFactors *sf, int32_t w,
                          int32_t h, ConvolveParams *conv_params, InterpFilters interp_filters,

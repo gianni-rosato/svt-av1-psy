@@ -572,6 +572,15 @@ typedef struct Lpd1Ctrls {
 #endif
 } Lpd1Ctrls;
 #endif
+#if FTR_SKIP_TX_LPD1
+typedef struct SkipTxCtrls {
+    uint8_t zero_y_coeff_exit;      // skip cost calc and chroma TX/compensation if there are zero luma coeffs
+    uint8_t skip_nrst_nrst_tx;      // skip luma TX for NRST_NRST cands if dist/QP is low, and top and left neighbours have no coeffs
+#if OPT_TX_SKIP
+    uint8_t skip_mvp_tx;            // skip luma TX for MVP cands if dist/QP is low, and top and left neighbours have no coeffs
+#endif
+} SkipTxCtrls;
+#endif
 typedef struct ModeDecisionContext {
     EbDctor  dctor;
     EbFifo * mode_decision_configuration_input_fifo_ptr;
@@ -671,6 +680,9 @@ typedef struct ModeDecisionContext {
     uint16_t         pu_height;
     EbPfMode         pf_md_mode;
     uint8_t          hbd_mode_decision;
+#if FTR_10BIT_MDS3_REG_PD1
+    uint8_t          encoder_bit_depth;
+#endif
     uint8_t          qp_index;
     uint64_t         three_quad_energy;
     uint32_t         txb_1d_offset;
@@ -684,9 +696,11 @@ typedef struct ModeDecisionContext {
     int32_t is_inter_ctx;
     uint8_t intra_luma_left_mode;
     uint8_t intra_luma_top_mode;
+
     EB_ALIGN(64)
     int16_t pred_buf_q3
         [CFL_BUF_SQUARE]; // Hsan: both MD and EP to use pred_buf_q3 (kept 1, and removed the 2nd)
+
     uint8_t injected_ref_type_l0_array
         [MODE_DECISION_CANDIDATE_MAX_COUNT]; // used to do not inject existing MV
     uint8_t injected_ref_type_l1_array
@@ -915,6 +929,9 @@ typedef struct ModeDecisionContext {
 #endif
     TxtControls       txt_ctrls;
     NearCountCtrls near_count_ctrls;
+#if FTR_MVP_BEST_ME_LIST
+    uint8_t           lpd1_mvp_best_me_list; // inject unipred MVP candidates only for the best ME list
+#endif
     RdoqCtrls         rdoq_ctrls;
     uint8_t           disallow_4x4;
     uint8_t           md_disallow_nsq;
@@ -1023,6 +1040,9 @@ typedef struct ModeDecisionContext {
 #if CHROMA_CLEANUP
     uint8_t end_plane;
 #endif
+#if FTR_10BIT_MDS3_REG_PD1
+    uint8_t need_hbd_comp_mds3; // set to true if MDS3 needs to perform a full 10bit compensation in MDS3 (to make MDS3 conformant when using bypass_encdec)
+#endif
 #if FTR_LOW_AC_COST_EST
     int masked_compound_used;
     int ctx_comp_group_idx;
@@ -1058,8 +1078,12 @@ typedef struct ModeDecisionContext {
     uint8_t is_intra_bordered;
     uint8_t updated_enable_pme;
 #endif
+#if FTR_SKIP_TX_LPD1
+    SkipTxCtrls skip_tx_ctrls;
+#else
 #if FTR_SKIP_COST_ZERO_COEFF
     uint16_t lpd1_zero_y_coeff_exit; // skip cost calc and chroma TX/compensation if there are zero luma coeffs
+#endif
 #endif
 #if CHROMA_DETECTOR
     COMPONENT_TYPE lpd1_chroma_comp; // chroma components to compensate at MDS3 of LPD1

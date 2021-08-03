@@ -357,9 +357,9 @@ NOTE : PART OF LIGHT_PD0_2  code was committed to svt-04-final-rebased under OPT
 
 #define SS_OPT_INIT                           1    // Loosless optimization of init time (there is an R2R for M3 and below)
 #if SS_OPT_INIT
-#define  SIM_OLD_TPL 1
+#define  SIM_OLD_TPL 0
 #endif
-#define  FIX_TPL_NON_VALID_REF  0
+#define  FIX_TPL_NON_VALID_REF                1  // exclude TPL non valid ref (no TPL recon data available)
 
 #define TUNE_M11_2                            1 // tuning m11
 #define FTR_COEFF_DETECTOR                    1 // use detector based on the skipped area % in the reference picture
@@ -471,9 +471,43 @@ NOTE : PART OF LIGHT_PD0_2  code was committed to svt-04-final-rebased under OPT
 #define OPT_FIRST_PASS                        1 // Reduce the compexity of the first pass
 #define OPTIMIZE_L6                           1
 #define FIX_DATA_RACE_2PASS                   1 // fixing data race issues with the 2pass
+
+#define TUNE_M6_MT                            1 // tune m6 using multi-threaded framework
+#define OPT_UPDATE_MI_MAP                     1 // opt update_mi_map() and some signal setting
+#define SS_CLN_10BIT_TPL_BUFFER                  1 // memory optimization for 10-bit by using 8-bit tpl buffer for 10-bit
+#define SS_CLN_NOISE_DENOISE_BUFFERS             1 // stopped allocating memory for noise and denoise buffers as they were unused
+#define FTR_SKIP_TX_LPD1                      1 // Skip luma TX in LPD1 based on neighbour info, distortion/QP, and candidate type
+#define FTR_MVP_BEST_ME_LIST                  1 // Inject MVP unipred cands for best PA_ME ref only in LPD1
+#define TUNE_REDUCE_NR_LPD1                   1 // Opt near count level for LPD1
+#define OPT_TX_SKIP                           1 // Add new level for LPD1 TX skipping
+#define OPT_MD_SEARCHES_10BIT                 1 // use 8-bit path for 10bit content when performing MD searches
+
+#define FTR_10BIT_MDS3_REG_PD1                1 // Add ability to bypass EncDec for 10bit content (incl. when using 8bit MD)
+#define FTR_10BIT_MDS3_LPD1                   1 // Add ability to bypass EncDec for 10bit content when using 8bit MD (LPD1 path) - to merge with above macro
+
+#define SS_OPT_TPL_REC                           1 // Lossless Optimize memory for TPL recon buffers
+#define CLN_RTIME_MEM_ALLOC                   1 // put run time memory allocation calls into function prefixed with rtime_alloc_...
+
+#define TUNE_M7_M8_2                          1 // tuning m7 and m8
+#define TUNE_4K_M11                           1 // tuning M11 for 4k
+
+#define FIX_PA_REF_RELEASE_HANG               1 // Fix a hang that occured for incomplete MGs when MRP is ON
+#define OPT_IBC_HASH_SEARCH                   1 // optimize hash search memory and speed by turning off higher block sizes and 4x4 for higher presets
+
+#define TUNE_M8_M10_4K_SUPER                  1 // tuning M8 to M10 for 4K, july2021
+
+#define OPT_BYPASS_ED_10BIT                   1 // Remove unnecessary buffer when copying recon for 10bit bypass-encdec; to merge with FTR_10BIT_MDS3_REG_PD1
+#define FIX_10BIT_R2R                         1 // Fix 10bit r2r for bypassing encdec - merge with FTR_10BIT_MDS3_LPD1
+#define FIX_COST_CALC_CHECK                   1 // Fix check to skip cost calcs
+#define FIX_QUANT_COEFF_BUFF                  1 // Fix how the quant coeff buffer is released, and cleanup the init
+
+#define SANITIZER_FIX                         1 // Fix thread sanitizer: race:svt_memcpy_small and race:svt_memcpy_sse
+#define FIX_SANITIZER_RACE_CONDS              1 // Fix race conditions in MD/EncDec
+
 #endif
 
 #if !PRIVATE_MACROS
+
 #undef LIGHT_PD0
 #undef LIGHT_PD0_2
 #undef  CLN_GEOM
@@ -544,6 +578,15 @@ NOTE : PART OF LIGHT_PD0_2  code was committed to svt-04-final-rebased under OPT
 #undef TUNE_4K_M8_M11
 #undef FTR_TPL_SYNTH
 #undef TUNE_M7_MT
+
+#undef TUNE_M6_MT
+#undef ME_8X8
+#undef CLN_RTIME_MEM_ALLOC
+#undef OPT_IBC_HASH_SEARCH
+#undef FTR_10BIT_MDS3_REG_PD1
+#undef FTR_10BIT_MDS3_LPD1
+#undef TUNE_4K_M11
+#undef TUNE_M8_M10_4K_SUPER
 #endif
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
