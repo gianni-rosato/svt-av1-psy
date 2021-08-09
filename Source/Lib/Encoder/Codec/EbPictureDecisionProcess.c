@@ -648,6 +648,11 @@ EbErrorType update_base_layer_reference_queue_dependent_count(
                     (input_entry_ptr->dep_list0_count + input_entry_ptr->dep_list1_count) +  //depCnt from org prediction struct
                     ((input_entry_ptr->is_alt_ref) ? 1 : 0);
 
+                // explanation for adding above line "((input_entry_ptr->is_alt_ref) ? 1 : 0)":
+                // int32_t dep_list_count_org = input_entry_ptr->dep_list0_count + input_entry_ptr->dep_list1_count;
+                // int32_t dep_list_count_new = input_entry_ptr->list0.list_count + input_entry_ptr->list1.list_count + ((input_entry_ptr->is_alt_ref) ? 1 : 0); // refer to below line 665
+                // diff_n = dep_list_count_new - dep_list_count_org;
+                // so, additional 1 from is_alt_ref is added to diff_n.
 
                 //these refs are defintely not in the pre-assignment buffer
                 if (diff_n) {
