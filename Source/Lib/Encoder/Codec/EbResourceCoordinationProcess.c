@@ -892,6 +892,18 @@ static void setup_two_pass(SequenceControlSet *scs_ptr) {
 extern EbErrorType first_pass_signal_derivation_pre_analysis_pcs(PictureParentControlSet *pcs_ptr);
 extern EbErrorType first_pass_signal_derivation_pre_analysis_scs(SequenceControlSet *scs_ptr);
 
+static EbErrorType realloc_sb_param(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_ptr) {
+    EB_FREE_ARRAY(pcs_ptr->sb_params_array);
+    EB_MALLOC_ARRAY(pcs_ptr->sb_params_array, scs_ptr->sb_total_count);
+    memcpy(pcs_ptr->sb_params_array,
+           scs_ptr->sb_params_array,
+           sizeof(SbParams) * scs_ptr->sb_total_count);
+    EB_FREE_ARRAY(pcs_ptr->sb_geom);
+    EB_MALLOC_ARRAY(pcs_ptr->sb_geom, scs_ptr->sb_tot_cnt);
+    memcpy(pcs_ptr->sb_geom, scs_ptr->sb_geom, sizeof(SbGeom) * scs_ptr->sb_tot_cnt);
+    return EB_ErrorNone;
+}
+
 /* Resource Coordination Kernel */
 /*********************************************************************************
 *
@@ -1104,8 +1116,8 @@ void *resource_coordination_kernel(void *input_ptr) {
 
             pcs_ptr->p_pcs_wrapper_ptr = pcs_wrapper_ptr;
 
-            pcs_ptr->sb_params_array   = scs_ptr->sb_params_array;
-            pcs_ptr->sb_geom           = scs_ptr->sb_geom;
+            realloc_sb_param(scs_ptr, pcs_ptr);
+
             pcs_ptr->input_resolution  = scs_ptr->input_resolution;
             pcs_ptr->picture_sb_width  = scs_ptr->pic_width_in_sb;
             pcs_ptr->picture_sb_height = scs_ptr->picture_height_in_sb;

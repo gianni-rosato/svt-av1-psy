@@ -1290,9 +1290,9 @@ static void picture_parent_control_set_dctor(EbPtr ptr) {
     EB_DESTROY_MUTEX(obj->pame_done.mutex);
     EB_DESTROY_SEMAPHORE(obj->first_pass_done_semaphore);
     EB_DESTROY_MUTEX(obj->first_pass_mutex);
+    svt_pcs_sb_structs_dctor(obj);
     if (obj->frame_superres_enabled) {
-        svt_pcs_sb_structs_dctor(obj);
-        EB_DELETE(obj->enhanced_picture_ptr);
+        EB_DELETE(obj->enhanced_downscaled_picture_ptr);
     }
     EB_DESTROY_SEMAPHORE(obj->tpl_disp_done_semaphore);
     EB_DESTROY_MUTEX(obj->tpl_disp_mutex);
@@ -1553,6 +1553,7 @@ EbErrorType sb_params_init_pcs(SequenceControlSet *scs_ptr, PictureParentControl
     uint8_t picture_sb_width  = (uint8_t)((encoding_width + scs_ptr->sb_sz - 1) / scs_ptr->sb_sz);
     uint8_t picture_sb_height = (uint8_t)((encoding_height + scs_ptr->sb_sz - 1) / scs_ptr->sb_sz);
 
+    EB_FREE_ARRAY(pcs_ptr->sb_params_array);
     EB_MALLOC_ARRAY(pcs_ptr->sb_params_array, picture_sb_width * picture_sb_height);
 
     for (sb_index = 0; sb_index < picture_sb_width * picture_sb_height; ++sb_index) {
@@ -1619,6 +1620,7 @@ EbErrorType sb_geom_init_pcs(SequenceControlSet *scs_ptr, PictureParentControlSe
     uint16_t picture_sb_height = (encoding_height + scs_ptr->sb_size_pix - 1) /
         scs_ptr->sb_size_pix;
 
+    EB_FREE_ARRAY(pcs_ptr->sb_geom);
     EB_MALLOC_ARRAY(pcs_ptr->sb_geom, picture_sb_width * picture_sb_height);
 
     for (sb_index = 0; sb_index < picture_sb_width * picture_sb_height; ++sb_index) {

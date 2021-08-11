@@ -1535,6 +1535,7 @@ void init_resize_picture(SequenceControlSet *scs_ptr, PictureParentControlSet *p
 
         pcs_ptr->superres_denom = spr_params.superres_denom;
 
+        EB_DELETE(pcs_ptr->enhanced_downscaled_picture_ptr);
         // Allocate downsampled picture buffer descriptor
         downscaled_source_buffer_desc_ctor(
             &pcs_ptr->enhanced_downscaled_picture_ptr, input_picture_ptr, spr_params);

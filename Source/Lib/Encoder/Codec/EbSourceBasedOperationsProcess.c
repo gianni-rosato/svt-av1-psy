@@ -551,7 +551,7 @@ void tpl_mc_flow_dispenser_sb(
     const uint8_t tpl_opt_flag = pcs_ptr->tpl_ctrls.tpl_opt_flag;
 
 
-    SbParams *sb_params    = &scs_ptr->sb_params_array[sb_index];
+    SbParams *sb_params    = &pcs_ptr->sb_params_array[sb_index];
     uint32_t  pa_blk_index = 0;
     while (pa_blk_index < CU_MAX_COUNT) {
         const CodedBlockStats *blk_stats_ptr;
