@@ -804,8 +804,10 @@ typedef struct PictureParentControlSet {
     double                          noise_levels[MAX_MB_PLANE];
     int32_t                         pic_decision_reorder_queue_idx;
     struct PictureParentControlSet *temp_filt_pcs_list[ALTREF_MAX_NFRAMES];
-    EbByte                          save_enhanced_picture_ptr[3];
-    EbByte                          save_enhanced_picture_bit_inc_ptr[3];
+    EbByte                          save_source_picture_ptr[3];
+    EbByte                          save_source_picture_bit_inc_ptr[3];
+    uint16_t                        save_source_picture_width;
+    uint16_t                        save_source_picture_height;
     EbHandle                        temp_filt_done_semaphore;
     EbHandle                        temp_filt_mutex;
     EbHandle                        debug_mutex;

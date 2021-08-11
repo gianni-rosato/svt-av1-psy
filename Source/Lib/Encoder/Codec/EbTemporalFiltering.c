@@ -2583,89 +2583,94 @@ void pad_and_decimate_filtered_pic(PictureParentControlSet *picture_control_set_
 // save original enchanced_picture_ptr buffer in a separate buffer (to be replaced by the temporally filtered pic)
 static EbErrorType save_src_pic_buffers(PictureParentControlSet *picture_control_set_ptr_central,
                                         uint32_t ss_y, EbBool is_highbd) {
+    // save buffer from full size frame enhanced_unscaled_picture_ptr
+    EbPictureBufferDesc* src_pic_ptr = picture_control_set_ptr_central->enhanced_unscaled_picture_ptr;
+    assert(src_pic_ptr != NULL);
     // allocate memory for the copy of the original enhanced buffer
-    EB_MALLOC_ARRAY(picture_control_set_ptr_central->save_enhanced_picture_ptr[C_Y],
-                    picture_control_set_ptr_central->enhanced_picture_ptr->luma_size);
-    EB_MALLOC_ARRAY(picture_control_set_ptr_central->save_enhanced_picture_ptr[C_U],
-                    picture_control_set_ptr_central->enhanced_picture_ptr->chroma_size);
-    EB_MALLOC_ARRAY(picture_control_set_ptr_central->save_enhanced_picture_ptr[C_V],
-                    picture_control_set_ptr_central->enhanced_picture_ptr->chroma_size);
+    EB_MALLOC_ARRAY(picture_control_set_ptr_central->save_source_picture_ptr[C_Y],
+                    src_pic_ptr->luma_size);
+    EB_MALLOC_ARRAY(picture_control_set_ptr_central->save_source_picture_ptr[C_U],
+                    src_pic_ptr->chroma_size);
+    EB_MALLOC_ARRAY(picture_control_set_ptr_central->save_source_picture_ptr[C_V],
+                    src_pic_ptr->chroma_size);
 
     // if highbd, allocate memory for the copy of the original enhanced buffer - bit inc
     if (is_highbd) {
-        EB_MALLOC_ARRAY(picture_control_set_ptr_central->save_enhanced_picture_bit_inc_ptr[C_Y],
-                        picture_control_set_ptr_central->enhanced_picture_ptr->luma_size);
-        EB_MALLOC_ARRAY(picture_control_set_ptr_central->save_enhanced_picture_bit_inc_ptr[C_U],
-                        picture_control_set_ptr_central->enhanced_picture_ptr->chroma_size);
-        EB_MALLOC_ARRAY(picture_control_set_ptr_central->save_enhanced_picture_bit_inc_ptr[C_V],
-                        picture_control_set_ptr_central->enhanced_picture_ptr->chroma_size);
+        EB_MALLOC_ARRAY(picture_control_set_ptr_central->save_source_picture_bit_inc_ptr[C_Y],
+                        src_pic_ptr->luma_size);
+        EB_MALLOC_ARRAY(picture_control_set_ptr_central->save_source_picture_bit_inc_ptr[C_U],
+                        src_pic_ptr->chroma_size);
+        EB_MALLOC_ARRAY(picture_control_set_ptr_central->save_source_picture_bit_inc_ptr[C_V],
+                        src_pic_ptr->chroma_size);
     }
+    picture_control_set_ptr_central->save_source_picture_width = src_pic_ptr->width;
+    picture_control_set_ptr_central->save_source_picture_height = src_pic_ptr->height;
 
     // copy buffers
     // Y
     uint32_t height_y = (uint32_t)(
-        picture_control_set_ptr_central->enhanced_picture_ptr->height +
-        picture_control_set_ptr_central->enhanced_picture_ptr->origin_y +
-        picture_control_set_ptr_central->enhanced_picture_ptr->origin_bot_y);
+        src_pic_ptr->height +
+        src_pic_ptr->origin_y +
+        src_pic_ptr->origin_bot_y);
     uint32_t height_uv = (uint32_t)(
-        (picture_control_set_ptr_central->enhanced_picture_ptr->height +
-         picture_control_set_ptr_central->enhanced_picture_ptr->origin_y +
-         picture_control_set_ptr_central->enhanced_picture_ptr->origin_bot_y) >>
+        (src_pic_ptr->height +
+         src_pic_ptr->origin_y +
+         src_pic_ptr->origin_bot_y) >>
         ss_y);
 
-    assert(height_y * picture_control_set_ptr_central->enhanced_picture_ptr->stride_y ==
-           picture_control_set_ptr_central->enhanced_picture_ptr->luma_size);
-    assert(height_uv * picture_control_set_ptr_central->enhanced_picture_ptr->stride_cb ==
-           picture_control_set_ptr_central->enhanced_picture_ptr->chroma_size);
-    assert(height_uv * picture_control_set_ptr_central->enhanced_picture_ptr->stride_cr ==
-           picture_control_set_ptr_central->enhanced_picture_ptr->chroma_size);
+    assert(height_y * src_pic_ptr->stride_y ==
+           src_pic_ptr->luma_size);
+    assert(height_uv * src_pic_ptr->stride_cb ==
+           src_pic_ptr->chroma_size);
+    assert(height_uv * src_pic_ptr->stride_cr ==
+           src_pic_ptr->chroma_size);
 
-    pic_copy_kernel_8bit(picture_control_set_ptr_central->enhanced_picture_ptr->buffer_y,
-                         picture_control_set_ptr_central->enhanced_picture_ptr->stride_y,
-                         picture_control_set_ptr_central->save_enhanced_picture_ptr[C_Y],
-                         picture_control_set_ptr_central->enhanced_picture_ptr->stride_y,
-                         picture_control_set_ptr_central->enhanced_picture_ptr->stride_y,
+    pic_copy_kernel_8bit(src_pic_ptr->buffer_y,
+                         src_pic_ptr->stride_y,
+                         picture_control_set_ptr_central->save_source_picture_ptr[C_Y],
+                         src_pic_ptr->stride_y,
+                         src_pic_ptr->stride_y,
                          height_y);
 
-    pic_copy_kernel_8bit(picture_control_set_ptr_central->enhanced_picture_ptr->buffer_cb,
-                         picture_control_set_ptr_central->enhanced_picture_ptr->stride_cb,
-                         picture_control_set_ptr_central->save_enhanced_picture_ptr[C_U],
-                         picture_control_set_ptr_central->enhanced_picture_ptr->stride_cb,
-                         picture_control_set_ptr_central->enhanced_picture_ptr->stride_cb,
+    pic_copy_kernel_8bit(src_pic_ptr->buffer_cb,
+                         src_pic_ptr->stride_cb,
+                         picture_control_set_ptr_central->save_source_picture_ptr[C_U],
+                         src_pic_ptr->stride_cb,
+                         src_pic_ptr->stride_cb,
                          height_uv);
 
-    pic_copy_kernel_8bit(picture_control_set_ptr_central->enhanced_picture_ptr->buffer_cr,
-                         picture_control_set_ptr_central->enhanced_picture_ptr->stride_cr,
-                         picture_control_set_ptr_central->save_enhanced_picture_ptr[C_V],
-                         picture_control_set_ptr_central->enhanced_picture_ptr->stride_cr,
-                         picture_control_set_ptr_central->enhanced_picture_ptr->stride_cr,
+    pic_copy_kernel_8bit(src_pic_ptr->buffer_cr,
+                         src_pic_ptr->stride_cr,
+                         picture_control_set_ptr_central->save_source_picture_ptr[C_V],
+                         src_pic_ptr->stride_cr,
+                         src_pic_ptr->stride_cr,
                          height_uv);
 
     if (is_highbd) {
         // if highbd, copy bit inc buffers
         // Y
         pic_copy_kernel_8bit(
-            picture_control_set_ptr_central->enhanced_picture_ptr->buffer_bit_inc_y,
-            picture_control_set_ptr_central->enhanced_picture_ptr->stride_bit_inc_y,
-            picture_control_set_ptr_central->save_enhanced_picture_bit_inc_ptr[C_Y],
-            picture_control_set_ptr_central->enhanced_picture_ptr->stride_bit_inc_y,
-            picture_control_set_ptr_central->enhanced_picture_ptr->stride_bit_inc_y,
+            src_pic_ptr->buffer_bit_inc_y,
+            src_pic_ptr->stride_bit_inc_y,
+            picture_control_set_ptr_central->save_source_picture_bit_inc_ptr[C_Y],
+            src_pic_ptr->stride_bit_inc_y,
+            src_pic_ptr->stride_bit_inc_y,
             height_y);
         // U
         pic_copy_kernel_8bit(
-            picture_control_set_ptr_central->enhanced_picture_ptr->buffer_bit_inc_cb,
-            picture_control_set_ptr_central->enhanced_picture_ptr->stride_bit_inc_cb,
-            picture_control_set_ptr_central->save_enhanced_picture_bit_inc_ptr[C_U],
-            picture_control_set_ptr_central->enhanced_picture_ptr->stride_bit_inc_cb,
-            picture_control_set_ptr_central->enhanced_picture_ptr->stride_bit_inc_cb,
+            src_pic_ptr->buffer_bit_inc_cb,
+            src_pic_ptr->stride_bit_inc_cb,
+            picture_control_set_ptr_central->save_source_picture_bit_inc_ptr[C_U],
+            src_pic_ptr->stride_bit_inc_cb,
+            src_pic_ptr->stride_bit_inc_cb,
             height_uv);
         // V
         pic_copy_kernel_8bit(
-            picture_control_set_ptr_central->enhanced_picture_ptr->buffer_bit_inc_cr,
-            picture_control_set_ptr_central->enhanced_picture_ptr->stride_bit_inc_cr,
-            picture_control_set_ptr_central->save_enhanced_picture_bit_inc_ptr[C_V],
-            picture_control_set_ptr_central->enhanced_picture_ptr->stride_bit_inc_cr,
-            picture_control_set_ptr_central->enhanced_picture_ptr->stride_bit_inc_cr,
+            src_pic_ptr->buffer_bit_inc_cr,
+            src_pic_ptr->stride_bit_inc_cr,
+            picture_control_set_ptr_central->save_source_picture_bit_inc_ptr[C_V],
+            src_pic_ptr->stride_bit_inc_cr,
+            src_pic_ptr->stride_bit_inc_cr,
             height_uv);
     }
 

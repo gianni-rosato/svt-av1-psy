@@ -727,7 +727,7 @@ void ssim_calculations(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr, 
         else
             recon_ptr = pcs_ptr->parent_pcs_ptr->enc_dec_ptr->recon_picture_ptr;
 
-        EbPictureBufferDesc *input_picture_ptr = (EbPictureBufferDesc*)pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr;
+        EbPictureBufferDesc *input_picture_ptr = (EbPictureBufferDesc*)pcs_ptr->parent_pcs_ptr->enhanced_unscaled_picture_ptr;
 
         EbByte  input_buffer;
         EbByte  recon_coeff_buffer;
@@ -743,9 +743,11 @@ void ssim_calculations(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr, 
         // if current source picture was temporally filtered, use an alternative buffer which stores
         // the original source picture
         if(pcs_ptr->parent_pcs_ptr->temporal_filtering_on == EB_TRUE){
-            buffer_y = pcs_ptr->parent_pcs_ptr->save_enhanced_picture_ptr[0];
-            buffer_cb = pcs_ptr->parent_pcs_ptr->save_enhanced_picture_ptr[1];
-            buffer_cr = pcs_ptr->parent_pcs_ptr->save_enhanced_picture_ptr[2];
+            assert(pcs_ptr->parent_pcs_ptr->save_source_picture_width == input_picture_ptr->width
+                && pcs_ptr->parent_pcs_ptr->save_source_picture_height == input_picture_ptr->height);
+            buffer_y = pcs_ptr->parent_pcs_ptr->save_source_picture_ptr[0];
+            buffer_cb = pcs_ptr->parent_pcs_ptr->save_source_picture_ptr[1];
+            buffer_cr = pcs_ptr->parent_pcs_ptr->save_source_picture_ptr[2];
         }
         else {
             buffer_y = input_picture_ptr->buffer_y;
@@ -910,12 +912,14 @@ void ssim_calculations(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr, 
             int bd, shift;
 
             if(pcs_ptr->parent_pcs_ptr->temporal_filtering_on == EB_TRUE){
-                buffer_y = pcs_ptr->parent_pcs_ptr->save_enhanced_picture_ptr[0];
-                buffer_bit_inc_y = pcs_ptr->parent_pcs_ptr->save_enhanced_picture_bit_inc_ptr[0];
-                buffer_cb = pcs_ptr->parent_pcs_ptr->save_enhanced_picture_ptr[1];
-                buffer_bit_inc_cb = pcs_ptr->parent_pcs_ptr->save_enhanced_picture_bit_inc_ptr[1];
-                buffer_cr = pcs_ptr->parent_pcs_ptr->save_enhanced_picture_ptr[2];
-                buffer_bit_inc_cr = pcs_ptr->parent_pcs_ptr->save_enhanced_picture_bit_inc_ptr[2];
+                assert(pcs_ptr->parent_pcs_ptr->save_source_picture_width == input_picture_ptr->width
+                    && pcs_ptr->parent_pcs_ptr->save_source_picture_height == input_picture_ptr->height);
+                buffer_y = pcs_ptr->parent_pcs_ptr->save_source_picture_ptr[0];
+                buffer_bit_inc_y = pcs_ptr->parent_pcs_ptr->save_source_picture_bit_inc_ptr[0];
+                buffer_cb = pcs_ptr->parent_pcs_ptr->save_source_picture_ptr[1];
+                buffer_bit_inc_cb = pcs_ptr->parent_pcs_ptr->save_source_picture_bit_inc_ptr[1];
+                buffer_cr = pcs_ptr->parent_pcs_ptr->save_source_picture_ptr[2];
+                buffer_bit_inc_cr = pcs_ptr->parent_pcs_ptr->save_source_picture_bit_inc_ptr[2];
             }else{
                 buffer_y = input_picture_ptr->buffer_y;
                 buffer_bit_inc_y = input_picture_ptr->buffer_bit_inc_y;
@@ -996,9 +1000,11 @@ void psnr_calculations(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr, 
         // if current source picture was temporally filtered, use an alternative buffer which stores
         // the original source picture
         if (pcs_ptr->parent_pcs_ptr->temporal_filtering_on == EB_TRUE) {
-            buffer_y  = pcs_ptr->parent_pcs_ptr->save_enhanced_picture_ptr[0];
-            buffer_cb = pcs_ptr->parent_pcs_ptr->save_enhanced_picture_ptr[1];
-            buffer_cr = pcs_ptr->parent_pcs_ptr->save_enhanced_picture_ptr[2];
+            assert(pcs_ptr->parent_pcs_ptr->save_source_picture_width == input_picture_ptr->width
+                && pcs_ptr->parent_pcs_ptr->save_source_picture_height == input_picture_ptr->height);
+            buffer_y  = pcs_ptr->parent_pcs_ptr->save_source_picture_ptr[0];
+            buffer_cb = pcs_ptr->parent_pcs_ptr->save_source_picture_ptr[1];
+            buffer_cr = pcs_ptr->parent_pcs_ptr->save_source_picture_ptr[2];
         } else {
             buffer_y  = input_picture_ptr->buffer_y;
             buffer_cb = input_picture_ptr->buffer_cb;
@@ -1330,12 +1336,14 @@ void psnr_calculations(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr, 
             EbByte buffer_cr, buffer_bit_inc_cr;
 
             if (pcs_ptr->parent_pcs_ptr->temporal_filtering_on == EB_TRUE) {
-                buffer_y          = pcs_ptr->parent_pcs_ptr->save_enhanced_picture_ptr[0];
-                buffer_bit_inc_y  = pcs_ptr->parent_pcs_ptr->save_enhanced_picture_bit_inc_ptr[0];
-                buffer_cb         = pcs_ptr->parent_pcs_ptr->save_enhanced_picture_ptr[1];
-                buffer_bit_inc_cb = pcs_ptr->parent_pcs_ptr->save_enhanced_picture_bit_inc_ptr[1];
-                buffer_cr         = pcs_ptr->parent_pcs_ptr->save_enhanced_picture_ptr[2];
-                buffer_bit_inc_cr = pcs_ptr->parent_pcs_ptr->save_enhanced_picture_bit_inc_ptr[2];
+                assert(pcs_ptr->parent_pcs_ptr->save_source_picture_width == input_picture_ptr->width
+                    && pcs_ptr->parent_pcs_ptr->save_source_picture_height == input_picture_ptr->height);
+                buffer_y          = pcs_ptr->parent_pcs_ptr->save_source_picture_ptr[0];
+                buffer_bit_inc_y  = pcs_ptr->parent_pcs_ptr->save_source_picture_bit_inc_ptr[0];
+                buffer_cb         = pcs_ptr->parent_pcs_ptr->save_source_picture_ptr[1];
+                buffer_bit_inc_cb = pcs_ptr->parent_pcs_ptr->save_source_picture_bit_inc_ptr[1];
+                buffer_cr         = pcs_ptr->parent_pcs_ptr->save_source_picture_ptr[2];
+                buffer_bit_inc_cr = pcs_ptr->parent_pcs_ptr->save_source_picture_bit_inc_ptr[2];
             } else {
                 buffer_y          = input_picture_ptr->buffer_y;
                 buffer_bit_inc_y  = input_picture_ptr->buffer_bit_inc_y;
