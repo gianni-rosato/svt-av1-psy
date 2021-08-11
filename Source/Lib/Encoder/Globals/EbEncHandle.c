@@ -2571,6 +2571,12 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
         scs_ptr->static_config.intra_refresh_type = 2;
     }
 
+    // encoder will hang-up when both enabled TPL and super-res
+    if (scs_ptr->static_config.superres_mode > SUPERRES_NONE) {
+        SVT_WARN("TPL will be disabled when super resolution is enabled!\n");
+        scs_ptr->static_config.enable_tpl_la = 0;
+    }
+
     if (scs_ptr->static_config.recode_loop > 0 &&
         (!scs_ptr->static_config.rate_control_mode || (!scs_ptr->lap_enabled && !use_input_stat(scs_ptr)))) {
         // Only allow re-encoding for 2pass VBR or 1 PASS LAP, otherwise force recode_loop to DISALLOW_RECODE or 0

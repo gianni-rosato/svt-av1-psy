@@ -24,7 +24,7 @@ static void svt_picture_buffer_desc_dctor(EbPtr p) {
         EB_FREE_ALIGNED_ARRAY(obj->buffer_cb);
         EB_FREE_ALIGNED_ARRAY(obj->buffer_bit_inc_cb);
     }
-    if (obj->buffer_enable_mask & PICTURE_BUFFER_DESC_Cb_FLAG) {
+    if (obj->buffer_enable_mask & PICTURE_BUFFER_DESC_Cr_FLAG) {
         EB_FREE_ALIGNED_ARRAY(obj->buffer_cr);
         EB_FREE_ALIGNED_ARRAY(obj->buffer_bit_inc_cr);
     }
@@ -129,7 +129,7 @@ static void svt_recon_picture_buffer_desc_dctor(EbPtr p) {
         EB_FREE_ALIGNED_ARRAY(obj->buffer_y);
     if (obj->buffer_enable_mask & PICTURE_BUFFER_DESC_Cb_FLAG)
         EB_FREE_ALIGNED_ARRAY(obj->buffer_cb);
-    if (obj->buffer_enable_mask & PICTURE_BUFFER_DESC_Cb_FLAG)
+    if (obj->buffer_enable_mask & PICTURE_BUFFER_DESC_Cr_FLAG)
         EB_FREE_ALIGNED_ARRAY(obj->buffer_cr);
 }
 /*****************************************

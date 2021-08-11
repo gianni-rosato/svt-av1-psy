@@ -1101,12 +1101,13 @@ static EbErrorType scale_pcs_params(SequenceControlSet *scs_ptr, PictureParentCo
                             spr_params.encoding_width * spr_params.encoding_height);
 
     // create new picture level sb_params and sb_geom
-    sb_params_init_pcs(scs_ptr, pcs_ptr);
+    if (pcs_ptr->frame_superres_enabled == EB_TRUE) {
+        sb_params_init_pcs(scs_ptr, pcs_ptr);
 
-    sb_geom_init_pcs(scs_ptr, pcs_ptr);
+        sb_geom_init_pcs(scs_ptr, pcs_ptr);
 
-    pcs_ptr->frm_hdr.use_ref_frame_mvs = 0;
-
+        pcs_ptr->frm_hdr.use_ref_frame_mvs = 0;
+    }
     return EB_ErrorNone;
 }
 
@@ -1569,5 +1570,14 @@ void init_resize_picture(SequenceControlSet *scs_ptr, PictureParentControlSet *p
         if (pcs_ptr->slice_type != I_SLICE) {
             scale_source_references(scs_ptr, pcs_ptr, pcs_ptr->enhanced_picture_ptr);
         }
+    }
+    else /*if(pcs_ptr->frame_superres_enabled)*/ {
+        // pcs_ptr previously might be used and dirty in params
+        // clean up if current frame doesn't need scaling
+        pcs_ptr->superres_denom = spr_params.superres_denom;
+        pcs_ptr->frame_superres_enabled = EB_FALSE;
+        scale_pcs_params(
+            scs_ptr, pcs_ptr, spr_params, input_picture_ptr->width, input_picture_ptr->height);
+        EB_DELETE(pcs_ptr->enhanced_downscaled_picture_ptr);
     }
 }
