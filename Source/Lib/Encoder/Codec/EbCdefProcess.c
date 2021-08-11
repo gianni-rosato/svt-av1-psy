@@ -43,6 +43,9 @@ void    svt_av1_cdef_frame(EncDecContext *context_ptr, SequenceControlSet *scs_p
                            PictureControlSet *pCs);
 void    svt_av1_loop_restoration_save_boundary_lines(const Yv12BufferConfig *frame, Av1Common *cm,
                                                      int32_t after_cdef);
+void    svt_av1_superres_upscale_frame(struct Av1Common* cm, PictureControlSet* pcs_ptr,
+                                       SequenceControlSet* scs_ptr);
+void    set_unscaled_input_16bit(PictureControlSet* pcs_ptr);
 
 /**************************************
  * Cdef Context
@@ -576,9 +579,18 @@ void *cdef_kernel(void *input_ptr) {
             }
 
             //restoration prep
-
             if (scs_ptr->seq_header.enable_restoration) {
                 svt_av1_loop_restoration_save_boundary_lines(cm->frame_to_show, cm, 1);
+                // upscale frame if super resolution is on
+                // ------- start: Normative upscaling - super-resolution tool
+                if (frm_hdr->allow_intrabc == 0 && !av1_superres_unscaled(&cm->frm_size)) {
+                    svt_av1_superres_upscale_frame(cm, pcs_ptr, scs_ptr);
+
+                    if (scs_ptr->static_config.is_16bit_pipeline || is_16bit) {
+                        set_unscaled_input_16bit(pcs_ptr);
+                    }
+                }
+                // ------- end: Normative upscaling - super-resolution tool
             }
 
             pcs_ptr->rest_segments_column_count = scs_ptr->rest_segment_column_count;

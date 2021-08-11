@@ -483,15 +483,6 @@ void *rest_kernel(void *input_ptr) {
         Av1Common *  cm       = pcs_ptr->parent_pcs_ptr->av1_cm;
 
         if (scs_ptr->seq_header.enable_restoration && frm_hdr->allow_intrabc == 0) {
-            // ------- start: Normative upscaling - super-resolution tool
-            if (!av1_superres_unscaled(&cm->frm_size)) {
-                svt_av1_superres_upscale_frame(cm, pcs_ptr, scs_ptr);
-
-                if (scs_ptr->static_config.is_16bit_pipeline || is_16bit) {
-                    set_unscaled_input_16bit(pcs_ptr);
-                }
-            }
-            // ------- end: Normative upscaling - super-resolution tool
             Yv12BufferConfig cpi_source;
             pcs_ptr->parent_pcs_ptr->enhanced_unscaled_picture_ptr->is_16bit_pipeline =
                 scs_ptr->static_config.is_16bit_pipeline;
