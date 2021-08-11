@@ -1067,9 +1067,11 @@ static EbErrorType scale_pcs_params(SequenceControlSet *scs_ptr, PictureParentCo
     uint16_t aligned_width  = (uint16_t)ALIGN_POWER_OF_TWO(spr_params.encoding_width, 3);
     uint16_t aligned_height = (uint16_t)ALIGN_POWER_OF_TWO(spr_params.encoding_height, 3);
 
-    assert((aligned_width == spr_params.encoding_width) &&
-           "Downscaled width needs to be a multiple of 8 "
-           "(otherwise not yet implemented)");
+    // remove this assertion because decoder specify allowing the width can be multiple of 8
+    // encoder should fix the issue if downscaled pictures are not 8 pixel aligned
+    //assert((aligned_width == spr_params.encoding_width) &&
+    //       "Downscaled width needs to be a multiple of 8 "
+    //       "(otherwise not yet implemented)");
 
     // change frame width and height params in pcs
     pcs_ptr->frame_width  = spr_params.encoding_width;
@@ -1121,8 +1123,8 @@ static EbErrorType allocate_downscaled_reference_pics(
     EbPictureBufferDescInitData ref_pic_buf_desc_init_data;
 
     // Initialize the various Picture types
-    ref_pic_buf_desc_init_data.max_width          = pcs_ptr->aligned_width;
-    ref_pic_buf_desc_init_data.max_height         = pcs_ptr->aligned_height;
+    ref_pic_buf_desc_init_data.max_width          = pcs_ptr->frame_width;  // aligned_width;
+    ref_pic_buf_desc_init_data.max_height         = pcs_ptr->frame_height; // aligned_height;
     ref_pic_buf_desc_init_data.bit_depth          = picture_ptr_for_reference->bit_depth;
     ref_pic_buf_desc_init_data.color_format       = picture_ptr_for_reference->color_format;
     ref_pic_buf_desc_init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK;
@@ -1244,8 +1246,8 @@ void scale_source_references(SequenceControlSet *scs_ptr, PictureParentControlSe
             // if the size of the reference pic is different than the size of the input pic, then scale references
             if (ref_pic_ptr->width != input_picture_ptr->width) {
                 if (reference_object->downscaled_input_padded_picture_ptr[denom_idx] == NULL) {
-                    superres_params_type spr_params = {pcs_ptr->aligned_width, // encoding_width
-                                                       pcs_ptr->aligned_height, // encoding_height
+                    superres_params_type spr_params = {pcs_ptr->frame_width,  // aligned_width
+                                                       pcs_ptr->frame_height, // aligned_height
                                                        scs_ptr->static_config.superres_mode};
 
                     // Allocate downsampled reference picture buffer descriptors
