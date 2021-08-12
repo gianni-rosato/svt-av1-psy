@@ -3992,7 +3992,6 @@ EbErrorType av1_inter_prediction(
                                               picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr->width,
                                               picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr->height);
     }
-    ScaleFactors scale_factors[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
     //special treatment for chroma in 4XN/NX4 blocks
     //if one of the neighbour blocks of the parent square is intra the chroma prediction will follow the normal path using the luma MV of the current nsq block which is the latest sub8x8.
     //for this case: only uniPred is allowed.
@@ -4069,6 +4068,36 @@ EbErrorType av1_inter_prediction(
             const int32_t b8_h = block_size_high[plane_bsize] >> ss_y;
 
             assert(!is_compound);
+
+            ScaleFactors scale_factors[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
+            if (picture_control_set_ptr != NULL && !use_intrabc && !picture_control_set_ptr->parent_pcs_ptr->is_superres_none) {
+                uint32_t num_of_list_to_search =
+                    (picture_control_set_ptr->parent_pcs_ptr->slice_type == P_SLICE) ? (uint32_t)REF_LIST_0
+                    : (uint32_t)REF_LIST_1;
+
+                EbReferenceObject* reference_object;
+                for (uint8_t list_idx = REF_LIST_0; list_idx <= num_of_list_to_search; ++list_idx) {
+                    uint8_t ref_idx;
+                    uint8_t num_of_ref_pic_to_search = (picture_control_set_ptr->parent_pcs_ptr->slice_type == P_SLICE)
+                        ? picture_control_set_ptr->parent_pcs_ptr->ref_list0_count
+                        : (list_idx == REF_LIST_0)
+                        ? picture_control_set_ptr->parent_pcs_ptr->ref_list0_count
+                        : picture_control_set_ptr->parent_pcs_ptr->ref_list1_count;
+                    for (ref_idx = 0; ref_idx < num_of_ref_pic_to_search; ++ref_idx) {
+
+                        reference_object = (EbReferenceObject*)picture_control_set_ptr->ref_pic_ptr_array[list_idx][ref_idx]
+                            ->object_ptr;
+
+                        EbPictureBufferDesc* ref_pic_ptr = reference_object->reference_picture;
+
+                        svt_av1_setup_scale_factors_for_frame(&(scale_factors[list_idx][ref_idx]),
+                            ref_pic_ptr->width,
+                            ref_pic_ptr->height,
+                            picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr->width,
+                            picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr->height);
+                    }
+                }
+            }
 
             int32_t row = row_start;
             for (int32_t y = 0; y < b8_h; y += b4_h) {
