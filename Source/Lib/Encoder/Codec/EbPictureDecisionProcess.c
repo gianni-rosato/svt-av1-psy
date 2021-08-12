@@ -4026,6 +4026,12 @@ void send_picture_out(
         scs->encode_context_ptr->reference_picture_pool_fifo_ptr,
         &reference_picture_wrapper);
     pcs->reference_picture_wrapper_ptr = reference_picture_wrapper;
+
+    // reset reference object in case of its members are altered by superres tool
+    EbReferenceObject* ref =
+        (EbReferenceObject*)reference_picture_wrapper->object_ptr;
+    svt_reference_object_reset(ref, scs);
+
     // Give the new Reference a nominal live_count of 1
     svt_object_inc_live_count(pcs->reference_picture_wrapper_ptr, 1);
 #if SRM_REPORT

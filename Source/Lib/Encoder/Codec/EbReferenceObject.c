@@ -258,6 +258,14 @@ EbErrorType svt_reference_object_creator(EbPtr *object_dbl_ptr, EbPtr object_ini
     return EB_ErrorNone;
 }
 
+EbErrorType svt_reference_object_reset(EbReferenceObject* reference_object,
+    SequenceControlSet* scs_ptr) {
+    reference_object->mi_rows = scs_ptr->max_input_luma_height >> MI_SIZE_LOG2;
+    reference_object->mi_cols = scs_ptr->max_input_luma_width >> MI_SIZE_LOG2;
+
+    return EB_ErrorNone;
+}
+
 static void svt_pa_reference_object_dctor(EbPtr p) {
     EbPaReferenceObject *obj = (EbPaReferenceObject *)p;
     if (obj->dummy_obj)
