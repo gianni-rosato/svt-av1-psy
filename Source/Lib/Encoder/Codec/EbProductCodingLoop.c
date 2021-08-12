@@ -5082,10 +5082,10 @@ void full_loop_core(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct *b
         // end_tx_depth set to zero for blocks which go beyond the picture boundaries
         if ((context_ptr->sb_origin_x + context_ptr->blk_geom->origin_x +
                      context_ptr->blk_geom->bwidth <=
-                 pcs_ptr->parent_pcs_ptr->scs_ptr->seq_header.max_frame_width &&
+                 pcs_ptr->parent_pcs_ptr->aligned_width &&
              context_ptr->sb_origin_y + context_ptr->blk_geom->origin_y +
                      context_ptr->blk_geom->bheight <=
-                 pcs_ptr->parent_pcs_ptr->scs_ptr->seq_header.max_frame_height))
+                 pcs_ptr->parent_pcs_ptr->aligned_height))
             end_tx_depth = get_end_tx_depth(context_ptr->blk_geom->bsize);
         else
             end_tx_depth = 0;
