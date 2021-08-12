@@ -1468,9 +1468,9 @@ EbErrorType svt_aom_denoise_and_model_alloc(AomDenoiseAndModel *ctx, int32_t bit
     ctx->noise_level = noise_level;
     ctx->bit_depth   = bit_depth;
 
-    EB_MALLOC_ARRAY(ctx->noise_psd[0], block_size * block_size);
-    EB_MALLOC_ARRAY(ctx->noise_psd[1], block_size * block_size);
-    EB_MALLOC_ARRAY(ctx->noise_psd[2], block_size * block_size);
+    EB_CALLOC_ARRAY(ctx->noise_psd[0], block_size * block_size);
+    EB_CALLOC_ARRAY(ctx->noise_psd[1], block_size * block_size);
+    EB_CALLOC_ARRAY(ctx->noise_psd[2], block_size * block_size);
     return EB_ErrorNone;
 }
 
@@ -1512,20 +1512,20 @@ EbErrorType denoise_and_model_ctor(AomDenoiseAndModel *object_ptr, EbPtr object_
 
     //todo: consider replacing with EbPictureBuffersDesc
 
-    EB_MALLOC_ARRAY(object_ptr->denoised[0],
+    EB_CALLOC_ARRAY(object_ptr->denoised[0],
                     (object_ptr->y_stride * object_ptr->height) << use_highbd);
-    EB_MALLOC_ARRAY(object_ptr->denoised[1],
+    EB_CALLOC_ARRAY(object_ptr->denoised[1],
                     (object_ptr->uv_stride * (object_ptr->height >> chroma_sub_log2[0]))
                         << use_highbd);
-    EB_MALLOC_ARRAY(object_ptr->denoised[2],
+    EB_CALLOC_ARRAY(object_ptr->denoised[2],
                     (object_ptr->uv_stride * (object_ptr->height >> chroma_sub_log2[0]))
                         << use_highbd);
 
     if (use_highbd) {
-        EB_MALLOC_ARRAY(object_ptr->packed[0], (object_ptr->y_stride * object_ptr->height));
-        EB_MALLOC_ARRAY(object_ptr->packed[1],
+        EB_CALLOC_ARRAY(object_ptr->packed[0], (object_ptr->y_stride * object_ptr->height));
+        EB_CALLOC_ARRAY(object_ptr->packed[1],
                         (object_ptr->uv_stride * (object_ptr->height >> chroma_sub_log2[0])));
-        EB_MALLOC_ARRAY(object_ptr->packed[2],
+        EB_CALLOC_ARRAY(object_ptr->packed[2],
                         (object_ptr->uv_stride * (object_ptr->height >> chroma_sub_log2[0])));
     }
 

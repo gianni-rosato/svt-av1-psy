@@ -466,11 +466,12 @@ void recon_output(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr) {
             if (scs_ptr->seq_header.film_grain_params_present
                 && pcs_ptr->parent_pcs_ptr->frm_hdr.film_grain_params.apply_grain) {
                 EbPictureBufferDesc *intermediate_buffer_ptr;
-                {
+                {   // temp_lf_recon_picture_ptr is finished in use
+                    // and reuse it to copy recon and add film grain noise
                     if (is_16bit)
-                        intermediate_buffer_ptr = pcs_ptr->film_grain_picture16bit_ptr;
+                        intermediate_buffer_ptr = pcs_ptr->temp_lf_recon_picture16bit_ptr;
                     else
-                        intermediate_buffer_ptr = pcs_ptr->film_grain_picture_ptr;
+                        intermediate_buffer_ptr = pcs_ptr->temp_lf_recon_picture_ptr;
                 }
 
                 AomFilmGrain *film_grain_ptr;

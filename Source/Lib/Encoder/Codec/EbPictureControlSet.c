@@ -173,8 +173,6 @@ void picture_control_set_dctor(EbPtr p) {
     EB_DELETE_PTR_ARRAY(obj->sb_ptr_array, obj->sb_total_count_unscaled);
     EB_DELETE(obj->bitstream_ptr);
     EB_DELETE_PTR_ARRAY(obj->entropy_coding_info, tile_cnt);
-    EB_DELETE(obj->film_grain_picture16bit_ptr);
-    EB_DELETE(obj->film_grain_picture_ptr);
     EB_DELETE(obj->temp_lf_recon_picture_ptr);
     EB_DELETE(obj->temp_lf_recon_picture16bit_ptr);
 
@@ -378,7 +376,6 @@ uint8_t get_enable_restoration(EbEncMode enc_mode) ;
 EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object_init_data_ptr) {
     PictureControlSetInitData *init_data_ptr = (PictureControlSetInitData *)object_init_data_ptr;
 
-    EbPictureBufferDescInitData input_pic_buf_desc_init_data;
     EbPictureBufferDescInitData coeff_buffer_desc_init_data;
 
     // Max/Min CU Sizes
@@ -407,17 +404,7 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
     object_ptr->dctor = picture_control_set_dctor;
 
     // Init Picture Init data
-    input_pic_buf_desc_init_data.max_width          = init_data_ptr->picture_width;
-    input_pic_buf_desc_init_data.max_height         = init_data_ptr->picture_height;
-    input_pic_buf_desc_init_data.bit_depth          = init_data_ptr->bit_depth;
-    input_pic_buf_desc_init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK;
-    input_pic_buf_desc_init_data.color_format       = init_data_ptr->color_format;
     uint16_t padding = init_data_ptr->sb_size_pix + 32;
-    input_pic_buf_desc_init_data.left_padding  = padding;
-    input_pic_buf_desc_init_data.right_padding = padding;
-    input_pic_buf_desc_init_data.top_padding   = padding;
-    input_pic_buf_desc_init_data.bot_padding   = padding;
-    input_pic_buf_desc_init_data.split_mode = EB_FALSE;
 
     coeff_buffer_desc_init_data.max_width          = init_data_ptr->picture_width;
     coeff_buffer_desc_init_data.max_height         = init_data_ptr->picture_height;
@@ -435,21 +422,11 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
     object_ptr->scs_wrapper_ptr = (EbObjectWrapper *)NULL;
 
     object_ptr->color_format           = init_data_ptr->color_format;
-    // Reconstructed Picture Buffer
-    // Film Grain Picture Buffer
-    if (init_data_ptr->film_grain_noise_level) {
-        if (is_16bit) {
-            EB_NEW(object_ptr->film_grain_picture16bit_ptr,
-                   svt_recon_picture_buffer_desc_ctor,
-                   (EbPtr)&coeff_buffer_desc_init_data);
-        } else {
-            EB_NEW(object_ptr->film_grain_picture_ptr,
-                   svt_recon_picture_buffer_desc_ctor,
-                   (EbPtr)&input_pic_buf_desc_init_data);
-        }
-    }
     uint8_t lf_recon_needed = 0;
-    if (init_data_ptr->tile_row_count > 0 || init_data_ptr->tile_column_count > 0)
+    // recon output will also use temp_lf_recon_picture_ptr for adding film grain noise
+    if (init_data_ptr->tile_row_count > 0 || init_data_ptr->tile_column_count > 0
+     || (init_data_ptr->static_config.film_grain_denoise_strength > 0
+        && init_data_ptr->static_config.recon_enabled))
         lf_recon_needed = 1;
     else
         for (uint8_t is_used_as_reference_flag = 0; is_used_as_reference_flag < 2; is_used_as_reference_flag++) {
@@ -1221,7 +1198,6 @@ EbErrorType picture_control_set_creator(EbPtr *object_dbl_ptr, EbPtr object_init
 static void picture_parent_control_set_dctor(EbPtr ptr) {
     PictureParentControlSet *obj = (PictureParentControlSet *)ptr;
 
-    EB_DELETE(obj->denoise_and_model);
     if (obj->is_chroma_downsampled_picture_ptr_owner)
         EB_DELETE(obj->chroma_downsampled_picture_ptr);
 
@@ -1479,21 +1455,6 @@ EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr,
     memset(&object_ptr->av1_cm->rst_frame, 0, sizeof(Yv12BufferConfig));
 
     EB_MALLOC_ARRAY(object_ptr->av1x, 1);
-
-    // Film grain noise model if film grain is applied
-    if (init_data_ptr->film_grain_noise_level) {
-        DenoiseAndModelInitData fg_init_data;
-        fg_init_data.encoder_bit_depth    = init_data_ptr->bit_depth;
-        fg_init_data.encoder_color_format = init_data_ptr->color_format;
-        fg_init_data.noise_level          = init_data_ptr->film_grain_noise_level;
-        fg_init_data.width                = init_data_ptr->picture_width;
-        fg_init_data.height               = init_data_ptr->picture_height;
-        fg_init_data.stride_y = init_data_ptr->picture_width + init_data_ptr->left_padding +
-            init_data_ptr->right_padding;
-        fg_init_data.stride_cb = fg_init_data.stride_cr = fg_init_data.stride_y >> subsampling_x;
-
-        EB_NEW(object_ptr->denoise_and_model, denoise_and_model_ctor, (EbPtr)&fg_init_data);
-    }
 
     //Jing: need to know the tile split info at pcs initialize stage
     object_ptr->log2_tile_rows = init_data_ptr->log2_tile_rows;

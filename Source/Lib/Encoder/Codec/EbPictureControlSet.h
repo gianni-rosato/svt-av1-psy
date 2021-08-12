@@ -245,8 +245,6 @@ typedef struct PictureControlSet {
     /*!< Pointer to the dtor of the struct*/
     EbDctor          dctor;
     EbObjectWrapper *scs_wrapper_ptr;
-    EbPictureBufferDesc *film_grain_picture_ptr;
-    EbPictureBufferDesc *film_grain_picture16bit_ptr;
     EbPictureBufferDesc *input_frame16bit;
 
     struct PictureParentControlSet *parent_pcs_ptr; //The parent of this PCS.
@@ -788,7 +786,6 @@ typedef struct PictureParentControlSet {
     EncDecSet *  enc_dec_ptr;
     Macroblock *         av1x;
     int32_t film_grain_params_present; //todo (AN): Do we need this flag at picture level?
-    AomDenoiseAndModel *denoise_and_model;
     int8_t              cdef_level;
     uint8_t             palette_level;
     uint8_t             sc_class0;

@@ -1801,10 +1801,25 @@ EbErrorType compute_block_mean_compute_variance(
 
 static int32_t apply_denoise_2d(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_ptr,
                                 EbPictureBufferDesc *inputPicturePointer) {
-    if (svt_aom_denoise_and_model_run(pcs_ptr->denoise_and_model,
+    AomDenoiseAndModel* denoise_and_model;
+    DenoiseAndModelInitData fg_init_data;
+    fg_init_data.encoder_bit_depth = pcs_ptr->enhanced_picture_ptr->bit_depth;
+    fg_init_data.encoder_color_format = pcs_ptr->enhanced_picture_ptr->color_format;
+    fg_init_data.noise_level = scs_ptr->static_config.film_grain_denoise_strength;
+    fg_init_data.width = pcs_ptr->enhanced_picture_ptr->width;
+    fg_init_data.height = pcs_ptr->enhanced_picture_ptr->height;
+    fg_init_data.stride_y = pcs_ptr->enhanced_picture_ptr->stride_y;
+    fg_init_data.stride_cb = pcs_ptr->enhanced_picture_ptr->stride_cb;
+    fg_init_data.stride_cr = pcs_ptr->enhanced_picture_ptr->stride_cr;
+    EB_NEW(denoise_and_model, denoise_and_model_ctor, (EbPtr)&fg_init_data);
+
+    if (svt_aom_denoise_and_model_run(denoise_and_model,
                                       inputPicturePointer,
                                       &pcs_ptr->frm_hdr.film_grain_params,
                                       scs_ptr->static_config.encoder_bit_depth > EB_8BIT)) {}
+
+    EB_DELETE(denoise_and_model);
+
     return 0;
 }
 
