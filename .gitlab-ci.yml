@@ -439,6 +439,19 @@ Linux Enc Test:
   needs:
     - Linux (GCC 10)
 
+Linux Intra Enc Test:
+  extends: .linux-test-base
+  stage: test
+  script:
+      - |
+        for INTRA_PERIOD in -1 200; do
+          ./Bin/Release/SvtAv1EncApp --preset 2 --keyint $INTRA_PERIOD -i "$SVT_ENCTEST_FILENAME" -n 17 -b "test-${BRANCH:-pr}-$(uname)-intra${INTRA_PERIOD}-${SVT_ENCTEST_BITNESS}bit-m2.ivf"
+          ./Bin/Release/SvtAv1EncApp --preset 8 --keyint $INTRA_PERIOD -i "$SVT_ENCTEST_FILENAME" -n 120 -b "test-${BRANCH:-pr}-$(uname)-intra${INTRA_PERIOD}-${SVT_ENCTEST_BITNESS}bit-m8.ivf"
+        done
+  parallel: *enc-test-parallel
+  artifacts: *enc-test-artifacts
+  needs:
+    - Linux (GCC 10)
 
 Linux Default Branch:
   extends:
@@ -520,6 +533,25 @@ Enc Default Diff test:
   needs:
     - Linux Enc Test
     - Linux Default Branch
+
+Enc Intra Diff Test:
+  stage: .post
+  image: registry.gitlab.com/aomediacodec/aom-testing/alpine3
+  allow_failure: true
+  script:
+    - |
+      success=true
+      for dist in *.ivf; do
+          case $dist in
+          test-pr-Linux-intra-1-*bit-*.ivf) continue ;;
+          *-8bit-m2.ivf) diff -q test-pr-Linux-intra-1-8bit-m2.ivf "$dist" || success=false ;;
+          *-10bit-m8.ivf) diff -q test-pr-Linux-intra-1-10bit-m8.ivf "$dist" || success=false ;;
+          esac
+      done
+      $success
+  needs:
+    - Linux Intra Enc Test
+
 
 Linux Gstreamer (Static):
   extends: .linux-test-base
