@@ -1040,11 +1040,19 @@ static EbErrorType prediction_structure_ctor(
             // Set Leading Picture's Reference List 0 Count
             // AV1 supports 4 forward and 3 backward maximum.
             // For low delay b case, will use the first 3 refs in L0 as refs in L0 and L1.
+#if FIX_PA_REF_RELEASE_HANG
+            // LDP is used for incomplete MGs, so should have the same ref structure as RA
+            // otherwise the dependent_count of the RA pics will be off
+            predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
+                ->ref_list0.reference_list_count = (predType == EB_PRED_LOW_DELAY_B)
+                ? MIN(3, ref_index)
+                : ref_index;
+#else
             predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
                 ->ref_list0.reference_list_count = (predType == EB_PRED_LOW_DELAY_B || predType == EB_PRED_LOW_DELAY_P)
                 ? MIN(3, ref_index)
                 : ref_index;
-
+#endif
             // Allocate the Leading Picture Reference List 0
             if (predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
                     ->ref_list0.reference_list_count) {
@@ -1184,11 +1192,19 @@ static EbErrorType prediction_structure_ctor(
                            .ref_list0[ref_index] != 0)
                 ++ref_index;
             // Set Reference List 0 Count
+#if FIX_PA_REF_RELEASE_HANG
+            // LDP is used for incomplete MGs, so should have the same ref structure as RA
+            // otherwise the dependent_count of the RA pics will be off
+            predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
+                ->ref_list0.reference_list_count = (predType == EB_PRED_LOW_DELAY_B)
+                ? MIN(3, ref_index)
+                : ref_index;
+#else
             predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
                 ->ref_list0.reference_list_count = (predType == EB_PRED_LOW_DELAY_B || predType == EB_PRED_LOW_DELAY_P)
                 ? MIN(3, ref_index)
                 : ref_index;
-
+#endif
             // Allocate Reference List 0
             EB_MALLOC_ARRAY(predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
                                 ->ref_list0.reference_list,

@@ -651,9 +651,14 @@ void *packetization_kernel(void *input_ptr) {
         else
             // Since feedback is not set to PM, life count of is reduced here instead of PM
             svt_release_object(pcs_ptr->scs_wrapper_ptr);
+#if FIX_QUANT_COEFF_BUFF
+        svt_release_object(pcs_ptr->parent_pcs_ptr->enc_dec_ptr->enc_dec_wrapper_ptr); //Child
+#endif
         //Release the Parent PCS then the Child PCS
         svt_release_object(entropy_coding_results_ptr->pcs_wrapper_ptr); //Child
+#if !FIX_QUANT_COEFF_BUFF
         svt_release_object(pcs_ptr->parent_pcs_ptr->enc_dec_ptr->enc_dec_wrapper_ptr); //Child
+#endif
         // Release the Entropy Coding Result
         svt_release_object(entropy_coding_results_wrapper_ptr);
 

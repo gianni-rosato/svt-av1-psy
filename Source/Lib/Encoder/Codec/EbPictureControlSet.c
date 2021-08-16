@@ -273,9 +273,10 @@ EbErrorType recon_coef_ctor(EncDecSet *object_ptr, EbPtr object_init_data_ptr) {
     const uint16_t picture_sb_height = (uint16_t)(
         (init_data_ptr->picture_height + init_data_ptr->sb_sz - 1) / init_data_ptr->sb_sz);
     uint16_t    sb_index;
+#if !FIX_QUANT_COEFF_BUFF
     uint16_t    sb_origin_x;
     uint16_t    sb_origin_y;
-
+#endif
     EbBool         is_16bit      = init_data_ptr->bit_depth > 8 ? EB_TRUE : EB_FALSE;
 
 
@@ -326,7 +327,7 @@ EbErrorType recon_coef_ctor(EncDecSet *object_ptr, EbPtr object_init_data_ptr) {
    // object_ptr->sb_total_count          = picture_sb_width * picture_sb_height;
     object_ptr->sb_total_count_unscaled = picture_sb_width * picture_sb_height;
     EB_ALLOC_PTR_ARRAY(object_ptr->quantized_coeff, object_ptr->sb_total_count_unscaled);
-
+#if !FIX_QUANT_COEFF_BUFF
     sb_origin_x = 0;
     sb_origin_y = 0;
 
@@ -340,7 +341,7 @@ EbErrorType recon_coef_ctor(EncDecSet *object_ptr, EbPtr object_init_data_ptr) {
 
 
     //object_ptr->sb_total_count_pix = all_sb;
-
+#endif
     EbPictureBufferDescInitData coeff_init_data;
     coeff_init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK;
     coeff_init_data.max_width          = init_data_ptr->sb_size_pix;
@@ -352,17 +353,19 @@ EbErrorType recon_coef_ctor(EncDecSet *object_ptr, EbPtr object_init_data_ptr) {
     coeff_init_data.top_padding        = 0;
     coeff_init_data.bot_padding        = 0;
     coeff_init_data.split_mode         = EB_FALSE;
+#if FIX_QUANT_COEFF_BUFF
+    for (sb_index = 0; sb_index < object_ptr->sb_total_count_unscaled; ++sb_index) {
+#else
     for (sb_index = 0; sb_index < all_sb; ++sb_index) {
-
-
-
-    EB_NEW(object_ptr->quantized_coeff[sb_index], //OMK2
-           svt_picture_buffer_desc_ctor,
-           (EbPtr)&coeff_init_data);
-
+#endif
+        EB_NEW(object_ptr->quantized_coeff[sb_index], //OMK2
+               svt_picture_buffer_desc_ctor,
+               (EbPtr)&coeff_init_data);
+#if !FIX_QUANT_COEFF_BUFF
         // Increment the Order in coding order (Raster Scan Order)
         sb_origin_y = (sb_origin_x == picture_sb_w - 1) ? sb_origin_y + 1 : sb_origin_y;
         sb_origin_x = (sb_origin_x == picture_sb_w - 1) ? 0 : sb_origin_x + 1;
+#endif
     }
 
     return EB_ErrorNone;
