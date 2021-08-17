@@ -319,15 +319,17 @@ void svt_av1_filter_block_plane_vert(const PictureControlSet *const pcs_ptr,
         }
     }
 
-    if (mi_col == (scs_ptr->max_input_luma_width / sb_size * sb_size) >> MI_SIZE_LOG2) {
-        x_range = (((scs_ptr->max_input_luma_width - scs_ptr->max_input_pad_right) % sb_size) +
-                   MI_SIZE - 1) >>
+    // the boundary of last column should use the actual width for frame might be downscaled in super resolution
+    EbPictureBufferDesc* pic_ptr = pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr;
+    if (mi_col == (pic_ptr->width / sb_size * sb_size) >> MI_SIZE_LOG2) {
+        x_range = (((pic_ptr->width) % sb_size) +
+            MI_SIZE - 1) >>
             MI_SIZE_LOG2;
         if (plane) {
-            x_range = ((((scs_ptr->max_input_luma_width - scs_ptr->max_input_pad_right) %
-                         sb_size) >>
-                        scale_horz) +
-                       MI_SIZE - 1) >>
+            x_range = ((((pic_ptr->width) %
+                sb_size + scale_horz) >>
+                scale_horz) +
+                MI_SIZE - 1) >>
                 MI_SIZE_LOG2;
         }
     }
@@ -461,15 +463,17 @@ void svt_av1_filter_block_plane_horz(const PictureControlSet *const pcs_ptr,
         }
     }
 
-    if (mi_col == (scs_ptr->max_input_luma_width / sb_size * sb_size) >> MI_SIZE_LOG2) {
-        x_range = (((scs_ptr->max_input_luma_width - scs_ptr->max_input_pad_right) % sb_size) +
-                   MI_SIZE - 1) >>
+    // the boundary of last column should use the actual width for frames might be downscaled in super resolution
+    EbPictureBufferDesc* pic_ptr = pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr;
+    if (mi_col == (pic_ptr->width / sb_size * sb_size) >> MI_SIZE_LOG2) {
+        x_range = (((pic_ptr->width) % sb_size) +
+            MI_SIZE - 1) >>
             MI_SIZE_LOG2;
         if (plane) {
-            x_range = ((((scs_ptr->max_input_luma_width - scs_ptr->max_input_pad_right) %
-                         sb_size) >>
-                        scale_horz) +
-                       MI_SIZE - 1) >>
+            x_range = ((((pic_ptr->width) %
+                sb_size + scale_horz) >>
+                scale_horz) +
+                MI_SIZE - 1) >>
                 MI_SIZE_LOG2;
         }
     }
