@@ -1745,17 +1745,41 @@ void md_nsq_motion_search(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
 void clip_mv_on_pic_boundary(int32_t blk_origin_x, int32_t blk_origin_y, int32_t bwidth,
                              int32_t bheight, EbPictureBufferDesc *ref_pic, int16_t *mvx,
                              int16_t *mvy) {
-    if (blk_origin_x + (*mvx >> 3) + bwidth > ref_pic->max_width + ref_pic->origin_x)
-        *mvx = (ref_pic->max_width - blk_origin_x) << 3;
+    if (blk_origin_x + (*mvx >> 3) + bwidth > ref_pic->max_width + MIN_SB_SIZE) {
+        SVT_INFO("mvx will be clipped because out of boundary! %d + %d + %d > %d + %d \n",
+                 blk_origin_x,
+                 (*mvx >> 3),
+                 bwidth,
+                 ref_pic->max_width,
+                 MIN_SB_SIZE);
+        *mvx = (ref_pic->max_width + MIN_SB_SIZE - blk_origin_x - bwidth) << 3;
+    }
 
-    if (blk_origin_y + (*mvy >> 3) + bheight > ref_pic->max_height + ref_pic->origin_y)
-        *mvy = (ref_pic->max_height - blk_origin_y) << 3;
+    if (blk_origin_y + (*mvy >> 3) + bheight > ref_pic->max_height + MIN_SB_SIZE) {
+        SVT_INFO("mvy will be clipped because out of boundary! %d + %d + %d > %d + %d \n",
+                 blk_origin_y,
+                 (*mvy >> 3),
+                 bheight,
+                 ref_pic->max_height,
+                 MIN_SB_SIZE);
+        *mvy = (ref_pic->max_height + MIN_SB_SIZE - blk_origin_y - bheight) << 3;
+    }
 
-    if (blk_origin_x + (*mvx >> 3) < -ref_pic->origin_x)
-        *mvx = (-blk_origin_x - bwidth) << 3;
+    if (blk_origin_x + (*mvx >> 3) + MIN_SB_SIZE < 0) {
+        SVT_INFO("mvx will be clipped because out of boundary! %d + %d + %d < 0 \n",
+                 blk_origin_x,
+                 (*mvx >> 3),
+                 MIN_SB_SIZE);
+        *mvx = (-blk_origin_x - MIN_SB_SIZE) << 3;
+    }
 
-    if (blk_origin_y + (*mvy >> 3) < -ref_pic->origin_y)
-        *mvy = (-blk_origin_y - bheight) << 3;
+    if (blk_origin_y + (*mvy >> 3) + MIN_SB_SIZE < 0) {
+        SVT_INFO("mvy will be clipped because out of boundary! %d + %d + %d < 0 \n",
+                 blk_origin_y,
+                 (*mvy >> 3),
+                 MIN_SB_SIZE);
+        *mvy = (-blk_origin_y - MIN_SB_SIZE) << 3;
+    }
 }
 /*
  * Check the size of the spatial MVs and MVPs of the given block
@@ -2260,6 +2284,13 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
                                        .y_mv)
                             << 1;
                     }
+                    clip_mv_on_pic_boundary(context_ptr->blk_origin_x,
+                                            context_ptr->blk_origin_y,
+                                            context_ptr->blk_geom->bwidth,
+                                            context_ptr->blk_geom->bheight,
+                                            ref_pic,
+                                            &me_mv_x,
+                                            &me_mv_y);
                 }
                 // Set ref MV
                 context_ptr->ref_mv.col = context_ptr->mvp_array[list_idx][ref_idx][0].col;

@@ -1430,18 +1430,27 @@ EbErrorType check_00_center(EbPictureBufferDesc *ref_pic_ptr, MeContext *context
 // level: 0 => sixteenth, 1 => quarter, 2 => original
 
 
-static EbPictureBufferDesc* get_me_reference(
-    PictureParentControlSet   *pcs_ptr,
-    MeContext                 *context_ptr,
-    uint8_t                   list_index,
-    uint8_t                   ref_pic_index,
-    uint8_t                   level,
-    uint16_t                  *dist) {
+static EbPictureBufferDesc *get_me_reference(PictureParentControlSet *pcs_ptr,
+                                             MeContext *context_ptr, uint8_t list_index,
+                                             uint8_t ref_pic_index, uint8_t level, uint16_t *dist,
+                                             uint16_t input_width, uint16_t input_height) {
 
     EbPictureBufferDesc* ref_pic_ptr;
     ref_pic_ptr = level == 0 ? context_ptr->me_ds_ref_array[list_index][ref_pic_index].sixteenth_picture_ptr :
                   level == 1 ? context_ptr->me_ds_ref_array[list_index][ref_pic_index].quarter_picture_ptr :
                                context_ptr->me_ds_ref_array[list_index][ref_pic_index].picture_ptr;
+
+    if ((input_width >> (2 - level)) != ref_pic_ptr->width ||
+        (input_height >> (2 - level)) != ref_pic_ptr->height) {
+        SVT_WARN(
+            "picture %3llu: HME level%d resolution mismatch! input (%dx%d) != (%dx%d) pa ref. \n",
+            pcs_ptr->picture_number,
+            level,
+            input_width >> (2 - level),
+            input_height >> (2 - level),
+            ref_pic_ptr->width,
+            ref_pic_ptr->height);
+    }
 
     *dist = ABS((int16_t)(pcs_ptr->picture_number - context_ptr->me_ds_ref_array[list_index][ref_pic_index].picture_number));
     return ref_pic_ptr;
@@ -1501,9 +1510,14 @@ void integer_search_sb(
         // Ref Picture Loop
         for (ref_pic_index = 0; ref_pic_index < num_of_ref_pic_to_search; ++ref_pic_index) {
             uint16_t dist = 0;
-            ref_pic_ptr = get_me_reference(pcs_ptr,
-                                           context_ptr, list_index, ref_pic_index,
-                                           2, &dist);
+            ref_pic_ptr   = get_me_reference(pcs_ptr,
+                                           context_ptr,
+                                           list_index,
+                                           ref_pic_index,
+                                           2,
+                                           &dist,
+                                           input_ptr->width,
+                                           input_ptr->height);
             // Get hme results
             if (context_ptr->hme_results[list_index][ref_pic_index].do_ref == 0)
                 continue;  //so will not get ME results for those references.
@@ -1890,7 +1904,8 @@ static void prehme_sb(
 
         for (uint8_t ref_i = 0; ref_i < num_of_ref_pic_to_search; ++ref_i) {
             uint16_t dist = 0;
-            EbPictureBufferDesc *sixteenthRefPicPtr = get_me_reference(pcs_ptr, ctx, list_i, ref_i,0, &dist);
+            EbPictureBufferDesc *sixteenthRefPicPtr = get_me_reference(
+                pcs_ptr, ctx, list_i, ref_i, 0, &dist, input_ptr->width, input_ptr->height);
 
             if (ctx->temporal_layer_index > 0 || list_i == 0)
             {
@@ -1978,8 +1993,13 @@ static void hme_level0_sb(
         for (uint8_t ref_pic_index = 0; ref_pic_index < num_of_ref_pic_to_search; ++ref_pic_index) {
             uint16_t dist = 0;
             EbPictureBufferDesc *sixteenthRefPicPtr = get_me_reference(pcs_ptr,
-                                           context_ptr, list_index, ref_pic_index,
-                                           0, &dist);
+                                                                       context_ptr,
+                                                                       list_index,
+                                                                       ref_pic_index,
+                                                                       0,
+                                                                       &dist,
+                                                                       input_ptr->width,
+                                                                       input_ptr->height);
             if (context_ptr->temporal_layer_index > 0 || list_index == 0) {
                 int16_t x_search_center = 0;
                 int16_t y_search_center = 0;
@@ -2155,8 +2175,13 @@ void hme_level1_sb(
 
             uint16_t dist = 0;
             EbPictureBufferDesc *quarterRefPicPtr = get_me_reference(pcs_ptr,
-                                           context_ptr, list_index, ref_pic_index,
-                                           1, &dist);
+                                                                     context_ptr,
+                                                                     list_index,
+                                                                     ref_pic_index,
+                                                                     1,
+                                                                     &dist,
+                                                                     input_ptr->width,
+                                                                     input_ptr->height);
             if (context_ptr->temporal_layer_index > 0 || list_index == 0) {
                         search_region_number_in_height = 0;
                         search_region_number_in_width = 0;
@@ -2246,8 +2271,13 @@ static void hme_level2_sb(
         for (uint8_t ref_pic_index = 0; ref_pic_index < num_of_ref_pic_to_search; ++ref_pic_index) {
             uint16_t dist = 0;
             EbPictureBufferDesc *refPicPtr = get_me_reference(pcs_ptr,
-                                           context_ptr, list_index, ref_pic_index,
-                                           2, &dist);
+                                                              context_ptr,
+                                                              list_index,
+                                                              ref_pic_index,
+                                                              2,
+                                                              &dist,
+                                                              input_ptr->width,
+                                                              input_ptr->height);
 
             if (context_ptr->temporal_layer_index > 0 || list_index == 0) {
                     // HME: Level2 search

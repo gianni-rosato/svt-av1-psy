@@ -943,17 +943,35 @@ void *motion_estimation_kernel(void *input_ptr) {
                         context_ptr->me_context_ptr->temporal_layer_index = pcs_ptr->temporal_layer_index;
                         context_ptr->me_context_ptr->is_used_as_reference_flag = pcs_ptr->is_used_as_reference_flag;
 
-                        for (int i = 0; i<= context_ptr->me_context_ptr->num_of_list_to_search; i++) {
-                            for (int j=0; j< context_ptr->me_context_ptr->num_of_ref_pic_to_search[i];j++) {
-                                EbPaReferenceObject* reference_object =
-                                    (EbPaReferenceObject *)pcs_ptr->ref_pa_pic_ptr_array[i][j]->object_ptr;
-                                context_ptr->me_context_ptr->me_ds_ref_array[i][j].picture_ptr =
-                                    reference_object->input_padded_picture_ptr;
-                                context_ptr->me_context_ptr->me_ds_ref_array[i][j].quarter_picture_ptr =
-                                    reference_object->quarter_downsampled_picture_ptr;
-                                context_ptr->me_context_ptr->me_ds_ref_array[i][j].sixteenth_picture_ptr =
-                                    reference_object->sixteenth_downsampled_picture_ptr;
-                                context_ptr->me_context_ptr->me_ds_ref_array[i][j].picture_number = reference_object->picture_number;
+                        if (pcs_ptr->superres_denom > SCALE_NUMERATOR) {
+                            for (int i = 0; i <= context_ptr->me_context_ptr->num_of_list_to_search; i++) {
+                                for (int j = 0; j < context_ptr->me_context_ptr->num_of_ref_pic_to_search[i]; j++) {
+                                    uint8_t denom_idx = (uint8_t)(pcs_ptr->superres_denom - SCALE_NUMERATOR - 1);
+                                    EbPaReferenceObject *reference_object =
+                                        (EbPaReferenceObject *)pcs_ptr->ref_pa_pic_ptr_array[i][j]->object_ptr;
+                                    context_ptr->me_context_ptr->me_ds_ref_array[i][j].picture_ptr =
+                                        reference_object->downscaled_input_padded_picture_ptr[denom_idx];
+                                    context_ptr->me_context_ptr->me_ds_ref_array[i][j].quarter_picture_ptr =
+                                        reference_object->downscaled_quarter_downsampled_picture_ptr[denom_idx];
+                                    context_ptr->me_context_ptr->me_ds_ref_array[i][j].sixteenth_picture_ptr =
+                                        reference_object->downscaled_sixteenth_downsampled_picture_ptr[denom_idx];
+                                    context_ptr->me_context_ptr->me_ds_ref_array[i][j].picture_number =
+                                        reference_object->picture_number;
+                                }
+                            }
+                        } else {
+                            for (int i = 0; i<= context_ptr->me_context_ptr->num_of_list_to_search; i++) {
+                                for (int j=0; j< context_ptr->me_context_ptr->num_of_ref_pic_to_search[i];j++) {
+                                    EbPaReferenceObject* reference_object =
+                                        (EbPaReferenceObject *)pcs_ptr->ref_pa_pic_ptr_array[i][j]->object_ptr;
+                                    context_ptr->me_context_ptr->me_ds_ref_array[i][j].picture_ptr =
+                                        reference_object->input_padded_picture_ptr;
+                                    context_ptr->me_context_ptr->me_ds_ref_array[i][j].quarter_picture_ptr =
+                                        reference_object->quarter_downsampled_picture_ptr;
+                                    context_ptr->me_context_ptr->me_ds_ref_array[i][j].sixteenth_picture_ptr =
+                                        reference_object->sixteenth_downsampled_picture_ptr;
+                                    context_ptr->me_context_ptr->me_ds_ref_array[i][j].picture_number = reference_object->picture_number;
+                                }
                             }
                         }
                         }

@@ -2751,7 +2751,7 @@ EbErrorType svt_av1_init_temporal_filtering(
     for (int i = 0; i < (picture_control_set_ptr_central->past_altref_nframes +
                          picture_control_set_ptr_central->future_altref_nframes + 1);
          i++)
-        list_input_picture_ptr[i] = list_picture_control_set_ptr[i]->enhanced_picture_ptr;
+        list_input_picture_ptr[i] = list_picture_control_set_ptr[i]->enhanced_unscaled_picture_ptr;
 
     produce_temporally_filtered_pic(list_picture_control_set_ptr,
                                     list_input_picture_ptr,
