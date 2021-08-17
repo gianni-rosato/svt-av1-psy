@@ -1306,6 +1306,9 @@ void scale_source_references(SequenceControlSet *scs_ptr, PictureParentControlSe
 static void scale_input_references(PictureParentControlSet *pcs_ptr,
                                    superres_params_type     superres_params) {
     uint8_t denom_idx = get_denom_idx(superres_params.superres_denom);
+    SequenceControlSet *scs_ptr = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
+    const uint32_t      ss_x    = scs_ptr->subsampling_x;
+    const uint32_t      ss_y    = scs_ptr->subsampling_y;
 
     // reference structures (padded pictures + downsampled versions)
     EbPaReferenceObject *src_object = (EbPaReferenceObject *)
@@ -1331,6 +1334,21 @@ static void scale_input_references(PictureParentControlSet *pcs_ptr,
                      input_picture_ptr->height,
                      input_picture_ptr->origin_x,
                      input_picture_ptr->origin_y);
+
+    // padding downscaled input buffer_cb & buffer_cr to fix green lines on the right
+    generate_padding(input_picture_ptr->buffer_cb,
+                     input_picture_ptr->stride_cb,
+                     input_picture_ptr->width >> ss_x,
+                     input_picture_ptr->height >> ss_y,
+                     input_picture_ptr->origin_x >> ss_x,
+                     input_picture_ptr->origin_y >> ss_y);
+
+    generate_padding(input_picture_ptr->buffer_cr,
+                     input_picture_ptr->stride_cr,
+                     input_picture_ptr->width >> ss_x,
+                     input_picture_ptr->height >> ss_y,
+                     input_picture_ptr->origin_x >> ss_x,
+                     input_picture_ptr->origin_y >> ss_y);
 
     for (uint32_t row = 0;
          row < (uint32_t)(input_picture_ptr->height + 2 * input_picture_ptr->origin_y);
