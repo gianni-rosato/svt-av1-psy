@@ -847,7 +847,10 @@ void *motion_estimation_kernel(void *input_ptr) {
             sixteenth_picture_ptr = (EbPictureBufferDesc *)pa_ref_obj_->sixteenth_downsampled_picture_ptr;
             input_padded_picture_ptr = (EbPictureBufferDesc *)pa_ref_obj_->input_padded_picture_ptr;
 
-            input_picture_ptr = pcs_ptr->enhanced_unscaled_picture_ptr;
+            if (pcs_ptr->superres_denom > SCALE_NUMERATOR)
+                input_picture_ptr = pcs_ptr->enhanced_downscaled_picture_ptr;
+            else
+                input_picture_ptr = pcs_ptr->enhanced_unscaled_picture_ptr;
             // Segments
             uint32_t segment_index   = in_results_ptr->segment_index;
             uint32_t pic_width_in_sb = (pcs_ptr->aligned_width + scs_ptr->sb_sz - 1) / scs_ptr->sb_sz;

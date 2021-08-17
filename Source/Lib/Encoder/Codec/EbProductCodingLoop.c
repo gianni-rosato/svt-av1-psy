@@ -1683,6 +1683,12 @@ void md_nsq_motion_search(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
     EbReferenceObject *  ref_obj = pcs_ptr->ref_pic_ptr_array[list_idx][ref_idx]->object_ptr;
     EbPictureBufferDesc *ref_pic = hbd_mode_decision ? ref_obj->reference_picture16bit
                                                      : ref_obj->reference_picture;
+
+    // -------
+    // Use scaled references if resolution of the reference is different from that of the input
+    // -------
+    use_scaled_rec_refs_if_needed(pcs_ptr, input_picture_ptr, ref_obj, &ref_pic);
+
     for (int16_t mvc_index = 0; mvc_index < mvc_count; mvc_index++) {
         // Round-up the search center to the closest integer
         mvc_x_array[mvc_index] = (mvc_x_array[mvc_index] + 4) & ~0x07;
@@ -1817,6 +1823,11 @@ void md_sq_motion_search(PictureControlSet *pcs, ModeDecisionContext *ctx,
     EbReferenceObject *  ref_obj           = pcs->ref_pic_ptr_array[list_idx][ref_idx]->object_ptr;
     EbPictureBufferDesc *ref_pic           = hbd_mode_decision ? ref_obj->reference_picture16bit
                                                                : ref_obj->reference_picture;
+
+    // -------
+    // Use scaled references if resolution of the reference is different from that of the input
+    // -------
+    use_scaled_rec_refs_if_needed(pcs, input_picture_ptr, ref_obj, &ref_pic);
 
     MdSqMotionSearchCtrls *md_sq_me_ctrls = &ctx->md_sq_me_ctrls;
     uint16_t               dist           = ABS(
@@ -2070,6 +2081,12 @@ int md_subpel_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_pt
     // Ref buffer
     EbReferenceObject *  ref_obj = pcs_ptr->ref_pic_ptr_array[list_idx][ref_idx]->object_ptr;
     EbPictureBufferDesc *ref_pic = ref_obj->reference_picture; // 10BIT not supported
+
+    // -------
+    // Use scaled references if resolution of the reference is different from that of the input
+    // -------
+    use_scaled_rec_refs_if_needed(pcs_ptr, input_picture_ptr, ref_obj, &ref_pic);
+
     int32_t              ref_origin_index = ref_pic->origin_x + context_ptr->blk_origin_x +
         (context_ptr->blk_origin_y + ref_pic->origin_y) * ref_pic->stride_y;
 
@@ -2167,6 +2184,11 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
             EbReferenceObject *ref_obj  = pcs_ptr->ref_pic_ptr_array[list_idx][ref_idx]->object_ptr;
             EbPictureBufferDesc *ref_pic = hbd_mode_decision ? ref_obj->reference_picture16bit
                                                              : ref_obj->reference_picture;
+            // -------
+            // Use scaled references if resolution of the reference is different from that of the input
+            // -------
+            use_scaled_rec_refs_if_needed(pcs_ptr, input_picture_ptr, ref_obj, &ref_pic);
+
             // Get the ME MV
             const MeSbResults *me_results =
                 pcs_ptr->parent_pcs_ptr->pa_me_data->me_results[context_ptr->me_sb_addr];
@@ -2353,6 +2375,12 @@ void perform_md_reference_pruning(PictureControlSet *pcs_ptr, ModeDecisionContex
                     pcs_ptr->ref_pic_ptr_array[list_idx][ref_idx]->object_ptr;
                 EbPictureBufferDesc *ref_pic = hbd_mode_decision ? ref_obj->reference_picture16bit
                                                                  : ref_obj->reference_picture;
+
+                // -------
+                // Use scaled references if resolution of the reference is different from that of the input
+                // -------
+                use_scaled_rec_refs_if_needed(pcs_ptr, input_picture_ptr, ref_obj, &ref_pic);
+
                 clip_mv_on_pic_boundary(context_ptr->blk_origin_x,
                                         context_ptr->blk_origin_y,
                                         context_ptr->blk_geom->bwidth,
@@ -2413,6 +2441,12 @@ void perform_md_reference_pruning(PictureControlSet *pcs_ptr, ModeDecisionContex
                     pcs_ptr->ref_pic_ptr_array[list_idx][ref_idx]->object_ptr;
                 EbPictureBufferDesc *ref_pic = hbd_mode_decision ? ref_obj->reference_picture16bit
                                                                  : ref_obj->reference_picture;
+
+                // -------
+                // Use scaled references if resolution of the reference is different from that of the input
+                // -------
+                use_scaled_rec_refs_if_needed(pcs_ptr, input_picture_ptr, ref_obj, &ref_pic);
+
                 clip_mv_on_pic_boundary(context_ptr->blk_origin_x,
                                         context_ptr->blk_origin_y,
                                         context_ptr->blk_geom->bwidth,

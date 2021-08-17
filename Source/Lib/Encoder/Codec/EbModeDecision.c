@@ -315,7 +315,7 @@ void inter_intra_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context
     if(ref_pic_list0 != NULL)
         use_scaled_rec_refs_if_needed(pcs_ptr,
                                       pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr,
-                                      (EbReferenceObject *)pcs_ptr->ref_pic_ptr_array[list_idx0][list_idx0]->object_ptr,
+                                      (EbReferenceObject *)pcs_ptr->ref_pic_ptr_array[list_idx0][ref_idx_l0]->object_ptr,
                                       &ref_pic_list0);
     if(ref_pic_list1 != NULL)
         use_scaled_rec_refs_if_needed(pcs_ptr,
