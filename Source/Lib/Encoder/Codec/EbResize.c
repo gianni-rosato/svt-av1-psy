@@ -1239,12 +1239,12 @@ void scale_source_references(SequenceControlSet *scs_ptr, PictureParentControlSe
                                    ->object_ptr;
 
             uint64_t ref_picture_number = pcs_ptr->ref_pic_poc_array[list_index][ref_pic_index];
-            UNUSED(ref_picture_number);
 
             EbPictureBufferDesc *ref_pic_ptr = reference_object->input_padded_picture_ptr;
 
             // if the size of the reference pic is different than the size of the input pic, then scale references
             if (ref_pic_ptr->width != input_picture_ptr->width) {
+                EbBool do_resize = EB_FALSE;
                 if (reference_object->downscaled_input_padded_picture_ptr[denom_idx] == NULL) {
                     superres_params_type spr_params = {pcs_ptr->frame_width,  // aligned_width
                                                        pcs_ptr->frame_height, // aligned_height
@@ -1257,6 +1257,15 @@ void scale_source_references(SequenceControlSet *scs_ptr, PictureParentControlSe
                         &reference_object->downscaled_sixteenth_downsampled_picture_ptr[denom_idx],
                         ref_pic_ptr,
                         spr_params);
+
+                    do_resize = EB_TRUE;
+                }
+
+                if (reference_object->downscaled_picture_number[denom_idx] != ref_picture_number) {
+                    do_resize = EB_TRUE;
+                }
+
+                if (do_resize) {
                     EbPictureBufferDesc *down_ref_pic_ptr =
                         reference_object->downscaled_input_padded_picture_ptr[denom_idx];
 
@@ -1292,6 +1301,8 @@ void scale_source_references(SequenceControlSet *scs_ptr, PictureParentControlSe
                             reference_object->downscaled_quarter_downsampled_picture_ptr[denom_idx],
                             reference_object->downscaled_sixteenth_downsampled_picture_ptr[denom_idx]);
                     }
+
+                    reference_object->downscaled_picture_number[denom_idx] = ref_picture_number;
                 }
             }
         }
@@ -1405,7 +1416,6 @@ void scale_rec_references(PictureControlSet *pcs_ptr, EbPictureBufferDesc *input
                                    ->object_ptr;
 
             uint64_t ref_picture_number = ppcs_ptr->ref_pic_poc_array[list_index][ref_pic_index];
-            UNUSED(ref_picture_number);
 
             EbPictureBufferDesc *ref_pic_ptr = hbd_mode_decision
                 ? reference_object->reference_picture16bit
@@ -1413,6 +1423,7 @@ void scale_rec_references(PictureControlSet *pcs_ptr, EbPictureBufferDesc *input
 
             // if the size of the reference pic is different than the size of the input pic, then scale references
             if (ref_pic_ptr->width != input_picture_ptr->width) {
+                EbBool               do_resize        = EB_FALSE;
                 EbPictureBufferDesc *down_ref_pic_ptr = hbd_mode_decision
                     ? reference_object->downscaled_reference_picture16bit[denom_idx]
                     : reference_object->downscaled_reference_picture[denom_idx];
@@ -1429,6 +1440,14 @@ void scale_rec_references(PictureControlSet *pcs_ptr, EbPictureBufferDesc *input
                         ? reference_object->downscaled_reference_picture16bit[denom_idx]
                         : reference_object->downscaled_reference_picture[denom_idx];
 
+                    do_resize = EB_TRUE;
+                }
+
+                if (reference_object->downscaled_picture_number[denom_idx] != ref_picture_number) {
+                    do_resize = EB_TRUE;
+                }
+
+                if (do_resize) {
                     // downsample input padded picture buffer
                     av1_resize_frame(ref_pic_ptr,
                                      down_ref_pic_ptr,
@@ -1483,6 +1502,7 @@ void scale_rec_references(PictureControlSet *pcs_ptr, EbPictureBufferDesc *input
                                          down_ref_pic_ptr->origin_y >> ss_y);
                     }
 
+                    reference_object->downscaled_picture_number[denom_idx] = ref_picture_number;
                     //printf("rescaled reference picture %d\n", (int)ref_picture_number);
                 }
             }
