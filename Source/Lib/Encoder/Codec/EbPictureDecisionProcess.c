@@ -4891,14 +4891,14 @@ void* picture_decision_kernel(void *input_ptr)
                     pcs_ptr->cra_flag =
                         (scs_ptr->static_config.intra_refresh_type != CRA_REFRESH) ?
                         pcs_ptr->cra_flag :
-                        (encode_context_ptr->intra_period_position == (uint32_t)scs_ptr->static_config.intra_period_length) ?
+                        ((encode_context_ptr->intra_period_position == (uint32_t)scs_ptr->static_config.intra_period_length) || (pcs_ptr->scene_change_flag == EB_TRUE)) ?
                         EB_TRUE :
                         pcs_ptr->cra_flag;
 
                     pcs_ptr->idr_flag =
                         (scs_ptr->static_config.intra_refresh_type != IDR_REFRESH) ?
                         pcs_ptr->idr_flag :
-                        (encode_context_ptr->intra_period_position == (uint32_t)scs_ptr->static_config.intra_period_length) ?
+                        ((encode_context_ptr->intra_period_position == (uint32_t)scs_ptr->static_config.intra_period_length) || (pcs_ptr->scene_change_flag == EB_TRUE)) ?
                         EB_TRUE :
                         pcs_ptr->idr_flag;
                 }
@@ -4921,7 +4921,7 @@ void* picture_decision_kernel(void *input_ptr)
                 if (scs_ptr->static_config.rate_control_mode)
                 {
                     // Increment the Intra Period Position
-                    encode_context_ptr->intra_period_position = (encode_context_ptr->intra_period_position == (uint32_t)scs_ptr->static_config.intra_period_length) ? 0 : encode_context_ptr->intra_period_position + 1;
+                    encode_context_ptr->intra_period_position = ((encode_context_ptr->intra_period_position == (uint32_t)scs_ptr->static_config.intra_period_length) || (pcs_ptr->scene_change_flag == EB_TRUE)) ? 0 : encode_context_ptr->intra_period_position + 1;
                 }
                 else
                 {

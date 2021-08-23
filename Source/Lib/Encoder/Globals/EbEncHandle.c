@@ -3225,10 +3225,6 @@ static EbErrorType verify_settings(
         return_error = EB_ErrorBadParameter;
     }
 
-    if (config->scene_change_detection) {
-        SVT_LOG("Error Instance %u: Scene change detection is currently not supported\n", channel_number + 1);
-        return_error = EB_ErrorBadParameter;
-    }
     if (config->max_qp_allowed > MAX_QP_VALUE) {
         SVT_LOG("Error instance %u: MaxQpAllowed must be [0 - %d]\n", channel_number + 1, MAX_QP_VALUE);
         return_error = EB_ErrorBadParameter;
