@@ -1567,6 +1567,12 @@ EbErrorType sb_params_init_pcs(SequenceControlSet *scs_ptr, PictureParentControl
                 ? EB_FALSE
                 : EB_TRUE;
         }
+
+        // super-res can not work with multi-tiles, just set up it for no tiling
+        pcs_ptr->sb_params_array[sb_index].tile_start_x = 0;
+        pcs_ptr->sb_params_array[sb_index].tile_start_y = 0;
+        pcs_ptr->sb_params_array[sb_index].tile_end_x = encoding_width;
+        pcs_ptr->sb_params_array[sb_index].tile_end_y = encoding_height;
     }
 
     return return_error;

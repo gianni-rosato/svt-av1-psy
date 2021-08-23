@@ -2588,6 +2588,12 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
             SVT_INFO("loop restoration will be enabled when super resolution is enabled!\n");
             scs_ptr->static_config.enable_restoration_filtering = 1;
         }
+        if (scs_ptr->static_config.tile_rows || scs_ptr->static_config.tile_columns) {
+            // disable tiles if super-res is on
+            SVT_WARN("Tiles will be disabled when super resolution is enabled!\n");
+            scs_ptr->static_config.tile_rows = 0;
+            scs_ptr->static_config.tile_columns = 0;
+        }
     }
 
     if (scs_ptr->static_config.recode_loop > 0 &&
