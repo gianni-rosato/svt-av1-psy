@@ -861,8 +861,8 @@ static EbErrorType av1_resize_frame(const EbPictureBufferDesc *src, EbPictureBuf
                     src->stride_cb,
                     dst_buffer_highbd[1] + (dst->origin_y >> ss_y) * dst->stride_cb +
                         (dst->origin_x >> ss_x),
-                    dst->height >> ss_y,
-                    dst->width >> ss_x,
+                    (dst->height + ss_y) >> ss_y,
+                    (dst->width + ss_x) >> ss_x,
                     dst->stride_cb,
                     bd);
                 break;
@@ -875,8 +875,8 @@ static EbErrorType av1_resize_frame(const EbPictureBufferDesc *src, EbPictureBuf
                     src->stride_cr,
                     dst_buffer_highbd[2] + (dst->origin_y >> ss_y) * dst->stride_cr +
                         (dst->origin_x >> ss_x),
-                    dst->height >> ss_y,
-                    dst->width >> ss_x,
+                    (dst->height + ss_y) >> ss_y,
+                    (dst->width + ss_x) >> ss_x,
                     dst->stride_cr,
                     bd);
                 break;
@@ -902,8 +902,8 @@ static EbErrorType av1_resize_frame(const EbPictureBufferDesc *src, EbPictureBuf
                                  src->stride_cb,
                                  dst->buffer_cb + (dst->origin_y >> ss_y) * dst->stride_cb +
                                      (dst->origin_x >> ss_x),
-                                 dst->height >> ss_y,
-                                 dst->width >> ss_x,
+                                 (dst->height + ss_y) >> ss_y,
+                                 (dst->width + ss_x) >> ss_x,
                                  dst->stride_cb);
                 break;
             case 2:
@@ -914,8 +914,8 @@ static EbErrorType av1_resize_frame(const EbPictureBufferDesc *src, EbPictureBuf
                                  src->stride_cr,
                                  dst->buffer_cr + (dst->origin_y >> ss_y) * dst->stride_cr +
                                      (dst->origin_x >> ss_x),
-                                 dst->height >> ss_y,
-                                 dst->width >> ss_x,
+                                 (dst->height + ss_y) >> ss_y,
+                                 (dst->width + ss_x) >> ss_x,
                                  dst->stride_cr);
                 break;
             default: break;
