@@ -832,6 +832,7 @@ typedef struct PictureParentControlSet {
     uint8_t     gm_level;
     uint8_t     tx_size_early_exit;
 
+    EbBool            is_pcs_sb_params;
     SbParams *        sb_params_array;
     SbGeom *          sb_geom;
     EbInputResolution input_resolution;

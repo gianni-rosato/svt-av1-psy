@@ -1290,7 +1290,8 @@ static void picture_parent_control_set_dctor(EbPtr ptr) {
     EB_DESTROY_MUTEX(obj->pame_done.mutex);
     EB_DESTROY_SEMAPHORE(obj->first_pass_done_semaphore);
     EB_DESTROY_MUTEX(obj->first_pass_mutex);
-    svt_pcs_sb_structs_dctor(obj);
+    if (obj->is_pcs_sb_params)
+        svt_pcs_sb_structs_dctor(obj);
     if (obj->frame_superres_enabled) {
         EB_DELETE(obj->enhanced_downscaled_picture_ptr);
     }
@@ -1351,6 +1352,7 @@ EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr,
     object_ptr->last_idr_picture        = 0;
     object_ptr->sb_total_count          = picture_sb_width * picture_sb_height;
     object_ptr->sb_total_count_unscaled = object_ptr->sb_total_count;
+    object_ptr->is_pcs_sb_params        = EB_FALSE;
 
     object_ptr->data_ll_head_ptr         = (EbLinkedListNode *)NULL;
     object_ptr->app_out_data_ll_head_ptr = (EbLinkedListNode *)NULL;

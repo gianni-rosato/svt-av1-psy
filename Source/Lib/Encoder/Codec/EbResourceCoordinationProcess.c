@@ -901,6 +901,7 @@ static EbErrorType realloc_sb_param(SequenceControlSet *scs_ptr, PictureParentCo
     EB_FREE_ARRAY(pcs_ptr->sb_geom);
     EB_MALLOC_ARRAY(pcs_ptr->sb_geom, scs_ptr->sb_tot_cnt);
     memcpy(pcs_ptr->sb_geom, scs_ptr->sb_geom, sizeof(SbGeom) * scs_ptr->sb_tot_cnt);
+    pcs_ptr->is_pcs_sb_params = EB_TRUE;
     return EB_ErrorNone;
 }
 
@@ -1116,8 +1117,14 @@ void *resource_coordination_kernel(void *input_ptr) {
 
             pcs_ptr->p_pcs_wrapper_ptr = pcs_wrapper_ptr;
 
-            realloc_sb_param(scs_ptr, pcs_ptr);
-
+            // reallocate sb_param_array and sb_geom for super-res mode on
+            if (scs_ptr->static_config.superres_mode > SUPERRES_NONE)
+                realloc_sb_param(scs_ptr, pcs_ptr);
+            else {
+                pcs_ptr->sb_params_array = scs_ptr->sb_params_array;
+                pcs_ptr->sb_geom = scs_ptr->sb_geom;
+                pcs_ptr->is_pcs_sb_params = EB_FALSE;
+            }
             pcs_ptr->input_resolution  = scs_ptr->input_resolution;
             pcs_ptr->picture_sb_width  = scs_ptr->pic_width_in_sb;
             pcs_ptr->picture_sb_height = scs_ptr->picture_height_in_sb;
