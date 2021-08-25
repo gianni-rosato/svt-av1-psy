@@ -31,6 +31,19 @@
 #include "EbPictureOperators.h"
 #include "EbResize.h"
 
+
+#if  SS_2B_COMPRESS
+void generate_padding_compressed_10bit(
+    EbByte   src_pic, //output paramter, pointer to the source picture to be padded.
+    uint32_t src_stride, //input paramter, the stride of the source picture to be padded.
+    uint32_t
+    original_src_width, //input paramter, the width of the source picture which excludes the padding.
+    uint32_t
+    original_src_height, //input paramter, the height of the source picture which excludes the padding.
+    uint32_t padding_width, //input paramter, the padding width.
+    uint32_t padding_height); //input paramter, the padding height.
+#endif
+
 #define VARIANCE_PRECISION 16
 #define SB_LOW_VAR_TH 5
 #define PIC_LOW_VAR_PERCENTAGE_TH 60
@@ -2233,6 +2246,111 @@ void gathering_picture_statistics(SequenceControlSet *scs_ptr, PictureParentCont
     return;
 }
 
+#if SS_2B_COMPRESS
+/*
+    pad the  2b-compressed picture on the right and bottom edges to reach n.8 for Luma and n.4 for Chroma
+*/
+void pad_2b_compressed_input_picture(
+    uint8_t  *src_pic,
+    uint32_t  src_stride,
+    uint32_t  original_src_width,
+    uint32_t  original_src_height,
+    uint32_t  pad_right,
+    uint32_t  pad_bottom)
+{
+
+    if (pad_right > 0) {
+
+        uint8_t last_byte, last_pixel, new_byte;
+        uint32_t w_m4 = (original_src_width / 4) * 4;
+
+        uint32_t last_col = w_m4 / 4;
+        //Luma 6 , 4 , 2
+        if (pad_right == 6) {
+
+            for (uint32_t row = 0; row < original_src_height; row++) {
+
+                last_byte = src_pic[last_col + row * src_stride];
+                last_byte &= 0xf0;
+                last_pixel = (last_byte >> 4) & 0x03;
+
+                new_byte = last_byte | (last_pixel << 2) | last_pixel;
+                src_pic[last_col + row * src_stride] = new_byte;
+
+                new_byte = (last_pixel << 6) | (last_pixel << 4) | (last_pixel << 2) | (last_pixel << 0);
+                src_pic[last_col + 1 + row * src_stride] = new_byte;
+
+            }
+
+        }
+        else  if (pad_right == 4) {
+
+            for (uint32_t row = 0; row < original_src_height; row++) {
+
+                last_byte = src_pic[last_col - 1 + row * src_stride];
+                last_pixel = last_byte & 0x03;
+
+                new_byte = (last_pixel << 6) | (last_pixel << 4) | (last_pixel << 2) | (last_pixel << 0);
+                src_pic[last_col + row * src_stride] = new_byte;
+
+            }
+        }
+        else  if (pad_right == 2) {
+
+            for (uint32_t row = 0; row < original_src_height; row++) {
+
+                last_byte = src_pic[last_col + row * src_stride];
+                last_byte &= 0xf0;
+                last_pixel = (last_byte >> 4) & 0x03;
+
+                new_byte = last_byte | (last_pixel << 2) | last_pixel;
+                src_pic[last_col + row * src_stride] = new_byte;
+
+            }
+        }
+        else  if (pad_right == 3) {
+
+            for (uint32_t row = 0; row < original_src_height; row++) {
+
+                last_byte = src_pic[last_col + row * src_stride];
+                last_byte &= 0xc0;
+                last_pixel = (last_byte >> 6) & 0x03;
+
+                new_byte = last_byte | (last_pixel << 4) | (last_pixel << 2) | last_pixel;
+                src_pic[last_col + row * src_stride] = new_byte;
+
+            }
+        }
+        else if (pad_right == 1) {
+
+            for (uint32_t row = 0; row < original_src_height; row++) {
+
+                last_byte = src_pic[last_col + row * src_stride];
+                last_byte &= 0xfc;
+                last_pixel = (last_byte >> 2) & 0x03;
+
+                new_byte = last_byte | last_pixel;
+                src_pic[last_col + row * src_stride] = new_byte;
+
+            }
+        }
+        else {
+            assert_err(0, "wrong pad value");
+        }
+    }
+
+    if (pad_bottom) {
+
+        uint8_t  *temp_src_pic0  = src_pic + (original_src_height - 1) * src_stride;
+        for (uint32_t row = 0; row < pad_bottom; row++) {
+            uint8_t  *temp_src_pic1 = temp_src_pic0 + (row+1)*src_stride;
+            svt_memcpy( temp_src_pic1, temp_src_pic0, (original_src_width + pad_right)/4);
+        }
+    }
+
+}
+#endif
+
 
 /************************************************
  * Pad Picture at the right and bottom sides
@@ -2279,6 +2397,40 @@ void pad_picture_to_multiple_of_min_blk_size_dimensions(SequenceControlSet * scs
         scs_ptr->pad_bottom >> subsampling_y);
 
     if (is16_bit_input) {
+#if SS_2B_COMPRESS
+        uint32_t comp_stride_y = input_picture_ptr->stride_y / 4;
+        uint32_t comp_luma_buffer_offset = comp_stride_y * input_picture_ptr->origin_y + input_picture_ptr->origin_x / 4;
+
+        uint32_t comp_stride_uv = input_picture_ptr->stride_cb / 4;
+        uint32_t comp_chroma_buffer_offset = comp_stride_uv * (input_picture_ptr->origin_y / 2) + input_picture_ptr->origin_x / 2 / 4;
+
+        if (input_picture_ptr->buffer_bit_inc_y)
+            pad_2b_compressed_input_picture(
+                &input_picture_ptr->buffer_bit_inc_y[comp_luma_buffer_offset],
+                comp_stride_y,
+                (input_picture_ptr->width - scs_ptr->pad_right),
+                (input_picture_ptr->height - scs_ptr->pad_bottom),
+                scs_ptr->pad_right,
+                scs_ptr->pad_bottom);
+
+        if (input_picture_ptr->buffer_bit_inc_cb)
+            pad_2b_compressed_input_picture(
+                &input_picture_ptr->buffer_bit_inc_cb[comp_chroma_buffer_offset],
+                comp_stride_uv,
+                (input_picture_ptr->width - scs_ptr->pad_right) >> subsampling_x,
+                (input_picture_ptr->height - scs_ptr->pad_bottom) >> subsampling_y,
+                scs_ptr->pad_right >> subsampling_x,
+                scs_ptr->pad_bottom >> subsampling_y);
+
+        if (input_picture_ptr->buffer_bit_inc_cr)
+            pad_2b_compressed_input_picture(
+                &input_picture_ptr->buffer_bit_inc_cr[comp_chroma_buffer_offset],
+                comp_stride_uv,
+                (input_picture_ptr->width - scs_ptr->pad_right) >> subsampling_x,
+                (input_picture_ptr->height - scs_ptr->pad_bottom) >> subsampling_y,
+                scs_ptr->pad_right >> subsampling_x,
+                scs_ptr->pad_bottom >> subsampling_y);
+#else
         if (input_picture_ptr->buffer_bit_inc_y)
         pad_input_picture(
             &input_picture_ptr->buffer_bit_inc_y[input_picture_ptr->origin_x +
@@ -2311,6 +2463,7 @@ void pad_picture_to_multiple_of_min_blk_size_dimensions(SequenceControlSet * scs
             (input_picture_ptr->height - scs_ptr->pad_bottom) >> subsampling_y,
             scs_ptr->pad_right >> subsampling_x,
             scs_ptr->pad_bottom >> subsampling_y);
+#endif
     }
 
     return;
@@ -2663,6 +2816,7 @@ void pad_input_pictures(SequenceControlSet *scs_ptr,
     // Pad pictures to multiple min cu size
     // For non-8 aligned case, like 426x240, padding to 432x240 first
     pad_picture_to_multiple_of_min_blk_size_dimensions(scs_ptr, input_picture_ptr);
+
     generate_padding(input_picture_ptr->buffer_y,
             input_picture_ptr->stride_y,
             input_picture_ptr->width,
@@ -2670,6 +2824,19 @@ void pad_input_pictures(SequenceControlSet *scs_ptr,
             input_picture_ptr->origin_x,
             input_picture_ptr->origin_y);
 
+#if SS_2B_COMPRESS
+    uint32_t comp_stride_y = input_picture_ptr->stride_y / 4;
+    uint32_t comp_stride_uv = input_picture_ptr->stride_cb / 4;
+
+    if (scs_ptr->static_config.encoder_bit_depth > EB_8BIT)
+        if (input_picture_ptr->buffer_bit_inc_y)
+        generate_padding_compressed_10bit(input_picture_ptr->buffer_bit_inc_y,
+                comp_stride_y,
+                input_picture_ptr->width,
+                input_picture_ptr->height,
+                input_picture_ptr->origin_x,
+                input_picture_ptr->origin_y);
+#else
     // PAD the bit inc buffer in 10bit
     if (scs_ptr->static_config.encoder_bit_depth > EB_8BIT)
         if (input_picture_ptr->buffer_bit_inc_y)
@@ -2679,6 +2846,7 @@ void pad_input_pictures(SequenceControlSet *scs_ptr,
                 input_picture_ptr->height,
                 input_picture_ptr->origin_x,
                 input_picture_ptr->origin_y);
+#endif
 
     if (input_picture_ptr->buffer_cb)
         generate_padding(input_picture_ptr->buffer_cb,
@@ -2695,6 +2863,27 @@ void pad_input_pictures(SequenceControlSet *scs_ptr,
                 input_picture_ptr->height >> scs_ptr->subsampling_y,
                 input_picture_ptr->origin_x >> scs_ptr->subsampling_x,
                 input_picture_ptr->origin_y >> scs_ptr->subsampling_y);
+
+#if SS_2B_COMPRESS
+    // PAD the bit inc buffer in 10bit
+    if (scs_ptr->static_config.encoder_bit_depth > EB_8BIT) {
+        if (input_picture_ptr->buffer_bit_inc_cb)
+            generate_padding_compressed_10bit(input_picture_ptr->buffer_bit_inc_cb,
+                comp_stride_uv,
+                input_picture_ptr->width >> scs_ptr->subsampling_x,
+                input_picture_ptr->height >> scs_ptr->subsampling_y,
+                input_picture_ptr->origin_x >> scs_ptr->subsampling_x,
+                input_picture_ptr->origin_y >> scs_ptr->subsampling_y);
+
+        if (input_picture_ptr->buffer_bit_inc_cr)
+            generate_padding_compressed_10bit(input_picture_ptr->buffer_bit_inc_cr,
+                comp_stride_uv,
+                input_picture_ptr->width >> scs_ptr->subsampling_x,
+                input_picture_ptr->height >> scs_ptr->subsampling_y,
+                input_picture_ptr->origin_x >> scs_ptr->subsampling_x,
+                input_picture_ptr->origin_y >> scs_ptr->subsampling_y);
+    }
+#else
     // PAD the bit inc buffer in 10bit
     if (scs_ptr->static_config.encoder_bit_depth > EB_8BIT) {
         if (input_picture_ptr->buffer_bit_inc_cb)
@@ -2713,6 +2902,7 @@ void pad_input_pictures(SequenceControlSet *scs_ptr,
                 input_picture_ptr->origin_x >> scs_ptr->subsampling_x,
                 input_picture_ptr->origin_y >> scs_ptr->subsampling_y);
     }
+#endif
 }
 
 /* Picture Analysis Kernel */

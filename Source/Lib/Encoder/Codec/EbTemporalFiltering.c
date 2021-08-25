@@ -34,6 +34,10 @@
 #include "EbEncInterPrediction.h"
 #include "EbLog.h"
 #include <limits.h>
+#if SS_2B_COMPRESS
+#include"EbPackUnPack_C.h"
+#endif
+
 #undef _MM_HINT_T2
 #define _MM_HINT_T2 1
 
@@ -65,6 +69,10 @@ extern AomVarianceFnPtr mefn_ptr[BlockSizeS_ALL];
 int32_t get_frame_update_type(SequenceControlSet* scs_ptr, PictureParentControlSet* pcs_ptr);
 #if FTR_TF_STRENGTH_PER_QP
 int32_t svt_av1_compute_qdelta(double qstart, double qtarget, AomBitDepth bit_depth);
+#endif
+#if SS_2B_COMPRESS
+void generate_padding_compressed_10bit(EbByte   src_pic, uint32_t src_stride, uint32_t original_src_width, uint32_t original_src_height, uint32_t padding_width, uint32_t padding_height);
+void svt_c_unpack_compressed_10bit(const uint8_t *inn_bit_buffer, uint32_t inn_stride, uint8_t *in_compn_bit_buffer, uint32_t out_stride, uint32_t height);
 #endif
 #if DEBUG_SCALING
 // save YUV to file - auxiliary function for debug
@@ -136,15 +144,18 @@ void save_YUV_to_file_highbd(char *filename, uint16_t *buffer_y, uint16_t *buffe
 #endif
 void pack_highbd_pic(const EbPictureBufferDesc *pic_ptr, uint16_t *buffer_16bit[3], uint32_t ss_x,
                      uint32_t ss_y, EbBool include_padding) {
+#if !SS_2B_COMPRESS
     uint32_t input_y_offset          = 0;
     uint32_t input_bit_inc_y_offset  = 0;
     uint32_t input_cb_offset         = 0;
     uint32_t input_bit_inc_cb_offset = 0;
     uint32_t input_cr_offset         = 0;
     uint32_t input_bit_inc_cr_offset = 0;
+#endif
     uint16_t width                   = pic_ptr->stride_y;
     uint16_t height                  = (uint16_t)(pic_ptr->origin_y * 2 + pic_ptr->height);
 
+#if !SS_2B_COMPRESS
     if (!include_padding) {
         input_y_offset         = ((pic_ptr->origin_y) * pic_ptr->stride_y) + (pic_ptr->origin_x);
         input_bit_inc_y_offset = ((pic_ptr->origin_y) * pic_ptr->stride_bit_inc_y) +
@@ -161,7 +172,49 @@ void pack_highbd_pic(const EbPictureBufferDesc *pic_ptr, uint16_t *buffer_16bit[
         width  = pic_ptr->width;
         height = pic_ptr->height;
     }
+#endif
 
+#if SS_2B_COMPRESS
+    assert_err(include_padding == 1, "not supporting OFF");
+
+    uint32_t comp_stride_y = pic_ptr->stride_y / 4;
+
+    compressed_pack_sb(
+        pic_ptr->buffer_y,
+        pic_ptr->stride_y,
+        pic_ptr->buffer_bit_inc_y,
+        comp_stride_y,
+        buffer_16bit[C_Y],
+        pic_ptr->stride_y,
+        width,
+        height);
+
+    uint32_t comp_stride_uv = pic_ptr->stride_cb / 4;
+#if SS_TF_OPTS
+    if (buffer_16bit[C_U])
+#endif
+    compressed_pack_sb(
+        pic_ptr->buffer_cb,
+        pic_ptr->stride_cb,
+        pic_ptr->buffer_bit_inc_cb,
+        comp_stride_uv,
+        buffer_16bit[C_U],
+        pic_ptr->stride_cb,
+        (width + ss_x) >> ss_x,
+        (height + ss_y) >> ss_y);
+#if SS_TF_OPTS
+    if (buffer_16bit[C_V])
+#endif
+    compressed_pack_sb(
+        pic_ptr->buffer_cr,
+        pic_ptr->stride_cr,
+        pic_ptr->buffer_bit_inc_cr,
+        comp_stride_uv,
+        buffer_16bit[C_V],
+        pic_ptr->stride_cr,
+        (width + ss_x) >> ss_x,
+        (height + ss_y) >> ss_y);
+#else
     pack2d_src(pic_ptr->buffer_y + input_y_offset,
                pic_ptr->stride_y,
                pic_ptr->buffer_bit_inc_y + input_bit_inc_y_offset,
@@ -188,19 +241,22 @@ void pack_highbd_pic(const EbPictureBufferDesc *pic_ptr, uint16_t *buffer_16bit[
                pic_ptr->stride_cr,
                (width + ss_x) >> ss_x,
                (height + ss_y) >> ss_y);
+#endif
 }
 
 void unpack_highbd_pic(uint16_t *buffer_highbd[3], EbPictureBufferDesc *pic_ptr, uint32_t ss_x,
                        uint32_t ss_y, EbBool include_padding) {
+#if !SS_2B_COMPRESS
     uint32_t input_y_offset          = 0;
     uint32_t input_bit_inc_y_offset  = 0;
     uint32_t input_cb_offset         = 0;
     uint32_t input_bit_inc_cb_offset = 0;
     uint32_t input_cr_offset         = 0;
     uint32_t input_bit_inc_cr_offset = 0;
+#endif
     uint16_t width                   = pic_ptr->stride_y;
     uint16_t height                  = (uint16_t)(pic_ptr->origin_y * 2 + pic_ptr->height);
-
+#if !SS_2B_COMPRESS
     if (!include_padding) {
         input_y_offset         = ((pic_ptr->origin_y) * pic_ptr->stride_y) + (pic_ptr->origin_x);
         input_bit_inc_y_offset = ((pic_ptr->origin_y) * pic_ptr->stride_bit_inc_y) +
@@ -217,7 +273,68 @@ void unpack_highbd_pic(uint16_t *buffer_highbd[3], EbPictureBufferDesc *pic_ptr,
         width  = pic_ptr->width;
         height = pic_ptr->height;
     }
+#endif
 
+#if SS_2B_COMPRESS
+    assert_err(include_padding == 1, "not supporting OFF");
+
+    uint32_t comp_stride_y  = pic_ptr->stride_y / 4;
+    uint32_t comp_stride_uv = pic_ptr->stride_cb / 4;
+
+    svt_unpack_and_2bcompress_c(
+        buffer_highbd[C_Y],
+        pic_ptr->stride_y,
+        pic_ptr->buffer_y,
+        pic_ptr->stride_y,
+        pic_ptr->buffer_bit_inc_y,
+        comp_stride_y,
+        width,
+        height);
+
+#if SS_TF_OPTS
+    if (buffer_highbd[C_U])
+        svt_unpack_and_2bcompress_c(
+            buffer_highbd[C_U],
+            pic_ptr->stride_cb,
+            pic_ptr->buffer_cb,
+            pic_ptr->stride_cb,
+            pic_ptr->buffer_bit_inc_cb,
+            comp_stride_uv,
+            width >> ss_x,
+            height >> ss_y);
+
+    if (buffer_highbd[C_V])
+        svt_unpack_and_2bcompress_c(
+            buffer_highbd[C_V],
+            pic_ptr->stride_cr,
+            pic_ptr->buffer_cr,
+            pic_ptr->stride_cr,
+            pic_ptr->buffer_bit_inc_cr,
+            comp_stride_uv,
+            width >> ss_x,
+            height >> ss_y);
+#else
+    svt_unpack_and_2bcompress_c(
+        buffer_highbd[C_U],
+        pic_ptr->stride_cb,
+        pic_ptr->buffer_cb,
+        pic_ptr->stride_cb,
+        pic_ptr->buffer_bit_inc_cb,
+        comp_stride_uv,
+        (width + ss_x) >> ss_x,
+        (height + ss_y) >> ss_y);
+
+    svt_unpack_and_2bcompress_c(
+        buffer_highbd[C_V],
+        pic_ptr->stride_cr,
+        pic_ptr->buffer_cr,
+        pic_ptr->stride_cr,
+        pic_ptr->buffer_bit_inc_cr,
+        comp_stride_uv,
+        (width + ss_x) >> ss_x,
+        (height + ss_y) >> ss_y);
+#endif
+#else
     un_pack2d(buffer_highbd[C_Y],
               pic_ptr->stride_y,
               pic_ptr->buffer_y + input_y_offset,
@@ -244,6 +361,7 @@ void unpack_highbd_pic(uint16_t *buffer_highbd[3], EbPictureBufferDesc *pic_ptr,
               pic_ptr->stride_bit_inc_cr,
               (width + ss_x) >> ss_x,
               (height + ss_y) >> ss_y);
+#endif
 }
 
 void generate_padding_pic(EbPictureBufferDesc *pic_ptr, uint32_t ss_x, uint32_t ss_y,
@@ -277,6 +395,21 @@ void generate_padding_pic(EbPictureBufferDesc *pic_ptr, uint32_t ss_x, uint32_t 
                          pic_ptr->origin_x >> ss_x,
                          pic_ptr->origin_y >> ss_y);
 
+#if SS_2B_COMPRESS
+        generate_padding_compressed_10bit(pic_ptr->buffer_bit_inc_cb,
+            pic_ptr->stride_cr / 4,
+            pic_ptr->width >> ss_x,
+            pic_ptr->height >> ss_y,
+            pic_ptr->origin_x >> ss_x,
+            pic_ptr->origin_y >> ss_y);
+
+        generate_padding_compressed_10bit(pic_ptr->buffer_bit_inc_cr,
+            pic_ptr->stride_cr / 4,
+            pic_ptr->width >> ss_x,
+            pic_ptr->height >> ss_y,
+            pic_ptr->origin_x >> ss_x,
+            pic_ptr->origin_y >> ss_y);
+#else
         generate_padding(pic_ptr->buffer_bit_inc_cb,
                          pic_ptr->stride_cr,
                          pic_ptr->width >> ss_x,
@@ -290,6 +423,7 @@ void generate_padding_pic(EbPictureBufferDesc *pic_ptr, uint32_t ss_x, uint32_t 
                          pic_ptr->height >> ss_y,
                          pic_ptr->origin_x >> ss_x,
                          pic_ptr->origin_y >> ss_y);
+#endif
     }
 }
 static void derive_tf_32x32_block_split_flag(MeContext *context_ptr) {
@@ -3913,18 +4047,32 @@ static EbErrorType produce_temporally_filtered_pic(
 
     EbByte    predictor       = {NULL};
     uint16_t *predictor_16bit = {NULL};
+#if OPT_TF_8BIT_SUBPEL
+    PictureParentControlSet *picture_control_set_ptr_central =
+        list_picture_control_set_ptr[index_center];
+    EbPictureBufferDesc *input_picture_ptr_central = list_input_picture_ptr[index_center];
+    MeContext *context_ptr = me_context_ptr->me_context_ptr;
+
+    // Prep 8bit source if 8bit content or using 8bit for subpel
+    if (!is_highbd || context_ptr->tf_ctrls.use_8bit_subpel)
+        EB_MALLOC_ALIGNED_ARRAY(predictor, BLK_PELS * COLOR_CHANNELS);
+
+    if (is_highbd)
+        EB_MALLOC_ALIGNED_ARRAY(predictor_16bit, BLK_PELS * COLOR_CHANNELS);
+#else
     if (!is_highbd)
         EB_MALLOC_ALIGNED_ARRAY(predictor, BLK_PELS * COLOR_CHANNELS);
     else
         EB_MALLOC_ALIGNED_ARRAY(predictor_16bit, BLK_PELS * COLOR_CHANNELS);
+#endif
     EbByte    pred[COLOR_CHANNELS] = {predictor, predictor + BLK_PELS, predictor + (BLK_PELS << 1)};
     uint16_t *pred_16bit[COLOR_CHANNELS] = {
         predictor_16bit, predictor_16bit + BLK_PELS, predictor_16bit + (BLK_PELS << 1)};
-
+#if !OPT_TF_8BIT_SUBPEL
     PictureParentControlSet *picture_control_set_ptr_central =
         list_picture_control_set_ptr[index_center];
     EbPictureBufferDesc *input_picture_ptr_central = list_input_picture_ptr[index_center];
-
+#endif
     int encoder_bit_depth =
         (int)picture_control_set_ptr_central->scs_ptr->static_config.encoder_bit_depth;
 
@@ -3943,9 +4091,9 @@ static EbErrorType produce_temporally_filtered_pic(
                                        input_picture_ptr_central->stride_cb,
                                        input_picture_ptr_central->stride_cr};
     uint32_t stride_pred[COLOR_CHANNELS] = {BW, blk_width_ch, blk_width_ch};
-
+#if !OPT_TF_8BIT_SUBPEL
     MeContext *context_ptr = me_context_ptr->me_context_ptr;
-
+#endif
     uint32_t x_seg_idx;
     uint32_t y_seg_idx;
     uint32_t picture_width_in_b64  = blk_cols;
@@ -4022,7 +4170,11 @@ static EbErrorType produce_temporally_filtered_pic(
     int offset_idx = -1;
     if (!picture_control_set_ptr_central->is_used_as_reference_flag)
         offset_idx = -1;
+#if FIX_QPS_OPEN_GOP
+    else if (picture_control_set_ptr_central->idr_flag)
+#else
     else if (picture_control_set_ptr_central->slice_type == I_SLICE)
+#endif
         offset_idx = 0;
     else
         offset_idx = MIN(picture_control_set_ptr_central->temporal_layer_index + 1, FIXED_QP_OFFSET_COUNT - 1);
@@ -4084,6 +4236,18 @@ static EbErrorType produce_temporally_filtered_pic(
 
             EbByte    src_center_ptr[COLOR_CHANNELS]           = {NULL};
             uint16_t *altref_buffer_highbd_ptr[COLOR_CHANNELS] = {NULL};
+#if OPT_TF_8BIT_SUBPEL
+            // Prep 8bit source if 8bit content or using 8bit for subpel
+            if (!is_highbd || context_ptr->tf_ctrls.use_8bit_subpel) {
+                src_center_ptr[C_Y] = src_center_ptr_start[C_Y] + blk_y_src_offset;
+                if (context_ptr->tf_chroma) {
+                    src_center_ptr[C_U] = src_center_ptr_start[C_U] + blk_ch_src_offset;
+                    src_center_ptr[C_V] = src_center_ptr_start[C_V] + blk_ch_src_offset;
+                }
+            }
+
+            if (is_highbd) {
+#else
             if (!is_highbd) {
                 src_center_ptr[C_Y] = src_center_ptr_start[C_Y] + blk_y_src_offset;
                 if (context_ptr->tf_chroma) {
@@ -4092,6 +4256,7 @@ static EbErrorType produce_temporally_filtered_pic(
                 }
             }
             else {
+#endif
                 altref_buffer_highbd_ptr[C_Y] = altref_buffer_highbd_start[C_Y] +
                     blk_y_src_offset;
                 if (context_ptr->tf_chroma) {
@@ -4254,7 +4419,11 @@ static EbErrorType produce_temporally_filtered_pic(
                             (uint32_t)blk_col * BW,
                             (uint32_t)blk_row * BH,
                             ss_x,
+#if OPT_TF_8BIT_SUBPEL
+                            (context_ptr->tf_ctrls.use_8bit_subpel) ? EB_8BIT : encoder_bit_depth);
+#else
                             encoder_bit_depth);
+#endif
 
                         // Perform MC using the information acquired using the ME step
                         tf_64x64_inter_prediction(picture_control_set_ptr_central,
@@ -4291,7 +4460,11 @@ static EbErrorType produce_temporally_filtered_pic(
                                     (uint32_t)blk_col * BW,
                                     (uint32_t)blk_row * BH,
                                     ss_x,
+#if OPT_TF_8BIT_SUBPEL
+                                    (context_ptr->tf_ctrls.use_8bit_subpel) ? EB_8BIT : encoder_bit_depth);
+#else
                                     encoder_bit_depth);
+#endif
 
                                 // Perform TF sub-pel search for 16x16 blocks
                                 tf_16x16_sub_pel_search(picture_control_set_ptr_central,
@@ -4307,8 +4480,11 @@ static EbErrorType produce_temporally_filtered_pic(
                                     (uint32_t)blk_col * BW,
                                     (uint32_t)blk_row * BH,
                                     ss_x,
+#if OPT_TF_8BIT_SUBPEL
+                                    (context_ptr->tf_ctrls.use_8bit_subpel) ? EB_8BIT : encoder_bit_depth);
+#else
                                     encoder_bit_depth);
-
+#endif
 
                                 // Derive tf_32x32_block_split_flag
                                 if (context_ptr->tf_16x16_search_do[context_ptr->idx_32x32]) {
@@ -4459,11 +4635,19 @@ static EbErrorType produce_temporally_filtered_pic(
                                       is_highbd);
         }
     }
+#if OPT_TF_8BIT_SUBPEL
+    // Prep 8bit source if 8bit content or using 8bit for subpel
+    if (!is_highbd || context_ptr->tf_ctrls.use_8bit_subpel)
+        EB_FREE_ALIGNED_ARRAY(predictor);
 
+    if (is_highbd)
+        EB_FREE_ALIGNED_ARRAY(predictor_16bit);
+#else
     if (!is_highbd)
         EB_FREE_ALIGNED_ARRAY(predictor);
     else
         EB_FREE_ALIGNED_ARRAY(predictor_16bit);
+#endif
     return EB_ErrorNone;
 }
 
@@ -4551,6 +4735,51 @@ void pad_and_decimate_filtered_pic(PictureParentControlSet *picture_control_set_
                                       picture_control_set_ptr_central->scs_wrapper_ptr->object_ptr;
     EbPaReferenceObject *src_object = (EbPaReferenceObject *)picture_control_set_ptr_central
                                           ->pa_reference_picture_wrapper_ptr->object_ptr;
+#if SS_TF_OPTS
+    EbPictureBufferDesc *input_picture_ptr =
+        picture_control_set_ptr_central->enhanced_picture_ptr;
+
+    // Refine the non-8 padding
+    if (((input_picture_ptr->width-scs_ptr->pad_right) % 8 != 0) || ((input_picture_ptr->height-scs_ptr->pad_bottom) % 8 != 0))
+        pad_picture_to_multiple_of_min_blk_size_dimensions(scs_ptr, input_picture_ptr);
+
+    //Generate padding first, then copy
+    generate_padding(&(input_picture_ptr->buffer_y[C_Y]),
+                        input_picture_ptr->stride_y,
+                        input_picture_ptr->width,
+                        input_picture_ptr->height,
+                        input_picture_ptr->origin_x,
+                        input_picture_ptr->origin_y);
+    // Padding chroma after altref
+    if (picture_control_set_ptr_central->tf_ctrls.do_chroma) {
+        generate_padding(input_picture_ptr->buffer_cb,
+            input_picture_ptr->stride_cb,
+            input_picture_ptr->width >> scs_ptr->subsampling_x,
+            input_picture_ptr->height >> scs_ptr->subsampling_y,
+            input_picture_ptr->origin_x >> scs_ptr->subsampling_x,
+            input_picture_ptr->origin_y >> scs_ptr->subsampling_y);
+        generate_padding(input_picture_ptr->buffer_cr,
+            input_picture_ptr->stride_cr,
+            input_picture_ptr->width >> scs_ptr->subsampling_x,
+            input_picture_ptr->height >> scs_ptr->subsampling_y,
+            input_picture_ptr->origin_x >> scs_ptr->subsampling_x,
+            input_picture_ptr->origin_y >> scs_ptr->subsampling_y);
+    }
+
+    // 1/4 & 1/16 input picture downsampling
+    if (scs_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED) {
+        downsample_filtering_input_picture(picture_control_set_ptr_central,
+            input_picture_ptr,
+            src_object->quarter_downsampled_picture_ptr,
+            src_object->sixteenth_downsampled_picture_ptr);
+    }
+    else {
+        downsample_decimation_input_picture(picture_control_set_ptr_central,
+            input_picture_ptr,
+            src_object->quarter_downsampled_picture_ptr,
+            src_object->sixteenth_downsampled_picture_ptr);
+    }
+#else
     EbPictureBufferDesc *padded_pic_ptr = src_object->input_padded_picture_ptr;
     {
         EbPictureBufferDesc *input_picture_ptr =
@@ -4607,6 +4836,7 @@ void pad_and_decimate_filtered_pic(PictureParentControlSet *picture_control_set_
             src_object->quarter_downsampled_picture_ptr,
             src_object->sixteenth_downsampled_picture_ptr);
     }
+#endif
 }
 
 // save original enchanced_picture_ptr buffer in a separate buffer (to be replaced by the temporally filtered pic)
@@ -4678,6 +4908,28 @@ static EbErrorType save_src_pic_buffers(PictureParentControlSet *picture_control
     if (is_highbd) {
         // if highbd, copy bit inc buffers
         // Y
+#if SS_2B_COMPRESS
+        svt_c_unpack_compressed_10bit(
+            picture_control_set_ptr_central->enhanced_picture_ptr->buffer_bit_inc_y,
+            picture_control_set_ptr_central->enhanced_picture_ptr->stride_bit_inc_y / 4,
+            picture_control_set_ptr_central->save_enhanced_picture_bit_inc_ptr[C_Y],
+            picture_control_set_ptr_central->enhanced_picture_ptr->stride_bit_inc_y,
+            height_y);
+        // U
+        svt_c_unpack_compressed_10bit(
+            picture_control_set_ptr_central->enhanced_picture_ptr->buffer_bit_inc_cb,
+            picture_control_set_ptr_central->enhanced_picture_ptr->stride_bit_inc_cb / 4,
+            picture_control_set_ptr_central->save_enhanced_picture_bit_inc_ptr[C_U],
+            picture_control_set_ptr_central->enhanced_picture_ptr->stride_bit_inc_cb,
+            height_uv);
+        // V
+        svt_c_unpack_compressed_10bit(
+            picture_control_set_ptr_central->enhanced_picture_ptr->buffer_bit_inc_cr,
+            picture_control_set_ptr_central->enhanced_picture_ptr->stride_bit_inc_cr / 4,
+            picture_control_set_ptr_central->save_enhanced_picture_bit_inc_ptr[C_V],
+            picture_control_set_ptr_central->enhanced_picture_ptr->stride_bit_inc_cr,
+            height_uv);
+#else
         pic_copy_kernel_8bit(
             src_pic_ptr->buffer_bit_inc_y,
             src_pic_ptr->stride_bit_inc_y,
@@ -4701,6 +4953,7 @@ static EbErrorType save_src_pic_buffers(PictureParentControlSet *picture_control
             src_pic_ptr->stride_bit_inc_cr,
             src_pic_ptr->stride_bit_inc_cr,
             height_uv);
+#endif
     }
 
     return EB_ErrorNone;
@@ -4745,15 +4998,27 @@ EbErrorType svt_av1_init_temporal_filtering(
              i++) {
             EbPictureBufferDesc *pic_ptr_ref =
                 list_picture_control_set_ptr[i]->enhanced_picture_ptr;
+#if !SS_TF_OPTS
             generate_padding_pic(pic_ptr_ref, ss_x, ss_y, is_highbd);
+#endif
             //10bit: for all the reference pictures do the packing once at the beggining.
             if (is_highbd && i != picture_control_set_ptr_central->past_altref_nframes) {
                 EB_MALLOC_ARRAY(list_picture_control_set_ptr[i]->altref_buffer_highbd[C_Y],
                                 central_picture_ptr->luma_size);
+#if SS_TF_OPTS
+                if (me_context_ptr->me_context_ptr->tf_chroma) {
+                    EB_MALLOC_ARRAY(list_picture_control_set_ptr[i]->altref_buffer_highbd[C_U],
+                        central_picture_ptr->chroma_size);
+                    EB_MALLOC_ARRAY(list_picture_control_set_ptr[i]->altref_buffer_highbd[C_V],
+                        central_picture_ptr->chroma_size);
+
+                }
+#else
                 EB_MALLOC_ARRAY(list_picture_control_set_ptr[i]->altref_buffer_highbd[C_U],
                                 central_picture_ptr->chroma_size);
                 EB_MALLOC_ARRAY(list_picture_control_set_ptr[i]->altref_buffer_highbd[C_V],
                                 central_picture_ptr->chroma_size);
+#endif
                 // pack byte buffers to 16 bit buffer
                 pack_highbd_pic(pic_ptr_ref,
                                 list_picture_control_set_ptr[i]->altref_buffer_highbd,
@@ -4842,7 +5107,24 @@ EbErrorType svt_av1_init_temporal_filtering(
                               ss_x,
                               ss_y,
                               EB_TRUE);
-
+#if SS_TF_OPTS
+            EB_FREE_ARRAY(picture_control_set_ptr_central->altref_buffer_highbd[C_Y]);
+            if (me_context_ptr->me_context_ptr->tf_chroma) {
+                EB_FREE_ARRAY(picture_control_set_ptr_central->altref_buffer_highbd[C_U]);
+                EB_FREE_ARRAY(picture_control_set_ptr_central->altref_buffer_highbd[C_V]);
+            }
+            for (int i = 0; i < (picture_control_set_ptr_central->past_altref_nframes +
+                picture_control_set_ptr_central->future_altref_nframes + 1);
+                i++) {
+                if (i != picture_control_set_ptr_central->past_altref_nframes) {
+                    EB_FREE_ARRAY(list_picture_control_set_ptr[i]->altref_buffer_highbd[C_Y]);
+                    if (me_context_ptr->me_context_ptr->tf_chroma) {
+                        EB_FREE_ARRAY(list_picture_control_set_ptr[i]->altref_buffer_highbd[C_U]);
+                        EB_FREE_ARRAY(list_picture_control_set_ptr[i]->altref_buffer_highbd[C_V]);
+                    }
+                }
+            }
+#else
             EB_FREE_ARRAY(picture_control_set_ptr_central->altref_buffer_highbd[C_Y]);
             EB_FREE_ARRAY(picture_control_set_ptr_central->altref_buffer_highbd[C_U]);
             EB_FREE_ARRAY(picture_control_set_ptr_central->altref_buffer_highbd[C_V]);
@@ -4855,6 +5137,7 @@ EbErrorType svt_av1_init_temporal_filtering(
                     EB_FREE_ARRAY(list_picture_control_set_ptr[i]->altref_buffer_highbd[C_V]);
                 }
             }
+#endif
         }
 
         // padding + decimation: even if highbd src, this is only performed on the 8 bit buffer (excluding the LSBs)

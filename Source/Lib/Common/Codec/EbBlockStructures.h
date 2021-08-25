@@ -112,7 +112,57 @@ typedef struct InterIntraModeParams {
     // int interintra_wedge_sign; Always 0
 } InterIntraModeParams;
 #if OPT_MEMORY_MIP
+#if OPT_MI_MAP_MEMORY
+typedef struct BlockModeInfoEnc {
+    // Only for INTER blocks
+    IntMv            mv[2];
 
+    /*!< Specifies the type of filter used in inter prediction. Values 0..3 are allowed
+        * with the same interpretation as for interpolation_filter. One filter type is specified
+        * for the vertical filter direction and one for the horizontal filter direction.*/
+    uint32_t interp_filters;
+
+    MvReferenceFrame    ref_frame[2]; // Only for INTER blocks
+    BlockSize           sb_type;
+    PredictionMode      mode;
+    PartitionType       partition;
+    UvPredictionMode    uv_mode; // Only for INTRA blocks
+
+#if !OPT_INTER_MI_MEM
+    uint16_t ref_mv_idx;
+#endif
+#if !OPT_MODE_MI_MEM
+    MotionMode motion_mode;
+#endif
+#if !OPT_INTRA_MI_MEM
+    uint8_t cfl_alpha_idx;
+    uint8_t cfl_alpha_signs;
+    int8_t angle_delta[PLANE_TYPES];
+#endif
+
+#if OPT_TX_MI_MEM
+    uint8_t tx_depth;
+#endif
+#if OPT_INTER_MI_MEM
+    uint8_t comp_group_idx : 1; // possible values: 0,1
+#endif
+    /*!< 0 indicates that a distance based weighted scheme should be used for blending.
+         *   1 indicates that the averaging scheme should be used for blending.*/
+    uint8_t compound_idx : 1; // possible values: 0,1
+    uint8_t         skip : 1; // possible values: 0,1
+
+    /*!< 1 indicates that this block will use some default settings and skip mode info.
+            * 0 indicates that the mode info is not skipped. */
+    uint8_t skip_mode : 1; // possible values: 0,1
+
+    uint8_t use_intrabc : 1; // possible values: 0,1
+
+#if MODE_INFO_DBG
+    int32_t mi_row;
+    int32_t mi_col;
+#endif
+} BlockModeInfoEnc;
+#else
 typedef struct BlockModeInfoEnc {
     // Common for both INTER and INTRA blocks
     BlockSize      sb_type;
@@ -159,7 +209,6 @@ typedef struct BlockModeInfoEnc {
     MotionMode motion_mode;
 
   //  InterIntraMode is_inter_intra;
-
     /*!< 0 indicates that a distance based weighted scheme should be used for blending.
          *   1 indicates that the averaging scheme should be used for blending.*/
     uint8_t compound_idx;
@@ -190,13 +239,12 @@ typedef struct BlockModeInfoEnc {
     /*mi_row & mi_col wrt a super block*/
    // int8_t mi_row_in_sb;
    // int8_t mi_col_in_sb;
-
 #if MODE_INFO_DBG
     int32_t mi_row;
     int32_t mi_col;
 #endif
 } BlockModeInfoEnc;
-
+#endif
 
 
 
@@ -293,11 +341,26 @@ typedef struct MbModeInfo {
     int32_t  mi_row;
     int32_t  mi_col;
 #endif
+#if OPT_MI_MAP_MEMORY
+    BlockModeInfoEnc   block_mi;
+#if OPT_PALETTE_MEM
+    PaletteLumaModeInfo palette_mode_info;
+#else
+    PaletteModeInfo palette_mode_info;
+#endif
+#if !OPT_INTER_MI_MEM
+    uint8_t     comp_group_idx;
+#endif
+    int8_t      cdef_strength;
+#if !OPT_TX_MI_MEM
+    TxSize      tx_size;
+    uint8_t     tx_depth;
+#endif
+#else
 #if !OPT_MEMORY_MIP
     EbWarpedMotionParams wm_params;
 #endif
     int32_t              comp_group_idx;
-
     int8_t          cdef_strength;
     TxSize          tx_size;
     uint8_t         tx_depth;
@@ -307,6 +370,7 @@ typedef struct MbModeInfo {
     BlockModeInfo   block_mi;
 #endif
     PaletteModeInfo palette_mode_info;
+#endif
 } MbModeInfo;
 
 void svt_av1_tile_set_col(TileInfo *tile, const TilesInfo *tiles_info, int32_t mi_cols, int col);

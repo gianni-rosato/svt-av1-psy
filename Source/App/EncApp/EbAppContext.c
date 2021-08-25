@@ -82,6 +82,15 @@ static EbErrorType allocate_frame_buffer(EbConfig *config, uint8_t *p_buffer) {
 
     const size_t chroma_8bit_size = luma_8bit_size >> (3 - color_format);
 
+#if FIX_COMPRESSED_10BIT
+    const size_t luma_10bit_size = (cfg->encoder_bit_depth > 8 && ten_bit_packed_mode == 0)
+        ? luma_8bit_size >> 2
+        : 0;
+
+    const size_t chroma_10bit_size = (cfg->encoder_bit_depth > 8 && ten_bit_packed_mode == 0)
+        ? chroma_8bit_size >> 2
+        : 0;
+#else
     const size_t luma_10bit_size = (cfg->encoder_bit_depth > 8 && ten_bit_packed_mode == 0)
         ? luma_8bit_size
         : 0;
@@ -89,6 +98,7 @@ static EbErrorType allocate_frame_buffer(EbConfig *config, uint8_t *p_buffer) {
     const size_t chroma_10bit_size = (cfg->encoder_bit_depth > 8 && ten_bit_packed_mode == 0)
         ? chroma_8bit_size
         : 0;
+#endif
 
     // Determine
     EbSvtIOFormat *input_ptr = (EbSvtIOFormat *)p_buffer;

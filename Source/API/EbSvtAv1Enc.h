@@ -124,6 +124,9 @@ typedef struct TfControls {
 #if OPT_NOISE_LEVEL
     uint8_t use_intra_for_noise_est; //use I frame for noise estimation
 #endif
+#if OPT_TF_8BIT_SUBPEL
+    uint8_t use_8bit_subpel; // Perform TF subpel search in 8bit for 10bit content (this setting won't affect 8bit content)
+#endif
 } TfControls;
 // super-res modes
 typedef enum {

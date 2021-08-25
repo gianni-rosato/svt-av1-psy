@@ -529,6 +529,9 @@ typedef struct SkipMDS1Ctrls {
     EbBool enabled;                 // enable skipping MDS1 in PD1
     uint32_t use_mds3_shortcuts_th; // if (best_mds0_distortion/QP < TH) use shortcuts for candidate at MDS3; 0: OFF, higher: more aggressive
     uint32_t force_1_cand_th;       // if (best_mds0_distortion/QP < TH) consider only the best candidate after MDS0; 0: OFF, higher: more aggressive.  Should be safer than use_mds3_shortcuts_th
+#if FTR_TX_NEIGH_INFO
+    uint8_t use_neighbour_info;     // if true, use info from neighbouring blocks apply tx shortcuts, if (best_mds0_distortion/QP > TH)
+#endif
 } SkipMDS1Ctrls;
 #endif
 #if REMOVE_CLOSE_MVS
@@ -570,6 +573,10 @@ typedef struct Lpd1Ctrls {
 #if OPT_LIGHT_PD1_USE_ME_DIST_VAR
     uint32_t me_8x8_cost_variance_th; // me_8x8_cost_variance_th beyond which the PD1 is used (instead of light-PD1)
 #endif
+#if TUNE_LPD1_DETECTOR
+    uint16_t skip_pd0_edge_dist_th;  // ME_64x64_dist threshold used for edge SBs when PD0 is skipped
+    uint16_t skip_pd0_me_dist_shift; // Shift applied to ME dist of top and left SBs when PD0 is skipped
+#endif
 } Lpd1Ctrls;
 #endif
 #if FTR_SKIP_TX_LPD1
@@ -578,6 +585,9 @@ typedef struct SkipTxCtrls {
     uint8_t skip_nrst_nrst_tx;      // skip luma TX for NRST_NRST cands if dist/QP is low, and top and left neighbours have no coeffs
 #if OPT_TX_SKIP
     uint8_t skip_mvp_tx;            // skip luma TX for MVP cands if dist/QP is low, and top and left neighbours have no coeffs
+#endif
+#if FTR_TX_NEIGH_INFO
+    uint16_t skip_tx_th;            // if (skip_tx_th/QP < TH) skip TX at MDS3; 0: OFF, higher: more aggressive
 #endif
 } SkipTxCtrls;
 #endif
@@ -634,6 +644,9 @@ typedef struct ModeDecisionContext {
     NeighborArrayUnit *  leaf_partition_neighbor_array;
 #if !OPT_NA_IFS
     NeighborArrayUnit32 *interpolation_type_neighbor_array;
+#endif
+#if FIX_SKIP_COEFF_CONTEXT
+    NeighborArrayUnit *skip_coeff_neighbor_array;
 #endif
     // Transform and Quantization Buffers
     EbTransQuantBuffers * trans_quant_buffers_ptr;
@@ -824,6 +837,9 @@ typedef struct ModeDecisionContext {
     uint8_t perform_mds1;
     uint8_t use_tx_shortcuts_mds3;
     SkipMDS1Ctrls skip_mds1_ctrls;
+#endif
+#if FTR_TX_NEIGH_INFO
+    uint8_t lpd1_allow_skipping_tx;
 #endif
     // fast_loop_core signals
     EbBool md_staging_skip_interpolation_search;
@@ -1090,6 +1106,9 @@ typedef struct ModeDecisionContext {
 #endif
 #if FIX_DO_NOT_TEST_CORRUPTED_MVS
     uint8_t corrupted_mv_check;
+#endif
+#if FIX_SKIP_COEFF_CONTEXT
+    uint8_t use_skip_coeff_context;
 #endif
 } ModeDecisionContext;
 

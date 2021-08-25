@@ -230,6 +230,25 @@ class PackMsbTest : public ::testing::TestWithParam<AreaSize> {
         for (int i = 0; i < RANDOM_TIME; i++) {
             svt_buf_random_u8(inn_bit_buffer_, test_size_ >> 2);
             svt_buf_random_u8(in_8bit_buffer_, test_size_);
+#if SS_2B_COMPRESS
+            svt_compressed_packmsb_avx2_intrin(in_8bit_buffer_,
+                in8_stride_,
+                inn_bit_buffer_,
+                inn_stride_,
+                out_16bit_buffer1_,
+                out_stride_,
+                area_width_,
+                area_height_);
+
+            svt_compressed_packmsb_c(in_8bit_buffer_,
+                in8_stride_,
+                inn_bit_buffer_,
+                inn_stride_,
+                out_16bit_buffer2_,
+                out_stride_,
+                area_width_,
+                area_height_);
+#else
             svt_compressed_packmsb_avx2_intrin(in_8bit_buffer_,
                                            in8_stride_,
                                            inn_bit_buffer_,
@@ -247,6 +266,7 @@ class PackMsbTest : public ::testing::TestWithParam<AreaSize> {
                                      out_stride_,
                                      area_width_,
                                      area_height_);
+#endif
 
             check_output(area_width_,
                          area_height_,

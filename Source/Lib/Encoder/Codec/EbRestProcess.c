@@ -48,8 +48,13 @@ void recon_output(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr);
 void svt_av1_loop_restoration_filter_frame(Yv12BufferConfig *frame, Av1Common *cm,
                                            int32_t optimized_lr);
 void copy_statistics_to_ref_obj_ect(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr);
+#if SS_2B_COMPRESS
+EbErrorType psnr_calculations(PictureControlSet* pcs_ptr, SequenceControlSet* scs_ptr, EbBool free_memory);
+EbErrorType ssim_calculations(PictureControlSet* pcs_ptr, SequenceControlSet* scs_ptr, EbBool free_memory);
+#else
 void psnr_calculations(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr, EbBool free_memory);
 void ssim_calculations(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr, EbBool free_memory);
+#endif
 void pad_ref_and_set_flags(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr);
 void generate_padding(EbByte src_pic, uint32_t src_stride, uint32_t original_src_width,
                       uint32_t original_src_height, uint32_t padding_width,
@@ -696,12 +701,30 @@ void *rest_kernel(void *input_ptr) {
             // PSNR and SSIM Calculation.
             if (superres_recode) {  // superres needs psnr to compute rdcost
                 // Note: if superres recode is actived, memory needs to be freed in packetization process by calling free_temporal_filtering_buffer()
+#if SS_2B_COMPRESS
+                EbErrorType return_error = psnr_calculations(pcs_ptr, scs_ptr, EB_FALSE);
+                if (return_error != EB_ErrorNone) {
+                    assert_err(0, "Couldn't allocate memory for uncompressed 10bit buffers for PSNR calculations");
+                }
+#else
                 psnr_calculations(pcs_ptr, scs_ptr, EB_FALSE);
+#endif
             }
             else if (scs_ptr->static_config.stat_report) {
                 // Note: if temporal_filtering is used, memory needs to be freed in the last of these calls
+#if SS_2B_COMPRESS
+                EbErrorType return_error = psnr_calculations(pcs_ptr, scs_ptr, EB_FALSE);
+                if (return_error != EB_ErrorNone) {
+                    assert_err(0, "Couldn't allocate memory for uncompressed 10bit buffers for PSNR calculations");
+                }
+                return_error = ssim_calculations(pcs_ptr, scs_ptr, EB_TRUE /* free memory here */);
+                if (return_error != EB_ErrorNone) {
+                    assert_err(0, "Couldn't allocate memory for uncompressed 10bit buffers for SSIM calculations");
+                }
+#else
                 psnr_calculations(pcs_ptr, scs_ptr, EB_FALSE);
                 ssim_calculations(pcs_ptr, scs_ptr, EB_TRUE);
+#endif
             }
 
             if (!superres_recode) {

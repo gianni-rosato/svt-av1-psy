@@ -44,6 +44,9 @@ extern void coding_loop_context_generation(PictureControlSet *pcs_ptr,
 #if !OPT_NA_ISINTER
     NeighborArrayUnit *mode_type_neighbor_array,
 #endif
+#if FIX_SKIP_COEFF_CONTEXT
+    NeighborArrayUnit *skip_coeff_neighbor_array,
+#endif
     NeighborArrayUnit *leaf_partition_neighbor_array);
 
 extern EbErrorType av1_txb_calc_cost(

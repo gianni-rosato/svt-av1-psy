@@ -16,10 +16,17 @@
 #define _mm256_set_m128i(/* __m128i */ hi, /* __m128i */ lo) \
     _mm256_insertf128_si256(_mm256_castsi128_si256(lo), (hi), 0x1)
 
+#if SS_2B_COMPRESS
+void svt_compressed_packmsb_avx2_intrin(uint8_t *in8_bit_buffer, uint32_t in8_stride,
+    uint8_t *inn_bit_buffer, uint32_t inn_stride,
+    uint16_t *out16_bit_buffer, uint32_t out_stride, uint32_t width,
+    uint32_t height) {
+#else
 void svt_compressed_packmsb_avx2_intrin(uint8_t *in8_bit_buffer, uint32_t in8_stride,
                                         uint8_t *inn_bit_buffer, uint16_t *out16_bit_buffer,
                                         uint32_t inn_stride, uint32_t out_stride, uint32_t width,
                                         uint32_t height) {
+#endif
     uint32_t y;
 
     if (width == 32) {

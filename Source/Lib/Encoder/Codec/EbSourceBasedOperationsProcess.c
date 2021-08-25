@@ -3384,8 +3384,12 @@ EbErrorType init_tpl_buffers(
     for (frame_idx = 0; frame_idx < frames_in_sw; frame_idx++) {
         // printf("TPL Base:%lld   Picture:%lld  valid:%i \n", pcs_ptr->picture_number, pcs_ptr->tpl_group[frame_idx]->picture_number, pcs_ptr->tpl_valid_pic[frame_idx]);
 #if SS_OPT_TPL_REC
+#if FIX_TPL_R2R_BUFF
+        // If REF pic, re-use previously assigned recon buffer
+        if (pcs_ptr->tpl_group[frame_idx]->is_used_as_reference_flag) {
+#else
         if (pcs_ptr->tpl_valid_pic[frame_idx] && pcs_ptr->tpl_group[frame_idx]->is_used_as_reference_flag) {
-
+#endif
              encode_context_ptr->mc_flow_rec_picture_buffer[frame_idx] =
                    ((EbReferenceObject *)pcs_ptr->tpl_group[frame_idx]->reference_picture_wrapper_ptr->object_ptr)->reference_picture;
 #else

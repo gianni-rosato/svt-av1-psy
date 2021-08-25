@@ -2164,6 +2164,16 @@ typedef enum EbTuSize
 #define EB_FRAME_CARAC_4           4
 
 #define  MAX_PAL_CAND   14
+
+#if OPT_PALETTE_MEM
+typedef struct {
+    // Value of base colors for Y only
+    uint16_t palette_colors[PALETTE_MAX_SIZE];
+    // Number of base colors for Y only
+    uint8_t palette_size;
+} PaletteLumaModeInfo;
+#endif
+
 typedef struct {
     // Value of base colors for Y, U, and V
     uint16_t palette_colors[3 * PALETTE_MAX_SIZE];

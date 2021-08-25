@@ -17,13 +17,28 @@ extern "C" {
 
 #include "EbDefinitions.h"
 
+
+#if SS_2B_COMPRESS
+void svt_unpack_and_2bcompress_c(
+    uint16_t *in16b_buffer, uint32_t in16b_stride,
+    uint8_t  *out8b_buffer, uint32_t out8b_stride,
+    uint8_t  *out2b_buffer, uint32_t out2b_stride,
+    uint32_t width, uint32_t height);
+#endif
+
 void svt_enc_msb_pack2_d(uint8_t *in8_bit_buffer, uint32_t in8_stride, uint8_t *inn_bit_buffer,
                          uint16_t *out16_bit_buffer, uint32_t inn_stride, uint32_t out_stride,
                          uint32_t width, uint32_t height);
 
+#if SS_2B_COMPRESS
+void svt_compressed_packmsb_c(uint8_t *in8_bit_buffer, uint32_t in8_stride, uint8_t *inn_bit_buffer,
+    uint32_t inn_stride, uint16_t *out16_bit_buffer, uint32_t out_stride,
+    uint32_t width, uint32_t height);
+#else
 void svt_compressed_packmsb_c(uint8_t *in8_bit_buffer, uint32_t in8_stride, uint8_t *inn_bit_buffer,
                               uint16_t *out16_bit_buffer, uint32_t inn_stride, uint32_t out_stride,
                               uint32_t width, uint32_t height);
+#endif
 
 void svt_c_pack_c(const uint8_t *inn_bit_buffer, uint32_t inn_stride, uint8_t *in_compn_bit_buffer,
                   uint32_t out_stride, uint8_t *local_cache, uint32_t width, uint32_t height);

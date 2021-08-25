@@ -5266,6 +5266,11 @@ static INLINE TxType av1_get_tx_type(int32_t is_inter, PredictionMode pred_mode,
         return DCT_DCT;
     }
 
+#if OPT_MODE_MI_MEM
+    // In intra mode, uv planes don't share the same prediction mode as y
+    // plane, so the tx_type should not be shared
+    TxType tx_type = intra_mode_to_tx_type(pred_mode, pred_mode_uv, PLANE_TYPE_UV);
+#else
     MbModeInfo mbmi;
     mbmi.block_mi.mode = pred_mode;
     mbmi.block_mi.uv_mode = pred_mode_uv;
@@ -5273,7 +5278,7 @@ static INLINE TxType av1_get_tx_type(int32_t is_inter, PredictionMode pred_mode,
     // In intra mode, uv planes don't share the same prediction mode as y
     // plane, so the tx_type should not be shared
     TxType tx_type = intra_mode_to_tx_type(&mbmi.block_mi, PLANE_TYPE_UV);
-
+#endif
     assert(tx_type < TX_TYPES);
     const TxSetType tx_set_type = get_ext_tx_set_type(tx_size, is_inter, reduced_tx_set);
     return !av1_ext_tx_used[tx_set_type][tx_type] ? DCT_DCT : tx_type;
@@ -5401,7 +5406,7 @@ void intra_bc_search(PictureControlSet *pcs, ModeDecisionContext *context_ptr,
     //IBC Modes:   0: OFF 1:Slow   2:Faster   3:Fastest
     enum IntrabcMotionDirection max_dir =
 #if OPT_IBC_HASH_SEARCH
-        pcs->parent_pcs_ptr->intraBC_ctrls.ibc_mode > 2 ? IBC_MOTION_LEFT : IBC_MOTION_DIRECTIONS;
+        pcs->parent_pcs_ptr->intraBC_ctrls.ibc_direction ? IBC_MOTION_LEFT : IBC_MOTION_DIRECTIONS;
 #else
         pcs->parent_pcs_ptr->ibc_mode > 2 ? IBC_MOTION_LEFT : IBC_MOTION_DIRECTIONS;
 #endif

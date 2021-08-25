@@ -53,6 +53,11 @@
 #include "EbCdefProcess.h"
 #include "EbDlfProcess.h"
 #include "EbRateControlResults.h"
+
+#if SS_2B_COMPRESS
+#include"EbPackUnPack_C.h"
+#endif
+
 #ifdef ARCH_X86_64
 #include <immintrin.h>
 #endif
@@ -1183,10 +1188,19 @@ static int create_pa_ref_buf_descs(EbEncHandle *enc_handle_ptr, uint32_t instanc
 #else
         ref_pic_buf_desc_init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_LUMA_MASK;
 #endif
+
+
+#if  INC_PAD68
+        ref_pic_buf_desc_init_data.left_padding = scs_ptr->left_padding;
+        ref_pic_buf_desc_init_data.right_padding = scs_ptr->right_padding;
+        ref_pic_buf_desc_init_data.top_padding = scs_ptr->top_padding;
+        ref_pic_buf_desc_init_data.bot_padding = scs_ptr->bot_padding;
+#else
         ref_pic_buf_desc_init_data.left_padding = scs_ptr->sb_sz + ME_FILTER_TAP;
         ref_pic_buf_desc_init_data.right_padding = scs_ptr->sb_sz + ME_FILTER_TAP;
         ref_pic_buf_desc_init_data.top_padding = scs_ptr->sb_sz + ME_FILTER_TAP;
         ref_pic_buf_desc_init_data.bot_padding = scs_ptr->sb_sz + ME_FILTER_TAP;
+#endif
         ref_pic_buf_desc_init_data.split_mode = EB_FALSE;
 #if OPT_MEMORY_REST
         ref_pic_buf_desc_init_data.rest_units_per_tile = scs_ptr->rest_units_per_tile;
@@ -2508,6 +2522,9 @@ void tf_controls(SequenceControlSet *scs_ptr, uint8_t tf_level) {
 #if OPT_NOISE_LEVEL
         scs_ptr->static_config.tf_params_per_type[0].use_intra_for_noise_est = 0;
 #endif
+#if OPT_TF_8BIT_SUBPEL
+        scs_ptr->static_config.tf_params_per_type[0].use_8bit_subpel = 0;
+#endif
         // BASE TF Params
         scs_ptr->static_config.tf_params_per_type[1].enabled                  = 1;
         scs_ptr->static_config.tf_params_per_type[1].num_past_pics            = 3;
@@ -2541,6 +2558,9 @@ void tf_controls(SequenceControlSet *scs_ptr, uint8_t tf_level) {
 #if OPT_NOISE_LEVEL
         scs_ptr->static_config.tf_params_per_type[1].use_intra_for_noise_est = 0;
 #endif
+#if OPT_TF_8BIT_SUBPEL
+        scs_ptr->static_config.tf_params_per_type[1].use_8bit_subpel = 0;
+#endif
         // L1 TF Params
         scs_ptr->static_config.tf_params_per_type[2].enabled                  = 1;
         scs_ptr->static_config.tf_params_per_type[2].num_past_pics            = 1;
@@ -2570,6 +2590,9 @@ void tf_controls(SequenceControlSet *scs_ptr, uint8_t tf_level) {
 #endif
 #if OPT_NOISE_LEVEL
         scs_ptr->static_config.tf_params_per_type[2].use_intra_for_noise_est = 0;
+#endif
+#if OPT_TF_8BIT_SUBPEL
+        scs_ptr->static_config.tf_params_per_type[2].use_8bit_subpel = 0;
 #endif
         break;
 
@@ -2604,6 +2627,9 @@ void tf_controls(SequenceControlSet *scs_ptr, uint8_t tf_level) {
 #if OPT_NOISE_LEVEL
         scs_ptr->static_config.tf_params_per_type[0].use_intra_for_noise_est = 0;
 #endif
+#if OPT_TF_8BIT_SUBPEL
+        scs_ptr->static_config.tf_params_per_type[0].use_8bit_subpel = 0;
+#endif
         // BASE TF Params
         scs_ptr->static_config.tf_params_per_type[1].enabled                  = 1;
         scs_ptr->static_config.tf_params_per_type[1].num_past_pics            = 3;
@@ -2637,6 +2663,9 @@ void tf_controls(SequenceControlSet *scs_ptr, uint8_t tf_level) {
 #if OPT_NOISE_LEVEL
         scs_ptr->static_config.tf_params_per_type[1].use_intra_for_noise_est = 0;
 #endif
+#if OPT_TF_8BIT_SUBPEL
+        scs_ptr->static_config.tf_params_per_type[1].use_8bit_subpel = 0;
+#endif
         // L1 TF Params
         scs_ptr->static_config.tf_params_per_type[2].enabled                  = 1;
         scs_ptr->static_config.tf_params_per_type[2].num_past_pics            = 1;
@@ -2669,6 +2698,9 @@ void tf_controls(SequenceControlSet *scs_ptr, uint8_t tf_level) {
 #endif
 #if OPT_NOISE_LEVEL
         scs_ptr->static_config.tf_params_per_type[2].use_intra_for_noise_est = 0;
+#endif
+#if OPT_TF_8BIT_SUBPEL
+        scs_ptr->static_config.tf_params_per_type[2].use_8bit_subpel = 0;
 #endif
         break;
 
@@ -2703,6 +2735,9 @@ void tf_controls(SequenceControlSet *scs_ptr, uint8_t tf_level) {
 #if OPT_NOISE_LEVEL
         scs_ptr->static_config.tf_params_per_type[0].use_intra_for_noise_est = 0;
 #endif
+#if OPT_TF_8BIT_SUBPEL
+        scs_ptr->static_config.tf_params_per_type[0].use_8bit_subpel = 0;
+#endif
         // BASE TF Params
         scs_ptr->static_config.tf_params_per_type[1].enabled                  = 1;
         scs_ptr->static_config.tf_params_per_type[1].num_past_pics            = 2;
@@ -2735,6 +2770,9 @@ void tf_controls(SequenceControlSet *scs_ptr, uint8_t tf_level) {
 #endif
 #if OPT_NOISE_LEVEL
         scs_ptr->static_config.tf_params_per_type[1].use_intra_for_noise_est = 0;
+#endif
+#if OPT_TF_8BIT_SUBPEL
+        scs_ptr->static_config.tf_params_per_type[1].use_8bit_subpel = 0;
 #endif
         // L1 TF Params
         scs_ptr->static_config.tf_params_per_type[2].enabled                  = 1;
@@ -2769,6 +2807,9 @@ void tf_controls(SequenceControlSet *scs_ptr, uint8_t tf_level) {
 #if OPT_NOISE_LEVEL
         scs_ptr->static_config.tf_params_per_type[2].use_intra_for_noise_est = 0;
 #endif
+#if OPT_TF_8BIT_SUBPEL
+        scs_ptr->static_config.tf_params_per_type[2].use_8bit_subpel = 0;
+#endif
         break;
 
     case 4:
@@ -2801,6 +2842,9 @@ void tf_controls(SequenceControlSet *scs_ptr, uint8_t tf_level) {
 #endif
 #if OPT_NOISE_LEVEL
         scs_ptr->static_config.tf_params_per_type[0].use_intra_for_noise_est = 0;
+#endif
+#if OPT_TF_8BIT_SUBPEL
+        scs_ptr->static_config.tf_params_per_type[0].use_8bit_subpel = 0;
 #endif
         // BASE TF Params
         scs_ptr->static_config.tf_params_per_type[1].enabled                  = 1;
@@ -2835,6 +2879,9 @@ void tf_controls(SequenceControlSet *scs_ptr, uint8_t tf_level) {
 #if OPT_NOISE_LEVEL
         scs_ptr->static_config.tf_params_per_type[1].use_intra_for_noise_est = 0;
 #endif
+#if OPT_TF_8BIT_SUBPEL
+        scs_ptr->static_config.tf_params_per_type[1].use_8bit_subpel = 0;
+#endif
         // L1 TF Params
         scs_ptr->static_config.tf_params_per_type[2].enabled                  = 1;
         scs_ptr->static_config.tf_params_per_type[2].num_past_pics            = 1;
@@ -2867,6 +2914,9 @@ void tf_controls(SequenceControlSet *scs_ptr, uint8_t tf_level) {
 #endif
 #if OPT_NOISE_LEVEL
         scs_ptr->static_config.tf_params_per_type[2].use_intra_for_noise_est = 0;
+#endif
+#if OPT_TF_8BIT_SUBPEL
+        scs_ptr->static_config.tf_params_per_type[2].use_8bit_subpel = 0;
 #endif
         break;
 
@@ -2903,6 +2953,9 @@ void tf_controls(SequenceControlSet *scs_ptr, uint8_t tf_level) {
 #if OPT_NOISE_LEVEL
         scs_ptr->static_config.tf_params_per_type[0].use_intra_for_noise_est = 0;
 #endif
+#if OPT_TF_8BIT_SUBPEL
+        scs_ptr->static_config.tf_params_per_type[0].use_8bit_subpel = 0;
+#endif
         // BASE TF Params
         scs_ptr->static_config.tf_params_per_type[1].enabled                  = 1;
         scs_ptr->static_config.tf_params_per_type[1].num_past_pics            = 1;
@@ -2937,6 +2990,9 @@ void tf_controls(SequenceControlSet *scs_ptr, uint8_t tf_level) {
 #endif
 #if OPT_NOISE_LEVEL
         scs_ptr->static_config.tf_params_per_type[1].use_intra_for_noise_est = 0;
+#endif
+#if OPT_TF_8BIT_SUBPEL
+        scs_ptr->static_config.tf_params_per_type[1].use_8bit_subpel = 0;
 #endif
         // L1 TF Params
         scs_ptr->static_config.tf_params_per_type[2].enabled                  = 0;
@@ -2991,6 +3047,9 @@ void tf_controls(SequenceControlSet *scs_ptr, uint8_t tf_level) {
 #if OPT_NOISE_LEVEL
         scs_ptr->static_config.tf_params_per_type[0].use_intra_for_noise_est = 1;
 #endif
+#if OPT_TF_8BIT_SUBPEL
+        scs_ptr->static_config.tf_params_per_type[0].use_8bit_subpel = 0;
+#endif
         // BASE TF Params
         scs_ptr->static_config.tf_params_per_type[1].enabled                  = 1;
         scs_ptr->static_config.tf_params_per_type[1].num_past_pics            = 1;
@@ -3038,6 +3097,9 @@ void tf_controls(SequenceControlSet *scs_ptr, uint8_t tf_level) {
 #if OPT_NOISE_LEVEL
         scs_ptr->static_config.tf_params_per_type[1].use_intra_for_noise_est = 1;
 #endif
+#if OPT_TF_8BIT_SUBPEL
+        scs_ptr->static_config.tf_params_per_type[1].use_8bit_subpel = 0;
+#endif
         // L1 TF Params
         scs_ptr->static_config.tf_params_per_type[2].enabled                  = 0;
         break;
@@ -3083,6 +3145,9 @@ void tf_controls(SequenceControlSet *scs_ptr, uint8_t tf_level) {
 #if OPT_NOISE_LEVEL
         scs_ptr->static_config.tf_params_per_type[0].use_intra_for_noise_est = 1;
 #endif
+#if OPT_TF_8BIT_SUBPEL
+        scs_ptr->static_config.tf_params_per_type[0].use_8bit_subpel = 0;
+#endif
         // BASE TF Params
         scs_ptr->static_config.tf_params_per_type[1].enabled                  = 1;
         scs_ptr->static_config.tf_params_per_type[1].num_past_pics            = 1;
@@ -3126,6 +3191,9 @@ void tf_controls(SequenceControlSet *scs_ptr, uint8_t tf_level) {
 #if OPT_NOISE_LEVEL
         scs_ptr->static_config.tf_params_per_type[1].use_intra_for_noise_est = 1;
 #endif
+#if OPT_TF_8BIT_SUBPEL
+        scs_ptr->static_config.tf_params_per_type[1].use_8bit_subpel = 0;
+#endif
         // L1 TF Params
         scs_ptr->static_config.tf_params_per_type[2].enabled                  = 0;
         break;
@@ -3159,6 +3227,9 @@ void tf_controls(SequenceControlSet *scs_ptr, uint8_t tf_level) {
         scs_ptr->static_config.tf_params_per_type[0].avoid_2d_qpel            = 1;
         scs_ptr->static_config.tf_params_per_type[0].use_2tap                 = 1;
         scs_ptr->static_config.tf_params_per_type[0].use_intra_for_noise_est  = 1;
+#if OPT_TF_8BIT_SUBPEL
+        scs_ptr->static_config.tf_params_per_type[0].use_8bit_subpel = 1;
+#endif
 
         // BASE TF Params
         scs_ptr->static_config.tf_params_per_type[1].enabled                  = 1;
@@ -3189,6 +3260,9 @@ void tf_controls(SequenceControlSet *scs_ptr, uint8_t tf_level) {
         scs_ptr->static_config.tf_params_per_type[1].avoid_2d_qpel            = 1;
         scs_ptr->static_config.tf_params_per_type[1].use_2tap                 = 1;
         scs_ptr->static_config.tf_params_per_type[1].use_intra_for_noise_est  = 1;
+#if OPT_TF_8BIT_SUBPEL
+        scs_ptr->static_config.tf_params_per_type[1].use_8bit_subpel = 1;
+#endif
 
         // L1 TF Params
         scs_ptr->static_config.tf_params_per_type[2].enabled                  = 0;
@@ -3222,6 +3296,9 @@ void tf_controls(SequenceControlSet *scs_ptr, uint8_t tf_level) {
         scs_ptr->static_config.tf_params_per_type[0].avoid_2d_qpel            = 1;
         scs_ptr->static_config.tf_params_per_type[0].use_2tap                 = 1;
         scs_ptr->static_config.tf_params_per_type[0].use_intra_for_noise_est  = 1;
+#if OPT_TF_8BIT_SUBPEL
+        scs_ptr->static_config.tf_params_per_type[0].use_8bit_subpel = 1;
+#endif
 
         // BASE TF Params
         scs_ptr->static_config.tf_params_per_type[1].enabled                  = 1;
@@ -3252,6 +3329,9 @@ void tf_controls(SequenceControlSet *scs_ptr, uint8_t tf_level) {
         scs_ptr->static_config.tf_params_per_type[1].avoid_2d_qpel            = 1;
         scs_ptr->static_config.tf_params_per_type[1].use_2tap                 = 1;
         scs_ptr->static_config.tf_params_per_type[1].use_intra_for_noise_est  = 1;
+#if OPT_TF_8BIT_SUBPEL
+        scs_ptr->static_config.tf_params_per_type[1].use_8bit_subpel = 1;
+#endif
 
         // L1 TF Params
         scs_ptr->static_config.tf_params_per_type[2].enabled                  = 0;
@@ -3292,9 +3372,18 @@ void derive_tf_params(SequenceControlSet *scs_ptr) {
     else if (scs_ptr->static_config.enc_mode <= ENC_M5) {
         tf_level = 2;
     }
+#if TUNE_M7_M8_3
+    else if (scs_ptr->static_config.enc_mode <= ENC_M6) {
+#else
     else if (scs_ptr->static_config.enc_mode <= ENC_M7) {
+#endif
         tf_level = 4;
     }
+#if TUNE_M7_M8_3
+    else if (scs_ptr->static_config.enc_mode <= ENC_M7) {
+        tf_level = (scs_ptr->input_resolution <= INPUT_SIZE_1080p_RANGE) ? 4 : 5;
+    }
+#endif
 #if !TUNE_M8_M10 || TUNE_M7_M8_2
     else if (scs_ptr->static_config.enc_mode <= ENC_M8) {
         tf_level = 5;
@@ -3585,6 +3674,20 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     scs_ptr->top_padding = BLOCK_SIZE_64 + 4;
     scs_ptr->right_padding = BLOCK_SIZE_64 + 4;
     scs_ptr->bot_padding = scs_ptr->static_config.super_block_size + 4;
+
+#if INC_PAD68
+    //for 10bit,  increase the pad of source from 68 to 72 (mutliple of 8) to accomodate 2bit-compression flow
+    //we actually need to change the horizontal dimension only, but for simplicity/uniformity we do all directions
+   // if (scs_ptr->static_config.encoder_bit_depth != EB_8BIT)
+    {
+        scs_ptr->left_padding  += 4;
+        scs_ptr->top_padding   += 4;
+        scs_ptr->right_padding += 4;
+        scs_ptr->bot_padding   += 4;
+    }
+#endif
+
+
     scs_ptr->static_config.enable_overlays = scs_ptr->static_config.tf_level == 0 ||
         (scs_ptr->static_config.rate_control_mode > 0) ?
         0 : scs_ptr->static_config.enable_overlays;
@@ -4082,7 +4185,13 @@ void copy_api_from_app(
     // Get Default Intra Period if not specified
     if (scs_ptr->static_config.intra_period_length == -2)
         scs_ptr->static_config.intra_period_length = compute_default_intra_period(scs_ptr);
-
+#if !FIX_INTRA_PERIOD_2PASS
+    else if (scs_ptr->static_config.intra_period_length == -1 && (use_input_stat(scs_ptr) || use_output_stat(scs_ptr) || scs_ptr->lap_enabled))
+    {
+        scs_ptr->static_config.intra_period_length = (scs_ptr->frame_rate >> 16)* MAX_NUM_SEC_INTRA;
+        SVT_LOG("SVT [Warning]: force Intra period to be %d for perf/quality tradeoff\n", scs_ptr->static_config.intra_period_length);
+    }
+#endif
 #if FTR_LAD_INPUT
     if (scs_ptr->static_config.look_ahead_distance == (uint32_t)~0)
         scs_ptr->static_config.look_ahead_distance = compute_default_look_ahead(&scs_ptr->static_config);
@@ -4475,11 +4584,19 @@ static EbErrorType verify_settings(
         return_error = EB_ErrorBadParameter;
     }
 
+#if FIX_COMPRESSED_10BIT
+    if (config->compressed_ten_bit_format !=0 && config->compressed_ten_bit_format !=1)
+    {
+        SVT_LOG("Error instance %u: Invalid Compressed Ten Bit Format flag [0 - 1]\n", channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+#else
     if (config->compressed_ten_bit_format !=0)
     {
         SVT_LOG("Error instance %u: Compressed ten bit format is not supported in this version \n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
+#endif
 
     if (config->speed_control_flag > 1) {
         SVT_LOG("Error Instance %u: Invalid Speed Control flag [0 - 1]\n", channel_number + 1);
@@ -5226,7 +5343,9 @@ static EbErrorType copy_frame_buffer(
     EbPictureBufferDesc           *input_picture_ptr = (EbPictureBufferDesc*)destination;
     EbPictureBufferDesc           *y8b_input_picture_ptr = (EbPictureBufferDesc*)destination_y8b;
     EbSvtIOFormat                   *input_ptr = (EbSvtIOFormat*)source;
+#if !FIX_COMPRESSED_10BIT
     uint16_t                         input_row_index;
+#endif
     EbBool                           is_16bit_input = (EbBool)(config->encoder_bit_depth > EB_8BIT);
 
     uint8_t                         *src, *dst;
@@ -5288,7 +5407,11 @@ static EbErrorType copy_frame_buffer(
                 (luma_height >> (input_picture_ptr->color_format == EB_YUV420));
 
             src = input_ptr->luma;
+#if FIX_COMPRESSED_10BIT
+            dst = y8b_input_picture_ptr->buffer_y + luma_buffer_offset;
+#else
             dst = input_picture_ptr->buffer_y + luma_buffer_offset;
+#endif
             for (unsigned i = 0; i < luma_height; i++) {
                 svt_memcpy(dst, src, source_luma_stride);
                 src += source_luma_stride;
@@ -5313,6 +5436,37 @@ static EbErrorType copy_frame_buffer(
             //efficient copy - final
             //compressed 2Bit in 1D format
             {
+#if FIX_COMPRESSED_10BIT
+                uint32_t comp_stride_y = luma_stride / 4;
+                uint32_t comp_luma_buffer_offset = comp_stride_y * input_picture_ptr->origin_y + input_picture_ptr->origin_x/4;
+
+                uint32_t comp_stride_uv = chroma_stride / 4;
+                uint32_t comp_chroma_buffer_offset = comp_stride_uv * (input_picture_ptr->origin_y/2) + input_picture_ptr->origin_x /2 / 4;
+
+                src = input_ptr->luma_ext;
+                dst = input_picture_ptr->buffer_bit_inc_y + comp_luma_buffer_offset;
+                for (unsigned i = 0; i < luma_height; i++) {
+                    svt_memcpy(dst, src, source_luma_stride >> 2);
+                    src += source_luma_stride >> 2;
+                    dst += comp_stride_y;
+                }
+
+                src = input_ptr->cb_ext;
+                dst = input_picture_ptr->buffer_bit_inc_cb + comp_chroma_buffer_offset;
+                for (unsigned i = 0; i < source_chroma_height; i++) {
+                    svt_memcpy(dst, src, source_cb_stride >> 2);
+                    src += source_cb_stride >> 2;
+                    dst += comp_stride_uv;
+                }
+
+                src = input_ptr->cr_ext;
+                dst = input_picture_ptr->buffer_bit_inc_cr + comp_chroma_buffer_offset;
+                for (unsigned i = 0; i < source_chroma_height; i++) {
+                    svt_memcpy(dst, src, source_cr_stride >> 2);
+                    src += source_cr_stride >> 2;
+                    dst += comp_stride_uv;
+                }
+#else
                 uint16_t luma_2bit_width = scs_ptr->max_input_luma_width / 4;
                 luma_height = scs_ptr->max_input_luma_height;
 
@@ -5328,6 +5482,7 @@ static EbErrorType copy_frame_buffer(
                 for (input_row_index = 0; input_row_index < luma_height >> 1; input_row_index++) {
                     svt_memcpy(input_picture_ptr->buffer_bit_inc_cr + (luma_2bit_width >> 1)*input_row_index, input_ptr->cr_ext + source_chroma_2bit_stride * input_row_index, luma_2bit_width >> 1);
                 }
+#endif
             }
         }
     }
@@ -5337,13 +5492,52 @@ static EbErrorType copy_frame_buffer(
         uint32_t luma_buffer_offset = (input_picture_ptr->stride_y*scs_ptr->top_padding + scs_ptr->left_padding);
         uint32_t chroma_buffer_offset = (input_picture_ptr->stride_cr*(scs_ptr->top_padding >> 1) + (scs_ptr->left_padding >> 1));
         uint16_t luma_width = (uint16_t)(input_picture_ptr->width - scs_ptr->max_input_pad_right);
+#if !SS_2B_COMPRESS
         uint16_t chroma_width = (luma_width >> 1);
+#endif
         uint16_t luma_height = (uint16_t)(input_picture_ptr->height - scs_ptr->max_input_pad_bottom);
 
         uint16_t source_luma_stride = (uint16_t)(input_ptr->y_stride);
         uint16_t source_cr_stride = (uint16_t)(input_ptr->cr_stride);
         uint16_t source_cb_stride = (uint16_t)(input_ptr->cb_stride);
 
+#if SS_2B_COMPRESS
+        uint32_t comp_stride_y = input_picture_ptr->stride_y / 4;
+        uint32_t comp_luma_buffer_offset = comp_stride_y * input_picture_ptr->origin_y + input_picture_ptr->origin_x/4;
+
+        uint32_t comp_stride_uv = input_picture_ptr->stride_cb / 4;
+        uint32_t comp_chroma_buffer_offset = comp_stride_uv * (input_picture_ptr->origin_y/2) + input_picture_ptr->origin_x /2 / 4;
+
+        svt_unpack_and_2bcompress_c(
+            (uint16_t*)(input_ptr->luma + luma_offset),
+            source_luma_stride,
+            y8b_input_picture_ptr->buffer_y + luma_buffer_offset,
+            y8b_input_picture_ptr->stride_y,
+            input_picture_ptr->buffer_bit_inc_y + comp_luma_buffer_offset,
+            comp_stride_y,
+            luma_width,
+            luma_height);
+
+        svt_unpack_and_2bcompress_c(
+            (uint16_t*)(input_ptr->cb + chroma_offset),
+            source_cb_stride,
+            input_picture_ptr->buffer_cb + chroma_buffer_offset,
+            input_picture_ptr->stride_cb,
+            input_picture_ptr->buffer_bit_inc_cb + comp_chroma_buffer_offset,
+            comp_stride_uv,
+            luma_width / 2,
+            luma_height / 2);
+
+        svt_unpack_and_2bcompress_c(
+            (uint16_t*)(input_ptr->cr + chroma_offset),
+            source_cr_stride,
+            input_picture_ptr->buffer_cr + chroma_buffer_offset,
+            input_picture_ptr->stride_cr,
+            input_picture_ptr->buffer_bit_inc_cr + comp_chroma_buffer_offset,
+            comp_stride_uv,
+            luma_width / 2,
+            luma_height / 2);
+#else
         un_pack2d(
             (uint16_t*)(input_ptr->luma + luma_offset),
             source_luma_stride,
@@ -5373,6 +5567,7 @@ static EbErrorType copy_frame_buffer(
             input_picture_ptr->stride_bit_inc_cr,
             chroma_width,
             (luma_height >> 1));
+#endif
     }
     return return_error;
 }
@@ -5913,9 +6108,11 @@ static EbErrorType allocate_frame_buffer(
     input_pic_buf_desc_init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK;
     input_pic_buf_desc_init_data.is_16bit_pipeline = 0;
 
+#if !FIX_COMPRESSED_10BIT
     if (is_16bit && config->compressed_ten_bit_format == 1)
         //do special allocation for 2bit data down below.
         input_pic_buf_desc_init_data.split_mode = EB_FALSE;
+#endif
 
     // Enhanced Picture Buffer
     {
@@ -5933,6 +6130,7 @@ static EbErrorType allocate_frame_buffer(
 #endif
         input_buffer->p_buffer = (uint8_t*)buf;
 
+#if !FIX_COMPRESSED_10BIT
         if (is_16bit && config->compressed_ten_bit_format == 1) {
             //pack 4 2bit pixels into 1Byte
             EB_MALLOC_ALIGNED_ARRAY(buf->buffer_bit_inc_y,
@@ -5945,6 +6143,7 @@ static EbErrorType allocate_frame_buffer(
                  (input_pic_buf_desc_init_data.max_width / 8)*
                  (input_pic_buf_desc_init_data.max_height / 2));
         }
+#endif
     }
 
     return return_error;

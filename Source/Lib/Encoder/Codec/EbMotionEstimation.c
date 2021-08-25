@@ -33,6 +33,10 @@
 /********************************************
  * Constants
  ********************************************/
+#if FIX_TF_HME
+#define TF_HME_MV_SAD_TH      512 // SAD_TH beyond which a penalty is applied to hme_mv_cost
+#define TF_HME_MV_COST_WEIGHT 125 // MV_COST weight when the SAD_TH condition is valid
+#endif
 #if FIX_DO_NOT_TEST_CORRUPTED_MVS
 EbBool check_mv_validity(int16_t x_mv, int16_t y_mv, uint8_t need_shift) {
     MV mv;
@@ -1479,6 +1483,14 @@ EbErrorType check_00_center(EbPictureBufferDesc *ref_pic_ptr, MeContext *context
 
     hme_mv_cost = (hme_mv_sad << COST_PRECISION) +
                   (((context_ptr->lambda * hme_mvd_rate) + MD_OFFSET) >> MD_SHIFT);
+#if FIX_TF_HME
+    // Apply a penalty to the HME_MV cost(@ the post - HME(0, 0) vs.HME_MV distortion check) when the HME_MV distortion is high (towards more search ~ (0,0) if difficult 64x64)
+    if (context_ptr->me_type == ME_MCTF) {
+        if (hme_mv_sad > TF_HME_MV_SAD_TH) {
+            hme_mv_cost = (hme_mv_cost * TF_HME_MV_COST_WEIGHT) / 100;
+        }
+    }
+#endif
     search_center_cost = MIN(zero_mv_cost, hme_mv_cost);
 
     *x_search_center = (search_center_cost == zero_mv_cost) ? 0 : *x_search_center;
@@ -2344,11 +2356,19 @@ static void hme_level0_sb(
                         context_ptr->hme_level0_sad[list_index][ref_pic_index][sr_w_max][sr_h_max] =
                             context_ptr->prehme_data[list_index][ref_pic_index][sr_i].sad;
 
+#if FIX_PREHME_ADD
+                        context_ptr->x_hme_level0_search_center[list_index][ref_pic_index][sr_w_max][sr_h_max] =
+                            context_ptr->prehme_data[list_index][ref_pic_index][sr_i].best_mv.as_mv.col;
+
+                        context_ptr->y_hme_level0_search_center[list_index][ref_pic_index][sr_w_max][sr_h_max] =
+                            context_ptr->prehme_data[list_index][ref_pic_index][sr_i].best_mv.as_mv.row;
+#else
                         context_ptr->x_hme_level0_search_center[list_index][ref_pic_index][search_region_number_in_width][search_region_number_in_height] =
                             context_ptr->prehme_data[list_index][ref_pic_index][sr_i].best_mv.as_mv.col;
 
                         context_ptr->y_hme_level0_search_center[list_index][ref_pic_index][search_region_number_in_width][search_region_number_in_height] =
                             context_ptr->prehme_data[list_index][ref_pic_index][sr_i].best_mv.as_mv.row;
+#endif
 
 
                     }

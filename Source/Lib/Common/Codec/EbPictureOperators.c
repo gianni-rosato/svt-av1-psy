@@ -405,6 +405,28 @@ void pack2d_src(uint8_t *in8_bit_buffer, uint32_t in8_stride, uint8_t *inn_bit_b
 void compressed_pack_sb(uint8_t *in8_bit_buffer, uint32_t in8_stride, uint8_t *inn_bit_buffer,
                         uint32_t inn_stride, uint16_t *out16_bit_buffer, uint32_t out_stride,
                         uint32_t width, uint32_t height) {
+#if SS_2B_COMPRESS
+    if (width == 64 || width == 32) {
+        svt_compressed_packmsb(in8_bit_buffer,
+            in8_stride,
+            inn_bit_buffer,
+            inn_stride,
+            out16_bit_buffer,
+            out_stride,
+            width,
+            height);
+    }
+    else {
+        svt_compressed_packmsb_c(in8_bit_buffer,
+            in8_stride,
+            inn_bit_buffer,
+            inn_stride,
+            out16_bit_buffer,
+            out_stride,
+            width,
+            height);
+    }
+#else
     if (width == 64 || width == 32) {
         svt_compressed_packmsb(in8_bit_buffer,
                                in8_stride,
@@ -415,6 +437,7 @@ void compressed_pack_sb(uint8_t *in8_bit_buffer, uint32_t in8_stride, uint8_t *i
                                width,
                                height);
     } else {
+
         svt_compressed_packmsb_c(in8_bit_buffer,
                                  in8_stride,
                                  inn_bit_buffer,
@@ -423,7 +446,9 @@ void compressed_pack_sb(uint8_t *in8_bit_buffer, uint32_t in8_stride, uint8_t *i
                                  out_stride,
                                  width,
                                  height);
+
     }
+#endif
 }
 // Copies the source image into the destination image and updates the
 // destination's UMV borders.

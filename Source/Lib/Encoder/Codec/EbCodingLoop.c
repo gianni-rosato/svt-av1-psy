@@ -27,6 +27,10 @@
 #include "aom_dsp_rtcd.h"
 #include "EbMdRateEstimation.h"
 #include "EbFullLoop.h"
+#if SS_2B_COMPRESS
+#include"EbPackUnPack_C.h"
+#endif
+
 #if !OPT_INLINE_FUNCS
 void av1_set_ref_frame(MvReferenceFrame *rf, int8_t ref_frame_type);
 #endif
@@ -2593,6 +2597,7 @@ void prepare_input_picture(SequenceControlSet *scs, PictureControlSet *pcs,
     if (is_16bit && scs->static_config.encoder_bit_depth > EB_8BIT) {
         //SB128_TODO change 10bit SB creation
 
+#if !FIX_COMPRESSED_10BIT
         if ((scs->static_config.ten_bit_format == 1) ||
             (scs->static_config.compressed_ten_bit_format == 1)) {
             const uint32_t input_luma_offset =
@@ -2640,26 +2645,72 @@ void prepare_input_picture(SequenceControlSet *scs, PictureControlSet *pcs,
                 sb_height >> 1);
         }
         else {
+#endif
             const uint32_t input_luma_offset =
                 ((sb_org_y + input_pic->origin_y) * input_pic->stride_y) +
                 (sb_org_x + input_pic->origin_x);
+#if !SS_2B_COMPRESS
             const uint32_t input_bit_inc_luma_offset =
                 ((sb_org_y + input_pic->origin_y) * input_pic->stride_bit_inc_y) +
                 (sb_org_x + input_pic->origin_x);
+#endif
             const uint32_t input_cb_offset =
                 (((sb_org_y + input_pic->origin_y) >> 1) * input_pic->stride_cb) +
                 ((sb_org_x + input_pic->origin_x) >> 1);
+#if !SS_2B_COMPRESS
             const uint32_t input_bit_inc_cb_offset =
                 (((sb_org_y + input_pic->origin_y) >> 1) *
                     input_pic->stride_bit_inc_cb) +
                     ((sb_org_x + input_pic->origin_x) >> 1);
+#endif
             const uint32_t input_cr_offset =
                 (((sb_org_y + input_pic->origin_y) >> 1) * input_pic->stride_cr) +
                 ((sb_org_x + input_pic->origin_x) >> 1);
+#if !SS_2B_COMPRESS
             const uint32_t input_bit_inc_cr_offset = (((sb_org_y + input_pic->origin_y) >> 1) *
                 input_pic->stride_bit_inc_cr) +
                 ((sb_org_x + input_pic->origin_x) >> 1);
+#endif
 
+#if SS_2B_COMPRESS
+            //sb_width is n*8 so the 2bit-decompression kernel works properly
+            uint32_t comp_stride_y = input_pic->stride_y / 4;
+            uint32_t comp_luma_buffer_offset = comp_stride_y * input_pic->origin_y + input_pic->origin_x / 4;
+            comp_luma_buffer_offset += sb_org_x / 4 + sb_org_y * comp_stride_y;
+
+            compressed_pack_sb(
+                input_pic->buffer_y + input_luma_offset,
+                input_pic->stride_y,
+                input_pic->buffer_bit_inc_y + comp_luma_buffer_offset,
+                comp_stride_y,
+                (uint16_t *)ctx->input_sample16bit_buffer->buffer_y,
+                ctx->input_sample16bit_buffer->stride_y,
+                sb_width,
+                sb_height);
+
+            uint32_t comp_stride_uv = input_pic->stride_cb / 4;
+            uint32_t comp_chroma_buffer_offset = comp_stride_uv * (input_pic->origin_y / 2) + input_pic->origin_x / 2 / 4;
+            comp_chroma_buffer_offset += sb_org_x / 4 / 2 + sb_org_y / 2 * comp_stride_uv;
+
+            compressed_pack_sb(
+                input_pic->buffer_cb + input_cb_offset,
+                input_pic->stride_cb,
+                input_pic->buffer_bit_inc_cb + comp_chroma_buffer_offset,
+                comp_stride_uv,
+                (uint16_t *)ctx->input_sample16bit_buffer->buffer_cb,
+                ctx->input_sample16bit_buffer->stride_cb,
+                sb_width / 2,
+                sb_height / 2);
+            compressed_pack_sb(
+                input_pic->buffer_cr + input_cr_offset,
+                input_pic->stride_cr,
+                input_pic->buffer_bit_inc_cr + comp_chroma_buffer_offset,
+                comp_stride_uv,
+                (uint16_t *)ctx->input_sample16bit_buffer->buffer_cr,
+                ctx->input_sample16bit_buffer->stride_cr,
+                sb_width / 2,
+                sb_height / 2);
+#else
             pack2d_src(input_pic->buffer_y + input_luma_offset,
                 input_pic->stride_y,
                 input_pic->buffer_bit_inc_y + input_bit_inc_luma_offset,
@@ -2686,6 +2737,8 @@ void prepare_input_picture(SequenceControlSet *scs, PictureControlSet *pcs,
                 ctx->input_sample16bit_buffer->stride_cr,
                 sb_width >> 1,
                 sb_height >> 1);
+#endif
+
             // PAD the packed source in incomplete sb up to max SB size
             pad_input_picture_16bit(
                 (uint16_t *)ctx->input_sample16bit_buffer->buffer_y,
@@ -2709,7 +2762,9 @@ void prepare_input_picture(SequenceControlSet *scs, PictureControlSet *pcs,
                 sb_height >> 1,
                 (scs->sb_size_pix - sb_width) >> 1,
                 (scs->sb_size_pix - sb_height) >> 1);
+#if !FIX_COMPRESSED_10BIT
         }
+#endif
 
         if (ctx->md_context->hbd_mode_decision == 0)
             store16bit_input_src(ctx->input_sample16bit_buffer,

@@ -431,6 +431,7 @@ Linux RC Test:
         bitrate=$(
           ./Bin/Release/SvtAv1EncApp \
             --preset 8 \
+            --rc 1 --tbr "$target" \
             -i "$clip" \
             --undershoot-pct 10 \
             --overshoot-pct 5 2>&1 |

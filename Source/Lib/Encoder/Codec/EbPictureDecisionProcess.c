@@ -1827,6 +1827,9 @@ uint16_t  get_max_can_count(EbEncMode enc_mode );
 
 #endif
 #if OPT_IBC_HASH_SEARCH
+/*
+    set controls for intra block copy
+*/
 void set_intrabc_level(PictureParentControlSet* pcs_ptr, SequenceControlSet *scs_ptr, uint8_t ibc_level) {
     IntraBCCtrls* intraBC_ctrls = &pcs_ptr->intraBC_ctrls;
 
@@ -1836,31 +1839,43 @@ void set_intrabc_level(PictureParentControlSet* pcs_ptr, SequenceControlSet *scs
         break;
     case 1:
         intraBC_ctrls->enabled = pcs_ptr->sc_class1;
-        intraBC_ctrls->ibc_mode = 1;
+        intraBC_ctrls->ibc_shift = 0;
+        intraBC_ctrls->ibc_direction = 0;
         intraBC_ctrls->hash_4x4_blocks = !get_disallow_4x4(pcs_ptr->enc_mode, pcs_ptr->slice_type);
         intraBC_ctrls->max_block_size_hash = scs_ptr->static_config.super_block_size;
         break;
     case 2:
         intraBC_ctrls->enabled = pcs_ptr->sc_class1;
-        intraBC_ctrls->ibc_mode = 2;
+        intraBC_ctrls->ibc_shift = 1;
+        intraBC_ctrls->ibc_direction = 0;
         intraBC_ctrls->hash_4x4_blocks = !get_disallow_4x4(pcs_ptr->enc_mode, pcs_ptr->slice_type);
         intraBC_ctrls->max_block_size_hash = scs_ptr->static_config.super_block_size;
         break;
     case 3:
         intraBC_ctrls->enabled = pcs_ptr->sc_class1;
-        intraBC_ctrls->ibc_mode = 2;
+        intraBC_ctrls->ibc_shift = 1;
+        intraBC_ctrls->ibc_direction = 1;
         intraBC_ctrls->hash_4x4_blocks = !get_disallow_4x4(pcs_ptr->enc_mode, pcs_ptr->slice_type);
-        intraBC_ctrls->max_block_size_hash = block_size_wide[BLOCK_16X16];
+        intraBC_ctrls->max_block_size_hash = scs_ptr->static_config.super_block_size;
         break;
     case 4:
         intraBC_ctrls->enabled = pcs_ptr->sc_class1;
-        intraBC_ctrls->ibc_mode = 2;
+        intraBC_ctrls->ibc_shift = 1;
+        intraBC_ctrls->ibc_direction = 0;
         intraBC_ctrls->hash_4x4_blocks = !get_disallow_4x4(pcs_ptr->enc_mode, pcs_ptr->slice_type);
-        intraBC_ctrls->max_block_size_hash = block_size_wide[BLOCK_8X8];
+        intraBC_ctrls->max_block_size_hash = block_size_wide[BLOCK_16X16];
         break;
     case 5:
         intraBC_ctrls->enabled = pcs_ptr->sc_class1;
-        intraBC_ctrls->ibc_mode = 3;
+        intraBC_ctrls->ibc_shift = 1;
+        intraBC_ctrls->ibc_direction = 0;
+        intraBC_ctrls->hash_4x4_blocks = !get_disallow_4x4(pcs_ptr->enc_mode, pcs_ptr->slice_type);
+        intraBC_ctrls->max_block_size_hash = block_size_wide[BLOCK_8X8];
+        break;
+    case 6:
+        intraBC_ctrls->enabled = pcs_ptr->sc_class1;
+        intraBC_ctrls->ibc_shift = 1;
+        intraBC_ctrls->ibc_direction = 1;
         intraBC_ctrls->hash_4x4_blocks = !get_disallow_4x4(pcs_ptr->enc_mode, pcs_ptr->slice_type);
         intraBC_ctrls->max_block_size_hash = block_size_wide[BLOCK_8X8];
         break;
@@ -2004,22 +2019,34 @@ EbErrorType signal_derivation_multi_processes_oq(
 
     //for now only I frames are allowed to use sc tools.
     //TODO: we can force all frames in GOP with the same detection status of leading I frame.
+#if OPT_IBC_HASH_SEARCH
+    uint8_t intrabc_level = 0;
     if (pcs_ptr->slice_type == I_SLICE) {
         frm_hdr->allow_screen_content_tools = pcs_ptr->sc_class1;
         if (scs_ptr->static_config.intrabc_mode == DEFAULT) {
-#if OPT_IBC_HASH_SEARCH
-            uint8_t intrabc_level = 0;
             if (pcs_ptr->enc_mode <= ENC_M5)
                 intrabc_level = 1;
             else if (pcs_ptr->enc_mode <= ENC_M7)
-                intrabc_level = 3;
-            else if (pcs_ptr->enc_mode <= ENC_M11)
                 intrabc_level = 4;
-            else
+            else if (pcs_ptr->enc_mode <= ENC_M11)
                 intrabc_level = 5;
-            set_intrabc_level(pcs_ptr, scs_ptr, intrabc_level);
-            frm_hdr->allow_intrabc = pcs_ptr->intraBC_ctrls.enabled;
+            else
+                intrabc_level = 6;
+        } else {
+            intrabc_level = (uint8_t)scs_ptr->static_config.intrabc_mode;
+        }
+    }
+    else {
+        //this will enable sc tools for P frames. hence change Bitstream even if palette mode is OFF
+        frm_hdr->allow_screen_content_tools = pcs_ptr->sc_class1;
+        intrabc_level = 0;
+    }
+    set_intrabc_level(pcs_ptr, scs_ptr, intrabc_level);
+    frm_hdr->allow_intrabc = pcs_ptr->intraBC_ctrls.enabled;
 #else
+    if (pcs_ptr->slice_type == I_SLICE) {
+        frm_hdr->allow_screen_content_tools = pcs_ptr->sc_class1;
+        if (scs_ptr->static_config.intrabc_mode == DEFAULT) {
             // ENABLE/DISABLE IBC
 #if TUNE_M11
             if (pcs_ptr->enc_mode <= ENC_M11)
@@ -2038,27 +2065,18 @@ EbErrorType signal_derivation_multi_processes_oq(
             } else {
                 pcs_ptr->ibc_mode = 2; // Faster
             }
-#endif
         } else {
-#if OPT_IBC_HASH_SEARCH
-            frm_hdr->allow_intrabc =  (uint8_t)(scs_ptr->static_config.intrabc_mode > 0);
-            pcs_ptr->intraBC_ctrls.hash_4x4_blocks = !get_disallow_4x4(pcs_ptr->enc_mode, pcs_ptr->slice_type);
-            pcs_ptr->intraBC_ctrls.ibc_mode = (uint8_t)scs_ptr->static_config.intrabc_mode;
-            pcs_ptr->intraBC_ctrls.max_block_size_hash = scs_ptr->static_config.super_block_size;
-#else
             frm_hdr->allow_intrabc =  (uint8_t)(scs_ptr->static_config.intrabc_mode > 0);
             pcs_ptr->ibc_mode = (uint8_t)scs_ptr->static_config.intrabc_mode;
-#endif
         }
     }
     else {
         //this will enable sc tools for P frames. hence change Bitstream even if palette mode is OFF
         frm_hdr->allow_screen_content_tools = pcs_ptr->sc_class1;
         frm_hdr->allow_intrabc = 0;
-#if !OPT_IBC_HASH_SEARCH
         pcs_ptr->ibc_mode = 0; // OFF
-#endif
     }
+#endif
 #if ADJUST_LAMBDA
     pcs_ptr->adjust_lambda_sb = (pcs_ptr->enc_mode <= ENC_M9) ? (!frm_hdr->allow_intrabc ? 1 : 0) : 0;
 #endif
@@ -2189,13 +2207,21 @@ EbErrorType signal_derivation_multi_processes_oq(
                 pcs_ptr->cdef_level = 8;
 #endif
 #endif
+#if TUNE_M9_11_3
+            else if (pcs_ptr->enc_mode <= ENC_M7)
+                pcs_ptr->cdef_level = (scs_ptr->input_resolution <= INPUT_SIZE_720p_RANGE) ? 8 : 9;
+#endif
 #if TUNE_M10_M7
 #if TUNE_M10_M0 && !TUNE_M8_M10
             else if (pcs_ptr->enc_mode <= ENC_M9)
 #else
             else if (pcs_ptr->enc_mode <= ENC_M8)
 #endif
+#if TUNE_M9_11_3
+                pcs_ptr->cdef_level = (scs_ptr->input_resolution <= INPUT_SIZE_720p_RANGE) ? (pcs_ptr->temporal_layer_index == 0 ? 8 : 9) : 9;
+#else
                 pcs_ptr->cdef_level = (scs_ptr->input_resolution <= INPUT_SIZE_720p_RANGE) ? 8 : 9;
+#endif
 #endif
 #if TUNE_M8_M10 && !TUNE_M9_M10
             else if (pcs_ptr->enc_mode <= ENC_M9)
@@ -5802,10 +5828,19 @@ EbErrorType derive_tf_window_params(
     if (is_highbd) {
         EB_MALLOC_ARRAY(picture_control_set_ptr_central->altref_buffer_highbd[C_Y],
             central_picture_ptr->luma_size);
+#if SS_TF_OPTS
+        if (pcs_ptr->tf_ctrls.do_chroma) {
+            EB_MALLOC_ARRAY(picture_control_set_ptr_central->altref_buffer_highbd[C_U],
+                central_picture_ptr->chroma_size);
+            EB_MALLOC_ARRAY(picture_control_set_ptr_central->altref_buffer_highbd[C_V],
+                central_picture_ptr->chroma_size);
+        }
+#else
         EB_MALLOC_ARRAY(picture_control_set_ptr_central->altref_buffer_highbd[C_U],
             central_picture_ptr->chroma_size);
         EB_MALLOC_ARRAY(picture_control_set_ptr_central->altref_buffer_highbd[C_V],
             central_picture_ptr->chroma_size);
+#endif
 
         // pack byte buffers to 16 bit buffer
         pack_highbd_pic(central_picture_ptr,
@@ -5820,6 +5855,23 @@ EbErrorType derive_tf_window_params(
             central_picture_ptr->origin_y * central_picture_ptr->stride_y +
             central_picture_ptr->origin_x;
 
+#if SS_TF_OPTS
+        if (pcs_ptr->tf_ctrls.do_chroma) {
+            altref_buffer_highbd_start[C_U] =
+                picture_control_set_ptr_central->altref_buffer_highbd[C_U] +
+                (central_picture_ptr->origin_y >> ss_y) * central_picture_ptr->stride_bit_inc_cb +
+                (central_picture_ptr->origin_x >> ss_x);
+
+            altref_buffer_highbd_start[C_V] =
+                picture_control_set_ptr_central->altref_buffer_highbd[C_V] +
+                (central_picture_ptr->origin_y >> ss_y) * central_picture_ptr->stride_bit_inc_cr +
+                (central_picture_ptr->origin_x >> ss_x);
+        }
+        else {
+            altref_buffer_highbd_start[C_U] = NOT_USED_VALUE;
+            altref_buffer_highbd_start[C_V] = NOT_USED_VALUE;
+        }
+#else
         altref_buffer_highbd_start[C_U] =
             picture_control_set_ptr_central->altref_buffer_highbd[C_U] +
             (central_picture_ptr->origin_y >> ss_y) * central_picture_ptr->stride_bit_inc_cb +
@@ -5829,6 +5881,7 @@ EbErrorType derive_tf_window_params(
             picture_control_set_ptr_central->altref_buffer_highbd[C_V] +
             (central_picture_ptr->origin_y >> ss_y) * central_picture_ptr->stride_bit_inc_cr +
             (central_picture_ptr->origin_x >> ss_x);
+#endif
 
 #if OPT_NOISE_LEVEL
             if (do_noise_est)
@@ -6101,7 +6154,11 @@ void copy_tf_params(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_pt
     // Map TF settings sps -> pcs
 
 #if OPT_TFILTER
+#if FIX_TF_OPEN_GOP
+    if (is_delayed_intra(pcs_ptr))
+#else
     if (pcs_ptr->slice_type == I_SLICE)
+#endif
         pcs_ptr->tf_ctrls = scs_ptr->static_config.tf_params_per_type[0];
     else if (pcs_ptr->temporal_layer_index == 0)  // BASE
         pcs_ptr->tf_ctrls = scs_ptr->static_config.tf_params_per_type[1];

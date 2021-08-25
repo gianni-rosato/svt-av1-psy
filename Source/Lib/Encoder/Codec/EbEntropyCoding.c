@@ -108,13 +108,21 @@ int get_comp_group_idx_context_enc(const MacroBlockD *xd) {
     int                     above_ctx = 0, left_ctx = 0;
     if (above_mi) {
         if (has_second_ref(above_mi))
+#if OPT_INTER_MI_MEM
+            above_ctx = above_mi->block_mi.comp_group_idx;
+#else
             above_ctx = above_mi->comp_group_idx;
+#endif
         else if (above_mi->block_mi.ref_frame[0] == ALTREF_FRAME)
             above_ctx = 3;
     }
     if (left_mi) {
         if (has_second_ref(left_mi))
+#if OPT_INTER_MI_MEM
+            left_ctx = left_mi->block_mi.comp_group_idx;
+#else
             left_ctx = left_mi->comp_group_idx;
+#endif
         else if (left_mi->block_mi.ref_frame[0] == ALTREF_FRAME)
             left_ctx = 3;
     }
@@ -3192,7 +3200,13 @@ void write_sequence_header(SequenceControlSet *scs_ptr, struct AomWriteBitBuffer
     svt_aom_wb_write_bit(wb, scs_ptr->seq_header.sb_size == BLOCK_128X128 ? 1 : 0);
     //    write_sb_size(seq_params, wb);
     svt_aom_wb_write_bit(wb, scs_ptr->seq_header.filter_intra_level);
-    // enable_intra_edge_filter is set at EbResourceCoordinationProcess.c and not modified during encoding
+#if !FIX_RACE_CONDS
+    if (scs_ptr->static_config.enable_intra_edge_filter == DEFAULT)
+        scs_ptr->seq_header.enable_intra_edge_filter = 1;
+    else
+        scs_ptr->seq_header.enable_intra_edge_filter =
+            (uint8_t)scs_ptr->static_config.enable_intra_edge_filter;
+#endif
     svt_aom_wb_write_bit(wb, scs_ptr->seq_header.enable_intra_edge_filter);
 
     if (!scs_ptr->seq_header.reduced_still_picture_header) {
@@ -4599,7 +4613,11 @@ void svt_av1_tokenize_color_map(FRAME_CONTEXT *frame_context, BlkStruct *blk_ptr
                                 COLOR_MAP_TYPE type, int allow_update_cdf);
 void av1_get_block_dimensions(BlockSize bsize, int plane, const MacroBlockD *xd, int *width,
                               int *height, int *rows_within_bounds, int *cols_within_bounds);
+#if OPT_PALETTE_MEM
+int  svt_get_palette_cache_y(const MacroBlockD *const xd, uint16_t *cache);
+#else
 int  svt_get_palette_cache(const MacroBlockD *const xd, int plane, uint16_t *cache);
+#endif
 int  svt_av1_index_color_cache(const uint16_t *color_cache, int n_cache, const uint16_t *colors,
                                int n_colors, uint8_t *cache_color_found, int *out_cache_colors);
 
@@ -4607,10 +4625,17 @@ int av1_get_palette_mode_ctx(const MacroBlockD *xd) {
     const MbModeInfo *const above_mi = xd->above_mbmi;
     const MbModeInfo *const left_mi  = xd->left_mbmi;
     int                     ctx      = 0;
+#if OPT_PALETTE_MEM
+    if (above_mi)
+        ctx += (above_mi->palette_mode_info.palette_size > 0);
+    if (left_mi)
+        ctx += (left_mi->palette_mode_info.palette_size > 0);
+#else
     if (above_mi)
         ctx += (above_mi->palette_mode_info.palette_size[0] > 0);
     if (left_mi)
         ctx += (left_mi->palette_mode_info.palette_size[0] > 0);
+#endif
     return ctx;
 }
 // Transmit color values with delta encoding. Write the first value as
@@ -4680,7 +4705,11 @@ static AOM_INLINE void write_palette_colors_y(const MacroBlockD *const     xd,
                                               AomWriter *w) {
     const int n = pmi->palette_size[0];
     uint16_t  color_cache[2 * PALETTE_MAX_SIZE];
+#if OPT_PALETTE_MEM
+    const int n_cache = svt_get_palette_cache_y(xd, color_cache);
+#else
     const int n_cache = svt_get_palette_cache(xd, 0, color_cache);
+#endif
     int       out_cache_colors[PALETTE_MAX_SIZE];
     uint8_t   cache_color_found[2 * PALETTE_MAX_SIZE];
     const int n_out_cache = svt_av1_index_color_cache(
@@ -4862,8 +4891,13 @@ static void write_tx_size_vartx(MacroBlockD *xd, const MbModeInfo *mbmi, TxSize 
                                            xd->left_txfm_context + blk_row,
                                            mbmi->block_mi.sb_type,
                                            tx_size);
+#if OPT_TX_MI_MEM
+    const int write_txfm_partition = (tx_size ==
+                                      tx_depth_to_tx_size[mbmi->block_mi.tx_depth][mbmi->block_mi.sb_type]);
+#else
     const int write_txfm_partition = (tx_size ==
                                       tx_depth_to_tx_size[mbmi->tx_depth][mbmi->block_mi.sb_type]);
+#endif
 
     if (write_txfm_partition) {
         aom_write_symbol(w, 0, ec_ctx->txfm_partition_cdf[ctx], 2);
@@ -4960,13 +4994,19 @@ static INLINE int get_tx_size_context(const MacroBlockD *xd) {
     else
         return 0;
 }
+#if OPT_TX_MI_MEM
+static void write_selected_tx_size(const MacroBlockD *xd, FRAME_CONTEXT *ec_ctx, AomWriter *w, TxSize tx_size) {
+#else
 static void write_selected_tx_size(const MacroBlockD *xd, FRAME_CONTEXT *ec_ctx, AomWriter *w) {
+#endif
     const ModeInfo *const   mi    = xd->mi[0];
     const MbModeInfo *const mbmi  = &mi->mbmi;
     const BlockSize         bsize = mbmi->block_mi.sb_type;
 
     if (block_signals_txsize(bsize)) {
+#if !OPT_TX_MI_MEM
         const TxSize tx_size     = mbmi->tx_size;
+#endif
         const int    tx_size_ctx = get_tx_size_context(xd);
         assert(bsize < BlockSizeS_ALL);
         const int     depth       = tx_size_to_depth(tx_size, bsize);
@@ -4980,9 +5020,15 @@ static void write_selected_tx_size(const MacroBlockD *xd, FRAME_CONTEXT *ec_ctx,
         aom_write_symbol(w, depth, ec_ctx->tx_size_cdf[tx_size_cat][tx_size_ctx], max_depths + 1);
     }
 }
+#if OPT_TX_MI_MEM
+static EbErrorType av1_code_tx_size(FRAME_CONTEXT *ec_ctx, AomWriter *w, MacroBlockD *xd,
+                                    const MbModeInfo *mbmi, TxSize tx_size, TxMode tx_mode, BlockSize bsize,
+                                    uint8_t skip) {
+#else
 static EbErrorType av1_code_tx_size(FRAME_CONTEXT *ec_ctx, AomWriter *w, MacroBlockD *xd,
                                     const MbModeInfo *mbmi, TxMode tx_mode, BlockSize bsize,
                                     uint8_t skip) {
+#endif
     EbErrorType return_error = EB_ErrorNone;
     int         is_inter_tx  = is_inter_block(&mbmi->block_mi) || is_intrabc_block(&mbmi->block_mi);
     //int skip = mbmi->skip;
@@ -5000,12 +5046,21 @@ static EbErrorType av1_code_tx_size(FRAME_CONTEXT *ec_ctx, AomWriter *w, MacroBl
                 for (idx = 0; idx < width; idx += txbw)
                     write_tx_size_vartx(xd, mbmi, max_tx_size, 0, idy, idx, ec_ctx, w);
         } else {
+#if OPT_TX_MI_MEM
+            write_selected_tx_size(xd, ec_ctx, w, tx_size);
+            set_txfm_ctxs(tx_size, xd->n8_w, xd->n8_h, 0, xd);
+#else
             write_selected_tx_size(xd, ec_ctx, w);
             set_txfm_ctxs(mbmi->tx_size, xd->n8_w, xd->n8_h, 0, xd);
+#endif
         }
     } else {
+#if OPT_TX_MI_MEM
+        set_txfm_ctxs(tx_size, xd->n8_w, xd->n8_h, skip && is_inter_block(&mbmi->block_mi), xd);
+#else
         set_txfm_ctxs(
             mbmi->tx_size, xd->n8_w, xd->n8_h, skip && is_inter_block(&mbmi->block_mi), xd);
+#endif
     }
 
     return return_error;
@@ -5075,8 +5130,14 @@ void code_tx_size(PictureControlSet *pcsPtr, uint32_t blk_origin_x, uint32_t blk
     const MbModeInfo *const mbmi = &xd->mi[0]->mbmi;
     xd->above_txfm_context       = &txfm_context_array->top_array[txfm_context_above_index];
     xd->left_txfm_context        = &txfm_context_array->left_array[txfm_context_left_index];
-
+#if OPT_TX_MI_MEM
+    TxSize tx_size = (blk_ptr->prediction_mode_flag == INTRA_MODE && blk_ptr->pred_mode == INTRA_MODE_4x4)
+        ? 0
+        : blk_geom->txsize[blk_ptr->tx_depth][0]; // inherit tx_size from 1st transform block;
+    av1_code_tx_size(ec_ctx, w, xd, mbmi, tx_size, tx_mode, bsize, skip);
+#else
     av1_code_tx_size(ec_ctx, w, xd, mbmi, tx_mode, bsize, skip);
+#endif
 }
 
 static INLINE int get_segment_id(Av1Common *cm, const uint8_t *segment_ids, BlockSize bsize,
@@ -5476,14 +5537,24 @@ EbErrorType write_modes_b(PictureControlSet *pcs_ptr, EntropyCodingContext *cont
                     const uint8_t palette_size_plane =
                         blk_ptr->palette_info.pmi.palette_size[plane];
                     if (palette_size_plane > 0) {
+#if OPT_TX_MI_MEM
+                        TxSize tx_size = (blk_ptr->prediction_mode_flag == INTRA_MODE && blk_ptr->pred_mode == INTRA_MODE_4x4)
+                            ? 0
+                            : blk_geom->txsize[blk_ptr->tx_depth][0]; // inherit tx_size from 1st transform block;
+#else
                         const MbModeInfo *const mbmi = &blk_ptr->av1xd->mi[0]->mbmi;
+#endif
                         svt_av1_tokenize_color_map(
                             frame_context,
                             blk_ptr,
                             plane,
                             &tok,
                             bsize,
+#if OPT_TX_MI_MEM
+                            tx_size,
+#else
                             mbmi->tx_size,
+#endif
                             PALETTE_MAP,
                             0); //NO CDF update in entropy, the update will take place in arithmetic encode
                         assert(blk_ptr->use_intrabc == 0);
@@ -5864,14 +5935,24 @@ EbErrorType write_modes_b(PictureControlSet *pcs_ptr, EntropyCodingContext *cont
                     const uint8_t palette_size_plane =
                         blk_ptr->palette_info.pmi.palette_size[plane];
                     if (palette_size_plane > 0) {
+#if OPT_TX_MI_MEM
+                        TxSize tx_size = (blk_ptr->prediction_mode_flag == INTRA_MODE && blk_ptr->pred_mode == INTRA_MODE_4x4)
+                            ? 0
+                            : blk_geom->txsize[blk_ptr->tx_depth][0]; // inherit tx_size from 1st transform block;
+#else
                         const MbModeInfo *const mbmi = &blk_ptr->av1xd->mi[0]->mbmi;
+#endif
                         svt_av1_tokenize_color_map(
                             frame_context,
                             blk_ptr,
                             plane,
                             &tok,
                             bsize,
+#if OPT_TX_MI_MEM
+                            tx_size,
+#else
                             mbmi->tx_size,
+#endif
                             PALETTE_MAP,
                             0); //NO CDF update in entropy, the update will take place in arithmetic encode
                         assert(blk_ptr->use_intrabc == 0);

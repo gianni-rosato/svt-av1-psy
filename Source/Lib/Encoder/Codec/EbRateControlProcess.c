@@ -45,7 +45,9 @@ static const double tpl_hl_base_frame_div_factor[EB_MAX_TEMPORAL_LAYERS] = { 1, 
 static const double tpl_hl_islice_div_factor[EB_MAX_TEMPORAL_LAYERS] = { 1, 1, 1, 2, 1, 0.8 };
 static const double tpl_hl_base_frame_div_factor[EB_MAX_TEMPORAL_LAYERS] = { 1, 1, 1, 3, 1, 0.7 };
 #endif
-
+#if FIX_TPL_BOOST
+#define KB 400
+#endif
 #if !FTR_RC_CAP
 /**************************************
  * Coded Frames Stats
@@ -888,7 +890,11 @@ static int cqp_qindex_calc_tpl_la(PictureControlSet *pcs_ptr, RATE_CONTROL *rc, 
         }
         pcs_ptr->parent_pcs_ptr->r0 = pcs_ptr->parent_pcs_ptr->r0 / tpl_hl_islice_div_factor[scs_ptr->static_config.hierarchical_levels];
         if (pcs_ptr->parent_pcs_ptr->frm_hdr.frame_type == KEY_FRAME) {
+#if FIX_TPL_BOOST
+            {
+#else
             if (scs_ptr->static_config.intra_period_length == -1 || scs_ptr->static_config.intra_period_length > KF_INTERVAL_TH) {
+#endif
                 double factor = 1.0;
                 if (pcs_ptr->parent_pcs_ptr->r0 < 0.2){
                     double mult = 1.0;
@@ -908,9 +914,15 @@ static int cqp_qindex_calc_tpl_la(PictureControlSet *pcs_ptr, RATE_CONTROL *rc, 
         // when frames_to_key not available, i.e. in 1 pass encoding
         rc->kf_boost = get_cqp_kf_boost_from_r0(
             pcs_ptr->parent_pcs_ptr->r0, -1, scs_ptr->input_resolution);
+#if FIX_TPL_BOOST
+        int max_boost = pcs_ptr->parent_pcs_ptr->used_tpl_frame_num * KB;
+        rc->kf_boost = AOMMIN(rc->kf_boost, max_boost);
+#else
         // NM: TODO: replaced by unitary number X * number of pictures in GOP // 93.75 * number of pictures in GOP
         int max_boost = scs_ptr->static_config.intra_period_length < KF_INTERVAL_TH ? MAX_KF_BOOST_LOW_KI : MAX_KF_BOOST_HIGHT_KI;
+
         rc->kf_boost = AOMMIN(rc->kf_boost, max_boost);
+#endif
         // Baseline value derived from cpi->active_worst_quality and kf boost.
         active_best_quality = get_kf_active_quality_tpl(rc, active_worst_quality, bit_depth);
         // Allow somewhat lower kf minq with small image formats.
@@ -1040,7 +1052,11 @@ static int cqp_qindex_calc(PictureControlSet *pcs_ptr, RATE_CONTROL *rc, int qin
     int offset_idx = -1;
     if (!pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag)
         offset_idx = -1;
+#if FIX_QPS_OPEN_GOP
+    else if (pcs_ptr->parent_pcs_ptr->idr_flag)
+#else
     else if (pcs_ptr->slice_type == I_SLICE)
+#endif
         offset_idx = 0;
     else
         offset_idx = MIN(pcs_ptr->temporal_layer_index + 1, FIXED_QP_OFFSET_COUNT-1);
@@ -1463,7 +1479,11 @@ void process_tpl_stats_frame_kf_gfu_boost(PictureControlSet *pcs_ptr) {
 #endif
         pcs_ptr->parent_pcs_ptr->r0 = pcs_ptr->parent_pcs_ptr->r0 / tpl_hl_islice_div_factor[scs_ptr->static_config.hierarchical_levels];
         if (pcs_ptr->parent_pcs_ptr->frm_hdr.frame_type == KEY_FRAME) {
+#if FIX_TPL_BOOST
+            {
+#else
             if (scs_ptr->static_config.intra_period_length == -1 || scs_ptr->static_config.intra_period_length > KF_INTERVAL_TH) {
+#endif
                 double factor = 1.0;
                 if (pcs_ptr->parent_pcs_ptr->r0 < 0.2) {
                     double mult = 1.0;
@@ -1483,9 +1503,14 @@ void process_tpl_stats_frame_kf_gfu_boost(PictureControlSet *pcs_ptr) {
 #else
             pcs_ptr->parent_pcs_ptr->r0, -1, scs_ptr->input_resolution);
 #endif
+#if FIX_TPL_BOOST
+        int max_boost = pcs_ptr->parent_pcs_ptr->used_tpl_frame_num * KB;
+        rc->kf_boost = AOMMIN(rc->kf_boost, max_boost);
+#else
         // NM: TODO: replaced by unitary number X * number of pictures in GOP // 93.75 * number of pictures in GOP
         int max_boost = scs_ptr->static_config.intra_period_length < KF_INTERVAL_TH ? MAX_KF_BOOST_LOW_KI : MAX_KF_BOOST_HIGHT_KI;
         rc->kf_boost = AOMMIN(rc->kf_boost, max_boost);
+#endif
     }
 #else
     if (scs_ptr->static_config.rate_control_mode == 0)

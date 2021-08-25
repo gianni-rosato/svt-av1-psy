@@ -1333,11 +1333,11 @@ int svt_av1_full_pixel_search(PictureControlSet *pcs, IntraBcContext *x, BlockSi
     int32_t ibc_shift = 0;
     //IBC Modes:   0: OFF 1:Slow   2:Faster   3:Fastest
 #if OPT_IBC_HASH_SEARCH
-    if (pcs->parent_pcs_ptr->intraBC_ctrls.ibc_mode > 1)
+    ibc_shift = pcs->parent_pcs_ptr->intraBC_ctrls.ibc_shift;
 #else
     if (pcs->parent_pcs_ptr->ibc_mode > 1)
-#endif
         ibc_shift = 1;
+#endif
 
     SpeedFeatures *sf              = &pcs->sf;
     sf->exhaustive_searches_thresh = (1 << 25);

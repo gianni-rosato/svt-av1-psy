@@ -65,7 +65,11 @@ static INLINE PredictionMode get_uv_mode(UvPredictionMode mode) {
 }
 
 #if OPT_MEMORY_MIP
+#if OPT_MODE_MI_MEM
+static INLINE TxType intra_mode_to_tx_type(PredictionMode pred_mode, UvPredictionMode pred_mode_uv, PlaneType plane_type) {
+#else
 static INLINE TxType intra_mode_to_tx_type(const BlockModeInfoEnc *mbmi, PlaneType plane_type) {
+#endif
     static const TxType _intra_mode_to_tx_type[INTRA_MODES] = {
         DCT_DCT, // DC
         ADST_DCT, // V
@@ -81,11 +85,16 @@ static INLINE TxType intra_mode_to_tx_type(const BlockModeInfoEnc *mbmi, PlaneTy
         DCT_ADST, // SMOOTH_H
         ADST_ADST, // PAETH
     };
+#if OPT_MODE_MI_MEM
+    const PredictionMode mode = (plane_type == PLANE_TYPE_Y) ? pred_mode : get_uv_mode(pred_mode_uv);
+#else
     const PredictionMode mode = (plane_type == PLANE_TYPE_Y) ? mbmi->mode
                                                              : get_uv_mode(mbmi->uv_mode);
+#endif
     assert(mode < INTRA_MODES);
     return _intra_mode_to_tx_type[mode];
 }
+
 static INLINE TxType intra_mode_to_tx_type_dec(const BlockModeInfo *mbmi, PlaneType plane_type) {
     static const TxType _intra_mode_to_tx_type[INTRA_MODES] = {
         DCT_DCT, // DC
@@ -104,6 +113,7 @@ static INLINE TxType intra_mode_to_tx_type_dec(const BlockModeInfo *mbmi, PlaneT
     };
     const PredictionMode mode = (plane_type == PLANE_TYPE_Y) ? mbmi->mode
                                                              : get_uv_mode(mbmi->uv_mode);
+
     assert(mode < INTRA_MODES);
     return _intra_mode_to_tx_type[mode];
 }

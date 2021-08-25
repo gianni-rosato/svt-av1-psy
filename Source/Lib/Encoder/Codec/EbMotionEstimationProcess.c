@@ -201,7 +201,11 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
 #endif
     }
 //#if TUNE_M8_M9_FEB24
+#if TUNE_M7_M8_3
+    else if (pcs_ptr->enc_mode <= ENC_M6) {
+#else
     else if (pcs_ptr->enc_mode <= ENC_M7) {
+#endif
 //#else
 //    else if (pcs_ptr->enc_mode <= ENC_M8) {
 //#endif
@@ -227,6 +231,21 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
         }
 #endif
     }
+#if TUNE_M7_M8_3
+    else if (pcs_ptr->enc_mode <= ENC_M7) {
+        if (pcs_ptr->input_resolution < INPUT_SIZE_1080p_RANGE) {
+            me_context_ptr->search_area_width = me_context_ptr->search_area_height = 16;
+            me_context_ptr->max_me_search_width = 32;
+            me_context_ptr->max_me_search_height = 16;
+        }
+        else {
+            me_context_ptr->search_area_width = 16;
+            me_context_ptr->search_area_height = 6;
+            me_context_ptr->max_me_search_width = 16;
+            me_context_ptr->max_me_search_height = 9;
+        }
+    }
+#endif
 #if TUNE_M8_M9_FEB24
 #if TUNE_M9_SLOW
 #if TUNE_M10_M0 && !TUNE_M9_M10 || TUNE_M8_M11_MT
@@ -397,6 +416,12 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
             me_context_ptr->hme_level0_total_search_area_width = me_context_ptr->hme_level0_total_search_area_height = input_resolution <= INPUT_SIZE_1080p_RANGE ? 120 : 240;
             me_context_ptr->hme_level0_max_total_search_area_width = me_context_ptr->hme_level0_max_total_search_area_height = 480;
         }
+#if TUNE_HME_LEVEL0_M0
+    else if (pcs_ptr->enc_mode <= ENC_M0) {
+        me_context_ptr->hme_level0_total_search_area_width = me_context_ptr->hme_level0_total_search_area_height = input_resolution <= INPUT_SIZE_1080p_RANGE ? 32 : 200;
+        me_context_ptr->hme_level0_max_total_search_area_width = me_context_ptr->hme_level0_max_total_search_area_height = input_resolution <= INPUT_SIZE_1080p_RANGE ? 192 : 400;
+    }
+#endif
         else if (pcs_ptr->enc_mode <= ENC_M4) {
             me_context_ptr->hme_level0_total_search_area_width = me_context_ptr->hme_level0_total_search_area_height = 32;
             me_context_ptr->hme_level0_max_total_search_area_width = me_context_ptr->hme_level0_max_total_search_area_height = 192;

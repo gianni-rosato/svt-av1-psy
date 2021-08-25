@@ -1138,12 +1138,17 @@ static EbErrorType copy_frame_buffer(SequenceControlSet *scs_ptr, uint8_t *dst, 
 
     EbPictureBufferDesc *dst_picture_ptr = (EbPictureBufferDesc *)dst;
     EbPictureBufferDesc *src_picture_ptr = (EbPictureBufferDesc *)src;
+#if !FIX_COMPRESSED_10BIT
     uint16_t             input_row_index;
+#endif
     EbBool               is_16bit_input = (EbBool)(config->encoder_bit_depth > EB_8BIT);
 
     // Need to include for Interlacing on the fly with pictureScanType = 1
 
     if (!is_16bit_input) {
+#if FIX_COMPRESSED_10BIT
+        uint16_t             input_row_index;
+#endif
         uint32_t luma_buffer_offset =
             (dst_picture_ptr->stride_y * scs_ptr->top_padding + scs_ptr->left_padding)
             << is_16bit_input;
@@ -1183,6 +1188,7 @@ static EbErrorType copy_frame_buffer(SequenceControlSet *scs_ptr, uint8_t *dst, 
                         chroma_stride * input_row_index),
                        chroma_width);
         }
+#if !FIX_COMPRESSED_10BIT
     } else if (config->compressed_ten_bit_format == 1) {
         {
             uint32_t luma_buffer_offset   = (dst_picture_ptr->stride_y * scs_ptr->top_padding +
@@ -1244,6 +1250,7 @@ static EbErrorType copy_frame_buffer(SequenceControlSet *scs_ptr, uint8_t *dst, 
             //    }
             //}
         }
+#endif
     } else { // 10bit packed
 
         svt_memcpy(
@@ -1255,6 +1262,19 @@ static EbErrorType copy_frame_buffer(SequenceControlSet *scs_ptr, uint8_t *dst, 
         svt_memcpy(
             dst_picture_ptr->buffer_cr, src_picture_ptr->buffer_cr, src_picture_ptr->chroma_size);
 
+#if SS_2B_COMPRESS
+        svt_memcpy(dst_picture_ptr->buffer_bit_inc_y,
+            src_picture_ptr->buffer_bit_inc_y,
+            src_picture_ptr->luma_size >> 2);
+
+        svt_memcpy(dst_picture_ptr->buffer_bit_inc_cb,
+            src_picture_ptr->buffer_bit_inc_cb,
+            src_picture_ptr->chroma_size >> 2);
+
+        svt_memcpy(dst_picture_ptr->buffer_bit_inc_cr,
+            src_picture_ptr->buffer_bit_inc_cr,
+            src_picture_ptr->chroma_size >> 2);
+#else
         svt_memcpy(dst_picture_ptr->buffer_bit_inc_y,
                    src_picture_ptr->buffer_bit_inc_y,
                    src_picture_ptr->luma_size);
@@ -1266,6 +1286,7 @@ static EbErrorType copy_frame_buffer(SequenceControlSet *scs_ptr, uint8_t *dst, 
         svt_memcpy(dst_picture_ptr->buffer_bit_inc_cr,
                    src_picture_ptr->buffer_bit_inc_cr,
                    src_picture_ptr->chroma_size);
+#endif
     }
     return return_error;
 }
@@ -1567,7 +1588,7 @@ void *resource_coordination_kernel(void *input_ptr) {
             // 0                 OFF: No compond mode search : AVG only
             // 1                 ON: full
             if (scs_ptr->static_config.compound_level == DEFAULT) {
-#if TUNE_NEW_M11
+#if TUNE_NEW_M11 && !TUNE_M9_11_3
                 scs_ptr->compound_mode = (scs_ptr->static_config.enc_mode <= ENC_M11) ? 1 : 0;
 #else
                 scs_ptr->compound_mode = (scs_ptr->static_config.enc_mode <= ENC_M10) ? 1 : 0;

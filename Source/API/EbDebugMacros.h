@@ -504,6 +504,48 @@ NOTE : PART OF LIGHT_PD0_2  code was committed to svt-04-final-rebased under OPT
 #define SANITIZER_FIX                         1 // Fix thread sanitizer: race:svt_memcpy_small and race:svt_memcpy_sse
 #define FIX_SANITIZER_RACE_CONDS              1 // Fix race conditions in MD/EncDec
 
+#define FIX_QPS_OPEN_GOP                      1 // Use the BASE QP-Offset for CRA (instead of using the IDR QP-Offset)
+#define FIX_TF_OPEN_GOP                       1 // Use past frame(s) to tf CRA (instead of using future frame(s) only)
+#define FIX_PD0_RDOQ                          1 // Enable RDOQ @ mds3 of PD0
+#define FIX_TF_HME                            1 // Apply a penalty to the HME_MV cost(@ the post - HME(0, 0) vs.HME_MV distortion check) when the HME_MV distortion is high (towards more search ~ (0,0) if difficult 64x64
+#define FIX_SKIP_COEFF_CONTEXT                1 // Use skip-coeff-context update @ full-cost derivation
+#define TUNE_HME_LEVEL0_M0                    1 // Tune HME-Level0 for 4K
+#define TUNE_PME_M0                           1 // Tune Full-Pel PME
+
+#define OPT_MI_MAP_MEMORY                     1 // Reduce fields in ModeInfo struct.  Only allocate MI for 8x8 blocks when 4x4 is disallowed.  Sub-macros can be merged with this one.
+#if OPT_MI_MAP_MEMORY
+#define OPT_INTRA_MI_MEM 1
+#define OPT_INTER_MI_MEM 1
+#define OPT_MODE_MI_MEM  1
+#define OPT_PALETTE_MEM  1
+#define OPT_TX_MI_MEM    1
+#endif
+
+#define SS_2B_COMPRESS                       1 // compress 10bit pictures into 10 bits from 16 bits, lossless, memory saving
+#if SS_2B_COMPRESS
+#define INC_PAD68                            1  // for 10bit increase the pad of source from 68 to 72 to be mutliple of 8 to accomodate 2bit-compression flow
+#endif
+#define FIX_TPL_R2R_BUFF                      1 // Fix r2r from using uninit'd recon buffer for REF pics
+#define FIX_RACE_CONDS                        1 // Fix race conditions, causing sanitizer thread test failure
+#define OPT_TF_8BIT_SUBPEL                    1 // Use 8bit pic in TF subpel
+#define SS_TF_OPTS                           1 // lossless tf optimizations, turning off chroma memory allocation in higher presets
+#define TUNE_LPD1_DETECTOR                    1 // Adjust LPD1 detector values for M11
+#define OPT_10BIT_MDS3                        1 // Use 8bit for MDS3 when bypassing EncDec if recon is not needed
+#define OPT_COEFF_BIT_EST                     1 // Skip coeff bit estimation when have many coeffs
+#define FIX_PREHME_ADD                        1 // fix the addition of the prehme candidate into the hme_level0 candidates
+#define FTR_TX_NEIGH_INFO                     1 // Use neighbour blocks' info to apply TX shortcuts
+
+#define TUNE_M7_M8_3                          1 // tune m7-m8
+#define FIX_LPD1_DETECTOR                     1 // Fix left SB check for LPD1 detector when PD0 is skipped
+
+#define FIX_COMPRESSED_10BIT                  1 // compressed 10bit files working (use with flag --compressed-ten-bit-format)
+#define OPT_TX_SHORTS                         1 // Extend coeff bit est skipping to regular PD1 path; use TX shrotcuts when PD0 is skipped
+#define FIX_TPL_BOOST                         1 // fix r2r between intra-period -1 and infinit intra-period.
+#define FIX_ISSUE_45                          1 // Issue 45 fix
+
+#define TUNE_M9_11_3                          1 // tune m8-11, new levels for deep_removal_level and md_pme_level. Small changes in M8 to improve spacing.
+
+#define FIX_INTRA_PERIOD_2PASS                1 // fixing the issue of intra-period -1 being lossy against intra-period greater than the number of frames in 2pass
 #endif
 
 #if !PRIVATE_MACROS
@@ -587,6 +629,11 @@ NOTE : PART OF LIGHT_PD0_2  code was committed to svt-04-final-rebased under OPT
 #undef FTR_10BIT_MDS3_LPD1
 #undef TUNE_4K_M11
 #undef TUNE_M8_M10_4K_SUPER
+#undef FTR_TX_NEIGH_INFO
+#undef TUNE_M7_M8_3
+#undef TUNE_M9_11_3
+#undef OPT_COEFF_BIT_EST
+#undef OPT_TX_SHORTS
 #endif
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch

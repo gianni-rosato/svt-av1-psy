@@ -140,6 +140,16 @@ EbErrorType svt_picture_buffer_desc_ctor_noy8b(EbPictureBufferDesc *pictureBuffe
     const EbPictureBufferDescInitData *picture_buffer_desc_init_data_ptr =
         (EbPictureBufferDescInitData *)object_init_data_ptr;
 
+#if SS_2B_COMPRESS
+    //for 10bit we force split mode + 2b-compressed
+    uint32_t       bytes_per_pixel = 1;
+    const uint16_t subsampling_x =
+        (picture_buffer_desc_init_data_ptr->color_format == EB_YUV444 ? 1 : 2) - 1;
+
+    pictureBufferDescPtr->dctor = svt_picture_buffer_desc_dctor;
+
+#else
+
     uint32_t       bytes_per_pixel = (picture_buffer_desc_init_data_ptr->bit_depth == EB_8BIT) ? 1
         : (picture_buffer_desc_init_data_ptr->bit_depth <= EB_16BIT) ? 2
         : 4;
@@ -152,7 +162,7 @@ EbErrorType svt_picture_buffer_desc_ctor_noy8b(EbPictureBufferDesc *pictureBuffe
         picture_buffer_desc_init_data_ptr->bit_depth <= EB_16BIT &&
         picture_buffer_desc_init_data_ptr->split_mode == EB_TRUE)
         bytes_per_pixel = 1;
-
+#endif
     // Set the Picture Buffer Static variables
     pictureBufferDescPtr->max_width = picture_buffer_desc_init_data_ptr->max_width;
     pictureBufferDescPtr->max_height = picture_buffer_desc_init_data_ptr->max_height;
@@ -164,6 +174,12 @@ EbErrorType svt_picture_buffer_desc_ctor_noy8b(EbPictureBufferDesc *pictureBuffe
     pictureBufferDescPtr->stride_y = picture_buffer_desc_init_data_ptr->max_width +
         picture_buffer_desc_init_data_ptr->left_padding +
         picture_buffer_desc_init_data_ptr->right_padding;
+
+#if SS_2B_COMPRESS
+    assert_err(pictureBufferDescPtr->stride_y % 8 == 0, "Luma Stride should be n*8 to accomodate 2b-compression flow \n");
+#endif
+
+
     pictureBufferDescPtr->stride_cb = pictureBufferDescPtr->stride_cr =
         pictureBufferDescPtr->stride_y >> subsampling_x;
     pictureBufferDescPtr->origin_x = picture_buffer_desc_init_data_ptr->left_padding;
@@ -197,8 +213,14 @@ EbErrorType svt_picture_buffer_desc_ctor_noy8b(EbPictureBufferDesc *pictureBuffe
 
         pictureBufferDescPtr->buffer_bit_inc_y = 0;
         if (picture_buffer_desc_init_data_ptr->split_mode == EB_TRUE) {
+
+#if SS_2B_COMPRESS
             EB_CALLOC_ALIGNED_ARRAY(pictureBufferDescPtr->buffer_bit_inc_y,
-                pictureBufferDescPtr->luma_size * bytes_per_pixel);
+                pictureBufferDescPtr->luma_size * bytes_per_pixel / 4);
+#else
+            EB_CALLOC_ALIGNED_ARRAY(pictureBufferDescPtr->buffer_bit_inc_y,
+                pictureBufferDescPtr->luma_size * bytes_per_pixel );
+#endif
         }
     }
 
@@ -207,8 +229,14 @@ EbErrorType svt_picture_buffer_desc_ctor_noy8b(EbPictureBufferDesc *pictureBuffe
             pictureBufferDescPtr->chroma_size * bytes_per_pixel);
         pictureBufferDescPtr->buffer_bit_inc_cb = 0;
         if (picture_buffer_desc_init_data_ptr->split_mode == EB_TRUE) {
+
+#if SS_2B_COMPRESS
+            EB_CALLOC_ALIGNED_ARRAY(pictureBufferDescPtr->buffer_bit_inc_cb,
+                pictureBufferDescPtr->chroma_size * bytes_per_pixel / 4);
+#else
             EB_CALLOC_ALIGNED_ARRAY(pictureBufferDescPtr->buffer_bit_inc_cb,
                 pictureBufferDescPtr->chroma_size * bytes_per_pixel);
+#endif
         }
     }
 
@@ -217,8 +245,13 @@ EbErrorType svt_picture_buffer_desc_ctor_noy8b(EbPictureBufferDesc *pictureBuffe
             pictureBufferDescPtr->chroma_size * bytes_per_pixel);
         pictureBufferDescPtr->buffer_bit_inc_cr = 0;
         if (picture_buffer_desc_init_data_ptr->split_mode == EB_TRUE) {
+#if SS_2B_COMPRESS
+            EB_CALLOC_ALIGNED_ARRAY(pictureBufferDescPtr->buffer_bit_inc_cr,
+                pictureBufferDescPtr->chroma_size * bytes_per_pixel/4);
+#else
             EB_CALLOC_ALIGNED_ARRAY(pictureBufferDescPtr->buffer_bit_inc_cr,
                 pictureBufferDescPtr->chroma_size * bytes_per_pixel);
+#endif
         }
     }
 

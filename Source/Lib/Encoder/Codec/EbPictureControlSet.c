@@ -236,6 +236,9 @@ void picture_control_set_dctor(EbPtr p) {
         EB_DELETE_PTR_ARRAY(obj->md_cr_dc_sign_level_coeff_neighbor_array[depth], tile_cnt);
         EB_DELETE_PTR_ARRAY(obj->md_cb_dc_sign_level_coeff_neighbor_array[depth], tile_cnt);
         EB_DELETE_PTR_ARRAY(obj->md_txfm_context_array[depth], tile_cnt);
+#if FIX_SKIP_COEFF_CONTEXT
+        EB_DELETE_PTR_ARRAY(obj->md_skip_coeff_neighbor_array[depth], tile_cnt);
+#endif
         EB_DELETE_PTR_ARRAY(obj->md_ref_frame_type_neighbor_array[depth], tile_cnt);
         EB_DELETE_PTR_ARRAY(obj->md_interpolation_type_neighbor_array[depth], tile_cnt);
     }
@@ -467,7 +470,10 @@ uint8_t get_loop_filter_mode(EbEncMode enc_mode, uint8_t is_used_as_reference_fl
 #endif
 
 uint8_t get_enable_restoration(EbEncMode enc_mode) ;
-
+#if OPT_MI_MAP_MEMORY
+uint8_t get_disallow_4x4(EbEncMode enc_mode, EB_SLICE slice_type);
+uint8_t get_disallow_nsq(EbEncMode enc_mode);
+#endif
 EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object_init_data_ptr) {
     PictureControlSetInitData *init_data_ptr = (PictureControlSetInitData *)object_init_data_ptr;
 
@@ -674,6 +680,9 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
         EB_ALLOC_PTR_ARRAY(object_ptr->md_cb_dc_sign_level_coeff_neighbor_array[depth],
                            total_tile_cnt);
         EB_ALLOC_PTR_ARRAY(object_ptr->md_txfm_context_array[depth], total_tile_cnt);
+#if FIX_SKIP_COEFF_CONTEXT
+        EB_ALLOC_PTR_ARRAY(object_ptr->md_skip_coeff_neighbor_array[depth], total_tile_cnt);
+#endif
         EB_ALLOC_PTR_ARRAY(object_ptr->md_ref_frame_type_neighbor_array[depth], total_tile_cnt);
         if (init_data_ptr->hbd_mode_decision != EB_10_BIT_MD) {
             EB_ALLOC_PTR_ARRAY(object_ptr->md_luma_recon_neighbor_array[depth], total_tile_cnt);
@@ -784,6 +793,17 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
                     PU_NEIGHBOR_ARRAY_GRANULARITY,
                     NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK,
                 },
+#if FIX_SKIP_COEFF_CONTEXT
+                {
+                    &object_ptr->md_skip_coeff_neighbor_array[depth][tile_idx],
+                    MAX_PICTURE_WIDTH_SIZE,
+                    MAX_PICTURE_HEIGHT_SIZE,
+                    sizeof(uint8_t),
+                    PU_NEIGHBOR_ARRAY_GRANULARITY,
+                    PU_NEIGHBOR_ARRAY_GRANULARITY,
+                    NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK,
+                },
+#endif
                 {
                     &object_ptr->md_ref_frame_type_neighbor_array[depth][tile_idx],
                     MAX_PICTURE_WIDTH_SIZE,
@@ -1293,6 +1313,34 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
                     all_sb * (init_data_ptr->sb_size_pix >> MI_SIZE_LOG2) *
                         (init_data_ptr->sb_size_pix >> MI_SIZE_LOG2));
 
+#if OPT_MI_MAP_MEMORY
+    // If NSQ is allowed, then need a 4x4 MI grid because 8x8 NSQ shapes will require 4x4 granularity
+    uint8_t disallow_4x4 = get_disallow_nsq(init_data_ptr->enc_mode);
+    for (EB_SLICE slice_type = 0; slice_type < IDR_SLICE + 1; slice_type++)
+        disallow_4x4 = MIN(disallow_4x4, get_disallow_4x4(init_data_ptr->enc_mode, slice_type));
+
+    object_ptr->disallow_4x4_all_frames = disallow_4x4;
+
+    /* If 4x4 blocks are disallowed for all frames, the the MI blocks only need to be allocated for
+    8x8 blocks.  The mi_grid will still be 4x4 so that the data can be accessed the same way throughout
+    the code. */
+    EB_MALLOC_ARRAY(object_ptr->mip,
+                    all_sb * (init_data_ptr->sb_size_pix >> (MI_SIZE_LOG2 + disallow_4x4)) *
+                        (init_data_ptr->sb_size_pix >> (MI_SIZE_LOG2 + disallow_4x4)));
+
+    memset(object_ptr->mip, 0,
+           sizeof(ModeInfo) * all_sb * (init_data_ptr->sb_size_pix >> (MI_SIZE_LOG2 + disallow_4x4)) *
+               (init_data_ptr->sb_size_pix >> (MI_SIZE_LOG2 + disallow_4x4)));
+
+    uint32_t mi_stride = picture_sb_w * (init_data_ptr->sb_size_pix >> MI_SIZE_LOG2);
+    for (uint32_t mi_h = 0; mi_h < picture_sb_h * (init_data_ptr->sb_size_pix >> MI_SIZE_LOG2); mi_h++) {
+        for (uint32_t mi_w = 0; mi_w < picture_sb_w * (init_data_ptr->sb_size_pix >> MI_SIZE_LOG2); mi_w++) {
+            uint32_t mi_grid_idx = mi_h * mi_stride + mi_w;
+            uint32_t mip_idx = (mi_h >> disallow_4x4) * (mi_stride >> disallow_4x4) + (mi_w >> disallow_4x4);
+            object_ptr->mi_grid_base[mi_grid_idx] = object_ptr->mip + mip_idx;
+        }
+    }
+#else
     EB_MALLOC_ARRAY(object_ptr->mip,
                     all_sb * (init_data_ptr->sb_size_pix >> MI_SIZE_LOG2) *
                         (init_data_ptr->sb_size_pix >> MI_SIZE_LOG2));
@@ -1307,6 +1355,7 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
              (init_data_ptr->sb_size_pix >> MI_SIZE_LOG2);
          ++mi_idx)
         object_ptr->mi_grid_base[mi_idx] = object_ptr->mip + mi_idx;
+#endif
     object_ptr->mi_stride = picture_sb_w * (init_data_ptr->sb_size_pix >> MI_SIZE_LOG2);
     if (init_data_ptr->mfmv) {
         //MFMV: map is 8x8 based.

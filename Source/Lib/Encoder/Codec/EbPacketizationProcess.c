@@ -678,12 +678,18 @@ void *packetization_kernel(void *input_ptr) {
         }
 
         output_stream_ptr->flags = 0;
+#if FIX_RACE_CONDS
+        if (pcs_ptr->parent_pcs_ptr->end_of_sequence_flag) {
+            output_stream_ptr->flags |= EB_BUFFERFLAG_EOS;
+        }
+#else
         output_stream_ptr->flags |=
             (encode_context_ptr->terminating_sequence_flag_received == EB_TRUE &&
              pcs_ptr->parent_pcs_ptr->decode_order ==
                  encode_context_ptr->terminating_picture_number)
                 ? EB_BUFFERFLAG_EOS
                 : 0;
+#endif
         output_stream_ptr->n_filled_len = 0;
         output_stream_ptr->pts          = pcs_ptr->parent_pcs_ptr->input_ptr->pts;
         //we output one temporal unit a time, so dts alwasy equals to pts.

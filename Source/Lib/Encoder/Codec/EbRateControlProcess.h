@@ -48,7 +48,9 @@
 #define MAX_GF_INTERVAL 32
 #define FIXED_GF_INTERVAL 8 // Used in some testing modes only
 #define MAX_GF_LENGTH_LAP 16
+#if !FIX_INTRA_PERIOD_2PASS
 #define MAX_NUM_SEC_INTRA 5
+#endif
 #define MAX_ARF_LAYERS 6
 
 enum {

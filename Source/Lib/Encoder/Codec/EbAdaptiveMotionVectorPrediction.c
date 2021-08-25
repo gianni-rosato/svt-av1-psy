@@ -1960,7 +1960,13 @@ void init_xd(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr) {
 
     xd->mi_stride        = pcs_ptr->mi_stride;
     const int32_t offset = mi_row * xd->mi_stride + mi_col;
+#if OPT_MI_MAP_MEMORY
+    // mip offset may be different from grid offset when 4x4 blocks are disallowed
+    const int32_t mip_offset = (mi_row >> pcs_ptr->disallow_4x4_all_frames) * (xd->mi_stride >> pcs_ptr->disallow_4x4_all_frames) + (mi_col >> pcs_ptr->disallow_4x4_all_frames);
+    pcs_ptr->mi_grid_base[offset] = pcs_ptr->mip + mip_offset;
+#else
     pcs_ptr->mi_grid_base[offset] = pcs_ptr->mip + offset;
+#endif
     xd->mi               = pcs_ptr->mi_grid_base + offset;
 
     //ModeInfo *mi_ptr = xd->mi[-(xd->mi_stride)]; /*&xd->mi[-xd->mi_stride]->mbmi*/
@@ -2208,7 +2214,13 @@ void update_mi_map(BlkStruct *blk_ptr, uint32_t blk_origin_x, uint32_t blk_origi
     const int32_t    offset = mi_row * mi_stride + mi_col;
 
     // Reset the mi_grid (needs to be done here in case it was changed for NSQ blocks during MD - init_xd())
+#if OPT_MI_MAP_MEMORY
+    // mip offset may be different from grid offset when 4x4 blocks are disallowed
+    const int32_t mip_offset = (mi_row >> pcs_ptr->disallow_4x4_all_frames) * (mi_stride >> pcs_ptr->disallow_4x4_all_frames) + (mi_col >> pcs_ptr->disallow_4x4_all_frames);
+    pcs_ptr->mi_grid_base[offset] = pcs_ptr->mip + mip_offset;
+#else
     pcs_ptr->mi_grid_base[offset] = pcs_ptr->mip + offset;
+#endif
 
     MvReferenceFrame rf[2];
     av1_set_ref_frame(rf, blk_ptr->prediction_unit_array->ref_frame_type);
@@ -2219,19 +2231,35 @@ void update_mi_map(BlkStruct *blk_ptr, uint32_t blk_origin_x, uint32_t blk_origi
     BlockModeInfoEnc*   block_mi = &mi_ptr[0].mbmi.block_mi;
 
     // copy mbmi data
+#if OPT_TX_MI_MEM
+    block_mi->tx_depth = blk_ptr->tx_depth;
+#else
     mbmi->tx_size = (blk_ptr->prediction_mode_flag == INTRA_MODE && blk_ptr->pred_mode == INTRA_MODE_4x4)
         ? 0 :
         blk_geom->txsize[blk_ptr->tx_depth][0]; // inherit tx_size from 1st transform block;
-
     mbmi->tx_depth = blk_ptr->tx_depth;
+#endif
+#if OPT_INTER_MI_MEM
+    block_mi->comp_group_idx = blk_ptr->comp_group_idx;
+#else
     mbmi->comp_group_idx = blk_ptr->comp_group_idx;
+#endif
     if (pcs_ptr->parent_pcs_ptr->palette_level) {
+#if OPT_PALETTE_MEM
+        mbmi->palette_mode_info.palette_size = blk_ptr->palette_info.pmi.palette_size[0];
+        svt_memcpy(mbmi->palette_mode_info.palette_colors, blk_ptr->palette_info.pmi.palette_colors, sizeof(mbmi->palette_mode_info.palette_colors[0]) * PALETTE_MAX_SIZE);
+#else
         svt_memcpy(&mbmi->palette_mode_info,
             &blk_ptr->palette_info.pmi,
             sizeof(PaletteModeInfo));
+#endif
     }
     else {
+#if OPT_PALETTE_MEM
+        mbmi->palette_mode_info.palette_size = 0;
+#else
         mbmi->palette_mode_info.palette_size[0] = mbmi->palette_mode_info.palette_size[1] = 0;
+#endif
     }
 
     block_mi->sb_type = (blk_ptr->prediction_mode_flag == INTRA_MODE && blk_ptr->pred_mode == INTRA_MODE_4x4) ? BLOCK_4X4 : blk_geom->bsize;
@@ -2260,20 +2288,23 @@ void update_mi_map(BlkStruct *blk_ptr, uint32_t blk_origin_x, uint32_t blk_origi
             block_mi->mv[1].as_mv.row = blk_ptr->prediction_unit_array->mv[1].y;
         }
 
+#if !OPT_INTER_MI_MEM
         block_mi->ref_mv_idx = blk_ptr->drl_index;
-
+#endif
+#if !OPT_MODE_MI_MEM
         block_mi->motion_mode = blk_ptr->prediction_unit_array[0].motion_mode;
+#endif
         block_mi->compound_idx = blk_ptr->compound_idx;
         block_mi->interp_filters = blk_ptr->interp_filters;
     }
-
+#if !OPT_INTRA_MI_MEM
     if (blk_ptr->prediction_mode_flag == INTRA_MODE) {
         block_mi->cfl_alpha_idx = blk_ptr->prediction_unit_array->cfl_alpha_idx;
         block_mi->cfl_alpha_signs = blk_ptr->prediction_unit_array->cfl_alpha_signs;
         block_mi->angle_delta[PLANE_TYPE_Y] = blk_ptr->prediction_unit_array[0].angle_delta[PLANE_TYPE_Y];
         block_mi->angle_delta[PLANE_TYPE_UV] = blk_ptr->prediction_unit_array[0].angle_delta[PLANE_TYPE_UV];
     }
-
+#endif
     // The data copied into each mi block is the same; therefore, copy the data from the blk_ptr only for the first block_mi
     // then use change the mi block pointers of the remaining blocks ot point to the first block_mi. All data that
     // is used from block_mi should be updated above.

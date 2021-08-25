@@ -479,6 +479,10 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         update_cdf_level = pcs_ptr->slice_type == I_SLICE
         ? 1
         : 3;
+#if TUNE_M9_11_3
+    else if (pcs_ptr->enc_mode <= ENC_M8)
+        update_cdf_level = pcs_ptr->slice_type == I_SLICE ? 1 : 0;
+#endif
 #if TUNE_SHIFT_PRESETS_DOWN && !TUNE_M9_23_BDR || TUNE_M8_M9_FEB24
 #if TUNE_M10_M7
 #if TUNE_M10_M9_1 && !TUNE_M10_M3_1
@@ -496,7 +500,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     else if (pcs_ptr->enc_mode <= ENC_M8)
 #endif
 #endif
+#if TUNE_M9_11_3
+        update_cdf_level = (pcs_ptr->parent_pcs_ptr->input_resolution <= INPUT_SIZE_1080p_RANGE)? 0 : (pcs_ptr->slice_type == I_SLICE ? 1 : 0);
+#else
         update_cdf_level = pcs_ptr->slice_type == I_SLICE ? 1 : 0;
+#endif
     else
         update_cdf_level = 0;
 
@@ -695,11 +703,26 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     if (enc_mode <= ENC_M9)
 #endif
         pcs_ptr->use_low_precision_cost_estimation = 0;
+#if OPT_COEFF_BIT_EST
+    else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M10)
+        pcs_ptr->use_low_precision_cost_estimation = 2;
+    else
+#if OPT_TX_SHORTS
+#if TUNE_M9_11_3
+        pcs_ptr->use_low_precision_cost_estimation = scs_ptr->input_resolution <= INPUT_SIZE_1080p_RANGE ? (pcs_ptr->parent_pcs_ptr->slice_type == I_SLICE ? 2 : 3) : 2;
+#else
+        pcs_ptr->use_low_precision_cost_estimation = pcs_ptr->parent_pcs_ptr->slice_type == I_SLICE ? 2 : 3;
+#endif
+#else
+        pcs_ptr->use_low_precision_cost_estimation = 3;
+#endif
+#else
     else
 #if FTR_PD0_OPT
         pcs_ptr->use_low_precision_cost_estimation = 2;
 #else
         pcs_ptr->use_low_precision_cost_estimation = 1;
+#endif
 #endif
 #endif
 #endif

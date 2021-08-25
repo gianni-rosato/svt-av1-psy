@@ -30,6 +30,13 @@
 #include "mcomp.h"
 #include "av1me.h"
 #include "limits.h"
+
+#if SS_2B_COMPRESS
+#include"EbPackUnPack_C.h"
+#endif
+
+
+
 #if OPT_INLINE_FUNCS
 #include "EbInterPrediction.h"
 #endif
@@ -231,7 +238,19 @@ void mode_decision_update_neighbor_arrays(PictureControlSet *  pcs_ptr,
                                        bheight,
                                        NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
         }
+#if FIX_SKIP_COEFF_CONTEXT
+        if (context_ptr->use_skip_coeff_context) {
+            uint8_t is_skip_coeff = !context_ptr->blk_ptr->block_has_coeff;
 
+            neighbor_array_unit_mode_write(context_ptr->skip_coeff_neighbor_array,
+                &is_skip_coeff,
+                origin_x,
+                origin_y,
+                bwdith,
+                bheight,
+                NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
+        }
+#endif
 #if !OPT_NA_ISINTER
         // Mode Type Update
         if (!context_ptr->shut_fast_rate)
@@ -852,6 +871,17 @@ void copy_neighbour_arrays(PictureControlSet *pcs_ptr, ModeDecisionContext *cont
                    blk_geom->bwidth,
                    blk_geom->bheight,
                    NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
+#if FIX_SKIP_COEFF_CONTEXT
+    if (context_ptr->use_skip_coeff_context) {
+        copy_neigh_arr(pcs_ptr->md_skip_coeff_neighbor_array[src_idx][tile_idx],
+            pcs_ptr->md_skip_coeff_neighbor_array[dst_idx][tile_idx],
+            blk_org_x,
+            blk_org_y,
+            blk_geom->bwidth,
+            blk_geom->bheight,
+            NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
+    }
+#endif
     //neighbor_array_unit_reset(pcs_ptr->md_ref_frame_type_neighbor_array[depth]);
     copy_neigh_arr(pcs_ptr->md_ref_frame_type_neighbor_array[src_idx][tile_idx],
                    pcs_ptr->md_ref_frame_type_neighbor_array[dst_idx][tile_idx],
@@ -1373,6 +1403,9 @@ void product_coding_loop_init_fast_loop(PictureControlSet *pcs_ptr,
 #if !OPT_NA_ISINTER
                                         NeighborArrayUnit *  mode_type_neighbor_array,
 #endif
+#if FIX_SKIP_COEFF_CONTEXT
+                                        NeighborArrayUnit *  skip_coeff_neighbor_array,
+#endif
                                         NeighborArrayUnit *  leaf_partition_neighbor_array) {
     context_ptr->tx_depth = context_ptr->blk_ptr->tx_depth = 0;
     // Generate Split, Skip and intra mode contexts for the rate estimation
@@ -1386,6 +1419,9 @@ void product_coding_loop_init_fast_loop(PictureControlSet *pcs_ptr,
 #endif
 #if !OPT_NA_ISINTER
                                    mode_type_neighbor_array,
+#endif
+#if FIX_SKIP_COEFF_CONTEXT
+                                   skip_coeff_neighbor_array,
 #endif
                                    leaf_partition_neighbor_array);
 
@@ -5055,7 +5091,11 @@ static INLINE TxType av1_get_tx_type(int32_t is_inter, PredictionMode pred_mode,
     if (txsize_sqr_up_map[tx_size] > TX_32X32 || plane_type == PLANE_TYPE_Y || is_inter) {
         return DCT_DCT;
     }
-
+#if OPT_MODE_MI_MEM
+    // In intra mode, uv planes don't share the same prediction mode as y
+    // plane, so the tx_type should not be shared
+    TxType tx_type = intra_mode_to_tx_type(pred_mode, pred_mode_uv, PLANE_TYPE_UV);
+#else
     MbModeInfo mbmi;
     mbmi.block_mi.mode    = pred_mode;
     mbmi.block_mi.uv_mode = pred_mode_uv;
@@ -5063,7 +5103,7 @@ static INLINE TxType av1_get_tx_type(int32_t is_inter, PredictionMode pred_mode,
     // In intra mode, uv planes don't share the same prediction mode as y
     // plane, so the tx_type should not be shared
     TxType tx_type = intra_mode_to_tx_type(&mbmi.block_mi, PLANE_TYPE_UV);
-
+#endif
     assert(tx_type < TX_TYPES);
     const TxSetType tx_set_type = get_ext_tx_set_type(tx_size, is_inter, reduced_tx_set);
     return !av1_ext_tx_used[tx_set_type][tx_type] ? DCT_DCT : tx_type;
@@ -6220,12 +6260,20 @@ void tx_type_search_light_pd0(PictureControlSet *pcs_ptr, ModeDecisionContext *c
 #if LIGHT_PD0_2
 #if OPT_PD0_TXT
 #if SS_CLN_LIGHT_PD0_PATH
+#if OPT_COEFF_BIT_EST
+    const uint32_t th = ((bwidth * bheight) >> 5);
+#else
     const uint32_t th = (((bwidth * bheight) / (8 * 8)) * 2);
+#endif
 #else
     uint64_t th = (((bwidth * bheight) / (8 * 8)) * 2);
 #endif
 #if FTR_PD0_OPT
+#if OPT_COEFF_BIT_EST
+    if (context_ptr->use_low_precision_cost_estimation >= 2)
+#else
     if (context_ptr->use_low_precision_cost_estimation == 2)
+#endif
         *y_coeff_bits = 5000 + (pcs_ptr->parent_pcs_ptr->input_resolution * 1600) + (candidate_buffer->candidate_ptr->eob[0][0] * 100);
     else if (context_ptr->use_low_precision_cost_estimation && (candidate_buffer->candidate_ptr->eob[0][0] < th))
         *y_coeff_bits = 6000 + candidate_buffer->candidate_ptr->eob[0][0] * 500;
@@ -6504,6 +6552,26 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
         if (use_pfn4_cond)
             pf_shape = N4_SHAPE;
     }
+#if FTR_TX_NEIGH_INFO
+    else if (context_ptr->md_stage == MD_STAGE_3 && !context_ptr->perform_mds1 && context_ptr->skip_mds1_ctrls.use_neighbour_info && context_ptr->skip_mds1_ctrls.enabled) {
+
+        MacroBlockD *xd = context_ptr->blk_ptr->av1xd;
+        if (xd->left_available && xd->up_available && context_ptr->blk_geom->sq_size > 16 && context_ptr->is_subres_safe == 1) {
+            const BlockModeInfoEnc* const left_mi = &xd->left_mbmi->block_mi;
+            const BlockModeInfoEnc* const above_mi = &xd->above_mbmi->block_mi;
+            if (left_mi->skip && above_mi->skip) {
+                context_ptr->use_tx_shortcuts_mds3 = 1;
+                pf_shape = N2_SHAPE;
+                // PF for MVP cands
+                if (candidate_buffer->candidate_ptr->type == INTER_MODE && (candidate_buffer->candidate_ptr->pred_mode != NEWMV && candidate_buffer->candidate_ptr->pred_mode != NEW_NEWMV))
+                    pf_shape = N4_SHAPE;
+                // PF for NRST_NRST
+                else if (candidate_buffer->candidate_ptr->pred_mode == NEAREST_NEARESTMV)
+                    pf_shape = N4_SHAPE;
+            }
+        }
+    }
+#endif
 #endif
     uint64_t        best_cost_tx_search = (uint64_t)~0;
     int32_t         tx_type;
@@ -6905,9 +6973,17 @@ void tx_type_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr
             }
             //LUMA-ONLY
 #if OPT_PD0_TXT
+#if OPT_TX_SHORTS
+            uint64_t th = ((context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr] * context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr]) >> 6);
+#else
         uint64_t th = ((context_ptr->blk_geom->tx_width[context_ptr->tx_depth][context_ptr->txb_itr]  * context_ptr->blk_geom->tx_height[context_ptr->tx_depth][context_ptr->txb_itr]) / (8 * 8));
+#endif
         if (context_ptr->use_low_precision_cost_estimation && (y_count_non_zero_coeffs_txt[tx_type] < (th)))
             y_txb_coeff_bits_txt[tx_type] = 6000 + y_count_non_zero_coeffs_txt[tx_type] * 1000;
+#if OPT_TX_SHORTS
+        else if (context_ptr->use_low_precision_cost_estimation >= 3)
+            y_txb_coeff_bits_txt[tx_type] = 3000 + y_count_non_zero_coeffs_txt[tx_type] * 100;
+#endif
         else
 #endif
             av1_txb_estimate_coeff_bits(
@@ -7138,10 +7214,13 @@ static uint64_t cost_tx_size_vartx(MacroBlockD *xd, const MbModeInfo *mbmi, TxSi
                                            xd->left_txfm_context + blk_row,
                                            mbmi->block_mi.sb_type,
                                            tx_size);
-
+#if OPT_TX_MI_MEM
+    const int write_txfm_partition = (tx_size ==
+                                      tx_depth_to_tx_size[mbmi->block_mi.tx_depth][mbmi->block_mi.sb_type]);
+#else
     const int write_txfm_partition = (tx_size ==
                                       tx_depth_to_tx_size[mbmi->tx_depth][mbmi->block_mi.sb_type]);
-
+#endif
     if (write_txfm_partition) {
         bits += md_rate_estimation_ptr->txfm_partition_fac_bits[ctx][0];
 
@@ -7249,16 +7328,23 @@ static INLINE int get_tx_size_context(const MacroBlockD *xd) {
     else
         return 0;
 }
-
+#if OPT_TX_MI_MEM
+static uint64_t cost_selected_tx_size(const MacroBlockD *      xd,
+                                      MdRateEstimationContext *md_rate_estimation_ptr,
+                                      TxSize tx_size) {
+#else
 static uint64_t cost_selected_tx_size(const MacroBlockD *      xd,
                                       MdRateEstimationContext *md_rate_estimation_ptr) {
+#endif
     const ModeInfo *const   mi    = xd->mi[0];
     const MbModeInfo *const mbmi  = &mi->mbmi;
     const BlockSize         bsize = mbmi->block_mi.sb_type;
     uint64_t                bits  = 0;
 
     if (block_signals_txsize(bsize)) {
+#if !OPT_TX_MI_MEM
         const TxSize tx_size     = mbmi->tx_size;
+#endif
         const int    tx_size_ctx = get_tx_size_context(xd);
         assert(bsize < BlockSizeS_ALL);
         const int     depth       = tx_size_to_depth(tx_size, bsize);
@@ -7268,10 +7354,15 @@ static uint64_t cost_selected_tx_size(const MacroBlockD *      xd,
 
     return bits;
 }
-
+#if OPT_TX_MI_MEM
+static uint64_t tx_size_bits(MdRateEstimationContext *md_rate_estimation_ptr, MacroBlockD *xd,
+                             const MbModeInfo *mbmi, TxSize tx_size, TxMode tx_mode, BlockSize bsize,
+                             uint8_t skip) {
+#else
 static uint64_t tx_size_bits(MdRateEstimationContext *md_rate_estimation_ptr, MacroBlockD *xd,
                              const MbModeInfo *mbmi, TxMode tx_mode, BlockSize bsize,
                              uint8_t skip) {
+#endif
     uint64_t bits = 0;
 
     int is_inter_tx = is_inter_block(&mbmi->block_mi) || is_intrabc_block(&mbmi->block_mi);
@@ -7289,12 +7380,21 @@ static uint64_t tx_size_bits(MdRateEstimationContext *md_rate_estimation_ptr, Ma
                     bits += cost_tx_size_vartx(
                         xd, mbmi, max_tx_size, 0, idy, idx, md_rate_estimation_ptr);
         } else {
+#if OPT_TX_MI_MEM
+            bits += cost_selected_tx_size(xd, md_rate_estimation_ptr, tx_size);
+            set_txfm_ctxs(tx_size, xd->n8_w, xd->n8_h, 0, xd);
+#else
             bits += cost_selected_tx_size(xd, md_rate_estimation_ptr);
             set_txfm_ctxs(mbmi->tx_size, xd->n8_w, xd->n8_h, 0, xd);
+#endif
         }
     } else {
+#if OPT_TX_MI_MEM
+        set_txfm_ctxs(tx_size, xd->n8_w, xd->n8_h, skip && is_inter_block(&mbmi->block_mi), xd);
+#else
         set_txfm_ctxs(
             mbmi->tx_size, xd->n8_w, xd->n8_h, skip && is_inter_block(&mbmi->block_mi), xd);
+#endif
     }
     return bits;
 }
@@ -7326,15 +7426,22 @@ uint64_t estimate_tx_size_bits(PictureControlSet *pcsPtr, ModeDecisionContext *c
 
     xd->above_txfm_context = context_ptr->above_txfm_context;
     xd->left_txfm_context  = context_ptr->left_txfm_context;
-
+#if !OPT_TX_MI_MEM
     mbmi->tx_size               = blk_geom->txsize[tx_depth][0];
+#endif
     mbmi->block_mi.sb_type      = blk_geom->bsize;
     mbmi->block_mi.use_intrabc  = candidate_ptr->use_intrabc;
     mbmi->block_mi.ref_frame[0] = candidate_ptr->ref_frame_type;
+#if OPT_TX_MI_MEM
+    mbmi->block_mi.tx_depth      = tx_depth;
+#else
     mbmi->tx_depth              = tx_depth;
-
+#endif
+#if OPT_TX_MI_MEM
+    uint64_t bits = tx_size_bits(md_rate_estimation_ptr, xd, mbmi, blk_geom->txsize[tx_depth][0], tx_mode, bsize, skip_flag);
+#else
     uint64_t bits = tx_size_bits(md_rate_estimation_ptr, xd, mbmi, tx_mode, bsize, skip_flag);
-
+#endif
     return bits;
 }
 
@@ -7803,6 +7910,25 @@ void perform_dct_dct_tx_light_pd1(PictureControlSet *pcs_ptr, ModeDecisionContex
     if (context_ptr->use_tx_shortcuts_mds3) {
         pf_shape = N4_SHAPE;
     }
+#if FTR_TX_NEIGH_INFO
+    else if (context_ptr->skip_mds1_ctrls.enabled && context_ptr->skip_mds1_ctrls.use_neighbour_info) {
+        MacroBlockD *xd = context_ptr->blk_ptr->av1xd;
+        if (xd->left_available && xd->up_available && context_ptr->blk_geom->sq_size > 16 && context_ptr->is_subres_safe == 1) {
+            const BlockModeInfoEnc* const left_mi = &xd->left_mbmi->block_mi;
+            const BlockModeInfoEnc* const above_mi = &xd->above_mbmi->block_mi;
+            if (left_mi->skip && above_mi->skip) {
+                context_ptr->use_tx_shortcuts_mds3 = 1;
+                pf_shape = N2_SHAPE;
+                // PF for MVP cands
+                if (candidate_buffer->candidate_ptr->type == INTER_MODE && (candidate_buffer->candidate_ptr->pred_mode != NEWMV && candidate_buffer->candidate_ptr->pred_mode != NEW_NEWMV))
+                    pf_shape = N4_SHAPE;
+                // PF for NRST_NRST
+                else if (candidate_buffer->candidate_ptr->pred_mode == NEAREST_NEARESTMV)
+                    pf_shape = N4_SHAPE;
+            }
+        }
+    }
+#endif
 #if !OPT_REMOVE_TXT_LPD1
     context_ptr->luma_txb_skip_context = 0;
     context_ptr->luma_dc_sign_context = 0;
@@ -7892,18 +8018,30 @@ void perform_dct_dct_tx_light_pd1(PictureControlSet *pcs_ptr, ModeDecisionContex
         bheight,
         y_full_distortion,
         candidate_buffer->candidate_ptr->eob[0][0]);
-
+#if !FTR_TX_NEIGH_INFO
     y_full_distortion[DIST_CALC_RESIDUAL] += context_ptr->three_quad_energy;
     y_full_distortion[DIST_CALC_PREDICTION] += context_ptr->three_quad_energy;
-
+#endif
     const int32_t shift = (MAX_TX_SCALE - av1_get_tx_scale_tab[tx_size]) * 2;
+#if FTR_TX_NEIGH_INFO
+    y_full_distortion[DIST_CALC_RESIDUAL] = RIGHT_SIGNED_SHIFT(y_full_distortion[DIST_CALC_RESIDUAL] + context_ptr->three_quad_energy, shift);
+    y_full_distortion[DIST_CALC_PREDICTION] = RIGHT_SIGNED_SHIFT(y_full_distortion[DIST_CALC_PREDICTION] + context_ptr->three_quad_energy, shift);
+#else
     y_full_distortion[DIST_CALC_RESIDUAL]   = RIGHT_SIGNED_SHIFT(y_full_distortion[DIST_CALC_RESIDUAL], shift);
     y_full_distortion[DIST_CALC_PREDICTION] = RIGHT_SIGNED_SHIFT(y_full_distortion[DIST_CALC_PREDICTION], shift);
+#endif
 #if !OPT_REMOVE_TXT_LPD1
     y_full_distortion[DIST_CALC_RESIDUAL] <<= context_ptr->md_staging_subres_step;
     y_full_distortion[DIST_CALC_PREDICTION] <<= context_ptr->md_staging_subres_step;
 #endif
     //LUMA-ONLY
+#if OPT_COEFF_BIT_EST
+    const uint32_t th = ((txbwidth * txbheight) >> 6);
+    if (context_ptr->use_low_precision_cost_estimation && candidate_buffer->candidate_ptr->eob[0][0] < th)
+        *y_coeff_bits = 6000 + candidate_buffer->candidate_ptr->eob[0][0] * 1000;
+    else if (context_ptr->use_low_precision_cost_estimation >= 3)
+        *y_coeff_bits = 6000 + candidate_buffer->candidate_ptr->eob[0][0] * 400;
+#else
 #if OPT_REMOVE_TXT_LPD1
     const uint32_t th = ((txbwidth * txbheight) >> 6);
 #else
@@ -7911,6 +8049,7 @@ void perform_dct_dct_tx_light_pd1(PictureControlSet *pcs_ptr, ModeDecisionContex
 #endif
     if (context_ptr->use_low_precision_cost_estimation && (candidate_buffer->candidate_ptr->eob[0][0] < (th)))
         *y_coeff_bits = 6000 + candidate_buffer->candidate_ptr->eob[0][0] * 1000;
+#endif
     else
         av1_txb_estimate_coeff_bits(
             context_ptr,
@@ -8238,9 +8377,17 @@ void perform_dct_dct_tx(PictureControlSet *pcs_ptr, ModeDecisionContext *context
     y_full_distortion[DIST_CALC_PREDICTION] <<=  context_ptr->md_staging_subres_step;
 
     //LUMA-ONLY
+#if OPT_COEFF_BIT_EST
+    const uint32_t th = ((context_ptr->blk_geom->tx_width[tx_depth][txb_itr] * context_ptr->blk_geom->tx_height[tx_depth][txb_itr]) >> 6);
+    if (context_ptr->use_low_precision_cost_estimation && (y_count_non_zero_coeffs_txt < th))
+        *y_coeff_bits = 6000 + y_count_non_zero_coeffs_txt * 1000;
+    else if (context_ptr->use_low_precision_cost_estimation >= 3)
+        *y_coeff_bits = 6000 + y_count_non_zero_coeffs_txt * 400;
+#else
     uint32_t th = ((context_ptr->blk_geom->tx_width[tx_depth][txb_itr] * context_ptr->blk_geom->tx_height[tx_depth][txb_itr]) / (8 * 8));
     if (context_ptr->use_low_precision_cost_estimation && (y_count_non_zero_coeffs_txt < (th)))
         *y_coeff_bits = 6000 + y_count_non_zero_coeffs_txt * 1000;
+#endif
     else
         av1_txb_estimate_coeff_bits(
             context_ptr,
@@ -8687,11 +8834,15 @@ void full_loop_core_light_pd1(PictureControlSet *pcs_ptr, BlkStruct *blk_ptr,
 #if FTR_SKIP_TX_LPD1
      EbBool perform_tx = 1;
 #if OPT_TX_SKIP
+#if FTR_TX_NEIGH_INFO
+     if (context_ptr->lpd1_allow_skipping_tx) {
+#else
      if (context_ptr->use_tx_shortcuts_mds3) {
+#endif
          MacroBlockD *xd = context_ptr->blk_ptr->av1xd;
          if (xd->left_available && xd->up_available) {
-             const BlockModeInfoEnc* const left_mi = &xd->mi[-1]->mbmi.block_mi;
-             const BlockModeInfoEnc* const above_mi = &xd->mi[-xd->mi_stride]->mbmi.block_mi;
+             const BlockModeInfoEnc* const left_mi = &xd->left_mbmi->block_mi;
+             const BlockModeInfoEnc* const above_mi = &xd->above_mbmi->block_mi;
              if (left_mi->skip && above_mi->skip) {
                  // Skip TX for MVP cands
                  if (context_ptr->skip_tx_ctrls.skip_mvp_tx && candidate_ptr->type == INTER_MODE && (candidate_ptr->pred_mode != NEWMV && candidate_ptr->pred_mode != NEW_NEWMV))
@@ -9612,7 +9763,11 @@ static void md_stage_3_light_pd0(PictureControlSet *pcs_ptr,
     context_ptr->md_staging_subres_step = context_ptr->subres_ctrls.step;             //ON  !!!
 
 #if FTR_PD0_OPT
+#if OPT_COEFF_BIT_EST
+    if (!pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag && (context_ptr->use_low_precision_cost_estimation >= 2)) {
+#else
     if (!pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag && (context_ptr->use_low_precision_cost_estimation == 2)) {
+#endif
         context_ptr->md_staging_subres_step = context_ptr->blk_geom->sq_size >= 16 ? 2 : 1;
     }
 #endif
@@ -9904,6 +10059,9 @@ void move_blk_data(PictureControlSet *pcs, EncDecContext *context_ptr, BlkStruct
     //CHKN IntMv  predmv[2];
 
     svt_memcpy(dst_cu->predmv, src_cu->predmv, 2 * sizeof(IntMv));
+#if FIX_SKIP_COEFF_CONTEXT
+    dst_cu->skip_coeff_context = src_cu->skip_coeff_context;
+#endif
     //CHKN uint8_t                         skip_coeff_context;
     //CHKN int16_t                        luma_txb_skip_context;
     //CHKN int16_t                        luma_dc_sign_context;
@@ -9986,7 +10144,9 @@ void move_blk_data_redund(PictureControlSet *pcs, ModeDecisionContext *context_p
     //CHKN IntMv  predmv[2];
 
     svt_memcpy(dst_cu->predmv, src_cu->predmv, 2 * sizeof(IntMv));
-
+#if FIX_SKIP_COEFF_CONTEXT
+    dst_cu->skip_coeff_context = src_cu->skip_coeff_context;
+#endif
     //CHKN uint8_t                         skip_coeff_context;
     //CHKN int16_t                        luma_txb_skip_context;
     //CHKN int16_t                        luma_dc_sign_context;
@@ -12030,6 +12190,15 @@ static void convert_recon_16bit_to_8bit(PictureControlSet *pcs, ModeDecisionCont
 }
 #endif
 #endif
+#if FTR_TX_NEIGH_INFO
+// Check if reference frame pair of the current block matches with the given
+// block.
+static INLINE int match_ref_frame_pair(const BlockModeInfoEnc *mbmi,
+                                       const MvReferenceFrame *ref_frames) {
+    return ((ref_frames[0] == mbmi->ref_frame[0]) &&
+            (ref_frames[1] == mbmi->ref_frame[1]));
+}
+#endif
 void md_encode_block_light_pd1(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr, uint32_t sb_addr,
     EbPictureBufferDesc *input_picture_ptr) {
 
@@ -12072,6 +12241,9 @@ void md_encode_block_light_pd1(PictureControlSet *pcs_ptr, ModeDecisionContext *
 
     product_coding_loop_init_fast_loop(pcs_ptr,
                                        context_ptr,
+#if FIX_SKIP_COEFF_CONTEXT
+                                       context_ptr->skip_coeff_neighbor_array,
+#endif
                                        context_ptr->leaf_partition_neighbor_array);
 #if OPT_USE_INTRA_NEIGHBORING
     context_ptr->is_intra_bordered = context_ptr->use_neighbouring_mode_ctrls.enabled ? is_intra_bordered(context_ptr) : 0;
@@ -12142,11 +12314,91 @@ void md_encode_block_light_pd1(PictureControlSet *pcs_ptr, ModeDecisionContext *
         const uint32_t best_md_stage_dist = (context_ptr->candidate_buffer_ptr_array[context_ptr->mds0_best_idx]->candidate_ptr)->luma_fast_distortion;
         const uint32_t th_normalizer = blk_geom->bheight * blk_geom->bwidth * (pcs_ptr->picture_qp >> 1);
         context_ptr->use_tx_shortcuts_mds3 = (100 * best_md_stage_dist) < (context_ptr->skip_mds1_ctrls.use_mds3_shortcuts_th * th_normalizer);
+#if FTR_TX_NEIGH_INFO
+        context_ptr->lpd1_allow_skipping_tx = (100 * best_md_stage_dist) < (context_ptr->skip_tx_ctrls.skip_tx_th * th_normalizer);
+#if OPT_TX_SHORTS
+        if (context_ptr->skip_mds1_ctrls.use_neighbour_info && context_ptr->depth_removal_ctrls.enabled && context_ptr->depth_removal_ctrls.disallow_below_64x64) {
+            context_ptr->use_tx_shortcuts_mds3 = 1;
+        }
+#endif
+        if (!context_ptr->use_tx_shortcuts_mds3 && context_ptr->skip_mds1_ctrls.use_neighbour_info && context_ptr->is_subres_safe) {
+            MacroBlockD *xd = context_ptr->blk_ptr->av1xd;
+            if (xd->left_available && xd->up_available) {
+                const BlockModeInfoEnc* const left_mi = &xd->left_mbmi->block_mi;
+                const BlockModeInfoEnc* const above_mi = &xd->above_mbmi->block_mi;
+                if (left_mi->skip && above_mi->skip) {
+
+                    ModeDecisionCandidate* candidate_ptr = candidate_buffer_ptr_array[context_ptr->mds0_best_idx]->candidate_ptr;
+
+                    MvReferenceFrame rf[2];
+                    av1_set_ref_frame(rf, candidate_ptr->ref_frame_type);
+                    int num_ref_frame_pair_match = match_ref_frame_pair(left_mi, rf);
+                    num_ref_frame_pair_match += match_ref_frame_pair(above_mi, rf);
+
+                    uint16_t use_tx_shortcuts_mds3_mult = 2; // is halved below
+                    uint16_t lpd1_allow_skipping_tx_mult = 2; // is halved below
+                    if (num_ref_frame_pair_match == 2) {
+                        if (left_mi->mode == candidate_ptr->pred_mode && above_mi->mode == candidate_ptr->pred_mode) {
+                            use_tx_shortcuts_mds3_mult = 4;
+                            lpd1_allow_skipping_tx_mult = 3;
+                            if (candidate_ptr->type == INTER_MODE) {
+                                if (candidate_ptr->prediction_direction[0] == UNI_PRED_LIST_0) {
+                                    if (left_mi->mv[0].as_mv.col == candidate_ptr->motion_vector_xl0 &&
+                                        left_mi->mv[0].as_mv.row == candidate_ptr->motion_vector_yl0 &&
+                                        above_mi->mv[0].as_mv.col == candidate_ptr->motion_vector_xl0 &&
+                                        above_mi->mv[0].as_mv.row == candidate_ptr->motion_vector_yl0) {
+                                        use_tx_shortcuts_mds3_mult = 6;
+                                        lpd1_allow_skipping_tx_mult = 4;
+                                    }
+                                }
+                                else if (candidate_ptr->prediction_direction[0] == UNI_PRED_LIST_1) {
+                                    if (left_mi->mv[0].as_mv.col == candidate_ptr->motion_vector_xl1 &&
+                                        left_mi->mv[0].as_mv.row == candidate_ptr->motion_vector_yl1 &&
+                                        above_mi->mv[0].as_mv.col == candidate_ptr->motion_vector_xl1 &&
+                                        above_mi->mv[0].as_mv.row == candidate_ptr->motion_vector_yl1) {
+                                        use_tx_shortcuts_mds3_mult = 6;
+                                        lpd1_allow_skipping_tx_mult = 4;
+                                    }
+                                }
+                                else {
+                                    if (left_mi->mv[0].as_mv.col == candidate_ptr->motion_vector_xl0 &&
+                                        left_mi->mv[0].as_mv.row == candidate_ptr->motion_vector_yl0 &&
+                                        left_mi->mv[1].as_mv.col == candidate_ptr->motion_vector_xl1 &&
+                                        left_mi->mv[1].as_mv.row == candidate_ptr->motion_vector_yl1 &&
+                                        above_mi->mv[0].as_mv.col == candidate_ptr->motion_vector_xl0 &&
+                                        above_mi->mv[0].as_mv.row == candidate_ptr->motion_vector_yl0 &&
+                                        above_mi->mv[1].as_mv.col == candidate_ptr->motion_vector_xl1 &&
+                                        above_mi->mv[1].as_mv.row == candidate_ptr->motion_vector_yl1) {
+                                        use_tx_shortcuts_mds3_mult = 6;
+                                        lpd1_allow_skipping_tx_mult = 4;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    context_ptr->use_tx_shortcuts_mds3 = (100 * best_md_stage_dist) < (((use_tx_shortcuts_mds3_mult * context_ptr->skip_mds1_ctrls.use_mds3_shortcuts_th) >> 1) * th_normalizer) ? 1 : context_ptr->use_tx_shortcuts_mds3;
+                    context_ptr->lpd1_allow_skipping_tx = (100 * best_md_stage_dist) < (((lpd1_allow_skipping_tx_mult * context_ptr->skip_tx_ctrls.skip_tx_th) >> 1) * th_normalizer) ? 1 : context_ptr->lpd1_allow_skipping_tx;
+                }
+            }
+        }
+#endif
     }
+#if FTR_TX_NEIGH_INFO
+    else {
+        context_ptr->use_tx_shortcuts_mds3 = 0;
+        context_ptr->lpd1_allow_skipping_tx = 0;
+    }
+#else
     else
         context_ptr->use_tx_shortcuts_mds3 = 0;
+#endif
 #if FTR_10BIT_MDS3_LPD1
+#if OPT_10BIT_MDS3
+    uint8_t perform_md_recon = do_md_recon(pcs_ptr->parent_pcs_ptr, context_ptr);
+    if (context_ptr->encoder_bit_depth > EB_8BIT && context_ptr->bypass_encdec && perform_md_recon) {
+#else
     if (context_ptr->encoder_bit_depth > EB_8BIT && context_ptr->bypass_encdec) {
+#endif
         context_ptr->hbd_mode_decision = 2;
 
         // Update input pic and offsets
@@ -12176,12 +12428,20 @@ void md_encode_block_light_pd1(PictureControlSet *pcs_ptr, ModeDecisionContext *
     candidate_buffer = candidate_buffer_ptr_array[candidate_index];
 
      // Perform inverse transform recon when needed
+#if OPT_10BIT_MDS3
+    if (perform_md_recon)
+#else
      if(do_md_recon(pcs_ptr->parent_pcs_ptr, context_ptr))
+#endif
         av1_perform_inverse_transform_recon(pcs_ptr, context_ptr, candidate_buffer, context_ptr->blk_geom);
 
 #if FTR_10BIT_MDS3_LPD1
      // Convert 10bit recon (used as final EncDec recon) to 8bit recon (used for MD intra pred)
+#if OPT_10BIT_MDS3
+     if (context_ptr->encoder_bit_depth > EB_8BIT && context_ptr->bypass_encdec && context_ptr->hbd_mode_decision) {
+#else
      if (context_ptr->encoder_bit_depth > EB_8BIT && context_ptr->bypass_encdec) {
+#endif
          if (!context_ptr->skip_intra)
 #if OPT_BYPASS_ED_10BIT
              convert_recon_16bit_to_8bit_md(pcs_ptr, context_ptr, candidate_buffer);
@@ -12339,6 +12599,9 @@ void md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionContext *context_pt
 #endif
 #if !OPT_NA_ISINTER
                                        context_ptr->mode_type_neighbor_array,
+#endif
+#if FIX_SKIP_COEFF_CONTEXT
+                                       context_ptr->skip_coeff_neighbor_array,
 #endif
                                        context_ptr->leaf_partition_neighbor_array);
 
@@ -12607,6 +12870,62 @@ void md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionContext *context_pt
                 context_ptr->perform_mds1 = 0;
                 context_ptr->use_tx_shortcuts_mds3 = (100 * best_md_stage_dist) < (context_ptr->skip_mds1_ctrls.use_mds3_shortcuts_th * th_normalizer);
             }
+#if FTR_TX_NEIGH_INFO
+            if (!context_ptr->use_tx_shortcuts_mds3 && context_ptr->skip_mds1_ctrls.use_neighbour_info && context_ptr->is_subres_safe) {
+                MacroBlockD *xd = context_ptr->blk_ptr->av1xd;
+                if (xd->left_available && xd->up_available) {
+                    const BlockModeInfoEnc* const left_mi = &xd->left_mbmi->block_mi;
+                    const BlockModeInfoEnc* const above_mi = &xd->above_mbmi->block_mi;
+                    if (left_mi->skip && above_mi->skip) {
+
+                        ModeDecisionCandidate* candidate_ptr = candidate_buffer_ptr_array[context_ptr->mds0_best_idx]->candidate_ptr;
+
+                        MvReferenceFrame rf[2];
+                        av1_set_ref_frame(rf, candidate_ptr->ref_frame_type);
+                        int num_ref_frame_pair_match = match_ref_frame_pair(left_mi, rf);
+                        num_ref_frame_pair_match += match_ref_frame_pair(above_mi, rf);
+
+                        uint16_t use_tx_shortcuts_mds3_mult = 2; // is halved below
+                        if (num_ref_frame_pair_match == 2) {
+                            if (left_mi->mode == candidate_ptr->pred_mode && above_mi->mode == candidate_ptr->pred_mode) {
+                                use_tx_shortcuts_mds3_mult = 4;
+                                if (candidate_ptr->type == INTER_MODE) {
+                                    if (candidate_ptr->prediction_direction[0] == UNI_PRED_LIST_0) {
+                                        if (left_mi->mv[0].as_mv.col == candidate_ptr->motion_vector_xl0 &&
+                                            left_mi->mv[0].as_mv.row == candidate_ptr->motion_vector_yl0 &&
+                                            above_mi->mv[0].as_mv.col == candidate_ptr->motion_vector_xl0 &&
+                                            above_mi->mv[0].as_mv.row == candidate_ptr->motion_vector_yl0) {
+                                            use_tx_shortcuts_mds3_mult = 6;
+                                        }
+                                    }
+                                    else if (candidate_ptr->prediction_direction[0] == UNI_PRED_LIST_1) {
+                                        if (left_mi->mv[0].as_mv.col == candidate_ptr->motion_vector_xl1 &&
+                                            left_mi->mv[0].as_mv.row == candidate_ptr->motion_vector_yl1 &&
+                                            above_mi->mv[0].as_mv.col == candidate_ptr->motion_vector_xl1 &&
+                                            above_mi->mv[0].as_mv.row == candidate_ptr->motion_vector_yl1) {
+                                            use_tx_shortcuts_mds3_mult = 6;
+                                        }
+                                    }
+                                    else {
+                                        if (left_mi->mv[0].as_mv.col == candidate_ptr->motion_vector_xl0 &&
+                                            left_mi->mv[0].as_mv.row == candidate_ptr->motion_vector_yl0 &&
+                                            left_mi->mv[1].as_mv.col == candidate_ptr->motion_vector_xl1 &&
+                                            left_mi->mv[1].as_mv.row == candidate_ptr->motion_vector_yl1 &&
+                                            above_mi->mv[0].as_mv.col == candidate_ptr->motion_vector_xl0 &&
+                                            above_mi->mv[0].as_mv.row == candidate_ptr->motion_vector_yl0 &&
+                                            above_mi->mv[1].as_mv.col == candidate_ptr->motion_vector_xl1 &&
+                                            above_mi->mv[1].as_mv.row == candidate_ptr->motion_vector_yl1) {
+                                            use_tx_shortcuts_mds3_mult = 6;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        context_ptr->use_tx_shortcuts_mds3 = (100 * best_md_stage_dist) < (((use_tx_shortcuts_mds3_mult * context_ptr->skip_mds1_ctrls.use_mds3_shortcuts_th) >> 1) * th_normalizer) ? 1 : context_ptr->use_tx_shortcuts_mds3;
+                    }
+                }
+            }
+#endif
         }
 #endif
         // 1st Full-Loop
@@ -12773,7 +13092,12 @@ void md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionContext *context_pt
 
 #if FTR_10BIT_MDS3_REG_PD1
     uint8_t org_hbd = context_ptr->hbd_mode_decision;
+#if OPT_10BIT_MDS3
+    uint8_t perform_md_recon = do_md_recon(pcs_ptr->parent_pcs_ptr, context_ptr);
+    if (context_ptr->encoder_bit_depth > EB_8BIT && context_ptr->bypass_encdec && !context_ptr->hbd_mode_decision && context_ptr->pd_pass == PD_PASS_1 && perform_md_recon) {
+#else
     if (context_ptr->encoder_bit_depth > EB_8BIT && context_ptr->bypass_encdec && !context_ptr->hbd_mode_decision && context_ptr->pd_pass == PD_PASS_1) {
+#endif
         context_ptr->hbd_mode_decision = 2;
         context_ptr->need_hbd_comp_mds3 = 1;
 
@@ -12823,7 +13147,11 @@ void md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionContext *context_pt
 #if FTR_BYPASS_ENCDEC
  #if SS_ITXF
      //perform inverse transform recon when needed
+#if OPT_10BIT_MDS3
+    if (perform_md_recon)
+#else
      if(do_md_recon(pcs_ptr->parent_pcs_ptr, context_ptr))
+#endif
  #else
      if (!context_ptr->skip_intra || (context_ptr->bypass_encdec && context_ptr->pd_pass == PD_PASS_1))
  #endif
@@ -12844,7 +13172,11 @@ void md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionContext *context_pt
                                             blk_origin_index,
                                             blk_chroma_origin_index);
 #if FTR_10BIT_MDS3_REG_PD1
+#if OPT_10BIT_MDS3
+    if (context_ptr->encoder_bit_depth > EB_8BIT && context_ptr->bypass_encdec && !org_hbd && context_ptr->pd_pass == PD_PASS_1 && context_ptr->hbd_mode_decision) {
+#else
     if (context_ptr->encoder_bit_depth > EB_8BIT && context_ptr->bypass_encdec && !org_hbd && context_ptr->pd_pass == PD_PASS_1) {
+#endif
         if (!context_ptr->skip_intra)
 #if OPT_BYPASS_ED_10BIT
             convert_recon_16bit_to_8bit_md(pcs_ptr, context_ptr, candidate_buffer);
@@ -13497,7 +13829,11 @@ EbBool update_md_settings(ModeDecisionContext *ctx, uint8_t level) {
 #endif
         ctx->md_inter_intra_level = 0;
         set_inter_intra_ctrls(ctx, ctx->md_inter_intra_level);
+#if TUNE_PME_M0
+        ctx->md_pme_level = 4;
+#else
         ctx->md_pme_level = 3;
+#endif
         md_pme_search_controls(ctx, ctx->md_pme_level);
     }
     if (level >= 3) {
@@ -13568,23 +13904,70 @@ EbPictureBufferDesc *pad_hbd_pictures(SequenceControlSet *scs, PictureControlSet
                                       uint16_t sb_org_x, uint16_t sb_org_y) {
     const uint32_t input_luma_offset = ((sb_org_y + in_pic->origin_y) * in_pic->stride_y) +
         (sb_org_x + in_pic->origin_x);
+#if !SS_2B_COMPRESS
     const uint32_t input_bit_inc_luma_offset = ((sb_org_y + in_pic->origin_y) *
                                                 in_pic->stride_bit_inc_y) +
         (sb_org_x + in_pic->origin_x);
+#endif
     const uint32_t input_cb_offset = (((sb_org_y + in_pic->origin_y) >> 1) * in_pic->stride_cb) +
         ((sb_org_x + in_pic->origin_x) >> 1);
+#if !SS_2B_COMPRESS
     const uint32_t input_bit_inc_cb_offset = (((sb_org_y + in_pic->origin_y) >> 1) *
                                               in_pic->stride_bit_inc_cb) +
         ((sb_org_x + in_pic->origin_x) >> 1);
+#endif
     const uint32_t input_cr_offset = (((sb_org_y + in_pic->origin_y) >> 1) * in_pic->stride_cr) +
         ((sb_org_x + in_pic->origin_x) >> 1);
+#if !SS_2B_COMPRESS
     const uint32_t input_bit_inc_cr_offset = (((sb_org_y + in_pic->origin_y) >> 1) *
                                               in_pic->stride_bit_inc_cr) +
         ((sb_org_x + in_pic->origin_x) >> 1);
+#endif
 
     uint32_t sb_width  = MIN(scs->sb_size_pix, pcs->parent_pcs_ptr->aligned_width - sb_org_x);
     uint32_t sb_height = MIN(scs->sb_size_pix, pcs->parent_pcs_ptr->aligned_height - sb_org_y);
 
+#if SS_2B_COMPRESS
+  //sb_width is n*8 so the 2bit-decompression kernel works properly
+    uint32_t comp_stride_y = in_pic->stride_y / 4;
+    uint32_t comp_luma_buffer_offset = comp_stride_y * in_pic->origin_y + in_pic->origin_x / 4;
+    comp_luma_buffer_offset += sb_org_x / 4 + sb_org_y * comp_stride_y;
+
+
+    compressed_pack_sb(
+        in_pic->buffer_y + input_luma_offset,
+        in_pic->stride_y,
+        in_pic->buffer_bit_inc_y + comp_luma_buffer_offset,
+        comp_stride_y,
+        (uint16_t *)ctx->input_sample16bit_buffer->buffer_y,
+        ctx->input_sample16bit_buffer->stride_y,
+        sb_width,
+        sb_height);
+
+    uint32_t comp_stride_uv = in_pic->stride_cb / 4;
+    uint32_t comp_chroma_buffer_offset = comp_stride_uv * (in_pic->origin_y / 2) + in_pic->origin_x / 2 / 4;
+    comp_chroma_buffer_offset += sb_org_x / 4 / 2 + sb_org_y / 2 * comp_stride_uv;
+
+    compressed_pack_sb(
+        in_pic->buffer_cb + input_cb_offset,
+        in_pic->stride_cb,
+        in_pic->buffer_bit_inc_cb + comp_chroma_buffer_offset,
+        comp_stride_uv,
+        (uint16_t *)ctx->input_sample16bit_buffer->buffer_cb,
+        ctx->input_sample16bit_buffer->stride_cb,
+        sb_width / 2,
+        sb_height / 2);
+
+    compressed_pack_sb(
+        in_pic->buffer_cr + input_cr_offset,
+        in_pic->stride_cr,
+        in_pic->buffer_bit_inc_cr + comp_chroma_buffer_offset,
+        comp_stride_uv,
+        (uint16_t *)ctx->input_sample16bit_buffer->buffer_cr,
+        ctx->input_sample16bit_buffer->stride_cr,
+        sb_width / 2,
+        sb_height / 2);
+#else
     pack2d_src(in_pic->buffer_y + input_luma_offset,
                in_pic->stride_y,
                in_pic->buffer_bit_inc_y + input_bit_inc_luma_offset,
@@ -13611,6 +13994,8 @@ EbPictureBufferDesc *pad_hbd_pictures(SequenceControlSet *scs, PictureControlSet
                ctx->input_sample16bit_buffer->stride_cr,
                sb_width >> 1,
                sb_height >> 1);
+#endif
+
     // PAD the packed source in incomplete sb up to max SB size
     pad_input_picture_16bit((uint16_t *)ctx->input_sample16bit_buffer->buffer_y,
                             ctx->input_sample16bit_buffer->stride_y,
@@ -13725,6 +14110,10 @@ void update_neighbour_arrays(PictureControlSet *pcs, ModeDecisionContext *ctx) {
         ctx->cr_recon_neighbor_array16bit =
             pcs->md_cr_recon_neighbor_array16bit[MD_NEIGHBOR_ARRAY_INDEX][tile_idx];
     }
+#if FIX_SKIP_COEFF_CONTEXT
+    ctx->skip_coeff_neighbor_array =
+        pcs->md_skip_coeff_neighbor_array[MD_NEIGHBOR_ARRAY_INDEX][tile_idx];
+#endif
     ctx->luma_dc_sign_level_coeff_neighbor_array =
         pcs->md_luma_dc_sign_level_coeff_neighbor_array[MD_NEIGHBOR_ARRAY_INDEX][tile_idx];
     ctx->cb_dc_sign_level_coeff_neighbor_array =

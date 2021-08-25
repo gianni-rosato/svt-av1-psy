@@ -432,8 +432,14 @@ void av1_estimate_mv_rate(PictureControlSet *      pcs_ptr,
     }
     else {
         memcpy(md_rate_estimation_array->nmv_vec_cost,pcs_ptr->parent_pcs_ptr->scs_ptr->nmv_vec_cost, sizeof(int32_t) *MV_JOINTS);
+#if FIX_ISSUE_45
+        memcpy(md_rate_estimation_array->nmv_costs, pcs_ptr->parent_pcs_ptr->scs_ptr->nmv_costs, sizeof(int32_t) *MV_VALS * 2);
+        md_rate_estimation_array->nmvcoststack[0] = &md_rate_estimation_array->nmv_costs[0][MV_MAX];
+        md_rate_estimation_array->nmvcoststack[1] = &md_rate_estimation_array->nmv_costs[1][MV_MAX];
+#else
         md_rate_estimation_array->nmvcoststack[0] = &pcs_ptr->parent_pcs_ptr->scs_ptr->nmv_costs[0][MV_MAX];
         md_rate_estimation_array->nmvcoststack[1] = &pcs_ptr->parent_pcs_ptr->scs_ptr->nmv_costs[1][MV_MAX];
+#endif
     }
     if (frm_hdr->allow_intrabc) {
         int32_t *dvcost[2] = {&md_rate_estimation_array->dv_cost[0][MV_MAX],
@@ -848,7 +854,11 @@ static AOM_INLINE void update_palette_cdf(MacroBlockD *xd, const MbModeInfo *con
                 fc->palette_y_size_cdf[palette_bsize_ctx], n - PALETTE_MIN_SIZE, PALETTE_SIZES);
         }
     }
+#if OPT_MODE_MI_MEM
+    uint32_t  intra_chroma_mode = blk_ptr->prediction_unit_array->intra_chroma_mode;
+#else
     uint32_t  intra_chroma_mode = mbmi->block_mi.uv_mode;
+#endif
     const int uv_dc_pred        = intra_chroma_mode == UV_DC_PRED &&
         is_chroma_reference(mi_row, mi_col, bsize, 1, 1);
 
@@ -895,21 +905,35 @@ static AOM_INLINE void sum_intra_stats(PictureControlSet *pcs_ptr, BlkStruct *bl
     if (av1_is_directional_mode(y_mode) &&
         av1_use_angle_delta(bsize,
                             pcs_ptr->parent_pcs_ptr->scs_ptr->static_config.intra_angle_delta)) {
+#if OPT_INTRA_MI_MEM
+        update_cdf(fc->angle_delta_cdf[y_mode - V_PRED],
+                   blk_ptr->prediction_unit_array[0].angle_delta[PLANE_TYPE_Y] + MAX_ANGLE_DELTA,
+                   2 * MAX_ANGLE_DELTA + 1);
+#else
         update_cdf(fc->angle_delta_cdf[y_mode - V_PRED],
                    mbmi->block_mi.angle_delta[PLANE_TYPE_Y] + MAX_ANGLE_DELTA,
                    2 * MAX_ANGLE_DELTA + 1);
+#endif
     }
     uint8_t sub_sampling_x = 1; // NM - subsampling_x is harcoded to 1 for 420 chroma sampling.
     uint8_t sub_sampling_y = 1; // NM - subsampling_y is harcoded to 1 for 420 chroma sampling.
     if (!is_chroma_reference(mi_row, mi_col, bsize, sub_sampling_x, sub_sampling_y))
         return;
-
+#if OPT_MODE_MI_MEM
+    const UvPredictionMode uv_mode = blk_ptr->prediction_unit_array->intra_chroma_mode;
+#else
     const UvPredictionMode uv_mode     = mbmi->block_mi.uv_mode;
+#endif
     const int              cfl_allowed = blk_geom->bwidth <= 32 && blk_geom->bheight <= 32;
     update_cdf(fc->uv_mode_cdf[cfl_allowed][y_mode], uv_mode, UV_INTRA_MODES - !cfl_allowed);
     if (uv_mode == UV_CFL_PRED) {
+#if OPT_INTRA_MI_MEM
+        const int8_t  joint_sign = blk_ptr->prediction_unit_array->cfl_alpha_signs;
+        const uint8_t idx = blk_ptr->prediction_unit_array->cfl_alpha_idx;
+#else
         const int8_t  joint_sign = mbmi->block_mi.cfl_alpha_signs;
         const uint8_t idx        = mbmi->block_mi.cfl_alpha_idx;
+#endif
         update_cdf(fc->cfl_sign_cdf, joint_sign, CFL_JOINT_SIGNS);
         if (CFL_SIGN_U(joint_sign) != CFL_SIGN_ZERO) {
             AomCdfProb *cdf_u = fc->cfl_alpha_cdf[CFL_CONTEXT_U(joint_sign)];
@@ -926,9 +950,15 @@ static AOM_INLINE void sum_intra_stats(PictureControlSet *pcs_ptr, BlkStruct *bl
                             pcs_ptr->parent_pcs_ptr->scs_ptr->static_config.intra_angle_delta)) {
         assert((uv_mode - UV_V_PRED) < DIRECTIONAL_MODES);
         assert((uv_mode - UV_V_PRED) >= 0);
+#if OPT_INTRA_MI_MEM
+        update_cdf(fc->angle_delta_cdf[uv_mode - UV_V_PRED],
+                   blk_ptr->prediction_unit_array[0].angle_delta[PLANE_TYPE_UV] + MAX_ANGLE_DELTA,
+                   2 * MAX_ANGLE_DELTA + 1);
+#else
         update_cdf(fc->angle_delta_cdf[uv_mode - UV_V_PRED],
                    mbmi->block_mi.angle_delta[PLANE_TYPE_UV] + MAX_ANGLE_DELTA,
                    2 * MAX_ANGLE_DELTA + 1);
+#endif
     }
     if (av1_allow_palette(pcs_ptr->parent_pcs_ptr->frm_hdr.allow_screen_content_tools, bsize)) {
         update_palette_cdf(xd, mbmi, blk_ptr, mi_row, mi_col);
@@ -1069,12 +1099,21 @@ void update_stats(PictureControlSet *pcs_ptr, BlkStruct *blk_ptr, int mi_row, in
                                       mbmi->block_mi.mode)
                 : SIMPLE_TRANSLATION;
             if (mbmi->block_mi.ref_frame[1] != INTRA_FRAME) {
+#if OPT_MODE_MI_MEM
+                if (motion_allowed == WARPED_CAUSAL) {
+                    update_cdf(
+                        fc->motion_mode_cdf[bsize], blk_ptr->prediction_unit_array[0].motion_mode, MOTION_MODES);
+                } else if (motion_allowed == OBMC_CAUSAL) {
+                    update_cdf(fc->obmc_cdf[bsize], blk_ptr->prediction_unit_array[0].motion_mode == OBMC_CAUSAL, 2);
+                }
+#else
                 if (motion_allowed == WARPED_CAUSAL) {
                     update_cdf(
                         fc->motion_mode_cdf[bsize], mbmi->block_mi.motion_mode, MOTION_MODES);
                 } else if (motion_allowed == OBMC_CAUSAL) {
                     update_cdf(fc->obmc_cdf[bsize], mbmi->block_mi.motion_mode == OBMC_CAUSAL, 2);
                 }
+#endif
             }
 
             if (has_second_ref(mbmi)) {
@@ -1082,10 +1121,17 @@ void update_stats(PictureControlSet *pcs_ptr, BlkStruct *blk_ptr, int mi_row, in
                     pcs_ptr->parent_pcs_ptr->scs_ptr->seq_header.enable_masked_compound;
                 if (masked_compound_used) {
                     const int comp_group_idx_ctx = get_comp_group_idx_context_enc(xd);
+#if OPT_INTER_MI_MEM
+                    update_cdf(fc->comp_group_idx_cdf[comp_group_idx_ctx], mbmi->block_mi.comp_group_idx, 2);
+#else
                     update_cdf(fc->comp_group_idx_cdf[comp_group_idx_ctx], mbmi->comp_group_idx, 2);
+#endif
                 }
-
+#if OPT_INTER_MI_MEM
+                if (mbmi->block_mi.comp_group_idx == 0) {
+#else
                 if (mbmi->comp_group_idx == 0) {
+#endif
                     const int comp_index_ctx = get_comp_index_context_enc(
                         pcs_ptr->parent_pcs_ptr,
                         pcs_ptr->parent_pcs_ptr->cur_order_hint, // cur_frame_index,
@@ -1115,7 +1161,11 @@ void update_stats(PictureControlSet *pcs_ptr, BlkStruct *blk_ptr, int mi_row, in
     }
 
     if (inter_block && pcs_ptr->parent_pcs_ptr->av1_cm->interp_filter == SWITCHABLE &&
+#if OPT_MODE_MI_MEM
+        blk_ptr->prediction_unit_array[0].motion_mode != WARPED_CAUSAL &&
+#else
         mbmi->block_mi.motion_mode != WARPED_CAUSAL &&
+#endif
         !is_nontrans_global_motion_ec(mbmi->block_mi.ref_frame[0],
                                       mbmi->block_mi.ref_frame[1],
                                       blk_ptr,
@@ -1146,9 +1196,15 @@ void update_stats(PictureControlSet *pcs_ptr, BlkStruct *blk_ptr, int mi_row, in
 #else
                     const uint8_t drl_ctx = av1_drl_ctx(xd->final_ref_mv_stack, idx);
 #endif
+#if OPT_INTER_MI_MEM
+                    update_cdf(fc->drl_cdf[drl_ctx], blk_ptr->drl_index != idx, 2);
+                    if (blk_ptr->drl_index == idx)
+                        break;
+#else
                     update_cdf(fc->drl_cdf[drl_ctx], mbmi->block_mi.ref_mv_idx != idx, 2);
                     if (mbmi->block_mi.ref_mv_idx == idx)
                         break;
+#endif
                 }
             }
         }
@@ -1162,9 +1218,15 @@ void update_stats(PictureControlSet *pcs_ptr, BlkStruct *blk_ptr, int mi_row, in
 #else
                     const uint8_t drl_ctx = av1_drl_ctx(xd->final_ref_mv_stack, idx);
 #endif
+#if OPT_INTER_MI_MEM
+                    update_cdf(fc->drl_cdf[drl_ctx], blk_ptr->drl_index != idx - 1, 2);
+                    if (blk_ptr->drl_index == idx - 1)
+                        break;
+#else
                     update_cdf(fc->drl_cdf[drl_ctx], mbmi->block_mi.ref_mv_idx != idx - 1, 2);
                     if (mbmi->block_mi.ref_mv_idx == idx - 1)
                         break;
+#endif
                 }
             }
         }

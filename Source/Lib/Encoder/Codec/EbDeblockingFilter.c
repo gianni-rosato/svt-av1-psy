@@ -139,7 +139,11 @@ static INLINE TxSize get_transform_size(const MbModeInfo *const mbmi, const Edge
     TxSize tx_size = (plane == COMPONENT_LUMA)
         ? (is_skip
             ? tx_depth_to_tx_size[0][mbmi->block_mi.sb_type]
+#if OPT_TX_MI_MEM
+            : tx_depth_to_tx_size[mbmi->block_mi.tx_depth][mbmi->block_mi.sb_type]) // use max_tx_size
+#else
             : tx_depth_to_tx_size[mbmi->tx_depth][mbmi->block_mi.sb_type]) // use max_tx_size
+#endif
         : av1_get_max_uv_txsize(mbmi->block_mi.sb_type, plane_ptr->subsampling_x, plane_ptr->subsampling_y);
     assert(tx_size < TX_SIZES_ALL);
 

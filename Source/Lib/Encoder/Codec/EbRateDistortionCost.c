@@ -34,7 +34,11 @@ int av1_get_comp_reference_type_context_new(const MacroBlockD *xd);
 int  av1_get_palette_bsize_ctx(BlockSize bsize);
 int  av1_get_palette_mode_ctx(const MacroBlockD *xd);
 int  write_uniform_cost(int n, int v);
+#if OPT_PALETTE_MEM
+int  svt_get_palette_cache_y(const MacroBlockD *const xd, uint16_t *cache);
+#else
 int  svt_get_palette_cache(const MacroBlockD *const xd, int plane, uint16_t *cache);
+#endif
 int  svt_av1_palette_color_cost_y(const PaletteModeInfo *const pmi, uint16_t *color_cache,
                                   int n_cache, int bit_depth);
 int  svt_av1_cost_color_map(PaletteInfo *palette_info, MdRateEstimationContext *rate_table,
@@ -749,7 +753,11 @@ uint64_t av1_intra_fast_cost(
                         ->palette_ysize_fac_bits[bsize_ctx][plt_size - PALETTE_MIN_SIZE] +
                     write_uniform_cost(plt_size, color_map[0]);
                 uint16_t  color_cache[2 * PALETTE_MAX_SIZE];
+#if OPT_PALETTE_MEM
+                const int n_cache = svt_get_palette_cache_y(blk_ptr->av1xd, color_cache);
+#else
                 const int n_cache = svt_get_palette_cache(blk_ptr->av1xd, 0, color_cache);
+#endif
                 palette_mode_cost += svt_av1_palette_color_cost_y(
                     &candidate_ptr->palette_info->pmi,
                     color_cache,
@@ -2179,7 +2187,45 @@ EbErrorType av1_full_cost(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
                                         candidate_buffer_ptr->candidate_ptr->block_has_coeff);
 
     // Coeff rate
+#if FIX_SKIP_COEFF_CONTEXT
+    if (context_ptr->blk_skip_decision && candidate_buffer_ptr->candidate_ptr->type != INTRA_MODE) {
+        // MD assumes skip_coeff_context=0:to evaluate updating skip_coeff_context
+        uint64_t non_skip_cost = RDCOST(
+            lambda,
+            (*y_coeff_bits + *cb_coeff_bits + *cr_coeff_bits + tx_size_bits +
+            (uint64_t)context_ptr->md_rate_estimation_ptr->skip_fac_bits[blk_ptr->skip_coeff_context][0]), (y_distortion[0] + cb_distortion[0] + cr_distortion[0]));
 
+        uint64_t skip_cost = RDCOST(lambda,
+            ((uint64_t)context_ptr->md_rate_estimation_ptr->skip_fac_bits[blk_ptr->skip_coeff_context][1]),
+            (y_distortion[1] + cb_distortion[1] + cr_distortion[1]));
+
+        if ((candidate_buffer_ptr->candidate_ptr->block_has_coeff == 0) ||
+            (skip_cost < non_skip_cost)) {
+            y_distortion[0] = y_distortion[1];
+            cb_distortion[0] = cb_distortion[1];
+            cr_distortion[0] = cr_distortion[1];
+            candidate_buffer_ptr->candidate_ptr->block_has_coeff = 0;
+            candidate_buffer_ptr->candidate_ptr->y_has_coeff = 0;
+            candidate_buffer_ptr->candidate_ptr->u_has_coeff = 0;
+            candidate_buffer_ptr->candidate_ptr->v_has_coeff = 0;
+        }
+
+        // MD assumes skip_coeff_context=0:to evaluate updating skip_coeff_context
+        if (candidate_buffer_ptr->candidate_ptr->block_has_coeff)
+            coeff_rate = (*y_coeff_bits + *cb_coeff_bits + *cr_coeff_bits +
+            (uint64_t)context_ptr->md_rate_estimation_ptr
+                ->skip_fac_bits[blk_ptr->skip_coeff_context][0]);
+        else
+            coeff_rate = MIN((uint64_t)context_ptr->md_rate_estimation_ptr->skip_fac_bits[blk_ptr->skip_coeff_context][1],
+            (*y_coeff_bits + *cb_coeff_bits + *cr_coeff_bits +
+                (uint64_t)context_ptr->md_rate_estimation_ptr->skip_fac_bits[blk_ptr->skip_coeff_context][0]));
+
+    }
+    else
+        coeff_rate = (*y_coeff_bits + *cb_coeff_bits + *cr_coeff_bits +
+        (uint64_t)context_ptr->md_rate_estimation_ptr
+            ->skip_fac_bits[blk_ptr->skip_coeff_context][0]);
+#else
     if (context_ptr->blk_skip_decision && candidate_buffer_ptr->candidate_ptr->type != INTRA_MODE) {
         // MD assumes skip_coeff_context=0:to evaluate updating skip_coeff_context
         uint64_t non_skip_cost = RDCOST(
@@ -2215,7 +2261,7 @@ EbErrorType av1_full_cost(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
         coeff_rate = (*y_coeff_bits + *cb_coeff_bits + *cr_coeff_bits +
                       (uint64_t)context_ptr->md_rate_estimation_ptr
                           ->skip_fac_bits[0][0]);
-
+#endif
     luma_sse         = y_distortion[0];
     chroma_sse       = cb_distortion[0] + cr_distortion[0];
     total_distortion = luma_sse + chroma_sse;
@@ -2495,6 +2541,9 @@ void coding_loop_context_generation(PictureControlSet *pcs_ptr, ModeDecisionCont
 #if  !OPT_NA_ISINTER
                                     NeighborArrayUnit *mode_type_neighbor_array,
 #endif
+#if FIX_SKIP_COEFF_CONTEXT
+                                    NeighborArrayUnit *skip_coeff_neighbor_array,
+#endif
                                     NeighborArrayUnit *leaf_partition_neighbor_array) {
 #if !OPT_NA_ISINTER
     uint32_t mode_type_left_neighbor_index = get_neighbor_array_unit_left_index(
@@ -2621,6 +2670,31 @@ if (!context_ptr->shut_fast_rate) {
     if (pcs_ptr->slice_type != I_SLICE || pcs_ptr->parent_pcs_ptr->frm_hdr.allow_intrabc)
     av1_collect_neighbors_ref_counts_new(blk_ptr->av1xd);
 
+#if FIX_SKIP_COEFF_CONTEXT
+    // Skip Coeff Context
+    if (context_ptr->use_skip_coeff_context) {
+        uint32_t skip_coeff_left_neighbor_index =
+            get_neighbor_array_unit_left_index(skip_coeff_neighbor_array, blk_origin_y);
+        uint32_t skip_coeff_top_neighbor_index =
+            get_neighbor_array_unit_top_index(skip_coeff_neighbor_array, blk_origin_x);
+
+
+        blk_ptr->skip_coeff_context =
+            (skip_coeff_neighbor_array->left_array[skip_coeff_left_neighbor_index] ==
+            (uint8_t)INVALID_NEIGHBOR_DATA)
+            ? 0
+            : (skip_coeff_neighbor_array->left_array[skip_coeff_left_neighbor_index]) ? 1 : 0;
+
+        blk_ptr->skip_coeff_context +=
+            (skip_coeff_neighbor_array->top_array[skip_coeff_top_neighbor_index] ==
+            (uint8_t)INVALID_NEIGHBOR_DATA)
+            ? 0
+            : (skip_coeff_neighbor_array->top_array[skip_coeff_top_neighbor_index]) ? 1 : 0;
+    }
+    else {
+        blk_ptr->skip_coeff_context = 0;
+    }
+#endif
     return;
 }
 

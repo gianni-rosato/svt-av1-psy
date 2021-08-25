@@ -33,14 +33,19 @@ void svt_enc_msb_pack2_d(uint8_t *in8_bit_buffer, uint32_t in8_stride, uint8_t *
         }
     }
 }
-
 /************************************************
 * pack 8 and 2 bit 2D data into 10 bit data
 2bit data storage : 4 2bit-pixels in one byte
 ************************************************/
+#if SS_2B_COMPRESS
+void svt_compressed_packmsb_c(uint8_t *in8_bit_buffer, uint32_t in8_stride, uint8_t *inn_bit_buffer,
+    uint32_t inn_stride, uint16_t *out16_bit_buffer, uint32_t out_stride,
+    uint32_t width, uint32_t height) {
+#else
 void svt_compressed_packmsb_c(uint8_t *in8_bit_buffer, uint32_t in8_stride, uint8_t *inn_bit_buffer,
                               uint16_t *out16_bit_buffer, uint32_t inn_stride, uint32_t out_stride,
                               uint32_t width, uint32_t height) {
+#endif
     uint64_t row, k_idx;
     uint16_t out_pixel;
     uint8_t  n_bit_pixel;
@@ -70,6 +75,94 @@ void svt_compressed_packmsb_c(uint8_t *in8_bit_buffer, uint32_t in8_stride, uint
     }
 }
 
+#if SS_2B_COMPRESS
+/************************************************
+* unpack  16bit  data to 8bit  + compressed-2bit
+  2bit data storage : 4 2bit-pixels in one byte
+  width is not necessarily multiple of 4
+************************************************/
+void svt_unpack_and_2bcompress_c(
+    uint16_t *in16b_buffer, uint32_t in16b_stride,
+    uint8_t  *out8b_buffer, uint32_t out8b_stride,
+    uint8_t  *out2b_buffer, uint32_t out2b_stride,
+    uint32_t width, uint32_t height)
+{
+    uint32_t row, col;
+    uint16_t in_pixel;
+    uint8_t  tmp_pixel;
+
+    uint32_t w_m4 = (width / 4) * 4;
+    uint32_t w_rem = width - w_m4;
+
+    for (row = 0; row< height; row++) {
+        for (col = 0; col < w_m4; col += 4) {
+
+
+            uint8_t compressed_unpacked_pixel = 0;
+
+            //+0
+            in_pixel = in16b_buffer[col + 0 + row * in16b_stride];
+            out8b_buffer[col + 0 + row * out8b_stride] = (uint8_t)(in_pixel >> 2);
+            tmp_pixel = (uint8_t)(in_pixel << 6);
+            compressed_unpacked_pixel = compressed_unpacked_pixel | ((tmp_pixel >> 0) & 0xC0); //1100.0000
+
+            //+1
+            in_pixel = in16b_buffer[col + 1 + row * in16b_stride];
+            out8b_buffer[col + 1 + row * out8b_stride] = (uint8_t)(in_pixel >> 2);
+            tmp_pixel = (uint8_t)(in_pixel << 6);
+            compressed_unpacked_pixel = compressed_unpacked_pixel |  ((tmp_pixel >> 2) & 0x30); //0011.0000
+
+            //+2
+            in_pixel = in16b_buffer[col + 2 + row * in16b_stride];
+            out8b_buffer[col + 2 + row * out8b_stride] = (uint8_t)(in_pixel >> 2);
+            tmp_pixel = (uint8_t)(in_pixel << 6);
+            compressed_unpacked_pixel = compressed_unpacked_pixel |  ((tmp_pixel>> 4) & 0x0C); //0000.1100
+
+
+            //+3
+            in_pixel = in16b_buffer[col + 3 + row * in16b_stride];
+            out8b_buffer[col + 3 + row * out8b_stride] = (uint8_t)(in_pixel >> 2);
+            tmp_pixel = (uint8_t)(in_pixel << 6);
+            compressed_unpacked_pixel = compressed_unpacked_pixel | ((tmp_pixel >> 6) & 0x03); //0000.0011
+
+            out2b_buffer[col / 4 + row * out2b_stride] = compressed_unpacked_pixel;
+        }
+
+        //we can have up to 3 pixels remaining
+        if (w_rem > 0) {
+
+            uint8_t compressed_unpacked_pixel = 0;
+            //+0
+            in_pixel = in16b_buffer[col + 0 + row * in16b_stride];
+            out8b_buffer[col + 0 + row * out8b_stride] = (uint8_t)(in_pixel >> 2);
+            tmp_pixel = (uint8_t)(in_pixel << 6);
+            compressed_unpacked_pixel = compressed_unpacked_pixel | ((tmp_pixel >> 0) & 0xC0); //1100.0000
+
+            if (w_rem > 1) {
+
+                //+1
+                in_pixel = in16b_buffer[col + 1 + row * in16b_stride];
+                out8b_buffer[col + 1 + row * out8b_stride] = (uint8_t)(in_pixel >> 2);
+                tmp_pixel = (uint8_t)(in_pixel << 6);
+                compressed_unpacked_pixel = compressed_unpacked_pixel | ((tmp_pixel >> 2) & 0x30); //0011.0000
+            }
+            if (w_rem > 2) {
+
+                //+2
+                in_pixel = in16b_buffer[col + 2 + row * in16b_stride];
+                out8b_buffer[col + 2 + row * out8b_stride] = (uint8_t)(in_pixel >> 2);
+                tmp_pixel = (uint8_t)(in_pixel << 6);
+                compressed_unpacked_pixel = compressed_unpacked_pixel | ((tmp_pixel >> 4) & 0x0C); //0000.1100
+            }
+
+            out2b_buffer[col / 4 + row * out2b_stride] = compressed_unpacked_pixel;
+        }
+
+    }
+}
+#endif
+
+
 /************************************************
 * convert unpacked nbit (n=2) data to compressedPAcked
 2bit data storage : 4 2bit-pixels in one byte
@@ -98,7 +191,40 @@ void svt_c_pack_c(const uint8_t *inn_bit_buffer, uint32_t inn_stride, uint8_t *i
         }
     }
 }
+#if SS_2B_COMPRESS
+/************************************************
+* convert compressed packed 2bit data to uncompressed 8bit
+data: 4 pixels in 1 byte to 4 1pixel-bytes
+************************************************/
+void svt_c_unpack_compressed_10bit(const uint8_t *inn_bit_buffer, uint32_t inn_stride, uint8_t *in_compn_bit_buffer,
+    uint32_t out_stride, uint32_t height) {
+    uint32_t row_index, col_index;
 
+    for (row_index = 0; row_index < height; row_index++) {
+        for (col_index = 0; col_index < out_stride; col_index++) {
+
+            uint32_t data_byte = inn_bit_buffer[row_index*inn_stride + col_index / 4];
+
+            uint8_t uncompressed_byte = 0;
+
+            if (col_index % 4 == 0) {
+                uncompressed_byte = data_byte & 0xC0;
+            }
+            else if (col_index % 4 == 1) {
+                uncompressed_byte = (data_byte << 2) & 0xC0;
+            }
+            else if (col_index % 4 == 2) {
+                uncompressed_byte = (data_byte << 4) & 0xC0;
+            }
+            else if (col_index % 4 == 3) {
+                uncompressed_byte = (data_byte << 6) & 0xC0;
+            }
+
+            in_compn_bit_buffer[row_index*out_stride + col_index] = uncompressed_byte;
+        }
+    }
+}
+#endif
 /************************************************
 * unpack 10 bit data into  8 and 2 bit 2D data
 ************************************************/
