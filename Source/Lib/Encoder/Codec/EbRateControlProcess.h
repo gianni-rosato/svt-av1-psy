@@ -257,6 +257,9 @@ typedef struct RateControlPorts {
 /**************************************
  * Extern Function Declarations
  **************************************/
+#if FIXED_POINTS_PLANEWISE
+int32_t svt_av1_convert_qindex_to_q_fp8(int32_t qindex, AomBitDepth bit_depth);
+#endif
 double svt_av1_convert_qindex_to_q(int32_t qindex, AomBitDepth bit_depth);
 int    svt_av1_rc_get_default_min_gf_interval(int width, int height, double framerate);
 int    svt_av1_rc_get_default_max_gf_interval(double framerate, int min_gf_interval);

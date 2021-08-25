@@ -12,8 +12,28 @@
 #include "common_dsp_rtcd.h"
 #include "EbWarpedMotion.h"
 
+#if FTR_MEM_OPT_WM
+static INLINE __m256i load_2buffers(const uint8_t *ref8b_a, const uint8_t *ref2b_a, const uint8_t *ref8b_b, const uint8_t *ref2b_b) {
+    __m128i in_2_bit_a = _mm_loadl_epi64((__m128i *)ref2b_a);
+    __m128i in_8_bit_a = _mm_loadl_epi64((__m128i *)ref8b_a);
+    __m128i in_2_bit_b = _mm_loadl_epi64((__m128i *)(ref2b_b));
+    __m128i in_8_bit_b = _mm_loadl_epi64((__m128i *)(ref8b_b));
+
+     __m128i out0 = _mm_srli_epi16(_mm_unpacklo_epi8(in_2_bit_a, in_8_bit_a), 6);
+     __m128i out1 = _mm_srli_epi16(_mm_unpacklo_epi8(in_2_bit_b, in_8_bit_b), 6);
+
+     return _mm256_inserti128_si256(_mm256_castsi128_si256(out0), out1, 0x1);
+}
+#endif
+
+#if FTR_MEM_OPT_WM
+void svt_av1_highbd_warp_affine_avx2(const int32_t *mat, const uint8_t *ref8b, const uint8_t *ref2b,
+                                     int width, int height, int stride8b, int stride2b, uint16_t *pred,
+                                     int p_col, int p_row, int p_width,
+#else
 void svt_av1_highbd_warp_affine_avx2(const int32_t *mat, const uint16_t *ref, int width, int height,
                                      int stride, uint16_t *pred, int p_col, int p_row, int p_width,
+#endif
                                      int p_height, int p_stride, int subsampling_x,
                                      int subsampling_y, int bd, ConvolveParams *conv_params,
                                      int16_t alpha, int16_t beta, int16_t gamma, int16_t delta) {
@@ -86,9 +106,17 @@ void svt_av1_highbd_warp_affine_avx2(const int32_t *mat, const uint16_t *ref, in
                         iy = 0;
                     else if (iy > height - 1)
                         iy = height - 1;
+#if FTR_MEM_OPT_WM
+                    uint16_t  ref      = (ref8b[iy * stride8b] << 2) |
+                                        ((ref2b[iy * stride2b] >> 6) & 3);
+                    tmp[k + 7]   = _mm256_cvtepi16_epi32(
+                        _mm_set1_epi16((1 << (bd + FILTER_BITS - reduce_bits_horiz - 1)) +
+                                       ref * (1 << (FILTER_BITS - reduce_bits_horiz))));
+#else
                     tmp[k + 7] = _mm256_cvtepi16_epi32(_mm_set1_epi16(
                         (1 << (bd + FILTER_BITS - reduce_bits_horiz - 1)) +
                         ref[iy * stride] * (1 << (FILTER_BITS - reduce_bits_horiz))));
+#endif
                 }
             } else if (ix4 >= width + 6) {
                 for (int k = -7; k < AOMMIN(8, p_height - i); ++k) {
@@ -97,9 +125,17 @@ void svt_av1_highbd_warp_affine_avx2(const int32_t *mat, const uint16_t *ref, in
                         iy = 0;
                     else if (iy > height - 1)
                         iy = height - 1;
+#if FTR_MEM_OPT_WM
+                    uint16_t  ref      = (ref8b[iy * stride8b + (width - 1)] << 2) |
+                                        ((ref2b[iy * stride2b + (width - 1)] >> 6) & 3);
+                    tmp[k + 7] = _mm256_cvtepi16_epi32(
+                        _mm_set1_epi16((1 << (bd + FILTER_BITS - reduce_bits_horiz - 1)) +
+                                       ref * (1 << (FILTER_BITS - reduce_bits_horiz))));
+#else
                     tmp[k + 7] = _mm256_cvtepi16_epi32(_mm_set1_epi16(
                         (1 << (bd + FILTER_BITS - reduce_bits_horiz - 1)) +
                         ref[iy * stride + (width - 1)] * (1 << (FILTER_BITS - reduce_bits_horiz))));
+#endif
                 }
             } else if (((ix4 - 7) < 0) || ((ix4 + 9) > width)) {
                 int32_t tmp1[8];
@@ -115,7 +151,13 @@ void svt_av1_highbd_warp_affine_avx2(const int32_t *mat, const uint16_t *ref, in
                         int32_t sum = 1 << offset_bits_horiz;
                         for (int m = 0; m < 8; ++m) {
                             const int sample_x = clamp(ix + m, 0, width - 1);
+#if FTR_MEM_OPT_WM
+                            uint16_t ref = (ref8b[iy * stride8b + sample_x] << 2) |
+                                           ((ref2b[iy * stride2b + sample_x] >> 6) & 3);
+                            sum += ref * coeffs[m];
+#else
                             sum += ref[iy * stride + sample_x] * coeffs[m];
+#endif
                         }
                         sum = ROUND_POWER_OF_TWO(sum, reduce_bits_horiz);
                         tmp1[(l + 4) / 2 + ((l + 4) % 2) * 4] = sum;
@@ -141,6 +183,12 @@ void svt_av1_highbd_warp_affine_avx2(const int32_t *mat, const uint16_t *ref, in
                             iy = 0;
                         else if (iy > height - 1)
                             iy = height - 1;
+#if FTR_MEM_OPT_WM
+                        __m256i v_refl = load_2buffers(&ref8b[iy * stride8b + ix4 - 7],
+                                                       &ref2b[iy * stride2b + ix4 - 7],
+                                                       &ref8b[iy * stride8b + ix4 + 1],
+                                                       &ref2b[iy * stride2b + ix4 + 1]);
+#else
                         iy = iy * stride;
 
                         __m256i v_refl = _mm256_inserti128_si256(
@@ -151,7 +199,7 @@ void svt_av1_highbd_warp_affine_avx2(const int32_t *mat, const uint16_t *ref, in
                             v_refl,
                             _mm_loadu_si128((__m128i *)&ref[iy + ix4 + 1]),
                             1); // R15 .. R0
-
+#endif
                         __m256i v_ref = _mm256_permute4x64_epi64(v_refl, 0xEE);
 
                         __m256i v_refu = _mm256_alignr_epi8(v_ref, v_refl, 2); // R8R15R14...R2R1
@@ -193,7 +241,9 @@ void svt_av1_highbd_warp_affine_avx2(const int32_t *mat, const uint16_t *ref, in
                             iy = 0;
                         else if (iy > height - 1)
                             iy = height - 1;
+#if !FTR_MEM_OPT_WM
                         iy = iy * stride;
+#endif
 
                         sx = sx4 + beta * (k + 4);
 
@@ -208,6 +258,13 @@ void svt_av1_highbd_warp_affine_avx2(const int32_t *mat, const uint16_t *ref, in
                         __m256i v_c67 = _mm256_broadcastd_epi32(
                             _mm_shuffle_epi32(v_01, 3)); // A7A6A7A6A7A6A7A6
 
+#if FTR_MEM_OPT_WM
+                        __m256i v_refl = load_2buffers(&ref8b[iy * stride8b + ix4 - 7],
+                                                       &ref2b[iy * stride2b + ix4 - 7],
+                                                       &ref8b[iy * stride8b + ix4 + 1],
+                                                       &ref2b[iy * stride2b + ix4 + 1]);
+#else
+
                         __m256i v_refl = _mm256_inserti128_si256(
                             _mm256_set1_epi16(0),
                             _mm_loadu_si128((__m128i *)&ref[iy + ix4 - 7]),
@@ -216,7 +273,7 @@ void svt_av1_highbd_warp_affine_avx2(const int32_t *mat, const uint16_t *ref, in
                             v_refl,
                             _mm_loadu_si128((__m128i *)&ref[iy + ix4 + 1]),
                             1); // R15 .. R0
-
+#endif
                         __m256i v_ref = _mm256_permute4x64_epi64(v_refl, 0xEE);
 
                         __m256i v_refu = _mm256_alignr_epi8(v_ref, v_refl, 2); // R8R15R14...R2R1
@@ -308,6 +365,13 @@ void svt_av1_highbd_warp_affine_avx2(const int32_t *mat, const uint16_t *ref, in
                             iy = 0;
                         else if (iy > height - 1)
                             iy = height - 1;
+
+#if FTR_MEM_OPT_WM
+                        __m256i v_refl = load_2buffers(&ref8b[iy * stride8b + ix4 - 7],
+                                                       &ref2b[iy * stride2b + ix4 - 7],
+                                                       &ref8b[iy * stride8b + ix4 + 1],
+                                                       &ref2b[iy * stride2b + ix4 + 1]);
+#else
                         iy = iy * stride;
 
                         __m256i v_refl = _mm256_inserti128_si256(
@@ -318,6 +382,7 @@ void svt_av1_highbd_warp_affine_avx2(const int32_t *mat, const uint16_t *ref, in
                             v_refl,
                             _mm_loadu_si128((__m128i *)&ref[iy + ix4 + 1]),
                             1); // R15 .. R0
+#endif
 
                         __m256i v_ref = _mm256_permute4x64_epi64(v_refl, 0xEE);
 
@@ -362,7 +427,9 @@ void svt_av1_highbd_warp_affine_avx2(const int32_t *mat, const uint16_t *ref, in
                             iy = 0;
                         else if (iy > height - 1)
                             iy = height - 1;
+#if !FTR_MEM_OPT_WM
                         iy = iy * stride;
+#endif
 
                         sx = sx4 + beta * (k + 4);
 
@@ -432,6 +499,13 @@ void svt_av1_highbd_warp_affine_avx2(const int32_t *mat, const uint16_t *ref, in
                         __m256i v_c45 = _mm256_unpacklo_epi64(v_c0123u, v_c4567u); // H5H4 ... A5A4
                         __m256i v_c67 = _mm256_unpackhi_epi64(v_c0123u, v_c4567u); // H7H6 ... A7A6
 
+
+#if FTR_MEM_OPT_WM
+                        __m256i v_refl = load_2buffers(&ref8b[iy * stride8b + ix4 - 7],
+                                                       &ref2b[iy * stride2b + ix4 - 7],
+                                                       &ref8b[iy * stride8b + ix4 + 1],
+                                                       &ref2b[iy * stride2b + ix4 + 1]);
+#else
                         __m256i v_refl = _mm256_inserti128_si256(
                             _mm256_set1_epi16(0),
                             _mm_loadu_si128((__m128i *)&ref[iy + ix4 - 7]),
@@ -440,7 +514,7 @@ void svt_av1_highbd_warp_affine_avx2(const int32_t *mat, const uint16_t *ref, in
                             v_refl,
                             _mm_loadu_si128((__m128i *)&ref[iy + ix4 + 1]),
                             1); // R15 .. R0
-
+#endif
                         __m256i v_ref = _mm256_permute4x64_epi64(v_refl, 0xEE);
 
                         __m256i v_refu = _mm256_alignr_epi8(v_ref, v_refl, 2); // R8R15R14...R2R1
@@ -615,3 +689,4 @@ void svt_av1_highbd_warp_affine_avx2(const int32_t *mat, const uint16_t *ref, in
         }
     }
 }
+

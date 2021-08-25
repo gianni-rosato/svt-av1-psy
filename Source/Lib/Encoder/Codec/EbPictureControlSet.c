@@ -1499,6 +1499,15 @@ EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr,
     uint32_t       region_in_picture_width_index;
     uint32_t       region_in_picture_height_index;
 
+#if FTR_MEM_OPT
+    //EbBool enable_wm = 0;
+    //for (uint8_t is_used_as_reference_flag = 0; is_used_as_reference_flag < 2; is_used_as_reference_flag++) {
+    //    for (uint8_t temporal_layer_index = 0; temporal_layer_index < MAX_TEMPORAL_LAYERS; temporal_layer_index++) {
+    //        enable_wm = MAX(enable_wm, get_wm_enable (init_data_ptr->enc_mode,temporal_layer_index ,is_used_as_reference_flag));
+    //    }
+    //}
+    object_ptr->packed_reference_hbd = DUPLICATE_REFENCE &&  (init_data_ptr->bit_depth > 8);
+#endif
     object_ptr->dctor = picture_parent_control_set_dctor;
 
     object_ptr->scs_wrapper_ptr                 = (EbObjectWrapper *)NULL;

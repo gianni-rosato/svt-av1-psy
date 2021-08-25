@@ -485,8 +485,11 @@ void process_lad_queue(
                       head_pcs->stats_in_offset + (uint64_t)head_pcs->ext_group_size + 1) :
                     (uint64_t)(head_pcs->scs_ptr->twopass.stats_buf_ctx->stats_in_end_write - head_pcs->scs_ptr->twopass.stats_buf_ctx->stats_in_start);
                 head_pcs->frames_in_sw = (int)(head_pcs->stats_in_end_offset - head_pcs->stats_in_offset);
-
+#if FIX_VBR_R2R
+                if (head_pcs->scs_ptr->enable_dec_order == 0 && head_pcs->scs_ptr->lap_enabled && head_pcs->temporal_layer_index == 0) {
+#else
                 if (head_pcs->scs_ptr->lap_enabled && head_pcs->temporal_layer_index == 0) {
+#endif
                     for (uint64_t num_frames = head_pcs->stats_in_offset; num_frames < head_pcs->stats_in_end_offset; ++num_frames) {
                         FIRSTPASS_STATS *cur_frame =
                             head_pcs->scs_ptr->twopass.stats_buf_ctx->stats_in_start + num_frames;
@@ -647,7 +650,7 @@ void *initial_rate_control_kernel(void *input_ptr) {
             uint8_t release_pa_ref = 0;
             if (scs_ptr->static_config.enable_tpl_la == 0 && scs_ptr->static_config.superres_mode <= SUPERRES_RANDOM)
                 release_pa_ref =1;
-#if FTR_LAD_INPUT
+#if FTR_LAD_INPUT && !FIX_VBR_R2R
             else if (scs_ptr->tpl_lad_mg == 0 && pcs_ptr->slice_type == P_SLICE)
 #else
             else if (scs_ptr->lad_mg == 0 && pcs_ptr->slice_type == P_SLICE)

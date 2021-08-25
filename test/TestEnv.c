@@ -23,7 +23,16 @@
 /** setup_test_env is a util for unit test setup environment without create a
  * encoder */
 void setup_test_env() {
+#if FIXED_POINTS_PLANEWISE
+#ifdef ARCH_X86_64
+     CPU_FLAGS cpu_flags = get_cpu_flags_to_use();
+ #else
+     CPU_FLAGS cpu_flags = 0;
+ #endif
+    setup_common_rtcd_internal(cpu_flags);
+#else /*FIXED_POINTS_PLANEWISE*/
     CPU_FLAGS cpu_flags = get_cpu_flags_to_use();
+#endif /*FIXED_POINTS_PLANEWISE*/
 
     setup_rtcd_internal(cpu_flags);
 }

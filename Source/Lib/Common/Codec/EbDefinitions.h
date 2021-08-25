@@ -183,6 +183,12 @@ enum {
 #define SB_STRIDE_Y MAX_SB_SIZE
 #define SB_STRIDE_UV (MAX_SB_SIZE >> 1)
 
+#if FTR_MEM_OPT
+#define INTERPOLATION_OFFSET   8
+#define PACKED_BUFFER_SIZE ((MAX_SB_SIZE+ (INTERPOLATION_OFFSET << 1)) * (MAX_SB_SIZE+(INTERPOLATION_OFFSET << 1)))
+
+#define DUPLICATE_REFENCE    0
+#endif
 // Min superblock size
 #define MIN_SB_SIZE 64
 #define MIN_SB_SIZE_LOG2 6

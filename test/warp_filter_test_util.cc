@@ -439,7 +439,12 @@ void AV1HighbdWarpFilterTest::TearDown() {
 void AV1HighbdWarpFilterTest::RunSpeedTest(highbd_warp_affine_func test_impl) {
     const int w = 128, h = 128;
     const int border = 16;
+#if FIX_UT_FTR_MEM_OPT_WM
+    const int stride8b = w + 2 * border;
+    const int stride2b = w + 2 * border;
+#else
     const int stride = w + 2 * border;
+#endif
     HighbdWarpTestParam param = TEST_GET_PARAM(0);
     const int is_alpha_zero = TEST_GET_PARAM(1);
     const int is_beta_zero = TEST_GET_PARAM(2);
@@ -455,8 +460,15 @@ void AV1HighbdWarpFilterTest::RunSpeedTest(highbd_warp_affine_func test_impl) {
     // So to avoid a buffer overflow, we may need to pad rows to a multiple
     // of 8.
     int output_n = ((out_w + 7) & ~7) * out_h;
+#if FIX_UT_FTR_MEM_OPT_WM
+    uint8_t *input8b_ = new uint8_t[h * stride8b];
+    uint8_t *input8b = input8b_ + border;
+    uint8_t *input2b_ = new uint8_t[h * stride2b];
+    uint8_t *input2b = input2b_ + border;
+#else
     uint16_t *input_ = new uint16_t[h * stride];
     uint16_t *input = input_ + border;
+#endif
     uint16_t *output = new uint16_t[output_n];
     int32_t mat[8];
     int16_t alpha, beta, gamma, delta;
@@ -474,6 +486,23 @@ void AV1HighbdWarpFilterTest::RunSpeedTest(highbd_warp_affine_func test_impl) {
                           is_gamma_zero,
                           is_delta_zero);
     // Generate an input block and extend its borders horizontally
+#if FIX_UT_FTR_MEM_OPT_WM
+    for (int r = 0; r < h; ++r)
+        for (int c = 0; c < w; ++c) {
+                uint16_t val = rnd_->Rand16() & mask;
+                input8b[r * stride8b + c] = val >> 2;
+                input2b[r * stride2b + c] = (val & 3) << 6;
+
+        }
+    for (int r = 0; r < h; ++r) {
+        for (int c = 0; c < border; ++c) {
+            input8b[r * stride8b - border + c] = input8b[r * stride8b];
+            input8b[r * stride8b + w + c] = input8b[r * stride8b + (w - 1)];
+            input2b[r * stride2b - border + c] = input2b[r * stride2b];
+            input2b[r * stride2b + w + c] = input2b[r * stride2b + (w - 1)];
+        }
+    }
+#else
     for (int r = 0; r < h; ++r)
         for (int c = 0; c < w; ++c)
             input[r * stride + c] = rnd_->Rand16() & mask;
@@ -483,6 +512,7 @@ void AV1HighbdWarpFilterTest::RunSpeedTest(highbd_warp_affine_func test_impl) {
             input[r * stride + w + c] = input[r * stride + (w - 1)];
         }
     }
+#endif
 
     sub_x = 0;
     sub_y = 0;
@@ -503,10 +533,20 @@ void AV1HighbdWarpFilterTest::RunSpeedTest(highbd_warp_affine_func test_impl) {
 
     for (int i = 0; i < num_loops; ++i)
         test_impl(mat,
+#if FIX_UT_FTR_MEM_OPT_WM
+                  input8b,
+                  input2b,
+#else
                   input,
+#endif
                   w,
                   h,
+#if FIX_UT_FTR_MEM_OPT_WM
+                  stride8b,
+                  stride2b,
+#else
                   stride,
+#endif
                   output,
                   32,
                   32,
@@ -533,10 +573,20 @@ void AV1HighbdWarpFilterTest::RunSpeedTest(highbd_warp_affine_func test_impl) {
 
     for (int i = 0; i < num_loops; ++i)
         svt_av1_highbd_warp_affine_c(mat,
+#if FIX_UT_FTR_MEM_OPT_WM
+                                     input8b,
+                                     input2b,
+#else
                                      input,
+#endif
                                      w,
                                      h,
+#if FIX_UT_FTR_MEM_OPT_WM
+                                     stride8b,
+                                     stride2b,
+#else
                                      stride,
+#endif
                                      output,
                                      32,
                                      32,
@@ -564,7 +614,12 @@ void AV1HighbdWarpFilterTest::RunSpeedTest(highbd_warp_affine_func test_impl) {
            out_h,
            elapsed_time_ref / elapsed_time_tst);
 
+#if FIX_UT_FTR_MEM_OPT_WM
+    delete[] input8b_;
+    delete[] input2b_;
+#else
     delete[] input_;
+#endif
     delete[] output;
     delete[] dsta;
 }
@@ -573,7 +628,12 @@ void AV1HighbdWarpFilterTest::RunCheckOutput(
     highbd_warp_affine_func test_impl) {
     const int w = 128, h = 128;
     const int border = 16;
+#if FIX_UT_FTR_MEM_OPT_WM
+    const int stride8b = w + 2 * border;
+    const int stride2b = w + 2 * border;
+#else
     const int stride = w + 2 * border;
+#endif
     HighbdWarpTestParam param = TEST_GET_PARAM(0);
     const int is_alpha_zero = TEST_GET_PARAM(1);
     const int is_beta_zero = TEST_GET_PARAM(2);
@@ -590,8 +650,15 @@ void AV1HighbdWarpFilterTest::RunCheckOutput(
     // So to avoid a buffer overflow, we may need to pad rows to a multiple
     // of 8.
     int output_n = ((out_w + 7) & ~7) * out_h;
+#if FIX_UT_FTR_MEM_OPT_WM
+    uint8_t *input8b_ = new uint8_t[h * stride8b];
+    uint8_t *input8b = input8b_ + border;
+    uint8_t *input2b_ = new uint8_t[h * stride2b];
+    uint8_t *input2b = input2b_ + border;
+#else
     uint16_t *input_ = new uint16_t[h * stride];
     uint16_t *input = input_ + border;
+#endif
     uint16_t *output = new uint16_t[output_n];
     uint16_t *output2 = new uint16_t[output_n];
     int32_t mat[8];
@@ -607,6 +674,23 @@ void AV1HighbdWarpFilterTest::RunCheckOutput(
 
     for (i = 0; i < num_iters; ++i) {
         // Generate an input block and extend its borders horizontally
+#if FIX_UT_FTR_MEM_OPT_WM
+        for (int r = 0; r < h; ++r)
+            for (int c = 0; c < w; ++c) {
+                uint16_t val = rnd_->Rand16() & mask;
+                input8b[r * stride8b + c] = val >> 2;
+                input2b[r * stride2b + c] = (val & 3) << 6;
+
+            }
+        for (int r = 0; r < h; ++r) {
+            for (int c = 0; c < border; ++c) {
+                input8b[r * stride8b - border + c] = input8b[r * stride8b];
+                input8b[r * stride8b + w + c] = input8b[r * stride8b + (w - 1)];
+                input2b[r * stride2b - border + c] = input2b[r * stride2b];
+                input2b[r * stride2b + w + c] = input2b[r * stride2b + (w - 1)];
+            }
+        }
+#else
         for (int r = 0; r < h; ++r)
             for (int c = 0; c < w; ++c)
                 input[r * stride + c] = rnd_->Rand16() & mask;
@@ -616,6 +700,7 @@ void AV1HighbdWarpFilterTest::RunCheckOutput(
                 input[r * stride + w + c] = input[r * stride + (w - 1)];
             }
         }
+#endif
         const int use_no_round = rnd_->Rand8() & 1;
         for (sub_x = 0; sub_x < 2; ++sub_x)
             for (sub_y = 0; sub_y < 2; ++sub_y) {
@@ -650,10 +735,20 @@ void AV1HighbdWarpFilterTest::RunCheckOutput(
                             }
 
                             svt_av1_highbd_warp_affine_c(mat,
+#if FIX_UT_FTR_MEM_OPT_WM
+                                                         input8b,
+                                                         input2b,
+#else
                                                          input,
+#endif
                                                          w,
                                                          h,
+#if FIX_UT_FTR_MEM_OPT_WM
+                                                         stride8b,
+                                                         stride2b,
+#else
                                                          stride,
+#endif
                                                          output,
                                                          32,
                                                          32,
@@ -684,10 +779,20 @@ void AV1HighbdWarpFilterTest::RunCheckOutput(
                                     quant_dist_lookup_table[ii][jj][1];
                             }
                             test_impl(mat,
+#if FIX_UT_FTR_MEM_OPT_WM
+                                      input8b,
+                                      input2b,
+#else
                                       input,
+#endif
                                       w,
                                       h,
+#if FIX_UT_FTR_MEM_OPT_WM
+                                      stride8b,
+                                      stride2b,
+#else
                                       stride,
+#endif
                                       output2,
                                       32,
                                       32,
@@ -730,7 +835,12 @@ void AV1HighbdWarpFilterTest::RunCheckOutput(
             }
     }
 
+#if FIX_UT_FTR_MEM_OPT_WM
+    delete[] input8b_;
+    delete[] input2b_;
+#else
     delete[] input_;
+#endif
     delete[] output;
     delete[] output2;
     delete[] dsta;

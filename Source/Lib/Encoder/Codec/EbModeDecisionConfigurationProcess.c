@@ -572,7 +572,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
 #else
 #if TUNE_M7_M10_PRESETS
 #if TUNE_NEW_M10_M11
+#if OPT_TXS_WM
+    } else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M7) {
+#else
     } else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M11) {
+#endif
 #else
     } else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M10) {
 #endif
@@ -581,9 +585,18 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
 #endif
 #endif
         enable_wm = (pcs_ptr->parent_pcs_ptr->temporal_layer_index == 0) ? EB_TRUE : EB_FALSE;
+#if OPT_TXS_WM
+    }
+    else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M11) {
+        if (pcs_ptr->parent_pcs_ptr->input_resolution <= INPUT_SIZE_720p_RANGE)
+            enable_wm = (pcs_ptr->parent_pcs_ptr->temporal_layer_index == 0) ? EB_TRUE : EB_FALSE;
+        else
+            enable_wm = EB_FALSE;
+#endif
     } else {
         enable_wm = EB_FALSE;
     }
+
     if (pcs_ptr->parent_pcs_ptr->scs_ptr->static_config.enable_warped_motion != DEFAULT)
         enable_wm = (EbBool)pcs_ptr->parent_pcs_ptr->scs_ptr->static_config.enable_warped_motion;
 
@@ -625,6 +638,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
 #endif
         else
             pcs_ptr->parent_pcs_ptr->pic_obmc_level = 0;
+
     } else
         pcs_ptr->parent_pcs_ptr->pic_obmc_level = scs_ptr->static_config.obmc_level;
 

@@ -21,6 +21,13 @@
 #include "aom_dsp_rtcd.h"
 #include "EbModeDecisionProcess.h"
 
+#if FTR_MEM_OPT
+EbPictureBufferDesc * get_ref_pic_buffer(PictureControlSet *pcs_ptr,
+                                         uint8_t is_highbd,
+                                         uint8_t list_idx,
+                                         uint8_t ref_idx);
+#endif
+
 #define DIVIDE_AND_ROUND(x, y) (((x) + ((y) >> 1)) / (y))
 
 // Filters for factor of 2 downsampling.
@@ -1683,10 +1690,17 @@ void scale_rec_references(PictureControlSet *pcs_ptr, EbPictureBufferDesc *input
 
             uint64_t ref_picture_number = ppcs_ptr->ref_pic_poc_array[list_index][ref_pic_index];
 
-            EbPictureBufferDesc *ref_pic_ptr = hbd_mode_decision
+            EbPictureBufferDesc *ref_pic_ptr =
+#if FTR_MEM_OPT
+                get_ref_pic_buffer(pcs_ptr, hbd_mode_decision, list_index, ref_pic_index);
+#else
+#if !FTR_MEM_OPT
+                hbd_mode_decision
                 ? reference_object->reference_picture16bit
-                : reference_object->reference_picture;
-
+                :
+#endif
+                reference_object->reference_picture;
+#endif
             // if the size of the reference pic is different than the size of the input pic, then scale references
             if (ref_pic_ptr->width != input_picture_ptr->width) {
                 EbBool do_resize = EB_FALSE;

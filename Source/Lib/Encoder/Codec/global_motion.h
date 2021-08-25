@@ -63,7 +63,11 @@ int svt_av1_is_enough_erroradvantage(double best_erroradvantage, int params_cost
 // motion params that result from fine-tuning "wm" to "ref". Note that "wm" is
 // modified in place.
 int64_t svt_av1_refine_integerized_param(EbWarpedMotionParams *wm, TransformationType wmtype,
+#if FTR_MEM_OPT_WM
+                                         int use_hbd, int bd, uint8_t *ref,uint8_t *ref_2b, int r_width,
+#else
                                          int use_hbd, int bd, uint8_t *ref, int r_width,
+#endif
                                          int r_height, int r_stride, uint8_t *dst, int d_width,
                                          int d_height, int d_stride, int n_refinements,
                                          int64_t best_frame_error);

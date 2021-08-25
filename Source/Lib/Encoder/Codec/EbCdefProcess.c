@@ -51,8 +51,9 @@ void    svt_av1_superres_upscale_frame(struct Av1Common* cm, PictureControlSet* 
                                        SequenceControlSet* scs_ptr);
 void    set_unscaled_input_16bit(PictureControlSet* pcs_ptr);
 
-void    get_recon_pic(PictureControlSet* pcs_ptr, EbPictureBufferDesc** recon_ptr, EbBool is_highbd);
-
+#if FTR_MEM_OPT
+ void get_recon_pic(PictureControlSet *pcs_ptr, EbPictureBufferDesc **recon_ptr, EbBool is_highbd);
+#endif
 /**************************************
  * Cdef Context
  **************************************/
@@ -441,11 +442,19 @@ void cdef_seg_search(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr,
 void cdef_seg_search16bit(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr,
     uint32_t segment_index) {
     EbPictureBufferDesc *input_pic_ptr = pcs_ptr->input_frame16bit;
+
+#if FTR_MEM_OPT
+
+    EbPictureBufferDesc *recon_pic_ptr;
+    get_recon_pic(pcs_ptr, &recon_pic_ptr, 1);
+
+#else
     EbPictureBufferDesc *recon_pic_ptr = (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ==
         EB_TRUE)
         ? ((EbReferenceObject *)pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
         ->reference_picture16bit
         : pcs_ptr->parent_pcs_ptr->enc_dec_ptr->recon_picture16bit_ptr;
+#endif
     struct PictureParentControlSet *ppcs = pcs_ptr->parent_pcs_ptr;
     FrameHeader *                   frm_hdr = &ppcs->frm_hdr;
     Av1Common *                     cm = pcs_ptr->parent_pcs_ptr->av1_cm;

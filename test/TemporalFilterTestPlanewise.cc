@@ -16,10 +16,18 @@
 #include "random.h"
 #include "EbUtility.h"
 #include "EbUnitTestUtility.h"
+#if FIXED_POINTS_PLANEWISE
+#include "EbUtility.h"
+#endif
 
 
 
 using svt_av1_test_tool::SVTRandom;
+
+#if FIXED_POINTS_PLANEWISE
+/** setup_test_env is implemented in test/TestEnv.c */
+extern "C" void setup_test_env();
+#endif
 
 typedef void (*TemporalFilterFunc)(
     struct MeContext *context_ptr, const uint8_t *y_src, int y_src_stride,
@@ -49,11 +57,19 @@ typedef void (*TemporalFilterFuncHbd)(
 
 #define MAX_STRIDE 256
 
+#if FIXED_POINTS_PLANEWISE
+typedef std::tuple<TemporalFilterFunc, TemporalFilterFunc, int>
+    TemporalFilterWithParam;
+
+typedef std::tuple<TemporalFilterFuncHbd, TemporalFilterFuncHbd, int>
+    TemporalFilterWithParamHbd;
+#else
 typedef std::tuple<TemporalFilterFunc, TemporalFilterFunc>
     TemporalFilterWithParam;
 
 typedef std::tuple<TemporalFilterFuncHbd, TemporalFilterFuncHbd>
     TemporalFilterWithParamHbd;
+#endif
 
 
 static void TemporalFilterFillMeContexts(MeContext *cnt1, MeContext *cnt2) {
@@ -88,7 +104,7 @@ static void TemporalFilterFillMeContexts(MeContext *cnt1, MeContext *cnt2) {
     cnt1->tf_32x32_block_error[1] = 168763;
     cnt1->tf_32x32_block_error[2] = 143351;
     cnt1->tf_32x32_block_error[3] = 189005;
-    cnt1->tf_16x16_mv_x[0] = 16;
+    cnt1->tf_16x16_mv_x[0] = 160;
     cnt1->tf_16x16_mv_x[1] = 13;
     cnt1->tf_16x16_mv_x[2] = 13;
     cnt1->tf_16x16_mv_x[3] = 13;
@@ -104,7 +120,7 @@ static void TemporalFilterFillMeContexts(MeContext *cnt1, MeContext *cnt2) {
     cnt1->tf_16x16_mv_x[13] = 13;
     cnt1->tf_16x16_mv_x[14] = 11;
     cnt1->tf_16x16_mv_x[15] = -4;
-    cnt1->tf_16x16_mv_y[0] = -39;
+    cnt1->tf_16x16_mv_y[0] = -390;
     cnt1->tf_16x16_mv_y[1] = -35;
     cnt1->tf_16x16_mv_y[2] = -38;
     cnt1->tf_16x16_mv_y[3] = -60;
@@ -129,6 +145,7 @@ static void TemporalFilterFillMeContexts(MeContext *cnt1, MeContext *cnt2) {
     cnt1->tf_32x32_mv_y[2] = -436;
     cnt1->tf_32x32_mv_y[3] = -420;
     cnt1->min_frame_size = 1080;
+    cnt1->tf_chroma = 1;
     *cnt2 = *cnt1;
     cnt2->tf_block_col = 1;
 
@@ -157,8 +174,14 @@ class TemporalFilterTestPlanewise
     }
 
     void SetUp() {
+#if FIXED_POINTS_PLANEWISE
+        setup_test_env();
+#endif
         ref_func = TEST_GET_PARAM(0);
         tst_func = TEST_GET_PARAM(1);
+#if FIXED_POINTS_PLANEWISE
+        use_fixed_point = TEST_GET_PARAM(2);
+#endif
 
         for (int color_channel = 0; color_channel < COLOR_CHANNELS; color_channel++) {
             src_ptr[color_channel] = reinterpret_cast<uint8_t *>(
@@ -226,6 +249,16 @@ class TemporalFilterTestPlanewise
         int mode = rnd_.Rand8() < 128;
 #endif
 
+#if FIXED_POINTS_PLANEWISE
+        float range = 100;
+        if (rnd_.Rand8() < 128) {
+            range = 100000.0f;
+        }
+        tf_decay_factor[0] = (float)fclamp((rnd_.random_float() * range), 1.0, 32760);
+        tf_decay_factor[1] = (float)fclamp((rnd_.random_float() * range), 1.0, 32760);
+        tf_decay_factor[2] = (float)fclamp((rnd_.random_float() * range), 1.0, 32760);
+#endif
+
         for (int ii = 0; ii < height; ii++) {
             for (int jj = 0; jj < width; jj++) {
                 src_ptr[C_Y][ii * stride + jj] = rnd_.Rand8();
@@ -268,12 +301,17 @@ class TemporalFilterTestPlanewise
 
     uint32_t stride[COLOR_CHANNELS];
     uint32_t stride_pred[COLOR_CHANNELS];
+#if FIXED_POINTS_PLANEWISE
+    int use_fixed_point;
+    float tf_decay_factor[COLOR_CHANNELS];
+#else /*FIXED_POINTS_PLANEWISE*/
 #if FTR_TF_STRENGTH_PER_QP
     int tf_decay_factor[COLOR_CHANNELS];
 #else
     double noise_levels[COLOR_CHANNELS];
     int decay_control;
 #endif
+#endif/*FIXED_POINTS_PLANEWISE*/
 };
 
 void TemporalFilterTestPlanewise::RunTest(int width, int height,
@@ -281,6 +319,10 @@ void TemporalFilterTestPlanewise::RunTest(int width, int height,
 
     struct MeContext context1, context2, *context_ptr;
     TemporalFilterFillMeContexts(&context1, &context2);
+#if FIXED_POINTS_PLANEWISE
+     context1.tf_ctrls.use_fixed_point = use_fixed_point;
+     context2.tf_ctrls.use_fixed_point = use_fixed_point;
+#endif
 
     if (run_times <= 100) {
         for (int j = 0; j < run_times; j++) {
@@ -290,6 +332,11 @@ void TemporalFilterTestPlanewise::RunTest(int width, int height,
             } else {
                 context_ptr = &context2;
             }
+#if FIXED_POINTS_PLANEWISE
+            context_ptr->tf_decay_factor_fp16[C_Y] = FLOAT2FP(tf_decay_factor[C_Y], 16, uint32_t);
+            context_ptr->tf_decay_factor_fp16[C_U] = FLOAT2FP(tf_decay_factor[C_U], 16, uint32_t);
+            context_ptr->tf_decay_factor_fp16[C_V] = FLOAT2FP(tf_decay_factor[C_V], 16, uint32_t);
+#endif
 #if FTR_TF_STRENGTH_PER_QP
             context_ptr->tf_decay_factor[C_Y] = tf_decay_factor[C_Y];
             context_ptr->tf_decay_factor[C_U] = tf_decay_factor[C_U];
@@ -376,6 +423,11 @@ void TemporalFilterTestPlanewise::RunTest(int width, int height,
             } else {
                 context_ptr = &context2;
             }
+#if FIXED_POINTS_PLANEWISE
+            context_ptr->tf_decay_factor_fp16[C_Y] = FLOAT2FP(tf_decay_factor[C_Y], 16, uint32_t);
+            context_ptr->tf_decay_factor_fp16[C_U] = FLOAT2FP(tf_decay_factor[C_U], 16, uint32_t);
+            context_ptr->tf_decay_factor_fp16[C_V] = FLOAT2FP(tf_decay_factor[C_V], 16, uint32_t);
+#endif
 #if FTR_TF_STRENGTH_PER_QP
             context_ptr->tf_decay_factor[C_Y] = tf_decay_factor[C_Y];
             context_ptr->tf_decay_factor[C_U] = tf_decay_factor[C_U];
@@ -416,6 +468,11 @@ void TemporalFilterTestPlanewise::RunTest(int width, int height,
             } else {
                 context_ptr = &context2;
             }
+#if FIXED_POINTS_PLANEWISE
+            context_ptr->tf_decay_factor_fp16[C_Y] = FLOAT2FP(tf_decay_factor[C_Y], 16, uint32_t);
+            context_ptr->tf_decay_factor_fp16[C_U] = FLOAT2FP(tf_decay_factor[C_U], 16, uint32_t);
+            context_ptr->tf_decay_factor_fp16[C_V] = FLOAT2FP(tf_decay_factor[C_V], 16, uint32_t);
+#endif
 #if FTR_TF_STRENGTH_PER_QP
             context_ptr->tf_decay_factor[C_Y] = tf_decay_factor[C_Y];
             context_ptr->tf_decay_factor[C_U] = tf_decay_factor[C_U];
@@ -487,10 +544,27 @@ TEST_P(TemporalFilterTestPlanewise, DISABLED_Speed) {
 
 // MSVC fails because avx2 kernel does not exist, temporal fix by assigning C
 // kernel instread of AVX2
+#if FIXED_POINTS_PLANEWISE
+INSTANTIATE_TEST_CASE_P(
+    AVX2, TemporalFilterTestPlanewise,
+    ::testing::Combine(::testing::Values(svt_av1_apply_temporal_filter_planewise_c),
+                       ::testing::Values(svt_av1_apply_temporal_filter_planewise_avx2),
+                       ::testing::Values(0, 1)));
+#else /*FIXED_POINTS_PLANEWISE*/
 INSTANTIATE_TEST_CASE_P(
     AVX2, TemporalFilterTestPlanewise,
     ::testing::Combine(::testing::Values(svt_av1_apply_temporal_filter_planewise_c),
                        ::testing::Values(svt_av1_apply_temporal_filter_planewise_avx2)));
+#endif /*FIXED_POINTS_PLANEWISE*/
+
+#if FIXED_POINTS_PLANEWISE
+INSTANTIATE_TEST_CASE_P(
+    AVX2_medium, TemporalFilterTestPlanewise,
+    ::testing::Combine(::testing::Values(svt_av1_apply_temporal_filter_planewise_medium_c),
+                       ::testing::Values(svt_av1_apply_temporal_filter_planewise_medium_avx2),
+                       ::testing::Values(1)
+        ));
+#endif /*FIXED_POINTS_PLANEWISE*/
 
 #if FIX_TEMPORAL_FILTER_PLANEWISE
 void svt_av1_apply_temporal_filter_planewise_fast_c_wraper(
@@ -506,6 +580,22 @@ void svt_av1_apply_temporal_filter_planewise_fast_c_wraper(
     uint32_t *y_accum, uint16_t *y_count,
     uint32_t *u_accum, uint16_t *u_count, uint32_t *v_accum,
     uint16_t *v_count) {
+    UNUSED(v_src);
+    UNUSED(u_src);
+    UNUSED(uv_src_stride);
+    UNUSED(u_pre);
+    UNUSED(v_pre);
+    UNUSED(uv_pre_stride);
+    UNUSED(ss_x);
+    UNUSED(ss_y);
+    UNUSED(u_accum);
+    UNUSED(u_count);
+    UNUSED(v_accum);
+    UNUSED(v_count);
+#if !FTR_TF_STRENGTH_PER_QP
+    UNUSED(noise_levels);
+    UNUSED(decay_control);
+#endif
         svt_av1_apply_temporal_filter_planewise_fast_c(
             context_ptr,
             y_src,
@@ -531,6 +621,22 @@ void svt_av1_apply_temporal_filter_planewise_fast_avx2_wraper(
     uint32_t *y_accum, uint16_t *y_count,
     uint32_t *u_accum, uint16_t *u_count, uint32_t *v_accum,
     uint16_t *v_count) {
+    UNUSED(v_src);
+    UNUSED(u_src);
+    UNUSED(uv_src_stride);
+    UNUSED(u_pre);
+    UNUSED(v_pre);
+    UNUSED(uv_pre_stride);
+    UNUSED(ss_x);
+    UNUSED(ss_y);
+    UNUSED(u_accum);
+    UNUSED(u_count);
+    UNUSED(v_accum);
+    UNUSED(v_count);
+#if !FTR_TF_STRENGTH_PER_QP
+    UNUSED(noise_levels);
+    UNUSED(decay_control);
+#endif
     svt_av1_apply_temporal_filter_planewise_fast_avx2(
             context_ptr,
             y_src,
@@ -543,10 +649,18 @@ void svt_av1_apply_temporal_filter_planewise_fast_avx2_wraper(
             y_count);
 }
 
+#if FIXED_POINTS_PLANEWISE
+INSTANTIATE_TEST_CASE_P(
+    AVX2_fast, TemporalFilterTestPlanewise,
+    ::testing::Combine(::testing::Values(svt_av1_apply_temporal_filter_planewise_fast_c_wraper),
+                       ::testing::Values(svt_av1_apply_temporal_filter_planewise_fast_avx2_wraper),
+                       ::testing::Values(0, 1)));
+#else /*FIXED_POINTS_PLANEWISE*/
 INSTANTIATE_TEST_CASE_P(
     AVX2_fast, TemporalFilterTestPlanewise,
     ::testing::Combine(::testing::Values(svt_av1_apply_temporal_filter_planewise_fast_c_wraper),
                        ::testing::Values(svt_av1_apply_temporal_filter_planewise_fast_avx2_wraper)));
+#endif /*FIXED_POINTS_PLANEWISE*/
 #endif
 
 class TemporalFilterTestPlanewiseHbd
@@ -557,8 +671,14 @@ class TemporalFilterTestPlanewiseHbd
     }
 
     void SetUp() {
+#if FIXED_POINTS_PLANEWISE
+        setup_test_env();
+#endif
         ref_func = TEST_GET_PARAM(0);
         tst_func = TEST_GET_PARAM(1);
+#if FIXED_POINTS_PLANEWISE
+        use_fixed_point = TEST_GET_PARAM(2);
+#endif
 
         for (int color_channel = 0; color_channel < COLOR_CHANNELS;
              color_channel++) {
@@ -620,6 +740,16 @@ class TemporalFilterTestPlanewiseHbd
 #if FIX_TEMPORAL_FILTER_PLANEWISE
         int mode = rnd_.Rand8() < 128;
 #endif
+#if FIXED_POINTS_PLANEWISE
+        float range = 100;
+        if (rnd_.Rand8() < 128) {
+            range = 100000.0f;
+        }
+        tf_decay_factor[0] = (float)fclamp((rnd_.random_float() *range), 1.0, 32760);
+        tf_decay_factor[1] = (float)fclamp((rnd_.random_float() *range), 1.0, 32760);
+        tf_decay_factor[2] = (float)fclamp((rnd_.random_float() *range), 1.0, 32760);
+#endif
+
         for (int ii = 0; ii < height; ii++) {
             for (int jj = 0; jj < width; jj++) {
                 src_ptr[C_Y][ii * stride + jj] = rnd_.random();
@@ -662,12 +792,18 @@ class TemporalFilterTestPlanewiseHbd
 
     uint32_t stride[COLOR_CHANNELS];
     uint32_t stride_pred[COLOR_CHANNELS];
+
+#if FIXED_POINTS_PLANEWISE
+    int use_fixed_point;
+    float tf_decay_factor[COLOR_CHANNELS];
+#else /*FIXED_POINTS_PLANEWISE*/
 #if FTR_TF_STRENGTH_PER_QP
     int tf_decay_factor[COLOR_CHANNELS];
 #else
     double noise_levels[COLOR_CHANNELS];
     int decay_control;
 #endif
+#endif/*FIXED_POINTS_PLANEWISE*/
     uint32_t encoder_bit_depth;
 };
 
@@ -676,6 +812,10 @@ void TemporalFilterTestPlanewiseHbd::RunTest(int width, int height,
 
     struct MeContext context1, context2, *context_ptr;
     TemporalFilterFillMeContexts(&context1, &context2);
+#if FIXED_POINTS_PLANEWISE
+     context1.tf_ctrls.use_fixed_point = use_fixed_point;
+     context2.tf_ctrls.use_fixed_point = use_fixed_point;
+#endif
 
     if (run_times <= 100) {
         for (int j = 0; j < run_times; j++) {
@@ -686,6 +826,11 @@ void TemporalFilterTestPlanewiseHbd::RunTest(int width, int height,
                 context_ptr = &context2;
             }
             encoder_bit_depth = 10;
+#if FIXED_POINTS_PLANEWISE
+            context_ptr->tf_decay_factor_fp16[C_Y] = FLOAT2FP(tf_decay_factor[C_Y], 16, uint32_t);
+            context_ptr->tf_decay_factor_fp16[C_U] = FLOAT2FP(tf_decay_factor[C_U], 16, uint32_t);
+            context_ptr->tf_decay_factor_fp16[C_V] = FLOAT2FP(tf_decay_factor[C_V], 16, uint32_t);
+#endif
 #if FTR_TF_STRENGTH_PER_QP
             context_ptr->tf_decay_factor[C_Y] = tf_decay_factor[C_Y];
             context_ptr->tf_decay_factor[C_U] = tf_decay_factor[C_U];
@@ -760,6 +905,11 @@ void TemporalFilterTestPlanewiseHbd::RunTest(int width, int height,
                           0);
             }
             encoder_bit_depth = 12;
+#if FIXED_POINTS_PLANEWISE
+            context_ptr->tf_decay_factor_fp16[C_Y] = FLOAT2FP(tf_decay_factor[C_Y], 16, uint32_t);
+            context_ptr->tf_decay_factor_fp16[C_U] = FLOAT2FP(tf_decay_factor[C_U], 16, uint32_t);
+            context_ptr->tf_decay_factor_fp16[C_V] = FLOAT2FP(tf_decay_factor[C_V], 16, uint32_t);
+#endif
 #if FTR_TF_STRENGTH_PER_QP
             context_ptr->tf_decay_factor[C_Y] = tf_decay_factor[C_Y];
             context_ptr->tf_decay_factor[C_U] = tf_decay_factor[C_U];
@@ -848,6 +998,11 @@ void TemporalFilterTestPlanewiseHbd::RunTest(int width, int height,
             } else {
                 context_ptr = &context2;
             }
+#if FIXED_POINTS_PLANEWISE
+            context_ptr->tf_decay_factor_fp16[C_Y] = FLOAT2FP(tf_decay_factor[C_Y], 16, uint32_t);
+            context_ptr->tf_decay_factor_fp16[C_U] = FLOAT2FP(tf_decay_factor[C_U], 16, uint32_t);
+            context_ptr->tf_decay_factor_fp16[C_V] = FLOAT2FP(tf_decay_factor[C_V], 16, uint32_t);
+#endif
 #if FTR_TF_STRENGTH_PER_QP
             context_ptr->tf_decay_factor[C_Y] = tf_decay_factor[C_Y];
             context_ptr->tf_decay_factor[C_U] = tf_decay_factor[C_U];
@@ -945,6 +1100,11 @@ void TemporalFilterTestPlanewiseHbd::RunTest(int width, int height,
             else {
                 context_ptr = &context2;
             }
+#if FIXED_POINTS_PLANEWISE
+            context_ptr->tf_decay_factor_fp16[C_Y] = FLOAT2FP(tf_decay_factor[C_Y], 16, uint32_t);
+            context_ptr->tf_decay_factor_fp16[C_U] = FLOAT2FP(tf_decay_factor[C_U], 16, uint32_t);
+            context_ptr->tf_decay_factor_fp16[C_V] = FLOAT2FP(tf_decay_factor[C_V], 16, uint32_t);
+#endif
 #if FTR_TF_STRENGTH_PER_QP
             context_ptr->tf_decay_factor[C_Y] = tf_decay_factor[C_Y];
             context_ptr->tf_decay_factor[C_U] = tf_decay_factor[C_U];
@@ -1047,11 +1207,29 @@ TEST_P(TemporalFilterTestPlanewiseHbd, DISABLED_Speed) {
     }
 }
 
+#if FIXED_POINTS_PLANEWISE
+INSTANTIATE_TEST_CASE_P(
+    AVX2, TemporalFilterTestPlanewiseHbd,
+    ::testing::Combine(
+        ::testing::Values(svt_av1_apply_temporal_filter_planewise_hbd_c),
+        ::testing::Values(svt_av1_apply_temporal_filter_planewise_hbd_avx2),
+        ::testing::Values(0, 1)));
+#else /*FIXED_POINTS_PLANEWISE*/
 INSTANTIATE_TEST_CASE_P(
     AVX2, TemporalFilterTestPlanewiseHbd,
     ::testing::Combine(
         ::testing::Values(svt_av1_apply_temporal_filter_planewise_hbd_c),
         ::testing::Values(svt_av1_apply_temporal_filter_planewise_hbd_avx2)));
+#endif /*FIXED_POINTS_PLANEWISE*/
+
+#if FIXED_POINTS_PLANEWISE
+INSTANTIATE_TEST_CASE_P(
+    AVX2_medium, TemporalFilterTestPlanewiseHbd,
+    ::testing::Combine(
+        ::testing::Values(svt_av1_apply_temporal_filter_planewise_medium_hbd_c),
+        ::testing::Values(svt_av1_apply_temporal_filter_planewise_medium_hbd_avx2),
+        ::testing::Values(1)));
+#endif /*FIXED_POINTS_PLANEWISE*/
 
 #if FIX_TEMPORAL_FILTER_PLANEWISE
 void svt_av1_apply_temporal_filter_planewise_fast_hbd_c_wraper(
@@ -1065,6 +1243,23 @@ void svt_av1_apply_temporal_filter_planewise_fast_hbd_c_wraper(
 #endif
     uint32_t *y_accum, uint16_t *y_count, uint32_t *u_accum,
     uint16_t *u_count, uint32_t *v_accum, uint16_t *v_count, uint32_t encoder_bit_depth) {
+    UNUSED(v_src);
+    UNUSED(u_src);
+    UNUSED(uv_src_stride);
+    UNUSED(u_pre);
+    UNUSED(v_pre);
+    UNUSED(uv_pre_stride);
+    UNUSED(ss_x);
+    UNUSED(ss_y);
+    UNUSED(u_accum);
+    UNUSED(u_count);
+    UNUSED(v_accum);
+    UNUSED(v_count);
+#if !FTR_TF_STRENGTH_PER_QP
+    UNUSED(noise_levels);
+    UNUSED(decay_control);
+#endif
+
     svt_av1_apply_temporal_filter_planewise_fast_hbd_c(
             context_ptr,
             y_src,
@@ -1088,6 +1283,22 @@ void svt_av1_apply_temporal_filter_planewise_fast_hbd_avx2_wraper(
 #endif
     uint32_t *y_accum, uint16_t *y_count, uint32_t *u_accum,
     uint16_t *u_count, uint32_t *v_accum, uint16_t *v_count, uint32_t encoder_bit_depth) {
+    UNUSED(v_src);
+    UNUSED(u_src);
+    UNUSED(uv_src_stride);
+    UNUSED(u_pre);
+    UNUSED(v_pre);
+    UNUSED(uv_pre_stride);
+    UNUSED(ss_x);
+    UNUSED(ss_y);
+    UNUSED(u_accum);
+    UNUSED(u_count);
+    UNUSED(v_accum);
+    UNUSED(v_count);
+#if !FTR_TF_STRENGTH_PER_QP
+    UNUSED(noise_levels);
+    UNUSED(decay_control);
+#endif
     svt_av1_apply_temporal_filter_planewise_fast_hbd_avx2(
             context_ptr,
             y_src,
@@ -1101,11 +1312,20 @@ void svt_av1_apply_temporal_filter_planewise_fast_hbd_avx2_wraper(
             encoder_bit_depth);
 }
 
+#if FIXED_POINTS_PLANEWISE
+INSTANTIATE_TEST_CASE_P(
+    AVX2_fast, TemporalFilterTestPlanewiseHbd,
+    ::testing::Combine(
+        ::testing::Values(svt_av1_apply_temporal_filter_planewise_fast_hbd_c_wraper),
+        ::testing::Values(svt_av1_apply_temporal_filter_planewise_fast_hbd_avx2_wraper),
+        ::testing::Values(0, 1)));
+#else /*FIXED_POINTS_PLANEWISE*/
 INSTANTIATE_TEST_CASE_P(
     AVX2_fast, TemporalFilterTestPlanewiseHbd,
     ::testing::Combine(
         ::testing::Values(svt_av1_apply_temporal_filter_planewise_fast_hbd_c_wraper),
         ::testing::Values(svt_av1_apply_temporal_filter_planewise_fast_hbd_avx2_wraper)));
+#endif /*FIXED_POINTS_PLANEWISE*/
 #endif
 
 #if TUNE_REDESIGN_TF_CTRLS

@@ -970,6 +970,9 @@ int  frames_in_sw; // used for Look ahead
     uint8_t  is_overlay;
     struct PictureParentControlSet *overlay_ppcs_ptr;
     struct PictureParentControlSet *alt_ref_ppcs_ptr;
+#if FIXED_POINTS_PLANEWISE
+    int32_t                         noise_levels_log1p_fp16[MAX_MB_PLANE];
+#endif /*FIXED_POINTS_PLANEWISE*/
     double                          noise_levels[MAX_MB_PLANE];
     int32_t                         pic_decision_reorder_queue_idx;
     struct PictureParentControlSet *temp_filt_pcs_list[ALTREF_MAX_NFRAMES];
@@ -1149,6 +1152,9 @@ int  frames_in_sw; // used for Look ahead
 #endif
 #if OPT_IBC_HASH_SEARCH
     IntraBCCtrls intraBC_ctrls;
+#endif
+#if FTR_MEM_OPT
+    uint8_t packed_reference_hbd;
 #endif
 } PictureParentControlSet;
 

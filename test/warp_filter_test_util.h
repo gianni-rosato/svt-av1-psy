@@ -57,6 +57,14 @@ class AV1WarpFilterTest : public ::testing::TestWithParam<WarpTestParams> {
 }  // namespace AV1WarpFilter
 
 namespace AV1HighbdWarpFilter {
+#if FIX_UT_FTR_MEM_OPT_WM
+typedef void (*highbd_warp_affine_func)(
+    const int32_t *mat, const uint8_t *ref8b, const uint8_t *ref2b, int width,
+    int height, int stride8b, int stride2b, uint16_t *pred, int p_col,
+    int p_row, int p_width, int p_height, int p_stride, int subsampling_x,
+    int subsampling_y, int bd, ConvolveParams *conv_params, int16_t alpha,
+    int16_t beta, int16_t gamma, int16_t delta);
+#else
 typedef void (*highbd_warp_affine_func)(const int32_t *mat, const uint16_t *ref,
                                         int width, int height, int stride,
                                         uint16_t *pred, int p_col, int p_row,
@@ -65,6 +73,7 @@ typedef void (*highbd_warp_affine_func)(const int32_t *mat, const uint16_t *ref,
                                         int bd, ConvolveParams *conv_params,
                                         int16_t alpha, int16_t beta,
                                         int16_t gamma, int16_t delta);
+#endif
 
 typedef std::tuple<int, int, int, int, highbd_warp_affine_func>
     HighbdWarpTestParam;

@@ -16,6 +16,9 @@
 #include "convolve.h"
 #include "common_dsp_rtcd.h"
 #include "EbUtility.h"
+#if FTR_MEM_OPT
+#include "EbPictureOperators.h"
+#endif
 //#include "EbRateDistortionCost.h"
 
 #define MVBOUNDLOW \
@@ -39,6 +42,23 @@
 #define ROUND0_BITS 3
 #define COMPOUND_ROUND1_BITS 7
 
+
+#if FTR_MEM_OPT
+extern   void pack_block(uint8_t *in8_bit_buffer, uint32_t in8_stride, uint8_t *inn_bit_buffer,
+    uint32_t inn_stride, uint16_t *out16_bit_buffer, uint32_t out_stride,
+    uint32_t width, uint32_t height) {
+
+        pack2d_src(in8_bit_buffer,
+            in8_stride,
+            inn_bit_buffer,
+            inn_stride,
+            out16_bit_buffer,
+            out_stride,
+            width,
+            height);
+
+}
+#endif
 static WedgeMasksType wedge_masks[BlockSizeS_ALL][2];
 
 int is_masked_compound_type(COMPOUND_TYPE type) {
@@ -1361,14 +1381,47 @@ void svt_inter_predictor_light_pd0(const uint8_t *src, int32_t src_stride, uint8
         0,
         conv_params);
 }
+#if FTR_MEM_OPT
+void svt_highbd_inter_predictor_light_pd0( uint8_t *src, uint8_t* src_ptr_2b,uint8_t packed_reference_hbd, int32_t src_stride, uint16_t *dst,
+#else
 void svt_highbd_inter_predictor_light_pd0(const uint16_t *src, int32_t src_stride, uint16_t *dst,
+#endif
     int32_t dst_stride, int32_t w, int32_t h,
     ConvolveParams *conv_params, int32_t bd)
 {
+#if FTR_MEM_OPT
+        uint16_t * src_10b ;
+        DECLARE_ALIGNED(16, uint16_t, packed_buf[PACKED_BUFFER_SIZE]);
+        // pack the reference into temp 16bit buffer
+        uint8_t offset = INTERPOLATION_OFFSET;
+        int32_t stride ;
+        if (packed_reference_hbd) {
+            src_10b = (uint16_t *)src;
+            stride = src_stride;
 
+        }else{
+            pack_block(
+                src - offset - (offset*src_stride),
+                src_stride,
+                src_ptr_2b - offset - (offset*src_stride),
+                src_stride,
+                (uint16_t *)packed_buf,
+                MAX_SB_SIZE,
+                w + (offset << 1),
+                h + (offset << 1));
+
+            src_10b = (uint16_t*)packed_buf + offset + (offset * MAX_SB_SIZE);
+            stride = MAX_SB_SIZE;
+        }
+#endif
+#if FTR_MEM_OPT
+    convolveHbd[0][0][conv_params->is_compound](src_10b,
+        stride,
+#else
     convolveHbd[0][0][conv_params->is_compound](src,
 
         src_stride,
+#endif
         dst,
         dst_stride,
         w,
@@ -1383,16 +1436,55 @@ void svt_highbd_inter_predictor_light_pd0(const uint16_t *src, int32_t src_strid
 }
 #endif
 #if FTR_10BIT_MDS3_LPD1
+#if FTR_MEM_OPT
+void svt_inter_predictor_light_pd1(uint8_t *src, uint8_t *src_2b,int32_t src_stride, uint8_t *dst,
+#else
 void svt_inter_predictor_light_pd1(uint8_t *src, int32_t src_stride, uint8_t *dst,
+#endif
     int32_t dst_stride, int32_t w, int32_t h, InterpFilterParams* filter_x, InterpFilterParams* filter_y,
+#if FTR_MEM_OPT
+    int32_t mv_x, int32_t mv_y, ConvolveParams *conv_params, uint8_t packed_reference_hbd, int32_t bd)
+#else
     int32_t mv_x, int32_t mv_y, ConvolveParams *conv_params, int32_t bd)
+#endif
 {
     if (bd > EB_8BIT) {
         uint16_t* src16 = (uint16_t*)src;
         uint16_t* dst16 = (uint16_t*)dst;
+
+#if FTR_MEM_OPT
+        uint16_t * src_10b ;
+        DECLARE_ALIGNED(16, uint16_t, packed_buf[PACKED_BUFFER_SIZE]);
+        // pack the reference into temp 16bit buffer
+        uint8_t offset = INTERPOLATION_OFFSET;
+        int32_t stride ;
+        if (packed_reference_hbd) {
+            src_10b = (uint16_t *)src;
+            stride = src_stride;
+
+        }else{
+            pack_block(
+                src - offset - (offset*src_stride),
+                src_stride,
+                src_2b - offset - (offset*src_stride),
+                src_stride,
+                (uint16_t *)packed_buf,
+                MAX_SB_SIZE,
+                w + (offset << 1),
+                h + (offset << 1));
+
+            src_10b = (uint16_t*)packed_buf + offset + (offset * MAX_SB_SIZE);
+            stride = MAX_SB_SIZE;
+        }
+#endif
         convolveHbd[mv_x != 0][mv_y != 0][conv_params->is_compound](
+#if FTR_MEM_OPT
+            src_10b,
+            stride,
+#else
             src16,
             src_stride,
+#endif
             dst16,
             dst_stride,
             w,

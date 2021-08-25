@@ -168,6 +168,10 @@ void compute_global_motion(PictureParentControlSet *pcs_ptr, EbPictureBufferDesc
     unsigned char *ref_buffer = ref_pic->buffer_y + ref_pic->origin_x +
         ref_pic->origin_y * ref_pic->stride_y;
 
+#if FTR_MEM_OPT_WM
+    unsigned char *ref_buffer_2b = ref_pic->buffer_bit_inc_y + ref_pic->origin_x +
+        ref_pic->origin_y * ref_pic->stride_bit_inc_y;
+#endif
     EbWarpedMotionParams global_motion = default_warp_params;
 
     // TODO: check ref_params
@@ -227,6 +231,9 @@ void compute_global_motion(PictureParentControlSet *pcs_ptr, EbPictureBufferDesc
                         EB_FALSE,
                         EB_8BIT,
                         ref_buffer,
+#if FTR_MEM_OPT_WM
+                        ref_buffer_2b,
+#endif
                         ref_pic->width,
                         ref_pic->height,
                         ref_pic->stride_y,

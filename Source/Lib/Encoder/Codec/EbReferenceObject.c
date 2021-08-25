@@ -79,6 +79,7 @@ void initialize_samples_neighboring_reference_picture_8bit(EbByte   recon_sample
 void initialize_samples_neighboring_reference_picture(
     EbReferenceObject *          reference_object,
     EbPictureBufferDescInitData *picture_buffer_desc_init_data_ptr, EbBitDepthEnum bit_depth) {
+
     if (bit_depth == EB_10BIT) {
         initialize_samples_neighboring_reference_picture16_bit(
             reference_object->reference_picture16bit->buffer_y,
@@ -103,7 +104,9 @@ void initialize_samples_neighboring_reference_picture(
             reference_object->reference_picture16bit->height >> 1,
             picture_buffer_desc_init_data_ptr->left_padding >> 1,
             picture_buffer_desc_init_data_ptr->top_padding >> 1);
-    } else {
+    } else
+
+    {
         initialize_samples_neighboring_reference_picture_8bit(
             reference_object->reference_picture->buffer_y,
             reference_object->reference_picture->stride_y,
@@ -132,7 +135,9 @@ void initialize_samples_neighboring_reference_picture(
 
 static void svt_reference_object_dctor(EbPtr p) {
     EbReferenceObject *obj = (EbReferenceObject *)p;
+
     EB_DELETE(obj->reference_picture16bit);
+
     EB_DELETE(obj->reference_picture);
 #if FTR_NEW_WN_LVLS
     EB_FREE_2D(obj->unit_info);
@@ -177,6 +182,9 @@ EbErrorType svt_reference_object_ctor(EbReferenceObject *reference_object,
     if (picture_buffer_desc_init_data_16bit_ptr.bit_depth == EB_10BIT) {
         // Hsan: set split_mode to 0 to construct the packed reference buffer (used @ EP)
         picture_buffer_desc_init_data_16bit_ptr.split_mode = EB_FALSE;
+#if FTR_MEM_OPT
+        if (DUPLICATE_REFENCE){
+
         EB_NEW(reference_object->reference_picture16bit,
                svt_picture_buffer_desc_ctor,
                (EbPtr)&picture_buffer_desc_init_data_16bit_ptr);
@@ -185,15 +193,46 @@ EbErrorType svt_reference_object_ctor(EbReferenceObject *reference_object,
             reference_object,
             &picture_buffer_desc_init_data_16bit_ptr,
             picture_buffer_desc_init_data_16bit_ptr.bit_depth);
+
+        }
+#else
+#if !FTR_MEM_OPT
+        EB_NEW(reference_object->reference_picture16bit,
+               svt_picture_buffer_desc_ctor,
+               (EbPtr)&picture_buffer_desc_init_data_16bit_ptr);
+
+        initialize_samples_neighboring_reference_picture(
+            reference_object,
+            &picture_buffer_desc_init_data_16bit_ptr,
+            picture_buffer_desc_init_data_16bit_ptr.bit_depth);
+#endif
+#endif
         // Use 8bit here to use in MD
+#if FTR_MEM_OPT
+#if FTR_MEM_OPT
+        if (DUPLICATE_REFENCE) {
+            picture_buffer_desc_init_data_16bit_ptr.split_mode = EB_FALSE;
+            picture_buffer_desc_init_data_16bit_ptr.bit_depth  = EB_8BIT;
+        }
+        else {
+            picture_buffer_desc_init_data_16bit_ptr.split_mode = EB_TRUE;
+            picture_buffer_desc_init_data_16bit_ptr.bit_depth = EB_10BIT;
+        }
+#else
+            picture_buffer_desc_init_data_16bit_ptr.split_mode = EB_TRUE;
+            picture_buffer_desc_init_data_16bit_ptr.bit_depth = EB_10BIT;
+#endif
+#else
         picture_buffer_desc_init_data_16bit_ptr.split_mode = EB_FALSE;
         picture_buffer_desc_init_data_16bit_ptr.bit_depth  = EB_8BIT;
-
+#endif
+#if !FTR_MEM_OPT
         // if hbd_md = 1, and we only use 8bit luma for obmc_motion_refine
         if (ref_init_ptr->hbd_mode_decision == EB_10_BIT_MD) {
             picture_buffer_desc_init_data_16bit_ptr.buffer_enable_mask =
                 PICTURE_BUFFER_DESC_LUMA_MASK;
         }
+#endif
         EB_NEW(reference_object->reference_picture,
                svt_picture_buffer_desc_ctor,
                (EbPtr)&picture_buffer_desc_init_data_16bit_ptr);
@@ -208,6 +247,7 @@ EbErrorType svt_reference_object_ctor(EbReferenceObject *reference_object,
             reference_object,
             picture_buffer_desc_init_data_ptr,
             picture_buffer_desc_init_data_16bit_ptr.bit_depth);
+#if !FTR_MEM_OPT
         if (picture_buffer_desc_init_data_ptr->is_16bit_pipeline) {
             picture_buffer_desc_init_data_16bit_ptr.split_mode = EB_FALSE;
             picture_buffer_desc_init_data_16bit_ptr.bit_depth  = EB_10BIT;
@@ -221,6 +261,7 @@ EbErrorType svt_reference_object_ctor(EbReferenceObject *reference_object,
                 picture_buffer_desc_init_data_16bit_ptr.bit_depth);
             reference_object->reference_picture16bit->bit_depth = EB_8BIT;
         }
+#endif
     }
     reference_object->input_picture = NULL;
 

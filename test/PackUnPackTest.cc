@@ -48,6 +48,7 @@
 #include "random.h"
 #include "util.h"
 #include "common_dsp_rtcd.h"
+#include "aom_dsp_rtcd.h"
 using svt_av1_test_tool::SVTRandom;  // to generate the random
 
 namespace {
@@ -63,6 +64,29 @@ AreaSize TEST_PACK_SIZES[] = {AreaSize(32, 32),
                               AreaSize(64, 64),
                               AreaSize(64, 32),
                               AreaSize(32, 64)};
+
+#if OPTIMIZE_COMPRESS_PACK_SB
+#define MAX_TEST_SIZE 2048
+AreaSize TEST_PACK_SIZES_EXTEND[] = {AreaSize(128, 128),
+                                     AreaSize(128, 8),
+                                     AreaSize(128, 16),
+                                     AreaSize(128, 62),
+                                     AreaSize(128, 80),
+                                     AreaSize(4, 4),
+                                     AreaSize(4, 8),
+                                     AreaSize(8, 4),
+                                     AreaSize(8, 8),
+                                     AreaSize(16, 16),
+                                     AreaSize(4, 16),
+                                     AreaSize(16, 4),
+                                     AreaSize(16, 8),
+                                     AreaSize(8, 16),
+                                     AreaSize(1920, 1080),
+                                     AreaSize(1280, 720),
+                                     AreaSize(176, 144),
+                                     AreaSize(800, 600),
+                                     AreaSize(640, 480)};
+#endif
 
 // test svt_c_pack_avx2_intrin, which only support width of 32 and 64;
 class PackTest : public ::testing::TestWithParam<AreaSize> {
@@ -170,16 +194,20 @@ TEST_P(PackTest, PackTest) {
 INSTANTIATE_TEST_CASE_P(PACK, PackTest, ::testing::ValuesIn(TEST_PACK_SIZES));
 
 // test svt_compressed_packmsb_avx2_intrin
-// only width of 32 and 64 are supported in svt_compressed_packmsb_avx2_intrin.
-// Use TEST_PACK_SIZES to test.
 class PackMsbTest : public ::testing::TestWithParam<AreaSize> {
   public:
     PackMsbTest()
         : area_width_(std::get<0>(GetParam())),
           area_height_(std::get<1>(GetParam())) {
+#if OPTIMIZE_COMPRESS_PACK_SB
+        in8_stride_ = out_stride_ = MAX_TEST_SIZE;
+        inn_stride_ = in8_stride_ >> 2;
+        test_size_ = MAX_TEST_SIZE * MAX_TEST_SIZE;
+#else
         in8_stride_ = out_stride_ = MAX_PU_SIZE;
         inn_stride_ = in8_stride_ >> 2;
         test_size_ = MAX_PU_SIZE * MAX_PU_SIZE;
+#endif
         inn_bit_buffer_ = nullptr;
         in_8bit_buffer_ = nullptr;
         out_16bit_buffer1_ = nullptr;
@@ -293,6 +321,131 @@ TEST_P(PackMsbTest, PackMsbTest) {
 
 INSTANTIATE_TEST_CASE_P(PACKMSB, PackMsbTest,
                         ::testing::ValuesIn(TEST_PACK_SIZES));
+
+#if OPTIMIZE_COMPRESS_PACK_SB
+INSTANTIATE_TEST_CASE_P(PACKMSB_EXTEND, PackMsbTest,
+                        ::testing::ValuesIn(TEST_PACK_SIZES_EXTEND));
+#endif
+
+#if OPTIMIZE_SVT_UNPACK_2B
+// test svt_unpack_and_2bcompress_avx2
+class Unpack2bCompress : public ::testing::TestWithParam<AreaSize> {
+  public:
+    Unpack2bCompress()
+        : area_width_(std::get<0>(GetParam())),
+          area_height_(std::get<1>(GetParam())) {
+        out8_stride_ = in_stride_ = MAX_TEST_SIZE;
+        out2_stride_ = out8_stride_ >> 2;
+        test_size_ = MAX_TEST_SIZE * MAX_TEST_SIZE;
+        in_16bit_ = nullptr;
+        out_2bit_buffer_ref_ = nullptr;
+        out_2bit_buffer_mod_ = nullptr;
+        out_8bit_buffer_ref_ = nullptr;
+        out_8bit_buffer_mod_ = nullptr;
+    }
+
+    void SetUp() override {
+        out_2bit_buffer_ref_ = reinterpret_cast<uint8_t *>(svt_aom_memalign(32, test_size_ >> 2));
+        out_2bit_buffer_mod_ = reinterpret_cast<uint8_t *>(svt_aom_memalign(32, test_size_ >> 2));
+        out_8bit_buffer_ref_ = reinterpret_cast<uint8_t *>(svt_aom_memalign(32, test_size_));
+        out_8bit_buffer_mod_ = reinterpret_cast<uint8_t *>(svt_aom_memalign(32, test_size_));
+        in_16bit_ = reinterpret_cast<uint16_t *>(svt_aom_memalign(32, sizeof(uint16_t) * test_size_));
+
+        memset(out_2bit_buffer_ref_, 0, test_size_ >> 2);
+        memset(out_2bit_buffer_mod_, 0, test_size_ >> 2);
+        memset(out_8bit_buffer_ref_, 0, test_size_);
+        memset(out_8bit_buffer_mod_, 0, test_size_);
+    }
+
+    void TearDown() override {
+        if (out_2bit_buffer_ref_)
+            svt_aom_free(out_2bit_buffer_ref_);
+        if (out_2bit_buffer_mod_)
+            svt_aom_free(out_2bit_buffer_mod_);
+        if (out_8bit_buffer_ref_)
+            svt_aom_free(out_8bit_buffer_ref_);
+        if (out_8bit_buffer_mod_)
+            svt_aom_free(out_8bit_buffer_mod_);
+        if (in_16bit_)
+            svt_aom_free(in_16bit_);
+        aom_clear_system_state();
+    }
+
+  protected:
+    void check_output(uint32_t width, uint32_t height, uint8_t *out_1,
+                      uint8_t *out_2, uint32_t out_stride) {
+        int fail_count = 0;
+        for (uint32_t j = 0; j < height; j++) {
+            for (uint32_t k = 0; k < width; k++) {
+                if (out_1[k + j * out_stride] != out_2[k + j * out_stride])
+                    fail_count++;
+            }
+        }
+        EXPECT_EQ(0, fail_count)
+            << "compare result error"
+            << "in test area for " << fail_count << "times";
+    }
+
+    void run_test() {
+        for (int i = 0; i < RANDOM_TIME; i++) {
+            svt_buf_random_u16_with_bd(in_16bit_, test_size_, 10);
+
+            svt_unpack_and_2bcompress_avx2(in_16bit_,
+                in_stride_,
+                out_8bit_buffer_mod_,
+                out8_stride_,
+                out_2bit_buffer_mod_,
+                out2_stride_,
+                area_width_,
+                area_height_);
+
+            svt_unpack_and_2bcompress_c(in_16bit_,
+                in_stride_,
+                out_8bit_buffer_ref_,
+                out8_stride_,
+                out_2bit_buffer_ref_,
+                out2_stride_,
+                area_width_,
+                area_height_);
+
+            //2bit output
+            check_output(area_width_ >> 2,
+                         area_height_,
+                         out_2bit_buffer_mod_,
+                         out_2bit_buffer_ref_,
+                         out2_stride_);
+
+            //8bit output
+            check_output(area_width_,
+                         area_height_,
+                         out_8bit_buffer_mod_,
+                         out_8bit_buffer_ref_,
+                         out8_stride_);
+
+            EXPECT_FALSE(HasFailure())
+                << "svt_unpack_and_2bcompress_avx2 failed at " << i
+                << "th test with size (" << area_width_ << "," << area_height_
+                << ")";
+        }
+    }
+
+    uint8_t *out_2bit_buffer_ref_, *out_2bit_buffer_mod_, *out_8bit_buffer_ref_, *out_8bit_buffer_mod_;
+    uint32_t out8_stride_, out2_stride_, in_stride_;
+    uint16_t *in_16bit_;
+    uint32_t area_width_, area_height_;
+    uint32_t test_size_;
+};
+
+TEST_P(Unpack2bCompress, Unpack2bCompress) {
+    run_test();
+};
+
+INSTANTIATE_TEST_CASE_P(UNPACK2BCOMPRESS, Unpack2bCompress,
+                        ::testing::ValuesIn(TEST_PACK_SIZES));
+
+INSTANTIATE_TEST_CASE_P(UNPACK2BCOMPRESS_EXTEND, Unpack2bCompress,
+                        ::testing::ValuesIn(TEST_PACK_SIZES_EXTEND));
+#endif
 
 // test svt_enc_msb_pack2d_avx2_intrin_al and svt_enc_msb_pack2d_sse2_intrin.
 // There is an implicit assumption that the width should be multiple of 4.

@@ -406,6 +406,16 @@ void compressed_pack_sb(uint8_t *in8_bit_buffer, uint32_t in8_stride, uint8_t *i
                         uint32_t inn_stride, uint16_t *out16_bit_buffer, uint32_t out_stride,
                         uint32_t width, uint32_t height) {
 #if SS_2B_COMPRESS
+#if OPTIMIZE_COMPRESS_PACK_SB
+    svt_compressed_packmsb(in8_bit_buffer,
+            in8_stride,
+            inn_bit_buffer,
+            inn_stride,
+            out16_bit_buffer,
+            out_stride,
+            width,
+            height);
+#else
     if (width == 64 || width == 32) {
         svt_compressed_packmsb(in8_bit_buffer,
             in8_stride,
@@ -426,6 +436,7 @@ void compressed_pack_sb(uint8_t *in8_bit_buffer, uint32_t in8_stride, uint8_t *i
             width,
             height);
     }
+#endif
 #else
     if (width == 64 || width == 32) {
         svt_compressed_packmsb(in8_bit_buffer,

@@ -485,6 +485,9 @@ typedef struct TxsControls {
     uint8_t inter_class_max_depth; // Max number of depth(s) for INTER classes
     int depth1_txt_group_offset;   // Offset to be subtracted from default txt-group to derive the txt-group of depth-1
     int depth2_txt_group_offset;   // Offset to be subtracted from default txt-group to derive the txt-group of depth-2
+#if OPT_TXS_WM
+    uint16_t min_sq_size;          // Min. sq size to use TXS for
+#endif
 } TxsControls;
 #endif
 #if FTR_NEW_WM_LVL

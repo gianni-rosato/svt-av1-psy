@@ -117,6 +117,10 @@ typedef struct TfControls {
 #if OPT_TFILTER
     uint8_t use_fast_filter;  //simple filter using fixed weight per block, no MV based correction, approximated exp
 #endif
+#if FIXED_POINTS_PLANEWISE
+    uint8_t use_fixed_point;  //Enable calculations on fixed points instead of float/double
+    uint8_t use_medium_filter;//simple filter using weight per quarter block
+#endif
 #if OPT_TFILTER
     uint8_t avoid_2d_qpel;    //avoid 2d qpel positions in 32x32 search
     uint8_t use_2tap;         //use bilinear sub pel filter in 32x32 search

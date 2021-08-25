@@ -342,6 +342,9 @@ typedef struct MeContext {
 
 
 #if OPT_TFILTER
+#if FIXED_POINTS_PLANEWISE
+    uint32_t tf_decay_factor_fp16[MAX_MB_PLANE];
+#endif /*FIXED_POINTS_PLANEWISE*/
 #if FTR_TF_STRENGTH_PER_QP
     double tf_decay_factor[3];
 #else

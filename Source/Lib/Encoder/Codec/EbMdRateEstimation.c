@@ -228,7 +228,11 @@ void av1_estimate_syntax_rate(MdRateEstimationContext *md_rate_estimation_array,
         av1_get_syntax_rate_from_cdf(
             md_rate_estimation_array->angle_delta_fac_bits[i], fc->angle_delta_cdf[i], NULL);
 #if OPT8_MDC
+#if FIX_ISSUE_45_M0_6
+    if (enable_restoration) {
+#else
     if(enable_restoration && allow_intrabc == 0) {
+#endif
 #endif
     av1_get_syntax_rate_from_cdf(
         md_rate_estimation_array->switchable_restore_fac_bits, fc->switchable_restore_cdf, NULL);
@@ -236,8 +240,15 @@ void av1_estimate_syntax_rate(MdRateEstimationContext *md_rate_estimation_array,
         md_rate_estimation_array->wiener_restore_fac_bits, fc->wiener_restore_cdf, NULL);
     av1_get_syntax_rate_from_cdf(
         md_rate_estimation_array->sgrproj_restore_fac_bits, fc->sgrproj_restore_cdf, NULL);
+#if !FIX_ISSUE_45_M0_6
         av1_get_syntax_rate_from_cdf(md_rate_estimation_array->intrabc_fac_bits, fc->intrabc_cdf, NULL);
+#endif
 #if OPT8_MDC
+    }
+#endif
+#if FIX_ISSUE_45_M0_6
+    if (allow_intrabc) {
+        av1_get_syntax_rate_from_cdf(md_rate_estimation_array->intrabc_fac_bits, fc->intrabc_cdf, NULL);
     }
 #endif
 

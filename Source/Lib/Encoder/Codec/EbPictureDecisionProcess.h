@@ -109,6 +109,9 @@ typedef struct PictureDecisionContext {
     int64_t mg_progress_id;
 
 #if OPT_NOISE_LEVEL
+#if FIXED_POINTS_PLANEWISE
+    int32_t                         last_i_noise_levels_log1p_fp16[MAX_MB_PLANE];
+#endif
     double                          last_i_noise_levels[MAX_MB_PLANE];
 #endif
 } PictureDecisionContext;

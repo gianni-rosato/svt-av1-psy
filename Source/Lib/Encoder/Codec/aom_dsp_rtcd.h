@@ -820,6 +820,22 @@ extern "C" {
 #endif
 #endif
 
+#if FIXED_POINTS_PLANEWISE
+    RTCD_EXTERN void(*svt_av1_apply_temporal_filter_planewise_medium)(
+        struct MeContext *context_ptr, const uint8_t *y_src, int y_src_stride, const uint8_t *y_pre,
+        int y_pre_stride, const uint8_t *u_src, const uint8_t *v_src, int uv_src_stride,
+        const uint8_t *u_pre, const uint8_t *v_pre, int uv_pre_stride, unsigned int block_width,
+        unsigned int block_height, int ss_x, int ss_y, uint32_t *y_accum, uint16_t *y_count, uint32_t *u_accum,
+        uint16_t *u_count, uint32_t *v_accum, uint16_t *v_count);
+
+    RTCD_EXTERN void(*svt_av1_apply_temporal_filter_planewise_medium_hbd)(
+        struct MeContext *context_ptr, const uint16_t *y_src, int y_src_stride, const uint16_t *y_pre,
+        int y_pre_stride, const uint16_t *u_src, const uint16_t *v_src, int uv_src_stride,
+        const uint16_t *u_pre, const uint16_t *v_pre, int uv_pre_stride, unsigned int block_width,
+        unsigned int block_height, int ss_x, int ss_y, uint32_t *y_accum, uint16_t *y_count, uint32_t *u_accum,
+        uint16_t *u_count, uint32_t *v_accum, uint16_t *v_count, uint32_t encoder_bit_depth);
+#endif /*FIXED_POINTS_PLANEWISE*/
+
     RTCD_EXTERN void(*svt_av1_apply_temporal_filter_planewise)(
         struct MeContext *context_ptr, const uint8_t *y_src, int y_src_stride, const uint8_t *y_pre, int y_pre_stride,
         const uint8_t *u_src, const uint8_t *v_src, int uv_src_stride, const uint8_t *u_pre,
@@ -895,6 +911,10 @@ extern "C" {
     uint32_t variance_highbd_c(const uint16_t *a, int a_stride, const uint16_t *b, int b_stride, int w, int h, uint32_t *sse);
     RTCD_EXTERN int(*svt_av1_haar_ac_sad_8x8_uint8_input)(uint8_t *input, int stride, int hbd);
     int svt_av1_haar_ac_sad_8x8_uint8_input_c(uint8_t *input, int stride, int hbd);
+#if OPTIMIZE_SVT_UNPACK_2B
+    void svt_unpack_and_2bcompress_avx2(uint16_t *in16b_buffer, uint32_t in16b_stride, uint8_t *out8b_buffer, uint32_t out8b_stride, uint8_t *out2b_buffer, uint32_t out2b_stride, uint32_t width, uint32_t height);
+    RTCD_EXTERN void (*svt_unpack_and_2bcompress)(uint16_t *in16b_buffer, uint32_t in16b_stride, uint8_t *out8b_buffer, uint32_t out8b_stride,uint8_t *out2b_buffer, uint32_t out2b_stride, uint32_t width, uint32_t height);
+#endif
 #ifdef ARCH_X86_64
     uint32_t combined_averaging_ssd_avx2(uint8_t *src, ptrdiff_t src_stride, uint8_t *ref1, ptrdiff_t ref1_stride, uint8_t *ref2, ptrdiff_t ref2_stride, uint32_t height, uint32_t width);
     uint32_t combined_averaging_ssd_avx512(uint8_t *src, ptrdiff_t src_stride, uint8_t *ref1, ptrdiff_t ref1_stride, uint8_t *ref2, ptrdiff_t ref2_stride, uint32_t height, uint32_t width);
@@ -1524,6 +1544,22 @@ extern "C" {
         unsigned int block_height, uint32_t *y_accum, uint16_t *y_count);
 #endif
 #endif
+
+#if FIXED_POINTS_PLANEWISE
+    void svt_av1_apply_temporal_filter_planewise_medium_avx2(
+        struct MeContext *context_ptr, const uint8_t *y_src, int y_src_stride, const uint8_t *y_pre,
+        int y_pre_stride, const uint8_t *u_src, const uint8_t *v_src, int uv_src_stride,
+        const uint8_t *u_pre, const uint8_t *v_pre, int uv_pre_stride, unsigned int block_width,
+        unsigned int block_height, int ss_x, int ss_y, uint32_t *y_accum, uint16_t *y_count, uint32_t *u_accum,
+        uint16_t *u_count, uint32_t *v_accum, uint16_t *v_count);
+
+    void svt_av1_apply_temporal_filter_planewise_medium_hbd_avx2(
+        struct MeContext *context_ptr, const uint16_t *y_src, int y_src_stride, const uint16_t *y_pre,
+        int y_pre_stride, const uint16_t *u_src, const uint16_t *v_src, int uv_src_stride,
+        const uint16_t *u_pre, const uint16_t *v_pre, int uv_pre_stride, unsigned int block_width,
+        unsigned int block_height, int ss_x, int ss_y, uint32_t *y_accum, uint16_t *y_count, uint32_t *u_accum,
+        uint16_t *u_count, uint32_t *v_accum, uint16_t *v_count, uint32_t encoder_bit_depth);
+#endif /*FIXED_POINTS_PLANEWISE*/
 
     void svt_av1_apply_temporal_filter_planewise_avx2(
         struct MeContext *context_ptr, const uint8_t *y_src, int y_src_stride, const uint8_t *y_pre,

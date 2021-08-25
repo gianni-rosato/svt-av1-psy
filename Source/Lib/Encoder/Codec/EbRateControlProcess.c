@@ -140,6 +140,39 @@ extern int16_t svt_av1_ac_quant_q3(int32_t qindex, int32_t delta, AomBitDepth bi
 // quantizer tables easier. If necessary they can be replaced by lookup
 // tables if and when things settle down in the experimental Bitstream
 
+#if FIXED_POINTS_PLANEWISE
+int32_t svt_av1_convert_qindex_to_q_fp8(int32_t qindex, AomBitDepth bit_depth) {
+    // Convert the index to a real Q value (scaled down to match old Q values)
+    switch (bit_depth) {
+    case AOM_BITS_8: return svt_av1_ac_quant_q3(qindex, 0, bit_depth) << 6; // / 4.0;
+    case AOM_BITS_10: return svt_av1_ac_quant_q3(qindex, 0, bit_depth) << 4;// / 16.0;
+    case AOM_BITS_12: return svt_av1_ac_quant_q3(qindex, 0, bit_depth) << 3; // / 64.0;
+    default: assert(0 && "bit_depth should be AOM_BITS_8, AOM_BITS_10 or AOM_BITS_12"); return -1;
+    }
+}
+
+int32_t svt_av1_compute_qdelta_fp(int32_t qstart_fp8, int32_t qtarget_fp8, AomBitDepth bit_depth) {
+    int32_t start_index  = MAX_Q_INDEX;
+    int32_t target_index = MAX_Q_INDEX;
+    int32_t i;
+
+    // Convert the average q value to an index.
+    for (i = MIN_Q_INDEX; i < MAX_Q_INDEX; ++i) {
+        start_index = i;
+        if (svt_av1_convert_qindex_to_q_fp8(i, bit_depth) >= qstart_fp8)
+            break;
+    }
+
+    // Convert the q target to an index
+    for (i = MIN_Q_INDEX; i < MAX_Q_INDEX; ++i) {
+        target_index = i;
+        if (svt_av1_convert_qindex_to_q_fp8(i, bit_depth) >= qtarget_fp8)
+            break;
+    }
+
+    return target_index - start_index;
+}
+#endif
 double svt_av1_convert_qindex_to_q(int32_t qindex, AomBitDepth bit_depth) {
     // Convert the index to a real Q value (scaled down to match old Q values)
     switch (bit_depth) {
@@ -2998,7 +3031,18 @@ static void restore_two_pass_param(PictureParentControlSet *        ppcs_ptr,
                                    RateControlIntervalParamContext *rate_control_param_ptr) {
     SequenceControlSet *scs_ptr = ppcs_ptr->scs_ptr;
     TWO_PASS *const     twopass = &scs_ptr->twopass;
-
+#if FIX_VBR_R2R
+    if (ppcs_ptr->scs_ptr->enable_dec_order == 1 && ppcs_ptr->scs_ptr->lap_enabled && ppcs_ptr->temporal_layer_index == 0) {
+        for (uint64_t num_frames = ppcs_ptr->stats_in_offset; num_frames < ppcs_ptr->stats_in_end_offset; ++num_frames) {
+            FIRSTPASS_STATS *cur_frame =
+                ppcs_ptr->scs_ptr->twopass.stats_buf_ctx->stats_in_start + num_frames;
+            if ((int64_t)cur_frame->frame > ppcs_ptr->scs_ptr->twopass.stats_buf_ctx->last_frame_accumulated) {
+                svt_av1_accumulate_stats(ppcs_ptr->scs_ptr->twopass.stats_buf_ctx->total_stats, cur_frame);
+                ppcs_ptr->scs_ptr->twopass.stats_buf_ctx->last_frame_accumulated = (int64_t)cur_frame->frame;
+            }
+        }
+    }
+#endif
     twopass->stats_in = scs_ptr->twopass.stats_buf_ctx->stats_in_start + ppcs_ptr->stats_in_offset;
     twopass->stats_buf_ctx->stats_in_end = scs_ptr->twopass.stats_buf_ctx->stats_in_start +
         ppcs_ptr->stats_in_end_offset;

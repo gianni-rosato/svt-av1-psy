@@ -26,6 +26,9 @@
 
 #define EDGE_THRESHOLD 50
 #define SQRT_PI_BY_2 1.25331413732
+#if FIXED_POINTS_PLANEWISE
+#define SQRT_PI_BY_2_FP16 82137
+#endif
 #define SMOOTH_THRESHOLD 16
 // Block size used in temporal filtering
 #define BW 64
@@ -147,6 +150,28 @@ void svt_av1_apply_temporal_filter_planewise_hbd_c(
 #endif
     uint32_t *y_accum, uint16_t *y_count, uint32_t *u_accum,
     uint16_t *u_count, uint32_t *v_accum, uint16_t *v_count, uint32_t encoder_bit_depth);
+#if FIXED_POINTS_PLANEWISE
+void svt_av1_apply_temporal_filter_planewise_medium_c(
+    struct MeContext *context_ptr, const uint8_t *y_src, int y_src_stride, const uint8_t *y_pre,
+    int y_pre_stride, const uint8_t *u_src, const uint8_t *v_src, int uv_src_stride,
+    const uint8_t *u_pre, const uint8_t *v_pre, int uv_pre_stride, unsigned int block_width,
+    unsigned int block_height, int ss_x, int ss_y, uint32_t *y_accum, uint16_t *y_count, uint32_t *u_accum,
+    uint16_t *u_count, uint32_t *v_accum, uint16_t *v_count);
+
+void svt_av1_apply_temporal_filter_planewise_medium_hbd_c(
+    struct MeContext *context_ptr, const uint16_t *y_src, int y_src_stride, const uint16_t *y_pre,
+    int y_pre_stride, const uint16_t *u_src, const uint16_t *v_src, int uv_src_stride,
+    const uint16_t *u_pre, const uint16_t *v_pre, int uv_pre_stride, unsigned int block_width,
+    unsigned int block_height, int ss_x, int ss_y, uint32_t *y_accum, uint16_t *y_count, uint32_t *u_accum,
+    uint16_t *u_count, uint32_t *v_accum, uint16_t *v_count, uint32_t encoder_bit_depth);
+
+int32_t noise_log1p_fp16(int32_t noise_level_fp16);
+
+int32_t estimate_noise_fp16(const uint8_t *src, uint16_t width, uint16_t height, uint16_t stride_y);
+
+int32_t estimate_noise_highbd_fp16(const uint16_t *src, int width, int height, int stride, int bd);
+#endif /*FIXED_POINTS_PLANEWISE*/
+
 double estimate_noise(const uint8_t *src, uint16_t width, uint16_t height, uint16_t stride_y);
 
 double estimate_noise_highbd(const uint16_t *src, int width, int height, int stride, int bd);

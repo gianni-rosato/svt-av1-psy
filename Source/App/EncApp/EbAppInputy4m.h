@@ -20,6 +20,9 @@ int32_t read_y4m_header(EbConfig *cfg);
 
 void read_and_skip_y4m_header(FILE *input_file);
 
+#if OPT_MMAP_FILE
+void read_and_compute_y4m_frame_delimiter(FILE *input_file, FILE *error_log_file, uint32_t *frame_hdr);
+#endif
 void read_y4m_frame_delimiter(FILE *input_file, FILE *error_log_file);
 
 EbBool check_if_y4m(EbConfig *cfg);

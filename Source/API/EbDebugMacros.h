@@ -546,7 +546,42 @@ NOTE : PART OF LIGHT_PD0_2  code was committed to svt-04-final-rebased under OPT
 #define TUNE_M9_11_3                          1 // tune m8-11, new levels for deep_removal_level and md_pme_level. Small changes in M8 to improve spacing.
 
 #define FIX_INTRA_PERIOD_2PASS                1 // fixing the issue of intra-period -1 being lossy against intra-period greater than the number of frames in 2pass
+
+#define FIX_ISSUE_46                          1 // disbale 2pass when I period is less than 16
+#define FIX_DO_NOT_TEST_CORRUPTED_MV_DIFF     1 // Ignore corrupted MV-to-MVP diffrence @ MD
+
+#define FTR_MEM_OPT                           1 // Remove reference buffer duplication in 10bit
+#define FTR_MEM_OPT_WM                        1 // Remove reference buffer duplication in 10bit for Warped motion
+
+#define TUNE_SUBRES_LEVEL                     1 // New level for subres in M11 LPD0
+#define OPT_MALLOC_TRIM                       1 // use malloc trim tool to release freed memory  back to the OS
+#define OPT_PD0_PF_LEVEL                      1 // Improve detector for using PF in LPD0
+
+#define FIX_ISSUE_45_M0_6                     1 // fix R2R due to enable_restoration checks to sc content
+#define OPT_TXS_WM                            1 // Add new TXS level restricting TXS usage per sq size; tune M11 WM level
+
+#define OPTIMIZE_COMPRESS_PACK_SB             1 //Optimize svt_compressed_packmsb_avx2_intrin() to work with any width
+#define OPTIMIZE_SVT_UNPACK_2B                1 //AVX2 Implementation of kernel svt_unpack_and_2bcompress_c()
+#if FTR_MEM_OPT_WM
+#define FIX_UT_FTR_MEM_OPT_WM                 1 // Fix Unit Tests for macro FTR_MEM_OPT_WM
 #endif
+
+#if FIX_TEMPORAL_FILTER_PLANEWISE && FTR_TF_STRENGTH_PER_QP && SIMD_APPROX_EXPF
+#define FIXED_POINTS_PLANEWISE                1 //Calculate Temporal Filter Planewise on Fixed Points
+#else
+#define FIXED_POINTS_PLANEWISE                0 //Calculate Temporal Filter Planewise on Fixed Points
+#endif
+#if FIXED_POINTS_PLANEWISE
+#define ENABLE_FIXED_POINTS_PLANEWISE         0 //Enable Temporal Filter Planewise on Fixed Points. Need decide on what level should be used.
+#define ENABLE_MEDIUM_PLANEWISE               0 //Enable Temporal Filter Planewise Medium on Fixed Points instead of normal filter. Need decide on what level should be used.
+//#define FIXED_POINT_ASSERT_TEST             1 //Enable special FP_ASSERT () tests for all builds. No define macro, then test only for debug
+#endif
+#define FIX_VBR_R2R                           1 // Fixes the 1 PASS VBR run to run
+#define TUNE_LPD1_DETECTOR_LVL                1 // Tune the LPD1 detector thresholds for M11
+#endif
+#define OPT_MMAP_FILE                         1 // Add support for memory mapped files in linux
+
+
 
 #if !PRIVATE_MACROS
 
@@ -634,6 +669,7 @@ NOTE : PART OF LIGHT_PD0_2  code was committed to svt-04-final-rebased under OPT
 #undef TUNE_M9_11_3
 #undef OPT_COEFF_BIT_EST
 #undef OPT_TX_SHORTS
+#undef FIXED_POINTS_PLANEWISE
 #endif
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch

@@ -21,6 +21,9 @@
 #include "EbPictureOperators.h"
 #include "EbComputeMean.h"
 #include "EbMeSadCalculation.h"
+#if OPTIMIZE_SVT_UNPACK_2B
+#include "EbPackUnPack_C.h"
+#endif
 
 /**************************************
  * Instruction Set Support
@@ -388,6 +391,10 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
     SET_SSE41_AVX2_AVX512(svt_sad_loop_kernel, svt_sad_loop_kernel_c, svt_sad_loop_kernel_sse4_1_intrin, svt_sad_loop_kernel_avx2_intrin, svt_sad_loop_kernel_avx512_intrin);
     SET_AVX2(svt_av1_apply_temporal_filter_planewise, svt_av1_apply_temporal_filter_planewise_c, svt_av1_apply_temporal_filter_planewise_avx2);
     SET_AVX2(svt_av1_apply_temporal_filter_planewise_hbd, svt_av1_apply_temporal_filter_planewise_hbd_c, svt_av1_apply_temporal_filter_planewise_hbd_avx2);
+#if FIXED_POINTS_PLANEWISE
+    SET_AVX2(svt_av1_apply_temporal_filter_planewise_medium, svt_av1_apply_temporal_filter_planewise_medium_c, svt_av1_apply_temporal_filter_planewise_medium_avx2);
+    SET_AVX2(svt_av1_apply_temporal_filter_planewise_medium_hbd, svt_av1_apply_temporal_filter_planewise_medium_hbd_c, svt_av1_apply_temporal_filter_planewise_medium_hbd_avx2);
+#endif /*FIXED_POINTS_PLANEWISE*/
 #if OPT_TFILTER
     SET_AVX2(svt_av1_apply_temporal_filter_planewise_fast, svt_av1_apply_temporal_filter_planewise_fast_c, svt_av1_apply_temporal_filter_planewise_fast_avx2);
     SET_AVX2(svt_av1_apply_temporal_filter_planewise_fast_hbd, svt_av1_apply_temporal_filter_planewise_fast_hbd_c, svt_av1_apply_temporal_filter_planewise_fast_hbd_avx2);
@@ -419,6 +426,9 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
     SET_AVX2(svt_av1_haar_ac_sad_8x8_uint8_input, svt_av1_haar_ac_sad_8x8_uint8_input_c, svt_av1_haar_ac_sad_8x8_uint8_input_avx2);
 #if FTR_USE_PSAD
     SET_AVX2(svt_pme_sad_loop_kernel, svt_pme_sad_loop_kernel_c, svt_pme_sad_loop_kernel_avx2);
+#endif
+#if OPTIMIZE_SVT_UNPACK_2B
+    SET_AVX2(svt_unpack_and_2bcompress, svt_unpack_and_2bcompress_c, svt_unpack_and_2bcompress_avx2);
 #endif
 }
 // clang-format on

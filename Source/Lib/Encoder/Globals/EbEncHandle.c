@@ -3346,6 +3346,16 @@ void tf_controls(SequenceControlSet *scs_ptr, uint8_t tf_level) {
     if (scs_ptr->static_config.pred_structure == EB_PRED_LOW_DELAY_P)
         scs_ptr->static_config.tf_params_per_type[1].max_num_future_pics = 0;
 #endif
+
+#if FIXED_POINTS_PLANEWISE
+    scs_ptr->static_config.tf_params_per_type[0].use_fixed_point = ENABLE_FIXED_POINTS_PLANEWISE;
+    scs_ptr->static_config.tf_params_per_type[1].use_fixed_point = ENABLE_FIXED_POINTS_PLANEWISE;
+    scs_ptr->static_config.tf_params_per_type[2].use_fixed_point = ENABLE_FIXED_POINTS_PLANEWISE;
+    scs_ptr->static_config.tf_params_per_type[0].use_medium_filter = ENABLE_MEDIUM_PLANEWISE;
+    scs_ptr->static_config.tf_params_per_type[1].use_medium_filter = ENABLE_MEDIUM_PLANEWISE;
+    scs_ptr->static_config.tf_params_per_type[2].use_medium_filter = ENABLE_MEDIUM_PLANEWISE;
+#endif /*FIXED_POINTS_PLANEWISE*/
+
 }
 /*
  * Derive TF Params
@@ -3607,7 +3617,7 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
 #if OPT_COMBINE_TPL_FOR_LAD
         uint8_t tpl_lad_mg = 1; // Specify the number of mini-gops to be used as LAD. 0: 1 mini-gop, 1: 2 mini-gops and 3: 3 mini-gops
 #if TUNE_M8_M10_4K_SUPER
-        if (scs_ptr->static_config.enc_mode <= ENC_M9)
+        if (scs_ptr->static_config.enc_mode <= ENC_M7)
 #else
         if (scs_ptr->static_config.enc_mode <= ENC_M10)
 #endif
@@ -5508,7 +5518,11 @@ static EbErrorType copy_frame_buffer(
         uint32_t comp_stride_uv = input_picture_ptr->stride_cb / 4;
         uint32_t comp_chroma_buffer_offset = comp_stride_uv * (input_picture_ptr->origin_y/2) + input_picture_ptr->origin_x /2 / 4;
 
+#if OPTIMIZE_SVT_UNPACK_2B
+        svt_unpack_and_2bcompress(
+#else
         svt_unpack_and_2bcompress_c(
+#endif
             (uint16_t*)(input_ptr->luma + luma_offset),
             source_luma_stride,
             y8b_input_picture_ptr->buffer_y + luma_buffer_offset,
@@ -5518,7 +5532,11 @@ static EbErrorType copy_frame_buffer(
             luma_width,
             luma_height);
 
+#if OPTIMIZE_SVT_UNPACK_2B
+        svt_unpack_and_2bcompress(
+#else
         svt_unpack_and_2bcompress_c(
+#endif
             (uint16_t*)(input_ptr->cb + chroma_offset),
             source_cb_stride,
             input_picture_ptr->buffer_cb + chroma_buffer_offset,
@@ -5528,7 +5546,11 @@ static EbErrorType copy_frame_buffer(
             luma_width / 2,
             luma_height / 2);
 
+#if OPTIMIZE_SVT_UNPACK_2B
+        svt_unpack_and_2bcompress(
+#else
         svt_unpack_and_2bcompress_c(
+#endif
             (uint16_t*)(input_ptr->cr + chroma_offset),
             source_cr_stride,
             input_picture_ptr->buffer_cr + chroma_buffer_offset,

@@ -21,7 +21,9 @@
 typedef struct EbReferenceObject {
     EbDctor                     dctor;
     EbPictureBufferDesc *       reference_picture;
+#if 1//!FTR_MEM_OPT
     EbPictureBufferDesc *       reference_picture16bit;
+#endif
     EbPictureBufferDesc *       quarter_reference_picture;
     EbPictureBufferDesc *       sixteenth_reference_picture;
     EbDownScaledBufDescPtrArray ds_pics; // Pointer array for down scaled pictures

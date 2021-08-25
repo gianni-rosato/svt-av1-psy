@@ -43,6 +43,16 @@
 #include "third_party/safestringlib/safe_str_lib.h"
 #endif
 
+#if  OPT_MALLOC_TRIM
+#include <malloc.h>
+#endif
+
+#if OPT_MMAP_FILE
+#ifndef _WIN32
+#include <unistd.h>
+#endif
+#endif
+
 /***************************************
  * External Functions
  ***************************************/
@@ -87,6 +97,38 @@ typedef struct EncContext {
 #endif
     int32_t    total_frames;
 } EncContext;
+
+
+#if OPT_MMAP_FILE
+//initilize memory mapped file handler
+void init_memory_file_map(EbConfig* config) {
+
+#ifdef _WIN32
+    config->mmap.enable = 0;
+#else
+    config->mmap.enable = 1;
+#endif
+
+    if (config->input_file == stdin || config->input_file_is_fifo)
+        config->mmap.enable = 0;
+
+
+    if (config->mmap.enable) {
+        if (config->input_file) {
+            uint64_t curr_loc = ftello(config->input_file); // get current fp location
+            fseeko(config->input_file, 0L, SEEK_END);
+            config->mmap.file_size = ftello(config->input_file);
+            fseeko(config->input_file, curr_loc, SEEK_SET); // seek back to that location
+        }
+        config->mmap.file_frame_it = 0;
+#ifndef _WIN32
+        config->mmap.fd = fileno(config->input_file);
+        config->mmap.align_mask = sysconf(_SC_PAGESIZE) - 1;
+#endif
+    }
+
+}
+#endif
 
 static EbErrorType enc_context_ctor(EncApp* enc_app, EncContext* enc_context, int32_t argc,
 #if FTR_MULTI_PASS_API
@@ -137,10 +179,15 @@ static EbErrorType enc_context_ctor(EncApp* enc_app, EncContext* enc_context, in
     for (uint32_t inst_cnt = 0; inst_cnt < num_channels; ++inst_cnt) {
         EncChannel* c = enc_context->channels + inst_cnt;
         if (c->return_error == EB_ErrorNone) {
-            EbConfig* config                    = c->config;
+            EbConfig* config = c->config;
             config->config.active_channel_count = num_channels;
-            config->config.channel_id           = inst_cnt;
-            config->config.recon_enabled        = config->recon_file ? EB_TRUE : EB_FALSE;
+            config->config.channel_id = inst_cnt;
+            config->config.recon_enabled = config->recon_file ? EB_TRUE : EB_FALSE;
+
+
+#if OPT_MMAP_FILE
+            init_memory_file_map(config);
+#endif
 
             app_svt_av1_get_time(&config->performance_context.lib_start_time[0],
                                  &config->performance_context.lib_start_time[1]);
@@ -467,6 +514,13 @@ int32_t main(int32_t argc, char* argv[]) {
         enc_context_dctor(&enc_context);
         if (return_error != EB_ErrorNone)
             break;
+
+#if OPT_MALLOC_TRIM
+#ifndef _WIN32
+        malloc_trim(0);
+#endif
+#endif
+
     }
     enc_app_dctor(&enc_app);
     return return_error != EB_ErrorNone;

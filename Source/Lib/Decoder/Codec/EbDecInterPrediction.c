@@ -558,6 +558,9 @@ void svt_make_inter_predictor(PartitionInfo *part_info, int32_t ref, void *src, 
                            highbd,
                            bit_depth,
                            src,
+#if FTR_MEM_OPT_WM
+                           NULL,
+#endif
                            ref_buf->ps_pic_buf->width >> ss_x,
                            ref_buf->ps_pic_buf->height >> ss_y,
                            src_stride,

@@ -1597,3 +1597,10 @@ uint32_t get_mds_idx(uint32_t orgx, uint32_t orgy, uint32_t size, uint32_t use_1
     }
     return mds;
 }
+
+#if FIXED_POINT_ASSERT_TEST
+void svt_fixed_point_test_breakpoint(char* file, unsigned line)
+{
+    printf("ERROR: Fixed Point Test Assert:  %s:%u", file, line);
+}
+#endif

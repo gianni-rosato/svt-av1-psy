@@ -22,7 +22,11 @@ static INLINE int error_measure(int err) { return error_measure_lut[255 + err]; 
 
 // Returns the error between the result of applying motion 'wm' to the frame
 // described by 'ref' and the frame described by 'dst'.
+#if FTR_MEM_OPT_WM
+int64_t svt_av1_warp_error(EbWarpedMotionParams *wm, int use_hbd, int bd, const uint8_t *ref, const uint8_t *ref_2b,
+#else
 int64_t svt_av1_warp_error(EbWarpedMotionParams *wm, int use_hbd, int bd, const uint8_t *ref,
+#endif
                            int width, int height, int stride, uint8_t *dst, int p_col, int p_row,
                            int p_width, int p_height, int p_stride, int subsampling_x,
                            int subsampling_y, int64_t best_error);

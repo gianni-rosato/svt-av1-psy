@@ -171,12 +171,27 @@ typedef struct EbPerformanceContext {
 
 } EbPerformanceContext;
 
+#if OPT_MMAP_FILE
+typedef struct MemMapFile{
+    uint8_t  enable;         //enable mem mapped file
+    int64_t  file_size;      //size of the input file
+    int32_t  align_mask;     //page size alignment mask
+    int32_t  fd;             //file descriptor
+    int64_t  y4m_seq_hdr;    //y4m seq length
+    uint32_t y4m_frm_hdr;    //y4m frame length
+    uint64_t file_frame_it;  //frame iterator within the input file
+} MemMapFile;
+#endif
+
 typedef struct EbConfig {
     /****************************************
      * File I/O
      ****************************************/
     FILE * config_file;
     FILE * input_file;
+#if OPT_MMAP_FILE
+    MemMapFile mmap;  //memory mapped file handler
+#endif
     EbBool input_file_is_fifo;
     FILE * bitstream_file;
     FILE * recon_file;

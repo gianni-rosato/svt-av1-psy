@@ -356,6 +356,36 @@ static INLINE int convert_to_trans_prec(int allow_hp, int coor) {
         return ROUND_POWER_OF_TWO_SIGNED(coor, WARPEDMODEL_PREC_BITS - 2) * 2;
 }
 
+
+#if FIXED_POINTS_PLANEWISE
+/* Convert Floating Point to Fixed Point example: int32_t val_fp8 = FLOAT2FP(val_float, 8, int32_t) */
+#define FLOAT2FP(x_float, base_move, fp_type)           ((fp_type)((x_float) * (((fp_type)(1))<<(base_move))))
+
+/* Convert Fixed Point to Floating Point example: double val = FP2FLOAT(val_fp8, 8, int32_t, double) */
+#define FP2FLOAT(x_fp, base_move, fp_type, float_type)  ((((float_type)((fp_type)(x_fp))) / ((float_type)(((fp_type)1)<<(base_move)))))
+
+#ifndef FIXED_POINT_ASSERT_TEST
+#if NDEBUG
+#define FIXED_POINT_ASSERT_TEST 0
+#else
+#define FIXED_POINT_ASSERT_TEST 1
+#endif
+#endif
+
+#if FIXED_POINT_ASSERT_TEST
+void svt_fixed_point_test_breakpoint(char* file, unsigned line);
+#define FP_ASSERT(expression)                                           \
+    if(!(expression)) {                                                 \
+        fprintf(stderr,"ERROR: FP_ASSERT Fixed Point overload %s:%u\n", __FILE__, (unsigned)(__LINE__));\
+        svt_fixed_point_test_breakpoint(__FILE__, (unsigned)(__LINE__));\
+        assert(0);                                                      \
+        abort();                                                        \
+    }
+#else /*FIXED_POINT_ASSERT_TEST*/
+#define FP_ASSERT(expression)
+#endif
+#endif /*FIXED_POINT_ASSERT_TEST*/
+
 #ifdef __cplusplus
 }
 #endif
