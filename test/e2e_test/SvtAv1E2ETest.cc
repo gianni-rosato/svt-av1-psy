@@ -211,6 +211,11 @@ static const std::vector<EncTestSetting> default_enc_settings = {
     {"OverlayTest2", {{"EnableOverlays", "1"}, {"LogicalProcessors", "1"}}, default_test_vectors},
     {"OverlayTest3", {{"EnableOverlays", "1"}, {"EncoderMode", "5"}}, default_test_vectors},
 
+    // test super resolution mode
+    {"SuperResTest0", {{"SuperresMode", "2"}}, default_test_vectors},
+    {"SuperResTest1", {{"SuperresMode", "2"}, {"Obmc", "0"}}, default_test_vectors},
+    {"SuperResTest2", {{"SuperresMode", "2"}, {"Obmc", "1"}}, default_test_vectors },
+
     // test by using a dummy source of color bar
     {"DummySrcTest1", {{"EncoderMode", "8"}}, dummy_test_vectors},
 
@@ -228,6 +233,17 @@ static const std::vector<EncTestSetting> overlay_preset_settings = {
     {"OverlayPresetTest6", {{"EncoderMode", "5"}, {"EnableOverlays", "1"}}, default_test_vectors},
     {"OverlayPresetTest7", {{"EncoderMode", "6"}, {"EnableOverlays", "1"}}, default_test_vectors},
     {"OverlayPresetTest8", {{"EncoderMode", "7"}, {"EnableOverlays", "1"}}, default_test_vectors},
+};
+
+static const std::vector<EncTestSetting> superres_preset_settings = {
+    {"SuperResPresetTest1", {{"EncoderMode", "0"}, {"SuperresMode", "2"}}, default_test_vectors},
+    {"SuperResPresetTest2", {{"EncoderMode", "1"}, {"SuperresMode", "2"}}, default_test_vectors},
+    {"SuperResPresetTest3", {{"EncoderMode", "2"}, {"SuperresMode", "2"}}, default_test_vectors},
+    {"SuperResPresetTest4", {{"EncoderMode", "3"}, {"SuperresMode", "2"}}, default_test_vectors},
+    {"SuperResPresetTest5", {{"EncoderMode", "4"}, {"SuperresMode", "2"}}, default_test_vectors},
+    {"SuperResPresetTest6", {{"EncoderMode", "5"}, {"SuperresMode", "2"}}, default_test_vectors},
+    {"SuperResPresetTest7", {{"EncoderMode", "6"}, {"SuperresMode", "2"}}, default_test_vectors},
+    {"SuperResPresetTest8", {{"EncoderMode", "7"}, {"SuperresMode", "2"}}, default_test_vectors},
 };
 
 /* clang-format on */
@@ -260,6 +276,33 @@ TEST_P(OverlayPresetConformanceTest, DISABLED_OverlayPresetTest) {
 
 INSTANTIATE_TEST_CASE_P(SvtAv1, OverlayPresetConformanceTest,
                         ::testing::ValuesIn(overlay_preset_settings),
+                        EncTestSetting::GetSettingName);
+
+/**
+ * @brief SVT-AV1 encoder E2E test with comparing the reconstructed frame with
+ * output frame from decoder buffer list when enabled super resolution random
+ * mode both with different preset parameters
+ *
+ * Test strategy:
+ * Setup SVT-AV1 encoder with different preset parameter, and encode the input
+ * YUV data frames. Do the decode and collect the reconstructed frames and
+ * compared them with reference decoder output.
+ *
+ * Expected result:
+ * No error is reported in encoding progress. The reconstructed frame data is
+ * same as the output frame from reference decoder,which proved tiles are
+ * considered independent and the test passes.
+ *
+ * Test coverage:
+ * All test vectors of 640*480, default disabled */
+class SuperResPresetConformanceTest : public ConformanceDeathTest {};
+
+TEST_P(SuperResPresetConformanceTest, DISABLED_SupreResPresetTest) {
+    run_death_test();
+}
+
+INSTANTIATE_TEST_CASE_P(SvtAv1, SuperResPresetConformanceTest,
+                        ::testing::ValuesIn(superres_preset_settings),
                         EncTestSetting::GetSettingName);
 
 class LongtimeConformanceTest : public ConformanceDeathTest {};
@@ -314,4 +357,83 @@ static const std::vector<EncTestSetting> tile_settings = {
 
 INSTANTIATE_TEST_CASE_P(TILETEST, TileIndependenceTest,
                         ::testing::ValuesIn(tile_settings),
+                        EncTestSetting::GetSettingName);
+
+/**
+ * @brief SVT-AV1 encoder E2E test with comparing the reconstructed frame with
+ * output frame from decoder buffer list when super resolution enabled for both
+ * 8-bit pipeline and 16-bit pipeline
+ *
+ * Test strategy:
+ * Setup SVT-AV1 encoder with different super resolution parameters, and encode
+ * the input YUV data frames,then collect the
+ * reconstructed frames and compared them with reference decoder output.
+ *
+ * Expected result:
+ * No error is reported in encoding progress. The reconstructed frame data is
+ * same as the output frame from reference decoder,which proved super resolution
+ * works independently and the test passes.
+ *
+ * Test coverage:
+ * All test vectors of 640*480 */
+class SuperResTest : public SvtAv1E2ETestFramework {
+  protected:
+    void config_test() override {
+        enable_decoder = true;
+        enable_recon = true;
+        enable_stat = true;
+        enable_config = true;
+        SvtAv1E2ETestFramework::config_test();
+    }
+};
+
+TEST_P(SuperResTest, SuperResolutionTest) {
+    run_death_test();
+}
+
+static const std::vector<EncTestSetting> generate_super_res_settings() {
+    static const std::string test_prefix = "SuperRes";
+    std::vector<EncTestSetting> settings;
+
+    int count = 0;
+    // 8-bit test cases
+    for (size_t i = 8; i <= 16; i++) {
+        for (size_t j = 8; j <= 16; j++) {
+            EncTestSetting new_setting;
+            string idx = std::to_string(count);
+            string name = test_prefix + idx;
+            EncTestSetting setting{name,
+                                   {{"SuperresMode", "1"},
+                                    {"Restoration Filter", "1"},
+                                    {"SuperresDenom", std::to_string(i)},
+                                    {"SuperresKfDenom", std::to_string(j)}},
+                                   default_test_vectors};
+            settings.push_back(setting);
+            count++;
+        }
+    }
+#if ENABLE_16BIT_SUPERRES_TEST
+    // 16-bit test cases
+    for (size_t i = 8; i <= 16; i++) {
+        for (size_t j = 8; j <= 16; j++) {
+            EncTestSetting new_setting;
+            string idx = std::to_string(count);
+            string name = test_prefix + idx;
+            EncTestSetting setting{name,
+                                   {{"SuperresMode", "1"},
+                                    {"Restoration Filter", "1"},
+                                    {"SuperresDenom", std::to_string(i)},
+                                    {"SuperresKfDenom", std::to_string(j)},
+                                    {"Encoder16BitPipeline", "1"}},
+                                   default_test_vectors};
+            settings.push_back(setting);
+            count++;
+        }
+    }
+#endif // ENABLE_16BIT_SUPERRES_TEST
+    return settings;
+}
+
+INSTANTIATE_TEST_CASE_P(SUPERRESTEST, SuperResTest,
+                        ::testing::ValuesIn(generate_super_res_settings()),
                         EncTestSetting::GetSettingName);
