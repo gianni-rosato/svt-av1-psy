@@ -728,7 +728,8 @@ EbErrorType load_default_buffer_configuration_settings(
     }
 
     scs_ptr->total_process_init_count += 6; // single processes count
-    SVT_LOG("Number of logical cores available: %u\nNumber of PPCS %u\n", core_count, scs_ptr->picture_control_set_pool_init_count);
+    SVT_INFO("Number of logical cores available: %u\n", core_count);
+    SVT_INFO("Number of PPCS %u\n", scs_ptr->picture_control_set_pool_init_count);
 
     /******************************************************************
     * Platform detection, limit cpu flags to hardware available CPU
@@ -737,12 +738,12 @@ EbErrorType load_default_buffer_configuration_settings(
     const CPU_FLAGS cpu_flags = get_cpu_flags();
     const CPU_FLAGS cpu_flags_to_use = get_cpu_flags_to_use();
     scs_ptr->static_config.use_cpu_flags &= cpu_flags_to_use;
-    SVT_LOG("[asm level on system : up to %s]\n", get_asm_level_name_str(cpu_flags));
-    SVT_LOG("[asm level selected : up to %s]\n", get_asm_level_name_str(scs_ptr->static_config.use_cpu_flags));
+    SVT_INFO("[asm level on system : up to %s]\n", get_asm_level_name_str(cpu_flags));
+    SVT_INFO("[asm level selected : up to %s]\n", get_asm_level_name_str(scs_ptr->static_config.use_cpu_flags));
 #else
     scs_ptr->static_config.use_cpu_flags &= 0;
-    SVT_LOG("[asm level on system : up to %s]\n", get_asm_level_name_str(0));
-    SVT_LOG("[asm level selected : up to %s]\n", get_asm_level_name_str(scs_ptr->static_config.use_cpu_flags));
+    SVT_INFO("[asm level on system : up to %s]\n", get_asm_level_name_str(0));
+    SVT_INFO("[asm level selected : up to %s]\n", get_asm_level_name_str(scs_ptr->static_config.use_cpu_flags));
 #endif
     return return_error;
 }
@@ -3751,90 +3752,92 @@ EbErrorType svt_svt_enc_init_parameter(
 
     return return_error;
 }
+
+static const char *tier_to_str(unsigned in) {
+    if (!in) return "(auto)";
+    static char ret[11];
+    snprintf(ret, 11, "%u", in);
+    return ret;
+}
+static const char *level_to_str(unsigned in) {
+    if (!in) return "(auto)";
+    static char ret[313];
+    snprintf(ret, 313, "%.1f", in / 10.0);
+    return ret;
+}
+
 //#define DEBUG_BUFFERS
 static void print_lib_params(
     SequenceControlSet* scs) {
     EbSvtAv1EncConfiguration*   config = &scs->static_config;
 
-    SVT_LOG("------------------------------------------- ");
-    if (config->profile == MAIN_PROFILE)
-        SVT_LOG("\nSVT [config]: Main Profile\t");
-    else if (config->profile == HIGH_PROFILE)
-        SVT_LOG("\nSVT [config]: High Profile\t");
-    else if (config->profile == PROFESSIONAL_PROFILE)
-        SVT_LOG("\nSVT [config]: Professional Profile\t");
-    else
-        SVT_LOG("\nSVT [config]: Unknown Profile\t");
+    SVT_INFO("-------------------------------------------\n");
+    SVT_INFO("SVT [config]: %s\tTier %s\tLevel %s\n",
+             config->profile == MAIN_PROFILE
+                ? "Main Profile"
+                : config->profile == HIGH_PROFILE
+                    ? "High Profile"
+                    : config->profile == PROFESSIONAL_PROFILE
+                        ? "Professional Profile"
+                        : "Unknown Profile",
+             tier_to_str(config->tier),
+             level_to_str(config->level));
 
-    if (config->tier != 0 && config->level != 0)
-        SVT_LOG("Tier %d\tLevel %.1f\t", config->tier, (float)(config->level / 10));
-    else {
-        if (config->tier == 0)
-            SVT_LOG("Tier (auto)\t");
-        else
-            SVT_LOG("Tier %d\t", config->tier);
-
-        if (config->level == 0)
-            SVT_LOG("Level (auto)\t");
-        else
-            SVT_LOG("Level %.1f\t", (float)(config->level / 10));
-    }
     if (config->rc_firstpass_stats_out)
-        SVT_LOG("\nSVT [config]: Preset \t\t\t\t\t\t\t\t: Pass 1 ");
+        SVT_INFO("SVT [config]: Preset \t\t\t\t\t\t\t: Pass 1\n");
     else
-        SVT_LOG("\nSVT [config]: Preset \t\t\t\t\t\t\t\t: %d ", config->enc_mode);
-    SVT_LOG("\nSVT [config]: EncoderBitDepth / EncoderColorFormat / CompressedTenBitFormat\t: %d / %d / %d", config->encoder_bit_depth, config->encoder_color_format, config->compressed_ten_bit_format);
-    SVT_LOG("\nSVT [config]: SourceWidth / SourceHeight\t\t\t\t\t: %d / %d ", config->source_width, config->source_height);
+        SVT_INFO("SVT [config]: Preset \t\t\t\t\t\t\t: %d\n", config->enc_mode);
+    SVT_INFO("SVT [config]: EncoderBitDepth / EncoderColorFormat / CompressedTenBitFormat\t: %d / %d / %d\n", config->encoder_bit_depth, config->encoder_color_format, config->compressed_ten_bit_format);
+    SVT_INFO("SVT [config]: SourceWidth / SourceHeight\t\t\t\t\t: %d / %d\n", config->source_width, config->source_height);
     if (config->frame_rate_denominator != 0 && config->frame_rate_numerator != 0)
-        SVT_LOG("\nSVT [config]: Fps_Numerator / Fps_Denominator / Gop Size / IntraRefreshType \t: %d / %d / %d / %d", config->frame_rate_numerator, config->frame_rate_denominator,
+        SVT_INFO("SVT [config]: Fps_Numerator / Fps_Denominator / Gop Size / IntraRefreshType \t: %d / %d / %d / %d\n", config->frame_rate_numerator, config->frame_rate_denominator,
             config->intra_period_length + 1,
             config->intra_refresh_type);
     else
-        SVT_LOG("\nSVT [config]: FrameRate / Gop Size\t\t\t\t\t\t: %d / %d ", config->frame_rate > 1000 ? config->frame_rate >> 16 : config->frame_rate, config->intra_period_length + 1);
-    SVT_LOG("\nSVT [config]: HierarchicalLevels  / PredStructure\t\t\t\t: %d / %d", config->hierarchical_levels, config->pred_structure);
+        SVT_INFO("SVT [config]: FrameRate / Gop Size\t\t\t\t\t\t: %d / %d\n", config->frame_rate > 1000 ? config->frame_rate >> 16 : config->frame_rate, config->intra_period_length + 1);
+    SVT_INFO("SVT [config]: HierarchicalLevels  / PredStructure\t\t\t\t: %d / %d\n", config->hierarchical_levels, config->pred_structure);
     if (config->rate_control_mode == 1)
-        SVT_LOG("\nSVT [config]: RCMode / TargetBitrate (kbps)/ SceneChange\t\t: VBR / %d /  %d ", (int)config->target_bit_rate/1000, config->scene_change_detection);
+        SVT_INFO("SVT [config]: RCMode / TargetBitrate (kbps)/ SceneChange\t\t: VBR / %d /  %d\n", (int)config->target_bit_rate/1000, config->scene_change_detection);
     else if (config->rate_control_mode == 2)
-        SVT_LOG("\nSVT [config]: RCMode / TargetBitrate (kbps)/ SceneChange\t\t: Constraint VBR / %d /  %d ", (int)config->target_bit_rate/1000,  config->scene_change_detection);
+        SVT_INFO("SVT [config]: RCMode / TargetBitrate (kbps)/ SceneChange\t\t: Constraint VBR / %d /  %d\n", (int)config->target_bit_rate/1000,  config->scene_change_detection);
     else
-        SVT_LOG("\nSVT [config]: BRC Mode / %s / SceneChange\t\t\t\t: %s / %d / %d ", scs->static_config.enable_tpl_la ? "Rate Factor" : "CQP Assignment", scs->static_config.enable_tpl_la ? "CRF" : "CQP", scs->static_config.qp, config->scene_change_detection);
+        SVT_INFO("SVT [config]: BRC Mode / %s / SceneChange\t\t\t\t: %s / %d / %d\n", scs->static_config.enable_tpl_la ? "Rate Factor" : "CQP Assignment", scs->static_config.enable_tpl_la ? "CRF" : "CQP", scs->static_config.qp, config->scene_change_detection);
 #ifdef DEBUG_BUFFERS
-    SVT_LOG("\nSVT [config]: INPUT / OUTPUT \t\t\t\t\t\t\t: %d / %d", scs->input_buffer_fifo_init_count, scs->output_stream_buffer_fifo_init_count);
-    SVT_LOG("\nSVT [config]: CPCS / PAREF / REF / ME\t\t\t\t\t\t: %d / %d / %d / %d", scs->picture_control_set_pool_init_count_child, scs->pa_reference_picture_buffer_init_count, scs->reference_picture_buffer_init_count, scs->me_pool_init_count);
-    SVT_LOG("\nSVT [config]: ME_SEG_W0 / ME_SEG_W1 / ME_SEG_W2 / ME_SEG_W3 \t\t\t: %d / %d / %d / %d ",
+    SVT_INFO("SVT [config]: INPUT / OUTPUT \t\t\t\t\t\t\t: %d / %d\n", scs->input_buffer_fifo_init_count, scs->output_stream_buffer_fifo_init_count);
+    SVT_INFO("SVT [config]: CPCS / PAREF / REF / ME\t\t\t\t\t\t: %d / %d / %d / %d\n", scs->picture_control_set_pool_init_count_child, scs->pa_reference_picture_buffer_init_count, scs->reference_picture_buffer_init_count, scs->me_pool_init_count);
+    SVT_INFO("SVT [config]: ME_SEG_W0 / ME_SEG_W1 / ME_SEG_W2 / ME_SEG_W3 \t\t\t: %d / %d / %d / %d\n",
         scs->me_segment_column_count_array[0],
         scs->me_segment_column_count_array[1],
         scs->me_segment_column_count_array[2],
         scs->me_segment_column_count_array[3]);
-    SVT_LOG("\nSVT [config]: ME_SEG_H0 / ME_SEG_H1 / ME_SEG_H2 / ME_SEG_H3 \t\t\t: %d / %d / %d / %d ",
+    SVT_INFO("SVT [config]: ME_SEG_H0 / ME_SEG_H1 / ME_SEG_H2 / ME_SEG_H3 \t\t\t: %d / %d / %d / %d\n",
         scs->me_segment_row_count_array[0],
         scs->me_segment_row_count_array[1],
         scs->me_segment_row_count_array[2],
         scs->me_segment_row_count_array[3]);
-    SVT_LOG("\nSVT [config]: ME_SEG_W0 / ME_SEG_W1 / ME_SEG_W2 / ME_SEG_W3 \t\t\t: %d / %d / %d / %d ",
+    SVT_INFO("SVT [config]: ME_SEG_W0 / ME_SEG_W1 / ME_SEG_W2 / ME_SEG_W3 \t\t\t: %d / %d / %d / %d\n",
         scs->enc_dec_segment_col_count_array[0],
         scs->enc_dec_segment_col_count_array[1],
         scs->enc_dec_segment_col_count_array[2],
         scs->enc_dec_segment_col_count_array[3]);
-    SVT_LOG("\nSVT [config]: ME_SEG_H0 / ME_SEG_H1 / ME_SEG_H2 / ME_SEG_H3 \t\t\t: %d / %d / %d / %d ",
+    SVT_INFO("SVT [config]: ME_SEG_H0 / ME_SEG_H1 / ME_SEG_H2 / ME_SEG_H3 \t\t\t: %d / %d / %d / %d\n",
         scs->enc_dec_segment_row_count_array[0],
         scs->enc_dec_segment_row_count_array[1],
         scs->enc_dec_segment_row_count_array[2],
         scs->enc_dec_segment_row_count_array[3]);
-    SVT_LOG("\nSVT [config]: PA_P / ME_P / SBO_P / MDC_P / ED_P / EC_P \t\t\t: %d / %d / %d / %d / %d / %d ",
+    SVT_INFO("SVT [config]: PA_P / ME_P / SBO_P / MDC_P / ED_P / EC_P \t\t\t: %d / %d / %d / %d / %d / %d\n",
         scs->picture_analysis_process_init_count,
         scs->motion_estimation_process_init_count,
         scs->source_based_operations_process_init_count,
         scs->mode_decision_configuration_process_init_count,
         scs->enc_dec_process_init_count,
         scs->entropy_coding_process_init_count);
-    SVT_LOG("\nSVT [config]: DLF_P / CDEF_P / REST_P \t\t\t\t\t\t: %d / %d / %d",
+    SVT_INFO("SVT [config]: DLF_P / CDEF_P / REST_P \t\t\t\t\t\t: %d / %d / %d\n",
         scs->dlf_process_init_count,
         scs->cdef_process_init_count,
         scs->rest_process_init_count);
 #endif
-    SVT_LOG("\n------------------------------------------- ");
-    SVT_LOG("\n");
+    SVT_INFO("-------------------------------------------\n");
 
     fflush(stdout);
 }
@@ -4349,26 +4352,30 @@ EB_API const char *svt_av1_get_version(void) {
 }
 
 EB_API void svt_av1_print_version(void) {
-    SVT_LOG("-------------------------------------------\n"
-        "SVT [version]:\tSVT-AV1 Encoder Lib " SVT_AV1_CVS_VERSION "\n");
+    SVT_INFO("-------------------------------------------\n");
+    SVT_INFO("SVT [version]:\tSVT-AV1 Encoder Lib %s\n", SVT_AV1_CVS_VERSION);
+    const char *compiler =
 #if defined( _MSC_VER ) && (_MSC_VER >= 1920)
-    SVT_LOG("SVT [build]  :\tVisual Studio 2019");
+    "Visual Studio 2019"
 #elif defined( _MSC_VER ) && (_MSC_VER >= 1910)
-    SVT_LOG("SVT [build]  :\tVisual Studio 2017");
+    "Visual Studio 2017"
 #elif defined( _MSC_VER ) && (_MSC_VER >= 1900)
-    SVT_LOG("SVT [build]  :\tVisual Studio 2015");
+    "Visual Studio 2015"
 #elif defined( _MSC_VER )
-    SVT_LOG("SVT [build]  :\tVisual Studio (old)");
+    "Visual Studio (old)"
+#elif defined(__clang__)
+    __VERSION__ "\t"
 #elif defined(__GNUC__)
-    SVT_LOG("SVT [build]  :\tGCC %s\t", __VERSION__);
+    "GCC " __VERSION__ "\t"
 #else
-    SVT_LOG("SVT [build]  :\tunknown compiler");
+    "unknown compiler"
 #endif
-    SVT_LOG(" %zu bit\n", sizeof(void*) * 8);
+    ;
+    SVT_INFO("SVT [build]  :\t%s %zu bit\n", compiler,  sizeof(void*) * 8);
 #if !REPRODUCIBLE_BUILDS
-    SVT_LOG("LIB Build date: %s %s\n", __DATE__, __TIME__);
+    SVT_INFO("LIB Build date: %s %s\n", __DATE__, __TIME__);
 #endif
-    SVT_LOG("-------------------------------------------\n");
+    SVT_INFO("-------------------------------------------\n");
 }
 
 /**********************************
