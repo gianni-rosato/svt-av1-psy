@@ -4059,6 +4059,17 @@ void send_picture_out(
         //printf("[%ld]: Got me data [NORMAL] %p\n", pcs->picture_number, pcs->pa_me_data);
     }
 
+    //****************************************************
+    // Picture resizing for super-res tool
+    //****************************************************
+
+    // Scale picture if super-res is used
+    if (!use_output_stat(scs) || use_input_stat(scs)) {
+        if (scs->static_config.superres_mode > SUPERRES_NONE) {
+            init_resize_picture(scs, pcs);
+        }
+    }
+
     for (uint32_t segment_index = 0; segment_index < pcs->me_segments_total_count; ++segment_index) {
         // Get Empty Results Object
         svt_get_empty_object(
@@ -5663,15 +5674,6 @@ void* picture_decision_kernel(void *input_ptr)
                             set_all_ref_frame_type(pcs_ptr, pcs_ptr->ref_frame_type_arr, &pcs_ptr->tot_ref_frame_types);
                             pcs_ptr->me_processed_sb_count = 0;
 
-                            //****************************************************
-                            // Picture resizing for super-res tool
-                            //****************************************************
-
-                            // Scale picture if super-res is used
-                            if(scs_ptr->static_config.superres_mode > SUPERRES_NONE){
-                                init_resize_picture(pcs_ptr->scs_ptr,
-                                                    pcs_ptr);
-                            }
                             uint32_t pic_it = out_stride_diff64 - context_ptr->mini_gop_start_index[mini_gop_index];
                             context_ptr->mg_pictures_array[pic_it] = pcs_ptr;
                             if (out_stride_diff64 == context_ptr->mini_gop_end_index[mini_gop_index] + has_overlay) {
