@@ -891,7 +891,7 @@ Win64 FFmpeg (Static):
     - |
       mkdir ffmpeg-build
       cd ffmpeg-build
-      dash ../ffmpeg-src/configure `
+      bash ../ffmpeg-src/configure `
         --arch=x86_64 `
         --pkg-config-flags="--static" `
         --cc="${env:CC}" `
