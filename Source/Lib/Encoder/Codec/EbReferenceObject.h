@@ -31,6 +31,7 @@ typedef struct EbReferenceObject {
     EbPictureBufferDesc *       downscaled_reference_picture[NUM_SCALES];
     EbPictureBufferDesc *       downscaled_reference_picture16bit[NUM_SCALES];
     uint64_t                    downscaled_picture_number[NUM_SCALES]; // save the picture_number for each denom
+    EbHandle                    resize_mutex[NUM_SCALES];
     uint64_t                    ref_poc;
     uint16_t                    qp;
     EB_SLICE                    slice_type;
@@ -72,7 +73,7 @@ typedef struct EbPaReferenceObject {
     EbPictureBufferDesc *downscaled_quarter_downsampled_picture_ptr[NUM_SCALES];
     EbPictureBufferDesc *downscaled_sixteenth_downsampled_picture_ptr[NUM_SCALES];
     uint64_t             downscaled_picture_number[NUM_SCALES]; // save the picture_number for each denom
-
+    EbHandle             resize_mutex[NUM_SCALES];
     uint64_t picture_number;
     uint8_t  dummy_obj;
 } EbPaReferenceObject;

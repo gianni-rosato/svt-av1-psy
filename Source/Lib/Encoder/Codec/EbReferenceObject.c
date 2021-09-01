@@ -144,6 +144,7 @@ static void svt_reference_object_dctor(EbPtr p) {
         if (obj->downscaled_reference_picture16bit[denom_idx] != NULL) {
             EB_DELETE(obj->downscaled_reference_picture16bit[denom_idx]);
         }
+        EB_DESTROY_MUTEX(obj->resize_mutex[denom_idx]);
     }
     EB_DELETE(obj->quarter_reference_picture);
     EB_DELETE(obj->sixteenth_reference_picture);
@@ -240,6 +241,8 @@ EbErrorType svt_reference_object_ctor(EbReferenceObject *reference_object,
     for (uint8_t down_idx = 0; down_idx < NUM_SCALES; down_idx++) {
         reference_object->downscaled_reference_picture[down_idx]      = NULL;
         reference_object->downscaled_reference_picture16bit[down_idx] = NULL;
+        reference_object->downscaled_picture_number[down_idx]         = (uint64_t)~0;
+        EB_CREATE_MUTEX(reference_object->resize_mutex[down_idx]);
     }
 
     reference_object->mi_rows = mi_rows;
@@ -279,6 +282,7 @@ static void svt_pa_reference_object_dctor(EbPtr p) {
             EB_DELETE(obj->downscaled_quarter_downsampled_picture_ptr[denom_idx]);
             EB_DELETE(obj->downscaled_sixteenth_downsampled_picture_ptr[denom_idx]);
         }
+        EB_DESTROY_MUTEX(obj->resize_mutex[denom_idx]);
     }
 }
 
@@ -311,6 +315,8 @@ EbErrorType svt_pa_reference_object_ctor(EbPaReferenceObject *pa_ref_obj_,
         pa_ref_obj_->downscaled_input_padded_picture_ptr[down_idx]        = NULL;
         pa_ref_obj_->downscaled_quarter_downsampled_picture_ptr[down_idx] = NULL;
         pa_ref_obj_->downscaled_sixteenth_downsampled_picture_ptr[down_idx] = NULL;
+        pa_ref_obj_->downscaled_picture_number[down_idx]                    = (uint64_t)~0;
+        EB_CREATE_MUTEX(pa_ref_obj_->resize_mutex[down_idx]);
     }
 
     return EB_ErrorNone;
