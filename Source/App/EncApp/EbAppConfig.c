@@ -1049,6 +1049,10 @@ ConfigEntry config_entry_intra_refresh[] = {
      INTRA_REFRESH_TYPE_TOKEN,
      "Intra refresh type (1: FWD Frame (Open GOP), 2: KEY Frame (Closed GOP)[default])",
     set_cfg_intra_refresh_type },
+    {SINGLE_INPUT,
+     SCENE_CHANGE_DETECTION_TOKEN,
+     "Enables or disables the scene change detection algorithm (0: OFF [default], 1: ON)",
+     set_scene_change_detection},
     { SINGLE_INPUT,
     LOOKAHEAD_NEW_TOKEN,
     "The lookahead option is currently disabled (forced to 0) until further work is done on "

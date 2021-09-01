@@ -238,6 +238,7 @@ for this command line, corresponding qindex are:
 | --- | --- | --- | --- | --- |
 | **IntraPeriod** | --keyint | [-2 - 2^31-2] | -2 | Intra period interval(frames) -2: default intra period , -1: No intra update or an integer >= 0. if RateControlMode >= 1 intra-period limited to [-2, 255] |
 | **IntraRefreshType** | --irefresh-type | [1 - 2] | 2 | Intra refresh type (1: FWD Frame (Open GOP), 2: KEY Frame (Closed GOP)[default]) |
+| **SceneChangeDetection** | --scd | [0 - 1] | 0 | Enables or disables the scene change detection algorithm (0: OFF, 1: ON) |
 
 #### AV1 Specific Options
 | **Configuration file parameter** | **Command line** | **Range** | **Default** | **Description** |
