@@ -495,6 +495,53 @@ void svt_aom_flat_block_finder_free(AomFlatBlockFinder *block_finder) {
     memset(block_finder, 0, sizeof(*block_finder));
 }
 
+// Matrix multiply
+static INLINE void multiply_mat_1_n_3(const double *m1, const double *m2, double *res, const int32_t inner_dim) {
+    double sum0 = 0, sum1 = 0, sum2 = 0;
+    int32_t inner_m3 = 0;
+
+    for (int32_t inner = 0; inner < inner_dim; ++inner, inner_m3 += 3) {
+        const double m1_inner = m1[inner];
+        sum0 += m1_inner * m2[inner_m3 + 0];
+        sum1 += m1_inner * m2[inner_m3 + 1];
+        sum2 += m1_inner * m2[inner_m3 + 2];
+    }
+
+    *(res++) = sum0;
+    *(res++) = sum1;
+    *(res++) = sum2;
+}
+
+static INLINE void multiply_mat_3_3_1(const double *m1, const double *m2, double *res) {
+    double sum0, sum1, sum2;
+
+    sum0 = m1[0 * 3 + 0] * m2[0 * 1 + 0];
+    sum0 += m1[0 * 3 + 1] * m2[1 * 1 + 0];
+    sum0 += m1[0 * 3 + 2] * m2[2 * 1 + 0];
+    *(res++) = sum0;
+
+    sum1 = m1[1 * 3 + 0] * m2[0 * 1 + 0];
+    sum1 += m1[1 * 3 + 1] * m2[1 * 1 + 0];
+    sum1 += m1[1 * 3 + 2] * m2[2 * 1 + 0];
+    *(res++) = sum1;
+
+    sum2 = m1[2 * 3 + 0] * m2[0 * 1 + 0];
+    sum2 += m1[2 * 3 + 1] * m2[1 * 1 + 0];
+    sum2 += m1[2 * 3 + 2] * m2[2 * 1 + 0];
+    *(res++) = sum2;
+}
+
+static INLINE void multiply_mat_n_3_1(const double *m1, const double *m2, double *res, const int32_t m1_rows) {
+    int32_t row_m3 = 0;
+
+    for (int32_t row = 0; row < m1_rows; ++row, row_m3 += 3) {
+        double sum = m1[row_m3 + 0] * m2[0 * 1 + 0];
+        sum += m1[row_m3 + 1] * m2[1 * 1 + 0];
+        sum += m1[row_m3 + 2] * m2[2 * 1 + 0];
+        *(res++) = sum;
+    }
+}
+
 void svt_aom_flat_block_finder_extract_block(const AomFlatBlockFinder *block_finder,
                                              const uint8_t *const data, int32_t w, int32_t h,
                                              int32_t stride, int32_t offsx, int32_t offsy,
@@ -503,6 +550,7 @@ void svt_aom_flat_block_finder_extract_block(const AomFlatBlockFinder *block_fin
     const int32_t n          = block_size * block_size;
     const double *A          = block_finder->A;
     const double *at_a_inv   = block_finder->at_a_inv;
+    const double  recp_norm  = 1 / block_finder->normalization;
     double        plane_coords[kLowPolyNumParams];
     double        at_a_inv__b[kLowPolyNumParams];
     int32_t       xi, yi, i;
@@ -513,8 +561,7 @@ void svt_aom_flat_block_finder_extract_block(const AomFlatBlockFinder *block_fin
             const int32_t y = clamp(offsy + yi, 0, h - 1);
             for (xi = 0; xi < block_size; ++xi) {
                 const int32_t x             = clamp(offsx + xi, 0, w - 1);
-                block[yi * block_size + xi] = ((double)data16[y * stride + x]) /
-                    block_finder->normalization;
+                block[yi * block_size + xi] = ((double)data16[y * stride + x]) * recp_norm;
             }
         }
     } else {
@@ -522,14 +569,19 @@ void svt_aom_flat_block_finder_extract_block(const AomFlatBlockFinder *block_fin
             const int32_t y = clamp(offsy + yi, 0, h - 1);
             for (xi = 0; xi < block_size; ++xi) {
                 const int32_t x             = clamp(offsx + xi, 0, w - 1);
-                block[yi * block_size + xi] = ((double)data[y * stride + x]) /
-                    block_finder->normalization;
+                block[yi * block_size + xi] = ((double)data[y * stride + x]) * recp_norm;
             }
         }
     }
+#if (kLowPolyNumParams == 3)
+    multiply_mat_1_n_3(block, A, at_a_inv__b, n);
+    multiply_mat_3_3_1(at_a_inv, at_a_inv__b, plane_coords);
+    multiply_mat_n_3_1(A, plane_coords, plane, n);
+#else
     multiply_mat(block, A, at_a_inv__b, 1, n, kLowPolyNumParams);
     multiply_mat(at_a_inv, at_a_inv__b, plane_coords, kLowPolyNumParams, kLowPolyNumParams, 1);
     multiply_mat(A, plane_coords, plane, n, kLowPolyNumParams, 1);
+#endif
 
     for (i = 0; i < n; ++i) block[i] -= plane[i];
 }
@@ -800,15 +852,28 @@ static int32_t add_block_observations(AomNoiseModel *noise_model, int32_t c,
     const int32_t lag           = noise_model->params.lag;
     const int32_t num_coords    = noise_model->n;
     const double  normalization = (1 << noise_model->params.bit_depth) - 1;
+    const double  recp_sqr_norm = 1 / (normalization * normalization);
     double *      A             = noise_model->latest_state[c].eqns.A;
     double *      b             = noise_model->latest_state[c].eqns.b;
-    double *      buffer        = (double *)malloc(sizeof(*buffer) * (num_coords + 1));
     const int32_t n             = noise_model->latest_state[c].eqns.n;
+    double *      buffer;
+    double *      buffer_norm;
+
+    EB_MALLOC_ALIGNED(buffer, sizeof(*buffer) * (num_coords + 1));
 
     if (!buffer) {
-        SVT_ERROR("Unable to allocate buffer of size %d\n", num_coords + 1);
+        SVT_ERROR("Unable to allocate buffer of size %d\n", sizeof(*buffer) * (num_coords + 1));
         return 0;
     }
+
+    EB_MALLOC_ALIGNED(buffer_norm, sizeof(*buffer_norm) * (n));
+
+    if (!buffer_norm) {
+        EB_FREE_ALIGNED(buffer);
+        SVT_ERROR("Unable to allocate buffer of size %d\n", sizeof(*buffer_norm) * (n));
+        return 0;
+    }
+
     for (int32_t by = 0; by < num_blocks_h; ++by) {
         const int32_t y_o = by * (block_size >> sub_log2[1]);
         for (int32_t bx = 0; bx < num_blocks_w; ++bx) {
@@ -826,6 +891,7 @@ static int32_t add_block_observations(AomNoiseModel *noise_model, int32_t c,
                       : ((block_size >> sub_log2[0]) - lag));
             for (int32_t y = y_start; y < y_end; ++y) {
                 for (int32_t x = x_start; x < x_end; ++x) {
+                    int32_t i = 0;
                     const double val = noise_model->params.use_highbd
                         ? extract_ar_row_highbd(noise_model->coords,
                                                 num_coords,
@@ -851,19 +917,56 @@ static int32_t add_block_observations(AomNoiseModel *noise_model, int32_t c,
                                                x + x_o,
                                                y + y_o,
                                                buffer);
-                    for (int32_t i = 0; i < n; ++i) {
-                        for (int32_t j = 0; j < n; ++j) {
-                            A[i * n + j] += (buffer[i] * buffer[j]) /
-                                (normalization * normalization);
-                        }
-                        b[i] += (buffer[i] * val) / (normalization * normalization);
+
+                    for (i = 0; i + 8 - 1 < n; i += 8) {
+                        buffer_norm[i + 0] = buffer[i + 0] * recp_sqr_norm;
+                        buffer_norm[i + 1] = buffer[i + 1] * recp_sqr_norm;
+                        buffer_norm[i + 2] = buffer[i + 2] * recp_sqr_norm;
+                        buffer_norm[i + 3] = buffer[i + 3] * recp_sqr_norm;
+                        buffer_norm[i + 4] = buffer[i + 4] * recp_sqr_norm;
+                        buffer_norm[i + 5] = buffer[i + 5] * recp_sqr_norm;
+                        buffer_norm[i + 6] = buffer[i + 6] * recp_sqr_norm;
+                        buffer_norm[i + 7] = buffer[i + 7] * recp_sqr_norm;
+                        b[i + 0] += buffer_norm[i + 0] * val;
+                        b[i + 1] += buffer_norm[i + 1] * val;
+                        b[i + 2] += buffer_norm[i + 2] * val;
+                        b[i + 3] += buffer_norm[i + 3] * val;
+                        b[i + 4] += buffer_norm[i + 4] * val;
+                        b[i + 5] += buffer_norm[i + 5] * val;
+                        b[i + 6] += buffer_norm[i + 6] * val;
+                        b[i + 7] += buffer_norm[i + 7] * val;
                     }
+                    for (; i < n; ++i) {
+                        buffer_norm[i] = buffer[i] * recp_sqr_norm;
+                        b[i] += buffer_norm[i] * val;
+                    }
+
+                    for (i = 0; i < n; ++i) {
+                        int32_t j = 0;
+                        const double buffer_norm_i = buffer_norm[i];
+
+                        for (j = 0; j + 8 - 1 < n; j += 8) {
+                            A[i * n + j + 0] += (buffer_norm_i * buffer[j + 0]);
+                            A[i * n + j + 1] += (buffer_norm_i * buffer[j + 1]);
+                            A[i * n + j + 2] += (buffer_norm_i * buffer[j + 2]);
+                            A[i * n + j + 3] += (buffer_norm_i * buffer[j + 3]);
+                            A[i * n + j + 4] += (buffer_norm_i * buffer[j + 4]);
+                            A[i * n + j + 5] += (buffer_norm_i * buffer[j + 5]);
+                            A[i * n + j + 6] += (buffer_norm_i * buffer[j + 6]);
+                            A[i * n + j + 7] += (buffer_norm_i * buffer[j + 7]);
+                        }
+                        for (; j < n; ++j) {
+                            A[i * n + j] += (buffer_norm_i * buffer[j]);
+                        }
+                    }
+
                     noise_model->latest_state[c].num_observations++;
                 }
             }
         }
     }
-    free(buffer);
+    EB_FREE_ALIGNED(buffer);
+    EB_FREE_ALIGNED(buffer_norm);
     return 1;
 }
 
@@ -1282,7 +1385,7 @@ static float *get_half_cos_window(int32_t block_size) {
                                              int32_t   chroma_sub_w,                              \
                                              int32_t   chroma_sub_h,                              \
                                              int32_t   block_size,                                \
-                                             float     block_normalization) {                         \
+                                             float     block_normalization) {                     \
         for (int32_t y = 0; y < (h >> chroma_sub_h); ++y) {                                       \
             for (int32_t x = 0; x < (w >> chroma_sub_w); ++x) {                                   \
                 const int32_t result_idx = (y + (block_size >> chroma_sub_h)) * result_stride +   \
