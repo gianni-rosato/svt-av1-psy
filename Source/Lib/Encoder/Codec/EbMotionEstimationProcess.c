@@ -551,25 +551,6 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
     // HME Search Method
         context_ptr->me_context_ptr->hme_search_method = SUB_SAD_SEARCH;
         context_ptr->me_context_ptr->me_search_method = SUB_SAD_SEARCH;
-    uint8_t gm_level = 0;
-    if (scs_ptr->static_config.enable_global_motion == EB_TRUE &&
-        pcs_ptr->frame_superres_enabled == EB_FALSE) {
-        if (enc_mode <= ENC_MRS)
-            gm_level = 2;
-        else if (enc_mode <= ENC_M1)
-            gm_level = 3;
-        else if (enc_mode <= ENC_M5)
-            gm_level = pcs_ptr->is_used_as_reference_flag ? 4 : 0;
-        else if (enc_mode <= ENC_M8)
-            gm_level = pcs_ptr->is_used_as_reference_flag ? 5 : 0;
-        else
-            gm_level = 0;
-    }
-
-    set_gm_controls(pcs_ptr, gm_level);
-
-
-
 
     // Set pre-hme level (0-2)
     uint8_t prehme_level = 0;

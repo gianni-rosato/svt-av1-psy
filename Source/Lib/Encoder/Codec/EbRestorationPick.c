@@ -607,6 +607,7 @@ static SgrprojInfo search_selfguided_restoration(
     int8_t end_ep   = sg_ref_frame_ep[0] < 0 && sg_ref_frame_ep[1] < 0
           ? SGRPROJ_PARAMS
           : AOMMIN(SGRPROJ_PARAMS, mid_ep + step);
+    UNUSED(sg_frame_ep_cnt);
 
     for (ep = start_ep; ep < end_ep; ep++) {
         int32_t exq[2];
@@ -664,7 +665,6 @@ static SgrprojInfo search_selfguided_restoration(
             bestxqd[1] = exqd[1];
         }
     }
-    sg_frame_ep_cnt[bestep]++;
 
     SgrprojInfo ret;
     ret.ep     = bestep;
@@ -1311,6 +1311,9 @@ static void search_sgrproj_seg(const RestorationTileLimits *limits, const Av1Pix
                                                   cm->sg_ref_frame_ep,
                                                   cm->sg_frame_ep_cnt,
                                                   step);
+    svt_block_on_mutex(cm->child_pcs->rest_search_mutex);
+    cm->sg_frame_ep_cnt[rusi->sgrproj.ep]++;
+    svt_release_mutex(cm->child_pcs->rest_search_mutex);
 
     RestorationUnitInfo rui;
     rui.restoration_type = RESTORE_SGRPROJ;
@@ -1536,13 +1539,18 @@ void restoration_seg_search(int32_t *rst_tmpbuf, Yv12BufferConfig *org_fts,
         rsc_p->tmpbuf = rst_tmpbuf;
 
         const int32_t highbd = rsc.cm->use_highbitdepth;
-        svt_extend_frame(rsc.dgd_buffer,
-                         rsc.plane_width,
-                         rsc.plane_height,
-                         rsc.dgd_stride,
-                         RESTORATION_BORDER,
-                         RESTORATION_BORDER,
-                         highbd);
+        svt_block_on_mutex(pcs_ptr->rest_search_mutex);
+        if (!pcs_ptr->rest_extend_flag[plane]) {
+            svt_extend_frame(rsc.dgd_buffer,
+                             rsc.plane_width,
+                             rsc.plane_height,
+                             rsc.dgd_stride,
+                             RESTORATION_BORDER,
+                             RESTORATION_BORDER,
+                             highbd);
+            pcs_ptr->rest_extend_flag[plane] = EB_TRUE;
+        }
+        svt_release_mutex(pcs_ptr->rest_search_mutex);
 
         av1_foreach_rest_unit_in_frame_seg(rsc_p->cm,
                                            rsc_p->plane,
@@ -1561,14 +1569,15 @@ void restoration_seg_search(int32_t *rst_tmpbuf, Yv12BufferConfig *org_fts,
                                                pcs_ptr->rest_segments_column_count,
                                                pcs_ptr->rest_segments_row_count,
                                                segment_index);
-        av1_foreach_rest_unit_in_frame_seg(rsc_p->cm,
-                                           rsc_p->plane,
-                                           rsc_on_tile,
-                                           search_sgrproj_seg,
-                                           rsc_p,
-                                           pcs_ptr->rest_segments_column_count,
-                                           pcs_ptr->rest_segments_row_count,
-                                           segment_index);
+        if (cm->sg_filter_mode)
+            av1_foreach_rest_unit_in_frame_seg(rsc_p->cm,
+                                               rsc_p->plane,
+                                               rsc_on_tile,
+                                               search_sgrproj_seg,
+                                               rsc_p,
+                                               pcs_ptr->rest_segments_column_count,
+                                               pcs_ptr->rest_segments_row_count,
+                                               segment_index);
     }
 }
 

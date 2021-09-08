@@ -1568,7 +1568,8 @@ void init_resize_picture(SequenceControlSet *scs_ptr, PictureParentControlSet *p
     calc_superres_params(&spr_params, scs_ptr, pcs_ptr);
 
     if (spr_params.superres_denom != SCALE_NUMERATOR) {
-        scs_ptr->seq_header.enable_superres = 1; // enable sequence level super-res flag
+        if (!scs_ptr->seq_header.enable_superres)
+            scs_ptr->seq_header.enable_superres = 1; // enable sequence level super-res flag
             // if super-res is ON for any frame
 
         pcs_ptr->superres_denom = spr_params.superres_denom;

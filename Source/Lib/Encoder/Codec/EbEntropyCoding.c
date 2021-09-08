@@ -3130,13 +3130,7 @@ void write_sequence_header(SequenceControlSet *scs_ptr, struct AomWriteBitBuffer
     svt_aom_wb_write_bit(wb, scs_ptr->seq_header.sb_size == BLOCK_128X128 ? 1 : 0);
     //    write_sb_size(seq_params, wb);
     svt_aom_wb_write_bit(wb, scs_ptr->seq_header.filter_intra_level);
-
-    if (scs_ptr->static_config.enable_intra_edge_filter == DEFAULT)
-        scs_ptr->seq_header.enable_intra_edge_filter = 1;
-    else
-        scs_ptr->seq_header.enable_intra_edge_filter =
-            (uint8_t)scs_ptr->static_config.enable_intra_edge_filter;
-
+    // enable_intra_edge_filter is set at EbResourceCoordinationProcess.c and not modified during encoding
     svt_aom_wb_write_bit(wb, scs_ptr->seq_header.enable_intra_edge_filter);
 
     if (!scs_ptr->seq_header.reduced_still_picture_header) {

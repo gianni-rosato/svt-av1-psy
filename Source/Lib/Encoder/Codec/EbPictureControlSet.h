@@ -293,6 +293,7 @@ typedef struct PictureControlSet {
     uint16_t rest_segments_total_count;
     uint8_t  rest_segments_column_count;
     uint8_t  rest_segments_row_count;
+    EbBool   rest_extend_flag[3]; // flag to indicate whether the frame is extended for restoration search
 
     // Slice Type
     EB_SLICE slice_type;

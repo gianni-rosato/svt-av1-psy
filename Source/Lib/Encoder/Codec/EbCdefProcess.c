@@ -598,6 +598,11 @@ void *cdef_kernel(void *input_ptr) {
             pcs_ptr->rest_segments_total_count  = (uint16_t)(pcs_ptr->rest_segments_column_count *
                                                             pcs_ptr->rest_segments_row_count);
             pcs_ptr->tot_seg_searched_rest      = 0;
+            pcs_ptr->parent_pcs_ptr->av1_cm->use_boundaries_in_rest_search = scs_ptr->use_boundaries_in_rest_search;
+            pcs_ptr->rest_extend_flag[0] = EB_FALSE;
+            pcs_ptr->rest_extend_flag[1] = EB_FALSE;
+            pcs_ptr->rest_extend_flag[2] = EB_FALSE;
+
             uint32_t segment_index;
             for (segment_index = 0; segment_index < pcs_ptr->rest_segments_total_count;
                  ++segment_index) {

@@ -4010,6 +4010,8 @@ void store_tpl_pictures(
     }
 }
 
+extern void set_gm_controls(PictureParentControlSet* pcs_ptr, uint8_t gm_level);
+
 void send_picture_out(
     SequenceControlSet      *scs,
     PictureParentControlSet *pcs,
@@ -4069,6 +4071,23 @@ void send_picture_out(
             init_resize_picture(scs, pcs);
         }
     }
+
+    uint8_t gm_level = 0;
+    if (scs->static_config.enable_global_motion == EB_TRUE &&
+        pcs->frame_superres_enabled == EB_FALSE) {
+        if (pcs->enc_mode <= ENC_MRS)
+            gm_level = 2;
+        else if (pcs->enc_mode <= ENC_M1)
+            gm_level = 3;
+        else if (pcs->enc_mode <= ENC_M5)
+            gm_level = pcs->is_used_as_reference_flag ? 4 : 0;
+        else if (pcs->enc_mode <= ENC_M8)
+            gm_level = pcs->is_used_as_reference_flag ? 5 : 0;
+        else
+            gm_level = 0;
+    }
+
+    set_gm_controls(pcs, gm_level);
 
     for (uint32_t segment_index = 0; segment_index < pcs->me_segments_total_count; ++segment_index) {
         // Get Empty Results Object

@@ -147,8 +147,6 @@ EbErrorType rest_context_ctor(EbThreadContext *  thread_context_ptr,
 EbPictureBufferDesc* get_own_recon(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
     RestContext *context_ptr, EbBool is_16bit) {
 
-    Av1Common* cm = pcs_ptr->parent_pcs_ptr->av1_cm;
-    cm->use_boundaries_in_rest_search = scs_ptr->use_boundaries_in_rest_search;
     const uint32_t ss_x = scs_ptr->subsampling_x;
     const uint32_t ss_y = scs_ptr->subsampling_y;
 
@@ -484,8 +482,6 @@ void *rest_kernel(void *input_ptr) {
 
         if (scs_ptr->seq_header.enable_restoration && frm_hdr->allow_intrabc == 0) {
             Yv12BufferConfig cpi_source;
-            pcs_ptr->parent_pcs_ptr->enhanced_unscaled_picture_ptr->is_16bit_pipeline =
-                scs_ptr->static_config.is_16bit_pipeline;
             link_eb_to_aom_buffer_desc(scs_ptr->static_config.is_16bit_pipeline || is_16bit
                                            ? pcs_ptr->input_frame16bit
                                            : pcs_ptr->parent_pcs_ptr->enhanced_unscaled_picture_ptr,
