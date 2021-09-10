@@ -23,6 +23,7 @@
 
 void svt_av1_loop_restoration_save_boundary_lines(const Yv12BufferConfig *frame, Av1Common *cm,
                                                   int32_t after_cdef);
+extern void get_recon_pic(PictureControlSet* pcs_ptr, EbPictureBufferDesc** recon_ptr, EbBool is_highbd);
 
 static void dlf_context_dctor(EbPtr p) {
     EbThreadContext *thread_context_ptr = (EbThreadContext *)p;
@@ -74,8 +75,7 @@ void *dlf_kernel(void *input_ptr) {
         pcs_ptr             = (PictureControlSet *)enc_dec_results_ptr->pcs_wrapper_ptr->object_ptr;
         scs_ptr             = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
 
-        EbBool is_16bit = (EbBool)(scs_ptr->static_config.encoder_bit_depth > EB_8BIT);
-
+        EbBool        is_16bit = scs_ptr->static_config.is_16bit_pipeline;
         if (scs_ptr->static_config.is_16bit_pipeline &&
             scs_ptr->static_config.encoder_bit_depth == EB_8BIT) {
             // //copy input from 8bit to 16bit
@@ -140,22 +140,8 @@ void *dlf_kernel(void *input_ptr) {
             (dlf_enable_flag && pcs_ptr->parent_pcs_ptr->loop_filter_mode == 1 &&
              total_tile_cnt > 1)) {
             EbPictureBufferDesc *recon_buffer;
-
-            if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE)
-                recon_buffer = (scs_ptr->static_config.is_16bit_pipeline || is_16bit)
-                    ? ((EbReferenceObject *)
-                           pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
-                          ->reference_picture16bit
-                    : ((EbReferenceObject *)
-                           pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
-                          ->reference_picture;
-            else
-                recon_buffer = scs_ptr->static_config.is_16bit_pipeline || is_16bit
-                    ? pcs_ptr->parent_pcs_ptr->enc_dec_ptr->recon_picture16bit_ptr
-                    : pcs_ptr->parent_pcs_ptr->enc_dec_ptr->recon_picture_ptr;
-
+            get_recon_pic(pcs_ptr, &recon_buffer, is_16bit);
             svt_av1_loop_filter_init(pcs_ptr);
-
             if (pcs_ptr->parent_pcs_ptr->loop_filter_mode == 2) {
                 svt_av1_pick_filter_level(
                     (EbPictureBufferDesc *)pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr,
@@ -182,39 +168,16 @@ void *dlf_kernel(void *input_ptr) {
         {
             Av1Common *          cm = pcs_ptr->parent_pcs_ptr->av1_cm;
             EbPictureBufferDesc *recon_picture_ptr;
-            if (is_16bit) {
-                if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE)
-                    recon_picture_ptr = ((EbReferenceObject *)pcs_ptr->parent_pcs_ptr
-                                             ->reference_picture_wrapper_ptr->object_ptr)
-                                            ->reference_picture16bit;
-                else
-                    recon_picture_ptr = pcs_ptr->parent_pcs_ptr->enc_dec_ptr->recon_picture16bit_ptr;
-            } else {
-                if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE)
-                    recon_picture_ptr = ((EbReferenceObject *)pcs_ptr->parent_pcs_ptr
-                                             ->reference_picture_wrapper_ptr->object_ptr)
-                                            ->reference_picture;
-                else
-                    recon_picture_ptr = pcs_ptr->parent_pcs_ptr->enc_dec_ptr->recon_picture_ptr;
-            }
-            if (scs_ptr->static_config.is_16bit_pipeline) {
-                if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE) {
-                    recon_picture_ptr = ((EbReferenceObject *)pcs_ptr->parent_pcs_ptr
-                                             ->reference_picture_wrapper_ptr->object_ptr)
-                                            ->reference_picture16bit;
-                } else {
-                    recon_picture_ptr = pcs_ptr->parent_pcs_ptr->enc_dec_ptr->recon_picture16bit_ptr;
-                }
-            }
+            get_recon_pic(pcs_ptr, &recon_picture_ptr, is_16bit);
             link_eb_to_aom_buffer_desc(recon_picture_ptr,
                                        cm->frame_to_show,
                                        scs_ptr->max_input_pad_right,
                                        scs_ptr->max_input_pad_bottom,
-                                       is_16bit || scs_ptr->static_config.is_16bit_pipeline);
+                                       is_16bit);
             if (scs_ptr->seq_header.enable_restoration)
                 svt_av1_loop_restoration_save_boundary_lines(cm->frame_to_show, cm, 0);
             if (scs_ptr->seq_header.cdef_level && pcs_ptr->parent_pcs_ptr->cdef_level) {
-                if (scs_ptr->static_config.is_16bit_pipeline || is_16bit) {
+                if (is_16bit) {
                     pcs_ptr->src[0] = (uint16_t *)recon_picture_ptr->buffer_y +
                         (recon_picture_ptr->origin_x +
                          recon_picture_ptr->origin_y * recon_picture_ptr->stride_y);

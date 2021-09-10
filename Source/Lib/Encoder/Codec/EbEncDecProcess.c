@@ -182,9 +182,7 @@ static void reset_encode_pass_neighbor_arrays(PictureControlSet *pcs_ptr, uint16
     neighbor_array_unit_reset(pcs_ptr->ep_cr_dc_sign_level_coeff_neighbor_array[tile_idx]);
     neighbor_array_unit_reset(pcs_ptr->ep_partition_context_neighbor_array[tile_idx]);
     // TODO(Joel): 8-bit ep_luma_recon_neighbor_array (Cb,Cr) when is_16bit==0?
-    EbBool is_16bit =
-        (EbBool)(pcs_ptr->parent_pcs_ptr->scs_ptr->static_config.encoder_bit_depth > EB_8BIT);
-    if (is_16bit || pcs_ptr->parent_pcs_ptr->scs_ptr->static_config.is_16bit_pipeline) {
+    if (pcs_ptr->parent_pcs_ptr->scs_ptr->static_config.is_16bit_pipeline) {
         neighbor_array_unit_reset(pcs_ptr->ep_luma_recon_neighbor_array16bit[tile_idx]);
         neighbor_array_unit_reset(pcs_ptr->ep_cb_recon_neighbor_array16bit[tile_idx]);
         neighbor_array_unit_reset(pcs_ptr->ep_cr_recon_neighbor_array16bit[tile_idx]);
@@ -197,7 +195,7 @@ static void reset_encode_pass_neighbor_arrays(PictureControlSet *pcs_ptr, uint16
  **************************************************/
 static void reset_enc_dec(EncDecContext *context_ptr, PictureControlSet *pcs_ptr,
                           SequenceControlSet *scs_ptr, uint32_t segment_index) {
-    context_ptr->is_16bit = (EbBool)(scs_ptr->static_config.encoder_bit_depth > EB_8BIT) || (EbBool)(scs_ptr->static_config.is_16bit_pipeline);
+    context_ptr->is_16bit = scs_ptr->static_config.is_16bit_pipeline;
     context_ptr->bit_depth = scs_ptr->static_config.encoder_bit_depth;
     uint16_t tile_group_idx = context_ptr->tile_group_index;
     (*av1_lambda_assignment_function_table[pcs_ptr->parent_pcs_ptr->pred_structure])(

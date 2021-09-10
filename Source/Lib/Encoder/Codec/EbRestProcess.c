@@ -88,7 +88,6 @@ EbErrorType rest_context_ctor(EbThreadContext *  thread_context_ptr,
                               const EbEncHandle *enc_handle_ptr, int index, int demux_index) {
     const SequenceControlSet *      scs_ptr      = enc_handle_ptr->scs_instance_array[0]->scs_ptr;
     const EbSvtAv1EncConfiguration *config       = &scs_ptr->static_config;
-    EbBool                          is_16bit     = (EbBool)(config->encoder_bit_depth > EB_8BIT);
     EbColorFormat                   color_format = config->encoder_color_format;
 
     RestContext *context_ptr;
@@ -104,13 +103,14 @@ EbErrorType rest_context_ctor(EbThreadContext *  thread_context_ptr,
     context_ptr->picture_demux_fifo_ptr = svt_system_resource_get_producer_fifo(
         enc_handle_ptr->picture_demux_results_resource_ptr, demux_index);
 
+    EbBool is_16bit = scs_ptr->static_config.is_16bit_pipeline;
     {
         EbPictureBufferDescInitData init_data;
 
         init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK;
         init_data.max_width          = (uint16_t)scs_ptr->max_input_luma_width;
         init_data.max_height         = (uint16_t)scs_ptr->max_input_luma_height;
-        init_data.bit_depth          = config->is_16bit_pipeline || is_16bit ? EB_16BIT : EB_8BIT;
+        init_data.bit_depth          = is_16bit ? EB_16BIT : EB_8BIT;
         init_data.color_format       = color_format;
         init_data.left_padding       = AOM_BORDER_IN_PIXELS;
         init_data.right_padding      = AOM_BORDER_IN_PIXELS;
@@ -394,8 +394,7 @@ void svt_av1_superres_upscale_frame(struct Av1Common *cm, PictureControlSet *pcs
     // Set these parameters for testing since they are not correctly populated yet
     EbPictureBufferDesc *recon_ptr;
 
-    EbBool is_16bit = (EbBool)(scs_ptr->static_config.encoder_bit_depth > EB_8BIT) ||
-        (scs_ptr->static_config.is_16bit_pipeline);
+    EbBool is_16bit = scs_ptr->static_config.is_16bit_pipeline;
 
     get_recon_pic(pcs_ptr, &recon_ptr, is_16bit);
 
@@ -477,25 +476,25 @@ void *rest_kernel(void *input_ptr) {
         pcs_ptr               = (PictureControlSet *)cdef_results_ptr->pcs_wrapper_ptr->object_ptr;
         scs_ptr               = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
         FrameHeader *frm_hdr  = &pcs_ptr->parent_pcs_ptr->frm_hdr;
-        EbBool       is_16bit = (EbBool)(scs_ptr->static_config.encoder_bit_depth > EB_8BIT);
+        EbBool       is_16bit = scs_ptr->static_config.is_16bit_pipeline;
         Av1Common *  cm       = pcs_ptr->parent_pcs_ptr->av1_cm;
 
         if (scs_ptr->seq_header.enable_restoration && frm_hdr->allow_intrabc == 0) {
             Yv12BufferConfig cpi_source;
-            link_eb_to_aom_buffer_desc(scs_ptr->static_config.is_16bit_pipeline || is_16bit
+            link_eb_to_aom_buffer_desc(is_16bit
                                            ? pcs_ptr->input_frame16bit
                                            : pcs_ptr->parent_pcs_ptr->enhanced_unscaled_picture_ptr,
                                        &cpi_source,
                                        scs_ptr->max_input_pad_right,
                                        scs_ptr->max_input_pad_bottom,
-                                       scs_ptr->static_config.is_16bit_pipeline || is_16bit);
+                                       is_16bit);
 
             Yv12BufferConfig trial_frame_rst;
             link_eb_to_aom_buffer_desc(context_ptr->trial_frame_rst,
                                        &trial_frame_rst,
                                        scs_ptr->max_input_pad_right,
                                        scs_ptr->max_input_pad_bottom,
-                                       scs_ptr->static_config.is_16bit_pipeline || is_16bit);
+                                       is_16bit);
             // If using boundaries during the filter search, copy the recon pic to a new buffer (to
             // avoid race conidition from many threads modifying the same recon pic).
             //
@@ -507,13 +506,13 @@ void *rest_kernel(void *input_ptr) {
                 get_own_recon(scs_ptr,
                     pcs_ptr,
                     context_ptr,
-                    scs_ptr->static_config.is_16bit_pipeline || is_16bit);
+                    is_16bit);
             Yv12BufferConfig org_fts;
             link_eb_to_aom_buffer_desc(recon_picture_ptr,
                                        &org_fts,
                                        scs_ptr->max_input_pad_right,
                                        scs_ptr->max_input_pad_bottom,
-                                       scs_ptr->static_config.is_16bit_pipeline || is_16bit);
+                                       is_16bit);
             restoration_seg_search(context_ptr->rst_tmpbuf,
                                    &org_fts,
                                    &cpi_source,
@@ -555,6 +554,47 @@ void *rest_kernel(void *input_ptr) {
                 copy_statistics_to_ref_obj_ect(pcs_ptr, scs_ptr);
             }
 
+            // Pad the reference picture and set ref POC
+            if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE)
+                pad_ref_and_set_flags(pcs_ptr, scs_ptr);
+            else {
+                // convert non-reference frame buffer from 16-bit to 8-bit, to export recon and psnr/ssim calculation
+                if (is_16bit && scs_ptr->static_config.encoder_bit_depth == EB_8BIT)
+                {
+                    EbPictureBufferDesc* ref_pic_ptr = pcs_ptr->parent_pcs_ptr->enc_dec_ptr->recon_picture_ptr;;
+                    EbPictureBufferDesc* ref_pic_16bit_ptr = pcs_ptr->parent_pcs_ptr->enc_dec_ptr->recon_picture16bit_ptr;;
+                    //Y
+                    uint16_t* buf_16bit = (uint16_t*)(ref_pic_16bit_ptr->buffer_y);
+                    uint8_t* buf_8bit = ref_pic_ptr->buffer_y;
+                    svt_convert_16bit_to_8bit(buf_16bit,
+                        ref_pic_16bit_ptr->stride_y,
+                        buf_8bit,
+                        ref_pic_ptr->stride_y,
+                        ref_pic_16bit_ptr->width + (ref_pic_ptr->origin_x << 1),
+                        ref_pic_16bit_ptr->height + (ref_pic_ptr->origin_y << 1));
+
+                    //CB
+                    buf_16bit = (uint16_t*)(ref_pic_16bit_ptr->buffer_cb);
+                    buf_8bit = ref_pic_ptr->buffer_cb;
+                    svt_convert_16bit_to_8bit(buf_16bit,
+                        ref_pic_16bit_ptr->stride_cb,
+                        buf_8bit,
+                        ref_pic_ptr->stride_cb,
+                        (ref_pic_16bit_ptr->width + (ref_pic_ptr->origin_x << 1)) >> scs_ptr->subsampling_x,
+                        (ref_pic_16bit_ptr->height + (ref_pic_ptr->origin_y << 1)) >> scs_ptr->subsampling_y);
+
+                    //CR
+                    buf_16bit = (uint16_t*)(ref_pic_16bit_ptr->buffer_cr);
+                    buf_8bit = ref_pic_ptr->buffer_cr;
+                    svt_convert_16bit_to_8bit(buf_16bit,
+                        ref_pic_16bit_ptr->stride_cr,
+                        buf_8bit,
+                        ref_pic_ptr->stride_cr,
+                        (ref_pic_16bit_ptr->width + (ref_pic_ptr->origin_x << 1)) >> scs_ptr->subsampling_x,
+                        (ref_pic_16bit_ptr->height + (ref_pic_ptr->origin_y << 1)) >> scs_ptr->subsampling_y);
+                }
+            }
+
             // PSNR and SSIM Calculation.
             // Note: if temporal_filtering is used, memory needs to be freed in the last of these calls
             if (scs_ptr->static_config.stat_report) {
@@ -564,8 +604,6 @@ void *rest_kernel(void *input_ptr) {
 
             // Pad the reference picture and set ref POC
             if (!use_output_stat(scs_ptr))
-            if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE)
-                pad_ref_and_set_flags(pcs_ptr, scs_ptr);
             if (scs_ptr->static_config.recon_enabled) {
                 recon_output(pcs_ptr, scs_ptr);
             }

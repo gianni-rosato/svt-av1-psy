@@ -542,12 +542,12 @@ void *cdef_kernel(void *input_ptr) {
         pcs_ptr         = (PictureControlSet *)dlf_results_ptr->pcs_wrapper_ptr->object_ptr;
         scs_ptr         = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
 
-        EbBool     is_16bit = (EbBool)(scs_ptr->static_config.encoder_bit_depth > EB_8BIT);
+        EbBool     is_16bit = scs_ptr->static_config.is_16bit_pipeline;
         Av1Common *cm       = pcs_ptr->parent_pcs_ptr->av1_cm;
         frm_hdr             = &pcs_ptr->parent_pcs_ptr->frm_hdr;
 
         if (scs_ptr->seq_header.cdef_level && pcs_ptr->parent_pcs_ptr->cdef_level) {
-            if (scs_ptr->static_config.is_16bit_pipeline || is_16bit)
+            if (is_16bit)
                 cdef_seg_search16bit(pcs_ptr, scs_ptr, dlf_results_ptr->segment_index);
             else
                 cdef_seg_search(pcs_ptr, scs_ptr, dlf_results_ptr->segment_index);
@@ -566,7 +566,7 @@ void *cdef_kernel(void *input_ptr) {
                 if (scs_ptr->seq_header.enable_restoration != 0 ||
                     pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ||
                     scs_ptr->static_config.recon_enabled) {
-                    if (scs_ptr->static_config.is_16bit_pipeline || is_16bit)
+                    if (is_16bit)
                         av1_cdef_frame16bit(0, scs_ptr, pcs_ptr);
                     else
                         svt_av1_cdef_frame(0, scs_ptr, pcs_ptr);
@@ -586,7 +586,7 @@ void *cdef_kernel(void *input_ptr) {
                 if (frm_hdr->allow_intrabc == 0 && !av1_superres_unscaled(&cm->frm_size)) {
                     svt_av1_superres_upscale_frame(cm, pcs_ptr, scs_ptr);
 
-                    if (scs_ptr->static_config.is_16bit_pipeline || is_16bit) {
+                    if (is_16bit) {
                         set_unscaled_input_16bit(pcs_ptr);
                     }
                 }

@@ -211,6 +211,9 @@ static const std::vector<EncTestSetting> default_enc_settings = {
     {"OverlayTest2", {{"EnableOverlays", "1"}, {"LogicalProcessors", "1"}}, default_test_vectors},
     {"OverlayTest3", {{"EnableOverlays", "1"}, {"EncoderMode", "5"}}, default_test_vectors},
 
+    // test 8-bit stream under 16-bit pipeline mode
+    {"16bitPipelineTest1", {{"Encoder16BitPipeline", "1"}}, default_test_vectors},
+
     // test super resolution mode
     {"SuperResTest0", {{"SuperresMode", "2"}}, default_test_vectors},
     {"SuperResTest1", {{"SuperresMode", "2"}, {"Obmc", "0"}}, default_test_vectors},

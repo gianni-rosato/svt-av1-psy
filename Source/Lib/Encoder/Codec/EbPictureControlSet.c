@@ -315,6 +315,7 @@ EbErrorType recon_coef_ctor(EncDecSet *object_ptr, EbPtr object_init_data_ptr) {
                (EbPtr)&input_pic_buf_desc_init_data);
     }
     if (init_data_ptr->is_16bit_pipeline && !is_16bit) {
+        input_pic_buf_desc_init_data.bit_depth = EB_16BIT;
         EB_NEW(object_ptr->recon_picture16bit_ptr,
                svt_recon_picture_buffer_desc_ctor,
                (EbPtr)&input_pic_buf_desc_init_data);
@@ -456,8 +457,6 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
         EB_NEW(object_ptr->temp_lf_recon_picture16bit_ptr,
                svt_recon_picture_buffer_desc_ctor,
                (EbPtr)&temp_lf_recon_desc_init_data);
-        if (!is_16bit)
-            object_ptr->temp_lf_recon_picture16bit_ptr->bit_depth = EB_8BIT;
     } else {
         temp_lf_recon_desc_init_data.bit_depth = EB_8BIT;
         EB_NEW(object_ptr->temp_lf_recon_picture_ptr,
