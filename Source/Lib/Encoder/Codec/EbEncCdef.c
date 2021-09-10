@@ -22,6 +22,8 @@ extern int16_t svt_av1_ac_quant_q3(int32_t qindex, int32_t delta, AomBitDepth bi
 
 #include "EbRateDistortionCost.h"
 
+extern void get_recon_pic(PictureControlSet* pcs_ptr, EbPictureBufferDesc** recon_ptr, EbBool is_highbd);
+
 static INLINE uint64_t dist_8x8_16bit_c(const uint16_t *src, const uint16_t *dst,
                                         const int32_t dstride, const int32_t coeff_shift) {
     uint64_t svar   = 0;
@@ -298,13 +300,7 @@ void svt_av1_cdef_frame(EncDecContext *context_ptr, SequenceControlSet *scs_ptr,
     FrameHeader *                   frm_hdr = &ppcs->frm_hdr;
 
     EbPictureBufferDesc *recon_picture_ptr;
-
-    if (ppcs->is_used_as_reference_flag == EB_TRUE)
-        recon_picture_ptr =
-            ((EbReferenceObject *)pCs->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
-                ->reference_picture;
-    else
-        recon_picture_ptr = pCs->parent_pcs_ptr->enc_dec_ptr->recon_picture_ptr;
+    get_recon_pic(pCs, &recon_picture_ptr, EB_FALSE);
 
     EbByte recon_buffer_y = &(
         (recon_picture_ptr->buffer_y)[recon_picture_ptr->origin_x +
@@ -668,14 +664,7 @@ void av1_cdef_frame16bit(EncDecContext *context_ptr, SequenceControlSet *scs_ptr
     FrameHeader *                   frm_hdr = &ppcs->frm_hdr;
 
     EbPictureBufferDesc *recon_picture_ptr;
-
-    if (ppcs->is_used_as_reference_flag == EB_TRUE)
-        recon_picture_ptr =
-            ((EbReferenceObject *)pCs->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
-                ->reference_picture16bit;
-
-    else
-        recon_picture_ptr = pCs->parent_pcs_ptr->enc_dec_ptr->recon_picture16bit_ptr;
+    get_recon_pic(pCs, &recon_picture_ptr, EB_TRUE);
 
     uint16_t *recon_buffer_y = (uint16_t *)recon_picture_ptr->buffer_y +
         (recon_picture_ptr->origin_x + recon_picture_ptr->origin_y * recon_picture_ptr->stride_y);

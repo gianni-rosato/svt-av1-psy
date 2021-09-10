@@ -215,9 +215,10 @@ static const std::vector<EncTestSetting> default_enc_settings = {
     {"16bitPipelineTest1", {{"Encoder16BitPipeline", "1"}}, default_test_vectors},
 
     // test super resolution mode
-    {"SuperResTest0", {{"SuperresMode", "2"}}, default_test_vectors},
-    {"SuperResTest1", {{"SuperresMode", "2"}, {"Obmc", "0"}}, default_test_vectors},
-    {"SuperResTest2", {{"SuperresMode", "2"}, {"Obmc", "1"}}, default_test_vectors },
+    {"SuperResTest1", {{"SuperresMode", "2"}}, default_test_vectors},
+    {"SuperResTest2", {{"SuperresMode", "2"}, {"Obmc", "0"}}, default_test_vectors},
+    {"SuperResTest3", {{"SuperresMode", "2"}, {"Obmc", "1"}}, default_test_vectors},
+    {"SuperResTest4", {{"SuperresMode", "2"}, {"Obmc", "1"}, {"Encoder16BitPipeline", "1"}}, default_test_vectors},
 
     // test by using a dummy source of color bar
     {"DummySrcTest1", {{"EncoderMode", "8"}}, dummy_test_vectors},
@@ -415,7 +416,6 @@ static const std::vector<EncTestSetting> generate_super_res_settings() {
             count++;
         }
     }
-#if ENABLE_16BIT_SUPERRES_TEST
     // 16-bit test cases
     for (size_t i = 8; i <= 16; i++) {
         for (size_t j = 8; j <= 16; j++) {
@@ -433,7 +433,6 @@ static const std::vector<EncTestSetting> generate_super_res_settings() {
             count++;
         }
     }
-#endif // ENABLE_16BIT_SUPERRES_TEST
     return settings;
 }
 

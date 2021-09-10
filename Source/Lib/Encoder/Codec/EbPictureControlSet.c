@@ -313,12 +313,12 @@ EbErrorType recon_coef_ctor(EncDecSet *object_ptr, EbPtr object_init_data_ptr) {
         EB_NEW(object_ptr->recon_picture_ptr, //OMK
                svt_recon_picture_buffer_desc_ctor,
                (EbPtr)&input_pic_buf_desc_init_data);
-    }
-    if (init_data_ptr->is_16bit_pipeline && !is_16bit) {
-        input_pic_buf_desc_init_data.bit_depth = EB_16BIT;
-        EB_NEW(object_ptr->recon_picture16bit_ptr,
-               svt_recon_picture_buffer_desc_ctor,
-               (EbPtr)&input_pic_buf_desc_init_data);
+        if (init_data_ptr->is_16bit_pipeline) {
+            input_pic_buf_desc_init_data.bit_depth = EB_16BIT;
+            EB_NEW(object_ptr->recon_picture16bit_ptr,
+                   svt_recon_picture_buffer_desc_ctor,
+                   (EbPtr)&input_pic_buf_desc_init_data);
+        }
     }
 
 

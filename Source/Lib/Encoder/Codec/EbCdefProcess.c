@@ -47,6 +47,8 @@ void    svt_av1_superres_upscale_frame(struct Av1Common* cm, PictureControlSet* 
                                        SequenceControlSet* scs_ptr);
 void    set_unscaled_input_16bit(PictureControlSet* pcs_ptr);
 
+void    get_recon_pic(PictureControlSet* pcs_ptr, EbPictureBufferDesc** recon_ptr, EbBool is_highbd);
+
 /**************************************
  * Cdef Context
  **************************************/
@@ -137,12 +139,7 @@ void cdef_seg_search(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr,
     EbPictureBufferDesc *input_picture_ptr = (EbPictureBufferDesc *)
                                                  pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr;
     EbPictureBufferDesc *recon_picture_ptr;
-    if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE)
-        recon_picture_ptr = ((EbReferenceObject *)
-                                 pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
-                                ->reference_picture;
-    else
-       recon_picture_ptr =  pcs_ptr->parent_pcs_ptr->enc_dec_ptr->recon_picture_ptr;
+    get_recon_pic(pcs_ptr, &recon_picture_ptr, EB_FALSE);
 
     for (pli = 0; pli < num_planes; pli++) {
         int32_t subsampling_x = (pli == 0) ? 0 : 1;

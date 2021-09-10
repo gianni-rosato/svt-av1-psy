@@ -23,6 +23,8 @@
 
 void svt_av1_loop_restoration_save_boundary_lines(const Yv12BufferConfig *frame, Av1Common *cm,
                                                   int32_t after_cdef);
+void svt_convert_pic_8bit_to_16bit(EbPictureBufferDesc* src_8bit, EbPictureBufferDesc* dst_16bit, uint16_t ss_x, uint16_t ss_y);
+
 extern void get_recon_pic(PictureControlSet* pcs_ptr, EbPictureBufferDesc** recon_ptr, EbBool is_highbd);
 
 static void dlf_context_dctor(EbPtr p) {
@@ -78,58 +80,11 @@ void *dlf_kernel(void *input_ptr) {
         EbBool        is_16bit = scs_ptr->static_config.is_16bit_pipeline;
         if (scs_ptr->static_config.is_16bit_pipeline &&
             scs_ptr->static_config.encoder_bit_depth == EB_8BIT) {
-            // //copy input from 8bit to 16bit
-            uint8_t *            input_8bit;
-            int32_t              input_stride_8bit;
-            uint16_t *           input_16bit;
-            int32_t              input_stride_16bit;
-            EbPictureBufferDesc *input_buffer_8bit =
-                (EbPictureBufferDesc *)pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr;
-            EbPictureBufferDesc *input_buffer = (EbPictureBufferDesc *)pcs_ptr->input_frame16bit;
-            // Y
-            input_16bit = (uint16_t *)(input_buffer->buffer_y) + input_buffer->origin_x +
-                input_buffer->origin_y * input_buffer->stride_y;
-            input_stride_16bit = input_buffer->stride_y;
-            input_8bit         = input_buffer_8bit->buffer_y + input_buffer_8bit->origin_x +
-                input_buffer_8bit->origin_y * input_buffer_8bit->stride_y;
-            input_stride_8bit = input_buffer_8bit->stride_y;
-
-            svt_convert_8bit_to_16bit(input_8bit,
-                                      input_stride_8bit,
-                                      input_16bit,
-                                      input_stride_16bit,
-                                      input_buffer->width,
-                                      input_buffer->height);
-
-            // Cb
-            input_16bit = (uint16_t *)(input_buffer->buffer_cb) + input_buffer->origin_x / 2 +
-                input_buffer->origin_y / 2 * input_buffer->stride_cb;
-            input_stride_16bit = input_buffer->stride_cb;
-            input_8bit         = input_buffer_8bit->buffer_cb + input_buffer_8bit->origin_x / 2 +
-                input_buffer_8bit->origin_y / 2 * input_buffer_8bit->stride_cb;
-            input_stride_8bit = input_buffer_8bit->stride_cb;
-
-            svt_convert_8bit_to_16bit(input_8bit,
-                                      input_stride_8bit,
-                                      input_16bit,
-                                      input_stride_16bit,
-                                      input_buffer->width >> 1,
-                                      input_buffer->height >> 1);
-
-            // Cr
-            input_16bit = (uint16_t *)(input_buffer->buffer_cr) + input_buffer->origin_x / 2 +
-                input_buffer->origin_y / 2 * input_buffer->stride_cr;
-            input_stride_16bit = input_buffer->stride_cr;
-            input_8bit         = input_buffer_8bit->buffer_cr + input_buffer_8bit->origin_x / 2 +
-                input_buffer_8bit->origin_y / 2 * input_buffer_8bit->stride_cr;
-            input_stride_8bit = input_buffer_8bit->stride_cr;
-
-            svt_convert_8bit_to_16bit(input_8bit,
-                                      input_stride_8bit,
-                                      input_16bit,
-                                      input_stride_16bit,
-                                      input_buffer->width >> 1,
-                                      input_buffer->height >> 1);
+            svt_convert_pic_8bit_to_16bit(
+                pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr,
+                pcs_ptr->input_frame16bit,
+                pcs_ptr->parent_pcs_ptr->scs_ptr->subsampling_x,
+                pcs_ptr->parent_pcs_ptr->scs_ptr->subsampling_y);
         }
 
         EbBool   dlf_enable_flag = (EbBool)pcs_ptr->parent_pcs_ptr->loop_filter_mode;

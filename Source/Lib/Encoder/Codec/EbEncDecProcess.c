@@ -41,6 +41,7 @@ void svt_av1_loop_restoration_save_boundary_lines(const Yv12BufferConfig *frame,
                                                   int32_t after_cdef);
 void svt_av1_loop_restoration_filter_frame(Yv12BufferConfig *frame, Av1Common *cm,
                                            int32_t optimized_lr);
+extern void get_recon_pic(PictureControlSet* pcs_ptr, EbPictureBufferDesc** recon_ptr, EbBool is_highbd);
 
 static void enc_dec_context_dctor(EbPtr p) {
     EbThreadContext *thread_context_ptr = (EbThreadContext *)p;
@@ -64,7 +65,6 @@ EbErrorType enc_dec_context_ctor(EbThreadContext *  thread_context_ptr,
 {
     const EbSvtAv1EncConfiguration *static_config =
         &enc_handle_ptr->scs_instance_array[0]->scs_ptr->static_config;
-    EbBool        is_16bit                 = (EbBool)(static_config->encoder_bit_depth > EB_8BIT);
     EbColorFormat color_format             = static_config->encoder_color_format;
     int8_t       enable_hbd_mode_decision = static_config->enable_hbd_mode_decision;
 
@@ -73,7 +73,7 @@ EbErrorType enc_dec_context_ctor(EbThreadContext *  thread_context_ptr,
     thread_context_ptr->priv  = context_ptr;
     thread_context_ptr->dctor = enc_dec_context_dctor;
 
-    context_ptr->is_16bit     = is_16bit;
+    context_ptr->is_16bit     = static_config->is_16bit_pipeline;
     context_ptr->color_format = color_format;
 
     // Input/Output System Resource Manager FIFOs
@@ -92,7 +92,7 @@ EbErrorType enc_dec_context_ctor(EbThreadContext *  thread_context_ptr,
 
     // Prediction Buffer
     context_ptr->input_sample16bit_buffer = NULL;
-    if (is_16bit || static_config->is_16bit_pipeline)
+    if (context_ptr->is_16bit)
         EB_NEW(context_ptr->input_sample16bit_buffer,
                svt_picture_buffer_desc_ctor,
                &(EbPictureBufferDescInitData){
@@ -719,14 +719,10 @@ void ssim_calculations(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr, 
     const uint32_t ss_x = scs_ptr->subsampling_x;
     const uint32_t ss_y = scs_ptr->subsampling_y;
 
+
+    EbPictureBufferDesc* recon_ptr;
+    get_recon_pic(pcs_ptr, &recon_ptr, is_16bit);
     if (!is_16bit) {
-        EbPictureBufferDesc *recon_ptr;
-
-        if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE)
-            recon_ptr = ((EbReferenceObject*)pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->reference_picture;
-        else
-            recon_ptr = pcs_ptr->parent_pcs_ptr->enc_dec_ptr->recon_picture_ptr;
-
         EbPictureBufferDesc *input_picture_ptr = (EbPictureBufferDesc*)pcs_ptr->parent_pcs_ptr->enhanced_unscaled_picture_ptr;
 
         EbByte  input_buffer;
@@ -781,12 +777,6 @@ void ssim_calculations(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr, 
         }
     }
     else {
-      EbPictureBufferDesc *recon_ptr;
-
-        if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE)
-            recon_ptr = ((EbReferenceObject*)pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->reference_picture16bit;
-        else
-            recon_ptr = pcs_ptr->parent_pcs_ptr->enc_dec_ptr->recon_picture16bit_ptr;
         EbPictureBufferDesc *input_picture_ptr = (EbPictureBufferDesc*)pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr;
 
         EbByte    input_buffer;

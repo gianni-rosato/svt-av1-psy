@@ -240,24 +240,72 @@ EbPictureBufferDesc* get_own_recon(SequenceControlSet *scs_ptr, PictureControlSe
     return context_ptr->org_rec_frame;
 }
 
-void set_unscaled_input_16bit(PictureControlSet *pcs_ptr) {
-    uint16_t *unscaled_input_frame16bit[MAX_MB_PLANE];
-    unscaled_input_frame16bit[0] = (uint16_t *)pcs_ptr->input_frame16bit->buffer_y;
-    unscaled_input_frame16bit[1] = (uint16_t *)pcs_ptr->input_frame16bit->buffer_cb;
-    unscaled_input_frame16bit[2] = (uint16_t *)pcs_ptr->input_frame16bit->buffer_cr;
+void svt_convert_pic_8bit_to_16bit(EbPictureBufferDesc* src_8bit, EbPictureBufferDesc* dst_16bit, uint16_t ss_x, uint16_t ss_y) {
+    //copy input from 8bit to 16bit
+    uint8_t*  buffer_8bit;
+    int32_t   stride_8bit;
+    uint16_t* buffer_16bit;
+    int32_t   stride_16bit;
+    // Y
+    buffer_16bit = (uint16_t*)(dst_16bit->buffer_y) + dst_16bit->origin_x +
+        dst_16bit->origin_y * dst_16bit->stride_y;
+    stride_16bit = dst_16bit->stride_y;
+    buffer_8bit = src_8bit->buffer_y + src_8bit->origin_x +
+        src_8bit->origin_y * src_8bit->stride_y;
+    stride_8bit = src_8bit->stride_y;
 
-    pack_highbd_pic(pcs_ptr->parent_pcs_ptr->enhanced_unscaled_picture_ptr,
-                    unscaled_input_frame16bit,
-                    1,
-                    1,
-                    EB_TRUE);
-    copy_buffer_info(pcs_ptr->parent_pcs_ptr->enhanced_unscaled_picture_ptr,
-                     pcs_ptr->input_frame16bit);
+    svt_convert_8bit_to_16bit(buffer_8bit,
+        stride_8bit,
+        buffer_16bit,
+        stride_16bit,
+        src_8bit->width,
+        src_8bit->height);
+
+    // Cb
+    buffer_16bit = (uint16_t*)(dst_16bit->buffer_cb) + (dst_16bit->origin_x >> ss_x) +
+        (dst_16bit->origin_y >> ss_y) * dst_16bit->stride_cb;
+    stride_16bit = dst_16bit->stride_cb;
+    buffer_8bit = src_8bit->buffer_cb + (src_8bit->origin_x >> ss_x) +
+        (src_8bit->origin_y >> ss_y) * src_8bit->stride_cb;
+    stride_8bit = src_8bit->stride_cb;
+
+    svt_convert_8bit_to_16bit(buffer_8bit,
+        stride_8bit,
+        buffer_16bit,
+        stride_16bit,
+        src_8bit->width >> ss_x,
+        src_8bit->height >> ss_y);
+
+    // Cr
+    buffer_16bit = (uint16_t*)(dst_16bit->buffer_cr) + (dst_16bit->origin_x >> ss_x) +
+        (dst_16bit->origin_y >> ss_y) * dst_16bit->stride_cr;
+    stride_16bit = dst_16bit->stride_cr;
+    buffer_8bit = src_8bit->buffer_cr + (src_8bit->origin_x >> ss_x) +
+        (src_8bit->origin_y >> ss_y) * src_8bit->stride_cr;
+    stride_8bit = src_8bit->stride_cr;
+
+    svt_convert_8bit_to_16bit(buffer_8bit,
+        stride_8bit,
+        buffer_16bit,
+        stride_16bit,
+        src_8bit->width >> ss_x,
+        src_8bit->height >> ss_y);
+
+    dst_16bit->width = src_8bit->width;
+    dst_16bit->height = src_8bit->height;
+}
+
+void set_unscaled_input_16bit(PictureControlSet *pcs_ptr) {
+    svt_convert_pic_8bit_to_16bit(
+        pcs_ptr->parent_pcs_ptr->enhanced_unscaled_picture_ptr,
+        pcs_ptr->input_frame16bit,
+        pcs_ptr->parent_pcs_ptr->scs_ptr->subsampling_x,
+        pcs_ptr->parent_pcs_ptr->scs_ptr->subsampling_y);
 }
 
 void derive_blk_pointers_enc(EbPictureBufferDesc *recon_picture_buf, int32_t plane,
                              int32_t blk_col_px, int32_t blk_row_px, void **pp_blk_recon_buf,
-                             int32_t *recon_stride, int32_t sub_x, int32_t sub_y) {
+                             int32_t *recon_stride, int32_t sub_x, int32_t sub_y, EbBool use_highbd) {
     int32_t block_offset;
 
     if (plane == 0) {
@@ -276,7 +324,7 @@ void derive_blk_pointers_enc(EbPictureBufferDesc *recon_picture_buf, int32_t pla
         *recon_stride = recon_picture_buf->stride_cr;
     }
 
-    if (recon_picture_buf->bit_depth != EB_8BIT) { //16bit
+    if (use_highbd) { //16bit
         if (plane == 0)
             *pp_blk_recon_buf = (void *)((uint16_t *)recon_picture_buf->buffer_y + block_offset);
         else if (plane == 1)
@@ -297,6 +345,7 @@ EbErrorType copy_recon_enc(SequenceControlSet *scs_ptr, EbPictureBufferDesc *rec
                            EbPictureBufferDesc *recon_picture_dst, int num_planes, int skip_copy) {
     recon_picture_dst->origin_x     = recon_picture_src->origin_x;
     recon_picture_dst->origin_y     = recon_picture_src->origin_y;
+    recon_picture_dst->origin_bot_y = recon_picture_src->origin_bot_y;
     recon_picture_dst->width        = recon_picture_src->width;
     recon_picture_dst->height       = recon_picture_src->height;
     recon_picture_dst->max_width    = recon_picture_src->max_width;
@@ -320,7 +369,7 @@ EbErrorType copy_recon_enc(SequenceControlSet *scs_ptr, EbPictureBufferDesc *rec
         ? PICTURE_BUFFER_DESC_LUMA_MASK
         : PICTURE_BUFFER_DESC_FULL_MASK;
 
-    uint32_t bytesPerPixel = (recon_picture_dst->bit_depth == EB_8BIT) ? 1 : 2;
+    uint32_t bytesPerPixel = scs_ptr->static_config.is_16bit_pipeline ? 2 : 1;
 
     // Allocate the Picture Buffers (luma & chroma)
     if (recon_picture_dst->buffer_enable_mask & PICTURE_BUFFER_DESC_Y_FLAG) {
@@ -342,7 +391,7 @@ EbErrorType copy_recon_enc(SequenceControlSet *scs_ptr, EbPictureBufferDesc *rec
     } else
         recon_picture_dst->buffer_cr = 0;
 
-    int use_highbd = (scs_ptr->static_config.encoder_bit_depth > 8);
+    int use_highbd = scs_ptr->static_config.is_16bit_pipeline;
 
     if (!skip_copy) {
         for (int plane = 0; plane < num_planes; ++plane) {
@@ -353,9 +402,9 @@ EbErrorType copy_recon_enc(SequenceControlSet *scs_ptr, EbPictureBufferDesc *rec
             int sub_y = plane ? scs_ptr->subsampling_y : 0;
 
             derive_blk_pointers_enc(
-                recon_picture_src, plane, 0, 0, (void *)&src_buf, &src_stride, sub_x, sub_y);
+                recon_picture_src, plane, 0, 0, (void*)&src_buf, &src_stride, sub_x, sub_y, use_highbd);
             derive_blk_pointers_enc(
-                recon_picture_dst, plane, 0, 0, (void *)&dst_buf, &dst_stride, sub_x, sub_y);
+                recon_picture_dst, plane, 0, 0, (void*)&dst_buf, &dst_stride, sub_x, sub_y, use_highbd);
 
             int height = (recon_picture_src->height >> sub_y);
             for (int row = 0; row < height; ++row) {
@@ -425,15 +474,15 @@ void svt_av1_superres_upscale_frame(struct Av1Common *cm, PictureControlSet *pcs
 
         int sub_x = plane ? ss_x : 0;
         int sub_y = plane ? ss_y : 0;
-        derive_blk_pointers_enc(src, plane, 0, 0, (void *)&src_buf, &src_stride, sub_x, sub_y);
-        derive_blk_pointers_enc(dst, plane, 0, 0, (void *)&dst_buf, &dst_stride, sub_x, sub_y);
+        derive_blk_pointers_enc(src, plane, 0, 0, (void*)&src_buf, &src_stride, sub_x, sub_y, is_16bit);
+        derive_blk_pointers_enc(dst, plane, 0, 0, (void*)&dst_buf, &dst_stride, sub_x, sub_y, is_16bit);
 
         svt_av1_upscale_normative_rows(cm,
                                        (const uint8_t *)src_buf,
                                        src_stride,
                                        dst_buf,
                                        dst_stride,
-                                       src->height >> sub_x,
+                                       src->height >> sub_y,
                                        sub_x,
                                        bit_depth,
                                        is_16bit);
