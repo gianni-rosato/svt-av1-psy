@@ -48,8 +48,13 @@
 #define STATS_CAPABILITY_INIT 100
 //1.5 times larger than request.
 #define STATS_CAPABILITY_GROW(s) (s * 3 / 2)
+#if FIX_INVALID_PTR_AFTER_REALLOC
 static EbErrorType realloc_stats_out(SequenceControlSet *scs_ptr, uint64_t frame_number) {
     FirstPassStatsOut *out = &scs_ptr->encode_context_ptr->stats_out;
+#else
+static EbErrorType realloc_stats_out(SequenceControlSet *scs_ptr, FirstPassStatsOut *out,
+                                     uint64_t frame_number) {
+#endif
     if (frame_number < out->size)
         return EB_ErrorNone;
 
@@ -75,21 +80,39 @@ static EbErrorType realloc_stats_out(SequenceControlSet *scs_ptr, uint64_t frame
         } else {
             EB_REALLOC_ARRAY(out->stat, capability);
         }
+#if FIX_INVALID_PTR_AFTER_REALLOC
         memset(out->stat + out->capability, 0, sizeof(*out->stat) * (capability - out->capability));
+#endif
         out->capability = capability;
     }
     out->size = frame_number + 1;
     return EB_ErrorNone;
 }
 
+#if FIX_INVALID_PTR_AFTER_REALLOC
 static AOM_INLINE void output_stats(SequenceControlSet *scs_ptr, STATS_BUFFER_CTX *stats_buf_ctx,
                                     size_t offset, uint64_t frame_number) {
+#else
+static AOM_INLINE void output_stats(SequenceControlSet *scs_ptr, FIRSTPASS_STATS *stats,
+                                    uint64_t frame_number) {
+    FirstPassStatsOut *stats_out = &scs_ptr->encode_context_ptr->stats_out;
+#endif
     svt_block_on_mutex(scs_ptr->encode_context_ptr->stat_file_mutex);
+#if FIX_INVALID_PTR_AFTER_REALLOC
     if (realloc_stats_out(scs_ptr, frame_number) != EB_ErrorNone) {
+#else
+    if (realloc_stats_out(scs_ptr, stats_out, frame_number) != EB_ErrorNone) {
+#endif
         SVT_ERROR("realloc_stats_out request %d entries failed failed\n", frame_number);
+#if !FIX_INVALID_PTR_AFTER_REALLOC
+    } else {
+        stats_out->stat[frame_number] = *stats;
+#endif
     }
+#if FIX_INVALID_PTR_AFTER_REALLOC
     FIRSTPASS_STATS *stats        = *(FIRSTPASS_STATS **)((uint8_t *)stats_buf_ctx + offset);
     scs_ptr->encode_context_ptr->stats_out.stat[frame_number] = *stats;
+#endif
 
     // TEMP debug code
 #if OUTPUT_FPF
@@ -203,12 +226,23 @@ void svt_av1_accumulate_stats(FIRSTPASS_STATS *section, const FIRSTPASS_STATS *f
     section->duration += frame->duration;
 }
 void svt_av1_end_first_pass(PictureParentControlSet *pcs_ptr) {
+#if FIX_INVALID_PTR_AFTER_REALLOC
     if (pcs_ptr->scs_ptr->twopass.stats_buf_ctx->total_stats) {
+#else
+    SequenceControlSet *scs_ptr = pcs_ptr->scs_ptr;
+    TWO_PASS *          twopass = &scs_ptr->twopass;
+
+    if (twopass->stats_buf_ctx->total_stats) {
+#endif
         // add the total to the end of the file
+#if FIX_INVALID_PTR_AFTER_REALLOC
         output_stats(pcs_ptr->scs_ptr,
                      pcs_ptr->scs_ptr->twopass.stats_buf_ctx,
                      offsetof(STATS_BUFFER_CTX, total_stats),
                      pcs_ptr->picture_number + 1);
+#else
+        output_stats(scs_ptr, twopass->stats_buf_ctx->total_stats, pcs_ptr->picture_number + 1);
+#endif
     }
 }
 #if !CLN_2PASS
@@ -296,13 +330,21 @@ void accumulate_mv_stats(const MV best_mv, const FULLPEL_MV mv, const int mb_row
 //                                         update its value and its position
 //                                         in the buffer.
 static void update_firstpass_stats(PictureParentControlSet *pcs_ptr, const FRAME_STATS *const stats,
-#if !CLN_2PASS
+#if CLN_2PASS
+#if !FIX_INVALID_PTR_AFTER_REALLOC
+                                   const int frame_number,
+#endif
+#else
+#if !FIX_INVALID_PTR_AFTER_REALLOC
+                                   const double raw_err_stdev, const int frame_number,
+#else
                                    const double raw_err_stdev,
 #endif
+#endif
 #if FTR_2PASS_1PASS_UNIFICATION
-                                    const double ts_duration) {
+                                   const double ts_duration) {
 #else
-                                    const int64_t ts_duration) {
+                                   const int64_t ts_duration) {
 #endif
     SequenceControlSet *scs_ptr = pcs_ptr->scs_ptr;
     TWO_PASS *          twopass = &scs_ptr->twopass;
@@ -328,12 +370,21 @@ static void update_firstpass_stats(PictureParentControlSet *pcs_ptr, const FRAME
     const double min_err = 200 * sqrt(num_mbs);
 
     if (pcs_ptr->skip_frame) {
-        FirstPassStatsOut * stats_out = &scs_ptr->encode_context_ptr->stats_out;
-        fps = stats_out->stat[pcs_ptr->picture_number - 1];
+        FirstPassStatsOut *stats_out = &scs_ptr->encode_context_ptr->stats_out;
+#if FIX_INVALID_PTR_AFTER_REALLOC
+        fps       = stats_out->stat[pcs_ptr->picture_number - 1];
         fps.frame = (double)pcs_ptr->picture_number;
+#else
+        fps       = stats_out->stat[frame_number - 1];
+        fps.frame = frame_number;
+#endif
     }else{
     fps.weight                   = stats->intra_factor * stats->brightness_factor;
+#if FIX_INVALID_PTR_AFTER_REALLOC
     fps.frame                    = (double)pcs_ptr->picture_number;
+#else
+    fps.frame                    = frame_number;
+#endif
     fps.coded_error              = (double)(stats->coded_error >> 8) + min_err;
     fps.sr_coded_error           = (double)(stats->sr_coded_error >> 8) + min_err;
 #if !CLN_2PASS
@@ -450,10 +501,14 @@ static void update_firstpass_stats(PictureParentControlSet *pcs_ptr, const FRAME
     // We will store the stats inside the persistent twopass struct (and NOT the
     // local variable 'fps'), and then cpi->output_pkt_list will point to it.
     *this_frame_stats = fps;
+#if FIX_INVALID_PTR_AFTER_REALLOC
     output_stats(scs_ptr,
                  twopass->stats_buf_ctx,
                  offsetof(STATS_BUFFER_CTX, stats_in_end_write),
                  pcs_ptr->picture_number);
+#else
+    output_stats(scs_ptr, this_frame_stats, pcs_ptr->picture_number);
+#endif
 #if FTR_1PAS_VBR
     if (twopass->stats_buf_ctx->total_stats != NULL && use_output_stat(scs_ptr)) {
 #else
@@ -616,9 +671,17 @@ void first_pass_frame_end(PictureParentControlSet *pcs_ptr, const int64_t ts_dur
     }
     update_firstpass_stats(
 #if CLN_2PASS
+#if FIX_INVALID_PTR_AFTER_REALLOC
         pcs_ptr, &stats, ts_duration);
 #else
+        pcs_ptr, &stats, (const int)pcs_ptr->picture_number, ts_duration);
+#endif
+#else
+#if FIX_INVALID_PTR_AFTER_REALLOC
         pcs_ptr, &stats, raw_err_stdev, ts_duration);
+#else
+        pcs_ptr, &stats, raw_err_stdev, (const int)pcs_ptr->picture_number, ts_duration);
+#endif
 #endif
 }
 #if TUNE_MULTI_PASS
@@ -677,7 +740,14 @@ void samepred_pass_frame_end(PictureParentControlSet *pcs_ptr, const double ts_d
 #endif
 
     *this_frame_stats = fps;
-    output_stats(scs_ptr, this_frame_stats, offsetof(STATS_BUFFER_CTX, total_stats), pcs_ptr->picture_number);
+#if FIX_INVALID_PTR_AFTER_REALLOC
+    output_stats(scs_ptr,
+                 twopass->stats_buf_ctx,
+                 offsetof(STATS_BUFFER_CTX, stats_in_end_write),
+                 pcs_ptr->picture_number);
+#else
+    output_stats(scs_ptr, this_frame_stats, pcs_ptr->picture_number);
+#endif
     if (twopass->stats_buf_ctx->total_stats != NULL) {
         svt_av1_accumulate_stats(twopass->stats_buf_ctx->total_stats, &fps);
     }
@@ -690,7 +760,16 @@ void samepred_pass_frame_end(PictureParentControlSet *pcs_ptr, const double ts_d
     if (pcs_ptr->end_of_sequence_flag){
         if (twopass->stats_buf_ctx->total_stats) {
             // add the total to the end of the file
-            output_stats(scs_ptr, twopass->stats_buf_ctx->total_stats, offsetof(STATS_BUFFER_CTX, total_stats), scs_ptr->encode_context_ptr->terminating_picture_number + 1);
+#if FIX_INVALID_PTR_AFTER_REALLOC
+            output_stats(scs_ptr,
+                         twopass->stats_buf_ctx,
+                         offsetof(STATS_BUFFER_CTX, total_stats),
+                         scs_ptr->encode_context_ptr->terminating_picture_number + 1);
+#else
+            output_stats(scs_ptr,
+                         twopass->stats_buf_ctx->total_stats,
+                         scs_ptr->encode_context_ptr->terminating_picture_number + 1);
+#endif
         }
     }
 }
