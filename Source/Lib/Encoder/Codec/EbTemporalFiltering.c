@@ -1143,7 +1143,8 @@ static void tf_16x16_sub_pel_search(PictureParentControlSet *pcs_ptr, MeContext 
                         local_origin_x,
                         local_origin_y,
                         0, //perform_chroma,
-                        (uint8_t)encoder_bit_depth);
+                        (uint8_t)encoder_bit_depth,
+                        0); // is_16bit_pipeline
 
                     uint64_t distortion;
                     if (!is_highbd) {
@@ -1219,7 +1220,8 @@ static void tf_16x16_sub_pel_search(PictureParentControlSet *pcs_ptr, MeContext 
                                 local_origin_x,
                                 local_origin_y,
                                 0, //perform_chroma,
-                                (uint8_t)encoder_bit_depth);
+                                (uint8_t)encoder_bit_depth,
+                                0); // is_16bit_pipeline
 
                             uint64_t distortion;
                             if (!is_highbd) {
@@ -1300,7 +1302,8 @@ static void tf_16x16_sub_pel_search(PictureParentControlSet *pcs_ptr, MeContext 
                                              local_origin_x,
                                              local_origin_y,
                                              0, //perform_chroma,
-                                             (uint8_t)encoder_bit_depth);
+                                             (uint8_t)encoder_bit_depth,
+                                             0); // is_16bit_pipeline
 
                         uint64_t distortion;
                         if (!is_highbd) {
@@ -1382,7 +1385,8 @@ static void tf_16x16_sub_pel_search(PictureParentControlSet *pcs_ptr, MeContext 
                                                  local_origin_x,
                                                  local_origin_y,
                                                  0, //perform_chroma,
-                                                 (uint8_t)encoder_bit_depth);
+                                                 (uint8_t)encoder_bit_depth,
+                                                 0); // is_16bit_pipeline
 
                             uint64_t distortion;
                             if (!is_highbd) {
@@ -1558,7 +1562,8 @@ static void tf_32x32_sub_pel_search(PictureParentControlSet *pcs_ptr, MeContext 
                 local_origin_x,
                 local_origin_y,
                 0, //perform_chroma,
-                (uint8_t)encoder_bit_depth);
+                (uint8_t)encoder_bit_depth,
+                0); // is_16bit_pipeline
 
             uint64_t distortion;
             if (!is_highbd) {
@@ -1629,7 +1634,8 @@ static void tf_32x32_sub_pel_search(PictureParentControlSet *pcs_ptr, MeContext 
                         local_origin_x,
                         local_origin_y,
                         0, //perform_chroma,
-                        (uint8_t)encoder_bit_depth);
+                        (uint8_t)encoder_bit_depth,
+                        0); // is_16bit_pipeline
 
                     uint64_t distortion;
                     if (!is_highbd) {
@@ -1704,7 +1710,8 @@ static void tf_32x32_sub_pel_search(PictureParentControlSet *pcs_ptr, MeContext 
                                      local_origin_x,
                                      local_origin_y,
                                      0, //perform_chroma,
-                                     (uint8_t)encoder_bit_depth);
+                                     (uint8_t)encoder_bit_depth,
+                                     0); // is_16bit_pipeline
 
                 uint64_t distortion;
                 if (!is_highbd) {
@@ -1777,7 +1784,8 @@ static void tf_32x32_sub_pel_search(PictureParentControlSet *pcs_ptr, MeContext 
                                          local_origin_x,
                                          local_origin_y,
                                          0, //perform_chroma,
-                                         (uint8_t)encoder_bit_depth);
+                                         (uint8_t)encoder_bit_depth,
+                                         0); // is_16bit_pipeline
 
                     uint64_t distortion;
                     if (!is_highbd) {
@@ -1922,7 +1930,8 @@ static void tf_32x32_inter_prediction(PictureParentControlSet *pcs_ptr, MeContex
                                      local_origin_x,
                                      local_origin_y,
                                      context_ptr->tf_chroma,
-                                     (uint8_t)encoder_bit_depth);
+                                     (uint8_t)encoder_bit_depth,
+                                     0); // is_16bit_pipeline
             }
         } else {
             uint32_t bsize = 32;
@@ -1985,7 +1994,8 @@ static void tf_32x32_inter_prediction(PictureParentControlSet *pcs_ptr, MeContex
                                  local_origin_x,
                                  local_origin_y,
                                  context_ptr->tf_chroma,
-                                 (uint8_t)encoder_bit_depth);
+                                 (uint8_t)encoder_bit_depth,
+                                 0); // is_16bit_pipeline
         }
 }
 static void get_final_filtered_pixels(MeContext *context_ptr, EbByte *src_center_ptr_start,

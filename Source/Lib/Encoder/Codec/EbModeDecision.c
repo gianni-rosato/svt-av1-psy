@@ -358,7 +358,8 @@ void inter_intra_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context
         0, //output origin_x,
         0, //output origin_y,
         0, //do chroma
-        context_ptr->hbd_mode_decision ? EB_10BIT : EB_8BIT);
+        context_ptr->hbd_mode_decision ? EB_10BIT : EB_8BIT,
+        0); // is_16bit_pipeline
 
     assert(is_interintra_wedge_used(
         context_ptr->blk_geom->bsize)); //if not I need to add nowedge path!!

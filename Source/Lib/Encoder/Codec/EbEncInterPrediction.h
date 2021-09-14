@@ -37,7 +37,7 @@ EbErrorType av1_inter_prediction(
     uint16_t pu_origin_x, uint16_t pu_origin_y, uint8_t bwidth, uint8_t bheight,
     EbPictureBufferDesc *ref_pic_list0, EbPictureBufferDesc *ref_pic_list1,
     EbPictureBufferDesc *prediction_ptr, uint16_t dst_origin_x, uint16_t dst_origin_y,
-    EbBool perform_chroma, uint8_t bit_depth);
+    EbBool perform_chroma, uint8_t bit_depth, uint8_t is_16bit_pipeline);
 
 EbErrorType av1_inter_prediction_16bit_pipeline(
     PictureControlSet *pcs_ptr, uint32_t interp_filters, BlkStruct *blk_ptr, uint8_t ref_frame_type,
