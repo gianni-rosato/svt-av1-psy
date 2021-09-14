@@ -48,8 +48,8 @@
 #define STATS_CAPABILITY_INIT 100
 //1.5 times larger than request.
 #define STATS_CAPABILITY_GROW(s) (s * 3 / 2)
-static EbErrorType realloc_stats_out(SequenceControlSet *scs_ptr, FirstPassStatsOut *out,
-                                     uint64_t frame_number) {
+static EbErrorType realloc_stats_out(SequenceControlSet *scs_ptr, uint64_t frame_number) {
+    FirstPassStatsOut *out = &scs_ptr->encode_context_ptr->stats_out;
     if (frame_number < out->size)
         return EB_ErrorNone;
 
@@ -75,21 +75,21 @@ static EbErrorType realloc_stats_out(SequenceControlSet *scs_ptr, FirstPassStats
         } else {
             EB_REALLOC_ARRAY(out->stat, capability);
         }
+        memset(out->stat + out->capability, 0, sizeof(*out->stat) * (capability - out->capability));
         out->capability = capability;
     }
     out->size = frame_number + 1;
     return EB_ErrorNone;
 }
 
-static AOM_INLINE void output_stats(SequenceControlSet *scs_ptr, FIRSTPASS_STATS *stats,
-                                    uint64_t frame_number) {
-    FirstPassStatsOut *stats_out = &scs_ptr->encode_context_ptr->stats_out;
+static AOM_INLINE void output_stats(SequenceControlSet *scs_ptr, STATS_BUFFER_CTX *stats_buf_ctx,
+                                    size_t offset, uint64_t frame_number) {
     svt_block_on_mutex(scs_ptr->encode_context_ptr->stat_file_mutex);
-    if (realloc_stats_out(scs_ptr, stats_out, frame_number) != EB_ErrorNone) {
+    if (realloc_stats_out(scs_ptr, frame_number) != EB_ErrorNone) {
         SVT_ERROR("realloc_stats_out request %d entries failed failed\n", frame_number);
-    } else {
-        stats_out->stat[frame_number] = *stats;
     }
+    FIRSTPASS_STATS *stats        = *(FIRSTPASS_STATS **)((uint8_t *)stats_buf_ctx + offset);
+    scs_ptr->encode_context_ptr->stats_out.stat[frame_number] = *stats;
 
     // TEMP debug code
 #if OUTPUT_FPF
@@ -182,12 +182,12 @@ void svt_av1_accumulate_stats(FIRSTPASS_STATS *section, const FIRSTPASS_STATS *f
     section->duration += frame->duration;
 }
 void svt_av1_end_first_pass(PictureParentControlSet *pcs_ptr) {
-    SequenceControlSet *scs_ptr = pcs_ptr->scs_ptr;
-    TWO_PASS *          twopass = &scs_ptr->twopass;
-
-    if (twopass->stats_buf_ctx->total_stats) {
+    if (pcs_ptr->scs_ptr->twopass.stats_buf_ctx->total_stats) {
         // add the total to the end of the file
-        output_stats(scs_ptr, twopass->stats_buf_ctx->total_stats, pcs_ptr->picture_number + 1);
+        output_stats(pcs_ptr->scs_ptr,
+                     pcs_ptr->scs_ptr->twopass.stats_buf_ctx,
+                     offsetof(STATS_BUFFER_CTX, total_stats),
+                     pcs_ptr->picture_number + 1);
     }
 }
 static double raw_motion_error_stdev(int *raw_motion_err_list, int raw_motion_err_counts) {
@@ -270,8 +270,7 @@ void accumulate_mv_stats(const MV best_mv, const FULLPEL_MV mv, const int mb_row
 //                                         update its value and its position
 //                                         in the buffer.
 static void update_firstpass_stats(PictureParentControlSet *pcs_ptr, const FRAME_STATS *const stats,
-                                   const double raw_err_stdev, const int frame_number,
-                                   const int64_t ts_duration) {
+                                   const double raw_err_stdev, const int64_t ts_duration) {
     SequenceControlSet *scs_ptr = pcs_ptr->scs_ptr;
     TWO_PASS *          twopass = &scs_ptr->twopass;
 
@@ -292,11 +291,11 @@ static void update_firstpass_stats(PictureParentControlSet *pcs_ptr, const FRAME
 
     if (pcs_ptr->skip_frame) {
         FirstPassStatsOut * stats_out = &scs_ptr->encode_context_ptr->stats_out;
-        fps = stats_out->stat[frame_number - 1];
-        fps.frame = frame_number;
+        fps = stats_out->stat[pcs_ptr->picture_number - 1];
+        fps.frame = (double)pcs_ptr->picture_number;
     }else{
     fps.weight                   = stats->intra_factor * stats->brightness_factor;
-    fps.frame                    = frame_number;
+    fps.frame                    = (double)pcs_ptr->picture_number;
     fps.coded_error              = (double)(stats->coded_error >> 8) + min_err;
     fps.sr_coded_error           = (double)(stats->sr_coded_error >> 8) + min_err;
     fps.tr_coded_error           = (double)(stats->tr_coded_error >> 8) + min_err;
@@ -345,7 +344,10 @@ static void update_firstpass_stats(PictureParentControlSet *pcs_ptr, const FRAME
     // We will store the stats inside the persistent twopass struct (and NOT the
     // local variable 'fps'), and then cpi->output_pkt_list will point to it.
     *this_frame_stats = fps;
-    output_stats(scs_ptr, this_frame_stats, pcs_ptr->picture_number);
+    output_stats(scs_ptr,
+                 twopass->stats_buf_ctx,
+                 offsetof(STATS_BUFFER_CTX, stats_in_end_write),
+                 pcs_ptr->picture_number);
     if (twopass->stats_buf_ctx->total_stats != NULL) {
         svt_av1_accumulate_stats(twopass->stats_buf_ctx->total_stats, &fps);
     }
@@ -469,7 +471,7 @@ void first_pass_frame_end(PictureParentControlSet *pcs_ptr, const int64_t ts_dur
     stats.brightness_factor = stats.brightness_factor / (double)num_mbs;
     }
     update_firstpass_stats(
-        pcs_ptr, &stats, raw_err_stdev, (const int)pcs_ptr->picture_number, ts_duration);
+        pcs_ptr, &stats, raw_err_stdev, ts_duration);
 }
 /******************************************************
 * Derive Pre-Analysis settings for first pass for pcs
