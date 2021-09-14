@@ -15,6 +15,9 @@
 #include "EbModeDecisionProcess.h"
 #include "EbLambdaRateTables.h"
 
+#if TUNE_BYPASS_MEM
+uint8_t  get_bypass_encdec( EbEncMode enc_mode ,uint8_t hbd_mode_decision,uint8_t encoder_bit_depth );
+#endif
 int         svt_av1_allow_palette(int allow_palette, BlockSize sb_type);
 static void mode_decision_context_dctor(EbPtr p) {
     ModeDecisionContext *obj                = (ModeDecisionContext *)p;
@@ -28,12 +31,24 @@ static void mode_decision_context_dctor(EbPtr p) {
     for (int cd = 0; cd < MAX_PAL_CAND; cd++)
         if (obj->palette_cand_array[cd].color_idx_map)
             EB_FREE_ARRAY(obj->palette_cand_array[cd].color_idx_map);
+
+
+#if OPT_MEM_PALETTE
+
+
+    // MD palette search
+    if (obj->palette_size_array_0)
+        EB_FREE_ARRAY(obj->palette_size_array_0);
+    if (obj->palette_size_array_1)
+        EB_FREE_ARRAY(obj->palette_size_array_1);
+#else
     for (uint32_t cand_index = 0; cand_index < MODE_DECISION_CANDIDATE_MAX_COUNT; ++cand_index) {
         for (uint32_t coded_leaf_index = 0; coded_leaf_index < block_max_count_sb;
              ++coded_leaf_index)
             if (obj->md_blk_arr_nsq[coded_leaf_index].palette_info.color_idx_map)
                 EB_FREE_ARRAY(obj->md_blk_arr_nsq[coded_leaf_index].palette_info.color_idx_map);
     }
+#endif
     EB_FREE_ARRAY(obj->ref_best_ref_sq_table);
     EB_FREE_ARRAY(obj->ref_best_cost_sq_table);
     for (CandClass cand_class_it = CAND_CLASS_0; cand_class_it < CAND_CLASS_TOTAL; cand_class_it++)
@@ -44,7 +59,13 @@ static void mode_decision_context_dctor(EbPtr p) {
     EB_FREE_ARRAY(obj->left_txfm_context);
 #if FTR_BYPASS_ENCDEC
     for (uint32_t coded_leaf_index = 0; coded_leaf_index < block_max_count_sb; ++coded_leaf_index) {
+#if TUNE_BYPASS_MEM
+        if (obj->md_blk_arr_nsq[coded_leaf_index].coeff_tmp)
+#endif
         EB_DELETE(obj->md_blk_arr_nsq[coded_leaf_index].coeff_tmp);
+#if TUNE_BYPASS_MEM
+        if (obj->md_blk_arr_nsq[coded_leaf_index].recon_tmp)
+#endif
         EB_DELETE(obj->md_blk_arr_nsq[coded_leaf_index].recon_tmp);
 }
 #endif
@@ -74,10 +95,19 @@ static void mode_decision_context_dctor(EbPtr p) {
     EB_FREE_ARRAY(obj->full_cost_merge_ptr);
 #endif
     if (obj->md_local_blk_unit) {
+#if CLN_MDCONTEXT
+        for (int i = 0; i < 3; i++) {
+            EB_FREE_ARRAY(obj->md_local_blk_unit[0].neigh_left_recon_16bit[i]);
+            EB_FREE_ARRAY(obj->md_local_blk_unit[0].neigh_top_recon_16bit[i]);
+            EB_FREE_ARRAY(obj->md_local_blk_unit[0].neigh_left_recon[i]);
+            EB_FREE_ARRAY(obj->md_local_blk_unit[0].neigh_top_recon[i]);
+        }
+#else
         EB_FREE_ARRAY(obj->md_local_blk_unit[0].neigh_left_recon_16bit[0]);
         EB_FREE_ARRAY(obj->md_local_blk_unit[0].neigh_top_recon_16bit[0]);
         EB_FREE_ARRAY(obj->md_local_blk_unit[0].neigh_left_recon[0]);
         EB_FREE_ARRAY(obj->md_local_blk_unit[0].neigh_top_recon[0]);
+#endif
     }
     if (obj->md_blk_arr_nsq) {
         EB_FREE_ARRAY(obj->md_blk_arr_nsq[0].av1xd);
@@ -157,6 +187,9 @@ EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr, EbColor
                                         uint8_t enc_mode,
 #if CLN_GEOM
                                         uint16_t max_block_cnt,
+#endif
+#if TUNE_BYPASS_MEM
+                                            uint32_t encoder_bit_depth,
 #endif
                                        EbFifo *mode_decision_configuration_input_fifo_ptr,
                                        EbFifo *mode_decision_output_fifo_ptr,
@@ -255,6 +288,15 @@ EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr, EbColor
             EB_MALLOC_ARRAY(context_ptr->palette_cand_array[cd].color_idx_map, MAX_PALETTE_SQUARE);
         else
             context_ptr->palette_cand_array[cd].color_idx_map = NULL;
+
+    #if OPT_MEM_PALETTE
+
+    // MD palette search
+    EB_MALLOC_ARRAY(context_ptr->palette_size_array_0 ,MAX_PAL_CAND);
+    EB_MALLOC_ARRAY(context_ptr->palette_size_array_1 ,MAX_PAL_CAND);
+
+
+#endif
     // Transform and Quantization Buffers
     EB_NEW(context_ptr->trans_quant_buffers_ptr, svt_trans_quant_buffers_ctor, sb_size);
 
@@ -278,24 +320,97 @@ EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr, EbColor
            context_ptr->hbd_mode_decision ? EB_10BIT : EB_8BIT);
 
     EB_ALLOC_PTR_ARRAY(context_ptr->candidate_buffer_tx_depth_2->candidate_ptr, 1);
+#if CLN_MDCONTEXT
+    for (int i = 0; i < 3; i++) {
+        context_ptr->md_local_blk_unit[0].neigh_left_recon[i] = NULL;
+        context_ptr->md_local_blk_unit[0].neigh_top_recon[i] = NULL;
+        context_ptr->md_local_blk_unit[0].neigh_left_recon_16bit[i] = NULL;
+        context_ptr->md_local_blk_unit[0].neigh_top_recon_16bit[i] = NULL;
+    }
+#else
     context_ptr->md_local_blk_unit[0].neigh_left_recon[0]       = NULL;
     context_ptr->md_local_blk_unit[0].neigh_top_recon[0]        = NULL;
     context_ptr->md_local_blk_unit[0].neigh_left_recon_16bit[0] = NULL;
     context_ptr->md_local_blk_unit[0].neigh_top_recon_16bit[0]  = NULL;
+#endif
     uint16_t sz                                                 = sizeof(uint16_t);
     if (context_ptr->hbd_mode_decision > EB_8_BIT_MD) {
+#if CLN_MDCONTEXT
+        EB_MALLOC_ARRAY(context_ptr->md_local_blk_unit[0].neigh_left_recon_16bit[0],
+            block_max_count_sb * sb_size * sz);
+        EB_MALLOC_ARRAY(context_ptr->md_local_blk_unit[0].neigh_top_recon_16bit[0],
+            block_max_count_sb * sb_size * sz);
+        EB_MALLOC_ARRAY(context_ptr->md_local_blk_unit[0].neigh_left_recon_16bit[1],
+            block_max_count_sb * sb_size * sz >> 1);
+        EB_MALLOC_ARRAY(context_ptr->md_local_blk_unit[0].neigh_top_recon_16bit[1],
+            block_max_count_sb * sb_size * sz >> 1);
+        EB_MALLOC_ARRAY(context_ptr->md_local_blk_unit[0].neigh_left_recon_16bit[2],
+            block_max_count_sb * sb_size * sz >> 1);
+        EB_MALLOC_ARRAY(context_ptr->md_local_blk_unit[0].neigh_top_recon_16bit[2],
+            block_max_count_sb * sb_size * sz >> 1);
+#else
         EB_MALLOC_ARRAY(context_ptr->md_local_blk_unit[0].neigh_left_recon_16bit[0],
                         block_max_count_sb * sb_size * 3 * sz);
         EB_MALLOC_ARRAY(context_ptr->md_local_blk_unit[0].neigh_top_recon_16bit[0],
                         block_max_count_sb * sb_size * 3 * sz);
+#endif
     }
     if (context_ptr->hbd_mode_decision != EB_10_BIT_MD) {
+#if CLN_MDCONTEXT
+        EB_MALLOC_ARRAY(context_ptr->md_local_blk_unit[0].neigh_left_recon[0],
+            block_max_count_sb * sb_size);
+        EB_MALLOC_ARRAY(context_ptr->md_local_blk_unit[0].neigh_top_recon[0],
+            block_max_count_sb * sb_size);
+        EB_MALLOC_ARRAY(context_ptr->md_local_blk_unit[0].neigh_left_recon[1],
+            block_max_count_sb * sb_size >> 1);
+        EB_MALLOC_ARRAY(context_ptr->md_local_blk_unit[0].neigh_top_recon[1],
+            block_max_count_sb * sb_size >> 1);
+        EB_MALLOC_ARRAY(context_ptr->md_local_blk_unit[0].neigh_left_recon[2],
+            block_max_count_sb * sb_size >> 1);
+        EB_MALLOC_ARRAY(context_ptr->md_local_blk_unit[0].neigh_top_recon[2],
+            block_max_count_sb * sb_size >> 1);
+#else
         EB_MALLOC_ARRAY(context_ptr->md_local_blk_unit[0].neigh_left_recon[0],
                         block_max_count_sb * sb_size * 3);
         EB_MALLOC_ARRAY(context_ptr->md_local_blk_unit[0].neigh_top_recon[0],
                         block_max_count_sb * sb_size * 3);
+#endif
     }
     uint32_t coded_leaf_index;
+#if CLN_MDCONTEXT
+    for (coded_leaf_index = 0; coded_leaf_index < block_max_count_sb; ++coded_leaf_index) {
+
+        size_t offset = coded_leaf_index * sb_size * sz;
+        context_ptr->md_local_blk_unit[coded_leaf_index].neigh_left_recon_16bit[0] =
+            context_ptr->md_local_blk_unit[0].neigh_left_recon_16bit[0] + offset;
+        context_ptr->md_local_blk_unit[coded_leaf_index].neigh_top_recon_16bit[0] =
+            context_ptr->md_local_blk_unit[0].neigh_top_recon_16bit[0] + offset;
+        offset >>= 1;
+        context_ptr->md_local_blk_unit[coded_leaf_index].neigh_left_recon_16bit[1] =
+            context_ptr->md_local_blk_unit[0].neigh_left_recon_16bit[1] + offset;
+        context_ptr->md_local_blk_unit[coded_leaf_index].neigh_top_recon_16bit[1] =
+            context_ptr->md_local_blk_unit[0].neigh_top_recon_16bit[1] + offset;
+        context_ptr->md_local_blk_unit[coded_leaf_index].neigh_left_recon_16bit[2] =
+            context_ptr->md_local_blk_unit[0].neigh_left_recon_16bit[2] + offset;
+        context_ptr->md_local_blk_unit[coded_leaf_index].neigh_top_recon_16bit[2] =
+            context_ptr->md_local_blk_unit[0].neigh_top_recon_16bit[2] + offset;
+
+        offset = coded_leaf_index * sb_size;
+        context_ptr->md_local_blk_unit[coded_leaf_index].neigh_left_recon[0] =
+            context_ptr->md_local_blk_unit[0].neigh_left_recon[0] + offset;
+        context_ptr->md_local_blk_unit[coded_leaf_index].neigh_top_recon[0] =
+            context_ptr->md_local_blk_unit[0].neigh_top_recon[0] + offset;
+        offset >>= 1;
+        context_ptr->md_local_blk_unit[coded_leaf_index].neigh_left_recon[1] =
+            context_ptr->md_local_blk_unit[0].neigh_left_recon[1] + offset;
+        context_ptr->md_local_blk_unit[coded_leaf_index].neigh_top_recon[1] =
+            context_ptr->md_local_blk_unit[0].neigh_top_recon[1] + offset;
+        context_ptr->md_local_blk_unit[coded_leaf_index].neigh_left_recon[2] =
+            context_ptr->md_local_blk_unit[0].neigh_left_recon[2] + offset;
+        context_ptr->md_local_blk_unit[coded_leaf_index].neigh_top_recon[2] =
+            context_ptr->md_local_blk_unit[0].neigh_top_recon[2] + offset;
+    }
+#else
     for (coded_leaf_index = 0; coded_leaf_index < block_max_count_sb; ++coded_leaf_index) {
         for (int i = 0; i < 3; i++) {
             size_t offset = (coded_leaf_index * sb_size * 3 + i * sb_size) * sz;
@@ -312,6 +427,7 @@ EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr, EbColor
                 context_ptr->md_local_blk_unit[0].neigh_top_recon[0] + offset;
         }
     }
+#endif
     context_ptr->md_blk_arr_nsq[0].av1xd = NULL;
     EB_MALLOC_ARRAY(context_ptr->md_blk_arr_nsq[0].av1xd, block_max_count_sb);
     EB_MALLOC_ARRAY(context_ptr->avail_blk_flag, block_max_count_sb);
@@ -323,13 +439,19 @@ EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr, EbColor
             coded_leaf_index;
         context_ptr->md_blk_arr_nsq[coded_leaf_index].segment_id = 0;
         const BlockGeom *blk_geom = get_blk_geom_mds(coded_leaf_index);
+
+#if !OPT_MEM_PALETTE
         if (svt_av1_allow_palette(cfg_palette, blk_geom->bsize))
             EB_MALLOC_ARRAY(
                 context_ptr->md_blk_arr_nsq[coded_leaf_index].palette_info.color_idx_map,
                 MAX_PALETTE_SQUARE);
         else
             context_ptr->md_blk_arr_nsq[coded_leaf_index].palette_info.color_idx_map = NULL;
+#endif
 #if FTR_BYPASS_ENCDEC
+#if TUNE_BYPASS_MEM
+        if (get_bypass_encdec( enc_mode , context_ptr->hbd_mode_decision , encoder_bit_depth ))
+#endif
         {
             EbPictureBufferDescInitData init_data;
 
@@ -362,7 +484,13 @@ EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr, EbColor
             EB_NEW(context_ptr->md_blk_arr_nsq[coded_leaf_index].recon_tmp,
                 svt_picture_buffer_desc_ctor,
                 (EbPtr)&init_data);
-    }
+        }
+#if TUNE_BYPASS_MEM
+        else {
+            context_ptr->md_blk_arr_nsq[coded_leaf_index].coeff_tmp = NULL;
+            context_ptr->md_blk_arr_nsq[coded_leaf_index].recon_tmp = NULL;
+        }
+#endif
 #endif
 #if NO_ENCDEC //SB128_TODO to upgrade
         {

@@ -325,7 +325,11 @@ typedef struct PictureControlSet {
     // SB Array
     uint16_t     sb_total_count;
     SuperBlock **sb_ptr_array;
-
+#if FTR_VLPD1
+    uint8_t* sb_intra;
+    uint8_t* sb_skip;
+    uint8_t* sb_64x64_mvp;
+#endif
     // Mode Decision Neighbor Arrays
     NeighborArrayUnit **md_intra_luma_mode_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
     NeighborArrayUnit **md_skip_flag_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
@@ -503,6 +507,17 @@ typedef struct MotionEstimationData {
     uint8_t       max_cand;//total max me candidates given the active references
     uint8_t       max_refs;//total max active references
     uint8_t       max_l0;  //max active refs in L0
+#endif
+#if OPT_TPL_DATA
+    OisMbResults **       ois_mb_results;
+    TplStats **           tpl_stats;
+
+    TplSrcStats *         tpl_src_stats;      //tpl src based stats
+
+    int32_t               base_rdmult;
+    double *              tpl_beta;
+    double *              tpl_rdmult_scaling_factors;
+    double *              tpl_sb_rdmult_scaling_factors;
 #endif
 } MotionEstimationData;
 typedef struct TplControls {
@@ -729,17 +744,19 @@ typedef struct PictureParentControlSet {
     uint16_t sb_total_count;
     EbBool   end_of_sequence_region;
 #if FTR_1PAS_VBR
-int  frames_in_sw; // used for Look ahead
+    int  frames_in_sw; // used for Look ahead
     struct RateControlIntervalParamContext *rate_control_param_ptr;
 #else
     uint8_t  frames_in_sw; // used for Look ahead
 #endif
     EbBool   qp_on_the_fly;
+#if !RFCTR_RC_P2
     uint8_t  calculated_qp;
     uint8_t  intra_selected_org_qp;
     uint64_t sad_me;
     uint64_t quantized_coeff_num_bits;
     uint64_t average_qp;
+#endif
     uint64_t last_idr_picture;
     uint64_t start_time_seconds;
     uint64_t start_time_u_seconds;
@@ -807,12 +824,18 @@ int  frames_in_sw; // used for Look ahead
     EbHandle              me_processed_sb_mutex;
     FirstPassData         firstpass_data;
     RefreshFrameFlagsInfo refresh_frame;
+#if !RFCTR_RC_P1
     int                   internal_altref_allowed;
+#endif
 #if FTR_2PASS_1PASS_UNIFICATION
     double                ts_duration;
 #else
     int64_t               ts_duration;
 #endif
+#if OPT_TPL_DATA
+    double                r0;
+    uint8_t               tpl_src_data_ready; //track pictures that are processd in two different TPL groups
+#else
     OisMbResults **       ois_mb_results;
     TplStats **           tpl_stats;
 #if SS_OPT_TPL
@@ -827,6 +850,7 @@ int  frames_in_sw; // used for Look ahead
     double *              tpl_beta;
     double *              tpl_rdmult_scaling_factors;
     double *              tpl_sb_rdmult_scaling_factors;
+#endif
     EbBool                blk_lambda_tuning;
     // Dynamic GOP
     EbPred   pred_structure;
@@ -1147,15 +1171,25 @@ int  frames_in_sw; // used for Look ahead
 #if ME_8X8
     uint8_t enable_me_8x8;
 #endif
+#if FTR_M13
+    uint8_t enable_me_16x16;
+#endif
 #if FTR_MVP_BEST_ME_LIST
     uint8_t use_best_me_unipred_cand_only; // if MRP is OFF, use one ME unipred candidate only
 #endif
 #if OPT_IBC_HASH_SEARCH
     IntraBCCtrls intraBC_ctrls;
 #endif
-#if FTR_MEM_OPT
-    uint8_t packed_reference_hbd;
+#if OPT_FIRST_PASS3
+    uint8_t bypass_blk_step;
 #endif
+
+#if OPT_PREHME
+    uint32_t  tf_tot_vert_blks;    //total vertical motion blocks in TF
+    uint32_t  tf_tot_horz_blks;    //total horizontal motion blocks in TF
+    int8_t    tf_motion_direction; //motion direction in TF   -1:invalid   0:horz  1:vert
+#endif
+
 } PictureParentControlSet;
 
 
@@ -1222,7 +1256,9 @@ typedef struct PictureControlSetInitData {
 
     uint8_t  rc_firstpass_stats_out;
     uint32_t rate_control_mode;
-
+#if TUNE_MULTI_PASS
+    uint8_t    passes;
+#endif
     Av1Common *                av1_cm;
 #if CLN_GEOM
     uint16_t   init_max_block_cnt;
@@ -1245,6 +1281,9 @@ typedef struct PictureControlSetInitData {
 #else
   uint8_t lad_mg;
 #endif
+#endif
+#if FIX_DG
+  uint8_t skip_frame_first_pass;
 #endif
 } PictureControlSetInitData;
 

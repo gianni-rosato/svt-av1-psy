@@ -86,7 +86,7 @@ static void rest_context_dctor(EbPtr p) {
     EB_FREE_ARRAY(obj);
 }
 #if OPT_MEMORY_REST
-uint8_t get_enable_restoration(EbEncMode enc_mode);
+uint8_t get_enable_restoration(EbEncMode enc_mode,int8_t config_enable_restoration );
 #endif
 /******************************************************
  * Rest Context Constructor
@@ -118,7 +118,7 @@ EbErrorType rest_context_ctor(EbThreadContext *  thread_context_ptr,
 
     EbBool is_16bit = scs_ptr->static_config.is_16bit_pipeline;
 #if OPT_MEMORY_REST
-    if (get_enable_restoration(init_data_ptr->enc_mode)) {
+    if (get_enable_restoration(init_data_ptr->enc_mode,config->enable_restoration_filtering)) {
 #else
     {
 #endif
@@ -162,12 +162,7 @@ extern void get_recon_pic(PictureControlSet *pcs_ptr, EbPictureBufferDesc **reco
         else
             *recon_ptr = pcs_ptr->parent_pcs_ptr->enc_dec_ptr->recon_picture_ptr; //OMK
     } else {
-        if (pcs_ptr->parent_pcs_ptr->packed_reference_hbd &&
-            pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE)
-            *recon_ptr = ((EbReferenceObject *)
-                              pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
-                             ->reference_picture16bit;
-        else
+
             *recon_ptr = pcs_ptr->parent_pcs_ptr->enc_dec_ptr->recon_picture16bit_ptr;
     }
 }

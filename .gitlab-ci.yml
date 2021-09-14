@@ -12,6 +12,7 @@ variables:
 Style check:
   stage: compile
   image: registry.gitlab.com/aomediacodec/aom-testing/alpine3
+  allow_failure: true
   script:
     - ./test/stylecheck.sh
 
@@ -526,6 +527,7 @@ Win64 Enc Test:
 Enc OS Diff Test:
   stage: .post
   image: registry.gitlab.com/aomediacodec/aom-testing/alpine3
+  allow_failure: true
   script:
     - |
       success=true

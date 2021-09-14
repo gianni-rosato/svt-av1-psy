@@ -489,7 +489,11 @@ FuncPair TEST_FUNC_PAIRS_SMALL[] = {
 #endif
 };
 
+#if FIX_FTR_PREHME_SUB
+typedef std::tuple<TestPattern, BlkSize, SearchArea, FuncPair, uint8_t>
+#else
 typedef std::tuple<TestPattern, BlkSize, SearchArea, FuncPair>
+#endif
     sad_LoopTestParam;
 
 /**
@@ -523,12 +527,20 @@ class sad_LoopTest : public ::testing::WithParamInterface<sad_LoopTestParam>,
                       std::get<0>(TEST_GET_PARAM(2)),
                       std::get<1>(TEST_GET_PARAM(2))),
           func_c_(std::get<0>(TEST_GET_PARAM(3))),
+#if FIX_FTR_PREHME_SUB
+          func_o_(std::get<1>(TEST_GET_PARAM(3))),
+          skip_search_line(TEST_GET_PARAM(4)){
+#else
           func_o_(std::get<1>(TEST_GET_PARAM(3))) {
+#endif
     }
 
   protected:
     Ebsad_LoopKernelNxMType func_c_;
     Ebsad_LoopKernelNxMType func_o_;
+#if FIX_FTR_PREHME_SUB
+    uint8_t skip_search_line;
+#endif
 
     void check_sad_loop() {
         prepare_data();
@@ -547,7 +559,11 @@ class sad_LoopTest : public ::testing::WithParamInterface<sad_LoopTestParam>,
                 &y_search_center0,
                 ref1_stride_,
 #if FTR_PREHME_SUB
+#if FIX_FTR_PREHME_SUB
+                skip_search_line,
+#else
                 0,
+#endif
 #endif
                 search_area_width_,
                 search_area_height_);
@@ -566,7 +582,11 @@ class sad_LoopTest : public ::testing::WithParamInterface<sad_LoopTestParam>,
                 &y_search_center1,
                 ref1_stride_,
 #if FTR_PREHME_SUB
+#if FIX_FTR_PREHME_SUB
+                skip_search_line,
+#else
                 0,
+#endif
 #endif
                 search_area_width_,
                 search_area_height_);
@@ -618,7 +638,11 @@ class sad_LoopTest : public ::testing::WithParamInterface<sad_LoopTestParam>,
                     &y_search_center0,
                     ref1_stride_,
 #if FTR_PREHME_SUB
+#if FIX_FTR_PREHME_SUB
+                    skip_search_line,
+#else
                     0,
+#endif
 #endif
                     search_area_width_,
                     search_area_height_);
@@ -638,7 +662,11 @@ class sad_LoopTest : public ::testing::WithParamInterface<sad_LoopTestParam>,
                     &y_search_center1,
                     ref1_stride_,
 #if FTR_PREHME_SUB
+#if FIX_FTR_PREHME_SUB
+                    skip_search_line,
+#else
                     0,
+#endif
 #endif
                     search_area_width_,
                     search_area_height_);
@@ -688,19 +716,39 @@ TEST_P(sad_LoopTest, DISABLED_sad_LoopSpeedTest) {
     speed_sad_loop();
 }
 
+#if FIX_FTR_PREHME_SUB
+INSTANTIATE_TEST_CASE_P(
+    LOOPSAD, sad_LoopTest,
+    ::testing::Combine(::testing::ValuesIn(TEST_PATTERNS),
+                       ::testing::ValuesIn(TEST_BLOCK_SIZES),
+                       ::testing::ValuesIn(TEST_LOOP_AREAS),
+                       ::testing::ValuesIn(TEST_FUNC_PAIRS),
+                       ::testing::Values(0,1)));
+#else
 INSTANTIATE_TEST_CASE_P(
     LOOPSAD, sad_LoopTest,
     ::testing::Combine(::testing::ValuesIn(TEST_PATTERNS),
                        ::testing::ValuesIn(TEST_BLOCK_SIZES),
                        ::testing::ValuesIn(TEST_LOOP_AREAS),
                        ::testing::ValuesIn(TEST_FUNC_PAIRS)));
+#endif
 
+#if FIX_FTR_PREHME_SUB
+INSTANTIATE_TEST_CASE_P(
+    LOOPSAD_SMALL, sad_LoopTest,
+    ::testing::Combine(::testing::ValuesIn(TEST_PATTERNS),
+                       ::testing::ValuesIn(TEST_BLOCK_SIZES_SMALL),
+                       ::testing::ValuesIn(TEST_LOOP_AREAS),
+                       ::testing::ValuesIn(TEST_FUNC_PAIRS_SMALL),
+                       ::testing::Values(0,1)));
+#else
 INSTANTIATE_TEST_CASE_P(
     LOOPSAD_SMALL, sad_LoopTest,
     ::testing::Combine(::testing::ValuesIn(TEST_PATTERNS),
                        ::testing::ValuesIn(TEST_BLOCK_SIZES_SMALL),
                        ::testing::ValuesIn(TEST_LOOP_AREAS),
                        ::testing::ValuesIn(TEST_FUNC_PAIRS_SMALL)));
+#endif
 
 /**
  * best_sadmxn in GetEightsad_Test,Allsad_CalculationTest and

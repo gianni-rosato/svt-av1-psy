@@ -958,7 +958,11 @@ EbErrorType svt_av1_intra_prediction_cl(
                     mode,                                                                           //PredictionMode mode,
                     plane ? candidate_buffer_ptr->candidate_ptr->angle_delta[PLANE_TYPE_UV] : candidate_buffer_ptr->candidate_ptr->angle_delta[PLANE_TYPE_Y],
                     plane==0 ? (candidate_buffer_ptr->candidate_ptr->palette_info ?
+#if OPT_MEM_PALETTE
+                                    candidate_buffer_ptr->candidate_ptr->palette_size[0]>0 : 0) : 0,
+#else
                                     candidate_buffer_ptr->candidate_ptr->palette_info->pmi.palette_size[0]>0 : 0) : 0,
+#endif
                     plane==0 ? candidate_buffer_ptr->candidate_ptr->palette_info : NULL,    //MD
                     plane ? FILTER_INTRA_MODES : candidate_buffer_ptr->candidate_ptr->filter_intra_mode,
                     top_neigh_array + 1,
@@ -1159,7 +1163,11 @@ EbErrorType svt_av1_intra_prediction_cl(
                     mode,                                                                           //PredictionMode mode,
                     plane ? candidate_buffer_ptr->candidate_ptr->angle_delta[PLANE_TYPE_UV] : candidate_buffer_ptr->candidate_ptr->angle_delta[PLANE_TYPE_Y],
                     plane==0 ? (candidate_buffer_ptr->candidate_ptr->palette_info ?
+#if OPT_MEM_PALETTE
+                                    candidate_buffer_ptr->candidate_ptr->palette_size[0]>0 : 0) : 0,
+#else
                                     candidate_buffer_ptr->candidate_ptr->palette_info->pmi.palette_size[0]>0 : 0) : 0,
+#endif
                     plane==0 ? candidate_buffer_ptr->candidate_ptr->palette_info : NULL,    //MD
                     plane ? FILTER_INTRA_MODES : candidate_buffer_ptr->candidate_ptr->filter_intra_mode,
                     top_neigh_array + 1,

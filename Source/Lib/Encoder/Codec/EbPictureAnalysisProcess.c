@@ -2959,7 +2959,17 @@ void *picture_analysis_kernel(void *input_ptr) {
         // There is no need to do processing for overlay picture. Overlay and AltRef share the same results.
         if (!pcs_ptr->is_overlay) {
             input_picture_ptr = pcs_ptr->enhanced_picture_ptr;
-
+#if OPT_FIRST_PASS2
+            int copy_frame = 1;
+#if FIX_ISSUE_50
+            if (pcs_ptr->scs_ptr->static_config.skip_frame_first_pass)
+#else
+            if (scs_ptr->static_config.final_pass_rc_mode == 0)
+#endif
+                copy_frame = (((pcs_ptr->picture_number % 8) == 0) || ((pcs_ptr->picture_number % 8) == 6) || ((pcs_ptr->picture_number % 8) == 7));
+            // Bypass copy for the unecessary picture in IPPP pass
+            if ((!use_output_stat(scs_ptr)) || ((use_output_stat(scs_ptr)) && copy_frame)) {
+#endif
             // Padding for input pictures
             pad_input_pictures(scs_ptr, input_picture_ptr);
 
@@ -3000,24 +3010,37 @@ void *picture_analysis_kernel(void *input_ptr) {
             // Pad input picture to complete border SBs
             pad_picture_to_multiple_of_sb_dimensions(input_padded_picture_ptr);
 #endif
-            // 1/4 & 1/16 input picture downsampling through filtering
-            if (scs_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED) {
-                downsample_filtering_input_picture(
-                    pcs_ptr,
-                    input_padded_picture_ptr,
-                    (EbPictureBufferDesc *)pa_ref_obj_->quarter_downsampled_picture_ptr,
-                    (EbPictureBufferDesc *)pa_ref_obj_->sixteenth_downsampled_picture_ptr);
+
+
+#if OPT_1P
+            if ((!use_output_stat(scs_ptr)) || ((use_output_stat(scs_ptr)) && copy_frame)) {
+#endif
+
+                // 1/4 & 1/16 input picture downsampling through filtering
+                if (scs_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED) {
+                    downsample_filtering_input_picture(
+                        pcs_ptr,
+                        input_padded_picture_ptr,
+                        (EbPictureBufferDesc *)pa_ref_obj_->quarter_downsampled_picture_ptr,
+                        (EbPictureBufferDesc *)pa_ref_obj_->sixteenth_downsampled_picture_ptr);
+                }
+                else {
+                    downsample_decimation_input_picture(
+                        pcs_ptr,
+                        input_padded_picture_ptr,
+                        (EbPictureBufferDesc *)pa_ref_obj_->quarter_downsampled_picture_ptr,
+                        (EbPictureBufferDesc *)pa_ref_obj_->sixteenth_downsampled_picture_ptr);
+                }
+
+#if OPT_1P
             }
-            else {
-                downsample_decimation_input_picture(
-                    pcs_ptr,
-                    input_padded_picture_ptr,
-                    (EbPictureBufferDesc *)pa_ref_obj_->quarter_downsampled_picture_ptr,
-                    (EbPictureBufferDesc *)pa_ref_obj_->sixteenth_downsampled_picture_ptr);
-            }
+#endif
 
             pcs_ptr->ds_pics.quarter_picture_ptr = pa_ref_obj_->quarter_downsampled_picture_ptr;
             pcs_ptr->ds_pics.sixteenth_picture_ptr = pa_ref_obj_->sixteenth_downsampled_picture_ptr;
+#if OPT_FIRST_PASS2
+            }
+#endif
             // Gathering statistics of input picture, including Variance Calculation, Histogram Bins
             if (!use_output_stat(scs_ptr))
                 gathering_picture_statistics(
@@ -3044,7 +3067,14 @@ void *picture_analysis_kernel(void *input_ptr) {
                 scs_ptr->static_config.screen_content_mode = 0;
             else
 #endif
+#if FIX_DG
+                if (((!use_output_stat(scs_ptr)) || ((use_output_stat(scs_ptr)) && copy_frame)) == 0) {
+                    pcs_ptr->sc_class0 = pcs_ptr->sc_class1 = pcs_ptr->sc_class2 = 0;
+                }
+                else if (scs_ptr->static_config.screen_content_mode == 2) { // auto detect
+#else
             if (scs_ptr->static_config.screen_content_mode == 2) { // auto detect
+#endif
                 is_screen_content(pcs_ptr);
             } else // off / on
                 pcs_ptr->sc_class0 = pcs_ptr->sc_class1 = pcs_ptr->sc_class2 = scs_ptr->static_config.screen_content_mode;

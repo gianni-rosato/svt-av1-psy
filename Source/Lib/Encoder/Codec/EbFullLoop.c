@@ -33,7 +33,7 @@ static PartitionType from_shape_to_part[] = {PARTITION_NONE,
                                              PARTITION_VERT_4,
                                              PARTITION_SPLIT};
 
-#if LIGHT_PD1
+#if LIGHT_PD1_MACRO
 void residual_kernel(uint8_t *input, uint32_t input_offset, uint32_t input_stride, uint8_t *pred,
     uint32_t pred_offset, uint32_t pred_stride, int16_t *residual,
     uint32_t residual_offset, uint32_t residual_stride, EbBool hbd,
@@ -1802,7 +1802,7 @@ void inv_transform_recon_wrapper(uint8_t *pred_buffer, uint32_t pred_offset, uin
     }
 }
 
-#if LIGHT_PD1
+#if LIGHT_PD1_MACRO
 /*
   tx path for light PD1 chroma
 */
@@ -3051,6 +3051,80 @@ void compute_depth_costs(ModeDecisionContext *context_ptr, SequenceControlSet *s
         above_split_rate;
 }
 
+#if FTR_VLPD0
+/*
+ * Compare costs between depths, then update cost/splitting info in the parent blocks
+ * to reflect chosen partition.  Cost comparison only performed when the all quadrants
+ * of a given depth have been evaluted.
+ */
+uint32_t d2_inter_depth_block_decision_very_light_pd0(SequenceControlSet* scs_ptr,
+                                       PictureControlSet* pcs_ptr,
+                                       ModeDecisionContext* context_ptr,
+                                       uint32_t blk_mds,
+                                       uint32_t sb_addr) {
+
+    uint64_t parent_depth_cost = 0, current_depth_cost = 0;
+    EbBool last_depth_flag = (context_ptr->md_blk_arr_nsq[blk_mds].split_flag == EB_FALSE);
+    uint32_t last_blk_index = blk_mds, current_depth_idx_mds = blk_mds;
+    const BlockGeom* blk_geom = get_blk_geom_mds(blk_mds);
+    if (last_depth_flag) {
+        while (blk_geom->is_last_quadrant) {
+            //get parent idx
+#if LIGHT_PD0
+            uint32_t parent_depth_idx_mds = blk_geom->parent_depth_idx_mds;
+#else
+            uint32_t parent_depth_idx_mds = current_depth_idx_mds -
+                parent_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128][blk_geom->depth];
+#endif
+            if (pcs_ptr->slice_type == I_SLICE && parent_depth_idx_mds == 0 &&
+                scs_ptr->seq_header.sb_size == BLOCK_128X128)
+                parent_depth_cost = MAX_MODE_COST;
+            else
+                compute_depth_costs(
+                    context_ptr,
+                    scs_ptr,
+                    pcs_ptr->parent_pcs_ptr,
+                    current_depth_idx_mds,
+                    parent_depth_idx_mds,
+#if LIGHT_PD0
+                    blk_geom->ns_depth_offset,
+#else
+                    ns_depth_offset[scs_ptr->seq_header.sb_size == BLOCK_128X128][blk_geom->depth],
+#endif
+                    &parent_depth_cost,
+                    &current_depth_cost);
+            if (!pcs_ptr->parent_pcs_ptr->sb_geom[sb_addr].block_is_allowed[parent_depth_idx_mds])
+                parent_depth_cost = MAX_MODE_COST;
+#if FTR_PD_EARLY_EXIT
+            if (context_ptr->pd0_inter_depth_bias) {
+#if SS_CLN_LIGHT_PD0_PATH
+                current_depth_cost = (current_depth_cost * context_ptr->pd0_inter_depth_bias) / 1000;
+#else
+                uint64_t bias = context_ptr->pd0_inter_depth_bias;
+                current_depth_cost = (current_depth_cost * bias) / 1000;
+#endif
+            }
+#endif
+            if (parent_depth_cost <= current_depth_cost) {
+
+                context_ptr->md_blk_arr_nsq[parent_depth_idx_mds].split_flag = EB_FALSE;
+                context_ptr->md_local_blk_unit[parent_depth_idx_mds].cost    = parent_depth_cost;
+                last_blk_index                                               = parent_depth_idx_mds;
+            } else {
+                context_ptr->md_local_blk_unit[parent_depth_idx_mds].cost = current_depth_cost;
+                context_ptr->md_blk_arr_nsq[parent_depth_idx_mds].part    = PARTITION_SPLIT;
+                context_ptr->md_blk_arr_nsq[parent_depth_idx_mds].split_flag = EB_TRUE;
+            }
+
+            //setup next parent inter depth
+            blk_geom              = get_blk_geom_mds(parent_depth_idx_mds);
+            current_depth_idx_mds = parent_depth_idx_mds;
+        }
+    }
+
+    return last_blk_index;
+}
+#endif
 /*
  * Compare costs between depths, then update cost/splitting info in the parent blocks
  * to reflect chosen partition.  Cost comparison only performed when the all quadrants

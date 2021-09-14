@@ -302,7 +302,9 @@ void set_reference_sg_ep(PictureControlSet *pcs_ptr) {
 
 void mode_decision_configuration_init_qp_update(PictureControlSet *pcs_ptr) {
     FrameHeader *frm_hdr                = &pcs_ptr->parent_pcs_ptr->frm_hdr;
+#if !RFCTR_RC_P2
     pcs_ptr->parent_pcs_ptr->average_qp = 0;
+#endif
 #if  FTR_INTRA_DETECTOR
     pcs_ptr->intra_coded_area           = 0;
 #endif
@@ -360,8 +362,10 @@ static void mode_decision_configuration_context_dctor(EbPtr p) {
     ModeDecisionConfigurationContext *obj                = (ModeDecisionConfigurationContext *)
                                                 thread_context_ptr->priv;
 
+#if !CLN_MDCONTEXT
     if (obj->is_md_rate_estimation_ptr_owner)
         EB_FREE_ARRAY(obj->md_rate_estimation_ptr);
+#endif
     EB_FREE_ARRAY(obj);
 }
 /******************************************************
@@ -381,9 +385,11 @@ EbErrorType mode_decision_configuration_context_ctor(EbThreadContext *  thread_c
     context_ptr->mode_decision_configuration_output_fifo_ptr =
         svt_system_resource_get_producer_fifo(enc_handle_ptr->enc_dec_tasks_resource_ptr,
                                               output_index);
+#if !CLN_MDCONTEXT
     // Rate estimation
     EB_MALLOC_ARRAY(context_ptr->md_rate_estimation_ptr, 1);
     context_ptr->is_md_rate_estimation_ptr_owner = EB_TRUE;
+#endif
     return EB_ErrorNone;
 }
 
@@ -587,7 +593,15 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         enable_wm = (pcs_ptr->parent_pcs_ptr->temporal_layer_index == 0) ? EB_TRUE : EB_FALSE;
 #if OPT_TXS_WM
     }
+#if TUNE_NEW_M12
+#if FTR_M13
+    else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M13) {
+#else
+    else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M12) {
+#endif
+#else
     else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M11) {
+#endif
         if (pcs_ptr->parent_pcs_ptr->input_resolution <= INPUT_SIZE_720p_RANGE)
             enable_wm = (pcs_ptr->parent_pcs_ptr->temporal_layer_index == 0) ? EB_TRUE : EB_FALSE;
         else
@@ -596,7 +610,14 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     } else {
         enable_wm = EB_FALSE;
     }
-
+#if FTR_OPT_MPASS_WARP_OFF
+#if FTR_OP_TEST
+    if (1)
+#else
+    if (pcs_ptr->parent_pcs_ptr->scs_ptr->rc_stat_gen_pass_mode)
+#endif
+        enable_wm = EB_FALSE;
+#endif
     if (pcs_ptr->parent_pcs_ptr->scs_ptr->static_config.enable_warped_motion != DEFAULT)
         enable_wm = (EbBool)pcs_ptr->parent_pcs_ptr->scs_ptr->static_config.enable_warped_motion;
 
@@ -627,7 +648,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M3)
             pcs_ptr->parent_pcs_ptr->pic_obmc_level = 1;
 #if TUNE_M5_M6
+#if TUNE_M7_SLOWDOWN
+        else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M7)
+#else
         else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M6)
+#endif
 #else
         else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M5)
 #endif
@@ -659,7 +684,15 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
 #if FTR_SELECTIVE_DLF
 #if TUNE_NEW_M11_2
 #if TUNE_M10_M0
+#if TUNE_M9_M11_OPTIMIZED_SUPER4KL
+#if TUNE_M11_SLOWDOWN
+    uint8_t use_selective_dlf_th = pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M11 ? (uint8_t)~0 : ((pcs_ptr->parent_pcs_ptr->input_resolution <= INPUT_SIZE_1080p_RANGE) ? 120 : (uint8_t)~0);
+#else
+    uint8_t use_selective_dlf_th = pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M10 ? (uint8_t)~0 : ((pcs_ptr->parent_pcs_ptr->input_resolution <= INPUT_SIZE_1080p_RANGE) ? 120 : (uint8_t)~0);
+#endif
+#else
     uint8_t use_selective_dlf_th = pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M10 ? (uint8_t)~0 : 120;
+#endif
 #else
     uint8_t use_selective_dlf_th = pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M9 ? (uint8_t)~0 : (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M10 ? 80 : 120);
 #endif
@@ -685,7 +718,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
 #endif
 #if FTR_SELECTIVE_MFMV
 #if TUNE_M8_M10_4K_SUPER
+#if TUNE_M9_SLOWDOWN
+    uint8_t use_selective_mfmv_th = pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M9 ? (uint8_t)~0 : 70; // This is a % [0-100]
+#else
     uint8_t use_selective_mfmv_th = pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M8 ? (uint8_t)~0 : ((pcs_ptr->parent_pcs_ptr->enc_mode == ENC_M9) && (pcs_ptr->parent_pcs_ptr->input_resolution > INPUT_SIZE_1080p_RANGE)) ? (uint8_t)~0 : 70; // This is a % [0-100]
+#endif
 #else
     uint8_t use_selective_mfmv_th = pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M8 ? (uint8_t)~0 : 70; // This is a % [0-100]
 #endif
@@ -718,7 +755,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
 #endif
         pcs_ptr->use_low_precision_cost_estimation = 0;
 #if OPT_COEFF_BIT_EST
+#if TUNE_M11_SLOWDOWN
+    else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M11)
+#else
     else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M10)
+#endif
         pcs_ptr->use_low_precision_cost_estimation = 2;
     else
 #if OPT_TX_SHORTS
@@ -1060,7 +1101,9 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
         // Get intra % in ref frame
         get_ref_intra_percentage(pcs_ptr, &pcs_ptr->intra_percentage);
 #endif
+#if !RFCTR_RC_P2
         pcs_ptr->parent_pcs_ptr->average_qp = 0;
+#endif
 #if  FTR_INTRA_DETECTOR
         pcs_ptr->intra_coded_area           = 0;
 #endif
@@ -1082,12 +1125,14 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
         context_ptr->qp_index = (uint8_t)frm_hdr->quantization_params.base_q_idx;
 
         md_rate_estimation_array = pcs_ptr->md_rate_estimation_array;
+#if !CLN_MDCONTEXT
         // Reset MD rate Estimation table to initial values by copying from md_rate_estimation_array
         if (context_ptr->is_md_rate_estimation_ptr_owner) {
             EB_FREE_ARRAY(context_ptr->md_rate_estimation_ptr);
             context_ptr->is_md_rate_estimation_ptr_owner = EB_FALSE;
         }
         context_ptr->md_rate_estimation_ptr = md_rate_estimation_array;
+#endif
         if (pcs_ptr->parent_pcs_ptr->frm_hdr.primary_ref_frame != PRIMARY_REF_NONE)
             memcpy(&pcs_ptr->md_frame_context,
                    &pcs_ptr->ref_frame_context[pcs_ptr->parent_pcs_ptr->frm_hdr.primary_ref_frame],
@@ -1127,9 +1172,11 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
             sf->allow_exhaustive_searches = 1;
 
             const int mesh_speed = AOMMIN(speed, MAX_MESH_SPEED);
+#if !RFCTR_RC_P1
             //if (cpi->twopass.fr_content_type == FC_GRAPHICS_ANIMATION)
             //    sf->exhaustive_searches_thresh = (1 << 24);
             //else
+#endif
             sf->exhaustive_searches_thresh = (1 << 25);
 
             sf->max_exaustive_pct = good_quality_max_mesh_pct[mesh_speed];

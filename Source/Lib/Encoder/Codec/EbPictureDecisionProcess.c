@@ -1749,7 +1749,11 @@ uint8_t get_dlf_level(EbEncMode enc_mode, uint8_t is_used_as_reference_flag) {
     else if (enc_mode <= ENC_M9)
 #else
 #if TUNE_NEW_M11_2
+#if TUNE_NEW_M12
+    else if (enc_mode <= ENC_M12)
+#else
     else if (enc_mode <= ENC_M11)
+#endif
 #else
     else if (enc_mode <= ENC_M10)
 #endif
@@ -1907,7 +1911,11 @@ EbErrorType signal_derivation_multi_processes_oq(
         pcs_ptr->enable_hme_level2_flag = 1;
     }
 #if TUNE_M7_M8
+#if TUNE_M7_SLOWDOWN
+    else if (pcs_ptr->enc_mode <= ENC_M7) {
+#else
     else if (pcs_ptr->enc_mode <= ENC_M6) {
+#endif
 #else
     else if (pcs_ptr->enc_mode <= ENC_M8) {
 #endif
@@ -1930,7 +1938,15 @@ EbErrorType signal_derivation_multi_processes_oq(
         pcs_ptr->enable_hme_level2_flag = 1;
     }
 #if TUNE_NEW_M10_M11
+#if TUNE_NEW_M12
+#if FTR_M13
+    else if (pcs_ptr->enc_mode <= ENC_M13) {
+#else
+    else if (pcs_ptr->enc_mode <= ENC_M12) {
+#endif
+#else
     else if (pcs_ptr->enc_mode <= ENC_M11) {
+#endif
 #else
     else {
 #endif
@@ -2028,7 +2044,15 @@ EbErrorType signal_derivation_multi_processes_oq(
                 intrabc_level = 1;
             else if (pcs_ptr->enc_mode <= ENC_M7)
                 intrabc_level = 4;
+#if TUNE_NEW_M12
+#if FTR_M13
+            else if (pcs_ptr->enc_mode <= ENC_M13)
+#else
+            else if (pcs_ptr->enc_mode <= ENC_M12)
+#endif
+#else
             else if (pcs_ptr->enc_mode <= ENC_M11)
+#endif
                 intrabc_level = 5;
             else
                 intrabc_level = 6;
@@ -2101,7 +2125,15 @@ EbErrorType signal_derivation_multi_processes_oq(
             pcs_ptr->palette_level =
             (frm_hdr->allow_screen_content_tools) &&
 #if TUNE_M11
+#if TUNE_NEW_M12
+#if FTR_M13
+            (pcs_ptr->temporal_layer_index == 0 && pcs_ptr->enc_mode <= ENC_M13)
+#else
+            (pcs_ptr->temporal_layer_index == 0 && pcs_ptr->enc_mode <= ENC_M12)
+#endif
+#else
             (pcs_ptr->temporal_layer_index == 0 && pcs_ptr->enc_mode <= ENC_M11)
+#endif
 #else
             (pcs_ptr->temporal_layer_index == 0 && pcs_ptr->enc_mode <= ENC_M10)
 #endif
@@ -2118,7 +2150,14 @@ EbErrorType signal_derivation_multi_processes_oq(
     if (!pcs_ptr->scs_ptr->static_config.disable_dlf_flag && frm_hdr->allow_intrabc == 0) {
         dlf_level = get_dlf_level(pcs_ptr->enc_mode, pcs_ptr->is_used_as_reference_flag);
     }
-
+#if FTR_OPT_MPASS_DLF_OFF
+#if FTR_OP_TEST
+    if (1)
+#else
+    if (pcs_ptr->scs_ptr->rc_stat_gen_pass_mode)
+#endif
+        dlf_level = 0;
+#endif
     set_dlf_controls(pcs_ptr, dlf_level);
 #else
     if (!pcs_ptr->scs_ptr->static_config.disable_dlf_flag && frm_hdr->allow_intrabc == 0) {
@@ -2233,7 +2272,7 @@ EbErrorType signal_derivation_multi_processes_oq(
             else if (pcs_ptr->enc_mode <= ENC_M9)
                 pcs_ptr->cdef_level = 9;
 #endif
-#if TUNE_NEW_M11_2 && !FTR_CDEF_BIAS_ZERO_COST
+#if (TUNE_NEW_M11_2 && !FTR_CDEF_BIAS_ZERO_COST) || TUNE_M11_SLOWDOWN
             else if (pcs_ptr->enc_mode <= ENC_M11)
 #else
             else if (pcs_ptr->enc_mode <= ENC_M10)
@@ -2244,7 +2283,11 @@ EbErrorType signal_derivation_multi_processes_oq(
                 pcs_ptr->cdef_level = pcs_ptr->is_used_as_reference_flag ? 9 : 10;
 #endif
 #if FTR_CDEF_BIAS_ZERO_COST
+#if TUNE_NEW_M12
+            else if (pcs_ptr->enc_mode <= ENC_M12)
+#else
             else if (pcs_ptr->enc_mode <= ENC_M11)
+#endif
 #if TUNE_REMOVE_CDEF_COST_BIAS
 #if TUNE_4K_M11
                 pcs_ptr->cdef_level = (scs_ptr->input_resolution <= INPUT_SIZE_1080p_RANGE) ? (pcs_ptr->temporal_layer_index == 0 ? 15 : pcs_ptr->is_used_as_reference_flag ? 16 : 17) : (pcs_ptr->temporal_layer_index == 0 ? 13 : pcs_ptr->is_used_as_reference_flag ? 13 : 14);
@@ -2287,7 +2330,14 @@ EbErrorType signal_derivation_multi_processes_oq(
     }
     else
         pcs_ptr->cdef_level = 0;
-
+#if FTR_OPT_MPASS_CDEF
+#if FTR_OP_TEST
+        if (1)
+#else
+    if (pcs_ptr->scs_ptr->rc_stat_gen_pass_mode)
+#endif
+        pcs_ptr->cdef_level = 0;
+#endif
     set_cdef_controls(pcs_ptr,pcs_ptr->cdef_level);
 #else
     // CDEF Level                                   Settings
@@ -2430,7 +2480,7 @@ EbErrorType signal_derivation_multi_processes_oq(
         else
             pcs_ptr->intra_pred_mode = 5;
     }
-#if TUNE_M10_M0 && !TUNE_M9_M10
+#if (TUNE_M10_M0 && !TUNE_M9_M10) || TUNE_M9_SLOWDOWN
     else if (pcs_ptr->enc_mode <= ENC_M9) {
 #else
     else if (pcs_ptr->enc_mode <= ENC_M8) {
@@ -2494,7 +2544,11 @@ EbErrorType signal_derivation_multi_processes_oq(
 #if OPT_TXS_SEARCH
 #if TUNE_M7_M10_PRESETS
 #if TUNE_NEW_M10_M11
+#if TUNE_NEW_M12
+    else if (pcs_ptr->enc_mode <= ENC_M12)
+#else
     else if (pcs_ptr->enc_mode <= ENC_M11)
+#endif
 #else
     else if (pcs_ptr->enc_mode <= ENC_M10)
 #endif
@@ -2570,7 +2624,11 @@ EbErrorType signal_derivation_multi_processes_oq(
 #endif
 #endif
         list0_only_base = 0;
+#if TUNE_M9_SLOWDOWN
+    else if (pcs_ptr->enc_mode <= ENC_M9)
+#else
     else if (pcs_ptr->enc_mode <= ENC_M8)
+#endif
 #if TUNE_MEGA_M9_M4
 #if TUNE_M7_M10_MT
 #if TUNE_M10_M3_1
@@ -5370,6 +5428,13 @@ int32_t search_this_pic(PictureParentControlSet**buf, uint32_t buf_size, uint64_
   Tells if an Intra picture should be delayed to get next mini-gop
 */
 EbBool is_delayed_intra(PictureParentControlSet *pcs) {
+
+#if OPT_1P
+    if(use_output_stat(pcs->scs_ptr))
+       return 0;
+#endif
+
+
 #if FIX_LOW_DELAY
     if ((pcs->idr_flag || pcs->cra_flag) && pcs->pred_structure != EB_PRED_LOW_DELAY_P) {
 #else
@@ -5393,8 +5458,13 @@ void process_first_pass_frame(
     int16_t seg_idx;
 
     // Initialize Segments
+#if OPT_1P
+    pcs_ptr->first_pass_seg_column_count = (uint8_t)(scs_ptr->fpass_segment_column_count);
+    pcs_ptr->first_pass_seg_row_count = (uint8_t)(scs_ptr->fpass_segment_row_count);
+#else
     pcs_ptr->first_pass_seg_column_count = (uint8_t)(scs_ptr->me_segment_column_count_array[0]);
     pcs_ptr->first_pass_seg_row_count = (uint8_t)(scs_ptr->me_segment_row_count_array[0]);
+#endif
     pcs_ptr->first_pass_seg_total_count = (uint16_t)(pcs_ptr->first_pass_seg_column_count  * pcs_ptr->first_pass_seg_row_count);
     pcs_ptr->first_pass_seg_acc = 0;
     first_pass_signal_derivation_multi_processes(scs_ptr, pcs_ptr);
@@ -5443,6 +5513,11 @@ void mctf_frame(
             out_stride_diff64);
         pcs_ptr->temp_filt_prep_done = 0;
 
+
+#if OPT_PREHME
+        pcs_ptr->tf_tot_horz_blks = pcs_ptr->tf_tot_vert_blks = 0;
+#endif
+
         // Start Filtering in ME processes
         {
             int16_t seg_idx;
@@ -5469,6 +5544,19 @@ void mctf_frame(
 
             svt_block_on_semaphore(pcs_ptr->temp_filt_done_semaphore);
         }
+
+
+#if OPT_PREHME
+        if (pcs_ptr->tf_tot_horz_blks > pcs_ptr->tf_tot_vert_blks * 6 / 4){
+            context_ptr->tf_motion_direction = 0;
+        }
+        else  if (pcs_ptr->tf_tot_vert_blks > pcs_ptr->tf_tot_horz_blks * 6 / 4) {
+            context_ptr->tf_motion_direction = 1;
+        }
+        else {
+            context_ptr->tf_motion_direction = -1;
+        }
+#endif
 
     }
     else
@@ -5601,67 +5689,80 @@ void send_picture_out(
     EbObjectWrapper               *out_results_wrapper;
 
 
-    if (pcs->is_used_as_reference_flag) {
-    EbObjectWrapper* reference_picture_wrapper;
-    // Get Empty Reference Picture Object
-    svt_get_empty_object(
-        scs->encode_context_ptr->reference_picture_pool_fifo_ptr,
-        &reference_picture_wrapper);
-    pcs->reference_picture_wrapper_ptr = reference_picture_wrapper;
+#if OPT_PREHME
+    //every picture enherits latest motion direction from TF
+    pcs->tf_motion_direction = ctx->tf_motion_direction;
+#endif
 
-    // reset reference object in case of its members are altered by superres tool
-    EbReferenceObject* ref =
-        (EbReferenceObject*)reference_picture_wrapper->object_ptr;
-    svt_reference_object_reset(ref, scs);
 
-    // Give the new Reference a nominal live_count of 1
-    svt_object_inc_live_count(pcs->reference_picture_wrapper_ptr, 1);
+
+
+#if OPT_1P
+    if (!use_output_stat(scs)) {
+#endif
+        if (pcs->is_used_as_reference_flag) {
+            EbObjectWrapper* reference_picture_wrapper;
+            // Get Empty Reference Picture Object
+            svt_get_empty_object(
+                scs->encode_context_ptr->reference_picture_pool_fifo_ptr,
+                &reference_picture_wrapper);
+            pcs->reference_picture_wrapper_ptr = reference_picture_wrapper;
+            // reset reference object in case of its members are altered by superres tool
+            EbReferenceObject* ref =
+                (EbReferenceObject*)reference_picture_wrapper->object_ptr;
+            svt_reference_object_reset(ref, scs);
+            // Give the new Reference a nominal live_count of 1
+            svt_object_inc_live_count(pcs->reference_picture_wrapper_ptr, 1);
 #if SRM_REPORT
     pcs->reference_picture_wrapper_ptr->pic_number= pcs->picture_number;
 #endif
 
     }else {
-        pcs->reference_picture_wrapper_ptr = NULL;
-    }
+            pcs->reference_picture_wrapper_ptr = NULL;
+        }
 
 #if !FTR_1PAS_VBR
-    if (scs->lap_enabled || use_input_stat(scs)) {
-        pcs->stats_in_offset = pcs->decode_order;
-        if (scs->lap_enabled)
-            pcs->stats_in_end_offset = MIN((uint64_t)(scs->twopass.stats_buf_ctx->stats_in_end_write - scs->twopass.stats_buf_ctx->stats_in_start),
-                pcs->stats_in_offset + (uint64_t)(1 << scs->static_config.hierarchical_levels) + SCD_LAD - 1);
-        else
-            // for use_input_stat(scs)
-            pcs->stats_in_end_offset = (uint64_t)(scs->twopass.stats_buf_ctx->stats_in_end_write - scs->twopass.stats_buf_ctx->stats_in_start);
-    }
+        if (scs->lap_enabled || use_input_stat(scs)) {
+            pcs->stats_in_offset = pcs->decode_order;
+            if (scs->lap_enabled)
+                pcs->stats_in_end_offset = MIN((uint64_t)(scs->twopass.stats_buf_ctx->stats_in_end_write - scs->twopass.stats_buf_ctx->stats_in_start),
+                    pcs->stats_in_offset + (uint64_t)(1 << scs->static_config.hierarchical_levels) + SCD_LAD - 1);
+            else
+                // for use_input_stat(scs)
+                pcs->stats_in_end_offset = (uint64_t)(scs->twopass.stats_buf_ctx->stats_in_end_write - scs->twopass.stats_buf_ctx->stats_in_start);
+        }
 #endif
-    //get a new ME data buffer
-    if (pcs->me_data_wrapper_ptr == NULL) {
-        svt_get_empty_object(ctx->me_fifo_ptr, &me_wrapper);
-        pcs->me_data_wrapper_ptr = me_wrapper;
-        pcs->pa_me_data = (MotionEstimationData *)me_wrapper->object_ptr;
-        //printf("[%ld]: Got me data [NORMAL] %p\n", pcs->picture_number, pcs->pa_me_data);
-    }
+        //get a new ME data buffer
+        if (pcs->me_data_wrapper_ptr == NULL) {
+            svt_get_empty_object(ctx->me_fifo_ptr, &me_wrapper);
+            pcs->me_data_wrapper_ptr = me_wrapper;
+            pcs->pa_me_data = (MotionEstimationData *)me_wrapper->object_ptr;
+            //printf("[%ld]: Got me data [NORMAL] %p\n", pcs->picture_number, pcs->pa_me_data);
+        }
 #if OPT_ME
-    if (pcs->ref_list0_count_try == 1 && pcs->ref_list1_count_try == 1) {
-        pcs->pa_me_data->max_cand = 3;
-        pcs->pa_me_data->max_refs = 2;
-        pcs->pa_me_data->max_l0 = 1;
-    }
-    else if (pcs->ref_list0_count_try <= 2 && pcs->ref_list1_count_try <= 2) {
-        pcs->pa_me_data->max_cand = 9;
-        pcs->pa_me_data->max_refs = 4;
-        pcs->pa_me_data->max_l0 = 2;
-    }
-    else { //specify more cases if need be
-        pcs->pa_me_data->max_cand = MAX_PA_ME_CAND;
-        pcs->pa_me_data->max_refs = MAX_PA_ME_MV;
-        pcs->pa_me_data->max_l0 = MAX_REF_IDX;
-    }
-     uint8_t max_ref_to_alloc,  max_cand_to_alloc;
+        if (pcs->ref_list0_count_try == 1 && pcs->ref_list1_count_try == 1) {
+            pcs->pa_me_data->max_cand = 3;
+            pcs->pa_me_data->max_refs = 2;
+            pcs->pa_me_data->max_l0 = 1;
+        }
+        else if (pcs->ref_list0_count_try <= 2 && pcs->ref_list1_count_try <= 2) {
+            pcs->pa_me_data->max_cand = 9;
+            pcs->pa_me_data->max_refs = 4;
+            pcs->pa_me_data->max_l0 = 2;
+        }
+        else { //specify more cases if need be
+            pcs->pa_me_data->max_cand = MAX_PA_ME_CAND;
+            pcs->pa_me_data->max_refs = MAX_PA_ME_MV;
+            pcs->pa_me_data->max_l0 = MAX_REF_IDX;
+        }
+        uint8_t max_ref_to_alloc, max_cand_to_alloc;
      get_max_allocated_me_refs(scs->mrp_init_level, & max_ref_to_alloc, & max_cand_to_alloc);
-     assert_err(pcs->pa_me_data->max_cand <= max_cand_to_alloc, " err in me ref allocation");
-     assert_err(pcs->pa_me_data->max_refs <= max_ref_to_alloc, " err in me ref allocation");
+        assert_err(pcs->pa_me_data->max_cand <= max_cand_to_alloc, " err in me ref allocation");
+        assert_err(pcs->pa_me_data->max_refs <= max_ref_to_alloc, " err in me ref allocation");
+#endif
+
+#if OPT_1P
+    }
 #endif
 
     //****************************************************
@@ -7128,7 +7229,23 @@ void* picture_decision_kernel(void *input_ptr)
                                             scs_ptr->static_config.screen_content_mode = 0;
                                         else
 #endif
-                                        if (scs_ptr->static_config.screen_content_mode == 2) // auto detect
+#if FIX_DG
+                                            int copy_frame = 1;
+#if FIX_ISSUE_50
+                                        if (pcs_ptr->scs_ptr->static_config.skip_frame_first_pass)
+#else
+                                        if (scs_ptr->static_config.final_pass_rc_mode == 0)
+#endif
+                                            copy_frame = (((pcs_ptr->picture_number % 8) == 0) || ((pcs_ptr->picture_number % 8) == 6) || ((pcs_ptr->picture_number % 8) == 7));
+                                        // Bypass copy for the unecessary picture in IPPP pass
+
+                                        if (((!use_output_stat(scs_ptr)) || ((use_output_stat(scs_ptr)) && copy_frame)) == 0) {
+                                            pcs_ptr->sc_class0 = pcs_ptr->sc_class1 = pcs_ptr->sc_class2 = 0;
+                                        }
+                                        else if (scs_ptr->static_config.screen_content_mode == 2) // auto detect
+#else
+                                            if (scs_ptr->static_config.screen_content_mode == 2) // auto detect
+#endif
                                             is_screen_content(pcs_ptr);
                                         else
                                             pcs_ptr->sc_class0 = pcs_ptr->sc_class1 = pcs_ptr->sc_class2 = scs_ptr->static_config.screen_content_mode;

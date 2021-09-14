@@ -162,7 +162,7 @@ extern uint64_t    get_tx_size_bits(ModeDecisionCandidateBuffer *candidateBuffer
 
 MvJointType svt_av1_get_mv_joint(const MV *mv);
 
-#if LIGHT_PD1
+#if LIGHT_PD1_MACRO
 static INLINE uint8_t av1_drl_ctx(const CandidateMv *ref_mv_stack, int32_t ref_idx) {
     return ref_mv_stack[ref_idx].weight >= REF_CAT_LEVEL
         ? ref_mv_stack[ref_idx + 1].weight >= REF_CAT_LEVEL ? 0 : 1

@@ -249,7 +249,11 @@ typedef struct {
     int extend_maxq;
     int extend_minq_fast;
 #if FTR_NEW_MULTI_PASS
+#if TUNE_MULTI_PASS
+    MultiPassModes multi_pass_mode;
+#else
     uint8_t    passes;
+#endif
 #endif
     /*!\endcond */
 } TWO_PASS;

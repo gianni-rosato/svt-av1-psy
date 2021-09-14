@@ -170,6 +170,10 @@ typedef struct SequenceControlSet {
     /*!< Segements (sub picture) count for different processes */
     uint32_t me_segment_column_count_array[MAX_TEMPORAL_LAYERS];
     uint32_t me_segment_row_count_array[MAX_TEMPORAL_LAYERS];
+#if OPT_1P
+    uint32_t fpass_segment_column_count;
+    uint32_t fpass_segment_row_count;
+#endif
     uint32_t enc_dec_segment_col_count_array[MAX_TEMPORAL_LAYERS];
     uint32_t enc_dec_segment_row_count_array[MAX_TEMPORAL_LAYERS];
     uint32_t tpl_segment_col_count_array;
@@ -236,6 +240,13 @@ typedef struct SequenceControlSet {
     uint8_t mvrate_set;
 #if CLIP_BASED_DYNAMIC_MINIGOP
     MiniGopSizeCtrls mgs_ctls;
+#endif
+#if FTR_OPT_MPASS
+    /*!< The RC stat generation pass mode (0: The default, 1: optimized)*/
+    uint8_t rc_stat_gen_pass_mode;
+#endif
+#if FTR_NEW_QPS
+    int cqp_base_q;
 #endif
 } SequenceControlSet;
 

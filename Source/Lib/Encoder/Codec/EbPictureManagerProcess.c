@@ -881,8 +881,10 @@ void *picture_manager_kernel(void *input_ptr) {
 
                         child_pcs_ptr->parent_pcs_ptr->total_num_bits = 0;
                         child_pcs_ptr->parent_pcs_ptr->picture_qp     = entry_pcs_ptr->picture_qp;
+#if !RFCTR_RC_P2
                         child_pcs_ptr->parent_pcs_ptr->sad_me         = 0;
                         child_pcs_ptr->parent_pcs_ptr->quantized_coeff_num_bits = 0;
+#endif
                         child_pcs_ptr->enc_mode = entry_pcs_ptr->enc_mode;
                         child_pcs_ptr->sb_total_count = entry_pcs_ptr->sb_total_count;
 
@@ -1231,11 +1233,13 @@ void *picture_manager_kernel(void *input_ptr) {
                             }
                         }
 
+#if !FIX_DG
                         // Adjust the Slice-type if the Lists are Empty, but don't reset the Prediction Structure
                         entry_pcs_ptr->slice_type =
                             (entry_pcs_ptr->ref_list1_count > 0)
                                 ? B_SLICE
                                 : (entry_pcs_ptr->ref_list0_count > 0) ? P_SLICE : I_SLICE;
+#endif
                         if (entry_pcs_ptr->frame_end_cdf_update_mode) {
                             if (entry_pcs_ptr->slice_type != I_SLICE)
                                 child_pcs_ptr->parent_pcs_ptr->frm_hdr.primary_ref_frame =

@@ -300,6 +300,9 @@ typedef struct EbPictureBufferDescInitData {
 #if OPT_MEMORY_REST
         int8_t enc_mode;
 #endif
+#if FTR_VLPD1
+    int32_t        sb_total_count;
+#endif
 } EbPictureBufferDescInitData;
 
 /**************************************

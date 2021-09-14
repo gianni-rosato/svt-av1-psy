@@ -187,7 +187,6 @@ enum {
 #define INTERPOLATION_OFFSET   8
 #define PACKED_BUFFER_SIZE ((MAX_SB_SIZE+ (INTERPOLATION_OFFSET << 1)) * (MAX_SB_SIZE+(INTERPOLATION_OFFSET << 1)))
 
-#define DUPLICATE_REFENCE    0
 #endif
 // Min superblock size
 #define MIN_SB_SIZE 64
@@ -493,6 +492,14 @@ typedef enum PdPass {
     PD_PASS_2,
     PD_PASS_TOTAL,
 } PdPass;
+#endif
+#if FTR_VLPD1
+typedef enum ATTRIBUTE_PACKED {
+    REGULAR_PD1     = -1, // The regular PD1 path; negative so that LPD1 can start at 0 (easy for indexing arrays in lpd1_ctrls)
+    LIGHT_PD1       = 0, // Light-PD1 path, which has many features off
+    VERY_LIGHT_PD1  = 1, // Lightest PD1 path, having more shortcuts than Light-PD1
+    LPD1_LEVELS     = VERY_LIGHT_PD1 + 1 // Number of light-PD1 paths (regular PD1 isn't a light-PD1 path)
+} Pd1Level;
 #endif
 typedef enum CandClass {
     CAND_CLASS_0,
@@ -2114,8 +2121,9 @@ typedef enum EbIntraRefreshType
 #define ENC_M10         10
 #define ENC_M11         11
 #define ENC_M12         12
+#define ENC_M13         13
 
-#define MAX_SUPPORTED_MODES 13
+#define MAX_SUPPORTED_MODES 16
 
 #define SPEED_CONTROL_INIT_MOD ENC_M4;
 /** The EB_TUID type is used to identify a TU within a CU.
@@ -2184,8 +2192,9 @@ typedef struct {
     // Value of base colors for Y, U, and V
     uint16_t palette_colors[3 * PALETTE_MAX_SIZE];
     // Number of base colors for Y (0) and UV (1)
+#if !OPT_MEM_PALETTE
     uint8_t palette_size[2];
-
+#endif
 } PaletteModeInfo;
 
 typedef struct {
@@ -3042,6 +3051,15 @@ static const uint8_t me_idx_85_8x8_to_16x16_conversion[] = {
 
     17,17,    18,18,    19,19,    20,20,
     17,17,    18,18,    19,19,    20,20
+};
+#endif
+#if FTR_M13
+static const uint8_t me_idx_16x16_to_parent_32x32_conversion[] = {
+    1,1,      2,2,
+    1,1,      2,2,
+
+    3,3,      4,4,
+    3,3,      4,4
 };
 #endif
 #if OPT_IBC_HASH_SEARCH

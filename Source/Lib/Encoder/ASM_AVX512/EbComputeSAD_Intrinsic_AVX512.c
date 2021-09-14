@@ -1968,6 +1968,9 @@ void svt_sad_loop_kernel_avx512_intrin(
     uint32_t  width, // input parameter, block width (N)
     uint64_t *best_sad, int16_t *x_search_center, int16_t *y_search_center,
     uint32_t src_stride_raw, // input parameter, source stride (no line skipping)
+#if FIX_FTR_PREHME_SUB
+    uint8_t skip_search_line,
+#endif
     int16_t search_area_width, int16_t search_area_height) {
     const uint32_t height2 = height >> 1;
     const uint8_t *s, *r;
@@ -2188,6 +2191,14 @@ void svt_sad_loop_kernel_avx512_intrin(
             if (height <= 16) {
                 y = 0;
                 do {
+#if FIX_FTR_PREHME_SUB
+                    if (skip_search_line) {
+                        if ((y & 1) == 0) {
+                            ref += src_stride_raw;
+                            continue;
+                        }
+                    }
+#endif
                     __m256i sum256 = _mm256_setzero_si256();
 
                     s = src;
@@ -2916,6 +2927,14 @@ void svt_sad_loop_kernel_avx512_intrin(
             if (height <= 16) {
                 y = 0;
                 do {
+#if FIX_FTR_PREHME_SUB
+                    if (skip_search_line) {
+                        if ((y & 1) == 0) {
+                            ref += src_stride_raw;
+                            continue;
+                        }
+                    }
+#endif
                     __m512i sum512 = _mm512_setzero_si512();
 
                     s = src;
@@ -3802,6 +3821,14 @@ void svt_sad_loop_kernel_avx512_intrin(
             if (height <= 16) {
                 y = 0;
                 do {
+#if FIX_FTR_PREHME_SUB
+                    if (skip_search_line) {
+                        if ((y & 1) == 0) {
+                            ref += src_stride_raw;
+                            continue;
+                        }
+                    }
+#endif
                     for (x = 0; x <= search_area_width - 16; x += 16) {
                         __m512i sum512 = _mm512_setzero_si512();
 

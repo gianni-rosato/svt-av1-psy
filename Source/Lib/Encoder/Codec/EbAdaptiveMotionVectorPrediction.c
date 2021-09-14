@@ -22,6 +22,9 @@
 #include "EbInterPrediction.h"
 #endif
 
+#if OPT_MEM_PALETTE
+ int svt_av1_allow_palette(int allow_palette, BlockSize sb_type);
+#endif
 #define UNUSED_FUNC
 
 /** ScaleMV
@@ -2023,17 +2026,44 @@ void generate_av1_mvp_table(ModeDecisionContext *context_ptr, BlkStruct *blk_ptr
 
 
     uint32_t ref_it;
+#if FTR_VLPD1
+    context_ptr->bipred_available = 0;
     for (ref_it = 0; ref_it < tot_refs; ++ref_it) {
         MvReferenceFrame ref_frame = ref_frames[ref_it];
+        if (ref_frame >= TOTAL_REFS_PER_FRAME) {
+            context_ptr->bipred_available = 1;
+        }
+    }
+#endif
+    for (ref_it = 0; ref_it < tot_refs; ++ref_it) {
+        MvReferenceFrame ref_frame = ref_frames[ref_it];
+#if FTR_VLPD1
+        MvReferenceFrame rf[2];
+        av1_set_ref_frame(rf, ref_frame);
+
+        // Can skip MVP generation for unipred refs if not using any unipred candidates; only supported for LPD1
+        // If block is intra bordered we only inject NEW unipred, so must generate MVPs
+        // If there is only 1 ME candidate, generate MVPs because that candidate will be injected (even if unipred)
+        if (context_ptr->reduce_unipred_candidates >= 3 &&
+            context_ptr->lpd1_ctrls.pd1_level > REGULAR_PD1 &&
+            !context_ptr->updated_enable_pme &&
+            !context_ptr->is_intra_bordered &&
+            frm_hdr->reference_mode != SINGLE_REFERENCE &&
+            rf[1] == NONE_FRAME &&
+            context_ptr->bipred_available &&
+            pcs_ptr->parent_pcs_ptr->pa_me_data->me_results[context_ptr->me_sb_addr]->total_me_candidate_index[context_ptr->me_block_offset] > 1) {
+            continue;
+        }
+#endif
 
         xd->ref_mv_count[ref_frame] = 0;
         memset(context_ptr->md_local_blk_unit[blk_geom->blkidx_mds].ed_ref_mv_stack[ref_frame],
             0,  sizeof(CandidateMv)*MAX_REF_MV_STACK_SIZE);
 
-
+#if !FTR_VLPD1
         MvReferenceFrame rf[2];
         av1_set_ref_frame(rf, ref_frame);
-
+#endif
         IntMv gm_mv[2];
 
         if (ref_frame == INTRA_FRAME) {
@@ -2244,10 +2274,20 @@ void update_mi_map(BlkStruct *blk_ptr, uint32_t blk_origin_x, uint32_t blk_origi
 #else
     mbmi->comp_group_idx = blk_ptr->comp_group_idx;
 #endif
+#if OPT_MEM_PALETTE
+    if (svt_av1_allow_palette(pcs_ptr->parent_pcs_ptr->palette_level, blk_geom->bsize)) {
+
+#else
     if (pcs_ptr->parent_pcs_ptr->palette_level) {
+#endif
 #if OPT_PALETTE_MEM
+#if OPT_MEM_PALETTE
+        mbmi->palette_mode_info.palette_size = blk_ptr->palette_size[0];
+        svt_memcpy(mbmi->palette_mode_info.palette_colors, blk_ptr->palette_info->pmi.palette_colors, sizeof(mbmi->palette_mode_info.palette_colors[0]) * PALETTE_MAX_SIZE);
+#else
         mbmi->palette_mode_info.palette_size = blk_ptr->palette_info.pmi.palette_size[0];
         svt_memcpy(mbmi->palette_mode_info.palette_colors, blk_ptr->palette_info.pmi.palette_colors, sizeof(mbmi->palette_mode_info.palette_colors[0]) * PALETTE_MAX_SIZE);
+#endif
 #else
         svt_memcpy(&mbmi->palette_mode_info,
             &blk_ptr->palette_info.pmi,

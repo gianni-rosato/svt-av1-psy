@@ -27,7 +27,15 @@ extern "C" {
 #define MAX_HIERARCHICAL_LEVEL 6
 #define REF_LIST_MAX_DEPTH 4
 #if TUNE_NEW_M11
+#if TUNE_NEW_M12
+#if FTR_M13
+#define MAX_ENC_PRESET 13
+#else
+#define MAX_ENC_PRESET 12
+#endif
+#else
 #define MAX_ENC_PRESET 11
+#endif
 #else
 #define MAX_ENC_PRESET 10
 #endif
@@ -339,6 +347,9 @@ typedef struct EbSvtAv1EncConfiguration {
 #if FTR_MULTI_PASS_API
     EbBool rc_middlepass_stats_out;
     uint8_t    passes;
+#if TUNE_MULTI_PASS
+    MultiPassModes multi_pass_mode;
+#endif
 #endif
     /* Enable picture QP scaling between hierarchical levels
     *
@@ -910,6 +921,9 @@ typedef struct EbSvtAv1EncConfiguration {
 #if OPT_FIRST_PASS
     uint8_t final_pass_rc_mode;
 #endif
+#if OPT_FIRST_PASS2
+    uint8_t skip_frame_first_pass;
+#endif
 } EbSvtAv1EncConfiguration;
 
 /**
@@ -972,8 +986,13 @@ EB_API EbErrorType svt_av1_enc_stream_header_release(EbBufferHeaderType *stream_
      * Parameter:
      * @ *svt_enc_component  Encoder handler.
      * @ *p_buffer           Header pointer, picture buffer. */
+#if OPT_FIRST_PASS2 && !FIX_DG
+EB_API EbErrorType svt_av1_enc_send_picture(EbComponentType *   svt_enc_component,
+    EbBufferHeaderType *p_buffer, int pass);
+#else
 EB_API EbErrorType svt_av1_enc_send_picture(EbComponentType *   svt_enc_component,
                                             EbBufferHeaderType *p_buffer);
+#endif
 
 /* STEP 5: Receive packet.
      * Parameter:

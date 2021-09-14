@@ -247,7 +247,7 @@ void read_and_compute_y4m_frame_delimiter(FILE *input_file, FILE *error_log_file
     }
 
     int i = 0;
-    while (i <= YFM_HEADER_MAX && buffer_y4m_header[i] != '\n')
+    while (i < YFM_HEADER_MAX && buffer_y4m_header[i] != '\n')
         i++;
 
     *frame_hdr = i + 1;

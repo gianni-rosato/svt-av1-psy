@@ -408,12 +408,21 @@ void SvtAv1E2ETestFramework::run_encode_process() {
                         video_src_->get_frame_qp(video_src_->get_frame_index());
                     av1enc_ctx_.input_picture_buffer->metadata = nullptr;
                     // Send the picture
+#if OPT_FIRST_PASS2 && !FIX_DG
                     EXPECT_EQ(EB_ErrorNone,
                               return_error = svt_av1_enc_send_picture(
                                   av1enc_ctx_.enc_handle,
-                                  av1enc_ctx_.input_picture_buffer))
+                                  av1enc_ctx_.input_picture_buffer , 2))
                         << "svt_av1_enc_send_picture error at: "
                         << av1enc_ctx_.input_picture_buffer->pts;
+#else
+                    EXPECT_EQ(EB_ErrorNone,
+                              return_error = svt_av1_enc_send_picture(
+                                  av1enc_ctx_.enc_handle,
+                                  av1enc_ctx_.input_picture_buffer ))
+                        << "svt_av1_enc_send_picture error at: "
+                        << av1enc_ctx_.input_picture_buffer->pts;
+#endif
                 }
 
                 // send eos to encoder if this is last frame
@@ -429,10 +438,17 @@ void SvtAv1E2ETestFramework::run_encode_process() {
                     headerPtrLast.pic_type = EB_AV1_INVALID_PICTURE;
                     headerPtrLast.metadata = nullptr;
                     av1enc_ctx_.input_picture_buffer->flags = EB_BUFFERFLAG_EOS;
+#if OPT_FIRST_PASS2 && !FIX_DG
+                    EXPECT_EQ(EB_ErrorNone,
+                              return_error = svt_av1_enc_send_picture(
+                                  av1enc_ctx_.enc_handle, &headerPtrLast, 2))
+                        << "svt_av1_enc_send_picture EOS error";
+#else
                     EXPECT_EQ(EB_ErrorNone,
                               return_error = svt_av1_enc_send_picture(
                                   av1enc_ctx_.enc_handle, &headerPtrLast))
                         << "svt_av1_enc_send_picture EOS error";
+#endif
                 }
             }
         }

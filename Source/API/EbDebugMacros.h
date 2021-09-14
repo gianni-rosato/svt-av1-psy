@@ -52,6 +52,33 @@ extern "C" {
 #define FTR_NEW_MULTI_PASS          1 // New multipass VBR
 #define FTR_MULTI_PASS_API          1 // the API needed to run multi pass (3 or 2) VBR
 
+#define TUNE_MULTI_PASS             1 // Tune the multipass VBR. Add the option to remove IPPP
+#define FTR_OPT_MPASS               1 // Optimize the middle pass for better speed
+
+#define RFCTR_RC_P1                 1 // Rate control code refactoring Part 1
+#define RFCTR_RC_P2                 1 // Rate control code refactoring Part 2
+
+#if TUNE_MULTI_PASS
+typedef enum MultiPassModes {
+    SINGLE_PASS, //single pass mode
+    TWO_PASS_IPP_FINAL, // two pass: IPP + final
+    TWO_PASS_SAMEPRED_FINAL, // two pass: Same Pred + final
+    THREE_PASS_IPP_SAMEPRED_FINAL, // three pass: IPP + Same Pred + final
+} MultiPassModes;
+#endif
+#if FTR_OPT_MPASS
+#define FTR_OPT_MPASS_CDEF 1
+#define FTR_OPT_MPASS_RDOQ_OFF 1
+#define FTR_OPT_MPASS_NEAR0 1
+#define FTR_OPT_MPASS_MRP1REF 1
+#define FTR_OPT_MPASS_WARP_OFF 1
+#define FTR_OPT_MPASS_DLF_OFF 1
+#define FTR_OPT_MPASS_REMOVE_UNDER32 1
+
+#define FTR_OPT_MPASS_DOWN_SAMPLE 0
+#define FTR_OP_TEST 0
+#endif
+
 #define SVT_05          1
 #define PRIVATE_MACROS   1
 
@@ -411,7 +438,7 @@ NOTE : PART OF LIGHT_PD0_2  code was committed to svt-04-final-rebased under OPT
 #define OPT_COMBINE_TPL_FOR_LAD               1 // Harmonize tpl for lad_mg 0 and lad_mg 1
 
 #define SS_CLN_INIT_IFS_MDS0                  1 // Move IFS init to MDS0
-#define LIGHT_PD1                             1 // Add a light-PD1 path
+#define LIGHT_PD1_MACRO                             1 // Add a light-PD1 path
 #define CLN_DECPL_TX_FEATS                    1 // Decouple mds1 skipping tx shortcuts and reduce_last_md_stage_candidate
 
 #define FTR_PD0_OPT                           1 // optimize pd0
@@ -420,7 +447,7 @@ NOTE : PART OF LIGHT_PD0_2  code was committed to svt-04-final-rebased under OPT
 #define SS_MEM_HIS                            1 // Optimize the histogram array
 #define SS_MEM_DLF                            1 // Run time FDL scratch buffer
 
-#if LIGHT_PD1
+#if LIGHT_PD1_MACRO
 #define FTR_LPD1_DETECTOR           1 // Add a detector for using light-PD1.  Set signal before depth refinement so you can use the detector to force pred depth
 #define OPT_LPD1_MRP                1 // Enable light-PD1 for BASE (when WM and MRP are on).  NB light-PD1 does not do reference pruning
 #define OPT_LPD1_PME                1 // Add PME to light-PD1
@@ -496,13 +523,15 @@ NOTE : PART OF LIGHT_PD0_2  code was committed to svt-04-final-rebased under OPT
 
 #define TUNE_M8_M10_4K_SUPER                  1 // tuning M8 to M10 for 4K, july2021
 
-#define OPT_BYPASS_ED_10BIT                   1 // Remove unnecessary buffer when copying recon for 10bit bypass-encdec; to merge with FTR_10BIT_MDS3_REG_PD1
+#define OPT_BYPASS_ED_10BIT                   0 // Remove unnecessary buffer when copying recon for 10bit bypass-encdec; to merge with FTR_10BIT_MDS3_REG_PD1
 #define FIX_10BIT_R2R                         1 // Fix 10bit r2r for bypassing encdec - merge with FTR_10BIT_MDS3_LPD1
 #define FIX_COST_CALC_CHECK                   1 // Fix check to skip cost calcs
 #define FIX_QUANT_COEFF_BUFF                  1 // Fix how the quant coeff buffer is released, and cleanup the init
 
 #define SANITIZER_FIX                         1 // Fix thread sanitizer: race:svt_memcpy_small and race:svt_memcpy_sse
 #define FIX_SANITIZER_RACE_CONDS              1 // Fix race conditions in MD/EncDec
+
+//svt-05-03 start
 
 #define FIX_QPS_OPEN_GOP                      1 // Use the BASE QP-Offset for CRA (instead of using the IDR QP-Offset)
 #define FIX_TF_OPEN_GOP                       1 // Use past frame(s) to tf CRA (instead of using future frame(s) only)
@@ -547,6 +576,8 @@ NOTE : PART OF LIGHT_PD0_2  code was committed to svt-04-final-rebased under OPT
 
 #define FIX_INTRA_PERIOD_2PASS                1 // fixing the issue of intra-period -1 being lossy against intra-period greater than the number of frames in 2pass
 
+//svt-05-04 start
+
 #define FIX_ISSUE_46                          1 // disbale 2pass when I period is less than 16
 #define FIX_DO_NOT_TEST_CORRUPTED_MV_DIFF     1 // Ignore corrupted MV-to-MVP diffrence @ MD
 
@@ -566,22 +597,75 @@ NOTE : PART OF LIGHT_PD0_2  code was committed to svt-04-final-rebased under OPT
 #define FIX_UT_FTR_MEM_OPT_WM                 1 // Fix Unit Tests for macro FTR_MEM_OPT_WM
 #endif
 
+
 #if FIX_TEMPORAL_FILTER_PLANEWISE && FTR_TF_STRENGTH_PER_QP && SIMD_APPROX_EXPF
 #define FIXED_POINTS_PLANEWISE                1 //Calculate Temporal Filter Planewise on Fixed Points
 #else
 #define FIXED_POINTS_PLANEWISE                0 //Calculate Temporal Filter Planewise on Fixed Points
 #endif
 #if FIXED_POINTS_PLANEWISE
-#define ENABLE_FIXED_POINTS_PLANEWISE         0 //Enable Temporal Filter Planewise on Fixed Points. Need decide on what level should be used.
+#define ENABLE_FIXED_POINTS_PLANEWISE         1 //Enable Temporal Filter Planewise on Fixed Points. Need decide on what level should be used.
 #define ENABLE_MEDIUM_PLANEWISE               0 //Enable Temporal Filter Planewise Medium on Fixed Points instead of normal filter. Need decide on what level should be used.
 //#define FIXED_POINT_ASSERT_TEST             1 //Enable special FP_ASSERT () tests for all builds. No define macro, then test only for debug
 #endif
+
 #define FIX_VBR_R2R                           1 // Fixes the 1 PASS VBR run to run
 #define TUNE_LPD1_DETECTOR_LVL                1 // Tune the LPD1 detector thresholds for M11
-#endif
+
+#define TUNE_MEDIUM_TFILTER                   1 // Tunes the new medium TF filters
+
 #define OPT_MMAP_FILE                         1 // Add support for memory mapped files in linux
+#define TUNE_MRP_MEM                          1 // Tune memory for  MRP level 3
+#define TUNE_BYPASS_MEM                       1 // Tune memory for  BYPASS ENCDEC OFF
 
+#define FIX_DG                                1 // fixing data race issues with the 2pass without impacting the bdrate and enable//CI
+                                                // the 2pass crf with DG for up to M10
+#define OPT_FIRST_PASS2                       1 // Reduce the compexity of the first pass//CI
+#define OPT_FIRST_PASS3                       1 // Bypass the odd sbs in both directions.//CI
+#define OPT_FIRST_PASS4                       1 // Skipintra comp and Downsampling.//CI
 
+#define OPT_TPL_DATA                          1 // move the TPL data from the parent pcs to the me results buffer
+#define CLN_MDCONTEXT                         1 // clean up pointers in the ModeDecisionContext struct
+#define OPT_MEM_PALETTE                       1  // make palette_info runtime memory allocation
+
+#define OPT_1P                                0 //New encoder pipeline for IPP based first pass //CI
+#define FIX_ISSUE_50                          1 //CI
+#define FIX_ISSUE_49                          1
+
+#define FIX_TXB_INIT_LEVELS                   1 // Fix EC to use AVX2 @ svt_av1_txb_init_levels()
+#define FTR_VLPD1                             1 // Add a new very-light-PD1 path, incl. new levels for existing features, and tracking info from co-located SBs
+
+#define FTR_MOD_DEPTH_REMOVAL_LVL             1 // Apply a more agressive depth_removal level for Layer0 based on the qp_offset band
+#define FIX_UNPACK_10BIT_ED_BYPASS            1 // Fix how the 10bit recon pictures are unpacked when generating the 8bit recon when ED is bypassed
+
+#define OPT_PREHME                            1 // Use TF motion to direct preHme search
+#define TUNE_EXIT_TH                          1 // Skip ME L1 ref based on L0 ref.
+#define TUNE_VLPD1_LVLS                       1 // Improve the features used in VLPD1
+#define TUNE_REG_PD1                          1 // Tune feature levels used in reg. PD1
+#define FIX_LPD1_FOR_ISLICE                   1 // Make LPD1 and VLPD1 compatible with I_SLICE
+
+#define TUNE_M9_M11_OPTIMIZED_SUPER4KL        1 // Optimize 4K in M11 and slowing down M9 by around 1%
+#define TUNE_M7_SLOWDOWN                      1 // Slowdown M7 for about 20% to get to a distance of around 82% from M6
+#define TUNE_M8_SLOWDOWN                      1 // Slowdown M8 for about 29% to get to a distance of around 80% from the new M7 after slowdown
+#define TUNE_M9_SLOWDOWN                      1 // Slowdown M9 for about 20% to get to a distance of around 73% from the new M8 after slowdown
+#define TUNE_M10_SLOWDOWN                     1 // Slowdown M10 for about 16% to get to a distance of around 63% from the new M9 after slowdown
+#define TUNE_M11_SLOWDOWN                     1 // Slowdown M11 for about 22% to get to a distance of around 51% from the new M10 after slowdown
+#define TUNE_NEW_M12                          1 // Enabling M12 as the old M11
+
+#define FIX_FTR_PREHME_SUB                    1 // Fix mismatch between svt_sad_loop_kernel_{c/sse4_1/avx2/avx512}_intrin introduced by FTR_PREHME_SUB macro
+
+#define FTR_VLPD0                             1 // Very Light PD0
+
+#define FTR_NEW_QPS                           0 // Added the ability to use the libaom QPS model
+#define FIX_INIT_ZZ_CAND                      0 // Fix initialized variables @ inject_zz_backup_candidate()
+#define OPT_M12_SPEED                         1 // optimize subpel_me for higher resolution for speed and modify ftr_vlpd0 levels
+
+#define FTR_LESS_BI                           0 // Avoid ME BiPred candidates if they have close enough MV to already injected Bi Pred.
+
+#define FTR_VLPD0_INTER_DEPTH                 0 // Modulate the inter-depth bias based on the QP, and the temporal complexity of the SB towards more split for low QPs or/and complex SBs, and less split for high QPs or/and easy SBs (to compensate for the absence of the coeff rate).
+#define FTR_M13                               1 // add M13 preset to the encoder, should match the cvh path
+
+#endif //----------------------------------- all svt-05 features should be place are above this line -------------------------
 
 #if !PRIVATE_MACROS
 
@@ -638,7 +722,7 @@ NOTE : PART OF LIGHT_PD0_2  code was committed to svt-04-final-rebased under OPT
 #undef OPT_TPL_ALL32X32
 #undef OPT_TPL_ALL64X64
 #undef OPT_COMBINE_TPL_FOR_LAD
-#undef LIGHT_PD1
+#undef LIGHT_PD1_MACRO
 #undef FTR_PD0_OPT
 #undef FTR_LPD1_DETECTOR
 #undef OPT_LPD1_MRP
@@ -670,6 +754,15 @@ NOTE : PART OF LIGHT_PD0_2  code was committed to svt-04-final-rebased under OPT
 #undef OPT_COEFF_BIT_EST
 #undef OPT_TX_SHORTS
 #undef FIXED_POINTS_PLANEWISE
+#undef TUNE_MEDIUM_TFILTER
+#undef FTR_MEM_OPT
+#undef FTR_MEM_OPT_WM
+#undef OPT_MEM_PALETTE
+#undef TUNE_BYPASS_MEM
+#undef OPT_TPL_DATA
+#undef FTR_VLPD1
+#undef FTR_VLPD0
+#undef OPT_M12_SPEED
 #endif
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch

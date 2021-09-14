@@ -249,7 +249,11 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
 #if TUNE_M8_M9_FEB24
 #if TUNE_M9_SLOW
 #if TUNE_M10_M0 && !TUNE_M9_M10 || TUNE_M8_M11_MT
+#if TUNE_M11_SLOWDOWN
+    else if (pcs_ptr->enc_mode <= ENC_M11) {
+#else
     else if (pcs_ptr->enc_mode <= ENC_M10) {
+#endif
 #else
     else if (pcs_ptr->enc_mode <= ENC_M9) {
 #endif
@@ -356,7 +360,11 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
 #if TUNE_M10_DEPTH_ME
 #if TUNE_NEW_M10_M11
 #if TUNE_M11
+#if TUNE_NEW_M12
+    else if (pcs_ptr->enc_mode <= ENC_M12) {
+#else
     else if (pcs_ptr->enc_mode <= ENC_M11) {
+#endif
 #else
     else if (pcs_ptr->enc_mode <= ENC_M10) {
 #endif
@@ -409,6 +417,11 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
             me_context_ptr->max_me_search_height = 3;
 #if !FTR_2PASS_1PASS_UNIFICATION
         }
+#endif
+#if FTR_M13
+#if FTR_BIAS_STAT
+        me_context_ptr->stat_factor = 80;
+#endif
 #endif
     }
 #endif
@@ -662,8 +675,16 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
     if(pcs_ptr->enc_mode <= ENC_M10)
 #endif
         me_context_ptr->me_early_exit_th = 0;
+
+#if TUNE_EXIT_TH
+    else if(pcs_ptr->enc_mode <= ENC_M10)
+        me_context_ptr->me_early_exit_th = BLOCK_SIZE_64 * BLOCK_SIZE_64 * 8;
+    else
+        me_context_ptr->me_early_exit_th = BLOCK_SIZE_64 * BLOCK_SIZE_64 * 9;
+#else
     else
         me_context_ptr->me_early_exit_th = BLOCK_SIZE_64 * BLOCK_SIZE_64 * 8;
+#endif
 #endif
     return NULL;
 };
@@ -703,15 +724,22 @@ void set_me_hme_ref_prune_ctrls(MeContext* context_ptr, uint8_t prune_level) {
         break;
     case 5:
         me_hme_prune_ctrls->enable_me_hme_ref_pruning = 1;
-        me_hme_prune_ctrls->prune_ref_if_hme_sad_dev_bigger_than_th = 5;
+        me_hme_prune_ctrls->prune_ref_if_hme_sad_dev_bigger_than_th =  5;
         me_hme_prune_ctrls->prune_ref_if_me_sad_dev_bigger_than_th = 60;
-        me_hme_prune_ctrls->protect_closest_refs = 1;
+        me_hme_prune_ctrls->protect_closest_refs =  1;
         break;
     case 6:
+#if TUNE_EXIT_TH
+        me_hme_prune_ctrls->enable_me_hme_ref_pruning = 1;
+        me_hme_prune_ctrls->prune_ref_if_hme_sad_dev_bigger_than_th = 200;
+        me_hme_prune_ctrls->prune_ref_if_me_sad_dev_bigger_than_th = 60;
+        me_hme_prune_ctrls->protect_closest_refs = 0;
+#else
         me_hme_prune_ctrls->enable_me_hme_ref_pruning = 1;
         me_hme_prune_ctrls->prune_ref_if_hme_sad_dev_bigger_than_th = 0;
         me_hme_prune_ctrls->prune_ref_if_me_sad_dev_bigger_than_th = 0;
         me_hme_prune_ctrls->protect_closest_refs = 1;
+#endif
         break;
     default:
         assert(0);
@@ -776,6 +804,23 @@ void set_me_sr_adjustment_ctrls(MeContext* context_ptr, uint8_t sr_adjustment_le
         break;
 #endif
 #endif
+
+#if TUNE_EXIT_TH
+    case 5:
+
+        me_sr_adjustment_ctrls->enable_me_sr_adjustment = 2;
+        me_sr_adjustment_ctrls->reduce_me_sr_based_on_mv_length_th = context_ptr->input_resolution <= INPUT_SIZE_720p_RANGE || context_ptr->clip_class ? 20 : 24;
+        me_sr_adjustment_ctrls->stationary_hme_sad_abs_th = context_ptr->input_resolution <= INPUT_SIZE_720p_RANGE || context_ptr->clip_class ? 24000 : 26000;
+        me_sr_adjustment_ctrls->stationary_me_sr_divisor = 8;
+        me_sr_adjustment_ctrls->reduce_me_sr_based_on_hme_sad_abs_th = context_ptr->input_resolution <= INPUT_SIZE_720p_RANGE || context_ptr->clip_class ? 24000 : 26000;
+        me_sr_adjustment_ctrls->me_sr_divisor_for_low_hme_sad = 8;
+        me_sr_adjustment_ctrls->distance_based_hme_resizing = 1;
+
+
+
+        break;
+#endif
+
     default:
         assert(0);
         break;
@@ -815,7 +860,9 @@ void set_prehme_ctrls(MeContext* context, uint8_t level) {
 #if FTR_PREHME_OPT
         ctrl->l1_early_exit = 0;
 #endif
-
+#if OPT_PREHME
+        ctrl->use_tf_motion = 0;
+#endif
         break;
     case 2:
         ctrl->enable = 1;
@@ -853,7 +900,9 @@ void set_prehme_ctrls(MeContext* context, uint8_t level) {
 #if FTR_PREHME_OPT
         ctrl->l1_early_exit = 0;
 #endif
-
+#if OPT_PREHME
+        ctrl->use_tf_motion = 0;
+#endif
         break;
 #if TUNE_PREHME_M10
     case 3:
@@ -868,6 +917,11 @@ void set_prehme_ctrls(MeContext* context, uint8_t level) {
 #if FTR_PREHME_OPT
         ctrl->l1_early_exit = 1;
 #endif
+#if OPT_PREHME
+        ctrl->use_tf_motion = 1;
+#endif
+
+
         break;
 #endif
     default:
@@ -1001,7 +1055,15 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
 #if TUNE_M7_M10_MT
 #if TUNE_M10_M9_1
 #if TUNE_NEW_M11_2
+#if TUNE_NEW_M12
+#if FTR_M13
+    if (enc_mode <= ENC_M13)
+#else
+    if (enc_mode <= ENC_M12)
+#endif
+#else
     if (enc_mode <= ENC_M11)
+#endif
 #else
     if (enc_mode <= ENC_M10)
 #endif
@@ -1082,7 +1144,15 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
 #else
             prehme_level = 2;
 #endif
+#if TUNE_NEW_M12
+#if FTR_M13
+        else if (enc_mode <= ENC_M13)
+#else
+        else if (enc_mode <= ENC_M12)
+#endif
+#else
         else if (enc_mode <= ENC_M11)
+#endif
             prehme_level = 3;
         else
             prehme_level = 0;
@@ -1109,17 +1179,43 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
     set_prehme_ctrls(context_ptr->me_context_ptr, prehme_level);
 
     // Set hme/me based reference pruning level (0-4)
-    if (enc_mode <= ENC_MRS)
+#if TUNE_EXIT_TH
+    if (pcs_ptr->sc_class1) {
+        if (enc_mode <= ENC_MRS)
             set_me_hme_ref_prune_ctrls(context_ptr->me_context_ptr, 0);
-    else if (enc_mode <= ENC_M1)
+        else if (enc_mode <= ENC_M1)
 
             set_me_hme_ref_prune_ctrls(context_ptr->me_context_ptr, 2);
-    else
-        set_me_hme_ref_prune_ctrls(context_ptr->me_context_ptr, 5);
+        else if (enc_mode <= ENC_M10)
+            set_me_hme_ref_prune_ctrls(context_ptr->me_context_ptr, 5);
+        else
+            set_me_hme_ref_prune_ctrls(context_ptr->me_context_ptr, 6);
+    }
+    else {
+#endif
+        if (enc_mode <= ENC_MRS)
+            set_me_hme_ref_prune_ctrls(context_ptr->me_context_ptr, 0);
+        else if (enc_mode <= ENC_M1)
+
+            set_me_hme_ref_prune_ctrls(context_ptr->me_context_ptr, 2);
+        else
+            set_me_hme_ref_prune_ctrls(context_ptr->me_context_ptr, 5);
+
+#if TUNE_EXIT_TH
+    }
+#endif
     // Set hme-based me sr adjustment level
 #if TUNE_SC_ME_SR_ADJUST
     if (pcs_ptr->sc_class1)
+
+#if TUNE_EXIT_TH
+        if(enc_mode <= ENC_M10)
+            set_me_sr_adjustment_ctrls(context_ptr->me_context_ptr, 4);
+        else
+            set_me_sr_adjustment_ctrls(context_ptr->me_context_ptr, 5);
+#else
         set_me_sr_adjustment_ctrls(context_ptr->me_context_ptr, 4);
+#endif
     else if (enc_mode <= ENC_MRS)
 #else
     if (enc_mode <= ENC_MRS)
@@ -1155,7 +1251,7 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
 
         set_me_sr_adjustment_ctrls(context_ptr->me_context_ptr, 3);
 #endif
-#if  TUNE_M7_M10_MT
+#if  TUNE_M7_M10_MT && !TUNE_M7_SLOWDOWN
 #if TUNE_M7_M8
     if (enc_mode <= ENC_M6)
 #else
@@ -1166,7 +1262,15 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
 #endif
         context_ptr->me_context_ptr->prune_me_candidates_th = 0;
 #if TUNE_NEW_M10_M11
+#if TUNE_NEW_M12
+#if FTR_M13
+    else if (enc_mode <= ENC_M13)
+#else
+    else if (enc_mode <= ENC_M12)
+#endif
+#else
     else if (enc_mode <= ENC_M11)
+#endif
         context_ptr->me_context_ptr->prune_me_candidates_th = scs_ptr->input_resolution <= INPUT_SIZE_720p_RANGE ? 65 : 30;
     else
         context_ptr->me_context_ptr->prune_me_candidates_th = 30;

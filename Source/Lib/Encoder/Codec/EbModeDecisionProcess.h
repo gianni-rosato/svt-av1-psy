@@ -554,7 +554,7 @@ typedef struct UseNeighbouringModeCtrls {
     uint8_t enabled;
 } UseNeighbouringModeCtrls;
 #endif
-#if LIGHT_PD1
+#if LIGHT_PD1_MACRO
 typedef struct BlockLocation {
     uint32_t input_origin_index;        //luma   block location in picture
     uint32_t input_cb_origin_in_index;  //chroma block location in picture
@@ -563,12 +563,29 @@ typedef struct BlockLocation {
 } BlockLocation;
 #endif
 #if FTR_LPD1_DETECTOR
+#if FTR_VLPD1
+typedef struct Lpd1Ctrls {
+    int8_t pd1_level;                               // Whether light-PD1 is set to be used for an SB (the detector may change this)
+    EbBool use_lpd1_detector[LPD1_LEVELS];          // Whether to use a detector; if use_light_pd1 is set to 1, the detector will protect tough SBs
+    EbBool use_ref_info[LPD1_LEVELS];               // Use info of ref frames - incl. colocated SBs - such as mode, coeffs, etc. in the detector
+    uint32_t cost_th_dist[LPD1_LEVELS];             // Distortion value used in cost TH for detector
+    uint16_t coeff_th[LPD1_LEVELS];                 // Num non-zero coeffs used in detector
+    uint16_t max_mv_length[LPD1_LEVELS];            // Max MV length TH used in the detector: 0 - (0,0) MV only; (uint16_t)~0 means no MV check (higher is more aggressive)
+    uint32_t me_8x8_cost_variance_th[LPD1_LEVELS];  // me_8x8_cost_variance_th beyond which the PD1 is used (instead of light-PD1)
+    uint32_t skip_pd0_edge_dist_th[LPD1_LEVELS];    // ME_64x64_dist threshold used for edge SBs when PD0 is skipped
+    uint16_t skip_pd0_me_shift[LPD1_LEVELS];        // Shift applied to ME dist and var of top and left SBs when PD0 is skipped
+} Lpd1Ctrls;
+#else
 typedef struct Lpd1Ctrls {
     EbBool enabled;             // Whether light-PD1 can be used for an SB
     EbBool use_light_pd1;       // Whether light-PD1 is set to be used for an SB (the detector may change this)
     EbBool use_lpd1_detector;   // Whether to use a detector; if use_light_pd1 is set to 1, the detector will protect tough SBs;
                                 // if use_light_pd1 is set to 0, the detector will select easy SBs to use light-PD1 for (not yet implemented)
+#if TUNE_LPD1_DETECTOR_LVL
+    uint32_t cost_th_dist;      // Distortion value used in cost TH for detector
+#else
     uint16_t cost_th_dist;      // Distortion value used in cost TH for detector
+#endif
     uint16_t coeff_th;          // Num non-zero coeffs used in detector
 #if OPT_USE_MVS_LPD1_DETECTOR
     uint16_t max_mv_length;     // Max MV length TH used in the detector: 0 - (0,0) MV only; (uint16_t)~0 means no MV check (higher is more aggressive)
@@ -577,17 +594,30 @@ typedef struct Lpd1Ctrls {
     uint32_t me_8x8_cost_variance_th; // me_8x8_cost_variance_th beyond which the PD1 is used (instead of light-PD1)
 #endif
 #if TUNE_LPD1_DETECTOR
+#if TUNE_LPD1_DETECTOR_LVL
+    uint32_t skip_pd0_edge_dist_th;  // ME_64x64_dist threshold used for edge SBs when PD0 is skipped
+#else
     uint16_t skip_pd0_edge_dist_th;  // ME_64x64_dist threshold used for edge SBs when PD0 is skipped
+#endif
     uint16_t skip_pd0_me_dist_shift; // Shift applied to ME dist of top and left SBs when PD0 is skipped
 #endif
 } Lpd1Ctrls;
 #endif
+#endif
 #if FTR_SKIP_TX_LPD1
 typedef struct SkipTxCtrls {
     uint8_t zero_y_coeff_exit;      // skip cost calc and chroma TX/compensation if there are zero luma coeffs
+#if FTR_VLPD1
+    uint8_t chroma_detector_dist_shift;      // left bitshift applied to the luma distortion to ensure chroma is only performed if necessary.  Higher is more aggressive.
+    uint8_t chroma_detector_downsampling;    // downsampling shift applied to the source images in the detector. [1-2]
+#endif
     uint8_t skip_nrst_nrst_tx;      // skip luma TX for NRST_NRST cands if dist/QP is low, and top and left neighbours have no coeffs
 #if OPT_TX_SKIP
     uint8_t skip_mvp_tx;            // skip luma TX for MVP cands if dist/QP is low, and top and left neighbours have no coeffs
+#endif
+#if FTR_VLPD1
+    uint8_t skip_inter_tx;          // skip luma TX for INTER cands if dist/QP is low, and top and left neighbours have no coeffs
+    uint8_t use_neigh_coeff_info;   // only skip if top and left neighbours have no coeffs
 #endif
 #if FTR_TX_NEIGH_INFO
     uint16_t skip_tx_th;            // if (skip_tx_th/QP < TH) skip TX at MDS3; 0: OFF, higher: more aggressive
@@ -678,6 +708,11 @@ typedef struct ModeDecisionContext {
 #endif
     PALETTE_BUFFER   palette_buffer;
     PaletteInfo      palette_cand_array[MAX_PAL_CAND];
+#if OPT_MEM_PALETTE
+    // MD palette search
+    uint8_t          *palette_size_array_0;
+    uint8_t          *palette_size_array_1;
+#endif
     // Entropy Coder
     MdEncPassCuData *md_ep_pipe_sb;
 
@@ -1037,10 +1072,24 @@ typedef struct ModeDecisionContext {
     uint16_t coded_area_sb;
     uint16_t coded_area_sb_uv;
 #endif
+#if FTR_VLPD0
+    EbBool pd0_level;
+    // 0 : Use regular PD0
+    // 1 : Use light PD0 path.  Assumes one class, no NSQ, no 4x4, TXT off, TXS off, PME off, etc.
+    // 2 : Use very light PD0 path: only mds0 (no transform path), no compensation(s) @ mds0
+    //     (only umpired candidates, and read directly from reference buffer(s) to compute distortion(s) without
+    //     accessing the pred buffer(s)), SSD as distortion metric(kept the use of full lambda @ in-depth-exit and @ inter-depth),
+    //     only split flag for rate(coefficient(s) rate is assumed to be 0),
+    //     use the 2nd PD1-level classifier (as the regular PD1 classifier uses the number of non-zero coefficient(s)).
+#if FTR_M13
+    // 3: Skip pd0 if block size is equal to or greater than 32x32
+#endif
+#else
 #if LIGHT_PD0
     EbBool use_light_pd0; // Use light PD0 path.  Assumes one class, no NSQ, no 4x4, TXT off, TXS off, PME off, etc.
 #endif
-#if LIGHT_PD1
+#endif
+#if LIGHT_PD1_MACRO
 #if FTR_LPD1_DETECTOR
     Lpd1Ctrls lpd1_ctrls;
 #else
@@ -1092,6 +1141,9 @@ typedef struct ModeDecisionContext {
 #if FTR_REDUCE_UNI_PRED
     uint8_t reduce_unipred_candidates;
 #endif
+#if FTR_VLPD1
+    uint8_t bipred_available;
+#endif
 #if OPT_USE_INTRA_NEIGHBORING
     UseNeighbouringModeCtrls use_neighbouring_mode_ctrls;
     uint8_t is_intra_bordered;
@@ -1113,6 +1165,9 @@ typedef struct ModeDecisionContext {
 #if FIX_SKIP_COEFF_CONTEXT
     uint8_t use_skip_coeff_context;
 #endif
+#if FTR_M13
+    uint8_t skip_pd0;
+#endif
 } ModeDecisionContext;
 
 typedef void (*EbAv1LambdaAssignFunc)(PictureControlSet *pcs_ptr, uint32_t *fast_lambda,
@@ -1127,6 +1182,9 @@ extern EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr,
                                               uint8_t enc_mode,
 #if CLN_GEOM
                                               uint16_t max_block_cnt,
+#endif
+#if TUNE_BYPASS_MEM
+                                            uint32_t encoder_bit_depth,
 #endif
                                               EbFifo *mode_decision_configuration_input_fifo_ptr,
                                               EbFifo *mode_decision_output_fifo_ptr,

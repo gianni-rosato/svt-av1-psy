@@ -91,20 +91,26 @@ extern EbErrorType rate_control_coded_frames_stats_context_ctor(coded_frames_sta
     uint64_t               picture_number);
 #endif
 typedef struct {
+#if !RFCTR_RC_P1
     int sb64_target_rate;
     int last_q[FRAME_TYPES]; // Separate values for Intra/Inter
+#endif
     int last_boosted_qindex; // Last boosted GF/KF/ARF q
+#if !RFCTR_RC_P1
     int last_kf_qindex; // Q index of the last key frame coded.
-
+#endif
     int gfu_boost;
     int kf_boost;
 
     double rate_correction_factors[RATE_FACTOR_LEVELS];
-
+#if !RFCTR_RC_P1
     int frames_since_golden;
+#endif
     int min_gf_interval;
     int max_gf_interval;
+#if !RFCTR_RC_P1
     int static_scene_max_gf_interval;
+#endif
 #if FTR_1PASS_CBR_RT
     int frames_till_gf_update_due;
     int onepass_cbr_mode; // 0: not 1pass cbr, 1: 1pass cbr normal, 2: 1pass cbr real time
@@ -114,10 +120,13 @@ typedef struct {
     int frames_to_key;
     int frames_since_key;
     int this_key_frame_forced;
+#if !RFCTR_RC_P1
     int next_key_frame_forced;
     int source_alt_ref_pending;
     int source_alt_ref_active;
+#endif
     int is_src_frame_alt_ref;
+#if !RFCTR_RC_P1
     int sframe_due;
 
     // Length of the bi-predictive frame group interval
@@ -129,32 +138,35 @@ typedef struct {
     int is_last_bipred_frame;
     int is_bipred_frame;
     int is_src_frame_ext_arf;
+#endif
 
     int avg_frame_bandwidth; // Average frame size target for clip
     int min_frame_bandwidth; // Minimum allocation used for any frame
     int max_frame_bandwidth; // Maximum burst rate allowed for a frame.
-
+#if !RFCTR_RC_P1
     int    ni_av_qi;
     int    ni_tot_qi;
     int    ni_frames;
+#endif
     int    avg_frame_qindex[FRAME_TYPES];
+#if !RFCTR_RC_P1
     double tot_q;
     double avg_q;
-
+#endif
     int64_t buffer_level;
     int64_t bits_off_target;
     int64_t vbr_bits_off_target;
     int64_t vbr_bits_off_target_fast;
-
+#if !RFCTR_RC_P1
     int decimation_factor;
     int decimation_count;
-
+#endif
     int rolling_target_bits;
     int rolling_actual_bits;
-
+#if !RFCTR_RC_P1
     int long_rolling_target_bits;
     int long_rolling_actual_bits;
-
+#endif
     int rate_error_estimate;
 
     int64_t total_actual_bits;
@@ -187,8 +199,9 @@ typedef struct {
     int prev_avg_frame_bandwidth; //only for CBR?
     int active_worst_quality;
     int active_best_quality[MAX_ARF_LAYERS + 1];
+#if !RFCTR_RC_P1
     int base_layer_qp;
-
+#endif
     int gf_interval;
 
     // gop bit budget
@@ -200,9 +213,13 @@ typedef struct {
     int num_stats_used_for_gfu_boost;
     // Total number of stats required by gfu_boost calculation.
     int num_stats_required_for_gfu_boost;
+#if !RFCTR_RC_P1
     int enable_scenecut_detection;
+#endif
+#if !RFCTR_RC_P1
     int use_arf_in_this_kf_group;
     int next_is_fwd_key;
+#endif
 #if FTR_RC_CAP
     // Rate Control stat Queue
     coded_frames_stats_entry **coded_frames_stat_queue;

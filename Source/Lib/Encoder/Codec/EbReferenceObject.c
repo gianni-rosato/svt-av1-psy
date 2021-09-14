@@ -143,6 +143,11 @@ static void svt_reference_object_dctor(EbPtr p) {
     EB_FREE_2D(obj->unit_info);
 #endif
     EB_FREE_ALIGNED_ARRAY(obj->mvs);
+#if FTR_VLPD1
+    EB_FREE_ARRAY(obj->sb_intra);
+    EB_FREE_ARRAY(obj->sb_skip);
+    EB_FREE_ARRAY(obj->sb_64x64_mvp);
+#endif
 #if !FTR_NEW_MULTI_PASS
     EB_DESTROY_MUTEX(obj->referenced_area_mutex);
 #endif
@@ -181,22 +186,8 @@ EbErrorType svt_reference_object_ctor(EbReferenceObject *reference_object,
     //TODO:12bit
     if (picture_buffer_desc_init_data_16bit_ptr.bit_depth == EB_10BIT) {
         // Hsan: set split_mode to 0 to construct the packed reference buffer (used @ EP)
-        picture_buffer_desc_init_data_16bit_ptr.split_mode = EB_FALSE;
-#if FTR_MEM_OPT
-        if (DUPLICATE_REFENCE){
-
-        EB_NEW(reference_object->reference_picture16bit,
-               svt_picture_buffer_desc_ctor,
-               (EbPtr)&picture_buffer_desc_init_data_16bit_ptr);
-
-        initialize_samples_neighboring_reference_picture(
-            reference_object,
-            &picture_buffer_desc_init_data_16bit_ptr,
-            picture_buffer_desc_init_data_16bit_ptr.bit_depth);
-
-        }
-#else
 #if !FTR_MEM_OPT
+        picture_buffer_desc_init_data_16bit_ptr.split_mode = EB_FALSE;
         EB_NEW(reference_object->reference_picture16bit,
                svt_picture_buffer_desc_ctor,
                (EbPtr)&picture_buffer_desc_init_data_16bit_ptr);
@@ -206,23 +197,12 @@ EbErrorType svt_reference_object_ctor(EbReferenceObject *reference_object,
             &picture_buffer_desc_init_data_16bit_ptr,
             picture_buffer_desc_init_data_16bit_ptr.bit_depth);
 #endif
-#endif
+#if FTR_MEM_OPT
+        // Use 10bit here to use in MD
+        picture_buffer_desc_init_data_16bit_ptr.split_mode = EB_TRUE;
+        picture_buffer_desc_init_data_16bit_ptr.bit_depth = EB_10BIT;
+#else
         // Use 8bit here to use in MD
-#if FTR_MEM_OPT
-#if FTR_MEM_OPT
-        if (DUPLICATE_REFENCE) {
-            picture_buffer_desc_init_data_16bit_ptr.split_mode = EB_FALSE;
-            picture_buffer_desc_init_data_16bit_ptr.bit_depth  = EB_8BIT;
-        }
-        else {
-            picture_buffer_desc_init_data_16bit_ptr.split_mode = EB_TRUE;
-            picture_buffer_desc_init_data_16bit_ptr.bit_depth = EB_10BIT;
-        }
-#else
-            picture_buffer_desc_init_data_16bit_ptr.split_mode = EB_TRUE;
-            picture_buffer_desc_init_data_16bit_ptr.bit_depth = EB_10BIT;
-#endif
-#else
         picture_buffer_desc_init_data_16bit_ptr.split_mode = EB_FALSE;
         picture_buffer_desc_init_data_16bit_ptr.bit_depth  = EB_8BIT;
 #endif
@@ -297,7 +277,11 @@ EbErrorType svt_reference_object_ctor(EbReferenceObject *reference_object,
 
     reference_object->mi_rows = mi_rows;
     reference_object->mi_cols = mi_cols;
-
+#if FTR_VLPD1
+    EB_MALLOC_ARRAY(reference_object->sb_intra, picture_buffer_desc_init_data_ptr->sb_total_count);
+    EB_MALLOC_ARRAY(reference_object->sb_skip, picture_buffer_desc_init_data_ptr->sb_total_count);
+    EB_MALLOC_ARRAY(reference_object->sb_64x64_mvp, picture_buffer_desc_init_data_ptr->sb_total_count);
+#endif
     return EB_ErrorNone;
 }
 

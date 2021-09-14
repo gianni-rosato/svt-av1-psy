@@ -142,8 +142,15 @@ int svt_av1_index_color_cache(const uint16_t *color_cache, int n_cache, const ui
 }
 
 int svt_av1_palette_color_cost_y(const PaletteModeInfo *const pmi, uint16_t *color_cache,
+#if OPT_MEM_PALETTE
+    const int palette_size ,
+#endif
                                  int n_cache, int bit_depth) {
+#if OPT_MEM_PALETTE
+    const int n = palette_size;
+#else
     const int n = pmi->palette_size[0];
+#endif
     int       out_cache_colors[PALETTE_MAX_SIZE];
     uint8_t   cache_color_found[2 * PALETTE_MAX_SIZE];
     const int n_out_cache = svt_av1_index_color_cache(
@@ -299,7 +306,11 @@ static AOM_INLINE void extend_palette_color_map(uint8_t *const color_map, int or
         svt_memcpy(color_map + j * new_width, color_map + (orig_height - 1) * new_width, new_width);
     }
 }
+#if OPT_MEM_PALETTE
+void palette_rd_y(PaletteInfo *palette_info,uint8_t *palette_size_array, ModeDecisionContext *context_ptr, BlockSize bsize,
+#else
 void palette_rd_y(PaletteInfo *palette_info, ModeDecisionContext *context_ptr, BlockSize bsize,
+#endif
                   const int *data, int *centroids, int n, uint16_t *color_cache, int n_cache,
                   int bit_depth) {
     optimize_palette_colors(color_cache, n_cache, n, 1, centroids);
@@ -307,7 +318,11 @@ void palette_rd_y(PaletteInfo *palette_info, ModeDecisionContext *context_ptr, B
     if (k < PALETTE_MIN_SIZE) {
         // Too few unique colors to create a palette. And DC_PRED will work
         // well for that case anyway. So skip.
+#if OPT_MEM_PALETTE
+       palette_size_array[0] = 0;
+#else
         palette_info->pmi.palette_size[0] = 0;
+#endif
         return;
     }
 
@@ -317,8 +332,11 @@ void palette_rd_y(PaletteInfo *palette_info, ModeDecisionContext *context_ptr, B
     } else {
         for (int i = 0; i < k; ++i) palette_info->pmi.palette_colors[i] = clip_pixel(centroids[i]);
     }
+#if OPT_MEM_PALETTE
+    palette_size_array[0] = k;
+#else
     palette_info->pmi.palette_size[0] = k;
-
+#endif
     uint8_t *const color_map = palette_info->color_idx_map;
     int            block_width, block_height, rows, cols;
     av1_get_block_dimensions(
@@ -334,7 +352,11 @@ int svt_av1_count_colors_highbd(uint16_t *src, int stride, int rows, int cols, i
    determine all palette luma candidates
  ****************************************/
 void search_palette_luma(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
+#if OPT_MEM_PALETTE
+    PaletteInfo *palette_cand, uint8_t*    palette_size_array , uint32_t *tot_palette_cands) {
+#else
                          PaletteInfo *palette_cand, uint32_t *tot_palette_cands) {
+#endif
     int    colors;
     EbBool is16bit = context_ptr->hbd_mode_decision > 0;
 
@@ -422,6 +444,9 @@ void search_palette_luma(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
             for (i = 0; i < n; ++i) centroids[i] = top_colors[i];
 
             palette_rd_y(&palette_cand[*tot_palette_cands],
+#if OPT_MEM_PALETTE
+                         &palette_size_array[*tot_palette_cands],
+#endif
                          context_ptr,
                          bsize,
                          data,
@@ -432,7 +457,12 @@ void search_palette_luma(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
                          bit_depth);
 
             //consider this candidate if it has some non zero palette
+#if OPT_MEM_PALETTE
+
+            if (palette_size_array[*tot_palette_cands] > 2)
+#else
             if (palette_cand[*tot_palette_cands].pmi.palette_size[0] > 2)
+#endif
                 (*tot_palette_cands)++;
             assert((*tot_palette_cands) <= 14);
         }
@@ -451,6 +481,9 @@ void search_palette_luma(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
             }
 
             palette_rd_y(&palette_cand[*tot_palette_cands],
+#if OPT_MEM_PALETTE
+                        &palette_size_array[*tot_palette_cands],
+#endif
                          context_ptr,
                          bsize,
                          data,
@@ -461,7 +494,12 @@ void search_palette_luma(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
                          bit_depth);
 
             //consider this candidate if it has some non zero palette
+#if OPT_MEM_PALETTE
+
+            if (palette_size_array[*tot_palette_cands] > 2)
+#else
             if (palette_cand[*tot_palette_cands].pmi.palette_size[0] > 2)
+#endif
                 (*tot_palette_cands)++;
 
             assert((*tot_palette_cands) <= 14);
@@ -493,12 +531,20 @@ static void get_palette_params(FRAME_CONTEXT *frame_context, BlkStruct *blk_ptr,
     MbModeInfo *                 mbmi = &(xd->mi[0]->mbmi);
     const PaletteModeInfo *const pmi  = &mbmi->palette_mode_info;
 #endif
+#if OPT_MEM_PALETTE
+    params->color_map                 = blk_ptr->palette_info->color_idx_map;
+#else
     params->color_map                 = blk_ptr->palette_info.color_idx_map;
+#endif
     params->map_cdf                   = plane ? frame_context->palette_uv_color_index_cdf
                                               : frame_context->palette_y_color_index_cdf;
     params->color_cost                = NULL;
 #if OPT_PALETTE_MEM
+#if OPT_MEM_PALETTE
+    params->n_colors                  = blk_ptr->palette_size[plane];
+#else
     params->n_colors                  = blk_ptr->palette_info.pmi.palette_size[plane];
+#endif
 #else
     params->n_colors                  = pmi->palette_size[plane];
 #endif
@@ -516,22 +562,39 @@ static void get_color_map_params(FRAME_CONTEXT *frame_context, BlkStruct *blk_pt
     default: assert(0 && "Invalid color map type"); return;
     }
 }
+#if OPT_MEM_PALETTE
+static void get_palette_params_rate(ModeDecisionCandidate *candidate_ptr, MdRateEstimationContext *rate_table,
+#else
 static void get_palette_params_rate(PaletteInfo *palette_info, MdRateEstimationContext *rate_table,
+#endif
                                     BlkStruct *blk_ptr, int plane, BlockSize bsize,
                                     Av1ColorMapParam *params) {
-    const MacroBlockD *const     xd  = blk_ptr->av1xd;
-    const PaletteModeInfo *const pmi = &palette_info->pmi;
+#if OPT_MEM_PALETTE
+  PaletteInfo *palette_info = candidate_ptr->palette_info;
 
+#endif
+    const MacroBlockD *const     xd  = blk_ptr->av1xd;
+#if !OPT_MEM_PALETTE
+    const PaletteModeInfo *const pmi = &palette_info->pmi;
+#endif
     params->color_map  = palette_info->color_idx_map;
     params->map_cdf    = NULL;
     params->color_cost = plane ? NULL : (ColorCost)&rate_table->palette_ycolor_fac_bitss;
+#if OPT_MEM_PALETTE
+    params->n_colors   = candidate_ptr->palette_size[plane];
+#else
     params->n_colors   = pmi->palette_size[plane];
+#endif
 
     av1_get_block_dimensions(
         bsize, plane, xd, &params->plane_width, NULL, &params->rows, &params->cols);
 }
+#if OPT_MEM_PALETTE
 
+static void get_color_map_params_rate(ModeDecisionCandidate *candidate_ptr,
+#else
 static void get_color_map_params_rate(PaletteInfo *                            palette_info,
+#endif
                                       MdRateEstimationContext *                rate_table,
                                       /*const MACROBLOCK *const x*/ BlkStruct *blk_ptr, int plane,
                                       BlockSize bsize, COLOR_MAP_TYPE type,
@@ -539,7 +602,11 @@ static void get_color_map_params_rate(PaletteInfo *                            p
     memset(params, 0, sizeof(*params));
     switch (type) {
     case PALETTE_MAP:
+#if OPT_MEM_PALETTE
+        get_palette_params_rate(candidate_ptr, rate_table, blk_ptr, plane, bsize, params);
+#else
         get_palette_params_rate(palette_info, rate_table, blk_ptr, plane, bsize, params);
+#endif
         break;
     default: assert(0 && "Invalid color map type"); return;
     }
@@ -606,12 +673,21 @@ void svt_av1_tokenize_color_map(FRAME_CONTEXT *frame_context, BlkStruct *blk_ptr
                               : frame_context->palette_y_color_index_cdf;
     cost_and_tokenize_map(&color_map_params, t, plane, 0, allow_update_cdf, map_pb_cdf);
 }
+#if OPT_MEM_PALETTE
+int  svt_av1_cost_color_map( ModeDecisionCandidate *candidate_ptr, MdRateEstimationContext *rate_table,
+
+#else
 int svt_av1_cost_color_map(PaletteInfo *palette_info, MdRateEstimationContext *rate_table,
+#endif
                            BlkStruct *blk_ptr, int plane, BlockSize bsize, COLOR_MAP_TYPE type) {
     assert(plane == 0 || plane == 1);
     Av1ColorMapParam color_map_params;
     get_color_map_params_rate(
+#if OPT_MEM_PALETTE
+        candidate_ptr, rate_table, blk_ptr, plane, bsize, type, &color_map_params);
+#else
         palette_info, rate_table, blk_ptr, plane, bsize, type, &color_map_params);
+#endif
     MapCdf map_pb_cdf = NULL;
     return cost_and_tokenize_map(&color_map_params, NULL, plane, 1, 0, map_pb_cdf);
 }

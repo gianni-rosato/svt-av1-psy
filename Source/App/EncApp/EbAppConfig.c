@@ -2049,6 +2049,9 @@ EbErrorType set_two_passes_stats(EbConfig *config, EncodePass pass,
                                  uint32_t              channel_number) {
     switch (pass) {
     case ENCODE_SINGLE_PASS: {
+#if FIX_DG
+        config->config.skip_frame_first_pass = 0;
+#endif
         const char *stats = config->stats ? config->stats : "svtav1_2pass.log";
         if (config->pass == 1) {
             if (!fopen_and_lock(&config->output_stat_file, stats, EB_TRUE)) {
@@ -2090,18 +2093,31 @@ EbErrorType set_two_passes_stats(EbConfig *config, EncodePass pass,
             }
         }
         config->config.rc_firstpass_stats_out = EB_TRUE;
+#if FIX_DG
+        config->config.skip_frame_first_pass = ((config->config.enc_mode <= 4) ||
+            (config->config.final_pass_rc_mode != 0)) ? 0 : 1;
+#endif
         break;
     }
 #if FTR_MULTI_PASS_API
     case ENCODE_MIDDLE_PASS: {
+#if !TUNE_MULTI_PASS
         if (!rc_twopass_stats_in->sz) {
             fprintf(config->error_log_file,
                 "Error instance %u: bug, combined  multi passes need stats in for middle pass \n",
                 channel_number + 1);
             return EB_ErrorBadParameter;
         }
+#endif
         config->config.rc_middlepass_stats_out = EB_TRUE;
         config->config.rc_twopass_stats_in = *rc_twopass_stats_in;
+#if FTR_OPT_MPASS_DOWN_SAMPLE
+        config->input_padded_width = config->config.source_width = config->config.source_width >> 1;
+        config->input_padded_height = config->config.source_height = config->config.source_height >> 1;
+#endif
+#if FIX_DG
+        config->config.skip_frame_first_pass = 0;
+#endif
         break;
     }
 #endif
@@ -2113,6 +2129,9 @@ EbErrorType set_two_passes_stats(EbConfig *config, EncodePass pass,
             return EB_ErrorBadParameter;
         }
         config->config.rc_twopass_stats_in = *rc_twopass_stats_in;
+#if FIX_DG
+        config->config.skip_frame_first_pass = 0;
+#endif
         break;
     }
     default: {
@@ -2521,8 +2540,13 @@ static EbBool check_two_pass_conflicts(int32_t argc, char *const argv[]) {
 #define ENC_M10         10
 #define ENC_M11         11
 #define ENC_M12         12
+#define ENC_M13         13
 #endif
+#if TUNE_MULTI_PASS
+uint32_t get_passes(int32_t argc, char *const argv[], EncodePass pass[MAX_ENCODE_PASS], MultiPassModes *multi_pass_mode) {
+#else
 uint32_t get_passes(int32_t argc, char *const argv[], EncodePass pass[MAX_ENCODE_PASS]) {
+#endif
     char     config_string[COMMAND_LINE_MAX_SIZE];
 #if FIX_2PASS_CRF
     int32_t passes = -1; // Default mode is used
@@ -2534,7 +2558,7 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncodePass pass[MAX_ENCODE
     int rc_mode = 0;
     int enc_mode = 0;
 #if FIX_ISSUE_46
-    int ip = 0;
+    int ip = -1;
 #endif
     if (find_token(argc, argv, RATE_CONTROL_ENABLE_TOKEN, config_string) == 0 ||
         find_token(argc, argv, "--rc", config_string) == 0)
@@ -2545,16 +2569,25 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncodePass pass[MAX_ENCODE
         find_token(argc, argv, "--preset", config_string) == 0)
         enc_mode = strtol(config_string, NULL, 0);
 
+#if FIX_ISSUE_46
+    if (find_token(argc, argv, INTRA_PERIOD_TOKEN, config_string) == 0 ||
+        find_token(argc, argv, "-intra-period", config_string) == 0 ||
+        find_token(argc, argv, "--keyint", config_string) == 0)
+        ip = strtol(config_string, NULL, 0);
+#endif
     if (rc_mode == 0) { // CRF mode
         if (passes == -1)
+#if FIX_DG
+            passes = (enc_mode <= ENC_M10) ? 2 : 1;
+#else
             passes = (enc_mode <= ENC_M3) ? 2 : 1;
+#endif
 #if FIX_ISSUE_46
-        if (find_token(argc, argv, INTRA_PERIOD_TOKEN, config_string) == 0 ||
-            find_token(argc, argv, "-intra-period", config_string) == 0 ||
-            find_token(argc, argv, "--keyint", config_string) == 0)
-            ip = strtol(config_string, NULL, 0);
         if (ip > -1 && ip < 16)
             passes = 1;
+#endif
+#if TUNE_MULTI_PASS
+        *multi_pass_mode = passes == 2 ? TWO_PASS_IPP_FINAL : SINGLE_PASS;
 #endif
         if (find_token(argc, argv, PASSES_TOKEN, config_string) != 0) {
         }
@@ -2569,9 +2602,45 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncodePass pass[MAX_ENCODE
     else {
         if (find_token(argc, argv, PASSES_TOKEN, config_string) != 0) {
             pass[0] = ENCODE_SINGLE_PASS;
+#if TUNE_MULTI_PASS
+            *multi_pass_mode = SINGLE_PASS;
+#endif
             return 1;
         }
         passes = strtol(config_string, NULL, 0);
+#if TUNE_MULTI_PASS
+        *multi_pass_mode = SINGLE_PASS;
+        if (rc_mode > 1) {
+            if (passes == 3) {
+                passes = 2;
+                *multi_pass_mode = TWO_PASS_IPP_FINAL;
+                fprintf(stderr, "\nWarning: --passes 3 CBR is not supported. Switching to 2-pass encoding\n\n");
+            }
+            else if (passes == 2)
+                *multi_pass_mode = TWO_PASS_IPP_FINAL;
+            else
+                *multi_pass_mode = SINGLE_PASS;
+        }
+        else {
+            if (passes > 1) {
+                if (enc_mode > ENC_M10) {
+                    passes = 2;
+                    *multi_pass_mode = TWO_PASS_IPP_FINAL;
+                    fprintf(stderr, "\nWarning: --passes 3 VBR is not supported for preset %d. Switching to 2-pass encoding\n\n", enc_mode);
+                }
+                else if (enc_mode > ENC_M7) {
+                    passes = 2;
+                    *multi_pass_mode = TWO_PASS_SAMEPRED_FINAL;
+                    fprintf(stderr, "\nWarning: --passes 3 VBR is not supported for preset %d. Switching to 2-pass encoding\n\n", enc_mode);
+                }
+                else
+                {
+                    passes = 3;
+                    *multi_pass_mode = THREE_PASS_IPP_SAMEPRED_FINAL;
+                }
+            }
+        }
+#else
         if (enc_mode > ENC_M7  && passes == 3) {
             passes = 2;
             fprintf(stderr, "\nWarning: --passes 3 VBR is not supported for preset %d. Switching to 2-pass encoding\n\n", enc_mode);
@@ -2580,6 +2649,7 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncodePass pass[MAX_ENCODE
             passes = 2;
             fprintf(stderr, "\nWarning: --passes 3 CBR is not supported. Switching to 2-pass encoding\n\n");
         }
+#endif
     }
 #else
     if (find_token(argc, argv, PASSES_TOKEN, config_string) != 0) {
@@ -2664,6 +2734,29 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncodePass pass[MAX_ENCODE
 #endif
     if (check_two_pass_conflicts(argc, argv))
         return 0;
+#if TUNE_MULTI_PASS
+    switch (*multi_pass_mode) {
+    case SINGLE_PASS:
+        pass[0] = ENCODE_SINGLE_PASS;
+        break;
+    case TWO_PASS_IPP_FINAL:
+        pass[0] = ENCODE_FIRST_PASS;
+        pass[1] = ENCODE_LAST_PASS;
+        break;
+    case TWO_PASS_SAMEPRED_FINAL:
+        pass[0] = ENCODE_MIDDLE_PASS;
+        pass[1] = ENCODE_LAST_PASS;
+        break;
+    case THREE_PASS_IPP_SAMEPRED_FINAL:
+        pass[0] = ENCODE_FIRST_PASS;
+        pass[1] = ENCODE_MIDDLE_PASS;
+        pass[2] = ENCODE_LAST_PASS;
+        break;
+    default:
+        break;
+    }
+    return passes;
+#else
 #if FTR_MULTI_PASS_API
     if (passes == 2) {
         pass[0] = ENCODE_FIRST_PASS;
@@ -2679,6 +2772,7 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncodePass pass[MAX_ENCODE
     pass[0] = ENCODE_FIRST_PASS;
     pass[1] = ENCODE_LAST_PASS;
     return 2;
+#endif
 #endif
 }
 
@@ -2712,8 +2806,11 @@ int32_t compute_frames_to_be_encoded(EbConfig *config) {
         file_size = ftello(config->input_file);
         fseeko(config->input_file, curr_loc, SEEK_SET); // seek back to that location
     }
-
+#if FTR_OP_TEST
+        frame_size = (config->input_padded_width << 1) * (config->input_padded_height << 1); // Luma
+#else
     frame_size = config->input_padded_width * config->input_padded_height; // Luma
+#endif
     frame_size += 2 * (frame_size >> (3 - config->config.encoder_color_format)); // Add Chroma
     frame_size = frame_size << ((config->config.encoder_bit_depth == 10) ? 1 : 0);
 
@@ -3144,6 +3241,10 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EncChannel *chan
 
                 // Assuming no errors, add padding to width and height
                 if (c->return_error == EB_ErrorNone) {
+#if FTR_OP_TEST
+                    config->config.source_width = config->config.source_width >> 1;
+                    config->config.source_height = config->config.source_height >> 1;
+#endif
                     config->input_padded_width  = config->config.source_width;
                     config->input_padded_height = config->config.source_height;
                 }

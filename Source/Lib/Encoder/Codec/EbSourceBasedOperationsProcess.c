@@ -202,10 +202,17 @@ static void generate_lambda_scaling_factor(PictureParentControlSet *pcs_ptr,
                     const int index1 = (mi_row >> (1 + pcs_ptr->is_720p_or_larger)) * stride +
                         (mi_col >> (1 + pcs_ptr->is_720p_or_larger));
 #endif
+#if OPT_TPL_DATA
+                    TplStats *tpl_stats_ptr = pcs_ptr->pa_me_data->tpl_stats[index1];
+                    int64_t   mc_dep_delta  = RDCOST(pcs_ptr->pa_me_data->base_rdmult,
+                        tpl_stats_ptr->mc_dep_rate,
+                        tpl_stats_ptr->mc_dep_dist);
+#else
                     TplStats *tpl_stats_ptr = pcs_ptr->tpl_stats[index1];
                     int64_t   mc_dep_delta  = RDCOST(pcs_ptr->base_rdmult,
                                                   tpl_stats_ptr->mc_dep_rate,
                                                   tpl_stats_ptr->mc_dep_dist);
+#endif
                     intra_cost += (double)(tpl_stats_ptr->recrf_dist << RDDIV_BITS);
                     mc_dep_cost += (double)(tpl_stats_ptr->recrf_dist << RDDIV_BITS) + mc_dep_delta;
                 }
@@ -215,8 +222,13 @@ static void generate_lambda_scaling_factor(PictureParentControlSet *pcs_ptr,
                 rk = intra_cost / mc_dep_cost;
             }
 
+#if OPT_TPL_DATA
+            pcs_ptr->pa_me_data->tpl_rdmult_scaling_factors[index] = (mc_dep_cost_base) ? rk / pcs_ptr->r0 + c
+                : c;
+#else
             pcs_ptr->tpl_rdmult_scaling_factors[index] = (mc_dep_cost_base) ? rk / pcs_ptr->r0 + c
                                                                             : c;
+#endif
         }
     }
 
@@ -285,7 +297,11 @@ static void result_model_store(PictureParentControlSet *pcs_ptr, TplStats  *tpl_
 #if FTR_TPL_SYNTH
     if (pcs_ptr->tpl_ctrls.synth_blk_size == 32) {
         const int stride = (((pcs_ptr->aligned_width + 31) / 32) );
+#if OPT_TPL_DATA
+        TplStats *dst_ptr = pcs_ptr->pa_me_data->tpl_stats[(mb_origin_y >> 5) * stride + (mb_origin_x >> 5)];
+#else
         TplStats *dst_ptr = pcs_ptr->tpl_stats[(mb_origin_y >> 5) * stride + (mb_origin_x >> 5)];
+#endif
 
         //write to a 16x16 grid
 #if OPT_TPL_ALL64X64
@@ -329,7 +345,11 @@ static void result_model_store(PictureParentControlSet *pcs_ptr, TplStats  *tpl_
     if (pcs_ptr->is_720p_or_larger) {
 #endif
         const int stride = ((pcs_ptr->aligned_width + 15) / 16);
+#if OPT_TPL_DATA
+        TplStats *dst_ptr = pcs_ptr->pa_me_data->tpl_stats[(mb_origin_y >> 4) * stride + (mb_origin_x >> 4)];
+#else
         TplStats *dst_ptr = pcs_ptr->tpl_stats[(mb_origin_y >> 4) * stride + (mb_origin_x >> 4)];
+#endif
 
         //write to a 16x16 grid
 #if OPT_TPL_ALL64X64
@@ -369,7 +389,11 @@ static void result_model_store(PictureParentControlSet *pcs_ptr, TplStats  *tpl_
     else {
         //for small resolution, the 16x16 data is duplicated at an 8x8 grid
         const int stride = ((pcs_ptr->aligned_width + 15) / 16) << 1;
+#if OPT_TPL_DATA
+        TplStats *dst_ptr = pcs_ptr->pa_me_data->tpl_stats[(mb_origin_y >> 3)  * stride + (mb_origin_x >> 3)];
+#else
         TplStats *dst_ptr = pcs_ptr->tpl_stats[(mb_origin_y >> 3)  * stride + (mb_origin_x >> 3)];
+#endif
 
         //write to a 8x8 grid
 #if OPT_TPL_ALL64X64
@@ -1524,7 +1548,11 @@ void tpl_mc_flow_dispenser_sb_generic(
 
         PredictionMode best_intra_mode = DC_PRED;
 
+#if OPT_TPL_DATA
+        TplSrcStats *tpl_src_stats = &pcs_ptr->pa_me_data->tpl_src_stats[(mb_origin_y >> 4) * aligned16_width + (mb_origin_x >> 4)];
+#else
         TplSrcStats *tpl_src_stats = &pcs_ptr->tpl_src_stats[(mb_origin_y >> 4) * aligned16_width + (mb_origin_x >> 4)];
+#endif
 
         //perform src based path if not yet done in previous TPL groups
         if (pcs_ptr->tpl_src_data_ready == 0)
@@ -1536,7 +1564,11 @@ void tpl_mc_flow_dispenser_sb_generic(
             {
                 if (scs_ptr->in_loop_ois == 0) {
                     uint32_t picture_width_in_mb = (pcs_ptr->enhanced_picture_ptr->width + size - 1) / size;
+#if OPT_TPL_DATA
+                    OisMbResults *ois_mb_results_ptr = pcs_ptr->pa_me_data->ois_mb_results[(mb_origin_y / size) * picture_width_in_mb + (mb_origin_x / size)];
+#else
                     OisMbResults *ois_mb_results_ptr = pcs_ptr->ois_mb_results[(mb_origin_y / size) * picture_width_in_mb + (mb_origin_x / size)];
+#endif
                     best_intra_mode = ois_mb_results_ptr->intra_mode;
                     best_intra_cost = ois_mb_results_ptr->intra_cost;
                 }
@@ -1707,6 +1739,10 @@ void tpl_mc_flow_dispenser_sb_generic(
 
             //Inter Src path
             me_mb_offset = tpl_blk_idx_tab[1][blk_index];
+#if FTR_M13
+            if (!pcs_ptr->enable_me_16x16)
+                me_mb_offset = (me_mb_offset - 1) / 4;
+#endif
             const MeSbResults *me_results = pcs_ptr->pa_me_data->me_results[sb_index];
             const MeCandidate *me_block_results = &me_results->me_candidate_array[me_mb_offset * pcs_ptr->pa_me_data->max_cand];
             const uint8_t      total_me_cnt = pcs_ptr->slice_type == I_SLICE ? 0 : me_results->total_me_candidate_index[me_mb_offset];
@@ -3066,9 +3102,15 @@ static AOM_INLINE void tpl_model_update_b(PictureParentControlSet *ref_pcs_ptr, 
 
             for (int idy = 0; idy < mi_height; idy += step) {
                 for (int idx = 0; idx < mi_width; idx += step) {
+#if OPT_TPL_DATA
+                    ref_tpl_stats_ptr = ref_pcs_ptr->pa_me_data->tpl_stats[((ref_mi_row + idy) >> shift) *
+                        (mi_cols_sr >> shift) +
+                        ((ref_mi_col + idx) >> shift)];
+#else
                     ref_tpl_stats_ptr = ref_pcs_ptr->tpl_stats[((ref_mi_row + idy) >> shift) *
                                                                    (mi_cols_sr >> shift) +
                                                                ((ref_mi_col + idx) >> shift)];
+#endif
                     ref_tpl_stats_ptr->mc_dep_dist += ((cur_dep_dist + mc_dep_dist) *
                                                        overlap_area) /
                         pix_num;
@@ -3193,9 +3235,15 @@ static AOM_INLINE void tpl_model_update(
 
     for (int idy = 0; idy < mi_height; idy += step) {
         for (int idx = 0; idx < mi_width; idx += step) {
+#if OPT_TPL_DATA
+            TplStats *tpl_stats_ptr =
+                pcs_ptr->pa_me_data->tpl_stats[(((mi_row + idy) >> shift) * (mi_cols_sr >> shift)) +
+                ((mi_col + idx) >> shift)];
+#else
             TplStats *tpl_stats_ptr =
                 pcs_ptr->tpl_stats[(((mi_row + idy) >> shift) * (mi_cols_sr >> shift)) +
                                    ((mi_col + idx) >> shift)];
+#endif
 
             while (i < frames_in_sw && pcs_array[i]->picture_number != tpl_stats_ptr->ref_frame_poc)
                 i++;
@@ -3237,33 +3285,40 @@ void tpl_mc_flow_synthesizer(
 }
 
 
-static void generate_r0beta(PictureParentControlSet *pcs_ptr) {
-    Av1Common *         cm               = pcs_ptr->av1_cm;
-    SequenceControlSet *scs_ptr          = pcs_ptr->scs_ptr;
-    int64_t             intra_cost_base  = 0;
+static void generate_r0beta(PictureParentControlSet* pcs_ptr) {
+    Av1Common* cm = pcs_ptr->av1_cm;
+    SequenceControlSet* scs_ptr = pcs_ptr->scs_ptr;
+    int64_t             intra_cost_base = 0;
     int64_t             mc_dep_cost_base = 0;
 #if FTR_TPL_SYNTH
-    const int32_t       shift            = pcs_ptr->tpl_ctrls.synth_blk_size  == 8 ? 1 : pcs_ptr->tpl_ctrls.synth_blk_size  == 16 ?   2 : 3 ;
-    const int32_t       step             = 1 << (shift);
-    const int32_t       col_step_sr      = coded_to_superres_mi(step, pcs_ptr->superres_denom);
+    const int32_t       shift = pcs_ptr->tpl_ctrls.synth_blk_size == 8 ? 1 : pcs_ptr->tpl_ctrls.synth_blk_size == 16 ? 2 : 3;
+    const int32_t       step = 1 << (shift);
+    const int32_t       col_step_sr = coded_to_superres_mi(step, pcs_ptr->superres_denom);
     // Super-res upscaled size should be used here.
-    const int32_t       mi_cols_sr       = ((pcs_ptr->enhanced_unscaled_picture_ptr->width + 15) / 16) << 2;  // picture column boundary
-    const int32_t       mi_rows          = ((pcs_ptr->enhanced_unscaled_picture_ptr->height + 15) / 16) << 2; // picture row boundary
+    const int32_t       mi_cols_sr = ((pcs_ptr->enhanced_unscaled_picture_ptr->width + 15) / 16) << 2;  // picture column boundary
+    const int32_t       mi_rows = ((pcs_ptr->enhanced_unscaled_picture_ptr->height + 15) / 16) << 2; // picture row boundary
 #else
-    const int32_t       shift            = pcs_ptr->is_720p_or_larger ? 2 : 1;
-    const int32_t       step             = 1 << (pcs_ptr->is_720p_or_larger ? 2 : 1);
-    const int32_t       col_step_sr      = coded_to_superres_mi(step, pcs_ptr->superres_denom);
+    const int32_t       shift = pcs_ptr->is_720p_or_larger ? 2 : 1;
+    const int32_t       step = 1 << (pcs_ptr->is_720p_or_larger ? 2 : 1);
+    const int32_t       col_step_sr = coded_to_superres_mi(step, pcs_ptr->superres_denom);
     // Super-res upscaled size should be used here.
-    const int32_t       mi_cols_sr       = ((pcs_ptr->enhanced_unscaled_picture_ptr->width + 15) / 16) << 2;  // picture column boundary
-    const int32_t       mi_rows          = ((pcs_ptr->enhanced_unscaled_picture_ptr->height + 15) / 16) << 2; // picture row boundary
+    const int32_t       mi_cols_sr = ((pcs_ptr->enhanced_unscaled_picture_ptr->width + 15) / 16) << 2;  // picture column boundary
+    const int32_t       mi_rows = ((pcs_ptr->enhanced_unscaled_picture_ptr->height + 15) / 16) << 2; // picture row boundary
 #endif
 
     for (int row = 0; row < cm->mi_rows; row += step) {
         for (int col = 0; col < mi_cols_sr; col += col_step_sr) {
-            TplStats *tpl_stats_ptr =
+#if OPT_TPL_DATA
+            TplStats* tpl_stats_ptr =
+                pcs_ptr->pa_me_data->tpl_stats[(row >> shift) * (mi_cols_sr >> shift) + (col >> shift)];
+            int64_t mc_dep_delta = RDCOST(
+                pcs_ptr->pa_me_data->base_rdmult, tpl_stats_ptr->mc_dep_rate, tpl_stats_ptr->mc_dep_dist);
+#else
+            TplStats* tpl_stats_ptr =
                 pcs_ptr->tpl_stats[(row >> shift) * (mi_cols_sr >> shift) + (col >> shift)];
             int64_t mc_dep_delta = RDCOST(
                 pcs_ptr->base_rdmult, tpl_stats_ptr->mc_dep_rate, tpl_stats_ptr->mc_dep_dist);
+#endif
             intra_cost_base += (tpl_stats_ptr->recrf_dist << RDDIV_BITS);
             mc_dep_cost_base += (tpl_stats_ptr->recrf_dist << RDDIV_BITS) + mc_dep_delta;
         }
@@ -3272,18 +3327,18 @@ static void generate_r0beta(PictureParentControlSet *pcs_ptr) {
     if (mc_dep_cost_base != 0) {
         pcs_ptr->r0 = (double)intra_cost_base / mc_dep_cost_base;
         pcs_ptr->tpl_is_valid = 1;
-    }
+        }
     else {
         pcs_ptr->tpl_is_valid = 0;
     }
 
 #if DEBUG_TPL
     SVT_LOG("generate_r0beta ------> poc %ld\t%.0f\t%.0f \t%.5f base_rdmult=%d\n",
-            pcs_ptr->picture_number,
-            (double)intra_cost_base,
-            (double)mc_dep_cost_base,
-            pcs_ptr->r0,
-            pcs_ptr->base_rdmult);
+        pcs_ptr->picture_number,
+        (double)intra_cost_base,
+        (double)mc_dep_cost_base,
+        pcs_ptr->r0,
+        pcs_ptr->base_rdmult);
 #endif
     generate_lambda_scaling_factor(pcs_ptr, mc_dep_cost_base);
 
@@ -3312,10 +3367,18 @@ static void generate_r0beta(PictureParentControlSet *pcs_ptr) {
                     }
 
                     int index = (row >> shift) * (mi_cols_sr >> shift) + (col >> shift);
+#if OPT_TPL_DATA
+                    TplStats* tpl_stats_ptr =
+                        pcs_ptr->pa_me_data->tpl_stats[index];
+                    int64_t mc_dep_delta = RDCOST(pcs_ptr->pa_me_data->base_rdmult,
+                        tpl_stats_ptr->mc_dep_rate,
+                        tpl_stats_ptr->mc_dep_dist);
+#else
                     TplStats* tpl_stats_ptr = pcs_ptr->tpl_stats[index];
                     int64_t mc_dep_delta = RDCOST(pcs_ptr->base_rdmult,
-                                                  tpl_stats_ptr->mc_dep_rate,
-                                                  tpl_stats_ptr->mc_dep_dist);
+                        tpl_stats_ptr->mc_dep_rate,
+                        tpl_stats_ptr->mc_dep_dist);
+#endif
                     intra_cost += (tpl_stats_ptr->recrf_dist << RDDIV_BITS);
                     mc_dep_cost += (tpl_stats_ptr->recrf_dist << RDDIV_BITS) + mc_dep_delta;
                 }
@@ -3323,10 +3386,14 @@ static void generate_r0beta(PictureParentControlSet *pcs_ptr) {
             double beta = 1.0;
             if (mc_dep_cost > 0 && intra_cost > 0) {
                 double rk = (double)intra_cost / mc_dep_cost;
-                beta      = (pcs_ptr->r0 / rk);
+                beta = (pcs_ptr->r0 / rk);
                 assert(beta > 0.0);
             }
+#if OPT_TPL_DATA
+            pcs_ptr->pa_me_data->tpl_beta[sb_y * picture_sb_width + sb_x] = beta;
+#else
             pcs_ptr->tpl_beta[sb_y * picture_sb_width + sb_x] = beta;
+#endif
         }
     }
     return;
@@ -3581,9 +3648,15 @@ EbErrorType tpl_mc_flow(EncodeContext *encode_context_ptr, SequenceControlSet *s
             encode_context_ptr->poc_map_idx[frame_idx] = pcs_ptr->tpl_group[frame_idx]->picture_number;
 #if FTR_TPL_SYNTH
             for (uint32_t blky = 0; blky < (picture_height_in_mb); blky++) {
+#if OPT_TPL_DATA
+                memset(pcs_ptr->tpl_group[frame_idx]->pa_me_data->tpl_stats[blky * (picture_width_in_mb)],
+                    0,
+                    (picture_width_in_mb) * sizeof(TplStats));
+#else
                 memset(pcs_ptr->tpl_group[frame_idx]->tpl_stats[blky * (picture_width_in_mb)],
                         0,
                         (picture_width_in_mb) * sizeof(TplStats));
+#endif
             }
 #else
             for (uint32_t blky = 0; blky < (picture_height_in_mb << shift); blky++) {
@@ -3609,7 +3682,11 @@ EbErrorType tpl_mc_flow(EncodeContext *encode_context_ptr, SequenceControlSet *s
             }
 #endif
             if (tpl_on)
+#if OPT_TPL_DATA
+                tpl_mc_flow_dispenser(encode_context_ptr, scs_ptr, &pcs_ptr->pa_me_data->base_rdmult, pcs_ptr->tpl_group[frame_idx], frame_idx,context_ptr);
+#else
                 tpl_mc_flow_dispenser(encode_context_ptr, scs_ptr, &pcs_ptr->base_rdmult, pcs_ptr->tpl_group[frame_idx], frame_idx,context_ptr);
+#endif
 
 #if SS_OPT_TPL
 

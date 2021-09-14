@@ -294,7 +294,11 @@ void store_extended_group(
         mg_size = 1 << pcs->scs_ptr->static_config.hierarchical_levels;
     }
     else {
+#if FIX_DG
+        mg_size = 1 << pcs->scs_ptr->static_config.max_heirachical_level;
+#else
         mg_size = 1 << pcs->hierarchical_levels;
+#endif
     }
 #else
     uint32_t mg_size                = 1 << pcs->scs_ptr->static_config.hierarchical_levels;

@@ -25,8 +25,13 @@
 #include "EbPictureDecisionResults.h"
 #include "EbRestoration.h"  // RDCOST_DBL
 
+#if OPT_1P
+#include "EbMotionEstimationResults.h"
+#endif
+
 #define RDCOST_DBL_WITH_NATIVE_BD_DIST(RM, R, D, BD)               \
          RDCOST_DBL((RM), (R), (double)((D) >> (2 * (BD - 8))))
+
 
 /**************************************
  * Type Declarations
@@ -42,6 +47,10 @@ typedef struct EbPPSConfig {
 typedef struct PacketizationContext {
     EbDctor      dctor;
     EbFifo *     entropy_coding_input_fifo_ptr;
+#if OPT_1P
+    EbFifo *     me_results_input_fifo;
+    uint8_t      ipp_pass; //1: if ipp pass is on
+#endif
     EbFifo *     rate_control_tasks_output_fifo_ptr;
     EbFifo *     picture_decision_results_output_fifo_ptr;  // to motion estimation process
     EbPPSConfig *pps_config;
@@ -80,23 +89,38 @@ static void packetization_context_dctor(EbPtr p) {
 
 EbErrorType packetization_context_ctor(EbThreadContext *  thread_context_ptr,
                                        const EbEncHandle *enc_handle_ptr, int rate_control_index,
+#if OPT_1P
+                                       uint8_t      ipp_pass,
+#endif
                                        int demux_index, int me_port_index) {
     PacketizationContext *context_ptr;
     EB_CALLOC_ARRAY(context_ptr, 1);
     thread_context_ptr->priv  = context_ptr;
     thread_context_ptr->dctor = packetization_context_dctor;
 
-    context_ptr->dctor                         = packetization_context_dctor;
-    context_ptr->entropy_coding_input_fifo_ptr = svt_system_resource_get_consumer_fifo(
-        enc_handle_ptr->entropy_coding_results_resource_ptr, 0);
-    context_ptr->rate_control_tasks_output_fifo_ptr = svt_system_resource_get_producer_fifo(
-        enc_handle_ptr->rate_control_tasks_resource_ptr, rate_control_index);
-    context_ptr->picture_demux_fifo_ptr = svt_system_resource_get_producer_fifo(
-        enc_handle_ptr->picture_demux_results_resource_ptr, demux_index);
-    context_ptr->picture_decision_results_output_fifo_ptr = svt_system_resource_get_producer_fifo(
-        enc_handle_ptr->picture_decision_results_resource_ptr, me_port_index);
-    EB_MALLOC_ARRAY(context_ptr->pps_config, 1);
+#if OPT_1P
+    context_ptr->ipp_pass = ipp_pass;
+    if (ipp_pass) {
+        context_ptr->me_results_input_fifo = svt_system_resource_get_consumer_fifo(
+            enc_handle_ptr->motion_estimation_results_resource_ptr, 0);
+    }
+    else {
+#endif
 
+        context_ptr->dctor = packetization_context_dctor;
+        context_ptr->entropy_coding_input_fifo_ptr = svt_system_resource_get_consumer_fifo(
+            enc_handle_ptr->entropy_coding_results_resource_ptr, 0);
+        context_ptr->rate_control_tasks_output_fifo_ptr = svt_system_resource_get_producer_fifo(
+            enc_handle_ptr->rate_control_tasks_resource_ptr, rate_control_index);
+        context_ptr->picture_demux_fifo_ptr = svt_system_resource_get_producer_fifo(
+            enc_handle_ptr->picture_demux_results_resource_ptr, demux_index);
+        context_ptr->picture_decision_results_output_fifo_ptr = svt_system_resource_get_producer_fifo(
+            enc_handle_ptr->picture_decision_results_resource_ptr, me_port_index);
+        EB_MALLOC_ARRAY(context_ptr->pps_config, 1);
+
+#if OPT_1P
+    }
+#endif
     return EB_ErrorNone;
 }
 static inline int get_reorder_queue_pos(const EncodeContext *encode_context_ptr, int delta) {
@@ -420,6 +444,9 @@ static EbErrorType realloc_output_bitstream(Bitstream *bitstream_ptr, uint32_t s
     }
     return EB_ErrorNone;
 }
+#if TUNE_MULTI_PASS
+void samepred_pass_frame_end(PictureParentControlSet *pcs_ptr, const double ts_duration);
+#endif
 void *packetization_kernel(void *input_ptr) {
     // Context
     EbThreadContext *     thread_context_ptr = (EbThreadContext *)input_ptr;
@@ -436,6 +463,45 @@ void *packetization_kernel(void *input_ptr) {
     context_ptr->disp_order_continuity_count = 0;
 
     for (;;) {
+
+
+#if OPT_1P
+        if (context_ptr->ipp_pass) {
+
+            // Get ME Results
+            EbObjectWrapper *in_results_wrapper_ptr;
+            EB_GET_FULL_OBJECT(context_ptr->me_results_input_fifo, &in_results_wrapper_ptr);
+
+            MotionEstimationResults *in_results_ptr = (MotionEstimationResults*)in_results_wrapper_ptr->object_ptr;
+            PictureParentControlSet *ppcs = (PictureParentControlSet*)in_results_ptr->pcs_wrapper_ptr->object_ptr;
+            SequenceControlSet *scs_ptr = ppcs->scs_ptr;
+
+            // Release Ressources
+            release_pa_reference_objects(scs_ptr, ppcs);
+
+            svt_release_object(ppcs->scs_wrapper_ptr);
+            svt_release_object(ppcs->eb_y8b_wrapper_ptr);
+            svt_release_object(ppcs->input_picture_wrapper_ptr);
+            svt_release_object(in_results_ptr->pcs_wrapper_ptr);
+
+            //Send empty bitstream to app
+            svt_get_empty_object(scs_ptr->encode_context_ptr->stream_output_fifo_ptr,
+                    &ppcs->output_stream_wrapper_ptr);
+            EbObjectWrapper *output_stream_wrapper_ptr = ppcs->output_stream_wrapper_ptr;
+            EbBufferHeaderType *output_stream_ptr = (EbBufferHeaderType*)output_stream_wrapper_ptr->object_ptr;
+
+            output_stream_ptr->flags = 0;
+            if (ppcs->end_of_sequence_flag) {
+                output_stream_ptr->flags |= EB_BUFFERFLAG_EOS;
+            }
+            svt_post_full_object(output_stream_wrapper_ptr);
+
+            //Release input
+            svt_release_object(in_results_wrapper_ptr);
+        }
+        else {
+#endif
+
         // Get EntropyCoding Results
         EB_GET_FULL_OBJECT(context_ptr->entropy_coding_input_fifo_ptr,
                            &entropy_coding_results_wrapper_ptr);
@@ -825,10 +891,27 @@ void *packetization_kernel(void *input_ptr) {
         // Send the number of bytes per frame to RC
         pcs_ptr->parent_pcs_ptr->total_num_bits = output_stream_ptr->n_filled_len << 3;
 #if FTR_MULTI_PASS_API
+        /*if(is_middle_pass(scs_ptr))
+        printf("POC:%ld\tbits:%ld\tEstbits:%ld\terror:%.2f\t%d\t%d\t%d\n",
+            pcs_ptr->picture_number,
+            pcs_ptr->parent_pcs_ptr->total_num_bits,
+            (pcs_ptr->parent_pcs_ptr->pcs_total_rate>>9),
+            (double)(pcs_ptr->parent_pcs_ptr->pcs_total_rate >> 9) / (double)pcs_ptr->parent_pcs_ptr->total_num_bits - 1,
+            frm_hdr->quantization_params.base_q_idx,
+            quantizer_to_qindex[(uint8_t)scs_ptr->static_config.qp],
+            scs_ptr->encode_context_ptr->rc.active_worst_quality);*/
+#if TUNE_MULTI_PASS
+        if (scs_ptr->static_config.multi_pass_mode == TWO_PASS_SAMEPRED_FINAL && is_middle_pass(scs_ptr))
+            samepred_pass_frame_end(pcs_ptr->parent_pcs_ptr, pcs_ptr->parent_pcs_ptr->ts_duration);
+#endif
         if (scs_ptr->static_config.passes == 3 && is_middle_pass(scs_ptr)) {
             StatStruct stat_struct;
             stat_struct.poc = pcs_ptr->picture_number;
+#if FTR_OPT_MPASS_DOWN_SAMPLE
+            stat_struct.total_num_bits = pcs_ptr->parent_pcs_ptr->total_num_bits*3;
+#else
             stat_struct.total_num_bits = pcs_ptr->parent_pcs_ptr->total_num_bits;
+#endif
             stat_struct.qindex = frm_hdr->quantization_params.base_q_idx;
             stat_struct.worst_qindex = quantizer_to_qindex[(uint8_t)scs_ptr->static_config.qp];
             (scs_ptr->twopass.stats_buf_ctx->stats_in_start + pcs_ptr->parent_pcs_ptr->picture_number)->stat_struct = stat_struct;
@@ -935,6 +1018,13 @@ void *packetization_kernel(void *input_ptr) {
             }
             release_frames(encode_context_ptr, frames);
         }
+
+
+#if  OPT_1P
+    }
+#endif
+
+
     }
     return NULL;
 }

@@ -22,7 +22,7 @@
 extern "C" {
 #endif
 
-#if LIGHT_PD1
+#if LIGHT_PD1_MACRO
     void full_loop_chroma_light_pd1(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
         ModeDecisionCandidateBuffer *candidate_buffer,
         EbPictureBufferDesc *input_picture_ptr,

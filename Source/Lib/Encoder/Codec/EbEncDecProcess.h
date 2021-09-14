@@ -40,8 +40,10 @@ typedef struct EncDecContext {
     EbFifo *                 enc_dec_output_fifo_ptr;
     EbFifo *                 enc_dec_feedback_fifo_ptr;
     EbFifo *                 picture_demux_output_fifo_ptr; // to picture-manager
+#if !CLN_MDCONTEXT
     MdRateEstimationContext *md_rate_estimation_ptr;
     EbBool                   is_md_rate_estimation_ptr_owner;
+#endif
     ModeDecisionContext *    md_context;
     const BlockGeom *        blk_geom;
     // MCP Context

@@ -26,6 +26,9 @@ extern "C" {
 #if ME_8X8
 #define  MAX_SB64_PU_COUNT_NO_8X8   21 //num,ber of square PUs from 64x64 to 16x16
 #endif
+#if FTR_M13
+#define MAX_SB64_PU_COUNT_WO_16X16  5 // number of square PUs for 64x64 and 32x32 block sizes
+#endif
 
 typedef struct MeCandidate {
     uint8_t direction : 2;

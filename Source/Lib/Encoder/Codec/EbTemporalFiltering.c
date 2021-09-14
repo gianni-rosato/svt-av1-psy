@@ -6431,6 +6431,10 @@ EbErrorType svt_av1_init_temporal_filtering(
 #if OPT_TFILTER
     me_context_ptr->me_context_ptr->tf_ctrls = picture_control_set_ptr_central->tf_ctrls;
 #endif
+
+#if OPT_PREHME
+    me_context_ptr->me_context_ptr->tf_tot_horz_blks = me_context_ptr->me_context_ptr->tf_tot_vert_blks = 0;
+#endif
     // index of the central source frame
     index_center = picture_control_set_ptr_central->past_altref_nframes;
 
@@ -6534,6 +6538,11 @@ EbErrorType svt_av1_init_temporal_filtering(
 
     svt_block_on_mutex(picture_control_set_ptr_central->temp_filt_mutex);
     picture_control_set_ptr_central->temp_filt_seg_acc++;
+
+#if OPT_PREHME
+    picture_control_set_ptr_central->tf_tot_horz_blks += me_context_ptr->me_context_ptr->tf_tot_horz_blks;
+    picture_control_set_ptr_central->tf_tot_vert_blks += me_context_ptr->me_context_ptr->tf_tot_vert_blks;
+#endif
 
     if (picture_control_set_ptr_central->temp_filt_seg_acc ==
         picture_control_set_ptr_central->tf_segments_total_count) {

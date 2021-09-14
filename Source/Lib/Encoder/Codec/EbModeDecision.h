@@ -50,6 +50,9 @@ typedef struct ModeDecisionCandidate {
     uint16_t     count_non_zero_coeffs;
     uint8_t      type;
     PaletteInfo *palette_info;
+#if OPT_MEM_PALETTE
+    uint8_t palette_size[2];
+#endif
     uint64_t                 fast_luma_rate;
     uint64_t                 fast_chroma_rate;
     uint64_t                 total_rate;
@@ -204,7 +207,7 @@ extern EbErrorType mode_decision_scratch_candidate_buffer_ctor(
 uint32_t product_full_mode_decision_light_pd0(struct ModeDecisionContext *context_ptr, BlkStruct *blk_ptr,
                                     ModeDecisionCandidateBuffer **buffer_ptr_array);
 #endif
-#if LIGHT_PD1
+#if LIGHT_PD1_MACRO
 uint32_t product_full_mode_decision_light_pd1(struct ModeDecisionContext *context_ptr, BlkStruct *blk_ptr,
                                     PictureControlSet *pcs,
                                     uint32_t sb_addr,

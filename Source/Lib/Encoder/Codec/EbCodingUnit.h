@@ -264,7 +264,7 @@ typedef struct MacroBlockD {
     uint8_t     n8_w, n8_h;
     uint8_t     n4_w, n4_h; // for warped motion
     uint8_t     ref_mv_count[MODE_CTX_REF_FRAMES];
-#if !LIGHT_PD1
+#if !LIGHT_PD1_MACRO
     CandidateMv final_ref_mv_stack[MAX_REF_MV_STACK_SIZE];
 #endif
     uint8_t     is_sec_rect;
@@ -336,7 +336,15 @@ typedef struct IntraBcContext {
 typedef struct BlkStruct {
     TransformUnit          txb_array[TRANSFORM_UNIT_MAX_COUNT]; // ec
     PredictionUnit         prediction_unit_array[MAX_NUM_OF_PU_PER_CU]; // ec
+#if OPT_MEM_PALETTE
+    PaletteInfo            *palette_info; // ec
+    uint8_t palette_mem; // status of palette info alloc
+#else
     PaletteInfo            palette_info; // ec
+#endif
+#if OPT_MEM_PALETTE
+    uint8_t palette_size[2];
+#endif
     IntMv                  predmv[2]; // ec
     MacroBlockD *          av1xd;
     InterInterCompoundData interinter_comp; // ec

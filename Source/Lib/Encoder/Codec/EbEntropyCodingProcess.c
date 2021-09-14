@@ -421,8 +421,9 @@ void *entropy_coding_kernel(void *input_ptr) {
                                                   ->entropy_coder_ptr->ec_writer.ec.offs -
                                               prev_pos)
                             << 3;
-
+#if !RFCTR_RC_P2
                         pcs_ptr->parent_pcs_ptr->quantized_coeff_num_bits += sb_ptr->total_bits;
+#endif
                         row_total_bits += sb_ptr->total_bits;
                     }
 

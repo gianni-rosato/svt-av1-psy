@@ -78,6 +78,14 @@ void svt_sad_loop_kernel_c(
     *best_sad = 0xffffff;
 
     for (y_search_index = 0; y_search_index < search_area_height; y_search_index++) {
+#if FIX_FTR_PREHME_SUB
+        if (block_width == 16 && block_height <= 16 && skip_search_line) {
+            if ((y_search_index & 1) == 0) {
+                    ref += src_stride_raw;
+                    continue;
+            }
+        }
+#endif
         for (x_search_index = 0; x_search_index < search_area_width; x_search_index++) {
             uint32_t x, y;
             uint32_t sad = 0;

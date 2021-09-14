@@ -44,7 +44,9 @@
 #endif
 
 #if  OPT_MALLOC_TRIM
+#ifndef __APPLE__
 #include <malloc.h>
+#endif
 #endif
 
 #if OPT_MMAP_FILE
@@ -56,7 +58,11 @@
 /***************************************
  * External Functions
  ***************************************/
+#if OPT_FIRST_PASS2 && !FIX_DG
+void process_input_buffer(EncChannel* c, EncodePass pass);
+#else
 void process_input_buffer(EncChannel* c);
+#endif
 
 void process_output_recon_buffer(EncChannel* c);
 
@@ -132,7 +138,11 @@ void init_memory_file_map(EbConfig* config) {
 
 static EbErrorType enc_context_ctor(EncApp* enc_app, EncContext* enc_context, int32_t argc,
 #if FTR_MULTI_PASS_API
+#if TUNE_MULTI_PASS
+                                    char* argv[], EncodePass pass, int32_t passes, MultiPassModes multi_pass_mode) {
+#else
                                     char* argv[], EncodePass pass, int32_t passes) {
+#endif
 #else
                                     char* argv[], EncodePass pass) {
 #endif
@@ -193,6 +203,9 @@ static EbErrorType enc_context_ctor(EncApp* enc_app, EncContext* enc_context, in
                                  &config->performance_context.lib_start_time[1]);
 #if FTR_MULTI_PASS_API
             config->config.passes = passes;
+#if TUNE_MULTI_PASS
+            config->config.multi_pass_mode = multi_pass_mode;
+#endif
 #endif
             c->return_error = set_two_passes_stats(
                 config, pass, &enc_app->rc_twopasses_stats, num_channels);
@@ -384,7 +397,11 @@ static EbBool has_active_channel(const EncContext* const enc_context) {
 
 static void enc_channel_step(EncChannel* c, EncApp* enc_app, EncContext* enc_context) {
     EbConfig* config = c->config;
+#if OPT_FIRST_PASS2 && !FIX_DG
+    process_input_buffer(c, enc_context->pass);
+#else
     process_input_buffer(c);
+#endif
     process_output_recon_buffer(c);
     process_output_stream_buffer(c, enc_app, &enc_context->total_frames);
 
@@ -500,10 +517,19 @@ int32_t main(int32_t argc, char* argv[]) {
         return 0;
 
     enc_app_ctor(&enc_app);
+#if TUNE_MULTI_PASS
+    MultiPassModes multi_pass_mode;
+    passes = get_passes(argc, argv, pass, &multi_pass_mode);
+#else
     passes = get_passes(argc, argv, pass);
+#endif
     for (uint32_t i = 0; i < passes; i++) {
 #if FTR_MULTI_PASS_API
+#if TUNE_MULTI_PASS
+        return_error = enc_context_ctor(&enc_app, &enc_context, argc, argv, pass[i], passes, multi_pass_mode);
+#else
         return_error = enc_context_ctor(&enc_app, &enc_context, argc, argv, pass[i], passes);
+#endif
 #else
         return_error = enc_context_ctor(&enc_app, &enc_context, argc, argv, pass[i]);
 #endif
@@ -517,7 +543,9 @@ int32_t main(int32_t argc, char* argv[]) {
 
 #if OPT_MALLOC_TRIM
 #ifndef _WIN32
+#ifndef __APPLE__
         malloc_trim(0);
+#endif
 #endif
 #endif
 

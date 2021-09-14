@@ -874,7 +874,9 @@ void svt_highbd_warp_plane(EbWarpedMotionParams *wm, const uint8_t *const ref8, 
     const int16_t        gamma = wm->gamma;
     const int16_t        delta = wm->delta;
 
+#if !FTR_MEM_OPT_WM
     const uint16_t *const ref  = (uint16_t *)ref8;
+#endif
     uint16_t *            pred = (uint16_t *)pred8;
     svt_av1_highbd_warp_affine(mat,
 #if FTR_MEM_OPT_WM

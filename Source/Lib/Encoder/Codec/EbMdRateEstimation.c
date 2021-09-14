@@ -633,7 +633,7 @@ int     get_comp_index_context_enc(PictureParentControlSet *pcs_ptr, int cur_fra
                                    int bck_frame_index, int fwd_frame_index, const MacroBlockD *xd);
 int32_t is_nontrans_global_motion_ec(MvReferenceFrame rf0, MvReferenceFrame rf1, BlkStruct *blk_ptr,
                                      BlockSize sb_type, PictureParentControlSet *pcs_ptr);
-#if !LIGHT_PD1
+#if !LIGHT_PD1_MACRO
 uint8_t av1_drl_ctx(const CandidateMv *ref_mv_stack, int32_t ref_idx);
 #endif
 int32_t have_newmv_in_inter_mode(PredictionMode mode);
@@ -852,11 +852,17 @@ static AOM_INLINE void update_palette_cdf(MacroBlockD *xd, const MbModeInfo *con
     FRAME_CONTEXT *              fc                = xd->tile_ctx;
     const BlockGeom *            blk_geom          = get_blk_geom_mds(blk_ptr->mds_idx);
     const BlockSize              bsize             = blk_geom->bsize;
+#if !OPT_MEM_PALETTE
     const PaletteModeInfo *const pmi               = &blk_ptr->palette_info.pmi;
+#endif
     const int                    palette_bsize_ctx = av1_get_palette_bsize_ctx(bsize);
 
     if (mbmi->block_mi.mode == DC_PRED) {
+#if OPT_MEM_PALETTE
+        const int n                = blk_ptr->palette_size[0];
+#else
         const int n                = pmi->palette_size[0];
+#endif
         const int palette_mode_ctx = av1_get_palette_mode_ctx(xd);
 
         update_cdf(fc->palette_y_mode_cdf[palette_bsize_ctx][palette_mode_ctx], n > 0, 2);
@@ -874,8 +880,13 @@ static AOM_INLINE void update_palette_cdf(MacroBlockD *xd, const MbModeInfo *con
         is_chroma_reference(mi_row, mi_col, bsize, 1, 1);
 
     if (uv_dc_pred) {
+#if OPT_MEM_PALETTE
+        const int n                   = blk_ptr->palette_size[1];
+        const int palette_uv_mode_ctx = (blk_ptr->palette_size[0] > 0);
+#else
         const int n                   = pmi->palette_size[1];
         const int palette_uv_mode_ctx = (pmi->palette_size[0] > 0);
+#endif
         update_cdf(fc->palette_uv_mode_cdf[palette_uv_mode_ctx], n > 0, 2);
         if (n > 0)
             update_cdf(
@@ -905,7 +916,11 @@ static AOM_INLINE void sum_intra_stats(PictureControlSet *pcs_ptr, BlkStruct *bl
     if (blk_ptr->use_intrabc == 0 &&
         av1_filter_intra_allowed(pcs_ptr->parent_pcs_ptr->scs_ptr->seq_header.filter_intra_level,
                                  bsize,
+#if OPT_MEM_PALETTE
+                                 blk_ptr->palette_size[0],
+#else
                                  blk_ptr->palette_info.pmi.palette_size[0],
+#endif
                                  y_mode)) {
         const int use_filter_intra_mode = blk_ptr->filter_intra_mode != FILTER_INTRA_MODES;
         update_cdf(fc->filter_intra_cdfs[bsize], use_filter_intra_mode, 2);
@@ -1202,7 +1217,7 @@ void update_stats(PictureControlSet *pcs_ptr, BlkStruct *blk_ptr, int mi_row, in
             const uint8_t ref_frame_type = av1_ref_frame_type(mbmi->block_mi.ref_frame);
             for (int idx = 0; idx < 2; ++idx) {
                 if (xd->ref_mv_count[ref_frame_type] > idx + 1) {
-#if LIGHT_PD1
+#if LIGHT_PD1_MACRO
                     const uint8_t drl_ctx = blk_ptr->drl_ctx[idx];
 #else
                     const uint8_t drl_ctx = av1_drl_ctx(xd->final_ref_mv_stack, idx);
@@ -1224,7 +1239,7 @@ void update_stats(PictureControlSet *pcs_ptr, BlkStruct *blk_ptr, int mi_row, in
             const uint8_t ref_frame_type = av1_ref_frame_type(mbmi->block_mi.ref_frame);
             for (int idx = 1; idx < 3; ++idx) {
                 if (xd->ref_mv_count[ref_frame_type] > idx + 1) {
-#if LIGHT_PD1
+#if LIGHT_PD1_MACRO
                     const uint8_t drl_ctx = blk_ptr->drl_ctx_near[idx - 1];
 #else
                     const uint8_t drl_ctx = av1_drl_ctx(xd->final_ref_mv_stack, idx);

@@ -39,8 +39,10 @@ typedef struct EbReferenceObject {
     EB_SLICE                    slice_type;
 #if  FTR_INTRA_DETECTOR
     uint8_t                     intra_coded_area; //percentage of intra coded area 0-100%
+#if !FTR_VLPD1
     uint8_t                     intra_coded_area_sb
         [MAX_NUMBER_OF_TREEBLOCKS_PER_PICTURE]; //percentage of intra coded area 0-100%
+#endif
 #endif
 #if FTR_COEFF_DETECTOR
     uint8_t                    skip_coded_area;
@@ -69,6 +71,11 @@ typedef struct EbReferenceObject {
 #if MS_CDEF_OPT3
     uint32_t            ref_cdef_strengths_num;
     uint8_t             ref_cdef_strengths[2][TOTAL_STRENGTHS];
+#endif
+#if FTR_VLPD1
+    uint8_t* sb_intra;
+    uint8_t* sb_skip;
+    uint8_t* sb_64x64_mvp;
 #endif
     int32_t              mi_cols;
     int32_t              mi_rows;

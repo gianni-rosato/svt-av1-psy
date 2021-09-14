@@ -169,9 +169,17 @@ uint8_t  get_tpl_level(int8_t enc_mode)
     }else if (enc_mode <= ENC_M10) {
         tpl_level = 5;
 #endif
+#if FTR_MOD_DEPTH_REMOVAL_LVL
+    } else if (enc_mode <= ENC_M10) {
+        tpl_level = 6;
+    } else {
+        tpl_level = 7;
+    }
+#else
     } else {
         tpl_level = 6;
     }
+#endif
 #else
     }else{
        tpl_level = 5;
@@ -421,7 +429,9 @@ void set_tpl_extended_controls(
         break;
 #if OPT_TPL_64X64_32X32
     case 6:
+#if !FTR_MOD_DEPTH_REMOVAL_LVL
     default:
+#endif
         tpl_ctrls->tpl_opt_flag = 1;
         tpl_ctrls->enable_tpl_qps = 0;
         tpl_ctrls->disable_intra_pred_nbase = 0;
@@ -441,6 +451,29 @@ void set_tpl_extended_controls(
         tpl_ctrls->r0_adjust_factor = scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? 0.3 : 2.0;
         tpl_ctrls->synth_blk_size = get_tpl_synthesizer_block_size(tpl_level, pcs_ptr->aligned_width, pcs_ptr->aligned_height);
         break;
+#if FTR_MOD_DEPTH_REMOVAL_LVL
+    case 7:
+    default:
+        tpl_ctrls->tpl_opt_flag = 1;
+        tpl_ctrls->enable_tpl_qps = 0;
+        tpl_ctrls->disable_intra_pred_nbase = 0;
+        tpl_ctrls->disable_intra_pred_nref = 1;
+
+        tpl_ctrls->reduced_tpl_group = pcs_ptr->hierarchical_levels == 5 ?
+            (scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? 3 : 1) :
+            (scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? 2 : 0);
+        tpl_ctrls->get_best_ref = 0;
+        tpl_ctrls->pf_shape = scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? N2_SHAPE : N4_SHAPE;
+        tpl_ctrls->use_pred_sad_in_intra_search = 1;
+        tpl_ctrls->use_pred_sad_in_inter_search = 1;
+        tpl_ctrls->skip_rdoq_uv_qp_based_th = 4;
+        tpl_ctrls->modulate_depth_removal_level = 2;
+        tpl_ctrls->dispenser_search_level = 1;
+        tpl_ctrls->subsample_tx = 2;
+        tpl_ctrls->r0_adjust_factor = scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? 0.3 : 2.0;
+        tpl_ctrls->synth_blk_size = get_tpl_synthesizer_block_size(tpl_level, pcs_ptr->aligned_width, pcs_ptr->aligned_height);
+        break;
+#endif
 #endif
 #else
         tpl_ctrls->r0_adjust_factor = 0.30;
@@ -457,7 +490,11 @@ void set_tpl_extended_controls(
             tpl_ctrls->r0_adjust_factor = 0.1;
     }
     else {
+#if FIX_DG
+        if (pcs_ptr->scs_ptr->static_config.max_heirachical_level < 4)
+#else
          if(pcs_ptr->hierarchical_levels < 4)
+#endif
              tpl_ctrls->r0_adjust_factor = 0.1;
     }
 #else
@@ -658,16 +695,16 @@ void set_tpl_controls(
 * return the restoration level
   Used by signal_derivation_pre_analysis_oq and memory allocation
 */
-uint8_t get_enable_restoration(EbEncMode enc_mode) {
+uint8_t get_enable_restoration(EbEncMode enc_mode,int8_t config_enable_restoration ) {
 
     uint8_t enable_restoration;
 
-#if FIX_PRESET_TUNING && !TUNE_M7_MT
+#if (FIX_PRESET_TUNING && !TUNE_M7_MT) || TUNE_M7_SLOWDOWN
         enable_restoration = (enc_mode <= ENC_M7) ? 1 : 0;
 #else
         enable_restoration = (enc_mode <= ENC_M6) ? 1 : 0;
 #endif
-    return  enable_restoration;
+    return  config_enable_restoration > 0 ? config_enable_restoration :  enable_restoration;
 }
 /******************************************************
 * Derive Pre-Analysis settings for OQ for pcs
@@ -798,7 +835,11 @@ EbErrorType signal_derivation_pre_analysis_oq_scs(SequenceControlSet * scs_ptr) 
         scs_ptr->seq_header.pic_based_rate_est = (uint8_t)scs_ptr->static_config.pic_based_rate_est;
 
     if (scs_ptr->static_config.enable_restoration_filtering == DEFAULT) {
+#if OPT_MEMORY_REST
+        scs_ptr->seq_header.enable_restoration = get_enable_restoration(scs_ptr->static_config.enc_mode,scs_ptr->static_config.enable_restoration_filtering);
+#else
         scs_ptr->seq_header.enable_restoration = get_enable_restoration(scs_ptr->static_config.enc_mode);
+#endif
     } else
         scs_ptr->seq_header.enable_restoration =
             (uint8_t)scs_ptr->static_config.enable_restoration_filtering;
@@ -1125,6 +1166,9 @@ static EbErrorType reset_pcs_av1(PictureParentControlSet *pcs_ptr) {
 #if SS_OPT_TPL
      pcs_ptr->tpl_src_data_ready = 0;
 #endif
+#if OPT_PREHME
+     pcs_ptr->tf_motion_direction = -1;
+#endif
 
     return EB_ErrorNone;
 }
@@ -1356,7 +1400,11 @@ static void setup_two_pass(SequenceControlSet *scs_ptr) {
     for (int i = 0; i < size; i++)
         scs_ptr->twopass.frame_stats_arr[i] = &encode_context_ptr->frame_stats_buffer[i];
 #if FTR_NEW_MULTI_PASS
+#if TUNE_MULTI_PASS
+    scs_ptr->twopass.multi_pass_mode = scs_ptr->static_config.multi_pass_mode;
+#else
     scs_ptr->twopass.passes = scs_ptr->static_config.passes;
+#endif
 #endif
     scs_ptr->twopass.stats_buf_ctx = &encode_context_ptr->stats_buf_context;
     scs_ptr->twopass.stats_in      = scs_ptr->twopass.stats_buf_ctx->stats_in_start;
@@ -1553,6 +1601,7 @@ void *resource_coordination_kernel(void *input_ptr) {
 
         // Init SB Params
         if (context_ptr->scs_instance_array[instance_index]->encode_context_ptr->initial_picture) {
+
             derive_input_resolution(&scs_ptr->input_resolution, input_size);
 
             sb_params_init(scs_ptr);
@@ -1747,7 +1796,7 @@ void *resource_coordination_kernel(void *input_ptr) {
             else
                 signal_derivation_pre_analysis_oq_pcs(scs_ptr, pcs_ptr);
             // Rate Control
-
+#if !TUNE_MULTI_PASS
             if (scs_ptr->static_config.use_qp_file == 1) {
                 pcs_ptr->qp_on_the_fly = EB_TRUE;
                 if (pcs_ptr->input_ptr->qp > MAX_QP_VALUE) {
@@ -1759,6 +1808,7 @@ void *resource_coordination_kernel(void *input_ptr) {
                 pcs_ptr->qp_on_the_fly = EB_FALSE;
                 pcs_ptr->picture_qp    = (uint8_t)scs_ptr->static_config.qp;
             }
+#endif
 
             // Picture Stats
             if (loop_index == has_overlay || end_of_sequence_flag)
@@ -1768,7 +1818,11 @@ void *resource_coordination_kernel(void *input_ptr) {
             if (pcs_ptr->picture_number == 0) {
                 if (use_input_stat(scs_ptr))
                     read_stat(scs_ptr);
+#if TUNE_MULTI_PASS
+                if (use_input_stat(scs_ptr) || use_output_stat(scs_ptr) || is_middle_pass(scs_ptr) || scs_ptr->lap_enabled)
+#else
                 if (use_input_stat(scs_ptr) || use_output_stat(scs_ptr) || scs_ptr->lap_enabled)
+#endif
                     setup_two_pass(scs_ptr);
 #if FTR_RC_CAP
                 else
@@ -1784,10 +1838,29 @@ void *resource_coordination_kernel(void *input_ptr) {
 #endif
             }
 #if FTR_MULTI_PASS_API
+#if TUNE_MULTI_PASS
+            if ((scs_ptr->static_config.multi_pass_mode == TWO_PASS_SAMEPRED_FINAL || scs_ptr->static_config.multi_pass_mode == THREE_PASS_IPP_SAMEPRED_FINAL)
+                &&!end_of_sequence_flag && use_input_stat(scs_ptr) && !is_middle_pass(scs_ptr) && scs_ptr->static_config.rate_control_mode) {
+#else
             if (scs_ptr->static_config.passes == 3 && !end_of_sequence_flag && use_input_stat(scs_ptr) && !is_middle_pass(scs_ptr) && scs_ptr->static_config.rate_control_mode) {
+#endif
                 pcs_ptr->stat_struct = (scs_ptr->twopass.stats_buf_ctx->stats_in_start + pcs_ptr->picture_number)->stat_struct;
                 if (pcs_ptr->stat_struct.poc != pcs_ptr->picture_number)
                     SVT_LOG("Error reading data in multi pass encoding\n");
+            }
+#endif
+#if TUNE_MULTI_PASS
+            if (scs_ptr->static_config.use_qp_file == 1) {
+                pcs_ptr->qp_on_the_fly = EB_TRUE;
+                if (pcs_ptr->input_ptr->qp > MAX_QP_VALUE) {
+                    SVT_LOG("SVT [WARNING]: INPUT QP/CRF OUTSIDE OF RANGE\n");
+                    pcs_ptr->qp_on_the_fly = EB_FALSE;
+                }
+                pcs_ptr->picture_qp = (uint8_t)pcs_ptr->input_ptr->qp;
+                }
+            else {
+                pcs_ptr->qp_on_the_fly = EB_FALSE;
+                pcs_ptr->picture_qp = (uint8_t)scs_ptr->static_config.qp;
             }
 #endif
 #if FTR_2PASS_1PASS_UNIFICATION

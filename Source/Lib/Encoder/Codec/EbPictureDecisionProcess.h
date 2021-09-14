@@ -62,7 +62,9 @@ typedef struct PictureDecisionContext {
     uint64_t last_solid_color_frame_poc;
 
     EbBool reset_running_avg;
-
+#if OPT_PREHME
+    int8_t  tf_motion_direction; // -1: invalid   0: horz  1: vert
+#endif
     uint32_t **ahd_running_avg_cb;
     uint32_t **ahd_running_avg_cr;
     uint32_t **ahd_running_avg;

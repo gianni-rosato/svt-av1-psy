@@ -34,17 +34,26 @@
 #if !OPT_INLINE_FUNCS
 void av1_set_ref_frame(MvReferenceFrame *rf, int8_t ref_frame_type);
 #endif
-#if !LIGHT_PD1
+#if !LIGHT_PD1_MACRO
 uint8_t av1_drl_ctx(const CandidateMv *ref_mv_stack, int32_t ref_idx);
 #endif
 #if FTR_MEM_OPT
  void get_recon_pic(PictureControlSet *pcs_ptr, EbPictureBufferDesc **recon_ptr, EbBool is_highbd);
+#endif
+#if OPT_MEM_PALETTE
+ int svt_av1_allow_palette(int allow_palette, BlockSize sb_type);
+
+uint32_t get_tot_1d_blks(struct PictureParentControlSet * ppcs, const int32_t sq_size, const uint8_t disallow_nsq) ;
+
 #endif
 #if FTR_MEM_OPT
 EbPictureBufferDesc * get_ref_pic_buffer(PictureControlSet *pcs_ptr,
                                          uint8_t is_highbd,
                                          uint8_t list_idx,
                                          uint8_t ref_idx);
+#endif
+#if OPT_MEM_PALETTE
+void rtime_alloc_palette_info(BlkStruct * md_blk_arr_nsq) ;
 #endif
 /*******************************************
 * set Penalize Skip Flag
@@ -1472,8 +1481,13 @@ void perform_intra_coding_loop(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, u
                 tx_size,
                 mode,
                 pu_ptr->angle_delta[PLANE_TYPE_Y],
+#if OPT_MEM_PALETTE
+                blk_ptr->palette_size[0] > 0,
+                blk_ptr->palette_info,
+#else
                 blk_ptr->palette_info.pmi.palette_size[0] > 0,
                 &blk_ptr->palette_info,
+#endif
                 blk_ptr->filter_intra_mode,
                 top_neigh_array + 1,
                 left_neigh_array + 1,
@@ -1541,8 +1555,13 @@ void perform_intra_coding_loop(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, u
                 tx_size,
                 mode,
                 pu_ptr->angle_delta[PLANE_TYPE_Y],
+#if OPT_MEM_PALETTE
+                blk_ptr->palette_size[0] > 0,
+                blk_ptr->palette_info,
+#else
                 blk_ptr->palette_info.pmi.palette_size[0] > 0,
                 &blk_ptr->palette_info,
+#endif
                 blk_ptr->filter_intra_mode,
                 top_neigh_array + 1,
                 left_neigh_array + 1,
@@ -1773,7 +1792,11 @@ void perform_intra_coding_loop(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, u
                     mode,
                     plane ? pu_ptr->angle_delta[PLANE_TYPE_UV] : pu_ptr->angle_delta[PLANE_TYPE_Y],
                     0, //chroma
+#if OPT_MEM_PALETTE
+                    blk_ptr->palette_info,
+#else
                     &blk_ptr->palette_info,
+#endif
                     FILTER_INTRA_MODES,
                     top_neigh_array + 1,
                     left_neigh_array + 1,
@@ -1880,7 +1903,11 @@ void perform_intra_coding_loop(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, u
                     mode,
                     plane ? pu_ptr->angle_delta[PLANE_TYPE_UV] : pu_ptr->angle_delta[PLANE_TYPE_Y],
                     0, //chroma
+#if OPT_MEM_PALETTE
+                    blk_ptr->palette_info,
+#else
                     &blk_ptr->palette_info,
+#endif
                     FILTER_INTRA_MODES,
                     top_neigh_array + 1,
                     left_neigh_array + 1,
@@ -2255,15 +2282,10 @@ void perform_inter_coding_loop(SequenceControlSet *scs, PictureControlSet *pcs,
     EbPictureBufferDesc             *ref_pic_list1;
     if (blk_ptr->use_intrabc) {
         ref_pic_list0 =
-#if FTR_MEM_OPT
-            is_16bit && pcs->parent_pcs_ptr->packed_reference_hbd ?
-             ((EbReferenceObject *)pcs->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->reference_picture16bit :
 
-#else
 #if !FTR_MEM_OPT
             is_16bit ?
             ((EbReferenceObject *)pcs->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->reference_picture16bit :
-#endif
 #endif
             ((EbReferenceObject *)pcs->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->reference_picture;
         ref_pic_list1 = (EbPictureBufferDesc*)NULL;
@@ -2288,17 +2310,6 @@ void perform_inter_coding_loop(SequenceControlSet *scs, PictureControlSet *pcs,
                 : (EbPictureBufferDesc*)NULL;
         }
         else
-#elif 0
-
-       if (pu_ptr->motion_mode == WARPED_CAUSAL) { //OMKC
-           ref_pic_list0 = ref_idx_l0 >= 0
-               ? ((EbReferenceObject*)pcs->ref_pic_ptr_array[list_idx0][ref_idx_l0]->object_ptr)->reference_picture16bit
-               : (EbPictureBufferDesc*)NULL;
-           ref_pic_list1 = ref_idx_l1 >= 0
-               ? ((EbReferenceObject*)pcs->ref_pic_ptr_array[list_idx1][ref_idx_l1]->object_ptr)->reference_picture16bit
-               : (EbPictureBufferDesc*)NULL;
-       }
-       else
 #endif
         {
 #if FTR_MEM_OPT
@@ -3048,10 +3059,17 @@ EB_EXTERN void av1_encode_decode(SequenceControlSet *scs, PictureControlSet *pcs
 
                 if (scs->static_config.encoder_bit_depth > EB_8BIT &&
                     pcs->hbd_mode_decision == 0 &&
+#if OPT_MEM_PALETTE
+                    blk_ptr->palette_size[0] > 0) {
+                    //MD was done on 8bit, scale  palette colors to 10bit
+                    for (uint8_t col = 0; col < blk_ptr->palette_size[0]; col++)
+                        blk_ptr->palette_info->pmi.palette_colors[col] *= 4;
+#else
                     blk_ptr->palette_info.pmi.palette_size[0] > 0) {
                     //MD was done on 8bit, scale  palette colors to 10bit
                     for (uint8_t col = 0; col < blk_ptr->palette_info.pmi.palette_size[0]; col++)
                         blk_ptr->palette_info.pmi.palette_colors[col] *= 4;
+#endif
                 }
 
                 // *Note - Transforms are the same size as predictions
@@ -3251,7 +3269,11 @@ EB_EXTERN void av1_encode_decode(SequenceControlSet *scs, PictureControlSet *pcs
 /*
  * Update data structures needed for future frames.  Apply DLF for certain modes.
 */
+#if OPT_MEM_PALETTE
+EB_EXTERN EbErrorType av1_encdec_update(SequenceControlSet *scs, PictureControlSet *pcs,
+#else
 EB_EXTERN void av1_encdec_update(SequenceControlSet *scs, PictureControlSet *pcs,
+#endif
     SuperBlock *sb_ptr, uint32_t sb_addr, uint32_t sb_org_x,
     uint32_t sb_org_y, EncDecContext *ctx) {
 
@@ -3280,6 +3302,11 @@ EB_EXTERN void av1_encdec_update(SequenceControlSet *scs, PictureControlSet *pcs
 #endif
     ctx->coded_area_sb = 0;
     ctx->coded_area_sb_uv = 0;
+#if FTR_VLPD1
+    pcs->sb_intra[sb_addr] = 0;
+    pcs->sb_skip[sb_addr] = 1;
+    pcs->sb_64x64_mvp[sb_addr] = 0;
+#endif
 
     // CU Loop
     uint32_t final_blk_itr = 0;
@@ -3343,6 +3370,24 @@ EB_EXTERN void av1_encdec_update(SequenceControlSet *scs, PictureControlSet *pcs
             else {
                 blk_ptr->qindex = sb_ptr->qindex;
             }
+#if FTR_VLPD1
+            if (blk_ptr->prediction_mode_flag == INTRA_MODE) {
+                ctx->tot_intra_coded_area += blk_geom->bwidth * blk_geom->bheight;
+                pcs->sb_intra[sb_addr] = 1;
+            }
+            else {
+                if (blk_it == 0 && blk_ptr->pred_mode != NEWMV && blk_ptr->pred_mode != NEW_NEWMV) {
+                    pcs->sb_64x64_mvp[sb_addr] = 1;
+                }
+            }
+
+            if (blk_ptr->block_has_coeff == 0) {
+                ctx->tot_skip_coded_area += blk_geom->bwidth * blk_geom->bheight;
+            }
+            else {
+                pcs->sb_skip[sb_addr] = 0;
+            }
+#else
 #if FTR_INTRA_DETECTOR
             if (blk_ptr->prediction_mode_flag == INTRA_MODE)
                 ctx->tot_intra_coded_area += blk_geom->bwidth * blk_geom->bheight;
@@ -3350,6 +3395,7 @@ EB_EXTERN void av1_encdec_update(SequenceControlSet *scs, PictureControlSet *pcs
 #if FTR_COEFF_DETECTOR
             if (blk_ptr->block_has_coeff == 0)
                 ctx->tot_skip_coded_area += blk_geom->bwidth * blk_geom->bheight;
+#endif
 #endif
 #if FTR_1PASS_CBR_FIX
             svt_block_on_mutex(pcs->parent_pcs_ptr->pcs_total_rate_mutex);
@@ -3797,6 +3843,16 @@ EB_EXTERN void av1_encdec_update(SequenceControlSet *scs, PictureControlSet *pcs
             // Copy final symbols and mode info from MD array to SB ptr
             // Data will be overwritten each iteration, so copying is useful. Data is updated at EntropyCoding.
             sb_ptr->final_blk_arr[final_blk_itr].av1xd = NULL;
+#if OPT_MEM_PALETTE
+        // ENCDEC palette info buffer
+            {
+                if (svt_av1_allow_palette(pcs->parent_pcs_ptr->palette_level, blk_geom->bsize))
+
+                    rtime_alloc_palette_info(&sb_ptr->final_blk_arr[final_blk_itr]);
+                else
+                    sb_ptr->final_blk_arr[final_blk_itr].palette_info = NULL;
+        }
+#endif
             BlkStruct *src_cu = &md_ctx->md_blk_arr_nsq[d1_itr];
             BlkStruct *dst_cu = &sb_ptr->final_blk_arr[final_blk_itr];
             move_blk_data(pcs, ctx, src_cu, dst_cu);
@@ -3834,6 +3890,49 @@ EB_EXTERN void av1_encdec_update(SequenceControlSet *scs, PictureControlSet *pcs
 #endif
     } // CU Loop
 
+#if OPT_MEM_PALETTE
+
+    // free MD palette info buffer
+    if(pcs->parent_pcs_ptr->palette_level){
+
+        const uint16_t max_block_cnt = scs->max_block_cnt;
+        const int32_t min_sq_size =
+            (md_ctx->depth_removal_ctrls.enabled && md_ctx->depth_removal_ctrls.disallow_below_64x64)
+            ? 64
+            : (md_ctx->depth_removal_ctrls.enabled && md_ctx->depth_removal_ctrls.disallow_below_32x32)
+            ? 32
+            : (md_ctx->depth_removal_ctrls.enabled && md_ctx->depth_removal_ctrls.disallow_below_16x16)
+            ? 16
+            : md_ctx->disallow_4x4 ? 8 : 4;
+        uint32_t blk_index = 0;
+            while (blk_index < max_block_cnt) {
+                const BlockGeom *blk_geom = get_blk_geom_mds(blk_index);
+
+                    if (pcs->parent_pcs_ptr->sb_geom[sb_addr].block_is_inside_md_scan[blk_index]) {
+
+                        const uint32_t tot_d1_blocks = pcs->parent_pcs_ptr->disallow_nsq ? 1 :
+                            get_tot_1d_blks(pcs->parent_pcs_ptr, blk_geom->sq_size, md_ctx->md_disallow_nsq);
+
+                        for (uint32_t idx = blk_index; idx < (tot_d1_blocks + blk_index); ++idx) {
+                            if (md_ctx->md_blk_arr_nsq[idx].palette_mem ){
+                           // if (pcs->parent_pcs_ptr->sb_geom[sb_addr].block_is_inside_md_scan[idx] && is_block_tagged) {
+
+                                EB_FREE_ARRAY(md_ctx->md_blk_arr_nsq[idx].palette_info->color_idx_map);
+
+                                EB_FREE_ARRAY(md_ctx->md_blk_arr_nsq[idx].palette_info);
+                            }
+                        }
+                        blk_index += blk_geom->d1_depth_offset;
+                    }
+                    else
+                        blk_index +=
+                        (blk_geom->sq_size > min_sq_size)
+                        ? blk_geom->d1_depth_offset
+                        : blk_geom->ns_depth_offset;
+
+            }
+    }
+#endif
 #if CLN_DLF_SIGNALS
 
     EbBool enable_dlf = pcs->parent_pcs_ptr->dlf_ctrls.enabled && pcs->parent_pcs_ptr->dlf_ctrls.sb_based_dlf;
@@ -3868,8 +3967,11 @@ EB_EXTERN void av1_encdec_update(SequenceControlSet *scs, PictureControlSet *pcs
             loop_filter_sb(recon_buffer, pcs, sb_org_y >> 2, sb_org_x >> 2, 0, 3, last_col);
         }
     }
-
+#if OPT_MEM_PALETTE
+    return EB_ErrorNone;
+#else
     return;
+#endif
 }
 #endif
 #else

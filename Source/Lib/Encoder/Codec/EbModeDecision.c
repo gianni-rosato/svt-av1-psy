@@ -1769,7 +1769,7 @@ uint8_t get_max_drl_index(uint8_t refmvCnt, PredictionMode mode) {
 
     return max_drl;
 }
-#if LIGHT_PD1
+#if LIGHT_PD1_MACRO
 /*********************************************************************
 **********************************************************************
         Upto 12 inter Candidated injected
@@ -1801,6 +1801,11 @@ void inject_mvp_candidates_ii_light_pd1 (PictureControlSet *pcs, ModeDecisionCon
         if (rf[1] == NONE_FRAME) {
             MvReferenceFrame frame_type = rf[0];
             uint8_t          list_idx = get_list_idx(rf[0]);
+#if FTR_VLPD1
+            if (ctx->reduce_unipred_candidates >= 3 && ctx->bipred_available) {
+                continue;
+            }
+#endif
 #if FTR_MVP_BEST_ME_LIST
             if (ctx->lpd1_mvp_best_me_list) {
                 const MeSbResults *me_results = pcs->parent_pcs_ptr->pa_me_data->me_results[ctx->me_sb_addr];
@@ -3589,7 +3594,152 @@ void obmc_motion_refinement(PictureControlSet *pcs_ptr, struct ModeDecisionConte
         candidate->motion_vector_pred_y[REF_LIST_1] = best_pred_mv[0].as_mv.row;
     }
 }
+#if FTR_VLPD0
+/*
+   inject ME candidates for very light PD0
+*/
+void inject_new_candidates_very_light_pd0(struct ModeDecisionContext* context_ptr, PictureControlSet* pcs_ptr,
+    EbBool is_compound_enabled, uint32_t me_sb_addr,
+    uint32_t me_block_offset, uint32_t* candidate_total_cnt)
+{
+    ModeDecisionCandidate* cand_array = context_ptr->fast_candidate_array;
+    uint32_t               cand_total_cnt = (*candidate_total_cnt);
+    const MeSbResults* me_results = pcs_ptr->parent_pcs_ptr->pa_me_data->me_results[me_sb_addr];
+    uint8_t            total_me_cnt = me_results->total_me_candidate_index[me_block_offset];
+    const MeCandidate* me_block_results = &me_results->me_candidate_array[context_ptr->me_cand_offset];
 
+#if OPT_ME
+    const uint8_t max_refs = pcs_ptr->parent_pcs_ptr->pa_me_data->max_refs;
+    const uint8_t max_l0 = pcs_ptr->parent_pcs_ptr->pa_me_data->max_l0;
+#endif
+
+    for (uint8_t me_candidate_index = 0; me_candidate_index < total_me_cnt; ++me_candidate_index) {
+        const MeCandidate* me_block_results_ptr = &me_block_results[me_candidate_index];
+        const uint8_t      inter_direction = me_block_results_ptr->direction;
+        const uint8_t      list0_ref_index = me_block_results_ptr->ref_idx_l0;
+        const uint8_t      list1_ref_index = me_block_results_ptr->ref_idx_l1;
+
+
+        if (inter_direction == 2)
+            continue;
+
+        /**************
+            NEWMV L0
+        ************* */
+        if (inter_direction == 0) {
+#if LIGHT_PD0
+
+#if OPT_ME
+            const int16_t to_inject_mv_x = (me_results->me_mv_array[me_block_offset * max_refs + list0_ref_index].x_mv) << 1;
+            const int16_t to_inject_mv_y = (me_results->me_mv_array[me_block_offset * max_refs + list0_ref_index].y_mv) << 1;
+#else
+
+            const int16_t to_inject_mv_x = (me_results->me_mv_array[me_block_offset * MAX_PA_ME_MV + list0_ref_index].x_mv) << 1;
+            const int16_t to_inject_mv_y = (me_results->me_mv_array[me_block_offset * MAX_PA_ME_MV + list0_ref_index].y_mv) << 1;
+#endif
+#else
+            int16_t to_inject_mv_x = context_ptr->sb_me_mv[context_ptr->blk_geom->blkidx_mds][REF_LIST_0][list0_ref_index][0];
+            int16_t to_inject_mv_y = context_ptr->sb_me_mv[context_ptr->blk_geom->blkidx_mds][REF_LIST_0][list0_ref_index][1];
+#endif
+            uint8_t to_inject_ref_type = svt_get_ref_frame_type(REF_LIST_0, list0_ref_index);
+
+            cand_array[cand_total_cnt].type = INTER_MODE;
+#if !LIGHT_PD0_2
+            cand_array[cand_total_cnt].use_intrabc = 0;
+            cand_array[cand_total_cnt].skip_mode_allowed = EB_FALSE;
+#endif
+            cand_array[cand_total_cnt].prediction_direction[0] = (EbPredDirection)0;
+            cand_array[cand_total_cnt].pred_mode = NEWMV;
+#if !LIGHT_PD0_2
+            cand_array[cand_total_cnt].motion_mode = SIMPLE_TRANSLATION;
+#endif
+            cand_array[cand_total_cnt].is_compound = 0;
+#if !LIGHT_PD0_2
+            cand_array[cand_total_cnt].drl_index = 0;
+#endif
+            // Set the MV to ME result
+            cand_array[cand_total_cnt].motion_vector_xl0 = to_inject_mv_x;
+            cand_array[cand_total_cnt].motion_vector_yl0 = to_inject_mv_y;
+
+            // will be needed later by the rate estimation
+            cand_array[cand_total_cnt].ref_frame_type = to_inject_ref_type;
+#if !LIGHT_PD0_2
+            cand_array[cand_total_cnt].motion_vector_pred_x[REF_LIST_0] = 0;
+            cand_array[cand_total_cnt].motion_vector_pred_y[REF_LIST_0] = 0;
+            cand_array[cand_total_cnt].is_interintra_used = 0;
+#endif
+#if TUNE_MDS0
+            INCRMENT_CAND_TOTAL_COUNT(cand_total_cnt, pcs_ptr->parent_pcs_ptr->max_can_count);
+#else
+            INCRMENT_CAND_TOTAL_COUNT(cand_total_cnt);
+#endif
+#if LIGHT_PD0
+            if (cand_total_cnt > 2)
+                break;
+#endif
+        }
+
+        if (is_compound_enabled) {
+            /**************
+               NEWMV L1
+           ************* */
+            if (inter_direction == 1) {
+#if LIGHT_PD0
+
+#if OPT_ME
+                const int16_t to_inject_mv_x = (me_results->me_mv_array[me_block_offset * max_refs + max_l0 + list0_ref_index].x_mv) << 1;
+                const int16_t to_inject_mv_y = (me_results->me_mv_array[me_block_offset * max_refs + max_l0 + list0_ref_index].y_mv) << 1;
+
+#else
+                const int16_t to_inject_mv_x = (me_results->me_mv_array[me_block_offset * MAX_PA_ME_MV + 4 + list1_ref_index].x_mv) << 1;
+                const int16_t to_inject_mv_y = (me_results->me_mv_array[me_block_offset * MAX_PA_ME_MV + 4 + list1_ref_index].y_mv) << 1;
+#endif
+#else
+                int16_t to_inject_mv_x = context_ptr->sb_me_mv[context_ptr->blk_geom->blkidx_mds][REF_LIST_1][list1_ref_index][0];
+                int16_t to_inject_mv_y = context_ptr->sb_me_mv[context_ptr->blk_geom->blkidx_mds][REF_LIST_1][list1_ref_index][1];
+#endif
+                uint8_t to_inject_ref_type = svt_get_ref_frame_type(REF_LIST_1, list1_ref_index);
+
+                cand_array[cand_total_cnt].type = INTER_MODE;
+#if !LIGHT_PD0_2
+                cand_array[cand_total_cnt].use_intrabc = 0;
+                cand_array[cand_total_cnt].skip_mode_allowed = EB_FALSE;
+#endif
+                cand_array[cand_total_cnt].prediction_direction[0] = (EbPredDirection)1;
+                cand_array[cand_total_cnt].pred_mode = NEWMV;
+#if !LIGHT_PD0_2
+                cand_array[cand_total_cnt].motion_mode = SIMPLE_TRANSLATION;
+#endif
+                cand_array[cand_total_cnt].is_compound = 0;
+#if !LIGHT_PD0_2
+                cand_array[cand_total_cnt].drl_index = 0;
+#endif
+                // Set the MV to ME result
+                cand_array[cand_total_cnt].motion_vector_xl1 = to_inject_mv_x;
+                cand_array[cand_total_cnt].motion_vector_yl1 = to_inject_mv_y;
+                // will be needed later by the rate estimation
+                cand_array[cand_total_cnt].ref_frame_type = to_inject_ref_type;
+#if !LIGHT_PD0_2
+                cand_array[cand_total_cnt].motion_vector_pred_x[REF_LIST_1] = 0;
+                cand_array[cand_total_cnt].motion_vector_pred_y[REF_LIST_1] = 0;
+                cand_array[cand_total_cnt].is_interintra_used = 0;
+#endif
+#if TUNE_MDS0
+                INCRMENT_CAND_TOTAL_COUNT(cand_total_cnt, pcs_ptr->parent_pcs_ptr->max_can_count);
+#else
+                INCRMENT_CAND_TOTAL_COUNT(cand_total_cnt);
+#endif
+#if LIGHT_PD0
+                if (cand_total_cnt > 2)
+                    break;
+#endif
+            }
+        }
+    }
+    // update the total number of candidates injected
+    (*candidate_total_cnt) = cand_total_cnt;
+}
+#endif
 #if LIGHT_PD0
 /*
    inject ME candidates for Light PD0
@@ -3812,7 +3962,7 @@ void inject_new_candidates_light_pd0(struct ModeDecisionContext *context_ptr, Pi
     (*candidate_total_cnt) = cand_total_cnt;
 }
 #endif
-#if LIGHT_PD1
+#if LIGHT_PD1_MACRO
 void inject_new_candidates_light_pd1(PictureControlSet *pcs, struct ModeDecisionContext *ctx,
                            EbBool is_compound_enabled, EbBool allow_bipred, uint32_t me_sb_addr,
                            uint32_t me_block_offset, uint32_t *candidate_total_cnt) {
@@ -3830,6 +3980,13 @@ void inject_new_candidates_light_pd1(PictureControlSet *pcs, struct ModeDecision
         const uint8_t      list0_ref_index      = me_block_results_ptr->ref_idx_l0;
         const uint8_t      list1_ref_index      = me_block_results_ptr->ref_idx_l1;
 
+#if FTR_VLPD1
+        if (ctx->reduce_unipred_candidates >= 2) {
+            if ((total_me_cnt > 1) && (inter_direction != 2))
+                continue;
+        }
+        else
+#endif
         if (ctx->reduce_unipred_candidates)
             if ((total_me_cnt > 3) && (inter_direction != 2))
                 continue;
@@ -5288,7 +5445,30 @@ void inject_pme_candidates(
     }
     (*candidate_total_cnt) = cand_total_cnt;
 }
+#if FTR_VLPD0
+void inject_inter_candidates_very_light_pd0(PictureControlSet* pcs_ptr, ModeDecisionContext* context_ptr,
+    uint32_t* candidate_total_cnt)
+{
+    FrameHeader* frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
+#if !LIGHT_PD0_2
+    uint32_t cand_total_cnt = *candidate_total_cnt;
+#endif
+    EbBool is_compound_enabled = (frm_hdr->reference_mode == SINGLE_REFERENCE) ? 0 : 1;
 
+    inject_new_candidates_very_light_pd0(context_ptr,
+        pcs_ptr,
+        is_compound_enabled,
+        context_ptr->me_sb_addr,
+        context_ptr->me_block_offset,
+#if LIGHT_PD0_2
+        candidate_total_cnt);
+#else
+        & cand_total_cnt);
+    // update the total number of candidates injected
+    *candidate_total_cnt = cand_total_cnt;
+#endif
+}
+#endif
 #if LIGHT_PD0
 void inject_inter_candidates_light_pd0(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
     uint32_t *candidate_total_cnt)
@@ -5314,7 +5494,7 @@ void inject_inter_candidates_light_pd0(PictureControlSet *pcs_ptr, ModeDecisionC
 #endif
 }
 #endif
-#if LIGHT_PD1
+#if LIGHT_PD1_MACRO
 void inject_inter_candidates_light_pd1(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr, uint32_t *candidate_total_cnt) {
 
     FrameHeader* frm_hdr        = &pcs_ptr->parent_pcs_ptr->frm_hdr;
@@ -6278,11 +6458,18 @@ void inject_zz_backup_candidate(
     choose_best_av1_mv_pred(context_ptr,
         context_ptr->md_rate_estimation_ptr,
         context_ptr->blk_ptr,
+#if FIX_INIT_ZZ_CAND
+        svt_get_ref_frame_type(REF_LIST_0, 0),
+        0,
+        NEWMV,
+        0,0,
+#else
         cand_array[cand_total_cnt].ref_frame_type,
         cand_array[cand_total_cnt].is_compound,
         cand_array[cand_total_cnt].pred_mode,
         cand_array[cand_total_cnt].motion_vector_xl0,
         cand_array[cand_total_cnt].motion_vector_yl0,
+#endif
         0,
         0,
         &cand_array[cand_total_cnt].drl_index,
@@ -6332,6 +6519,9 @@ void  search_palette_luma(
     PictureControlSet            *pcs_ptr,
     ModeDecisionContext          *context_ptr,
     PaletteInfo                 *palette_cand,
+#if OPT_MEM_PALETTE
+    uint8_t    *palette_size_array,
+#endif
     uint32_t                     *tot_palette_cands);
 
 void  inject_palette_candidates(
@@ -6348,6 +6538,12 @@ void  inject_palette_candidates(
     uint32_t cand_i;
     uint32_t tot_palette_cands = 0;
     PaletteInfo    *palette_cand_array = context_ptr->palette_cand_array;
+#if OPT_MEM_PALETTE
+    // MD palette search
+    uint8_t  * palette_size_array_0  = context_ptr->palette_size_array_0;
+    uint8_t  * palette_size_array_1  = context_ptr->palette_size_array_1;
+
+#endif
 
     SequenceControlSet *scs_ptr = (SequenceControlSet*)pcs_ptr->scs_wrapper_ptr->object_ptr;
     if (scs_ptr->static_config.disable_cfl_flag != DEFAULT && !disable_cfl_flag)
@@ -6358,13 +6554,26 @@ void  inject_palette_candidates(
         pcs_ptr,
         context_ptr,
         palette_cand_array,
+#if OPT_MEM_PALETTE
+        palette_size_array_0,
+#endif
         &tot_palette_cands);
 
     for (cand_i = 0; cand_i < tot_palette_cands; ++cand_i) {
         cand_array[can_total_cnt].is_interintra_used = 0;
+#if OPT_MEM_PALETTE
+        palette_size_array_1[cand_i] = 0;
+        cand_array[can_total_cnt].palette_size[0] = palette_size_array_0[cand_i];
+        cand_array[can_total_cnt].palette_size[1] = palette_size_array_1[cand_i];
+#else
         palette_cand_array[cand_i].pmi.palette_size[1] = 0;
+#endif
         cand_array[can_total_cnt].palette_info = &palette_cand_array[cand_i];
+#if OPT_MEM_PALETTE
+        assert(palette_size_array_0[cand_i] < 9);
+#else
         assert(palette_cand_array[cand_i].pmi.palette_size[0] < 9);
+#endif
         //to re check these fields
         cand_array[can_total_cnt].type = INTRA_MODE;
         cand_array[can_total_cnt].skip_mode_allowed = EB_FALSE;
@@ -6482,6 +6691,115 @@ static INLINE void eliminate_candidate_based_on_pme_me_results(ModeDecisionConte
         }
     }
 }
+#if FTR_VLPD0
+EbErrorType generate_md_stage_0_cand_very_light_pd0(
+    ModeDecisionContext *context_ptr,
+    uint32_t            *candidate_total_count_ptr,
+    PictureControlSet   *pcs_ptr)
+{
+    const EB_SLICE slice_type = pcs_ptr->slice_type;
+    uint32_t cand_total_cnt = 0;
+#if !LIGHT_PD0_2
+    // Reset duplicates variables
+    context_ptr->injected_mv_count_l0 = 0;
+    context_ptr->injected_mv_count_l1 = 0;
+    context_ptr->injected_mv_count_bipred = 0;
+#endif
+    //----------------------
+    // Intra
+    if (context_ptr->blk_geom->sq_size < 128 && !context_ptr->skip_intra) {
+        inject_intra_candidates_light_pd0(
+#if TUNE_MDS0
+            pcs_ptr,
+#endif
+            context_ptr,
+            &cand_total_cnt);
+    }
+
+    if (slice_type != I_SLICE && context_ptr->inject_inter_candidates) {
+        inject_inter_candidates_very_light_pd0(
+            pcs_ptr,
+            context_ptr,
+            &cand_total_cnt);
+    }
+
+    // For I_SLICE, DC is always injected, and therefore there is no a risk of no candidates @ md_stage_0()
+    // For non I_SLICE, there is a risk of no candidates @ md_stage_0() because of the INTER candidates pruning techniques
+    if (slice_type != I_SLICE && cand_total_cnt == 0) {
+        inject_zz_backup_candidate(
+#if TUNE_MDS0
+            pcs_ptr,
+#endif
+            context_ptr,
+            &cand_total_cnt);
+    }
+    *candidate_total_count_ptr = cand_total_cnt;
+#if !LIGHT_PD0_2
+    for (uint32_t index = 0; index < MIN((*candidate_total_count_ptr + CAND_CLASS_TOTAL), context_ptr->max_nics); ++index)
+        context_ptr->fast_cost_array[index] = MAX_CU_COST;
+#endif
+#if !SS_CLN_LIGHT_PD0_PATH
+    memset(context_ptr->md_stage_0_count, 0, CAND_CLASS_TOTAL * sizeof(uint32_t));
+
+    for (uint32_t cand_i = 0; cand_i < cand_total_cnt; cand_i++) {
+
+        ModeDecisionCandidate * cand_ptr = &context_ptr->fast_candidate_array[cand_i];
+#if LIGHT_PD0_2
+        if (cand_ptr->type == INTRA_MODE) {
+            // Intra prediction
+            cand_ptr->cand_class = CAND_CLASS_0;
+            context_ptr->md_stage_0_count[CAND_CLASS_0]++;
+        }
+        else { // INTER
+            // MV Prediction
+            cand_ptr->cand_class = CAND_CLASS_1;
+            context_ptr->md_stage_0_count[CAND_CLASS_1]++;
+#else
+        if (cand_ptr->type == INTRA_MODE) {
+            // Intra prediction
+            if (cand_ptr->palette_info == NULL ||
+                cand_ptr->palette_info->pmi.palette_size[0] == 0) {
+                cand_ptr->cand_class = CAND_CLASS_0;
+                context_ptr->md_stage_0_count[CAND_CLASS_0]++;
+            }
+            else {
+                // Palette Prediction
+                cand_ptr->cand_class = CAND_CLASS_3;
+                context_ptr->md_stage_0_count[CAND_CLASS_3]++;
+            }
+        }
+        else { // INTER
+            if (cand_ptr->pred_mode == NEWMV || cand_ptr->pred_mode == NEW_NEWMV || context_ptr->merge_inter_classes) {
+
+                // MV Prediction
+                cand_ptr->cand_class = CAND_CLASS_1;
+                context_ptr->md_stage_0_count[CAND_CLASS_1]++;
+            }
+            else {
+                //MVP Prediction
+                cand_ptr->cand_class = CAND_CLASS_2;
+                context_ptr->md_stage_0_count[CAND_CLASS_2]++;
+            }
+#endif
+#if !CLN_REMOVE_CHECK_MV_VALIDITY
+            //check if final MV is within AV1 limits
+            if (cand_ptr->prediction_direction[0] == UNI_PRED_LIST_0 ||
+                cand_ptr->prediction_direction[0] == BI_PRED)
+                check_mv_validity(cand_ptr->motion_vector_xl0,
+                    cand_ptr->motion_vector_yl0, 0);
+
+            if (cand_ptr->prediction_direction[0] == UNI_PRED_LIST_1 ||
+                cand_ptr->prediction_direction[0] == BI_PRED)
+                check_mv_validity(cand_ptr->motion_vector_xl1,
+                    cand_ptr->motion_vector_yl1, 0);
+#endif
+        }
+    }
+#endif
+
+    return EB_ErrorNone;
+}
+#endif
 #if LIGHT_PD0
 EbErrorType generate_md_stage_0_cand_light_pd0(
     ModeDecisionContext *context_ptr,
@@ -6591,7 +6909,7 @@ EbErrorType generate_md_stage_0_cand_light_pd0(
     return EB_ErrorNone;
 }
 #endif
-#if LIGHT_PD1
+#if LIGHT_PD1_MACRO
 /*
    generate candidates for light pd1
 */
@@ -6751,7 +7069,11 @@ EbErrorType generate_md_stage_0_cand(
         if (cand_ptr->type == INTRA_MODE) {
             // Intra prediction
                   if (cand_ptr->palette_info == NULL ||
+#if OPT_MEM_PALETTE
+                          cand_ptr->palette_size[0] == 0) {
+#else
                           cand_ptr->palette_info->pmi.palette_size[0] == 0) {
+#endif
                     cand_ptr->cand_class = CAND_CLASS_0;
                     context_ptr->md_stage_0_count[CAND_CLASS_0]++;
                   }
@@ -6835,7 +7157,7 @@ uint32_t product_full_mode_decision_light_pd0(
 }
 #endif
 #endif
-#if LIGHT_PD1
+#if LIGHT_PD1_MACRO
 /***************************************
 * Update symbols for light-PD1 path
 ***************************************/
@@ -6856,7 +7178,11 @@ uint32_t product_full_mode_decision_light_pd1(
     // Set common signals (INTER/INTRA)
     blk_ptr->prediction_mode_flag = candidate_ptr->type;
     blk_ptr->use_intrabc = 0;
+#if OPT_MEM_PALETTE
+    blk_ptr->palette_size[0] = blk_ptr->palette_size[1] = 0;
+#else
     blk_ptr->palette_info.pmi.palette_size[0] = blk_ptr->palette_info.pmi.palette_size[1] = 0;
+#endif
     blk_ptr->pred_mode = candidate_ptr->pred_mode;
     blk_ptr->is_interintra_used = 0;
     pu_ptr->ref_frame_type = candidate_ptr->ref_frame_type;
@@ -7054,7 +7380,7 @@ uint32_t product_full_mode_decision(
     if (context_ptr->pd_pass == PD_PASS_1) {
         blk_ptr->total_rate = candidate_ptr->total_rate;
     }
-#if LIGHT_PD1
+#if LIGHT_PD1_MACRO
 #if FIX_COST_CALC_CHECK
     if (!(context_ptr->pd_pass == PD_PASS_1 && context_ptr->pred_depth_only && context_ptr->md_disallow_nsq)) {
 #else
@@ -7075,7 +7401,7 @@ uint32_t product_full_mode_decision(
             context_ptr->md_local_blk_unit[blk_ptr->mds_idx].default_cost = *(buffer_ptr_array[lowest_cost_index]->full_cost_ptr);
         }
         context_ptr->md_local_blk_unit[blk_ptr->mds_idx].full_distortion = (uint32_t)candidate_ptr->full_distortion;
-#if LIGHT_PD1
+#if LIGHT_PD1_MACRO
     }
 #endif
 
@@ -7097,7 +7423,7 @@ uint32_t product_full_mode_decision(
             memcpy(&blk_ptr->interinter_comp, &candidate_ptr->interinter_comp, sizeof(blk_ptr->interinter_comp));
             blk_ptr->compound_idx = candidate_ptr->compound_idx;
             blk_ptr->comp_group_idx = candidate_ptr->comp_group_idx;
-#if LIGHT_PD1
+#if LIGHT_PD1_MACRO
             assert(IMPLIES(blk_ptr->interinter_comp.type == COMPOUND_AVERAGE, (blk_ptr->comp_group_idx == 0 && blk_ptr->compound_idx == 1)));
 #else
             if (blk_ptr->interinter_comp.type == COMPOUND_AVERAGE) {
@@ -7114,8 +7440,11 @@ uint32_t product_full_mode_decision(
         }
 
         blk_ptr->interp_filters = candidate_ptr->interp_filters;
+#if OPT_MEM_PALETTE
+         blk_ptr->palette_size[0] = blk_ptr->palette_size[1] = 0;
+#else
         blk_ptr->palette_info.pmi.palette_size[0] = blk_ptr->palette_info.pmi.palette_size[1] = 0;
-
+#endif
         // Set MVs
         if (pu_ptr->inter_pred_direction_index == UNI_PRED_LIST_0)
         {
@@ -7155,7 +7484,7 @@ uint32_t product_full_mode_decision(
         }
 
         if (context_ptr->pd_pass == PD_PASS_1) {
-#if !LIGHT_PD1
+#if !LIGHT_PD1_MACRO
             //keep final useful mvp for entropy
             svt_memcpy(blk_ptr->av1xd->final_ref_mv_stack,
                 context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].ed_ref_mv_stack[pu_ptr->ref_frame_type],
@@ -7165,7 +7494,7 @@ uint32_t product_full_mode_decision(
             if (blk_ptr->pred_mode == NEWMV || blk_ptr->pred_mode == NEW_NEWMV) {
                 for (uint8_t idx = 0; idx < 2; ++idx) {
                     if (blk_ptr->av1xd->ref_mv_count[pu_ptr->ref_frame_type] > idx + 1)
-#if LIGHT_PD1
+#if LIGHT_PD1_MACRO
                         blk_ptr->drl_ctx[idx] = av1_drl_ctx(context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].ed_ref_mv_stack[pu_ptr->ref_frame_type], idx);
 #else
                         blk_ptr->drl_ctx[idx] = av1_drl_ctx(blk_ptr->av1xd->final_ref_mv_stack, idx);
@@ -7179,7 +7508,7 @@ uint32_t product_full_mode_decision(
                 // TODO(jingning): Temporary solution to compensate the NEARESTMV offset.
                 for (uint8_t idx = 1; idx < 3; ++idx) {
                     if (blk_ptr->av1xd->ref_mv_count[pu_ptr->ref_frame_type] > idx + 1)
-#if LIGHT_PD1
+#if LIGHT_PD1_MACRO
                         blk_ptr->drl_ctx_near[idx - 1] = av1_drl_ctx(context_ptr->md_local_blk_unit[context_ptr->blk_geom->blkidx_mds].ed_ref_mv_stack[pu_ptr->ref_frame_type], idx);
 #else
                         blk_ptr->drl_ctx_near[idx - 1] = av1_drl_ctx(blk_ptr->av1xd->final_ref_mv_stack, idx);
@@ -7203,7 +7532,21 @@ uint32_t product_full_mode_decision(
         pu_ptr->intra_chroma_mode = candidate_ptr->intra_chroma_mode;
         pu_ptr->is_directional_chroma_mode_flag = candidate_ptr->is_directional_chroma_mode_flag;
         pu_ptr->angle_delta[PLANE_TYPE_UV] = candidate_ptr->angle_delta[PLANE_TYPE_UV];
+#if OPT_MEM_PALETTE
+        if (!candidate_ptr->palette_info)
+            blk_ptr->palette_size[0] = blk_ptr->palette_size[1] = 0;
+        else if (svt_av1_allow_palette(context_ptr->md_palette_level, context_ptr->blk_geom->bsize)) {
+            if (candidate_ptr->palette_info) {
+                memcpy(&blk_ptr->palette_info->pmi, &candidate_ptr->palette_info->pmi, sizeof(PaletteModeInfo));
+                memcpy(blk_ptr->palette_info->color_idx_map, candidate_ptr->palette_info->color_idx_map, MAX_PALETTE_SQUARE);
+                blk_ptr->palette_size[0] = candidate_ptr->palette_size [0];
+                blk_ptr->palette_size[1] = candidate_ptr->palette_size [1];
+            }
+            else
+                memset(blk_ptr->palette_info->color_idx_map, 0, MAX_PALETTE_SQUARE);
+        }
 
+#else
         if (!candidate_ptr->palette_info)
             blk_ptr->palette_info.pmi.palette_size[0] = blk_ptr->palette_info.pmi.palette_size[1] = 0;
         else if (svt_av1_allow_palette(context_ptr->md_palette_level, context_ptr->blk_geom->bsize)) {
@@ -7214,7 +7557,7 @@ uint32_t product_full_mode_decision(
             else
                 memset(blk_ptr->palette_info.color_idx_map, 0, MAX_PALETTE_SQUARE);
         }
-
+#endif
         if (blk_ptr->use_intrabc == 0) {
             pu_ptr->inter_pred_direction_index = EB_PREDDIRECTION_TOTAL;
             candidate_ptr->skip_mode_allowed = EB_FALSE;
@@ -7898,7 +8241,11 @@ uint32_t get_blk_tuned_full_lambda(struct ModeDecisionContext *context_ptr, Pict
             col < sb_bcol_end;
             ++col) {
             const int index = row * num_cols + col;
+#if OPT_TPL_DATA
+            geom_mean_of_scale += log(ppcs_ptr->pa_me_data->tpl_sb_rdmult_scaling_factors[index]);
+#else
             geom_mean_of_scale += log(ppcs_ptr->tpl_sb_rdmult_scaling_factors[index]);
+#endif
             base_block_count += 1.0;
         }
     }

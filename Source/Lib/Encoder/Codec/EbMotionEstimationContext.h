@@ -324,6 +324,9 @@ typedef struct PreHmeCtrls {
 #if FTR_PREHME_OPT
     uint8_t l1_early_exit;
 #endif
+#if OPT_PREHME
+    uint8_t  use_tf_motion; // use TF motion to direct prehme searches
+#endif
 } PreHmeCtrls;
 
 typedef struct HmeResults {
@@ -512,6 +515,10 @@ typedef struct MeContext {
 #if FTR_TUNE_PRUNING
     uint8_t input_resolution;
     uint8_t clip_class;
+#endif
+#if OPT_PREHME
+    uint32_t  tf_tot_vert_blks;    //total vertical motion blocks in TF
+    uint32_t  tf_tot_horz_blks;    //total horizontal motion blocks in TF
 #endif
 } MeContext;
 

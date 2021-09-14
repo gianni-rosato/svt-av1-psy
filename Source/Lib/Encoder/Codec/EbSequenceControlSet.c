@@ -293,6 +293,12 @@ EbErrorType copy_sequence_control_set(SequenceControlSet *dst, SequenceControlSe
         dst->tile_group_col_count_array[i]      = src->tile_group_col_count_array[i];
         dst->tile_group_row_count_array[i]      = src->tile_group_row_count_array[i];
     }
+
+#if OPT_1P
+     dst->fpass_segment_column_count = src->fpass_segment_column_count;
+     dst->fpass_segment_row_count = src->fpass_segment_row_count;
+#endif
+
     dst->tpl_segment_col_count_array  = src->tpl_segment_col_count_array;
     dst->tpl_segment_row_count_array  = src->tpl_segment_row_count_array;
 
@@ -324,6 +330,9 @@ EbErrorType copy_sequence_control_set(SequenceControlSet *dst, SequenceControlSe
     dst->max_block_cnt = src->max_block_cnt;
 #endif
     dst->enc_mode_2ndpass = src->enc_mode_2ndpass;
+#if FTR_OPT_MPASS
+    dst->rc_stat_gen_pass_mode = src->rc_stat_gen_pass_mode;
+#endif
     return EB_ErrorNone;
 }
 

@@ -77,8 +77,20 @@ static EbErrorType allocate_frame_buffer(EbConfig *config, uint8_t *p_buffer) {
     const uint8_t       subsampling_x = (color_format == EB_YUV444 ? 1 : 2) - 1;
 
     // Determine size of each plane
+#if FTR_OPT_MPASS_DOWN_SAMPLE
+    size_t luma_8bit_size;
+#if FTR_OP_TEST
+    if(1)
+#else
+    if (config->config.rc_middlepass_stats_out)
+#endif
+        luma_8bit_size = (config->input_padded_width<<1) * (config->input_padded_height << 1) *(1 << ten_bit_packed_mode);
+    else
+        luma_8bit_size = config->input_padded_width * config->input_padded_height *(1 << ten_bit_packed_mode);
+#else
     const size_t luma_8bit_size = config->input_padded_width * config->input_padded_height *
         (1 << ten_bit_packed_mode);
+#endif
 
     const size_t chroma_8bit_size = luma_8bit_size >> (3 - color_format);
 
@@ -102,9 +114,26 @@ static EbErrorType allocate_frame_buffer(EbConfig *config, uint8_t *p_buffer) {
 
     // Determine
     EbSvtIOFormat *input_ptr = (EbSvtIOFormat *)p_buffer;
+#if FTR_OPT_MPASS_DOWN_SAMPLE
+#if FTR_OP_TEST
+    if (1) {
+#else
+    if (config->config.rc_middlepass_stats_out) {
+#endif
+        input_ptr->y_stride = (config->input_padded_width << 1);
+        input_ptr->cr_stride = (config->input_padded_width << 1) >> subsampling_x;
+        input_ptr->cb_stride = (config->input_padded_width << 1) >> subsampling_x;
+    }
+    else {
+        input_ptr->y_stride = config->input_padded_width;
+        input_ptr->cr_stride = config->input_padded_width >> subsampling_x;
+        input_ptr->cb_stride = config->input_padded_width >> subsampling_x;
+    }
+#else
     input_ptr->y_stride      = config->input_padded_width;
     input_ptr->cr_stride     = config->input_padded_width >> subsampling_x;
     input_ptr->cb_stride     = config->input_padded_width >> subsampling_x;
+#endif
 
     if (luma_8bit_size) {
         EB_APP_MALLOC(

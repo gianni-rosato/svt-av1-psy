@@ -40,14 +40,22 @@ int  svt_get_palette_cache_y(const MacroBlockD *const xd, uint16_t *cache);
 int  svt_get_palette_cache(const MacroBlockD *const xd, int plane, uint16_t *cache);
 #endif
 int  svt_av1_palette_color_cost_y(const PaletteModeInfo *const pmi, uint16_t *color_cache,
+#if OPT_MEM_PALETTE
+    const int palette_size ,
+#endif
                                   int n_cache, int bit_depth);
+#if OPT_MEM_PALETTE
+int  svt_av1_cost_color_map( ModeDecisionCandidate *candidate_ptr, MdRateEstimationContext *rate_table,
+
+#else
 int  svt_av1_cost_color_map(PaletteInfo *palette_info, MdRateEstimationContext *rate_table,
+#endif
                             BlkStruct *blk_ptr, int plane, BlockSize bsize, COLOR_MAP_TYPE type);
 void av1_get_block_dimensions(BlockSize bsize, int plane, const MacroBlockD *xd, int *width,
                               int *height, int *rows_within_bounds, int *cols_within_bounds);
 int  av1_allow_palette(int allow_screen_content_tools, BlockSize sb_type);
 int  av1_allow_intrabc(const FrameHeader *frm_hdr, EB_SLICE slice_type);
-#if !LIGHT_PD1
+#if !LIGHT_PD1_MACRO
 uint8_t av1_drl_ctx(const CandidateMv *ref_mv_stack, int32_t ref_idx) {
     if (ref_mv_stack[ref_idx].weight >= REF_CAT_LEVEL &&
         ref_mv_stack[ref_idx + 1].weight >= REF_CAT_LEVEL)
@@ -735,7 +743,11 @@ uint64_t av1_intra_fast_cost(
                               blk_geom->bsize) &&
             intra_mode == DC_PRED) {
             const int use_palette = candidate_ptr->palette_info
+#if OPT_MEM_PALETTE
+                ? (candidate_ptr->palette_size[0] > 0)
+#else
                 ? (candidate_ptr->palette_info->pmi.palette_size[0] > 0)
+#endif
                 : 0;
             const int bsize_ctx   = av1_get_palette_bsize_ctx(blk_geom->bsize);
             const int mode_ctx    = av1_get_palette_mode_ctx(blk_ptr->av1xd);
@@ -747,7 +759,11 @@ uint64_t av1_intra_fast_cost(
                 int                  block_width, block_height, rows, cols;
                 av1_get_block_dimensions(
                     blk_geom->bsize, 0, blk_ptr->av1xd, &block_width, &block_height, &rows, &cols);
+#if OPT_MEM_PALETTE
+                const int plt_size = candidate_ptr->palette_size[0];
+#else
                 const int plt_size = candidate_ptr->palette_info->pmi.palette_size[0];
+#endif
                 int       palette_mode_cost =
                     ctx->md_rate_estimation_ptr
                         ->palette_ysize_fac_bits[bsize_ctx][plt_size - PALETTE_MIN_SIZE] +
@@ -761,9 +777,16 @@ uint64_t av1_intra_fast_cost(
                 palette_mode_cost += svt_av1_palette_color_cost_y(
                     &candidate_ptr->palette_info->pmi,
                     color_cache,
+#if OPT_MEM_PALETTE
+                    candidate_ptr->palette_size[0],
+#endif
                     n_cache,
                     pcs_ptr->parent_pcs_ptr->scs_ptr->encoder_bit_depth);
+#if OPT_MEM_PALETTE
+                palette_mode_cost += svt_av1_cost_color_map(candidate_ptr,
+#else
                 palette_mode_cost += svt_av1_cost_color_map(candidate_ptr->palette_info,
+#endif
                                                            ctx->md_rate_estimation_ptr,
                                                             blk_ptr,
                                                             0,
@@ -776,7 +799,11 @@ uint64_t av1_intra_fast_cost(
         if (av1_filter_intra_allowed(
                 pcs_ptr->parent_pcs_ptr->scs_ptr->seq_header.filter_intra_level,
                 blk_geom->bsize,
+#if OPT_MEM_PALETTE
+                candidate_ptr->palette_info ? candidate_ptr->palette_size[0] : 0,
+#else
                 candidate_ptr->palette_info ? candidate_ptr->palette_info->pmi.palette_size[0] : 0,
+#endif
                 intra_mode)) {
             intra_filter_mode_bits_num =
                 ctx->md_rate_estimation_ptr
@@ -812,9 +839,17 @@ uint64_t av1_intra_fast_cost(
                                       blk_geom->bsize) &&
                     chroma_mode == UV_DC_PRED) {
                     const int use_palette_y = candidate_ptr->palette_info &&
+#if OPT_MEM_PALETTE
+                        (candidate_ptr->palette_size[0] > 0);
+#else
                         (candidate_ptr->palette_info->pmi.palette_size[0] > 0);
+#endif
                     const int use_palette_uv = candidate_ptr->palette_info &&
+#if OPT_MEM_PALETTE
+                        (candidate_ptr->palette_size[1] > 0);
+#else
                         (candidate_ptr->palette_info->pmi.palette_size[1] > 0);
+#endif
                     intra_chroma_ang_mode_bits_num +=
                         ctx->md_rate_estimation_ptr
                             ->palette_uv_mode_fac_bits[use_palette_y][use_palette_uv];

@@ -120,7 +120,7 @@ typedef struct InterPredictionContext {
 void svt_inter_predictor_light_pd0(const uint8_t *src, int32_t src_stride, uint8_t *dst, int32_t dst_stride,
     int32_t w, int32_t h, ConvolveParams *conv_params);
 #if FTR_MEM_OPT
-void svt_highbd_inter_predictor_light_pd0( uint8_t *src, uint8_t* src_ptr_2b,uint8_t packed_reference_hbd, int32_t src_stride, uint16_t *dst,
+void svt_highbd_inter_predictor_light_pd0( uint8_t *src, uint8_t* src_ptr_2b, int32_t src_stride, uint16_t *dst,
 #else
 void svt_highbd_inter_predictor_light_pd0(const uint16_t *src, int32_t src_stride, uint16_t *dst,
 #endif
@@ -134,11 +134,7 @@ void svt_inter_predictor_light_pd1(uint8_t *src, uint8_t *src_2b,int32_t src_str
 void svt_inter_predictor_light_pd1(uint8_t *src, int32_t src_stride, uint8_t *dst,
 #endif
     int32_t dst_stride, int32_t w, int32_t h, InterpFilterParams* filter_x, InterpFilterParams* filter_y,
-#if FTR_MEM_OPT
-    int32_t mv_x, int32_t mv_y, ConvolveParams *conv_params, uint8_t packed_reference_hbd, int32_t bd);
-#else
     int32_t mv_x, int32_t mv_y, ConvolveParams *conv_params, int32_t bd);
-#endif
 #endif
 void svt_inter_predictor(const uint8_t *src, int32_t src_stride, uint8_t *dst, int32_t dst_stride,
                          const SubpelParams *subpel_params, const ScaleFactors *sf, int32_t w,
