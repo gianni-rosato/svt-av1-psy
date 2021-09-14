@@ -1027,7 +1027,7 @@ static EbErrorType downscaled_source_buffer_desc_ctor(
     initData.max_height         = spr_params.encoding_height;
     initData.bit_depth          = picture_ptr_for_reference->bit_depth;
     initData.color_format       = picture_ptr_for_reference->color_format;
-    initData.split_mode         = EB_TRUE;
+    initData.split_mode         = (picture_ptr_for_reference->bit_depth > EB_8BIT) ? EB_TRUE : EB_FALSE;
     initData.left_padding       = picture_ptr_for_reference->origin_x;
     initData.right_padding      = picture_ptr_for_reference->origin_x;
     initData.top_padding        = picture_ptr_for_reference->origin_y;
@@ -1174,7 +1174,7 @@ static EbErrorType allocate_downscaled_source_reference_pics(
     initData.max_height         = spr_params.encoding_height;
     initData.bit_depth          = picture_ptr_for_reference->bit_depth;
     initData.color_format       = picture_ptr_for_reference->color_format;
-    initData.split_mode         = EB_TRUE;
+    initData.split_mode         = (picture_ptr_for_reference->bit_depth > EB_8BIT) ? EB_TRUE : EB_FALSE;
     initData.left_padding       = picture_ptr_for_reference->origin_x;
     initData.right_padding      = picture_ptr_for_reference->origin_x;
     initData.top_padding        = picture_ptr_for_reference->origin_y;
@@ -1187,7 +1187,7 @@ static EbErrorType allocate_downscaled_source_reference_pics(
     initData.max_height = spr_params.encoding_height >> 1;
     initData.bit_depth = picture_ptr_for_reference->bit_depth;
     initData.color_format = picture_ptr_for_reference->color_format;
-    initData.split_mode = EB_TRUE;
+    initData.split_mode = (picture_ptr_for_reference->bit_depth > EB_8BIT) ? EB_TRUE : EB_FALSE;
     initData.left_padding = picture_ptr_for_reference->origin_x >> 1;
     initData.right_padding = picture_ptr_for_reference->origin_x >> 1;
     initData.top_padding = picture_ptr_for_reference->origin_y >> 1;
@@ -1200,7 +1200,7 @@ static EbErrorType allocate_downscaled_source_reference_pics(
     initData.max_height = spr_params.encoding_height >> 2;
     initData.bit_depth = picture_ptr_for_reference->bit_depth;
     initData.color_format = picture_ptr_for_reference->color_format;
-    initData.split_mode = EB_TRUE;
+    initData.split_mode = (picture_ptr_for_reference->bit_depth > EB_8BIT) ? EB_TRUE : EB_FALSE;
     initData.left_padding = picture_ptr_for_reference->origin_x >> 2;
     initData.right_padding = picture_ptr_for_reference->origin_x >> 2;
     initData.top_padding = picture_ptr_for_reference->origin_y >> 2;
