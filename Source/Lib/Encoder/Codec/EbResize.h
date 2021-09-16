@@ -49,6 +49,10 @@ void use_scaled_source_refs_if_needed(PictureParentControlSet *pcs_ptr,
 
 void init_resize_picture(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_ptr);
 
+void reset_resized_picture(SequenceControlSet* scs_ptr,
+                           PictureParentControlSet* pcs_ptr,
+                           EbPictureBufferDesc* input_picture_ptr);
+
 #define filteredinterp_filters1000 av1_resize_filter_normative
 
 #ifdef __cplusplus

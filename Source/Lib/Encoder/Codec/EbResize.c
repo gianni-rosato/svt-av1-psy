@@ -1551,6 +1551,21 @@ void use_scaled_source_refs_if_needed(PictureParentControlSet *pcs_ptr,
     assert((*ref_pic_ptr)->width == input_picture_ptr->width);
 }
 
+void reset_resized_picture(SequenceControlSet* scs_ptr, PictureParentControlSet* pcs_ptr,
+    EbPictureBufferDesc* input_picture_ptr) {
+    superres_params_type spr_params = { input_picture_ptr->width,  // encoding_width
+                                        input_picture_ptr->height, // encoding_height
+                                        SCALE_NUMERATOR };
+    pcs_ptr->superres_denom = spr_params.superres_denom;
+    pcs_ptr->frame_superres_enabled = EB_FALSE;
+    // restore frame size (width) which was changed by super-res tool
+    scale_pcs_params(
+        scs_ptr, pcs_ptr, spr_params, input_picture_ptr->width, input_picture_ptr->height);
+    // delete picture buffer allocated by super-res tool
+    // TODO: reuse the buffer if current picture's denominator is the same as previous one's.
+    EB_DELETE(pcs_ptr->enhanced_downscaled_picture_ptr);
+}
+
 /*
  * If super-res is ON, determine super-res denominator for current picture,
  * perform resizing of source picture and
@@ -1634,10 +1649,6 @@ void init_resize_picture(SequenceControlSet *scs_ptr, PictureParentControlSet *p
     else /*if(pcs_ptr->frame_superres_enabled)*/ {
         // pcs_ptr previously might be used and dirty in params
         // clean up if current frame doesn't need scaling
-        pcs_ptr->superres_denom = spr_params.superres_denom;
-        pcs_ptr->frame_superres_enabled = EB_FALSE;
-        scale_pcs_params(
-            scs_ptr, pcs_ptr, spr_params, input_picture_ptr->width, input_picture_ptr->height);
-        EB_DELETE(pcs_ptr->enhanced_downscaled_picture_ptr);
+        reset_resized_picture(scs_ptr, pcs_ptr, input_picture_ptr);
     }
 }

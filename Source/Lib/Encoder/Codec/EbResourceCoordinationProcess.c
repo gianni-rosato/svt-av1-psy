@@ -20,6 +20,7 @@
 #include "EbResourceCoordinationProcess.h"
 #include "EbResourceCoordinationResults.h"
 #include "EbTransforms.h"
+#include "EbResize.h"
 #include "EbTime.h"
 #include "EbObject.h"
 #include "EbLog.h"
@@ -1167,6 +1168,9 @@ void *resource_coordination_kernel(void *input_ptr) {
             pcs_ptr->input_ptr            = eb_input_ptr;
             end_of_sequence_flag = (pcs_ptr->input_ptr->flags & EB_BUFFERFLAG_EOS) ? EB_TRUE
                                                                                    : EB_FALSE;
+            // Check whether super-res is previously enabled in this recycled parent pcs and restore to non-scale-down default if so.
+            if (pcs_ptr->frame_superres_enabled)
+                reset_resized_picture(scs_ptr, pcs_ptr, pcs_ptr->enhanced_picture_ptr);
             svt_av1_get_time(&pcs_ptr->start_time_seconds, &pcs_ptr->start_time_u_seconds);
 
             pcs_ptr->scs_wrapper_ptr =
