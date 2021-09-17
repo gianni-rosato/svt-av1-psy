@@ -1423,7 +1423,20 @@ void scale_rec_references(PictureControlSet *pcs_ptr, EbPictureBufferDesc *input
                     ? reference_object->downscaled_reference_picture16bit[denom_idx]
                     : reference_object->downscaled_reference_picture[denom_idx];
 
+                if (down_ref_pic_ptr != NULL) {
+                    if (ref_pic_ptr->bit_depth != down_ref_pic_ptr->bit_depth) {
+                        EB_DELETE(reference_object->downscaled_reference_picture16bit[denom_idx]);
+                        EB_DELETE(reference_object->downscaled_reference_picture[denom_idx]);
+                        down_ref_pic_ptr = NULL;
+                    }
+                }
+
                 if (down_ref_pic_ptr == NULL) {
+                    if (reference_object->downscaled_reference_picture16bit[denom_idx] != NULL)
+                        EB_DELETE(reference_object->downscaled_reference_picture16bit[denom_idx]);
+                    if (reference_object->downscaled_reference_picture[denom_idx] != NULL)
+                        EB_DELETE(reference_object->downscaled_reference_picture[denom_idx]);
+
                     // Allocate downsampled reference picture buffer descriptors
                     allocate_downscaled_reference_pics(
                         &reference_object->downscaled_reference_picture[denom_idx],
