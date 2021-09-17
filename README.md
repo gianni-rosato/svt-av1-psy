@@ -90,6 +90,14 @@ The SVT-AV1 Encoder library supports the x86 architecture
 - __Sample Binaries location__
   - Binaries can be found under `Bin/Release` and/or `Bin/Debug`
 
+- __Clang usage__
+  - To install Clang-11 on Ubuntu execute command: `sudo apt install clang-11 --install-suggests`
+  - To build SVT-AV1 using Clang-11:
+    - `export CC="clang-11"`
+    - `export CXX="clang++-11"`
+    - `./build.sh <release | debug>`
+
+
 - __Installation__
 
   For the binaries to operate properly on your system, the following conditions have to be met:
