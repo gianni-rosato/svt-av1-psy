@@ -1467,25 +1467,25 @@ void scale_rec_references(PictureControlSet *pcs_ptr, EbPictureBufferDesc *input
                     );
 
                     if (down_ref_pic_ptr->bit_depth > EB_8BIT) {
-                        generate_padding16_bit(down_ref_pic_ptr->buffer_y,
-                                               down_ref_pic_ptr->stride_y << 1,
-                                               down_ref_pic_ptr->width << 1,
+                        generate_padding16_bit((uint16_t *)down_ref_pic_ptr->buffer_y,
+                                               down_ref_pic_ptr->stride_y,
+                                               down_ref_pic_ptr->width,
                                                down_ref_pic_ptr->height,
-                                               down_ref_pic_ptr->origin_x << 1,
+                                               down_ref_pic_ptr->origin_x,
                                                down_ref_pic_ptr->origin_y);
 
-                        generate_padding16_bit(down_ref_pic_ptr->buffer_cb,
-                                               down_ref_pic_ptr->stride_cb << 1,
-                                               down_ref_pic_ptr->width,
+                        generate_padding16_bit((uint16_t *)down_ref_pic_ptr->buffer_cb,
+                                               down_ref_pic_ptr->stride_cb,
+                                               down_ref_pic_ptr->width >> ss_x,
                                                down_ref_pic_ptr->height >> ss_y,
-                                               down_ref_pic_ptr->origin_x,
+                                               down_ref_pic_ptr->origin_x >> ss_x,
                                                down_ref_pic_ptr->origin_y >> ss_y);
 
-                        generate_padding16_bit(down_ref_pic_ptr->buffer_cr,
-                                               down_ref_pic_ptr->stride_cr << 1,
-                                               down_ref_pic_ptr->width,
+                        generate_padding16_bit((uint16_t *)down_ref_pic_ptr->buffer_cr,
+                                               down_ref_pic_ptr->stride_cr,
+                                               down_ref_pic_ptr->width >> ss_x,
                                                down_ref_pic_ptr->height >> ss_y,
-                                               down_ref_pic_ptr->origin_x,
+                                               down_ref_pic_ptr->origin_x >> ss_x,
                                                down_ref_pic_ptr->origin_y >> ss_y);
                     } else {
                         generate_padding(down_ref_pic_ptr->buffer_y,

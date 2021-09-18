@@ -167,7 +167,7 @@ is used to pad the target picture. The horizontal padding happens first and then
 */
 // TODO: generate_padding() and generate_padding16() functions are not aligned, inputs according to comments are wrong
 void generate_padding16_bit(
-    EbByte   src_pic, //output paramter, pointer to the source picture to be padded.
+    uint16_t* src_pic, //output paramter, pointer to the source picture to be padded.
     uint32_t src_stride, //input paramter, the stride of the source picture to be padded.
     uint32_t
         original_src_width, //input paramter, the width of the source picture which excludes the padding.
@@ -177,21 +177,19 @@ void generate_padding16_bit(
     uint32_t padding_height) //input paramter, the padding height.
 {
     uint32_t vertical_idx = original_src_height;
-    EbByte   temp_src_pic0;
-    EbByte   temp_src_pic1;
-    EbByte   temp_src_pic2;
-    EbByte   temp_src_pic3;
+    uint16_t* temp_src_pic0;
+    uint16_t* temp_src_pic1;
+    uint16_t* temp_src_pic2;
+    uint16_t* temp_src_pic3;
 
     temp_src_pic0 = src_pic + padding_width + padding_height * src_stride;
     while (vertical_idx) {
         // horizontal padding
         //EB_MEMSET(temp_src_pic0 - padding_width, temp_src_pic0, padding_width);
-        memset16bit((uint16_t*)(temp_src_pic0 - padding_width),
-                    ((uint16_t*)(temp_src_pic0))[0],
-                    padding_width >> 1);
-        memset16bit((uint16_t*)(temp_src_pic0 + original_src_width),
-                    ((uint16_t*)(temp_src_pic0 + original_src_width - 2 /*1*/))[0],
-                    padding_width >> 1);
+        memset16bit(temp_src_pic0 - padding_width, temp_src_pic0[0], padding_width);
+        memset16bit(temp_src_pic0 + original_src_width,
+                    (temp_src_pic0 + original_src_width - 1)[0],
+                    padding_width);
 
         temp_src_pic0 += src_stride;
         --vertical_idx;
@@ -206,12 +204,10 @@ void generate_padding16_bit(
     while (vertical_idx) {
         // top part data copy
         temp_src_pic2 -= src_stride;
-        svt_memcpy(
-            temp_src_pic2, temp_src_pic0, sizeof(uint8_t) * src_stride); // uint8_t to be modified
+        svt_memcpy(temp_src_pic2, temp_src_pic0, sizeof(uint16_t) * src_stride);
         // bottom part data copy
         temp_src_pic3 += src_stride;
-        svt_memcpy(
-            temp_src_pic3, temp_src_pic1, sizeof(uint8_t) * src_stride); // uint8_t to be modified
+        svt_memcpy(temp_src_pic3, temp_src_pic1, sizeof(uint16_t) * src_stride);
         --vertical_idx;
     }
 
