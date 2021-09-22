@@ -192,22 +192,24 @@ install_build() (
 )
 
 if [ -z "$CC" ] && [ "$(uname -a | cut -c1-5)" != "MINGW" ]; then
-    ! CC=$(check_executable -p icc /opt/intel/bin) &&
+    if ! CC=$(check_executable -p icc /opt/intel/bin) && ! CC=$(check_executable -p clang); then
         ! CC=$(check_executable -p gcc) &&
-        ! CC=$(check_executable -p clang) &&
-        ! CC=$(check_executable -p cc) &&
-        die "No suitable c compiler found in path" \
-            "Please either install one or set it via cc=*"
+            ! CC=$(check_executable -p cc) &&
+            die "No suitable c compiler found in path" \
+                "Please either install one or set it via cc=*"
+        print_message "Unable to find clang or icc, it is recommended to use clang" "Currently using $CC"
+    fi
     export CC
 fi
 
 if [ -z "$CXX" ] && [ "$(uname -a | cut -c1-5)" != "MINGW" ]; then
-    ! CXX=$(check_executable -p icpc "/opt/intel/bin") &&
+    if ! CXX=$(check_executable -p icpc /opt/intel/bin) && ! CXX=$(check_executable -p clang++); then
         ! CXX=$(check_executable -p g++) &&
-        ! CXX=$(check_executable -p clang++) &&
-        ! CXX=$(check_executable -p c++) &&
-        die "No suitable cpp compiler found in path" \
-            "Please either install one or set it via cxx=*"
+            ! CXX=$(check_executable -p c++) &&
+            die "No suitable c++ compiler found in path" \
+                "Please either install one or set it via cxx=*"
+        print_message "Unable to find clang++ or icpc, it is recommended to use clang++" "Currently using $CXX"
+    fi
     export CXX
 fi
 
