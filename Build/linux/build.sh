@@ -163,7 +163,8 @@ check_executable() (
         $print_exec && printf '%s\n' "$command_to_check"
         return 0
     fi
-    for d in "$@" $(printf '%s ' "$PATH" | tr ':' ' '); do
+    IFS="${IFS}:"
+    for d in "$@" $PATH; do
         if [ -x "$d/$command_to_check" ]; then
             $print_exec && printf '%s\n' "$d/$command_to_check"
             return 0
