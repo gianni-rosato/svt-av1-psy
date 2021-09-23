@@ -598,7 +598,8 @@ EbErrorType load_default_buffer_configuration_settings(
         else if (scs_ptr->static_config.enable_tpl_la) {
             // PictureDecisionContext.mg_size = mg_size + overlay; see EbPictureDecisionProcess.c line 5680
             min_me = lad_mg_pictures +      // 1 + 16 + 1 ME data used in store_tpl_pictures() at line 5717
-                     (mg_size + overlay);   //     16 + 1 ME data used in store_tpl_pictures() at line 5729
+                     (mg_size + overlay) +  //     16 + 1 ME data used in store_tpl_pictures() at line 5729
+                     scs_ptr->scd_delay;
         }
         else
             min_me = 1;
