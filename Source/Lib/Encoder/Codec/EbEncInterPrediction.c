@@ -94,7 +94,7 @@ void av1_make_masked_scaled_inter_predictor(uint8_t *src_ptr, uint32_t src_strid
     conv_params->dst_stride       = tmp_buf_stride;
     assert(conv_params->do_average == 0);
 
-    if (bitdepth > EB_8BIT){
+    if (bitdepth > EB_8BIT || is_16bit){
         uint16_t *src16 = (uint16_t *) src_ptr;
         svt_highbd_inter_predictor(src16,
                                    src_stride,
