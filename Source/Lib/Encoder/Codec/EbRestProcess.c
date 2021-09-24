@@ -295,12 +295,30 @@ void svt_convert_pic_8bit_to_16bit(EbPictureBufferDesc* src_8bit, EbPictureBuffe
     dst_16bit->height = src_8bit->height;
 }
 
+extern void pack_2d_pic(EbPictureBufferDesc* input_picture, uint16_t* packed[3]);
+
 void set_unscaled_input_16bit(PictureControlSet *pcs_ptr) {
-    svt_convert_pic_8bit_to_16bit(
-        pcs_ptr->parent_pcs_ptr->enhanced_unscaled_picture_ptr,
-        pcs_ptr->input_frame16bit,
-        pcs_ptr->parent_pcs_ptr->scs_ptr->subsampling_x,
-        pcs_ptr->parent_pcs_ptr->scs_ptr->subsampling_y);
+    EbPictureBufferDesc* input_pic = pcs_ptr->parent_pcs_ptr->enhanced_unscaled_picture_ptr;
+    EbPictureBufferDesc* output_pic = pcs_ptr->input_frame16bit;
+    uint16_t ss_x = pcs_ptr->parent_pcs_ptr->scs_ptr->subsampling_x;
+    uint16_t ss_y = pcs_ptr->parent_pcs_ptr->scs_ptr->subsampling_y;
+    copy_buffer_info(input_pic, pcs_ptr->input_frame16bit);
+    if (input_pic->bit_depth == EB_8BIT)
+        svt_convert_pic_8bit_to_16bit(
+            input_pic,
+            output_pic,
+            ss_x,
+            ss_y);
+    else {
+        uint16_t* planes[3] = {
+            (uint16_t*)output_pic->buffer_y + (output_pic->origin_y * output_pic->stride_y) +
+        (output_pic->origin_x),
+            (uint16_t*)output_pic->buffer_cb + (((output_pic->origin_y) >> ss_y) * output_pic->stride_cb) +
+        ((output_pic->origin_x) >> ss_x),
+            (uint16_t*)output_pic->buffer_cr + (((output_pic->origin_y) >> ss_y) * output_pic->stride_cr) +
+        ((output_pic->origin_x) >> ss_x) };
+        pack_2d_pic(input_pic, planes);
+    }
 }
 
 void derive_blk_pointers_enc(EbPictureBufferDesc *recon_picture_buf, int32_t plane,

@@ -1675,7 +1675,7 @@ static int32_t denoise_and_model_realloc_if_necessary(struct AomDenoiseAndModel 
     return 1;
 }
 
-static void pack_2d_pic(EbPictureBufferDesc *input_picture, uint16_t *packed[3]) {
+void pack_2d_pic(EbPictureBufferDesc *input_picture, uint16_t *packed[3]) {
     const uint32_t input_luma_offset = ((input_picture->origin_y) * input_picture->stride_y) +
         (input_picture->origin_x);
     const uint32_t input_bit_inc_luma_offset = ((input_picture->origin_y) *

@@ -777,7 +777,7 @@ void ssim_calculations(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr, 
         }
     }
     else {
-        EbPictureBufferDesc *input_picture_ptr = (EbPictureBufferDesc*)pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr;
+        EbPictureBufferDesc *input_picture_ptr = (EbPictureBufferDesc*)pcs_ptr->parent_pcs_ptr->enhanced_unscaled_picture_ptr;
 
         EbByte    input_buffer;
         uint16_t *recon_coeff_buffer;
