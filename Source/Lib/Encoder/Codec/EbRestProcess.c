@@ -622,43 +622,45 @@ void *rest_kernel(void *input_ptr) {
             }
 
             // Pad the reference picture and set ref POC
-            if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE)
-                pad_ref_and_set_flags(pcs_ptr, scs_ptr);
-            else {
-                // convert non-reference frame buffer from 16-bit to 8-bit, to export recon and psnr/ssim calculation
-                if (is_16bit && scs_ptr->static_config.encoder_bit_depth == EB_8BIT)
-                {
-                    EbPictureBufferDesc* ref_pic_ptr = pcs_ptr->parent_pcs_ptr->enc_dec_ptr->recon_picture_ptr;;
-                    EbPictureBufferDesc* ref_pic_16bit_ptr = pcs_ptr->parent_pcs_ptr->enc_dec_ptr->recon_picture16bit_ptr;;
-                    //Y
-                    uint16_t* buf_16bit = (uint16_t*)(ref_pic_16bit_ptr->buffer_y);
-                    uint8_t* buf_8bit = ref_pic_ptr->buffer_y;
-                    svt_convert_16bit_to_8bit(buf_16bit,
-                        ref_pic_16bit_ptr->stride_y,
-                        buf_8bit,
-                        ref_pic_ptr->stride_y,
-                        ref_pic_16bit_ptr->width + (ref_pic_ptr->origin_x << 1),
-                        ref_pic_16bit_ptr->height + (ref_pic_ptr->origin_y << 1));
+            if (!use_output_stat(scs_ptr)) {
+                if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE)
+                    pad_ref_and_set_flags(pcs_ptr, scs_ptr);
+                else {
+                    // convert non-reference frame buffer from 16-bit to 8-bit, to export recon and psnr/ssim calculation
+                    if (is_16bit && scs_ptr->static_config.encoder_bit_depth == EB_8BIT)
+                    {
+                        EbPictureBufferDesc* ref_pic_ptr = pcs_ptr->parent_pcs_ptr->enc_dec_ptr->recon_picture_ptr;
+                        EbPictureBufferDesc* ref_pic_16bit_ptr = pcs_ptr->parent_pcs_ptr->enc_dec_ptr->recon_picture16bit_ptr;
+                        //Y
+                        uint16_t* buf_16bit = (uint16_t*)(ref_pic_16bit_ptr->buffer_y);
+                        uint8_t* buf_8bit = ref_pic_ptr->buffer_y;
+                        svt_convert_16bit_to_8bit(buf_16bit,
+                            ref_pic_16bit_ptr->stride_y,
+                            buf_8bit,
+                            ref_pic_ptr->stride_y,
+                            ref_pic_16bit_ptr->width + (ref_pic_ptr->origin_x << 1),
+                            ref_pic_16bit_ptr->height + (ref_pic_ptr->origin_y << 1));
 
-                    //CB
-                    buf_16bit = (uint16_t*)(ref_pic_16bit_ptr->buffer_cb);
-                    buf_8bit = ref_pic_ptr->buffer_cb;
-                    svt_convert_16bit_to_8bit(buf_16bit,
-                        ref_pic_16bit_ptr->stride_cb,
-                        buf_8bit,
-                        ref_pic_ptr->stride_cb,
-                        (ref_pic_16bit_ptr->width + (ref_pic_ptr->origin_x << 1)) >> scs_ptr->subsampling_x,
-                        (ref_pic_16bit_ptr->height + (ref_pic_ptr->origin_y << 1)) >> scs_ptr->subsampling_y);
+                        //CB
+                        buf_16bit = (uint16_t*)(ref_pic_16bit_ptr->buffer_cb);
+                        buf_8bit = ref_pic_ptr->buffer_cb;
+                        svt_convert_16bit_to_8bit(buf_16bit,
+                            ref_pic_16bit_ptr->stride_cb,
+                            buf_8bit,
+                            ref_pic_ptr->stride_cb,
+                            (ref_pic_16bit_ptr->width + (ref_pic_ptr->origin_x << 1)) >> scs_ptr->subsampling_x,
+                            (ref_pic_16bit_ptr->height + (ref_pic_ptr->origin_y << 1)) >> scs_ptr->subsampling_y);
 
-                    //CR
-                    buf_16bit = (uint16_t*)(ref_pic_16bit_ptr->buffer_cr);
-                    buf_8bit = ref_pic_ptr->buffer_cr;
-                    svt_convert_16bit_to_8bit(buf_16bit,
-                        ref_pic_16bit_ptr->stride_cr,
-                        buf_8bit,
-                        ref_pic_ptr->stride_cr,
-                        (ref_pic_16bit_ptr->width + (ref_pic_ptr->origin_x << 1)) >> scs_ptr->subsampling_x,
-                        (ref_pic_16bit_ptr->height + (ref_pic_ptr->origin_y << 1)) >> scs_ptr->subsampling_y);
+                        //CR
+                        buf_16bit = (uint16_t*)(ref_pic_16bit_ptr->buffer_cr);
+                        buf_8bit = ref_pic_ptr->buffer_cr;
+                        svt_convert_16bit_to_8bit(buf_16bit,
+                            ref_pic_16bit_ptr->stride_cr,
+                            buf_8bit,
+                            ref_pic_ptr->stride_cr,
+                            (ref_pic_16bit_ptr->width + (ref_pic_ptr->origin_x << 1)) >> scs_ptr->subsampling_x,
+                            (ref_pic_16bit_ptr->height + (ref_pic_ptr->origin_y << 1)) >> scs_ptr->subsampling_y);
+                    }
                 }
             }
 
@@ -670,7 +672,6 @@ void *rest_kernel(void *input_ptr) {
             }
 
             // Pad the reference picture and set ref POC
-            if (!use_output_stat(scs_ptr))
             if (scs_ptr->static_config.recon_enabled) {
                 recon_output(pcs_ptr, scs_ptr);
             }
