@@ -431,6 +431,9 @@ void *entropy_coding_kernel(void *input_ptr) {
 #endif
 
                 // At the end of each SB-row, send the updated bit-count to Entropy Coding
+                // TODO: handle superres recode condition.
+                //   In current code base rate control process doesn't handle RC_ENTROPY_CODING_ROW_FEEDBACK_RESULT task.
+                //   Should revisit the code snippet when the task to be handled in the future.
                 {
                     EbObjectWrapper * rate_control_task_wrapper_ptr;
                     RateControlTasks *rate_control_task_ptr;
@@ -472,26 +475,28 @@ void *entropy_coding_kernel(void *input_ptr) {
                         }
                         svt_release_mutex(pcs_ptr->entropy_coding_pic_mutex);
                         if (pic_ready) {
-                            // Release the List 0 Reference Pictures
-                            for (uint32_t ref_idx = 0;
-                                 ref_idx < pcs_ptr->parent_pcs_ptr->ref_list0_count;
-                                 ++ref_idx) {
-                                if (pcs_ptr->ref_pic_ptr_array[0][ref_idx] != NULL) {
-                                    svt_release_object(pcs_ptr->ref_pic_ptr_array[0][ref_idx]);
+                            if (pcs_ptr->parent_pcs_ptr->superres_total_recode_loop == 0) {
+                                // Release the List 0 Reference Pictures
+                                for (uint32_t ref_idx = 0;
+                                    ref_idx < pcs_ptr->parent_pcs_ptr->ref_list0_count;
+                                    ++ref_idx) {
+                                    if (pcs_ptr->ref_pic_ptr_array[0][ref_idx] != NULL) {
+                                        svt_release_object(pcs_ptr->ref_pic_ptr_array[0][ref_idx]);
+                                    }
                                 }
-                            }
+                                // Release the List 1 Reference Pictures
+                                for (uint32_t ref_idx = 0;
+                                    ref_idx < pcs_ptr->parent_pcs_ptr->ref_list1_count;
+                                    ++ref_idx) {
+                                    if (pcs_ptr->ref_pic_ptr_array[1][ref_idx] != NULL) {
+                                        svt_release_object(pcs_ptr->ref_pic_ptr_array[1][ref_idx]);
+                                    }
+                                }
 
-                            // Release the List 1 Reference Pictures
-                            for (uint32_t ref_idx = 0;
-                                 ref_idx < pcs_ptr->parent_pcs_ptr->ref_list1_count;
-                                 ++ref_idx) {
-                                if (pcs_ptr->ref_pic_ptr_array[1][ref_idx] != NULL)
-                                    svt_release_object(pcs_ptr->ref_pic_ptr_array[1][ref_idx]);
+                                //free palette data
+                                if (pcs_ptr->tile_tok[0][0])
+                                    EB_FREE_ARRAY(pcs_ptr->tile_tok[0][0]);
                             }
-
-                            //free palette data
-                            if (pcs_ptr->tile_tok[0][0])
-                                EB_FREE_ARRAY(pcs_ptr->tile_tok[0][0]);
 
                             frame_entropy_done = EB_TRUE;
                         }

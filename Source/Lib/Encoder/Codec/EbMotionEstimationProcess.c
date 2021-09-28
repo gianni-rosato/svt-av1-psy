@@ -798,11 +798,11 @@ void *motion_estimation_kernel(void *input_ptr) {
             context_ptr->me_context_ptr->me_type = ME_MCTF;
         else if (in_results_ptr->task_type == TASK_FIRST_PASS_ME)
             context_ptr->me_context_ptr->me_type = ME_FIRST_PASS;
-        else
+        else  // TASK_PAME or TASK_SUPERRES_RE_ME
             context_ptr->me_context_ptr->me_type = ME_OPEN_LOOP;
 
         // ME Kernel Signal(s) derivation
-        if (in_results_ptr->task_type == TASK_PAME)
+        if ((in_results_ptr->task_type == TASK_PAME) || (in_results_ptr->task_type == TASK_SUPERRES_RE_ME))
             if (use_output_stat(scs_ptr))
                 first_pass_signal_derivation_me_kernel(scs_ptr, pcs_ptr, context_ptr);
             else
@@ -815,7 +815,7 @@ void *motion_estimation_kernel(void *input_ptr) {
 
 
         get_lambda_for_me(me_ctx, pcs_ptr);
-        if (in_results_ptr->task_type == TASK_PAME) {
+        if ((in_results_ptr->task_type == TASK_PAME) || (in_results_ptr->task_type == TASK_SUPERRES_RE_ME)) {
             EbPictureBufferDesc *sixteenth_picture_ptr ;
             EbPictureBufferDesc *quarter_picture_ptr ;
             EbPictureBufferDesc *input_padded_picture_ptr ;
@@ -914,47 +914,47 @@ void *motion_estimation_kernel(void *input_ptr) {
                         }
                         context_ptr->me_context_ptr->me_type = ME_OPEN_LOOP;
 
-                        if (in_results_ptr->task_type == TASK_PAME) {
-                        context_ptr->me_context_ptr->num_of_list_to_search =
-                            (pcs_ptr->slice_type == P_SLICE) ? (uint32_t)REF_LIST_0 : (uint32_t)REF_LIST_1;
+                        if ((in_results_ptr->task_type == TASK_PAME) || (in_results_ptr->task_type == TASK_SUPERRES_RE_ME)) {
+                            context_ptr->me_context_ptr->num_of_list_to_search =
+                                (pcs_ptr->slice_type == P_SLICE) ? (uint32_t)REF_LIST_0 : (uint32_t)REF_LIST_1;
 
-                        context_ptr->me_context_ptr->num_of_ref_pic_to_search[0] = pcs_ptr->ref_list0_count_try;
-                        if (pcs_ptr->slice_type == B_SLICE)
-                            context_ptr->me_context_ptr->num_of_ref_pic_to_search[1] = pcs_ptr->ref_list1_count_try;
-                        context_ptr->me_context_ptr->temporal_layer_index = pcs_ptr->temporal_layer_index;
-                        context_ptr->me_context_ptr->is_used_as_reference_flag = pcs_ptr->is_used_as_reference_flag;
+                            context_ptr->me_context_ptr->num_of_ref_pic_to_search[0] = pcs_ptr->ref_list0_count_try;
+                            if (pcs_ptr->slice_type == B_SLICE)
+                                context_ptr->me_context_ptr->num_of_ref_pic_to_search[1] = pcs_ptr->ref_list1_count_try;
+                            context_ptr->me_context_ptr->temporal_layer_index = pcs_ptr->temporal_layer_index;
+                            context_ptr->me_context_ptr->is_used_as_reference_flag = pcs_ptr->is_used_as_reference_flag;
 
-                        if (pcs_ptr->superres_denom > SCALE_NUMERATOR) {
-                            for (int i = 0; i <= context_ptr->me_context_ptr->num_of_list_to_search; i++) {
-                                for (int j = 0; j < context_ptr->me_context_ptr->num_of_ref_pic_to_search[i]; j++) {
-                                    uint8_t denom_idx = (uint8_t)(pcs_ptr->superres_denom - SCALE_NUMERATOR - 1);
-                                    EbPaReferenceObject *reference_object =
-                                        (EbPaReferenceObject *)pcs_ptr->ref_pa_pic_ptr_array[i][j]->object_ptr;
-                                    context_ptr->me_context_ptr->me_ds_ref_array[i][j].picture_ptr =
-                                        reference_object->downscaled_input_padded_picture_ptr[denom_idx];
-                                    context_ptr->me_context_ptr->me_ds_ref_array[i][j].quarter_picture_ptr =
-                                        reference_object->downscaled_quarter_downsampled_picture_ptr[denom_idx];
-                                    context_ptr->me_context_ptr->me_ds_ref_array[i][j].sixteenth_picture_ptr =
-                                        reference_object->downscaled_sixteenth_downsampled_picture_ptr[denom_idx];
-                                    context_ptr->me_context_ptr->me_ds_ref_array[i][j].picture_number =
-                                        reference_object->picture_number;
+                            if (pcs_ptr->frame_superres_enabled) {
+                                for (int i = 0; i <= context_ptr->me_context_ptr->num_of_list_to_search; i++) {
+                                    for (int j = 0; j < context_ptr->me_context_ptr->num_of_ref_pic_to_search[i]; j++) {
+                                        uint8_t denom_idx = (uint8_t)(pcs_ptr->superres_denom - SCALE_NUMERATOR - 1);
+                                        EbPaReferenceObject* reference_object =
+                                            (EbPaReferenceObject*)pcs_ptr->ref_pa_pic_ptr_array[i][j]->object_ptr;
+                                        context_ptr->me_context_ptr->me_ds_ref_array[i][j].picture_ptr =
+                                            reference_object->downscaled_input_padded_picture_ptr[denom_idx];
+                                        context_ptr->me_context_ptr->me_ds_ref_array[i][j].quarter_picture_ptr =
+                                            reference_object->downscaled_quarter_downsampled_picture_ptr[denom_idx];
+                                        context_ptr->me_context_ptr->me_ds_ref_array[i][j].sixteenth_picture_ptr =
+                                            reference_object->downscaled_sixteenth_downsampled_picture_ptr[denom_idx];
+                                        context_ptr->me_context_ptr->me_ds_ref_array[i][j].picture_number =
+                                            reference_object->picture_number;
+                                    }
+                                }
+                            } else {
+                                for (int i = 0; i <= context_ptr->me_context_ptr->num_of_list_to_search; i++) {
+                                    for (int j = 0; j < context_ptr->me_context_ptr->num_of_ref_pic_to_search[i]; j++) {
+                                        EbPaReferenceObject* reference_object =
+                                            (EbPaReferenceObject*)pcs_ptr->ref_pa_pic_ptr_array[i][j]->object_ptr;
+                                        context_ptr->me_context_ptr->me_ds_ref_array[i][j].picture_ptr =
+                                            reference_object->input_padded_picture_ptr;
+                                        context_ptr->me_context_ptr->me_ds_ref_array[i][j].quarter_picture_ptr =
+                                            reference_object->quarter_downsampled_picture_ptr;
+                                        context_ptr->me_context_ptr->me_ds_ref_array[i][j].sixteenth_picture_ptr =
+                                            reference_object->sixteenth_downsampled_picture_ptr;
+                                        context_ptr->me_context_ptr->me_ds_ref_array[i][j].picture_number = reference_object->picture_number;
+                                    }
                                 }
                             }
-                        } else {
-                            for (int i = 0; i<= context_ptr->me_context_ptr->num_of_list_to_search; i++) {
-                                for (int j=0; j< context_ptr->me_context_ptr->num_of_ref_pic_to_search[i];j++) {
-                                    EbPaReferenceObject* reference_object =
-                                        (EbPaReferenceObject *)pcs_ptr->ref_pa_pic_ptr_array[i][j]->object_ptr;
-                                    context_ptr->me_context_ptr->me_ds_ref_array[i][j].picture_ptr =
-                                        reference_object->input_padded_picture_ptr;
-                                    context_ptr->me_context_ptr->me_ds_ref_array[i][j].quarter_picture_ptr =
-                                        reference_object->quarter_downsampled_picture_ptr;
-                                    context_ptr->me_context_ptr->me_ds_ref_array[i][j].sixteenth_picture_ptr =
-                                        reference_object->sixteenth_downsampled_picture_ptr;
-                                    context_ptr->me_context_ptr->me_ds_ref_array[i][j].picture_number = reference_object->picture_number;
-                                }
-                            }
-                        }
                         }
                         motion_estimate_sb(
                                            pcs_ptr,
@@ -964,24 +964,20 @@ void *motion_estimation_kernel(void *input_ptr) {
                                            context_ptr->me_context_ptr,
                                            input_picture_ptr);
 
-                        if (in_results_ptr->task_type == TASK_PAME) {
-                        svt_block_on_mutex(pcs_ptr->me_processed_sb_mutex);
-                        pcs_ptr->me_processed_sb_count++;
-                        // We need to finish ME for all SBs to do GM
-                        if (pcs_ptr->me_processed_sb_count == pcs_ptr->sb_total_count) {
-                            if (pcs_ptr->gm_ctrls.enabled)
-                                global_motion_estimation(
+                        if ((in_results_ptr->task_type == TASK_PAME) || (in_results_ptr->task_type == TASK_SUPERRES_RE_ME)) {
+                            svt_block_on_mutex(pcs_ptr->me_processed_sb_mutex);
+                            pcs_ptr->me_processed_sb_count++;
+                            // We need to finish ME for all SBs to do GM
+                            if (pcs_ptr->me_processed_sb_count == pcs_ptr->sb_total_count) {
+                                if (pcs_ptr->gm_ctrls.enabled)
+                                    global_motion_estimation(pcs_ptr, input_picture_ptr);
+                                else
+                                    // Initilize global motion to be OFF when GM is OFF
+                                    memset(pcs_ptr->is_global_motion, EB_FALSE, MAX_NUM_OF_REF_PIC_LIST * REF_LIST_MAX_DEPTH);
+                            }
 
-                                    pcs_ptr, input_picture_ptr);
-                            else
-                            // Initilize global motion to be OFF when GM is OFF
-                                memset(pcs_ptr->is_global_motion, EB_FALSE, MAX_NUM_OF_REF_PIC_LIST * REF_LIST_MAX_DEPTH);
+                            svt_release_mutex(pcs_ptr->me_processed_sb_mutex);
                         }
-
-                        svt_release_mutex(pcs_ptr->me_processed_sb_mutex);
-
-                        }
-
                     }
                 }
             }

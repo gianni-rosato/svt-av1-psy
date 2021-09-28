@@ -498,6 +498,12 @@ EbErrorType load_default_buffer_configuration_settings(
 
     scs_ptr->tf_segment_column_count = me_seg_w;//1;//
     scs_ptr->tf_segment_row_count =  me_seg_h;//1;//
+
+    // adjust buffer count for superres
+    uint32_t superres_recode = (scs_ptr->static_config.superres_mode == SUPERRES_AUTO &&
+        (scs_ptr->static_config.superres_auto_search_type == SUPERRES_AUTO_DUAL ||
+         scs_ptr->static_config.superres_auto_search_type == SUPERRES_AUTO_ALL)) ? 1 : 0;
+
     //#====================== Data Structures and Picture Buffers ======================
     scs_ptr->picture_control_set_pool_init_count       = input_pic + SCD_LAD ;
     if (scs_ptr->static_config.enable_overlays)
@@ -506,8 +512,8 @@ EbErrorType load_default_buffer_configuration_settings(
             ((1 << scs_ptr->static_config.hierarchical_levels) + SCD_LAD) * 2 + // minigop formation in PD + SCD_LAD *(normal pictures + potential pictures )
             (1 << scs_ptr->static_config.hierarchical_levels)) + // minigop in PM
             1); //  key frame of first minigop
-    scs_ptr->picture_control_set_pool_init_count_child = MAX(MAX(MIN(3, core_count/2), core_count / 6), 1);
-    scs_ptr->enc_dec_pool_init_count               = MAX(MAX(MIN(3, core_count/2), core_count / 6), 1);
+    scs_ptr->picture_control_set_pool_init_count_child = MAX(MAX(MIN(3, core_count/2), core_count / 6), 1) + superres_recode;
+    scs_ptr->enc_dec_pool_init_count               = MAX(MAX(MIN(3, core_count/2), core_count / 6), 1) + superres_recode;
     scs_ptr->reference_picture_buffer_init_count       = MAX((uint32_t)(input_pic >> 1),
                                                                           (uint32_t)((1 << scs_ptr->static_config.hierarchical_levels) + 2)) +
                                                                           SCD_LAD;
@@ -641,8 +647,8 @@ EbErrorType load_default_buffer_configuration_settings(
             scs_ptr->picture_control_set_pool_init_count = min_parent;
             scs_ptr->pa_reference_picture_buffer_init_count = min_paref;
             scs_ptr->reference_picture_buffer_init_count = min_ref;
-            scs_ptr->picture_control_set_pool_init_count_child = min_child;
-            scs_ptr->enc_dec_pool_init_count               = min_child;
+            scs_ptr->picture_control_set_pool_init_count_child = min_child + superres_recode;
+            scs_ptr->enc_dec_pool_init_count               = min_child + superres_recode;
             scs_ptr->overlay_input_picture_buffer_init_count = min_overlay;
             scs_ptr->output_recon_buffer_fifo_init_count = scs_ptr->reference_picture_buffer_init_count;
             scs_ptr->me_pool_init_count = MAX(min_me, scs_ptr->picture_control_set_pool_init_count);
@@ -1574,7 +1580,7 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
             enc_handle_ptr->picture_decision_results_resource_ptr,
             svt_system_resource_ctor,
             enc_handle_ptr->scs_instance_array[0]->scs_ptr->picture_decision_fifo_init_count,
-            EB_PictureDecisionProcessInitCount,
+            EB_PictureDecisionProcessInitCount + 2,  // 1 for rate control, another 1 for packetization when superres recoding is on
             enc_handle_ptr->scs_instance_array[0]->scs_ptr->motion_estimation_process_init_count,
             picture_decision_result_creator,
             &picture_decision_result_init_data,
@@ -1883,7 +1889,8 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
     EB_NEW(
         enc_handle_ptr->rate_control_context_ptr,
         rate_control_context_ctor,
-        enc_handle_ptr);
+        enc_handle_ptr,
+        EB_PictureDecisionProcessInitCount);
 
     // Mode Decision Configuration Contexts
     {
@@ -1970,7 +1977,8 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
         enc_handle_ptr,
         rate_control_port_lookup(RATE_CONTROL_INPUT_PORT_PACKETIZATION, 0),
         enc_handle_ptr->scs_instance_array[0]->scs_ptr->source_based_operations_process_init_count +
-            enc_handle_ptr->scs_instance_array[0]->scs_ptr->enc_dec_process_init_count);
+            enc_handle_ptr->scs_instance_array[0]->scs_ptr->enc_dec_process_init_count,
+            EB_PictureDecisionProcessInitCount + EB_RateControlProcessInitCount);
 
     /************************************
     * Thread Handles
@@ -2573,12 +2581,25 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
         scs_ptr->static_config.intra_refresh_type = 2;
     }
 
+    if (scs_ptr->static_config.superres_mode == SUPERRES_FIXED &&
+        scs_ptr->static_config.superres_denom == SCALE_NUMERATOR &&
+        scs_ptr->static_config.superres_kf_denom == SCALE_NUMERATOR) {
+        scs_ptr->static_config.superres_mode = SUPERRES_NONE;
+    }
+    if (scs_ptr->static_config.superres_mode == SUPERRES_QTHRESH &&
+        scs_ptr->static_config.superres_qthres == MAX_QP_VALUE &&
+        scs_ptr->static_config.superres_kf_qthres == MAX_QP_VALUE) {
+        scs_ptr->static_config.superres_mode = SUPERRES_NONE;
+    }
     if (scs_ptr->static_config.superres_mode > SUPERRES_NONE) {
-        if (scs_ptr->static_config.enable_tpl_la != 0) {
-            // encoder will hang-up when both enabled TPL and super-res
-            SVT_WARN("TPL will be disabled when super resolution is enabled!\n");
-            scs_ptr->static_config.enable_tpl_la = 0;
+        // allow TPL with auto-dual and auto-all
+        if ((scs_ptr->static_config.superres_mode != SUPERRES_AUTO) || (scs_ptr->static_config.superres_auto_search_type == SUPERRES_AUTO_SOLO)) {
+            if (scs_ptr->static_config.enable_tpl_la != 0) {
+                SVT_WARN("TPL will be disabled when super resolution is enabled!\n");
+                scs_ptr->static_config.enable_tpl_la = 0;
+            }
         }
+
         if (scs_ptr->static_config.intrabc_mode != 0) {
             // disable intrabc if super-res is on
             SVT_WARN("intrabc will be disabled when super resolution is enabled!\n");
@@ -2952,6 +2973,14 @@ void copy_api_from_app(
     scs_ptr->static_config.superres_denom = config_struct->superres_denom;
     scs_ptr->static_config.superres_kf_denom = config_struct->superres_kf_denom;
     scs_ptr->static_config.superres_qthres = config_struct->superres_qthres;
+    scs_ptr->static_config.superres_kf_qthres = config_struct->superres_kf_qthres;
+    if (scs_ptr->static_config.superres_mode == SUPERRES_AUTO)
+    {
+        // TODO: set search mode based on preset
+        //scs_ptr->static_config.superres_auto_search_type = SUPERRES_AUTO_SOLO;
+        scs_ptr->static_config.superres_auto_search_type = SUPERRES_AUTO_DUAL;
+        //scs_ptr->static_config.superres_auto_search_type = SUPERRES_AUTO_ALL;
+    }
 
     // Prediction Structure
     scs_ptr->static_config.enable_manual_pred_struct    = config_struct->enable_manual_pred_struct;
@@ -3522,9 +3551,9 @@ static EbErrorType verify_settings(
         }
     }
 
-    if (config->superres_mode > 2) {
-        SVT_LOG("Error instance %u: invalid superres-mode %d, should be in the range [%d - %d], "
-                "only SUPERRES_NONE (0), SUPERRES_FIXED (1) and SUPERRES_RANDOM (2) are currently implemented \n", channel_number + 1, config->superres_mode, 0, 2);
+    if (config->superres_mode > SUPERRES_AUTO) {
+        SVT_LOG("Error instance %u: invalid superres-mode %d, should be in the range [%d - %d]\n",
+                channel_number + 1, config->superres_mode, SUPERRES_NONE, SUPERRES_AUTO);
         return_error = EB_ErrorBadParameter;
     }
 
@@ -3535,6 +3564,11 @@ static EbErrorType verify_settings(
 
     if (config->superres_qthres > MAX_QP_VALUE) {
         SVT_LOG("Error instance %u: invalid superres-qthres %d, should be in the range [%d - %d] \n", channel_number + 1, config->superres_qthres, MIN_QP_VALUE, MAX_QP_VALUE);
+        return_error = EB_ErrorBadParameter;
+    }
+
+    if (config->superres_kf_qthres > MAX_QP_VALUE) {
+        SVT_LOG("Error instance %u: invalid superres-kf-qthres %d, should be in the range [%d - %d] \n", channel_number + 1, config->superres_kf_qthres, MIN_QP_VALUE, MAX_QP_VALUE);
         return_error = EB_ErrorBadParameter;
     }
 
@@ -3760,6 +3794,7 @@ EbErrorType svt_svt_enc_init_parameter(
     config_ptr->superres_denom = 8;
     config_ptr->superres_kf_denom = 8;
     config_ptr->superres_qthres = 43; // random threshold, change
+    config_ptr->superres_kf_qthres = 43; // random threshold, change
 
     // Color description default values
     config_ptr->color_description_present_flag = EB_FALSE;

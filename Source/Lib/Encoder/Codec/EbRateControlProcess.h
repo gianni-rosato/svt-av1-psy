@@ -216,7 +216,8 @@ double svt_av1_get_gfu_boost_projection_factor(double min_factor, double max_fac
                                                int frame_count);
 
 EbErrorType rate_control_context_ctor(EbThreadContext *  thread_context_ptr,
-                                      const EbEncHandle *enc_handle_ptr);
+                                      const EbEncHandle *enc_handle_ptr,
+                                      int me_port_index);
 
 extern void *rate_control_kernel(void *input_ptr);
 #endif // EbRateControl_h

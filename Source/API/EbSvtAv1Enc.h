@@ -114,6 +114,14 @@ typedef enum {
     SUPERRES_MODES
 } SUPERRES_MODE;
 
+// super-res auto search type
+typedef enum {
+    SUPERRES_AUTO_ALL,   // Tries all possible superres ratios
+    SUPERRES_AUTO_DUAL,  // Tries no superres and q-based superres ratios
+    SUPERRES_AUTO_SOLO,  // Only apply the q-based superres ratio
+    SUPERRES_AUTO_SEARCH_TYPES
+} SUPERRES_AUTO_SEARCH_TYPE;
+
 typedef enum {
     SVT_AV1_STREAM_INFO_START = 1,
 
@@ -758,6 +766,8 @@ typedef struct EbSvtAv1EncConfiguration {
     uint8_t superres_denom;
     uint8_t superres_kf_denom;
     uint8_t superres_qthres;
+    uint8_t superres_kf_qthres;
+    uint8_t superres_auto_search_type;
 
     /* Prediction Structure user defined
    */

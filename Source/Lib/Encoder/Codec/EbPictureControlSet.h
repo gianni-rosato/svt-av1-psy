@@ -850,6 +850,12 @@ typedef struct PictureParentControlSet {
 
     EbBool                frame_superres_enabled;
     uint8_t               superres_denom;
+    // recode for auto superres
+    int32_t               superres_recode_loop;        // which loop is now running, range from 0 to superres_total_recode_loop - 1
+    int32_t               superres_total_recode_loop;  // how many loops to run, set to 2 in dual search mode
+    uint8_t               superres_denom_array[SCALE_NUMERATOR + 1];  // denom candidate array used in auto supreres
+    double                superres_rdcost[SCALE_NUMERATOR + 1];  // 9 slots, for denom 8 ~ 16
+
     EbObjectWrapper *     me_data_wrapper_ptr;
     MotionEstimationData *pa_me_data;
     unsigned char         gf_group_index;

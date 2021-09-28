@@ -48,11 +48,19 @@ void use_scaled_source_refs_if_needed(PictureParentControlSet *pcs_ptr,
                                       EbPictureBufferDesc **   quarter_ref_pic_ptr,
                                       EbPictureBufferDesc **   sixteenth_ref_pic_ptr);
 
+void scale_pcs_params(SequenceControlSet * scs_ptr, PictureParentControlSet * pcs_ptr,
+                      superres_params_type spr_params, uint16_t source_width,
+                      uint16_t source_height);
+
 void init_resize_picture(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_ptr);
 
 void reset_resized_picture(SequenceControlSet* scs_ptr,
                            PictureParentControlSet* pcs_ptr,
                            EbPictureBufferDesc* input_picture_ptr);
+
+static INLINE int coded_to_superres_mi(int mi_col, int denom) {
+    return (mi_col * denom + SCALE_NUMERATOR / 2) / SCALE_NUMERATOR;
+}
 
 #define filteredinterp_filters1000 av1_resize_filter_normative
 

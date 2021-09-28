@@ -59,6 +59,10 @@ static void source_based_operations_context_dctor(EbPtr p) {
     EB_FREE_ARRAY(obj);
 }
 
+static INLINE int coded_to_superres_mi(int mi_col, int denom) {
+    return (mi_col * denom + SCALE_NUMERATOR / 2) / SCALE_NUMERATOR;
+}
+
 /************************************************
 * Source Based Operation Context Constructor
 ************************************************/
@@ -159,7 +163,8 @@ static void generate_lambda_scaling_factor(PictureParentControlSet *pcs_ptr,
                                            int64_t                  mc_dep_cost_base) {
     Av1Common *cm         = pcs_ptr->av1_cm;
     const int  step       = 1 << (pcs_ptr->is_720p_or_larger ? 2 : 1);
-    const int  mi_cols_sr = ((pcs_ptr->aligned_width + 15) / 16) << 2;
+    // According to AOM function av1_tpl_rdmult_setup, unscaled size should be used here.
+    const int    mi_cols_sr = ((pcs_ptr->enhanced_unscaled_picture_ptr->width + 15) / 16) << 2;
 
     const int    block_size = BLOCK_16X16;
     const int    num_mi_w   = mi_size_wide[block_size];
@@ -1435,12 +1440,15 @@ static void generate_r0beta(PictureParentControlSet *pcs_ptr) {
     SequenceControlSet *scs_ptr          = pcs_ptr->scs_ptr;
     int64_t             intra_cost_base  = 0;
     int64_t             mc_dep_cost_base = 0;
-    const int           step             = 1 << (pcs_ptr->is_720p_or_larger ? 2 : 1);
-    const int           mi_cols_sr       = ((pcs_ptr->aligned_width + 15) / 16) << 2;
-    const int           shift            = pcs_ptr->is_720p_or_larger ? 2 : 1;
+    const int32_t       step = 1 << (pcs_ptr->is_720p_or_larger ? 2 : 1);
+    const int32_t       col_step_sr = coded_to_superres_mi(step, pcs_ptr->superres_denom);
+    // According to AOM function process_tpl_stats_frame, unscaled size should be used here.
+    const int32_t       mi_cols_sr = ((pcs_ptr->enhanced_unscaled_picture_ptr->width + 15) / 16) << 2;  // picture column boundary
+    const int32_t       mi_rows = ((pcs_ptr->enhanced_unscaled_picture_ptr->height + 15) / 16) << 2; // picture row boundary
+    const int32_t       shift = pcs_ptr->is_720p_or_larger ? 2 : 1;
 
     for (int row = 0; row < cm->mi_rows; row += step) {
-        for (int col = 0; col < mi_cols_sr; col += step) {
+        for (int col = 0; col < mi_cols_sr; col += col_step_sr) {
             TplStats *tpl_stats_ptr =
                 pcs_ptr->tpl_stats[(row >> shift) * (mi_cols_sr >> shift) + (col >> shift)];
             int64_t mc_dep_delta = RDCOST(
@@ -1468,31 +1476,44 @@ static void generate_r0beta(PictureParentControlSet *pcs_ptr) {
 #endif
     generate_lambda_scaling_factor(pcs_ptr, mc_dep_cost_base);
 
-    const uint32_t sb_sz            = scs_ptr->seq_header.sb_size == BLOCK_128X128 ? 128 : 64;
-    const uint32_t picture_sb_width = (uint32_t)((scs_ptr->seq_header.max_frame_width + sb_sz - 1) /
-                                                 sb_sz);
-    const uint32_t picture_sb_height = (uint32_t)(
-        (scs_ptr->seq_header.max_frame_height + sb_sz - 1) / sb_sz);
-    const uint32_t picture_width_in_mb  = (scs_ptr->seq_header.max_frame_width + 16 - 1) / 16;
-    const uint32_t picture_height_in_mb = (scs_ptr->seq_header.max_frame_height + 16 - 1) / 16;
-    const uint32_t blks                 = scs_ptr->seq_header.sb_size == BLOCK_128X128
-                        ? (128 >> (3 + pcs_ptr->is_720p_or_larger))
-                        : (64 >> (3 + pcs_ptr->is_720p_or_larger));
+    // If superres scale down is on, should use scaled width instead of full size
+    const int32_t sb_mi_sz = (int32_t)(scs_ptr->sb_size_pix >> 2);
+    const uint32_t picture_sb_width = (uint32_t)((pcs_ptr->aligned_width + scs_ptr->sb_size_pix - 1) / scs_ptr->sb_size_pix);
+    const uint32_t picture_sb_height = (uint32_t)((pcs_ptr->aligned_height + scs_ptr->sb_size_pix - 1) / scs_ptr->sb_size_pix);
+    const int32_t mi_high = sb_mi_sz;  // sb size in 4x4 units
+    const int32_t mi_wide = sb_mi_sz;
     for (uint32_t sb_y = 0; sb_y < picture_sb_height; ++sb_y) {
         for (uint32_t sb_x = 0; sb_x < picture_sb_width; ++sb_x) {
-            int64_t intra_cost  = 0;
+            uint16_t mi_row = pcs_ptr->sb_geom[sb_y * picture_sb_width + sb_x].origin_y >> 2;
+            uint16_t mi_col = pcs_ptr->sb_geom[sb_y * picture_sb_width + sb_x].origin_x >> 2;
+
+            int64_t intra_cost = 0;
             int64_t mc_dep_cost = 0;
-            for (uint32_t blky_offset = 0; blky_offset < blks; blky_offset++) {
-                for (uint32_t blkx_offset = 0; blkx_offset < blks; blkx_offset++) {
-                    uint32_t blkx = ((sb_x * sb_sz) >> (3 + pcs_ptr->is_720p_or_larger)) +
-                        blkx_offset;
-                    uint32_t blky = ((sb_y * sb_sz) >> (3 + pcs_ptr->is_720p_or_larger)) +
-                        blky_offset;
-                    if ((blkx >> (1 - pcs_ptr->is_720p_or_larger)) >= picture_width_in_mb ||
-                        (blky >> (1 - pcs_ptr->is_720p_or_larger)) >= picture_height_in_mb)
+            const int mi_col_sr = coded_to_superres_mi(mi_col, pcs_ptr->superres_denom);
+            const int mi_col_end_sr = coded_to_superres_mi(mi_col + mi_wide, pcs_ptr->superres_denom);
+            const int row_step = step;
+
+            //printOn = printOn && mi_row == 0/* && mi_col == 0*/;
+            //if (printOn)
+            //{
+            //    printf("%s - Frame %d, denom %d, mi_col_end_sr %d, col_step_sr %d\n", __FUNCTION__,
+            //        (int)pcs_ptr->picture_number, pcs_ptr->superres_denom, mi_col_end_sr, col_step_sr);
+            //}
+
+            // loop all mb in the sb
+            for (int row = mi_row; row < mi_row + mi_high; row += row_step) {
+                for (int col = mi_col_sr; col < mi_col_end_sr; col += col_step_sr) {
+                    if (row >= mi_rows || col >= mi_cols_sr) {
                         continue;
-                    TplStats *tpl_stats_ptr =
-                        pcs_ptr->tpl_stats[blky * (mi_cols_sr >> shift) + blkx];
+                    }
+
+                    int index = (row >> shift) * (mi_cols_sr >> shift) + (col >> shift);
+                    /*if (printOn)
+                    {
+                        printf("%s - Frame %d, row %d, col %d, tpl_index %d\n", __FUNCTION__,
+                            (int)pcs_ptr->picture_number, row, col, index);
+                    }*/
+                    TplStats* tpl_stats_ptr = pcs_ptr->tpl_stats[index];
                     int64_t mc_dep_delta = RDCOST(pcs_ptr->base_rdmult,
                                                   tpl_stats_ptr->mc_dep_rate,
                                                   tpl_stats_ptr->mc_dep_dist);
@@ -1507,6 +1528,11 @@ static void generate_r0beta(PictureParentControlSet *pcs_ptr) {
                 assert(beta > 0.0);
             }
             pcs_ptr->tpl_beta[sb_y * picture_sb_width + sb_x] = beta;
+            /*if (printOn)
+            {
+                fprintf(stderr, "%s - Frame %d, tpl_beta_index %u, tpl_beta %.3f\n", __FUNCTION__,
+                    (int)pcs_ptr->picture_number, sb_y * picture_sb_width + sb_x, beta);
+            }*/
         }
     }
     return;
@@ -1939,8 +1965,21 @@ void *tpl_disp_kernel(void *input_ptr) {
     return NULL;
 }
 
+static void sbo_send_picture_out(SourceBasedOperationsContext* context_ptr, PictureParentControlSet* pcs, EbBool superres_recode) {
+    EbObjectWrapper* out_results_wrapper_ptr;
 
+    // Get Empty Results Object
+    svt_get_empty_object(context_ptr->picture_demux_results_output_fifo_ptr,
+        &out_results_wrapper_ptr);
 
+    PictureDemuxResults* out_results_ptr = (PictureDemuxResults*)
+        out_results_wrapper_ptr->object_ptr;
+    out_results_ptr->pcs_wrapper_ptr = pcs->p_pcs_wrapper_ptr;
+    out_results_ptr->picture_type = superres_recode ? EB_PIC_SUPERRES_INPUT : EB_PIC_INPUT;
+
+    // Post the Full Results Object
+    svt_post_full_object(out_results_wrapper_ptr);
+}
 
 /************************************************
  * Source Based Operations Kernel
@@ -1951,37 +1990,45 @@ void *source_based_operations_kernel(void *input_ptr) {
     EbThreadContext *             thread_context_ptr = (EbThreadContext *)input_ptr;
     SourceBasedOperationsContext *context_ptr        = (SourceBasedOperationsContext *)
                                                     thread_context_ptr->priv;
-    PictureParentControlSet *  pcs_ptr;
     EbObjectWrapper *          in_results_wrapper_ptr;
-    InitialRateControlResults *in_results_ptr;
-    EbObjectWrapper *          out_results_wrapper_ptr;
 
     for (;;) {
         // Get Input Full Object
         EB_GET_FULL_OBJECT(context_ptr->initial_rate_control_results_input_fifo_ptr,
                            &in_results_wrapper_ptr);
 
-        in_results_ptr = (InitialRateControlResults *)in_results_wrapper_ptr->object_ptr;
-        pcs_ptr        = (PictureParentControlSet *)in_results_ptr->pcs_wrapper_ptr->object_ptr;
+        InitialRateControlResults* in_results_ptr = (InitialRateControlResults*)in_results_wrapper_ptr->object_ptr;
+        PictureParentControlSet * pcs_ptr = (PictureParentControlSet *)in_results_ptr->pcs_wrapper_ptr->object_ptr;
+        SequenceControlSet * scs_ptr = (SequenceControlSet*)pcs_ptr->scs_wrapper_ptr->object_ptr;
         context_ptr->complete_sb_count = 0;
-        uint32_t sb_total_count        = pcs_ptr->sb_total_count;
-        uint32_t sb_index;
 
-        SequenceControlSet *scs_ptr = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
-        // Get TPL ME
-
-        if (scs_ptr->static_config.enable_tpl_la) {
-
-            if (scs_ptr->static_config.enable_tpl_la &&
-                pcs_ptr->temporal_layer_index == 0) {
-
-                tpl_prep_info(pcs_ptr);
-                tpl_mc_flow(scs_ptr->encode_context_ptr, scs_ptr, pcs_ptr,context_ptr);
+        if (in_results_ptr->superres_recode) {
+            if (scs_ptr->static_config.enable_tpl_la) {
+                // regenerate r0 and tpl_beta since they are frame size dependency
+                generate_r0beta(pcs_ptr);
             }
+            sbo_send_picture_out(context_ptr, pcs_ptr, EB_TRUE);
+
+            // Release the Input Results
+            svt_release_object(in_results_wrapper_ptr);
+            continue;
+        }
+
+        // Get TPL ME
+        if (scs_ptr->static_config.enable_tpl_la &&
+            !pcs_ptr->frame_superres_enabled &&
+            pcs_ptr->temporal_layer_index == 0) {
+
+            tpl_prep_info(pcs_ptr);
+            tpl_mc_flow(scs_ptr->encode_context_ptr, scs_ptr, pcs_ptr,context_ptr);
         }
 
         /***********************************************SB-based operations************************************************************/
-        for (sb_index = 0; sb_index < sb_total_count; ++sb_index) {
+        uint16_t sb_cnt = scs_ptr->sb_tot_cnt;
+        if (scs_ptr->static_config.superres_mode > SUPERRES_NONE)
+            sb_cnt = pcs_ptr->sb_total_count;
+        uint32_t sb_index;
+        for (sb_index = 0; sb_index < sb_cnt; ++sb_index) {
             SbParams *sb_params      = &pcs_ptr->sb_params_array[sb_index];
             EbBool    is_complete_sb = sb_params->is_complete_sb;
             if (is_complete_sb) {
@@ -1993,20 +2040,10 @@ void *source_based_operations_kernel(void *input_ptr) {
         // Activity statistics derivation
         derive_picture_activity_statistics(pcs_ptr);
 
-        // Get Empty Results Object
-        svt_get_empty_object(context_ptr->picture_demux_results_output_fifo_ptr,
-                             &out_results_wrapper_ptr);
-
-        PictureDemuxResults *out_results_ptr = (PictureDemuxResults *)
-                                                   out_results_wrapper_ptr->object_ptr;
-        out_results_ptr->pcs_wrapper_ptr = in_results_ptr->pcs_wrapper_ptr;
-        out_results_ptr->picture_type    = EB_PIC_INPUT;
+        sbo_send_picture_out(context_ptr, pcs_ptr, EB_FALSE);
 
         // Release the Input Results
         svt_release_object(in_results_wrapper_ptr);
-
-        // Post the Full Results Object
-        svt_post_full_object(out_results_wrapper_ptr);
     }
     return NULL;
 }

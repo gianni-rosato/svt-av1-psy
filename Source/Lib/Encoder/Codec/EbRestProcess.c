@@ -535,6 +535,8 @@ void *rest_kernel(void *input_ptr) {
     uint8_t tile_cols;
     uint8_t tile_rows;
 
+    EbBool superres_recode = EB_FALSE;
+
     for (;;) {
         // Get Cdef Results
         EB_GET_FULL_OBJECT(context_ptr->rest_input_fifo_ptr, &cdef_results_wrapper_ptr);
@@ -621,80 +623,89 @@ void *rest_kernel(void *input_ptr) {
                 copy_statistics_to_ref_obj_ect(pcs_ptr, scs_ptr);
             }
 
-            // Pad the reference picture and set ref POC
-            if (!use_output_stat(scs_ptr)) {
-                if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE)
-                    pad_ref_and_set_flags(pcs_ptr, scs_ptr);
-                else {
-                    // convert non-reference frame buffer from 16-bit to 8-bit, to export recon and psnr/ssim calculation
-                    if (is_16bit && scs_ptr->static_config.encoder_bit_depth == EB_8BIT)
-                    {
-                        EbPictureBufferDesc* ref_pic_ptr = pcs_ptr->parent_pcs_ptr->enc_dec_ptr->recon_picture_ptr;
-                        EbPictureBufferDesc* ref_pic_16bit_ptr = pcs_ptr->parent_pcs_ptr->enc_dec_ptr->recon_picture16bit_ptr;
-                        //Y
-                        uint16_t* buf_16bit = (uint16_t*)(ref_pic_16bit_ptr->buffer_y);
-                        uint8_t* buf_8bit = ref_pic_ptr->buffer_y;
-                        svt_convert_16bit_to_8bit(buf_16bit,
-                            ref_pic_16bit_ptr->stride_y,
-                            buf_8bit,
-                            ref_pic_ptr->stride_y,
-                            ref_pic_16bit_ptr->width + (ref_pic_ptr->origin_x << 1),
-                            ref_pic_16bit_ptr->height + (ref_pic_ptr->origin_y << 1));
+            superres_recode = pcs_ptr->parent_pcs_ptr->superres_total_recode_loop > 0 ? EB_TRUE : EB_FALSE;
 
-                        //CB
-                        buf_16bit = (uint16_t*)(ref_pic_16bit_ptr->buffer_cb);
-                        buf_8bit = ref_pic_ptr->buffer_cb;
-                        svt_convert_16bit_to_8bit(buf_16bit,
-                            ref_pic_16bit_ptr->stride_cb,
-                            buf_8bit,
-                            ref_pic_ptr->stride_cb,
-                            (ref_pic_16bit_ptr->width + (ref_pic_ptr->origin_x << 1)) >> scs_ptr->subsampling_x,
-                            (ref_pic_16bit_ptr->height + (ref_pic_ptr->origin_y << 1)) >> scs_ptr->subsampling_y);
+            if (!superres_recode) {
+                // Pad the reference picture and set ref POC
+                if (!use_output_stat(scs_ptr)) {
+                    if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE)
+                        pad_ref_and_set_flags(pcs_ptr, scs_ptr);
+                    else {
+                        // convert non-reference frame buffer from 16-bit to 8-bit, to export recon and psnr/ssim calculation
+                        if (is_16bit && scs_ptr->static_config.encoder_bit_depth == EB_8BIT)
+                        {
+                            EbPictureBufferDesc* ref_pic_ptr = pcs_ptr->parent_pcs_ptr->enc_dec_ptr->recon_picture_ptr;;
+                            EbPictureBufferDesc* ref_pic_16bit_ptr = pcs_ptr->parent_pcs_ptr->enc_dec_ptr->recon_picture16bit_ptr;;
+                            //Y
+                            uint16_t* buf_16bit = (uint16_t*)(ref_pic_16bit_ptr->buffer_y);
+                            uint8_t* buf_8bit = ref_pic_ptr->buffer_y;
+                            svt_convert_16bit_to_8bit(buf_16bit,
+                                ref_pic_16bit_ptr->stride_y,
+                                buf_8bit,
+                                ref_pic_ptr->stride_y,
+                                ref_pic_16bit_ptr->width + (ref_pic_ptr->origin_x << 1),
+                                ref_pic_16bit_ptr->height + (ref_pic_ptr->origin_y << 1));
 
-                        //CR
-                        buf_16bit = (uint16_t*)(ref_pic_16bit_ptr->buffer_cr);
-                        buf_8bit = ref_pic_ptr->buffer_cr;
-                        svt_convert_16bit_to_8bit(buf_16bit,
-                            ref_pic_16bit_ptr->stride_cr,
-                            buf_8bit,
-                            ref_pic_ptr->stride_cr,
-                            (ref_pic_16bit_ptr->width + (ref_pic_ptr->origin_x << 1)) >> scs_ptr->subsampling_x,
-                            (ref_pic_16bit_ptr->height + (ref_pic_ptr->origin_y << 1)) >> scs_ptr->subsampling_y);
+                            //CB
+                            buf_16bit = (uint16_t*)(ref_pic_16bit_ptr->buffer_cb);
+                            buf_8bit = ref_pic_ptr->buffer_cb;
+                            svt_convert_16bit_to_8bit(buf_16bit,
+                                ref_pic_16bit_ptr->stride_cb,
+                                buf_8bit,
+                                ref_pic_ptr->stride_cb,
+                                (ref_pic_16bit_ptr->width + (ref_pic_ptr->origin_x << 1)) >> scs_ptr->subsampling_x,
+                                (ref_pic_16bit_ptr->height + (ref_pic_ptr->origin_y << 1)) >> scs_ptr->subsampling_y);
+
+                            //CR
+                            buf_16bit = (uint16_t*)(ref_pic_16bit_ptr->buffer_cr);
+                            buf_8bit = ref_pic_ptr->buffer_cr;
+                            svt_convert_16bit_to_8bit(buf_16bit,
+                                ref_pic_16bit_ptr->stride_cr,
+                                buf_8bit,
+                                ref_pic_ptr->stride_cr,
+                                (ref_pic_16bit_ptr->width + (ref_pic_ptr->origin_x << 1)) >> scs_ptr->subsampling_x,
+                                (ref_pic_16bit_ptr->height + (ref_pic_ptr->origin_y << 1)) >> scs_ptr->subsampling_y);
+                        }
                     }
                 }
             }
 
             // PSNR and SSIM Calculation.
             // Note: if temporal_filtering is used, memory needs to be freed in the last of these calls
+            // Note: if superres recode is used, memory needs to be freed in packetization process
             if (scs_ptr->static_config.stat_report) {
                 psnr_calculations(pcs_ptr, scs_ptr, EB_FALSE);
-                ssim_calculations(pcs_ptr, scs_ptr, EB_TRUE /* free memory here */);
+                ssim_calculations(pcs_ptr, scs_ptr, superres_recode ? EB_FALSE : EB_TRUE);
+            } else if (superres_recode) {  // superres needs psnr to calculate rdcost
+                psnr_calculations(pcs_ptr, scs_ptr, EB_FALSE);
             }
 
-            // Pad the reference picture and set ref POC
-            if (scs_ptr->static_config.recon_enabled) {
-                recon_output(pcs_ptr, scs_ptr);
+            if (!superres_recode) {
+                if (scs_ptr->static_config.recon_enabled) {
+                    recon_output(pcs_ptr, scs_ptr);
+                }
+
+                // post reference picture task in packetization process if it's superres_recode
+                if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag) {
+                    // Get Empty PicMgr Results
+                    svt_get_empty_object(context_ptr->picture_demux_fifo_ptr,
+                        &picture_demux_results_wrapper_ptr);
+
+                    picture_demux_results_rtr = (PictureDemuxResults*)
+                        picture_demux_results_wrapper_ptr->object_ptr;
+                    picture_demux_results_rtr->reference_picture_wrapper_ptr =
+                        pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr;
+                    picture_demux_results_rtr->scs_wrapper_ptr = pcs_ptr->scs_wrapper_ptr;
+                    picture_demux_results_rtr->picture_number = pcs_ptr->picture_number;
+                    picture_demux_results_rtr->picture_type = EB_PIC_REFERENCE;
+
+                    // Post Reference Picture
+                    svt_post_full_object(picture_demux_results_wrapper_ptr);
+                }
             }
 
             tile_cols = pcs_ptr->parent_pcs_ptr->av1_cm->tiles_info.tile_cols;
             tile_rows = pcs_ptr->parent_pcs_ptr->av1_cm->tiles_info.tile_rows;
-
-            if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag) {
-                // Get Empty PicMgr Results
-                svt_get_empty_object(context_ptr->picture_demux_fifo_ptr,
-                                     &picture_demux_results_wrapper_ptr);
-
-                picture_demux_results_rtr = (PictureDemuxResults *)
-                                                picture_demux_results_wrapper_ptr->object_ptr;
-                picture_demux_results_rtr->reference_picture_wrapper_ptr =
-                    pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr;
-                picture_demux_results_rtr->scs_wrapper_ptr = pcs_ptr->scs_wrapper_ptr;
-                picture_demux_results_rtr->picture_number  = pcs_ptr->picture_number;
-                picture_demux_results_rtr->picture_type    = EB_PIC_REFERENCE;
-
-                // Post Reference Picture
-                svt_post_full_object(picture_demux_results_wrapper_ptr);
-            }
 
             //Jing: TODO
             //Consider to add parallelism here, sending line by line, not waiting for a full frame

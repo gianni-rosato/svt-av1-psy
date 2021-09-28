@@ -5136,34 +5136,73 @@ uint32_t product_full_mode_decision(
     } while (txb_itr < tu_total_count);
     return lowest_cost_index;
 }
+
+// Return the end column for the current superblock, in unit of TPL blocks.
+static int get_superblock_tpl_column_end(PictureParentControlSet* ppcs_ptr, int mi_col,
+    int num_mi_w) {
+    const int mib_size_log2 = ppcs_ptr->scs_ptr->seq_header.sb_size == BLOCK_128X128 ? 5 : 4;
+    // Find the start column of this superblock.
+    const int sb_mi_col_start = (mi_col >> mib_size_log2) << mib_size_log2;
+    // Same but in superres upscaled dimension.
+    const int sb_mi_col_start_sr =
+        coded_to_superres_mi(sb_mi_col_start, ppcs_ptr->superres_denom);
+    // Width of this superblock in mi units.
+    const int sb_mi_width = mi_size_wide[ppcs_ptr->scs_ptr->seq_header.sb_size];
+    // Same but in superres upscaled dimension.
+    const int sb_mi_width_sr =
+        coded_to_superres_mi(sb_mi_width, ppcs_ptr->superres_denom);
+    // Superblock end in mi units.
+    const int sb_mi_end = sb_mi_col_start_sr + sb_mi_width_sr;
+    // Superblock end in TPL units.
+    return (sb_mi_end + num_mi_w - 1) / num_mi_w;
+}
+
 uint32_t get_blk_tuned_full_lambda(struct ModeDecisionContext *context_ptr, PictureControlSet *pcs_ptr,
         uint32_t pic_full_lambda) {
     PictureParentControlSet *ppcs_ptr = pcs_ptr->parent_pcs_ptr;
     Av1Common *cm = ppcs_ptr->av1_cm;
 
     BlockSize bsize = context_ptr->blk_geom->bsize;
+    int mi_row = context_ptr->blk_origin_y / 4;
+    int mi_col = context_ptr->blk_origin_x / 4;
+
+    const int mi_col_sr =
+        coded_to_superres_mi(mi_col, ppcs_ptr->superres_denom);
+    const int mi_cols_sr = ((ppcs_ptr->enhanced_unscaled_picture_ptr->width + 15) / 16) << 2;  // picture column boundary
+    const int block_mi_width_sr =
+        coded_to_superres_mi(mi_size_wide[bsize], ppcs_ptr->superres_denom);
     const int bsize_base = BLOCK_16X16;
     const int num_mi_w = mi_size_wide[bsize_base];
     const int num_mi_h = mi_size_high[bsize_base];
-    const int num_cols = (cm->mi_cols + num_mi_w - 1) / num_mi_w;
+    const int num_cols = (mi_cols_sr + num_mi_w - 1) / num_mi_w;
     const int num_rows = (cm->mi_rows + num_mi_h - 1) / num_mi_h;
-    const int num_bcols = (mi_size_wide[bsize] + num_mi_w - 1) / num_mi_w;
+    const int num_bcols = (block_mi_width_sr + num_mi_w - 1) / num_mi_w;
     const int num_brows = (mi_size_high[bsize] + num_mi_h - 1) / num_mi_h;
-    int mi_row = context_ptr->blk_origin_y / 4;
-    int mi_col = context_ptr->blk_origin_x / 4;
+
+    // This is required because the end col of superblock may be off by 1 in case
+    // of superres.
+    const int sb_bcol_end = get_superblock_tpl_column_end(ppcs_ptr, mi_col, num_mi_w);
     int row, col;
     double base_block_count = 0.0;
     double geom_mean_of_scale = 0.0;
     for (row = mi_row / num_mi_w;
-            row < num_rows && row < mi_row / num_mi_w + num_brows; ++row) {
-        for (col = mi_col / num_mi_h;
-                col < num_cols && col < mi_col / num_mi_h + num_bcols; ++col) {
+        row < num_rows&& row < mi_row / num_mi_w + num_brows; ++row) {
+        for (col = mi_col_sr / num_mi_h;
+            col < num_cols && col < mi_col_sr / num_mi_h + num_bcols &&
+            col < sb_bcol_end;
+            ++col) {
             const int index = row * num_cols + col;
             geom_mean_of_scale += log(ppcs_ptr->tpl_sb_rdmult_scaling_factors[index]);
             base_block_count += 1.0;
         }
     }
-    assert(base_block_count > 0);
+    // When superres is on, base_block_count could be zero.
+    // This function's counterpart in AOM, av1_get_hier_tpl_rdmult, will encounter division by zero
+    if (base_block_count == 0) {
+        // return a large number to indicate invalid state
+        return 0x7fffffff;
+    }
+
     geom_mean_of_scale = exp(geom_mean_of_scale / base_block_count);
     uint32_t new_full_lambda = (uint32_t)((double)pic_full_lambda * geom_mean_of_scale + 0.5);
     new_full_lambda = AOMMAX(new_full_lambda, 0);

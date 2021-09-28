@@ -18,6 +18,8 @@
 #include <string.h>
 #include "EbResize.h"
 
+#include "aom_dsp_rtcd.h"
+#include "EbModeDecisionProcess.h"
 
 #define DIVIDE_AND_ROUND(x, y) (((x) + ((y) >> 1)) / (y))
 
@@ -978,12 +980,191 @@ static INLINE unsigned int lcg_rand16(unsigned int *state) {
     return *state / 65536 % 32768;
 }
 
+// Compute the horizontal frequency components' energy in a frame
+// by calculuating the 16x4 Horizontal DCT. This is to be used to
+// decide the superresolution parameters.
+static void analyze_hor_freq(PictureParentControlSet* pcs_ptr, double* energy) {
+    SequenceControlSet* scs_ptr = (SequenceControlSet*)pcs_ptr->scs_wrapper_ptr->object_ptr;
+    uint64_t freq_energy[16] = { 0 };
+
+    EbPictureBufferDesc* input_picture_ptr = pcs_ptr->enhanced_picture_ptr;
+    uint8_t* in = input_picture_ptr->buffer_y + input_picture_ptr->origin_x +
+        input_picture_ptr->origin_y * input_picture_ptr->stride_y;
+    const int bd = input_picture_ptr->bit_depth;
+    const int width = input_picture_ptr->width;
+    const int height = input_picture_ptr->height;
+    EbBool is_16bit = (EbBool)(scs_ptr->static_config.encoder_bit_depth > EB_8BIT) ||
+        (scs_ptr->static_config.is_16bit_pipeline);
+
+    DECLARE_ALIGNED(64, int32_t, coeff[16 * 4]);
+    int n = 0;
+    memset(freq_energy, 0, sizeof(freq_energy));
+    if (is_16bit) {
+        int16_t* src16 = (int16_t*)CONVERT_TO_SHORTPTR(in);
+        for (int i = 0; i < height - 4; i += 4) {
+            for (int j = 0; j < width - 16; j += 16) {
+                svt_av1_fwd_txfm2d_16x4(src16 + i * input_picture_ptr->stride_y + j, coeff, input_picture_ptr->stride_y,
+                    H_DCT, bd);
+                for (int k = 1; k < 16; ++k) {
+                    const uint64_t this_energy =
+                        ((int64_t)coeff[k] * coeff[k]) +
+                        ((int64_t)coeff[k + 16] * coeff[k + 16]) +
+                        ((int64_t)coeff[k + 32] * coeff[k + 32]) +
+                        ((int64_t)coeff[k + 48] * coeff[k + 48]);
+                    freq_energy[k] += ROUND_POWER_OF_TWO(this_energy, 2 + 2 * (bd - 8));
+                }
+                n++;
+            }
+        }
+    }
+    else {
+        assert(bd == 8);
+        DECLARE_ALIGNED(64, int16_t, src16[16 * 4]);
+        for (int i = 0; i < height - 4; i += 4) {
+            for (int j = 0; j < width - 16; j += 16) {
+                for (int ii = 0; ii < 4; ++ii)
+                    for (int jj = 0; jj < 16; ++jj)
+                        src16[ii * 16 + jj] = in[(i + ii) * input_picture_ptr->stride_y + (j + jj)];
+                svt_av1_fwd_txfm2d_16x4(src16, coeff, 16, H_DCT, bd);
+                for (int k = 1; k < 16; ++k) {
+                    const uint64_t this_energy =
+                        ((int64_t)coeff[k] * coeff[k]) +
+                        ((int64_t)coeff[k + 16] * coeff[k + 16]) +
+                        ((int64_t)coeff[k + 32] * coeff[k + 32]) +
+                        ((int64_t)coeff[k + 48] * coeff[k + 48]);
+                    freq_energy[k] += ROUND_POWER_OF_TWO(this_energy, 2);
+                }
+                n++;
+            }
+        }
+    }
+    if (n) {
+        for (int k = 1; k < 16; ++k) energy[k] = (double)freq_energy[k] / n;
+        // Convert to cumulative energy
+        for (int k = 14; k > 0; --k) energy[k] += energy[k + 1];
+    }
+    else {
+        for (int k = 1; k < 16; ++k) energy[k] = 1e+20;
+    }
+}
+
+#define SUPERRES_ENERGY_BY_Q2_THRESH_KEYFRAME_SOLO 0.012
+#define SUPERRES_ENERGY_BY_Q2_THRESH_KEYFRAME 0.008
+#define SUPERRES_ENERGY_BY_Q2_THRESH_ARFFRAME 0.008
+#define SUPERRES_ENERGY_BY_AC_THRESH 0.2
+
+static double get_energy_by_q2_thresh(const RATE_CONTROL* rc, int frame_update_type) {
+    // TODO(now): Return keyframe thresh * factor based on frame type / pyramid
+    // level.
+    if (frame_update_type == ARF_UPDATE) {
+        return SUPERRES_ENERGY_BY_Q2_THRESH_ARFFRAME;
+    }
+    else if (frame_update_type == KF_UPDATE) {
+        if (rc->frames_to_key <= 1)
+            return SUPERRES_ENERGY_BY_Q2_THRESH_KEYFRAME_SOLO;
+        else
+            return SUPERRES_ENERGY_BY_Q2_THRESH_KEYFRAME;
+    }
+    else {
+        assert(0);
+    }
+    return 0;
+}
+
+static int av1_superres_in_recode_allowed(SequenceControlSet* scs_ptr) {
+    const EbSvtAv1EncConfiguration* const static_config = &scs_ptr->static_config;
+    // Empirically found to not be beneficial for image coding.
+    return static_config->superres_mode == SUPERRES_AUTO &&
+        static_config->superres_auto_search_type != SUPERRES_AUTO_SOLO/* &&
+        scs_ptr->encode_context_ptr->rc.frames_to_key > 1*/;
+}
+
+static uint8_t get_superres_denom_from_qindex_energy(int qindex, double* energy,
+    double threshq,
+    double threshp) {
+    const double q = svt_av1_convert_qindex_to_q(qindex, AOM_BITS_8);
+    const double tq = threshq * q * q;
+    const double tp = threshp * energy[1];
+    const double thresh = AOMMIN(tq, tp);
+    int k;
+    for (k = SCALE_NUMERATOR * 2; k > SCALE_NUMERATOR; --k) {
+        if (energy[k - 1] > thresh) break;
+    }
+    return 3 * SCALE_NUMERATOR - k;
+}
+
+static int32_t get_frame_update_type(SequenceControlSet* scs_ptr, PictureParentControlSet* pcs_ptr)
+{
+    // gf_group->update_type is valid when in 2nd pass of 2-pass encoding or lap_enabled is true.
+    if (use_input_stat(scs_ptr) || scs_ptr->lap_enabled) {
+        const GF_GROUP* gf_group = &scs_ptr->encode_context_ptr->gf_group;
+        return gf_group->update_type[pcs_ptr->gf_group_index];
+    }
+    else {
+        if (pcs_ptr->frm_hdr.frame_type == KEY_FRAME) {
+            return KF_UPDATE;
+        }
+        else if (pcs_ptr->temporal_layer_index == 0) {
+            return ARF_UPDATE;
+        }
+        else if (pcs_ptr->temporal_layer_index == pcs_ptr->hierarchical_levels) {
+            return LF_UPDATE;
+        }
+        else {
+            return INTNL_ARF_UPDATE;
+        }
+    }
+}
+
+static uint8_t get_superres_denom_for_qindex(SequenceControlSet* scs_ptr, PictureParentControlSet* pcs_ptr,
+    int qindex, int sr_kf, int sr_arf) {
+    // Use superres for Key-frames and Alt-ref frames only.
+    int32_t update_type = get_frame_update_type(scs_ptr, pcs_ptr);
+    if (update_type != KF_UPDATE &&
+        update_type != ARF_UPDATE) {
+        return SCALE_NUMERATOR;
+    }
+    if (update_type == KF_UPDATE && !sr_kf) {
+        return SCALE_NUMERATOR;
+    }
+    if (update_type == ARF_UPDATE && !sr_arf) {
+        return SCALE_NUMERATOR;
+    }
+
+    double energy[16];
+    analyze_hor_freq(pcs_ptr, energy);
+
+    const double energy_by_q2_thresh =
+        get_energy_by_q2_thresh(&scs_ptr->encode_context_ptr->rc, update_type);
+    int denom = get_superres_denom_from_qindex_energy(
+        qindex, energy, energy_by_q2_thresh, SUPERRES_ENERGY_BY_AC_THRESH);
+
+    /*printf("\nFrame %d. energy_by_q2_thresh %.3f, energy = [", (int)pcs_ptr->picture_number, energy_by_q2_thresh);
+    for (int k = 1; k < 16; ++k) printf("%f, ", energy[k]);
+    printf("]\n");
+    printf("boost = %d\n",
+           (update_type == KF_UPDATE)
+               ? scs_ptr->encode_context_ptr->rc.kf_boost
+               : scs_ptr->encode_context_ptr->rc.gfu_boost);
+    printf("denom = %d\n", denom);*/
+
+    if (av1_superres_in_recode_allowed(scs_ptr)) {
+        assert(scs_ptr->static_config.superres_mode != SUPERRES_NONE);
+        // Force superres to be tried in the recode loop, as full-res is also going
+        // to be tried anyway.
+        denom = AOMMAX(denom, SCALE_NUMERATOR + 1);
+    }
+    return denom;
+}
+
 /*
  * Given the superres configurations and the frame type, determine the denominator and
  * encoding resolution
  */
 static void calc_superres_params(superres_params_type *spr_params, SequenceControlSet *scs_ptr,
                                  PictureParentControlSet *pcs_ptr) {
+    pcs_ptr->superres_total_recode_loop = 0;
+    pcs_ptr->superres_recode_loop = 0;
     spr_params->superres_denom  = SCALE_NUMERATOR;
     static unsigned int seed    = 34567;
     FrameHeader *       frm_hdr = &pcs_ptr->frm_hdr;
@@ -991,16 +1172,14 @@ static void calc_superres_params(superres_params_type *spr_params, SequenceContr
     uint8_t superres_mode = scs_ptr->static_config.superres_mode;
     uint8_t cfg_denom     = scs_ptr->static_config.superres_denom;
     uint8_t cfg_kf_denom  = scs_ptr->static_config.superres_kf_denom;
-    //uint8_t superres_qthres = scs_ptr->static_config.superres_qthres;
+    uint8_t superres_qthres = quantizer_to_qindex[scs_ptr->static_config.superres_qthres];
+    uint8_t superres_kf_qthres = quantizer_to_qindex[scs_ptr->static_config.superres_kf_qthres];
 
     // super-res can only be enabled in case allow_intrabc is disabled and
     // loop restoration is enabled
     if (frm_hdr->allow_intrabc || !scs_ptr->seq_header.enable_restoration) {
         return;
     }
-
-    // remove assertion when rest of the modes are implemented
-    assert(superres_mode <= SUPERRES_RANDOM);
 
     switch (superres_mode) {
     case SUPERRES_NONE: spr_params->superres_denom = SCALE_NUMERATOR; break;
@@ -1011,9 +1190,89 @@ static void calc_superres_params(superres_params_type *spr_params, SequenceContr
             spr_params->superres_denom = cfg_denom;
         break;
     case SUPERRES_RANDOM: spr_params->superres_denom = (uint8_t)(lcg_rand16(&seed) % 9 + 8); break;
-    //SUPERRES_QTHRESH and SUPERRES_AUTO are not yet implemented
-    case SUPERRES_QTHRESH: break;
-    case SUPERRES_AUTO: break;
+    case SUPERRES_QTHRESH: {
+        // Do not use superres when screen content tools are used.
+        if (frm_hdr->allow_screen_content_tools) break;
+
+        const int q = quantizer_to_qindex[pcs_ptr->picture_qp];
+
+        // TODO: seperate qthres for key frame and inter frame
+        const int qthresh = frame_is_intra_only(pcs_ptr) ? superres_kf_qthres : superres_qthres;
+        if (q <= qthresh) {
+            spr_params->superres_denom = SCALE_NUMERATOR;
+        }
+        else {
+            spr_params->superres_denom = get_superres_denom_for_qindex(scs_ptr, pcs_ptr, q, 1, 1);
+        }
+        // TEST code
+        /*int32_t update_type = get_frame_update_type(scs_ptr, pcs_ptr);
+        if (update_type == KF_UPDATE || update_type == ARF_UPDATE)
+        {
+            //spr_params->superres_denom = SCALE_NUMERATOR + 1;
+            printf("@Superres@ Frame %d, type %d, Update type %d, temp_layer_index %d, denom %d, qindex %d, q threshold index %d\n",
+                (int)pcs_ptr->picture_number, frm_hdr->frame_type, update_type, pcs_ptr->temporal_layer_index, spr_params->superres_denom, q, qthresh);
+        }*/
+        break;
+    }
+    case SUPERRES_AUTO: {
+        const int q = quantizer_to_qindex[pcs_ptr->picture_qp];
+
+        const int sr_search_type = scs_ptr->static_config.superres_auto_search_type;
+        const int qthresh = (sr_search_type == SUPERRES_AUTO_SOLO) ? 128 : 0;
+        if (q <= qthresh) {
+            spr_params->superres_denom = SCALE_NUMERATOR;  // Don't use superres.
+        }
+        else {
+            if (sr_search_type == SUPERRES_AUTO_SOLO) {
+                spr_params->superres_denom = get_superres_denom_for_qindex(scs_ptr, pcs_ptr, q, 1, 1);
+
+                // TEST code
+                /*int32_t update_type = get_frame_update_type(scs_ptr, pcs_ptr);
+                if (update_type == KF_UPDATE || update_type == ARF_UPDATE)
+                {
+                    spr_params->superres_denom = SCALE_NUMERATOR + 1;
+                }
+                fprintf(stderr, "@Superres@ Frame %d, type %d, Update type %d, temp_layer_index %d, denom %d, q %d, frames_to_key %d\n",
+                    (int)pcs_ptr->picture_number, frm_hdr->frame_type, update_type, pcs_ptr->temporal_layer_index, spr_params->superres_denom, q,
+                    pcs_ptr->frames_to_key);*/
+            }
+            else if (sr_search_type == SUPERRES_AUTO_DUAL) {
+                pcs_ptr->superres_denom_array[0] = get_superres_denom_for_qindex(scs_ptr, pcs_ptr, q, 1, 1);
+                if (pcs_ptr->superres_denom_array[0] != SCALE_NUMERATOR) {
+                    pcs_ptr->superres_denom_array[1] = SCALE_NUMERATOR;
+                    spr_params->superres_denom = pcs_ptr->superres_denom_array[0];
+                    pcs_ptr->superres_total_recode_loop = 2;
+                }
+            }
+            else { // SUPERRES_AUTO_ALL
+                assert(sr_search_type == SUPERRES_AUTO_ALL);
+                int32_t update_type = get_frame_update_type(scs_ptr, pcs_ptr);
+                if (update_type == KF_UPDATE || update_type == ARF_UPDATE) {
+                    for (int i = 0; i < SCALE_NUMERATOR + 1; i++) {
+                        if (i < SCALE_NUMERATOR) {
+                            pcs_ptr->superres_denom_array[i] = SCALE_NUMERATOR + 1 + i;
+                        }
+                        else {
+                            pcs_ptr->superres_denom_array[i] = SCALE_NUMERATOR;
+                        }
+                    }
+                    spr_params->superres_denom = pcs_ptr->superres_denom_array[0];
+                    pcs_ptr->superres_total_recode_loop = SCALE_NUMERATOR + 1;
+                }
+            }
+        }
+
+        // TEST code
+        //int32_t update_type = get_frame_update_type(scs_ptr, pcs_ptr);
+        //if (update_type == KF_UPDATE || update_type == ARF_UPDATE)
+        //{
+        //    //spr_params->superres_denom = SCALE_NUMERATOR + 1;
+        //    printf("@Superres@ Frame %d, type %d, Update type %d, temp_layer_index %d, denom %d, q %d, frames_to_key %d\n",
+        //        (int)pcs_ptr->picture_number, frm_hdr->frame_type, update_type, pcs_ptr->temporal_layer_index, spr_params->superres_denom, q,
+        //        pcs_ptr->frames_to_key);
+        //}
+        break;
+    }
     default: break;
     }
 
@@ -1055,9 +1314,9 @@ static uint8_t get_denom_idx(uint8_t superres_denom) {
  * Modify encoder parameters and structures that depend on picture resolution
  * Performed after a source picture has been scaled
  */
-static EbErrorType scale_pcs_params(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_ptr,
-                                    superres_params_type spr_params, uint16_t source_width,
-                                    uint16_t source_height) {
+void scale_pcs_params(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_ptr,
+                      superres_params_type spr_params, uint16_t source_width,
+                      uint16_t source_height) {
     Av1Common *cm = pcs_ptr->av1_cm;
 
     // frame sizes
@@ -1107,14 +1366,17 @@ static EbErrorType scale_pcs_params(SequenceControlSet *scs_ptr, PictureParentCo
                             spr_params.encoding_width * spr_params.encoding_height);
 
     // create new picture level sb_params and sb_geom
+    sb_params_init_pcs(scs_ptr, pcs_ptr);
+    sb_geom_init_pcs(scs_ptr, pcs_ptr);
+
     if (pcs_ptr->frame_superres_enabled == EB_TRUE) {
-        sb_params_init_pcs(scs_ptr, pcs_ptr);
-
-        sb_geom_init_pcs(scs_ptr, pcs_ptr);
-
         pcs_ptr->frm_hdr.use_ref_frame_mvs = 0;
+    } else {
+        if (pcs_ptr->slice_type == I_SLICE)
+            pcs_ptr->frm_hdr.use_ref_frame_mvs = 0;
+        else
+            pcs_ptr->frm_hdr.use_ref_frame_mvs = scs_ptr->mfmv_enabled;
     }
-    return EB_ErrorNone;
 }
 
 /*
@@ -1610,24 +1872,38 @@ void reset_resized_picture(SequenceControlSet* scs_ptr, PictureParentControlSet*
  * adjust resolution related parameters
  */
 void init_resize_picture(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_ptr) {
-    EbPictureBufferDesc *input_picture_ptr = pcs_ptr->enhanced_picture_ptr;
+    EbPictureBufferDesc *input_picture_ptr = pcs_ptr->enhanced_unscaled_picture_ptr;
 
     superres_params_type spr_params = {input_picture_ptr->width, // encoding_width
                                        input_picture_ptr->height, // encoding_height
                                        scs_ptr->static_config.superres_denom};
 
-    // determine super-resolution parameters - encoding resolution
-    // given configs and frame type
-    calc_superres_params(&spr_params, scs_ptr, pcs_ptr);
+    EbBool first_loop = !(scs_ptr->static_config.superres_mode == SUPERRES_AUTO && pcs_ptr->superres_recode_loop > 0);
+    if (!first_loop) {
+        if (pcs_ptr->superres_recode_loop < pcs_ptr->superres_total_recode_loop) {
+            spr_params.superres_denom = pcs_ptr->superres_denom_array[pcs_ptr->superres_recode_loop];
+        }
+        else {  // extra loop to pick up a scaled recode
+            // denom is set by downstream packetization process
+            spr_params.superres_denom = pcs_ptr->superres_denom;
+        }
+        calculate_scaled_size_helper(&spr_params.encoding_width, spr_params.superres_denom);
+        //printf("%s: picture %d, loop %d/%d\n", __FUNCTION__,
+        //    (int)pcs_ptr->picture_number, pcs_ptr->superres_recode_loop, pcs_ptr->superres_total_recode_loop);
+    }
+    else {
+        // determine super-resolution parameters - encoding resolution
+        // given configs and frame type
+        calc_superres_params(&spr_params, scs_ptr, pcs_ptr);
+    }
+
+    // delete picture buffer allocated by superres tool
+    // TODO: reuse the buffer if current picture's denom is the same as previous one's.
+    EB_DELETE(pcs_ptr->enhanced_downscaled_picture_ptr);
 
     if (spr_params.superres_denom != SCALE_NUMERATOR) {
-        if (!scs_ptr->seq_header.enable_superres)
-            scs_ptr->seq_header.enable_superres = 1; // enable sequence level super-res flag
-            // if super-res is ON for any frame
-
         pcs_ptr->superres_denom = spr_params.superres_denom;
 
-        EB_DELETE(pcs_ptr->enhanced_downscaled_picture_ptr);
         // Allocate downsampled picture buffer descriptor
         downscaled_source_buffer_desc_ctor(
             &pcs_ptr->enhanced_downscaled_picture_ptr, input_picture_ptr, spr_params);
@@ -1684,9 +1960,10 @@ void init_resize_picture(SequenceControlSet *scs_ptr, PictureParentControlSet *p
             scale_source_references(scs_ptr, pcs_ptr, pcs_ptr->enhanced_picture_ptr);
         }
     }
-    else /*if(pcs_ptr->frame_superres_enabled)*/ {
+    else {
         // pcs_ptr previously might be used and dirty in params
         // clean up if current frame doesn't need scaling
+        pcs_ptr->enhanced_picture_ptr = pcs_ptr->enhanced_unscaled_picture_ptr;
         reset_resized_picture(scs_ptr, pcs_ptr, input_picture_ptr);
     }
 }

@@ -2746,7 +2746,13 @@ EbErrorType svt_av1_init_temporal_filtering(
 
         // save original source picture (to be replaced by the temporally filtered pic)
         // if stat_report is enabled for PSNR computation
-        if (picture_control_set_ptr_central->scs_ptr->static_config.stat_report) {
+        // or if superres recode is enabled
+        SUPERRES_MODE superres_mode = picture_control_set_ptr_central->scs_ptr->static_config.superres_mode;
+        SUPERRES_AUTO_SEARCH_TYPE search_type = picture_control_set_ptr_central->scs_ptr->static_config.superres_auto_search_type;
+        EbBool superres_recode_enabled = (superres_mode == SUPERRES_AUTO)
+            && ((search_type == SUPERRES_AUTO_DUAL) || (search_type == SUPERRES_AUTO_ALL))  // auto-dual or auto-all
+            && (picture_control_set_ptr_central->temporal_layer_index == 0);                // recode only applies to key and arf
+        if (picture_control_set_ptr_central->scs_ptr->static_config.stat_report || superres_recode_enabled) {
             save_src_pic_buffers(picture_control_set_ptr_central, ss_y, is_highbd);
         }
     }

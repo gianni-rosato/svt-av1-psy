@@ -23,6 +23,11 @@
 #include "EbPictureDemuxResults.h"
 #include "EbLog.h"
 #include "EbSvtAv1ErrorCodes.h"
+#include "EbPictureDecisionResults.h"
+#include "EbRestoration.h"  // RDCOST_DBL
+
+#define RDCOST_DBL_WITH_NATIVE_BD_DIST(RM, R, D, BD)               \
+         RDCOST_DBL((RM), (R), (double)((D) >> (2 * (BD - 8))))
 
 /**************************************
  * Type Declarations
@@ -39,14 +44,22 @@ typedef struct PacketizationContext {
     EbDctor      dctor;
     EbFifo *     entropy_coding_input_fifo_ptr;
     EbFifo *     rate_control_tasks_output_fifo_ptr;
+    EbFifo *     picture_decision_results_output_fifo_ptr;  // to motion estimation process
     EbPPSConfig *pps_config;
-    EbFifo *     picture_manager_input_fifo_ptr; // to picture-manager
+    EbFifo *     picture_demux_fifo_ptr; // to picture manager process
     uint64_t     dpb_disp_order[8], dpb_dec_order[8];
     uint64_t     tot_shown_frames;
     uint64_t     disp_order_continuity_count;
 } PacketizationContext;
 
 static EbBool is_passthrough_data(EbLinkedListNode *data_node) { return data_node->passthrough; }
+
+int compute_rdmult_sse(PictureControlSet* pcs_ptr, uint8_t q_index, uint8_t bit_depth);
+void free_temporal_filtering_buffer(PictureControlSet* pcs_ptr, SequenceControlSet* scs_ptr);
+void recon_output(PictureControlSet* pcs_ptr, SequenceControlSet* scs_ptr);
+void init_resize_picture(SequenceControlSet* scs_ptr, PictureParentControlSet* pcs_ptr);
+void pad_ref_and_set_flags(PictureControlSet* pcs_ptr, SequenceControlSet* scs_ptr);
+void update_rc_counts(PictureParentControlSet* ppcs_ptr);
 
 // Extracts passthrough data from a linked list. The extracted data nodes are removed from the original linked list and
 // returned as a linked list. Does not gaurantee the original order of the nodes.
@@ -67,7 +80,7 @@ static void packetization_context_dctor(EbPtr p) {
 
 EbErrorType packetization_context_ctor(EbThreadContext *  thread_context_ptr,
                                        const EbEncHandle *enc_handle_ptr, int rate_control_index,
-                                       int demux_index) {
+                                       int demux_index, int me_port_index) {
     PacketizationContext *context_ptr;
     EB_CALLOC_ARRAY(context_ptr, 1);
     thread_context_ptr->priv  = context_ptr;
@@ -78,8 +91,10 @@ EbErrorType packetization_context_ctor(EbThreadContext *  thread_context_ptr,
         enc_handle_ptr->entropy_coding_results_resource_ptr, 0);
     context_ptr->rate_control_tasks_output_fifo_ptr = svt_system_resource_get_producer_fifo(
         enc_handle_ptr->rate_control_tasks_resource_ptr, rate_control_index);
-    context_ptr->picture_manager_input_fifo_ptr = svt_system_resource_get_producer_fifo(
+    context_ptr->picture_demux_fifo_ptr = svt_system_resource_get_producer_fifo(
         enc_handle_ptr->picture_demux_results_resource_ptr, demux_index);
+    context_ptr->picture_decision_results_output_fifo_ptr = svt_system_resource_get_producer_fifo(
+        enc_handle_ptr->picture_decision_results_resource_ptr, me_port_index);
     EB_MALLOC_ARRAY(context_ptr->pps_config, 1);
 
     return EB_ErrorNone;
@@ -435,6 +450,106 @@ void *packetization_kernel(void *input_ptr) {
         FrameHeader *    frm_hdr    = &pcs_ptr->parent_pcs_ptr->frm_hdr;
         Av1Common *const cm = pcs_ptr->parent_pcs_ptr->av1_cm;
         uint16_t            tile_cnt = cm->tiles_info.tile_rows * cm->tiles_info.tile_cols;
+        PictureParentControlSet* parent_pcs_ptr = (PictureParentControlSet*)pcs_ptr->parent_pcs_ptr;
+
+        if (pcs_ptr->parent_pcs_ptr->superres_total_recode_loop > 0 &&
+            pcs_ptr->parent_pcs_ptr->superres_recode_loop < pcs_ptr->parent_pcs_ptr->superres_total_recode_loop) {
+
+            // Reset the Bitstream before writing to it
+            bitstream_reset(pcs_ptr->bitstream_ptr);
+            write_frame_header_av1(pcs_ptr->bitstream_ptr, scs_ptr, pcs_ptr, 0);
+            int64_t bits = (int64_t)bitstream_get_bytes_count(pcs_ptr->bitstream_ptr) << 3;
+            int64_t rate = bits << 5;  // To match scale.
+            bitstream_reset(pcs_ptr->bitstream_ptr);
+            int64_t sse = pcs_ptr->parent_pcs_ptr->luma_sse;
+            uint8_t bit_depth = pcs_ptr->hbd_mode_decision ? 10 : 8;
+            uint8_t qindex = pcs_ptr->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx;
+            int32_t rdmult = compute_rdmult_sse(pcs_ptr, qindex, bit_depth);
+
+            double rdcost = RDCOST_DBL_WITH_NATIVE_BD_DIST(rdmult, rate, sse, scs_ptr->static_config.encoder_bit_depth);
+            //fprintf(stderr, "####### %s - frame %d, loop %d/%d, denom %d, rate %I64d, sse %I64d, rdcost %.2f, qindex %d, rdmult %d\n", __FUNCTION__,
+            //   (int)pcs_ptr->parent_pcs_ptr->picture_number, pcs_ptr->parent_pcs_ptr->superres_recode_loop, pcs_ptr->parent_pcs_ptr->superres_total_recode_loop,
+            //    pcs_ptr->parent_pcs_ptr->superres_denom, rate, sse, rdcost, qindex, rdmult);
+
+            assert(pcs_ptr->parent_pcs_ptr->superres_total_recode_loop <= SCALE_NUMERATOR + 1);
+            pcs_ptr->parent_pcs_ptr->superres_rdcost[pcs_ptr->parent_pcs_ptr->superres_recode_loop] = rdcost;
+            ++pcs_ptr->parent_pcs_ptr->superres_recode_loop;
+
+            if (parent_pcs_ptr->superres_recode_loop <= parent_pcs_ptr->superres_total_recode_loop) {
+                EbBool do_recode = EB_FALSE;
+                if (parent_pcs_ptr->superres_recode_loop == parent_pcs_ptr->superres_total_recode_loop) {
+                    // compare rdcosts to determine whether need to recode again
+                    // rdcost is the smaller the better
+                    int best_index = 0;
+                    for (int i = 1; i < parent_pcs_ptr->superres_total_recode_loop; ++i) {
+                        double rdcost1 = parent_pcs_ptr->superres_rdcost[best_index];
+                        double rdcost2 = parent_pcs_ptr->superres_rdcost[i];
+                        if (rdcost2 < rdcost1) {
+                            best_index = i;
+                        }
+                    }
+
+                    // TEST code: hard coding to pick up first loop coding
+                    //best_index = 0;
+                    //best_index = parent_pcs_ptr->superres_total_recode_loop - 1;
+
+                    if (best_index != parent_pcs_ptr->superres_total_recode_loop - 1) {
+                        do_recode = EB_TRUE;
+                        parent_pcs_ptr->superres_denom = parent_pcs_ptr->superres_denom_array[best_index];
+                        //fprintf(stderr, "####### %s - frame %d, last loop, pick denom %d\n", __FUNCTION__,
+                        //    (int)parent_pcs_ptr->picture_number, parent_pcs_ptr->superres_denom);
+                    }
+                }
+                else {
+                    do_recode = EB_TRUE;
+                }
+
+                if (do_recode)
+                {
+                    init_resize_picture(scs_ptr, parent_pcs_ptr);
+
+                    // Initialize Segments as picture decision process
+                    parent_pcs_ptr->me_segments_completion_count = 0;
+                    parent_pcs_ptr->me_processed_sb_count = 0;
+
+                    if (parent_pcs_ptr->reference_picture_wrapper_ptr != NULL) {
+                        // update mi_rows and mi_cols for the reference pic wrapper (used in mfmv for other pictures)
+                        EbReferenceObject* reference_object =
+                            parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr;
+                        svt_reference_object_reset(reference_object, scs_ptr);
+                    }
+
+                    //fprintf(stderr, "%s - send superres recode task to open loop ME. Frame %d, denom %d\n", __FUNCTION__,
+                    //    (int)parent_pcs_ptr->picture_number, parent_pcs_ptr->superres_denom);
+
+                    for (uint32_t segment_index = 0; segment_index < pcs_ptr->parent_pcs_ptr->me_segments_total_count; ++segment_index) {
+                        // Get Empty Results Object
+                        EbObjectWrapper* out_results_wrapper;
+                        svt_get_empty_object(
+                            context_ptr->picture_decision_results_output_fifo_ptr,
+                            &out_results_wrapper);
+
+                        PictureDecisionResults* out_results = (PictureDecisionResults*)out_results_wrapper->object_ptr;
+                        out_results->pcs_wrapper_ptr = pcs_ptr->parent_pcs_ptr->p_pcs_wrapper_ptr;
+                        out_results->segment_index = segment_index;
+                        out_results->task_type = TASK_SUPERRES_RE_ME;
+                        //Post the Full Results Object
+                        svt_post_full_object(out_results_wrapper);
+                    }
+
+                    // Release the Entropy Coding Result
+                    svt_release_object(entropy_coding_results_wrapper_ptr);
+                    continue;
+                }
+            }
+        }
+
+        if (pcs_ptr->parent_pcs_ptr->superres_total_recode_loop > 0) {
+            // Delayed call from rate control kernel for multiple coding loop frames
+            if (use_input_stat(scs_ptr) || scs_ptr->lap_enabled)
+                update_rc_counts(pcs_ptr->parent_pcs_ptr);
+        }
+
         //****************************************************
         // Input Entropy Results into Reordering Queue
         //****************************************************
@@ -500,6 +615,109 @@ void *packetization_kernel(void *input_ptr) {
             output_stream_ptr->cb_ssim   = 0;
         }
 
+        if (parent_pcs_ptr->superres_total_recode_loop > 0) {
+            // Release pa me ptr. For non-superres-recode, it's released in mode_decision_kernel
+            assert(pcs_ptr->parent_pcs_ptr->me_data_wrapper_ptr != NULL);
+            assert(pcs_ptr->parent_pcs_ptr->pa_me_data != NULL);
+            svt_release_object(pcs_ptr->parent_pcs_ptr->me_data_wrapper_ptr);
+            pcs_ptr->parent_pcs_ptr->me_data_wrapper_ptr = NULL;
+            pcs_ptr->parent_pcs_ptr->pa_me_data = NULL;
+
+            //
+            free_temporal_filtering_buffer(pcs_ptr, scs_ptr);
+
+            if (parent_pcs_ptr->is_used_as_reference_flag)
+                pad_ref_and_set_flags(pcs_ptr, scs_ptr);
+            else {
+                EbBool is_16bit = scs_ptr->static_config.is_16bit_pipeline;
+                // convert non-reference frame buffer from 16-bit to 8-bit, to export recon and psnr/ssim calculation
+                if (is_16bit && scs_ptr->static_config.encoder_bit_depth == EB_8BIT)
+                {
+                    EbPictureBufferDesc* ref_pic_ptr = pcs_ptr->parent_pcs_ptr->enc_dec_ptr->recon_picture_ptr;;
+                    EbPictureBufferDesc* ref_pic_16bit_ptr = pcs_ptr->parent_pcs_ptr->enc_dec_ptr->recon_picture16bit_ptr;;
+                    //Y
+                    uint16_t* buf_16bit = (uint16_t*)(ref_pic_16bit_ptr->buffer_y);
+                    uint8_t* buf_8bit = ref_pic_ptr->buffer_y;
+                    svt_convert_16bit_to_8bit(buf_16bit,
+                        ref_pic_16bit_ptr->stride_y,
+                        buf_8bit,
+                        ref_pic_ptr->stride_y,
+                        ref_pic_16bit_ptr->width + (ref_pic_ptr->origin_x << 1),
+                        ref_pic_16bit_ptr->height + (ref_pic_ptr->origin_y << 1));
+
+                    //CB
+                    buf_16bit = (uint16_t*)(ref_pic_16bit_ptr->buffer_cb);
+                    buf_8bit = ref_pic_ptr->buffer_cb;
+                    svt_convert_16bit_to_8bit(buf_16bit,
+                        ref_pic_16bit_ptr->stride_cb,
+                        buf_8bit,
+                        ref_pic_ptr->stride_cb,
+                        (ref_pic_16bit_ptr->width + (ref_pic_ptr->origin_x << 1)) >> scs_ptr->subsampling_x,
+                        (ref_pic_16bit_ptr->height + (ref_pic_ptr->origin_y << 1)) >> scs_ptr->subsampling_y);
+
+                    //CR
+                    buf_16bit = (uint16_t*)(ref_pic_16bit_ptr->buffer_cr);
+                    buf_8bit = ref_pic_ptr->buffer_cr;
+                    svt_convert_16bit_to_8bit(buf_16bit,
+                        ref_pic_16bit_ptr->stride_cr,
+                        buf_8bit,
+                        ref_pic_ptr->stride_cr,
+                        (ref_pic_16bit_ptr->width + (ref_pic_ptr->origin_x << 1)) >> scs_ptr->subsampling_x,
+                        (ref_pic_16bit_ptr->height + (ref_pic_ptr->origin_y << 1)) >> scs_ptr->subsampling_y);
+                }
+            }
+
+            if (scs_ptr->static_config.recon_enabled) {
+                recon_output(pcs_ptr, scs_ptr);
+            }
+
+            //
+            if (parent_pcs_ptr->is_used_as_reference_flag) {
+                EbObjectWrapper* picture_demux_results_wrapper_ptr;
+                PictureDemuxResults* picture_demux_results_rtr;
+
+                // Get Empty PicMgr Results
+                svt_get_empty_object(context_ptr->picture_demux_fifo_ptr,
+                    &picture_demux_results_wrapper_ptr);
+
+                picture_demux_results_rtr = (PictureDemuxResults*)
+                    picture_demux_results_wrapper_ptr->object_ptr;
+                picture_demux_results_rtr->reference_picture_wrapper_ptr =
+                    parent_pcs_ptr->reference_picture_wrapper_ptr;
+                picture_demux_results_rtr->scs_wrapper_ptr = parent_pcs_ptr->scs_wrapper_ptr;
+                picture_demux_results_rtr->picture_number = parent_pcs_ptr->picture_number;
+                picture_demux_results_rtr->picture_type = EB_PIC_REFERENCE;
+
+                // Post Reference Picture
+                svt_post_full_object(picture_demux_results_wrapper_ptr);
+            }
+
+            // from entropy coding process
+            {
+                // Release the List 0 Reference Pictures
+                for (uint32_t ref_idx = 0;
+                    ref_idx < pcs_ptr->parent_pcs_ptr->ref_list0_count;
+                    ++ref_idx) {
+                    if (pcs_ptr->ref_pic_ptr_array[0][ref_idx] != NULL) {
+                        svt_release_object(pcs_ptr->ref_pic_ptr_array[0][ref_idx]);
+                    }
+                }
+
+                // Release the List 1 Reference Pictures
+                for (uint32_t ref_idx = 0;
+                    ref_idx < pcs_ptr->parent_pcs_ptr->ref_list1_count;
+                    ++ref_idx) {
+                    if (pcs_ptr->ref_pic_ptr_array[1][ref_idx] != NULL) {
+                        svt_release_object(pcs_ptr->ref_pic_ptr_array[1][ref_idx]);
+                    }
+                }
+
+                //free palette data
+                if (pcs_ptr->tile_tok[0][0])
+                    EB_FREE_ARRAY(pcs_ptr->tile_tok[0][0]);
+            }
+        }
+
         // Get Empty Rate Control Input Tasks
         svt_get_empty_object(context_ptr->rate_control_tasks_output_fifo_ptr,
                              &rate_control_tasks_wrapper_ptr);
@@ -525,7 +743,7 @@ void *packetization_kernel(void *input_ptr) {
                 }
             }
             // Get Empty Results Object
-            svt_get_empty_object(context_ptr->picture_manager_input_fifo_ptr,
+            svt_get_empty_object(context_ptr->picture_demux_fifo_ptr,
                                  &picture_manager_results_wrapper_ptr);
 
             PictureDemuxResults *picture_manager_results_ptr =
@@ -571,6 +789,22 @@ void *packetization_kernel(void *input_ptr) {
         }
 
         write_frame_header_av1(pcs_ptr->bitstream_ptr, scs_ptr, pcs_ptr, 0);
+
+        // debug info
+        //if (pcs_ptr->parent_pcs_ptr->superres_total_recode_loop == 0)
+        //{
+        //    int64_t bits = (int64_t)bitstream_get_bytes_count(pcs_ptr->bitstream_ptr) << 3;
+        //    int64_t rate = bits << 5;  // To match scale.
+        //    int64_t sse = pcs_ptr->parent_pcs_ptr->luma_sse;
+        //    uint8_t bit_depth = pcs_ptr->hbd_mode_decision ? 10 : 8;
+        //    uint8_t qindex = pcs_ptr->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx;
+        //    int32_t rdmult = compute_rdmult_sse(pcs_ptr, qindex, bit_depth);
+
+        //    double rdcost = RDCOST_DBL_WITH_NATIVE_BD_DIST(rdmult, rate, sse, scs_ptr->static_config.encoder_bit_depth);
+        //    printf("####### %s - frame %d, loop %d/%d, denom %d, rate %I64d, sse %I64d, rdcost %.2f, qindex %d, rdmult %d\n", __FUNCTION__,
+        //        (int)pcs_ptr->parent_pcs_ptr->picture_number, pcs_ptr->parent_pcs_ptr->superres_recode_loop, pcs_ptr->parent_pcs_ptr->superres_total_recode_loop,
+        //        pcs_ptr->parent_pcs_ptr->superres_denom, rate, sse, rdcost, qindex, rdmult);
+        //}
 
         output_stream_ptr->n_alloc_len = (uint32_t)(
             bitstream_get_bytes_count(pcs_ptr->bitstream_ptr) + TD_SIZE + metadata_sz);
@@ -668,6 +902,7 @@ void *packetization_kernel(void *input_ptr) {
         svt_release_object(pcs_ptr->parent_pcs_ptr->enc_dec_ptr->enc_dec_wrapper_ptr); //Child
 #endif
         //Release the Parent PCS then the Child PCS
+        assert(entropy_coding_results_ptr->pcs_wrapper_ptr->live_count == 1);
         svt_release_object(entropy_coding_results_ptr->pcs_wrapper_ptr); //Child
 #if !FIX_QUANT_COEFF_BUFF
         svt_release_object(pcs_ptr->parent_pcs_ptr->enc_dec_ptr->enc_dec_wrapper_ptr); //Child

@@ -34,6 +34,10 @@
 #include "EbLog.h"
 #include "EbIntraPrediction.h"
 #include "EbMotionEstimation.h"
+
+#include "EbPictureDecisionResults.h"
+#include "EbResize.h"
+
 static const double tpl_hl_islice_div_factor[EB_MAX_TEMPORAL_LAYERS] = { 1, 1, 1, 2, 1, 0.8 };
 static const double tpl_hl_base_frame_div_factor[EB_MAX_TEMPORAL_LAYERS] = { 1, 1, 1, 3, 1, 0.7 };
 
@@ -60,6 +64,7 @@ typedef struct RateControlIntervalParamContext {
 typedef struct RateControlContext {
     EbFifo *rate_control_input_tasks_fifo_ptr;
     EbFifo *rate_control_output_results_fifo_ptr;
+    EbFifo* picture_decision_results_output_fifo_ptr;
 
     RateControlIntervalParamContext **rate_control_param_queue;
 } RateControlContext;
@@ -73,7 +78,8 @@ static void rate_control_context_dctor(EbPtr p) {
 }
 
 EbErrorType rate_control_context_ctor(EbThreadContext *  thread_context_ptr,
-                                      const EbEncHandle *enc_handle_ptr) {
+                                      const EbEncHandle *enc_handle_ptr,
+                                      int me_port_index) {
     uint32_t interval_index;
 
     int32_t intra_period =
@@ -88,6 +94,8 @@ EbErrorType rate_control_context_ctor(EbThreadContext *  thread_context_ptr,
         enc_handle_ptr->rate_control_tasks_resource_ptr, 0);
     context_ptr->rate_control_output_results_fifo_ptr = svt_system_resource_get_producer_fifo(
         enc_handle_ptr->rate_control_results_resource_ptr, 0);
+    context_ptr->picture_decision_results_output_fifo_ptr = svt_system_resource_get_producer_fifo(
+        enc_handle_ptr->picture_decision_results_resource_ptr, me_port_index);
 
     EB_MALLOC_2D(context_ptr->rate_control_param_queue, (int32_t)PARALLEL_GOP_MAX_NUMBER, 1);
 
@@ -160,6 +168,10 @@ int32_t svt_av1_compute_qdelta(double qstart, double qtarget, AomBitDepth bit_de
 #define ME_SAD_LOW_THRESHOLD1 15 // Low sad_ threshold1 for me distortion (very low)
 #define ME_SAD_LOW_THRESHOLD2 25 // Low sad_ threshold2 for me distortion (low)
 #define ME_SAD_HIGH_THRESHOLD 80 // High sad_ threshold2 for me distortion (high)
+
+#define SUPERRES_QADJ_PER_DENOM_KEYFRAME_SOLO 0
+#define SUPERRES_QADJ_PER_DENOM_KEYFRAME 2
+#define SUPERRES_QADJ_PER_DENOM_ARFFRAME 0
 
 #define ASSIGN_MINQ_TABLE(bit_depth, name)                   \
     do {                                                     \
@@ -1004,22 +1016,33 @@ static void sb_setup_lambda(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr) {
     const Av1Common *const   cm         = pcs_ptr->parent_pcs_ptr->av1_cm;
     PictureParentControlSet *ppcs_ptr   = pcs_ptr->parent_pcs_ptr;
     SequenceControlSet *     scs_ptr    = ppcs_ptr->scs_ptr;
+
+    int       mi_col = sb_ptr->origin_x / 4;
+    int       mi_row = sb_ptr->origin_y / 4;
+
+    const int mi_col_sr =
+        coded_to_superres_mi(mi_col, ppcs_ptr->superres_denom);
+    assert(ppcs_ptr->enhanced_unscaled_picture_ptr);
+    // ALIGN_POWER_OF_TWO(pixels, 3) >> 2 ??
+    const int mi_cols_sr = ((ppcs_ptr->enhanced_unscaled_picture_ptr->width + 15) / 16) << 2;
+    const int sb_mi_width_sr = coded_to_superres_mi(
+        mi_size_wide[scs_ptr->seq_header.sb_size], ppcs_ptr->superres_denom);
+
     const int                bsize_base = BLOCK_16X16;
-    const int                num_mi_w   = mi_size_wide[bsize_base];
-    const int                num_mi_h   = mi_size_high[bsize_base];
-    const int                num_cols   = (cm->mi_cols + num_mi_w - 1) / num_mi_w;
-    const int                num_rows   = (cm->mi_rows + num_mi_h - 1) / num_mi_h;
-    const int num_bcols = (mi_size_wide[scs_ptr->seq_header.sb_size] + num_mi_w - 1) / num_mi_w;
+    const int                num_mi_w = mi_size_wide[bsize_base];
+    const int                num_mi_h = mi_size_high[bsize_base];
+    const int                num_cols = (mi_cols_sr + num_mi_w - 1) / num_mi_w;
+    const int                num_rows = (cm->mi_rows + num_mi_h - 1) / num_mi_h;
+    const int num_bcols = (sb_mi_width_sr + num_mi_w - 1) / num_mi_w;
     const int num_brows = (mi_size_high[scs_ptr->seq_header.sb_size] + num_mi_h - 1) / num_mi_h;
-    int       mi_col    = sb_ptr->origin_x / 4;
-    int       mi_row    = sb_ptr->origin_y / 4;
+
     int       row, col;
 
     double base_block_count = 0.0;
     double log_sum          = 0.0;
 
     for (row = mi_row / num_mi_w; row < num_rows && row < mi_row / num_mi_w + num_brows; ++row) {
-        for (col = mi_col / num_mi_h; col < num_cols && col < mi_col / num_mi_h + num_bcols;
+        for (col = mi_col_sr / num_mi_h; col < num_cols && col < mi_col_sr / num_mi_h + num_bcols;
              ++col) {
             const int index = row * num_cols + col;
             log_sum += log(ppcs_ptr->tpl_rdmult_scaling_factors[index]);
@@ -1038,9 +1061,9 @@ static void sb_setup_lambda(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr) {
     scale_adj                   = exp(scale_adj);
 
     for (row = mi_row / num_mi_w; row < num_rows && row < mi_row / num_mi_w + num_brows; ++row) {
-        for (col = mi_col / num_mi_h; col < num_cols && col < mi_col / num_mi_h + num_bcols;
-             ++col) {
-            const int index                                = row * num_cols + col;
+        for (col = mi_col_sr / num_mi_h; col < num_cols && col < mi_col_sr / num_mi_h + num_bcols;
+            ++col) {
+            const int index = row * num_cols + col;
             ppcs_ptr->tpl_sb_rdmult_scaling_factors[index] = scale_adj *
                 ppcs_ptr->tpl_rdmult_scaling_factors[index];
         }
@@ -1382,6 +1405,19 @@ static void get_intra_q_and_bounds(PictureControlSet *pcs_ptr, int *active_best,
         // on active_best_quality.
         q_val = svt_av1_convert_qindex_to_q(active_best_quality, bit_depth);
         active_best_quality += svt_av1_compute_qdelta(q_val, q_val * q_adj_factor, bit_depth);
+
+        // Tweak active_best_quality for AOM_Q mode when superres is on, as this
+        // will be used directly as 'q' later.
+        if (encode_context_ptr->rc_cfg.mode == AOM_Q &&
+            (scs_ptr->static_config.superres_mode == SUPERRES_QTHRESH ||
+                scs_ptr->static_config.superres_mode == SUPERRES_AUTO) &&
+            pcs_ptr->parent_pcs_ptr->superres_denom != SCALE_NUMERATOR) {
+            active_best_quality =
+                AOMMAX(active_best_quality -
+                    ((pcs_ptr->parent_pcs_ptr->superres_denom - SCALE_NUMERATOR) *
+                        SUPERRES_QADJ_PER_DENOM_KEYFRAME),
+                    0);
+        }
     }
 
     *active_best  = active_best_quality;
@@ -2474,62 +2510,73 @@ void *rate_control_kernel(void *input_ptr) {
 
         rate_control_tasks_ptr = (RateControlTasks *)rate_control_tasks_wrapper_ptr->object_ptr;
         task_type              = rate_control_tasks_ptr->task_type;
+        EbBool is_superres_recode_task = (task_type == RC_INPUT_SUPERRES_RECODE) ? EB_TRUE : EB_FALSE;
 
         // Modify these for different temporal layers later
         switch (task_type) {
+        case RC_INPUT_SUPERRES_RECODE:
+            assert(scs_ptr->static_config.superres_mode == SUPERRES_QTHRESH ||
+                scs_ptr->static_config.superres_mode == SUPERRES_AUTO);
         case RC_INPUT:
             pcs_ptr = (PictureControlSet *)rate_control_tasks_ptr->pcs_wrapper_ptr->object_ptr;
 
             scs_ptr = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
             FrameHeader *frm_hdr                       = &pcs_ptr->parent_pcs_ptr->frm_hdr;
-            pcs_ptr->parent_pcs_ptr->blk_lambda_tuning = EB_FALSE;
+
+            if (!is_superres_recode_task) {
+                pcs_ptr->parent_pcs_ptr->blk_lambda_tuning = EB_FALSE;
+            }
 
             // SB Loop
             pcs_ptr->parent_pcs_ptr->sad_me = 0;
-            if (pcs_ptr->slice_type != 2)
+            if (pcs_ptr->slice_type != I_SLICE)
                 for (int sb_addr = 0; sb_addr < pcs_ptr->sb_total_count; ++sb_addr) {
                     pcs_ptr->parent_pcs_ptr->sad_me +=
                         pcs_ptr->parent_pcs_ptr->rc_me_distortion[sb_addr];
                 }
-            // Frame level RC. Find the ParamPtr for the current GOP
-            if (scs_ptr->static_config.intra_period_length == -1 ||
-                scs_ptr->static_config.rate_control_mode == 0) {
-                rate_control_param_ptr = context_ptr->rate_control_param_queue[0];
-            }
-            else {
-                uint32_t interval_index_temp = 0;
-                EbBool   interval_found = EB_FALSE;
-                while ((interval_index_temp < PARALLEL_GOP_MAX_NUMBER) && !interval_found) {
-                    if (pcs_ptr->picture_number >=
-                        context_ptr->rate_control_param_queue[interval_index_temp]->first_poc &&
-                        pcs_ptr->picture_number <=
-                        context_ptr->rate_control_param_queue[interval_index_temp]->last_poc) {
-                        interval_found = EB_TRUE;
+
+            if (!is_superres_recode_task) {
+                // Frame level RC. Find the ParamPtr for the current GOP
+                if (scs_ptr->static_config.intra_period_length == -1 ||
+                    scs_ptr->static_config.rate_control_mode == 0) {
+                    rate_control_param_ptr = context_ptr->rate_control_param_queue[0];
+                }
+                else {
+                    uint32_t interval_index_temp = 0;
+                    EbBool   interval_found = EB_FALSE;
+                    while ((interval_index_temp < PARALLEL_GOP_MAX_NUMBER) && !interval_found) {
+                        if (pcs_ptr->picture_number >=
+                            context_ptr->rate_control_param_queue[interval_index_temp]->first_poc &&
+                            pcs_ptr->picture_number <=
+                            context_ptr->rate_control_param_queue[interval_index_temp]->last_poc) {
+                            interval_found = EB_TRUE;
+                        }
+                        else
+                            interval_index_temp++;
                     }
-                    else
-                        interval_index_temp++;
+                    CHECK_REPORT_ERROR(interval_index_temp != PARALLEL_GOP_MAX_NUMBER,
+                        scs_ptr->encode_context_ptr->app_callback_ptr,
+                        EB_ENC_RC_ERROR2);
+
+                    rate_control_param_ptr = context_ptr->rate_control_param_queue[interval_index_temp];
+
                 }
-                CHECK_REPORT_ERROR(interval_index_temp != PARALLEL_GOP_MAX_NUMBER,
-                    scs_ptr->encode_context_ptr->app_callback_ptr,
-                    EB_ENC_RC_ERROR2);
 
-                rate_control_param_ptr = context_ptr->rate_control_param_queue[interval_index_temp];
-
+                if (use_input_stat(scs_ptr) || scs_ptr->lap_enabled) {
+                    if (pcs_ptr->picture_number == 0) {
+                        set_rc_buffer_sizes(scs_ptr);
+                        av1_rc_init(scs_ptr);
+                    }
+                    restore_param(pcs_ptr->parent_pcs_ptr, rate_control_param_ptr);
+                    svt_av1_get_second_pass_params(pcs_ptr->parent_pcs_ptr);
+                    av1_configure_buffer_updates(pcs_ptr, &(pcs_ptr->parent_pcs_ptr->refresh_frame), 0);
+                    av1_set_target_rate(pcs_ptr,
+                        pcs_ptr->parent_pcs_ptr->av1_cm->frm_size.frame_width,
+                        pcs_ptr->parent_pcs_ptr->av1_cm->frm_size.frame_height);
+                    store_param(pcs_ptr->parent_pcs_ptr, rate_control_param_ptr);
+                }
             }
 
-            if (use_input_stat(scs_ptr) || scs_ptr->lap_enabled) {
-                if (pcs_ptr->picture_number == 0) {
-                    set_rc_buffer_sizes(scs_ptr);
-                    av1_rc_init(scs_ptr);
-                }
-                restore_param(pcs_ptr->parent_pcs_ptr, rate_control_param_ptr);
-                svt_av1_get_second_pass_params(pcs_ptr->parent_pcs_ptr);
-                av1_configure_buffer_updates(pcs_ptr, &(pcs_ptr->parent_pcs_ptr->refresh_frame), 0);
-                av1_set_target_rate(pcs_ptr,
-                                    pcs_ptr->parent_pcs_ptr->av1_cm->frm_size.frame_width,
-                                    pcs_ptr->parent_pcs_ptr->av1_cm->frm_size.frame_height);
-                store_param(pcs_ptr->parent_pcs_ptr, rate_control_param_ptr);
-            }
             if (scs_ptr->static_config.rate_control_mode == 0) {
                 // if RC mode is 0,  fixed QP is used
                 // QP scaling based on POC number for Flat IPPP structure
@@ -2685,6 +2732,44 @@ void *rate_control_kernel(void *input_ptr) {
 
             pcs_ptr->parent_pcs_ptr->picture_qp = pcs_ptr->picture_qp;
 
+            if (!is_superres_recode_task) {
+                // Determine superres parameters for 1-pass encoding or 2nd pass of 2-pass encoding
+                // if superres_mode is SUPERRES_QTHRESH or SUPERRES_AUTO.
+                // SUPERRES_FIXED and SUPERRES_RANDOM modes are handled in picture decision process.
+                if (!use_output_stat(scs_ptr) || use_input_stat(scs_ptr)) {
+                    if (scs_ptr->static_config.superres_mode > SUPERRES_RANDOM) {
+                        // determine denom and scale down picture by selected denom
+                        init_resize_picture(scs_ptr, pcs_ptr->parent_pcs_ptr);
+                        if (pcs_ptr->parent_pcs_ptr->frame_superres_enabled)
+                        {
+                            // Initialize Segments as picture decision process
+                            pcs_ptr->parent_pcs_ptr->me_segments_completion_count = 0;
+                            pcs_ptr->parent_pcs_ptr->me_processed_sb_count = 0;
+
+                            for (uint32_t segment_index = 0; segment_index < pcs_ptr->parent_pcs_ptr->me_segments_total_count; ++segment_index) {
+                                // Get Empty Results Object
+                                EbObjectWrapper* out_results_wrapper;
+                                svt_get_empty_object(
+                                    context_ptr->picture_decision_results_output_fifo_ptr,
+                                    &out_results_wrapper);
+
+                                PictureDecisionResults* out_results = (PictureDecisionResults*)out_results_wrapper->object_ptr;
+                                out_results->pcs_wrapper_ptr = pcs_ptr->parent_pcs_ptr->p_pcs_wrapper_ptr;
+                                out_results->segment_index = segment_index;
+                                out_results->task_type = TASK_SUPERRES_RE_ME;
+                                //Post the Full Results Object
+                                svt_post_full_object(out_results_wrapper);
+                            }
+
+                            // Release Rate Control Tasks
+                            svt_release_object(rate_control_tasks_wrapper_ptr);
+
+                            break;
+                        }
+                    }
+                }
+            }
+
             // 2pass QPM with tpl_la
             if (scs_ptr->static_config.enable_adaptive_quantization == 2 &&
                 !use_output_stat(scs_ptr) && (use_input_stat(scs_ptr) || scs_ptr->lap_enabled) &&
@@ -2695,24 +2780,29 @@ void *rate_control_kernel(void *input_ptr) {
                 if (scs_ptr->static_config.enable_adaptive_quantization == 2 &&
                     !use_output_stat(scs_ptr) && !use_input_stat(scs_ptr) &&
                     scs_ptr->static_config.enable_tpl_la && pcs_ptr->parent_pcs_ptr->r0 != 0)
-                sb_qp_derivation_tpl_la(pcs_ptr);
-            else {
-                pcs_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_present = 0;
-                pcs_ptr->parent_pcs_ptr->average_qp                             = 0;
-                for (int sb_addr = 0; sb_addr < pcs_ptr->sb_total_count_pix; ++sb_addr) {
-                    SuperBlock *sb_ptr = pcs_ptr->sb_ptr_array[sb_addr];
-                    sb_ptr->qindex     = quantizer_to_qindex[pcs_ptr->picture_qp];
-                    pcs_ptr->parent_pcs_ptr->average_qp += pcs_ptr->picture_qp;
+                    sb_qp_derivation_tpl_la(pcs_ptr);
+                else {
+                    pcs_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_present = 0;
+                    pcs_ptr->parent_pcs_ptr->average_qp = 0;
+                    for (int sb_addr = 0; sb_addr < pcs_ptr->sb_total_count_pix; ++sb_addr) {
+                        SuperBlock* sb_ptr = pcs_ptr->sb_ptr_array[sb_addr];
+                        sb_ptr->qindex = quantizer_to_qindex[pcs_ptr->picture_qp];
+                        pcs_ptr->parent_pcs_ptr->average_qp += pcs_ptr->picture_qp;
+                    }
                 }
+
+            if (!is_superres_recode_task) {
+                if (use_input_stat(scs_ptr) || scs_ptr->lap_enabled)
+                    update_rc_counts(pcs_ptr->parent_pcs_ptr);
             }
-            if (use_input_stat(scs_ptr) || scs_ptr->lap_enabled)
-                update_rc_counts(pcs_ptr->parent_pcs_ptr);
+
             // Get Empty Rate Control Results Buffer
             svt_get_empty_object(context_ptr->rate_control_output_results_fifo_ptr,
                                  &rate_control_results_wrapper_ptr);
             rate_control_results_ptr = (RateControlResults *)
                                            rate_control_results_wrapper_ptr->object_ptr;
             rate_control_results_ptr->pcs_wrapper_ptr = rate_control_tasks_ptr->pcs_wrapper_ptr;
+            rate_control_results_ptr->superres_recode = is_superres_recode_task;
 
             // Post Full Rate Control Results
             svt_post_full_object(rate_control_results_wrapper_ptr);

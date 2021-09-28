@@ -346,6 +346,92 @@ void init_enc_dec_segement(PictureParentControlSet *parentpicture_control_set_pt
         }
     }
 }
+
+void superres_setup_child_pcs(SequenceControlSet* entry_scs_ptr, PictureParentControlSet* entry_pcs_ptr) {
+    PictureControlSet* child_pcs_ptr = entry_pcs_ptr->child_pcs;
+
+    uint8_t pic_width_in_sb;
+    uint8_t picture_height_in_sb;
+
+    child_pcs_ptr->sb_total_count = entry_pcs_ptr->sb_total_count;
+
+    pic_width_in_sb = (uint8_t)((entry_pcs_ptr->aligned_width +
+        entry_scs_ptr->sb_size_pix - 1) /
+        entry_scs_ptr->sb_size_pix);
+    picture_height_in_sb =
+        (uint8_t)((entry_pcs_ptr->aligned_height +
+            entry_scs_ptr->sb_size_pix - 1) /
+            entry_scs_ptr->sb_size_pix);
+
+    child_pcs_ptr->sb_total_count_pix = pic_width_in_sb * picture_height_in_sb;
+
+    //if (entry_pcs_ptr->frame_superres_enabled)
+    {
+        // Modify sb_prt_array in child pcs
+        uint16_t    sb_index;
+        uint16_t    sb_origin_x = 0;
+        uint16_t    sb_origin_y = 0;
+        for (sb_index = 0; sb_index < child_pcs_ptr->sb_total_count_pix; ++sb_index) {
+            largest_coding_unit_dctor(child_pcs_ptr->sb_ptr_array[sb_index]);
+            largest_coding_unit_ctor(child_pcs_ptr->sb_ptr_array[sb_index],
+                (uint8_t)entry_scs_ptr->sb_size_pix,
+                (uint16_t)(sb_origin_x * entry_scs_ptr->sb_size_pix),
+                (uint16_t)(sb_origin_y * entry_scs_ptr->sb_size_pix),
+                (uint16_t)sb_index,
+                child_pcs_ptr->enc_mode,
+                child_pcs_ptr);
+            // Increment the Order in coding order (Raster Scan Order)
+            sb_origin_y = (sb_origin_x == pic_width_in_sb - 1) ? sb_origin_y + 1 : sb_origin_y;
+            sb_origin_x = (sb_origin_x == pic_width_in_sb - 1) ? 0 : sb_origin_x + 1;
+        }
+    }
+
+    // Update pcs_ptr->mi_stride
+    child_pcs_ptr->mi_stride = pic_width_in_sb * (entry_scs_ptr->sb_size_pix >> MI_SIZE_LOG2);
+
+    // init segment since picture scaled
+    init_enc_dec_segement(entry_pcs_ptr);
+
+    //Tile Loop
+    int sb_size_log2 = entry_scs_ptr->seq_header.sb_size_log2;
+    Av1Common* const cm = entry_pcs_ptr->av1_cm;
+    const int tile_cols = entry_pcs_ptr->av1_cm->tiles_info.tile_cols;
+    const int tile_rows = entry_pcs_ptr->av1_cm->tiles_info.tile_rows;
+    uint32_t x_sb_index, y_sb_index;
+    uint16_t tile_row, tile_col;
+    TileInfo tile_info;
+    for (tile_row = 0; tile_row < tile_rows; tile_row++) {
+        svt_av1_tile_set_row(&tile_info, &cm->tiles_info, cm->mi_rows, tile_row);
+
+        for (tile_col = 0; tile_col < tile_cols; tile_col++) {
+            svt_av1_tile_set_col(
+                &tile_info, &cm->tiles_info, cm->mi_cols, tile_col);
+            tile_info.tile_rs_index = tile_col + tile_row * tile_cols;
+
+            for ((y_sb_index = cm->tiles_info.tile_row_start_mi[tile_row] >>
+                sb_size_log2);
+                (y_sb_index <
+                    ((uint32_t)cm->tiles_info.tile_row_start_mi[tile_row + 1] >>
+                        sb_size_log2));
+                y_sb_index++) {
+                for ((x_sb_index = cm->tiles_info.tile_col_start_mi[tile_col] >>
+                    sb_size_log2);
+                    (x_sb_index < ((uint32_t)cm->tiles_info
+                        .tile_col_start_mi[tile_col + 1] >>
+                        sb_size_log2));
+                    x_sb_index++) {
+                    int sb_index =
+                        (uint16_t)(x_sb_index + y_sb_index * pic_width_in_sb);
+                    child_pcs_ptr->sb_ptr_array[sb_index]->tile_info =
+                        tile_info;
+                }
+            }
+        }
+    }
+
+    child_pcs_ptr->enc_dec_coded_sb_count = 0;
+}
+
 /* Picture Manager Kernel */
 
 /***************************************************************************************************
@@ -416,6 +502,32 @@ void *picture_manager_kernel(void *input_ptr) {
         loop_count++;
 
         switch (input_picture_demux_ptr->picture_type) {
+        case EB_PIC_SUPERRES_INPUT: {
+            pcs_ptr =
+                (PictureParentControlSet*)input_picture_demux_ptr->pcs_wrapper_ptr->object_ptr;
+            scs_ptr = (SequenceControlSet*)pcs_ptr->scs_wrapper_ptr->object_ptr;
+
+            assert(scs_ptr->static_config.superres_mode == SUPERRES_QTHRESH ||
+                scs_ptr->static_config.superres_mode == SUPERRES_AUTO);
+
+            // setup child pcs to reflect superres config. E.g. sb count, sb orig, tile info, etc.
+            superres_setup_child_pcs(scs_ptr, pcs_ptr);
+
+            EbObjectWrapper* out_results_wrapper_ptr;
+            // Get Empty Results Object
+            svt_get_empty_object(
+                context_ptr->picture_manager_output_fifo_ptr,
+                &out_results_wrapper_ptr);
+            RateControlTasks* rate_control_tasks_ptr = (RateControlTasks*)out_results_wrapper_ptr->object_ptr;
+            rate_control_tasks_ptr->pcs_wrapper_ptr = pcs_ptr->child_pcs->c_pcs_wrapper_ptr;
+            rate_control_tasks_ptr->task_type = RC_INPUT_SUPERRES_RECODE;
+            // Post the Full Results Object
+            svt_post_full_object(out_results_wrapper_ptr);
+
+            pcs_ptr = (PictureParentControlSet*)NULL;
+            encode_context_ptr = (EncodeContext*)NULL;
+            break;
+        }
         case EB_PIC_INPUT:
 
             pcs_ptr =
@@ -797,7 +909,8 @@ void *picture_manager_kernel(void *input_ptr) {
 
                         child_pcs_ptr->sb_total_count_pix = pic_width_in_sb * picture_height_in_sb;
 
-                        if(entry_pcs_ptr->frame_superres_enabled){
+                        // force re-ctor sb_ptr since child_pcs_ptrs are reused, and sb_ptr could be altered by superres tool when coding previous pictures
+                        {
                             // Modify sb_prt_array in child pcs
                             uint16_t    sb_index;
                             uint16_t    sb_origin_x = 0;

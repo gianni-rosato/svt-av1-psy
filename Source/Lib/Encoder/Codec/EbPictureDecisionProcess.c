@@ -3852,6 +3852,7 @@ void process_first_pass_frame(
     svt_block_on_semaphore(pcs_ptr->first_pass_done_semaphore);
     svt_release_object(pcs_ptr->me_data_wrapper_ptr);
     pcs_ptr->me_data_wrapper_ptr = (EbObjectWrapper *)NULL;
+    pcs_ptr->pa_me_data = NULL;
 }
 /*
   Performs Motion Compensated Temporal Filtering in ME process
@@ -4066,8 +4067,11 @@ void send_picture_out(
     //****************************************************
 
     // Scale picture if super-res is used
+    // Handle SUPERRES_FIXED and SUPERRES_RANDOM modes here.
+    // SUPERRES_QTHRESH and SUPERRES_AUTO modes are handled in rate control process because these modes depend on qindex
     if (!use_output_stat(scs) || use_input_stat(scs)) {
-        if (scs->static_config.superres_mode > SUPERRES_NONE) {
+        if (scs->static_config.superres_mode == SUPERRES_FIXED ||
+            scs->static_config.superres_mode == SUPERRES_RANDOM) {
             init_resize_picture(scs, pcs);
         }
     }

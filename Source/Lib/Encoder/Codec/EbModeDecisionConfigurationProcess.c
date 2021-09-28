@@ -1006,11 +1006,16 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
 
             EncDecTasks *enc_dec_tasks_ptr = (EncDecTasks *)enc_dec_tasks_wrapper_ptr->object_ptr;
             enc_dec_tasks_ptr->pcs_wrapper_ptr  = rate_control_results_ptr->pcs_wrapper_ptr;
-            enc_dec_tasks_ptr->input_type       = ENCDEC_TASKS_MDC_INPUT;
+            enc_dec_tasks_ptr->input_type       = rate_control_results_ptr->superres_recode ? ENCDEC_TASKS_SUPERRES_INPUT : ENCDEC_TASKS_MDC_INPUT;
             enc_dec_tasks_ptr->tile_group_index = tile_group_idx;
 
             // Post the Full Results Object
             svt_post_full_object(enc_dec_tasks_wrapper_ptr);
+
+            if (rate_control_results_ptr->superres_recode) {
+                // for superres input, only send one task
+                break;
+            }
         }
 
         // Release Rate Control Results

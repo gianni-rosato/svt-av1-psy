@@ -1471,6 +1471,10 @@ EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr,
     object_ptr->frame_height           = init_data_ptr->picture_height;
 
     object_ptr->superres_denom = SCALE_NUMERATOR;
+    object_ptr->superres_total_recode_loop = 0;
+    object_ptr->superres_recode_loop = 0;
+    memset(&object_ptr->superres_rdcost, 0, sizeof(object_ptr->superres_rdcost));
+    memset(&object_ptr->superres_denom_array, 0, sizeof(object_ptr->superres_denom_array));
     // Loop variables
     object_ptr->loop_count      = 0;
     object_ptr->overshoot_seen  = 0;

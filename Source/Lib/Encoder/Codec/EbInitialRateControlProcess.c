@@ -167,7 +167,7 @@ void push_to_lad_queue(
 }
 
 /* send picture out from irc process */
-void irc_send_picture_out(InitialRateControlContext *ctx, PictureParentControlSet *pcs)
+void irc_send_picture_out(InitialRateControlContext *ctx, PictureParentControlSet *pcs, EbBool superres_recode)
 {
     EbObjectWrapper *out_results_wrapper_ptr;
     // Get Empty Results Object
@@ -177,6 +177,7 @@ void irc_send_picture_out(InitialRateControlContext *ctx, PictureParentControlSe
           (InitialRateControlResults *)out_results_wrapper_ptr->object_ptr;
     //SVT_LOG("iRC Out:%lld\n",pcs->picture_number);
     out_results_ptr->pcs_wrapper_ptr = pcs->p_pcs_wrapper_ptr;
+    out_results_ptr->superres_recode = superres_recode;
     svt_post_full_object(out_results_wrapper_ptr);
 }
 uint8_t is_frame_already_exists(PictureParentControlSet *pcs, uint32_t end_index, uint64_t pic_num) {
@@ -440,7 +441,7 @@ void process_lad_queue(
 
         if (send_out) {
             //take the picture out from iRc process
-            irc_send_picture_out(ctx, head_pcs);
+            irc_send_picture_out(ctx, head_pcs, EB_FALSE);
             //advance the head
             head_entry->pcs = NULL;
             queue->head = OUT_Q_ADVANCE(queue->head);
@@ -505,6 +506,33 @@ void *initial_rate_control_kernel(void *input_ptr) {
         if (pcs_ptr->me_segments_completion_count == pcs_ptr->me_segments_total_count) {
             SequenceControlSet *scs_ptr = (SequenceControlSet *)
                                               pcs_ptr->scs_wrapper_ptr->object_ptr;
+
+            if (in_results_ptr->task_type == TASK_SUPERRES_RE_ME) {
+                // do necessary steps as normal routine
+                {
+                    // Release Pa Ref pictures when not needed
+                    // Don't release if superres auto-dual or auto-all is on
+                    //   because the objects will be used in multiple recode loops
+                    if (pcs_ptr->superres_total_recode_loop == 0) {
+                        release_pa_reference_objects(scs_ptr, pcs_ptr);
+                    }
+
+                    /*In case Look-Ahead is zero there is no need to place pictures in the
+                      re-order queue. this will cause an artificial delay since pictures come in dec-order*/
+                    pcs_ptr->frames_in_sw = 0;
+                    pcs_ptr->end_of_sequence_region = EB_FALSE;
+
+                    init_zz_cost_info(pcs_ptr);
+                }
+
+                // post to downstream process
+                irc_send_picture_out(context_ptr, pcs_ptr, EB_TRUE);
+
+                // Release the Input Results
+                svt_release_object(in_results_wrapper_ptr);
+                continue;
+            }
+
             if (pcs_ptr->picture_number == 0) {
                 Quants *const   quants_8bit = &scs_ptr->quants_8bit;
                 Dequants *const deq_8bit    = &scs_ptr->deq_8bit;
@@ -532,7 +560,8 @@ void *initial_rate_control_kernel(void *input_ptr) {
                         deq_bd);
                 }
             }
-            if (scs_ptr->static_config.enable_tpl_la) {
+            // perform tpl_la on unscaled frames only
+            if (scs_ptr->static_config.enable_tpl_la && !pcs_ptr->frame_superres_enabled) {
                 svt_set_cond_var(&pcs_ptr->me_ready, 1);
             }
 
@@ -553,7 +582,7 @@ void *initial_rate_control_kernel(void *input_ptr) {
 #if LAD_MG_PRINT
             print_lad_queue(context_ptr,0);
 #endif
-            uint8_t lad_queue_pass_thru = !scs_ptr->static_config.enable_tpl_la;
+            uint8_t lad_queue_pass_thru = !(scs_ptr->static_config.enable_tpl_la && !pcs_ptr->frame_superres_enabled);
             process_lad_queue(context_ptr, lad_queue_pass_thru);
 
         }

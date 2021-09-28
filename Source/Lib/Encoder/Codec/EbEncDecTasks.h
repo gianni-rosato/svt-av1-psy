@@ -21,6 +21,7 @@ extern "C" {
 #define ENCDEC_TASKS_MDC_INPUT 0
 #define ENCDEC_TASKS_ENCDEC_INPUT 1
 #define ENCDEC_TASKS_CONTINUE 2
+#define ENCDEC_TASKS_SUPERRES_INPUT 3
 
 /**************************************
      * Process Results

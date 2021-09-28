@@ -133,6 +133,7 @@
 #define SUPERRES_DENOM "-superres-denom"
 #define SUPERRES_KF_DENOM "-superres-kf-denom"
 #define SUPERRES_QTHRES "-superres-qthres"
+#define SUPERRES_KF_QTHRES "-superres-kf-qthres"
 // --- end: SUPER-RESOLUTION SUPPORT
 #define HBD_MD_ENABLE_TOKEN "-hbd-md"
 #define PALETTE_TOKEN "-palette-level"
@@ -699,6 +700,9 @@ static void set_superres_kf_denom(const char *value, EbConfig *cfg) {
 };
 static void set_superres_qthres(const char *value, EbConfig *cfg) {
     cfg->config.superres_qthres = (uint8_t)strtoul(value, NULL, 0);
+};
+static void set_superres_kf_qthres(const char* value, EbConfig* cfg) {
+    cfg->config.superres_kf_qthres = (uint8_t)strtoul(value, NULL, 0);
 };
 // --- end: SUPER-RESOLUTION SUPPORT
 static void set_enable_hbd_mode_decision(const char *value, EbConfig *cfg) {
@@ -1518,6 +1522,7 @@ ConfigEntry config_entry[] = {
     {SINGLE_INPUT, SUPERRES_DENOM, "SuperresDenom", set_superres_denom},
     {SINGLE_INPUT, SUPERRES_KF_DENOM, "SuperresKfDenom", set_superres_kf_denom},
     {SINGLE_INPUT, SUPERRES_QTHRES, "SuperresQthres", set_superres_qthres},
+    {SINGLE_INPUT, SUPERRES_KF_QTHRES, "SuperresKfQthres", set_superres_kf_qthres},
 
     // double dash
     {SINGLE_INPUT, PRESET_TOKEN, "Encoder mode/Preset used[-2,-1,0,..,8]", set_enc_mode},

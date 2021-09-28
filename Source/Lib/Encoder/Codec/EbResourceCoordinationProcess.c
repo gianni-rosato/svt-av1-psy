@@ -26,6 +26,7 @@
 #include "EbLog.h"
 #include "pass2_strategy.h"
 #include "common_dsp_rtcd.h"
+#include "EbResize.h"
 typedef struct ResourceCoordinationContext {
     EbFifo *                       input_buffer_fifo_ptr;
     EbFifo *                       resource_coordination_results_output_fifo_ptr;
@@ -1051,7 +1052,7 @@ void *resource_coordination_kernel(void *input_ptr) {
             sb_geom_init(scs_ptr);
 
             // initialize sequence level enable_superres
-            scs_ptr->seq_header.enable_superres = 0;
+            scs_ptr->seq_header.enable_superres = scs_ptr->static_config.superres_mode > SUPERRES_NONE ? 1 : 0;
 
             if (scs_ptr->static_config.inter_intra_compound == DEFAULT) {
                 // Set inter-intra mode      Settings
@@ -1171,6 +1172,8 @@ void *resource_coordination_kernel(void *input_ptr) {
             // Check whether super-res is previously enabled in this recycled parent pcs and restore to non-scale-down default if so.
             if (pcs_ptr->frame_superres_enabled)
                 reset_resized_picture(scs_ptr, pcs_ptr, pcs_ptr->enhanced_picture_ptr);
+            pcs_ptr->superres_total_recode_loop = 0;
+            pcs_ptr->superres_recode_loop = 0;
             svt_av1_get_time(&pcs_ptr->start_time_seconds, &pcs_ptr->start_time_u_seconds);
 
             pcs_ptr->scs_wrapper_ptr =
