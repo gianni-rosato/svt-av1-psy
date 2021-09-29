@@ -219,6 +219,7 @@ static const std::vector<EncTestSetting> default_enc_settings = {
     {"SuperResTest2", {{"SuperresMode", "2"}, {"Obmc", "0"}}, default_test_vectors},
     {"SuperResTest3", {{"SuperresMode", "2"}, {"Obmc", "1"}}, default_test_vectors},
     {"SuperResTest4", {{"SuperresMode", "2"}, {"Obmc", "1"}, {"Encoder16BitPipeline", "1"}}, default_test_vectors},
+    {"SuperResTest5", {{"SuperresMode", "4"}}, default_test_vectors},
 
     // test by using a dummy source of color bar
     {"DummySrcTest1", {{"EncoderMode", "8"}}, dummy_test_vectors},
@@ -439,3 +440,44 @@ static const std::vector<EncTestSetting> generate_super_res_settings() {
 INSTANTIATE_TEST_CASE_P(SUPERRESTEST, SuperResTest,
                         ::testing::ValuesIn(generate_super_res_settings()),
                         EncTestSetting::GetSettingName);
+
+typedef std::tuple<int, int> SuperresQThresholdPair;
+
+static const std::vector<EncTestSetting>
+generate_super_res_q_threshold_settings() {
+    static const std::string test_prefix = "SuperResQThres";
+    std::vector<EncTestSetting> settings;
+
+    static const std::vector<SuperresQThresholdPair> q_thresholds = {
+        std::make_tuple(63, 63),
+        std::make_tuple(63, 41),
+        std::make_tuple(17, 63),
+        std::make_tuple(41, 11),
+        std::make_tuple(1, 37),
+        std::make_tuple(11, 11),
+        std::make_tuple(1, 1),
+        std::make_tuple(17, 29),
+        std::make_tuple(29, 11),
+    };
+
+    int count = 0;
+    for (auto q_threshold : q_thresholds) {
+        EncTestSetting new_setting;
+        string idx = std::to_string(count);
+        string name = test_prefix + idx;
+        EncTestSetting setting{
+            name,
+            {{"SuperresMode", "3"},
+             {"SuperresQthres", std::to_string(std::get<0>(q_threshold))},
+             {"SuperresKfQthres", std::to_string(std::get<1>(q_threshold))}},
+            default_test_vectors};
+        settings.push_back(setting);
+        count++;
+    }
+    return settings;
+}
+
+INSTANTIATE_TEST_CASE_P(
+    SUPERRESQTHRESTEST, SuperResTest,
+    ::testing::ValuesIn(generate_super_res_q_threshold_settings()),
+    EncTestSetting::GetSettingName);
