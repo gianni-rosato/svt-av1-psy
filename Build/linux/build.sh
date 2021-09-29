@@ -76,6 +76,8 @@ For each enable-*, there is a disable-* option, and vice versa.
     enable-avx512
     --enable-lto,       Enable link time optimization
     enable-lto
+    --disable-native,   Disable the use of -march=native
+    disable-native
     --enable-pgo,       Enable profile guided optimization
     enable-pgo
     --shared, shared    Build shared libs
@@ -267,6 +269,7 @@ parse_options() {
             case ${1#disable-} in
             avx512) CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS -DENABLE_AVX512=OFF" ;;
             lto) CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS -DSVT_AV1_LTO=OFF" ;;
+            native) CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS -DNATIVE=OFF" ;;
             pgo) CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS -DSVT_AV1_PGO=OFF" PGO_COMPILE_STAGE=none ;;
             *) print_message "Unknown option: $1" ;;
             esac
@@ -276,6 +279,7 @@ parse_options() {
             case ${1#enable-} in
             avx512) CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS -DENABLE_AVX512=ON" ;;
             lto) CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS -DSVT_AV1_LTO=ON" ;;
+            native) CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS -DNATIVE=ON" ;;
             pgo)
                 CMAKE_EXTRA_FLAGS="$CMAKE_EXTRA_FLAGS -DSVT_AV1_PGO=ON"
                 case $PGO_COMPILE_STAGE in
@@ -339,6 +343,8 @@ parse_equal_option() {
     *) parse_options "$(printf %s "$1" | cut -c3- | cut -d= -f1 | tr '[:upper:]' '[:lower:]')=$2" ;;
     esac
 }
+
+parse_options enable-native
 
 if [ -z "$*" ]; then
     build_release=true
