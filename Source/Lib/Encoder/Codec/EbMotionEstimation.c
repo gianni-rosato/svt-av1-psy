@@ -1554,11 +1554,11 @@ void integer_search_sb(
             y_search_area_origin = y_search_center - (search_area_height >> 1);
 
             if (scs_ptr->static_config.unrestricted_motion_vector == 0) {
-                // tile_start and tile_end should use the value in scs
-                // their values are different from values in pcs, when super-res is enabled
-                // crash will happen for they are mismatch
-                int tile_start_x = scs_ptr->sb_params_array[sb_index].tile_start_x;
-                int tile_end_x   = scs_ptr->sb_params_array[sb_index].tile_end_x;
+                // sb_params_array in scs and ppcs are different when super-res is enabled
+                // ME_OPEN_LOOP is performed on downscaled frames while others (ME_MCTF and ME_FIRST_PASS) are performed on unscaled frames
+                SbParams * sb_params_array = context_ptr->me_type != ME_OPEN_LOOP ? scs_ptr->sb_params_array : pcs_ptr->sb_params_array;
+                int tile_start_x = sb_params_array[sb_index].tile_start_x;
+                int tile_end_x   = sb_params_array[sb_index].tile_end_x;
                 // Correct the left edge of the Search Area if it is not on the
                 // reference Picture
                 x_search_area_origin = ((origin_x + x_search_area_origin) < tile_start_x)
@@ -1618,11 +1618,11 @@ void integer_search_sb(
                     (search_area_width < 8) ? search_area_width : search_area_width & ~0x07;
             }
             if (scs_ptr->static_config.unrestricted_motion_vector == 0) {
-                // tile_start and tile_end should use the value in scs
-                // their values are different from values in pcs, when super-res is enabled
-                // crash will happen for they are mismatch
-                int tile_start_y = scs_ptr->sb_params_array[sb_index].tile_start_y;
-                int tile_end_y   = scs_ptr->sb_params_array[sb_index].tile_end_y;
+                // sb_params_array in scs and ppcs are different when super-res is enabled
+                // ME_OPEN_LOOP is performed on downscaled frames while others (ME_MCTF and ME_FIRST_PASS) are performed on unscaled frames
+                SbParams* sb_params_array = context_ptr->me_type != ME_OPEN_LOOP ? scs_ptr->sb_params_array : pcs_ptr->sb_params_array;
+                int tile_start_y = sb_params_array[sb_index].tile_start_y;
+                int tile_end_y   = sb_params_array[sb_index].tile_end_y;
                 // Correct the top edge of the Search Area if it is not on the
                 // reference Picture
                 y_search_area_origin = ((origin_y + y_search_area_origin) < tile_start_y)
