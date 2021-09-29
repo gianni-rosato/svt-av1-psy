@@ -61,6 +61,8 @@ ${IN_SCRIPT:-false} && {
 echo_help() {
     cat << EOF
 Usage: $0 [OPTION] ... -- [OPTIONS FOR CMAKE]
+--enable-*/--disable-* options shown are not the default
+For each enable-*, there is a disable-* option, and vice versa.
 
 -a, --all, all          Builds release and debug
     --asm, asm=*        Set assembly compiler [$ASM]
@@ -70,8 +72,6 @@ Usage: $0 [OPTION] ... -- [OPTIONS FOR CMAKE]
     --c-only, c-only    Compile only C code
     --clean, clean      Remove build and Bin folders
     --debug, debug      Build debug
-    --disable-avx512,   Disable building avx512 code (Default)
-    disable-avx512
     --enable-avx512,    Enable building avx512 code (if supported)
     enable-avx512
     --enable-lto,       Enable link time optimization
