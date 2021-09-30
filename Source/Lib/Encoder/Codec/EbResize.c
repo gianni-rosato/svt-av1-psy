@@ -984,60 +984,38 @@ static INLINE unsigned int lcg_rand16(unsigned int *state) {
 // by calculuating the 16x4 Horizontal DCT. This is to be used to
 // decide the superresolution parameters.
 static void analyze_hor_freq(PictureParentControlSet* pcs_ptr, double* energy) {
-    SequenceControlSet* scs_ptr = (SequenceControlSet*)pcs_ptr->scs_wrapper_ptr->object_ptr;
     uint64_t freq_energy[16] = { 0 };
 
     EbPictureBufferDesc* input_picture_ptr = pcs_ptr->enhanced_picture_ptr;
     uint8_t* in = input_picture_ptr->buffer_y + input_picture_ptr->origin_x +
         input_picture_ptr->origin_y * input_picture_ptr->stride_y;
-    const int bd = input_picture_ptr->bit_depth;
     const int width = input_picture_ptr->width;
     const int height = input_picture_ptr->height;
-    EbBool is_16bit = (EbBool)(scs_ptr->static_config.encoder_bit_depth > EB_8BIT) ||
-        (scs_ptr->static_config.is_16bit_pipeline);
 
     DECLARE_ALIGNED(64, int32_t, coeff[16 * 4]);
     int n = 0;
     memset(freq_energy, 0, sizeof(freq_energy));
-    if (is_16bit) {
-        int16_t* src16 = (int16_t*)CONVERT_TO_SHORTPTR(in);
-        for (int i = 0; i < height - 4; i += 4) {
-            for (int j = 0; j < width - 16; j += 16) {
-                svt_av1_fwd_txfm2d_16x4(src16 + i * input_picture_ptr->stride_y + j, coeff, input_picture_ptr->stride_y,
-                    H_DCT, bd);
-                for (int k = 1; k < 16; ++k) {
-                    const uint64_t this_energy =
-                        ((int64_t)coeff[k] * coeff[k]) +
-                        ((int64_t)coeff[k + 16] * coeff[k + 16]) +
-                        ((int64_t)coeff[k + 32] * coeff[k + 32]) +
-                        ((int64_t)coeff[k + 48] * coeff[k + 48]);
-                    freq_energy[k] += ROUND_POWER_OF_TWO(this_energy, 2 + 2 * (bd - 8));
-                }
-                n++;
+
+    // All treated as 8-bit input. For 10-bit input, uses high 8 bit (pointed by input_picture_ptr->buffer_y)
+    DECLARE_ALIGNED(64, int16_t, src16[16 * 4]);
+    for (int i = 0; i < height - 4; i += 4) {
+        for (int j = 0; j < width - 16; j += 16) {
+            for (int ii = 0; ii < 4; ++ii)
+                for (int jj = 0; jj < 16; ++jj)
+                    src16[ii * 16 + jj] = in[(i + ii) * input_picture_ptr->stride_y + (j + jj)];
+            svt_av1_fwd_txfm2d_16x4(src16, coeff, 16, H_DCT, EB_8BIT);
+            for (int k = 1; k < 16; ++k) {
+                const uint64_t this_energy =
+                    ((int64_t)coeff[k] * coeff[k]) +
+                    ((int64_t)coeff[k + 16] * coeff[k + 16]) +
+                    ((int64_t)coeff[k + 32] * coeff[k + 32]) +
+                    ((int64_t)coeff[k + 48] * coeff[k + 48]);
+                freq_energy[k] += ROUND_POWER_OF_TWO(this_energy, 2);
             }
+            n++;
         }
     }
-    else {
-        assert(bd == 8);
-        DECLARE_ALIGNED(64, int16_t, src16[16 * 4]);
-        for (int i = 0; i < height - 4; i += 4) {
-            for (int j = 0; j < width - 16; j += 16) {
-                for (int ii = 0; ii < 4; ++ii)
-                    for (int jj = 0; jj < 16; ++jj)
-                        src16[ii * 16 + jj] = in[(i + ii) * input_picture_ptr->stride_y + (j + jj)];
-                svt_av1_fwd_txfm2d_16x4(src16, coeff, 16, H_DCT, bd);
-                for (int k = 1; k < 16; ++k) {
-                    const uint64_t this_energy =
-                        ((int64_t)coeff[k] * coeff[k]) +
-                        ((int64_t)coeff[k + 16] * coeff[k + 16]) +
-                        ((int64_t)coeff[k + 32] * coeff[k + 32]) +
-                        ((int64_t)coeff[k + 48] * coeff[k + 48]);
-                    freq_energy[k] += ROUND_POWER_OF_TWO(this_energy, 2);
-                }
-                n++;
-            }
-        }
-    }
+
     if (n) {
         for (int k = 1; k < 16; ++k) energy[k] = (double)freq_energy[k] / n;
         // Convert to cumulative energy
