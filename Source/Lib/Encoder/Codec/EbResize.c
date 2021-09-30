@@ -492,6 +492,31 @@ static EbErrorType av1_resize_plane(const uint8_t *const input, int height, int 
     return EB_ErrorNone;
 }
 
+static EbErrorType av1_resize_plane_horizontal(const uint8_t* const input, int height, int width,
+    int in_stride, uint8_t* output, int height2, int width2,
+    int out_stride) {
+    int      i;
+    uint8_t* tmpbuf;
+
+    assert(width > 0);
+    assert(height > 0);
+    assert(width2 > 0);
+    assert(height2 == height);
+    UNUSED(height2);
+
+    EB_MALLOC_ARRAY(tmpbuf, AOMMAX(width, height));
+    if (tmpbuf == NULL) {
+        EB_FREE_ARRAY(tmpbuf);
+        return EB_ErrorInsufficientResources;
+    }
+    for (i = 0; i < height; ++i)
+        resize_multistep(input + in_stride * i, width, output + out_stride * i, width2, tmpbuf);
+
+    EB_FREE_ARRAY(tmpbuf);
+
+    return EB_ErrorNone;
+}
+
 static void highbd_interpolate_core(const uint16_t *const input, int in_length, uint16_t *output,
                                     int out_length, int bd, const int16_t *interp_filters,
                                     int interp_taps) {
@@ -764,6 +789,30 @@ static EbErrorType av1_highbd_resize_plane(const uint16_t *const input, int heig
     return EB_ErrorNone;
 }
 
+static EbErrorType av1_highbd_resize_plane_horizontal(const uint16_t* const input, int height, int width,
+    int in_stride, uint16_t* output, int height2, int width2,
+    int out_stride, int bd) {
+    int       i;
+    uint16_t* tmpbuf;
+
+    UNUSED(height2);
+    assert(height2 == height);
+
+    EB_MALLOC_ARRAY(tmpbuf, sizeof(uint16_t) * AOMMAX(width, height));
+    if (tmpbuf == NULL) {
+        EB_FREE(tmpbuf);
+        return EB_ErrorInsufficientResources;
+    }
+    for (i = 0; i < height; ++i) {
+        highbd_resize_multistep(
+            input + in_stride * i, width, output + out_stride * i, width2, tmpbuf, bd);
+    }
+
+    EB_FREE(tmpbuf);
+
+    return EB_ErrorNone;
+}
+
 void pack_highbd_pic(const EbPictureBufferDesc *pic_ptr, uint16_t *buffer_16bit[3], uint32_t ss_x,
                      uint32_t ss_y, EbBool include_padding);
 
@@ -780,6 +829,13 @@ void save_YUV_to_file_highbd(char *filename, uint16_t *buffer_y, uint16_t *buffe
                              uint16_t stride_u, uint16_t stride_v, uint16_t origin_y,
                              uint16_t origin_x, uint32_t ss_x, uint32_t ss_y);
 #endif
+
+typedef EbErrorType (*Av1HighbdResizePlane)(const uint16_t* const input, int height, int width,
+                                    int in_stride, uint16_t* output, int height2, int width2,
+                                    int out_stride, int bd);
+typedef EbErrorType (*Av1ResizePlane)(const uint8_t* const input, int height, int width,
+                                     int in_stride, uint8_t* output, int height2, int width2,
+                                     int out_stride);
 
 /*
  * Resize frame according to dst resolution.
@@ -841,9 +897,11 @@ static EbErrorType av1_resize_frame(const EbPictureBufferDesc *src, EbPictureBuf
 
     for (int plane = 0; plane <= AOMMIN(num_planes, MAX_MB_PLANE - 1); ++plane) {
         if (bd > 8) {
+            Av1HighbdResizePlane resize_plane_func = (src->height == dst->height) ?
+                av1_highbd_resize_plane_horizontal : av1_highbd_resize_plane;
             switch (plane) {
             case 0:
-                av1_highbd_resize_plane(
+                resize_plane_func(
                     src_buffer_highbd[0] + src->origin_y * src->stride_y + src->origin_x,
                     src->height,
                     src->width,
@@ -855,7 +913,7 @@ static EbErrorType av1_resize_frame(const EbPictureBufferDesc *src, EbPictureBuf
                     bd);
                 break;
             case 1:
-                av1_highbd_resize_plane(
+                resize_plane_func(
                     src_buffer_highbd[1] + (src->origin_y >> ss_y) * src->stride_cb +
                         (src->origin_x >> ss_x),
                     src->height >> ss_y,
@@ -869,7 +927,7 @@ static EbErrorType av1_resize_frame(const EbPictureBufferDesc *src, EbPictureBuf
                     bd);
                 break;
             case 2:
-                av1_highbd_resize_plane(
+                resize_plane_func(
                     src_buffer_highbd[2] + (src->origin_y >> ss_y) * src->stride_cr +
                         (src->origin_x >> ss_x),
                     src->height >> ss_y,
@@ -885,20 +943,22 @@ static EbErrorType av1_resize_frame(const EbPictureBufferDesc *src, EbPictureBuf
             default: break;
             }
         } else {
+            Av1ResizePlane resize_plane_func = (src->height == dst->height) ?
+                av1_resize_plane_horizontal : av1_resize_plane;
             switch (plane) {
             case 0:
-                av1_resize_plane(src->buffer_y + src->origin_y * src->stride_y + src->origin_x,
-                                 src->height,
-                                 src->width,
-                                 src->stride_y,
-                                 dst->buffer_y + dst->origin_y * dst->stride_y + dst->origin_x,
-                                 dst->height,
-                                 dst->width,
-                                 dst->stride_y);
+                resize_plane_func(src->buffer_y + src->origin_y * src->stride_y + src->origin_x,
+                                  src->height,
+                                  src->width,
+                                  src->stride_y,
+                                  dst->buffer_y + dst->origin_y * dst->stride_y + dst->origin_x,
+                                  dst->height,
+                                  dst->width,
+                                  dst->stride_y);
                 break;
             case 1:
                 if (dst->buffer_cb) {
-                    av1_resize_plane(src->buffer_cb + (src->origin_y >> ss_y) * src->stride_cb +
+                    resize_plane_func(src->buffer_cb + (src->origin_y >> ss_y) * src->stride_cb +
                                          (src->origin_x >> ss_x),
                                      src->height >> ss_y,
                                      src->width >> ss_x,
@@ -912,7 +972,7 @@ static EbErrorType av1_resize_frame(const EbPictureBufferDesc *src, EbPictureBuf
                 break;
             case 2:
                 if (dst->buffer_cr) {
-                    av1_resize_plane(src->buffer_cr + (src->origin_y >> ss_y) * src->stride_cr +
+                    resize_plane_func(src->buffer_cr + (src->origin_y >> ss_y) * src->stride_cr +
                                          (src->origin_x >> ss_x),
                                      src->height >> ss_y,
                                      src->width >> ss_x,
