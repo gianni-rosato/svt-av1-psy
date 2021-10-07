@@ -449,10 +449,22 @@ typedef struct PictureControlSet {
     // for tile row i.
     int32_t rst_end_stripe[MAX_TILE_ROWS];
 #if TUNE_NEW_M11_2
+#if CLN_REF_AREA
+    uint8_t ref_intra_percentage;
+    uint8_t ref_skip_percentage;
+#else
     uint8_t intra_percentage;
 #endif
+#endif
 #if  FTR_SIMPLIFIED_MV_COST
+#if CLN_RATE_EST_CTRLS
+    uint8_t approx_inter_rate; // use approximate rate for inter cost (set at pic-level b/c some pic-level initializations will be removed)
+#else
     uint8_t use_low_precision_cost_estimation;
+#endif
+#endif
+#if SS_FIX_MOVE_SKIP_INTRA_PIC
+    uint8_t skip_intra;
 #endif
 } PictureControlSet;
 
@@ -546,7 +558,7 @@ typedef struct TplControls {
 #endif
     uint8_t skip_rdoq_uv_qp_based_th;
     double r0_adjust_factor;
-#if FTR_QP_BASED_DEPTH_REMOVAL
+#if FTR_QP_BASED_DEPTH_REMOVAL && !CLN_TPL_LEVEL_7
     uint8_t modulate_depth_removal_level; // Modulate depth_removal level @ BASE based on the qp_offset band (towards better quality only)
 #endif
 #if OPT_TPL_64X64_32X32
@@ -563,6 +575,9 @@ typedef struct TplControls {
 #if FTR_16X16_TPL_MAP
     uint8_t synth_blk_size; //syntheszier block size, support 8x8 and 16x16 for now. NOTE: this field must be
                             //modified inside the get_ function, as it is linked to memory allocation at init time
+#endif
+#if ADJUST_LAMBDA
+    uint8_t vq_adjust_lambda_sb;
 #endif
 } TplControls;
 
@@ -594,6 +609,7 @@ typedef struct {
     EbBool                      is_used_as_reference_flag;
     EbDownScaledBufDescPtrArray tpl_ref_ds_ptr_array[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
 } TPLData;
+#if !CLN_INTRA_CTRLS
 #if TUNE_INTRA_LEVELS
 typedef struct IntraPredControls {
     uint8_t disable_angle_prediction; // disables all angular prediction modes, including H_PRED and V_PRED
@@ -603,6 +619,7 @@ typedef struct IntraPredControls {
     uint8_t intra_mode_end; // the last intra prediciton mode generated starting from DC_PRED, min: DC_PRED, max: PAETH_PRED
     uint8_t skip_paeth; // skip PAETH_PRED mode
 } IntraPredControls;
+#endif
 #endif
 typedef struct GmControls {
     uint8_t enabled;
@@ -731,6 +748,9 @@ typedef struct PictureParentControlSet {
     uint8_t         temporal_layer_index;
     uint64_t        decode_order;
     EbBool          is_used_as_reference_flag;
+#if FIX_I51
+    uint8_t          reference_released; // status of PA reference 0: Not release; 1: Released
+#endif
     uint8_t         ref_list0_count;
     uint8_t         ref_list1_count;
     uint8_t
@@ -1084,8 +1104,10 @@ typedef struct PictureParentControlSet {
     uint8_t is_superres_none;
     TfControls tf_ctrls;
     GmControls gm_ctrls;
+#if !CLN_INTRA_CTRLS
 #if TUNE_INTRA_LEVELS
     IntraPredControls intra_ctrls;
+#endif
 #endif
 #if FTR_MULTI_STAGE_CDEF
     CdefControls cdef_ctrls;
@@ -1108,6 +1130,9 @@ typedef struct PictureParentControlSet {
     struct PictureParentControlSet *first_pass_ref_ppcs_ptr[2];
     uint8_t                         first_pass_ref_count;
     uint8_t                         first_pass_done;
+#if FTR_OPT_MPASS_BYPASS_FRAMES
+    uint8_t                         first_frame_in_minigop;
+#endif
     TplControls                     tpl_ctrls;
     uint8_t tpl_is_valid;
 #if CLN_ADD_LIST0_ONLY_CTRL
@@ -1162,9 +1187,6 @@ typedef struct PictureParentControlSet {
     uint8_t partition_contexts;
 #endif
     uint8_t bypass_cost_table_gen;
-#if ADJUST_LAMBDA
-    uint8_t adjust_lambda_sb;
-#endif
 #if TUNE_MDS0
     uint16_t max_can_count;
 #endif
@@ -1189,7 +1211,9 @@ typedef struct PictureParentControlSet {
     uint32_t  tf_tot_horz_blks;    //total horizontal motion blocks in TF
     int8_t    tf_motion_direction; //motion direction in TF   -1:invalid   0:horz  1:vert
 #endif
-
+#if FTR_NEW_QPS
+    uint8_t cqp_qps_model; // 0: use fixed QP-Offsets, 1: QP-Offsets are funtion of the base_qp
+#endif
 } PictureParentControlSet;
 
 

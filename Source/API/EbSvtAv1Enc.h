@@ -116,9 +116,11 @@ typedef struct TfControls {
     uint32_t me_exit_th;               // early exit ME_TF if HME distortion < me_exit_th
 #endif
     uint64_t pred_error_32x32_th;      // The 32x32 pred error (post-subpel) under which subpel for the 16x16 block(s) is bypassed
+#if !CLN_TF_CTRLS
     int64_t  me_16x16_to_8x8_dev_th;   // The 16x16-to-8x8 me-distortion deviation beyond which the number of reference frames is capped to [max_64x64_past_pics, max_64x64_future_pics] @ the level of a 64x64 Block
     uint64_t max_64x64_past_pics;      // The max number of past reference frames if me_16x16_to_8x8_dev > me_16x16_to_8x8_dev_th
     uint64_t max_64x64_future_pics;    // The max number of future reference frames if me_16x16_to_8x8_dev > me_16x16_to_8x8_dev_th
+#endif
 #if OPT_TF
     uint8_t sub_sampling_shift;         // Use subsampled prediction and sse;
 #endif
@@ -349,6 +351,9 @@ typedef struct EbSvtAv1EncConfiguration {
     uint8_t    passes;
 #if TUNE_MULTI_PASS
     MultiPassModes multi_pass_mode;
+#endif
+#if FTR_OPT_MPASS_DOWN_SAMPLE
+    EbBool rc_middlepass_ds_stats_out;
 #endif
 #endif
     /* Enable picture QP scaling between hierarchical levels
@@ -923,6 +928,9 @@ typedef struct EbSvtAv1EncConfiguration {
 #endif
 #if OPT_FIRST_PASS2
     uint8_t skip_frame_first_pass;
+#endif
+#if FTR_OPT_IPP_DOWN_SAMPLE
+    uint8_t ipp_ds; // use downsampled version in ipp pass
 #endif
 } EbSvtAv1EncConfiguration;
 

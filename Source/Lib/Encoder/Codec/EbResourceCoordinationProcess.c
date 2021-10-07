@@ -170,11 +170,18 @@ uint8_t  get_tpl_level(int8_t enc_mode)
         tpl_level = 5;
 #endif
 #if FTR_MOD_DEPTH_REMOVAL_LVL
+#if CLN_TPL_LEVEL_7
+    }
+    else {
+        tpl_level = 6;
+    }
+#else
     } else if (enc_mode <= ENC_M10) {
         tpl_level = 6;
     } else {
         tpl_level = 7;
     }
+#endif
 #else
     } else {
         tpl_level = 6;
@@ -238,7 +245,7 @@ void set_tpl_extended_controls(
         tpl_ctrls->use_pred_sad_in_inter_search = 0;
         tpl_ctrls->skip_rdoq_uv_qp_based_th = 4;
         tpl_ctrls->r0_adjust_factor = 0.1;
-#if FTR_QP_BASED_DEPTH_REMOVAL
+#if FTR_QP_BASED_DEPTH_REMOVAL && !CLN_TPL_LEVEL_7
         tpl_ctrls->modulate_depth_removal_level = 1;
 #endif
 #if OPT_TPL_64X64_32X32
@@ -249,6 +256,9 @@ void set_tpl_extended_controls(
 #endif
 #if FTR_16X16_TPL_MAP
         tpl_ctrls->synth_blk_size = get_tpl_synthesizer_block_size(tpl_level,pcs_ptr->aligned_width, pcs_ptr->aligned_height);
+#endif
+#if ADJUST_LAMBDA
+        tpl_ctrls->vq_adjust_lambda_sb = 1;
 #endif
         break;
     case 1:
@@ -267,7 +277,7 @@ void set_tpl_extended_controls(
         tpl_ctrls->use_pred_sad_in_inter_search = 0;
         tpl_ctrls->skip_rdoq_uv_qp_based_th = 4;
         tpl_ctrls->r0_adjust_factor = 0.1;
-#if FTR_QP_BASED_DEPTH_REMOVAL
+#if FTR_QP_BASED_DEPTH_REMOVAL && !CLN_TPL_LEVEL_7
         tpl_ctrls->modulate_depth_removal_level = 1;
 #endif
 #if OPT_TPL_64X64_32X32
@@ -278,6 +288,9 @@ void set_tpl_extended_controls(
 #endif
 #if FTR_16X16_TPL_MAP
         tpl_ctrls->synth_blk_size = get_tpl_synthesizer_block_size(tpl_level, pcs_ptr->aligned_width, pcs_ptr->aligned_height);
+#endif
+#if ADJUST_LAMBDA
+        tpl_ctrls->vq_adjust_lambda_sb = 1;
 #endif
         break;
     case 2:
@@ -296,7 +309,7 @@ void set_tpl_extended_controls(
         tpl_ctrls->use_pred_sad_in_inter_search = 0;
         tpl_ctrls->skip_rdoq_uv_qp_based_th = 4;
         tpl_ctrls->r0_adjust_factor = 0.30;
-#if FTR_QP_BASED_DEPTH_REMOVAL
+#if FTR_QP_BASED_DEPTH_REMOVAL && !CLN_TPL_LEVEL_7
         tpl_ctrls->modulate_depth_removal_level = 1;
 #endif
 #if OPT_TPL_64X64_32X32
@@ -307,6 +320,9 @@ void set_tpl_extended_controls(
 #endif
 #if FTR_16X16_TPL_MAP
         tpl_ctrls->synth_blk_size = get_tpl_synthesizer_block_size(tpl_level, pcs_ptr->aligned_width, pcs_ptr->aligned_height);
+#endif
+#if ADJUST_LAMBDA
+        tpl_ctrls->vq_adjust_lambda_sb = 1;
 #endif
         break;
     case 3:
@@ -328,7 +344,9 @@ void set_tpl_extended_controls(
         tpl_ctrls->use_pred_sad_in_inter_search = 1;
         tpl_ctrls->skip_rdoq_uv_qp_based_th = 4;
 #if FTR_QP_BASED_DEPTH_REMOVAL
+#if !CLN_TPL_LEVEL_7
         tpl_ctrls->modulate_depth_removal_level = 1;
+#endif
 #if OPT_TPL_64X64_32X32
         tpl_ctrls->dispenser_search_level = 0;
 #endif
@@ -338,6 +356,9 @@ void set_tpl_extended_controls(
         tpl_ctrls->r0_adjust_factor = 0.30;
 #if FTR_16X16_TPL_MAP
         tpl_ctrls->synth_blk_size = get_tpl_synthesizer_block_size(tpl_level, pcs_ptr->aligned_width, pcs_ptr->aligned_height);
+#endif
+#if ADJUST_LAMBDA
+        tpl_ctrls->vq_adjust_lambda_sb = 1;
 #endif
         break;
 #if FTR_TPL_TX_SUBSAMPLE
@@ -362,7 +383,9 @@ void set_tpl_extended_controls(
         tpl_ctrls->use_pred_sad_in_intra_search = 1;
         tpl_ctrls->use_pred_sad_in_inter_search = 1;
         tpl_ctrls->skip_rdoq_uv_qp_based_th = 4;
+#if !CLN_TPL_LEVEL_7
         tpl_ctrls->modulate_depth_removal_level = 1;
+#endif
 #if OPT_TPL_64X64_32X32
         tpl_ctrls->dispenser_search_level = 0;
 #endif
@@ -374,6 +397,9 @@ void set_tpl_extended_controls(
 #endif
 #if FTR_16X16_TPL_MAP
         tpl_ctrls->synth_blk_size = get_tpl_synthesizer_block_size(tpl_level, pcs_ptr->aligned_width, pcs_ptr->aligned_height);
+#endif
+#if ADJUST_LAMBDA
+        tpl_ctrls->vq_adjust_lambda_sb = 1;
 #endif
         break;
     case 5:
@@ -400,7 +426,9 @@ void set_tpl_extended_controls(
         tpl_ctrls->use_pred_sad_in_intra_search = 1;
         tpl_ctrls->use_pred_sad_in_inter_search = 1;
         tpl_ctrls->skip_rdoq_uv_qp_based_th = 4;
+#if !CLN_TPL_LEVEL_7
         tpl_ctrls->modulate_depth_removal_level = 1;
+#endif
 #if OPT_TPL_64X64_32X32
         tpl_ctrls->dispenser_search_level = 0;
 #endif
@@ -426,6 +454,9 @@ void set_tpl_extended_controls(
         tpl_ctrls->subsample_tx = 1;
 #endif
 #endif
+#if ADJUST_LAMBDA
+        tpl_ctrls->vq_adjust_lambda_sb = 1;
+#endif
         break;
 #if OPT_TPL_64X64_32X32
     case 6:
@@ -445,13 +476,18 @@ void set_tpl_extended_controls(
         tpl_ctrls->use_pred_sad_in_intra_search = 1;
         tpl_ctrls->use_pred_sad_in_inter_search = 1;
         tpl_ctrls->skip_rdoq_uv_qp_based_th = 4;
+#if !CLN_TPL_LEVEL_7
         tpl_ctrls->modulate_depth_removal_level = 1;
+#endif
         tpl_ctrls->dispenser_search_level = 1;
         tpl_ctrls->subsample_tx = 2;
         tpl_ctrls->r0_adjust_factor = scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? 0.3 : 2.0;
         tpl_ctrls->synth_blk_size = get_tpl_synthesizer_block_size(tpl_level, pcs_ptr->aligned_width, pcs_ptr->aligned_height);
+#if ADJUST_LAMBDA
+        tpl_ctrls->vq_adjust_lambda_sb = 2;
+#endif
         break;
-#if FTR_MOD_DEPTH_REMOVAL_LVL
+#if FTR_MOD_DEPTH_REMOVAL_LVL && !CLN_TPL_LEVEL_7
     case 7:
     default:
         tpl_ctrls->tpl_opt_flag = 1;
@@ -735,7 +771,7 @@ EbErrorType signal_derivation_pre_analysis_oq_pcs(SequenceControlSet const * con
     pcs_ptr->tf_enable_hme_level1_flag = 1;
     pcs_ptr->tf_enable_hme_level2_flag = 1;
 
-
+#if !FIX_R2R_TPL_IXX
 #if FTR_16X16_TPL_MAP
     //TPL level should not be modified outside of this function
     uint8_t tpl_level = get_tpl_level(pcs_ptr->enc_mode);
@@ -803,6 +839,8 @@ EbErrorType signal_derivation_pre_analysis_oq_pcs(SequenceControlSet const * con
         set_tpl_extended_controls(pcs_ptr,tpl_level);
     else
         set_tpl_controls(pcs_ptr, tpl_level);
+#endif
+
 #endif
 
 #if FTR_16X16_TPL_MAP
@@ -1040,6 +1078,9 @@ static EbErrorType reset_pcs_av1(PictureParentControlSet *pcs_ptr) {
     FrameHeader *frm_hdr = &pcs_ptr->frm_hdr;
     Av1Common *  cm      = pcs_ptr->av1_cm;
 
+#if FIX_I51 // reset_pcs_av1
+    pcs_ptr->reference_released   = 0;
+#endif
     pcs_ptr->is_skip_mode_allowed = 0;
     pcs_ptr->skip_mode_flag       = 0;
     frm_hdr->frame_type           = KEY_FRAME;
@@ -1609,7 +1650,12 @@ void *resource_coordination_kernel(void *input_ptr) {
 
             // initialize sequence level enable_superres
             scs_ptr->seq_header.enable_superres = scs_ptr->static_config.superres_mode > SUPERRES_NONE ? 1 : 0;
-
+#if CLN_HIGH_LVL_SYNTAX
+            if (scs_ptr->static_config.inter_intra_compound == DEFAULT)
+                scs_ptr->seq_header.enable_interintra_compound = 1;
+            else
+                scs_ptr->seq_header.enable_interintra_compound = scs_ptr->static_config.inter_intra_compound;
+#else
             if (scs_ptr->static_config.inter_intra_compound == DEFAULT) {
                 // Set inter-intra mode      Settings
                 // 0                 OFF
@@ -1622,10 +1668,17 @@ void *resource_coordination_kernel(void *input_ptr) {
             } else
                 scs_ptr->seq_header.enable_interintra_compound =
                     scs_ptr->static_config.inter_intra_compound;
+#endif
             // Enable/Disable Filter Intra
             // seq_header.filter_intra_level | Settings
             // 0                             | Disable
             // 1                             | Enable
+#if CLN_HIGH_LVL_SYNTAX
+            if (scs_ptr->static_config.filter_intra_level == DEFAULT)
+                scs_ptr->seq_header.filter_intra_level = 1;
+            else
+                scs_ptr->seq_header.filter_intra_level = scs_ptr->static_config.filter_intra_level;
+#else
             if (scs_ptr->static_config.filter_intra_level == DEFAULT)
                 scs_ptr->seq_header.filter_intra_level =
                 (scs_ptr->static_config.enc_mode <= ENC_M5) ? 1 : 0;
@@ -1633,9 +1686,16 @@ void *resource_coordination_kernel(void *input_ptr) {
             else
                 scs_ptr->seq_header.filter_intra_level =
                     (scs_ptr->static_config.filter_intra_level == 0) ? 0 : 1;
+#endif
             // Set compound mode      Settings
             // 0                 OFF: No compond mode search : AVG only
             // 1                 ON: full
+#if CLN_HIGH_LVL_SYNTAX
+            if (scs_ptr->static_config.compound_level == DEFAULT)
+                scs_ptr->compound_mode = 1;
+            else
+                scs_ptr->compound_mode = scs_ptr->static_config.compound_level;
+#else
             if (scs_ptr->static_config.compound_level == DEFAULT) {
 #if TUNE_NEW_M11 && !TUNE_M9_11_3
                 scs_ptr->compound_mode = (scs_ptr->static_config.enc_mode <= ENC_M11) ? 1 : 0;
@@ -1644,7 +1704,7 @@ void *resource_coordination_kernel(void *input_ptr) {
 #endif
             } else
                 scs_ptr->compound_mode = scs_ptr->static_config.compound_level;
-
+#endif
 #if M8_NEW_REF
             scs_ptr->compound_mode = 1;
 #endif

@@ -217,7 +217,10 @@ typedef struct EbConfig {
 
     uint32_t input_padded_width;
     uint32_t input_padded_height;
-
+#if FTR_OPT_MPASS_DOWN_SAMPLE
+    uint32_t org_input_padded_width;
+    uint32_t org_input_padded_height;
+#endif
     // -1 indicates unknown (auto-detect at earliest opportunity)
     // auto-detect is performed on load for files and at end of stream for pipes
     int64_t   frames_to_be_encoded;

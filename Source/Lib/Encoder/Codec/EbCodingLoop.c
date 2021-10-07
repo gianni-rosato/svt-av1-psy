@@ -3029,7 +3029,17 @@ EB_EXTERN void av1_encode_decode(SequenceControlSet *scs, PictureControlSet *pcs
 
             ctx->blk_origin_x = (uint16_t)(sb_org_x + blk_geom->origin_x);
             ctx->blk_origin_y = (uint16_t)(sb_org_y + blk_geom->origin_y);
-
+#if CLN_REMOVE_UNUSED_FEATS
+            /* ED should use the skip decision from MD. If MD signals 0 coeffs, the TX will
+            be bypassed unless MD did not perform chroma (blk_skip_decision) or the block is an
+            INTRA block (since the prediction at MD may not be conformant). */
+            ctx->md_skip_blk =
+                md_ctx->blk_skip_decision
+                ? ((blk_ptr->prediction_mode_flag == INTRA_MODE || blk_ptr->block_has_coeff)
+                    ? 0
+                    : 1)
+                : 0;
+#else
             if (md_ctx->ep_use_md_skip_decision)
                 ctx->md_skip_blk = !blk_ptr->block_has_coeff;
             else
@@ -3039,7 +3049,7 @@ EB_EXTERN void av1_encode_decode(SequenceControlSet *scs, PictureControlSet *pcs
                     ? 0
                     : 1)
                 : 0;
-
+#endif
             blk_ptr->block_has_coeff = 0;
 
             // for now, segmentation independent of sharpness/delta QP.

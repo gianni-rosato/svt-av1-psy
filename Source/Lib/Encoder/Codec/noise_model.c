@@ -16,6 +16,9 @@
 #include "noise_util.h"
 #include "mathutils.h"
 #include "EbLog.h"
+#if SS_2B_COMPRESS
+#include "aom_dsp_rtcd.h"
+#endif
 
 #define kLowPolyNumParams 3
 
@@ -31,7 +34,11 @@ void un_pack2d(uint16_t *in16_bit_buffer, uint32_t in_stride, uint8_t *out8_bit_
 void pack2d_src(uint8_t *in8_bit_buffer, uint32_t in8_stride, uint8_t *inn_bit_buffer,
                 uint32_t inn_stride, uint16_t *out16_bit_buffer, uint32_t out_stride,
                 uint32_t width, uint32_t height);
-
+#if SS_2B_COMPRESS
+void compressed_pack_sb(uint8_t *in8_bit_buffer, uint32_t in8_stride, uint8_t *inn_bit_buffer,
+    uint32_t inn_stride, uint16_t *out16_bit_buffer, uint32_t out_stride,
+    uint32_t width, uint32_t height);
+#endif
 // Defines a function that can be used to obtain the mean of a block for the
 // provided data type (uint8_t, or uint16_t)
 #define GET_BLOCK_MEAN(INT_TYPE, suffix)                          \
@@ -1678,20 +1685,66 @@ static int32_t denoise_and_model_realloc_if_necessary(struct AomDenoiseAndModel 
 void pack_2d_pic(EbPictureBufferDesc *input_picture, uint16_t *packed[3]) {
     const uint32_t input_luma_offset = ((input_picture->origin_y) * input_picture->stride_y) +
         (input_picture->origin_x);
+#if SS_2B_COMPRESS
+    const uint32_t input_bit_inc_luma_offset = ((input_picture->origin_y) *
+        input_picture->stride_bit_inc_y >> 2) +
+        (input_picture->origin_x >> 2);
+#else
     const uint32_t input_bit_inc_luma_offset = ((input_picture->origin_y) *
                                                 input_picture->stride_bit_inc_y) +
         (input_picture->origin_x);
+#endif
     const uint32_t input_cb_offset = (((input_picture->origin_y) >> 1) * input_picture->stride_cb) +
         ((input_picture->origin_x) >> 1);
+#if SS_2B_COMPRESS
+    const uint32_t input_bit_inc_cb_offset = (((input_picture->origin_y) >> 1) *
+        input_picture->stride_bit_inc_cb >> 2) +
+        ((input_picture->origin_x >> 2) >> 1);
+#else
     const uint32_t input_bit_inc_cb_offset = (((input_picture->origin_y) >> 1) *
                                               input_picture->stride_bit_inc_cb) +
         ((input_picture->origin_x) >> 1);
+#endif
     const uint32_t input_cr_offset = (((input_picture->origin_y) >> 1) * input_picture->stride_cr) +
         ((input_picture->origin_x) >> 1);
+#if SS_2B_COMPRESS
+    const uint32_t input_bit_inc_cr_offset = (((input_picture->origin_y) >> 1) *
+        input_picture->stride_bit_inc_cr >> 2) +
+        ((input_picture->origin_x >> 2) >> 1);
+#else
     const uint32_t input_bit_inc_cr_offset = (((input_picture->origin_y) >> 1) *
                                               input_picture->stride_bit_inc_cr) +
         ((input_picture->origin_x) >> 1);
+#endif
 
+#if SS_2B_COMPRESS
+    compressed_pack_sb(input_picture->buffer_y + input_luma_offset,
+        input_picture->stride_y,
+        input_picture->buffer_bit_inc_y + input_bit_inc_luma_offset,
+        input_picture->stride_bit_inc_y >> 2,
+        (uint16_t *)packed[0],
+        input_picture->stride_y,
+        input_picture->width,
+        input_picture->height);
+
+    compressed_pack_sb(input_picture->buffer_cb + input_cb_offset,
+        input_picture->stride_cr,
+        input_picture->buffer_bit_inc_cb + input_bit_inc_cb_offset,
+        input_picture->stride_bit_inc_cr >> 2,
+        (uint16_t *)packed[1],
+        input_picture->stride_cr,
+        input_picture->width >> 1,
+        input_picture->height >> 1);
+
+    compressed_pack_sb(input_picture->buffer_cr + input_cr_offset,
+        input_picture->stride_cr,
+        input_picture->buffer_bit_inc_cr + input_bit_inc_cr_offset,
+        input_picture->stride_bit_inc_cr >> 2,
+        (uint16_t *)packed[2],
+        input_picture->stride_cr,
+        input_picture->width >> 1,
+        input_picture->height >> 1);
+#else
     pack2d_src(input_picture->buffer_y + input_luma_offset,
                input_picture->stride_y,
                input_picture->buffer_bit_inc_y + input_bit_inc_luma_offset,
@@ -1718,6 +1771,7 @@ void pack_2d_pic(EbPictureBufferDesc *input_picture, uint16_t *packed[3]) {
                input_picture->stride_cr,
                input_picture->width >> 1,
                input_picture->height >> 1);
+#endif
 }
 
 static void unpack_2d_pic(uint8_t *packed[3], EbPictureBufferDesc *outputPicturePtr) {
@@ -1726,11 +1780,47 @@ static void unpack_2d_pic(uint8_t *packed[3], EbPictureBufferDesc *outputPicture
     uint32_t chroma_buffer_offset = (((outputPicturePtr->origin_y) >> 1) *
                                      outputPicturePtr->stride_cb) +
         ((outputPicturePtr->origin_x) >> 1);
+#if SS_2B_COMPRESS
+    uint32_t bit_inc_luma_offset = ((outputPicturePtr->origin_y) *
+        outputPicturePtr->stride_bit_inc_y >> 2) +
+        (outputPicturePtr->origin_x >> 2);
+    uint32_t bit_inc_chroma_offset = (((outputPicturePtr->origin_y) >> 1) *
+        outputPicturePtr->stride_bit_inc_cb >> 2) +
+        ((outputPicturePtr->origin_x >> 2) >> 1);
+#endif
     uint16_t luma_width    = (uint16_t)(outputPicturePtr->width);
     uint16_t chroma_width  = luma_width >> 1;
     uint16_t luma_height   = (uint16_t)(outputPicturePtr->height);
     uint16_t chroma_height = luma_height >> 1;
 
+#if SS_2B_COMPRESS
+    svt_unpack_and_2bcompress((uint16_t *)(packed[0]),
+        outputPicturePtr->stride_y,
+        outputPicturePtr->buffer_y + luma_buffer_offset,
+        outputPicturePtr->stride_y,
+        outputPicturePtr->buffer_bit_inc_y + bit_inc_luma_offset,
+        outputPicturePtr->stride_bit_inc_y >> 2,
+        luma_width,
+        luma_height);
+
+    svt_unpack_and_2bcompress((uint16_t *)(packed[1]),
+        outputPicturePtr->stride_cb,
+        outputPicturePtr->buffer_cb + chroma_buffer_offset,
+        outputPicturePtr->stride_cb,
+        outputPicturePtr->buffer_bit_inc_cb + bit_inc_chroma_offset,
+        outputPicturePtr->stride_bit_inc_cb >> 2,
+        chroma_width,
+        chroma_height);
+
+    svt_unpack_and_2bcompress((uint16_t *)(packed[2]),
+        outputPicturePtr->stride_cr,
+        outputPicturePtr->buffer_cr + chroma_buffer_offset,
+        outputPicturePtr->stride_cr,
+        outputPicturePtr->buffer_bit_inc_cr + bit_inc_chroma_offset,
+        outputPicturePtr->stride_bit_inc_cr >> 2,
+        chroma_width,
+        chroma_height);
+#else
     un_pack2d((uint16_t *)(packed[0]),
               outputPicturePtr->stride_y,
               outputPicturePtr->buffer_y + luma_buffer_offset,
@@ -1757,6 +1847,7 @@ static void unpack_2d_pic(uint8_t *packed[3], EbPictureBufferDesc *outputPicture
               outputPicturePtr->stride_bit_inc_cr,
               chroma_width,
               chroma_height);
+#endif
 }
 
 int32_t svt_aom_denoise_and_model_run(struct AomDenoiseAndModel *ctx, EbPictureBufferDesc *sd,

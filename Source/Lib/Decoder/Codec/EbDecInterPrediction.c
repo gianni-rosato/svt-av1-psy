@@ -553,14 +553,14 @@ void svt_make_inter_predictor(PartitionInfo *part_info, int32_t ref, void *src, 
 
         const EbWarpedMotionParams *wm_params = mi->motion_mode == WARPED_CAUSAL ? wm_local
                                                                                  : wm_global;
-
+#if FTR_MEM_OPT_WM
+        dec_svt_av1_warp_plane((EbWarpedMotionParams *)wm_params,
+#else
         svt_av1_warp_plane((EbWarpedMotionParams *)wm_params,
+#endif
                            highbd,
                            bit_depth,
                            src,
-#if FTR_MEM_OPT_WM
-                           NULL,
-#endif
                            ref_buf->ps_pic_buf->width >> ss_x,
                            ref_buf->ps_pic_buf->height >> ss_y,
                            src_stride,

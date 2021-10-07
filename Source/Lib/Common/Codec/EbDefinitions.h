@@ -493,13 +493,44 @@ typedef enum PdPass {
     PD_PASS_TOTAL,
 } PdPass;
 #endif
+#if CLN_LPD0_CTRL
+typedef enum ATTRIBUTE_PACKED {
+    REGULAR_PD0 = 0, // The regular PD0 path
+    LIGHT_PD0_LVL1 = 1,
+    LIGHT_PD0_LVL2 = 2,
+    LIGHT_PD0_LVL3 = 3,
+    LIGHT_PD0_LVL4 = 4,
+    VERY_LIGHT_PD0 = 5, // Lightest PD0 path, having more shortcuts than Light-PD1
+} Pd0Level;
+#endif
 #if FTR_VLPD1
+#if CLN_LPD1_LVLS
+typedef enum ATTRIBUTE_PACKED {
+    REGULAR_PD1     = -1, // The regular PD1 path; negative so that LPD1 can start at 0 (easy for indexing arrays in lpd1_ctrls)
+    LPD1_LVL_0      = 0, // Light-PD1 path, with safest feature levels
+    LPD1_LVL_1      = 1, // Light PD1 path, having more shortcuts than previous LPD1 level
+    LPD1_LVL_2      = 2, // Light PD1 path, having more shortcuts than previous LPD1 level
+    LPD1_LVL_3      = 3, // Light PD1 path, having more shortcuts than previous LPD1 level
+    LPD1_LVL_4      = 4, // Light-PD1 path, with most aggressive feature levels
+    LPD1_LEVELS     = LPD1_LVL_4 + 1 // Number of light-PD1 paths (regular PD1 isn't a light-PD1 path)
+} Pd1Level;
+#else
 typedef enum ATTRIBUTE_PACKED {
     REGULAR_PD1     = -1, // The regular PD1 path; negative so that LPD1 can start at 0 (easy for indexing arrays in lpd1_ctrls)
     LIGHT_PD1       = 0, // Light-PD1 path, which has many features off
     VERY_LIGHT_PD1  = 1, // Lightest PD1 path, having more shortcuts than Light-PD1
     LPD1_LEVELS     = VERY_LIGHT_PD1 + 1 // Number of light-PD1 paths (regular PD1 isn't a light-PD1 path)
 } Pd1Level;
+#endif
+#endif
+#if CLN_LPD1_TX_CTRLS
+typedef enum ATTRIBUTE_PACKED {
+    SKIP_TX_OFF         = 0, // No skipping TX
+    SKIP_NRST_NRST_TX   = 1, // Allow skipping NEAREST_NEAREST TX only
+    SKIP_MVP_TX         = 2, // Allow skipping TX for all MVP candidates
+    SKIP_INTER_TX       = 3, // Allow skipping TX for all INTER candidates
+    SKIP_ALL_TX         = 4  // Allow skipping TX for all candidates
+} SkipTxGroup;
 #endif
 typedef enum CandClass {
     CAND_CLASS_0,
@@ -2363,10 +2394,15 @@ void(*error_handler)(
 #define TOTAL_LEVEL_COUNT                           13
 
 //***Encoding Parameters***
+#if FTR_16K
+#define MAX_PICTURE_WIDTH_SIZE                    20000
+#define MAX_PICTURE_HEIGHT_SIZE                   10000
+#else
 #define MAX_PICTURE_WIDTH_SIZE                      4672u
 #define MAX_PICTURE_HEIGHT_SIZE                     2560u
 #define MAX_PICTURE_WIDTH_SIZE_CH                   2336u
 #define MAX_PICTURE_HEIGHT_SIZE_CH                  1280u
+#endif
 #define INTERNAL_BIT_DEPTH                          8 // to be modified
 #define MAX_SAMPLE_VALUE                            ((1 << INTERNAL_BIT_DEPTH) - 1)
 #define MAX_SAMPLE_VALUE_10BIT                      0x3FF
@@ -3020,6 +3056,9 @@ typedef struct StatStruct
     uint64_t   total_num_bits;
     uint8_t    qindex;
     uint8_t    worst_qindex;
+#if  FTR_OPT_MPASS_BYPASS_FRAMES
+    uint8_t    temporal_layer_index;
+#endif
 } StatStruct;
 #else
 typedef struct StatStruct

@@ -53,6 +53,12 @@ extern PredictionStructureConfigEntry four_level_hierarchical_pred_struct[];
 extern PredictionStructureConfigEntry five_level_hierarchical_pred_struct[];
 extern PredictionStructureConfigEntry six_level_hierarchical_pred_struct[];
 
+
+#if FIX_R2R_TPL_IXX
+uint8_t  get_tpl_level(int8_t enc_mode);
+void set_tpl_extended_controls(PictureParentControlSet *pcs_ptr, uint8_t tpl_level);
+#endif
+
 #if  OPT_ME
 void  get_max_allocated_me_refs(uint8_t mrp_level, uint8_t* max_ref_to_alloc, uint8_t* max_cand_to_alloc);
 #endif
@@ -790,7 +796,7 @@ void update_list0_only_base(SequenceControlSet *scs_ptr, PictureParentControlSet
     pcs_ptr->ref_list1_count_try = (pcs_ptr->pic_avg_variance < pcs_ptr->list0_only_base_ctrls.noise_variance_th || ahd < ahd_th) ? 0 : pcs_ptr->ref_list1_count_try;
 }
 #endif
-
+#if !CLN_INTRA_CTRLS
 #if TUNE_INTRA_LEVELS
 void set_intra_pred_controls(PictureParentControlSet* pcs_ptr, uint8_t intra_pred_mode) {
     IntraPredControls *intra_ctrls = &pcs_ptr->intra_ctrls;
@@ -840,6 +846,7 @@ void set_intra_pred_controls(PictureParentControlSet* pcs_ptr, uint8_t intra_pre
         break;
     }
 }
+#endif
 #endif
 #if FTR_MULTI_STAGE_CDEF
 uint8_t pf_gi[16] = { 0,4,8,12,16,20,24,28,32,36,40,44,48,52,56,60 };
@@ -1274,7 +1281,11 @@ void set_cdef_controls(PictureParentControlSet *pcs_ptr, uint8_t cdef_level) {
         cdef_ctrls->subsampling_factor = 4;
         cdef_ctrls->zero_fs_cost_bias = 0;
 #if OPT_CDEF
+#if CLN_REF_AREA
+        cdef_ctrls->use_skip_detector = 0;
+#else
         cdef_ctrls->use_skip_detector = 1;
+#endif
 #endif
         break;
     case 13:
@@ -1301,7 +1312,11 @@ void set_cdef_controls(PictureParentControlSet *pcs_ptr, uint8_t cdef_level) {
         cdef_ctrls->subsampling_factor = 4;
         cdef_ctrls->zero_fs_cost_bias = 0;
 #if OPT_CDEF
+#if CLN_REF_AREA
+        cdef_ctrls->use_skip_detector = 0;
+#else
         cdef_ctrls->use_skip_detector = 1;
+#endif
 #endif
         break;
     case 14:
@@ -1327,7 +1342,11 @@ void set_cdef_controls(PictureParentControlSet *pcs_ptr, uint8_t cdef_level) {
         cdef_ctrls->subsampling_factor = 4;
         cdef_ctrls->zero_fs_cost_bias = 0;
 #if OPT_CDEF
+#if CLN_REF_AREA
+        cdef_ctrls->use_skip_detector = 0;
+#else
         cdef_ctrls->use_skip_detector = 1;
+#endif
 #endif
         break;
 #endif
@@ -1357,7 +1376,11 @@ void set_cdef_controls(PictureParentControlSet *pcs_ptr, uint8_t cdef_level) {
         cdef_ctrls->subsampling_factor = 4;
         cdef_ctrls->zero_fs_cost_bias = 62;
 #if OPT_CDEF
+#if CLN_REF_AREA
+        cdef_ctrls->use_skip_detector = 0;
+#else
         cdef_ctrls->use_skip_detector = 1;
+#endif
 #endif
         break;
 #if TUNE_REMOVE_CDEF_COST_BIAS
@@ -2101,9 +2124,7 @@ EbErrorType signal_derivation_multi_processes_oq(
         pcs_ptr->ibc_mode = 0; // OFF
     }
 #endif
-#if ADJUST_LAMBDA
-    pcs_ptr->adjust_lambda_sb = (pcs_ptr->enc_mode <= ENC_M9) ? (!frm_hdr->allow_intrabc ? 1 : 0) : 0;
-#endif
+
 #if FIX_REMOVE_PD1
     // Set palette_level
 #else
@@ -2246,6 +2267,10 @@ EbErrorType signal_derivation_multi_processes_oq(
                 pcs_ptr->cdef_level = 8;
 #endif
 #endif
+#if CLN_M6_M12_FEATURES
+            else if (pcs_ptr->enc_mode <= ENC_M8)
+                pcs_ptr->cdef_level = (scs_ptr->input_resolution <= INPUT_SIZE_720p_RANGE) ? 8 : 9;
+#else
 #if TUNE_M9_11_3
             else if (pcs_ptr->enc_mode <= ENC_M7)
                 pcs_ptr->cdef_level = (scs_ptr->input_resolution <= INPUT_SIZE_720p_RANGE) ? 8 : 9;
@@ -2260,6 +2285,7 @@ EbErrorType signal_derivation_multi_processes_oq(
                 pcs_ptr->cdef_level = (scs_ptr->input_resolution <= INPUT_SIZE_720p_RANGE) ? (pcs_ptr->temporal_layer_index == 0 ? 8 : 9) : 9;
 #else
                 pcs_ptr->cdef_level = (scs_ptr->input_resolution <= INPUT_SIZE_720p_RANGE) ? 8 : 9;
+#endif
 #endif
 #endif
 #if TUNE_M8_M10 && !TUNE_M9_M10
@@ -2453,6 +2479,7 @@ EbErrorType signal_derivation_multi_processes_oq(
     else
         cm->wn_filter_mode = scs_ptr->static_config.wn_filter_mode;
 #endif
+#if !CLN_INTRA_CTRLS
 #if TUNE_INTRA_LEVELS
     if (pcs_ptr->enc_mode <= ENC_M0)
         pcs_ptr->intra_pred_mode = 1;
@@ -2521,6 +2548,7 @@ EbErrorType signal_derivation_multi_processes_oq(
     else
         pcs_ptr->intra_pred_mode = 3;
     }
+#endif
 #endif
 #if OPT_TXS_SEARCH
         // Set tx size search mode
@@ -2614,6 +2642,12 @@ EbErrorType signal_derivation_multi_processes_oq(
 #endif
 #if CLN_ADD_LIST0_ONLY_CTRL
     uint8_t list0_only_base = 0;
+#if CLN_LIST0_ONLY_BASE_IFS_MFMV
+    if (pcs_ptr->enc_mode <= ENC_M8)
+        list0_only_base = 0;
+    else
+        list0_only_base = 4;
+#else
 #if TUNE_M0_M7_MEGA_FEB && !TUNE_M10_M7
     if (pcs_ptr->enc_mode <= ENC_M6)
 #else
@@ -2663,6 +2697,7 @@ EbErrorType signal_derivation_multi_processes_oq(
 #else
         list0_only_base = (pcs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE) ? 1 : 3;
 #endif
+#if !CLN_P_BASE_LVL
 #if TUNE_NEW_M10_M11
 #if TUNE_M10_M7 && !TUNE_M10_M9_1
     else if (pcs_ptr->enc_mode <= ENC_M9)
@@ -2677,9 +2712,11 @@ EbErrorType signal_derivation_multi_processes_oq(
 #else
         list0_only_base = (pcs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE) ? 2 : 4;
 #endif
+#endif
 #if TUNE_NEW_M10_M11
     else
         list0_only_base = 4;
+#endif
 #endif
     set_list0_only_base(pcs_ptr, list0_only_base);
 #else
@@ -2700,18 +2737,52 @@ EbErrorType signal_derivation_multi_processes_oq(
             pcs_ptr->hbd_mode_decision = 2;
         else if (pcs_ptr->enc_mode <= ENC_M6)
             pcs_ptr->hbd_mode_decision = pcs_ptr->is_used_as_reference_flag ? 2 : 0;
+#if TUNE_HBD_MD
+        else if (pcs_ptr->enc_mode <= ENC_M8)
+#else
         else
+#endif
             pcs_ptr->hbd_mode_decision = pcs_ptr->temporal_layer_index == 0 ? 2 : 0;
+#if TUNE_HBD_MD
+        else
+            pcs_ptr->hbd_mode_decision = pcs_ptr->slice_type == I_SLICE ? 2 : 0;
+#endif
     else
         pcs_ptr->hbd_mode_decision = scs_ptr->static_config.enable_hbd_mode_decision;
 #if TUNE_MDS0
     pcs_ptr->max_can_count = get_max_can_count(pcs_ptr->enc_mode );
 #endif
 #if FTR_MVP_BEST_ME_LIST
+#if CLN_M10_M12_DIFFS
+    if (pcs_ptr->enc_mode <= ENC_M10)
+#else
     if (pcs_ptr->enc_mode <= ENC_M9)
+#endif
         pcs_ptr->use_best_me_unipred_cand_only = 0;
     else
         pcs_ptr->use_best_me_unipred_cand_only = 1;
+#endif
+
+#if FIX_R2R_TPL_IXX
+    //TPL level should not be modified outside of this function
+    uint8_t tpl_level = get_tpl_level(pcs_ptr->enc_mode);
+    set_tpl_extended_controls(pcs_ptr, tpl_level);
+#endif
+
+
+
+#if FTR_NEW_QPS
+    // For only CQP
+    // Set cqp_qps_model; 0: use fixed QP-Offsets, 1: QP-Offsets are funtion of the base_qp
+    // Use cqp_qps_model 1 for only Open-GOP 6L RA and for only 4K
+    if (pcs_ptr->enc_mode <= ENC_M2 && pcs_ptr->input_resolution == INPUT_SIZE_4K_RANGE &&
+        pcs_ptr->scs_ptr->static_config.intra_refresh_type == CRA_REFRESH &&
+        pcs_ptr->hierarchical_levels >= 5 &&
+        pcs_ptr->pred_structure == 2)
+
+        pcs_ptr->cqp_qps_model = 1;
+    else
+        pcs_ptr->cqp_qps_model = 0;
 #endif
     return return_error;
 }
@@ -6459,7 +6530,11 @@ void set_mini_gop_size(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs
         }
         mv_in_out_count = ABS(mv_in_out_count / count);
         pcnt_motion = pcnt_motion / count;
+#if FTR_OPT_IPP_DOWN_SAMPLE
+        uint32_t min_gop_level = (pcnt_motion > 0.8) && mv_in_out_count > (scs_ptr->static_config.ipp_ds ? 0.5 : 0.6) ? scs_ptr->static_config.max_heirachical_level - 2 : scs_ptr->static_config.max_heirachical_level;
+#else
         uint32_t min_gop_level = (pcnt_motion > 0.8) && mv_in_out_count > 0.6 ? scs_ptr->static_config.max_heirachical_level - 2 : scs_ptr->static_config.max_heirachical_level;
+#endif
         min_gop_level = MIN(scs_ptr->static_config.max_heirachical_level, min_gop_level);
         //printf("\nold: %d\t", scs_ptr->static_config.hierarchical_levels);
         scs_ptr->static_config.hierarchical_levels = min_gop_level;
@@ -7703,6 +7778,15 @@ void* picture_decision_kernel(void *input_ptr)
                                 }
                             }
                         }
+#if FTR_OPT_MPASS_BYPASS_FRAMES
+                        for (uint32_t pic_i = 0; pic_i < mg_size; ++pic_i) {
+                            if (pic_i == 0)
+                                context_ptr->mg_pictures_array_disp_order[pic_i]->first_frame_in_minigop = 1;
+                            else
+                                context_ptr->mg_pictures_array_disp_order[pic_i]->first_frame_in_minigop = 0;
+                        }
+
+#endif
                         //Process previous delayed Intra if we have one
                         pcs_ptr->is_new_gf_group = 0;
                         if (context_ptr->prev_delayed_intra) {

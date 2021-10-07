@@ -244,6 +244,26 @@
 #define MASTERING_DISPLAY_TOKEN "--mastering-display"
 #define CONTENT_LIGHT_LEVEL_TOKEN "--content-light"
 
+#if TUNE_RC
+#if FIX_2PASS_CRF
+#define ENC_MRS         -2 // Highest quality research mode (slowest)
+#define ENC_MR          -1 //Research mode with higher quality than M0
+#define ENC_M0          0
+#define ENC_M1          1
+#define ENC_M2          2
+#define ENC_M3          3
+#define ENC_M4          4
+#define ENC_M5          5
+#define ENC_M6          6
+#define ENC_M7          7
+#define ENC_M8          8
+#define ENC_M9          9
+#define ENC_M10         10
+#define ENC_M11         11
+#define ENC_M12         12
+#define ENC_M13         13
+#endif
+#endif
 #ifdef _WIN32
 static HANDLE get_file_handle(FILE *fp) { return (HANDLE)_get_osfhandle(_fileno(fp)); }
 #endif
@@ -2094,8 +2114,15 @@ EbErrorType set_two_passes_stats(EbConfig *config, EncodePass pass,
         }
         config->config.rc_firstpass_stats_out = EB_TRUE;
 #if FIX_DG
-        config->config.skip_frame_first_pass = ((config->config.enc_mode <= 4) ||
+        config->config.skip_frame_first_pass = ((config->config.enc_mode <= ENC_M4) ||
             (config->config.final_pass_rc_mode != 0)) ? 0 : 1;
+#endif
+#if FTR_OPT_IPP_DOWN_SAMPLE
+        config->org_input_padded_width = config->config.source_width;
+        config->org_input_padded_height = config->config.source_height;
+        // To make sure the down scaled video has width and height of multiple of 2
+        config->input_padded_width = config->config.source_width = (((config->config.source_width >> 1) >> 1) << 1);
+        config->input_padded_height = config->config.source_height = (((config->config.source_height >> 1) >> 1) << 1);
 #endif
         break;
     }
@@ -2112,8 +2139,14 @@ EbErrorType set_two_passes_stats(EbConfig *config, EncodePass pass,
         config->config.rc_middlepass_stats_out = EB_TRUE;
         config->config.rc_twopass_stats_in = *rc_twopass_stats_in;
 #if FTR_OPT_MPASS_DOWN_SAMPLE
-        config->input_padded_width = config->config.source_width = config->config.source_width >> 1;
-        config->input_padded_height = config->config.source_height = config->config.source_height >> 1;
+        config->config.rc_middlepass_ds_stats_out = config->config.enc_mode > ENC_M8 ? 1 : 0;
+        if (config->config.rc_middlepass_ds_stats_out) {
+            config->org_input_padded_width = config->config.source_width;
+            config->org_input_padded_height = config->config.source_height;
+            // To make sure the down scaled video has width and height of multiple of 2
+            config->input_padded_width = config->config.source_width = (((config->config.source_width >> 1) >> 1) << 1);
+            config->input_padded_height = config->config.source_height = (((config->config.source_height >> 1) >> 1) << 1);
+        }
 #endif
 #if FIX_DG
         config->config.skip_frame_first_pass = 0;
@@ -2276,6 +2309,16 @@ static EbErrorType verify_settings(EbConfig *config, uint32_t channel_number) {
             return EB_ErrorBadParameter;
         }
     }
+#if DIS_VBR_HL0
+    if (config->config.hierarchical_levels == 0 && config->config.rate_control_mode == 1) {
+        fprintf(
+            config->error_log_file,
+            "Error instance %u: VBR encode for hierarchical_levels %u is not supported\n",
+            channel_number + 1,
+            config->config.hierarchical_levels);
+        return EB_ErrorBadParameter;
+    }
+#endif
 #if !FIX_2PASS_CRF
     if (pass != DEFAULT && config->config.rate_control_mode == 0) {
         fprintf(
@@ -2524,6 +2567,7 @@ static EbBool check_two_pass_conflicts(int32_t argc, char *const argv[]) {
     }
     return EB_FALSE;
 }
+#if !TUNE_RC
 #if FIX_2PASS_CRF
 #define ENC_MRS         -2 // Highest quality research mode (slowest)
 #define ENC_MR          -1 //Research mode with higher quality than M0
@@ -2541,6 +2585,7 @@ static EbBool check_two_pass_conflicts(int32_t argc, char *const argv[]) {
 #define ENC_M11         11
 #define ENC_M12         12
 #define ENC_M13         13
+#endif
 #endif
 #if TUNE_MULTI_PASS
 uint32_t get_passes(int32_t argc, char *const argv[], EncodePass pass[MAX_ENCODE_PASS], MultiPassModes *multi_pass_mode) {
@@ -2586,6 +2631,9 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncodePass pass[MAX_ENCODE
         if (ip > -1 && ip < 16)
             passes = 1;
 #endif
+#if FTR_OP_TEST
+        passes = 1;
+#endif
 #if TUNE_MULTI_PASS
         *multi_pass_mode = passes == 2 ? TWO_PASS_IPP_FINAL : SINGLE_PASS;
 #endif
@@ -2609,7 +2657,11 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncodePass pass[MAX_ENCODE
         }
         passes = strtol(config_string, NULL, 0);
 #if TUNE_MULTI_PASS
+#if TUNE_RC
+        *multi_pass_mode = (passes == 2) ? TWO_PASS_IPP_FINAL : SINGLE_PASS;
+#else
         *multi_pass_mode = SINGLE_PASS;
+#endif
         if (rc_mode > 1) {
             if (passes == 3) {
                 passes = 2;
@@ -2622,6 +2674,12 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncodePass pass[MAX_ENCODE
                 *multi_pass_mode = SINGLE_PASS;
         }
         else {
+#if TUNE_RC
+            if (passes > 1) {
+                passes = 3;
+                *multi_pass_mode = THREE_PASS_IPP_SAMEPRED_FINAL;
+            }
+#else
             if (passes > 1) {
                 if (enc_mode > ENC_M10) {
                     passes = 2;
@@ -2638,7 +2696,8 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncodePass pass[MAX_ENCODE
                     passes = 3;
                     *multi_pass_mode = THREE_PASS_IPP_SAMEPRED_FINAL;
                 }
-            }
+        }
+#endif
         }
 #else
         if (enc_mode > ENC_M7  && passes == 3) {
@@ -2806,8 +2865,8 @@ int32_t compute_frames_to_be_encoded(EbConfig *config) {
         file_size = ftello(config->input_file);
         fseeko(config->input_file, curr_loc, SEEK_SET); // seek back to that location
     }
-#if FTR_OP_TEST
-        frame_size = (config->input_padded_width << 1) * (config->input_padded_height << 1); // Luma
+#if FTR_OP_TEST && (FTR_OPT_MPASS_DOWN_SAMPLE || FTR_OPT_IPP_DOWN_SAMPLE)
+    frame_size = (config->org_input_padded_width) * (config->org_input_padded_height); // Luma
 #else
     frame_size = config->input_padded_width * config->input_padded_height; // Luma
 #endif
@@ -3241,9 +3300,12 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EncChannel *chan
 
                 // Assuming no errors, add padding to width and height
                 if (c->return_error == EB_ErrorNone) {
-#if FTR_OP_TEST
-                    config->config.source_width = config->config.source_width >> 1;
-                    config->config.source_height = config->config.source_height >> 1;
+#if FTR_OP_TEST && (FTR_OPT_MPASS_DOWN_SAMPLE || FTR_OPT_IPP_DOWN_SAMPLE)
+                    config->org_input_padded_width  = config->config.source_width;
+                    config->org_input_padded_height = config->config.source_height;
+                    // To make sure the down scaled video has width and height of multiple of 2
+                    config->config.source_width = (((config->config.source_width >> 1)>>1)<<1);
+                    config->config.source_height = (((config->config.source_height >> 1) >> 1) << 1);
 #endif
                     config->input_padded_width  = config->config.source_width;
                     config->input_padded_height = config->config.source_height;

@@ -143,8 +143,13 @@ typedef struct SequenceControlSet {
     /*!< Super block parameters set for the stream */
     uint8_t  sb_sz;
     uint8_t  max_sb_depth;
+#if FTR_16K
+    uint16_t  pic_width_in_sb;
+    uint16_t  picture_height_in_sb;
+#else
     uint8_t  pic_width_in_sb;
     uint8_t  picture_height_in_sb;
+#endif
     uint16_t sb_total_count;
     uint16_t sb_size_pix;
     uint16_t sb_tot_cnt;
@@ -246,6 +251,7 @@ typedef struct SequenceControlSet {
     uint8_t rc_stat_gen_pass_mode;
 #endif
 #if FTR_NEW_QPS
+    int cqp_base_q_tf;
     int cqp_base_q;
 #endif
 } SequenceControlSet;
@@ -293,6 +299,11 @@ inline static EbBool use_output_stat(const SequenceControlSet *scs_ptr) {
 inline static EbBool is_middle_pass(const SequenceControlSet *scs_ptr) {
     return scs_ptr->static_config.rc_middlepass_stats_out;
 }
+#if FTR_OPT_MPASS_DOWN_SAMPLE
+inline static EbBool is_middle_pass_ds(const SequenceControlSet *scs_ptr) {
+    return scs_ptr->static_config.rc_middlepass_ds_stats_out;
+}
+#endif
 #endif
 #ifdef __cplusplus
 }

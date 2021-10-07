@@ -1084,7 +1084,7 @@ static const int percents[FIXED_QP_OFFSET_COUNT] = { 76, 60, 30, 15, 8 };
 #endif
 
 #if FTR_NEW_QPS
-int av1_get_q_index_from_qstep_ratio(int leaf_qindex, double qstep_ratio, const int bit_depth) {
+int svt_av1_get_q_index_from_qstep_ratio(int leaf_qindex, double qstep_ratio, const int bit_depth) {
     const double leaf_qstep = svt_av1_dc_quant_qtx(leaf_qindex, 0, bit_depth);
     const double target_qstep = leaf_qstep * qstep_ratio;
     int qindex = leaf_qindex;
@@ -1101,19 +1101,23 @@ int av1_get_q_index_from_qstep_ratio(int leaf_qindex, double qstep_ratio, const 
  * Assign the q_index per frame.
  * Used in the one pass encoding with no look ahead
  ******************************************************/
+#if FTR_NEW_QPS
+static int cqp_qindex_calc(PictureControlSet* pcs_ptr, int qindex) {
+#else
 static int cqp_qindex_calc(PictureControlSet *pcs_ptr, RATE_CONTROL *rc, int qindex) {
+#endif
     SequenceControlSet *scs_ptr = pcs_ptr->parent_pcs_ptr->scs_ptr;
-
+#if !FTR_NEW_QPS //--
     int       active_best_quality  = 0;
     int       active_worst_quality = qindex;
+#endif
     int       q;
     const int bit_depth = scs_ptr->static_config.encoder_bit_depth;
 
-#if FTR_NEW_QPS
-    // Use the libaom QPS model for only Open-GOP 6L and for only 4K
-    if (pcs_ptr->enc_mode <= ENC_M2 &&
-        scs_ptr->static_config.intra_refresh_type == CRA_REFRESH &&
-        pcs_ptr->parent_pcs_ptr->hierarchical_levels >= 5) {
+#if FTR_NEW_QPS //--
+    if (pcs_ptr->parent_pcs_ptr->cqp_qps_model) {
+
+        int active_worst_quality = qindex;
 
         if (pcs_ptr->temporal_layer_index == 0)
         {
@@ -1124,7 +1128,7 @@ static int cqp_qindex_calc(PictureControlSet *pcs_ptr, RATE_CONTROL *rc, int qin
                 0.2 +
                 (1.0 - (double)active_worst_quality / MAXQ) * qratio_grad;
 
-            q = scs_ptr->cqp_base_q = av1_get_q_index_from_qstep_ratio(active_worst_quality, qstep_ratio, bit_depth);
+            q = scs_ptr->cqp_base_q = svt_av1_get_q_index_from_qstep_ratio(active_worst_quality, qstep_ratio, bit_depth);
         }
         else if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag) {
             int this_height = pcs_ptr->parent_pcs_ptr->temporal_layer_index + 1;
@@ -1140,27 +1144,24 @@ static int cqp_qindex_calc(PictureControlSet *pcs_ptr, RATE_CONTROL *rc, int qin
         }
     }
     else {
+
+        int active_best_quality = 0;
+        int active_worst_quality = qindex;
+
         double q_val = svt_av1_convert_qindex_to_q(qindex, bit_depth);
 
         int offset_idx = -1;
         if (!pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag)
             offset_idx = -1;
-#if FIX_QPS_OPEN_GOP
         else if (pcs_ptr->parent_pcs_ptr->idr_flag)
-#else
-        else if (pcs_ptr->slice_type == I_SLICE)
-#endif
             offset_idx = 0;
         else
             offset_idx = MIN(pcs_ptr->temporal_layer_index + 1, FIXED_QP_OFFSET_COUNT - 1);
 
         const double q_val_target = (offset_idx == -1) ?
             q_val :
-#if FTR_6L_QPS
             MAX(q_val - (q_val * percents[pcs_ptr->parent_pcs_ptr->hierarchical_levels <= 4][offset_idx] / 100), 0.0);
-#else
-            MAX(q_val - (q_val * percents[offset_idx] / 100), 0.0);
-#endif
+
         const int32_t delta_qindex = svt_av1_compute_qdelta(
             q_val,
             q_val_target,
@@ -1169,7 +1170,6 @@ static int cqp_qindex_calc(PictureControlSet *pcs_ptr, RATE_CONTROL *rc, int qin
         active_best_quality = (int32_t)(qindex + delta_qindex);
         q = active_best_quality;
         clamp(q, active_best_quality, active_worst_quality);
-
 }
 #else
     // Since many frames can be processed at the same time, storing/using arf_q in rc param is not sufficient and will create a run to run.
@@ -1212,7 +1212,9 @@ static int cqp_qindex_calc(PictureControlSet *pcs_ptr, RATE_CONTROL *rc, int qin
     return q;
 }
 #if ADJUST_LAMBDA
-const int64_t q_factor[6] = { 100,110,120,138,140,150 };
+const int64_t q_factor[2][6] = {
+    { 100,110,120,138,140,150 },
+    { 100,110,112,125,135,140 } };
 #endif
 // The table we use is modified from libaom; here is the original, from libaom:
 // static const int rd_frame_type_factor[FRAME_UPDATE_TYPES] = { 128, 144, 128,
@@ -1240,11 +1242,10 @@ int compute_rdmult_sse(PictureControlSet *pcs_ptr, uint8_t q_index, uint8_t bit_
         rdmult                 = (rdmult * rd_frame_type_factor[gf_update_type]) >> 7;
     }
 #if ADJUST_LAMBDA
-    if (pcs_ptr->parent_pcs_ptr->adjust_lambda_sb) {
-        int qdiff = q_index - quantizer_to_qindex[pcs_ptr->parent_pcs_ptr->picture_qp];
-        int8_t qidx = (qdiff < -8) ? 0 : (qdiff < -4) ? 1 : (qdiff < -2) ? 2 : (qdiff <= 4) ? 3 : 4;
-        rdmult = (rdmult * q_factor[qidx]) >> 7;
-    }
+    assert(pcs_ptr->parent_pcs_ptr->tpl_ctrls.vq_adjust_lambda_sb > 0);
+    int qdiff = q_index - quantizer_to_qindex[pcs_ptr->parent_pcs_ptr->picture_qp];
+    int8_t qidx = (qdiff < -8) ? 0 : (qdiff < -4) ? 1 : (qdiff < -2) ? 2 : (qdiff <= 4) ? 3 : 4;
+    rdmult = (rdmult * q_factor[pcs_ptr->parent_pcs_ptr->tpl_ctrls.vq_adjust_lambda_sb-1][qidx]) >> 7;
 #endif
     return (int)rdmult;
 }
@@ -3722,7 +3723,11 @@ void *rate_control_kernel(void *input_ptr) {
                             new_qindex = rc_pick_q_and_bounds(pcs_ptr);
                         } else
 #if FTR_RC_CAP
+#if FTR_NEW_QPS
+                            new_qindex = cqp_qindex_calc(pcs_ptr, qindex);
+#else
                             new_qindex = cqp_qindex_calc(pcs_ptr, rc, qindex);
+#endif
 #else
                             new_qindex = cqp_qindex_calc(pcs_ptr, &rc, qindex);
 #endif

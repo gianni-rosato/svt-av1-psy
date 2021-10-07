@@ -246,8 +246,21 @@ static int get_twopass_worst_quality(PictureParentControlSet *pcs_ptr, const dou
   TWO_PASS *const twopass = &scs_ptr->twopass;
   RATE_CONTROL *const rc = &encode_context_ptr->rc;
   const RateControlCfg *const rc_cfg = &encode_context_ptr->rc_cfg;
+#if FTR_OPT_MPASS_DOWN_SAMPLE
+  uint32_t mb_cols;
+  uint32_t mb_rows;
+  if (is_middle_pass_ds(scs_ptr)) {
+      mb_cols = 2 * (scs_ptr->seq_header.max_frame_width + 16 - 1) / 16;
+      mb_rows = 2 * (scs_ptr->seq_header.max_frame_height + 16 - 1) / 16;
+  }
+  else {
+      mb_cols = (scs_ptr->seq_header.max_frame_width + 16 - 1) / 16;
+      mb_rows = (scs_ptr->seq_header.max_frame_height + 16 - 1) / 16;
+  }
+#else
   const uint32_t mb_cols = (scs_ptr->seq_header.max_frame_width  + 16 - 1) / 16;
   const uint32_t mb_rows = (scs_ptr->seq_header.max_frame_height + 16 - 1) / 16;
+#endif
   inactive_zone = fclamp(inactive_zone, 0.0, 1.0);
 
   if (section_target_bandwidth <= 0) {
@@ -2607,8 +2620,21 @@ static void process_first_pass_stats(PictureParentControlSet *pcs_ptr,
   TWO_PASS *const twopass = &scs_ptr->twopass;
   RATE_CONTROL *const rc = &encode_context_ptr->rc;
   const RateControlCfg *const rc_cfg = &encode_context_ptr->rc_cfg;
+#if FTR_OPT_MPASS_DOWN_SAMPLE
+  uint32_t mb_cols;
+  uint32_t mb_rows;
+  if (is_middle_pass_ds(scs_ptr)) {
+      mb_cols = 2*(scs_ptr->seq_header.max_frame_width + 16 - 1) / 16;
+      mb_rows = 2*(scs_ptr->seq_header.max_frame_height + 16 - 1) / 16;
+  }
+  else {
+      mb_cols = (scs_ptr->seq_header.max_frame_width + 16 - 1) / 16;
+      mb_rows = (scs_ptr->seq_header.max_frame_height + 16 - 1) / 16;
+  }
+#else
   const uint32_t mb_cols = (scs_ptr->seq_header.max_frame_width  + 16 - 1) / 16;
   const uint32_t mb_rows = (scs_ptr->seq_header.max_frame_height + 16 - 1) / 16;
+#endif
 #if TUNE_MULTI_PASS
     if ((rc_cfg->mode != AOM_Q || is_middle_pass(scs_ptr)) && pcs_ptr->picture_number == 0 &&
 #else
@@ -2625,14 +2651,7 @@ static void process_first_pass_stats(PictureParentControlSet *pcs_ptr,
           *twopass->stats_buf_ctx->total_stats;
     }
     // Special case code for first frame.
-#if FTR_OPT_MPASS_DOWN_SAMPLE
-    int section_target_bandwidth;
-    section_target_bandwidth = get_section_target_bandwidth(pcs_ptr);
-    /*if (is_middle_pass(scs_ptr))
-        section_target_bandwidth /= 3;*/
-#else
     const int section_target_bandwidth = get_section_target_bandwidth(pcs_ptr);
-#endif
     const double section_length =
         twopass->stats_buf_ctx->total_left_stats->count;
     const double section_error =
@@ -3079,10 +3098,22 @@ void set_rc_param(SequenceControlSet *scs_ptr) {
     FrameInfo *frame_info = &encode_context_ptr->frame_info;
 
     const int is_vbr = scs_ptr->static_config.rate_control_mode == 1;
-    frame_info->frame_width = scs_ptr->seq_header.max_frame_width;
-    frame_info->frame_height = scs_ptr->seq_header.max_frame_height;
-    frame_info->mb_cols = (scs_ptr->seq_header.max_frame_width + 16 - 1) / 16;
-    frame_info->mb_rows = (scs_ptr->seq_header.max_frame_height + 16 - 1) / 16;
+#if FTR_OPT_MPASS_DOWN_SAMPLE
+    if (is_middle_pass_ds(scs_ptr)) {
+        frame_info->frame_width = scs_ptr->seq_header.max_frame_width<<1;
+        frame_info->frame_height = scs_ptr->seq_header.max_frame_height<<1;
+        frame_info->mb_cols = ((scs_ptr->seq_header.max_frame_width + 16 - 1) / 16)<<1;
+        frame_info->mb_rows = ((scs_ptr->seq_header.max_frame_height + 16 - 1) / 16)<<1;
+    }
+    else {
+#endif
+        frame_info->frame_width = scs_ptr->seq_header.max_frame_width;
+        frame_info->frame_height = scs_ptr->seq_header.max_frame_height;
+        frame_info->mb_cols = (scs_ptr->seq_header.max_frame_width + 16 - 1) / 16;
+        frame_info->mb_rows = (scs_ptr->seq_header.max_frame_height + 16 - 1) / 16;
+#if FTR_OPT_MPASS_DOWN_SAMPLE
+    }
+#endif
     frame_info->num_mbs = frame_info->mb_cols * frame_info->mb_rows;
     frame_info->bit_depth = scs_ptr->static_config.encoder_bit_depth;
     // input config  from options
@@ -3134,8 +3165,15 @@ static void read_stat_from_file(SequenceControlSet *scs_ptr) {
     TWO_PASS *const twopass = &scs_ptr->twopass;
     FIRSTPASS_STATS *this_frame = (FIRSTPASS_STATS *)twopass->stats_in;
     uint64_t   total_num_bits = 0;
-
+#if FTR_OPT_MPASS_BYPASS_FRAMES
+    uint64_t    previous_num_bits[MAX_TEMPORAL_LAYERS] = { 0 };
+#endif
     while (this_frame < twopass->stats_buf_ctx->stats_in_end){
+#if FTR_OPT_MPASS_BYPASS_FRAMES
+        if (this_frame->stat_struct.total_num_bits == 0)
+            this_frame->stat_struct.total_num_bits = previous_num_bits[MAX((int)this_frame->stat_struct.temporal_layer_index, 0)];
+        previous_num_bits[this_frame->stat_struct.temporal_layer_index] = this_frame->stat_struct.total_num_bits;
+#endif
 #if FTR_MULTI_PASS_API
         total_num_bits += this_frame->stat_struct.total_num_bits;
 #endif

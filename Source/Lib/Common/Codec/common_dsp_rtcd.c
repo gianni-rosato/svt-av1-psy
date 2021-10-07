@@ -523,7 +523,9 @@ void setup_common_rtcd_internal(CPU_FLAGS flags) {
 
     SET_AVX2(svt_copy_rect8_8bit_to_16bit, svt_copy_rect8_8bit_to_16bit_c, svt_copy_rect8_8bit_to_16bit_avx2);
     SET_AVX2(svt_av1_highbd_warp_affine, svt_av1_highbd_warp_affine_c, svt_av1_highbd_warp_affine_avx2);
-
+#if FTR_MEM_OPT_WM
+    SET_AVX2(dec_svt_av1_highbd_warp_affine, dec_svt_av1_highbd_warp_affine_c, dec_svt_av1_highbd_warp_affine_avx2);
+#endif
     SET_AVX2(svt_av1_warp_affine, svt_av1_warp_affine_c, svt_av1_warp_affine_avx2);
 
     SET_SSE2(svt_aom_highbd_lpf_horizontal_4, svt_aom_highbd_lpf_horizontal_4_c, svt_aom_highbd_lpf_horizontal_4_sse2);

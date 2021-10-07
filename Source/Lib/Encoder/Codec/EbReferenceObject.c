@@ -409,6 +409,9 @@ void release_pa_reference_objects(SequenceControlSet *scs_ptr, PictureParentCont
         svt_release_object(pcs_ptr->eb_y8b_wrapper_ptr);
 #endif
     }
-
+#if FIX_I51
+    // Mark that the PCS released PA references
+    pcs_ptr->reference_released = 1;
+#endif
     return;
 }

@@ -2044,11 +2044,19 @@ void generate_av1_mvp_table(ModeDecisionContext *context_ptr, BlkStruct *blk_ptr
         // Can skip MVP generation for unipred refs if not using any unipred candidates; only supported for LPD1
         // If block is intra bordered we only inject NEW unipred, so must generate MVPs
         // If there is only 1 ME candidate, generate MVPs because that candidate will be injected (even if unipred)
+#if CLN_CAND_REDUCTION_CTRLS
+        if (context_ptr->cand_reduction_ctrls.reduce_unipred_candidates >= 3 &&
+#else
         if (context_ptr->reduce_unipred_candidates >= 3 &&
+#endif
             context_ptr->lpd1_ctrls.pd1_level > REGULAR_PD1 &&
+#if OPT_LPD1_PME
             !context_ptr->updated_enable_pme &&
+#endif
             !context_ptr->is_intra_bordered &&
             frm_hdr->reference_mode != SINGLE_REFERENCE &&
+            !frm_hdr->use_ref_frame_mvs &&  //MFMV generation re-uses projection information when symetric references are used.
+                                            //so could not be skipped, as BWD or LAST_BWD might reuse projection info from LAST
             rf[1] == NONE_FRAME &&
             context_ptr->bipred_available &&
             pcs_ptr->parent_pcs_ptr->pa_me_data->me_results[context_ptr->me_sb_addr]->total_me_candidate_index[context_ptr->me_block_offset] > 1) {

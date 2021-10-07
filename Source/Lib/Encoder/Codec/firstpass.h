@@ -233,7 +233,6 @@ typedef struct {
 
     // Error score of frames still to be coded in kf group
     int64_t kf_group_error_left;
-
     // Over time correction for bits per macro block estimation
     double bpm_factor;
 

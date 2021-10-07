@@ -649,17 +649,17 @@ void *initial_rate_control_kernel(void *input_ptr) {
             //   1. TPL is OFF and
             //   2. super-res mode is NONE or FIXED or RANDOM.
             //     For other super-res modes, pa_ref_objs are needed in TASK_SUPERRES_RE_ME task
-#if FIX_LAD_MG_0_HANG
+#if FIX_LAD_MG_0_HANG && !FIX_I51
             // Release Pa Ref if mg_lad is 0 and P slice (not belonging to any TPL group)
             uint8_t release_pa_ref = 0;
             if (scs_ptr->static_config.enable_tpl_la == 0 && scs_ptr->static_config.superres_mode <= SUPERRES_RANDOM)
-                release_pa_ref =1;
+                release_pa_ref = 1;
 #if FTR_LAD_INPUT && !FIX_VBR_R2R
             else if (scs_ptr->tpl_lad_mg == 0 && pcs_ptr->slice_type == P_SLICE)
 #else
             else if (scs_ptr->lad_mg == 0 && pcs_ptr->slice_type == P_SLICE)
 #endif
-                release_pa_ref =1;
+                release_pa_ref = 1;
 
             if (release_pa_ref)
 #else

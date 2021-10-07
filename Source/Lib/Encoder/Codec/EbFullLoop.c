@@ -1750,8 +1750,13 @@ int32_t av1_quantize_inv_quantize(
     }
 
     *count_non_zero_coeffs = *eob;
+#if CLN_RATE_EST_CTRLS
+    if (!md_context->rate_est_ctrls.update_skip_ctx_dc_sign_ctx)
+        return 0;
+#else
     if (md_context->shut_skip_ctx_dc_sign_update)
         return 0;
+#endif
     // Derive cul_level
     int32_t              cul_level = 0;
     const int16_t *const scan      = scan_order->scan;
@@ -1832,6 +1837,15 @@ void full_loop_chroma_light_pd1(
     if (context_ptr->use_tx_shortcuts_mds3) {
         pf_shape = N4_SHAPE;
     }else {
+#if CLN_LPD1_TX_CTRLS
+        uint8_t use_pfn4_cond = 0;
+        if (context_ptr->lpd1_tx_ctrls.use_uv_shortcuts_on_y_coeffs) {
+            const uint16_t th = ((context_ptr->blk_geom->tx_width_uv[0][0] >> 4) * (context_ptr->blk_geom->tx_height_uv[0][0] >> 4));
+            use_pfn4_cond = (candidate_buffer->candidate_ptr->count_non_zero_coeffs < th) || !candidate_buffer->candidate_ptr->block_has_coeff ? 1 : 0;
+        }
+        if (use_pfn4_cond)
+            pf_shape = N4_SHAPE;
+#else
         uint8_t use_pfn4_cond = 0;
         if (context_ptr->reduce_last_md_stage_candidate <= 3)
             use_pfn4_cond = !candidate_buffer->candidate_ptr->block_has_coeff ? 1 : 0;
@@ -1842,6 +1856,7 @@ void full_loop_chroma_light_pd1(
         }
         if (use_pfn4_cond)
             pf_shape = N4_SHAPE;
+#endif
     }
 #if !OPT_REMOVE_TXT_LPD1
     context_ptr->cb_txb_skip_context = 0;
@@ -2191,15 +2206,30 @@ void full_loop_r(SuperBlock *sb_ptr, ModeDecisionCandidateBuffer *candidate_buff
 #endif
             pf_shape = N4_SHAPE;
         }
+#if CLN_REG_PD1_TX_CTRLS
+       // for chroma path, use luma coeff info to make shortcut decisions (available even if MDS1 is skipped)
+       else if (context_ptr->tx_shortcut_ctrls.apply_pf_on_coeffs && context_ptr->md_stage == MD_STAGE_3) {
+           uint8_t use_pfn4_cond = 0;
+
+           const uint16_t th = ((context_ptr->blk_geom->tx_width_uv[tx_depth][txb_itr] >> 4) *
+               (context_ptr->blk_geom->tx_height_uv[tx_depth][txb_itr] >> 4));
+           use_pfn4_cond = (candidate_buffer->candidate_ptr->count_non_zero_coeffs < th) || !candidate_buffer->candidate_ptr->block_has_coeff ? 1 : 0;
+
+           if (use_pfn4_cond)
+               pf_shape = N4_SHAPE;
+       }
+#else
         // only have coeff info if mds1/2 were performed
 #if OPT_UV_USE_Y_COEFF
        else if (context_ptr->reduce_last_md_stage_candidate && context_ptr->md_stage == MD_STAGE_3) {
 #else
         else if (context_ptr->reduce_last_md_stage_candidate && context_ptr->md_stage == MD_STAGE_3 && context_ptr->perform_mds1) {
 #endif
+#endif
 #else
         if (context_ptr->reduce_last_md_stage_candidate && context_ptr->md_stage == MD_STAGE_3) {
 #endif
+#if !CLN_REG_PD1_TX_CTRLS
 #if FTR_OPT_PF_PD1
             uint8_t use_pfn4_cond = 0;
             if (context_ptr->reduce_last_md_stage_candidate <= 3)
@@ -2226,6 +2256,7 @@ void full_loop_r(SuperBlock *sb_ptr, ModeDecisionCandidateBuffer *candidate_buff
             }
 #endif
         }
+#endif
         //    This function replaces the previous Intra Chroma mode if the LM fast
         //    cost is better.
         //    *Note - this might require that we have inv transform in the loop
@@ -2234,7 +2265,11 @@ void full_loop_r(SuperBlock *sb_ptr, ModeDecisionCandidateBuffer *candidate_buff
 
             context_ptr->cb_txb_skip_context = 0;
             context_ptr->cb_dc_sign_context = 0;
+#if CLN_RATE_EST_CTRLS
+            if (context_ptr->rate_est_ctrls.update_skip_ctx_dc_sign_ctx)
+#else
             if (!context_ptr->shut_skip_ctx_dc_sign_update)
+#endif
                 get_txb_ctx(pcs_ptr,
                     COMPONENT_CHROMA,
                     context_ptr->cb_dc_sign_level_coeff_neighbor_array,
@@ -2427,7 +2462,11 @@ void full_loop_r(SuperBlock *sb_ptr, ModeDecisionCandidateBuffer *candidate_buff
 
             context_ptr->cr_txb_skip_context = 0;
             context_ptr->cr_dc_sign_context = 0;
+#if CLN_RATE_EST_CTRLS
+            if (context_ptr->rate_est_ctrls.update_skip_ctx_dc_sign_ctx)
+#else
             if (!context_ptr->shut_skip_ctx_dc_sign_update)
+#endif
                 get_txb_ctx(pcs_ptr,
                     COMPONENT_CHROMA,
                     context_ptr->cr_dc_sign_level_coeff_neighbor_array,
@@ -3051,7 +3090,7 @@ void compute_depth_costs(ModeDecisionContext *context_ptr, SequenceControlSet *s
         above_split_rate;
 }
 
-#if FTR_VLPD0
+#if FTR_VLPD0 && !CLN_MERGE_LPD0_VLPD0
 /*
  * Compare costs between depths, then update cost/splitting info in the parent blocks
  * to reflect chosen partition.  Cost comparison only performed when the all quadrants

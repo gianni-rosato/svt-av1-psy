@@ -82,9 +82,13 @@ static EbErrorType allocate_frame_buffer(EbConfig *config, uint8_t *p_buffer) {
 #if FTR_OP_TEST
     if(1)
 #else
-    if (config->config.rc_middlepass_stats_out)
+#if FTR_OPT_IPP_DOWN_SAMPLE
+    if (config->config.rc_middlepass_ds_stats_out || config->config.rc_firstpass_stats_out)
+#else
+    if (config->config.rc_middlepass_ds_stats_out)
 #endif
-        luma_8bit_size = (config->input_padded_width<<1) * (config->input_padded_height << 1) *(1 << ten_bit_packed_mode);
+#endif
+        luma_8bit_size = (config->org_input_padded_width) * (config->org_input_padded_height) *(1 << ten_bit_packed_mode);
     else
         luma_8bit_size = config->input_padded_width * config->input_padded_height *(1 << ten_bit_packed_mode);
 #else
@@ -118,11 +122,15 @@ static EbErrorType allocate_frame_buffer(EbConfig *config, uint8_t *p_buffer) {
 #if FTR_OP_TEST
     if (1) {
 #else
-    if (config->config.rc_middlepass_stats_out) {
+#if FTR_OPT_IPP_DOWN_SAMPLE
+    if (config->config.rc_middlepass_ds_stats_out || config->config.rc_firstpass_stats_out) {
+#else
+    if (config->config.rc_middlepass_ds_stats_out) {
 #endif
-        input_ptr->y_stride = (config->input_padded_width << 1);
-        input_ptr->cr_stride = (config->input_padded_width << 1) >> subsampling_x;
-        input_ptr->cb_stride = (config->input_padded_width << 1) >> subsampling_x;
+#endif
+        input_ptr->y_stride = (config->org_input_padded_width);
+        input_ptr->cr_stride = (config->org_input_padded_width) >> subsampling_x;
+        input_ptr->cb_stride = (config->org_input_padded_width) >> subsampling_x;
     }
     else {
         input_ptr->y_stride = config->input_padded_width;
@@ -258,8 +266,29 @@ EbErrorType allocate_output_recon_buffers(EbConfig *config, EbAppContext *callba
 
 EbErrorType preload_frames_info_ram(EbConfig *config) {
     EbErrorType         return_error        = EB_ErrorNone;
-    int32_t             input_padded_width  = config->input_padded_width;
+#if FTR_OPT_MPASS_DOWN_SAMPLE
+    int32_t             input_padded_width;
+    int32_t             input_padded_height;
+#if FTR_OP_TEST
+    if (1){
+#else
+#if FTR_OPT_IPP_DOWN_SAMPLE
+    if (config->config.rc_middlepass_ds_stats_out || config->config.rc_firstpass_stats_out) {
+#else
+    if (config->config.rc_middlepass_ds_stats_out) {
+#endif
+#endif
+        input_padded_width = config->org_input_padded_width;
+        input_padded_height = config->org_input_padded_height;
+    }
+    else {
+        input_padded_width = config->input_padded_width;
+        input_padded_height = config->input_padded_height;
+    }
+#else
+    int32_t             input_padded_width = config->input_padded_width;
     int32_t             input_padded_height = config->input_padded_height;
+#endif
     size_t              read_size;
     const EbColorFormat color_format =
         (EbColorFormat)config->config.encoder_color_format; // Chroma subsampling

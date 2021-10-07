@@ -213,8 +213,13 @@ int mv_err_cost(const MV *mv, const MV *ref, const int *mvjcost, int *mvcost[2],
 
 static int mvsad_err_cost(const IntraBcContext *x, const MV *mv, const MV *ref, int sad_per_bit) {
 #if  FTR_SIMPLIFIED_MV_COST
+#if CLN_RATE_EST_CTRLS
+    if (x->approx_inter_rate)
+        return mvsad_err_cost_light(mv, ref);
+#else
     if (x->use_low_precision_cost_estimation)
         return mvsad_err_cost_light(mv, ref);
+#endif
 #endif
     const MV diff = {(mv->row - ref->row) * 8, (mv->col - ref->col) * 8};
     return ROUND_POWER_OF_TWO(
@@ -266,7 +271,11 @@ int svt_av1_get_mvpred_var(const IntraBcContext *x, const MV *best_mv, const MV 
     const MV                  mv      = {best_mv->row * 8, best_mv->col * 8};
     unsigned int              unused;
 #if  FTR_SIMPLIFIED_MV_COST
+#if CLN_RATE_EST_CTRLS
+    if (x->approx_inter_rate)
+#else
     if (x->use_low_precision_cost_estimation)
+#endif
         return vfp->vf(what->buf,
             what->stride,
             get_buf_from_mv(in_what, best_mv),
@@ -724,7 +733,11 @@ static int get_obmc_mvpred_var(const IntraBcContext *x, const int32_t *wsrc, con
     const MV            mv      = {best_mv->row * 8, best_mv->col * 8};
     unsigned int        unused;
 #if  FTR_SIMPLIFIED_MV_COST
+#if CLN_RATE_EST_CTRLS
+    if (x->approx_inter_rate)
+#else
     if (x->use_low_precision_cost_estimation)
+#endif
         return vfp->ovf(get_buf_from_mv((const struct Buf2D *)in_what, best_mv),
             in_what->stride,
             wsrc,
@@ -796,7 +809,11 @@ int svt_av1_obmc_full_pixel_search(ModeDecisionContext *context_ptr, IntraBcCont
     const int      search_range = 8;
     *dst_mv                     = *mvp_full;
 #if  FTR_SIMPLIFIED_MV_COST
+#if CLN_RATE_EST_CTRLS
+    x->approx_inter_rate = context_ptr->approx_inter_rate;
+#else
     x->use_low_precision_cost_estimation = context_ptr->use_low_precision_cost_estimation;
+#endif
 #endif
     clamp_mv(dst_mv,
              x->mv_limits.col_min,
@@ -1146,7 +1163,11 @@ int svt_av1_find_best_obmc_sub_pixel_tree_up(ModeDecisionContext *context_ptr, I
     const int                      w = block_size_wide[context_ptr->blk_geom->bsize];
     const int                      h = block_size_high[context_ptr->blk_geom->bsize];
 #if  FTR_SIMPLIFIED_MV_COST
+#if CLN_RATE_EST_CTRLS
+    const uint8_t lp = context_ptr->approx_inter_rate;
+#else
     const uint8_t lp = context_ptr->use_low_precision_cost_estimation;
+#endif
 #endif
     int minc, maxc, minr, maxr;
 

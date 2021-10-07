@@ -49,11 +49,13 @@ EbBool check_mv_validity(int16_t x_mv, int16_t y_mv, uint8_t need_shift) {
       -2048 < MV_x_in_full_pel or MV_y_in_full_pel < 2048
     */
     if (!is_mv_valid(&mv)) {
+#if !CLN_REMOVE_CORRUPTED_MV_PRINTF
         printf("Corrupted-MV (%i %i) not in range  (%i %i); it will be ignored @ MD \n",
             mv.col,
             mv.row,
             MV_LOW,
             MV_UPP);
+#endif
         return EB_FALSE;
     }
     return EB_TRUE;

@@ -765,7 +765,6 @@ Decoder Test:
   # parallel:
   #   matrix:
   #     - threads: [1, 2]
-  allow_failure: true
   before_script:
     - "true"
   script:

@@ -88,6 +88,15 @@ void svt_av1_warp_plane(EbWarpedMotionParams *wm, int use_hbd, int bd, const uin
                         int p_width, int p_height, int p_stride, int subsampling_x,
                         int subsampling_y, ConvolveParams *conv_params);
 
+
+#if FTR_MEM_OPT_WM
+void dec_svt_av1_warp_plane(EbWarpedMotionParams *wm, int use_hbd, int bd, const uint8_t *ref,
+                        int width, int height, int stride, uint8_t *pred, int p_col, int p_row,
+                        int p_width, int p_height, int p_stride, int subsampling_x,
+                        int subsampling_y, ConvolveParams *conv_params);
+
+#endif
+
 EbBool svt_find_projection(int np, int *pts1, int *pts2, BlockSize bsize, int mvy, int mvx,
                            EbWarpedMotionParams *wm_params, int mi_row, int mi_col);
 
@@ -102,6 +111,12 @@ void svt_highbd_warp_plane(EbWarpedMotionParams *wm, const uint8_t *const ref8, 
                            int p_width, int p_height, int p_stride, int subsampling_x,
                            int subsampling_y, int bd, ConvolveParams *conv_params);
 
+#if FTR_MEM_OPT_WM
+void dec_svt_highbd_warp_plane(EbWarpedMotionParams *wm, const uint8_t *const ref8, int width,
+                           int height, int stride, const uint8_t *const pred8, int p_col, int p_row,
+                           int p_width, int p_height, int p_stride, int subsampling_x,
+                           int subsampling_y, int bd, ConvolveParams *conv_params);
+#endif
 void svt_warp_plane(EbWarpedMotionParams *wm, const uint8_t *const ref, int width, int height,
                     int stride, uint8_t *pred, int p_col, int p_row, int p_width, int p_height,
                     int p_stride, int subsampling_x, int subsampling_y,

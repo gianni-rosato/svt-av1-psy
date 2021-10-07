@@ -348,7 +348,50 @@ static void update_firstpass_stats(PictureParentControlSet *pcs_ptr, const FRAME
         fps.new_mv_count    = 0.0;
         fps.pcnt_motion     = 0.0;
     }
+#if 0//FTR_OPT_IPP_DOWN_SAMPLE
+   // fps.weight = stats->intra_factor * stats->brightness_factor;
+   // fps.frame = frame_number;
+    fps.coded_error *= 3;// (double)(stats->coded_error >> 8) + min_err;
+    fps.sr_coded_error *= 3;// (double)(stats->sr_coded_error >> 8) + min_err;
+    fps.tr_coded_error *= 3;//(double)(stats->tr_coded_error >> 8) + min_err;
+    fps.intra_error *= 3;// (double)(stats->intra_error >> 8) + min_err;
+   // fps.count = 1.0;
+   // fps.pcnt_inter = (double)stats->inter_count / num_mbs;
+  //  fps.pcnt_second_ref = (double)stats->second_ref_count / num_mbs;
+   // fps.pcnt_third_ref = (double)stats->third_ref_count / num_mbs;
+  //  fps.pcnt_neutral = (double)stats->neutral_count / num_mbs;
+  //  fps.intra_skip_pct = (double)stats->intra_skip_count / num_mbs;
+    fps.inactive_zone_rows *= 2;// (double)stats->image_data_start_row;
+    fps.inactive_zone_cols *= 2;// (double)0; // TODO(paulwilkins): fix
+   // fps.raw_error_stdev = raw_err_stdev;
 
+    if (stats->mv_count > 0) {
+       // fps.MVr = (double)stats->sum_mvr / stats->mv_count;
+      //  fps.mvr_abs = (double)stats->sum_mvr_abs / stats->mv_count;
+       // fps.MVc = (double)stats->sum_mvc / stats->mv_count;
+     //   fps.mvc_abs = (double)stats->sum_mvc_abs / stats->mv_count;
+      //  fps.MVrv = ((double)stats->sum_mvrs -
+      //      ((double)stats->sum_mvr * stats->sum_mvr / stats->mv_count)) /
+       //     stats->mv_count;
+      //  fps.MVcv = ((double)stats->sum_mvcs -
+     //       ((double)stats->sum_mvc * stats->sum_mvc / stats->mv_count)) /
+     //       stats->mv_count;
+     //   fps.mv_in_out_count = (double)stats->sum_in_vectors / (stats->mv_count * 2);
+        fps.new_mv_count *= 3;// stats->new_mv_count;
+    //    fps.pcnt_motion = (double)stats->mv_count / num_mbs;
+    }
+    //else {
+    //    fps.MVr = 0.0;
+    //    fps.mvr_abs = 0.0;
+    //    fps.MVc = 0.0;
+    //    fps.mvc_abs = 0.0;
+    //    fps.MVrv = 0.0;
+    //    fps.MVcv = 0.0;
+    //    fps.mv_in_out_count = 0.0;
+    //    fps.new_mv_count = 0.0;
+    //    fps.pcnt_motion = 0.0;
+    //}
+#endif
     // TODO(paulwilkins):  Handle the case when duration is set to 0, or
     // something less than the full time between subsequent values of
     // cpi->source_time_stamp.
@@ -551,12 +594,18 @@ void samepred_pass_frame_end(PictureParentControlSet *pcs_ptr, const double ts_d
     memset(&fps.stat_struct, 0, sizeof(StatStruct));
     fps.stat_struct.poc = pcs_ptr->picture_number;
 #if FTR_OPT_MPASS_DOWN_SAMPLE
-    fps.stat_struct.total_num_bits = pcs_ptr->total_num_bits * 3;
+    if (is_middle_pass_ds(scs_ptr))
+        fps.stat_struct.total_num_bits = pcs_ptr->total_num_bits *DS_SC_FACT / 10;
+    else
+        fps.stat_struct.total_num_bits = pcs_ptr->total_num_bits;
 #else
     fps.stat_struct.total_num_bits = pcs_ptr->total_num_bits;
 #endif
     fps.stat_struct.qindex = pcs_ptr->frm_hdr.quantization_params.base_q_idx;
     fps.stat_struct.worst_qindex = quantizer_to_qindex[(uint8_t)scs_ptr->static_config.qp];
+#if  FTR_OPT_MPASS_BYPASS_FRAMES
+    fps.stat_struct.temporal_layer_index = pcs_ptr->temporal_layer_index;
+#endif
 
     *this_frame_stats = fps;
     output_stats(scs_ptr, this_frame_stats, pcs_ptr->picture_number);
@@ -824,7 +873,11 @@ EbErrorType first_pass_signal_derivation_mode_decision_config_kernel(PictureCont
 #endif
     pcs_ptr->parent_pcs_ptr->bypass_cost_table_gen = 0;
 #if  FTR_SIMPLIFIED_MV_COST
+#if CLN_RATE_EST_CTRLS
+    pcs_ptr->approx_inter_rate = 0;
+#else
     pcs_ptr->use_low_precision_cost_estimation = 0;
+#endif
 #endif
     return return_error;
 }
@@ -1733,8 +1786,14 @@ void open_loop_first_pass(PictureParentControlSet *  ppcs_ptr,
         ppcs_ptr->skip_frame =0;
     else {
 #if OPT_FIRST_PASS
+#if ENBLE_SKIP_FRAME_IN_VBR_MODE
 #if FIX_ISSUE_50
-        if ((ppcs_ptr->scs_ptr->static_config.skip_frame_first_pass) && (ppcs_ptr->picture_number % 8 > 0))
+        if ((ppcs_ptr->scs_ptr->static_config.skip_frame_first_pass == 1) && (ppcs_ptr->picture_number % 8 > 0))
+#else
+        if ((ppcs_ptr->scs_ptr->static_config.final_pass_rc_mode == 0) && (ppcs_ptr->picture_number % 8 > 0))
+#endif
+            ppcs_ptr->skip_frame = 1;
+        else if ((ppcs_ptr->scs_ptr->static_config.skip_frame_first_pass == 2) && (ppcs_ptr->picture_number > 7 && ppcs_ptr->picture_number % 8 > 0))
 #else
         if ((ppcs_ptr->scs_ptr->static_config.final_pass_rc_mode == 0) && (ppcs_ptr->picture_number % 8 > 0))
 #endif

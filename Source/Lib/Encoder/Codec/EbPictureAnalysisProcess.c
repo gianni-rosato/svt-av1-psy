@@ -2962,11 +2962,15 @@ void *picture_analysis_kernel(void *input_ptr) {
 #if OPT_FIRST_PASS2
             int copy_frame = 1;
 #if FIX_ISSUE_50
-            if (pcs_ptr->scs_ptr->static_config.skip_frame_first_pass)
+            if (pcs_ptr->scs_ptr->static_config.skip_frame_first_pass == 1)
 #else
             if (scs_ptr->static_config.final_pass_rc_mode == 0)
 #endif
                 copy_frame = (((pcs_ptr->picture_number % 8) == 0) || ((pcs_ptr->picture_number % 8) == 6) || ((pcs_ptr->picture_number % 8) == 7));
+#if ENBLE_SKIP_FRAME_IN_VBR_MODE
+            else if (pcs_ptr->scs_ptr->static_config.skip_frame_first_pass == 2)
+                copy_frame = ((pcs_ptr->picture_number < 7) || ((pcs_ptr->picture_number % 8) == 0) || ((pcs_ptr->picture_number % 8) == 6) || ((pcs_ptr->picture_number % 8) == 7));
+#endif
             // Bypass copy for the unecessary picture in IPPP pass
             if ((!use_output_stat(scs_ptr)) || ((use_output_stat(scs_ptr)) && copy_frame)) {
 #endif

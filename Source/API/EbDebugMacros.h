@@ -58,6 +58,7 @@ extern "C" {
 #define RFCTR_RC_P1                 1 // Rate control code refactoring Part 1
 #define RFCTR_RC_P2                 1 // Rate control code refactoring Part 2
 
+#define TUNE_RC                     1 // Tune RC setting for each preset
 #if TUNE_MULTI_PASS
 typedef enum MultiPassModes {
     SINGLE_PASS, //single pass mode
@@ -73,12 +74,13 @@ typedef enum MultiPassModes {
 #define FTR_OPT_MPASS_MRP1REF 1
 #define FTR_OPT_MPASS_WARP_OFF 1
 #define FTR_OPT_MPASS_DLF_OFF 1
-#define FTR_OPT_MPASS_REMOVE_UNDER32 1
+#define FTR_OP_TEST 0 // for debugging to run the optimization of middle pass in normal CRF mode
+#define FTR_OPT_MPASS_DOWN_SAMPLE 1 // Down sample the input picture by 2 in each dimention to be used in middle pass
 
-#define FTR_OPT_MPASS_DOWN_SAMPLE 0
-#define FTR_OP_TEST 0
+#define FTR_OPT_MPASS_BYPASS_FRAMES 1
 #endif
-
+#define FTR_OPT_IPP_DOWN_SAMPLE 0 // Down sample the input picture by 2 in each dimention to be used in IPP pass
+#define DS_SC_FACT 23
 #define SVT_05          1
 #define PRIVATE_MACROS   1
 
@@ -450,7 +452,7 @@ NOTE : PART OF LIGHT_PD0_2  code was committed to svt-04-final-rebased under OPT
 #if LIGHT_PD1_MACRO
 #define FTR_LPD1_DETECTOR           1 // Add a detector for using light-PD1.  Set signal before depth refinement so you can use the detector to force pred depth
 #define OPT_LPD1_MRP                1 // Enable light-PD1 for BASE (when WM and MRP are on).  NB light-PD1 does not do reference pruning
-#define OPT_LPD1_PME                1 // Add PME to light-PD1
+#define OPT_LPD1_PME                0 // Add PME to light-PD1
 #endif
 
 #define SS_MEM_TPL                            1 // Optimize TPL when lad_mg is zero
@@ -629,8 +631,11 @@ NOTE : PART OF LIGHT_PD0_2  code was committed to svt-04-final-rebased under OPT
 #define OPT_MEM_PALETTE                       1  // make palette_info runtime memory allocation
 
 #define OPT_1P                                0 //New encoder pipeline for IPP based first pass //CI
-#define FIX_ISSUE_50                          1 //CI
+#define FIX_ISSUE_50                          1
 #define FIX_ISSUE_49                          1
+
+#define ENBLE_SKIP_FRAME_IN_VBR_MODE          1 // Skip frame step of 8 for VBR.
+#define ENBLE_DG_IN_VBR_MODE                  1 // Enable DG for VBR.
 
 #define FIX_TXB_INIT_LEVELS                   1 // Fix EC to use AVX2 @ svt_av1_txb_init_levels()
 #define FTR_VLPD1                             1 // Add a new very-light-PD1 path, incl. new levels for existing features, and tracking info from co-located SBs
@@ -656,14 +661,59 @@ NOTE : PART OF LIGHT_PD0_2  code was committed to svt-04-final-rebased under OPT
 
 #define FTR_VLPD0                             1 // Very Light PD0
 
-#define FTR_NEW_QPS                           0 // Added the ability to use the libaom QPS model
-#define FIX_INIT_ZZ_CAND                      0 // Fix initialized variables @ inject_zz_backup_candidate()
 #define OPT_M12_SPEED                         1 // optimize subpel_me for higher resolution for speed and modify ftr_vlpd0 levels
 
 #define FTR_LESS_BI                           0 // Avoid ME BiPred candidates if they have close enough MV to already injected Bi Pred.
 
-#define FTR_VLPD0_INTER_DEPTH                 0 // Modulate the inter-depth bias based on the QP, and the temporal complexity of the SB towards more split for low QPs or/and complex SBs, and less split for high QPs or/and easy SBs (to compensate for the absence of the coeff rate).
 #define FTR_M13                               1 // add M13 preset to the encoder, should match the cvh path
+#define SS_CLN_CFL_CTRLS                      1 // Create ctrl struct for CFL
+#define CLN_RATE_EST_CTRLS                    1 // Create ctrl struct for rate estimation signals
+#define CLN_REMOVE_UNUSED_FEATS               1 // Remove unneeded features
+
+#define FIX_INIT_ZZ_CAND                      1 // Fix initialized variables @ inject_zz_backup_candidate()
+#define CLN_TF_CTRLS                          1
+#define CLN_DEPTH_REMOVAL                     1
+#define CLN_INDEPTH                           1
+#define CLN_TF_LVL                            1
+#define CLN_P_BASE_LVL                        1
+#define CLN_HIGH_LVL_SYNTAX                   1
+#define CLN_SUBPEL_CTRLS                      1
+#define CLN_REF_PRUNING                       1
+#define CLN_RDOQ_CTRLS                        1
+#define FTR_VLPD0_INTER_DEPTH                 1 // Modulate the inter-depth bias based on the QP, and the temporal complexity of the SB towards more split for low QPs or/and complex SBs, and less split for high QPs or/and easy SBs (to compensate for the absence of the coeff rate).
+
+#define CLN_RED_CAND                          1 // Remove some actions of reduce_last_md_stage_candidate (actions related to RDOQ, IFS, and class pruning)
+#define TUNE_M10_M11                          1 // tuned m10 and m11 oct 6
+#define SS_FIX_MOVE_SKIP_INTRA_PIC            1 // Change skip_intra to be set at the picture level
+#define CLN_LPD1_LVLS                         1 // Make LPD1 have several levels, instead of enc_mode checks per feature
+#define CLN_REG_PD1_DIFFS                     1 // Remove feature level diffs from reg. PD1 path for high presets, where LPD1 is used mostly
+#define CLN_TPL_LEVEL_7                       1 // Remove TPL level 7 including modulate_depth_removal_level flag
+#define CLN_LPD1_TX_CTRLS                     1 // Clean up TX shortcut controls used in LPD1
+#define CLN_LPD0_CTRL                         1
+#define CLN_SUBRES                            1
+#define FTR_NEW_QPS                           1 // Added the ability to use the libaom QPS model (only CQP 6L)
+#define OPT_PACK_HBD                          1 // Avoid redundunt packing of high bit depth source pixels between different PD passes. Lossless.
+#define CLN_INTRA_CTRLS                       1 // Cleanup intra controls
+#define TUNE_HBD_MD                           1 // Add checks for M9-13, hybrid 10bit/8bit MD for INTRA, 8bit MD for NON-INTRA.
+#define CLN_MERGE_LPD0_VLPD0                  1
+#define CLN_REG_PD1_TX_CTRLS                  1 // Cleanup controls for TX shortcuts in reg. PD1
+#define CLN_M10_M12_DIFFS                     1 // Remove useless feature diffs in M10-M12
+#define CLN_NIC_PRUNE_CTRLS                   1 // Merge mds1_skip_level with nic_pruning ctrls
+
+#define CLN_REMOVE_CORRUPTED_MV_PRINTF        1
+#define FIX_I64                               1 // Remove tile use from 1st pass
+#define FIX_I51                               1 // Fix release of PA references for P pictures
+#define FIX_R2R_TPL_IXX                       1 // Move TPL control from ress coord to pic decision where pcs->hierarchical_levels is finally set.
+#define CLN_MDS0_CTRLS                        1 // Cleanup ctrls for MDS0
+#define CLN_REF_AREA                          1 // Make ref_is_high_skip and ref_is_high_intra return a percentage (out of 100)
+#define CLN_LIST0_ONLY_BASE_IFS_MFMV          1
+#define CLN_NIC_SIGS                          1 // Merge NIC pruning/scaling controls under one signal
+#define DIS_VBR_HL0                           1 // Block VBR in HL0
+#define CLN_M6_M12_FEATURES                   1 // push all small speed features out to m11 vs m12 difference
+#define FTR_16K                               1 // Support Encoding of up to 16K resolutions
+#define CLN_FEAT_LEVEL                        1 // Remove useless feature levels/diffs
+
+#define CLN_CAND_REDUCTION_CTRLS              1 // Merge near_count_level, lpd1_mvp_best_me_list, reduce_unipred_candidates, redundant_cand_level, eliminate_candidate_based_on_pme_me_results, use_neighbouring_mode, merge_inter_classes into one control.
 
 #endif //----------------------------------- all svt-05 features should be place are above this line -------------------------
 
@@ -763,6 +813,12 @@ NOTE : PART OF LIGHT_PD0_2  code was committed to svt-04-final-rebased under OPT
 #undef FTR_VLPD1
 #undef FTR_VLPD0
 #undef OPT_M12_SPEED
+#undef SS_CLN_CFL_CTRLS
+#undef CLN_RATE_EST_CTRLS
+#undef CLN_TF_CTRLS
+#undef CLN_SUBPEL_CTRLS
+#undef CLN_LPD1_LVLS
+#undef CLN_TPL_LEVEL_7
 #endif
 //FOR DEBUGGING - Do not remove
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch

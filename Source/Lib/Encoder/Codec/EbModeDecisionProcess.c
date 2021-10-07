@@ -114,7 +114,9 @@ static void mode_decision_context_dctor(EbPtr p) {
     }
     EB_FREE_ARRAY(obj->avail_blk_flag);
     EB_FREE_ARRAY(obj->tested_blk_flag);
+#if !CLN_REMOVE_UNUSED_FEATS
     EB_FREE_ARRAY(obj->do_not_process_blk);
+#endif
     EB_FREE_ARRAY(obj->md_local_blk_unit);
     EB_FREE_ARRAY(obj->md_blk_arr_nsq);
     EB_FREE_ARRAY(obj->md_ep_pipe_sb);
@@ -138,44 +140,54 @@ static void mode_decision_context_dctor(EbPtr p) {
     EB_DELETE(obj->temp_recon_ptr);
 }
 
-
+#if CLN_NIC_SIGS
+uint8_t get_nic_level(PdPass pd_pass, EbEncMode enc_mode, uint8_t temporal_layer_index);
+uint8_t set_nic_controls(ModeDecisionContext *ctx, uint8_t nic_level);
+#else
 uint8_t  get_nic_scaling_level(PdPass pd_pass, EbEncMode enc_mode ,uint8_t temporal_layer_index );
-
+#endif
 #if TUNE_MDS0
 /*
 * return the max canidate count for MDS0
   Used by candidate injection and memory allocation
 */
 uint16_t  get_max_can_count(EbEncMode enc_mode ) {
-    uint16_t  max_can_count ;
+
+    //NOTE: this is a memory feature and not a speed feature. it should not be have any speed/quality impact.
+    uint16_t  mem_max_can_count ;
 
 
     if (enc_mode <= ENC_M0)
-        max_can_count = 900;
+        mem_max_can_count = 900;
     else if (enc_mode <= ENC_M1)
-        max_can_count =  720;
+        mem_max_can_count =  720;
     else if (enc_mode <= ENC_M2)
-        max_can_count = 576;
+        mem_max_can_count = 576;
     else if (enc_mode <= ENC_M3)
-        max_can_count = 461;
+        mem_max_can_count = 461;
     else if (enc_mode <= ENC_M4)
-        max_can_count = 369;
+        mem_max_can_count = 369;
     else if (enc_mode <= ENC_M5)
-        max_can_count = 295;
+        mem_max_can_count = 295;
     else if (enc_mode <= ENC_M6)
-        max_can_count = 236;
+        mem_max_can_count = 236;
     else if (enc_mode <= ENC_M7)
-        max_can_count = 190;
+        mem_max_can_count = 190;
+#if CLN_M10_M12_DIFFS
+    else if (enc_mode <= ENC_M11)
+        mem_max_can_count = 120;
+#else
     else if (enc_mode <= ENC_M8)
-        max_can_count = 120;
+        mem_max_can_count = 120;
     else if (enc_mode <= ENC_M9)
-        max_can_count = 120;
+        mem_max_can_count = 120;
     else if (enc_mode <= ENC_M10)
-        max_can_count = 100;
+        mem_max_can_count = 100;
+#endif
     else
-        max_can_count = 80;
+        mem_max_can_count = 80;
 
-   return max_can_count ;
+   return mem_max_can_count;
 }
 
 #endif
@@ -235,7 +247,13 @@ EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr, EbColor
     for (PdPass pd_id = 0; pd_id < PD_PASS_TOTAL; pd_id++) {
 
         for (uint8_t temporal_layer_index = 0; temporal_layer_index < MAX_TEMPORAL_LAYERS; temporal_layer_index++) {
+#if CLN_NIC_SIGS
+            uint8_t nic_level = get_nic_level(pd_id, enc_mode, temporal_layer_index);
+            uint8_t nic_scaling_level = set_nic_controls(NULL, nic_level);
+            min_nic_scaling_level = MIN(min_nic_scaling_level, nic_scaling_level);
+#else
             min_nic_scaling_level = MIN(min_nic_scaling_level, get_nic_scaling_level(pd_id,  enc_mode,  temporal_layer_index));
+#endif
         }
     }
     // scale max_nics
@@ -432,7 +450,9 @@ EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr, EbColor
     EB_MALLOC_ARRAY(context_ptr->md_blk_arr_nsq[0].av1xd, block_max_count_sb);
     EB_MALLOC_ARRAY(context_ptr->avail_blk_flag, block_max_count_sb);
     EB_MALLOC_ARRAY(context_ptr->tested_blk_flag, block_max_count_sb);
+#if !CLN_REMOVE_UNUSED_FEATS
     EB_MALLOC_ARRAY(context_ptr->do_not_process_blk, block_max_count_sb);
+#endif
     EB_MALLOC_ARRAY(context_ptr->mdc_sb_array, 1);
     for (coded_leaf_index = 0; coded_leaf_index < block_max_count_sb; ++coded_leaf_index) {
         context_ptr->md_blk_arr_nsq[coded_leaf_index].av1xd = context_ptr->md_blk_arr_nsq[0].av1xd +
@@ -815,6 +835,10 @@ void mode_decision_configure_sb(ModeDecisionContext *context_ptr, PictureControl
         : (uint8_t)pcs_ptr->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx;
 
     av1_lambda_assign_md(pcs_ptr, context_ptr);
+
+#if OPT_PACK_HBD
+    context_ptr->hbd_pack_done = 0;
+#endif
 
     return;
 }

@@ -29,46 +29,7 @@
 #include <sys/mman.h>
 #endif
 #endif
-#if FTR_OPT_MPASS_DOWN_SAMPLE
- /********************************************
-  * downsample_2d
-  *      downsamples the input
-  * Alternative implementation to decimation_2d that performs filtering (2x2, 0-phase)
-  ********************************************/
-void downsample_2d(uint8_t *input_samples, // input parameter, input samples Ptr
-    uint32_t input_stride, // input parameter, input stride
-    uint32_t input_area_width, // input parameter, input area width
-    uint32_t input_area_height, // input parameter, input area height
-    uint8_t *decim_samples, // output parameter, decimated samples Ptr
-    uint32_t decim_stride, // input parameter, output stride
-    uint32_t decim_step) // input parameter, decimation amount in pixels
-{
-    uint32_t       horizontal_index;
-    uint32_t       vertical_index;
-    uint32_t       input_stripe_stride = input_stride * decim_step;
-    uint32_t       decim_horizontal_index;
-    const uint32_t half_decim_step = decim_step >> 1;
 
-    for (input_samples += half_decim_step * input_stride, vertical_index = half_decim_step;
-        vertical_index < input_area_height;
-        vertical_index += decim_step) {
-        uint8_t *prev_input_line = input_samples - input_stride;
-        for (horizontal_index = half_decim_step, decim_horizontal_index = 0;
-            horizontal_index < input_area_width;
-            horizontal_index += decim_step, decim_horizontal_index++) {
-            uint32_t sum = (uint32_t)prev_input_line[horizontal_index - 1] +
-                (uint32_t)prev_input_line[horizontal_index] +
-                (uint32_t)input_samples[horizontal_index - 1] +
-                (uint32_t)input_samples[horizontal_index];
-            decim_samples[decim_horizontal_index] = (sum + 2) >> 2;
-        }
-        input_samples += input_stripe_stride;
-        decim_samples += decim_stride;
-    }
-
-    return;
-}
-#endif
 /***************************************
  * Macros
  ***************************************/
@@ -205,13 +166,33 @@ void svt_munmap(MemMapFile *h, void *addr, int64_t size)
 /* release  memory mapped file  */
 void release_memory_mapped_file(EbConfig *config, uint8_t is_16bit, EbBufferHeaderType *header_ptr)
 {
+#if FTR_OPT_MPASS_DOWN_SAMPLE
+    uint32_t input_padded_width;
+    uint32_t input_padded_height;
+#if FTR_OP_TEST
+    if (1) {
+#else
+#if FTR_OPT_IPP_DOWN_SAMPLE
+    if (config->config.rc_middlepass_ds_stats_out || config->config.rc_firstpass_stats_out) {
+#else
+    if (config->config.rc_middlepass_ds_stats_out) {
+#endif
+#endif
+        input_padded_width = config->org_input_padded_width;
+        input_padded_height = config->org_input_padded_height;
+    }
+    else {
+        input_padded_width = config->input_padded_width;
+        input_padded_height = config->input_padded_height;
+    }
+#else
    const uint32_t input_padded_width = config->input_padded_width;
    const uint32_t input_padded_height = config->input_padded_height;
+#endif
    uint64_t luma_read_size = (uint64_t)input_padded_width * input_padded_height
        << (config->config.compressed_ten_bit_format ? 0 : is_16bit);
    const uint8_t color_format = config->config.encoder_color_format;
    EbSvtIOFormat *input_ptr = (EbSvtIOFormat *)header_ptr->p_buffer;
-
    svt_munmap(&config->mmap, input_ptr->luma, luma_read_size);
    svt_munmap(&config->mmap, input_ptr->cb, luma_read_size >> (3 - color_format));
    svt_munmap(&config->mmap, input_ptr->cr, luma_read_size >> (3 - color_format));
@@ -234,10 +215,14 @@ void read_input_frames(EbConfig *config, uint8_t is_16bit, EbBufferHeaderType *h
 #if FTR_OP_TEST
     if (1) {
 #else
-    if (config->config.rc_middlepass_stats_out) {
+#if FTR_OPT_IPP_DOWN_SAMPLE
+    if (config->config.rc_middlepass_ds_stats_out || config->config.rc_firstpass_stats_out) {
+#else
+    if (config->config.rc_middlepass_ds_stats_out) {
 #endif
-        input_padded_width = config->input_padded_width << 1;
-        input_padded_height = config->input_padded_height << 1;
+#endif
+        input_padded_width = config->org_input_padded_width;
+        input_padded_height = config->org_input_padded_height;
     }
     else {
         input_padded_width = config->input_padded_width;
@@ -656,10 +641,14 @@ void process_input_buffer(EncChannel *channel) {
 #if FTR_OP_TEST
     if (1) {
 #else
-    if (config->config.rc_middlepass_stats_out) {
+#if FTR_OPT_IPP_DOWN_SAMPLE
+    if (config->config.rc_middlepass_ds_stats_out || config->config.rc_firstpass_stats_out) {
+#else
+    if (config->config.rc_middlepass_ds_stats_out) {
 #endif
-        input_padded_width = config->input_padded_width << 1;
-        input_padded_height = config->input_padded_height << 1;
+#endif
+        input_padded_width = config->org_input_padded_width;
+        input_padded_height = config->org_input_padded_height;
     }
     else {
         input_padded_width = config->input_padded_width;
@@ -716,81 +705,6 @@ void process_input_buffer(EncChannel *channel) {
             header_ptr->pic_type = EB_AV1_INVALID_PICTURE;
             header_ptr->flags    = 0;
             header_ptr->metadata = NULL;
-#if FTR_OPT_MPASS_DOWN_SAMPLE
-#if FTR_OP_TEST
-            if (1) {
-#else
-            if (config->config.rc_middlepass_stats_out) {
-#endif
-                // const uint32_t input_padded_width = config->input_padded_width;
-                // const uint32_t input_padded_height = config->input_padded_height;
-                FILE *         input_file = config->input_file;
-                EbSvtIOFormat *input_ptr = (EbSvtIOFormat *)header_ptr->p_buffer;
-                const size_t luma_size = (input_padded_width * input_padded_height) << is_16bit;
-                const size_t chroma_size = luma_size >> (3 - color_format);
-
-                input_ptr = (EbSvtIOFormat *)header_ptr->p_buffer;
-
-                //input_ptr->y_stride;// = input_padded_width;
-                //input_ptr->cr_stride;// = input_padded_width >> subsampling_x;
-                //input_ptr->cb_stride;// = input_padded_width >> subsampling_x;
-
-                //input_ptr->luma =
-                //    config->sequence_buffer[config->processed_frame_count % config->buffered_input];
-                //input_ptr->cb =
-                //    config->sequence_buffer[config->processed_frame_count % config->buffered_input] +
-                //    luma_size;
-                //input_ptr->cr =
-                //    config->sequence_buffer[config->processed_frame_count % config->buffered_input] +
-                //    luma_size + chroma_size;
-
-                downsample_2d_c(
-                    input_ptr->luma,
-                    input_ptr->y_stride,
-                    input_padded_width,//input_ptr->width,
-                    input_padded_height,//input_ptr->height,
-                    input_ptr->luma,
-                    input_ptr->y_stride,
-                    2);
-
-                downsample_2d_c(
-                    input_ptr->cr,
-                    input_ptr->cr_stride,
-                    input_padded_width >> 1,//input_ptr->width,
-                    input_padded_height >> 1,//input_ptr->height,
-                    input_ptr->cr,
-                    input_ptr->cr_stride,
-                    2);
-
-                downsample_2d_c(
-                    input_ptr->cb,
-                    input_ptr->cb_stride,
-                    input_padded_width >> 1,//input_ptr->width,
-                    input_padded_height >> 1,//input_ptr->height,
-                    input_ptr->cb,
-                    input_ptr->cb_stride,
-                    2);
-
-                //downsample_2d(
-                //    &input_padded_picture_ptr->buffer_y[input_padded_picture_ptr->origin_x +
-                //    input_padded_picture_ptr->origin_y *
-                //    input_padded_picture_ptr->stride_y],
-                //    input_padded_picture_ptr->stride_y,
-                //    input_padded_picture_ptr->width,
-                //    input_padded_picture_ptr->height,
-                //    &quarter_picture_ptr
-                //    ->buffer_y[quarter_picture_ptr->origin_x +
-                //    quarter_picture_ptr->origin_x * quarter_picture_ptr->stride_y],
-                //    quarter_picture_ptr->stride_y,
-                //    2);
-                //generate_padding(&quarter_picture_ptr->buffer_y[0],
-                //    quarter_picture_ptr->stride_y,
-                //    quarter_picture_ptr->width,
-                //    quarter_picture_ptr->height,
-                //    quarter_picture_ptr->origin_x,
-                //    quarter_picture_ptr->origin_y);
-            }
-#endif
             // Send the picture
 #if OPT_FIRST_PASS2 && !FIX_DG
             svt_av1_enc_send_picture(component_handle, header_ptr, pass);

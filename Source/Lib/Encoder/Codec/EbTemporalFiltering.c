@@ -76,6 +76,9 @@ int32_t svt_av1_compute_qdelta_fp(int32_t qstart_fp8, int32_t qtarget_fp8, AomBi
 #endif
 int32_t svt_av1_compute_qdelta(double qstart, double qtarget, AomBitDepth bit_depth);
 #endif
+#if FTR_NEW_QPS
+int svt_av1_get_q_index_from_qstep_ratio(int leaf_qindex, double qstep_ratio, const int bit_depth);
+#endif
 #if SS_2B_COMPRESS
 void generate_padding_compressed_10bit(EbByte   src_pic, uint32_t src_stride, uint32_t original_src_width, uint32_t original_src_height, uint32_t padding_width, uint32_t padding_height);
 void svt_c_unpack_compressed_10bit(const uint8_t *inn_bit_buffer, uint32_t inn_stride, uint8_t *in_compn_bit_buffer, uint32_t out_stride, uint32_t height);
@@ -5294,6 +5297,7 @@ void get_final_filtered_pixels_c(MeContext *context_ptr, EbByte *src_center_ptr_
         }
     }
 }
+#if !CLN_TF_CTRLS
 /*
 * Check whether to consider this reference frame(frame_index) @ the level of each 64x64 based on ME results
 */
@@ -5324,6 +5328,7 @@ int8_t skip_this_reference_frame(PictureParentControlSet *picture_control_set_pt
     }
     return 0;
 }
+#endif
 #if OPT_UPGRADE_TF
 /*
 * Check whether to perform 64x64 pred only
@@ -5493,7 +5498,7 @@ static EbErrorType produce_temporally_filtered_pic(
 #if !FIXED_POINTS_PLANEWISE
     double q_val = svt_av1_convert_qindex_to_q(active_worst_quality, bit_depth);
 #endif /*!FIXED_POINTS_PLANEWISE*/
-
+#if !FTR_NEW_QPS // tf
     int offset_idx = -1;
     if (!picture_control_set_ptr_central->is_used_as_reference_flag)
         offset_idx = -1;
@@ -5505,12 +5510,68 @@ static EbErrorType produce_temporally_filtered_pic(
         offset_idx = 0;
     else
         offset_idx = MIN(picture_control_set_ptr_central->temporal_layer_index + 1, FIXED_QP_OFFSET_COUNT - 1);
-
+#endif
 #if FIXED_POINTS_PLANEWISE
     if (context_ptr->tf_ctrls.use_fixed_point || context_ptr->tf_ctrls.use_medium_filter) {
         FP_ASSERT(TF_FILTER_STRENGTH == 5);
         FP_ASSERT(TF_STRENGTH_THRESHOLD == 4);
         FP_ASSERT(TF_Q_DECAY_THRESHOLD == 20);
+#if FTR_NEW_QPS // tf
+        if (picture_control_set_ptr_central->cqp_qps_model) {
+
+            if (picture_control_set_ptr_central->temporal_layer_index == 0)
+            {
+                const double qratio_grad =
+                    picture_control_set_ptr_central->hierarchical_levels <= 4 ? 0.3 : 0.2;
+
+                const double qstep_ratio =
+                    0.2 +
+                    (1.0 - (double)active_worst_quality / MAXQ) * qratio_grad;
+
+                q = picture_control_set_ptr_central->scs_ptr->cqp_base_q_tf = svt_av1_get_q_index_from_qstep_ratio(active_worst_quality, qstep_ratio, bit_depth);
+            }
+            else if (picture_control_set_ptr_central->is_used_as_reference_flag) {
+                int this_height = picture_control_set_ptr_central->temporal_layer_index + 1;
+                int arf_q = picture_control_set_ptr_central->scs_ptr->cqp_base_q_tf;
+                while (this_height > 1) {
+                    arf_q = (arf_q + active_worst_quality + 1) / 2;
+                    --this_height;
+                }
+                q = arf_q;
+            }
+            else {
+                q = active_worst_quality;
+            }
+        }
+        else {
+
+            int offset_idx = -1;
+            if (!picture_control_set_ptr_central->is_used_as_reference_flag)
+                offset_idx = -1;
+
+            else if (picture_control_set_ptr_central->idr_flag)
+                offset_idx = 0;
+            else
+                offset_idx = MIN(picture_control_set_ptr_central->temporal_layer_index + 1, FIXED_QP_OFFSET_COUNT - 1);
+
+            // Fixed-QP offsets are use here since final picture QP(s) are not generated @ this early stage
+            int32_t q_val_fp8 = svt_av1_convert_qindex_to_q_fp8(active_worst_quality, bit_depth);
+
+            const int32_t q_val_target_fp8 = (offset_idx == -1)
+                ? q_val_fp8
+                : MAX(q_val_fp8 -
+                    (q_val_fp8 *
+                        percents[picture_control_set_ptr_central->hierarchical_levels <= 4]
+                        [offset_idx] /
+                        100),
+                    0);
+
+            const int32_t delta_qindex_f = svt_av1_compute_qdelta_fp(
+                q_val_fp8, q_val_target_fp8, bit_depth);
+            active_best_quality = (int32_t)(active_worst_quality + delta_qindex_f);
+            q = active_best_quality;
+        }
+#else
         // Fixed-QP offsets are use here since final picture QP(s) are not generated @ this early stage
         int32_t q_val_fp8 = svt_av1_convert_qindex_to_q_fp8(active_worst_quality, bit_depth);
 
@@ -5527,7 +5588,7 @@ static EbErrorType produce_temporally_filtered_pic(
             q_val_fp8, q_val_target_fp8, bit_depth);
         active_best_quality = (int32_t)(active_worst_quality + delta_qindex_f);
         q                   = active_best_quality;
-
+#endif
         FP_ASSERT(q < (1 << 20));
         //double q_decay = pow((double)q / TF_Q_DECAY_THRESHOLD, 2);
 
@@ -5564,8 +5625,61 @@ static EbErrorType produce_temporally_filtered_pic(
                 (((((int64_t)n_decay_fp10) * ((int64_t)n_decay_fp10))) * q_decay_fp8) >> 11);
         }
     } else {
+#if !FTR_NEW_QPS // tf
     double q_val = svt_av1_convert_qindex_to_q(active_worst_quality, bit_depth);
+#endif
 #endif /*FIXED_POINTS_PLANEWISE*/
+#if FTR_NEW_QPS // tf
+    if (picture_control_set_ptr_central->cqp_qps_model) {
+
+        if (picture_control_set_ptr_central->temporal_layer_index == 0)
+        {
+            const double qratio_grad =
+                picture_control_set_ptr_central->hierarchical_levels <= 4 ? 0.3 : 0.2;
+
+            const double qstep_ratio =
+                0.2 +
+                (1.0 - (double)active_worst_quality / MAXQ) * qratio_grad;
+
+            q = picture_control_set_ptr_central->scs_ptr->cqp_base_q_tf = svt_av1_get_q_index_from_qstep_ratio(active_worst_quality, qstep_ratio, bit_depth);
+        }
+        else if (picture_control_set_ptr_central->is_used_as_reference_flag) {
+            int this_height = picture_control_set_ptr_central->temporal_layer_index + 1;
+            int arf_q = picture_control_set_ptr_central->scs_ptr->cqp_base_q_tf;
+            while (this_height > 1) {
+                arf_q = (arf_q + active_worst_quality + 1) / 2;
+                --this_height;
+            }
+            q = arf_q;
+        }
+        else {
+            q = active_worst_quality;
+        }
+    }
+    else {
+        double q_val = svt_av1_convert_qindex_to_q(active_worst_quality, bit_depth);
+        int offset_idx = -1;
+        if (!picture_control_set_ptr_central->is_used_as_reference_flag)
+            offset_idx = -1;
+        else if (picture_control_set_ptr_central->idr_flag)
+            offset_idx = 0;
+        else
+            offset_idx = MIN(picture_control_set_ptr_central->temporal_layer_index + 1, FIXED_QP_OFFSET_COUNT - 1);
+
+        const double q_val_target = (offset_idx == -1) ?
+            q_val :
+            MAX(q_val - (q_val * percents[picture_control_set_ptr_central->hierarchical_levels <= 4][offset_idx] / 100), 0.0);
+
+        const int32_t delta_qindex = svt_av1_compute_qdelta(
+            q_val,
+            q_val_target,
+            bit_depth);
+
+        active_best_quality = (int32_t)(active_worst_quality + delta_qindex);
+        q = active_best_quality;
+        clamp(q, active_best_quality, active_worst_quality);
+    }
+#else
     const double q_val_target = (offset_idx == -1) ?
         q_val :
         MAX(q_val - (q_val * percents[picture_control_set_ptr_central->hierarchical_levels <= 4][offset_idx] / 100), 0.0);
@@ -5578,7 +5692,7 @@ static EbErrorType produce_temporally_filtered_pic(
     active_best_quality = (int32_t)(active_worst_quality + delta_qindex);
     q = active_best_quality;
     clamp(q, active_best_quality, active_worst_quality);
-
+#endif
     double q_decay = pow((double)q / TF_Q_DECAY_THRESHOLD, 2);
     q_decay = CLIP(q_decay, 1e-5, 1);
     if (q >= TF_QINDEX_CUTOFF) {
@@ -5775,7 +5889,7 @@ static EbErrorType produce_temporally_filtered_pic(
                         (uint32_t)blk_row * BH, // y block
                         context_ptr,
                         input_picture_ptr_central); // source picture
-
+#if !CLN_TF_CTRLS
                     // Check whether to consider this reference frame (frame_index) @ the level of each 64x64 based on ME results
 #if OPT_EARLY_TF_ME_EXIT
 #if OPT_EARLY_TF_ME_EXIT
@@ -5787,7 +5901,7 @@ static EbErrorType produce_temporally_filtered_pic(
                     if (skip_this_reference_frame(picture_control_set_ptr_central, list_picture_control_set_ptr, context_ptr, frame_index))
 #endif
                         continue;
-
+#endif
 #if OPT_UPGRADE_TF
 #if OPT_EARLY_TF_ME_EXIT
                     if (context_ptr->tf_use_pred_64x64_only_th && (context_ptr->tf_use_pred_64x64_only_th == (uint8_t)~0 || tf_use_64x64_pred(context_ptr))) {

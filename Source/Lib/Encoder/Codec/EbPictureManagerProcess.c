@@ -488,8 +488,13 @@ void *picture_manager_kernel(void *input_ptr) {
     SequenceControlSet *      entry_scs_ptr;
 
     // Initialization
+#if FTR_16K
+    uint16_t                    pic_width_in_sb;
+    uint16_t                    picture_height_in_sb;
+#else
     uint8_t                     pic_width_in_sb;
     uint8_t                     picture_height_in_sb;
+#endif
     uint64_t decode_order = 0;
     // Debug
     uint32_t loop_count = 0;
@@ -894,6 +899,12 @@ void *picture_manager_kernel(void *input_ptr) {
                         child_pcs_ptr->hbd_mode_decision = entry_pcs_ptr->hbd_mode_decision;
                         context_ptr->pmgr_dec_order = child_pcs_ptr->parent_pcs_ptr->decode_order;
                         //3.make all  init for ChildPCS
+
+#if FTR_16K
+                        pic_width_in_sb = (entry_pcs_ptr->aligned_width + entry_scs_ptr->sb_size_pix - 1) / entry_scs_ptr->sb_size_pix;
+                        picture_height_in_sb =(entry_pcs_ptr->aligned_height +  entry_scs_ptr->sb_size_pix - 1) / entry_scs_ptr->sb_size_pix;
+#else
+
                         pic_width_in_sb = (uint8_t)((entry_pcs_ptr->aligned_width +
                                                      entry_scs_ptr->sb_size_pix - 1) /
                                                     entry_scs_ptr->sb_size_pix);
@@ -901,6 +912,7 @@ void *picture_manager_kernel(void *input_ptr) {
                             (uint8_t)((entry_pcs_ptr->aligned_height +
                                        entry_scs_ptr->sb_size_pix - 1) /
                                       entry_scs_ptr->sb_size_pix);
+#endif
 
                         init_enc_dec_segement(entry_pcs_ptr);
 

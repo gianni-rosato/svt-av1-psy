@@ -1820,9 +1820,10 @@ MvJointType av1_get_mv_joint_diff(int32_t diff[2]) {
 
 void svt_av1_encode_mv(PictureParentControlSet *pcs_ptr, AomWriter *ec_writer, const MV *mv,
                        const MV *ref, NmvContext *mvctx, int32_t usehp) {
+#if !CLN_REMOVE_CORRUPTED_MV_PRINTF
     if (is_mv_valid(mv) == 0)
         SVT_LOG("Corrupted MV\n");
-
+#endif
     int32_t           diff[2] = {mv->row - ref->row, mv->col - ref->col};
     const MvJointType j       = av1_get_mv_joint_diff(diff);
 
@@ -2833,6 +2834,9 @@ static void write_tile_info_max_tile(const PictureParentControlSet *const pcs_pt
         if (cm->log2_tile_cols < cm->tiles_info.max_log2_tile_cols)
             svt_aom_wb_write_bit(wb, 0);
         // rows
+#if FTR_16K
+        cm->tiles_info.min_log2_tile_rows = AOMMAX(cm->tiles_info.min_log2_tiles - cm->log2_tile_cols, 0);
+#endif
         ones = cm->log2_tile_rows - cm->tiles_info.min_log2_tile_rows;
         while (ones--) svt_aom_wb_write_bit(wb, 1);
         if (cm->log2_tile_rows < cm->tiles_info.max_log2_tile_rows)
@@ -2975,7 +2979,7 @@ void set_tile_info(PictureParentControlSet *pcs_ptr) {
     svt_av1_calculate_tile_cols(pcs_ptr);
 
     // configure tile rows
-    if (cm->tiles_info.uniform_tile_spacing_flag) {
+      if (cm->tiles_info.uniform_tile_spacing_flag) {
         cm->log2_tile_rows = AOMMAX(pcs_ptr->log2_tile_rows, cm->tiles_info.min_log2_tile_rows);
         cm->log2_tile_rows = AOMMIN(cm->log2_tile_rows, cm->tiles_info.max_log2_tile_rows);
     } else {

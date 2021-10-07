@@ -891,15 +891,6 @@ void *packetization_kernel(void *input_ptr) {
         // Send the number of bytes per frame to RC
         pcs_ptr->parent_pcs_ptr->total_num_bits = output_stream_ptr->n_filled_len << 3;
 #if FTR_MULTI_PASS_API
-        /*if(is_middle_pass(scs_ptr))
-        printf("POC:%ld\tbits:%ld\tEstbits:%ld\terror:%.2f\t%d\t%d\t%d\n",
-            pcs_ptr->picture_number,
-            pcs_ptr->parent_pcs_ptr->total_num_bits,
-            (pcs_ptr->parent_pcs_ptr->pcs_total_rate>>9),
-            (double)(pcs_ptr->parent_pcs_ptr->pcs_total_rate >> 9) / (double)pcs_ptr->parent_pcs_ptr->total_num_bits - 1,
-            frm_hdr->quantization_params.base_q_idx,
-            quantizer_to_qindex[(uint8_t)scs_ptr->static_config.qp],
-            scs_ptr->encode_context_ptr->rc.active_worst_quality);*/
 #if TUNE_MULTI_PASS
         if (scs_ptr->static_config.multi_pass_mode == TWO_PASS_SAMEPRED_FINAL && is_middle_pass(scs_ptr))
             samepred_pass_frame_end(pcs_ptr->parent_pcs_ptr, pcs_ptr->parent_pcs_ptr->ts_duration);
@@ -908,12 +899,20 @@ void *packetization_kernel(void *input_ptr) {
             StatStruct stat_struct;
             stat_struct.poc = pcs_ptr->picture_number;
 #if FTR_OPT_MPASS_DOWN_SAMPLE
-            stat_struct.total_num_bits = pcs_ptr->parent_pcs_ptr->total_num_bits*3;
+            if(is_middle_pass_ds(scs_ptr))
+                stat_struct.total_num_bits = pcs_ptr->parent_pcs_ptr->total_num_bits*DS_SC_FACT / 10;
+            else
+                stat_struct.total_num_bits = pcs_ptr->parent_pcs_ptr->total_num_bits;
 #else
             stat_struct.total_num_bits = pcs_ptr->parent_pcs_ptr->total_num_bits;
 #endif
             stat_struct.qindex = frm_hdr->quantization_params.base_q_idx;
             stat_struct.worst_qindex = quantizer_to_qindex[(uint8_t)scs_ptr->static_config.qp];
+#if  FTR_OPT_MPASS_BYPASS_FRAMES
+            if (scs_ptr->rc_stat_gen_pass_mode && !pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag && !pcs_ptr->parent_pcs_ptr->first_frame_in_minigop)
+                stat_struct.total_num_bits = 0;
+            stat_struct.temporal_layer_index = pcs_ptr->temporal_layer_index;
+#endif
             (scs_ptr->twopass.stats_buf_ctx->stats_in_start + pcs_ptr->parent_pcs_ptr->picture_number)->stat_struct = stat_struct;
         }
 #endif

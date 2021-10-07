@@ -3338,7 +3338,7 @@ static void generate_r0beta(PictureParentControlSet* pcs_ptr) {
         (double)intra_cost_base,
         (double)mc_dep_cost_base,
         pcs_ptr->r0,
-        pcs_ptr->base_rdmult);
+        pcs_ptr->pa_me_data->base_rdmult);
 #endif
     generate_lambda_scaling_factor(pcs_ptr, mc_dep_cost_base);
 
@@ -3732,32 +3732,42 @@ EbErrorType tpl_mc_flow(EncodeContext *encode_context_ptr, SequenceControlSet *s
 
         // generate tpl stats
         generate_r0beta(pcs_ptr);
+
+
 #if DEBUG_TPL
-        SVT_LOG("LOG displayorder:%ld\n",
-            pcs_ptr->picture_number);
-        for (frame_idx = 0; frame_idx < frames_in_sw; frame_idx++)
-        {
-            PictureParentControlSet *pcs_ptr_tmp = pcs_ptr->tpl_group[frame_idx];
-            Av1Common *cm = pcs_ptr->av1_cm;
-            SequenceControlSet *scs_ptr = pcs_ptr_tmp->scs_ptr;
-            int64_t intra_cost_base = 0;
-            int64_t mc_dep_cost_base = 0;
-            const int step = 2;// 1 << (pcs_ptr_tmp->is_720p_or_larger ? 2 : 1);
-            const int mi_cols_sr = ((pcs_ptr_tmp->aligned_width + 15) / 16) << 2;
-            const int shift = 2;// pcs_ptr_tmp->is_720p_or_larger ? 2 : 1;
 
-            for (int row = 0; row < cm->mi_rows; row += step) {
-                for (int col = 0; col < mi_cols_sr; col += step) {
-                    TplStats *tpl_stats_ptr = pcs_ptr_tmp->tpl_stats[(row >> shift) * (mi_cols_sr >> shift) + (col >> shift)];
-                    int64_t mc_dep_delta =
-                        RDCOST(pcs_ptr->base_rdmult, tpl_stats_ptr->mc_dep_rate, tpl_stats_ptr->mc_dep_dist);
-                    intra_cost_base += (tpl_stats_ptr->recrf_dist << RDDIV_BITS);
-                    mc_dep_cost_base += (tpl_stats_ptr->recrf_dist << RDDIV_BITS) + mc_dep_delta;
+
+            for (uint32_t frame_idx = 0; frame_idx < frames_in_sw; frame_idx++)
+            {
+                PictureParentControlSet *pcs_ptr_tmp = pcs_ptr->tpl_group[frame_idx];
+                Av1Common *cm = pcs_ptr->av1_cm;
+                SequenceControlSet *scs_ptr = pcs_ptr_tmp->scs_ptr;
+                int64_t intra_cost_base = 0;
+                int64_t mc_dep_cost_base = 0;
+#if   FIX_R2R_TPL_IXX
+                const int           shift = pcs_ptr->tpl_ctrls.synth_blk_size == 8 ? 1 : pcs_ptr->tpl_ctrls.synth_blk_size == 16 ? 2 : 3;
+                const int           step = 1 << (shift);
+                const int           mi_cols_sr = ((pcs_ptr->aligned_width + 15) / 16) << 2;
+#else
+                const int step = 2;// 1 << (pcs_ptr_tmp->is_720p_or_larger ? 2 : 1);
+                const int mi_cols_sr = ((pcs_ptr_tmp->aligned_width + 15) / 16) << 2;
+                const int shift = 2;// pcs_ptr_tmp->is_720p_or_larger ? 2 : 1;
+#endif
+                for (int row = 0; row < cm->mi_rows; row += step) {
+                    for (int col = 0; col < mi_cols_sr; col += step) {
+                        TplStats *tpl_stats_ptr = pcs_ptr_tmp->pa_me_data->tpl_stats[(row >> shift) * (mi_cols_sr >> shift) + (col >> shift)];
+                        int64_t mc_dep_delta =
+                            RDCOST(pcs_ptr->pa_me_data->base_rdmult, tpl_stats_ptr->mc_dep_rate, tpl_stats_ptr->mc_dep_dist);
+                        intra_cost_base += (tpl_stats_ptr->recrf_dist << RDDIV_BITS);
+                        mc_dep_cost_base += (tpl_stats_ptr->recrf_dist << RDDIV_BITS) + mc_dep_delta;
+                    }
                 }
-            }
 
-            SVT_LOG("After mc_flow_synthesizer:\tframe_indx:%d\tdisplayorder:%ld\tIntra:%lld\tmc_dep:%lld rdmult:%i\n",
-                frame_idx, pcs_ptr_tmp->picture_number, intra_cost_base, mc_dep_cost_base, pcs_ptr->base_rdmult);
+                SVT_LOG("After mc_flow_synthesizer:\tframe_indx:%d\tdisplayorder:%ld\tIntra:%lld\tmc_dep:%lld rdmult:%i\n",
+                    frame_idx, pcs_ptr_tmp->picture_number, intra_cost_base, mc_dep_cost_base, pcs_ptr->pa_me_data->base_rdmult);
+
+
+            }
         }
 #endif
 
@@ -4009,12 +4019,20 @@ void *source_based_operations_kernel(void *input_ptr) {
         }
 
         // Get TPL ME
-        if (scs_ptr->static_config.enable_tpl_la &&
-            !pcs_ptr->frame_superres_enabled &&
-            pcs_ptr->temporal_layer_index == 0) {
+        if (scs_ptr->static_config.enable_tpl_la) {
+            if (pcs_ptr->frame_superres_enabled&&
+                pcs_ptr->temporal_layer_index == 0) {
 
-            tpl_prep_info(pcs_ptr);
-            tpl_mc_flow(scs_ptr->encode_context_ptr, scs_ptr, pcs_ptr,context_ptr);
+                tpl_prep_info(pcs_ptr);
+                tpl_mc_flow(scs_ptr->encode_context_ptr, scs_ptr, pcs_ptr, context_ptr);
+            }
+#if FIX_I51
+            // Release Pa Ref if lad_mg is 0 and P slice and not flat struct (not belonging to any TPL group)
+            if (/*scs_ptr->lad_mg == 0 &&*/  pcs_ptr->reference_released == 0) {
+                release_pa_reference_objects(scs_ptr, pcs_ptr);
+                // printf ("\n PIC \t %d\n",pcs_ptr->picture_number);
+            }
+#endif
         }
 
         /***********************************************SB-based operations************************************************************/

@@ -333,6 +333,10 @@ EbErrorType copy_sequence_control_set(SequenceControlSet *dst, SequenceControlSe
 #if FTR_OPT_MPASS
     dst->rc_stat_gen_pass_mode = src->rc_stat_gen_pass_mode;
 #endif
+#if FTR_NEW_QPS
+    dst->cqp_base_q_tf = src->cqp_base_q_tf;
+    dst->cqp_base_q = src->cqp_base_q;
+#endif
     return EB_ErrorNone;
 }
 
@@ -384,10 +388,18 @@ extern EbErrorType sb_params_init(SequenceControlSet *scs_ptr) {
     EbErrorType return_error = EB_ErrorNone;
     uint16_t    sb_index;
     uint16_t    raster_scan_blk_index;
+
+#if FTR_16K
+    uint16_t picture_sb_width =
+        (scs_ptr->seq_header.max_frame_width + scs_ptr->sb_sz - 1) / scs_ptr->sb_sz;
+    uint16_t picture_sb_height =
+        (scs_ptr->seq_header.max_frame_height + scs_ptr->sb_sz - 1) / scs_ptr->sb_sz;
+#else
     uint8_t     picture_sb_width = (uint8_t)(
         (scs_ptr->seq_header.max_frame_width + scs_ptr->sb_sz - 1) / scs_ptr->sb_sz);
     uint8_t picture_sb_height = (uint8_t)(
         (scs_ptr->seq_header.max_frame_height + scs_ptr->sb_sz - 1) / scs_ptr->sb_sz);
+#endif
     //free old one;
     EB_FREE_ARRAY(scs_ptr->sb_params_array);
 

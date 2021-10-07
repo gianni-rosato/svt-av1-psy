@@ -390,7 +390,15 @@ void *entropy_coding_kernel(void *input_ptr) {
                 }
 
 #if TURN_OFF_EC_FIRST_PASS
+#if  FTR_OPT_MPASS_BYPASS_FRAMES
+#if FTR_OP_TEST
+                if (!use_output_stat(scs_ptr) && !(!pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag && 1 && !pcs_ptr->parent_pcs_ptr->first_frame_in_minigop)) {
+#else
+                if (!use_output_stat(scs_ptr) && !(!pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag && scs_ptr->rc_stat_gen_pass_mode && !pcs_ptr->parent_pcs_ptr->first_frame_in_minigop)) {
+#endif
+#else
                 if (!use_output_stat(scs_ptr)) {
+#endif
 #endif
                     for (uint32_t x_sb_index = 0; x_sb_index < tile_width_in_sb; ++x_sb_index) {
                         uint16_t    sb_index = (uint16_t)((x_sb_index + tile_sb_start_x) +

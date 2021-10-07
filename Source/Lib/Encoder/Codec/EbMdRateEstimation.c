@@ -405,7 +405,11 @@ void av1_estimate_mv_rate(PictureControlSet *      pcs_ptr,
 
 {
 #if  FTR_SIMPLIFIED_MV_COST
+#if CLN_RATE_EST_CTRLS
+    if (pcs_ptr->approx_inter_rate) {
+#else
     if (pcs_ptr->use_low_precision_cost_estimation) {
+#endif
         memset(md_rate_estimation_array->nmv_vec_cost, 0, sizeof(int32_t) *MV_JOINTS);
         memset(pcs_ptr->parent_pcs_ptr->scs_ptr->nmv_vec_cost, 0, sizeof(int32_t) *MV_JOINTS);
         memset(pcs_ptr->parent_pcs_ptr->scs_ptr->nmv_costs, 0, sizeof(int32_t) *MV_VALS * 2);

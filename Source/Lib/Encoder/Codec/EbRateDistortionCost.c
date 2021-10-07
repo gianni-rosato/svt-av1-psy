@@ -650,7 +650,7 @@ uint64_t av1_intra_fast_cost(
         ref_mv.col = pred_ref_x;
         int *dvcost[2] = { (int *)&ctx->md_rate_estimation_ptr->dv_cost[0][MV_MAX],
                            (int *)&ctx->md_rate_estimation_ptr->dv_cost[1][MV_MAX] };
-#if  FTR_SIMPLIFIED_MV_COST
+#if  FTR_SIMPLIFIED_MV_COST && !CLN_RATE_EST_CTRLS
         int32_t mv_rate = 0;
         if (ctx->use_low_precision_cost_estimation)
             mv_rate = svt_av1_mv_bit_cost(&mv,
@@ -1657,7 +1657,11 @@ uint64_t av1_inter_fast_cost(
 
 {
 #if OPT_INTER_FAST_COST
+#if CLN_RATE_EST_CTRLS
+    if (ctx->approx_inter_rate)
+#else
     if (ctx->use_low_precision_cost_estimation)
+#endif
         return av1_inter_fast_cost_light(ctx, blk_ptr,candidate_ptr,
             luma_distortion, chroma_distortion, lambda,pcs_ptr, ref_mv_stack);
 #endif
@@ -2707,7 +2711,11 @@ if (!context_ptr->shut_fast_rate) {
 
 #if FIX_SKIP_COEFF_CONTEXT
     // Skip Coeff Context
+#if CLN_RATE_EST_CTRLS
+    if (context_ptr->rate_est_ctrls.update_skip_coeff_ctx) {
+#else
     if (context_ptr->use_skip_coeff_context) {
+#endif
         uint32_t skip_coeff_left_neighbor_index =
             get_neighbor_array_unit_left_index(skip_coeff_neighbor_array, blk_origin_y);
         uint32_t skip_coeff_top_neighbor_index =

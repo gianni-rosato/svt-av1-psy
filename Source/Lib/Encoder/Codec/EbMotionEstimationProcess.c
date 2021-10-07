@@ -443,7 +443,11 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
 #if TUNE_MATCH_04_M8
 #if TUNE_M10_M3_1
 #if TUNE_M10_M0
+#if TUNE_M10_M11
+        else if (pcs_ptr->enc_mode <= ENC_M10) {
+#else
         else if (pcs_ptr->enc_mode <= ENC_M9) {
+#endif
 #else
         else if (pcs_ptr->enc_mode <= ENC_M8) {
 #endif
@@ -473,6 +477,7 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
                 }
         }
 #endif
+#if !TUNE_M10_M11
 #if TUNE_M10_M7
 #if TUNE_M7_M10_MT && !TUNE_M10_M9_1
         else if (pcs_ptr->enc_mode <= ENC_M10) {
@@ -530,6 +535,7 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
                 }
             }
         }
+#endif
 #endif
         else {
             if (pcs_ptr->sc_class1) {
@@ -677,7 +683,11 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
         me_context_ptr->me_early_exit_th = 0;
 
 #if TUNE_EXIT_TH
+#if CLN_M10_M12_DIFFS
+    else if (pcs_ptr->enc_mode <= ENC_M11)
+#else
     else if(pcs_ptr->enc_mode <= ENC_M10)
+#endif
         me_context_ptr->me_early_exit_th = BLOCK_SIZE_64 * BLOCK_SIZE_64 * 8;
     else
         me_context_ptr->me_early_exit_th = BLOCK_SIZE_64 * BLOCK_SIZE_64 * 9;
@@ -1128,6 +1138,10 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
 #endif
 #if TUNE_PREHME_M10
     {
+#if CLN_M6_M12_FEATURES
+        if (enc_mode <= ENC_M11)
+            prehme_level = 1;
+#else
 #if TUNE_M10_M0 && !TUNE_M7_MT
         if (enc_mode <= ENC_M7)
 #else
@@ -1143,6 +1157,7 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
             prehme_level = scs_ptr->input_resolution <= INPUT_SIZE_1080p_RANGE ? 2 : 1;
 #else
             prehme_level = 2;
+#endif
 #endif
 #if TUNE_NEW_M12
 #if FTR_M13
@@ -1237,9 +1252,17 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
     else if (enc_mode <= ENC_M5)
 #endif
         set_me_sr_adjustment_ctrls(context_ptr->me_context_ptr, 2);
+#if TUNE_M10_M11
+    else
+        set_me_sr_adjustment_ctrls(context_ptr->me_context_ptr, 3);
+#else
 #if FTR_ADJUST_SR_FOR_STILL || FTR_ADJUST_SR_USING_LIST0
 #if TUNE_M10_M0 && !TUNE_M9_M10 || TUNE_M8_M11_MT
+#if TUNE_M10_M11
+    else if (enc_mode <= ENC_M11)
+#else
     else if (enc_mode <= ENC_M10)
+#endif
 #else
     else if (enc_mode <= ENC_M9)
 #endif
@@ -1250,6 +1273,7 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
     else
 
         set_me_sr_adjustment_ctrls(context_ptr->me_context_ptr, 3);
+#endif
 #endif
 #if  TUNE_M7_M10_MT && !TUNE_M7_SLOWDOWN
 #if TUNE_M7_M8
@@ -1569,7 +1593,15 @@ void *motion_estimation_kernel(void *input_ptr) {
             uint32_t y_sb_end_index = SEGMENT_END_IDX(
                 y_segment_index, picture_height_in_sb, pcs_ptr->me_segments_row_count);
             EbBool skip_me = EB_FALSE;
+#if  FTR_OPT_MPASS_BYPASS_FRAMES
+#if FTR_OP_TEST
+            if (use_output_stat(scs_ptr) || (!pcs_ptr->is_used_as_reference_flag && 1 && !pcs_ptr->first_frame_in_minigop))
+#else
+            if (use_output_stat(scs_ptr) || (!pcs_ptr->is_used_as_reference_flag && scs_ptr->rc_stat_gen_pass_mode && !pcs_ptr->first_frame_in_minigop))
+#endif
+#else
             if (use_output_stat(scs_ptr))
+#endif
                 skip_me = EB_TRUE;
             // skip me for the first pass. ME is already performed
             if (!skip_me) {

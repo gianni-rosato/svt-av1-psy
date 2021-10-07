@@ -157,8 +157,10 @@ typedef int aom_bit_depth_t;
 typedef struct {
     int             frame_width;
     int             frame_height;
+#if !TUNE_RC
     int             mi_rows;
     int             mi_cols;
+#endif
     int             mb_rows;
     int             mb_cols;
     int             num_mbs;

@@ -24,7 +24,7 @@ extern "C" {
      * ModeDecisionSb
      *   performs CL (SB)
      *******************************************/
-#if FTR_VLPD0
+#if FTR_VLPD0 && !CLN_MERGE_LPD0_VLPD0
     extern EbErrorType mode_decision_sb_very_light_pd0(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
         const MdcSbData *const mdcResultTbPtr, SuperBlock *sb_ptr,
         uint16_t sb_origin_x, uint16_t sb_origin_y, uint32_t sb_addr,

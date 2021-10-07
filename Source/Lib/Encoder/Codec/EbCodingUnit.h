@@ -329,7 +329,11 @@ typedef struct IntraBcContext {
     CRC_CALCULATOR crc_calculator1;
     CRC_CALCULATOR crc_calculator2;
 #if  FTR_SIMPLIFIED_MV_COST
+#if CLN_RATE_EST_CTRLS
+    uint8_t approx_inter_rate; // use approximate rate for inter cost (set at pic-level b/c some pic-level initializations will be removed)
+#else
     uint8_t use_low_precision_cost_estimation;
+#endif
 #endif
 } IntraBcContext;
 
@@ -441,9 +445,15 @@ typedef struct SuperBlock {
     unsigned       picture_left_edge_flag : 1;
     unsigned       picture_top_edge_flag : 1;
     unsigned       picture_right_edge_flag : 1;
+#if FTR_16K
+    unsigned       index : 32;
+    unsigned       origin_x : 32;
+    unsigned       origin_y : 32;
+#else
     unsigned       index : 12;
     unsigned       origin_x : 12;
     unsigned       origin_y : 12;
+#endif
     uint8_t        qindex;
     uint32_t       total_bits;
 

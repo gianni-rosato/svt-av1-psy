@@ -427,6 +427,7 @@ void set_cdf_controls(PictureControlSet *pcs, uint8_t update_cdf_level) {
 Input   : encoder mode and tune
 Output  : EncDec Kernel signal(s)
 ******************************************************/
+#if !CLN_REF_AREA
 #if FTR_SELECTIVE_DLF
 extern uint8_t ref_is_high_intra(PictureControlSet *pcs_ptr, uint8_t *dlf_th);
 #endif
@@ -449,6 +450,7 @@ void get_ref_intra_percentage(PictureControlSet *pcs_ptr, uint8_t *iperc){
         *iperc += ref_obj_l1->slice_type == I_SLICE ? 100  : ref_obj_l1->intra_coded_area;
     }
 }
+#endif
 #endif
 #if CLN_RTIME_MEM_ALLOC
 EbErrorType rtime_alloc_ec_ctx_array(PictureControlSet * pcs_ptr, uint16_t all_sb) {
@@ -579,7 +581,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
 #if TUNE_M7_M10_PRESETS
 #if TUNE_NEW_M10_M11
 #if OPT_TXS_WM
+#if CLN_M6_M12_FEATURES
+    } else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M11) {
+#else
     } else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M7) {
+#endif
 #else
     } else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M11) {
 #endif
@@ -672,6 +678,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         pcs_ptr->parent_pcs_ptr->pic_obmc_level;
 
     pcs_ptr->parent_pcs_ptr->bypass_cost_table_gen = 0;
+#if !CLN_M6_M12_FEATURES
     if(scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE)
          pcs_ptr->parent_pcs_ptr->bypass_cost_table_gen = 0;
     else if(pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M7)
@@ -681,12 +688,17 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         pcs_ptr->parent_pcs_ptr->bypass_cost_table_gen = 0;
     else
         pcs_ptr->parent_pcs_ptr->bypass_cost_table_gen = 1;
+#endif
 #if FTR_SELECTIVE_DLF
 #if TUNE_NEW_M11_2
 #if TUNE_M10_M0
 #if TUNE_M9_M11_OPTIMIZED_SUPER4KL
 #if TUNE_M11_SLOWDOWN
+#if CLN_REF_AREA
+    uint8_t use_selective_dlf_th = pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M11 ? (uint8_t)~0 : ((pcs_ptr->parent_pcs_ptr->input_resolution <= INPUT_SIZE_1080p_RANGE) ? 60 : (uint8_t)~0);
+#else
     uint8_t use_selective_dlf_th = pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M11 ? (uint8_t)~0 : ((pcs_ptr->parent_pcs_ptr->input_resolution <= INPUT_SIZE_1080p_RANGE) ? 120 : (uint8_t)~0);
+#endif
 #else
     uint8_t use_selective_dlf_th = pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M10 ? (uint8_t)~0 : ((pcs_ptr->parent_pcs_ptr->input_resolution <= INPUT_SIZE_1080p_RANGE) ? 120 : (uint8_t)~0);
 #endif
@@ -698,8 +710,12 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
 #endif
     if (use_selective_dlf_th != (uint8_t)~0){
         if (pcs_ptr->parent_pcs_ptr->temporal_layer_index) {
+#if CLN_REF_AREA
+            uint8_t dlf_th = pcs_ptr->ref_intra_percentage;
+#else
             uint8_t dlf_th = 100;
             ref_is_high_intra(pcs_ptr, &dlf_th);
+#endif
             if (dlf_th < use_selective_dlf_th)
                 pcs_ptr->parent_pcs_ptr->dlf_ctrls.enabled = 0;
         }
@@ -719,7 +735,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
 #if FTR_SELECTIVE_MFMV
 #if TUNE_M8_M10_4K_SUPER
 #if TUNE_M9_SLOWDOWN
+#if CLN_REF_AREA
+    uint8_t use_selective_mfmv_th = pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M9 ? (uint8_t)~0 : 35; // This is a % [0-100]
+#else
     uint8_t use_selective_mfmv_th = pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M9 ? (uint8_t)~0 : 70; // This is a % [0-100]
+#endif
 #else
     uint8_t use_selective_mfmv_th = pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M8 ? (uint8_t)~0 : ((pcs_ptr->parent_pcs_ptr->enc_mode == ENC_M9) && (pcs_ptr->parent_pcs_ptr->input_resolution > INPUT_SIZE_1080p_RANGE)) ? (uint8_t)~0 : 70; // This is a % [0-100]
 #endif
@@ -731,13 +751,27 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
             pcs_ptr->parent_pcs_ptr->frm_hdr.use_ref_frame_mvs = 0;
         else
         {
+#if CLN_REF_AREA
+            uint8_t rmv_th = pcs_ptr->ref_intra_percentage;
+#else
             uint8_t rmv_th = 100;
             ref_is_high_intra(pcs_ptr, &rmv_th);
+#endif
             if (rmv_th > use_selective_mfmv_th)
                 pcs_ptr->parent_pcs_ptr->frm_hdr.use_ref_frame_mvs = 0;
         }
     }
 #endif
+#if CLN_RATE_EST_CTRLS
+#if CLN_FEAT_LEVEL
+    if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M10)
+#else
+    if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M9)
+#endif
+        pcs_ptr->approx_inter_rate = 0;
+    else
+        pcs_ptr->approx_inter_rate = 1;
+#else
 #if  FTR_SIMPLIFIED_MV_COST
 #if FTR_LOW_AC_COST_EST
 #if OPT_PD0_TXT
@@ -779,6 +813,27 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         pcs_ptr->use_low_precision_cost_estimation = 1;
 #endif
 #endif
+#endif
+#endif
+#endif
+#if SS_FIX_MOVE_SKIP_INTRA_PIC
+    if (pcs_ptr->slice_type == I_SLICE)
+        pcs_ptr->skip_intra = 0;
+    else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M8)
+        pcs_ptr->skip_intra = 0;
+#if CLN_M10_M12_DIFFS
+    else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M11)
+#else
+    else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M10)
+#endif
+#if CLN_REF_AREA
+        pcs_ptr->skip_intra = pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag || pcs_ptr->ref_intra_percentage > 50 ? 0 : 1;
+    else
+        pcs_ptr->skip_intra = (pcs_ptr->parent_pcs_ptr->input_resolution <= INPUT_SIZE_1080p_RANGE) ? (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? 0 : 1) : (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag || pcs_ptr->ref_intra_percentage > 50 ? 0 : 1);
+#else
+        pcs_ptr->skip_intra = pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag || pcs_ptr->intra_percentage > 100 ? 0 : 1;
+    else
+        pcs_ptr->skip_intra = (pcs_ptr->parent_pcs_ptr->input_resolution <= INPUT_SIZE_1080p_RANGE) ? (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? 0 : 1) : (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag || pcs_ptr->intra_percentage > 100 ? 0 : 1);
 #endif
 #endif
     return return_error;
@@ -1008,8 +1063,57 @@ static void av1_setup_motion_field(Av1Common *cm, PictureControlSet *pcs_ptr) {
 #if OPT_MEMORY_HASH_TABLE
 EbErrorType svt_av1_hash_table_create(HashTable *p_hash_table);
 #endif
+#if CLN_REF_AREA
+// intra_perc will be set to the % of intra area in two nearest ref frames
+void get_ref_intra_percentage(PictureControlSet *pcs_ptr, uint8_t *intra_perc) {
+
+    assert(intra_perc != NULL);
+    if (pcs_ptr->slice_type == I_SLICE) {
+        *intra_perc = 100;
+        return;
+    }
+
+    uint8_t iperc = 0;
+
+    EbReferenceObject *ref_obj_l0 = (EbReferenceObject *)pcs_ptr->ref_pic_ptr_array[REF_LIST_0][0]->object_ptr;
+    iperc = ref_obj_l0->intra_coded_area;
+    if (pcs_ptr->slice_type == B_SLICE) {
+        EbReferenceObject *ref_obj_l1 = (EbReferenceObject *)pcs_ptr->ref_pic_ptr_array[REF_LIST_1][0]->object_ptr;
+        iperc += ref_obj_l1->intra_coded_area;
+
+        // if have two frames, divide the iperc by 2 to get the avg skip area
+        iperc >>= 1;
+    }
+
+    *intra_perc = iperc;
+}
+
+// skip_area will be set to the % of skipped area in two nearest ref frames
+void get_ref_skip_percentage(PictureControlSet *pcs_ptr, uint8_t *skip_area) {
+
+    assert(skip_area != NULL);
+    if (pcs_ptr->slice_type == I_SLICE) {
+        *skip_area = 0;
+        return;
+    }
+
+    uint8_t skip_perc = 0;
+    EbReferenceObject *ref_obj_l0 = (EbReferenceObject *)pcs_ptr->ref_pic_ptr_array[REF_LIST_0][0]->object_ptr;
+    skip_perc = ref_obj_l0->skip_coded_area;
+    if (pcs_ptr->slice_type == B_SLICE) {
+        EbReferenceObject *ref_obj_l1 = (EbReferenceObject *)pcs_ptr->ref_pic_ptr_array[REF_LIST_1][0]->object_ptr;
+        skip_perc += ref_obj_l1->skip_coded_area;
+
+        // if have two frames, divide the skip_perc by 2 to get the avg skip area
+        skip_perc >>= 1;
+    }
+
+    *skip_area = skip_perc;
+}
+#else
 #if OPT_CDEF
 extern uint8_t ref_is_high_skip(PictureControlSet *pcs_ptr, uint8_t *skip_area);
+#endif
 #endif
 #if CLN_RTIME_MEM_ALLOC
 void* rtime_alloc_block_hash_block_is_same(size_t size) {
@@ -1090,14 +1194,25 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
             av1_setup_motion_field(pcs_ptr->parent_pcs_ptr->av1_cm, pcs_ptr);
 
         FrameHeader *frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
+#if SS_FIX_MOVE_SKIP_INTRA_PIC
+#if CLN_REF_AREA
+        // Get intra % in ref frame
+        get_ref_intra_percentage(pcs_ptr, &pcs_ptr->ref_intra_percentage);
 
+        // Get skip % in ref frame
+        get_ref_skip_percentage(pcs_ptr, &pcs_ptr->ref_skip_percentage);
+#else
+        // Get intra % in ref frame
+        get_ref_intra_percentage(pcs_ptr, &pcs_ptr->intra_percentage);
+#endif
+#endif
         // Mode Decision Configuration Kernel Signal(s) derivation
         if (use_output_stat(scs_ptr))
             first_pass_signal_derivation_mode_decision_config_kernel(pcs_ptr);
         else
             signal_derivation_mode_decision_config_kernel_oq(scs_ptr, pcs_ptr);
 
-#if TUNE_NEW_M11_2
+#if TUNE_NEW_M11_2 && !SS_FIX_MOVE_SKIP_INTRA_PIC
         // Get intra % in ref frame
         get_ref_intra_percentage(pcs_ptr, &pcs_ptr->intra_percentage);
 #endif
@@ -1362,9 +1477,14 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
 #if MS_CDEF_OPT3
         CdefControls *cdef_ctrls = &pcs_ptr->parent_pcs_ptr->cdef_ctrls;
 #if OPT_CDEF
+#if CLN_REF_AREA
+        uint8_t skip_perc = pcs_ptr->ref_skip_percentage;
+        if (skip_perc > 75 && cdef_ctrls->use_skip_detector)
+#else
         uint8_t skip_area = 0;
         ref_is_high_skip(pcs_ptr, &skip_area);
         if (skip_area > 150 && cdef_ctrls->use_skip_detector)
+#endif
             pcs_ptr->parent_pcs_ptr->cdef_level = 0;
         else {
 #endif
