@@ -38,7 +38,8 @@ void scale_rec_references(PictureControlSet *pcs_ptr, EbPictureBufferDesc *input
 
 void use_scaled_rec_refs_if_needed(PictureControlSet *  pcs_ptr,
                                    EbPictureBufferDesc *input_picture_ptr,
-                                   EbReferenceObject *ref_obj, EbPictureBufferDesc **ref_pic);
+                                   EbReferenceObject *ref_obj, EbPictureBufferDesc **ref_pic,
+                                   uint8_t hbd_mode_decision);
 
 void use_scaled_source_refs_if_needed(PictureParentControlSet *pcs_ptr,
                                       EbPictureBufferDesc *    input_picture_ptr,

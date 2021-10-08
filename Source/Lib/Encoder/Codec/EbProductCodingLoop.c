@@ -1687,7 +1687,7 @@ void md_nsq_motion_search(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
     // -------
     // Use scaled references if resolution of the reference is different from that of the input
     // -------
-    use_scaled_rec_refs_if_needed(pcs_ptr, input_picture_ptr, ref_obj, &ref_pic);
+    use_scaled_rec_refs_if_needed(pcs_ptr, input_picture_ptr, ref_obj, &ref_pic, hbd_mode_decision);
 
     for (int16_t mvc_index = 0; mvc_index < mvc_count; mvc_index++) {
         // Round-up the search center to the closest integer
@@ -1827,7 +1827,7 @@ void md_sq_motion_search(PictureControlSet *pcs, ModeDecisionContext *ctx,
     // -------
     // Use scaled references if resolution of the reference is different from that of the input
     // -------
-    use_scaled_rec_refs_if_needed(pcs, input_picture_ptr, ref_obj, &ref_pic);
+    use_scaled_rec_refs_if_needed(pcs, input_picture_ptr, ref_obj, &ref_pic, hbd_mode_decision);
 
     MdSqMotionSearchCtrls *md_sq_me_ctrls = &ctx->md_sq_me_ctrls;
     uint16_t               dist           = ABS(
@@ -2085,7 +2085,7 @@ int md_subpel_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_pt
     // -------
     // Use scaled references if resolution of the reference is different from that of the input
     // -------
-    use_scaled_rec_refs_if_needed(pcs_ptr, input_picture_ptr, ref_obj, &ref_pic);
+    use_scaled_rec_refs_if_needed(pcs_ptr, input_picture_ptr, ref_obj, &ref_pic, EB_8_BIT_MD);
 
     int32_t              ref_origin_index = ref_pic->origin_x + context_ptr->blk_origin_x +
         (context_ptr->blk_origin_y + ref_pic->origin_y) * ref_pic->stride_y;
@@ -2187,7 +2187,7 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
             // -------
             // Use scaled references if resolution of the reference is different from that of the input
             // -------
-            use_scaled_rec_refs_if_needed(pcs_ptr, input_picture_ptr, ref_obj, &ref_pic);
+            use_scaled_rec_refs_if_needed(pcs_ptr, input_picture_ptr, ref_obj, &ref_pic, hbd_mode_decision);
 
             // Get the ME MV
             const MeSbResults *me_results =
@@ -2386,7 +2386,7 @@ void perform_md_reference_pruning(PictureControlSet *pcs_ptr, ModeDecisionContex
                 // -------
                 // Use scaled references if resolution of the reference is different from that of the input
                 // -------
-                use_scaled_rec_refs_if_needed(pcs_ptr, input_picture_ptr, ref_obj, &ref_pic);
+                use_scaled_rec_refs_if_needed(pcs_ptr, input_picture_ptr, ref_obj, &ref_pic, hbd_mode_decision);
 
                 clip_mv_on_pic_boundary(context_ptr->blk_origin_x,
                                         context_ptr->blk_origin_y,
@@ -2452,7 +2452,7 @@ void perform_md_reference_pruning(PictureControlSet *pcs_ptr, ModeDecisionContex
                 // -------
                 // Use scaled references if resolution of the reference is different from that of the input
                 // -------
-                use_scaled_rec_refs_if_needed(pcs_ptr, input_picture_ptr, ref_obj, &ref_pic);
+                use_scaled_rec_refs_if_needed(pcs_ptr, input_picture_ptr, ref_obj, &ref_pic, hbd_mode_decision);
 
                 clip_mv_on_pic_boundary(context_ptr->blk_origin_x,
                                         context_ptr->blk_origin_y,
@@ -2627,7 +2627,7 @@ void   pme_search(PictureControlSet *pcs, ModeDecisionContext *ctx,
             // -------
             // Use scaled references if resolution of the reference is different from that of the input
             // -------
-            use_scaled_rec_refs_if_needed(pcs, input_picture_ptr, ref_obj, &ref_pic);
+            use_scaled_rec_refs_if_needed(pcs, input_picture_ptr, ref_obj, &ref_pic, hbd_mode_decision);
 
             if (!is_valid_unipred_ref(ctx, PRED_ME_GROUP, list_idx, ref_idx))
                 continue;

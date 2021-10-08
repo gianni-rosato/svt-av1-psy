@@ -895,28 +895,32 @@ static EbErrorType av1_resize_frame(const EbPictureBufferDesc *src, EbPictureBuf
                                  dst->stride_y);
                 break;
             case 1:
-                av1_resize_plane(src->buffer_cb + (src->origin_y >> ss_y) * src->stride_cb +
-                                     (src->origin_x >> ss_x),
-                                 src->height >> ss_y,
-                                 src->width >> ss_x,
-                                 src->stride_cb,
-                                 dst->buffer_cb + (dst->origin_y >> ss_y) * dst->stride_cb +
-                                     (dst->origin_x >> ss_x),
-                                 (dst->height + ss_y) >> ss_y,
-                                 (dst->width + ss_x) >> ss_x,
-                                 dst->stride_cb);
+                if (dst->buffer_cb) {
+                    av1_resize_plane(src->buffer_cb + (src->origin_y >> ss_y) * src->stride_cb +
+                                         (src->origin_x >> ss_x),
+                                     src->height >> ss_y,
+                                     src->width >> ss_x,
+                                     src->stride_cb,
+                                     dst->buffer_cb + (dst->origin_y >> ss_y) * dst->stride_cb +
+                                         (dst->origin_x >> ss_x),
+                                     (dst->height + ss_y) >> ss_y,
+                                     (dst->width + ss_x) >> ss_x,
+                                     dst->stride_cb);
+                }
                 break;
             case 2:
-                av1_resize_plane(src->buffer_cr + (src->origin_y >> ss_y) * src->stride_cr +
-                                     (src->origin_x >> ss_x),
-                                 src->height >> ss_y,
-                                 src->width >> ss_x,
-                                 src->stride_cr,
-                                 dst->buffer_cr + (dst->origin_y >> ss_y) * dst->stride_cr +
-                                     (dst->origin_x >> ss_x),
-                                 (dst->height + ss_y) >> ss_y,
-                                 (dst->width + ss_x) >> ss_x,
-                                 dst->stride_cr);
+                if (dst->buffer_cr) {
+                    av1_resize_plane(src->buffer_cr + (src->origin_y >> ss_y) * src->stride_cr +
+                                         (src->origin_x >> ss_x),
+                                     src->height >> ss_y,
+                                     src->width >> ss_x,
+                                     src->stride_cr,
+                                     dst->buffer_cr + (dst->origin_y >> ss_y) * dst->stride_cr +
+                                         (dst->origin_x >> ss_x),
+                                     (dst->height + ss_y) >> ss_y,
+                                     (dst->width + ss_x) >> ss_x,
+                                     dst->stride_cr);
+                }
                 break;
             default: break;
             }
@@ -1119,14 +1123,14 @@ static EbErrorType scale_pcs_params(SequenceControlSet *scs_ptr, PictureParentCo
 static EbErrorType allocate_downscaled_reference_pics(
     EbPictureBufferDesc **downscaled_reference_picture_ptr,
     EbPictureBufferDesc **downscaled_reference_picture16bit,
-    EbPictureBufferDesc *picture_ptr_for_reference, PictureParentControlSet *pcs_ptr) {
+    PictureParentControlSet *pcs_ptr) {
     EbPictureBufferDescInitData ref_pic_buf_desc_init_data;
 
     // Initialize the various Picture types
     ref_pic_buf_desc_init_data.max_width          = pcs_ptr->frame_width;  // aligned_width;
     ref_pic_buf_desc_init_data.max_height         = pcs_ptr->frame_height; // aligned_height;
-    ref_pic_buf_desc_init_data.bit_depth          = picture_ptr_for_reference->bit_depth;
-    ref_pic_buf_desc_init_data.color_format       = picture_ptr_for_reference->color_format;
+    ref_pic_buf_desc_init_data.bit_depth          = pcs_ptr->scs_ptr->encoder_bit_depth;
+    ref_pic_buf_desc_init_data.color_format       = pcs_ptr->scs_ptr->static_config.encoder_color_format;
     ref_pic_buf_desc_init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK;
 
     ref_pic_buf_desc_init_data.left_padding  = PAD_VALUE;
@@ -1142,8 +1146,12 @@ static EbErrorType allocate_downscaled_reference_pics(
                svt_picture_buffer_desc_ctor,
                (EbPtr)&ref_pic_buf_desc_init_data);
 
-        // Hsan: set split_mode to 1 to construct the unpacked reference buffer (used @ MD)
-        ref_pic_buf_desc_init_data.split_mode = EB_TRUE;
+        // align with svt_reference_object_ctor(): Use 8bit here to use in MD
+        ref_pic_buf_desc_init_data.split_mode = EB_FALSE;
+        ref_pic_buf_desc_init_data.bit_depth  = EB_8BIT;
+        if (pcs_ptr->hbd_mode_decision != EB_10_BIT_MD) {
+            ref_pic_buf_desc_init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_LUMA_MASK;
+        }
         EB_NEW(*downscaled_reference_picture_ptr,
                svt_picture_buffer_desc_ctor,
                (EbPtr)&ref_pic_buf_desc_init_data);
@@ -1419,35 +1427,35 @@ void scale_rec_references(PictureControlSet *pcs_ptr, EbPictureBufferDesc *input
 
                 svt_block_on_mutex(reference_object->resize_mutex[denom_idx]);
 
+                EbPictureBufferDesc *down_ref_pic16bit = NULL;
+                EbPictureBufferDesc *down_ref_pic8bit = reference_object->downscaled_reference_picture[denom_idx];
+
+                if (hbd_mode_decision != EB_8_BIT_MD)
+                    down_ref_pic16bit = reference_object->downscaled_reference_picture16bit[denom_idx];
+
                 EbPictureBufferDesc *down_ref_pic_ptr = hbd_mode_decision
-                    ? reference_object->downscaled_reference_picture16bit[denom_idx]
-                    : reference_object->downscaled_reference_picture[denom_idx];
+                    ? down_ref_pic16bit
+                    : down_ref_pic8bit;
 
                 if (down_ref_pic_ptr != NULL) {
                     if (ref_pic_ptr->bit_depth != down_ref_pic_ptr->bit_depth) {
                         EB_DELETE(reference_object->downscaled_reference_picture16bit[denom_idx]);
                         EB_DELETE(reference_object->downscaled_reference_picture[denom_idx]);
+                        down_ref_pic16bit = NULL;
+                        down_ref_pic8bit  = NULL;
                         down_ref_pic_ptr = NULL;
                     }
                 }
 
                 if (down_ref_pic_ptr == NULL) {
-                    if (reference_object->downscaled_reference_picture16bit[denom_idx] != NULL)
-                        EB_DELETE(reference_object->downscaled_reference_picture16bit[denom_idx]);
-                    if (reference_object->downscaled_reference_picture[denom_idx] != NULL)
-                        EB_DELETE(reference_object->downscaled_reference_picture[denom_idx]);
-
                     // Allocate downsampled reference picture buffer descriptors
                     allocate_downscaled_reference_pics(
                         &reference_object->downscaled_reference_picture[denom_idx],
                         &reference_object->downscaled_reference_picture16bit[denom_idx],
-                        ref_pic_ptr,
                         ppcs_ptr);
 
-                    down_ref_pic_ptr = hbd_mode_decision
-                        ? reference_object->downscaled_reference_picture16bit[denom_idx]
-                        : reference_object->downscaled_reference_picture[denom_idx];
-
+                    down_ref_pic8bit = reference_object->downscaled_reference_picture[denom_idx];
+                    down_ref_pic16bit = reference_object->downscaled_reference_picture16bit[denom_idx];
                     do_resize = EB_TRUE;
                 }
 
@@ -1456,58 +1464,74 @@ void scale_rec_references(PictureControlSet *pcs_ptr, EbPictureBufferDesc *input
                 }
 
                 if (do_resize) {
+                    if (down_ref_pic16bit != NULL) {
+                        // downsample input padded picture buffer
+                        av1_resize_frame(reference_object->reference_picture16bit,
+                                         down_ref_pic16bit,
+                                         down_ref_pic16bit->bit_depth,
+                                         num_planes,
+                                         ss_x,
+                                         ss_y,
+                                         1 // is_packed
+                        );
+                    }
+
                     // downsample input padded picture buffer
-                    av1_resize_frame(ref_pic_ptr,
-                                     down_ref_pic_ptr,
-                                     down_ref_pic_ptr->bit_depth,
+                    av1_resize_frame(reference_object->reference_picture,
+                                     down_ref_pic8bit,
+                                     down_ref_pic8bit->bit_depth,
                                      num_planes,
                                      ss_x,
                                      ss_y,
                                      1 // is_packed
                     );
 
-                    if (down_ref_pic_ptr->bit_depth > EB_8BIT) {
-                        generate_padding16_bit((uint16_t *)down_ref_pic_ptr->buffer_y,
-                                               down_ref_pic_ptr->stride_y,
-                                               down_ref_pic_ptr->width,
-                                               down_ref_pic_ptr->height,
-                                               down_ref_pic_ptr->origin_x,
-                                               down_ref_pic_ptr->origin_y);
+                    if (down_ref_pic16bit != NULL) {
+                        generate_padding16_bit((uint16_t *)down_ref_pic16bit->buffer_y,
+                                               down_ref_pic16bit->stride_y,
+                                               down_ref_pic16bit->width,
+                                               down_ref_pic16bit->height,
+                                               down_ref_pic16bit->origin_x,
+                                               down_ref_pic16bit->origin_y);
 
-                        generate_padding16_bit((uint16_t *)down_ref_pic_ptr->buffer_cb,
-                                               down_ref_pic_ptr->stride_cb,
-                                               down_ref_pic_ptr->width >> ss_x,
-                                               down_ref_pic_ptr->height >> ss_y,
-                                               down_ref_pic_ptr->origin_x >> ss_x,
-                                               down_ref_pic_ptr->origin_y >> ss_y);
+                        generate_padding16_bit((uint16_t *)down_ref_pic16bit->buffer_cb,
+                                               down_ref_pic16bit->stride_cb,
+                                               down_ref_pic16bit->width >> ss_x,
+                                               down_ref_pic16bit->height >> ss_y,
+                                               down_ref_pic16bit->origin_x >> ss_x,
+                                               down_ref_pic16bit->origin_y >> ss_y);
 
-                        generate_padding16_bit((uint16_t *)down_ref_pic_ptr->buffer_cr,
-                                               down_ref_pic_ptr->stride_cr,
-                                               down_ref_pic_ptr->width >> ss_x,
-                                               down_ref_pic_ptr->height >> ss_y,
-                                               down_ref_pic_ptr->origin_x >> ss_x,
-                                               down_ref_pic_ptr->origin_y >> ss_y);
-                    } else {
-                        generate_padding(down_ref_pic_ptr->buffer_y,
-                                         down_ref_pic_ptr->stride_y,
-                                         down_ref_pic_ptr->width,
-                                         down_ref_pic_ptr->height,
-                                         down_ref_pic_ptr->origin_x,
-                                         down_ref_pic_ptr->origin_y);
+                        generate_padding16_bit((uint16_t *)down_ref_pic16bit->buffer_cr,
+                                               down_ref_pic16bit->stride_cr,
+                                               down_ref_pic16bit->width >> ss_x,
+                                               down_ref_pic16bit->height >> ss_y,
+                                               down_ref_pic16bit->origin_x >> ss_x,
+                                               down_ref_pic16bit->origin_y >> ss_y);
+                    }
 
-                        generate_padding(down_ref_pic_ptr->buffer_cb,
-                                         down_ref_pic_ptr->stride_cb,
-                                         down_ref_pic_ptr->width >> ss_x,
-                                         down_ref_pic_ptr->height >> ss_y,
-                                         down_ref_pic_ptr->origin_x >> ss_x,
-                                         down_ref_pic_ptr->origin_y >> ss_y);
+                    generate_padding(down_ref_pic8bit->buffer_y,
+                                        down_ref_pic8bit->stride_y,
+                                        down_ref_pic8bit->width,
+                                        down_ref_pic8bit->height,
+                                        down_ref_pic8bit->origin_x,
+                                        down_ref_pic8bit->origin_y);
 
-                        generate_padding(down_ref_pic_ptr->buffer_cr,
-                                         down_ref_pic_ptr->stride_cr,
-                                         down_ref_pic_ptr->width >> ss_x,
-                                         down_ref_pic_ptr->height >> ss_y,
-                                         down_ref_pic_ptr->origin_x >> ss_x,
-                                         down_ref_pic_ptr->origin_y >> ss_y);
+                    if (down_ref_pic8bit->buffer_cb) {
+                        generate_padding(down_ref_pic8bit->buffer_cb,
+                                         down_ref_pic8bit->stride_cb,
+                                         down_ref_pic8bit->width >> ss_x,
+                                         down_ref_pic8bit->height >> ss_y,
+                                         down_ref_pic8bit->origin_x >> ss_x,
+                                         down_ref_pic8bit->origin_y >> ss_y);
+                    }
+
+                    if (down_ref_pic8bit->buffer_cr) {
+                        generate_padding(down_ref_pic8bit->buffer_cr,
+                                         down_ref_pic8bit->stride_cr,
+                                         down_ref_pic8bit->width >> ss_x,
+                                         down_ref_pic8bit->height >> ss_y,
+                                         down_ref_pic8bit->origin_x >> ss_x,
+                                         down_ref_pic8bit->origin_y >> ss_y);
                     }
 
                     reference_object->downscaled_picture_number[denom_idx] = ref_picture_number;
@@ -1526,11 +1550,12 @@ void scale_rec_references(PictureControlSet *pcs_ptr, EbPictureBufferDesc *input
  */
 void use_scaled_rec_refs_if_needed(PictureControlSet *  pcs_ptr,
                                    EbPictureBufferDesc *input_picture_ptr,
-                                   EbReferenceObject *ref_obj, EbPictureBufferDesc **ref_pic) {
+                                   EbReferenceObject *ref_obj, EbPictureBufferDesc **ref_pic,
+                                   uint8_t hbd_mode_decision) {
     if ((*ref_pic)->width != input_picture_ptr->width) {
         uint8_t denom_idx = get_denom_idx(pcs_ptr->parent_pcs_ptr->superres_denom);
 
-        if (pcs_ptr->hbd_mode_decision) {
+        if (hbd_mode_decision) {
             assert(ref_obj->downscaled_reference_picture16bit[denom_idx] != NULL);
             *ref_pic = ref_obj->downscaled_reference_picture16bit[denom_idx];
         } else {

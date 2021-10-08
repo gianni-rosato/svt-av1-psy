@@ -316,12 +316,12 @@ void inter_intra_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context
         use_scaled_rec_refs_if_needed(pcs_ptr,
                                       pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr,
                                       (EbReferenceObject *)pcs_ptr->ref_pic_ptr_array[list_idx0][ref_idx_l0]->object_ptr,
-                                      &ref_pic_list0);
+                                      &ref_pic_list0, context_ptr->hbd_mode_decision);
     if(ref_pic_list1 != NULL)
         use_scaled_rec_refs_if_needed(pcs_ptr,
                                       pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr,
                                       (EbReferenceObject *)pcs_ptr->ref_pic_ptr_array[list_idx1][ref_idx_l1]->object_ptr,
-                                      &ref_pic_list1);
+                                      &ref_pic_list1, context_ptr->hbd_mode_decision);
 
     mv_unit.pred_direction = candidate_ptr->prediction_direction[0];
 
@@ -2877,7 +2877,7 @@ void obmc_motion_refinement(PictureControlSet *pcs_ptr, struct ModeDecisionConte
         use_scaled_rec_refs_if_needed(pcs_ptr,
                                       pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr,
                                       (EbReferenceObject *)pcs_ptr->ref_pic_ptr_array[list_idx][ref_idx]->object_ptr,
-                                      &reference_picture);
+                                      &reference_picture, EB_8_BIT_MD);
 
         Yv12BufferConfig ref_buf;
         link_eb_to_aom_buffer_desc_8bit(reference_picture, &ref_buf);
