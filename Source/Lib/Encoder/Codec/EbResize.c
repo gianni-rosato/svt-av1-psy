@@ -1363,7 +1363,7 @@ void scale_pcs_params(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_
 static EbErrorType allocate_downscaled_reference_pics(
     EbPictureBufferDesc **downscaled_reference_picture_ptr,
     EbPictureBufferDesc **downscaled_reference_picture16bit,
-    PictureParentControlSet *pcs_ptr) {
+    EbPictureBufferDesc* picture_ptr_for_reference, PictureParentControlSet* pcs_ptr) {
     EbPictureBufferDescInitData ref_pic_buf_desc_init_data;
 
     // Initialize the various Picture types
@@ -1373,10 +1373,10 @@ static EbErrorType allocate_downscaled_reference_pics(
     ref_pic_buf_desc_init_data.color_format       = pcs_ptr->scs_ptr->static_config.encoder_color_format;
     ref_pic_buf_desc_init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK;
 
-    ref_pic_buf_desc_init_data.left_padding  = PAD_VALUE;
-    ref_pic_buf_desc_init_data.right_padding = PAD_VALUE;
-    ref_pic_buf_desc_init_data.top_padding   = PAD_VALUE;
-    ref_pic_buf_desc_init_data.bot_padding   = PAD_VALUE;
+    ref_pic_buf_desc_init_data.left_padding = picture_ptr_for_reference->origin_x;
+    ref_pic_buf_desc_init_data.right_padding = picture_ptr_for_reference->origin_x;
+    ref_pic_buf_desc_init_data.top_padding = picture_ptr_for_reference->origin_y;
+    ref_pic_buf_desc_init_data.bot_padding = picture_ptr_for_reference->origin_bot_y;
     ref_pic_buf_desc_init_data.mfmv          = pcs_ptr->scs_ptr->mfmv_enabled;
 
     if (ref_pic_buf_desc_init_data.bit_depth == EB_10BIT) {
@@ -1692,6 +1692,7 @@ void scale_rec_references(PictureControlSet *pcs_ptr, EbPictureBufferDesc *input
                     allocate_downscaled_reference_pics(
                         &reference_object->downscaled_reference_picture[denom_idx],
                         &reference_object->downscaled_reference_picture16bit[denom_idx],
+                        ref_pic_ptr,
                         ppcs_ptr);
 
                     down_ref_pic8bit = reference_object->downscaled_reference_picture[denom_idx];
