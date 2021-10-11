@@ -170,8 +170,8 @@ void pack_highbd_pic(const EbPictureBufferDesc *pic_ptr, uint16_t *buffer_16bit[
                pic_ptr->stride_bit_inc_cb,
                buffer_16bit[C_U],
                pic_ptr->stride_cb,
-               width >> ss_x,
-               height >> ss_y);
+               (width + ss_x) >> ss_x,
+               (height + ss_y) >> ss_y);
 
     pack2d_src(pic_ptr->buffer_cr + input_cr_offset,
                pic_ptr->stride_cr,
@@ -179,8 +179,8 @@ void pack_highbd_pic(const EbPictureBufferDesc *pic_ptr, uint16_t *buffer_16bit[
                pic_ptr->stride_bit_inc_cr,
                buffer_16bit[C_V],
                pic_ptr->stride_cr,
-               width >> ss_x,
-               height >> ss_y);
+               (width + ss_x) >> ss_x,
+               (height + ss_y) >> ss_y);
 }
 
 void unpack_highbd_pic(uint16_t *buffer_highbd[3], EbPictureBufferDesc *pic_ptr, uint32_t ss_x,
@@ -226,8 +226,8 @@ void unpack_highbd_pic(uint16_t *buffer_highbd[3], EbPictureBufferDesc *pic_ptr,
               pic_ptr->stride_cb,
               pic_ptr->buffer_bit_inc_cb + input_bit_inc_cb_offset,
               pic_ptr->stride_bit_inc_cb,
-              width >> ss_x,
-              height >> ss_y);
+              (width + ss_x) >> ss_x,
+              (height + ss_y) >> ss_y);
 
     un_pack2d(buffer_highbd[C_V],
               pic_ptr->stride_cr,
@@ -235,8 +235,8 @@ void unpack_highbd_pic(uint16_t *buffer_highbd[3], EbPictureBufferDesc *pic_ptr,
               pic_ptr->stride_cr,
               pic_ptr->buffer_bit_inc_cr + input_bit_inc_cr_offset,
               pic_ptr->stride_bit_inc_cr,
-              width >> ss_x,
-              height >> ss_y);
+              (width + ss_x) >> ss_x,
+              (height + ss_y) >> ss_y);
 }
 
 void generate_padding_pic(EbPictureBufferDesc *pic_ptr, uint32_t ss_x, uint32_t ss_y,

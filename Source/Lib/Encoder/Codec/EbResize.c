@@ -1984,6 +1984,29 @@ void init_resize_picture(SequenceControlSet *scs_ptr, PictureParentControlSet *p
                          pcs_ptr->enhanced_downscaled_picture_ptr->origin_x >> ss_x,
                          pcs_ptr->enhanced_downscaled_picture_ptr->origin_y >> ss_y);
 
+        // generate padding if hbd buffer is unpacked
+        if (pcs_ptr->enhanced_downscaled_picture_ptr->buffer_bit_inc_y)
+            generate_padding(pcs_ptr->enhanced_downscaled_picture_ptr->buffer_bit_inc_y,
+                             pcs_ptr->enhanced_downscaled_picture_ptr->stride_bit_inc_y,
+                             pcs_ptr->enhanced_downscaled_picture_ptr->width,
+                             pcs_ptr->enhanced_downscaled_picture_ptr->height,
+                             pcs_ptr->enhanced_downscaled_picture_ptr->origin_x,
+                             pcs_ptr->enhanced_downscaled_picture_ptr->origin_y);
+        if (pcs_ptr->enhanced_downscaled_picture_ptr->buffer_bit_inc_cb)
+            generate_padding(pcs_ptr->enhanced_downscaled_picture_ptr->buffer_bit_inc_cb,
+                             pcs_ptr->enhanced_downscaled_picture_ptr->stride_bit_inc_cb,
+                             (pcs_ptr->enhanced_downscaled_picture_ptr->width + 0) >> ss_x,
+                             (pcs_ptr->enhanced_downscaled_picture_ptr->height + ss_y) >> ss_y,
+                             pcs_ptr->enhanced_downscaled_picture_ptr->origin_x >> ss_x,
+                             pcs_ptr->enhanced_downscaled_picture_ptr->origin_y >> ss_y);
+        if (pcs_ptr->enhanced_downscaled_picture_ptr->buffer_bit_inc_cr)
+            generate_padding(pcs_ptr->enhanced_downscaled_picture_ptr->buffer_bit_inc_cr,
+                             pcs_ptr->enhanced_downscaled_picture_ptr->stride_bit_inc_cr,
+                             (pcs_ptr->enhanced_downscaled_picture_ptr->width + 0) >> ss_x,
+                             (pcs_ptr->enhanced_downscaled_picture_ptr->height + ss_y) >> ss_y,
+                             pcs_ptr->enhanced_downscaled_picture_ptr->origin_x >> ss_x,
+                             pcs_ptr->enhanced_downscaled_picture_ptr->origin_y >> ss_y);
+
         // use downscaled picture instead of original res for mode decision, encoding loop etc
         // after temporal filtering and motion estimation
         pcs_ptr->enhanced_picture_ptr = pcs_ptr->enhanced_downscaled_picture_ptr;
