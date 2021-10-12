@@ -816,6 +816,7 @@ NOTE : PART OF LIGHT_PD0_2  code was committed to svt-04-final-rebased under OPT
 #define FIX_ISSUE_99                          1 // invalid parent-to-pred cost deviation @ the final Pred-Depth refinement stage (the up to 2 depth(s) only check) for incomplete SB(s) as not derived @ the regular refinement stage (weather to consider or not the parent depth); initialized to MAX before (and not inside) the regular refinement stage
 
 #define FIX_INVALID_PTR_AFTER_REALLOC         1 // Fix invalid pointer after realloc from AOMediaCodec/SVT-AV1!1737
+#define FIX_HANG_IN_RATE_CONTROL_PARAM_QUEUE  1 // Fix hang in rate_control_param_queue from AOMediaCodec/SVT-AV1!1737
 
 #define TUNE_OVERSHOOT_I83                    1 // Tune VBR to decrease the overshoot
 #endif //----------------------------------- all svt-05 features should be place are above this line -------------------------

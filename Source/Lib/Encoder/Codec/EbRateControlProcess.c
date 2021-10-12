@@ -68,7 +68,9 @@ typedef struct RateControlIntervalParamContext {
     // Error score of frames still to be coded in kf group
     int64_t kf_group_error_left;
 
+#if FIX_HANG_IN_RATE_CONTROL_PARAM_QUEUE
     int32_t processed_frame_number;
+#endif
 } RateControlIntervalParamContext;
 #endif
 
@@ -126,6 +128,9 @@ EbErrorType rate_control_context_ctor(EbThreadContext *  thread_context_ptr,
 #if FTR_1PAS_VBR
         context_ptr->rate_control_param_queue[interval_index]->processed_frame_number = 0;
         context_ptr->rate_control_param_queue[interval_index]->end_of_seq_seen = 0;
+#endif
+#if FIX_HANG_IN_RATE_CONTROL_PARAM_QUEUE
+        context_ptr->rate_control_param_queue[interval_index]->processed_frame_number = 0;
 #endif
     }
 
@@ -4255,6 +4260,7 @@ void *rate_control_kernel(void *input_ptr) {
             scs_ptr = (SequenceControlSet *)
                 parentpicture_control_set_ptr->scs_wrapper_ptr->object_ptr;
 
+#if FIX_HANG_IN_RATE_CONTROL_PARAM_QUEUE
             if (scs_ptr->static_config.intra_period_length != -1 &&
                 scs_ptr->static_config.rate_control_mode != 0) {
                 uint32_t interval_index_temp = 0;
@@ -4282,6 +4288,7 @@ void *rate_control_kernel(void *input_ptr) {
                     rate_control_param_ptr->processed_frame_number = 0;
                 }
             }
+#endif
 
 #if RFCTR_RC_P2
             if (!use_output_stat(scs_ptr)) {

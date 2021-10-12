@@ -253,6 +253,9 @@ typedef struct RateControlIntervalParamContext {
     int64_t kf_group_error_left;
     int32_t processed_frame_number;
     uint8_t end_of_seq_seen;
+#if FIX_HANG_IN_RATE_CONTROL_PARAM_QUEUE
+    int32_t processed_frame_number;
+#endif
 } RateControlIntervalParamContext;
 #endif
 /**************************************
