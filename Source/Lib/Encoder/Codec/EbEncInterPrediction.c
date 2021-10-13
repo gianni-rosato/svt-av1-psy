@@ -3856,8 +3856,10 @@ void compute_subpel_params(int16_t pre_y,
         *pos_x += SCALE_EXTRA_OFF;
         *pos_y += SCALE_EXTRA_OFF;
 
-        const int top = -AOM_LEFT_TOP_MARGIN_SCALED(ss_y);
-        const int left = -AOM_LEFT_TOP_MARGIN_SCALED(ss_x);
+        // Equations of top and left are expanded from macro -AOM_LEFT_TOP_MARGIN_SCALED(ss_y),
+        // except padding in svt is 'scs_ptr->static_config.super_block_size + 32' (64+32=96 when super-res is on) instead of 288
+        const int top = -(((96 >> ss_y) - AOM_INTERP_EXTEND) << SCALE_SUBPEL_BITS);
+        const int left = -(((96 >> ss_x) - AOM_INTERP_EXTEND) << SCALE_SUBPEL_BITS);
         const int bottom = ((frame_height >> ss_y) + AOM_INTERP_EXTEND)
                 << SCALE_SUBPEL_BITS;
         const int right = ((frame_width >> ss_x) + AOM_INTERP_EXTEND)
