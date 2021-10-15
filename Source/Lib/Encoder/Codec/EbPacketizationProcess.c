@@ -544,7 +544,29 @@ void *packetization_kernel(void *input_ptr) {
             }
         }
 
-        if (pcs_ptr->parent_pcs_ptr->superres_total_recode_loop > 0) {
+        if (parent_pcs_ptr->superres_total_recode_loop > 0) {
+            // Release pa_ref_objs
+            // Delayed call from initial rate control kernel / source based operations kernel
+            if (scs_ptr->static_config.enable_tpl_la) {
+                if (pcs_ptr->parent_pcs_ptr->temporal_layer_index == 0) {
+                    for (uint32_t i = 0; i < pcs_ptr->parent_pcs_ptr->tpl_group_size; i++) {
+                        if (pcs_ptr->parent_pcs_ptr->tpl_group[i]->slice_type == P_SLICE) {
+                            if (pcs_ptr->parent_pcs_ptr->tpl_group[i]->ext_mg_id == pcs_ptr->parent_pcs_ptr->ext_mg_id + 1) {
+                                release_pa_reference_objects(scs_ptr, pcs_ptr->parent_pcs_ptr->tpl_group[i]);
+                            }
+                        }
+                        else {
+                            if (pcs_ptr->parent_pcs_ptr->tpl_group[i]->ext_mg_id == pcs_ptr->parent_pcs_ptr->ext_mg_id) {
+                                release_pa_reference_objects(scs_ptr, pcs_ptr->parent_pcs_ptr->tpl_group[i]);
+                            }
+                        }
+                    }
+                }
+            }
+            else {
+                release_pa_reference_objects(scs_ptr, pcs_ptr->parent_pcs_ptr);
+            }
+
             // Delayed call from rate control kernel for multiple coding loop frames
             if (use_input_stat(scs_ptr) || scs_ptr->lap_enabled)
                 update_rc_counts(pcs_ptr->parent_pcs_ptr);

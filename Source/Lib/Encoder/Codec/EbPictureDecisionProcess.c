@@ -5644,6 +5644,7 @@ void* picture_decision_kernel(void *input_ptr)
                                         pcs_ptr->ref_pa_pic_ptr_array[REF_LIST_0][ref_pic_index] = pa_reference_entry_ptr->input_object_ptr;
                                         pcs_ptr->ref_pic_poc_array[REF_LIST_0][ref_pic_index] = ref_poc;
                                         // Increment the PA Reference's liveCount by the number of tiles in the input picture
+                                        //assert((int32_t)pa_reference_entry_ptr->input_object_ptr->live_count > 0);
                                         svt_object_inc_live_count(
                                             pa_reference_entry_ptr->input_object_ptr,
                                             1);
@@ -5672,6 +5673,7 @@ void* picture_decision_kernel(void *input_ptr)
                                         pcs_ptr->ref_pic_poc_array[REF_LIST_1][ref_pic_index] = ref_poc;
 
                                         // Increment the PA Reference's liveCount by the number of tiles in the input picture
+                                        //assert((int32_t)pa_reference_entry_ptr->input_object_ptr->live_count > 0);
                                         svt_object_inc_live_count(
                                             pa_reference_entry_ptr->input_object_ptr,
                                             1);
@@ -5832,6 +5834,7 @@ void* picture_decision_kernel(void *input_ptr)
                     if ((input_entry_ptr->dependent_count == 0) &&
                         (input_entry_ptr->input_object_ptr)) {
                         // Release the nominal live_count value
+                        //assert((int32_t)input_entry_ptr->input_object_ptr->live_count > 0);
                         svt_release_object(input_entry_ptr->input_object_ptr);
                         input_entry_ptr->input_object_ptr = (EbObjectWrapper*)NULL;
                     }

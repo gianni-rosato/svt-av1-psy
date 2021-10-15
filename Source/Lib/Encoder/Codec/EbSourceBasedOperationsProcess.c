@@ -1808,14 +1808,19 @@ EbErrorType tpl_mc_flow(EncodeContext *encode_context_ptr, SequenceControlSet *s
     }
     EB_DELETE(encode_context_ptr->mc_flow_rec_picture_buffer_noref);
 
+    // When super-res recode is actived, don't release pa_ref_objs until final loop is finished
+    // Although tpl-la won't be enabled in super-res FIXED or RANDOM mode, here we use the condition to align with that in initial rate control process
+    EbBool release_pa_ref = (scs_ptr->static_config.superres_mode <= SUPERRES_RANDOM) ? EB_TRUE : EB_FALSE;
     for (uint32_t i = 0; i < pcs_ptr->tpl_group_size; i++) {
-        if (pcs_ptr->tpl_group[i]->slice_type == P_SLICE) {
-            if (pcs_ptr->tpl_group[i]->ext_mg_id == pcs_ptr->ext_mg_id + 1)
-                release_pa_reference_objects(scs_ptr, pcs_ptr->tpl_group[i]);
-        }
-        else {
-            if (pcs_ptr->tpl_group[i]->ext_mg_id == pcs_ptr->ext_mg_id)
-                release_pa_reference_objects(scs_ptr, pcs_ptr->tpl_group[i]);
+        if (release_pa_ref) {
+            if (pcs_ptr->tpl_group[i]->slice_type == P_SLICE) {
+                if (pcs_ptr->tpl_group[i]->ext_mg_id == pcs_ptr->ext_mg_id + 1)
+                    release_pa_reference_objects(scs_ptr, pcs_ptr->tpl_group[i]);
+            }
+            else {
+                if (pcs_ptr->tpl_group[i]->ext_mg_id == pcs_ptr->ext_mg_id)
+                    release_pa_reference_objects(scs_ptr, pcs_ptr->tpl_group[i]);
+            }
         }
         if (pcs_ptr->tpl_group[i]->non_tf_input)
             EB_DELETE(pcs_ptr->tpl_group[i]->non_tf_input);

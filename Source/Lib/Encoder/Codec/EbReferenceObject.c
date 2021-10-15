@@ -354,6 +354,7 @@ void release_pa_reference_objects(SequenceControlSet *scs_ptr, PictureParentCont
             for (uint32_t ref_pic_index = 0; ref_pic_index < num_of_ref_pic_to_search;
                  ++ref_pic_index) {
                 if (pcs_ptr->ref_pa_pic_ptr_array[list_index][ref_pic_index] != NULL) {
+                    //assert((int32_t)pcs_ptr->ref_pa_pic_ptr_array[list_index][ref_pic_index]->live_count > 0);
                     svt_release_object(pcs_ptr->ref_pa_pic_ptr_array[list_index][ref_pic_index]);
                 }
             }
@@ -361,6 +362,7 @@ void release_pa_reference_objects(SequenceControlSet *scs_ptr, PictureParentCont
     }
 
     if (pcs_ptr->pa_reference_picture_wrapper_ptr != NULL) {
+        //assert((int32_t)pcs_ptr->pa_reference_picture_wrapper_ptr->live_count > 0);
         svt_release_object(pcs_ptr->pa_reference_picture_wrapper_ptr);
     }
 

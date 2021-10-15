@@ -511,8 +511,8 @@ void *initial_rate_control_kernel(void *input_ptr) {
                 // do necessary steps as normal routine
                 {
                     // Release Pa Ref pictures when not needed
-                    // Don't release if superres auto-dual or auto-all is on
-                    //   because the objects will be used in multiple recode loops
+                    // Don't release if superres recode loop is actived (auto-dual or auto-all mode)
+                    // Needn't to check scs_ptr->static_config.enable_tpl_la because tpl_la (if enabled) is already done before this stage
                     if (pcs_ptr->superres_total_recode_loop == 0) {
                         release_pa_reference_objects(scs_ptr, pcs_ptr);
                     }
@@ -566,9 +566,16 @@ void *initial_rate_control_kernel(void *input_ptr) {
             }
 
             // Release Pa Ref pictures when not needed
-            // Release Pa ref after when TPL is OFF
-            if (scs_ptr->static_config.enable_tpl_la == 0)
+            // Release Pa ref when
+            //   1. TPL is OFF and
+            //   2. super-res mode is NONE or FIXED or RANDOM.
+            //     For other super-res modes, pa_ref_objs are needed in TASK_SUPERRES_RE_ME task
+            EbBool release_pa_ref = (scs_ptr->static_config.enable_tpl_la == 0) &&
+                (scs_ptr->static_config.superres_mode <= SUPERRES_RANDOM) ?
+                EB_TRUE : EB_FALSE;
+            if (release_pa_ref) {
                 release_pa_reference_objects(scs_ptr, pcs_ptr);
+            }
 
             /*In case Look-Ahead is zero there is no need to place pictures in the
               re-order queue. this will cause an artificial delay since pictures come in dec-order*/
