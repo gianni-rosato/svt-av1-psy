@@ -1,88 +1,85 @@
 # Super-resolution Appendix
 
 ## 1. Description of the algorithm
-The AV1 codec allows video to be coded at lower resolution and upscaled to original resolution after reconstructed. This is useful in low bit rate streaming scenario [1]. Figure 1 depicts the architecture of the in-loop filtering pipeline when using super-resolution [2]. At encoder side, the source video is downscaled by a non-normative process first. Second, the downscaled video is encoded, followed by deblocking and CDEF. Third, the video is upscaled to original dimension and applied loop restoration to recover part of high frequency loss. The upscale and loop restoration together is called super-resolve and is normative. At decoder side, the coded video is decoded, and then applied deblocking and CDEF on lower resolution, lastly super-resolved to original video dimension [2]. In order to reduce overheads in line-buffers with respect to hardware implementation, the upscaling and downscaling processes are applied to horizontal dimension only [3]. The downscaling factor is constrained to 8/9 ~ 8/16. The downscale can be applied to some of the frames, especially for those that are too complex to fit in the target bandwidth. The downscaled frames can have different downscaling factors, too. The following sections will cover how the different size pictures work in different coding processes/stages and how the downscaling factor is determined.
+The AV1 specification allows for the input video pictures to be coded at a lower resolution and then upscaled to the original resolution after reconstruction. This coding procedure, referred to as super-resolution, is useful in low bit rate streaming scenarios [1]. Figure 1 depicts the architecture of the processing pipeline when using super-resolution [2]. At the encoder side, encoding using the super-resolution feature involves the following step. First, the source video is downscaled using a non-normative process. Second, the downscaled version of the input video is encoded, followed by application of deblocking and CDEF to the reconstructed downscaled version of the input video. Third, the output pictures from CDEF are upscaled to the original resolution and loop restoration is applied to the full resolution pictures to recover part of lost high frequency information. The upscaling and loop restoration operations are referred to as the super-resolve steps and are normative. At the decoder side, the resulting bitstream is decoded, and deblocking and CDEF are then applied on the lower resolution pictures. The output pictures from CDEF are then super-resolved to original video resolution[2]. In order to reduce overheads associated with line-buffers in hardware implementations, the upscaling and downscaling operations are applied to the horizontal dimension only [3]. The downscaling factor is constrained to 8/9 ~ 8/16. The downscaling operation can be applied to some of the frames, especially for frames that are too complex to fit in the target bandwidth. Different frames can have different downscaling factors. The following sections outline how the different size pictures are processed in the different stages of the SVT-AV1 encoder pipeline and how the downscaling factor is determined.
 
 ![superres_pipeline](./img/superres_pipeline.png)
-##### Figure 1. In-loop filtering pipeline with optional super-resolution
+##### Figure 1. Processing pipeline  when super-resolution is active.
 
 
 ## 2. Implementation of the algorithm
 ### 2.1. Downscaled and full size versions of pictures
-Figure 2 demonstrates how the different size pictures work in different coding processes/stages.
+Figure 2 illustrates how the different size pictures are processed in the different coding processes/stages.
 ![superres_picture_size](./img/superres_picture_size.png)
-##### Figure 2. Downscaled and full size pictures in coding processes
+##### Figure 2. Processing of the downscaled and full size pictures in the encoder pipeline.
 
-In Figure 2. Input downscaled denotes the downscaled version of current picture.
+In Figure 2, downscaled input refers to a downscaled version of the current input picture.
 
-In the Motion Estimation process (open-loop stage), pa ref denotes reference list which contains the original input pictures. Downscaled version of references and input picture are used in this process because of pixel-by-pixel SAD.
+In the Motion Estimation process (open-loop stage based on using source pictures as reference pictures), pa ref denotes a list of reference pictures consisting of input pictures at their original input resolution. When super-resolution is active, downscaled versions of reference and input pictures are used in this process to compute SAD distortion.
 
-In the Mode Decision process (in-loop stage), recon ref denotes reference picture list which contains the reconstructed pictures. Downscaled version of references and input picture are used in this process because of pixel-by-pixel SAD.
+In the Mode Decision process (in-loop stage), recon ref denotes reference picture list which contains the reconstructed pictures. When super-resolution is active, downscaled version of the recon references and input pictures are used in this process to compute SAD and other distortion measures.
 
-When doing prediction and OBMC, full size version of reconstructed references and downscaled version of current picture are used to align with the same process in decoder.
+In the prediction process, when super-resolution is active, MotionVectors and ScaleFactors are used to create downscaled prediction picture from upscaled recon ref pictures via convolve_2d_scale() function. Such design follows AV1 spec “Motion vector scaling process”. Current downscaled input picture and downscaled prediction picture are used to create residual picture for transform and quantization process.
 
-After restoration reconstructed version of current picture is updated to recon ref list.
+After deblocking and CDEF, current downscaled reconstructed picture is upscaled for next restoration process.
+
+After restoration, current upscaled reconstructed picture is added to the recon ref list.
 
 ### 2.2. Determination of the downscaling factor
-As mentioned, the downscaling factor is constrained to 8/9 ~ 8/16. Since the numerator of factor is fixed to 8, only the denominator needs to be determined. Libaom defines four modes to determine the denominator. They are Fixed, Random, QThreshold and Auto respectively. The mode is set by user. Auto mode has three search types: Auto-Solo, Auto-Dual and Auto-All which is set by Encoder Preset.
+The downscaling factor is constrained to 8/9 ~ 8/16. Since the numerator of the factor is fixed to 8, only the denominator needs to be determined. Four modes are used to set the denominator namely Fixed, Random, QThreshold and Auto modes, respectively. The mode is set by the user. Auto mode has three search types: Auto-Solo, Auto-Dual and Auto-All and is set according to the encoder Preset. A brief description of how each of the above mentioned modes works is included below.
 
-Below are how these modes work:
-* Fixed: Two denominators can be set by user, one for Key-frames and the other for non-key-frames. Downscale can be applied to all pictures.
-* Random: Denominator is set randomly. Downscale can be applied to all pictures. This mode is mainly used for debugging/verification purpose.
-* QThreshold: The use of super-resolution will be decided by comparing the QP of the frame with a user-supplied QP threshold.  Downscale is applied to Key-frames and ARFs only.
-* Auto-Solo: It works similarly with QThreshold mode except the QP threshold is fixed by encoder. In libaom, this search type is selected in Real-time usage.
-* Auto-Dual: Both downscaled (the denominator is determined by QP) and full size original input pictures are encoded. The output with better RDCost is picked. Downscale is applied to Key-frames and ARFs only. In libaom, this search type is selected in ‘good quality’ and ‘all intra’ usages.
-* Auto-All: Both downscaled with all possible denominators (9~16), and full size original input pictures are encoded. The output with best RDCost is picked. Downscale is applied to Key-frames and ARFs only (According to libaom’s comment, downscale is applied to Key-frames and Alt-ref frames only. But it is applied to all frame types except overlay and internal overlay frames in the code). This search type is implemented but not selected in libaom.
+* Fixed: Two denominator values can be set by the user, one for Key-frames and the other for non-key-frames. Downscaling can be applied to all pictures.
+* Random: The denominator is set randomly. Downscaling can be applied to all pictures. This mode is mainly used for debugging/verification purpose.
+* QThreshold: The use of super-resolution is decided by comparing the QP of the frame with a user-supplied QP threshold. Downscaling is applied to Key-frames and ARFs only.
+* Auto-Solo: It works similarly to QThreshold mode except that the QP threshold is fixed by the encoder.
+* Auto-Dual: Both downscaled (the denominator is determined by QP) and full size original input pictures are encoded. The output with the better rate-distortion cost is selected. Downscaling is applied to Key-frames and ARFs only.
+* Auto-All: Both downscaled with all possible denominator values (9~16) and full size original input pictures are encoded. The output with best rate-distortion cost is selected. Downscaling is applied to Key-frames and ARFs only.
 
-The following sections explain how these modes are implemented in SVT-AV1 encoder. And the high level dataflow of super-resolution is shown in figure 3.
+The following sections explain how these different modes are implemented in the SVT-AV1 encoder. The high level dataflow of super-resolution is shown in Figure 3.
 ![superres_new_modes_dataflow](./img/superres_new_modes_dataflow.png)
 ##### Figure 3. High-level encoder process dataflow with super-resolution feature.
 
 #### 2.2.1. Fixed and Random mode
-Denominators are determined and input picture is downscaled in Picture Decision process. The Picture Decision process posts three types of tasks to Motion Estimation process. They are first pass ME, TFME (temporal filter) and PAME (HME) respectively. First, skip super-resolution if it’s the first pass of two passes encoding. Second, super-resolution downscale is performed after TFME and before PAME: TFME is applied to full size picture, and then downscale is applied to TFME filtered picture. Lastly, PAME is applied to downscaled picture. As in Figure 2, HME requires input source and input references are with the same size, so the references (pa reference pictures) are also downscaled in advance.
+Setting the denominator value and the downscaling of the input picture are performed in the Picture Decision process. The Picture Decision process posts three types of tasks to Motion Estimation process. They are first pass ME, TFME (temporal filter) and PAME respectively. Super-resolution is not considered if it is the first pass of two-pass encoding process. Super-resolution downscaling is performed after TFME and before PAME, i.e. TFME is applied to the full size picture and then downscaling is applied to TFME filtered picture. PAME is performed using downscaled pictures. As shown in Figure 2, PAME requires the input source pictures and the corresponding reference pictures to be of the same size, so the references (pa reference pictures) are also downscaled in advance.
 
 #### 2.2.2. QThreshold and Auto-Solo mode
-These modes require QP (or qindex) to determine denominator. In SVT-AV1 encoder, picture level QP won’t be determined until Rate Control process. So it’s reasonable to determine denominator in RC process after picture level QP is determined. Since HME is resolution dependent, a PAME task is posted and dataflow goes back to Motion Estimation process. When a picture is second time in RC process, its QP is adjusted based on the rate control mode and its denominator. The super block level QP is also updated.
+Both modes require QP (or qindex) to determine denominator. In SVT-AV1 encoder, picture level QP is determined in the Rate Control process. So the denominator can be decided only if the picture level QP is determined in the Rate Control process on the original resolution. Because the resolution is changed by new denominator, PAME must be done again at new resolution. As illustrated in Figure 3, a PAME task is posted after Rate Control and dataflow goes back to the Motion Estimation process.
 
 #### 2.2.3. Auto-Dual and Auto-All mode
-Auto-Dual and Auto-All require multiple coding loops. The denominator for each loop (including full size loop which is represented by special denominator 8) is determined in RateControl process. After all coding loops are finished, the denominator produces best RDCost is picked. RDCost is derived from SSE and bits of coded picture. In SVT-AV1 architecture SSE is computed in Restoration process, and bits of coded picture is computed in Packetization process. So RDCost is computed in Packetization process. After the RDCost is acquired, a PAME task is posted to trigger next coding loop as illustrated in figure 3.
+The Auto-Dual and the Auto-All modes require going through the coding loop multiple times. The scaling factor denominator for each pass through the coding loop (including full resolution pass which is represented by special scaling factor denominator 8) is determined in the rate control process. Once all the passes through the coding loop are completed, the scaling factor denominator corresponding to the best rate-distortion cost is selected. The rate-distortion cost is derived based on the SSE and the rate corresponding to the coded picture. In SVT-AV1, the SSE is computed in the Restoration process, and the rate of the coded picture is computed in the Packetization process. So the rate-distortion cost is computed in the Packetization process. After the rate-distortion cost is acquired, a PAME task is posted to trigger the next coding loop as illustrated in Figure 3.
 
-When multiple coding loops are applied, feedback tasks like RC feedback and reference list update tasks won’t be posted until final loop is finished. Recon output is also delayed.
+When multiple coding loops are considered, feedback tasks such as RC feedback and reference list update tasks won’t be posted until the final pass through the coding loop is finished. The recon output is also delayed.
 
 ### 2.3. Other noticeable changes in code base
 In SVT-AV1, data structure pool is widely used. That means many data structures are used in recycled manner and when a data structure is acquired from pool, its member variables may contain outdated values. This is not a problem when all pictures are in the same size, but care should be taken when super-resolution is enabled. For example, variables related to size and geometry, like super block count, or extra buffers allocated for downscaled pictures need to be reset to default (full size) values and memory to be safely freed. The most noticeable data structures are parent PCS (PictureParentControlSet) and child PCS (PictureControlSet). They are acquired in Resource Coordination process and Picture Manager process respectively.
 
-When Auto-Dual or Auto-All mode is on, coding state needs to be reset before each coding loop (Similar to ‘do recode’ in Mode Decision process).
+When Auto-Dual or Auto-All mode is active, coding state needs to be reset before each coding loop (Similar to ‘do recode’ in Mode Decision process).
 
 ### 2.4. Super-resolution API
 Table 1 illustrates the usage of super-resolution functions. Only related processes are listed.
 ![superres_API](./img/superres_API.png)
 ##### Table 1. Super-resolution API
 
-
 ## 3. Optimization
-Super-resolution has impact on coding speed: the current picture and its references are all needed to be downscaled to the same size for motion search. If different downscaled factors are used, pictures will be downscaled multiple times to the same resolutions. Pictures are downscaled on demand.
+Super-resolution affects the coding speed: The current picture and its references are all needed to be downscaled to the same size for motion estimation search. In current implementation, pa ref[8] array and recon ref[8] array are used to hold downscaled reference pictures, to avoid duplicate downscaling on the same reference picture for different input pictures.
 
-If Auto-Dual or Auto-All is selected, pictures will be encoded multiple times. While previous coding states are not saved except RDCost, so if previous coding pass’s RDCost is better, the last coding state is useless and an extra coding loop with previous factor is required. Mostly, full size coding has better RDCost than downscale ones, so current solution does downscaled coding loops first, then full size coding loop. The other possible solution is to eliminate the extra coding loop by saving previous coding states, but it requires extra memory and it is a bit more complicated to implement (E.g. Add an extra child PCS pointer in parent PCS structure).
+When Auto-Dual or Auto-All is selected, each picture is encoded multiple times with different denominator values. A rate-distortion cost is produced by each coding pass. If the last rate-distortion cost is the best, the encoded bitstream will be used directly. If not, the current picture must be encoded again with the denominator value of the best rate-distortion cost. Mostly, full size coding has better rate-distortion cost than the downscaling ones, so full size coding pass is arranged in the last. Because only key frame and ARF may enable downscaling, an extra coding pass is barely needed in practice. The other possible solution is to eliminate the extra coding pass by saving coding states, but it requires extra memory and it is a bit more complicated to implement (E.g. At least need an extra special PCS to save all coding state for the best rate-distortion cost).
 
-Super-resolution also has impact on memory usage: extra buffers have to be allocated to hold downscaled pictures, including current coding picture, pa references and reconstructed references as shown in figure 4.
+Super-resolution also has an impact on memory usage: Extra buffers are allocated to hold downscaled pictures, including current coding picture, PA references and reconstructed references as shown in Figure 4.
 ![superres_downscaled_buffers](./img/superres_downscaled_buffers.png)
 ##### Figure 4. Buffers for downscaled pictures
 
-Whether enable or disable super-resolution is up to user. If Auto mode is selected, encoder may decide search type according to its preset.
-
+Whether to enable super-resolution or not is up to the user. If the Auto mode is selected, the encoder may decide the search type according to specified encoder preset.
 
 ## 4. Usage recommendation
-The random mode is suitable for validation or test only because it requires more memory (buffers to hold every denominator in use of current coding frame and its references) and more CPU time (scaling frames with different factors) but brings no benefit than other modes.
+The Random mode is suitable for validation or testing only because it requires more memory (pa ref[8] and recon ref[8] are fully filled) and more CPU time (scaling the same reference on all different denominator values) but brings no benefit as compared to other modes.
 
-The fixed mode with constant QP configuration can achieve less bandwidth requirement and acceptable quality.
+The Fixed mode with constant QP configuration can achieve less bandwidth requirement and acceptable quality.
 
-The qthreshold or auto mode with VBR configuration are expected to have better coding efficiency than other modes because for most natural video and common bit rate, enabling super resolution actually causes compression efficiency loss. According to internal tests, coding gain is only achieved at very low bit rate with auto mode. With qthreshold and auto modes, super-resolution is only conducted on selected frames. The selection is based on frame QP (qthreshold mode) and RDCost (auto mode).
-
+The Qthreshold or Auto mode with VBR configuration is expected to have better coding efficiency than other modes because for most natural videos and common bit rates, enabling super-resolution actually leads to a drop in compression efficiency. According to internal tests, coding gain is achieved only at very low bit rates with the Auto mode. With Qthreshold and Auto modes, super-resolution is only conducted on selected frames. The selection is based on the frame QP (Qthreshold mode) and rate-distortion cost (Auto mode).
 
 ## 5. Notes
 The feature settings that are described in this document were compiled at v0.8.7 of the code and may not reflect the current status of the code. The description in this document represents an example showing how features would interact with the SVT architecture. For the most up-to-date settings, it's recommended to review the section of the code implementing this feature.
-
 
 ## 6. References
 [1] Jingning Han, Bohan Li, Debargha Mukherjee, Ching-Han Chiang, Adrian Grange, Cheng Chen, Hui Su, Sarah Parker, Sai Deng, Urvang Joshi, Yue Chen, Yunqing Wang, Paul Wilkins, Yaowu Xu, James Bankoski, “A Technical Overview of AV1”
