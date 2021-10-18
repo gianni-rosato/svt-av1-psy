@@ -60,6 +60,7 @@ void recon_output(PictureControlSet* pcs_ptr, SequenceControlSet* scs_ptr);
 void init_resize_picture(SequenceControlSet* scs_ptr, PictureParentControlSet* pcs_ptr);
 void pad_ref_and_set_flags(PictureControlSet* pcs_ptr, SequenceControlSet* scs_ptr);
 void update_rc_counts(PictureParentControlSet* ppcs_ptr);
+void ssim_calculations(PictureControlSet* pcs_ptr, SequenceControlSet* scs_ptr, EbBool free_memory);
 
 // Extracts passthrough data from a linked list. The extracted data nodes are removed from the original linked list and
 // returned as a linked list. Does not gaurantee the original order of the nodes.
@@ -548,7 +549,7 @@ void *packetization_kernel(void *input_ptr) {
 
         if (parent_pcs_ptr->superres_total_recode_loop > 0) {
             // Release pa_ref_objs
-            // Delayed call from initial rate control kernel / source based operations kernel
+            // Delayed call from Initial Rate Control process / Source Based Operations process
             if (scs_ptr->static_config.enable_tpl_la) {
                 if (parent_pcs_ptr->temporal_layer_index == 0) {
                     for (uint32_t i = 0; i < parent_pcs_ptr->tpl_group_size; i++) {
@@ -569,9 +570,77 @@ void *packetization_kernel(void *input_ptr) {
                 release_pa_reference_objects(scs_ptr, parent_pcs_ptr);
             }
 
-            // Delayed call from rate control kernel for multiple coding loop frames
+            // Delayed call from Rate Control process for multiple coding loop frames
             if (use_input_stat(scs_ptr) || scs_ptr->lap_enabled)
                 update_rc_counts(parent_pcs_ptr);
+
+            // Release pa me ptr. For non-superres-recode, it's released in mode_decision_kernel
+            assert(pcs_ptr->parent_pcs_ptr->me_data_wrapper_ptr != NULL);
+            assert(pcs_ptr->parent_pcs_ptr->pa_me_data != NULL);
+            svt_release_object(pcs_ptr->parent_pcs_ptr->me_data_wrapper_ptr);
+            pcs_ptr->parent_pcs_ptr->me_data_wrapper_ptr = NULL;
+            pcs_ptr->parent_pcs_ptr->pa_me_data = NULL;
+
+            // Delayed call from Rest process
+            {
+                if (scs_ptr->static_config.stat_report) {
+                    // memory is freed in the ssim_calculations call
+                    ssim_calculations(pcs_ptr, scs_ptr, EB_TRUE);
+                }
+                else {
+                    // free memory used by psnr_calculations
+                    free_temporal_filtering_buffer(pcs_ptr, scs_ptr);
+                }
+
+                if (scs_ptr->static_config.recon_enabled) {
+                    recon_output(pcs_ptr, scs_ptr);
+                }
+
+                if (parent_pcs_ptr->is_used_as_reference_flag) {
+                    EbObjectWrapper* picture_demux_results_wrapper_ptr;
+                    PictureDemuxResults* picture_demux_results_rtr;
+
+                    // Get Empty PicMgr Results
+                    svt_get_empty_object(context_ptr->picture_demux_fifo_ptr,
+                        &picture_demux_results_wrapper_ptr);
+
+                    picture_demux_results_rtr = (PictureDemuxResults*)
+                        picture_demux_results_wrapper_ptr->object_ptr;
+                    picture_demux_results_rtr->reference_picture_wrapper_ptr =
+                        parent_pcs_ptr->reference_picture_wrapper_ptr;
+                    picture_demux_results_rtr->scs_wrapper_ptr = parent_pcs_ptr->scs_wrapper_ptr;
+                    picture_demux_results_rtr->picture_number = parent_pcs_ptr->picture_number;
+                    picture_demux_results_rtr->picture_type = EB_PIC_REFERENCE;
+
+                    // Post Reference Picture
+                    svt_post_full_object(picture_demux_results_wrapper_ptr);
+                }
+            }
+
+            // Delayed call from Entropy Coding process
+            {
+                // Release the List 0 Reference Pictures
+                for (uint32_t ref_idx = 0;
+                    ref_idx < pcs_ptr->parent_pcs_ptr->ref_list0_count;
+                    ++ref_idx) {
+                    if (pcs_ptr->ref_pic_ptr_array[0][ref_idx] != NULL) {
+                        svt_release_object(pcs_ptr->ref_pic_ptr_array[0][ref_idx]);
+                    }
+                }
+
+                // Release the List 1 Reference Pictures
+                for (uint32_t ref_idx = 0;
+                    ref_idx < pcs_ptr->parent_pcs_ptr->ref_list1_count;
+                    ++ref_idx) {
+                    if (pcs_ptr->ref_pic_ptr_array[1][ref_idx] != NULL) {
+                        svt_release_object(pcs_ptr->ref_pic_ptr_array[1][ref_idx]);
+                    }
+                }
+
+                //free palette data
+                if (pcs_ptr->tile_tok[0][0])
+                    EB_FREE_ARRAY(pcs_ptr->tile_tok[0][0]);
+            }
         }
 
         //****************************************************
@@ -637,110 +706,6 @@ void *packetization_kernel(void *input_ptr) {
             output_stream_ptr->luma_ssim = 0;
             output_stream_ptr->cr_ssim   = 0;
             output_stream_ptr->cb_ssim   = 0;
-        }
-
-        if (parent_pcs_ptr->superres_total_recode_loop > 0) {
-            // Release pa me ptr. For non-superres-recode, it's released in mode_decision_kernel
-            assert(pcs_ptr->parent_pcs_ptr->me_data_wrapper_ptr != NULL);
-            assert(pcs_ptr->parent_pcs_ptr->pa_me_data != NULL);
-            svt_release_object(pcs_ptr->parent_pcs_ptr->me_data_wrapper_ptr);
-            pcs_ptr->parent_pcs_ptr->me_data_wrapper_ptr = NULL;
-            pcs_ptr->parent_pcs_ptr->pa_me_data = NULL;
-
-            // free memory used by psnr_calculations
-            free_temporal_filtering_buffer(pcs_ptr, scs_ptr);
-
-            // reference rest_kernel()
-            if (parent_pcs_ptr->is_used_as_reference_flag)
-                pad_ref_and_set_flags(pcs_ptr, scs_ptr);
-            else {
-                EbBool is_16bit = scs_ptr->static_config.is_16bit_pipeline;
-                // convert non-reference frame buffer from 16-bit to 8-bit, to export recon and psnr/ssim calculation
-                if (is_16bit && scs_ptr->static_config.encoder_bit_depth == EB_8BIT)
-                {
-                    EbPictureBufferDesc* ref_pic_ptr = pcs_ptr->parent_pcs_ptr->enc_dec_ptr->recon_picture_ptr;
-                    EbPictureBufferDesc* ref_pic_16bit_ptr = pcs_ptr->parent_pcs_ptr->enc_dec_ptr->recon_picture16bit_ptr;
-                    //Y
-                    uint16_t* buf_16bit = (uint16_t*)(ref_pic_16bit_ptr->buffer_y);
-                    uint8_t* buf_8bit = ref_pic_ptr->buffer_y;
-                    svt_convert_16bit_to_8bit(buf_16bit,
-                        ref_pic_16bit_ptr->stride_y,
-                        buf_8bit,
-                        ref_pic_ptr->stride_y,
-                        ref_pic_16bit_ptr->width + (ref_pic_ptr->origin_x << 1),
-                        ref_pic_16bit_ptr->height + (ref_pic_ptr->origin_y << 1));
-
-                    //CB
-                    buf_16bit = (uint16_t*)(ref_pic_16bit_ptr->buffer_cb);
-                    buf_8bit = ref_pic_ptr->buffer_cb;
-                    svt_convert_16bit_to_8bit(buf_16bit,
-                        ref_pic_16bit_ptr->stride_cb,
-                        buf_8bit,
-                        ref_pic_ptr->stride_cb,
-                        (ref_pic_16bit_ptr->width + (ref_pic_ptr->origin_x << 1)) >> scs_ptr->subsampling_x,
-                        (ref_pic_16bit_ptr->height + (ref_pic_ptr->origin_y << 1)) >> scs_ptr->subsampling_y);
-
-                    //CR
-                    buf_16bit = (uint16_t*)(ref_pic_16bit_ptr->buffer_cr);
-                    buf_8bit = ref_pic_ptr->buffer_cr;
-                    svt_convert_16bit_to_8bit(buf_16bit,
-                        ref_pic_16bit_ptr->stride_cr,
-                        buf_8bit,
-                        ref_pic_ptr->stride_cr,
-                        (ref_pic_16bit_ptr->width + (ref_pic_ptr->origin_x << 1)) >> scs_ptr->subsampling_x,
-                        (ref_pic_16bit_ptr->height + (ref_pic_ptr->origin_y << 1)) >> scs_ptr->subsampling_y);
-                }
-            }
-
-            if (scs_ptr->static_config.recon_enabled) {
-                recon_output(pcs_ptr, scs_ptr);
-            }
-
-            //
-            if (parent_pcs_ptr->is_used_as_reference_flag) {
-                EbObjectWrapper* picture_demux_results_wrapper_ptr;
-                PictureDemuxResults* picture_demux_results_rtr;
-
-                // Get Empty PicMgr Results
-                svt_get_empty_object(context_ptr->picture_demux_fifo_ptr,
-                    &picture_demux_results_wrapper_ptr);
-
-                picture_demux_results_rtr = (PictureDemuxResults*)
-                    picture_demux_results_wrapper_ptr->object_ptr;
-                picture_demux_results_rtr->reference_picture_wrapper_ptr =
-                    parent_pcs_ptr->reference_picture_wrapper_ptr;
-                picture_demux_results_rtr->scs_wrapper_ptr = parent_pcs_ptr->scs_wrapper_ptr;
-                picture_demux_results_rtr->picture_number = parent_pcs_ptr->picture_number;
-                picture_demux_results_rtr->picture_type = EB_PIC_REFERENCE;
-
-                // Post Reference Picture
-                svt_post_full_object(picture_demux_results_wrapper_ptr);
-            }
-
-            // from entropy coding process
-            {
-                // Release the List 0 Reference Pictures
-                for (uint32_t ref_idx = 0;
-                    ref_idx < pcs_ptr->parent_pcs_ptr->ref_list0_count;
-                    ++ref_idx) {
-                    if (pcs_ptr->ref_pic_ptr_array[0][ref_idx] != NULL) {
-                        svt_release_object(pcs_ptr->ref_pic_ptr_array[0][ref_idx]);
-                    }
-                }
-
-                // Release the List 1 Reference Pictures
-                for (uint32_t ref_idx = 0;
-                    ref_idx < pcs_ptr->parent_pcs_ptr->ref_list1_count;
-                    ++ref_idx) {
-                    if (pcs_ptr->ref_pic_ptr_array[1][ref_idx] != NULL) {
-                        svt_release_object(pcs_ptr->ref_pic_ptr_array[1][ref_idx]);
-                    }
-                }
-
-                //free palette data
-                if (pcs_ptr->tile_tok[0][0])
-                    EB_FREE_ARRAY(pcs_ptr->tile_tok[0][0]);
-            }
         }
 
         // Get Empty Rate Control Input Tasks
