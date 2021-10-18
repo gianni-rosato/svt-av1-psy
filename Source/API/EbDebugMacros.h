@@ -52,6 +52,8 @@ extern "C" {
 #define DEBUG_SCALING           0
 #define DEBUG_TF                0
 #define DEBUG_UPSCALING         0
+#define DEBUG_SUPERRES_RECODE   0
+#define DEBUG_SUPERRES_ENERGY   0
 #ifdef __cplusplus
 }
 #endif // __cplusplus

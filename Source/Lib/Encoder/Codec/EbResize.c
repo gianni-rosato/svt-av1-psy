@@ -506,7 +506,6 @@ static EbErrorType av1_resize_plane_horizontal(const uint8_t* const input, int h
 
     EB_MALLOC_ARRAY(tmpbuf, AOMMAX(width, height));
     if (tmpbuf == NULL) {
-        EB_FREE_ARRAY(tmpbuf);
         return EB_ErrorInsufficientResources;
     }
     for (i = 0; i < height; ++i)
@@ -800,7 +799,6 @@ static EbErrorType av1_highbd_resize_plane_horizontal(const uint16_t* const inpu
 
     EB_MALLOC_ARRAY(tmpbuf, sizeof(uint16_t) * AOMMAX(width, height));
     if (tmpbuf == NULL) {
-        EB_FREE(tmpbuf);
         return EB_ErrorInsufficientResources;
     }
     for (i = 0; i < height; ++i) {
@@ -808,8 +806,7 @@ static EbErrorType av1_highbd_resize_plane_horizontal(const uint16_t* const inpu
             input + in_stride * i, width, output + out_stride * i, width2, tmpbuf, bd);
     }
 
-    EB_FREE(tmpbuf);
-
+    EB_FREE_ARRAY(tmpbuf);
     return EB_ErrorNone;
 }
 
@@ -1177,14 +1174,16 @@ static uint8_t get_superres_denom_for_qindex(SequenceControlSet* scs_ptr, Pictur
     int denom = get_superres_denom_from_qindex_energy(
         qindex, energy, energy_by_q2_thresh, SUPERRES_ENERGY_BY_AC_THRESH);
 
-    /*printf("\nFrame %d. energy_by_q2_thresh %.3f, energy = [", (int)pcs_ptr->picture_number, energy_by_q2_thresh);
+#if DEBUG_SUPERRES_ENERGY
+    printf("\nFrame %d. energy_by_q2_thresh %.3f, energy = [", (int)pcs_ptr->picture_number, energy_by_q2_thresh);
     for (int k = 1; k < 16; ++k) printf("%f, ", energy[k]);
     printf("]\n");
     printf("boost = %d\n",
            (update_type == KF_UPDATE)
                ? scs_ptr->encode_context_ptr->rc.kf_boost
                : scs_ptr->encode_context_ptr->rc.gfu_boost);
-    printf("denom = %d\n", denom);*/
+    printf("denom = %d\n", denom);
+#endif
 
     if (av1_superres_in_recode_allowed(scs_ptr)) {
         assert(scs_ptr->static_config.superres_mode != SUPERRES_NONE);
@@ -1242,14 +1241,6 @@ static void calc_superres_params(superres_params_type *spr_params, SequenceContr
         else {
             spr_params->superres_denom = get_superres_denom_for_qindex(scs_ptr, pcs_ptr, q, 1, 1);
         }
-        // TEST code
-        /*int32_t update_type = get_frame_update_type(scs_ptr, pcs_ptr);
-        if (update_type == KF_UPDATE || update_type == ARF_UPDATE)
-        {
-            //spr_params->superres_denom = SCALE_NUMERATOR + 1;
-            printf("@Superres@ Frame %d, type %d, Update type %d, temp_layer_index %d, denom %d, qindex %d, q threshold index %d\n",
-                (int)pcs_ptr->picture_number, frm_hdr->frame_type, update_type, pcs_ptr->temporal_layer_index, spr_params->superres_denom, q, qthresh);
-        }*/
         break;
     }
     case SUPERRES_AUTO: {
@@ -1263,16 +1254,6 @@ static void calc_superres_params(superres_params_type *spr_params, SequenceContr
         else {
             if (sr_search_type == SUPERRES_AUTO_SOLO) {
                 spr_params->superres_denom = get_superres_denom_for_qindex(scs_ptr, pcs_ptr, q, 1, 1);
-
-                // TEST code
-                /*int32_t update_type = get_frame_update_type(scs_ptr, pcs_ptr);
-                if (update_type == KF_UPDATE || update_type == ARF_UPDATE)
-                {
-                    spr_params->superres_denom = SCALE_NUMERATOR + 1;
-                }
-                fprintf(stderr, "@Superres@ Frame %d, type %d, Update type %d, temp_layer_index %d, denom %d, q %d, frames_to_key %d\n",
-                    (int)pcs_ptr->picture_number, frm_hdr->frame_type, update_type, pcs_ptr->temporal_layer_index, spr_params->superres_denom, q,
-                    pcs_ptr->frames_to_key);*/
             }
             else if (sr_search_type == SUPERRES_AUTO_DUAL) {
                 pcs_ptr->superres_denom_array[0] = get_superres_denom_for_qindex(scs_ptr, pcs_ptr, q, 1, 1);
@@ -1299,16 +1280,6 @@ static void calc_superres_params(superres_params_type *spr_params, SequenceContr
                 }
             }
         }
-
-        // TEST code
-        //int32_t update_type = get_frame_update_type(scs_ptr, pcs_ptr);
-        //if (update_type == KF_UPDATE || update_type == ARF_UPDATE)
-        //{
-        //    //spr_params->superres_denom = SCALE_NUMERATOR + 1;
-        //    printf("@Superres@ Frame %d, type %d, Update type %d, temp_layer_index %d, denom %d, q %d, frames_to_key %d\n",
-        //        (int)pcs_ptr->picture_number, frm_hdr->frame_type, update_type, pcs_ptr->temporal_layer_index, spr_params->superres_denom, q,
-        //        pcs_ptr->frames_to_key);
-        //}
         break;
     }
     default: break;
@@ -1918,7 +1889,11 @@ void init_resize_picture(SequenceControlSet *scs_ptr, PictureParentControlSet *p
                                        scs_ptr->static_config.superres_denom};
 
     EbBool first_loop = !(scs_ptr->static_config.superres_mode == SUPERRES_AUTO && pcs_ptr->superres_recode_loop > 0);
-    if (!first_loop) {
+    if (first_loop) {  // first loop of multiple coding loop (auto-dual or auto-all mode) or the only loop (all the other modes)
+        // determine super-res denom
+        calc_superres_params(&spr_params, scs_ptr, pcs_ptr);
+    }
+    else {
         if (pcs_ptr->superres_recode_loop < pcs_ptr->superres_total_recode_loop) {
             spr_params.superres_denom = pcs_ptr->superres_denom_array[pcs_ptr->superres_recode_loop];
         }
@@ -1927,13 +1902,6 @@ void init_resize_picture(SequenceControlSet *scs_ptr, PictureParentControlSet *p
             spr_params.superres_denom = pcs_ptr->superres_denom;
         }
         calculate_scaled_size_helper(&spr_params.encoding_width, spr_params.superres_denom);
-        //printf("%s: picture %d, loop %d/%d\n", __FUNCTION__,
-        //    (int)pcs_ptr->picture_number, pcs_ptr->superres_recode_loop, pcs_ptr->superres_total_recode_loop);
-    }
-    else {
-        // determine super-resolution parameters - encoding resolution
-        // given configs and frame type
-        calc_superres_params(&spr_params, scs_ptr, pcs_ptr);
     }
 
     // delete picture buffer allocated by superres tool

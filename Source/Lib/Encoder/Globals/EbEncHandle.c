@@ -1890,7 +1890,7 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
         enc_handle_ptr->rate_control_context_ptr,
         rate_control_context_ctor,
         enc_handle_ptr,
-        EB_PictureDecisionProcessInitCount);
+        EB_PictureDecisionProcessInitCount);  // me_port_index
 
     // Mode Decision Configuration Contexts
     {
@@ -1978,7 +1978,7 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
         rate_control_port_lookup(RATE_CONTROL_INPUT_PORT_PACKETIZATION, 0),
         enc_handle_ptr->scs_instance_array[0]->scs_ptr->source_based_operations_process_init_count +
             enc_handle_ptr->scs_instance_array[0]->scs_ptr->enc_dec_process_init_count,
-            EB_PictureDecisionProcessInitCount + EB_RateControlProcessInitCount);
+            EB_PictureDecisionProcessInitCount + EB_RateControlProcessInitCount);  // me_port_index
 
     /************************************
     * Thread Handles

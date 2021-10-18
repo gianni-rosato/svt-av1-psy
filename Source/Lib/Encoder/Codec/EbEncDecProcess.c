@@ -714,6 +714,7 @@ static double aom_highbd_ssim2(const uint8_t *img1, int stride_img1,
 }
 
 void free_temporal_filtering_buffer(PictureControlSet* pcs_ptr, SequenceControlSet* scs_ptr) {
+    // save_source_picture_ptr will be allocated only if temporal_filtering_on is true in svt_av1_init_temporal_filtering().
     if (!pcs_ptr->parent_pcs_ptr->temporal_filtering_on) {
         return;
     }
@@ -5301,7 +5302,7 @@ void *mode_decision_kernel(void *input_ptr) {
                                          sb_origin_y,
                                          sb_index,
                                          context_ptr->md_context);
-    #if NO_ENCDEC
+#if NO_ENCDEC
                         no_enc_dec_pass(scs_ptr,
                                         pcs_ptr,
                                         sb_ptr,
@@ -5310,11 +5311,11 @@ void *mode_decision_kernel(void *input_ptr) {
                                         sb_origin_y,
                                         sb_ptr->qp,
                                         context_ptr);
-    #else
+#else
                         // Encode Pass
                         av1_encode_decode(
                             scs_ptr, pcs_ptr, sb_ptr, sb_index, sb_origin_x, sb_origin_y, context_ptr);
-    #endif
+#endif
 
                         context_ptr->coded_sb_count++;
                     }

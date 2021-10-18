@@ -2517,6 +2517,7 @@ void *rate_control_kernel(void *input_ptr) {
         case RC_INPUT_SUPERRES_RECODE:
             assert(scs_ptr->static_config.superres_mode == SUPERRES_QTHRESH ||
                 scs_ptr->static_config.superres_mode == SUPERRES_AUTO);
+            // intentionally reuse code in RC_INPUT
         case RC_INPUT:
             pcs_ptr = (PictureControlSet *)rate_control_tasks_ptr->pcs_wrapper_ptr->object_ptr;
 

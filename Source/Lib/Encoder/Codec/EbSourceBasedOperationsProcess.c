@@ -1493,13 +1493,6 @@ static void generate_r0beta(PictureParentControlSet *pcs_ptr) {
             const int mi_col_end_sr = coded_to_superres_mi(mi_col + mi_wide, pcs_ptr->superres_denom);
             const int row_step = step;
 
-            //printOn = printOn && mi_row == 0/* && mi_col == 0*/;
-            //if (printOn)
-            //{
-            //    printf("%s - Frame %d, denom %d, mi_col_end_sr %d, col_step_sr %d\n", __FUNCTION__,
-            //        (int)pcs_ptr->picture_number, pcs_ptr->superres_denom, mi_col_end_sr, col_step_sr);
-            //}
-
             // loop all mb in the sb
             for (int row = mi_row; row < mi_row + mi_high; row += row_step) {
                 for (int col = mi_col_sr; col < mi_col_end_sr; col += col_step_sr) {
@@ -1508,11 +1501,6 @@ static void generate_r0beta(PictureParentControlSet *pcs_ptr) {
                     }
 
                     int index = (row >> shift) * (mi_cols_sr >> shift) + (col >> shift);
-                    /*if (printOn)
-                    {
-                        printf("%s - Frame %d, row %d, col %d, tpl_index %d\n", __FUNCTION__,
-                            (int)pcs_ptr->picture_number, row, col, index);
-                    }*/
                     TplStats* tpl_stats_ptr = pcs_ptr->tpl_stats[index];
                     int64_t mc_dep_delta = RDCOST(pcs_ptr->base_rdmult,
                                                   tpl_stats_ptr->mc_dep_rate,
@@ -1528,11 +1516,6 @@ static void generate_r0beta(PictureParentControlSet *pcs_ptr) {
                 assert(beta > 0.0);
             }
             pcs_ptr->tpl_beta[sb_y * picture_sb_width + sb_x] = beta;
-            /*if (printOn)
-            {
-                fprintf(stderr, "%s - Frame %d, tpl_beta_index %u, tpl_beta %.3f\n", __FUNCTION__,
-                    (int)pcs_ptr->picture_number, sb_y * picture_sb_width + sb_x, beta);
-            }*/
         }
     }
     return;

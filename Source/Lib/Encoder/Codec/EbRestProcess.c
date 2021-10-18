@@ -634,8 +634,8 @@ void *rest_kernel(void *input_ptr) {
                         // convert non-reference frame buffer from 16-bit to 8-bit, to export recon and psnr/ssim calculation
                         if (is_16bit && scs_ptr->static_config.encoder_bit_depth == EB_8BIT)
                         {
-                            EbPictureBufferDesc* ref_pic_ptr = pcs_ptr->parent_pcs_ptr->enc_dec_ptr->recon_picture_ptr;;
-                            EbPictureBufferDesc* ref_pic_16bit_ptr = pcs_ptr->parent_pcs_ptr->enc_dec_ptr->recon_picture16bit_ptr;;
+                            EbPictureBufferDesc* ref_pic_ptr = pcs_ptr->parent_pcs_ptr->enc_dec_ptr->recon_picture_ptr;
+                            EbPictureBufferDesc* ref_pic_16bit_ptr = pcs_ptr->parent_pcs_ptr->enc_dec_ptr->recon_picture16bit_ptr;
                             //Y
                             uint16_t* buf_16bit = (uint16_t*)(ref_pic_16bit_ptr->buffer_y);
                             uint8_t* buf_8bit = ref_pic_ptr->buffer_y;
@@ -672,7 +672,7 @@ void *rest_kernel(void *input_ptr) {
 
             // PSNR and SSIM Calculation.
             // Note: if temporal_filtering is used, memory needs to be freed in the last of these calls
-            // Note: if superres recode is used, memory needs to be freed in packetization process
+            // Note: if superres recode is actived, memory will be freed in packetization process by calling free_temporal_filtering_buffer()
             if (scs_ptr->static_config.stat_report) {
                 psnr_calculations(pcs_ptr, scs_ptr, EB_FALSE);
                 ssim_calculations(pcs_ptr, scs_ptr, superres_recode ? EB_FALSE : EB_TRUE);

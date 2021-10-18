@@ -452,8 +452,8 @@ void *packetization_kernel(void *input_ptr) {
         uint16_t            tile_cnt = cm->tiles_info.tile_rows * cm->tiles_info.tile_cols;
         PictureParentControlSet* parent_pcs_ptr = (PictureParentControlSet*)pcs_ptr->parent_pcs_ptr;
 
-        if (pcs_ptr->parent_pcs_ptr->superres_total_recode_loop > 0 &&
-            pcs_ptr->parent_pcs_ptr->superres_recode_loop < pcs_ptr->parent_pcs_ptr->superres_total_recode_loop) {
+        if (parent_pcs_ptr->superres_total_recode_loop > 0 &&
+            parent_pcs_ptr->superres_recode_loop < parent_pcs_ptr->superres_total_recode_loop) {
 
             // Reset the Bitstream before writing to it
             bitstream_reset(pcs_ptr->bitstream_ptr);
@@ -461,19 +461,21 @@ void *packetization_kernel(void *input_ptr) {
             int64_t bits = (int64_t)bitstream_get_bytes_count(pcs_ptr->bitstream_ptr) << 3;
             int64_t rate = bits << 5;  // To match scale.
             bitstream_reset(pcs_ptr->bitstream_ptr);
-            int64_t sse = pcs_ptr->parent_pcs_ptr->luma_sse;
+            int64_t sse = parent_pcs_ptr->luma_sse;
             uint8_t bit_depth = pcs_ptr->hbd_mode_decision ? 10 : 8;
-            uint8_t qindex = pcs_ptr->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx;
+            uint8_t qindex = parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx;
             int32_t rdmult = compute_rdmult_sse(pcs_ptr, qindex, bit_depth);
 
             double rdcost = RDCOST_DBL_WITH_NATIVE_BD_DIST(rdmult, rate, sse, scs_ptr->static_config.encoder_bit_depth);
-            //fprintf(stderr, "####### %s - frame %d, loop %d/%d, denom %d, rate %I64d, sse %I64d, rdcost %.2f, qindex %d, rdmult %d\n", __FUNCTION__,
-            //   (int)pcs_ptr->parent_pcs_ptr->picture_number, pcs_ptr->parent_pcs_ptr->superres_recode_loop, pcs_ptr->parent_pcs_ptr->superres_total_recode_loop,
-            //    pcs_ptr->parent_pcs_ptr->superres_denom, rate, sse, rdcost, qindex, rdmult);
+#if DEBUG_SUPERRES_RECODE
+            printf("\n####### %s - frame %d, loop %d/%d, denom %d, rate %I64d, sse %I64d, rdcost %.2f, qindex %d, rdmult %d\n", __FUNCTION__,
+               (int)parent_pcs_ptr->picture_number, parent_pcs_ptr->superres_recode_loop, parent_pcs_ptr->superres_total_recode_loop,
+                parent_pcs_ptr->superres_denom, rate, sse, rdcost, qindex, rdmult);
+#endif
 
-            assert(pcs_ptr->parent_pcs_ptr->superres_total_recode_loop <= SCALE_NUMERATOR + 1);
-            pcs_ptr->parent_pcs_ptr->superres_rdcost[pcs_ptr->parent_pcs_ptr->superres_recode_loop] = rdcost;
-            ++pcs_ptr->parent_pcs_ptr->superres_recode_loop;
+            assert(parent_pcs_ptr->superres_total_recode_loop <= SCALE_NUMERATOR + 1);
+            parent_pcs_ptr->superres_rdcost[parent_pcs_ptr->superres_recode_loop] = rdcost;
+            ++parent_pcs_ptr->superres_recode_loop;
 
             if (parent_pcs_ptr->superres_recode_loop <= parent_pcs_ptr->superres_total_recode_loop) {
                 EbBool do_recode = EB_FALSE;
@@ -489,15 +491,13 @@ void *packetization_kernel(void *input_ptr) {
                         }
                     }
 
-                    // TEST code: hard coding to pick up first loop coding
-                    //best_index = 0;
-                    //best_index = parent_pcs_ptr->superres_total_recode_loop - 1;
-
                     if (best_index != parent_pcs_ptr->superres_total_recode_loop - 1) {
                         do_recode = EB_TRUE;
                         parent_pcs_ptr->superres_denom = parent_pcs_ptr->superres_denom_array[best_index];
-                        //fprintf(stderr, "####### %s - frame %d, last loop, pick denom %d\n", __FUNCTION__,
-                        //    (int)parent_pcs_ptr->picture_number, parent_pcs_ptr->superres_denom);
+#if DEBUG_SUPERRES_RECODE
+                        printf("\n####### %s - frame %d, extra loop, pick denom %d\n", __FUNCTION__,
+                            (int)parent_pcs_ptr->picture_number, parent_pcs_ptr->superres_denom);
+#endif
                     }
                 }
                 else {
@@ -519,10 +519,12 @@ void *packetization_kernel(void *input_ptr) {
                         svt_reference_object_reset(reference_object, scs_ptr);
                     }
 
-                    //fprintf(stderr, "%s - send superres recode task to open loop ME. Frame %d, denom %d\n", __FUNCTION__,
-                    //    (int)parent_pcs_ptr->picture_number, parent_pcs_ptr->superres_denom);
+#if DEBUG_SUPERRES_RECODE
+                    printf("\n%s - send superres recode task to open loop ME. Frame %d, denom %d\n", __FUNCTION__,
+                        (int)parent_pcs_ptr->picture_number, parent_pcs_ptr->superres_denom);
+#endif
 
-                    for (uint32_t segment_index = 0; segment_index < pcs_ptr->parent_pcs_ptr->me_segments_total_count; ++segment_index) {
+                    for (uint32_t segment_index = 0; segment_index < parent_pcs_ptr->me_segments_total_count; ++segment_index) {
                         // Get Empty Results Object
                         EbObjectWrapper* out_results_wrapper;
                         svt_get_empty_object(
@@ -530,7 +532,7 @@ void *packetization_kernel(void *input_ptr) {
                             &out_results_wrapper);
 
                         PictureDecisionResults* out_results = (PictureDecisionResults*)out_results_wrapper->object_ptr;
-                        out_results->pcs_wrapper_ptr = pcs_ptr->parent_pcs_ptr->p_pcs_wrapper_ptr;
+                        out_results->pcs_wrapper_ptr = parent_pcs_ptr->p_pcs_wrapper_ptr;
                         out_results->segment_index = segment_index;
                         out_results->task_type = TASK_SUPERRES_RE_ME;
                         //Post the Full Results Object
@@ -548,28 +550,28 @@ void *packetization_kernel(void *input_ptr) {
             // Release pa_ref_objs
             // Delayed call from initial rate control kernel / source based operations kernel
             if (scs_ptr->static_config.enable_tpl_la) {
-                if (pcs_ptr->parent_pcs_ptr->temporal_layer_index == 0) {
-                    for (uint32_t i = 0; i < pcs_ptr->parent_pcs_ptr->tpl_group_size; i++) {
-                        if (pcs_ptr->parent_pcs_ptr->tpl_group[i]->slice_type == P_SLICE) {
-                            if (pcs_ptr->parent_pcs_ptr->tpl_group[i]->ext_mg_id == pcs_ptr->parent_pcs_ptr->ext_mg_id + 1) {
-                                release_pa_reference_objects(scs_ptr, pcs_ptr->parent_pcs_ptr->tpl_group[i]);
+                if (parent_pcs_ptr->temporal_layer_index == 0) {
+                    for (uint32_t i = 0; i < parent_pcs_ptr->tpl_group_size; i++) {
+                        if (parent_pcs_ptr->tpl_group[i]->slice_type == P_SLICE) {
+                            if (parent_pcs_ptr->tpl_group[i]->ext_mg_id == parent_pcs_ptr->ext_mg_id + 1) {
+                                release_pa_reference_objects(scs_ptr, parent_pcs_ptr->tpl_group[i]);
                             }
                         }
                         else {
-                            if (pcs_ptr->parent_pcs_ptr->tpl_group[i]->ext_mg_id == pcs_ptr->parent_pcs_ptr->ext_mg_id) {
-                                release_pa_reference_objects(scs_ptr, pcs_ptr->parent_pcs_ptr->tpl_group[i]);
+                            if (parent_pcs_ptr->tpl_group[i]->ext_mg_id == parent_pcs_ptr->ext_mg_id) {
+                                release_pa_reference_objects(scs_ptr, parent_pcs_ptr->tpl_group[i]);
                             }
                         }
                     }
                 }
             }
             else {
-                release_pa_reference_objects(scs_ptr, pcs_ptr->parent_pcs_ptr);
+                release_pa_reference_objects(scs_ptr, parent_pcs_ptr);
             }
 
             // Delayed call from rate control kernel for multiple coding loop frames
             if (use_input_stat(scs_ptr) || scs_ptr->lap_enabled)
-                update_rc_counts(pcs_ptr->parent_pcs_ptr);
+                update_rc_counts(parent_pcs_ptr);
         }
 
         //****************************************************
@@ -645,9 +647,10 @@ void *packetization_kernel(void *input_ptr) {
             pcs_ptr->parent_pcs_ptr->me_data_wrapper_ptr = NULL;
             pcs_ptr->parent_pcs_ptr->pa_me_data = NULL;
 
-            //
+            // free memory used by psnr_calculations
             free_temporal_filtering_buffer(pcs_ptr, scs_ptr);
 
+            // reference rest_kernel()
             if (parent_pcs_ptr->is_used_as_reference_flag)
                 pad_ref_and_set_flags(pcs_ptr, scs_ptr);
             else {
@@ -655,8 +658,8 @@ void *packetization_kernel(void *input_ptr) {
                 // convert non-reference frame buffer from 16-bit to 8-bit, to export recon and psnr/ssim calculation
                 if (is_16bit && scs_ptr->static_config.encoder_bit_depth == EB_8BIT)
                 {
-                    EbPictureBufferDesc* ref_pic_ptr = pcs_ptr->parent_pcs_ptr->enc_dec_ptr->recon_picture_ptr;;
-                    EbPictureBufferDesc* ref_pic_16bit_ptr = pcs_ptr->parent_pcs_ptr->enc_dec_ptr->recon_picture16bit_ptr;;
+                    EbPictureBufferDesc* ref_pic_ptr = pcs_ptr->parent_pcs_ptr->enc_dec_ptr->recon_picture_ptr;
+                    EbPictureBufferDesc* ref_pic_16bit_ptr = pcs_ptr->parent_pcs_ptr->enc_dec_ptr->recon_picture16bit_ptr;
                     //Y
                     uint16_t* buf_16bit = (uint16_t*)(ref_pic_16bit_ptr->buffer_y);
                     uint8_t* buf_8bit = ref_pic_ptr->buffer_y;
@@ -811,22 +814,6 @@ void *packetization_kernel(void *input_ptr) {
         }
 
         write_frame_header_av1(pcs_ptr->bitstream_ptr, scs_ptr, pcs_ptr, 0);
-
-        // debug info
-        //if (pcs_ptr->parent_pcs_ptr->superres_total_recode_loop == 0)
-        //{
-        //    int64_t bits = (int64_t)bitstream_get_bytes_count(pcs_ptr->bitstream_ptr) << 3;
-        //    int64_t rate = bits << 5;  // To match scale.
-        //    int64_t sse = pcs_ptr->parent_pcs_ptr->luma_sse;
-        //    uint8_t bit_depth = pcs_ptr->hbd_mode_decision ? 10 : 8;
-        //    uint8_t qindex = pcs_ptr->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx;
-        //    int32_t rdmult = compute_rdmult_sse(pcs_ptr, qindex, bit_depth);
-
-        //    double rdcost = RDCOST_DBL_WITH_NATIVE_BD_DIST(rdmult, rate, sse, scs_ptr->static_config.encoder_bit_depth);
-        //    printf("####### %s - frame %d, loop %d/%d, denom %d, rate %I64d, sse %I64d, rdcost %.2f, qindex %d, rdmult %d\n", __FUNCTION__,
-        //        (int)pcs_ptr->parent_pcs_ptr->picture_number, pcs_ptr->parent_pcs_ptr->superres_recode_loop, pcs_ptr->parent_pcs_ptr->superres_total_recode_loop,
-        //        pcs_ptr->parent_pcs_ptr->superres_denom, rate, sse, rdcost, qindex, rdmult);
-        //}
 
         output_stream_ptr->n_alloc_len = (uint32_t)(
             bitstream_get_bytes_count(pcs_ptr->bitstream_ptr) + TD_SIZE + metadata_sz);
