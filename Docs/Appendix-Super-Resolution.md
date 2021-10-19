@@ -1,17 +1,17 @@
 # Super-resolution Appendix
 
 ## 1. Description of the algorithm
-The AV1 specification allows for the input video pictures to be coded at a lower resolution and then upscaled to the original resolution after reconstruction. This coding procedure, referred to as super-resolution, is useful in low bit rate streaming scenarios [1]. Figure 1 depicts the architecture of the processing pipeline when using super-resolution [2]. At the encoder side, encoding using the super-resolution feature involves the following step. First, the source video is downscaled using a non-normative process. Second, the downscaled version of the input video is encoded, followed by application of deblocking and CDEF to the reconstructed downscaled version of the input video. Third, the output pictures from CDEF are upscaled to the original resolution and loop restoration is applied to the full resolution pictures to recover part of lost high frequency information. The upscaling and loop restoration operations are referred to as the super-resolve steps and are normative. At the decoder side, the resulting bitstream is decoded, and deblocking and CDEF are then applied on the lower resolution pictures. The output pictures from CDEF are then super-resolved to original video resolution[2]. In order to reduce overheads associated with line-buffers in hardware implementations, the upscaling and downscaling operations are applied to the horizontal dimension only [3]. The downscaling factor is constrained to 8/9 ~ 8/16. The downscaling operation can be applied to some of the frames, especially for frames that are too complex to fit in the target bandwidth. Different frames can have different downscaling factors. The following sections outline how the different size pictures are processed in the different stages of the SVT-AV1 encoder pipeline and how the downscaling factor is determined.
+The AV1 specification allows for the input video pictures to be coded at a lower resolution and then upscaled to the original resolution after reconstruction. This coding procedure, referred to as super-resolution, is useful in low bit rate streaming scenarios [1]. Figure 1 depicts the architecture of the processing pipeline when using super-resolution [2]. At the encoder side, encoding using the super-resolution feature involves the following step. First, the source video is downscaled using a non-normative process. Second, the downscaled version of the input video is encoded, followed by application of deblocking and CDEF to the reconstructed downscaled version of the input video. Third, the output pictures from CDEF are upscaled to the original resolution and loop restoration is applied to the full resolution pictures to recover part of lost high frequency information. The upscaling and loop restoration operations are referred to as the super-resolve steps and are normative. At the decoder side, the resulting bitstream is decoded, and deblocking and CDEF are then applied on the lower resolution pictures. The output pictures from CDEF are then super-resolved to original video resolution [2]. In order to reduce overheads associated with line-buffers in hardware implementations, the upscaling and downscaling operations are applied to the horizontal direction only [3]. The downscaling factor is constrained to 8/9 ~ 8/16, i.e, maximum 2x. The downscaling operation can be applied to some of the frames, especially for frames that are too complex to fit in the target bandwidth. Different frames can have different downscaling factors. The following sections outline how pictures with different sizes are processed in the different stages of the SVT-AV1 encoder pipeline and how the downscaling factor is determined.
 
 ![superres_pipeline](./img/superres_pipeline.png)
-##### Figure 1. Processing pipeline  when super-resolution is active.
+##### Figure 1. Processing pipeline when super-resolution is active.
 
 
 ## 2. Implementation of the algorithm
-### 2.1. Downscaled and full size versions of pictures
-Figure 2 illustrates how the different size pictures are processed in the different coding processes/stages.
+### 2.1. Downscaled and full-size versions of pictures
+Figure 2 illustrates how pictures with different sizes are processed in the different coding processes/stages.
 ![superres_picture_size](./img/superres_picture_size.png)
-##### Figure 2. Processing of the downscaled and full size pictures in the encoder pipeline.
+##### Figure 2. Processing of the downscaled and full-size pictures in the encoder pipeline.
 
 In Figure 2, downscaled input refers to a downscaled version of the current input picture.
 
@@ -33,7 +33,7 @@ The downscaling factor is constrained to 8/9 ~ 8/16. Since the numerator of the 
 * QThreshold: The use of super-resolution is decided by comparing the QP of the frame with a user-supplied QP threshold. Downscaling is applied to Key-frames and ARFs only.
 * Auto-Solo: It works similarly to QThreshold mode except that the QP threshold is fixed by the encoder.
 * Auto-Dual: Both downscaled (the denominator is determined by QP) and full size original input pictures are encoded. The output with the better rate-distortion cost is selected. Downscaling is applied to Key-frames and ARFs only.
-* Auto-All: Both downscaled with all possible denominator values (9~16) and full size original input pictures are encoded. The output with best rate-distortion cost is selected. Downscaling is applied to Key-frames and ARFs only.
+* Auto-All: Both downscaled with all possible denominator values (9~16) and full-size original input pictures are encoded. The output with best rate-distortion cost is selected. Downscaling is applied to Key-frames and ARFs only.
 
 The following sections explain how these different modes are implemented in the SVT-AV1 encoder. The high level dataflow of super-resolution is shown in Figure 3.
 ![superres_new_modes_dataflow](./img/superres_new_modes_dataflow.png)
@@ -61,7 +61,7 @@ Table 1 illustrates the usage of super-resolution functions. Only related proces
 ##### Table 1. Super-resolution API
 
 ## 3. Optimization
-Super-resolution affects the coding speed: The current picture and its references are all needed to be downscaled to the same size for motion estimation search. In current implementation, pa ref[8] array and recon ref[8] array are used to hold downscaled reference pictures, to avoid duplicate downscaling on the same reference picture for different input pictures.
+Super-resolution affects the coding speed: The current picture and its references are downscaled to the same size for motion estimation search. In current implementation, pa ref[8] array and recon ref[8] array are used to hold downscaled reference pictures, to avoid duplicate downscaling on the same reference picture for different input pictures.
 
 When Auto-Dual or Auto-All is selected, each picture is encoded multiple times with different denominator values. A rate-distortion cost is produced by each coding pass. If the last rate-distortion cost is the best, the encoded bitstream will be used directly. If not, the current picture must be encoded again with the denominator value of the best rate-distortion cost. Mostly, full size coding has better rate-distortion cost than the downscaling ones, so full size coding pass is arranged in the last. Because only key frame and ARF may enable downscaling, an extra coding pass is barely needed in practice. The other possible solution is to eliminate the extra coding pass by saving coding states, but it requires extra memory and it is a bit more complicated to implement (E.g. At least need an extra special PCS to save all coding state for the best rate-distortion cost).
 
