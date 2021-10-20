@@ -44,7 +44,9 @@ typedef struct SequenceControlSet {
     /*!< Encoding context pointer containing the handle pointer */
     EncodeContext *encode_context_ptr;
      /*!< 2ndpass enc mode, available at firstpass encoder */
+#if !IPP_CTRL
      int8_t enc_mode_2ndpass;
+#endif
     /*!< API structure */
     EbSvtAv1EncConfiguration static_config;
     /*!< Pointer to prediction structure containing the mini-gop information */
@@ -253,6 +255,9 @@ typedef struct SequenceControlSet {
 #if FTR_NEW_QPS
     int cqp_base_q_tf;
     int cqp_base_q;
+#endif
+#if TUNE_VBR_OVERSHOOT
+    uint8_t is_short_clip; //less than 200 frames, used in VBR and set in multipass encode
 #endif
 } SequenceControlSet;
 

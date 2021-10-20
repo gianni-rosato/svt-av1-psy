@@ -462,7 +462,12 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
                                                              PictureControlSet * pcs_ptr) {
     UNUSED(scs_ptr);
     EbErrorType return_error = EB_ErrorNone;
-
+#if CLN_WM_SIG
+    const EbEncMode enc_mode = pcs_ptr->enc_mode;
+    const uint8_t   is_ref =  pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag;
+    const uint8_t   is_base = pcs_ptr->parent_pcs_ptr->temporal_layer_index==0;
+    const EbInputResolution input_resolution = pcs_ptr->parent_pcs_ptr->input_resolution;
+#endif
     uint8_t update_cdf_level = 0;
     if (pcs_ptr->enc_mode <= ENC_M2)
         update_cdf_level = 1;
@@ -487,6 +492,10 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         update_cdf_level = pcs_ptr->slice_type == I_SLICE
         ? 1
         : 3;
+#if CLN_UPDATE_CDF
+    else if (pcs_ptr->enc_mode <= ENC_M11)
+        update_cdf_level = pcs_ptr->slice_type == I_SLICE ? 1 : 0;
+#else
 #if TUNE_M9_11_3
     else if (pcs_ptr->enc_mode <= ENC_M8)
         update_cdf_level = pcs_ptr->slice_type == I_SLICE ? 1 : 0;
@@ -512,6 +521,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         update_cdf_level = (pcs_ptr->parent_pcs_ptr->input_resolution <= INPUT_SIZE_1080p_RANGE)? 0 : (pcs_ptr->slice_type == I_SLICE ? 1 : 0);
 #else
         update_cdf_level = pcs_ptr->slice_type == I_SLICE ? 1 : 0;
+#endif
 #endif
     else
         update_cdf_level = 0;
@@ -564,6 +574,72 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
             (scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE)
         ? 1
         : 0;
+
+#if CLN_WM_SIG
+
+        /*
+               Warped Motion
+        */
+        pcs_ptr->wm_level = 0;
+        EbBool enable_wm;
+        if (frm_hdr->frame_type == KEY_FRAME || frm_hdr->frame_type == INTRA_ONLY_FRAME ||
+            frm_hdr->error_resilient_mode || pcs_ptr->parent_pcs_ptr->frame_superres_enabled)
+        {
+            pcs_ptr->wm_level = 0;
+            enable_wm = 0;
+        }
+        else {
+
+            if (enc_mode <= ENC_M3) {
+                pcs_ptr->wm_level = enable_wm = 1;
+            }
+            else if (enc_mode <= ENC_M4) {
+                enable_wm = is_ref ? EB_TRUE : EB_FALSE;
+                pcs_ptr->wm_level = enable_wm;
+            }
+            else if (enc_mode <= ENC_M9) {
+                enable_wm = is_base ? EB_TRUE : EB_FALSE;
+                pcs_ptr->wm_level = enable_wm;
+            }
+            else if (enc_mode <= ENC_M11) {
+
+                enable_wm = is_base ? EB_TRUE : EB_FALSE;
+
+                if (enable_wm)
+                    pcs_ptr->wm_level = (input_resolution <= INPUT_SIZE_360p_RANGE) ? 1 : 2;
+                else
+                    pcs_ptr->wm_level = 0;
+
+            }
+            else if (enc_mode <= ENC_M12) {
+                enable_wm = is_base ? EB_TRUE : EB_FALSE;
+                if (enable_wm)
+                    pcs_ptr->wm_level = 2;
+                else
+                    pcs_ptr->wm_level = 0;
+            }
+            else if (enc_mode <= ENC_M13) {
+                if (input_resolution <= INPUT_SIZE_720p_RANGE)
+                    enable_wm = is_base ? EB_TRUE : EB_FALSE;
+                else
+                    enable_wm = EB_FALSE;
+
+                if (enable_wm)
+                    pcs_ptr->wm_level = 2;
+                else
+                    pcs_ptr->wm_level = 0;
+
+            }
+            else {
+                enable_wm = EB_FALSE;
+            }
+        }
+
+#else
+
+
+
+
     EbBool enable_wm;
 #if TUNE_M3_M6_MEM_OPT
     if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M3)
@@ -582,7 +658,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
 #if TUNE_NEW_M10_M11
 #if OPT_TXS_WM
 #if CLN_M6_M12_FEATURES
+#if TUNE_IMPROVE_M12
+    } else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M12) {
+#else
     } else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M11) {
+#endif
 #else
     } else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M7) {
 #endif
@@ -623,6 +703,8 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     if (pcs_ptr->parent_pcs_ptr->scs_ptr->rc_stat_gen_pass_mode)
 #endif
         enable_wm = EB_FALSE;
+#endif
+
 #endif
     if (pcs_ptr->parent_pcs_ptr->scs_ptr->static_config.enable_warped_motion != DEFAULT)
         enable_wm = (EbBool)pcs_ptr->parent_pcs_ptr->scs_ptr->static_config.enable_warped_motion;
@@ -732,6 +814,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     }
 #endif
 #endif
+#if !CLN_USE_SELECTIVE_MFMV_TH
 #if FTR_SELECTIVE_MFMV
 #if TUNE_M8_M10_4K_SUPER
 #if TUNE_M9_SLOWDOWN
@@ -761,6 +844,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
                 pcs_ptr->parent_pcs_ptr->frm_hdr.use_ref_frame_mvs = 0;
         }
     }
+#endif
 #endif
 #if CLN_RATE_EST_CTRLS
 #if CLN_FEAT_LEVEL

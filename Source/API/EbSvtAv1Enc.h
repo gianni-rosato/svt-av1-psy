@@ -112,8 +112,10 @@ typedef struct TfControls {
     uint8_t  eight_pel_mode;           // 0: do not perform eight-pel refinement    | 1: perform eight-pel refinement for the 8-positions   | 2: eight half-pel refinement for only 4-positions (H and V only)
     uint8_t  do_chroma;                // 0: do not filter chroma | 1: filter chroma
 #if OPT_UPGRADE_TF
+#if !FIX_TF_FILTER_64x64_PATH
     uint8_t  use_pred_64x64_only_th;   // 0: subpel/pred error for 32x32(s) or/and 16x16(s) | > 0: subpel/pred error for 64x64 only if 64x64-to-32x32 dist deviation less than use_pred_64x64_only_th
     uint32_t me_exit_th;               // early exit ME_TF if HME distortion < me_exit_th
+#endif
 #endif
     uint64_t pred_error_32x32_th;      // The 32x32 pred error (post-subpel) under which subpel for the 16x16 block(s) is bypassed
 #if !CLN_TF_CTRLS
@@ -130,6 +132,10 @@ typedef struct TfControls {
 #if FIXED_POINTS_PLANEWISE
     uint8_t use_fixed_point;  //Enable calculations on fixed points instead of float/double
     uint8_t use_medium_filter;//simple filter using weight per quarter block
+#endif
+#if FIX_TF_FILTER_64x64_PATH
+    uint8_t  use_pred_64x64_only_th;   // [valid for only use_fast_filter=1] 0: subpel/pred error for 32x32(s) or/and 16x16(s) | > 0: subpel/pred error for 64x64 only if 64x64-to-32x32 dist deviation less than use_pred_64x64_only_th
+    uint32_t me_exit_th;               // [valid for only use_fast_filter=1] early exit ME_TF if HME distortion < me_exit_th
 #endif
 #if OPT_TFILTER
     uint8_t avoid_2d_qpel;    //avoid 2d qpel positions in 32x32 search
@@ -181,6 +187,17 @@ typedef struct SvtAv1FixedBuf {
     uint64_t sz; /**< Length of the buffer, in chars */
 } SvtAv1FixedBuf; /**< alias for struct aom_fixed_buf */
 
+#if OPT_FIRST_PASS2
+typedef struct IppPassControls {
+    uint8_t skip_frame_first_pass; // Enable the ability to skip frame
+    uint8_t ipp_ds; // use downsampled version in ipp pass
+    uint8_t bypass_blk_step; // bypass every other row and col
+    uint8_t dist_ds; // downsample distortion
+    uint8_t bypass_zz_check; // Bypas the (0,0)_MV check against HME_MV before performing ME
+    uint8_t use8blk; 
+    uint8_t reduce_me_search; //Reduce HME_ME SR areas
+} IppPassControls;
+#endif
 // Will contain the EbEncApi which will live in the EncHandle class
 // Only modifiable during config-time.
 typedef struct EbSvtAv1EncConfiguration {
@@ -927,10 +944,11 @@ typedef struct EbSvtAv1EncConfiguration {
     uint8_t final_pass_rc_mode;
 #endif
 #if OPT_FIRST_PASS2
-    uint8_t skip_frame_first_pass;
+    IppPassControls ipp_ctrls;
+    uint8_t ipp_was_ds;
 #endif
-#if FTR_OPT_IPP_DOWN_SAMPLE
-    uint8_t ipp_ds; // use downsampled version in ipp pass
+#if IPP_CTRL
+    uint8_t final_pass_preset;
 #endif
 } EbSvtAv1EncConfiguration;
 

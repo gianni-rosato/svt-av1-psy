@@ -910,7 +910,11 @@ static INLINE int is_almost_static(double gf_zero_motion, int kf_zero_motion,
 #if GROUP_ADAPTIVE_MAXQ
 #if FTR_NEW_MULTI_PASS
 #define RC_FACTOR_MIN 1
+#if TUNE_VBR_OVERSHOOT
+#define RC_FACTOR_MAX 2
+#else
 #define RC_FACTOR_MAX 1.5
+#endif
 #else
 #define RC_FACTOR_MIN 0.75
 #define RC_FACTOR_MAX 1.25
@@ -3366,7 +3370,11 @@ void svt_av1_twopass_postencode_update(PictureParentControlSet *ppcs_ptr) {
     } else if (rc->rate_error_estimate < -rc_cfg->over_shoot_pct) {
       --twopass->extend_minq;
       if (rc->rolling_target_bits < rc->rolling_actual_bits)
-        ++twopass->extend_maxq;
+#if TUNE_VBR_OVERSHOOT
+       twopass->extend_maxq += (scs_ptr->is_short_clip) ? 2 : 1;
+#else
+       ++twopass->extend_maxq;
+#endif
     } else {
       // Adjustment for extreme local overshoot.
         if (ppcs_ptr->projected_frame_size > (2 * ppcs_ptr->base_frame_target) &&
@@ -3389,7 +3397,11 @@ void svt_av1_twopass_postencode_update(PictureParentControlSet *ppcs_ptr) {
     // but not very well predcited by the previous frame.
     if (!frame_is_kf_gf_arf(ppcs_ptr) && !rc->is_src_frame_alt_ref) {
       int fast_extra_thresh = ppcs_ptr->base_frame_target / HIGH_UNDERSHOOT_RATIO;
+#if TUNE_VBR_OVERSHOOT
+      if (ppcs_ptr->projected_frame_size < fast_extra_thresh && rc->rate_error_estimate > 0) {
+#else
       if (ppcs_ptr->projected_frame_size < fast_extra_thresh) {
+#endif
         rc->vbr_bits_off_target_fast +=
             fast_extra_thresh - ppcs_ptr->projected_frame_size;
         rc->vbr_bits_off_target_fast =

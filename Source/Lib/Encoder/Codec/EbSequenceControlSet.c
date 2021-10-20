@@ -329,13 +329,18 @@ EbErrorType copy_sequence_control_set(SequenceControlSet *dst, SequenceControlSe
     dst->geom_idx = src->geom_idx;
     dst->max_block_cnt = src->max_block_cnt;
 #endif
+#if !IPP_CTRL
     dst->enc_mode_2ndpass = src->enc_mode_2ndpass;
+#endif
 #if FTR_OPT_MPASS
     dst->rc_stat_gen_pass_mode = src->rc_stat_gen_pass_mode;
 #endif
 #if FTR_NEW_QPS
     dst->cqp_base_q_tf = src->cqp_base_q_tf;
     dst->cqp_base_q = src->cqp_base_q;
+#endif
+#if TUNE_VBR_OVERSHOOT
+    dst->is_short_clip = src->is_short_clip;
 #endif
     return EB_ErrorNone;
 }

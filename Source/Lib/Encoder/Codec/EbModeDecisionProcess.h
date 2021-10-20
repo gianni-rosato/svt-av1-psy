@@ -491,6 +491,9 @@ typedef struct NicPruningCtrls {
 typedef struct NicCtrls {
     NicPruningCtrls pruning_ctrls;
     NicScalingCtrls scaling_ctrls;
+#if CLN_MD_STAGING_CTRLS
+    uint8_t md_staging_mode; // to specify the number of md-stage(s)
+#endif
 } NicCtrls;
 #endif
 typedef struct CandEliminationCtlrs {
@@ -951,7 +954,9 @@ typedef struct ModeDecisionContext {
     unsigned int prediction_mse;
     MdStage      md_stage;
     uint32_t     *cand_buff_indices[CAND_CLASS_TOTAL];
+#if !CLN_MD_STAGING_CTRLS
     uint8_t      md_staging_mode;
+#endif
 #if SS_OPT_MD
     uint8_t      bypass_md_stage_1;
     uint8_t      bypass_md_stage_2;

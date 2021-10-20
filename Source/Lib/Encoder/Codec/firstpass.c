@@ -646,8 +646,7 @@ extern EbErrorType first_pass_signal_derivation_pre_analysis_pcs(PictureParentCo
     pcs_ptr->tf_enable_hme_level1_flag             = 0;
     pcs_ptr->tf_enable_hme_level2_flag             = 0;
 #if OPT_FIRST_PASS3
-    pcs_ptr->bypass_blk_step = ((pcs_ptr->scs_ptr->static_config.final_pass_rc_mode != 0) ||
-        (pcs_ptr->scs_ptr->input_resolution < INPUT_SIZE_360p_RANGE)) ? 1 : 2;
+    pcs_ptr->bypass_blk_step = pcs_ptr->scs_ptr->static_config.ipp_ctrls.bypass_blk_step ? ((pcs_ptr->scs_ptr->input_resolution < INPUT_SIZE_360p_RANGE) ? 1 : 2) : 1;
 #endif
     return return_error;
 }
@@ -899,7 +898,11 @@ void *set_first_pass_me_hme_params_oq(MeContext *me_context_ptr, PictureParentCo
     me_context_ptr->reduce_hme_l0_sr_th_max = 0;
 
     // Set the minimum ME search area
+#if IPP_CTRL
+    if (!scs_ptr->static_config.ipp_ctrls.reduce_me_search) {
+#else
     if (pcs_ptr->scs_ptr->enc_mode_2ndpass <= ENC_M4) {
+#endif
         me_context_ptr->search_area_width = me_context_ptr->search_area_height = 8;
         me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 8;
     }
@@ -1012,7 +1015,11 @@ EbErrorType first_pass_signal_derivation_me_kernel(SequenceControlSet *       sc
     context_ptr->me_context_ptr->enable_hme_level0_flag = pcs_ptr->enable_hme_level0_flag;
     context_ptr->me_context_ptr->enable_hme_level1_flag = pcs_ptr->enable_hme_level1_flag;
 #if TUNE_FIRSTPASS_HME2
+#if IPP_CTRL
+    context_ptr->me_context_ptr->enable_hme_level2_flag = !scs_ptr->static_config.ipp_ctrls.reduce_me_search ? pcs_ptr->enable_hme_level2_flag : 0;
+#else
     context_ptr->me_context_ptr->enable_hme_level2_flag = scs_ptr->enc_mode_2ndpass <= ENC_M4 ? pcs_ptr->enable_hme_level2_flag : 0;
+#endif
 #else
     context_ptr->me_context_ptr->enable_hme_level2_flag = scs_ptr->enc_mode_2ndpass <= ENC_M7 ? pcs_ptr->enable_hme_level2_flag : 0;
 #endif
@@ -1071,7 +1078,11 @@ static int open_loop_firstpass_intra_prediction(PictureParentControlSet *ppcs_pt
     const int use_dc_pred = (mb_col || mb_row) && (!mb_col || !mb_row);
     uint8_t  use8blk = 0;
 #if FIX_PRESET_TUNING
+#if IPP_CTRL
+    if (!ppcs_ptr->scs_ptr->static_config.ipp_ctrls.use8blk) {
+#else
     if (ppcs_ptr->scs_ptr->enc_mode_2ndpass <= ENC_M4) {
+#endif
 #else
     if (ppcs_ptr->scs_ptr->enc_mode_2ndpass <= ENC_M7) {
 #endif
@@ -1462,9 +1473,7 @@ static EbErrorType first_pass_frame_seg(PictureParentControlSet *ppcs_ptr, int32
     const uint32_t blk_index_x_end = (x_b64_end_idx * blks_in_b64) > blk_cols ? blk_cols : (x_b64_end_idx * blks_in_b64);
     EbSpatialFullDistType spatial_full_dist_type_fun = svt_spatial_full_distortion_kernel;
 #if OPT_FIRST_PASS4
-    int down_step = ppcs_ptr->scs_ptr->static_config.final_pass_rc_mode != 0 ? 0 : 1;
-    int this_intra_error = ~((unsigned int)0) >> 1;
-    int skip_intra_copm_th = ppcs_ptr->scs_ptr->static_config.final_pass_rc_mode != 0 ? -1 : this_intra_error - 1;
+    int down_step = ppcs_ptr->scs_ptr->static_config.ipp_ctrls.dist_ds;
 #endif
     for (uint32_t blk_index_y = (y_b64_start_idx * blks_in_b64); blk_index_y < blk_index_y_end; blk_index_y++) {
         for (uint32_t blk_index_x = (x_b64_start_idx * blks_in_b64); blk_index_x < blk_index_x_end; blk_index_x++) {
@@ -1516,22 +1525,7 @@ static EbErrorType first_pass_frame_seg(PictureParentControlSet *ppcs_ptr, int32
                                                           blk_width,
                                                           blk_height));
 #endif
-#if OPT_FIRST_PASS4
-            this_intra_error = ~((unsigned int)0)>>1;
 
-            if (ppcs_ptr->first_pass_ref_count)
-                this_intra_error = ppcs_ptr->firstpass_data.raw_motion_err_list[blk_index_y * blk_cols + blk_index_x];
-            if (this_intra_error > skip_intra_copm_th) {
-                this_intra_error = open_loop_firstpass_intra_prediction(ppcs_ptr, ppcs_ptr->firstpass_data.raw_motion_err_list[blk_index_y * blk_cols + blk_index_x], blk_origin_x,
-                    blk_origin_y,
-                    blk_width,
-                    blk_height,
-                    input_picture_ptr,
-                    input_origin_index,
-                    mb_stats);
-
-            }
-#else
             int this_intra_error = open_loop_firstpass_intra_prediction(ppcs_ptr, ppcs_ptr->firstpass_data.raw_motion_err_list[blk_index_y * blk_cols + blk_index_x] ,blk_origin_x,
                                                                         blk_origin_y,
                                                                         blk_width,
@@ -1539,7 +1533,7 @@ static EbErrorType first_pass_frame_seg(PictureParentControlSet *ppcs_ptr, int32
                                                                         input_picture_ptr,
                                                                         input_origin_index,
                                                                         mb_stats);
-#endif
+
             int this_inter_error = this_intra_error;
 
             if (blk_origin_x == 0)
@@ -1782,18 +1776,22 @@ void open_loop_first_pass(PictureParentControlSet *  ppcs_ptr,
     me_context_ptr->me_context_ptr->min_frame_size = MIN(ppcs_ptr->aligned_height,
                                                          ppcs_ptr->aligned_width);
     // Perform the me for the first pass for each segment
+#if IPP_CTRL
+    if (!ppcs_ptr->scs_ptr->static_config.ipp_ctrls.skip_frame_first_pass)
+#else
     if (ppcs_ptr->scs_ptr->enc_mode_2ndpass <= ENC_M4)
+#endif
         ppcs_ptr->skip_frame =0;
     else {
 #if OPT_FIRST_PASS
 #if ENBLE_SKIP_FRAME_IN_VBR_MODE
 #if FIX_ISSUE_50
-        if ((ppcs_ptr->scs_ptr->static_config.skip_frame_first_pass == 1) && (ppcs_ptr->picture_number % 8 > 0))
+        if ((ppcs_ptr->scs_ptr->static_config.ipp_ctrls.skip_frame_first_pass == 1) && (ppcs_ptr->picture_number % 8 > 0))
 #else
         if ((ppcs_ptr->scs_ptr->static_config.final_pass_rc_mode == 0) && (ppcs_ptr->picture_number % 8 > 0))
 #endif
             ppcs_ptr->skip_frame = 1;
-        else if ((ppcs_ptr->scs_ptr->static_config.skip_frame_first_pass == 2) && (ppcs_ptr->picture_number > 7 && ppcs_ptr->picture_number % 8 > 0))
+        else if ((ppcs_ptr->scs_ptr->static_config.ipp_ctrls.skip_frame_first_pass == 2) && (ppcs_ptr->picture_number > 7 && ppcs_ptr->picture_number % 8 > 0))
 #else
         if ((ppcs_ptr->scs_ptr->static_config.final_pass_rc_mode == 0) && (ppcs_ptr->picture_number % 8 > 0))
 #endif
@@ -1806,8 +1804,7 @@ void open_loop_first_pass(PictureParentControlSet *  ppcs_ptr,
             ppcs_ptr->skip_frame = 0;
     }
 #if OPT_FIRST_PASS3
-    ppcs_ptr->bypass_blk_step = ((ppcs_ptr->scs_ptr->static_config.final_pass_rc_mode != 0) ||
-        (ppcs_ptr->scs_ptr->input_resolution < INPUT_SIZE_360p_RANGE)) ? 1 : 2;
+    ppcs_ptr->bypass_blk_step = ppcs_ptr->scs_ptr->static_config.ipp_ctrls.bypass_blk_step ? ((ppcs_ptr->scs_ptr->input_resolution < INPUT_SIZE_360p_RANGE) ? 1 : 2) : 1;
 #endif
     if (!ppcs_ptr->skip_frame)
     if (ppcs_ptr->first_pass_ref_count)

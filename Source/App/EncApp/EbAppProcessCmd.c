@@ -173,7 +173,7 @@ void release_memory_mapped_file(EbConfig *config, uint8_t is_16bit, EbBufferHead
     if (1) {
 #else
 #if FTR_OPT_IPP_DOWN_SAMPLE
-    if (config->config.rc_middlepass_ds_stats_out || config->config.rc_firstpass_stats_out) {
+    if (config->config.rc_middlepass_ds_stats_out || config->config.ipp_ctrls.ipp_ds) {
 #else
     if (config->config.rc_middlepass_ds_stats_out) {
 #endif
@@ -216,7 +216,7 @@ void read_input_frames(EbConfig *config, uint8_t is_16bit, EbBufferHeaderType *h
     if (1) {
 #else
 #if FTR_OPT_IPP_DOWN_SAMPLE
-    if (config->config.rc_middlepass_ds_stats_out || config->config.rc_firstpass_stats_out) {
+    if (config->config.rc_middlepass_ds_stats_out || config->config.ipp_ctrls.ipp_ds) {
 #else
     if (config->config.rc_middlepass_ds_stats_out) {
 #endif
@@ -642,7 +642,7 @@ void process_input_buffer(EncChannel *channel) {
     if (1) {
 #else
 #if FTR_OPT_IPP_DOWN_SAMPLE
-    if (config->config.rc_middlepass_ds_stats_out || config->config.rc_firstpass_stats_out) {
+    if (config->config.rc_middlepass_ds_stats_out || config->config.ipp_ctrls.ipp_ds) {
 #else
     if (config->config.rc_middlepass_ds_stats_out) {
 #endif

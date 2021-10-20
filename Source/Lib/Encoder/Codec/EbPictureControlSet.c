@@ -26,6 +26,9 @@ void *svt_aom_malloc(size_t size);
 
 EbErrorType svt_av1_alloc_restoration_buffers(PictureControlSet *pcs , Av1Common *cm);
 EbErrorType svt_av1_hash_table_create(HashTable *p_hash_table);
+#if RFCT_ME8X8
+uint8_t get_disallow_below_16x16_picture_level(EbEncMode enc_mode, EbInputResolution resolution, EB_SLICE slice_type, uint8_t sc_class1);
+#endif
 
 static void set_restoration_unit_size(int32_t width, int32_t height, int32_t sx, int32_t sy,
                                       RestorationInfo *rst) {
@@ -91,6 +94,7 @@ void  get_max_allocated_me_refs(uint8_t mrp_level, uint8_t* max_ref_to_alloc, ui
         *max_cand_to_alloc = MAX_PA_ME_CAND;
     }
 }
+#if !RFCT_ME8X8
 #if ME_8X8
 /*
 if disallow_below_16x16 is turned ON then enable_me_8x8 should be turned OFF for the same preset in order to save memory and cycles as enable_me_8x8 OFF will optimize the me_candidate_array,
@@ -112,6 +116,7 @@ uint8_t get_enable_me_8x8(EbEncMode enc_mode,  EbInputResolution input_resolutio
 
     return  enable_me_8x8;
 }
+#endif
 #endif
 #if FTR_M13
 uint8_t get_enable_me_16x16(EbEncMode enc_mode) {
@@ -139,9 +144,15 @@ EbErrorType me_sb_results_ctor(MeSbResults *obj_ptr, PictureControlSetInitData *
     EbInputResolution resolution;
     derive_input_resolution(&resolution, init_data_ptr->picture_width * init_data_ptr->picture_height);
 #if FTR_M13
+#if RFCT_ME8X8
+    uint8_t number_of_pus = get_enable_me_16x16(init_data_ptr->enc_mode) ?
+        !get_disallow_below_16x16_picture_level(init_data_ptr->enc_mode, resolution, B_SLICE, 0) ? SQUARE_PU_COUNT : MAX_SB64_PU_COUNT_NO_8X8 :
+        MAX_SB64_PU_COUNT_WO_16X16;
+#else
     uint8_t number_of_pus = get_enable_me_16x16(init_data_ptr->enc_mode) ?
         get_enable_me_8x8(init_data_ptr->enc_mode, resolution) ? SQUARE_PU_COUNT : MAX_SB64_PU_COUNT_NO_8X8 :
         MAX_SB64_PU_COUNT_WO_16X16;
+#endif
 #else
     uint8_t number_of_pus = get_enable_me_8x8(init_data_ptr->enc_mode, resolution) ? SQUARE_PU_COUNT : MAX_SB64_PU_COUNT_NO_8X8;
 #endif
@@ -1819,7 +1830,11 @@ EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr,
 #if ME_8X8
     EbInputResolution resolution;
     derive_input_resolution(&resolution, init_data_ptr->picture_width * init_data_ptr->picture_height);
+#if RFCT_ME8X8
+    object_ptr->enable_me_8x8 = !get_disallow_below_16x16_picture_level(init_data_ptr->enc_mode, resolution, B_SLICE, 0);
+#else
     object_ptr->enable_me_8x8 = get_enable_me_8x8(init_data_ptr->enc_mode, resolution);
+#endif
 #endif
 #if FTR_M13
     object_ptr->enable_me_16x16 = get_enable_me_16x16(init_data_ptr->enc_mode);

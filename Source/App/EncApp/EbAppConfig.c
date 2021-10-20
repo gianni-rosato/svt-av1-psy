@@ -2064,14 +2064,70 @@ EbBool load_twopass_stats_in(EbConfig *cfg) {
 
 /* set two passes stats information to EbConfig
  */
+#if OPT_FIRST_PASS2
+void set_ipp_controls(
+    EbConfig *config, uint8_t ipp_level) {
+    IppPassControls *ipp_ctrls = &config->config.ipp_ctrls;
+    switch (ipp_level) {
+    case 0:
+        ipp_ctrls->skip_frame_first_pass = 0;
+        ipp_ctrls->ipp_ds = 0;
+        ipp_ctrls->bypass_blk_step = 0;
+        ipp_ctrls->dist_ds = 0;
+#if IPP_CTRL
+        ipp_ctrls->bypass_zz_check = 0;
+        ipp_ctrls->use8blk = 0;
+        ipp_ctrls->reduce_me_search = 0;
+#endif
+        break;
+    case 1:
+        ipp_ctrls->skip_frame_first_pass = config->config.final_pass_rc_mode == 0 ? 1 : 2;
+        ipp_ctrls->ipp_ds = 0;
+        ipp_ctrls->bypass_blk_step = 0;
+        ipp_ctrls->dist_ds = 1;
+#if IPP_CTRL
+        ipp_ctrls->bypass_zz_check = 1;
+        ipp_ctrls->use8blk = 1;
+        ipp_ctrls->reduce_me_search = 1;
+#endif
+        break;
+    case 2:
+        ipp_ctrls->skip_frame_first_pass = config->config.final_pass_rc_mode == 0 ? 1 : 2;
+        ipp_ctrls->ipp_ds = 1;
+        ipp_ctrls->bypass_blk_step = 1;
+        ipp_ctrls->dist_ds = 1;
+#if IPP_CTRL
+        ipp_ctrls->bypass_zz_check = 1;
+        ipp_ctrls->use8blk = 1;
+        ipp_ctrls->reduce_me_search = 1;
+#endif
+        break;
+    default:
+        ipp_ctrls->skip_frame_first_pass = 0;
+        ipp_ctrls->ipp_ds = 0;
+        ipp_ctrls->bypass_blk_step = 0;
+        ipp_ctrls->dist_ds = 0;
+#if IPP_CTRL
+        ipp_ctrls->bypass_zz_check = 0;
+        ipp_ctrls->use8blk = 0;
+        ipp_ctrls->reduce_me_search = 0;
+#endif
+        break;
+    }
+}
+#endif
 EbErrorType set_two_passes_stats(EbConfig *config, EncodePass pass,
                                  const SvtAv1FixedBuf *rc_twopass_stats_in,
                                  uint32_t              channel_number) {
     switch (pass) {
     case ENCODE_SINGLE_PASS: {
 #if FIX_DG
-        config->config.skip_frame_first_pass = 0;
+        set_ipp_controls(config, 0);
+        config->config.ipp_was_ds = 0;
 #endif
+#if IPP_CTRL
+        config->config.final_pass_preset = config->config.enc_mode;
+#endif 
         const char *stats = config->stats ? config->stats : "svtav1_2pass.log";
         if (config->pass == 1) {
             if (!fopen_and_lock(&config->output_stat_file, stats, EB_TRUE)) {
@@ -2114,15 +2170,28 @@ EbErrorType set_two_passes_stats(EbConfig *config, EncodePass pass,
         }
         config->config.rc_firstpass_stats_out = EB_TRUE;
 #if FIX_DG
-        config->config.skip_frame_first_pass = ((config->config.enc_mode <= ENC_M4) ||
-            (config->config.final_pass_rc_mode != 0)) ? 0 : 1;
+        if(config->config.enc_mode <= ENC_M4)
+            set_ipp_controls(config, 0);
+        else if (config->config.enc_mode <= ENC_M10)
+            set_ipp_controls(config, 1);
+        else
+            if(config->config.final_pass_rc_mode == 0)
+                set_ipp_controls(config, 2);
+            else
+                set_ipp_controls(config, 1);
+        config->config.ipp_was_ds = 0;
+#endif
+#if IPP_CTRL
+        config->config.final_pass_preset = config->config.enc_mode;
 #endif
 #if FTR_OPT_IPP_DOWN_SAMPLE
-        config->org_input_padded_width = config->config.source_width;
-        config->org_input_padded_height = config->config.source_height;
-        // To make sure the down scaled video has width and height of multiple of 2
-        config->input_padded_width = config->config.source_width = (((config->config.source_width >> 1) >> 1) << 1);
-        config->input_padded_height = config->config.source_height = (((config->config.source_height >> 1) >> 1) << 1);
+        if (config->config.ipp_ctrls.ipp_ds) {
+            config->org_input_padded_width = config->config.source_width;
+            config->org_input_padded_height = config->config.source_height;
+            // To make sure the down scaled video has width and height of multiple of 2
+            config->input_padded_width = config->config.source_width = (((config->config.source_width >> 1) >> 1) << 1);
+            config->input_padded_height = config->config.source_height = (((config->config.source_height >> 1) >> 1) << 1);
+        }
 #endif
         break;
     }
@@ -2149,7 +2218,11 @@ EbErrorType set_two_passes_stats(EbConfig *config, EncodePass pass,
         }
 #endif
 #if FIX_DG
-        config->config.skip_frame_first_pass = 0;
+        set_ipp_controls(config, 0);
+        config->config.ipp_was_ds = 0;
+#endif
+#if IPP_CTRL
+        config->config.final_pass_preset = config->config.enc_mode;
 #endif
         break;
     }
@@ -2163,7 +2236,15 @@ EbErrorType set_two_passes_stats(EbConfig *config, EncodePass pass,
         }
         config->config.rc_twopass_stats_in = *rc_twopass_stats_in;
 #if FIX_DG
-        config->config.skip_frame_first_pass = 0;
+        set_ipp_controls(config, 0);
+        // Please make sure that ipp_was_ds is ON only when ipp_ctrls->ipp_ds is ON
+        if (config->config.enc_mode <= ENC_M10)
+            config->config.ipp_was_ds = 0;
+        else
+            config->config.ipp_was_ds = config->config.final_pass_rc_mode == 0 ? 1 : 0;
+#endif
+#if IPP_CTRL
+        config->config.final_pass_preset = config->config.enc_mode;
 #endif
         break;
     }
@@ -2623,7 +2704,7 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncodePass pass[MAX_ENCODE
     if (rc_mode == 0) { // CRF mode
         if (passes == -1)
 #if FIX_DG
-            passes = (enc_mode <= ENC_M10) ? 2 : 1;
+            passes = (enc_mode <= ENC_M11) ? 2 : 1;
 #else
             passes = (enc_mode <= ENC_M3) ? 2 : 1;
 #endif

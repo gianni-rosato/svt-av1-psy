@@ -1635,7 +1635,11 @@ void integer_search_sb(
                 else {
                     uint8_t  hme_is_accuarte = 1;
 #endif
+#if IPP_CTRL
+             if (!scs_ptr->static_config.ipp_ctrls.bypass_zz_check || context_ptr->me_type != ME_FIRST_PASS)
+#else
             if (scs_ptr->enc_mode_2ndpass <= ENC_M4  || context_ptr->me_type != ME_FIRST_PASS)
+#endif
             if ((x_search_center != 0 || y_search_center != 0) &&
                 (context_ptr->is_used_as_reference_flag == EB_TRUE)) {
 #if FTR_ADJUST_SR_FOR_STILL

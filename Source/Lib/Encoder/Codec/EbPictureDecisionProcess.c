@@ -2604,13 +2604,16 @@ EbErrorType signal_derivation_multi_processes_oq(
             pcs_ptr->frm_hdr.use_ref_frame_mvs = 0;
         }
         else {
-
+#if CLN_LIST0_ONLY_BASE_IFS_MFMV
+            pcs_ptr->frm_hdr.use_ref_frame_mvs = 1;
+#else
             if (pcs_ptr->enc_mode <= ENC_M8) {
                 pcs_ptr->frm_hdr.use_ref_frame_mvs = 1;
             }
             else {
                 pcs_ptr->frm_hdr.use_ref_frame_mvs = 1;
             }
+#endif
         }
         // Global motion level                        Settings
         // GM_FULL                                    Exhaustive search mode.
@@ -6531,16 +6534,12 @@ void set_mini_gop_size(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs
         mv_in_out_count = ABS(mv_in_out_count / count);
         pcnt_motion = pcnt_motion / count;
 #if FTR_OPT_IPP_DOWN_SAMPLE
-        uint32_t min_gop_level = (pcnt_motion > 0.8) && mv_in_out_count > (scs_ptr->static_config.ipp_ds ? 0.5 : 0.6) ? scs_ptr->static_config.max_heirachical_level - 2 : scs_ptr->static_config.max_heirachical_level;
+        uint32_t min_gop_level = (pcnt_motion > 0.78) && mv_in_out_count > (scs_ptr->static_config.ipp_ctrls.ipp_ds ? 0.5 : 0.6) ? scs_ptr->static_config.max_heirachical_level - 2 : scs_ptr->static_config.max_heirachical_level;
 #else
         uint32_t min_gop_level = (pcnt_motion > 0.8) && mv_in_out_count > 0.6 ? scs_ptr->static_config.max_heirachical_level - 2 : scs_ptr->static_config.max_heirachical_level;
 #endif
         min_gop_level = MIN(scs_ptr->static_config.max_heirachical_level, min_gop_level);
-        //printf("\nold: %d\t", scs_ptr->static_config.hierarchical_levels);
         scs_ptr->static_config.hierarchical_levels = min_gop_level;
-        //scs_ptr->max_temporal_layers = scs_ptr->static_config.hierarchical_levels;
-        //printf("new: %d\n", scs_ptr->static_config.hierarchical_levels);
-        //scs_ptr->static_config.hierarchical_levels = scs_ptr->static_config.max_heirachical_level;
     }
 }
 #endif
@@ -7307,7 +7306,7 @@ void* picture_decision_kernel(void *input_ptr)
 #if FIX_DG
                                             int copy_frame = 1;
 #if FIX_ISSUE_50
-                                        if (pcs_ptr->scs_ptr->static_config.skip_frame_first_pass)
+                                        if (pcs_ptr->scs_ptr->static_config.ipp_ctrls.skip_frame_first_pass)
 #else
                                         if (scs_ptr->static_config.final_pass_rc_mode == 0)
 #endif
@@ -7321,7 +7320,17 @@ void* picture_decision_kernel(void *input_ptr)
 #else
                                             if (scs_ptr->static_config.screen_content_mode == 2) // auto detect
 #endif
-                                            is_screen_content(pcs_ptr);
+#if TUNE_SC_DETECTOR
+                                        {
+                                                // SC Detection is OFF for 4K and higher
+                                             if (scs_ptr->input_resolution <= INPUT_SIZE_1080p_RANGE)
+#endif
+                                                is_screen_content(pcs_ptr);
+#if TUNE_SC_DETECTOR
+                                            else
+                                                pcs_ptr->sc_class0 = pcs_ptr->sc_class1 = pcs_ptr->sc_class2 = 0;
+                                        }
+#endif
                                         else
                                             pcs_ptr->sc_class0 = pcs_ptr->sc_class1 = pcs_ptr->sc_class2 = scs_ptr->static_config.screen_content_mode;
                                     }

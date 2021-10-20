@@ -2090,7 +2090,11 @@ void fast_loop_core(ModeDecisionCandidateBuffer *candidate_buffer, PictureContro
             context_ptr->intra_luma_top_mode);
     }
     // Init full cost in case we by pass stage1/stage2
+#if CLN_MD_STAGING_CTRLS
+    if (context_ptr->nic_ctrls.md_staging_mode == MD_STAGING_MODE_0)
+#else
     if (context_ptr->md_staging_mode == MD_STAGING_MODE_0)
+#endif
         *(candidate_buffer->full_cost_ptr) = *(candidate_buffer->fast_cost_ptr);
 }
 #if !OPT_COMP_MODE_CHECK
@@ -2255,11 +2259,19 @@ void scale_nics(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr) {
 void set_md_stage_counts(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr) {
     // Step 1: derive bypass_stage1 flags
 #if SS_OPT_MD
+#if CLN_MD_STAGING_CTRLS
+    context_ptr->bypass_md_stage_1 = (context_ptr->nic_ctrls.md_staging_mode == MD_STAGING_MODE_1 ||
+                                      context_ptr->nic_ctrls.md_staging_mode == MD_STAGING_MODE_2)
+                                      ? EB_FALSE
+                                      : EB_TRUE;
+    context_ptr->bypass_md_stage_2 = (context_ptr->nic_ctrls.md_staging_mode == MD_STAGING_MODE_2) ? EB_FALSE : EB_TRUE;
+#else
     context_ptr->bypass_md_stage_1 = (context_ptr->md_staging_mode == MD_STAGING_MODE_1 ||
                                       context_ptr->md_staging_mode == MD_STAGING_MODE_2)
                                       ? EB_FALSE
                                       : EB_TRUE;
     context_ptr->bypass_md_stage_2 = (context_ptr->md_staging_mode == MD_STAGING_MODE_2) ? EB_FALSE : EB_TRUE;
+#endif
 #else
     if (context_ptr->md_staging_mode == MD_STAGING_MODE_1 ||
         context_ptr->md_staging_mode == MD_STAGING_MODE_2)
@@ -10713,7 +10725,11 @@ static void md_stage_3(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct
 #endif
         // Set MD Staging full_loop_core settings
 #if FTR_10BIT_MDS3_REG_PD1
+#if CLN_MD_STAGING_CTRLS
+        context_ptr->md_staging_perform_inter_pred = context_ptr->nic_ctrls.md_staging_mode != MD_STAGING_MODE_0 || (context_ptr->pd_pass == PD_PASS_1 && context_ptr->need_hbd_comp_mds3);
+#else
         context_ptr->md_staging_perform_inter_pred = context_ptr->md_staging_mode != MD_STAGING_MODE_0 || (context_ptr->pd_pass == PD_PASS_1 && context_ptr->need_hbd_comp_mds3);
+#endif
 #else
         context_ptr->md_staging_perform_inter_pred = context_ptr->md_staging_mode !=
             MD_STAGING_MODE_0;

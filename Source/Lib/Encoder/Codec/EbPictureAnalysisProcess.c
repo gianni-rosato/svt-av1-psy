@@ -2962,13 +2962,13 @@ void *picture_analysis_kernel(void *input_ptr) {
 #if OPT_FIRST_PASS2
             int copy_frame = 1;
 #if FIX_ISSUE_50
-            if (pcs_ptr->scs_ptr->static_config.skip_frame_first_pass == 1)
+            if (pcs_ptr->scs_ptr->static_config.ipp_ctrls.skip_frame_first_pass == 1)
 #else
             if (scs_ptr->static_config.final_pass_rc_mode == 0)
 #endif
                 copy_frame = (((pcs_ptr->picture_number % 8) == 0) || ((pcs_ptr->picture_number % 8) == 6) || ((pcs_ptr->picture_number % 8) == 7));
 #if ENBLE_SKIP_FRAME_IN_VBR_MODE
-            else if (pcs_ptr->scs_ptr->static_config.skip_frame_first_pass == 2)
+            else if (pcs_ptr->scs_ptr->static_config.ipp_ctrls.skip_frame_first_pass == 2)
                 copy_frame = ((pcs_ptr->picture_number < 7) || ((pcs_ptr->picture_number % 8) == 0) || ((pcs_ptr->picture_number % 8) == 6) || ((pcs_ptr->picture_number % 8) == 7));
 #endif
             // Bypass copy for the unecessary picture in IPPP pass
@@ -3079,7 +3079,16 @@ void *picture_analysis_kernel(void *input_ptr) {
 #else
             if (scs_ptr->static_config.screen_content_mode == 2) { // auto detect
 #endif
+#if TUNE_SC_DETECTOR
+                // SC Detection is OFF for 4K and higher
+                if (scs_ptr->input_resolution <= INPUT_SIZE_1080p_RANGE)
+#endif
                 is_screen_content(pcs_ptr);
+#if TUNE_SC_DETECTOR
+                else
+                    pcs_ptr->sc_class0 = pcs_ptr->sc_class1 = pcs_ptr->sc_class2 = 0;
+
+#endif
             } else // off / on
                 pcs_ptr->sc_class0 = pcs_ptr->sc_class1 = pcs_ptr->sc_class2 = scs_ptr->static_config.screen_content_mode;
 #if SS_OPT_MOVE_SC_DETECTION

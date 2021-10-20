@@ -808,10 +808,12 @@ static void adjust_active_best_and_worst_quality_org(PictureControlSet *pcs_ptr,
     TWO_PASS *const                    twopass            = &scs_ptr->twopass;
     const enum aom_rc_mode             rc_mode            = encode_context_ptr->rc_cfg.mode;
     GF_GROUP *                         gf_group           = &encode_context_ptr->gf_group;
+#if !TUNE_VBR_OVERSHOOT
     const RefreshFrameFlagsInfo *const refresh_frame_flags =
         &pcs_ptr->parent_pcs_ptr->refresh_frame;
     int is_intrl_arf_boost = gf_group->update_type[pcs_ptr->parent_pcs_ptr->gf_group_index] ==
         INTNL_ARF_UPDATE;
+#endif
 #if !RFCTR_RC_P1
     this_key_frame_forced = rc->this_key_frame_forced;
 #endif
@@ -819,9 +821,14 @@ static void adjust_active_best_and_worst_quality_org(PictureControlSet *pcs_ptr,
     // the permitted range.
     if (rc_mode != AOM_Q) {
         if (frame_is_intra_only(pcs_ptr->parent_pcs_ptr) ||
+#if TUNE_VBR_OVERSHOOT
+            (pcs_ptr->parent_pcs_ptr->temporal_layer_index < 2 && scs_ptr->is_short_clip) ||
+            (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag && !scs_ptr->is_short_clip)){
+#else
             (1 /*!rc->is_src_frame_alt_ref*/ &&
              (refresh_frame_flags->golden_frame || is_intrl_arf_boost ||
               refresh_frame_flags->alt_ref_frame))) {
+#endif
             active_best_quality -= (twopass->extend_minq + twopass->extend_minq_fast);
             active_worst_quality += (twopass->extend_maxq / 2);
         } else {
@@ -3010,7 +3017,9 @@ void recode_loop_update_q(PictureParentControlSet *ppcs_ptr, int *const loop, in
     if (ppcs_ptr->loop_count) {
 #endif
         // scale rc->projected_frame_size with *0.8 for loop_count>=1
+#if !TUNE_VBR_OVERSHOOT
         ppcs_ptr->projected_frame_size = (ppcs_ptr->projected_frame_size * 8) / 10;
+#endif
     }
     *loop = 0;
     if (scs_ptr->encode_context_ptr->recode_loop == ALLOW_RECODE_KFMAXBW &&

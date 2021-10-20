@@ -68,18 +68,18 @@ typedef enum MultiPassModes {
 } MultiPassModes;
 #endif
 #if FTR_OPT_MPASS
-#define FTR_OPT_MPASS_CDEF 1
-#define FTR_OPT_MPASS_RDOQ_OFF 1
-#define FTR_OPT_MPASS_NEAR0 1
-#define FTR_OPT_MPASS_MRP1REF 1
-#define FTR_OPT_MPASS_WARP_OFF 1
-#define FTR_OPT_MPASS_DLF_OFF 1
+#define FTR_OPT_MPASS_CDEF 0
+#define FTR_OPT_MPASS_RDOQ_OFF 0
+#define FTR_OPT_MPASS_NEAR0 0
+#define FTR_OPT_MPASS_MRP1REF 0
+#define FTR_OPT_MPASS_WARP_OFF 0
+#define FTR_OPT_MPASS_DLF_OFF 0
 #define FTR_OP_TEST 0 // for debugging to run the optimization of middle pass in normal CRF mode
 #define FTR_OPT_MPASS_DOWN_SAMPLE 1 // Down sample the input picture by 2 in each dimention to be used in middle pass
 
 #define FTR_OPT_MPASS_BYPASS_FRAMES 1
 #endif
-#define FTR_OPT_IPP_DOWN_SAMPLE 0 // Down sample the input picture by 2 in each dimention to be used in IPP pass
+#define FTR_OPT_IPP_DOWN_SAMPLE 1 // Down sample the input picture by 2 in each dimention to be used in IPP pass
 #define DS_SC_FACT 23
 #define SVT_05          1
 #define PRIVATE_MACROS   1
@@ -710,10 +710,31 @@ NOTE : PART OF LIGHT_PD0_2  code was committed to svt-04-final-rebased under OPT
 #define CLN_NIC_SIGS                          1 // Merge NIC pruning/scaling controls under one signal
 #define DIS_VBR_HL0                           1 // Block VBR in HL0
 #define CLN_M6_M12_FEATURES                   1 // push all small speed features out to m11 vs m12 difference
-#define FTR_16K                               1 // Support Encoding of up to 16K resolutions
+#define FTR_16K                               0 // Support Encoding of up to 16K resolutions
 #define CLN_FEAT_LEVEL                        1 // Remove useless feature levels/diffs
 
 #define CLN_CAND_REDUCTION_CTRLS              1 // Merge near_count_level, lpd1_mvp_best_me_list, reduce_unipred_candidates, redundant_cand_level, eliminate_candidate_based_on_pme_me_results, use_neighbouring_mode, merge_inter_classes into one control.
+
+#define CLN_USE_SELECTIVE_MFMV_TH             1
+#define TUNE_VBR_OVERSHOOT                    1 // Tune VBR to reduce the overshoot
+#define RFCT_ME8X8                            1 // refactor the enable_me_8x8 and disallow_below_16x16 code so that the two features are linked
+#define CLN_UPDATE_CDF                        1 // Cleanup levels for update_cdf feature in MD
+
+#define FIX_TF_FILTER_64x64_PATH              1
+#define TUNE_SC_DETECTOR                      1 // Disable SC detector for 4k and higher resolutions
+
+#define CLN_TF                                1
+#define CLN_MD_STAGING_CTRLS                  1
+#define CLN_SUBPEL_LVL                        1
+#define IPP_CTRL                              1
+
+#define TUNE_IMPROVE_M12                      1 // Pushing out M11 M12 differences to M13, slow down by 0.5%, gain 0.5% BDrate.
+#define TUNE_4K_STABILITY                     1 // Change 4k levels of depth_removal_level and pd0_level level because of R2R
+#define TUNE_M13_LPD1_LVL                     1 // Turn LPD1 off for BASE pics in M13
+#define CLN_WM_SIG                            1 // centralize and clean up Warped motion signalling
+
+
+
 
 #endif //----------------------------------- all svt-05 features should be place are above this line -------------------------
 

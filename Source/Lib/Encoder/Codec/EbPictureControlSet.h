@@ -410,6 +410,11 @@ typedef struct PictureControlSet {
 #if OPT_MI_MAP_MEMORY
     uint8_t disallow_4x4_all_frames; // true if 4x4 blocks are disallowed for all frames, and NSQ is disabled (since granularity is needed for 8x8 NSQ blocks).  Used to compute the offset for mip.
 #endif
+
+#if CLN_WM_SIG
+    uint8_t wm_level;  //warped motion level
+#endif
+
     EbReflist        colocated_pu_ref_list;
     EbEncMode        enc_mode;
     int32_t          cdef_preset[MAX_TILE_CNTS][4];
@@ -1308,6 +1313,16 @@ typedef struct PictureControlSetInitData {
 #endif
 #if FIX_DG
   uint8_t skip_frame_first_pass;
+  uint8_t ipp_ds;
+  uint8_t bypass_blk_step;
+  uint8_t dist_ds;
+  uint8_t ipp_was_ds;
+#if IPP_CTRL
+  uint8_t final_pass_preset;
+  uint8_t bypass_zz_check;
+  uint8_t use8blk;
+  uint8_t reduce_me_search;
+#endif
 #endif
 } PictureControlSetInitData;
 

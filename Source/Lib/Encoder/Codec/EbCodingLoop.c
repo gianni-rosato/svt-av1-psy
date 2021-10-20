@@ -2281,13 +2281,19 @@ void perform_inter_coding_loop(SequenceControlSet *scs, PictureControlSet *pcs,
     EbPictureBufferDesc             *ref_pic_list0;
     EbPictureBufferDesc             *ref_pic_list1;
     if (blk_ptr->use_intrabc) {
-        ref_pic_list0 =
 
-#if !FTR_MEM_OPT
+
+#if FTR_MEM_OPT
+        get_recon_pic(pcs, &ref_pic_list0, is_16bit);
+#else
+        ref_pic_list0 =
             is_16bit ?
             ((EbReferenceObject *)pcs->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->reference_picture16bit :
-#endif
             ((EbReferenceObject *)pcs->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->reference_picture;
+#endif
+
+
+
         ref_pic_list1 = (EbPictureBufferDesc*)NULL;
 
     }

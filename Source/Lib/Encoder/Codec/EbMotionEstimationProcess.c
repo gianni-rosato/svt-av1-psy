@@ -684,7 +684,11 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
 
 #if TUNE_EXIT_TH
 #if CLN_M10_M12_DIFFS
+#if TUNE_IMPROVE_M12
+    else if (pcs_ptr->enc_mode <= ENC_M12)
+#else
     else if (pcs_ptr->enc_mode <= ENC_M11)
+#endif
 #else
     else if(pcs_ptr->enc_mode <= ENC_M10)
 #endif
