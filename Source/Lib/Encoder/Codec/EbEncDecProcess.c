@@ -1087,9 +1087,9 @@ void psnr_calculations(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr, 
         }
 
         sse_total[2]                      = residual_distortion;
-        pcs_ptr->parent_pcs_ptr->luma_sse = (uint32_t)sse_total[0];
-        pcs_ptr->parent_pcs_ptr->cb_sse   = (uint32_t)sse_total[1];
-        pcs_ptr->parent_pcs_ptr->cr_sse   = (uint32_t)sse_total[2];
+        pcs_ptr->parent_pcs_ptr->luma_sse = sse_total[0];
+        pcs_ptr->parent_pcs_ptr->cb_sse   = sse_total[1];
+        pcs_ptr->parent_pcs_ptr->cr_sse   = sse_total[2];
 
         if(free_memory && pcs_ptr->parent_pcs_ptr->temporal_filtering_on == EB_TRUE) {
             EB_FREE_ARRAY(buffer_y);
@@ -1461,9 +1461,9 @@ void psnr_calculations(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr, 
            }
         }
 
-        pcs_ptr->parent_pcs_ptr->luma_sse = (uint32_t)sse_total[0];
-        pcs_ptr->parent_pcs_ptr->cb_sse   = (uint32_t)sse_total[1];
-        pcs_ptr->parent_pcs_ptr->cr_sse   = (uint32_t)sse_total[2];
+        pcs_ptr->parent_pcs_ptr->luma_sse = sse_total[0];
+        pcs_ptr->parent_pcs_ptr->cb_sse   = sse_total[1];
+        pcs_ptr->parent_pcs_ptr->cr_sse   = sse_total[2];
     }
 }
 

@@ -590,9 +590,9 @@ typedef struct PictureParentControlSet {
     uint64_t last_idr_picture;
     uint64_t start_time_seconds;
     uint64_t start_time_u_seconds;
-    uint32_t luma_sse;
-    uint32_t cr_sse;
-    uint32_t cb_sse;
+    uint64_t luma_sse;
+    uint64_t cr_sse;
+    uint64_t cb_sse;
     double   luma_ssim;
     double   cr_ssim;
     double   cb_ssim;
