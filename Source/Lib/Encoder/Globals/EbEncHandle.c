@@ -2595,6 +2595,11 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
             scs_ptr->static_config.tile_rows = 0;
             scs_ptr->static_config.tile_columns = 0;
         }
+        if (scs_ptr->static_config.superres_mode == SUPERRES_RANDOM) {
+            SVT_WARN("Super resolution random mode is designed for test and debugging purpose,\n"
+                "it creates array of picture buffers for all scaling denominators (up to 8) of each reference frame.\n"
+                "This mode retains a significant amount of memory, much more than other modes!\n");
+        }
     }
 
     if (scs_ptr->static_config.recode_loop > 0 &&
