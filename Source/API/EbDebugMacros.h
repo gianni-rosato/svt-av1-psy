@@ -729,13 +729,42 @@ NOTE : PART OF LIGHT_PD0_2  code was committed to svt-04-final-rebased under OPT
 #define IPP_CTRL                              1
 
 #define TUNE_IMPROVE_M12                      1 // Pushing out M11 M12 differences to M13, slow down by 0.5%, gain 0.5% BDrate.
+
 #define TUNE_4K_STABILITY                     1 // Change 4k levels of depth_removal_level and pd0_level level because of R2R
 #define TUNE_M13_LPD1_LVL                     1 // Turn LPD1 off for BASE pics in M13
-#define CLN_WM_SIG                            1 // centralize and clean up Warped motion signalling
 
+#define TUNE_IMPROVE_M11_M10                  1 // Improve spacing and slope for M11 and M10, M11 slowdown by 2% gain 1.5% BDrate, M10 speedup 3% lose .3% BDrate. tpl_lad_mg 1 to 0 is moved from M8 level to M11 level.
+#define TUNE_M1_M8                            1 // tune M1 to M8 after cleanup
+#define FIX_VBR_R2R                           1 // Fix run-to-run in 3 pass VBR
+#define TUNE_LAD_MAX                          1 // Change the max LAD size to 120
+#define FIX_SUBRES_R2R                        1 // Fix uninit'd subres signals
 
+#define CLN_4K_CHECKS                         1
 
+#define CLN_REG_PD_SIG                        1
+#if CLN_REG_PD_SIG
+#define CLN_REG_PD_SIG_SET_0                  1
+#define CLN_REG_PD_SIG_SET_1                  1
+#define CLN_REG_PD_SIG_SET_2                  1
+#endif
+#define TUNE_ED_BYPASS_8BIT                   1 // Tune 8bit bypass_encdec level
+#define FIX_THREE_QUAD_ENERGY                 1 // Initialize three_quad_energy to 0 in perform_dct_dct_tx_light_pd1
 
+#define CLN_SB_LEVEL_SIG                      1
+#if CLN_SB_LEVEL_SIG
+#define CLN_WM_SIG                            1 // centralize and clean up Warped motion signalling - Lossless
+#define CLN_4X4_SIG                           1 // Move 4x4 signal from SB to Pic Level - Lossless
+#define CLN_BYP_ED_SIG                        1 // Move bypas enc dec     signal from SB to Pic Level - Lossless
+#define CLN_PD0_SIG                           1 // Move pd0_level signal from SB to Pic Level - Lossless
+#define CLN_SKIP_PD0_SIG                      1 // Move skip_pd0 signal from SB to Pic Level - Lossless
+#define CLN_DISALLOW_BELOW_16X16_SIG          1 // Move disallow_below_16x16 signal from SB to Pic Level - Lossless
+#define CLN_DEPTH_REMOVAL_SIG                 1 // Move depth_removal_level signal from SB to Pic Level - Lossless
+#define CLN_BLOCK_BASED_DEPTH_SIG             1 // Move block_based_depth_refinement_level signal from SB to Pic Level - Lossless
+#define CLN_LPD1_LVL_SIG                      1 // Move lpd1_lvl signal from SB to Pic Level - Lossless
+#endif
+
+#define TUNE_M9_M13                           1 // tune both M9 and M13 for better slopes, will affect stream for M6-M8 also
+#define TUNE_2PASS_SETTINGS                   1 // move 1 pass to M9 for crf
 #endif //----------------------------------- all svt-05 features should be place are above this line -------------------------
 
 #if !PRIVATE_MACROS

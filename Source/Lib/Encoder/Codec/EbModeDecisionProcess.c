@@ -18,6 +18,9 @@
 #if TUNE_BYPASS_MEM
 uint8_t  get_bypass_encdec( EbEncMode enc_mode ,uint8_t hbd_mode_decision,uint8_t encoder_bit_depth );
 #endif
+#if CLN_BLOCK_BASED_DEPTH_SIG
+void set_block_based_depth_refinement_controls(ModeDecisionContext* mdctxt, uint8_t block_based_depth_refinement_level);
+#endif
 int         svt_av1_allow_palette(int allow_palette, BlockSize sb_type);
 static void mode_decision_context_dctor(EbPtr p) {
     ModeDecisionContext *obj                = (ModeDecisionContext *)p;
@@ -141,7 +144,11 @@ static void mode_decision_context_dctor(EbPtr p) {
 }
 
 #if CLN_NIC_SIGS
+#if CLN_REG_PD_SIG_SET_2
+uint8_t get_nic_level(EbEncMode enc_mode, uint8_t temporal_layer_index);
+#else
 uint8_t get_nic_level(PdPass pd_pass, EbEncMode enc_mode, uint8_t temporal_layer_index);
+#endif
 uint8_t set_nic_controls(ModeDecisionContext *ctx, uint8_t nic_level);
 #else
 uint8_t  get_nic_scaling_level(PdPass pd_pass, EbEncMode enc_mode ,uint8_t temporal_layer_index );
@@ -244,18 +251,25 @@ EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr, EbColor
 
     // get the min scalling level ( smallest scalling level is the most concervative
     uint8_t min_nic_scaling_level = NICS_SCALING_LEVELS - 1 ;
+#if !CLN_REG_PD_SIG_SET_2
     for (PdPass pd_id = 0; pd_id < PD_PASS_TOTAL; pd_id++) {
-
+#endif
         for (uint8_t temporal_layer_index = 0; temporal_layer_index < MAX_TEMPORAL_LAYERS; temporal_layer_index++) {
 #if CLN_NIC_SIGS
+#if CLN_REG_PD_SIG_SET_2
+            uint8_t nic_level = get_nic_level(enc_mode, temporal_layer_index);
+#else
             uint8_t nic_level = get_nic_level(pd_id, enc_mode, temporal_layer_index);
+#endif
             uint8_t nic_scaling_level = set_nic_controls(NULL, nic_level);
             min_nic_scaling_level = MIN(min_nic_scaling_level, nic_scaling_level);
 #else
             min_nic_scaling_level = MIN(min_nic_scaling_level, get_nic_scaling_level(pd_id,  enc_mode,  temporal_layer_index));
 #endif
         }
+#if !CLN_REG_PD_SIG_SET_2
     }
+#endif
     // scale max_nics
     uint8_t stage1_scaling_num = MD_STAGE_NICS_SCAL_NUM[min_nic_scaling_level][MD_STAGE_1];
     max_nics   = MAX(2,
@@ -819,6 +833,21 @@ void reset_mode_decision(SequenceControlSet *scs_ptr, ModeDecisionContext *conte
         }
         (void)scs_ptr;
     }
+
+#if CLN_4X4_SIG
+    //each segment enherits the disallow 4x4 from the picture level
+    context_ptr->disallow_4x4 = pcs_ptr->pic_disallow_4x4;
+#endif
+#if CLN_BYP_ED_SIG
+    //each segment enherits the bypass encdec from the picture level
+    context_ptr->bypass_encdec = pcs_ptr->pic_bypass_encdec;
+#endif
+#if CLN_SKIP_PD0_SIG
+    context_ptr->skip_pd0 = pcs_ptr->pic_skip_pd0;
+#endif
+#if CLN_BLOCK_BASED_DEPTH_SIG
+    set_block_based_depth_refinement_controls(context_ptr, pcs_ptr->pic_block_based_depth_refinement_level);
+#endif
     return;
 }
 

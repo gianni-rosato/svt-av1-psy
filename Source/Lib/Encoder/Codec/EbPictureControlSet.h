@@ -410,11 +410,61 @@ typedef struct PictureControlSet {
 #if OPT_MI_MAP_MEMORY
     uint8_t disallow_4x4_all_frames; // true if 4x4 blocks are disallowed for all frames, and NSQ is disabled (since granularity is needed for 8x8 NSQ blocks).  Used to compute the offset for mip.
 #endif
-
 #if CLN_WM_SIG
     uint8_t wm_level;  //warped motion level
 #endif
-
+#if CLN_REG_PD_SIG_SET_0
+    uint8_t cand_reduction_level;
+    uint8_t txt_level;
+    uint8_t tx_shortcut_level;
+    uint8_t interpolation_search_level;
+    uint8_t chroma_level;
+    uint8_t cfl_level;
+#endif
+#if CLN_REG_PD_SIG_SET_1
+    uint8_t new_nearest_near_comb_injection;
+    uint8_t unipred3x3_injection;
+    uint8_t bipred3x3_injection;
+    uint8_t inter_compound_mode;
+    uint8_t dist_based_ref_pruning;
+    uint8_t spatial_sse_full_loop_level;
+#endif
+#if CLN_REG_PD_SIG_SET_2
+    uint8_t parent_sq_coeff_area_based_cycles_reduction_level;
+    uint32_t sq_weight;
+    uint32_t max_part0_to_part1_dev;
+    uint8_t md_inter_intra_level;
+    uint8_t txs_level;
+    uint8_t nic_level;
+    uint8_t md_sq_mv_search_level;
+    uint8_t md_nsq_mv_search_level;
+    uint8_t md_pme_level;
+    uint8_t mds0_level;
+#endif
+#if CLN_4X4_SIG
+    uint8_t   pic_disallow_4x4; //disallow 4x4 at pic level
+#endif
+#if CLN_PD0_SIG
+    EbBool pic_pd0_level; // pd0_level at pic level
+#endif
+#if CLN_SKIP_PD0_SIG
+    uint8_t pic_skip_pd0; // skip_pd0 at pic level
+#endif
+#if CLN_DISALLOW_BELOW_16X16_SIG
+    uint8_t pic_disallow_below_16x16; // disallow_below_16x16 signal at pic level
+#endif
+#if CLN_DEPTH_REMOVAL_SIG
+    uint8_t pic_depth_removal_level; // depth_removal_level signal at the picture level
+#endif
+#if CLN_BLOCK_BASED_DEPTH_SIG
+    uint8_t pic_block_based_depth_refinement_level; // block_based_depth_refinement_level signal set at the picture level
+#endif
+#if CLN_LPD1_LVL_SIG
+    uint8_t pic_lpd1_lvl; // lpd1_lvl signal set at the picture level
+#endif
+#if CLN_BYP_ED_SIG
+    EbBool    pic_bypass_encdec;
+#endif
     EbReflist        colocated_pu_ref_list;
     EbEncMode        enc_mode;
     int32_t          cdef_preset[MAX_TILE_CNTS][4];

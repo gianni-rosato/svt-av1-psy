@@ -64,7 +64,11 @@ uint8_t  get_bypass_encdec( EbEncMode enc_mode ,uint8_t hbd_mode_decision,uint8_
 #if FTR_10BIT_MDS3_LPD1
         if (encoder_bit_depth == EB_8BIT) {
             // 8bit settings
+#if TUNE_ED_BYPASS_8BIT
+            if (enc_mode <= ENC_M6)
+#else
             if (enc_mode <= ENC_M4)
+#endif
                 bypass_encdec = 0;
             else
                 bypass_encdec = 1;
@@ -3787,7 +3791,13 @@ void set_subres_controls(ModeDecisionContext *mdctxt, uint8_t subres_level) {
         assert(0);
         break;
     }
-
+#if FIX_SUBRES_R2R
+    // Set the TH used to determine if subres is safe to use (based on ODD vs. EVEN rows' distortion)
+    if (subres_ctrls->step == 0)
+        subres_ctrls->odd_to_even_deviation_th = 0;
+    else
+        subres_ctrls->odd_to_even_deviation_th = 5;
+#endif
 }
 #endif
 void set_pf_controls(ModeDecisionContext *mdctxt, uint8_t pf_level) {
@@ -5837,6 +5847,13 @@ void set_wm_controls(ModeDecisionContext *mdctxt, uint8_t wm_level) {
 #endif
 #if CLN_NIC_SIGS
 // Get the nic_level used for each preset (to be passed to setting function: set_nic_controls())
+#if CLN_REG_PD_SIG_SET_2
+uint8_t get_nic_level(EbEncMode enc_mode, uint8_t temporal_layer_index) {
+
+    uint8_t nic_level;
+
+    if (enc_mode <= ENC_MRS)
+#else
 uint8_t get_nic_level(PdPass pd_pass, EbEncMode enc_mode, uint8_t temporal_layer_index) {
 
     uint8_t nic_level;
@@ -5848,6 +5865,7 @@ uint8_t get_nic_level(PdPass pd_pass, EbEncMode enc_mode, uint8_t temporal_layer
         nic_level = 16;
 #endif
     else if (enc_mode <= ENC_MRS)
+#endif
         nic_level = 0;
     else if (enc_mode <= ENC_MR)
         nic_level = 1;
@@ -7143,6 +7161,7 @@ EbErrorType signal_derivation_enc_dec_kernel_common(
 
     EbEncMode enc_mode = pcs_ptr->enc_mode;
 
+#if !CLN_4X4_SIG
 #if OPT_PD0_PATH
     // Set disallow_4x4
     ctx->disallow_4x4 = get_disallow_4x4(enc_mode, pcs_ptr->slice_type);
@@ -7159,6 +7178,7 @@ EbErrorType signal_derivation_enc_dec_kernel_common(
         ctx->ep_use_md_skip_decision = 0;
     else
         ctx->ep_use_md_skip_decision = 1;
+#endif
 #endif
 #endif
     // Level 0: pred depth only
@@ -7201,6 +7221,7 @@ EbErrorType signal_derivation_enc_dec_kernel_common(
 #if FTR_BYPASS_ENCDEC
     ctx->pred_depth_only = (depth_level == 0);
 #endif
+#if !CLN_BYP_ED_SIG
 #if FTR_BYPASS_ENCDEC
 #if FIX_10BIT_R2R
     // TODO: Bypassing EncDec doesn't work if HVA_HVB_HV4 are enabled (for all bit depths; causes non-conformant bitstreams),
@@ -7279,24 +7300,39 @@ EbErrorType signal_derivation_enc_dec_kernel_common(
     ctx->bypass_encdec = 0;// (scs_ptr->static_config.encoder_bit_depth == EB_8BIT && pcs_ptr->parent_pcs_ptr->disallow_HVA_HVB_HV4) ? 1 : 0;
 #endif
 #endif
+#endif
 #if CLN_LPD0_CTRL
+#if CLN_PD0_SIG
+    ctx->pd0_level = pcs_ptr->pic_pd0_level;
+#else
+#if TUNE_M1_M8
+    if (enc_mode <= ENC_M4)
+#else
     if (enc_mode <= ENC_M5)
+#endif
         ctx->pd0_level = REGULAR_PD0;
+#if TUNE_M1_M8
+    else if (enc_mode <= ENC_M7)
+#else
     else if (enc_mode <= ENC_M8)
+#endif
         ctx->pd0_level = LIGHT_PD0_LVL1;
     else if (enc_mode <= ENC_M9)
         ctx->pd0_level = LIGHT_PD0_LVL2;
+#if !TUNE_IMPROVE_M11_M10
     else if (enc_mode <= ENC_M10)
 #if TUNE_4K_STABILITY
         ctx->pd0_level = scs_ptr->input_resolution <= INPUT_SIZE_1080p_RANGE ? LIGHT_PD0_LVL3 : LIGHT_PD0_LVL2;
 #else
         ctx->pd0_level = LIGHT_PD0_LVL3;
 #endif
+#endif
     else
 #if TUNE_4K_STABILITY
         ctx->pd0_level = scs_ptr->input_resolution <= INPUT_SIZE_1080p_RANGE? (pcs_ptr->parent_pcs_ptr->temporal_layer_index == 0 ? LIGHT_PD0_LVL4 : VERY_LIGHT_PD0) : LIGHT_PD0_LVL2;
 #else
         ctx->pd0_level = pcs_ptr->parent_pcs_ptr->temporal_layer_index == 0 ? LIGHT_PD0_LVL4 : VERY_LIGHT_PD0;
+#endif
 #endif
 #else
 #if LIGHT_PD0
@@ -7347,11 +7383,13 @@ EbErrorType signal_derivation_enc_dec_kernel_common(
 #endif
 #endif
 #endif
+#if !CLN_SKIP_PD0_SIG
 #if FTR_M13
     if (enc_mode <= ENC_M12)
         ctx->skip_pd0 = 0;
     else
         ctx->skip_pd0 = 1;
+#endif
 #endif
 #if SHUT_8x8_IF_NON_ISLICE
     SbParams *sb_params = &pcs_ptr->parent_pcs_ptr->sb_params_array[ctx->sb_index];
@@ -7369,7 +7407,11 @@ that use 8x8 blocks will lose significant BD-Rate as the parent 16x16 me data wi
 #endif
 #if SHUT_8x8_IF_NON_ISLICE
 #if RFCT_ME8X8
+#if CLN_DISALLOW_BELOW_16X16_SIG
+    ctx->depth_removal_ctrls.disallow_below_16x16 = pcs_ptr->pic_disallow_below_16x16;
+#else
     ctx->depth_removal_ctrls.disallow_below_16x16 = get_disallow_below_16x16_picture_level(enc_mode, scs_ptr->input_resolution, pcs_ptr->slice_type, pcs_ptr->parent_pcs_ptr->sc_class1);
+#endif
 #else
     if (pcs_ptr->parent_pcs_ptr->sc_class1)
         ctx->depth_removal_ctrls.disallow_below_16x16 = 0;
@@ -7410,6 +7452,11 @@ that use 8x8 blocks will lose significant BD-Rate as the parent 16x16 me data wi
 #endif
 
     // me_distortion/variance generated for 64x64 blocks only
+#if CLN_DEPTH_REMOVAL_SIG
+    if (scs_ptr->static_config.super_block_size == 64) {
+        set_depth_removal_level_controls(pcs_ptr, ctx, pcs_ptr->pic_depth_removal_level);
+    }
+#else
 #if OPT_DEPTH_REMOVAL_I_SLICE
     if (scs_ptr->static_config.super_block_size == 64) {
         uint8_t depth_removal_level;
@@ -7459,7 +7506,11 @@ that use 8x8 blocks will lose significant BD-Rate as the parent 16x16 me data wi
         else if (enc_mode <= ENC_M2)
             depth_removal_level = 0;
 #if TUNE_M10_M0
+#if TUNE_M1_M8
+        else if (enc_mode <= ENC_M5) {
+#else
         else if (enc_mode <= ENC_M4) {
+#endif
 #else
         else if (enc_mode <= ENC_M3) {
 #endif
@@ -7494,6 +7545,7 @@ that use 8x8 blocks will lose significant BD-Rate as the parent 16x16 me data wi
 #endif
         }
 #if TUNE_M7_M8_3
+#if !TUNE_M1_M8
         else if (enc_mode <= ENC_M7) {
             if (scs_ptr->input_resolution <= INPUT_SIZE_360p_RANGE)
                 depth_removal_level = 1;
@@ -7504,6 +7556,7 @@ that use 8x8 blocks will lose significant BD-Rate as the parent 16x16 me data wi
             else
                 depth_removal_level = (pcs_ptr->temporal_layer_index == 0) ? 2 : 5;
         }
+#endif
 #endif
 #if !TUNE_M10_M3_1
         else if (enc_mode <= ENC_M8) {
@@ -7877,7 +7930,7 @@ that use 8x8 blocks will lose significant BD-Rate as the parent 16x16 me data wi
 #endif
         set_depth_removal_level_controls(pcs_ptr, ctx, depth_removal_level);
     }
-
+#endif
 #if FTR_M13
     if (/*scs_ptr->rc_stat_gen_pass_mode || */ctx->skip_pd0) {
            // ctx->depth_removal_ctrls.disallow_below_64x64 = 1;
@@ -7895,6 +7948,7 @@ that use 8x8 blocks will lose significant BD-Rate as the parent 16x16 me data wi
             ctx->depth_removal_ctrls.disallow_below_16x16 = EB_FALSE;
     }
 #endif
+#if !CLN_BLOCK_BASED_DEPTH_SIG
 #if OPTIMIZE_L6
     // Set block_based_depth_refinement_level
     int8_t block_based_depth_refinement_level;
@@ -8022,6 +8076,7 @@ that use 8x8 blocks will lose significant BD-Rate as the parent 16x16 me data wi
         block_based_depth_refinement_level = MAX(0, block_based_depth_refinement_level - 1);
 #endif
     set_block_based_depth_refinement_controls(ctx, block_based_depth_refinement_level);
+#endif
 #if !CLN_RATE_EST_CTRLS
 #if  FTR_SIMPLIFIED_MV_COST
     ctx->use_low_precision_cost_estimation = pcs_ptr->use_low_precision_cost_estimation;
@@ -8038,17 +8093,24 @@ that use 8x8 blocks will lose significant BD-Rate as the parent 16x16 me data wi
 #endif
 #endif
 #endif
+
+#if CLN_LPD1_LVL_SIG
+    set_lpd1_ctrls(ctx, pcs_ptr->pic_lpd1_lvl);
+#else
 #if FTR_LPD1_DETECTOR
     uint8_t lpd1_lvl;
 #if CLN_LPD1_LVLS
     if (enc_mode <= ENC_M7)
         lpd1_lvl = 0;
+#if !TUNE_M1_M8
     else if (enc_mode <= ENC_M8)
         lpd1_lvl = (scs_ptr->input_resolution <= INPUT_SIZE_1080p_RANGE) ? 0 : (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? 0 : 1);
+#endif
     else if (enc_mode <= ENC_M9)
         lpd1_lvl = (scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE) ? 0 : (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? 0 : 1); // used to be 2
     else if (enc_mode <= ENC_M10)
         lpd1_lvl = pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? 0 : 2;
+    // Possible intermediate level for M11: lpd1_lvl = pcs_ptr->parent_pcs_ptr->temporal_layer_index == 0 ? 0 : 2;
     else if (enc_mode <= ENC_M12)
         lpd1_lvl = pcs_ptr->parent_pcs_ptr->temporal_layer_index == 0 ? 0 : 3;
     else
@@ -8122,6 +8184,7 @@ that use 8x8 blocks will lose significant BD-Rate as the parent 16x16 me data wi
     }
 
     set_lpd1_ctrls(ctx, lpd1_lvl);
+#endif
 #endif
     return return_error;
 }
@@ -9397,7 +9460,9 @@ EbErrorType signal_derivation_enc_dec_kernel_oq_light_pd0(
                 else
                     subres_level = 2;
             }
+#if !FIX_SUBRES_R2R
             ctx->subres_ctrls.odd_to_even_deviation_th = 5;
+#endif
         }
         else {
             if (ctx->pd0_level <= LIGHT_PD0_LVL2)
@@ -11178,7 +11243,42 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     EbErrorType return_error = EB_ErrorNone;
     EbEncMode enc_mode = pcs_ptr->enc_mode;
     uint8_t pd_pass = context_ptr->pd_pass;
+#if CLN_REG_PD_SIG_SET_0
+    const uint32_t picture_qp = pcs_ptr->picture_qp;
+    uint32_t me_8x8_cost_variance = (uint32_t)~0;
+    uint32_t me_64x64_distortion = (uint32_t)~0;
+    uint8_t l0_was_skip = 0, l1_was_skip = 0;
+    uint8_t ref_skip_perc = pcs_ptr->ref_skip_percentage;
 
+    set_cand_reduction_ctrls(
+        pcs_ptr, context_ptr,
+        pd_pass == PD_PASS_0 ? 0 : pcs_ptr->cand_reduction_level,
+        picture_qp,
+        me_8x8_cost_variance,
+        me_64x64_distortion,
+        l0_was_skip, l1_was_skip, ref_skip_perc);
+
+    set_txt_controls(
+        context_ptr,
+        pd_pass == PD_PASS_0 ? 0 : pcs_ptr->txt_level,
+        pcs_ptr->parent_pcs_ptr->input_resolution);
+
+    set_tx_shortcut_ctrls(
+        context_ptr,
+        pd_pass == PD_PASS_0 ? 0 : pcs_ptr->tx_shortcut_level);
+
+    set_interpolation_search_level_ctrls(
+        context_ptr,
+        pd_pass == PD_PASS_0 ? 0 : pcs_ptr->interpolation_search_level);
+
+    set_chroma_controls(
+        context_ptr,
+        pd_pass == PD_PASS_0 ? 0 : pcs_ptr->chroma_level);
+
+    set_cfl_ctrls(
+        context_ptr,
+        pd_pass == PD_PASS_0 ? 0 : pcs_ptr->cfl_level);
+#else
 #if CLN_CAND_REDUCTION_CTRLS
     const uint32_t picture_qp = pcs_ptr->picture_qp;
     uint32_t me_8x8_cost_variance = (uint32_t)~0;
@@ -11207,7 +11307,6 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         me_64x64_distortion,
         l0_was_skip, l1_was_skip, ref_skip_perc);
 #endif
-
     uint8_t txt_level = 0;
     if (pd_pass == PD_PASS_0)
         txt_level = 0;
@@ -11231,6 +11330,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         else if (enc_mode <= ENC_M8)
 #endif
             txt_level = 5;
+#if !TUNE_M1_M8
 #if TUNE_4K_M8_M11
         else if (enc_mode <= ENC_M9) {
 #if TUNE_REG_PD1
@@ -11246,6 +11346,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
                 txt_level = 0;
             }
         }
+#endif
 #endif
 #if TUNE_NEW_M11
 #if !TUNE_M10_M0
@@ -11332,6 +11433,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 
     set_txt_controls(context_ptr, txt_level);
 #endif
+
 #if CLN_REG_PD1_TX_CTRLS
     uint8_t tx_shortcut_level = 0;
     if (pd_pass == PD_PASS_0)
@@ -11766,6 +11868,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     else
         context_ptr->md_disable_cfl = EB_TRUE;
 #endif
+#endif
 #if !OPT_PD0_PATH
     // Set disallow_4x4
     context_ptr->disallow_4x4 = get_disallow_4x4 (enc_mode, pcs_ptr->slice_type);
@@ -11798,7 +11901,9 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         context_ptr->new_nearest_injection = 0;
     else
         context_ptr->new_nearest_injection = 1;
-
+#if CLN_REG_PD_SIG_SET_1
+    context_ptr->new_nearest_near_comb_injection = pd_pass == PD_PASS_0 ? 0 : pcs_ptr->new_nearest_near_comb_injection;
+#else
     if (pd_pass == PD_PASS_0)
         context_ptr->new_nearest_near_comb_injection = 0;
     else
@@ -11809,6 +11914,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
                 context_ptr->new_nearest_near_comb_injection = 0;
         else
             context_ptr->new_nearest_near_comb_injection = sequence_control_set_ptr->static_config.new_nearest_comb_inject;
+#endif
 #if !CLN_CAND_REDUCTION_CTRLS
 #if CLN_REG_PD1_DIFFS
     uint8_t near_count_level = 0;
@@ -11986,7 +12092,20 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 
 #endif
 
+#if CLN_REG_PD_SIG_SET_1
+    context_ptr->unipred3x3_injection = pd_pass == PD_PASS_0 ? 0 : pcs_ptr->unipred3x3_injection;
+    context_ptr->bipred3x3_injection = pd_pass == PD_PASS_0 ? 0 : pcs_ptr->bipred3x3_injection;
+    context_ptr->inject_inter_candidates = 1;
+    context_ptr->inter_compound_mode = pd_pass == PD_PASS_0 ? 0 : pcs_ptr->inter_compound_mode;
 
+    set_dist_based_ref_pruning_controls(
+        context_ptr,
+        pd_pass == PD_PASS_0 ? 0 : pcs_ptr->dist_based_ref_pruning);
+
+    set_spatial_sse_full_loop_level(
+        context_ptr,
+        pd_pass == PD_PASS_0 ? 0 : pcs_ptr->spatial_sse_full_loop_level);
+#else
     // Set unipred3x3 injection
     // Level                Settings
     // 0                    OFF
@@ -12198,6 +12317,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         context_ptr->spatial_sse_full_loop_level =
         sequence_control_set_ptr->static_config.spatial_sse_full_loop_level;
 #endif
+#endif
 #if CHROMA_CLEANUP
     if (context_ptr->uv_ctrls.uv_mode <= CHROMA_MODE_1)
 #else
@@ -12206,10 +12326,13 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         context_ptr->blk_skip_decision = EB_TRUE;
     else
         context_ptr->blk_skip_decision = EB_FALSE;
-
     if (pd_pass == PD_PASS_0)
 #if FIX_PD0_RDOQ
+#if TUNE_M1_M8
+        if (enc_mode <= ENC_M1)
+#else
         if (enc_mode <= ENC_M0)
+#endif
             context_ptr->rdoq_level = 1;
         else
             context_ptr->rdoq_level = 0;
@@ -12309,6 +12432,12 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         else
             context_ptr->redundant_blk =
             sequence_control_set_ptr->static_config.enable_redundant_blk;
+#if CLN_REG_PD_SIG_SET_2
+    set_parent_sq_coeff_area_based_cycles_reduction_ctrls(
+        context_ptr,
+        pcs_ptr->parent_pcs_ptr->input_resolution,
+        pd_pass == PD_PASS_0 ? 0 : pcs_ptr->parent_sq_coeff_area_based_cycles_reduction_level);
+#else
     uint8_t parent_sq_coeff_area_based_cycles_reduction_level = 0;
     if (pd_pass == PD_PASS_0)
         parent_sq_coeff_area_based_cycles_reduction_level = 0;
@@ -12328,6 +12457,12 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         parent_sq_coeff_area_based_cycles_reduction_level = pcs_ptr->slice_type == I_SLICE ? 5 : pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? 6 : 7;
     set_parent_sq_coeff_area_based_cycles_reduction_ctrls(context_ptr, pcs_ptr->parent_pcs_ptr->input_resolution, parent_sq_coeff_area_based_cycles_reduction_level);
 
+#endif
+#if CLN_REG_PD_SIG_SET_2
+    context_ptr->sq_weight = pd_pass == PD_PASS_0 ? (uint32_t) ~0 : pcs_ptr->sq_weight;
+
+    context_ptr->max_part0_to_part1_dev = pd_pass == PD_PASS_0 ? 0 : pcs_ptr->max_part0_to_part1_dev;
+#else
     // Weighting (expressed as a percentage) applied to
     // square shape costs for determining if a and b
     // shapes should be skipped. Namely:
@@ -12387,6 +12522,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #endif
         else
             context_ptr->max_part0_to_part1_dev = 100;
+#endif
 
 
 
@@ -12399,6 +12535,12 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 
     set_obmc_controls(context_ptr, context_ptr->md_pic_obmc_level);
 
+#if CLN_REG_PD_SIG_SET_2
+    context_ptr->md_inter_intra_level = pcs_ptr->md_inter_intra_level;
+    set_inter_intra_ctrls(
+        context_ptr,
+        pd_pass == PD_PASS_0 ? 0 : pcs_ptr->md_inter_intra_level);
+#else
     // Set enable_inter_intra @ MD
     //Block level switch, has to follow the picture level
     // inter intra pred                      Settings
@@ -12418,6 +12560,17 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         context_ptr->md_inter_intra_level = 0;
 
     set_inter_intra_ctrls(context_ptr, context_ptr->md_inter_intra_level);
+#endif
+#if CLN_REG_PD_SIG_SET_2
+    set_txs_controls(
+        context_ptr,
+        pd_pass == PD_PASS_0 ? 0 : pcs_ptr->txs_level);
+
+    set_nic_controls(
+        context_ptr,
+        pd_pass == PD_PASS_0 ? 17 : pcs_ptr->nic_level);
+#else
+
 #if !CLN_INTRA_CTRLS
     // Set enable_paeth @ MD
     if (pd_pass == PD_PASS_0)
@@ -12446,7 +12599,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         txs_level = 1;
     else if (enc_mode <= ENC_MR)
         txs_level = 2;
+#if TUNE_M1_M8
+    else if (enc_mode <= ENC_M2)
+#else
     else if (enc_mode <= ENC_M1)
+#endif
         txs_level = (pcs_ptr->temporal_layer_index == 0) ? 2 : 3;
 #if TUNE_M9_M10_MAR
 #if TUNE_M7_11
@@ -12618,6 +12775,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #endif
 
     set_nic_pruning_controls(context_ptr, nic_pruning_level);
+#endif
 #endif
     // Set md_filter_intra_mode @ MD
     // md_filter_intra_level specifies whether filter intra would be active
@@ -12872,6 +13030,19 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 
     set_lower_depth_block_skip_ctrls(context_ptr, lower_depth_block_skip_level);
 #endif
+#if CLN_REG_PD_SIG_SET_2
+    md_sq_motion_search_controls(
+        context_ptr,
+        pd_pass == PD_PASS_0 ? 0 : pcs_ptr->md_sq_mv_search_level);
+
+    md_nsq_motion_search_controls(
+        context_ptr,
+        pd_pass == PD_PASS_0 ? 0 : pcs_ptr->md_nsq_mv_search_level);
+
+    md_pme_search_controls(
+        context_ptr,
+        pd_pass == PD_PASS_0 ? 0 : pcs_ptr->md_pme_level);
+#else
     if (pd_pass == PD_PASS_0)
         context_ptr->md_sq_mv_search_level = 0;
     else
@@ -12909,7 +13080,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             context_ptr->md_pme_level = 1;
 #endif
 #if TUNE_MEGA_M9_M4
-#if TUNE_M5_M6
+#if TUNE_M5_M6 && !TUNE_M1_M8
         else if (enc_mode <= ENC_M4)
 #else
         else if (enc_mode <= ENC_M5)
@@ -12923,11 +13094,19 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             context_ptr->md_pme_level = 2;
 #endif
 #if TUNE_M9_11_3
+#if TUNE_M1_M8
+        else if (enc_mode <= ENC_M6)
+#else
         else if (enc_mode <= ENC_M7)
+#endif
             context_ptr->md_pme_level = 4;
 #if TUNE_M9_M11_OPTIMIZED_SUPER4KL
 #if TUNE_M10_M11
+#if TUNE_IMPROVE_M11_M10
+        else if (enc_mode <= ENC_M11)
+#else
         else if (enc_mode <= ENC_M10)
+#endif
 #else
         else if (enc_mode <= ENC_M9)
 #endif
@@ -13029,7 +13208,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             context_ptr->md_pme_level = 0;
 
     md_pme_search_controls(context_ptr, context_ptr->md_pme_level);
-
+#endif
     if (pd_pass == PD_PASS_0)
 #if TUNE_M0_M7_MEGA_FEB
         context_ptr->md_subpel_me_level = enc_mode <= ENC_M5 ? 3 : 0;
@@ -13039,7 +13218,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #if CLN_SUBPEL_LVL
     else if (enc_mode <= ENC_M0)
         context_ptr->md_subpel_me_level = 1;
+#if TUNE_M1_M8
+    else if (enc_mode <= ENC_M7)
+#else
     else if (enc_mode <= ENC_M6)
+#endif
         context_ptr->md_subpel_me_level = pcs_ptr->parent_pcs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? 1 : 2;
 #else
     else
@@ -13339,7 +13522,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
             rate_est_level = 2;
     }
     else {
+#if TUNE_M1_M8
+        if (enc_mode <= ENC_M3)
+#else
         if (enc_mode <= ENC_M2)
+#endif
             rate_est_level = 1;
         else if (enc_mode <= ENC_M9)
             rate_est_level = 2;
@@ -13704,6 +13891,12 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         context_ptr->merge_inter_classes = (enc_mode <= ENC_M8) ? 0 : 1;
 #endif
 #endif
+#if CLN_REG_PD_SIG_SET_2
+    set_mds0_controls(
+        pcs_ptr,
+        context_ptr,
+        pd_pass == PD_PASS_0 ? 2 : pcs_ptr->mds0_level);
+#else
 #if CLN_MDS0_CTRLS
     uint8_t mds0_level = 0;
     if (pd_pass == PD_PASS_0)
@@ -13730,6 +13923,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     context_ptr->mds0_dist_type = (enc_mode <= ENC_MRS) ? MDS0_SAD : pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? MDS0_VAR : MDS0_SAD;
 #else
     context_ptr->use_var_in_mds0 = (enc_mode <= ENC_MRS) ? 0 : pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? 1 : 0;
+#endif
 #endif
 #endif
 #if !CLN_CAND_REDUCTION_CTRLS

@@ -2127,7 +2127,7 @@ EbErrorType set_two_passes_stats(EbConfig *config, EncodePass pass,
 #endif
 #if IPP_CTRL
         config->config.final_pass_preset = config->config.enc_mode;
-#endif 
+#endif
         const char *stats = config->stats ? config->stats : "svtav1_2pass.log";
         if (config->pass == 1) {
             if (!fopen_and_lock(&config->output_stat_file, stats, EB_TRUE)) {
@@ -2704,7 +2704,11 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncodePass pass[MAX_ENCODE
     if (rc_mode == 0) { // CRF mode
         if (passes == -1)
 #if FIX_DG
+#if TUNE_2PASS_SETTINGS
+            passes = (enc_mode <= ENC_M8) ? 2 : 1;
+#else
             passes = (enc_mode <= ENC_M11) ? 2 : 1;
+#endif
 #else
             passes = (enc_mode <= ENC_M3) ? 2 : 1;
 #endif

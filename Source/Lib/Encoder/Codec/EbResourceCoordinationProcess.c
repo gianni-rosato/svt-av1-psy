@@ -1891,6 +1891,10 @@ void *resource_coordination_kernel(void *input_ptr) {
                 else
                     set_rc_param(scs_ptr);
 #endif
+#if FIX_VBR_R2R
+                if (is_middle_pass(scs_ptr))
+                    find_init_qp_middle_pass(scs_ptr, pcs_ptr);
+#endif
 #if FTR_1PASS_CBR
                 if (!use_input_stat(scs_ptr) && !use_output_stat(scs_ptr) && scs_ptr->static_config.rate_control_mode == 2) {
                     setup_two_pass(scs_ptr);

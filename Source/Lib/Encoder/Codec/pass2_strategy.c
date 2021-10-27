@@ -2716,7 +2716,7 @@ static void process_first_pass_stats(PictureParentControlSet *pcs_ptr,
     rc->last_q[KEY_FRAME] = (tmp_q + rc_cfg->best_allowed_q) / 2;
     rc->avg_frame_qindex[KEY_FRAME] = rc->last_q[KEY_FRAME];
 #endif
-#if TUNE_MULTI_PASS
+#if TUNE_MULTI_PASS && !FIX_VBR_R2R
     // For same pred pass, use the estimated QP as the sequence QP
     if (is_middle_pass(scs_ptr)) {
         scs_ptr->static_config.qp =
@@ -3307,7 +3307,59 @@ void svt_av1_init_second_pass(SequenceControlSet *scs_ptr) {
   twopass->rolling_arf_group_target_bits = 1;
   twopass->rolling_arf_group_actual_bits = 1;
 }
+#if FIX_VBR_R2R
+/*********************************************************************************************
+* Find the initial QP to be used in the middle pass based on the target rate
+* and stats from previous pass
+***********************************************************************************************/
+void find_init_qp_middle_pass(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_ptr) {
+    TWO_PASS *const twopass = &scs_ptr->twopass;
+    EncodeContext *encode_context_ptr = scs_ptr->encode_context_ptr;
 
+    if (is_middle_pass(scs_ptr) &&
+        twopass->stats_buf_ctx->total_stats &&
+        twopass->stats_buf_ctx->total_left_stats) {
+
+        RATE_CONTROL *const rc = &encode_context_ptr->rc;
+        const RateControlCfg *const rc_cfg = &encode_context_ptr->rc_cfg;
+        rc->worst_quality = rc_cfg->worst_allowed_q;
+        rc->best_quality = rc_cfg->best_allowed_q;
+#if FTR_OPT_MPASS_DOWN_SAMPLE
+        uint32_t mb_rows;
+        if (is_middle_pass_ds(scs_ptr))
+            mb_rows = 2 * (scs_ptr->seq_header.max_frame_height + 16 - 1) / 16;
+        else
+            mb_rows = (scs_ptr->seq_header.max_frame_height + 16 - 1) / 16;
+#else
+        const uint32_t mb_rows = (scs_ptr->seq_header.max_frame_height + 16 - 1) / 16;
+#endif
+        const int section_target_bandwidth = get_section_target_bandwidth(pcs_ptr);
+        const double section_length =
+            twopass->stats_buf_ctx->total_left_stats->count;
+        const double section_error =
+            twopass->stats_buf_ctx->total_left_stats->coded_error / section_length;
+        const double section_intra_skip =
+            twopass->stats_buf_ctx->total_left_stats->intra_skip_pct /
+            section_length;
+        const double section_inactive_zone =
+            (twopass->stats_buf_ctx->total_left_stats->inactive_zone_rows * 2) /
+            ((double)mb_rows * section_length);
+
+        const int tmp_q = get_twopass_worst_quality(
+            pcs_ptr, section_error, section_intra_skip + section_inactive_zone,
+            section_target_bandwidth, DEFAULT_GRP_WEIGHT);
+
+        rc->active_worst_quality = tmp_q;
+        // For same pred pass, use the estimated QP as the sequence QP
+        scs_ptr->static_config.qp =
+            (uint8_t)CLIP3(
+            (int32_t)scs_ptr->static_config.min_qp_allowed,
+                (int32_t)scs_ptr->static_config.max_qp_allowed - 4,
+                (int32_t)((tmp_q + 2) >> 2));
+        encode_context_ptr->rc_cfg.cq_level = scs_ptr->static_config.qp << 2;
+    }
+}
+#endif
 int frame_is_kf_gf_arf(PictureParentControlSet *ppcs_ptr) {
   SequenceControlSet *scs_ptr = ppcs_ptr->scs_ptr;
   EncodeContext *encode_context_ptr = scs_ptr->encode_context_ptr;

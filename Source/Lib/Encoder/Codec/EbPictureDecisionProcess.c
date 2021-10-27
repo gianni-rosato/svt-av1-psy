@@ -2234,7 +2234,11 @@ EbErrorType signal_derivation_multi_processes_oq(
     if (scs_ptr->seq_header.cdef_level && frm_hdr->allow_intrabc == 0) {
         if (scs_ptr->static_config.cdef_level == DEFAULT) {
 #if TUNE_M10_M0
+#if TUNE_M1_M8
+            if (pcs_ptr->enc_mode <= ENC_M0)
+#else
             if (pcs_ptr->enc_mode <= ENC_M1)
+#endif
 #else
             if (pcs_ptr->enc_mode <= ENC_M2)
 #endif
@@ -2269,7 +2273,11 @@ EbErrorType signal_derivation_multi_processes_oq(
 #endif
 #if CLN_M6_M12_FEATURES
             else if (pcs_ptr->enc_mode <= ENC_M8)
+#if TUNE_M9_M13
+                pcs_ptr->cdef_level = (scs_ptr->input_resolution <= INPUT_SIZE_720p_RANGE) ? 8 : (pcs_ptr->temporal_layer_index == 0 ? 8 : 9);
+#else
                 pcs_ptr->cdef_level = (scs_ptr->input_resolution <= INPUT_SIZE_720p_RANGE) ? 8 : 9;
+#endif
 #else
 #if TUNE_M9_11_3
             else if (pcs_ptr->enc_mode <= ENC_M7)
@@ -2304,7 +2312,11 @@ EbErrorType signal_derivation_multi_processes_oq(
             else if (pcs_ptr->enc_mode <= ENC_M10)
 #endif
 #if FTR_CDEF_SEARCH_BEST_REF
+#if TUNE_M9_M13
+                pcs_ptr->cdef_level = pcs_ptr->temporal_layer_index == 0 ? 8 : pcs_ptr->is_used_as_reference_flag ? 9 : 10;
+#else
                 pcs_ptr->cdef_level = pcs_ptr->temporal_layer_index == 0 ? 9 : pcs_ptr->is_used_as_reference_flag ? 10 : 11;
+#endif
 #else
                 pcs_ptr->cdef_level = pcs_ptr->is_used_as_reference_flag ? 9 : 10;
 #endif
@@ -2451,7 +2463,11 @@ EbErrorType signal_derivation_multi_processes_oq(
     uint8_t wn_filter_lvl = 0;
     if (scs_ptr->static_config.wn_filter_mode == DEFAULT) {
 #if TUNE_M0_M7_MEGA_FEB
+#if TUNE_M1_M8
+        if (pcs_ptr->enc_mode <= ENC_M4)
+#else
         if (pcs_ptr->enc_mode <= ENC_M5)
+#endif
 #else
         if (pcs_ptr->enc_mode <= ENC_M6)
 #endif
@@ -2619,12 +2635,20 @@ EbErrorType signal_derivation_multi_processes_oq(
         // GM_FULL                                    Exhaustive search mode.
         // GM_DOWN                                    Downsampled resolution with a downsampling factor of 2 in each dimension
         // GM_TRAN_ONLY                               Translation only using ME MV.
+#if TUNE_M1_M8
+    if (pcs_ptr->enc_mode <= ENC_M2)
+#else
     if (pcs_ptr->enc_mode <= ENC_M1)
+#endif
         pcs_ptr->gm_level = GM_FULL;
 #if TUNE_SHIFT_PRESETS_DOWN && !TUNE_M0_M7_MEGA_FEB
     else if (pcs_ptr->enc_mode <= ENC_M5)
 #else
+#if TUNE_M1_M8
+    else if (pcs_ptr->enc_mode <= ENC_M5)
+#else
     else if (pcs_ptr->enc_mode <= ENC_M6)
+#endif
 #endif
         pcs_ptr->gm_level = GM_DOWN;
     else
@@ -2646,7 +2670,11 @@ EbErrorType signal_derivation_multi_processes_oq(
 #if CLN_ADD_LIST0_ONLY_CTRL
     uint8_t list0_only_base = 0;
 #if CLN_LIST0_ONLY_BASE_IFS_MFMV
+#if TUNE_M1_M8
+    if (pcs_ptr->enc_mode <= ENC_M9)
+#else
     if (pcs_ptr->enc_mode <= ENC_M8)
+#endif
         list0_only_base = 0;
     else
         list0_only_base = 4;
@@ -2756,7 +2784,7 @@ EbErrorType signal_derivation_multi_processes_oq(
     pcs_ptr->max_can_count = get_max_can_count(pcs_ptr->enc_mode );
 #endif
 #if FTR_MVP_BEST_ME_LIST
-#if CLN_M10_M12_DIFFS
+#if CLN_M10_M12_DIFFS && !TUNE_IMPROVE_M11_M10
     if (pcs_ptr->enc_mode <= ENC_M10)
 #else
     if (pcs_ptr->enc_mode <= ENC_M9)

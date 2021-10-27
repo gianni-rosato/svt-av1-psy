@@ -4733,7 +4733,11 @@ void derive_tf_params(SequenceControlSet *scs_ptr) {
     if (do_tf == 0) {
         tf_level = 0;
     }
+#if TUNE_M1_M8
+    else if (scs_ptr->static_config.enc_mode <= ENC_M1) {
+#else
     else if (scs_ptr->static_config.enc_mode <= ENC_M0) {
+#endif
         tf_level = 1;
     }
     else if (scs_ptr->static_config.enc_mode <= ENC_M5) {
@@ -4742,15 +4746,22 @@ void derive_tf_params(SequenceControlSet *scs_ptr) {
     else if (scs_ptr->static_config.enc_mode <= ENC_M8) {
         tf_level = 3;
     }
+#if !TUNE_M1_M8
     else if (scs_ptr->static_config.enc_mode <= ENC_M9) {
         tf_level = 4;
     }
+#endif
+#if TUNE_M9_M13
+    else
+        tf_level = 5;
+#else
     else if (scs_ptr->static_config.enc_mode <= ENC_M12) {
         tf_level = 5;
     }
     else {
         tf_level = 0;
     }
+#endif
 #else
     if (do_tf == 0) {
         tf_level = 0;
@@ -5046,7 +5057,11 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
         uint8_t tpl_lad_mg = 1; // Specify the number of mini-gops to be used as LAD. 0: 1 mini-gop, 1: 2 mini-gops and 3: 3 mini-gops
 #if TUNE_M8_M10_4K_SUPER
 #if TUNE_M8_SLOWDOWN
+#if TUNE_IMPROVE_M11_M10
+        if (scs_ptr->static_config.enc_mode <= ENC_M11)
+#else
         if (scs_ptr->static_config.enc_mode <= ENC_M8)
+#endif
 #else
         if (scs_ptr->static_config.enc_mode <= ENC_M7)
 #endif
@@ -5206,7 +5221,11 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
 #if FTR_SELECTIVE_MFMV
 #if TUNE_4K_M8_M11
 #if CLN_LIST0_ONLY_BASE_IFS_MFMV
+#if TUNE_IMPROVE_M11_M10
+            scs_ptr->mfmv_enabled = (uint8_t)(scs_ptr->static_config.enc_mode <= ENC_M11) ? 1 : 0;
+#else
             scs_ptr->mfmv_enabled = (uint8_t)(scs_ptr->static_config.enc_mode <= ENC_M10) ? 1 : 0;
+#endif
 #else
             scs_ptr->mfmv_enabled = (uint8_t)(scs_ptr->static_config.enc_mode <= ENC_M9) ? 1 : ((scs_ptr->static_config.enc_mode <= ENC_M10) ? (scs_ptr->input_resolution <= INPUT_SIZE_1080p_RANGE ? 1 : 0) : 0);
 #endif
@@ -5454,7 +5473,7 @@ void copy_api_from_app(
     scs_ptr->static_config.ipp_ctrls.bypass_zz_check = ((EbSvtAv1EncConfiguration*)config_struct)->ipp_ctrls.bypass_zz_check;
     scs_ptr->static_config.ipp_ctrls.use8blk = ((EbSvtAv1EncConfiguration*)config_struct)->ipp_ctrls.use8blk;
     scs_ptr->static_config.ipp_ctrls.reduce_me_search = ((EbSvtAv1EncConfiguration*)config_struct)->ipp_ctrls.reduce_me_search;
-#endif    
+#endif
 #endif
 #if FTR_MULTI_PASS_API
     scs_ptr->static_config.rc_middlepass_stats_out = ((EbSvtAv1EncConfiguration*)config_struct)->rc_middlepass_stats_out;
@@ -6655,7 +6674,7 @@ EbErrorType svt_svt_enc_init_parameter(
     config_ptr->ipp_ctrls.bypass_zz_check = 0;
     config_ptr->ipp_ctrls.use8blk = 0;
     config_ptr->ipp_ctrls.reduce_me_search = 0;
-#endif 
+#endif
     return return_error;
 }
 

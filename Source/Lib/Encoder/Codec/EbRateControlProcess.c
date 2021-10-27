@@ -893,7 +893,7 @@ static void adjust_active_best_and_worst_quality(PictureControlSet *pcs_ptr, RAT
  ******************************************************/
 #if FIX_DG
 double adjust_boost(SequenceControlSet *scs_ptr) {
-    double boost = 1.0;
+    double boost = 0.0;
     if (use_input_stat(scs_ptr)) {
         FIRSTPASS_STATS * stat = scs_ptr->twopass.stats_buf_ctx->total_stats;
         double high_inter_propagation = (stat->pcnt_inter / (stat->count - 1));

@@ -1078,11 +1078,17 @@ typedef struct ModeDecisionContext {
 #endif
     PfCtrls              pf_ctrls;
     // Control signals for MD sparse search (used for increasing ME search for active clips)
+#if !CLN_REG_PD_SIG_SET_2
     uint8_t                md_sq_mv_search_level;
+#endif
     MdSqMotionSearchCtrls  md_sq_me_ctrls;
+#if !CLN_REG_PD_SIG_SET_2
     uint8_t                md_nsq_mv_search_level;
+#endif
     MdNsqMotionSearchCtrls md_nsq_motion_search_ctrls;
+#if !CLN_REG_PD_SIG_SET_2
     uint8_t                md_pme_level;
+#endif
     MdPmeCtrls             md_pme_ctrls;
     uint8_t                md_subpel_me_level;
     MdSubPelSearchCtrls    md_subpel_me_ctrls;

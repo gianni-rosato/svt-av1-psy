@@ -194,7 +194,7 @@ typedef struct IppPassControls {
     uint8_t bypass_blk_step; // bypass every other row and col
     uint8_t dist_ds; // downsample distortion
     uint8_t bypass_zz_check; // Bypas the (0,0)_MV check against HME_MV before performing ME
-    uint8_t use8blk; 
+    uint8_t use8blk;
     uint8_t reduce_me_search; //Reduce HME_ME SR areas
 } IppPassControls;
 #endif

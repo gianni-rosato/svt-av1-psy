@@ -151,7 +151,7 @@ enum {
 #define BLOCK_MAX_COUNT_SB_64 1101
 #endif
 #define MAX_TXB_COUNT 16 // Maximum number of transform blocks per depth
-#if FTR_LAD_INPUT
+#if FTR_LAD_INPUT && !TUNE_LAD_MAX
 #define MAX_LAD 300 // max lookahead-distance 5x60fps
 #else
 #define MAX_LAD 120 // max lookahead-distance 2x60fps

@@ -232,7 +232,11 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
 #endif
     }
 #if TUNE_M7_M8_3
+#if TUNE_M1_M8
+    else if (pcs_ptr->enc_mode <= ENC_M8) {
+#else
     else if (pcs_ptr->enc_mode <= ENC_M7) {
+#endif
         if (pcs_ptr->input_resolution < INPUT_SIZE_1080p_RANGE) {
             me_context_ptr->search_area_width = me_context_ptr->search_area_height = 16;
             me_context_ptr->max_me_search_width = 32;
@@ -444,7 +448,11 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
 #if TUNE_M10_M3_1
 #if TUNE_M10_M0
 #if TUNE_M10_M11
+#if TUNE_IMPROVE_M11_M10
+        else if (pcs_ptr->enc_mode <= ENC_M11) {
+#else
         else if (pcs_ptr->enc_mode <= ENC_M10) {
+#endif
 #else
         else if (pcs_ptr->enc_mode <= ENC_M9) {
 #endif
@@ -1097,10 +1105,18 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
         pcs_ptr->frame_superres_enabled == EB_FALSE) {
         if (enc_mode <= ENC_MRS)
             gm_level = 2;
+#if TUNE_M1_M8
+        else if (enc_mode <= ENC_M2)
+#else
         else if (enc_mode <= ENC_M1)
+#endif
             gm_level = 3;
 #if TUNE_M0_M7_MEGA_FEB
+#if TUNE_M1_M8
+        else if (enc_mode <= ENC_M6)
+#else
         else if (enc_mode <= ENC_M7)
+#endif
 #else
         else if (enc_mode <= ENC_M5)
 #endif
@@ -1109,7 +1125,11 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
         else if (enc_mode <= ENC_M8)
 #else
 #if FTR_LIMIT_GM_REFINEMENT
+#if TUNE_M1_M8
+        else if (enc_mode <= ENC_M7)
+#else
         else if (enc_mode <= ENC_M8)
+#endif
 #else
         else if (enc_mode <= ENC_M9)
 #endif
@@ -1143,7 +1163,11 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
 #if TUNE_PREHME_M10
     {
 #if CLN_M6_M12_FEATURES
+#if TUNE_IMPROVE_M11_M10
+        if (enc_mode <= ENC_M10)
+#else
         if (enc_mode <= ENC_M11)
+#endif
             prehme_level = 1;
 #else
 #if TUNE_M10_M0 && !TUNE_M7_MT
@@ -1241,7 +1265,11 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
 #endif
         set_me_sr_adjustment_ctrls(context_ptr->me_context_ptr, 0);
 #if TUNE_M3_M6_MEM_OPT
+#if TUNE_M1_M8
+    else if (enc_mode <= ENC_M3)
+#else
     else if (enc_mode <= ENC_M2)
+#endif
 #else
     else if (enc_mode <= ENC_M3)
 #endif

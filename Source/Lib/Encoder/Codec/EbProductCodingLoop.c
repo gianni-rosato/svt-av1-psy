@@ -8416,6 +8416,9 @@ void perform_dct_dct_tx_light_pd1(PictureControlSet *pcs_ptr, ModeDecisionContex
 #endif
 
     const int is_inter = (candidate_buffer->candidate_ptr->type == INTER_MODE) ? EB_TRUE: EB_FALSE;
+#if FIX_THREE_QUAD_ENERGY
+    context_ptr->three_quad_energy = 0;
+#endif
 #if !OPT_REMOVE_TXT_LPD1
     context_ptr->tx_depth = 0;
     context_ptr->txb_itr = 0;
@@ -9093,8 +9096,13 @@ void full_loop_core_light_pd0(PictureControlSet *pcs_ptr,
         }
     }
 #if TUNE_ADD_SUBRESS_FACTOR4
+#if FIX_SUBRES_R2R
+    if (context_ptr->is_subres_safe != 1)
+        context_ptr->md_staging_subres_step = 0;
+#else
     if (!context_ptr->is_subres_safe)
         context_ptr->md_staging_subres_step = 0;
+#endif
 
     // If using 4x subsampling, can't have 8x8 b/c no 8x2 transform
     // If using 2x subsampling, can't have 4x4 b/c no 4x2 transform
@@ -15391,11 +15399,17 @@ EbBool update_md_settings(ModeDecisionContext *ctx, uint8_t level) {
         ctx->md_inter_intra_level = 0;
         set_inter_intra_ctrls(ctx, ctx->md_inter_intra_level);
 #if TUNE_PME_M0
+#if !CLN_REG_PD_SIG_SET_2
         ctx->md_pme_level = 4;
+#endif
 #else
         ctx->md_pme_level = 3;
 #endif
+#if CLN_REG_PD_SIG_SET_2
+        md_pme_search_controls(ctx, 4);
+#else
         md_pme_search_controls(ctx, ctx->md_pme_level);
+#endif
     }
     if (level >= 3) {
         ctx->dist_based_ref_pruning = 6;
