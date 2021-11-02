@@ -96,7 +96,7 @@
 #define EB_OUTPUTRECONBUFFERSIZE                                        (MAX_PICTURE_WIDTH_SIZE*MAX_PICTURE_HEIGHT_SIZE*2)   // Recon Slice Size
 #define EB_OUTPUTSTATISTICSBUFFERSIZE                                   0x30            // 6X8 (8 Bytes for Y, U, V, number of bits, picture number, QP)
 #define EOS_NAL_BUFFER_SIZE                                             0x0010 // Bitstream used to code EOS NAL
-#if TUNE_PICT_PARALLEL
+#if FIX_TPL_PORTS
 #define ENCDEC_INPUT_PORT_TPL                                0
 #endif
 #define ENCDEC_INPUT_PORT_MDC                                0
@@ -412,8 +412,10 @@ EbErrorType load_default_buffer_configuration_settings(
     if (return_ppcs == -1)
         return EB_ErrorInsufficientResources;
 
+#if !TUNE_PICT_PARALLEL
     uint32_t input_pic = (uint32_t)return_ppcs;
     scs_ptr->input_buffer_fifo_init_count = input_pic + SCD_LAD;
+#endif
     uint32_t enc_dec_seg_h = (core_count == SINGLE_CORE_COUNT) ? 1 :
         (scs_ptr->static_config.super_block_size == 128) ?
         ((scs_ptr->max_input_luma_height + 64) / 128) :
@@ -527,6 +529,7 @@ EbErrorType load_default_buffer_configuration_settings(
          scs_ptr->static_config.superres_auto_search_type == SUPERRES_AUTO_ALL)) ? 1 : 0;
 
     //#====================== Data Structures and Picture Buffers ======================
+#if !TUNE_PICT_PARALLEL
     scs_ptr->picture_control_set_pool_init_count       = input_pic + SCD_LAD ;
     if (scs_ptr->static_config.enable_overlays)
         scs_ptr->picture_control_set_pool_init_count = MAX(scs_ptr->picture_control_set_pool_init_count,
@@ -545,6 +548,7 @@ EbErrorType load_default_buffer_configuration_settings(
     scs_ptr->output_recon_buffer_fifo_init_count       = scs_ptr->reference_picture_buffer_init_count;
     scs_ptr->overlay_input_picture_buffer_init_count   = scs_ptr->static_config.enable_overlays ?
                                                                           (2 << scs_ptr->static_config.hierarchical_levels) + SCD_LAD : 1;
+#endif
 #if !FTR_LAD_INPUT
     //Future frames window in Scene Change Detection (SCD) / TemporalFiltering
     scs_ptr->scd_delay = 0;
@@ -690,18 +694,16 @@ EbErrorType load_default_buffer_configuration_settings(
         else
         {
 #if TUNE_PICT_PARALLEL
-            scs_ptr->input_buffer_fifo_init_count = MAX(min_input, 60);//Input Src
-            scs_ptr->picture_control_set_pool_init_count = MAX(min_parent, 64);// Parent PCS (Picture Control Set)
-            scs_ptr->pa_reference_picture_buffer_init_count = MAX(min_paref, 40);// Pa ref
-#if TUNE_M3_M6_MEM_OPT
-            scs_ptr->reference_picture_buffer_init_count = (scs_ptr->static_config.enc_mode <= ENC_M6) ? MAX(min_ref, 40) : MAX(min_ref, 30); // Rec Ref
-#else
-            scs_ptr->reference_picture_buffer_init_count = MAX(min_ref, 30); // Rec Ref
-#endif
-            scs_ptr->picture_control_set_pool_init_count_child = MAX(min_child, 3); // Child PCS
-            scs_ptr->enc_dec_pool_init_count               = MAX(min_child, 3); // Child PCS
-            scs_ptr->overlay_input_picture_buffer_init_count = MAX(min_overlay, scs_ptr->overlay_input_picture_buffer_init_count);
-            scs_ptr->me_pool_init_count = MAX(min_me, 55); // ME results
+            scs_ptr->input_buffer_fifo_init_count               = MAX(min_input, 60);//Input Src
+            scs_ptr->picture_control_set_pool_init_count        = MAX(min_parent, 64);// Parent PCS (Picture Control Set)
+            scs_ptr->pa_reference_picture_buffer_init_count     = MAX(min_paref, 40);// Pa ref
+            scs_ptr->output_recon_buffer_fifo_init_count        = scs_ptr->reference_picture_buffer_init_count = MAX(min_ref, 30); // Rec Ref
+            scs_ptr->picture_control_set_pool_init_count_child  = MAX(min_child, 3); // Child PCS
+            scs_ptr->enc_dec_pool_init_count                    = MAX(min_child, 3); // Child PCS
+
+            uint32_t overlay_input_picture_buffer_init_count    = scs_ptr->static_config.enable_overlays ? (2 << scs_ptr->static_config.hierarchical_levels) + SCD_LAD : 1;
+            scs_ptr->overlay_input_picture_buffer_init_count    = MAX(min_overlay, overlay_input_picture_buffer_init_count);
+            scs_ptr->me_pool_init_count                         = MAX(min_me, 55); // ME results
 #else
             scs_ptr->input_buffer_fifo_init_count = MAX(min_input, scs_ptr->input_buffer_fifo_init_count);
             scs_ptr->picture_control_set_pool_init_count = MAX(min_parent, scs_ptr->picture_control_set_pool_init_count);
@@ -830,7 +832,7 @@ static EncDecPorts_t enc_dec_ports[] = {
     {ENCDEC_INPUT_PORT_ENCDEC,     0},
     {ENCDEC_INPUT_PORT_INVALID,    0}
 };
-#if TUNE_PICT_PARALLEL
+#if FIX_TPL_PORTS
 static EncDecPorts_t tpl_ports[] = {
     {ENCDEC_INPUT_PORT_TPL,     0},
     {ENCDEC_INPUT_PORT_INVALID,    0}
@@ -1655,7 +1657,7 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
 
     enc_dec_ports[ENCDEC_INPUT_PORT_MDC].count = enc_handle_ptr->scs_instance_array[0]->scs_ptr->mode_decision_configuration_process_init_count;
     enc_dec_ports[ENCDEC_INPUT_PORT_ENCDEC].count = enc_handle_ptr->scs_instance_array[0]->scs_ptr->enc_dec_process_init_count;
-#if TUNE_PICT_PARALLEL
+#if FIX_TPL_PORTS
     tpl_ports[ENCDEC_INPUT_PORT_TPL].count = enc_handle_ptr->scs_instance_array[0]->scs_ptr->tpl_disp_process_init_count;
 #endif
     for (instance_index = 0; instance_index < enc_handle_ptr->encode_instance_total_count; ++instance_index) {
@@ -1885,7 +1887,7 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
     // TPL dispenser Results
     {
         EntropyCodingResultsInitData tpl_disp_result_init_data;
-#if TUNE_PICT_PARALLEL
+#if FIX_TPL_PORTS
         EB_NEW(
             enc_handle_ptr->tpl_disp_res_srm,
             svt_system_resource_ctor,
@@ -2119,7 +2121,7 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
         EB_ALLOC_PTR_ARRAY(enc_handle_ptr->tpl_disp_context_ptr_array, enc_handle_ptr->scs_instance_array[0]->scs_ptr->tpl_disp_process_init_count);
 
         for (process_index = 0; process_index < enc_handle_ptr->scs_instance_array[0]->scs_ptr->tpl_disp_process_init_count; ++process_index) {
-#if TUNE_PICT_PARALLEL
+#if FIX_TPL_PORTS
             EB_NEW(
                 enc_handle_ptr->tpl_disp_context_ptr_array[process_index],
                 tpl_disp_context_ctor,//TODOOMK

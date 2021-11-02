@@ -765,6 +765,9 @@ NOTE : PART OF LIGHT_PD0_2  code was committed to svt-04-final-rebased under OPT
 
 #define TUNE_M9_M13                           1 // tune both M9 and M13 for better slopes, will affect stream for M6-M8 also
 #define TUNE_2PASS_SETTINGS                   1 // move 1 pass to M9 for crf
+#define TUNE_PICT_PARALLEL                    1 // Tune picture parallelization
+#define FIX_TPL_PORTS                         1 // Separate the TPL thread port numbers from the EncDec port numbers
+
 #endif //----------------------------------- all svt-05 features should be place are above this line -------------------------
 
 #if !PRIVATE_MACROS
@@ -877,7 +880,6 @@ NOTE : PART OF LIGHT_PD0_2  code was committed to svt-04-final-rebased under OPT
 #define TUNE_CHROMA_SSIM        0 // Allows for Chroma and SSIM BDR-based Tuning
 
 #define MIN_PIC_PARALLELIZATION 0 // Use the minimum amount of picture parallelization
-#define TUNE_PICT_PARALLEL      0 //  Tune picture parallelization
 #define SRM_REPORT              0 // Report SRM status
 #define LAD_MG_PRINT            0 // Report LAD
 #define RC_NO_R2R               0 // This is a debugging flag for RC and makes encoder to run with no R2R in RC mode
