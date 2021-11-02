@@ -1,4 +1,4 @@
-// clang-format off
+﻿// clang-format off
 /*
 * Copyright(c) 2019 Intel Corporation
 *
@@ -2701,6 +2701,9 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     if (scs_ptr->static_config.encoder_bit_depth < 10)
         scs_ptr->static_config.enable_hbd_mode_decision = 0;
 
+    // Throws a warning when scene change is on, as the feature is not optimal and may produce false detections
+    if (scs_ptr->static_config.scene_change_detection == 1)
+        SVT_WARN("Scene Change is not optimal and may produce suboptimal keyframe placements\n");
 
     scs_ptr->mrp_init_level = scs_ptr->static_config.enc_mode <= ENC_M4 ? 1 : scs_ptr->static_config.enc_mode <= ENC_M6 ? 3 : 4;
 }
@@ -2936,11 +2939,6 @@ void copy_api_from_app(
     // Get Default Intra Period if not specified
     if (scs_ptr->static_config.intra_period_length == -2)
         scs_ptr->static_config.intra_period_length = compute_default_intra_period(scs_ptr);
-    else if (scs_ptr->static_config.intra_period_length == -1 && (use_input_stat(scs_ptr) || use_output_stat(scs_ptr) || scs_ptr->lap_enabled))
-    {
-        scs_ptr->static_config.intra_period_length = (scs_ptr->frame_rate >> 16)* MAX_NUM_SEC_INTRA;
-        SVT_LOG("SVT [Warning]: force Intra period to be %d for perf/quality tradeoff\n", scs_ptr->static_config.intra_period_length);
-    }
 
     scs_ptr->static_config.tf_level = config_struct->tf_level;
     scs_ptr->static_config.enable_overlays = config_struct->enable_overlays;
@@ -3574,6 +3572,20 @@ static EbErrorType verify_settings(
 
     if (config->rate_control_mode == 1 || config->rate_control_mode == 2) {
         SVT_WARN("The VBR and CVBR rate control modes are a work-in-progress projects, and are only available for demos, experimental and further development uses and should not be used for benchmarking until fully implemented.\n");
+    }
+
+    if (config->film_grain_denoise_strength > 0 && config->enc_mode > 3) {
+        SVT_WARN("It is recommended to not use Film Grain for presets greater than 3 as it produces a significant compute overhead. This combination should only be used for debug purposes.\n");
+    }
+
+    if (config->hierarchical_levels < 3 || config->hierarchical_levels > 4) {
+        SVT_LOG("Error instance %u: Only hierarchical levels 3 and 4 currently supported\n", channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+
+    if (config->rate_control_mode != 0 && config->intra_period_length == -1) {
+        SVT_LOG("Error instance %u: keyint = -1 is not supported for modes other than CRF rate control encoding modes.\n", channel_number + 1);
+        return_error = EB_ErrorBadParameter;
     }
 
     return return_error;
