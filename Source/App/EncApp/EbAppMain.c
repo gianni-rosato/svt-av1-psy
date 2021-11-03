@@ -55,6 +55,10 @@
 #endif
 #endif
 
+
+#if LOG_ENC_DONE
+int tot_frames_done = 0;
+#endif
 /***************************************
  * External Functions
  ***************************************/
@@ -146,6 +150,13 @@ static EbErrorType enc_context_ctor(EncApp* enc_app, EncContext* enc_context, in
 #else
                                     char* argv[], EncodePass pass) {
 #endif
+
+
+#if LOG_ENC_DONE
+     tot_frames_done = 0;
+#endif
+
+
     memset(enc_context, 0, sizeof(*enc_context));
     uint32_t num_channels = get_number_of_channels(argc, argv);
     if (num_channels == 0)
@@ -236,6 +247,9 @@ static void print_summary(const EncContext* const enc_context) {
         const EncChannel* const c      = &enc_context->channels[inst_cnt];
         const EbConfig*         config = c->config;
         if (c->exit_cond == APP_ExitConditionFinished && c->return_error == EB_ErrorNone) {
+#if LOG_ENC_DONE
+            tot_frames_done = (int)config->performance_context.frame_count;
+#endif
             uint64_t frame_count    = (uint32_t)config->performance_context.frame_count;
             uint32_t max_luma_value = (config->config.encoder_bit_depth == 8) ? 255 : 1023;
             double   max_luma_sse   = (double)max_luma_value * max_luma_value *
@@ -551,5 +565,9 @@ int32_t main(int32_t argc, char* argv[]) {
 
     }
     enc_app_dctor(&enc_app);
+
+#if LOG_ENC_DONE
+    printf("all_done_encoding  %i frames \n", tot_frames_done);
+#endif
     return return_error != EB_ErrorNone;
 }
