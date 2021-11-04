@@ -17,11 +17,19 @@
 #include "mathutils.h"
 #include "random.h"
 #include "common_dsp_rtcd.h"
+#if CLN_RANSAC
+#include "EbUtility.h"
+#endif
+
 #define MAX_MINPTS 4
 #define MAX_DEGENERATE_ITER 10
 #define MINPTS_MULTIPLIER 5
 
+#if CLN_RANSAC
+#define INLIER_THRESHOLD_POW2 1.5625/*(1.25 * 1.25)*/
+#else
 #define INLIER_THRESHOLD 1.25
+#endif
 #define MIN_TRIALS 20
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -87,7 +95,11 @@ static void normalize_homography(double *pts, int n, double *T) {
         msqe += sqrt(p[0] * p[0] + p[1] * p[1]);
     }
     msqe /= n;
+#if CLN_RANSAC
+    scale = (msqe == 0 ? 1.0 : CONST_SQRT2/ msqe);
+#else
     scale = (msqe == 0 ? 1.0 : sqrt(2) / msqe);
+#endif
     T[0]  = scale;
     T[1]  = 0;
     T[2]  = -scale * mean[0];
@@ -456,6 +468,15 @@ static int ransac(const int *matched_points, int npoints, int *num_inliers_by_mo
         for (int i = 0; i < npoints; ++i) {
             double dx       = image1_coord[i * 2] - corners2[i * 2];
             double dy       = image1_coord[i * 2 + 1] - corners2[i * 2 + 1];
+#if CLN_RANSAC
+            double distance_pow2 = dx * dx + dy * dy;
+
+            if (distance_pow2 < INLIER_THRESHOLD_POW2) {
+                current_motion.inlier_indices[current_motion.num_inliers++] = i;
+                sum_distance += sqrt(distance_pow2);
+                sum_distance_squared += distance_pow2;
+            }
+#else /*CLN_RANSAC*/
             double distance = sqrt(dx * dx + dy * dy);
 
             if (distance < INLIER_THRESHOLD) {
@@ -463,6 +484,7 @@ static int ransac(const int *matched_points, int npoints, int *num_inliers_by_mo
                 sum_distance += distance;
                 sum_distance_squared += distance * distance;
             }
+#endif /*CLN_RANSAC*/
         }
 
         if (current_motion.num_inliers >= worst_kept_motion->num_inliers &&

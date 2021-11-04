@@ -292,6 +292,9 @@ extern const CodedBlockStats* get_coded_blk_stats(const uint32_t cu_idx);
 #define MAX_UNSIGNED_VALUE ~0u
 #define MIN_SIGNED_VALUE ~0 - ((signed)(~0u >> 1))
 #define MAX_SIGNED_VALUE ((signed)(~0u >> 1))
+#if CLN_MATHUTIL
+#define CONST_SQRT2 (1.4142135623730950488016887242097) /*sqrt(2)*/
+#endif
 
 // Helper functions for EbLinkedListNode.
 

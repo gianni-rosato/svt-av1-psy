@@ -38,12 +38,17 @@ typedef struct {
     double gf_group_skip_pct;
     double gf_group_inactive_zone_rows;
 
+#if !CLN_2PASS
     double mv_ratio_accumulator;
+#endif
     double decay_accumulator;
     double zero_motion_accumulator;
+#if !CLN_2PASS
     double loop_decay_rate;
     double last_loop_decay_rate;
+#endif
     double this_frame_mv_in_out;
+#if !CLN_2PASS
     double mv_in_out_accumulator;
     double abs_mv_in_out_accumulator;
 
@@ -55,14 +60,17 @@ typedef struct {
     double avg_new_mv_count;
     double avg_raw_err_stdev;
     int    non_zero_stdev_count;
+#endif
 } GF_GROUP_STATS;
 
+#if !CLN_2PASS
 typedef struct {
     double frame_err;
     double frame_coded_error;
     double frame_sr_coded_error;
     double frame_tr_coded_error;
 } GF_FRAME_STATS;
+#endif
 
 #if FTR_1PASS_CBR && !FTR_RC_CAP
 void set_rc_param(struct SequenceControlSet *scs_ptr);

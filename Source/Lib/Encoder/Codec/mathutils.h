@@ -18,12 +18,17 @@
 #include <stdlib.h>
 #include <assert.h>
 
+#if !CLN_MATHUTIL
 static const double tiny_near_zero = 1.0E-16;
 
 #define PI 3.141592653589793238462643383279502884
+#endif
 
 // Solves Ax = b, where x and b are column vectors of size nx1 and A is nxn
 static INLINE int32_t linsolve(int32_t n, double *A, int32_t stride, double *b, double *x) {
+#if CLN_MATHUTIL
+    const double tiny_near_zero = 1.0E-16;
+#endif
     int32_t i, j, k;
     double  c;
     // Forward elimination
@@ -110,6 +115,7 @@ static INLINE void multiply_mat(const double *m1, const double *m2, double *res,
     }
 }
 
+#if !CLN_MATHUTIL
 //
 // The functions below are needed only for homography computation
 // Remove if the homography models are not used.
@@ -319,5 +325,6 @@ static INLINE int32_t svdcmp(double **u, int32_t m, int32_t n, double w[], doubl
     free(rv1);
     return 0;
 }
+#endif /*CLN_MATHUTIL*/
 
 #endif // AOM_AV1_ENCODER_MATHUTILS_H_

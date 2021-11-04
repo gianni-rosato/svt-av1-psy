@@ -312,7 +312,9 @@ static void denoise_and_model_dctor(EbPtr p) {
     free(obj->flat_blocks);
     for (int32_t i = 0; i < 3; ++i) {
         EB_FREE_ARRAY(obj->denoised[i]);
+#if !OPT_FILM_GRAIN
         EB_FREE_ARRAY(obj->noise_psd[i]);
+#endif
         EB_FREE_ARRAY(obj->packed[i]);
     }
     svt_aom_noise_model_free(&obj->noise_model);

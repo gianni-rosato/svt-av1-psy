@@ -3179,8 +3179,19 @@ void write_sequence_header(SequenceControlSet *scs_ptr, struct AomWriteBitBuffer
         scs_ptr->max_input_pad_right;
     const int32_t max_frame_height = scs_ptr->seq_header.max_frame_height -
         scs_ptr->max_input_pad_bottom;
+#if OPT_CODE_LOG
+    unsigned frame_width_bits  = svt_log2f(max_frame_width);
+    unsigned frame_height_bits = svt_log2f(max_frame_height);
+    if (max_frame_width > (1 << frame_width_bits)) {
+        ++frame_width_bits;
+    }
+     if (max_frame_height > (1 << frame_height_bits)) {
+        ++frame_height_bits;
+    }
+#else
     const unsigned frame_width_bits  = (unsigned)ceil(log2(max_frame_width));
     const unsigned frame_height_bits = (unsigned)ceil(log2(max_frame_height));
+#endif
     svt_aom_wb_write_literal(wb, frame_width_bits - 1, 4);
     svt_aom_wb_write_literal(wb, frame_height_bits - 1, 4);
     svt_aom_wb_write_literal(wb, max_frame_width - 1, frame_width_bits);

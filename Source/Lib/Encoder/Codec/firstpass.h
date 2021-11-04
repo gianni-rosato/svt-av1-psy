@@ -70,10 +70,12 @@ typedef struct {
    * Best of intra pred error and inter pred error using golden frame as ref.
    */
     double sr_coded_error;
+#if !CLN_2PASS
     /*!
    * Best of intra pred error and inter pred error using altref frame as ref.
    */
     double tr_coded_error;
+#endif
     /*!
    * Percentage of blocks with inter pred error < intra pred error.
    */
@@ -88,10 +90,12 @@ typedef struct {
    * inter pred error using golden frame < intra pred error
    */
     double pcnt_second_ref;
+#if !CLN_2PASS
     /*!
    * Percentage of blocks where altref frame was better than intra, last, golden
    */
     double pcnt_third_ref;
+#endif
     /*!
    * Percentage of blocks where intra and inter prediction errors were very
    * close. Note that this is a 'weighted count', that is, the so blocks may be
@@ -114,22 +118,27 @@ typedef struct {
    * Image mask columns at left and right edges.
    */
     double inactive_zone_cols;
+#if !CLN_2PASS
     /*!
    * Average of row motion vectors.
    */
     double MVr;
+#endif
     /*!
    * Mean of absolute value of row motion vectors.
    */
     double mvr_abs;
+#if !CLN_2PASS
     /*!
    * Mean of column motion vectors.
    */
     double MVc;
+#endif
     /*!
    * Mean of absolute value of column motion vectors.
    */
     double mvc_abs;
+#if !CLN_2PASS
     /*!
    * Variance of row motion vectors.
    */
@@ -138,16 +147,19 @@ typedef struct {
    * Variance of column motion vectors.
    */
     double MVcv;
+#endif
     /*!
    * Value in range [-1,1] indicating fraction of row and column motion vectors
    * that point inwards (negative MV value) or outwards (positive MV value).
    * For example, value of 1 indicates, all row/column MVs are inwards.
    */
     double mv_in_out_count;
+#if !CLN_2PASS
     /*!
    * Count of unique non-zero motion vectors.
    */
     double new_mv_count;
+#endif
     /*!
    * Duration of the frame / collection of frames.
    */
@@ -157,10 +169,12 @@ typedef struct {
    * Number of frames in this collection for which the stats are accumulated.
    */
     double count;
+#if !CLN_2PASS
     /*!
    * standard deviation for (0, 0) motion prediction error
    */
     double raw_error_stdev;
+#endif
 #if FTR_NEW_MULTI_PASS
     StatStruct stat_struct;
 #endif
@@ -214,8 +228,10 @@ typedef struct {
     // Circular queue of first pass stats stored for most recent frames.
     // cpi->output_pkt_list[i].data.twopass_stats.buf points to actual data stored
     // here.
+#if !CLN_2PASS
     FIRSTPASS_STATS *      frame_stats_arr[MAX_LAP_BUFFERS + 1];
     int                    frame_stats_next_idx; // Index to next unused element in frame_stats_arr.
+#endif
     const FIRSTPASS_STATS *stats_in;
     STATS_BUFFER_CTX *     stats_buf_ctx;
     int                    first_pass_done;
@@ -223,7 +239,9 @@ typedef struct {
     double                 modified_error_min;
     double                 modified_error_max;
     double                 modified_error_left;
+#if !CLN_2PASS
     double                 mb_av_energy;
+#endif
 
     // An indication of the content type of the current frame
     FRAME_CONTENT_TYPE fr_content_type;
@@ -233,6 +251,7 @@ typedef struct {
 
     // Error score of frames still to be coded in kf group
     int64_t kf_group_error_left;
+#if !CLN_2PASS
     // Over time correction for bits per macro block estimation
     double bpm_factor;
 
@@ -241,6 +260,7 @@ typedef struct {
     int rolling_arf_group_actual_bits;
 
     int sr_update_lag;
+#endif
 
     int kf_zeromotion_pct;
     int last_kfgroup_zeromotion_pct;
@@ -268,8 +288,10 @@ typedef struct {
     int64_t coded_error;
     // Best of intra pred error and inter pred error using golden frame as ref.
     int64_t sr_coded_error;
+#if !CLN_2PASS
     // Best of intra pred error and inter pred error using altref frame as ref.
     int64_t tr_coded_error;
+#endif
     // Count of motion vector.
     int mv_count;
     // Count of blocks that pick inter prediction (inter pred error is smaller
@@ -277,8 +299,10 @@ typedef struct {
     int inter_count;
     // Count of blocks that pick second ref (golden frame).
     int second_ref_count;
+#if !CLN_2PASS
     // Count of blocks that pick third ref (altref frame).
     int third_ref_count;
+#endif
     // Count of blocks where the inter and intra are very close and very low.
     double neutral_count;
     // Count of blocks where intra error is very small.
@@ -286,21 +310,27 @@ typedef struct {
     // Start row.
     int image_data_start_row;
     // Count of unique non-zero motion vectors.
+#if !CLN_2PASS
     int new_mv_count;
+#endif
     // Sum of inward motion vectors.
     int sum_in_vectors;
     // Sum of motion vector row.
+#if !CLN_2PASS
     int sum_mvr;
+#endif
     // Sum of motion vector column.
     int sum_mvc;
     // Sum of absolute value of motion vector row.
     int sum_mvr_abs;
     // Sum of absolute value of motion vector column.
     int sum_mvc_abs;
+#if !CLN_2PASS
     // Sum of the square of motion vector row.
     int64_t sum_mvrs;
     // Sum of the square of motion vector column.
     int64_t sum_mvcs;
+#endif
     // A factor calculated using intra pred error.
     double intra_factor;
     // A factor that measures brightness.

@@ -36,7 +36,11 @@ void svt_aom_noise_tx_forward(struct aom_noise_tx_t *aom_noise_tx, const float *
 // density. The PSD must be at least BlockSize * BlockSize and should be
 // populated with a constant or via estimates taken from
 // aom_noise_tx_add_energy.
+#if OPT_FILM_GRAIN
+void svt_aom_noise_tx_filter(struct aom_noise_tx_t *aom_noise_tx, const float psd);
+#else
 void svt_aom_noise_tx_filter(struct aom_noise_tx_t *aom_noise_tx, const float *psd);
+#endif
 
 // Performs an inverse transform using the internal transform data.
 // For compatibility with existing SIMD implementations, "data" must be 32-byte

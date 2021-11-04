@@ -996,7 +996,15 @@ static int cqp_qindex_calc_tpl_la(PictureControlSet *pcs_ptr, RATE_CONTROL *rc, 
         q_val = svt_av1_convert_qindex_to_q(active_best_quality, bit_depth);
         active_best_quality += svt_av1_compute_qdelta(q_val, q_val * q_adj_factor, bit_depth);
     } else if (refresh_golden_frame || is_intrl_arf_boost || refresh_alt_ref_frame) {
+#if OPT_CODE_LOG
+        //double min_boost_factor = sqrt(1 << pcs_ptr->parent_pcs_ptr->hierarchical_levels);
+        double min_boost_factor = (int32_t)1 << (pcs_ptr->parent_pcs_ptr->hierarchical_levels >> 1);
+        if (pcs_ptr->parent_pcs_ptr->hierarchical_levels & 1) {
+            min_boost_factor *= CONST_SQRT2;
+        }
+#else
         double min_boost_factor = sqrt(1 << pcs_ptr->parent_pcs_ptr->hierarchical_levels);
+#endif
         // The new tpl only looks at pictures in tpl group, which is fewer than before,
         // As a results, we defined a factor to adjust r0
         if (pcs_ptr->parent_pcs_ptr->temporal_layer_index == 0) {
@@ -1004,11 +1012,17 @@ static int cqp_qindex_calc_tpl_la(PictureControlSet *pcs_ptr, RATE_CONTROL *rc, 
 #if !OPT_COMBINE_TPL_FOR_LAD
             if (scs_ptr->lad_mg)
 #endif
+#if CLN_RATE_CONTROL
+            if (pcs_ptr->parent_pcs_ptr->tpl_ctrls.r0_adjust_factor) {
+                div_factor = pcs_ptr->parent_pcs_ptr->used_tpl_frame_num * pcs_ptr->parent_pcs_ptr->tpl_ctrls.r0_adjust_factor;
+            }
+#else /*CLN_RATE_CONTROL*/
             {
                 div_factor = pcs_ptr->parent_pcs_ptr->tpl_ctrls.r0_adjust_factor ?
                     pcs_ptr->parent_pcs_ptr->used_tpl_frame_num * pcs_ptr->parent_pcs_ptr->tpl_ctrls.r0_adjust_factor :
                     div_factor;
             }
+#endif /*CLN_RATE_CONTROL*/
             pcs_ptr->parent_pcs_ptr->r0 = pcs_ptr->parent_pcs_ptr->r0 / div_factor;
             pcs_ptr->parent_pcs_ptr->r0 = pcs_ptr->parent_pcs_ptr->r0 / tpl_hl_base_frame_div_factor[scs_ptr->static_config.hierarchical_levels];
         }
@@ -1285,7 +1299,11 @@ static void sb_setup_lambda(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr) {
 
     int       row, col;
 
+#if CLN_MD_MEAN_CALC
+    int32_t base_block_count = 0;
+#else
     double base_block_count = 0.0;
+#endif
     double log_sum          = 0.0;
 
     for (row = mi_row / num_mi_w; row < num_rows && row < mi_row / num_mi_w + num_brows; ++row) {
@@ -1297,7 +1315,11 @@ static void sb_setup_lambda(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr) {
 #else
             log_sum += log(ppcs_ptr->tpl_rdmult_scaling_factors[index]);
 #endif
+#if CLN_MD_MEAN_CALC
+            ++base_block_count;
+#else
             base_block_count += 1.0;
+#endif
         }
     }
     assert(base_block_count > 0);
@@ -1308,8 +1330,13 @@ static void sb_setup_lambda(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr) {
         pcs_ptr, ppcs_ptr->frm_hdr.quantization_params.base_q_idx, bit_depth);
     const int    new_rdmult     = compute_rdmult_sse(pcs_ptr, sb_ptr->qindex, bit_depth);
     const double scaling_factor = (double)new_rdmult / (double)orig_rdmult;
+#if CLN_MD_MEAN_CALC
+    //double scale_adj = exp(log(scaling_factor) - log_sum / base_block_count);
+    double scale_adj = scaling_factor / exp(log_sum / base_block_count);
+#else /*CLN_MD_MEAN_CALC*/
     double       scale_adj      = log(scaling_factor) - log_sum / base_block_count;
     scale_adj                   = exp(scale_adj);
+#endif /*CLN_MD_MEAN_CALC*/
 
     for (row = mi_row / num_mi_w; row < num_rows && row < mi_row / num_mi_w + num_brows; ++row) {
         for (col = mi_col_sr / num_mi_h; col < num_cols && col < mi_col_sr / num_mi_h + num_bcols;
@@ -1611,11 +1638,17 @@ void process_tpl_stats_frame_kf_gfu_boost(PictureControlSet *pcs_ptr) {
 #if !OPT_COMBINE_TPL_FOR_LAD
             if (scs_ptr->lad_mg)
 #endif
+#if CLN_RATE_CONTROL
+            if (pcs_ptr->parent_pcs_ptr->tpl_ctrls.r0_adjust_factor) {
+                div_factor = pcs_ptr->parent_pcs_ptr->used_tpl_frame_num * pcs_ptr->parent_pcs_ptr->tpl_ctrls.r0_adjust_factor;
+            }
+#else /*CLN_RATE_CONTROL*/
             {
                 div_factor = pcs_ptr->parent_pcs_ptr->tpl_ctrls.r0_adjust_factor ?
                     pcs_ptr->parent_pcs_ptr->used_tpl_frame_num * pcs_ptr->parent_pcs_ptr->tpl_ctrls.r0_adjust_factor :
                     div_factor;
             }
+#endif /*CLN_RATE_CONTROL*/
 
 
             pcs_ptr->parent_pcs_ptr->r0 = pcs_ptr->parent_pcs_ptr->r0 / div_factor;

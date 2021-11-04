@@ -768,6 +768,17 @@ NOTE : PART OF LIGHT_PD0_2  code was committed to svt-04-final-rebased under OPT
 #define TUNE_PICT_PARALLEL                    1 // Tune picture parallelization
 #define FIX_TPL_PORTS                         1 // Separate the TPL thread port numbers from the EncDec port numbers
 
+#define CLN_MATHUTIL                          1 //Cleanup linsolve(), and more
+#define CLN_RANSAC                            1 //Cleanup ransac operations
+#define OPT_FILM_GRAIN                        1 //lossless optimization of film grain feature
+#define OPT_CORNER_MATCH                      1 //lossless optimization of corner match
+#define OPT_FP_LOG                            1 //lossless optimization of first pass
+#define OPT_CODE_LOG                          1 //lossless optimization of remove few log()
+#define CLN_RATE_CONTROL                      1 //Cleanup RateControlProcess
+#define CLN_MD_MEAN_CALC                      1 //Cleanup ModeDecision and RateControlProcess geometrin mean calc
+#define OPT_SBO_CALC_FACTORS                  1 //lossless optimization of SourceBaseOperations
+#define OPT_CALC_TPL_MC                       1 //lossless optimization of SourceBaseOperations
+#define CLN_2PASS                             1 //lossless cleanup 1 and 2 PASS structures and calculations
 #endif //----------------------------------- all svt-05 features should be place are above this line -------------------------
 
 #if !PRIVATE_MACROS

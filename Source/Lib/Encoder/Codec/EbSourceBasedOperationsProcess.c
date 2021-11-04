@@ -187,8 +187,13 @@ static void generate_lambda_scaling_factor(PictureParentControlSet *pcs_ptr,
 
     for (int row = 0; row < num_rows; row++) {
         for (int col = 0; col < num_cols; col++) {
+#if OPT_SBO_CALC_FACTORS
+            int64_t recrf_dist_sum  = 0;
+            int64_t mc_dep_delta_sum = 0;
+#else
             double    intra_cost  = 0.0;
             double    mc_dep_cost = 0.0;
+#endif
             const int index       = row * num_cols + col;
             for (int mi_row = row * num_mi_h; mi_row < (row + 1) * num_mi_h; mi_row += step) {
                 for (int mi_col = col * num_mi_w; mi_col < (col + 1) * num_mi_w; mi_col += step) {
@@ -213,10 +218,27 @@ static void generate_lambda_scaling_factor(PictureParentControlSet *pcs_ptr,
                                                   tpl_stats_ptr->mc_dep_rate,
                                                   tpl_stats_ptr->mc_dep_dist);
 #endif
+#if OPT_SBO_CALC_FACTORS
+                    recrf_dist_sum += tpl_stats_ptr->recrf_dist;
+                    mc_dep_delta_sum += mc_dep_delta;
+#else
                     intra_cost += (double)(tpl_stats_ptr->recrf_dist << RDDIV_BITS);
                     mc_dep_cost += (double)(tpl_stats_ptr->recrf_dist << RDDIV_BITS) + mc_dep_delta;
+#endif
                 }
             }
+#if OPT_SBO_CALC_FACTORS
+            double scaling_factors = c;
+            if(mc_dep_cost_base && (recrf_dist_sum > 0)) {
+                double rk = ((double)(recrf_dist_sum << (RDDIV_BITS))) / ((recrf_dist_sum << RDDIV_BITS) + mc_dep_delta_sum);
+                scaling_factors += rk / pcs_ptr->r0;
+            }
+#if OPT_TPL_DATA
+            pcs_ptr->pa_me_data->tpl_rdmult_scaling_factors[index] = scaling_factors;
+#else
+            pcs_ptr->tpl_rdmult_scaling_factors[index] = scaling_factors;
+#endif
+#else /*OPT_SBO_CALC_FACTORS*/
             double rk = 0;
             if (mc_dep_cost > 0 && intra_cost > 0) {
                 rk = intra_cost / mc_dep_cost;
@@ -229,6 +251,7 @@ static void generate_lambda_scaling_factor(PictureParentControlSet *pcs_ptr,
             pcs_ptr->tpl_rdmult_scaling_factors[index] = (mc_dep_cost_base) ? rk / pcs_ptr->r0 + c
                                                                             : c;
 #endif
+#endif /*OPT_SBO_CALC_FACTORS*/
         }
     }
 
@@ -269,11 +292,19 @@ static int rate_estimator(TranLow *qcoeff, int eob, TxSize tx_size) {
 
     assert((1 << num_pels_log2_lookup[txsize_to_bsize[tx_size]]) >= eob);
 
+#if OPT_CODE_LOG
+    int rate_cost = eob + 1;
+#else
     int rate_cost = 1;
+#endif
 
     for (int idx = 0; idx < eob; ++idx) {
         int abs_level = abs(qcoeff[scan_order->scan[idx]]);
+#if OPT_CODE_LOG
+        rate_cost += svt_log2f(abs_level + 1);
+#else
         rate_cost += (int)(log1p(abs_level) / log(2.0)) + 1;
+#endif
     }
 
     return (rate_cost << AV1_PROB_COST_SHIFT);
@@ -3013,6 +3044,33 @@ static int round_floor(int ref_pos, int bsize_pix) {
 
 static int64_t delta_rate_cost(int64_t delta_rate, int64_t recrf_dist, int64_t srcrf_dist,
                                int pix_num) {
+#if OPT_CALC_TPL_MC
+    if (srcrf_dist <= 128)
+        return delta_rate;
+
+    int64_t rate_cost = delta_rate;
+    double  beta      = (double)srcrf_dist / recrf_dist;
+    double dr = (double)(delta_rate >> (TPL_DEP_COST_SCALE_LOG2 + AV1_PROB_COST_SHIFT)) / pix_num;
+    const double log2_mul2 = 1.3862943611;/*(2.0 * log(2))*/
+    /* double log_den = log(beta) / log(2.0) + 2.0 * dr;
+       double num = pow(2.0, log_den);
+       equivalent of:
+       double num = beta * exp(2.0 * dr * log(2.0));*/
+    double num = beta * exp(dr * log2_mul2);
+    if (num > 10.0) {
+        //rate_cost = (int64_t)((pix_num * log(1.0 / beta) ) / log(2.0) / 2.0);
+        //rate_cost = (int64_t)((pix_num * (-log(beta)) ) / (2.0 * log(2.0)));
+        assert(beta > 0.0);
+        rate_cost = (int64_t)((pix_num * (-log(beta))) / log2_mul2);
+    } else {
+        //double den = num * beta + (1 - beta) * beta;
+        double den = num * beta + (1.0 - beta) * beta;
+        assert(den > 0.0);
+        rate_cost = (int64_t)(((double)pix_num * log(num / den)) / log2_mul2);
+    }
+
+    rate_cost <<= (TPL_DEP_COST_SCALE_LOG2 + AV1_PROB_COST_SHIFT);
+#else /*OPT_CALC_TPL_MC*/
     double  beta      = (double)srcrf_dist / recrf_dist;
     int64_t rate_cost = delta_rate;
 
@@ -3035,6 +3093,7 @@ static int64_t delta_rate_cost(int64_t delta_rate, int64_t recrf_dist, int64_t s
     rate_cost = (int64_t)((pix_num * log(num / den)) / log(2.0) / 2.0);
 
     rate_cost <<= (TPL_DEP_COST_SCALE_LOG2 + AV1_PROB_COST_SHIFT);
+#endif /*OPT_CALC_TPL_MC*/
 
     return rate_cost;
 }
@@ -3072,10 +3131,16 @@ static AOM_INLINE void tpl_model_update_b(PictureParentControlSet *ref_pcs_ptr, 
     int block;
 
     int64_t cur_dep_dist = tpl_stats_ptr->recrf_dist - tpl_stats_ptr->srcrf_dist;
+#if OPT_SBO_CALC_FACTORS
+    int64_t mc_dep_dist = tpl_stats_ptr->mc_dep_dist *
+        (tpl_stats_ptr->recrf_dist - tpl_stats_ptr->srcrf_dist) /
+         tpl_stats_ptr->recrf_dist;
+#else
     int64_t mc_dep_dist  = (int64_t)(
         tpl_stats_ptr->mc_dep_dist *
         ((double)(tpl_stats_ptr->recrf_dist - tpl_stats_ptr->srcrf_dist) /
          tpl_stats_ptr->recrf_dist));
+#endif
     int64_t delta_rate  = tpl_stats_ptr->recrf_rate - tpl_stats_ptr->srcrf_rate;
     int64_t mc_dep_rate = pcs_ptr->tpl_ctrls.tpl_opt_flag ? 0
 
@@ -3288,7 +3353,12 @@ void tpl_mc_flow_synthesizer(
 static void generate_r0beta(PictureParentControlSet* pcs_ptr) {
     Av1Common* cm = pcs_ptr->av1_cm;
     SequenceControlSet* scs_ptr = pcs_ptr->scs_ptr;
+#if OPT_SBO_CALC_FACTORS
+    int64_t             recrf_dist_base_sum = 0;
+    int64_t             mc_dep_delta_base_sum = 0;
+#else
     int64_t             intra_cost_base = 0;
+#endif
     int64_t             mc_dep_cost_base = 0;
 #if FTR_TPL_SYNTH
     const int32_t       shift = pcs_ptr->tpl_ctrls.synth_blk_size == 8 ? 1 : pcs_ptr->tpl_ctrls.synth_blk_size == 16 ? 2 : 3;
@@ -3319,20 +3389,36 @@ static void generate_r0beta(PictureParentControlSet* pcs_ptr) {
             int64_t mc_dep_delta = RDCOST(
                 pcs_ptr->base_rdmult, tpl_stats_ptr->mc_dep_rate, tpl_stats_ptr->mc_dep_dist);
 #endif
+#if OPT_SBO_CALC_FACTORS
+            recrf_dist_base_sum += tpl_stats_ptr->recrf_dist;
+            mc_dep_delta_base_sum += mc_dep_delta;
+#else
             intra_cost_base += (tpl_stats_ptr->recrf_dist << RDDIV_BITS);
             mc_dep_cost_base += (tpl_stats_ptr->recrf_dist << RDDIV_BITS) + mc_dep_delta;
+#endif
         }
     }
 
+#if OPT_SBO_CALC_FACTORS
+    mc_dep_cost_base = (recrf_dist_base_sum << RDDIV_BITS) + mc_dep_delta_base_sum;
+    if (mc_dep_cost_base != 0) {
+        pcs_ptr->r0 = ((double)(recrf_dist_base_sum << (RDDIV_BITS))) / mc_dep_cost_base;
+        pcs_ptr->tpl_is_valid = 1;
+    }
+#else
     if (mc_dep_cost_base != 0) {
         pcs_ptr->r0 = (double)intra_cost_base / mc_dep_cost_base;
         pcs_ptr->tpl_is_valid = 1;
         }
+#endif
     else {
         pcs_ptr->tpl_is_valid = 0;
     }
 
 #if DEBUG_TPL
+#if OPT_SBO_CALC_FACTORS
+    int64_t intra_cost_base = (recrf_dist_base_sum << (RDDIV_BITS));
+#endif
     SVT_LOG("generate_r0beta ------> poc %ld\t%.0f\t%.0f \t%.5f base_rdmult=%d\n",
         pcs_ptr->picture_number,
         (double)intra_cost_base,
@@ -3352,9 +3438,13 @@ static void generate_r0beta(PictureParentControlSet* pcs_ptr) {
         for (uint32_t sb_x = 0; sb_x < picture_sb_width; ++sb_x) {
             uint16_t mi_row = pcs_ptr->sb_geom[sb_y * picture_sb_width + sb_x].origin_y >> 2;
             uint16_t mi_col = pcs_ptr->sb_geom[sb_y * picture_sb_width + sb_x].origin_x >> 2;
-
+#if OPT_SBO_CALC_FACTORS
+            int64_t recrf_dist_sum = 0;
+            int64_t mc_dep_delta_sum = 0;
+#else
             int64_t intra_cost = 0;
             int64_t mc_dep_cost = 0;
+#endif
             const int mi_col_sr = coded_to_superres_mi(mi_col, pcs_ptr->superres_denom);
             const int mi_col_end_sr = coded_to_superres_mi(mi_col + mi_wide, pcs_ptr->superres_denom);
             const int row_step = step;
@@ -3379,16 +3469,29 @@ static void generate_r0beta(PictureParentControlSet* pcs_ptr) {
                         tpl_stats_ptr->mc_dep_rate,
                         tpl_stats_ptr->mc_dep_dist);
 #endif
+#if OPT_SBO_CALC_FACTORS
+                    recrf_dist_sum += tpl_stats_ptr->recrf_dist;
+                    mc_dep_delta_sum += mc_dep_delta;
+#else
                     intra_cost += (tpl_stats_ptr->recrf_dist << RDDIV_BITS);
                     mc_dep_cost += (tpl_stats_ptr->recrf_dist << RDDIV_BITS) + mc_dep_delta;
+#endif
                 }
             }
             double beta = 1.0;
+#if OPT_SBO_CALC_FACTORS
+            if (recrf_dist_sum > 0) {
+                double rk = ((double)(recrf_dist_sum << (RDDIV_BITS))) / ((recrf_dist_sum << RDDIV_BITS) + mc_dep_delta_sum);
+                beta = (pcs_ptr->r0 / rk);
+                assert(beta > 0.0);
+            }
+#else /*OPT_SBO_CALC_FACTORS*/
             if (mc_dep_cost > 0 && intra_cost > 0) {
                 double rk = (double)intra_cost / mc_dep_cost;
                 beta = (pcs_ptr->r0 / rk);
                 assert(beta > 0.0);
             }
+#endif /*OPT_SBO_CALC_FACTORS*/
 #if OPT_TPL_DATA
             pcs_ptr->pa_me_data->tpl_beta[sb_y * picture_sb_width + sb_x] = beta;
 #else

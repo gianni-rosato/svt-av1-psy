@@ -143,19 +143,29 @@ void svt_av1_twopass_zero_stats(FIRSTPASS_STATS *section) {
     section->intra_skip_pct           = 0.0;
     section->inactive_zone_rows       = 0.0;
     section->inactive_zone_cols       = 0.0;
+#if !CLN_2PASS
     section->MVr                      = 0.0;
+#endif
     section->mvr_abs                  = 0.0;
+#if !CLN_2PASS
     section->MVc                      = 0.0;
+#endif
     section->mvc_abs                  = 0.0;
+#if !CLN_2PASS
     section->MVrv                     = 0.0;
     section->MVcv                     = 0.0;
+#endif
     section->mv_in_out_count          = 0.0;
+#if !CLN_2PASS
     section->new_mv_count             = 0.0;
+#endif
     section->count                    = 0.0;
     section->duration                 = 1.0;
+#if !CLN_2PASS
     section->raw_error_stdev          = 0.0;
     section->pcnt_third_ref           = 0.0;
     section->tr_coded_error           = 0.0;
+#endif
 #if FTR_NEW_MULTI_PASS
     memset(&section->stat_struct, 0, sizeof(StatStruct));
 #endif
@@ -173,14 +183,22 @@ void svt_av1_accumulate_stats(FIRSTPASS_STATS *section, const FIRSTPASS_STATS *f
     section->intra_skip_pct += frame->intra_skip_pct;
     section->inactive_zone_rows += frame->inactive_zone_rows;
     section->inactive_zone_cols += frame->inactive_zone_cols;
+#if !CLN_2PASS
     section->MVr += frame->MVr;
+#endif
     section->mvr_abs += frame->mvr_abs;
+#if !CLN_2PASS
     section->MVc += frame->MVc;
+#endif
     section->mvc_abs += frame->mvc_abs;
+#if !CLN_2PASS
     section->MVrv += frame->MVrv;
     section->MVcv += frame->MVcv;
+#endif
     section->mv_in_out_count += frame->mv_in_out_count;
+#if !CLN_2PASS
     section->new_mv_count += frame->new_mv_count;
+#endif
     section->count += frame->count;
     section->duration += frame->duration;
 }
@@ -193,6 +211,7 @@ void svt_av1_end_first_pass(PictureParentControlSet *pcs_ptr) {
                      pcs_ptr->picture_number + 1);
     }
 }
+#if !CLN_2PASS
 static double raw_motion_error_stdev(int *raw_motion_err_list, int raw_motion_err_counts) {
     int64_t sum_raw_err   = 0;
     double  raw_err_avg   = 0;
@@ -213,6 +232,7 @@ static double raw_motion_error_stdev(int *raw_motion_err_list, int raw_motion_er
     raw_err_stdev = sqrt(raw_err_stdev / raw_motion_err_counts);
     return raw_err_stdev;
 }
+#endif
 #define UL_INTRA_THRESH 50
 #define INVALID_ROW -1
 // Accumulates motion vector stats.
@@ -223,9 +243,12 @@ void accumulate_mv_stats(const MV best_mv, const FULLPEL_MV mv, const int mb_row
         return;
 
     ++stats->mv_count;
+#if !CLN_2PASS
     // Non-zero vector, was it different from the last non zero vector?
     if (!is_equal_mv(&best_mv, last_mv))
         ++stats->new_mv_count;
+#endif
+
     *last_mv = best_mv;
 
     // Does the row vector point inwards or outwards?
@@ -273,7 +296,9 @@ void accumulate_mv_stats(const MV best_mv, const FULLPEL_MV mv, const int mb_row
 //                                         update its value and its position
 //                                         in the buffer.
 static void update_firstpass_stats(PictureParentControlSet *pcs_ptr, const FRAME_STATS *const stats,
+#if !CLN_2PASS
                                    const double raw_err_stdev,
+#endif
 #if FTR_2PASS_1PASS_UNIFICATION
                                     const double ts_duration) {
 #else
@@ -311,41 +336,63 @@ static void update_firstpass_stats(PictureParentControlSet *pcs_ptr, const FRAME
     fps.frame                    = (double)pcs_ptr->picture_number;
     fps.coded_error              = (double)(stats->coded_error >> 8) + min_err;
     fps.sr_coded_error           = (double)(stats->sr_coded_error >> 8) + min_err;
+#if !CLN_2PASS
     fps.tr_coded_error           = (double)(stats->tr_coded_error >> 8) + min_err;
+#endif
     fps.intra_error              = (double)(stats->intra_error >> 8) + min_err;
     fps.count                    = 1.0;
     fps.pcnt_inter               = (double)stats->inter_count / num_mbs;
     fps.pcnt_second_ref          = (double)stats->second_ref_count / num_mbs;
+#if !CLN_2PASS
     fps.pcnt_third_ref           = (double)stats->third_ref_count / num_mbs;
+#endif
     fps.pcnt_neutral             = (double)stats->neutral_count / num_mbs;
     fps.intra_skip_pct           = (double)stats->intra_skip_count / num_mbs;
     fps.inactive_zone_rows       = (double)stats->image_data_start_row;
     fps.inactive_zone_cols       = (double)0; // TODO(paulwilkins): fix
+#if !CLN_2PASS
     fps.raw_error_stdev          = raw_err_stdev;
+#endif
 
     if (stats->mv_count > 0) {
+#if !CLN_2PASS
         fps.MVr     = (double)stats->sum_mvr / stats->mv_count;
+#endif
         fps.mvr_abs = (double)stats->sum_mvr_abs / stats->mv_count;
+#if !CLN_2PASS
         fps.MVc     = (double)stats->sum_mvc / stats->mv_count;
+#endif
         fps.mvc_abs = (double)stats->sum_mvc_abs / stats->mv_count;
+#if !CLN_2PASS
         fps.MVrv    = ((double)stats->sum_mvrs -
                     ((double)stats->sum_mvr * stats->sum_mvr / stats->mv_count)) /
             stats->mv_count;
         fps.MVcv = ((double)stats->sum_mvcs -
                     ((double)stats->sum_mvc * stats->sum_mvc / stats->mv_count)) /
             stats->mv_count;
+#endif
         fps.mv_in_out_count = (double)stats->sum_in_vectors / (stats->mv_count * 2);
+#if !CLN_2PASS
         fps.new_mv_count    = stats->new_mv_count;
+#endif
         fps.pcnt_motion     = (double)stats->mv_count / num_mbs;
     } else {
+#if !CLN_2PASS
         fps.MVr             = 0.0;
+#endif
         fps.mvr_abs         = 0.0;
+#if !CLN_2PASS
         fps.MVc             = 0.0;
+#endif
         fps.mvc_abs         = 0.0;
+#if !CLN_2PASS
         fps.MVrv            = 0.0;
         fps.MVcv            = 0.0;
+#endif
         fps.mv_in_out_count = 0.0;
+#if !CLN_2PASS
         fps.new_mv_count    = 0.0;
+#endif
         fps.pcnt_motion     = 0.0;
     }
 #if 0//FTR_OPT_IPP_DOWN_SAMPLE
@@ -457,18 +504,22 @@ static FRAME_STATS accumulate_frame_stats(FRAME_STATS *mb_stats, int mb_rows, in
             stats.intra_skip_count += mb_stat.intra_skip_count;
             stats.mv_count += mb_stat.mv_count;
             stats.neutral_count += mb_stat.neutral_count;
+#if !CLN_2PASS
             stats.new_mv_count += mb_stat.new_mv_count;
+#endif
             stats.second_ref_count += mb_stat.second_ref_count;
             stats.sr_coded_error += mb_stat.sr_coded_error;
             stats.sum_in_vectors += mb_stat.sum_in_vectors;
             stats.sum_mvc += mb_stat.sum_mvc;
             stats.sum_mvc_abs += mb_stat.sum_mvc_abs;
+#if !CLN_2PASS
             stats.sum_mvcs += mb_stat.sum_mvcs;
             stats.sum_mvr += mb_stat.sum_mvr;
             stats.sum_mvr_abs += mb_stat.sum_mvr_abs;
             stats.sum_mvrs += mb_stat.sum_mvrs;
             stats.third_ref_count += mb_stat.third_ref_count;
             stats.tr_coded_error += mb_stat.tr_coded_error;
+#endif
         }
     }
     return stats;
@@ -520,20 +571,26 @@ void first_pass_frame_end(PictureParentControlSet *pcs_ptr, const int64_t ts_dur
     const uint32_t      mb_cols = (scs_ptr->seq_header.max_frame_width + 16 - 1) / 16;
     const uint32_t      mb_rows = (scs_ptr->seq_header.max_frame_height + 16 - 1) / 16;
 
+#if !CLN_2PASS
     int *        raw_motion_err_list = pcs_ptr->firstpass_data.raw_motion_err_list;
+#endif
     FRAME_STATS *mb_stats            = pcs_ptr->firstpass_data.mb_stats;
 
     FRAME_STATS  stats;
+#if !CLN_2PASS
     double raw_err_stdev = 0;
+#endif
     if (!pcs_ptr->skip_frame) {
 #if OPT_FIRST_PASS3
         stats                      = accumulate_frame_stats(mb_stats, mb_rows, mb_cols, pcs_ptr);
 #else
         stats                      = accumulate_frame_stats(mb_stats, mb_rows, mb_cols);
 #endif
+#if !CLN_2PASS
         int total_raw_motion_err_count = frame_is_intra_only(pcs_ptr) ? 0 : mb_rows * mb_cols;
         raw_err_stdev              = raw_motion_error_stdev(raw_motion_err_list,
                                                         total_raw_motion_err_count);
+#endif
     // Clamp the image start to rows/2. This number of rows is discarded top
     // and bottom as dead data so rows / 2 means the frame is blank.
     if ((stats.image_data_start_row > (int)mb_rows / 2) ||
@@ -558,7 +615,11 @@ void first_pass_frame_end(PictureParentControlSet *pcs_ptr, const int64_t ts_dur
     stats.brightness_factor = stats.brightness_factor / (double)num_mbs;
     }
     update_firstpass_stats(
+#if CLN_2PASS
+        pcs_ptr, &stats, ts_duration);
+#else
         pcs_ptr, &stats, raw_err_stdev, ts_duration);
+#endif
 }
 #if TUNE_MULTI_PASS
 void samepred_pass_frame_end(PictureParentControlSet *pcs_ptr, const double ts_duration) {
@@ -578,14 +639,22 @@ void samepred_pass_frame_end(PictureParentControlSet *pcs_ptr, const double ts_d
     fps.intra_skip_pct= 0;
     fps.inactive_zone_rows= 0;
     fps.inactive_zone_cols= 0;
+#if !CLN_2PASS
     fps.MVr= 0;
+#endif
     fps.mvr_abs= 0;
+#if !CLN_2PASS
     fps.MVc= 0;
+#endif
     fps.mvc_abs= 0;
+#if !CLN_2PASS
     fps.MVrv= 0;
     fps.MVcv= 0;
+#endif
     fps.mv_in_out_count= 0;
+#if !CLN_2PASS
     fps.new_mv_count= 0;
+#endif
 
     fps.weight = 0;
     fps.duration = (double)ts_duration;
@@ -608,7 +677,7 @@ void samepred_pass_frame_end(PictureParentControlSet *pcs_ptr, const double ts_d
 #endif
 
     *this_frame_stats = fps;
-    output_stats(scs_ptr, this_frame_stats, pcs_ptr->picture_number);
+    output_stats(scs_ptr, this_frame_stats, offsetof(STATS_BUFFER_CTX, total_stats), pcs_ptr->picture_number);
     if (twopass->stats_buf_ctx->total_stats != NULL) {
         svt_av1_accumulate_stats(twopass->stats_buf_ctx->total_stats, &fps);
     }
@@ -621,7 +690,7 @@ void samepred_pass_frame_end(PictureParentControlSet *pcs_ptr, const double ts_d
     if (pcs_ptr->end_of_sequence_flag){
         if (twopass->stats_buf_ctx->total_stats) {
             // add the total to the end of the file
-            output_stats(scs_ptr, twopass->stats_buf_ctx->total_stats, scs_ptr->encode_context_ptr->terminating_picture_number + 1);
+            output_stats(scs_ptr, twopass->stats_buf_ctx->total_stats, offsetof(STATS_BUFFER_CTX, total_stats), scs_ptr->encode_context_ptr->terminating_picture_number + 1);
         }
     }
 }
@@ -1169,6 +1238,21 @@ static int open_loop_firstpass_intra_prediction(PictureParentControlSet *ppcs_pt
         stats->image_data_start_row = mb_row;
     }
     // aom_clear_system_state();
+#if OPT_FP_LOG
+    //22025 is (exp(10) -1) equivalent to (log1p((double)this_intra_error) < 10.0)
+    if (this_intra_error < 22025)
+        stats->intra_factor += 1.5 - log1p((double)this_intra_error) * 0.05;
+    else
+        stats->intra_factor += 1.0;
+
+    int level_sample = input_picture_ptr->buffer_y[input_origin_index];
+
+    //8102 is (exp(9) -1) equivalent to (log1p((double)this_intra_error) < 9.0)
+    if ((level_sample < DARK_THRESH) && (this_intra_error < 8102))
+        stats->brightness_factor += 1.0 + (0.01 * (DARK_THRESH - level_sample));
+    else
+        stats->brightness_factor += 1.0;
+#else /*OPT_FP_LOG*/
     double log_intra = log1p((double)this_intra_error);
     if (log_intra < 10.0)
         stats->intra_factor += 1.0 + ((10.0 - log_intra) * 0.05);
@@ -1181,6 +1265,7 @@ static int open_loop_firstpass_intra_prediction(PictureParentControlSet *ppcs_pt
         stats->brightness_factor += 1.0 + (0.01 * (DARK_THRESH - level_sample));
     else
         stats->brightness_factor += 1.0;
+#endif /*OPT_FP_LOG*/
     // Intrapenalty below deals with situations where the intra and inter
     // error scores are very low (e.g. a plain black frame).
     // We do not have special cases in first pass for 0,0 and nearest etc so
@@ -1378,6 +1463,7 @@ static int open_loop_firstpass_inter_prediction(
             stats->sr_coded_error += motion_error;
         }
 
+#if !CLN_2PASS
         // Motion search in 3rd reference frame.
         int alt_motion_error = motion_error;
         if (alt_motion_error < motion_error && alt_motion_error < gf_motion_error &&
@@ -1390,9 +1476,12 @@ static int open_loop_firstpass_inter_prediction(
         // the last frame.
         // alt_ref_frame is not supported yet
         stats->tr_coded_error += motion_error;
+#endif
     } else {
         stats->sr_coded_error += motion_error;
+#if !CLN_2PASS
         stats->tr_coded_error += motion_error;
+#endif
     }
 
     // Start by assuming that intra mode is best.
@@ -1415,12 +1504,16 @@ static int open_loop_firstpass_inter_prediction(
         }
         const MV best_mv = get_mv_from_fullmv(&mv);
         this_inter_error = motion_error;
+#if !CLN_2PASS
         stats->sum_mvr += best_mv.row;
+#endif
         stats->sum_mvr_abs += abs(best_mv.row);
         stats->sum_mvc += best_mv.col;
         stats->sum_mvc_abs += abs(best_mv.col);
+#if !CLN_2PASS
         stats->sum_mvrs += best_mv.row * best_mv.row;
         stats->sum_mvcs += best_mv.col * best_mv.col;
+#endif
         ++stats->inter_count;
         accumulate_mv_stats(best_mv, mv, mb_row, mb_col, mb_rows, mb_cols, last_mv, stats);
     }
@@ -1566,7 +1659,9 @@ static EbErrorType first_pass_frame_seg(PictureParentControlSet *ppcs_ptr, int32
                 mb_stats->coded_error += this_inter_error;
             } else {
                 mb_stats->sr_coded_error += this_intra_error;
+#if !CLN_2PASS
                 mb_stats->tr_coded_error += this_intra_error;
+#endif
                 mb_stats->coded_error += this_intra_error;
             }
         }

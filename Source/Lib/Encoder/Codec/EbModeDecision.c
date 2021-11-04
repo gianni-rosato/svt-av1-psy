@@ -8456,7 +8456,11 @@ uint32_t get_blk_tuned_full_lambda(struct ModeDecisionContext *context_ptr, Pict
     // of superres.
     const int sb_bcol_end = get_superblock_tpl_column_end(ppcs_ptr, mi_col, num_mi_w);
     int row, col;
+#if CLN_MD_MEAN_CALC
+    int32_t base_block_count = 0;
+#else
     double base_block_count = 0.0;
+#endif
     double geom_mean_of_scale = 0.0;
     for (row = mi_row / num_mi_w;
         row < num_rows&& row < mi_row / num_mi_w + num_brows; ++row) {
@@ -8470,7 +8474,11 @@ uint32_t get_blk_tuned_full_lambda(struct ModeDecisionContext *context_ptr, Pict
 #else
             geom_mean_of_scale += log(ppcs_ptr->tpl_sb_rdmult_scaling_factors[index]);
 #endif
+#if CLN_MD_MEAN_CALC
+            ++base_block_count;
+#else
             base_block_count += 1.0;
+#endif
         }
     }
     // When superres is on, base_block_count could be zero.

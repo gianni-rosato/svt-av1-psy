@@ -9,9 +9,11 @@
  * PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
  */
 
-#include <math.h>
 #include "aom_dsp_rtcd.h"
 #include "corner_match.h"
+#if !OPT_CORNER_MATCH
+#include <math.h>
+#endif
 
 #define SEARCH_SZ 9
 #define SEARCH_SZ_BY2 ((SEARCH_SZ - 1) / 2)
@@ -21,7 +23,11 @@
 /* Compute var(im) * MATCH_SZ_SQ over a MATCH_SZ by MATCH_SZ window of im,
    centered at (x, y).
 */
+#if OPT_CORNER_MATCH
+static int32_t compute_variance(unsigned char *im, int stride, int x, int y) {
+#else
 static double compute_variance(unsigned char *im, int stride, int x, int y) {
+#endif
     int sum   = 0;
     int sumsq = 0;
     int var;
@@ -33,13 +39,24 @@ static double compute_variance(unsigned char *im, int stride, int x, int y) {
                 im[(i + y - MATCH_SZ_BY2) * stride + (j + x - MATCH_SZ_BY2)];
         }
     var = sumsq * MATCH_SZ_SQ - sum * sum;
+#if OPT_CORNER_MATCH
+    return var;
+#else
     return (double)var;
+#endif
 }
 
+#if OPT_CORNER_MATCH
+/* Compute quad of corr(im1, im2) * MATCH_SZ * stddev(im1), where the
+   correlation/standard deviation are taken over MATCH_SZ by MATCH_SZ windows
+   of each image, centered at (x1, y1) and (x2, y2) respectively.
+*/
+#else
 /* Compute corr(im1, im2) * MATCH_SZ * stddev(im1), where the
    correlation/standard deviation are taken over MATCH_SZ by MATCH_SZ windows
    of each image, centered at (x1, y1) and (x2, y2) respectively.
 */
+#endif
 double svt_av1_compute_cross_correlation_c(unsigned char *im1, int stride1, int x1, int y1,
                                            unsigned char *im2, int stride2, int x2, int y2) {
     int v1, v2;
@@ -60,7 +77,14 @@ double svt_av1_compute_cross_correlation_c(unsigned char *im1, int stride1, int 
         }
     var2 = sumsq2 * MATCH_SZ_SQ - sum2 * sum2;
     cov  = cross * MATCH_SZ_SQ - sum1 * sum2;
+#if OPT_CORNER_MATCH
+    if (cov < 0) {
+        return 0;
+    }
+    return ((double)cov * cov) / ((double)var2);
+#else
     return cov / sqrt((double)var2);
+#endif
 }
 
 static INLINE int is_eligible_point(int pointx, int pointy, int width, int height) {
@@ -159,7 +183,11 @@ int svt_av1_determine_correspondence(unsigned char *frm, int *frm_corners, int n
     const int       threshSqr           = thresh * thresh;
     for (i = 0; i < num_frm_corners; ++i) {
         double best_match_ncc = 0.0;
+#if OPT_CORNER_MATCH
+        int32_t template_norm;
+#else
         double template_norm;
+#endif
         int    best_match_j = -1;
         if (!is_eligible_point(frm_corners[2 * i], frm_corners[2 * i + 1], width, height))
             continue;
@@ -191,7 +219,11 @@ int svt_av1_determine_correspondence(unsigned char *frm, int *frm_corners, int n
         // av1_compute_cross_correlation.
         template_norm = compute_variance(
             frm, frm_stride, frm_corners[2 * i], frm_corners[2 * i + 1]);
+#if OPT_CORNER_MATCH
+        if (best_match_ncc > (template_norm * THRESHOLD_NCC * THRESHOLD_NCC)) {
+#else
         if (best_match_ncc > THRESHOLD_NCC * sqrt(template_norm)) {
+#endif
             correspondences[num_correspondences].x  = frm_corners[2 * i];
             correspondences[num_correspondences].y  = frm_corners[2 * i + 1];
             correspondences[num_correspondences].rx = ref_corners[2 * best_match_j];

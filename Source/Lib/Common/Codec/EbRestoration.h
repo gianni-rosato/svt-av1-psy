@@ -336,6 +336,7 @@ typedef void (*RestTileStartVisitor)(int32_t tile_row, int32_t tile_col, void *p
 //                                                  struct AV1Common *cm,
 //                                                  int32_t after_cdef);
 
+#if !CLN_MATHUTIL
 static const double tiny_near_zero = 1.0E-16;
 
 // Solves Ax = b, where x and b are column vectors of size nx1 and A is nxn
@@ -376,6 +377,7 @@ static INLINE int32_t linsolve(int32_t n, double *A, int32_t stride, double *b, 
 
     return 1;
 }
+#endif /*CLN_MATHUTIL*/
 
 // Returns 1 if a superres upscaled frame is unscaled and 0 otherwise.
 static INLINE int32_t av1_superres_unscaled(const FrameSize *frm_size) {

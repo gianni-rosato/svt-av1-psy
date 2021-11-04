@@ -228,11 +228,24 @@ const CodedBlockStats* get_coded_blk_stats(const uint32_t cu_idx) {
   * Long Log 2
   *  This is a quick adaptation of a Number
   *  Leading Zeros (NLZ) algorithm to get
-  *  the log2f of a 64-bit number
+  *  the log2f of a 32-bit number
   *****************************************/
 uint32_t log2f_32(uint32_t x) {
+#if OPT_CODE_LOG
+    uint32_t  log = 0;
+    int32_t  i;
+    for (i = 4; i >= 0; --i) {
+        const uint32_t  shift = (1 << i);
+        const uint32_t n = x >> shift;
+        if (n != 0) {
+            x = n;
+            log += shift;
+        }
+    }
+#else
     //return (x > 1) ? 1 + log2(x >> 1) : 0;
     uint32_t log = (uint32_t)log2(x);
+#endif
     return log;
 }
 // concatenate two linked list, and return the pointer to the new concatenated list

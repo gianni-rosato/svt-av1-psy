@@ -9,10 +9,12 @@
  * PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
  */
 
-#include <math.h>
 #include <immintrin.h>
 #include "corner_match.h"
 #include "EbDefinitions.h"
+#if !OPT_CORNER_MATCH
+#include <math.h>
+#endif
 
 DECLARE_ALIGNED(16, static const uint8_t, byte_mask[16]) = {
     255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 0, 0, 0};
@@ -23,10 +25,17 @@ DECLARE_ALIGNED(16, static const uint8_t, byte_mask[16]) = {
 #error "Need to change byte_mask in corner_match_sse4.c if MATCH_SZ != 13"
 #endif
 
+#if OPT_CORNER_MATCH
+/* Compute quad of corr(im1, im2) * MATCH_SZ * stddev(im1), where the
+correlation/standard deviation are taken over MATCH_SZ by MATCH_SZ windows
+of each image, centered at (x1, y1) and (x2, y2) respectively.
+*/
+#else
 /* Compute corr(im1, im2) * MATCH_SZ * stddev(im1), where the
 correlation/standard deviation are taken over MATCH_SZ by MATCH_SZ windows
 of each image, centered at (x1, y1) and (x2, y2) respectively.
 */
+#endif
 double svt_av1_compute_cross_correlation_avx2(unsigned char *im1, int stride1, int x1, int y1,
                                               unsigned char *im2, int stride2, int x2, int y2) {
     int           i, stride1_i = 0, stride2_i = 0;
@@ -74,5 +83,12 @@ double svt_av1_compute_cross_correlation_avx2(unsigned char *im1, int stride1, i
     int var2 = sumsq2_acc * MATCH_SZ_SQ - sum2_acc * sum2_acc;
     int cov  = cross_acc * MATCH_SZ_SQ - sum1_acc * sum2_acc;
     aom_clear_system_state();
+#if OPT_CORNER_MATCH
+    if (cov < 0) {
+        return 0;
+    }
+    return ((double)cov * cov) / ((double)var2);
+#else
     return cov / sqrt((double)var2);
+#endif
 }

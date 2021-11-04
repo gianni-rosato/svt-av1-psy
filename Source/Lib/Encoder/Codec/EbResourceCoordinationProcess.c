@@ -1439,7 +1439,9 @@ static void setup_two_pass(SequenceControlSet *scs_ptr) {
     int num_lap_buffers = 0;
     int size            = get_stats_buf_size(num_lap_buffers, MAX_LAG_BUFFERS);
     for (int i = 0; i < size; i++)
+#if !CLN_2PASS
         scs_ptr->twopass.frame_stats_arr[i] = &encode_context_ptr->frame_stats_buffer[i];
+#endif
 #if FTR_NEW_MULTI_PASS
 #if TUNE_MULTI_PASS
     scs_ptr->twopass.multi_pass_mode = scs_ptr->static_config.multi_pass_mode;

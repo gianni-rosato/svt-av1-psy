@@ -130,14 +130,22 @@ static void subtract_stats(FIRSTPASS_STATS *section,
   section->intra_skip_pct -= frame->intra_skip_pct;
   section->inactive_zone_rows -= frame->inactive_zone_rows;
   section->inactive_zone_cols -= frame->inactive_zone_cols;
+#if !CLN_2PASS
   section->MVr -= frame->MVr;
+#endif
   section->mvr_abs -= frame->mvr_abs;
+#if !CLN_2PASS
   section->MVc -= frame->MVc;
+#endif
   section->mvc_abs -= frame->mvc_abs;
+#if !CLN_2PASS
   section->MVrv -= frame->MVrv;
   section->MVcv -= frame->MVcv;
+#endif
   section->mv_in_out_count -= frame->mv_in_out_count;
+#if !CLN_2PASS
   section->new_mv_count -= frame->new_mv_count;
+#endif
   section->count -= frame->count;
   section->duration -= frame->duration;
 }
@@ -171,6 +179,7 @@ static double calc_correction_factor(double err_per_mb, int q) {
   return fclamp(pow(error_term, power_term), 0.05, 5.0);
 }
 
+#if !CLN_2PASS
 static void twopass_update_bpm_factor(TWO_PASS *twopass) {
   // Based on recent history adjust expectations of bits per macroblock.
   double last_group_rate_err =
@@ -180,6 +189,7 @@ static void twopass_update_bpm_factor(TWO_PASS *twopass) {
   twopass->bpm_factor *= (3.0 + last_group_rate_err) / 4.0;
   twopass->bpm_factor = AOMMAX(0.25, AOMMIN(4.0, twopass->bpm_factor));
 }
+#endif
 static int qbpm_enumerator(int rate_err_tol) {
   return 1250000 + ((300000 * AOMMIN(75, AOMMAX(rate_err_tol - 25, 0))) / 75);
 }
@@ -243,7 +253,9 @@ static int get_twopass_worst_quality(PictureParentControlSet *pcs_ptr, const dou
                                      double group_weight_factor) {
   SequenceControlSet *scs_ptr = pcs_ptr->scs_ptr;
   EncodeContext *encode_context_ptr = scs_ptr->encode_context_ptr;
+#if !CLN_2PASS
   TWO_PASS *const twopass = &scs_ptr->twopass;
+#endif
   RATE_CONTROL *const rc = &encode_context_ptr->rc;
   const RateControlCfg *const rc_cfg = &encode_context_ptr->rc_cfg;
 #if FTR_OPT_MPASS_DOWN_SAMPLE
@@ -277,7 +289,9 @@ static int get_twopass_worst_quality(PictureParentControlSet *pcs_ptr, const dou
         active_mbs;
     int rate_err_tol = AOMMIN(rc_cfg->under_shoot_pct, rc_cfg->over_shoot_pct);
 
+#if !CLN_2PASS
     twopass_update_bpm_factor(twopass);
+#endif
     // Try and pick a max Q that will be high enough to encode the
     // content at the given rate.
     int q = find_qindex_by_rate_with_correction(
@@ -398,6 +412,7 @@ static void accumulate_frame_motion_stats(const FIRSTPASS_STATS *stats,
 
   // Accumulate Motion In/Out of frame stats.
   gf_stats->this_frame_mv_in_out = stats->mv_in_out_count * pct;
+#if !CLN_2PASS
   gf_stats->mv_in_out_accumulator += gf_stats->this_frame_mv_in_out;
   gf_stats->abs_mv_in_out_accumulator += fabs(gf_stats->this_frame_mv_in_out);
 
@@ -414,6 +429,7 @@ static void accumulate_frame_motion_stats(const FIRSTPASS_STATS *stats,
     gf_stats->mv_ratio_accumulator +=
         pct * (mvc_ratio < stats->mvc_abs ? mvc_ratio : stats->mvc_abs);
   }
+#endif
 }
 
 static void accumulate_this_frame_stats(const FIRSTPASS_STATS *stats,
@@ -435,6 +451,7 @@ static void accumulate_next_frame_stats(const FIRSTPASS_STATS *stats,
                                         GF_GROUP_STATS *gf_stats) {
   accumulate_frame_motion_stats(stats, gf_stats);
   // sum up the metric values of current gf group
+#if !CLN_2PASS
   gf_stats->avg_sr_coded_error += stats->sr_coded_error;
   gf_stats->avg_tr_coded_error += stats->tr_coded_error;
   gf_stats->avg_pcnt_second_ref += stats->pcnt_second_ref;
@@ -444,14 +461,19 @@ static void accumulate_next_frame_stats(const FIRSTPASS_STATS *stats,
     gf_stats->non_zero_stdev_count++;
     gf_stats->avg_raw_err_stdev += stats->raw_error_stdev;
   }
+#endif
 
   // Accumulate the effect of prediction quality decay
   if (!flash_detected) {
+#if CLN_2PASS
+    gf_stats->decay_accumulator *= get_prediction_decay_rate(frame_info, stats);;
+#else
     gf_stats->last_loop_decay_rate = gf_stats->loop_decay_rate;
     gf_stats->loop_decay_rate = get_prediction_decay_rate(frame_info, stats);
 
     gf_stats->decay_accumulator =
         gf_stats->decay_accumulator * gf_stats->loop_decay_rate;
+#endif
 
     // Monitor for static sections.
     if ((frames_since_key + cur_idx - 1) > 1) {
@@ -462,6 +484,7 @@ static void accumulate_next_frame_stats(const FIRSTPASS_STATS *stats,
   }
 }
 
+#if !CLN_2PASS
 static void average_gf_stats(const int total_frame,
                              const FIRSTPASS_STATS *last_stat,
                              GF_GROUP_STATS *gf_stats) {
@@ -484,6 +507,7 @@ static void average_gf_stats(const int total_frame,
   if (gf_stats->non_zero_stdev_count)
     gf_stats->avg_raw_err_stdev /= gf_stats->non_zero_stdev_count;
 }
+#endif
 
 #define BOOST_FACTOR 12.5
 static double baseline_err_per_mb(const FrameInfo *frame_info) {
@@ -999,12 +1023,17 @@ static void init_gf_stats(GF_GROUP_STATS *gf_stats) {
   gf_stats->gf_group_skip_pct = 0.0;
   gf_stats->gf_group_inactive_zone_rows = 0.0;
 
+#if !CLN_2PASS
   gf_stats->mv_ratio_accumulator = 0.0;
+#endif
   gf_stats->decay_accumulator = 1.0;
   gf_stats->zero_motion_accumulator = 1.0;
+#if !CLN_2PASS
   gf_stats->loop_decay_rate = 1.0;
   gf_stats->last_loop_decay_rate = 1.0;
+#endif
   gf_stats->this_frame_mv_in_out = 0.0;
+#if !CLN_2PASS
   gf_stats->mv_in_out_accumulator = 0.0;
   gf_stats->abs_mv_in_out_accumulator = 0.0;
 
@@ -1016,6 +1045,7 @@ static void init_gf_stats(GF_GROUP_STATS *gf_stats) {
   gf_stats->avg_new_mv_count = 0.0;
   gf_stats->avg_raw_err_stdev = 0.0;
   gf_stats->non_zero_stdev_count = 0;
+#endif
 }
 // function from gop_structure.c
 // Set parameters for frames between 'start' and 'end' (excluding both).
@@ -1411,7 +1441,9 @@ static void define_gf_group(PictureParentControlSet *pcs_ptr, FIRSTPASS_STATS *t
 
   GF_GROUP_STATS gf_stats;
   init_gf_stats(&gf_stats);
+#if !CLN_2PASS
   GF_FRAME_STATS first_frame_stats;
+#endif
 
   const int can_disable_arf = (gf_cfg->gf_min_pyr_height == MIN_PYRAMID_LVL);
 
@@ -1421,16 +1453,22 @@ static void define_gf_group(PictureParentControlSet *pcs_ptr, FIRSTPASS_STATS *t
 
   // Note the error of the frame at the start of the group. This will be
   // the GF frame error if we code a normal gf.
+#if !CLN_2PASS
   first_frame_stats.frame_err = mod_frame_err;
   first_frame_stats.frame_coded_error = this_frame->coded_error;
   first_frame_stats.frame_sr_coded_error = this_frame->sr_coded_error;
   first_frame_stats.frame_tr_coded_error = this_frame->tr_coded_error;
+#endif
 
   // If this is a key frame or the overlay from a previous arf then
   // the error score / cost of this frame has already been accounted for.
   // There is no overlay support for now
   if (is_intra_only) {
+#if CLN_2PASS
+    gf_stats.gf_group_err -= mod_frame_err;
+#else
     gf_stats.gf_group_err -= first_frame_stats.frame_err;
+#endif
 #if GROUP_ADAPTIVE_MAXQ
     gf_stats.gf_group_raw_error -= this_frame->coded_error;
 #endif
@@ -1487,7 +1525,9 @@ static void define_gf_group(PictureParentControlSet *pcs_ptr, FIRSTPASS_STATS *t
                       //    : cm->mi_params.MBs;
   assert(num_mbs > 0);
 #endif
+#if !CLN_2PASS
   average_gf_stats(i, &next_frame, &gf_stats);
+#endif
 #if !RFCTR_RC_P1
   // Disable internal ARFs for "still" gf groups.
   //   zero_motion_accumulator: minimum percentage of (0,0) motion;
@@ -1683,9 +1723,11 @@ static void define_gf_group(PictureParentControlSet *pcs_ptr, FIRSTPASS_STATS *t
         rc->baseline_gf_interval);
   }
 
+#if !CLN_2PASS
   // Reset rolling actual and target bits counters for ARF groups.
   twopass->rolling_arf_group_target_bits = 1;
   twopass->rolling_arf_group_actual_bits = 1;
+#endif
 
 #if FTR_NEW_MULTI_PASS
 #if TUNE_MULTI_PASS
@@ -2258,15 +2300,23 @@ static int calc_avg_stats(PictureParentControlSet *pcs_ptr, FIRSTPASS_STATS *avg
       avg_frame_stat->inactive_zone_rows / num_frames;
   avg_frame_stat->inactive_zone_cols =
       avg_frame_stat->inactive_zone_cols / num_frames;
+#if !CLN_2PASS
   avg_frame_stat->MVr = avg_frame_stat->MVr / num_frames;
+#endif
   avg_frame_stat->mvr_abs = avg_frame_stat->mvr_abs / num_frames;
+#if !CLN_2PASS
   avg_frame_stat->MVc = avg_frame_stat->MVc / num_frames;
+#endif
   avg_frame_stat->mvc_abs = avg_frame_stat->mvc_abs / num_frames;
+#if !CLN_2PASS
   avg_frame_stat->MVrv = avg_frame_stat->MVrv / num_frames;
   avg_frame_stat->MVcv = avg_frame_stat->MVcv / num_frames;
+#endif
   avg_frame_stat->mv_in_out_count =
       avg_frame_stat->mv_in_out_count / num_frames;
+#if !CLN_2PASS
   avg_frame_stat->new_mv_count = avg_frame_stat->new_mv_count / num_frames;
+#endif
   avg_frame_stat->count = avg_frame_stat->count / num_frames;
   avg_frame_stat->duration = avg_frame_stat->duration / num_frames;
 
@@ -2625,14 +2675,20 @@ static void process_first_pass_stats(PictureParentControlSet *pcs_ptr,
   RATE_CONTROL *const rc = &encode_context_ptr->rc;
   const RateControlCfg *const rc_cfg = &encode_context_ptr->rc_cfg;
 #if FTR_OPT_MPASS_DOWN_SAMPLE
+#if !CLN_2PASS
   uint32_t mb_cols;
+#endif
   uint32_t mb_rows;
   if (is_middle_pass_ds(scs_ptr)) {
+#if !CLN_2PASS
       mb_cols = 2*(scs_ptr->seq_header.max_frame_width + 16 - 1) / 16;
+#endif
       mb_rows = 2*(scs_ptr->seq_header.max_frame_height + 16 - 1) / 16;
   }
   else {
+#if !CLN_2PASS
       mb_cols = (scs_ptr->seq_header.max_frame_width + 16 - 1) / 16;
+#endif
       mb_rows = (scs_ptr->seq_header.max_frame_height + 16 - 1) / 16;
   }
 #else
@@ -2737,6 +2793,7 @@ static void process_first_pass_stats(PictureParentControlSet *pcs_ptr,
   }
   if (err == EOF) return;
 
+#if !CLN_2PASS
   {
     const int num_mbs = mb_cols * mb_rows;
                         //(cpi->oxcf.resize_cfg.resize_mode != RESIZE_NONE)
@@ -2746,6 +2803,7 @@ static void process_first_pass_stats(PictureParentControlSet *pcs_ptr,
     // applied when combining MB error values for the frame.
     twopass->mb_av_energy = log1p(this_frame->intra_error / num_mbs);
   }
+#endif
 
   // Update the total stats remaining structure.
   if (twopass->stats_buf_ctx->total_left_stats)
@@ -3194,7 +3252,9 @@ void svt_av1_init_single_pass_lap(SequenceControlSet *scs_ptr) {
     set_rc_param(scs_ptr);
 
     // This variable monitors how far behind the second ref update is lagging.
+#if !CLN_2PASS
     twopass->sr_update_lag = 1;
+#endif
 
     twopass->bits_left = 0;
     twopass->modified_error_min = 0.0;
@@ -3211,12 +3271,15 @@ void svt_av1_init_single_pass_lap(SequenceControlSet *scs_ptr) {
     twopass->kf_zeromotion_pct = 100;
     twopass->last_kfgroup_zeromotion_pct = 100;
 
+#if !CLN_2PASS
     // Initialize bits per macro_block estimate correction factor.
     twopass->bpm_factor = 1.0;
+
     // Initialize actual and target bits counters for ARF groups so that
     // at the start we have a neutral bpm adjustment.
     twopass->rolling_arf_group_target_bits = 1;
     twopass->rolling_arf_group_actual_bits = 1;
+#endif
 }
 void svt_av1_init_second_pass(SequenceControlSet *scs_ptr) {
   TWO_PASS *const twopass = &scs_ptr->twopass;
@@ -3260,8 +3323,10 @@ void svt_av1_init_second_pass(SequenceControlSet *scs_ptr) {
   twopass->bits_left =
       (int64_t)(stats->duration * (int64_t)scs_ptr->static_config.target_bit_rate / 10000000.0);
 
+#if !CLN_2PASS
   // This variable monitors how far behind the second ref update is lagging.
   twopass->sr_update_lag = 1;
+#endif
 #if FTR_NEW_MULTI_PASS
 #if FTR_MULTI_PASS_API
 #if TUNE_MULTI_PASS
@@ -3300,12 +3365,15 @@ void svt_av1_init_second_pass(SequenceControlSet *scs_ptr) {
   twopass->kf_zeromotion_pct = 100;
   twopass->last_kfgroup_zeromotion_pct = 100;
 
+#if !CLN_2PASS
   // Initialize bits per macro_block estimate correction factor.
   twopass->bpm_factor = 1.0;
+
   // Initialize actual and target bits counters for ARF groups so that
   // at the start we have a neutral bpm adjustment.
   twopass->rolling_arf_group_target_bits = 1;
   twopass->rolling_arf_group_actual_bits = 1;
+#endif
 }
 #if FIX_VBR_R2R
 /*********************************************************************************************
@@ -3384,8 +3452,10 @@ void svt_av1_twopass_postencode_update(PictureParentControlSet *ppcs_ptr) {
   // or group of frames.
   rc->vbr_bits_off_target += ppcs_ptr->base_frame_target - ppcs_ptr->projected_frame_size;
   // Target vs actual bits for this arf group.
+#if !CLN_2PASS
   twopass->rolling_arf_group_target_bits += ppcs_ptr->this_frame_target;
   twopass->rolling_arf_group_actual_bits += ppcs_ptr->projected_frame_size;
+#endif
   // Calculate the pct rc error.
   if (rc->total_actual_bits) {
     rc->rate_error_estimate =
