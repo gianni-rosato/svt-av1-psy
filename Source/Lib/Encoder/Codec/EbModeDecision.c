@@ -37,6 +37,8 @@
         SVT_LOG(" ERROR: reaching limit for MODE_DECISION_CANDIDATE_MAX_COUNT %i\n", cnt); \
     MULTI_LINE_MACRO_END
 
+#define SUPERRES_INVALID_STATE 0x7fffffff
+
 int8_t av1_ref_frame_type(const MvReferenceFrame *const rf);
 int    av1_filter_intra_allowed_bsize(uint8_t enable_filter_intra, BlockSize bs);
 
@@ -5200,7 +5202,7 @@ uint32_t get_blk_tuned_full_lambda(struct ModeDecisionContext *context_ptr, Pict
     // This function's counterpart in AOM, av1_get_hier_tpl_rdmult, will encounter division by zero
     if (base_block_count == 0) {
         // return a large number to indicate invalid state
-        return 0x7fffffff;
+        return SUPERRES_INVALID_STATE;
     }
 
     geom_mean_of_scale = exp(geom_mean_of_scale / base_block_count);
