@@ -7133,7 +7133,11 @@ void set_lpd1_ctrls(ModeDecisionContext *ctx, uint8_t lpd1_lvl) {
 #endif
 #if RFCT_ME8X8
 // use this function to set the disallow_below_16x16 level and to set the accompanying enable_me_8x8 level
+#if CLN_RES_DISALLOW_B16
+uint8_t get_disallow_below_16x16_picture_level(EbEncMode enc_mode, EbInputResolution resolution, EB_SLICE slice_type, uint8_t sc_class1, uint8_t is_used_as_reference_flag, uint8_t temporal_layer_index) {
+#else
 uint8_t get_disallow_below_16x16_picture_level(EbEncMode enc_mode, EbInputResolution resolution, EB_SLICE slice_type, uint8_t sc_class1) {
+#endif
 
     uint8_t disallow_below_16x16 = 0;
 
@@ -7141,8 +7145,16 @@ uint8_t get_disallow_below_16x16_picture_level(EbEncMode enc_mode, EbInputResolu
         disallow_below_16x16 = 0;
     else if (enc_mode <= ENC_M7)
         disallow_below_16x16 = 0;
+#if CLN_RES_DISALLOW_B16
+    else if (enc_mode <= ENC_M8)
+        disallow_below_16x16 = is_used_as_reference_flag ? 0 : 1;
+#endif
     else if (enc_mode <= ENC_M11)
+#if CLN_RES_DISALLOW_B16
+        disallow_below_16x16 = (resolution <= INPUT_SIZE_480p_RANGE) ? (temporal_layer_index == 0 ? 0 : 1) : ((slice_type == I_SLICE) ? 0 : 1);
+#else
         disallow_below_16x16 = (resolution <= INPUT_SIZE_720p_RANGE) ? 0 : ((slice_type == I_SLICE) ? 0 : 1);
+#endif
     else
         disallow_below_16x16 = (slice_type == I_SLICE) ? 0 : 1;
 

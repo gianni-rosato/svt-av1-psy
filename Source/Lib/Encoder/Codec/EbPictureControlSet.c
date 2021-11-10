@@ -27,7 +27,11 @@ void *svt_aom_malloc(size_t size);
 EbErrorType svt_av1_alloc_restoration_buffers(PictureControlSet *pcs , Av1Common *cm);
 EbErrorType svt_av1_hash_table_create(HashTable *p_hash_table);
 #if RFCT_ME8X8
+#if CLN_RES_DISALLOW_B16
+uint8_t get_disallow_below_16x16_picture_level(EbEncMode enc_mode, EbInputResolution resolution, EB_SLICE slice_type, uint8_t sc_class1, uint8_t is_used_as_reference_flag, uint8_t temporal_layer_index);
+#else
 uint8_t get_disallow_below_16x16_picture_level(EbEncMode enc_mode, EbInputResolution resolution, EB_SLICE slice_type, uint8_t sc_class1);
+#endif
 #endif
 
 static void set_restoration_unit_size(int32_t width, int32_t height, int32_t sx, int32_t sy,
@@ -146,7 +150,11 @@ EbErrorType me_sb_results_ctor(MeSbResults *obj_ptr, PictureControlSetInitData *
 #if FTR_M13
 #if RFCT_ME8X8
     uint8_t number_of_pus = get_enable_me_16x16(init_data_ptr->enc_mode) ?
+#if CLN_RES_DISALLOW_B16
+        !get_disallow_below_16x16_picture_level(init_data_ptr->enc_mode, resolution, B_SLICE, 0, 1, 0) ? SQUARE_PU_COUNT : MAX_SB64_PU_COUNT_NO_8X8 :
+#else
         !get_disallow_below_16x16_picture_level(init_data_ptr->enc_mode, resolution, B_SLICE, 0) ? SQUARE_PU_COUNT : MAX_SB64_PU_COUNT_NO_8X8 :
+#endif
         MAX_SB64_PU_COUNT_WO_16X16;
 #else
     uint8_t number_of_pus = get_enable_me_16x16(init_data_ptr->enc_mode) ?
@@ -1831,7 +1839,11 @@ EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr,
     EbInputResolution resolution;
     derive_input_resolution(&resolution, init_data_ptr->picture_width * init_data_ptr->picture_height);
 #if RFCT_ME8X8
+#if CLN_RES_DISALLOW_B16
+    object_ptr->enable_me_8x8 = !get_disallow_below_16x16_picture_level(init_data_ptr->enc_mode, resolution, B_SLICE, 0, 1, 0);
+#else
     object_ptr->enable_me_8x8 = !get_disallow_below_16x16_picture_level(init_data_ptr->enc_mode, resolution, B_SLICE, 0);
+#endif
 #else
     object_ptr->enable_me_8x8 = get_enable_me_8x8(init_data_ptr->enc_mode, resolution);
 #endif

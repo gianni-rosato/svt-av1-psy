@@ -254,7 +254,11 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
 #if TUNE_M9_SLOW
 #if TUNE_M10_M0 && !TUNE_M9_M10 || TUNE_M8_M11_MT
 #if TUNE_M11_SLOWDOWN
+#if CLN_RES_ME_BIS
+    else if (pcs_ptr->enc_mode <= ENC_M10) {
+#else
     else if (pcs_ptr->enc_mode <= ENC_M11) {
+#endif
 #else
     else if (pcs_ptr->enc_mode <= ENC_M10) {
 #endif
@@ -272,10 +276,24 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
         else {
 #endif
 #if TUNE_MATCH_04_M8
+#if CLN_RES_ME
+            if (pcs_ptr->input_resolution < INPUT_SIZE_1080p_RANGE) {
+                me_context_ptr->search_area_width = me_context_ptr->search_area_height = 8;
+                me_context_ptr->max_me_search_width = 24;
+                me_context_ptr->max_me_search_height = 12;
+            }
+            else {
+                me_context_ptr->search_area_width = 8;
+                me_context_ptr->search_area_height = 5;
+                me_context_ptr->max_me_search_width = 16;
+                me_context_ptr->max_me_search_height = 9;
+            }
+#else
             me_context_ptr->search_area_width = 8;
             me_context_ptr->search_area_height = 5;
             me_context_ptr->max_me_search_width = 16;
             me_context_ptr->max_me_search_height = 9;
+#endif
 #else
             me_context_ptr->search_area_width = 16;
             me_context_ptr->search_area_height = 5;
@@ -285,6 +303,14 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
 #if !FTR_2PASS_1PASS_UNIFICATION
         }
 #endif
+    }
+#endif
+#if CLN_RES_ME_BIS
+    else if (pcs_ptr->enc_mode <= ENC_M11) {
+        me_context_ptr->search_area_width = 8;
+        me_context_ptr->search_area_height = 5;
+        me_context_ptr->max_me_search_width = 16;
+        me_context_ptr->max_me_search_height = 9;
     }
 #endif
 #if !TUNE_M10_M0

@@ -761,6 +761,22 @@ NOTE : PART OF LIGHT_PD0_2  code was committed to svt-04-final-rebased under OPT
 #define CLN_DEPTH_REMOVAL_SIG                 1 // Move depth_removal_level signal from SB to Pic Level - Lossless
 #define CLN_BLOCK_BASED_DEPTH_SIG             1 // Move block_based_depth_refinement_level signal from SB to Pic Level - Lossless
 #define CLN_LPD1_LVL_SIG                      1 // Move lpd1_lvl signal from SB to Pic Level - Lossless
+
+
+#define IMPROVE_PRESET_SPACING                1 // Improve spacing between the presets
+#if IMPROVE_PRESET_SPACING
+#define CLN_RES_CHECKS                        1
+#define CLN_RES_CDEF                          1
+#define CLN_RES_TXT                           1
+#define CLN_RES_ME                            1
+#define CLN_RES_IFS                           1
+#define CLN_RES_DP                            1
+#define CLN_RES_DISALLOW_B16                  1
+#define CLN_RES_DEPTH_REMOVAL                 1
+#define CLN_RES_ME_BIS                        1
+#define CLN_RES_LPD1_BIS                      1
+#endif
+
 #endif
 
 #define TUNE_M9_M13                           1 // tune both M9 and M13 for better slopes, will affect stream for M6-M8 also

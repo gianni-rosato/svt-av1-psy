@@ -2272,9 +2272,14 @@ EbErrorType signal_derivation_multi_processes_oq(
 #endif
 #endif
 #if CLN_M6_M12_FEATURES
+#if !CLN_RES_CDEF
             else if (pcs_ptr->enc_mode <= ENC_M8)
+#endif
+
 #if TUNE_M9_M13
+#if !CLN_RES_CDEF
                 pcs_ptr->cdef_level = (scs_ptr->input_resolution <= INPUT_SIZE_720p_RANGE) ? 8 : (pcs_ptr->temporal_layer_index == 0 ? 8 : 9);
+#endif
 #else
                 pcs_ptr->cdef_level = (scs_ptr->input_resolution <= INPUT_SIZE_720p_RANGE) ? 8 : 9;
 #endif
