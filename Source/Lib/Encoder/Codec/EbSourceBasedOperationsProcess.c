@@ -4044,7 +4044,7 @@ void *tpl_disp_kernel(void *input_ptr) {
         // Tiles path does not suupport segments
         for (uint32_t sb_index = 0; sb_index < pcs_ptr->sb_total_count; ++sb_index) {
 #if OPT_TPL_64X64_32X32
-            SbParams *sb_params = &scs_ptr->sb_params_array[context_ptr->sb_index];
+            SbParams *sb_params = &scs_ptr->sb_params_array[sb_index];
             tpl_mc_flow_dispenser_sb_generic(
                 pcs_ptr->scs_ptr->encode_context_ptr,
                 scs_ptr,
