@@ -1212,11 +1212,9 @@ static void calc_superres_params(superres_params_type *spr_params, SequenceContr
     uint8_t superres_qthres = quantizer_to_qindex[scs_ptr->static_config.superres_qthres];
     uint8_t superres_kf_qthres = quantizer_to_qindex[scs_ptr->static_config.superres_kf_qthres];
 
-    // super-res can only be enabled in case allow_intrabc is disabled and
-    // loop restoration is enabled
-    if (frm_hdr->allow_intrabc || !scs_ptr->seq_header.enable_restoration) {
+    // super-res can only be enabled in case allow_intrabc is disabled
+    if (frm_hdr->allow_intrabc)
         return;
-    }
 
     switch (superres_mode) {
     case SUPERRES_NONE: spr_params->superres_denom = SCALE_NUMERATOR; break;

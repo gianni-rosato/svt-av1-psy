@@ -2605,11 +2605,6 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
             SVT_WARN("intrabc will be disabled when super resolution is enabled!\n");
             scs_ptr->static_config.intrabc_mode = 0;
         }
-        if (scs_ptr->static_config.enable_restoration_filtering != 1) {
-            // loop restoration is forced enable when super-res is on
-            SVT_INFO("loop restoration will be enabled when super resolution is enabled!\n");
-            scs_ptr->static_config.enable_restoration_filtering = 1;
-        }
         if (scs_ptr->static_config.tile_rows || scs_ptr->static_config.tile_columns) {
             // disable tiles if super-res is on
             SVT_WARN("Tiles will be disabled when super resolution is enabled!\n");
