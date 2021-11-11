@@ -2644,16 +2644,7 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
             scs_ptr->static_config.super_block_size = 64;
     if (scs_ptr->static_config.rate_control_mode && !use_input_stat(scs_ptr) && !scs_ptr->lap_enabled)
         scs_ptr->static_config.super_block_size = 64;
-    // preset mode 0~2 use SB_SIZE_128, there is mismatch between scs_ptr->sb_tot_cnt and
-    // ppcs_ptr->sb_total_count after scaling, the clean up of different sb size and sb cnt
-    // is TBD; involves:
-    // scs_ptr->sb_tot_cnt
-    // pcs_ptr->sb_total_count
-    // ppcs_ptr->sb_total_count
-    // pcs_ptr->sb_total_count_pix
-    // ppcs_ptr->sb_total_count_pix
-    if (scs_ptr->static_config.superres_mode > SUPERRES_NONE)
-        scs_ptr->static_config.super_block_size = 64;
+
     // scs_ptr->static_config.hierarchical_levels = (scs_ptr->static_config.rate_control_mode > 1) ? 3 : scs_ptr->static_config.hierarchical_levels;
     if (use_output_stat(scs_ptr))
         scs_ptr->static_config.hierarchical_levels = 0;

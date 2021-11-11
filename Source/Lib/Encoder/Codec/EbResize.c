@@ -1351,10 +1351,10 @@ void scale_pcs_params(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_
     pcs_ptr->aligned_height = aligned_height;
 
     // number of SBs
-    const uint16_t picture_sb_width  = (uint16_t)((aligned_width + scs_ptr->sb_sz - 1) /
-                                                 scs_ptr->sb_sz);
-    const uint16_t picture_sb_height = (uint16_t)((aligned_height + scs_ptr->sb_sz - 1) /
-                                                  scs_ptr->sb_sz);
+    const uint16_t picture_sb_width  = (uint16_t)((aligned_width + scs_ptr->sb_size_pix - 1) /
+                                                 scs_ptr->sb_size_pix);
+    const uint16_t picture_sb_height = (uint16_t)((aligned_height + scs_ptr->sb_size_pix - 1) /
+                                                  scs_ptr->sb_size_pix);
 
     pcs_ptr->picture_sb_width  = picture_sb_width; // TODO: use this instead of re-computing
     pcs_ptr->picture_sb_height = picture_sb_height;
@@ -1362,10 +1362,7 @@ void scale_pcs_params(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_
     pcs_ptr->sb_total_count = picture_sb_width * picture_sb_height;
 
     // mi params
-    const uint16_t picture_sb_pix_width = (uint16_t)((aligned_width + scs_ptr->sb_size_pix - 1) /
-                                                     scs_ptr->sb_size_pix);
-
-    cm->mi_stride = picture_sb_pix_width * (scs_ptr->sb_size_pix >> MI_SIZE_LOG2);
+    cm->mi_stride = picture_sb_width * (scs_ptr->sb_size_pix >> MI_SIZE_LOG2);
     cm->mi_cols   = aligned_width >> MI_SIZE_LOG2;
     cm->mi_rows   = aligned_height >> MI_SIZE_LOG2;
 
