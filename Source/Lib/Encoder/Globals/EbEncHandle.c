@@ -3277,7 +3277,7 @@ static EbErrorType verify_settings(
         return_error = EB_ErrorBadParameter;
     }
 
-    if (config->intrabc_mode != -1 && config->screen_content_mode != 1) {
+    if (config->intrabc_mode > 0 && config->screen_content_mode != 1) {
         SVT_LOG("Error instance %u: The intra BC feature is only available when screen_content_mode is set to 1\n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
