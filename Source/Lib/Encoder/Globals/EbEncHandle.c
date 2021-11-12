@@ -2600,11 +2600,6 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
             }
         }
 
-        if (scs_ptr->static_config.intrabc_mode != 0) {
-            // disable intrabc if super-res is on
-            SVT_WARN("intrabc will be disabled when super resolution is enabled!\n");
-            scs_ptr->static_config.intrabc_mode = 0;
-        }
         if (scs_ptr->static_config.tile_rows || scs_ptr->static_config.tile_columns) {
             // disable tiles if super-res is on
             SVT_WARN("Tiles will be disabled when super resolution is enabled!\n");
