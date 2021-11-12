@@ -795,6 +795,7 @@ NOTE : PART OF LIGHT_PD0_2  code was committed to svt-04-final-rebased under OPT
 #define OPT_SBO_CALC_FACTORS                  1 //lossless optimization of SourceBaseOperations
 #define OPT_CALC_TPL_MC                       1 //lossless optimization of SourceBaseOperations
 #define CLN_2PASS                             1 //lossless cleanup 1 and 2 PASS structures and calculations
+#define TUNE_CAPPED_CRF                       1 // Improve the Capped CRF algorithm
 #endif //----------------------------------- all svt-05 features should be place are above this line -------------------------
 
 #if !PRIVATE_MACROS

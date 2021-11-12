@@ -1220,7 +1220,6 @@ typedef struct PictureParentControlSet {
 #if FTR_RC_CAP
     int                             max_frame_size;
 #endif
-
     int                             frames_to_key;
     int                             frames_since_key;
     int                             is_src_frame_alt_ref;

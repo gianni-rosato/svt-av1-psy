@@ -776,7 +776,6 @@ static int64_t calculate_total_gf_group_bits(PictureParentControlSet *pcs_ptr,
   twopass->kf_group_bits = AOMMAX(twopass->kf_group_bits - total_group_bits, 0);
   return total_group_bits;
 }
-
 // Calculate the number of bits to assign to boosted frames in a group.
 static int calculate_boost_bits(int frame_count, int boost,
                                 int64_t total_group_bits) {
@@ -2601,7 +2600,6 @@ static void find_next_key_frame(PictureParentControlSet *pcs_ptr, FIRSTPASS_STAT
         rc->kf_boost = AOMMIN(rc->kf_boost, MAX_KF_BOOST);
 #endif
     }
-
     // Work out how many bits to allocate for the key frame itself.
   // In case of LAP enabled for VBR, if the frames_to_key value is
   // very high, we calculate the bits based on a clipped value of
@@ -2949,7 +2947,11 @@ void svt_av1_get_second_pass_params(PictureParentControlSet *pcs_ptr) {
 #ifdef ARCH_X86_64
   aom_clear_system_state();
 #endif
+#if TUNE_CAPPED_CRF
+  if (encode_context_ptr->rc_cfg.mode == AOM_Q && scs_ptr->static_config.max_bit_rate == 0)
+#else
   if (encode_context_ptr->rc_cfg.mode == AOM_Q)
+#endif
     rc->active_worst_quality = encode_context_ptr->rc_cfg.cq_level;
   FIRSTPASS_STATS this_frame;
   av1_zero(this_frame);
@@ -3546,6 +3548,129 @@ void svt_av1_twopass_postencode_update(PictureParentControlSet *ppcs_ptr) {
   }
 }
 #if FTR_RC_CAP
+#if TUNE_CAPPED_CRF
+int gf_high_tpl_la = 2400;
+int gf_low_tpl_la = 300;
+int kf_high = 5000;
+int kf_low = 400;
+/******************************************************
+ * crf_assign_max_rate
+ * Assign the max frame size for capped VBR in base layer frames
+ * Update the qindex and active worse quality based on the already
+ *  spent bits in the sliding window
+ ******************************************************/
+void crf_assign_max_rate(PictureParentControlSet *ppcs_ptr) {
+    SequenceControlSet *scs_ptr = ppcs_ptr->scs_ptr;
+    EncodeContext *encode_context_ptr = scs_ptr->encode_context_ptr;
+    RATE_CONTROL *const rc = &encode_context_ptr->rc;
+
+    uint32_t frame_rate = ((scs_ptr->frame_rate + (1 << (RC_PRECISION - 1))) >>
+        RC_PRECISION);
+    int frames_in_sw = (int)rc->rate_average_periodin_frames;
+    int64_t spent_bits_sw = 0, available_bit_sw;
+    int coded_frames_num_sw = 0;
+    // Find the start and the end of the sliding window
+    int32_t start_index = ((ppcs_ptr->picture_number / frames_in_sw) * frames_in_sw) %
+        CODED_FRAMES_STAT_QUEUE_MAX_DEPTH;
+    int32_t end_index = start_index + frames_in_sw;
+    frames_in_sw = (scs_ptr->static_config.passes > 1) ? MIN(end_index, (int32_t)scs_ptr->twopass.stats_buf_ctx->total_stats->count) - start_index : frames_in_sw;
+    int64_t max_bits_sw = (int64_t)scs_ptr->static_config.max_bit_rate* (int32_t)frames_in_sw / frame_rate;
+
+    // Loop over the sliding window and calculated the spent bits
+    for (int index = start_index; index < end_index; index++) {
+        int32_t queue_entry_index = (index > CODED_FRAMES_STAT_QUEUE_MAX_DEPTH - 1)
+            ? index - CODED_FRAMES_STAT_QUEUE_MAX_DEPTH
+            : index;
+        coded_frames_stats_entry *queue_entry_ptr = rc->coded_frames_stat_queue[queue_entry_index];
+        spent_bits_sw += (queue_entry_ptr->frame_total_bit_actual > 0) ? queue_entry_ptr->frame_total_bit_actual : 0;
+        coded_frames_num_sw += (queue_entry_ptr->frame_total_bit_actual > 0) ? 1 : 0;
+    }
+    available_bit_sw = MAX(max_bits_sw - spent_bits_sw, 0);
+
+    int max_frame_size = 0;
+    // Based on the kf boost, calculate the frame size for I frames
+    if (ppcs_ptr->slice_type == I_SLICE) {
+        int kf_interval = scs_ptr->static_config.intra_period_length > 0 ? MIN(frames_in_sw, scs_ptr->static_config.intra_period_length + 1) : frames_in_sw;
+        max_frame_size = calculate_boost_bits(
+            kf_interval,
+            rc->kf_boost,
+            available_bit_sw);
+        int kf_low_thr = kf_low + (kf_high - kf_low) / 3;
+        if (rc->kf_boost > kf_low_thr)
+            max_frame_size = max_frame_size * 14 / 10;
+#if DEBUG_RC_CAP_LOG
+        printf("SW_POC:%lld\t%lld\t%lld\t%d\tboost:%d\n", ppcs_ptr->picture_number, max_bits_sw, available_bit_sw, max_frame_size, rc->kf_boost);
+#endif
+    }
+    // Based on the gfu boost, calculate the frame size for I frames
+    else if (ppcs_ptr->temporal_layer_index == 0) {
+        int64_t gf_group_bits = available_bit_sw * (int64_t)(1 << ppcs_ptr->hierarchical_levels) / (frames_in_sw - coded_frames_num_sw);
+        max_frame_size = calculate_boost_bits(
+            (1 << ppcs_ptr->hierarchical_levels),
+            rc->gfu_boost,
+            gf_group_bits);
+        int gfu_low_thr = gf_low_tpl_la + (gf_high_tpl_la - gf_low_tpl_la) / 3;
+        if (rc->gfu_boost > gfu_low_thr)
+            max_frame_size = max_frame_size * 12 / 10;
+#if DEBUG_RC_CAP_LOG
+        printf("SW_POC:%lld\t%lld\t%lld\t%d\tboost:%d\n", ppcs_ptr->picture_number, gf_group_bits, available_bit_sw, max_frame_size, rc->gfu_boost);
+#endif
+    }
+    FrameHeader *frm_hdr = &ppcs_ptr->frm_hdr;
+    int32_t new_qindex = frm_hdr->quantization_params.base_q_idx;
+    // Increase the qindex based on the status of the spent bits in the window
+    int remaining_frames = frames_in_sw - coded_frames_num_sw;
+    int available_bit_ratio = (int)(100 * available_bit_sw / max_bits_sw);
+    int available_frames_ratio = 100 * remaining_frames / frames_in_sw;
+    int buff_lvl_step = (OPTIMAL_BUFFER_LEVEL - CRITICAL_BUFFER_LEVEL);
+    int adjustment = 0;
+    if (available_bit_ratio <= OPTIMAL_BUFFER_LEVEL) {
+        if (available_bit_ratio > CRITICAL_BUFFER_LEVEL) {
+            int max_adjustment = (available_bit_ratio + 20 < available_frames_ratio) ? rc->active_worst_quality : rc->active_worst_quality / 2;
+            // Adjust up from assigned QP.
+            if (buff_lvl_step && available_bit_ratio < available_frames_ratio + 10) {
+                adjustment = (int)(max_adjustment *
+                    (OPTIMAL_BUFFER_LEVEL - available_bit_ratio) /
+                    buff_lvl_step);
+            }
+        }
+        else {
+            // Set to worst_quality if buffer is below critical level.
+            adjustment = rc->active_worst_quality;
+        }
+    }
+#if DEBUG_RC_CAP_LOG
+    printf("SW_POC:%lld\t%lld\t%lld\t%d%%\t%d%%\tadj:\t%d\n", ppcs_ptr->picture_number, max_bits_sw, available_bit_sw, available_bit_ratio, available_frames_ratio, adjustment);
+#endif
+    new_qindex += adjustment;
+    // Increase the active_worse_quality based on the adjustment
+    if (ppcs_ptr->temporal_layer_index == 0)
+        rc->active_worst_quality += (adjustment / 2);
+    // Decrease the active_worse_quality where undershoot happens and active_worst_quality is greater than the input QP
+    if (available_bit_ratio > available_frames_ratio + 20 && available_frames_ratio < 10 &&
+        rc->active_worst_quality > quantizer_to_qindex[(uint8_t)scs_ptr->static_config.qp]) {
+        rc->active_worst_quality -= rc->active_worst_quality / 10;
+    }
+    rc->active_worst_quality = CLIP3(
+        (int32_t)quantizer_to_qindex[(uint8_t)scs_ptr->static_config.qp],
+        (int32_t)quantizer_to_qindex[scs_ptr->static_config.max_qp_allowed],
+        rc->active_worst_quality);
+
+    frm_hdr->quantization_params.base_q_idx = (uint8_t)CLIP3(
+        (int32_t)quantizer_to_qindex[scs_ptr->static_config.min_qp_allowed],
+        (int32_t)quantizer_to_qindex[scs_ptr->static_config.max_qp_allowed],
+        (int32_t)(new_qindex));
+
+    ppcs_ptr->picture_qp = (uint8_t)CLIP3(
+        (int32_t)scs_ptr->static_config.min_qp_allowed,
+        (int32_t)scs_ptr->static_config.max_qp_allowed,
+        (frm_hdr->quantization_params.base_q_idx + 2) >> 2);
+
+    ppcs_ptr->max_frame_size = max_frame_size;
+    // The target is set to 80% of the max.
+    ppcs_ptr->this_frame_target = ppcs_ptr->max_frame_size * 8 / 10;
+}
+#else
 /******************************************************
  * crf_assign_max_rate
  * Assign the max frame size for capped VBR in base layer frames
@@ -3559,7 +3684,6 @@ void crf_assign_max_rate(PictureParentControlSet *ppcs_ptr) {
     uint32_t frame_rate = ((scs_ptr->frame_rate + (1 << (RC_PRECISION - 1))) >>
         RC_PRECISION);
     int frames_in_sw = (int)rc->rate_average_periodin_frames;
-
     int64_t max_bits_sw = (int64_t)scs_ptr->static_config.max_bit_rate* (int64_t)frames_in_sw / frame_rate;
     int64_t spent_bits_sw = 0, available_bit_sw;
     int coded_frames_num_sw = 0;
@@ -3587,10 +3711,9 @@ void crf_assign_max_rate(PictureParentControlSet *ppcs_ptr) {
             kf_interval,
             rc->kf_boost,
             available_bit_sw);
-
         max_frame_size = max_frame_size * 12 / 10;
 #if DEBUG_RC_CAP_LOG
-        printf("SW_POC:%lld\t%lld\t%lld\t%d\n", ppcs_ptr->picture_number, max_bits_sw, available_bit_sw, max_frame_size);
+        printf("SW_POC:%lld\t%lld\t%lld\t%d\tboost:%d\n", ppcs_ptr->picture_number, max_bits_sw, available_bit_sw, max_frame_size, rc->kf_boost);
 #endif
     }
     // Based on the gfu boost, calculate the frame size for I frames
@@ -3601,10 +3724,11 @@ void crf_assign_max_rate(PictureParentControlSet *ppcs_ptr) {
             rc->gfu_boost,
             gf_group_bits);
 #if DEBUG_RC_CAP_LOG
-        printf("SW_POC:%lld\t%lld\t%lld\t%d\n", ppcs_ptr->picture_number, gf_group_bits, available_bit_sw, max_frame_size);
+        printf("SW_POC:%lld\t%lld\t%lld\t%d\tboost:%d\n", ppcs_ptr->picture_number, gf_group_bits, available_bit_sw, max_frame_size, rc->gfu_boost);
 #endif
     }
-    else {
+    else
+    {
         FrameHeader *frm_hdr = &ppcs_ptr->frm_hdr;
         int32_t new_qindex = frm_hdr->quantization_params.base_q_idx;
         // Increase the qindex based on the status of the spent bits in the window
@@ -3629,4 +3753,5 @@ void crf_assign_max_rate(PictureParentControlSet *ppcs_ptr) {
     // The target is set to 80% of the max.
     ppcs_ptr->this_frame_target = ppcs_ptr->max_frame_size * 8 / 10;
 }
+#endif
 #endif

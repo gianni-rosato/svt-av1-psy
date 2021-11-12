@@ -541,12 +541,10 @@ static int rtc_minq_12[QINDEX_RANGE] = {
         216, 218, 219, 221, 222, 224, 225, 227, 229, 230, 232, 234, 235, 237, 239,
         241};
 #endif
-
 static int gf_high_tpl_la = 2400;
 static int gf_low_tpl_la  = 300;
 static int kf_high        = 5000;
 static int kf_low         = 400;
-
 static int get_active_quality(int q, int gfu_boost, int low, int high, int *low_motion_minq,
                               int *high_motion_minq) {
     if (gfu_boost > high)
@@ -2906,7 +2904,160 @@ static double av1_get_compression_ratio(PictureParentControlSet *ppcs_ptr,
     const size_t uncompressed_frame_size = (luma_pic_size * pic_size_profile_factor) >> 3;
     return uncompressed_frame_size / (double)encoded_frame_size;
 }
+#if TUNE_CAPPED_CRF
+/**************************************************************************************************************
+* get_kf_q_tpl()
+* This function finds the q for a selected active quality for key frame. The functionality is the
+* reverse of get_kf_active_quality_tpl()
+**************************************************************************************************************/
+static int get_kf_q_tpl(const RATE_CONTROL *const rc, int target_active_quality, AomBitDepth bit_depth) {
+    int *kf_low_motion_minq_cqp;
+    int *kf_high_motion_minq;
+    ASSIGN_MINQ_TABLE(bit_depth, kf_low_motion_minq_cqp);
+    ASSIGN_MINQ_TABLE(bit_depth, kf_high_motion_minq);
+    int q = rc->active_worst_quality;
+    int active_quality = get_active_quality(
+        q, rc->kf_boost, kf_low, kf_high, kf_low_motion_minq_cqp, kf_high_motion_minq);
+    int prev_dif = abs(target_active_quality - active_quality);
+    while (abs(target_active_quality - active_quality) > 4 && abs(target_active_quality - active_quality) <= prev_dif) {
+        if (active_quality > target_active_quality)
+            q--;
+        else
+            q++;
+        active_quality = get_active_quality(
+            q, rc->kf_boost, kf_low, kf_high, kf_low_motion_minq_cqp, kf_high_motion_minq);
 
+    }
+    return q;
+}
+/**************************************************************************************************************
+*This function finds the q for a selected active quality for base layer frames. The functionality is the reverse of get_kf_active_quality_tpl()
+**************************************************************************************************************/
+static int get_gfu_q_tpl(const RATE_CONTROL *const rc, int target_active_quality, AomBitDepth bit_depth) {
+
+    int *arfgf_low_motion_minq;
+    int *arfgf_high_motion_minq;
+    ASSIGN_MINQ_TABLE(bit_depth, arfgf_low_motion_minq);
+    ASSIGN_MINQ_TABLE(bit_depth, arfgf_high_motion_minq);
+
+    int q = rc->active_worst_quality;
+    int active_quality = get_active_quality(
+        q, rc->gfu_boost, gf_low_tpl_la, gf_high_tpl_la, arfgf_low_motion_minq, arfgf_high_motion_minq);
+
+    int prev_dif = abs(target_active_quality - active_quality);
+    while (abs(target_active_quality - active_quality) > 4 && abs(target_active_quality - active_quality) <= prev_dif) {
+        if (active_quality > target_active_quality)
+            q--;
+        else
+            q++;
+        active_quality = get_active_quality(
+            q, rc->gfu_boost, gf_low_tpl_la, gf_high_tpl_la, arfgf_low_motion_minq, arfgf_high_motion_minq);
+
+    }
+    return q;
+}
+/**************************************************************************************************************
+* capped_crf_reencode()
+* This function performs re-encoding for capped CRF. It adjusts the QP, and active_worst_quality
+**************************************************************************************************************/
+static void capped_crf_reencode(PictureParentControlSet *ppcs_ptr, int *const q) {
+
+    SequenceControlSet *scs_ptr = ppcs_ptr->scs_ptr;
+    EncodeContext *encode_context_ptr = scs_ptr->encode_context_ptr;
+    RATE_CONTROL *const rc = &encode_context_ptr->rc;
+
+    if (ppcs_ptr->temporal_layer_index == 0 && ppcs_ptr->slice_type != 2) {
+        ppcs_ptr->gf_group_index = 1;
+        scs_ptr->encode_context_ptr->gf_group.update_type[ppcs_ptr->gf_group_index] = 6;
+    }
+    uint32_t frame_rate = ((scs_ptr->frame_rate + (1 << (RC_PRECISION - 1))) >>
+        RC_PRECISION);
+    int frames_in_sw = (int)rc->rate_average_periodin_frames;
+
+    int64_t spent_bits_sw = 0, available_bit_sw;
+    int coded_frames_num_sw = 0;
+    // Find the start and the end of the sliding window
+    int32_t start_index = ((ppcs_ptr->picture_number / frames_in_sw) * frames_in_sw) %
+        CODED_FRAMES_STAT_QUEUE_MAX_DEPTH;
+    int32_t end_index = start_index + frames_in_sw;
+    frames_in_sw = (scs_ptr->static_config.passes > 1) ? MIN(end_index, (int32_t)scs_ptr->twopass.stats_buf_ctx->total_stats->count) - start_index : frames_in_sw;
+    int64_t max_bits_sw = (int64_t)scs_ptr->static_config.max_bit_rate* (int32_t)frames_in_sw / frame_rate;
+    // Loop over the sliding window and calculated the spent bits
+    for (int index = start_index; index < end_index; index++) {
+        int32_t queue_entry_index = (index > CODED_FRAMES_STAT_QUEUE_MAX_DEPTH - 1)
+            ? index - CODED_FRAMES_STAT_QUEUE_MAX_DEPTH
+            : index;
+        coded_frames_stats_entry *queue_entry_ptr = rc->coded_frames_stat_queue[queue_entry_index];
+        spent_bits_sw += (queue_entry_ptr->frame_total_bit_actual > 0) ? queue_entry_ptr->frame_total_bit_actual : 0;
+        coded_frames_num_sw += (queue_entry_ptr->frame_total_bit_actual > 0) ? 1 : 0;
+    }
+    available_bit_sw = MAX(max_bits_sw - spent_bits_sw, 0);
+
+    int remaining_frames = frames_in_sw - coded_frames_num_sw;
+    int available_bit_ratio = (int)(100 * available_bit_sw / max_bits_sw);
+    int available_frames_ratio = 100 * remaining_frames / frames_in_sw;
+
+    int worst_quality = (int32_t)quantizer_to_qindex[scs_ptr->static_config.max_qp_allowed];
+    if (*q < worst_quality && ppcs_ptr->projected_frame_size > ppcs_ptr->max_frame_size &&
+        ppcs_ptr->temporal_layer_index == 0) {
+        int tmp_q;
+        int ref_qindex = rc->active_worst_quality;
+        const double ref_q = svt_av1_convert_qindex_to_q(ref_qindex, scs_ptr->encoder_bit_depth);
+        int64_t ref_bits = (int64_t)(ppcs_ptr->projected_frame_size);
+        int64_t target_bits = ppcs_ptr->max_frame_size;
+        int low = rc->best_quality;
+        int high = rc->worst_quality;
+
+        while (low < high) {
+            const int mid = (low + high) >> 1;
+            const double q_tmp1 = svt_av1_convert_qindex_to_q(mid, scs_ptr->encoder_bit_depth);
+            const int mid_bits =
+                (int)(ref_bits *ref_q / q_tmp1);
+
+            if (mid_bits > target_bits)
+                low = mid + 1;
+            else
+                high = mid;
+        }
+        tmp_q = low;
+
+        rc->active_worst_quality = CLIP3(
+            (int32_t)quantizer_to_qindex[scs_ptr->static_config.min_qp_allowed],
+            (int32_t)quantizer_to_qindex[scs_ptr->static_config.max_qp_allowed],
+            tmp_q);
+#if DEBUG_RC_CAP_LOG
+        if (ppcs_ptr->temporal_layer_index <= 0)
+            printf("Reencode POC:%lld\tQindex:%d\t%d\t%d\tWorseActive%d\t%d\t%d\n",
+                ppcs_ptr->picture_number,
+                ppcs_ptr->frm_hdr.quantization_params.base_q_idx,
+                ppcs_ptr->projected_frame_size,
+                ppcs_ptr->max_frame_size,
+                rc->active_worst_quality,
+                ppcs_ptr->bottom_index,
+                ppcs_ptr->top_index);
+#endif
+        ppcs_ptr->top_index = rc->active_worst_quality;
+        ppcs_ptr->q_high = rc->active_worst_quality;
+    }
+    // Decrease the active worse quality based on the projected frame size and max frame size
+    else if (ppcs_ptr->projected_frame_size < ppcs_ptr->max_frame_size &&
+        ppcs_ptr->temporal_layer_index == 0 && ppcs_ptr->loop_count == 0 &&
+        rc->active_worst_quality > quantizer_to_qindex[(uint8_t)scs_ptr->static_config.qp] &&
+        (available_bit_ratio > available_frames_ratio)) {
+        if (ppcs_ptr->projected_frame_size < ppcs_ptr->max_frame_size / 3)
+            rc->active_worst_quality -= (rc->active_worst_quality / 5);
+        else if (ppcs_ptr->projected_frame_size < ppcs_ptr->max_frame_size / 2)
+            rc->active_worst_quality -= (rc->active_worst_quality / 8);
+        else if (ppcs_ptr->projected_frame_size < 2 * ppcs_ptr->max_frame_size / 3)
+            rc->active_worst_quality -= (rc->active_worst_quality / 12);
+
+        rc->active_worst_quality = CLIP3(
+            (int32_t)quantizer_to_qindex[(uint8_t)scs_ptr->static_config.qp],
+            (int32_t)quantizer_to_qindex[scs_ptr->static_config.max_qp_allowed],
+            rc->active_worst_quality);
+    }
+}
+#endif
 static void av1_rc_compute_frame_size_bounds(PictureParentControlSet *ppcs_ptr, int frame_target,
                                              int *frame_under_shoot_limit,
                                              int *frame_over_shoot_limit) {
@@ -3084,6 +3235,13 @@ void recode_loop_update_q(PictureParentControlSet *ppcs_ptr, int *const loop, in
 #if FTR_RC_CAP
     // Used for capped CRF. Update the active worse quality
     if (rc_cfg->mode == AOM_Q && scs_ptr->static_config.max_bit_rate) {
+#if TUNE_CAPPED_CRF
+        if (ppcs_ptr->temporal_layer_index > 0)
+            return;
+        else
+            capped_crf_reencode(ppcs_ptr, q);
+    }
+#else
         if (ppcs_ptr->temporal_layer_index == 0 && ppcs_ptr->slice_type != 2) {
             ppcs_ptr->gf_group_index = 1;
             scs_ptr->encode_context_ptr->gf_group.update_type[ppcs_ptr->gf_group_index] = 6;
@@ -3109,7 +3267,6 @@ void recode_loop_update_q(PictureParentControlSet *ppcs_ptr, int *const loop, in
                 rc->active_worst_quality = rc->active_worst_quality + 2;
             else
                 rc->active_worst_quality = rc->active_worst_quality + 1;
-
             rc->active_worst_quality = CLIP3(
                 (int32_t)quantizer_to_qindex[scs_ptr->static_config.min_qp_allowed],
                 (int32_t)quantizer_to_qindex[scs_ptr->static_config.max_qp_allowed],
@@ -3125,11 +3282,11 @@ void recode_loop_update_q(PictureParentControlSet *ppcs_ptr, int *const loop, in
                     ppcs_ptr->bottom_index,
                     ppcs_ptr->top_index);
 #endif
-
         }
         // Decrease the active worse quality based on the projected frame size and max frame size
         else if (ppcs_ptr->projected_frame_size < ppcs_ptr->max_frame_size &&
             ppcs_ptr->temporal_layer_index == 0 && ppcs_ptr->loop_count == 0 &&
+
             rc->active_worst_quality > quantizer_to_qindex[(uint8_t)scs_ptr->static_config.qp]) {
             if (ppcs_ptr->projected_frame_size < 5 * ppcs_ptr->max_frame_size / 10)
                 rc->active_worst_quality = rc->active_worst_quality - 4;
@@ -3144,7 +3301,8 @@ void recode_loop_update_q(PictureParentControlSet *ppcs_ptr, int *const loop, in
         }
         else if (ppcs_ptr->temporal_layer_index > 0)
             return;
-    }
+        }
+#endif
 #else
     if (rc_cfg->mode == AOM_Q)
         return;
@@ -3248,6 +3406,21 @@ void recode_loop_update_q(PictureParentControlSet *ppcs_ptr, int *const loop, in
                         (int32_t)quantizer_to_qindex[scs_ptr->static_config.max_qp_allowed],
                         *q);
     *loop = (*q != last_q);
+#if TUNE_CAPPED_CRF
+    // Used for capped CRF. Update the active worse quality based on the final assigned qindex
+    if (rc_cfg->mode == AOM_Q && scs_ptr->static_config.max_bit_rate && *loop == 0 && ppcs_ptr->temporal_layer_index == 0 && ppcs_ptr->loop_count > 0) {
+
+        if (ppcs_ptr->slice_type == I_SLICE)
+            rc->active_worst_quality = get_kf_q_tpl(rc, *q, scs_ptr->static_config.encoder_bit_depth);
+        else
+            rc->active_worst_quality = get_gfu_q_tpl(rc, *q, scs_ptr->static_config.encoder_bit_depth);
+
+        rc->active_worst_quality = CLIP3(
+            (int32_t)quantizer_to_qindex[scs_ptr->static_config.min_qp_allowed],
+            (int32_t)quantizer_to_qindex[scs_ptr->static_config.max_qp_allowed],
+            rc->active_worst_quality);
+    }
+#endif
 }
 /************************************************************************************************
 * Populate the required parameters in two_pass structure from other structures
@@ -3599,9 +3772,16 @@ void *rate_control_kernel(void *input_ptr) {
             FrameHeader *frm_hdr                       = &pcs_ptr->parent_pcs_ptr->frm_hdr;
 #if FTR_RC_CAP
             rc = &scs_ptr->encode_context_ptr->rc;
+#if TUNE_CAPPED_CRF
+            if (scs_ptr->static_config.passes > 1 && scs_ptr->static_config.max_bit_rate)
+                rc->rate_average_periodin_frames = (uint64_t)scs_ptr->twopass.stats_buf_ctx->total_stats->count;
+            else
+                rc->rate_average_periodin_frames = 60;
+#else
             rc->rate_average_periodin_frames = ((scs_ptr->frame_rate + (1 << (RC_PRECISION - 1))) >>
                 RC_PRECISION) *
                 MAX_RATE_AVG_PERIOD_IN_SEC;
+#endif
 #endif
             if (!is_superres_recode_task) {
                 pcs_ptr->parent_pcs_ptr->blk_lambda_tuning = EB_FALSE;

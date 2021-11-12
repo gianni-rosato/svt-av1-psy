@@ -77,6 +77,10 @@ typedef enum rate_factor_level {
 // max bit rate average period in second. default is set to 2 second
 #define MAX_RATE_AVG_PERIOD_IN_SEC        2
 #define CODED_FRAMES_STAT_QUEUE_MAX_DEPTH 2000
+#if TUNE_CAPPED_CRF
+#define CRITICAL_BUFFER_LEVEL 15
+#define OPTIMAL_BUFFER_LEVEL 70
+#endif
 /**************************************
  * Coded Frames Stats
  **************************************/

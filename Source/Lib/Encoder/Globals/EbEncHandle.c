@@ -4912,6 +4912,9 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
         scs_ptr->static_config.enable_tpl_la = 0;
         scs_ptr->static_config.rate_control_mode = 0;
         scs_ptr->static_config.intra_refresh_type = 2;
+#if TUNE_CAPPED_CRF
+        scs_ptr->static_config.max_bit_rate = 0;
+#endif
     }
 #if FTR_MULTI_PASS_API
     else if (scs_ptr->static_config.rc_middlepass_stats_out) {
@@ -4931,6 +4934,9 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
         scs_ptr->static_config.rate_control_mode = 0;
         scs_ptr->static_config.qp = 43;
         scs_ptr->static_config.intra_refresh_type = 2;
+#if TUNE_CAPPED_CRF
+        scs_ptr->static_config.max_bit_rate = 0;
+#endif
     }
 #endif
     else if (use_input_stat(scs_ptr) || scs_ptr->lap_enabled) {
@@ -6726,7 +6732,12 @@ static void print_lib_params(
     if (config->rate_control_mode == 1)
         SVT_INFO("SVT [config]: RCMode / TargetBitrate (kbps)/ SceneChange\t\t: VBR / %d /  %d\n", (int)config->target_bit_rate/1000, config->scene_change_detection);
     else if (config->rate_control_mode == 2)
-        SVT_INFO("SVT [config]: RCMode / TargetBitrate (kbps)/ SceneChange\t\t: Constraint VBR / %d /  %d\n", (int)config->target_bit_rate/1000,  config->scene_change_detection);
+        SVT_LOG("\nSVT [config]: RCMode / TargetBitrate (kbps)/ SceneChange\t\t: Constraint VBR / %d /  %d ", (int)config->target_bit_rate/1000,  config->scene_change_detection);
+#if TUNE_CAPPED_CRF
+    else if (config->rate_control_mode == 0 && config->max_bit_rate)
+        SVT_LOG("\nSVT [config]: BRC Mode / %s / MaxBitrate (kbps)/ SceneChange\t\t: %s / %d / %d / %d ", scs->static_config.enable_tpl_la ? "Rate Factor" : "CQP Assignment", scs->static_config.enable_tpl_la ? "Capped CRF" : "CQP", scs->static_config.qp,
+        (int)config->max_bit_rate / 1000, config->scene_change_detection);
+#endif
     else
         SVT_INFO("SVT [config]: BRC Mode / %s / SceneChange\t\t\t\t: %s / %d / %d\n", scs->static_config.enable_tpl_la ? "Rate Factor" : "CQP Assignment", scs->static_config.enable_tpl_la ? "CRF" : "CQP", scs->static_config.qp, config->scene_change_detection);
 #ifdef DEBUG_BUFFERS
