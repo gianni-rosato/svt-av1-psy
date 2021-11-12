@@ -2593,7 +2593,7 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     }
     if (scs_ptr->static_config.superres_mode > SUPERRES_NONE) {
         // allow TPL with auto-dual and auto-all
-        if ((scs_ptr->static_config.superres_mode != SUPERRES_AUTO) || (scs_ptr->static_config.superres_auto_search_type == SUPERRES_AUTO_SOLO)) {
+        if ((scs_ptr->static_config.superres_mode != SUPERRES_AUTO) && (scs_ptr->static_config.superres_mode != SUPERRES_QTHRESH)) {
             if (scs_ptr->static_config.enable_tpl_la != 0) {
                 SVT_WARN("TPL will be disabled when super resolution is enabled!\n");
                 scs_ptr->static_config.enable_tpl_la = 0;

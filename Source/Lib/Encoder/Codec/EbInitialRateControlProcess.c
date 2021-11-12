@@ -512,9 +512,23 @@ void *initial_rate_control_kernel(void *input_ptr) {
                 {
                     // Release Pa Ref pictures when not needed
                     // Don't release if superres recode loop is actived (auto-dual or auto-all mode)
-                    // Needn't to check scs_ptr->static_config.enable_tpl_la because tpl_la (if enabled) is already done before this stage
-                    if (pcs_ptr->superres_total_recode_loop == 0) {
-                        release_pa_reference_objects(scs_ptr, pcs_ptr);
+                    if (pcs_ptr->superres_total_recode_loop == 0) {  // QThreshold or auto-solo mode
+                        if (scs_ptr->static_config.enable_tpl_la) {
+                            for (uint32_t i = 0; i < pcs_ptr->tpl_group_size; i++) {
+                                if (pcs_ptr->tpl_group[i]->slice_type == P_SLICE) {
+                                    if (pcs_ptr->tpl_group[i]->ext_mg_id == pcs_ptr->ext_mg_id + 1)
+                                        release_pa_reference_objects(scs_ptr, pcs_ptr->tpl_group[i]);
+                                }
+                                else {
+                                    if (pcs_ptr->tpl_group[i]->ext_mg_id == pcs_ptr->ext_mg_id)
+                                        release_pa_reference_objects(scs_ptr, pcs_ptr->tpl_group[i]);
+                                }
+                                if (pcs_ptr->tpl_group[i]->non_tf_input)
+                                    EB_DELETE(pcs_ptr->tpl_group[i]->non_tf_input);
+                            }
+                        } else {
+                            release_pa_reference_objects(scs_ptr, pcs_ptr);
+                        }
                     }
 
                     /*In case Look-Ahead is zero there is no need to place pictures in the
