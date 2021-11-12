@@ -3355,7 +3355,7 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EncChannel *chan
                 // handle warnings for new tokens
                 if (strnlen_s(message, sizeof(message) > 1)) {
                     char double_dash_warning[WARNING_LENGTH] = "-";
-                    strcpy_s(double_dash_warning + 1, sizeof(double_dash_warning), message);
+                    strcpy_s(double_dash_warning + 1, sizeof(double_dash_warning) - 1, message);
                     strcpy_s(warning_str[++warning_index], WARNING_LENGTH, double_dash_warning);
                     warning_index++;
                 }
