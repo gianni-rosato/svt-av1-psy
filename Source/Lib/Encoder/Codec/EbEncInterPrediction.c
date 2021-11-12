@@ -21,7 +21,8 @@
 extern void av1_set_ref_frame(MvReferenceFrame *rf, int8_t ref_frame_type);
 extern AomVarianceFnPtr mefn_ptr[BlockSizeS_ALL];
 
-void enc_make_inter_predictor(uint8_t* src_ptr,
+void enc_make_inter_predictor(SequenceControlSet * scs_ptr,
+    uint8_t* src_ptr,
     uint8_t* dst_ptr,
     int16_t pre_y,
     int16_t pre_x,
@@ -941,7 +942,7 @@ void av1_setup_build_prediction_by_left_pred_hbd(MacroBlockD *xd, int rel_mi_row
         ctxt->mb_to_far_edge + (xd->n4_h - rel_mi_row - left_mi_height) * MI_SIZE * 8;
 }
 EbErrorType get_single_prediction_for_obmc_luma_hbd(
-        uint32_t interp_filters, MacroBlockD *xd, MvUnit *mv_unit, uint16_t pu_origin_x,
+        SequenceControlSet * scs_ptr, uint32_t interp_filters, MacroBlockD *xd, MvUnit *mv_unit, uint16_t pu_origin_x,
         uint16_t pu_origin_y, uint8_t bwidth, uint8_t bheight, EbPictureBufferDesc *ref_pic_list0,
         EbPictureBufferDesc *prediction_ptr, uint16_t dst_origin_x, uint16_t dst_origin_y, uint8_t bit_depth) {
     EbErrorType return_error = EB_ErrorNone;
@@ -981,7 +982,8 @@ EbErrorType get_single_prediction_for_obmc_luma_hbd(
         (prediction_ptr->origin_y + dst_origin_y) * prediction_ptr->stride_y;
 
 
-    enc_make_inter_predictor((uint8_t*)src_ptr,
+    enc_make_inter_predictor(scs_ptr,
+        (uint8_t*)src_ptr,
         (uint8_t*)dst_ptr,
         (int16_t)pu_origin_y,
         (int16_t)pu_origin_x,
@@ -1009,7 +1011,7 @@ EbErrorType get_single_prediction_for_obmc_luma_hbd(
     return return_error;
 }
 EbErrorType get_single_prediction_for_obmc_chroma_hbd(
-        uint32_t interp_filters, MacroBlockD *xd, MvUnit *mv_unit, uint16_t pu_origin_x,
+        SequenceControlSet* scs_ptr, uint32_t interp_filters, MacroBlockD *xd, MvUnit *mv_unit, uint16_t pu_origin_x,
         uint16_t pu_origin_y, uint8_t bwidth, uint8_t bheight, EbPictureBufferDesc *ref_pic_list0,
         EbPictureBufferDesc *prediction_ptr, uint16_t dst_origin_x, uint16_t dst_origin_y,
         int32_t ss_x, int32_t ss_y, uint8_t bit_depth) {
@@ -1055,7 +1057,8 @@ EbErrorType get_single_prediction_for_obmc_chroma_hbd(
         ((prediction_ptr->origin_x + ((dst_origin_x >> 3) << 3)) >> ss_x) +
         ((prediction_ptr->origin_y + ((dst_origin_y >> 3) << 3)) >> ss_y) * prediction_ptr->stride_cb;
 
-    enc_make_inter_predictor((uint8_t*)src_ptr,
+    enc_make_inter_predictor(scs_ptr,
+        (uint8_t*)src_ptr,
         (uint8_t*)dst_ptr,
         (int16_t)pu_origin_y_chroma,
         (int16_t)pu_origin_x_chroma,
@@ -1095,7 +1098,8 @@ EbErrorType get_single_prediction_for_obmc_chroma_hbd(
     dst_ptr = (uint16_t *)prediction_ptr->buffer_cr +
         ((prediction_ptr->origin_x + ((dst_origin_x >> 3) << 3)) >> ss_x) +
         ((prediction_ptr->origin_y + ((dst_origin_y >> 3) << 3)) >> ss_y) * prediction_ptr->stride_cr;
-    enc_make_inter_predictor((uint8_t*)src_ptr,
+    enc_make_inter_predictor(scs_ptr,
+        (uint8_t*)src_ptr,
         (uint8_t*)dst_ptr,
         (int16_t)pu_origin_y_chroma,
         (int16_t)pu_origin_x_chroma,
@@ -1123,7 +1127,7 @@ EbErrorType get_single_prediction_for_obmc_chroma_hbd(
     return return_error;
 }
 
-EbErrorType get_single_prediction_for_obmc_luma(uint32_t interp_filters, MacroBlockD *xd,
+EbErrorType get_single_prediction_for_obmc_luma(SequenceControlSet* scs_ptr, uint32_t interp_filters, MacroBlockD *xd,
                                                 MvUnit *mv_unit, uint16_t pu_origin_x,
                                                 uint16_t pu_origin_y, uint8_t bwidth,
                                                 uint8_t bheight, EbPictureBufferDesc *ref_pic_list0,
@@ -1169,7 +1173,8 @@ EbErrorType get_single_prediction_for_obmc_luma(uint32_t interp_filters, MacroBl
             (prediction_ptr->origin_y + dst_origin_y) *
             prediction_ptr->stride_y));
 
-    enc_make_inter_predictor(src_ptr,
+    enc_make_inter_predictor(scs_ptr,
+        src_ptr,
         dst_ptr,
         (int16_t)pu_origin_y,
         (int16_t)pu_origin_x,
@@ -1198,7 +1203,7 @@ EbErrorType get_single_prediction_for_obmc_luma(uint32_t interp_filters, MacroBl
 }
 
 EbErrorType get_single_prediction_for_obmc_chroma(
-        uint32_t interp_filters, MacroBlockD *xd, MvUnit *mv_unit, uint16_t pu_origin_x,
+        SequenceControlSet* scs_ptr, uint32_t interp_filters, MacroBlockD *xd, MvUnit *mv_unit, uint16_t pu_origin_x,
         uint16_t pu_origin_y, uint8_t bwidth, uint8_t bheight, EbPictureBufferDesc *ref_pic_list0,
         EbPictureBufferDesc *prediction_ptr, uint16_t dst_origin_x, uint16_t dst_origin_y,
         int32_t ss_x, int32_t ss_y) {
@@ -1247,7 +1252,8 @@ EbErrorType get_single_prediction_for_obmc_chroma(
             ((prediction_ptr->origin_y + ((dst_origin_y >> 3) << 3)) >> ss_y) *
             prediction_ptr->stride_cb));
 
-    enc_make_inter_predictor(src_ptr,
+    enc_make_inter_predictor(scs_ptr,
+        src_ptr,
         dst_ptr,
         (int16_t)pu_origin_y_chroma,
         (int16_t)pu_origin_x_chroma,
@@ -1289,7 +1295,8 @@ EbErrorType get_single_prediction_for_obmc_chroma(
         ((((prediction_ptr->origin_x + ((dst_origin_x >> 3) << 3)) >> ss_x) +
             ((prediction_ptr->origin_y + ((dst_origin_y >> 3) << 3)) >> ss_y) *
             prediction_ptr->stride_cr));
-    enc_make_inter_predictor(src_ptr,
+    enc_make_inter_predictor(scs_ptr,
+        src_ptr,
         dst_ptr,
         (int16_t)pu_origin_y_chroma,
         (int16_t)pu_origin_x_chroma,
@@ -1323,6 +1330,7 @@ static INLINE void build_prediction_by_above_pred(uint8_t is16bit, MacroBlockD *
     const int                     above_mi_col = ctxt->mi_col + rel_mi_col;
     int                           mi_x, mi_y;
     MbModeInfo                    backup_mbmi = *above_mbmi;
+    SequenceControlSet * scs_ptr = (SequenceControlSet*)ctxt->picture_control_set_ptr->scs_wrapper_ptr->object_ptr;
 
     av1_setup_build_prediction_by_above_pred(
             xd, rel_mi_col, above_mi_width, &backup_mbmi, ctxt, num_planes, is16bit);
@@ -1358,7 +1366,8 @@ static INLINE void build_prediction_by_above_pred(uint8_t is16bit, MacroBlockD *
 
         if (j == 0)
             if (is16bit)
-                get_single_prediction_for_obmc_luma_hbd(above_mbmi->block_mi.interp_filters,
+                get_single_prediction_for_obmc_luma_hbd(scs_ptr,
+                                                        above_mbmi->block_mi.interp_filters,
                                                         xd,
                                                         &ctxt->mv_unit,
                                                         mi_x,
@@ -1371,7 +1380,8 @@ static INLINE void build_prediction_by_above_pred(uint8_t is16bit, MacroBlockD *
                                                         ctxt->dst_origin_y,
                                                         ctxt->ref_pic_list0->bit_depth);
             else
-                get_single_prediction_for_obmc_luma(above_mbmi->block_mi.interp_filters,
+                get_single_prediction_for_obmc_luma(scs_ptr,
+                                                    above_mbmi->block_mi.interp_filters,
                                                     xd,
                                                     &ctxt->mv_unit,
                                                     mi_x,
@@ -1383,7 +1393,8 @@ static INLINE void build_prediction_by_above_pred(uint8_t is16bit, MacroBlockD *
                                                     ctxt->dst_origin_x,
                                                     ctxt->dst_origin_y);
         else if (is16bit)
-            get_single_prediction_for_obmc_chroma_hbd(above_mbmi->block_mi.interp_filters,
+            get_single_prediction_for_obmc_chroma_hbd(scs_ptr,
+                                                      above_mbmi->block_mi.interp_filters,
                                                       xd,
                                                       &ctxt->mv_unit,
                                                       mi_x,
@@ -1398,7 +1409,8 @@ static INLINE void build_prediction_by_above_pred(uint8_t is16bit, MacroBlockD *
                                                       ctxt->ss_y,
                                                       ctxt->ref_pic_list0->bit_depth);
         else
-            get_single_prediction_for_obmc_chroma(above_mbmi->block_mi.interp_filters,
+            get_single_prediction_for_obmc_chroma(scs_ptr,
+                                                  above_mbmi->block_mi.interp_filters,
                                                   xd,
                                                   &ctxt->mv_unit,
                                                   mi_x,
@@ -1421,6 +1433,7 @@ static INLINE void build_prediction_by_above_pred_hbd(uint8_t bit_depth, MacroBl
     const int                     above_mi_col = ctxt->mi_col + rel_mi_col;
     int                           mi_x, mi_y;
     MbModeInfo                    backup_mbmi = *above_mbmi;
+    SequenceControlSet* scs_ptr = (SequenceControlSet*)ctxt->picture_control_set_ptr->scs_wrapper_ptr->object_ptr;
 
     av1_setup_build_prediction_by_above_pred_hbd(
         xd, rel_mi_col, above_mi_width, &backup_mbmi, ctxt, num_planes);
@@ -1455,7 +1468,8 @@ static INLINE void build_prediction_by_above_pred_hbd(uint8_t bit_depth, MacroBl
         if (svt_av1_skip_u4x4_pred_in_obmc(bsize, 0, subsampling_x, subsampling_y)) continue;
 
         if (j == 0)
-            get_single_prediction_for_obmc_luma_hbd(above_mbmi->block_mi.interp_filters,
+            get_single_prediction_for_obmc_luma_hbd(scs_ptr,
+                above_mbmi->block_mi.interp_filters,
                 xd,
                 &ctxt->mv_unit,
                 mi_x,
@@ -1468,7 +1482,8 @@ static INLINE void build_prediction_by_above_pred_hbd(uint8_t bit_depth, MacroBl
                 ctxt->dst_origin_y,
                 bit_depth);
         else
-            get_single_prediction_for_obmc_chroma_hbd(above_mbmi->block_mi.interp_filters,
+            get_single_prediction_for_obmc_chroma_hbd(scs_ptr,
+                above_mbmi->block_mi.interp_filters,
                 xd,
                 &ctxt->mv_unit,
                 mi_x,
@@ -1491,6 +1506,7 @@ static INLINE void build_prediction_by_left_pred(uint8_t is16bit, MacroBlockD *x
     const int                     left_mi_row = ctxt->mi_row + rel_mi_row;
     int                           mi_x, mi_y;
     MbModeInfo                    backup_mbmi = *left_mbmi;
+    SequenceControlSet* scs_ptr = (SequenceControlSet*)ctxt->picture_control_set_ptr->scs_wrapper_ptr->object_ptr;
 
     av1_setup_build_prediction_by_left_pred(
             xd, rel_mi_row, left_mi_height, &backup_mbmi, ctxt, num_planes, is16bit);
@@ -1526,7 +1542,8 @@ static INLINE void build_prediction_by_left_pred(uint8_t is16bit, MacroBlockD *x
 
         if (j == 0)
             if (is16bit)
-                get_single_prediction_for_obmc_luma_hbd(left_mbmi->block_mi.interp_filters,
+                get_single_prediction_for_obmc_luma_hbd(scs_ptr,
+                                                        left_mbmi->block_mi.interp_filters,
                                                         xd,
                                                         &ctxt->mv_unit,
                                                         mi_x,
@@ -1539,7 +1556,8 @@ static INLINE void build_prediction_by_left_pred(uint8_t is16bit, MacroBlockD *x
                                                         ctxt->dst_origin_y,
                                                         ctxt->ref_pic_list0->bit_depth);
             else
-                get_single_prediction_for_obmc_luma(left_mbmi->block_mi.interp_filters,
+                get_single_prediction_for_obmc_luma(scs_ptr,
+                                                    left_mbmi->block_mi.interp_filters,
                                                     xd,
                                                     &ctxt->mv_unit,
                                                     mi_x,
@@ -1551,7 +1569,8 @@ static INLINE void build_prediction_by_left_pred(uint8_t is16bit, MacroBlockD *x
                                                     ctxt->dst_origin_x,
                                                     ctxt->dst_origin_y);
         else if (is16bit)
-            get_single_prediction_for_obmc_chroma_hbd(left_mbmi->block_mi.interp_filters,
+            get_single_prediction_for_obmc_chroma_hbd(scs_ptr,
+                                                      left_mbmi->block_mi.interp_filters,
                                                       xd,
                                                       &ctxt->mv_unit,
                                                       mi_x,
@@ -1566,7 +1585,8 @@ static INLINE void build_prediction_by_left_pred(uint8_t is16bit, MacroBlockD *x
                                                       ctxt->ss_y,
                                                       ctxt->ref_pic_list0->bit_depth);
         else
-            get_single_prediction_for_obmc_chroma(left_mbmi->block_mi.interp_filters,
+            get_single_prediction_for_obmc_chroma(scs_ptr,
+                                                  left_mbmi->block_mi.interp_filters,
                                                   xd,
                                                   &ctxt->mv_unit,
                                                   mi_x,
@@ -1588,6 +1608,7 @@ static INLINE void build_prediction_by_left_pred_hbd(uint8_t bit_depth, MacroBlo
     const int                     left_mi_row = ctxt->mi_row + rel_mi_row;
     int                           mi_x, mi_y;
     MbModeInfo                    backup_mbmi = *left_mbmi;
+    SequenceControlSet* scs_ptr = (SequenceControlSet*)ctxt->picture_control_set_ptr->scs_wrapper_ptr->object_ptr;
 
     av1_setup_build_prediction_by_left_pred_hbd(
         xd, rel_mi_row, left_mi_height, &backup_mbmi, ctxt, num_planes);
@@ -1622,7 +1643,8 @@ static INLINE void build_prediction_by_left_pred_hbd(uint8_t bit_depth, MacroBlo
         if (svt_av1_skip_u4x4_pred_in_obmc(bsize, 1, subsampling_x, subsampling_y)) continue;
 
         if (j == 0)
-            get_single_prediction_for_obmc_luma_hbd(left_mbmi->block_mi.interp_filters,
+            get_single_prediction_for_obmc_luma_hbd(scs_ptr,
+                left_mbmi->block_mi.interp_filters,
                 xd,
                 &ctxt->mv_unit,
                 mi_x,
@@ -1635,7 +1657,8 @@ static INLINE void build_prediction_by_left_pred_hbd(uint8_t bit_depth, MacroBlo
                 ctxt->dst_origin_y,
                 bit_depth);
         else
-            get_single_prediction_for_obmc_chroma_hbd(left_mbmi->block_mi.interp_filters,
+            get_single_prediction_for_obmc_chroma_hbd(scs_ptr,
+                left_mbmi->block_mi.interp_filters,
                 xd,
                 &ctxt->mv_unit,
                 mi_x,
@@ -3829,7 +3852,8 @@ EbPictureBufferDesc * get_ref_pic_buffer(PictureControlSet *pcs_ptr,
                 ->reference_picture;
 }
 
-void compute_subpel_params(int16_t pre_y,
+void compute_subpel_params(SequenceControlSet* scs_ptr,
+                           int16_t pre_y,
                            int16_t pre_x,
                            MV mv,
                            const struct ScaleFactors *const sf,
@@ -3857,9 +3881,10 @@ void compute_subpel_params(int16_t pre_y,
         *pos_y += SCALE_EXTRA_OFF;
 
         // Equations of top and left are expanded from macro -AOM_LEFT_TOP_MARGIN_SCALED(ss_y),
-        // except padding in svt is 'scs_ptr->static_config.super_block_size + 32' (64+32=96 when super-res is on) instead of 288
-        const int top = -(((96 >> ss_y) - AOM_INTERP_EXTEND) << SCALE_SUBPEL_BITS);
-        const int left = -(((96 >> ss_x) - AOM_INTERP_EXTEND) << SCALE_SUBPEL_BITS);
+        // except padding in svt is 'scs_ptr->static_config.super_block_size + 32' instead of 288
+        const int border_in_pixels = scs_ptr->sb_size_pix + 32;
+        const int top = -(((border_in_pixels >> ss_y) - AOM_INTERP_EXTEND) << SCALE_SUBPEL_BITS);
+        const int left = -(((border_in_pixels >> ss_x) - AOM_INTERP_EXTEND) << SCALE_SUBPEL_BITS);
         const int bottom = ((frame_height >> ss_y) + AOM_INTERP_EXTEND)
                 << SCALE_SUBPEL_BITS;
         const int right = ((frame_width >> ss_x) + AOM_INTERP_EXTEND)
@@ -3903,7 +3928,8 @@ void compute_subpel_params(int16_t pre_y,
 
 }
 
-void enc_make_inter_predictor(uint8_t* src_ptr,
+void enc_make_inter_predictor(SequenceControlSet * scs_ptr,
+                              uint8_t* src_ptr,
                               uint8_t* dst_ptr,
                               int16_t pre_y,
                               int16_t pre_x,
@@ -3932,7 +3958,8 @@ void enc_make_inter_predictor(uint8_t* src_ptr,
     SubpelParams subpel_params;
     int32_t pos_y, pos_x;
 
-    compute_subpel_params(pre_y,
+    compute_subpel_params(scs_ptr,
+                          pre_y,
                           pre_x,
                           mv,
                           sf,
@@ -4213,7 +4240,8 @@ EbErrorType av1_inter_prediction(
                     av1_get_convolve_filter_params(interp_filters, &filter_params_x,
                             &filter_params_y, blk_geom->bwidth_uv, blk_geom->bheight_uv);
 
-                    enc_make_inter_predictor(src_ptr,
+                    enc_make_inter_predictor(scs_ptr,
+                                             src_ptr,
                                              dst_ptr,
                                              (int16_t)pu_origin_y_chroma,
                                              (int16_t)pu_origin_x_chroma,
@@ -4259,7 +4287,8 @@ EbErrorType av1_inter_prediction(
                     av1_get_convolve_filter_params(interp_filters, &filter_params_x,
                             &filter_params_y, blk_geom->bwidth_uv, blk_geom->bheight_uv);
 
-                    enc_make_inter_predictor(src_ptr,
+                    enc_make_inter_predictor(scs_ptr,
+                                             src_ptr,
                                              dst_ptr,
                                              (int16_t)pu_origin_y_chroma,
                                              (int16_t)pu_origin_x_chroma,
@@ -4319,7 +4348,8 @@ EbErrorType av1_inter_prediction(
         av1_get_convolve_filter_params(interp_filters, &filter_params_x,
                 &filter_params_y, bwidth, bheight);
 
-        enc_make_inter_predictor(src_ptr,
+        enc_make_inter_predictor(scs_ptr,
+                                 src_ptr,
                                  dst_ptr,
                                  (int16_t)pu_origin_y,
                                  (int16_t)pu_origin_x,
@@ -4368,7 +4398,8 @@ EbErrorType av1_inter_prediction(
                                            blk_geom->bwidth_uv,
                                            blk_geom->bheight_uv);
 
-            enc_make_inter_predictor(src_ptr,
+            enc_make_inter_predictor(scs_ptr,
+                                     src_ptr,
                                      dst_ptr,
                                      (int16_t)pu_origin_y_chroma,
                                      (int16_t)pu_origin_x_chroma,
@@ -4407,7 +4438,8 @@ EbErrorType av1_inter_prediction(
 
             conv_params = get_conv_params_no_round(0, 0, 0, tmp_dstCr, 64, is_compound, bit_depth);
 
-            enc_make_inter_predictor(src_ptr,
+            enc_make_inter_predictor(scs_ptr,
+                                     src_ptr,
                                      dst_ptr,
                                      (int16_t)pu_origin_y_chroma,
                                      (int16_t)pu_origin_x_chroma,
@@ -4481,7 +4513,8 @@ EbErrorType av1_inter_prediction(
                                                 &sf_identity :
                                                 &ref1_scale_factors;
 
-        enc_make_inter_predictor(src_ptr,
+        enc_make_inter_predictor(scs_ptr,
+                                 src_ptr,
                                  dst_ptr,
                                  (int16_t)pu_origin_y,
                                  (int16_t)pu_origin_x,
@@ -4547,7 +4580,8 @@ EbErrorType av1_inter_prediction(
             int pu_origin_y_chroma = ((pu_origin_y >> 3) << 3) >> ss_y;
             int pu_origin_x_chroma = ((pu_origin_x >> 3) << 3) >> ss_x;
 
-            enc_make_inter_predictor(src_ptr,
+            enc_make_inter_predictor(scs_ptr,
+                                     src_ptr,
                                      dst_ptr,
                                      (int16_t)pu_origin_y_chroma,
                                      (int16_t)pu_origin_x_chroma,
@@ -4603,6 +4637,7 @@ EbErrorType av1_inter_prediction(
             conv_params.use_jnt_comp_avg = conv_params.use_dist_wtd_comp_avg;
 
             enc_make_inter_predictor(
+                scs_ptr,
                 src_ptr,
                 dst_ptr,
                 (int16_t)pu_origin_y_chroma,
