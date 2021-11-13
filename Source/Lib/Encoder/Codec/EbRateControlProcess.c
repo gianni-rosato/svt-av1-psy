@@ -944,7 +944,11 @@ static int cqp_qindex_calc_tpl_la(PictureControlSet *pcs_ptr, RATE_CONTROL *rc, 
                 factor = 1;
             pcs_ptr->parent_pcs_ptr->r0 = pcs_ptr->parent_pcs_ptr->r0 / factor;
         }
+#if FIX_DG
+        pcs_ptr->parent_pcs_ptr->r0 = pcs_ptr->parent_pcs_ptr->r0 / tpl_hl_islice_div_factor[scs_ptr->static_config.max_heirachical_level];
+#else
         pcs_ptr->parent_pcs_ptr->r0 = pcs_ptr->parent_pcs_ptr->r0 / tpl_hl_islice_div_factor[scs_ptr->static_config.hierarchical_levels];
+#endif
         if (pcs_ptr->parent_pcs_ptr->frm_hdr.frame_type == KEY_FRAME) {
 #if FIX_TPL_BOOST
             {
@@ -1022,7 +1026,11 @@ static int cqp_qindex_calc_tpl_la(PictureControlSet *pcs_ptr, RATE_CONTROL *rc, 
             }
 #endif /*CLN_RATE_CONTROL*/
             pcs_ptr->parent_pcs_ptr->r0 = pcs_ptr->parent_pcs_ptr->r0 / div_factor;
+#if FIX_DG
+            pcs_ptr->parent_pcs_ptr->r0 = pcs_ptr->parent_pcs_ptr->r0 / tpl_hl_base_frame_div_factor[scs_ptr->static_config.max_heirachical_level];
+#else
             pcs_ptr->parent_pcs_ptr->r0 = pcs_ptr->parent_pcs_ptr->r0 / tpl_hl_base_frame_div_factor[scs_ptr->static_config.hierarchical_levels];
+#endif
         }
 
         int num_stats_required_for_gfu_boost = pcs_ptr->parent_pcs_ptr->tpl_group_size +
