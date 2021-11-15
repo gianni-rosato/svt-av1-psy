@@ -59,6 +59,7 @@ static const uint32_t idx_32x32_to_idx_16x16[4][4] = {
     {10, 11, 14, 15}};
 
 extern AomVarianceFnPtr mefn_ptr[BlockSizeS_ALL];
+int32_t get_frame_update_type(SequenceControlSet* scs_ptr, PictureParentControlSet* pcs_ptr);
 #if DEBUG_SCALING
 // save YUV to file - auxiliary function for debug
 void save_YUV_to_file(char *filename, EbByte buffer_y, EbByte buffer_u, EbByte buffer_v,
@@ -2749,9 +2750,10 @@ EbErrorType svt_av1_init_temporal_filtering(
         // or if superres recode is enabled
         SUPERRES_MODE superres_mode = picture_control_set_ptr_central->scs_ptr->static_config.superres_mode;
         SUPERRES_AUTO_SEARCH_TYPE search_type = picture_control_set_ptr_central->scs_ptr->static_config.superres_auto_search_type;
+        uint32_t frame_update_type = get_frame_update_type(picture_control_set_ptr_central->scs_ptr, picture_control_set_ptr_central);
         EbBool superres_recode_enabled = (superres_mode == SUPERRES_AUTO)
             && ((search_type == SUPERRES_AUTO_DUAL) || (search_type == SUPERRES_AUTO_ALL))  // auto-dual or auto-all
-            && (picture_control_set_ptr_central->temporal_layer_index == 0);                // recode only applies to key and arf
+            && ((frame_update_type == KF_UPDATE) || (frame_update_type == ARF_UPDATE));     // recode only applies to key and arf
         if (picture_control_set_ptr_central->scs_ptr->static_config.stat_report || superres_recode_enabled) {
             save_src_pic_buffers(picture_control_set_ptr_central, ss_y, is_highbd);
         }

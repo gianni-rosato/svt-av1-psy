@@ -1128,7 +1128,7 @@ static uint8_t get_superres_denom_from_qindex_energy(int qindex, double* energy,
     return 3 * SCALE_NUMERATOR - k;
 }
 
-static int32_t get_frame_update_type(SequenceControlSet* scs_ptr, PictureParentControlSet* pcs_ptr)
+int32_t get_frame_update_type(SequenceControlSet* scs_ptr, PictureParentControlSet* pcs_ptr)
 {
     // gf_group->update_type is valid when in 2nd pass of 2-pass encoding or lap_enabled is true.
     if (use_input_stat(scs_ptr) || scs_ptr->lap_enabled) {
@@ -1139,14 +1139,19 @@ static int32_t get_frame_update_type(SequenceControlSet* scs_ptr, PictureParentC
         if (pcs_ptr->frm_hdr.frame_type == KEY_FRAME) {
             return KF_UPDATE;
         }
-        else if (pcs_ptr->temporal_layer_index == 0) {
-            return ARF_UPDATE;
-        }
-        else if (pcs_ptr->temporal_layer_index == pcs_ptr->hierarchical_levels) {
+
+        if (scs_ptr->max_temporal_layers > 0) {
+            if (pcs_ptr->temporal_layer_index == 0) {
+                return ARF_UPDATE;
+            }
+            else if (pcs_ptr->temporal_layer_index == pcs_ptr->hierarchical_levels) {
+                return LF_UPDATE;
+            }
+            else {
+                return INTNL_ARF_UPDATE;
+            }
+        } else {
             return LF_UPDATE;
-        }
-        else {
-            return INTNL_ARF_UPDATE;
         }
     }
 }
@@ -1230,8 +1235,6 @@ static void calc_superres_params(superres_params_type *spr_params, SequenceContr
         if (frm_hdr->allow_screen_content_tools) break;
 
         const int q = quantizer_to_qindex[pcs_ptr->picture_qp];
-
-        // TODO: seperate qthres for key frame and inter frame
         const int qthresh = frame_is_intra_only(pcs_ptr) ? superres_kf_qthres : superres_qthres;
         if (q <= qthresh) {
             spr_params->superres_denom = SCALE_NUMERATOR;
