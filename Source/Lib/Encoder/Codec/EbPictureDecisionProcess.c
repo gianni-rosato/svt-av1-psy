@@ -2067,6 +2067,14 @@ EbErrorType signal_derivation_multi_processes_oq(
                 intrabc_level = 1;
             else if (pcs_ptr->enc_mode <= ENC_M7)
                 intrabc_level = 4;
+#if TUNE_SC_SPACING
+            else if (pcs_ptr->enc_mode <= ENC_M9)
+                intrabc_level = 5;
+            else if (pcs_ptr->enc_mode <= ENC_M10)
+                intrabc_level = 6;
+            else
+                intrabc_level = 0;
+#else
 #if TUNE_NEW_M12
 #if FTR_M13
             else if (pcs_ptr->enc_mode <= ENC_M13)
@@ -2079,6 +2087,7 @@ EbErrorType signal_derivation_multi_processes_oq(
                 intrabc_level = 5;
             else
                 intrabc_level = 6;
+#endif
         } else {
             intrabc_level = (uint8_t)scs_ptr->static_config.intrabc_mode;
         }
@@ -2141,6 +2150,22 @@ EbErrorType signal_derivation_multi_processes_oq(
 
  */
 #endif
+#if TUNE_SC_SPACING
+    if (frm_hdr->allow_screen_content_tools) {
+        if (scs_ptr->static_config.palette_level == DEFAULT) { //auto mode; if not set by cfg
+            if (pcs_ptr->enc_mode <= ENC_M11)
+                pcs_ptr->palette_level = pcs_ptr->temporal_layer_index == 0 ? 6 : 0;
+            else if (pcs_ptr->enc_mode <= ENC_M12)
+                pcs_ptr->palette_level = pcs_ptr->slice_type == I_SLICE ? 6 : 0;
+            else
+                pcs_ptr->palette_level = 0;
+        }
+        else
+            pcs_ptr->palette_level = scs_ptr->static_config.palette_level;
+    }
+    else
+        pcs_ptr->palette_level = 0;
+#else
     if (frm_hdr->allow_screen_content_tools)
         if (scs_ptr->static_config.palette_level == -1)//auto mode; if not set by cfg
             pcs_ptr->palette_level =
@@ -2164,7 +2189,7 @@ EbErrorType signal_derivation_multi_processes_oq(
                 pcs_ptr->palette_level = scs_ptr->static_config.palette_level;
     else
                 pcs_ptr->palette_level = 0;
-
+#endif
     assert(pcs_ptr->palette_level < 7);
 #if CLN_DLF_SIGNALS
     uint8_t dlf_level = 0;
@@ -7523,7 +7548,11 @@ void* picture_decision_kernel(void *input_ptr)
                                         pcs_ptr->ref_list0_count_try = MIN(pcs_ptr->ref_list0_count, 2);
                                         pcs_ptr->ref_list1_count_try = MIN(pcs_ptr->ref_list1_count, 2);
                                     }
+#if TUNE_SC_SPACING
+                                    else if (pcs_ptr->enc_mode <= ENC_M12) {
+#else
                                     else if (pcs_ptr->enc_mode <= ENC_M2) {
+#endif
                                         if (pcs_ptr->temporal_layer_index == 0) {
                                             pcs_ptr->ref_list0_count_try = MIN(pcs_ptr->ref_list0_count, 2);
                                             pcs_ptr->ref_list1_count_try = MIN(pcs_ptr->ref_list1_count, 2);

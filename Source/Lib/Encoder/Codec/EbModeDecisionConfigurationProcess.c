@@ -1340,8 +1340,46 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         }
         else {
             // Set depth_removal_level_controls
+#if TUNE_SC_SPACING
+            if (pcs_ptr->parent_pcs_ptr->sc_class1) {
+                if (enc_mode <= ENC_M8)
+                    pcs_ptr->pic_depth_removal_level = 0;
+                else if (enc_mode <= ENC_M10) {
+                    if (input_resolution <= INPUT_SIZE_360p_RANGE)
+                        pcs_ptr->pic_depth_removal_level = is_base ? 0 : 2;
+                    else if (input_resolution <= INPUT_SIZE_480p_RANGE)
+                        pcs_ptr->pic_depth_removal_level = is_base ? 0 : 3;
+                    else if (input_resolution <= INPUT_SIZE_1080p_RANGE)
+                        pcs_ptr->pic_depth_removal_level = is_base ? 0 : 6;
+                    else
+                        pcs_ptr->pic_depth_removal_level = is_base ? 0 : 11;
+                }
+                else if (enc_mode <= ENC_M12) {
+                    if (input_resolution <= INPUT_SIZE_360p_RANGE)
+                        pcs_ptr->pic_depth_removal_level = is_base ? 1 : 2;
+                    else if (input_resolution <= INPUT_SIZE_480p_RANGE)
+                        pcs_ptr->pic_depth_removal_level = is_base ? 1 : 3;
+                    else if (input_resolution <= INPUT_SIZE_1080p_RANGE)
+                        pcs_ptr->pic_depth_removal_level = is_base ? 4 : 6;
+                    else
+                        pcs_ptr->pic_depth_removal_level = is_base ? 5 : 11;
+                }
+                else {
+                    if (input_resolution <= INPUT_SIZE_360p_RANGE)
+                        pcs_ptr->pic_depth_removal_level = is_base ? 4 : 8;
+                    else if (input_resolution <= INPUT_SIZE_480p_RANGE)
+                        pcs_ptr->pic_depth_removal_level = is_base ? 5 : 11;
+                    else if (input_resolution <= INPUT_SIZE_1080p_RANGE)
+                        pcs_ptr->pic_depth_removal_level = is_base ? 5 : 14;
+                    else
+                        pcs_ptr->pic_depth_removal_level = is_base ? 5 : 11;
+
+                }
+            }
+#else
             if (pcs_ptr->parent_pcs_ptr->sc_class1)
                 pcs_ptr->pic_depth_removal_level = 0;
+#endif
             else if (enc_mode <= ENC_M2)
                 pcs_ptr->pic_depth_removal_level = 0;
             else if (enc_mode <= ENC_M5) {
@@ -1424,9 +1462,22 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     }
 #endif
 #if CLN_BLOCK_BASED_DEPTH_SIG
+#if TUNE_SC_SPACING
+    if (pcs_ptr->parent_pcs_ptr->sc_class1) {
+        if (enc_mode <= ENC_M6)
+            pcs_ptr->pic_block_based_depth_refinement_level = 0;
+        else if (enc_mode <= ENC_M9)
+            pcs_ptr->pic_block_based_depth_refinement_level = is_base ? 0 : 4;
+        else if (enc_mode <= ENC_M10)
+            pcs_ptr->pic_block_based_depth_refinement_level = (slice_type == I_SLICE) ? 1 : 4;
+        else
+            pcs_ptr->pic_block_based_depth_refinement_level = (slice_type == I_SLICE) ? 6 : 11;
+    }
+#else
     // do not use feature for SC
     if (pcs_ptr->parent_pcs_ptr->sc_class1)
         pcs_ptr->pic_block_based_depth_refinement_level = 0;
+#endif
     else if (enc_mode <= ENC_M2)
         pcs_ptr->pic_block_based_depth_refinement_level = 0;
     else if (enc_mode <= ENC_M4)
@@ -1446,7 +1497,21 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         pcs_ptr->pic_block_based_depth_refinement_level = MAX(0, pcs_ptr->pic_block_based_depth_refinement_level - 1);
 #endif
 #if CLN_LPD1_LVL_SIG
+#if TUNE_SC_SPACING
+    if (pcs_ptr->parent_pcs_ptr->sc_class1) {
+        if (enc_mode <= ENC_M7)
+            pcs_ptr->pic_lpd1_lvl = 0;
+        else if (enc_mode <= ENC_M9)
+            pcs_ptr->pic_lpd1_lvl = (input_resolution <= INPUT_SIZE_480p_RANGE) ? 0 : (is_ref ? 0 : 1);
+        else if (enc_mode <= ENC_M10)
+            pcs_ptr->pic_lpd1_lvl = is_ref ? 0 : 2;
+        else
+            pcs_ptr->pic_lpd1_lvl = is_base ? 0 : 2;
+    }
+    else if (enc_mode <= ENC_M7)
+#else
     if (enc_mode <= ENC_M7)
+#endif
         pcs_ptr->pic_lpd1_lvl = 0;
 #if CLN_RES_LPD1_BIS
     else if (enc_mode <= ENC_M9)

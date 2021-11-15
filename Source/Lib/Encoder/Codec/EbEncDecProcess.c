@@ -6790,7 +6790,11 @@ uint8_t get_disallow_4x4(EbEncMode enc_mode, EB_SLICE slice_type) {
     if (enc_mode <= ENC_M0)
         disallow_4x4 = EB_FALSE;
 #if TUNE_M5_M6
+#if TUNE_SC_SPACING
+    else if (enc_mode <= ENC_M5)
+#else
     else if (enc_mode <= ENC_M4)
+#endif
 #else
     else if (enc_mode <= ENC_M6)
 #endif
@@ -7200,10 +7204,19 @@ EbErrorType signal_derivation_enc_dec_kernel_common(
     if (enc_mode <= ENC_MRS)
         depth_level = 1;
     else if (pcs_ptr->parent_pcs_ptr->sc_class1) {
+#if TUNE_SC_SPACING
+        if (enc_mode <= ENC_M3)
+            depth_level = pcs_ptr->slice_type == I_SLICE ? 1 : 2;
+        else if (enc_mode <= ENC_M8)
+            depth_level = 2;
+        else
+            depth_level = pcs_ptr->slice_type == I_SLICE ? 2 : 0;
+#else
         if (enc_mode <= ENC_M2)
             depth_level = pcs_ptr->slice_type == I_SLICE ? 1 : 2;
         else
             depth_level = 2;
+#endif
     }
     else if(enc_mode <= ENC_M2)
         depth_level = pcs_ptr->slice_type == I_SLICE ? 1 : 2;
@@ -16057,8 +16070,8 @@ void lpd1_detector_post_pd0(PictureControlSet* pcs, ModeDecisionContext* md_ctx)
                 }
 
                 // If the best PD0 mode was INTER, check the MV length
-                if (md_ctx->md_blk_arr_nsq[0].prediction_mode_flag == INTER_MODE && md_ctx->lpd1_ctrls.max_mv_length[pd1_lvl] != (uint16_t)~0 &&
-                    md_ctx->avail_blk_flag[0] == EB_TRUE) {
+                if (md_ctx->avail_blk_flag[0] == EB_TRUE && md_ctx->md_blk_arr_nsq[0].prediction_mode_flag == INTER_MODE &&
+                    md_ctx->lpd1_ctrls.max_mv_length[pd1_lvl] != (uint16_t)~0) {
 
 
                     PredictionUnit* pu_ptr = md_ctx->md_blk_arr_nsq[0].prediction_unit_array;
@@ -16863,7 +16876,11 @@ void *mode_decision_kernel(void *input_ptr) {
                         }
 #endif
                         // Force pred depth only for modes where that is not the default
+#if TUNE_SC_SPACING
+                        if (md_ctx->lpd1_ctrls.pd1_level > REGULAR_PD1) {
+#else
                         if (md_ctx->lpd1_ctrls.pd1_level > REGULAR_PD1 && !ppcs->sc_class1) {
+#endif
                             set_depth_ctrls(md_ctx, 0);
                             md_ctx->pred_depth_only = 1;
                         }
