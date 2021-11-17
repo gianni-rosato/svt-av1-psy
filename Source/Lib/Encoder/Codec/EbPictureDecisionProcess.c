@@ -2796,10 +2796,18 @@ EbErrorType signal_derivation_multi_processes_oq(
             pcs_ptr->hbd_mode_decision = pcs_ptr->is_used_as_reference_flag ? 1 : 2;
         else if (pcs_ptr->enc_mode <= ENC_M3)
             pcs_ptr->hbd_mode_decision = 2;
+#if TUNE_10BIT_M5_M8
+        else if (pcs_ptr->enc_mode <= ENC_M4)
+#else
         else if (pcs_ptr->enc_mode <= ENC_M6)
+#endif
             pcs_ptr->hbd_mode_decision = pcs_ptr->is_used_as_reference_flag ? 2 : 0;
 #if TUNE_HBD_MD
+#if TUNE_10BIT_M5_M8
+        else if (pcs_ptr->enc_mode <= ENC_M7)
+#else
         else if (pcs_ptr->enc_mode <= ENC_M8)
+#endif
 #else
         else
 #endif

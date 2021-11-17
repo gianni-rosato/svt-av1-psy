@@ -798,7 +798,7 @@ NOTE : PART OF LIGHT_PD0_2  code was committed to svt-04-final-rebased under OPT
 #define TUNE_CAPPED_CRF                       1 // Improve the Capped CRF algorithm
 
 #define TUNE_SC_SPACING                       1 // Tune SC features for presets
-
+#define TUNE_10BIT_M5_M8                      1 // tune 10bit setting for m5-m8
 #endif //----------------------------------- all svt-05 features should be place are above this line -------------------------
 
 #if !PRIVATE_MACROS
