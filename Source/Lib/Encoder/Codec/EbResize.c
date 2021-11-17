@@ -1130,29 +1130,26 @@ static uint8_t get_superres_denom_from_qindex_energy(int qindex, double* energy,
 
 int32_t get_frame_update_type(SequenceControlSet* scs_ptr, PictureParentControlSet* pcs_ptr)
 {
-    // gf_group->update_type is valid when in 2nd pass of 2-pass encoding or lap_enabled is true.
-    if (use_input_stat(scs_ptr) || scs_ptr->lap_enabled) {
-        const GF_GROUP* gf_group = &scs_ptr->encode_context_ptr->gf_group;
-        return gf_group->update_type[pcs_ptr->gf_group_index];
+    // Reasons why not use gf_group->update_type:
+    //   1. It is valid only in 2nd pass of 2-pass encoding or lap_enabled is true. E.g. It's invalid in 1-pass CQP mode.
+    //   2. It is set in RC process, so can't use it in processes before RC.
+    if (pcs_ptr->frm_hdr.frame_type == KEY_FRAME) {
+        return KF_UPDATE;
     }
-    else {
-        if (pcs_ptr->frm_hdr.frame_type == KEY_FRAME) {
-            return KF_UPDATE;
-        }
 
-        if (scs_ptr->max_temporal_layers > 0) {
-            if (pcs_ptr->temporal_layer_index == 0) {
-                return ARF_UPDATE;
-            }
-            else if (pcs_ptr->temporal_layer_index == pcs_ptr->hierarchical_levels) {
-                return LF_UPDATE;
-            }
-            else {
-                return INTNL_ARF_UPDATE;
-            }
-        } else {
+    if (scs_ptr->max_temporal_layers > 0) {
+        if (pcs_ptr->temporal_layer_index == 0) {
+            return ARF_UPDATE;
+        }
+        else if (pcs_ptr->temporal_layer_index == pcs_ptr->hierarchical_levels) {
             return LF_UPDATE;
         }
+        else {
+            return INTNL_ARF_UPDATE;
+        }
+    }
+    else {
+        return LF_UPDATE;
     }
 }
 
