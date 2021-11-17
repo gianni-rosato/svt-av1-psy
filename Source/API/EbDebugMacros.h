@@ -799,6 +799,9 @@ NOTE : PART OF LIGHT_PD0_2  code was committed to svt-04-final-rebased under OPT
 
 #define TUNE_SC_SPACING                       1 // Tune SC features for presets
 #define TUNE_10BIT_M5_M8                      1 // tune 10bit setting for m5-m8
+
+#define FIX_TILES_COL                         1 // Fix the hard-coded Tiles setting
+
 #endif //----------------------------------- all svt-05 features should be place are above this line -------------------------
 
 #if !PRIVATE_MACROS
