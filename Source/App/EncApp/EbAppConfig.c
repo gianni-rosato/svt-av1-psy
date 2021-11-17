@@ -1042,11 +1042,19 @@ ConfigEntry config_entry_rc[] = {
      set_cfg_crf},
     {SINGLE_INPUT,
     MAX_QP_TOKEN,
+#if FIX_I87
+     "Maximum (worst) quantizer[1-63] only applicable  when --rc > 0",
+#else
      "Maximum (worst) quantizer[0-63] only applicable  when --rc > 0",
+#endif
      set_max_qp_allowed},
      {SINGLE_INPUT,
     MIN_QP_TOKEN,
+#if FIX_I87
+     "Minimum (best) quantizer[1-63] only applicable when --rc > 0",
+#else
      "Minimum (best) quantizer[0-63] only applicable when --rc > 0",
+#endif
      set_min_qp_allowed},
      {SINGLE_INPUT,
      ADAPTIVE_QP_ENABLE_TOKEN,
@@ -2114,6 +2122,11 @@ void set_ipp_controls(
 #endif
         break;
     }
+#if FIX_I80
+    // To make sure downsample version has width and height greater or equal to 64
+    if (config->config.source_width < 128 || config->config.source_height < 128)
+        ipp_ctrls->ipp_ds = 0;
+#endif
 }
 #endif
 EbErrorType set_two_passes_stats(EbConfig *config, EncodePass pass,
@@ -2206,11 +2219,18 @@ EbErrorType set_two_passes_stats(EbConfig *config, EncodePass pass,
         }
 #endif
         config->config.rc_middlepass_stats_out = EB_TRUE;
-        config->config.rc_twopass_stats_in = *rc_twopass_stats_in;
+        config->config.rc_twopass_stats_in     = *rc_twopass_stats_in;
 #if FTR_OPT_MPASS_DOWN_SAMPLE
+#if FIX_I80
+        config->config.rc_middlepass_ds_stats_out = (config->config.enc_mode > ENC_M8 &&
+             config->config.source_width >= 128 && config->config.source_height >= 128)
+            ? 1
+            : 0;
+#else
         config->config.rc_middlepass_ds_stats_out = config->config.enc_mode > ENC_M8 ? 1 : 0;
+#endif
         if (config->config.rc_middlepass_ds_stats_out) {
-            config->org_input_padded_width = config->config.source_width;
+            config->org_input_padded_width  = config->config.source_width;
             config->org_input_padded_height = config->config.source_height;
             // To make sure the down scaled video has width and height of multiple of 2
             config->input_padded_width = config->config.source_width = (((config->config.source_width >> 1) >> 1) << 1);

@@ -184,8 +184,8 @@ The encoder parameters present in the `Sample.cfg` file are listed in this table
 | **TargetBitRate** | --tbr | [1 - 4294967] | 7000 | Target bitrate in kilobits per second when RateControlMode is set to 1, or 2 |
 | **UseQpFile** | --use-q-file | [0-1] | 0 | When set to 1, overwrite the picture qp assignment using qp values in QpFile, can be used for initial crf values as well if EnableTPLModel is set to 1, the encoder may still change crf per block |
 | **QpFile** | --qpfile | any string | Null | Path to qp file |
-| **MaxQpAllowed** | --max-qp | [0 - 63] | Null | Maximum (worst) quantizer[0-63] only applicable  when --rc > 0 |
-| **MinQpAllowed** | --min-qp | [0 - 63] | Null | Minimum (best) quantizer[0-63] only applicable  when --rc > 0 |
+| **MaxQpAllowed** | --max-qp | [1 - 63] | Null | Maximum (worst) quantizer[1-63] only applicable  when --rc > 0 |
+| **MinQpAllowed** | --min-qp | [1 - 63] | Null | Minimum (best) quantizer[1-63] only applicable  when --rc > 0 |
 | **AdaptiveQuantization** | --adaptive-quantization | [0 - 2] | 2 | 0 = OFF , 1 = variance base using segments , 2 = Deltaq pred efficiency (default) |
 | **VBVBufSize** | --vbv-bufsize | [1 - 4294967] | 1 second TargetBitRate | VBV Buffer Size when RateControl is 2. |
 | **UseFixedQIndexOffsets** | --use-fixed-qindex-offsets | [0 - 1] | 0 | 0 = OFF, 1 = enable fixed qindex offset based on temporal layer and frame type when rc mode is 0. qindex offsets are specified by the following arguments |

@@ -5876,7 +5876,11 @@ static EbErrorType verify_settings(
         return_error = EB_ErrorBadParameter;
     }
     if (scs_ptr->max_input_luma_height < 64) {
+#if FIX_I80
+        SVT_LOG("Error instance %u: Source Height must be at least 64\n", channel_number + 1);
+#else
         SVT_LOG("Error instance %u: Source Width must be at least 64\n", channel_number + 1);
+#endif
         return_error = EB_ErrorBadParameter;
     }
 #if FIX_LOW_DELAY
@@ -6086,17 +6090,31 @@ if (scs_ptr->max_input_luma_width > 16384) {
     }
 
     if (config->max_qp_allowed > MAX_QP_VALUE) {
+#if FIX_I87
+        SVT_LOG("Error instance %u: MaxQpAllowed must be [1 - %d]\n", channel_number + 1, MAX_QP_VALUE);
+#else
         SVT_LOG("Error instance %u: MaxQpAllowed must be [0 - %d]\n", channel_number + 1, MAX_QP_VALUE);
+#endif
         return_error = EB_ErrorBadParameter;
     }
     else if (config->min_qp_allowed >= MAX_QP_VALUE) {
-        SVT_LOG("Error instance %u: MinQpAllowed must be [0 - %d]\n", channel_number + 1, MAX_QP_VALUE-1);
+#if FIX_I87
+        SVT_LOG("Error instance %u: MinQpAllowed must be [1 - %d]\n", channel_number + 1, MAX_QP_VALUE-1);
+#else
+        SVT_LOG("Error instance %u: MinQpAllowed must be [0 - %d]\n", channel_number + 1, MAX_QP_VALUE - 1);
+#endif
         return_error = EB_ErrorBadParameter;
     }
     else if ((config->min_qp_allowed) > (config->max_qp_allowed)) {
         SVT_LOG("Error Instance %u:  MinQpAllowed must be smaller than MaxQpAllowed\n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
+#if FIX_I87
+    else if ((config->min_qp_allowed) == 0) {
+        SVT_LOG("Error instance %u: MinQpAllowed must be [1 - %d]. Lossless coding not supported\n", channel_number + 1, MAX_QP_VALUE - 1);
+        return_error = EB_ErrorBadParameter;
+    }
+#endif
 
     if (config->stat_report > 1) {
         SVT_LOG("Error instance %u : Invalid StatReport. StatReport must be [0 - 1]\n", channel_number + 1);
