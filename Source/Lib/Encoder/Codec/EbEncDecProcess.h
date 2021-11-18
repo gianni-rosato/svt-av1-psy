@@ -98,9 +98,14 @@ typedef struct EncDecContext {
 /**************************************
      * Extern Function Declarations
      **************************************/
+#if FIX_ED_PORT
+extern EbErrorType enc_dec_context_ctor(EbThreadContext *  thread_context_ptr,
+    const EbEncHandle *enc_handle_ptr, int index, int tasks_index);
+#else
 extern EbErrorType enc_dec_context_ctor(EbThreadContext *  thread_context_ptr,
                                         const EbEncHandle *enc_handle_ptr, int index,
                                         int tasks_index, int demux_index);
+#endif
 
 extern void *mode_decision_kernel(void *input_ptr);
 

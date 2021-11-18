@@ -66,8 +66,13 @@ static INLINE int coded_to_superres_mi(int mi_col, int denom) {
 /************************************************
 * Source Based Operation Context Constructor
 ************************************************/
+#if FIX_TPL_PORTS
+EbErrorType source_based_operations_context_ctor(EbThreadContext *  thread_context_ptr,
+    const EbEncHandle *enc_handle_ptr, int  tpl_index, int index) {
+#else
 EbErrorType source_based_operations_context_ctor(EbThreadContext *  thread_context_ptr,
                                                  const EbEncHandle *enc_handle_ptr, int index) {
+#endif
     SourceBasedOperationsContext *context_ptr;
     EB_CALLOC_ARRAY(context_ptr, 1);
     thread_context_ptr->priv  = context_ptr;
@@ -76,9 +81,14 @@ EbErrorType source_based_operations_context_ctor(EbThreadContext *  thread_conte
     context_ptr->initial_rate_control_results_input_fifo_ptr =
         svt_system_resource_get_consumer_fifo(
             enc_handle_ptr->initial_rate_control_results_resource_ptr, index);
-
+#if FIX_TPL_PORTS
+    context_ptr->sbo_output_fifo_ptr = svt_system_resource_get_producer_fifo(
+        enc_handle_ptr->tpl_disp_res_srm, tpl_index);
+#else
     context_ptr->sbo_output_fifo_ptr= svt_system_resource_get_producer_fifo(
         enc_handle_ptr->tpl_disp_res_srm, index);
+#endif
+
     context_ptr->picture_demux_results_output_fifo_ptr = svt_system_resource_get_producer_fifo(
         enc_handle_ptr->picture_demux_results_resource_ptr, index);
     return EB_ErrorNone;

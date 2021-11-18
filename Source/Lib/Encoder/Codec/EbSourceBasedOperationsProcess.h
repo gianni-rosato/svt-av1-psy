@@ -21,8 +21,13 @@
 EbErrorType tpl_disp_context_ctor(EbThreadContext *thread_context_ptr,
                              const EbEncHandle *enc_handle_ptr, int index, int tasks_index);
 extern void *tpl_disp_kernel(void *input_ptr);
+#if FIX_TPL_PORTS
+EbErrorType source_based_operations_context_ctor(EbThreadContext *  thread_context_ptr,
+    const EbEncHandle *enc_handle_ptr, int  tpl_index, int index);
+#else
 EbErrorType source_based_operations_context_ctor(EbThreadContext *  thread_context_ptr,
                                                  const EbEncHandle *enc_handle_ptr, int index);
+#endif
 
 extern void *source_based_operations_kernel(void *input_ptr);
 

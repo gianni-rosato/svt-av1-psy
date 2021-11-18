@@ -100,9 +100,14 @@ EbErrorType picture_manager_context_ctor(EbThreadContext *  thread_context_ptr,
 
     context_ptr->picture_input_fifo_ptr =
         svt_system_resource_get_consumer_fifo(enc_handle_ptr->picture_demux_results_resource_ptr, 0);
+#if FIX_RC_PORT
+    context_ptr->picture_manager_output_fifo_ptr = svt_system_resource_get_producer_fifo(
+        enc_handle_ptr->rate_control_tasks_resource_ptr, rate_control_index);
+#else
     UNUSED(rate_control_index);
     context_ptr->picture_manager_output_fifo_ptr = svt_system_resource_get_producer_fifo(
         enc_handle_ptr->rate_control_tasks_resource_ptr, 0);
+#endif
     context_ptr->picture_control_set_fifo_ptr = svt_system_resource_get_producer_fifo(
         enc_handle_ptr->picture_control_set_pool_ptr_array[0], 0); //The Child PCS Pool here
     context_ptr->recon_coef_fifo_ptr = svt_system_resource_get_producer_fifo(

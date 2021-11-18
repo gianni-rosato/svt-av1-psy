@@ -148,9 +148,14 @@ static void enc_dec_context_dctor(EbPtr p) {
 /******************************************************
  * Enc Dec Context Constructor
  ******************************************************/
+#if FIX_ED_PORT
+EbErrorType enc_dec_context_ctor(EbThreadContext *  thread_context_ptr,
+    const EbEncHandle *enc_handle_ptr, int index, int tasks_index)
+#else
 EbErrorType enc_dec_context_ctor(EbThreadContext *  thread_context_ptr,
                                  const EbEncHandle *enc_handle_ptr, int index, int tasks_index,
                                  int demux_index)
+#endif
 
 {
     const EbSvtAv1EncConfiguration *static_config =
@@ -173,8 +178,10 @@ EbErrorType enc_dec_context_ctor(EbThreadContext *  thread_context_ptr,
         enc_handle_ptr->enc_dec_results_resource_ptr, index);
     context_ptr->enc_dec_feedback_fifo_ptr = svt_system_resource_get_producer_fifo(
         enc_handle_ptr->enc_dec_tasks_resource_ptr, tasks_index);
+#if !FIX_ED_PORT
     context_ptr->picture_demux_output_fifo_ptr = svt_system_resource_get_producer_fifo(
         enc_handle_ptr->picture_demux_results_resource_ptr, demux_index);
+#endif
 
 #if !CLN_MDCONTEXT
     // MD rate Estimation tables

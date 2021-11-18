@@ -271,6 +271,19 @@ typedef struct RateControlPorts {
     uint32_t                  count;
 } RateControlPorts;
 
+#if FIX_PMG_PORT
+typedef enum PicMgrInputPortTypes {
+   PIC_MGR_INPUT_PORT_SOP = 0,
+   PIC_MGR_INPUT_PORT_PACKETIZATION = 1,
+   PIC_MGR_INPUT_PORT_REST = 2,
+   PIC_MGR_INPUT_PORT_TOTAL_COUNT = 3,
+   PIC_MGR_INPUT_PORT_INVALID = ~0,
+} PicMgrInputPortTypes;
+typedef struct PicMgrPorts {
+    PicMgrInputPortTypes type;
+    uint32_t             count;
+} PicMgrPorts;
+#endif
 /**************************************
  * Context
  **************************************/

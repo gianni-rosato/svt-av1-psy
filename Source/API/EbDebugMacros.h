@@ -783,6 +783,10 @@ NOTE : PART OF LIGHT_PD0_2  code was committed to svt-04-final-rebased under OPT
 #define TUNE_2PASS_SETTINGS                   1 // move 1 pass to M9 for crf
 #define TUNE_PICT_PARALLEL                    1 // Tune picture parallelization
 #define FIX_TPL_PORTS                         1 // Separate the TPL thread port numbers from the EncDec port numbers
+#define FTR_MG_PARALELL                       1  // MG level picture based pralellism
+#define FIX_ED_PORT                           1  // Fix unused Enc-Dec port FIFO causing a seg fault
+#define FIX_RC_PORT                           1  // Fix RC port FIFO causing a seg fault
+#define FIX_PMG_PORT                          1  // Fix Pic-Mgr port FIFO causing a seg fault
 
 #define CLN_MATHUTIL                          1 //Cleanup linsolve(), and more
 #define CLN_RANSAC                            1 //Cleanup ransac operations
