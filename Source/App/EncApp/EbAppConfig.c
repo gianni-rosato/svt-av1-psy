@@ -2721,6 +2721,11 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncodePass pass[MAX_ENCODE
         find_token(argc, argv, "--keyint", config_string) == 0)
         ip = strtol(config_string, NULL, 0);
 #endif
+    if (find_token(argc, argv, PASSES_TOKEN, config_string) != 0) {
+    }
+    else
+        passes = strtol(config_string, NULL, 0);
+
     if (rc_mode == 0) { // CRF mode
         if (passes == -1)
 #if FIX_DG
@@ -2766,6 +2771,14 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncodePass pass[MAX_ENCODE
         *multi_pass_mode = (passes == 2) ? TWO_PASS_IPP_FINAL : SINGLE_PASS;
 #else
         *multi_pass_mode = SINGLE_PASS;
+#endif
+#if TUNE_MIDDLEP_VBR
+        if (enc_mode > ENC_M12 && passes > 1) {
+            fprintf(stderr, "\nWarning: Multipass VBR is not supported for preset %d. Switching to 1-pass encoding\n\n", enc_mode);
+            passes = 1;
+            *multi_pass_mode = SINGLE_PASS;
+        }
+        else
 #endif
         if (rc_mode > 1) {
             if (passes == 3) {

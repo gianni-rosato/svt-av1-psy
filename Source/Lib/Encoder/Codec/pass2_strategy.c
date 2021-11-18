@@ -826,8 +826,13 @@ static void av1_gop_bit_allocation_two_pass(PictureParentControlSet *pcs, GF_GRO
 }
 #endif
 // Allocate bits to each frame in a GF / ARF group
+#if OPT_1P_VBR
+static double layer_fraction[MAX_ARF_LAYERS + 1] = { 1.0,  0.80, 0.7, 0.60,
+                                              0.60, 1.0,  1.0 };
+#else
 static double layer_fraction[MAX_ARF_LAYERS + 1] = { 1.0,  0.70, 0.55, 0.60,
                                               0.60, 1.0,  1.0 };
+#endif
 static void allocate_gf_group_bits(GF_GROUP *gf_group, RATE_CONTROL *const rc,
                                    int64_t gf_group_bits, int gf_arf_bits,
                                    int gf_interval,
@@ -855,8 +860,13 @@ static void allocate_gf_group_bits(GF_GROUP *gf_group, RATE_CONTROL *const rc,
       gf_group->bit_allocation[frame_index] = 0;
     else
 #endif
+#if OPT_1P_VBR
+        gf_group->bit_allocation[frame_index] =
+        base_frame_bits + (int)(gf_arf_bits * 0.1);
+#else
       gf_group->bit_allocation[frame_index] =
           base_frame_bits + (int)(gf_arf_bits * layer_fraction[1]);
+#endif
   }
   frame_index++;
 

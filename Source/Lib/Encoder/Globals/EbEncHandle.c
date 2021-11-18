@@ -4923,6 +4923,14 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
 #if FTR_MULTI_PASS_API
     else if (scs_ptr->static_config.rc_middlepass_stats_out) {
 #if TUNE_RC
+#if TUNE_MIDDLEP_VBR
+        if (scs_ptr->static_config.final_pass_preset < ENC_M8)
+            scs_ptr->static_config.enc_mode = ENC_M11;
+        else if (scs_ptr->static_config.final_pass_preset < ENC_M9)
+            scs_ptr->static_config.enc_mode = ENC_M12;
+        else
+            scs_ptr->static_config.enc_mode = MAX_ENC_PRESET;
+#else
 #if IPP_CTRL
         if (scs_ptr->static_config.final_pass_preset > ENC_M8) // to have different signal
 #else
@@ -4931,7 +4939,9 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
             scs_ptr->static_config.enc_mode = MAX_ENC_PRESET;
         else
             scs_ptr->static_config.enc_mode = ENC_M11;
+#endif
 #else
+
             scs_ptr->static_config.enc_mode = MAX_ENC_PRESET;
 #endif
         scs_ptr->static_config.enable_tpl_la = 1;
@@ -5013,10 +5023,14 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
             scs_ptr->static_config.recode_loop = ALLOW_RECODE_KFARFGF;
         else
 #endif
+#if TUNE_RECODE_VBR
+            scs_ptr->static_config.recode_loop = scs_ptr->static_config.enc_mode <= ENC_M2 ? ALLOW_RECODE_KFARFGF : ALLOW_RECODE_KFMAXBW;
+#else
 #if TUNE_M0_M7_MEGA_FEB
         scs_ptr->static_config.recode_loop = scs_ptr->static_config.enc_mode <= ENC_M7 ? ALLOW_RECODE_KFARFGF : ALLOW_RECODE_KFMAXBW;
 #else
         scs_ptr->static_config.recode_loop = scs_ptr->static_config.enc_mode <= ENC_M5 ? ALLOW_RECODE_KFARFGF : ALLOW_RECODE_KFMAXBW;
+#endif
 #endif
     }
 #if FIX_SANITIZER_RACE_CONDS
