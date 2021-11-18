@@ -106,8 +106,15 @@ extern EbErrorType split_flag_rate(ModeDecisionContext *context_ptr, BlkStruct *
 
 #define RDDIV_BITS 7
 
+#if FIX_RDCOST_OVERFLOW
+#define RDCOST(RM, R, D) \
+    (ROUND_POWER_OF_TWO(((uint64_t)(R)) * ((uint64_t)(RM)), AV1_PROB_COST_SHIFT) + (((uint64_t)(D)) << RDDIV_BITS))
+#else
 #define RDCOST(RM, R, D) \
     (ROUND_POWER_OF_TWO(((uint64_t)(R)) * (RM), AV1_PROB_COST_SHIFT) + ((D) * (1 << RDDIV_BITS)))
+#endif
+
+
 
 extern EbErrorType av1_split_flag_rate(PictureParentControlSet *pcs_ptr,
                                        ModeDecisionContext *context_ptr, BlkStruct *blk_ptr,

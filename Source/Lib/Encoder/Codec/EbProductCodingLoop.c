@@ -11150,8 +11150,13 @@ static void search_best_independent_uv_mode(PictureControlSet *  pcs_ptr,
                                                  context_ptr->md_intra_angle_delta);
 #endif
 
+#if FIX_RDCOST_OVERFLOW
+    uint64_t coeff_rate[UV_PAETH_PRED + 1][(MAX_ANGLE_DELTA << 1) + 1];
+    uint64_t distortion[UV_PAETH_PRED + 1][(MAX_ANGLE_DELTA << 1) + 1];
+#else
     int coeff_rate[UV_PAETH_PRED + 1][(MAX_ANGLE_DELTA << 1) + 1];
     int distortion[UV_PAETH_PRED + 1][(MAX_ANGLE_DELTA << 1) + 1];
+#endif
 
     ModeDecisionCandidate *candidate_array         = context_ptr->fast_candidate_array;
 #if TUNE_MDS0
@@ -11383,6 +11388,14 @@ static void search_best_independent_uv_mode(PictureControlSet *  pcs_ptr,
                                            1);
 #endif
 
+#if FIX_RDCOST_OVERFLOW
+        coeff_rate[candidate_buffer->candidate_ptr->intra_chroma_mode]
+                  [MAX_ANGLE_DELTA + candidate_buffer->candidate_ptr->angle_delta[PLANE_TYPE_UV]] =
+                      cb_coeff_bits + cr_coeff_bits;
+        distortion[candidate_buffer->candidate_ptr->intra_chroma_mode]
+                  [MAX_ANGLE_DELTA + candidate_buffer->candidate_ptr->angle_delta[PLANE_TYPE_UV]] =
+                      cb_full_distortion[DIST_CALC_RESIDUAL] + cr_full_distortion[DIST_CALC_RESIDUAL];
+#else
         coeff_rate[candidate_buffer->candidate_ptr->intra_chroma_mode]
                   [MAX_ANGLE_DELTA + candidate_buffer->candidate_ptr->angle_delta[PLANE_TYPE_UV]] =
                       (int)(cb_coeff_bits + cr_coeff_bits);
@@ -11390,6 +11403,7 @@ static void search_best_independent_uv_mode(PictureControlSet *  pcs_ptr,
                   [MAX_ANGLE_DELTA + candidate_buffer->candidate_ptr->angle_delta[PLANE_TYPE_UV]] =
                       (int)(cb_full_distortion[DIST_CALC_RESIDUAL] +
                             cr_full_distortion[DIST_CALC_RESIDUAL]);
+#endif
     }
 
     // Loop over all intra mode, then over all uv move to derive the best uv mode for a given intra mode in term of rate

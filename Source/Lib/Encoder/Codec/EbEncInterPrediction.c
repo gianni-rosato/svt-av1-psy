@@ -3081,9 +3081,11 @@ int32_t svt_av1_get_switchable_rate(ModeDecisionCandidateBuffer *candidate_buffe
         return 0;
 }
 
+#if !FIX_RDCOST_OVERFLOW
 #define RDDIV_BITS 7
 #define RDCOST(RM, R, D) \
     (ROUND_POWER_OF_TWO(((uint64_t)(R)) * (RM), AV1_PROB_COST_SHIFT) + ((D) * (1 << RDDIV_BITS)))
+#endif
 
 static void model_rd_norm(int32_t xsq_q10, int32_t *r_q10, int32_t *d_q10) {
     // NOTE: The tables below must be of the same size.

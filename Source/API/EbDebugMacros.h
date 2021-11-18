@@ -806,6 +806,7 @@ NOTE : PART OF LIGHT_PD0_2  code was committed to svt-04-final-rebased under OPT
 #define FIX_TILES_COL                         1 // Fix the hard-coded Tiles setting
 #define FIX_I87                               1 // Fix issue 87
 #define FIX_I80                               1 // Fix issue 80
+#define FIX_RDCOST_OVERFLOW                   1 //Fix overflow uint32_t when calculate RDCOST. Found by mismatch between GCC and CLANG. Fix issue 101
 
 #define TUNE_MIDDLEP_VBR                      1 // Set the best middlepass preset for each encoder mode.
 #define OPT_1P_VBR                            1 // Optimise 1pass VBR.
