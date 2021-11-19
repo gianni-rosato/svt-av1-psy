@@ -15175,8 +15175,13 @@ uint8_t update_skip_nsq_based_on_sq_recon_dist(ModeDecisionContext *context_ptr)
                                    context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds]
                                        .rec_dist_per_quadrant[3]);
 
+#if FIX_CLANG_GCC_MISMATCH
+        uint32_t dev = (uint32_t)((ABS((int64_t)dist_h0 - (int64_t)dist_h1) * 100) /
+                                  MIN(dist_h0, dist_h1));
+#else
         uint32_t dev = (uint32_t)((ABS((int32_t)(dist_h0 - dist_h1)) * 100) /
                                   MIN(dist_h0, dist_h1));
+#endif
         // TH = TH + TH * Min(dev_0,dev_1); dev_0 is q0 - to - q1 deviation, and dev_1 is q2 - to - q3 deviation
         uint64_t dist_q0 = MAX(1,
                                context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds]
@@ -15191,10 +15196,17 @@ uint8_t update_skip_nsq_based_on_sq_recon_dist(ModeDecisionContext *context_ptr)
                                context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds]
                                    .rec_dist_per_quadrant[3]);
 
+#if FIX_CLANG_GCC_MISMATCH
+        uint32_t quad_dev_t = (uint32_t)((ABS((int64_t)dist_q0 - (int64_t)dist_q1) * 100) /
+                                         MIN(dist_q0, dist_q1));
+        uint32_t quad_dev_b = (uint32_t)((ABS((int64_t)dist_q2 - (int64_t)dist_q3) * 100) /
+                                         MIN(dist_q2, dist_q3));
+#else
         uint32_t quad_dev_t    = (uint32_t)((ABS((int32_t)(dist_q0 - dist_q1)) * 100) /
                                          MIN(dist_q0, dist_q1));
         uint32_t quad_dev_b    = (uint32_t)((ABS((int32_t)(dist_q2 - dist_q3)) * 100) /
                                          MIN(dist_q2, dist_q3));
+#endif
         max_part0_to_part1_dev = max_part0_to_part1_dev +
             ((max_part0_to_part1_dev * MIN(quad_dev_t, quad_dev_b)) / 100);
 
@@ -15227,8 +15239,13 @@ uint8_t update_skip_nsq_based_on_sq_recon_dist(ModeDecisionContext *context_ptr)
                                    context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds]
                                        .rec_dist_per_quadrant[3]);
 
+#if FIX_CLANG_GCC_MISMATCH
+        uint32_t dev = (uint32_t)((ABS((int64_t)dist_v0 - (int64_t)dist_v1) * 100) /
+                                  MIN(dist_v0, dist_v1));
+#else
         uint32_t dev = (uint32_t)((ABS((int32_t)(dist_v0 - dist_v1)) * 100) /
                                   MIN(dist_v0, dist_v1));
+#endif
 
         // TH = TH + TH * Min(dev_0,dev_1); dev_0 is q0-to-q2 deviation, and dev_1 is q1-to-q3 deviation
         uint64_t dist_q0 = MAX(1,
@@ -15244,10 +15261,17 @@ uint8_t update_skip_nsq_based_on_sq_recon_dist(ModeDecisionContext *context_ptr)
                                context_ptr->md_local_blk_unit[context_ptr->blk_geom->sqi_mds]
                                    .rec_dist_per_quadrant[3]);
 
+#if FIX_CLANG_GCC_MISMATCH
+        uint32_t quad_dev_l = (uint32_t)((ABS((int64_t)dist_q0 - (int64_t)dist_q2) * 100) /
+                                         MIN(dist_q0, dist_q2));
+        uint32_t quad_dev_r = (uint32_t)((ABS((int64_t)dist_q1 - (int64_t)dist_q3) * 100) /
+                                         MIN(dist_q1, dist_q3));
+#else
         uint32_t quad_dev_l = (uint32_t)((ABS((int32_t)(dist_q0 - dist_q2)) * 100) /
                                          MIN(dist_q0, dist_q2));
         uint32_t quad_dev_r = (uint32_t)((ABS((int32_t)(dist_q1 - dist_q3)) * 100) /
                                          MIN(dist_q1, dist_q3));
+#endif
 
         max_part0_to_part1_dev = max_part0_to_part1_dev +
             ((max_part0_to_part1_dev * MIN(quad_dev_l, quad_dev_r)) / 100);
