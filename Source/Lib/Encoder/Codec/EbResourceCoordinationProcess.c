@@ -172,6 +172,11 @@ uint8_t  get_tpl_level(int8_t enc_mode)
 #if FTR_MOD_DEPTH_REMOVAL_LVL
 #if CLN_TPL_LEVEL_7
     }
+#if TUNE_M10_M12_ULTRA
+    else if (enc_mode <= ENC_M10) {
+        tpl_level = 4;
+    }
+#endif
     else {
         tpl_level = 6;
     }

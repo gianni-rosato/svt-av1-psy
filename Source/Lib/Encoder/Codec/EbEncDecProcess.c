@@ -6846,7 +6846,34 @@ void set_lpd1_ctrls(ModeDecisionContext *ctx, uint8_t lpd1_lvl) {
         ctrls->skip_pd0_edge_dist_th[LPD1_LVL_0] = 1024;
         ctrls->skip_pd0_me_shift[LPD1_LVL_0] = 1;
         break;
+#if TUNE_NEW_LPD1_LVL
     case 3:
+        ctrls->pd1_level = LPD1_LVL_1;
+
+        // Set LPD1 level 0 controls
+        ctrls->use_lpd1_detector[LPD1_LVL_0] = 1;
+        ctrls->use_ref_info[LPD1_LVL_0] = 0;
+        ctrls->cost_th_dist[LPD1_LVL_0] = 256 << 9;
+        ctrls->coeff_th[LPD1_LVL_0] = 8192;
+        ctrls->max_mv_length[LPD1_LVL_0] = 2048;
+        ctrls->me_8x8_cost_variance_th[LPD1_LVL_0] = (uint32_t)~0;
+        ctrls->skip_pd0_edge_dist_th[LPD1_LVL_0] = 16384;
+        ctrls->skip_pd0_me_shift[LPD1_LVL_0] = 3;
+
+        // Set LPD1 level 1 controls
+        ctrls->use_lpd1_detector[LPD1_LVL_1] = 1;
+        ctrls->use_ref_info[LPD1_LVL_1] = 1;
+        ctrls->cost_th_dist[LPD1_LVL_1] = 256 << 6;
+        ctrls->coeff_th[LPD1_LVL_1] = 2000;
+        ctrls->max_mv_length[LPD1_LVL_1] = 1600;
+        ctrls->me_8x8_cost_variance_th[LPD1_LVL_1] = 500000;
+        ctrls->skip_pd0_edge_dist_th[LPD1_LVL_1] = 16384;
+        ctrls->skip_pd0_me_shift[LPD1_LVL_1] = 2;
+        break;
+    case 4:
+#else
+    case 3:
+#endif
         ctrls->pd1_level = LPD1_LVL_2;
 
         // Set LPD1 level 0 controls
@@ -6879,7 +6906,11 @@ void set_lpd1_ctrls(ModeDecisionContext *ctx, uint8_t lpd1_lvl) {
         ctrls->skip_pd0_edge_dist_th[LPD1_LVL_2] = 16384;
         ctrls->skip_pd0_me_shift[LPD1_LVL_2] = 2;
         break;
+#if TUNE_NEW_LPD1_LVL
+    case 5:
+#else
     case 4:
+#endif
         ctrls->pd1_level = LPD1_LVL_4;
 
         // LPD1 level 3 doesn't use the detector (will be used for all SBs)

@@ -2336,7 +2336,7 @@ EbErrorType signal_derivation_multi_processes_oq(
             else if (pcs_ptr->enc_mode <= ENC_M9)
                 pcs_ptr->cdef_level = 9;
 #endif
-#if (TUNE_NEW_M11_2 && !FTR_CDEF_BIAS_ZERO_COST) || TUNE_M11_SLOWDOWN
+#if ((TUNE_NEW_M11_2 && !FTR_CDEF_BIAS_ZERO_COST) || TUNE_M11_SLOWDOWN ) && !TUNE_M10_M12_ULTRA
             else if (pcs_ptr->enc_mode <= ENC_M11)
 #else
             else if (pcs_ptr->enc_mode <= ENC_M10)

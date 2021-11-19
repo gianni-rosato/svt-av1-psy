@@ -279,7 +279,11 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
 #if TUNE_M10_M0 && !TUNE_M9_M10 || TUNE_M8_M11_MT
 #if TUNE_M11_SLOWDOWN
 #if CLN_RES_ME_BIS
+#if TUNE_M10_M12_ULTRA
+    else if (pcs_ptr->enc_mode <= ENC_M9) {
+#else
     else if (pcs_ptr->enc_mode <= ENC_M10) {
+#endif
 #else
     else if (pcs_ptr->enc_mode <= ENC_M11) {
 #endif
@@ -1213,7 +1217,7 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
 #if TUNE_PREHME_M10
     {
 #if CLN_M6_M12_FEATURES
-#if TUNE_IMPROVE_M11_M10
+#if TUNE_IMPROVE_M11_M10 && !TUNE_M10_M12_ULTRA
         if (enc_mode <= ENC_M10)
 #else
         if (enc_mode <= ENC_M11)

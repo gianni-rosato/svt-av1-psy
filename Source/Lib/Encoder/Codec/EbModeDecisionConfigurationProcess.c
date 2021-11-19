@@ -955,7 +955,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     pcs_ptr->cand_reduction_level = 0;
     if (pcs_ptr->slice_type == I_SLICE)
         pcs_ptr->cand_reduction_level = 0;
+#if TUNE_M7_M9_ULTRA
+    else if (enc_mode <= ENC_M6)
+#else
     else if (enc_mode <= ENC_M7)
+#endif
         pcs_ptr->cand_reduction_level = 0;
     else if (enc_mode <= ENC_M9)
         pcs_ptr->cand_reduction_level = 1;
@@ -973,7 +977,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         pcs_ptr->txt_level = (pcs_ptr->temporal_layer_index == 0) ? 1 : 3;
     else if (enc_mode <= ENC_M8)
         pcs_ptr->txt_level = 5;
+#if TUNE_M10_M12_ULTRA
+    else if (enc_mode <= ENC_M11) {
+#else
     else if (enc_mode <= ENC_M10) {
+#endif
 #if CLN_RES_TXT
         pcs_ptr->txt_level = (pcs_ptr->parent_pcs_ptr->input_resolution <= INPUT_SIZE_1080p_RANGE) ? ((pcs_ptr->temporal_layer_index == 0) ? 6 : 8) : ((pcs_ptr->temporal_layer_index == 0) ? 6 : 9);
         if (pcs_ptr->ref_intra_percentage < 85 && pcs_ptr->temporal_layer_index && pcs_ptr->parent_pcs_ptr->input_resolution > INPUT_SIZE_1080p_RANGE && !pcs_ptr->parent_pcs_ptr->sc_class1) {
@@ -1078,7 +1086,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
             pcs_ptr->cfl_level = (pcs_ptr->temporal_layer_index == 0) ? 2 : 0;
     } else if (enc_mode <= ENC_M5)
         pcs_ptr->cfl_level = 1;
+#if TUNE_M10_M12_ULTRA
+    else if (enc_mode <= ENC_M11)
+#else
     else if (enc_mode <= ENC_M10)
+#endif
         pcs_ptr->cfl_level = (pcs_ptr->temporal_layer_index == 0) ? 2 : 0;
     else if (enc_mode <= ENC_M12)
         pcs_ptr->cfl_level = (pcs_ptr->slice_type == I_SLICE) ? 2 : 0;
@@ -1224,7 +1236,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
          pcs_ptr->txs_level = 2;
      else if (enc_mode <= ENC_M2)
          pcs_ptr->txs_level = (pcs_ptr->temporal_layer_index == 0) ? 2 : 3;
+#if TUNE_M10_M12_ULTRA
+     else if (enc_mode <= ENC_M10)
+#else
      else if (enc_mode <= ENC_M11)
+#endif
          pcs_ptr->txs_level = 3;
      else if (enc_mode <= ENC_M13)
          pcs_ptr->txs_level = (pcs_ptr->parent_pcs_ptr->input_resolution <= INPUT_SIZE_240p_RANGE) ? 5 : (pcs_ptr->parent_pcs_ptr->input_resolution <= INPUT_SIZE_1080p_RANGE) ? 4 : 1;
@@ -1253,10 +1269,16 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
          pcs_ptr->md_pme_level = 3;
      else if (enc_mode <= ENC_M6)
          pcs_ptr->md_pme_level = 4;
+#if TUNE_M10_M12_ULTRA
+     else if (enc_mode <= ENC_M12)
+#else
      else if (enc_mode <= ENC_M11)
+#endif
          pcs_ptr->md_pme_level = 6;
+#if !TUNE_M10_M12_ULTRA
      else if (enc_mode <= ENC_M12)
          pcs_ptr->md_pme_level = 10;
+#endif
      else
          pcs_ptr->md_pme_level = 0;
 
@@ -1300,7 +1322,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         pcs_ptr->pic_pd0_level = REGULAR_PD0;
     else if (enc_mode <= ENC_M7)
         pcs_ptr->pic_pd0_level = LIGHT_PD0_LVL1;
+#if TUNE_M10_M12_ULTRA
+    else if (enc_mode <= ENC_M10)
+#else
     else if (enc_mode <= ENC_M9)
+#endif
         pcs_ptr->pic_pd0_level = LIGHT_PD0_LVL2;
     else
 #if CLN_RES_CHECKS
@@ -1388,16 +1414,22 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
                 else
                     pcs_ptr->pic_depth_removal_level = 2;
             }
+#if TUNE_M7_M9_ULTRA
+            else if (enc_mode <= ENC_M7) {
+#else
             else if (enc_mode <= ENC_M6) {
+#endif
                 if (input_resolution <= INPUT_SIZE_360p_RANGE)
                     pcs_ptr->pic_depth_removal_level = 1;
                 else
                     pcs_ptr->pic_depth_removal_level = is_base ? 1 : 2;
             }
 #if CLN_RES_DEPTH_REMOVAL
+#if !TUNE_M7_M9_ULTRA
             else if (enc_mode <= ENC_M7) {
                 pcs_ptr->pic_depth_removal_level = is_base ? 2 : 3;
             }
+#endif
             else if (enc_mode <= ENC_M9) {
                 if (input_resolution <= INPUT_SIZE_360p_RANGE)
                     pcs_ptr->pic_depth_removal_level = is_base ? 2 : 3;
@@ -1406,7 +1438,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
                 else
                     pcs_ptr->pic_depth_removal_level = is_base ? 2 : 5;
             }
+#if TUNE_M10_M12_ULTRA
+            else if (enc_mode <= ENC_M11) {
+#else
             else if (enc_mode <= ENC_M10) {
+#endif
                 if (input_resolution <= INPUT_SIZE_360p_RANGE)
                     pcs_ptr->pic_depth_removal_level = is_base ? 2 : 4;
                 else if (input_resolution <= INPUT_SIZE_480p_RANGE)
@@ -1416,6 +1452,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
                 else
                     pcs_ptr->pic_depth_removal_level = is_base ? 3 : 8;
             }
+#if !TUNE_M10_M12_ULTRA
             else if (enc_mode <= ENC_M11) {
                 if (input_resolution <= INPUT_SIZE_360p_RANGE)
                     pcs_ptr->pic_depth_removal_level = is_base ? 3 : 6;
@@ -1426,6 +1463,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
                 else
                     pcs_ptr->pic_depth_removal_level = is_base ? 4 : 9;
             }
+#endif
 #else
             else if (enc_mode <= ENC_M11) {
                 if (input_resolution <= INPUT_SIZE_360p_RANGE)
@@ -1521,13 +1559,27 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         pcs_ptr->pic_lpd1_lvl = (input_resolution <= INPUT_SIZE_480p_RANGE) ? 0 : (is_ref ? 0 : 1);
 #endif
     else if (enc_mode <= ENC_M10)
+#if TUNE_M10_M12_ULTRA
+        pcs_ptr->pic_lpd1_lvl = is_base ? 0 : 2;
+#else
         pcs_ptr->pic_lpd1_lvl = is_ref ? 0 : 2;
-
+#endif
+#if TUNE_NEW_LPD1_LVL
+#if TUNE_M10_M12_ULTRA
+    else if (enc_mode <= ENC_M11)
+        pcs_ptr->pic_lpd1_lvl = is_base ? 0 : 3;
+#endif
+    else if (enc_mode <= ENC_M12)
+        pcs_ptr->pic_lpd1_lvl = is_base ? 0 : 4;
+    else
+        pcs_ptr->pic_lpd1_lvl = is_base ? 0 : 5;
+#else
     // Possible intermediate level for M11: lpd1_lvl = pcs_ptr->parent_pcs_ptr->temporal_layer_index == 0 ? 0 : 2;
     else if (enc_mode <= ENC_M12)
         pcs_ptr->pic_lpd1_lvl = is_base ? 0 : 3;
     else
         pcs_ptr->pic_lpd1_lvl = is_base ? 0 : 4;
+#endif
     // Can only use light-PD1 under the following conditions
     // There is another check before PD1 is called; pred_depth_only is not checked here, because some modes
     // may force pred_depth_only at the light-pd1 detector
