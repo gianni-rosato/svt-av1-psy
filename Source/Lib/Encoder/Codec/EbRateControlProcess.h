@@ -105,8 +105,11 @@ typedef struct {
 #endif
     int gfu_boost;
     int kf_boost;
-
+#if TUNE_OVERSHOOT_I83
+    double rate_correction_factors[MAX_TEMPORAL_LAYERS + 1];
+#else
     double rate_correction_factors[RATE_FACTOR_LEVELS];
+#endif
 #if !RFCTR_RC_P1
     int frames_since_golden;
 #endif

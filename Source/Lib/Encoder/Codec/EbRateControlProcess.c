@@ -1541,7 +1541,11 @@ static void av1_rc_init(SequenceControlSet *scs_ptr) {
     rc->avg_q = svt_av1_convert_qindex_to_q(rc_cfg->worst_allowed_q,
                                             scs_ptr->static_config.encoder_bit_depth);
 #endif
+#if TUNE_OVERSHOOT_I83
+    for (i = 0; i < MAX_TEMPORAL_LAYERS + 1; ++i) { rc->rate_correction_factors[i] = 0.7; }
+#else
     for (i = 0; i < RATE_FACTOR_LEVELS; ++i) { rc->rate_correction_factors[i] = 0.7; }
+#endif
     rc->rate_correction_factors[KF_STD] = 1.0;
     rc->min_gf_interval                 = encode_context_ptr->gf_cfg.min_gf_interval;
     rc->max_gf_interval                 = encode_context_ptr->gf_cfg.max_gf_interval;
@@ -1927,8 +1931,12 @@ static double get_rate_correction_factor(PictureParentControlSet *ppcs_ptr/*,
 #else
     } else {
 #endif
+#if TUNE_OVERSHOOT_I83
+        const rate_factor_level rf_lvl = ppcs_ptr->temporal_layer_index + 1;
+#else
         const rate_factor_level rf_lvl = get_rate_factor_level(&encode_context_ptr->gf_group,
                                                                ppcs_ptr->gf_group_index);
+#endif
         rcf                            = rc->rate_correction_factors[rf_lvl];
     }
 #if FTR_1PASS_CBR
@@ -1968,8 +1976,12 @@ static void set_rate_correction_factor(PictureParentControlSet *ppcs_ptr, double
 #else
     } else {
 #endif
+#if TUNE_OVERSHOOT_I83
+        const rate_factor_level rf_lvl = ppcs_ptr->temporal_layer_index + 1;
+#else
         const rate_factor_level rf_lvl      = get_rate_factor_level(&encode_context_ptr->gf_group,
                                                                ppcs_ptr->gf_group_index);
+#endif
         rc->rate_correction_factors[rf_lvl] = factor;
     }
 #if FTR_1PASS_CBR
@@ -2422,6 +2434,7 @@ static int rc_pick_q_and_bounds(PictureControlSet *pcs_ptr) {
         pcs_ptr, rc, &active_worst_quality, &active_best_quality);
 
     q = get_q(pcs_ptr, active_worst_quality, active_best_quality);
+
     // Special case when we are targeting the max allowed rate.
     if (pcs_ptr->parent_pcs_ptr->this_frame_target >= rc->max_frame_bandwidth && q > active_worst_quality) {
         active_worst_quality = q;

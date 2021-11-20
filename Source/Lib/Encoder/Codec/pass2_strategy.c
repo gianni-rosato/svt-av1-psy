@@ -3468,8 +3468,15 @@ void svt_av1_twopass_postencode_update(PictureParentControlSet *ppcs_ptr) {
   twopass->rolling_arf_group_target_bits += ppcs_ptr->this_frame_target;
   twopass->rolling_arf_group_actual_bits += ppcs_ptr->projected_frame_size;
 #endif
+#if TUNE_OVERSHOOT_I83
+  int rate_error_estimate_target = 0;
+#endif
   // Calculate the pct rc error.
   if (rc->total_actual_bits) {
+#if TUNE_OVERSHOOT_I83
+      if (rc->total_target_bits)
+        rate_error_estimate_target = (int)((rc->vbr_bits_off_target * 100) / rc->total_target_bits);
+#endif
     rc->rate_error_estimate =
         (int)((rc->vbr_bits_off_target * 100) / rc->total_actual_bits);
     rc->rate_error_estimate = clamp(rc->rate_error_estimate, -100, 100);
@@ -3505,7 +3512,11 @@ void svt_av1_twopass_postencode_update(PictureParentControlSet *ppcs_ptr) {
       --twopass->extend_minq;
       if (rc->rolling_target_bits < rc->rolling_actual_bits)
 #if TUNE_VBR_OVERSHOOT
-       twopass->extend_maxq += (scs_ptr->is_short_clip) ? 2 : 1;
+#if TUNE_OVERSHOOT_I83
+      twopass->extend_maxq += (scs_ptr->is_short_clip) ? rate_error_estimate_target < -100 ? 10 : 2 : 1;
+#else
+      twopass->extend_maxq += (scs_ptr->is_short_clip) ? 2 : 1;
+#endif
 #else
        ++twopass->extend_maxq;
 #endif
@@ -3523,7 +3534,10 @@ void svt_av1_twopass_postencode_update(PictureParentControlSet *ppcs_ptr) {
     }
 
     twopass->extend_minq = clamp(twopass->extend_minq, 0, minq_adj_limit);
-    twopass->extend_maxq = clamp(twopass->extend_maxq, 0, maxq_adj_limit);
+#if TUNE_OVERSHOOT_I83
+    if(!scs_ptr->is_short_clip)
+#endif
+        twopass->extend_maxq = clamp(twopass->extend_maxq, 0, maxq_adj_limit);
 
     // If there is a big and undexpected undershoot then feed the extra
     // bits back in quickly. One situation where this may happen is if a
