@@ -15421,7 +15421,9 @@ uint8_t is_parent_to_current_deviation_small(SequenceControlSet *scs_ptr,
 #endif
     if (mdctxt->depth_refinement_ctrls.parent_to_current_th == MIN_SIGNED_VALUE)
         return EB_FALSE;
+#if !FIX_ISSUE_99
     mdctxt->parent_to_current_deviation = MIN_SIGNED_VALUE;
+#endif
     // block-based depth refinement using cost is applicable for only [s_depth=-1, e_depth=1]
         // Get the parent of the current block
 #if LIGHT_PD0
@@ -15448,7 +15450,9 @@ uint8_t is_child_to_current_deviation_small(SequenceControlSet *scs_ptr,
 
     if (mdctxt->depth_refinement_ctrls.sub_to_current_th == MIN_SIGNED_VALUE)
         return EB_FALSE;
+#if !FIX_ISSUE_99
     mdctxt->child_to_current_deviation = MIN_SIGNED_VALUE;
+#endif
 #if LIGHT_PD0
     const uint32_t ns_d1_offset = blk_geom->d1_depth_offset;
 #else
@@ -15619,6 +15623,9 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
                         // Add block indices of upper depth(s)
                         // Block-based depth refinement using cost is applicable for only [s_depth=-1, e_depth=1]
                         uint8_t add_parent_depth = 1;
+#if FIX_ISSUE_99
+                        context_ptr->parent_to_current_deviation = MIN_SIGNED_VALUE;
+#endif
                         if (context_ptr->depth_refinement_ctrls.enabled && s_depth == -1 && pcs_ptr->parent_pcs_ptr->sb_geom[sb_index].block_is_allowed[blk_index] && blk_geom->sq_size < ((scs_ptr->seq_header.sb_size == BLOCK_128X128) ? 128 : 64)) {
 #if LIGHT_PD0
                             add_parent_depth = is_parent_to_current_deviation_small(context_ptr, blk_geom, th_offset);
@@ -15631,6 +15638,9 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
                         // Add block indices of lower depth(s)
                         // Block-based depth refinement using cost is applicable for only [s_depth=-1, e_depth=1]
                         uint8_t add_sub_depth = 1;
+#if FIX_ISSUE_99
+                        context_ptr->child_to_current_deviation = MIN_SIGNED_VALUE;
+#endif
                         if (context_ptr->depth_refinement_ctrls.enabled && e_depth == 1 && pcs_ptr->parent_pcs_ptr->sb_geom[sb_index].block_is_allowed[blk_index] && blk_geom->sq_size > 4) {
                             add_sub_depth = is_child_to_current_deviation_small(
                                 scs_ptr, context_ptr, blk_geom, blk_index, th_offset);
