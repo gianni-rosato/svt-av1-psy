@@ -82,7 +82,7 @@ typedef enum MultiPassModes {
 #define FTR_OPT_IPP_DOWN_SAMPLE 1 // Down sample the input picture by 2 in each dimention to be used in IPP pass
 #define DS_SC_FACT 23
 #define SVT_05          1
-#define PRIVATE_MACROS   1
+
 
 #define FIX_PA_REF_RELEASE_HANG               1 // Fix a hang that occured for incomplete MGs when MRP is ON
 #define FIX_QUANT_COEFF_BUFF                  1 // Fix how the quant coeff buffer is released, and cleanup the init
@@ -825,109 +825,8 @@ NOTE : PART OF LIGHT_PD0_2  code was committed to svt-04-final-rebased under OPT
 #define TUNE_M7_M9_ULTRA                      1 // TUNE M7-9 based on new ULTRA set
 
 #endif //----------------------------------- all svt-05 features should be place are above this line -------------------------
-#if !PRIVATE_MACROS
 
-#undef LIGHT_PD0
-#undef LIGHT_PD0_2
-#undef  CLN_GEOM
 
-#undef FTR_MULTI_STAGE_CDEF                   // multi_stages CDEF
-#undef MS_CDEF_OPT1                           // Optimised skip cdef condition
-#undef MS_CDEF_OPT2                           // Add the ability to reduce the number of filter strengths for chroma components
-#undef MS_CDEF_OPT3
-
-#undef CLN_REDUCE_CDEF
-
-#undef TUNE_CDEF_TF_LEVELS
-
-#undef FTR_CDEF_SUBSAMPLING                    // Allow subsampling (i.e. skipping rows) in the CDEF search
-#undef FTR_SKIP_LINES_CDEF_SEARCH
-#undef FTR_SKIP_LINES_CDEF_DIST
-
-#undef OPT_REDUCE_CDEF_MEMSET
-#undef SS_OPT_CDEF
-#undef OPT_CDEF_LEVELS
-#undef FTR_CDEF_SEARCH_BEST_REF
-
-#undef SS_ITXF
-#undef SS_OPT_MD
-
-#undef SS_OPT_MDS0
-#undef OPT_EARLY_CAND_ELIM
-#undef SS_CLN_LIGHT_PD0_PATH
-#undef FIX_LIGHT_PD0_BEST_COST
-#undef SIM_OLD_TPL
-#undef FIX_TPL_NON_VALID_REF
-#undef TUNE_M11_2
-#undef FTR_COEFF_DETECTOR
-#undef OPT_UPGRADE_TF
-#undef TUNE_M9_SLOW
-#undef FTR_CDEF_BIAS_ZERO_COST
-#undef OPT_EARLY_TF_ME_EXIT
-#undef SS_OPT_CDEF_APPL
-#undef FTR_16X16_TPL_MAP
-#undef SS_MORE_OPT_TPL
-#undef TUNE_ADD_SUBRESS_FACTOR4
-#undef TUNE_M10_M0
-#undef OPT_M11_SUBPEL
-#undef TUNE_MDS0_SAD
-#undef OPT_FAST_MDS0_PD0
-#undef OPT_SUPEL_VAR_CHECK
-#undef OPT_USE_INTRA_NEIGHBORING
-#undef OPT_CDEF
-#undef TUNE_M7_11
-#undef OPT_TPL_64X64_32X32
-#undef OPT_TPL_ALL32X32
-#undef OPT_TPL_ALL64X64
-#undef OPT_COMBINE_TPL_FOR_LAD
-#undef LIGHT_PD1_MACRO
-#undef FTR_PD0_OPT
-#undef FTR_LPD1_DETECTOR
-#undef OPT_LPD1_MRP
-#undef OPT_LPD1_PME
-#undef TUNE_M8_M10
-#undef TUNE_M7_M8
-#undef CLN_MISC_CLEANUP
-#undef CLN_READ_REFINE_MVS
-#undef FTR_TF_STRENGTH_PER_QP
-#undef OPT_LIGHT_PD1
-#undef TUNE_REMOVE_CDEF_COST_BIAS
-#undef OPT_LIGHT_PD1_USE_ME_DIST_VAR
-#undef TUNE_M8_M11_MT
-#undef TUNE_4K_M8_M11
-#undef FTR_TPL_SYNTH
-#undef TUNE_M7_MT
-
-#undef TUNE_M6_MT
-#undef ME_8X8
-#undef CLN_RTIME_MEM_ALLOC
-#undef OPT_IBC_HASH_SEARCH
-#undef FTR_10BIT_MDS3_REG_PD1
-#undef FTR_10BIT_MDS3_LPD1
-#undef TUNE_4K_M11
-#undef TUNE_M8_M10_4K_SUPER
-#undef FTR_TX_NEIGH_INFO
-#undef TUNE_M7_M8_3
-#undef TUNE_M9_11_3
-#undef OPT_COEFF_BIT_EST
-#undef OPT_TX_SHORTS
-#undef FIXED_POINTS_PLANEWISE
-#undef TUNE_MEDIUM_TFILTER
-#undef FTR_MEM_OPT
-#undef FTR_MEM_OPT_WM
-#undef OPT_MEM_PALETTE
-#undef TUNE_BYPASS_MEM
-#undef OPT_TPL_DATA
-#undef FTR_VLPD1
-#undef FTR_VLPD0
-#undef OPT_M12_SPEED
-#undef SS_CLN_CFL_CTRLS
-#undef CLN_RATE_EST_CTRLS
-#undef CLN_TF_CTRLS
-#undef CLN_SUBPEL_CTRLS
-#undef CLN_LPD1_LVLS
-#undef CLN_TPL_LEVEL_7
-#endif
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
