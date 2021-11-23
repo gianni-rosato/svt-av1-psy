@@ -832,6 +832,7 @@ NOTE : PART OF LIGHT_PD0_2  code was committed to svt-04-final-rebased under OPT
 #define CLN_SUBPEL_SIG                        1 // Comment the subpel-ctrl structure
 
 
+#define FIX_UMV_OFF_CRASH                     1 // Fix crash related restricted MV (umv 0), turn umv ON when SB128
 #endif //----------------------------------- all svt-05 features should be place are above this line -------------------------
 
 

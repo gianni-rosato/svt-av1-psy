@@ -5444,6 +5444,14 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
         scs_ptr->static_config.super_block_size = 64;
 
     // scs_ptr->static_config.hierarchical_levels = (scs_ptr->static_config.rate_control_mode > 1) ? 3 : scs_ptr->static_config.hierarchical_levels;
+#if FIX_UMV_OFF_CRASH
+    // unrestricted_motion_vector 0 && SB 128x128 not supported
+    // Forcing unrestricted_motion_vector to 1
+    if (scs_ptr->static_config.unrestricted_motion_vector == 0 && scs_ptr->static_config.super_block_size == 128) {
+        scs_ptr->static_config.unrestricted_motion_vector = 1;
+        SVT_LOG("SVT [Warning]: unrestricted_motion_vector 0 and SB 128x128 not supoorted, set to 1\n");
+    }
+#endif
 
 #if CLN_GEOM
     uint8_t disallow_nsq = get_disallow_nsq(scs_ptr->static_config.enc_mode);
