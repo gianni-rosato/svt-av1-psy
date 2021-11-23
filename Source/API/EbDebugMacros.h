@@ -825,6 +825,7 @@ NOTE : PART OF LIGHT_PD0_2  code was committed to svt-04-final-rebased under OPT
 #define TUNE_M7_M9_ULTRA                      1 // TUNE M7-9 based on new ULTRA set
 #define FIX_HANG_ONE_COL                      1 // Fix a hang occuring when EncDec segments are used with a pic width of a single SB
 
+#define FIX_2P_VBR_R2R                        1 // Fix the run to run in 2 pass VBR
 #endif //----------------------------------- all svt-05 features should be place are above this line -------------------------
 
 

@@ -3747,6 +3747,19 @@ static void coded_frames_stat_calc(PictureParentControlSet *ppcs_ptr) {
     }
 }
 #endif
+#if FIX_2P_VBR_R2R
+/****************************************************************************************
+* reset_rc_param
+* reset RC related variable in PPCS
+*****************************************************************************************/
+void reset_rc_param(PictureParentControlSet *ppcs) {
+
+    ppcs->loop_count = 0;
+    ppcs->overshoot_seen = 0;
+    ppcs->undershoot_seen = 0;
+}
+#endif
+
 void *rate_control_kernel(void *input_ptr) {
     // Context
     EbThreadContext *   thread_context_ptr = (EbThreadContext *)input_ptr;
@@ -3812,6 +3825,9 @@ void *rate_control_kernel(void *input_ptr) {
             if (!is_superres_recode_task) {
                 pcs_ptr->parent_pcs_ptr->blk_lambda_tuning = EB_FALSE;
             }
+#if FIX_2P_VBR_R2R
+            reset_rc_param(pcs_ptr->parent_pcs_ptr);
+#endif
 #if !RFCTR_RC_P2
             // SB Loop
             pcs_ptr->parent_pcs_ptr->sad_me = 0;
