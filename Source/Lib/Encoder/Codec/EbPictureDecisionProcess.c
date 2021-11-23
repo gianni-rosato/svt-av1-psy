@@ -1912,6 +1912,101 @@ void set_intrabc_level(PictureParentControlSet* pcs_ptr, SequenceControlSet *scs
     }
 }
 #endif
+#if CLN_ME_SIGS
+/******************************************************
+* GM controls
+******************************************************/
+void set_gm_controls(PictureParentControlSet *pcs_ptr, uint8_t gm_level)
+{
+    GmControls *gm_ctrls = &pcs_ptr->gm_ctrls;
+    switch (gm_level)
+    {
+    case 0:
+        gm_ctrls->enabled = 0;
+        break;
+    case 1:
+        gm_ctrls->enabled = 1;
+        gm_ctrls->identiy_exit = 0;
+        gm_ctrls->rotzoom_model_only = 0;
+        gm_ctrls->bipred_only = 0;
+        gm_ctrls->bypass_based_on_me = 0;
+        gm_ctrls->use_stationary_block = 0;
+        gm_ctrls->use_distance_based_active_th = 0;
+        gm_ctrls->params_refinement_steps = 5;
+        gm_ctrls->downsample_level = GM_FULL;
+        break;
+    case 2:
+        gm_ctrls->enabled = 1;
+        gm_ctrls->identiy_exit = 1;
+        gm_ctrls->rotzoom_model_only = 0;
+        gm_ctrls->bipred_only = 0;
+        gm_ctrls->bypass_based_on_me = 0;
+        gm_ctrls->use_stationary_block = 0;
+        gm_ctrls->use_distance_based_active_th = 0;
+        gm_ctrls->params_refinement_steps = 5;
+        gm_ctrls->downsample_level = GM_FULL;
+        break;
+    case 3:
+        gm_ctrls->enabled = 1;
+        gm_ctrls->identiy_exit = 1;
+        gm_ctrls->rotzoom_model_only = 1;
+        gm_ctrls->bipred_only = 0;
+        gm_ctrls->bypass_based_on_me = 0;
+        gm_ctrls->use_stationary_block = 0;
+        gm_ctrls->use_distance_based_active_th = 0;
+        gm_ctrls->params_refinement_steps = 5;
+        gm_ctrls->downsample_level = GM_FULL;
+        break;
+    case 4:
+        gm_ctrls->enabled = 1;
+        gm_ctrls->identiy_exit = 1;
+        gm_ctrls->rotzoom_model_only = 1;
+        gm_ctrls->bipred_only = 1;
+        gm_ctrls->bypass_based_on_me = 1;
+        gm_ctrls->use_stationary_block = 0;
+        gm_ctrls->use_distance_based_active_th = 0;
+        gm_ctrls->params_refinement_steps = 5;
+        gm_ctrls->downsample_level = GM_DOWN;
+        break;
+    case 5:
+        gm_ctrls->enabled = 1;
+        gm_ctrls->identiy_exit = 1;
+        gm_ctrls->rotzoom_model_only = 1;
+        gm_ctrls->bipred_only = 1;
+        gm_ctrls->bypass_based_on_me = 1;
+        gm_ctrls->use_stationary_block = 0;
+        gm_ctrls->use_distance_based_active_th = 0;
+        gm_ctrls->params_refinement_steps = 5;
+        gm_ctrls->downsample_level = GM_DOWN16;
+        break;
+    case 6:
+        gm_ctrls->enabled = 1;
+        gm_ctrls->identiy_exit = 1;
+        gm_ctrls->rotzoom_model_only = 1;
+        gm_ctrls->bipred_only = 1;
+        gm_ctrls->bypass_based_on_me = 1;
+        gm_ctrls->use_stationary_block = 1;
+        gm_ctrls->use_distance_based_active_th = 1;
+        gm_ctrls->params_refinement_steps = 5;
+        gm_ctrls->downsample_level = GM_DOWN16;
+        break;
+    case 7:
+        gm_ctrls->enabled = 1;
+        gm_ctrls->identiy_exit = 1;
+        gm_ctrls->rotzoom_model_only = 1;
+        gm_ctrls->bipred_only = 1;
+        gm_ctrls->bypass_based_on_me = 1;
+        gm_ctrls->use_stationary_block = 1;
+        gm_ctrls->use_distance_based_active_th = 1;
+        gm_ctrls->params_refinement_steps = 1;
+        gm_ctrls->downsample_level = GM_DOWN16;
+        break;
+    default:
+        assert(0);
+        break;
+    }
+}
+#endif
 /******************************************************
 * Derive Multi-Processes Settings for OQ
 Input   : encoder mode and tune
@@ -2661,6 +2756,27 @@ EbErrorType signal_derivation_multi_processes_oq(
             }
 #endif
         }
+
+#if CLN_ME_SIGS
+        uint8_t gm_level = 0;
+        if (scs_ptr->static_config.enable_global_motion == EB_TRUE &&
+            pcs_ptr->frame_superres_enabled == EB_FALSE) {
+            if (pcs_ptr->enc_mode <= ENC_MRS)
+                gm_level = 2;
+            else if (pcs_ptr->enc_mode <= ENC_M2)
+                gm_level = 3;
+            else if (pcs_ptr->enc_mode <= ENC_M5)
+                gm_level = pcs_ptr->is_used_as_reference_flag ? 4 : 0;
+            else if (pcs_ptr->enc_mode <= ENC_M6)
+                gm_level = pcs_ptr->is_used_as_reference_flag ? 5 : 0;
+            else if (pcs_ptr->enc_mode <= ENC_M7)
+                gm_level = pcs_ptr->is_used_as_reference_flag ? 6 : 0;
+            else
+                gm_level = 0;
+        }
+
+        set_gm_controls(pcs_ptr, gm_level);
+#else
         // Global motion level                        Settings
         // GM_FULL                                    Exhaustive search mode.
         // GM_DOWN                                    Downsampled resolution with a downsampling factor of 2 in each dimension
@@ -2683,6 +2799,7 @@ EbErrorType signal_derivation_multi_processes_oq(
         pcs_ptr->gm_level = GM_DOWN;
     else
         pcs_ptr->gm_level = GM_DOWN16;
+#endif
 #if !OPT_TXS_SEARCH
     //Exit TX size search when all coefficients are zero
     // 0: OFF

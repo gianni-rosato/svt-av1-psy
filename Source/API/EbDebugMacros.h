@@ -826,6 +826,9 @@ NOTE : PART OF LIGHT_PD0_2  code was committed to svt-04-final-rebased under OPT
 #define FIX_HANG_ONE_COL                      1 // Fix a hang occuring when EncDec segments are used with a pic width of a single SB
 
 #define FIX_2P_VBR_R2R                        1 // Fix the run to run in 2 pass VBR
+#define CLN_ME_SIGS                           1 // Cleanup me_early_exit_th signal and GM signals
+#define CLN_REM_WARN                          1 // Remove outdated warning of setting # of passes from CLI
+
 #endif //----------------------------------- all svt-05 features should be place are above this line -------------------------
 
 

@@ -824,6 +824,9 @@ void set_wn_filter_ctrls(Av1Common* cm, uint8_t wn_filter_lvl);
 #if CLN_DLF_SIGNALS
 void set_dlf_controls(PictureParentControlSet *pcs_ptr, uint8_t dlf_level);
 #endif
+#if CLN_ME_SIGS
+void set_gm_controls(PictureParentControlSet *pcs_ptr, uint8_t gm_level);
+#endif
 /******************************************************
 * Derive Multi-Processes Settings for first pass
 Input   : encoder mode and tune
@@ -950,13 +953,17 @@ EbErrorType first_pass_signal_derivation_multi_processes(SequenceControlSet *   
         pcs_ptr->frame_end_cdf_update_mode = scs_ptr->static_config.frame_end_cdf_update;
 
     pcs_ptr->frm_hdr.use_ref_frame_mvs = 0;
-
+#if CLN_ME_SIGS
+    // GM off
+    set_gm_controls(pcs_ptr, 0);
+#else
     // Global motion level                        Settings
     // GM_FULL                                    Exhaustive search mode.
     // GM_DOWN                                    Downsampled resolution with a
     // downsampling factor of 2 in each dimension GM_TRAN_ONLY Translation only
     // using ME MV.
     pcs_ptr->gm_level = GM_DOWN;
+#endif
 #if !OPT_TXS_SEARCH
     // Exit TX size search when all coefficients are zero
     // 0: OFF

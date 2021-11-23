@@ -688,6 +688,9 @@ typedef struct GmControls {
 #if FTR_LIMIT_GM_REFINEMENT
     uint8_t params_refinement_steps; // The number of refinement steps to use in the GM params refinement
 #endif
+#if CLN_ME_SIGS
+    uint8_t downsample_level; // GM_FULL: Exhaustive search mode; GM_DOWN: Downsampled resolution with a downsampling factor of 2 in each dimension; GM_TRAN_ONLY: Translation only using ME MV.
+#endif
 } GmControls;
 #if FTR_MULTI_STAGE_CDEF
 typedef struct CdefControls {
@@ -1100,7 +1103,9 @@ typedef struct PictureParentControlSet {
     FrameHeader frm_hdr;
     uint16_t *  altref_buffer_highbd[3];
     uint8_t     pic_obmc_level;
+#if !CLN_ME_SIGS
     uint8_t     gm_level;
+#endif
 #if !OPT_TXS_SEARCH
     uint8_t     tx_size_early_exit;
 #endif

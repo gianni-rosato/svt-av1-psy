@@ -732,6 +732,7 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
         me_context_ptr->search_area_width = (me_context_ptr->search_area_width * 3) / 2;
         me_context_ptr->search_area_height = (me_context_ptr->search_area_height * 3) / 2;
     }
+#if !CLN_ME_SIGS
 #if FTR_HME_ME_EARLY_EXIT
 #if TUNE_M10_M0
 #if TUNE_M7_M8
@@ -760,6 +761,7 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
 #else
     else
         me_context_ptr->me_early_exit_th = BLOCK_SIZE_64 * BLOCK_SIZE_64 * 8;
+#endif
 #endif
 #endif
     return NULL;
@@ -1005,6 +1007,7 @@ void set_prehme_ctrls(MeContext* context, uint8_t level) {
         break;
     }
 }
+#if !CLN_ME_SIGS
 /******************************************************
 * GM controls
 ******************************************************/
@@ -1093,6 +1096,7 @@ void set_gm_controls(PictureParentControlSet *pcs_ptr, uint8_t gm_level)
         break;
     }
 }
+#endif
 /******************************************************
 * Derive ME Settings for OQ
   Input   : encoder mode and tune
@@ -1153,7 +1157,7 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
     else
         context_ptr->me_context_ptr->skip_search_line_hme0 = scs_ptr->input_resolution <= INPUT_SIZE_720p_RANGE  ? 0 : 1;
 #endif
-
+#if !CLN_ME_SIGS
     uint8_t gm_level = 0;
     if (scs_ptr->static_config.enable_global_motion == EB_TRUE &&
         pcs_ptr->frame_superres_enabled == EB_FALSE) {
@@ -1202,7 +1206,7 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
     set_gm_controls(pcs_ptr, gm_level);
 
 
-
+#endif
 
     // Set pre-hme level (0-2)
     uint8_t prehme_level = 0;
@@ -1409,6 +1413,14 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
         context_ptr->me_context_ptr->use_best_unipred_cand_only = 1;
 #endif
 #endif
+#if CLN_ME_SIGS
+    if (pcs_ptr->enc_mode <= ENC_M7)
+        context_ptr->me_context_ptr->me_early_exit_th = 0;
+    else if (pcs_ptr->enc_mode <= ENC_M12)
+        context_ptr->me_context_ptr->me_early_exit_th = BLOCK_SIZE_64 * BLOCK_SIZE_64 * 8;
+    else
+        context_ptr->me_context_ptr->me_early_exit_th = BLOCK_SIZE_64 * BLOCK_SIZE_64 * 9;
+#endif
     return return_error;
 };
 void open_loop_first_pass(struct PictureParentControlSet *ppcs_ptr,
@@ -1551,6 +1563,10 @@ EbErrorType tf_signal_derivation_me_kernel_oq(
     // Set hme-based me sr adjustment level
     // ME SR adjustment is disallowed for TF in motion_estimate_sb()
     set_me_sr_adjustment_ctrls(context_ptr->me_context_ptr, 0);
+
+#if CLN_ME_SIGS
+    context_ptr->me_context_ptr->me_early_exit_th = 0;
+#endif
     return return_error;
 };
 

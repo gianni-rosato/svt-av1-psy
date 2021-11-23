@@ -2721,11 +2721,16 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncodePass pass[MAX_ENCODE
         find_token(argc, argv, "--keyint", config_string) == 0)
         ip = strtol(config_string, NULL, 0);
 #endif
+#if CLN_REM_WARN
+    if (find_token(argc, argv, PASSES_TOKEN, config_string) == 0) {
+        passes = strtol(config_string, NULL, 0);
+    }
+#else
     if (find_token(argc, argv, PASSES_TOKEN, config_string) != 0) {
     }
     else
         passes = strtol(config_string, NULL, 0);
-
+#endif
     if (rc_mode == 0) { // CRF mode
         if (passes == -1)
 #if FIX_DG
@@ -2747,6 +2752,7 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncodePass pass[MAX_ENCODE
 #if TUNE_MULTI_PASS
         *multi_pass_mode = passes == 2 ? TWO_PASS_IPP_FINAL : SINGLE_PASS;
 #endif
+#if !CLN_REM_WARN
         if (find_token(argc, argv, PASSES_TOKEN, config_string) != 0) {
         }
         else {
@@ -2756,6 +2762,7 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncodePass pass[MAX_ENCODE
             else if ((enc_mode > ENC_M3) && (input_passes == 2))
                 fprintf(stderr, "\nWarning: --passes 2 CRF is not supported for preset %d\n\n", enc_mode);
         }
+#endif
     }
     else {
         if (find_token(argc, argv, PASSES_TOKEN, config_string) != 0) {

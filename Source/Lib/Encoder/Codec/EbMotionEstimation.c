@@ -1431,7 +1431,11 @@ EbErrorType check_00_center(EbPictureBufferDesc *ref_pic_ptr, MeContext *context
     search_region_index = (int16_t)ref_pic_ptr->origin_x + origin_x +
                           ((int16_t)ref_pic_ptr->origin_y + origin_y) * ref_pic_ptr->stride_y;
 #if FTR_HME_ME_EARLY_EXIT
+#if CLN_ME_SIGS
+    if (context_ptr->me_early_exit_th)
+#else
     if (context_ptr->me_early_exit_th && context_ptr->me_type != ME_MCTF)
+#endif
         zero_mv_sad = zz_sad;
     else
 #endif
@@ -1626,7 +1630,11 @@ void integer_search_sb(
             uint64_t best_hme_sad = (uint64_t)~0;
 #endif
 #if FTR_HME_ME_EARLY_EXIT
+#if CLN_ME_SIGS
+                if (context_ptr->me_early_exit_th) {
+#else
                 if (context_ptr->me_early_exit_th && context_ptr->me_type != ME_MCTF) {
+#endif
                     if (context_ptr->zz_sad[list_index][ref_pic_index] < (context_ptr->me_early_exit_th / 6)) {
                         search_area_width = 1;
                         search_area_height = 1;
@@ -2084,7 +2092,11 @@ static void prehme_sb(
 #if FTR_HME_ME_EARLY_EXIT
                 EbPictureBufferDesc *refpic = ctx->me_ds_ref_array[list_i][ref_i].picture_ptr;
                 uint32_t zz_sad = (uint32_t)~0;
+#if CLN_ME_SIGS
+                if (ctx->me_early_exit_th) {
+#else
                 if (ctx->me_early_exit_th && ctx->me_type != ME_MCTF) {
+#endif
                     zz_sad = get_zz_sad(refpic, ctx, sb_origin_x, sb_origin_y, sb_width, sb_height);
                     ctx->zz_sad[list_i][ref_i] = zz_sad;
                 }
@@ -2100,7 +2112,11 @@ static void prehme_sb(
 
                 for (uint8_t sr_i = 0; sr_i < SEARCH_REGION_COUNT; sr_i++) {
 #if FTR_HME_ME_EARLY_EXIT
+#if CLN_ME_SIGS
+                    if (ctx->me_early_exit_th) {
+#else
                     if (ctx->me_early_exit_th && ctx->me_type != ME_MCTF) {
+#endif
                         if (zz_sad < ctx->me_early_exit_th) {
                             ctx->prehme_data[list_i][ref_i][sr_i].best_mv.as_mv.col = 0;
                             ctx->prehme_data[list_i][ref_i][sr_i].best_mv.as_mv.row = 0;
@@ -2225,7 +2241,11 @@ static void hme_level0_sb(
         // Ref Picture Loop
         for (uint8_t ref_pic_index = 0; ref_pic_index < num_of_ref_pic_to_search; ++ref_pic_index) {
 #if FTR_HME_ME_EARLY_EXIT
+#if CLN_ME_SIGS
+            if (context_ptr->me_early_exit_th) {
+#else
             if (context_ptr->me_early_exit_th && context_ptr->me_type != ME_MCTF) {
+#endif
                 if (context_ptr->zz_sad[list_index][ref_pic_index] < (context_ptr->me_early_exit_th >> 2)) {
 #if FIX_HME_ME_EARLY_EXIT
                     for (uint32_t sr_idx_y = 0; sr_idx_y < context_ptr->number_hme_search_region_in_height; sr_idx_y++) {
@@ -2459,7 +2479,11 @@ void hme_level1_sb(
                                                                      input_ptr->height);
             if (context_ptr->temporal_layer_index > 0 || list_index == 0) {
 #if FTR_HME_ME_EARLY_EXIT
+#if CLN_ME_SIGS
+                if (context_ptr->me_early_exit_th) {
+#else
                 if (context_ptr->me_early_exit_th && context_ptr->me_type != ME_MCTF) {
+#endif
                     if (context_ptr->zz_sad[list_index][ref_pic_index] < (context_ptr->me_early_exit_th >> 2)) {
 #if FIX_HME_ME_EARLY_EXIT
                         for (uint32_t sr_idx_y = 0; sr_idx_y < context_ptr->number_hme_search_region_in_height; sr_idx_y++) {

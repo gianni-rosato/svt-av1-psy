@@ -102,12 +102,20 @@ void global_motion_estimation(PictureParentControlSet *pcs_ptr,
 
                 // Set the source and the reference picture to be used by the global motion search
                 // based on the input search mode
+#if CLN_ME_SIGS
+                if (pcs_ptr->gm_ctrls.downsample_level == GM_DOWN16) {
+#else
                 if (pcs_ptr->gm_level == GM_DOWN16) {
+#endif
                     sixteenth_ref_pic_ptr = (EbPictureBufferDesc *)reference_object->sixteenth_downsampled_picture_ptr;
                     ref_picture_ptr       = sixteenth_ref_pic_ptr;
                     input_picture_ptr     = sixteenth_picture_ptr;
-
+#if CLN_ME_SIGS
+                }
+                else if (pcs_ptr->gm_ctrls.downsample_level == GM_DOWN) {
+#else
                 } else if (pcs_ptr->gm_level == GM_DOWN) {
+#endif
                     quarter_ref_pic_ptr = (EbPictureBufferDesc *)reference_object->quarter_downsampled_picture_ptr;
                     ref_picture_ptr     = quarter_ref_pic_ptr;
                     input_picture_ptr   = quarter_picture_ptr;
