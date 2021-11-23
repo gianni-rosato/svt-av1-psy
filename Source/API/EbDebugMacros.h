@@ -823,6 +823,7 @@ NOTE : PART OF LIGHT_PD0_2  code was committed to svt-04-final-rebased under OPT
 #define TUNE_NEW_LPD1_LVL                     1 // Add a new lpd1_level between level 2 and 3
 #define TUNE_M10_M12_ULTRA                    1 // Tune M10-12 based on new ULTRA set
 #define TUNE_M7_M9_ULTRA                      1 // TUNE M7-9 based on new ULTRA set
+#define FIX_HANG_ONE_COL                      1 // Fix a hang occuring when EncDec segments are used with a pic width of a single SB
 
 #endif //----------------------------------- all svt-05 features should be place are above this line -------------------------
 

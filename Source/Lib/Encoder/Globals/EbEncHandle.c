@@ -405,7 +405,17 @@ uint32_t get_max_wavefronts(uint32_t width, uint32_t height, uint32_t blk_size) 
     return (height + blk_size / 2) / blk_size;
 }
 #endif
-
+#if FIX_HANG_ONE_COL
+/*
+* When the picture width is a single SB, must use a single segment (EncDec segments
+* assume a width of at least 2 SBs)
+*
+* Return true if the pic width is a single SB width
+*/
+EbBool is_pic_width_single_sb(uint32_t sb_size, uint16_t pic_width) {
+    return ((pic_width + (sb_size >> 1)) / sb_size) == 1;
+}
+#endif
 EbErrorType load_default_buffer_configuration_settings(
     EbEncHandle        *enc_handle,
     SequenceControlSet       *scs_ptr){
@@ -442,10 +452,17 @@ EbErrorType load_default_buffer_configuration_settings(
     uint32_t input_pic = (uint32_t)return_ppcs;
     scs_ptr->input_buffer_fifo_init_count = input_pic + SCD_LAD;
 #endif
+#if FIX_HANG_ONE_COL
+    uint32_t enc_dec_seg_h = (core_count == SINGLE_CORE_COUNT || is_pic_width_single_sb(scs_ptr->static_config.super_block_size, scs_ptr->max_input_luma_width)) ? 1 :
+        (scs_ptr->static_config.super_block_size == 128) ?
+        ((scs_ptr->max_input_luma_height + 64) / 128) :
+        ((scs_ptr->max_input_luma_height + 32) / 64);
+#else
     uint32_t enc_dec_seg_h = (core_count == SINGLE_CORE_COUNT) ? 1 :
         (scs_ptr->static_config.super_block_size == 128) ?
         ((scs_ptr->max_input_luma_height + 64) / 128) :
         ((scs_ptr->max_input_luma_height + 32) / 64);
+#endif
     uint32_t enc_dec_seg_w = (core_count == SINGLE_CORE_COUNT) ? 1 :
         (scs_ptr->static_config.super_block_size == 128) ?
         ((scs_ptr->max_input_luma_width + 64) / 128) :
@@ -534,8 +551,14 @@ EbErrorType load_default_buffer_configuration_settings(
     scs_ptr->enc_dec_segment_col_count_array[4] = enc_dec_seg_w;
     scs_ptr->enc_dec_segment_col_count_array[5] = enc_dec_seg_w;
 
+#if FIX_HANG_ONE_COL
+    // TPL processed in 64x64 blocks, so check width against 64x64 block size (even if SB is 128x128)
+    uint32_t tpl_seg_h = (core_count == SINGLE_CORE_COUNT || is_pic_width_single_sb(64, scs_ptr->max_input_luma_width)) ? 1 :
+        ((scs_ptr->max_input_luma_height + 32) / 64);
+#else
     uint32_t tpl_seg_h = (core_count == SINGLE_CORE_COUNT) ? 1 :
         ((scs_ptr->max_input_luma_height + 32) / 64);
+#endif
 
     uint32_t tpl_seg_w = (core_count == SINGLE_CORE_COUNT) ? 1 :
         ((scs_ptr->max_input_luma_width + 32) / 64);
