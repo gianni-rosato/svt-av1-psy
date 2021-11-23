@@ -894,17 +894,6 @@ static void adjust_active_best_and_worst_quality(PictureControlSet *pcs_ptr, RAT
  * Assign the q_index per frame.
  * Used in the one pass encoding with tpl stats
  ******************************************************/
-#if FIX_DG
-double adjust_boost(SequenceControlSet *scs_ptr) {
-    double boost = 0.0;
-    if (use_input_stat(scs_ptr)) {
-        FIRSTPASS_STATS * stat = scs_ptr->twopass.stats_buf_ctx->total_stats;
-        double high_inter_propagation = (stat->pcnt_inter / (stat->count - 1));
-        boost = (high_inter_propagation) / 10.0;
-    }
-    return boost;
-}
-#endif
 static int cqp_qindex_calc_tpl_la(PictureControlSet *pcs_ptr, RATE_CONTROL *rc, int qindex) {
     SequenceControlSet *scs_ptr              = pcs_ptr->parent_pcs_ptr->scs_ptr;
     const int           cq_level             = qindex;
@@ -979,9 +968,6 @@ static int cqp_qindex_calc_tpl_la(PictureControlSet *pcs_ptr, RATE_CONTROL *rc, 
         // when frames_to_key not available, i.e. in 1 pass encoding
         rc->kf_boost = get_cqp_kf_boost_from_r0(
             pcs_ptr->parent_pcs_ptr->r0, -1, scs_ptr->input_resolution);
-#if FIX_DG
-        rc->kf_boost += (int)rint((double)rc->kf_boost * adjust_boost(scs_ptr));
-#endif
 #if FIX_TPL_BOOST
         int max_boost = pcs_ptr->parent_pcs_ptr->used_tpl_frame_num * KB;
         rc->kf_boost = AOMMIN(rc->kf_boost, max_boost);

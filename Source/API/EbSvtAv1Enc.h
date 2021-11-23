@@ -937,8 +937,10 @@ typedef struct EbSvtAv1EncConfiguration {
     */
     struct EbContentLightLevel content_light_level;
 #if GOP_BASED_DYNAMIC_MINIGOP
+#if FIX_DATA_RACE_2PASS
     uint8_t enable_adaptive_mini_gop;
     uint8_t max_heirachical_level;
+#endif
 #endif
 #if OPT_FIRST_PASS
     uint8_t final_pass_rc_mode;

@@ -2730,7 +2730,7 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncodePass pass[MAX_ENCODE
         if (passes == -1)
 #if FIX_DG
 #if TUNE_2PASS_SETTINGS
-            passes = (enc_mode <= ENC_M8) ? 2 : 1;
+            passes = (enc_mode <= ENC_M7) ? 2 : 1;
 #else
             passes = (enc_mode <= ENC_M11) ? 2 : 1;
 #endif

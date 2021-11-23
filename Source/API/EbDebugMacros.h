@@ -496,7 +496,7 @@ NOTE : PART OF LIGHT_PD0_2  code was committed to svt-04-final-rebased under OPT
 // DYNAMIC GOP
 #define FIX_2PASS_CRF                         1 // Fix 2pass crf
 #define CLIP_BASED_DYNAMIC_MINIGOP            1 // Ajust minigop size based on the first pass statistics for each clip
-#define GOP_BASED_DYNAMIC_MINIGOP             1 // Ajust minigop size based on the first pass statistics at gop level
+#define GOP_BASED_DYNAMIC_MINIGOP             0 // Ajust minigop size based on the first pass statistics at gop level
 #define OPT_FIRST_PASS                        1 // Reduce the compexity of the first pass
 #define OPTIMIZE_L6                           1
 #define FIX_DATA_RACE_2PASS                   1 // fixing data race issues with the 2pass

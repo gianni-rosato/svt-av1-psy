@@ -5637,7 +5637,7 @@ void set_mini_gop_size_controls(MiniGopSizeCtrls *mgs_ctls, uint8_t mg_level) {
         break;
     case 1:
         mgs_ctls->adptive_enable = 1;
-        mgs_ctls->animation_type_th = 0.15;
+        mgs_ctls->animation_type_th = 0.40;
         mgs_ctls->hm_th = 0.95;
         mgs_ctls->hsa_th = 0.5;
         mgs_ctls->lfr_th = 50;
@@ -5668,6 +5668,9 @@ void set_mini_gop_size_controls(MiniGopSizeCtrls *mgs_ctls, uint8_t mg_level) {
         break;
     default:
         mgs_ctls->adptive_enable = 0;
+#else
+    default:
+        mgs_ctls->adptive_enable = 0;
 #endif
     }
 }
@@ -5681,14 +5684,10 @@ void set_max_mini_gop_size(SequenceControlSet *scs_ptr, MiniGopSizeCtrls *mgs_ct
         const double resolution_offset[INPUT_SIZE_COUNT] = { 0.3,0.1,0.0,0.0,0.0,0.0,0.0 };
 #endif
         FIRSTPASS_STATS * stat = scs_ptr->twopass.stats_buf_ctx->total_stats;
-        double high_inter_propagation = (stat->pcnt_inter / (stat->count - 1)) > mgs_ctls->hm_th ? 1 : 0;
         double low_motion_clip = (stat->pcnt_inter - stat->pcnt_motion) / (stat->count - 1);
         double content_type = (stat->intra_skip_pct / (stat->count - 1)) >= mgs_ctls->animation_type_th ? FC_GRAPHICS_ANIMATION : FC_NORMAL;
-        double inactive_zone_rows = (stat->inactive_zone_rows / (stat->count - 1));
-        double inactive_zone_cols = (stat->inactive_zone_cols / (stat->count - 1));
         // Avoid long gop for animation contents with low static area.
         double avoid_long_gop = content_type == FC_GRAPHICS_ANIMATION ? 1 : 0;
-        avoid_long_gop = high_inter_propagation || (inactive_zone_rows && inactive_zone_rows > mgs_ctls->hsa_th) || (inactive_zone_cols && inactive_zone_cols > mgs_ctls->hsa_th) ? 0 : avoid_long_gop;
         // Avoid long_gop for short clips
         avoid_long_gop = stat->count < (mgs_ctls->short_shot_th * 32) ? 1 : avoid_long_gop;
 #if FTR_OPT_MPASS_DOWN_SAMPLE
@@ -5726,6 +5725,11 @@ void set_max_mini_gop_size(SequenceControlSet *scs_ptr, MiniGopSizeCtrls *mgs_ct
 #endif
         double hm_th = (mgs_ctls->lm_th + lm_th_offset);
         uint32_t  min_gop_size = ((low_motion_clip > lm_th) && !avoid_long_gop) ? 32 : low_motion_clip > hm_th ? 16 : 8;
+        double high_motion_clip = (stat->pcnt_motion) / (stat->count - 1);
+        double mv_in_out_count = ABS(stat->mv_in_out_count / (stat->count - 1));
+        min_gop_size = (high_motion_clip > 0.78) && (mv_in_out_count > (scs_ptr->static_config.ipp_ctrls.ipp_ds ? 0.5 : 0.6)) ? min_gop_size / 2 : min_gop_size;
+        min_gop_size = MIN(32, MAX(8, min_gop_size));
+
         switch (min_gop_size) {
         case 1:
             scs_ptr->static_config.hierarchical_levels = 0;
@@ -5753,7 +5757,7 @@ void set_max_mini_gop_size(SequenceControlSet *scs_ptr, MiniGopSizeCtrls *mgs_ct
 
 
     }
-#if GOP_BASED_DYNAMIC_MINIGOP
+#if FIX_DATA_RACE_2PASS
     scs_ptr->static_config.enable_adaptive_mini_gop = mgs_ctls->adptive_enable;
     scs_ptr->static_config.max_heirachical_level = scs_ptr->static_config.hierarchical_levels;
 #endif
@@ -7018,7 +7022,7 @@ EbErrorType svt_svt_enc_init_parameter(
     config_ptr->multi_pass_mode = 0;
     config_ptr->passes = 1;
 #endif
-#if GOP_BASED_DYNAMIC_MINIGOP
+#if FIX_DATA_RACE_2PASS
     config_ptr->enable_adaptive_mini_gop = 0;
     config_ptr->max_heirachical_level = 5;
 #endif
@@ -7192,8 +7196,18 @@ EB_API EbErrorType svt_av1_enc_set_parameter(
 #endif
 #else
     uint8_t mg_level = (use_input_stat(enc_handle->scs_instance_array[instance_index]->scs_ptr)) ? 1 : 0;
+    // Disable Dynamic Gop for non-CRF mode
+#if ENBLE_DG_IN_VBR_MODE
+    if (enc_handle->scs_instance_array[instance_index]->scs_ptr->static_config.multi_pass_mode == TWO_PASS_SAMEPRED_FINAL)
+#else
+    if (enc_handle->scs_instance_array[instance_index]->scs_ptr->static_config.final_pass_rc_mode)
 #endif
-#if GOP_BASED_DYNAMIC_MINIGOP
+        mg_level = 0;
+#if FIX_DG
+    enc_handle->scs_instance_array[instance_index]->scs_ptr->static_config.max_heirachical_level = enc_handle->scs_instance_array[instance_index]->scs_ptr->static_config.hierarchical_levels;
+#endif
+#endif
+#if FIX_DATA_RACE_2PASS
     enc_handle->scs_instance_array[instance_index]->scs_ptr->static_config.enable_adaptive_mini_gop = 0;
 #endif
 #if OPT_FIRST_PASS3
