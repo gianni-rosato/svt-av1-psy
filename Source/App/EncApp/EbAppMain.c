@@ -116,7 +116,7 @@ void init_memory_file_map(EbConfig* config) {
 #ifdef _WIN32
     config->mmap.enable = 0;
 #else
-    config->mmap.enable = 1;
+    config->mmap.enable = (config->buffered_input == -1) ? 1 : 0;
 #endif
 
     if (config->input_file == stdin || config->input_file_is_fifo)
