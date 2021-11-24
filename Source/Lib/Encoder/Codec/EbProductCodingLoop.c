@@ -2700,7 +2700,7 @@ void md_stage_0(
 #if TUNE_BLOCK_SIZE
     context_ptr->md_staging_skip_interpolation_search =
 #if CLN_IFS_SIG
-    (context_ptr->ifs_ctrls.level == IFS_MDS0) ? EB_FALSE : EB_TRUE;
+        (context_ptr->ifs_ctrls.level == IFS_MDS0) ? EB_FALSE : EB_TRUE;
 #else
         (context_ptr->ifs_ctrls.interpolation_search_level == IFS_MDS0) ? EB_FALSE : EB_TRUE;
 #endif
