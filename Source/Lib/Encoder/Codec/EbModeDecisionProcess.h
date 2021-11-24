@@ -332,6 +332,20 @@ typedef struct MdPmeCtrls {
     uint8_t enable_psad; // Enable pSad
 #endif
 } MdPmeCtrls;
+#if CLN_SUBPEL_SIG
+typedef struct MdSubPelSearchCtrls {
+    uint8_t enabled;                             // Specifies whether the Sub-Pel search will be performed or not (0: OFF, 1: ON)
+    SUBPEL_SEARCH_TYPE subpel_search_type;       // Specifies the interpolation filter tap (1: 2-tap filter, 2: 4-tap filter, 3: 8-tap filter)
+    SUBPEL_FORCE_STOP max_precision;             // Specifies the refinement precision (or number of rounds) (0: 1/8-Pel (3 rounds), 1: 1/4-Pel (2 rounds), 2: 1/2-Pel (1 round), 3: Full-Pel-no refinement (0 round))
+    SUBPEL_SEARCH_METHODS subpel_search_method;  // Specifies whether pruning will be applied to 1/2-Pel position(s) or not (SUBPEL_TREE: No, SUBPEL_TREE_PRUNED: YES)
+    int subpel_iters_per_step;                   // Specifies the maximum number of steps in logarithmic subpel search before giving up
+    int pred_variance_th;                        // Specifies the Full-Pel prediction-block-variance threshold under which the Sub-Pel search is not performed; do not perform Sub-Pel if the variance of the Full-Pel prediction-block is low (where interpolation will unlikely modify the Full-Pel samples)
+    uint8_t abs_th_mult;                         // Specifies the Full-Pel prediction-block-error-threshold below which the Sub-Pel search is not performed; do not perform Sub-Pel if the prediction-block-error is already low
+    int round_dev_th;                            // Specifies the prediction-block-error deviation threshold between round-(N-1) and round-(N-2) under which the refinement is paused; pause the refinement if the prediction-block-error is not getting better through the process (the check takes place at only the 2nd round (prior to the 1/4-Pel refinement) and the 3rd round (prior to the 1/8-Pel refinement).
+    uint8_t skip_diag_refinement;                // Specifies the refinement accuracy for diagonal position(s).
+    uint8_t skip_zz_mv;                          // Specifies whether the Sub-Pel search will be performed for around (0,0) or not (0: OFF, 1: ON)
+} MdSubPelSearchCtrls;
+#else
 typedef struct MdSubPelSearchCtrls {
     uint8_t enabled; // 0: subpel search @ MD OFF; 1: subpel search @ MD ON
     SUBPEL_SEARCH_TYPE
@@ -362,6 +376,7 @@ typedef struct MdSubPelSearchCtrls {
     uint8_t skip_zz_mv;                          // don't perform subpel for (0,0) MVs
 #endif
 } MdSubPelSearchCtrls;
+#endif
 typedef struct ParentSqCoeffAreaBasedCyclesReductionCtrls {
     EbBool enabled;
 

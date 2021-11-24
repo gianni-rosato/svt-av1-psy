@@ -166,9 +166,6 @@ typedef enum MultiPassModes {
 #define CLN_MOVE_SKIP_MODE_CHECK              1 // Move check on skip_mode to MD from EncDec; semi-lossless
 #define CLN_ENC_DEC                           1 // Clean up the EncDec function
 
-#define CLN_TF_SIG                            1 // Comment/refactor the tf-ctrl structure
-#define CLN_IFS_SIG                           1 // Comment/refactor the ifs-ctrl structure
-
 // cleanup
 
 
@@ -829,6 +826,11 @@ NOTE : PART OF LIGHT_PD0_2  code was committed to svt-04-final-rebased under OPT
 #define FIX_2P_VBR_R2R                        1 // Fix the run to run in 2 pass VBR
 #define CLN_ME_SIGS                           1 // Cleanup me_early_exit_th signal and GM signals
 #define CLN_REM_WARN                          1 // Remove outdated warning of setting # of passes from CLI
+
+#define CLN_TF_SIG                            1 // Comment/refactor the tf-ctrl structure
+#define CLN_IFS_SIG                           1 // Comment/refactor the ifs-ctrl structure
+#define CLN_SUBPEL_SIG                        1 // Comment the subpel-ctrl structure
+
 
 #endif //----------------------------------- all svt-05 features should be place are above this line -------------------------
 
