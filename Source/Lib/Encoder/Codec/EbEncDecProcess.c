@@ -5440,7 +5440,11 @@ void set_interpolation_search_level_ctrls(ModeDecisionContext* context_ptr, uint
 
     switch (interpolation_search_level) {
     case 0:
+#if CLN_IFS_SIG
+        ifs_ctrls->level = IFS_OFF;
+#else
         ifs_ctrls->interpolation_search_level = IFS_OFF;
+#endif
         ifs_ctrls->quarter_pel_only = 0;
         ifs_ctrls->modulate_filter_per_resolution = 0;
 #if OPT_IFS
@@ -5450,7 +5454,11 @@ void set_interpolation_search_level_ctrls(ModeDecisionContext* context_ptr, uint
 #endif
         break;
     case 1:
+#if CLN_IFS_SIG
+        ifs_ctrls->level = IFS_MDS0;
+#else
         ifs_ctrls->interpolation_search_level = IFS_MDS0;
+#endif
         ifs_ctrls->quarter_pel_only = 0;
         ifs_ctrls->modulate_filter_per_resolution = 0;
 #if OPT_IFS
@@ -5460,7 +5468,11 @@ void set_interpolation_search_level_ctrls(ModeDecisionContext* context_ptr, uint
 #endif
         break;
     case 2:
+#if CLN_IFS_SIG
+        ifs_ctrls->level = IFS_MDS1;
+#else
         ifs_ctrls->interpolation_search_level = IFS_MDS1;
+#endif
         ifs_ctrls->quarter_pel_only = 0;
         ifs_ctrls->modulate_filter_per_resolution = 0;
 #if OPT_IFS
@@ -5470,7 +5482,11 @@ void set_interpolation_search_level_ctrls(ModeDecisionContext* context_ptr, uint
 #endif
         break;
     case 3:
+#if CLN_IFS_SIG
+        ifs_ctrls->level = IFS_MDS2;
+#else
         ifs_ctrls->interpolation_search_level = IFS_MDS2;
+#endif
         ifs_ctrls->quarter_pel_only = 0;
         ifs_ctrls->modulate_filter_per_resolution = 0;
 #if OPT_IFS
@@ -5480,7 +5496,11 @@ void set_interpolation_search_level_ctrls(ModeDecisionContext* context_ptr, uint
 #endif
         break;
     case 4:
+#if CLN_IFS_SIG
+        ifs_ctrls->level = IFS_MDS3;
+#else
         ifs_ctrls->interpolation_search_level = IFS_MDS3;
+#endif
         ifs_ctrls->quarter_pel_only = 0;
         ifs_ctrls->modulate_filter_per_resolution = 0;
 #if OPT_IFS
@@ -5490,7 +5510,11 @@ void set_interpolation_search_level_ctrls(ModeDecisionContext* context_ptr, uint
 #endif
         break;
     case 5:
+#if CLN_IFS_SIG
+        ifs_ctrls->level = IFS_MDS3;
+#else
         ifs_ctrls->interpolation_search_level = IFS_MDS3;
+#endif
         ifs_ctrls->quarter_pel_only = 1;
         ifs_ctrls->modulate_filter_per_resolution = 1;
 #if OPT_IFS
@@ -5501,7 +5525,11 @@ void set_interpolation_search_level_ctrls(ModeDecisionContext* context_ptr, uint
         break;
 #if OPT_IFS
     case 6:
+#if CLN_IFS_SIG
+        ifs_ctrls->level = IFS_MDS3;
+#else
         ifs_ctrls->interpolation_search_level = IFS_MDS3;
+#endif
         ifs_ctrls->quarter_pel_only = 0;
         ifs_ctrls->modulate_filter_per_resolution = 0;
         ifs_ctrls->early_skip = 1;
@@ -5509,7 +5537,11 @@ void set_interpolation_search_level_ctrls(ModeDecisionContext* context_ptr, uint
         ifs_ctrls->skip_sse_rd_model = 1;
         break;
     case 7:
+#if CLN_IFS_SIG
+        ifs_ctrls->level = IFS_MDS3;
+#else
         ifs_ctrls->interpolation_search_level = IFS_MDS3;
+#endif
         ifs_ctrls->quarter_pel_only = 1;
         ifs_ctrls->modulate_filter_per_resolution = 1;
         ifs_ctrls->early_skip = 1;
@@ -16001,7 +16033,11 @@ void exaustive_light_pd1_features(
             md_ctx->obmc_ctrls.enabled == 0 &&
             md_ctx->md_allow_intrabc == 0 &&
             md_ctx->hbd_mode_decision == 0 &&
+#if CLN_IFS_SIG
+            md_ctx->ifs_ctrls.level == IFS_OFF &&
+#else
             md_ctx->ifs_ctrls.interpolation_search_level == IFS_OFF &&
+#endif
             ppcs->frm_hdr.allow_warped_motion == 0 &&
             md_ctx->inter_intra_comp_ctrls.enabled == 0 &&
 #if !CLN_REG_PD1_TX_CTRLS

@@ -3412,7 +3412,11 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
             const int filter_set_size = DUAL_FILTER_SET_SIZE;
             uint32_t      best_filters    = 0; // mbmi->interp_filters;
 #if TUNE_BLOCK_SIZE
+#if CLN_IFS_SIG
+            if (md_context_ptr->ifs_ctrls.level &&
+#else
             if (md_context_ptr->ifs_ctrls.interpolation_search_level &&
+#endif
                 picture_control_set_ptr->parent_pcs_ptr->scs_ptr->seq_header.enable_dual_filter) {
 #else
             if (md_context_ptr->interpolation_search_level &&
@@ -8333,7 +8337,11 @@ EbErrorType inter_pu_prediction_av1(uint8_t hbd_mode_decision, ModeDecisionConte
     uint32_t interp_filters_0 = candidate_buffer_ptr->candidate_ptr->interp_filters;
 #endif
 #if TUNE_BLOCK_SIZE
+#if CLN_IFS_SIG
+    if (md_context_ptr->ifs_ctrls.level != IFS_OFF) {
+#else
     if (md_context_ptr->ifs_ctrls.interpolation_search_level != IFS_OFF) {
+#endif
 #else
     if (md_context_ptr->interpolation_search_level != IFS_OFF) {
 #endif

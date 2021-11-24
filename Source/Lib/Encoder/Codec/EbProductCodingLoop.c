@@ -2699,7 +2699,11 @@ void md_stage_0(
     // Set MD Staging fast_loop_core settings
 #if TUNE_BLOCK_SIZE
     context_ptr->md_staging_skip_interpolation_search =
+#if CLN_IFS_SIG
+    (context_ptr->ifs_ctrls.level == IFS_MDS0) ? EB_FALSE : EB_TRUE;
+#else
         (context_ptr->ifs_ctrls.interpolation_search_level == IFS_MDS0) ? EB_FALSE : EB_TRUE;
+#endif
 #else
     context_ptr->md_staging_skip_interpolation_search =
         (context_ptr->interpolation_search_level == IFS_MDS0) ? EB_FALSE : EB_TRUE;
@@ -10270,9 +10274,15 @@ static void md_stage_1(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct
         context_ptr->md_staging_skip_chroma_pred          = EB_TRUE;
         context_ptr->md_staging_perform_intra_chroma_pred = EB_FALSE;
         context_ptr->md_staging_perform_inter_pred =
+#if CLN_IFS_SIG
+            (context_ptr->ifs_ctrls.level == IFS_MDS1) ? EB_TRUE : EB_FALSE;
+        context_ptr->md_staging_skip_interpolation_search =
+            (context_ptr->ifs_ctrls.level == IFS_MDS1) ? EB_FALSE : EB_TRUE;
+#else
             (context_ptr->ifs_ctrls.interpolation_search_level == IFS_MDS1) ? EB_TRUE : EB_FALSE;
         context_ptr->md_staging_skip_interpolation_search =
             (context_ptr->ifs_ctrls.interpolation_search_level == IFS_MDS1) ? EB_FALSE : EB_TRUE;
+#endif
         context_ptr->end_plane = (context_ptr->blk_geom->has_uv && context_ptr->uv_ctrls.uv_mode <= CHROMA_MODE_1 && !context_ptr->md_staging_skip_chroma_pred) ? (int)MAX_MB_PLANE : 1;
 #endif
     for (uint32_t full_loop_candidate_index = 0;
@@ -10335,10 +10345,17 @@ static void md_stage_2(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct
         candidate_buffer_ptr_array_base[0]);
 
 #if CHROMA_CLEANUP
+#if CLN_IFS_SIG
+    context_ptr->md_staging_perform_inter_pred =
+        (context_ptr->ifs_ctrls.level == IFS_MDS2) ? EB_TRUE : EB_FALSE;
+    context_ptr->md_staging_skip_interpolation_search =
+        (context_ptr->ifs_ctrls.level == IFS_MDS2) ? EB_FALSE : EB_TRUE;
+#else
     context_ptr->md_staging_perform_inter_pred =
             (context_ptr->ifs_ctrls.interpolation_search_level == IFS_MDS2) ? EB_TRUE : EB_FALSE;
     context_ptr->md_staging_skip_interpolation_search =
             (context_ptr->ifs_ctrls.interpolation_search_level == IFS_MDS2) ? EB_FALSE : EB_TRUE;
+#endif
     context_ptr->md_staging_skip_chroma_pred          = EB_TRUE;
     context_ptr->md_staging_perform_intra_chroma_pred = EB_FALSE;
     context_ptr->end_plane = (context_ptr->blk_geom->has_uv && context_ptr->uv_ctrls.uv_mode <= CHROMA_MODE_1 && !context_ptr->md_staging_skip_chroma_pred) ? (int)MAX_MB_PLANE : 1;
@@ -10743,7 +10760,11 @@ static void md_stage_3(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct
             MD_STAGING_MODE_0;
 #endif
 #if CLN_RED_CAND
+#if CLN_IFS_SIG
+        context_ptr->md_staging_skip_interpolation_search = (context_ptr->ifs_ctrls.level == IFS_MDS3) ? EB_FALSE : EB_TRUE;
+#else
         context_ptr->md_staging_skip_interpolation_search = (context_ptr->ifs_ctrls.interpolation_search_level == IFS_MDS3) ? EB_FALSE : EB_TRUE;
+#endif
 #else
 #if SS_OPT_MD
         context_ptr->md_staging_skip_interpolation_search = disable_feature

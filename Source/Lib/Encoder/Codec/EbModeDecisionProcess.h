@@ -539,6 +539,16 @@ typedef struct UvCtrls {
 } UvCtrls;
 #endif
 #if TUNE_BLOCK_SIZE
+#if CLN_IFS_SIG
+typedef struct InterpolationSearchCtrls {
+    IfsLevel level;                          // Specifies the MD Stage where the interpolation filter search will take place (IFS_MDS0, IFS_MDS1, IFS_MDS2, or IFS_MDS3 for respectively MD Stage 0, MD Stage 1, MD Stage 2, and MD Stage 3)
+    uint8_t  quarter_pel_only;               // Specifies whether the interpolation filter search will use 1/8-Pel precision or 1/4-Pel precision (0: 1/8-Pel precision, 1: 1/4-Pel precision)
+    uint8_t  modulate_filter_per_resolution; // Specifies whether certain combination(s) will be skipped depending on the input resolution or not (0: NO, 1: only (regular, regular) and (sharp, sharp) if 480p and below, and only (regular, regular) and (smooth, smooth) otherwise
+    uint8_t  early_skip;                     // Specifies whether an early interpolation filter search exit could take place based on the cost of signaling a switchable filter type (0: OFF, 1: ON)
+    uint8_t  subsampled_distortion;          // Specifies whether sub-sampled input/prediction will be used at the distortion computation (0: OFF, 1: ON, NA for block height 16 and lower)
+    uint8_t  skip_sse_rd_model;              // Specifies whether a model wll be used for rate estimation or not (0: NO (assume rate is 0), 1: estimate rate from distortion)
+} InterpolationSearchCtrls;
+#else
 typedef struct InterpolationSearchCtrls {
     IfsLevel interpolation_search_level; // set the interpolation search level for md stage
     uint8_t quarter_pel_only; // IFS only on for quarter-pel
@@ -549,6 +559,7 @@ typedef struct InterpolationSearchCtrls {
     uint8_t skip_sse_rd_model; // bypass rd model
 #endif
 } InterpolationSearchCtrls;
+#endif
 #endif
 #if TUNE_BLOCK_SIZE
 typedef struct SpatialSSECtrls {

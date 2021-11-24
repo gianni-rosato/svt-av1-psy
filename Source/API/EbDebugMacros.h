@@ -166,7 +166,8 @@ typedef enum MultiPassModes {
 #define CLN_MOVE_SKIP_MODE_CHECK              1 // Move check on skip_mode to MD from EncDec; semi-lossless
 #define CLN_ENC_DEC                           1 // Clean up the EncDec function
 
-
+#define CLN_TF_SIG                            1 // Comment/refactor the tf-ctrl structure
+#define CLN_IFS_SIG                           0 // Comment/refactor the ifs-ctrl structure
 
 // cleanup
 
