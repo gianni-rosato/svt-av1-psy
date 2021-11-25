@@ -1,13 +1,11 @@
-# Chroma from Luma Prediction Appendix
+# Chroma from Luma Prediction
 
 ## 1.  Description of the algorithm
 
-The general idea behind the chroma from luma (CfL) prediction feature is to exploit the
-correlation between luma and chroma to express the Intra prediction of
-chroma sample values as an affine function of the corresponding
-reconstructed luma sample values, where the reconstructed luma samples are
-sub-sampled to match the chroma sub-sampling. The chroma prediction is
-given by
+The general idea behind the chroma from luma (CfL) prediction feature is to exploit the correlation
+between luma and chroma to express the Intra prediction of chroma sample values as an affine function of
+the corresponding reconstructed luma sample values, where the reconstructed luma samples are sub-sampled to
+match the chroma sub-sampling. The chroma prediction is given by
 
 ![math](http://latex.codecogs.com/gif.latex?Chroma_{pred}=\alpha*Luma_{recon}+\beta)
 
@@ -36,7 +34,7 @@ The steps illustrated in the diagram above can be summarized as follows:
     sample values to generate the AC reconstructed luma sample values,
     ![math7](./img/cfl_appendix_math7.png) , which has a zero average.
 
-  - Compute ![math8](./img/cfl_appendix_math8.png) and ![math9](./img/cfl_appendix_math9.png) using the
+  - Compute ![math8](./img/cfl_appendix_math8.png) using the
     AC reconstructed luma sample values.
 
   - Compute the intra DC mode chroma prediction, ![math10](./img/cfl_appendix_math10.png). The final chroma from
@@ -46,7 +44,7 @@ The steps illustrated in the diagram above can be summarized as follows:
 
 ## 2.  Implementation of the algorithm
 
-**Inputs**: Intra chroma code, luma inverse quantized residuals
+**Inputs**: luma inverse quantized residuals
 
 **Outputs**: Best ![math](http://latex.codecogs.com/gif.latex?\alpha) and chroma residuals
 
@@ -55,37 +53,38 @@ The steps illustrated in the diagram above can be summarized as follows:
 ##### Table 1. Control flags related to the CfL prediction.
 | **Flag**          | **Level**     | **Description**                                                                      |
 | ----------------- | ------------- | ------------------------------------------------------------------------------------ |
-| -dcfl             | Configuration | 0: OFF (do not disable), 1: ON (disable), -1: DEFAULT
-| -chroma\_mode     | Configuration | Level: [0-3], -1: DEFAULT
-| chroma\_level     | Picture       | Describes the Chroma level of the encoder. Indicates which Chroma modes are allowed. |
+| cfl_level         | Picture       | Describes the CfL level of the encoder.                                              |
 
 **Details of the implementation**
 
+![CfL_fig1](./img/CfL_fig1.png)
+
+##### Figure 2. High-level encoder pipeline dataflow with CfL feature.
+
+
 ![CfL_fig2](./img/CfL_fig2.png)
 
-##### Figure 2. The main function calls leading to CfL prediction. The functions highlighted in blue are where CfL prediction takes place.
+##### Figure 3. The main function calls leading to CfL prediction. The functions highlighted in blue are where CfL prediction takes place.
 
 
 ![CfL_fig3](./img/CfL_fig3.png)
 
-##### Figure 3. Continuation of Figure 2 showing the details of CfL processing in the function CfLPrediction.
+##### Figure 4. Continuation of Figure 2 showing the details of CfL processing in the function CfLPrediction.
 
+The high level dataflow of CfL in SVT-AV1 is shown in Figure 2. CfL prediction takes place in MD through the function ```CflPrediction```
+and in the encode pass through the function ```Av1EncodeLoop/Av1EncodeLoop16bit```. The details of the CfL prediction in the function ```CflPrediction``` are presented in Figure 4.
+Similar flow is also followed in the function ```Av1EncodeLoop/Av1EncodeLoop16bit```, except for the fact that ![math](http://latex.codecogs.com/gif.latex?\alpha)
+is calculated only in MD and the encode pass would use the same ![math](http://latex.codecogs.com/gif.latex?\alpha)
+to perform the final CfL prediction. In the following, the details of the CfL processing in the function ```CflPrediction``` are presented.
 
-CfL prediction takes place in MD through the function CflPrediction and in the encode pass through the function Av1EncodeLoop/Av1EncodeLoop16bit.
-The details of the CfL prediction in the function CflPrediction are presented in Figure 3.
-Similar flow is also followed in the function Av1EncodeLoop/Av1EncodeLoop16bit.
-In the following, the details of the CfL processing in the function CflPrediction are presented.
-
-For an intra coded block, the function CflPrediction is called when the intra_chroma_mode is set to UV_CFL_PRED. There are four steps in the function:
+For an intra coded block, the function ```CflPrediction``` is called when the ```intra_chroma_mode``` is set to ```UV_CFL_PRED```. There are four steps in the function:
 
 **Step 1**: Reconstruct the Luma samples (```AV1PerformInverseTransformReconLuma```)
 
-The first step is to reconstruct
-the luma samples, since the latter would be used to generate the chroma prediction.
-At this stage in the encoder pipeline, the luma residuals are transformed,
-quantized and inverse quantized. In this step, the inverse transform is
-applied, and the reconstructed luma residuals are
-added to the prediction to build the reconstructed samples.
+The first step is to reconstruct the luma samples, since the latter would be used to generate the chroma prediction.
+At this stage in the encoder pipeline, the luma residuals are transformed, quantized and inverse quantized.
+In this step, the inverse transform is applied, and the reconstructed luma residuals are added to the prediction
+to build the reconstructed samples.
 
 **Step 2**: Compute the AC component of the luma intra prediction
 
@@ -116,63 +115,42 @@ Finding the best ![math](http://latex.codecogs.com/gif.latex?\alpha) requires se
 values in the set of allowed ![math](http://latex.codecogs.com/gif.latex?\alpha) values and calculating the cost
 associated with each value. Performing this ![math](http://latex.codecogs.com/gif.latex?\alpha) search
 process in MD for every luma mode and block size
-at MD would be very complex. In order to find the best quality-speed
-trade off, there is an option to perform the selection of the best
-![math](http://latex.codecogs.com/gif.latex?\alpha) at the encode pass and only on the final chosen intra coding mode.
-This option is signaled using the ```evaluate_cfl_ep flag```. The flag depends on the chroma
-level, which in turn depends on the chroma mode. The description of the chroma mode settings is given in Table 2.
+at MD would be very costly. In order to find the best quality-speed
+trade offs for the feature,  CfL and UV (i.e. chroma) control signals are defined with multiple levels.
+Table 2 shows the CfL control signals and their descriptions.
+The CfL control signals are set in the function ```set_cfl_ctrls``` based on the ```cfl_level``` value.
 
-##### Table 2. Chroma mode description.
+##### Table 2. CfL control signals description.
 
-| **chroma\_Mode** | **evaluate\_cfl\_ep**      |
-| ----------------- | -------------------------- |
-| CHROMA_MODE_0 (0)                 | Full chroma search @ MD, including CfL         |
-| CHROMA_MODE_1 (1)                 | Fast chroma search @ MD, including CfL          |
-| CHROMA_MODE_2 (2)                 | Chroma blind @ MD + CfL @ Encode Pass |
-| CHROMA_MODE_3 (3)                 | Chroma blind @ MD + no CfL @ Encode Pass                |
+| **Signal**        | **Description**                                                                                                                                                                                               |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------     |
+| enabled           | 0/1: Disable/Enable CfL candidate injection                                                                                                                                                                   |
+| itr_th            | Threshold to indicate the minimum number of α values to try. However if a large enough number of α values are evaluated without improvements in the overall rate-distortion cost, the search would stop.      |
 
+Table 3 shows the CfL-related UV control signal and its description. The signal is set in the function ```set_chroma_controls``` based on the chroma level ```uv_level```.
 
-The chroma_level settings as a function of the encoder settings are given in Table 3.
+##### Table 3. CfL-related UV control signals description.
 
-##### Table 3. chroma_level settings and description.
+| **Signal**        | **Description**                                                                                                       |
+| ----------------- | ------------------------------------------------------------------------------------------------------------          |
+| uv_cfl_th         | Threshold to skip CfL if the ratio of the best intra cost to the best inter cost is greater than uv_cfl_th.           |
 
-![table3](./img/cfl_appendix_table3.png)
-
-The settings of evaluate_cfl_ep as a function of chroma _level are as indicated in Table 4.
-
-##### Table 4. Evaluate\_cfl\_ep as a function of chroma\_level.
-
-| **chroma\_level** | **evaluate\_cfl\_ep**      |
-| ----------------- | -------------------------- |
-| 0                 | α selection at MD          |
-| 1                 | α selection at MD          |
-| 2                 | α selection at encode pass |
-| 3                 | no CFL mode                |
-
-As the ```chroma_level``` increases, so does the complexity of the feature
-and the quality of the chroma prediction.
+The CfL and UV levels are set according to the encoder preset, PD_PASS, temporal layer index, slice type and  screen content class.
 
 ## 4.  Signaling
 
-CfL is a chroma mode that is only allowed for blocks with height
-and width of 32 or smaller. The entropy encoder signals the chroma
-mode per block and if the mode is CfL, extra parameters are included in
-the bit stream:
+CfL is an Intra chroma mode that is allowed only for blocks with height and width of 32 or smaller.
+The entropy encoder signals the chroma mode per block and if the mode is CfL,
+extra parameters are included in the bit stream:
 
   - ```cfl_alpha_signs``` contains the sign of the alpha values for U and
     V packed together into a single syntax element with 8 possible
     values. (The combination of two zero signs is prohibited as it is
     redundant with DC Intra prediction.)
 
-  - ```cfl_alpha_u``` contains the absolute value of alpha minus one for
-    the U component.
-
-  - ```cfl_alpha_v``` contains the absolute value of alpha minus one for
-    the U component.
-
 ## Notes
 
-The feature settings that are described in this document were compiled at v0.8.3 of the code and may not reflect the current status of the code. The description in this document represents an example showing  how features would interact with the SVT architecture. For the most up-to-date settings, it's recommended to review the section of the code implementing this feature.
+The feature settings that are described in this document were compiled at v0.8.3 of the code and may not reflect the current status of the code. The description in this document represents an example showing how features would interact with the SVT architecture. For the most up-to-date settings, it's recommended to review the section of the code implementing this feature.
 
 ## References
 
