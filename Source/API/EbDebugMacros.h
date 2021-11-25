@@ -837,9 +837,9 @@ NOTE : PART OF LIGHT_PD0_2  code was committed to svt-04-final-rebased under OPT
 #define CLN_TPL_WARNING                       1 // Add warning that TPL is hard-coded and --enable-tpl-la is not effective
 
 #define TUNE_CAP_CRF_OVERSHOOT                1 // Add overshoot percentage to Capped CRF
-
 #define FIX_ISSUE_105                         1 // Do not access the ref-POC if invalid ref
 
+#define TUNE_MEM_SHUT                         1 // Shut tpl_lad_mg and restoration depending on resolution, hierarchical_levels and logical processors
 #endif //----------------------------------- all svt-05 features should be place are above this line -------------------------
 
 

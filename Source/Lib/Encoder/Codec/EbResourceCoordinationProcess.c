@@ -736,7 +736,11 @@ void set_tpl_controls(
 * return the restoration level
   Used by signal_derivation_pre_analysis_oq and memory allocation
 */
-uint8_t get_enable_restoration(EbEncMode enc_mode,int8_t config_enable_restoration ) {
+#if TUNE_MEM_SHUT
+uint8_t get_enable_restoration(EbEncMode enc_mode, int8_t config_enable_restoration, uint8_t input_resolution) {
+#else
+uint8_t get_enable_restoration(EbEncMode enc_mode,int8_t config_enable_restoration) {
+#endif
 
     uint8_t enable_restoration;
 
@@ -745,6 +749,13 @@ uint8_t get_enable_restoration(EbEncMode enc_mode,int8_t config_enable_restorati
 #else
         enable_restoration = (enc_mode <= ENC_M6) ? 1 : 0;
 #endif
+
+#if TUNE_MEM_SHUT
+        // higher resolutions will shut restoration to save memory
+        if (input_resolution >= INPUT_SIZE_8K_RANGE)
+            enable_restoration = 0;
+#endif
+
     return  config_enable_restoration > 0 ? config_enable_restoration :  enable_restoration;
 }
 /******************************************************
@@ -879,7 +890,11 @@ EbErrorType signal_derivation_pre_analysis_oq_scs(SequenceControlSet * scs_ptr) 
 
     if (scs_ptr->static_config.enable_restoration_filtering == DEFAULT) {
 #if OPT_MEMORY_REST
+#if TUNE_MEM_SHUT
+        scs_ptr->seq_header.enable_restoration = get_enable_restoration(scs_ptr->static_config.enc_mode, scs_ptr->static_config.enable_restoration_filtering, scs_ptr->input_resolution);
+#else
         scs_ptr->seq_header.enable_restoration = get_enable_restoration(scs_ptr->static_config.enc_mode,scs_ptr->static_config.enable_restoration_filtering);
+#endif
 #else
         scs_ptr->seq_header.enable_restoration = get_enable_restoration(scs_ptr->static_config.enc_mode);
 #endif

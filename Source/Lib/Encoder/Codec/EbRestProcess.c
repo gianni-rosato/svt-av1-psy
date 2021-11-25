@@ -86,7 +86,11 @@ static void rest_context_dctor(EbPtr p) {
     EB_FREE_ARRAY(obj);
 }
 #if OPT_MEMORY_REST
+#if TUNE_MEM_SHUT
+uint8_t get_enable_restoration(EbEncMode enc_mode, int8_t config_enable_restoration, uint8_t input_resolution);
+#else
 uint8_t get_enable_restoration(EbEncMode enc_mode,int8_t config_enable_restoration );
+#endif
 #endif
 /******************************************************
  * Rest Context Constructor
@@ -118,7 +122,11 @@ EbErrorType rest_context_ctor(EbThreadContext *  thread_context_ptr,
 
     EbBool is_16bit = scs_ptr->static_config.is_16bit_pipeline;
 #if OPT_MEMORY_REST
+#if TUNE_MEM_SHUT
+    if (get_enable_restoration(init_data_ptr->enc_mode, config->enable_restoration_filtering, scs_ptr->input_resolution)) {
+#else
     if (get_enable_restoration(init_data_ptr->enc_mode,config->enable_restoration_filtering)) {
+#endif
 #else
     {
 #endif

@@ -1378,6 +1378,9 @@ typedef struct PictureControlSetInitData {
   uint8_t reduce_me_search;
 #endif
 #endif
+#if TUNE_MEM_SHUT
+  uint8_t       input_resolution;
+#endif
 } PictureControlSetInitData;
 
 typedef struct Av1Comp {

@@ -516,7 +516,11 @@ uint8_t get_loop_filter_mode(EbEncMode enc_mode, uint8_t is_used_as_reference_fl
 #endif
 
 #if OPT_MEMORY_REST
+#if TUNE_MEM_SHUT
+uint8_t get_enable_restoration(EbEncMode enc_mode, int8_t config_enable_restoration, uint8_t input_resolution);
+#else
 uint8_t get_enable_restoration(EbEncMode enc_mode,int8_t config_enable_restoration ) ;
+#endif
 #else
 uint8_t get_enable_restoration(EbEncMode enc_mode) ;
 #endif
@@ -622,7 +626,11 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
 #endif
     }
 #if OPT_MEMORY_REST
+#if TUNE_MEM_SHUT
+    if (get_enable_restoration(init_data_ptr->enc_mode, init_data_ptr->static_config.enable_restoration_filtering, init_data_ptr->input_resolution)) {
+#else
     if (get_enable_restoration(init_data_ptr->enc_mode,init_data_ptr->static_config.enable_restoration_filtering)) {
+#endif
 #else
     if (get_enable_restoration(init_data_ptr->enc_mode) || init_data_ptr->static_config.enable_restoration_filtering > 0) {
 #endif
@@ -1427,7 +1435,11 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
     svt_av1_hash_table_create(&object_ptr->hash_table);
 #endif
 #if OPT_MEMORY_REST
+#if TUNE_MEM_SHUT
+    if (get_enable_restoration(init_data_ptr->enc_mode, init_data_ptr->static_config.enable_restoration_filtering, init_data_ptr->input_resolution))
+#else
     if (get_enable_restoration(init_data_ptr->enc_mode,init_data_ptr->static_config.enable_restoration_filtering))
+#endif
 #else
     if (get_enable_restoration(init_data_ptr->enc_mode)|| init_data_ptr->static_config.enable_restoration_filtering > 0)
 #endif

@@ -1725,6 +1725,9 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
         input_data.lad_mg = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->lad_mg;
 #endif
 #endif
+#if TUNE_MEM_SHUT
+        input_data.input_resolution = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->input_resolution;
+#endif
 
         EB_NEW(
             enc_handle_ptr->picture_parent_control_set_pool_ptr_array[instance_index],
@@ -1803,6 +1806,10 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
             input_data.av1_cm = parent_pcs->av1_cm;
             input_data.enc_mode = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.enc_mode;
 
+#if TUNE_MEM_SHUT
+            input_data.input_resolution = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->input_resolution;
+#endif
+
             EB_NEW(
                 enc_handle_ptr->enc_dec_pool_ptr_array[instance_index],
                 svt_system_resource_ctor,
@@ -1865,6 +1872,10 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
             input_data.av1_cm = parent_pcs->av1_cm;
             input_data.enc_mode = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.enc_mode;
             input_data.static_config = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config;
+
+#if TUNE_MEM_SHUT
+            input_data.input_resolution = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->input_resolution;
+#endif
 
             EB_NEW(
                 enc_handle_ptr->picture_control_set_pool_ptr_array[instance_index],
@@ -5418,6 +5429,17 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
             tpl_lad_mg = 1;
         else
             tpl_lad_mg = 0;
+
+#if TUNE_MEM_SHUT
+        // special conditions for higher resolutions in order to decrease memory usage for tpl_lad_mg
+        if (scs_ptr->static_config.logical_processors == 1 && scs_ptr->input_resolution >= INPUT_SIZE_4K_RANGE && scs_ptr->static_config.hierarchical_levels >= 4) {
+            tpl_lad_mg = 0;
+        }
+        else if (scs_ptr->input_resolution >= INPUT_SIZE_8K_RANGE && scs_ptr->static_config.hierarchical_levels >= 4){
+            tpl_lad_mg = 0;
+        }
+#endif
+
         scs_ptr->tpl_lad_mg = MIN(2, tpl_lad_mg);// lad_mg is capped to 2 because tpl was optimised only for 1,2 and 3 mini-gops
 #else
         uint8_t tpl_lad_mg = 1; // Specify the number of mini-gops to be used as LAD. 0: 1 mini-gop, 1: 2 mini-gops and 3: 3 mini-gops
