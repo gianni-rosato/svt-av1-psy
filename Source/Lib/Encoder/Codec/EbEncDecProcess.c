@@ -1975,9 +1975,12 @@ void copy_statistics_to_ref_obj_ect(PictureControlSet *pcs_ptr, SequenceControlS
     uint32_t sb_index;
 #if FTR_VLPD1
     for (sb_index = 0; sb_index < pcs_ptr->sb_total_count; ++sb_index) {
+
+#if !FTR_16K
         ((EbReferenceObject *)pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
             ->non_moving_index_array[sb_index] =
             pcs_ptr->parent_pcs_ptr->non_moving_index_array[sb_index];
+#endif
         ((EbReferenceObject *)pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
             ->sb_intra[sb_index] =
             pcs_ptr->sb_intra[sb_index];
@@ -16198,8 +16201,14 @@ void lpd1_detector_post_pd0(PictureControlSet* pcs, ModeDecisionContext* md_ctx)
 not performed, this detector is used (else lpd1_detector_post_pd0() is used). */
 void lpd1_detector_skip_pd0(PictureControlSet* pcs, ModeDecisionContext* md_ctx, uint32_t pic_width_in_sb) {
 
+
+#if FTR_16K
+    const uint16_t left_sb_index = md_ctx->sb_index - 1;
+    const uint16_t top_sb_index = md_ctx->sb_index - (uint16_t)pic_width_in_sb;
+#else
     const int16_t left_sb_index = (int16_t)md_ctx->sb_index - 1;
     const int16_t top_sb_index = (int16_t)md_ctx->sb_index - (int16_t)pic_width_in_sb;
+#endif
 
     for (int pd1_lvl = LPD1_LEVELS - 1; pd1_lvl > REGULAR_PD1; pd1_lvl--) {
         if (md_ctx->lpd1_ctrls.pd1_level == pd1_lvl) {

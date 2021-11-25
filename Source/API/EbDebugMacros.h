@@ -708,7 +708,11 @@ NOTE : PART OF LIGHT_PD0_2  code was committed to svt-04-final-rebased under OPT
 #define CLN_NIC_SIGS                          1 // Merge NIC pruning/scaling controls under one signal
 #define DIS_VBR_HL0                           1 // Block VBR in HL0
 #define CLN_M6_M12_FEATURES                   1 // push all small speed features out to m11 vs m12 difference
-#define FTR_16K                               0 // Support Encoding of up to 16K resolutions
+#define FTR_16K                               1 // Support Encoding of up to 16K resolutions
+#if FTR_16K
+#define CLN_NA                                1 // Clean up of Neigh Arrays to use actual picture sizes instead of hardcoded max sizes
+#define LIMIT_16K                             1 // Limit 8K & 16K configurations ( due to  memory constraints)
+#endif
 #define CLN_FEAT_LEVEL                        1 // Remove useless feature levels/diffs
 
 #define CLN_CAND_REDUCTION_CTRLS              1 // Merge near_count_level, lpd1_mvp_best_me_list, reduce_unipred_candidates, redundant_cand_level, eliminate_candidate_based_on_pme_me_results, use_neighbouring_mode, merge_inter_classes into one control.
@@ -844,7 +848,7 @@ NOTE : PART OF LIGHT_PD0_2  code was committed to svt-04-final-rebased under OPT
 
 
 //FOR DEBUGGING - Do not remove
-#define LOG_ENC_DONE            0 // log encoder job one
+#define LOG_ENC_DONE            1 // log encoder job one
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
 #define DEBUG_TPL               0 // Prints to debug TPL
 #define DETAILED_FRAME_OUTPUT   0 // Prints detailed frame output from the library for debugging

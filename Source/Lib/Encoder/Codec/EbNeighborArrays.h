@@ -57,6 +57,9 @@ typedef struct NeighborArrayUnit {
     uint8_t  granularity_normal_log2;
     uint8_t  granularity_top_left;
     uint8_t  granularity_top_left_log2;
+#if CLN_NA
+    uint32_t max_pic_h;
+#endif
 } NeighborArrayUnit;
 
 typedef struct NeighborArrayUnit32 {

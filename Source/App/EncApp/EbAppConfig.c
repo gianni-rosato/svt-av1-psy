@@ -2421,6 +2421,17 @@ static EbErrorType verify_settings(EbConfig *config, uint32_t channel_number) {
             return EB_ErrorBadParameter;
         }
     }
+
+#if LIMIT_16K
+    // Limit 8K & 16K configurations ( due to  memory constraints)
+    if(config->config.source_width * config->config.source_height >= 7680*4320 && config->config.enc_mode <=ENC_M7 ) {
+        fprintf(config->error_log_file,
+            "Error instance %u: 8k+ encodes are limited to M8 and up\n",
+            channel_number + 1 );
+        return EB_ErrorBadParameter;
+    }
+#endif
+
 #if DIS_VBR_HL0
     if (config->config.hierarchical_levels == 0 && config->config.rate_control_mode == 1) {
         fprintf(

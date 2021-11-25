@@ -98,9 +98,14 @@ EbErrorType svt_sequence_control_set_ctor(SequenceControlSet *scs_ptr, EbPtr obj
     // Quantization
     scs_ptr->static_config.qp = 20;
     // Initialize SB params
+#if FTR_16K
+    //allocation will happen in ress-corrd
+    scs_ptr->sb_params_array = 0;
+#else
     EB_MALLOC_ARRAY(scs_ptr->sb_params_array,
                     ((MAX_PICTURE_WIDTH_SIZE + scs_ptr->sb_sz - 1) / scs_ptr->sb_sz) *
                         ((MAX_PICTURE_HEIGHT_SIZE + scs_ptr->sb_sz - 1) / scs_ptr->sb_sz));
+#endif
 
     scs_ptr->seq_header.frame_width_bits              = 16;
     scs_ptr->seq_header.frame_height_bits             = 16;

@@ -5875,9 +5875,18 @@ EbErrorType av1_intra_luma_prediction(ModeDecisionContext *        md_context_pt
 #endif
         }
 
+#if CLN_NA
+
+
+        if (txb_origin_y != 0 && txb_origin_x != 0)
+            top_neigh_array[0] = left_neigh_array[0] =
+            md_context_ptr->tx_search_luma_recon_neighbor_array->top_left_array[md_context_ptr->tx_search_luma_recon_neighbor_array->max_pic_h + txb_origin_x - txb_origin_y];
+#else
+
         if (txb_origin_y != 0 && txb_origin_x != 0)
             top_neigh_array[0] = left_neigh_array[0] =
             md_context_ptr->tx_search_luma_recon_neighbor_array->top_left_array[MAX_PICTURE_HEIGHT_SIZE + txb_origin_x - txb_origin_y];
+#endif
 #else
 
         if (txb_origin_y != 0)
@@ -5994,9 +6003,17 @@ EbErrorType av1_intra_luma_prediction(ModeDecisionContext *        md_context_pt
 
         }
 
+#if CLN_NA
+
+        if (txb_origin_y != 0 && txb_origin_x != 0)
+            top_neigh_array[0] = left_neigh_array[0] =
+            ((uint16_t *)(md_context_ptr->tx_search_luma_recon_neighbor_array16bit->top_left_array) +
+                md_context_ptr->tx_search_luma_recon_neighbor_array16bit->max_pic_h + txb_origin_x - txb_origin_y)[0];
+#else
         if (txb_origin_y != 0 && txb_origin_x != 0)
             top_neigh_array[0] = left_neigh_array[0] =
             ((uint16_t *)(md_context_ptr->tx_search_luma_recon_neighbor_array16bit->top_left_array) + MAX_PICTURE_HEIGHT_SIZE + txb_origin_x - txb_origin_y)[0];
+#endif
 
 #else
         if (txb_origin_y != 0)

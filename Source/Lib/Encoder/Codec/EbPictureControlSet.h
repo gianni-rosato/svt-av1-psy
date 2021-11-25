@@ -1390,6 +1390,11 @@ typedef struct Av1Comp {
 /**************************************
      * Extern Function Declarations
      **************************************/
+
+#if FTR_16K
+uint32_t  get_out_buffer_size(uint32_t picture_width, uint32_t picture_height);
+#endif
+
 extern EbErrorType picture_control_set_creator(EbPtr *object_dbl_ptr, EbPtr object_init_data_ptr);
 extern EbErrorType recon_coef_creator(EbPtr *object_dbl_ptr, EbPtr object_init_data_ptr);
 extern EbErrorType picture_parent_control_set_creator(EbPtr *object_dbl_ptr,

@@ -3778,10 +3778,18 @@ void inter_intra_prediction(
                         luma_recon_neighbor_array->left_array + ((uint64_t)pu_origin_y << is16bit),
                         blk_geom->bheight * 2 << is16bit);
 
+#if CLN_NA
+
+            if (pu_origin_y != 0 && pu_origin_x != 0)
+                topNeighArray[0] = leftNeighArray[0] =
+                luma_recon_neighbor_array->top_left_array[(luma_recon_neighbor_array->max_pic_h
+                    + pu_origin_x - pu_origin_y) << is16bit];
+#else
             if (pu_origin_y != 0 && pu_origin_x != 0)
                 topNeighArray[0] = leftNeighArray[0] =
                         luma_recon_neighbor_array->top_left_array[(MAX_PICTURE_HEIGHT_SIZE
                                                                     + pu_origin_x - pu_origin_y) << is16bit];
+#endif
 
         }
 
@@ -3802,11 +3810,18 @@ void inter_intra_prediction(
                 svt_memcpy(leftNeighArray + ((uint64_t)1 << is16bit),
                         cb_recon_neighbor_array->left_array + ((uint64_t)blk_originy_uv << is16bit),
                         blk_geom->bheight_uv * 2 << is16bit);
+#if CLN_NA
 
+            if (blk_originy_uv != 0 && blk_originx_uv != 0)
+                topNeighArray[0] = leftNeighArray[0] =
+                cb_recon_neighbor_array->top_left_array[(cb_recon_neighbor_array->max_pic_h
+                    + blk_originx_uv - blk_originy_uv / 2) << is16bit];
+#else
             if (blk_originy_uv != 0 && blk_originx_uv != 0)
                 topNeighArray[0] = leftNeighArray[0] =
                         cb_recon_neighbor_array->top_left_array[(MAX_PICTURE_HEIGHT_SIZE / 2
                                                                     + blk_originx_uv - blk_originy_uv / 2) << is16bit];
+#endif
         }
         else {
             dst_ptr = prediction_ptr->buffer_cr +
@@ -3825,11 +3840,18 @@ void inter_intra_prediction(
                 svt_memcpy(leftNeighArray + ((uint64_t)1 << is16bit),
                         cr_recon_neighbor_array->left_array + ((uint64_t)blk_originy_uv << is16bit),
                         blk_geom->bheight_uv * 2 << is16bit);
+#if CLN_NA
 
+            if (blk_originy_uv != 0 && blk_originx_uv != 0)
+                topNeighArray[0] = leftNeighArray[0] =
+                cr_recon_neighbor_array->top_left_array[(cr_recon_neighbor_array->max_pic_h
+                    + blk_originx_uv - blk_originy_uv / 2) << is16bit];
+#else
             if (blk_originy_uv != 0 && blk_originx_uv != 0)
                 topNeighArray[0] = leftNeighArray[0] =
                         cr_recon_neighbor_array->top_left_array[(MAX_PICTURE_HEIGHT_SIZE / 2
                                                                     + blk_originx_uv - blk_originy_uv / 2) << is16bit];
+#endif
         }
         TxSize tx_size        = blk_geom->txsize[0][0]; // Nader - Intra 128x128 not supported
         TxSize tx_size_Chroma = blk_geom->txsize_uv[0][0]; //Nader - Intra 128x128 not supported
@@ -6575,10 +6597,19 @@ EbErrorType av1_inter_prediction(
                            blk_geom->bheight * 2 << is16bit);
 #endif
 
+#if CLN_NA
+
+
+                if (pu_origin_y != 0 && pu_origin_x != 0)
+                    topNeighArray[0] = leftNeighArray[0] =
+                    luma_recon_neighbor_array->top_left_array[(luma_recon_neighbor_array->max_pic_h
+                        + pu_origin_x - pu_origin_y) << is16bit];
+#else
                 if (pu_origin_y != 0 && pu_origin_x != 0)
                     topNeighArray[0] = leftNeighArray[0] =
                             luma_recon_neighbor_array->top_left_array[(MAX_PICTURE_HEIGHT_SIZE
                                                                        + pu_origin_x - pu_origin_y) << is16bit];
+#endif
 
             }
 
@@ -6609,10 +6640,19 @@ EbErrorType av1_inter_prediction(
                            blk_geom->bheight_uv * 2 << is16bit);
 #endif
 
+#if CLN_NA
+
+
+                if (blk_originy_uv != 0 && blk_originx_uv != 0)
+                    topNeighArray[0] = leftNeighArray[0] =
+                    cb_recon_neighbor_array->top_left_array[(cb_recon_neighbor_array->max_pic_h
+                        + blk_originx_uv - blk_originy_uv / 2) << is16bit];
+#else
                 if (blk_originy_uv != 0 && blk_originx_uv != 0)
                     topNeighArray[0] = leftNeighArray[0] =
                             cb_recon_neighbor_array->top_left_array[(MAX_PICTURE_HEIGHT_SIZE / 2
                                                                      + blk_originx_uv - blk_originy_uv / 2) << is16bit];
+#endif
             }
             else {
                 dst_ptr = pred_pic->buffer_cr +
@@ -6641,10 +6681,19 @@ EbErrorType av1_inter_prediction(
                            blk_geom->bheight_uv * 2 << is16bit);
 #endif
 
+#if CLN_NA
+
+
+                if (blk_originy_uv != 0 && blk_originx_uv != 0)
+                    topNeighArray[0] = leftNeighArray[0] =
+                    cr_recon_neighbor_array->top_left_array[(cr_recon_neighbor_array->max_pic_h
+                        + blk_originx_uv - blk_originy_uv / 2) << is16bit];
+#else
                 if (blk_originy_uv != 0 && blk_originx_uv != 0)
                     topNeighArray[0] = leftNeighArray[0] =
                             cr_recon_neighbor_array->top_left_array[(MAX_PICTURE_HEIGHT_SIZE / 2
                                                                      + blk_originx_uv - blk_originy_uv / 2) << is16bit];
+#endif
             }
             TxSize tx_size        = blk_geom->txsize[0][0]; // Nader - Intra 128x128 not supported
             TxSize tx_size_Chroma = blk_geom->txsize_uv[0][0]; //Nader - Intra 128x128 not supported

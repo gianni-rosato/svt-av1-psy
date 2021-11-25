@@ -47,8 +47,10 @@ typedef struct EbReferenceObject {
 #if FTR_COEFF_DETECTOR
     uint8_t                    skip_coded_area;
 #endif
+#if !FTR_16K
     uint32_t non_moving_index_array
         [MAX_NUMBER_OF_TREEBLOCKS_PER_PICTURE]; //array to hold non-moving blocks in reference frames
+#endif
 
     uint8_t              tmp_layer_idx;
     EbBool               is_scene_change;

@@ -1464,10 +1464,19 @@ void perform_intra_coding_loop(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, u
                        context_ptr->blk_geom->tx_height[blk_ptr->tx_depth][context_ptr->txb_itr] *
                            2 * sizeof(uint16_t));
 #endif
+
+#if CLN_NA
+
+            if (txb_origin_y != 0 && txb_origin_x != 0)
+                top_neigh_array[0] = left_neigh_array[0] =
+                ((uint16_t *)(ep_luma_recon_neighbor_array->top_left_array) +
+                    ep_luma_recon_neighbor_array->max_pic_h + txb_origin_x - txb_origin_y)[0];
+#else
             if (txb_origin_y != 0 && txb_origin_x != 0)
                 top_neigh_array[0] = left_neigh_array[0] =
                     ((uint16_t *)(ep_luma_recon_neighbor_array->top_left_array) +
                      MAX_PICTURE_HEIGHT_SIZE + txb_origin_x - txb_origin_y)[0];
+#endif
 
             mode = blk_ptr->pred_mode;
 
@@ -1537,10 +1546,17 @@ void perform_intra_coding_loop(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, u
                     context_ptr->blk_geom->tx_height[blk_ptr->tx_depth][context_ptr->txb_itr] * 2);
 #endif
 
+#if CLN_NA
+
+            if (txb_origin_y != 0 && txb_origin_x != 0)
+                top_neigh_array[0] = left_neigh_array[0] =
+                ep_luma_recon_neighbor_array->top_left_array[ep_luma_recon_neighbor_array->max_pic_h + txb_origin_x - txb_origin_y];
+#else
             if (txb_origin_y != 0 && txb_origin_x != 0)
                 top_neigh_array[0] = left_neigh_array[0] =
                     ep_luma_recon_neighbor_array
                         ->top_left_array[MAX_PICTURE_HEIGHT_SIZE + txb_origin_x - txb_origin_y];
+#endif
 
             mode = blk_ptr->pred_mode;
 
@@ -1749,10 +1765,20 @@ void perform_intra_coding_loop(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, u
                                (uint16_t *)(ep_cb_recon_neighbor_array->left_array) + blk_originy_uv,
                                context_ptr->blk_geom->bheight_uv * 2 * sizeof(uint16_t));
 #endif
+
+#if CLN_NA
+
+                    if (blk_originy_uv != 0 && blk_originx_uv != 0)
+                        top_neigh_array[0] = left_neigh_array[0] =
+                        ((uint16_t *)(ep_cb_recon_neighbor_array->top_left_array) +
+                            ep_cb_recon_neighbor_array->max_pic_h + blk_originx_uv - blk_originy_uv)[0];
+#else
                     if (blk_originy_uv != 0 && blk_originx_uv != 0)
                         top_neigh_array[0] = left_neigh_array[0] =
                             ((uint16_t *)(ep_cb_recon_neighbor_array->top_left_array) +
                              MAX_PICTURE_HEIGHT_SIZE / 2 + blk_originx_uv - blk_originy_uv)[0];
+#endif
+
                 } else if (plane == 2) {
                     if (blk_originy_uv != 0)
                         svt_memcpy(top_neigh_array + 1,
@@ -1771,10 +1797,19 @@ void perform_intra_coding_loop(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, u
                                (uint16_t *)(ep_cr_recon_neighbor_array->left_array) + blk_originy_uv,
                                context_ptr->blk_geom->bheight_uv * 2 * sizeof(uint16_t));
 #endif
+
+#if CLN_NA
+
+                    if (blk_originy_uv != 0 && blk_originx_uv != 0)
+                        top_neigh_array[0] = left_neigh_array[0] =
+                        ((uint16_t *)(ep_cr_recon_neighbor_array->top_left_array) +
+                            ep_cr_recon_neighbor_array->max_pic_h + blk_originx_uv - blk_originy_uv)[0];
+#else
                     if (blk_originy_uv != 0 && blk_originx_uv != 0)
                         top_neigh_array[0] = left_neigh_array[0] =
                             ((uint16_t *)(ep_cr_recon_neighbor_array->top_left_array) +
                              MAX_PICTURE_HEIGHT_SIZE / 2 + blk_originx_uv - blk_originy_uv)[0];
+#endif
                 }
 
                 mode = (pu_ptr->intra_chroma_mode == UV_CFL_PRED)
@@ -1855,11 +1890,18 @@ void perform_intra_coding_loop(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, u
                                context_ptr->blk_geom->bheight_uv * 2);
 #endif
 
+#if CLN_NA
+
+                    if (blk_originy_uv != 0 && blk_originx_uv != 0)
+                        top_neigh_array[0] = left_neigh_array[0] =
+                        ep_cb_recon_neighbor_array->top_left_array[ep_cb_recon_neighbor_array->max_pic_h + blk_originx_uv - blk_originy_uv];
+#else
                     if (blk_originy_uv != 0 && blk_originx_uv != 0)
                         top_neigh_array[0] = left_neigh_array[0] =
                             ep_cb_recon_neighbor_array
                                 ->top_left_array[MAX_PICTURE_HEIGHT_SIZE / 2 + blk_originx_uv -
                                                  blk_originy_uv];
+#endif
                 } else {
                     if (blk_originy_uv != 0)
                         svt_memcpy(top_neigh_array + 1,
@@ -1880,11 +1922,19 @@ void perform_intra_coding_loop(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, u
                                context_ptr->blk_geom->bheight_uv * 2);
 #endif
 
+#if CLN_NA
+
+                    if (blk_originy_uv != 0 && blk_originx_uv != 0)
+                        top_neigh_array[0] = left_neigh_array[0] =
+                        ep_cr_recon_neighbor_array->top_left_array[ep_cr_recon_neighbor_array->max_pic_h + blk_originx_uv - blk_originy_uv];
+#else
                     if (blk_originy_uv != 0 && blk_originx_uv != 0)
                         top_neigh_array[0] = left_neigh_array[0] =
                             ep_cr_recon_neighbor_array
                                 ->top_left_array[MAX_PICTURE_HEIGHT_SIZE / 2 + blk_originx_uv -
                                                  blk_originy_uv];
+#endif
+
                 }
 
                 mode = (pu_ptr->intra_chroma_mode == UV_CFL_PRED)

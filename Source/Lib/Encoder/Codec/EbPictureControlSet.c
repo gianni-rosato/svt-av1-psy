@@ -528,6 +528,18 @@ uint8_t get_enable_restoration(EbEncMode enc_mode) ;
 uint8_t get_disallow_4x4(EbEncMode enc_mode, EB_SLICE slice_type);
 uint8_t get_disallow_nsq(EbEncMode enc_mode);
 #endif
+
+#if FTR_16K
+uint32_t  get_out_buffer_size(uint32_t picture_width, uint32_t picture_height)
+{
+    uint32_t frame_size = picture_width * picture_height * 3 / 2; //assuming 4:2:0;
+    if (frame_size > INPUT_SIZE_4K_TH)
+        return frame_size;
+    else
+        return (uint32_t)(EB_OUTPUTSTREAMBUFFERSIZE_MACRO(picture_width * picture_height));
+}
+#endif
+
 EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object_init_data_ptr) {
     PictureControlSetInitData *init_data_ptr = (PictureControlSetInitData *)object_init_data_ptr;
 
@@ -551,8 +563,13 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
 
     uint32_t total_tile_cnt     = init_data_ptr->tile_row_count * init_data_ptr->tile_column_count;
     uint32_t tile_idx           = 0;
+
+#if FTR_16K
+    uint32_t output_buffer_size = get_out_buffer_size(init_data_ptr->picture_width, init_data_ptr->picture_height);
+#else
     uint32_t output_buffer_size = (uint32_t)(EB_OUTPUTSTREAMBUFFERSIZE_MACRO(
         init_data_ptr->picture_width * init_data_ptr->picture_height));
+#endif
     object_ptr->tile_row_count  = init_data_ptr->tile_row_count;
     object_ptr->tile_column_count = init_data_ptr->tile_column_count;
 
@@ -772,20 +789,33 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
         EB_ALLOC_PTR_ARRAY(object_ptr->md_interpolation_type_neighbor_array[depth], total_tile_cnt);
     }
 
+#if CLN_NA
+    const uint32_t na_max_pic_w = init_data_ptr->picture_width  + 2 * BLOCK_SIZE_64;
+    const uint32_t na_max_pic_h = init_data_ptr->picture_height + 2 * BLOCK_SIZE_64;
+#endif
+
     for (tile_idx = 0; tile_idx < total_tile_cnt; tile_idx++) {
         for (depth = 0; depth < NEIGHBOR_ARRAY_TOTAL_COUNT; depth++) {
             InitData data0[] = {
                 {&object_ptr->md_intra_luma_mode_neighbor_array[depth][tile_idx],
+#if CLN_NA
+                 na_max_pic_w,na_max_pic_h,
+#else
                  MAX_PICTURE_WIDTH_SIZE,
                  MAX_PICTURE_HEIGHT_SIZE,
+#endif
                  sizeof(uint8_t),
                  PU_NEIGHBOR_ARRAY_GRANULARITY,
                  PU_NEIGHBOR_ARRAY_GRANULARITY,
                  NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK},
                 {
                     &object_ptr->md_skip_flag_neighbor_array[depth][tile_idx],
+#if CLN_NA
+                    na_max_pic_w,na_max_pic_h,
+#else
                     MAX_PICTURE_WIDTH_SIZE,
                     MAX_PICTURE_HEIGHT_SIZE,
+#endif
                     sizeof(uint8_t),
                     PU_NEIGHBOR_ARRAY_GRANULARITY,
                     PU_NEIGHBOR_ARRAY_GRANULARITY,
@@ -793,8 +823,12 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
                 },
                 {
                     &object_ptr->md_mode_type_neighbor_array[depth][tile_idx],
+#if CLN_NA
+                    na_max_pic_w,na_max_pic_h,
+#else
                     MAX_PICTURE_WIDTH_SIZE,
                     MAX_PICTURE_HEIGHT_SIZE,
+#endif
                     sizeof(uint8_t),
                     PU_NEIGHBOR_ARRAY_GRANULARITY,
                     PU_NEIGHBOR_ARRAY_GRANULARITY,
@@ -802,8 +836,12 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
                 },
                 {
                     &object_ptr->mdleaf_partition_neighbor_array[depth][tile_idx],
+#if CLN_NA
+                    na_max_pic_w,na_max_pic_h,
+#else
                     MAX_PICTURE_WIDTH_SIZE,
                     MAX_PICTURE_HEIGHT_SIZE,
+#endif
                     sizeof(struct PartitionContext),
                     PU_NEIGHBOR_ARRAY_GRANULARITY,
                     PU_NEIGHBOR_ARRAY_GRANULARITY,
@@ -812,8 +850,12 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
                 // for each 4x4
                 {
                     &object_ptr->md_luma_dc_sign_level_coeff_neighbor_array[depth][tile_idx],
+#if CLN_NA
+                    na_max_pic_w,na_max_pic_h,
+#else
                     MAX_PICTURE_WIDTH_SIZE,
                     MAX_PICTURE_HEIGHT_SIZE,
+#endif
                     sizeof(uint8_t),
                     PU_NEIGHBOR_ARRAY_GRANULARITY,
                     PU_NEIGHBOR_ARRAY_GRANULARITY,
@@ -823,8 +865,12 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
                 {
                     &object_ptr
                          ->md_tx_depth_1_luma_dc_sign_level_coeff_neighbor_array[depth][tile_idx],
+#if CLN_NA
+                    na_max_pic_w,na_max_pic_h,
+#else
                     MAX_PICTURE_WIDTH_SIZE,
                     MAX_PICTURE_HEIGHT_SIZE,
+#endif
                     sizeof(uint8_t),
                     PU_NEIGHBOR_ARRAY_GRANULARITY,
                     PU_NEIGHBOR_ARRAY_GRANULARITY,
@@ -833,8 +879,12 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
                 // for each 4x4
                 {
                     &object_ptr->md_cr_dc_sign_level_coeff_neighbor_array[depth][tile_idx],
+#if CLN_NA
+                    na_max_pic_w,na_max_pic_h,
+#else
                     MAX_PICTURE_WIDTH_SIZE,
                     MAX_PICTURE_HEIGHT_SIZE,
+#endif
                     sizeof(uint8_t),
                     PU_NEIGHBOR_ARRAY_GRANULARITY,
                     PU_NEIGHBOR_ARRAY_GRANULARITY,
@@ -843,8 +893,12 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
                 // for each 4x4
                 {
                     &object_ptr->md_cb_dc_sign_level_coeff_neighbor_array[depth][tile_idx],
+#if CLN_NA
+                    na_max_pic_w,na_max_pic_h,
+#else
                     MAX_PICTURE_WIDTH_SIZE,
                     MAX_PICTURE_HEIGHT_SIZE,
+#endif
                     sizeof(uint8_t),
                     PU_NEIGHBOR_ARRAY_GRANULARITY,
                     PU_NEIGHBOR_ARRAY_GRANULARITY,
@@ -852,8 +906,12 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
                 },
                 {
                     &object_ptr->md_txfm_context_array[depth][tile_idx],
+#if CLN_NA
+                    na_max_pic_w,na_max_pic_h,
+#else
                     MAX_PICTURE_WIDTH_SIZE,
                     MAX_PICTURE_HEIGHT_SIZE,
+#endif
                     sizeof(TXFM_CONTEXT),
                     PU_NEIGHBOR_ARRAY_GRANULARITY,
                     PU_NEIGHBOR_ARRAY_GRANULARITY,
@@ -862,8 +920,12 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
 #if FIX_SKIP_COEFF_CONTEXT
                 {
                     &object_ptr->md_skip_coeff_neighbor_array[depth][tile_idx],
+#if CLN_NA
+                    na_max_pic_w,na_max_pic_h,
+#else
                     MAX_PICTURE_WIDTH_SIZE,
                     MAX_PICTURE_HEIGHT_SIZE,
+#endif
                     sizeof(uint8_t),
                     PU_NEIGHBOR_ARRAY_GRANULARITY,
                     PU_NEIGHBOR_ARRAY_GRANULARITY,
@@ -872,8 +934,12 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
 #endif
                 {
                     &object_ptr->md_ref_frame_type_neighbor_array[depth][tile_idx],
+#if CLN_NA
+                    na_max_pic_w,na_max_pic_h,
+#else
                     MAX_PICTURE_WIDTH_SIZE,
                     MAX_PICTURE_HEIGHT_SIZE,
+#endif
                     sizeof(uint8_t),
                     PU_NEIGHBOR_ARRAY_GRANULARITY,
                     PU_NEIGHBOR_ARRAY_GRANULARITY,
@@ -887,8 +953,12 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
 
                     {
                         &object_ptr->md_luma_recon_neighbor_array[depth][tile_idx],
+#if CLN_NA
+                        na_max_pic_w,na_max_pic_h,
+#else
                         MAX_PICTURE_WIDTH_SIZE,
                         MAX_PICTURE_HEIGHT_SIZE,
+#endif
                         sizeof(uint8_t),
                         SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
                         SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
@@ -896,8 +966,12 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
                     },
                     {
                         &object_ptr->md_tx_depth_1_luma_recon_neighbor_array[depth][tile_idx],
+#if CLN_NA
+                        na_max_pic_w,na_max_pic_h,
+#else
                         MAX_PICTURE_WIDTH_SIZE,
                         MAX_PICTURE_HEIGHT_SIZE,
+#endif
                         sizeof(uint8_t),
                         SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
                         SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
@@ -905,8 +979,12 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
                     },
                     {
                         &object_ptr->md_tx_depth_2_luma_recon_neighbor_array[depth][tile_idx],
+#if CLN_NA
+                        na_max_pic_w,na_max_pic_h,
+#else
                         MAX_PICTURE_WIDTH_SIZE,
                         MAX_PICTURE_HEIGHT_SIZE,
+#endif
                         sizeof(uint8_t),
                         SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
                         SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
@@ -914,8 +992,12 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
                     },
                     {
                         &object_ptr->md_cb_recon_neighbor_array[depth][tile_idx],
+#if CLN_NA
+                        na_max_pic_w >> subsampling_x , na_max_pic_h >> subsampling_y,
+#else
                         MAX_PICTURE_WIDTH_SIZE >> subsampling_x,
                         MAX_PICTURE_HEIGHT_SIZE >> subsampling_y,
+#endif
                         sizeof(uint8_t),
                         SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
                         SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
@@ -923,8 +1005,12 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
                     },
                     {
                         &object_ptr->md_cr_recon_neighbor_array[depth][tile_idx],
+#if CLN_NA
+                        na_max_pic_w >> subsampling_x , na_max_pic_h >> subsampling_y,
+#else
                         MAX_PICTURE_WIDTH_SIZE >> subsampling_x,
                         MAX_PICTURE_HEIGHT_SIZE >> subsampling_y,
+#endif
                         sizeof(uint8_t),
                         SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
                         SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
@@ -940,8 +1026,12 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
                 InitData data[] = {
                     {
                         &object_ptr->md_luma_recon_neighbor_array16bit[depth][tile_idx],
+#if CLN_NA
+                        na_max_pic_w  , na_max_pic_h ,
+#else
                         MAX_PICTURE_WIDTH_SIZE,
                         MAX_PICTURE_HEIGHT_SIZE,
+#endif
                         sizeof(uint16_t),
                         SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
                         SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
@@ -949,8 +1039,12 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
                     },
                     {
                         &object_ptr->md_tx_depth_1_luma_recon_neighbor_array16bit[depth][tile_idx],
+#if CLN_NA
+                        na_max_pic_w  , na_max_pic_h ,
+#else
                         MAX_PICTURE_WIDTH_SIZE,
                         MAX_PICTURE_HEIGHT_SIZE,
+#endif
                         sizeof(uint16_t),
                         SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
                         SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
@@ -958,8 +1052,12 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
                     },
                     {
                         &object_ptr->md_tx_depth_2_luma_recon_neighbor_array16bit[depth][tile_idx],
+#if CLN_NA
+                        na_max_pic_w  , na_max_pic_h ,
+#else
                         MAX_PICTURE_WIDTH_SIZE,
                         MAX_PICTURE_HEIGHT_SIZE,
+#endif
                         sizeof(uint16_t),
                         SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
                         SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
@@ -967,8 +1065,12 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
                     },
                     {
                         &object_ptr->md_cb_recon_neighbor_array16bit[depth][tile_idx],
+#if CLN_NA
+                        na_max_pic_w   >> subsampling_x, na_max_pic_h >> subsampling_y,
+#else
                         MAX_PICTURE_WIDTH_SIZE >> subsampling_x,
                         MAX_PICTURE_HEIGHT_SIZE >> subsampling_y,
+#endif
                         sizeof(uint16_t),
                         SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
                         SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
@@ -976,8 +1078,12 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
                     },
                     {
                         &object_ptr->md_cr_recon_neighbor_array16bit[depth][tile_idx],
+#if CLN_NA
+                        na_max_pic_w >> subsampling_x, na_max_pic_h >> subsampling_y,
+#else
                         MAX_PICTURE_WIDTH_SIZE >> subsampling_x,
                         MAX_PICTURE_HEIGHT_SIZE >> subsampling_y,
+#endif
                         sizeof(uint16_t),
                         SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
                         SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
@@ -987,7 +1093,15 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
                 if (return_error == EB_ErrorInsufficientResources)
                     return EB_ErrorInsufficientResources;
             }
-
+#if CLN_NA
+            EB_NEW(object_ptr->md_interpolation_type_neighbor_array[depth][tile_idx],
+                   neighbor_array_unit_ctor32,
+                na_max_pic_w, na_max_pic_h,
+                sizeof(uint32_t),
+                PU_NEIGHBOR_ARRAY_GRANULARITY,
+                PU_NEIGHBOR_ARRAY_GRANULARITY,
+                NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
+#else
             EB_NEW(object_ptr->md_interpolation_type_neighbor_array[depth][tile_idx],
                    neighbor_array_unit_ctor32,
                    MAX_PICTURE_WIDTH_SIZE,
@@ -996,6 +1110,7 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
                    PU_NEIGHBOR_ARRAY_GRANULARITY,
                    PU_NEIGHBOR_ARRAY_GRANULARITY,
                    NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
+#endif
         }
     }
     // EncDec Neighbor
@@ -1040,8 +1155,12 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
         InitData data0[] = {
             {
                 &object_ptr->ep_intra_luma_mode_neighbor_array[tile_idx],
+#if CLN_NA
+                na_max_pic_w, na_max_pic_h,
+#else
                 MAX_PICTURE_WIDTH_SIZE,
                 MAX_PICTURE_HEIGHT_SIZE,
+#endif
                 sizeof(uint8_t),
                 PU_NEIGHBOR_ARRAY_GRANULARITY,
                 PU_NEIGHBOR_ARRAY_GRANULARITY,
@@ -1050,8 +1169,12 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
             // Encode Pass Neighbor Arrays
             {
                 &object_ptr->ep_intra_chroma_mode_neighbor_array[tile_idx],
+#if CLN_NA
+                na_max_pic_w>> subsampling_x, na_max_pic_h >> subsampling_y,
+#else
                 MAX_PICTURE_WIDTH_SIZE >> subsampling_x,
                 MAX_PICTURE_HEIGHT_SIZE >> subsampling_y,
+#endif
                 sizeof(uint8_t),
                 PU_NEIGHBOR_ARRAY_GRANULARITY,
                 PU_NEIGHBOR_ARRAY_GRANULARITY,
@@ -1059,8 +1182,12 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
             },
             {
                 &object_ptr->ep_mv_neighbor_array[tile_idx],
+#if CLN_NA
+                na_max_pic_w, na_max_pic_h,
+#else
                 MAX_PICTURE_WIDTH_SIZE,
                 MAX_PICTURE_HEIGHT_SIZE,
+#endif
                 sizeof(MvUnit),
                 PU_NEIGHBOR_ARRAY_GRANULARITY,
                 PU_NEIGHBOR_ARRAY_GRANULARITY,
@@ -1068,8 +1195,12 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
             },
             {
                 &object_ptr->ep_skip_flag_neighbor_array[tile_idx],
+#if CLN_NA
+                na_max_pic_w, na_max_pic_h,
+#else
                 MAX_PICTURE_WIDTH_SIZE,
                 MAX_PICTURE_HEIGHT_SIZE,
+#endif
                 sizeof(uint8_t),
                 CU_NEIGHBOR_ARRAY_GRANULARITY,
                 CU_NEIGHBOR_ARRAY_GRANULARITY,
@@ -1077,8 +1208,12 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
             },
             {
                 &object_ptr->ep_mode_type_neighbor_array[tile_idx],
+#if CLN_NA
+                na_max_pic_w, na_max_pic_h,
+#else
                 MAX_PICTURE_WIDTH_SIZE,
                 MAX_PICTURE_HEIGHT_SIZE,
+#endif
                 sizeof(uint8_t),
                 PU_NEIGHBOR_ARRAY_GRANULARITY,
                 PU_NEIGHBOR_ARRAY_GRANULARITY,
@@ -1086,8 +1221,12 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
             },
             {
                 &object_ptr->ep_luma_recon_neighbor_array[tile_idx],
+#if CLN_NA
+                na_max_pic_w, na_max_pic_h,
+#else
                 MAX_PICTURE_WIDTH_SIZE,
                 MAX_PICTURE_HEIGHT_SIZE,
+#endif
                 sizeof(uint8_t),
                 SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
                 SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
@@ -1095,17 +1234,26 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
             },
             {
                 &object_ptr->ep_cb_recon_neighbor_array[tile_idx],
+#if CLN_NA
+                na_max_pic_w >> subsampling_x,  na_max_pic_h>> subsampling_y,
+#else
                 MAX_PICTURE_WIDTH_SIZE >> subsampling_x,
                 MAX_PICTURE_HEIGHT_SIZE >> subsampling_y,
+#endif
                 sizeof(uint8_t),
                 SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
                 SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
                 NEIGHBOR_ARRAY_UNIT_FULL_MASK,
             },
             {
+
                 &object_ptr->ep_cr_recon_neighbor_array[tile_idx],
+#if CLN_NA
+                na_max_pic_w >> subsampling_x,  na_max_pic_h >> subsampling_y,
+#else
                 MAX_PICTURE_WIDTH_SIZE >> subsampling_x,
                 MAX_PICTURE_HEIGHT_SIZE >> subsampling_y,
+#endif
                 sizeof(uint8_t),
                 SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
                 SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
@@ -1114,8 +1262,12 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
             // for each 4x4
             {
                 &object_ptr->ep_luma_dc_sign_level_coeff_neighbor_array[tile_idx],
+#if CLN_NA
+                na_max_pic_w, na_max_pic_h,
+#else
                 MAX_PICTURE_WIDTH_SIZE,
                 MAX_PICTURE_HEIGHT_SIZE,
+#endif
                 sizeof(uint8_t),
                 PU_NEIGHBOR_ARRAY_GRANULARITY,
                 PU_NEIGHBOR_ARRAY_GRANULARITY,
@@ -1124,8 +1276,12 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
             // for each 4x4
             {
                 &object_ptr->ep_cb_dc_sign_level_coeff_neighbor_array[tile_idx],
+#if CLN_NA
+                na_max_pic_w, na_max_pic_h,
+#else
                 MAX_PICTURE_WIDTH_SIZE,
                 MAX_PICTURE_HEIGHT_SIZE,
+#endif
                 sizeof(uint8_t),
                 PU_NEIGHBOR_ARRAY_GRANULARITY,
                 PU_NEIGHBOR_ARRAY_GRANULARITY,
@@ -1134,8 +1290,12 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
             // for each 4x4
             {
                 &object_ptr->ep_cr_dc_sign_level_coeff_neighbor_array[tile_idx],
+#if CLN_NA
+                na_max_pic_w, na_max_pic_h,
+#else
                 MAX_PICTURE_WIDTH_SIZE,
                 MAX_PICTURE_HEIGHT_SIZE,
+#endif
                 sizeof(uint8_t),
                 PU_NEIGHBOR_ARRAY_GRANULARITY,
                 PU_NEIGHBOR_ARRAY_GRANULARITY,
@@ -1145,8 +1305,12 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
             // for each 4x4
             {
                 &object_ptr->ep_luma_dc_sign_level_coeff_neighbor_array_update[tile_idx],
+#if CLN_NA
+                na_max_pic_w, na_max_pic_h,
+#else
                 MAX_PICTURE_WIDTH_SIZE,
                 MAX_PICTURE_HEIGHT_SIZE,
+#endif
                 sizeof(uint8_t),
                 PU_NEIGHBOR_ARRAY_GRANULARITY,
                 PU_NEIGHBOR_ARRAY_GRANULARITY,
@@ -1155,8 +1319,12 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
             // for each 4x4
             {
                 &object_ptr->ep_cb_dc_sign_level_coeff_neighbor_array_update[tile_idx],
+#if CLN_NA
+                na_max_pic_w, na_max_pic_h,
+#else
                 MAX_PICTURE_WIDTH_SIZE,
                 MAX_PICTURE_HEIGHT_SIZE,
+#endif
                 sizeof(uint8_t),
                 PU_NEIGHBOR_ARRAY_GRANULARITY,
                 PU_NEIGHBOR_ARRAY_GRANULARITY,
@@ -1165,8 +1333,12 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
             // for each 4x4
             {
                 &object_ptr->ep_cr_dc_sign_level_coeff_neighbor_array_update[tile_idx],
+#if CLN_NA
+                na_max_pic_w, na_max_pic_h,
+#else
                 MAX_PICTURE_WIDTH_SIZE,
                 MAX_PICTURE_HEIGHT_SIZE,
+#endif
                 sizeof(uint8_t),
                 PU_NEIGHBOR_ARRAY_GRANULARITY,
                 PU_NEIGHBOR_ARRAY_GRANULARITY,
@@ -1176,8 +1348,12 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
             // Encode pass partition neighbor array
             {
                 &object_ptr->ep_partition_context_neighbor_array[tile_idx],
+#if CLN_NA
+                na_max_pic_w, na_max_pic_h,
+#else
                 MAX_PICTURE_WIDTH_SIZE,
                 MAX_PICTURE_HEIGHT_SIZE,
+#endif
                 sizeof(struct PartitionContext),
                 PU_NEIGHBOR_ARRAY_GRANULARITY,
                 PU_NEIGHBOR_ARRAY_GRANULARITY,
@@ -1186,8 +1362,12 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
             // Entropy Coding Neighbor Arrays
             {
                 &object_ptr->mode_type_neighbor_array[tile_idx],
+#if CLN_NA
+                na_max_pic_w, na_max_pic_h,
+#else
                 MAX_PICTURE_WIDTH_SIZE,
                 MAX_PICTURE_HEIGHT_SIZE,
+#endif
                 sizeof(uint8_t),
                 PU_NEIGHBOR_ARRAY_GRANULARITY,
                 PU_NEIGHBOR_ARRAY_GRANULARITY,
@@ -1195,8 +1375,12 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
             },
             {
                 &object_ptr->partition_context_neighbor_array[tile_idx],
+#if CLN_NA
+                na_max_pic_w, na_max_pic_h,
+#else
                 MAX_PICTURE_WIDTH_SIZE,
                 MAX_PICTURE_HEIGHT_SIZE,
+#endif
                 sizeof(struct PartitionContext),
                 PU_NEIGHBOR_ARRAY_GRANULARITY,
                 PU_NEIGHBOR_ARRAY_GRANULARITY,
@@ -1204,8 +1388,12 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
             },
             {
                 &object_ptr->skip_flag_neighbor_array[tile_idx],
+#if CLN_NA
+                na_max_pic_w, na_max_pic_h,
+#else
                 MAX_PICTURE_WIDTH_SIZE,
                 MAX_PICTURE_HEIGHT_SIZE,
+#endif
                 sizeof(uint8_t),
                 PU_NEIGHBOR_ARRAY_GRANULARITY,
                 PU_NEIGHBOR_ARRAY_GRANULARITY,
@@ -1213,8 +1401,12 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
             },
             {
                 &object_ptr->skip_coeff_neighbor_array[tile_idx],
+#if CLN_NA
+                na_max_pic_w, na_max_pic_h,
+#else
                 MAX_PICTURE_WIDTH_SIZE,
                 MAX_PICTURE_HEIGHT_SIZE,
+#endif
                 sizeof(uint8_t),
                 PU_NEIGHBOR_ARRAY_GRANULARITY,
                 PU_NEIGHBOR_ARRAY_GRANULARITY,
@@ -1223,8 +1415,12 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
             // for each 4x4
             {
                 &object_ptr->luma_dc_sign_level_coeff_neighbor_array[tile_idx],
+#if CLN_NA
+                na_max_pic_w, na_max_pic_h,
+#else
                 MAX_PICTURE_WIDTH_SIZE,
                 MAX_PICTURE_HEIGHT_SIZE,
+#endif
                 sizeof(uint8_t),
                 PU_NEIGHBOR_ARRAY_GRANULARITY,
                 PU_NEIGHBOR_ARRAY_GRANULARITY,
@@ -1233,8 +1429,12 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
             // for each 4x4
             {
                 &object_ptr->cr_dc_sign_level_coeff_neighbor_array[tile_idx],
+#if CLN_NA
+                na_max_pic_w, na_max_pic_h,
+#else
                 MAX_PICTURE_WIDTH_SIZE,
                 MAX_PICTURE_HEIGHT_SIZE,
+#endif
                 sizeof(uint8_t),
                 PU_NEIGHBOR_ARRAY_GRANULARITY,
                 PU_NEIGHBOR_ARRAY_GRANULARITY,
@@ -1243,8 +1443,12 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
             // for each 4x4
             {
                 &object_ptr->cb_dc_sign_level_coeff_neighbor_array[tile_idx],
+#if CLN_NA
+                na_max_pic_w, na_max_pic_h,
+#else
                 MAX_PICTURE_WIDTH_SIZE,
                 MAX_PICTURE_HEIGHT_SIZE,
+#endif
                 sizeof(uint8_t),
                 PU_NEIGHBOR_ARRAY_GRANULARITY,
                 PU_NEIGHBOR_ARRAY_GRANULARITY,
@@ -1252,8 +1456,12 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
             },
             {
                 &object_ptr->ref_frame_type_neighbor_array[tile_idx],
+#if CLN_NA
+                na_max_pic_w, na_max_pic_h,
+#else
                 MAX_PICTURE_WIDTH_SIZE,
                 MAX_PICTURE_HEIGHT_SIZE,
+#endif
                 sizeof(uint8_t),
                 PU_NEIGHBOR_ARRAY_GRANULARITY,
                 PU_NEIGHBOR_ARRAY_GRANULARITY,
@@ -1261,8 +1469,12 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
             },
             {
                 &object_ptr->intra_luma_mode_neighbor_array[tile_idx],
+#if CLN_NA
+                na_max_pic_w, na_max_pic_h,
+#else
                 MAX_PICTURE_WIDTH_SIZE,
                 MAX_PICTURE_HEIGHT_SIZE,
+#endif
                 sizeof(uint8_t),
                 PU_NEIGHBOR_ARRAY_GRANULARITY,
                 PU_NEIGHBOR_ARRAY_GRANULARITY,
@@ -1270,8 +1482,12 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
             },
             {
                 &object_ptr->txfm_context_array[tile_idx],
+#if CLN_NA
+                na_max_pic_w, na_max_pic_h,
+#else
                 MAX_PICTURE_WIDTH_SIZE,
                 MAX_PICTURE_HEIGHT_SIZE,
+#endif
                 sizeof(TXFM_CONTEXT),
                 PU_NEIGHBOR_ARRAY_GRANULARITY,
                 PU_NEIGHBOR_ARRAY_GRANULARITY,
@@ -1279,8 +1495,12 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
             },
             {
                 &object_ptr->segmentation_id_pred_array[tile_idx],
+#if CLN_NA
+                na_max_pic_w, na_max_pic_h,
+#else
                 MAX_PICTURE_WIDTH_SIZE,
                 MAX_PICTURE_HEIGHT_SIZE,
+#endif
                 sizeof(uint8_t),
                 PU_NEIGHBOR_ARRAY_GRANULARITY,
                 PU_NEIGHBOR_ARRAY_GRANULARITY,
@@ -1295,8 +1515,12 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
             InitData data[] = {
                 {
                     &object_ptr->ep_luma_recon_neighbor_array16bit[tile_idx],
+#if CLN_NA
+                    na_max_pic_w, na_max_pic_h,
+#else
                     MAX_PICTURE_WIDTH_SIZE,
                     MAX_PICTURE_HEIGHT_SIZE,
+#endif
                     sizeof(uint16_t),
                     SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
                     SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
@@ -1304,8 +1528,12 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
                 },
                 {
                     &object_ptr->ep_cb_recon_neighbor_array16bit[tile_idx],
+#if CLN_NA
+                    na_max_pic_w >> subsampling_x, na_max_pic_h>> subsampling_y,
+#else
                     MAX_PICTURE_WIDTH_SIZE >> subsampling_x,
                     MAX_PICTURE_HEIGHT_SIZE >> subsampling_y,
+#endif
                     sizeof(uint16_t),
                     SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
                     SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
@@ -1313,8 +1541,12 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
                 },
                 {
                     &object_ptr->ep_cr_recon_neighbor_array16bit[tile_idx],
+#if CLN_NA
+                    na_max_pic_w >> subsampling_x, na_max_pic_h >> subsampling_y,
+#else
                     MAX_PICTURE_WIDTH_SIZE >> subsampling_x,
                     MAX_PICTURE_HEIGHT_SIZE >> subsampling_y,
+#endif
                     sizeof(uint16_t),
                     SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
                     SAMPLE_NEIGHBOR_ARRAY_GRANULARITY,
@@ -1329,6 +1561,16 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
             object_ptr->ep_cb_recon_neighbor_array16bit   = 0;
             object_ptr->ep_cr_recon_neighbor_array16bit   = 0;
         }
+
+#if CLN_NA
+        EB_NEW(object_ptr->interpolation_type_neighbor_array[tile_idx],
+               neighbor_array_unit_ctor32,
+            na_max_pic_w, na_max_pic_h,
+            sizeof(uint32_t),
+            PU_NEIGHBOR_ARRAY_GRANULARITY,
+            PU_NEIGHBOR_ARRAY_GRANULARITY,
+            NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
+#else
         EB_NEW(object_ptr->interpolation_type_neighbor_array[tile_idx],
                neighbor_array_unit_ctor32,
                MAX_PICTURE_WIDTH_SIZE,
@@ -1337,6 +1579,7 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
                PU_NEIGHBOR_ARRAY_GRANULARITY,
                PU_NEIGHBOR_ARRAY_GRANULARITY,
                NEIGHBOR_ARRAY_UNIT_TOP_AND_LEFT_ONLY_MASK);
+#endif
     }
     //Segmentation neighbor arrays
     EB_NEW(object_ptr->segmentation_neighbor_map,

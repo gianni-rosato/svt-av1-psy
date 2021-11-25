@@ -2395,8 +2395,7 @@ void(*error_handler)(
 
 //***Encoding Parameters***
 #if FTR_16K
-#define MAX_PICTURE_WIDTH_SIZE                    20000
-#define MAX_PICTURE_HEIGHT_SIZE                   10000
+
 #else
 #define MAX_PICTURE_WIDTH_SIZE                      4672u
 #define MAX_PICTURE_HEIGHT_SIZE                     2560u
@@ -2426,10 +2425,16 @@ void(*error_handler)(
 #define MIN_CU_BLK_COUNT                            ((BLOCK_SIZE_64 / MIN_BLOCK_SIZE) * (BLOCK_SIZE_64 / MIN_BLOCK_SIZE))
 #define MAX_NUM_OF_TU_PER_CU                        21
 #define MIN_NUM_OF_TU_PER_CU                        5
-#define MAX_SB_ROWS                                ((MAX_PICTURE_HEIGHT_SIZE) / (BLOCK_SIZE_64))
 
+#if CLN_NA
+#define MAX_SB_ROWS                                ((10000) / (BLOCK_SIZE_64))
+#else
+#define MAX_SB_ROWS                                ((MAX_PICTURE_HEIGHT_SIZE) / (BLOCK_SIZE_64))
+#endif
+#if !FTR_16K
 #define MAX_NUMBER_OF_TREEBLOCKS_PER_PICTURE       ((MAX_PICTURE_WIDTH_SIZE + BLOCK_SIZE_64 - 1) / BLOCK_SIZE_64) * \
                                                 ((MAX_PICTURE_HEIGHT_SIZE + BLOCK_SIZE_64 - 1) / BLOCK_SIZE_64)
+#endif
 // super-resolution definitions
 #define MIN_SUPERRES_DENOM                          8
 #define MAX_SUPERRES_DENOM                          16
