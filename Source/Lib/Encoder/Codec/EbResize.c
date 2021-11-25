@@ -1301,7 +1301,7 @@ static EbErrorType downscaled_source_buffer_desc_ctor(
     initData.left_padding       = picture_ptr_for_reference->origin_x;
     initData.right_padding      = picture_ptr_for_reference->origin_x;
     initData.top_padding        = picture_ptr_for_reference->origin_y;
-    initData.bot_padding        = picture_ptr_for_reference->origin_y;
+    initData.bot_padding        = picture_ptr_for_reference->origin_bot_y;
 
     EB_NEW(*picture_ptr, svt_picture_buffer_desc_ctor, (EbPtr)&initData);
 
@@ -1452,7 +1452,7 @@ static EbErrorType allocate_downscaled_source_reference_pics(
     initData.left_padding       = picture_ptr_for_reference->origin_x;
     initData.right_padding      = picture_ptr_for_reference->origin_x;
     initData.top_padding        = picture_ptr_for_reference->origin_y;
-    initData.bot_padding        = picture_ptr_for_reference->origin_y;
+    initData.bot_padding        = picture_ptr_for_reference->origin_bot_y;
 
     EB_NEW(*input_padded_picture_ptr, svt_picture_buffer_desc_ctor, (EbPtr)&initData);
 
@@ -1465,7 +1465,7 @@ static EbErrorType allocate_downscaled_source_reference_pics(
     initData.left_padding = picture_ptr_for_reference->origin_x >> 1;
     initData.right_padding = picture_ptr_for_reference->origin_x >> 1;
     initData.top_padding = picture_ptr_for_reference->origin_y >> 1;
-    initData.bot_padding = picture_ptr_for_reference->origin_y >> 1;
+    initData.bot_padding = picture_ptr_for_reference->origin_bot_y >> 1;
 
     EB_NEW(*quarter_downsampled_picture_ptr, svt_picture_buffer_desc_ctor, (EbPtr)&initData);
 
@@ -1478,7 +1478,7 @@ static EbErrorType allocate_downscaled_source_reference_pics(
     initData.left_padding = picture_ptr_for_reference->origin_x >> 2;
     initData.right_padding = picture_ptr_for_reference->origin_x >> 2;
     initData.top_padding = picture_ptr_for_reference->origin_y >> 2;
-    initData.bot_padding = picture_ptr_for_reference->origin_y >> 2;
+    initData.bot_padding = picture_ptr_for_reference->origin_bot_y >> 2;
 
     EB_NEW(*sixteenth_downsampled_picture_ptr, svt_picture_buffer_desc_ctor, (EbPtr)&initData);
     return EB_ErrorNone;
