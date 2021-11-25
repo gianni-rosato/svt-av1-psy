@@ -6012,6 +6012,9 @@ void copy_api_from_app(
     scs_ptr->static_config.vbr_max_section_pct = ((EbSvtAv1EncConfiguration*)config_struct)->vbr_max_section_pct;
     scs_ptr->static_config.under_shoot_pct     = ((EbSvtAv1EncConfiguration*)config_struct)->under_shoot_pct;
     scs_ptr->static_config.over_shoot_pct      = ((EbSvtAv1EncConfiguration*)config_struct)->over_shoot_pct;
+#if TUNE_CAP_CRF_OVERSHOOT
+    scs_ptr->static_config.mbr_over_shoot_pct  = ((EbSvtAv1EncConfiguration*)config_struct)->mbr_over_shoot_pct;
+#endif
 #if FTR_2PASS_CBR || FTR_1PASS_CBR
     scs_ptr->static_config.maximum_buffer_size_ms   = ((EbSvtAv1EncConfiguration*)config_struct)->maximum_buffer_size_ms;
     scs_ptr->static_config.starting_buffer_level_ms = ((EbSvtAv1EncConfiguration*)config_struct)->starting_buffer_level_ms;
@@ -6957,6 +6960,9 @@ EbErrorType svt_svt_enc_init_parameter(
 #if TUNE_RC
     config_ptr->under_shoot_pct = 100;
     config_ptr->over_shoot_pct = 5;
+#if TUNE_CAP_CRF_OVERSHOOT
+    config_ptr->mbr_over_shoot_pct = 50;
+#endif
 #else
     config_ptr->under_shoot_pct = 100;
     config_ptr->over_shoot_pct = 25;

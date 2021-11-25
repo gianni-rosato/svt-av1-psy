@@ -835,6 +835,8 @@ NOTE : PART OF LIGHT_PD0_2  code was committed to svt-04-final-rebased under OPT
 
 #define FIX_UMV_OFF_CRASH                     1 // Fix crash related restricted MV (umv 0), turn umv ON when SB128
 #define CLN_TPL_WARNING                       1 // Add warning that TPL is hard-coded and --enable-tpl-la is not effective
+
+#define TUNE_CAP_CRF_OVERSHOOT                1 // Add overshoot percentage to Capped CRF
 #endif //----------------------------------- all svt-05 features should be place are above this line -------------------------
 
 

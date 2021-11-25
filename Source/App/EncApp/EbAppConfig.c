@@ -688,6 +688,9 @@ static void set_under_shoot_pct(const char *value, EbConfig *cfg) {
 };
 static void set_over_shoot_pct(const char *value, EbConfig *cfg) {
     cfg->config.over_shoot_pct = strtoul(value, NULL, 0);
+#if TUNE_CAP_CRF_OVERSHOOT
+    cfg->config.mbr_over_shoot_pct = strtoul(value, NULL, 0);
+#endif
 };
 #if FTR_2PASS_CBR || FTR_1PASS_CBR
 static void set_buf_sz(const char *value, EbConfig *cfg) {

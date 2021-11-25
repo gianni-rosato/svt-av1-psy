@@ -182,6 +182,7 @@ The encoder parameters present in the `Sample.cfg` file are listed in this table
 | **QP** | -q | [0 - 63] | 50 | Quantization parameter used when RateControl is set to 0 and EnableTPLModel is set to 0, also represents the CRF value if EnableTPLModel is set to 0 |
 | **CRF** | --crf | [0 - 63] | 50 | Rate control parameter used to set CRF and forces RateControlMode to 0 and EnableTPLModel to 1 |
 | **TargetBitRate** | --tbr | [1 - 4294967] | 7000 | Target bitrate in kilobits per second when RateControlMode is set to 1, or 2 |
+| **MaximumBitRate** | --mbr | [1 - 4294967] | 0 | Maximum bitrate in kilobits per second when RateControlMode is set to 0. To be set for capped CRF |
 | **UseQpFile** | --use-q-file | [0-1] | 0 | When set to 1, overwrite the picture qp assignment using qp values in QpFile, can be used for initial crf values as well if EnableTPLModel is set to 1, the encoder may still change crf per block |
 | **QpFile** | --qpfile | any string | Null | Path to qp file |
 | **MaxQpAllowed** | --max-qp | [1 - 63] | Null | Maximum (worst) quantizer[1-63] only applicable  when --rc > 0 |

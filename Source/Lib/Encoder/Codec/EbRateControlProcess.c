@@ -2994,6 +2994,9 @@ static void capped_crf_reencode(PictureParentControlSet *ppcs_ptr, int *const q)
     int32_t end_index = start_index + frames_in_sw;
     frames_in_sw = (scs_ptr->static_config.passes > 1) ? MIN(end_index, (int32_t)scs_ptr->twopass.stats_buf_ctx->total_stats->count) - start_index : frames_in_sw;
     int64_t max_bits_sw = (int64_t)scs_ptr->static_config.max_bit_rate* (int32_t)frames_in_sw / frame_rate;
+#if TUNE_CAP_CRF_OVERSHOOT
+    max_bits_sw += (max_bits_sw *scs_ptr->static_config.mbr_over_shoot_pct / 100);
+#endif
     // Loop over the sliding window and calculated the spent bits
     for (int index = start_index; index < end_index; index++) {
         int32_t queue_entry_index = (index > CODED_FRAMES_STAT_QUEUE_MAX_DEPTH - 1)

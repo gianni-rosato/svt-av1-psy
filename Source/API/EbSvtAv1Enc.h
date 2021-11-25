@@ -734,6 +734,12 @@ typedef struct EbSvtAv1EncConfiguration {
      * and is used as a trigger threshold for more agressive adaptation of Q. Its
      * value can range from 0-1000. */
     uint32_t over_shoot_pct;
+#if TUNE_CAP_CRF_OVERSHOOT
+    /* over_shoot_pct indicates the tolerance of the Capped CRF algorithm to overshoot
+     * and is used as a trigger threshold for more agressive adaptation of Q. Its
+     * value can range from 0-1000. */
+    uint32_t mbr_over_shoot_pct;
+#endif
 #if FTR_2PASS_CBR || FTR_1PASS_CBR
     /* Indicates the amount of data that will be buffered by the decoding
      * application prior to beginning playback, and is expressed in units of
