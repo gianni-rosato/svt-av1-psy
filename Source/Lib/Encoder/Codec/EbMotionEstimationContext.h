@@ -386,7 +386,9 @@ typedef struct MeContext {
     EB_ALIGN(64) uint32_t p_eight_sad16x16[16][8];
     EB_ALIGN(64) uint32_t p_eight_sad8x8[64][8];
     EbBitFraction *mvd_bits_array;
+#if !FIX_ISSUE_104
     uint64_t       lambda;
+#endif
     uint8_t        hme_search_method;
     uint8_t        me_search_method;
 

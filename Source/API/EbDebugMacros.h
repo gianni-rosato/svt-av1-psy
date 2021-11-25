@@ -831,6 +831,7 @@ NOTE : PART OF LIGHT_PD0_2  code was committed to svt-04-final-rebased under OPT
 #define CLN_IFS_SIG                           1 // Comment/refactor the ifs-ctrl structure
 #define CLN_SUBPEL_SIG                        1 // Comment the subpel-ctrl structure
 
+#define FIX_ISSUE_104                         1 // HEVC lambda tables are used instead of AV1 lambda tables for rate derivation @ ME (potential memory leaks for QP 52 & higher when accessing lambda as the QP range for HEVC is 0 to 51); since rate is not used @ ME permanently remove the HEVC lambda tables and the lambda derivation and removed rate component from cost derivation
 
 #define FIX_UMV_OFF_CRASH                     1 // Fix crash related restricted MV (umv 0), turn umv ON when SB128
 #define CLN_TPL_WARNING                       1 // Add warning that TPL is hard-coded and --enable-tpl-la is not effective

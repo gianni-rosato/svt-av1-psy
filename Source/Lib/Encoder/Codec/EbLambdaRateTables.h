@@ -19,8 +19,9 @@ extern "C" {
 #define NUMBER_OF_INTRA_MODES_MINUS_TWO 34
 #define LUMA_INTRA_MODE_BITS_GRE31 \
     196608 // farctional number of bit required for signaling luma intra mode greater than 31
+#if !FIX_ISSUE_104
 #define QP_NUM 52
-
+#endif
 // *Note - As of Oct 2011, the JCT-VC uses the PSNR forumula
 //  PSNR = (LUMA_WEIGHT * PSNRy + PSNRu + PSNRv) / (2+LUMA_WEIGHT)
 #define LUMA_WEIGHT 1
@@ -54,6 +55,7 @@ extern "C" {
 #define SKIP_FLAG_ONE 1
 #define SKIP_TAB_OFFSET 3 // offset to parse skip flag tables
 
+#if !FIX_ISSUE_104
 // Lamda table for mode decision -
 // GOP structure: IPPPP...
 // lambda values are << 16
@@ -215,7 +217,7 @@ static const uint32_t chroma_weight_factor_ra_qp_scaling_l3[QP_NUM] = {
     65536,  65536,  65536,  65536,  65536,  65536,  65536,  65536,  87427,  87157,  86916,
     86699,  114435, 113940, 113489, 142988, 136771, 172320, 165140, 208064, 208064, 262144,
     330281, 330281, 416128, 524288, 524288, 660561, 832255, 1048576};
-
+#endif
 static const uint32_t intra_luma_mode_mapping[] = {
     // intra luma mode mapping for scaling
     3, 4, 4, 3, 5, 5, 5, 3, 1, 1, 1, 3, 6, 6, 6, 3, 7,

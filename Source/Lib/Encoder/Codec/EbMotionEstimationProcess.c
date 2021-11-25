@@ -1595,7 +1595,7 @@ EbErrorType motion_estimation_context_ctor(EbThreadContext *  thread_context_ptr
         me_context_ctor);
     return EB_ErrorNone;
 }
-
+#if !FIX_ISSUE_104
 /* determine lambda for ME purpose*/
 
 void get_lambda_for_me(MeContext *me_ctx, PictureParentControlSet *pcs_ptr)
@@ -1621,7 +1621,7 @@ void get_lambda_for_me(MeContext *me_ctx, PictureParentControlSet *pcs_ptr)
             lambda_mode_decision_ld_sad_qp_scaling[pcs_ptr->picture_qp];
     }
 }
-
+#endif
 /************************************************
  * Motion Analysis Kernel
  * The Motion Analysis performs  Motion Estimation
@@ -1635,7 +1635,9 @@ void *motion_estimation_kernel(void *input_ptr) {
     MotionEstimationContext_t *context_ptr = (MotionEstimationContext_t *)thread_context_ptr->priv;
     EbObjectWrapper *          in_results_wrapper_ptr;
     EbObjectWrapper *          out_results_wrapper_ptr;
+#if !FIX_ISSUE_104
     MeContext *me_ctx = context_ptr->me_context_ptr;
+#endif
     for (;;) {
         // Get Input Full Object
         EB_GET_FULL_OBJECT(context_ptr->picture_decision_results_input_fifo_ptr,
@@ -1664,8 +1666,9 @@ void *motion_estimation_kernel(void *input_ptr) {
         else  // TASK_FIRST_PASS_ME
             first_pass_signal_derivation_me_kernel(scs_ptr, pcs_ptr, context_ptr);
 
-
+#if !FIX_ISSUE_104
         get_lambda_for_me(me_ctx, pcs_ptr);
+#endif
         if ((in_results_ptr->task_type == TASK_PAME) || (in_results_ptr->task_type == TASK_SUPERRES_RE_ME)) {
             EbPictureBufferDesc *sixteenth_picture_ptr ;
             EbPictureBufferDesc *quarter_picture_ptr ;

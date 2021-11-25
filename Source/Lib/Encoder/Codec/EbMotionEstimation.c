@@ -1420,7 +1420,11 @@ EbErrorType check_00_center(EbPictureBufferDesc *ref_pic_ptr, MeContext *context
 #if !FTR_ADJUST_SR_FOR_STILL
     EbErrorType return_error = EB_ErrorNone;
 #endif
+#if FIX_ISSUE_104
+    uint32_t    search_region_index, zero_mv_sad, hme_mv_sad;
+#else
     uint32_t    search_region_index, zero_mv_sad, hme_mv_sad, hme_mvd_rate;
+#endif
     uint64_t    hme_mv_cost, zero_mv_cost, search_center_cost;
     int16_t     origin_x      = (int16_t)sb_origin_x;
     int16_t     origin_y      = (int16_t)sb_origin_y;
@@ -1484,13 +1488,20 @@ EbErrorType check_00_center(EbPictureBufferDesc *ref_pic_ptr, MeContext *context
                                     sb_width);
 
     hme_mv_sad = hme_mv_sad << subsample_sad;
-
+#if FIX_ISSUE_104
+    hme_mv_cost = hme_mv_sad << COST_PRECISION;
+#else
     hme_mvd_rate = 0;
 
     hme_mv_cost = (hme_mv_sad << COST_PRECISION) +
                   (((context_ptr->lambda * hme_mvd_rate) + MD_OFFSET) >> MD_SHIFT);
+#endif
 #if FIX_TF_HME
+#if FIX_ISSUE_104
+    // Apply a penalty to the HME_MV cost (after the HME(0,0) vs.HME_MV distortion check) when the HME_MV distortion is high (search ~(0,0) if complex 64x64)
+#else
     // Apply a penalty to the HME_MV cost(@ the post - HME(0, 0) vs.HME_MV distortion check) when the HME_MV distortion is high (towards more search ~ (0,0) if difficult 64x64)
+#endif
     if (context_ptr->me_type == ME_MCTF) {
         if (hme_mv_sad > TF_HME_MV_SAD_TH) {
             hme_mv_cost = (hme_mv_cost * TF_HME_MV_COST_WEIGHT) / 100;

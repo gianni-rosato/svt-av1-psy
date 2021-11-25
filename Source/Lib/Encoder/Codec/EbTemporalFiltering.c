@@ -509,12 +509,12 @@ static void create_me_context_and_picture_control(
         input_picture_ptr_central->origin_x + sb_origin_x;
     // set search method
     context_ptr->me_context_ptr->hme_search_method = FULL_SAD_SEARCH;
-
+#if !FIX_ISSUE_104
     // set Lambda
     context_ptr->me_context_ptr->lambda =
         lambda_mode_decision_ra_sad[picture_control_set_ptr_central->picture_qp];
 
-
+#endif
 #ifdef ARCH_X86_64
     {
         uint8_t *src_ptr = &(padded_pic_ptr->buffer_y[buffer_index]);
