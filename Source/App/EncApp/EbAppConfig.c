@@ -644,14 +644,6 @@ static void set_scene_change_detection(const char *value, EbConfig *cfg) {
     cfg->config.scene_change_detection = strtoul(value, NULL, 0);
 }
 static void set_enable_tpl_la(const char *value, EbConfig *cfg) {
-
-#if CLN_TPL_WARNING
-
-    if(cfg->config.enable_tpl_la == 0 || cfg->config.enable_tpl_la == 1) {
-        printf("SVT [WARNING] enable_tpl_la is hard-coded and enable_tpl_la is ineffective \n");
-    }
-
-#endif
     cfg->config.enable_tpl_la = (uint8_t)strtoul(value, NULL, 0);
 };
 static void set_rate_control_mode(const char *value, EbConfig *cfg) {
