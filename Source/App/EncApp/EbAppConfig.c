@@ -786,8 +786,6 @@ static void set_injector(const char *value, EbConfig *cfg) {
 
 static void set_injector_frame_rate(const char *value, EbConfig *cfg) {
     cfg->injector_frame_rate = strtoul(value, NULL, 0);
-    if (cfg->injector_frame_rate <= 1000)
-        cfg->injector_frame_rate <<= 16;
 }
 static void set_asm_type(const char *value, EbConfig *cfg) {
     const struct {
@@ -2343,7 +2341,7 @@ static EbErrorType verify_settings(EbConfig *config, uint32_t channel_number) {
         return_error = EB_ErrorBadParameter;
     }
 
-    if (config->injector_frame_rate > (240 << 16) && config->injector) {
+    if (config->injector_frame_rate > 240 && config->injector) {
         fprintf(config->error_log_file,
                 "Error Instance %u: The maximum allowed injector_frame_rate is 240 fps\n",
                 channel_number + 1);
