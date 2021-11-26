@@ -227,7 +227,7 @@ static EbErrorType enc_context_ctor(EncApp* enc_app, EncContext* enc_context, in
         } else
             c->active = EB_FALSE;
     }
-    return EB_ErrorNone;
+    return return_error;
 }
 
 static void enc_context_dctor(EncContext* enc_context) {
