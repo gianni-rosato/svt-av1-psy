@@ -1099,7 +1099,7 @@ ConfigEntry config_entry_2p[] = {
      set_two_pass_stats},
     {SINGLE_INPUT,
      PASSES_TOKEN,
-     "Number of passes (1: one pass encode, 2: two passes encode) applicable only for rc > 0",
+     "Number of passes (1: one pass encode, 2: multi-pass encode)",
      set_passes},
     {SINGLE_INPUT,
      VBR_BIAS_PCT_TOKEN,
@@ -2744,6 +2744,16 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncodePass pass[MAX_ENCODE
 #if CLN_REM_WARN
     if (find_token(argc, argv, PASSES_TOKEN, config_string) == 0) {
         passes = strtol(config_string, NULL, 0);
+#if FTR_MULTI_PASS_API
+        if (passes == 0 || passes > 2) {
+#else
+        if (passes == 0 || passes > 2) {
+#endif
+            fprintf(stderr,
+                "Error: The number of passes has to be within the range [1,%u]\n",
+                (uint32_t)2);
+            return 0;
+        }
     }
 #else
     if (find_token(argc, argv, PASSES_TOKEN, config_string) != 0) {
@@ -2902,16 +2912,7 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncodePass pass[MAX_ENCODE
     passes = strtol(config_string, NULL, 0);
 #endif
 #endif
-#if FTR_MULTI_PASS_API
-    if (passes == 0 || passes > MAX_ENCODE_PASS) {
-#else
-    if (passes == 0 || passes > 2) {
-#endif
-        fprintf(stderr,
-                "Error: The number of passes has to be within the range [1,%u]\n",
-                (uint32_t)MAX_ENCODE_PASS);
-        return 0;
-    }
+
     if (passes == 1) {
         pass[0] = ENCODE_SINGLE_PASS;
         return 1;
