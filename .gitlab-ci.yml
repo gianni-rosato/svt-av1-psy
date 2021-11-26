@@ -321,7 +321,7 @@ Valgrind:
       - PASS: 1
   script:
     # --error-limit=no --leak-check=full --show-leak-kinds=all makes the log very huge and takes around 16 minutes
-    - valgrind --error-exitcode=1 --track-origins=yes --suppressions=/usr/lib/valgrind/debian.supp -- ./valgrind/SvtAv1EncApp --preset 6 ${PASS:+--pass $PASS} -i akiyo_cif.y4m --rc 1 --tbr 500 -n 10 -b test1.ivf
+    - valgrind --error-exitcode=1 --track-origins=yes --suppressions=/usr/lib/valgrind/debian.supp -- ./valgrind/SvtAv1EncApp --preset 6 ${PASS:+--pass $PASS} -i akiyo_cif.y4m --rc 1 --tbr 500 -n 10 -lp 7 -b test1.ivf
   needs:
     - Linux (Valgrind)
 
@@ -429,7 +429,7 @@ Linux RC Test:
         printf 'Testing clip %s\n' "$clip"
         bitrate=$(
           ./Bin/Release/SvtAv1EncApp \
-            --preset 8 \
+            --preset 8 -lp 7 \
             --rc 1 --tbr "$target" \
             -i "$clip" \
             --undershoot-pct 10 \
