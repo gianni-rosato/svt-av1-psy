@@ -5518,7 +5518,10 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
         SVT_WARN("Unrestricted_motion_vector 0 and SB 128x128 not supoorted, set to 1\n");
     }
 #endif
-
+    if (scs_ptr->static_config.intra_refresh_type == 1 && scs_ptr->static_config.hierarchical_levels != 4){
+        scs_ptr->static_config.hierarchical_levels = 4;
+        SVT_WARN("Fwd key frame is only supported for hierarchical levels 4 at this point. Hierarchical levels are set to 4\n");
+    }
 #if CLN_GEOM
     uint8_t disallow_nsq = get_disallow_nsq(scs_ptr->static_config.enc_mode);
     uint8_t disallow_4x4 = 1;
