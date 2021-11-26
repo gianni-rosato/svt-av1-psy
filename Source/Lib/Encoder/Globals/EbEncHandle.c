@@ -6953,7 +6953,7 @@ EbErrorType svt_svt_enc_init_parameter(
     config_ptr->look_ahead_distance = 0;
 #endif
     config_ptr->enable_tpl_la = 1;
-    config_ptr->target_bit_rate = 7000000;
+    config_ptr->target_bit_rate = 2000000;
 #if FTR_RC_CAP
     config_ptr->max_bit_rate = 0;
 #endif
