@@ -6286,6 +6286,9 @@ static EbErrorType verify_settings(
         SVT_LOG("Error instance %u: EncoderMode must be in the range of [0-%d]\n", channel_number + 1, MAX_ENC_PRESET);
         return_error = EB_ErrorBadParameter;
     }
+    if (config->enc_mode == MAX_ENC_PRESET) {
+        SVT_WARN("Warning EncoderMode (preset): %d was developed for the sole purpose of debugging and or running fast convex-hull encoding. This configuration should not be used for any benchmarking or quality analysis\n", channel_number + 1, MAX_ENC_PRESET);
+    }
     if (config->ext_block_flag > 1) {
         SVT_LOG("Error instance %u: ExtBlockFlag must be [0-1]\n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
@@ -6958,7 +6961,7 @@ EbErrorType svt_svt_enc_init_parameter(
     config_ptr->min_qp_allowed = 1;
 
     config_ptr->enable_adaptive_quantization = 2;
-    config_ptr->enc_mode = MAX_ENC_PRESET;
+    config_ptr->enc_mode = 12;
     config_ptr->intra_period_length = -2;
     config_ptr->intra_refresh_type = 2;
     config_ptr->hierarchical_levels = 4;
