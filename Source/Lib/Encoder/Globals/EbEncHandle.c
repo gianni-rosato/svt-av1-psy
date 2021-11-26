@@ -2916,7 +2916,7 @@ static void update_look_ahead(SequenceControlSet *scs_ptr) {
     if (scs_ptr->static_config.look_ahead_distance - (eos_delay + scs_ptr->scd_delay) < mg_size + 1) {
         // Not enough pictures to form the minigop. update mg_size
         scs_ptr->static_config.look_ahead_distance = mg_size + 1 + (eos_delay + scs_ptr->scd_delay);
-        SVT_LOG("SVT [Warning]: Minimum lookahead distance to run %dL with TF %d is %d. Force the look_ahead_distance to be %d\n",
+        SVT_WARN("Minimum lookahead distance to run %dL with TF %d is %d. Force the look_ahead_distance to be %d\n",
             scs_ptr->static_config.hierarchical_levels + 1,
             scs_ptr->static_config.tf_level == 0 ? 0 : 1,
             scs_ptr->static_config.look_ahead_distance,
@@ -2934,13 +2934,13 @@ static void update_look_ahead(SequenceControlSet *scs_ptr) {
     if (scs_ptr->lad_mg < scs_ptr->tpl_lad_mg) {
         scs_ptr->lad_mg = scs_ptr->tpl_lad_mg;
         scs_ptr->static_config.look_ahead_distance = (1 + mg_size) * (scs_ptr->lad_mg + 1) + scs_ptr->scd_delay + eos_delay;
-        SVT_LOG("SVT [Warning]: Lookahead distance is not long enough to get best bdrate trade off. Force the look_ahead_distance to be %d\n",
+        SVT_WARN("Lookahead distance is not long enough to get best bdrate trade off. Force the look_ahead_distance to be %d\n",
             scs_ptr->static_config.look_ahead_distance);
     }
     else if (scs_ptr->lad_mg > scs_ptr->tpl_lad_mg && (scs_ptr->static_config.rate_control_mode == 0 || use_input_stat(scs_ptr))) {
         scs_ptr->lad_mg = scs_ptr->tpl_lad_mg;
         scs_ptr->static_config.look_ahead_distance = (1 + mg_size) * (scs_ptr->lad_mg + 1) + scs_ptr->scd_delay + eos_delay;
-        SVT_LOG("SVT [Warning]: For CRF or 2PASS RC mode, the maximum needed Lookahead distance is %d. Force the look_ahead_distance to be %d\n",
+        SVT_WARN("For CRF or 2PASS RC mode, the maximum needed Lookahead distance is %d. Force the look_ahead_distance to be %d\n",
             scs_ptr->static_config.look_ahead_distance,
             scs_ptr->static_config.look_ahead_distance);
 
@@ -5515,7 +5515,7 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     // Forcing unrestricted_motion_vector to 1
     if (scs_ptr->static_config.unrestricted_motion_vector == 0 && scs_ptr->static_config.super_block_size == 128) {
         scs_ptr->static_config.unrestricted_motion_vector = 1;
-        SVT_LOG("SVT [Warning]: unrestricted_motion_vector 0 and SB 128x128 not supoorted, set to 1\n");
+        SVT_WARN("Unrestricted_motion_vector 0 and SB 128x128 not supoorted, set to 1\n");
     }
 #endif
 
@@ -6107,7 +6107,7 @@ void copy_api_from_app(
     scs_ptr->static_config.encoder_bit_depth = ((EbSvtAv1EncConfiguration*)config_struct)->encoder_bit_depth;
     scs_ptr->static_config.encoder_color_format = ((EbSvtAv1EncConfiguration*)config_struct)->encoder_color_format;
     if (scs_ptr->static_config.encoder_color_format == EB_YUV400) {
-        SVT_LOG("SVT [Warning]: Color format EB_YUV400 not supported, set to EB_YUV420\n");
+        SVT_WARN("Color format EB_YUV400 not supported, set to EB_YUV420\n");
         scs_ptr->static_config.encoder_color_format = EB_YUV420;
     }
     scs_ptr->chroma_format_idc = (uint32_t)(scs_ptr->static_config.encoder_color_format);
@@ -7598,7 +7598,7 @@ static EbErrorType downsample_copy_frame_buffer(
     else if (config->compressed_ten_bit_format == 1)
     {
         {
-            SVT_LOG("compressed_ten_bit_format nor supported in downsample_copy_frame_buffer");//anaghdin
+            SVT_WARN("Compressed_ten_bit_format not supported in downsample_copy_frame_buffer");//anaghdin
             uint32_t  luma_buffer_offset = (input_picture_ptr->stride_y*scs_ptr->top_padding + scs_ptr->left_padding);
             uint32_t  chroma_buffer_offset = (input_picture_ptr->stride_cr*(scs_ptr->top_padding >> 1) + (scs_ptr->left_padding >> 1));
             uint16_t  luma_stride = input_picture_ptr->stride_y;
@@ -8319,7 +8319,7 @@ static EbErrorType copy_metadata_buffer(EbBufferHeaderType *dst, EbBufferHeaderT
         const size_t sz = current_metadata->sz;
 
         if (svt_add_metadata(dst, type, payload, sz) != 0)
-            SVT_LOG("Error: Metadata of type %d could not be added to the buffer.\n", type);
+            SVT_WARN("Metadata of type %d could not be added to the buffer.\n", type);
     }
     return return_error;
 }
