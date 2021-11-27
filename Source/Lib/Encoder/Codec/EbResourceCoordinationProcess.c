@@ -151,6 +151,18 @@ EbErrorType resource_coordination_context_ctor(EbThreadContext *thread_contxt_pt
 uint8_t  get_tpl_level(int8_t enc_mode)
 {
     uint8_t tpl_level;
+#if TUNE_LIVE_PRESETS
+    if (enc_mode <= ENC_M5)
+        tpl_level = 0;
+    else if (enc_mode <= ENC_M7)
+        tpl_level = 2;
+    else if (enc_mode <= ENC_M8)
+        tpl_level = 3;
+    else if (enc_mode <= ENC_M9)
+        tpl_level = 4;
+    else
+        tpl_level = 6;
+#else
     if (enc_mode <= ENC_M5){
         tpl_level = 0;
     }else if (enc_mode <= ENC_M7){
@@ -196,6 +208,7 @@ uint8_t  get_tpl_level(int8_t enc_mode)
     }else{
        tpl_level = 5;
     }
+#endif
 #endif
     return tpl_level;
 }

@@ -5121,7 +5121,11 @@ void derive_tf_params(SequenceControlSet *scs_ptr) {
     else if (scs_ptr->static_config.enc_mode <= ENC_M5) {
         tf_level = 2;
     }
+#if TUNE_LIVE_PRESETS
+    else if (scs_ptr->static_config.enc_mode <= ENC_M7) {
+#else
     else if (scs_ptr->static_config.enc_mode <= ENC_M8) {
+#endif
         tf_level = 3;
     }
 #if !TUNE_M1_M8

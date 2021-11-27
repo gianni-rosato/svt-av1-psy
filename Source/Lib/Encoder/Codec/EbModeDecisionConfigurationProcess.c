@@ -1554,17 +1554,23 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         else
             pcs_ptr->pic_lpd1_lvl = is_base ? 0 : 2;
     }
+#if TUNE_LIVE_PRESETS
+    else if (enc_mode <= ENC_M9)
+#else
     else if (enc_mode <= ENC_M7)
+#endif
 #else
     if (enc_mode <= ENC_M7)
 #endif
         pcs_ptr->pic_lpd1_lvl = 0;
+#if !TUNE_LIVE_PRESETS
 #if CLN_RES_LPD1_BIS
     else if (enc_mode <= ENC_M9)
         pcs_ptr->pic_lpd1_lvl = (input_resolution <= INPUT_SIZE_480p_RANGE) ? (is_base ? 0 : 1) : (is_ref ? 0 : 1);
 #else
     else if (enc_mode <= ENC_M9)
         pcs_ptr->pic_lpd1_lvl = (input_resolution <= INPUT_SIZE_480p_RANGE) ? 0 : (is_ref ? 0 : 1);
+#endif
 #endif
     else if (enc_mode <= ENC_M10)
 #if TUNE_M10_M12_ULTRA

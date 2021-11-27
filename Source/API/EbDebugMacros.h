@@ -845,6 +845,7 @@ NOTE : PART OF LIGHT_PD0_2  code was committed to svt-04-final-rebased under OPT
 
 #define TUNE_MEM_SHUT                         1 // Shut tpl_lad_mg and restoration depending on resolution, hierarchical_levels and logical processors
 #define FTR_LP64                              1 // add high latency multi-threaded settings, set as default multi-threaded configuration
+#define TUNE_LIVE_PRESETS                     1 // Tune presets M8-M10 for live use cases
 #endif //----------------------------------- all svt-05 features should be place are above this line -------------------------
 
 

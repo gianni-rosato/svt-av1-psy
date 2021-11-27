@@ -13802,7 +13802,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
         intra_level = pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? 1 : 4;
     else if (enc_mode <= ENC_M5)
         intra_level = (pcs_ptr->temporal_layer_index == 0) ? 1 : 4;
+#if TUNE_LIVE_PRESETS
+    else if (enc_mode <= ENC_M7)
+#else
     else if (enc_mode <= ENC_M9)
+#endif
         intra_level = pcs_ptr->slice_type == I_SLICE ? 1 : (pcs_ptr->temporal_layer_index == 0) ? 2 : 4;
     else
         intra_level = pcs_ptr->slice_type == I_SLICE ? 3 : 4;
