@@ -6293,7 +6293,7 @@ static EbErrorType verify_settings(
         return_error = EB_ErrorBadParameter;
     }
     if (config->enc_mode == MAX_ENC_PRESET) {
-        SVT_WARN("Warning EncoderMode (preset): %d was developed for the sole purpose of debugging and or running fast convex-hull encoding. This configuration should not be used for any benchmarking or quality analysis\n", channel_number + 1, MAX_ENC_PRESET);
+        SVT_WARN("EncoderMode (preset): %d was developed for the sole purpose of debugging and or running fast convex-hull encoding. This configuration should not be used for any benchmarking or quality analysis\n", MAX_ENC_PRESET);
     }
     if (config->ext_block_flag > 1) {
         SVT_LOG("Error instance %u: ExtBlockFlag must be [0-1]\n", channel_number + 1);
