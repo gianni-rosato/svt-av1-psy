@@ -2857,11 +2857,9 @@ static int32_t compute_default_intra_period(
                                             config->frame_rate :
                                             config->frame_rate >> 16;
     int32_t mini_gop_size              = (1 << (config->hierarchical_levels));
-    int32_t min_ip                     = ((int)((fps) / mini_gop_size)*(mini_gop_size));
-    int32_t max_ip                     = ((int)((fps + mini_gop_size) / mini_gop_size)*(mini_gop_size));
 
-    intra_period = (ABS((fps - max_ip)) > ABS((fps - min_ip))) ? min_ip : max_ip;
-
+    intra_period                       = ((int)((fps + mini_gop_size) / mini_gop_size)*(mini_gop_size));
+    intra_period                       = intra_period << 1; // use a 2-sec gop by default.
     if (config->intra_refresh_type == 1)
         intra_period -= 1;
 
