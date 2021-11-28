@@ -889,8 +889,8 @@ ConfigEntry config_entry_options[] = {
     {SINGLE_INPUT, STAT_FILE_TOKEN, "Stat filename", set_cfg_stat_file},
     {SINGLE_INPUT,
      PRESET_TOKEN,
-     "Encoder mode/Preset used (-2 (debugging preset),-1 (debugging preset),0 - 8 [default]) the"
-     "higher the preset, the higher the speed, the lower the preset, the lower the quality",
+     "Encoder mode/Preset used (-2 (debugging preset),-1 (debugging preset),0 - 13, 12 [default]) the"
+     " higher the preset, the higher the speed, the lower the preset, the higher the quality",
      set_enc_mode},
     {SINGLE_INPUT, NULL, NULL, NULL}};
 
@@ -904,11 +904,13 @@ ConfigEntry config_entry_global_options[] = {
 
     {SINGLE_INPUT,
      NUMBER_OF_PICTURES_TOKEN,
-     "Stop encoding after n input frames",
+     "Stop encoding after n input frames, if n is larger than the number of frames in the input file,"
+     " the encoder will loop back to frame 0 and continue encoding",
      set_cfg_frames_to_be_encoded},
     {SINGLE_INPUT,
      NUMBER_OF_PICTURES_LONG_TOKEN,
-     "Stop encoding after n input frames",
+     "Stop encoding after n input frames, if n is larger than the number of frames in the input file,"
+     " the encoder will loop back to frame 0 and continue encoding",
      set_cfg_frames_to_be_encoded},
 
     {SINGLE_INPUT, BUFFERED_INPUT_TOKEN, "Buffer n input frames", set_buffered_input},
@@ -931,7 +933,7 @@ ConfigEntry config_entry_global_options[] = {
      "Bitstream profile number to use(0: main profile[default], 1: high profile, 2: professional "
      "profile) ",
      set_profile},
-    {SINGLE_INPUT, FRAME_RATE_TOKEN, "Stream frame rate (rate/scale)", set_frame_rate},
+    {SINGLE_INPUT, FRAME_RATE_TOKEN, "Stream frame rate, integer values only", set_frame_rate},
     {SINGLE_INPUT,
      FRAME_RATE_NUMERATOR_TOKEN,
      "Stream frame rate numerator",
@@ -941,29 +943,31 @@ ConfigEntry config_entry_global_options[] = {
      "Stream frame rate denominator",
      set_frame_rate_denominator},
     //{SINGLE_INPUT, ENCODER_BIT_DEPTH, "Bit depth for codec(8 or 10)", set_encoder_bit_depth},
-    {SINGLE_INPUT, INPUT_DEPTH_TOKEN, "Bit depth for codec(8 or 10)", set_encoder_bit_depth},
+    {SINGLE_INPUT, INPUT_DEPTH_TOKEN, "Bit depth for codec (8 [default] , 10)", set_encoder_bit_depth},
     {SINGLE_INPUT,
      ENCODER_16BIT_PIPELINE,
      "Bit depth for enc-dec(0: lbd[default], 1: hbd)",
      set_encoder_16bit_pipeline},
     {SINGLE_INPUT,
      INPUT_COMPRESSED_TEN_BIT_FORMAT,
-     " Offline packing of the 2bits: requires two bits packed input (0: OFF[default], 1: ON)",
+     "Offline packing of the 2bits: requires two bits packed input (0: OFF[default], 1: ON)",
      set_compressed_ten_bit_format},
     // Latency
     {SINGLE_INPUT,
      INJECTOR_TOKEN,
      "Inject pictures at defined frame rate(0: OFF[default],1: ON)",
      set_injector},
-    {SINGLE_INPUT, INJECTOR_FRAMERATE_TOKEN, "Set injector frame rate", set_injector_frame_rate},
+    {SINGLE_INPUT, INJECTOR_FRAMERATE_TOKEN, "Set injector frame rate (0 - 240), only applicable when"
+     " --inj is set to 1",
+    set_injector_frame_rate},
     //{SINGLE_INPUT, LEVEL_TOKEN, "Level", set_level},
     {SINGLE_INPUT,
      HIERARCHICAL_LEVELS_TOKEN,
-     "Set hierarchical levels (0 - 5 : 4 [default])",
+     "Set hierarchical levels (1 [2 temporal layers] - 5  [6 temporal layers] : 4 [default])",
      set_hierarchical_levels},
     {SINGLE_INPUT,
      PRED_STRUCT_TOKEN,
-     "Set prediction structure( 0: low delay P, 1: low delay B, 2: random access [default])",
+     "Set prediction structure( (1: low delay, 2: random access) [default])",
      set_cfg_pred_structure},
     {SINGLE_INPUT,
      STAT_REPORT_NEW_TOKEN,
@@ -978,7 +982,7 @@ ConfigEntry config_entry_global_options[] = {
      set_asm_type},
     {SINGLE_INPUT,
      THREAD_MGMNT,
-     " target number of logical cores to be used (1-max number of cores on machine[default])",
+     "Target number of logical cores to be used (1-max number of cores on machine[default])",
      set_logical_processors},
     {SINGLE_INPUT,
      UNPIN_TOKEN,
@@ -1004,9 +1008,9 @@ ConfigEntry config_entry_rc[] = {
     {SINGLE_INPUT,
      RATE_CONTROL_ENABLE_TOKEN,
 #if FTR_2PASS_CBR || FTR_1PASS_CBR
-     "Rate control mode(0 = CQP if --enable-tpl-la is set to 0, else CRF , 1 = VBR, 2 = CBR)",
+     "Rate control mode(0 = CRF or CQP if --enable-tpl-la is set to 0 , 1 = VBR, 2 = CBR)",
 #else
-     "Rate control mode(0 = CQP if --enable-tpl-la is set to 0, else CRF , 1 = VBR)",
+     "Rate control mode(0 = CRF or CQP if --enable-tpl-la is set to 0 , 1 = VBR)",
 #endif
      set_rate_control_mode},
     {SINGLE_INPUT, TARGET_BIT_RATE_TOKEN, "Target Bitrate (kbps)", set_target_bit_rate},
@@ -1110,7 +1114,7 @@ ConfigEntry config_entry_2p[] = {
 ConfigEntry config_entry_intra_refresh[] = {
     {SINGLE_INPUT,
      KEYINT_TOKEN,
-     "Intra period interval(frames) (-2: default intra period , -1: No intra update or [0 - "
+     "Intra period interval(frames) (-2: default intra period (set to 2 sec long) , -1: No intra update or [0 - "
      "2^31-2]; [-2-255] if RateControlMode >= 1)",
      set_cfg_intra_period},
     {SINGLE_INPUT,
@@ -1125,7 +1129,7 @@ ConfigEntry config_entry_intra_refresh[] = {
     LOOKAHEAD_NEW_TOKEN,
 #if FTR_LAD_INPUT
         "The lookahead is the total number of frames in future used by the encoder, including"
-        " frames to form a minigop, temporal filtering and rate control. [0 - 300]",
+        " frames to form a minigop, temporal filtering and rate control. [0 - 120]",
 #else
     "The lookahead option is currently disabled (forced to 0) until further work is done on "
     "rate control",
@@ -1135,7 +1139,7 @@ ConfigEntry config_entry_intra_refresh[] = {
     LOOK_AHEAD_DIST_TOKEN,
 #if FTR_LAD_INPUT
         "The lookahead is the total number of frames in future used by the encoder, including"
-        " frames to form a minigop, temporal filtering and rate control. [0 - 300]",
+        " frames to form a minigop, temporal filtering and rate control. [0 - 120]",
 #else
     "The lookahead option is currently disabled (forced to 0) until further work is done on "
     "rate control",
@@ -2507,11 +2511,12 @@ uint32_t get_help(int32_t argc, char *const argv[]) {
     printf(
         "Usage: SvtAv1EncApp <options> -b dst_filename -i src_filename\n\n"
         "Examples:\n"
-        "Two passes encode (VBR only):\n"
-        "    SvtAv1EncApp <--stats svtav1_2pass.log> --rc 1 --tbr 1000 --pass 1 -b dst_filename -i src_filename\n"
-        "    SvtAv1EncApp <--stats svtav1_2pass.log> --rc 1 --tbr 1000 --pass 2 -b dst_filename -i src_filename\n"
-        "Or a combined cli:\n"
+        "Multi-pass encode (VBR):\n"
         "    SvtAv1EncApp <--stats svtav1_2pass.log> --passes 2 --rc 1 --tbr 1000 -b dst_filename -i src_filename\n"
+        "Multi-pass encode (CRF):\n"
+        "    SvtAv1EncApp <--stats svtav1_2pass.log> --passes 2 --rc 0 --crf 43 -b dst_filename -i src_filename\n"
+        "Single-pass encode (VBR):\n"
+        "    SvtAv1EncApp <--stats svtav1_2pass.log> --passes 1 --rc 1 --tbr 1000 -b dst_filename -i src_filename\n"
         "\nOptions:\n");
     for (ConfigEntry *options_token_index = config_entry_options; options_token_index->token;
          ++options_token_index) {
@@ -2567,7 +2572,7 @@ uint32_t get_help(int32_t argc, char *const argv[]) {
                    rc_token_index->name);
         }
     }
-    printf("\nTwopass Options:\n");
+    printf("\nMulti-pass Options:\n");
     for (ConfigEntry *two_p_token_index = config_entry_2p; two_p_token_index->token;
          ++two_p_token_index) {
         switch (check_long(*two_p_token_index, two_p_token_index[1])) {
