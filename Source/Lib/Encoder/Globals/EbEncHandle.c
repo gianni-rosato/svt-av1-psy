@@ -6072,8 +6072,10 @@ void copy_api_from_app(
         63;
 
     scs_ptr->static_config.min_qp_allowed = (scs_ptr->static_config.rate_control_mode) ?
-        ((EbSvtAv1EncConfiguration*)config_struct)->min_qp_allowed :
+        (((EbSvtAv1EncConfiguration*)config_struct)->min_qp_allowed > 0) ?
+        ((EbSvtAv1EncConfiguration*)config_struct)->min_qp_allowed : 1 :
         1; // lossless coding not supported
+
     scs_ptr->static_config.vbr_bias_pct        = ((EbSvtAv1EncConfiguration*)config_struct)->vbr_bias_pct;
     scs_ptr->static_config.vbr_min_section_pct = ((EbSvtAv1EncConfiguration*)config_struct)->vbr_min_section_pct;
     scs_ptr->static_config.vbr_max_section_pct = ((EbSvtAv1EncConfiguration*)config_struct)->vbr_max_section_pct;
