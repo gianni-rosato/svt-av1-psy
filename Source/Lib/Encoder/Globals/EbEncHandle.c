@@ -6372,8 +6372,8 @@ if (scs_ptr->max_input_luma_width > 16384) {
         return_error = EB_ErrorBadParameter;
     }
 
-    if ((config->intra_period_length < -2 || config->intra_period_length > 255) && config->rate_control_mode >=1) {
-        SVT_LOG("Error Instance %u: The intra period must be [-2, 255] for RateControlMode %d \n", channel_number + 1, config->rate_control_mode);
+    if ((config->intra_period_length < 0) && config->rate_control_mode >=1) {
+        SVT_LOG("Error Instance %u: The intra period must be > 0 for RateControlMode %d \n", channel_number + 1, config->rate_control_mode);
         return_error = EB_ErrorBadParameter;
     }
 

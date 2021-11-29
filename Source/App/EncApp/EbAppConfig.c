@@ -1115,7 +1115,7 @@ ConfigEntry config_entry_intra_refresh[] = {
     {SINGLE_INPUT,
      KEYINT_TOKEN,
      "Intra period interval(frames) (-2: default intra period (set to 2 sec long) , -1: No intra update or [0 - "
-     "2^31-2]; [-2-255] if RateControlMode >= 1)",
+     "2^31-2]",
      set_cfg_intra_period},
     {SINGLE_INPUT,
      INTRA_REFRESH_TYPE_TOKEN,
