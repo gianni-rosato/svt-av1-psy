@@ -184,7 +184,11 @@ void clean_pictures_in_ref_queue(EncodeContext *ctx)
                     SVT_ERROR(" PicMgr: Negative dep count\n");
                 //printf(" search %I64i  ====Pic-MGR-Dep-Cnt-reduce found: %I64i  %i --> %i\n",
                 //    queue[q_idx]->pic_num, ref_entry_ptr->picture_number, ref_entry_ptr->dependent_count, new_dep_cnt);
+#if FIX_INT_OVERLOW
+                ref_entry_ptr->dependent_count = new_dep_cnt;
+#else
                 ref_entry_ptr->dependent_count += queue[q_idx]->dep_cnt_diff;
+#endif
                 queue[q_idx]->is_done = 1;
             }
         }
@@ -641,7 +645,11 @@ void *picture_manager_kernel(void *input_ptr) {
                     reference_entry_ptr->dependent_count =
                         reference_entry_ptr->dep_list0_count + reference_entry_ptr->dep_list1_count;
                     //remove dependency to alredy knowmn broken links from PD
+#if FIX_INT_OVERLOW
+                    reference_entry_ptr->dependent_count = (int32_t)reference_entry_ptr->dependent_count + pcs_ptr->self_updated_links;
+#else
                     reference_entry_ptr->dependent_count += pcs_ptr->self_updated_links;
+#endif
 
                     CHECK_REPORT_ERROR(
                         (pcs_ptr->pred_struct_ptr->pred_struct_period * REF_LIST_MAX_DEPTH <
@@ -778,9 +786,15 @@ void *picture_manager_kernel(void *input_ptr) {
                                 // hardcode the reference for the overlay frame
                                 ref_poc = entry_pcs_ptr->picture_number;
                             else
+#if FIX_INT_OVERLOW
+                                ref_poc = POC_CIRCULAR_ADD(
+                                    (int64_t)entry_pcs_ptr->picture_number,
+                                    -input_entry_ptr->list0_ptr->reference_list[ref_idx]);
+#else
                                 ref_poc = POC_CIRCULAR_ADD(
                                     entry_pcs_ptr->picture_number,
                                     -input_entry_ptr->list0_ptr->reference_list[ref_idx]);
+#endif
 
                             reference_entry_ptr = search_ref_in_ref_queue(encode_context_ptr, ref_poc);
 
@@ -816,9 +830,15 @@ void *picture_manager_kernel(void *input_ptr) {
                                 if (input_entry_ptr->list1_ptr->reference_list[ref_idx] !=
                                     (int32_t)INVALID_POC) {
 
+#if FIX_INT_OVERLOW
+                                    ref_poc = POC_CIRCULAR_ADD(
+                                        (int64_t)entry_pcs_ptr->picture_number,
+                                        -input_entry_ptr->list1_ptr->reference_list[ref_idx]);
+#else
                                     ref_poc = POC_CIRCULAR_ADD(
                                         entry_pcs_ptr->picture_number,
                                         -input_entry_ptr->list1_ptr->reference_list[ref_idx]);
+#endif
 
                                     reference_entry_ptr = search_ref_in_ref_queue(encode_context_ptr, ref_poc);
 
@@ -1071,9 +1091,15 @@ void *picture_manager_kernel(void *input_ptr) {
                                     if (entry_pcs_ptr->is_overlay)
                                         ref_poc = entry_pcs_ptr->picture_number;
                                     else
+#if FIX_INT_OVERLOW
+                                        ref_poc = POC_CIRCULAR_ADD(
+                                            (int64_t)entry_pcs_ptr->picture_number,
+                                            -input_entry_ptr->list0_ptr->reference_list[ref_idx]);
+#else
                                         ref_poc = POC_CIRCULAR_ADD(
                                             entry_pcs_ptr->picture_number,
                                             -input_entry_ptr->list0_ptr->reference_list[ref_idx]);
+#endif
 
                                     reference_entry_ptr = search_ref_in_ref_queue(encode_context_ptr, ref_poc);
                                     assert(reference_entry_ptr != 0);
@@ -1166,9 +1192,15 @@ void *picture_manager_kernel(void *input_ptr) {
                                  ++ref_idx) {
                                 if (entry_pcs_ptr->ref_list1_count) {
 
+#if FIX_INT_OVERLOW
+                                    ref_poc = POC_CIRCULAR_ADD(
+                                        (int64_t)entry_pcs_ptr->picture_number,
+                                        -input_entry_ptr->list1_ptr->reference_list[ref_idx]);
+#else
                                     ref_poc = POC_CIRCULAR_ADD(
                                         entry_pcs_ptr->picture_number,
                                         -input_entry_ptr->list1_ptr->reference_list[ref_idx]);
+#endif
 
                                     reference_entry_ptr = search_ref_in_ref_queue(encode_context_ptr, ref_poc);
 

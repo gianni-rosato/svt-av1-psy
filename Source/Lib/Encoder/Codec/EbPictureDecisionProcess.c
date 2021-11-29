@@ -75,10 +75,15 @@ uint64_t  get_ref_poc(PictureDecisionContext *context, uint64_t curr_picture_num
 {
     uint64_t ref_poc;
 
-    if ((int64_t)curr_picture_number - (int64_t)delta_poc < (int64_t)context->key_poc)
+    if ((int64_t)curr_picture_number - (int64_t)delta_poc < (int64_t)context->key_poc) {
         ref_poc = context->key_poc;
-    else
+    } else {
+#if FIX_INT_OVERLOW
+        ref_poc = (int64_t)curr_picture_number - (int64_t)delta_poc;
+#else
         ref_poc = curr_picture_number - delta_poc;
+#endif
+    }
 
     return ref_poc;
 }
@@ -608,7 +613,11 @@ EbErrorType update_base_layer_reference_queue_dependent_count(
         trig_pcs = (PictureParentControlSet*)encode_context_ptr->pre_assignment_buffer[last_pic_in_mg]->object_ptr;
     }
     // Derive the temporal layer difference between the current mini GOP and the previous mini GOP
+#if FIX_INT_OVERLOW
+    pcs_ptr->hierarchical_layers_diff = (int32_t)encode_context_ptr->previous_mini_gop_hierarchical_levels - (int32_t)pcs_ptr->hierarchical_levels;
+#else
     pcs_ptr->hierarchical_layers_diff = (uint8_t)(encode_context_ptr->previous_mini_gop_hierarchical_levels - pcs_ptr->hierarchical_levels);
+#endif
 
     // Set init_pred_struct_position_flag to TRUE if mini GOP switch
     pcs_ptr->init_pred_struct_position_flag = encode_context_ptr->is_mini_gop_changed = (pcs_ptr->hierarchical_layers_diff != 0) ?
@@ -662,10 +671,17 @@ EbErrorType update_base_layer_reference_queue_dependent_count(
                         input_entry_ptr->list1.list[input_entry_ptr->list1.list_count++] = next_base_layer_pred_position_ptr->dep_list1.list[dep_idx];
                 }
 
+#if FIX_INT_OVERLOW
+                diff_n =
+                    (int32_t)(input_entry_ptr->list0.list_count + input_entry_ptr->list1.list_count) - //depCnt after clean up
+                    (int32_t)(input_entry_ptr->dep_list0_count + input_entry_ptr->dep_list1_count) + //depCnt from org prediction struct
+                    (input_entry_ptr->is_alt_ref ? 1 : 0);
+#else
                 diff_n =
                     (input_entry_ptr->list0.list_count + input_entry_ptr->list1.list_count) - //depCnt after clean up
                     (input_entry_ptr->dep_list0_count + input_entry_ptr->dep_list1_count) +  //depCnt from org prediction struct
                     ((input_entry_ptr->is_alt_ref) ? 1 : 0);
+#endif
 
                 // explanation for adding above line "((input_entry_ptr->is_alt_ref) ? 1 : 0)":
                 // int32_t dep_list_count_org = input_entry_ptr->dep_list0_count + input_entry_ptr->dep_list1_count;
@@ -690,13 +706,24 @@ EbErrorType update_base_layer_reference_queue_dependent_count(
                 for (uint32_t dep_idx = 0; dep_idx < dep_list_count; ++dep_idx) {
                     // Adjust the latest currentInputPoc in case we're in a POC rollover scenario
                     // currentInputPoc += (currentInputPoc < input_entry_ptr->pocNumber) ? (1 << scs_ptr->bitsForPictureOrderCount) : 0;
+#if FIX_INT_OVERLOW
+                    int64_t dep_poc = POC_CIRCULAR_ADD(
+                        (int64_t)input_entry_ptr->picture_number, // can't use a value that gets reset
+                        input_entry_ptr->list0.list[dep_idx]/*,
+                                                         scs_ptr->bitsForPictureOrderCount*/);
+#else
                     uint64_t dep_poc = POC_CIRCULAR_ADD(
                         input_entry_ptr->picture_number, // can't use a value that gets reset
                         input_entry_ptr->list0.list[dep_idx]/*,
                                                          scs_ptr->bitsForPictureOrderCount*/);
+#endif
 
                                                          // If Dependent POC is greater or equal to the IDR POC
+#if FIX_INT_OVERLOW
+                    if (dep_poc >= (int64_t)pcs_ptr->picture_number && input_entry_ptr->list0.list[dep_idx]) {
+#else
                     if (dep_poc >= pcs_ptr->picture_number && input_entry_ptr->list0.list[dep_idx]) {
+#endif
                         input_entry_ptr->list0.list[dep_idx] = 0;
 
                         // Decrement the Reference's reference_count
@@ -713,13 +740,24 @@ EbErrorType update_base_layer_reference_queue_dependent_count(
                 for (uint32_t dep_idx = 0; dep_idx < dep_list_count; ++dep_idx) {
                     // Adjust the latest currentInputPoc in case we're in a POC rollover scenario
                     // currentInputPoc += (currentInputPoc < input_entry_ptr->pocNumber) ? (1 << scs_ptr->bitsForPictureOrderCount) : 0;
+#if FIX_INT_OVERLOW
+                    int64_t dep_poc = POC_CIRCULAR_ADD(
+                        (int64_t)input_entry_ptr->picture_number,
+                        input_entry_ptr->list1.list[dep_idx]/*,
+                                                         scs_ptr->bitsForPictureOrderCount*/);
+#else
                     uint64_t dep_poc = POC_CIRCULAR_ADD(
                         input_entry_ptr->picture_number,
                         input_entry_ptr->list1.list[dep_idx]/*,
                                                          scs_ptr->bitsForPictureOrderCount*/);
+#endif
 
                     // If Dependent POC is greater or equal to the IDR POC
+#if FIX_INT_OVERLOW
+                    if ((dep_poc >= (int64_t)pcs_ptr->picture_number) && input_entry_ptr->list1.list[dep_idx]) {
+#else
                     if ((dep_poc >= pcs_ptr->picture_number) && input_entry_ptr->list1.list[dep_idx]) {
+#endif
                         input_entry_ptr->list1.list[dep_idx] = 0;
                         // Decrement the Reference's reference_count
                         --input_entry_ptr->dependent_count;
@@ -6979,7 +7017,11 @@ void* picture_decision_kernel(void *input_ptr)
     uint64_t                           ref_poc;
 
     uint32_t                           dep_idx;
+#if FIX_INT_OVERLOW
+    int64_t                            dep_poc;
+#else
     uint64_t                           dep_poc;
+#endif
 
     uint32_t                           dep_list_count;
 
@@ -7679,13 +7721,24 @@ void* picture_decision_kernel(void *input_ptr)
                                             // Adjust the latest current_input_poc in case we're in a POC rollover scenario
                                             // current_input_poc += (current_input_poc < input_entry_ptr->pocNumber) ? (1 << scs_ptr->bits_for_picture_order_count) : 0;
 
+#if FIX_INT_OVERLOW
+                                            dep_poc = POC_CIRCULAR_ADD(
+                                                (int64_t)input_entry_ptr->picture_number, // can't use a value that gets reset
+                                                input_entry_ptr->list0.list[dep_idx]/*,
+                                                scs_ptr->bits_for_picture_order_count*/);
+#else
                                             dep_poc = POC_CIRCULAR_ADD(
                                                 input_entry_ptr->picture_number, // can't use a value that gets reset
                                                 input_entry_ptr->list0.list[dep_idx]/*,
                                                 scs_ptr->bits_for_picture_order_count*/);
+#endif
 
                                                 // If Dependent POC is greater or equal to the IDR POC
+#if FIX_INT_OVERLOW
+                                            if (dep_poc >=(int64_t) pcs_ptr->picture_number && input_entry_ptr->list0.list[dep_idx]) {
+#else
                                             if (dep_poc >= pcs_ptr->picture_number && input_entry_ptr->list0.list[dep_idx]) {
+#endif
                                                 input_entry_ptr->list0.list[dep_idx] = 0;
 
                                                 // Decrement the Reference's referenceCount
@@ -7706,13 +7759,24 @@ void* picture_decision_kernel(void *input_ptr)
                                             // Adjust the latest current_input_poc in case we're in a POC rollover scenario
                                             // current_input_poc += (current_input_poc < input_entry_ptr->pocNumber) ? (1 << scs_ptr->bits_for_picture_order_count) : 0;
 
+#if FIX_INT_OVERLOW
+                                            dep_poc = POC_CIRCULAR_ADD(
+                                                (int64_t)input_entry_ptr->picture_number,
+                                                input_entry_ptr->list1.list[dep_idx]/*,
+                                                scs_ptr->bits_for_picture_order_count*/);
+#else
                                             dep_poc = POC_CIRCULAR_ADD(
                                                 input_entry_ptr->picture_number,
                                                 input_entry_ptr->list1.list[dep_idx]/*,
                                                 scs_ptr->bits_for_picture_order_count*/);
+#endif
 
                                                 // If Dependent POC is greater or equal to the IDR POC
+#if FIX_INT_OVERLOW
+                                            if (((dep_poc >= (int64_t)pcs_ptr->picture_number) || (((pcs_ptr->pre_assignment_buffer_count != pcs_ptr->pred_struct_ptr->pred_struct_period) || (pcs_ptr->idr_flag == EB_TRUE)) && (dep_poc > ((int64_t)pcs_ptr->picture_number - (int64_t)pcs_ptr->pre_assignment_buffer_count)))) && input_entry_ptr->list1.list[dep_idx]) {
+#else
                                             if (((dep_poc >= pcs_ptr->picture_number) || (((pcs_ptr->pre_assignment_buffer_count != pcs_ptr->pred_struct_ptr->pred_struct_period) || (pcs_ptr->idr_flag == EB_TRUE)) && (dep_poc > (pcs_ptr->picture_number - pcs_ptr->pre_assignment_buffer_count)))) && input_entry_ptr->list1.list[dep_idx]) {
+#endif
                                                 input_entry_ptr->list1.list[dep_idx] = 0;
 
                                                 // Decrement the Reference's referenceCount
@@ -7989,13 +8053,20 @@ void* picture_decision_kernel(void *input_ptr)
                                 uint8_t ref_pic_index;
                                 for (ref_pic_index = 0; ref_pic_index < pcs_ptr->ref_list0_count; ++ref_pic_index) {
                                     if (pcs_ptr->ref_list0_count) {
-                                        if (pcs_ptr->is_overlay)
+                                        if (pcs_ptr->is_overlay) {
                                         // hardcode the reference for the overlay frame
                                             ref_poc = pcs_ptr->picture_number;
-                                        else
+                                        } else {
+#if FIX_INT_OVERLOW
+                                            ref_poc = POC_CIRCULAR_ADD(
+                                                (int64_t)pcs_ptr->picture_number,
+                                                -input_entry_ptr->list0_ptr->reference_list[ref_pic_index]);
+#else
                                             ref_poc = POC_CIRCULAR_ADD(
                                                 pcs_ptr->picture_number,
                                                 -input_entry_ptr->list0_ptr->reference_list[ref_pic_index]);
+#endif
+                                        }
 
                                         pa_reference_entry_ptr = search_ref_in_ref_queue_pa(encode_context_ptr, ref_poc);
                                         assert(pa_reference_entry_ptr != 0);
@@ -8029,9 +8100,15 @@ void* picture_decision_kernel(void *input_ptr)
                                 uint8_t ref_pic_index;
                                 for (ref_pic_index = 0; ref_pic_index < pcs_ptr->ref_list1_count; ++ref_pic_index) {
                                     if (pcs_ptr->ref_list1_count) {
+#if FIX_INT_OVERLOW
+                                        ref_poc = POC_CIRCULAR_ADD(
+                                            (int64_t)pcs_ptr->picture_number,
+                                            -input_entry_ptr->list1_ptr->reference_list[ref_pic_index]);
+#else
                                         ref_poc = POC_CIRCULAR_ADD(
                                             pcs_ptr->picture_number,
                                             -input_entry_ptr->list1_ptr->reference_list[ref_pic_index]);
+#endif
 
                                         pa_reference_entry_ptr = search_ref_in_ref_queue_pa(encode_context_ptr, ref_poc);
 

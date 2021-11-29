@@ -108,7 +108,12 @@ extern EbErrorType split_flag_rate(ModeDecisionContext *context_ptr, BlkStruct *
 
 #if FIX_RDCOST_OVERFLOW
 #define RDCOST(RM, R, D) \
+    (ROUND_POWER_OF_TWO(((int64_t)(R)) * ((int64_t)(RM)), AV1_PROB_COST_SHIFT) + ((int64_t)(D) * ((int64_t)1 << RDDIV_BITS)))
+#if FIX_INT_OVERLOW
+#else
+#define RDCOST(RM, R, D) \
     (ROUND_POWER_OF_TWO(((uint64_t)(R)) * ((uint64_t)(RM)), AV1_PROB_COST_SHIFT) + (((uint64_t)(D)) << RDDIV_BITS))
+#endif
 #else
 #define RDCOST(RM, R, D) \
     (ROUND_POWER_OF_TWO(((uint64_t)(R)) * (RM), AV1_PROB_COST_SHIFT) + ((D) * (1 << RDDIV_BITS)))

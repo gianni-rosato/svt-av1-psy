@@ -200,9 +200,15 @@ static INLINE unsigned int svt_check_better_fast(
 #if OPT_SUBPEL
         cost = svt_mv_err_cost_(this_mv, mv_cost_params);
         if (mv_cost_params->mv_cost_type == MV_COST_OPT) {
+#if FIX_INT_OVERLOW
+            int64_t bestcost = *distortion + cost;
+            if (bestcost > (((int64_t)*besterr * (int64_t)mv_cost_params->early_exit_th) / 1000))
+                return (uint32_t)bestcost;
+#else
             unsigned int bestcost = *distortion + cost;
             if (bestcost > ((*besterr * mv_cost_params->early_exit_th) / 1000))
                 return bestcost;
+#endif
         }
 #endif
         // TODO: add estimated func
@@ -756,7 +762,11 @@ int svt_av1_find_best_sub_pixel_tree_pruned(
         if (ms_params->skip_diag_refinement && iter < QUARTER_PEL)
             org_error = MIN(org_error, besterr);
 #if OPT_M11_SUBPEL // --
+#if FIX_INT_OVERLOW
+        int32_t deviation = (((int64_t)MAX(besterr, 1) - (int64_t)MAX(prev_besterr, 1)) * 100) / (int64_t) MAX(prev_besterr, 1);
+#else
         int deviation = ((int)((int)MAX(besterr, 1) - (int)MAX(prev_besterr, 1)) * 100) / (int) MAX(prev_besterr, 1);
+#endif
         if (deviation >= ms_params->round_dev_th)
             return besterr;
 #endif

@@ -1826,8 +1826,13 @@ void tpl_mc_flow_dispenser_sb_generic(
                 MV      best_mv = { y_curr_mv, x_curr_mv };
 
                 if (pcs_ptr->tpl_ctrls.tpl_opt_flag && pcs_ptr->tpl_ctrls.use_pred_sad_in_inter_search) {
+#if FIX_INT_OVERLOW
+                    int32_t ref_origin_index = (int32_t)ref_pic_ptr->origin_x + ((int32_t)mb_origin_x + (best_mv.col >> 3)) +
+                        ((int32_t)mb_origin_y + (best_mv.row >> 3) + (int32_t)ref_pic_ptr->origin_y) * (int32_t)ref_pic_ptr->stride_y;
+#else
                     int32_t ref_origin_index = ref_pic_ptr->origin_x + (mb_origin_x + (best_mv.col >> 3)) +
                         (mb_origin_y + (best_mv.row >> 3) + ref_pic_ptr->origin_y) * ref_pic_ptr->stride_y;
+#endif
 
                     inter_cost = svt_nxm_sad_kernel_sub_sampled(
                         src_mb,
@@ -1838,10 +1843,17 @@ void tpl_mc_flow_dispenser_sb_generic(
                         size);
                 }
                 else {
+#if FIX_INT_OVERLOW
+                    int32_t ref_origin_index = (int32_t)ref_pic_ptr->origin_x +
+                        ((int32_t)mb_origin_x + (best_mv.col / 8)) +
+                        ((int32_t)mb_origin_y + (best_mv.row / 8) + (int32_t)ref_pic_ptr->origin_y) *
+                        (int32_t)ref_pic_ptr->stride_y;
+#else
                     int32_t ref_origin_index = ref_pic_ptr->origin_x +
                         (mb_origin_x + (best_mv.col >> 3)) +
                         (mb_origin_y + (best_mv.row >> 3) + ref_pic_ptr->origin_y) *
                         ref_pic_ptr->stride_y;
+#endif
 
                     svt_aom_subtract_block(size >> tpl_ctrls->subsample_tx,
                         size,
@@ -1883,8 +1895,13 @@ void tpl_mc_flow_dispenser_sb_generic(
                     uint32_t list_index = best_rf_idx < 4 ? 0 : 1;
                     uint32_t ref_pic_index = best_rf_idx >= 4 ? (best_rf_idx - 4) : best_rf_idx;
                     ref_pic_ptr = pcs_ptr->tpl_data.tpl_ref_ds_ptr_array[list_index][ref_pic_index].picture_ptr;
+#if FIX_INT_OVERLOW
+                    int32_t ref_origin_index = (int32_t)ref_pic_ptr->origin_x + ((int32_t)mb_origin_x + (final_best_mv.col >> 3)) +
+                        ((int32_t)mb_origin_y + (final_best_mv.row >> 3) + (int32_t)ref_pic_ptr->origin_y) * (int32_t)ref_pic_ptr->stride_y;
+#else
                     int32_t ref_origin_index = ref_pic_ptr->origin_x + (mb_origin_x + (final_best_mv.col >> 3)) +
                         (mb_origin_y + (final_best_mv.row >> 3) + ref_pic_ptr->origin_y) * ref_pic_ptr->stride_y;
+#endif
 
                     svt_aom_subtract_block(size >> tpl_ctrls->subsample_tx,
                         size,
@@ -1963,8 +1980,13 @@ void tpl_mc_flow_dispenser_sb_generic(
             else
                 ref_pic_ptr = (EbPictureBufferDesc *)pcs_ptr->tpl_data.tpl_ref_ds_ptr_array[list_index][ref_pic_index].picture_ptr;
 
+#if FIX_INT_OVERLOW
+            int32_t ref_origin_index = (int32_t)ref_pic_ptr->origin_x + ((int32_t)mb_origin_x + (final_best_mv.col >> 3)) +
+                ((int32_t)mb_origin_y + (final_best_mv.row >> 3) + (int32_t)ref_pic_ptr->origin_y) * (int32_t)ref_pic_ptr->stride_y;
+#else
             int32_t ref_origin_index = ref_pic_ptr->origin_x + (mb_origin_x + (final_best_mv.col >> 3)) +
                 (mb_origin_y + (final_best_mv.row >> 3) + ref_pic_ptr->origin_y) *  ref_pic_ptr->stride_y;
+#endif
             for (int i = 0; i < (int) size; ++i)
                 EB_MEMCPY(dst_buffer + i * dst_buffer_stride,
                     ref_pic_ptr->buffer_y + ref_origin_index +

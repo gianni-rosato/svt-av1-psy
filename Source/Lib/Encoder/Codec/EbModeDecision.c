@@ -6846,7 +6846,11 @@ static INLINE void eliminate_candidate_based_on_pme_me_results(ModeDecisionConte
 #else
         if (context_ptr->md_pme_ctrls.enabled) {
 #endif
+#if FIX_INT_OVERLOW
+        const int32_t me_pme_distance = ((int32_t)context_ptr->md_me_dist - (int32_t)MIN(context_ptr->pme_res[0][0].dist, context_ptr->pme_res[1][0].dist));
+#else
         const int32_t me_pme_distance = (context_ptr->md_me_dist - MIN(context_ptr->pme_res[0][0].dist, context_ptr->pme_res[1][0].dist));
+#endif
 #if CLN_CAND_REDUCTION_CTRLS
         if (me_pme_distance >= 0)
             context_ptr->inject_new_me = context_ptr->cand_reduction_ctrls.cand_elimination_ctrls.inject_new_me ? 0 : context_ptr->inject_new_me;

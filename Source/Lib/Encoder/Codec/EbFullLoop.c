@@ -1605,7 +1605,11 @@ int32_t av1_quantize_inv_quantize(
     if (pcs_ptr->parent_pcs_ptr->tpl_ctrls.tpl_opt_flag && pcs_ptr->parent_pcs_ptr->tpl_ctrls.skip_rdoq_uv_qp_based_th) {
         const int qp_offset_th = pcs_ptr->parent_pcs_ptr->tpl_ctrls.skip_rdoq_uv_qp_based_th;
         if (component_type == COMPONENT_CHROMA_CB || component_type == COMPONENT_CHROMA_CR) {
+#if FIX_INT_OVERLOW
+            int diff = (int32_t)q_index - (int32_t)quantizer_to_qindex[pcs_ptr->parent_pcs_ptr->picture_qp];
+#else
             int diff = q_index - quantizer_to_qindex[pcs_ptr->parent_pcs_ptr->picture_qp];
+#endif
             if (diff > qp_offset_th)
                 perform_rdoq = 0;
         }

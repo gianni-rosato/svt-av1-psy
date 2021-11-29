@@ -3373,7 +3373,11 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EncChannel *chan
     /***************************************************************************************************/
     token_index                     = -1;
     EbErrorType return_result_error = EB_ErrorNone;
+#if FIX_INT_OVERLOW
+    int32_t warning_index       = -1;
+#else
     uint32_t    warning_index       = -1;
+#endif
     // Parse command line for tokens
     while (config_entry[++token_index].name != NULL) {
         if (config_entry[token_index].type == SINGLE_INPUT) {

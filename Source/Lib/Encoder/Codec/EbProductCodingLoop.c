@@ -3489,8 +3489,13 @@ void md_sq_motion_search(PictureControlSet *pcs, ModeDecisionContext *ctx,
     use_scaled_rec_refs_if_needed(pcs, input_picture_ptr, ref_obj, &ref_pic, hbd_mode_decision);
 
     MdSqMotionSearchCtrls *md_sq_me_ctrls = &ctx->md_sq_me_ctrls;
+#if FIX_INT_OVERLOW
+    uint16_t               dist           = ABS(
+        (int16_t)((int64_t)pcs->picture_number - (int64_t)pcs->parent_pcs_ptr->ref_pic_poc_array[list_idx][ref_idx]));
+#else
     uint16_t               dist           = ABS(
         (int16_t)(pcs->picture_number - pcs->parent_pcs_ptr->ref_pic_poc_array[list_idx][ref_idx]));
+#endif
     uint8_t search_area_multiplier = 0;
 #if FTR_USE_PSAD
     ctx->enable_psad = md_sq_me_ctrls->enable_psad;
@@ -4531,8 +4536,13 @@ void perform_md_reference_pruning(PictureControlSet *pcs_ptr, ModeDecisionContex
         min_dist = MIN(min_dist, early_inter_distortion_array[i]);
 #endif
     for (unsigned i = 0; i < num_of_cand_to_sort - 1; ++i)
+#if FIX_INT_OVERLOW
+        dev_to_the_best[i] = (((int64_t)MAX(early_inter_distortion_array[i], 1) - MAX(min_dist, 1)) * 100) /
+            MAX(min_dist, 1);
+#else
         dev_to_the_best[i] = ((MAX(early_inter_distortion_array[i], 1) - MAX(min_dist, 1)) * 100) /
             MAX(min_dist, 1);
+#endif
 #if SS_CLN_REF_PRUNE
     for (unsigned li = 0; li < MAX_NUM_OF_REF_PIC_LIST; li++) {
         for (unsigned ri = 0; ri < REF_LIST_MAX_DEPTH; ri++) {
@@ -15283,8 +15293,13 @@ uint8_t update_skip_nsq_based_on_sq_recon_dist(ModeDecisionContext *context_ptr)
         uint32_t quad_dev_b    = (uint32_t)((ABS((int32_t)(dist_q2 - dist_q3)) * 100) /
                                          MIN(dist_q2, dist_q3));
 #endif
+#if FIX_INT_OVERLOW
+        max_part0_to_part1_dev = max_part0_to_part1_dev +
+            (((uint64_t)max_part0_to_part1_dev * MIN(quad_dev_t, quad_dev_b)) / 100);
+#else
         max_part0_to_part1_dev = max_part0_to_part1_dev +
             ((max_part0_to_part1_dev * MIN(quad_dev_t, quad_dev_b)) / 100);
+#endif
 
         max_part0_to_part1_dev = (uint32_t)((dist_cost_ratio <= min_ratio) ? 0
                                                 : (dist_cost_ratio <= max_ratio)
@@ -15348,9 +15363,13 @@ uint8_t update_skip_nsq_based_on_sq_recon_dist(ModeDecisionContext *context_ptr)
         uint32_t quad_dev_r = (uint32_t)((ABS((int32_t)(dist_q1 - dist_q3)) * 100) /
                                          MIN(dist_q1, dist_q3));
 #endif
-
+#if FIX_INT_OVERLOW
+        max_part0_to_part1_dev = max_part0_to_part1_dev +
+            (((uint64_t)max_part0_to_part1_dev * MIN(quad_dev_l, quad_dev_r)) / 100);
+#else
         max_part0_to_part1_dev = max_part0_to_part1_dev +
             ((max_part0_to_part1_dev * MIN(quad_dev_l, quad_dev_r)) / 100);
+#endif
 
         max_part0_to_part1_dev = (uint32_t)((dist_cost_ratio <= min_ratio) ? 0
                                                 : (dist_cost_ratio <= max_ratio)
@@ -15397,12 +15416,20 @@ uint8_t update_skip_nsq_shapes(ModeDecisionContext *context_ptr) {
             if (context_ptr->blk_geom->shape == PART_HA) {
                 if (!context_ptr->md_blk_arr_nsq[context_ptr->blk_geom->sqi_mds + 1]
                          .block_has_coeff)
+#if FIX_INT_OVERLOW
+                    sq_weight = (int32_t)sq_weight + AGGRESSIVE_OFFSET_1;
+#else
                     sq_weight += AGGRESSIVE_OFFSET_1;
+#endif
             }
             if (context_ptr->blk_geom->shape == PART_HB) {
                 if (!context_ptr->md_blk_arr_nsq[context_ptr->blk_geom->sqi_mds + 2]
                          .block_has_coeff)
+#if FIX_INT_OVERLOW
+                    sq_weight = (int32_t)sq_weight + AGGRESSIVE_OFFSET_1;
+#else
                     sq_weight += AGGRESSIVE_OFFSET_1;
+#endif
             }
 
             // compute the cost of the SQ block and H block
@@ -15439,12 +15466,20 @@ uint8_t update_skip_nsq_shapes(ModeDecisionContext *context_ptr) {
             if (context_ptr->blk_geom->shape == PART_VA) {
                 if (!context_ptr->md_blk_arr_nsq[context_ptr->blk_geom->sqi_mds + 3]
                          .block_has_coeff)
+#if FIX_INT_OVERLOW
+                    sq_weight = (int32_t)sq_weight + AGGRESSIVE_OFFSET_1;
+#else
                     sq_weight += AGGRESSIVE_OFFSET_1;
+#endif
             }
             if (context_ptr->blk_geom->shape == PART_VB) {
                 if (!context_ptr->md_blk_arr_nsq[context_ptr->blk_geom->sqi_mds + 4]
                          .block_has_coeff)
+#if FIX_INT_OVERLOW
+                    sq_weight = (int32_t)sq_weight + AGGRESSIVE_OFFSET_1;
+#else
                     sq_weight += AGGRESSIVE_OFFSET_1;
+#endif
             }
 
             // compute the cost of the SQ block and V block

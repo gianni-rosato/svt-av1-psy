@@ -1373,9 +1373,15 @@ static EbErrorType prediction_structure_ctor(
                      ref_index < predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
                                      ->ref_list0.reference_list_count;
                      ++ref_index) {
+#if FIX_INT_OVERLOW
+                    dep_index = (int64_t)picture_number -
+                        predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
+                            ->ref_list0.reference_list[ref_index];
+#else
                     dep_index = picture_number -
                         predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
                             ->ref_list0.reference_list[ref_index];
+#endif
 
                     if (dep_index >= 0 &&
                         dep_index < (int32_t)(predictionStructurePtr->steady_state_index +
@@ -1444,9 +1450,15 @@ static EbErrorType prediction_structure_ctor(
                      ref_index < predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
                                      ->ref_list0.reference_list_count;
                      ++ref_index) {
+#if FIX_INT_OVERLOW
+                    dep_index = (int64_t)picture_number -
+                        predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
+                            ->ref_list0.reference_list[ref_index];
+#else
                     dep_index = picture_number -
                         predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
                             ->ref_list0.reference_list[ref_index];
+#endif
 
                     if (dep_index >= 0 &&
                         dep_index < (int32_t)(predictionStructurePtr->steady_state_index +
@@ -1515,9 +1527,15 @@ static EbErrorType prediction_structure_ctor(
                      ref_index < predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
                                      ->ref_list1.reference_list_count;
                      ++ref_index) {
+#if FIX_INT_OVERLOW
+                    dep_index = (int64_t)picture_number -
+                        predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
+                            ->ref_list1.reference_list[ref_index];
+#else
                     dep_index = picture_number -
                         predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
                             ->ref_list1.reference_list[ref_index];
+#endif
 
                     if (dep_index >= 0 &&
                         dep_index < (int32_t)(predictionStructurePtr->steady_state_index +
@@ -1537,9 +1555,15 @@ static EbErrorType prediction_structure_ctor(
                      ref_index < predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
                                      ->ref_list1.reference_list_count;
                      ++ref_index) {
+#if FIX_INT_OVERLOW
+                    dep_index = (int64_t)picture_number -
+                        predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
+                            ->ref_list1.reference_list[ref_index];
+#else
                     dep_index = picture_number -
                         predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
                             ->ref_list1.reference_list[ref_index];
+#endif
 
                     if (dep_index >= 0 &&
                         dep_index < (int32_t)(predictionStructurePtr->steady_state_index +
@@ -1586,9 +1610,15 @@ static EbErrorType prediction_structure_ctor(
                      ref_index < predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
                                      ->ref_list1.reference_list_count;
                      ++ref_index) {
+#if FIX_INT_OVERLOW
+                    dep_index = (int64_t)picture_number -
+                        predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
+                            ->ref_list1.reference_list[ref_index];
+#else
                     dep_index = picture_number -
                         predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
                             ->ref_list1.reference_list[ref_index];
+#endif
 
                     if (dep_index >= 0 &&
                         dep_index < (int32_t)(predictionStructurePtr->steady_state_index +
@@ -1613,9 +1643,15 @@ static EbErrorType prediction_structure_ctor(
                      ref_index < predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
                                      ->ref_list1.reference_list_count;
                      ++ref_index) {
+#if FIX_INT_OVERLOW
+                    dep_index = (int64_t)picture_number -
+                        predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
+                            ->ref_list1.reference_list[ref_index];
+#else
                     dep_index = picture_number -
                         predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
                             ->ref_list1.reference_list[ref_index];
+#endif
 
                     // Assign the Reference to the Dep List and Increment the Dep List Count
                     if (dep_index >= 0 &&

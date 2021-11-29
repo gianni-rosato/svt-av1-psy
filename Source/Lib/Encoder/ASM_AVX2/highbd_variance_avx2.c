@@ -185,5 +185,9 @@ uint32_t variance_highbd_avx2(const uint16_t *a, int a_stride, const uint16_t *b
     default: assert(0);
     }
 
+#if FIX_INT_OVERLOW
+    return *sse - ((int64_t)sum * sum) / (w * h);
+#else
     return *sse - (sum * sum) / (w * h);
+#endif
 }

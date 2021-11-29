@@ -124,7 +124,11 @@ enum {
     NEED_BOTTOMLEFT = 1 << 5,
 };
 
+#if FIX_INT_OVERLOW
+static const int32_t mode_to_angle_map[] = {
+#else
 static const uint32_t mode_to_angle_map[] = {
+#endif
     0,
     90,
     180,

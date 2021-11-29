@@ -1501,9 +1501,15 @@ static int open_loop_firstpass_inter_prediction(
         int32_t ref_origin_index;
         if (last_input_picture_ptr != NULL)
         {
+#if FIX_INT_OVERLOW
+            ref_origin_index = (int32_t)last_input_picture_ptr->origin_x + ((int32_t)blk_origin_x + mv.col) +
+                ((int32_t)blk_origin_y + mv.row + (int32_t)last_input_picture_ptr->origin_y) *
+                (int32_t)last_input_picture_ptr->stride_y;
+#else
             ref_origin_index = last_input_picture_ptr->origin_x + (blk_origin_x + mv.col) +
                 (blk_origin_y + mv.row + last_input_picture_ptr->origin_y) *
                 last_input_picture_ptr->stride_y;
+#endif
 #if OPT_FIRST_PASS4
             motion_error = (uint32_t)(spatial_full_dist_type_fun(input_picture_ptr->buffer_y,
                 input_origin_index,
@@ -1558,9 +1564,15 @@ static int open_loop_firstpass_inter_prediction(
 #endif
             EbPictureBufferDesc *golden_input_picture_ptr =
                 ppcs_ptr->first_pass_ref_ppcs_ptr[1]->enhanced_picture_ptr;
+#if FIX_INT_OVERLOW
+            ref_origin_index = (int32_t)golden_input_picture_ptr->origin_x + ((int32_t)blk_origin_x + gf_mv.col) +
+                ((int32_t)blk_origin_y + gf_mv.row + (int32_t)golden_input_picture_ptr->origin_y) *
+                    (int32_t)golden_input_picture_ptr->stride_y;
+#else
             ref_origin_index = golden_input_picture_ptr->origin_x + (blk_origin_x + gf_mv.col) +
                 (blk_origin_y + gf_mv.row + golden_input_picture_ptr->origin_y) *
                     golden_input_picture_ptr->stride_y;
+#endif
 #if OPT_FIRST_PASS4
             gf_motion_error = (uint32_t)(
                 spatial_full_dist_type_fun(input_picture_ptr->buffer_y,

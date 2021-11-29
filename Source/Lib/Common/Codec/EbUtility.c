@@ -429,6 +429,9 @@ void md_scan_all_blks(uint32_t* idx_mds, uint32_t sq_size, uint32_t x, uint32_t 
                       int32_t is_last_quadrant, uint8_t quad_it) {
     //the input block is the parent square block of size sq_size located at pos (x,y)
 
+#if FIX_INT_OVERLOW
+    assert(quad_it <= 3);
+#endif
     uint32_t part_it, nsq_it, d1_it, sqi_mds;
 
     uint32_t halfsize  = sq_size / 2;
@@ -471,9 +474,15 @@ void md_scan_all_blks(uint32_t* idx_mds, uint32_t sq_size, uint32_t x, uint32_t 
 
             blk_geom_mds[*idx_mds]. geom_idx = geom_idx;
 
+#if FIX_INT_OVERLOW
+            blk_geom_mds[*idx_mds].parent_depth_idx_mds = sqi_mds == 0 ? 0 :
+                (sqi_mds + (3 - quad_it) * ns_depth_offset[geom_idx][blk_geom_mds[*idx_mds].depth])
+                - parent_depth_offset[geom_idx][blk_geom_mds[*idx_mds].depth];
+#else
             blk_geom_mds[*idx_mds].parent_depth_idx_mds = sqi_mds == 0 ? 0 :
                 (sqi_mds - (quad_it - 3) * ns_depth_offset[geom_idx][blk_geom_mds[*idx_mds].depth])
                 - parent_depth_offset[geom_idx][blk_geom_mds[*idx_mds].depth];
+#endif
             blk_geom_mds[*idx_mds].d1_depth_offset = d1_depth_offset[geom_idx][blk_geom_mds[*idx_mds].depth];
             blk_geom_mds[*idx_mds].ns_depth_offset = ns_depth_offset[geom_idx][blk_geom_mds[*idx_mds].depth];
 #else

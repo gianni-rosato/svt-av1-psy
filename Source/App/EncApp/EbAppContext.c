@@ -394,8 +394,13 @@ EbErrorType de_init_encoder(EbAppContext *callback_data_ptr, uint32_t instance_i
     EbMemoryMapEntry *memory_entry = (EbMemoryMapEntry *)0;
 
     // Loop through the ptr table and free all malloc'd pointers per channel
+#if FIX_INT_OVERLOW
+    for (ptr_index = (int32_t)app_memory_map_index_all_channels[instance_index] - 1; ptr_index >= 0;
+         --ptr_index) {
+#else
     for (ptr_index = app_memory_map_index_all_channels[instance_index] - 1; ptr_index >= 0;
          --ptr_index) {
+#endif
         memory_entry = &app_memory_map_all_channels[instance_index][ptr_index];
         switch (memory_entry->ptr_type) {
         case EB_N_PTR: free(memory_entry->ptr); break;

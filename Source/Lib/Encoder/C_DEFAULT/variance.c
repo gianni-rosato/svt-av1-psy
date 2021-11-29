@@ -308,7 +308,11 @@ uint32_t variance_highbd_c(const uint16_t *a, int a_stride, const uint16_t *b, i
         b += b_stride;
     }
 
+#if FIX_INT_OVERLOW
+    return *sse - ((int64_t)sad * sad) / (w * h);
+#else
     return *sse - (sad * sad) / (w * h);
+#endif
 }
 
 // Moved from EbComputeVariance_C.c
