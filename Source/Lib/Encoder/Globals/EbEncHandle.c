@@ -6925,8 +6925,8 @@ EbErrorType svt_svt_enc_init_parameter(
         return EB_ErrorBadParameter;
     }
 
-    config_ptr->frame_rate = 30 << 16;
-    config_ptr->frame_rate_numerator = 30000;
+    config_ptr->frame_rate = 60 << 16;
+    config_ptr->frame_rate_numerator = 60000;
     config_ptr->frame_rate_denominator = 1000;
     config_ptr->encoder_bit_depth = 8;
     config_ptr->is_16bit_pipeline = EB_FALSE;
