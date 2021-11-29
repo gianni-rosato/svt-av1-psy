@@ -1,4 +1,4 @@
-# Restoration Filter Appendix
+# Restoration Filter
 
 The restoration filter is applied after the constrained directional
 enhancement filter (CDEF) and aims at improving the reconstructed picture by
@@ -39,17 +39,17 @@ The design of the Wiener filter proceeds in an iterative manner:
   - Design one of the two filters while holding the second filter fixed,
     then repeat the process
 
-The filter is designed over windows of size 64x64 in the reference
-picture. The filter taps are either 7, 5, or 3 for luma and 3 or 5 for
+The filter is designed over windows of size 64x64.
+The filter taps are either 7, 5, or 3 for luma and 5 or 3 for
 chroma.
 
-### 2.  Implementation [To be completed]
+### 2.  Implementation
 
 **Inputs to rest\_kernel**: Output frame of the CDEF filter.
 
 **Outputs of rest\_kernel**: Restored picture, filter parameters.
 
-**Control macros/flags**:
+**Control flags**:
 
 ##### Table 1. Control flags for the Wiener filter.
 
@@ -57,7 +57,55 @@ chroma.
 | ------------------- | --------- | ------------------------------------------------------------------------------------------------------------------- |
 | enable\_restoration | Sequence  | Indicates whether to use restoration filters for the whole sequence.                                                |
 | wn\_filter\_mode    | Picture   | Controls the quality-complexity tradeoff of the filter as a function of the encoder mode.                           |
-| allow\_intrabc      | Picture   | Indicates whether to enable intra block copy. The restoration filter is not active when allow\_intrabc is set to 1. |
+| allow\_intrabc      | Picture   | Indicates whether to enable intra block copy. The restoration filter is not active when allow_intrabc is set to 1.  |
+
+### Step 1 - Splitting the frame into segments
+
+The frame to be filtered is divided into segments to allow for parallel filtering operations on
+different parts of the frame. Each segment could involve more than one restoration unit.
+The sizes and number of segments are set as follows (see ```EbEncHandle.c```):
+
+```
+unit_size = 256;
+rest_seg_w = MAX((max_input_luma_width /2) / unit_size, 1);
+rest_seg_h = MAX((max_input_luma_height/2 ) / unit_size, 1);
+rest_segment_column_count = MIN(rest_seg_w,6);
+rest_segment_row_count = MIN(rest_seg_h,4);
+```
+
+Each segment may consist of several restoration units.
+Each restoration unit is split into restoration processing units of size 64x64 for luma
+(```#define RESTORATION_PROC_UNIT_SIZE 64```(in ```EbRestoration.h```))
+
+### Step 2 – Restoration filter search. Each segment goes through a search to identify the best Wiener filter parameters for each restoration unit in the segment (```restoration_seg_search```).
+
+Loop over all restoration units in each tile segment (```foreach_rest_unit_in_tile_seg```)
+
+- Determine the best filtering parameters for the restoration unit (```search_wiener_seg```)
+   - The initial Wiener filter coeff are computed.  See functions ```svt_av1_compute_stats```, ```wiener_decompose_sep_sym```, ```finalize_sym_filter```.  (This step may be skipped, see optimization section).
+     Check that the new filter params are an improvement over the identity filter (i.e. no filtering).  If not, exit Wiener filter search and do not use Wiener filter.  See function ```compute_score```.
+   - Refine the initially computed Wiener filter coeffs (see function ```finer_tile_search_wiener_seg```).
+     Up to three refinement steps are performed (with step sizes 4,2,1).
+	 In each step, the filter coeffs are shifted according to the step size.
+	 Filtering is applied to the filter block with the new coeff values and the SSE is computed (```try_restoration_unit_seg```).
+	 If the refined coeff values are better than the original, the coeff values are updated.
+   - The best filter coeffs are returned, along with the corresponding SSE of the filtered block.
+
+### Step 3 – Identify the best filtering mode for the whole frame
+
+- Loop over the picture planes to identify the best restoration option for each of the picture planes 
+   - Loop over all available filtering options (```RESTORE_NONE```, ```RESTORE_WIENER```, ```RESTORE_SGRPROJ```, ```RESTORE_SWITCHABLE```),
+     compute the resulting cost for using each of the options over the whole frame, and choose the best
+	 option for the whole frame. The selection is based on the rate-distortion cost of the different options.
+	 (```rest_finish_search```)
+
+### Step 4 – Filter each restoration unit in the frame using the identified best option from step 3 above. (```av1_loop_restoration_filter_frame```)
+
+More details on ```try_restoration_unit_seg```
+- Filter stripes of height 64 (```try_restoration_unit_seg```)
+  - Loop over stripes (```av1_loop_restoration_filter_unit```) 
+    - Loop over the restoration processing units in a stripe and apply filtering to each restoration processing unit using the already identified best filtering parameters for each restoration processing unit. (```wiener_filter_stripe```)
+- Compute the sse for the filtered restoration unit (```sse_restoration_unit```)
 
 
 ## II. Self-Guided Restoration Filter with Subspace Projection (SGRPROJ)
@@ -151,7 +199,7 @@ To illustrate the idea of subspace projection, consider the following column vec
 
 **Outputs of rest\_kernel**: Restored picture, filter parameters.
 
-**Control macros/flags**:
+**Control flags**:
 
 ##### Table 2. Control flags for the SGRPROJ filter.
 
@@ -182,14 +230,10 @@ are set as follows (see EbEncHandle.c):
 
 ```c
 unit_size = 256;
-
-rest_seg_w = MAX((sequence_control_set_ptr->max_input_luma_width /2 + (unit_size >> 1)) / unit_size, 1);
-
-rest_seg_h = MAX((sequence_control_set_ptr->max_input_luma_height/2 + (unit_size >> 1)) / unit_size, 1);
-
-sequence_control_set_ptr->rest_segment_column_count = MIN(rest_seg_w,6);
-
-sequence_control_set_ptr->rest_segment_row_count = MIN(rest_seg_h,4);
+rest_seg_w = MAX((max_input_luma_width /2) / unit_size, 1);
+rest_seg_h = MAX((max_input_luma_height/2 ) / unit_size, 1);
+rest_segment_column_count = MIN(rest_seg_w,6);
+rest_segment_row_count = MIN(rest_seg_h,4);
 ```
 
 Each segment may consist of a number of restoration units. Each
@@ -213,7 +257,7 @@ Loop over all restoration units in a given tile segment (```foreach_rest_unit_in
         and Filtered\_recon\_2 are two restored version of
         thereconstructed picture, and generate the corresponding
         projection coordinates xq\[0\] and xq\[1\], which correspond to
-        \(\alpha\) and \(\beta\) in the description of the algorithm
+        \(α) and \(β) in the description of the algorithm
         outlined above. (```get_proj_subspace```)
       - Compute the following parameters in (encode\_xq)
           - xqd\[0\]: Clamped value of xq\[0\]
@@ -254,11 +298,7 @@ the rate-distortion cost of the different options.
 #### Step 4 – Filter each restoration unit in the frame using the identified best option from step 3 above. (```av1_loop_restoration_filter_frame```)
 
 #### More details on av1\_selfguided\_restoration(\_avx2 or \_c).
-```c
-#define MAX_RADIUS 2 // Only 1, 2, 3 allowed
 
-#define MAX_NELEM ((2 * MAX_RADIUS + 1) * (2 * MAX_RADIUS + 1))
-```
 For a given 64x64 block in a restoration unit, integral images D and C
 corresponding to the sum of elements in the 64x64 block and to the sum
 of their squares, respectively, are generated. These two integral images
@@ -290,6 +330,10 @@ filter parameter search.
 
 **3.1 Wiener filter search**
 
+Wiener filter optimization controls are set in ```set_wn_filter_ctrls ()```.
+
+### Filter Tap Level
+
 For the wiener filter, the search could be performed using either 3, 5
 or 7 tap filters for luma, or 3 or 5 tap filters for chroma. The
 parameter ```cm->wn_filter_mode``` is used to specify the level of filter
@@ -306,14 +350,22 @@ and chroma, as given in the table below.
 | 2                    | 5-Tap luma/ 5-Tap chroma |
 | 3                    | 7-Tap luma/ 5-Tap chroma |
 
-The encoder mode (```picture_control_set_ptr->enc_mode```) is used to
-specify the Wiener filter mode (```cm->wn_filter_mode```). The settings of
-the filter mode as a function of the encoder mode are given in the table
-below.
+### Filter Coeff Selection
 
-##### Table 4. Wiener filter settings as a function of encoder mode.
+Generally, the Wiener filter coeffs for each restoration unit are computed; however,
+if the Wiener filter coeff values of ref frames are available, they can be used instead
+(and the computation can be skipped).  When enabled, ```cm->wn_filter_ctrls.use_prev_frame_coeffs```
+will set the initial coeff values to those chosen by the nearest list 0 reference frame for each
+corresponding restoration unit.  Refinement (if enabled – see next section) will then be performed.
 
-![table4](./img/restoration_filter_table4.png)
+### Filter Coeff Refinement
+
+After the initial filter coeff values are selected, a refinement search can be performed to
+improve the coeff values.  The refinement is performed iteratively, with 3 step sizes: 4, 2, 1.
+By enabling ```cm->wn_filter_ctrls.max_one_refinement_step``` only a step size of 4 is used in the refinement
+(smaller step sizes, which improve granularity of the coeff, and therefore accuracy, will be skipped).
+To disable the refinement and automatically use the computed coeffs without refinement, set ```cm->wn_filter_ctrls.use_refinement``` to 0.
+
 
 **3.2 SGRPROJ filter search**
 
@@ -340,14 +392,6 @@ in the following table.
 | 3                    | 4        |
 | 4                    | 16       |
 
-The ```sg_filter_mode``` parameter is a function of the encoder mode
-(```picture_control_set_ptr->enc_mode```) as indicated in the table
-blow.
-
-##### Table 6. Step parameter as a function of the encoder mode.
-
-![table6](./img/restoration_filter_table6.png)
-
 The optimization proceeds as follows:
 
 1.  The encoder mode ```enc_mode``` specifies the SGRPROJ filter mode
@@ -362,15 +406,14 @@ The optimization proceeds as follows:
 
   - The ![epsilon](http://latex.codecogs.com/gif.latex?\varepsilon) values sg\_ref\_frame\_ep\[0\] and sg\_ref\_frame\_ep\[1\] of the reference pictures are used to define the center of the interval mid\_ep as follows:
     ```c
-    mid_ep = sg_ref_frame_ep[0] < 0 && sg_ref_frame_ep[1] < 0 ? 0 :
-    sg_ref_frame_ep[1] < 0 ? sg_ref_frame_ep[0] :
-    sg_ref_frame_ep[0] < 0 ? sg_ref_frame_ep[1] :
-    (sg_ref_frame_ep[0] + sg_ref_frame_ep[1]) / 2;
+    if (sg_ref_frame_ep[0] < 0 && sg_ref_frame_ep[1] < 0) then mid_ep = 0
+    else if (sg_ref_frame_ep[1] < 0) then mid_ep = sg_ref_frame_ep[0]
+    else if (sg_ref_frame_ep[0] < 0( then mid_ep = sg_ref_frame_ep[1]else mid_ep = (sg_ref_frame_ep[0] + sg_ref_frame_ep[1]) / 2
     ```
   - The interval limits are given by:
     ```c
-    start_ep = sg_ref_frame_ep[0] < 0 && sg_ref_frame_ep[1] < 0 ? 0 : AOMMAX(0, mid_ep - step);
-    end_ep = sg_ref_frame_ep[0] < 0 && sg_ref_frame_ep[1] < 0 ? SGRPROJ_PARAMS : AOMMIN(SGRPROJ_PARAMS, mid_ep + step);
+    start_ep = 0 if (sg_ref_frame_ep[0] < 0 && sg_ref_frame_ep[1] < 0), else start_ep = max(0, mid_ep - step)
+    end_ep = 8  if (sg_ref_frame_ep[0] < 0 && sg_ref_frame_ep[1] < 0), else end_ep = min(8, mid_ep + step)
     ```
 ### 4.  Signaling
 
