@@ -438,8 +438,11 @@ void search_palette_luma(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
         // Try the dominant colors directly.
         // TODO: Try to avoid duplicate computation in cases
         // where the dominant colors and the k-means results are similar.
-
+#if CLN_PALETTE_CTRLS
+        int step = pcs_ptr->parent_pcs_ptr->palette_ctrls.dominant_color_step;
+#else
         int step = (pcs_ptr->parent_pcs_ptr->palette_level == 6) ? 2 : 1;
+#endif
         for (int n = AOMMIN(colors, PALETTE_MAX_SIZE); n >= 2; n -= step) {
             for (i = 0; i < n; ++i) centroids[i] = top_colors[i];
 

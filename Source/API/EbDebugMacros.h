@@ -852,6 +852,8 @@ NOTE : PART OF LIGHT_PD0_2  code was committed to svt-04-final-rebased under OPT
 #define CLN_MERGE_MRP_SIG                     1 // (1) Signal MRP control @ only 1 spot prior to the RPS construction.
                                                 // (2) Build RPS using the reference count signals rather than using the mrp-init-level.
                                                 // (3) Made the PA/MD cand buffer function of the reference count signals rather than using hard-coded values based on the mrp-init-level.
+#define CLN_PALETTE_CTRLS                     1 // Cleanup palette controls
+
 #endif //----------------------------------- all svt-05 features should be place are above this line -------------------------
 
 

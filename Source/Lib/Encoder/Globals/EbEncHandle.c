@@ -6831,11 +6831,17 @@ if (scs_ptr->max_input_luma_width > 16384) {
     }
 
     // palette
+#if CLN_PALETTE_CTRLS
+    if (config->palette_level < (int32_t)(-1) || config->palette_level > 2) {
+        SVT_LOG("Error instance %u: Invalid Palette Mode [0 .. 2], your input: %i\n", channel_number + 1, config->palette_level);
+        return_error = EB_ErrorBadParameter;
+    }
+#else
     if (config->palette_level < (int32_t)(-1) || config->palette_level > 6) {
         SVT_LOG("Error instance %u: Invalid Palette Mode [0 .. 6], your input: %i\n", channel_number + 1, config->palette_level);
         return_error = EB_ErrorBadParameter;
     }
-
+#endif
     // RDOQ
     if (config->rdoq_level != 0 && config->rdoq_level != 1 && config->rdoq_level != -1) {
         SVT_LOG("Error instance %u: Invalid RDOQ parameter [-1, 0, 1], your input: %i\n", channel_number + 1, config->rdoq_level);

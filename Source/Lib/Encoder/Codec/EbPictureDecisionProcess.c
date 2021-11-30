@@ -1916,6 +1916,32 @@ void set_intrabc_level(PictureParentControlSet* pcs_ptr, SequenceControlSet *scs
     }
 }
 #endif
+#if CLN_PALETTE_CTRLS
+/*
+    set controls for Palette prediction
+*/
+void set_palette_level(PictureParentControlSet* pcs_ptr, uint8_t palette_level) {
+
+    PaletteCtrls* palette_ctrls = &pcs_ptr->palette_ctrls;
+
+    switch (palette_level) {
+    case 0:
+        palette_ctrls->enabled = 0;
+        break;
+    case 1:
+        palette_ctrls->enabled = 1;
+        palette_ctrls->dominant_color_step = 1;
+        break;
+    case 2:
+        palette_ctrls->enabled = 1;
+        palette_ctrls->dominant_color_step = 2;
+        break;
+    default:
+        assert(0);
+        break;
+    }
+}
+#endif
 #if CLN_ME_SIGS
 /******************************************************
 * GM controls
@@ -2232,7 +2258,25 @@ EbErrorType signal_derivation_multi_processes_oq(
         pcs_ptr->ibc_mode = 0; // OFF
     }
 #endif
+#if CLN_PALETTE_CTRLS
+    // Set palette_level
+    if (frm_hdr->allow_screen_content_tools) {
+        if (scs_ptr->static_config.palette_level == DEFAULT) { //auto mode; if not set by cfg
+            if (pcs_ptr->enc_mode <= ENC_M11)
+                pcs_ptr->palette_level = pcs_ptr->temporal_layer_index == 0 ? 2 : 0;
+            else if (pcs_ptr->enc_mode <= ENC_M12)
+                pcs_ptr->palette_level = pcs_ptr->slice_type == I_SLICE ? 2 : 0;
+            else
+                pcs_ptr->palette_level = 0;
+        }
+        else
+            pcs_ptr->palette_level = scs_ptr->static_config.palette_level;
+    }
+    else
+        pcs_ptr->palette_level = 0;
 
+    set_palette_level(pcs_ptr, pcs_ptr->palette_level);
+#else
 #if FIX_REMOVE_PD1
     // Set palette_level
 #else
@@ -2290,6 +2334,7 @@ EbErrorType signal_derivation_multi_processes_oq(
                 pcs_ptr->palette_level = 0;
 #endif
     assert(pcs_ptr->palette_level < 7);
+#endif
 #if CLN_DLF_SIGNALS
     uint8_t dlf_level = 0;
     if (!pcs_ptr->scs_ptr->static_config.disable_dlf_flag && frm_hdr->allow_intrabc == 0) {
