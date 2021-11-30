@@ -84,6 +84,19 @@ static void me_sb_results_dctor(EbPtr p) {
 /*
   controls how many references are needed for ME results allocation
 */
+#if CLN_MERGE_MRP_SIG
+void  get_max_allocated_me_refs(uint8_t ref_count_used_list0, uint8_t ref_count_used_list1, uint8_t* max_ref_to_alloc, uint8_t* max_cand_to_alloc) {
+
+    *max_ref_to_alloc = ref_count_used_list0 + ref_count_used_list1;
+    *max_cand_to_alloc =
+        ref_count_used_list0 +
+        ref_count_used_list1 +
+        (ref_count_used_list0 * ref_count_used_list1) +
+        (ref_count_used_list0 - 1) +
+        (ref_count_used_list1 == 3 ? 1 : 0);
+
+}
+#else
 void  get_max_allocated_me_refs(uint8_t mrp_level, uint8_t* max_ref_to_alloc, uint8_t* max_cand_to_alloc) {
 #if TUNE_MRP_MEM
     if (mrp_level >= 3) {
@@ -98,6 +111,7 @@ void  get_max_allocated_me_refs(uint8_t mrp_level, uint8_t* max_ref_to_alloc, ui
         *max_cand_to_alloc = MAX_PA_ME_CAND;
     }
 }
+#endif
 #if !RFCT_ME8X8
 #if ME_8X8
 /*
@@ -142,8 +156,11 @@ EbErrorType me_sb_results_ctor(MeSbResults *obj_ptr, PictureControlSetInitData *
 
 
     uint8_t max_ref_to_alloc, max_cand_to_alloc;
-
+#if CLN_MERGE_MRP_SIG
+    get_max_allocated_me_refs(init_data_ptr->ref_count_used_list0, init_data_ptr->ref_count_used_list1, &max_ref_to_alloc, &max_cand_to_alloc);
+#else
     get_max_allocated_me_refs(init_data_ptr->mrp_level, &max_ref_to_alloc, &max_cand_to_alloc);
+#endif
 #if ME_8X8
     EbInputResolution resolution;
     derive_input_resolution(&resolution, init_data_ptr->picture_width * init_data_ptr->picture_height);

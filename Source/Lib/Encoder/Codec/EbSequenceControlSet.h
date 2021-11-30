@@ -35,6 +35,7 @@ extern "C" {
         double lmv_di_th; // Threshold to determine low mv direction scene
     } MiniGopSizeCtrls;
 #endif
+
 /************************************
      * Sequence Control Set
      ************************************/
@@ -241,7 +242,9 @@ typedef struct SequenceControlSet {
     Quants   quants_8bit; // 8bit
     Dequants deq_8bit; // 8bit
     ScaleFactors sf_identity;
+#if !CLN_MERGE_MRP_SIG
     uint8_t  mrp_init_level; //sequence based MRP level
+#endif
     int32_t nmv_vec_cost[MV_JOINTS];
     int32_t nmv_costs[2][MV_VALS];
     uint8_t mvrate_set;

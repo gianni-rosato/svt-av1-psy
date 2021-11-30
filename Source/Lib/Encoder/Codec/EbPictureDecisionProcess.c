@@ -60,7 +60,11 @@ void set_tpl_extended_controls(PictureParentControlSet *pcs_ptr, uint8_t tpl_lev
 #endif
 
 #if  OPT_ME
+#if CLN_MERGE_MRP_SIG
+void  get_max_allocated_me_refs(uint8_t ref_count_used_list0, uint8_t ref_count_used_list1, uint8_t* max_ref_to_alloc, uint8_t* max_cand_to_alloc);
+#else
 void  get_max_allocated_me_refs(uint8_t mrp_level, uint8_t* max_ref_to_alloc, uint8_t* max_cand_to_alloc);
+#endif
 #endif
 void init_resize_picture(SequenceControlSet* scs_ptr, PictureParentControlSet* pcs_ptr);
 #if OPT_IBC_HASH_SEARCH
@@ -3765,8 +3769,11 @@ static void  av1_generate_rps_info(
             }
             else
                 SVT_LOG("Error in GOp indexing\n");
-
+#if CLN_MERGE_MRP_SIG
+            if (pcs_ptr->scs_ptr->static_config.mrp_ctrls.referencing_scheme == 1) {
+#else
             if (pcs_ptr->scs_ptr->mrp_init_level == 1) {
+#endif
                 av1_rps->refresh_frame_mask = 1 << (lay3_idx);
             }
             else {
@@ -3787,7 +3794,11 @@ static void  av1_generate_rps_info(
         if (!set_frame_display_params(pcs_ptr, context_ptr, mini_gop_index)) {
 
             uint8_t no_show;
+#if CLN_MERGE_MRP_SIG
+            if (pcs_ptr->scs_ptr->static_config.mrp_ctrls.referencing_scheme == 1)
+#else
             if (pcs_ptr->scs_ptr->mrp_init_level == 1)
+#endif
                 no_show = pcs_ptr->is_used_as_reference_flag && picture_index != 0 && picture_index != 2 && picture_index != 4 && picture_index != 6;
             else
                 no_show = pcs_ptr->is_used_as_reference_flag && picture_index != 0;
@@ -4260,7 +4271,11 @@ static void  av1_generate_rps_info(
                 SVT_LOG("Error in GOp indexing\n");
 
             uint8_t keep_lay4_as_ref;
+#if CLN_MERGE_MRP_SIG
+            if (pcs_ptr->scs_ptr->static_config.mrp_ctrls.referencing_scheme == 1)
+#else
             if (pcs_ptr->scs_ptr->mrp_init_level == 1)
+#endif
                 keep_lay4_as_ref = (picture_index == 0 || picture_index == 8 || picture_index == 14 || picture_index == 2 || picture_index == 4 || picture_index == 6 || picture_index == 10 || picture_index == 12);
             else
                 keep_lay4_as_ref = (picture_index == 0 || picture_index == 8);
@@ -4281,7 +4296,11 @@ static void  av1_generate_rps_info(
         if (!set_frame_display_params(pcs_ptr, context_ptr, mini_gop_index)) {
 
             uint8_t no_show;
+#if CLN_MERGE_MRP_SIG
+            if (pcs_ptr->scs_ptr->static_config.mrp_ctrls.referencing_scheme == 1)
+#else
             if (pcs_ptr->scs_ptr->mrp_init_level == 1)
+#endif
                 no_show = (pcs_ptr->is_used_as_reference_flag && picture_index != 0 && picture_index != 8 && picture_index != 14 && picture_index != 2 && picture_index != 4 && picture_index != 6 && picture_index != 10 && picture_index != 12);
             else
                 no_show = (pcs_ptr->is_used_as_reference_flag && picture_index != 0 && picture_index != 8);
@@ -5997,25 +6016,51 @@ void send_picture_out(
             //printf("[%ld]: Got me data [NORMAL] %p\n", pcs->picture_number, pcs->pa_me_data);
         }
 #if OPT_ME
-        if (pcs->ref_list0_count_try == 1 && pcs->ref_list1_count_try == 1) {
-            pcs->pa_me_data->max_cand = 3;
-            pcs->pa_me_data->max_refs = 2;
-            pcs->pa_me_data->max_l0 = 1;
-        }
-        else if (pcs->ref_list0_count_try <= 2 && pcs->ref_list1_count_try <= 2) {
-            pcs->pa_me_data->max_cand = 9;
-            pcs->pa_me_data->max_refs = 4;
-            pcs->pa_me_data->max_l0 = 2;
-        }
-        else { //specify more cases if need be
-            pcs->pa_me_data->max_cand = MAX_PA_ME_CAND;
-            pcs->pa_me_data->max_refs = MAX_PA_ME_MV;
-            pcs->pa_me_data->max_l0 = MAX_REF_IDX;
-        }
+
+
+#if CLN_MERGE_MRP_SIG
+        MrpCtrls* mrp_ctrl = &(scs->static_config.mrp_ctrls);
+
+        uint8_t ref_count_used_list0 =
+            MAX(mrp_ctrl->sc_base_ref_list0_count,
+                MAX(mrp_ctrl->base_ref_list0_count,
+                    MAX(mrp_ctrl->sc_non_base_ref_list0_count, mrp_ctrl->non_base_ref_list0_count)));
+
+        uint8_t ref_count_used_list1 =
+            MAX(mrp_ctrl->sc_base_ref_list1_count,
+                MAX(mrp_ctrl->base_ref_list1_count,
+                    MAX(mrp_ctrl->sc_non_base_ref_list1_count, mrp_ctrl->non_base_ref_list1_count)));
+
         uint8_t max_ref_to_alloc, max_cand_to_alloc;
+
+        get_max_allocated_me_refs(ref_count_used_list0, ref_count_used_list1, &max_ref_to_alloc, &max_cand_to_alloc);
+
+        pcs->pa_me_data->max_cand = max_cand_to_alloc;
+        pcs->pa_me_data->max_refs = max_ref_to_alloc;
+        pcs->pa_me_data->max_l0 = ref_count_used_list0;
+#else
+    if (pcs->ref_list0_count_try == 1 && pcs->ref_list1_count_try == 1) {
+        pcs->pa_me_data->max_cand = 3;
+        pcs->pa_me_data->max_refs = 2;
+        pcs->pa_me_data->max_l0 = 1;
+    }
+    else if (pcs->ref_list0_count_try <= 2 && pcs->ref_list1_count_try <= 2) {
+        pcs->pa_me_data->max_cand = 9;
+        pcs->pa_me_data->max_refs = 4;
+        pcs->pa_me_data->max_l0 = 2;
+    }
+    else { //specify more cases if need be
+        pcs->pa_me_data->max_cand = MAX_PA_ME_CAND;
+        pcs->pa_me_data->max_refs = MAX_PA_ME_MV;
+        pcs->pa_me_data->max_l0 = MAX_REF_IDX;
+    }
+    uint8_t max_ref_to_alloc, max_cand_to_alloc;
+
      get_max_allocated_me_refs(scs->mrp_init_level, & max_ref_to_alloc, & max_cand_to_alloc);
-        assert_err(pcs->pa_me_data->max_cand <= max_cand_to_alloc, " err in me ref allocation");
-        assert_err(pcs->pa_me_data->max_refs <= max_ref_to_alloc, " err in me ref allocation");
+
+     assert_err(pcs->pa_me_data->max_cand <= max_cand_to_alloc, " err in me ref allocation");
+     assert_err(pcs->pa_me_data->max_refs <= max_ref_to_alloc, " err in me ref allocation");
+#endif
 #endif
 
 #if OPT_1P
@@ -6723,6 +6768,36 @@ void set_mini_gop_size(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs
 #endif
         min_gop_level = MIN(scs_ptr->static_config.max_heirachical_level, min_gop_level);
         scs_ptr->static_config.hierarchical_levels = min_gop_level;
+    }
+}
+#endif
+#if CLN_MERGE_MRP_SIG
+/*
+* Update the list0 count try and the list1 count try based on the Enc-Mode, whether BASE or not, whether SC or not
+*/
+void update_count_try(SequenceControlSet* scs_ptr, PictureParentControlSet* pcs_ptr) {
+
+    MrpCtrls *mrp_ctrl = &scs_ptr->static_config.mrp_ctrls;
+
+    if (pcs_ptr->sc_class1) {
+        if (pcs_ptr->temporal_layer_index == 0) {
+            pcs_ptr->ref_list0_count_try = MIN(pcs_ptr->ref_list0_count, mrp_ctrl->sc_base_ref_list0_count);
+            pcs_ptr->ref_list1_count_try = MIN(pcs_ptr->ref_list1_count, mrp_ctrl->sc_base_ref_list1_count);
+        }
+        else {
+            pcs_ptr->ref_list0_count_try = MIN(pcs_ptr->ref_list0_count, mrp_ctrl->sc_non_base_ref_list0_count);
+            pcs_ptr->ref_list1_count_try = MIN(pcs_ptr->ref_list1_count, mrp_ctrl->sc_non_base_ref_list1_count);
+        }
+    }
+    else {
+        if (pcs_ptr->temporal_layer_index == 0) {
+            pcs_ptr->ref_list0_count_try = MIN(pcs_ptr->ref_list0_count, mrp_ctrl->base_ref_list0_count);
+            pcs_ptr->ref_list1_count_try = MIN(pcs_ptr->ref_list1_count, mrp_ctrl->base_ref_list1_count);
+        }
+        else {
+            pcs_ptr->ref_list0_count_try = MIN(pcs_ptr->ref_list0_count, mrp_ctrl->non_base_ref_list0_count);
+            pcs_ptr->ref_list1_count_try = MIN(pcs_ptr->ref_list1_count, mrp_ctrl->non_base_ref_list1_count);
+        }
     }
 }
 #endif
@@ -7663,6 +7738,9 @@ void* picture_decision_kernel(void *input_ptr)
                                                                             (pcs_ptr->is_overlay) ? 1 : (uint8_t)pred_position_ptr->ref_list0.reference_list_count;
                                 pcs_ptr->ref_list1_count = (picture_type == I_SLICE || pcs_ptr->is_overlay) ? 0 : (uint8_t)pred_position_ptr->ref_list1.reference_list_count;
 
+#if CLN_MERGE_MRP_SIG
+                                update_count_try(scs_ptr, pcs_ptr);
+#else
                                 //set the number of references to try in ME/MD.Note: PicMgr will still use the original values to sync the references.
                                 if (pcs_ptr->sc_class1) {
                                     if (pcs_ptr->enc_mode <= ENC_MRS) {
@@ -7701,6 +7779,7 @@ void* picture_decision_kernel(void *input_ptr)
                                     pcs_ptr->ref_list0_count_try = MIN(pcs_ptr->ref_list0_count, 2);
                                     pcs_ptr->ref_list1_count_try = MIN(pcs_ptr->ref_list1_count, 2);
                                 }
+#endif
 #if CLN_ADD_LIST0_ONLY_CTRL
                                 if (picture_type == B_SLICE && pcs_ptr->temporal_layer_index == 0 && pcs_ptr->list0_only_base_ctrls.enabled)
                                     update_list0_only_base(scs_ptr, pcs_ptr);

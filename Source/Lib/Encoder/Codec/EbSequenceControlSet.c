@@ -329,7 +329,9 @@ EbErrorType copy_sequence_control_set(SequenceControlSet *dst, SequenceControlSe
     dst->tpl_lad_mg                     = src->tpl_lad_mg;
 #endif
     dst->use_boundaries_in_rest_search  = src->use_boundaries_in_rest_search;
+#if !CLN_MERGE_MRP_SIG
     dst->mrp_init_level = src->mrp_init_level;
+#endif
 #if CLN_GEOM
     dst->geom_idx = src->geom_idx;
     dst->max_block_cnt = src->max_block_cnt;

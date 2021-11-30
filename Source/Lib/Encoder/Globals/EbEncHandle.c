@@ -1758,10 +1758,23 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
 #if TUNE_MULTI_PASS
         input_data.passes = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.passes;
 #endif
+#if CLN_MERGE_MRP_SIG
+        MrpCtrls* mrp_ctrl = &(enc_handle_ptr->scs_instance_array[0]->scs_ptr->static_config.mrp_ctrls);
+
+        input_data.ref_count_used_list0 =
+            MAX(mrp_ctrl->sc_base_ref_list0_count,
+                MAX(mrp_ctrl->base_ref_list0_count,
+                    MAX(mrp_ctrl->sc_non_base_ref_list0_count, mrp_ctrl->non_base_ref_list0_count)));
+
+        input_data.ref_count_used_list1 =
+            MAX(mrp_ctrl->sc_base_ref_list1_count,
+                MAX(mrp_ctrl->base_ref_list1_count,
+                    MAX(mrp_ctrl->sc_non_base_ref_list1_count, mrp_ctrl->non_base_ref_list1_count)));
+#else
 #if OPT_ME
         input_data.mrp_level= enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->mrp_init_level;
 #endif
-
+#endif
 #if FTR_16X16_TPL_MAP
         input_data.tpl_synth_size = get_tpl_synthesizer_block_size( get_tpl_level(input_data.enc_mode), input_data.picture_width, input_data.picture_height);
 #endif
@@ -5266,6 +5279,94 @@ void derive_tf_params(SequenceControlSet *scs_ptr) {
 #endif
     tf_controls(scs_ptr, tf_level);
 }
+#if CLN_MERGE_MRP_SIG
+/*
+ * Set the MRP control
+ */
+void set_mrp_ctrl(SequenceControlSet* scs_ptr, uint8_t mrp_level) {
+
+    MrpCtrls* mrp_ctrl = &scs_ptr->static_config.mrp_ctrls;
+
+    switch (mrp_level)
+    {
+    case 0:
+        mrp_ctrl->referencing_scheme          = 0;
+        mrp_ctrl->sc_base_ref_list0_count     = 1;
+        mrp_ctrl->sc_base_ref_list1_count     = 1;
+        mrp_ctrl->sc_non_base_ref_list0_count = 1;
+        mrp_ctrl->sc_non_base_ref_list1_count = 1;
+        mrp_ctrl->base_ref_list0_count        = 1;
+        mrp_ctrl->base_ref_list1_count        = 1;
+        mrp_ctrl->non_base_ref_list0_count    = 1;
+        mrp_ctrl->non_base_ref_list1_count    = 1;
+        break;
+
+    case 1:
+        mrp_ctrl->referencing_scheme          = 1;
+        mrp_ctrl->sc_base_ref_list0_count     = 4;
+        mrp_ctrl->sc_base_ref_list1_count     = 3;
+        mrp_ctrl->sc_non_base_ref_list0_count = 4;
+        mrp_ctrl->sc_non_base_ref_list1_count = 3;
+        mrp_ctrl->base_ref_list0_count        = 4;
+        mrp_ctrl->base_ref_list1_count        = 3;
+        mrp_ctrl->non_base_ref_list0_count    = 4;
+        mrp_ctrl->non_base_ref_list1_count    = 3;
+        break;
+
+    case 2:
+        mrp_ctrl->referencing_scheme          = 1;
+        mrp_ctrl->sc_base_ref_list0_count     = 2;
+        mrp_ctrl->sc_base_ref_list1_count     = 2;
+        mrp_ctrl->sc_non_base_ref_list0_count = 2;
+        mrp_ctrl->sc_non_base_ref_list1_count = 2;
+        mrp_ctrl->base_ref_list0_count        = 4;
+        mrp_ctrl->base_ref_list1_count        = 3;
+        mrp_ctrl->non_base_ref_list0_count    = 4;
+        mrp_ctrl->non_base_ref_list1_count    = 3;
+        break;
+
+    case 3:
+        mrp_ctrl->referencing_scheme          = 1;
+        mrp_ctrl->sc_base_ref_list0_count     = 2;
+        mrp_ctrl->sc_base_ref_list1_count     = 2;
+        mrp_ctrl->sc_non_base_ref_list0_count = 1;
+        mrp_ctrl->sc_non_base_ref_list1_count = 1;
+        mrp_ctrl->base_ref_list0_count        = 4;
+        mrp_ctrl->base_ref_list1_count        = 3;
+        mrp_ctrl->non_base_ref_list0_count    = 4;
+        mrp_ctrl->non_base_ref_list1_count    = 3;
+        break;
+
+    case 4:
+        mrp_ctrl->referencing_scheme          = 0;
+        mrp_ctrl->sc_base_ref_list0_count     = 2;
+        mrp_ctrl->sc_base_ref_list1_count     = 2;
+        mrp_ctrl->sc_non_base_ref_list0_count = 1;
+        mrp_ctrl->sc_non_base_ref_list1_count = 1;
+        mrp_ctrl->base_ref_list0_count        = 2;
+        mrp_ctrl->base_ref_list1_count        = 2;
+        mrp_ctrl->non_base_ref_list0_count    = 2;
+        mrp_ctrl->non_base_ref_list1_count    = 2;
+        break;
+
+    case 5:
+        mrp_ctrl->referencing_scheme          = 0;
+        mrp_ctrl->sc_base_ref_list0_count     = 2;
+        mrp_ctrl->sc_base_ref_list1_count     = 2;
+        mrp_ctrl->sc_non_base_ref_list0_count = 1;
+        mrp_ctrl->sc_non_base_ref_list1_count = 1;
+        mrp_ctrl->base_ref_list0_count        = 2;
+        mrp_ctrl->base_ref_list1_count        = 2;
+        mrp_ctrl->non_base_ref_list0_count    = 1;
+        mrp_ctrl->non_base_ref_list1_count    = 1;
+        break;
+
+    default:
+        assert(0);
+        break;
+    }
+}
+#endif
 void set_param_based_on_input(SequenceControlSet *scs_ptr)
 {
     uint16_t subsampling_x = scs_ptr->subsampling_x;
@@ -5685,9 +5786,41 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     if (scs_ptr->static_config.scene_change_detection == 1)
         SVT_WARN("Scene Change is not optimal and may produce suboptimal keyframe placements\n");
 
+#if CLN_MERGE_MRP_SIG
+    // MRP level
+    uint8_t mrp_level;
+
+    if (scs_ptr->static_config.enc_mode <= ENC_MRS) {
+
+        mrp_level = 1;
+    }
+    else if (scs_ptr->static_config.enc_mode <= ENC_M1) {
+
+        mrp_level = 2;
+    }
+    else if (scs_ptr->static_config.enc_mode <= ENC_M3) {
+
+        mrp_level = 3;
+    }
+    else if (scs_ptr->static_config.enc_mode <= ENC_M6) {
+
+        mrp_level = 4;
+    }
+    else if (scs_ptr->static_config.enc_mode <= ENC_M12) {
+
+        mrp_level = 5;
+    }
+    else {
+        mrp_level = 0;
+    }
+
+    set_mrp_ctrl(scs_ptr, mrp_level);
+#endif
 #if FIX_PRESET_TUNING
 #if FTR_M13
+#if !CLN_MERGE_MRP_SIG
     scs_ptr->mrp_init_level = scs_ptr->static_config.enc_mode <= ENC_M3 ? 1 : scs_ptr->static_config.enc_mode <= ENC_M6 ? 3 : scs_ptr->static_config.enc_mode <= ENC_M12 ? 4 : 0;
+#endif
 #else
     scs_ptr->mrp_init_level = scs_ptr->static_config.enc_mode <= ENC_M3 ? 1 : scs_ptr->static_config.enc_mode <= ENC_M6 ? 3 : 4;
 #endif
@@ -7328,12 +7461,19 @@ EB_API EbErrorType svt_av1_enc_set_parameter(
             enc_handle->scs_instance_array[instance_index]->scs_ptr, mgs_ctls);
 #endif
     // Initialize the Prediction Structure Group
+#if CLN_MERGE_MRP_SIG
+    EB_NO_THROW_NEW(
+        enc_handle->scs_instance_array[instance_index]->encode_context_ptr->prediction_structure_group_ptr,
+        prediction_structure_group_ctor,
+        &(enc_handle->scs_instance_array[instance_index]->scs_ptr->static_config));
+#else
     EB_NO_THROW_NEW(
         enc_handle->scs_instance_array[instance_index]->encode_context_ptr->prediction_structure_group_ptr,
         prediction_structure_group_ctor,
         enc_handle->scs_instance_array[instance_index]->scs_ptr->mrp_init_level,
         enc_handle->scs_instance_array[instance_index]->scs_ptr->static_config.enc_mode,
         &(enc_handle->scs_instance_array[instance_index]->scs_ptr->static_config));
+#endif
     if (!enc_handle->scs_instance_array[instance_index]->encode_context_ptr->prediction_structure_group_ptr) {
         svt_release_mutex(enc_handle->scs_instance_array[instance_index]->config_mutex);
         return EB_ErrorInsufficientResources;

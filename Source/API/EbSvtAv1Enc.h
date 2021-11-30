@@ -233,6 +233,23 @@ typedef struct IppPassControls {
     uint8_t reduce_me_search; //Reduce HME_ME SR areas
 } IppPassControls;
 #endif
+#if CLN_MERGE_MRP_SIG
+typedef struct MrpCtrls {
+    // Referencing scheme
+    uint8_t referencing_scheme; // 0 or 1
+
+    // SC signals
+    uint8_t sc_base_ref_list0_count;
+    uint8_t sc_base_ref_list1_count;
+    uint8_t sc_non_base_ref_list0_count;
+    uint8_t sc_non_base_ref_list1_count;
+    // non-SC signals
+    uint8_t base_ref_list0_count;
+    uint8_t base_ref_list1_count;
+    uint8_t non_base_ref_list0_count;
+    uint8_t non_base_ref_list1_count;
+} MrpCtrls;
+#endif
 // Will contain the EbEncApi which will live in the EncHandle class
 // Only modifiable during config-time.
 typedef struct EbSvtAv1EncConfiguration {
@@ -992,6 +1009,9 @@ typedef struct EbSvtAv1EncConfiguration {
 #endif
 #if IPP_CTRL
     uint8_t final_pass_preset;
+#endif
+#if CLN_MERGE_MRP_SIG
+    MrpCtrls mrp_ctrls;
 #endif
 } EbSvtAv1EncConfiguration;
 

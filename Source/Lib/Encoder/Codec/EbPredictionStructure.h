@@ -132,11 +132,16 @@ typedef struct PredictionStructureGroup {
 /************************************************
      * Declarations
      ************************************************/
+#if CLN_MERGE_MRP_SIG
+extern EbErrorType prediction_structure_group_ctor(
+    PredictionStructureGroup* pred_struct_group_ptr,
+    EbSvtAv1EncConfiguration* config);
+#else
 extern EbErrorType prediction_structure_group_ctor(PredictionStructureGroup *pred_struct_group_ptr,
     uint8_t   mrp_init_level,
                                                    EbEncMode                 enc_mode,
                                                    EbSvtAv1EncConfiguration *config);
-
+#endif
 extern PredictionStructure *get_prediction_structure(
     PredictionStructureGroup *prediction_structure_group_ptr, EbPred pred_structure,
     uint32_t number_of_references, uint32_t levels_of_hierarchy);

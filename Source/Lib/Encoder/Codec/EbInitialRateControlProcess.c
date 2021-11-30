@@ -200,9 +200,11 @@ uint8_t  inj_to_tpl_group( PictureParentControlSet* pcs)
             inj = 0;
     }
     else {
-
+#if CLN_MERGE_MRP_SIG
+        if (pcs->scs_ptr->static_config.mrp_ctrls.referencing_scheme == 1) {
+#else
         if (pcs->scs_ptr->mrp_init_level == 1) {
-
+#endif
             if (pcs->temporal_layer_index < 4)
                 inj = 1;
             else if (pcs->is_used_as_reference_flag && (pcs->pic_index == 6 || pcs->pic_index == 10))//TODO: could be removed once TPL r0 adapts dyncamically  to TPL group size

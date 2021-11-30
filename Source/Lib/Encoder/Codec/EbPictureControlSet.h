@@ -1348,9 +1348,13 @@ typedef struct PictureControlSetInitData {
 #if CLN_GEOM
     uint16_t   init_max_block_cnt;
 #endif
-
+#if CLN_MERGE_MRP_SIG
+    uint8_t ref_count_used_list0;
+    uint8_t ref_count_used_list1;
+#else
 #if OPT_ME
    uint8_t mrp_level;
+#endif
 #endif
 #if SS_MEM_VAR
 

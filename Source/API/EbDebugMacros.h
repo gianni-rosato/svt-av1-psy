@@ -849,6 +849,9 @@ NOTE : PART OF LIGHT_PD0_2  code was committed to svt-04-final-rebased under OPT
 #define FTR_LP64                              1 // add high latency multi-threaded settings, set as default multi-threaded configuration
 #define TUNE_LIVE_PRESETS                     1 // Tune presets M8-M10 for live use cases
 #define FIX_ISSUE_121                         1 // move the skip_frame and bypass_blk_step to the context.
+#define CLN_MERGE_MRP_SIG                     1 // (1) Signal MRP control @ only 1 spot prior to the RPS construction.
+                                                // (2) Build RPS using the reference count signals rather than using the mrp-init-level.
+                                                // (3) Made the PA/MD cand buffer function of the reference count signals rather than using hard-coded values based on the mrp-init-level.
 #endif //----------------------------------- all svt-05 features should be place are above this line -------------------------
 
 

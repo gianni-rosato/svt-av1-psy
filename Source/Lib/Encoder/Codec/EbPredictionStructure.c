@@ -1865,7 +1865,7 @@ static void prediction_structure_group_dctor(EbPtr p) {
     PredictionStructureConfigArray *array = (PredictionStructureConfigArray *)obj->priv;
     EB_DELETE(array);
 }
-
+#if !CLN_MERGE_MRP_SIG
 typedef struct MrpInitCtrls {
     EbBool enable;                  // MRP ON/OFF
     uint8_t ref_count_used_base;    //number of reference to use in each ref list for     base pictures
@@ -1911,6 +1911,7 @@ void set_mrp_init_ctrls( MrpInitCtrls* ctrls, uint8_t  level) {
         break;
     }
 }
+#endif
 /*************************************************
  * Prediction Structure Group Ctor
  *
@@ -1930,10 +1931,15 @@ void set_mrp_init_ctrls( MrpInitCtrls* ctrls, uint8_t  level) {
  *      # Random Access
  *
  *************************************************/
-
+#if CLN_MERGE_MRP_SIG
+EbErrorType prediction_structure_group_ctor(
+    PredictionStructureGroup* pred_struct_group_ptr,
+    EbSvtAv1EncConfiguration* config) {
+#else
 EbErrorType prediction_structure_group_ctor(PredictionStructureGroup *pred_struct_group_ptr,
     uint8_t   mrp_init_level,
                                             EbEncMode enc_mode, EbSvtAv1EncConfiguration *config) {
+#endif
     uint32_t pred_struct_index = 0;
     uint32_t ref_idx;
     uint32_t hierarchical_level_idx;
@@ -1941,7 +1947,23 @@ EbErrorType prediction_structure_group_ctor(PredictionStructureGroup *pred_struc
     uint32_t number_of_references;
 
     pred_struct_group_ptr->dctor = prediction_structure_group_dctor;
+#if CLN_MERGE_MRP_SIG
+    MrpCtrls* mrp_ctrl = &(config->mrp_ctrls);
 
+    // Derive the max count at BASE
+    uint8_t ref_count_used_base =
+        MAX(mrp_ctrl->sc_base_ref_list0_count,
+            MAX(mrp_ctrl->sc_base_ref_list1_count,
+                MAX(mrp_ctrl->base_ref_list0_count, mrp_ctrl->base_ref_list1_count)));
+
+    // Derive the max count at non-BASE
+    uint8_t ref_count_used =
+        MAX(mrp_ctrl->sc_non_base_ref_list0_count,
+            MAX(mrp_ctrl->sc_non_base_ref_list1_count,
+                MAX(mrp_ctrl->non_base_ref_list0_count, mrp_ctrl->non_base_ref_list1_count)));
+
+    if(mrp_ctrl->referencing_scheme == 1)
+#else
     MrpInitCtrls mrp_init_ctrls;
     set_mrp_init_ctrls(&mrp_init_ctrls, mrp_init_level);
     uint8_t ref_count_used = mrp_init_ctrls.ref_count_used_non_base;
@@ -1950,6 +1972,7 @@ EbErrorType prediction_structure_group_ctor(PredictionStructureGroup *pred_struc
 
     (void)enc_mode;
     if (mrp_init_level == 1)
+#endif
     {
 
         {
