@@ -798,7 +798,9 @@ typedef struct PictureParentControlSet {
     EbBool          end_of_sequence_flag;
     uint8_t         picture_qp;
     uint64_t        picture_number;
+#if !FIX_ISSUE_121
     uint8_t         skip_frame;
+#endif
     uint32_t        cur_order_hint;
     uint32_t        ref_order_hint[7];
     EB_SLICE        slice_type;
@@ -1261,7 +1263,7 @@ typedef struct PictureParentControlSet {
 #if OPT_IBC_HASH_SEARCH
     IntraBCCtrls intraBC_ctrls;
 #endif
-#if OPT_FIRST_PASS3
+#if OPT_FIRST_PASS3 && !FIX_ISSUE_121
     uint8_t bypass_blk_step;
 #endif
 

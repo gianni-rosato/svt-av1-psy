@@ -522,6 +522,10 @@ typedef struct MeContext {
     uint32_t  tf_tot_vert_blks;    //total vertical motion blocks in TF
     uint32_t  tf_tot_horz_blks;    //total horizontal motion blocks in TF
 #endif
+#if FIX_ISSUE_121
+    uint8_t skip_frame;
+    uint8_t bypass_blk_step;
+#endif
 } MeContext;
 
 typedef uint64_t (*EB_ME_DISTORTION_FUNC)(uint8_t *src, uint32_t src_stride, uint8_t *ref,
