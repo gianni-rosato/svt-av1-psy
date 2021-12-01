@@ -86,24 +86,24 @@ Loop over all restoration units in each tile segment (```foreach_rest_unit_in_ti
      Check that the new filter params are an improvement over the identity filter (i.e. no filtering).  If not, exit Wiener filter search and do not use Wiener filter.  See function ```compute_score```.
    - Refine the initially computed Wiener filter coeffs (see function ```finer_tile_search_wiener_seg```).
      Up to three refinement steps are performed (with step sizes 4,2,1).
-	 In each step, the filter coeffs are shifted according to the step size.
-	 Filtering is applied to the filter block with the new coeff values and the SSE is computed (```try_restoration_unit_seg```).
-	 If the refined coeff values are better than the original, the coeff values are updated.
+     In each step, the filter coeffs are shifted according to the step size.
+     Filtering is applied to the filter block with the new coeff values and the SSE is computed (```try_restoration_unit_seg```).
+     If the refined coeff values are better than the original, the coeff values are updated.
    - The best filter coeffs are returned, along with the corresponding SSE of the filtered block.
 
 ### Step 3 – Identify the best filtering mode for the whole frame
 
-- Loop over the picture planes to identify the best restoration option for each of the picture planes 
+- Loop over the picture planes to identify the best restoration option for each of the picture planes
    - Loop over all available filtering options (```RESTORE_NONE```, ```RESTORE_WIENER```, ```RESTORE_SGRPROJ```, ```RESTORE_SWITCHABLE```),
      compute the resulting cost for using each of the options over the whole frame, and choose the best
-	 option for the whole frame. The selection is based on the rate-distortion cost of the different options.
-	 (```rest_finish_search```)
+     option for the whole frame. The selection is based on the rate-distortion cost of the different options.
+     (```rest_finish_search```)
 
 ### Step 4 – Filter each restoration unit in the frame using the identified best option from step 3 above. (```av1_loop_restoration_filter_frame```)
 
 More details on ```try_restoration_unit_seg```
 - Filter stripes of height 64 (```try_restoration_unit_seg```)
-  - Loop over stripes (```av1_loop_restoration_filter_unit```) 
+  - Loop over stripes (```av1_loop_restoration_filter_unit```)
     - Loop over the restoration processing units in a stripe and apply filtering to each restoration processing unit using the already identified best filtering parameters for each restoration processing unit. (```wiener_filter_stripe```)
 - Compute the sse for the filtered restoration unit (```sse_restoration_unit```)
 

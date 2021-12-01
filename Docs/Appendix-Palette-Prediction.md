@@ -1,4 +1,4 @@
-# Palette Prediction Appendix
+# Palette Prediction
 
 ## 1.  Description of the algorithm
 
@@ -56,23 +56,23 @@ indices as context, as shown in the table below.
 
 **Outputs**: Palette information (palette size, colors and map tokens)
 
-**Control macros/flags**:
+**Control tokens/flags**:
 
-##### Table 2. Control flags for palette prediction.
+The feature is currently active only when screen content encoding is active, either through:
+
+- Setting screen content encoding to Auto mode, where screen-content-type of pictures are flagged based on detector information, or
+
+- Setting the screen content encoding to Manual mode, where the input sequence is encoded as screen content (occurs when “```—scm 1```” is specified in the command line).
+
+
+##### Table 2. Control tokens and flags for palette prediction.
 
 |**Flag**|**Level (Sequence/Picture)**|**Description**|
 |--- |--- |--- |
-|--palette|Configuration|To enable palette from the command-line interface. 0: OFF; 1: Slow; … ; 6: Fastest. Auto mode=-1 if not set from the encoder configuration|
+|--scm|Sequence|Command line token. 0: No SC, 1: SC ON 2: Auto mode (detector based)|
+|--palette|Configuration|To enable palette from the command-line interface. 0: OFF; 1: Slow;  2: Fastest. Auto mode=-1 if not set from the encoder configuration|
 |palette_level|Picture based|Set based on the configuration palette mode. For auto mode it is set to 6 for M0.|
 
-The feature is currently active only:
-  - For encoder mode 0.
-  - Only when screen content encoding is active, either through
-      - Setting screen content encoding to Auto mode, where
-        creen-content-type of pictures are flagged based on detector
-        information, or
-      - Setting the screen content encoding to Manual mode, where
-        the input sequence is encoded as screen content.
 
 **Details of the implementation**
 
@@ -119,40 +119,11 @@ MD candidate class.
 
 ## 3.  Optimization of the algorithm
 
-The following quality complexity trade-offs are present in the
-code. The tradeoff is realized by adjusting the number of input
-candidates (NIC) in the last MD stage and by restricting the search
-options for the best number of colors. The NIC is expressed as a
-triplet x/y/z corresponding to the case of a base layer picture,
-reference pictures and non-reference picture, respectively (e.g. the
-number of input palette prediction candidates for reference pictures
-at the last MD stage is y). The input candidates could be a mix of
-candidates generated based on the two candidate search methods
-outlined above.
+| **Signal**          | **Description**                                                                         |
+| -----------------   | --------------------------------------------------------------------------------------- |
+| enabled             |                                                                                         |
+| dominant_color_step | In the dominant color search, test a subset of the most dominant color combinations by testing every nth combo. For example, with step size of 2, if the block involves 7 colors, then only 3 candidates with palettes based on the most dominant 7, 5 and 3 colors are tested. Range: [1 (test all), 7 (test one)]           |
 
-##### Table 3. palette\_level settings.
-
-| **palette\_level** | **Description**                                                                         |
-| ----------------- | --------------------------------------------------------------------------------------- |
-| 1 (Slow)          | NIC=7/4/4                                                                           |
-| 2                 | NIC=7/2/2                                                                           |
-| 3                 | NIC=7/2/2 + No K-means injection for non-reference pictures                           |
-| 4                 | NIC=4/2/1                                                                          |
-| 5                 | NIC=4/2/1 + No K-means for Inter frames                                          |
-| 6 (Fastest)       | NIC=4/2/1 + No K-means for non-base + step\_2 for non-base for most dominant colors |
-
-For ```palette_level``` 6, step\_2 refers to a method of selecting the subset
-of the most dominant colors to include in the palette. For example, if
-the block involves 7 colors, then only three candidates with palettes
-based on the most dominant 7, 5 and 3 colors are injected, and the
-candidates based on the most dominant 6 and 4 colors are discarded.
-
-The settings for palette_level as a function of the encoder preset and other encoder settings are
-indicated in Table 4 below.
-
-##### Table 4. palette\_level as a function of encoder presets.
-
-![image_table4](./img/palette_prediction_table4.png)
 
 ## 4.  **Signaling**
 

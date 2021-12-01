@@ -206,12 +206,12 @@ The CDEF search (```cdef_seg_search```) proceeds along the following steps.
 
         - Find the direction for each 8x8 block (```cdef_find_dir```).
         - Filter the 8x8 block according to the identified direction using the set filter strength
-		  (```cdef_filter_block```, C only version ```cdef_filter_block_c```.
-		  More details on ```cdef_filter_block_c``` are provided below.).
+          (```cdef_filter_block```, C only version ```cdef_filter_block_c```.
+          More details on ```cdef_filter_block_c``` are provided below.).
 
 
     - Compute the filtering mse for the filter block corresponding to the filter strength being considered
-	  (```compute_cdef_dist```).
+      (```compute_cdef_dist```).
 
 Step 3: Select a subset of filter strengths to use in the final filtering of the 64x64
 filter blocks in the frame based on the filtering results from step 2
@@ -230,7 +230,7 @@ position of the neighboring samples to be considered in the filtering
 operation are given by the array `cdef_directions` according to the
 identified direction. The array is given by
 
-The primary and secondary filter coefficients are given in Section 1. 
+The primary and secondary filter coefficients are given in Section 1.
 
 **More details on finish\_cdef\_search in step 3**
 
@@ -252,13 +252,13 @@ filter block is signaled separately. The search performed in ```finish_cdef_sear
 
   - Call the function ```joint_strength_search_dual``` to determine the best such set for each of the options
     based on filtering distortion (```joint_strength_search_dual``` function makes use of a greedy search
-	algorithm). Compute the RDO cost of each of the options and keep track of the best option (i.e. the best
-	number of bits and the corresponding set of best (Primary strength, Secondary strength) pairs. The latter are
-	stored in the ```cdef_strengths```  and ```cdef_uv_strengths```  arrays.
+    algorithm). Compute the RDO cost of each of the options and keep track of the best option (i.e. the best
+    number of bits and the corresponding set of best (Primary strength, Secondary strength) pairs. The latter are
+    stored in the ```cdef_strengths```  and ```cdef_uv_strengths```  arrays.
 
   - Loop over the filter blocks in the frame and select for each filter block the best (Primary strength,
     Secondary strength) pair. The selected pair is signaled in ```mbmi.cdef_strength``` whereas damping values
-	are stored in ```cdef_pri_damping``` and ```cdef_sec_damping```.
+    are stored in ```cdef_pri_damping``` and ```cdef_sec_damping```.
 
   - The most used filter strength pair in the filter blocks for the frame is then identified as the frame strength
     and its corresponding index is stored in ```pPcs->cdef_frame_strength```.
@@ -319,15 +319,15 @@ as follows:
 
 ```
 If (list0_best_filter == list1_best_filter)
-	Skip CDEF search; use the filter selected by the reference frames
+    Skip CDEF search; use the filter selected by the reference frames
 Else if (list0_best_filter == OFF && list1_best_filter == OFF)
-	Skip CDEF search; assume CDEF is off for this frame
+    Skip CDEF search; assume CDEF is off for this frame
 Else {
     add list0_best_filter to be tested
     if (list1_best_filter != list0_best_filter)
-	    add list1_best_filter to be tested
+        add list1_best_filter to be tested
     if (list0_best_filter_uv == OFF && list1_best_filter_uv == OFF)
-	    Disallow CDEF search for the chroma planes only
+        Disallow CDEF search for the chroma planes only
 }
 ```
 

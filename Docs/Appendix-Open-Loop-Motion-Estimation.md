@@ -21,7 +21,7 @@ refinement stage. Motion Estimation finds the best motion vector around the SB s
 
 ### Pre-Hierarchical Motion Estimation (pre-HME)
 
-The goal of pre-HME is to catch very high motion along the horizontal or vertical directions. 
+The goal of pre-HME is to catch very high motion along the horizontal or vertical directions.
 A narrow, long search is performed along each direction on the sixteenth-downsampled pictures
 (i.e. downsampling by a factor of 4 in each direction) as shown in Figure 1.
 
@@ -121,9 +121,9 @@ Similarly, if the HME output search centre is close to (0,0) the ME search regio
 IF (HME_search_centre_x <= MV_TH &&
      HME_search_centre_y <= MV_TH &&
      HME_SAD < stationary_sad_th)
-	Divide ME search width and height by stationary_divisor
+    Divide ME search width and height by stationary_divisor
 ELSE IF (HME_SAD < general_sad_th)
-	Divide ME search width and height by general_divisor
+    Divide ME search width and height by general_divisor
 ```
 
 Where the variables in the pseudo-code above correspond to the following signals in the code (set in ```set_me_sr_adjustment_ctrls()```):
