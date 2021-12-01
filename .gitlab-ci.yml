@@ -270,6 +270,20 @@ Linux Sanitizer Compile:
       - memory/
       - thread/
 
+Linux Integer Overflow Compile:
+  extends: .linux-compiler-base
+  variables:
+    CC: clang-10
+    CXX: clang++-10
+    CMAKE_BUILD_TYPE: Debug
+    EXTRA_CFLAGS: -fsanitize=signed-integer-overflow,unsigned-integer-overflow
+    EXTRA_CXXFLAGS: -fsanitize=signed-integer-overflow,unsigned-integer-overflow
+  artifacts:
+    untracked: false
+    expire_in: 1 days
+    paths:
+      - Bin/Debug/SvtAv1EncApp
+
 macOS (Static, Tests):
   extends: .macos-compiler-base
   variables:
@@ -482,6 +496,32 @@ Linux Intra Enc Test:
   artifacts: *enc-test-artifacts
   needs:
     - Linux (GCC 10)
+
+Linux Integer Overflow Test:
+  extends:
+    - .linux-test-base
+  stage: test
+  allow_failure: false
+  script:
+    - |
+      ret=true
+      ./Bin/Debug/SvtAv1EncApp --preset 2 -i "$SVT_ENCTEST_FILENAME" -n 17 -b "test-int-overflow-${BRANCH:-pr}-$(uname)-${SVT_ENCTEST_BITNESS}bit-m2.ivf" 2> "test-int-overflow-${BRANCH:-pr}-$(uname)-${SVT_ENCTEST_BITNESS}bit-m2.log"
+      ./Bin/Debug/SvtAv1EncApp --preset 8 -i "$SVT_ENCTEST_FILENAME" -n 120 -b "test-int-overflow-${BRANCH:-pr}-$(uname)-${SVT_ENCTEST_BITNESS}bit-m8.ivf" 2> "test-int-overflow-${BRANCH:-pr}-$(uname)-${SVT_ENCTEST_BITNESS}bit-m8.log"
+      num_errors=$(sort -u test-int-overflow-${BRANCH:-pr}-$(uname)-${SVT_ENCTEST_BITNESS}bit-m*.log | awk 'BEGIN{count=0}/error/ {print $0 > "/dev/stderr"; count=count+1} END{print count}')
+
+      if [[ $num_errors > 0 ]]; then
+        ret=false
+        echo "Found $num_errors integer overflows"
+      fi
+      $ret
+  parallel: &enc-test-parallel
+    matrix:
+      - SVT_ENCTEST_FILENAME: akiyo_cif.y4m
+        SVT_ENCTEST_BITNESS: 8
+      - SVT_ENCTEST_FILENAME: Chimera-Aerial_480x264_2997fps_10bit_420_150frames.y4m
+        SVT_ENCTEST_BITNESS: 10
+  needs:
+    - Linux Integer Overflow Compile
 
 Linux Default Branch:
   extends:
