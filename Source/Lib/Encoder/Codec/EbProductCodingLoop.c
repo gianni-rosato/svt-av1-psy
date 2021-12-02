@@ -1553,14 +1553,24 @@ void fast_loop_core_light_pd0(ModeDecisionCandidateBuffer* candidate_buffer, Pic
     int32_t ref_origin_index;
 
     if (list_idx_first == 0) {
+#if FTR_MEM_OPT
         ref_pic = get_ref_pic_buffer(pcs_ptr, context_ptr->hbd_mode_decision, 0, ref_idx_first);
+#else
+        ref_pic = context_ptr->hbd_mode_decision ? ((EbReferenceObject*)pcs_ptr->ref_pic_ptr_array[0][ref_idx_first]->object_ptr)->reference_picture16bit
+            : ((EbReferenceObject*)pcs_ptr->ref_pic_ptr_array[0][ref_idx_first]->object_ptr)->reference_picture;
+#endif
         ref_origin_index = ref_pic->origin_x +
             (context_ptr->blk_origin_x + (candidate_ptr->motion_vector_xl0 >> 3)) +
             (context_ptr->blk_origin_y + (candidate_ptr->motion_vector_yl0 >> 3) + ref_pic->origin_y) *
             ref_pic->stride_y;
     }
     else {
+#if FTR_MEM_OPT
         ref_pic = get_ref_pic_buffer(pcs_ptr, context_ptr->hbd_mode_decision, 1, ref_idx_first);
+#else
+        ref_pic = context_ptr->hbd_mode_decision ? ((EbReferenceObject*)pcs_ptr->ref_pic_ptr_array[1][ref_idx_first]->object_ptr)->reference_picture16bit
+            : ((EbReferenceObject*)pcs_ptr->ref_pic_ptr_array[1][ref_idx_first]->object_ptr)->reference_picture;
+#endif
         ref_origin_index = ref_pic->origin_x +
             (context_ptr->blk_origin_x + (candidate_ptr->motion_vector_xl1 >> 3)) +
             (context_ptr->blk_origin_y + (candidate_ptr->motion_vector_yl1 >> 3) + ref_pic->origin_y) *
@@ -3295,9 +3305,7 @@ void md_nsq_motion_search(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
                      ? EB_8_BIT_MD
                      : context_ptr->hbd_mode_decision;
 #endif
-#if !FTR_MEM_OPT
     EbReferenceObject *  ref_obj = pcs_ptr->ref_pic_ptr_array[list_idx][ref_idx]->object_ptr;
-#endif
     EbPictureBufferDesc *ref_pic =
 #if FTR_MEM_OPT
      get_ref_pic_buffer(pcs_ptr, hbd_mode_decision, list_idx, ref_idx);
@@ -3780,10 +3788,10 @@ int md_subpel_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_pt
     MSBuffers *ms_buffers = &ms_params->var_params.ms_buffers;
 
     // Ref buffer
+    EbReferenceObject *  ref_obj = pcs_ptr->ref_pic_ptr_array[list_idx][ref_idx]->object_ptr;
 #if FTR_MEM_OPT
     EbPictureBufferDesc *ref_pic = get_ref_pic_buffer(pcs_ptr, 0 /* 10BIT not supported*/, list_idx, ref_idx);
 #else
-    EbReferenceObject *  ref_obj = pcs_ptr->ref_pic_ptr_array[list_idx][ref_idx]->object_ptr;
     EbPictureBufferDesc *ref_pic = ref_obj->reference_picture; // 10BIT not supported
 #endif
     // -------
@@ -4061,9 +4069,7 @@ void read_refine_me_mvs(PictureControlSet *pcs_ptr, ModeDecisionContext *context
         if (rf[1] == NONE_FRAME) {
             uint8_t            list_idx = get_list_idx(rf[0]);
             uint8_t            ref_idx  = get_ref_frame_idx(rf[0]);
-#if !FTR_MEM_OPT
             EbReferenceObject *ref_obj  = pcs_ptr->ref_pic_ptr_array[list_idx][ref_idx]->object_ptr;
-#endif
             EbPictureBufferDesc *ref_pic =
 #if FTR_MEM_OPT
      get_ref_pic_buffer(pcs_ptr, hbd_mode_decision, list_idx, ref_idx);
@@ -4301,11 +4307,9 @@ void perform_md_reference_pruning(PictureControlSet *pcs_ptr, ModeDecisionContex
             for (int8_t mvp_index = 0; mvp_index < context_ptr->mvp_count[list_idx][ref_idx];
                  mvp_index++) {
                 // MVP Distortion
-#if !FTR_MEM_OPT
                 EbReferenceObject *ref_obj =
                     pcs_ptr->ref_pic_ptr_array[list_idx][ref_idx]->object_ptr;
 
-#endif
                 EbPictureBufferDesc *ref_pic =
 #if FTR_MEM_OPT
                get_ref_pic_buffer(pcs_ptr, hbd_mode_decision,  list_idx, ref_idx);
@@ -4415,10 +4419,8 @@ void perform_md_reference_pruning(PictureControlSet *pcs_ptr, ModeDecisionContex
                 // Round-up to the closest integer the ME MV
                 me_mv_x = (me_mv_x + 4) & ~0x07;
                 me_mv_y = (me_mv_y + 4) & ~0x07;
-#if !FTR_MEM_OPT
                 EbReferenceObject *ref_obj =
                     pcs_ptr->ref_pic_ptr_array[list_idx][ref_idx]->object_ptr;
-#endif
                 EbPictureBufferDesc *ref_pic =
 #if FTR_MEM_OPT
                get_ref_pic_buffer(pcs_ptr, hbd_mode_decision, list_idx, ref_idx);

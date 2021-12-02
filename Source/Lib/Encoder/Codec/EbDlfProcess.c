@@ -20,9 +20,7 @@
 #include "EbSequenceControlSet.h"
 #include "EbPictureControlSet.h"
 #include "aom_dsp_rtcd.h"
-#if FTR_MEM_OPT
- void get_recon_pic(PictureControlSet *pcs_ptr, EbPictureBufferDesc **recon_ptr, EbBool is_highbd);
-#endif
+void get_recon_pic(PictureControlSet *pcs_ptr, EbPictureBufferDesc **recon_ptr, EbBool is_highbd);
 void svt_av1_loop_restoration_save_boundary_lines(const Yv12BufferConfig *frame, Av1Common *cm,
                                                   int32_t after_cdef);
 void svt_convert_pic_8bit_to_16bit(EbPictureBufferDesc* src_8bit, EbPictureBufferDesc* dst_16bit, uint16_t ss_x, uint16_t ss_y);
@@ -87,6 +85,20 @@ void *dlf_kernel(void *input_ptr) {
                 pcs_ptr->input_frame16bit,
                 pcs_ptr->parent_pcs_ptr->scs_ptr->subsampling_x,
                 pcs_ptr->parent_pcs_ptr->scs_ptr->subsampling_y);
+#if FTR_BYPASS_ENCDEC
+            // convert 8-bit recon to 16-bit for it bypass encdec process
+            if (pcs_ptr->pic_bypass_encdec) {
+                EbPictureBufferDesc* recon_picture_ptr;
+                EbPictureBufferDesc* recon_picture_16bit_ptr;
+                get_recon_pic(pcs_ptr, &recon_picture_ptr, 0);
+                get_recon_pic(pcs_ptr, &recon_picture_16bit_ptr, 1);
+                svt_convert_pic_8bit_to_16bit(
+                    recon_picture_ptr,
+                    recon_picture_16bit_ptr,
+                    pcs_ptr->parent_pcs_ptr->scs_ptr->subsampling_x,
+                    pcs_ptr->parent_pcs_ptr->scs_ptr->subsampling_y);
+            }
+#endif
         }
 #if CLN_DLF_SIGNALS
         EbBool   dlf_enable_flag = (EbBool)pcs_ptr->parent_pcs_ptr->dlf_ctrls.enabled;
@@ -105,25 +117,7 @@ void *dlf_kernel(void *input_ptr) {
              total_tile_cnt > 1)) {
 #endif
             EbPictureBufferDesc *recon_buffer;
-
-#if FTR_MEM_OPT
-
-
-    get_recon_pic(pcs_ptr, &recon_buffer, is_16bit);
-#else
-            if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE)
-                recon_buffer = (scs_ptr->static_config.is_16bit_pipeline || is_16bit)
-                    ? ((EbReferenceObject *)
-                           pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
-                          ->reference_picture16bit
-                    : ((EbReferenceObject *)
-                           pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
-                          ->reference_picture;
-            else
-                recon_buffer = scs_ptr->static_config.is_16bit_pipeline || is_16bit
-                    ? pcs_ptr->parent_pcs_ptr->enc_dec_ptr->recon_picture16bit_ptr
-                    : pcs_ptr->parent_pcs_ptr->enc_dec_ptr->recon_picture_ptr;
-#endif
+            get_recon_pic(pcs_ptr, &recon_buffer, is_16bit);
             svt_av1_loop_filter_init(pcs_ptr);
 #if !CLN_DLF_SIGNALS
             if (pcs_ptr->parent_pcs_ptr->loop_filter_mode == 2) {
@@ -152,36 +146,7 @@ void *dlf_kernel(void *input_ptr) {
         {
             Av1Common *          cm = pcs_ptr->parent_pcs_ptr->av1_cm;
             EbPictureBufferDesc *recon_picture_ptr;
-#if FTR_MEM_OPT
-
-
-    get_recon_pic(pcs_ptr, &recon_picture_ptr, is_16bit);
-#else
-            if (is_16bit) {
-                if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE)
-                    recon_picture_ptr = ((EbReferenceObject *)pcs_ptr->parent_pcs_ptr
-                                             ->reference_picture_wrapper_ptr->object_ptr)
-                                            ->reference_picture16bit;
-                else
-                    recon_picture_ptr = pcs_ptr->parent_pcs_ptr->enc_dec_ptr->recon_picture16bit_ptr;
-            } else {
-                if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE)
-                    recon_picture_ptr = ((EbReferenceObject *)pcs_ptr->parent_pcs_ptr
-                                             ->reference_picture_wrapper_ptr->object_ptr)
-                                            ->reference_picture;
-                else
-                    recon_picture_ptr = pcs_ptr->parent_pcs_ptr->enc_dec_ptr->recon_picture_ptr;
-            }
-            if (scs_ptr->static_config.is_16bit_pipeline) {
-                if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE) {
-                    recon_picture_ptr = ((EbReferenceObject *)pcs_ptr->parent_pcs_ptr
-                                             ->reference_picture_wrapper_ptr->object_ptr)
-                                            ->reference_picture16bit;
-                } else {
-                    recon_picture_ptr = pcs_ptr->parent_pcs_ptr->enc_dec_ptr->recon_picture16bit_ptr;
-                }
-            }
-#endif
+            get_recon_pic(pcs_ptr, &recon_picture_ptr, is_16bit);
             link_eb_to_aom_buffer_desc(recon_picture_ptr,
                                        cm->frame_to_show,
                                        scs_ptr->max_input_pad_right,

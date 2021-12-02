@@ -664,8 +664,8 @@ EbErrorType load_default_buffer_configuration_settings(
         uint32_t eos_delay = 1;
 
         //Minimum input pictures needed in the pipeline
-        uint16_t lad_mg_pictures = (1 + mg_size + overlay) * scs_ptr->lad_mg; //Unit= 1(provision for a potential delayI) + prediction struct + potential overlay
-        return_ppcs = (1 + mg_size) * (scs_ptr->lad_mg + 1)  + scs_ptr->scd_delay + eos_delay;
+        uint16_t lad_mg_pictures = (1 + mg_size + overlay) * scs_ptr->lad_mg; //Unit= 1(provision for a potential delayI) + prediction struct + potential overlay        return_ppcs = (1 + mg_size) * (scs_ptr->lad_mg + 1)  + scs_ptr->scd_delay + eos_delay;
+        return_ppcs = (1 + mg_size) * (scs_ptr->lad_mg + 1) + scs_ptr->scd_delay + eos_delay;
         //scs_ptr->input_buffer_fifo_init_count = return_ppcs;
         min_input = return_ppcs;
 
@@ -697,28 +697,37 @@ EbErrorType load_default_buffer_configuration_settings(
 
         if (use_output_stat(scs_ptr))
             min_me = min_parent;
+#if DEBUG_SR_MEM_OPTM
         else if (scs_ptr->static_config.enable_tpl_la) {
             // PictureDecisionContext.mg_size = mg_size + overlay; see EbPictureDecisionProcess.c line 5680
-            min_me = lad_mg_pictures +      // 1 + 16 + 1 ME data used in store_tpl_pictures() at line 5717
-                     (mg_size + overlay) +  //     16 + 1 ME data used in store_tpl_pictures() at line 5729
-                     scs_ptr->scd_delay;
+            min_me = 1 +                  // potential delay I
+                     lad_mg_pictures +    // 16 + 1 ME data used in store_tpl_pictures() at line 5717
+                     (mg_size + overlay); // 16 + 1 ME data used in store_tpl_pictures() at line 5729
         }
         else
             min_me = 1;
+#else
+        // for super-res need to disable tpl-la but tpl-la should be enable to avoid freeze, fix me at SR MR5
+        else {
+            // PictureDecisionContext.mg_size = mg_size + overlay; see EbPictureDecisionProcess.c line 5680
+            min_me = 1 +                  // potential delay I
+                     lad_mg_pictures +    // 16 + 1 ME data used in store_tpl_pictures() at line 5717
+                     (mg_size + overlay); // 16 + 1 ME data used in store_tpl_pictures() at line 5729
+        }
+#endif
 
         //PA REF
         uint16_t num_pa_ref_from_past_mgs = tot_past_refs[scs_ptr->static_config.hierarchical_levels];
         //printf("TOT_PAST_REFs:%i \n", num_pa_ref_from_past_mgs);
         uint16_t num_pa_ref_from_cur_mg = mg_size; //ref+nref; nRef PA buffers are processed in PicAnalysis and used in TF
         uint16_t num_pa_ref_for_cur_mg = num_pa_ref_from_past_mgs + num_pa_ref_from_cur_mg;
-        min_paref = num_pa_ref_for_cur_mg + lad_mg_pictures + scs_ptr->scd_delay + eos_delay ;
+        min_paref = num_pa_ref_for_cur_mg + 1 + lad_mg_pictures + scs_ptr->scd_delay + eos_delay ;
         if (scs_ptr->static_config.enable_overlays) {
             // the additional paref count for overlay is mg_size + scs_ptr->scd_delay.
             // in resource_coordination, allocate 1 additional paref for each potential overlay picture in minigop. (line 1259)
             // in picture_decision, for each minigop, keep 1 paref for the real overlay picture and release others. (line 5109)
             min_paref += mg_size + scs_ptr->scd_delay; // min_paref *= 2;
         }
-
         //Overlays
         min_overlay = scs_ptr->static_config.enable_overlays ?
               mg_size + eos_delay + scs_ptr->scd_delay : 1;
@@ -758,7 +767,6 @@ EbErrorType load_default_buffer_configuration_settings(
     }
 #endif
 
-
     if (core_count == SINGLE_CORE_COUNT || MIN_PIC_PARALLELIZATION) {
         scs_ptr->input_buffer_fifo_init_count                  = min_input;
         scs_ptr->picture_control_set_pool_init_count           = min_parent;
@@ -777,32 +785,36 @@ EbErrorType load_default_buffer_configuration_settings(
         scs_ptr->picture_control_set_pool_init_count = clamp(max_parent, min_parent, max_parent);
         scs_ptr->pa_reference_picture_buffer_init_count = clamp(max_paref, min_paref, max_paref);
         scs_ptr->output_recon_buffer_fifo_init_count = scs_ptr->reference_picture_buffer_init_count = clamp(max_ref, min_ref, max_ref);
-        scs_ptr->picture_control_set_pool_init_count_child = scs_ptr->enc_dec_pool_init_count = clamp(2, min_child, max_child);
+        scs_ptr->picture_control_set_pool_init_count_child = scs_ptr->enc_dec_pool_init_count = clamp(2, min_child, max_child) + superres_count;
         scs_ptr->me_pool_init_count = clamp(max_me, min_me, max_me);
+        scs_ptr->overlay_input_picture_buffer_init_count = min_overlay;
     }
     else if (core_count <= PARALLEL_LEVEL_3) {
         scs_ptr->input_buffer_fifo_init_count = clamp(max_input, min_input, max_input);
         scs_ptr->picture_control_set_pool_init_count = clamp(max_parent, min_parent, max_parent);
         scs_ptr->pa_reference_picture_buffer_init_count = clamp(max_paref, min_paref, max_paref);
         scs_ptr->output_recon_buffer_fifo_init_count = scs_ptr->reference_picture_buffer_init_count = clamp(max_ref, min_ref, max_ref);
-        scs_ptr->picture_control_set_pool_init_count_child = scs_ptr->enc_dec_pool_init_count = clamp(4, min_child, max_child);
+        scs_ptr->picture_control_set_pool_init_count_child = scs_ptr->enc_dec_pool_init_count = clamp(4, min_child, max_child) + superres_count;
         scs_ptr->me_pool_init_count = clamp(max_me, min_me, max_me);
+        scs_ptr->overlay_input_picture_buffer_init_count = min_overlay;
     }
     else if (core_count <= PARALLEL_LEVEL_4) {
         scs_ptr->input_buffer_fifo_init_count = clamp(max_input, min_input, max_input);
         scs_ptr->picture_control_set_pool_init_count = clamp(max_parent, min_parent, max_parent);
         scs_ptr->pa_reference_picture_buffer_init_count = clamp(max_paref, min_paref, max_paref);
         scs_ptr->output_recon_buffer_fifo_init_count = scs_ptr->reference_picture_buffer_init_count = clamp(max_ref, min_ref, max_ref);
-        scs_ptr->picture_control_set_pool_init_count_child = scs_ptr->enc_dec_pool_init_count = clamp(6, min_child, max_child);
+        scs_ptr->picture_control_set_pool_init_count_child = scs_ptr->enc_dec_pool_init_count = clamp(6, min_child, max_child) + superres_count;
         scs_ptr->me_pool_init_count = clamp(max_me, min_me, max_me);
+        scs_ptr->overlay_input_picture_buffer_init_count = min_overlay;
     }
     else {
         scs_ptr->input_buffer_fifo_init_count = clamp(max_input, min_input, max_input);
         scs_ptr->picture_control_set_pool_init_count = clamp(max_parent, min_parent, max_parent);
         scs_ptr->pa_reference_picture_buffer_init_count = clamp(max_paref, min_paref, max_paref);
         scs_ptr->output_recon_buffer_fifo_init_count = scs_ptr->reference_picture_buffer_init_count = clamp(max_ref, min_ref, max_ref);
-        scs_ptr->picture_control_set_pool_init_count_child = scs_ptr->enc_dec_pool_init_count = clamp(max_child, min_child, max_child);
+        scs_ptr->picture_control_set_pool_init_count_child = scs_ptr->enc_dec_pool_init_count = clamp(max_child, min_child, max_child) + superres_count;
         scs_ptr->me_pool_init_count = clamp(max_me, min_me, max_me);
+        scs_ptr->overlay_input_picture_buffer_init_count = min_overlay;
     }
 #else
     else {
@@ -836,7 +848,7 @@ EbErrorType load_default_buffer_configuration_settings(
             scs_ptr->picture_control_set_pool_init_count = MAX(min_parent, scs_ptr->picture_control_set_pool_init_count);
             scs_ptr->pa_reference_picture_buffer_init_count = MAX(min_paref, scs_ptr->pa_reference_picture_buffer_init_count);
             scs_ptr->reference_picture_buffer_init_count = 2 * MAX(min_ref, scs_ptr->reference_picture_buffer_init_count);
-            scs_ptr->picture_control_set_pool_init_count_child = MAX(min_child, scs_ptr->picture_control_set_pool_init_count_child);
+            scs_ptr->picture_control_set_pool_init_count_child = MAX(min_child, scs_ptr->picture_control_set_pool_init_count_child) + superres_count;
             scs_ptr->overlay_input_picture_buffer_init_count = MAX(min_overlay, scs_ptr->overlay_input_picture_buffer_init_count);
 
             scs_ptr->me_pool_init_count = MAX(min_me, scs_ptr->picture_control_set_pool_init_count);
@@ -1332,6 +1344,10 @@ EbErrorType svt_input_buffer_header_creator(
     EbPtr  object_init_data_ptr);
 
 EbErrorType svt_output_recon_buffer_header_creator(
+    EbPtr *object_dbl_ptr,
+    EbPtr  object_init_data_ptr);
+
+EbErrorType svt_overlay_buffer_header_creator(
     EbPtr *object_dbl_ptr,
     EbPtr  object_init_data_ptr);
 
@@ -1997,7 +2013,7 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
                 enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->overlay_input_picture_buffer_init_count,
                 1,
                 0,
-                svt_input_buffer_header_creator,
+                svt_overlay_buffer_header_creator,
                 enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr,
                 svt_input_buffer_header_destroyer);
             // Set the SequenceControlSet Overlay input Picture Pool Fifo Ptrs
@@ -2634,7 +2650,8 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
         packetization_context_ctor,
         enc_handle_ptr,
         rate_control_port_lookup(RATE_CONTROL_INPUT_PORT_PACKETIZATION, 0),
-        pic_mgr_port_lookup(PIC_MGR_INPUT_PORT_PACKETIZATION, 0));
+        pic_mgr_port_lookup(PIC_MGR_INPUT_PORT_PACKETIZATION, 0),
+        EB_PictureDecisionProcessInitCount + EB_RateControlProcessInitCount);  // me_port_index
 #else
     EB_NEW(
         enc_handle_ptr->packetization_context_ptr,
@@ -8656,7 +8673,8 @@ EbErrorType init_svt_av1_encoder_handle(
 
 static EbErrorType allocate_frame_buffer(
     SequenceControlSet       *scs_ptr,
-    EbBufferHeaderType        *input_buffer)
+    EbBufferHeaderType       *input_buffer,
+    EbBool                   noy8b)
 {
     EbErrorType   return_error = EB_ErrorNone;
     EbPictureBufferDescInitData input_pic_buf_desc_init_data;
@@ -8695,16 +8713,22 @@ static EbErrorType allocate_frame_buffer(
     // Enhanced Picture Buffer
     {
         EbPictureBufferDesc* buf;
+#if !OPT_PA_REF
+        noy8b = EB_FALSE;
+#endif
+        if (!noy8b) {
+            EB_NEW(
+                buf,
+                svt_picture_buffer_desc_ctor,
+                (EbPtr)&input_pic_buf_desc_init_data);
+        }
 #if OPT_PA_REF
-        EB_NEW(
-            buf,
+        else {
+            EB_NEW(
+                buf,
                 svt_picture_buffer_desc_ctor_noy8b,
                 (EbPtr)&input_pic_buf_desc_init_data);
-#else
-        EB_NEW(
-            buf,
-            svt_picture_buffer_desc_ctor,
-            (EbPtr)&input_pic_buf_desc_init_data);
+        }
 #endif
         input_buffer->p_buffer = (uint8_t*)buf;
 
@@ -8712,14 +8736,14 @@ static EbErrorType allocate_frame_buffer(
         if (is_16bit && config->compressed_ten_bit_format == 1) {
             //pack 4 2bit pixels into 1Byte
             EB_MALLOC_ALIGNED_ARRAY(buf->buffer_bit_inc_y,
-                 (input_pic_buf_desc_init_data.max_width / 4)*
-                 (input_pic_buf_desc_init_data.max_height));
+                (input_pic_buf_desc_init_data.max_width / 4) *
+                (input_pic_buf_desc_init_data.max_height));
             EB_MALLOC_ALIGNED_ARRAY(buf->buffer_bit_inc_cb,
-                 (input_pic_buf_desc_init_data.max_width / 8)*
-                 (input_pic_buf_desc_init_data.max_height / 2));
+                (input_pic_buf_desc_init_data.max_width / 8) *
+                (input_pic_buf_desc_init_data.max_height / 2));
             EB_MALLOC_ALIGNED_ARRAY(buf->buffer_bit_inc_cr,
-                 (input_pic_buf_desc_init_data.max_width / 8)*
-                 (input_pic_buf_desc_init_data.max_height / 2));
+                (input_pic_buf_desc_init_data.max_width / 8) *
+                (input_pic_buf_desc_init_data.max_height / 2));
         }
 #endif
     }
@@ -8843,7 +8867,8 @@ EbErrorType svt_input_buffer_header_creator(
 
     EbErrorType return_error = allocate_frame_buffer(
         scs_ptr,
-        input_buffer);
+        input_buffer,
+        EB_TRUE);
     if (return_error != EB_ErrorNone)
         return return_error;
 
@@ -8864,6 +8889,31 @@ void svt_input_buffer_header_destroyer(    EbPtr p)
 
     EB_DELETE(buf);
     EB_FREE(obj);
+}
+
+EbErrorType svt_overlay_buffer_header_creator(
+    EbPtr* object_dbl_ptr,
+    EbPtr  object_init_data_ptr)
+{
+    EbBufferHeaderType* input_buffer;
+    SequenceControlSet* scs_ptr = (SequenceControlSet*)object_init_data_ptr;
+
+    *object_dbl_ptr = NULL;
+    EB_CALLOC(input_buffer, 1, sizeof(EbBufferHeaderType));
+    *object_dbl_ptr = (EbPtr)input_buffer;
+    // Initialize Header
+    input_buffer->size = sizeof(EbBufferHeaderType);
+
+    EbErrorType return_error = allocate_frame_buffer(
+        scs_ptr,
+        input_buffer,
+        EB_FALSE);
+    if (return_error != EB_ErrorNone)
+        return return_error;
+
+    input_buffer->p_app_private = NULL;
+
+    return EB_ErrorNone;
 }
 
 /**************************************

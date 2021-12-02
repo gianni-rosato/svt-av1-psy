@@ -8491,6 +8491,7 @@ uint32_t get_blk_tuned_full_lambda(struct ModeDecisionContext *context_ptr, Pict
 
         context_ptr->fast_lambda_md[EB_8_BIT_MD] = SUPERRES_INVALID_STATE;
         context_ptr->fast_lambda_md[EB_10_BIT_MD] = SUPERRES_INVALID_STATE;
+        return;
 #else
         return SUPERRES_INVALID_STATE;
 #endif

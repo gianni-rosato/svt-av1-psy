@@ -37,9 +37,7 @@ void av1_set_ref_frame(MvReferenceFrame *rf, int8_t ref_frame_type);
 #if !LIGHT_PD1_MACRO
 uint8_t av1_drl_ctx(const CandidateMv *ref_mv_stack, int32_t ref_idx);
 #endif
-#if FTR_MEM_OPT
- void get_recon_pic(PictureControlSet *pcs_ptr, EbPictureBufferDesc **recon_ptr, EbBool is_highbd);
-#endif
+void get_recon_pic(PictureControlSet *pcs_ptr, EbPictureBufferDesc **recon_ptr, EbBool is_highbd);
 #if OPT_MEM_PALETTE
  int svt_av1_allow_palette(int allow_palette, BlockSize sb_type);
 
@@ -1392,22 +1390,7 @@ void perform_intra_coding_loop(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, u
     uint64_t        cb_txb_coeff_bits;
     uint64_t        cr_txb_coeff_bits;
 #endif
-#if FTR_MEM_OPT
     get_recon_pic (pcs_ptr,&recon_buffer,is_16bit);
-#else
-    if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE)
-        //get the 16bit form of the input SB
-        if (is_16bit)
-            recon_buffer = ((EbReferenceObject *)
-                                pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
-                               ->reference_picture16bit;
-        else
-            recon_buffer = ((EbReferenceObject *)
-                                pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
-                               ->reference_picture;
-    else // non ref pictures
-        recon_buffer = is_16bit ? pcs_ptr->parent_pcs_ptr->enc_dec_ptr->recon_picture16bit_ptr : pcs_ptr->parent_pcs_ptr->enc_dec_ptr->recon_picture_ptr;
-#endif
     uint32_t tot_tu = context_ptr->blk_geom->txb_count[blk_ptr->tx_depth];
 #if SANITIZER_FIX
     uint32_t        sb_size_luma   = pcs_ptr->parent_pcs_ptr->scs_ptr->sb_size_pix;
@@ -2157,17 +2140,7 @@ void convert_recon_16bit_to_8bit(PictureControlSet *pcs, EncDecContext *ctx){
 
     EbPictureBufferDesc *recon_buffer_16bit;
     EbPictureBufferDesc *recon_buffer_8bit;
-#if FTR_MEM_OPT
     get_recon_pic (pcs,&recon_buffer_16bit,1);
-#else
-    if (pcs->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE)
-        //get the 16bit form of the input SB
-        recon_buffer_16bit = ((EbReferenceObject *)pcs->parent_pcs_ptr
-            ->reference_picture_wrapper_ptr->object_ptr)
-        ->reference_picture16bit;
-    else // non ref pictures
-        recon_buffer_16bit = pcs->parent_pcs_ptr->enc_dec_ptr->recon_picture16bit_ptr;
-#endif
     if (pcs->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE)
         //get the 16bit form of the input SB
         recon_buffer_8bit = ((EbReferenceObject *)pcs->parent_pcs_ptr
@@ -2282,17 +2255,7 @@ void perform_inter_coding_loop(SequenceControlSet *scs, PictureControlSet *pcs,
         : pcs->ep_cr_recon_neighbor_array[tile_idx];
 
 
-#if FTR_MEM_OPT
     get_recon_pic(pcs, &recon_buffer, is_16bit);
-#else
-    if (pcs->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE)
-        if (is_16bit)
-            recon_buffer = ((EbReferenceObject*)pcs->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->reference_picture16bit;
-        else
-            recon_buffer = ((EbReferenceObject*)pcs->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->reference_picture;
-    else // non ref pictures
-        recon_buffer = is_16bit ? pcs->parent_pcs_ptr->enc_dec_ptr->recon_picture16bit_ptr : pcs->parent_pcs_ptr->enc_dec_ptr->recon_picture_ptr;
-#endif
 #if !REFCTR_SEP_ENCDEC
     //keep final usefull mvp for entropy
     svt_memcpy(blk_ptr->av1xd->final_ref_mv_stack,
@@ -2331,21 +2294,8 @@ void perform_inter_coding_loop(SequenceControlSet *scs, PictureControlSet *pcs,
     EbPictureBufferDesc             *ref_pic_list0;
     EbPictureBufferDesc             *ref_pic_list1;
     if (blk_ptr->use_intrabc) {
-
-
-#if FTR_MEM_OPT
         get_recon_pic(pcs, &ref_pic_list0, is_16bit);
-#else
-        ref_pic_list0 =
-            is_16bit ?
-            ((EbReferenceObject *)pcs->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->reference_picture16bit :
-            ((EbReferenceObject *)pcs->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->reference_picture;
-#endif
-
-
-
         ref_pic_list1 = (EbPictureBufferDesc*)NULL;
-
     }
     else {
         MvReferenceFrame rf[2];
@@ -2420,71 +2370,38 @@ void perform_inter_coding_loop(SequenceControlSet *scs, PictureControlSet *pcs,
             EB_TRUE,
             EB_TRUE);
     } else {
-        if (is_16bit && !(scs->static_config.superres_mode > SUPERRES_NONE)) {
-            av1_inter_prediction_16bit_pipeline(
-                pcs,
-                blk_ptr->interp_filters,
-                blk_ptr,
-                blk_ptr->prediction_unit_array->ref_frame_type,
-                &ctx->mv_unit,
-                blk_ptr->use_intrabc,
-                blk_ptr->prediction_unit_array->motion_mode,
-                0, //use_precomputed_obmc,
-                0,
-                blk_ptr->compound_idx,
-                &blk_ptr->interinter_comp,
-                ep_luma_recon_neighbor_array,
-                ep_cb_recon_neighbor_array,
-                ep_cr_recon_neighbor_array,
-                blk_ptr->is_interintra_used,
-                blk_ptr->interintra_mode,
-                blk_ptr->use_wedge_interintra,
-                blk_ptr->interintra_wedge_index,
-                ctx->blk_origin_x,
-                ctx->blk_origin_y,
-                blk_geom->bwidth,
-                blk_geom->bheight,
-                ref_pic_list0,
-                ref_pic_list1,
-                recon_buffer,
-                ctx->blk_origin_x,
-                ctx->blk_origin_y,
-                EB_TRUE,
-                (uint8_t)scs->static_config.encoder_bit_depth);
-        }
-        else {
-            av1_inter_prediction(
-                scs,
-                pcs,
-                blk_ptr->interp_filters,
-                blk_ptr,
-                blk_ptr->prediction_unit_array->ref_frame_type,
-                &ctx->mv_unit,
-                blk_ptr->use_intrabc,
-                blk_ptr->prediction_unit_array->motion_mode,
-                0, //use_precomputed_obmc,
-                0,
-                blk_ptr->compound_idx,
-                &blk_ptr->interinter_comp,
-                ep_luma_recon_neighbor_array,
-                ep_cb_recon_neighbor_array,
-                ep_cr_recon_neighbor_array,
-                blk_ptr->is_interintra_used,
-                blk_ptr->interintra_mode,
-                blk_ptr->use_wedge_interintra,
-                blk_ptr->interintra_wedge_index,
-                ctx->blk_origin_x,
-                ctx->blk_origin_y,
-                blk_geom->bwidth,
-                blk_geom->bheight,
-                ref_pic_list0,
-                ref_pic_list1,
-                recon_buffer,
-                ctx->blk_origin_x,
-                ctx->blk_origin_y,
-                PICTURE_BUFFER_DESC_FULL_MASK,
-                (uint8_t)scs->static_config.encoder_bit_depth);
-        }
+        av1_inter_prediction(
+            scs,
+            pcs,
+            blk_ptr->interp_filters,
+            blk_ptr,
+            blk_ptr->prediction_unit_array->ref_frame_type,
+            &ctx->mv_unit,
+            blk_ptr->use_intrabc,
+            blk_ptr->prediction_unit_array->motion_mode,
+            0, //use_precomputed_obmc,
+            0,
+            blk_ptr->compound_idx,
+            &blk_ptr->interinter_comp,
+            ep_luma_recon_neighbor_array,
+            ep_cb_recon_neighbor_array,
+            ep_cr_recon_neighbor_array,
+            blk_ptr->is_interintra_used,
+            blk_ptr->interintra_mode,
+            blk_ptr->use_wedge_interintra,
+            blk_ptr->interintra_wedge_index,
+            ctx->blk_origin_x,
+            ctx->blk_origin_y,
+            blk_geom->bwidth,
+            blk_geom->bheight,
+            ref_pic_list0,
+            ref_pic_list1,
+            recon_buffer,
+            ctx->blk_origin_x,
+            ctx->blk_origin_y,
+            PICTURE_BUFFER_DESC_FULL_MASK,
+            (uint8_t)scs->static_config.encoder_bit_depth,
+            is_16bit);
     }
 
     // Transform Loop
@@ -3013,18 +2930,7 @@ EB_EXTERN void av1_encode_decode(SequenceControlSet *scs, PictureControlSet *pcs
         : pcs->ep_cr_recon_neighbor_array[tile_idx];
     NeighborArrayUnit *ep_skip_flag_neighbor_array = pcs->ep_skip_flag_neighbor_array[tile_idx];
 
-#if FTR_MEM_OPT
     get_recon_pic(pcs, &recon_buffer, is_16bit);
-#else
-    if (pcs->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE)
-        //get the 16bit form of the input SB
-        if (is_16bit)
-            recon_buffer = ((EbReferenceObject*)pcs->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->reference_picture16bit;
-        else
-            recon_buffer = ((EbReferenceObject*)pcs->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->reference_picture;
-    else // non ref pictures
-        recon_buffer = is_16bit ? pcs->parent_pcs_ptr->enc_dec_ptr->recon_picture16bit_ptr : pcs->parent_pcs_ptr->enc_dec_ptr->recon_picture_ptr;
-#endif
     // Pad/Pack/compress the input picture
     prepare_input_picture(scs, pcs, ctx, input_picture, sb_org_x, sb_org_y);
 
@@ -3352,20 +3258,7 @@ EB_EXTERN void av1_encdec_update(SequenceControlSet *scs, PictureControlSet *pcs
     uint16_t total_tile_cnt = pcs->parent_pcs_ptr->av1_cm->tiles_info.tile_cols *
         pcs->parent_pcs_ptr->av1_cm->tiles_info.tile_rows;
 
-#if FTR_MEM_OPT
-
-
     get_recon_pic(pcs, &recon_buffer, is_16bit);
-#else
-    if (pcs->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE)
-        //get the 16bit form of the input SB
-        if (is_16bit)
-            recon_buffer = ((EbReferenceObject*)pcs->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->reference_picture16bit;
-        else
-            recon_buffer = ((EbReferenceObject*)pcs->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->reference_picture;
-    else // non ref pictures
-        recon_buffer = is_16bit ? pcs->parent_pcs_ptr->enc_dec_ptr->recon_picture16bit_ptr : pcs->parent_pcs_ptr->enc_dec_ptr->recon_picture_ptr;
-#endif
     ctx->coded_area_sb = 0;
     ctx->coded_area_sb_uv = 0;
 #if FTR_VLPD1

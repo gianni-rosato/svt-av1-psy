@@ -313,7 +313,7 @@ EbErrorType svt_picture_buffer_desc_ctor(EbPictureBufferDesc *pictureBufferDescP
 
     // Allocate the Picture Buffers (luma & chroma)
     if (picture_buffer_desc_init_data_ptr->buffer_enable_mask & PICTURE_BUFFER_DESC_Y_FLAG) {
-#if SS_OPT_INIT
+#if SS_OPT_INIT && !FIX_MSAN_UNINIT_MEM
         EB_MALLOC_ALIGNED_ARRAY(pictureBufferDescPtr->buffer_y,
             pictureBufferDescPtr->luma_size * bytes_per_pixel);
 #else
@@ -322,7 +322,7 @@ EbErrorType svt_picture_buffer_desc_ctor(EbPictureBufferDesc *pictureBufferDescP
 #endif
         pictureBufferDescPtr->buffer_bit_inc_y = 0;
         if (picture_buffer_desc_init_data_ptr->split_mode == EB_TRUE) {
-#if SS_OPT_INIT
+#if SS_OPT_INIT && !FIX_MSAN_UNINIT_MEM
             EB_MALLOC_ALIGNED_ARRAY(pictureBufferDescPtr->buffer_bit_inc_y,
                 pictureBufferDescPtr->luma_size * bytes_per_pixel);
 #else
@@ -333,7 +333,7 @@ EbErrorType svt_picture_buffer_desc_ctor(EbPictureBufferDesc *pictureBufferDescP
     }
 
     if (picture_buffer_desc_init_data_ptr->buffer_enable_mask & PICTURE_BUFFER_DESC_Cb_FLAG) {
-#if SS_OPT_INIT
+#if SS_OPT_INIT && !FIX_MSAN_UNINIT_MEM
         EB_MALLOC_ALIGNED_ARRAY(pictureBufferDescPtr->buffer_cb,
             pictureBufferDescPtr->chroma_size * bytes_per_pixel);
 #else
@@ -342,7 +342,7 @@ EbErrorType svt_picture_buffer_desc_ctor(EbPictureBufferDesc *pictureBufferDescP
 #endif
         pictureBufferDescPtr->buffer_bit_inc_cb = 0;
         if (picture_buffer_desc_init_data_ptr->split_mode == EB_TRUE) {
-#if SS_OPT_INIT
+#if SS_OPT_INIT && !FIX_MSAN_UNINIT_MEM
             EB_MALLOC_ALIGNED_ARRAY(pictureBufferDescPtr->buffer_bit_inc_cb,
                 pictureBufferDescPtr->chroma_size * bytes_per_pixel);
 #else
@@ -353,7 +353,7 @@ EbErrorType svt_picture_buffer_desc_ctor(EbPictureBufferDesc *pictureBufferDescP
     }
 
     if (picture_buffer_desc_init_data_ptr->buffer_enable_mask & PICTURE_BUFFER_DESC_Cr_FLAG) {
-#if SS_OPT_INIT
+#if SS_OPT_INIT && !FIX_MSAN_UNINIT_MEM
         EB_MALLOC_ALIGNED_ARRAY(pictureBufferDescPtr->buffer_cr,
             pictureBufferDescPtr->chroma_size * bytes_per_pixel);
 #else
@@ -362,7 +362,7 @@ EbErrorType svt_picture_buffer_desc_ctor(EbPictureBufferDesc *pictureBufferDescP
 #endif
         pictureBufferDescPtr->buffer_bit_inc_cr = 0;
         if (picture_buffer_desc_init_data_ptr->split_mode == EB_TRUE) {
-#if SS_OPT_INIT
+#if SS_OPT_INIT && !FIX_MSAN_UNINIT_MEM
             EB_MALLOC_ALIGNED_ARRAY(pictureBufferDescPtr->buffer_bit_inc_cr,
                 pictureBufferDescPtr->chroma_size * bytes_per_pixel);
 #else

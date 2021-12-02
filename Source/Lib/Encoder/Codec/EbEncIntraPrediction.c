@@ -92,6 +92,8 @@ static void build_intra_predictors(
     const uint8_t *left_ref = left_neigh_array;//CHKN ref - 1;
     DECLARE_ALIGNED(32, uint8_t, left_data[MAX_TX_SIZE * 2 + 48]);
     DECLARE_ALIGNED(32, uint8_t, above_data[MAX_TX_SIZE * 2 + 48]);
+    memset(left_data, 0x80, sizeof(left_data));
+    memset(above_data, 0x80, sizeof(above_data));
     uint8_t *const above_row = above_data + 32;
     uint8_t *const left_col = left_data + 32;
 
@@ -268,6 +270,8 @@ static void build_intra_predictors_high(
 
     DECLARE_ALIGNED(16, uint16_t, left_data[MAX_TX_SIZE * 2 + 32]);
     DECLARE_ALIGNED(16, uint16_t, above_data[MAX_TX_SIZE * 2 + 32]);
+    memset(left_data, 0x80, sizeof(left_data));
+    memset(above_data, 0x80, sizeof(above_data));
     uint16_t *const above_row = above_data + 16;
     uint16_t *const left_col = left_data + 16;
     const int32_t txwpx = tx_size_wide[tx_size];

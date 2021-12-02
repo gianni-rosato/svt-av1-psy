@@ -576,6 +576,7 @@ void recon_output(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr) {
             uint8_t *recon_write_ptr;
 
             EbPictureBufferDesc *recon_ptr;
+            EbPictureBufferDesc *intermediate_buffer_ptr = NULL;
             {
 #if FTR_MEM_OPT
 
@@ -599,18 +600,33 @@ void recon_output(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr) {
 
             // FGN: Create a buffer if needed, copy the reconstructed picture and run the film grain synthesis algorithm
 
-            if (scs_ptr->seq_header.film_grain_params_present
+            if (!use_output_stat(scs_ptr)
+                && scs_ptr->seq_header.film_grain_params_present
                 && pcs_ptr->parent_pcs_ptr->frm_hdr.film_grain_params.apply_grain) {
-                EbPictureBufferDesc *intermediate_buffer_ptr;
-                {   // temp_lf_recon_picture_ptr is finished in use
-                    // and reuse it to copy recon and add film grain noise
-                    if (is_16bit)
-                        intermediate_buffer_ptr = pcs_ptr->temp_lf_recon_picture16bit_ptr;
-                    else
-                        intermediate_buffer_ptr = pcs_ptr->temp_lf_recon_picture_ptr;
+                AomFilmGrain *film_grain_ptr;
+
+                uint16_t padding = scs_ptr->static_config.super_block_size + 32;
+                EbPictureBufferDescInitData temp_recon_desc_init_data;
+                temp_recon_desc_init_data.max_width          = (uint16_t)scs_ptr->max_input_luma_width;
+                temp_recon_desc_init_data.max_height         = (uint16_t)scs_ptr->max_input_luma_height;
+                temp_recon_desc_init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK;
+
+                temp_recon_desc_init_data.left_padding  = padding;
+                temp_recon_desc_init_data.right_padding = padding;
+                temp_recon_desc_init_data.top_padding   = padding;
+                temp_recon_desc_init_data.bot_padding   = padding;
+                temp_recon_desc_init_data.split_mode   = EB_FALSE;
+                temp_recon_desc_init_data.color_format = scs_ptr->static_config.encoder_color_format;
+
+                if (is_16bit) {
+                    temp_recon_desc_init_data.bit_depth = EB_16BIT;
+                } else {
+                    temp_recon_desc_init_data.bit_depth = EB_8BIT;
                 }
 
-                AomFilmGrain *film_grain_ptr;
+                EB_NO_THROW_NEW(intermediate_buffer_ptr,
+                    svt_recon_picture_buffer_desc_ctor,
+                    (EbPtr)&temp_recon_desc_init_data);
 
                 if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE)
                     film_grain_ptr =
@@ -620,8 +636,10 @@ void recon_output(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr) {
                 else
                     film_grain_ptr = &pcs_ptr->parent_pcs_ptr->frm_hdr.film_grain_params;
 
-                svt_av1_add_film_grain(recon_ptr, intermediate_buffer_ptr, film_grain_ptr);
-                recon_ptr = intermediate_buffer_ptr;
+                if (intermediate_buffer_ptr) {
+                    svt_av1_add_film_grain(recon_ptr, intermediate_buffer_ptr, film_grain_ptr);
+                    recon_ptr = intermediate_buffer_ptr;
+                }
             }
 
             // End running the film grain
@@ -701,6 +719,10 @@ void recon_output(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr) {
                                 1 << is_16bit);
             output_recon_ptr->n_filled_len += sample_total_count;
             output_recon_ptr->pts = pcs_ptr->picture_number;
+
+            if (intermediate_buffer_ptr) {
+                EB_DELETE(intermediate_buffer_ptr);
+            }
         }
 
         // Post the Recon object
@@ -937,8 +959,6 @@ void ssim_calculations(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr, 
         }
     }
     else {
-      EbPictureBufferDesc *recon_ptr;
-
 #if FTR_MEM_OPT
 
         get_recon_pic(pcs_ptr, &recon_ptr, is_16bit);
@@ -1729,9 +1749,9 @@ void psnr_calculations(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr, 
                 EB_FREE_ARRAY(buffer_bit_inc_cr);
             }
         }
-        pcs_ptr->parent_pcs_ptr->luma_sse = (uint32_t)sse_total[0];
-        pcs_ptr->parent_pcs_ptr->cb_sse   = (uint32_t)sse_total[1];
-        pcs_ptr->parent_pcs_ptr->cr_sse   = (uint32_t)sse_total[2];
+        pcs_ptr->parent_pcs_ptr->luma_sse = sse_total[0];
+        pcs_ptr->parent_pcs_ptr->cb_sse   = sse_total[1];
+        pcs_ptr->parent_pcs_ptr->cr_sse   = sse_total[2];
     }
     return EB_ErrorNone;
 #else
@@ -16441,12 +16461,14 @@ void *mode_decision_kernel(void *input_ptr) {
             if (enc_dec_tasks_ptr->input_type == ENCDEC_TASKS_SUPERRES_INPUT) {
                 // do as dorecode do
                 pcs_ptr->enc_dec_coded_sb_count = 0;
+#if !CLN_MDCONTEXT
                 // Reset MD rate Estimation table to initial values by copying from md_rate_estimation_array
                 if (context_ptr->is_md_rate_estimation_ptr_owner) {
                     EB_FREE_ARRAY(context_ptr->md_rate_estimation_ptr);
                     context_ptr->is_md_rate_estimation_ptr_owner = EB_FALSE;
                 }
                 context_ptr->md_rate_estimation_ptr = pcs_ptr->md_rate_estimation_array;
+#endif
                 // re-init mode decision configuration for qp update for re-encode frame
                 mode_decision_configuration_init_qp_update(pcs_ptr);
                 // init segment for re-encode frame

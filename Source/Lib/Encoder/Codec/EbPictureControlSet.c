@@ -478,7 +478,7 @@ EbErrorType recon_coef_ctor(EncDecSet *object_ptr, EbPtr object_init_data_ptr) {
 #endif
 
     //object_ptr->sb_total_count_pix = all_sb;
-#endif
+
     EbPictureBufferDescInitData coeff_init_data;
     coeff_init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK;
     coeff_init_data.max_width          = init_data_ptr->sb_size_pix;

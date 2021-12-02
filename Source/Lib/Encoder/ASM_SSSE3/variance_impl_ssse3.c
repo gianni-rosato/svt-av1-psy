@@ -51,7 +51,7 @@ DECL(16);
             const uint8_t *src_ptr = src;                                              \
             const uint8_t *dst_ptr = dst;                                              \
             for (int j = 0; j < (h / hf); ++j) {                                       \
-                unsigned int sse2;                                                     \
+                unsigned int sse2 = 0;                                                 \
                 const int    se2 = svt_aom_sub_pixel_variance##wf##xh_ssse3(src_ptr,   \
                                                                            src_stride, \
                                                                            x_offset,   \

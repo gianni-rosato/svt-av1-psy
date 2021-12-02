@@ -1602,6 +1602,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
             scs_ptr->static_config.super_block_size == 64)) {
         pcs_ptr->pic_lpd1_lvl = 0;
     }
+
+    // FIXME: Workaround for Superres End to End test failure.
+    if (pcs_ptr->pic_lpd1_lvl && scs_ptr->static_config.superres_mode > SUPERRES_NONE) {
+        pcs_ptr->pic_lpd1_lvl = 0;
+    }
 #endif
     return return_error;
 }

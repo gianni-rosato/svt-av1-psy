@@ -388,6 +388,9 @@ void superres_setup_child_pcs(SequenceControlSet* entry_scs_ptr, PictureParentCo
                 (uint16_t)(sb_origin_y * entry_scs_ptr->sb_size_pix),
                 (uint16_t)sb_index,
                 child_pcs_ptr->enc_mode,
+#if CLN_GEOM
+                entry_scs_ptr->max_block_cnt,
+#endif
                 child_pcs_ptr);
             // Increment the Order in coding order (Raster Scan Order)
             sb_origin_y = (sb_origin_x == pic_width_in_sb - 1) ? sb_origin_y + 1 : sb_origin_y;

@@ -317,8 +317,8 @@ void unpack_highbd_pic(uint16_t *buffer_highbd[3], EbPictureBufferDesc *pic_ptr,
             pic_ptr->stride_cb,
             pic_ptr->buffer_bit_inc_cb,
             comp_stride_uv,
-            width >> ss_x,
-            height >> ss_y);
+            (width + ss_x) >> ss_x,
+            (height + ss_y) >> ss_y);
 
     if (buffer_highbd[C_V])
 #if OPTIMIZE_SVT_UNPACK_2B
@@ -332,8 +332,8 @@ void unpack_highbd_pic(uint16_t *buffer_highbd[3], EbPictureBufferDesc *pic_ptr,
             pic_ptr->stride_cr,
             pic_ptr->buffer_bit_inc_cr,
             comp_stride_uv,
-            width >> ss_x,
-            height >> ss_y);
+            (width + ss_x) >> ss_x,
+            (height + ss_y) >> ss_y);
 #else
     svt_unpack_and_2bcompress_c(
         buffer_highbd[C_U],
@@ -3302,6 +3302,7 @@ uint64_t svt_check_position_64x64(
     mv_unit.mv->y = tf_sp_param.mv_y + tf_sp_param.yd;
 
     av1_simple_luma_unipred(
+        scs_ptr,
         scs_ptr->sf_identity,
         tf_sp_param.interp_filters,
 #if FIX_SVT_POSITION_CHECK_CPP
@@ -3395,6 +3396,7 @@ uint64_t svt_check_position(
     mv_unit.mv->y = tf_sp_param.mv_y + tf_sp_param.yd;
 
     av1_simple_luma_unipred(
+        scs_ptr,
         scs_ptr->sf_identity,
         tf_sp_param.interp_filters,
 #if FIX_SVT_POSITION_CHECK_CPP
@@ -5041,7 +5043,8 @@ static void tf_64x64_inter_prediction(PictureParentControlSet *pcs_ptr, MeContex
         local_origin_x,
         local_origin_y,
         context_ptr->tf_chroma ? PICTURE_BUFFER_DESC_FULL_MASK : PICTURE_BUFFER_DESC_LUMA_MASK,
-        (uint8_t)encoder_bit_depth);
+        (uint8_t)encoder_bit_depth,
+        is_highbd);
 }
 #endif
 static void tf_32x32_inter_prediction(PictureParentControlSet *pcs_ptr, MeContext *context_ptr,
@@ -6486,21 +6489,21 @@ static EbErrorType save_src_pic_buffers(PictureParentControlSet *picture_control
         svt_c_unpack_compressed_10bit(
             picture_control_set_ptr_central->enhanced_picture_ptr->buffer_bit_inc_y,
             picture_control_set_ptr_central->enhanced_picture_ptr->stride_bit_inc_y / 4,
-            picture_control_set_ptr_central->save_enhanced_picture_bit_inc_ptr[C_Y],
+            picture_control_set_ptr_central->save_source_picture_bit_inc_ptr[C_Y],
             picture_control_set_ptr_central->enhanced_picture_ptr->stride_bit_inc_y,
             height_y);
         // U
         svt_c_unpack_compressed_10bit(
             picture_control_set_ptr_central->enhanced_picture_ptr->buffer_bit_inc_cb,
             picture_control_set_ptr_central->enhanced_picture_ptr->stride_bit_inc_cb / 4,
-            picture_control_set_ptr_central->save_enhanced_picture_bit_inc_ptr[C_U],
+            picture_control_set_ptr_central->save_source_picture_bit_inc_ptr[C_U],
             picture_control_set_ptr_central->enhanced_picture_ptr->stride_bit_inc_cb,
             height_uv);
         // V
         svt_c_unpack_compressed_10bit(
             picture_control_set_ptr_central->enhanced_picture_ptr->buffer_bit_inc_cr,
             picture_control_set_ptr_central->enhanced_picture_ptr->stride_bit_inc_cr / 4,
-            picture_control_set_ptr_central->save_enhanced_picture_bit_inc_ptr[C_V],
+            picture_control_set_ptr_central->save_source_picture_bit_inc_ptr[C_V],
             picture_control_set_ptr_central->enhanced_picture_ptr->stride_bit_inc_cr,
             height_uv);
 #else

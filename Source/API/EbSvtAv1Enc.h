@@ -977,7 +977,7 @@ typedef struct EbSvtAv1EncConfiguration {
     * values are from set using svt_aom_parse_content_light_level()
     */
     struct EbContentLightLevel content_light_level;
-#if GOP_BASED_DYNAMIC_MINIGOP
+#if 1 /*GOP_BASED_DYNAMIC_MINIGOP*/ // TODO: fix me, this break build for depend on two MACRO definition
 #if FIX_DATA_RACE_2PASS
     uint8_t enable_adaptive_mini_gop;
     uint8_t max_heirachical_level;

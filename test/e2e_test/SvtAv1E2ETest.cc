@@ -211,14 +211,18 @@ static const std::vector<EncTestSetting> default_enc_settings = {
     {"OverlayTest2", {{"EnableOverlays", "1"}, {"LogicalProcessors", "1"}}, default_test_vectors},
     {"OverlayTest3", {{"EnableOverlays", "1"}, {"EncoderMode", "5"}}, default_test_vectors},
 
+#ifdef ENBALE_16BIT_PIPELINE_TEST
     // test 8-bit stream under 16-bit pipeline mode
     {"16bitPipelineTest1", {{"Encoder16BitPipeline", "1"}}, default_test_vectors},
+#endif // ENBALE_16BIT_PIPELINE_TEST
 
     // test super resolution mode
     {"SuperResTest1", {{"SuperresMode", "2"}}, default_test_vectors},
     {"SuperResTest2", {{"SuperresMode", "2"}, {"Obmc", "0"}}, default_test_vectors},
     {"SuperResTest3", {{"SuperresMode", "2"}, {"Obmc", "1"}}, default_test_vectors},
+#ifdef ENBALE_16BIT_PIPELINE_TEST
     {"SuperResTest4", {{"SuperresMode", "2"}, {"Obmc", "1"}, {"Encoder16BitPipeline", "1"}}, default_test_vectors},
+#endif // ENBALE_16BIT_PIPELINE_TEST
     {"SuperResTest5", {{"SuperresMode", "4"}}, default_test_vectors},
 
     // test by using a dummy source of color bar
@@ -238,7 +242,13 @@ static const std::vector<EncTestSetting> overlay_preset_settings = {
     {"OverlayPresetTest6", {{"EncoderMode", "5"}, {"EnableOverlays", "1"}}, default_test_vectors},
     {"OverlayPresetTest7", {{"EncoderMode", "6"}, {"EnableOverlays", "1"}}, default_test_vectors},
     {"OverlayPresetTest8", {{"EncoderMode", "7"}, {"EnableOverlays", "1"}}, default_test_vectors},
+    {"OverlayPresetTest9", {{"EncoderMode", "8"}, {"EnableOverlays", "1"}}, default_test_vectors},
+    {"OverlayPresetTest10",{{"EncoderMode", "9"}, {"EnableOverlays", "1"}}, default_test_vectors},
+    {"OverlayPresetTest11",{{"EncoderMode", "10"},{"EnableOverlays", "1"}}, default_test_vectors},
+    {"OverlayPresetTest12",{{"EncoderMode", "11"},{"EnableOverlays", "1"}}, default_test_vectors},
+    {"OverlayPresetTest13",{{"EncoderMode", "12"},{"EnableOverlays", "1"}}, default_test_vectors},
 };
+
 
 static const std::vector<EncTestSetting> superres_preset_settings = {
     {"SuperResPresetTest1", {{"EncoderMode", "0"}, {"SuperresMode", "2"}}, default_test_vectors},
@@ -249,6 +259,11 @@ static const std::vector<EncTestSetting> superres_preset_settings = {
     {"SuperResPresetTest6", {{"EncoderMode", "5"}, {"SuperresMode", "2"}}, default_test_vectors},
     {"SuperResPresetTest7", {{"EncoderMode", "6"}, {"SuperresMode", "2"}}, default_test_vectors},
     {"SuperResPresetTest8", {{"EncoderMode", "7"}, {"SuperresMode", "2"}}, default_test_vectors},
+    {"SuperResPresetTest9", {{"EncoderMode", "8"}, {"SuperresMode", "2"}}, default_test_vectors},
+    {"SuperResPresetTest10",{{"EncoderMode", "9"}, {"SuperresMode", "2"}}, default_test_vectors},
+    {"SuperResPresetTest11",{{"EncoderMode", "10"},{"SuperresMode", "2"}}, default_test_vectors},
+    {"SuperResPresetTest12",{{"EncoderMode", "11"},{"SuperresMode", "2"}}, default_test_vectors},
+    {"SuperResPresetTest13",{{"EncoderMode", "12"},{"SuperresMode", "2"}}, default_test_vectors},
 };
 
 /* clang-format on */
@@ -417,6 +432,7 @@ static const std::vector<EncTestSetting> generate_super_res_settings() {
             count++;
         }
     }
+#ifdef ENBALE_16BIT_PIPELINE_TEST
     // 16-bit test cases
     for (size_t i = 8; i <= 16; i++) {
         for (size_t j = 8; j <= 16; j++) {
@@ -434,6 +450,7 @@ static const std::vector<EncTestSetting> generate_super_res_settings() {
             count++;
         }
     }
+#endif // ENBALE_16BIT_PIPELINE_TEST
     return settings;
 }
 

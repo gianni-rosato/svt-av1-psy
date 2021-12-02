@@ -160,8 +160,8 @@ EbErrorType rest_context_ctor(EbThreadContext *  thread_context_ptr,
 
     return EB_ErrorNone;
 }
-#if FTR_MEM_OPT
 extern void get_recon_pic(PictureControlSet *pcs_ptr, EbPictureBufferDesc **recon_ptr, EbBool is_highbd) {
+#if FTR_MEM_OPT
     if (!is_highbd) {
         if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE)
             *recon_ptr = ((EbReferenceObject *)
@@ -173,8 +173,25 @@ extern void get_recon_pic(PictureControlSet *pcs_ptr, EbPictureBufferDesc **reco
 
             *recon_ptr = pcs_ptr->parent_pcs_ptr->enc_dec_ptr->recon_picture16bit_ptr;
     }
-}
+#else
+    if (!is_highbd) {
+        if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE)
+            *recon_ptr = ((EbReferenceObject*)
+                pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
+            ->reference_picture;
+        else
+            *recon_ptr = pcs_ptr->parent_pcs_ptr->enc_dec_ptr->recon_picture_ptr; //OMK
+    }
+    else {
+        if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE)
+            *recon_ptr = ((EbReferenceObject*)
+                pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
+            ->reference_picture16bit;
+        else
+            *recon_ptr = pcs_ptr->parent_pcs_ptr->enc_dec_ptr->recon_picture16bit_ptr;
+    }
 #endif
+}
 // If using boundaries during the filter search, copy the recon pic to a new buffer (to
 // avoid race conidition from many threads modifying the same recon pic).
 //
@@ -192,16 +209,7 @@ EbPictureBufferDesc* get_own_recon(SequenceControlSet *scs_ptr, PictureControlSe
 
     EbPictureBufferDesc *recon_picture_ptr;
     if (is_16bit) {
-#if FTR_MEM_OPT
-    get_recon_pic (pcs_ptr,&recon_picture_ptr,is_16bit);
-#else
-        if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE)
-            recon_picture_ptr = ((EbReferenceObject *)pcs_ptr->parent_pcs_ptr
-                                     ->reference_picture_wrapper_ptr->object_ptr)
-                                    ->reference_picture16bit;
-        else
-            recon_picture_ptr = pcs_ptr->parent_pcs_ptr->enc_dec_ptr->recon_picture16bit_ptr;
-#endif
+        get_recon_pic (pcs_ptr,&recon_picture_ptr,is_16bit);
         // if boundaries are not used, don't need to copy pic to new buffer, as the
         // search will not modify the pic
         if (!scs_ptr->use_boundaries_in_rest_search) {
@@ -482,25 +490,6 @@ EbErrorType copy_recon_enc(SequenceControlSet *scs_ptr, EbPictureBufferDesc *rec
     return EB_ErrorNone;
 }
 
-#if !FTR_MEM_OPT
-void get_recon_pic(PictureControlSet *pcs_ptr, EbPictureBufferDesc **recon_ptr, EbBool is_highbd) {
-    if (!is_highbd) {
-        if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE)
-            *recon_ptr = ((EbReferenceObject *)
-                              pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
-                             ->reference_picture;
-        else
-            *recon_ptr = pcs_ptr->parent_pcs_ptr->enc_dec_ptr->recon_picture_ptr; //OMK
-    } else {
-        if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE)
-            *recon_ptr = ((EbReferenceObject *)
-                              pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
-                             ->reference_picture16bit;
-        else
-            *recon_ptr = pcs_ptr->parent_pcs_ptr->enc_dec_ptr->recon_picture16bit_ptr;
-    }
-}
-#endif
 void svt_av1_superres_upscale_frame(struct Av1Common *cm, PictureControlSet *pcs_ptr,
                                     SequenceControlSet *scs_ptr) {
     // Set these parameters for testing since they are not correctly populated yet

@@ -1542,6 +1542,7 @@ void tpl_mc_flow_dispenser_sb_generic(
     DECLARE_ALIGNED(16, TranLow, qcoeff[MAX_TPL_SAMPLES_PER_BLOCK]);
     DECLARE_ALIGNED(16, TranLow, dqcoeff[MAX_TPL_SAMPLES_PER_BLOCK]);
     DECLARE_ALIGNED(16, TranLow, best_coeff[MAX_TPL_SAMPLES_PER_BLOCK]);
+    memset(predictor8, 0, sizeof(predictor8));
     uint8_t *predictor = predictor8;
 
     MacroblockPlane mb_plane;
@@ -4133,7 +4134,7 @@ void *source_based_operations_kernel(void *input_ptr) {
 
         // Get TPL ME
         if (scs_ptr->static_config.enable_tpl_la) {
-            if (pcs_ptr->frame_superres_enabled&&
+            if (!pcs_ptr->frame_superres_enabled&&
                 pcs_ptr->temporal_layer_index == 0) {
 
                 tpl_prep_info(pcs_ptr);

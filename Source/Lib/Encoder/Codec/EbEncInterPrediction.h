@@ -27,6 +27,7 @@ extern aom_highbd_convolve_fn_t convolveHbd[/*subX*/ 2][/*subY*/ 2][/*bi*/ 2];
 
 #if OPT_TF
 EbErrorType av1_simple_luma_unipred(
+    SequenceControlSet* scs_ptr,
     ScaleFactors sf_identity,
     uint32_t interp_filters,  BlkStruct *blk_ptr,
     uint8_t ref_frame_type, MvUnit *mv_unit,
@@ -80,18 +81,6 @@ void  av1_inter_prediction_light_pd0(
     EbPictureBufferDesc *ref_pic_list0, EbPictureBufferDesc *ref_pic_list1,
     EbPictureBufferDesc *prediction_ptr, uint16_t dst_origin_x, uint16_t dst_origin_y,
     uint8_t bit_depth);
-EbErrorType av1_inter_prediction_16bit_pipeline(
-    PictureControlSet *pcs_ptr, uint32_t interp_filters, BlkStruct *blk_ptr, uint8_t ref_frame_type,
-    MvUnit *mv_unit, uint8_t use_intrabc, MotionMode motion_mode, uint8_t use_precomputed_obmc,
-    struct ModeDecisionContext *md_context, uint8_t compound_idx,
-    InterInterCompoundData *interinter_comp,
-    NeighborArrayUnit *luma_recon_neighbor_array, NeighborArrayUnit *cb_recon_neighbor_array,
-    NeighborArrayUnit *cr_recon_neighbor_array, uint8_t is_interintra_used,
-    InterIntraMode interintra_mode, uint8_t use_wedge_interintra, int32_t interintra_wedge_index,
-    uint16_t pu_origin_x, uint16_t pu_origin_y, uint8_t bwidth, uint8_t bheight,
-    EbPictureBufferDesc *ref_pic_list0, EbPictureBufferDesc *ref_pic_list1,
-    EbPictureBufferDesc *prediction_ptr, uint16_t dst_origin_x, uint16_t dst_origin_y,
-    EbBool perform_chroma, uint8_t bit_depth);
 
 void search_compound_diff_wedge(PictureControlSet *pcs_ptr, struct ModeDecisionContext *context_ptr,
                                 ModeDecisionCandidate *candidate_ptr);

@@ -385,6 +385,8 @@ NOTE : PART OF LIGHT_PD0_2  code was committed to svt-04-final-rebased under OPT
 #define SS_OPT_INIT                           1    // Loosless optimization of init time (there is an R2R for M3 and below)
 #if SS_OPT_INIT
 #define  SIM_OLD_TPL 0
+#else
+#define  SIM_OLD_TPL 1
 #endif
 #define  FIX_TPL_NON_VALID_REF                1  // exclude TPL non valid ref (no TPL recon data available)
 
@@ -868,6 +870,10 @@ NOTE : PART OF LIGHT_PD0_2  code was committed to svt-04-final-rebased under OPT
 #define DEBUG_SUPERRES_RECODE   0
 #define DEBUG_SUPERRES_ENERGY   0
 #define DEBUG_RC_CAP_LOG        0 // Prints for RC cap
+#define DEBUG_SR_MEM_OPTM       1 // this memory optimization will freeze encoder, need fine tune later
+
+// MSAN fixing
+#define FIX_MSAN_UNINIT_MEM     0 // this is a temporally fixing for uninitialized memory found in MSAN test
 #ifdef __cplusplus
 }
 #endif // __cplusplus
