@@ -870,6 +870,7 @@ NOTE : PART OF LIGHT_PD0_2  code was committed to svt-04-final-rebased under OPT
 #endif
 #define FIX_SKIP_TX_LPD1                     1 // Don't skip TX for non-NEAREST_NEAREST candidates in LPD1 to prevent blocking artifacts
 #define FIX_INT_OVERLOW                       1 // Fix overloads on integers, potential compilers mismatches.
+#define FIX_USE_NOINIT_VALUES                 1 // Fix use no init values in AVX.
 
 #endif //----------------------------------- all svt-05 features should be place are above this line -------------------------
 
