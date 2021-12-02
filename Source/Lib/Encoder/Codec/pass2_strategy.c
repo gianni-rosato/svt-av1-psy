@@ -3613,8 +3613,11 @@ void crf_assign_max_rate(PictureParentControlSet *ppcs_ptr) {
         coded_frames_num_sw += (queue_entry_ptr->frame_total_bit_actual > 0) ? 1 : 0;
     }
     available_bit_sw = MAX(max_bits_sw - spent_bits_sw, 0);
-
+#if FIX_CAP_CRF
+    int64_t max_frame_size = 0;
+#else
     int max_frame_size = 0;
+#endif
     // Based on the kf boost, calculate the frame size for I frames
     if (ppcs_ptr->slice_type == I_SLICE) {
         int kf_interval = scs_ptr->static_config.intra_period_length > 0 ? MIN(frames_in_sw, scs_ptr->static_config.intra_period_length + 1) : frames_in_sw;
@@ -3692,8 +3695,12 @@ void crf_assign_max_rate(PictureParentControlSet *ppcs_ptr) {
         (int32_t)scs_ptr->static_config.min_qp_allowed,
         (int32_t)scs_ptr->static_config.max_qp_allowed,
         (frm_hdr->quantization_params.base_q_idx + 2) >> 2);
-
+#if FIX_CAP_CRF
+    // clip the max frame size to 32 bits
+    ppcs_ptr->max_frame_size = (int)CLIP3(1, (0xFFFFFFFFull >> 1), (uint64_t)max_frame_size);
+#else
     ppcs_ptr->max_frame_size = max_frame_size;
+#endif
     // The target is set to 80% of the max.
     ppcs_ptr->this_frame_target = ppcs_ptr->max_frame_size * 8 / 10;
 }

@@ -854,6 +854,9 @@ NOTE : PART OF LIGHT_PD0_2  code was committed to svt-04-final-rebased under OPT
                                                 // (3) Made the PA/MD cand buffer function of the reference count signals rather than using hard-coded values based on the mrp-init-level.
 #define CLN_PALETTE_CTRLS                     1 // Cleanup palette controls
 
+#define CLN_PALETTE_CTRLS                     1 // Cleanup palette controls
+#define FIX_CAP_CRF                           1 // Fix the overflow happens in the max bitrate calculation
+
 #endif //----------------------------------- all svt-05 features should be place are above this line -------------------------
 
 
