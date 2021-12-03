@@ -36,6 +36,7 @@ pre-HME result (to be considered in the next HME stages).  As such, HME-level-1 
 ### Hierarchical Motion Estimation (HME)
 
 Hierarchical Motion Estimation (HME) takes as input an enhanced input picture and reference picture and produces a search center for each SB, to be searched at ME.
+The enhanced input picture is the temporally filtered source picture. 
 The HME consists of up to three stages: a one-sixteenth resolution Level-0 full search, a one-quarter resolution Level-1 refinement search, and a base-resolution
 Level-2 refinement search as depicted in Figure 2. In addition, the total search area is subdivided into N-search areas, where each of the Level-0, Level-1,
 and Level-2 searches are performed independently to produce N-search centers. Of the N-search centers, one search center is finally selected. Having multiple
@@ -57,17 +58,21 @@ Search Center Selection chooses the best SB search center for Motion Estimation 
 or other sources of candidate search centers.
 A diagram showing search center selection and the Motion Estimation is given in Figure 4.
 
+![me_fig4](./img/me_fig4.png)
+
+##### Figure 4: Search centre selection and motion estimation.  Reference N search centre candidates come from HME (or other sources, if applicable).
+
 ### Motion Estimation (ME)
 
 Motion Estimation (ME) takes as input an enhanced input picture, reference picture, and search center for each SB. ME produces Motion Vectors (MVs),
 one for each of the 8x8 and larger square blocks in an SB. ME is an integer full search around the search centre on the full resolution picture and is performed
 for square blocks only.
 The integer full search produces an integer MV candidate for each 8x8 and larger square blocks and the SB SAD estimation using the base 8x8 block SAD data.
+As shown in Figure 5, the ME search is performed on 8x8 blocks, and the MV/SAD information for larger block sizes are derived from the 8x8 results (by adding together all the 8x8 SADs that make up a given block).
 
-![me_fig4](./img/me_fig4.png)
+![me_fig5](./img/me_fig_new.png)
 
-##### Figure 4: Search centre selection and motion estimation.  Reference N search centre candidates come from HME (or other sources, if applicable).
-
+##### Figure 5: ME search for the case of a 64x64 SB.  The SAD is computed for each 8x8 block.  For larger square blocks, the 8x8 SADs are summed to produce the output SAD of the larger blocks.
 
 ## Implementation of the Algorithm
 
@@ -75,11 +80,11 @@ The integer full search produces an integer MV candidate for each 8x8 and larger
 
 **Outputs**: MVs for each 8x8 and larger square blocks and SB distortion (SAD) values.
 
-The flow of data in open-loop ME is illustrated in Figure 5, along with the relevant functions that are associated with each part of the algorithm.
+The flow of data in open-loop ME is illustrated in Figure 6, along with the relevant functions that are associated with each part of the algorithm.
 
-![me_fig5](./img/me_fig5.png)
+![me_fig6](./img/me_fig5.png)
 
-##### Figure 5: Open-loop ME flow diagram for each SB.
+##### Figure 6: Open-loop ME flow diagram for each SB.
 
 
 ## Optimization
@@ -96,8 +101,10 @@ The flow of data in open-loop ME is illustrated in Figure 5, along with the rele
 
 The search areas of pre-HME, HME and ME can be adjusted for quality/complexity trade-offs.
 Larger search areas will capture more motion, thereby improving quality, while smaller search areas will require less computation and favour speedups.
-For ME and HME, a maximum and a minimum search area are specified.  The actual area searched for each reference frame depends on the distance of the reference
-frame to the current frame (and will always be greater than or equal to the minimum area and less than or equal to the maximum area).
+
+For ME and HME, a maximum and a minimum search area are specified.
+Closer frames are expected to have less motion relative to the current frame, thus the search areas are scaled-up more for distant frames.
+The actual area searched for each reference frame depends on the distance of the reference frame to the current frame (and will always be greater than or equal to the minimum area and less than or equal to the maximum area).
 Closer frames are expected to have less motion relative to the current frame, thus the search areas are scaled-up more for distant frames.
 
 Pre-HME level is set with ```prehme_level```, and the search areas are set in ```set_prehme_ctrls()```.  ME and HME search areas are set in ```set_me_hme_params_oq()```.
