@@ -349,6 +349,9 @@ EbErrorType copy_sequence_control_set(SequenceControlSet *dst, SequenceControlSe
 #if TUNE_VBR_OVERSHOOT
     dst->is_short_clip = src->is_short_clip;
 #endif
+#if TUNE_MEM_SHUT
+    dst->input_resolution = src->input_resolution;
+#endif
     return EB_ErrorNone;
 }
 
