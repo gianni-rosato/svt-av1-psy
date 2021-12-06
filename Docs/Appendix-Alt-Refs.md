@@ -1,198 +1,157 @@
-# ALTREF and Overlay Pictures - Temporal filtering Appendix
+# ALTREF and Overlay Pictures
 
-## 1. Description of the algorithm
+## 1. ALTREF pictures
 
-ALTREFs are non-displayable pictures that are used as reference for
-other pictures. They are usually constructed using several source frames
-but can hold any type of information useful for compression and the
-given use-case. In the current version of SVT-AV1, temporal filtering of
-adjacent video frames is used to construct some of the ALTREF pictures.
-The resulting temporally filtered pictures will be encoded in place of
-or in addition to the original sources. This methodology is especially
-useful for source pictures that contain a high level of noise since the
-temporal filtering process will produce reference pictures with reduced
-noise level.
+### Introduction
 
-Temporal filtering is currently applied to the base layer picture and
-can also be applied to layer 1 pictures of each mini-GOP (e.g. source
-frame position 16 in a mini-GOP in a 5-layer hierarchical prediction
-structure). In addition, filtering of the key-frames and intra-only
-frames is also supported.
+ALTREFs are non-displayable pictures that are used as reference for other pictures. They are usually constructed using several source frames
+but can hold any type of information useful for compression and the given use-case. In the current version of SVT-AV1, temporal filtering of
+adjacent video frames is used to construct some of the ALTREF pictures. The resulting temporally filtered pictures will be encoded in place
+of or in addition to the original source pictures. This methodology is especially useful for source pictures that contain a high level
+of noise since the temporal filtering process produces reference pictures with reduced noise level.
 
-The number of pictures to be used for filtering, also referred to as the
-temporal window, is internally decided by past_altref_nframes and
-future_altref_nframes. These two altref nframes are decided by enc_mode
-and noise level. Lower altref_nframes is used for higher enc_mode (faster)
-and higher noise level.
+Temporal filtering is currently applied to the base layer picture and can also be applied to layer 1 pictures of each mini-GOP
+(e.g. source frame positions 16 and 8 respectively in a mini-GOP in a 5-layer hierarchical prediction structure).
+In addition, filtering of the key-frames and intra-only frames is also supported.
 
-
-The diagram in Fig. 1 illustrates the use of 5 adjacent pictures
-(```past_altref_nframes = 2 and future_altref_nframes = 2```), 2 past,
-2 future and one central pictures, in order to produce a single filtered
-picture. Motion estimation is applied between the central picture and
-each future or past pictures generating multiple motion-compensated
-predictions. These are then combined using adaptive weighting (filtering)
-to produce the final noise-reduced picture.
-
+The diagram in Figure 1 illustrates the use of five adjacent pictures: Two past, two future and one central picture, in order to produce a
+single filtered picture. Motion estimation is applied between the central picture and each future or past pictures generating multiple
+motion-compensated predictions.
+These are then combined using adaptive weighting (filtering) to produce the final noise-reduced picture.
 
 ![altref_fig1](./img/altref_fig1.png)
 
 ##### Fig. 1. Example of motion estimation for temporal filtering in a temporal window consisting of 5 adjacent pictures
 
-Since a number of adjacent frames are necessary, the Look Ahead Distance
-(LAD) needs to be adjusted according to the following relationship:
-<center><b><i>LAD = miniGOPsize + future_altref_nframes</i></b></center>
-
-For instance, if the ```miniGOPsize``` is set to 16 pictures, and
-```future_altref_nframes``` is 3, a ```LAD``` of 19 frames would be required.
-
-When applying temporal filtering to ALTREF pictures, an Overlay picture
-might be necessary. This Overlay picture corresponds to the same original
-source picture but only use the temporally filtered version of the source
+Since temporal filtering makes use of a number of adjacent frames, the Look Ahead Distance (lad_mg_pictures) needs to be incremented by the
+number of future frames used for ALTREF temporal filtering. When applying temporal filtering to ALTREF pictures, an Overlay picture might be
+necessary. This Overlay picture corresponds to the same original source picture but uses only the temporally filtered version of the source
 picture as a reference to reconstruct the original picture.
 
+### Description of the temporal filtering control  
 
-### Steps of the temporal filtering algorithm:
+Various signals are used to specify the temporal filtering settings and are described in Table 1 below. The settings could be different based
+on the frame type; however, the same set of signals is used for all frame types. The temporal filtering flow diagram in Figure 2 below further
+explains how and where each of the defined signals is used.
+These parameters are decided as a function of the encoder preset (enc_mode). 
 
-#### Step 1: Source picture noise estimation
 
-In order to decide temporal window length according to the content
-characteristics, the amount of noise is estimated from the central
-source picture. The algorithm considered is based on a simplification of
-the algorithm proposed in [\[1\]](#ref-1). The standard deviation (sigma) of the
-noise is estimated using the Laplacian operator. Pixels that belong to
-an edge (i.e. as determined by how the magnitude of the Sobel gradients
-compare to a predetermined threshold), are not considered in the
-computation. The current noise estimation considers only the luma
-component. ```adjust_num``` will be set according to the ```noise_levels```, then
-it will be applied to ```past_altref_nframes``` and ```future_altref_nframes``` by
-internal control ```noise_adjust_past_pics``` and ```noise_adjust_future_pics```.
+|**Category**|**Signal(s)**|**Description**|
+| --- | --- | --- |
+|**Filtering**|Enabled|Specifies whether the current input will be filtered or not (0: OFF, 1: ON).|
+|**Filtering**|do_chroma|Specifies whether the U&V planes will be filered or not (0: filter all planes, 1: filter Y plane only).|
+|**Filtering**|use_medium_filter|Specifies whether the weights generation will use approximations or not (0: do not use approximations, 1: per-block weights derivation, use an approximated exponential & log, use an approximated noise level).|
+|**Filtering**|use_fast_filter|Specifies whether the weights derivation will use the distance factor (MV-based correction) and the 5x5 window error or not (0: OFF, 1: ON).|
+|**Filtering**|use_fixed_point|Specifies noise-level-estimation and filtering precision (0: use float/double precision, 1: use fixed point precision).|
+|**Number of reference frame(s)**|num_past_pics|Specifies the default number of frame(s) from past.|
+|**Number of reference frame(s)**|num_future_pics|Specifies the default number of frame(s) from future.|
+|**Number of reference frame(s)**|noise_adjust_past_pics|Specifies whether num_past_pics will be incremented or not based on the noise level of the central frame (0: OFF or 1: ON).|
+|**Number of reference frame(s)**|noise_adjust_future_pics|Specifies whether num_future_pics will be incremented or not based on the noise level of the central frame (0: OFF or 1: ON).|
+|**Number of reference frame(s)**|use_intra_for_noise_est|Specifies whether to use the key-frame noise level for all inputs or to re-compute the noise level for each input.|
+|**Number of reference frame(s)**|activity_adjust_th|Specifies whether `num_past_pics`  and `num_future_pics` will be decremented or not based on the activity of the outer reference frame(s) compared to the central frame (∞: OFF, else remove the reference frame if the cumulative differences between the histogram bins of the central frame and the histogram bins of the reference frame is higher than `activity_adjust_th`.|
+|**Number of reference frame(s)**|max_num_past_pics|Specifies the maximum number of frame(s) from past (after all adjustments).|
+|**Number of reference frame(s)**|max_num_past_pics|Specifies the maximum number of frame(s) from future (after all adjustments).|
+|**Motion search**|hme_me_level|Specifies the accuracy of the ME search (note that ME performs a HME search, then a Full-Pel search).|
+|**Motion search**|half_pel_mode|Specifies the accuracy of the Half-Pel search (0: OFF, 1: perform refinement for the 8 neighboring positions, 2/3: perform refinement for the 2 horizontal-neighboring positions and for the 2 vertical-neighboring positions, but not for all the 4 diagonal-neighboring positions = function (horizontal & vertical distortions).|
+|**Motion search**|quarter_pel_mode|Specifies the accuracy of the Quarter-Pel search (0: OFF, 1: perform refinement for the 8 neighboring positions, 2/3: perform refinement for the 2 horizontal-neighboring positions and for the 2 vertical-neighboring positions, but not for all the 4 diagonal-neighboring positions = function (horizontal & vertical distortions).|
+|**Motion search**|eight_pel_mode|Specifies the accuracy of the Eight-Pel search (0: OFF, 1: perform refinement for the 8 neighboring positions).|
+|**Motion search**|use_8bit_subpel|Specifies whether the Sub-Pel search for a 10bit input will be performed in 8bit resolution (0: OFF, 1: ON, NA if 8bit input).|
+|**Motion search**|avoid_2d_qpel|Specifies whether the Sub-Pel positions that require a 2D interpolation will be tested or not (0: OFF, 1: ON, NA if 16x16 block or if the Sub-Pel mode is set to 1).|
+|**Motion search**|use_2tap|Specifies the Sub-Pel search filter type (0: regular, 1: bilinear, NA if 16x16 block or if the Sub-Pel mode is set to 1).|
+|**Motion search**|sub_sampling_shift|Specifies whether sub-sampled input/prediction will be used at the distortion computation of the Sub-Pel search.|
+|**Motion search**|pred_error_32x32_th|Specifies the 32x32 prediction error (after subpel) under which the subpel for the 16x16 block(s) is bypassed.|
+|**Motion search**|tf_me_exit_th|Specifies whether to exit ME after HME or not (0: perform both HME and Full-Pel search, else if the HME distortion is less than me_exit_th then exit after HME (i.e. do not perform the Full-Pel search), NA if use_fast_filter is set 0).|
+|**Motion search**|use_pred_64x64_only_th|Specifies whether to perform Sub-Pel search for only the 64x64 block or to use default size(s) (32x32 or/and 16x16) (∞: perform Sub-Pel search for default size(s), else if the deviation between the 64x64 ME distortion and the sum of the 4 32x32 ME distortions is less than use_pred_64x64_only_th then perform Sub-Pel search for only the 64x64 block, NA if use_fast_filter is set 0).|
 
-#### Step 2: Building the list of source pictures
+### Temporal filtering data flow
 
-As mentioned previously, the temporal filtering algorithm uses multiple
-frames to generate a temporally denoised or filtered picture at the
-central picture location. If enough pictures are available in the list
-of source picture buffers, the number of pictures used will generally be
-given by the altref nframes, unless not enough frames are
-available (e.g. end of sequence). This will correspond to
-```past_altref_nframes``` and ```future_altref_nframes``` in addition to
-the central picture.
-<center><b><i>altref_nframes = past_altref_nframes + 1 + future_altref_nframes</i></b></center>
+The block diagram in Figure 2 outlines the flow of the temporal filtering operations. 
 
-However, in order to account for illumination changes, which might
-compromise the quality of the temporally filtered picture, an adjustment
-of the altref nframes is conducted to remove cases where a
-significant illumination change is found in the defined temporal window.
-This algorithm first computes and accumulates the absolute difference
-between the luminance histograms of adjacent pictures in the temporal
-window, starting from the first past picture to the last past picture
-and from the first future picture to the last future picture. Then,
-depending on a threshold, ```ahd_th```, if the cumulative difference
-is high enough, edge pictures will be removed. The current threshold
-is chosen based on the picture width and height:
-<center><b><i>ahd_th = (width * height) * activity_adjust_th / 100</i></b></center>
+![altref_newfig2](./img/altref_newfig2.png)
 
-After this step, the list of pictures to use for the temporal filtering
-is ready. However, given that the number of past and future frames can
-be different, the index of the central picture needs to be known.
+##### Fig. 2. Block diagram of the temporal filtering operations. 
 
-#### Step 3: Block-based processing
 
-The central picture is split into 64x64 pixel non-overlapping blocks.
-For each block, ``` altref_nframes - 1``` motion-compensated
-predictions will be determined from the adjacent frames and weighted in
-order to generate a final filtered block. All blocks are then combined
-to build the final filtered picture.
+## Description of the main modules
 
-#### Step 4: Block-based motion estimation and compensation
+### Source picture noise estimation
 
-For each block and each adjacent picture, hierarchical block-based
-motion estimation (unidirectional prediction) is performed. A similar
-version of the open-loop Hierarchical Motion Estimation (HME), performed
-in subsequent steps in the encoding process, is applied. The ME motion
-estimation produces ¼-pel precision motion-vectors on blocks from 64x64
-to 8x8 pixels. After obtaining the motion information, sub-blocks of
-size 16x16 are compensated using the AV1 normative interpolation.
-Finally, during this step, a small refinement search using 1/8-pel
-precision motion vectors is conducted on a 3x3 search window. Motion is
-estimated on the luma channel only, but the motion compensation is
-applied to all channels.
+In order to decide temporal window length according to the content characteristics, the amount of noise is estimated from the central source
+picture. The algorithm considered is based on a simplification of the algorithm proposed in [1]. The standard deviation (sigma) of the noise
+is estimated using the Laplacian operator. Pixels that belong to an edge (i.e. as determined by how the magnitude of the Sobel gradients
+compare to a predetermined threshold), are not considered in the computation. The current noise estimation considers only the luma component.
+When `use_intra_for_noise_est` is set to 1, the noise level of the I-frame will be used for ALTREF_FRAME or ALTREF2_FRAME. 
 
-#### Step 5: Determination of block-based weights
+### Building the list of source pictures
 
-After motion compensation, distortion between the original (![math4](./img/altref_math4.png))
-and predicted (![math5](./img/altref_math5.png)) sub-blocks of size 16x16 is computed
-using the non-normalized variance (![math6](./img/altref_math6.png)) of the residual
-(![math7](./img/altref_math7.png)), which is computed as follows:
+As mentioned previously, the temporal filtering algorithm uses multiple frames to generate a temporally
+denoised or filtered picture at the central picture location. If enough pictures are available in the list of source picture buffers,
+the number of pictures used will generally be given by the num_past_pics  and num_future_pics in addition to the central picture, unless not
+enough frames are available (e.g. end of sequence). 
 
-![math8](./img/altref_math8.png)
+The number of pictures will be first increased based on the noise level of the central picture. Basically, the lower the noise of the central
+picture, the widerthe temporal window (+3 on each side if noise <0.5, +2 on each side if noise < 1.0, and +1 on each if noise < 2.0).
+Both sides of the window could be adjusted or just one side depending on noise_adjust_past_pics and noise_adjust_future_pics.
 
-![math9](./img/altref_math9.png)
+In order to account for illumination changes, which might compromise the quality of the temporally filtered picture, an adjustment of both
+`num_past_pics`  and `num_future_pics` is conducted to remove cases where a significant illumination change is found in the defined temporal
+window. This algorithm first computes and accumulates the absolute difference between the luminance histograms of adjacent pictures in the
+temporal window, starting from the first past picture to the last past picture and from the first future picture to the last future picture.
+Then, depending on a threshold, ahd_th, if the cumulative difference is high enough, edge pictures will be removed. The current threshold is
+chosen based on the picture width and height:ahd_th = (width * height) * activity_adjust_th / 100 
 
-![math10](./img/altref_math10.png)
+After this step, the list of pictures to use for the temporal filtering is ready. However, given that the number of past and future frames
+can be different, the index of the central picture needs to be known.
 
-Based on this distortion, sub-block weights, ```blk_fw```, from 0 to 2 are
-determined using two thresholds, ```thres_low``` and ```thres_high```:
+### Block-based processing
 
-![math11](./img/altref_math11.png)
+The central picture is split into 64x64 pixel non-overlapping blocks. For each block, (num_past_pics + num_future_pics )–,
+motion-compensated predictions will be determined from the adjacent frames and weighted in order to generate a final filtered block.
+All blocks are then combined to build the final filtered picture.
 
-Where ```thres_low = 10000``` and ```thres_high = 20000```.
+### Block-based motion search and compensation
 
-For the central picture, the weights are always 2 for all blocks.
+The motion search consists of three steps: (1) Hierarchical Motion Estimation (HME), (2) Full-Pel search, and (3) Sub-Pel search,
+and performed for only the Luma plane.
 
-#### Step 6: Determination of pixel-based weights
+HME is performed for each single 64x64-block, while Full-Pel search is performed for the 85 square blocks between 8x8 and 64x64,
+and the Sub-Pel search (using regular or bilinear as filter type depending on use_2tap) is performed for only the 4 32x32-blocks and the
+16 16x16-blocks.
 
-After obtaining the sub-block weights, a further refinement of the
-weights is computed for each pixel of the predicted block. This is based
-on a non-local means approach.
+After obtaining the motion information, an inter-depth decision between the 4 32x32-blocks and the 16 16x16-blocks is performed towards a
+final partitioning for the 64x64. The latter will be considered at the final compensation (using sharp as filter type and for all planes).
 
-First, the Squared Errors, ![math12](./img/altref_math12.png), between the predicted
-and the central block are computed per pixel for the Y, U and V
-channels. Then, for each pixel, when computing the Y pixel weight, a
-neighboring sum of squared errors, ![math13](./img/altref_math13.png), corresponding
-to the sum of the Y squared errors on a 3x3 neighborhood around the
-current pixel plus the U and V squared errors of the current pixel is
-computed:
+However, if the 64x64 distortion after HME is less than tf_me_exit_th, then the Full_Pel search is bypassed and Sub-Pel search/final
+compensation is performed for only the 64x64. 
 
-![math14](./img/altref_math14.png)
+Also, Sub-Pel search/final compensation is performed for only 64x64 blocks, if the deviation between the 64x64 ME distortion and the 4 32x32
+ME distortions (after the Full-Pel search) is less than use_pred_64x64_only_th.
 
-The mean of the ![math13](./img/altref_math13.png), ![math15](./img/altref_math15.png) is then
-used to computed the pixel weight ![math](./img/altref_math16.png) of the current
-pixel location (i,j), which is an integer between {0,16}, and is
-determined using the following equation:
 
-![math17](./img/altref_math17.png)
+### Compute the Decay Factor
 
-Where strength is the adjusted *altref\_strength* parameter. The same
-approach is applied to the U and V weights, but in this case, the number
-of (se) values added from the Y channel depends on the chroma
-subsampling used (e.g. 4 for 4:2:0).
+The decay factor (`tf_decay_factor`) is derived per block/per component and will be used at the sample-based filtering operations.
 
-As can be observed from the equation above, for the same amount of
-distortion, the higher the strength, the higher the pixel weights, which
-leads to stronger filtering.
+```tf_decay_factor = 2 * n_decay * n_decay * q_decay * s_decay```
 
-The final filter weight of each pixel is then given by the
-multiplication of the respective block-based weight and the pixel
-weight. The maximum value of the filter weight is 32 (2\*16) and the
-minimum is 0.
+The noise-decay (`n_decay`) is mainly an increasing function of the input noise level, but is also adjusted depending on the filtering method
+(`use_fast_filter`), the input resolution, and the input QP; where a higher noise level implies a larger n_decay value and a stronger
+filtering. The computations of `n_decay` are simplified when `use_fixed_point` or `use_fast_filter` is set to 1.
 
-In case the picture being processed is the central picture, all filter
-weights correspond to the maximum value, 32.
+The QP-decay (`q_decay`) is an increasing function of the input QP. For a high QP, the quantization leads to a higher loss of information,
+and thus a stronger filtering is less likely to distort the encoded quality, while a stronger filtering could reduce bit rates. For a low QP,
+more details are expected to be retained. Filtering is thus more conservative. 
 
-#### Step 7: Temporal filtering of the co-located motion compensated blocks
+The strength decay (`s_decay`) is a function of the filtering strength that is set in the code. 
 
-After multiplying each pixel of the co-located 64x64 blocks by the
-respective weight, the blocks are then added and normalized to produce
-the final output filtered block. These are then combined with the rest
-of the blocks in the frame to produce the final temporally filtered
-picture.
+### Temporal filtering of the co-located motion compensated blocks
 
-The process of generating one filtered block is illustrated in diagram
-of Fig. 2. In this example, only 3 pictures are used for the temporal
-filtering ```altref_nframes = 3```. Moreover, the values of the filter
-weights are for illustration purposes only and are in the range {0,32}.
+After multiplying each pixel of the co-located 64x64 blocks by the respective weight, the blocks are then added and normalized to produce the
+final output filtered block. These are then combined with the rest of the blocks in the frame to produce the final temporally filtered picture.
+
+The process of generating one filtered block is illustrated in diagram of Figure 3. In this example, only 3 pictures are used for the temporal
+filtering (`num_past_pics = 1` and `num_future_pics = 1`). Moreover, the values of the filter weights are used for illustration purposes only
+and are in the range {0,32}.
 
 ![altref_fig2](./img/altref_fig2.png)
 
@@ -200,27 +159,25 @@ weights are for illustration purposes only and are in the range {0,32}.
 
 ## 2. Implementation of the algorithm
 
-**Inputs**: list of picture buffer pointers to use for filtering,
-location of central picture, initial filtering strength
+**Inputs**: list of picture buffer pointers to use for filtering, location of central picture, initial filtering strength
 
-**Outputs**: the resulting temporally filtered picture, which replaces
-the location of the central pictures in the source buffer. The original
-source picture is stored in an additional buffer.
+**Outputs**: the resulting temporally filtered picture, which replaces the location of the central pictures in the source buffer.
+The original source picture is stored in an additional buffer.
 
-**Control macros/flags**:
+**Control flags**:
 
-| **Flag**         | **Level (sequence/Picture)** | **Description**    |
-| ---------------- | ------------- | ------------ |
-| tf-level        | Sequence                     | High-level flag to enable/disable temporally filtered pictures (-1: Default; 0: OFF; 1: ON)                              |
-| enable-overlays | Sequence                     | Enable overlay frames (0: OFF[default], 1: ON)      |
+#### Table 2: Control signals/flags for the ALTREF frames feature.  
+| **Flag**         | **Level** |
+| ---------------- | ------------- |
+| tf-controls      | Sequence      |
+| enable-overlays  | Sequence      |
 
 
 ### Implementation details
 
-The current implementation supports 8-bit and 10-bit sources as well as
-420, 422 and 444 chroma sub-sampling. Moreover, in addition to the C
-versions, SIMD implementations of some of the more computationally
-demanding functions are also available.
+The current implementation supports 8-bit and 10-bit sources as well as 420, 422 and 444 chroma sub-sampling.
+Moreover, in addition to the C versions,
+SIMD implementations of some of the more computationally demanding functions are also available.
 
 Most of the variables and structures used by the temporal filtering
 process are located at the picture level, in the PictureControlSet (PCS)
@@ -247,12 +204,9 @@ consumed by the HME process.
 
 ### Memory allocation
 
-Three uint8_t or uint16_t buffers of size 64x64x3 are allocated: the
-accumulator, predictor and counter. In addition, an extra picture buffer
-(or two in case of high bit-depth content) is allocated to store the
-original source. Finally, a temporary buffer is allocated for high-bit
-depth sources, due to the way high bit-depth sources are stored in the
-encoder implementation (see sub-section on high bit-depth
+Three uint8_t or uint16_t buffers of size 64x64x3 are allocated: the accumulator, predictor and counter. In addition, an extra picture buffer
+(or two in case of high bit-depth content) is allocated to store the original source. Finally, a temporary buffer is allocated for high-bit
+depth sources, due to the way high bit-depth sources are stored in the encoder implementation (see sub-section on high bit-depth
 considerations).
 
 ### High bit-depth considerations
@@ -285,33 +239,7 @@ copying of the original source buffers. These steps are protected by a
 mutex, ```temp_filt_mutex```, and a binary flag, ```temp_filt_prep_done``` in
 the PCS structure.
 
-### Relevant files and functions in the codebase
-
-The main source files that implement the temporal filtering operations
-are located in Source/Lib/Encoder/Codec, and correspond to:
-
-  - EbTemporalFiltering.c
-
-  - EbTemporalFiltering.h (header file)
-
-In addition, the logic to build the list of source pictures for the
-temporal filtering is located in Source/Lib/Encoder/Codec:
-
-  - EbPictureDecisionProcess.c
-
-The table below presents the list of functions implemented in
-EbTemporalFiltering.c, grouped by tasks.
-
-![table1](./img/altref_table1.png)
-
-## 3. Optimization of the algorithm
-
-The current algorithm provides a good trade-off between compression
-efficiency and complexity, and therefore is enabled by default for all
-encoding presets, enc-modes, from 0 to 8. No optimizations for higher
-speed presets are performed.
-
-## 4. Signaling
+## Signaling
 
 If the temporally filtered picture location is of type ```ALTREF_FRAME``` or
 ```ALTREF2_FRAME```, the frame should not be displayed with the
@@ -353,8 +281,12 @@ In set_frame_display_params function, ```frm_hdr->show_frame = EB_TRUE``` and
 associate ALTREF picture will not be displayed, and the reconstructed Overlay
 picture will be displayed instead.
 
+Consider the example of a five-layer prediction structure shown in Figure 4 below.
+The ALTREF and Overlay picture settings are shown in Table 3. 
 
 ![image1](./img/image1.png)
+
+#### Figure 4. Example of a five-layer prediction structure. 
 
 **Example when picture 16 is ALTREF**:
 

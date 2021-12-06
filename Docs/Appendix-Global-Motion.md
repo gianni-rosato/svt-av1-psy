@@ -124,7 +124,7 @@ The global motion data flow is summarized in the Figure 2 below.
 
 ![gm_fig2](./img/gm_fig2.png)
 
-##### Figure 2. Global motion data flow in the encoder pipeline. 
+##### Figure 2. Global motion data flow in the encoder pipeline.
 
 The main algorithmic components of the global motion feature are the estimation component which takes place in the motion estimation process,
 and the injection and processing component which takes place in the Mode Decision process(injection and processing).
@@ -222,7 +222,7 @@ The conditions for the injection of GLOBAL_GLOBAL candidates are as follows:
 For the case where downsample_level <= GM_DOWN:
 
 1.  Is_compound_enabled (i.e. compound reference mode) AND
-2.  2.	allow_bipred (i.e. block height > 4 or block width > 4) AND
+2.  2.  allow_bipred (i.e. block height > 4 or block width > 4) AND
 3.  (List_0 Transformation type > TRANSLATION AND List_1 Transformation type > TRANSLATION))
 
 Otherwise, only conditions 1 and 2 above apply.
@@ -247,7 +247,7 @@ of the mode decision process.
 Different quality-complexity tradeoffs of the global motion algorithm can be achieved by manipulating a set of control parameters that are
 set in the gm_controls() function. These control parameters are set according to the flag gm_level which is set in the picture decision
 process according to the encoder preset.
-The different parameters that are controlled by the flag gm_level are described in Table 2 below.  
+The different parameters that are controlled by the flag gm_level are described in Table 2 below.
 
 ##### Table 2. Optimization flags associated with global motion compensation.
 
@@ -264,7 +264,7 @@ The different parameters that are controlled by the flag gm_level are described 
 |downsample_level|Picture|GM_FULL: Exhaustive search mode. GM_DOWN: GM search based on down-sampled resolution with a down-sampling factor of 2 in each dimension. GM_TRAN_ONLY: Translation only using ME MV|
 
 The generated global motion information may be used in all or some of the mode decision Partitioning Decision (PD) passes.
-The injection of global motion candidates in MD is controlled by the flag global_mv_injection. 
+The injection of global motion candidates in MD is controlled by the flag global_mv_injection.
 
 ## 4.  Signaling
 
