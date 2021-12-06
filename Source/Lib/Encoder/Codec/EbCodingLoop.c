@@ -1350,8 +1350,11 @@ void store16bit_input_src(EbPictureBufferDesc *input_sample16bit_buffer, Picture
                from_ptr + row_it * input_sample16bit_buffer->stride_cr,
                sb_w * 2);
 }
-
+#if FIX_PALETTE_10BIT
+void update_mi_map_enc_dec(BlkStruct *blk_ptr,ModeDecisionContext *md_ctx);
+#else
 void update_mi_map_skip_settings(BlkStruct *blk_ptr);
+#endif
 void move_blk_data(PictureControlSet *pcs, EncDecContext *context_ptr, BlkStruct *src_cu,
                    BlkStruct *dst_cu);
 #if REFCTR_SEP_ENCDEC
@@ -3776,7 +3779,11 @@ EB_EXTERN void av1_encdec_update(SequenceControlSet *scs, PictureControlSet *pcs
             } // End coeff update
 #endif
             if (!md_ctx->bypass_encdec)
+#if FIX_PALETTE_10BIT
+                update_mi_map_enc_dec(blk_ptr,md_ctx);
+#else
                 update_mi_map_skip_settings(blk_ptr);
+#endif
             if (pcs->cdf_ctrl.update_se) {
                 // Update the partition Neighbor Array
                 PartitionContext partition;

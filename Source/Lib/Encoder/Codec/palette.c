@@ -363,7 +363,10 @@ void search_palette_luma(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
     EbPictureBufferDesc *src_pic    = is16bit ? pcs_ptr->input_frame16bit
                                               : pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr;
     const int            src_stride = src_pic->stride_y;
-
+#if FIX_PALETTE_10BIT
+    // bit depth for palette search
+    unsigned bit_depth_pal = is16bit ? EB_10BIT: EB_8BIT;
+#endif
     const uint8_t *const src = src_pic->buffer_y +
         (((context_ptr->blk_origin_x + src_pic->origin_x) +
           (context_ptr->blk_origin_y + src_pic->origin_y) * src_pic->stride_y)
@@ -425,7 +428,11 @@ void search_palette_luma(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
         int top_colors[PALETTE_MAX_SIZE] = {0};
         for (i = 0; i < AOMMIN(colors, PALETTE_MAX_SIZE); ++i) {
             int max_count = 0;
+#if FIX_PALETTE_10BIT
+            for (int j = 0; j < (1 << bit_depth_pal); ++j) {
+#else
             for (int j = 0; j < (1 << bit_depth); ++j) {
+#endif
                 if (count_buf[j] > max_count) {
                     max_count     = count_buf[j];
                     top_colors[i] = j;
@@ -457,7 +464,11 @@ void search_palette_luma(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
                          n,
                          color_cache,
                          n_cache,
+#if FIX_PALETTE_10BIT
+                         bit_depth_pal);
+#else
                          bit_depth);
+#endif
 
             //consider this candidate if it has some non zero palette
 #if OPT_MEM_PALETTE
@@ -494,7 +505,11 @@ void search_palette_luma(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
                          n,
                          color_cache,
                          n_cache,
+#if FIX_PALETTE_10BIT
+                         bit_depth_pal);
+#else
                          bit_depth);
+#endif
 
             //consider this candidate if it has some non zero palette
 #if OPT_MEM_PALETTE

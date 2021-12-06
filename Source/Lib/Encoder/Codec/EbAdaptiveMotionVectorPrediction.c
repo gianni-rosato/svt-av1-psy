@@ -2200,12 +2200,23 @@ void get_av1_mv_pred_drl(ModeDecisionContext *context_ptr, BlkStruct *blk_ptr,
         }
     }
 }
+#if FIX_PALETTE_10BIT
+void update_mi_map_enc_dec(BlkStruct *blk_ptr,ModeDecisionContext *md_ctx) {
+#else
 void update_mi_map_skip_settings(BlkStruct *blk_ptr) {
-
+#endif
     // Update only the data in the top left block of the partition, because all other mi_blocks
     // point to the top left mi block of the partition
     blk_ptr->av1xd->mi[0]->mbmi.block_mi.skip = blk_ptr->block_has_coeff ? EB_FALSE : EB_TRUE;
     blk_ptr->av1xd->mi[0]->mbmi.block_mi.skip_mode = (int8_t)blk_ptr->skip_flag;
+
+#if FIX_PALETTE_10BIT
+    // update palette_colors mi map when input bit depth is 10bit and hbd mode decision is 0 (8bit MD)
+    // palette_colors were scaled to 10bit in av1_encode_decode so here we need to update mi map for entropy coding
+    if (md_ctx->encoder_bit_depth > EB_8BIT && md_ctx->hbd_mode_decision == 0)
+        if (blk_ptr->av1xd->mi[0]->mbmi.palette_mode_info.palette_size )
+               svt_memcpy(blk_ptr->av1xd->mi[0]->mbmi.palette_mode_info.palette_colors, blk_ptr->palette_info->pmi.palette_colors, sizeof(blk_ptr->av1xd->mi[0]->mbmi.palette_mode_info.palette_colors[0]) * PALETTE_MAX_SIZE);
+#endif
 }
 #if OPT_UPDATE_MI_MAP
 void copy_mi_map_grid(ModeInfo** mi_grid_ptr, uint32_t mi_stride, uint8_t num_rows, uint8_t num_cols) {

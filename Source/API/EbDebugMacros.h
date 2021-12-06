@@ -858,6 +858,15 @@ NOTE : PART OF LIGHT_PD0_2  code was committed to svt-04-final-rebased under OPT
 #define CLN_PALETTE_CTRLS                     1 // Cleanup palette controls
 #define FIX_CAP_CRF                           1 // Fix the overflow happens in the max bitrate calculation
 
+
+
+
+
+
+
+
+
+#define FIX_PALETTE_10BIT                    1 // Fix palette in 10bit with hbd-mode-decision 0
 #endif //----------------------------------- all svt-05 features should be place are above this line -------------------------
 
 

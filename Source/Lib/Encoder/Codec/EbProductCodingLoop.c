@@ -10717,6 +10717,14 @@ static void md_stage_3(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr, BlkStruct
              !context_ptr->bypass_md_stage_2[candidate_ptr->cand_class]) &&
                         (!candidate_buffer->candidate_ptr->block_has_coeff);
 #endif
+#if FIX_PALETTE_10BIT
+        if (context_ptr->scale_palette)
+            if (candidate_ptr->palette_info != NULL)
+                if  (candidate_ptr->palette_size[0] > 0)
+                    //MD was done on 8bit, scale  palette colors to 10bit
+                    for (uint8_t col = 0; col <candidate_ptr->palette_size[0]; col++)
+                        candidate_ptr->palette_info->pmi.palette_colors[col] *= 4;
+#endif
 #if FTR_BYPASS_ENCDEC
         // If EncDec is bypassed, disable features affecting the TX that are usually disabled in EncDec
         if (context_ptr->bypass_encdec && context_ptr->pd_pass == PD_PASS_1) {
@@ -14717,7 +14725,9 @@ void md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionContext *context_pt
 #endif
         context_ptr->hbd_mode_decision = 2;
         context_ptr->need_hbd_comp_mds3 = 1;
-
+#if FIX_PALETTE_10BIT
+        context_ptr->scale_palette = 1;
+#endif
         // Set the new input picture and offsets
         input_picture_ptr = pcs_ptr->input_frame16bit;
         input_cb_origin_in_index = ((context_ptr->round_origin_y >> 1) + (input_picture_ptr->origin_y >> 1)) * input_picture_ptr->stride_cb +
@@ -15854,6 +15864,9 @@ void init_block_data(PictureControlSet *pcs, ModeDecisionContext *ctx,
 
     const BlockGeom *blk_geom = ctx->blk_geom;
     BlkStruct *      blk_ptr  = ctx->blk_ptr;
+#if FIX_PALETTE_10BIT
+    ctx->scale_palette = 0;
+#endif
     ctx->blk_origin_x = sb_org_x + blk_geom->origin_x;
     ctx->blk_origin_y = sb_org_y + blk_geom->origin_y;
     ctx->round_origin_x = ((ctx->blk_origin_x >> 3) << 3);

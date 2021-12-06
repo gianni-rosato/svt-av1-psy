@@ -1374,6 +1374,10 @@ typedef struct ModeDecisionContext {
 #if FTR_M13
     uint8_t skip_pd0;
 #endif
+#if FIX_PALETTE_10BIT
+    uint8_t scale_palette;   //   when MD is done on 8bit, scale  palette colors to 10bit (valid when bypass is 1)
+#endif
+
 } ModeDecisionContext;
 
 typedef void (*EbAv1LambdaAssignFunc)(PictureControlSet *pcs_ptr, uint32_t *fast_lambda,
