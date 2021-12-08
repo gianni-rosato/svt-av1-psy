@@ -1,13 +1,13 @@
-# TX Search Appendix
+# Transform Type and Transform Size Search
 
 ## Transform Search
-AV1 provides multiple transform (Tx) type options to work with. Moreover, transform block size could
-be the same of smaller than the prediction block size. In the following Tx type search and Tx size search
-are discussed in detail.
+AV1 provides multiple transform (Tx) type options to work with.
+Moreover, transform block size could be the same or smaller than the prediction block size.
+In the following Tx type search and Tx size search are discussed in detail.
 
-## I. Tx Type Search
+## Tx Type Search
 
-### 1.  Description of the algorithm
+### Description of the algorithm
 
 The AV1 specifications indicate that four transform options could be
 considered, namely DCT, Asymmetric Discrete Sine Transform (ADST),
@@ -44,15 +44,10 @@ approaches to evaluate the least number of transform options without
 incurrent a significant loss in compression performance. The options
 considered in the following are listed below:
 
-  - Deciding whether to perform Tx search, and if so where in the
-    pipeline to perform the search.
-
   - To use a subset of the transform options.
 
-  - To exploit already computed cost information for different
-    prediction candidates for the same block to decide whether to skip
-    the Tx search for the current candidate based on the cost difference
-    between the current candidate and the best candidate.
+  - To exploit already computed information (e.g. distortion, previous stage coeffs, etc.)
+    to decide whether to skip (or reduce) the Tx search for the current candidate.
 
 <!-- end list -->
 
@@ -68,118 +63,123 @@ considered in the following are listed below:
 
 | **Flag**          | **Level (sequence/Picture)** | **Description**                                                                                                        |
 | ----------------- | ---------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| tx\_search\_level | Picture                      | Indicates whether Tx search is to be performed, and if so, whether it would be considered in MD or in the encode pass. |
+| tx\_level         | Picture                      | Indicates whether Tx search is to be performed, and if so, what level of optimizations to use in the search.           |
 
 #### Details of the implementation
 
-The main function calls associated with Tx search in MD and in the
-encode pass are outlined in Figure 1 below.
+TX type search happens in the function tx_type_search().  The luma transform for each TX type (or a subset of TX types – see optimization section) is tested
+and the associated cost is computed.  The TX type with the lowest cost is selected.
 
-![tx_search_fig1](./img/tx_search_fig1.png)
+For the looping, the transform types (see Table 1) are split into groups based on how likely each transform is to be selected (on average).  This allows for
+only certain groups of transforms to be tested (see optimization section).  All transforms in Group 0 will be tested, then all transforms in Group 1 will be
+tested, then all transforms in Group 2 will be tested, and so on. The groups area as follows:
 
-##### Figure 1. Main function calls associated with TX search in MD and in the encode pass.
+##### Table 3. Groupings of transform options.
 
+| **Group**     | **TX Types in Non-SC Encoder** | **TX Types in the SC Encoder** |
+| ---------------------- | ------------ | -------------- |
+| 0          | DCT\_DCT      | DCT\_DCT, IDTX       |
+| 1          | V_DCT, H_DCT      | V_DCT, H_DCT      |
+| 2          | ADST_ADST      | ADST_ADST       |
+| 3          | ADST_DCT, DCT_ADST      | ADST_DCT, DCT_ADST       |
+| 4          | FLIPADST_FLIPADST, IDTX      | FLIPADST_FLIPADST       |
+| 5          | FLIPADST_DCT, DCT_FLIPADST, ADST_FLIPADST, FLIPADST_ADST, V_ADST, H_ADST, V_FLIPADST, H_FLIPADST      | FLIPADST_DCT, DCT_FLIPADST, ADST_FLIPADST, FLIPADST_ADST, V_ADST, H_ADST, V_FLIPADST, H_FLIPADST       |
 
-Tx type search is performed using the functions ```tx_type_Search``` and ```product_full_loop_tx_search```
-in MD and the function ```encode_pass_tx_search``` in the encode pass.
 
 ### 3.  Optimization of the algorithm
 
-A summary of the different optimization approaches considered in Tx
-search is presented in Figure 2 below.
+#### Reducing Tested TX Types
 
-![tx_search_fig2](./img/tx_type_search_fig2.png)
+The search for the transform type is controlled by the **txt_level** signal.
 
-##### Figure 2. A Summary of the Tx search optimization approaches.
+The txt_level signal controls the number of TX groups to test in the TX type search.  The number of TX groups to be tested are reduced based on block size
+and block type.  The search can exit early if the distortion and/or resulting number of coefficients is sufficiently low.
+
+##### Table 4. Groupings of transform options.
+
+| **Signal**     | **Description** |
+| -------------- | --------------- |
+| enabled | 1: TX type search enabled; 0: TX type search disabled (use DCT_DCT) |
+| txt_group_inter_lt_16x16 | Max group to use when inter and tx block < 16x16 |
+| txt_group_inter_gt_eq_16x16 | Max group to use when inter and tx block >= 16x16 |
+| txt_group_intra_lt_16x16 | Max group to use when intra and tx block < 16x16 |
+| txt_group_intra_gt_eq_16x16 | Max group to use when intra and tx block >= 16x16 |
+| early_exit_dist_th | Per unit distortion TH; if best TX distortion is below the TH, skip remaining TX types (0 OFF, higher = more aggressive) |
+| early_exit_coeff_th | If best TX number of coeffs is less than the TH, skip remaining TX types (0 OFF, higher = more aggressive) |
+
+#### Tx Type Search Shortcuts Based on Block Characteristics
+
+This type of optimization is controlled by the **tx_shortcut_level** signal. Shortcuts to speedup the search can be used based on results from previous MD stages and
+neighbouring blocks.
+
+##### Table 5. Optimization signals for Tx type search controlled by the tx_shortcut_level.
+
+| **Signal**     | **Description** |
+| -------------- | --------------- |
+| bypass_tx_when_zcoeff | Skip TX at MD_Stage_3 if the MD_Stage_1 TX did not yield any non-zero coefficients |
+| apply_pf_on_coeffs | Apply partial frequency transform (PF) based on the number of coefficients |
+| use_mds3_shortcuts_th | if (best MD_Stage_0 distortion/QP < TH) use shortcuts for candidates at MD_Stage_3; 0: OFF, higher settings: More aggressive |
+| use_neighbour_info | if true, use info from neighbouring blocks to use more aggressive Thresholds/actions |
+
+#### Residual Subsampling
+
+The residuals can be subsampled before the transform is performed to reduce the computations spent in the transform loop.  When enabled, only every 2nd line
+(or 4th line, depending on settings) is used to compute the transform.  Subsampling will change the size of the TX according to the table below; subsampling
+more than every 4th line is not permitted since there is no corresponding TX size (e.g. no 8x64).
+
+##### Table 6. Tx block size for different subsampling levels.
+
+| **TX size (width x height)**     | **2x subsampled TX size** | **4x subsampled TX size** |
+| -------------------------------- | ------------------------- | ------------------------- |
+| 128x128 | Not supported | Not supported |
+| 64x64 | 64x32 | 64x16 |
+| 32x32 | 32x16 | 32x8 |
+| 16x16 | 16x8 | 16x4 |
+| 8x8 | 8x4 | Not allowed (no 8x2 TX size) |
+| 4x4 | Not allowed (no 4x2 TX size) | Not allowed (no 4x1 TX size) |
+
+When computing the reconstructed block from a subsampled TX, the rows that were skipped in the transform coefficient calculations will be filled with the copy
+of the previous line.  Subsampling cannot be used when computing a conformant transform because the reconstructed block will not be the correct size.
+
+Subsampling the residual is controlled with the **subres_level** signal.
+
+#### Partial Frequency Transforms
+
+Instead of computing the transform for the entire block area, partial frequency transforms (PF) considers the computations necessary to generate only transform
+coefficients in an upper left area of the transform coefficient block.   Table 7 and Figure 1 below summarize the available PF sizes.
+
+##### Table 7. Description for PF shapes.
+
+| **PF Shape**     | **Block Size Used in TX** |
+| ---------------- | ------------------------- |
+| ```DEFAULT_SHAPE``` | Full Block (regular TX) |
+| ```N2_SHAPE``` | Quarter block (half width x half height) |
+| ```N4_SHAPE``` | Eighth block (quarter width x quarter height) |
+| ```ONLY_DC_SHAPE``` | DC position only – not recommended |
 
 
-The optimization of the Tx search is performed using different
-approaches as outlined in the following.
+![tx_search_new_fig1](./img/tx_search_new_fig1.png)
 
-**Tx search level**: The Tx search level indicates where in the encoder
-pipeline the Tx search would be performed. The three candidate
-components of the encoder where Tx search could be performed are the
-full-loop in MD, inter-depth decision in MD, and the encode pass.
-The flag tx\_search\_level is used to indicate where Tx search
-would be performed. Table 3 summarized the values and associated
-descriptions of the flag. The settings for tx\_search\_level as a
-function of the encoder preset and other settings are given in Table 4.
+##### Figure 1. A Summary of the Tx search optimization approaches.
 
-##### Table 3. tx\_search\_level values and description.
+PF is controlled through the **pf_level** signal.
 
-| **tx\_search\_level**    | **Value** | **Description**                                                     |
-| ------------------------ | --------- | ------------------------------------------------------------------- |
-| TX\_SEARCH\_OFF          | 0         | Tx search OFF                                                       |
-| TX\_SEARCH\_ENC\_DEC     | 1         | Tx search performed only in the encode pass, the lowest complexity option.  |
-| TX\_SEARCH\_INTER\_DEPTH | 2         | Tx search performed only in inter-depth decision in MD, intermediate complexity level. |
-| TX\_SEARCH\_FULL\_LOOP   | 3         | Tx search performed only in the full-loop in MD, highest complexity level.      |
+## Tx Size Search
 
-##### Table 4. tx\_search\_level settings as a function of encoder settings.
+### Description of the Algorithm
 
-![image_table4](./img/tx_search_table4.png)
+For a given block, Tx size (TxS) search is used to determine the transform block size that yields the best rate-distortion cost for the block under
+consideration. Block transform size can be either the same as, one depth or two depths below the current block size.  The maximum allowable depth change for
+each block size is specified below, where a depth change of 2 means a TX size two depths more than the current block size, and 0 means the default TX size.
 
-**Cost-dependent Tx search**
+##### Table 8. Maximum change in block depth in transform size search as a function of the block size.
 
-If Tx search is to be performed in the full-loop in MD, the decision
-on whether to perform Tx search could be further refined based on the
-difference between the fast loop cost of the current candidate and the
-best fast loop cost for the block. If the difference is greater than a
-given threshold, Tx search is skipped. The threshold value is specified
-by the variable tx\_weight. The values of tx_weight and corresponding
-descriptions are given in Table 5. The settings for tx\_weight as a
-function of the encoder preset and other settings are given in Table
-6.
+| **Block size**     | **Max transform block depth change beyond current block depth** |
+| ------------------ | --------------------------------------------------------------- |
+| 64X64, 32X32, 16X16, 64X32, 32X64, 16X32, 32X16, 16X8, 8X16, 64X16, 16X64, 32X8, 8X32, 16X4, 4X16 | 2 |
+| 8X8 | 1 |
 
-##### Table 5. tx\_weight values and description.
-
-| **tx\_weight**          | **Value**           | **Description**                            |
-| ----------------------- | ------------------- | ------------------------------------------ |
-|                         | 0                   | Always skip.                               |
-| FC\_SKIP\_TX\_SR\_TH010 | 110                 | Skip if difference in cost is 10% or more. |
-| FC\_SKIP\_TX\_SR\_TH025 | 125                 | Skip if difference in cost is 25% or more. |
-| MAX\_MODE\_COST         | 13616969489728 \* 8 | No skipping                                |
-
-##### Table 6. tx\_weight as a function of encoder settings.
-
-|**Preset**|**PD_PASS_0**|**PD_PASS_1**|**PD_PASS_2**|
-|--- |--- |--- |--- |
-|M0|MAX_MODE_COST|FC_SKIP_TX_SR_TH025|if (tx_search_level == TX_SEARCH_ENC_DEC) then MAX_MODE_COST else FC_SKIP_TX_SR_TH025|
-|M1|MAX_MODE_COST|FC_SKIP_TX_SR_TH025|if (tx_search_level == TX_SEARCH_ENC_DEC) then MAX_MODE_COST else FC_SKIP_TX_SR_TH025|
-|M2 - M8|MAX_MODE_COST|FC_SKIP_TX_SR_TH025|if is_used_as_reference_flag then FC_SKIP_TX_SR_TH025 else FC_SKIP_TX_SR_TH010|
-
-
-**Search subset**: If Tx search is performed in either full-loop in MD or
-in encode pass in enc/dec, a Tx search subset could be considered
-instead of the full Tx search set. The use of a reduced search subset is
-specified by the flag ```tx_search_reduced_set```. The values of ```tx_search_reduced_set```
-and the corresponding descriptions are given in Table 7. The
-settings for ```tx_search_reduced_set``` as a function of the encoder
-preset and other settings are given in Table 8.
-
-##### Table 7. tx\_search\_reduced\_set values and description.
-
-| **tx\_search\_reduced\_set** | **Description** |
-| ---------------------------- | --------------- |
-| 0                            | Full Tx set     |
-| 1                            | Reduced Tx set  |
-| 2                            | Two Tx          |
-
-##### Table 8. tx\_search\_reduced\_set settings as a function of encoder settings.
-
-![image_table8](./img/tx_search_table8.png)
-
-## II. Tx Size Search
-
-## 1.  Description of the algorithm
-
-For a given block, Tx size search is used to determine the transform
-block size that yields the best rate-distortion cost for the block
-under consideration. In the current implementation of the Tx size
-search feature, only one depth below the current block depth is
-considered, as determined by the function ```get_end_tx_depth```. This
-is true for inter and intra blocks and for the following block
-sizes: 8X8, 8X16, 16X8, 16X16, 16X32, 32X16, 32X32, 32X64, 64X32,
-64X64, 4X16, 16X4, 8X32, 32X8, 16X64, 64X16.
+### Implementation of the Algorithm
 
 ## 2.  Implementation of the algorithm
 
@@ -190,86 +190,48 @@ sizes: 8X8, 8X16, 16X8, 16X16, 16X32, 32X16, 32X32, 32X64, 64X32,
 **Control macros/flags**:
 
 ##### Table 9. Control flags associated with Tx size search.
+
 | **Flag**               | **Level (sequence/Picture)** | **Description**                                                       |
 | ---------------------- | ---------------------------- | --------------------------------------------------------------------- |
-| md\_atb\_mode          |                              | When set, it allows transform block size search.                      |
-| md\_staging\_skip\_atb |                              | When set, transform block size search is skipped.                     |
-| use\_intrabc           | Block                        | When set it indicates that Intra Block Copy prediction could be used. |
+| tx_size_search_mode    | Picture                      | When set, it allows transform block size search.                      |
+| frm_hdr->tx_mode       | Picture                      | Frame-based signal used to signal that TX size search is allowed in a given frame. |
+| txs_level              | Picture                      | Indicates the level of optimization to use in the TX size search. |
 
-**Details of the implementation**
+#### Details of the implementation
 
-The main function calls associated with Tx size search in MD are
-outlined in Figure 3 below.
+The function tx_partitioning_path performs the Tx size search in MD. The flow of the evaluation depends on whether the block is an inter-coded block or an
+intra-coded block, as outlined below.
 
+1.  In the case of an inter block (i.e. the candidate type is INTER or Intra Block Copy), the residual block can be computed for the whole block based on the already computed prediction (computed in MD_Stage_0 in the function full_loop_core) through the call to the function residual_kernel.
+2.  Loop over the depths to be evaluated (up to 2 depths, if block size allows – see optimization section for signals limiting number of TX depths to search).
+    1. The function tx_reset_neighbor_arrays is used to reset the neighbor arrays. Initialize the neighbor arrays using tx_initialize_neighbor_arrays.  The neighbour arrays are needed to store the data from all TX depths until a decision on the best depth can be made.
+    2. Loop over the Tx blocks in the depth being evaluated.
+       - If the block is an intra block, then:
+         - Perform luma intra prediction in av1_intra_luma_prediction.
+         - Compute the luma resulting residuals in residual_kernel.
+       - Perform Tx search for the current Tx block in tx_type_search
+       - Perform Tx, quantization, inverse quantization, and if spatial SSE is needed, inverse transform. Compute the cost of the current transform type for the transform block size under consideration.
+       - If the block is an intra block, update both the recon sample neighbor array and the transform-related neighbor array tx_update_neighbor_array. Otherwise, update only the transform-related neighbor array in the same function.
+    3. Estimate the rate associated with signaling the Tx size in get_tx_size_bits.
+    4. Update best_cost_search and best_tx_depth based on the depths evaluated so far.
 
-![tx_search_fig3](./img/tx_search_fig3.png)
+#### Optimization of the Algorithm
 
-##### Figure 3. Main function calls associated with Tx size search in MD.
+The optimization of the TX size search focuses on two areas:
+- Reducing the number of depths tested
+- Reducing the cost of testing each depth (by reducing the number of transforms searched for depths 1 and 2).
 
-Tx size search is enabled currently only in ```MD_stage_2``` since in
-```MD_Stage_1``` we have ```md_staging_skip_atb == EB_TRUE```.
+##### Table 10. Optimization signals for Tx size search.
 
-The function ```tx_partitioning_path``` performs the Tx size search in MD.
-Currently, only the original transform block and the corresponding
-one-depth below partitioning transform blocks are evaluated, i.e. only
-the original block depth and one depth below are evaluated. The flow of
-the evaluation depends on whether the block is an inter coded block or
-an intra coded block, as outlined below.
-
-1. In the case of an inter block (i.e. the candidate type is INTER or Intra Block Copy),
-    the residual block can be computed for the whole
-    block based on the already computed prediction. This is done in the
-    function `full_loop_core` through the call to the function
-    `residual_kernel`.
-
-2. Determine the setting for the flag `tx_search_skip_flag`, which
-    indicates whether transform type search would be performed or not.
-    The function `get_skip_tx_search_flag` is used to determine the
-    setting for the flag.
-
-3. The function `tx_reset_neighbor_arrays` is used to reset the
-    neighbor arrays.
-
-4. Loop over the depths to be evaluated (i.e. current depth and thenext depth).
-
-   a. Initialize the neighbor arrays using `tx_initialize_neighbor_arrays`
-
-   b. Loop over the Tx blocks in the depth being evaluated.
-
-      1. If the block is not an inter block, then:
-         * Perform luma intra prediction in av1_intra_luma_prediction.
-         * Compute the luma resulting residuals in residual_kernel.
-
-      2. Perform Tx search for the current Tx block in `tx_type_search`
-
-      3. Perform Tx, quantization, inverse quantization, and if spatialSSE, inverse transform. Compute the cost of the current transform type for the transform block size under consideration. All these operations are performed in `product_full_loop`
-
-      4. If the block is not an inter block, update both the recon sample neighbor array and the transform-related neighbor array `tx_update_neighbor_array`. Otherwise, update only the transform-related neighbor array in the same function.
-
-   c. Estimate the rate associated with signaling the Tx size in `get_tx_size_bits`.
-
-   d. Update `best_cost_search` and `best_tx_depth` based on the depths evaluated so far.
-
-<!-- end list -->
-
-## 3.  Optimization of the algorithm
-
-The Tx size search optimization is based on checking whether the
-parent transform block for the current transform block has all zero
-coefficients. If the parent Tx block does not have any non-zero
-coefficients, then no further Tx size search is considered. The feature
-is controlled by the flag ```tx_size_early_exit```. The flag is used in
-```tx_partitioning_path``` to exit the Tx size search if the flag is set. A
-description of the flag settings is given in Table 10.
-
-##### Table 10. Description of the tx\_size\_early\_exit settings.
-
-| **tx\_size\_early\_exit** | **Description** |
-| ------------------------- | --------------- |
-| 0                         | Feature OFF     |
-| 1                         | Feature ON      |
-
-The flag ```tx_size_early_exit``` is set to 1.
+| **Signal**     | **Description** |
+| -------------- | --------------- |
+| enabled | 1: Ts size search enabled; 0: Tx size search disabled (use default TX size) |
+| prev_depth_coeff_exit | Skip current depth if previous depth has zero coeffs |
+| intra_class_max_depth | Max number of depth(s) for INTRA classes |
+| inter_class_max_depth | Max number of depth(s) for INTER classes |
+| depth1_txt_group_offset | Offset to be subtracted from default txt-group to derive the txt-group of depth-1 |
+| depth2_txt_group_offset | Offset to be subtracted from default txt-group to derive the txt-group of depth-2 |
+| min_sq_size | Min. square size to use Tx size for |
 
 ## Notes
 
