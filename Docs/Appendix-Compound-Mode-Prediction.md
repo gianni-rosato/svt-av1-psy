@@ -141,20 +141,40 @@ Table 1 below provides the weights as a function of d1/d0.
 
 ## 2.  Implementation of the algorithm
 
-**Control macros/flags**:
+**Control tokens/flags**:
 
-##### Table 2. Inter-intra-related control flags.
+The control tokens and flags for the feature are listed in Tables 2 and 3.
 
-![comp_mode_pred_table2](./img/comp_mode_pred_table2.png)
+##### Table 2. Control flags related to inter-intra compound mode prediction.
 
-##### Table 3. Control flag for wedge prediction.
+| **Flag** | **Level (Sequence/picture)** | **Description** |
+| --- | --- | --- |
+| inter_intra_compound | sequence | Config level settings for the whole sequence. 0/1: ON/OFF; -1 for Auto i.e. Default |
+| enable_interintra_compound | sequence | Sequence level ON/OFF flag |
+| md_inter_intra_level | sequence | Enable/disable the feature at the picture level. |
+| md_inter_intra_level | block | Enable/disable the feature at the block level. |
 
-![comp_mode_pred_table3](./img/comp_mode_pred_table3.png)
 
-##### Table 4. Control flags related to inter-inter compound mode prediction.
+##### Table 3. Control flags related to inter-inter compound mode prediction.
 
-![comp_mode_pred_table4](./img/comp_mode_pred_table4.png)
+| **Flag** | **Level (Sequence/picture)** | **Description** |
+| --- | --- | --- |
+| compound_level | sequence | Config level settings for the whole sequence. 0/1: OFF/ON; -1 for Auto i.e. Default |
+| compound_mode | sequence | Sequence level ON/OFF flag |
+| inter_compound_mode | sequence | Enable/disable the feature at the picture level. |
+| inter_compound_mode | block | Enable/disable the feature at the block level. |
 
+### API
+
+The main function calls associated with the compound mode are listed in Tables 4 and 5.
+
+##### Table 4. API for inter-intra compound mode.
+
+![comp_mode_pred_table4_new](./img/comp_mode_pred_table4_new.png)
+
+##### Table 5. API for inter-inter compound mode.
+
+![comp_mode_pred_table5_new](./img/comp_mode_pred_table5_new.png)
 
 ### Details of the implementation
 
@@ -252,17 +272,14 @@ residuals and the intra prediction residuals.
 
 3.  ```Determine_compound_mode```
 
-The main function calls starting at ```Determine_compound_mode``` are
-outlined in Figure 4.
+The main function calls starting at ```determine_compound_mode``` are outlined in Figure 4.
 
 ![comp_mode_pred_fig6](./img/comp_mode_pred_fig6.png)
 
 ##### Figure 4. Continuation of Figure 3 showing the main function calls starting with determine\_compound\_mode.
 
-The generation of ```COMPOUND_WEDGE``` and ```COMPOUND_DIFFWTD``` predictions is
-performed using the function ```Determine_compound\_mode```, which calls the
-function ```search_compound_diff_wedge```. The rest of the details are
-outlined in the following.
+The generation of ```COMPOUND_WEDGE``` and ```COMPOUND_DIFFWTD``` predictions is performed using the function ```determine_compound_mode```,
+which calls the function ```search_compound_diff_wedge```. The rest of the details are outlined in the following.
 
 For a given block, the generation of the single reference inter
 predictions is performed in the function ```av1_inter_prediction /
@@ -282,7 +299,7 @@ called.
 inter-inter ```COMPOUND_WEDGE``` and updates the best ```COMPOUND_WEDGE```
 prediction mode and corresponding cost. This is allowed only for block
 sizes 8x8, 8x16, 16x8, 16x16, 16x32, 32x16, 32x32, 8x32 and 32x8. In
-this function, both the nominal mask and its inverse are evaluated and
+this function, both the nominal mask and its inverse are evaluated, and
 the best mask is selected. The best mask also indicated the mask
 sign.
 
@@ -299,25 +316,11 @@ As an example, consider the flow below for the function
 
 2.  Determine the number of compound modes to try:
 
-     - If 8x8 \<= block size \<= 32x32, then compound modes to try =
-compound\_types\_to\_try
+     - If compound is enabled for this inter type (`inter_comp_ctrls.do_nearest_nearest` is true) `tot_comp_types` equal to `inter_comp_ctrls.tot_comp_types`
+       which is based on `inter_compound_mode` level
+     - else `tot_comp_types` equal to `MD_COMP_DIST`
 
-      - else
-
-        - If (compound\_types\_to\_try == MD\_COMP\_WEDGE)
-
-          compound modes to try = MD\_COMP\_DIFF0
-
-        - else compound modes to try = compound\_types\_to\_try
-
-3.  Optimize further the number of modes to evaluate based on the
-    variance of the source block. If the variance of the source block is
-    smaller than a given threshold (```inter_inter_wedge_variance_th```),
-    then ```MD_COMP_WEDGE``` is not considered in the search and compound
-    modes to try is limited to MIN(compound modes to try,
-    ```MD_COMP_DIFF0```)
-
-4.  Single reference case
+3.  Single reference case
 
     - Check if inter-intra is allowed: ```svt_is_interintra_allowed```
 
@@ -346,7 +349,7 @@ mode).
     prediction option based on the best intra prediction mode from the
     smooth inter-intra prediction search. (```inter_intra_search```)
 
-5.  Compound reference case
+4.  Compound reference case
 
     For all ```NEARESTMV_NEARESTMV``` and ```NEAR_NEARMV``` candidates, loop over
 all selected compound prediction modes
@@ -367,49 +370,49 @@ av1\_inter\_prediction.
 
 ##### Figure 5. Continuation of Figure 3 showing the main function calls associated with compound modes in the case of warped motion prediction.
 
-1.  warped\_motion\_prediction
+- Step 2.1: warped\_motion\_prediction
   - **plane\_warped\_motion\_prediction**: Generates the luma and chroma
-  warped luma predictions. The chroma predictions are generated for
-  blocks that are 16x16 or larger.
+    warped luma predictions. The chroma predictions are generated for
+    blocks that are 16x16 or larger.
     - **av1\_dist\_wtd\_comp\_weight\_assign**: Returns forward offset
       and backward offset for the case of compound reference
       candidates and where the inter-inter compound prediction mde
       is COMPOUND\_DISTWTD. The forward offset and backward offset
       are used as weights in the generation of the final prediction.
     - **av1\_make\_masked\_warp\_inter\_predictor**: Called only in the case
-  of compound reference candidate where the inter-inter compound type
-  is COMPOUND\_WEDGE or COMPOUND\_DIFFWTD. Generates the predictions
-  for both of those two compound types. The first step is to build the
-  mask for the case of the COMPOUND\_DIFFWTD inter-inter compound type
-  using the function av1\_build\_compound\_diffwtd\_mask\_d16. The
-  next step is to generate the predictions using the function
-  build\_masked\_compound\_no\_round as follows:
+      of compound reference candidate where the inter-inter compound type
+      is COMPOUND\_WEDGE or COMPOUND\_DIFFWTD. Generates the predictions
+      for both of those two compound types. The first step is to build the
+      mask for the case of the COMPOUND\_DIFFWTD inter-inter compound type
+      using the function av1\_build\_compound\_diffwtd\_mask\_d16. The
+      next step is to generate the predictions using the function
+      build\_masked\_compound\_no\_round as follows:
       - The function av1\_get\_compound\_type\_mask is called and
-      returns the mask for either the case of COMPOUND\_DIFFWTD or
-      for the case of COMPOUND\_WEDGE. The function
-      av1\_get\_contiguous\_soft\_mask returns the mask for the case
-      of COMPOUND\_WEDGE. For the case of COMPOUND\_DIFFWTD, the
-      mask is computed in the step above.
+        returns the mask for either the case of COMPOUND\_DIFFWTD or
+        for the case of COMPOUND\_WEDGE. The function
+        av1\_get\_contiguous\_soft\_mask returns the mask for the case
+        of COMPOUND\_WEDGE. For the case of COMPOUND\_DIFFWTD, the
+        mask is computed in the step above.
       - The function aom\_highbd\_blend\_a64\_d16\_mask/
-      aom\_lowbd\_blend\_a64\_d16\_mask is the called to perform the
-      blending of the two inter predictions using the generated
-      mask.
-    - **eb\_av1\_warp\_plane** is invoked in the case of BIPRED where
-  inter-inter compound type is COMPOUND\_DISTWTD. In this case the
-  function highbd\_warp\_plane / warp\_plane is called and in turn
-  calls the function eb\_av1\_highbd\_warp\_affine /
-  eb\_av1\_warp\_affine. The latter applies the affine transform and
-  generates the warped motion prediction using the forward offset and
-  backward offset weights associated with the COMPOUND\_DISTWTD mode.
+        aom\_lowbd\_blend\_a64\_d16\_mask is the called to perform the
+        blending of the two inter predictions using the generated
+        mask.
+    - **svt\_av1\_warp\_plane** is invoked in the case of BIPRED where
+      inter-inter compound type is COMPOUND\_DISTWTD. In this case the
+      function highbd\_warp\_plane / warp\_plane is called and in turn
+      calls the function eb\_av1\_highbd\_warp\_affine /
+      eb\_av1\_warp\_affine. The latter applies the affine transform and
+      generates the warped motion prediction using the forward offset and
+      backward offset weights associated with the COMPOUND\_DISTWTD mode.
   - **chroma\_plane\_warped\_motion\_prediction\_sub8x8**: Generates chroma
-  warped motion predictions for blocks that are smaller than 16x16.
-  The function av1\_dist\_wtd\_comp\_weight\_assign is first called to
-  generate the mask for the COMPOUND\_DISTWTD case. The appropriate
-  function in the function array convolve\[\]\[\]\[\] /
-  convolveHbd\[\]\[\]\[\] is then called to generate the prediction
-  using the forward offset and the backward offset weights.
+    warped motion predictions for blocks that are smaller than 16x16.
+    The function av1\_dist\_wtd\_comp\_weight\_assign is first called to
+    generate the mask for the COMPOUND\_DISTWTD case. The appropriate
+    function in the function array convolve\[\]\[\]\[\] /
+    convolveHbd\[\]\[\]\[\] is then called to generate the prediction
+    using the forward offset and the backward offset weights.
 
-2.  **av1\_inter\_prediction**
+- Step 2.1:  **av1\_inter\_prediction**
 
 ![comp_mode_pred_fig8](./img/comp_mode_pred_fig8.png)
 
@@ -431,67 +434,29 @@ pass. The two main relevant functions are ```warped_motion_prediction``` and
 
 **Inter-intra prediction**
 
-The settings for the different flags associated with inter-intra
-prediction mode are outlined in Table 5 below.
+The flag ```md_inter_intra_level``` is used to control when the inter-intra modes are allowed as a function of the PD pass and encoder preset.
 
-##### Table 5. Optimization settings for inter-intra compound prediction.
+### Optimization of inter-inter compound mode prediction
 
-![comp_mode_pred_fig9](./img/comp_mode_pred_fig9.png)
+The flag ```inter_compound_mode``` is used to define different levels of complexity-quality tradeoffs for the inter-inter compound prediction mode.
+The flag is set as a function of the encoder preset and controls a number of signals in the InterCompCtrls structure. The descriptions of those
+signals are given in Table 6.
 
-The flag ```md_enable_inter_intra``` is used to control when the
-inter-intra modes are allowed as a function of the PD pass and of the
-flag ```enable_inter_intra```. The latter is active in the default mode only
-for MR mode and for the M0 preset, otherwise it would active only if the
-config flag ```inter_intra_compound``` is active.
 
-**Inter-inter compound prediction**
-
-The flags ```compound_level``` and ```compound_mode``` control the
-complexity-quality tradeoff of the inter-inter compound prediction
-modes.
-
-##### Table 6. Settings for compound\_level in inter-inter compound prediction.
-
-![comp_mode_pred_fig10](./img/comp_mode_pred_fig10.png)
-
-##### Table 7. Optimization settings for the inter-inter compound prediction.
-
-![comp_mode_pred_fig11](./img/comp_mode_pred_fig11.png)
-
-The flag ```compound_types_to_try``` indicates the inter-inter compound
-mode to evaluate as a function of the PD pass and of the flag
-```picture_control_set_ptr->parent_pcs_ptr->compound_mode```. The
-setting for the latter in the default mode depends on
-```sequence_control_set_ptr->compound_mode```, the encoder preset and the
-```sc_content_detected``` flag; otherwise, it is set to the config input
-value compound\_level. The flag
-```sequence_control_set_ptr->compound_mode``` depends in the default
-configuration on the encoder preset, otherwise it set to the config
-input value ```compound_level```.
-
-**Inter-inter wedge prediction**
-
-For the case of inter-inter wedge prediction, the flag ```wedge_mode```
-decides on the tradeoff between complexity and quality for inter-inter
-wedge prediction. The settings for the flag are given in Table 8.
-
-##### Table 8. wedge\_mode settings and description.
-
-![comp_mode_pred_fig12](./img/comp_mode_pred_fig12.png)
-
-Currently, wedge\_mode is set to 0, i.e. full search is performed all
-the time as indicated in Table 9.
-
-##### Table 9. wedge\_mode settings.
-
-![comp_mode_pred_fig13](./img/comp_mode_pred_fig13.png)
-
-Whether to include wedge prediction in the case of inter-inter
-compound prediction is also controlled by the variance of the source
-block. If the variance of the source block is smaller than a given
-threshold (```inter_inter_wedge_variance_th```), then ```MD_COMP_WEDGE``` is
-not considered in the search and the compound modes to try are limited
-to at most to ```MD_COMP_DIST``` and ```MD_COMP_DIFF0```.
+##### Table 6. Optimization signals related to inter-inter compound mode prediction.
+| **Signal** | **Description** |
+| --- | --- |
+| tot_comp_types | Compound types to test; 0: OFF, 1: AVG, 2: AVG/DIST, 3: AVG/DIST/DIFF/WEDGE, 4: AVG/DIST/DIFF/WEDGE |
+| do_me | if true, test all compound types for me |
+| do_pme | if true, test all compound types for pme |
+| do_nearest_nearest | if true, test all compound types for nearest_nearest |
+| do_near_near | if true, test all compound types for near_near |
+| do_nearest_near_new | if true, test all compound types for nearest_near_new |
+| do_3x3_bi | if true, test all compound types for near_near |
+| do_nearest_near_new | if true, test all compound types for nearest_near_new |
+| do_3x3_bi | if true, test all compound types for 3x3_bipred |
+| pred0_to_pred1_mult | Multiplier to the pred0_to_pred1_sad; 0: no pred0_to_pred1_sad-based pruning, >= 1: towards more inter-inter compound |
+| use_rate | if true, use rate @ compound params derivation |
 
 ## Notes
 
@@ -509,3 +474,7 @@ Yunqing Wang, Paul Wilkins, Jim Bankoski, Luc Trudeau, Nathan Egge,
 Jean-Marc Valin, Thomas Davies, Steinar Midtskogen, Andrey Norkin and
 Peter de Rivaz, “An Overview of Core Coding Tools in the AV1 Video
 Codec,” Picture Coding Symposium, pp. 41-45, 2018.
+
+\[3\] Jingning Han, Bohan Li, Debargha Mukherjee, Ching-Han Chiang, Adrian Grange, Cheng Chen,
+Hui Su, Sarah Parker, Sai Deng, Urvang Joshi, Yue Chen, Yunqing Wang, Paul Wilkins, Yaowu Xu, James  Bankoski,
+“A Technical Overview of AV1,” Proceedings of the IEEE, vol. 109, no. 9, pp. 1435-1462, Sept. 2021.
