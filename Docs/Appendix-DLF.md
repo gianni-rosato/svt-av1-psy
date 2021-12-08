@@ -78,12 +78,12 @@ where
   - Segment delta is specified on an 8x8 basis for each of the eight
     segments.
   - Mode delta and reference delta are determined as follows:
-  - Define ```scale = 1 << (((filter_level for the frame) + (segment
-    delta)) >>5 )```
-  - ```mode delta = mode_deltas * scale```, where ```mode_deltas``` is
-    obtained from Table 2.
-  - Reference delta = ```ref_deltas * scale```, where ```ref_deltas``` is
-    obtained from Table 3 below.
+    - Define ```scale = 1 << (((filter_level for the frame) + (segment
+      delta)) >>5 )```
+    - ```mode delta = mode_deltas * scale```, where ```mode_deltas``` is
+      obtained from Table 2.
+    - Reference delta = ```ref_deltas * scale```, where ```ref_deltas``` is
+      obtained from Table 3 below.
 
 ##### Table 2. Mode deltas for the loop filter level.
 
@@ -137,7 +137,7 @@ The edges to filter should satisfy the following conditions:
   - Transform unit edges AND
 
   - (non-zero level on either side of the edge) AND ((Non-skip inter
-    blocks on either side of the edge) OR CU edge).
+    blocks on either side of the edge) OR block edge).
 
 ### Filtering Process for luma
 
@@ -244,24 +244,6 @@ arrangement of the samples for the case of a vertical edge.
       - q0 ![r_arrow](./img/l_arrow.png) q0 - Delta; p0 ![r_arrow](./img/l_arrow.png) p0 + Delta
       - q1 ![r_arrow](./img/l_arrow.png) q1 - Delta/2; p1 ![r_arrow](./img/l_arrow.png) p1+Delta/2
 
-      clamp(x) clamps the value of x to within the interval -128 to 127.
-      Round2(x,1) returns (x+1)\>\>1.
-
-      Implementation (see the function filter4)
-
-        ps0 = p0 - 128; ps1 = p1 - 128
-        qs0 = q0 - 128; qs1 = q1 - 128
-        filter = clamp( ps1 - qs1 ) if hev_Mask = 1; else 0.
-        filter = clamp( filter + 3 * (qs0 - ps0) )
-        filter1 = clamp( filter + 4 ) >> 3
-        filter2 = clamp( filter + 3 ) >> 3
-        q0 = clamp( qs0 - filter1 ) + 128
-        p0 = clamp( ps0 + filter2 ) + 128
-        if (Hev_Mask == 0)
-          filter = Round2( filter1, 1 )
-          q1 = clamp( qs1 - filter ) + 128
-          p1 = clamp( ps1 + filter ) + 128
-
 *Filter6*
 
 - 5-tap filter: \[1, 2, 2, 2, 1\]
@@ -318,19 +300,25 @@ filter14)
 
 ## 2.  Implementation
 
-**Inputs to dlf\_kernel**: Reconstructed picture from the encode pass.
+**Inputs**: Block mode, transform size and reconstructed picture.
 
-**Outputs of dlf\_kernel**: Filtered frame, filter parameters.
+**Outputs**: Filtered frame, filter parameters.
 
-**Controlling macros/flags**:
+**Controlling tokens/flags**:
 
 ##### Table 4. List of loop filter control flags.
 
 | **Flag**                | **Level** | **Description**                                                                                                                                                                                                                                                                                         |
 | ----------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| loop\_filter\_mode      | Picture   | Sets the loop filter complexity-performance tradeoff                                                                                                                                                                                                                                                    |
+| -dlf                    | Configuration | 0: OFF (disable), 1: ON (DEFAULT)                                                                                                                                                                                                                                     |
+| DlfCtrls      | Picture   | Describes the Dlf control signal.                                                                                                                                                                                                           |
 | combine\_vert\_horz\_lf | Picture   | When set, it implies performing filtering of vertical edges in the current SB followed by filtering of horizontal edges in the preceding SB in the same SB row. When OFF, it implies performing filtering of vertical edges in the current SB followed by filtering of horizontal edges in the same SB. |
 
+![dlf_new_fig4](./img/dlf_new_fig4.png)
+
+##### Figure 4. High-level encoder process dataflow with DLF feature.
+
+The high level dataflow of deblocking loop filter in SVT-AV1 is shown in Figure 4.
 The main steps involved in the implementation of the algorithm are
 outlined below, followed by more details on some of the important
 functions.
@@ -343,7 +331,7 @@ The loop filtering operation consists of the following three main steps:
 
   - Applying loop filtering to the frame
 
-The steps above are performed only when (```loop_filter_mode >= 2```).
+The steps above are performed only when DlfCtrls is enabled.
 Otherwise, loop filtering is not applied to the frame. The details of
 the three steps mentioned above are outlined in the following.
 
@@ -391,7 +379,7 @@ work with. The loop filter levels are:
   - Get the last frame filter levels ```filter_level[0],
     filter_level[1], filter_level_u, filter_level_v```.
 
-  - For each of the picture data planes, perform a search for the best
+  - For each of the picture data planes, perform a binary search for the best
     filter level for the picture data plane (search\_filter\_level)
 
     - Set the filter level ```filt_mid``` to the frame level for the last frame,
@@ -404,17 +392,7 @@ SSE for the filtered frame (```try_filter_frame``` and then
 functions), update the best SSE ```best_err``` and corresponding filter
 level ```filt_best```.
 
-    - If (```loop_filter_mode <= 2```),
-
-      - **Search Method 1**: filter the frame with filter level set to
-(```filt_mid-2```) and evaluate the SSE for the filtered frame
-(```try_filter_frame```), update the best SSE ```best_err``` and corresponding
-filter level ```filt_best```. Redo the same with filter level set to
-(```filt_mid+2```) and update ```best_err``` and ```filt_best```.
-
-    - else
-
-      - **Search Method 2**: Iterate the search for the best filter level,
+    - Search for the best filter level,
 starting with filter level (```filt_mid-filter_step```) or
 (```filt_mid+filter_step```), depending on the search direction
 (```try_filter_frame```). Keep track of the best filtering SSE and filter
@@ -438,12 +416,12 @@ filtering SSE.
 **More details on** (```svt_av1_loop_filter_frame```)
 
 The function calls that start at ```svt_av1_loop_filter_frame``` are
-indicated in Figure 4 below according to the depth of the function
+indicated in Figure 5 below according to the depth of the function
 call.
 
 ![dlf_fig4](./img/dlf_fig4.png)
 
-##### Figure 4. Function calls starting at eb\_av1\_loop\_filter\_frame.
+##### Figure 5. Function calls starting at eb\_av1\_loop\_filter\_frame.
 
 The main steps involved in are outlines as follows.
 
@@ -482,7 +460,7 @@ Otherwise, ```tx_size``` is determined through the function call
 tx_depth_to_tx_size[mbmi->tx_depth][mbmi->block_mi.sb_type]```
             - ```tx_size``` is ultimately set to the width the transform block.
 
-          - Determine the loop filter level to use (```get_filter_level```), which
+          - Determine the loop filter level to use (```get_filter_level_delta_```), which
 accounts for the loop filter level deltas associated with
 segmentation, reference pictures and encoding modes.
 
@@ -504,41 +482,26 @@ indicated in the Table above.
 
 ## 3.  Optimization of the algorithm
 
-The algorithmic optimization of the loop filter is performed by
-considering different loop filter search methods. First, the encoder
-mode (```picture_control_set_ptr->enc_mode```) is used to specify the
-loop filter mode
-(```picture_control_set_ptr->parent_pcs_ptr->loop_filter_mode```)
-according to Table 5 below.
+The algorithmic optimization of the loop filter is performed by considering different loop filter search methods. If LPF_PICK_FROM_Q is chosen as the search
+method, the filter levels are determined using the picture qindex, however is LPF_PICK_FROM_FULL_IMAGE is selected, a binary search is performed to find the
+best filter levels. Table 5 shows the DLF control signals and their descriptions. The encoder mode and the picture being used as a reference are used to
+determine the search method.
 
-##### Table 5. Loop filter mode as a function of the encoder mode.
+##### Table 5. DLF control signals description.
 
-![table5](./img/dlf_table5.png)
-
-The ```loop_filter_mode``` is used to specify the filter level search method
-in (```av1_pick_filter_level```), either Search Method 1 or Search Method
-2. Search Method 2 is more exhaustive than Method 1, and therefore
-involves more filtering operations, but could possibly provide better
-filtering results. The settings of the filter level search mode as a function
-of the ```loop_filter_mode``` are summarized in Table 6.
-
-##### Table 6. Filter Level search Method as a function of the loop\_filter\_mode.
-
-| **loop\_filter\_mode** | **Filter Level Search Method** |
-| ---------------------- | ------------------------------ |
-| 0                      | Loop filter OFF                |
-| 1                      | Loop filter OFF                |
-| 2                      | 1                              |
-| 3                      | 2                              |
+| **Signal** | **Description** |
+| --- | --- |
+| enabled | 0/1: Enable/Disable DLF |
+| sb_based_dlf | 0: perform picture-based DLF with LPF_PICK_FROM_FULL_IMAGE search method 1: perform DLF per SB using LPF_PICK_FROM_Q method |
 
 ## 4.  Signaling
 
 The loop filter parameters are signaled at the frame level and include
 the following parameters: ```filter_level[0]```, ```filter_level[1]```,
 ```filter_level_u```, ```filter_level_v``` and ```sharpness_level```,
-seen in Table 7.
+seen in Table 6.
 
-##### Table 7. Frame level loop filter parameters signaled in the bitstream.
+##### Table 6. Frame level loop filter parameters signaled in the bitstream.
 
 | **Parameters**     | **Values** |
 | ------------------ | ---------- |
@@ -558,3 +521,6 @@ The feature settings that are described in this document were compiled at v0.8.3
 “GPGPU Implementation of VP9 Inloop Deblocking Filter and Improvements
 for AV1 CODEC,” International Conference on Image Processing, pp.
 925-929, 2017.
+
+\[2\] Jingning Han, Bohan Li, Debargha Mukherjee, Ching-Han Chiang, Adrian Grange, Cheng Chen, Hui Su, Sarah Parker, Sai Deng, Urvang Joshi, Yue Chen,
+Yunqing Wang, Paul Wilkins, Yaowu Xu, James  Bankoski, “A Technical Overview of AV1,” Proceedings of the IEEE, vol. 109, no. 9, pp. 1435-1462, Sept. 2021.
