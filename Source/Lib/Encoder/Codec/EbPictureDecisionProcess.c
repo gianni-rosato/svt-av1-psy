@@ -2483,7 +2483,11 @@ EbErrorType signal_derivation_multi_processes_oq(
 #if ((TUNE_NEW_M11_2 && !FTR_CDEF_BIAS_ZERO_COST) || TUNE_M11_SLOWDOWN ) && !TUNE_M10_M12_ULTRA
             else if (pcs_ptr->enc_mode <= ENC_M11)
 #else
+#if TUNE_PRESETS_DECODER_TPL
+            else if (pcs_ptr->enc_mode <= ENC_M9)
+#else
             else if (pcs_ptr->enc_mode <= ENC_M10)
+#endif
 #endif
 #if FTR_CDEF_SEARCH_BEST_REF
 #if TUNE_M9_M13

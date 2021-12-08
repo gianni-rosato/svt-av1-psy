@@ -758,7 +758,11 @@ uint8_t get_enable_restoration(EbEncMode enc_mode,int8_t config_enable_restorati
     uint8_t enable_restoration;
 
 #if (FIX_PRESET_TUNING && !TUNE_M7_MT) || TUNE_M7_SLOWDOWN
+#if TUNE_PRESETS_DECODER_TPL
+    enable_restoration = (enc_mode <= ENC_M6) ? 1 : 0;
+#else
         enable_restoration = (enc_mode <= ENC_M7) ? 1 : 0;
+#endif
 #else
         enable_restoration = (enc_mode <= ENC_M6) ? 1 : 0;
 #endif
