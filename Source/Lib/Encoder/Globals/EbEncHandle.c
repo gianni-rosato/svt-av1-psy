@@ -5414,12 +5414,21 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     else if (scs_ptr->static_config.rc_middlepass_stats_out) {
 #if TUNE_RC
 #if TUNE_MIDDLEP_VBR
+#if FIX_MIDDLE_PASS
+        if (scs_ptr->static_config.final_pass_preset <= ENC_M7)
+            scs_ptr->static_config.enc_mode = ENC_M11;
+        else if (scs_ptr->static_config.final_pass_preset <= ENC_M9)
+            scs_ptr->static_config.enc_mode = ENC_M12;
+        else
+            scs_ptr->static_config.enc_mode = MAX_ENC_PRESET;
+#else
         if (scs_ptr->static_config.final_pass_preset < ENC_M8)
             scs_ptr->static_config.enc_mode = ENC_M11;
         else if (scs_ptr->static_config.final_pass_preset < ENC_M9)
             scs_ptr->static_config.enc_mode = ENC_M12;
         else
             scs_ptr->static_config.enc_mode = MAX_ENC_PRESET;
+#endif
 #else
 #if IPP_CTRL
         if (scs_ptr->static_config.final_pass_preset > ENC_M8) // to have different signal
@@ -6172,7 +6181,9 @@ void copy_api_from_app(
     scs_ptr->static_config.scene_change_detection = ((EbSvtAv1EncConfiguration*)config_struct)->scene_change_detection;
     scs_ptr->static_config.rate_control_mode = ((EbSvtAv1EncConfiguration*)config_struct)->rate_control_mode;
 #if OPT_FIRST_PASS
+#if !FIX_VBR_IPP
     scs_ptr->static_config.final_pass_rc_mode = ((EbSvtAv1EncConfiguration*)config_struct)->rate_control_mode;
+#endif
 #endif
 #if !FTR_2PASS_CBR
     if (scs_ptr->static_config.rate_control_mode == 2) {
@@ -7186,8 +7197,13 @@ EbErrorType svt_svt_enc_init_parameter(
     config_ptr->vbr_min_section_pct = 0;
     config_ptr->vbr_max_section_pct = 2000;
 #if TUNE_RC
+#if FIX_VBR_SETTINGS
+    config_ptr->under_shoot_pct = 25;
+    config_ptr->over_shoot_pct = 25;
+#else
     config_ptr->under_shoot_pct = 100;
     config_ptr->over_shoot_pct = 5;
+#endif
 #if TUNE_CAP_CRF_OVERSHOOT
     config_ptr->mbr_over_shoot_pct = 50;
 #endif
@@ -7269,7 +7285,9 @@ EbErrorType svt_svt_enc_init_parameter(
     config_ptr->max_heirachical_level = 5;
 #endif
 #if OPT_FIRST_PASS
+#if !FIX_VBR_IPP
     config_ptr->final_pass_rc_mode = 0;
+#endif
 #endif
 #if OPT_FIRST_PASS2
     config_ptr->ipp_ctrls.skip_frame_first_pass = 0;

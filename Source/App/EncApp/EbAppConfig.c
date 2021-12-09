@@ -2094,7 +2094,11 @@ void set_ipp_controls(
 #endif
         break;
     case 1:
+#if FIX_VBR_IPP
+        ipp_ctrls->skip_frame_first_pass = 1;
+#else
         ipp_ctrls->skip_frame_first_pass = config->config.final_pass_rc_mode == 0 ? 1 : 2;
+#endif
         ipp_ctrls->ipp_ds = 0;
         ipp_ctrls->bypass_blk_step = 0;
         ipp_ctrls->dist_ds = 1;
@@ -2105,7 +2109,11 @@ void set_ipp_controls(
 #endif
         break;
     case 2:
+#if FIX_VBR_IPP
+        ipp_ctrls->skip_frame_first_pass = 1;
+#else
         ipp_ctrls->skip_frame_first_pass = config->config.final_pass_rc_mode == 0 ? 1 : 2;
+#endif
         ipp_ctrls->ipp_ds = 1;
         ipp_ctrls->bypass_blk_step = 1;
         ipp_ctrls->dist_ds = 1;
@@ -2193,7 +2201,11 @@ EbErrorType set_two_passes_stats(EbConfig *config, EncodePass pass,
         else if (config->config.enc_mode <= ENC_M10)
             set_ipp_controls(config, 1);
         else
+#if FIX_VBR_IPP
+            if (config->config.rate_control_mode == 0)
+#else
             if(config->config.final_pass_rc_mode == 0)
+#endif
                 set_ipp_controls(config, 2);
             else
                 set_ipp_controls(config, 1);
@@ -2227,10 +2239,17 @@ EbErrorType set_two_passes_stats(EbConfig *config, EncodePass pass,
         config->config.rc_twopass_stats_in     = *rc_twopass_stats_in;
 #if FTR_OPT_MPASS_DOWN_SAMPLE
 #if FIX_I80
+#if FIX_MIDDLE_PASS
+        config->config.rc_middlepass_ds_stats_out =
+            (config->config.enc_mode <= ENC_M10 || config->config.source_width < 128 || config->config.source_height < 128)
+            ? 0
+            : 1;
+#else
         config->config.rc_middlepass_ds_stats_out = (config->config.enc_mode > ENC_M8 &&
              config->config.source_width >= 128 && config->config.source_height >= 128)
             ? 1
             : 0;
+#endif
 #else
         config->config.rc_middlepass_ds_stats_out = config->config.enc_mode > ENC_M8 ? 1 : 0;
 #endif
@@ -2262,11 +2281,19 @@ EbErrorType set_two_passes_stats(EbConfig *config, EncodePass pass,
         config->config.rc_twopass_stats_in = *rc_twopass_stats_in;
 #if FIX_DG
         set_ipp_controls(config, 0);
+#if FIX_VBR_IPP
+        // Please make sure that ipp_was_ds is ON only when ipp_ctrls->ipp_ds is ON
+        if (config->config.enc_mode <= ENC_M10)
+            config->config.ipp_was_ds = 0;
+        else
+            config->config.ipp_was_ds = config->config.rate_control_mode == 0 ? 1 : 0;
+#else
         // Please make sure that ipp_was_ds is ON only when ipp_ctrls->ipp_ds is ON
         if (config->config.enc_mode <= ENC_M10)
             config->config.ipp_was_ds = 0;
         else
             config->config.ipp_was_ds = config->config.final_pass_rc_mode == 0 ? 1 : 0;
+#endif
 #endif
 #if IPP_CTRL
         config->config.final_pass_preset = config->config.enc_mode;

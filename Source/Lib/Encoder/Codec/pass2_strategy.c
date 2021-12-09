@@ -813,7 +813,11 @@ static void av1_gop_bit_allocation_two_pass(PictureParentControlSet *pcs, GF_GRO
 #endif
     // For key frames the frame target rate is already set and it
     // is also the golden frame.
+#if FIX_VBR_LAST_KF
+    int frame_index = (pcs->slice_type == I_SLICE) ? 1 : 0;
+#else
     int frame_index = 0;
+#endif
 
     for (int idx = frame_index; idx < pcs->gf_interval; ++idx) {
         uint8_t gf_group_index = pcs->slice_type == I_SLICE ? idx : idx + 1;
@@ -942,7 +946,11 @@ static INLINE int is_almost_static(double gf_zero_motion, int kf_zero_motion,
 
 #if GROUP_ADAPTIVE_MAXQ
 #if FTR_NEW_MULTI_PASS
+#if FIX_VBR_SETTINGS
+#define RC_FACTOR_MIN 0.75
+#else
 #define RC_FACTOR_MIN 1
+#endif
 #if TUNE_VBR_OVERSHOOT
 #define RC_FACTOR_MAX 2
 #else
@@ -2110,7 +2118,21 @@ static void set_kf_interval_variables(PictureParentControlSet *pcs_ptr, FIRSTPAS
         input_stats(twopass, this_frame);
         ++frames_to_key;
     }
+#if FIX_VBR_LAST_KF
+    // Special case for the last key frame of the file.
+    if (twopass->stats_in == twopass->stats_buf_ctx->stats_in_end &&
+        frames_to_key < num_frames_to_detect_scenecut) {
+        // Accumulate total number of stats available till next key frame
+        num_stats_used_for_kf_boost++;
 
+        // Accumulate kf group error.
+        if (kf_group_err != NULL)
+            *kf_group_err += calculate_modified_err(
+                frame_info, twopass, &(encode_context_ptr->two_pass_cfg), this_frame);
+
+        ++frames_to_key;
+    }
+#endif
     if (kf_group_err != NULL)
         rc->num_stats_used_for_kf_boost = num_stats_used_for_kf_boost;
 #if FTR_1PAS_VBR
@@ -2505,13 +2527,14 @@ static void find_next_key_frame(PictureParentControlSet *pcs_ptr, FIRSTPASS_STAT
 
     if (kf_cfg->fwd_kf_enabled) rc->next_is_fwd_key |= rc->next_key_frame_forced;
 #endif
+#if !FIX_VBR_LAST_KF
     // Special case for the last key frame of the file.
     if (twopass->stats_in >= twopass->stats_buf_ctx->stats_in_end) {
         // Accumulate kf group error.
         kf_group_err +=
             calculate_modified_err(frame_info, twopass, &(encode_context_ptr->two_pass_cfg), this_frame);
     }
-
+#endif
     // Calculate the number of bits that should be assigned to the kf group.
     if ((twopass->bits_left > 0 && twopass->modified_error_left > 0.0) ||
         (scs_ptr->lap_enabled && rc_cfg->mode != AOM_Q)) {

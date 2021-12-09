@@ -1345,7 +1345,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
 #endif
 #if CLN_SKIP_PD0_SIG
 #if TUNE_M9_M13
+#if FIX_MIDDLE_PASS
+    if (pcs_ptr->parent_pcs_ptr->sc_class1 || scs_ptr->static_config.rc_middlepass_stats_out)
+#else
     if (pcs_ptr->parent_pcs_ptr->sc_class1)
+#endif
         pcs_ptr->pic_skip_pd0 = 0;
     else if (enc_mode <= ENC_M12)
 #else

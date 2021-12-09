@@ -1001,7 +1001,9 @@ typedef struct EbSvtAv1EncConfiguration {
 #endif
 #endif
 #if OPT_FIRST_PASS
+#if !FIX_VBR_IPP
     uint8_t final_pass_rc_mode;
+#endif
 #endif
 #if OPT_FIRST_PASS2
     IppPassControls ipp_ctrls;

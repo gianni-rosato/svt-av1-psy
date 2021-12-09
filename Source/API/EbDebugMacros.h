@@ -860,6 +860,14 @@ NOTE : PART OF LIGHT_PD0_2  code was committed to svt-04-final-rebased under OPT
 #define FIX_PALETTE_10BIT                     1 // Fix palette in 10bit with hbd-mode-decision 0
 #define TUNE_PRESETS_DECODER_TPL              1 // Tune MFMV/CDEF/Restoration for decoder speed up, and set tpl_lad_mg=0 for M11
 
+#define FIX_MULTI_PASS_VBR                   1 // Fix multi-pass VBR
+#if FIX_MULTI_PASS_VBR
+#define FIX_VBR_SETTINGS                     1 // Set default Undershoot/Overshoot to 25/25, optimize undershoot the last stage bits allocation
+#define FIX_VBR_IPP                          1 // Fix the IPP Pass
+#define FIX_VBR_LAST_KF                      1 // Fix the rate allocation for last KF
+#define FIX_MIDDLE_PASS                      1 // Fix the CRF Pass
+#endif
+
 #endif //----------------------------------- all svt-05 features should be place are above this line -------------------------
 
 
