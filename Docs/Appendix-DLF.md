@@ -22,7 +22,7 @@ edges. The main idea behind the filter can be summarized as follows:
 
 |**Min TX size across the edge**|**Flat areas around the edge**|**Filter (Luma)**|**Filter_Size (Luma)**|**Filter (Chroma)**|**Filter_Size (Chroma)**|
 |--- |--- |--- |--- |--- |--- |
-|>=TX_8x8|Yes|Filter14 (13-tap)|14|Filter6 (5-tap)|6|
+|>TX_8x8|Yes|Filter14 (13-tap)|14|Filter6 (5-tap)|6|
 ||No|Filter8 (7-tap)/ Filter4|4|Filter4|4|
 |TX_8x8|Yes|Filter8 (7-tap)|8|Filter6 (5-tap)|6|
 ||No|Filter4|4|Filter4|4|

@@ -75,14 +75,14 @@ More detailed steps involved in the DV search are listed below:
 
 6.  Limits on mv sizes are computed and refined
     (```svt_av1_set_mv_search_range```).
-	
-	Perform full-pel diamond/exhaustive search followed by hash search (svt_av1_full_pixel_search).
-	The hash search computes the hash of 2x2 blocks around each luma pixel in the reference frame.
-	The 2x2 hashes arethen used to make up the 4x4 hashes, which are then used to make up the 8x8 hashes, and so on.
-	All the hash values are stored in a hash table.  The hash for the current block is then computed and compared to hash values
-	in the hash table which stores the hashes from the reference frames.  If a match is found, then there is a block in the
-	reference frame that is the same as the current block.
-	That block may then be used as an IBC candidate if its estimated cost is lower than all other IBC candidates.
+
+    Perform full-pel diamond/exhaustive search followed by hash search (svt_av1_full_pixel_search).
+    The hash search computes the hash of 2x2 blocks around each luma pixel in the reference frame.
+    The 2x2 hashes arethen used to make up the 4x4 hashes, which are then used to make up the 8x8 hashes, and so on.
+    All the hash values are stored in a hash table.  The hash for the current block is then computed and compared to hash values
+    in the hash table which stores the hashes from the reference frames.  If a match is found, then there is a block in the
+    reference frame that is the same as the current block.
+    That block may then be used as an IBC candidate if its estimated cost is lower than all other IBC candidates.
 
 7.  Perform full-pel diamond search followed by hash search
     (```svt_av1_full_pixel_search```).
@@ -103,7 +103,7 @@ The feature is currently active only when screen content encoding is active, eit
 
 The control tokens and flags associated with the IBC feature are listed in Table 1 below.
 
-##### Table 1. Control tokens and flags for the IBC feature. 
+##### Table 1. Control tokens and flags for the IBC feature.
 
 |**Flag**|**Level(Sequence/Picture)**|**Description**|
 |--- |--- |--- |

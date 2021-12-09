@@ -36,7 +36,7 @@ pre-HME result (to be considered in the next HME stages).  As such, HME-level-1 
 ### Hierarchical Motion Estimation (HME)
 
 Hierarchical Motion Estimation (HME) takes as input an enhanced input picture and reference picture and produces a search center for each SB, to be searched at ME.
-The enhanced input picture is the temporally filtered source picture. 
+The enhanced input picture is the temporally filtered source picture.
 The HME consists of up to three stages: a one-sixteenth resolution Level-0 full search, a one-quarter resolution Level-1 refinement search, and a base-resolution
 Level-2 refinement search as depicted in Figure 2. In addition, the total search area is subdivided into N-search areas, where each of the Level-0, Level-1,
 and Level-2 searches are performed independently to produce N-search centers. Of the N-search centers, one search center is finally selected. Having multiple

@@ -58,12 +58,12 @@ where the translational component ![local_warped_motion_math_new1](./img/local_w
 the reference frame using the motion vector ![latexmath](http://latex.codecogs.com/gif.latex?\mathbf{MV_7}) for block 7.
 
 The local warp transformation defines how the vector relating ![latexmath](http://latex.codecogs.com/gif.latex?\mathbf{C})
-and ![latexmath](http://latex.codecogs.com/gif.latex?\mathbf{C_7}) in the source frame is mapped into the vector relating 
+and ![latexmath](http://latex.codecogs.com/gif.latex?\mathbf{C_7}) in the source frame is mapped into the vector relating
 ![latexmath](http://latex.codecogs.com/gif.latex?\mathbf{C^{\'}) and ![latexmath](http://latex.codecogs.com/gif.latex?\mathbf{C^{\'}_7}) in the reference frame.
 
 ![local_warped_motion_math_new4](./img/local_warped_motion_math_new4.png)
 
-In addition to block 7, considering blocks 6 and 4 results in the following:  
+In addition to block 7, considering blocks 6 and 4 results in the following:
 
 ![local_warped_motion_math_new5](./img/local_warped_motion_math_new5.png)
 
@@ -133,11 +133,11 @@ Figure 3 below summarizes the data flow of the LW implementation.
 
 ![local_warped_motion_fig_new1](./img/local_warped_motion_fig_new1.png)
 
-##### Figure 3. Data flow for the LW feature. 
+##### Figure 3. Data flow for the LW feature.
 
 As with other prediction mode candidates in the encoder, candidates for the LW mode are first injected into MD and then processed
 through several MD stages of RD optimization.
-A high-level diagram of the function calls relevant to the two main LW functions, namely 
+A high-level diagram of the function calls relevant to the two main LW functions, namely
 ```inject_inter_candidates``` and ```warped_motion_prediction``` is given in
 Figure 4 below.
 
@@ -278,7 +278,7 @@ The main relevant function is warped_motion_prediction which is described above.
 ## 3.  Optimization of the algorithm
 
 The injection of the LW motion candidates is performed if the following is true: ```allow_warped_motion``` is set AND the block has
-overlappable candidates AND ```bwidth >= 8``` AND ```bheight >= 8``` AND enable flag (in the LW controls structure) is set to 1. 
+overlappable candidates AND ```bwidth >= 8``` AND ```bheight >= 8``` AND enable flag (in the LW controls structure) is set to 1.
 
 The injection of LW candidates is not allowed for ```PD_PASS_0```.
 
@@ -286,7 +286,7 @@ In mode decision, the picture-level flag wm_level controls the complexity-qualit
 The flag is set is set in ```signal_derivation_mode_decision_config_kernel_oq``` and control the LW optimization signals listed in
 Table 2 below.
 
-The wm_level is set to zero for Intra pictures or when ```error_resilient_mode``` is enabled or when ```frame_super-resolution``` is enabled. 
+The wm_level is set to zero for Intra pictures or when ```error_resilient_mode``` is enabled or when ```frame_super-resolution``` is enabled.
 
 ##### Table 2. Optimization signals associated with the LW feature.
 |**Signal**|**Level**|**Description**|
@@ -309,4 +309,4 @@ The feature settings that are described in this document were compiled at v0.8.3
 “Global and Locally Adaptive Warped Motion Compensation in Video Compression,”  IEEE International Conference on Image Processing (ICIP), pp. 275-279, 2017.
 
 [2] Jingning Han, Bohan Li, Debargha Mukherjee, Ching-Han Chiang, Adrian Grange, Cheng Chen, Hui Su, Sarah Parker, Sai Deng, Urvang Joshi, Yue Chen, Yunqing Wang, Paul Wilkins, Yaowu Xu, James  Bankoski,
-“A Technical Overview of AV1,” Proceedings of the IEEE, vol. 109, no. 9, pp. 1435-1462, Sept. 2021. 
+“A Technical Overview of AV1,” Proceedings of the IEEE, vol. 109, no. 9, pp. 1435-1462, Sept. 2021.
