@@ -9559,6 +9559,27 @@ void full_loop_core_light_pd1(PictureControlSet *pcs_ptr, BlkStruct *blk_ptr,
 #else
      if (context_ptr->use_tx_shortcuts_mds3) {
 #endif
+#if FIX_SKIP_TX_LPD1
+         if (context_ptr->lpd1_skip_inter_tx_level == 2 && candidate_ptr->type == INTER_MODE)
+             perform_tx = 0;
+
+         MacroBlockD *xd = context_ptr->blk_ptr->av1xd;
+         if (xd->left_available && xd->up_available) {
+             const BlockModeInfoEnc* const left_mi = &xd->left_mbmi->block_mi;
+             const BlockModeInfoEnc* const above_mi = &xd->above_mbmi->block_mi;
+             if (left_mi->skip && above_mi->skip) {
+                 /* For M12 and below, do not skip TX for candidates other than NRST_NRST and do not remove the check on neighbouring
+                    coeffs, as that may introduce blocking artifacts in certain clips. */
+
+                 // Skip TX for NRST_NRST
+                 if (context_ptr->lpd1_tx_ctrls.skip_nrst_nrst_luma_tx && candidate_ptr->pred_mode == NEAREST_NEARESTMV)
+                     perform_tx = 0;
+                 // Skip TX for INTER - should only be true for M13
+                 else if (context_ptr->lpd1_skip_inter_tx_level == 1 && candidate_ptr->type == INTER_MODE)
+                     perform_tx = 0;
+             }
+         }
+#else
 #if FTR_VLPD1
 #if CLN_LPD1_TX_CTRLS
          if (context_ptr->lpd1_tx_ctrls.use_skip_tx_neigh_coeff_detector) {
@@ -9630,6 +9651,7 @@ void full_loop_core_light_pd1(PictureControlSet *pcs_ptr, BlkStruct *blk_ptr,
                  perform_tx = 0;
 #endif
          }
+#endif
 #endif
      }
 #else
@@ -13771,8 +13793,12 @@ void md_encode_block_light_pd1(PictureControlSet *pcs_ptr, ModeDecisionContext *
 
     // If there is only a single candidate, skip compensation if transform will be skipped (unless compensation is needed for recon)
 #if CLN_LPD1_TX_CTRLS
+#if FIX_SKIP_TX_LPD1
+    if (fast_candidate_total_count > 1 || perform_md_recon || context_ptr->lpd1_skip_inter_tx_level < 2 || fast_candidate_array[0].type == INTRA_MODE) {
+#else
     if (fast_candidate_total_count > 1 || perform_md_recon ||
         (!(context_ptr->lpd1_tx_ctrls.skip_luma_tx_lvl >= SKIP_INTER_TX) || context_ptr->lpd1_tx_ctrls.use_skip_tx_neigh_coeff_detector || fast_candidate_array[0].type == INTRA_MODE)) {
+#endif
 #else
     if (fast_candidate_total_count > 1 || perform_md_recon ||
         (!context_ptr->skip_tx_ctrls.skip_inter_tx || context_ptr->skip_tx_ctrls.use_neigh_coeff_info || fast_candidate_array[0].type == INTRA_MODE)) {

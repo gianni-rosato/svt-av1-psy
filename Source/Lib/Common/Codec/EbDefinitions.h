@@ -523,7 +523,7 @@ typedef enum ATTRIBUTE_PACKED {
 } Pd1Level;
 #endif
 #endif
-#if CLN_LPD1_TX_CTRLS
+#if CLN_LPD1_TX_CTRLS && !FIX_SKIP_TX_LPD1
 typedef enum ATTRIBUTE_PACKED {
     SKIP_TX_OFF         = 0, // No skipping TX
     SKIP_NRST_NRST_TX   = 1, // Allow skipping NEAREST_NEAREST TX only

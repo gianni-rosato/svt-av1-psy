@@ -867,6 +867,7 @@ NOTE : PART OF LIGHT_PD0_2  code was committed to svt-04-final-rebased under OPT
 #define FIX_VBR_LAST_KF                      1 // Fix the rate allocation for last KF
 #define FIX_MIDDLE_PASS                      1 // Fix the CRF Pass
 #endif
+#define FIX_SKIP_TX_LPD1                     1 // Don't skip TX for non-NEAREST_NEAREST candidates in LPD1 to prevent blocking artifacts
 
 #endif //----------------------------------- all svt-05 features should be place are above this line -------------------------
 

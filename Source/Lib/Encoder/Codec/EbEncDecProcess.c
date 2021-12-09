@@ -8927,7 +8927,11 @@ void set_lpd1_tx_ctrls(ModeDecisionContext* ctx, uint8_t lpd1_tx_level) {
     switch (lpd1_tx_level) {
     case 0:
         ctrls->zero_y_coeff_exit = 0;
+#if FIX_SKIP_TX_LPD1
+        ctrls->skip_nrst_nrst_luma_tx = 0;
+#else
         ctrls->skip_luma_tx_lvl = SKIP_TX_OFF;
+#endif
         ctrls->skip_tx_th = 0;
         ctrls->use_uv_shortcuts_on_y_coeffs = 0;
 
@@ -8937,9 +8941,14 @@ void set_lpd1_tx_ctrls(ModeDecisionContext* ctx, uint8_t lpd1_tx_level) {
     case 1:
         ctrls->zero_y_coeff_exit = 1;
         ctrls->chroma_detector_level = 1;
+#if FIX_SKIP_TX_LPD1
+        ctrls->skip_nrst_nrst_luma_tx = 0;
+        ctrls->skip_tx_th = 0;
+#else
         ctrls->skip_luma_tx_lvl = SKIP_TX_OFF;
         ctrls->skip_tx_th = 0;
         ctrls->use_skip_tx_neigh_coeff_detector = 1;
+#endif
         ctrls->use_uv_shortcuts_on_y_coeffs = 1;
 
         ctrls->use_mds3_shortcuts_th = 25;
@@ -8948,9 +8957,14 @@ void set_lpd1_tx_ctrls(ModeDecisionContext* ctx, uint8_t lpd1_tx_level) {
     case 2:
         ctrls->zero_y_coeff_exit = 1;
         ctrls->chroma_detector_level = 1;
+#if FIX_SKIP_TX_LPD1
+        ctrls->skip_nrst_nrst_luma_tx = 1;
+        ctrls->skip_tx_th = 25;
+#else
         ctrls->skip_luma_tx_lvl = SKIP_NRST_NRST_TX;
         ctrls->skip_tx_th = 25;
         ctrls->use_skip_tx_neigh_coeff_detector = 1;
+#endif
         ctrls->use_uv_shortcuts_on_y_coeffs = 1;
 
         ctrls->use_mds3_shortcuts_th = 25;
@@ -8959,9 +8973,14 @@ void set_lpd1_tx_ctrls(ModeDecisionContext* ctx, uint8_t lpd1_tx_level) {
     case 3:
         ctrls->zero_y_coeff_exit = 1;
         ctrls->chroma_detector_level = 2;
+#if FIX_SKIP_TX_LPD1
+        ctrls->skip_nrst_nrst_luma_tx = 1;
+        ctrls->skip_tx_th = 25;
+#else
         ctrls->skip_luma_tx_lvl = SKIP_MVP_TX;
         ctrls->skip_tx_th = 25;
         ctrls->use_skip_tx_neigh_coeff_detector = 1;
+#endif
         ctrls->use_uv_shortcuts_on_y_coeffs = 1;
 
         ctrls->use_mds3_shortcuts_th = 25;
@@ -8970,9 +8989,14 @@ void set_lpd1_tx_ctrls(ModeDecisionContext* ctx, uint8_t lpd1_tx_level) {
     case 4:
         ctrls->zero_y_coeff_exit = 1;
         ctrls->chroma_detector_level = 2;
+#if FIX_SKIP_TX_LPD1
+        ctrls->skip_nrst_nrst_luma_tx = 1;
+        ctrls->skip_tx_th = 25;
+#else
         ctrls->skip_luma_tx_lvl = SKIP_INTER_TX;
         ctrls->skip_tx_th = 25;
         ctrls->use_skip_tx_neigh_coeff_detector = 1;
+#endif
         ctrls->use_uv_shortcuts_on_y_coeffs = 1;
 
         ctrls->use_mds3_shortcuts_th = 50;
@@ -8981,9 +9005,14 @@ void set_lpd1_tx_ctrls(ModeDecisionContext* ctx, uint8_t lpd1_tx_level) {
     case 5:
         ctrls->zero_y_coeff_exit = 1;
         ctrls->chroma_detector_level = 2;
+#if FIX_SKIP_TX_LPD1
+        ctrls->skip_nrst_nrst_luma_tx = 1;
+        ctrls->skip_tx_th = 50;
+#else
         ctrls->skip_luma_tx_lvl = SKIP_INTER_TX;
         ctrls->skip_tx_th = 50;
         ctrls->use_skip_tx_neigh_coeff_detector = 1;
+#endif
         ctrls->use_uv_shortcuts_on_y_coeffs = 1;
 
         ctrls->use_mds3_shortcuts_th = 50;
@@ -8992,9 +9021,14 @@ void set_lpd1_tx_ctrls(ModeDecisionContext* ctx, uint8_t lpd1_tx_level) {
     case 6:
         ctrls->zero_y_coeff_exit = 1;
         ctrls->chroma_detector_level = 2;
+#if FIX_SKIP_TX_LPD1
+        ctrls->skip_nrst_nrst_luma_tx = 1;
+        ctrls->skip_tx_th = 70;
+#else
         ctrls->skip_luma_tx_lvl = SKIP_INTER_TX;
         ctrls->skip_tx_th = 70;
         ctrls->use_skip_tx_neigh_coeff_detector = 0;
+#endif
         ctrls->use_uv_shortcuts_on_y_coeffs = 1;
 
         ctrls->use_mds3_shortcuts_th = 100;
@@ -10356,6 +10390,29 @@ void signal_derivation_enc_dec_kernel_oq_light_pd1(
     }
 
     set_lpd1_tx_ctrls(context_ptr, lpd1_tx_level);
+
+#if FIX_SKIP_TX_LPD1
+    /* In modes below M13, only skip non-NEAREST_NEAREST TX b/c skipping all inter TX will cause blocking artifacts
+    in certain clips.  This signal is separated from the general lpd1_tx_ctrls (above) to avoid
+    accidentally turning this on for modes below M13.
+
+    Do not test this signal in M12 and below during preset tuning.  This signal should be kept as an enc_mode check
+    instead of and LPD1_LEVEL check to ensure that M12 and below do not use it.
+    */
+    if (pcs_ptr->enc_mode <= ENC_M12)
+        context_ptr->lpd1_skip_inter_tx_level = 0;
+    else {
+        assert(pcs_ptr->enc_mode >= ENC_M13 && "Only enable this feature for M13+");
+        context_ptr->lpd1_skip_inter_tx_level = pcs_ptr->parent_pcs_ptr->input_resolution <= INPUT_SIZE_1080p_RANGE || lpd1_level > LPD1_LVL_3 ? 1 : 0;
+        if (((l0_was_skip && l1_was_skip && ref_skip_perc > 35) &&
+            me_8x8_cost_variance < (800 * picture_qp) &&
+            me_64x64_distortion < (800 * picture_qp)) ||
+            (me_8x8_cost_variance < (100 * picture_qp) &&
+                me_64x64_distortion < (100 * picture_qp))) {
+            context_ptr->lpd1_skip_inter_tx_level = 2;
+        }
+    }
+#endif
 #else
     uint8_t mds1_skip_level = 0;
     if (lpd1_level <= LPD1_LVL_0)

@@ -670,8 +670,12 @@ typedef struct Lpd1Ctrls {
 typedef struct Lpd1TxCtrls {
     uint8_t zero_y_coeff_exit;      // skip cost calc and chroma TX/compensation if there are zero luma coeffs
     uint8_t chroma_detector_level;    // Control aggressiveness of chroma detector (used to skip chroma TX when luma has 0 coeffs): 0: OFF, 1: saftest, 2: medium
+#if FIX_SKIP_TX_LPD1
+    uint8_t skip_nrst_nrst_luma_tx;        // Skip luma TX for NRST_NRST candidates if dist/QP is low and if top and left neighbours have no coeffs
+#else
     SkipTxGroup skip_luma_tx_lvl;        // Groups to skip luma TX for if dist/QP is low
     uint8_t use_skip_tx_neigh_coeff_detector;   // only skip luma tx if top and left neighbours have no coeffs
+#endif
     uint16_t skip_tx_th;            // if (skip_tx_th/QP < TH) skip TX at MDS3; 0: OFF, higher: more aggressive
     uint32_t use_mds3_shortcuts_th;         // if (best_mds0_distortion/QP < TH) use shortcuts for candidate at MDS3; 0: OFF, higher: more aggressive
     uint8_t use_neighbour_info;   // if true, use info from neighbouring blocks to use more aggressive THs/actions
@@ -1352,6 +1356,10 @@ typedef struct ModeDecisionContext {
 #if FTR_SKIP_TX_LPD1
 #if CLN_LPD1_TX_CTRLS
     Lpd1TxCtrls lpd1_tx_ctrls;
+#if FIX_SKIP_TX_LPD1
+    uint8_t lpd1_skip_inter_tx_level; // Signal to skip INTER TX in LPD1; should only be used by M13 as this causes blocking artifacts.
+                                      // 0: OFF, 1: Skip INTER TX if neighs have 0 coeffs, 2: skip all INTER TX
+#endif
 #else
     SkipTxCtrls skip_tx_ctrls;
 #endif
