@@ -2019,8 +2019,11 @@ void generate_av1_mvp_table(ModeDecisionContext *context_ptr, BlkStruct *blk_ptr
     uint8_t symteric_refs = 0;
     IntMv mv_ref0[64];
     if (pcs_ptr->temporal_layer_index>0)
-        if(tot_refs == 3 && ref_frames[0] == LAST_FRAME && ref_frames[1] == BWDREF_FRAME && ref_frames[2] == LAST_BWD_FRAME)
-           symteric_refs = 1;
+#if FIX_LDB_MFMV
+        if( pcs_ptr->parent_pcs_ptr->scs_ptr->static_config.pred_structure == EB_PRED_RANDOM_ACCESS)
+#endif
+            if(tot_refs == 3 && ref_frames[0] == LAST_FRAME && ref_frames[1] == BWDREF_FRAME && ref_frames[2] == LAST_BWD_FRAME)
+               symteric_refs = 1;
 
     //128x128 OFF, 4xN OFF, SQ only
 

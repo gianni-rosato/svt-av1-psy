@@ -98,6 +98,10 @@ typedef struct PictureDecisionContext {
     uint8_t                  last_i_picture_sc_class2;
     uint64_t                 key_poc;
     uint8_t                  tf_level;
+#if FTR_LDB_TF
+    uint32_t tf_pic_arr_cnt;
+    PictureParentControlSet *tf_pic_array[1 << MAX_TEMPORAL_LAYERS];
+#endif
     PictureParentControlSet *mg_pictures_array[1 << MAX_TEMPORAL_LAYERS];
     DepCntPicInfo            updated_links_arr
         [UPDATED_LINKS]; //if not empty, this picture is a depn-cnt-cleanUp triggering picture (I frame; or MG size change )

@@ -1113,7 +1113,27 @@ int svt_av1_get_q_index_from_qstep_ratio(int leaf_qindex, double qstep_ratio, co
     return qindex;
 }
 #endif
-
+#if FTR_LDB_QPS
+/******************************************************
+ * non_base_boost
+ * Compute a non-base frame boost.
+ ******************************************************/
+int8_t non_base_boost(PictureControlSet* pcs_ptr) {
+    int8_t q_boost = 0;
+    EbReferenceObject* ref_obj_l0 = (EbReferenceObject*)pcs_ptr->ref_pic_ptr_array[REF_LIST_0][0]->object_ptr;
+    uint32_t l0_was_intra = 0;
+    if (ref_obj_l0->slice_type != I_SLICE) {
+        for (uint32_t sb_index = 0; sb_index < pcs_ptr->sb_total_count; sb_index++) {
+            l0_was_intra += ref_obj_l0->sb_intra[sb_index];
+        }
+    }
+    if (l0_was_intra) {
+        int8_t intra_percentage = (l0_was_intra * 100) / pcs_ptr->sb_total_count;
+        q_boost = intra_percentage >> 2;
+    }
+    return q_boost;
+}
+#endif
 /******************************************************
  * cqp_qindex_calc
  * Assign the q_index per frame.
@@ -1175,11 +1195,22 @@ static int cqp_qindex_calc(PictureControlSet *pcs_ptr, RATE_CONTROL *rc, int qin
             offset_idx = 0;
         else
             offset_idx = MIN(pcs_ptr->temporal_layer_index + 1, FIXED_QP_OFFSET_COUNT - 1);
-
+#if FTR_LDB_QPS
+        double q_val_target = (offset_idx == -1) ?
+#else
         const double q_val_target = (offset_idx == -1) ?
+#endif
             q_val :
             MAX(q_val - (q_val * percents[pcs_ptr->parent_pcs_ptr->hierarchical_levels <= 4][offset_idx] / 100), 0.0);
-
+#if FTR_LDB_QPS
+            if (scs_ptr->static_config.pred_structure == EB_PRED_LOW_DELAY_P || scs_ptr->static_config.pred_structure == EB_PRED_LOW_DELAY_B) {
+                if (pcs_ptr->parent_pcs_ptr->temporal_layer_index) {
+                    int8_t boost = non_base_boost(pcs_ptr);
+                    if (boost)
+                        q_val_target = MAX(0, q_val_target - (boost * q_val_target) / 100);
+                }
+            }
+#endif
         const int32_t delta_qindex = svt_av1_compute_qdelta(
             q_val,
             q_val_target,

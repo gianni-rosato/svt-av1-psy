@@ -724,6 +724,25 @@ EbErrorType load_default_buffer_configuration_settings(
 
         min_recon = min_ref;
 
+#if FIX_LDB_MEM
+        if (scs_ptr->static_config.pred_structure == EB_PRED_LOW_DELAY_P ||
+            scs_ptr->static_config.pred_structure == EB_PRED_LOW_DELAY_B)
+        {
+            min_input = min_parent = 1 + scs_ptr->scd_delay + eos_delay;
+            min_child = 1;
+            min_ref = num_ref_from_past_mgs + num_ref_from_cur_mg;
+            min_me = 1;
+            min_paref = num_pa_ref_for_cur_mg + scs_ptr->scd_delay + eos_delay;
+
+            uint32_t low_delay_tf_frames =  scs_ptr->static_config.tf_params_per_type[1].max_num_past_pics;
+            min_input  += low_delay_tf_frames;
+            min_parent += low_delay_tf_frames;
+            min_ref    += low_delay_tf_frames;
+            min_me     += low_delay_tf_frames;
+            min_paref  += low_delay_tf_frames;
+
+        }
+#endif
 #if FTR_MG_PARALELL
         //Configure max needed buffers to process 1+n_extra_mg Mini-Gops in the pipeline. n extra MGs to feed to picMgr on top of current one.
 #if FTR_LP64
@@ -3813,6 +3832,25 @@ void tf_controls(SequenceControlSet *scs_ptr, uint8_t tf_level) {
         scs_ptr->static_config.tf_params_per_type[1].max_num_future_pics = 0;
 #endif
 
+#if  FTR_LDB_TF
+    if (scs_ptr->static_config.pred_structure == EB_PRED_LOW_DELAY_B)
+    {
+        //for Low Delay, filter only the base B , as Intra is not delayed.
+        //if speed not a concern we can add layer1 B
+
+        // I_SLICE TF Params
+        scs_ptr->static_config.tf_params_per_type[0].enabled = 0;
+
+        // BASE TF Params
+        scs_ptr->static_config.tf_params_per_type[1].num_future_pics = 0;
+        scs_ptr->static_config.tf_params_per_type[1].max_num_future_pics = 0;
+
+        scs_ptr->static_config.tf_params_per_type[1].use_intra_for_noise_est = 0; //I frame not TF-ed
+
+        // L1 TF Params
+        scs_ptr->static_config.tf_params_per_type[2].enabled = 0;
+    }
+#endif
 #if FIXED_POINTS_PLANEWISE
     scs_ptr->static_config.tf_params_per_type[0].use_fixed_point = ENABLE_FIXED_POINTS_PLANEWISE;
     scs_ptr->static_config.tf_params_per_type[1].use_fixed_point = ENABLE_FIXED_POINTS_PLANEWISE;
@@ -5489,6 +5527,10 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
         }
     }
 
+#if FIX_LDB
+    if (scs_ptr->static_config.pred_structure == EB_PRED_LOW_DELAY_B)
+        scs_ptr->static_config.enable_tpl_la = 0;
+#endif
 #if FTR_OPT_MPASS
 #if TUNE_RC
 #if IPP_CTRL
@@ -5573,9 +5615,16 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
 
 #if FIX_LOW_DELAY
     // no future minigop is used for lowdelay prediction structure
+#if FIX_LDB
+    if (scs_ptr->static_config.pred_structure == EB_PRED_LOW_DELAY_P || scs_ptr->static_config.pred_structure == EB_PRED_LOW_DELAY_B) {
+        scs_ptr->lad_mg = scs_ptr->tpl_lad_mg = 0;
+    }
+    else
+#else
     if (scs_ptr->static_config.pred_structure == EB_PRED_LOW_DELAY_P)
         scs_ptr->lad_mg = scs_ptr->tpl_lad_mg = 0;
     else
+#endif
 #endif
      {
 #if OPT_COMBINE_TPL_FOR_LAD
@@ -6468,10 +6517,17 @@ static EbErrorType verify_settings(
         return_error = EB_ErrorBadParameter;
     }
 #if FIX_LOW_DELAY
+#if FIX_LDB
+    if (config->pred_structure > 2) {
+        SVT_LOG("Error instance %u: Pred Structure must be [0, 1 or 2]\n", channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+#else
     if (config->pred_structure != 2 && config->pred_structure != 0) {
         SVT_LOG("Error instance %u: Pred Structure must be [0 or 2]\n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
+#endif
 #else
     if (config->pred_structure != 2) {
         SVT_LOG("Error instance %u: Pred Structure must be [2]\n", channel_number + 1);
@@ -8568,6 +8624,13 @@ EB_API EbErrorType svt_av1_enc_send_picture(
     svt_get_empty_object(
         enc_handle_ptr->input_buffer_producer_fifo_ptr,
         &eb_wrapper_ptr);
+
+#if FTR_LDB_TF
+     //set live count to 1 to be decremented at the end of the encode in RC, and released
+     //this would also allow low delay TF to retain pictures
+     svt_object_inc_live_count(eb_wrapper_ptr, 1);
+#endif
+
 #if FIX_ISSUE_50 && !FIX_DG
     enc_handle_ptr->scs_instance_array[0]->scs_ptr->static_config.skip_frame_first_pass = ((enc_handle_ptr->scs_instance_array[0]->scs_ptr->enc_mode_2ndpass <= ENC_M4) ||
         (enc_handle_ptr->scs_instance_array[0]->scs_ptr->static_config.final_pass_rc_mode != 0)) ? 0 : 1;

@@ -276,6 +276,10 @@ EbErrorType picture_decision_context_ctor(
     thread_context_ptr->priv = context_ptr;
     thread_context_ptr->dctor = picture_decision_context_dctor;
 
+#if FTR_LDB_TF
+     memset(context_ptr->tf_pic_array, 0, (1 << MAX_TEMPORAL_LAYERS) * sizeof(PictureParentControlSet *));
+     context_ptr->tf_pic_arr_cnt = 0;
+#endif
     context_ptr->picture_analysis_results_input_fifo_ptr =
         svt_system_resource_get_consumer_fifo(enc_handle_ptr->picture_analysis_results_resource_ptr, 0);
     context_ptr->picture_decision_results_output_fifo_ptr =
@@ -5799,7 +5803,11 @@ EbBool is_delayed_intra(PictureParentControlSet *pcs) {
 
 
 #if FIX_LOW_DELAY
+#if FIX_LDB_MEM
+    if ((pcs->idr_flag || pcs->cra_flag) && pcs->pred_structure == EB_PRED_RANDOM_ACCESS) {
+#else
     if ((pcs->idr_flag || pcs->cra_flag) && pcs->pred_structure != EB_PRED_LOW_DELAY_P) {
+#endif
 #else
     if (pcs->idr_flag || pcs->cra_flag) {
 #endif
@@ -5857,6 +5865,56 @@ void process_first_pass_frame(
     pcs_ptr->me_data_wrapper_ptr = (EbObjectWrapper *)NULL;
     pcs_ptr->pa_me_data = NULL;
 }
+#if FTR_LDB_TF
+/*
+store this input  picture to be used for TF-ing of upcoming base
+increment live count of the required ressources to be used by TF of upcoming base.
+will be released once TF is done
+*/
+void low_delay_store_tf_pictures(
+    SequenceControlSet      *scs,
+    PictureParentControlSet *pcs,
+    PictureDecisionContext  *ctx)
+{
+    const uint32_t mg_size = 1 << (scs->static_config.hierarchical_levels);
+    const uint32_t tot_past = scs->static_config.tf_params_per_type[1].max_num_past_pics;
+
+    if (pcs->temporal_layer_index != 0 && pcs->pic_index + 1 + tot_past >= mg_size)
+    {
+        //printf("Store:%lld \n", pcs->picture_number);
+        //store this picture to be used for TF-ing upcoming base
+        ctx->tf_pic_array[ctx->tf_pic_arr_cnt++] = pcs;
+
+        //increment live count of these ressources to be used by TF of upcoming base. will be released once TF is done.
+        svt_object_inc_live_count(pcs->p_pcs_wrapper_ptr, 1);
+        svt_object_inc_live_count(pcs->input_picture_wrapper_ptr, 1);
+        svt_object_inc_live_count(pcs->pa_reference_picture_wrapper_ptr, 1);
+        svt_object_inc_live_count(pcs->eb_y8b_wrapper_ptr, 1);
+    }
+}
+/*
+ TF is done, release ressources and reset the tf picture buffer.
+*/
+void low_delay_release_tf_pictures(
+    PictureDecisionContext  *ctx)
+{
+    for (uint32_t pic_it = 0; pic_it < ctx->tf_pic_arr_cnt; pic_it++) {
+
+        PictureParentControlSet *past_pcs = ctx->tf_pic_array[pic_it];
+        //printf("                   Release:%lld \n", past_pcs->picture_number);
+
+        svt_release_object(past_pcs->input_picture_wrapper_ptr);
+        svt_release_object(past_pcs->eb_y8b_wrapper_ptr);
+        svt_release_object(past_pcs->pa_reference_picture_wrapper_ptr);
+        //ppcs should be the last one to release
+        svt_release_object(past_pcs->p_pcs_wrapper_ptr);
+    }
+
+    memset(ctx->tf_pic_array, 0, ctx->tf_pic_arr_cnt * sizeof(PictureParentControlSet *));
+    ctx->tf_pic_arr_cnt = 0;
+}
+#endif
+
 /*
   Performs Motion Compensated Temporal Filtering in ME process
 */
@@ -5867,6 +5925,14 @@ void mctf_frame(
     uint32_t               out_stride_diff64
 )
 {
+#if FTR_LDB_TF
+    if (scs_ptr->static_config.pred_structure != EB_PRED_RANDOM_ACCESS &&
+        scs_ptr->static_config.tf_params_per_type[1].enabled)
+        low_delay_store_tf_pictures(
+            scs_ptr,
+            pcs_ptr,
+            context_ptr);
+#endif
     if (pcs_ptr->tf_ctrls.enabled) {
         derive_tf_window_params(
             scs_ptr,
@@ -5924,6 +5990,12 @@ void mctf_frame(
     }
     else
         pcs_ptr->temporal_filtering_on = EB_FALSE; // set temporal filtering flag OFF for current picture
+#if FTR_LDB_TF
+    if (scs_ptr->static_config.pred_structure != EB_PRED_RANDOM_ACCESS &&
+        scs_ptr->static_config.tf_params_per_type[1].enabled  &&
+        pcs_ptr->temporal_layer_index == 0)
+        low_delay_release_tf_pictures(context_ptr);
+#endif
 }
 
 /* this function sets up ME refs for a regular pic*/
@@ -6246,6 +6318,8 @@ void print_pre_ass_buffer(EncodeContext *ctx, PictureParentControlSet *pcs_ptr, 
             SVT_LOG("PRE-ASSIGN COMPLETE   (%i pictures)  POC:%lld \n", ctx->pre_assignment_buffer_count, pcs_ptr->picture_number);
         if (ctx->pre_assignment_buffer_eos_flag == 1)
             SVT_LOG("PRE-ASSIGN EOS   (%i pictures)  POC:%lld \n", ctx->pre_assignment_buffer_count, pcs_ptr->picture_number);
+        if (pcs_ptr->pred_structure == EB_PRED_LOW_DELAY_P)
+            SVT_LOG("PRE-ASSIGN LDP   (%i pictures)  POC:%lld \n", ctx->pre_assignment_buffer_count, pcs_ptr->picture_number);
 
         SVT_LOG("\n Pre-Assign(%i):  ", ctx->pre_assignment_buffer_count);
         for (uint32_t pic = 0; pic < ctx->pre_assignment_buffer_count; pic++) {
@@ -6547,84 +6621,10 @@ EbErrorType derive_tf_window_params(
         adjust_num = 2;
     }
     (void)out_stride_diff64;
-    if (is_delayed_intra(pcs_ptr)) {
-        //initilize list
-        for (int pic_itr = 0; pic_itr < ALTREF_MAX_NFRAMES; pic_itr++)
-            pcs_ptr->temp_filt_pcs_list[pic_itr] = NULL;
 
-        pcs_ptr->temp_filt_pcs_list[0] = pcs_ptr;
-        uint32_t num_future_pics = pcs_ptr->tf_ctrls.num_future_pics + (pcs_ptr->tf_ctrls.noise_adjust_future_pics ? adjust_num : 0);
-        num_future_pics = MIN(pcs_ptr->tf_ctrls.max_num_future_pics, num_future_pics);
 
-        uint32_t pic_i;
-        for (pic_i = 0; pic_i < num_future_pics; pic_i++) {
-            int32_t idx = search_this_pic(context_ptr->mg_pictures_array, context_ptr->mg_size, pcs_ptr->picture_number + pic_i + 1);
-            if (idx >= 0)
-                pcs_ptr->temp_filt_pcs_list[pic_i + 1] = context_ptr->mg_pictures_array[idx];
-            else
-                break;
-        }
-
-        pcs_ptr->past_altref_nframes = 0;
-        pcs_ptr->future_altref_nframes = pic_i;
-        int index_center = 0;
-        uint32_t actual_future_pics = pcs_ptr->future_altref_nframes;
-        int pic_itr;
-
-        int ahd_th = (((pcs_ptr->aligned_width * pcs_ptr->aligned_height) *  pcs_ptr->tf_ctrls.activity_adjust_th) / 100);
-
-        // Accumulative histogram absolute differences between the central and future frame
-        for (pic_itr = (index_center + actual_future_pics); pic_itr > index_center; pic_itr--) {
-            int ahd = compute_luma_sad_between_center_and_target_frame(index_center, pic_itr, pcs_ptr, scs_ptr);
-
-            if (ahd < ahd_th)
-               break;
-        }
-        pcs_ptr->future_altref_nframes = pic_itr - index_center;
-    }
-    else
-    if (pcs_ptr->idr_flag) {
-
-        //initilize list
-        for (int pic_itr = 0; pic_itr < ALTREF_MAX_NFRAMES; pic_itr++)
-            pcs_ptr->temp_filt_pcs_list[pic_itr] = NULL;
-
-        pcs_ptr->temp_filt_pcs_list[0] = pcs_ptr;
-        uint32_t num_future_pics = pcs_ptr->tf_ctrls.num_future_pics + (pcs_ptr->tf_ctrls.noise_adjust_future_pics ? adjust_num : 0);
-        num_future_pics = MIN(pcs_ptr->tf_ctrls.max_num_future_pics, num_future_pics);
-        uint32_t num_past_pics = 0;
-        uint32_t pic_i;
-        //search reord-queue to get the future pictures
-        for (pic_i = 0; pic_i < num_future_pics; pic_i++) {
-            int32_t q_index = QUEUE_GET_NEXT_SPOT(pcs_ptr->pic_decision_reorder_queue_idx, pic_i + 1);
-            if (encode_context_ptr->picture_decision_reorder_queue[q_index]->parent_pcs_wrapper_ptr != NULL) {
-                PictureParentControlSet* pcs_itr = (PictureParentControlSet *)encode_context_ptr->picture_decision_reorder_queue[q_index]->parent_pcs_wrapper_ptr->object_ptr;
-                pcs_ptr->temp_filt_pcs_list[pic_i + num_past_pics + 1] = pcs_itr;
-
-            }
-            else
-                break;
-        }
-
-        pcs_ptr->past_altref_nframes = 0;
-        pcs_ptr->future_altref_nframes = pic_i;
-        int index_center = 0;
-        uint32_t actual_future_pics = pcs_ptr->future_altref_nframes;
-        int pic_itr;
-
-        int ahd_th = (((pcs_ptr->aligned_width * pcs_ptr->aligned_height) *  pcs_ptr->tf_ctrls.activity_adjust_th) / 100);
-
-        // Accumulative histogram absolute differences between the central and future frame
-        for (pic_itr = (index_center + actual_future_pics); pic_itr > index_center; pic_itr--) {
-            int ahd = compute_luma_sad_between_center_and_target_frame(index_center, pic_itr, pcs_ptr, scs_ptr);
-            if (ahd < ahd_th)
-                break;
-        }
-        pcs_ptr->future_altref_nframes = pic_itr - index_center;
-        //SVT_LOG("\nPOC %d\t PAST %d\t FUTURE %d\n", pcs_ptr->picture_number, pcs_ptr->past_altref_nframes, pcs_ptr->future_altref_nframes);
-    }
-    else
-    {
+#if FTR_LDB_TF
+    if (scs_ptr->static_config.pred_structure != EB_PRED_RANDOM_ACCESS) {
         int num_past_pics = pcs_ptr->tf_ctrls.num_past_pics + (pcs_ptr->tf_ctrls.noise_adjust_past_pics ? (adjust_num >> 1) : 0);
         num_past_pics = MIN(pcs_ptr->tf_ctrls.max_num_past_pics, num_past_pics);
 
@@ -6634,15 +6634,17 @@ EbErrorType derive_tf_window_params(
         //initilize list
         for (int pic_itr = 0; pic_itr < ALTREF_MAX_NFRAMES; pic_itr++)
             pcs_ptr->temp_filt_pcs_list[pic_itr] = NULL;
-        // limit the number of pictures to make sure there are enough pictures in the buffer. i.e. Intra CRA case
-        // limit the number of pictures to make sure there are enough pictures in the buffer. i.e. Intra CRA case
-        num_past_pics = MIN(num_past_pics, avail_past_pictures(context_ptr->mg_pictures_array, context_ptr->mg_size, pcs_ptr->picture_number));
-        //get previous+current pictures from the the pre-assign buffer
-        for (int pic_itr = 0; pic_itr <= num_past_pics; pic_itr++) {
-            int32_t idx = search_this_pic(context_ptr->mg_pictures_array, context_ptr->mg_size, pcs_ptr->picture_number - num_past_pics + pic_itr);
+
+        //get previous
+        for (int pic_itr = 0; pic_itr < num_past_pics; pic_itr++) {
+            int32_t idx = search_this_pic(context_ptr->tf_pic_array, context_ptr->tf_pic_arr_cnt, pcs_ptr->picture_number - num_past_pics + pic_itr);
             if (idx >= 0)
-                pcs_ptr->temp_filt_pcs_list[pic_itr] = context_ptr->mg_pictures_array[idx];
+                pcs_ptr->temp_filt_pcs_list[pic_itr] = context_ptr->tf_pic_array[idx];
         }
+
+        //get central
+        pcs_ptr->temp_filt_pcs_list[num_past_pics] = pcs_ptr;
+
         int actual_past_pics = num_past_pics;
         int actual_future_pics = 0;
         int pic_i;
@@ -6705,6 +6707,170 @@ EbErrorType derive_tf_window_params(
             }
         }
     }
+    else {
+#endif
+        if (is_delayed_intra(pcs_ptr)) {
+            //initilize list
+            for (int pic_itr = 0; pic_itr < ALTREF_MAX_NFRAMES; pic_itr++)
+                pcs_ptr->temp_filt_pcs_list[pic_itr] = NULL;
+
+            pcs_ptr->temp_filt_pcs_list[0] = pcs_ptr;
+            uint32_t num_future_pics = pcs_ptr->tf_ctrls.num_future_pics + (pcs_ptr->tf_ctrls.noise_adjust_future_pics ? adjust_num : 0);
+            num_future_pics = MIN(pcs_ptr->tf_ctrls.max_num_future_pics, num_future_pics);
+
+            uint32_t pic_i;
+            for (pic_i = 0; pic_i < num_future_pics; pic_i++) {
+                int32_t idx = search_this_pic(context_ptr->mg_pictures_array, context_ptr->mg_size, pcs_ptr->picture_number + pic_i + 1);
+                if (idx >= 0)
+                    pcs_ptr->temp_filt_pcs_list[pic_i + 1] = context_ptr->mg_pictures_array[idx];
+                else
+                    break;
+            }
+
+            pcs_ptr->past_altref_nframes = 0;
+            pcs_ptr->future_altref_nframes = pic_i;
+            int index_center = 0;
+            uint32_t actual_future_pics = pcs_ptr->future_altref_nframes;
+            int pic_itr;
+
+            int ahd_th = (((pcs_ptr->aligned_width * pcs_ptr->aligned_height) *  pcs_ptr->tf_ctrls.activity_adjust_th) / 100);
+
+            // Accumulative histogram absolute differences between the central and future frame
+            for (pic_itr = (index_center + actual_future_pics); pic_itr > index_center; pic_itr--) {
+                int ahd = compute_luma_sad_between_center_and_target_frame(index_center, pic_itr, pcs_ptr, scs_ptr);
+
+                if (ahd < ahd_th)
+                    break;
+            }
+            pcs_ptr->future_altref_nframes = pic_itr - index_center;
+        }
+        else
+            if (pcs_ptr->idr_flag) {
+
+                //initilize list
+                for (int pic_itr = 0; pic_itr < ALTREF_MAX_NFRAMES; pic_itr++)
+                    pcs_ptr->temp_filt_pcs_list[pic_itr] = NULL;
+
+                pcs_ptr->temp_filt_pcs_list[0] = pcs_ptr;
+                uint32_t num_future_pics = pcs_ptr->tf_ctrls.num_future_pics + (pcs_ptr->tf_ctrls.noise_adjust_future_pics ? adjust_num : 0);
+                num_future_pics = MIN(pcs_ptr->tf_ctrls.max_num_future_pics, num_future_pics);
+                uint32_t num_past_pics = 0;
+                uint32_t pic_i;
+                //search reord-queue to get the future pictures
+                for (pic_i = 0; pic_i < num_future_pics; pic_i++) {
+                    int32_t q_index = QUEUE_GET_NEXT_SPOT(pcs_ptr->pic_decision_reorder_queue_idx, pic_i + 1);
+                    if (encode_context_ptr->picture_decision_reorder_queue[q_index]->parent_pcs_wrapper_ptr != NULL) {
+                        PictureParentControlSet* pcs_itr = (PictureParentControlSet *)encode_context_ptr->picture_decision_reorder_queue[q_index]->parent_pcs_wrapper_ptr->object_ptr;
+                        pcs_ptr->temp_filt_pcs_list[pic_i + num_past_pics + 1] = pcs_itr;
+
+                    }
+                    else
+                        break;
+                }
+
+                pcs_ptr->past_altref_nframes = 0;
+                pcs_ptr->future_altref_nframes = pic_i;
+                int index_center = 0;
+                uint32_t actual_future_pics = pcs_ptr->future_altref_nframes;
+                int pic_itr;
+
+                int ahd_th = (((pcs_ptr->aligned_width * pcs_ptr->aligned_height) *  pcs_ptr->tf_ctrls.activity_adjust_th) / 100);
+
+                // Accumulative histogram absolute differences between the central and future frame
+                for (pic_itr = (index_center + actual_future_pics); pic_itr > index_center; pic_itr--) {
+                    int ahd = compute_luma_sad_between_center_and_target_frame(index_center, pic_itr, pcs_ptr, scs_ptr);
+                    if (ahd < ahd_th)
+                        break;
+                }
+                pcs_ptr->future_altref_nframes = pic_itr - index_center;
+                //SVT_LOG("\nPOC %d\t PAST %d\t FUTURE %d\n", pcs_ptr->picture_number, pcs_ptr->past_altref_nframes, pcs_ptr->future_altref_nframes);
+            }
+            else
+            {
+                int num_past_pics = pcs_ptr->tf_ctrls.num_past_pics + (pcs_ptr->tf_ctrls.noise_adjust_past_pics ? (adjust_num >> 1) : 0);
+                num_past_pics = MIN(pcs_ptr->tf_ctrls.max_num_past_pics, num_past_pics);
+
+                int num_future_pics = pcs_ptr->tf_ctrls.num_future_pics + (pcs_ptr->tf_ctrls.noise_adjust_future_pics ? (adjust_num >> 1) : 0);
+                num_future_pics = MIN(pcs_ptr->tf_ctrls.max_num_future_pics, num_future_pics);
+
+                //initilize list
+                for (int pic_itr = 0; pic_itr < ALTREF_MAX_NFRAMES; pic_itr++)
+                    pcs_ptr->temp_filt_pcs_list[pic_itr] = NULL;
+                // limit the number of pictures to make sure there are enough pictures in the buffer. i.e. Intra CRA case
+                // limit the number of pictures to make sure there are enough pictures in the buffer. i.e. Intra CRA case
+                num_past_pics = MIN(num_past_pics, avail_past_pictures(context_ptr->mg_pictures_array, context_ptr->mg_size, pcs_ptr->picture_number));
+                //get previous+current pictures from the the pre-assign buffer
+                for (int pic_itr = 0; pic_itr <= num_past_pics; pic_itr++) {
+                    int32_t idx = search_this_pic(context_ptr->mg_pictures_array, context_ptr->mg_size, pcs_ptr->picture_number - num_past_pics + pic_itr);
+                    if (idx >= 0)
+                        pcs_ptr->temp_filt_pcs_list[pic_itr] = context_ptr->mg_pictures_array[idx];
+                }
+                int actual_past_pics = num_past_pics;
+                int actual_future_pics = 0;
+                int pic_i;
+                //search reord-queue to get the future pictures
+                for (pic_i = 0; pic_i < num_future_pics; pic_i++) {
+                    int32_t q_index = QUEUE_GET_NEXT_SPOT(pcs_ptr->pic_decision_reorder_queue_idx, pic_i + 1);
+                    if (encode_context_ptr->picture_decision_reorder_queue[q_index]->parent_pcs_wrapper_ptr != NULL) {
+                        PictureParentControlSet* pcs_itr = (PictureParentControlSet *)encode_context_ptr->picture_decision_reorder_queue[q_index]->parent_pcs_wrapper_ptr->object_ptr;
+                        pcs_ptr->temp_filt_pcs_list[pic_i + num_past_pics + 1] = pcs_itr;
+                        actual_future_pics++;
+                    }
+                    else
+                        break;
+                }
+
+                //search in pre-ass if still short
+                if (pic_i < num_future_pics) {
+                    actual_future_pics = 0;
+                    for (int pic_i_future = 0; pic_i_future < num_future_pics; pic_i_future++) {
+                        for (uint32_t pic_i_pa = 0; pic_i_pa < encode_context_ptr->pre_assignment_buffer_count; pic_i_pa++) {
+                            PictureParentControlSet* pcs_itr = (PictureParentControlSet*)encode_context_ptr->pre_assignment_buffer[pic_i_pa]->object_ptr;
+                            if (pcs_itr->picture_number == pcs_ptr->picture_number + pic_i_future + 1) {
+                                pcs_ptr->temp_filt_pcs_list[pic_i_future + num_past_pics + 1] = pcs_itr;
+                                actual_future_pics++;
+                                break; //exist the pre-ass loop, go search the next
+                            }
+                        }
+                    }
+                }
+                int index_center = actual_past_pics;
+                int pic_itr;
+                int ahd;
+
+                int ahd_th = (((pcs_ptr->aligned_width * pcs_ptr->aligned_height) *  pcs_ptr->tf_ctrls.activity_adjust_th) / 100);
+
+                // Accumulative histogram absolute differences between the central and past frame
+                for (pic_itr = index_center - actual_past_pics; pic_itr < index_center; pic_itr++) {
+                    ahd = compute_luma_sad_between_center_and_target_frame(index_center, pic_itr, pcs_ptr, scs_ptr);
+
+                    if (ahd < ahd_th)
+                        break;
+                }
+                pcs_ptr->past_altref_nframes = actual_past_pics = index_center - pic_itr;
+
+                // Accumulative histogram absolute differences between the central and past frame
+                for (pic_itr = (index_center + actual_future_pics); pic_itr > index_center; pic_itr--) {
+                    ahd = compute_luma_sad_between_center_and_target_frame(index_center, pic_itr, pcs_ptr, scs_ptr);
+                    if (ahd < ahd_th)
+                        break;
+                }
+                pcs_ptr->future_altref_nframes = pic_itr - index_center;
+
+                // adjust the temporal filtering pcs buffer to remove unused past pictures
+                if (actual_past_pics != num_past_pics) {
+
+                    pic_i = 0;
+                    while (pcs_ptr->temp_filt_pcs_list[pic_i] != NULL) {
+                        pcs_ptr->temp_filt_pcs_list[pic_i] = pcs_ptr->temp_filt_pcs_list[pic_i + num_past_pics - actual_past_pics];
+                        pic_i++;
+                    }
+                }
+            }
+
+#if FTR_LDB_TF
+    }
+#endif
     return EB_ErrorNone;
 }
 
@@ -6737,7 +6903,17 @@ PaReferenceQueueEntry * search_ref_in_ref_queue_pa(
 void copy_tf_params(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_ptr) {
 
     // Map TF settings sps -> pcs
+#if FTR_LDB_TF
+   if (scs_ptr->static_config.pred_structure != EB_PRED_RANDOM_ACCESS)
+   {
+        if (pcs_ptr->slice_type != I_SLICE && pcs_ptr->temporal_layer_index == 0)
+            pcs_ptr->tf_ctrls = scs_ptr->static_config.tf_params_per_type[1];
+        else
+            pcs_ptr->tf_ctrls.enabled = 0;
 
+        return;
+   }
+#endif
 #if OPT_TFILTER
 #if FIX_TF_OPEN_GOP
     if (is_delayed_intra(pcs_ptr))

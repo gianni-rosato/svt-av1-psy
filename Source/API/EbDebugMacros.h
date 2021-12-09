@@ -872,6 +872,14 @@ NOTE : PART OF LIGHT_PD0_2  code was committed to svt-04-final-rebased under OPT
 #define FIX_INT_OVERLOW                       1 // Fix overloads on integers, potential compilers mismatches.
 #define FIX_USE_NOINIT_VALUES                 1 // Fix use no init values in AVX.
 
+#define FIX_LDB                               1 // Fix/Improve Low Delay B infrastructure
+#if FIX_LDB
+#define FIX_LDB_MFMV                          1 //Fix Low Delay B structure MFMV
+#define FIX_LDB_MEM                           1 //Fix Low Delay B structure : Buffer allocation
+#define FTR_LDB_TF                            1 //Add support of TF in Low delay application
+#define FTR_LDB_QPS                           1 // Improved qps for LD
+#endif
+
 #endif //----------------------------------- all svt-05 features should be place are above this line -------------------------
 
 
