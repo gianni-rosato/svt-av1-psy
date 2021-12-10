@@ -887,8 +887,8 @@ void process_output_statistics_buffer(EbBufferHeaderType *header_ptr, EbConfig *
                 (double)cb_sse / (source_width / 2 * source_height / 2),
                 (double)cr_sse / (source_width / 2 * source_height / 2),
                 luma_ssim,
-                cr_ssim,
                 cb_ssim,
+                cr_ssim,
                 (int)picture_stream_size);
     }
 
