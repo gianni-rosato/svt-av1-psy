@@ -846,11 +846,6 @@ typedef struct EbSvtAv1EncConfiguration {
     * Default is 0. */
     uint32_t speed_control_flag;
 
-    /* Frame Rate used for the injector. Recommended to match the encoder speed.
-    *
-    * Default is 60. */
-    int32_t injector_frame_rate;
-
     /* Flag to constrain motion vectors.
      *
      * 1: Motion vectors are allowed to point outside frame boundary.

@@ -129,8 +129,6 @@ class EncParamTestBase : public ::testing::Test {
             }
         } else if (!param_name_str_.compare("target_bit_rate")) {
             ctxt_.enc_params.rate_control_mode = 1;
-        } else if (!param_name_str_.compare("injector_frame_rate")) {
-            ctxt_.enc_params.speed_control_flag = 1;
         }
     }
 
@@ -371,10 +369,6 @@ PARAM_TEST(EncParamActiveChCountTest);
 /** Test case for speed_control_flag*/
 DEFINE_PARAM_TEST_CLASS(EncParamSpeedCtrlTest, speed_control_flag);
 PARAM_TEST(EncParamSpeedCtrlTest);
-
-/** Test case for injector_frame_rate*/
-DEFINE_PARAM_TEST_CLASS(EncParamInjectorFrameRateTest, injector_frame_rate);
-PARAM_TEST(EncParamInjectorFrameRateTest);
 
 /** Test case for logical_processors*/
 DEFINE_PARAM_TEST_CLASS(EncParamLogicalProcessorsTest, logical_processors);

@@ -873,34 +873,6 @@ static const vector<uint32_t> invalid_speed_control_flag = {
     2,
 };
 
-/* Frame Rate used for the injector. Recommended to match the encoder speed.
- *
- * Default is 60. */
-static const vector<int32_t> default_injector_frame_rate = {
-    60<<16,
-};
-static const vector<int32_t> valid_injector_frame_rate = {
-    24,
-    25,
-    30,
-    50,
-    60,
-    120,
-    240,
-    24 << 16,
-    25 << 16,
-    30 << 16,
-    50 << 16,
-    60 << 16,
-    120 << 16,
-    240 << 16,  // ...
-};
-static const vector<int32_t> invalid_injector_frame_rate = {
-    /* injector_frame_rate override in code
-    0, 1, 2, 10, 15, 29, 241,  // ...
-    */
-};
-
 // Threads management
 
 /* The number of logical processor which encoder threads run on. If

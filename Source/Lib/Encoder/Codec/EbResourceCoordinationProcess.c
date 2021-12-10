@@ -948,7 +948,7 @@ void speed_buffer_control(ResourceCoordinationContext *context_ptr,
     int8_t   encoder_mode_delta = 0;
     int64_t  input_frames_count = 0;
     int8_t   change_cond        = 0;
-    int64_t  target_fps         = (scs_ptr->static_config.injector_frame_rate >> 16);
+    int64_t  target_fps         = (60 >> 16);
 
     int64_t buffer_threshold_1 = SC_FRAMES_INTERVAL_T1;
     int64_t buffer_threshold_2 = SC_FRAMES_INTERVAL_T2;
@@ -975,7 +975,7 @@ void speed_buffer_control(ResourceCoordinationContext *context_ptr,
                                                             curs_time_useconds);
 
     input_frames_count = (int64_t)overall_duration *
-        (scs_ptr->static_config.injector_frame_rate >> 16) / 1000;
+        (60 >> 16) / 1000;
     scs_ptr->encode_context_ptr->sc_buffer = input_frames_count -
         scs_ptr->encode_context_ptr->sc_frame_in;
 

@@ -6304,7 +6304,6 @@ void copy_api_from_app(
     scs_ptr->static_config.level = ((EbSvtAv1EncConfiguration*)config_struct)->level;
     scs_ptr->static_config.stat_report = ((EbSvtAv1EncConfiguration*)config_struct)->stat_report;
 
-    scs_ptr->static_config.injector_frame_rate = ((EbSvtAv1EncConfiguration*)config_struct)->injector_frame_rate;
     scs_ptr->static_config.speed_control_flag = ((EbSvtAv1EncConfiguration*)config_struct)->speed_control_flag;
 
     // Buffers - Hardcoded(Cleanup)
@@ -7233,7 +7232,6 @@ EbErrorType svt_svt_enc_init_parameter(
     config_ptr->level = 0;
 
     // Latency
-    config_ptr->injector_frame_rate = 60 << 16;
     config_ptr->speed_control_flag = 0;
     config_ptr->super_block_size = 128;
 

@@ -1748,6 +1748,7 @@ EbConfig *svt_config_ctor(EncodePass pass) {
     config_ptr->error_log_file = stderr;
     config_ptr->buffered_input = -1;
     config_ptr->progress       = 1;
+    config_ptr->injector_frame_rate = 60;
 
     return config_ptr;
 }
@@ -3471,6 +3472,9 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EncChannel *chan
             if (c->return_error == EB_ErrorNone) {
                 EbConfig *config = c->config;
                 c->return_error  = verify_settings(config, index);
+                // set inj_frame_rate to q16 format
+                if (c->return_error == EB_ErrorNone && config->injector == 1)
+                    config->injector_frame_rate <<= 16;
 
                 // Assuming no errors, add padding to width and height
                 if (c->return_error == EB_ErrorNone) {
