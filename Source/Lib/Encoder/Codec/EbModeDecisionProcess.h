@@ -671,7 +671,7 @@ typedef struct Lpd1TxCtrls {
     uint8_t zero_y_coeff_exit;      // skip cost calc and chroma TX/compensation if there are zero luma coeffs
     uint8_t chroma_detector_level;    // Control aggressiveness of chroma detector (used to skip chroma TX when luma has 0 coeffs): 0: OFF, 1: saftest, 2: medium
 #if FIX_SKIP_TX_LPD1
-    uint8_t skip_nrst_nrst_luma_tx;        // Skip luma TX for NRST_NRST candidates if dist/QP is low and if top and left neighbours have no coeffs
+    uint8_t skip_nrst_nrst_luma_tx; // Skip luma TX for NRST_NRST candidates if dist/QP is low and if top and left neighbours have no coeffs and are NRST_NRST
 #else
     SkipTxGroup skip_luma_tx_lvl;        // Groups to skip luma TX for if dist/QP is low
     uint8_t use_skip_tx_neigh_coeff_detector;   // only skip luma tx if top and left neighbours have no coeffs

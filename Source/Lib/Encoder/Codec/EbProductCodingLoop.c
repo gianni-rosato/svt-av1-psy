@@ -9577,7 +9577,7 @@ void full_loop_core_light_pd1(PictureControlSet *pcs_ptr, BlkStruct *blk_ptr,
          if (xd->left_available && xd->up_available) {
              const BlockModeInfoEnc* const left_mi = &xd->left_mbmi->block_mi;
              const BlockModeInfoEnc* const above_mi = &xd->above_mbmi->block_mi;
-             if (left_mi->skip && above_mi->skip) {
+             if (left_mi->skip && above_mi->skip && ((left_mi->mode == NEAREST_NEARESTMV && above_mi->mode == NEAREST_NEARESTMV) || context_ptr->lpd1_skip_inter_tx_level)) {
                  /* For M12 and below, do not skip TX for candidates other than NRST_NRST and do not remove the check on neighbouring
                     coeffs, as that may introduce blocking artifacts in certain clips. */
 
