@@ -58,7 +58,7 @@ typedef struct SvtMetadataArray {
  * \return Returns the newly allocated SvtMetadataT struct. If data is NULL,
  * sz is 0, or memory allocation fails, it returns NULL.
  */
-EB_API SvtMetadataT *svt_metadata_alloc(const uint32_t type, const uint8_t *data, size_t sz);
+EB_API SvtMetadataT *svt_metadata_alloc(const uint32_t type, const uint8_t *data, const size_t sz);
 
 /*!\brief Free metadata struct.
  *
