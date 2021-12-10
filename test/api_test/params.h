@@ -458,21 +458,6 @@ static const vector<EbBool> invalid_disable_dlf_flag = {
     // none
 };
 
-/* Denoise the input picture when noise levels are too high
- * Flag to enable the denoising
- *
- * Default is 0. */
-static const vector<EbBool> default_enable_denoise_flag = {
-    EB_FALSE,
-};
-static const vector<EbBool> valid_enable_denoise_flag = {
-    EB_FALSE,
-    EB_TRUE,
-};
-static const vector<EbBool> invalid_enable_denoise_flag = {
-    // none
-};
-
 /* Film grain denoising the input picture
  * Flag to enable the denoising
  *

@@ -276,10 +276,6 @@ PARAM_TEST(EncParamEnableQPScaleTest);
 DEFINE_PARAM_TEST_CLASS(EncParamDisableDlfTest, disable_dlf_flag);
 PARAM_TEST(EncParamDisableDlfTest);
 
-/** Test case for enable_denoise_flag*/
-DEFINE_PARAM_TEST_CLASS(EncParamEnableDenoiseTest, enable_denoise_flag);
-PARAM_TEST(EncParamEnableDenoiseTest);
-
 /** Test case for film_grain_denoise_strength*/
 DEFINE_PARAM_TEST_CLASS(EncParamFilmGrainDenoiseStrTest,
                         film_grain_denoise_strength);

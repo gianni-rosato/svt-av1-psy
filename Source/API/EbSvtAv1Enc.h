@@ -315,8 +315,6 @@ typedef struct EbSvtAv1EncConfiguration {
      * Default is 0. */
     uint32_t source_height;
 
-    uint32_t render_width, render_height;
-
     /* The frequecy of images being displayed. If the number is less than 1000,
      * the input frame rate is an integer number between 1 and 60, else the input
      * number is in Q16 format, shifted by 16 bits, where max allowed is 240 fps.
@@ -435,12 +433,6 @@ typedef struct EbSvtAv1EncConfiguration {
      *
      * Default is 0. */
     EbBool disable_dlf_flag;
-
-    /* Denoise the input picture when noise levels are too high
-    * Flag to enable the denoising
-    *
-    * Default is 0. */
-    EbBool enable_denoise_flag;
 
     /* Film grain denoising the input picture
     * Flag to enable the denoising

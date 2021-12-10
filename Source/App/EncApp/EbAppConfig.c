@@ -60,7 +60,6 @@
 #define BUFFERED_INPUT_TOKEN "-nb"
 #define NO_PROGRESS_TOKEN "--no-progress" // tbd if it should be removed
 #define PROGRESS_TOKEN "--progress"
-#define BASE_LAYER_SWITCH_MODE_TOKEN "-base-layer-switch-mode" // no Eval
 #define QP_TOKEN "-q"
 #define USE_QP_FILE_TOKEN "-use-q-file"
 
@@ -164,7 +163,6 @@
 #define TILE_ROW_TOKEN "-tile-rows"
 #define TILE_COL_TOKEN "-tile-columns"
 
-#define SQ_WEIGHT_TOKEN "-sqw"
 #define CHROMA_MODE_TOKEN "-chroma-mode"
 #define DISABLE_CFL_TOKEN "-dcfl"
 
@@ -191,10 +189,6 @@
 #define BUFFER_FILE_MAX_ARG_COUNT 320
 #define BUFFER_FILE_MAX_VAR_LEN 128
 
-#define MDS_1_PRUNE_C_TH "-mds-1-class-th"
-#define MDS_1_PRUNE_S_TH "-mds-1-cand-th"
-#define MDS_2_3_PRUNE_C_TH "-mds-2-3-class-th"
-#define MDS_2_3_PRUNE_S_TH "-mds-2-3-cand-th"
 //double dash
 #define PRESET_TOKEN "--preset"
 #define QP_FILE_NEW_TOKEN "--qpfile"
@@ -205,13 +199,11 @@
 #define STAT_REPORT_NEW_TOKEN "--enable-stat-report"
 #define RESTORATION_ENABLE_NEW_TOKEN "--enable-restoration-filtering"
 #define INTER_INTRA_COMPOUND_NEW_TOKEN "--enable-interintra-comp"
-#define FRAC_SEARCH_64_NEW_TOKEN "--enable-frac-search-64"
 #define MFMV_ENABLE_NEW_TOKEN "--enable-mfmv"
 #define REDUNDANT_BLK_NEW_TOKEN "--enable-redundant-blk"
 #define SPATIAL_SSE_FL_NEW_TOKEN "--enable-spatial-sse-full-loop-level"
 #define OVR_BNDRY_BLK_NEW_TOKEN "--enable-over-bndry-blk"
 #define NEW_NEAREST_COMB_INJECT_NEW_TOKEN "--enable-new-nrst-near-comb"
-#define NX4_4XN_MV_INJECT_NEW_TOKEN "--enable-nx4-4xn-mv-inject"
 #define NSQ_TABLE_NEW_TOKEN "--enable-nsq-table-use"
 #define FRAME_END_CDF_UPDATE_NEW_TOKEN "--enable-framend-cdf-upd-mode"
 #define LOCAL_WARPED_ENABLE_NEW_TOKEN "--enable-local-warp"
@@ -228,7 +220,6 @@
 #define NUMBER_OF_PICTURES_LONG_TOKEN "--frames"
 #define QP_LONG_TOKEN "--qp"
 #define CRF_LONG_TOKEN "--crf"
-#define CLASS_12_NEW_TOKEN "--enable-class-12"
 #define LOOP_FILTER_DISABLE_NEW_TOKEN "--disable-dlf"
 #define DISABLE_CFL_NEW_TOKEN "--disable-cfl"
 #define INTRA_EDGE_FILTER_NEW_TOKEN "--enable-intra-edge-filter"
@@ -1616,13 +1607,13 @@ ConfigEntry config_entry[] = {
     {SINGLE_INPUT,
      KEYINT_TOKEN,
      "Intra period interval(frames) (-2: default intra period, -1: No intra update or [0 - "
-     "2^31-2]; [-2 - 255] if RateControlMode>=1)",
+     "2^31-2] for the number of frames between intra frames)",
      set_cfg_intra_period},
     { SINGLE_INPUT,
         LOOKAHEAD_NEW_TOKEN,
 #if FTR_LAD_INPUT
         "The lookahead is the total number of frames in future used by the encoder, including"
-        " frames to form a minigop, temporal filtering and rate control. [0 - 300]",
+        " frames to form a minigop, temporal filtering and rate control. [0 - 120]",
 #else
         "The lookahead option is currently disabled (forced to 0) until further work is done on "
         "rate control",
@@ -1632,7 +1623,7 @@ ConfigEntry config_entry[] = {
         LOOK_AHEAD_DIST_TOKEN,
 #if FTR_LAD_INPUT
         "The lookahead is the total number of frames in future used by the encoder, including"
-        " frames to form a minigop, temporal filtering and rate control. [0 - 300]",
+        " frames to form a minigop, temporal filtering and rate control. [0 - 120]",
 #else
         "The lookahead option is currently disabled (forced to 0) until further work is done on "
         "rate control",
