@@ -6701,6 +6701,10 @@ if (scs_ptr->max_input_luma_width > 16384) {
         return_error = EB_ErrorBadParameter;
     }
 #endif
+    if (config->use_qp_file > 1) {
+        SVT_LOG("Error instance %u : Invalid use_qp_file. use_qp_file must be [0 - 1]\n", channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
 
     if (config->stat_report > 1) {
         SVT_LOG("Error instance %u : Invalid StatReport. StatReport must be [0 - 1]\n", channel_number + 1);
