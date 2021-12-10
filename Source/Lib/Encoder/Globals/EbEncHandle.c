@@ -5580,7 +5580,7 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
      {
 #if OPT_COMBINE_TPL_FOR_LAD
         uint8_t tpl_lad_mg = 1; // Specify the number of mini-gops to be used as LAD. 0: 1 mini-gop, 1: 2 mini-gops and 3: 3 mini-gops
-#if TUNE_M8_M10_4K_SUPER && !TUNE_PRESETS_DECODER_TPL
+#if TUNE_M8_M10_4K_SUPER
 #if TUNE_M8_SLOWDOWN
 #if TUNE_IMPROVE_M11_M10
         if (scs_ptr->static_config.enc_mode <= ENC_M11)
@@ -5768,7 +5768,7 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
 #if FTR_SELECTIVE_MFMV
 #if TUNE_4K_M8_M11
 #if CLN_LIST0_ONLY_BASE_IFS_MFMV
-#if TUNE_IMPROVE_M11_M10 && !TUNE_PRESETS_DECODER_TPL
+#if TUNE_IMPROVE_M11_M10 && !TUNE_PRESETS_DECODER
             scs_ptr->mfmv_enabled = (uint8_t)(scs_ptr->static_config.enc_mode <= ENC_M11) ? 1 : 0;
 #else
             scs_ptr->mfmv_enabled = (uint8_t)(scs_ptr->static_config.enc_mode <= ENC_M10) ? 1 : 0;
