@@ -4213,6 +4213,16 @@ EbErrorType write_frame_header_av1(Bitstream *bitstream_ptr, SequenceControlSet 
             OutputBitstreamUnit *ec_output_bitstream_ptr =
                 (OutputBitstreamUnit *)pcs_ptr->entropy_coding_info[tile_idx]
                     ->entropy_coder_ptr->ec_output_bitstream_ptr;
+#if FIX_EC_OVERFLOW
+            assert(output_bitstream_ptr->buffer_av1 >= output_bitstream_ptr->buffer_begin_av1);
+            // Size of the buffer needed to store all data; if buffer is too small, increase buffer size
+            uint32_t data_size = (uint32_t)tile_size + curr_data_size + tile_size_bytes + 10 /*MAX length_field_size*/ +
+                                 (uint32_t)(output_bitstream_ptr->buffer_av1 - output_bitstream_ptr->buffer_begin_av1);
+            if (output_bitstream_ptr->size < data_size) {
+                svt_realloc_output_bitstream_unit(output_bitstream_ptr, data_size + 1); // plus one for good measure
+                data = output_bitstream_ptr->buffer_av1;
+            }
+#endif
             svt_memcpy(data + curr_data_size + tile_size_bytes,
                        ec_output_bitstream_ptr->buffer_begin_av1,
                        tile_size);

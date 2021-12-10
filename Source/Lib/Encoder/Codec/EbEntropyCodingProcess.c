@@ -195,16 +195,21 @@ static void reset_entropy_coding_picture(EntropyCodingContext *context_ptr,
             (OutputBitstreamUnit *)(pcs_ptr->entropy_coding_info[tile_idx]
                                         ->entropy_coder_ptr->ec_output_bitstream_ptr);
         //****************************************************************//
+#if !FIX_EC_OVERFLOW
         uint8_t *data = output_bitstream_ptr->buffer_av1;
+#endif
         pcs_ptr->entropy_coding_info[tile_idx]->entropy_coder_ptr->ec_writer.allow_update_cdf =
             !pcs_ptr->parent_pcs_ptr->large_scale_tile;
         pcs_ptr->entropy_coding_info[tile_idx]->entropy_coder_ptr->ec_writer.allow_update_cdf =
             pcs_ptr->entropy_coding_info[tile_idx]->entropy_coder_ptr->ec_writer.allow_update_cdf &&
             !frm_hdr->disable_cdf_update;
-
+#if FIX_EC_OVERFLOW
+        aom_start_encode(&pcs_ptr->entropy_coding_info[tile_idx]->entropy_coder_ptr->ec_writer,
+            output_bitstream_ptr);
+#else
         aom_start_encode(&pcs_ptr->entropy_coding_info[tile_idx]->entropy_coder_ptr->ec_writer,
                          data);
-
+#endif
         // ADD Reset here
         if (pcs_ptr->parent_pcs_ptr->frm_hdr.primary_ref_frame != PRIMARY_REF_NONE)
             svt_memcpy(

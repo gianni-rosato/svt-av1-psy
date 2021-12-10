@@ -229,13 +229,22 @@ OD_WARN_UNUSED_RESULT int32_t svt_od_ec_enc_tell(const OdEcEnc *enc) OD_ARG_NONN
 struct DaalaWriter {
     uint32_t pos;
     uint8_t *buffer;
+#if FIX_EC_OVERFLOW
+    uint32_t buffer_size;
+    OutputBitstreamUnit* buffer_parent; // save a pointer to the container holding the buffer, in case the buffer must be resized
+#endif
     OdEcEnc  ec;
     uint8_t  allow_update_cdf;
 };
 
 typedef struct DaalaWriter DaalaWriter;
 
+#if FIX_EC_OVERFLOW
+void svt_aom_daala_start_encode(DaalaWriter *br, OutputBitstreamUnit *source);
+EbErrorType svt_realloc_output_bitstream_unit(OutputBitstreamUnit *output_bitstream_ptr, uint32_t sz);
+#else
 void    svt_aom_daala_start_encode(DaalaWriter *w, uint8_t *buffer);
+#endif
 int32_t svt_aom_daala_stop_encode(DaalaWriter *w);
 
 static INLINE void aom_daala_write(DaalaWriter *w, int32_t bit, int32_t prob) {
@@ -258,11 +267,15 @@ static INLINE void daala_write_symbol(DaalaWriter *w, int32_t symb, const AomCdf
 /********************************************************************************************************************************/
 // bitwriter.h
 typedef struct DaalaWriter AomWriter;
-
+#if FIX_EC_OVERFLOW
+static INLINE void aom_start_encode(AomWriter *bc, OutputBitstreamUnit *buffer) {
+    svt_aom_daala_start_encode(bc, buffer);
+}
+#else
 static INLINE void aom_start_encode(AomWriter *bc, uint8_t *buffer) {
     svt_aom_daala_start_encode(bc, buffer);
 }
-
+#endif
 static INLINE int32_t aom_stop_encode(AomWriter *bc) { return svt_aom_daala_stop_encode(bc); }
 
 static INLINE void aom_write(AomWriter *br, int32_t bit, int32_t probability) {

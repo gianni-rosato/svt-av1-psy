@@ -61,18 +61,48 @@ EbErrorType output_bitstream_reset(OutputBitstreamUnit *bitstream_ptr) {
 /********************************************************************************************************************************/
 /********************************************************************************************************************************/
 // daalaboolwriter.c
+#if FIX_EC_OVERFLOW
+void svt_aom_daala_start_encode(DaalaWriter *br, OutputBitstreamUnit *source) {
+    br->buffer = source->buffer_av1;
+    br->buffer_size = source->size;
+    br->buffer_parent = source;
+    br->pos = 0;
+    svt_od_ec_enc_init(&br->ec, 62025);
+}
+
+/* Realloc when bitstream pointer size is not enough to write data of size sz */
+EbErrorType svt_realloc_output_bitstream_unit(OutputBitstreamUnit *output_bitstream_ptr, uint32_t sz) {
+    if (output_bitstream_ptr && sz > 0) {
+        // Must add offset to realloc'd buffer to save any previously written bits
+        uint64_t offset = output_bitstream_ptr->buffer_av1 - output_bitstream_ptr->buffer_begin_av1;
+        assert(output_bitstream_ptr->buffer_av1 >= output_bitstream_ptr->buffer_begin_av1);
+        output_bitstream_ptr->size = sz;
+        EB_REALLOC_ARRAY(output_bitstream_ptr->buffer_begin_av1, output_bitstream_ptr->size);
+        output_bitstream_ptr->buffer_av1 = output_bitstream_ptr->buffer_begin_av1 + offset;
+    }
+    return EB_ErrorNone;
+}
+#else
 void svt_aom_daala_start_encode(DaalaWriter *br, uint8_t *source) {
     br->buffer = source;
     br->pos    = 0;
     svt_od_ec_enc_init(&br->ec, 62025);
 }
-
+#endif
 int32_t svt_aom_daala_stop_encode(DaalaWriter *br) {
     int32_t  nb_bits;
     uint32_t daala_bytes = 0;
     uint8_t *daala_data;
     daala_data = svt_od_ec_enc_done(&br->ec, &daala_bytes);
     nb_bits    = svt_od_ec_enc_tell(&br->ec);
+#if FIX_EC_OVERFLOW
+    // If buffer is smaller than data, increase buffer size
+    if (br->buffer_size < daala_bytes) {
+        svt_realloc_output_bitstream_unit(br->buffer_parent, daala_bytes + 1); // plus one for good measure
+        br->buffer = br->buffer_parent->buffer_av1;
+        br->buffer_size = daala_bytes + 1;
+    }
+#endif
     if (svt_memcpy != NULL)
         svt_memcpy(br->buffer, daala_data, daala_bytes);
     else
