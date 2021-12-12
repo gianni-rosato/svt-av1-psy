@@ -6707,11 +6707,6 @@ if (scs_ptr->max_input_luma_width > 16384) {
         return_error = EB_ErrorBadParameter;
     }
 
-    if (config->screen_content_mode != 0) {
-        SVT_LOG("Error instance %u : non zero screen content mode is not supported in this version, setting --scm to 0\n", channel_number + 1);
-        config->screen_content_mode = 0;
-    }
-
     // IntraBC
     if (config->intrabc_mode > 3 || config->intrabc_mode < -1) {
         SVT_LOG( "Error instance %u: Invalid intraBC mode [0-3, -1 for default], your input: %i\n", channel_number + 1, config->intrabc_mode);
@@ -7212,7 +7207,7 @@ EbErrorType svt_svt_enc_init_parameter(
     config_ptr->unrestricted_motion_vector = EB_TRUE;
 
     config_ptr->high_dynamic_range_input = 0;
-    config_ptr->screen_content_mode = 0;
+    config_ptr->screen_content_mode = 2;
 
     config_ptr->intrabc_mode = DEFAULT;
 
