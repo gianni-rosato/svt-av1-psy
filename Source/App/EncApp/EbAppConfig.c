@@ -2464,6 +2464,15 @@ static EbErrorType verify_settings(EbConfig *config, uint32_t channel_number) {
         return EB_ErrorBadParameter;
     }
 #endif
+#if FIX_DISALLOW_SEG_TILES
+    if (config->config.enable_adaptive_quantization == 1 && (config->config.tile_columns > 0 || config->config.tile_rows > 0)) {
+        fprintf(
+            config->error_log_file,
+            "Error instance %u: Adaptive quantization using segmentation with tiles is not supported\n",
+            channel_number + 1);
+        return EB_ErrorBadParameter;
+    }
+#endif
     return return_error;
 }
 
