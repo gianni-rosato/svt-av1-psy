@@ -869,6 +869,10 @@ typedef struct PictureParentControlSet {
     uint16_t         pic_avg_variance;
     EbBool           scene_transition_flag[MAX_NUM_OF_REF_PIC_LIST];
     uint8_t          average_intensity[3];
+#if CLN_NON_MOVING_CNT
+    uint8_t  fade_out_from_black;
+    uint8_t  fade_in_to_black;
+#else
     // Non moving index array
     uint8_t *non_moving_index_array;
     int      kf_zeromotion_pct; // percent of zero motion blocks
@@ -878,6 +882,7 @@ typedef struct PictureParentControlSet {
     int16_t  non_moving_index_min_distance;
     int16_t  non_moving_index_max_distance;
     uint16_t qp_scaling_average_complexity;
+#endif
     // Histograms
     uint32_t ****picture_histogram;
     uint64_t     average_intensity_per_region[MAX_NUMBER_OF_REGIONS_IN_WIDTH]

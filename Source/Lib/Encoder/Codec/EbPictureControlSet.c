@@ -1788,9 +1788,10 @@ static void picture_parent_control_set_dctor(EbPtr ptr) {
     EB_FREE_ARRAY(obj->me_8x8_distortion);
 
     EB_FREE_ARRAY(obj->me_8x8_cost_variance);
-
+#if !CLN_NON_MOVING_CNT
     // Non moving index array
     EB_FREE_ARRAY(obj->non_moving_index_array);
+#endif
     // SB noise variance array
     EB_FREE_ARRAY(obj->sb_depth_mode_array);
 
@@ -2022,9 +2023,10 @@ EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr,
     EB_MALLOC_ARRAY(object_ptr->me_8x8_distortion, object_ptr->sb_total_count);
 
     EB_MALLOC_ARRAY(object_ptr->me_8x8_cost_variance, object_ptr->sb_total_count);
-
+#if !CLN_NON_MOVING_CNT
     // Non moving index array
     EB_MALLOC_ARRAY(object_ptr->non_moving_index_array, object_ptr->sb_total_count);
+#endif
     // SB noise variance array
     EB_CREATE_MUTEX(object_ptr->me_processed_sb_mutex);
     EB_MALLOC_ARRAY(object_ptr->sb_depth_mode_array, object_ptr->sb_total_count);

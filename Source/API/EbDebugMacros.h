@@ -872,6 +872,7 @@ NOTE : PART OF LIGHT_PD0_2  code was committed to svt-04-final-rebased under OPT
 #define FIX_INT_OVERLOW                       1 // Fix overloads on integers, potential compilers mismatches.
 #define FIX_USE_NOINIT_VALUES                 1 // Fix use no init values in AVX.
 #define CLN_PRED_STRUCT                      1 // Cleanup the PredictionStructure struct
+#define CLN_NON_MOVING_CNT                   1 // Remove pcs_ptr->non_moving_index_array and associated references
 
 #define FIX_LDB                               1 // Fix/Improve Low Delay B infrastructure
 #if FIX_LDB

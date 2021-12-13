@@ -93,7 +93,7 @@ EbErrorType source_based_operations_context_ctor(EbThreadContext *  thread_conte
         enc_handle_ptr->picture_demux_results_resource_ptr, index);
     return EB_ErrorNone;
 }
-
+#if !CLN_NON_MOVING_CNT
 /***************************************************
 * Derives BEA statistics and set activity flags
 ***************************************************/
@@ -135,7 +135,7 @@ void derive_picture_activity_statistics(PictureParentControlSet *pcs_ptr)
         ABS((int32_t)(pcs_ptr->non_moving_index_average) - (int32_t)non_moving_index_max));
     return;
 }
-
+#endif
 /*
      TPL dispenser context dctor
 */
@@ -4185,10 +4185,10 @@ void *source_based_operations_kernel(void *input_ptr) {
             }
         }
         /*********************************************Picture-based operations**********************************************************/
-
+#if !CLN_NON_MOVING_CNT
         // Activity statistics derivation
         derive_picture_activity_statistics(pcs_ptr);
-
+#endif
         sbo_send_picture_out(context_ptr, pcs_ptr, EB_FALSE);
 
         // Release the Input Results

@@ -1880,11 +1880,11 @@ void *motion_estimation_kernel(void *input_ptr) {
             svt_release_object(in_results_wrapper_ptr);
         }
         else {
-
+#if !CLN_NON_MOVING_CNT
             //For first pass compute_decimated_zz_sad() is skipped, and non_moving_index_array[] become uninitialized
             init_zz_cost_info((PictureParentControlSet *)
                                   pcs_ptr->previous_picture_control_set_wrapper_ptr->object_ptr);
-
+#endif
             // first pass start
             context_ptr->me_context_ptr->me_type = ME_FIRST_PASS;
             open_loop_first_pass(

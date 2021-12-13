@@ -93,7 +93,7 @@ EbErrorType initial_rate_control_context_ctor(EbThreadContext *  thread_context_
 
     return EB_ErrorNone;
 }
-
+#if !CLN_NON_MOVING_CNT
 /****************************************
 * Init ZZ Cost array to default values
 ** Used when no Lookahead is available
@@ -106,7 +106,7 @@ void init_zz_cost_info(PictureParentControlSet *pcs_ptr) {
         pcs_ptr->non_moving_index_array[sb_idx] = INVALID_ZZ_COST;
     return;
 }
-
+#endif
 
 void svt_av1_build_quantizer(AomBitDepth bit_depth, int32_t y_dc_delta_q, int32_t u_dc_delta_q,
                              int32_t u_ac_delta_q, int32_t v_dc_delta_q, int32_t v_ac_delta_q,
@@ -602,8 +602,9 @@ void *initial_rate_control_kernel(void *input_ptr) {
                       re-order queue. this will cause an artificial delay since pictures come in dec-order*/
                     pcs_ptr->frames_in_sw = 0;
                     pcs_ptr->end_of_sequence_region = EB_FALSE;
-
+#if !CLN_NON_MOVING_CNT
                     init_zz_cost_info(pcs_ptr);
+#endif
                 }
 
                 // post to downstream process
@@ -673,9 +674,9 @@ void *initial_rate_control_kernel(void *input_ptr) {
               re-order queue. this will cause an artificial delay since pictures come in dec-order*/
             pcs_ptr->frames_in_sw           = 0;
             pcs_ptr->end_of_sequence_region = EB_FALSE;
-
+#if !CLN_NON_MOVING_CNT
             init_zz_cost_info(pcs_ptr);
-
+#endif
 
             push_to_lad_queue(pcs_ptr, context_ptr);
 #if LAD_MG_PRINT
