@@ -2731,7 +2731,7 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncodePass pass[MAX_ENCODE
 #endif
     char     config_string[COMMAND_LINE_MAX_SIZE];
 #if FIX_2PASS_CRF
-    int32_t passes = -1; // Default mode is used
+    int32_t passes = 1; // Default mode is used
 #else
     uint32_t passes;
 #endif
