@@ -442,7 +442,11 @@ static EbBool scene_transition_detector(
     }
 
     context_ptr->reset_running_avg = is_abrupt_change_count >= region_count_threshold;
+#if CLN_NON_MOVING_CNT
+    return is_scene_change_count >= region_count_threshold;
+#else
     return is_scene_change_count >= region_count_threshold && !parent_pcs_window[1]->fade_in_to_black && !parent_pcs_window[1]->fade_out_from_black;
+#endif
 }
 
 /***************************************************************************************************
@@ -5744,8 +5748,10 @@ void perform_simple_picture_analysis_for_overlay(PictureParentControlSet     *pc
  * Initialize the overlay frame
 ***************************************************************************************************/
 void initialize_overlay_frame(PictureParentControlSet     *pcs_ptr) {
+#if !CLN_NON_MOVING_CNT
     pcs_ptr->fade_out_from_black = pcs_ptr->alt_ref_ppcs_ptr->fade_out_from_black;
     pcs_ptr->fade_in_to_black = pcs_ptr->alt_ref_ppcs_ptr->fade_in_to_black;
+#endif
     pcs_ptr->scene_change_flag = EB_FALSE;
     pcs_ptr->cra_flag = EB_FALSE;
     pcs_ptr->idr_flag = EB_FALSE;
@@ -7337,9 +7343,11 @@ void* picture_decision_kernel(void *input_ptr)
             }
 
             pcs_ptr = (PictureParentControlSet*)queue_entry_ptr->parent_pcs_wrapper_ptr->object_ptr;
+#if !CLN_NON_MOVING_CNT
             pcs_ptr->fade_out_from_black = 0;
 
             pcs_ptr->fade_in_to_black = 0;
+#endif
             if (pcs_ptr->idr_flag == EB_TRUE)
                 context_ptr->last_solid_color_frame_poc = 0xFFFFFFFF;
             if (window_avail == EB_TRUE && queue_entry_ptr->picture_number > 0) {
