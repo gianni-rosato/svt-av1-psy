@@ -109,11 +109,12 @@ typedef struct PredictionStructure {
     uint32_t leading_pic_index;
     uint32_t init_pic_index;
     uint32_t steady_state_index;
-
+#if !CLN_PRED_STRUCT
     //private use only
     int32_t * decode_order_table;
     uint32_t *display_order_table;
     EbBool *  timeline_map;
+#endif
 } PredictionStructure;
 
 /************************************************

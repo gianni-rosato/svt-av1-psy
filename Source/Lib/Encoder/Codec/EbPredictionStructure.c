@@ -657,9 +657,11 @@ static void prediction_structure_dctor(EbPtr p) {
         }
         EB_FREE_2D(obj->pred_struct_entry_ptr_array);
     }
+#if !CLN_PRED_STRUCT
     EB_FREE_ARRAY(obj->decode_order_table);
     EB_FREE_ARRAY(obj->display_order_table);
     EB_FREE_ARRAY(obj->timeline_map);
+#endif
 }
 
 /********************************************************************************************
@@ -1686,6 +1688,7 @@ static EbErrorType prediction_structure_ctor(
             : EB_FALSE;
     }
 
+#if !CLN_PRED_STRUCT
     //----------------------------------------
     // CONSTRUCT THE RPSes
     //----------------------------------------
@@ -1743,7 +1746,7 @@ static EbErrorType prediction_structure_ctor(
                     predictionStructurePtr->pred_struct_period
                 : entry_index + 1;
         }
-
+//#if !CLN_PRED_STRUCT
         // Construct the timeline map from the dependency lists
         for (ref_poc_index = 0, entry_index = 0; ref_poc_index < timeline_size; ++ref_poc_index) {
             // Initialize Max to most negative signed value and Min to most positive signed value
@@ -1823,7 +1826,7 @@ static EbErrorType prediction_structure_ctor(
                 : entry_index + 1;
         }
     }
-
+#endif
     return EB_ErrorNone;
 }
 
