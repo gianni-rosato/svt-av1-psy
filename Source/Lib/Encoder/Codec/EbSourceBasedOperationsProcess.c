@@ -1537,12 +1537,19 @@ void tpl_mc_flow_dispenser_sb_generic(
     TplStats             tpl_stats;
 
     DECLARE_ALIGNED(16, uint8_t, predictor8[(const uint32_t)MAX_TPL_SAMPLES_PER_BLOCK * 2]);
+    memset(predictor8, 0, sizeof(predictor8));
     DECLARE_ALIGNED(16, int16_t, src_diff[MAX_TPL_SAMPLES_PER_BLOCK]);
+#if FIX_AVX_BIT_ALIGNMENT
+    DECLARE_ALIGNED(32, TranLow, coeff[MAX_TPL_SAMPLES_PER_BLOCK]);
+    DECLARE_ALIGNED(32, TranLow, qcoeff[MAX_TPL_SAMPLES_PER_BLOCK]);
+    DECLARE_ALIGNED(32, TranLow, dqcoeff[MAX_TPL_SAMPLES_PER_BLOCK]);
+    DECLARE_ALIGNED(32, TranLow, best_coeff[MAX_TPL_SAMPLES_PER_BLOCK]);
+#else
     DECLARE_ALIGNED(16, TranLow, coeff[MAX_TPL_SAMPLES_PER_BLOCK]);
     DECLARE_ALIGNED(16, TranLow, qcoeff[MAX_TPL_SAMPLES_PER_BLOCK]);
     DECLARE_ALIGNED(16, TranLow, dqcoeff[MAX_TPL_SAMPLES_PER_BLOCK]);
     DECLARE_ALIGNED(16, TranLow, best_coeff[MAX_TPL_SAMPLES_PER_BLOCK]);
-    memset(predictor8, 0, sizeof(predictor8));
+#endif
     uint8_t *predictor = predictor8;
 
     MacroblockPlane mb_plane;

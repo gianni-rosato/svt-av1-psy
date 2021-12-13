@@ -882,7 +882,7 @@ NOTE : PART OF LIGHT_PD0_2  code was committed to svt-04-final-rebased under OPT
 #define FTR_LDB_TF                            1 //Add support of TF in Low delay application
 #define FTR_LDB_QPS                           1 // Improved qps for LD
 #endif
-
+#define FIX_AVX_BIT_ALIGNMENT                 1 // Fix seg fault in Sanitizer thread in TPL transform
 #endif //----------------------------------- all svt-05 features should be place are above this line -------------------------
 
 
