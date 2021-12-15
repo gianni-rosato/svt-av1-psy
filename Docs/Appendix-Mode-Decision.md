@@ -32,7 +32,7 @@ The mode decision takes place in each of the PD Stages 0 to n (where n=1 in the 
 
 The input candidates to the MD stages are grouped according to classes. In the current implementation, there are four classes corresponding to Intra, Inter (NEWMV and NEW_NEWMV), MV Pred (Nearest, Near…) and Palette prediction candidates.  Once the input candidates to a given MD stage are processed, only the best among the processed candidates are passed on to the next MD stage, hence reducing the number of candidates to be processed in the subsequent stage. In the process, some classes might be retired (not considered in subsequent MD stages) if the performance of their corresponding candidates is not satisfactory. The main idea behind introducing candidate classes is to ensure that important types of candidates are given a chance to be present in the final MD stage and to compete at that stage against the best from other candidate classes.
 
-It should be noted that the prediction tools considered in MD are not necessarily conformant tools, as the objective of MD is to produce partitioning and mode decisions, and not necessarily residuals to be coded and transmitted in the bitstream, which is the task performed by the Encode Pass discussed next.  The exception is that final MD stage must be conformant when the Encode Pass is bypassed (controlled using the ```bypass_encdec signal```).
+It should be noted that the prediction tools considered in MD are not necessarily conformant tools, as the objective of MD is to produce partitioning and mode decisions, and not necessarily residuals to be coded and transmitted in the bitstream, which is the task performed by the Encode Pass discussed next.  The exception is that final MD stage must be conformant when the Encode Pass is bypassed (controlled using the ```bypass_encdec``` signal).
 
 ![md_figure4](./img/md_figure4.png)
 
@@ -105,15 +105,15 @@ The Neighbor Array design hinges on how its memory locations are accessed and up
 
 The basic processing flow is that at the beginning of a picture, each of the Neighbor Arrays is reset. As each block is completed, its mode information or reference information is written to each of the Neighbor Arrays using the appropriate index. The Neighbor Array update and access flow can be described as follows:
 
-1.	Construct neighbor information using the Neighbor Arrays
+1.  Construct neighbor information using the Neighbor Arrays
 
-2.	Block Mode Decision
+2.  Block Mode Decision
 
-3.	Update each of the Neighbor Arrays using the current block location
+3.  Update each of the Neighbor Arrays using the current block location
 
-4.	If at a partitioning (Quadtree or otherwise) mode decision point, update the neighbor array
+4.  If at a partitioning (Quadtree or otherwise) mode decision point, update the neighbor array
 
-5.	Proceed to the next block
+5.  Proceed to the next block
 
 This process is illustrated in Figure 6. The arrows represent the block z-scan coding order and the colors represent each block’s mode information. The three neighbor arrays contain a snapshot of the mode information currently stored in each block position at the time that the block labeled “Current Block” is being processed.
 
