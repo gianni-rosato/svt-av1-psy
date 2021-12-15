@@ -3069,6 +3069,11 @@ EbErrorType signal_derivation_multi_processes_oq(
     else
         pcs_ptr->cqp_qps_model = 0;
 #endif
+#if FIX_1PASS_VBR_UNDERSHOOT
+    pcs_ptr->adjust_under_shoot_gf = 0;
+    if(scs_ptr->static_config.passes == 1 && scs_ptr->static_config.rate_control_mode == 1)
+        pcs_ptr->adjust_under_shoot_gf = pcs_ptr->enc_mode <= ENC_M11 ? 1 : 2;
+#endif
     return return_error;
 }
 

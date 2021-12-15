@@ -1287,6 +1287,9 @@ typedef struct PictureParentControlSet {
 #if FTR_NEW_QPS
     uint8_t cqp_qps_model; // 0: use fixed QP-Offsets, 1: QP-Offsets are funtion of the base_qp
 #endif
+#if FIX_1PASS_VBR_UNDERSHOOT
+    uint8_t adjust_under_shoot_gf;
+#endif
 } PictureParentControlSet;
 
 

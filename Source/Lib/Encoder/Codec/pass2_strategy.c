@@ -1683,7 +1683,22 @@ static void define_gf_group(PictureParentControlSet *pcs_ptr, FIRSTPASS_STATS *t
       rate_error = (int)((rc->vbr_bits_off_target * 100) / bits);
       rate_error = clamp(rate_error, -100, 100);
       if (rate_error > 0) {
+#if FIX_1PASS_VBR_UNDERSHOOT
+          double rc_min_factor = RC_FACTOR_MIN;
+          if (pcs_ptr->adjust_under_shoot_gf) {
+              double inactive_zone = group_av_skip_pct + group_av_inactive_zone;
+                  double gwf_div = inactive_zone > 0.8 ? 4 :
+                  inactive_zone > 0.3 ? 3 :
+                  inactive_zone > 0.01 ? 2 :
+                  1;
+              gwf_div += (double)pcs_ptr->adjust_under_shoot_gf - 1;
+              rc_min_factor = rc_min_factor / gwf_div;
+          }
+          rc_factor = AOMMAX(rc_min_factor, (double)(100 - rate_error) / 100.0);
+#else
         rc_factor = AOMMAX(RC_FACTOR_MIN, (double)(100 - rate_error) / 100.0);
+#endif
+
       } else {
         rc_factor = AOMMIN(RC_FACTOR_MAX, (double)(100 - rate_error) / 100.0);
       }
