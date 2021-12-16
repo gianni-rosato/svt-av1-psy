@@ -68,7 +68,11 @@ static INLINE void setup_pred_plane(struct Buf2D *dst, BlockSize bsize, uint8_t 
     dst->height     = height;
     dst->stride     = stride;
 }
+#if FIX_DLF_IN_PADDED_AREA
+void svt_av1_setup_dst_planes(PictureControlSet *pcs_ptr, struct MacroblockdPlane *planes, BlockSize bsize,
+#else
 void svt_av1_setup_dst_planes(struct MacroblockdPlane *planes, BlockSize bsize,
+#endif
                               //const Yv12BufferConfig *src,
                               const EbPictureBufferDesc *src, int32_t mi_row, int32_t mi_col,
                               const int32_t plane_start, const int32_t plane_end) {
@@ -81,6 +85,9 @@ void svt_av1_setup_dst_planes(struct MacroblockdPlane *planes, BlockSize bsize,
     //        src->crop_heights[is_uv], src->strides[is_uv], mi_row,
     //        mi_col, NULL, pd->subsampling_x, pd->subsampling_y);
     //}
+#if FIX_DLF_IN_PADDED_AREA
+    SequenceControlSet *scs_ptr = (SequenceControlSet*)pcs_ptr->parent_pcs_ptr->scs_wrapper_ptr->object_ptr;
+#endif
     for (int32_t i = plane_start; i < AOMMIN(plane_end, 3); ++i) {
         if (i == 0) {
             struct MacroblockdPlane *const pd = &planes[0];
@@ -88,8 +95,13 @@ void svt_av1_setup_dst_planes(struct MacroblockdPlane *planes, BlockSize bsize,
                 &pd->dst,
                 bsize,
                 &src->buffer_y[(src->origin_x + src->origin_y * src->stride_y) << pd->is_16bit],
+#if FIX_DLF_IN_PADDED_AREA
+                (scs_ptr->max_input_luma_width - scs_ptr->max_input_pad_right), // The width/height should be the unpadded width/height (see AV1 spec 7.14.2 Edge Loop Filter Process)
+                (scs_ptr->max_input_luma_height - scs_ptr->max_input_pad_bottom),
+#else
                 src->width,
                 src->height,
+#endif
                 src->stride_y,
                 mi_row,
                 mi_col,
@@ -101,10 +113,14 @@ void svt_av1_setup_dst_planes(struct MacroblockdPlane *planes, BlockSize bsize,
             setup_pred_plane(
                 &pd->dst,
                 bsize,
-                &src->buffer_cb[((src->origin_x + src->origin_y * src->stride_cb) << pd->is_16bit) /
-                                2],
+                &src->buffer_cb[((src->origin_x + src->origin_y * src->stride_cb) << pd->is_16bit) / 2],
+#if FIX_DLF_IN_PADDED_AREA
+                (scs_ptr->max_input_luma_width - scs_ptr->max_input_pad_right) >> 1, // The width/height should be the unpadded width/height (see AV1 spec 7.14.2 Edge Loop Filter Process)
+                (scs_ptr->max_input_luma_height - scs_ptr->max_input_pad_bottom) >> 1,
+#else
                 src->width / 2,
                 src->height / 2,
+#endif
                 src->stride_cb,
                 mi_row,
                 mi_col,
@@ -116,10 +132,14 @@ void svt_av1_setup_dst_planes(struct MacroblockdPlane *planes, BlockSize bsize,
             setup_pred_plane(
                 &pd->dst,
                 bsize,
-                &src->buffer_cr[((src->origin_x + src->origin_y * src->stride_cr) << pd->is_16bit) /
-                                2],
+                &src->buffer_cr[((src->origin_x + src->origin_y * src->stride_cr) << pd->is_16bit) / 2],
+#if FIX_DLF_IN_PADDED_AREA
+                (scs_ptr->max_input_luma_width - scs_ptr->max_input_pad_right) >> 1, // The width/height should be the unpadded width/height (see AV1 spec 7.14.2 Edge Loop Filter Process)
+                (scs_ptr->max_input_luma_height - scs_ptr->max_input_pad_bottom) >> 1,
+#else
                 src->width / 2,
                 src->height / 2,
+#endif
                 src->stride_cr,
                 mi_row,
                 mi_col,
@@ -308,6 +328,7 @@ void svt_av1_filter_block_plane_vert(const PictureControlSet *const pcs_ptr,
                                                                    : (SB64_MIB_SIZE >> scale_vert);
     int32_t x_range = scs_ptr->seq_header.sb_size == BLOCK_128X128 ? (MAX_MIB_SIZE >> scale_horz)
                                                                    : (SB64_MIB_SIZE >> scale_horz);
+#if !FIX_DLF_IN_PADDED_AREA
     const uint32_t sb_size = (scs_ptr->seq_header.sb_size == BLOCK_128X128) ? 128 : 64;
     if (mi_row == (scs_ptr->max_input_luma_height / sb_size * sb_size) >> MI_SIZE_LOG2) {
         y_range = (((scs_ptr->max_input_luma_height - scs_ptr->max_input_pad_bottom) % sb_size) +
@@ -336,7 +357,7 @@ void svt_av1_filter_block_plane_vert(const PictureControlSet *const pcs_ptr,
                 MI_SIZE_LOG2;
         }
     }
-
+#endif
     for (int32_t y = 0; y < y_range; y += row_step) {
         uint8_t *p = dst_ptr + ((y * MI_SIZE * dst_stride) << plane_ptr->is_16bit);
         for (int32_t x = 0; x < x_range;) {
@@ -449,7 +470,7 @@ void svt_av1_filter_block_plane_horz(const PictureControlSet *const pcs_ptr,
     int32_t  x_range   = scs_ptr->seq_header.sb_size == BLOCK_128X128 ? (MAX_MIB_SIZE >> scale_horz)
                                                                       : (SB64_MIB_SIZE >> scale_horz);
     uint32_t mi_stride = pcs_ptr->mi_stride;
-
+#if !FIX_DLF_IN_PADDED_AREA
     const uint32_t sb_size = (scs_ptr->seq_header.sb_size == BLOCK_128X128) ? 128 : 64;
     if (mi_row == (scs_ptr->max_input_luma_height / sb_size * sb_size) >> MI_SIZE_LOG2) {
         y_range = (((scs_ptr->max_input_luma_height - scs_ptr->max_input_pad_bottom) % sb_size) +
@@ -478,7 +499,7 @@ void svt_av1_filter_block_plane_horz(const PictureControlSet *const pcs_ptr,
                 MI_SIZE_LOG2;
         }
     }
-
+#endif
     for (int32_t x = 0; x < x_range; x += col_step) {
         uint8_t *p = dst_ptr + ((x * MI_SIZE) << plane_ptr->is_16bit);
         for (int32_t y = 0; y < y_range;) {
@@ -617,7 +638,12 @@ void loop_filter_sb(EbPictureBufferDesc *frame_buffer, //reconpicture,
         if (frm_hdr->loop_filter_params.combine_vert_horz_lf) {
             // filter all vertical and horizontal edges in every 64x64 super block
             // filter vertical edges
+#if FIX_DLF_IN_PADDED_AREA
+            svt_av1_setup_dst_planes(pcs_ptr,
+                                     pd,
+#else
             svt_av1_setup_dst_planes(pd,
+#endif
                                      pcs_ptr->parent_pcs_ptr->scs_ptr->seq_header.sb_size,
                                      frame_buffer,
                                      mi_row,
@@ -632,7 +658,12 @@ void loop_filter_sb(EbPictureBufferDesc *frame_buffer, //reconpicture,
                 : SB64_MIB_SIZE;
 
             if (mi_col - max_mib_size >= 0) {
+#if FIX_DLF_IN_PADDED_AREA
+                svt_av1_setup_dst_planes(pcs_ptr,
+                                         pd,
+#else
                 svt_av1_setup_dst_planes(pd,
+#endif
                                          pcs_ptr->parent_pcs_ptr->scs_ptr->seq_header.sb_size,
                                          frame_buffer,
                                          mi_row,
@@ -644,7 +675,12 @@ void loop_filter_sb(EbPictureBufferDesc *frame_buffer, //reconpicture,
             }
             // Filter the horizontal edges of the last sb in each row
             if (last_col) {
+#if FIX_DLF_IN_PADDED_AREA
+                svt_av1_setup_dst_planes(pcs_ptr,
+                                         pd,
+#else
                 svt_av1_setup_dst_planes(pd,
+#endif
                                          pcs_ptr->parent_pcs_ptr->scs_ptr->seq_header.sb_size,
                                          frame_buffer,
                                          mi_row,
@@ -655,7 +691,12 @@ void loop_filter_sb(EbPictureBufferDesc *frame_buffer, //reconpicture,
             }
         } else {
             // filter all vertical edges in every 64x64 super block
+#if FIX_DLF_IN_PADDED_AREA
+            svt_av1_setup_dst_planes(pcs_ptr,
+                                     pd,
+#else
             svt_av1_setup_dst_planes(pd,
+#endif
                                      pcs_ptr->parent_pcs_ptr->scs_ptr->seq_header.sb_size,
                                      frame_buffer,
                                      mi_row,
@@ -666,7 +707,12 @@ void loop_filter_sb(EbPictureBufferDesc *frame_buffer, //reconpicture,
             svt_av1_filter_block_plane_vert(pcs_ptr, plane, &pd[plane], mi_row, mi_col);
 
             // filter all horizontal edges in every 64x64 super block
+#if FIX_DLF_IN_PADDED_AREA
+            svt_av1_setup_dst_planes(pcs_ptr,
+                                     pd,
+#else
             svt_av1_setup_dst_planes(pd,
+#endif
                                      pcs_ptr->parent_pcs_ptr->scs_ptr->seq_header.sb_size,
                                      frame_buffer,
                                      mi_row,

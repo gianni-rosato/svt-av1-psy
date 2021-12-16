@@ -886,6 +886,7 @@ NOTE : PART OF LIGHT_PD0_2  code was committed to svt-04-final-rebased under OPT
 #define FIX_AVX_BIT_ALIGNMENT                 1 // Fix seg fault in Sanitizer thread in TPL transform
 #define FIX_1PASS_VBR_UNDERSHOOT              1 // Adjust group_weight_factor based on the inactive area
 #define TUNE_PRESETS_LDB                      1 // Tune presets for Low Delay B structure
+#define FIX_DLF_IN_PADDED_AREA                1 // Do not perform DLF in padded areas outside the area of the input video (fixes recon-decode mistmatch)
 
 #endif //----------------------------------- all svt-05 features should be place are above this line -------------------------
 
