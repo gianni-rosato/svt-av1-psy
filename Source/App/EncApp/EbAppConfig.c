@@ -2744,6 +2744,33 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncodePass pass[MAX_ENCODE
 #else
     uint32_t passes;
 #endif
+#if FIX_MULTIPASS_WITH_FIFO
+    int using_fifo = 0;
+
+    if (find_token(argc, argv, INPUT_FILE_LONG_TOKEN, config_string) == 0 ||
+        find_token(argc, argv, INPUT_FILE_TOKEN, config_string) == 0) {
+        if (!strcmp(config_string, "stdin")) {
+            using_fifo = 1;
+        } else {
+#ifdef _WIN32
+            HANDLE in_file = CreateFile(
+                config_string, 0, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
+            if (in_file != INVALID_HANDLE_VALUE) {
+                using_fifo = GetFileType(in_file) == FILE_TYPE_PIPE;
+                CloseHandle(in_file);
+            }
+#else
+            struct stat st;
+            if (!stat(config_string, &st)) {
+                if (S_ISFIFO(st.st_mode)) {
+                    using_fifo = 1;
+                }
+            }
+#endif
+        }
+    }
+#endif
+
 #if FTR_MULTI_PASS_API
 #if FIX_2PASS_CRF
     int rc_mode = 0;
@@ -2780,6 +2807,14 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncodePass pass[MAX_ENCODE
             return 0;
         }
     }
+#if FIX_MULTIPASS_WITH_FIFO
+    if (using_fifo && passes > 1) {
+        fprintf(stderr,
+                "Warning: The number of passes has to be 1 when using a fifo, using 1-pass\n");
+        *multi_pass_mode = SINGLE_PASS;
+        passes           = 1;
+    }
+#endif
 #else
     if (find_token(argc, argv, PASSES_TOKEN, config_string) != 0) {
     }

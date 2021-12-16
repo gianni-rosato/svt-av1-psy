@@ -888,6 +888,7 @@ NOTE : PART OF LIGHT_PD0_2  code was committed to svt-04-final-rebased under OPT
 #define TUNE_PRESETS_LDB                      1 // Tune presets for Low Delay B structure
 #define FIX_DLF_IN_PADDED_AREA                1 // Do not perform DLF in padded areas outside the area of the input video (fixes recon-decode mistmatch)
 
+#define FIX_MULTIPASS_WITH_FIFO               1 // Fix multipass with stdin
 #endif //----------------------------------- all svt-05 features should be place are above this line -------------------------
 
 
