@@ -205,7 +205,7 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
         }
 #endif
     }
-#if TUNE_M10_M0
+#if TUNE_M10_M0 && !TUNE_PRESETS_LDB
     else if (pcs_ptr->enc_mode <= ENC_M5) {
 #else
     else if (pcs_ptr->enc_mode <= ENC_M6) {
@@ -224,15 +224,11 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
         }
 #endif
     }
-//#if TUNE_M8_M9_FEB24
-#if TUNE_M7_M8_3
+#if TUNE_M7_M8_3 && !TUNE_PRESETS_LDB
     else if (pcs_ptr->enc_mode <= ENC_M6) {
 #else
     else if (pcs_ptr->enc_mode <= ENC_M7) {
 #endif
-//#else
-//    else if (pcs_ptr->enc_mode <= ENC_M8) {
-//#endif
 #if !FTR_2PASS_1PASS_UNIFICATION
         if (use_output_stat(scs_ptr)) {
             me_context_ptr->search_area_width = me_context_ptr->search_area_height = 8;
@@ -257,7 +253,11 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
     }
 #if TUNE_M7_M8_3
 #if TUNE_M1_M8
+#if TUNE_PRESETS_LDB
+    else if (pcs_ptr->enc_mode <= ENC_M9) {
+#else
     else if (pcs_ptr->enc_mode <= ENC_M8) {
+#endif
 #else
     else if (pcs_ptr->enc_mode <= ENC_M7) {
 #endif
@@ -274,6 +274,7 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
         }
     }
 #endif
+#if !TUNE_PRESETS_LDB
 #if TUNE_M8_M9_FEB24
 #if TUNE_M9_SLOW
 #if TUNE_M10_M0 && !TUNE_M9_M10 || TUNE_M8_M11_MT
@@ -332,6 +333,7 @@ void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *p
         }
 #endif
     }
+#endif
 #endif
 #if CLN_RES_ME_BIS
     else if (pcs_ptr->enc_mode <= ENC_M11) {
@@ -1224,7 +1226,11 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
 #if TUNE_IMPROVE_M11_M10 && !TUNE_M10_M12_ULTRA
         if (enc_mode <= ENC_M10)
 #else
+#if TUNE_PRESETS_LDB
+        if (enc_mode <= ENC_M12)
+#else
         if (enc_mode <= ENC_M11)
+#endif
 #endif
             prehme_level = 1;
 #else

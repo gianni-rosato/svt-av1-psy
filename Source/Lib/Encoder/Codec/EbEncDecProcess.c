@@ -5943,8 +5943,10 @@ uint8_t get_nic_level(PdPass pd_pass, EbEncMode enc_mode, uint8_t temporal_layer
         nic_level = 11;
     else if (enc_mode <= ENC_M5)
         nic_level = 12;
+#if !TUNE_PRESETS_LDB
     else if (enc_mode <= ENC_M6)
         nic_level = (temporal_layer_index == 0) ? 12 : 14;
+#endif
     else if (enc_mode <= ENC_M7)
         nic_level = 14;
     else if (enc_mode <= ENC_M11)
@@ -7240,10 +7242,18 @@ uint8_t get_disallow_below_16x16_picture_level(EbEncMode enc_mode, EbInputResolu
 
     if (sc_class1)
         disallow_below_16x16 = 0;
+#if TUNE_PRESETS_LDB
+    else if (enc_mode <= ENC_M8)
+#else
     else if (enc_mode <= ENC_M7)
+#endif
         disallow_below_16x16 = 0;
 #if CLN_RES_DISALLOW_B16
+#if TUNE_PRESETS_LDB
+    else if (enc_mode <= ENC_M9)
+#else
     else if (enc_mode <= ENC_M8)
+#endif
         disallow_below_16x16 = is_used_as_reference_flag ? 0 : 1;
 #endif
     else if (enc_mode <= ENC_M11)
@@ -7314,7 +7324,7 @@ EbErrorType signal_derivation_enc_dec_kernel_common(
     else if(enc_mode <= ENC_M2)
         depth_level = pcs_ptr->slice_type == I_SLICE ? 1 : 2;
 #if FTR_BYPASS_ENCDEC
-#if TUNE_M9_SLOW
+#if TUNE_M9_SLOW && !TUNE_PRESETS_LDB
 #if TUNE_M8_M10 && !TUNE_M9_SLOWDOWN
     else if (enc_mode <= ENC_M8)
 #else
@@ -13393,7 +13403,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #if CLN_SUBPEL_LVL
     else if (enc_mode <= ENC_M0)
         context_ptr->md_subpel_me_level = 1;
-#if TUNE_M1_M8
+#if TUNE_M1_M8 && !TUNE_PRESETS_LDB
     else if (enc_mode <= ENC_M7)
 #else
     else if (enc_mode <= ENC_M6)
@@ -13420,7 +13430,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
 #endif
 #if TUNE_M7_M8_3
 #if TUNE_M8_SLOWDOWN
+#if TUNE_PRESETS_LDB
+        else if (enc_mode <= ENC_M9)
+#else
         else if (enc_mode <= ENC_M8)
+#endif
 #else
         else if (enc_mode <= ENC_M7)
 #endif
@@ -13880,7 +13894,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(
     else if (enc_mode <= ENC_M5)
         intra_level = (pcs_ptr->temporal_layer_index == 0) ? 1 : 4;
 #if TUNE_LIVE_PRESETS
+#if TUNE_PRESETS_LDB
+    else if (enc_mode <= ENC_M6)
+#else
     else if (enc_mode <= ENC_M7)
+#endif
 #else
     else if (enc_mode <= ENC_M9)
 #endif

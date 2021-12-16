@@ -5864,7 +5864,11 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
 
         mrp_level = 4;
     }
+#if TUNE_PRESETS_LDB
+    else if (scs_ptr->static_config.enc_mode <= ENC_M11) {
+#else
     else if (scs_ptr->static_config.enc_mode <= ENC_M12) {
+#endif
 
         mrp_level = 5;
     }

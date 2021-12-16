@@ -522,7 +522,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         ? 1
         : 3;
 #if CLN_UPDATE_CDF
+#if TUNE_PRESETS_LDB
+    else if (pcs_ptr->enc_mode <= ENC_M10)
+#else
     else if (pcs_ptr->enc_mode <= ENC_M11)
+#endif
         update_cdf_level = pcs_ptr->slice_type == I_SLICE ? 1 : 0;
 #else
 #if TUNE_M9_11_3
@@ -627,14 +631,22 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
                 pcs_ptr->wm_level = enable_wm;
             }
 #if TUNE_M1_M8
+#if TUNE_PRESETS_LDB
+            else if (enc_mode <= ENC_M7) {
+#else
             else if (enc_mode <= ENC_M8) {
+#endif
 #else
             else if (enc_mode <= ENC_M9) {
 #endif
                 enable_wm = is_base ? EB_TRUE : EB_FALSE;
                 pcs_ptr->wm_level = enable_wm;
             }
+#if TUNE_PRESETS_LDB
+            else if (enc_mode <= ENC_M10) {
+#else
             else if (enc_mode <= ENC_M11) {
+#endif
 
                 enable_wm = is_base ? EB_TRUE : EB_FALSE;
 
@@ -769,7 +781,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M3)
             pcs_ptr->parent_pcs_ptr->pic_obmc_level = 1;
 #if TUNE_M5_M6
-#if TUNE_M7_SLOWDOWN && !TUNE_M1_M8
+#if TUNE_M7_SLOWDOWN && !TUNE_M1_M8 || TUNE_PRESETS_LDB
         else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M7)
 #else
         else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M6)
@@ -940,10 +952,18 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
 #if SS_FIX_MOVE_SKIP_INTRA_PIC
     if (pcs_ptr->slice_type == I_SLICE)
         pcs_ptr->skip_intra = 0;
+#if TUNE_PRESETS_LDB
+    else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M9)
+#else
     else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M8)
+#endif
         pcs_ptr->skip_intra = 0;
 #if CLN_M10_M12_DIFFS
+#if TUNE_PRESETS_LDB
+    else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M12)
+#else
     else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M11)
+#endif
 #else
     else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M10)
 #endif
@@ -986,7 +1006,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     else if (enc_mode <= ENC_M8)
         pcs_ptr->txt_level = 5;
 #if TUNE_M10_M12_ULTRA
+#if TUNE_PRESETS_LDB
+    else if (enc_mode <= ENC_M12) {
+#else
     else if (enc_mode <= ENC_M11) {
+#endif
 #else
     else if (enc_mode <= ENC_M10) {
 #endif
@@ -1022,7 +1046,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     pcs_ptr->tx_shortcut_level = 0;
     if (enc_mode <= ENC_M5)
         pcs_ptr->tx_shortcut_level = 0;
+#if TUNE_PRESETS_LDB
+    else if (enc_mode <= ENC_M10)
+#else
     else if (enc_mode <= ENC_M11)
+#endif
         pcs_ptr->tx_shortcut_level = pcs_ptr->slice_type == I_SLICE ? 0 : 1;
     else if (enc_mode <= ENC_M12)
         pcs_ptr->tx_shortcut_level = pcs_ptr->slice_type == I_SLICE ? 0 : 4;
@@ -1275,8 +1303,10 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
          pcs_ptr->md_pme_level = (pcs_ptr->parent_pcs_ptr->input_resolution <= INPUT_SIZE_1080p_RANGE) ? 2 : 1;
      else if (enc_mode <= ENC_M5)
          pcs_ptr->md_pme_level = 3;
+#if !TUNE_PRESETS_LDB
      else if (enc_mode <= ENC_M6)
          pcs_ptr->md_pme_level = 4;
+#endif
 #if TUNE_M10_M12_ULTRA
      else if (enc_mode <= ENC_M12)
 #else
@@ -1427,7 +1457,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
                     pcs_ptr->pic_depth_removal_level = 2;
             }
 #if TUNE_M7_M9_ULTRA
+#if TUNE_PRESETS_LDB
+            else if (enc_mode <= ENC_M8) {
+#else
             else if (enc_mode <= ENC_M7) {
+#endif
 #else
             else if (enc_mode <= ENC_M6) {
 #endif

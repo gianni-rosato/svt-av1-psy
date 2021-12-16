@@ -1812,7 +1812,11 @@ uint8_t get_dlf_level(EbEncMode enc_mode, uint8_t is_used_as_reference_flag) {
     else if (enc_mode <= ENC_M6)
 #else
 #if TUNE_M7_M8
+#if TUNE_PRESETS_LDB
+    else if (enc_mode <= ENC_M9)
+#else
     else if (enc_mode <= ENC_M8)
+#endif
 #else
     else if (enc_mode <= ENC_M7)
 #endif
@@ -2812,7 +2816,7 @@ EbErrorType signal_derivation_multi_processes_oq(
 #if OPT_TXS_SEARCH
 #if TUNE_M7_M10_PRESETS
 #if TUNE_NEW_M10_M11
-#if TUNE_NEW_M12
+#if TUNE_NEW_M12 && !TUNE_PRESETS_LDB
     else if (pcs_ptr->enc_mode <= ENC_M12)
 #else
     else if (pcs_ptr->enc_mode <= ENC_M11)
@@ -2868,8 +2872,10 @@ EbErrorType signal_derivation_multi_processes_oq(
                 gm_level = pcs_ptr->is_used_as_reference_flag ? 4 : 0;
             else if (pcs_ptr->enc_mode <= ENC_M6)
                 gm_level = pcs_ptr->is_used_as_reference_flag ? 5 : 0;
+#if !TUNE_PRESETS_LDB
             else if (pcs_ptr->enc_mode <= ENC_M7)
                 gm_level = pcs_ptr->is_used_as_reference_flag ? 6 : 0;
+#endif
             else
                 gm_level = 0;
         }
@@ -2917,7 +2923,11 @@ EbErrorType signal_derivation_multi_processes_oq(
     uint8_t list0_only_base = 0;
 #if CLN_LIST0_ONLY_BASE_IFS_MFMV
 #if TUNE_M1_M8
+#if TUNE_PRESETS_LDB
+    if (pcs_ptr->enc_mode <= ENC_M6)
+#else
     if (pcs_ptr->enc_mode <= ENC_M9)
+#endif
 #else
     if (pcs_ptr->enc_mode <= ENC_M8)
 #endif
