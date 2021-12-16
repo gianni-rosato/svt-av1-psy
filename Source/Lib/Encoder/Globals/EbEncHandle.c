@@ -646,10 +646,10 @@ EbErrorType load_default_buffer_configuration_settings(
     // bistream buffer will be allocated at run time. app will free the buffer once written to file.
     scs_ptr->output_stream_buffer_fifo_init_count = PICTURE_DECISION_PA_REFERENCE_QUEUE_MAX_DEPTH;
 
-    uint32_t min_input, min_parent, min_child, min_paref, min_ref, min_overlay;
+    uint32_t min_input, min_parent, min_child, min_paref, min_ref, min_overlay, min_recon;
     uint32_t min_me;
 #if FTR_MG_PARALELL
-    uint32_t max_input, max_parent, max_child, max_paref, max_ref, max_me;
+    uint32_t max_input, max_parent, max_child, max_paref, max_me, max_recon;
 #endif
     {
         /*Look-Ahead. Picture-Decision outputs pictures by group of mini-gops so
@@ -697,7 +697,6 @@ EbErrorType load_default_buffer_configuration_settings(
 
         if (use_output_stat(scs_ptr))
             min_me = min_parent;
-#if DEBUG_SR_MEM_OPTM
         else if (scs_ptr->static_config.enable_tpl_la) {
             // PictureDecisionContext.mg_size = mg_size + overlay; see EbPictureDecisionProcess.c line 5680
             min_me = 1 +                  // potential delay I
@@ -706,15 +705,6 @@ EbErrorType load_default_buffer_configuration_settings(
         }
         else
             min_me = 1;
-#else
-        // for super-res need to disable tpl-la but tpl-la should be enable to avoid freeze, fix me at SR MR5
-        else {
-            // PictureDecisionContext.mg_size = mg_size + overlay; see EbPictureDecisionProcess.c line 5680
-            min_me = 1 +                  // potential delay I
-                     lad_mg_pictures +    // 16 + 1 ME data used in store_tpl_pictures() at line 5717
-                     (mg_size + overlay); // 16 + 1 ME data used in store_tpl_pictures() at line 5729
-        }
-#endif
 
         //PA REF
         uint16_t num_pa_ref_from_past_mgs = tot_past_refs[scs_ptr->static_config.hierarchical_levels];
@@ -731,6 +721,8 @@ EbErrorType load_default_buffer_configuration_settings(
         //Overlays
         min_overlay = scs_ptr->static_config.enable_overlays ?
               mg_size + eos_delay + scs_ptr->scd_delay : 1;
+
+        min_recon = min_ref;
 
 #if FTR_MG_PARALELL
         //Configure max needed buffers to process 1+n_extra_mg Mini-Gops in the pipeline. n extra MGs to feed to picMgr on top of current one.
@@ -751,9 +743,15 @@ EbErrorType load_default_buffer_configuration_settings(
         max_child = (mg_size / 2) * (n_extra_mg + 1);
         max_child = MAX(max_child, 1);//have at least one child for mg_size<2
 
-        max_ref   = min_ref   + num_ref_from_cur_mg * n_extra_mg;
+        // max_ref defines here to avoid cppcheck warning
+        uint32_t max_ref = min_ref   + num_ref_from_cur_mg * n_extra_mg;
         max_paref = min_paref + (1 + mg_size)       * n_extra_mg;
         max_me    = min_me    + (1 + mg_size)       * n_extra_mg;
+        max_recon = max_ref;
+        // if tpl_la is disabled when super-res fix/random, input speed is much faster than recon output speed,
+        // recon_output_fifo might be full and freeze at recon_output()
+        if (!scs_ptr->static_config.enable_tpl_la && scs_ptr->static_config.recon_enabled)
+            max_recon = min_recon = MAX(max_ref, 30);
 #endif
     }
 
@@ -776,7 +774,7 @@ EbErrorType load_default_buffer_configuration_settings(
         scs_ptr->enc_dec_pool_init_count                    = min_child;
         scs_ptr->overlay_input_picture_buffer_init_count       = min_overlay;
 
-        scs_ptr->output_recon_buffer_fifo_init_count = scs_ptr->reference_picture_buffer_init_count;
+        scs_ptr->output_recon_buffer_fifo_init_count = MAX(scs_ptr->reference_picture_buffer_init_count, min_recon);
         scs_ptr->me_pool_init_count = min_me;
     }
 #if FTR_MG_PARALELL
@@ -784,7 +782,7 @@ EbErrorType load_default_buffer_configuration_settings(
         scs_ptr->input_buffer_fifo_init_count = clamp(max_input, min_input, max_input);
         scs_ptr->picture_control_set_pool_init_count = clamp(max_parent, min_parent, max_parent);
         scs_ptr->pa_reference_picture_buffer_init_count = clamp(max_paref, min_paref, max_paref);
-        scs_ptr->output_recon_buffer_fifo_init_count = scs_ptr->reference_picture_buffer_init_count = clamp(max_ref, min_ref, max_ref);
+        scs_ptr->output_recon_buffer_fifo_init_count = scs_ptr->reference_picture_buffer_init_count = clamp(max_recon, min_recon, max_recon);
         scs_ptr->picture_control_set_pool_init_count_child = scs_ptr->enc_dec_pool_init_count = clamp(2, min_child, max_child) + superres_count;
         scs_ptr->me_pool_init_count = clamp(max_me, min_me, max_me);
         scs_ptr->overlay_input_picture_buffer_init_count = min_overlay;
@@ -793,7 +791,7 @@ EbErrorType load_default_buffer_configuration_settings(
         scs_ptr->input_buffer_fifo_init_count = clamp(max_input, min_input, max_input);
         scs_ptr->picture_control_set_pool_init_count = clamp(max_parent, min_parent, max_parent);
         scs_ptr->pa_reference_picture_buffer_init_count = clamp(max_paref, min_paref, max_paref);
-        scs_ptr->output_recon_buffer_fifo_init_count = scs_ptr->reference_picture_buffer_init_count = clamp(max_ref, min_ref, max_ref);
+        scs_ptr->output_recon_buffer_fifo_init_count = scs_ptr->reference_picture_buffer_init_count = clamp(max_recon, min_recon, max_recon);
         scs_ptr->picture_control_set_pool_init_count_child = scs_ptr->enc_dec_pool_init_count = clamp(4, min_child, max_child) + superres_count;
         scs_ptr->me_pool_init_count = clamp(max_me, min_me, max_me);
         scs_ptr->overlay_input_picture_buffer_init_count = min_overlay;
@@ -802,7 +800,7 @@ EbErrorType load_default_buffer_configuration_settings(
         scs_ptr->input_buffer_fifo_init_count = clamp(max_input, min_input, max_input);
         scs_ptr->picture_control_set_pool_init_count = clamp(max_parent, min_parent, max_parent);
         scs_ptr->pa_reference_picture_buffer_init_count = clamp(max_paref, min_paref, max_paref);
-        scs_ptr->output_recon_buffer_fifo_init_count = scs_ptr->reference_picture_buffer_init_count = clamp(max_ref, min_ref, max_ref);
+        scs_ptr->output_recon_buffer_fifo_init_count = scs_ptr->reference_picture_buffer_init_count = clamp(max_recon, min_recon, max_recon);
         scs_ptr->picture_control_set_pool_init_count_child = scs_ptr->enc_dec_pool_init_count = clamp(6, min_child, max_child) + superres_count;
         scs_ptr->me_pool_init_count = clamp(max_me, min_me, max_me);
         scs_ptr->overlay_input_picture_buffer_init_count = min_overlay;
@@ -811,7 +809,7 @@ EbErrorType load_default_buffer_configuration_settings(
         scs_ptr->input_buffer_fifo_init_count = clamp(max_input, min_input, max_input);
         scs_ptr->picture_control_set_pool_init_count = clamp(max_parent, min_parent, max_parent);
         scs_ptr->pa_reference_picture_buffer_init_count = clamp(max_paref, min_paref, max_paref);
-        scs_ptr->output_recon_buffer_fifo_init_count = scs_ptr->reference_picture_buffer_init_count = clamp(max_ref, min_ref, max_ref);
+        scs_ptr->output_recon_buffer_fifo_init_count = scs_ptr->reference_picture_buffer_init_count = clamp(max_recon, min_recon, max_recon);
         scs_ptr->picture_control_set_pool_init_count_child = scs_ptr->enc_dec_pool_init_count = clamp(max_child, min_child, max_child) + superres_count;
         scs_ptr->me_pool_init_count = clamp(max_me, min_me, max_me);
         scs_ptr->overlay_input_picture_buffer_init_count = min_overlay;

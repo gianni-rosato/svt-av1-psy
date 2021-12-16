@@ -4141,8 +4141,9 @@ void *source_based_operations_kernel(void *input_ptr) {
                 tpl_mc_flow(scs_ptr->encode_context_ptr, scs_ptr, pcs_ptr, context_ptr);
             }
 #if FIX_I51
+            EbBool release_pa_ref = (scs_ptr->static_config.superres_mode <= SUPERRES_RANDOM) ? EB_TRUE : EB_FALSE;
             // Release Pa Ref if lad_mg is 0 and P slice and not flat struct (not belonging to any TPL group)
-            if (/*scs_ptr->lad_mg == 0 &&*/  pcs_ptr->reference_released == 0) {
+            if (release_pa_ref && /*scs_ptr->lad_mg == 0 &&*/  pcs_ptr->reference_released == 0) {
                 release_pa_reference_objects(scs_ptr, pcs_ptr);
                 // printf ("\n PIC \t %d\n",pcs_ptr->picture_number);
             }

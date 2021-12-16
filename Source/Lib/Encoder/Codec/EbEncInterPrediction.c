@@ -5910,7 +5910,6 @@ static uint8_t inter_chroma_4xn_pred(PictureControlSet *pcs, MacroBlockD* xd, Mv
     assert(bsize < BlockSizeS_ALL);
 
     uint8_t is16bit = bit_depth > EB_8BIT;
-    ScaleFactors scale_factors[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
 
     // CHKN fill current mi from current block
     // only need to update top left mbmi for partition b/c all other MI blocks will reference the top left
@@ -5960,6 +5959,39 @@ static uint8_t inter_chroma_4xn_pred(PictureControlSet *pcs, MacroBlockD* xd, Mv
         assert(plane_bsize < BlockSizeS_ALL);
         const int32_t b8_w = block_size_wide[plane_bsize] >> ss_x;
         const int32_t b8_h = block_size_high[plane_bsize] >> ss_y;
+
+        ScaleFactors scale_factors[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
+        if (pcs != NULL && !use_intrabc && !pcs->parent_pcs_ptr->is_superres_none) {
+            uint32_t num_of_list_to_search =
+                (pcs->parent_pcs_ptr->slice_type == P_SLICE) ? (uint32_t)REF_LIST_0
+                : (uint32_t)REF_LIST_1;
+
+            EbReferenceObject* reference_object;
+            for (uint8_t list_idx = REF_LIST_0; list_idx <= num_of_list_to_search; ++list_idx) {
+                uint8_t ref_idx;
+                uint8_t num_of_ref_pic_to_search = (pcs->parent_pcs_ptr->slice_type == P_SLICE)
+                    ? pcs->parent_pcs_ptr->ref_list0_count
+                    : (list_idx == REF_LIST_0)
+                    ? pcs->parent_pcs_ptr->ref_list0_count
+                    : pcs->parent_pcs_ptr->ref_list1_count;
+                for (ref_idx = 0; ref_idx < num_of_ref_pic_to_search; ++ref_idx) {
+
+                    reference_object = (EbReferenceObject*)pcs->ref_pic_ptr_array[list_idx][ref_idx]
+                        ->object_ptr;
+
+                    EbPictureBufferDesc* ref_pic_ptr =
+                        (bit_depth == EB_8BIT && is16bit) ?
+                        reference_object->reference_picture16bit :
+                        reference_object->reference_picture;
+
+                    svt_av1_setup_scale_factors_for_frame(&(scale_factors[list_idx][ref_idx]),
+                        ref_pic_ptr->width,
+                        ref_pic_ptr->height,
+                        pcs->parent_pcs_ptr->enhanced_picture_ptr->width,
+                        pcs->parent_pcs_ptr->enhanced_picture_ptr->height);
+                }
+            }
+        }
 
         int32_t row = row_start;
         for (int32_t y = 0; y < b8_h; y += b4_h) {
