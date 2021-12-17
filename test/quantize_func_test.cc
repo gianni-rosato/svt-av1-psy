@@ -584,6 +584,18 @@ using std::make_tuple;
 
 #if HAS_AVX2
 const QuantizeParam kQParamArrayAvx2[] = {
+#if SSE_CODE_OPT
+    make_tuple(&svt_av1_quantize_fp_c, &svt_av1_quantize_fp_sse4_1,
+               static_cast<TxSize>(TX_16X16), TYPE_FP, AOM_BITS_8),
+    make_tuple(&svt_av1_quantize_fp_c, &svt_av1_quantize_fp_sse4_1,
+               static_cast<TxSize>(TX_4X16), TYPE_FP, AOM_BITS_8),
+    make_tuple(&svt_av1_quantize_fp_c, &svt_av1_quantize_fp_sse4_1,
+               static_cast<TxSize>(TX_16X4), TYPE_FP, AOM_BITS_8),
+    make_tuple(&svt_av1_quantize_fp_c, &svt_av1_quantize_fp_sse4_1,
+               static_cast<TxSize>(TX_32X8), TYPE_FP, AOM_BITS_8),
+    make_tuple(&svt_av1_quantize_fp_c, &svt_av1_quantize_fp_sse4_1,
+               static_cast<TxSize>(TX_8X32), TYPE_FP, AOM_BITS_8),
+#endif
     make_tuple(&svt_av1_quantize_fp_c, &svt_av1_quantize_fp_avx2,
                static_cast<TxSize>(TX_16X16), TYPE_FP, AOM_BITS_8),
     make_tuple(&svt_av1_quantize_fp_c, &svt_av1_quantize_fp_avx2,

@@ -44,4 +44,8 @@ typedef struct {
     int row_max;
 } SubpelMvLimits;
 
+#ifdef __cplusplus
+} // extern "C"
+#endif
+
 #endif // AOM_AV1_COMMON_MV_H_

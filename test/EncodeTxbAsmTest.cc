@@ -312,6 +312,13 @@ INSTANTIATE_TEST_CASE_P(
     ::testing::Combine(::testing::Values(&svt_av1_txb_init_levels_avx2),
                        ::testing::Range(0, static_cast<int>(TX_SIZES_ALL), 1)));
 
+#if SSE_CODE_OPT
+INSTANTIATE_TEST_CASE_P(
+    Entropy_SSE41, EncodeTxbInitLevelTest,
+    ::testing::Combine(::testing::Values(&svt_av1_txb_init_levels_sse4_1),
+                       ::testing::Range(0, static_cast<int>(TX_SIZES_ALL), 1)));
+#endif
+
 #if EN_AVX512_SUPPORT
 INSTANTIATE_TEST_CASE_P(
     EntropyAVX512, EncodeTxbInitLevelTest,

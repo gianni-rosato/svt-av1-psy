@@ -184,7 +184,12 @@ typedef void (*AomUpsampledPredFunc)(MacroBlockD *,
                                      const struct AV1Common *const, int, int,
                                      const MV *const, uint8_t *, int, int, int,
                                      int, const uint8_t *, int, int);
+
+#if SSE_CODE_OPT
+typedef ::testing::tuple<BlockSize, AomUpsampledPredFunc, int, int, int, uint64_t> AomUpsampledPredParam;
+#else
 typedef ::testing::tuple<BlockSize, AomUpsampledPredFunc, int, int, int> AomUpsampledPredParam;
+#endif
 
 class AomUpsampledPredTest
     : public ::testing::TestWithParam<AomUpsampledPredParam> {
@@ -214,7 +219,12 @@ class AomUpsampledPredTest
 
         //Function svt_aom_upsampled_pred_sse2 call inside function pointer which have to be set properly
         // by setup_common_rtcd_internal(), we want to test intrinsic version of it, so AVX2 flag is necessary
+#if SSE_CODE_OPT
+        uint64_t CPU_FLAGS = TEST_GET_PARAM(5);
+        setup_common_rtcd_internal(CPU_FLAGS);
+#else
         setup_common_rtcd_internal(CPU_FLAGS_AVX2);
+#endif
 
         const int run_times = 100;
         for (int i = 0; i < run_times; ++i) {
@@ -264,6 +274,16 @@ TEST_P(AomUpsampledPredTest, MatchTest) {
     run_test();
 }
 
+#if SSE_CODE_OPT
+INSTANTIATE_TEST_CASE_P(
+    UPSAMPLED_PRED_TEST, AomUpsampledPredTest,
+    ::testing::Combine(::testing::Range(BLOCK_4X4, BlockSizeS_ALL),
+                       ::testing::Values(svt_aom_upsampled_pred_sse2),
+                       ::testing::Values(USE_2_TAPS, USE_4_TAPS, USE_8_TAPS),
+                       ::testing::Values(0, 1, 2),
+                       ::testing::Values(0, 1, 2),
+                       ::testing::Values(CPU_FLAGS_SSSE3, CPU_FLAGS_AVX2)));
+#else
 INSTANTIATE_TEST_CASE_P(
     UPSAMPLED_PRED_TEST, AomUpsampledPredTest,
     ::testing::Combine(::testing::Range(BLOCK_4X4, BlockSizeS_ALL),
@@ -271,6 +291,7 @@ INSTANTIATE_TEST_CASE_P(
                        ::testing::Values(USE_2_TAPS, USE_4_TAPS, USE_8_TAPS),
                        ::testing::Values(0, 1, 2),
                        ::testing::Values(0, 1, 2)));
+#endif
 
 
 typedef void (*CflLumaSubsamplingLbdFunc)(const uint8_t *, int32_t, int16_t *, int32_t,

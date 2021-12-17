@@ -41,6 +41,12 @@ INSTANTIATE_TEST_CASE_P(
     AVX2, AV1WarpFilterTest,
     libaom_test::AV1WarpFilter::BuildParams(svt_av1_warp_affine_avx2));
 
+#if SSE_CODE_OPT
+INSTANTIATE_TEST_CASE_P(
+    SSE4_1, AV1WarpFilterTest,
+    libaom_test::AV1WarpFilter::BuildParams(svt_av1_warp_affine_sse4_1));
+#endif
+
 INSTANTIATE_TEST_CASE_P(AVX2, AV1HighbdWarpFilterTest,
                         libaom_test::AV1HighbdWarpFilter::BuildParams(
                             svt_av1_highbd_warp_affine_avx2));

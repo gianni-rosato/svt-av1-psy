@@ -457,6 +457,18 @@ INSTANTIATE_TEST_CASE_P(
         ::testing::Values(BLOCK_4X4, BLOCK_4X8, BLOCK_8X4, BLOCK_8X8),
         ::testing::Range(0, 16), ::testing::Range(8, 13, 2),
         ::testing::ValuesIn(svt_cdef_filter_block_8xn_16_func_table)));
+
+#if SSE_CODE_OPT
+INSTANTIATE_TEST_CASE_P(
+    Cdef_sse4_1, CDEFBlockTest,
+    ::testing::Combine(
+        ::testing::Values(&svt_cdef_filter_block_avx2),
+        ::testing::Values(&svt_av1_cdef_filter_block_sse4_1),
+        ::testing::Values(BLOCK_4X4, BLOCK_4X8, BLOCK_8X4, BLOCK_8X8),
+        ::testing::Range(0, 16), ::testing::Range(8, 13, 2),
+        ::testing::ValuesIn(svt_cdef_filter_block_8xn_16_func_table)));
+#endif
+
 #else
 INSTANTIATE_TEST_CASE_P(
     Cdef, CDEFBlockTest,

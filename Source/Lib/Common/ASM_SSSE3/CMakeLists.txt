@@ -31,7 +31,8 @@ file(GLOB all_files
     "*.c")
 
 set(asm_files
-    aom_subpixel_bilinear_ssse3.asm)
+    aom_subpixel_bilinear_ssse3.asm
+    aom_subpixel_8t_ssse3.asm)
 
 add_library(COMMON_ASM_SSSE3 OBJECT ${all_files})
 

@@ -436,6 +436,42 @@ INSTANTIATE_TEST_CASE_P(
         VarianceParam(128, 128, &svt_aom_variance128x128_c,
                       &svt_aom_variance128x128_avx2)));
 
+#if SSE_CODE_OPT
+INSTANTIATE_TEST_CASE_P(
+    Variance_SSE2, VarianceTest,
+    ::testing::Values(
+       VarianceParam(16, 4, &svt_aom_variance16x4_c,
+                     &svt_aom_variance16x4_sse2),
+       VarianceParam(16, 8, &svt_aom_variance16x8_c,
+                     &svt_aom_variance16x8_sse2),
+       VarianceParam(16, 16, &svt_aom_variance16x16_c,
+                     &svt_aom_variance16x16_sse2),
+       VarianceParam(16, 32, &svt_aom_variance16x32_c,
+                     &svt_aom_variance16x32_sse2),
+       VarianceParam(16, 64, &svt_aom_variance16x64_c,
+                     &svt_aom_variance16x64_sse2),
+       VarianceParam(32, 8, &svt_aom_variance32x8_c,
+                     &svt_aom_variance32x8_sse2),
+       VarianceParam(32, 16, &svt_aom_variance32x16_c,
+                     &svt_aom_variance32x16_sse2),
+       VarianceParam(32, 32, &svt_aom_variance32x32_c,
+                     &svt_aom_variance32x32_sse2),
+       VarianceParam(32, 64, &svt_aom_variance32x64_c,
+                     &svt_aom_variance32x64_sse2),
+       VarianceParam(64, 16, &svt_aom_variance64x16_c,
+                     &svt_aom_variance64x16_sse2),
+       VarianceParam(64, 32, &svt_aom_variance64x32_c,
+                     &svt_aom_variance64x32_sse2),
+       VarianceParam(64, 64, &svt_aom_variance64x64_c,
+                     &svt_aom_variance64x64_sse2),
+       VarianceParam(64, 128, &svt_aom_variance64x128_c,
+                     &svt_aom_variance64x128_sse2),
+       VarianceParam(128, 64, &svt_aom_variance128x64_c,
+                     &svt_aom_variance128x64_sse2),
+       VarianceParam(128, 128, &svt_aom_variance128x128_c,
+                     &svt_aom_variance128x128_sse2)));
+#endif
+
 #if EN_AVX512_SUPPORT
 INSTANTIATE_TEST_CASE_P(
     Variance_AVX512, VarianceTest,

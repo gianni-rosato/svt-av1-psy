@@ -67,6 +67,9 @@ using lowbd_convolve_func = void (*)(const uint8_t *src, int src_stride,
 
 static const lowbd_convolve_func lowbd_convolve_2d_sr_func_table[] = {
     svt_av1_convolve_2d_sr_avx2,
+#if SSE_CODE_OPT
+    svt_av1_convolve_2d_sr_sse2,
+#endif
 #if EN_AVX512_SUPPORT
     svt_av1_convolve_2d_sr_avx512
 #endif
@@ -74,6 +77,9 @@ static const lowbd_convolve_func lowbd_convolve_2d_sr_func_table[] = {
 
 static const lowbd_convolve_func lowbd_convolve_x_sr_func_table[] = {
     svt_av1_convolve_x_sr_avx2,
+#if SSE_CODE_OPT
+    svt_av1_convolve_x_sr_sse2,
+#endif
 #if EN_AVX512_SUPPORT
     svt_av1_convolve_x_sr_avx512
 #endif
@@ -81,6 +87,9 @@ static const lowbd_convolve_func lowbd_convolve_x_sr_func_table[] = {
 
 static const lowbd_convolve_func lowbd_convolve_y_sr_func_table[] = {
     svt_av1_convolve_y_sr_avx2,
+#if SSE_CODE_OPT
+    svt_av1_convolve_y_sr_sse2,
+#endif
 #if EN_AVX512_SUPPORT
     svt_av1_convolve_y_sr_avx512
 #endif
@@ -88,6 +97,9 @@ static const lowbd_convolve_func lowbd_convolve_y_sr_func_table[] = {
 
 static const lowbd_convolve_func lowbd_convolve_copy_sr_func_table[] = {
     svt_av1_convolve_2d_copy_sr_avx2,
+#if SSE_CODE_OPT
+    svt_av1_convolve_2d_copy_sr_sse2,
+#endif
 #if EN_AVX512_SUPPORT
     svt_av1_convolve_2d_copy_sr_avx512
 #endif
@@ -95,6 +107,10 @@ static const lowbd_convolve_func lowbd_convolve_copy_sr_func_table[] = {
 
 static const lowbd_convolve_func lowbd_jnt_convolve_2d_func_table[] = {
     svt_av1_jnt_convolve_2d_avx2,
+#if SSE_CODE_OPT
+    svt_av1_jnt_convolve_2d_sse2,
+    svt_av1_jnt_convolve_2d_ssse3,
+#endif
 #if EN_AVX512_SUPPORT
     svt_av1_jnt_convolve_2d_avx512
 #endif
@@ -102,6 +118,9 @@ static const lowbd_convolve_func lowbd_jnt_convolve_2d_func_table[] = {
 
 static const lowbd_convolve_func lowbd_jnt_convolve_x_func_table[] = {
     svt_av1_jnt_convolve_x_avx2,
+#if SSE_CODE_OPT
+    svt_av1_jnt_convolve_x_sse2,
+#endif
 #if EN_AVX512_SUPPORT
     svt_av1_jnt_convolve_x_avx512
 #endif
@@ -109,6 +128,9 @@ static const lowbd_convolve_func lowbd_jnt_convolve_x_func_table[] = {
 
 static const lowbd_convolve_func lowbd_jnt_convolve_y_func_table[] = {
     svt_av1_jnt_convolve_y_avx2,
+#if SSE_CODE_OPT
+    svt_av1_jnt_convolve_y_sse2,
+#endif
 #if EN_AVX512_SUPPORT
     svt_av1_jnt_convolve_y_avx512
 #endif
@@ -116,6 +138,9 @@ static const lowbd_convolve_func lowbd_jnt_convolve_y_func_table[] = {
 
 static const lowbd_convolve_func lowbd_jnt_convolve_copy_func_table[] = {
     svt_av1_jnt_convolve_2d_copy_avx2,
+#if SSE_CODE_OPT
+    svt_av1_jnt_convolve_2d_copy_sse2,
+#endif
 #if EN_AVX512_SUPPORT
     svt_av1_jnt_convolve_2d_copy_avx512
 #endif
@@ -799,6 +824,28 @@ INSTANTIATE_TEST_CASE_P(ConvolveTestY, AV1LbdJntConvolve2DTest,
 INSTANTIATE_TEST_CASE_P(ConvolveTest2D, AV1LbdJntConvolve2DTest,
                         BuildParams(1, 1, 0, 0));
 
+#if SSE_CODE_OPT
+INSTANTIATE_TEST_CASE_P(ConvolveTest2D_sse2, AV1LbdJntConvolve2DTest,
+                        BuildParams(1, 1, 1, 0));
+INSTANTIATE_TEST_CASE_P(ConvolveTest2D_ssse3, AV1LbdJntConvolve2DTest,
+                        BuildParams(1, 1, 2, 0));
+INSTANTIATE_TEST_CASE_P(ConvolveTestX_sse2, AV1LbdJntConvolve2DTest,
+                        BuildParams(1, 0, 1, 0));
+INSTANTIATE_TEST_CASE_P(ConvolveTestY_sse2, AV1LbdJntConvolve2DTest,
+                        BuildParams(0, 1, 1, 0));
+INSTANTIATE_TEST_CASE_P(ConvolveTestCOPY_sse2, AV1LbdJntConvolve2DTest,
+                        BuildParams(0, 0, 1, 0));
+#if EN_AVX512_SUPPORT
+INSTANTIATE_TEST_CASE_P(ConvolveTestCOPY_AVX512, AV1LbdJntConvolve2DTest,
+                        BuildParams(0, 0, 2, 0));
+INSTANTIATE_TEST_CASE_P(ConvolveTestX_AVX512, AV1LbdJntConvolve2DTest,
+                        BuildParams(1, 0, 2, 0));
+INSTANTIATE_TEST_CASE_P(ConvolveTestY_AVX512, AV1LbdJntConvolve2DTest,
+                        BuildParams(0, 1, 2, 0));
+INSTANTIATE_TEST_CASE_P(ConvolveTest2D_AVX512, AV1LbdJntConvolve2DTest,
+                        BuildParams(1, 1, 3, 0));
+#endif
+#else
 #if EN_AVX512_SUPPORT
 INSTANTIATE_TEST_CASE_P(ConvolveTestCOPY_AVX512, AV1LbdJntConvolve2DTest,
                         BuildParams(0, 0, 1, 0));
@@ -808,6 +855,7 @@ INSTANTIATE_TEST_CASE_P(ConvolveTestY_AVX512, AV1LbdJntConvolve2DTest,
                         BuildParams(0, 1, 1, 0));
 INSTANTIATE_TEST_CASE_P(ConvolveTest2D_AVX512, AV1LbdJntConvolve2DTest,
                         BuildParams(1, 1, 1, 0));
+#endif
 #endif
 
 class AV1LbdSrConvolve2DTest : public AV1LbdConvolve2DTest {
@@ -849,6 +897,26 @@ INSTANTIATE_TEST_CASE_P(ConvolveTestY, AV1LbdSrConvolve2DTest,
 INSTANTIATE_TEST_CASE_P(ConvolveTest2D, AV1LbdSrConvolve2DTest,
                         BuildParams(1, 1, 0, 0));
 
+#if SSE_CODE_OPT
+INSTANTIATE_TEST_CASE_P(ConvolveTestX_SSE2, AV1LbdSrConvolve2DTest,
+                        BuildParams(1, 0, 1, 0));
+INSTANTIATE_TEST_CASE_P(ConvolveTestY_SSE2, AV1LbdSrConvolve2DTest,
+                        BuildParams(0, 1, 1, 0));
+INSTANTIATE_TEST_CASE_P(ConvolveTest2D_SSE2, AV1LbdSrConvolve2DTest,
+                        BuildParams(1, 1, 1, 0));
+INSTANTIATE_TEST_CASE_P(ConvolveTestCopy_SSE2, AV1LbdSrConvolve2DTest,
+                        BuildParams(0, 0, 1, 0));
+#if EN_AVX512_SUPPORT
+INSTANTIATE_TEST_CASE_P(ConvolveTestCopy_AVX512, AV1LbdSrConvolve2DTest,
+                        BuildParams(0, 0, 2, 0));
+INSTANTIATE_TEST_CASE_P(ConvolveTestX_AVX512, AV1LbdSrConvolve2DTest,
+                        BuildParams(1, 0, 2, 0));
+INSTANTIATE_TEST_CASE_P(ConvolveTestY_AVX512, AV1LbdSrConvolve2DTest,
+                        BuildParams(0, 1, 2, 0));
+INSTANTIATE_TEST_CASE_P(ConvolveTest2D_AVX512, AV1LbdSrConvolve2DTest,
+                        BuildParams(1, 1, 2, 0));
+#endif
+#else
 #if EN_AVX512_SUPPORT
 INSTANTIATE_TEST_CASE_P(ConvolveTestCopy_AVX512, AV1LbdSrConvolve2DTest,
                         BuildParams(0, 0, 1, 0));
@@ -858,6 +926,7 @@ INSTANTIATE_TEST_CASE_P(ConvolveTestY_AVX512, AV1LbdSrConvolve2DTest,
                         BuildParams(0, 1, 1, 0));
 INSTANTIATE_TEST_CASE_P(ConvolveTest2D_AVX512, AV1LbdSrConvolve2DTest,
                         BuildParams(1, 1, 1, 0));
+#endif
 #endif
 
 class AV1HbdConvolve2DTest

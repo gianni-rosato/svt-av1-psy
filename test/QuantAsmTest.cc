@@ -60,7 +60,11 @@ using QuantizeFunc = void (*)(const TranLow *coeff_ptr, intptr_t n_coeffs,
                               const QmVal *qm_ptr, const QmVal *iqm_ptr,
                               const int32_t log_scale);
 
+#if SSE_CODE_OPT
+using QuantizeParam = std::tuple<int, int, QuantizeFunc>;
+#else
 using QuantizeParam = std::tuple<int, int>;
+#endif
 
 using svt_av1_test_tool::SVTRandom;  // to generate the random
 /**
@@ -135,7 +139,11 @@ class QuantizeBTest : public ::testing::TestWithParam<QuantizeParam> {
     void setup_func_ptrs() {
         if (bd_ == AOM_BITS_8) {
                 quant_ref_ = svt_aom_quantize_b_c_ii;
+#if SSE_CODE_OPT
+                quant_test_ = TEST_GET_PARAM(2);
+#else
                 quant_test_ = svt_aom_quantize_b_avx2;
+#endif
         } else {
                 quant_ref_ = svt_aom_highbd_quantize_b_c;
                 quant_test_ = svt_aom_highbd_quantize_b_avx2;
@@ -316,6 +324,16 @@ TEST_P(QuantizeBTest, input_random_all_q_all) {
 }
 
 #ifndef FULL_UNIT_TEST
+#if SSE_CODE_OPT
+INSTANTIATE_TEST_CASE_P(
+    Quant, QuantizeBTest,
+    ::testing::Combine(::testing::Values(static_cast<int>(TX_16X16),
+                                         static_cast<int>(TX_32X32),
+                                         static_cast<int>(TX_64X64)),
+                       ::testing::Values(static_cast<int>(AOM_BITS_8),
+                                         static_cast<int>(AOM_BITS_10)),
+                       ::testing::Values(svt_aom_quantize_b_sse4_1, svt_aom_quantize_b_avx2)));
+#else
 INSTANTIATE_TEST_CASE_P(
     Quant, QuantizeBTest,
     ::testing::Combine(::testing::Values(static_cast<int>(TX_16X16),
@@ -323,6 +341,7 @@ INSTANTIATE_TEST_CASE_P(
                                          static_cast<int>(TX_64X64)),
                        ::testing::Values(static_cast<int>(AOM_BITS_8),
                                          static_cast<int>(AOM_BITS_10))));
+#endif
 #else
 INSTANTIATE_TEST_CASE_P(
     Quant, QuantizeBTest,

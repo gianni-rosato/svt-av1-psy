@@ -49,6 +49,34 @@ using svt_av1_test_tool::SVTRandom;
 
 namespace {
 using FwdTxfm2dAsmParam = std::tuple<int, int>;
+
+#if SSE_CODE_OPT
+static const FwdTxfm2dFunc fwd_txfm_2d_avx2_func[TX_SIZES_ALL] = {
+    svt_av1_fwd_txfm2d_4x4_sse4_1, svt_av1_fwd_txfm2d_8x8_avx2,
+    svt_av1_fwd_txfm2d_16x16_avx2, svt_av1_fwd_txfm2d_32x32_avx2,
+    svt_av1_fwd_txfm2d_64x64_avx2, svt_av1_fwd_txfm2d_4x8_avx2,
+    svt_av1_fwd_txfm2d_8x4_avx2,   svt_av1_fwd_txfm2d_8x16_avx2,
+    svt_av1_fwd_txfm2d_16x8_avx2,  svt_av1_fwd_txfm2d_16x32_avx2,
+    svt_av1_fwd_txfm2d_32x16_avx2, svt_av1_fwd_txfm2d_32x64_avx2,
+    svt_av1_fwd_txfm2d_64x32_avx2, svt_av1_fwd_txfm2d_4x16_avx2,
+    svt_av1_fwd_txfm2d_16x4_avx2,  svt_av1_fwd_txfm2d_8x32_avx2,
+    svt_av1_fwd_txfm2d_32x8_avx2,  svt_av1_fwd_txfm2d_16x64_avx2,
+    svt_av1_fwd_txfm2d_64x16_avx2,
+};
+
+static const FwdTxfm2dFunc fwd_txfm_2d_sse4_1_func[TX_SIZES_ALL] = {
+    svt_av1_fwd_txfm2d_4x4_sse4_1, svt_av1_fwd_txfm2d_8x8_sse4_1,
+    svt_av1_fwd_txfm2d_16x16_sse4_1, svt_av1_fwd_txfm2d_32x32_sse4_1,
+    svt_av1_fwd_txfm2d_64x64_sse4_1, svt_av1_fwd_txfm2d_4x8_sse4_1,
+    svt_av1_fwd_txfm2d_8x4_sse4_1,   svt_av1_fwd_txfm2d_8x16_sse4_1,
+    svt_av1_fwd_txfm2d_16x8_sse4_1,  svt_av1_fwd_txfm2d_16x32_sse4_1,
+    svt_av1_fwd_txfm2d_32x16_sse4_1, svt_av1_fwd_txfm2d_32x64_sse4_1,
+    svt_av1_fwd_txfm2d_64x32_sse4_1, svt_av1_fwd_txfm2d_4x16_sse4_1,
+    svt_av1_fwd_txfm2d_16x4_sse4_1,  svt_av1_fwd_txfm2d_8x32_sse4_1,
+    svt_av1_fwd_txfm2d_32x8_sse4_1,  svt_av1_fwd_txfm2d_16x64_sse4_1,
+    svt_av1_fwd_txfm2d_64x16_sse4_1,
+};
+#else
 static const FwdTxfm2dFunc fwd_txfm_2d_asm_func[TX_SIZES_ALL] = {
     svt_av1_fwd_txfm2d_4x4_sse4_1, svt_av1_fwd_txfm2d_8x8_avx2,
     svt_av1_fwd_txfm2d_16x16_avx2, svt_av1_fwd_txfm2d_32x32_avx2,
@@ -61,6 +89,7 @@ static const FwdTxfm2dFunc fwd_txfm_2d_asm_func[TX_SIZES_ALL] = {
     svt_av1_fwd_txfm2d_32x8_avx2,  svt_av1_fwd_txfm2d_16x64_avx2,
     svt_av1_fwd_txfm2d_64x16_avx2,
 };
+#endif
 
 static const FwdTxfm2dFunc fwd_txfm_2d_N2_asm_func[TX_SIZES_ALL] = {
    svt_av1_fwd_txfm2d_4x4_N2_sse4_1, svt_av1_fwd_txfm2d_8x8_N2_avx2,
@@ -191,11 +220,25 @@ class FwdTxfm2dAsmTest : public ::testing::TestWithParam<FwdTxfm2dAsmParam> {
         aom_clear_system_state();
     }
 
+#if SSE_CODE_OPT
+    void run_match_test_avx2() {
+        FwdTxfm2dFunc test_func = fwd_txfm_2d_avx2_func[tx_size_];
+        FwdTxfm2dFunc ref_func = fwd_txfm_2d_c_func[tx_size_];
+        execute_test(test_func, ref_func, DEFAULT_SHAPE);
+    }
+
+    void run_match_test_sse4_1() {
+        FwdTxfm2dFunc test_func = fwd_txfm_2d_sse4_1_func[tx_size_];
+        FwdTxfm2dFunc ref_func = fwd_txfm_2d_c_func[tx_size_];
+        execute_test(test_func, ref_func, DEFAULT_SHAPE);
+    }
+#else
     void run_match_test_default() {
         FwdTxfm2dFunc test_func = fwd_txfm_2d_asm_func[tx_size_];
         FwdTxfm2dFunc ref_func = fwd_txfm_2d_c_func[tx_size_];
         execute_test(test_func, ref_func, DEFAULT_SHAPE);
     }
+#endif
 
     void run_match_test_N2() {
         FwdTxfm2dFunc test_func_asm = fwd_txfm_2d_N2_asm_func[tx_size_];
@@ -213,6 +256,23 @@ class FwdTxfm2dAsmTest : public ::testing::TestWithParam<FwdTxfm2dAsmParam> {
         execute_test(test_func_c, ref_func, N4_SHAPE);
     }
 
+#if SSE_CODE_OPT
+    void speed_test_avx2() {
+        FwdTxfm2dFunc test_func = fwd_txfm_2d_avx2_func[tx_size_];
+        FwdTxfm2dFunc ref_func = fwd_txfm_2d_c_func[tx_size_];
+        run_speed_test("C   AND ASM", test_func, ref_func);
+        run_speed_test(
+            "ASM AND N2 ", fwd_txfm_2d_N2_asm_func[tx_size_], test_func);
+        run_speed_test(
+            "ASM AND N4 ", fwd_txfm_2d_N4_asm_func[tx_size_], test_func);
+    }
+
+    void speed_test_sse4_1() {
+        FwdTxfm2dFunc test_func = fwd_txfm_2d_sse4_1_func[tx_size_];
+        FwdTxfm2dFunc ref_func = fwd_txfm_2d_c_func[tx_size_];
+        run_speed_test("C   AND ASM", test_func, ref_func);
+    }
+#else
     void speed_test() {
         FwdTxfm2dFunc test_func = fwd_txfm_2d_asm_func[tx_size_];
         FwdTxfm2dFunc ref_func = fwd_txfm_2d_c_func[tx_size_];
@@ -222,6 +282,7 @@ class FwdTxfm2dAsmTest : public ::testing::TestWithParam<FwdTxfm2dAsmParam> {
         run_speed_test(
             "ASM AND N4 ", fwd_txfm_2d_N4_asm_func[tx_size_], test_func);
     }
+#endif
 #if EN_AVX512_SUPPORT
     void run_match_test_N2_512() {
         FwdTxfm2dFunc test_func_asm = fwd_txfm_2d_N2_asm512_func[tx_size_];
@@ -410,9 +471,19 @@ class FwdTxfm2dAsmTest : public ::testing::TestWithParam<FwdTxfm2dAsmParam> {
     int32_t *output_ref_;  /**< aligned address for output ref */
 };
 
+#if SSE_CODE_OPT
+TEST_P(FwdTxfm2dAsmTest, match_test_avx2) {
+    run_match_test_avx2();
+}
+
+TEST_P(FwdTxfm2dAsmTest, match_test_sse4_1) {
+    run_match_test_sse4_1();
+}
+#else
 TEST_P(FwdTxfm2dAsmTest, match_test) {
     run_match_test_default();
 }
+#endif
 
 TEST_P(FwdTxfm2dAsmTest, match_test_N2) {
     run_match_test_N2();
@@ -422,9 +493,19 @@ TEST_P(FwdTxfm2dAsmTest, match_test_N4) {
     run_match_test_N4();
 }
 
+#if SSE_CODE_OPT
+TEST_P(FwdTxfm2dAsmTest, DISABLED_speed_test_avx2) {
+    speed_test_avx2();
+}
+
+TEST_P(FwdTxfm2dAsmTest, DISABLED_speed_test_sse4_1) {
+    speed_test_sse4_1();
+}
+#else
 TEST_P(FwdTxfm2dAsmTest, DISABLED_speed_test) {
     speed_test();
 }
+#endif
 
 #if EN_AVX512_SUPPORT
 TEST_P(FwdTxfm2dAsmTest, match_test_N2_512) {

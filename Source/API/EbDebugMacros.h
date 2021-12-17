@@ -887,6 +887,7 @@ NOTE : PART OF LIGHT_PD0_2  code was committed to svt-04-final-rebased under OPT
 #define FIX_1PASS_VBR_UNDERSHOOT              1 // Adjust group_weight_factor based on the inactive area
 #define TUNE_PRESETS_LDB                      1 // Tune presets for Low Delay B structure
 #define FIX_DLF_IN_PADDED_AREA                1 // Do not perform DLF in padded areas outside the area of the input video (fixes recon-decode mistmatch)
+#define SSE_CODE_OPT                         1 //SSE2/SSSE3/SSE4_1 kernels optimization
 
 #define FIX_MULTIPASS_WITH_FIFO               1 // Fix multipass with stdin
 #endif //----------------------------------- all svt-05 features should be place are above this line -------------------------
