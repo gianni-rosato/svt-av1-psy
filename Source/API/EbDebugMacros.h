@@ -888,6 +888,7 @@ NOTE : PART OF LIGHT_PD0_2  code was committed to svt-04-final-rebased under OPT
 #define CLN_TF_ENC_CONFIG                     1 // Move TF ctrls from static to sps
 #define CLN_MRP_ENC_CONFIG                    1 // Move MRP ctrls from static to sps
 
+#define FIX_GF_INTERVAL_LENGTH                1 // Fix GF interval size for I slice that is EOS
 #endif //----------------------------------- all svt-05 features should be place are above this line -------------------------
 
 #if TUNE_MULTI_PASS

@@ -1115,6 +1115,10 @@ static EbErrorType reset_pcs_av1(PictureParentControlSet *pcs_ptr) {
     FrameHeader *frm_hdr = &pcs_ptr->frm_hdr;
     Av1Common *  cm      = pcs_ptr->av1_cm;
 
+#if FIX_GF_INTERVAL_LENGTH
+    pcs_ptr->gf_interval = 0;
+#endif
+
 #if FIX_I51 // reset_pcs_av1
     pcs_ptr->reference_released   = 0;
 #endif
