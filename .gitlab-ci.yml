@@ -414,8 +414,8 @@ Win64 Unit Tests:
   parallel:
     matrix:
       - UNIT_TEST: SvtAv1UnitTests
-        GTEST_TOTAL_SHARDS: 2
-        GTEST_SHARD_INDEX: [0, 1]
+        GTEST_TOTAL_SHARDS: 3
+        GTEST_SHARD_INDEX: [0, 1, 2]
       - UNIT_TEST: SvtAv1E2ETests
         SVT_AV1_TEST_VECTOR_PATH: $CI_PROJECT_DIR/test/vectors
   cache:
