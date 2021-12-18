@@ -39,7 +39,11 @@ void release_enc_config(void *config_ptr) {
 }
 
 void *create_enc_config() {
+#if CLN_ENC_CONFIG_SIG
+    EbConfig *config = svt_config_ctor();
+#else
     EbConfig *config = svt_config_ctor(ENCODE_SINGLE_PASS);
+#endif
     assert(config != NULL);
     if (!set_default_config(&config->config)) {
         release_enc_config(config);

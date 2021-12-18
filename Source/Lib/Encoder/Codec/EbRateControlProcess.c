@@ -3958,15 +3958,15 @@ void *rate_control_kernel(void *input_ptr) {
 #if FTR_1PASS_CBR_RT
 
 #if CLN_ENC_CONFIG_SIG
-                if (!(scs_ptr->static_config.pass == ENC_MIDDLE_PASS || scs_ptr->static_config.pass == ENC_LAST_PASS) && scs_ptr->static_config.pass != ENC_FIRST_PASS && scs_ptr->static_config.rate_control_mode == 2 &&
+                    if (!(scs_ptr->static_config.pass == ENC_MIDDLE_PASS || scs_ptr->static_config.pass == ENC_LAST_PASS) && scs_ptr->static_config.pass != ENC_FIRST_PASS && scs_ptr->static_config.rate_control_mode == 2 &&
 #else
-                if (!use_input_stat(scs_ptr) && !use_output_stat(scs_ptr) && scs_ptr->static_config.rate_control_mode == 2 &&
+                    if (!use_input_stat(scs_ptr) && !use_output_stat(scs_ptr) && scs_ptr->static_config.rate_control_mode == 2 &&
 #endif
-                     scs_ptr->static_config.pred_structure == EB_PRED_LOW_DELAY_P)
-                    svt_av1_get_one_pass_rt_params(pcs_ptr->parent_pcs_ptr);
-                else
+                        scs_ptr->static_config.pred_structure == EB_PRED_LOW_DELAY_P)
+                        svt_av1_get_one_pass_rt_params(pcs_ptr->parent_pcs_ptr);
+                    else
 #endif
-                    svt_av1_get_second_pass_params(pcs_ptr->parent_pcs_ptr);
+                        svt_av1_get_second_pass_params(pcs_ptr->parent_pcs_ptr);
 
                     av1_configure_buffer_updates(pcs_ptr, &(pcs_ptr->parent_pcs_ptr->refresh_frame), 0);
 #if RFCTR_RC_P2
