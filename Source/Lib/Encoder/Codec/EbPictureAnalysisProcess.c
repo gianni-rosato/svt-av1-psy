@@ -2962,17 +2962,29 @@ void *picture_analysis_kernel(void *input_ptr) {
 #if OPT_FIRST_PASS2
             int copy_frame = 1;
 #if FIX_ISSUE_50
+#if CLN_ENC_CONFIG_SIG
+            if (pcs_ptr->scs_ptr->ipp_pass_ctrls.skip_frame_first_pass == 1)
+#else
             if (pcs_ptr->scs_ptr->static_config.ipp_ctrls.skip_frame_first_pass == 1)
+#endif
 #else
             if (scs_ptr->static_config.final_pass_rc_mode == 0)
 #endif
                 copy_frame = (((pcs_ptr->picture_number % 8) == 0) || ((pcs_ptr->picture_number % 8) == 6) || ((pcs_ptr->picture_number % 8) == 7));
 #if ENBLE_SKIP_FRAME_IN_VBR_MODE
+#if CLN_ENC_CONFIG_SIG
+            else if (pcs_ptr->scs_ptr->ipp_pass_ctrls.skip_frame_first_pass == 2)
+#else
             else if (pcs_ptr->scs_ptr->static_config.ipp_ctrls.skip_frame_first_pass == 2)
+#endif
                 copy_frame = ((pcs_ptr->picture_number < 7) || ((pcs_ptr->picture_number % 8) == 0) || ((pcs_ptr->picture_number % 8) == 6) || ((pcs_ptr->picture_number % 8) == 7));
 #endif
             // Bypass copy for the unecessary picture in IPPP pass
+#if CLN_ENC_CONFIG_SIG
+            if (scs_ptr->static_config.pass != ENC_FIRST_PASS ||  copy_frame) {
+#else
             if ((!use_output_stat(scs_ptr)) || ((use_output_stat(scs_ptr)) && copy_frame)) {
+#endif
 #endif
             // Padding for input pictures
             pad_input_pictures(scs_ptr, input_picture_ptr);
@@ -3046,7 +3058,11 @@ void *picture_analysis_kernel(void *input_ptr) {
             }
 #endif
             // Gathering statistics of input picture, including Variance Calculation, Histogram Bins
+#if CLN_ENC_CONFIG_SIG
+            if(scs_ptr->static_config.pass != ENC_FIRST_PASS)
+#else
             if (!use_output_stat(scs_ptr))
+#endif
                 gathering_picture_statistics(
                         scs_ptr,
                         pcs_ptr,
@@ -3072,7 +3088,11 @@ void *picture_analysis_kernel(void *input_ptr) {
             else
 #endif
 #if FIX_DG
+#if CLN_ENC_CONFIG_SIG
+                if ((scs_ptr->static_config.pass != ENC_FIRST_PASS ||  copy_frame) == 0) {
+#else
                 if (((!use_output_stat(scs_ptr)) || ((use_output_stat(scs_ptr)) && copy_frame)) == 0) {
+#endif
                     pcs_ptr->sc_class0 = pcs_ptr->sc_class1 = pcs_ptr->sc_class2 = 0;
                 }
                 else if (scs_ptr->static_config.screen_content_mode == 2) { // auto detect

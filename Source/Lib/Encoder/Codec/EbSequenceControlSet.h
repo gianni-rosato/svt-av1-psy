@@ -35,7 +35,28 @@ extern "C" {
         double lmv_di_th; // Threshold to determine low mv direction scene
     } MiniGopSizeCtrls;
 #endif
+#if CLN_ENC_CONFIG_SIG
+    typedef enum EncPass {
+        ENC_SINGLE_PASS, //single pass mode
+        ENC_FIRST_PASS, // first pass of multi pass mode
+        ENC_MIDDLE_PASS, // middle pass of multi pass mode
+        ENC_LAST_PASS, // last pass of multi pass mode
+        MAX_ENCODE_PASS = 3,
+    } EncPass;
 
+    typedef struct IppPassControls {
+        uint8_t skip_frame_first_pass; // Enable the ability to skip frame
+        uint8_t ds; // use downsampled input
+        uint8_t bypass_blk_step; // bypass every other row and col
+        uint8_t dist_ds; // downsample distortion
+        uint8_t bypass_zz_check; // Bypas the (0,0)_MV check against HME_MV before performing ME
+        uint8_t use8blk;
+        uint8_t reduce_me_search; //Reduce HME_ME SR areas
+    } IppPassControls;
+    typedef struct MidPassControls {
+        uint8_t ds; // use downsampled input
+    } MidPassControls;
+#endif
 /************************************
      * Sequence Control Set
      ************************************/
@@ -251,6 +272,12 @@ typedef struct SequenceControlSet {
 #if CLIP_BASED_DYNAMIC_MINIGOP
     MiniGopSizeCtrls mgs_ctls;
 #endif
+#if CLN_TF_ENC_CONFIG
+    TfControls tf_params_per_type[3]; // [I_SLICE][BASE][L1]
+#endif
+#if CLN_MRP_ENC_CONFIG
+    MrpCtrls mrp_ctrls;
+#endif
 #if FTR_OPT_MPASS
     /*!< The RC stat generation pass mode (0: The default, 1: optimized)*/
     uint8_t rc_stat_gen_pass_mode;
@@ -261,6 +288,13 @@ typedef struct SequenceControlSet {
 #endif
 #if TUNE_VBR_OVERSHOOT
     uint8_t is_short_clip; //less than 200 frames, used in VBR and set in multipass encode
+#endif
+#if CLN_ENC_CONFIG_SIG
+    uint8_t passes;
+    IppPassControls ipp_pass_ctrls;
+    MidPassControls mid_pass_ctrls;
+    uint8_t ipp_was_ds;
+    uint8_t final_pass_preset;
 #endif
 } SequenceControlSet;
 
@@ -295,22 +329,28 @@ extern EbErrorType derive_input_resolution(EbInputResolution *input_resolution,
                                            uint32_t           input_size);
 
 EbErrorType sb_geom_init(SequenceControlSet *scs_ptr);
-
+#if !CLN_ENC_CONFIG_SIG
 inline static EbBool use_input_stat(const SequenceControlSet *scs_ptr) {
     return !!scs_ptr->static_config.rc_twopass_stats_in.sz;
 }
 
-inline static EbBool use_output_stat(const SequenceControlSet *scs_ptr) {
+inline static EbBool use_output_stat(const SequenceControlSet* scs_ptr) {
     return scs_ptr->static_config.rc_firstpass_stats_out;
 }
+#endif
+
 #if FTR_MULTI_PASS_API
+#if !CLN_ENC_CONFIG_SIG
 inline static EbBool is_middle_pass(const SequenceControlSet *scs_ptr) {
     return scs_ptr->static_config.rc_middlepass_stats_out;
 }
+#endif
+#if !CLN_ENC_CONFIG_SIG
 #if FTR_OPT_MPASS_DOWN_SAMPLE
 inline static EbBool is_middle_pass_ds(const SequenceControlSet *scs_ptr) {
     return scs_ptr->static_config.rc_middlepass_ds_stats_out;
 }
+#endif
 #endif
 #endif
 #ifdef __cplusplus

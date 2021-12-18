@@ -203,11 +203,12 @@ typedef enum {
 
 typedef enum {
     SVT_AV1_STREAM_INFO_START = 1,
-
+#if !CLN_ENC_CONFIG_SIG
     // The output is SvtAv1FixedBuf*
     // Two use this, you need:
     // 1. set the EbSvtAv1EncConfiguration.rc_firstpass_stats_out to EB_TRUE
     // 2. call this when you got EB_BUFFERFLAG_EOS
+#endif
     SVT_AV1_STREAM_INFO_FIRST_PASS_STATS_OUT = SVT_AV1_STREAM_INFO_START,
 
     SVT_AV1_STREAM_INFO_END,
@@ -223,6 +224,8 @@ typedef struct SvtAv1FixedBuf {
 } SvtAv1FixedBuf; /**< alias for struct aom_fixed_buf */
 
 #if OPT_FIRST_PASS2
+
+#if !CLN_ENC_CONFIG_SIG
 typedef struct IppPassControls {
     uint8_t skip_frame_first_pass; // Enable the ability to skip frame
     uint8_t ipp_ds; // use downsampled version in ipp pass
@@ -232,6 +235,7 @@ typedef struct IppPassControls {
     uint8_t use8blk;
     uint8_t reduce_me_search; //Reduce HME_ME SR areas
 } IppPassControls;
+#endif
 #endif
 #if CLN_MERGE_MRP_SIG
 typedef struct MrpCtrls {
@@ -403,6 +407,7 @@ typedef struct EbSvtAv1EncConfiguration {
     int32_t chroma_qindex_offsets[EB_MAX_TEMPORAL_LAYERS];
     /* input buffer for the second pass */
     SvtAv1FixedBuf rc_twopass_stats_in;
+#if !CLN_ENC_CONFIG_SIG
     /* generate first pass stats output.
     * when you set this to EB_TRUE, and you got the EB_BUFFERFLAG_EOS,
     * you can get the encoder stats using:
@@ -413,14 +418,24 @@ typedef struct EbSvtAv1EncConfiguration {
     *
     * Default is 0.*/
     EbBool rc_firstpass_stats_out;
+#endif
 #if FTR_MULTI_PASS_API
+#if !CLN_ENC_CONFIG_SIG
     EbBool rc_middlepass_stats_out;
     uint8_t    passes;
+#endif
+#if CLN_ENC_CONFIG_SIG
+    int pass;
+#endif
 #if TUNE_MULTI_PASS
+#if !CLN_ENC_CONFIG_SIG
     MultiPassModes multi_pass_mode;
 #endif
+#endif
 #if FTR_OPT_MPASS_DOWN_SAMPLE
+#if !CLN_ENC_CONFIG_SIG
     EbBool rc_middlepass_ds_stats_out;
+#endif
 #endif
 #endif
     /* Enable picture QP scaling between hierarchical levels
@@ -924,8 +939,9 @@ typedef struct EbSvtAv1EncConfiguration {
     // -1: Default; 0: OFF; 1: ON
     int8_t  tf_level;
     EbBool  enable_overlays;
+#if !CLN_TF_ENC_CONFIG
     TfControls tf_params_per_type[3]; // [I_SLICE][BASE][L1]
-
+#endif
     // super-resolution parameters
     uint8_t superres_mode;
     uint8_t superres_denom;
@@ -981,12 +997,12 @@ typedef struct EbSvtAv1EncConfiguration {
     * values are from set using svt_aom_parse_content_light_level()
     */
     struct EbContentLightLevel content_light_level;
-#if 1 /*GOP_BASED_DYNAMIC_MINIGOP*/ // TODO: fix me, this break build for depend on two MACRO definition
+
 #if FIX_DATA_RACE_2PASS
     uint8_t enable_adaptive_mini_gop;
     uint8_t max_heirachical_level;
 #endif
-#endif
+#if !CLN_ENC_CONFIG_SIG
 #if OPT_FIRST_PASS
 #if !FIX_VBR_IPP
     uint8_t final_pass_rc_mode;
@@ -999,8 +1015,11 @@ typedef struct EbSvtAv1EncConfiguration {
 #if IPP_CTRL
     uint8_t final_pass_preset;
 #endif
+#endif
+#if !CLN_MRP_ENC_CONFIG
 #if CLN_MERGE_MRP_SIG
     MrpCtrls mrp_ctrls;
+#endif
 #endif
 } EbSvtAv1EncConfiguration;
 

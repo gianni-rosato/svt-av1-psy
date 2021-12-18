@@ -1187,7 +1187,11 @@ static EbErrorType reset_pcs_av1(PictureParentControlSet *pcs_ptr) {
     frm_hdr->primary_ref_frame               = PRIMARY_REF_NONE;
 #if FTR_1PASS_CBR
     if (pcs_ptr->scs_ptr->static_config.rate_control_mode == 2 &&
+#if CLN_ENC_CONFIG_SIG
+        pcs_ptr->scs_ptr->static_config.pass != ENC_FIRST_PASS && !(pcs_ptr->scs_ptr->static_config.pass == ENC_MIDDLE_PASS || pcs_ptr->scs_ptr->static_config.pass == ENC_LAST_PASS)) {
+#else
        !use_output_stat(pcs_ptr->scs_ptr) && !use_input_stat(pcs_ptr->scs_ptr)) {
+#endif
         pcs_ptr->frame_offset = pcs_ptr->picture_number %
             (pcs_ptr->scs_ptr->static_config.intra_period_length + 1);
     } else
@@ -1472,23 +1476,32 @@ void setup_two_pass(SequenceControlSet *scs_ptr) {
 static void setup_two_pass(SequenceControlSet *scs_ptr) {
 #endif
     EncodeContext *encode_context_ptr = scs_ptr->encode_context_ptr;
-
+#if !CLN_ENC_CONFIG_SIG
     int num_lap_buffers = 0;
     int size            = get_stats_buf_size(num_lap_buffers, MAX_LAG_BUFFERS);
     for (int i = 0; i < size; i++)
 #if !CLN_2PASS
         scs_ptr->twopass.frame_stats_arr[i] = &encode_context_ptr->frame_stats_buffer[i];
 #endif
+#endif
 #if FTR_NEW_MULTI_PASS
 #if TUNE_MULTI_PASS
+#if CLN_ENC_CONFIG_SIG
+    scs_ptr->twopass.passes = scs_ptr->passes;
+#else
     scs_ptr->twopass.multi_pass_mode = scs_ptr->static_config.multi_pass_mode;
+#endif
 #else
     scs_ptr->twopass.passes = scs_ptr->static_config.passes;
 #endif
 #endif
     scs_ptr->twopass.stats_buf_ctx = &encode_context_ptr->stats_buf_context;
     scs_ptr->twopass.stats_in      = scs_ptr->twopass.stats_buf_ctx->stats_in_start;
+#if CLN_ENC_CONFIG_SIG
+    if (scs_ptr->static_config.pass == ENC_MIDDLE_PASS || scs_ptr->static_config.pass == ENC_LAST_PASS) {
+#else
     if (use_input_stat(scs_ptr)) {
+#endif
         const size_t packet_sz = sizeof(FIRSTPASS_STATS);
         const int    packets   = (int)(encode_context_ptr->rc_twopass_stats_in.sz / packet_sz);
 
@@ -1652,7 +1665,11 @@ void *resource_coordination_kernel(void *input_ptr) {
             scs_tmp->scd_mode = scs_tmp->static_config.scene_change_detection == 0 ? SCD_MODE_0
                                                                                    : SCD_MODE_1;
             // Pre-Analysis Signal(s) derivation
+#if CLN_ENC_CONFIG_SIG
+            if (scs_tmp->static_config.pass == ENC_FIRST_PASS)
+#else
             if (use_output_stat(scs_tmp))
+#endif
                 first_pass_signal_derivation_pre_analysis_scs(scs_tmp);
             else
                 signal_derivation_pre_analysis_oq_scs(scs_tmp);
@@ -1893,7 +1910,11 @@ void *resource_coordination_kernel(void *input_ptr) {
             //  If the mode of the second pass is not set from CLI, it is set to enc_mode
 
             // Pre-Analysis Signal(s) derivation
+#if CLN_ENC_CONFIG_SIG
+            if (scs_ptr->static_config.pass == ENC_FIRST_PASS)
+#else
             if (use_output_stat(scs_ptr))
+#endif
                 first_pass_signal_derivation_pre_analysis_pcs(pcs_ptr);
             else
                 signal_derivation_pre_analysis_oq_pcs(scs_ptr, pcs_ptr);
@@ -1918,10 +1939,18 @@ void *resource_coordination_kernel(void *input_ptr) {
             else
                 pcs_ptr->picture_number = context_ptr->picture_number_array[instance_index];
             if (pcs_ptr->picture_number == 0) {
+#if CLN_ENC_CONFIG_SIG
+                if (scs_ptr->static_config.pass == ENC_MIDDLE_PASS || scs_ptr->static_config.pass == ENC_LAST_PASS)
+#else
                 if (use_input_stat(scs_ptr))
+#endif
                     read_stat(scs_ptr);
 #if TUNE_MULTI_PASS
+#if CLN_ENC_CONFIG_SIG
+                if (scs_ptr->static_config.pass != ENC_SINGLE_PASS || scs_ptr->lap_enabled)
+#else
                 if (use_input_stat(scs_ptr) || use_output_stat(scs_ptr) || is_middle_pass(scs_ptr) || scs_ptr->lap_enabled)
+#endif
 #else
                 if (use_input_stat(scs_ptr) || use_output_stat(scs_ptr) || scs_ptr->lap_enabled)
 #endif
@@ -1931,11 +1960,19 @@ void *resource_coordination_kernel(void *input_ptr) {
                     set_rc_param(scs_ptr);
 #endif
 #if FIX_VBR_R2R
+#if CLN_ENC_CONFIG_SIG
+                if (scs_ptr->static_config.pass == ENC_MIDDLE_PASS)
+#else
                 if (is_middle_pass(scs_ptr))
+#endif
                     find_init_qp_middle_pass(scs_ptr, pcs_ptr);
 #endif
 #if FTR_1PASS_CBR
+#if CLN_ENC_CONFIG_SIG
+                if (!(scs_ptr->static_config.pass == ENC_MIDDLE_PASS || scs_ptr->static_config.pass == ENC_LAST_PASS) && scs_ptr->static_config.pass != ENC_FIRST_PASS && scs_ptr->static_config.rate_control_mode == 2) {
+#else
                 if (!use_input_stat(scs_ptr) && !use_output_stat(scs_ptr) && scs_ptr->static_config.rate_control_mode == 2) {
+#endif
                     setup_two_pass(scs_ptr);
 #if !FTR_RC_CAP
                     set_rc_param(scs_ptr);
@@ -1945,8 +1982,12 @@ void *resource_coordination_kernel(void *input_ptr) {
             }
 #if FTR_MULTI_PASS_API
 #if TUNE_MULTI_PASS
+#if CLN_ENC_CONFIG_SIG
+            if (scs_ptr->passes == 3 && !end_of_sequence_flag && scs_ptr->static_config.pass == ENC_LAST_PASS && scs_ptr->static_config.rate_control_mode) {
+#else
             if ((scs_ptr->static_config.multi_pass_mode == TWO_PASS_SAMEPRED_FINAL || scs_ptr->static_config.multi_pass_mode == THREE_PASS_IPP_SAMEPRED_FINAL)
                 &&!end_of_sequence_flag && use_input_stat(scs_ptr) && !is_middle_pass(scs_ptr) && scs_ptr->static_config.rate_control_mode) {
+#endif
 #else
             if (scs_ptr->static_config.passes == 3 && !end_of_sequence_flag && use_input_stat(scs_ptr) && !is_middle_pass(scs_ptr) && scs_ptr->static_config.rate_control_mode) {
 #endif

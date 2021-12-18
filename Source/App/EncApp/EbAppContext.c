@@ -77,7 +77,7 @@ static EbErrorType allocate_frame_buffer(EbConfig *config, uint8_t *p_buffer) {
     const uint8_t       subsampling_x = (color_format == EB_YUV444 ? 1 : 2) - 1;
 
     // Determine size of each plane
-#if FTR_OPT_MPASS_DOWN_SAMPLE
+#if FTR_OPT_MPASS_DOWN_SAMPLE  && !CLN_ENC_CONFIG_SIG
     size_t luma_8bit_size;
 #if FTR_OP_TEST
     if(1)
@@ -118,7 +118,7 @@ static EbErrorType allocate_frame_buffer(EbConfig *config, uint8_t *p_buffer) {
 
     // Determine
     EbSvtIOFormat *input_ptr = (EbSvtIOFormat *)p_buffer;
-#if FTR_OPT_MPASS_DOWN_SAMPLE
+#if FTR_OPT_MPASS_DOWN_SAMPLE  && !CLN_ENC_CONFIG_SIG
 #if FTR_OP_TEST
     if (1) {
 #else
@@ -266,7 +266,7 @@ EbErrorType allocate_output_recon_buffers(EbConfig *config, EbAppContext *callba
 
 EbErrorType preload_frames_info_ram(EbConfig *config) {
     EbErrorType         return_error        = EB_ErrorNone;
-#if FTR_OPT_MPASS_DOWN_SAMPLE
+#if FTR_OPT_MPASS_DOWN_SAMPLE  && !CLN_ENC_CONFIG_SIG
     int32_t             input_padded_width;
     int32_t             input_padded_height;
 #if FTR_OP_TEST
@@ -340,6 +340,7 @@ EbErrorType preload_frames_info_ram(EbConfig *config) {
  * Initialize Core & Component
  ***********************************/
 EbErrorType init_encoder(EbConfig *config, EbAppContext *callback_data, uint32_t instance_idx) {
+
     // Allocate a memory table hosting all allocated pointers
     allocate_memory_table(instance_idx);
 
@@ -356,6 +357,7 @@ EbErrorType init_encoder(EbConfig *config, EbAppContext *callback_data, uint32_t
         return return_error;
     // STEP 5: Init Encoder
     return_error = svt_av1_enc_init(callback_data->svt_encoder_handle);
+
     if (return_error != EB_ErrorNone) {
         return return_error;
     }

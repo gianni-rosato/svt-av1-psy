@@ -134,9 +134,15 @@ typedef struct PredictionStructureGroup {
      * Declarations
      ************************************************/
 #if CLN_MERGE_MRP_SIG
+#if CLN_MRP_ENC_CONFIG
+ //EbErrorType prediction_structure_group_ctor(
+ //   PredictionStructureGroup* pred_struct_group_ptr,
+ //   struct SequenceControlSet* scs_ptr);
+#else
 extern EbErrorType prediction_structure_group_ctor(
     PredictionStructureGroup* pred_struct_group_ptr,
     EbSvtAv1EncConfiguration* config);
+#endif
 #else
 extern EbErrorType prediction_structure_group_ctor(PredictionStructureGroup *pred_struct_group_ptr,
     uint8_t   mrp_init_level,

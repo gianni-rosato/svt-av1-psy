@@ -1,4 +1,4 @@
-﻿// clang-format off
+// clang-format off
 /*
 * Copyright(c) 2019 Intel Corporation
 *
@@ -76,6 +76,13 @@
 
 #include "aom_dsp_rtcd.h"
 #include "common_dsp_rtcd.h"
+
+
+#if CLN_MRP_ENC_CONFIG
+ EbErrorType prediction_structure_group_ctor(
+     PredictionStructureGroup* pred_struct_group_ptr,
+     struct SequenceControlSet* scs_ptr);
+#endif
 
  /**************************************
   * Defines
@@ -694,8 +701,11 @@ EbErrorType load_default_buffer_configuration_settings(
 
         uint16_t num_ref_lad_mgs = num_ref_from_cur_mg * scs_ptr->lad_mg;
         min_ref = num_ref_from_past_mgs + num_ref_from_cur_mg + num_ref_lad_mgs;
-
+#if CLN_ENC_CONFIG_SIG
+        if (scs_ptr->static_config.pass == ENC_FIRST_PASS)
+#else
         if (use_output_stat(scs_ptr))
+#endif
             min_me = min_parent;
         else if (scs_ptr->static_config.enable_tpl_la) {
             // PictureDecisionContext.mg_size = mg_size + overlay; see EbPictureDecisionProcess.c line 5680
@@ -733,8 +743,11 @@ EbErrorType load_default_buffer_configuration_settings(
             min_ref = num_ref_from_past_mgs + num_ref_from_cur_mg;
             min_me = 1;
             min_paref = num_pa_ref_for_cur_mg + scs_ptr->scd_delay + eos_delay;
-
+#if CLN_TF_ENC_CONFIG
+            uint32_t low_delay_tf_frames = scs_ptr->tf_params_per_type[1].max_num_past_pics;
+#else
             uint32_t low_delay_tf_frames =  scs_ptr->static_config.tf_params_per_type[1].max_num_past_pics;
+#endif
             min_input  += low_delay_tf_frames;
             min_parent += low_delay_tf_frames;
             min_ref    += low_delay_tf_frames;
@@ -1759,7 +1772,22 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
         input_data.in_loop_ois = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->in_loop_ois;
         input_data.enc_dec_segment_col = (uint16_t)enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->tpl_segment_col_count_array;
         input_data.enc_dec_segment_row = (uint16_t)enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->tpl_segment_row_count_array;
+#if CLN_ENC_CONFIG_SIG
+        input_data.pass = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.pass;
+#else
         input_data.rc_firstpass_stats_out = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.rc_firstpass_stats_out;
+#endif
+#if CLN_ENC_CONFIG_SIG
+        input_data.skip_frame_first_pass = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->ipp_pass_ctrls.skip_frame_first_pass;
+        input_data.bypass_blk_step = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->ipp_pass_ctrls.bypass_blk_step;
+        input_data.ipp_ds = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->ipp_pass_ctrls.ds;
+        input_data.dist_ds = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->ipp_pass_ctrls.dist_ds;
+        input_data.ipp_was_ds = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->ipp_was_ds;
+        input_data.final_pass_preset = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->final_pass_preset;
+        input_data.bypass_zz_check = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->ipp_pass_ctrls.bypass_zz_check;
+        input_data.use8blk = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->ipp_pass_ctrls.use8blk;
+        input_data.reduce_me_search = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->ipp_pass_ctrls.reduce_me_search;
+#else
 #if FIX_DG
         input_data.skip_frame_first_pass = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.ipp_ctrls.skip_frame_first_pass;
         input_data.bypass_blk_step = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.ipp_ctrls.bypass_blk_step;
@@ -1773,13 +1801,19 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
         input_data.reduce_me_search = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.ipp_ctrls.reduce_me_search;
 #endif
 #endif
+#endif
         input_data.rate_control_mode = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.rate_control_mode;
 #if TUNE_MULTI_PASS
+#if !CLN_ENC_CONFIG_SIG
         input_data.passes = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.passes;
 #endif
+#endif
 #if CLN_MERGE_MRP_SIG
+#if CLN_MRP_ENC_CONFIG
+        MrpCtrls* mrp_ctrl = &(enc_handle_ptr->scs_instance_array[0]->scs_ptr->mrp_ctrls);
+#else
         MrpCtrls* mrp_ctrl = &(enc_handle_ptr->scs_instance_array[0]->scs_ptr->static_config.mrp_ctrls);
-
+#endif
         input_data.ref_count_used_list0 =
             MAX(mrp_ctrl->sc_base_ref_list0_count,
                 MAX(mrp_ctrl->base_ref_list0_count,
@@ -2982,7 +3016,11 @@ static void update_look_ahead(SequenceControlSet *scs_ptr) {
         SVT_WARN("Lookahead distance is not long enough to get best bdrate trade off. Force the look_ahead_distance to be %d\n",
             scs_ptr->static_config.look_ahead_distance);
     }
+#if CLN_ENC_CONFIG_SIG
+    else if (scs_ptr->lad_mg > scs_ptr->tpl_lad_mg && (scs_ptr->static_config.rate_control_mode == 0 || scs_ptr->static_config.pass == ENC_MIDDLE_PASS || scs_ptr->static_config.pass == ENC_LAST_PASS)) {
+#else
     else if (scs_ptr->lad_mg > scs_ptr->tpl_lad_mg && (scs_ptr->static_config.rate_control_mode == 0 || use_input_stat(scs_ptr))) {
+#endif
         scs_ptr->lad_mg = scs_ptr->tpl_lad_mg;
         scs_ptr->static_config.look_ahead_distance = (1 + mg_size) * (scs_ptr->lad_mg + 1) + scs_ptr->scd_delay + eos_delay;
         SVT_WARN("For CRF or 2PASS RC mode, the maximum needed Lookahead distance is %d. Force the look_ahead_distance to be %d\n",
@@ -3010,6 +3048,842 @@ void set_tf_64x64_params(
  * Control TF
  */
 #if CLN_TF
+#if CLN_TF_ENC_CONFIG
+void tf_controls(SequenceControlSet *scs_ptr, uint8_t tf_level) {
+
+    switch (tf_level)
+    {
+    case 0:
+        // I_SLICE TF Params
+        scs_ptr->tf_params_per_type[0].enabled = 0;
+
+        // BASE TF Params
+        scs_ptr->tf_params_per_type[1].enabled = 0;
+
+        // L1 TF Params
+        scs_ptr->tf_params_per_type[2].enabled = 0;
+        break;
+
+    case 1:
+        // I_SLICE TF Params
+        scs_ptr->tf_params_per_type[0].enabled                  = 1;
+        scs_ptr->tf_params_per_type[0].num_future_pics          = 16;
+        scs_ptr->tf_params_per_type[0].noise_adjust_future_pics = 1;
+        scs_ptr->tf_params_per_type[0].activity_adjust_th       = 35;
+        scs_ptr->tf_params_per_type[0].max_num_future_pics      = MIN((1 << scs_ptr->static_config.hierarchical_levels), 16);
+        scs_ptr->tf_params_per_type[0].hme_me_level             = 0;
+        scs_ptr->tf_params_per_type[0].half_pel_mode            = 1;
+        scs_ptr->tf_params_per_type[0].quarter_pel_mode         = 1;
+        scs_ptr->tf_params_per_type[0].eight_pel_mode           = 1;
+        scs_ptr->tf_params_per_type[0].do_chroma                = 1;
+#if !FIX_TF_FILTER_64x64_PATH
+#if OPT_UPGRADE_TF
+        scs_ptr->tf_params_per_type[0].use_pred_64x64_only_th   = 0;
+        scs_ptr->tf_params_per_type[0].me_exit_th               = 0;
+#endif
+#endif
+        scs_ptr->tf_params_per_type[0].pred_error_32x32_th      = 0;
+#if !CLN_TF_CTRLS
+        scs_ptr->tf_params_per_type[0].me_16x16_to_8x8_dev_th   = MAX_SIGNED_VALUE;
+#endif
+#if OPT_TF
+        scs_ptr->tf_params_per_type[0].sub_sampling_shift       = 0;
+#endif
+#if OPT_TFILTER
+        scs_ptr->tf_params_per_type[0].use_fast_filter = 0;
+#endif
+#if TUNE_MEDIUM_TFILTER
+        scs_ptr->tf_params_per_type[0].use_medium_filter = 0;
+#endif
+#if OPT_TFILTER
+        scs_ptr->tf_params_per_type[0].avoid_2d_qpel = 0;
+        scs_ptr->tf_params_per_type[0].use_2tap = 0;
+#endif
+#if OPT_NOISE_LEVEL
+        scs_ptr->tf_params_per_type[0].use_intra_for_noise_est = 0;
+#endif
+#if OPT_TF_8BIT_SUBPEL
+        scs_ptr->tf_params_per_type[0].use_8bit_subpel = 0;
+#endif
+#if FIX_TF_FILTER_64x64_PATH
+        set_tf_64x64_params(
+            scs_ptr->tf_params_per_type[0].use_fast_filter,
+            &scs_ptr->tf_params_per_type[0].use_pred_64x64_only_th,
+            &scs_ptr->tf_params_per_type[0].me_exit_th, 0, 0);
+#endif
+        // BASE TF Params
+        scs_ptr->tf_params_per_type[1].enabled                  = 1;
+        scs_ptr->tf_params_per_type[1].num_past_pics            = 3;
+        scs_ptr->tf_params_per_type[1].num_future_pics          = 6;
+        scs_ptr->tf_params_per_type[1].noise_adjust_past_pics   = 1;
+        scs_ptr->tf_params_per_type[1].noise_adjust_future_pics = 1;
+        scs_ptr->tf_params_per_type[1].activity_adjust_th       = 35;
+        scs_ptr->tf_params_per_type[1].max_num_past_pics        = MIN((1 << scs_ptr->static_config.hierarchical_levels), 3);
+        scs_ptr->tf_params_per_type[1].max_num_future_pics      = MIN((1 << scs_ptr->static_config.hierarchical_levels), 6);
+        scs_ptr->tf_params_per_type[1].hme_me_level             = 0;
+        scs_ptr->tf_params_per_type[1].half_pel_mode            = 1;
+        scs_ptr->tf_params_per_type[1].quarter_pel_mode         = 1;
+        scs_ptr->tf_params_per_type[1].eight_pel_mode           = 1;
+        scs_ptr->tf_params_per_type[1].do_chroma                = 1;
+#if !FIX_TF_FILTER_64x64_PATH
+#if OPT_UPGRADE_TF
+        scs_ptr->tf_params_per_type[1].use_pred_64x64_only_th   = 0;
+        scs_ptr->tf_params_per_type[1].me_exit_th               = 0;
+#endif
+#endif
+        scs_ptr->tf_params_per_type[1].pred_error_32x32_th      = 0;
+#if !CLN_TF_CTRLS
+        scs_ptr->tf_params_per_type[1].me_16x16_to_8x8_dev_th   = MAX_SIGNED_VALUE;
+#endif
+#if OPT_TF
+        scs_ptr->tf_params_per_type[1].sub_sampling_shift       = 0;
+#endif
+#if OPT_TFILTER
+        scs_ptr->tf_params_per_type[1].use_fast_filter = 0;
+#endif
+#if TUNE_MEDIUM_TFILTER
+        scs_ptr->tf_params_per_type[1].use_medium_filter = 0;
+#endif
+#if OPT_TFILTER
+        scs_ptr->tf_params_per_type[1].avoid_2d_qpel = 0;
+        scs_ptr->tf_params_per_type[1].use_2tap = 0;
+#endif
+#if OPT_NOISE_LEVEL
+        scs_ptr->tf_params_per_type[1].use_intra_for_noise_est = 0;
+#endif
+#if OPT_TF_8BIT_SUBPEL
+        scs_ptr->tf_params_per_type[1].use_8bit_subpel = 0;
+#endif
+#if FIX_TF_FILTER_64x64_PATH
+        set_tf_64x64_params(
+            scs_ptr->tf_params_per_type[1].use_fast_filter,
+            &scs_ptr->tf_params_per_type[1].use_pred_64x64_only_th,
+            &scs_ptr->tf_params_per_type[1].me_exit_th, 0, 0);
+#endif
+        // L1 TF Params
+        scs_ptr->tf_params_per_type[2].enabled                  = 1;
+        scs_ptr->tf_params_per_type[2].num_past_pics            = 1;
+        scs_ptr->tf_params_per_type[2].num_future_pics          = 1;
+        scs_ptr->tf_params_per_type[2].noise_adjust_past_pics   = 0;
+        scs_ptr->tf_params_per_type[2].noise_adjust_future_pics = 0;
+        scs_ptr->tf_params_per_type[2].activity_adjust_th       = 35;
+        scs_ptr->tf_params_per_type[2].max_num_past_pics        = MIN((1 << scs_ptr->static_config.hierarchical_levels) / 2, 1);
+        scs_ptr->tf_params_per_type[2].max_num_future_pics      = MIN((1 << scs_ptr->static_config.hierarchical_levels) / 2, 1);
+        scs_ptr->tf_params_per_type[2].hme_me_level             = 0;
+        scs_ptr->tf_params_per_type[2].half_pel_mode            = 1;
+        scs_ptr->tf_params_per_type[2].quarter_pel_mode         = 1;
+        scs_ptr->tf_params_per_type[2].eight_pel_mode           = 1;
+        scs_ptr->tf_params_per_type[2].do_chroma                = 1;
+#if !FIX_TF_FILTER_64x64_PATH
+#if OPT_UPGRADE_TF
+        scs_ptr->tf_params_per_type[2].use_pred_64x64_only_th   = 0;
+        scs_ptr->tf_params_per_type[2].me_exit_th               = 0;
+#endif
+#endif
+        scs_ptr->tf_params_per_type[2].pred_error_32x32_th      = 0;
+#if !CLN_TF_CTRLS
+        scs_ptr->tf_params_per_type[2].me_16x16_to_8x8_dev_th   = MAX_SIGNED_VALUE;
+#endif
+#if OPT_TF
+        scs_ptr->tf_params_per_type[2].sub_sampling_shift       = 0;
+#endif
+#if OPT_TFILTER
+        scs_ptr->tf_params_per_type[2].use_fast_filter = 0;
+#endif
+#if TUNE_MEDIUM_TFILTER
+        scs_ptr->tf_params_per_type[2].use_medium_filter = 0;
+#endif
+#if OPT_TFILTER
+        scs_ptr->tf_params_per_type[2].avoid_2d_qpel = 0;
+        scs_ptr->tf_params_per_type[2].use_2tap = 0;
+#endif
+#if OPT_NOISE_LEVEL
+        scs_ptr->tf_params_per_type[2].use_intra_for_noise_est = 0;
+#endif
+#if OPT_TF_8BIT_SUBPEL
+        scs_ptr->tf_params_per_type[2].use_8bit_subpel = 0;
+#endif
+#if FIX_TF_FILTER_64x64_PATH
+        set_tf_64x64_params(
+            scs_ptr->tf_params_per_type[2].use_fast_filter,
+            &scs_ptr->tf_params_per_type[2].use_pred_64x64_only_th,
+            &scs_ptr->tf_params_per_type[2].me_exit_th, 0, 0);
+#endif
+        break;
+
+#if TUNE_MEDIUM_TFILTER
+    case 2:
+        // I_SLICE TF Params
+        scs_ptr->tf_params_per_type[0].enabled = 1;
+        scs_ptr->tf_params_per_type[0].num_future_pics = 16;
+        scs_ptr->tf_params_per_type[0].noise_adjust_future_pics = 1;
+        scs_ptr->tf_params_per_type[0].activity_adjust_th = 35;
+        scs_ptr->tf_params_per_type[0].max_num_future_pics = MIN((1 << scs_ptr->static_config.hierarchical_levels), 16);
+        scs_ptr->tf_params_per_type[0].hme_me_level = 1;
+        scs_ptr->tf_params_per_type[0].half_pel_mode = 1;
+        scs_ptr->tf_params_per_type[0].quarter_pel_mode = 1;
+        scs_ptr->tf_params_per_type[0].eight_pel_mode = 1;
+        scs_ptr->tf_params_per_type[0].do_chroma = 1;
+#if !FIX_TF_FILTER_64x64_PATH
+#if OPT_UPGRADE_TF
+        scs_ptr->tf_params_per_type[0].use_pred_64x64_only_th = 0;
+        scs_ptr->tf_params_per_type[0].me_exit_th = 0;
+#endif
+#endif
+        scs_ptr->tf_params_per_type[0].pred_error_32x32_th = 0;
+#if !CLN_TF_CTRLS
+        scs_ptr->tf_params_per_type[0].me_16x16_to_8x8_dev_th = MAX_SIGNED_VALUE;
+#endif
+#if OPT_TF
+        scs_ptr->tf_params_per_type[0].sub_sampling_shift = 0;
+#endif
+#if OPT_TFILTER
+        scs_ptr->tf_params_per_type[0].use_fast_filter = 0;
+#if TUNE_MEDIUM_TFILTER
+        scs_ptr->tf_params_per_type[0].use_medium_filter = (scs_ptr->input_resolution < INPUT_SIZE_720p_RANGE) ? 1 : 0; //case 3, M4-5
+#endif
+#endif
+#if OPT_TFILTER
+        scs_ptr->tf_params_per_type[0].avoid_2d_qpel = 0;
+        scs_ptr->tf_params_per_type[0].use_2tap = 0;
+#endif
+#if OPT_NOISE_LEVEL
+        scs_ptr->tf_params_per_type[0].use_intra_for_noise_est = 0;
+#endif
+#if OPT_TF_8BIT_SUBPEL
+        scs_ptr->tf_params_per_type[0].use_8bit_subpel = 0;
+#endif
+#if FIX_TF_FILTER_64x64_PATH
+        set_tf_64x64_params(
+            scs_ptr->tf_params_per_type[0].use_fast_filter,
+            &scs_ptr->tf_params_per_type[0].use_pred_64x64_only_th,
+            &scs_ptr->tf_params_per_type[0].me_exit_th, 0, 0);
+#endif
+
+        // BASE TF Params
+        scs_ptr->tf_params_per_type[1].enabled = 1;
+        scs_ptr->tf_params_per_type[1].num_past_pics = 3;
+        scs_ptr->tf_params_per_type[1].num_future_pics = 3;
+        scs_ptr->tf_params_per_type[1].noise_adjust_past_pics = 1;
+        scs_ptr->tf_params_per_type[1].noise_adjust_future_pics = 1;
+        scs_ptr->tf_params_per_type[1].activity_adjust_th = 35;
+        scs_ptr->tf_params_per_type[1].max_num_past_pics = MIN((1 << scs_ptr->static_config.hierarchical_levels), 3);
+        scs_ptr->tf_params_per_type[1].max_num_future_pics = MIN((1 << scs_ptr->static_config.hierarchical_levels), 6);
+        scs_ptr->tf_params_per_type[1].hme_me_level = 1;
+        scs_ptr->tf_params_per_type[1].half_pel_mode = 1;
+        scs_ptr->tf_params_per_type[1].quarter_pel_mode = 1;
+        scs_ptr->tf_params_per_type[1].eight_pel_mode = 1;
+        scs_ptr->tf_params_per_type[1].do_chroma = 1;
+#if !FIX_TF_FILTER_64x64_PATH
+#if OPT_UPGRADE_TF
+        scs_ptr->tf_params_per_type[1].use_pred_64x64_only_th = 0;
+        scs_ptr->tf_params_per_type[1].me_exit_th = 0;
+#endif
+#endif
+        scs_ptr->tf_params_per_type[1].pred_error_32x32_th = 0;
+#if !CLN_TF_CTRLS
+        scs_ptr->tf_params_per_type[1].me_16x16_to_8x8_dev_th = MAX_SIGNED_VALUE;
+#endif
+#if OPT_TF
+        scs_ptr->tf_params_per_type[1].sub_sampling_shift = 0;
+#endif
+#if OPT_TFILTER
+        scs_ptr->tf_params_per_type[1].use_fast_filter = 0;
+#if TUNE_MEDIUM_TFILTER
+        scs_ptr->tf_params_per_type[1].use_medium_filter = (scs_ptr->input_resolution < INPUT_SIZE_720p_RANGE) ? 1 : 0; //case 3, M4-5
+#endif
+#endif
+#if OPT_TFILTER
+        scs_ptr->tf_params_per_type[1].avoid_2d_qpel = 0;
+        scs_ptr->tf_params_per_type[1].use_2tap = 0;
+#endif
+#if OPT_NOISE_LEVEL
+        scs_ptr->tf_params_per_type[1].use_intra_for_noise_est = 0;
+#endif
+#if OPT_TF_8BIT_SUBPEL
+        scs_ptr->tf_params_per_type[1].use_8bit_subpel = 0;
+#endif
+#if FIX_TF_FILTER_64x64_PATH
+        set_tf_64x64_params(
+            scs_ptr->tf_params_per_type[1].use_fast_filter,
+            &scs_ptr->tf_params_per_type[1].use_pred_64x64_only_th,
+            &scs_ptr->tf_params_per_type[1].me_exit_th, 0, 0);
+#endif
+
+        // L1 TF Params
+        scs_ptr->tf_params_per_type[2].enabled = 1;
+        scs_ptr->tf_params_per_type[2].num_past_pics = 1;
+        scs_ptr->tf_params_per_type[2].num_future_pics = 1;
+        scs_ptr->tf_params_per_type[2].noise_adjust_past_pics = 0;
+        scs_ptr->tf_params_per_type[2].noise_adjust_future_pics = 0;
+        scs_ptr->tf_params_per_type[2].activity_adjust_th = 35;
+        scs_ptr->tf_params_per_type[2].max_num_past_pics = MIN((1 << scs_ptr->static_config.hierarchical_levels) / 2, 1);
+        scs_ptr->tf_params_per_type[2].max_num_future_pics = MIN((1 << scs_ptr->static_config.hierarchical_levels) / 2, 1);
+        scs_ptr->tf_params_per_type[2].hme_me_level = 1;
+        scs_ptr->tf_params_per_type[2].half_pel_mode = 1;
+        scs_ptr->tf_params_per_type[2].quarter_pel_mode = 1;
+        scs_ptr->tf_params_per_type[2].eight_pel_mode = 1;
+        scs_ptr->tf_params_per_type[2].do_chroma = 1;
+#if !FIX_TF_FILTER_64x64_PATH
+#if OPT_UPGRADE_TF
+        scs_ptr->tf_params_per_type[2].use_pred_64x64_only_th = 0;
+        scs_ptr->tf_params_per_type[2].me_exit_th = 0;
+#endif
+#endif
+        scs_ptr->tf_params_per_type[2].pred_error_32x32_th = 0;
+#if !CLN_TF_CTRLS
+        scs_ptr->tf_params_per_type[2].me_16x16_to_8x8_dev_th = MAX_SIGNED_VALUE;
+#endif
+#if OPT_TF
+        scs_ptr->tf_params_per_type[2].sub_sampling_shift = 0;
+#endif
+#if OPT_TFILTER
+        scs_ptr->tf_params_per_type[2].use_fast_filter = 0;
+#if TUNE_MEDIUM_TFILTER
+        scs_ptr->tf_params_per_type[2].use_medium_filter = (scs_ptr->input_resolution < INPUT_SIZE_720p_RANGE) ? 1 : 0; //case 3, M4-5
+#endif
+#endif
+#if OPT_TFILTER
+        scs_ptr->tf_params_per_type[2].avoid_2d_qpel = 0;
+        scs_ptr->tf_params_per_type[2].use_2tap = 0;
+#endif
+#if OPT_NOISE_LEVEL
+        scs_ptr->tf_params_per_type[2].use_intra_for_noise_est = 0;
+#endif
+#if OPT_TF_8BIT_SUBPEL
+        scs_ptr->tf_params_per_type[2].use_8bit_subpel = 0;
+#endif
+#if FIX_TF_FILTER_64x64_PATH
+        set_tf_64x64_params(
+            scs_ptr->tf_params_per_type[2].use_fast_filter,
+            &scs_ptr->tf_params_per_type[2].use_pred_64x64_only_th,
+            &scs_ptr->tf_params_per_type[2].me_exit_th, 0, 0);
+#endif
+        break;
+#else
+    case 3:
+        // I_SLICE TF Params
+        scs_ptr->tf_params_per_type[0].enabled                  = 1;
+        scs_ptr->tf_params_per_type[0].num_future_pics          = 8;// 2;
+        scs_ptr->tf_params_per_type[0].noise_adjust_future_pics = 1;
+        scs_ptr->tf_params_per_type[0].activity_adjust_th       = 35;
+        scs_ptr->tf_params_per_type[0].max_num_future_pics      = MIN((1 << scs_ptr->static_config.hierarchical_levels), 16);
+        scs_ptr->tf_params_per_type[0].hme_me_level             = 1;
+        scs_ptr->tf_params_per_type[0].half_pel_mode            = 1;
+        scs_ptr->tf_params_per_type[0].quarter_pel_mode         = 1;
+        scs_ptr->tf_params_per_type[0].eight_pel_mode           = 1;
+        scs_ptr->tf_params_per_type[0].do_chroma                = 1;
+#if OPT_UPGRADE_TF
+        scs_ptr->tf_params_per_type[0].use_pred_64x64_only_th   = 0;
+        scs_ptr->tf_params_per_type[0].me_exit_th               = 0;
+#endif
+        scs_ptr->tf_params_per_type[0].pred_error_32x32_th      = 0;
+        scs_ptr->tf_params_per_type[0].me_16x16_to_8x8_dev_th   = MAX_SIGNED_VALUE;
+#if OPT_TF
+        scs_ptr->tf_params_per_type[0].sub_sampling_shift       = 0;
+#endif
+#if OPT_TFILTER
+        scs_ptr->tf_params_per_type[0].use_fast_filter = 0;
+#if TUNE_MEDIUM_TFILTER
+        scs_ptr->tf_params_per_type[0].use_medium_filter = (scs_ptr->input_resolution < INPUT_SIZE_4K_RANGE) ? 1 : 0; // case 4, M6-7
+#endif
+#endif
+#if OPT_TFILTER
+        scs_ptr->tf_params_per_type[0].avoid_2d_qpel = 0;
+        scs_ptr->tf_params_per_type[0].use_2tap = 0;
+#endif
+#if OPT_NOISE_LEVEL
+        scs_ptr->tf_params_per_type[0].use_intra_for_noise_est = 0;
+#endif
+#if OPT_TF_8BIT_SUBPEL
+        scs_ptr->tf_params_per_type[0].use_8bit_subpel = 0;
+#endif
+        // BASE TF Params
+        scs_ptr->tf_params_per_type[1].enabled                  = 1;
+        scs_ptr->tf_params_per_type[1].num_past_pics            = 2;
+        scs_ptr->tf_params_per_type[1].num_future_pics          = 2;
+        scs_ptr->tf_params_per_type[1].noise_adjust_past_pics   = 1;
+        scs_ptr->tf_params_per_type[1].noise_adjust_future_pics = 1;
+        scs_ptr->tf_params_per_type[1].activity_adjust_th       = 35;
+        scs_ptr->tf_params_per_type[1].max_num_past_pics        = MIN((1 << scs_ptr->static_config.hierarchical_levels), 3);
+        scs_ptr->tf_params_per_type[1].max_num_future_pics      = MIN((1 << scs_ptr->static_config.hierarchical_levels), 6);
+        scs_ptr->tf_params_per_type[1].hme_me_level             = 1;
+        scs_ptr->tf_params_per_type[1].half_pel_mode            = 1;
+        scs_ptr->tf_params_per_type[1].quarter_pel_mode         = 1;
+        scs_ptr->tf_params_per_type[1].eight_pel_mode           = 1;
+        scs_ptr->tf_params_per_type[1].do_chroma                = 1;
+#if OPT_UPGRADE_TF
+        scs_ptr->tf_params_per_type[1].use_pred_64x64_only_th   = 0;
+        scs_ptr->tf_params_per_type[1].me_exit_th               = 0;
+#endif
+        scs_ptr->tf_params_per_type[1].pred_error_32x32_th      = 0;
+        scs_ptr->tf_params_per_type[1].me_16x16_to_8x8_dev_th   = MAX_SIGNED_VALUE;
+#if OPT_TF
+        scs_ptr->tf_params_per_type[1].sub_sampling_shift       = 0;
+#endif
+#if OPT_TFILTER
+        scs_ptr->tf_params_per_type[1].use_fast_filter = 0;
+#if TUNE_MEDIUM_TFILTER
+        scs_ptr->tf_params_per_type[1].use_medium_filter = (scs_ptr->input_resolution < INPUT_SIZE_4K_RANGE) ? 1 : 0; // case 4, M6-7
+#endif
+#endif
+#if OPT_TFILTER
+        scs_ptr->tf_params_per_type[1].avoid_2d_qpel = 0;
+        scs_ptr->tf_params_per_type[1].use_2tap = 0;
+#endif
+#if OPT_NOISE_LEVEL
+        scs_ptr->tf_params_per_type[1].use_intra_for_noise_est = 0;
+#endif
+#if OPT_TF_8BIT_SUBPEL
+        scs_ptr->tf_params_per_type[1].use_8bit_subpel = 0;
+#endif
+        // L1 TF Params
+        scs_ptr->tf_params_per_type[2].enabled                  = 1;
+        scs_ptr->tf_params_per_type[2].num_past_pics            = 1;
+        scs_ptr->tf_params_per_type[2].num_future_pics          = 1;
+        scs_ptr->tf_params_per_type[2].noise_adjust_past_pics   = 0;
+        scs_ptr->tf_params_per_type[2].noise_adjust_future_pics = 0;
+        scs_ptr->tf_params_per_type[2].activity_adjust_th       = 35;
+        scs_ptr->tf_params_per_type[2].max_num_past_pics        = MIN((1 << scs_ptr->static_config.hierarchical_levels) / 2, 1);
+        scs_ptr->tf_params_per_type[2].max_num_future_pics      = MIN((1 << scs_ptr->static_config.hierarchical_levels) / 2, 1);
+        scs_ptr->tf_params_per_type[2].hme_me_level             = 1;
+        scs_ptr->tf_params_per_type[2].half_pel_mode            = 1;
+        scs_ptr->tf_params_per_type[2].quarter_pel_mode         = 1;
+        scs_ptr->tf_params_per_type[2].eight_pel_mode           = 1;
+        scs_ptr->tf_params_per_type[2].do_chroma                = 1;
+#if OPT_UPGRADE_TF
+        scs_ptr->tf_params_per_type[2].use_pred_64x64_only_th   = 0;
+        scs_ptr->tf_params_per_type[2].me_exit_th               = 0;
+#endif
+        scs_ptr->tf_params_per_type[2].pred_error_32x32_th      = 0;
+        scs_ptr->tf_params_per_type[2].me_16x16_to_8x8_dev_th   = MAX_SIGNED_VALUE;
+#if OPT_TF
+        scs_ptr->tf_params_per_type[2].sub_sampling_shift       = 0;
+#endif
+#if OPT_TFILTER
+        scs_ptr->tf_params_per_type[2].use_fast_filter = 0;
+#if TUNE_MEDIUM_TFILTER
+        scs_ptr->tf_params_per_type[2].use_medium_filter = (scs_ptr->input_resolution < INPUT_SIZE_4K_RANGE) ? 1 : 0; // case 4, M6-7
+#endif
+#endif
+#if OPT_TFILTER
+        scs_ptr->tf_params_per_type[2].avoid_2d_qpel = 0;
+        scs_ptr->tf_params_per_type[2].use_2tap = 0;
+#endif
+#if OPT_NOISE_LEVEL
+        scs_ptr->tf_params_per_type[2].use_intra_for_noise_est = 0;
+#endif
+#if OPT_TF_8BIT_SUBPEL
+        scs_ptr->tf_params_per_type[2].use_8bit_subpel = 0;
+#endif
+        break;
+#endif
+    case 3:
+        // I_SLICE TF Params
+        scs_ptr->tf_params_per_type[0].enabled                  = 1;
+        scs_ptr->tf_params_per_type[0].num_future_pics          = 8;
+        scs_ptr->tf_params_per_type[0].noise_adjust_future_pics = 1;
+        scs_ptr->tf_params_per_type[0].activity_adjust_th       = 35;
+        scs_ptr->tf_params_per_type[0].max_num_future_pics      = MIN((1 << scs_ptr->static_config.hierarchical_levels), 16);
+        scs_ptr->tf_params_per_type[0].hme_me_level             = 2;
+        scs_ptr->tf_params_per_type[0].half_pel_mode            = 1;
+        scs_ptr->tf_params_per_type[0].quarter_pel_mode         = 1;
+        scs_ptr->tf_params_per_type[0].eight_pel_mode           = 0;
+        scs_ptr->tf_params_per_type[0].do_chroma                = 1;
+#if !FIX_TF_FILTER_64x64_PATH
+#if OPT_UPGRADE_TF
+        scs_ptr->tf_params_per_type[0].use_pred_64x64_only_th   = 0;
+        scs_ptr->tf_params_per_type[0].me_exit_th               = 0;
+#endif
+#endif
+        scs_ptr->tf_params_per_type[0].pred_error_32x32_th      = 20 * 32 * 32;
+#if !CLN_TF_CTRLS
+        scs_ptr->tf_params_per_type[0].me_16x16_to_8x8_dev_th   = MAX_SIGNED_VALUE;
+#endif
+#if OPT_TF
+        scs_ptr->tf_params_per_type[0].sub_sampling_shift       = 0;
+#endif
+#if OPT_TFILTER
+        scs_ptr->tf_params_per_type[0].use_fast_filter = 0;
+#if TUNE_MEDIUM_TFILTER
+        scs_ptr->tf_params_per_type[0].use_medium_filter = (scs_ptr->input_resolution < INPUT_SIZE_4K_RANGE) ? 1 : 0; // case 5, M7-8
+#endif
+#endif
+#if OPT_TFILTER
+        scs_ptr->tf_params_per_type[0].avoid_2d_qpel = 0;
+        scs_ptr->tf_params_per_type[0].use_2tap = 0;
+#endif
+#if OPT_NOISE_LEVEL
+        scs_ptr->tf_params_per_type[0].use_intra_for_noise_est = 0;
+#endif
+#if OPT_TF_8BIT_SUBPEL
+        scs_ptr->tf_params_per_type[0].use_8bit_subpel = 0;
+#endif
+#if FIX_TF_FILTER_64x64_PATH
+        set_tf_64x64_params(
+            scs_ptr->tf_params_per_type[0].use_fast_filter,
+            &scs_ptr->tf_params_per_type[0].use_pred_64x64_only_th,
+            &scs_ptr->tf_params_per_type[0].me_exit_th, 0, 0);
+#endif
+        // BASE TF Params
+        scs_ptr->tf_params_per_type[1].enabled                  = 1;
+        scs_ptr->tf_params_per_type[1].num_past_pics            = 2;
+        scs_ptr->tf_params_per_type[1].num_future_pics          = 2;
+        scs_ptr->tf_params_per_type[1].noise_adjust_past_pics   = 0;
+        scs_ptr->tf_params_per_type[1].noise_adjust_future_pics = 0;
+        scs_ptr->tf_params_per_type[1].activity_adjust_th       = 35;
+        scs_ptr->tf_params_per_type[1].max_num_past_pics        = MIN((1 << scs_ptr->static_config.hierarchical_levels), 3);
+        scs_ptr->tf_params_per_type[1].max_num_future_pics      = MIN((1 << scs_ptr->static_config.hierarchical_levels), 6);
+        scs_ptr->tf_params_per_type[1].hme_me_level             = 2;
+        scs_ptr->tf_params_per_type[1].half_pel_mode            = 1;
+        scs_ptr->tf_params_per_type[1].quarter_pel_mode         = 1;
+        scs_ptr->tf_params_per_type[1].eight_pel_mode           = 0;
+        scs_ptr->tf_params_per_type[1].do_chroma                = 1;
+#if !FIX_TF_FILTER_64x64_PATH
+#if OPT_UPGRADE_TF
+        scs_ptr->tf_params_per_type[1].use_pred_64x64_only_th   = 0;
+        scs_ptr->tf_params_per_type[1].me_exit_th               = 0;
+#endif
+#endif
+        scs_ptr->tf_params_per_type[1].pred_error_32x32_th      = 20 * 32 * 32;
+#if !CLN_TF_CTRLS
+        scs_ptr->tf_params_per_type[1].me_16x16_to_8x8_dev_th   = MAX_SIGNED_VALUE;
+#endif
+#if OPT_TF
+        scs_ptr->tf_params_per_type[1].sub_sampling_shift       = 0;
+#endif
+#if OPT_TFILTER
+        scs_ptr->tf_params_per_type[1].use_fast_filter = 0;
+#if TUNE_MEDIUM_TFILTER
+        scs_ptr->tf_params_per_type[1].use_medium_filter = (scs_ptr->input_resolution < INPUT_SIZE_4K_RANGE)? 1 : 0; // case 5, M7-8
+#endif
+#endif
+#if OPT_TFILTER
+        scs_ptr->tf_params_per_type[1].avoid_2d_qpel = 0;
+        scs_ptr->tf_params_per_type[1].use_2tap = 0;
+#endif
+#if OPT_NOISE_LEVEL
+        scs_ptr->tf_params_per_type[1].use_intra_for_noise_est = 0;
+#endif
+#if OPT_TF_8BIT_SUBPEL
+        scs_ptr->tf_params_per_type[1].use_8bit_subpel = 0;
+#endif
+#if FIX_TF_FILTER_64x64_PATH
+        set_tf_64x64_params(
+            scs_ptr->tf_params_per_type[1].use_fast_filter,
+            &scs_ptr->tf_params_per_type[1].use_pred_64x64_only_th,
+            &scs_ptr->tf_params_per_type[1].me_exit_th, 0, 0);
+#endif
+        // L1 TF Params
+        scs_ptr->tf_params_per_type[2].enabled                  = 1;
+        scs_ptr->tf_params_per_type[2].num_past_pics            = 1;
+        scs_ptr->tf_params_per_type[2].num_future_pics          = 1;
+        scs_ptr->tf_params_per_type[2].noise_adjust_past_pics   = 0;
+        scs_ptr->tf_params_per_type[2].noise_adjust_future_pics = 0;
+        scs_ptr->tf_params_per_type[2].activity_adjust_th       = 35;
+        scs_ptr->tf_params_per_type[2].max_num_past_pics        = MIN((1 << scs_ptr->static_config.hierarchical_levels) / 2, 1);
+        scs_ptr->tf_params_per_type[2].max_num_future_pics      = MIN((1 << scs_ptr->static_config.hierarchical_levels) / 2, 1);
+        scs_ptr->tf_params_per_type[2].hme_me_level             = 2;
+        scs_ptr->tf_params_per_type[2].half_pel_mode            = 1;
+        scs_ptr->tf_params_per_type[2].quarter_pel_mode         = 1;
+        scs_ptr->tf_params_per_type[2].eight_pel_mode           = 0;
+        scs_ptr->tf_params_per_type[2].do_chroma                = 1;
+#if !FIX_TF_FILTER_64x64_PATH
+#if OPT_UPGRADE_TF
+        scs_ptr->tf_params_per_type[2].use_pred_64x64_only_th   = 0;
+        scs_ptr->tf_params_per_type[2].me_exit_th               = 0;
+#endif
+#endif
+        scs_ptr->tf_params_per_type[2].pred_error_32x32_th      = 20 * 32 * 32;
+#if !CLN_TF_CTRLS
+        scs_ptr->tf_params_per_type[2].me_16x16_to_8x8_dev_th   = MAX_SIGNED_VALUE;
+#endif
+#if OPT_TF
+        scs_ptr->tf_params_per_type[2].sub_sampling_shift       = 0;
+#endif
+#if OPT_TFILTER
+        scs_ptr->tf_params_per_type[2].use_fast_filter = 0;
+#endif
+#if TUNE_MEDIUM_TFILTER
+        scs_ptr->tf_params_per_type[2].use_medium_filter = (scs_ptr->input_resolution < INPUT_SIZE_4K_RANGE)? 1 : 0; // case 5, M7-8
+#endif
+#if OPT_TFILTER
+        scs_ptr->tf_params_per_type[2].avoid_2d_qpel = 0;
+        scs_ptr->tf_params_per_type[2].use_2tap = 0;
+#endif
+#if OPT_NOISE_LEVEL
+        scs_ptr->tf_params_per_type[2].use_intra_for_noise_est = 0;
+#endif
+#if OPT_TF_8BIT_SUBPEL
+        scs_ptr->tf_params_per_type[2].use_8bit_subpel = 0;
+#endif
+#if FIX_TF_FILTER_64x64_PATH
+        set_tf_64x64_params(
+            scs_ptr->tf_params_per_type[2].use_fast_filter,
+            &scs_ptr->tf_params_per_type[2].use_pred_64x64_only_th,
+            &scs_ptr->tf_params_per_type[2].me_exit_th, 0, 0);
+#endif
+        break;
+
+    case 4:
+        // I_SLICE TF Params
+        scs_ptr->tf_params_per_type[0].enabled                  = 1;
+#if TUNE_CDEF_TF_LEVELS
+        scs_ptr->tf_params_per_type[0].num_future_pics          = 8;
+#else
+        scs_ptr->tf_params_per_type[0].num_future_pics          = 4;
+#endif
+        scs_ptr->tf_params_per_type[0].noise_adjust_future_pics = 0;
+        scs_ptr->tf_params_per_type[0].activity_adjust_th       = 20;
+        scs_ptr->tf_params_per_type[0].max_num_future_pics      = MIN((1 << scs_ptr->static_config.hierarchical_levels), 16);
+        scs_ptr->tf_params_per_type[0].hme_me_level             = 2;
+        scs_ptr->tf_params_per_type[0].half_pel_mode            = 2;
+#if TUNE_CDEF_TF_LEVELS
+#if OPT_TF
+        scs_ptr->tf_params_per_type[0].quarter_pel_mode         = 3;
+#else
+        scs_ptr->tf_params_per_type[0].quarter_pel_mode         = 1;
+#endif
+#else
+        scs_ptr->tf_params_per_type[0].quarter_pel_mode         = 0;
+#endif
+        scs_ptr->tf_params_per_type[0].eight_pel_mode           = 0;
+        scs_ptr->tf_params_per_type[0].do_chroma                = 0;
+#if !FIX_TF_FILTER_64x64_PATH
+#if OPT_UPGRADE_TF
+        scs_ptr->tf_params_per_type[0].use_pred_64x64_only_th   = 0;
+        scs_ptr->tf_params_per_type[0].me_exit_th               = 0;
+#endif
+#endif
+        scs_ptr->tf_params_per_type[0].pred_error_32x32_th      = (uint64_t)~0;
+#if !CLN_TF_CTRLS
+        scs_ptr->tf_params_per_type[0].me_16x16_to_8x8_dev_th   = 20;
+        scs_ptr->tf_params_per_type[0].max_64x64_past_pics      = 0;
+        scs_ptr->tf_params_per_type[0].max_64x64_future_pics    = 1;
+#endif
+#if OPT_TF
+#if SS_FIX_TF_BUG
+        scs_ptr->tf_params_per_type[0].sub_sampling_shift = 0;
+#else
+        scs_ptr->tf_params_per_type[1].sub_sampling_shift       = 1;
+#endif
+#endif
+#if OPT_TFILTER
+#if TUNE_MEDIUM_TFILTER
+        scs_ptr->tf_params_per_type[0].use_fast_filter = 0;
+        scs_ptr->tf_params_per_type[0].use_medium_filter = 1; // case 6, M9
+#else
+        scs_ptr->tf_params_per_type[0].use_fast_filter = scs_ptr->static_config.encoder_bit_depth== EB_8BIT ? 1: 0;
+#endif
+#endif
+#if OPT_TFILTER
+        scs_ptr->tf_params_per_type[0].avoid_2d_qpel = 1;
+        scs_ptr->tf_params_per_type[0].use_2tap = 1;
+#endif
+#if OPT_NOISE_LEVEL
+        scs_ptr->tf_params_per_type[0].use_intra_for_noise_est = 1;
+#endif
+#if OPT_TF_8BIT_SUBPEL
+        scs_ptr->tf_params_per_type[0].use_8bit_subpel = 0;
+#endif
+#if FIX_TF_FILTER_64x64_PATH
+        set_tf_64x64_params(
+            scs_ptr->tf_params_per_type[0].use_fast_filter,
+            &scs_ptr->tf_params_per_type[0].use_pred_64x64_only_th,
+            &scs_ptr->tf_params_per_type[0].me_exit_th, 0, 0);
+#endif
+        // BASE TF Params
+        scs_ptr->tf_params_per_type[1].enabled                  = 1;
+        scs_ptr->tf_params_per_type[1].num_past_pics            = 1;
+        scs_ptr->tf_params_per_type[1].num_future_pics          = 1;
+        scs_ptr->tf_params_per_type[1].noise_adjust_past_pics   = 0;
+        scs_ptr->tf_params_per_type[1].noise_adjust_future_pics = 0;
+        scs_ptr->tf_params_per_type[1].activity_adjust_th       = 20;
+        scs_ptr->tf_params_per_type[1].max_num_past_pics        = MIN((1 << scs_ptr->static_config.hierarchical_levels), 3);
+        scs_ptr->tf_params_per_type[1].max_num_future_pics      = MIN((1 << scs_ptr->static_config.hierarchical_levels), 6);
+        scs_ptr->tf_params_per_type[1].hme_me_level             = 2;
+        scs_ptr->tf_params_per_type[1].half_pel_mode            = 2;
+#if TUNE_CDEF_TF_LEVELS
+#if OPT_TF
+        scs_ptr->tf_params_per_type[1].quarter_pel_mode         = 3;
+#else
+        scs_ptr->tf_params_per_type[1].quarter_pel_mode         = 1;
+#endif
+#else
+        scs_ptr->tf_params_per_type[1].quarter_pel_mode         = 0;
+#endif
+        scs_ptr->tf_params_per_type[1].eight_pel_mode           = 0;
+        scs_ptr->tf_params_per_type[1].do_chroma                = 0;
+#if !FIX_TF_FILTER_64x64_PATH
+#if OPT_UPGRADE_TF
+        scs_ptr->tf_params_per_type[1].use_pred_64x64_only_th   = 0;
+        scs_ptr->tf_params_per_type[1].me_exit_th               = 0;
+#endif
+#endif
+        scs_ptr->tf_params_per_type[1].pred_error_32x32_th      = (uint64_t)~0;
+#if !CLN_TF_CTRLS
+        scs_ptr->tf_params_per_type[1].me_16x16_to_8x8_dev_th   = 20;
+        scs_ptr->tf_params_per_type[1].max_64x64_past_pics      = 0;
+        scs_ptr->tf_params_per_type[1].max_64x64_future_pics    = 1;
+#endif
+#if OPT_TF
+#if OPT_TUNE_DECAY_UN_8_10_M11
+        scs_ptr->tf_params_per_type[1].sub_sampling_shift = scs_ptr->static_config.encoder_bit_depth == EB_8BIT ? 1 : 0;
+#else
+        scs_ptr->tf_params_per_type[1].sub_sampling_shift       = 1;
+#endif
+#endif
+#if OPT_TFILTER
+#if TUNE_MEDIUM_TFILTER
+        scs_ptr->tf_params_per_type[1].use_fast_filter = 0;
+        scs_ptr->tf_params_per_type[1].use_medium_filter = 1; // case 6, M9
+#else
+        scs_ptr->tf_params_per_type[1].use_fast_filter = scs_ptr->static_config.encoder_bit_depth == EB_8BIT ? 1 : 0;
+#endif
+#endif
+#if OPT_TFILTER
+        scs_ptr->tf_params_per_type[1].avoid_2d_qpel = 1;
+        scs_ptr->tf_params_per_type[1].use_2tap = 1;
+#endif
+#if OPT_NOISE_LEVEL
+        scs_ptr->tf_params_per_type[1].use_intra_for_noise_est = 1;
+#endif
+#if OPT_TF_8BIT_SUBPEL
+        scs_ptr->tf_params_per_type[1].use_8bit_subpel = 0;
+#endif
+#if FIX_TF_FILTER_64x64_PATH
+        set_tf_64x64_params(
+            scs_ptr->tf_params_per_type[1].use_fast_filter,
+            &scs_ptr->tf_params_per_type[1].use_pred_64x64_only_th,
+            &scs_ptr->tf_params_per_type[1].me_exit_th, 0, 0);
+#endif
+        // L1 TF Params
+        scs_ptr->tf_params_per_type[2].enabled                  = 0;
+        break;
+
+#if OPT_UPGRADE_TF
+     case 5:
+        // I_SLICE TF Params
+        scs_ptr->tf_params_per_type[0].enabled                  = 1;
+        scs_ptr->tf_params_per_type[0].num_future_pics          = 8;
+        scs_ptr->tf_params_per_type[0].noise_adjust_future_pics = 0;
+        scs_ptr->tf_params_per_type[0].activity_adjust_th       = 20;
+        scs_ptr->tf_params_per_type[0].max_num_future_pics      = MIN((1 << scs_ptr->static_config.hierarchical_levels), 16);
+        scs_ptr->tf_params_per_type[0].hme_me_level             = 2;
+        scs_ptr->tf_params_per_type[0].half_pel_mode            = 2;
+        scs_ptr->tf_params_per_type[0].quarter_pel_mode         = 3;
+        scs_ptr->tf_params_per_type[0].eight_pel_mode           = 0;
+        scs_ptr->tf_params_per_type[0].do_chroma                = 0;
+#if !FIX_TF_FILTER_64x64_PATH
+        scs_ptr->tf_params_per_type[0].use_pred_64x64_only_th   = 35;
+        scs_ptr->tf_params_per_type[0].me_exit_th               = 16*16;
+#endif
+        scs_ptr->tf_params_per_type[0].pred_error_32x32_th      = (uint64_t)~0;
+#if !CLN_TF_CTRLS
+        scs_ptr->tf_params_per_type[0].me_16x16_to_8x8_dev_th   = 20;
+        scs_ptr->tf_params_per_type[0].max_64x64_past_pics      = 0;
+        scs_ptr->tf_params_per_type[0].max_64x64_future_pics    = 1;
+#endif
+        scs_ptr->tf_params_per_type[0].sub_sampling_shift       = 1;
+#if OPT_TUNE_DECAY_UN_8_10_M11
+#if TUNE_MEDIUM_TFILTER
+        scs_ptr->tf_params_per_type[0].use_fast_filter = (scs_ptr->input_resolution < INPUT_SIZE_4K_RANGE) ? 1 : 0;
+        scs_ptr->tf_params_per_type[0].use_medium_filter = (scs_ptr->input_resolution < INPUT_SIZE_4K_RANGE) ? 0 : 1; // case 8, M10,11
+#else
+        scs_ptr->tf_params_per_type[0].use_fast_filter          = 1;
+#endif
+#else
+        scs_ptr->tf_params_per_type[0].use_fast_filter          = scs_ptr->static_config.encoder_bit_depth == EB_8BIT ? 1 : 0;
+#endif
+        scs_ptr->tf_params_per_type[0].avoid_2d_qpel            = 1;
+        scs_ptr->tf_params_per_type[0].use_2tap                 = 1;
+        scs_ptr->tf_params_per_type[0].use_intra_for_noise_est  = 1;
+#if OPT_TF_8BIT_SUBPEL
+        scs_ptr->tf_params_per_type[0].use_8bit_subpel = 1;
+#endif
+#if FIX_TF_FILTER_64x64_PATH
+        set_tf_64x64_params(
+            scs_ptr->tf_params_per_type[0].use_fast_filter,
+            &scs_ptr->tf_params_per_type[0].use_pred_64x64_only_th,
+            &scs_ptr->tf_params_per_type[0].me_exit_th, 35, 16 * 16);
+#endif
+        // BASE TF Params
+        scs_ptr->tf_params_per_type[1].enabled                  = 1;
+        scs_ptr->tf_params_per_type[1].num_past_pics            = 1;
+        scs_ptr->tf_params_per_type[1].num_future_pics          = 1;
+        scs_ptr->tf_params_per_type[1].noise_adjust_past_pics   = 0;
+        scs_ptr->tf_params_per_type[1].noise_adjust_future_pics = 0;
+        scs_ptr->tf_params_per_type[1].activity_adjust_th       = 20;
+        scs_ptr->tf_params_per_type[1].max_num_past_pics        = MIN((1 << scs_ptr->static_config.hierarchical_levels), 3);
+        scs_ptr->tf_params_per_type[1].max_num_future_pics      = MIN((1 << scs_ptr->static_config.hierarchical_levels), 6);
+        scs_ptr->tf_params_per_type[1].hme_me_level             = 2;
+        scs_ptr->tf_params_per_type[1].half_pel_mode            = 2;
+        scs_ptr->tf_params_per_type[1].quarter_pel_mode         = 3;
+        scs_ptr->tf_params_per_type[1].eight_pel_mode           = 0;
+        scs_ptr->tf_params_per_type[1].do_chroma                = 0;
+#if !FIX_TF_FILTER_64x64_PATH
+        scs_ptr->tf_params_per_type[1].use_pred_64x64_only_th   = 35;
+#endif
+        scs_ptr->tf_params_per_type[1].pred_error_32x32_th      = (uint64_t)~0;
+#if !FIX_TF_FILTER_64x64_PATH
+        scs_ptr->tf_params_per_type[1].me_exit_th               = 16*16;
+#endif
+#if !CLN_TF_CTRLS
+        scs_ptr->tf_params_per_type[1].me_16x16_to_8x8_dev_th   = 20;
+        scs_ptr->tf_params_per_type[1].max_64x64_past_pics      = 0;
+        scs_ptr->tf_params_per_type[1].max_64x64_future_pics    = 1;
+#endif
+        scs_ptr->tf_params_per_type[1].sub_sampling_shift       = 1;
+#if OPT_TUNE_DECAY_UN_8_10_M11
+#if TUNE_MEDIUM_TFILTER
+        scs_ptr->tf_params_per_type[1].use_fast_filter = (scs_ptr->input_resolution < INPUT_SIZE_4K_RANGE) ? 1 : 0;
+        scs_ptr->tf_params_per_type[1].use_medium_filter = (scs_ptr->input_resolution < INPUT_SIZE_4K_RANGE) ? 0 : 1; // case 8, M10,11
+#else
+        scs_ptr->tf_params_per_type[1].use_fast_filter = 1;
+#endif
+#else
+        scs_ptr->tf_params_per_type[1].use_fast_filter          = scs_ptr->static_config.encoder_bit_depth == EB_8BIT ? 1 : 0;
+#endif
+        scs_ptr->tf_params_per_type[1].avoid_2d_qpel            = 1;
+        scs_ptr->tf_params_per_type[1].use_2tap                 = 1;
+        scs_ptr->tf_params_per_type[1].use_intra_for_noise_est  = 1;
+#if OPT_TF_8BIT_SUBPEL
+        scs_ptr->tf_params_per_type[1].use_8bit_subpel = 1;
+#endif
+#if FIX_TF_FILTER_64x64_PATH
+        set_tf_64x64_params(
+            scs_ptr->tf_params_per_type[1].use_fast_filter,
+            &scs_ptr->tf_params_per_type[1].use_pred_64x64_only_th,
+            &scs_ptr->tf_params_per_type[1].me_exit_th, 35, 16*16);
+#endif
+        // L1 TF Params
+        scs_ptr->tf_params_per_type[2].enabled                  = 0;
+        break;
+#endif
+
+    default:
+        assert(0);
+        break;
+    }
+#if FIX_LOW_DELAY
+    // Limit the future frames used in TF for lowdelay prediction structure
+    if (scs_ptr->static_config.pred_structure == EB_PRED_LOW_DELAY_P)
+        scs_ptr->tf_params_per_type[1].max_num_future_pics = 0;
+#endif
+
+#if FIXED_POINTS_PLANEWISE
+    scs_ptr->tf_params_per_type[0].use_fixed_point = ENABLE_FIXED_POINTS_PLANEWISE;
+    scs_ptr->tf_params_per_type[1].use_fixed_point = ENABLE_FIXED_POINTS_PLANEWISE;
+    scs_ptr->tf_params_per_type[2].use_fixed_point = ENABLE_FIXED_POINTS_PLANEWISE;
+#if !TUNE_MEDIUM_TFILTER
+    scs_ptr->tf_params_per_type[0].use_medium_filter = ENABLE_MEDIUM_PLANEWISE;
+    scs_ptr->tf_params_per_type[1].use_medium_filter = ENABLE_MEDIUM_PLANEWISE;
+    scs_ptr->tf_params_per_type[2].use_medium_filter = ENABLE_MEDIUM_PLANEWISE;
+#endif
+#endif /*FIXED_POINTS_PLANEWISE*/
+
+}
+#else
 void tf_controls(SequenceControlSet *scs_ptr, uint8_t tf_level) {
 
     switch (tf_level)
@@ -3863,6 +4737,7 @@ void tf_controls(SequenceControlSet *scs_ptr, uint8_t tf_level) {
 #endif /*FIXED_POINTS_PLANEWISE*/
 
 }
+#endif
 #else
 void tf_controls(SequenceControlSet *scs_ptr, uint8_t tf_level) {
 
@@ -5165,7 +6040,11 @@ void derive_tf_params(SequenceControlSet *scs_ptr) {
     // Do not perform TF if LD or 1 Layer or 1st pass
     uint8_t do_tf =
 #if FIX_LOW_DELAY
+#if CLN_ENC_CONFIG_SIG
+        (scs_ptr->static_config.tf_level && scs_ptr->static_config.hierarchical_levels >= 1 && scs_ptr->static_config.pass != ENC_FIRST_PASS)
+#else
         (scs_ptr->static_config.tf_level && scs_ptr->static_config.hierarchical_levels >= 1 && !use_output_stat(scs_ptr))
+#endif
 #else
         (scs_ptr->static_config.tf_level && scs_ptr->static_config.pred_structure == EB_PRED_RANDOM_ACCESS && scs_ptr->static_config.hierarchical_levels >= 1 && !use_output_stat(scs_ptr))
 #endif
@@ -5322,9 +6201,11 @@ void derive_tf_params(SequenceControlSet *scs_ptr) {
  * Set the MRP control
  */
 void set_mrp_ctrl(SequenceControlSet* scs_ptr, uint8_t mrp_level) {
-
+#if CLN_MRP_ENC_CONFIG
+    MrpCtrls* mrp_ctrl = &scs_ptr->mrp_ctrls;
+#else
     MrpCtrls* mrp_ctrl = &scs_ptr->static_config.mrp_ctrls;
-
+#endif
     switch (mrp_level)
     {
     case 0:
@@ -5405,8 +6286,208 @@ void set_mrp_ctrl(SequenceControlSet* scs_ptr, uint8_t mrp_level) {
     }
 }
 #endif
+
+#if CLN_ENC_CONFIG_SIG
+void set_ipp_pass_ctrls(
+    SequenceControlSet* scs_ptr,
+    uint8_t ipp_pass_level) {
+
+    IppPassControls* ipp_pass_ctrls = &scs_ptr->ipp_pass_ctrls;
+    switch (ipp_pass_level) {
+    case 0:
+        ipp_pass_ctrls->skip_frame_first_pass = 0;
+        ipp_pass_ctrls->ds = 0;
+        ipp_pass_ctrls->bypass_blk_step = 0;
+        ipp_pass_ctrls->dist_ds = 0;
+        ipp_pass_ctrls->bypass_zz_check = 0;
+        ipp_pass_ctrls->use8blk = 0;
+        ipp_pass_ctrls->reduce_me_search = 0;
+        break;
+
+    case 1:
+        ipp_pass_ctrls->skip_frame_first_pass = 1;
+        ipp_pass_ctrls->ds = 0;
+        ipp_pass_ctrls->bypass_blk_step = 0;
+        ipp_pass_ctrls->dist_ds = 1;
+        ipp_pass_ctrls->bypass_zz_check = 1;
+        ipp_pass_ctrls->use8blk = 1;
+        ipp_pass_ctrls->reduce_me_search = 1;
+        break;
+
+    case 2:
+        ipp_pass_ctrls->skip_frame_first_pass = 1;
+        ipp_pass_ctrls->ds = 1;
+        ipp_pass_ctrls->bypass_blk_step = 1;
+        ipp_pass_ctrls->dist_ds = 1;
+        ipp_pass_ctrls->bypass_zz_check = 1;
+        ipp_pass_ctrls->use8blk = 1;
+        ipp_pass_ctrls->reduce_me_search = 1;
+        break;
+
+    default:
+        assert(0);
+        break;
+    }
+}
+
+void set_mid_pass_ctrls(
+    SequenceControlSet* scs_ptr,
+    uint8_t mid_pass_level) {
+
+    MidPassControls* mid_pass_ctrls = &scs_ptr->mid_pass_ctrls;
+    switch (mid_pass_level) {
+
+    case 0:
+        mid_pass_ctrls->ds = 0;
+        break;
+
+    case 1:
+        mid_pass_ctrls->ds = 1;
+        break;
+
+    default:
+        assert(0);
+        break;
+    }
+}
+#endif
+#if CLN_ENC_CONFIG_SIG
+/*
+* Set multi Pass Params
+*/
+void set_multi_pass_params(SequenceControlSet *scs_ptr)
+{
+    EbSvtAv1EncConfiguration *config = &scs_ptr->static_config;
+
+    // Update passes
+    if (scs_ptr->static_config.pass != ENC_SINGLE_PASS)
+        scs_ptr->passes = (scs_ptr->static_config.rate_control_mode == 1) ? 3 : 2;
+    else
+        scs_ptr->passes = 1;
+
+    switch (config->pass) {
+
+        case ENC_SINGLE_PASS: {
+            set_ipp_pass_ctrls(scs_ptr, 0);
+            set_mid_pass_ctrls(scs_ptr, 0);
+            scs_ptr->ipp_was_ds = 0;
+            scs_ptr->final_pass_preset = config->enc_mode;
+            break;
+        }
+
+        case ENC_FIRST_PASS: {
+            if (config->enc_mode <= ENC_M4)
+                set_ipp_pass_ctrls(scs_ptr, 0);
+            else if (config->enc_mode <= ENC_M10)
+                set_ipp_pass_ctrls(scs_ptr, 1);
+            else
+                if (config->rate_control_mode == 0)
+                    set_ipp_pass_ctrls(scs_ptr, 2);
+                else
+                    set_ipp_pass_ctrls(scs_ptr, 1);
+            set_mid_pass_ctrls(scs_ptr, 0);
+            scs_ptr->ipp_was_ds = 0;
+            scs_ptr->final_pass_preset = config->enc_mode;
+            scs_ptr->static_config.enc_mode = MAX_ENC_PRESET;
+            scs_ptr->static_config.look_ahead_distance = 0;
+            scs_ptr->static_config.enable_tpl_la = 0;
+            scs_ptr->static_config.rate_control_mode = 0;
+            scs_ptr->static_config.intra_refresh_type = 2;
+            scs_ptr->static_config.max_bit_rate = 0;
+            scs_ptr->static_config.hierarchical_levels = 0;
+            break;
+        }
+
+        case ENC_MIDDLE_PASS: {
+            set_ipp_pass_ctrls(scs_ptr, 0);
+            if (config->enc_mode <= ENC_M10)
+                set_mid_pass_ctrls(scs_ptr, 0);
+            else
+                set_mid_pass_ctrls(scs_ptr, 1);
+            scs_ptr->ipp_was_ds = 0;
+            scs_ptr->final_pass_preset = config->enc_mode;
+            if (scs_ptr->final_pass_preset <= ENC_M7)
+                scs_ptr->static_config.enc_mode = ENC_M11;
+            else if (scs_ptr->final_pass_preset <= ENC_M9)
+                scs_ptr->static_config.enc_mode = ENC_M12;
+            else
+                scs_ptr->static_config.enc_mode = MAX_ENC_PRESET;
+            scs_ptr->static_config.enable_tpl_la = 1;
+            scs_ptr->static_config.rate_control_mode = 0;
+            scs_ptr->static_config.qp = 43;
+            scs_ptr->static_config.intra_refresh_type = 2;
+            scs_ptr->static_config.max_bit_rate = 0;
+            scs_ptr->static_config.enable_tpl_la = 1;
+            scs_ptr->static_config.intra_refresh_type = 2;
+            break;
+        }
+
+        case ENC_LAST_PASS: {
+            set_ipp_pass_ctrls(scs_ptr, 0);
+            // Please make sure that ipp_was_ds is ON only when ipp_ctrls->ipp_ds is ON
+            if (config->enc_mode <= ENC_M10)
+                scs_ptr->ipp_was_ds = 0;
+            else
+                scs_ptr->ipp_was_ds = config->rate_control_mode == 0 ? 1 : 0;
+            scs_ptr->final_pass_preset = config->enc_mode;
+            scs_ptr->static_config.enable_tpl_la = 1;
+            scs_ptr->static_config.intra_refresh_type = 2;
+            break;
+        }
+        default: {
+            assert(0);
+            break;
+        }
+    }
+
+    int do_downsample =
+        (scs_ptr->mid_pass_ctrls.ds || scs_ptr->ipp_pass_ctrls.ds) && scs_ptr->max_input_luma_width >= 128 && scs_ptr->max_input_luma_height >= 128
+        ? 1
+        : 0;
+
+    if (do_downsample) {
+        // To make sure the down scaled video has width and height of multiple of 2
+        scs_ptr->max_input_luma_width = (scs_ptr->max_input_luma_width >> 2) << 1;
+        scs_ptr->max_input_luma_height = (scs_ptr->max_input_luma_height >> 2) << 1;
+    }
+
+    if (scs_ptr->lap_enabled) {
+        scs_ptr->static_config.enable_tpl_la = 1;
+        scs_ptr->static_config.intra_refresh_type = 2;
+    }
+
+    if (scs_ptr->static_config.pred_structure == EB_PRED_LOW_DELAY_B)
+        scs_ptr->static_config.enable_tpl_la = 0;
+
+    if (scs_ptr->static_config.pass == ENC_MIDDLE_PASS && scs_ptr->final_pass_preset > ENC_M8)
+        scs_ptr->rc_stat_gen_pass_mode = 1;
+    else
+        scs_ptr->rc_stat_gen_pass_mode = 0;
+
+    if (scs_ptr->static_config.recode_loop > 0 &&
+        (!scs_ptr->static_config.rate_control_mode && scs_ptr->static_config.max_bit_rate == 0) &&
+        (!scs_ptr->static_config.rate_control_mode || (!scs_ptr->lap_enabled && !(scs_ptr->static_config.pass == ENC_MIDDLE_PASS || scs_ptr->static_config.pass == ENC_LAST_PASS)))) {
+        // Only allow re-encoding for 2pass VBR/CBR or 1 PASS LAP, otherwise force recode_loop to DISALLOW_RECODE or 0
+        scs_ptr->static_config.recode_loop = DISALLOW_RECODE;
+    }
+    else if (scs_ptr->static_config.recode_loop == ALLOW_RECODE_DEFAULT) {
+        // capped CRF has reencde enabled for base layer frames for all presets
+        if (!scs_ptr->static_config.rate_control_mode && scs_ptr->static_config.max_bit_rate)
+            scs_ptr->static_config.recode_loop = ALLOW_RECODE_KFARFGF;
+        else
+            scs_ptr->static_config.recode_loop = scs_ptr->static_config.enc_mode <= ENC_M2 ? ALLOW_RECODE_KFARFGF : ALLOW_RECODE_KFMAXBW;
+    }
+
+    scs_ptr->encode_context_ptr->recode_loop = scs_ptr->static_config.recode_loop;
+}
+#endif
 void set_param_based_on_input(SequenceControlSet *scs_ptr)
 {
+
+#if CLN_ENC_CONFIG_SIG
+    set_multi_pass_params(
+        scs_ptr);
+#endif
     uint16_t subsampling_x = scs_ptr->subsampling_x;
     uint16_t subsampling_y = scs_ptr->subsampling_y;
     // Update picture width, and picture height
@@ -5436,6 +6517,7 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
 #if !IPP_CTRL
         scs_ptr->enc_mode_2ndpass = scs_ptr->static_config.enc_mode ;
 #endif
+#if !CLN_ENC_CONFIG_SIG
     if (use_output_stat(scs_ptr)) {
         scs_ptr->static_config.enc_mode = MAX_ENC_PRESET;
 #if FTR_LAD_INPUT
@@ -5577,21 +6659,43 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
 #if FIX_SANITIZER_RACE_CONDS
     scs_ptr->encode_context_ptr->recode_loop = scs_ptr->static_config.recode_loop;
 #endif
-
+#endif
     derive_input_resolution(
         &scs_ptr->input_resolution,
         scs_ptr->seq_header.max_frame_width*scs_ptr->seq_header.max_frame_height);
     // Set TF level
     derive_tf_params(scs_ptr);
+
 #if FTR_LAD_INPUT
+#if !CLN_ENC_CONFIG_SIG
+#if CLN_ENC_CONFIG_SIG
+    if (scs_ptr->static_config.pass == ENC_FIRST_PASS)
+#else
     if (use_output_stat(scs_ptr))
+#endif
         scs_ptr->static_config.hierarchical_levels = 0;
+#endif
     //Future frames window in Scene Change Detection (SCD) / TemporalFiltering
     scs_ptr->scd_delay = 0;
 
     // Update the scd_delay based on the the number of future frames @ ISLICE
     // This case is needed for non-delayed Intra (intra_period_length == 0)
     uint32_t scd_delay_islice = 0;
+#if CLN_TF_ENC_CONFIG
+    if (scs_ptr->static_config.intra_period_length == 0)
+        if (scs_ptr->tf_params_per_type[0].enabled)
+            scd_delay_islice =
+            MIN(scs_ptr->tf_params_per_type[0].num_future_pics + (scs_ptr->tf_params_per_type[0].noise_adjust_future_pics ? 3 : 0), // number of future picture(s) used for ISLICE + max picture(s) after noise-based adjustement (=3)
+                scs_ptr->tf_params_per_type[0].max_num_future_pics);
+
+
+    // Update the scd_delay based on the the number of future frames @ BASE
+    uint32_t scd_delay_base = 0;
+    if (scs_ptr->tf_params_per_type[1].enabled)
+        scd_delay_base =
+        MIN(scs_ptr->tf_params_per_type[1].num_future_pics + (scs_ptr->tf_params_per_type[1].noise_adjust_future_pics ? 3 : 0), // number of future picture(s) used for BASE + max picture(s) after noise-based adjustement (=3)
+            scs_ptr->tf_params_per_type[1].max_num_future_pics);
+#else
     if (scs_ptr->static_config.intra_period_length == 0)
         if (scs_ptr->static_config.tf_params_per_type[0].enabled)
             scd_delay_islice =
@@ -5605,12 +6709,16 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
         scd_delay_base =
         MIN(scs_ptr->static_config.tf_params_per_type[1].num_future_pics + (scs_ptr->static_config.tf_params_per_type[1].noise_adjust_future_pics ? 3 : 0), // number of future picture(s) used for BASE + max picture(s) after noise-based adjustement (=3)
             scs_ptr->static_config.tf_params_per_type[1].max_num_future_pics);
-
+#endif
     scs_ptr->scd_delay = MAX(scd_delay_islice, scd_delay_base);
 
     // Update the scd_delay based on SCD, 1first pass
     // Delay needed for SCD , 1first pass of (2pass and 1pass VBR)
+#if CLN_ENC_CONFIG_SIG
+    if (scs_ptr->static_config.scene_change_detection || scs_ptr->static_config.pass == ENC_FIRST_PASS || scs_ptr->lap_enabled)
+#else
     if (scs_ptr->static_config.scene_change_detection || use_output_stat(scs_ptr) || scs_ptr->lap_enabled)
+#endif
         scs_ptr->scd_delay = MAX(scs_ptr->scd_delay, 2);
 
 #if FIX_LOW_DELAY
@@ -5670,7 +6778,11 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
 #endif
     // In two pass encoding, the first pass uses sb size=64. Also when tpl is used
     // in 240P resolution, sb size is set to 64
+#if CLN_ENC_CONFIG_SIG
+    if (scs_ptr->static_config.pass == ENC_FIRST_PASS ||
+#else
     if (use_output_stat(scs_ptr) ||
+#endif
         (scs_ptr->static_config.enable_tpl_la && scs_ptr->input_resolution == INPUT_SIZE_240p_RANGE))
         scs_ptr->static_config.super_block_size = 64;
     else
@@ -5678,7 +6790,11 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
             scs_ptr->static_config.super_block_size = 128;
         else
             scs_ptr->static_config.super_block_size = 64;
+#if CLN_ENC_CONFIG_SIG
+    if (scs_ptr->static_config.rate_control_mode && !(scs_ptr->static_config.pass == ENC_MIDDLE_PASS || scs_ptr->static_config.pass == ENC_LAST_PASS) && !scs_ptr->lap_enabled)
+#else
     if (scs_ptr->static_config.rate_control_mode && !use_input_stat(scs_ptr) && !scs_ptr->lap_enabled)
+#endif
         scs_ptr->static_config.super_block_size = 64;
 
     // scs_ptr->static_config.hierarchical_levels = (scs_ptr->static_config.rate_control_mode > 1) ? 3 : scs_ptr->static_config.hierarchical_levels;
@@ -5767,7 +6883,11 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     scs_ptr->enable_dec_order = 1;
 #else
     if (scs_ptr->static_config.logical_processors == 1 && // LP1
+#if CLN_ENC_CONFIG_SIG
+        ((scs_ptr->static_config.pass == ENC_MIDDLE_PASS || scs_ptr->static_config.pass == ENC_LAST_PASS) || scs_ptr->lap_enabled))
+#else
         (use_input_stat(scs_ptr) || scs_ptr->lap_enabled))
+#endif
         scs_ptr->enable_dec_order = 1;
     else
         scs_ptr->enable_dec_order = 0;
@@ -5805,7 +6925,11 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
         scs_ptr->over_boundary_block_mode = 1;
     else
         scs_ptr->over_boundary_block_mode = scs_ptr->static_config.over_bndry_blk;
+#if CLN_ENC_CONFIG_SIG
+    if (scs_ptr->static_config.pass == ENC_FIRST_PASS)
+#else
     if (use_output_stat(scs_ptr))
+#endif
         scs_ptr->over_boundary_block_mode = 0;
     if (scs_ptr->static_config.enable_mfmv == DEFAULT)
 #if TUNE_SHIFT_PRESETS_DOWN && !TUNE_TXS_IFS_MFMV_DEPTH_M9
@@ -5960,7 +7084,11 @@ void set_mini_gop_size_controls(MiniGopSizeCtrls *mgs_ctls, uint8_t mg_level) {
     }
 }
 void set_max_mini_gop_size(SequenceControlSet *scs_ptr, MiniGopSizeCtrls *mgs_ctls) {
+#if CLN_ENC_CONFIG_SIG
+    if (scs_ptr->static_config.pass == ENC_MIDDLE_PASS || scs_ptr->static_config.pass == ENC_LAST_PASS) {
+#else
     if (use_input_stat(scs_ptr)) {
+#endif
         read_stat(scs_ptr);
         setup_two_pass(scs_ptr);
 #if FTR_OPT_IPP_DOWN_SAMPLE
@@ -5978,7 +7106,11 @@ void set_max_mini_gop_size(SequenceControlSet *scs_ptr, MiniGopSizeCtrls *mgs_ct
 #if FTR_OPT_MPASS_DOWN_SAMPLE
         EbInputResolution input_resolution;
 #if FTR_OPT_IPP_DOWN_SAMPLE
+#if CLN_ENC_CONFIG_SIG
+        if (scs_ptr->mid_pass_ctrls.ds)
+#else
         if (is_middle_pass_ds(scs_ptr))
+#endif
 #else
         if (is_middle_pass_ds(scs_ptr))
 #endif
@@ -5990,7 +7122,11 @@ void set_max_mini_gop_size(SequenceControlSet *scs_ptr, MiniGopSizeCtrls *mgs_ct
                 &input_resolution,
                 scs_ptr->seq_header.max_frame_width*scs_ptr->seq_header.max_frame_height);
 #if FTR_OPT_IPP_DOWN_SAMPLE
+#if CLN_ENC_CONFIG_SIG
+        double lm_th = (0.6 + resolution_offset[scs_ptr->ipp_was_ds][input_resolution]);
+#else
         double lm_th = (0.6 + resolution_offset[scs_ptr->static_config.ipp_was_ds][input_resolution]);
+#endif
 #else
         double lm_th = (0.6 + resolution_offset[input_resolution]);
 #endif
@@ -6004,7 +7140,11 @@ void set_max_mini_gop_size(SequenceControlSet *scs_ptr, MiniGopSizeCtrls *mgs_ct
         double unid_motion = ((stat->mv_in_out_count / (stat->count - 1)) > mgs_ctls->lmv_di_th) && ((stat->mv_in_out_count / (stat->count - 1)) < mgs_ctls->hmv_di_th) ? 1 : 0;
         double low_frame_rate = (fps < mgs_ctls->lfr_th) ? 1 : 0;
 #if FTR_OPT_IPP_DOWN_SAMPLE
+#if CLN_ENC_CONFIG_SIG
+        double lm_th_offset = (short_shot && unid_motion && low_frame_rate ? (scs_ptr->ipp_was_ds ? 0.2 : 0.065) : 0.0);
+#else
         double lm_th_offset = (short_shot && unid_motion && low_frame_rate ? (scs_ptr->static_config.ipp_was_ds ? 0.2 : 0.065) : 0.0);
+#endif
 #else
         double lm_th_offset = (short_shot && unid_motion && low_frame_rate ? 0.065 : 0.0);
 #endif
@@ -6012,7 +7152,11 @@ void set_max_mini_gop_size(SequenceControlSet *scs_ptr, MiniGopSizeCtrls *mgs_ct
         uint32_t  min_gop_size = ((low_motion_clip > lm_th) && !avoid_long_gop) ? 32 : low_motion_clip > hm_th ? 16 : 8;
         double high_motion_clip = (stat->pcnt_motion) / (stat->count - 1);
         double mv_in_out_count = ABS(stat->mv_in_out_count / (stat->count - 1));
+#if CLN_ENC_CONFIG_SIG
+        min_gop_size = (high_motion_clip > 0.78) && (mv_in_out_count > (scs_ptr->ipp_pass_ctrls.ds ? 0.5 : 0.6)) ? min_gop_size / 2 : min_gop_size;
+#else
         min_gop_size = (high_motion_clip > 0.78) && (mv_in_out_count > (scs_ptr->static_config.ipp_ctrls.ipp_ds ? 0.5 : 0.6)) ? min_gop_size / 2 : min_gop_size;
+#endif
         min_gop_size = MIN(32, MAX(8, min_gop_size));
 
         switch (min_gop_size) {
@@ -6052,7 +7196,6 @@ void copy_api_from_app(
     SequenceControlSet       *scs_ptr,
     EbSvtAv1EncConfiguration   *config_struct){
     uint32_t                  hme_region_index = 0;
-
     scs_ptr->max_input_luma_width = config_struct->source_width;
     scs_ptr->max_input_luma_height = config_struct->source_height;
     scs_ptr->frame_rate = ((EbSvtAv1EncConfiguration*)config_struct)->frame_rate;
@@ -6097,7 +7240,10 @@ void copy_api_from_app(
             MAX_TEMPORAL_LAYERS * sizeof(int32_t));
     }
     scs_ptr->static_config.rc_twopass_stats_in = ((EbSvtAv1EncConfiguration*)config_struct)->rc_twopass_stats_in;
+#if !CLN_ENC_CONFIG_SIG
     scs_ptr->static_config.rc_firstpass_stats_out = ((EbSvtAv1EncConfiguration*)config_struct)->rc_firstpass_stats_out;
+#endif
+#if !CLN_ENC_CONFIG_SIG
 #if FIX_DG
     scs_ptr->static_config.ipp_ctrls.skip_frame_first_pass = ((EbSvtAv1EncConfiguration*)config_struct)->ipp_ctrls.skip_frame_first_pass;
     scs_ptr->static_config.ipp_ctrls.ipp_ds = ((EbSvtAv1EncConfiguration*)config_struct)->ipp_ctrls.ipp_ds;
@@ -6111,14 +7257,24 @@ void copy_api_from_app(
     scs_ptr->static_config.ipp_ctrls.reduce_me_search = ((EbSvtAv1EncConfiguration*)config_struct)->ipp_ctrls.reduce_me_search;
 #endif
 #endif
+#endif
 #if FTR_MULTI_PASS_API
+#if !CLN_ENC_CONFIG_SIG
     scs_ptr->static_config.rc_middlepass_stats_out = ((EbSvtAv1EncConfiguration*)config_struct)->rc_middlepass_stats_out;
-#if FTR_OPT_MPASS_DOWN_SAMPLE
+#endif
+#if FTR_OPT_MPASS_DOWN_SAMPLE && !CLN_ENC_CONFIG_SIG
     scs_ptr->static_config.rc_middlepass_ds_stats_out = ((EbSvtAv1EncConfiguration*)config_struct)->rc_middlepass_ds_stats_out;
 #endif
+#if !CLN_ENC_CONFIG_SIG
     scs_ptr->static_config.passes = ((EbSvtAv1EncConfiguration*)config_struct)->passes;
+#endif
+#if CLN_ENC_CONFIG_SIG
+    scs_ptr->static_config.pass = ((EbSvtAv1EncConfiguration*)config_struct)->pass;
+#endif
 #if TUNE_MULTI_PASS
+#if !CLN_ENC_CONFIG_SIG
     scs_ptr->static_config.multi_pass_mode = ((EbSvtAv1EncConfiguration*)config_struct)->multi_pass_mode;
+#endif
 #endif
 #endif
     // Deblock Filter
@@ -6220,8 +7376,13 @@ void copy_api_from_app(
     scs_ptr->static_config.palette_level = ((EbSvtAv1EncConfiguration*)config_struct)->palette_level;
     // Adaptive Loop Filter
 #if FIX_I64
+#if CLN_ENC_CONFIG_SIG
+    scs_ptr->static_config.tile_rows = scs_ptr->static_config.pass == ENC_FIRST_PASS ? 0 : ((EbSvtAv1EncConfiguration*)config_struct)->tile_rows;
+    scs_ptr->static_config.tile_columns = scs_ptr->static_config.pass == ENC_FIRST_PASS ? 0 : ((EbSvtAv1EncConfiguration*)config_struct)->tile_columns;
+#else
     scs_ptr->static_config.tile_rows = use_output_stat(scs_ptr) ? 0 :  ((EbSvtAv1EncConfiguration*)config_struct)->tile_rows;
     scs_ptr->static_config.tile_columns =  use_output_stat(scs_ptr) ? 0 :  ((EbSvtAv1EncConfiguration*)config_struct)->tile_columns;
+#endif
 #else
     scs_ptr->static_config.tile_rows = ((EbSvtAv1EncConfiguration*)config_struct)->tile_rows;
     scs_ptr->static_config.tile_columns = ((EbSvtAv1EncConfiguration*)config_struct)->tile_columns;
@@ -6244,7 +7405,11 @@ void copy_api_from_app(
 #endif
 #if FTR_1PASS_CBR
 #if FIX_LOW_DELAY
+#if CLN_ENC_CONFIG_SIG
+    if (scs_ptr->static_config.rate_control_mode == 2 && scs_ptr->static_config.pass != ENC_FIRST_PASS && !(scs_ptr->static_config.pass == ENC_MIDDLE_PASS || scs_ptr->static_config.pass == ENC_LAST_PASS) &&
+#else
     if (scs_ptr->static_config.rate_control_mode == 2 && !use_output_stat(scs_ptr) && !use_input_stat(scs_ptr) &&
+#endif
         scs_ptr->static_config.pred_structure != 0) {
         scs_ptr->static_config.pred_structure = 0;
         SVT_WARN("Forced 1pass CBR to be always low delay mode.\n");
@@ -6302,7 +7467,11 @@ void copy_api_from_app(
     scs_ptr->static_config.recode_loop         = ((EbSvtAv1EncConfiguration*)config_struct)->recode_loop;
 #if FTR_1PASS_CBR
 #if TUNE_MULTI_PASS
+#if CLN_ENC_CONFIG_SIG
+    if (scs_ptr->static_config.rate_control_mode == 1 && scs_ptr->static_config.pass != ENC_MIDDLE_PASS && scs_ptr->static_config.pass != ENC_FIRST_PASS && !(scs_ptr->static_config.pass == ENC_MIDDLE_PASS || scs_ptr->static_config.pass == ENC_LAST_PASS))
+#else
     if (scs_ptr->static_config.rate_control_mode == 1 && !is_middle_pass(scs_ptr) && !use_output_stat(scs_ptr) && !use_input_stat(scs_ptr))
+#endif
 #else
     if (scs_ptr->static_config.rate_control_mode == 1 && !use_output_stat(scs_ptr) && !use_input_stat(scs_ptr))
 #endif
@@ -6339,7 +7508,11 @@ void copy_api_from_app(
     // SC detection is OFF for first pass in M8
 #if FIX_PRESET_TUNING
 #if TUNE_MULTI_PASS
+#if CLN_ENC_CONFIG_SIG
+    uint8_t disable_sc_detection = (scs_ptr->static_config.pass == ENC_FIRST_PASS) ? 1 : 0;
+#else
     uint8_t disable_sc_detection = use_output_stat(scs_ptr) ? 1 : 0;
+#endif
 #else
     uint8_t disable_sc_detection = scs_ptr->enc_mode_2ndpass <= ENC_M4 ? 0 : use_output_stat(scs_ptr) ? 1 : 0;
 #endif
@@ -6638,7 +7811,11 @@ if (scs_ptr->max_input_luma_width > 16384) {
     }
 
 #if FTR_2PASS_CBR
+#if CLN_ENC_CONFIG_SIG
+    if (config->rate_control_mode > 2 && (config->pass == ENC_FIRST_PASS || config->rc_twopass_stats_in.buf)) {
+#else
     if (config->rate_control_mode > 2 && (config->rc_firstpass_stats_out || config->rc_twopass_stats_in.buf)) {
+#endif
         SVT_LOG("Error Instance %u: Only rate control mode 0~2 are supported for 2-pass \n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
@@ -7064,8 +8241,11 @@ if (scs_ptr->max_input_luma_width > 16384) {
                 channel_number + 1, config->superres_mode, SUPERRES_NONE, SUPERRES_AUTO);
         return_error = EB_ErrorBadParameter;
     }
-
+#if CLN_ENC_CONFIG_SIG
+    if (config->superres_mode > 0 && ((config->rc_twopass_stats_in.sz || config->pass == ENC_FIRST_PASS))) {
+#else
     if (config->superres_mode > 0 && ((config->rc_twopass_stats_in.sz || config->rc_firstpass_stats_out))){
+#endif
         SVT_LOG("Error instance %u: superres is not supported for 2-pass\n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
@@ -7336,9 +8516,11 @@ EbErrorType svt_svt_enc_init_parameter(
     memset(&config_ptr->mastering_display, 0, sizeof(config_ptr->mastering_display));
     memset(&config_ptr->content_light_level, 0, sizeof(config_ptr->content_light_level));
 #if TUNE_MULTI_PASS
+#if !CLN_ENC_CONFIG_SIG
     config_ptr->rc_middlepass_stats_out = 0;
     config_ptr->multi_pass_mode = 0;
     config_ptr->passes = 1;
+#endif
 #endif
 #if FIX_DATA_RACE_2PASS
     config_ptr->enable_adaptive_mini_gop = 0;
@@ -7349,6 +8531,7 @@ EbErrorType svt_svt_enc_init_parameter(
     config_ptr->final_pass_rc_mode = 0;
 #endif
 #endif
+#if !CLN_ENC_CONFIG_SIG
 #if OPT_FIRST_PASS2
     config_ptr->ipp_ctrls.skip_frame_first_pass = 0;
     config_ptr->ipp_ctrls.bypass_blk_step = 0;
@@ -7363,6 +8546,7 @@ EbErrorType svt_svt_enc_init_parameter(
     config_ptr->ipp_ctrls.bypass_zz_check = 0;
     config_ptr->ipp_ctrls.use8blk = 0;
     config_ptr->ipp_ctrls.reduce_me_search = 0;
+#endif
 #endif
     return return_error;
 }
@@ -7397,7 +8581,11 @@ static void print_lib_params(
              tier_to_str(config->tier),
              level_to_str(config->level));
 
+#if CLN_ENC_CONFIG_SIG
+    if (config->pass == ENC_FIRST_PASS)
+#else
     if (config->rc_firstpass_stats_out)
+#endif
         SVT_INFO("SVT [config]: Preset \t\t\t\t\t\t\t: Pass 1\n");
     else
         SVT_INFO("SVT [config]: Preset \t\t\t\t\t\t\t: %d\n", config->enc_mode);
@@ -7493,6 +8681,7 @@ EB_API EbErrorType svt_av1_enc_set_parameter(
 
     if (return_error == EB_ErrorBadParameter)
         return EB_ErrorBadParameter;
+
     set_param_based_on_input(
         enc_handle->scs_instance_array[instance_index]->scs_ptr);
 #if CLIP_BASED_DYNAMIC_MINIGOP
@@ -7515,7 +8704,12 @@ EB_API EbErrorType svt_av1_enc_set_parameter(
     enc_handle->scs_instance_array[instance_index]->scs_ptr->static_config.max_heirachical_level =  enc_handle->scs_instance_array[instance_index]->scs_ptr->static_config.hierarchical_levels;
 #endif
 #else
+#if CLN_ENC_CONFIG_SIG
+    uint8_t mg_level = (enc_handle->scs_instance_array[instance_index]->scs_ptr->static_config.pass == ENC_MIDDLE_PASS || enc_handle->scs_instance_array[instance_index]->scs_ptr->static_config.pass == ENC_LAST_PASS) ? 1 : 0;
+#else
     uint8_t mg_level = (use_input_stat(enc_handle->scs_instance_array[instance_index]->scs_ptr)) ? 1 : 0;
+#endif
+#if !CLN_ENC_CONFIG_SIG
     // Disable Dynamic Gop for non-CRF mode
 #if ENBLE_DG_IN_VBR_MODE
     if (enc_handle->scs_instance_array[instance_index]->scs_ptr->static_config.multi_pass_mode == TWO_PASS_SAMEPRED_FINAL)
@@ -7523,6 +8717,7 @@ EB_API EbErrorType svt_av1_enc_set_parameter(
     if (enc_handle->scs_instance_array[instance_index]->scs_ptr->static_config.final_pass_rc_mode)
 #endif
         mg_level = 0;
+#endif
 #if FIX_DG
     enc_handle->scs_instance_array[instance_index]->scs_ptr->static_config.max_heirachical_level = enc_handle->scs_instance_array[instance_index]->scs_ptr->static_config.hierarchical_levels;
 #endif
@@ -7541,10 +8736,17 @@ EB_API EbErrorType svt_av1_enc_set_parameter(
 #endif
     // Initialize the Prediction Structure Group
 #if CLN_MERGE_MRP_SIG
+#if CLN_MRP_ENC_CONFIG
+    EB_NO_THROW_NEW(
+        enc_handle->scs_instance_array[instance_index]->encode_context_ptr->prediction_structure_group_ptr,
+        prediction_structure_group_ctor,
+        enc_handle->scs_instance_array[instance_index]->scs_ptr);
+#else
     EB_NO_THROW_NEW(
         enc_handle->scs_instance_array[instance_index]->encode_context_ptr->prediction_structure_group_ptr,
         prediction_structure_group_ctor,
         &(enc_handle->scs_instance_array[instance_index]->scs_ptr->static_config));
+#endif
 #else
     EB_NO_THROW_NEW(
         enc_handle->scs_instance_array[instance_index]->encode_context_ptr->prediction_structure_group_ptr,
@@ -8355,13 +9557,21 @@ static void copy_input_buffer(
 #if OPT_FIRST_PASS2
     int copy_frame = 1;
 #if FIX_ISSUE_50
+#if CLN_ENC_CONFIG_SIG
+    if (sequenceControlSet->ipp_pass_ctrls.skip_frame_first_pass == 1)
+#else
     if (sequenceControlSet->static_config.ipp_ctrls.skip_frame_first_pass == 1)
+#endif
 #else
     if (sequenceControlSet->static_config.final_pass_rc_mode == 0)
 #endif
         copy_frame = (((src->pts % 8) == 0) || ((src->pts % 8) == 6) || ((src->pts % 8) == 7));
 #if ENBLE_SKIP_FRAME_IN_VBR_MODE
+#if CLN_ENC_CONFIG_SIG
+    else if (sequenceControlSet->ipp_pass_ctrls.skip_frame_first_pass == 2)
+#else
     else if (sequenceControlSet->static_config.ipp_ctrls.skip_frame_first_pass == 2)
+#endif
         copy_frame = ((src->pts < 7) || ((src->pts % 8) == 0) || ((src->pts % 8) == 6) || ((src->pts % 8) == 7));
 #endif
 #if FTR_OPT_MPASS_DOWN_SAMPLE
@@ -8369,7 +9579,11 @@ static void copy_input_buffer(
     if (1) {
 #else
 #if FTR_OPT_IPP_DOWN_SAMPLE
+#if CLN_ENC_CONFIG_SIG // --------------------- here
+    if (sequenceControlSet->mid_pass_ctrls.ds || sequenceControlSet->ipp_pass_ctrls.ds) {
+#else
     if (sequenceControlSet->static_config.rc_middlepass_ds_stats_out || sequenceControlSet->static_config.ipp_ctrls.ipp_ds) {
+#endif
 #else
     if (sequenceControlSet->static_config.rc_middlepass_ds_stats_out) {
 #endif
@@ -8640,7 +9854,9 @@ EB_API EbErrorType svt_av1_enc_send_picture(
         (enc_handle_ptr->scs_instance_array[0]->scs_ptr->static_config.final_pass_rc_mode != 0)) ? 0 : 1;
 #endif
 #if FIX_DG
+#if !CLN_ENC_CONFIG_SIG
     int pass = enc_handle_ptr->scs_instance_array[0]->scs_ptr->static_config.rc_firstpass_stats_out;
+#endif
 #endif
     if (p_buffer != NULL) {
 
@@ -8654,7 +9870,11 @@ EB_API EbErrorType svt_av1_enc_send_picture(
             lib_y8b_hdr,
 #if OPT_FIRST_PASS2
             app_hdr,
+#if CLN_ENC_CONFIG_SIG
+            enc_handle_ptr->scs_instance_array[0]->scs_ptr->static_config.pass == ENC_FIRST_PASS);
+#else
             pass);
+#endif
 #else
             app_hdr);
 #endif

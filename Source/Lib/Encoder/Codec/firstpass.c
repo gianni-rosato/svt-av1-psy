@@ -462,6 +462,7 @@ static void update_firstpass_stats(PictureParentControlSet *pcs_ptr, const FRAME
 #endif
         fps.pcnt_motion     = 0.0;
     }
+#if !CLN_ENC_CONFIG_SIG
 #if 0//FTR_OPT_IPP_DOWN_SAMPLE
    // fps.weight = stats->intra_factor * stats->brightness_factor;
    // fps.frame = frame_number;
@@ -506,6 +507,7 @@ static void update_firstpass_stats(PictureParentControlSet *pcs_ptr, const FRAME
     //    fps.pcnt_motion = 0.0;
     //}
 #endif
+#endif
     // TODO(paulwilkins):  Handle the case when duration is set to 0, or
     // something less than the full time between subsequent values of
     // cpi->source_time_stamp.
@@ -526,7 +528,11 @@ static void update_firstpass_stats(PictureParentControlSet *pcs_ptr, const FRAME
     output_stats(scs_ptr, this_frame_stats, pcs_ptr->picture_number);
 #endif
 #if FTR_1PAS_VBR
+#if CLN_ENC_CONFIG_SIG
+    if (twopass->stats_buf_ctx->total_stats != NULL && scs_ptr->static_config.pass == ENC_FIRST_PASS) {
+#else
     if (twopass->stats_buf_ctx->total_stats != NULL && use_output_stat(scs_ptr)) {
+#endif
 #else
     if (twopass->stats_buf_ctx->total_stats != NULL) {
 #endif
@@ -535,8 +541,11 @@ static void update_firstpass_stats(PictureParentControlSet *pcs_ptr, const FRAME
     /*In the case of two pass, first pass uses it as a circular buffer,
    * when LAP is enabled it is used as a linear buffer*/
     twopass->stats_buf_ctx->stats_in_end_write++;
-
+#if CLN_ENC_CONFIG_SIG
+    if (scs_ptr->static_config.pass == ENC_FIRST_PASS &&
+#else
     if ((use_output_stat(scs_ptr)) &&
+#endif
         (twopass->stats_buf_ctx->stats_in_end_write >= twopass->stats_buf_ctx->stats_in_buf_end)) {
         twopass->stats_buf_ctx->stats_in_end_write = twopass->stats_buf_ctx->stats_in_start;
     }
@@ -734,6 +743,7 @@ void first_pass_frame_end(PictureParentControlSet *pcs_ptr, const int64_t ts_dur
 #endif
 #endif
 }
+#if !CLN_ENC_CONFIG_SIG
 #if TUNE_MULTI_PASS
 void samepred_pass_frame_end(PictureParentControlSet *pcs_ptr, const double ts_duration) {
     SequenceControlSet *scs_ptr = pcs_ptr->scs_ptr;
@@ -776,7 +786,11 @@ void samepred_pass_frame_end(PictureParentControlSet *pcs_ptr, const double ts_d
     memset(&fps.stat_struct, 0, sizeof(StatStruct));
     fps.stat_struct.poc = pcs_ptr->picture_number;
 #if FTR_OPT_MPASS_DOWN_SAMPLE
+#if CLN_ENC_CONFIG_SIG
+    if (scs_ptr->mid_pass_ctrls.ds)
+#else
     if (is_middle_pass_ds(scs_ptr))
+#endif
         fps.stat_struct.total_num_bits = pcs_ptr->total_num_bits *DS_SC_FACT / 10;
     else
         fps.stat_struct.total_num_bits = pcs_ptr->total_num_bits;
@@ -827,6 +841,7 @@ void samepred_pass_frame_end(PictureParentControlSet *pcs_ptr, const double ts_d
         }
     }
 }
+#endif
 #endif
 /******************************************************
 * Derive Pre-Analysis settings for first pass for pcs
@@ -1108,7 +1123,11 @@ void *set_first_pass_me_hme_params_oq(MeContext *me_context_ptr, PictureParentCo
 
     // Set the minimum ME search area
 #if IPP_CTRL
+#if CLN_ENC_CONFIG_SIG
+    if (!scs_ptr->ipp_pass_ctrls.reduce_me_search) {
+#else
     if (!scs_ptr->static_config.ipp_ctrls.reduce_me_search) {
+#endif
 #else
     if (pcs_ptr->scs_ptr->enc_mode_2ndpass <= ENC_M4) {
 #endif
@@ -1225,7 +1244,11 @@ EbErrorType first_pass_signal_derivation_me_kernel(SequenceControlSet *       sc
     context_ptr->me_context_ptr->enable_hme_level1_flag = pcs_ptr->enable_hme_level1_flag;
 #if TUNE_FIRSTPASS_HME2
 #if IPP_CTRL
+#if CLN_ENC_CONFIG_SIG
+    context_ptr->me_context_ptr->enable_hme_level2_flag = !scs_ptr->ipp_pass_ctrls.reduce_me_search ? pcs_ptr->enable_hme_level2_flag : 0;
+#else
     context_ptr->me_context_ptr->enable_hme_level2_flag = !scs_ptr->static_config.ipp_ctrls.reduce_me_search ? pcs_ptr->enable_hme_level2_flag : 0;
+#endif
 #else
     context_ptr->me_context_ptr->enable_hme_level2_flag = scs_ptr->enc_mode_2ndpass <= ENC_M4 ? pcs_ptr->enable_hme_level2_flag : 0;
 #endif
@@ -1288,7 +1311,11 @@ static int open_loop_firstpass_intra_prediction(PictureParentControlSet *ppcs_pt
     uint8_t  use8blk = 0;
 #if FIX_PRESET_TUNING
 #if IPP_CTRL
+#if CLN_ENC_CONFIG_SIG
+    if (!ppcs_ptr->scs_ptr->ipp_pass_ctrls.use8blk) {
+#else
     if (!ppcs_ptr->scs_ptr->static_config.ipp_ctrls.use8blk) {
+#endif
 #else
     if (ppcs_ptr->scs_ptr->enc_mode_2ndpass <= ENC_M4) {
 #endif
@@ -1722,7 +1749,11 @@ static EbErrorType first_pass_frame_seg(PictureParentControlSet *ppcs_ptr, int32
     const uint32_t blk_index_x_end = (x_b64_end_idx * blks_in_b64) > blk_cols ? blk_cols : (x_b64_end_idx * blks_in_b64);
     EbSpatialFullDistType spatial_full_dist_type_fun = svt_spatial_full_distortion_kernel;
 #if OPT_FIRST_PASS4
+#if CLN_ENC_CONFIG_SIG
+    int down_step = ppcs_ptr->scs_ptr->ipp_pass_ctrls.dist_ds;
+#else
     int down_step = ppcs_ptr->scs_ptr->static_config.ipp_ctrls.dist_ds;
+#endif
 #endif
     for (uint32_t blk_index_y = (y_b64_start_idx * blks_in_b64); blk_index_y < blk_index_y_end; blk_index_y++) {
         for (uint32_t blk_index_x = (x_b64_start_idx * blks_in_b64); blk_index_x < blk_index_x_end; blk_index_x++) {
@@ -2039,7 +2070,11 @@ void open_loop_first_pass(PictureParentControlSet *  ppcs_ptr,
                                                          ppcs_ptr->aligned_width);
     // Perform the me for the first pass for each segment
 #if IPP_CTRL
+#if CLN_ENC_CONFIG_SIG
+    if (!ppcs_ptr->scs_ptr->ipp_pass_ctrls.skip_frame_first_pass)
+#else
     if (!ppcs_ptr->scs_ptr->static_config.ipp_ctrls.skip_frame_first_pass)
+#endif
 #else
     if (ppcs_ptr->scs_ptr->enc_mode_2ndpass <= ENC_M4)
 #endif
@@ -2052,7 +2087,11 @@ void open_loop_first_pass(PictureParentControlSet *  ppcs_ptr,
 #if OPT_FIRST_PASS
 #if ENBLE_SKIP_FRAME_IN_VBR_MODE
 #if FIX_ISSUE_50
+#if CLN_ENC_CONFIG_SIG
+        if ((ppcs_ptr->scs_ptr->ipp_pass_ctrls.skip_frame_first_pass == 1) && (ppcs_ptr->picture_number % 8 > 0))
+#else
         if ((ppcs_ptr->scs_ptr->static_config.ipp_ctrls.skip_frame_first_pass == 1) && (ppcs_ptr->picture_number % 8 > 0))
+#endif
 #else
         if ((ppcs_ptr->scs_ptr->static_config.final_pass_rc_mode == 0) && (ppcs_ptr->picture_number % 8 > 0))
 #endif
@@ -2061,7 +2100,11 @@ void open_loop_first_pass(PictureParentControlSet *  ppcs_ptr,
 #else
             ppcs_ptr->skip_frame = 1;
 #endif
+#if CLN_ENC_CONFIG_SIG
+        else if ((ppcs_ptr->scs_ptr->ipp_pass_ctrls.skip_frame_first_pass == 2) && (ppcs_ptr->picture_number > 7 && ppcs_ptr->picture_number % 8 > 0))
+#else
         else if ((ppcs_ptr->scs_ptr->static_config.ipp_ctrls.skip_frame_first_pass == 2) && (ppcs_ptr->picture_number > 7 && ppcs_ptr->picture_number % 8 > 0))
+#endif
 #else
         if ((ppcs_ptr->scs_ptr->static_config.final_pass_rc_mode == 0) && (ppcs_ptr->picture_number % 8 > 0))
 #endif
@@ -2087,7 +2130,11 @@ void open_loop_first_pass(PictureParentControlSet *  ppcs_ptr,
     }
 #if OPT_FIRST_PASS3
 #if FIX_ISSUE_121
+#if CLN_ENC_CONFIG_SIG
+    me_context_ptr->me_context_ptr->bypass_blk_step = ppcs_ptr->scs_ptr->ipp_pass_ctrls.bypass_blk_step ?
+#else
     me_context_ptr->me_context_ptr->bypass_blk_step = ppcs_ptr->scs_ptr->static_config.ipp_ctrls.bypass_blk_step ?
+#endif
         ((ppcs_ptr->scs_ptr->input_resolution < INPUT_SIZE_360p_RANGE) ? 1 : 2) : 1;
 #else
     ppcs_ptr->bypass_blk_step = ppcs_ptr->scs_ptr->static_config.ipp_ctrls.bypass_blk_step ? ((ppcs_ptr->scs_ptr->input_resolution < INPUT_SIZE_360p_RANGE) ? 1 : 2) : 1;

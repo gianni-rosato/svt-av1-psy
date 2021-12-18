@@ -359,9 +359,11 @@ static void set_cfg_qp_file(const char *value, EbConfig *cfg) {
     }
     FOPEN(cfg->qp_file, value, "r");
 };
-
+#if CLN_ENC_CONFIG_SIG
+static void set_pass(const char* value, EbConfig* cfg) { cfg->config.pass = strtol(value, NULL, 0); }
+#else
 static void set_pass(const char *value, EbConfig *cfg) { cfg->pass = strtol(value, NULL, 0); }
-
+#endif
 static void set_two_pass_stats(const char *value, EbConfig *cfg) {
 #ifndef _WIN32
     cfg->stats = strdup(value);
@@ -1725,17 +1727,21 @@ ConfigEntry config_entry[] = {
 /**********************************
  * Constructor
  **********************************/
+#if CLN_ENC_CONFIG_SIG
+EbConfig* svt_config_ctor() {
+#else
 EbConfig *svt_config_ctor(EncodePass pass) {
+#endif
     EbConfig *config_ptr = (EbConfig *)calloc(1, sizeof(EbConfig));
     if (!config_ptr)
         return NULL;
-
+#if !CLN_ENC_CONFIG_SIG
     switch (pass) {
     case ENCODE_FIRST_PASS: config_ptr->pass = 1; break;
     case ENCODE_LAST_PASS: config_ptr->pass = 2; break;
     default: config_ptr->pass = DEFAULT;
     }
-
+#endif
     config_ptr->error_log_file = stderr;
     config_ptr->buffered_input = -1;
     config_ptr->progress       = 1;
@@ -1800,9 +1806,14 @@ void svt_config_dtor(EbConfig *config_ptr) {
     free(config_ptr);
     return;
 }
+#if CLN_ENC_CONFIG_SIG
+EbErrorType enc_channel_ctor(EncChannel* c) {
+    c->config = svt_config_ctor();
+#else
 
 EbErrorType enc_channel_ctor(EncChannel *c, EncodePass pass) {
     c->config = svt_config_ctor(pass);
+#endif
     if (!c->config)
         return EB_ErrorInsufficientResources;
     c->app_callback = (EbAppContext *)malloc(sizeof(EbAppContext));
@@ -2063,10 +2074,15 @@ EbBool load_twopass_stats_in(EbConfig *cfg) {
             (size_t)file_stat.st_size) {
             return EB_FALSE;
         }
+#if FIX_MULTI_CMDLINE
+        if (file_stat.st_size == 0) {
+            return EB_FALSE;
+        }
+#endif
     }
     return config->rc_twopass_stats_in.buf != NULL;
 }
-
+#if !CLN_ENC_CONFIG_SIG
 /* set two passes stats information to EbConfig
  */
 #if OPT_FIRST_PASS2
@@ -2134,6 +2150,127 @@ void set_ipp_controls(
 #endif
 }
 #endif
+#endif
+#if CLN_ENC_CONFIG_SIG
+EbErrorType handle_stats_file(
+    EbConfig* config,
+    EncPass enc_pass,
+    const SvtAv1FixedBuf* rc_twopass_stats_in,
+    uint32_t channel_number) {
+
+    switch (enc_pass) {
+
+        case ENC_SINGLE_PASS: {
+            const char* stats = config->stats ? config->stats : "svtav1_2pass.log";
+            if (config->config.pass == 1) {
+                if (!fopen_and_lock(&config->output_stat_file, stats, EB_TRUE)) {
+                    fprintf(config->error_log_file,
+                        "Error instance %u: can't open stats file %s for write \n",
+                        channel_number + 1,
+                        stats);
+                    return EB_ErrorBadParameter;
+                }
+            }
+
+            // Multi pass VBR has 3 passes, and pass = 2 is the middle pass
+            // In this pass, data is read from the file, copied to memory, updated and
+            // written back to the same file
+            else if (config->config.pass == 2 && config->config.rate_control_mode == 1) {
+                if (!fopen_and_lock(&config->input_stat_file, stats, EB_FALSE)) {
+                    fprintf(config->error_log_file,
+                        "Error instance %u: can't read stats file %s for read\n",
+                        channel_number + 1,
+                        stats);
+                    return EB_ErrorBadParameter;
+                }
+                // Copy from file to memory
+                if (!load_twopass_stats_in(config)) {
+                    fprintf(config->error_log_file,
+                        "Error instance %u: can't load file %s\n",
+                        channel_number + 1,
+                        stats);
+                    return EB_ErrorBadParameter;
+                }
+                // Close the input stat file
+                if (config->input_stat_file) {
+                    fclose(config->input_stat_file);
+                    config->input_stat_file = (FILE*)NULL;
+                }
+                // Open the file in write mode
+                if (!fopen_and_lock(&config->output_stat_file, stats, EB_TRUE)) {
+                    fprintf(config->error_log_file,
+                        "Error instance %u: can't open stats file %s for write \n",
+                        channel_number + 1,
+                        stats);
+                    return EB_ErrorBadParameter;
+                }
+            }
+            // Final pass: pass = 2 for CRF and pass = 3 for VBR
+            else if ((config->config.pass == 2 && config->config.rate_control_mode == 0) ||
+                (config->config.pass == 3 && config->config.rate_control_mode == 1)) {
+                if (!fopen_and_lock(&config->input_stat_file, stats, EB_FALSE)) {
+                    fprintf(config->error_log_file,
+                        "Error instance %u: can't read stats file %s for read\n",
+                        channel_number + 1,
+                        stats);
+                    return EB_ErrorBadParameter;
+                }
+                if (!load_twopass_stats_in(config)) {
+                    fprintf(config->error_log_file,
+                        "Error instance %u: can't load file %s\n",
+                        channel_number + 1,
+                        stats);
+                    return EB_ErrorBadParameter;
+                }
+            }
+            break;
+        }
+
+        case ENC_FIRST_PASS: {
+            // for combined two passes,
+            // we only ouptut first pass stats when user explicitly set the --stats
+            if (config->stats) {
+                if (!fopen_and_lock(&config->output_stat_file, config->stats, EB_TRUE)) {
+                    fprintf(config->error_log_file,
+                        "Error instance %u: can't open stats file %s for write \n",
+                        channel_number + 1,
+                        config->stats);
+                    return EB_ErrorBadParameter;
+                }
+            }
+            break;
+        }
+
+        case ENC_MIDDLE_PASS: {
+            if (!rc_twopass_stats_in->sz) {
+                fprintf(config->error_log_file,
+                    "Error instance %u: combined multi passes need stats in for the middle pass \n",
+                    channel_number + 1);
+                return EB_ErrorBadParameter;
+            }
+            config->config.rc_twopass_stats_in = *rc_twopass_stats_in;
+            break;
+        }
+
+        case ENC_LAST_PASS: {
+            if (!rc_twopass_stats_in->sz) {
+                fprintf(config->error_log_file,
+                    "Error instance %u: combined multi passes need stats in for the final pass \n",
+                    channel_number + 1);
+                return EB_ErrorBadParameter;
+            }
+            config->config.rc_twopass_stats_in = *rc_twopass_stats_in;
+            break;
+        }
+
+        default: {
+            assert(0);
+            break;
+        }
+    }
+    return EB_ErrorNone;
+}
+#else
 EbErrorType set_two_passes_stats(EbConfig *config, EncodePass pass,
                                  const SvtAv1FixedBuf *rc_twopass_stats_in,
                                  uint32_t              channel_number) {
@@ -2156,7 +2293,69 @@ EbErrorType set_two_passes_stats(EbConfig *config, EncodePass pass,
                 return EB_ErrorBadParameter;
             }
             config->config.rc_firstpass_stats_out = EB_TRUE;
+#if FIX_MULTI_CMDLINE // copied here temporarily, to move the the library
+#if FIX_DG
+            if (config->config.enc_mode <= ENC_M4)
+                set_ipp_controls(config, 0);
+            else if (config->config.enc_mode <= ENC_M10)
+                set_ipp_controls(config, 1);
+            else
+#if FIX_VBR_IPP
+                if (config->config.rate_control_mode == 0)
+#else
+                if (config->config.final_pass_rc_mode == 0)
+#endif
+                    set_ipp_controls(config, 2);
+                else
+                    set_ipp_controls(config, 1);
+            config->config.ipp_was_ds = 0;
+#endif
+#if IPP_CTRL
+            config->config.final_pass_preset = config->config.enc_mode;
+#endif
+#endif
+#if FIX_MULTI_CMDLINE
+        }
+        // Multi pass VBR has 3 passes, and pass = 2 is the middle pass
+        // In this pass, data is read from the file, copied to memory, updated and
+        // written back to the same file
+        else if (config->pass == 2 && config->config.rate_control_mode == 1) {
+            if (!fopen_and_lock(&config->input_stat_file, stats, EB_FALSE)) {
+                fprintf(config->error_log_file,
+                    "Error instance %u: can't read stats file %s for read\n",
+                    channel_number + 1,
+                    stats);
+                return EB_ErrorBadParameter;
+            }
+            // Copy from file to memory
+            if (!load_twopass_stats_in(config)) {
+                fprintf(config->error_log_file,
+                    "Error instance %u: can't load file %s\n",
+                    channel_number + 1,
+                    stats);
+                return EB_ErrorBadParameter;
+            }
+            // Close the input stat file
+            if (config->input_stat_file) {
+                fclose(config->input_stat_file);
+                config->input_stat_file = (FILE *)NULL;
+            }
+            // Open the file in write mode
+            if (!fopen_and_lock(&config->output_stat_file, stats, EB_TRUE)) {
+                fprintf(config->error_log_file,
+                    "Error instance %u: can't open stats file %s for write \n",
+                    channel_number + 1,
+                    stats);
+                return EB_ErrorBadParameter;
+            }
+            config->config.rc_middlepass_stats_out = EB_TRUE;
+        }
+        // Final pass: pass = 2 for CRF and pass = 3 for VBR
+        else if ((config->pass == 2 && config->config.rate_control_mode == 0) ||
+            (config->pass == 3 && config->config.rate_control_mode == 1)) {
+#else
         } else if (config->pass == 2) {
+#endif
             if (!fopen_and_lock(&config->input_stat_file, stats, EB_FALSE)) {
                 fprintf(config->error_log_file,
                         "Error instance %u: can't read stats file %s for read\n",
@@ -2219,14 +2418,14 @@ EbErrorType set_two_passes_stats(EbConfig *config, EncodePass pass,
     }
 #if FTR_MULTI_PASS_API
     case ENCODE_MIDDLE_PASS: {
-#if !TUNE_MULTI_PASS
+
         if (!rc_twopass_stats_in->sz) {
             fprintf(config->error_log_file,
                 "Error instance %u: bug, combined  multi passes need stats in for middle pass \n",
                 channel_number + 1);
             return EB_ErrorBadParameter;
         }
-#endif
+
         config->config.rc_middlepass_stats_out = EB_TRUE;
         config->config.rc_twopass_stats_in     = *rc_twopass_stats_in;
 #if FTR_OPT_MPASS_DOWN_SAMPLE
@@ -2299,7 +2498,7 @@ EbErrorType set_two_passes_stats(EbConfig *config, EncodePass pass,
     }
     return EB_ErrorNone;
 }
-
+#endif
 /******************************************
 * Verify Settings
 ******************************************/
@@ -2386,13 +2585,28 @@ static EbErrorType verify_settings(EbConfig *config, uint32_t channel_number) {
                 channel_number + 1);
         return EB_ErrorBadParameter;
     }
+#if CLN_ENC_CONFIG_SIG
+    int pass = config->config.pass;
+#else
     int pass = config->pass;
-
+#endif
+#if FIX_MULTI_CMDLINE
+#if CLN_ENC_CONFIG_SIG
+    if (pass != 3 && pass != 2 && pass != 1 && pass != 0 && pass != DEFAULT) {
+#else
+    if (pass != 3 && pass != 2 && pass != 1 && pass != DEFAULT) {
+#endif
+#else
     if (pass != 2 && pass != 1 && pass != DEFAULT) {
+#endif
         fprintf(config->error_log_file,
                 "Error instance %u: %d pass encode is not supported\n",
                 channel_number + 1,
+#if CLN_ENC_CONFIG_SIG
+                config->config.pass);
+#else
                 config->pass);
+#endif
         return EB_ErrorBadParameter;
     }
 
@@ -2733,17 +2947,27 @@ static EbBool check_two_pass_conflicts(int32_t argc, char *const argv[]) {
 #define ENC_M13         13
 #endif
 #endif
-#if TUNE_MULTI_PASS
-uint32_t get_passes(int32_t argc, char *const argv[], EncodePass pass[MAX_ENCODE_PASS], MultiPassModes *multi_pass_mode) {
-#else
-uint32_t get_passes(int32_t argc, char *const argv[], EncodePass pass[MAX_ENCODE_PASS]) {
-#endif
+#if CLN_ENC_CONFIG_SIG
+/*
+* Returns the number of passes, multi_pass_mode
+*/
+uint32_t get_passes(int32_t argc, char* const argv[], EncPass enc_pass[MAX_ENC_PASS], MultiPassModes* multi_pass_mode) {
     char     config_string[COMMAND_LINE_MAX_SIZE];
-#if FIX_2PASS_CRF
-    int32_t passes = 1; // Default mode is used
-#else
-    uint32_t passes;
-#endif
+
+    int rc_mode = 0;
+    int enc_mode = 0;
+    int ip = -1;
+    // Read required inputs to decide on the number of passes and check the validity of their ranges
+    if (find_token(argc, argv, RATE_CONTROL_ENABLE_TOKEN, config_string) == 0 ||
+        find_token(argc, argv, "--rc", config_string) == 0) {
+        rc_mode = strtol(config_string, NULL, 0);
+        if (rc_mode > 2 || rc_mode < 0) {
+            fprintf(stderr, "Error: The rate control mode must be [0 - 2] \n");
+            return 0;
+        }
+    }
+
+    int32_t passes = rc_mode ? -1 : 1;
 #if FIX_MULTIPASS_WITH_FIFO
     int using_fifo = 0;
 
@@ -2751,7 +2975,8 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncodePass pass[MAX_ENCODE
         find_token(argc, argv, INPUT_FILE_TOKEN, config_string) == 0) {
         if (!strcmp(config_string, "stdin")) {
             using_fifo = 1;
-        } else {
+        }
+        else {
 #ifdef _WIN32
             HANDLE in_file = CreateFile(
                 config_string, 0, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
@@ -2770,7 +2995,156 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncodePass pass[MAX_ENCODE
         }
     }
 #endif
+    if (find_token(argc, argv, ENCMODE_TOKEN, config_string) == 0 ||
+        find_token(argc, argv, "-enc-mode", config_string) == 0 ||
+        find_token(argc, argv, "--preset", config_string) == 0) {
+        enc_mode = strtol(config_string, NULL, 0);
+        if (enc_mode > MAX_ENC_PRESET || enc_mode < 0) {
+            fprintf(stderr, "Error: EncoderMode must be in the range of [0-%d]\n", MAX_ENC_PRESET);
+            return 0;
+        }
+    }
 
+    if (find_token(argc, argv, INTRA_PERIOD_TOKEN, config_string) == 0 ||
+        find_token(argc, argv, "--intra-period", config_string) == 0 ||
+        find_token(argc, argv, "--keyint", config_string) == 0) {
+        ip = strtol(config_string, NULL, 0);
+        if ((ip < -2 || ip > 2 * ((1 << 30) - 1)) && rc_mode == 0) {
+            fprintf(stderr, "Error: The intra period must be [-2, 2^31-2]  \n");
+            return 0;
+        }
+        if ((ip < 0) && rc_mode >= 1) {
+            fprintf(stderr, "Error: The intra period must be > 0 for RateControlMode %d \n", rc_mode);
+            return 0;
+        }
+    }
+
+    if (find_token(argc, argv, PASSES_TOKEN, config_string) == 0) {
+        passes = strtol(config_string, NULL, 0);
+        if (passes == 0 || passes > 2) {
+            fprintf(stderr,
+                "Error: The number of passes has to be within the range [1,%u]\n",
+                (uint32_t)2);
+            return 0;
+        }
+    }
+#if FIX_MULTIPASS_WITH_FIFO
+    if (using_fifo && passes > 1) {
+        fprintf(stderr,
+            "Warning: The number of passes has to be 1 when using a fifo, using 1-pass\n");
+        *multi_pass_mode = SINGLE_PASS;
+        passes = 1;
+    }
+#endif
+    // Determine the number of passes in CRF mode
+    if (rc_mode == 0) {
+        if (passes == -1)
+#if FIX_DG
+#if TUNE_2PASS_SETTINGS
+            passes = (enc_mode <= ENC_M7) ? 2 : 1;
+#else
+            passes = (enc_mode <= ENC_M11) ? 2 : 1;
+#endif
+#else
+            passes = (enc_mode <= ENC_M3) ? 2 : 1;
+#endif
+#if FIX_ISSUE_46
+        if (ip > -1 && ip < 16) {
+            passes = 1;
+            fprintf(stderr, "\nWarning: Multipass CRF is not supported for Intra_period %d. Switching to 1-pass encoding\n\n", ip);
+        }
+#endif
+        *multi_pass_mode = passes == 2 ? TWO_PASS_IPP_FINAL : SINGLE_PASS;
+    }
+    // Determine the number of passes in rate control mode
+    else {
+        if (passes == -1) {
+            enc_pass[0] = ENC_SINGLE_PASS;
+            *multi_pass_mode = SINGLE_PASS;
+            return 1;
+        }
+        if (passes == 1)
+            *multi_pass_mode = SINGLE_PASS;
+        else if (passes > 1) {
+#if TUNE_MIDDLEP_VBR
+            if (enc_mode > ENC_M12) {
+                fprintf(stderr, "\nWarning: Multipass VBR is not supported for preset %d. Switching to 1-pass encoding\n\n", enc_mode);
+                passes = 1;
+                *multi_pass_mode = SINGLE_PASS;
+            }
+            else
+#endif
+                if (rc_mode > 1)
+                    *multi_pass_mode = (passes == 2) ? TWO_PASS_IPP_FINAL : SINGLE_PASS;
+                else {
+                    passes = 3;
+                    *multi_pass_mode = THREE_PASS_IPP_SAMEPRED_FINAL;
+                }
+        }
+    }
+
+    if (check_two_pass_conflicts(argc, argv))
+        return 0;
+    // Set the settings for each pass based on multi_pass_mode
+    switch (*multi_pass_mode) {
+        case SINGLE_PASS:
+            enc_pass[0] = ENC_SINGLE_PASS;
+            break;
+        case TWO_PASS_IPP_FINAL:
+            enc_pass[0] = ENC_FIRST_PASS;
+            enc_pass[1] = ENC_LAST_PASS;
+            break;
+        case THREE_PASS_IPP_SAMEPRED_FINAL:
+            enc_pass[0] = ENC_FIRST_PASS;
+            enc_pass[1] = ENC_MIDDLE_PASS;
+            enc_pass[2] = ENC_LAST_PASS;
+            break;
+        default:
+            break;
+    }
+
+    return passes;
+}
+#else
+
+#if TUNE_MULTI_PASS
+uint32_t get_passes(int32_t argc, char *const argv[], EncodePass pass[MAX_ENCODE_PASS], MultiPassModes *multi_pass_mode) {
+#else
+uint32_t get_passes(int32_t argc, char *const argv[], EncodePass pass[MAX_ENCODE_PASS]) {
+#endif
+    char     config_string[COMMAND_LINE_MAX_SIZE];
+#if FIX_2PASS_CRF
+    int32_t passes = 1; // Default mode is used
+#else
+    uint32_t passes;
+#endif
+#if FIX_MULTIPASS_WITH_FIFO
+    int using_fifo = 0;
+
+    if (find_token(argc, argv, INPUT_FILE_LONG_TOKEN, config_string) == 0 ||
+        find_token(argc, argv, INPUT_FILE_TOKEN, config_string) == 0) {
+        if (!strcmp(config_string, "stdin")) {
+            using_fifo = 1;
+        }
+        else {
+#ifdef _WIN32
+            HANDLE in_file = CreateFile(
+                config_string, 0, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
+            if (in_file != INVALID_HANDLE_VALUE) {
+                using_fifo = GetFileType(in_file) == FILE_TYPE_PIPE;
+                CloseHandle(in_file);
+            }
+#else
+            struct stat st;
+            if (!stat(config_string, &st)) {
+                if (S_ISFIFO(st.st_mode)) {
+                    using_fifo = 1;
+                }
+            }
+#endif
+        }
+    }
+#endif
 #if FTR_MULTI_PASS_API
 #if FIX_2PASS_CRF
     int rc_mode = 0;
@@ -2810,9 +3184,9 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncodePass pass[MAX_ENCODE
 #if FIX_MULTIPASS_WITH_FIFO
     if (using_fifo && passes > 1) {
         fprintf(stderr,
-                "Warning: The number of passes has to be 1 when using a fifo, using 1-pass\n");
+            "Warning: The number of passes has to be 1 when using a fifo, using 1-pass\n");
         *multi_pass_mode = SINGLE_PASS;
-        passes           = 1;
+        passes = 1;
     }
 #endif
 #else
@@ -3040,6 +3414,7 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncodePass pass[MAX_ENCODE
 #endif
 #endif
 }
+#endif
 
 void mark_token_as_read(const char *token, char *cmd_copy[], int32_t *cmd_token_cnt) {
     int32_t cmd_copy_index;
@@ -3071,7 +3446,7 @@ int32_t compute_frames_to_be_encoded(EbConfig *config) {
         file_size = ftello(config->input_file);
         fseeko(config->input_file, curr_loc, SEEK_SET); // seek back to that location
     }
-#if FTR_OP_TEST && (FTR_OPT_MPASS_DOWN_SAMPLE || FTR_OPT_IPP_DOWN_SAMPLE)
+#if FTR_OP_TEST && (FTR_OPT_MPASS_DOWN_SAMPLE || FTR_OPT_IPP_DOWN_SAMPLE) &&  !CLN_ENC_CONFIG_SIG
     frame_size = (config->org_input_padded_width) * (config->org_input_padded_height); // Luma
 #else
     frame_size = config->input_padded_width * config->input_padded_height; // Luma

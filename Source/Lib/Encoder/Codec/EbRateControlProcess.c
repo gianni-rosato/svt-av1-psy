@@ -1518,7 +1518,11 @@ static void av1_rc_init(SequenceControlSet *scs_ptr) {
     int                         i;
 
 #if FTR_1PASS_CBR
+#if CLN_ENC_CONFIG_SIG
+    if ((!(scs_ptr->static_config.pass == ENC_MIDDLE_PASS || scs_ptr->static_config.pass == ENC_LAST_PASS) && scs_ptr->static_config.pass != ENC_FIRST_PASS && rc_cfg->mode == AOM_CBR))
+#else
     if ((!use_input_stat(scs_ptr) && !use_output_stat(scs_ptr) && rc_cfg->mode == AOM_CBR))
+#endif
 #else
     if (0 /*pass == 0*/ && rc_cfg->mode == AOM_CBR)
 #endif
@@ -1586,7 +1590,11 @@ static void av1_rc_init(SequenceControlSet *scs_ptr) {
     rc->worst_quality = rc_cfg->worst_allowed_q;
     rc->best_quality  = rc_cfg->best_allowed_q;
 #if FTR_1PASS_CBR
+#if CLN_ENC_CONFIG_SIG
+    if (!(scs_ptr->static_config.pass == ENC_MIDDLE_PASS || scs_ptr->static_config.pass == ENC_LAST_PASS) && scs_ptr->static_config.pass != ENC_FIRST_PASS && rc_cfg->mode == AOM_CBR) {
+#else
     if (!use_input_stat(scs_ptr) && !use_output_stat(scs_ptr) && rc_cfg->mode == AOM_CBR) {
+#endif
         if (scs_ptr->static_config.pred_structure == EB_PRED_LOW_DELAY_P) {
             rc->onepass_cbr_mode = 2;
         } else {
@@ -1598,7 +1606,11 @@ static void av1_rc_init(SequenceControlSet *scs_ptr) {
 #endif
 #if FTR_1PASS_CBR
     if (scs_ptr->lap_enabled ||
+#if CLN_ENC_CONFIG_SIG
+       (!(scs_ptr->static_config.pass == ENC_MIDDLE_PASS || scs_ptr->static_config.pass == ENC_LAST_PASS) && scs_ptr->static_config.pass != ENC_FIRST_PASS && rc_cfg->mode == AOM_CBR))
+#else
        (!use_input_stat(scs_ptr) && !use_output_stat(scs_ptr) && rc_cfg->mode == AOM_CBR))
+#endif
 #else
     if (scs_ptr->lap_enabled)
 #endif
@@ -1810,7 +1822,11 @@ static void get_intra_q_and_bounds(PictureControlSet *pcs_ptr, int *active_best,
             active_best_quality /= 3;
         }
 #if TUNE_MULTI_PASS
+#if CLN_ENC_CONFIG_SIG
+        if (pcs_ptr->parent_pcs_ptr->sc_class1 && scs_ptr->passes == 1 &&
+#else
         if (pcs_ptr->parent_pcs_ptr->sc_class1 && scs_ptr->static_config.multi_pass_mode == SINGLE_PASS &&
+#endif
 #else
         if (pcs_ptr->parent_pcs_ptr->sc_class1 &&
 #endif
@@ -1949,7 +1965,11 @@ static double get_rate_correction_factor(PictureParentControlSet *ppcs_ptr/*,
     if (ppcs_ptr->frm_hdr.frame_type == KEY_FRAME) {
         rcf = rc->rate_correction_factors[KF_STD];
 #if FTR_1PASS_CBR
+#if CLN_ENC_CONFIG_SIG
+    } else if (scs_ptr->static_config.pass == ENC_MIDDLE_PASS || scs_ptr->static_config.pass == ENC_LAST_PASS || scs_ptr->lap_enabled) {
+#else
     } else if (use_input_stat(scs_ptr) || scs_ptr->lap_enabled) {
+#endif
 #else
     } else {
 #endif
@@ -1994,7 +2014,11 @@ static void set_rate_correction_factor(PictureParentControlSet *ppcs_ptr, double
     if (ppcs_ptr->frm_hdr.frame_type == KEY_FRAME) {
         rc->rate_correction_factors[KF_STD] = factor;
 #if FTR_1PASS_CBR
+#if CLN_ENC_CONFIG_SIG
+    } else if (scs_ptr->static_config.pass == ENC_MIDDLE_PASS || scs_ptr->static_config.pass == ENC_LAST_PASS || scs_ptr->lap_enabled) {
+#else
     } else if (use_input_stat(scs_ptr) || scs_ptr->lap_enabled) {
+#endif
 #else
     } else {
 #endif
@@ -2139,7 +2163,11 @@ static int av1_rc_regulate_q(PictureParentControlSet *ppcs_ptr, int target_bits_
 #if FTR_1PASS_CBR
     SequenceControlSet *   scs_ptr            = ppcs_ptr->scs_ptr;
     EncodeContext *        encode_context_ptr = scs_ptr->encode_context_ptr;
+#if CLN_ENC_CONFIG_SIG
+    if (!(scs_ptr->static_config.pass == ENC_MIDDLE_PASS || scs_ptr->static_config.pass == ENC_LAST_PASS) && scs_ptr->static_config.pass != ENC_FIRST_PASS && encode_context_ptr->rc_cfg.mode == AOM_CBR) {
+#else
     if (!use_input_stat(scs_ptr) && !use_output_stat(scs_ptr) && encode_context_ptr->rc_cfg.mode == AOM_CBR) {
+#endif
         return adjust_q_cbr(ppcs_ptr, q/*, active_worst_quality*/);
     }
 #endif
@@ -3023,7 +3051,11 @@ static void capped_crf_reencode(PictureParentControlSet *ppcs_ptr, int *const q)
     int32_t start_index = ((ppcs_ptr->picture_number / frames_in_sw) * frames_in_sw) %
         CODED_FRAMES_STAT_QUEUE_MAX_DEPTH;
     int32_t end_index = start_index + frames_in_sw;
+#if CLN_ENC_CONFIG_SIG
+    frames_in_sw = (scs_ptr->passes > 1) ? MIN(end_index, (int32_t)scs_ptr->twopass.stats_buf_ctx->total_stats->count) - start_index : frames_in_sw;
+#else
     frames_in_sw = (scs_ptr->static_config.passes > 1) ? MIN(end_index, (int32_t)scs_ptr->twopass.stats_buf_ctx->total_stats->count) - start_index : frames_in_sw;
+#endif
     int64_t max_bits_sw = (int64_t)scs_ptr->static_config.max_bit_rate* (int32_t)frames_in_sw / frame_rate;
 #if TUNE_CAP_CRF_OVERSHOOT
     max_bits_sw += (max_bits_sw *scs_ptr->static_config.mbr_over_shoot_pct / 100);
@@ -3514,7 +3546,11 @@ static void restore_param(PictureParentControlSet *ppcs_ptr,
 #if FTR_1PASS_CBR
     SequenceControlSet *scs_ptr = ppcs_ptr->scs_ptr;
     EncodeContext *     encode_context_ptr = scs_ptr->encode_context_ptr;
+#if CLN_ENC_CONFIG_SIG
+    if (!(!(scs_ptr->static_config.pass == ENC_MIDDLE_PASS || scs_ptr->static_config.pass == ENC_LAST_PASS) && scs_ptr->static_config.pass != ENC_FIRST_PASS && scs_ptr->static_config.rate_control_mode == 2))
+#else
     if(!(!use_input_stat(scs_ptr) && !use_output_stat(scs_ptr) && scs_ptr->static_config.rate_control_mode == 2))
+#endif
 #endif
     restore_two_pass_param(ppcs_ptr, rate_control_param_ptr);
 #if !FTR_1PASS_CBR
@@ -3543,7 +3579,11 @@ static void restore_param(PictureParentControlSet *ppcs_ptr,
             key_max = kf_cfg->key_freq_max;
     } else {
 #if FTR_1PASS_CBR
+#if CLN_ENC_CONFIG_SIG
+        if(!(!(scs_ptr->static_config.pass == ENC_MIDDLE_PASS || scs_ptr->static_config.pass == ENC_LAST_PASS) && scs_ptr->static_config.pass != ENC_FIRST_PASS && scs_ptr->static_config.rate_control_mode == 2))
+#else
         if(!(!use_input_stat(scs_ptr) && !use_output_stat(scs_ptr) && scs_ptr->static_config.rate_control_mode == 2))
+#endif
 #endif
         key_max = (int)MIN(
             kf_cfg->key_freq_max,
@@ -3551,7 +3591,11 @@ static void restore_param(PictureParentControlSet *ppcs_ptr,
                   ppcs_ptr->last_idr_picture + 1));
     }
 #if FTR_1PASS_CBR
+#if CLN_ENC_CONFIG_SIG
+    if (!(!(scs_ptr->static_config.pass == ENC_MIDDLE_PASS || scs_ptr->static_config.pass == ENC_LAST_PASS) && scs_ptr->static_config.pass != ENC_FIRST_PASS && scs_ptr->static_config.rate_control_mode == 2))
+#else
     if(!(!use_input_stat(scs_ptr) && !use_output_stat(scs_ptr) && scs_ptr->static_config.rate_control_mode == 2))
+#endif
     {
 #endif
     ppcs_ptr->frames_to_key = key_max - ppcs_ptr->frames_since_key;
@@ -3832,7 +3876,11 @@ void *rate_control_kernel(void *input_ptr) {
 #if FTR_RC_CAP
             rc = &scs_ptr->encode_context_ptr->rc;
 #if TUNE_CAPPED_CRF
+#if CLN_ENC_CONFIG_SIG
+            if (scs_ptr->passes > 1 && scs_ptr->static_config.max_bit_rate)
+#else
             if (scs_ptr->static_config.passes > 1 && scs_ptr->static_config.max_bit_rate)
+#endif
                 rc->rate_average_periodin_frames = (uint64_t)scs_ptr->twopass.stats_buf_ctx->total_stats->count;
             else
                 rc->rate_average_periodin_frames = 60;
@@ -3888,8 +3936,15 @@ void *rate_control_kernel(void *input_ptr) {
 #endif
 
 #if FTR_1PASS_CBR
-                if (use_input_stat(scs_ptr) || scs_ptr->lap_enabled ||
-                    (!use_input_stat(scs_ptr) && !use_output_stat(scs_ptr) && scs_ptr->static_config.rate_control_mode == 2))
+
+#if CLN_ENC_CONFIG_SIG
+            if (scs_ptr->static_config.pass == ENC_MIDDLE_PASS || scs_ptr->static_config.pass == ENC_LAST_PASS ||
+                scs_ptr->lap_enabled ||
+                (!(scs_ptr->static_config.pass == ENC_MIDDLE_PASS || scs_ptr->static_config.pass == ENC_LAST_PASS) && scs_ptr->static_config.pass != ENC_FIRST_PASS && scs_ptr->static_config.rate_control_mode == 2))
+#else
+            if (use_input_stat(scs_ptr) || scs_ptr->lap_enabled ||
+                (!use_input_stat(scs_ptr) && !use_output_stat(scs_ptr) && scs_ptr->static_config.rate_control_mode == 2))
+#endif
 #else
                 if (use_input_stat(scs_ptr) || scs_ptr->lap_enabled)
 #endif
@@ -3901,10 +3956,15 @@ void *rate_control_kernel(void *input_ptr) {
                     restore_param(pcs_ptr->parent_pcs_ptr, rate_control_param_ptr);
 
 #if FTR_1PASS_CBR_RT
-                    if (!use_input_stat(scs_ptr) && !use_output_stat(scs_ptr) && scs_ptr->static_config.rate_control_mode == 2 &&
-                         scs_ptr->static_config.pred_structure == EB_PRED_LOW_DELAY_P)
-                        svt_av1_get_one_pass_rt_params(pcs_ptr->parent_pcs_ptr);
-                    else
+
+#if CLN_ENC_CONFIG_SIG
+                if (!(scs_ptr->static_config.pass == ENC_MIDDLE_PASS || scs_ptr->static_config.pass == ENC_LAST_PASS) && scs_ptr->static_config.pass != ENC_FIRST_PASS && scs_ptr->static_config.rate_control_mode == 2 &&
+#else
+                if (!use_input_stat(scs_ptr) && !use_output_stat(scs_ptr) && scs_ptr->static_config.rate_control_mode == 2 &&
+#endif
+                     scs_ptr->static_config.pred_structure == EB_PRED_LOW_DELAY_P)
+                    svt_av1_get_one_pass_rt_params(pcs_ptr->parent_pcs_ptr);
+                else
 #endif
                     svt_av1_get_second_pass_params(pcs_ptr->parent_pcs_ptr);
 
@@ -3972,7 +4032,11 @@ void *rate_control_kernel(void *input_ptr) {
                     const int32_t qindex = quantizer_to_qindex[(uint8_t)scs_ptr->static_config.qp];
                     // if there are need enough pictures in the LAD/SlidingWindow, the adaptive QP scaling is not used
                     int32_t new_qindex;
+#if CLN_ENC_CONFIG_SIG
+                    if (scs_ptr->static_config.pass != ENC_FIRST_PASS) {
+#else
                     if (!use_output_stat(scs_ptr)) {
+#endif
                         // Content adaptive qp assignment
 #if FIX_2PASS_CRF
                         if (scs_ptr->static_config.enable_tpl_la)
@@ -3991,7 +4055,11 @@ void *rate_control_kernel(void *input_ptr) {
 #else
                             new_qindex = cqp_qindex_calc_tpl_la(pcs_ptr, &rc, qindex);
 #endif
+#if CLN_ENC_CONFIG_SIG
+                        else if (scs_ptr->static_config.pass == ENC_MIDDLE_PASS || scs_ptr->static_config.pass == ENC_LAST_PASS) {
+#else
                         else if (use_input_stat(scs_ptr)) {
+#endif
                             int32_t update_type =
                                 scs_ptr->encode_context_ptr->gf_group
                                     .update_type[pcs_ptr->parent_pcs_ptr->gf_group_index];
@@ -4060,7 +4128,11 @@ void *rate_control_kernel(void *input_ptr) {
                 }
                 // VBR Qindex calculating
 #if FTR_1PASS_CBR
+#if CLN_ENC_CONFIG_SIG
+                if (!(scs_ptr->static_config.pass == ENC_MIDDLE_PASS || scs_ptr->static_config.pass == ENC_LAST_PASS) && scs_ptr->static_config.pass != ENC_FIRST_PASS && scs_ptr->static_config.rate_control_mode == 2)
+#else
                 if (!use_input_stat(scs_ptr) && !use_output_stat(scs_ptr) && scs_ptr->static_config.rate_control_mode == 2)
+#endif
                     new_qindex = rc_pick_q_and_bounds_no_stats_cbr(pcs_ptr);
                 else
 #endif
@@ -4170,7 +4242,11 @@ void *rate_control_kernel(void *input_ptr) {
                 // Determine superres parameters for 1-pass encoding or 2nd pass of 2-pass encoding
                 // if superres_mode is SUPERRES_QTHRESH or SUPERRES_AUTO.
                 // SUPERRES_FIXED and SUPERRES_RANDOM modes are handled in picture decision process.
+#if CLN_ENC_CONFIG_SIG
+                if (scs_ptr->static_config.pass == ENC_SINGLE_PASS) {
+#else
                 if (!use_output_stat(scs_ptr) || use_input_stat(scs_ptr)) {
+#endif
                     if (scs_ptr->static_config.superres_mode > SUPERRES_RANDOM) {
                         // determine denom and scale down picture by selected denom
                         init_resize_picture(scs_ptr, pcs_ptr->parent_pcs_ptr);
@@ -4327,6 +4403,15 @@ void *rate_control_kernel(void *input_ptr) {
 #endif
 
 #if RFCTR_RC_P2
+#if CLN_ENC_CONFIG_SIG
+            if (scs_ptr->static_config.pass != ENC_FIRST_PASS) {
+                restore_gf_group_param(parentpicture_control_set_ptr);
+                av1_rc_postencode_update(parentpicture_control_set_ptr);
+
+                if (!(!(scs_ptr->static_config.pass == ENC_MIDDLE_PASS || scs_ptr->static_config.pass == ENC_LAST_PASS) && scs_ptr->static_config.rate_control_mode == 2))
+                    svt_av1_twopass_postencode_update(parentpicture_control_set_ptr);
+            }
+#else
             if (!use_output_stat(scs_ptr)) {
                 restore_gf_group_param(parentpicture_control_set_ptr);
                 av1_rc_postencode_update(parentpicture_control_set_ptr);
@@ -4335,6 +4420,7 @@ void *rate_control_kernel(void *input_ptr) {
 #endif
                     svt_av1_twopass_postencode_update(parentpicture_control_set_ptr);
             }
+#endif
 #else
             if (!use_output_stat(scs_ptr)) {
             restore_gf_group_param(parentpicture_control_set_ptr);

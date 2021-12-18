@@ -14,6 +14,9 @@
 #include "EbPredictionStructure.h"
 #include "EbUtility.h"
 #include "common_dsp_rtcd.h"
+#if CLN_MRP_ENC_CONFIG
+#include "EbSequenceControlSet.h"
+#endif
 /**********************************************************
  * Macros
  **********************************************************/
@@ -1971,9 +1974,17 @@ void set_mrp_init_ctrls( MrpInitCtrls* ctrls, uint8_t  level) {
  *
  *************************************************/
 #if CLN_MERGE_MRP_SIG
+#if CLN_MRP_ENC_CONFIG
+EbErrorType prediction_structure_group_ctor(
+    PredictionStructureGroup* pred_struct_group_ptr,
+    struct SequenceControlSet* scs_ptr) {
+
+    EbSvtAv1EncConfiguration* config = &scs_ptr->static_config;
+#else
 EbErrorType prediction_structure_group_ctor(
     PredictionStructureGroup* pred_struct_group_ptr,
     EbSvtAv1EncConfiguration* config) {
+#endif
 #else
 EbErrorType prediction_structure_group_ctor(PredictionStructureGroup *pred_struct_group_ptr,
     uint8_t   mrp_init_level,
@@ -1987,8 +1998,11 @@ EbErrorType prediction_structure_group_ctor(PredictionStructureGroup *pred_struc
 
     pred_struct_group_ptr->dctor = prediction_structure_group_dctor;
 #if CLN_MERGE_MRP_SIG
+#if CLN_MRP_ENC_CONFIG
+    MrpCtrls* mrp_ctrl = &(scs_ptr->mrp_ctrls);
+#else
     MrpCtrls* mrp_ctrl = &(config->mrp_ctrls);
-
+#endif
     // Derive the max count at BASE
     uint8_t ref_count_used_base =
         MAX(mrp_ctrl->sc_base_ref_list0_count,

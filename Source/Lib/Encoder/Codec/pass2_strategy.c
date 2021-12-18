@@ -56,7 +56,11 @@ static double calculate_modified_err(const FrameInfo *frame_info,
     return 0;
   }
 #if TUNE_MULTI_PASS
+#if CLN_ENC_CONFIG_SIG
+  if (twopass->passes == 3)
+#else
   if (twopass->multi_pass_mode == TWO_PASS_SAMEPRED_FINAL || twopass->multi_pass_mode == THREE_PASS_IPP_SAMEPRED_FINAL)
+#endif
       return (double)this_frame->stat_struct.total_num_bits;
 #endif
   const double av_weight = stats->weight / stats->count;
@@ -261,7 +265,11 @@ static int get_twopass_worst_quality(PictureParentControlSet *pcs_ptr, const dou
 #if FTR_OPT_MPASS_DOWN_SAMPLE
   uint32_t mb_cols;
   uint32_t mb_rows;
+#if CLN_ENC_CONFIG_SIG
+  if (scs_ptr->mid_pass_ctrls.ds) {
+#else
   if (is_middle_pass_ds(scs_ptr)) {
+#endif
       mb_cols = 2 * (scs_ptr->seq_header.max_frame_width + 16 - 1) / 16;
       mb_rows = 2 * (scs_ptr->seq_header.max_frame_height + 16 - 1) / 16;
   }
@@ -1212,7 +1220,11 @@ static void av1_gop_setup_structure(PictureParentControlSet *pcs_ptr,
         : rc->source_alt_ref_active ? OVERLAY_UPDATE : GF_UPDATE;
 #endif
 #if FTR_1PASS_CBR
+#if CLN_ENC_CONFIG_SIG
+    const int is_1pass_cbr = scs_ptr->static_config.rate_control_mode == 2 && scs_ptr->static_config.pass != ENC_FIRST_PASS && !(scs_ptr->static_config.pass == ENC_MIDDLE_PASS || scs_ptr->static_config.pass == ENC_LAST_PASS);
+#else
     const int is_1pass_cbr = scs_ptr->static_config.rate_control_mode == 2 && !use_output_stat(scs_ptr) && !use_input_stat(scs_ptr);
+#endif
 #endif
     gf_group->size = construct_multi_layer_gf_structure(
         twopass, gf_group, rc, frame_info, rc->baseline_gf_interval,
@@ -1449,8 +1461,12 @@ static void define_gf_group(PictureParentControlSet *pcs_ptr, FIRSTPASS_STATS *t
   av1_zero(next_frame);
 
 #if FTR_1PASS_CBR
+#if CLN_ENC_CONFIG_SIG
+  if (scs_ptr->static_config.rate_control_mode == 2 && !(scs_ptr->static_config.pass == ENC_MIDDLE_PASS || scs_ptr->static_config.pass == ENC_LAST_PASS) && scs_ptr->static_config.pass != ENC_FIRST_PASS && scs_ptr->lap_enabled == 0) {
+#else
   if (scs_ptr->static_config.rate_control_mode == 2 && !use_input_stat(scs_ptr) && !use_output_stat(scs_ptr) &&
       scs_ptr->lap_enabled == 0) {
+#endif
     define_gf_group_pass0(pcs_ptr, frame_params);
     return;
   }
@@ -1708,7 +1724,11 @@ static void define_gf_group(PictureParentControlSet *pcs_ptr, FIRSTPASS_STATS *t
         vbr_group_bits_per_frame, rc_factor);
 #if FTR_NEW_MULTI_PASS
 #if TUNE_MULTI_PASS
+#if CLN_ENC_CONFIG_SIG
+    if (twopass->passes == 3) {
+#else
     if (twopass->multi_pass_mode == TWO_PASS_SAMEPRED_FINAL || twopass->multi_pass_mode == THREE_PASS_IPP_SAMEPRED_FINAL) {
+#endif
 #else
     if (twopass->passes == 3) {
 #endif
@@ -1763,8 +1783,13 @@ static void define_gf_group(PictureParentControlSet *pcs_ptr, FIRSTPASS_STATS *t
 
 #if FTR_NEW_MULTI_PASS
 #if TUNE_MULTI_PASS
+#if CLN_ENC_CONFIG_SIG
+  if (twopass->passes == 3 && (scs_ptr->static_config.pass == ENC_MIDDLE_PASS || scs_ptr->static_config.pass == ENC_LAST_PASS))
+      av1_gop_bit_allocation_same_pred(pcs_ptr, gf_group, gf_group_bits, gf_stats);
+#else
   if ((twopass->multi_pass_mode == TWO_PASS_SAMEPRED_FINAL || twopass->multi_pass_mode == THREE_PASS_IPP_SAMEPRED_FINAL) && use_input_stat(scs_ptr))
       av1_gop_bit_allocation_same_pred(pcs_ptr, gf_group, gf_group_bits, gf_stats);
+#endif
 #else
   if (twopass->passes == 3 && use_input_stat(scs_ptr))
       av1_gop_bit_allocation_two_pass(pcs_ptr, gf_group, gf_group_bits, gf_stats);
@@ -2464,7 +2489,11 @@ static void find_next_key_frame(PictureParentControlSet *pcs_ptr, FIRSTPASS_STAT
     rc->frames_to_key = 1;
 
 #if FTR_1PASS_CBR
+#if CLN_ENC_CONFIG_SIG
+    if ((!(scs_ptr->static_config.pass == ENC_MIDDLE_PASS || scs_ptr->static_config.pass == ENC_LAST_PASS) && scs_ptr->static_config.pass != ENC_FIRST_PASS && rc_cfg->mode == AOM_CBR)) {
+#else
     if ((!use_input_stat(scs_ptr) && !use_output_stat(scs_ptr) && rc_cfg->mode == AOM_CBR)) {
+#endif
         rc->frames_to_key = AOMMAX(1, kf_cfg->key_freq_max);
         //correct_frames_to_key(cpi);
         rc->kf_boost = DEFAULT_KF_BOOST;
@@ -2653,7 +2682,11 @@ static void find_next_key_frame(PictureParentControlSet *pcs_ptr, FIRSTPASS_STAT
   // very high, we calculate the bits based on a clipped value of
   // frames_to_key.
 #if TUNE_MULTI_PASS
+#if CLN_ENC_CONFIG_SIG
+    if (twopass->passes == 3)
+#else
     if ((twopass->multi_pass_mode == TWO_PASS_SAMEPRED_FINAL || twopass->multi_pass_mode == THREE_PASS_IPP_SAMEPRED_FINAL))
+#endif
         kf_bits = (int)(twopass->kf_group_bits*(twopass->stats_in - 1)->stat_struct.total_num_bits / kf_group_err);
     else
 #endif
@@ -2725,7 +2758,11 @@ static void process_first_pass_stats(PictureParentControlSet *pcs_ptr,
   uint32_t mb_cols;
 #endif
   uint32_t mb_rows;
+#if CLN_ENC_CONFIG_SIG
+  if (scs_ptr->mid_pass_ctrls.ds) {
+#else
   if (is_middle_pass_ds(scs_ptr)) {
+#endif
 #if !CLN_2PASS
       mb_cols = 2*(scs_ptr->seq_header.max_frame_width + 16 - 1) / 16;
 #endif
@@ -2742,7 +2779,11 @@ static void process_first_pass_stats(PictureParentControlSet *pcs_ptr,
   const uint32_t mb_rows = (scs_ptr->seq_header.max_frame_height + 16 - 1) / 16;
 #endif
 #if TUNE_MULTI_PASS
+#if CLN_ENC_CONFIG_SIG
+    if ((rc_cfg->mode != AOM_Q || scs_ptr->static_config.pass == ENC_MIDDLE_PASS) && pcs_ptr->picture_number == 0 &&
+#else
     if ((rc_cfg->mode != AOM_Q || is_middle_pass(scs_ptr)) && pcs_ptr->picture_number == 0 &&
+#endif
 #else
   if (rc_cfg->mode != AOM_Q && /*current_frame->frame_number*/pcs_ptr->picture_number == 0 &&
 #endif
@@ -2770,9 +2811,12 @@ static void process_first_pass_stats(PictureParentControlSet *pcs_ptr,
         ((double)/*cm->mi_params.*/mb_rows * section_length);
 #if TUNE_MULTI_PASS
     int tmp_q;
+#if CLN_ENC_CONFIG_SIG
+    if (scs_ptr->passes == 3 && scs_ptr->static_config.pass != ENC_MIDDLE_PASS) {
+#else
     if ((twopass->multi_pass_mode == TWO_PASS_SAMEPRED_FINAL || scs_ptr->static_config.multi_pass_mode == THREE_PASS_IPP_SAMEPRED_FINAL) &&
         !is_middle_pass(scs_ptr)) {
-
+#endif
         int ref_qindex = twopass->stats_buf_ctx->stats_in_start->stat_struct.worst_qindex;
         const double ref_q = svt_av1_convert_qindex_to_q(ref_qindex, scs_ptr->encoder_bit_depth);
         int64_t ref_gf_group_bits = (int64_t)(twopass->stats_buf_ctx->total_stats->stat_struct.total_num_bits);
@@ -3005,7 +3049,11 @@ void svt_av1_get_second_pass_params(PictureParentControlSet *pcs_ptr) {
   av1_zero(this_frame);
   // call above fn
 #if FTR_1PASS_CBR
+#if CLN_ENC_CONFIG_SIG
+  if (scs_ptr->static_config.pass != ENC_SINGLE_PASS || scs_ptr->lap_enabled)
+#else
   if (use_input_stat(scs_ptr) || use_output_stat(scs_ptr) || scs_ptr->lap_enabled)
+#endif
 #else
   if (1/*is_stat_consumption_stage(cpi)*/)
 #endif
@@ -3211,7 +3259,11 @@ void set_rc_param(SequenceControlSet *scs_ptr) {
 
     const int is_vbr = scs_ptr->static_config.rate_control_mode == 1;
 #if FTR_OPT_MPASS_DOWN_SAMPLE
+#if CLN_ENC_CONFIG_SIG
+    if (scs_ptr->mid_pass_ctrls.ds) {
+#else
     if (is_middle_pass_ds(scs_ptr)) {
+#endif
         frame_info->frame_width = scs_ptr->seq_header.max_frame_width<<1;
         frame_info->frame_height = scs_ptr->seq_header.max_frame_height<<1;
         frame_info->mb_cols = ((scs_ptr->seq_header.max_frame_width + 16 - 1) / 16)<<1;
@@ -3342,7 +3394,11 @@ void svt_av1_init_second_pass(SequenceControlSet *scs_ptr) {
   if (!twopass->stats_buf_ctx->stats_in_end) return;
 
 #if TUNE_MULTI_PASS
+#if CLN_ENC_CONFIG_SIG
+  if (twopass->passes == 3 && scs_ptr->static_config.pass != ENC_MIDDLE_PASS) {
+#else
   if ((twopass->multi_pass_mode == TWO_PASS_SAMEPRED_FINAL || twopass->multi_pass_mode == THREE_PASS_IPP_SAMEPRED_FINAL) && !is_middle_pass(scs_ptr)) {
+#endif
       svt_av1_twopass_zero_stats(twopass->stats_buf_ctx->stats_in_end);
       FIRSTPASS_STATS *this_frame = (FIRSTPASS_STATS *)scs_ptr->twopass.stats_in;
       uint64_t   total_num_bits = 0;
@@ -3380,7 +3436,11 @@ void svt_av1_init_second_pass(SequenceControlSet *scs_ptr) {
 #if FTR_NEW_MULTI_PASS
 #if FTR_MULTI_PASS_API
 #if TUNE_MULTI_PASS
+#if CLN_ENC_CONFIG_SIG
+  if (twopass->passes == 3 && scs_ptr->static_config.pass != ENC_MIDDLE_PASS)
+#else
   if ((twopass->multi_pass_mode == TWO_PASS_SAMEPRED_FINAL || twopass->multi_pass_mode == THREE_PASS_IPP_SAMEPRED_FINAL) && !is_middle_pass(scs_ptr))
+#endif
 #else
   if (twopass->passes == 3 && !is_middle_pass(scs_ptr))
 #endif
@@ -3433,8 +3493,11 @@ void svt_av1_init_second_pass(SequenceControlSet *scs_ptr) {
 void find_init_qp_middle_pass(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_ptr) {
     TWO_PASS *const twopass = &scs_ptr->twopass;
     EncodeContext *encode_context_ptr = scs_ptr->encode_context_ptr;
-
+#if CLN_ENC_CONFIG_SIG
+    if (scs_ptr->static_config.pass == ENC_MIDDLE_PASS &&
+#else
     if (is_middle_pass(scs_ptr) &&
+#endif
         twopass->stats_buf_ctx->total_stats &&
         twopass->stats_buf_ctx->total_left_stats) {
 
@@ -3444,7 +3507,11 @@ void find_init_qp_middle_pass(SequenceControlSet *scs_ptr, PictureParentControlS
         rc->best_quality = rc_cfg->best_allowed_q;
 #if FTR_OPT_MPASS_DOWN_SAMPLE
         uint32_t mb_rows;
+#if CLN_ENC_CONFIG_SIG
+        if (scs_ptr->mid_pass_ctrls.ds)
+#else
         if (is_middle_pass_ds(scs_ptr))
+#endif
             mb_rows = 2 * (scs_ptr->seq_header.max_frame_height + 16 - 1) / 16;
         else
             mb_rows = (scs_ptr->seq_header.max_frame_height + 16 - 1) / 16;
@@ -3635,7 +3702,11 @@ void crf_assign_max_rate(PictureParentControlSet *ppcs_ptr) {
     int32_t start_index = ((ppcs_ptr->picture_number / frames_in_sw) * frames_in_sw) %
         CODED_FRAMES_STAT_QUEUE_MAX_DEPTH;
     int32_t end_index = start_index + frames_in_sw;
+#if CLN_ENC_CONFIG_SIG
+    frames_in_sw = (scs_ptr->passes > 1) ? MIN(end_index, (int32_t)scs_ptr->twopass.stats_buf_ctx->total_stats->count) - start_index : frames_in_sw;
+#else
     frames_in_sw = (scs_ptr->static_config.passes > 1) ? MIN(end_index, (int32_t)scs_ptr->twopass.stats_buf_ctx->total_stats->count) - start_index : frames_in_sw;
+#endif
     int64_t max_bits_sw = (int64_t)scs_ptr->static_config.max_bit_rate* (int32_t)frames_in_sw / frame_rate;
 #if TUNE_CAP_CRF_OVERSHOOT
     max_bits_sw += (max_bits_sw *scs_ptr->static_config.mbr_over_shoot_pct / 100);

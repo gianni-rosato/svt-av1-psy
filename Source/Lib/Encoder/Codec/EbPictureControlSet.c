@@ -1915,7 +1915,11 @@ EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr,
         }
     }
 #if TUNE_MULTI_PASS
+#if CLN_ENC_CONFIG_SIG
+    if (init_data_ptr->pass == ENC_FIRST_PASS || (init_data_ptr->rate_control_mode && init_data_ptr->pass == ENC_SINGLE_PASS))
+#else
     if (init_data_ptr->rc_firstpass_stats_out ||  (init_data_ptr->rate_control_mode && init_data_ptr->passes == 1))
+#endif
 #else
     if (init_data_ptr->rc_firstpass_stats_out ||  init_data_ptr->rate_control_mode)
 #endif

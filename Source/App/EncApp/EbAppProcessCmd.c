@@ -166,7 +166,7 @@ void svt_munmap(MemMapFile *h, void *addr, int64_t size)
 /* release  memory mapped file  */
 void release_memory_mapped_file(EbConfig *config, uint8_t is_16bit, EbBufferHeaderType *header_ptr)
 {
-#if FTR_OPT_MPASS_DOWN_SAMPLE
+#if FTR_OPT_MPASS_DOWN_SAMPLE && !CLN_ENC_CONFIG_SIG
     uint32_t input_padded_width;
     uint32_t input_padded_height;
 #if FTR_OP_TEST
@@ -209,7 +209,7 @@ void release_memory_mapped_file(EbConfig *config, uint8_t is_16bit, EbBufferHead
 #endif
 
 void read_input_frames(EbConfig *config, uint8_t is_16bit, EbBufferHeaderType *header_ptr) {
-#if FTR_OPT_MPASS_DOWN_SAMPLE
+#if FTR_OPT_MPASS_DOWN_SAMPLE  && !CLN_ENC_CONFIG_SIG
     uint32_t input_padded_width;
     uint32_t input_padded_height;
 #if FTR_OP_TEST
@@ -635,7 +635,7 @@ void process_input_buffer(EncChannel *channel) {
     AppExitConditionType return_value = APP_ExitConditionNone;
 
     const uint8_t color_format         = config->config.encoder_color_format;
-#if FTR_OPT_MPASS_DOWN_SAMPLE
+#if FTR_OPT_MPASS_DOWN_SAMPLE  && !CLN_ENC_CONFIG_SIG
     int64_t input_padded_width;
     int64_t input_padded_height;
 #if FTR_OP_TEST
@@ -980,7 +980,11 @@ void process_output_stream_buffer(EncChannel *channel, EncApp *enc_app, int32_t 
 
             if (flags & EB_BUFFERFLAG_EOS) {
 #if TUNE_MULTI_PASS
+#if CLN_ENC_CONFIG_SIG
+                if (config->config.pass == ENC_FIRST_PASS) {
+#else
                 if (config->config.rc_firstpass_stats_out || (config->config.rc_middlepass_stats_out && config->config.multi_pass_mode == TWO_PASS_SAMEPRED_FINAL)) {
+#endif
 #else
                 if (config->config.rc_firstpass_stats_out) {
 #endif
@@ -1006,8 +1010,22 @@ void process_output_stream_buffer(EncChannel *channel, EncApp *enc_app, int32_t 
                         }
                     }
                 }
-            }
+#if FIX_MULTI_CMDLINE
+#if CLN_ENC_CONFIG_SIG
+                if (config->config.pass == ENC_MIDDLE_PASS) {
+#else
+                if (config->config.rc_middlepass_stats_out) {
+#endif
 
+                    if (config->output_stat_file && config->config.rc_twopass_stats_in.buf) {
+                        fwrite(config->config.rc_twopass_stats_in.buf,
+                            1,
+                            config->config.rc_twopass_stats_in.sz,
+                            config->output_stat_file);
+                    }
+                }
+#endif
+            }
             ++*frame_count;
             const double fps = (double)*frame_count / config->performance_context.total_encode_time;
             const double frame_rate = config->config.frame_rate_numerator &&

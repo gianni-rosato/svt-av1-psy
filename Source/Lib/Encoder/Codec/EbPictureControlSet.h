@@ -1353,11 +1353,16 @@ typedef struct PictureControlSetInitData {
     uint8_t  tpl_synth_size;
 #endif
     uint8_t  in_loop_ois;
-
+#if CLN_ENC_CONFIG_SIG
+    uint8_t pass;
+#else
     uint8_t  rc_firstpass_stats_out;
+#endif
     uint32_t rate_control_mode;
+#if !CLN_ENC_CONFIG_SIG
 #if TUNE_MULTI_PASS
     uint8_t    passes;
+#endif
 #endif
     Av1Common *                av1_cm;
 #if CLN_GEOM

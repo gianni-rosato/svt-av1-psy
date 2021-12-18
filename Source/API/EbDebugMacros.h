@@ -59,14 +59,7 @@ extern "C" {
 #define RFCTR_RC_P2                 1 // Rate control code refactoring Part 2
 
 #define TUNE_RC                     1 // Tune RC setting for each preset
-#if TUNE_MULTI_PASS
-typedef enum MultiPassModes {
-    SINGLE_PASS, //single pass mode
-    TWO_PASS_IPP_FINAL, // two pass: IPP + final
-    TWO_PASS_SAMEPRED_FINAL, // two pass: Same Pred + final
-    THREE_PASS_IPP_SAMEPRED_FINAL, // three pass: IPP + Same Pred + final
-} MultiPassModes;
-#endif
+
 #if FTR_OPT_MPASS
 #define FTR_OPT_MPASS_CDEF 0
 #define FTR_OPT_MPASS_RDOQ_OFF 0
@@ -890,8 +883,29 @@ NOTE : PART OF LIGHT_PD0_2  code was committed to svt-04-final-rebased under OPT
 #define SSE_CODE_OPT                         1 //SSE2/SSSE3/SSE4_1 kernels optimization
 
 #define FIX_MULTIPASS_WITH_FIFO               1 // Fix multipass with stdin
+#define FIX_MULTI_CMDLINE                     1 // Add the ability to run VBR multi-pass using multiple cmd lines:
+#define CLN_ENC_CONFIG_SIG                    1 // Move RC params from static to sps
+#define CLN_TF_ENC_CONFIG                     1 // Move TF ctrls from static to sps
+#define CLN_MRP_ENC_CONFIG                    1 // Move MRP ctrls from static to sps
+
 #endif //----------------------------------- all svt-05 features should be place are above this line -------------------------
 
+#if TUNE_MULTI_PASS
+#if CLN_ENC_CONFIG_SIG
+typedef enum MultiPassModes {
+    SINGLE_PASS, //single pass mode
+    TWO_PASS_IPP_FINAL, // two pass: IPP + final
+    THREE_PASS_IPP_SAMEPRED_FINAL, // three pass: IPP + Same Pred + final
+} MultiPassModes;
+#else
+typedef enum MultiPassModes {
+    SINGLE_PASS, //single pass mode
+    TWO_PASS_IPP_FINAL, // two pass: IPP + final
+    TWO_PASS_SAMEPRED_FINAL, // two pass: Same Pred + final
+    THREE_PASS_IPP_SAMEPRED_FINAL, // three pass: IPP + Same Pred + final
+} MultiPassModes;
+#endif
+#endif
 
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            1 // log encoder job one

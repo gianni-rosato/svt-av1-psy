@@ -352,6 +352,21 @@ EbErrorType copy_sequence_control_set(SequenceControlSet *dst, SequenceControlSe
 #if TUNE_MEM_SHUT
     dst->input_resolution = src->input_resolution;
 #endif
+#if CLN_TF_ENC_CONFIG //--
+    dst->tf_params_per_type[0] = src->tf_params_per_type[0];
+    dst->tf_params_per_type[1] = src->tf_params_per_type[1];
+    dst->tf_params_per_type[2] = src->tf_params_per_type[2];
+#endif
+#if CLN_MRP_ENC_CONFIG
+    dst->mrp_ctrls = src->mrp_ctrls;
+#endif
+#if CLN_ENC_CONFIG_SIG
+    dst->passes = src->passes;
+    dst->ipp_pass_ctrls = src->ipp_pass_ctrls;
+    dst->mid_pass_ctrls = src->mid_pass_ctrls;
+    dst->ipp_was_ds = src->ipp_was_ds;
+    dst->final_pass_preset = src->final_pass_preset;
+#endif
     return EB_ErrorNone;
 }
 

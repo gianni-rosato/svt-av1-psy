@@ -15802,8 +15802,11 @@ EbPictureBufferDesc *pad_hbd_pictures(SequenceControlSet *scs, PictureControlSet
         ctx->hbd_pack_done = 1;
     }
 #endif
-
+#if CLN_ENC_CONFIG_SIG
+    return ((scs->static_config.pass != ENC_FIRST_PASS) ? pcs->input_frame16bit : in_pic);
+#else
     return !use_output_stat(scs) ? pcs->input_frame16bit : in_pic;
+#endif
 }
 
 #if LIGHT_PD0

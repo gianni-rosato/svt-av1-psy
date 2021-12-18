@@ -399,7 +399,11 @@ void *entropy_coding_kernel(void *input_ptr) {
 #if FTR_OP_TEST
                 if (!use_output_stat(scs_ptr) && !(!pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag && 1 && !pcs_ptr->parent_pcs_ptr->first_frame_in_minigop)) {
 #else
+#if CLN_ENC_CONFIG_SIG
+                if (scs_ptr->static_config.pass != ENC_FIRST_PASS && !(!pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag && scs_ptr->rc_stat_gen_pass_mode && !pcs_ptr->parent_pcs_ptr->first_frame_in_minigop)) {
+#else
                 if (!use_output_stat(scs_ptr) && !(!pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag && scs_ptr->rc_stat_gen_pass_mode && !pcs_ptr->parent_pcs_ptr->first_frame_in_minigop)) {
+#endif
 #endif
 #else
                 if (!use_output_stat(scs_ptr)) {

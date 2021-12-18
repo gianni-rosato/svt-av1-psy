@@ -1376,7 +1376,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
 #if CLN_SKIP_PD0_SIG
 #if TUNE_M9_M13
 #if FIX_MIDDLE_PASS
+#if CLN_ENC_CONFIG_SIG
+    if (pcs_ptr->parent_pcs_ptr->sc_class1 || scs_ptr->static_config.pass == ENC_MIDDLE_PASS)
+#else
     if (pcs_ptr->parent_pcs_ptr->sc_class1 || scs_ptr->static_config.rc_middlepass_stats_out)
+#endif
 #else
     if (pcs_ptr->parent_pcs_ptr->sc_class1)
 #endif
@@ -2017,7 +2021,11 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
 #endif
 #endif
         // Mode Decision Configuration Kernel Signal(s) derivation
+#if CLN_ENC_CONFIG_SIG
+        if (scs_ptr->static_config.pass == ENC_FIRST_PASS)
+#else
         if (use_output_stat(scs_ptr))
+#endif
             first_pass_signal_derivation_mode_decision_config_kernel(pcs_ptr);
         else
             signal_derivation_mode_decision_config_kernel_oq(scs_ptr, pcs_ptr);
@@ -2085,7 +2093,11 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
                                  &pcs_ptr->md_frame_context);
 #endif
         // Initial Rate Estimation of the Motion vectors
+#if CLN_ENC_CONFIG_SIG
+        if (scs_ptr->static_config.pass != ENC_FIRST_PASS) {
+#else
         if (!use_output_stat(scs_ptr)){
+#endif
         av1_estimate_mv_rate(pcs_ptr, md_rate_estimation_array, &pcs_ptr->md_frame_context);
         // Initial Rate Estimation of the quantized coefficients
         av1_estimate_coefficients_rate(md_rate_estimation_array, &pcs_ptr->md_frame_context);

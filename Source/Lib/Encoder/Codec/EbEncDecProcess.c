@@ -599,8 +599,11 @@ void recon_output(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr) {
             }
 
             // FGN: Create a buffer if needed, copy the reconstructed picture and run the film grain synthesis algorithm
-
+#if CLN_ENC_CONFIG_SIG
+            if ((scs_ptr->static_config.pass != ENC_FIRST_PASS)
+#else
             if (!use_output_stat(scs_ptr)
+#endif
                 && scs_ptr->seq_header.film_grain_params_present
                 && pcs_ptr->parent_pcs_ptr->frm_hdr.film_grain_params.apply_grain) {
                 AomFilmGrain *film_grain_ptr;
@@ -16514,7 +16517,11 @@ void *mode_decision_kernel(void *input_ptr) {
 #if FTR_OP_TEST
         if (use_output_stat(scs_ptr) || (!pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag && 1 && !pcs_ptr->parent_pcs_ptr->first_frame_in_minigop)) {
 #else
+#if CLN_ENC_CONFIG_SIG
+        if (scs_ptr->static_config.pass == ENC_FIRST_PASS || (!pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag && scs_ptr->rc_stat_gen_pass_mode && !pcs_ptr->parent_pcs_ptr->first_frame_in_minigop)) {
+#else
         if (use_output_stat(scs_ptr) || (!pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag && scs_ptr->rc_stat_gen_pass_mode  && !pcs_ptr->parent_pcs_ptr->first_frame_in_minigop)) {
+#endif
 #endif
 #else
         if (use_output_stat(scs_ptr)) {
@@ -17530,7 +17537,11 @@ void *mode_decision_kernel(void *input_ptr) {
             scs_ptr->encode_context_ptr->recode_loop = scs_ptr->static_config.recode_loop;
 #endif
 #if FTR_RC_CAP
+#if CLN_ENC_CONFIG_SIG
+            if ((scs_ptr->static_config.pass == ENC_MIDDLE_PASS || scs_ptr->static_config.pass == ENC_LAST_PASS || scs_ptr->lap_enabled || scs_ptr->static_config.max_bit_rate != 0) &&
+#else
             if ((use_input_stat(scs_ptr) || scs_ptr->lap_enabled || scs_ptr->static_config.max_bit_rate != 0) &&
+#endif
 #else
             if ((use_input_stat(scs_ptr) || scs_ptr->lap_enabled) &&
 #endif

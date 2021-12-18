@@ -37,6 +37,15 @@ the App.
 */
 typedef enum AppPortActiveType { APP_PortActive = 0, APP_PortInactive } AppPortActiveType;
 #if FTR_MULTI_PASS_API
+#if CLN_ENC_CONFIG_SIG
+typedef enum EncPass {
+    ENC_SINGLE_PASS, //single pass mode
+    ENC_FIRST_PASS, // first pass of multi pass mode
+    ENC_MIDDLE_PASS, // middle pass of multi pass mode
+    ENC_LAST_PASS, // last pass of multi pass mode
+    MAX_ENC_PASS = 3,
+} EncPass;
+#else
 typedef enum EncodePass {
     ENCODE_SINGLE_PASS, //single pass mode
     ENCODE_FIRST_PASS, // first pass of multi pass mode
@@ -44,6 +53,7 @@ typedef enum EncodePass {
     ENCODE_LAST_PASS, // last pass of multi pass mode
     MAX_ENCODE_PASS = 3,
 } EncodePass;
+#endif
 #else
 typedef enum EncodePass {
     ENCODE_SINGLE_PASS, //single pass mode
@@ -200,7 +210,9 @@ typedef struct EbConfig {
     FILE * buffer_file;
     FILE * qp_file;
     /* two pass */
+#if !CLN_ENC_CONFIG_SIG
     int         pass;
+#endif
     const char *stats;
     FILE *      input_stat_file;
     FILE *      output_stat_file;
@@ -217,7 +229,7 @@ typedef struct EbConfig {
 
     uint32_t input_padded_width;
     uint32_t input_padded_height;
-#if FTR_OPT_MPASS_DOWN_SAMPLE
+#if FTR_OPT_MPASS_DOWN_SAMPLE && !CLN_ENC_CONFIG_SIG
     uint32_t org_input_padded_width;
     uint32_t org_input_padded_height;
 #endif
@@ -267,24 +279,42 @@ typedef struct EncChannel {
 typedef struct EncApp {
     SvtAv1FixedBuf rc_twopasses_stats;
 } EncApp;
+#if CLN_ENC_CONFIG_SIG
+EbConfig *svt_config_ctor();
+void      svt_config_dtor(EbConfig *config_ptr);
 
+EbErrorType enc_channel_ctor(EncChannel *c);
+void        enc_channel_dctor(EncChannel *c, uint32_t inst_cnt);
+#else
 EbConfig *svt_config_ctor(EncodePass pass);
 void      svt_config_dtor(EbConfig *config_ptr);
 
 EbErrorType enc_channel_ctor(EncChannel *c, EncodePass pass);
 void        enc_channel_dctor(EncChannel *c, uint32_t inst_cnt);
-
+#endif
 extern EbErrorType read_command_line(int32_t argc, char *const argv[], EncChannel *channels,
                                      uint32_t num_channels, char *warning_str[WARNING_LENGTH]);
 int get_version(int argc, char *argv[]);
 extern uint32_t    get_help(int32_t argc, char *const argv[]);
 extern uint32_t    get_number_of_channels(int32_t argc, char *const argv[]);
 #if TUNE_MULTI_PASS
+#if CLN_ENC_CONFIG_SIG
+uint32_t           get_passes(int32_t argc, char* const argv[], EncPass enc_pass[MAX_ENC_PASS], MultiPassModes* multi_pass_mode);
+#else
 uint32_t           get_passes(int32_t argc, char *const argv[], EncodePass pass[MAX_ENCODE_PASS], MultiPassModes *multi_pass_mode);
+#endif
 #else
 uint32_t           get_passes(int32_t argc, char *const argv[], EncodePass pass[MAX_ENCODE_PASS]);
 #endif
+#if CLN_ENC_CONFIG_SIG
+EbErrorType handle_stats_file(
+    EbConfig* config,
+    EncPass pass,
+    const SvtAv1FixedBuf* rc_twopass_stats_in,
+    uint32_t channel_number);
+#else
 EbErrorType        set_two_passes_stats(EbConfig *config, EncodePass pass,
                                         const SvtAv1FixedBuf *rc_twopass_stats_in,
                                         uint32_t              channel_number);
+#endif
 #endif //EbAppConfig_h

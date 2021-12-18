@@ -1663,7 +1663,11 @@ void integer_search_sb(
                     uint8_t  hme_is_accuarte = 1;
 #endif
 #if IPP_CTRL
+#if CLN_ENC_CONFIG_SIG
+             if (!scs_ptr->ipp_pass_ctrls.bypass_zz_check || context_ptr->me_type != ME_FIRST_PASS)
+#else
              if (!scs_ptr->static_config.ipp_ctrls.bypass_zz_check || context_ptr->me_type != ME_FIRST_PASS)
+#endif
 #else
             if (scs_ptr->enc_mode_2ndpass <= ENC_M4  || context_ptr->me_type != ME_FIRST_PASS)
 #endif

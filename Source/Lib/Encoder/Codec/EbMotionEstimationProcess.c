@@ -1662,7 +1662,11 @@ void *motion_estimation_kernel(void *input_ptr) {
 
         // ME Kernel Signal(s) derivation
         if ((in_results_ptr->task_type == TASK_PAME) || (in_results_ptr->task_type == TASK_SUPERRES_RE_ME))
+#if CLN_ENC_CONFIG_SIG
+            if (scs_ptr->static_config.pass == ENC_FIRST_PASS)
+#else
             if (use_output_stat(scs_ptr))
+#endif
                 first_pass_signal_derivation_me_kernel(scs_ptr, pcs_ptr, context_ptr);
             else
                 signal_derivation_me_kernel_oq(scs_ptr, pcs_ptr, context_ptr);
@@ -1714,7 +1718,11 @@ void *motion_estimation_kernel(void *input_ptr) {
 #if FTR_OP_TEST
             if (use_output_stat(scs_ptr) || (!pcs_ptr->is_used_as_reference_flag && 1 && !pcs_ptr->first_frame_in_minigop))
 #else
+#if CLN_ENC_CONFIG_SIG
+            if (scs_ptr->static_config.pass == ENC_FIRST_PASS || (!pcs_ptr->is_used_as_reference_flag && scs_ptr->rc_stat_gen_pass_mode && !pcs_ptr->first_frame_in_minigop))
+#else
             if (use_output_stat(scs_ptr) || (!pcs_ptr->is_used_as_reference_flag && scs_ptr->rc_stat_gen_pass_mode && !pcs_ptr->first_frame_in_minigop))
+#endif
 #endif
 #else
             if (use_output_stat(scs_ptr))

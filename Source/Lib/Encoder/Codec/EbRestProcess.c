@@ -673,7 +673,12 @@ void *rest_kernel(void *input_ptr) {
             superres_recode = pcs_ptr->parent_pcs_ptr->superres_total_recode_loop > 0 ? EB_TRUE : EB_FALSE;
 
             // Pad the reference picture and set ref POC
-            if (!use_output_stat(scs_ptr)) {
+#if CLN_ENC_CONFIG_SIG
+            if (scs_ptr->static_config.pass != ENC_FIRST_PASS)
+#else
+            if (!use_output_stat(scs_ptr))
+#endif
+            {
                 if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE)
                     pad_ref_and_set_flags(pcs_ptr, scs_ptr);
                 else {
@@ -738,10 +743,25 @@ void *rest_kernel(void *input_ptr) {
                 if (return_error != EB_ErrorNone) {
                     assert_err(0, "Couldn't allocate memory for uncompressed 10bit buffers for SSIM calculations");
                 }
+            }
 #else
+            if (scs_ptr->static_config.stat_report) {
                 psnr_calculations(pcs_ptr, scs_ptr, EB_FALSE);
                 ssim_calculations(pcs_ptr, scs_ptr, EB_TRUE);
+            }
 #endif
+
+
+            // Pad the reference picture and set ref POC
+#if CLN_ENC_CONFIG_SIG
+            if (scs_ptr->static_config.pass != ENC_FIRST_PASS)
+#else
+            if (!use_output_stat(scs_ptr))
+#endif
+            if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE)
+                pad_ref_and_set_flags(pcs_ptr, scs_ptr);
+            if (scs_ptr->static_config.recon_enabled) {
+                recon_output(pcs_ptr, scs_ptr);
             }
 
             if (!superres_recode) {

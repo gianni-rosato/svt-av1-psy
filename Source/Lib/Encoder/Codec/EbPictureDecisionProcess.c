@@ -3081,7 +3081,11 @@ EbErrorType signal_derivation_multi_processes_oq(
 #endif
 #if FIX_1PASS_VBR_UNDERSHOOT
     pcs_ptr->adjust_under_shoot_gf = 0;
+#if CLN_ENC_CONFIG_SIG
+    if (scs_ptr->passes == 1 && scs_ptr->static_config.rate_control_mode == 1)
+#else
     if(scs_ptr->static_config.passes == 1 && scs_ptr->static_config.rate_control_mode == 1)
+#endif
         pcs_ptr->adjust_under_shoot_gf = pcs_ptr->enc_mode <= ENC_M11 ? 1 : 2;
 #endif
     return return_error;
@@ -3880,7 +3884,11 @@ static void  av1_generate_rps_info(
             else
                 SVT_LOG("Error in GOp indexing\n");
 #if CLN_MERGE_MRP_SIG
+#if CLN_MRP_ENC_CONFIG
+            if (pcs_ptr->scs_ptr->mrp_ctrls.referencing_scheme == 1) {
+#else
             if (pcs_ptr->scs_ptr->static_config.mrp_ctrls.referencing_scheme == 1) {
+#endif
 #else
             if (pcs_ptr->scs_ptr->mrp_init_level == 1) {
 #endif
@@ -3905,7 +3913,11 @@ static void  av1_generate_rps_info(
 
             uint8_t no_show;
 #if CLN_MERGE_MRP_SIG
+#if CLN_MRP_ENC_CONFIG
+            if (pcs_ptr->scs_ptr->mrp_ctrls.referencing_scheme == 1)
+#else
             if (pcs_ptr->scs_ptr->static_config.mrp_ctrls.referencing_scheme == 1)
+#endif
 #else
             if (pcs_ptr->scs_ptr->mrp_init_level == 1)
 #endif
@@ -4382,7 +4394,11 @@ static void  av1_generate_rps_info(
 
             uint8_t keep_lay4_as_ref;
 #if CLN_MERGE_MRP_SIG
+#if CLN_MRP_ENC_CONFIG
+            if (pcs_ptr->scs_ptr->mrp_ctrls.referencing_scheme == 1)
+#else
             if (pcs_ptr->scs_ptr->static_config.mrp_ctrls.referencing_scheme == 1)
+#endif
 #else
             if (pcs_ptr->scs_ptr->mrp_init_level == 1)
 #endif
@@ -4407,7 +4423,11 @@ static void  av1_generate_rps_info(
 
             uint8_t no_show;
 #if CLN_MERGE_MRP_SIG
+#if CLN_MRP_ENC_CONFIG
+            if (pcs_ptr->scs_ptr->mrp_ctrls.referencing_scheme == 1)
+#else
             if (pcs_ptr->scs_ptr->static_config.mrp_ctrls.referencing_scheme == 1)
+#endif
 #else
             if (pcs_ptr->scs_ptr->mrp_init_level == 1)
 #endif
@@ -5898,8 +5918,11 @@ void low_delay_store_tf_pictures(
     PictureDecisionContext  *ctx)
 {
     const uint32_t mg_size = 1 << (scs->static_config.hierarchical_levels);
+#if CLN_TF_ENC_CONFIG
+    const uint32_t tot_past = scs->tf_params_per_type[1].max_num_past_pics;
+#else
     const uint32_t tot_past = scs->static_config.tf_params_per_type[1].max_num_past_pics;
-
+#endif
     if (pcs->temporal_layer_index != 0 && pcs->pic_index + 1 + tot_past >= mg_size)
     {
         //printf("Store:%lld \n", pcs->picture_number);
@@ -5948,7 +5971,11 @@ void mctf_frame(
 {
 #if FTR_LDB_TF
     if (scs_ptr->static_config.pred_structure != EB_PRED_RANDOM_ACCESS &&
+#if CLN_TF_ENC_CONFIG
+        scs_ptr->tf_params_per_type[1].enabled)
+#else
         scs_ptr->static_config.tf_params_per_type[1].enabled)
+#endif
         low_delay_store_tf_pictures(
             scs_ptr,
             pcs_ptr,
@@ -6013,7 +6040,11 @@ void mctf_frame(
         pcs_ptr->temporal_filtering_on = EB_FALSE; // set temporal filtering flag OFF for current picture
 #if FTR_LDB_TF
     if (scs_ptr->static_config.pred_structure != EB_PRED_RANDOM_ACCESS &&
+#if CLN_TF_ENC_CONFIG
+        scs_ptr->tf_params_per_type[1].enabled&&
+#else
         scs_ptr->static_config.tf_params_per_type[1].enabled  &&
+#endif
         pcs_ptr->temporal_layer_index == 0)
         low_delay_release_tf_pictures(context_ptr);
 #endif
@@ -6199,8 +6230,11 @@ void send_picture_out(
 
 
 #if CLN_MERGE_MRP_SIG
+#if CLN_MRP_ENC_CONFIG
+        MrpCtrls* mrp_ctrl = &(scs->mrp_ctrls);
+#else
         MrpCtrls* mrp_ctrl = &(scs->static_config.mrp_ctrls);
-
+#endif
         uint8_t ref_count_used_list0 =
             MAX(mrp_ctrl->sc_base_ref_list0_count,
                 MAX(mrp_ctrl->base_ref_list0_count,
@@ -6254,7 +6288,11 @@ void send_picture_out(
     // Scale picture if super-res is used
     // Handle SUPERRES_FIXED and SUPERRES_RANDOM modes here.
     // SUPERRES_QTHRESH and SUPERRES_AUTO modes are handled in rate control process because these modes depend on qindex
+#if CLN_ENC_CONFIG_SIG
+    if (scs->static_config.pass == ENC_SINGLE_PASS) {
+#else
     if (!use_output_stat(scs) || use_input_stat(scs)) {
+#endif
         if (scs->static_config.superres_mode == SUPERRES_FIXED ||
             scs->static_config.superres_mode == SUPERRES_RANDOM) {
             init_resize_picture(scs, pcs);
@@ -6928,7 +6966,11 @@ void copy_tf_params(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_pt
    if (scs_ptr->static_config.pred_structure != EB_PRED_RANDOM_ACCESS)
    {
         if (pcs_ptr->slice_type != I_SLICE && pcs_ptr->temporal_layer_index == 0)
+#if CLN_TF_ENC_CONFIG
+            pcs_ptr->tf_ctrls = scs_ptr->tf_params_per_type[1];
+#else
             pcs_ptr->tf_ctrls = scs_ptr->static_config.tf_params_per_type[1];
+#endif
         else
             pcs_ptr->tf_ctrls.enabled = 0;
 
@@ -6936,6 +6978,20 @@ void copy_tf_params(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_pt
    }
 #endif
 #if OPT_TFILTER
+#if CLN_TF_ENC_CONFIG
+#if FIX_TF_OPEN_GOP
+    if (is_delayed_intra(pcs_ptr))
+#else
+    if (pcs_ptr->slice_type == I_SLICE)
+#endif
+        pcs_ptr->tf_ctrls = scs_ptr->tf_params_per_type[0];
+    else if (pcs_ptr->temporal_layer_index == 0)  // BASE
+        pcs_ptr->tf_ctrls = scs_ptr->tf_params_per_type[1];
+    else if (pcs_ptr->temporal_layer_index == 1)  // L1
+        pcs_ptr->tf_ctrls = scs_ptr->tf_params_per_type[2];
+    else
+        pcs_ptr->tf_ctrls.enabled = 0;
+#else
 #if FIX_TF_OPEN_GOP
     if (is_delayed_intra(pcs_ptr))
 #else
@@ -6948,6 +7004,7 @@ void copy_tf_params(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_pt
         pcs_ptr->tf_ctrls = scs_ptr->static_config.tf_params_per_type[2];
     else
         pcs_ptr->tf_ctrls.enabled = 0;
+#endif
 #else
 
 
@@ -7060,9 +7117,11 @@ void set_mini_gop_size(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs
 * Update the list0 count try and the list1 count try based on the Enc-Mode, whether BASE or not, whether SC or not
 */
 void update_count_try(SequenceControlSet* scs_ptr, PictureParentControlSet* pcs_ptr) {
-
+#if CLN_MRP_ENC_CONFIG
+    MrpCtrls* mrp_ctrl = &scs_ptr->mrp_ctrls;
+#else
     MrpCtrls *mrp_ctrl = &scs_ptr->static_config.mrp_ctrls;
-
+#endif
     if (pcs_ptr->sc_class1) {
         if (pcs_ptr->temporal_layer_index == 0) {
             pcs_ptr->ref_list0_count_try = MIN(pcs_ptr->ref_list0_count, mrp_ctrl->sc_base_ref_list0_count);
@@ -7279,8 +7338,11 @@ void* picture_decision_kernel(void *input_ptr)
                 frame_passthrough = EB_FALSE;
             window_avail = EB_TRUE;
             previous_entry_index = QUEUE_GET_PREVIOUS_SPOT(encode_context_ptr->picture_decision_reorder_queue_head_index);
-
+#if CLN_ENC_CONFIG_SIG
+            if (scs_ptr->static_config.pass == ENC_FIRST_PASS || scs_ptr->lap_enabled) {
+#else
             if (use_output_stat(scs_ptr) || scs_ptr->lap_enabled) {
+#endif
                 for (window_index = 0; window_index < scs_ptr->scd_delay + 1; window_index++)
                 {
                     entry_index = QUEUE_GET_NEXT_SPOT(encode_context_ptr->picture_decision_reorder_queue_head_index, window_index);
@@ -7854,14 +7916,21 @@ void* picture_decision_kernel(void *input_ptr)
 #if FIX_DG
                                             int copy_frame = 1;
 #if FIX_ISSUE_50
+#if CLN_ENC_CONFIG_SIG
+                                        if (pcs_ptr->scs_ptr->ipp_pass_ctrls.skip_frame_first_pass)
+#else
                                         if (pcs_ptr->scs_ptr->static_config.ipp_ctrls.skip_frame_first_pass)
+#endif
 #else
                                         if (scs_ptr->static_config.final_pass_rc_mode == 0)
 #endif
                                             copy_frame = (((pcs_ptr->picture_number % 8) == 0) || ((pcs_ptr->picture_number % 8) == 6) || ((pcs_ptr->picture_number % 8) == 7));
                                         // Bypass copy for the unecessary picture in IPPP pass
-
+#if CLN_ENC_CONFIG_SIG
+                                        if ((scs_ptr->static_config.pass != ENC_FIRST_PASS || copy_frame) == 0) {
+#else
                                         if (((!use_output_stat(scs_ptr)) || ((use_output_stat(scs_ptr)) && copy_frame)) == 0) {
+#endif
                                             pcs_ptr->sc_class0 = pcs_ptr->sc_class1 = pcs_ptr->sc_class2 = 0;
                                         }
                                         else if (scs_ptr->static_config.screen_content_mode == 2) // auto detect
@@ -7896,7 +7965,11 @@ void* picture_decision_kernel(void *input_ptr)
                                 copy_tf_params(scs_ptr, pcs_ptr);
                                 // TODO: put this in EbMotionEstimationProcess?
                                 // ME Kernel Multi-Processes Signal(s) derivation
+#if CLN_ENC_CONFIG_SIG
+                                if (scs_ptr->static_config.pass == ENC_FIRST_PASS)
+#else
                                 if (use_output_stat(scs_ptr))
+#endif
                                     first_pass_signal_derivation_multi_processes(scs_ptr, pcs_ptr);
                                 else
                                     signal_derivation_multi_processes_oq(scs_ptr, pcs_ptr, context_ptr);

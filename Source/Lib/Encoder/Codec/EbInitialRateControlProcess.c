@@ -201,7 +201,11 @@ uint8_t  inj_to_tpl_group( PictureParentControlSet* pcs)
     }
     else {
 #if CLN_MERGE_MRP_SIG
+#if CLN_MRP_ENC_CONFIG
+        if (pcs->scs_ptr->mrp_ctrls.referencing_scheme == 1) {
+#else
         if (pcs->scs_ptr->static_config.mrp_ctrls.referencing_scheme == 1) {
+#endif
 #else
         if (pcs->scs_ptr->mrp_init_level == 1) {
 #endif
@@ -484,9 +488,17 @@ void process_lad_queue(
 
         if (send_out) {
 #if FTR_1PAS_VBR
+#if CLN_ENC_CONFIG_SIG
+            if(head_pcs->scs_ptr->static_config.pass == ENC_MIDDLE_PASS || head_pcs->scs_ptr->static_config.pass == ENC_LAST_PASS || head_pcs->scs_ptr->lap_enabled) {
+#else
             if (head_pcs->scs_ptr->lap_enabled || use_input_stat(head_pcs->scs_ptr)) {
+#endif
                 head_pcs->stats_in_offset = head_pcs->decode_order;
+#if CLN_ENC_CONFIG_SIG
+                head_pcs->stats_in_end_offset = head_pcs->ext_group_size && !(head_pcs->scs_ptr->static_config.pass == ENC_MIDDLE_PASS || head_pcs->scs_ptr->static_config.pass == ENC_LAST_PASS) ?
+#else
                 head_pcs->stats_in_end_offset = head_pcs->ext_group_size && !use_input_stat(head_pcs->scs_ptr) ?
+#endif
                     MIN((uint64_t)(head_pcs->scs_ptr->twopass.stats_buf_ctx->stats_in_end_write - head_pcs->scs_ptr->twopass.stats_buf_ctx->stats_in_start),
                       head_pcs->stats_in_offset + (uint64_t)head_pcs->ext_group_size + 1) :
                     (uint64_t)(head_pcs->scs_ptr->twopass.stats_buf_ctx->stats_in_end_write - head_pcs->scs_ptr->twopass.stats_buf_ctx->stats_in_start);

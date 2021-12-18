@@ -444,8 +444,10 @@ static EbErrorType realloc_output_bitstream(Bitstream *bitstream_ptr, uint32_t s
     }
     return EB_ErrorNone;
 }
+#if !CLN_ENC_CONFIG_SIG
 #if TUNE_MULTI_PASS
 void samepred_pass_frame_end(PictureParentControlSet *pcs_ptr, const double ts_duration);
+#endif
 #endif
 void *packetization_kernel(void *input_ptr) {
     // Context
@@ -636,8 +638,15 @@ void *packetization_kernel(void *input_ptr) {
 
             // Delayed call from Rate Control process for multiple coding loop frames
 #if FTR_1PASS_CBR
+#if CLN_ENC_CONFIG_SIG
+            if (scs_ptr->static_config.pass == ENC_MIDDLE_PASS || scs_ptr->static_config.pass == ENC_LAST_PASS ||
+                scs_ptr->lap_enabled ||
+                (!(scs_ptr->static_config.pass == ENC_MIDDLE_PASS || scs_ptr->static_config.pass == ENC_LAST_PASS) &&
+                     scs_ptr->static_config.pass != ENC_FIRST_PASS && scs_ptr->static_config.rate_control_mode == 2))
+#else
             if (use_input_stat(scs_ptr) || scs_ptr->lap_enabled ||
                 (!use_input_stat(scs_ptr) && !use_output_stat(scs_ptr) && scs_ptr->static_config.rate_control_mode == 2))
+#endif
 #else
             if (use_input_stat(scs_ptr) || scs_ptr->lap_enabled)
 #endif
@@ -892,14 +901,24 @@ void *packetization_kernel(void *input_ptr) {
         pcs_ptr->parent_pcs_ptr->total_num_bits = output_stream_ptr->n_filled_len << 3;
 #if FTR_MULTI_PASS_API
 #if TUNE_MULTI_PASS
+#if !CLN_ENC_CONFIG_SIG
         if (scs_ptr->static_config.multi_pass_mode == TWO_PASS_SAMEPRED_FINAL && is_middle_pass(scs_ptr))
             samepred_pass_frame_end(pcs_ptr->parent_pcs_ptr, pcs_ptr->parent_pcs_ptr->ts_duration);
 #endif
+#endif
+#if CLN_ENC_CONFIG_SIG
+        if (scs_ptr->passes == 3 && scs_ptr->static_config.pass == ENC_MIDDLE_PASS) {
+#else
         if (scs_ptr->static_config.passes == 3 && is_middle_pass(scs_ptr)) {
+#endif
             StatStruct stat_struct;
             stat_struct.poc = pcs_ptr->picture_number;
 #if FTR_OPT_MPASS_DOWN_SAMPLE
+#if CLN_ENC_CONFIG_SIG
+            if (scs_ptr->mid_pass_ctrls.ds)
+#else
             if(is_middle_pass_ds(scs_ptr))
+#endif
                 stat_struct.total_num_bits = pcs_ptr->parent_pcs_ptr->total_num_bits*DS_SC_FACT / 10;
             else
                 stat_struct.total_num_bits = pcs_ptr->parent_pcs_ptr->total_num_bits;
