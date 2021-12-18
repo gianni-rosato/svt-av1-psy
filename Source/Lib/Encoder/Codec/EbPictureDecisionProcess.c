@@ -1802,7 +1802,7 @@ uint8_t get_disallow_nsq(EbEncMode enc_mode){
 uint8_t get_dlf_level(EbEncMode enc_mode, uint8_t is_used_as_reference_flag) {
 
     uint8_t dlf_level;
-#if TUNE_M5_M6
+#if TUNE_M5_M6 && !TUNE_PRESETS_LDB
     if (enc_mode <= ENC_M5)
 #else
     if (enc_mode <= ENC_M4)
