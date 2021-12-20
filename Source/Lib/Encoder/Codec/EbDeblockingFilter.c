@@ -342,22 +342,25 @@ void svt_av1_filter_block_plane_vert(const PictureControlSet *const pcs_ptr,
                 MI_SIZE_LOG2;
         }
     }
+#endif
 
-    // the boundary of last column should use the actual width for frame might be downscaled in super resolution
-    EbPictureBufferDesc* pic_ptr = pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr;
-    if (mi_col == (pic_ptr->width / sb_size * sb_size) >> MI_SIZE_LOG2) {
-        x_range = (((pic_ptr->width) % sb_size) +
-            MI_SIZE - 1) >>
-            MI_SIZE_LOG2;
-        if (plane) {
-            x_range = ((((pic_ptr->width) %
-                sb_size + scale_horz) >>
-                scale_horz) +
+    if (pcs_ptr->parent_pcs_ptr->frame_superres_enabled) {
+        // the boundary of last column should use the actual width for frame might be downscaled in super resolution
+        const uint32_t sb_size = (scs_ptr->seq_header.sb_size == BLOCK_128X128) ? 128 : 64;
+        EbPictureBufferDesc* pic_ptr = pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr;
+        if (mi_col == (pic_ptr->width / sb_size * sb_size) >> MI_SIZE_LOG2) {
+            x_range = (((pic_ptr->width) % sb_size) +
                 MI_SIZE - 1) >>
                 MI_SIZE_LOG2;
+            if (plane) {
+                x_range = ((((pic_ptr->width) %
+                    sb_size + scale_horz) >>
+                    scale_horz) +
+                    MI_SIZE - 1) >>
+                    MI_SIZE_LOG2;
+            }
         }
     }
-#endif
     for (int32_t y = 0; y < y_range; y += row_step) {
         uint8_t *p = dst_ptr + ((y * MI_SIZE * dst_stride) << plane_ptr->is_16bit);
         for (int32_t x = 0; x < x_range;) {
@@ -484,22 +487,25 @@ void svt_av1_filter_block_plane_horz(const PictureControlSet *const pcs_ptr,
                 MI_SIZE_LOG2;
         }
     }
+#endif
 
-    // the boundary of last column should use the actual width for frames might be downscaled in super resolution
-    EbPictureBufferDesc* pic_ptr = pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr;
-    if (mi_col == (pic_ptr->width / sb_size * sb_size) >> MI_SIZE_LOG2) {
-        x_range = (((pic_ptr->width) % sb_size) +
-            MI_SIZE - 1) >>
-            MI_SIZE_LOG2;
-        if (plane) {
-            x_range = ((((pic_ptr->width) %
-                sb_size + scale_horz) >>
-                scale_horz) +
+    if (pcs_ptr->parent_pcs_ptr->frame_superres_enabled) {
+        // the boundary of last column should use the actual width for frames might be downscaled in super resolution
+        const uint32_t sb_size = (scs_ptr->seq_header.sb_size == BLOCK_128X128) ? 128 : 64;
+        EbPictureBufferDesc* pic_ptr = pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr;
+        if (mi_col == (pic_ptr->width / sb_size * sb_size) >> MI_SIZE_LOG2) {
+            x_range = (((pic_ptr->width) % sb_size) +
                 MI_SIZE - 1) >>
                 MI_SIZE_LOG2;
+            if (plane) {
+                x_range = ((((pic_ptr->width) %
+                    sb_size + scale_horz) >>
+                    scale_horz) +
+                    MI_SIZE - 1) >>
+                    MI_SIZE_LOG2;
+            }
         }
     }
-#endif
     for (int32_t x = 0; x < x_range; x += col_step) {
         uint8_t *p = dst_ptr + ((x * MI_SIZE) << plane_ptr->is_16bit);
         for (int32_t y = 0; y < y_range;) {
