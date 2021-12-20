@@ -6659,6 +6659,38 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
 #if FIX_SANITIZER_RACE_CONDS
     scs_ptr->encode_context_ptr->recode_loop = scs_ptr->static_config.recode_loop;
 #endif
+#else
+    if (scs_ptr->static_config.superres_mode == SUPERRES_FIXED &&
+        scs_ptr->static_config.superres_denom == SCALE_NUMERATOR &&
+        scs_ptr->static_config.superres_kf_denom == SCALE_NUMERATOR) {
+        scs_ptr->static_config.superres_mode = SUPERRES_NONE;
+    }
+    if (scs_ptr->static_config.superres_mode == SUPERRES_QTHRESH &&
+        scs_ptr->static_config.superres_qthres == MAX_QP_VALUE &&
+        scs_ptr->static_config.superres_kf_qthres == MAX_QP_VALUE) {
+        scs_ptr->static_config.superres_mode = SUPERRES_NONE;
+    }
+    if (scs_ptr->static_config.superres_mode > SUPERRES_NONE) {
+        // allow TPL with auto-dual and auto-all
+        if ((scs_ptr->static_config.superres_mode != SUPERRES_AUTO) && (scs_ptr->static_config.superres_mode != SUPERRES_QTHRESH)) {
+            if (scs_ptr->static_config.enable_tpl_la != 0) {
+                SVT_WARN("TPL will be disabled when super resolution is enabled!\n");
+                scs_ptr->static_config.enable_tpl_la = 0;
+            }
+        }
+
+        if (scs_ptr->static_config.tile_rows || scs_ptr->static_config.tile_columns) {
+            // disable tiles if super-res is on
+            SVT_WARN("Tiles will be disabled when super resolution is enabled!\n");
+            scs_ptr->static_config.tile_rows = 0;
+            scs_ptr->static_config.tile_columns = 0;
+        }
+        if (scs_ptr->static_config.superres_mode == SUPERRES_RANDOM) {
+            SVT_WARN("Super resolution random mode is designed for test and debugging purpose,\n"
+                "it creates array of picture buffers for all scaling denominators (up to 8) of each reference frame.\n"
+                "This mode retains a significant amount of memory, much more than other modes!\n");
+        }
+    }
 #endif
     derive_input_resolution(
         &scs_ptr->input_resolution,

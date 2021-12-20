@@ -751,24 +751,10 @@ void *rest_kernel(void *input_ptr) {
             }
 #endif
 
-
-            // Pad the reference picture and set ref POC
-#if CLN_ENC_CONFIG_SIG
-            if (scs_ptr->static_config.pass != ENC_FIRST_PASS)
-#else
-            if (!use_output_stat(scs_ptr))
-#endif
-            if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE)
-                pad_ref_and_set_flags(pcs_ptr, scs_ptr);
-            if (scs_ptr->static_config.recon_enabled) {
-                recon_output(pcs_ptr, scs_ptr);
-            }
-
             if (!superres_recode) {
                 if (scs_ptr->static_config.recon_enabled) {
                     recon_output(pcs_ptr, scs_ptr);
                 }
-
                 // post reference picture task in packetization process if it's superres_recode
                 if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag) {
                     // Get Empty PicMgr Results
