@@ -3644,7 +3644,10 @@ void perform_gm_detection(
             uint32_t ref_pic_index = (me_candidate->direction == 0 || me_candidate->direction == 2) ? me_candidate->ref_idx_l0 : me_candidate->ref_idx_l1;
 
             // Active block detection
-            uint16_t dist = ABS((int16_t)(pcs_ptr->picture_number - context_ptr->me_ds_ref_array[list_index][ref_pic_index].picture_number));
+            uint64_t pcs_pic_num = pcs_ptr->picture_number;
+            uint64_t ref_pic_num =
+                context_ptr->me_ds_ref_array[list_index][ref_pic_index].picture_number;
+            uint16_t dist      = ABS((int16_t)(MAX(pcs_pic_num, ref_pic_num) - MIN(pcs_pic_num, ref_pic_num)));
             int active_th = (pcs_ptr->gm_ctrls.use_distance_based_active_th) ? MAX(dist >> 1, 4) : 4;
 
             int mx = _MVXT(context_ptr->p_sb_best_mv[list_index][ref_pic_index][n_idx]);
