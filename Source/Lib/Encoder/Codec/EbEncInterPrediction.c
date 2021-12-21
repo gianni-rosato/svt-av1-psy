@@ -8234,7 +8234,9 @@ EbErrorType inter_pu_prediction_av1(uint8_t hbd_mode_decision, ModeDecisionConte
     mv_unit.mv[1] = mv_1;
 
     if (candidate_buffer_ptr->candidate_ptr->use_intrabc) {
+#if FTR_MEM_OPT
         get_recon_pic(picture_control_set_ptr, &ref_pic_list0, hbd_mode_decision);
+#else
 #if !FTR_MEM_OPT
         if (!hbd_mode_decision)
 #endif
@@ -8246,6 +8248,7 @@ EbErrorType inter_pu_prediction_av1(uint8_t hbd_mode_decision, ModeDecisionConte
             ref_pic_list0 = ((EbReferenceObject *)picture_control_set_ptr->parent_pcs_ptr
                     ->reference_picture_wrapper_ptr->object_ptr)
                     ->reference_picture16bit;
+#endif
 #endif
 #if CHROMA_CLEANUP
         uint32_t component_mask = (md_context_ptr->uv_ctrls.uv_mode <= CHROMA_MODE_1 && md_context_ptr->md_staging_skip_chroma_pred == EB_FALSE) ? PICTURE_BUFFER_DESC_FULL_MASK : PICTURE_BUFFER_DESC_LUMA_MASK;
