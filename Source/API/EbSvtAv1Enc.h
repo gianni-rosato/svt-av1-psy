@@ -639,7 +639,7 @@ typedef struct EbSvtAv1EncConfiguration {
     *
     * Default is - 1. */
     int pic_based_rate_est;
-
+#if !CLN_REMOVE_ME_HME_CLI
     /* Flag to enable the use of default ME HME parameters.
     *
     * Default is 1. */
@@ -663,7 +663,7 @@ typedef struct EbSvtAv1EncConfiguration {
      *
      * Default depends on input resolution. */
     uint32_t search_area_height;
-
+#endif
     // MD Parameters
     /* Enable the use of HBD (10-bit) for 10 bit content at the mode decision step
      *
@@ -901,7 +901,7 @@ typedef struct EbSvtAv1EncConfiguration {
 
     /* To be deprecated.
  * Encoder configuration parameters below this line are to be deprecated. */
-
+#if !CLN_REMOVE_ME_HME_CLI
     /* Flag to enable Hierarchical Motion Estimation 1/16th of the picture
     *
     * Default is 1. */
@@ -931,7 +931,7 @@ typedef struct EbSvtAv1EncConfiguration {
     uint32_t hme_level1_search_area_in_height_array[EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
     uint32_t hme_level2_search_area_in_width_array[EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT];
     uint32_t hme_level2_search_area_in_height_array[EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
-
+#endif
     uint32_t ten_bit_format;
 
     /* Variables to control the use of ALT-REF (temporally filtered frames)

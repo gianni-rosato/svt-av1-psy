@@ -889,6 +889,16 @@ NOTE : PART OF LIGHT_PD0_2  code was committed to svt-04-final-rebased under OPT
 #define CLN_MRP_ENC_CONFIG                    1 // Move MRP ctrls from static to sps
 
 #define FIX_GF_INTERVAL_LENGTH                1 // Fix GF interval size for I slice that is EOS
+#define CLN_ME_NUM_LISTS                      1 // Make num_of_list_to_search be the number of lists to search, rather than the MAX list to search
+#define USE_DEFAULT_ME_HME_ONLY               1
+#if USE_DEFAULT_ME_HME_ONLY
+#define CLN_REMOVE_ME_HME_CLI                 0 // Remove ME/HME search area CLI tokens (disabled temporarily b/c causing issues with CI tests)
+#define CLN_FORCE_DEFAULT_ME_HME              1 // Do not allow user input to overwrite the default ME/HME settings
+#endif
+#define CLN_REMOVE_HME_DECIMATION             1 // Remove unused HME decimation signalling
+#define CLN_ME_HME_AREA_SIGS                  1 // Cleanup signalling of ME/HME search areas
+#define FIX_HME_L0_SA_CALC                    1 // Fix scaling of HME L0 search area
+#define CLN_ME_REDENDANT_VAR                  1 // Reduce redendant generation of some ME variables
 #endif //----------------------------------- all svt-05 features should be place are above this line -------------------------
 
 #if TUNE_MULTI_PASS

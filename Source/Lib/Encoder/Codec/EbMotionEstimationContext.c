@@ -33,7 +33,11 @@ EbErrorType me_context_ctor(MeContext *object_ptr) {
 
     // Initialize Alt-Ref parameters
     object_ptr->me_type                     = ME_CLOSE_LOOP;
+#if CLN_ME_NUM_LISTS
+    object_ptr->num_of_list_to_search       = 1;
+#else
     object_ptr->num_of_list_to_search       = 0;
+#endif
     object_ptr->num_of_ref_pic_to_search[0] = 0;
     object_ptr->num_of_ref_pic_to_search[1] = 0;
 

@@ -780,10 +780,22 @@ uint8_t get_enable_restoration(EbEncMode enc_mode,int8_t config_enable_restorati
 Input   : encoder mode and tune
 Output  : Pre-Analysis signal(s)
 ******************************************************/
+#if CLN_REMOVE_ME_HME_CLI || CLN_FORCE_DEFAULT_ME_HME
+EbErrorType signal_derivation_pre_analysis_oq_pcs(PictureParentControlSet *pcs_ptr) {
+#else
 EbErrorType signal_derivation_pre_analysis_oq_pcs(SequenceControlSet const * const scs_ptr,
                                                   PictureParentControlSet *pcs_ptr) {
+#endif
     EbErrorType return_error = EB_ErrorNone;
     // Derive HME Flag
+#if CLN_REMOVE_ME_HME_CLI || CLN_FORCE_DEFAULT_ME_HME
+    // Set here to allocate resources for the downsampled pictures used in HME (generated in PictureAnalysis)
+    // Will be later updated for SC/NSC in PictureDecisionProcess
+    pcs_ptr->enable_hme_flag = 1;
+    pcs_ptr->enable_hme_level0_flag = 1;
+    pcs_ptr->enable_hme_level1_flag = 1;
+    pcs_ptr->enable_hme_level2_flag = 1;
+#else
     if (scs_ptr->static_config.use_default_me_hme) {
         // Set here to allocate resources for the downsampled pictures used in HME (generated in PictureAnalysis)
         // Will be later updated for SC/NSC in PictureDecisionProcess
@@ -797,6 +809,7 @@ EbErrorType signal_derivation_pre_analysis_oq_pcs(SequenceControlSet const * con
         pcs_ptr->enable_hme_level1_flag = scs_ptr->static_config.enable_hme_level1_flag;
         pcs_ptr->enable_hme_level2_flag = scs_ptr->static_config.enable_hme_level2_flag;
     }
+#endif
     // Set here to allocate resources for the downsampled pictures used in HME (generated in PictureAnalysis)
     // Will be later updated for SC/NSC in PictureDecisionProcess
     pcs_ptr->tf_enable_hme_flag        = 1;
@@ -1921,7 +1934,11 @@ void *resource_coordination_kernel(void *input_ptr) {
 #endif
                 first_pass_signal_derivation_pre_analysis_pcs(pcs_ptr);
             else
+#if CLN_REMOVE_ME_HME_CLI || CLN_FORCE_DEFAULT_ME_HME
+                signal_derivation_pre_analysis_oq_pcs(pcs_ptr);
+#else
                 signal_derivation_pre_analysis_oq_pcs(scs_ptr, pcs_ptr);
+#endif
             // Rate Control
 #if !TUNE_MULTI_PASS
             if (scs_ptr->static_config.use_qp_file == 1) {

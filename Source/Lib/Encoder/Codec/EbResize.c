@@ -1504,11 +1504,16 @@ void scale_source_references(SequenceControlSet *scs_ptr, PictureParentControlSe
     const int32_t  num_planes = 0; // Y only
     const uint32_t ss_x       = scs_ptr->subsampling_x;
     const uint32_t ss_y       = scs_ptr->subsampling_y;
+#if CLN_ME_NUM_LISTS
+    uint32_t num_of_list_to_search = (pcs_ptr->slice_type == P_SLICE) ? 1 /*List 0 only*/ : 2 /*List 0 + 1*/;
 
+    for (uint8_t list_index = REF_LIST_0; list_index < num_of_list_to_search; ++list_index) {
+#else
     uint32_t num_of_list_to_search = (pcs_ptr->slice_type == P_SLICE) ? (uint32_t)REF_LIST_0
                                                                       : (uint32_t)REF_LIST_1;
 
     for (uint8_t list_index = REF_LIST_0; list_index <= num_of_list_to_search; ++list_index) {
+#endif
         uint8_t ref_pic_index;
         uint8_t num_of_ref_pic_to_search = (pcs_ptr->slice_type == P_SLICE)
             ? pcs_ptr->ref_list0_count
@@ -1673,11 +1678,16 @@ void scale_rec_references(PictureControlSet *pcs_ptr, EbPictureBufferDesc *input
     const int32_t  num_planes = av1_num_planes(&scs_ptr->seq_header.color_config);
     const uint32_t ss_x       = scs_ptr->subsampling_x;
     const uint32_t ss_y       = scs_ptr->subsampling_y;
+#if CLN_ME_NUM_LISTS
+    uint32_t num_of_list_to_search = (pcs_ptr->slice_type == P_SLICE) ? 1 /*List 0 only*/ : 2 /*List 0 + 1*/;
 
+    for (uint8_t list_index = REF_LIST_0; list_index < num_of_list_to_search; ++list_index) {
+#else
     uint32_t num_of_list_to_search = (ppcs_ptr->slice_type == P_SLICE) ? (uint32_t)REF_LIST_0
                                                                        : (uint32_t)REF_LIST_1;
 
     for (uint8_t list_index = REF_LIST_0; list_index <= num_of_list_to_search; ++list_index) {
+#endif
         uint8_t ref_pic_index;
         uint8_t num_of_ref_pic_to_search = (ppcs_ptr->slice_type == P_SLICE)
             ? ppcs_ptr->ref_list0_count

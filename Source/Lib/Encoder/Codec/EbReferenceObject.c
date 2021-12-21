@@ -374,10 +374,17 @@ EbErrorType svt_pa_reference_object_creator(EbPtr *object_dbl_ptr, EbPtr object_
 void release_pa_reference_objects(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_ptr) {
     // PA Reference Pictures
     if (pcs_ptr->slice_type != I_SLICE) {
+#if CLN_ME_NUM_LISTS
+        uint32_t num_of_list_to_search = (pcs_ptr->slice_type == P_SLICE) ? 1 /*List 0 only*/ : 2 /*List 0 + 1*/;
+
+        // List Loop
+        for (uint32_t list_index = REF_LIST_0; list_index < num_of_list_to_search; ++list_index) {
+#else
         uint32_t num_of_list_to_search = (pcs_ptr->slice_type == P_SLICE) ? REF_LIST_0 : REF_LIST_1;
 
         // List Loop
         for (uint32_t list_index = REF_LIST_0; list_index <= num_of_list_to_search; ++list_index) {
+#endif
             // Release PA Reference Pictures
             uint8_t num_of_ref_pic_to_search = (pcs_ptr->slice_type == P_SLICE)
                 ? MIN(pcs_ptr->ref_list0_count, scs_ptr->reference_count)

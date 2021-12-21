@@ -1108,16 +1108,25 @@ EbErrorType first_pass_signal_derivation_mode_decision_config_kernel(PictureCont
 /************************************************
  * Set ME/HME Params for the first pass encoding
  ************************************************/
+#if CLN_REMOVE_HME_DECIMATION
+void *set_first_pass_me_hme_params_oq(MeContext *me_context_ptr,
+    SequenceControlSet *scs_ptr, EbInputResolution input_resolution) {
+#else
 void *set_first_pass_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *pcs_ptr,
     SequenceControlSet *scs_ptr, EbInputResolution input_resolution) {
     UNUSED(scs_ptr);
-
+#endif
 #if FTR_BIAS_STAT
     me_context_ptr->stat_factor = 100;
 #endif
     // HME/ME default settings
+#if CLN_ME_REDENDANT_VAR
+    me_context_ptr->num_hme_sa_w = 2;
+    me_context_ptr->num_hme_sa_h = 2;
+#else
     me_context_ptr->number_hme_search_region_in_width = 2;
     me_context_ptr->number_hme_search_region_in_height = 2;
+#endif
     me_context_ptr->reduce_hme_l0_sr_th_min = 0;
     me_context_ptr->reduce_hme_l0_sr_th_max = 0;
 
@@ -1131,24 +1140,51 @@ void *set_first_pass_me_hme_params_oq(MeContext *me_context_ptr, PictureParentCo
 #else
     if (pcs_ptr->scs_ptr->enc_mode_2ndpass <= ENC_M4) {
 #endif
+#if CLN_ME_HME_AREA_SIGS
+        me_context_ptr->me_sa.sa_min = (SearchArea) { 8, 8 };
+        me_context_ptr->me_sa.sa_max = (SearchArea) { 8, 8 };
+#else
         me_context_ptr->search_area_width = me_context_ptr->search_area_height = 8;
         me_context_ptr->max_me_search_width = me_context_ptr->max_me_search_height = 8;
+#endif
     }
     else {
+#if CLN_ME_HME_AREA_SIGS
+        me_context_ptr->me_sa.sa_min = (SearchArea) { 8, 3 };
+        me_context_ptr->me_sa.sa_max = (SearchArea) { 8, 5 };
+#else
         me_context_ptr->search_area_width = 8;
         me_context_ptr->search_area_height = 3;
         me_context_ptr->max_me_search_width = 8;
         me_context_ptr->max_me_search_height = 5;
+#endif
     }
-
+#if CLN_REMOVE_HME_DECIMATION
+    if (input_resolution < INPUT_SIZE_1080p_RANGE) {
+#else
     if (pcs_ptr->input_resolution < INPUT_SIZE_1080p_RANGE) {
+#endif
+#if CLN_ME_HME_AREA_SIGS
+        me_context_ptr->hme_l0_sa.sa_min = (SearchArea) { 4, 4 };
+        me_context_ptr->hme_l0_sa.sa_max = (SearchArea) { 96, 96 };
+#else
         me_context_ptr->hme_level0_total_search_area_width = me_context_ptr->hme_level0_total_search_area_height = 8;
         me_context_ptr->hme_level0_max_total_search_area_width = me_context_ptr->hme_level0_max_total_search_area_height = 192;
+#endif
     }
     else {
+#if CLN_ME_HME_AREA_SIGS
+        me_context_ptr->hme_l0_sa.sa_min = (SearchArea) { 8, 8 };
+        me_context_ptr->hme_l0_sa.sa_max = (SearchArea) { 96, 96 };
+#else
         me_context_ptr->hme_level0_total_search_area_width = me_context_ptr->hme_level0_total_search_area_height = 16;
         me_context_ptr->hme_level0_max_total_search_area_width = me_context_ptr->hme_level0_max_total_search_area_height = 192;
+#endif
     }
+#if CLN_ME_HME_AREA_SIGS
+    me_context_ptr->hme_l1_sa = (SearchArea) { 8, 8 };
+    me_context_ptr->hme_l2_sa = (SearchArea) { 8, 8 };
+#else
     me_context_ptr->hme_level0_total_search_area_width = me_context_ptr->hme_level0_total_search_area_height = me_context_ptr->hme_level0_total_search_area_width / 2;
     me_context_ptr->hme_level0_max_total_search_area_width = me_context_ptr->hme_level0_max_total_search_area_height = me_context_ptr->hme_level0_max_total_search_area_width / 2;
 
@@ -1185,17 +1221,23 @@ void *set_first_pass_me_hme_params_oq(MeContext *me_context_ptr, PictureParentCo
         me_context_ptr->hme_level2_search_area_in_width_array[1] =
         me_context_ptr->hme_level2_search_area_in_height_array[0] =
         me_context_ptr->hme_level2_search_area_in_height_array[1] = 16 / 2;
-
+#endif
+#if !CLN_REMOVE_HME_DECIMATION
     if (input_resolution <= INPUT_SIZE_720p_RANGE)
         me_context_ptr->hme_decimation = pcs_ptr->enc_mode <= ENC_MRS ? ONE_DECIMATION_HME : TWO_DECIMATION_HME;
     else
         me_context_ptr->hme_decimation = TWO_DECIMATION_HME;
-
+#endif
     // Scale up the MIN ME area if low frame rate
     uint8_t  low_frame_rate_flag = (scs_ptr->static_config.frame_rate >> 16) < 50 ? 1 : 0;
     if (low_frame_rate_flag) {
+#if CLN_ME_HME_AREA_SIGS
+        me_context_ptr->me_sa.sa_min.width = (me_context_ptr->me_sa.sa_min.width * 3) >> 1;
+        me_context_ptr->me_sa.sa_min.height = (me_context_ptr->me_sa.sa_min.height * 3) >> 1;
+#else
         me_context_ptr->search_area_width = (me_context_ptr->search_area_width * 3) / 2;
         me_context_ptr->search_area_height = (me_context_ptr->search_area_height * 3) / 2;
+#endif
     }
 #if FTR_HME_ME_EARLY_EXIT
     me_context_ptr->me_early_exit_th = 0;
@@ -1206,7 +1248,9 @@ void *set_first_pass_me_hme_params_oq(MeContext *me_context_ptr, PictureParentCo
 void *set_me_hme_params_oq(MeContext *me_context_ptr, PictureParentControlSet *pcs_ptr,
                            SequenceControlSet *scs_ptr, EbInputResolution input_resolution);
 #endif
+#if !CLN_REMOVE_ME_HME_CLI && !CLN_FORCE_DEFAULT_ME_HME
 void *set_me_hme_params_from_config(SequenceControlSet *scs_ptr, MeContext *me_context_ptr);
+#endif
 void  set_me_hme_ref_prune_ctrls(MeContext *context_ptr, uint8_t prune_level);
 void  set_me_sr_adjustment_ctrls(MeContext *context_ptr, uint8_t sr_adjustment_level);
 void  set_gm_controls(PictureParentControlSet *pcs_ptr, uint8_t gm_level);
@@ -1226,7 +1270,9 @@ EbErrorType first_pass_signal_derivation_me_kernel(SequenceControlSet *       sc
     context_ptr->me_context_ptr->clip_class = pcs_ptr->sc_class1;
 #endif
     // Set ME/HME search regions
-
+#if CLN_REMOVE_ME_HME_CLI || CLN_FORCE_DEFAULT_ME_HME
+    set_first_pass_me_hme_params_oq(context_ptr->me_context_ptr, scs_ptr, scs_ptr->input_resolution);
+#else
     if (scs_ptr->static_config.use_default_me_hme)
 #if FTR_2PASS_1PASS_UNIFICATION
         set_first_pass_me_hme_params_oq(
@@ -1237,6 +1283,7 @@ EbErrorType first_pass_signal_derivation_me_kernel(SequenceControlSet *       sc
 #endif
     else
         set_me_hme_params_from_config(scs_ptr, context_ptr->me_context_ptr);
+#endif
 
     // Set HME flags
     context_ptr->me_context_ptr->enable_hme_flag        = pcs_ptr->enable_hme_flag;
@@ -1869,7 +1916,11 @@ static void first_pass_setup_me_context(MotionEstimationContext_t *context_ptr,
                                         EbPictureBufferDesc *input_picture_ptr, int blk_row,
                                         int blk_col, uint32_t ss_x, uint32_t ss_y) {
     // setup the references
+#if CLN_ME_NUM_LISTS
+    context_ptr->me_context_ptr->num_of_list_to_search = 1;
+#else
     context_ptr->me_context_ptr->num_of_list_to_search       = 0;
+#endif
     context_ptr->me_context_ptr->num_of_ref_pic_to_search[0] = 0;
     context_ptr->me_context_ptr->num_of_ref_pic_to_search[1] = 0;
     context_ptr->me_context_ptr->temporal_layer_index        = 0;

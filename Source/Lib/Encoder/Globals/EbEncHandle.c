@@ -1760,7 +1760,9 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
         input_data.hbd_mode_decision = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.enable_hbd_mode_decision;
         input_data.film_grain_noise_level = enc_handle_ptr->scs_instance_array[0]->scs_ptr->static_config.film_grain_denoise_strength;
         input_data.bit_depth = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.encoder_bit_depth;
+#if !CLN_REMOVE_ME_HME_CLI
         input_data.ext_block_flag = (uint8_t)enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.ext_block_flag;
+#endif
         input_data.log2_tile_rows = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.tile_rows;
         input_data.log2_tile_cols = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.tile_columns;
         input_data.log2_sb_sz = (scs_init.sb_size == 128) ? 5 : 4;
@@ -7227,7 +7229,9 @@ void set_max_mini_gop_size(SequenceControlSet *scs_ptr, MiniGopSizeCtrls *mgs_ct
 void copy_api_from_app(
     SequenceControlSet       *scs_ptr,
     EbSvtAv1EncConfiguration   *config_struct){
+#if !CLN_REMOVE_ME_HME_CLI
     uint32_t                  hme_region_index = 0;
+#endif
     scs_ptr->max_input_luma_width = config_struct->source_width;
     scs_ptr->max_input_luma_height = config_struct->source_height;
     scs_ptr->frame_rate = ((EbSvtAv1EncConfiguration*)config_struct)->frame_rate;
@@ -7375,6 +7379,7 @@ void copy_api_from_app(
         scs_ptr->static_config.pic_based_rate_est = 0;
     else
         scs_ptr->static_config.pic_based_rate_est = ((EbSvtAv1EncConfiguration*)config_struct)->pic_based_rate_est;
+#if !CLN_REMOVE_ME_HME_CLI
     // ME Tools
     scs_ptr->static_config.use_default_me_hme = ((EbSvtAv1EncConfiguration*)config_struct)->use_default_me_hme;
     scs_ptr->static_config.enable_hme_flag = ((EbSvtAv1EncConfiguration*)config_struct)->enable_hme_flag;
@@ -7399,7 +7404,7 @@ void copy_api_from_app(
         scs_ptr->static_config.hme_level1_search_area_in_height_array[hme_region_index] = ((EbSvtAv1EncConfiguration*)config_struct)->hme_level1_search_area_in_height_array[hme_region_index];
         scs_ptr->static_config.hme_level2_search_area_in_height_array[hme_region_index] = ((EbSvtAv1EncConfiguration*)config_struct)->hme_level2_search_area_in_height_array[hme_region_index];
     }
-
+#endif
     //Film Grain
     scs_ptr->static_config.film_grain_denoise_strength = ((EbSvtAv1EncConfiguration*)config_struct)->film_grain_denoise_strength;
 
@@ -7662,7 +7667,7 @@ void copy_api_from_app(
 * Verify Settings
 ******************************************/
 #define PowerOfTwoCheck(x) (((x) != 0) && (((x) & (~(x) + 1)) == (x)))
-
+#if !CLN_REMOVE_ME_HME_CLI
 static int verify_hme_dimension(unsigned int index, unsigned int HmeLevel0SearchAreaInWidth, uint32_t number_hme_search_region_in_width_array[EB_HME_SEARCH_AREA_ROW_MAX_COUNT], unsigned int number_hme_search_region_in_width)
 {
     int           return_error = 0;
@@ -7695,7 +7700,7 @@ static int verify_hme_dimension_l1_l2(unsigned int index, uint32_t number_hme_se
 
     return return_error;
 }
-
+#endif
 static EbErrorType verify_settings(
     SequenceControlSet       *scs_ptr)
 {
@@ -7709,10 +7714,12 @@ static EbErrorType verify_settings(
     if (config->enc_mode == MAX_ENC_PRESET) {
         SVT_WARN("EncoderMode (preset): %d was developed for the sole purpose of debugging and or running fast convex-hull encoding. This configuration should not be used for any benchmarking or quality analysis\n", MAX_ENC_PRESET);
     }
+#if !CLN_REMOVE_ME_HME_CLI
     if (config->ext_block_flag > 1) {
         SVT_LOG("Error instance %u: ExtBlockFlag must be [0-1]\n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
+#endif
     if (scs_ptr->max_input_luma_width < 64) {
         SVT_LOG("Error instance %u: Source Width must be at least 64\n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
@@ -7807,7 +7814,7 @@ if (scs_ptr->max_input_luma_width > 16384) {
         SVT_LOG("Error Instance %u: Invalid LoopFilterDisable. LoopFilterDisable must be [0 - 1]\n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
-
+#if !CLN_REMOVE_ME_HME_CLI
     if (config->use_default_me_hme > 1) {
         SVT_LOG("Error Instance %u: invalid use_default_me_hme. use_default_me_hme must be [0 - 1]\n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
@@ -7841,7 +7848,7 @@ if (scs_ptr->max_input_luma_width > 16384) {
         SVT_LOG("Error Instance %u: Invalid search_area_height. search_area_height must be [1 - 480]\n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
-
+#endif
 #if FTR_2PASS_CBR
 #if CLN_ENC_CONFIG_SIG
     if (config->rate_control_mode > 2 && (config->pass == ENC_FIRST_PASS || config->rc_twopass_stats_in.buf)) {
@@ -7857,7 +7864,7 @@ if (scs_ptr->max_input_luma_width > 16384) {
         return_error = EB_ErrorBadParameter;
     }
 #endif
-
+#if !CLN_REMOVE_ME_HME_CLI
     if (config->enable_hme_flag) {
         if ((config->number_hme_search_region_in_width > (uint32_t)EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT) || (config->number_hme_search_region_in_width == 0)) {
             SVT_LOG("Error Instance %u: Invalid number_hme_search_region_in_width. number_hme_search_region_in_width must be [1 - %d]\n", channel_number + 1, EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT);
@@ -7890,7 +7897,7 @@ if (scs_ptr->max_input_luma_width > 16384) {
         if (verify_hme_dimension_l1_l2(channel_number + 1, config->hme_level2_search_area_in_height_array, config->number_hme_search_region_in_width))
             return_error = EB_ErrorBadParameter;
     }
-
+#endif
     if (config->profile > 2) {
         SVT_LOG("Error Instance %u: The maximum allowed profile value is 2 \n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
@@ -8435,6 +8442,7 @@ EbErrorType svt_svt_enc_init_parameter(
     config_ptr->filter_intra_level = DEFAULT;
     config_ptr->enable_intra_edge_filter = DEFAULT;
     config_ptr->pic_based_rate_est = DEFAULT;
+#if !CLN_REMOVE_ME_HME_CLI
     config_ptr->ext_block_flag = EB_FALSE;
     config_ptr->use_default_me_hme = EB_TRUE;
     config_ptr->enable_hme_flag = EB_TRUE;
@@ -8464,7 +8472,7 @@ EbErrorType svt_svt_enc_init_parameter(
     config_ptr->enable_manual_pred_struct = EB_FALSE;
     config_ptr->encoder_color_format = EB_YUV420;
     config_ptr->mrp_level = DEFAULT;
-
+#endif
     // Two pass data rate control options
     config_ptr->vbr_bias_pct = 50;
     config_ptr->vbr_min_section_pct = 0;

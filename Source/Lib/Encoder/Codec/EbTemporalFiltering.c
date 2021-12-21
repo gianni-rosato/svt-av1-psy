@@ -5890,8 +5890,11 @@ static EbErrorType produce_temporally_filtered_pic(
                         blk_col,
                         ss_x,
                         ss_y);
-
+#if CLN_ME_NUM_LISTS
+                    context_ptr->num_of_list_to_search = 1;
+#else
                     context_ptr->num_of_list_to_search       = 0;
+#endif
                     context_ptr->num_of_ref_pic_to_search[0] = 1;
                     context_ptr->num_of_ref_pic_to_search[1] = 0;
                     context_ptr->temporal_layer_index =

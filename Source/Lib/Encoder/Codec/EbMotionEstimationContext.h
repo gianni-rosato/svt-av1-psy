@@ -328,7 +328,14 @@ typedef struct PreHmeCtrls {
     uint8_t  use_tf_motion; // use TF motion to direct prehme searches
 #endif
 } PreHmeCtrls;
-
+#if CLN_ME_HME_AREA_SIGS
+typedef struct MeHmeSearchAreaCtrls {
+    SearchAreaMinMax hme_l0_sa[SEARCH_REGION_COUNT];
+    SearchArea hme_l1_sa[SEARCH_REGION_COUNT];
+    SearchArea hme_l2_sa[SEARCH_REGION_COUNT];
+    SearchAreaMinMax me_sa[SEARCH_REGION_COUNT];
+}MeHmeSearchAreaCtrls;
+#endif
 typedef struct HmeResults {
     uint8_t  list_i; // list index of this ref
     uint8_t  ref_i; // ref list index of this ref
@@ -402,7 +409,24 @@ typedef struct MeContext {
     MeHmeRefPruneCtrls me_hme_prune_ctrls;
     MeSrCtrls          me_sr_adjustment_ctrls;
     uint8_t            max_hme_sr_area_multipler;
+#if CLN_ME_HME_AREA_SIGS
+    // ME
+    uint8_t  best_list_idx;
+    uint8_t  best_ref_idx;
+    SearchAreaMinMax me_sa;
 
+    // HME
+#if CLN_ME_REDENDANT_VAR
+    uint16_t   num_hme_sa_w;
+    uint16_t   num_hme_sa_h;
+#else
+    uint16_t   number_hme_search_region_in_width;
+    uint16_t   number_hme_search_region_in_height;
+#endif
+    SearchAreaMinMax hme_l0_sa; // Total HME Level-0 search area
+    SearchArea hme_l1_sa; // HME Level-1 search area per HME-L0 search centre
+    SearchArea hme_l2_sa; // HME Level-2 search area per HME-L1 search centre
+#else
     // ME
     uint16_t search_area_width;
     uint16_t search_area_height;
@@ -425,7 +449,10 @@ typedef struct MeContext {
     uint16_t   hme_level1_search_area_in_height_array[EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
     uint16_t   hme_level2_search_area_in_width_array[EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT];
     uint16_t   hme_level2_search_area_in_height_array[EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
+#endif
+#if !CLN_REMOVE_HME_DECIMATION
     uint8_t    hme_decimation;
+#endif
     HmeResults hme_results[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
     uint32_t   reduce_me_sr_divisor[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
 
@@ -525,6 +552,10 @@ typedef struct MeContext {
 #if FIX_ISSUE_121
     uint8_t skip_frame;
     uint8_t bypass_blk_step;
+#endif
+#if CLN_ME_REDENDANT_VAR
+    uint32_t block_width;
+    uint32_t block_height;
 #endif
 } MeContext;
 

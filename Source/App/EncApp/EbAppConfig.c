@@ -621,12 +621,14 @@ static void set_enable_intra_edge_filter_flag(const char *value, EbConfig *cfg) 
 static void set_pic_based_rate_est(const char *value, EbConfig *cfg) {
     cfg->config.pic_based_rate_est = strtol(value, NULL, 0);
 };
+#if !CLN_REMOVE_ME_HME_CLI
 static void set_enable_hme_flag(const char *value, EbConfig *cfg) {
     cfg->config.enable_hme_flag = (EbBool)strtoul(value, NULL, 0);
 };
 static void set_enable_hme_level_0_flag(const char *value, EbConfig *cfg) {
     cfg->config.enable_hme_level0_flag = (EbBool)strtoul(value, NULL, 0);
 };
+#endif
 static void set_tile_row(const char *value, EbConfig *cfg) {
     cfg->config.tile_rows = strtoul(value, NULL, 0);
 };
@@ -694,6 +696,7 @@ static void set_recode_loop(const char *value, EbConfig *cfg) {
 static void set_adaptive_quantization(const char *value, EbConfig *cfg) {
     cfg->config.enable_adaptive_quantization = (EbBool)strtol(value, NULL, 0);
 };
+#if !CLN_REMOVE_ME_HME_CLI
 static void set_enable_hme_level_1_flag(const char *value, EbConfig *cfg) {
     cfg->config.enable_hme_level1_flag = (EbBool)strtoul(value, NULL, 0);
 };
@@ -712,6 +715,7 @@ static void set_cfg_use_default_me_hme(const char *value, EbConfig *cfg) {
 static void set_enable_ext_block_flag(const char *value, EbConfig *cfg) {
     cfg->config.ext_block_flag = (EbBool)strtoul(value, NULL, 0);
 };
+#endif
 static void set_screen_content_mode(const char *value, EbConfig *cfg) {
     cfg->config.screen_content_mode = strtoul(value, NULL, 0);
 };
@@ -1284,6 +1288,7 @@ ConfigEntry config_entry_specific[] = {
      COMPOUND_LEVEL_TOKEN,
      "Enable compound mode(0: OFF, 1:ON[AVG/DIST/DIFF], 2: ON[AVG/DIST/DIFF/WEDGE], -1: default)",
      set_compound_level_flag},
+#if !CLN_REMOVE_ME_HME_CLI
     // ME Tools
     {SINGLE_INPUT,
      USE_DEFAULT_ME_HME_TOKEN,
@@ -1319,6 +1324,7 @@ ConfigEntry config_entry_specific[] = {
      SEARCH_AREA_HEIGHT_TOKEN,
      "Set search area in height[1-256]",
      set_cfg_search_area_height},
+#endif
     // MD Parameters
     {SINGLE_INPUT,
      SCREEN_CONTENT_TOKEN,
@@ -1552,7 +1558,7 @@ ConfigEntry config_entry[] = {
     {SINGLE_INPUT, BIPRED_3x3_TOKEN, "Bipred3x3", set_bipred3x3inject_flag},
     // COMPOUND MODE
     {SINGLE_INPUT, COMPOUND_LEVEL_TOKEN, "CompoundLevel", set_compound_level_flag},
-
+#if !CLN_REMOVE_ME_HME_CLI
     // ME Tools
     {SINGLE_INPUT, USE_DEFAULT_ME_HME_TOKEN, "UseDefaultMeHme", set_cfg_use_default_me_hme},
     {SINGLE_INPUT, HME_ENABLE_TOKEN, "HME", set_enable_hme_flag},
@@ -1563,7 +1569,7 @@ ConfigEntry config_entry[] = {
     // ME Parameters
     {SINGLE_INPUT, SEARCH_AREA_WIDTH_TOKEN, "SearchAreaWidth", set_cfg_search_area_width},
     {SINGLE_INPUT, SEARCH_AREA_HEIGHT_TOKEN, "SearchAreaHeight", set_cfg_search_area_height},
-
+#endif
     // MD Parameters
     {SINGLE_INPUT, SCREEN_CONTENT_TOKEN, "ScreenContentMode", set_screen_content_mode},
     {SINGLE_INPUT, INTRABC_MODE_TOKEN, "IntraBCMode", set_intrabc_mode},
