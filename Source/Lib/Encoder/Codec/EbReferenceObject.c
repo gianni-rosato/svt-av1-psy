@@ -80,6 +80,7 @@ void initialize_samples_neighboring_reference_picture(
     EbReferenceObject *          reference_object,
     EbPictureBufferDescInitData *picture_buffer_desc_init_data_ptr, EbBitDepthEnum bit_depth) {
 
+#if !FTR_MEM_OPT
     if (bit_depth == EB_10BIT) {
         initialize_samples_neighboring_reference_picture16_bit(
             reference_object->reference_picture16bit->buffer_y,
@@ -105,7 +106,9 @@ void initialize_samples_neighboring_reference_picture(
             picture_buffer_desc_init_data_ptr->left_padding >> 1,
             picture_buffer_desc_init_data_ptr->top_padding >> 1);
     } else
-
+#else
+    UNUSED(bit_depth);
+#endif
     {
         initialize_samples_neighboring_reference_picture_8bit(
             reference_object->reference_picture->buffer_y,
@@ -135,8 +138,9 @@ void initialize_samples_neighboring_reference_picture(
 
 static void svt_reference_object_dctor(EbPtr p) {
     EbReferenceObject *obj = (EbReferenceObject *)p;
-
+#if !FTR_MEM_OPT
     EB_DELETE(obj->reference_picture16bit);
+#endif
 
     EB_DELETE(obj->reference_picture);
 #if FTR_NEW_WN_LVLS
@@ -155,9 +159,11 @@ static void svt_reference_object_dctor(EbPtr p) {
         if (obj->downscaled_reference_picture[denom_idx] != NULL) {
             EB_DELETE(obj->downscaled_reference_picture[denom_idx]);
         }
+#if !FTR_MEM_OPT
         if (obj->downscaled_reference_picture16bit[denom_idx] != NULL) {
             EB_DELETE(obj->downscaled_reference_picture16bit[denom_idx]);
         }
+#endif
         EB_DESTROY_MUTEX(obj->resize_mutex[denom_idx]);
     }
     EB_DELETE(obj->quarter_reference_picture);
@@ -270,7 +276,9 @@ EbErrorType svt_reference_object_ctor(EbReferenceObject *reference_object,
     // set all supplemental downscaled reference picture pointers to NULL
     for (uint8_t down_idx = 0; down_idx < NUM_SCALES; down_idx++) {
         reference_object->downscaled_reference_picture[down_idx]      = NULL;
+#if !FTR_MEM_OPT
         reference_object->downscaled_reference_picture16bit[down_idx] = NULL;
+#endif
         reference_object->downscaled_picture_number[down_idx]         = (uint64_t)~0;
         EB_CREATE_MUTEX(reference_object->resize_mutex[down_idx]);
     }

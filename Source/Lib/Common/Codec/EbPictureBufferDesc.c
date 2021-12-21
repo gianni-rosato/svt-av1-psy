@@ -77,7 +77,7 @@ EbErrorType svt_picture_buffer_desc_ctor_zeroout(EbPictureBufferDesc *pictureBuf
             picture_buffer_desc_init_data_ptr->bot_padding);
     pictureBufferDescPtr->chroma_size = pictureBufferDescPtr->luma_size >>
         (3 - picture_buffer_desc_init_data_ptr->color_format);
-    pictureBufferDescPtr->packed_flag = EB_FALSE;
+    pictureBufferDescPtr->packed_flag = bytes_per_pixel > 1 ? EB_TRUE : EB_FALSE;
 
     if (picture_buffer_desc_init_data_ptr->split_mode == EB_TRUE) {
         pictureBufferDescPtr->stride_bit_inc_y = pictureBufferDescPtr->stride_y;
@@ -194,7 +194,11 @@ EbErrorType svt_picture_buffer_desc_ctor_noy8b(EbPictureBufferDesc *pictureBuffe
             picture_buffer_desc_init_data_ptr->bot_padding);
     pictureBufferDescPtr->chroma_size = pictureBufferDescPtr->luma_size >>
         (3 - picture_buffer_desc_init_data_ptr->color_format);
+#if SS_2B_COMPRESS
     pictureBufferDescPtr->packed_flag = EB_FALSE;
+#else
+    pictureBufferDescPtr->packed_flag = bytes_per_pixel > 1 ? EB_TRUE : EB_FALSE;
+#endif // SS_2B_COMPRESS
 
     if (picture_buffer_desc_init_data_ptr->split_mode == EB_TRUE) {
         pictureBufferDescPtr->stride_bit_inc_y = pictureBufferDescPtr->stride_y;
@@ -301,7 +305,7 @@ EbErrorType svt_picture_buffer_desc_ctor(EbPictureBufferDesc *pictureBufferDescP
          picture_buffer_desc_init_data_ptr->bot_padding);
     pictureBufferDescPtr->chroma_size = pictureBufferDescPtr->luma_size >>
         (3 - picture_buffer_desc_init_data_ptr->color_format);
-    pictureBufferDescPtr->packed_flag = EB_FALSE;
+    pictureBufferDescPtr->packed_flag = bytes_per_pixel > 1 ? EB_TRUE : EB_FALSE;
 
     if (picture_buffer_desc_init_data_ptr->split_mode == EB_TRUE) {
         pictureBufferDescPtr->stride_bit_inc_y  = pictureBufferDescPtr->stride_y;

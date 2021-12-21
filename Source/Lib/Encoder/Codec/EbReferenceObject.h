@@ -21,7 +21,7 @@
 typedef struct EbReferenceObject {
     EbDctor                     dctor;
     EbPictureBufferDesc *       reference_picture;
-#if 1//!FTR_MEM_OPT
+#if !FTR_MEM_OPT
     EbPictureBufferDesc *       reference_picture16bit;
 #endif
     EbPictureBufferDesc *       quarter_reference_picture;
@@ -31,7 +31,9 @@ typedef struct EbReferenceObject {
     EbPictureBufferDesc *       quarter_input_picture;
     EbPictureBufferDesc *       sixteenth_input_picture;
     EbPictureBufferDesc *       downscaled_reference_picture[NUM_SCALES];
+#if !FTR_MEM_OPT
     EbPictureBufferDesc *       downscaled_reference_picture16bit[NUM_SCALES];
+#endif
     uint64_t                    downscaled_picture_number[NUM_SCALES]; // save the picture_number for each denom
     EbHandle                    resize_mutex[NUM_SCALES];
     uint64_t                    ref_poc;

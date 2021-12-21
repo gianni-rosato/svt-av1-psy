@@ -165,31 +165,38 @@ void av1_make_masked_scaled_inter_predictor(uint8_t *src_ptr, uint32_t src_strid
 
     if (bitdepth > EB_8BIT || is_16bit){
 #if FTR_MEM_OPT
-        uint16_t * src_ptr_10b;
+        int32_t stride16;
+        DECLARE_ALIGNED(16, uint16_t, src16[PACKED_BUFFER_SIZE * 2]);
+        uint16_t* src_ptr_10b = src16;
+        // for super-res, the reference frame block might be 2x than predictor in maximum
+        // should pack enough buffer for scaled reference
+        if (src_ptr_2b) {
+            // pack the reference into temp 16bit buffer
+            uint8_t offset_w = INTERPOLATION_OFFSET * 2; // super-res maximum 2x in width/offset
+            uint8_t offset_h = INTERPOLATION_OFFSET;
+            stride16 = MAX_SB_SIZE * 2 + (offset_w << 1);
 
-        // pack the reference into temp 16bit buffer
-        int32_t stride ;
-
-        uint8_t offset = INTERPOLATION_OFFSET;
-        DECLARE_ALIGNED(16, uint16_t, src16[PACKED_BUFFER_SIZE]);
-        pack_block(
-            src_ptr - offset - (offset*src_stride),
-            src_stride,
-            src_ptr_2b - offset - (offset*src_stride),
-            src_stride,
-            (uint16_t*)src16,
-            MAX_SB_SIZE,
-            bwidth + (offset << 1),
-            bheight + (offset << 1));
-        src_ptr_10b = (uint16_t*)src16 + offset + (offset * MAX_SB_SIZE);
-        stride = MAX_SB_SIZE;
-
+            pack_block(
+                src_ptr - offset_w - (offset_h * src_stride),
+                src_stride,
+                src_ptr_2b - offset_w - (offset_h * src_stride),
+                src_stride,
+                (uint16_t*)src16,
+                stride16,
+                bwidth * 2 + (offset_w << 1),
+                bheight + (offset_h << 1));
+            src_ptr_10b = (uint16_t*)src16 + offset_w + (offset_h * stride16);
+        }
+        else {
+            src_ptr_10b = (uint16_t*)src_ptr;
+            stride16 = src_stride;
+        }
 #else
         uint16_t *src16 = (uint16_t *) src_ptr;
 #endif
 #if FTR_MEM_OPT
         svt_highbd_inter_predictor(src_ptr_10b,
-                                   stride,
+                                   stride16,
 #else
         svt_highbd_inter_predictor(src16,
                                    src_stride,
@@ -4720,32 +4727,33 @@ void enc_make_inter_predictor(SequenceControlSet * scs_ptr,
     if (is16bit) {
 
 #if FTR_MEM_OPT
-
-        DECLARE_ALIGNED(16, uint16_t, src16_temp[PACKED_BUFFER_SIZE]);
+        // for super-res, the reference frame block might be 2x than predictor in maximum
+        // should pack enough buffer for scaled reference
+        DECLARE_ALIGNED(16, uint16_t, src16_temp[PACKED_BUFFER_SIZE*2]);
         uint16_t *src16_ptr = (uint16_t *)src16_temp;
-        int32_t stride ;
+        int32_t stride16;
         if (src_ptr_2b){
-
             // pack the reference into temp 16bit buffer
-            uint8_t offset = INTERPOLATION_OFFSET;
+            uint8_t offset_w = INTERPOLATION_OFFSET*2; // super-res maximum 2x in width/offset
+            uint8_t offset_h = INTERPOLATION_OFFSET;
             uint16_t *src16;
             src16 = (uint16_t *)src16_temp;
+            stride16 = MAX_SB_SIZE * 2 + (offset_w << 1);
 
             pack_block(
-                src_mod - offset - (offset*src_stride),
+                src_mod - offset_w - (offset_h*src_stride),
                 src_stride,
-                src_mod_2b - offset - (offset*src_stride),
+                src_mod_2b - offset_w - (offset_h*src_stride),
                 src_stride,
                 (uint16_t*)src16,
-                MAX_SB_SIZE,
-                blk_width + (offset << 1),
-                blk_height + (offset << 1));
-            stride = MAX_SB_SIZE;
-            src16_ptr = (uint16_t*)src16 + offset + (offset *MAX_SB_SIZE);
+                stride16,
+                blk_width*2 + (offset_w << 1),
+                blk_height + (offset_h << 1));
+            src16_ptr = (uint16_t *)src16 + offset_w + (offset_h * stride16);
         }
         else {
             src16_ptr = (uint16_t *)src_mod;
-            stride  =  src_stride;
+            stride16  =  src_stride;
         }
 #else
         uint16_t *src16 = (uint16_t *) src_mod;
@@ -4753,7 +4761,7 @@ void enc_make_inter_predictor(SequenceControlSet * scs_ptr,
 #endif
 #if FTR_MEM_OPT
         svt_highbd_inter_predictor(src16_ptr,//(src_ptr_2b)? (uint16_t*)src16+ 8 + 8*128 : src16,
-                                   stride  ,
+                                   stride16,
 #else
         svt_highbd_inter_predictor(src16,
                                    src_stride,
@@ -5966,7 +5974,6 @@ static uint8_t inter_chroma_4xn_pred(PictureControlSet *pcs, MacroBlockD* xd, Mv
                 (pcs->parent_pcs_ptr->slice_type == P_SLICE) ? (uint32_t)REF_LIST_0
                 : (uint32_t)REF_LIST_1;
 
-            EbReferenceObject* reference_object;
             for (uint8_t list_idx = REF_LIST_0; list_idx <= num_of_list_to_search; ++list_idx) {
                 uint8_t ref_idx;
                 uint8_t num_of_ref_pic_to_search = (pcs->parent_pcs_ptr->slice_type == P_SLICE)
@@ -5975,14 +5982,7 @@ static uint8_t inter_chroma_4xn_pred(PictureControlSet *pcs, MacroBlockD* xd, Mv
                     ? pcs->parent_pcs_ptr->ref_list0_count
                     : pcs->parent_pcs_ptr->ref_list1_count;
                 for (ref_idx = 0; ref_idx < num_of_ref_pic_to_search; ++ref_idx) {
-
-                    reference_object = (EbReferenceObject*)pcs->ref_pic_ptr_array[list_idx][ref_idx]
-                        ->object_ptr;
-
-                    EbPictureBufferDesc* ref_pic_ptr =
-                        (bit_depth == EB_8BIT && is16bit) ?
-                        reference_object->reference_picture16bit :
-                        reference_object->reference_picture;
+                    EbPictureBufferDesc *ref_pic_ptr = get_ref_pic_buffer(pcs, (bit_depth == EB_8BIT && is16bit), list_idx, ref_idx);
 
                     svt_av1_setup_scale_factors_for_frame(&(scale_factors[list_idx][ref_idx]),
                         ref_pic_ptr->width,
