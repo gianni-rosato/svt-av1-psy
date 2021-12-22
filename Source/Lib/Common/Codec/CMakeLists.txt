@@ -10,16 +10,22 @@
 #
 # Common/Codec Directory CMakeLists.txt
 
-add_custom_target(EbVersionHeaderGen
-    ${CMAKE_COMMAND}
-        -D INPUT_FILE=${CMAKE_CURRENT_SOURCE_DIR}/EbVersion.h.in
-        -D OUTPUT_FILE=EbVersion.h
-        -D GIT_ROOT_DIR=${CMAKE_SOURCE_DIR}
-        -D PACKAGE_VERSION_STRING=${PROJECT_VERSION}
-        -P ${CMAKE_CURRENT_SOURCE_DIR}/ConfigureGitVersion.cmake
-    BYPRODUCTS EbVersion.h
-    COMMENT "Generating version header"
-    VERBATIM)
+if(EXCLUDE_HASH)
+    set(PACKAGE_VERSION_STRING ${PROJECT_VERSION})
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/EbVersion.h.in EbVersion.h @ONLY)
+    add_custom_target(EbVersionHeaderGen)
+else()
+    add_custom_target(EbVersionHeaderGen
+        ${CMAKE_COMMAND}
+            -D INPUT_FILE=${CMAKE_CURRENT_SOURCE_DIR}/EbVersion.h.in
+            -D OUTPUT_FILE=EbVersion.h
+            -D GIT_ROOT_DIR=${CMAKE_SOURCE_DIR}
+            -D PACKAGE_VERSION_STRING=${PROJECT_VERSION}
+            -P ${CMAKE_CURRENT_SOURCE_DIR}/ConfigureGitVersion.cmake
+        BYPRODUCTS EbVersion.h
+        COMMENT "Generating version header"
+        VERBATIM)
+endif()
 
 if(NOT COMPILE_C_ONLY AND HAVE_X86_PLATFORM)
 # Include Encoder Subdirectories

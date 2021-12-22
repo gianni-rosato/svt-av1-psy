@@ -52,6 +52,21 @@
 #define SET_FUNCTIONS_X86(ptr, c, mmx, sse, sse2, sse3, ssse3, sse4_1, sse4_2, avx, avx2, avx512)
 #endif /* ARCH_X86_64 */
 
+#if EXCLUDE_HASH
+#define SET_FUNCTIONS(ptr, c, mmx, sse, sse2, sse3, ssse3, sse4_1, sse4_2, avx, avx2, avx512)     \
+    do {                                                                                          \
+        if (check_pointer_was_set && ptr != 0) {                                                                           \
+            printf("Error: %s:%i: Pointer \"%s\" is set before!\n", __FILE__, 0, #ptr);    \
+            assert(0);                                                                            \
+        }                                                                                         \
+        if ((uintptr_t)NULL == (uintptr_t)c) {                                                    \
+            printf("Error: %s:%i: Pointer \"%s\" on C is NULL!\n", __FILE__, 0, #ptr);     \
+            assert(0);                                                                            \
+        }                                                                                         \
+        ptr = c;                                                                                  \
+        SET_FUNCTIONS_X86(ptr, c, mmx, sse, sse2, sse3, ssse3, sse4_1, sse4_2, avx, avx2, avx512) \
+    } while (0)
+#else
 #define SET_FUNCTIONS(ptr, c, mmx, sse, sse2, sse3, ssse3, sse4_1, sse4_2, avx, avx2, avx512)     \
     do {                                                                                          \
         if (check_pointer_was_set && ptr != 0) {                                                                           \
@@ -65,6 +80,7 @@
         ptr = c;                                                                                  \
         SET_FUNCTIONS_X86(ptr, c, mmx, sse, sse2, sse3, ssse3, sse4_1, sse4_2, avx, avx2, avx512) \
     } while (0)
+#endif
 
 /* Macros SET_* use local variable CPU_FLAGS flags and EbBool check_pointer_was_set */
 #define SET_ONLY_C(ptr, c)                                  SET_FUNCTIONS(ptr, c, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)

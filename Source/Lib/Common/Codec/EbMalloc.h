@@ -29,7 +29,11 @@ void svt_decrease_component_count(void);
 void svt_add_mem_entry(void* ptr, EbPtrType type, size_t count, const char* file, uint32_t line);
 void svt_remove_mem_entry(void* ptr, EbPtrType type);
 
+#if EXCLUDE_HASH
+#define EB_ADD_MEM_ENTRY(p, type, count) svt_add_mem_entry(p, type, count, __FILE__, 0)
+#else
 #define EB_ADD_MEM_ENTRY(p, type, count) svt_add_mem_entry(p, type, count, __FILE__, __LINE__)
+#endif
 
 #define EB_REMOVE_MEM_ENTRY(p, type) svt_remove_mem_entry(p, type);
 
@@ -52,6 +56,15 @@ void svt_remove_mem_entry(void* ptr, EbPtrType type);
 
 #endif //DEBUG_MEMORY_USAGE
 
+#if EXCLUDE_HASH
+#define EB_NO_THROW_ADD_MEM(p, size, type)            \
+    do {                                              \
+        if (!p)                                       \
+            svt_print_alloc_fail(__FILE__, 0); \
+        else                                          \
+            EB_ADD_MEM_ENTRY(p, type, size);          \
+    } while (0)
+#else
 #define EB_NO_THROW_ADD_MEM(p, size, type)            \
     do {                                              \
         if (!p)                                       \
@@ -59,6 +72,7 @@ void svt_remove_mem_entry(void* ptr, EbPtrType type);
         else                                          \
             EB_ADD_MEM_ENTRY(p, type, size);          \
     } while (0)
+#endif
 
 #define EB_CHECK_MEM(p)                           \
     do {                                          \
