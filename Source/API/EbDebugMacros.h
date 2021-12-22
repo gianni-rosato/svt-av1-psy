@@ -919,7 +919,7 @@ typedef enum MultiPassModes {
 #endif
 
 //FOR DEBUGGING - Do not remove
-#define LOG_ENC_DONE            1 // log encoder job one
+#define LOG_ENC_DONE            0 // log encoder job one
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
 #define DEBUG_TPL               0 // Prints to debug TPL
 #define DETAILED_FRAME_OUTPUT   0 // Prints detailed frame output from the library for debugging

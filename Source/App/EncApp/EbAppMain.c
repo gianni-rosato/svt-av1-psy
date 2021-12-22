@@ -639,7 +639,7 @@ int32_t main(int32_t argc, char* argv[]) {
     enc_app_dctor(&enc_app);
 
 #if LOG_ENC_DONE
-    printf("all_done_encoding  %i frames \n", tot_frames_done);
+    fprintf(stderr, "all_done_encoding  %i frames \n", tot_frames_done);
 #endif
     return return_error != EB_ErrorNone;
 }
