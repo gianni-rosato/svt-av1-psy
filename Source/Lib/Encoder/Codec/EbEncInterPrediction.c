@@ -178,6 +178,9 @@ void av1_make_masked_scaled_inter_predictor(uint8_t *src_ptr, uint32_t src_strid
                 width_scale = 2; // super-res scale maximum 2x in width for reference
             // optimize stride from MAX_SB_SIZE to bwidth to minimum the block buffer size
             src_stride16 = bwidth * width_scale + (offset << 1);
+            // 16-byte align of src16
+            if (src_stride16 % 8)
+                src_stride16 = ALIGN_POWER_OF_TWO(src_stride16, 3);
 
             pack_block(
                 src_ptr - offset - (offset * src_stride),
@@ -4743,6 +4746,9 @@ void enc_make_inter_predictor(SequenceControlSet * scs_ptr,
                 width_scale = 2; // super-res scale maximum 2x in width for reference
             // optimize stride from MAX_SB_SIZE to blk_width to minimum the block buffer size
             src_stride16 = blk_width * width_scale + (offset << 1);
+            // 16-byte align of src16
+            if (src_stride16 % 8)
+                src_stride16 = ALIGN_POWER_OF_TWO(src_stride16, 3);
 
             pack_block(
                 src_mod - offset - (offset * src_stride),
