@@ -1,13 +1,14 @@
 /*
-* Copyright(c) 2019 Netflix, Inc.
-*
-* This source code is subject to the terms of the BSD 2 Clause License and
-* the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
-* was not distributed with this source code in the LICENSE file, you can
-* obtain it at https://www.aomedia.org/license/software-license. If the Alliance for Open
-* Media Patent License 1.0 was not distributed with this source code in the
-* PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
-*/
+ * Copyright(c) 2019 Netflix, Inc.
+ *
+ * This source code is subject to the terms of the BSD 2 Clause License and
+ * the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
+ * was not distributed with this source code in the LICENSE file, you can
+ * obtain it at https://www.aomedia.org/license/software-license. If the
+ * Alliance for Open Media Patent License 1.0 was not distributed with this
+ * source code in the PATENTS file, you can obtain it at
+ * https://www.aomedia.org/license/patent-license.
+ */
 
 /******************************************************************************
  * @file EncodeTxbAsmTest.cc
@@ -42,7 +43,6 @@
 #include "random.h"
 #include "EbTime.h"
 #include "EncodeTxbRef_C.h"
-
 
 using svt_av1_test_tool::SVTRandom;  // to generate the random
 namespace {
@@ -312,12 +312,10 @@ INSTANTIATE_TEST_CASE_P(
     ::testing::Combine(::testing::Values(&svt_av1_txb_init_levels_avx2),
                        ::testing::Range(0, static_cast<int>(TX_SIZES_ALL), 1)));
 
-#if SSE_CODE_OPT
 INSTANTIATE_TEST_CASE_P(
     Entropy_SSE41, EncodeTxbInitLevelTest,
     ::testing::Combine(::testing::Values(&svt_av1_txb_init_levels_sse4_1),
                        ::testing::Range(0, static_cast<int>(TX_SIZES_ALL), 1)));
-#endif
 
 #if EN_AVX512_SUPPORT
 INSTANTIATE_TEST_CASE_P(

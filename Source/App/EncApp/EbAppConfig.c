@@ -139,9 +139,7 @@
 #define HDR_INPUT_TOKEN "-hdr"
 #define RATE_CONTROL_ENABLE_TOKEN "-rc"
 #define TARGET_BIT_RATE_TOKEN "-tbr"
-#if FTR_RC_CAP
 #define MAX_BIT_RATE_TOKEN "-mbr"
-#endif
 #define MAX_QP_TOKEN "-max-qp"
 #define VBV_BUFSIZE_TOKEN "-vbv-bufsize"
 #define MIN_QP_TOKEN "-min-qp"
@@ -150,11 +148,9 @@
 #define VBR_MAX_SECTION_PCT_TOKEN "-maxsection-pct"
 #define UNDER_SHOOT_PCT_TOKEN "-undershoot-pct"
 #define OVER_SHOOT_PCT_TOKEN "-overshoot-pct"
-#if FTR_2PASS_CBR || FTR_1PASS_CBR
 #define BUFFER_SIZE_TOKEN "-buf-sz"
 #define BUFFER_INITIAL_SIZE_TOKEN "-buf-initial-sz"
 #define BUFFER_OPTIMAL_SIZE_TOKEN "-buf-optimal-sz"
-#endif
 #define RECODE_LOOP_TOKEN "-recode-loop"
 #define ADAPTIVE_QP_ENABLE_TOKEN "-adaptive-quantization"
 #define LOOK_AHEAD_DIST_TOKEN "-lad"
@@ -235,26 +231,22 @@
 #define MASTERING_DISPLAY_TOKEN "--mastering-display"
 #define CONTENT_LIGHT_LEVEL_TOKEN "--content-light"
 
-#if TUNE_RC
-#if FIX_2PASS_CRF
-#define ENC_MRS         -2 // Highest quality research mode (slowest)
-#define ENC_MR          -1 //Research mode with higher quality than M0
-#define ENC_M0          0
-#define ENC_M1          1
-#define ENC_M2          2
-#define ENC_M3          3
-#define ENC_M4          4
-#define ENC_M5          5
-#define ENC_M6          6
-#define ENC_M7          7
-#define ENC_M8          8
-#define ENC_M9          9
-#define ENC_M10         10
-#define ENC_M11         11
-#define ENC_M12         12
-#define ENC_M13         13
-#endif
-#endif
+#define ENC_MRS -2 // Highest quality research mode (slowest)
+#define ENC_MR -1 //Research mode with higher quality than M0
+#define ENC_M0 0
+#define ENC_M1 1
+#define ENC_M2 2
+#define ENC_M3 3
+#define ENC_M4 4
+#define ENC_M5 5
+#define ENC_M6 6
+#define ENC_M7 7
+#define ENC_M8 8
+#define ENC_M9 9
+#define ENC_M10 10
+#define ENC_M11 11
+#define ENC_M12 12
+#define ENC_M13 13
 #ifdef _WIN32
 static HANDLE get_file_handle(FILE *fp) { return (HANDLE)_get_osfhandle(_fileno(fp)); }
 #endif
@@ -359,11 +351,9 @@ static void set_cfg_qp_file(const char *value, EbConfig *cfg) {
     }
     FOPEN(cfg->qp_file, value, "r");
 };
-#if CLN_ENC_CONFIG_SIG
-static void set_pass(const char* value, EbConfig* cfg) { cfg->config.pass = strtol(value, NULL, 0); }
-#else
-static void set_pass(const char *value, EbConfig *cfg) { cfg->pass = strtol(value, NULL, 0); }
-#endif
+static void set_pass(const char *value, EbConfig *cfg) {
+    cfg->config.pass = strtol(value, NULL, 0);
+}
 static void set_two_pass_stats(const char *value, EbConfig *cfg) {
 #ifndef _WIN32
     cfg->stats = strdup(value);
@@ -415,15 +405,13 @@ static void set_progress(const char *value, EbConfig *cfg) {
 static void set_frame_rate(const char *value, EbConfig *cfg) {
     cfg->config.frame_rate = strtoul(value, NULL, 0);
     if (cfg->config.frame_rate <= 1000) {
-        cfg->config.frame_rate_numerator = cfg->config.frame_rate * 1000;
+        cfg->config.frame_rate_numerator   = cfg->config.frame_rate * 1000;
         cfg->config.frame_rate_denominator = 1000;
         cfg->config.frame_rate <<= 16;
-    }
-    else {
-        cfg->config.frame_rate_numerator = (cfg->config.frame_rate >> 16) * 1000;
+    } else {
+        cfg->config.frame_rate_numerator   = (cfg->config.frame_rate >> 16) * 1000;
         cfg->config.frame_rate_denominator = 1000;
     }
-
 }
 
 static void set_frame_rate_numerator(const char *value, EbConfig *cfg) {
@@ -466,9 +454,9 @@ static void set_cfg_qp(const char *value, EbConfig *cfg) {
     cfg->config.qp = strtoul(value, NULL, 0);
 };
 static void set_cfg_crf(const char *value, EbConfig *cfg) {
-    cfg->config.qp = strtoul(value, NULL, 0);
+    cfg->config.qp                = strtoul(value, NULL, 0);
     cfg->config.rate_control_mode = 0;
-    cfg->config.enable_tpl_la = 1;
+    cfg->config.enable_tpl_la     = 1;
 }
 static void set_cfg_use_qp_file(const char *value, EbConfig *cfg) {
     cfg->config.use_qp_file = (EbBool)strtol(value, NULL, 0);
@@ -489,8 +477,8 @@ static void set_cfg_key_frame_chroma_qindex_offset(const char *value, EbConfig *
 //assume the input list of values are in the format of "[v1,v2,v3,...]"
 int arg_parse_list(const char *value, int *list, int n) {
     const char *ptr = value;
-    char *endptr;
-    int i = 0;
+    char *      endptr;
+    int         i = 0;
     while (ptr[0] != '\0') {
         if (ptr[0] == '[' || ptr[0] == ']') {
             ptr++;
@@ -501,23 +489,22 @@ int arg_parse_list(const char *value, int *list, int n) {
         if (i >= n) {
             fprintf(stderr, "List has more than %d entries\n", n);
             exit(1);
-        }
-        else if (*endptr == ',' || *endptr == ']') {
+        } else if (*endptr == ',' || *endptr == ']') {
             endptr++;
-        }
-        else if (*endptr != '\0') {
+        } else if (*endptr != '\0') {
             fprintf(stderr, "Bad list separator '%c'\n", *endptr);
             exit(1);
         }
         list[i++] = (int)rawval;
-        ptr = endptr;
+        ptr       = endptr;
     }
     return i;
 }
 
 static void set_cfg_qindex_offsets(const char *value, EbConfig *cfg) {
     if (cfg->config.hierarchical_levels == 0) {
-        fprintf(stderr, "qindex offsets parameter should be specificied after hierachical_levels\n");
+        fprintf(stderr,
+                "qindex offsets parameter should be specificied after hierachical_levels\n");
         exit(1);
     }
     arg_parse_list(value, cfg->config.qindex_offsets, cfg->config.hierarchical_levels + 1);
@@ -525,7 +512,8 @@ static void set_cfg_qindex_offsets(const char *value, EbConfig *cfg) {
 
 static void set_cfg_chroma_qindex_offsets(const char *value, EbConfig *cfg) {
     if (cfg->config.hierarchical_levels == 0) {
-        fprintf(stderr, "chroma qindex offsets parameter should be specificied after hierachical_levels\n");
+        fprintf(stderr,
+                "chroma qindex offsets parameter should be specificied after hierachical_levels\n");
         exit(1);
     }
     arg_parse_list(value, cfg->config.chroma_qindex_offsets, cfg->config.hierarchical_levels + 1);
@@ -621,14 +609,12 @@ static void set_enable_intra_edge_filter_flag(const char *value, EbConfig *cfg) 
 static void set_pic_based_rate_est(const char *value, EbConfig *cfg) {
     cfg->config.pic_based_rate_est = strtol(value, NULL, 0);
 };
-#if !CLN_REMOVE_ME_HME_CLI
 static void set_enable_hme_flag(const char *value, EbConfig *cfg) {
     cfg->config.enable_hme_flag = (EbBool)strtoul(value, NULL, 0);
 };
 static void set_enable_hme_level_0_flag(const char *value, EbConfig *cfg) {
     cfg->config.enable_hme_level0_flag = (EbBool)strtoul(value, NULL, 0);
 };
-#endif
 static void set_tile_row(const char *value, EbConfig *cfg) {
     cfg->config.tile_rows = strtoul(value, NULL, 0);
 };
@@ -647,11 +633,9 @@ static void set_rate_control_mode(const char *value, EbConfig *cfg) {
 static void set_target_bit_rate(const char *value, EbConfig *cfg) {
     cfg->config.target_bit_rate = 1000 * strtoul(value, NULL, 0);
 };
-#if FTR_RC_CAP
 static void set_max_bit_rate(const char *value, EbConfig *cfg) {
     cfg->config.max_bit_rate = 1000 * strtoul(value, NULL, 0);
 };
-#endif
 static void set_vbv_buf_size(const char *value, EbConfig *cfg) {
     cfg->config.vbv_bufsize = 1000 * strtoul(value, NULL, 0);
 };
@@ -675,11 +659,8 @@ static void set_under_shoot_pct(const char *value, EbConfig *cfg) {
 };
 static void set_over_shoot_pct(const char *value, EbConfig *cfg) {
     cfg->config.over_shoot_pct = strtoul(value, NULL, 0);
-#if TUNE_CAP_CRF_OVERSHOOT
     cfg->config.mbr_over_shoot_pct = strtoul(value, NULL, 0);
-#endif
 };
-#if FTR_2PASS_CBR || FTR_1PASS_CBR
 static void set_buf_sz(const char *value, EbConfig *cfg) {
     cfg->config.maximum_buffer_size_ms = strtoul(value, NULL, 0);
 };
@@ -689,14 +670,12 @@ static void set_buf_initial_sz(const char *value, EbConfig *cfg) {
 static void set_buf_optimal_sz(const char *value, EbConfig *cfg) {
     cfg->config.optimal_buffer_level_ms = strtoul(value, NULL, 0);
 };
-#endif
 static void set_recode_loop(const char *value, EbConfig *cfg) {
     cfg->config.recode_loop = strtoul(value, NULL, 0);
 };
 static void set_adaptive_quantization(const char *value, EbConfig *cfg) {
     cfg->config.enable_adaptive_quantization = (EbBool)strtol(value, NULL, 0);
 };
-#if !CLN_REMOVE_ME_HME_CLI
 static void set_enable_hme_level_1_flag(const char *value, EbConfig *cfg) {
     cfg->config.enable_hme_level1_flag = (EbBool)strtoul(value, NULL, 0);
 };
@@ -715,7 +694,6 @@ static void set_cfg_use_default_me_hme(const char *value, EbConfig *cfg) {
 static void set_enable_ext_block_flag(const char *value, EbConfig *cfg) {
     cfg->config.ext_block_flag = (EbBool)strtoul(value, NULL, 0);
 };
-#endif
 static void set_screen_content_mode(const char *value, EbConfig *cfg) {
     cfg->config.screen_content_mode = strtoul(value, NULL, 0);
 };
@@ -744,7 +722,7 @@ static void set_superres_kf_denom(const char *value, EbConfig *cfg) {
 static void set_superres_qthres(const char *value, EbConfig *cfg) {
     cfg->config.superres_qthres = (uint8_t)strtoul(value, NULL, 0);
 };
-static void set_superres_kf_qthres(const char* value, EbConfig* cfg) {
+static void set_superres_kf_qthres(const char *value, EbConfig *cfg) {
     cfg->config.superres_kf_qthres = (uint8_t)strtoul(value, NULL, 0);
 };
 // --- end: SUPER-RESOLUTION SUPPORT
@@ -886,7 +864,8 @@ ConfigEntry config_entry_options[] = {
     {SINGLE_INPUT, STAT_FILE_TOKEN, "Stat filename", set_cfg_stat_file},
     {SINGLE_INPUT,
      PRESET_TOKEN,
-     "Encoder mode/Preset used (-2 (debugging preset),-1 (debugging preset),0 - 13, 12 [default]) the"
+     "Encoder mode/Preset used (-2 (debugging preset),-1 (debugging preset),0 - 13, 12 [default]) "
+     "the"
      " higher the preset, the higher the speed, the lower the preset, the higher the quality",
      set_enc_mode},
     {SINGLE_INPUT, NULL, NULL, NULL}};
@@ -901,12 +880,14 @@ ConfigEntry config_entry_global_options[] = {
 
     {SINGLE_INPUT,
      NUMBER_OF_PICTURES_TOKEN,
-     "Stop encoding after n input frames, if n is larger than the number of frames in the input file,"
+     "Stop encoding after n input frames, if n is larger than the number of frames in the input "
+     "file,"
      " the encoder will loop back to frame 0 and continue encoding",
      set_cfg_frames_to_be_encoded},
     {SINGLE_INPUT,
      NUMBER_OF_PICTURES_LONG_TOKEN,
-     "Stop encoding after n input frames, if n is larger than the number of frames in the input file,"
+     "Stop encoding after n input frames, if n is larger than the number of frames in the input "
+     "file,"
      " the encoder will loop back to frame 0 and continue encoding",
      set_cfg_frames_to_be_encoded},
 
@@ -940,7 +921,10 @@ ConfigEntry config_entry_global_options[] = {
      "Stream frame rate denominator",
      set_frame_rate_denominator},
     //{SINGLE_INPUT, ENCODER_BIT_DEPTH, "Bit depth for codec(8 or 10)", set_encoder_bit_depth},
-    {SINGLE_INPUT, INPUT_DEPTH_TOKEN, "Bit depth for codec (8 [default] , 10)", set_encoder_bit_depth},
+    {SINGLE_INPUT,
+     INPUT_DEPTH_TOKEN,
+     "Bit depth for codec (8 [default] , 10)",
+     set_encoder_bit_depth},
     {SINGLE_INPUT,
      ENCODER_16BIT_PIPELINE,
      "Bit depth for enc-dec(0: lbd[default], 1: hbd)",
@@ -954,9 +938,11 @@ ConfigEntry config_entry_global_options[] = {
      INJECTOR_TOKEN,
      "Inject pictures at defined frame rate(0: OFF[default],1: ON)",
      set_injector},
-    {SINGLE_INPUT, INJECTOR_FRAMERATE_TOKEN, "Set injector frame rate (0 - 240), only applicable when"
+    {SINGLE_INPUT,
+     INJECTOR_FRAMERATE_TOKEN,
+     "Set injector frame rate (0 - 240), only applicable when"
      " --inj is set to 1",
-    set_injector_frame_rate},
+     set_injector_frame_rate},
     //{SINGLE_INPUT, LEVEL_TOKEN, "Level", set_level},
     {SINGLE_INPUT,
      HIERARCHICAL_LEVELS_TOKEN,
@@ -1004,34 +990,30 @@ ConfigEntry config_entry_rc[] = {
     // Rate Control
     {SINGLE_INPUT,
      RATE_CONTROL_ENABLE_TOKEN,
-#if FTR_2PASS_CBR || FTR_1PASS_CBR
      "Rate control mode(0 = CRF or CQP if --enable-tpl-la is set to 0 , 1 = VBR, 2 = CBR)",
-#else
-     "Rate control mode(0 = CRF or CQP if --enable-tpl-la is set to 0 , 1 = VBR)",
-#endif
      set_rate_control_mode},
     {SINGLE_INPUT, TARGET_BIT_RATE_TOKEN, "Target Bitrate (kbps)", set_target_bit_rate},
-#if FTR_RC_CAP
     {SINGLE_INPUT, MAX_BIT_RATE_TOKEN, "Maximum Bitrate (kbps)", set_max_bit_rate},
-#endif
     {SINGLE_INPUT,
      USE_QP_FILE_TOKEN,
      "Overwrite QP assignment using qp values in QP file",
      set_cfg_use_qp_file},
 
-    {SINGLE_INPUT, USE_FIXED_QINDEX_OFFSETS_TOKEN,
+    {SINGLE_INPUT,
+     USE_FIXED_QINDEX_OFFSETS_TOKEN,
      "Use fixed QIndex offset",
      set_cfg_use_fixed_qindex_offsets},
-     {SINGLE_INPUT, KEY_FRAME_QINDEX_OFFSET_TOKEN,
+    {SINGLE_INPUT,
+     KEY_FRAME_QINDEX_OFFSET_TOKEN,
      "Key Frame QIndex Offset",
      set_cfg_key_frame_qindex_offset},
-     {SINGLE_INPUT, KEY_FRAME_CHROMA_QINDEX_OFFSET_TOKEN,
+    {SINGLE_INPUT,
+     KEY_FRAME_CHROMA_QINDEX_OFFSET_TOKEN,
      "Key Frame Chroma QIndex Offset",
      set_cfg_key_frame_chroma_qindex_offset},
-     {SINGLE_INPUT, QINDEX_OFFSETS_TOKEN,
-     "QIndexOffsets",
-     set_cfg_qindex_offsets},
-     {SINGLE_INPUT, CHROMA_QINDEX_OFFSETS_TOKEN,
+    {SINGLE_INPUT, QINDEX_OFFSETS_TOKEN, "QIndexOffsets", set_cfg_qindex_offsets},
+    {SINGLE_INPUT,
+     CHROMA_QINDEX_OFFSETS_TOKEN,
      "ChromaQIndexOffsets",
      set_cfg_chroma_qindex_offsets},
 
@@ -1043,22 +1025,14 @@ ConfigEntry config_entry_rc[] = {
      "Constant Rate Factor, equal to --rc 0 --enable-tpl-la 1 --qp x",
      set_cfg_crf},
     {SINGLE_INPUT,
-    MAX_QP_TOKEN,
-#if FIX_I87
+     MAX_QP_TOKEN,
      "Maximum (worst) quantizer[1-63] only applicable  when --rc > 0",
-#else
-     "Maximum (worst) quantizer[0-63] only applicable  when --rc > 0",
-#endif
      set_max_qp_allowed},
-     {SINGLE_INPUT,
-    MIN_QP_TOKEN,
-#if FIX_I87
+    {SINGLE_INPUT,
+     MIN_QP_TOKEN,
      "Minimum (best) quantizer[1-63] only applicable when --rc > 0",
-#else
-     "Minimum (best) quantizer[0-63] only applicable when --rc > 0",
-#endif
      set_min_qp_allowed},
-     {SINGLE_INPUT,
+    {SINGLE_INPUT,
      ADAPTIVE_QP_ENABLE_TOKEN,
      "Set adaptive QP level(0: OFF ,1: variance base using segments ,2: Deltaq pred efficiency)",
      set_adaptive_quantization},
@@ -1068,14 +1042,20 @@ ConfigEntry config_entry_rc[] = {
      "Datarate undershoot (min) target (%)",
      set_under_shoot_pct},
     {SINGLE_INPUT, OVER_SHOOT_PCT_TOKEN, "Datarate overshoot (max) target (%)", set_over_shoot_pct},
-#if FTR_2PASS_CBR || FTR_1PASS_CBR
     {SINGLE_INPUT, BUFFER_SIZE_TOKEN, "Client buffer size (ms)", set_buf_sz},
-    {SINGLE_INPUT, BUFFER_INITIAL_SIZE_TOKEN, "Client initial buffer size (ms)", set_buf_initial_sz},
-    {SINGLE_INPUT, BUFFER_OPTIMAL_SIZE_TOKEN, "Client optimal buffer size (ms)", set_buf_optimal_sz},
-#endif
+    {SINGLE_INPUT,
+     BUFFER_INITIAL_SIZE_TOKEN,
+     "Client initial buffer size (ms)",
+     set_buf_initial_sz},
+    {SINGLE_INPUT,
+     BUFFER_OPTIMAL_SIZE_TOKEN,
+     "Client optimal buffer size (ms)",
+     set_buf_optimal_sz},
     {SINGLE_INPUT,
      RECODE_LOOP_TOKEN,
-     "Recode loop levels    (0 : OFF, 1: Allow recode for KF and exceeding maximum frame bandwidth, 2:Allow recode only for KF/ARF/GF frames, 3: Allow recode for all frames based on bitrate constraints, 4: preset based decision [Default])",
+     "Recode loop levels    (0 : OFF, 1: Allow recode for KF and exceeding maximum frame "
+     "bandwidth, 2:Allow recode only for KF/ARF/GF frames, 3: Allow recode for all frames based on "
+     "bitrate constraints, 4: preset based decision [Default])",
      set_recode_loop},
     // Termination
     {SINGLE_INPUT, NULL, NULL, NULL}};
@@ -1094,10 +1074,7 @@ ConfigEntry config_entry_2p[] = {
      PASSES_TOKEN,
      "Number of passes (1: one pass encode, 2: multi-pass encode)",
      set_passes},
-    {SINGLE_INPUT,
-     VBR_BIAS_PCT_TOKEN,
-     "CBR/VBR bias (0=CBR-like, 100=VBR-like)",
-     set_vbr_bias_pct},
+    {SINGLE_INPUT, VBR_BIAS_PCT_TOKEN, "CBR/VBR bias (0=CBR-like, 100=VBR-like)", set_vbr_bias_pct},
     {SINGLE_INPUT,
      VBR_MIN_SECTION_PCT_TOKEN,
      "GOP min bitrate (% of target)",
@@ -1111,37 +1088,28 @@ ConfigEntry config_entry_2p[] = {
 ConfigEntry config_entry_intra_refresh[] = {
     {SINGLE_INPUT,
      KEYINT_TOKEN,
-     "Intra period interval(frames) (-2: default intra period (set to 2 sec long) , -1: No intra update or [0 - "
+     "Intra period interval(frames) (-2: default intra period (set to 2 sec long) , -1: No intra "
+     "update or [0 - "
      "2^31-2]",
      set_cfg_intra_period},
     {SINGLE_INPUT,
      INTRA_REFRESH_TYPE_TOKEN,
      "Intra refresh type (1: FWD Frame (Open GOP), 2: KEY Frame (Closed GOP)[default])",
-    set_cfg_intra_refresh_type },
+     set_cfg_intra_refresh_type},
     {SINGLE_INPUT,
      SCENE_CHANGE_DETECTION_TOKEN,
      "Enables or disables the scene change detection algorithm (0: OFF [default], 1: ON)",
      set_scene_change_detection},
-    { SINGLE_INPUT,
-    LOOKAHEAD_NEW_TOKEN,
-#if FTR_LAD_INPUT
-        "The lookahead is the total number of frames in future used by the encoder, including"
-        " frames to form a minigop, temporal filtering and rate control. [0 - 120]",
-#else
-    "The lookahead option is currently disabled (forced to 0) until further work is done on "
-    "rate control",
-#endif
-    set_look_ahead_distance },
-    { SINGLE_INPUT,
-    LOOK_AHEAD_DIST_TOKEN,
-#if FTR_LAD_INPUT
-        "The lookahead is the total number of frames in future used by the encoder, including"
-        " frames to form a minigop, temporal filtering and rate control. [0 - 120]",
-#else
-    "The lookahead option is currently disabled (forced to 0) until further work is done on "
-    "rate control",
-#endif
-    set_look_ahead_distance },
+    {SINGLE_INPUT,
+     LOOKAHEAD_NEW_TOKEN,
+     "The lookahead is the total number of frames in future used by the encoder, including"
+     " frames to form a minigop, temporal filtering and rate control. [0 - 120]",
+     set_look_ahead_distance},
+    {SINGLE_INPUT,
+     LOOK_AHEAD_DIST_TOKEN,
+     "The lookahead is the total number of frames in future used by the encoder, including"
+     " frames to form a minigop, temporal filtering and rate control. [0 - 120]",
+     set_look_ahead_distance},
 
     // Termination
     {SINGLE_INPUT, NULL, NULL, NULL}};
@@ -1288,7 +1256,6 @@ ConfigEntry config_entry_specific[] = {
      COMPOUND_LEVEL_TOKEN,
      "Enable compound mode(0: OFF, 1:ON[AVG/DIST/DIFF], 2: ON[AVG/DIST/DIFF/WEDGE], -1: default)",
      set_compound_level_flag},
-#if !CLN_REMOVE_ME_HME_CLI
     // ME Tools
     {SINGLE_INPUT,
      USE_DEFAULT_ME_HME_TOKEN,
@@ -1324,7 +1291,6 @@ ConfigEntry config_entry_specific[] = {
      SEARCH_AREA_HEIGHT_TOKEN,
      "Set search area in height[1-256]",
      set_cfg_search_area_height},
-#endif
     // MD Parameters
     {SINGLE_INPUT,
      SCREEN_CONTENT_TOKEN,
@@ -1354,10 +1320,7 @@ ConfigEntry config_entry_specific[] = {
      "Enable film grain(0: OFF[default], 1-50: ON, film-grain denoising strength)",
      set_cfg_film_grain},
     // --- start: ALTREF_FILTERING_SUPPORT
-    {SINGLE_INPUT,
-     TF_LEVEL,
-     "Set altref level(-1: Default; 0: OFF; 1: ON)",
-     set_tf_level},
+    {SINGLE_INPUT, TF_LEVEL, "Set altref level(-1: Default; 0: OFF; 1: ON)", set_tf_level},
 
     {SINGLE_INPUT,
      ENABLE_OVERLAYS,
@@ -1456,19 +1419,29 @@ ConfigEntry config_entry[] = {
     {SINGLE_INPUT, CRF_LONG_TOKEN, "CRF", set_cfg_crf},
     {SINGLE_INPUT, USE_QP_FILE_TOKEN, "UseQpFile", set_cfg_use_qp_file},
 
-    {SINGLE_INPUT, USE_FIXED_QINDEX_OFFSETS_TOKEN, "UseFixedQIndexOffsets", set_cfg_use_fixed_qindex_offsets},
-    {SINGLE_INPUT, KEY_FRAME_QINDEX_OFFSET_TOKEN, "KeyFrameQIndexOffset", set_cfg_key_frame_qindex_offset},
-    {SINGLE_INPUT, KEY_FRAME_CHROMA_QINDEX_OFFSET_TOKEN, "KeyFrameChromaQIndexOffset", set_cfg_key_frame_chroma_qindex_offset},
+    {SINGLE_INPUT,
+     USE_FIXED_QINDEX_OFFSETS_TOKEN,
+     "UseFixedQIndexOffsets",
+     set_cfg_use_fixed_qindex_offsets},
+    {SINGLE_INPUT,
+     KEY_FRAME_QINDEX_OFFSET_TOKEN,
+     "KeyFrameQIndexOffset",
+     set_cfg_key_frame_qindex_offset},
+    {SINGLE_INPUT,
+     KEY_FRAME_CHROMA_QINDEX_OFFSET_TOKEN,
+     "KeyFrameChromaQIndexOffset",
+     set_cfg_key_frame_chroma_qindex_offset},
     {SINGLE_INPUT, QINDEX_OFFSETS_TOKEN, "QIndexOffsets", set_cfg_qindex_offsets},
-    {SINGLE_INPUT, CHROMA_QINDEX_OFFSETS_TOKEN, "ChromaQIndexOffsets", set_cfg_chroma_qindex_offsets},
+    {SINGLE_INPUT,
+     CHROMA_QINDEX_OFFSETS_TOKEN,
+     "ChromaQIndexOffsets",
+     set_cfg_chroma_qindex_offsets},
 
     {SINGLE_INPUT, STAT_REPORT_TOKEN, "StatReport", set_stat_report},
     {SINGLE_INPUT, RATE_CONTROL_ENABLE_TOKEN, "RateControlMode", set_rate_control_mode},
     {SINGLE_INPUT, ENABLE_TPL_LA_TOKEN, "EnableTplLA", set_enable_tpl_la},
     {SINGLE_INPUT, TARGET_BIT_RATE_TOKEN, "TargetBitRate", set_target_bit_rate},
-#if FTR_RC_CAP
     {SINGLE_INPUT, MAX_BIT_RATE_TOKEN, "MaxBitRate", set_max_bit_rate},
-#endif
     {SINGLE_INPUT, MAX_QP_TOKEN, "MaxQpAllowed", set_max_qp_allowed},
     {SINGLE_INPUT, MIN_QP_TOKEN, "MinQpAllowed", set_min_qp_allowed},
     {SINGLE_INPUT, VBV_BUFSIZE_TOKEN, "VBVBufSize", set_vbv_buf_size},
@@ -1487,11 +1460,15 @@ ConfigEntry config_entry[] = {
      "Datarate undershoot (min) target (%)",
      set_under_shoot_pct},
     {SINGLE_INPUT, OVER_SHOOT_PCT_TOKEN, "Datarate overshoot (max) target (%)", set_over_shoot_pct},
-#if FTR_2PASS_CBR || FTR_1PASS_CBR
     {SINGLE_INPUT, BUFFER_SIZE_TOKEN, "Client buffer size (ms)", set_buf_sz},
-    {SINGLE_INPUT, BUFFER_INITIAL_SIZE_TOKEN, "Client initial buffer size (ms)", set_buf_initial_sz},
-    {SINGLE_INPUT, BUFFER_OPTIMAL_SIZE_TOKEN, "Client optimal buffer size (ms)", set_buf_optimal_sz},
-#endif
+    {SINGLE_INPUT,
+     BUFFER_INITIAL_SIZE_TOKEN,
+     "Client initial buffer size (ms)",
+     set_buf_initial_sz},
+    {SINGLE_INPUT,
+     BUFFER_OPTIMAL_SIZE_TOKEN,
+     "Client optimal buffer size (ms)",
+     set_buf_optimal_sz},
     {SINGLE_INPUT, RECODE_LOOP_TOKEN, "Recode loop levels ", set_recode_loop},
 
     // DLF
@@ -1558,7 +1535,6 @@ ConfigEntry config_entry[] = {
     {SINGLE_INPUT, BIPRED_3x3_TOKEN, "Bipred3x3", set_bipred3x3inject_flag},
     // COMPOUND MODE
     {SINGLE_INPUT, COMPOUND_LEVEL_TOKEN, "CompoundLevel", set_compound_level_flag},
-#if !CLN_REMOVE_ME_HME_CLI
     // ME Tools
     {SINGLE_INPUT, USE_DEFAULT_ME_HME_TOKEN, "UseDefaultMeHme", set_cfg_use_default_me_hme},
     {SINGLE_INPUT, HME_ENABLE_TOKEN, "HME", set_enable_hme_flag},
@@ -1569,7 +1545,6 @@ ConfigEntry config_entry[] = {
     // ME Parameters
     {SINGLE_INPUT, SEARCH_AREA_WIDTH_TOKEN, "SearchAreaWidth", set_cfg_search_area_width},
     {SINGLE_INPUT, SEARCH_AREA_HEIGHT_TOKEN, "SearchAreaHeight", set_cfg_search_area_height},
-#endif
     // MD Parameters
     {SINGLE_INPUT, SCREEN_CONTENT_TOKEN, "ScreenContentMode", set_screen_content_mode},
     {SINGLE_INPUT, INTRABC_MODE_TOKEN, "IntraBCMode", set_intrabc_mode},
@@ -1617,26 +1592,16 @@ ConfigEntry config_entry[] = {
      "Intra period interval(frames) (-2: default intra period, -1: No intra update or [0 - "
      "2^31-2] for the number of frames between intra frames)",
      set_cfg_intra_period},
-    { SINGLE_INPUT,
-        LOOKAHEAD_NEW_TOKEN,
-#if FTR_LAD_INPUT
-        "The lookahead is the total number of frames in future used by the encoder, including"
-        " frames to form a minigop, temporal filtering and rate control. [0 - 120]",
-#else
-        "The lookahead option is currently disabled (forced to 0) until further work is done on "
-        "rate control",
-#endif
-        set_look_ahead_distance },
-    { SINGLE_INPUT,
-        LOOK_AHEAD_DIST_TOKEN,
-#if FTR_LAD_INPUT
-        "The lookahead is the total number of frames in future used by the encoder, including"
-        " frames to form a minigop, temporal filtering and rate control. [0 - 120]",
-#else
-        "The lookahead option is currently disabled (forced to 0) until further work is done on "
-        "rate control",
-#endif
-        set_look_ahead_distance },
+    {SINGLE_INPUT,
+     LOOKAHEAD_NEW_TOKEN,
+     "The lookahead is the total number of frames in future used by the encoder, including"
+     " frames to form a minigop, temporal filtering and rate control. [0 - 120]",
+     set_look_ahead_distance},
+    {SINGLE_INPUT,
+     LOOK_AHEAD_DIST_TOKEN,
+     "The lookahead is the total number of frames in future used by the encoder, including"
+     " frames to form a minigop, temporal filtering and rate control. [0 - 120]",
+     set_look_ahead_distance},
     {SINGLE_INPUT, STAT_REPORT_NEW_TOKEN, "Stat Report", set_stat_report},
     {SINGLE_INPUT,
      RESTORATION_ENABLE_NEW_TOKEN,
@@ -1700,10 +1665,7 @@ ConfigEntry config_entry[] = {
     {SINGLE_INPUT, SMOOTH_NEW_TOKEN, "Smooth New Token", set_enable_smooth_flag},
 
     // Color description
-    {SINGLE_INPUT,
-     COLOR_PRIMARIES_NEW_TOKEN,
-     "ColorPrimaries",
-     set_cfg_color_primaries},
+    {SINGLE_INPUT, COLOR_PRIMARIES_NEW_TOKEN, "ColorPrimaries", set_cfg_color_primaries},
     {SINGLE_INPUT,
      TRANSFER_CHARACTERISTICS_NEW_TOKEN,
      "TransferCharacteristics",
@@ -1712,20 +1674,11 @@ ConfigEntry config_entry[] = {
      MATRIX_COEFFICIENTS_NEW_TOKEN,
      "MatrixCoefficients",
      set_cfg_matrix_coefficients},
-    {SINGLE_INPUT,
-     COLOR_RANGE_NEW_TOKEN,
-     "ColorRange",
-     set_cfg_color_range},
+    {SINGLE_INPUT, COLOR_RANGE_NEW_TOKEN, "ColorRange", set_cfg_color_range},
 
-    {SINGLE_INPUT,
-     MASTERING_DISPLAY_TOKEN,
-     "MasteringDisplay",
-     set_cfg_mastering_display},
+    {SINGLE_INPUT, MASTERING_DISPLAY_TOKEN, "MasteringDisplay", set_cfg_mastering_display},
 
-     {SINGLE_INPUT,
-     CONTENT_LIGHT_LEVEL_TOKEN,
-     "ContentLightLevel",
-     set_cfg_content_light},
+    {SINGLE_INPUT, CONTENT_LIGHT_LEVEL_TOKEN, "ContentLightLevel", set_cfg_content_light},
 
     // Termination
     {SINGLE_INPUT, NULL, NULL, NULL}};
@@ -1733,24 +1686,13 @@ ConfigEntry config_entry[] = {
 /**********************************
  * Constructor
  **********************************/
-#if CLN_ENC_CONFIG_SIG
-EbConfig* svt_config_ctor() {
-#else
-EbConfig *svt_config_ctor(EncodePass pass) {
-#endif
+EbConfig *svt_config_ctor() {
     EbConfig *config_ptr = (EbConfig *)calloc(1, sizeof(EbConfig));
     if (!config_ptr)
         return NULL;
-#if !CLN_ENC_CONFIG_SIG
-    switch (pass) {
-    case ENCODE_FIRST_PASS: config_ptr->pass = 1; break;
-    case ENCODE_LAST_PASS: config_ptr->pass = 2; break;
-    default: config_ptr->pass = DEFAULT;
-    }
-#endif
-    config_ptr->error_log_file = stderr;
-    config_ptr->buffered_input = -1;
-    config_ptr->progress       = 1;
+    config_ptr->error_log_file      = stderr;
+    config_ptr->buffered_input      = -1;
+    config_ptr->progress            = 1;
     config_ptr->injector_frame_rate = 60;
 
     return config_ptr;
@@ -1812,14 +1754,8 @@ void svt_config_dtor(EbConfig *config_ptr) {
     free(config_ptr);
     return;
 }
-#if CLN_ENC_CONFIG_SIG
-EbErrorType enc_channel_ctor(EncChannel* c) {
+EbErrorType enc_channel_ctor(EncChannel *c) {
     c->config = svt_config_ctor();
-#else
-
-EbErrorType enc_channel_ctor(EncChannel *c, EncodePass pass) {
-    c->config = svt_config_ctor(pass);
-#endif
     if (!c->config)
         return EB_ErrorInsufficientResources;
     c->app_callback = (EbAppContext *)malloc(sizeof(EbAppContext));
@@ -2066,9 +2002,9 @@ EbBool load_twopass_stats_in(EbConfig *cfg) {
     struct _stat file_stat;
     int          ret = _fstat(fd, &file_stat);
 #else
-    int         fd = fileno(cfg->input_stat_file);
+    int fd = fileno(cfg->input_stat_file);
     struct stat file_stat;
-    int         ret = fstat(fd, &file_stat);
+    int ret = fstat(fd, &file_stat);
 #endif
     if (ret) {
         return EB_FALSE;
@@ -2080,217 +2016,18 @@ EbBool load_twopass_stats_in(EbConfig *cfg) {
             (size_t)file_stat.st_size) {
             return EB_FALSE;
         }
-#if FIX_MULTI_CMDLINE
         if (file_stat.st_size == 0) {
             return EB_FALSE;
         }
-#endif
     }
     return config->rc_twopass_stats_in.buf != NULL;
 }
-#if !CLN_ENC_CONFIG_SIG
-/* set two passes stats information to EbConfig
- */
-#if OPT_FIRST_PASS2
-void set_ipp_controls(
-    EbConfig *config, uint8_t ipp_level) {
-    IppPassControls *ipp_ctrls = &config->config.ipp_ctrls;
-    switch (ipp_level) {
-    case 0:
-        ipp_ctrls->skip_frame_first_pass = 0;
-        ipp_ctrls->ipp_ds = 0;
-        ipp_ctrls->bypass_blk_step = 0;
-        ipp_ctrls->dist_ds = 0;
-#if IPP_CTRL
-        ipp_ctrls->bypass_zz_check = 0;
-        ipp_ctrls->use8blk = 0;
-        ipp_ctrls->reduce_me_search = 0;
-#endif
-        break;
-    case 1:
-#if FIX_VBR_IPP
-        ipp_ctrls->skip_frame_first_pass = 1;
-#else
-        ipp_ctrls->skip_frame_first_pass = config->config.final_pass_rc_mode == 0 ? 1 : 2;
-#endif
-        ipp_ctrls->ipp_ds = 0;
-        ipp_ctrls->bypass_blk_step = 0;
-        ipp_ctrls->dist_ds = 1;
-#if IPP_CTRL
-        ipp_ctrls->bypass_zz_check = 1;
-        ipp_ctrls->use8blk = 1;
-        ipp_ctrls->reduce_me_search = 1;
-#endif
-        break;
-    case 2:
-#if FIX_VBR_IPP
-        ipp_ctrls->skip_frame_first_pass = 1;
-#else
-        ipp_ctrls->skip_frame_first_pass = config->config.final_pass_rc_mode == 0 ? 1 : 2;
-#endif
-        ipp_ctrls->ipp_ds = 1;
-        ipp_ctrls->bypass_blk_step = 1;
-        ipp_ctrls->dist_ds = 1;
-#if IPP_CTRL
-        ipp_ctrls->bypass_zz_check = 1;
-        ipp_ctrls->use8blk = 1;
-        ipp_ctrls->reduce_me_search = 1;
-#endif
-        break;
-    default:
-        ipp_ctrls->skip_frame_first_pass = 0;
-        ipp_ctrls->ipp_ds = 0;
-        ipp_ctrls->bypass_blk_step = 0;
-        ipp_ctrls->dist_ds = 0;
-#if IPP_CTRL
-        ipp_ctrls->bypass_zz_check = 0;
-        ipp_ctrls->use8blk = 0;
-        ipp_ctrls->reduce_me_search = 0;
-#endif
-        break;
-    }
-#if FIX_I80
-    // To make sure downsample version has width and height greater or equal to 64
-    if (config->config.source_width < 128 || config->config.source_height < 128)
-        ipp_ctrls->ipp_ds = 0;
-#endif
-}
-#endif
-#endif
-#if CLN_ENC_CONFIG_SIG
-EbErrorType handle_stats_file(
-    EbConfig* config,
-    EncPass enc_pass,
-    const SvtAv1FixedBuf* rc_twopass_stats_in,
-    uint32_t channel_number) {
-
+EbErrorType handle_stats_file(EbConfig *config, EncPass enc_pass,
+                              const SvtAv1FixedBuf *rc_twopass_stats_in, uint32_t channel_number) {
     switch (enc_pass) {
-
-        case ENC_SINGLE_PASS: {
-            const char* stats = config->stats ? config->stats : "svtav1_2pass.log";
-            if (config->config.pass == 1) {
-                if (!fopen_and_lock(&config->output_stat_file, stats, EB_TRUE)) {
-                    fprintf(config->error_log_file,
-                        "Error instance %u: can't open stats file %s for write \n",
-                        channel_number + 1,
-                        stats);
-                    return EB_ErrorBadParameter;
-                }
-            }
-
-            // Multi pass VBR has 3 passes, and pass = 2 is the middle pass
-            // In this pass, data is read from the file, copied to memory, updated and
-            // written back to the same file
-            else if (config->config.pass == 2 && config->config.rate_control_mode == 1) {
-                if (!fopen_and_lock(&config->input_stat_file, stats, EB_FALSE)) {
-                    fprintf(config->error_log_file,
-                        "Error instance %u: can't read stats file %s for read\n",
-                        channel_number + 1,
-                        stats);
-                    return EB_ErrorBadParameter;
-                }
-                // Copy from file to memory
-                if (!load_twopass_stats_in(config)) {
-                    fprintf(config->error_log_file,
-                        "Error instance %u: can't load file %s\n",
-                        channel_number + 1,
-                        stats);
-                    return EB_ErrorBadParameter;
-                }
-                // Close the input stat file
-                if (config->input_stat_file) {
-                    fclose(config->input_stat_file);
-                    config->input_stat_file = (FILE*)NULL;
-                }
-                // Open the file in write mode
-                if (!fopen_and_lock(&config->output_stat_file, stats, EB_TRUE)) {
-                    fprintf(config->error_log_file,
-                        "Error instance %u: can't open stats file %s for write \n",
-                        channel_number + 1,
-                        stats);
-                    return EB_ErrorBadParameter;
-                }
-            }
-            // Final pass: pass = 2 for CRF and pass = 3 for VBR
-            else if ((config->config.pass == 2 && config->config.rate_control_mode == 0) ||
-                (config->config.pass == 3 && config->config.rate_control_mode == 1)) {
-                if (!fopen_and_lock(&config->input_stat_file, stats, EB_FALSE)) {
-                    fprintf(config->error_log_file,
-                        "Error instance %u: can't read stats file %s for read\n",
-                        channel_number + 1,
-                        stats);
-                    return EB_ErrorBadParameter;
-                }
-                if (!load_twopass_stats_in(config)) {
-                    fprintf(config->error_log_file,
-                        "Error instance %u: can't load file %s\n",
-                        channel_number + 1,
-                        stats);
-                    return EB_ErrorBadParameter;
-                }
-            }
-            break;
-        }
-
-        case ENC_FIRST_PASS: {
-            // for combined two passes,
-            // we only ouptut first pass stats when user explicitly set the --stats
-            if (config->stats) {
-                if (!fopen_and_lock(&config->output_stat_file, config->stats, EB_TRUE)) {
-                    fprintf(config->error_log_file,
-                        "Error instance %u: can't open stats file %s for write \n",
-                        channel_number + 1,
-                        config->stats);
-                    return EB_ErrorBadParameter;
-                }
-            }
-            break;
-        }
-
-        case ENC_MIDDLE_PASS: {
-            if (!rc_twopass_stats_in->sz) {
-                fprintf(config->error_log_file,
-                    "Error instance %u: combined multi passes need stats in for the middle pass \n",
-                    channel_number + 1);
-                return EB_ErrorBadParameter;
-            }
-            config->config.rc_twopass_stats_in = *rc_twopass_stats_in;
-            break;
-        }
-
-        case ENC_LAST_PASS: {
-            if (!rc_twopass_stats_in->sz) {
-                fprintf(config->error_log_file,
-                    "Error instance %u: combined multi passes need stats in for the final pass \n",
-                    channel_number + 1);
-                return EB_ErrorBadParameter;
-            }
-            config->config.rc_twopass_stats_in = *rc_twopass_stats_in;
-            break;
-        }
-
-        default: {
-            assert(0);
-            break;
-        }
-    }
-    return EB_ErrorNone;
-}
-#else
-EbErrorType set_two_passes_stats(EbConfig *config, EncodePass pass,
-                                 const SvtAv1FixedBuf *rc_twopass_stats_in,
-                                 uint32_t              channel_number) {
-    switch (pass) {
-    case ENCODE_SINGLE_PASS: {
-#if FIX_DG
-        set_ipp_controls(config, 0);
-        config->config.ipp_was_ds = 0;
-#endif
-#if IPP_CTRL
-        config->config.final_pass_preset = config->config.enc_mode;
-#endif
+    case ENC_SINGLE_PASS: {
         const char *stats = config->stats ? config->stats : "svtav1_2pass.log";
-        if (config->pass == 1) {
+        if (config->config.pass == 1) {
             if (!fopen_and_lock(&config->output_stat_file, stats, EB_TRUE)) {
                 fprintf(config->error_log_file,
                         "Error instance %u: can't open stats file %s for write \n",
@@ -2298,47 +2035,25 @@ EbErrorType set_two_passes_stats(EbConfig *config, EncodePass pass,
                         stats);
                 return EB_ErrorBadParameter;
             }
-            config->config.rc_firstpass_stats_out = EB_TRUE;
-#if FIX_MULTI_CMDLINE // copied here temporarily, to move the the library
-#if FIX_DG
-            if (config->config.enc_mode <= ENC_M4)
-                set_ipp_controls(config, 0);
-            else if (config->config.enc_mode <= ENC_M10)
-                set_ipp_controls(config, 1);
-            else
-#if FIX_VBR_IPP
-                if (config->config.rate_control_mode == 0)
-#else
-                if (config->config.final_pass_rc_mode == 0)
-#endif
-                    set_ipp_controls(config, 2);
-                else
-                    set_ipp_controls(config, 1);
-            config->config.ipp_was_ds = 0;
-#endif
-#if IPP_CTRL
-            config->config.final_pass_preset = config->config.enc_mode;
-#endif
-#endif
-#if FIX_MULTI_CMDLINE
         }
+
         // Multi pass VBR has 3 passes, and pass = 2 is the middle pass
         // In this pass, data is read from the file, copied to memory, updated and
         // written back to the same file
-        else if (config->pass == 2 && config->config.rate_control_mode == 1) {
+        else if (config->config.pass == 2 && config->config.rate_control_mode == 1) {
             if (!fopen_and_lock(&config->input_stat_file, stats, EB_FALSE)) {
                 fprintf(config->error_log_file,
-                    "Error instance %u: can't read stats file %s for read\n",
-                    channel_number + 1,
-                    stats);
+                        "Error instance %u: can't read stats file %s for read\n",
+                        channel_number + 1,
+                        stats);
                 return EB_ErrorBadParameter;
             }
             // Copy from file to memory
             if (!load_twopass_stats_in(config)) {
                 fprintf(config->error_log_file,
-                    "Error instance %u: can't load file %s\n",
-                    channel_number + 1,
-                    stats);
+                        "Error instance %u: can't load file %s\n",
+                        channel_number + 1,
+                        stats);
                 return EB_ErrorBadParameter;
             }
             // Close the input stat file
@@ -2349,19 +2064,15 @@ EbErrorType set_two_passes_stats(EbConfig *config, EncodePass pass,
             // Open the file in write mode
             if (!fopen_and_lock(&config->output_stat_file, stats, EB_TRUE)) {
                 fprintf(config->error_log_file,
-                    "Error instance %u: can't open stats file %s for write \n",
-                    channel_number + 1,
-                    stats);
+                        "Error instance %u: can't open stats file %s for write \n",
+                        channel_number + 1,
+                        stats);
                 return EB_ErrorBadParameter;
             }
-            config->config.rc_middlepass_stats_out = EB_TRUE;
         }
         // Final pass: pass = 2 for CRF and pass = 3 for VBR
-        else if ((config->pass == 2 && config->config.rate_control_mode == 0) ||
-            (config->pass == 3 && config->config.rate_control_mode == 1)) {
-#else
-        } else if (config->pass == 2) {
-#endif
+        else if ((config->config.pass == 2 && config->config.rate_control_mode == 0) ||
+                 (config->config.pass == 3 && config->config.rate_control_mode == 1)) {
             if (!fopen_and_lock(&config->input_stat_file, stats, EB_FALSE)) {
                 fprintf(config->error_log_file,
                         "Error instance %u: can't read stats file %s for read\n",
@@ -2379,7 +2090,8 @@ EbErrorType set_two_passes_stats(EbConfig *config, EncodePass pass,
         }
         break;
     }
-    case ENCODE_FIRST_PASS: {
+
+    case ENC_FIRST_PASS: {
         // for combined two passes,
         // we only ouptut first pass stats when user explicitly set the --stats
         if (config->stats) {
@@ -2391,112 +2103,31 @@ EbErrorType set_two_passes_stats(EbConfig *config, EncodePass pass,
                 return EB_ErrorBadParameter;
             }
         }
-        config->config.rc_firstpass_stats_out = EB_TRUE;
-#if FIX_DG
-        if(config->config.enc_mode <= ENC_M4)
-            set_ipp_controls(config, 0);
-        else if (config->config.enc_mode <= ENC_M10)
-            set_ipp_controls(config, 1);
-        else
-#if FIX_VBR_IPP
-            if (config->config.rate_control_mode == 0)
-#else
-            if(config->config.final_pass_rc_mode == 0)
-#endif
-                set_ipp_controls(config, 2);
-            else
-                set_ipp_controls(config, 1);
-        config->config.ipp_was_ds = 0;
-#endif
-#if IPP_CTRL
-        config->config.final_pass_preset = config->config.enc_mode;
-#endif
-#if FTR_OPT_IPP_DOWN_SAMPLE
-        if (config->config.ipp_ctrls.ipp_ds) {
-            config->org_input_padded_width = config->config.source_width;
-            config->org_input_padded_height = config->config.source_height;
-            // To make sure the down scaled video has width and height of multiple of 2
-            config->input_padded_width = config->config.source_width = (((config->config.source_width >> 1) >> 1) << 1);
-            config->input_padded_height = config->config.source_height = (((config->config.source_height >> 1) >> 1) << 1);
-        }
-#endif
         break;
     }
-#if FTR_MULTI_PASS_API
-    case ENCODE_MIDDLE_PASS: {
 
+    case ENC_MIDDLE_PASS: {
         if (!rc_twopass_stats_in->sz) {
             fprintf(config->error_log_file,
-                "Error instance %u: bug, combined  multi passes need stats in for middle pass \n",
-                channel_number + 1);
-            return EB_ErrorBadParameter;
-        }
-
-        config->config.rc_middlepass_stats_out = EB_TRUE;
-        config->config.rc_twopass_stats_in     = *rc_twopass_stats_in;
-#if FTR_OPT_MPASS_DOWN_SAMPLE
-#if FIX_I80
-#if FIX_MIDDLE_PASS
-        config->config.rc_middlepass_ds_stats_out =
-            (config->config.enc_mode <= ENC_M10 || config->config.source_width < 128 || config->config.source_height < 128)
-            ? 0
-            : 1;
-#else
-        config->config.rc_middlepass_ds_stats_out = (config->config.enc_mode > ENC_M8 &&
-             config->config.source_width >= 128 && config->config.source_height >= 128)
-            ? 1
-            : 0;
-#endif
-#else
-        config->config.rc_middlepass_ds_stats_out = config->config.enc_mode > ENC_M8 ? 1 : 0;
-#endif
-        if (config->config.rc_middlepass_ds_stats_out) {
-            config->org_input_padded_width  = config->config.source_width;
-            config->org_input_padded_height = config->config.source_height;
-            // To make sure the down scaled video has width and height of multiple of 2
-            config->input_padded_width = config->config.source_width = (((config->config.source_width >> 1) >> 1) << 1);
-            config->input_padded_height = config->config.source_height = (((config->config.source_height >> 1) >> 1) << 1);
-        }
-#endif
-#if FIX_DG
-        set_ipp_controls(config, 0);
-        config->config.ipp_was_ds = 0;
-#endif
-#if IPP_CTRL
-        config->config.final_pass_preset = config->config.enc_mode;
-#endif
-        break;
-    }
-#endif
-    case ENCODE_LAST_PASS: {
-        if (!rc_twopass_stats_in->sz) {
-            fprintf(config->error_log_file,
-                    "Error instance %u: bug, combined 2passes need stats in for second pass \n",
+                    "Error instance %u: combined multi passes need stats in for the middle pass \n",
                     channel_number + 1);
             return EB_ErrorBadParameter;
         }
         config->config.rc_twopass_stats_in = *rc_twopass_stats_in;
-#if FIX_DG
-        set_ipp_controls(config, 0);
-#if FIX_VBR_IPP
-        // Please make sure that ipp_was_ds is ON only when ipp_ctrls->ipp_ds is ON
-        if (config->config.enc_mode <= ENC_M10)
-            config->config.ipp_was_ds = 0;
-        else
-            config->config.ipp_was_ds = config->config.rate_control_mode == 0 ? 1 : 0;
-#else
-        // Please make sure that ipp_was_ds is ON only when ipp_ctrls->ipp_ds is ON
-        if (config->config.enc_mode <= ENC_M10)
-            config->config.ipp_was_ds = 0;
-        else
-            config->config.ipp_was_ds = config->config.final_pass_rc_mode == 0 ? 1 : 0;
-#endif
-#endif
-#if IPP_CTRL
-        config->config.final_pass_preset = config->config.enc_mode;
-#endif
         break;
     }
+
+    case ENC_LAST_PASS: {
+        if (!rc_twopass_stats_in->sz) {
+            fprintf(config->error_log_file,
+                    "Error instance %u: combined multi passes need stats in for the final pass \n",
+                    channel_number + 1);
+            return EB_ErrorBadParameter;
+        }
+        config->config.rc_twopass_stats_in = *rc_twopass_stats_in;
+        break;
+    }
+
     default: {
         assert(0);
         break;
@@ -2504,7 +2135,6 @@ EbErrorType set_two_passes_stats(EbConfig *config, EncodePass pass,
     }
     return EB_ErrorNone;
 }
-#endif
 /******************************************
 * Verify Settings
 ******************************************/
@@ -2591,28 +2221,12 @@ static EbErrorType verify_settings(EbConfig *config, uint32_t channel_number) {
                 channel_number + 1);
         return EB_ErrorBadParameter;
     }
-#if CLN_ENC_CONFIG_SIG
     int pass = config->config.pass;
-#else
-    int pass = config->pass;
-#endif
-#if FIX_MULTI_CMDLINE
-#if CLN_ENC_CONFIG_SIG
     if (pass != 3 && pass != 2 && pass != 1 && pass != 0 && pass != DEFAULT) {
-#else
-    if (pass != 3 && pass != 2 && pass != 1 && pass != DEFAULT) {
-#endif
-#else
-    if (pass != 2 && pass != 1 && pass != DEFAULT) {
-#endif
         fprintf(config->error_log_file,
                 "Error instance %u: %d pass encode is not supported\n",
                 channel_number + 1,
-#if CLN_ENC_CONFIG_SIG
                 config->config.pass);
-#else
-                config->pass);
-#endif
         return EB_ErrorBadParameter;
     }
 
@@ -2655,44 +2269,30 @@ static EbErrorType verify_settings(EbConfig *config, uint32_t channel_number) {
         }
     }
 
-#if LIMIT_16K
     // Limit 8K & 16K configurations ( due to  memory constraints)
-    if(config->config.source_width * config->config.source_height >= 7680*4320 && config->config.enc_mode <=ENC_M7 ) {
+    if (config->config.source_width * config->config.source_height >= 7680 * 4320 &&
+        config->config.enc_mode <= ENC_M7) {
         fprintf(config->error_log_file,
-            "Error instance %u: 8k+ encodes are limited to M8 and up\n",
-            channel_number + 1 );
+                "Error instance %u: 8k+ encodes are limited to M8 and up\n",
+                channel_number + 1);
         return EB_ErrorBadParameter;
     }
-#endif
 
-#if DIS_VBR_HL0
     if (config->config.hierarchical_levels == 0 && config->config.rate_control_mode == 1) {
-        fprintf(
-            config->error_log_file,
-            "Error instance %u: VBR encode for hierarchical_levels %u is not supported\n",
-            channel_number + 1,
-            config->config.hierarchical_levels);
+        fprintf(config->error_log_file,
+                "Error instance %u: VBR encode for hierarchical_levels %u is not supported\n",
+                channel_number + 1,
+                config->config.hierarchical_levels);
         return EB_ErrorBadParameter;
     }
-#endif
-#if !FIX_2PASS_CRF
-    if (pass != DEFAULT && config->config.rate_control_mode == 0) {
-        fprintf(
-            config->error_log_file,
-            "Error instance %u: 2 pass encode for CRF is not supported \n",
-            channel_number + 1);
+    if (config->config.enable_adaptive_quantization == 1 &&
+        (config->config.tile_columns > 0 || config->config.tile_rows > 0)) {
+        fprintf(config->error_log_file,
+                "Error instance %u: Adaptive quantization using segmentation with tiles is not "
+                "supported\n",
+                channel_number + 1);
         return EB_ErrorBadParameter;
     }
-#endif
-#if FIX_DISALLOW_SEG_TILES
-    if (config->config.enable_adaptive_quantization == 1 && (config->config.tile_columns > 0 || config->config.tile_rows > 0)) {
-        fprintf(
-            config->error_log_file,
-            "Error instance %u: Adaptive quantization using segmentation with tiles is not supported\n",
-            channel_number + 1);
-        return EB_ErrorBadParameter;
-    }
-#endif
     return return_error;
 }
 
@@ -2760,11 +2360,14 @@ uint32_t get_help(int32_t argc, char *const argv[]) {
         "Usage: SvtAv1EncApp <options> -b dst_filename -i src_filename\n\n"
         "Examples:\n"
         "Multi-pass encode (VBR):\n"
-        "    SvtAv1EncApp <--stats svtav1_2pass.log> --passes 2 --rc 1 --tbr 1000 -b dst_filename -i src_filename\n"
+        "    SvtAv1EncApp <--stats svtav1_2pass.log> --passes 2 --rc 1 --tbr 1000 -b dst_filename "
+        "-i src_filename\n"
         "Multi-pass encode (CRF):\n"
-        "    SvtAv1EncApp <--stats svtav1_2pass.log> --passes 2 --rc 0 --crf 43 -b dst_filename -i src_filename\n"
+        "    SvtAv1EncApp <--stats svtav1_2pass.log> --passes 2 --rc 0 --crf 43 -b dst_filename -i "
+        "src_filename\n"
         "Single-pass encode (VBR):\n"
-        "    SvtAv1EncApp <--stats svtav1_2pass.log> --passes 1 --rc 1 --tbr 1000 -b dst_filename -i src_filename\n"
+        "    SvtAv1EncApp <--stats svtav1_2pass.log> --passes 1 --rc 1 --tbr 1000 -b dst_filename "
+        "-i src_filename\n"
         "\nOptions:\n");
     for (ConfigEntry *options_token_index = config_entry_options; options_token_index->token;
          ++options_token_index) {
@@ -2875,8 +2478,8 @@ uint32_t get_help(int32_t argc, char *const argv[]) {
         }
     }
     printf("\nColor Description Options:\n");
-    for (ConfigEntry* cd_token_index = config_entry_color_description; cd_token_index->token;
-        ++cd_token_index) {
+    for (ConfigEntry *cd_token_index = config_entry_color_description; cd_token_index->token;
+         ++cd_token_index) {
         switch (check_long(*cd_token_index, cd_token_index[1])) {
         case 1:
             printf("  %s, %-25s    %-25s\n",
@@ -2933,36 +2536,16 @@ static EbBool check_two_pass_conflicts(int32_t argc, char *const argv[]) {
     }
     return EB_FALSE;
 }
-#if !TUNE_RC
-#if FIX_2PASS_CRF
-#define ENC_MRS         -2 // Highest quality research mode (slowest)
-#define ENC_MR          -1 //Research mode with higher quality than M0
-#define ENC_M0          0
-#define ENC_M1          1
-#define ENC_M2          2
-#define ENC_M3          3
-#define ENC_M4          4
-#define ENC_M5          5
-#define ENC_M6          6
-#define ENC_M7          7
-#define ENC_M8          8
-#define ENC_M9          9
-#define ENC_M10         10
-#define ENC_M11         11
-#define ENC_M12         12
-#define ENC_M13         13
-#endif
-#endif
-#if CLN_ENC_CONFIG_SIG
 /*
 * Returns the number of passes, multi_pass_mode
 */
-uint32_t get_passes(int32_t argc, char* const argv[], EncPass enc_pass[MAX_ENC_PASS], MultiPassModes* multi_pass_mode) {
-    char     config_string[COMMAND_LINE_MAX_SIZE];
+uint32_t get_passes(int32_t argc, char *const argv[], EncPass enc_pass[MAX_ENC_PASS],
+                    MultiPassModes *multi_pass_mode) {
+    char config_string[COMMAND_LINE_MAX_SIZE];
 
-    int rc_mode = 0;
+    int rc_mode  = 0;
     int enc_mode = 0;
-    int ip = -1;
+    int ip       = -1;
     // Read required inputs to decide on the number of passes and check the validity of their ranges
     if (find_token(argc, argv, RATE_CONTROL_ENABLE_TOKEN, config_string) == 0 ||
         find_token(argc, argv, "--rc", config_string) == 0) {
@@ -2974,15 +2557,13 @@ uint32_t get_passes(int32_t argc, char* const argv[], EncPass enc_pass[MAX_ENC_P
     }
 
     int32_t passes = rc_mode ? -1 : 1;
-#if FIX_MULTIPASS_WITH_FIFO
     int using_fifo = 0;
 
     if (find_token(argc, argv, INPUT_FILE_LONG_TOKEN, config_string) == 0 ||
         find_token(argc, argv, INPUT_FILE_TOKEN, config_string) == 0) {
         if (!strcmp(config_string, "stdin")) {
             using_fifo = 1;
-        }
-        else {
+        } else {
 #ifdef _WIN32
             HANDLE in_file = CreateFile(
                 config_string, 0, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
@@ -3000,7 +2581,6 @@ uint32_t get_passes(int32_t argc, char* const argv[], EncPass enc_pass[MAX_ENC_P
 #endif
         }
     }
-#endif
     if (find_token(argc, argv, ENCMODE_TOKEN, config_string) == 0 ||
         find_token(argc, argv, "-enc-mode", config_string) == 0 ||
         find_token(argc, argv, "--preset", config_string) == 0) {
@@ -3020,7 +2600,8 @@ uint32_t get_passes(int32_t argc, char* const argv[], EncPass enc_pass[MAX_ENC_P
             return 0;
         }
         if ((ip < 0) && rc_mode >= 1) {
-            fprintf(stderr, "Error: The intra period must be > 0 for RateControlMode %d \n", rc_mode);
+            fprintf(
+                stderr, "Error: The intra period must be > 0 for RateControlMode %d \n", rc_mode);
             return 0;
         }
     }
@@ -3029,63 +2610,54 @@ uint32_t get_passes(int32_t argc, char* const argv[], EncPass enc_pass[MAX_ENC_P
         passes = strtol(config_string, NULL, 0);
         if (passes == 0 || passes > 2) {
             fprintf(stderr,
-                "Error: The number of passes has to be within the range [1,%u]\n",
-                (uint32_t)2);
+                    "Error: The number of passes has to be within the range [1,%u]\n",
+                    (uint32_t)2);
             return 0;
         }
     }
-#if FIX_MULTIPASS_WITH_FIFO
     if (using_fifo && passes > 1) {
         fprintf(stderr,
-            "Warning: The number of passes has to be 1 when using a fifo, using 1-pass\n");
+                "Warning: The number of passes has to be 1 when using a fifo, using 1-pass\n");
         *multi_pass_mode = SINGLE_PASS;
-        passes = 1;
+        passes           = 1;
     }
-#endif
     // Determine the number of passes in CRF mode
     if (rc_mode == 0) {
         if (passes == -1)
-#if FIX_DG
-#if TUNE_2PASS_SETTINGS
             passes = (enc_mode <= ENC_M7) ? 2 : 1;
-#else
-            passes = (enc_mode <= ENC_M11) ? 2 : 1;
-#endif
-#else
-            passes = (enc_mode <= ENC_M3) ? 2 : 1;
-#endif
-#if FIX_ISSUE_46
         if (ip > -1 && ip < 16) {
             passes = 1;
-            fprintf(stderr, "\nWarning: Multipass CRF is not supported for Intra_period %d. Switching to 1-pass encoding\n\n", ip);
+            fprintf(stderr,
+                    "\nWarning: Multipass CRF is not supported for Intra_period %d. Switching to "
+                    "1-pass encoding\n\n",
+                    ip);
         }
-#endif
         *multi_pass_mode = passes == 2 ? TWO_PASS_IPP_FINAL : SINGLE_PASS;
     }
     // Determine the number of passes in rate control mode
     else {
         if (passes == -1) {
-            enc_pass[0] = ENC_SINGLE_PASS;
+            enc_pass[0]      = ENC_SINGLE_PASS;
             *multi_pass_mode = SINGLE_PASS;
             return 1;
         }
         if (passes == 1)
             *multi_pass_mode = SINGLE_PASS;
         else if (passes > 1) {
-#if TUNE_MIDDLEP_VBR
             if (enc_mode > ENC_M12) {
-                fprintf(stderr, "\nWarning: Multipass VBR is not supported for preset %d. Switching to 1-pass encoding\n\n", enc_mode);
-                passes = 1;
+                fprintf(stderr,
+                        "\nWarning: Multipass VBR is not supported for preset %d. Switching to "
+                        "1-pass encoding\n\n",
+                        enc_mode);
+                passes           = 1;
                 *multi_pass_mode = SINGLE_PASS;
-            }
-            else
-#endif
+            } else
                 if (rc_mode > 1)
-                    *multi_pass_mode = (passes == 2) ? TWO_PASS_IPP_FINAL : SINGLE_PASS;
-                else {
-                    passes = 3;
-                    *multi_pass_mode = THREE_PASS_IPP_SAMEPRED_FINAL;
-                }
+                *multi_pass_mode = (passes == 2) ? TWO_PASS_IPP_FINAL : SINGLE_PASS;
+            else {
+                passes           = 3;
+                *multi_pass_mode = THREE_PASS_IPP_SAMEPRED_FINAL;
+            }
         }
     }
 
@@ -3093,334 +2665,21 @@ uint32_t get_passes(int32_t argc, char* const argv[], EncPass enc_pass[MAX_ENC_P
         return 0;
     // Set the settings for each pass based on multi_pass_mode
     switch (*multi_pass_mode) {
-        case SINGLE_PASS:
-            enc_pass[0] = ENC_SINGLE_PASS;
-            break;
-        case TWO_PASS_IPP_FINAL:
-            enc_pass[0] = ENC_FIRST_PASS;
-            enc_pass[1] = ENC_LAST_PASS;
-            break;
-        case THREE_PASS_IPP_SAMEPRED_FINAL:
-            enc_pass[0] = ENC_FIRST_PASS;
-            enc_pass[1] = ENC_MIDDLE_PASS;
-            enc_pass[2] = ENC_LAST_PASS;
-            break;
-        default:
-            break;
-    }
-
-    return passes;
-}
-#else
-
-#if TUNE_MULTI_PASS
-uint32_t get_passes(int32_t argc, char *const argv[], EncodePass pass[MAX_ENCODE_PASS], MultiPassModes *multi_pass_mode) {
-#else
-uint32_t get_passes(int32_t argc, char *const argv[], EncodePass pass[MAX_ENCODE_PASS]) {
-#endif
-    char     config_string[COMMAND_LINE_MAX_SIZE];
-#if FIX_2PASS_CRF
-    int32_t passes = 1; // Default mode is used
-#else
-    uint32_t passes;
-#endif
-#if FIX_MULTIPASS_WITH_FIFO
-    int using_fifo = 0;
-
-    if (find_token(argc, argv, INPUT_FILE_LONG_TOKEN, config_string) == 0 ||
-        find_token(argc, argv, INPUT_FILE_TOKEN, config_string) == 0) {
-        if (!strcmp(config_string, "stdin")) {
-            using_fifo = 1;
-        }
-        else {
-#ifdef _WIN32
-            HANDLE in_file = CreateFile(
-                config_string, 0, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
-            if (in_file != INVALID_HANDLE_VALUE) {
-                using_fifo = GetFileType(in_file) == FILE_TYPE_PIPE;
-                CloseHandle(in_file);
-            }
-#else
-            struct stat st;
-            if (!stat(config_string, &st)) {
-                if (S_ISFIFO(st.st_mode)) {
-                    using_fifo = 1;
-                }
-            }
-#endif
-        }
-    }
-#endif
-#if FTR_MULTI_PASS_API
-#if FIX_2PASS_CRF
-    int rc_mode = 0;
-    int enc_mode = 0;
-#if FIX_ISSUE_46
-    int ip = -1;
-#endif
-    if (find_token(argc, argv, RATE_CONTROL_ENABLE_TOKEN, config_string) == 0 ||
-        find_token(argc, argv, "--rc", config_string) == 0)
-        rc_mode = strtol(config_string, NULL, 0);
-
-    if (find_token(argc, argv, ENCMODE_TOKEN, config_string) == 0 ||
-        find_token(argc, argv, "-enc-mode", config_string) == 0 ||
-        find_token(argc, argv, "--preset", config_string) == 0)
-        enc_mode = strtol(config_string, NULL, 0);
-
-#if FIX_ISSUE_46
-    if (find_token(argc, argv, INTRA_PERIOD_TOKEN, config_string) == 0 ||
-        find_token(argc, argv, "-intra-period", config_string) == 0 ||
-        find_token(argc, argv, "--keyint", config_string) == 0)
-        ip = strtol(config_string, NULL, 0);
-#endif
-#if CLN_REM_WARN
-    if (find_token(argc, argv, PASSES_TOKEN, config_string) == 0) {
-        passes = strtol(config_string, NULL, 0);
-#if FTR_MULTI_PASS_API
-        if (passes == 0 || passes > 2) {
-#else
-        if (passes == 0 || passes > 2) {
-#endif
-            fprintf(stderr,
-                "Error: The number of passes has to be within the range [1,%u]\n",
-                (uint32_t)2);
-            return 0;
-        }
-    }
-#if FIX_MULTIPASS_WITH_FIFO
-    if (using_fifo && passes > 1) {
-        fprintf(stderr,
-            "Warning: The number of passes has to be 1 when using a fifo, using 1-pass\n");
-        *multi_pass_mode = SINGLE_PASS;
-        passes = 1;
-    }
-#endif
-#else
-    if (find_token(argc, argv, PASSES_TOKEN, config_string) != 0) {
-    }
-    else
-        passes = strtol(config_string, NULL, 0);
-#endif
-    if (rc_mode == 0) { // CRF mode
-        if (passes == -1)
-#if FIX_DG
-#if TUNE_2PASS_SETTINGS
-            passes = (enc_mode <= ENC_M7) ? 2 : 1;
-#else
-            passes = (enc_mode <= ENC_M11) ? 2 : 1;
-#endif
-#else
-            passes = (enc_mode <= ENC_M3) ? 2 : 1;
-#endif
-#if FIX_ISSUE_46
-        if (ip > -1 && ip < 16)
-            passes = 1;
-#endif
-#if FTR_OP_TEST
-        passes = 1;
-#endif
-#if TUNE_MULTI_PASS
-        *multi_pass_mode = passes == 2 ? TWO_PASS_IPP_FINAL : SINGLE_PASS;
-#endif
-#if !CLN_REM_WARN
-        if (find_token(argc, argv, PASSES_TOKEN, config_string) != 0) {
-        }
-        else {
-            int input_passes = strtol(config_string, NULL, 0);
-            if ((enc_mode <= ENC_M3) && (input_passes == 1))
-                fprintf(stderr, "\nWarning: --passes 1 CRF is not supported for preset %d\n\n", enc_mode);
-            else if ((enc_mode > ENC_M3) && (input_passes == 2))
-                fprintf(stderr, "\nWarning: --passes 2 CRF is not supported for preset %d\n\n", enc_mode);
-        }
-#endif
-    }
-    else {
-        if (find_token(argc, argv, PASSES_TOKEN, config_string) != 0) {
-            pass[0] = ENCODE_SINGLE_PASS;
-#if TUNE_MULTI_PASS
-            *multi_pass_mode = SINGLE_PASS;
-#endif
-            return 1;
-        }
-        passes = strtol(config_string, NULL, 0);
-#if TUNE_MULTI_PASS
-#if TUNE_RC
-        *multi_pass_mode = (passes == 2) ? TWO_PASS_IPP_FINAL : SINGLE_PASS;
-#else
-        *multi_pass_mode = SINGLE_PASS;
-#endif
-#if TUNE_MIDDLEP_VBR
-        if (enc_mode > ENC_M12 && passes > 1) {
-            fprintf(stderr, "\nWarning: Multipass VBR is not supported for preset %d. Switching to 1-pass encoding\n\n", enc_mode);
-            passes = 1;
-            *multi_pass_mode = SINGLE_PASS;
-        }
-        else
-#endif
-        if (rc_mode > 1) {
-            if (passes == 3) {
-                passes = 2;
-                *multi_pass_mode = TWO_PASS_IPP_FINAL;
-                fprintf(stderr, "\nWarning: --passes 3 CBR is not supported. Switching to 2-pass encoding\n\n");
-            }
-            else if (passes == 2)
-                *multi_pass_mode = TWO_PASS_IPP_FINAL;
-            else
-                *multi_pass_mode = SINGLE_PASS;
-        }
-        else {
-#if TUNE_RC
-            if (passes > 1) {
-                passes = 3;
-                *multi_pass_mode = THREE_PASS_IPP_SAMEPRED_FINAL;
-            }
-#else
-            if (passes > 1) {
-                if (enc_mode > ENC_M10) {
-                    passes = 2;
-                    *multi_pass_mode = TWO_PASS_IPP_FINAL;
-                    fprintf(stderr, "\nWarning: --passes 3 VBR is not supported for preset %d. Switching to 2-pass encoding\n\n", enc_mode);
-                }
-                else if (enc_mode > ENC_M7) {
-                    passes = 2;
-                    *multi_pass_mode = TWO_PASS_SAMEPRED_FINAL;
-                    fprintf(stderr, "\nWarning: --passes 3 VBR is not supported for preset %d. Switching to 2-pass encoding\n\n", enc_mode);
-                }
-                else
-                {
-                    passes = 3;
-                    *multi_pass_mode = THREE_PASS_IPP_SAMEPRED_FINAL;
-                }
-        }
-#endif
-        }
-#else
-        if (enc_mode > ENC_M7  && passes == 3) {
-            passes = 2;
-            fprintf(stderr, "\nWarning: --passes 3 VBR is not supported for preset %d. Switching to 2-pass encoding\n\n", enc_mode);
-        }
-        else if (rc_mode > 1 && passes == 3) {
-            passes = 2;
-            fprintf(stderr, "\nWarning: --passes 3 CBR is not supported. Switching to 2-pass encoding\n\n");
-        }
-#endif
-    }
-#else
-    if (find_token(argc, argv, PASSES_TOKEN, config_string) != 0) {
-        pass[0] = ENCODE_SINGLE_PASS;
-        return 1;
-    }
-    passes = strtol(config_string, NULL, 0);
-#endif
-#else
-#if FIX_2PASS_CRF
-    int rc_mode = 0;
-    if (find_token(argc, argv, RATE_CONTROL_ENABLE_TOKEN, config_string) == 0 ||
-        find_token(argc, argv, "--rc", config_string) == 0)
-        rc_mode = strtol(config_string, NULL, 0);
-    if (rc_mode == 0) { // CRF mode
-        int enc_mode = 0;
-        if (passes == -1) {
-            if (find_token(argc, argv, ENCMODE_TOKEN, config_string) == 0 ||
-                find_token(argc, argv, "-enc-mode", config_string) == 0 ||
-                find_token(argc, argv, "--preset", config_string) == 0)
-                enc_mode = strtol(config_string, NULL, 0);
-            passes = (enc_mode <= ENC_M3) ? 2 : 1;
-        }
-        if (find_token(argc, argv, PASSES_TOKEN, config_string) != 0) {
-        }
-        else {
-            int input_passes = strtol(config_string, NULL, 0);
-            if((enc_mode <= ENC_M3) && (input_passes == 1))
-                fprintf(stderr,"\nWarning: --passes 1 CRF is not supported for preset %d\n\n", enc_mode);
-            else if ((enc_mode > ENC_M3) && (input_passes == 2))
-                fprintf(stderr, "\nWarning: --passes 2 CRF is not supported for preset %d\n\n", enc_mode);
-        }
-    }
-    else {
-        if (find_token(argc, argv, PASSES_TOKEN, config_string) != 0) {
-            pass[0] = ENCODE_SINGLE_PASS;
-            return 1;
-        }
-        passes = strtol(config_string, NULL, 0);
-    }
-#else
-    if (find_token(argc, argv, PASSES_TOKEN, config_string) != 0) {
-        pass[0] = ENCODE_SINGLE_PASS;
-        return 1;
-    }
-    passes = strtol(config_string, NULL, 0);
-#endif
-#endif
-
-    if (passes == 1) {
-        pass[0] = ENCODE_SINGLE_PASS;
-        return 1;
-    }
-#if !FIX_2PASS_CRF
-    int rc_mode = 0;
-
-    if (find_token(argc, argv, RATE_CONTROL_ENABLE_TOKEN, config_string) == 0 ||
-        find_token(argc, argv, "--rc", config_string) == 0)
-        rc_mode = strtol(config_string, NULL, 0);
-
-    if (rc_mode == 0)
-    {
-        fprintf(
-            stderr,
-#if FTR_2PASS_1PASS_UNIFICATION
-            "\nWarning: --passes 2 CRF is not supported, force single pass\n\n");
-#else
-            "\nWarn: --passes 2 CRF for preset > 3 is not supported yet, force single pass\n\n");
-#endif
-        pass[0] = ENCODE_SINGLE_PASS;
-        return 1;
-    }
-#endif
-    if (check_two_pass_conflicts(argc, argv))
-        return 0;
-#if TUNE_MULTI_PASS
-    switch (*multi_pass_mode) {
-    case SINGLE_PASS:
-        pass[0] = ENCODE_SINGLE_PASS;
-        break;
+    case SINGLE_PASS: enc_pass[0] = ENC_SINGLE_PASS; break;
     case TWO_PASS_IPP_FINAL:
-        pass[0] = ENCODE_FIRST_PASS;
-        pass[1] = ENCODE_LAST_PASS;
-        break;
-    case TWO_PASS_SAMEPRED_FINAL:
-        pass[0] = ENCODE_MIDDLE_PASS;
-        pass[1] = ENCODE_LAST_PASS;
+        enc_pass[0] = ENC_FIRST_PASS;
+        enc_pass[1] = ENC_LAST_PASS;
         break;
     case THREE_PASS_IPP_SAMEPRED_FINAL:
-        pass[0] = ENCODE_FIRST_PASS;
-        pass[1] = ENCODE_MIDDLE_PASS;
-        pass[2] = ENCODE_LAST_PASS;
+        enc_pass[0] = ENC_FIRST_PASS;
+        enc_pass[1] = ENC_MIDDLE_PASS;
+        enc_pass[2] = ENC_LAST_PASS;
         break;
-    default:
-        break;
+    default: break;
     }
+
     return passes;
-#else
-#if FTR_MULTI_PASS_API
-    if (passes == 2) {
-        pass[0] = ENCODE_FIRST_PASS;
-        pass[1] = ENCODE_LAST_PASS;
-    }
-    else { // passes == 3
-        pass[0] = ENCODE_FIRST_PASS;
-        pass[1] = ENCODE_MIDDLE_PASS;
-        pass[2] = ENCODE_LAST_PASS;
-    }
-    return passes;
-#else
-    pass[0] = ENCODE_FIRST_PASS;
-    pass[1] = ENCODE_LAST_PASS;
-    return 2;
-#endif
-#endif
 }
-#endif
 
 void mark_token_as_read(const char *token, char *cmd_copy[], int32_t *cmd_token_cnt) {
     int32_t cmd_copy_index;
@@ -3452,11 +2711,7 @@ int32_t compute_frames_to_be_encoded(EbConfig *config) {
         file_size = ftello(config->input_file);
         fseeko(config->input_file, curr_loc, SEEK_SET); // seek back to that location
     }
-#if FTR_OP_TEST && (FTR_OPT_MPASS_DOWN_SAMPLE || FTR_OPT_IPP_DOWN_SAMPLE) &&  !CLN_ENC_CONFIG_SIG
-    frame_size = (config->org_input_padded_width) * (config->org_input_padded_height); // Luma
-#else
     frame_size = config->input_padded_width * config->input_padded_height; // Luma
-#endif
     frame_size += 2 * (frame_size >> (3 - config->config.encoder_color_format)); // Add Chroma
     frame_size = frame_size << ((config->config.encoder_bit_depth == 10) ? 1 : 0);
 
@@ -3790,11 +3045,7 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EncChannel *chan
     /***************************************************************************************************/
     token_index                     = -1;
     EbErrorType return_result_error = EB_ErrorNone;
-#if FIX_INT_OVERLOW
-    int32_t warning_index       = -1;
-#else
-    uint32_t    warning_index       = -1;
-#endif
+    int32_t warning_index = -1;
     // Parse command line for tokens
     while (config_entry[++token_index].name != NULL) {
         if (config_entry[token_index].type == SINGLE_INPUT) {
@@ -3894,13 +3145,6 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EncChannel *chan
 
                 // Assuming no errors, add padding to width and height
                 if (c->return_error == EB_ErrorNone) {
-#if FTR_OP_TEST && (FTR_OPT_MPASS_DOWN_SAMPLE || FTR_OPT_IPP_DOWN_SAMPLE)
-                    config->org_input_padded_width  = config->config.source_width;
-                    config->org_input_padded_height = config->config.source_height;
-                    // To make sure the down scaled video has width and height of multiple of 2
-                    config->config.source_width = (((config->config.source_width >> 1)>>1)<<1);
-                    config->config.source_height = (((config->config.source_height >> 1) >> 1) << 1);
-#endif
                     config->input_padded_width  = config->config.source_width;
                     config->input_padded_height = config->config.source_height;
                 }

@@ -85,7 +85,6 @@ static INLINE void variance8_sse2(const uint8_t *src, const int src_stride, cons
     }
 }
 
-#if SSE_CODE_OPT
 static INLINE void variance16_kernel_sse2(const uint8_t *const src, const uint8_t *const ref,
                                           __m128i *const sse, __m128i *const sum) {
     const __m128i zero = _mm_setzero_si128();
@@ -187,15 +186,13 @@ static INLINE void variance_final_1024_pel_sse2(__m128i vsse, __m128i vsum, unsi
     vsum = sum_to_32bit_sse2(vsum);
     *sum = add32x4_sse2(vsum);
 }
-#endif
-
 
 #define AOM_VAR_NO_LOOP_SSE2(bw, bh, bits, max_pixels)                           \
     unsigned int svt_aom_variance##bw##x##bh##_sse2(const uint8_t *src,          \
                                                     int            src_stride,   \
                                                     const uint8_t *ref,          \
                                                     int            ref_stride,   \
-                                                    unsigned int * sse) {        \
+                                                    unsigned int * sse) {         \
         __m128i vsse = _mm_setzero_si128();                                      \
         __m128i vsum;                                                            \
         int     sum = 0;                                                         \
@@ -215,7 +212,6 @@ AOM_VAR_NO_LOOP_SSE2(8, 8, 6, 128);
 AOM_VAR_NO_LOOP_SSE2(8, 16, 7, 128);
 AOM_VAR_NO_LOOP_SSE2(8, 32, 8, 256);
 
-#if SSE_CODE_OPT
 AOM_VAR_NO_LOOP_SSE2(16, 4, 6, 128);
 AOM_VAR_NO_LOOP_SSE2(16, 8, 7, 128);
 AOM_VAR_NO_LOOP_SSE2(16, 16, 8, 256);
@@ -228,10 +224,10 @@ AOM_VAR_NO_LOOP_SSE2(32, 32, 10, 1024);
 
 #define AOM_VAR_LOOP_SSE2(bw, bh, bits, uh)                                            \
     unsigned int svt_aom_variance##bw##x##bh##_sse2(const uint8_t *src,                \
-                                                int            src_stride,             \
-                                                const uint8_t *ref,                    \
-                                                int            ref_stride,             \
-                                                unsigned int * sse) {                  \
+                                                    int            src_stride,         \
+                                                    const uint8_t *ref,                \
+                                                    int            ref_stride,         \
+                                                    unsigned int * sse) {               \
         __m128i vsse = _mm_setzero_si128();                                            \
         __m128i vsum = _mm_setzero_si128();                                            \
         for (int i = 0; i < (bh / uh); ++i) {                                          \
@@ -258,49 +254,65 @@ AOM_VAR_LOOP_SSE2(128, 64, 13, 8); // 128x8 * ( 64/8 )
 AOM_VAR_LOOP_SSE2(128, 128, 14, 8); // 128x8 * ( 128/8 )
 
 AOM_VAR_NO_LOOP_SSE2(64, 16, 10, 1024);
-#endif
 
 // The 2 unused parameters are place holders for PIC enabled build.
 // These definitions are for functions defined in subpel_variance.asm
-#define DECL(w)                                                                \
-  int svt_aom_sub_pixel_variance##w##xh_sse2(                                  \
-      const uint8_t *src, ptrdiff_t src_stride, int x_offset, int y_offset,    \
-      const uint8_t *dst, ptrdiff_t dst_stride, int height, unsigned int *sse, \
-      void *unused0, void *unused)
+#define DECL(w)                                                           \
+    int svt_aom_sub_pixel_variance##w##xh_sse2(const uint8_t *src,        \
+                                               ptrdiff_t      src_stride, \
+                                               int            x_offset,   \
+                                               int            y_offset,   \
+                                               const uint8_t *dst,        \
+                                               ptrdiff_t      dst_stride, \
+                                               int            height,     \
+                                               unsigned int * sse,        \
+                                               void *         unused0,    \
+                                               void *         unused)
 DECL(4);
 DECL(8);
 DECL(16);
 
 #undef DECL
 
-#define FN(w, h, wf, wlog2, hlog2, cast_prod, cast)                           \
-  unsigned int svt_aom_sub_pixel_variance##w##x##h##_sse2(                    \
-      const uint8_t *src, int src_stride, int x_offset, int y_offset,         \
-      const uint8_t *dst, int dst_stride, unsigned int *sse_ptr) {            \
-    /*Avoid overflow in helper by capping height.*/                           \
-    const int hf = AOMMIN(h, 64);                                             \
-    const int wf2 = AOMMIN(wf, 128);                                          \
-    unsigned int sse = 0;                                                     \
-    int se = 0;                                                               \
-    for (int i = 0; i < (w / wf2); ++i) {                                     \
-      const uint8_t *src_ptr = src;                                           \
-      const uint8_t *dst_ptr = dst;                                           \
-      for (int j = 0; j < (h / hf); ++j) {                                    \
-        unsigned int sse2;                                                    \
-        const int    se2 = svt_aom_sub_pixel_variance##wf##xh_sse2(           \
-            src_ptr, src_stride, x_offset, y_offset, dst_ptr, dst_stride, hf, \
-            &sse2, NULL, NULL);                                               \
-        dst_ptr += hf * dst_stride;                                           \
-        src_ptr += hf * src_stride;                                           \
-        se += se2;                                                            \
-        sse += sse2;                                                          \
-      }                                                                       \
-      src += wf;                                                              \
-      dst += wf;                                                              \
-    }                                                                         \
-    *sse_ptr = sse;                                                           \
-    return sse - (unsigned int)(cast_prod(cast se * se) >> (wlog2 + hlog2));  \
-  }
+#define FN(w, h, wf, wlog2, hlog2, cast_prod, cast)                                    \
+    unsigned int svt_aom_sub_pixel_variance##w##x##h##_sse2(const uint8_t *src,        \
+                                                            int            src_stride, \
+                                                            int            x_offset,   \
+                                                            int            y_offset,   \
+                                                            const uint8_t *dst,        \
+                                                            int            dst_stride, \
+                                                            unsigned int * sse_ptr) {   \
+        /*Avoid overflow in helper by capping height.*/                                \
+        const int    hf  = AOMMIN(h, 64);                                              \
+        const int    wf2 = AOMMIN(wf, 128);                                            \
+        unsigned int sse = 0;                                                          \
+        int          se  = 0;                                                          \
+        for (int i = 0; i < (w / wf2); ++i) {                                          \
+            const uint8_t *src_ptr = src;                                              \
+            const uint8_t *dst_ptr = dst;                                              \
+            for (int j = 0; j < (h / hf); ++j) {                                       \
+                unsigned int sse2;                                                     \
+                const int    se2 = svt_aom_sub_pixel_variance##wf##xh_sse2(src_ptr,    \
+                                                                        src_stride, \
+                                                                        x_offset,   \
+                                                                        y_offset,   \
+                                                                        dst_ptr,    \
+                                                                        dst_stride, \
+                                                                        hf,         \
+                                                                        &sse2,      \
+                                                                        NULL,       \
+                                                                        NULL);      \
+                dst_ptr += hf * dst_stride;                                            \
+                src_ptr += hf * src_stride;                                            \
+                se += se2;                                                             \
+                sse += sse2;                                                           \
+            }                                                                          \
+            src += wf;                                                                 \
+            dst += wf;                                                                 \
+        }                                                                              \
+        *sse_ptr = sse;                                                                \
+        return sse - (unsigned int)(cast_prod(cast se * se) >> (wlog2 + hlog2));       \
+    }
 
 FN(128, 128, 16, 7, 7, (int64_t), (int64_t));
 FN(128, 64, 16, 7, 6, (int64_t), (int64_t));

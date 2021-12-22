@@ -52,7 +52,6 @@ typedef struct EbObjectWrapper {
     // next_ptr - a pointer to a different EbObjectWrapper.  Used
     //   only in the implemenation of a single-linked Fifo.
     struct EbObjectWrapper *next_ptr;
-
 #if SRM_REPORT
     uint64_t  pic_number;
 #endif
@@ -113,7 +112,6 @@ typedef struct EbMuxingQueue {
     EbCircularBuffer *process_queue;
     uint32_t          process_total_count;
     EbFifo **         process_fifo_ptr_array;
-
 #if SRM_REPORT
     uint32_t         curr_count; //run time fullness
     uint8_t          log;//if set monitor out the queue size
@@ -268,7 +266,6 @@ EbFifo *svt_system_resource_get_consumer_fifo(const EbSystemResource *resource_p
      *      EbObjectWrapper pointer.
      *********************************************************************/
 extern EbErrorType svt_get_empty_object(EbFifo *empty_fifo_ptr, EbObjectWrapper **wrapper_dbl_ptr);
-
 #if SRM_REPORT
 /*
   dump pictures occuping the SRM

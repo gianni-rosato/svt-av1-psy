@@ -26,36 +26,28 @@ typedef struct BlockList {
     uint16_t blk_mds_table[3]; //stores a max of 3 redundant blocks
 } BlockList_t;
 
-#if CLN_GEOM
 typedef enum GeomIndex {
-    GEOM_0,  //64x64  ->8x8  NSQ:OFF
-    GEOM_1,  //64x64  ->4x4  NSQ:ON
-    GEOM_2,  //128x128->4x4  NSQ:ON
+    GEOM_0, //64x64  ->8x8  NSQ:OFF
+    GEOM_1, //64x64  ->4x4  NSQ:ON
+    GEOM_2, //128x128->4x4  NSQ:ON
     GEOM_TOT
 } GeomIndex;
 
 void build_blk_geom(GeomIndex geom);
 
-#else
-void build_blk_geom();
-#endif
 typedef struct BlockGeom {
-#if CLN_GEOM
-    GeomIndex geom_idx;//type of geom this block belongs
-#endif
-    uint8_t depth; // depth of the block
-    Part    shape; // P_N..P_V4 . P_S is not used.
-    uint8_t origin_x; // orgin x from topleft of sb
-    uint8_t origin_y; // orgin x from topleft of sb
+    GeomIndex geom_idx; //type of geom this block belongs
+    uint8_t   depth; // depth of the block
+    Part      shape; // P_N..P_V4 . P_S is not used.
+    uint8_t   origin_x; // orgin x from topleft of sb
+    uint8_t   origin_y; // orgin x from topleft of sb
 
     uint8_t
              d1i; // index of the block in d1 dimension 0..24  (0 is parent square, 1 top half of H , ...., 24:last quarter of V4)
     uint16_t sqi_mds; // index of the parent square in md  scan.
-#if LIGHT_PD0
     uint16_t parent_depth_idx_mds; // index of the parent block of a given depth
     uint16_t d1_depth_offset; // offset to the next d1 sq block
     uint16_t ns_depth_offset; // offset to the next nsq block (skip remaining d2 blocks)
-#endif
     uint8_t
                 totns; // max number of ns blocks within one partition 1..4 (N:1,H:2,V:2,HA:3,HB:3,VA:3,VB:3,H4:4,V4:4)
     uint8_t     nsi; // non square index within a partition  0..totns-1
@@ -88,9 +80,6 @@ typedef struct BlockGeom {
     uint8_t tx_height_uv[MAX_VARTX_DEPTH + 1][MAX_TXB_COUNT]; //tx_size_wide
 
     uint16_t blkidx_mds; // block index in md scan
-#if !OPT_INLINE_FUNCS
-    uint16_t blkidx_dps; // block index in depth scan
-#endif
     int32_t  has_uv;
     int32_t  sq_size;
     int32_t  is_last_quadrant; // only for square bloks, is this the fourth quadrant block?
@@ -139,47 +128,26 @@ static INLINE TxSize av1_get_max_uv_txsize(BlockSize bsize, int32_t subsampling_
 
 #define NOT_USED_VALUE 0
 
-#if CLN_GEOM
-
 //gives the index of parent from the last qudrant child
-static const uint32_t parent_depth_offset[GEOM_TOT][6] =
-{
+static const uint32_t parent_depth_offset[GEOM_TOT][6] = {
     {NOT_USED_VALUE, 64, 16, 4, NOT_USED_VALUE, NOT_USED_VALUE},
     {NOT_USED_VALUE, 832, 208, 52, 8, NOT_USED_VALUE},
-    {NOT_USED_VALUE, 3320, 832, 208, 52, 8}
-};
+    {NOT_USED_VALUE, 3320, 832, 208, 52, 8}};
 //gives the index of next quadrant child within a depth
-static const uint32_t ns_depth_offset[GEOM_TOT][6] ={
+static const uint32_t ns_depth_offset[GEOM_TOT][6] = {
 
-  {85, 21, 5, 1, NOT_USED_VALUE, NOT_USED_VALUE},
-  {1101, 269, 61, 9, 1, NOT_USED_VALUE},
-  {4421, 1101, 269, 61, 9, 1}
-};
+    {85, 21, 5, 1, NOT_USED_VALUE, NOT_USED_VALUE},
+    {1101, 269, 61, 9, 1, NOT_USED_VALUE},
+    {4421, 1101, 269, 61, 9, 1}};
 //gives the next depth block(first qudrant child) from a given parent square
-static const uint32_t d1_depth_offset[GEOM_TOT][6] ={
+static const uint32_t d1_depth_offset[GEOM_TOT][6] = {
 
-   {1, 1, 1, 1, 1, NOT_USED_VALUE},
-   {25, 25, 25, 5, 1, NOT_USED_VALUE},
-   {17, 25, 25, 25, 5, 1}
-};
-#else
-
-static const uint32_t parent_depth_offset[2][6] = {
-    /*64x64*/ {NOT_USED_VALUE, 832, 208, 52, 8, NOT_USED_VALUE},
-    /*128x128*/ {NOT_USED_VALUE, 3320, 832, 208, 52, 8}};
-static const uint32_t ns_depth_offset[2][6] = {/*64x64*/ {1101, 269, 61, 9, 1, NOT_USED_VALUE},
-                                               /*128x128*/ {4421, 1101, 269, 61, 9, 1}};
-static const uint32_t d1_depth_offset[2][6] = {/*64x64*/ {25, 25, 25, 5, 1, NOT_USED_VALUE},
-                                               /*128x128*/ {17, 25, 25, 25, 5, 1}};
-
-#endif
-#if OPT_INLINE_FUNCS
+    {1, 1, 1, 1, 1, NOT_USED_VALUE}, {25, 25, 25, 5, 1, NOT_USED_VALUE}, {17, 25, 25, 25, 5, 1}};
 extern BlockGeom blk_geom_mds[MAX_NUM_BLOCKS_ALLOC];
 
-static INLINE const BlockGeom* get_blk_geom_mds(uint32_t bidx_mds) { return &blk_geom_mds[bidx_mds]; }
-#else
-const BlockGeom* get_blk_geom_mds(uint32_t bidx_mds);
-#endif
+static INLINE const BlockGeom* get_blk_geom_mds(uint32_t bidx_mds) {
+    return &blk_geom_mds[bidx_mds];
+}
 // CU Stats Helper Functions
 typedef struct CodedBlockStats {
     uint8_t depth;
@@ -191,10 +159,10 @@ typedef struct CodedBlockStats {
     uint8_t parent32x32_index;
 } CodedBlockStats;
 
-extern void* svt_aom_memalign(size_t align, size_t size);
-extern void* svt_aom_malloc(size_t size);
-extern void  svt_aom_free(void* memblk);
-extern void* svt_aom_memset16(void* dest, int32_t val, size_t length);
+extern void*                  svt_aom_memalign(size_t align, size_t size);
+extern void*                  svt_aom_malloc(size_t size);
+extern void                   svt_aom_free(void* memblk);
+extern void*                  svt_aom_memset16(void* dest, int32_t val, size_t length);
 extern const CodedBlockStats* get_coded_blk_stats(const uint32_t cu_idx);
 
 #define PU_ORIGIN_ADJUST(cu_origin, cu_size, offset) ((((cu_size) * (offset)) >> 2) + (cu_origin))
@@ -292,9 +260,7 @@ extern const CodedBlockStats* get_coded_blk_stats(const uint32_t cu_idx);
 #define MAX_UNSIGNED_VALUE ~0u
 #define MIN_SIGNED_VALUE ~0 - ((signed)(~0u >> 1))
 #define MAX_SIGNED_VALUE ((signed)(~0u >> 1))
-#if CLN_MATHUTIL
 #define CONST_SQRT2 (1.4142135623730950488016887242097) /*sqrt(2)*/
-#endif
 
 // Helper functions for EbLinkedListNode.
 
@@ -359,13 +325,13 @@ static INLINE int convert_to_trans_prec(int allow_hp, int coor) {
         return ROUND_POWER_OF_TWO_SIGNED(coor, WARPEDMODEL_PREC_BITS - 2) * 2;
 }
 
-
-#if FIXED_POINTS_PLANEWISE
 /* Convert Floating Point to Fixed Point example: int32_t val_fp8 = FLOAT2FP(val_float, 8, int32_t) */
-#define FLOAT2FP(x_float, base_move, fp_type)           ((fp_type)((x_float) * (((fp_type)(1))<<(base_move))))
+#define FLOAT2FP(x_float, base_move, fp_type) \
+    ((fp_type)((x_float) * (((fp_type)(1)) << (base_move))))
 
 /* Convert Fixed Point to Floating Point example: double val = FP2FLOAT(val_fp8, 8, int32_t, double) */
-#define FP2FLOAT(x_fp, base_move, fp_type, float_type)  ((((float_type)((fp_type)(x_fp))) / ((float_type)(((fp_type)1)<<(base_move)))))
+#define FP2FLOAT(x_fp, base_move, fp_type, float_type) \
+    ((((float_type)((fp_type)(x_fp))) / ((float_type)(((fp_type)1) << (base_move)))))
 
 #ifndef FIXED_POINT_ASSERT_TEST
 #if NDEBUG
@@ -377,17 +343,19 @@ static INLINE int convert_to_trans_prec(int allow_hp, int coor) {
 
 #if FIXED_POINT_ASSERT_TEST
 void svt_fixed_point_test_breakpoint(char* file, unsigned line);
-#define FP_ASSERT(expression)                                           \
-    if(!(expression)) {                                                 \
-        fprintf(stderr,"ERROR: FP_ASSERT Fixed Point overload %s:%u\n", __FILE__, (unsigned)(__LINE__));\
-        svt_fixed_point_test_breakpoint(__FILE__, (unsigned)(__LINE__));\
-        assert(0);                                                      \
-        abort();                                                        \
+#define FP_ASSERT(expression)                                            \
+    if (!(expression)) {                                                 \
+        fprintf(stderr,                                                  \
+                "ERROR: FP_ASSERT Fixed Point overload %s:%u\n",         \
+                __FILE__,                                                \
+                (unsigned)(__LINE__));                                   \
+        svt_fixed_point_test_breakpoint(__FILE__, (unsigned)(__LINE__)); \
+        assert(0);                                                       \
+        abort();                                                         \
     }
 #else /*FIXED_POINT_ASSERT_TEST*/
 #define FP_ASSERT(expression)
 #endif
-#endif /*FIXED_POINT_ASSERT_TEST*/
 
 #ifdef __cplusplus
 }

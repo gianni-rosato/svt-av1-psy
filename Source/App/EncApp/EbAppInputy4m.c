@@ -207,9 +207,7 @@ int32_t read_y4m_header(EbConfig *cfg) {
     cfg->config.frame_rate_denominator = fr_d;
     cfg->config.frame_rate             = fr_n / fr_d;
     cfg->config.encoder_bit_depth      = bitdepth;
-#if OPT_MMAP_FILE
     cfg->mmap.y4m_seq_hdr = ftell(cfg->input_file);
-#endif
 
     /* TODO: when implemented, need to set input bit depth
         (instead of the encoder bit depth) and chroma format */
@@ -231,11 +229,10 @@ void read_y4m_frame_delimiter(FILE *input_file, FILE *error_log_file) {
         return;
     }
 }
-#if OPT_MMAP_FILE
 /* computes size of y4m frame header*/
-void read_and_compute_y4m_frame_delimiter(FILE *input_file, FILE *error_log_file, uint32_t *frame_hdr) {
-
-    char buffer_y4m_header[YFM_HEADER_MAX] = { 0 };
+void read_and_compute_y4m_frame_delimiter(FILE *input_file, FILE *error_log_file,
+                                          uint32_t *frame_hdr) {
+    char buffer_y4m_header[YFM_HEADER_MAX] = {0};
 
     if (!fgets(buffer_y4m_header, sizeof(buffer_y4m_header), input_file)) {
         assert(feof(input_file));
@@ -247,12 +244,10 @@ void read_and_compute_y4m_frame_delimiter(FILE *input_file, FILE *error_log_file
     }
 
     int i = 0;
-    while (i < YFM_HEADER_MAX && buffer_y4m_header[i] != '\n')
-        i++;
+    while (i < YFM_HEADER_MAX && buffer_y4m_header[i] != '\n') i++;
 
     *frame_hdr = i + 1;
 }
-#endif
 /* check if the input file is in YUV4MPEG2 (y4m) format */
 EbBool check_if_y4m(EbConfig *cfg) {
 #define YUV4MPEG2_IND_SIZE 9

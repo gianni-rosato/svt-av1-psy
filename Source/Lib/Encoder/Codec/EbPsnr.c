@@ -285,4 +285,3 @@ int64_t svt_aom_highbd_get_v_sse_part(const Yv12BufferConfig *a, const Yv12Buffe
                           width,
                           height);
 }
-

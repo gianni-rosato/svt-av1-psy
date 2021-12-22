@@ -21,9 +21,6 @@
 typedef struct EbReferenceObject {
     EbDctor                     dctor;
     EbPictureBufferDesc *       reference_picture;
-#if !FTR_MEM_OPT
-    EbPictureBufferDesc *       reference_picture16bit;
-#endif
     EbPictureBufferDesc *       quarter_reference_picture;
     EbPictureBufferDesc *       sixteenth_reference_picture;
     EbDownScaledBufDescPtrArray ds_pics; // Pointer array for down scaled pictures
@@ -31,28 +28,13 @@ typedef struct EbReferenceObject {
     EbPictureBufferDesc *       quarter_input_picture;
     EbPictureBufferDesc *       sixteenth_input_picture;
     EbPictureBufferDesc *       downscaled_reference_picture[NUM_SCALES];
-#if !FTR_MEM_OPT
-    EbPictureBufferDesc *       downscaled_reference_picture16bit[NUM_SCALES];
-#endif
-    uint64_t                    downscaled_picture_number[NUM_SCALES]; // save the picture_number for each denom
-    EbHandle                    resize_mutex[NUM_SCALES];
-    uint64_t                    ref_poc;
-    uint16_t                    qp;
-    EB_SLICE                    slice_type;
-#if  FTR_INTRA_DETECTOR
-    uint8_t                     intra_coded_area; //percentage of intra coded area 0-100%
-#if !FTR_VLPD1
-    uint8_t                     intra_coded_area_sb
-        [MAX_NUMBER_OF_TREEBLOCKS_PER_PICTURE]; //percentage of intra coded area 0-100%
-#endif
-#endif
-#if FTR_COEFF_DETECTOR
-    uint8_t                    skip_coded_area;
-#endif
-#if !FTR_16K
-    uint32_t non_moving_index_array
-        [MAX_NUMBER_OF_TREEBLOCKS_PER_PICTURE]; //array to hold non-moving blocks in reference frames
-#endif
+    uint64_t downscaled_picture_number[NUM_SCALES]; // save the picture_number for each denom
+    EbHandle resize_mutex[NUM_SCALES];
+    uint64_t ref_poc;
+    uint16_t qp;
+    EB_SLICE slice_type;
+    uint8_t  intra_coded_area; //percentage of intra coded area 0-100%
+    uint8_t  skip_coded_area;
 
     uint8_t              tmp_layer_idx;
     EbBool               is_scene_change;
@@ -66,26 +48,16 @@ typedef struct EbReferenceObject {
     FrameType            frame_type;
     uint32_t             order_hint;
     uint32_t             ref_order_hint[7];
-#if !FTR_NEW_MULTI_PASS
-    StatStruct           stat_struct;
-    EbHandle             referenced_area_mutex;
-    uint64_t             referenced_area_avg;
-#endif
     double               r0;
-#if MS_CDEF_OPT3
-    uint32_t            ref_cdef_strengths_num;
-    uint8_t             ref_cdef_strengths[2][TOTAL_STRENGTHS];
-#endif
-#if FTR_VLPD1
-    uint8_t* sb_intra;
-    uint8_t* sb_skip;
-    uint8_t* sb_64x64_mvp;
-#endif
+    uint32_t             ref_cdef_strengths_num;
+    uint8_t              ref_cdef_strengths[2][TOTAL_STRENGTHS];
+    uint8_t *            sb_intra;
+    uint8_t *            sb_skip;
+    uint8_t *            sb_64x64_mvp;
     int32_t              mi_cols;
     int32_t              mi_rows;
-#if FTR_NEW_WN_LVLS
-    WienerUnitInfo** unit_info; // per plane, per rest. unit; used for fwding wiener info to future frames
-#endif
+    WienerUnitInfo *
+        *unit_info; // per plane, per rest. unit; used for fwding wiener info to future frames
 } EbReferenceObject;
 
 typedef struct EbReferenceObjectDescInitData {
@@ -102,8 +74,8 @@ typedef struct EbPaReferenceObject {
     EbPictureBufferDesc *downscaled_input_padded_picture_ptr[NUM_SCALES];
     EbPictureBufferDesc *downscaled_quarter_downsampled_picture_ptr[NUM_SCALES];
     EbPictureBufferDesc *downscaled_sixteenth_downsampled_picture_ptr[NUM_SCALES];
-    uint64_t             downscaled_picture_number[NUM_SCALES]; // save the picture_number for each denom
-    EbHandle             resize_mutex[NUM_SCALES];
+    uint64_t downscaled_picture_number[NUM_SCALES]; // save the picture_number for each denom
+    EbHandle resize_mutex[NUM_SCALES];
     uint64_t picture_number;
     uint8_t  dummy_obj;
 } EbPaReferenceObject;
@@ -118,7 +90,7 @@ typedef struct EbPaReferenceObjectDescInitData {
  * Extern Function Declarations
  **************************************/
 extern EbErrorType svt_reference_object_creator(EbPtr *object_dbl_ptr, EbPtr object_init_data_ptr);
-extern EbErrorType svt_reference_object_reset(EbReferenceObject* obj, SequenceControlSet* scs_ptr);
+extern EbErrorType svt_reference_object_reset(EbReferenceObject *obj, SequenceControlSet *scs_ptr);
 
 extern EbErrorType svt_pa_reference_object_creator(EbPtr *object_dbl_ptr,
                                                    EbPtr  object_init_data_ptr);

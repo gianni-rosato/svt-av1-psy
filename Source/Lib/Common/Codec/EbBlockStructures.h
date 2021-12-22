@@ -50,12 +50,6 @@ static const MV         kZeroMv     = {0, 0};
 static const FULLPEL_MV kZeroFullMv = {0, 0};
 static INLINE int       is_zero_mv(const MV *mv) { return *((const uint32_t *)mv) == 0; }
 
-#if !CLN_2PASS
-static INLINE int is_equal_mv(const MV *a, const MV *b) {
-    return *((const uint32_t *)a) == *((const uint32_t *)b);
-}
-#endif
-
 static AOM_INLINE FULLPEL_MV get_fullmv_from_mv(const MV *subpel_mv) {
     const FULLPEL_MV full_mv = {(int16_t)GET_MV_RAWPEL(subpel_mv->row),
                                 (int16_t)GET_MV_RAWPEL(subpel_mv->col)};
@@ -113,45 +107,27 @@ typedef struct InterIntraModeParams {
     /*!< Specifies the sign of the wedge blend. */
     // int interintra_wedge_sign; Always 0
 } InterIntraModeParams;
-#if OPT_MEMORY_MIP
-#if OPT_MI_MAP_MEMORY
 typedef struct BlockModeInfoEnc {
     // Only for INTER blocks
-    IntMv            mv[2];
+    IntMv mv[2];
 
     /*!< Specifies the type of filter used in inter prediction. Values 0..3 are allowed
         * with the same interpretation as for interpolation_filter. One filter type is specified
         * for the vertical filter direction and one for the horizontal filter direction.*/
     uint32_t interp_filters;
 
-    MvReferenceFrame    ref_frame[2]; // Only for INTER blocks
-    BlockSize           sb_type;
-    PredictionMode      mode;
-    PartitionType       partition;
-    UvPredictionMode    uv_mode; // Only for INTRA blocks
+    MvReferenceFrame ref_frame[2]; // Only for INTER blocks
+    BlockSize        sb_type;
+    PredictionMode   mode;
+    PartitionType    partition;
+    UvPredictionMode uv_mode; // Only for INTRA blocks
 
-#if !OPT_INTER_MI_MEM
-    uint16_t ref_mv_idx;
-#endif
-#if !OPT_MODE_MI_MEM
-    MotionMode motion_mode;
-#endif
-#if !OPT_INTRA_MI_MEM
-    uint8_t cfl_alpha_idx;
-    uint8_t cfl_alpha_signs;
-    int8_t angle_delta[PLANE_TYPES];
-#endif
-
-#if OPT_TX_MI_MEM
     uint8_t tx_depth;
-#endif
-#if OPT_INTER_MI_MEM
     uint8_t comp_group_idx : 1; // possible values: 0,1
-#endif
     /*!< 0 indicates that a distance based weighted scheme should be used for blending.
          *   1 indicates that the averaging scheme should be used for blending.*/
     uint8_t compound_idx : 1; // possible values: 0,1
-    uint8_t         skip : 1; // possible values: 0,1
+    uint8_t skip : 1; // possible values: 0,1
 
     /*!< 1 indicates that this block will use some default settings and skip mode info.
             * 0 indicates that the mode info is not skipped. */
@@ -164,94 +140,6 @@ typedef struct BlockModeInfoEnc {
     int32_t mi_col;
 #endif
 } BlockModeInfoEnc;
-#else
-typedef struct BlockModeInfoEnc {
-    // Common for both INTER and INTRA blocks
-    BlockSize      sb_type;
-    PredictionMode mode;
-    int8_t         skip;
-
-    PartitionType partition;
-
-    /*!< 1 indicates that this block will use some default settings and skip mode info.
-            * 0 indicates that the mode info is not skipped. */
-    int8_t skip_mode;
-
-    /*!< Specifies which segment is associated with the current intra block being decoded. */
-  //  int8_t segment_id;
-
-    /*!< Equal to 1 specifies that the segment_id is taken from the segmentation map. */
-  //  int8_t seg_id_predicted;
-    /*!< For Lossy mode   : Specifies number of TUs in a block for each plane
-             For Lossless mode: Specifies number of TUs for a block of size other than
-                                128x128, 128x64, 64x128 and 64x64 - computed based on blocksize */
-
-
-  //  uint8_t num_tus[MAX_MB_PLANE - 1];//DEC
-    /*!< Offset of first transform info from strat of SB pointer for each plane */
-   // uint16_t first_txb_offset[MAX_MB_PLANE - 1]; // DEC
-
-    // Only for INTRA blocks
-    UvPredictionMode uv_mode;
-
-    uint8_t use_intrabc;
-
-    // Only for INTER blocks
-
-    MvReferenceFrame ref_frame[2];
-    IntMv            mv[2];
-
-    uint16_t ref_mv_idx;
-
-    // interinter members
-
-  //  InterIntraModeParams interintra_mode_params;
-
-    /*!< Specifies the type of motion compensation to perform. */
-    MotionMode motion_mode;
-
-  //  InterIntraMode is_inter_intra;
-    /*!< 0 indicates that a distance based weighted scheme should be used for blending.
-         *   1 indicates that the averaging scheme should be used for blending.*/
-    uint8_t compound_idx;
-
-  //  InterInterCompoundData inter_inter_compound;
- //   FilterIntraModeInfo_t  filter_intra_mode_info;
-
-    /*!< Specifies how the motion vector used by inter prediction is obtained when using compound prediction. */
-    //uint8_t compound_mode;
-
-    /*!< Specifies the type of filter used in inter prediction. Values 0..3 are allowed
-        * with the same interpretation as for interpolation_filter. One filter type is specified
-        * for the vertical filter direction and one for the horizontal filter direction.*/
-    uint32_t interp_filters;
-
-    /*!< Index of the alpha Cb and alpha Cr combination */
-    uint8_t cfl_alpha_idx;
-
-    /*!< Contains the sign of the alpha values for U and V packed together into a single syntax element. */
-    uint8_t cfl_alpha_signs;
-
-    /*!< The actual prediction angle is the base angle + (angle_delta * step). */
-    int8_t angle_delta[PLANE_TYPES];
-
-    // Number of base colors for Y (0) and UV (1)
-   // uint8_t palette_size[MAX_MB_PLANE - 1];
-
-    /*mi_row & mi_col wrt a super block*/
-   // int8_t mi_row_in_sb;
-   // int8_t mi_col_in_sb;
-#if MODE_INFO_DBG
-    int32_t mi_row;
-    int32_t mi_col;
-#endif
-} BlockModeInfoEnc;
-#endif
-
-
-
-
-#endif
 
 typedef struct BlockModeInfo {
     // Common for both INTER and INTRA blocks
@@ -343,36 +231,9 @@ typedef struct MbModeInfo {
     int32_t  mi_row;
     int32_t  mi_col;
 #endif
-#if OPT_MI_MAP_MEMORY
-    BlockModeInfoEnc   block_mi;
-#if OPT_PALETTE_MEM
+    BlockModeInfoEnc    block_mi;
     PaletteLumaModeInfo palette_mode_info;
-#else
-    PaletteModeInfo palette_mode_info;
-#endif
-#if !OPT_INTER_MI_MEM
-    uint8_t     comp_group_idx;
-#endif
-    int8_t      cdef_strength;
-#if !OPT_TX_MI_MEM
-    TxSize      tx_size;
-    uint8_t     tx_depth;
-#endif
-#else
-#if !OPT_MEMORY_MIP
-    EbWarpedMotionParams wm_params;
-#endif
-    int32_t              comp_group_idx;
-    int8_t          cdef_strength;
-    TxSize          tx_size;
-    uint8_t         tx_depth;
-#if OPT_MEMORY_MIP
-    BlockModeInfoEnc   block_mi;
-#else
-    BlockModeInfo   block_mi;
-#endif
-    PaletteModeInfo palette_mode_info;
-#endif
+    int8_t              cdef_strength;
 } MbModeInfo;
 
 void svt_av1_tile_set_col(TileInfo *tile, const TilesInfo *tiles_info, int32_t mi_cols, int col);

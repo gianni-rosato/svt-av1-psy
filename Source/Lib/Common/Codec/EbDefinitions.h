@@ -30,21 +30,19 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#define  TASK_PAME   0
-#define  TASK_TFME   1
-#define  TASK_FIRST_PASS_ME  2
-#define  TASK_SUPERRES_RE_ME 3
-#define SCD_LAD                                             6  //number of future frames
-#define PD_WINDOW_SIZE                                      (SCD_LAD +2) //adding previous+current to future
-#define MAX_TPL_GROUP_SIZE                                  512 //enough to cover 6L gop
+#define TASK_PAME 0
+#define TASK_TFME 1
+#define TASK_FIRST_PASS_ME 2
+#define TASK_SUPERRES_RE_ME 3
+#define SCD_LAD 6 //number of future frames
+#define PD_WINDOW_SIZE (SCD_LAD + 2) //adding previous+current to future
+#define MAX_TPL_GROUP_SIZE 512 //enough to cover 6L gop
 
-#define MAX_TPL_EXT_GROUP_SIZE                              MAX_TPL_GROUP_SIZE
+#define MAX_TPL_EXT_GROUP_SIZE MAX_TPL_GROUP_SIZE
 #define OUT_Q_ADVANCE(h) ((h == REFERENCE_QUEUE_MAX_DEPTH - 1) ? 0 : h + 1)
-#if FTR_LAD_INPUT
-#define MIN_LAD_MG              1
-#define RC_DEFAULT_LAD_MG       3
-#endif
-void assert_err(uint32_t condition, char * err_msg);
+#define MIN_LAD_MG 1
+#define RC_DEFAULT_LAD_MG 3
+void assert_err(uint32_t condition, char *err_msg);
 
 #define TPL_DEP_COST_SCALE_LOG2 4
 #define MAX_TX_WEIGHT 500
@@ -63,9 +61,9 @@ void assert_err(uint32_t condition, char * err_msg);
 #define AOM_LEFT_TOP_MARGIN_SCALED(subsampling) \
     (AOM_LEFT_TOP_MARGIN_PX(subsampling) << SCALE_SUBPEL_BITS)
 typedef enum GM_LEVEL {
-    GM_FULL      = 0, // Exhaustive search mode.
-    GM_DOWN      = 1, // Downsampled search mode, with a downsampling factor of 2 in each dimension
-    GM_DOWN16    = 2, // Downsampled search mode, with a downsampling factor of 4 in each dimension
+    GM_FULL   = 0, // Exhaustive search mode.
+    GM_DOWN   = 1, // Downsampled search mode, with a downsampling factor of 2 in each dimension
+    GM_DOWN16 = 2, // Downsampled search mode, with a downsampling factor of 4 in each dimension
 } GM_LEVEL;
 typedef enum SqWeightOffsets {
     CONSERVATIVE_OFFSET_0 = 5,
@@ -94,8 +92,9 @@ typedef struct {
 } CdefList;
 #define FB_NUM 3 // number of freqiency bands
 #define SSEG_NUM 2 // number of sse_gradient bands
-#define DEPTH_DELTA_NUM 5 // number of depth refinement 0: Pred-2, 1:  Pred-1, 2:  Pred, 3:  Pred+1, 4:  Pred+2,
-#define TXT_DEPTH_DELTA_NUM   3 // negative, pred, positive
+#define DEPTH_DELTA_NUM \
+    5 // number of depth refinement 0: Pred-2, 1:  Pred-1, 2:  Pred, 3:  Pred+1, 4:  Pred+2,
+#define TXT_DEPTH_DELTA_NUM 3 // negative, pred, positive
 #define UNUSED_HIGH_FREQ_BAND_TH 200
 #define UNUSED_LOW_FREQ_BAND_TH 0
 
@@ -147,15 +146,8 @@ enum {
 #define ADD_DELTA_QP_SUPPORT 1 // Add delta QP support
 #define BLOCK_MAX_COUNT_SB_128 4421
 
-#if !CLN_GEOM
-#define BLOCK_MAX_COUNT_SB_64 1101
-#endif
 #define MAX_TXB_COUNT 16 // Maximum number of transform blocks per depth
-#if FTR_LAD_INPUT && !TUNE_LAD_MAX
-#define MAX_LAD 300 // max lookahead-distance 5x60fps
-#else
 #define MAX_LAD 120 // max lookahead-distance 2x60fps
-#endif
 #define ROUND_UV(x) (((x) >> 3) << 3)
 #define AV1_PROB_COST_SHIFT 9
 #define AOMINNERBORDERINPIXELS 160
@@ -183,11 +175,10 @@ enum {
 #define SB_STRIDE_Y MAX_SB_SIZE
 #define SB_STRIDE_UV (MAX_SB_SIZE >> 1)
 
-#if FTR_MEM_OPT
-#define INTERPOLATION_OFFSET   8
-#define PACKED_BUFFER_SIZE ((MAX_SB_SIZE+ (INTERPOLATION_OFFSET << 1)) * (MAX_SB_SIZE+(INTERPOLATION_OFFSET << 1)))
+#define INTERPOLATION_OFFSET 8
+#define PACKED_BUFFER_SIZE \
+    ((MAX_SB_SIZE + (INTERPOLATION_OFFSET << 1)) * (MAX_SB_SIZE + (INTERPOLATION_OFFSET << 1)))
 
-#endif
 // Min superblock size
 #define MIN_SB_SIZE 64
 #define MIN_SB_SIZE_LOG2 6
@@ -437,7 +428,7 @@ static INLINE int64_t clamp64(int64_t value, int64_t low, int64_t high) {
 
 // from aom aom_dsp_common.h
 static INLINE double fclamp(double value, double low, double high) {
-  return value < low ? low : (value > high ? high : value);
+    return value < low ? low : (value > high ? high : value);
 }
 static INLINE uint8_t clip_pixel(int32_t val) {
     return (uint8_t)((val > 255) ? 255 : (val < 0) ? 0 : val);
@@ -458,16 +449,14 @@ static INLINE int av1_num_planes(EbColorConfig *color_info) {
     return color_info->mono_chrome ? 1 : MAX_MB_PLANE;
 }
 
-#if  OPT_NA_INTRA
 typedef struct IntraSize {
     uint8_t top;
     uint8_t left;
 } IntraSize;
-#endif
 
-#define MI_SIZE_W_8X8    2
-#define MI_SIZE_W_16X16  4
-#define MI_SIZE_W_64X64  16
+#define MI_SIZE_W_8X8 2
+#define MI_SIZE_W_16X16 4
+#define MI_SIZE_W_64X64 16
 
 //*********************************************************************************************************************//
 // enums.h
@@ -479,59 +468,29 @@ typedef struct IntraSize {
 #define ATTRIBUTE_PACKED
 #endif
 #endif /* ATTRIBUTE_PACKED */
-#if FIX_REMOVE_PD1
 typedef enum PdPass {
     PD_PASS_0,
     PD_PASS_1,
     PD_PASS_TOTAL,
 } PdPass;
-#else
-typedef enum PdPass {
-    PD_PASS_0,
-    PD_PASS_1,
-    PD_PASS_2,
-    PD_PASS_TOTAL,
-} PdPass;
-#endif
-#if CLN_LPD0_CTRL
 typedef enum ATTRIBUTE_PACKED {
-    REGULAR_PD0 = 0, // The regular PD0 path
+    REGULAR_PD0    = 0, // The regular PD0 path
     LIGHT_PD0_LVL1 = 1,
     LIGHT_PD0_LVL2 = 2,
     LIGHT_PD0_LVL3 = 3,
     LIGHT_PD0_LVL4 = 4,
     VERY_LIGHT_PD0 = 5, // Lightest PD0 path, having more shortcuts than Light-PD1
 } Pd0Level;
-#endif
-#if FTR_VLPD1
-#if CLN_LPD1_LVLS
 typedef enum ATTRIBUTE_PACKED {
-    REGULAR_PD1     = -1, // The regular PD1 path; negative so that LPD1 can start at 0 (easy for indexing arrays in lpd1_ctrls)
-    LPD1_LVL_0      = 0, // Light-PD1 path, with safest feature levels
-    LPD1_LVL_1      = 1, // Light PD1 path, having more shortcuts than previous LPD1 level
-    LPD1_LVL_2      = 2, // Light PD1 path, having more shortcuts than previous LPD1 level
-    LPD1_LVL_3      = 3, // Light PD1 path, having more shortcuts than previous LPD1 level
-    LPD1_LVL_4      = 4, // Light-PD1 path, with most aggressive feature levels
-    LPD1_LEVELS     = LPD1_LVL_4 + 1 // Number of light-PD1 paths (regular PD1 isn't a light-PD1 path)
+    REGULAR_PD1 =
+        -1, // The regular PD1 path; negative so that LPD1 can start at 0 (easy for indexing arrays in lpd1_ctrls)
+    LPD1_LVL_0  = 0, // Light-PD1 path, with safest feature levels
+    LPD1_LVL_1  = 1, // Light PD1 path, having more shortcuts than previous LPD1 level
+    LPD1_LVL_2  = 2, // Light PD1 path, having more shortcuts than previous LPD1 level
+    LPD1_LVL_3  = 3, // Light PD1 path, having more shortcuts than previous LPD1 level
+    LPD1_LVL_4  = 4, // Light-PD1 path, with most aggressive feature levels
+    LPD1_LEVELS = LPD1_LVL_4 + 1 // Number of light-PD1 paths (regular PD1 isn't a light-PD1 path)
 } Pd1Level;
-#else
-typedef enum ATTRIBUTE_PACKED {
-    REGULAR_PD1     = -1, // The regular PD1 path; negative so that LPD1 can start at 0 (easy for indexing arrays in lpd1_ctrls)
-    LIGHT_PD1       = 0, // Light-PD1 path, which has many features off
-    VERY_LIGHT_PD1  = 1, // Lightest PD1 path, having more shortcuts than Light-PD1
-    LPD1_LEVELS     = VERY_LIGHT_PD1 + 1 // Number of light-PD1 paths (regular PD1 isn't a light-PD1 path)
-} Pd1Level;
-#endif
-#endif
-#if CLN_LPD1_TX_CTRLS && !FIX_SKIP_TX_LPD1
-typedef enum ATTRIBUTE_PACKED {
-    SKIP_TX_OFF         = 0, // No skipping TX
-    SKIP_NRST_NRST_TX   = 1, // Allow skipping NEAREST_NEAREST TX only
-    SKIP_MVP_TX         = 2, // Allow skipping TX for all MVP candidates
-    SKIP_INTER_TX       = 3, // Allow skipping TX for all INTER candidates
-    SKIP_ALL_TX         = 4  // Allow skipping TX for all candidates
-} SkipTxGroup;
-#endif
 typedef enum CandClass {
     CAND_CLASS_0,
     CAND_CLASS_1,
@@ -549,38 +508,37 @@ typedef enum MdStagingMode {
     MD_STAGING_MODE_TOTAL
 } MdStagingMode;
 
-#define NICS_PIC_TYPE  3
-#define NICS_SCALING_LEVELS  16
-static const  uint32_t MD_STAGE_NICS[NICS_PIC_TYPE][CAND_CLASS_TOTAL] =
+#define NICS_PIC_TYPE 3
+#define NICS_SCALING_LEVELS 16
+static const uint32_t MD_STAGE_NICS[NICS_PIC_TYPE][CAND_CLASS_TOTAL] =
 
-{
-// C0    C1    C2     C3
-{ 64,     0,     0,    16}, // I SLICE
-{ 32,    32,    32,     8}, // REF FRAMES
-{ 16,    16,    16,     4}, // NON-REF FRAMES
+    {
+        // C0    C1    C2     C3
+        {64, 0, 0, 16}, // I SLICE
+        {32, 32, 32, 8}, // REF FRAMES
+        {16, 16, 16, 4}, // NON-REF FRAMES
 };
 
-#define  MD_STAGE_NICS_SCAL_DENUM  16
+#define MD_STAGE_NICS_SCAL_DENUM 16
 
-static const  uint32_t MD_STAGE_NICS_SCAL_NUM[NICS_SCALING_LEVELS][MD_STAGE_TOTAL] =
-{
-// S0    S1    S2     S3
-{ 0,    20,    20,    20},   // LEVEL 0
-{ 0,    18,    18,    18},   // LEVEL 1
-{ 0,    16,    16,    16},   // LEVEL 2
-{ 0,    12,    12,    12},   // LEVEL 3
-{ 0,    10,    10,    10},   // LEVEL 4
-{ 0,     8,     8,     8},   // LEVEL 5
-{ 0,     6,     6,     6},   // LEVEL 6
-{ 0,     4,     5,     5},   // LEVEL 7
-{ 0,     4,     4,     4},   // LEVEL 8
-{ 0,     4,     3,     3},   // LEVEL 9
-{ 0,     3,     3,     3},   // LEVEL 10
-{ 0,     3,     2,     2},   // LEVEL 11
-{ 0,     3,     1,     1},   // LEVEL 12
-{ 0,     2,     1,     1},   // LEVEL 13
-{ 0,     2,     0,     0},   // LEVEL 14
-{ 0,     0,     0,     0}    // LEVEL 15
+static const uint32_t MD_STAGE_NICS_SCAL_NUM[NICS_SCALING_LEVELS][MD_STAGE_TOTAL] = {
+    // S0    S1    S2     S3
+    {0, 20, 20, 20}, // LEVEL 0
+    {0, 18, 18, 18}, // LEVEL 1
+    {0, 16, 16, 16}, // LEVEL 2
+    {0, 12, 12, 12}, // LEVEL 3
+    {0, 10, 10, 10}, // LEVEL 4
+    {0, 8, 8, 8}, // LEVEL 5
+    {0, 6, 6, 6}, // LEVEL 6
+    {0, 4, 5, 5}, // LEVEL 7
+    {0, 4, 4, 4}, // LEVEL 8
+    {0, 4, 3, 3}, // LEVEL 9
+    {0, 3, 3, 3}, // LEVEL 10
+    {0, 3, 2, 2}, // LEVEL 11
+    {0, 3, 1, 1}, // LEVEL 12
+    {0, 2, 1, 1}, // LEVEL 13
+    {0, 2, 0, 0}, // LEVEL 14
+    {0, 0, 0, 0} // LEVEL 15
 };
 // NICS
 #define MAX_FRAME_TYPE 3 // Max number of frame type allowed for nics
@@ -608,14 +566,12 @@ enum {
 } UENUM1BYTE(SUBPEL_SEARCH_TYPE);
 
 enum {
-    SUBPEL_TREE = 0,
-    SUBPEL_TREE_PRUNED = 1,           // Prunes 1/2-pel searches
+    SUBPEL_TREE        = 0,
+    SUBPEL_TREE_PRUNED = 1, // Prunes 1/2-pel searches
     //SUBPEL_TREE_PRUNED_MORE = 2,      // Not supported - (from libaom: Prunes 1/2-pel searches more aggressively)
     //SUBPEL_TREE_PRUNED_EVENMORE = 3,  // Not supported - (from libaom: Prunes 1/2- and 1/4-pel searches)
 } UENUM1BYTE(SUBPEL_SEARCH_METHODS);
-#if TUNE_CTR_QUARTER_PEL
 enum { EIGHTH_PEL, QUARTER_PEL, HALF_PEL, FULL_PEL } UENUM1BYTE(SUBPEL_FORCE_STOP);
-#endif
 typedef struct InterpFilterParams {
     const int16_t *filter_ptr;
     uint16_t       taps;
@@ -623,36 +579,18 @@ typedef struct InterpFilterParams {
     InterpFilter   interp_filter;
 } InterpFilterParams;
 typedef enum IfsLevel {
-    IFS_OFF,  // IFS OFF
+    IFS_OFF, // IFS OFF
     IFS_MDS0, // IFS @ md_stage_0()
     IFS_MDS1, // IFS @ md_stage_1()
     IFS_MDS2, // IFS @ md_stage_2()
     IFS_MDS3, // IFS @ md_stage_3()
 } IfsLevel;
-#if SS_OPT_MDS0
 typedef enum Mds0DistortionType {
     MDS0_SAD, // Use SAD at MDS0
     MDS0_VAR, // Use variance at MDS0
     MDS0_SSD, // Use SSD at MDS0
     MDS0_DIST_TYPES
 } Mds0DistortionType;
-#else
-typedef enum NsqSearchLevel {
-    NSQ_SEARCH_OFF,
-    NSQ_SEARCH_LEVEL1,
-    NSQ_SEARCH_LEVEL2,
-    NSQ_SEARCH_LEVEL3,
-    NSQ_SEARCH_LEVEL4,
-    NSQ_SEARCH_LEVEL5,
-    NSQ_SEARCH_LEVEL6,
-    NSQ_SEARCH_FULL
-} NsqSearchLevel;
-
-#define MAX_PARENT_SQ 6
-typedef enum CompoundDistWeightMode {
-    DIST,
-} CompoundDistWeightMode;
-#endif
 // Profile 0.  8-bit and 10-bit 4:2:0 and 4:0:0 only.
 // Profile 1.  8-bit and 10-bit 4:4:4
 // Profile 2.  8-bit and 10-bit 4:2:2
@@ -706,11 +644,7 @@ typedef enum ATTRIBUTE_PACKED {
     PARTITION_INVALID = 255
 } PartitionType;
 
-#if CLN_GEOM
 #define MAX_NUM_BLOCKS_ALLOC 4421
-#else
-#define MAX_NUM_BLOCKS_ALLOC 7493 //max number of blocks assuming 128x128-4x4 all partitions.
-#endif
 
 typedef enum ATTRIBUTE_PACKED {
     PART_N,
@@ -785,14 +719,14 @@ static const TxSize tx_depth_to_tx_size[3][BlockSizeS_ALL] = {
      TX_64X64, //TX_64X128,
      TX_64X64, //TX_128X64,
      TX_64X64, //TX_128X128,
-     TX_4X8, TX_8X4, TX_8X16, TX_16X8, TX_16X32, TX_32X16},
+     TX_4X8,   TX_8X4,   TX_8X16,  TX_16X8,  TX_16X32, TX_32X16},
     // tx_depth 2
     {TX_4X4,   TX_4X8, TX_8X4, TX_8X8,   TX_4X4,   TX_4X4,   TX_4X4,
      TX_8X8,   TX_8X8, TX_8X8, TX_16X16, TX_16X16, TX_16X16,
      TX_64X64, //TX_64X128,
      TX_64X64, //TX_128X64,
      TX_64X64, //TX_128X128,
-     TX_4X4, TX_4X4, TX_8X8, TX_8X8, TX_16X16, TX_16X16}};
+     TX_4X4,   TX_4X4, TX_8X8, TX_8X8,   TX_16X16, TX_16X16}};
 static const int32_t tx_size_wide[TX_SIZES_ALL] = {
     4, 8, 16, 32, 64, 4, 8, 8, 16, 16, 32, 32, 64, 4, 16, 8, 32, 16, 64,
 };
@@ -883,21 +817,35 @@ typedef enum ATTRIBUTE_PACKED {
 
 #define MAX_TX_TYPE_GROUP 6
 static const TxType tx_type_group[MAX_TX_TYPE_GROUP][TX_TYPES] = {
-    { DCT_DCT, INVALID_TX_TYPE},
-    { V_DCT, H_DCT, INVALID_TX_TYPE},
-    { ADST_ADST, INVALID_TX_TYPE},
-    { ADST_DCT, DCT_ADST, INVALID_TX_TYPE},
-    { FLIPADST_FLIPADST, IDTX, INVALID_TX_TYPE},
-    { FLIPADST_DCT, DCT_FLIPADST, ADST_FLIPADST, FLIPADST_ADST, V_ADST, H_ADST, V_FLIPADST, H_FLIPADST, INVALID_TX_TYPE}
-};
+    {DCT_DCT, INVALID_TX_TYPE},
+    {V_DCT, H_DCT, INVALID_TX_TYPE},
+    {ADST_ADST, INVALID_TX_TYPE},
+    {ADST_DCT, DCT_ADST, INVALID_TX_TYPE},
+    {FLIPADST_FLIPADST, IDTX, INVALID_TX_TYPE},
+    {FLIPADST_DCT,
+     DCT_FLIPADST,
+     ADST_FLIPADST,
+     FLIPADST_ADST,
+     V_ADST,
+     H_ADST,
+     V_FLIPADST,
+     H_FLIPADST,
+     INVALID_TX_TYPE}};
 static const TxType tx_type_group_sc[MAX_TX_TYPE_GROUP][TX_TYPES] = {
-    { DCT_DCT, IDTX, INVALID_TX_TYPE},
-    { V_DCT, H_DCT, INVALID_TX_TYPE},
-    { ADST_ADST, INVALID_TX_TYPE},
-    { ADST_DCT, DCT_ADST, INVALID_TX_TYPE},
-    { FLIPADST_FLIPADST, INVALID_TX_TYPE},
-    { FLIPADST_DCT, DCT_FLIPADST, ADST_FLIPADST, FLIPADST_ADST, V_ADST, H_ADST, V_FLIPADST, H_FLIPADST, INVALID_TX_TYPE}
-};
+    {DCT_DCT, IDTX, INVALID_TX_TYPE},
+    {V_DCT, H_DCT, INVALID_TX_TYPE},
+    {ADST_ADST, INVALID_TX_TYPE},
+    {ADST_DCT, DCT_ADST, INVALID_TX_TYPE},
+    {FLIPADST_FLIPADST, INVALID_TX_TYPE},
+    {FLIPADST_DCT,
+     DCT_FLIPADST,
+     ADST_FLIPADST,
+     FLIPADST_ADST,
+     V_ADST,
+     H_ADST,
+     V_FLIPADST,
+     H_FLIPADST,
+     INVALID_TX_TYPE}};
 typedef enum ATTRIBUTE_PACKED {
     // DCT only
     EXT_TX_SET_DCTONLY,
@@ -1135,10 +1083,8 @@ typedef struct {
 
     /*!< Specifies the type of mask to be used during blending. */
     DIFFWTD_MASK_TYPE mask_type;
-#if CLN_INTER_PRED
     // Temp buffer used for inter prediction
     uint8_t *seg_mask;
-#endif
 } InterInterCompoundData;
 
 #define InterIntraMode InterIntraMode
@@ -1276,7 +1222,7 @@ typedef enum ATTRIBUTE_PACKED {
 #define REF_FRAMES_LOG2 3
 #define REF_FRAMES (1 << REF_FRAMES_LOG2)
 
-#define UNDISP_QUEUE_SIZE  (REF_FRAMES * 10)
+#define UNDISP_QUEUE_SIZE (REF_FRAMES * 10)
 // 4 scratch frames for the new frames to support a maximum of 4 cores decoding
 // in parallel, 3 for scaled references on the encoder.
 #define FRAME_BUFFERS (REF_FRAMES + 7)
@@ -1804,13 +1750,13 @@ typedef struct LoopFilterInfoN {
 //**********************************************************************************************************************//
 // cdef.h
 typedef enum {
-  CDEF_FULL_SEARCH,      /**< Full search */
-  CDEF_FAST_SEARCH_LVL1, /**< Search among a subset of all possible filters. */
-  CDEF_FAST_SEARCH_LVL2, /**< Search reduced subset of filters than Level 1. */
-  CDEF_FAST_SEARCH_LVL3, /**< Search reduced subset of secondary filters than
+    CDEF_FULL_SEARCH, /**< Full search */
+    CDEF_FAST_SEARCH_LVL1, /**< Search among a subset of all possible filters. */
+    CDEF_FAST_SEARCH_LVL2, /**< Search reduced subset of filters than Level 1. */
+    CDEF_FAST_SEARCH_LVL3, /**< Search reduced subset of secondary filters than
                               Level 2. */
-  CDEF_PICK_FROM_Q,      /**< Estimate filter strength based on quantizer. */
-  CDEF_PICK_METHODS
+    CDEF_PICK_FROM_Q, /**< Estimate filter strength based on quantizer. */
+    CDEF_PICK_METHODS
 } CDEF_PICK_METHOD;
 #define CDEF_STRENGTH_BITS 6
 
@@ -1820,44 +1766,39 @@ typedef enum {
 #define REDUCED_PRI_STRENGTHS_LVL2 5
 #define REDUCED_SEC_STRENGTHS_LVL3 2
 
-#define REDUCED_TOTAL_STRENGTHS_LVL1 \
-  (REDUCED_PRI_STRENGTHS_LVL1 * CDEF_SEC_STRENGTHS)
-#define REDUCED_TOTAL_STRENGTHS_LVL2 \
-  (REDUCED_PRI_STRENGTHS_LVL2 * CDEF_SEC_STRENGTHS)
-#define REDUCED_TOTAL_STRENGTHS_LVL3 \
-  (REDUCED_PRI_STRENGTHS_LVL2 * REDUCED_SEC_STRENGTHS_LVL3)
+#define REDUCED_TOTAL_STRENGTHS_LVL1 (REDUCED_PRI_STRENGTHS_LVL1 * CDEF_SEC_STRENGTHS)
+#define REDUCED_TOTAL_STRENGTHS_LVL2 (REDUCED_PRI_STRENGTHS_LVL2 * CDEF_SEC_STRENGTHS)
+#define REDUCED_TOTAL_STRENGTHS_LVL3 (REDUCED_PRI_STRENGTHS_LVL2 * REDUCED_SEC_STRENGTHS_LVL3)
 #define TOTAL_STRENGTHS (CDEF_PRI_STRENGTHS * CDEF_SEC_STRENGTHS)
 
-static const int priconv_lvl1[REDUCED_PRI_STRENGTHS_LVL1] = { 0, 1, 2,  3,
-                                                              5, 7, 10, 13 };
-static const int priconv_lvl2[REDUCED_PRI_STRENGTHS_LVL2] = { 0, 2, 4, 8, 14 };
-static const int secconv_lvl3[REDUCED_SEC_STRENGTHS_LVL3] = { 0, 2 };
-static const int nb_cdef_strengths[CDEF_PICK_METHODS] = {
-  TOTAL_STRENGTHS, REDUCED_TOTAL_STRENGTHS_LVL1, REDUCED_TOTAL_STRENGTHS_LVL2,
-  REDUCED_TOTAL_STRENGTHS_LVL3, TOTAL_STRENGTHS
-};
-static INLINE void get_cdef_filter_strengths(CDEF_PICK_METHOD pick_method,
-                                             int *pri_strength,
-                                             int *sec_strength,
-                                             int strength_idx) {
-  const int tot_sec_filter = (pick_method == CDEF_FAST_SEARCH_LVL3)
-                                 ? REDUCED_SEC_STRENGTHS_LVL3
-                                 : CDEF_SEC_STRENGTHS;
-  const int pri_idx = strength_idx / tot_sec_filter;
-  const int sec_idx = strength_idx % tot_sec_filter;
-  *pri_strength = pri_idx;
-  *sec_strength = sec_idx;
-  if (pick_method == CDEF_FULL_SEARCH) return;
+static const int   priconv_lvl1[REDUCED_PRI_STRENGTHS_LVL1] = {0, 1, 2, 3, 5, 7, 10, 13};
+static const int   priconv_lvl2[REDUCED_PRI_STRENGTHS_LVL2] = {0, 2, 4, 8, 14};
+static const int   secconv_lvl3[REDUCED_SEC_STRENGTHS_LVL3] = {0, 2};
+static const int   nb_cdef_strengths[CDEF_PICK_METHODS]     = {TOTAL_STRENGTHS,
+                                                         REDUCED_TOTAL_STRENGTHS_LVL1,
+                                                         REDUCED_TOTAL_STRENGTHS_LVL2,
+                                                         REDUCED_TOTAL_STRENGTHS_LVL3,
+                                                         TOTAL_STRENGTHS};
+static INLINE void get_cdef_filter_strengths(CDEF_PICK_METHOD pick_method, int *pri_strength,
+                                             int *sec_strength, int strength_idx) {
+    const int tot_sec_filter = (pick_method == CDEF_FAST_SEARCH_LVL3) ? REDUCED_SEC_STRENGTHS_LVL3
+                                                                      : CDEF_SEC_STRENGTHS;
+    const int pri_idx        = strength_idx / tot_sec_filter;
+    const int sec_idx        = strength_idx % tot_sec_filter;
+    *pri_strength            = pri_idx;
+    *sec_strength            = sec_idx;
+    if (pick_method == CDEF_FULL_SEARCH)
+        return;
 
-  switch (pick_method) {
+    switch (pick_method) {
     case CDEF_FAST_SEARCH_LVL1: *pri_strength = priconv_lvl1[pri_idx]; break;
     case CDEF_FAST_SEARCH_LVL2: *pri_strength = priconv_lvl2[pri_idx]; break;
     case CDEF_FAST_SEARCH_LVL3:
-      *pri_strength = priconv_lvl2[pri_idx];
-      *sec_strength = secconv_lvl3[sec_idx];
-      break;
+        *pri_strength = priconv_lvl2[pri_idx];
+        *sec_strength = secconv_lvl3[sec_idx];
+        break;
     default: assert(0 && "Invalid CDEF search method");
-  }
+    }
 }
 
 // Bits of precision used for the model
@@ -2210,22 +2151,17 @@ typedef enum EbTuSize
 
 #define  MAX_PAL_CAND   14
 
-#if OPT_PALETTE_MEM
 typedef struct {
     // Value of base colors for Y only
     uint16_t palette_colors[PALETTE_MAX_SIZE];
     // Number of base colors for Y only
     uint8_t palette_size;
 } PaletteLumaModeInfo;
-#endif
 
 typedef struct {
     // Value of base colors for Y, U, and V
     uint16_t palette_colors[3 * PALETTE_MAX_SIZE];
     // Number of base colors for Y (0) and UV (1)
-#if !OPT_MEM_PALETTE
-    uint8_t palette_size[2];
-#endif
 } PaletteModeInfo;
 
 typedef struct {
@@ -2394,14 +2330,7 @@ void(*error_handler)(
 #define TOTAL_LEVEL_COUNT                           13
 
 //***Encoding Parameters***
-#if FTR_16K
 
-#else
-#define MAX_PICTURE_WIDTH_SIZE                      4672u
-#define MAX_PICTURE_HEIGHT_SIZE                     2560u
-#define MAX_PICTURE_WIDTH_SIZE_CH                   2336u
-#define MAX_PICTURE_HEIGHT_SIZE_CH                  1280u
-#endif
 #define INTERNAL_BIT_DEPTH                          8 // to be modified
 #define MAX_SAMPLE_VALUE                            ((1 << INTERNAL_BIT_DEPTH) - 1)
 #define MAX_SAMPLE_VALUE_10BIT                      0x3FF
@@ -2426,15 +2355,7 @@ void(*error_handler)(
 #define MAX_NUM_OF_TU_PER_CU                        21
 #define MIN_NUM_OF_TU_PER_CU                        5
 
-#if CLN_NA
 #define MAX_SB_ROWS                                ((10000) / (BLOCK_SIZE_64))
-#else
-#define MAX_SB_ROWS                                ((MAX_PICTURE_HEIGHT_SIZE) / (BLOCK_SIZE_64))
-#endif
-#if !FTR_16K
-#define MAX_NUMBER_OF_TREEBLOCKS_PER_PICTURE       ((MAX_PICTURE_WIDTH_SIZE + BLOCK_SIZE_64 - 1) / BLOCK_SIZE_64) * \
-                                                ((MAX_PICTURE_HEIGHT_SIZE + BLOCK_SIZE_64 - 1) / BLOCK_SIZE_64)
-#endif
 // super-resolution definitions
 #define MIN_SUPERRES_DENOM                          8
 #define MAX_SUPERRES_DENOM                          16
@@ -2718,33 +2639,12 @@ static const uint8_t intra_area_th_class_1[MAX_HIERARCHICAL_LEVEL][MAX_TEMPORAL_
 
 // Multi-Pass Partitioning Depth(Multi - Pass PD) performs multiple PD stages for the same SB towards 1 final Partitioning Structure
 // As we go from PDn to PDn + 1, the prediction accuracy of the MD feature(s) increases while the number of block(s) decreases
-#if FIX_REMOVE_PD1
 typedef enum MultiPassPdLevel
 {
     MULTI_PASS_PD_OFF     = 0, // Multi-Pass PD OFF = 1-single PD Pass
     MULTI_PASS_PD_ON      = 1, // Multi-Pass PD ON  = PD0 | PD0_REFINEMENT | PD1
     MULTI_PASS_PD_INVALID = 0, // Invalid Multi-Pass PD Mode
 } MultiPassPdLevel;
-#else
-typedef enum MultiPassPdLevel
-{
-    MULTI_PASS_PD_OFF     = 0, // Multi-Pass PD OFF = 1-single PD Pass (e.g. I_SLICE, SC)
-    MULTI_PASS_PD_LEVEL_0 = 1, // Multi-Pass PD Mode 0: PD0 | PD0_REFINEMENT
-    MULTI_PASS_PD_LEVEL_1 = 2, // Multi-Pass PD Mode 1: PD0 | PD0_REFINEMENT | PD1 | PD1_REFINEMENT
-    MULTI_PASS_PD_LEVEL_2 = 3, // Multi-Pass PD Mode 1: PD0 | PD0_REFINEMENT | PD1 | PD1_REFINEMENT using SQ vs. NSQ only
-    MULTI_PASS_PD_LEVEL_3 = 4, // Multi-Pass PD Mode 2: PD0 | PD0_REFINEMENT | PD1 | PD1_REFINEMENT using SQ vs. NSQ and SQ coeff info
-    MULTI_PASS_PD_LEVEL_4 = 5, // reserved = MULTI_PASS_PD_LEVEL_3
-    MULTI_PASS_PD_INVALID = 6, // Invalid Multi-Pass PD Mode
-} MultiPassPdLevel;
-
-typedef enum AdpLevel
-{
-    ADP_OFF = 0, // All SBs use the same Multi-Pass PD level
-    ADP_LEVEL_1 = 1, // read @ ADP budget derivation (e.g. high budget_boost)
-    ADP_LEVEL_2 = 2, // read @ ADP budget derivation (e.g. moderate budget_boost)
-    ADP_LEVEL_3 = 3, // read @ ADP budget derivation (e.g. low budget_boost)
-} AdpLevel;
-#endif
 #define EB_SB_DEPTH_MODE              uint8_t
 #define SB_SQ_BLOCKS_DEPTH_MODE             1
 #define SB_SQ_NON4_BLOCKS_DEPTH_MODE        2
@@ -3054,26 +2954,14 @@ static const uint32_t md_scan_to_ois_32x32_scan[CU_MAX_COUNT] =
     /*83 */3,
     /*84 */3,
 };
-#if FTR_NEW_MULTI_PASS
 typedef struct StatStruct
 {
     uint64_t   poc;
     uint64_t   total_num_bits;
     uint8_t    qindex;
     uint8_t    worst_qindex;
-#if  FTR_OPT_MPASS_BYPASS_FRAMES
     uint8_t    temporal_layer_index;
-#endif
 } StatStruct;
-#else
-typedef struct StatStruct
-{
-    uint32_t                        referenced_area[MAX_NUMBER_OF_TREEBLOCKS_PER_PICTURE];
-} StatStruct;
-#define TWO_PASS_IR_THRSHLD 40  // Intra refresh threshold used to reduce the reference area.
-                                // If the periodic Intra refresh is less than the threshold,
-                                // the referenced area is normalized
-#endif
 #define SC_MAX_LEVEL 2 // 2 sets of HME/ME settings are used depending on the scene content mode
 
 typedef enum HmeDecimation
@@ -3082,7 +2970,6 @@ typedef enum HmeDecimation
     ONE_DECIMATION_HME = 1, // HME search on quarter-res picture; 1 refinement level
     TWO_DECIMATION_HME = 2, // HME search on sixteenth-res picture; 2 refinement level
 } HmeDecimation;
-#if ME_8X8
 static const uint8_t me_idx_85_8x8_to_16x16_conversion[] = {
     5,5,      6,6,      7,7,      8,8,
     5,5,      6,6,      7,7,      8,8,
@@ -3096,8 +2983,6 @@ static const uint8_t me_idx_85_8x8_to_16x16_conversion[] = {
     17,17,    18,18,    19,19,    20,20,
     17,17,    18,18,    19,19,    20,20
 };
-#endif
-#if FTR_M13
 static const uint8_t me_idx_16x16_to_parent_32x32_conversion[] = {
     1,1,      2,2,
     1,1,      2,2,
@@ -3105,104 +2990,12 @@ static const uint8_t me_idx_16x16_to_parent_32x32_conversion[] = {
     3,3,      4,4,
     3,3,      4,4
 };
-#endif
-#if OPT_IBC_HASH_SEARCH
 typedef enum IntrabcMotionDirection
 {
     IBC_MOTION_ABOVE,
     IBC_MOTION_LEFT,
     IBC_MOTION_DIRECTIONS
 } IntrabcMotionDirection;
-#endif
-#if !CLN_GEOM
-static const uint16_t ep_to_pa_block_index[BLOCK_MAX_COUNT_SB_64] = {
-    0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    1 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    2 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    3 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    4 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    5 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    6 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    7 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    8 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    9 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    10,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    11,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    12,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    13,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    14,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    15,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    16,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    17,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    18,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    19,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    20,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    21,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    22,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    23,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    24,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    25,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    26,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    27,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    28,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    29,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    30,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    31,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    32,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    33,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    34,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    35,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    36,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    37,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    38,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    39,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    40,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    41,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    42,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    43,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    44,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    45,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    46,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    47,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    48,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    49,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    50,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    51,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    52,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    53,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    54,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    55,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    56,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    57,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    58,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    59,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    60,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    61,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    62,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    63,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    64,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    65,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    66,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    67,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    68,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    69,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    70,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    71,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    72,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    73,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    74,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    75,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 , 0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    76,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    77,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    78,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    79,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    80,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    81,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    82,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    83,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
-    84,0 ,0 ,0 ,0 ,0 ,0 ,0 ,0
-};
-#endif
 typedef struct _EbEncHandle EbEncHandle;
 typedef struct _EbThreadContext EbThreadContext;
 #ifdef __cplusplus

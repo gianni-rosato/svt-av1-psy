@@ -5,9 +5,10 @@
  * This source code is subject to the terms of the BSD 2 Clause License and
  * the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
  * was not distributed with this source code in the LICENSE file, you can
- * obtain it at https://www.aomedia.org/license/software-license. If the Alliance for Open
- * Media Patent License 1.0 was not distributed with this source code in the
- * PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
+ * obtain it at https://www.aomedia.org/license/software-license. If the
+ * Alliance for Open Media Patent License 1.0 was not distributed with this
+ * source code in the PATENTS file, you can obtain it at
+ * https://www.aomedia.org/license/patent-license.
  */
 
 #include <stdlib.h>
@@ -54,8 +55,8 @@ class BlendA64Mask1DTest : public ACMRandom {
     virtual ~BlendA64Mask1DTest() {
     }
 
-    virtual void Execute(const T *, const T *) {};
-    virtual void prepare_data(int) {};
+    virtual void Execute(const T *, const T *){};
+    virtual void prepare_data(int){};
 
     void Common(int type) {
         prepare_data(type);
@@ -108,8 +109,8 @@ class BlendA64Mask1DTest : public ACMRandom {
         for (int iter = 0;
              iter < kIterations && !::testing::Test::HasFatalFailure();
              iter++) {
-            Common(0);  /*RandomValues*/
-            Common(1);  /*ExtremeValues*/
+            Common(0); /*RandomValues*/
+            Common(1); /*ExtremeValues*/
         }
     }
 
@@ -177,12 +178,24 @@ class BlendA64Mask1DTest8B : public BlendA64Mask1DTest<Blend8B, uint8_t> {
         }
     }
     void Execute(const uint8_t *p_src0, const uint8_t *p_src1) override {
-        ref_func_(dst_ref_ + dst_offset_, dst_stride_, p_src0 + src0_offset_,
-                  src0_stride_, p_src1 + src1_offset_, src1_stride_,
-                  mask_, w_, h_);
-        tst_func_(dst_tst_ + dst_offset_, dst_stride_, p_src0 + src0_offset_,
-                  src0_stride_, p_src1 + src1_offset_, src1_stride_,
-                  mask_, w_, h_);
+        ref_func_(dst_ref_ + dst_offset_,
+                  dst_stride_,
+                  p_src0 + src0_offset_,
+                  src0_stride_,
+                  p_src1 + src1_offset_,
+                  src1_stride_,
+                  mask_,
+                  w_,
+                  h_);
+        tst_func_(dst_tst_ + dst_offset_,
+                  dst_stride_,
+                  p_src0 + src0_offset_,
+                  src0_stride_,
+                  p_src1 + src1_offset_,
+                  src1_stride_,
+                  mask_,
+                  w_,
+                  h_);
     }
 };
 
@@ -197,9 +210,18 @@ static void blend_a64_hmask_ref(uint8_t *dst, uint32_t dst_stride,
         for (int col = 0; col < w; ++col)
             mask2d[row][col] = mask[col];
 
-    svt_aom_blend_a64_mask_c(dst, dst_stride, src0, src0_stride, src1, src1_stride,
-                         &mask2d[0][0], BlendA64Mask1DTest8B::kMaxMaskSize,
-                         w, h, 0, 0);
+    svt_aom_blend_a64_mask_c(dst,
+                             dst_stride,
+                             src0,
+                             src0_stride,
+                             src1,
+                             src1_stride,
+                             &mask2d[0][0],
+                             BlendA64Mask1DTest8B::kMaxMaskSize,
+                             w,
+                             h,
+                             0,
+                             0);
 }
 
 static void blend_a64_vmask_ref(uint8_t *dst, uint32_t dst_stride,
@@ -213,22 +235,31 @@ static void blend_a64_vmask_ref(uint8_t *dst, uint32_t dst_stride,
         for (int col = 0; col < w; ++col)
             mask2d[row][col] = mask[row];
 
-    svt_aom_blend_a64_mask_c(dst, dst_stride, src0, src0_stride, src1, src1_stride,
-                         &mask2d[0][0], BlendA64Mask1DTest8B::kMaxMaskSize,
-                         w, h, 0, 0);
+    svt_aom_blend_a64_mask_c(dst,
+                             dst_stride,
+                             src0,
+                             src0_stride,
+                             src1,
+                             src1_stride,
+                             &mask2d[0][0],
+                             BlendA64Mask1DTest8B::kMaxMaskSize,
+                             w,
+                             h,
+                             0,
+                             0);
 }
 
-#define TEST_CLASS(type_name, ref, tst, match_test)     \
-    TEST(type_name, match_test) {            \
-        type_name *test = new type_name(ref, tst); \
-        test->RunTest();                   \
-        delete test;                       \
+#define TEST_CLASS(type_name, ref, tst, match_test) \
+    TEST(type_name, match_test) {                   \
+        type_name *test = new type_name(ref, tst);  \
+        test->RunTest();                            \
+        delete test;                                \
     }
 // C
-TEST_CLASS(BlendA64Mask1DTest8B, blend_a64_hmask_ref,
-          svt_aom_blend_a64_hmask_c, Horz_Blend_C)
-TEST_CLASS(BlendA64Mask1DTest8B, blend_a64_vmask_ref,
-           svt_aom_blend_a64_vmask_c, Vert_Blend_C)
+TEST_CLASS(BlendA64Mask1DTest8B, blend_a64_hmask_ref, svt_aom_blend_a64_hmask_c,
+           Horz_Blend_C)
+TEST_CLASS(BlendA64Mask1DTest8B, blend_a64_vmask_ref, svt_aom_blend_a64_vmask_c,
+           Vert_Blend_C)
 // Intrinsic
 TEST_CLASS(BlendA64Mask1DTest8B, blend_a64_hmask_ref,
            svt_aom_blend_a64_hmask_sse4_1, Horz_Blend_SSE4_1)
@@ -252,22 +283,22 @@ class BlendA64Mask1DTestHBD : public BlendA64Mask1DTest<BlendHBD, uint16_t> {
     }
     void prepare_data(int type) override {
         switch (this->PseudoUniform(3)) {
-            case 0: bd_ = 8; break;
-            case 1: bd_ = 10; break;
-            default: bd_ = 12; break;
+        case 0: bd_ = 8; break;
+        case 1: bd_ = 10; break;
+        default: bd_ = 12; break;
         }
         if (!type) {
             const int hi = 1 << bd_;
 
             for (int i = 0; i < kBufSize; ++i) {
-              dst_ref_[i] = this->PseudoUniform(hi);
-              dst_tst_[i] = this->PseudoUniform(hi);
-              src0_[i] = this->PseudoUniform(hi);
-              src1_[i] = this->PseudoUniform(hi);
+                dst_ref_[i] = this->PseudoUniform(hi);
+                dst_tst_[i] = this->PseudoUniform(hi);
+                src0_[i] = this->PseudoUniform(hi);
+                src1_[i] = this->PseudoUniform(hi);
             }
 
             for (int i = 0; i < kMaxMaskSize; ++i)
-              mask_[i] = this->PseudoUniform(AOM_BLEND_A64_MAX_ALPHA + 1);
+                mask_[i] = this->PseudoUniform(AOM_BLEND_A64_MAX_ALPHA + 1);
 
         } else {
             const int hi = 1 << bd_;
@@ -285,14 +316,26 @@ class BlendA64Mask1DTestHBD : public BlendA64Mask1DTest<BlendHBD, uint16_t> {
         }
     }
     void Execute(const uint16_t *p_src0, const uint16_t *p_src1) override {
-        ref_func_((uint8_t *)(dst_ref_ + dst_offset_), dst_stride_,
-                  (uint8_t *)(p_src0 + src0_offset_), src0_stride_,
-                  (uint8_t *)(p_src1 + src1_offset_), src1_stride_,
-                  mask_, w_, h_, bd_);
-        tst_func_((uint8_t *)(dst_tst_ + dst_offset_), dst_stride_,
-                  (uint8_t *)(p_src0 + src0_offset_), src0_stride_,
-                  (uint8_t *)(p_src1 + src1_offset_), src1_stride_,
-                  mask_, w_, h_, bd_);
+        ref_func_((uint8_t *)(dst_ref_ + dst_offset_),
+                  dst_stride_,
+                  (uint8_t *)(p_src0 + src0_offset_),
+                  src0_stride_,
+                  (uint8_t *)(p_src1 + src1_offset_),
+                  src1_stride_,
+                  mask_,
+                  w_,
+                  h_,
+                  bd_);
+        tst_func_((uint8_t *)(dst_tst_ + dst_offset_),
+                  dst_stride_,
+                  (uint8_t *)(p_src0 + src0_offset_),
+                  src0_stride_,
+                  (uint8_t *)(p_src1 + src1_offset_),
+                  src1_stride_,
+                  mask_,
+                  w_,
+                  h_,
+                  bd_);
     }
 };
 
@@ -307,9 +350,19 @@ static void highbd_blend_a64_hmask_ref(
         for (int col = 0; col < w; ++col)
             mask2d[row][col] = mask[col];
 
-    svt_aom_highbd_blend_a64_mask_c(dst, dst_stride, src0, src0_stride, src1,
-        src1_stride, &mask2d[0][0], BlendA64Mask1DTestHBD::kMaxMaskSize,
-        w, h, 0, 0, bd);
+    svt_aom_highbd_blend_a64_mask_c(dst,
+                                    dst_stride,
+                                    src0,
+                                    src0_stride,
+                                    src1,
+                                    src1_stride,
+                                    &mask2d[0][0],
+                                    BlendA64Mask1DTestHBD::kMaxMaskSize,
+                                    w,
+                                    h,
+                                    0,
+                                    0,
+                                    bd);
 }
 
 static void highbd_blend_a64_vmask_ref(
@@ -323,9 +376,19 @@ static void highbd_blend_a64_vmask_ref(
         for (int col = 0; col < w; ++col)
             mask2d[row][col] = mask[row];
 
-    svt_aom_highbd_blend_a64_mask_c(dst, dst_stride, src0, src0_stride, src1,
-        src1_stride, &mask2d[0][0], BlendA64Mask1DTestHBD::kMaxMaskSize,
-        w, h, 0, 0,bd);
+    svt_aom_highbd_blend_a64_mask_c(dst,
+                                    dst_stride,
+                                    src0,
+                                    src0_stride,
+                                    src1,
+                                    src1_stride,
+                                    &mask2d[0][0],
+                                    BlendA64Mask1DTestHBD::kMaxMaskSize,
+                                    w,
+                                    h,
+                                    0,
+                                    0,
+                                    bd);
 }
 
 // C
@@ -339,4 +402,4 @@ TEST_CLASS(BlendA64Mask1DTestHBD, highbd_blend_a64_hmask_ref,
 TEST_CLASS(BlendA64Mask1DTestHBD, highbd_blend_a64_vmask_ref,
            svt_aom_highbd_blend_a64_vmask_8bit_sse4_1, Vert_Blend_Hbd_SSE4_1)
 
-}; // namespace
+};  // namespace

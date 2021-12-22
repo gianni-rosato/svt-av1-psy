@@ -20,24 +20,16 @@ static void me_context_dctor(EbPtr p) {
 
     EB_FREE_ARRAY(obj->mvd_bits_array);
     EB_FREE_ARRAY(obj->p_eight_pos_sad16x16);
-
 }
 EbErrorType me_context_ctor(MeContext *object_ptr) {
     object_ptr->dctor = me_context_dctor;
-
-
-
 
     EB_MALLOC_ARRAY(object_ptr->p_eight_pos_sad16x16,
                     8 * 16); //16= 16 16x16 blocks in a SB.       8=8search points
 
     // Initialize Alt-Ref parameters
-    object_ptr->me_type                     = ME_CLOSE_LOOP;
-#if CLN_ME_NUM_LISTS
-    object_ptr->num_of_list_to_search       = 1;
-#else
-    object_ptr->num_of_list_to_search       = 0;
-#endif
+    object_ptr->me_type = ME_CLOSE_LOOP;
+    object_ptr->num_of_list_to_search = 1;
     object_ptr->num_of_ref_pic_to_search[0] = 0;
     object_ptr->num_of_ref_pic_to_search[1] = 0;
 

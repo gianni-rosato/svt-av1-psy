@@ -47,9 +47,7 @@ void gathering_picture_statistics(SequenceControlSet *scs_ptr, PictureParentCont
 void down_sample_chroma(EbPictureBufferDesc *input_picture_ptr,
                         EbPictureBufferDesc *outputPicturePtr);
 
-
 EbBool is_delayed_intra(PictureParentControlSet *pcs);
-
 
 /**************************************
  * Context
@@ -61,10 +59,8 @@ typedef struct PictureDecisionContext {
     EbFifo * me_fifo_ptr;
     uint64_t last_solid_color_frame_poc;
 
-    EbBool reset_running_avg;
-#if OPT_PREHME
-    int8_t  tf_motion_direction; // -1: invalid   0: horz  1: vert
-#endif
+    EbBool     reset_running_avg;
+    int8_t     tf_motion_direction; // -1: invalid   0: horz  1: vert
     uint32_t **ahd_running_avg_cb;
     uint32_t **ahd_running_avg_cr;
     uint32_t **ahd_running_avg;
@@ -98,14 +94,12 @@ typedef struct PictureDecisionContext {
     uint8_t                  last_i_picture_sc_class2;
     uint64_t                 key_poc;
     uint8_t                  tf_level;
-#if FTR_LDB_TF
-    uint32_t tf_pic_arr_cnt;
+    uint32_t                 tf_pic_arr_cnt;
     PictureParentControlSet *tf_pic_array[1 << MAX_TEMPORAL_LAYERS];
-#endif
     PictureParentControlSet *mg_pictures_array[1 << MAX_TEMPORAL_LAYERS];
     DepCntPicInfo            updated_links_arr
         [UPDATED_LINKS]; //if not empty, this picture is a depn-cnt-cleanUp triggering picture (I frame; or MG size change )
-        //this array will store all others pictures needing a dep-cnt clean up.
+    //this array will store all others pictures needing a dep-cnt clean up.
     uint32_t
         other_updated_links_cnt; //how many other pictures in the above array needing a dep-cnt clean-up
     PictureParentControlSet *prev_delayed_intra; //Key frame or I of LDP short MG
@@ -114,12 +108,8 @@ typedef struct PictureDecisionContext {
 
     int64_t mg_progress_id;
 
-#if OPT_NOISE_LEVEL
-#if FIXED_POINTS_PLANEWISE
-    int32_t                         last_i_noise_levels_log1p_fp16[MAX_MB_PLANE];
-#endif
-    double                          last_i_noise_levels[MAX_MB_PLANE];
-#endif
+    int32_t last_i_noise_levels_log1p_fp16[MAX_MB_PLANE];
+    double  last_i_noise_levels[MAX_MB_PLANE];
 } PictureDecisionContext;
 
 #endif // EbPictureDecision_h

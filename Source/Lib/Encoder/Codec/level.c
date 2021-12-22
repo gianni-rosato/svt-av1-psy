@@ -43,5 +43,3 @@ typedef enum {
     TARGET_LEVEL_FAIL_IDS,
     TARGET_LEVEL_OK,
 } TARGET_LEVEL_FAIL_ID;
-
-

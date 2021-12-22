@@ -43,18 +43,13 @@
 #include "third_party/safestringlib/safe_str_lib.h"
 #endif
 
-#if  OPT_MALLOC_TRIM
 #ifndef __APPLE__
 #include <malloc.h>
 #endif
-#endif
 
-#if OPT_MMAP_FILE
 #ifndef _WIN32
 #include <unistd.h>
 #endif
-#endif
-
 
 #if LOG_ENC_DONE
 int tot_frames_done = 0;
@@ -62,11 +57,7 @@ int tot_frames_done = 0;
 /***************************************
  * External Functions
  ***************************************/
-#if OPT_FIRST_PASS2 && !FIX_DG
-void process_input_buffer(EncChannel* c, EncodePass pass);
-#else
 void process_input_buffer(EncChannel* c);
-#endif
 
 void process_output_recon_buffer(EncChannel* c);
 
@@ -100,22 +91,13 @@ typedef struct EncContext {
     uint32_t   num_channels;
     EncChannel channels[MAX_CHANNEL_NUMBER];
     char*      warning[MAX_NUM_TOKENS];
-#if CLN_ENC_CONFIG_SIG
     EncPass enc_pass;
-#else
-    EncodePass pass;
-#endif
-#if FTR_MULTI_PASS_API
     int32_t passes;
-#endif
-    int32_t    total_frames;
+    int32_t total_frames;
 } EncContext;
 
-
-#if OPT_MMAP_FILE
 //initilize memory mapped file handler
 void init_memory_file_map(EbConfig* config) {
-
 #ifdef _WIN32
     config->mmap.enable = 0;
 #else
@@ -124,7 +106,6 @@ void init_memory_file_map(EbConfig* config) {
 
     if (config->input_file == stdin || config->input_file_is_fifo)
         config->mmap.enable = 0;
-
 
     if (config->mmap.enable) {
         if (config->input_file) {
@@ -135,56 +116,30 @@ void init_memory_file_map(EbConfig* config) {
         }
         config->mmap.file_frame_it = 0;
 #ifndef _WIN32
-        config->mmap.fd = fileno(config->input_file);
+        config->mmap.fd         = fileno(config->input_file);
         config->mmap.align_mask = sysconf(_SC_PAGESIZE) - 1;
 #endif
     }
-
 }
-#endif
 
 static EbErrorType enc_context_ctor(EncApp* enc_app, EncContext* enc_context, int32_t argc,
-#if FTR_MULTI_PASS_API
-#if TUNE_MULTI_PASS
-#if CLN_ENC_CONFIG_SIG
                                     char* argv[], EncPass enc_pass, int32_t passes) {
-#else
-                                    char* argv[], EncodePass pass, int32_t passes, MultiPassModes multi_pass_mode) {
-#endif
-#else
-                                    char* argv[], EncodePass pass, int32_t passes) {
-#endif
-#else
-                                    char* argv[], EncodePass pass) {
-#endif
-
 
 #if LOG_ENC_DONE
      tot_frames_done = 0;
 #endif
 
-
     memset(enc_context, 0, sizeof(*enc_context));
     uint32_t num_channels = get_number_of_channels(argc, argv);
     if (num_channels == 0)
         return EB_ErrorBadParameter;
-#if CLN_ENC_CONFIG_SIG
     enc_context->enc_pass = enc_pass;
-#else
-    enc_context->pass = pass;
-#endif
-#if FTR_MULTI_PASS_API
-    enc_context->passes        = passes;
-#endif
+    enc_context->passes = passes;
     EbErrorType return_error = EB_ErrorNone;
 
     enc_context->num_channels = num_channels;
     for (uint32_t inst_cnt = 0; inst_cnt < num_channels; ++inst_cnt) {
-#if CLN_ENC_CONFIG_SIG
         return_error = enc_channel_ctor(enc_context->channels + inst_cnt);
-#else
-        return_error = enc_channel_ctor(enc_context->channels + inst_cnt, pass);
-#endif
         if (return_error != EB_ErrorNone)
             return return_error;
     }
@@ -214,41 +169,20 @@ static EbErrorType enc_context_ctor(EncApp* enc_app, EncContext* enc_context, in
     for (uint32_t inst_cnt = 0; inst_cnt < num_channels; ++inst_cnt) {
         EncChannel* c = enc_context->channels + inst_cnt;
         if (c->return_error == EB_ErrorNone) {
-            EbConfig* config = c->config;
+            EbConfig* config                    = c->config;
             config->config.active_channel_count = num_channels;
-            config->config.channel_id = inst_cnt;
-            config->config.recon_enabled = config->recon_file ? EB_TRUE : EB_FALSE;
+            config->config.channel_id           = inst_cnt;
+            config->config.recon_enabled        = config->recon_file ? EB_TRUE : EB_FALSE;
 
-
-#if OPT_MMAP_FILE
             init_memory_file_map(config);
-#endif
 
             app_svt_av1_get_time(&config->performance_context.lib_start_time[0],
                                  &config->performance_context.lib_start_time[1]);
-#if CLN_ENC_CONFIG_SIG
             // Update pass
-            config->config.pass = passes == 1
-                ? config->config.pass // Single-Pass
-                : (int) enc_pass; // Multi-Pass
-#endif
-#if FTR_MULTI_PASS_API
-#if !CLN_ENC_CONFIG_SIG
-            config->config.passes = passes;
-#endif
-#if TUNE_MULTI_PASS
-#if !CLN_ENC_CONFIG_SIG
-            config->config.multi_pass_mode = multi_pass_mode;
-#endif
-#endif
-#endif
-#if CLN_ENC_CONFIG_SIG
+            config->config.pass = passes == 1 ? config->config.pass // Single-Pass
+                                              : (int)enc_pass; // Multi-Pass
             c->return_error = handle_stats_file(
                 config, enc_pass, &enc_app->rc_twopasses_stats, num_channels);
-#else
-            c->return_error = set_two_passes_stats(
-                config, pass, &enc_app->rc_twopasses_stats, num_channels);
-#endif
             if (c->return_error == EB_ErrorNone) {
                 c->return_error = init_encoder(config, c->app_callback, inst_cnt);
             }
@@ -440,11 +374,7 @@ static EbBool has_active_channel(const EncContext* const enc_context) {
 
 static void enc_channel_step(EncChannel* c, EncApp* enc_app, EncContext* enc_context) {
     EbConfig* config = c->config;
-#if OPT_FIRST_PASS2 && !FIX_DG
-    process_input_buffer(c, enc_context->pass);
-#else
     process_input_buffer(c);
-#endif
     process_output_recon_buffer(c);
     process_output_stream_buffer(c, enc_app, &enc_context->total_frames);
 
@@ -462,51 +392,22 @@ static void enc_channel_step(EncChannel* c, EncApp* enc_app, EncContext* enc_con
             c->exit_cond = (AppExitConditionType)(c->exit_cond_output | c->exit_cond_input);
     }
 }
-#if FTR_MULTI_PASS_API
-#if CLN_ENC_CONFIG_SIG
 static const char* get_pass_name(EncPass enc_pass, int32_t passes) {
     if (passes == 3) {
         switch (enc_pass) {
-            case ENC_FIRST_PASS: return "Pass 1/3 ";
-            case ENC_MIDDLE_PASS: return "Pass 2/3 ";
-            case ENC_LAST_PASS: return "Pass 3/3 ";
-            default: return "";
-        }
-    }
-    else { // passes == 2
-        switch (enc_pass) {
-        case ENC_FIRST_PASS: return "Pass 1/2 ";
-            case ENC_LAST_PASS: return "Pass 2/2 ";
-            default: return "";
-        }
-    }
-}
-#else
-static const char* get_pass_name(EncodePass pass, int32_t passes) {
-    if (passes == 3)
-        switch (pass) {
-        case ENCODE_FIRST_PASS: return "Pass 1/3 ";
-        case ENCODE_MIDDLE_PASS: return "Pass 2/3 ";
-        case ENCODE_LAST_PASS: return "Pass 3/3 ";
+        case ENC_FIRST_PASS: return "Pass 1/3 ";
+        case ENC_MIDDLE_PASS: return "Pass 2/3 ";
+        case ENC_LAST_PASS: return "Pass 3/3 ";
         default: return "";
         }
-    else // passes == 2
-        switch (pass) {
-            case ENCODE_FIRST_PASS: return "Pass 1/2 ";
-            case ENCODE_LAST_PASS: return "Pass 2/2 ";
-            default: return "";
+    } else { // passes == 2
+        switch (enc_pass) {
+        case ENC_FIRST_PASS: return "Pass 1/2 ";
+        case ENC_LAST_PASS: return "Pass 2/2 ";
+        default: return "";
         }
-}
-#endif
-#else
-static const char* get_pass_name(EncodePass pass) {
-    switch (pass) {
-    case ENCODE_FIRST_PASS: return "Pass 1/2 ";
-    case ENCODE_LAST_PASS: return "Pass 2/2 ";
-    default: return "";
     }
 }
-#endif
 static void enc_channel_start(EncChannel* c) {
     if (c->return_error == EB_ErrorNone) {
         EbConfig* config    = c->config;
@@ -525,24 +426,12 @@ static EbErrorType encode(EncApp* enc_app, EncContext* enc_context) {
 
     // Get num_channels
     uint32_t num_channels = enc_context->num_channels;
-#if CLN_ENC_CONFIG_SIG
     EncPass enc_pass = enc_context->enc_pass;
-#else
-    EncodePass pass = enc_context->pass;
-#endif
     // Start the Encoder
     for (uint32_t inst_cnt = 0; inst_cnt < num_channels; ++inst_cnt)
         enc_channel_start(enc_context->channels + inst_cnt);
     print_warnnings(enc_context);
-#if FTR_MULTI_PASS_API
-#if CLN_ENC_CONFIG_SIG
     fprintf(stderr, "%sEncoding          ", get_pass_name(enc_pass, enc_context->passes));
-#else
-    fprintf(stderr, "%sEncoding          ", get_pass_name(pass, enc_context->passes));
-#endif
-#else
-    fprintf(stderr, "%sEncoding          ", get_pass_name(pass));
-#endif
 
     while (has_active_channel(enc_context)) {
         for (uint32_t inst_cnt = 0; inst_cnt < num_channels; ++inst_cnt) {
@@ -575,13 +464,9 @@ int32_t main(int32_t argc, char* argv[]) {
     // GLOBAL VARIABLES
     EbErrorType return_error = EB_ErrorNone; // Error Handling
     uint32_t    passes;
-#if CLN_ENC_CONFIG_SIG
     EncPass enc_pass[MAX_ENC_PASS];
-#else
-    EncodePass  pass[MAX_ENCODE_PASS];
-#endif
-    EncApp      enc_app;
-    EncContext  enc_context;
+    EncApp     enc_app;
+    EncContext enc_context;
 
     signal(SIGINT, event_handler);
     if (get_version(argc, argv))
@@ -591,34 +476,11 @@ int32_t main(int32_t argc, char* argv[]) {
         return 0;
 
     enc_app_ctor(&enc_app);
-#if TUNE_MULTI_PASS
     MultiPassModes multi_pass_mode;
-#if CLN_ENC_CONFIG_SIG
     passes = get_passes(argc, argv, enc_pass, &multi_pass_mode);
-#else
-    passes = get_passes(argc, argv, pass, &multi_pass_mode);
-#endif
-#else
-    passes = get_passes(argc, argv, pass);
-#endif
-#if CLN_ENC_CONFIG_SIG
     for (uint8_t pass_idx = 0; pass_idx < passes; pass_idx++) {
-#else
-    for (uint32_t i = 0; i < passes; i++) {
-#endif
-#if FTR_MULTI_PASS_API
-#if TUNE_MULTI_PASS
-#if CLN_ENC_CONFIG_SIG
-        return_error = enc_context_ctor(&enc_app, &enc_context, argc, argv, enc_pass[pass_idx], passes);
-#else
-        return_error = enc_context_ctor(&enc_app, &enc_context, argc, argv, pass[i], passes, multi_pass_mode);
-#endif
-#else
-        return_error = enc_context_ctor(&enc_app, &enc_context, argc, argv, pass[i], passes);
-#endif
-#else
-        return_error = enc_context_ctor(&enc_app, &enc_context, argc, argv, pass[i]);
-#endif
+        return_error = enc_context_ctor(
+            &enc_app, &enc_context, argc, argv, enc_pass[pass_idx], passes);
 
         if (return_error == EB_ErrorNone)
             return_error = encode(&enc_app, &enc_context);
@@ -627,14 +489,11 @@ int32_t main(int32_t argc, char* argv[]) {
         if (return_error != EB_ErrorNone)
             break;
 
-#if OPT_MALLOC_TRIM
 #ifndef _WIN32
 #ifndef __APPLE__
         malloc_trim(0);
 #endif
 #endif
-#endif
-
     }
     enc_app_dctor(&enc_app);
 

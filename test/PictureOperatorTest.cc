@@ -1,13 +1,14 @@
 /*
-* Copyright(c) 2019 Netflix, Inc.
-*
-* This source code is subject to the terms of the BSD 2 Clause License and
-* the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
-* was not distributed with this source code in the LICENSE file, you can
-* obtain it at https://www.aomedia.org/license/software-license. If the Alliance for Open
-* Media Patent License 1.0 was not distributed with this source code in the
-* PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
-*/
+ * Copyright(c) 2019 Netflix, Inc.
+ *
+ * This source code is subject to the terms of the BSD 2 Clause License and
+ * the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
+ * was not distributed with this source code in the LICENSE file, you can
+ * obtain it at https://www.aomedia.org/license/software-license. If the
+ * Alliance for Open Media Patent License 1.0 was not distributed with this
+ * source code in the PATENTS file, you can obtain it at
+ * https://www.aomedia.org/license/patent-license.
+ */
 
 /******************************************************************************
  * @file PictureOperatorTest.cc
@@ -40,10 +41,8 @@
 #include "random.h"
 #include "util.h"
 #include "common_dsp_rtcd.h"
-#if DOWNSAMPLE_2D_AVX2
 #include "aom_dsp_rtcd.h"
 #include "EbMotionEstimation.h"
-#endif
 using svt_av1_test_tool::SVTRandom;  // to generate the random
 
 namespace {
@@ -206,15 +205,15 @@ INSTANTIATE_TEST_CASE_P(PictureOperator, PictureOperatorTest,
                         ::testing::Combine(::testing::ValuesIn(TEST_PU_SIZES),
                                            ::testing::ValuesIn(TEST_PATTERNS)));
 
-#if DOWNSAMPLE_2D_AVX2
 uint32_t DECIM_STEPS[] = {2, 4, 8};
 PUSize DOWNSAMPLE_SIZES[] = {
     PUSize(1920, 1080), PUSize(960, 540), PUSize(176, 144), PUSize(88, 72)};
 
 typedef std::tuple<PUSize, uint32_t> Downsample2DParam;
 
-class Downsample2DTest : public ::testing::Test,
-                         public ::testing::WithParamInterface<Downsample2DParam> {
+class Downsample2DTest
+    : public ::testing::Test,
+      public ::testing::WithParamInterface<Downsample2DParam> {
   public:
     Downsample2DTest()
         : pu_width(std::get<0>(TEST_GET_PARAM(0))),
@@ -289,5 +288,4 @@ INSTANTIATE_TEST_CASE_P(
     Downsample2D, Downsample2DTest,
     ::testing::Combine(::testing::ValuesIn(DOWNSAMPLE_SIZES),
                        ::testing::ValuesIn(DECIM_STEPS)));
-#endif
 }  // namespace

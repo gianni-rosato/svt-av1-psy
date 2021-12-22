@@ -5,9 +5,10 @@
  * This source code is subject to the terms of the BSD 2 Clause License and
  * the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
  * was not distributed with this source code in the LICENSE file, you can
- * obtain it at https://www.aomedia.org/license/software-license. If the Alliance for Open
- * Media Patent License 1.0 was not distributed with this source code in the
- * PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
+ * obtain it at https://www.aomedia.org/license/software-license. If the
+ * Alliance for Open Media Patent License 1.0 was not distributed with this
+ * source code in the PATENTS file, you can obtain it at
+ * https://www.aomedia.org/license/patent-license.
  */
 #include <stdlib.h>
 
@@ -312,9 +313,6 @@ static void denoise_and_model_dctor(EbPtr p) {
     free(obj->flat_blocks);
     for (int32_t i = 0; i < 3; ++i) {
         EB_FREE_ARRAY(obj->denoised[i]);
-#if !OPT_FILM_GRAIN
-        EB_FREE_ARRAY(obj->noise_psd[i]);
-#endif
         EB_FREE_ARRAY(obj->packed[i]);
     }
     svt_aom_noise_model_free(&obj->noise_model);
@@ -379,7 +377,8 @@ class DenoiseModelRunTest : public ::testing::Test {
         subsampling_x_ = (pbd_init_data.color_format == EB_YUV444 ? 1 : 2) - 1;
         subsampling_y_ = (pbd_init_data.color_format >= EB_YUV422 ? 1 : 2) - 1;
 
-        EbErrorType err = svt_picture_buffer_desc_ctor(&in_pic_, &pbd_init_data);
+        EbErrorType err =
+            svt_picture_buffer_desc_ctor(&in_pic_, &pbd_init_data);
         EXPECT_EQ(err, 0) << "create input pic fail";
 
         // create the denoise and noise model

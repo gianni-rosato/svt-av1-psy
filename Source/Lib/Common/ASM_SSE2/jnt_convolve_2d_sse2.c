@@ -44,16 +44,25 @@ static INLINE __m128i convolve_rounding(const __m128i *const res_unsigned,
 }
 
 void svt_av1_jnt_convolve_2d_sse2(const uint8_t *src, int32_t src_stride, uint8_t *dst8,
-                               int32_t dst8_stride, int32_t w, int32_t h,
-                               InterpFilterParams *filter_params_x,
-                               InterpFilterParams *filter_params_y, const int32_t subpel_x_q4,
-                               const int32_t subpel_y_q4, ConvolveParams *conv_params) {
+                                  int32_t dst8_stride, int32_t w, int32_t h,
+                                  InterpFilterParams *filter_params_x,
+                                  InterpFilterParams *filter_params_y, const int32_t subpel_x_q4,
+                                  const int32_t subpel_y_q4, ConvolveParams *conv_params) {
     //TODO: Write sse code when w<=4
     if (w <= 4) {
-        svt_av1_jnt_convolve_2d_c(src,src_stride,dst8,dst8_stride,w,h,filter_params_x,filter_params_y,subpel_x_q4,subpel_y_q4,conv_params);
+        svt_av1_jnt_convolve_2d_c(src,
+                                  src_stride,
+                                  dst8,
+                                  dst8_stride,
+                                  w,
+                                  h,
+                                  filter_params_x,
+                                  filter_params_y,
+                                  subpel_x_q4,
+                                  subpel_y_q4,
+                                  conv_params);
         return;
     }
-
 
     CONV_BUF_TYPE *dst        = conv_params->dst;
     int            dst_stride = conv_params->dst_stride;
@@ -63,11 +72,11 @@ void svt_av1_jnt_convolve_2d_sse2(const uint8_t *src, int32_t src_stride, uint8_
     int                  im_h      = h + filter_params_y->taps - 1;
     int                  im_stride = MAX_SB_SIZE;
     int                  i, j;
-    const int            fo_vert               = filter_params_y->taps / 2 - 1;
-    const int            fo_horiz              = filter_params_x->taps / 2 - 1;
-    const int            do_average            = conv_params->do_average;
+    const int            fo_vert          = filter_params_y->taps / 2 - 1;
+    const int            fo_horiz         = filter_params_x->taps / 2 - 1;
+    const int            do_average       = conv_params->do_average;
     const int            use_jnt_comp_avg = conv_params->use_jnt_comp_avg;
-    const uint8_t *const src_ptr               = src - fo_vert * src_stride - fo_horiz;
+    const uint8_t *const src_ptr          = src - fo_vert * src_stride - fo_horiz;
 
     const __m128i zero = _mm_setzero_si128();
 
@@ -272,7 +281,17 @@ void svt_av1_jnt_convolve_2d_copy_sse2(const uint8_t *src, int32_t src_stride, u
                                        ConvolveParams *conv_params) {
     //TODO: Write sse code when w<=4
     if (w <= 4) {
-        svt_av1_jnt_convolve_2d_copy_c(src,src_stride,dst8,dst8_stride,w,h,filter_params_x,filter_params_y,subpel_x_q4,subpel_y_q4,conv_params);
+        svt_av1_jnt_convolve_2d_copy_c(src,
+                                       src_stride,
+                                       dst8,
+                                       dst8_stride,
+                                       w,
+                                       h,
+                                       filter_params_x,
+                                       filter_params_y,
+                                       subpel_x_q4,
+                                       subpel_y_q4,
+                                       conv_params);
         return;
     }
 
@@ -280,11 +299,11 @@ void svt_av1_jnt_convolve_2d_copy_sse2(const uint8_t *src, int32_t src_stride, u
     CONV_BUF_TYPE *dst        = conv_params->dst;
     int            dst_stride = conv_params->dst_stride;
 
-    const int     bits       = FILTER_BITS * 2 - conv_params->round_1 - conv_params->round_0;
-    const int     do_average = conv_params->do_average;
+    const int     bits             = FILTER_BITS * 2 - conv_params->round_1 - conv_params->round_0;
+    const int     do_average       = conv_params->do_average;
     const int     use_jnt_comp_avg = conv_params->use_jnt_comp_avg;
-    const __m128i zero                  = _mm_setzero_si128();
-    const __m128i left_shift            = _mm_cvtsi32_si128(bits);
+    const __m128i zero             = _mm_setzero_si128();
+    const __m128i left_shift       = _mm_cvtsi32_si128(bits);
     int           i, j;
 
     const int     w0  = conv_params->fwd_offset;

@@ -23,7 +23,7 @@
 #include <math.h>
 
 /* assert a certain condition and report err if condition not met */
-void assert_err(uint32_t condition, char * err_msg) {
+void assert_err(uint32_t condition, char* err_msg) {
     assert(condition);
     if (!condition)
         SVT_ERROR("\n %s \n", err_msg);
@@ -231,21 +231,16 @@ const CodedBlockStats* get_coded_blk_stats(const uint32_t cu_idx) {
   *  the log2f of a 32-bit number
   *****************************************/
 uint32_t log2f_32(uint32_t x) {
-#if OPT_CODE_LOG
-    uint32_t  log = 0;
+    uint32_t log = 0;
     int32_t  i;
     for (i = 4; i >= 0; --i) {
-        const uint32_t  shift = (1 << i);
-        const uint32_t n = x >> shift;
+        const uint32_t shift = (1 << i);
+        const uint32_t n     = x >> shift;
         if (n != 0) {
             x = n;
             log += shift;
         }
     }
-#else
-    //return (x > 1) ? 1 + log2(x >> 1) : 0;
-    uint32_t log = (uint32_t)log2(x);
-#endif
     return log;
 }
 // concatenate two linked list, and return the pointer to the new concatenated list
@@ -349,69 +344,11 @@ uint32_t max_depth = 5;
 uint32_t max_part  = 9;
 uint32_t max_num_active_blocks;
 
-#if CLN_GEOM
 GeomIndex geom_idx;
 //TODO need to remove above globals for multi-channel support
-#endif
 
-#if OPT_INLINE_FUNCS
-BlockGeom blk_geom_mds[MAX_NUM_BLOCKS_ALLOC]; // to access geom info of a particular block; use this table if you have the block index in md scan
-#else
-//data could be  organized in 2 forms: depth scan (dps) or MD scan (mds):
-//dps: all depth0 - all depth1 - all depth2 - all depth3.
-//     within a depth: square blk0 in raster scan (followed by all its ns blcoks),
-//     square blk1 in raster scan (followed by all its ns blcoks), etc
-//mds: top-down and Z scan.
-BlockGeom blk_geom_dps
-    [MAX_NUM_BLOCKS_ALLOC]; //to access geom info of a particular block : use this table if you have the block index in depth scan
 BlockGeom blk_geom_mds
-    [MAX_NUM_BLOCKS_ALLOC]; //to access geom info of a particular block : use this table if you have the block index in md    scan
-
-uint32_t search_matching_from_dps(uint32_t depth, uint32_t part, uint32_t x, uint32_t y) {
-    uint32_t found = 0;
-    uint32_t it;
-    uint32_t matched = 0xFFFF;
-    for (it = 0; it < max_num_active_blocks; it++) {
-        if (blk_geom_dps[it].depth == depth && blk_geom_dps[it].shape == part &&
-            blk_geom_dps[it].origin_x == x && blk_geom_dps[it].origin_y == y) {
-            if (found == 0) {
-                matched = it;
-                found   = 1;
-            } else {
-                matched = 0xFFFF;
-                break;
-            }
-        }
-    }
-
-    if (matched == 0xFFFF)
-        SVT_LOG(" \n\n PROBLEM\n\n ");
-
-    return matched;
-}
-uint32_t search_matching_from_mds(uint32_t depth, uint32_t part, uint32_t x, uint32_t y) {
-    uint32_t found = 0;
-    uint32_t it;
-    uint32_t matched = 0xFFFF;
-    for (it = 0; it < max_num_active_blocks; it++) {
-        if (blk_geom_mds[it].depth == depth && blk_geom_mds[it].shape == part &&
-            blk_geom_mds[it].origin_x == x && blk_geom_mds[it].origin_y == y) {
-            if (found == 0) {
-                matched = it;
-                found   = 1;
-            } else {
-                matched = 0xFFFF;
-                break;
-            }
-        }
-    }
-
-    if (matched == 0xFFFF)
-        SVT_LOG(" \n\n PROBLEM\n\n ");
-
-    return matched;
-}
-#endif
+    [MAX_NUM_BLOCKS_ALLOC]; // to access geom info of a particular block; use this table if you have the block index in md scan
 static INLINE TxSize av1_get_tx_size(BlockSize sb_type, int32_t plane /*, const MacroBlockD *xd*/) {
     UNUSED(plane);
     //const MbModeInfo *mbmi = xd->mi[0];
@@ -429,9 +366,7 @@ void md_scan_all_blks(uint32_t* idx_mds, uint32_t sq_size, uint32_t x, uint32_t 
                       int32_t is_last_quadrant, uint8_t quad_it) {
     //the input block is the parent square block of size sq_size located at pos (x,y)
 
-#if FIX_INT_OVERLOW
     assert(quad_it <= 3);
-#endif
     uint32_t part_it, nsq_it, d1_it, sqi_mds;
 
     uint32_t halfsize  = sq_size / 2;
@@ -470,42 +405,20 @@ void md_scan_all_blks(uint32_t* idx_mds, uint32_t sq_size, uint32_t x, uint32_t 
 
             blk_geom_mds[*idx_mds].d1i     = d1_it++;
             blk_geom_mds[*idx_mds].sqi_mds = sqi_mds;
-#if CLN_GEOM
 
-            blk_geom_mds[*idx_mds]. geom_idx = geom_idx;
+            blk_geom_mds[*idx_mds].geom_idx = geom_idx;
 
-#if FIX_INT_OVERLOW
-            blk_geom_mds[*idx_mds].parent_depth_idx_mds = sqi_mds == 0 ? 0 :
-                (sqi_mds + (3 - quad_it) * ns_depth_offset[geom_idx][blk_geom_mds[*idx_mds].depth])
-                - parent_depth_offset[geom_idx][blk_geom_mds[*idx_mds].depth];
-#else
-            blk_geom_mds[*idx_mds].parent_depth_idx_mds = sqi_mds == 0 ? 0 :
-                (sqi_mds - (quad_it - 3) * ns_depth_offset[geom_idx][blk_geom_mds[*idx_mds].depth])
-                - parent_depth_offset[geom_idx][blk_geom_mds[*idx_mds].depth];
-#endif
-            blk_geom_mds[*idx_mds].d1_depth_offset = d1_depth_offset[geom_idx][blk_geom_mds[*idx_mds].depth];
-            blk_geom_mds[*idx_mds].ns_depth_offset = ns_depth_offset[geom_idx][blk_geom_mds[*idx_mds].depth];
-#else
-
-    #if LIGHT_PD0
-                blk_geom_mds[*idx_mds].parent_depth_idx_mds = sqi_mds == 0 ? 0 :
-                    (sqi_mds - (quad_it - 3) * ns_depth_offset[max_sb == 128][blk_geom_mds[*idx_mds].depth])
-                    - parent_depth_offset[max_sb == 128][blk_geom_mds[*idx_mds].depth];
-                blk_geom_mds[*idx_mds].d1_depth_offset = d1_depth_offset[max_sb == 128][blk_geom_mds[*idx_mds].depth];
-                blk_geom_mds[*idx_mds].ns_depth_offset = ns_depth_offset[max_sb == 128][blk_geom_mds[*idx_mds].depth];
-    #endif
-
-#endif
-            blk_geom_mds[*idx_mds].totns   = tot_num_ns_per_part;
-            blk_geom_mds[*idx_mds].nsi     = nsq_it;
-#if !OPT_INLINE_FUNCS
-            uint32_t matched = search_matching_from_dps(blk_geom_mds[*idx_mds].depth,
-                                                        blk_geom_mds[*idx_mds].shape,
-                                                        blk_geom_mds[*idx_mds].origin_x,
-                                                        blk_geom_mds[*idx_mds].origin_y);
-
-            blk_geom_mds[*idx_mds].blkidx_dps = blk_geom_dps[matched].blkidx_dps;
-#endif
+            blk_geom_mds[*idx_mds].parent_depth_idx_mds = sqi_mds == 0
+                ? 0
+                : (sqi_mds +
+                   (3 - quad_it) * ns_depth_offset[geom_idx][blk_geom_mds[*idx_mds].depth]) -
+                    parent_depth_offset[geom_idx][blk_geom_mds[*idx_mds].depth];
+            blk_geom_mds[*idx_mds].d1_depth_offset =
+                d1_depth_offset[geom_idx][blk_geom_mds[*idx_mds].depth];
+            blk_geom_mds[*idx_mds].ns_depth_offset =
+                ns_depth_offset[geom_idx][blk_geom_mds[*idx_mds].depth];
+            blk_geom_mds[*idx_mds].totns = tot_num_ns_per_part;
+            blk_geom_mds[*idx_mds].nsi   = nsq_it;
             blk_geom_mds[*idx_mds].bwidth  = quartsize * ns_quarter_size_mult[part_it][0][nsq_it];
             blk_geom_mds[*idx_mds].bheight = quartsize * ns_quarter_size_mult[part_it][1][nsq_it];
             blk_geom_mds[*idx_mds].bwidth_log2  = svt_log2f(blk_geom_mds[*idx_mds].bwidth);
@@ -1387,96 +1300,6 @@ void md_scan_all_blks(uint32_t* idx_mds, uint32_t sq_size, uint32_t x, uint32_t 
     }
 }
 
-#if !OPT_INLINE_FUNCS
-void depth_scan_all_blks() {
-    uint32_t depth_it, sq_it_y, sq_it_x, part_it, nsq_it;
-    uint32_t sq_orgx, sq_orgy;
-    uint32_t depth_scan_idx = 0;
-
-    for (depth_it = 0; depth_it < max_depth; depth_it++) {
-        uint32_t tot_num_sq = 1 << depth_it;
-        uint32_t sq_size    = depth_it == 0 ? max_sb
-               : depth_it == 1              ? max_sb / 2
-               : depth_it == 2              ? max_sb / 4
-               : depth_it == 3              ? max_sb / 8
-               : depth_it == 4              ? max_sb / 16
-                                            : max_sb / 32;
-
-        uint32_t max_part_updated = sq_size == 128 ? MIN(max_part, 7)
-            : sq_size == 8                         ? MIN(max_part, 3)
-            : sq_size == 4                         ? 1
-                                                   : max_part;
-
-        for (sq_it_y = 0; sq_it_y < tot_num_sq; sq_it_y++) {
-            sq_orgy = sq_it_y * sq_size;
-
-            for (sq_it_x = 0; sq_it_x < tot_num_sq; sq_it_x++) {
-                sq_orgx = sq_it_x * sq_size;
-
-                for (part_it = 0; part_it < max_part_updated; part_it++) {
-                    uint32_t tot_num_ns_per_part = part_it < 1 ? 1
-                        : part_it < 3                          ? 2
-                        : part_it < 7                          ? 3
-                                                               : 4;
-
-                    for (nsq_it = 0; nsq_it < tot_num_ns_per_part; nsq_it++) {
-                        blk_geom_dps[depth_scan_idx].blkidx_dps = depth_scan_idx;
-                        blk_geom_dps[depth_scan_idx].depth      = depth_it;
-                        blk_geom_dps[depth_scan_idx].shape      = (Part)part_it;
-                        blk_geom_dps[depth_scan_idx].origin_x   = sq_orgx +
-                            (sq_size / 4) * ns_quarter_off_mult[part_it][0][nsq_it];
-                        blk_geom_dps[depth_scan_idx].origin_y = sq_orgy +
-                            (sq_size / 4) * ns_quarter_off_mult[part_it][1][nsq_it];
-
-                        depth_scan_idx++;
-                    }
-                }
-            }
-        }
-    }
-}
-
-void finish_depth_scan_all_blks() {
-    uint32_t depth_scan_idx = 0;
-
-    for (uint32_t depth_it = 0; depth_it < max_depth; depth_it++) {
-        uint32_t tot_num_sq = 1 << depth_it;
-        uint32_t sq_size    = depth_it == 0 ? max_sb
-               : depth_it == 1              ? max_sb / 2
-               : depth_it == 2              ? max_sb / 4
-               : depth_it == 3              ? max_sb / 8
-               : depth_it == 4              ? max_sb / 16
-                                            : max_sb / 32;
-
-        uint32_t max_part_updated = sq_size == 128 ? MIN(max_part, 7)
-            : sq_size == 8                         ? MIN(max_part, 3)
-            : sq_size == 4                         ? 1
-                                                   : max_part;
-
-        for (uint32_t sq_it_y = 0; sq_it_y < tot_num_sq; sq_it_y++) {
-            for (uint32_t sq_it_x = 0; sq_it_x < tot_num_sq; sq_it_x++) {
-                for (uint32_t part_it = 0; part_it < max_part_updated; part_it++) {
-                    uint32_t tot_num_ns_per_part = part_it < 1 ? 1
-                        : part_it < 3                          ? 2
-                        : part_it < 7                          ? 3
-                                                               : 4;
-
-                    for (uint32_t nsq_it = 0; nsq_it < tot_num_ns_per_part; nsq_it++) {
-                        uint32_t matched = search_matching_from_mds(
-                            blk_geom_dps[depth_scan_idx].depth,
-                            blk_geom_dps[depth_scan_idx].shape,
-                            blk_geom_dps[depth_scan_idx].origin_x,
-                            blk_geom_dps[depth_scan_idx].origin_y);
-
-                        blk_geom_dps[depth_scan_idx].blkidx_mds = blk_geom_mds[matched].blkidx_mds;
-                        depth_scan_idx++;
-                    }
-                }
-            }
-        }
-    }
-}
-#endif
 uint32_t count_total_num_of_active_blks() {
     uint32_t depth_it, sq_it_y, sq_it_x, part_it, nsq_it;
 
@@ -1544,69 +1367,42 @@ void log_redundancy_similarity(uint32_t max_block_count) {
     }
 }
 
-#if CLN_GEOM
 /*
   Build Block Geometry
 */
 void build_blk_geom(GeomIndex geom) {
-
     uint32_t max_block_count;
     geom_idx = geom;
     if (geom == GEOM_0) {
-        max_sb = 64;
-        max_depth = 4;
-        max_part = 1;
+        max_sb          = 64;
+        max_depth       = 4;
+        max_part        = 1;
         max_block_count = 85;
-    }
-    else if (geom == GEOM_1) {
-        max_sb = 64;
-        max_depth = 5;
-        max_part = 9;
+    } else if (geom == GEOM_1) {
+        max_sb          = 64;
+        max_depth       = 5;
+        max_part        = 9;
         max_block_count = 1101;
-    }
-    else {
-        max_sb = 128;
-        max_depth = 6;
-        max_part = 9;
+    } else {
+        max_sb          = 128;
+        max_depth       = 6;
+        max_part        = 9;
         max_block_count = 4421;
     }
 
-#else
-void build_blk_geom(int32_t use_128x128) {
-    max_sb                   = use_128x128 ? 128 : 64;
-    max_depth                = use_128x128 ? 6 : 5;
-    uint32_t max_block_count = use_128x128 ? BLOCK_MAX_COUNT_SB_128 : BLOCK_MAX_COUNT_SB_64;
-#endif
     //(0)compute total number of blocks using the information provided
     max_num_active_blocks = count_total_num_of_active_blks();
     if (max_num_active_blocks != max_block_count)
         SVT_LOG(" \n\n Error %i blocks\n\n ", max_num_active_blocks);
-#if !OPT_INLINE_FUNCS
-    //(1) Construct depth scan blk_geom_dps
-    depth_scan_all_blks();
-#endif
     //(2) Construct md scan blk_geom_mds:  use info from dps
     uint32_t idx_mds = 0;
     md_scan_all_blks(&idx_mds, max_sb, 0, 0, 0, 0);
-#if !OPT_INLINE_FUNCS
-    //(3) Fill more info from mds to dps - print using dps
-    finish_depth_scan_all_blks();
-#endif
     log_redundancy_similarity(max_block_count);
 }
-#if !OPT_INLINE_FUNCS
-//need to finish filling dps by inherting data from mds
-const BlockGeom* get_blk_geom_mds(uint32_t bidx_mds) { return &blk_geom_mds[bidx_mds]; }
-#endif
 uint32_t get_mds_idx(uint32_t orgx, uint32_t orgy, uint32_t size, uint32_t use_128x128) {
-
-#if CLN_GEOM
     (void)use_128x128;
     uint32_t max_block_count = max_num_active_blocks;
-#else
-    uint32_t max_block_count = use_128x128 ? BLOCK_MAX_COUNT_SB_128 : BLOCK_MAX_COUNT_SB_64;
-#endif
-    uint32_t mds             = 0;
+    uint32_t mds = 0;
 
     for (uint32_t blk_it = 0; blk_it < max_block_count; blk_it++) {
         BlockGeom* cur_geom = &blk_geom_mds[blk_it];
@@ -1621,8 +1417,7 @@ uint32_t get_mds_idx(uint32_t orgx, uint32_t orgy, uint32_t size, uint32_t use_1
 }
 
 #if FIXED_POINT_ASSERT_TEST
-void svt_fixed_point_test_breakpoint(char* file, unsigned line)
-{
+void svt_fixed_point_test_breakpoint(char* file, unsigned line) {
     printf("ERROR: Fixed Point Test Assert:  %s:%u", file, line);
 }
 #endif

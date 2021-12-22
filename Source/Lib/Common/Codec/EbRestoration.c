@@ -1856,7 +1856,7 @@ void svt_av1_loop_restoration_save_boundary_lines(const Yv12BufferConfig *frame,
 }
 
 // Assumes cm->rst_info[p].restoration_unit_size is already initialized
-EbErrorType svt_av1_alloc_restoration_buffers(PictureControlSet *pcs , Av1Common *cm) {
+EbErrorType svt_av1_alloc_restoration_buffers(PictureControlSet *pcs, Av1Common *cm) {
     EbErrorType   return_error = EB_ErrorNone;
     const int32_t num_planes   = 3; // av1_num_planes(cm);
     for (int32_t p = 0; p < num_planes; ++p)
@@ -1903,4 +1903,3 @@ EbErrorType svt_av1_alloc_restoration_buffers(PictureControlSet *pcs , Av1Common
 
     return return_error;
 }
-

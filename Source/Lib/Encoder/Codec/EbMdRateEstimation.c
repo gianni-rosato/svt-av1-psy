@@ -18,9 +18,7 @@
 #include "EbEntropyCoding.h"
 #include "EbBitstreamUnit.h"
 #include "EbRateDistortionCost.h"
-#if OPT_INLINE_FUNCS
 #include "EbInterPrediction.h"
-#endif
 
 static INLINE int32_t get_interinter_wedge_bits(BlockSize sb_type) {
     const int32_t wbits = get_wedge_params_bits(sb_type);
@@ -73,38 +71,20 @@ int av1_filter_intra_allowed_bsize(uint8_t enable_filter_intra, BlockSize bs);
 * all scenarios based on the frame CDF
 **************************************************************/
 void av1_estimate_syntax_rate(MdRateEstimationContext *md_rate_estimation_array, EbBool is_i_slice,
-#if OPT8_MDC
-    uint8_t pic_filter_intra_level,
-    uint8_t allow_screen_content_tools,
-    uint8_t enable_restoration,
-    uint8_t allow_intrabc,
-#endif
-#if OPT9_RATE_ESTIMATION
-    uint8_t partition_contexts,
-#endif
-    FRAME_CONTEXT *fc) {
+                              uint8_t pic_filter_intra_level, uint8_t allow_screen_content_tools,
+                              uint8_t enable_restoration, uint8_t allow_intrabc,
+                              uint8_t partition_contexts,
+                              FRAME_CONTEXT *fc) {
     int32_t i, j;
 
     md_rate_estimation_array->initialized = 1;
-#if OPT9_RATE_ESTIMATION
     for (i = 0; i < partition_contexts; ++i)
         av1_get_syntax_rate_from_cdf(
             md_rate_estimation_array->partition_fac_bits[i], fc->partition_cdf[i], NULL);
-#else
-    for (i = 0; i < PARTITION_CONTEXTS; ++i)
-        av1_get_syntax_rate_from_cdf(
-            md_rate_estimation_array->partition_fac_bits[i], fc->partition_cdf[i], NULL);
-#endif
 
-#if !OPT8_MDC
-    //if (cm->skip_mode_flag) { // NM - Hardcoded to true
-#endif
     for (i = 0; i < SKIP_CONTEXTS; ++i)
         av1_get_syntax_rate_from_cdf(
             md_rate_estimation_array->skip_mode_fac_bits[i], fc->skip_mode_cdfs[i], NULL);
-#if !OPT8_MDC
-    //}
-#endif
 
     for (i = 0; i < SKIP_CONTEXTS; ++i)
         av1_get_syntax_rate_from_cdf(
@@ -124,55 +104,51 @@ void av1_estimate_syntax_rate(MdRateEstimationContext *md_rate_estimation_array,
                                          fc->uv_mode_cdf[i][j],
                                          NULL);
     }
-#if OPT8_MDC
     if (pic_filter_intra_level) {
-#endif
         av1_get_syntax_rate_from_cdf(
             md_rate_estimation_array->filter_intra_mode_fac_bits, fc->filter_intra_mode_cdf, NULL);
         for (i = 0; i < BlockSizeS_ALL; ++i) {
             if (av1_filter_intra_allowed_bsize(1, i))
-                av1_get_syntax_rate_from_cdf(
-                    md_rate_estimation_array->filter_intra_fac_bits[i], fc->filter_intra_cdfs[i], NULL);
+                av1_get_syntax_rate_from_cdf(md_rate_estimation_array->filter_intra_fac_bits[i],
+                                             fc->filter_intra_cdfs[i],
+                                             NULL);
         }
-#if OPT8_MDC
     }
-#endif
     for (i = 0; i < SWITCHABLE_FILTER_CONTEXTS; ++i)
         av1_get_syntax_rate_from_cdf(md_rate_estimation_array->switchable_interp_fac_bitss[i],
                                      fc->switchable_interp_cdf[i],
                                      NULL);
-#if OPT8_MDC
     if (allow_screen_content_tools) {
-#endif
-    for (i = 0; i < PALATTE_BSIZE_CTXS; ++i) {
-        av1_get_syntax_rate_from_cdf(
-            md_rate_estimation_array->palette_ysize_fac_bits[i], fc->palette_y_size_cdf[i], NULL);
-        av1_get_syntax_rate_from_cdf(md_rate_estimation_array->palette_uv_size_fac_bits[i],
-                                     fc->palette_uv_size_cdf[i],
-                                     NULL);
-        for (j = 0; j < PALETTE_Y_MODE_CONTEXTS; ++j)
-            av1_get_syntax_rate_from_cdf(md_rate_estimation_array->palette_ymode_fac_bits[i][j],
-                                         fc->palette_y_mode_cdf[i][j],
+        for (i = 0; i < PALATTE_BSIZE_CTXS; ++i) {
+            av1_get_syntax_rate_from_cdf(md_rate_estimation_array->palette_ysize_fac_bits[i],
+                                         fc->palette_y_size_cdf[i],
                                          NULL);
-    }
+            av1_get_syntax_rate_from_cdf(md_rate_estimation_array->palette_uv_size_fac_bits[i],
+                                         fc->palette_uv_size_cdf[i],
+                                         NULL);
+            for (j = 0; j < PALETTE_Y_MODE_CONTEXTS; ++j)
+                av1_get_syntax_rate_from_cdf(md_rate_estimation_array->palette_ymode_fac_bits[i][j],
+                                             fc->palette_y_mode_cdf[i][j],
+                                             NULL);
+        }
 
-    for (i = 0; i < PALETTE_UV_MODE_CONTEXTS; ++i)
-        av1_get_syntax_rate_from_cdf(md_rate_estimation_array->palette_uv_mode_fac_bits[i],
-                                     fc->palette_uv_mode_cdf[i],
-                                     NULL);
-    for (i = 0; i < PALETTE_SIZES; ++i) {
-        for (j = 0; j < PALETTE_COLOR_INDEX_CONTEXTS; ++j) {
-            av1_get_syntax_rate_from_cdf(md_rate_estimation_array->palette_ycolor_fac_bitss[i][j],
-                                         fc->palette_y_color_index_cdf[i][j],
+        for (i = 0; i < PALETTE_UV_MODE_CONTEXTS; ++i)
+            av1_get_syntax_rate_from_cdf(md_rate_estimation_array->palette_uv_mode_fac_bits[i],
+                                         fc->palette_uv_mode_cdf[i],
                                          NULL);
-            av1_get_syntax_rate_from_cdf(md_rate_estimation_array->palette_uv_color_fac_bits[i][j],
-                                         fc->palette_uv_color_index_cdf[i][j],
-                                         NULL);
+        for (i = 0; i < PALETTE_SIZES; ++i) {
+            for (j = 0; j < PALETTE_COLOR_INDEX_CONTEXTS; ++j) {
+                av1_get_syntax_rate_from_cdf(
+                    md_rate_estimation_array->palette_ycolor_fac_bitss[i][j],
+                    fc->palette_y_color_index_cdf[i][j],
+                    NULL);
+                av1_get_syntax_rate_from_cdf(
+                    md_rate_estimation_array->palette_uv_color_fac_bits[i][j],
+                    fc->palette_uv_color_index_cdf[i][j],
+                    NULL);
+            }
         }
     }
-#if OPT8_MDC
-    }
-#endif
     int32_t sign_fac_bits[CFL_JOINT_SIGNS];
     av1_get_syntax_rate_from_cdf(sign_fac_bits, fc->cfl_sign_cdf, NULL);
     for (int32_t joint_sign = 0; joint_sign < CFL_JOINT_SIGNS; joint_sign++) {
@@ -227,30 +203,19 @@ void av1_estimate_syntax_rate(MdRateEstimationContext *md_rate_estimation_array,
     for (i = 0; i < DIRECTIONAL_MODES; ++i)
         av1_get_syntax_rate_from_cdf(
             md_rate_estimation_array->angle_delta_fac_bits[i], fc->angle_delta_cdf[i], NULL);
-#if OPT8_MDC
-#if FIX_ISSUE_45_M0_6
     if (enable_restoration) {
-#else
-    if(enable_restoration && allow_intrabc == 0) {
-#endif
-#endif
-    av1_get_syntax_rate_from_cdf(
-        md_rate_estimation_array->switchable_restore_fac_bits, fc->switchable_restore_cdf, NULL);
-    av1_get_syntax_rate_from_cdf(
-        md_rate_estimation_array->wiener_restore_fac_bits, fc->wiener_restore_cdf, NULL);
-    av1_get_syntax_rate_from_cdf(
-        md_rate_estimation_array->sgrproj_restore_fac_bits, fc->sgrproj_restore_cdf, NULL);
-#if !FIX_ISSUE_45_M0_6
-        av1_get_syntax_rate_from_cdf(md_rate_estimation_array->intrabc_fac_bits, fc->intrabc_cdf, NULL);
-#endif
-#if OPT8_MDC
+        av1_get_syntax_rate_from_cdf(md_rate_estimation_array->switchable_restore_fac_bits,
+                                     fc->switchable_restore_cdf,
+                                     NULL);
+        av1_get_syntax_rate_from_cdf(
+            md_rate_estimation_array->wiener_restore_fac_bits, fc->wiener_restore_cdf, NULL);
+        av1_get_syntax_rate_from_cdf(
+            md_rate_estimation_array->sgrproj_restore_fac_bits, fc->sgrproj_restore_cdf, NULL);
     }
-#endif
-#if FIX_ISSUE_45_M0_6
     if (allow_intrabc) {
-        av1_get_syntax_rate_from_cdf(md_rate_estimation_array->intrabc_fac_bits, fc->intrabc_cdf, NULL);
+        av1_get_syntax_rate_from_cdf(
+            md_rate_estimation_array->intrabc_fac_bits, fc->intrabc_cdf, NULL);
     }
-#endif
 
     if (!is_i_slice) { // NM - Hardcoded to true
         for (i = 0; i < COMP_INTER_CONTEXTS; ++i)
@@ -404,34 +369,32 @@ void av1_estimate_mv_rate(PictureControlSet *      pcs_ptr,
                           MdRateEstimationContext *md_rate_estimation_array, FRAME_CONTEXT *fc)
 
 {
-#if  FTR_SIMPLIFIED_MV_COST
-#if CLN_RATE_EST_CTRLS
     if (pcs_ptr->approx_inter_rate) {
-#else
-    if (pcs_ptr->use_low_precision_cost_estimation) {
-#endif
-        memset(md_rate_estimation_array->nmv_vec_cost, 0, sizeof(int32_t) *MV_JOINTS);
-        memset(pcs_ptr->parent_pcs_ptr->scs_ptr->nmv_vec_cost, 0, sizeof(int32_t) *MV_JOINTS);
-        memset(pcs_ptr->parent_pcs_ptr->scs_ptr->nmv_costs, 0, sizeof(int32_t) *MV_VALS * 2);
-        md_rate_estimation_array->nmvcoststack[0] = &pcs_ptr->parent_pcs_ptr->scs_ptr->nmv_costs[0][MV_MAX];
-        md_rate_estimation_array->nmvcoststack[1] = &pcs_ptr->parent_pcs_ptr->scs_ptr->nmv_costs[1][MV_MAX];
+        memset(md_rate_estimation_array->nmv_vec_cost, 0, sizeof(int32_t) * MV_JOINTS);
+        memset(pcs_ptr->parent_pcs_ptr->scs_ptr->nmv_vec_cost, 0, sizeof(int32_t) * MV_JOINTS);
+        memset(pcs_ptr->parent_pcs_ptr->scs_ptr->nmv_costs, 0, sizeof(int32_t) * MV_VALS * 2);
+        md_rate_estimation_array->nmvcoststack[0] =
+            &pcs_ptr->parent_pcs_ptr->scs_ptr->nmv_costs[0][MV_MAX];
+        md_rate_estimation_array->nmvcoststack[1] =
+            &pcs_ptr->parent_pcs_ptr->scs_ptr->nmv_costs[1][MV_MAX];
         return;
     }
-#endif
     int32_t *    nmvcost[2];
     int32_t *    nmvcost_hp[2];
     FrameHeader *frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
 
-    nmvcost[0]    = &md_rate_estimation_array->nmv_costs[0][MV_MAX];
-    nmvcost[1]    = &md_rate_estimation_array->nmv_costs[1][MV_MAX];
-    nmvcost_hp[0] = &md_rate_estimation_array->nmv_costs_hp[0][MV_MAX];
-    nmvcost_hp[1] = &md_rate_estimation_array->nmv_costs_hp[1][MV_MAX];
-    uint8_t allow_high_precision_mv = pcs_ptr->parent_pcs_ptr->bypass_cost_table_gen ? 0 : frm_hdr->allow_high_precision_mv;
+    nmvcost[0]                      = &md_rate_estimation_array->nmv_costs[0][MV_MAX];
+    nmvcost[1]                      = &md_rate_estimation_array->nmv_costs[1][MV_MAX];
+    nmvcost_hp[0]                   = &md_rate_estimation_array->nmv_costs_hp[0][MV_MAX];
+    nmvcost_hp[1]                   = &md_rate_estimation_array->nmv_costs_hp[1][MV_MAX];
+    uint8_t allow_high_precision_mv = pcs_ptr->parent_pcs_ptr->bypass_cost_table_gen
+        ? 0
+        : frm_hdr->allow_high_precision_mv;
     if (!pcs_ptr->parent_pcs_ptr->bypass_cost_table_gen) {
         svt_av1_build_nmv_cost_table(md_rate_estimation_array->nmv_vec_cost, //out
-            allow_high_precision_mv ? nmvcost_hp : nmvcost, //out
-            &fc->nmvc,
-            allow_high_precision_mv);
+                                     allow_high_precision_mv ? nmvcost_hp : nmvcost, //out
+                                     &fc->nmvc,
+                                     allow_high_precision_mv);
         md_rate_estimation_array->nmvcoststack[0] = allow_high_precision_mv
             ? &md_rate_estimation_array->nmv_costs_hp[0][MV_MAX]
             : &md_rate_estimation_array->nmv_costs[0][MV_MAX];
@@ -440,21 +403,23 @@ void av1_estimate_mv_rate(PictureControlSet *      pcs_ptr,
             : &md_rate_estimation_array->nmv_costs[1][MV_MAX];
 
         if (!pcs_ptr->parent_pcs_ptr->scs_ptr->mvrate_set) {
-            memcpy(pcs_ptr->parent_pcs_ptr->scs_ptr->nmv_vec_cost, md_rate_estimation_array->nmv_vec_cost, sizeof(int32_t) *MV_JOINTS);
-            memcpy(pcs_ptr->parent_pcs_ptr->scs_ptr->nmv_costs, md_rate_estimation_array->nmv_costs, sizeof(int32_t) *MV_VALS*2);
+            memcpy(pcs_ptr->parent_pcs_ptr->scs_ptr->nmv_vec_cost,
+                   md_rate_estimation_array->nmv_vec_cost,
+                   sizeof(int32_t) * MV_JOINTS);
+            memcpy(pcs_ptr->parent_pcs_ptr->scs_ptr->nmv_costs,
+                   md_rate_estimation_array->nmv_costs,
+                   sizeof(int32_t) * MV_VALS * 2);
             pcs_ptr->parent_pcs_ptr->scs_ptr->mvrate_set = 1;
         }
-    }
-    else {
-        memcpy(md_rate_estimation_array->nmv_vec_cost,pcs_ptr->parent_pcs_ptr->scs_ptr->nmv_vec_cost, sizeof(int32_t) *MV_JOINTS);
-#if FIX_ISSUE_45
-        memcpy(md_rate_estimation_array->nmv_costs, pcs_ptr->parent_pcs_ptr->scs_ptr->nmv_costs, sizeof(int32_t) *MV_VALS * 2);
+    } else {
+        memcpy(md_rate_estimation_array->nmv_vec_cost,
+               pcs_ptr->parent_pcs_ptr->scs_ptr->nmv_vec_cost,
+               sizeof(int32_t) * MV_JOINTS);
+        memcpy(md_rate_estimation_array->nmv_costs,
+               pcs_ptr->parent_pcs_ptr->scs_ptr->nmv_costs,
+               sizeof(int32_t) * MV_VALS * 2);
         md_rate_estimation_array->nmvcoststack[0] = &md_rate_estimation_array->nmv_costs[0][MV_MAX];
         md_rate_estimation_array->nmvcoststack[1] = &md_rate_estimation_array->nmv_costs[1][MV_MAX];
-#else
-        md_rate_estimation_array->nmvcoststack[0] = &pcs_ptr->parent_pcs_ptr->scs_ptr->nmv_costs[0][MV_MAX];
-        md_rate_estimation_array->nmvcoststack[1] = &pcs_ptr->parent_pcs_ptr->scs_ptr->nmv_costs[1][MV_MAX];
-#endif
     }
     if (frm_hdr->allow_intrabc) {
         int32_t *dvcost[2] = {&md_rate_estimation_array->dv_cost[0][MV_MAX],
@@ -637,17 +602,10 @@ int     get_comp_index_context_enc(PictureParentControlSet *pcs_ptr, int cur_fra
                                    int bck_frame_index, int fwd_frame_index, const MacroBlockD *xd);
 int32_t is_nontrans_global_motion_ec(MvReferenceFrame rf0, MvReferenceFrame rf1, BlkStruct *blk_ptr,
                                      BlockSize sb_type, PictureParentControlSet *pcs_ptr);
-#if !LIGHT_PD1_MACRO
-uint8_t av1_drl_ctx(const CandidateMv *ref_mv_stack, int32_t ref_idx);
-#endif
 int32_t have_newmv_in_inter_mode(PredictionMode mode);
 //Returns a context number for the given MB prediction signal
-#if OPT_MEMORY_MIP
 /*static*/ InterpFilter get_ref_filter_type(const BlockModeInfoEnc *ref_mbmi, int dir,
-#else
-static InterpFilter get_ref_filter_type(const BlockModeInfo *ref_mbmi, int dir,
-#endif
-                                        MvReferenceFrame ref_frame) {
+                                            MvReferenceFrame ref_frame) {
     return ((ref_mbmi->ref_frame[0] == ref_frame || ref_mbmi->ref_frame[1] == ref_frame)
                 ? av1_extract_interp_filter(ref_mbmi->interp_filters, dir & 0x01)
                 : SWITCHABLE_FILTERS);
@@ -660,11 +618,7 @@ int av1_filter_intra_allowed(uint8_t enable_filter_intra, BlockSize bsize, uint8
 INLINE int32_t is_chroma_reference(int32_t mi_row, int32_t mi_col, BlockSize bsize,
                                    int32_t subsampling_x, int32_t subsampling_y);
 
-#if OPT_MEMORY_MIP
 int32_t is_inter_block(const BlockModeInfoEnc *mbmi);
-#else
-int32_t is_inter_block(const BlockModeInfo *mbmi);
-#endif
 
 int av1_allow_palette(int allow_screen_content_tools, BlockSize sb_type);
 
@@ -672,9 +626,6 @@ int av1_get_palette_bsize_ctx(BlockSize bsize);
 
 int av1_get_palette_mode_ctx(const MacroBlockD *xd);
 
-#if !OPT_INLINE_FUNCS
-extern void av1_set_ref_frame(MvReferenceFrame *rf, int8_t ref_frame_type);
-#endif
 static INLINE InterpFilter av1_extract_interp_filter(InterpFilters filters, int32_t x_filter);
 
 /*******************************************************************************
@@ -702,10 +653,7 @@ int svt_av1_get_intra_inter_context(const MacroBlockD *xd) {
         return 0;
     }
 }
-#if !OPT_INLINE_FUNCS
-extern int8_t av1_ref_frame_type(const MvReferenceFrame *const rf);
-#endif
-uint16_t      compound_mode_ctx_map_[3][COMP_NEWMV_CTXS] = {
+uint16_t compound_mode_ctx_map_[3][COMP_NEWMV_CTXS] = {
     {0, 1, 1, 1, 1},
     {1, 2, 3, 4, 4},
     {4, 4, 5, 6, 7},
@@ -853,20 +801,13 @@ static AOM_INLINE void update_inter_mode_stats(FRAME_CONTEXT *fc, PredictionMode
  ******************************************************************************/
 static AOM_INLINE void update_palette_cdf(MacroBlockD *xd, const MbModeInfo *const mbmi,
                                           BlkStruct *blk_ptr, const int mi_row, const int mi_col) {
-    FRAME_CONTEXT *              fc                = xd->tile_ctx;
-    const BlockGeom *            blk_geom          = get_blk_geom_mds(blk_ptr->mds_idx);
-    const BlockSize              bsize             = blk_geom->bsize;
-#if !OPT_MEM_PALETTE
-    const PaletteModeInfo *const pmi               = &blk_ptr->palette_info.pmi;
-#endif
-    const int                    palette_bsize_ctx = av1_get_palette_bsize_ctx(bsize);
+    FRAME_CONTEXT *  fc       = xd->tile_ctx;
+    const BlockGeom *blk_geom = get_blk_geom_mds(blk_ptr->mds_idx);
+    const BlockSize  bsize    = blk_geom->bsize;
+    const int palette_bsize_ctx = av1_get_palette_bsize_ctx(bsize);
 
     if (mbmi->block_mi.mode == DC_PRED) {
-#if OPT_MEM_PALETTE
-        const int n                = blk_ptr->palette_size[0];
-#else
-        const int n                = pmi->palette_size[0];
-#endif
+        const int n = blk_ptr->palette_size[0];
         const int palette_mode_ctx = av1_get_palette_mode_ctx(xd);
 
         update_cdf(fc->palette_y_mode_cdf[palette_bsize_ctx][palette_mode_ctx], n > 0, 2);
@@ -875,22 +816,13 @@ static AOM_INLINE void update_palette_cdf(MacroBlockD *xd, const MbModeInfo *con
                 fc->palette_y_size_cdf[palette_bsize_ctx], n - PALETTE_MIN_SIZE, PALETTE_SIZES);
         }
     }
-#if OPT_MODE_MI_MEM
-    uint32_t  intra_chroma_mode = blk_ptr->prediction_unit_array->intra_chroma_mode;
-#else
-    uint32_t  intra_chroma_mode = mbmi->block_mi.uv_mode;
-#endif
-    const int uv_dc_pred        = intra_chroma_mode == UV_DC_PRED &&
+    uint32_t intra_chroma_mode = blk_ptr->prediction_unit_array->intra_chroma_mode;
+    const int uv_dc_pred = intra_chroma_mode == UV_DC_PRED &&
         is_chroma_reference(mi_row, mi_col, bsize, 1, 1);
 
     if (uv_dc_pred) {
-#if OPT_MEM_PALETTE
         const int n                   = blk_ptr->palette_size[1];
         const int palette_uv_mode_ctx = (blk_ptr->palette_size[0] > 0);
-#else
-        const int n                   = pmi->palette_size[1];
-        const int palette_uv_mode_ctx = (pmi->palette_size[0] > 0);
-#endif
         update_cdf(fc->palette_uv_mode_cdf[palette_uv_mode_ctx], n > 0, 2);
         if (n > 0)
             update_cdf(
@@ -920,11 +852,7 @@ static AOM_INLINE void sum_intra_stats(PictureControlSet *pcs_ptr, BlkStruct *bl
     if (blk_ptr->use_intrabc == 0 &&
         av1_filter_intra_allowed(pcs_ptr->parent_pcs_ptr->scs_ptr->seq_header.filter_intra_level,
                                  bsize,
-#if OPT_MEM_PALETTE
                                  blk_ptr->palette_size[0],
-#else
-                                 blk_ptr->palette_info.pmi.palette_size[0],
-#endif
                                  y_mode)) {
         const int use_filter_intra_mode = blk_ptr->filter_intra_mode != FILTER_INTRA_MODES;
         update_cdf(fc->filter_intra_cdfs[bsize], use_filter_intra_mode, 2);
@@ -935,35 +863,20 @@ static AOM_INLINE void sum_intra_stats(PictureControlSet *pcs_ptr, BlkStruct *bl
     if (av1_is_directional_mode(y_mode) &&
         av1_use_angle_delta(bsize,
                             pcs_ptr->parent_pcs_ptr->scs_ptr->static_config.intra_angle_delta)) {
-#if OPT_INTRA_MI_MEM
         update_cdf(fc->angle_delta_cdf[y_mode - V_PRED],
                    blk_ptr->prediction_unit_array[0].angle_delta[PLANE_TYPE_Y] + MAX_ANGLE_DELTA,
                    2 * MAX_ANGLE_DELTA + 1);
-#else
-        update_cdf(fc->angle_delta_cdf[y_mode - V_PRED],
-                   mbmi->block_mi.angle_delta[PLANE_TYPE_Y] + MAX_ANGLE_DELTA,
-                   2 * MAX_ANGLE_DELTA + 1);
-#endif
     }
     uint8_t sub_sampling_x = 1; // NM - subsampling_x is harcoded to 1 for 420 chroma sampling.
     uint8_t sub_sampling_y = 1; // NM - subsampling_y is harcoded to 1 for 420 chroma sampling.
     if (!is_chroma_reference(mi_row, mi_col, bsize, sub_sampling_x, sub_sampling_y))
         return;
-#if OPT_MODE_MI_MEM
     const UvPredictionMode uv_mode = blk_ptr->prediction_unit_array->intra_chroma_mode;
-#else
-    const UvPredictionMode uv_mode     = mbmi->block_mi.uv_mode;
-#endif
-    const int              cfl_allowed = blk_geom->bwidth <= 32 && blk_geom->bheight <= 32;
+    const int cfl_allowed = blk_geom->bwidth <= 32 && blk_geom->bheight <= 32;
     update_cdf(fc->uv_mode_cdf[cfl_allowed][y_mode], uv_mode, UV_INTRA_MODES - !cfl_allowed);
     if (uv_mode == UV_CFL_PRED) {
-#if OPT_INTRA_MI_MEM
         const int8_t  joint_sign = blk_ptr->prediction_unit_array->cfl_alpha_signs;
-        const uint8_t idx = blk_ptr->prediction_unit_array->cfl_alpha_idx;
-#else
-        const int8_t  joint_sign = mbmi->block_mi.cfl_alpha_signs;
-        const uint8_t idx        = mbmi->block_mi.cfl_alpha_idx;
-#endif
+        const uint8_t idx        = blk_ptr->prediction_unit_array->cfl_alpha_idx;
         update_cdf(fc->cfl_sign_cdf, joint_sign, CFL_JOINT_SIGNS);
         if (CFL_SIGN_U(joint_sign) != CFL_SIGN_ZERO) {
             AomCdfProb *cdf_u = fc->cfl_alpha_cdf[CFL_CONTEXT_U(joint_sign)];
@@ -980,15 +893,9 @@ static AOM_INLINE void sum_intra_stats(PictureControlSet *pcs_ptr, BlkStruct *bl
                             pcs_ptr->parent_pcs_ptr->scs_ptr->static_config.intra_angle_delta)) {
         assert((uv_mode - UV_V_PRED) < DIRECTIONAL_MODES);
         assert((uv_mode - UV_V_PRED) >= 0);
-#if OPT_INTRA_MI_MEM
         update_cdf(fc->angle_delta_cdf[uv_mode - UV_V_PRED],
                    blk_ptr->prediction_unit_array[0].angle_delta[PLANE_TYPE_UV] + MAX_ANGLE_DELTA,
                    2 * MAX_ANGLE_DELTA + 1);
-#else
-        update_cdf(fc->angle_delta_cdf[uv_mode - UV_V_PRED],
-                   mbmi->block_mi.angle_delta[PLANE_TYPE_UV] + MAX_ANGLE_DELTA,
-                   2 * MAX_ANGLE_DELTA + 1);
-#endif
     }
     if (av1_allow_palette(pcs_ptr->parent_pcs_ptr->frm_hdr.allow_screen_content_tools, bsize)) {
         update_palette_cdf(xd, mbmi, blk_ptr, mi_row, mi_col);
@@ -1129,21 +1036,15 @@ void update_stats(PictureControlSet *pcs_ptr, BlkStruct *blk_ptr, int mi_row, in
                                       mbmi->block_mi.mode)
                 : SIMPLE_TRANSLATION;
             if (mbmi->block_mi.ref_frame[1] != INTRA_FRAME) {
-#if OPT_MODE_MI_MEM
                 if (motion_allowed == WARPED_CAUSAL) {
-                    update_cdf(
-                        fc->motion_mode_cdf[bsize], blk_ptr->prediction_unit_array[0].motion_mode, MOTION_MODES);
+                    update_cdf(fc->motion_mode_cdf[bsize],
+                               blk_ptr->prediction_unit_array[0].motion_mode,
+                               MOTION_MODES);
                 } else if (motion_allowed == OBMC_CAUSAL) {
-                    update_cdf(fc->obmc_cdf[bsize], blk_ptr->prediction_unit_array[0].motion_mode == OBMC_CAUSAL, 2);
+                    update_cdf(fc->obmc_cdf[bsize],
+                               blk_ptr->prediction_unit_array[0].motion_mode == OBMC_CAUSAL,
+                               2);
                 }
-#else
-                if (motion_allowed == WARPED_CAUSAL) {
-                    update_cdf(
-                        fc->motion_mode_cdf[bsize], mbmi->block_mi.motion_mode, MOTION_MODES);
-                } else if (motion_allowed == OBMC_CAUSAL) {
-                    update_cdf(fc->obmc_cdf[bsize], mbmi->block_mi.motion_mode == OBMC_CAUSAL, 2);
-                }
-#endif
             }
 
             if (has_second_ref(mbmi)) {
@@ -1151,17 +1052,11 @@ void update_stats(PictureControlSet *pcs_ptr, BlkStruct *blk_ptr, int mi_row, in
                     pcs_ptr->parent_pcs_ptr->scs_ptr->seq_header.enable_masked_compound;
                 if (masked_compound_used) {
                     const int comp_group_idx_ctx = get_comp_group_idx_context_enc(xd);
-#if OPT_INTER_MI_MEM
-                    update_cdf(fc->comp_group_idx_cdf[comp_group_idx_ctx], mbmi->block_mi.comp_group_idx, 2);
-#else
-                    update_cdf(fc->comp_group_idx_cdf[comp_group_idx_ctx], mbmi->comp_group_idx, 2);
-#endif
+                    update_cdf(fc->comp_group_idx_cdf[comp_group_idx_ctx],
+                               mbmi->block_mi.comp_group_idx,
+                               2);
                 }
-#if OPT_INTER_MI_MEM
                 if (mbmi->block_mi.comp_group_idx == 0) {
-#else
-                if (mbmi->comp_group_idx == 0) {
-#endif
                     const int comp_index_ctx = get_comp_index_context_enc(
                         pcs_ptr->parent_pcs_ptr,
                         pcs_ptr->parent_pcs_ptr->cur_order_hint, // cur_frame_index,
@@ -1191,11 +1086,7 @@ void update_stats(PictureControlSet *pcs_ptr, BlkStruct *blk_ptr, int mi_row, in
     }
 
     if (inter_block && pcs_ptr->parent_pcs_ptr->av1_cm->interp_filter == SWITCHABLE &&
-#if OPT_MODE_MI_MEM
         blk_ptr->prediction_unit_array[0].motion_mode != WARPED_CAUSAL &&
-#else
-        mbmi->block_mi.motion_mode != WARPED_CAUSAL &&
-#endif
         !is_nontrans_global_motion_ec(mbmi->block_mi.ref_frame[0],
                                       mbmi->block_mi.ref_frame[1],
                                       blk_ptr,
@@ -1221,20 +1112,10 @@ void update_stats(PictureControlSet *pcs_ptr, BlkStruct *blk_ptr, int mi_row, in
             const uint8_t ref_frame_type = av1_ref_frame_type(mbmi->block_mi.ref_frame);
             for (int idx = 0; idx < 2; ++idx) {
                 if (xd->ref_mv_count[ref_frame_type] > idx + 1) {
-#if LIGHT_PD1_MACRO
                     const uint8_t drl_ctx = blk_ptr->drl_ctx[idx];
-#else
-                    const uint8_t drl_ctx = av1_drl_ctx(xd->final_ref_mv_stack, idx);
-#endif
-#if OPT_INTER_MI_MEM
                     update_cdf(fc->drl_cdf[drl_ctx], blk_ptr->drl_index != idx, 2);
                     if (blk_ptr->drl_index == idx)
                         break;
-#else
-                    update_cdf(fc->drl_cdf[drl_ctx], mbmi->block_mi.ref_mv_idx != idx, 2);
-                    if (mbmi->block_mi.ref_mv_idx == idx)
-                        break;
-#endif
                 }
             }
         }
@@ -1243,20 +1124,10 @@ void update_stats(PictureControlSet *pcs_ptr, BlkStruct *blk_ptr, int mi_row, in
             const uint8_t ref_frame_type = av1_ref_frame_type(mbmi->block_mi.ref_frame);
             for (int idx = 1; idx < 3; ++idx) {
                 if (xd->ref_mv_count[ref_frame_type] > idx + 1) {
-#if LIGHT_PD1_MACRO
                     const uint8_t drl_ctx = blk_ptr->drl_ctx_near[idx - 1];
-#else
-                    const uint8_t drl_ctx = av1_drl_ctx(xd->final_ref_mv_stack, idx);
-#endif
-#if OPT_INTER_MI_MEM
                     update_cdf(fc->drl_cdf[drl_ctx], blk_ptr->drl_index != idx - 1, 2);
                     if (blk_ptr->drl_index == idx - 1)
                         break;
-#else
-                    update_cdf(fc->drl_cdf[drl_ctx], mbmi->block_mi.ref_mv_idx != idx - 1, 2);
-                    if (mbmi->block_mi.ref_mv_idx == idx - 1)
-                        break;
-#endif
                 }
             }
         }

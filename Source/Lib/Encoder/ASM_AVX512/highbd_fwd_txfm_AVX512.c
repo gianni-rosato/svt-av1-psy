@@ -311,9 +311,11 @@ static void fadst16x16_avx512(const __m512i *in, __m512i *out, const int8_t bit,
         out[7 * col_num + col]  = half_btf_avx512(&cospi34, &u[8], &cospi30, &u[9], &rnding, bit);
         out[8 * col_num + col]  = half_btf_avx512(&cospi30, &u[8], &cospim34, &u[9], &rnding, bit);
         out[5 * col_num + col]  = half_btf_avx512(&cospi42, &u[10], &cospi22, &u[11], &rnding, bit);
-        out[10 * col_num + col] = half_btf_avx512(&cospi22, &u[10], &cospim42, &u[11], &rnding, bit);
+        out[10 * col_num + col] = half_btf_avx512(
+            &cospi22, &u[10], &cospim42, &u[11], &rnding, bit);
         out[3 * col_num + col]  = half_btf_avx512(&cospi50, &u[12], &cospi14, &u[13], &rnding, bit);
-        out[12 * col_num + col] = half_btf_avx512(&cospi14, &u[12], &cospim50, &u[13], &rnding, bit);
+        out[12 * col_num + col] = half_btf_avx512(
+            &cospi14, &u[12], &cospim50, &u[13], &rnding, bit);
         out[1 * col_num + col]  = half_btf_avx512(&cospi58, &u[14], &cospi6, &u[15], &rnding, bit);
         out[14 * col_num + col] = half_btf_avx512(&cospi6, &u[14], &cospim58, &u[15], &rnding, bit);
     }
@@ -425,26 +427,26 @@ static void fdct16x16_avx512(const __m512i *in, __m512i *out, const int8_t bit,
         u[14] = _mm512_add_epi32(u[14], v[13]);
 
         // stage 4
-        u[0] = _mm512_mullo_epi32(u[0], cospi32);
-        u[1] = _mm512_mullo_epi32(u[1], cospi32);
-        v[0] = _mm512_add_epi32(u[0], u[1]);
-        v[0] = _mm512_add_epi32(v[0], rnding);
+        u[0]                   = _mm512_mullo_epi32(u[0], cospi32);
+        u[1]                   = _mm512_mullo_epi32(u[1], cospi32);
+        v[0]                   = _mm512_add_epi32(u[0], u[1]);
+        v[0]                   = _mm512_add_epi32(v[0], rnding);
         out[0 * col_num + col] = _mm512_srai_epi32(v[0], (uint8_t)bit);
 
-        v[1] = _mm512_sub_epi32(u[0], u[1]);
-        v[1] = _mm512_add_epi32(v[1], rnding);
+        v[1]                   = _mm512_sub_epi32(u[0], u[1]);
+        v[1]                   = _mm512_add_epi32(v[1], rnding);
         out[8 * col_num + col] = _mm512_srai_epi32(v[1], (uint8_t)bit);
 
-        v[2] = _mm512_mullo_epi32(u[2], cospi48);
-        x    = _mm512_mullo_epi32(u[3], cospi16);
-        v[2] = _mm512_add_epi32(v[2], x);
-        v[2] = _mm512_add_epi32(v[2], rnding);
+        v[2]                   = _mm512_mullo_epi32(u[2], cospi48);
+        x                      = _mm512_mullo_epi32(u[3], cospi16);
+        v[2]                   = _mm512_add_epi32(v[2], x);
+        v[2]                   = _mm512_add_epi32(v[2], rnding);
         out[4 * col_num + col] = _mm512_srai_epi32(v[2], (uint8_t)bit);
 
-        v[3] = _mm512_mullo_epi32(u[2], cospi16);
-        x    = _mm512_mullo_epi32(u[3], cospi48);
-        v[3] = _mm512_sub_epi32(x, v[3]);
-        v[3] = _mm512_add_epi32(v[3], rnding);
+        v[3]                    = _mm512_mullo_epi32(u[2], cospi16);
+        x                       = _mm512_mullo_epi32(u[3], cospi48);
+        v[3]                    = _mm512_sub_epi32(x, v[3]);
+        v[3]                    = _mm512_add_epi32(v[3], rnding);
         out[12 * col_num + col] = _mm512_srai_epi32(v[3], (uint8_t)bit);
 
         v[5] = _mm512_sub_epi32(v[4], u[5]);
@@ -477,31 +479,31 @@ static void fdct16x16_avx512(const __m512i *in, __m512i *out, const int8_t bit,
         v[13] = _mm512_srai_epi32(v[13], (uint8_t)bit);
 
         // stage 5
-        u[4] = _mm512_mullo_epi32(v[4], cospi56);
-        x    = _mm512_mullo_epi32(v[7], cospi8);
-        u[4] = _mm512_add_epi32(u[4], x);
-        u[4] = _mm512_add_epi32(u[4], rnding);
+        u[4]                   = _mm512_mullo_epi32(v[4], cospi56);
+        x                      = _mm512_mullo_epi32(v[7], cospi8);
+        u[4]                   = _mm512_add_epi32(u[4], x);
+        u[4]                   = _mm512_add_epi32(u[4], rnding);
         out[2 * col_num + col] = _mm512_srai_epi32(u[4], (uint8_t)bit);
 
-        u[7] = _mm512_mullo_epi32(v[4], cospi8);
-        x    = _mm512_mullo_epi32(v[7], cospi56);
-        u[7] = _mm512_sub_epi32(x, u[7]);
-        u[7] = _mm512_add_epi32(u[7], rnding);
+        u[7]                    = _mm512_mullo_epi32(v[4], cospi8);
+        x                       = _mm512_mullo_epi32(v[7], cospi56);
+        u[7]                    = _mm512_sub_epi32(x, u[7]);
+        u[7]                    = _mm512_add_epi32(u[7], rnding);
         out[14 * col_num + col] = _mm512_srai_epi32(u[7], (uint8_t)bit);
 
-        u[5] = _mm512_mullo_epi32(v[5], cospi24);
-        x    = _mm512_mullo_epi32(v[6], cospi40);
-        u[5] = _mm512_add_epi32(u[5], x);
-        u[5] = _mm512_add_epi32(u[5], rnding);
+        u[5]                    = _mm512_mullo_epi32(v[5], cospi24);
+        x                       = _mm512_mullo_epi32(v[6], cospi40);
+        u[5]                    = _mm512_add_epi32(u[5], x);
+        u[5]                    = _mm512_add_epi32(u[5], rnding);
         out[10 * col_num + col] = _mm512_srai_epi32(u[5], (uint8_t)bit);
 
-        u[6] = _mm512_mullo_epi32(v[5], cospi40);
-        x    = _mm512_mullo_epi32(v[6], cospi24);
-        u[6] = _mm512_sub_epi32(x, u[6]);
-        u[6] = _mm512_add_epi32(u[6], rnding);
+        u[6]                   = _mm512_mullo_epi32(v[5], cospi40);
+        x                      = _mm512_mullo_epi32(v[6], cospi24);
+        u[6]                   = _mm512_sub_epi32(x, u[6]);
+        u[6]                   = _mm512_add_epi32(u[6], rnding);
         out[6 * col_num + col] = _mm512_srai_epi32(u[6], (uint8_t)bit);
 
-        u[9] = _mm512_sub_epi32(u[8], v[9]);
+        u[9]  = _mm512_sub_epi32(u[8], v[9]);
         u[8]  = _mm512_add_epi32(u[8], v[9]);
         u[10] = _mm512_sub_epi32(u[11], v[10]);
         u[11] = _mm512_add_epi32(u[11], v[10]);
@@ -511,52 +513,52 @@ static void fdct16x16_avx512(const __m512i *in, __m512i *out, const int8_t bit,
         u[15] = _mm512_add_epi32(u[15], v[14]);
 
         // stage 6
-        v[8] = _mm512_mullo_epi32(u[8], cospi60);
-        x    = _mm512_mullo_epi32(u[15], cospi4);
-        v[8] = _mm512_add_epi32(v[8], x);
-        v[8] = _mm512_add_epi32(v[8], rnding);
+        v[8]                   = _mm512_mullo_epi32(u[8], cospi60);
+        x                      = _mm512_mullo_epi32(u[15], cospi4);
+        v[8]                   = _mm512_add_epi32(v[8], x);
+        v[8]                   = _mm512_add_epi32(v[8], rnding);
         out[1 * col_num + col] = _mm512_srai_epi32(v[8], (uint8_t)bit);
 
-        v[15] = _mm512_mullo_epi32(u[8], cospi4);
-        x     = _mm512_mullo_epi32(u[15], cospi60);
-        v[15] = _mm512_sub_epi32(x, v[15]);
-        v[15] = _mm512_add_epi32(v[15], rnding);
+        v[15]                   = _mm512_mullo_epi32(u[8], cospi4);
+        x                       = _mm512_mullo_epi32(u[15], cospi60);
+        v[15]                   = _mm512_sub_epi32(x, v[15]);
+        v[15]                   = _mm512_add_epi32(v[15], rnding);
         out[15 * col_num + col] = _mm512_srai_epi32(v[15], (uint8_t)bit);
 
-        v[9] = _mm512_mullo_epi32(u[9], cospi28);
-        x    = _mm512_mullo_epi32(u[14], cospi36);
-        v[9] = _mm512_add_epi32(v[9], x);
-        v[9] = _mm512_add_epi32(v[9], rnding);
+        v[9]                   = _mm512_mullo_epi32(u[9], cospi28);
+        x                      = _mm512_mullo_epi32(u[14], cospi36);
+        v[9]                   = _mm512_add_epi32(v[9], x);
+        v[9]                   = _mm512_add_epi32(v[9], rnding);
         out[9 * col_num + col] = _mm512_srai_epi32(v[9], (uint8_t)bit);
 
-        v[14] = _mm512_mullo_epi32(u[9], cospi36);
-        x     = _mm512_mullo_epi32(u[14], cospi28);
-        v[14] = _mm512_sub_epi32(x, v[14]);
-        v[14] = _mm512_add_epi32(v[14], rnding);
+        v[14]                  = _mm512_mullo_epi32(u[9], cospi36);
+        x                      = _mm512_mullo_epi32(u[14], cospi28);
+        v[14]                  = _mm512_sub_epi32(x, v[14]);
+        v[14]                  = _mm512_add_epi32(v[14], rnding);
         out[7 * col_num + col] = _mm512_srai_epi32(v[14], (uint8_t)bit);
 
-        v[10] = _mm512_mullo_epi32(u[10], cospi44);
-        x     = _mm512_mullo_epi32(u[13], cospi20);
-        v[10] = _mm512_add_epi32(v[10], x);
-        v[10] = _mm512_add_epi32(v[10], rnding);
+        v[10]                  = _mm512_mullo_epi32(u[10], cospi44);
+        x                      = _mm512_mullo_epi32(u[13], cospi20);
+        v[10]                  = _mm512_add_epi32(v[10], x);
+        v[10]                  = _mm512_add_epi32(v[10], rnding);
         out[5 * col_num + col] = _mm512_srai_epi32(v[10], (uint8_t)bit);
 
-        v[13] = _mm512_mullo_epi32(u[10], cospi20);
-        x     = _mm512_mullo_epi32(u[13], cospi44);
-        v[13] = _mm512_sub_epi32(x, v[13]);
-        v[13] = _mm512_add_epi32(v[13], rnding);
+        v[13]                   = _mm512_mullo_epi32(u[10], cospi20);
+        x                       = _mm512_mullo_epi32(u[13], cospi44);
+        v[13]                   = _mm512_sub_epi32(x, v[13]);
+        v[13]                   = _mm512_add_epi32(v[13], rnding);
         out[11 * col_num + col] = _mm512_srai_epi32(v[13], (uint8_t)bit);
 
-        v[11] = _mm512_mullo_epi32(u[11], cospi12);
-        x     = _mm512_mullo_epi32(u[12], cospi52);
-        v[11] = _mm512_add_epi32(v[11], x);
-        v[11] = _mm512_add_epi32(v[11], rnding);
+        v[11]                   = _mm512_mullo_epi32(u[11], cospi12);
+        x                       = _mm512_mullo_epi32(u[12], cospi52);
+        v[11]                   = _mm512_add_epi32(v[11], x);
+        v[11]                   = _mm512_add_epi32(v[11], rnding);
         out[13 * col_num + col] = _mm512_srai_epi32(v[11], (uint8_t)bit);
 
-        v[12] = _mm512_mullo_epi32(u[11], cospi52);
-        x     = _mm512_mullo_epi32(u[12], cospi12);
-        v[12] = _mm512_sub_epi32(x, v[12]);
-        v[12] = _mm512_add_epi32(v[12], rnding);
+        v[12]                  = _mm512_mullo_epi32(u[11], cospi52);
+        x                      = _mm512_mullo_epi32(u[12], cospi12);
+        v[12]                  = _mm512_sub_epi32(x, v[12]);
+        v[12]                  = _mm512_add_epi32(v[12], rnding);
         out[3 * col_num + col] = _mm512_srai_epi32(v[12], (uint8_t)bit);
     }
 }

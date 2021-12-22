@@ -28,8 +28,8 @@ float svt_aom_noise_psd_get_default_value(int32_t block_size, float factor) {
 // transformed data and a temporary working buffer to use during the
 // transform.
 struct aom_noise_tx_t {
-    float *tx_block;
-    float *temp;
+    float * tx_block;
+    float * temp;
     int32_t block_size;
     void (*fft)(const float *, float *, float *);
     void (*ifft)(const float *, float *, float *);
@@ -87,18 +87,17 @@ void svt_aom_noise_tx_forward(struct aom_noise_tx_t *noise_tx, const float *data
     noise_tx->fft(data, noise_tx->temp, noise_tx->tx_block);
 }
 
-#if OPT_FILM_GRAIN
 void svt_aom_noise_tx_filter(struct aom_noise_tx_t *noise_tx, const float psd) {
-    const int32_t block_size = noise_tx->block_size;
-    const float   k_beta     = 1.1f;
-    const float   k_beta_m1_div_k_beta     = (k_beta - 1.0f) / k_beta;
-    const float   psd_mul_k_beta = k_beta * psd;
-    const float   k_eps      = 1e-6f;
-    float *tx_block = noise_tx->tx_block;
+    const int32_t block_size           = noise_tx->block_size;
+    const float   k_beta               = 1.1f;
+    const float   k_beta_m1_div_k_beta = (k_beta - 1.0f) / k_beta;
+    const float   psd_mul_k_beta       = k_beta * psd;
+    const float   k_eps                = 1e-6f;
+    float *       tx_block             = noise_tx->tx_block;
     for (int32_t y = 0; y < block_size; ++y) {
         for (int32_t x = 0; x < block_size; ++x) {
             const float p = tx_block[0] * tx_block[0] + tx_block[1] * tx_block[1];
-            if (p > psd_mul_k_beta  && p > 1e-6) {
+            if (p > psd_mul_k_beta && p > 1e-6) {
                 float val = (p - psd) / AOMMAX(p, k_eps);
                 tx_block[0] *= val;
                 tx_block[1] *= val;
@@ -110,27 +109,6 @@ void svt_aom_noise_tx_filter(struct aom_noise_tx_t *noise_tx, const float psd) {
         }
     }
 }
-#else /*OPT_FILM_GRAIN*/
-void svt_aom_noise_tx_filter(struct aom_noise_tx_t *noise_tx, const float *psd) {
-    const int32_t block_size = noise_tx->block_size;
-    const float   k_beta     = 1.1f;
-    const float   k_eps      = 1e-6f;
-    for (int32_t y = 0; y < block_size; ++y) {
-        for (int32_t x = 0; x < block_size; ++x) {
-            int32_t     i = y * block_size + x;
-            float *     c = noise_tx->tx_block + 2 * i;
-            const float p = c[0] * c[0] + c[1] * c[1];
-            if (p > k_beta * psd[i] && p > 1e-6) {
-                noise_tx->tx_block[2 * i + 0] *= (p - psd[i]) / AOMMAX(p, k_eps);
-                noise_tx->tx_block[2 * i + 1] *= (p - psd[i]) / AOMMAX(p, k_eps);
-            } else {
-                noise_tx->tx_block[2 * i + 0] *= (k_beta - 1.0f) / k_beta;
-                noise_tx->tx_block[2 * i + 1] *= (k_beta - 1.0f) / k_beta;
-            }
-        }
-    }
-}
-#endif /*OPT_FILM_GRAIN*/
 
 void svt_aom_noise_tx_inverse(struct aom_noise_tx_t *noise_tx, float *data) {
     const int32_t n = noise_tx->block_size * noise_tx->block_size;

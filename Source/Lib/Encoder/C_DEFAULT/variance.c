@@ -270,7 +270,7 @@ void svt_aom_upsampled_pred_c(MacroBlockD *                 xd,
 // functions are from deleted file, associated with this macro
 // Moved from EbComputeVariance_C.c
 static void variance_c(const uint8_t *a, int a_stride, const uint8_t *b, int b_stride, int w, int h,
-    uint32_t *sse, int *sum) {
+                       uint32_t *sse, int *sum) {
     int i, j;
 
     *sum = 0;
@@ -291,11 +291,11 @@ static void variance_c(const uint8_t *a, int a_stride, const uint8_t *b, int b_s
 // Moved from EbComputeVariance_C.c
 // TODO: use or implement a simd version of this
 uint32_t variance_highbd_c(const uint16_t *a, int a_stride, const uint16_t *b, int b_stride, int w,
-    int h, uint32_t *sse) {
+                           int h, uint32_t *sse) {
     int i, j;
 
     int sad = 0;
-    *sse = 0;
+    *sse    = 0;
 
     for (i = 0; i < h; ++i) {
         for (j = 0; j < w; ++j) {
@@ -308,11 +308,7 @@ uint32_t variance_highbd_c(const uint16_t *a, int a_stride, const uint16_t *b, i
         b += b_stride;
     }
 
-#if FIX_INT_OVERLOW
     return *sse - ((int64_t)sad * sad) / (w * h);
-#else
-    return *sse - (sad * sad) / (w * h);
-#endif
 }
 
 // Moved from EbComputeVariance_C.c
@@ -325,24 +321,28 @@ uint32_t variance_highbd_c(const uint16_t *a, int a_stride, const uint16_t *b, i
     }
 
 #define SUBPIX_VAR(W, H)                                                      \
-  uint32_t svt_aom_sub_pixel_variance##W##x##H##_c(                               \
-      const uint8_t *a, int a_stride, int xoffset, int yoffset,               \
-      const uint8_t *b, int b_stride, uint32_t *sse) {                        \
-    uint16_t fdata3[(H + 1) * W];                                             \
-    uint8_t temp2[H * W];                                                     \
+    uint32_t svt_aom_sub_pixel_variance##W##x##H##_c(const uint8_t *a,        \
+                                                     int            a_stride, \
+                                                     int            xoffset,  \
+                                                     int            yoffset,  \
+                                                     const uint8_t *b,        \
+                                                     int            b_stride, \
+                                                     uint32_t *     sse) {         \
+        uint16_t fdata3[(H + 1) * W];                                         \
+        uint8_t  temp2[H * W];                                                \
                                                                               \
-    aom_var_filter_block2d_bil_first_pass_c(a, fdata3, a_stride, 1, H + 1, W, \
-                                            bilinear_filters_2t[xoffset]);    \
-    aom_var_filter_block2d_bil_second_pass_c(fdata3, temp2, W, W, H, W,       \
-                                             bilinear_filters_2t[yoffset]);   \
+        aom_var_filter_block2d_bil_first_pass_c(                              \
+            a, fdata3, a_stride, 1, H + 1, W, bilinear_filters_2t[xoffset]);  \
+        aom_var_filter_block2d_bil_second_pass_c(                             \
+            fdata3, temp2, W, W, H, W, bilinear_filters_2t[yoffset]);         \
                                                                               \
-    return svt_aom_variance##W##x##H##_c(temp2, W, b, b_stride, sse);          \
-  }
+        return svt_aom_variance##W##x##H##_c(temp2, W, b, b_stride, sse);     \
+    }
 
 /* All the variance are available in the same sizes. */
 #define VARIANCES(W, H) \
-  VAR(W, H)             \
-  SUBPIX_VAR(W, H)
+    VAR(W, H)           \
+    SUBPIX_VAR(W, H)
 VARIANCES(128, 128)
 VARIANCES(128, 64)
 VARIANCES(64, 128)

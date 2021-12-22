@@ -5,9 +5,10 @@
  * This source code is subject to the terms of the BSD 2 Clause License and
  * the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
  * was not distributed with this source code in the LICENSE file, you can
- * obtain it at https://www.aomedia.org/license/software-license. If the Alliance for Open
- * Media Patent License 1.0 was not distributed with this source code in the
- * PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
+ * obtain it at https://www.aomedia.org/license/software-license. If the
+ * Alliance for Open Media Patent License 1.0 was not distributed with this
+ * source code in the PATENTS file, you can obtain it at
+ * https://www.aomedia.org/license/patent-license.
  */
 
 #include "gtest/gtest.h"
@@ -584,7 +585,6 @@ using std::make_tuple;
 
 #if HAS_AVX2
 const QuantizeParam kQParamArrayAvx2[] = {
-#if SSE_CODE_OPT
     make_tuple(&svt_av1_quantize_fp_c, &svt_av1_quantize_fp_sse4_1,
                static_cast<TxSize>(TX_16X16), TYPE_FP, AOM_BITS_8),
     make_tuple(&svt_av1_quantize_fp_c, &svt_av1_quantize_fp_sse4_1,
@@ -595,7 +595,6 @@ const QuantizeParam kQParamArrayAvx2[] = {
                static_cast<TxSize>(TX_32X8), TYPE_FP, AOM_BITS_8),
     make_tuple(&svt_av1_quantize_fp_c, &svt_av1_quantize_fp_sse4_1,
                static_cast<TxSize>(TX_8X32), TYPE_FP, AOM_BITS_8),
-#endif
     make_tuple(&svt_av1_quantize_fp_c, &svt_av1_quantize_fp_avx2,
                static_cast<TxSize>(TX_16X16), TYPE_FP, AOM_BITS_8),
     make_tuple(&svt_av1_quantize_fp_c, &svt_av1_quantize_fp_avx2,

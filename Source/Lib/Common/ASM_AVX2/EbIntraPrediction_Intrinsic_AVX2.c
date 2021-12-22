@@ -5090,4 +5090,3 @@ void svt_aom_highbd_paeth_predictor_4x16_avx2(uint16_t *dst, ptrdiff_t stride,
         dst += 4 * stride;
     }
 }
-

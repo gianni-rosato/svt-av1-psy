@@ -91,7 +91,6 @@ static INLINE void transpose_32(int32_t txfm_size, const __m128i *input, __m128i
 #define btf_32_type1_sse4_1_new(ww0, ww1, in0, in1, out0, out1, r, bit) \
     do { btf_32_type0_sse4_1_new(ww1, ww0, in1, in0, out0, out1, r, bit); } while (0)
 
-#if SSE_CODE_OPT
 static INLINE __m128i mm_reverse_epi16(const __m128i x) {
     const __m128i a = _mm_shufflelo_epi16(x, 0x1b);
     const __m128i b = _mm_shufflehi_epi16(a, 0x1b);
@@ -109,7 +108,6 @@ static INLINE __m128i half_btf_sse4_1(const __m128i *w0, const __m128i *n0, cons
     x = _mm_srai_epi32(x, bit);
     return x;
 }
-#endif
 
 #ifdef __cplusplus
 }

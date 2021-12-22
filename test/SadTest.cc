@@ -1,13 +1,14 @@
 /*
-* Copyright(c) 2019 Netflix, Inc.
-*
-* This source code is subject to the terms of the BSD 2 Clause License and
-* the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
-* was not distributed with this source code in the LICENSE file, you can
-* obtain it at https://www.aomedia.org/license/software-license. If the Alliance for Open
-* Media Patent License 1.0 was not distributed with this source code in the
-* PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
-*/
+ * Copyright(c) 2019 Netflix, Inc.
+ *
+ * This source code is subject to the terms of the BSD 2 Clause License and
+ * the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
+ * was not distributed with this source code in the LICENSE file, you can
+ * obtain it at https://www.aomedia.org/license/software-license. If the
+ * Alliance for Open Media Patent License 1.0 was not distributed with this
+ * source code in the PATENTS file, you can obtain it at
+ * https://www.aomedia.org/license/patent-license.
+ */
 
 /******************************************************************************
  * @file sad_Test.cc
@@ -52,20 +53,15 @@
 #include "random.h"
 #include "util.h"
 
-#if SSE_CODE_OPT
 #include "mcomp.h"
-#endif
 
 using svt_av1_test_tool::SVTRandom;  // to generate the random
 extern "C" void svt_ext_all_sad_calculation_8x8_16x16_c(
     uint8_t *src, uint32_t src_stride, uint8_t *ref, uint32_t ref_stride,
-    uint32_t mv,
-#if OPT_TFILTER
-    uint8_t out_8x8,
-#endif
-    uint32_t *p_best_sad_8x8, uint32_t *p_best_sad_16x16,
-    uint32_t *p_best_mv8x8, uint32_t *p_best_mv16x16,
-    uint32_t p_eight_sad16x16[16][8], uint32_t p_eight_sad8x8[64][8], EbBool sub_sad);
+    uint32_t mv, uint8_t out_8x8, uint32_t *p_best_sad_8x8,
+    uint32_t *p_best_sad_16x16, uint32_t *p_best_mv8x8,
+    uint32_t *p_best_mv16x16, uint32_t p_eight_sad16x16[16][8],
+    uint32_t p_eight_sad8x8[64][8], EbBool sub_sad);
 extern "C" void svt_ext_eigth_sad_calculation_nsq_c(
     uint32_t p_sad8x8[64][8], uint32_t p_sad16x16[16][8],
     uint32_t p_sad32x32[4][8], uint32_t *p_best_sad_64x32,
@@ -96,18 +92,17 @@ typedef std::tuple<int, int> BlkSize;
 typedef enum { REF_MAX, SRC_MAX, RANDOM, UNALIGN } TestPattern;
 typedef enum { BUF_MAX, BUF_MIN, BUF_SMALL, BUF_RANDOM } SADPattern;
 BlkSize TEST_BLOCK_SIZES[] = {
-    BlkSize(16, 10), BlkSize(16, 5),
-    BlkSize(32, 10), BlkSize(32, 20), BlkSize(64, 20),
-    BlkSize(64, 64), BlkSize(64, 32), BlkSize(32, 64), BlkSize(32, 32),
-    BlkSize(32, 16), BlkSize(16, 32), BlkSize(16, 16), BlkSize(16, 8),
-    BlkSize(8, 16),  BlkSize(8, 8),   BlkSize(8, 4),   BlkSize(4, 4),
-    BlkSize(4, 8),   BlkSize(4, 16),  BlkSize(16, 4),  BlkSize(8, 32),
-    BlkSize(32, 8),  BlkSize(16, 64), BlkSize(64, 16), BlkSize(24, 24),
-    BlkSize(24, 16), BlkSize(16, 24), BlkSize(24, 8),  BlkSize(8, 24),
-    BlkSize(64, 24), BlkSize(48, 24), BlkSize(32, 24), BlkSize(24, 32),
-    BlkSize(48, 48), BlkSize(48, 16), BlkSize(48, 32), BlkSize(16, 48),
-    BlkSize(32, 48), BlkSize(48, 64), BlkSize(64, 48), BlkSize(56, 32),
-    BlkSize(40, 32)};
+    BlkSize(16, 10), BlkSize(16, 5),  BlkSize(32, 10), BlkSize(32, 20),
+    BlkSize(64, 20), BlkSize(64, 64), BlkSize(64, 32), BlkSize(32, 64),
+    BlkSize(32, 32), BlkSize(32, 16), BlkSize(16, 32), BlkSize(16, 16),
+    BlkSize(16, 8),  BlkSize(8, 16),  BlkSize(8, 8),   BlkSize(8, 4),
+    BlkSize(4, 4),   BlkSize(4, 8),   BlkSize(4, 16),  BlkSize(16, 4),
+    BlkSize(8, 32),  BlkSize(32, 8),  BlkSize(16, 64), BlkSize(64, 16),
+    BlkSize(24, 24), BlkSize(24, 16), BlkSize(16, 24), BlkSize(24, 8),
+    BlkSize(8, 24),  BlkSize(64, 24), BlkSize(48, 24), BlkSize(32, 24),
+    BlkSize(24, 32), BlkSize(48, 48), BlkSize(48, 16), BlkSize(48, 32),
+    BlkSize(16, 48), BlkSize(32, 48), BlkSize(48, 64), BlkSize(64, 48),
+    BlkSize(56, 32), BlkSize(40, 32)};
 
 BlkSize TEST_BLOCK_SIZES_SMALL[] = {
     BlkSize(6, 2),   BlkSize(6, 4),   BlkSize(6, 8),   BlkSize(6, 16),
@@ -247,7 +242,6 @@ class SADTestBase : public ::testing::Test {
         }
     }
 
-
     void fill_buf_with_value(uint32_t *buf, int num, uint32_t value) {
         for (int i = 0; i < num; ++i)
             buf[i] = value;
@@ -352,17 +346,17 @@ class SADTestSubSample : public ::testing::WithParamInterface<Testsad_Param>,
 
         ref_sad = reference_sad();
         non_avx2_sad = svt_nxm_sad_kernel_helper_c(src_aligned_,
-                                               src_stride_,
-                                               ref1_aligned_,
-                                               ref1_stride_,
-                                               height_,
-                                               width_);
+                                                   src_stride_,
+                                                   ref1_aligned_,
+                                                   ref1_stride_,
+                                                   height_,
+                                                   width_);
         avx2_sad = svt_nxm_sad_kernel_sub_sampled_helper_avx2(src_aligned_,
-                                                          src_stride_,
-                                                          ref1_aligned_,
-                                                          ref1_stride_,
-                                                          height_,
-                                                          width_);
+                                                              src_stride_,
+                                                              ref1_aligned_,
+                                                              ref1_stride_,
+                                                              height_,
+                                                              width_);
         EXPECT_EQ(non_avx2_sad, avx2_sad)
             << "compare non_avx2_sad(" << non_avx2_sad << ") and avx2_sad("
             << avx2_sad << ") error, ref: " << ref_sad;
@@ -470,10 +464,8 @@ typedef void (*Ebsad_LoopKernelNxMType)(
     uint64_t *best_sad, int16_t *x_search_center, int16_t *y_search_center,
     uint32_t
         src_stride_raw,  // input parameter, source stride (no line skipping)
-#if FTR_PREHME_SUB
-    uint8_t skip_search_line,
-#endif
-    int16_t search_area_width, int16_t search_area_height);
+    uint8_t skip_search_line, int16_t search_area_width,
+    int16_t search_area_height);
 
 typedef std::tuple<Ebsad_LoopKernelNxMType, Ebsad_LoopKernelNxMType> FuncPair;
 
@@ -493,11 +485,7 @@ FuncPair TEST_FUNC_PAIRS_SMALL[] = {
 #endif
 };
 
-#if FIX_FTR_PREHME_SUB
 typedef std::tuple<TestPattern, BlkSize, SearchArea, FuncPair, uint8_t>
-#else
-typedef std::tuple<TestPattern, BlkSize, SearchArea, FuncPair>
-#endif
     sad_LoopTestParam;
 
 /**
@@ -531,20 +519,14 @@ class sad_LoopTest : public ::testing::WithParamInterface<sad_LoopTestParam>,
                       std::get<0>(TEST_GET_PARAM(2)),
                       std::get<1>(TEST_GET_PARAM(2))),
           func_c_(std::get<0>(TEST_GET_PARAM(3))),
-#if FIX_FTR_PREHME_SUB
           func_o_(std::get<1>(TEST_GET_PARAM(3))),
-          skip_search_line(TEST_GET_PARAM(4)){
-#else
-          func_o_(std::get<1>(TEST_GET_PARAM(3))) {
-#endif
+          skip_search_line(TEST_GET_PARAM(4)) {
     }
 
   protected:
     Ebsad_LoopKernelNxMType func_c_;
     Ebsad_LoopKernelNxMType func_o_;
-#if FIX_FTR_PREHME_SUB
     uint8_t skip_search_line;
-#endif
 
     void check_sad_loop() {
         prepare_data();
@@ -562,13 +544,7 @@ class sad_LoopTest : public ::testing::WithParamInterface<sad_LoopTestParam>,
                 &x_search_center0,
                 &y_search_center0,
                 ref1_stride_,
-#if FTR_PREHME_SUB
-#if FIX_FTR_PREHME_SUB
                 skip_search_line,
-#else
-                0,
-#endif
-#endif
                 search_area_width_,
                 search_area_height_);
 
@@ -585,13 +561,7 @@ class sad_LoopTest : public ::testing::WithParamInterface<sad_LoopTestParam>,
                 &x_search_center1,
                 &y_search_center1,
                 ref1_stride_,
-#if FTR_PREHME_SUB
-#if FIX_FTR_PREHME_SUB
                 skip_search_line,
-#else
-                0,
-#endif
-#endif
                 search_area_width_,
                 search_area_height_);
 
@@ -641,13 +611,7 @@ class sad_LoopTest : public ::testing::WithParamInterface<sad_LoopTestParam>,
                     &x_search_center0,
                     &y_search_center0,
                     ref1_stride_,
-#if FTR_PREHME_SUB
-#if FIX_FTR_PREHME_SUB
                     skip_search_line,
-#else
-                    0,
-#endif
-#endif
                     search_area_width_,
                     search_area_height_);
         }
@@ -665,13 +629,7 @@ class sad_LoopTest : public ::testing::WithParamInterface<sad_LoopTestParam>,
                     &x_search_center1,
                     &y_search_center1,
                     ref1_stride_,
-#if FTR_PREHME_SUB
-#if FIX_FTR_PREHME_SUB
                     skip_search_line,
-#else
-                    0,
-#endif
-#endif
                     search_area_width_,
                     search_area_height_);
         }
@@ -720,39 +678,21 @@ TEST_P(sad_LoopTest, DISABLED_sad_LoopSpeedTest) {
     speed_sad_loop();
 }
 
-#if FIX_FTR_PREHME_SUB
 INSTANTIATE_TEST_CASE_P(
     LOOPSAD, sad_LoopTest,
     ::testing::Combine(::testing::ValuesIn(TEST_PATTERNS),
                        ::testing::ValuesIn(TEST_BLOCK_SIZES),
                        ::testing::ValuesIn(TEST_LOOP_AREAS),
                        ::testing::ValuesIn(TEST_FUNC_PAIRS),
-                       ::testing::Values(0,1)));
-#else
-INSTANTIATE_TEST_CASE_P(
-    LOOPSAD, sad_LoopTest,
-    ::testing::Combine(::testing::ValuesIn(TEST_PATTERNS),
-                       ::testing::ValuesIn(TEST_BLOCK_SIZES),
-                       ::testing::ValuesIn(TEST_LOOP_AREAS),
-                       ::testing::ValuesIn(TEST_FUNC_PAIRS)));
-#endif
+                       ::testing::Values(0, 1)));
 
-#if FIX_FTR_PREHME_SUB
 INSTANTIATE_TEST_CASE_P(
     LOOPSAD_SMALL, sad_LoopTest,
     ::testing::Combine(::testing::ValuesIn(TEST_PATTERNS),
                        ::testing::ValuesIn(TEST_BLOCK_SIZES_SMALL),
                        ::testing::ValuesIn(TEST_LOOP_AREAS),
                        ::testing::ValuesIn(TEST_FUNC_PAIRS_SMALL),
-                       ::testing::Values(0,1)));
-#else
-INSTANTIATE_TEST_CASE_P(
-    LOOPSAD_SMALL, sad_LoopTest,
-    ::testing::Combine(::testing::ValuesIn(TEST_PATTERNS),
-                       ::testing::ValuesIn(TEST_BLOCK_SIZES_SMALL),
-                       ::testing::ValuesIn(TEST_LOOP_AREAS),
-                       ::testing::ValuesIn(TEST_FUNC_PAIRS_SMALL)));
-#endif
+                       ::testing::Values(0, 1)));
 
 /**
  * best_sadmxn in GetEightsad_Test,Allsad_CalculationTest and
@@ -779,19 +719,12 @@ typedef void (*get_eight_sad_32_64_func)(uint16_t *p_sad16x16,
                                          uint32_t *p_best_sad_64x64,
                                          uint32_t *p_best_mv32x32,
                                          uint32_t *p_best_mv64x64, uint32_t mv);
-#if SSE_CODE_OPT
 typedef void (*svt_ext_all_sad_calculation_8x8_16x16_fn)(
-                                         uint8_t *src, uint32_t src_stride,
-                                         uint8_t *ref, uint32_t ref_stride,
-                                         uint32_t mv,
-#if OPT_TFILTER
-    uint8_t out_8x8,
-#endif
-                                         uint32_t *p_best_sad_8x8, uint32_t *p_best_sad_16x16,
-                                         uint32_t *p_best_mv8x8, uint32_t *p_best_mv16x16,
-                                         uint32_t p_eight_sad16x16[16][8], uint32_t p_eight_sad8x8[64][8],
-                                         EbBool sub_sad);
-#endif
+    uint8_t *src, uint32_t src_stride, uint8_t *ref, uint32_t ref_stride,
+    uint32_t mv, uint8_t out_8x8, uint32_t *p_best_sad_8x8,
+    uint32_t *p_best_sad_16x16, uint32_t *p_best_mv8x8,
+    uint32_t *p_best_mv16x16, uint32_t p_eight_sad16x16[16][8],
+    uint32_t p_eight_sad8x8[64][8], EbBool sub_sad);
 
 typedef std::tuple<TestPattern, SADPattern> sad_CalTestParam;
 
@@ -829,11 +762,7 @@ class Allsad_CalculationTest
     }
 
   protected:
-#if SSE_CODE_OPT
     void check_get_8x8_sad(svt_ext_all_sad_calculation_8x8_16x16_fn test_fn) {
-#else
-    void check_get_8x8_sad() {
-#endif
         uint32_t best_sad8x8[2][64];
         uint32_t best_mv8x8[2][64] = {{0}};
         uint32_t best_sad16x16[2][16];
@@ -853,9 +782,7 @@ class Allsad_CalculationTest
                                                 ref1_aligned_,
                                                 ref1_stride_,
                                                 0,
-#if OPT_TFILTER
                                                 1,
-#endif
                                                 best_sad8x8[0],
                                                 best_sad16x16[0],
                                                 best_mv8x8[0],
@@ -864,25 +791,19 @@ class Allsad_CalculationTest
                                                 eight_sad8x8[0],
                                                 sub_sad);
 
-#if SSE_CODE_OPT
         test_fn(src_aligned_,
-#else
-        svt_ext_all_sad_calculation_8x8_16x16_avx2(src_aligned_,
-#endif
-                                                   src_stride_,
-                                                   ref1_aligned_,
-                                                   ref1_stride_,
-                                                   0,
-#if OPT_TFILTER
-                                                   1,
-#endif
-                                                   best_sad8x8[1],
-                                                   best_sad16x16[1],
-                                                   best_mv8x8[1],
-                                                   best_mv16x16[1],
-                                                   eight_sad16x16[1],
-                                                   eight_sad8x8[1],
-                                                   sub_sad);
+                src_stride_,
+                ref1_aligned_,
+                ref1_stride_,
+                0,
+                1,
+                best_sad8x8[1],
+                best_sad16x16[1],
+                best_mv8x8[1],
+                best_mv16x16[1],
+                eight_sad16x16[1],
+                eight_sad8x8[1],
+                sub_sad);
 
         EXPECT_EQ(
             0, memcmp(best_sad8x8[0], best_sad8x8[1], sizeof(best_sad8x8[0])))
@@ -920,46 +841,38 @@ class Allsad_CalculationTest
         prepare_data();
 
         svt_ext_all_sad_calculation_8x8_16x16_c(src_aligned_,
-            src_stride_,
-            ref1_aligned_,
-            ref1_stride_,
-            0,
-#if OPT_TFILTER
-            1,
-#endif
-            best_sad8x8[0],
-            best_sad16x16[0],
-            best_mv8x8[0],
-            best_mv16x16[0],
-            eight_sad16x16[0],
-            eight_sad8x8[0],
-            sub_sad);
+                                                src_stride_,
+                                                ref1_aligned_,
+                                                ref1_stride_,
+                                                0,
+                                                1,
+                                                best_sad8x8[0],
+                                                best_sad16x16[0],
+                                                best_mv8x8[0],
+                                                best_mv16x16[0],
+                                                eight_sad16x16[0],
+                                                eight_sad8x8[0],
+                                                sub_sad);
 
-#if SSE_CODE_OPT
         test_fn(src_aligned_,
-#else
-        svt_ext_all_sad_calculation_8x8_16x16_avx2(src_aligned_,
-#endif
-            src_stride_,
-            ref1_aligned_,
-            ref1_stride_,
-            0,
-#if OPT_TFILTER
-            1,
-#endif
-            best_sad8x8[1],
-            best_sad16x16[1],
-            best_mv8x8[1],
-            best_mv16x16[1],
-            eight_sad16x16[1],
-            eight_sad8x8[1],
-            sub_sad);
+                src_stride_,
+                ref1_aligned_,
+                ref1_stride_,
+                0,
+                1,
+                best_sad8x8[1],
+                best_sad16x16[1],
+                best_mv8x8[1],
+                best_mv16x16[1],
+                eight_sad16x16[1],
+                eight_sad8x8[1],
+                sub_sad);
 
         EXPECT_EQ(
             0, memcmp(best_sad8x8[0], best_sad8x8[1], sizeof(best_sad8x8[0])))
             << "compare best_sad8x8 error sub_sad true";
         EXPECT_EQ(0,
-            memcmp(best_mv8x8[0], best_mv8x8[1], sizeof(best_mv8x8[0])))
+                  memcmp(best_mv8x8[0], best_mv8x8[1], sizeof(best_mv8x8[0])))
             << "compare best_mv8x8 error sub_sad true";
         EXPECT_EQ(
             0,
@@ -977,9 +890,9 @@ class Allsad_CalculationTest
             << "compare eight_sad8x8 error sub_sad true";
 #endif
         EXPECT_EQ(0,
-            memcmp(eight_sad16x16[0],
-                eight_sad16x16[1],
-                sizeof(eight_sad16x16[0])))
+                  memcmp(eight_sad16x16[0],
+                         eight_sad16x16[1],
+                         sizeof(eight_sad16x16[0])))
             << "compare eight_sad16x16 error sub_sad true";
     }
 
@@ -1029,18 +942,12 @@ class Allsad_CalculationTest
     }
 };
 
-#if SSE_CODE_OPT
 TEST_P(Allsad_CalculationTest, 8x8_16x16_Test_avx2) {
     check_get_8x8_sad(svt_ext_all_sad_calculation_8x8_16x16_avx2);
 }
 TEST_P(Allsad_CalculationTest, 8x8_16x16_Test_sse4_1) {
     check_get_8x8_sad(svt_ext_all_sad_calculation_8x8_16x16_sse4_1);
 }
-#else
-TEST_P(Allsad_CalculationTest, 8x8_16x16_Test) {
-    check_get_8x8_sad();
-}
-#endif
 
 TEST_P(Allsad_CalculationTest, 32x32_64x64_Test) {
     check_get_32x32_sad();
@@ -1087,11 +994,7 @@ class Extsad_CalculationTest
     }
 
   protected:
-#if SSE_CODE_OPT
     void check_get_8x8_sad(svt_ext_sad_calculation_8x8_16x16_fn test_fn) {
-#else
-    void check_get_8x8_sad() {
-#endif
         uint32_t best_sad8x8[2][4];
         uint32_t best_mv8x8[2][4] = {{0}};
         uint32_t best_sad16x16[2], best_mv16x16[2] = {0};
@@ -1118,22 +1021,18 @@ class Extsad_CalculationTest
                                             sad8x8[0],
                                             sub_sad);
 
-#if SSE_CODE_OPT
         test_fn(src_aligned_,
-#else
-        svt_ext_sad_calculation_8x8_16x16_avx2_intrin(src_aligned_,
-#endif
-                                                      src_stride_,
-                                                      ref1_aligned_,
-                                                      ref1_stride_,
-                                                      best_sad8x8[1],
-                                                      &best_sad16x16[1],
-                                                      best_mv8x8[1],
-                                                      &best_mv16x16[1],
-                                                      0,
-                                                      &sad16x16[1],
-                                                      sad8x8[1],
-                                                      sub_sad);
+                src_stride_,
+                ref1_aligned_,
+                ref1_stride_,
+                best_sad8x8[1],
+                &best_sad16x16[1],
+                best_mv8x8[1],
+                &best_mv16x16[1],
+                0,
+                &sad16x16[1],
+                sad8x8[1],
+                sub_sad);
 
         EXPECT_EQ(
             0, memcmp(best_sad8x8[0], best_sad8x8[1], sizeof(best_sad8x8[0])))
@@ -1147,7 +1046,8 @@ class Extsad_CalculationTest
             << "compare best_mv16x16 error sub_sad false";
         EXPECT_EQ(0, memcmp(sad8x8[0], sad8x8[1], sizeof(sad8x8[0])))
             << "compare sad8x8 error sub_sad false";
-        EXPECT_EQ(sad16x16[0], sad16x16[1]) << "compare sad16x16 error sub_sad false";
+        EXPECT_EQ(sad16x16[0], sad16x16[1])
+            << "compare sad16x16 error sub_sad false";
 
         sub_sad = true;
         fill_buf_with_value(&best_sad8x8[0][0], 2 * 4, BEST_SAD_MAX);
@@ -1158,40 +1058,36 @@ class Extsad_CalculationTest
         prepare_data();
 
         svt_ext_sad_calculation_8x8_16x16_c(src_aligned_,
-            src_stride_,
-            ref1_aligned_,
-            ref1_stride_,
-            best_sad8x8[0],
-            &best_sad16x16[0],
-            best_mv8x8[0],
-            &best_mv16x16[0],
-            0,
-            &sad16x16[0],
-            sad8x8[0],
-            sub_sad);
+                                            src_stride_,
+                                            ref1_aligned_,
+                                            ref1_stride_,
+                                            best_sad8x8[0],
+                                            &best_sad16x16[0],
+                                            best_mv8x8[0],
+                                            &best_mv16x16[0],
+                                            0,
+                                            &sad16x16[0],
+                                            sad8x8[0],
+                                            sub_sad);
 
-#if SSE_CODE_OPT
         test_fn(src_aligned_,
-#else
-        svt_ext_sad_calculation_8x8_16x16_avx2_intrin(src_aligned_,
-#endif
-            src_stride_,
-            ref1_aligned_,
-            ref1_stride_,
-            best_sad8x8[1],
-            &best_sad16x16[1],
-            best_mv8x8[1],
-            &best_mv16x16[1],
-            0,
-            &sad16x16[1],
-            sad8x8[1],
-            sub_sad);
+                src_stride_,
+                ref1_aligned_,
+                ref1_stride_,
+                best_sad8x8[1],
+                &best_sad16x16[1],
+                best_mv8x8[1],
+                &best_mv16x16[1],
+                0,
+                &sad16x16[1],
+                sad8x8[1],
+                sub_sad);
 
         EXPECT_EQ(
             0, memcmp(best_sad8x8[0], best_sad8x8[1], sizeof(best_sad8x8[0])))
             << "compare best_sad8x8 error sub_sad true";
         EXPECT_EQ(0,
-            memcmp(best_mv8x8[0], best_mv8x8[1], sizeof(best_mv8x8[0])))
+                  memcmp(best_mv8x8[0], best_mv8x8[1], sizeof(best_mv8x8[0])))
             << "compare best_mv8x8 error sub_sad true";
         EXPECT_EQ(best_sad16x16[0], best_sad16x16[1])
             << "compare best_sad16x16 error sub_sad true";
@@ -1199,7 +1095,8 @@ class Extsad_CalculationTest
             << "compare best_mv16x16 error sub_sad true";
         EXPECT_EQ(0, memcmp(sad8x8[0], sad8x8[1], sizeof(sad8x8[0])))
             << "compare sad8x8 error sub_sad true";
-        EXPECT_EQ(sad16x16[0], sad16x16[1]) << "compare sad16x16 error sub_sad true";
+        EXPECT_EQ(sad16x16[0], sad16x16[1])
+            << "compare sad16x16 error sub_sad true";
     }
 
     void check_get_32x32_sad() {
@@ -1247,18 +1144,12 @@ class Extsad_CalculationTest
     }
 };
 
-#if SSE_CODE_OPT
 TEST_P(Extsad_CalculationTest, Extsad_8x8Test_avx2) {
     check_get_8x8_sad(svt_ext_sad_calculation_8x8_16x16_avx2_intrin);
 }
 TEST_P(Extsad_CalculationTest, Extsad_8x8Test_sse4_1) {
     check_get_8x8_sad(svt_ext_sad_calculation_8x8_16x16_sse4_1_intrin);
 }
-#else
-TEST_P(Extsad_CalculationTest, Extsad_8x8Test) {
-    check_get_8x8_sad();
-}
-#endif
 
 TEST_P(Extsad_CalculationTest, Extsad_32x32Test) {
     check_get_32x32_sad();
@@ -1294,7 +1185,8 @@ class InitializeBuffer32
   protected:
     void checkWithSize() {
         svt_initialize_buffer_32bits_c(_ref_, count128, count32, value);
-        svt_initialize_buffer_32bits_sse2_intrin(_test_, count128, count32, value);
+        svt_initialize_buffer_32bits_sse2_intrin(
+            _test_, count128, count32, value);
 
         int cmpResult = memcmp(_ref_, _test_, MAX_BUFFER_SIZE);
         EXPECT_EQ(cmpResult, 0);
@@ -1519,19 +1411,18 @@ class SADTestSubSample16bit
 };
 
 BlkSize TEST_BLOCK_SAD_SIZES[] = {
-    BlkSize(16, 10), BlkSize(16, 5),
-    BlkSize(32, 10), BlkSize(32, 20), BlkSize(64, 20),
-    BlkSize(64, 64),  BlkSize(64, 32), BlkSize(32, 64),  BlkSize(32, 32),
-    BlkSize(32, 16),  BlkSize(16, 32), BlkSize(16, 16),  BlkSize(16, 8),
-    BlkSize(8, 16),   BlkSize(8, 8),   BlkSize(8, 4),    BlkSize(4, 4),
-    BlkSize(4, 8),    BlkSize(4, 16),  BlkSize(16, 4),   BlkSize(8, 32),
-    BlkSize(32, 8),   BlkSize(16, 64), BlkSize(16, 128), BlkSize(128, 128),
-    BlkSize(64, 16),  BlkSize(24, 24), BlkSize(24, 16),  BlkSize(16, 24),
-    BlkSize(24, 8),   BlkSize(8, 24),  BlkSize(64, 24),  BlkSize(48, 24),
-    BlkSize(32, 24),  BlkSize(24, 32), BlkSize(48, 48),  BlkSize(48, 16),
-    BlkSize(48, 32),  BlkSize(16, 48), BlkSize(32, 48),  BlkSize(48, 64),
-    BlkSize(64, 48),  BlkSize(64, 48), BlkSize(128, 64), BlkSize(64, 128),
-    BlkSize(128, 128)};
+    BlkSize(16, 10),   BlkSize(16, 5),   BlkSize(32, 10), BlkSize(32, 20),
+    BlkSize(64, 20),   BlkSize(64, 64),  BlkSize(64, 32), BlkSize(32, 64),
+    BlkSize(32, 32),   BlkSize(32, 16),  BlkSize(16, 32), BlkSize(16, 16),
+    BlkSize(16, 8),    BlkSize(8, 16),   BlkSize(8, 8),   BlkSize(8, 4),
+    BlkSize(4, 4),     BlkSize(4, 8),    BlkSize(4, 16),  BlkSize(16, 4),
+    BlkSize(8, 32),    BlkSize(32, 8),   BlkSize(16, 64), BlkSize(16, 128),
+    BlkSize(128, 128), BlkSize(64, 16),  BlkSize(24, 24), BlkSize(24, 16),
+    BlkSize(16, 24),   BlkSize(24, 8),   BlkSize(8, 24),  BlkSize(64, 24),
+    BlkSize(48, 24),   BlkSize(32, 24),  BlkSize(24, 32), BlkSize(48, 48),
+    BlkSize(48, 16),   BlkSize(48, 32),  BlkSize(16, 48), BlkSize(32, 48),
+    BlkSize(48, 64),   BlkSize(64, 48),  BlkSize(64, 48), BlkSize(128, 64),
+    BlkSize(64, 128),  BlkSize(128, 128)};
 
 TEST_P(SADTestSubSample16bit, SADTestSubSample16bit) {
     check_sad();
@@ -1546,8 +1437,8 @@ TEST_P(SADTestSubSample16bit, DISABLED_Speed) {
     RunSpeedTest();
 }
 
-#if SSE_CODE_OPT
-typedef void (*PmeSadLoopKernel)(const struct svt_mv_cost_param *mv_cost_params, uint8_t *src,
+typedef void (*PmeSadLoopKernel)(
+    const struct svt_mv_cost_param *mv_cost_params, uint8_t *src,
     uint32_t src_stride, uint8_t *ref, uint32_t ref_stride,
     uint32_t block_height, uint32_t block_width, uint32_t *best_cost,
     int16_t *best_mvx, int16_t *best_mvy, int16_t search_position_start_x,
@@ -1593,7 +1484,6 @@ class PmeSadLoopTest
         for (int ddd = 0; ddd < MV_VALS; ddd++) {
             mv_cost[ddd] = rnd.Rand16();
         }
-
     }
 
   protected:
@@ -1621,7 +1511,7 @@ class PmeSadLoopTest
         mv_cost_params.mvcost[1] = &mv_cost[MV_MAX];
         mv_cost_params.error_per_bit = 20542;
         mv_cost_params.early_exit_th = 14130;
-        mv_cost_params.sad_per_bit=442;
+        mv_cost_params.sad_per_bit = 442;
 
         uint32_t best_sad0 = UINT32_MAX;
         int16_t best_mvx0 = 0;
@@ -1772,13 +1662,13 @@ class PmeSadLoopTest
             << search_area_height_ << "]";
 
         time_c = svt_av1_compute_overall_elapsed_time_ms(start_time_seconds,
-                                           start_time_useconds,
-                                           middle_time_seconds,
-                                           middle_time_useconds);
+                                                         start_time_useconds,
+                                                         middle_time_seconds,
+                                                         middle_time_useconds);
         time_o = svt_av1_compute_overall_elapsed_time_ms(middle_time_seconds,
-                                           middle_time_useconds,
-                                           finish_time_seconds,
-                                           finish_time_useconds);
+                                                         middle_time_useconds,
+                                                         finish_time_seconds,
+                                                         finish_time_useconds);
 
         printf("    pme_sad_loop_kernel(%dx%d) search area[%dx%d]: %5.2fx)\n",
                width_,
@@ -1811,5 +1701,4 @@ INSTANTIATE_TEST_CASE_P(
                        ::testing::ValuesIn(TEST_LOOP_AREAS),
                        ::testing::ValuesIn(TEST_PME_FUNC_PAIRS)));
 
-#endif  // SSE_CODE_OPT
 }  // namespace

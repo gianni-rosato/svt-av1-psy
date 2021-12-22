@@ -42,13 +42,8 @@ extern "C" {
 #define MAX_NUMBER_OF_LEAFS_PER_TREEBLOCK 64
 #define MAX_NUMBER_OF_4x4_TUs_IN_8x8_LEAF 4
 #define MAX_CU_COST (0xFFFFFFFFFFFFFFFFull >> 1)
-#if FIX_INT_OVERLOW
 #define MAX_MODE_COST \
     (13754408443200 * 8) // RDCOST(6544618, 128 * 128 * 255 * 255, 128 * 128 * 255 * 255) * 8;
-#else
-#define MAX_MODE_COST \
-    (13616969489728 * 8) // RDCOST(6544618, 128 * 128 * 255 * 255, 128 * 128 * 255 * 255) * 8;
-#endif
 #define INVALID_FAST_CANDIDATE_INDEX ~0
 #define MAX_OIS_CANDIDATES 61 //18//18
 
@@ -266,20 +261,17 @@ typedef struct InterPredParams {
 } InterPredParams;
 typedef struct MacroBlockD {
     // block dimension in the unit of mode_info.
-    uint8_t     n8_w, n8_h;
-    uint8_t     n4_w, n4_h; // for warped motion
-    uint8_t     ref_mv_count[MODE_CTX_REF_FRAMES];
-#if !LIGHT_PD1_MACRO
-    CandidateMv final_ref_mv_stack[MAX_REF_MV_STACK_SIZE];
-#endif
-    uint8_t     is_sec_rect;
-    int8_t      up_available;
-    int8_t      left_available;
-    int8_t      chroma_up_available;
-    int8_t      chroma_left_available;
-    TileInfo    tile;
-    int32_t     mi_stride;
-    ModeInfo ** mi;
+    uint8_t    n8_w, n8_h;
+    uint8_t    n4_w, n4_h; // for warped motion
+    uint8_t    ref_mv_count[MODE_CTX_REF_FRAMES];
+    uint8_t    is_sec_rect;
+    int8_t     up_available;
+    int8_t     left_available;
+    int8_t     chroma_up_available;
+    int8_t     chroma_left_available;
+    TileInfo   tile;
+    int32_t    mi_stride;
+    ModeInfo **mi;
 
     /* Distance of MB away from frame edges in subpixels (1/8th pixel)  */
     int32_t                  mb_to_left_edge;
@@ -333,27 +325,16 @@ typedef struct IntraBcContext {
     uint8_t        is_exhaustive_allowed;
     CRC_CALCULATOR crc_calculator1;
     CRC_CALCULATOR crc_calculator2;
-#if  FTR_SIMPLIFIED_MV_COST
-#if CLN_RATE_EST_CTRLS
-    uint8_t approx_inter_rate; // use approximate rate for inter cost (set at pic-level b/c some pic-level initializations will be removed)
-#else
-    uint8_t use_low_precision_cost_estimation;
-#endif
-#endif
+    uint8_t
+        approx_inter_rate; // use approximate rate for inter cost (set at pic-level b/c some pic-level initializations will be removed)
 } IntraBcContext;
 
 typedef struct BlkStruct {
     TransformUnit          txb_array[TRANSFORM_UNIT_MAX_COUNT]; // ec
     PredictionUnit         prediction_unit_array[MAX_NUM_OF_PU_PER_CU]; // ec
-#if OPT_MEM_PALETTE
-    PaletteInfo            *palette_info; // ec
-    uint8_t palette_mem; // status of palette info alloc
-#else
-    PaletteInfo            palette_info; // ec
-#endif
-#if OPT_MEM_PALETTE
-    uint8_t palette_size[2];
-#endif
+    PaletteInfo *          palette_info; // ec
+    uint8_t                palette_mem; // status of palette info alloc
+    uint8_t                palette_size[2];
     IntMv                  predmv[2]; // ec
     MacroBlockD *          av1xd;
     InterInterCompoundData interinter_comp; // ec
@@ -377,44 +358,31 @@ typedef struct BlkStruct {
     uint8_t split_flag;
     uint8_t skip_flag; // ec
     uint8_t mdc_split_flag; // ?
-#if FTR_BYPASS_ENCDEC
-    EbPictureBufferDesc *coeff_tmp; // buffer to store quantized coeffs from MD for the final mode of each block
-    EbPictureBufferDesc *recon_tmp; // buffer to store recon from MD for the final mode of each block
-#endif
-#if NO_ENCDEC
-    EbPictureBufferDesc *quant_tmp;
-    EbPictureBufferDesc *coeff_tmp;
-    EbPictureBufferDesc *recon_tmp;
-    uint32_t             cand_buff_index;
-#endif
+    EbPictureBufferDesc
+        *coeff_tmp; // buffer to store quantized coeffs from MD for the final mode of each block
+    EbPictureBufferDesc
+        *   recon_tmp; // buffer to store recon from MD for the final mode of each block
     uint8_t drl_index; // ec
     int8_t  drl_ctx[2]; // Store the drl ctx in coding loop to avoid storing
         // final_ref_mv_stack and ref_mv_count for EC
     int8_t drl_ctx_near[2]; // Store the drl ctx in coding loop to avoid storing
         // final_ref_mv_stack and ref_mv_count for EC
     PredictionMode pred_mode; // ec
-#if FIX_SKIP_COEFF_CONTEXT
-    uint8_t skip_coeff_context;
-#endif
-    uint8_t  reference_mode_context;
-    uint8_t  compoud_reference_type_context;
-    uint32_t is_inter_ctx;
+    uint8_t        skip_coeff_context;
+    uint8_t        reference_mode_context;
+    uint8_t        compoud_reference_type_context;
+    uint32_t       is_inter_ctx;
 
-    uint8_t       segment_id; // ec
+    uint8_t segment_id; // ec
 
-#if !OPT_MEMORY_MIP
-    uint8_t       seg_id_predicted; // valid only when temporal_update is enabled
-#endif
-    PartitionType part;
-#if CLN_ENC_DEC
-    uint32_t best_d1_blk;
-#endif
+    PartitionType  part;
+    uint32_t       best_d1_blk;
     InterIntraMode interintra_mode; // ec
     uint8_t        is_interintra_used; // ec
     uint8_t        use_wedge_interintra; // ec
-    uint8_t  filter_intra_mode; // ec
-    uint8_t  use_intrabc;
-    uint64_t total_rate;
+    uint8_t        filter_intra_mode; // ec
+    uint8_t        use_intrabc;
+    uint64_t       total_rate;
 } BlkStruct;
 
 typedef struct TplStats {
@@ -428,17 +396,15 @@ typedef struct TplStats {
     uint64_t ref_frame_poc;
 } TplStats;
 
-#if SS_OPT_TPL
 typedef struct TplSrcStats {
-    int64_t  srcrf_dist;
-    int64_t  srcrf_rate;
-    uint64_t ref_frame_poc;
-    MV       mv;
-    uint8_t  best_mode;
-    int32_t  best_rf_idx;
+    int64_t        srcrf_dist;
+    int64_t        srcrf_rate;
+    uint64_t       ref_frame_poc;
+    MV             mv;
+    uint8_t        best_mode;
+    int32_t        best_rf_idx;
     PredictionMode best_intra_mode;
 } TplSrcStats;
-#endif
 typedef struct SuperBlock {
     EbDctor                   dctor;
     struct PictureControlSet *pcs_ptr;
@@ -450,29 +416,20 @@ typedef struct SuperBlock {
     unsigned       picture_left_edge_flag : 1;
     unsigned       picture_top_edge_flag : 1;
     unsigned       picture_right_edge_flag : 1;
-#if FTR_16K
     unsigned       index : 32;
     unsigned       origin_x : 32;
     unsigned       origin_y : 32;
-#else
-    unsigned       index : 12;
-    unsigned       origin_x : 12;
-    unsigned       origin_y : 12;
-#endif
     uint8_t        qindex;
     uint32_t       total_bits;
 
     // Quantized Coefficients
-    TileInfo       tile_info;
+    TileInfo tile_info;
 } SuperBlock;
 
 extern EbErrorType largest_coding_unit_ctor(SuperBlock *larget_coding_unit_ptr, uint8_t sb_sz,
                                             uint16_t sb_origin_x, uint16_t sb_origin_y,
-                                            uint16_t                  sb_index,
-                                            uint8_t enc_mode,
-#if CLN_GEOM
-    uint16_t max_block_cnt,
-#endif
+                                            uint16_t sb_index, uint8_t enc_mode,
+                                            uint16_t                  max_block_cnt,
                                             struct PictureControlSet *picture_control_set);
 
 #ifdef __cplusplus

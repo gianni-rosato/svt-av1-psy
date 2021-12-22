@@ -21,8 +21,8 @@
  * Dlf Context
  **************************************/
 typedef struct DlfContext {
-    EbFifo *             dlf_input_fifo_ptr;
-    EbFifo *             dlf_output_fifo_ptr;
+    EbFifo *dlf_input_fifo_ptr;
+    EbFifo *dlf_output_fifo_ptr;
 } DlfContext;
 
 /**************************************

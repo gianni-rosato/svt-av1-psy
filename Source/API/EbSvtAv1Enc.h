@@ -26,22 +26,10 @@ extern "C" {
 #define EB_HME_SEARCH_AREA_ROW_MAX_COUNT 2
 #define MAX_HIERARCHICAL_LEVEL 6
 #define REF_LIST_MAX_DEPTH 4
-#if TUNE_NEW_M11
-#if TUNE_NEW_M12
-#if FTR_M13
 #define MAX_ENC_PRESET 13
-#else
-#define MAX_ENC_PRESET 12
-#endif
-#else
-#define MAX_ENC_PRESET 11
-#endif
-#else
-#define MAX_ENC_PRESET 10
-#endif
 #define NUM_MV_COMPONENTS 2
 #define NUM_MV_HIST 2
-#define MAX_MV_HIST_SIZE  2 * REF_LIST_MAX_DEPTH * NUM_MV_COMPONENTS * NUM_MV_HIST
+#define MAX_MV_HIST_SIZE 2 * REF_LIST_MAX_DEPTH *NUM_MV_COMPONENTS *NUM_MV_HIST
 #define DEFAULT -1
 
 #define EB_BUFFERFLAG_EOS 0x00000001 // signals the last packet of the stream
@@ -97,92 +85,59 @@ typedef struct PredictionStructureConfigEntry {
     int32_t  ref_list1[REF_LIST_MAX_DEPTH];
 } PredictionStructureConfigEntry;
 
-#if CLN_TF_SIG
 typedef struct TfControls {
     // Filtering set
-    uint8_t  enabled;                  // Specifies whether the current input will be filtered or not (0: OFF, 1: ON)
-    uint8_t  do_chroma;                // Specifies whether the U& V planes will be filered or not (0: filter all planes, 1 : filter Y plane only)
-    uint8_t  use_medium_filter;        // Specifies whether the weights generation will use approximations or not (0: do not use approximations, 1: per-block weights derivation, use an approximated exponential & log, use an approximated noise level)
-    uint8_t  use_fast_filter;          // Specifies whether the weights derivation will use the distance factor(MV - based correction) and the 5x5 window error or not (0: OFF, 1 : ON)
-    uint8_t  use_fixed_point;          // Specifies noise-level-estimation and filtering precision (0: use float/double precision, 1: use fixed point precision)
+    uint8_t enabled; // Specifies whether the current input will be filtered or not (0: OFF, 1: ON)
+    uint8_t
+        do_chroma; // Specifies whether the U& V planes will be filered or not (0: filter all planes, 1 : filter Y plane only)
+    uint8_t
+        use_medium_filter; // Specifies whether the weights generation will use approximations or not (0: do not use approximations, 1: per-block weights derivation, use an approximated exponential & log, use an approximated noise level)
+    uint8_t
+        use_fast_filter; // Specifies whether the weights derivation will use the distance factor(MV - based correction) and the 5x5 window error or not (0: OFF, 1 : ON)
+    uint8_t
+        use_fixed_point; // Specifies noise-level-estimation and filtering precision (0: use float/double precision, 1: use fixed point precision)
 
     // Number of reference frame(s) set
-    uint8_t  num_past_pics;            // Specifies the default number of frame(s) from past
-    uint8_t  num_future_pics;          // Specifies the default number of frame(s) from future
-    uint8_t  noise_adjust_past_pics;   // Specifies whether num_past_pics will be incremented or not based on the noise level of the central frame(0: OFF or 1 : ON)
-    uint8_t  noise_adjust_future_pics; // Specifies whether num_future_pics will be incremented or not based on the noise level of the central frame(0: OFF or 1 : ON)
-    uint8_t  use_intra_for_noise_est;  // Specifies whether to use the key- rame noise level for all inputs or to re - compute the noise level for each input
-    uint8_t  activity_adjust_th;       // Specifies whether num_past_picsand num_future_pics will be decremented or not based on the activity of the outer reference frame(s) compared to the central frame(∞: OFF, else remove the reference frame if the cumulative differences between the histogram bins of the central frameand the histogram bins of the reference frame is higher than activity_adjust_th
-    uint8_t  max_num_past_pics;        // Specifies the maximum number of frame(s) from past(after all adjustments)
-    uint8_t  max_num_future_pics;      // Specifies the maximum number of frame(s) from future(after all adjustments)
+    uint8_t num_past_pics; // Specifies the default number of frame(s) from past
+    uint8_t num_future_pics; // Specifies the default number of frame(s) from future
+    uint8_t
+        noise_adjust_past_pics; // Specifies whether num_past_pics will be incremented or not based on the noise level of the central frame(0: OFF or 1 : ON)
+    uint8_t
+        noise_adjust_future_pics; // Specifies whether num_future_pics will be incremented or not based on the noise level of the central frame(0: OFF or 1 : ON)
+    uint8_t
+        use_intra_for_noise_est; // Specifies whether to use the key- rame noise level for all inputs or to re - compute the noise level for each input
+    uint8_t
+        activity_adjust_th; // Specifies whether num_past_picsand num_future_pics will be decremented or not based on the activity of the outer reference frame(s) compared to the central frame(∞: OFF, else remove the reference frame if the cumulative differences between the histogram bins of the central frameand the histogram bins of the reference frame is higher than activity_adjust_th
+    uint8_t
+        max_num_past_pics; // Specifies the maximum number of frame(s) from past(after all adjustments)
+    uint8_t
+        max_num_future_pics; // Specifies the maximum number of frame(s) from future(after all adjustments)
 
     // Motion search
-    uint8_t  hme_me_level;             // Specifies the accuracy of the ME search (note that ME performs a HME search, then a Full - Pel search).
-    uint8_t  half_pel_mode;            // Specifies the accuracy of the Half-Pel search (0: OFF, 1 : perform refinement for the 8 neighboring positions, 2/3 : perform refinement for the 2 horizontal-neighboring positions and for the 2 vertical-neighboring positions, but not for all the 4 diagonal-neighboring positions = function(horizontal & vertical distortions)
-    uint8_t  quarter_pel_mode;         // Specifies the accuracy of the Quarter-Pel search (0: OFF, 1 : perform refinement for the 8 neighboring positions, 2/3 : perform refinement for the 2 horizontal-neighboring positions and for the 2 vertical-neighboring positions, but not for all the 4 diagonal-neighboring positions = function(horizontal & vertical distortions)
-    uint8_t  eight_pel_mode;           // Specifies the accuracy of the Eight-Pel search (0: OFF, 1 : perform refinement for the 8 neighboring positions)
-    uint8_t  use_8bit_subpel;          // Specifies whether the Sub-Pel search for a 10bit input will be performed in 8bit resolution(0: OFF, 1 : ON, NA if 8bit input)
-    uint8_t  avoid_2d_qpel;            // Specifies whether the Sub-Pel positions that require a 2D interpolation will be tested or not (0: OFF, 1 : ON, NA if 16x16 block or if the Sub-Pel mode is set to 1)
-    uint8_t  use_2tap;                 // Specifies the Sub-Pel search filter type(0: regular, 1 : bilinear, NA if 16x16 block or if the Sub - Pel mode is set to 1)
-    uint8_t  sub_sampling_shift;       // Specifies whether sub-sampled input / prediction will be used at the distortion computation of the Sub-Pel search
-    uint64_t pred_error_32x32_th;      // Specifies the 32x32 prediction error(after subpel) under which the subpel for the 16x16 block(s) is bypassed
-    uint32_t me_exit_th;               // Specifies whether to exit ME after HME or not (0: perform both HME and Full-Pel search, else if the HME distortion is less than me_exit_th then exit after HME(i.e. do not perform the Full-Pel search), NA if use_fast_filter is set 0)
-    uint8_t  use_pred_64x64_only_th;   // Specifies whether to perform Sub-Pel search for only the 64x64 block or to use default size(s) (32x32 or/ and 16x16) (∞: perform Sub-Pel search for default size(s), else if the deviation between the 64x64 ME distortion and the sum of the 4 32x32 ME distortions is less than use_pred_64x64_only_th then perform Sub - Pel search for only the 64x64 block, NA if use_fast_filter is set 0)
+    uint8_t
+        hme_me_level; // Specifies the accuracy of the ME search (note that ME performs a HME search, then a Full - Pel search).
+    uint8_t
+        half_pel_mode; // Specifies the accuracy of the Half-Pel search (0: OFF, 1 : perform refinement for the 8 neighboring positions, 2/3 : perform refinement for the 2 horizontal-neighboring positions and for the 2 vertical-neighboring positions, but not for all the 4 diagonal-neighboring positions = function(horizontal & vertical distortions)
+    uint8_t
+        quarter_pel_mode; // Specifies the accuracy of the Quarter-Pel search (0: OFF, 1 : perform refinement for the 8 neighboring positions, 2/3 : perform refinement for the 2 horizontal-neighboring positions and for the 2 vertical-neighboring positions, but not for all the 4 diagonal-neighboring positions = function(horizontal & vertical distortions)
+    uint8_t
+        eight_pel_mode; // Specifies the accuracy of the Eight-Pel search (0: OFF, 1 : perform refinement for the 8 neighboring positions)
+    uint8_t
+        use_8bit_subpel; // Specifies whether the Sub-Pel search for a 10bit input will be performed in 8bit resolution(0: OFF, 1 : ON, NA if 8bit input)
+    uint8_t
+        avoid_2d_qpel; // Specifies whether the Sub-Pel positions that require a 2D interpolation will be tested or not (0: OFF, 1 : ON, NA if 16x16 block or if the Sub-Pel mode is set to 1)
+    uint8_t
+        use_2tap; // Specifies the Sub-Pel search filter type(0: regular, 1 : bilinear, NA if 16x16 block or if the Sub - Pel mode is set to 1)
+    uint8_t
+        sub_sampling_shift; // Specifies whether sub-sampled input / prediction will be used at the distortion computation of the Sub-Pel search
+    uint64_t
+        pred_error_32x32_th; // Specifies the 32x32 prediction error(after subpel) under which the subpel for the 16x16 block(s) is bypassed
+    uint32_t
+        me_exit_th; // Specifies whether to exit ME after HME or not (0: perform both HME and Full-Pel search, else if the HME distortion is less than me_exit_th then exit after HME(i.e. do not perform the Full-Pel search), NA if use_fast_filter is set 0)
+    uint8_t
+        use_pred_64x64_only_th; // Specifies whether to perform Sub-Pel search for only the 64x64 block or to use default size(s) (32x32 or/ and 16x16) (∞: perform Sub-Pel search for default size(s), else if the deviation between the 64x64 ME distortion and the sum of the 4 32x32 ME distortions is less than use_pred_64x64_only_th then perform Sub - Pel search for only the 64x64 block, NA if use_fast_filter is set 0)
 
 } TfControls;
-#else
-typedef struct TfControls {
-    uint8_t  enabled;
-    uint8_t  num_past_pics;            // Number of frame(s) from past
-    uint8_t  num_future_pics;          // Number of frame(s) from future
-    uint8_t  noise_adjust_past_pics;   // 0: noise-based adjustment OFF | 1: up to 3 additional frame(s) from the past based on the noise level
-    uint8_t  noise_adjust_future_pics; // 0: noise-based adjustment OFF | 1: up to 3 additional frame(s) from the future based on the noise level
-    uint8_t  activity_adjust_th;       // The abs diff between the histogram of the central frame and the reference frame beyond which the reference frame is removed
-    uint8_t  max_num_past_pics;        // Max number of frame(s) from past
-    uint8_t  max_num_future_pics;      // Max number of frame(s) from future
-    uint8_t  hme_me_level;             // HME/ME Search Level
-    uint8_t  half_pel_mode;            // 0: do not perform half-pel refinement     | 1: perform half-pel refinement for the 8-positions    | 2: perform half-pel refinement for only 4-positions (H and V only)
-    uint8_t  quarter_pel_mode;         // 0: do not perform quarter-pel refinement  | 1: perform quarter-pel refinement for the 8-positions | 2: perform half-pel refinement for only 4-positions (H and V only)
-    uint8_t  eight_pel_mode;           // 0: do not perform eight-pel refinement    | 1: perform eight-pel refinement for the 8-positions   | 2: eight half-pel refinement for only 4-positions (H and V only)
-    uint8_t  do_chroma;                // 0: do not filter chroma | 1: filter chroma
-#if OPT_UPGRADE_TF
-#if !FIX_TF_FILTER_64x64_PATH
-    uint8_t  use_pred_64x64_only_th;   // 0: subpel/pred error for 32x32(s) or/and 16x16(s) | > 0: subpel/pred error for 64x64 only if 64x64-to-32x32 dist deviation less than use_pred_64x64_only_th
-    uint32_t me_exit_th;               // early exit ME_TF if HME distortion < me_exit_th
-#endif
-#endif
-    uint64_t pred_error_32x32_th;      // The 32x32 pred error (post-subpel) under which subpel for the 16x16 block(s) is bypassed
-#if !CLN_TF_CTRLS
-    int64_t  me_16x16_to_8x8_dev_th;   // The 16x16-to-8x8 me-distortion deviation beyond which the number of reference frames is capped to [max_64x64_past_pics, max_64x64_future_pics] @ the level of a 64x64 Block
-    uint64_t max_64x64_past_pics;      // The max number of past reference frames if me_16x16_to_8x8_dev > me_16x16_to_8x8_dev_th
-    uint64_t max_64x64_future_pics;    // The max number of future reference frames if me_16x16_to_8x8_dev > me_16x16_to_8x8_dev_th
-#endif
-#if OPT_TF
-    uint8_t sub_sampling_shift;         // Use subsampled prediction and sse;
-#endif
-#if OPT_TFILTER
-    uint8_t use_fast_filter;  //simple filter using fixed weight per block, no MV based correction, approximated exp
-#endif
-#if FIXED_POINTS_PLANEWISE
-    uint8_t use_fixed_point;  //Enable calculations on fixed points instead of float/double
-    uint8_t use_medium_filter;//simple filter using weight per quarter block
-#endif
-#if FIX_TF_FILTER_64x64_PATH
-    uint8_t  use_pred_64x64_only_th;   // [valid for only use_fast_filter=1] 0: subpel/pred error for 32x32(s) or/and 16x16(s) | > 0: subpel/pred error for 64x64 only if 64x64-to-32x32 dist deviation less than use_pred_64x64_only_th
-    uint32_t me_exit_th;               // [valid for only use_fast_filter=1] early exit ME_TF if HME distortion < me_exit_th
-#endif
-#if OPT_TFILTER
-    uint8_t avoid_2d_qpel;    //avoid 2d qpel positions in 32x32 search
-    uint8_t use_2tap;         //use bilinear sub pel filter in 32x32 search
-#endif
-#if OPT_NOISE_LEVEL
-    uint8_t use_intra_for_noise_est; //use I frame for noise estimation
-#endif
-#if OPT_TF_8BIT_SUBPEL
-    uint8_t use_8bit_subpel; // Perform TF subpel search in 8bit for 10bit content (this setting won't affect 8bit content)
-#endif
-} TfControls;
-#endif
 // super-res modes
 typedef enum {
     SUPERRES_NONE, // No frame superres allowed.
@@ -195,20 +150,14 @@ typedef enum {
 
 // super-res auto search type
 typedef enum {
-    SUPERRES_AUTO_ALL,   // Tries all possible superres ratios
-    SUPERRES_AUTO_DUAL,  // Tries no superres and q-based superres ratios
-    SUPERRES_AUTO_SOLO,  // Only apply the q-based superres ratio
+    SUPERRES_AUTO_ALL, // Tries all possible superres ratios
+    SUPERRES_AUTO_DUAL, // Tries no superres and q-based superres ratios
+    SUPERRES_AUTO_SOLO, // Only apply the q-based superres ratio
     SUPERRES_AUTO_SEARCH_TYPES
 } SUPERRES_AUTO_SEARCH_TYPE;
 
 typedef enum {
-    SVT_AV1_STREAM_INFO_START = 1,
-#if !CLN_ENC_CONFIG_SIG
-    // The output is SvtAv1FixedBuf*
-    // Two use this, you need:
-    // 1. set the EbSvtAv1EncConfiguration.rc_firstpass_stats_out to EB_TRUE
-    // 2. call this when you got EB_BUFFERFLAG_EOS
-#endif
+    SVT_AV1_STREAM_INFO_START                = 1,
     SVT_AV1_STREAM_INFO_FIRST_PASS_STATS_OUT = SVT_AV1_STREAM_INFO_START,
 
     SVT_AV1_STREAM_INFO_END,
@@ -223,21 +172,6 @@ typedef struct SvtAv1FixedBuf {
     uint64_t sz; /**< Length of the buffer, in chars */
 } SvtAv1FixedBuf; /**< alias for struct aom_fixed_buf */
 
-#if OPT_FIRST_PASS2
-
-#if !CLN_ENC_CONFIG_SIG
-typedef struct IppPassControls {
-    uint8_t skip_frame_first_pass; // Enable the ability to skip frame
-    uint8_t ipp_ds; // use downsampled version in ipp pass
-    uint8_t bypass_blk_step; // bypass every other row and col
-    uint8_t dist_ds; // downsample distortion
-    uint8_t bypass_zz_check; // Bypas the (0,0)_MV check against HME_MV before performing ME
-    uint8_t use8blk;
-    uint8_t reduce_me_search; //Reduce HME_ME SR areas
-} IppPassControls;
-#endif
-#endif
-#if CLN_MERGE_MRP_SIG
 typedef struct MrpCtrls {
     // Referencing scheme
     uint8_t referencing_scheme; // 0 or 1
@@ -253,7 +187,6 @@ typedef struct MrpCtrls {
     uint8_t non_base_ref_list0_count;
     uint8_t non_base_ref_list1_count;
 } MrpCtrls;
-#endif
 // Will contain the EbEncApi which will live in the EncHandle class
 // Only modifiable during config-time.
 typedef struct EbSvtAv1EncConfiguration {
@@ -400,44 +333,14 @@ typedef struct EbSvtAv1EncConfiguration {
     /* use fixed qp offset for every picture based on temporal layer index
     *
     * Default is 0.*/
-    EbBool use_fixed_qindex_offsets;
+    EbBool  use_fixed_qindex_offsets;
     int32_t qindex_offsets[EB_MAX_TEMPORAL_LAYERS];
     int32_t key_frame_chroma_qindex_offset;
     int32_t key_frame_qindex_offset;
     int32_t chroma_qindex_offsets[EB_MAX_TEMPORAL_LAYERS];
     /* input buffer for the second pass */
     SvtAv1FixedBuf rc_twopass_stats_in;
-#if !CLN_ENC_CONFIG_SIG
-    /* generate first pass stats output.
-    * when you set this to EB_TRUE, and you got the EB_BUFFERFLAG_EOS,
-    * you can get the encoder stats using:
-    *
-    * SvtAv1FixedBuf first_pass_stat;
-    * EbErrorType ret = svt_av1_enc_get_stream_info(component_handle,
-    *     SVT_AV1_STREAM_INFO_FIRST_PASS_STATS_OUT, &first_pass_stat);
-    *
-    * Default is 0.*/
-    EbBool rc_firstpass_stats_out;
-#endif
-#if FTR_MULTI_PASS_API
-#if !CLN_ENC_CONFIG_SIG
-    EbBool rc_middlepass_stats_out;
-    uint8_t    passes;
-#endif
-#if CLN_ENC_CONFIG_SIG
-    int pass;
-#endif
-#if TUNE_MULTI_PASS
-#if !CLN_ENC_CONFIG_SIG
-    MultiPassModes multi_pass_mode;
-#endif
-#endif
-#if FTR_OPT_MPASS_DOWN_SAMPLE
-#if !CLN_ENC_CONFIG_SIG
-    EbBool rc_middlepass_ds_stats_out;
-#endif
-#endif
-#endif
+    int            pass;
     /* Enable picture QP scaling between hierarchical levels
     *
     * Default is null.*/
@@ -512,17 +415,10 @@ typedef struct EbSvtAv1EncConfiguration {
     *
     * Default is -1. */
     int enable_redundant_blk;
-#if FIX_REMOVE_PD1
     /* spatial sse in full loop
     *
     * -1: Default, 0: OFF, 1: ON. */
     int spatial_sse_full_loop_level;
-#else
-    /* spatial sse in full loop
-    *
-    * -1: Default, 0: OFF in PD_PASS_2, 1: Fully ON in PD_PASS_2. */
-    int spatial_sse_full_loop_level;
-#endif
     /* over boundry block
     *
     * Default is -1. */
@@ -571,8 +467,7 @@ typedef struct EbSvtAv1EncConfiguration {
      *
      * Default is -1 (auto) */
     int disable_cfl_flag;
-#if FIX_REMOVE_PD1
-        /* obmc_level specifies the level of the OBMC feature that would be
+    /* obmc_level specifies the level of the OBMC feature that would be
      * considered when the level is specified in the command line instruction (CLI).
      * The meaning of the feature level in the CLI is different from that for
      * the default settings. See description of pic_obmc_level for the full details.
@@ -584,34 +479,11 @@ typedef struct EbSvtAv1EncConfiguration {
      *         1        | ON
      *
      * Default is -1 (auto). */
-#else
-    /* obmc_level specifies the level of the OBMC feature that would be
-     * considered when the level is specified in the command line instruction (CLI).
-     * The meaning of the feature level in the CLI is different from that for
-     * the default settings. See description of pic_obmc_level for the full details.
-     *
-     * The table below specifies the meaning of obmc_level when specified in the CLI.
-     *     obmc_level   | Command Line Settings
-     *        -1        | Default settings (auto)
-     *         0        | OFF everywhere in encoder
-     *         1        | Fully ON in PD_PASS_2
-     *         2        | Level 2 everywhere in PD_PASS_2
-     *         3        | Level 3 everywhere in PD_PASS_3
-     *
-     * Default is -1 (auto). */
-#endif
     int8_t obmc_level;
-#if FIX_REMOVE_PD1
     /* RDOQ
     *
     * -1: Default, 0: OFF, 1: ON. */
-#else
-    /* RDOQ
-    *
-    * -1: Default, 0: OFF in PD_PASS_2, 1: Fully ON in PD_PASS_2. */
-#endif
     int rdoq_level;
-#if FIX_REMOVE_PD1
     /* Filter intra prediction
     *
     * The table below specifies the meaning of filter_intra_level when specified in the CLI.
@@ -620,16 +492,6 @@ typedef struct EbSvtAv1EncConfiguration {
     *         0          | OFF everywhere in encoder
     *         1          | ON */
     int8_t filter_intra_level;
-#else
-    /* Filter intra prediction
-    *
-    * The table below specifies the meaning of filter_intra_level when specified in the CLI.
-    * filter_intra_level | Command Line Settings
-    *        -1          | Default settings (auto)
-    *         0          | OFF everywhere in encoder
-    *         1          | Fully ON in PD_PASS_2, Default settings in PD_PASS_0 */
-    int8_t filter_intra_level;
-#endif
     /* Intra Edge Filter
     *
     * Default is -1. */
@@ -639,7 +501,6 @@ typedef struct EbSvtAv1EncConfiguration {
     *
     * Default is - 1. */
     int pic_based_rate_est;
-#if !CLN_REMOVE_ME_HME_CLI
     /* Flag to enable the use of default ME HME parameters.
     *
     * Default is 1. */
@@ -663,7 +524,6 @@ typedef struct EbSvtAv1EncConfiguration {
      *
      * Default depends on input resolution. */
     uint32_t search_area_height;
-#endif
     // MD Parameters
     /* Enable the use of HBD (10-bit) for 10 bit content at the mode decision step
      *
@@ -673,18 +533,10 @@ typedef struct EbSvtAv1EncConfiguration {
      *
     * Default is 1. */
     int8_t enable_hbd_mode_decision;
-#if FIX_REMOVE_PD1
     /* Palette Mode
     *
     * -1: Default, 0: OFF, 1: Fully ON, 2 ... 6: Faster levels */
     int32_t palette_level;
-#else
-    /* Palette Mode
-    *
-    * -1: Default, 0: OFF, 1: Fully ON, 2 ... 6: Faster levels
-    * Levels 0 - 6 apply only to PD_PASS_2 */
-    int32_t palette_level;
-#endif
     // Rate Control
 
     /* Rate control mode.
@@ -717,13 +569,11 @@ typedef struct EbSvtAv1EncConfiguration {
      *
      * Default is 7000000. */
     uint32_t target_bit_rate;
-#if FTR_RC_CAP
     /* maximum bitrate in bits/second, only apllicable when rate control mode is
      * set to 0.
      *
      * Default is 0. */
     uint32_t max_bit_rate;
-#endif
     /* VBV Buffer size */
     uint32_t vbv_bufsize;
 
@@ -758,13 +608,10 @@ typedef struct EbSvtAv1EncConfiguration {
      * and is used as a trigger threshold for more agressive adaptation of Q. Its
      * value can range from 0-1000. */
     uint32_t over_shoot_pct;
-#if TUNE_CAP_CRF_OVERSHOOT
     /* over_shoot_pct indicates the tolerance of the Capped CRF algorithm to overshoot
      * and is used as a trigger threshold for more agressive adaptation of Q. Its
      * value can range from 0-1000. */
     uint32_t mbr_over_shoot_pct;
-#endif
-#if FTR_2PASS_CBR || FTR_1PASS_CBR
     /* Indicates the amount of data that will be buffered by the decoding
      * application prior to beginning playback, and is expressed in units of
      * time(milliseconds). */
@@ -775,7 +622,6 @@ typedef struct EbSvtAv1EncConfiguration {
     /* Indicates the maximum amount of data that may be buffered by the decoding
      * application, and is expressed in units of time(milliseconds).*/
     int64_t maximum_buffer_size_ms;
-#endif
 
     /* recode_loop indicates the recode levels,
      * DISALLOW_RECODE = 0, No recode.
@@ -901,7 +747,6 @@ typedef struct EbSvtAv1EncConfiguration {
 
     /* To be deprecated.
  * Encoder configuration parameters below this line are to be deprecated. */
-#if !CLN_REMOVE_ME_HME_CLI
     /* Flag to enable Hierarchical Motion Estimation 1/16th of the picture
     *
     * Default is 1. */
@@ -931,17 +776,13 @@ typedef struct EbSvtAv1EncConfiguration {
     uint32_t hme_level1_search_area_in_height_array[EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
     uint32_t hme_level2_search_area_in_width_array[EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT];
     uint32_t hme_level2_search_area_in_height_array[EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
-#endif
     uint32_t ten_bit_format;
 
     /* Variables to control the use of ALT-REF (temporally filtered frames)
     */
     // -1: Default; 0: OFF; 1: ON
-    int8_t  tf_level;
-    EbBool  enable_overlays;
-#if !CLN_TF_ENC_CONFIG
-    TfControls tf_params_per_type[3]; // [I_SLICE][BASE][L1]
-#endif
+    int8_t tf_level;
+    EbBool enable_overlays;
     // super-resolution parameters
     uint8_t superres_mode;
     uint8_t superres_denom;
@@ -998,29 +839,8 @@ typedef struct EbSvtAv1EncConfiguration {
     */
     struct EbContentLightLevel content_light_level;
 
-#if FIX_DATA_RACE_2PASS
     uint8_t enable_adaptive_mini_gop;
     uint8_t max_heirachical_level;
-#endif
-#if !CLN_ENC_CONFIG_SIG
-#if OPT_FIRST_PASS
-#if !FIX_VBR_IPP
-    uint8_t final_pass_rc_mode;
-#endif
-#endif
-#if OPT_FIRST_PASS2
-    IppPassControls ipp_ctrls;
-    uint8_t ipp_was_ds;
-#endif
-#if IPP_CTRL
-    uint8_t final_pass_preset;
-#endif
-#endif
-#if !CLN_MRP_ENC_CONFIG
-#if CLN_MERGE_MRP_SIG
-    MrpCtrls mrp_ctrls;
-#endif
-#endif
 } EbSvtAv1EncConfiguration;
 
 /**
@@ -1083,13 +903,8 @@ EB_API EbErrorType svt_av1_enc_stream_header_release(EbBufferHeaderType *stream_
      * Parameter:
      * @ *svt_enc_component  Encoder handler.
      * @ *p_buffer           Header pointer, picture buffer. */
-#if OPT_FIRST_PASS2 && !FIX_DG
-EB_API EbErrorType svt_av1_enc_send_picture(EbComponentType *   svt_enc_component,
-    EbBufferHeaderType *p_buffer, int pass);
-#else
 EB_API EbErrorType svt_av1_enc_send_picture(EbComponentType *   svt_enc_component,
                                             EbBufferHeaderType *p_buffer);
-#endif
 
 /* STEP 5: Receive packet.
      * Parameter:

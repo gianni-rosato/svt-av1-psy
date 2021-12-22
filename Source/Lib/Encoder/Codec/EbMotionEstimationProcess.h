@@ -45,8 +45,8 @@ EbErrorType motion_estimation_context_ctor(EbThreadContext *  thread_context_ptr
 
 extern void *motion_estimation_kernel(void *input_ptr);
 
-EbErrorType  signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
-                                            PictureParentControlSet *  pcs_ptr,
-                                            MotionEstimationContext_t *context_ptr);
+EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
+                                           PictureParentControlSet *  pcs_ptr,
+                                           MotionEstimationContext_t *context_ptr);
 
 #endif // EbMotionEstimationProcess_h

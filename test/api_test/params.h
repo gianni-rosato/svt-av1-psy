@@ -1,13 +1,14 @@
 /*
-* Copyright(c) 2019 Netflix, Inc.
-*
-* This source code is subject to the terms of the BSD 2 Clause License and
-* the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
-* was not distributed with this source code in the LICENSE file, you can
-* obtain it at https://www.aomedia.org/license/software-license. If the Alliance for Open
-* Media Patent License 1.0 was not distributed with this source code in the
-* PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
-*/
+ * Copyright(c) 2019 Netflix, Inc.
+ *
+ * This source code is subject to the terms of the BSD 2 Clause License and
+ * the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
+ * was not distributed with this source code in the LICENSE file, you can
+ * obtain it at https://www.aomedia.org/license/software-license. If the
+ * Alliance for Open Media Patent License 1.0 was not distributed with this
+ * source code in the PATENTS file, you can obtain it at
+ * https://www.aomedia.org/license/patent-license.
+ */
 
 /******************************************************************************
  * @file params.h
@@ -167,7 +168,6 @@ static const vector<uint8_t> invalid_pred_structure = {
     /* _pred_structure override in code
     EB_PRED_TOTAL_COUNT, EB_PRED_TOTAL_COUNT + 1, EB_PRED_INVALID*/};
 
-
 // Input Info
 /* The width of input source in units of picture luma pixels.
  *
@@ -307,7 +307,7 @@ static const vector<uint32_t> default_compressed_ten_bit_format = {
 };
 static const vector<uint32_t> valid_compressed_ten_bit_format = {
     0,
-    //1, Not supported in this version
+    // 1, Not supported in this version
 };
 static const vector<uint32_t> invalid_compressed_ten_bit_format = {
     2, 10,  // ...
@@ -545,8 +545,6 @@ static const vector<EbBool> invalid_ext_block_flag = {
     // none
 };
 
-
-
 // ME Parameters
 /* Number of search positions in the horizontal direction.
  *
@@ -586,9 +584,9 @@ static const vector<uint32_t> invalid_search_area_height = {
  * 6:Fastest NIC=4/2/1 + No K means for non base + step for non base for
  * most dominant
  * Default is -1. */
-static const vector<int32_t> default_palette_level = { -1 };
-static const vector<int32_t> valid_palette_level = { -1, 0, 1, 2, 3, 4, 5, 6 };
-static const vector<int32_t> invalid_palette_level = { -2, 7 };
+static const vector<int32_t> default_palette_level = {-1};
+static const vector<int32_t> valid_palette_level = {-1, 0, 1, 2, 3, 4, 5, 6};
+static const vector<int32_t> invalid_palette_level = {-2, 7};
 
 /* Enable the use of Constrained Intra, which yields sending two picture
  * parameter sets in the elementary streams .
@@ -629,7 +627,6 @@ static const vector<uint32_t> valid_scene_change_detection = {
 static const vector<uint32_t> invalid_scene_change_detection = {
     2,
 };
-
 
 /* Target bitrate in bits/second, only apllicable when rate control mode is
  * set to 1.
@@ -801,9 +798,7 @@ static const vector<CPU_FLAGS> valid_use_cpu_flags = {
     CPU_FLAGS_AVX512BW,
     CPU_FLAGS_AVX512VL,
 };
-static const vector<CPU_FLAGS> invalid_use_cpu_flags = {
-    CPU_FLAGS_INVALID
-};
+static const vector<CPU_FLAGS> invalid_use_cpu_flags = {CPU_FLAGS_INVALID};
 
 // Application Specific parameters
 /* ID assigned to each channel when multiple instances are running within the
@@ -964,16 +959,17 @@ static const vector<uint32_t> invalid_screen_content_mode = {3};
 
 /* Variables to control the use of ALT-REF (temporally filtered frames)
  */
-static const vector<int8_t> default_tf_level = { DEFAULT };
-static const vector<int8_t> valid_tf_level = { DEFAULT, 0, 1, 2, 3 };
-static const vector<int8_t> invalid_tf_level = { -2, 4 };
+static const vector<int8_t> default_tf_level = {DEFAULT};
+static const vector<int8_t> valid_tf_level = {DEFAULT, 0, 1, 2, 3};
+static const vector<int8_t> invalid_tf_level = {-2, 4};
 
 static const vector<uint8_t> default_altref_strength = {5};
 static const vector<uint8_t> valid_altref_strength = {0, 1, 2, 3, 4, 5, 6};
 static const vector<uint8_t> invalid_altref_strength = {7};
 
 static const vector<uint8_t> default_altref_nframes = {7};
-static const vector<uint8_t> valid_altref_nframes = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+static const vector<uint8_t> valid_altref_nframes = {
+    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
 static const vector<uint8_t> invalid_altref_nframes = {11};
 
 static const vector<EbBool> default_enable_overlays = {EB_FALSE};
@@ -987,11 +983,13 @@ static const vector<EbBool> valid_superres_mode = {0, 1, 2};
 static const vector<EbBool> invalid_superres_mode = {3};
 
 static const vector<uint8_t> default_superres_denom = {8};
-static const vector<uint8_t> valid_superres_denom = {8, 9, 10, 11, 12, 13, 14, 15, 16};
+static const vector<uint8_t> valid_superres_denom = {
+    8, 9, 10, 11, 12, 13, 14, 15, 16};
 static const vector<uint8_t> invalid_superres_denom = {7};
 
 static const vector<uint8_t> default_superres_kf_denom = {8};
-static const vector<uint8_t> valid_superres_kf_denom = {8, 9, 10, 11, 12, 13, 14, 15, 16};
+static const vector<uint8_t> valid_superres_kf_denom = {
+    8, 9, 10, 11, 12, 13, 14, 15, 16};
 static const vector<uint8_t> invalid_superres_kf_denom = {7};
 
 // Color description
@@ -1062,7 +1060,8 @@ static const vector<uint32_t> valid_matrix_coefficients = {
     13,
     14,
 };
-static const vector<uint32_t> invalid_matrix_coefficients = {0}; // not actually invalid, but requires 4:4:4
+static const vector<uint32_t> invalid_matrix_coefficients = {
+    0};  // not actually invalid, but requires 4:4:4
 
 }  // namespace svt_av1_test_params
 

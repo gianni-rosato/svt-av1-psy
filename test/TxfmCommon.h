@@ -1,13 +1,14 @@
 /*
-* Copyright(c) 2019 Netflix, Inc.
-*
-* This source code is subject to the terms of the BSD 2 Clause License and
-* the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
-* was not distributed with this source code in the LICENSE file, you can
-* obtain it at https://www.aomedia.org/license/software-license. If the Alliance for Open
-* Media Patent License 1.0 was not distributed with this source code in the
-* PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
-*/
+ * Copyright(c) 2019 Netflix, Inc.
+ *
+ * This source code is subject to the terms of the BSD 2 Clause License and
+ * the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
+ * was not distributed with this source code in the LICENSE file, you can
+ * obtain it at https://www.aomedia.org/license/software-license. If the
+ * Alliance for Open Media Patent License 1.0 was not distributed with this
+ * source code in the PATENTS file, you can obtain it at
+ * https://www.aomedia.org/license/patent-license.
+ */
 
 /******************************************************************************
  * @file TxfmCommon.h
@@ -54,10 +55,10 @@ void svt_av1_fidentity4_c(const int32_t *input, int32_t *output, int8_t cos_bit,
                           const int8_t *stage_range);
 void svt_av1_fidentity8_c(const int32_t *input, int32_t *output, int8_t cos_bit,
                           const int8_t *stage_range);
-void svt_av1_fidentity16_c(const int32_t *input, int32_t *output, int8_t cos_bit,
-                           const int8_t *stage_range);
-void svt_av1_fidentity32_c(const int32_t *input, int32_t *output, int8_t cos_bit,
-                           const int8_t *stage_range);
+void svt_av1_fidentity16_c(const int32_t *input, int32_t *output,
+                           int8_t cos_bit, const int8_t *stage_range);
+void svt_av1_fidentity32_c(const int32_t *input, int32_t *output,
+                           int8_t cos_bit, const int8_t *stage_range);
 void av1_fidentity64_c(const int32_t *input, int32_t *output, int8_t cos_bit,
                        const int8_t *stage_range);
 
@@ -84,10 +85,10 @@ void svt_av1_iidentity4_c(const int32_t *input, int32_t *output, int8_t cos_bit,
                           const int8_t *stage_range);
 void svt_av1_iidentity8_c(const int32_t *input, int32_t *output, int8_t cos_bit,
                           const int8_t *stage_range);
-void svt_av1_iidentity16_c(const int32_t *input, int32_t *output, int8_t cos_bit,
-                           const int8_t *stage_range);
-void svt_av1_iidentity32_c(const int32_t *input, int32_t *output, int8_t cos_bit,
-                           const int8_t *stage_range);
+void svt_av1_iidentity16_c(const int32_t *input, int32_t *output,
+                           int8_t cos_bit, const int8_t *stage_range);
+void svt_av1_iidentity32_c(const int32_t *input, int32_t *output,
+                           int8_t cos_bit, const int8_t *stage_range);
 void av1_iidentity64_c(const int32_t *input, int32_t *output, int8_t cos_bit,
                        const int8_t *stage_range);
 
@@ -146,12 +147,12 @@ static const FwdTxfm2dFunc fwd_txfm_2d_c_func[TX_SIZES_ALL] = {
     svt_av1_transform_two_d_4x4_c,   svt_av1_transform_two_d_8x8_c,
     svt_av1_transform_two_d_16x16_c, svt_av1_transform_two_d_32x32_c,
     svt_av1_transform_two_d_64x64_c, svt_av1_fwd_txfm2d_4x8_c,
-    svt_av1_fwd_txfm2d_8x4_c,     svt_av1_fwd_txfm2d_8x16_c,
-    svt_av1_fwd_txfm2d_16x8_c,    svt_av1_fwd_txfm2d_16x32_c,
-    svt_av1_fwd_txfm2d_32x16_c,   svt_av1_fwd_txfm2d_32x64_c,
-    svt_av1_fwd_txfm2d_64x32_c,   svt_av1_fwd_txfm2d_4x16_c,
-    svt_av1_fwd_txfm2d_16x4_c,    svt_av1_fwd_txfm2d_8x32_c,
-    svt_av1_fwd_txfm2d_32x8_c,    svt_av1_fwd_txfm2d_16x64_c,
+    svt_av1_fwd_txfm2d_8x4_c,        svt_av1_fwd_txfm2d_8x16_c,
+    svt_av1_fwd_txfm2d_16x8_c,       svt_av1_fwd_txfm2d_16x32_c,
+    svt_av1_fwd_txfm2d_32x16_c,      svt_av1_fwd_txfm2d_32x64_c,
+    svt_av1_fwd_txfm2d_64x32_c,      svt_av1_fwd_txfm2d_4x16_c,
+    svt_av1_fwd_txfm2d_16x4_c,       svt_av1_fwd_txfm2d_8x32_c,
+    svt_av1_fwd_txfm2d_32x8_c,       svt_av1_fwd_txfm2d_16x64_c,
     svt_av1_fwd_txfm2d_64x16_c,
 };
 
@@ -176,38 +177,51 @@ static INLINE int get_txfm1d_size(TxfmType txfm_type) {
 }
 
 static INLINE bool is_txfm_allowed(TxType tx_type, TxSize tx_size) {
-
-    int support_types[] = {DCT_DCT, ADST_DCT, DCT_ADST, ADST_ADST, FLIPADST_DCT,
-        DCT_FLIPADST, FLIPADST_FLIPADST, ADST_FLIPADST, FLIPADST_ADST, IDTX,
-        V_DCT, H_DCT, V_ADST, H_ADST, V_FLIPADST, H_FLIPADST, TX_TYPES, -1 };
+    int support_types[] = {DCT_DCT,
+                           ADST_DCT,
+                           DCT_ADST,
+                           ADST_ADST,
+                           FLIPADST_DCT,
+                           DCT_FLIPADST,
+                           FLIPADST_FLIPADST,
+                           ADST_FLIPADST,
+                           FLIPADST_ADST,
+                           IDTX,
+                           V_DCT,
+                           H_DCT,
+                           V_ADST,
+                           H_ADST,
+                           V_FLIPADST,
+                           H_FLIPADST,
+                           TX_TYPES,
+                           -1};
 
     switch (tx_size) {
-        case TX_32X32: {
-            int types[] = {DCT_DCT, IDTX, V_DCT, H_DCT, -1};
-            memcpy(support_types, types,sizeof(types));
-            break;
-        }
-        case TX_32X64:
-        case TX_64X32:
-        case TX_16X64:
-        case TX_64X16: {
-            int types[] = {DCT_DCT, -1};
-            memcpy(support_types, types,sizeof(types));
-            break;
-        }
-        case TX_16X32:
-        case TX_32X16:
-        case TX_64X64:
-        case TX_8X32:
-        case TX_32X8: {
-            int types[] = {DCT_DCT, IDTX, -1};
-            memcpy(support_types, types,sizeof(types));
-            break;
-        }
-        default:
-            break;
+    case TX_32X32: {
+        int types[] = {DCT_DCT, IDTX, V_DCT, H_DCT, -1};
+        memcpy(support_types, types, sizeof(types));
+        break;
     }
-    int *ptr =support_types;
+    case TX_32X64:
+    case TX_64X32:
+    case TX_16X64:
+    case TX_64X16: {
+        int types[] = {DCT_DCT, -1};
+        memcpy(support_types, types, sizeof(types));
+        break;
+    }
+    case TX_16X32:
+    case TX_32X16:
+    case TX_64X64:
+    case TX_8X32:
+    case TX_32X8: {
+        int types[] = {DCT_DCT, IDTX, -1};
+        memcpy(support_types, types, sizeof(types));
+        break;
+    }
+    default: break;
+    }
+    int *ptr = support_types;
 
     while (*ptr > -1) {
         if (*ptr == tx_type) {

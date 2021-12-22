@@ -162,14 +162,13 @@ void generate_padding(
 
     return;
 }
-#if SS_2B_COMPRESS
 void generate_padding_compressed_10bit(
     EbByte   src_pic, //output paramter, pointer to the source picture to be padded.
     uint32_t src_stride, //input paramter, the stride of the source picture to be padded.
     uint32_t
-    original_src_width, //input paramter, the width of the source picture which excludes the padding.
+        original_src_width, //input paramter, the width of the source picture which excludes the padding.
     uint32_t
-    original_src_height, //input paramter, the height of the source picture which excludes the padding.
+        original_src_height, //input paramter, the height of the source picture which excludes the padding.
     uint32_t padding_width, //input paramter, the padding width.
     uint32_t padding_height) //input paramter, the padding height.
 {
@@ -183,15 +182,17 @@ void generate_padding_compressed_10bit(
         SVT_ERROR("padding NULL pointers\n");
         return;
     }
-    temp_src_pic0 = src_pic + padding_width/4 + padding_height * src_stride;
+    temp_src_pic0 = src_pic + padding_width / 4 + padding_height * src_stride;
 
     for (uint32_t row = 0; row < original_src_height; row++) {
         uint8_t left_pixel, right_pixel, new_left_byte, new_right_byte;
-        left_pixel = (temp_src_pic0[0] >> 6) & 0x03;
+        left_pixel  = (temp_src_pic0[0] >> 6) & 0x03;
         right_pixel = temp_src_pic0[original_src_width / 4 - 1] & 0x03;
 
-        new_left_byte = ((left_pixel << 6) & 0xC0) | ((left_pixel << 4) & 0x30) | ((left_pixel << 2) & 0x0C) | left_pixel;
-        new_right_byte = ((right_pixel << 6) & 0xC0) | ((right_pixel << 4) & 0x30) | ((right_pixel << 2) & 0x0C) | right_pixel;
+        new_left_byte = ((left_pixel << 6) & 0xC0) | ((left_pixel << 4) & 0x30) |
+            ((left_pixel << 2) & 0x0C) | left_pixel;
+        new_right_byte = ((right_pixel << 6) & 0xC0) | ((right_pixel << 4) & 0x30) |
+            ((right_pixel << 2) & 0x0C) | right_pixel;
 
         EB_MEMSET(temp_src_pic0 - padding_width / 4, new_left_byte, padding_width / 4);
 
@@ -211,7 +212,7 @@ void generate_padding_compressed_10bit(
         temp_src_pic2 -= src_stride;
         svt_memcpy(
             temp_src_pic2, temp_src_pic0, sizeof(uint8_t) * src_stride); // uint8_t to be modified
-                                                                         // bottom part data copy
+            // bottom part data copy
         temp_src_pic3 += src_stride;
         svt_memcpy(
             temp_src_pic3, temp_src_pic1, sizeof(uint8_t) * src_stride); // uint8_t to be modified
@@ -220,14 +221,13 @@ void generate_padding_compressed_10bit(
 
     return;
 }
-#endif
 /** generate_padding16_bit()
 is used to pad the target picture. The horizontal padding happens first and then the vertical padding.
 */
 // TODO: generate_padding() and generate_padding16() functions are not aligned, inputs according to comments are wrong
 void generate_padding16_bit(
     uint16_t* src_pic, //output paramter, pointer to the source picture to be padded.
-    uint32_t src_stride, //input paramter, the stride of the source picture to be padded.
+    uint32_t  src_stride, //input paramter, the stride of the source picture to be padded.
     uint32_t
         original_src_width, //input paramter, the width of the source picture which excludes the padding.
     uint32_t
@@ -235,7 +235,7 @@ void generate_padding16_bit(
     uint32_t padding_width, //input paramter, the padding width.
     uint32_t padding_height) //input paramter, the padding height.
 {
-    uint32_t vertical_idx = original_src_height;
+    uint32_t  vertical_idx = original_src_height;
     uint16_t* temp_src_pic0;
     uint16_t* temp_src_pic1;
     uint16_t* temp_src_pic2;

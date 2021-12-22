@@ -23,9 +23,11 @@
 void get_recon_pic(PictureControlSet *pcs_ptr, EbPictureBufferDesc **recon_ptr, EbBool is_highbd);
 void svt_av1_loop_restoration_save_boundary_lines(const Yv12BufferConfig *frame, Av1Common *cm,
                                                   int32_t after_cdef);
-void svt_convert_pic_8bit_to_16bit(EbPictureBufferDesc* src_8bit, EbPictureBufferDesc* dst_16bit, uint16_t ss_x, uint16_t ss_y);
+void svt_convert_pic_8bit_to_16bit(EbPictureBufferDesc *src_8bit, EbPictureBufferDesc *dst_16bit,
+                                   uint16_t ss_x, uint16_t ss_y);
 
-extern void get_recon_pic(PictureControlSet* pcs_ptr, EbPictureBufferDesc** recon_ptr, EbBool is_highbd);
+extern void get_recon_pic(PictureControlSet *pcs_ptr, EbPictureBufferDesc **recon_ptr,
+                          EbBool is_highbd);
 
 static void dlf_context_dctor(EbPtr p) {
     EbThreadContext *thread_context_ptr = (EbThreadContext *)p;
@@ -77,68 +79,40 @@ void *dlf_kernel(void *input_ptr) {
         pcs_ptr             = (PictureControlSet *)enc_dec_results_ptr->pcs_wrapper_ptr->object_ptr;
         scs_ptr             = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
 
-        EbBool        is_16bit = scs_ptr->static_config.is_16bit_pipeline;
+        EbBool is_16bit = scs_ptr->static_config.is_16bit_pipeline;
         if (scs_ptr->static_config.is_16bit_pipeline &&
             scs_ptr->static_config.encoder_bit_depth == EB_8BIT) {
-            svt_convert_pic_8bit_to_16bit(
-                pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr,
-                pcs_ptr->input_frame16bit,
-                pcs_ptr->parent_pcs_ptr->scs_ptr->subsampling_x,
-                pcs_ptr->parent_pcs_ptr->scs_ptr->subsampling_y);
-#if FTR_BYPASS_ENCDEC
+            svt_convert_pic_8bit_to_16bit(pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr,
+                                          pcs_ptr->input_frame16bit,
+                                          pcs_ptr->parent_pcs_ptr->scs_ptr->subsampling_x,
+                                          pcs_ptr->parent_pcs_ptr->scs_ptr->subsampling_y);
             // convert 8-bit recon to 16-bit for it bypass encdec process
             if (pcs_ptr->pic_bypass_encdec) {
-                EbPictureBufferDesc* recon_picture_ptr;
-                EbPictureBufferDesc* recon_picture_16bit_ptr;
+                EbPictureBufferDesc *recon_picture_ptr;
+                EbPictureBufferDesc *recon_picture_16bit_ptr;
                 get_recon_pic(pcs_ptr, &recon_picture_ptr, 0);
                 get_recon_pic(pcs_ptr, &recon_picture_16bit_ptr, 1);
-                svt_convert_pic_8bit_to_16bit(
-                    recon_picture_ptr,
-                    recon_picture_16bit_ptr,
-                    pcs_ptr->parent_pcs_ptr->scs_ptr->subsampling_x,
-                    pcs_ptr->parent_pcs_ptr->scs_ptr->subsampling_y);
+                svt_convert_pic_8bit_to_16bit(recon_picture_ptr,
+                                              recon_picture_16bit_ptr,
+                                              pcs_ptr->parent_pcs_ptr->scs_ptr->subsampling_x,
+                                              pcs_ptr->parent_pcs_ptr->scs_ptr->subsampling_y);
             }
-#endif
         }
-#if CLN_DLF_SIGNALS
-        EbBool   dlf_enable_flag = (EbBool)pcs_ptr->parent_pcs_ptr->dlf_ctrls.enabled;
-#else
-        EbBool   dlf_enable_flag = (EbBool)pcs_ptr->parent_pcs_ptr->loop_filter_mode;
-#endif
-        uint16_t total_tile_cnt  = pcs_ptr->parent_pcs_ptr->av1_cm->tiles_info.tile_cols *
+        EbBool dlf_enable_flag = (EbBool)pcs_ptr->parent_pcs_ptr->dlf_ctrls.enabled;
+        uint16_t total_tile_cnt = pcs_ptr->parent_pcs_ptr->av1_cm->tiles_info.tile_cols *
             pcs_ptr->parent_pcs_ptr->av1_cm->tiles_info.tile_rows;
         // Jing: Move sb level lf to here if tile_parallel
-#if CLN_DLF_SIGNALS
         if ((dlf_enable_flag && !pcs_ptr->parent_pcs_ptr->dlf_ctrls.sb_based_dlf) ||
-            (dlf_enable_flag && pcs_ptr->parent_pcs_ptr->dlf_ctrls.sb_based_dlf && total_tile_cnt > 1)) {
-#else
-        if ((dlf_enable_flag && pcs_ptr->parent_pcs_ptr->loop_filter_mode >= 2) ||
-            (dlf_enable_flag && pcs_ptr->parent_pcs_ptr->loop_filter_mode == 1 &&
+            (dlf_enable_flag && pcs_ptr->parent_pcs_ptr->dlf_ctrls.sb_based_dlf &&
              total_tile_cnt > 1)) {
-#endif
             EbPictureBufferDesc *recon_buffer;
             get_recon_pic(pcs_ptr, &recon_buffer, is_16bit);
             svt_av1_loop_filter_init(pcs_ptr);
-#if !CLN_DLF_SIGNALS
-            if (pcs_ptr->parent_pcs_ptr->loop_filter_mode == 2) {
-                svt_av1_pick_filter_level(
-                    (EbPictureBufferDesc *)pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr,
-                    pcs_ptr,
-                    LPF_PICK_FROM_Q);
-            }
-#endif
             svt_av1_pick_filter_level(
                 (EbPictureBufferDesc *)pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr,
                 pcs_ptr,
                 LPF_PICK_FROM_FULL_IMAGE);
 
-#if NO_ENCDEC
-            //NO DLF
-            pcs_ptr->parent_pcs_ptr->lf.filter_level[0] = 0;
-            pcs_ptr->parent_pcs_ptr->lf.filter_level[1] = 0;
-            pcs_ptr->parent_pcs_ptr->lf.filter_level_u  = 0;
-            pcs_ptr->parent_pcs_ptr->lf.filter_level_v  = 0;
-#endif
             svt_av1_loop_filter_frame(recon_buffer, pcs_ptr, 0, 3);
         }
 

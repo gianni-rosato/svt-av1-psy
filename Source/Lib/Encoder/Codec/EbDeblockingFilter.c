@@ -68,11 +68,8 @@ static INLINE void setup_pred_plane(struct Buf2D *dst, BlockSize bsize, uint8_t 
     dst->height     = height;
     dst->stride     = stride;
 }
-#if FIX_DLF_IN_PADDED_AREA
-void svt_av1_setup_dst_planes(PictureControlSet *pcs_ptr, struct MacroblockdPlane *planes, BlockSize bsize,
-#else
-void svt_av1_setup_dst_planes(struct MacroblockdPlane *planes, BlockSize bsize,
-#endif
+void svt_av1_setup_dst_planes(PictureControlSet *pcs_ptr, struct MacroblockdPlane *planes,
+                              BlockSize bsize,
                               //const Yv12BufferConfig *src,
                               const EbPictureBufferDesc *src, int32_t mi_row, int32_t mi_col,
                               const int32_t plane_start, const int32_t plane_end) {
@@ -85,9 +82,8 @@ void svt_av1_setup_dst_planes(struct MacroblockdPlane *planes, BlockSize bsize,
     //        src->crop_heights[is_uv], src->strides[is_uv], mi_row,
     //        mi_col, NULL, pd->subsampling_x, pd->subsampling_y);
     //}
-#if FIX_DLF_IN_PADDED_AREA
-    SequenceControlSet *scs_ptr = (SequenceControlSet*)pcs_ptr->parent_pcs_ptr->scs_wrapper_ptr->object_ptr;
-#endif
+    SequenceControlSet *scs_ptr = (SequenceControlSet *)
+                                      pcs_ptr->parent_pcs_ptr->scs_wrapper_ptr->object_ptr;
     for (int32_t i = plane_start; i < AOMMIN(plane_end, 3); ++i) {
         if (i == 0) {
             struct MacroblockdPlane *const pd = &planes[0];
@@ -95,13 +91,10 @@ void svt_av1_setup_dst_planes(struct MacroblockdPlane *planes, BlockSize bsize,
                 &pd->dst,
                 bsize,
                 &src->buffer_y[(src->origin_x + src->origin_y * src->stride_y) << pd->is_16bit],
-#if FIX_DLF_IN_PADDED_AREA
-                (scs_ptr->max_input_luma_width - scs_ptr->max_input_pad_right), // The width/height should be the unpadded width/height (see AV1 spec 7.14.2 Edge Loop Filter Process)
+                (scs_ptr->max_input_luma_width -
+                 scs_ptr
+                     ->max_input_pad_right), // The width/height should be the unpadded width/height (see AV1 spec 7.14.2 Edge Loop Filter Process)
                 (scs_ptr->max_input_luma_height - scs_ptr->max_input_pad_bottom),
-#else
-                src->width,
-                src->height,
-#endif
                 src->stride_y,
                 mi_row,
                 mi_col,
@@ -113,14 +106,11 @@ void svt_av1_setup_dst_planes(struct MacroblockdPlane *planes, BlockSize bsize,
             setup_pred_plane(
                 &pd->dst,
                 bsize,
-                &src->buffer_cb[((src->origin_x + src->origin_y * src->stride_cb) << pd->is_16bit) / 2],
-#if FIX_DLF_IN_PADDED_AREA
-                (scs_ptr->max_input_luma_width - scs_ptr->max_input_pad_right) >> 1, // The width/height should be the unpadded width/height (see AV1 spec 7.14.2 Edge Loop Filter Process)
+                &src->buffer_cb[((src->origin_x + src->origin_y * src->stride_cb) << pd->is_16bit) /
+                                2],
+                (scs_ptr->max_input_luma_width - scs_ptr->max_input_pad_right) >>
+                    1, // The width/height should be the unpadded width/height (see AV1 spec 7.14.2 Edge Loop Filter Process)
                 (scs_ptr->max_input_luma_height - scs_ptr->max_input_pad_bottom) >> 1,
-#else
-                src->width / 2,
-                src->height / 2,
-#endif
                 src->stride_cb,
                 mi_row,
                 mi_col,
@@ -132,14 +122,11 @@ void svt_av1_setup_dst_planes(struct MacroblockdPlane *planes, BlockSize bsize,
             setup_pred_plane(
                 &pd->dst,
                 bsize,
-                &src->buffer_cr[((src->origin_x + src->origin_y * src->stride_cr) << pd->is_16bit) / 2],
-#if FIX_DLF_IN_PADDED_AREA
-                (scs_ptr->max_input_luma_width - scs_ptr->max_input_pad_right) >> 1, // The width/height should be the unpadded width/height (see AV1 spec 7.14.2 Edge Loop Filter Process)
+                &src->buffer_cr[((src->origin_x + src->origin_y * src->stride_cr) << pd->is_16bit) /
+                                2],
+                (scs_ptr->max_input_luma_width - scs_ptr->max_input_pad_right) >>
+                    1, // The width/height should be the unpadded width/height (see AV1 spec 7.14.2 Edge Loop Filter Process)
                 (scs_ptr->max_input_luma_height - scs_ptr->max_input_pad_bottom) >> 1,
-#else
-                src->width / 2,
-                src->height / 2,
-#endif
                 src->stride_cr,
                 mi_row,
                 mi_col,
@@ -152,18 +139,17 @@ void svt_av1_setup_dst_planes(struct MacroblockdPlane *planes, BlockSize bsize,
 
 //***************************************************************************************************//
 static INLINE TxSize get_transform_size(const MbModeInfo *const mbmi, const EdgeDir edge_dir,
-    const int32_t plane, const struct MacroblockdPlane *plane_ptr, const EbBool is_skip) {
+                                        const int32_t                  plane,
+                                        const struct MacroblockdPlane *plane_ptr,
+                                        const EbBool                   is_skip) {
     assert(mbmi != NULL);
 
     TxSize tx_size = (plane == COMPONENT_LUMA)
-        ? (is_skip
-            ? tx_depth_to_tx_size[0][mbmi->block_mi.sb_type]
-#if OPT_TX_MI_MEM
-            : tx_depth_to_tx_size[mbmi->block_mi.tx_depth][mbmi->block_mi.sb_type]) // use max_tx_size
-#else
-            : tx_depth_to_tx_size[mbmi->tx_depth][mbmi->block_mi.sb_type]) // use max_tx_size
-#endif
-        : av1_get_max_uv_txsize(mbmi->block_mi.sb_type, plane_ptr->subsampling_x, plane_ptr->subsampling_y);
+        ? (is_skip ? tx_depth_to_tx_size[0][mbmi->block_mi.sb_type]
+                   : tx_depth_to_tx_size[mbmi->block_mi.tx_depth]
+                                        [mbmi->block_mi.sb_type]) // use max_tx_size
+        : av1_get_max_uv_txsize(
+              mbmi->block_mi.sb_type, plane_ptr->subsampling_x, plane_ptr->subsampling_y);
     assert(tx_size < TX_SIZES_ALL);
 
     // since in case of chrominance or non-square transorm need to convert
@@ -176,9 +162,8 @@ static INLINE TxSize get_transform_size(const MbModeInfo *const mbmi, const Edge
 // Return TxSize from get_transform_size(), so it is plane and direction
 // awared
 static TxSize set_lpf_parameters(Av1DeblockingParameters *const params, const uint64_t mode_step,
-                                 const PictureControlSet *const pcs_ptr,
-                                 const EdgeDir edge_dir, const uint32_t x,
-                                 const uint32_t y, const int32_t plane,
+                                 const PictureControlSet *const pcs_ptr, const EdgeDir edge_dir,
+                                 const uint32_t x, const uint32_t y, const int32_t plane,
                                  const struct MacroblockdPlane *const plane_ptr) {
     FrameHeader *          frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
     const LoopFilterInfoN *lfi_n   = &pcs_ptr->parent_pcs_ptr->lf_info;
@@ -257,7 +242,8 @@ static TxSize set_lpf_parameters(Av1DeblockingParameters *const params, const ui
                     return TX_INVALID;
                 const int32_t pv_skip = mi_prev->block_mi.skip &&
                     is_inter_block_no_intrabc(mi_prev->block_mi.ref_frame[0]);
-                const TxSize  pv_ts = get_transform_size(mi_prev, edge_dir, plane, plane_ptr, pv_skip);
+                const TxSize pv_ts = get_transform_size(
+                    mi_prev, edge_dir, plane, plane_ptr, pv_skip);
                 uint32_t pv_lvl;
                 mode = (mi_prev->block_mi.mode == INTRA_MODE_4x4) ? DC_PRED
                                                                   : mi_prev->block_mi.mode;
@@ -309,8 +295,7 @@ static TxSize set_lpf_parameters(Av1DeblockingParameters *const params, const ui
     return ts;
 }
 
-void svt_av1_filter_block_plane_vert(const PictureControlSet *const pcs_ptr,
-                                     const int32_t plane,
+void svt_av1_filter_block_plane_vert(const PictureControlSet *const pcs_ptr, const int32_t plane,
                                      const MacroblockdPlane *const plane_ptr, const uint32_t mi_row,
                                      const uint32_t mi_col) {
     SequenceControlSet *scs_ptr = (SequenceControlSet *)
@@ -318,7 +303,7 @@ void svt_av1_filter_block_plane_vert(const PictureControlSet *const pcs_ptr,
     // TODO
     // when loop_filter_mode = 1, dblk is processed in encdec
     // 16 bit dblk for loop_filter_mode = 1 needs to enabled after 16bit encdec is done
-    EbBool is_16bit = scs_ptr->static_config.is_16bit_pipeline;
+    EbBool         is_16bit   = scs_ptr->static_config.is_16bit_pipeline;
     const int32_t  row_step   = MI_SIZE >> MI_SIZE_LOG2;
     const uint32_t scale_horz = plane_ptr->subsampling_x;
     const uint32_t scale_vert = plane_ptr->subsampling_y;
@@ -328,35 +313,16 @@ void svt_av1_filter_block_plane_vert(const PictureControlSet *const pcs_ptr,
                                                                    : (SB64_MIB_SIZE >> scale_vert);
     int32_t x_range = scs_ptr->seq_header.sb_size == BLOCK_128X128 ? (MAX_MIB_SIZE >> scale_horz)
                                                                    : (SB64_MIB_SIZE >> scale_horz);
-#if !FIX_DLF_IN_PADDED_AREA
-    const uint32_t sb_size = (scs_ptr->seq_header.sb_size == BLOCK_128X128) ? 128 : 64;
-    if (mi_row == (scs_ptr->max_input_luma_height / sb_size * sb_size) >> MI_SIZE_LOG2) {
-        y_range = (((scs_ptr->max_input_luma_height - scs_ptr->max_input_pad_bottom) % sb_size) +
-                   MI_SIZE - 1) >>
-            MI_SIZE_LOG2;
-        if (plane) {
-            y_range = ((((scs_ptr->max_input_luma_height - scs_ptr->max_input_pad_bottom) %
-                         sb_size) >>
-                        scale_vert) +
-                       MI_SIZE - 1) >>
-                MI_SIZE_LOG2;
-        }
-    }
-#endif
 
     if (pcs_ptr->parent_pcs_ptr->frame_superres_enabled) {
         // the boundary of last column should use the actual width for frame might be downscaled in super resolution
-        const uint32_t sb_size = (scs_ptr->seq_header.sb_size == BLOCK_128X128) ? 128 : 64;
-        EbPictureBufferDesc* pic_ptr = pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr;
+        const uint32_t       sb_size = (scs_ptr->seq_header.sb_size == BLOCK_128X128) ? 128 : 64;
+        EbPictureBufferDesc *pic_ptr = pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr;
         if (mi_col == (pic_ptr->width / sb_size * sb_size) >> MI_SIZE_LOG2) {
-            x_range = (((pic_ptr->width) % sb_size) +
-                MI_SIZE - 1) >>
-                MI_SIZE_LOG2;
+            x_range = (((pic_ptr->width) % sb_size) + MI_SIZE - 1) >> MI_SIZE_LOG2;
             if (plane) {
-                x_range = ((((pic_ptr->width) %
-                    sb_size + scale_horz) >>
-                    scale_horz) +
-                    MI_SIZE - 1) >>
+                x_range = ((((pic_ptr->width) % sb_size + scale_horz) >> scale_horz) + MI_SIZE -
+                           1) >>
                     MI_SIZE_LOG2;
             }
         }
@@ -454,15 +420,14 @@ void svt_av1_filter_block_plane_vert(const PictureControlSet *const pcs_ptr,
     }
 }
 
-void svt_av1_filter_block_plane_horz(const PictureControlSet *const pcs_ptr,
-                                     const int32_t plane,
+void svt_av1_filter_block_plane_horz(const PictureControlSet *const pcs_ptr, const int32_t plane,
                                      const MacroblockdPlane *const plane_ptr, const uint32_t mi_row,
                                      const uint32_t mi_col) {
     SequenceControlSet *scs_ptr = (SequenceControlSet *)
                                       pcs_ptr->parent_pcs_ptr->scs_wrapper_ptr->object_ptr;
     // when loop_filter_mode = 1, dblk is processed in encdec
     // 16 bit dblk for loop_filter_mode = 1 needs to enabled after 16bit encdec is done
-    EbBool is_16bit = scs_ptr->static_config.is_16bit_pipeline;
+    EbBool         is_16bit   = scs_ptr->static_config.is_16bit_pipeline;
     const int32_t  col_step   = MI_SIZE >> MI_SIZE_LOG2;
     const uint32_t scale_horz = plane_ptr->subsampling_x;
     const uint32_t scale_vert = plane_ptr->subsampling_y;
@@ -473,35 +438,16 @@ void svt_av1_filter_block_plane_horz(const PictureControlSet *const pcs_ptr,
     int32_t  x_range   = scs_ptr->seq_header.sb_size == BLOCK_128X128 ? (MAX_MIB_SIZE >> scale_horz)
                                                                       : (SB64_MIB_SIZE >> scale_horz);
     uint32_t mi_stride = pcs_ptr->mi_stride;
-#if !FIX_DLF_IN_PADDED_AREA
-    const uint32_t sb_size = (scs_ptr->seq_header.sb_size == BLOCK_128X128) ? 128 : 64;
-    if (mi_row == (scs_ptr->max_input_luma_height / sb_size * sb_size) >> MI_SIZE_LOG2) {
-        y_range = (((scs_ptr->max_input_luma_height - scs_ptr->max_input_pad_bottom) % sb_size) +
-                   MI_SIZE - 1) >>
-            MI_SIZE_LOG2;
-        if (plane) {
-            y_range = ((((scs_ptr->max_input_luma_height - scs_ptr->max_input_pad_bottom) %
-                         sb_size) >>
-                        scale_vert) +
-                       MI_SIZE - 1) >>
-                MI_SIZE_LOG2;
-        }
-    }
-#endif
 
     if (pcs_ptr->parent_pcs_ptr->frame_superres_enabled) {
         // the boundary of last column should use the actual width for frames might be downscaled in super resolution
-        const uint32_t sb_size = (scs_ptr->seq_header.sb_size == BLOCK_128X128) ? 128 : 64;
-        EbPictureBufferDesc* pic_ptr = pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr;
+        const uint32_t       sb_size = (scs_ptr->seq_header.sb_size == BLOCK_128X128) ? 128 : 64;
+        EbPictureBufferDesc *pic_ptr = pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr;
         if (mi_col == (pic_ptr->width / sb_size * sb_size) >> MI_SIZE_LOG2) {
-            x_range = (((pic_ptr->width) % sb_size) +
-                MI_SIZE - 1) >>
-                MI_SIZE_LOG2;
+            x_range = (((pic_ptr->width) % sb_size) + MI_SIZE - 1) >> MI_SIZE_LOG2;
             if (plane) {
-                x_range = ((((pic_ptr->width) %
-                    sb_size + scale_horz) >>
-                    scale_horz) +
-                    MI_SIZE - 1) >>
+                x_range = ((((pic_ptr->width) % sb_size + scale_horz) >> scale_horz) + MI_SIZE -
+                           1) >>
                     MI_SIZE_LOG2;
             }
         }
@@ -609,9 +555,8 @@ void svt_av1_filter_block_plane_horz(const PictureControlSet *const pcs_ptr,
 // New function to filter each sb (64x64)
 void loop_filter_sb(EbPictureBufferDesc *frame_buffer, //reconpicture,
                     //Yv12BufferConfig *frame_buffer,
-                    PictureControlSet *pcs_ptr,
-                    int32_t mi_row, int32_t mi_col,
-                    int32_t plane_start, int32_t plane_end, uint8_t last_col) {
+                    PictureControlSet *pcs_ptr, int32_t mi_row, int32_t mi_col, int32_t plane_start,
+                    int32_t plane_end, uint8_t last_col) {
     FrameHeader *           frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
     struct MacroblockdPlane pd[3];
     int32_t                 plane;
@@ -644,12 +589,8 @@ void loop_filter_sb(EbPictureBufferDesc *frame_buffer, //reconpicture,
         if (frm_hdr->loop_filter_params.combine_vert_horz_lf) {
             // filter all vertical and horizontal edges in every 64x64 super block
             // filter vertical edges
-#if FIX_DLF_IN_PADDED_AREA
             svt_av1_setup_dst_planes(pcs_ptr,
                                      pd,
-#else
-            svt_av1_setup_dst_planes(pd,
-#endif
                                      pcs_ptr->parent_pcs_ptr->scs_ptr->seq_header.sb_size,
                                      frame_buffer,
                                      mi_row,
@@ -664,12 +605,8 @@ void loop_filter_sb(EbPictureBufferDesc *frame_buffer, //reconpicture,
                 : SB64_MIB_SIZE;
 
             if (mi_col - max_mib_size >= 0) {
-#if FIX_DLF_IN_PADDED_AREA
                 svt_av1_setup_dst_planes(pcs_ptr,
                                          pd,
-#else
-                svt_av1_setup_dst_planes(pd,
-#endif
                                          pcs_ptr->parent_pcs_ptr->scs_ptr->seq_header.sb_size,
                                          frame_buffer,
                                          mi_row,
@@ -681,12 +618,8 @@ void loop_filter_sb(EbPictureBufferDesc *frame_buffer, //reconpicture,
             }
             // Filter the horizontal edges of the last sb in each row
             if (last_col) {
-#if FIX_DLF_IN_PADDED_AREA
                 svt_av1_setup_dst_planes(pcs_ptr,
                                          pd,
-#else
-                svt_av1_setup_dst_planes(pd,
-#endif
                                          pcs_ptr->parent_pcs_ptr->scs_ptr->seq_header.sb_size,
                                          frame_buffer,
                                          mi_row,
@@ -697,12 +630,8 @@ void loop_filter_sb(EbPictureBufferDesc *frame_buffer, //reconpicture,
             }
         } else {
             // filter all vertical edges in every 64x64 super block
-#if FIX_DLF_IN_PADDED_AREA
             svt_av1_setup_dst_planes(pcs_ptr,
                                      pd,
-#else
-            svt_av1_setup_dst_planes(pd,
-#endif
                                      pcs_ptr->parent_pcs_ptr->scs_ptr->seq_header.sb_size,
                                      frame_buffer,
                                      mi_row,
@@ -713,12 +642,8 @@ void loop_filter_sb(EbPictureBufferDesc *frame_buffer, //reconpicture,
             svt_av1_filter_block_plane_vert(pcs_ptr, plane, &pd[plane], mi_row, mi_col);
 
             // filter all horizontal edges in every 64x64 super block
-#if FIX_DLF_IN_PADDED_AREA
             svt_av1_setup_dst_planes(pcs_ptr,
                                      pd,
-#else
-            svt_av1_setup_dst_planes(pd,
-#endif
                                      pcs_ptr->parent_pcs_ptr->scs_ptr->seq_header.sb_size,
                                      frame_buffer,
                                      mi_row,
@@ -1067,51 +992,6 @@ static int32_t search_filter_level(
         sd, temp_lf_recon_buffer, pcs_ptr, filt_mid, partial_frame, plane, dir);
     filt_best        = filt_mid;
     ss_err[filt_mid] = best_err;
-#if !CLN_DLF_SIGNALS
-    if (pcs_ptr->parent_pcs_ptr->loop_filter_mode <= 2) {
-        filter_step             = 2;
-        const int32_t filt_high = AOMMIN(filt_mid + filter_step, max_filter_level);
-        const int32_t filt_low  = AOMMAX(filt_mid - filter_step, min_filter_level);
-
-        // Bias against raising loop filter in favor of lowering it.
-        int64_t bias = (best_err >> (15 - (filt_mid / 8))) * filter_step;
-
-        //if ((cpi->oxcf.pass == 2) && (cpi->twopass.section_intra_rating < 20))
-        //    bias = (bias * cpi->twopass.section_intra_rating) / 20;
-
-        // yx, bias less for large block size
-        if (frm_hdr->tx_mode != ONLY_4X4)
-            bias >>= 1;
-
-        if (filt_direction <= 0 && filt_low != filt_mid) {
-            // Get Low filter error score
-            if (ss_err[filt_low] < 0) {
-                ss_err[filt_low] = try_filter_frame(
-                    sd, temp_lf_recon_buffer, pcs_ptr, filt_low, partial_frame, plane, dir);
-            }
-            // If value is close to the best so far then bias towards a lower loop
-            // filter value.
-            if (ss_err[filt_low] < (best_err + bias)) {
-                // Was it actually better than the previous best?
-                if (ss_err[filt_low] < best_err)
-                    best_err = ss_err[filt_low];
-                filt_best = filt_low;
-            }
-        }
-
-        // Now look at filt_high
-        if (filt_direction >= 0 && filt_high != filt_mid) {
-            if (ss_err[filt_high] < 0) {
-                ss_err[filt_high] = try_filter_frame(
-                    sd, temp_lf_recon_buffer, pcs_ptr, filt_high, partial_frame, plane, dir);
-            }
-            // If value is significantly better than previous best, bias added against
-            // raising filter value
-            if (ss_err[filt_high] < (best_err - bias))
-                filt_best = filt_high;
-        }
-    } else {
-#endif
         while (filter_step > 0) {
             const int32_t filt_high = AOMMIN(filt_mid + filter_step, max_filter_level);
             const int32_t filt_low  = AOMMAX(filt_mid - filter_step, min_filter_level);
@@ -1165,9 +1045,6 @@ static int32_t search_filter_level(
                 filt_mid       = filt_best;
             }
         }
-#if !CLN_DLF_SIGNALS
-    }
-#endif
     // Update best error
     best_err = ss_err[filt_best];
 
@@ -1175,13 +1052,9 @@ static int32_t search_filter_level(
         *best_cost_ret = (double)best_err; //RDCOST_DBL(x->rdmult, 0, best_err);
     return filt_best;
 }
-#if SS_MEM_DLF
-EbErrorType  svt_av1_pick_filter_level(
-#else
-void svt_av1_pick_filter_level(
-#endif
-                               EbPictureBufferDesc *srcBuffer, // source input
-                               PictureControlSet *pcs_ptr, LpfPickMethod method) {
+EbErrorType svt_av1_pick_filter_level(
+    EbPictureBufferDesc *srcBuffer, // source input
+    PictureControlSet *pcs_ptr, LpfPickMethod method) {
     SequenceControlSet *scs_ptr = (SequenceControlSet *)
                                       pcs_ptr->parent_pcs_ptr->scs_wrapper_ptr->object_ptr;
     FrameHeader *frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
@@ -1219,11 +1092,7 @@ void svt_av1_pick_filter_level(
             assert(0 &&
                    "bit_depth should be AOM_BITS_8, AOM_BITS_10 "
                    "or AOM_BITS_12");
-#if SS_MEM_DLF
             return EB_ErrorNone;
-#else
-            return;
-#endif
         }
         if (scs_ptr->static_config.encoder_bit_depth != EB_8BIT && frm_hdr->frame_type == KEY_FRAME)
             filt_guess -= 4;
@@ -1236,37 +1105,35 @@ void svt_av1_pick_filter_level(
         lf->filter_level_u  = clamp(filt_guess_chroma, min_filter_level, max_filter_level);
         lf->filter_level_v  = clamp(filt_guess_chroma, min_filter_level, max_filter_level);
     } else {
-#if SS_MEM_DLF
-            uint16_t padding = scs_ptr->static_config.super_block_size + 32;
-    EbPictureBufferDescInitData temp_lf_recon_desc_init_data;
-    temp_lf_recon_desc_init_data.max_width          = (uint16_t)scs_ptr->max_input_luma_width;
-    temp_lf_recon_desc_init_data.max_height         = (uint16_t)scs_ptr->max_input_luma_height;
-    temp_lf_recon_desc_init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK;
+        uint16_t                    padding = scs_ptr->static_config.super_block_size + 32;
+        EbPictureBufferDescInitData temp_lf_recon_desc_init_data;
+        temp_lf_recon_desc_init_data.max_width          = (uint16_t)scs_ptr->max_input_luma_width;
+        temp_lf_recon_desc_init_data.max_height         = (uint16_t)scs_ptr->max_input_luma_height;
+        temp_lf_recon_desc_init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK;
 
-    temp_lf_recon_desc_init_data.left_padding  = padding;
-    temp_lf_recon_desc_init_data.right_padding = padding;
-    temp_lf_recon_desc_init_data.top_padding   = padding;
-    temp_lf_recon_desc_init_data.bot_padding   = padding;
-    temp_lf_recon_desc_init_data.split_mode   = EB_FALSE;
-    temp_lf_recon_desc_init_data.color_format = scs_ptr->static_config.encoder_color_format;
-    EbBool         is_16bit      = scs_ptr->static_config.encoder_bit_depth > 8 ? EB_TRUE : EB_FALSE;
-    if (scs_ptr->static_config.is_16bit_pipeline || is_16bit) {
-        temp_lf_recon_desc_init_data.bit_depth = EB_16BIT;
-        EB_NEW(pcs_ptr->temp_lf_recon_picture16bit_ptr,
-               svt_recon_picture_buffer_desc_ctor,
-               (EbPtr)&temp_lf_recon_desc_init_data);
-        if (!is_16bit)
-            pcs_ptr->temp_lf_recon_picture16bit_ptr->bit_depth = EB_8BIT;
-    } else {
-        temp_lf_recon_desc_init_data.bit_depth = EB_8BIT;
-        EB_NEW(pcs_ptr->temp_lf_recon_picture_ptr,
-               svt_recon_picture_buffer_desc_ctor,
-               (EbPtr)&temp_lf_recon_desc_init_data);
-    }
-#endif
+        temp_lf_recon_desc_init_data.left_padding  = padding;
+        temp_lf_recon_desc_init_data.right_padding = padding;
+        temp_lf_recon_desc_init_data.top_padding   = padding;
+        temp_lf_recon_desc_init_data.bot_padding   = padding;
+        temp_lf_recon_desc_init_data.split_mode    = EB_FALSE;
+        temp_lf_recon_desc_init_data.color_format  = scs_ptr->static_config.encoder_color_format;
+        EbBool is_16bit = scs_ptr->static_config.encoder_bit_depth > 8 ? EB_TRUE : EB_FALSE;
+        if (scs_ptr->static_config.is_16bit_pipeline || is_16bit) {
+            temp_lf_recon_desc_init_data.bit_depth = EB_16BIT;
+            EB_NEW(pcs_ptr->temp_lf_recon_picture16bit_ptr,
+                   svt_recon_picture_buffer_desc_ctor,
+                   (EbPtr)&temp_lf_recon_desc_init_data);
+            if (!is_16bit)
+                pcs_ptr->temp_lf_recon_picture16bit_ptr->bit_depth = EB_8BIT;
+        } else {
+            temp_lf_recon_desc_init_data.bit_depth = EB_8BIT;
+            EB_NEW(pcs_ptr->temp_lf_recon_picture_ptr,
+                   svt_recon_picture_buffer_desc_ctor,
+                   (EbPtr)&temp_lf_recon_desc_init_data);
+        }
         const int32_t last_frame_filter_level[4] = {
             lf->filter_level[0], lf->filter_level[1], lf->filter_level_u, lf->filter_level_v};
-        EbPictureBufferDesc* temp_lf_recon_buffer = scs_ptr->static_config.is_16bit_pipeline
+        EbPictureBufferDesc *temp_lf_recon_buffer = scs_ptr->static_config.is_16bit_pipeline
             ? pcs_ptr->temp_lf_recon_picture16bit_ptr
             : pcs_ptr->temp_lf_recon_picture_ptr;
 
@@ -1296,13 +1163,9 @@ void svt_av1_pick_filter_level(
                                                  NULL,
                                                  2,
                                                  0);
-#if SS_MEM_DLF
-    EB_DELETE(pcs_ptr->temp_lf_recon_picture_ptr);
-    EB_DELETE(pcs_ptr->temp_lf_recon_picture16bit_ptr);
-#endif
+        EB_DELETE(pcs_ptr->temp_lf_recon_picture_ptr);
+        EB_DELETE(pcs_ptr->temp_lf_recon_picture16bit_ptr);
     }
-#if SS_MEM_DLF
 
     return EB_ErrorNone;
-#endif
 }

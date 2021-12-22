@@ -450,7 +450,7 @@ static const std::vector<EncTestSetting> generate_super_res_settings() {
             count++;
         }
     }
-#endif // ENBALE_16BIT_PIPELINE_TEST
+#endif  // ENBALE_16BIT_PIPELINE_TEST
     return settings;
 }
 

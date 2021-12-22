@@ -1,13 +1,14 @@
 /*
-* Copyright(c) 2019 Netflix, Inc.
-*
-* This source code is subject to the terms of the BSD 2 Clause License and
-* the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
-* was not distributed with this source code in the LICENSE file, you can
-* obtain it at https://www.aomedia.org/license/software-license. If the Alliance for Open
-* Media Patent License 1.0 was not distributed with this source code in the
-* PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
-*/
+ * Copyright(c) 2019 Netflix, Inc.
+ *
+ * This source code is subject to the terms of the BSD 2 Clause License and
+ * the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
+ * was not distributed with this source code in the LICENSE file, you can
+ * obtain it at https://www.aomedia.org/license/software-license. If the
+ * Alliance for Open Media Patent License 1.0 was not distributed with this
+ * source code in the PATENTS file, you can obtain it at
+ * https://www.aomedia.org/license/patent-license.
+ */
 
 /******************************************************************************
  * @file SvtAv1EncParamsTest.cc
@@ -75,7 +76,8 @@ class EncParamTestBase : public ::testing::Test {
     virtual void SetUp() override {
         // initialize encoder and get handle
         ASSERT_EQ(EB_ErrorNone,
-                  svt_av1_enc_init_handle(&ctxt_.enc_handle, &ctxt_, &ctxt_.enc_params))
+                  svt_av1_enc_init_handle(
+                      &ctxt_.enc_handle, &ctxt_, &ctxt_.enc_params))
             << "svt_av1_enc_init_handle failed";
         // setup encoder parameters with all default
         ASSERT_NE(nullptr, ctxt_.enc_handle) << "enc_handle is invalid";
@@ -93,9 +95,9 @@ class EncParamTestBase : public ::testing::Test {
 
     // Tears down the test fixture.
     virtual void TearDown() override {
-        // TODO: svt_av1_enc_deinit should not be called here, for this test does
-        // not call svt_av1_enc_init, but there is huge memory leak if only calls
-        // svt_av1_enc_deinit_handle. please remmove it after we pass
+        // TODO: svt_av1_enc_deinit should not be called here, for this test
+        // does not call svt_av1_enc_init, but there is huge memory leak if only
+        // calls svt_av1_enc_deinit_handle. please remmove it after we pass
         // EncApiTest-->repeat_normal_setup
         ASSERT_EQ(EB_ErrorNone, svt_av1_enc_deinit(ctxt_.enc_handle))
             << "svt_av1_enc_deinit failed";
@@ -142,9 +144,9 @@ class EncParamTestBase : public ::testing::Test {
     << "svt_av1_enc_set_parameter " << #p << ": " << (int)(p) << " failed"
 
 /** Marcro defininition of printing 2 parameters name when in failed */
-#define PRINT_2PARAM_FATAL(p1, p2)                                             \
-    << "svt_av1_enc_set_parameter " << #p1 << ": " << (int)(p1) << " + " << #p2 \
-    << ": " << (int)(p2) << " failed"
+#define PRINT_2PARAM_FATAL(p1, p2)                                       \
+    << "svt_av1_enc_set_parameter " << #p1 << ": " << (int)(p1) << " + " \
+    << #p2 << ": " << (int)(p2) << " failed"
 
 /** Marcro defininition of batch processing check for default, valid, invalid
  * and special parameter check*/
@@ -176,8 +178,8 @@ class EncParamTestBase : public ::testing::Test {
                 ctxt_.enc_params.param_name = GET_VALID_PARAM(param_name, i); \
                 config_enc_param();                                           \
                 EXPECT_EQ(EB_ErrorNone,                                       \
-                          svt_av1_enc_set_parameter(ctxt_.enc_handle,          \
-                                                   &ctxt_.enc_params))        \
+                          svt_av1_enc_set_parameter(ctxt_.enc_handle,         \
+                                                    &ctxt_.enc_params))       \
                 PRINT_PARAM_FATAL(ctxt_.enc_params.param_name);               \
                 EncParamTestBase::TearDown();                                 \
             }                                                                 \
@@ -189,8 +191,8 @@ class EncParamTestBase : public ::testing::Test {
                     GET_INVALID_PARAM(param_name, i);                         \
                 config_enc_param();                                           \
                 EXPECT_EQ(EB_ErrorBadParameter,                               \
-                          svt_av1_enc_set_parameter(ctxt_.enc_handle,          \
-                                                   &ctxt_.enc_params))        \
+                          svt_av1_enc_set_parameter(ctxt_.enc_handle,         \
+                                                    &ctxt_.enc_params))       \
                 PRINT_PARAM_FATAL(ctxt_.enc_params.param_name);               \
                 EncParamTestBase::TearDown();                                 \
             }                                                                 \
@@ -339,8 +341,8 @@ DEFINE_PARAM_TEST_CLASS(EncParamHighDynamicRangeInputTest,
 PARAM_TEST(EncParamHighDynamicRangeInputTest);
 
 /** Test case for profile, requiure YUV 422 or 444 which is unsupported now */
-//DEFINE_PARAM_TEST_CLASS(EncParamProfileTest, profile);
-//PARAM_TEST(EncParamProfileTest);
+// DEFINE_PARAM_TEST_CLASS(EncParamProfileTest, profile);
+// PARAM_TEST(EncParamProfileTest);
 
 /** Test case for tier*/
 DEFINE_PARAM_TEST_CLASS(EncParamTierTest, tier);
@@ -409,7 +411,8 @@ DEFINE_PARAM_TEST_CLASS(EncParamColorPrimariesTest, color_primaries);
 PARAM_TEST(EncParamColorPrimariesTest);
 
 /** Test case for transfer_characteristics*/
-DEFINE_PARAM_TEST_CLASS(EncParamTransferCharacteristicsTest, transfer_characteristics);
+DEFINE_PARAM_TEST_CLASS(EncParamTransferCharacteristicsTest,
+                        transfer_characteristics);
 PARAM_TEST(EncParamTransferCharacteristicsTest);
 
 /** Test case for matrix_coefficients*/

@@ -57,9 +57,9 @@ extern void generate_padding(EbByte src_pic, uint32_t src_stride, uint32_t origi
                              uint32_t original_src_height, uint32_t padding_width,
                              uint32_t padding_height);
 
-extern void generate_padding16_bit(uint16_t * src_pic, uint32_t src_stride, uint32_t original_src_width,
-                                   uint32_t original_src_height, uint32_t padding_width,
-                                   uint32_t padding_height);
+extern void generate_padding16_bit(uint16_t* src_pic, uint32_t src_stride,
+                                   uint32_t original_src_width, uint32_t original_src_height,
+                                   uint32_t padding_width, uint32_t padding_height);
 
 extern void pad_input_picture(EbByte src_pic, uint32_t src_stride, uint32_t original_src_width,
                               uint32_t original_src_height, uint32_t pad_right,

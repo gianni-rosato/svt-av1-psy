@@ -1,13 +1,14 @@
 /*
-* Copyright(c) 2019 Netflix, Inc.
-*
-* This source code is subject to the terms of the BSD 2 Clause License and
-* the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
-* was not distributed with this source code in the LICENSE file, you can
-* obtain it at https://www.aomedia.org/license/software-license. If the Alliance for Open
-* Media Patent License 1.0 was not distributed with this source code in the
-* PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
-*/
+ * Copyright(c) 2019 Netflix, Inc.
+ *
+ * This source code is subject to the terms of the BSD 2 Clause License and
+ * the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
+ * was not distributed with this source code in the LICENSE file, you can
+ * obtain it at https://www.aomedia.org/license/software-license. If the
+ * Alliance for Open Media Patent License 1.0 was not distributed with this
+ * source code in the PATENTS file, you can obtain it at
+ * https://www.aomedia.org/license/patent-license.
+ */
 
 /******************************************************************************
  * @file E2eTestVectors.h
@@ -83,14 +84,14 @@ const std::vector<TestVideoVector> screen_test_vectors = {
 const std::vector<TestVideoVector> dummy_test_vectors = {
     std::make_tuple("colorbar_480p_8_420", DUMMY_SOURCE, IMG_FMT_420, 640, 480,
                     8, 0, 0, 100),
-    std::make_tuple("colorbar_1080p_8_420", DUMMY_SOURCE, IMG_FMT_420, 1920, 1080,
-                    8, 0, 0, 60),
+    std::make_tuple("colorbar_1080p_8_420", DUMMY_SOURCE, IMG_FMT_420, 1920,
+                    1080, 8, 0, 0, 60),
     std::make_tuple("colorbar_64x64_8_420", DUMMY_SOURCE, IMG_FMT_420, 64, 64,
                     8, 0, 0, 60),
     std::make_tuple("colorbar_480p_10_420", DUMMY_SOURCE, IMG_FMT_420, 640, 480,
                     10, 0, 0, 100),
-    std::make_tuple("colorbar_1080p_10_420", DUMMY_SOURCE, IMG_FMT_420, 1920, 1080,
-                    10, 0, 0, 60),
+    std::make_tuple("colorbar_1080p_10_420", DUMMY_SOURCE, IMG_FMT_420, 1920,
+                    1080, 10, 0, 0, 60),
     std::make_tuple("colorbar_64x64_10_420", DUMMY_SOURCE, IMG_FMT_420, 64, 64,
                     10, 0, 0, 60),
 };

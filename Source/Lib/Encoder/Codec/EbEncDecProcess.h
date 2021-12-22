@@ -36,16 +36,12 @@ extern "C" {
      * Enc Dec Context
      **************************************/
 typedef struct EncDecContext {
-    EbFifo *                 mode_decision_input_fifo_ptr;
-    EbFifo *                 enc_dec_output_fifo_ptr;
-    EbFifo *                 enc_dec_feedback_fifo_ptr;
-    EbFifo *                 picture_demux_output_fifo_ptr; // to picture-manager
-#if !CLN_MDCONTEXT
-    MdRateEstimationContext *md_rate_estimation_ptr;
-    EbBool                   is_md_rate_estimation_ptr_owner;
-#endif
-    ModeDecisionContext *    md_context;
-    const BlockGeom *        blk_geom;
+    EbFifo *             mode_decision_input_fifo_ptr;
+    EbFifo *             enc_dec_output_fifo_ptr;
+    EbFifo *             enc_dec_feedback_fifo_ptr;
+    EbFifo *             picture_demux_output_fifo_ptr; // to picture-manager
+    ModeDecisionContext *md_context;
+    const BlockGeom *    blk_geom;
     // MCP Context
     MotionCompensationPredictionContext *mcp_context;
 
@@ -72,13 +68,9 @@ typedef struct EncDecContext {
     EbBool        is_16bit; //enable 10 bit encode in CL
     uint32_t      bit_depth;
     EbColorFormat color_format;
-#if  FTR_INTRA_DETECTOR
     uint64_t      tot_intra_coded_area;
-#endif
-#if FTR_COEFF_DETECTOR
     uint64_t      tot_skip_coded_area;
-#endif
-    uint64_t three_quad_energy;
+    uint64_t      three_quad_energy;
 
     // Needed for DC prediction
     uint8_t  upsample_left;
@@ -98,14 +90,9 @@ typedef struct EncDecContext {
 /**************************************
      * Extern Function Declarations
      **************************************/
-#if FIX_ED_PORT
-extern EbErrorType enc_dec_context_ctor(EbThreadContext *  thread_context_ptr,
-    const EbEncHandle *enc_handle_ptr, int index, int tasks_index);
-#else
 extern EbErrorType enc_dec_context_ctor(EbThreadContext *  thread_context_ptr,
                                         const EbEncHandle *enc_handle_ptr, int index,
-                                        int tasks_index, int demux_index);
-#endif
+                                        int tasks_index);
 
 extern void *mode_decision_kernel(void *input_ptr);
 

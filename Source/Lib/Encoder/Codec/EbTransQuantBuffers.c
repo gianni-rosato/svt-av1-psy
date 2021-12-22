@@ -18,7 +18,7 @@ static void svt_trans_quant_buffers_dctor(EbPtr p) {
 
 EbErrorType svt_trans_quant_buffers_ctor(EbTransQuantBuffers* trans_quant_buffers_ptr,
                                          uint8_t              sb_size) {
-    trans_quant_buffers_ptr->dctor            = svt_trans_quant_buffers_dctor;
+    trans_quant_buffers_ptr->dctor = svt_trans_quant_buffers_dctor;
 
     EbPictureBufferDescInitData trans_coeff_32bit_init_array;
     trans_coeff_32bit_init_array.max_width          = sb_size;

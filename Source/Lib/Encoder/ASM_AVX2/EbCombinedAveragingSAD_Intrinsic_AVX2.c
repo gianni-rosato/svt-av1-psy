@@ -44,13 +44,13 @@ uint64_t svt_compute_mean8x8_avx2_intrin(
                          _mm_loadl_epi64((__m128i *)(input_samples + 2 * input_stride))));
     sum2 = _mm256_add_epi16(xmm1, xmm2);
 
-    sum   = _mm256_add_epi16(sum1, sum2);
+    sum           = _mm256_add_epi16(sum1, sum2);
     __m128i upper = _mm256_extractf128_si256(sum, 1); //extract upper 128 bit
-    upper = _mm_add_epi32(upper,
+    upper         = _mm_add_epi32(upper,
                           _mm_srli_si128(upper, 8)); // shift 2nd 16 bits to the 1st and sum both
 
     __m128i lower = _mm256_extractf128_si256(sum, 0); //extract lower 128 bit
-    lower = _mm_add_epi32(lower,
+    lower         = _mm_add_epi32(lower,
                           _mm_srli_si128(lower, 8)); // shift 2nd 16 bits to the 1st and sum both
 
     __m128i mean = _mm_add_epi32(lower, upper);

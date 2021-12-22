@@ -422,12 +422,8 @@ void svt_make_inter_predictor(PartitionInfo *part_info, int32_t ref, void *src, 
                               int32_t pre_x, int32_t pre_y, int32_t bw, int32_t bh,
                               ConvolveParams *conv_params, int32_t plane, int32_t do_warp,
                               EbBool is_16bit) {
-    const BlockModeInfo *mi         = part_info->mi;
-#if OPT_MEMORY_MIP
-    const int32_t        is_intrabc = is_intrabc_block_dec(mi);
-#else
-    const int32_t        is_intrabc = is_intrabc_block(mi);
-#endif
+    const BlockModeInfo *mi = part_info->mi;
+    const int32_t is_intrabc = is_intrabc_block_dec(mi);
     const int32_t ss_x      = plane ? part_info->subsampling_x : 0;
     const int32_t ss_y      = plane ? part_info->subsampling_y : 0;
     int32_t       bit_depth = ref_buf->ps_pic_buf->bit_depth;
@@ -553,26 +549,22 @@ void svt_make_inter_predictor(PartitionInfo *part_info, int32_t ref, void *src, 
 
         const EbWarpedMotionParams *wm_params = mi->motion_mode == WARPED_CAUSAL ? wm_local
                                                                                  : wm_global;
-#if FTR_MEM_OPT_WM
         dec_svt_av1_warp_plane((EbWarpedMotionParams *)wm_params,
-#else
-        svt_av1_warp_plane((EbWarpedMotionParams *)wm_params,
-#endif
-                           highbd,
-                           bit_depth,
-                           src,
-                           ref_buf->ps_pic_buf->width >> ss_x,
-                           ref_buf->ps_pic_buf->height >> ss_y,
-                           src_stride,
-                           dst_mod,
-                           pre_x,
-                           pre_y,
-                           bw,
-                           bh,
-                           dst_stride,
-                           ss_x,
-                           ss_y,
-                           conv_params);
+                               highbd,
+                               bit_depth,
+                               src,
+                               ref_buf->ps_pic_buf->width >> ss_x,
+                               ref_buf->ps_pic_buf->height >> ss_y,
+                               src_stride,
+                               dst_mod,
+                               pre_x,
+                               pre_y,
+                               bw,
+                               bh,
+                               dst_stride,
+                               ss_x,
+                               ss_y,
+                               conv_params);
     } else if (highbd) {
         uint16_t *src16 = (uint16_t *)src_mod;
 
@@ -824,11 +816,7 @@ void svtav1_predict_inter_block_plane(DecModCtxt *dec_mod_ctx, EbDecHandle *dec_
     const FrameHeader *  cur_frm_hdr = dec_mod_ctx->frame_header;
     SeqHeader *          seq_header  = dec_mod_ctx->seq_header;
     int32_t              is_compound = has_second_ref(mi);
-#if OPT_MEMORY_MIP
-    const int32_t        is_intrabc  = is_intrabc_block_dec(mi);
-#else
-    const int32_t        is_intrabc  = is_intrabc_block(mi);
-#endif
+    const int32_t is_intrabc = is_intrabc_block_dec(mi);
     //temporary buffer for joint compound, move this to context if stack does not hold.
     DECLARE_ALIGNED(32, uint16_t, tmp_dst[128 * 128]);
 

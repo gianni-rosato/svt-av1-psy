@@ -26,28 +26,19 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-extern uint64_t svt_av1_cost_coeffs_txb(
-                                       struct ModeDecisionContext *ctx,
-                                        uint8_t allow_update_cdf, FRAME_CONTEXT *ec_ctx,
+extern uint64_t svt_av1_cost_coeffs_txb(struct ModeDecisionContext *ctx, uint8_t allow_update_cdf,
+                                        FRAME_CONTEXT *                     ec_ctx,
                                         struct ModeDecisionCandidateBuffer *candidate_buffer_ptr,
                                         const TranLow *const qcoeff, uint16_t eob,
                                         PlaneType plane_type, TxSize transform_size,
                                         TxType transform_type, int16_t txb_skip_ctx,
                                         int16_t dc_sign_ctx, EbBool reduced_transform_set_flag);
 
-extern void coding_loop_context_generation(PictureControlSet *pcs_ptr,
-    ModeDecisionContext *context_ptr, BlkStruct *blk_ptr, uint32_t blk_origin_x,
-    uint32_t blk_origin_y,
-#if !OPT_NA_SKIP
-    NeighborArrayUnit *skip_flag_neighbor_array,
-#endif
-#if !OPT_NA_ISINTER
-    NeighborArrayUnit *mode_type_neighbor_array,
-#endif
-#if FIX_SKIP_COEFF_CONTEXT
-    NeighborArrayUnit *skip_coeff_neighbor_array,
-#endif
-    NeighborArrayUnit *leaf_partition_neighbor_array);
+extern void coding_loop_context_generation(PictureControlSet *  pcs_ptr,
+                                           ModeDecisionContext *context_ptr, BlkStruct *blk_ptr,
+                                           uint32_t blk_origin_x, uint32_t blk_origin_y,
+                                           NeighborArrayUnit *skip_coeff_neighbor_array,
+                                           NeighborArrayUnit *leaf_partition_neighbor_array);
 
 extern EbErrorType av1_txb_calc_cost(
     ModeDecisionCandidate *candidate_ptr, // input parameter, prediction result Ptr
@@ -80,13 +71,6 @@ extern EbErrorType txb_calc_cost(
     uint64_t cr_txb_distortion[DIST_CALC_TOTAL], uint32_t component_mask,
     uint64_t *y_txb_coeff_bits, uint64_t *cb_txb_coeff_bits, uint64_t *cr_txb_coeff_bits,
     uint32_t qp, uint64_t lambda, uint64_t lambda_chroma);
-#if !OPT_TX_PATH
-extern EbErrorType av1_txb_calc_cost_luma(
-    uint64_t y_txb_distortion[DIST_CALC_TOTAL], // input parameter, Y distortion for both Normal and Cbf zero modes
-    uint64_t *y_txb_coeff_bits,                 // input parameter, Y quantized coefficients rate
-    uint64_t *y_full_cost,
-    uint64_t lambda);                           // input parameter, lambda for Luma
-#endif
 extern EbErrorType intra_luma_mode_context(BlkStruct *blk_ptr, uint32_t luma_mode,
                                            int32_t *prediction_index);
 extern EbErrorType intra2_nx2_n_fast_cost_islice(
@@ -106,20 +90,9 @@ extern EbErrorType split_flag_rate(ModeDecisionContext *context_ptr, BlkStruct *
 
 #define RDDIV_BITS 7
 
-#if FIX_RDCOST_OVERFLOW
-#define RDCOST(RM, R, D) \
-    (ROUND_POWER_OF_TWO(((int64_t)(R)) * ((int64_t)(RM)), AV1_PROB_COST_SHIFT) + ((int64_t)(D) * ((int64_t)1 << RDDIV_BITS)))
-#if FIX_INT_OVERLOW
-#else
-#define RDCOST(RM, R, D) \
-    (ROUND_POWER_OF_TWO(((uint64_t)(R)) * ((uint64_t)(RM)), AV1_PROB_COST_SHIFT) + (((uint64_t)(D)) << RDDIV_BITS))
-#endif
-#else
-#define RDCOST(RM, R, D) \
-    (ROUND_POWER_OF_TWO(((uint64_t)(R)) * (RM), AV1_PROB_COST_SHIFT) + ((D) * (1 << RDDIV_BITS)))
-#endif
-
-
+#define RDCOST(RM, R, D)                                                         \
+    (ROUND_POWER_OF_TWO(((int64_t)(R)) * ((int64_t)(RM)), AV1_PROB_COST_SHIFT) + \
+     ((int64_t)(D) * ((int64_t)1 << RDDIV_BITS)))
 
 extern EbErrorType av1_split_flag_rate(PictureParentControlSet *pcs_ptr,
                                        ModeDecisionContext *context_ptr, BlkStruct *blk_ptr,
@@ -127,32 +100,26 @@ extern EbErrorType av1_split_flag_rate(PictureParentControlSet *pcs_ptr,
                                        uint64_t *split_rate, uint64_t lambda,
                                        MdRateEstimationContext *md_rate_estimation_ptr,
                                        uint32_t                 tb_max_depth);
-extern uint64_t av1_intra_fast_cost(
-                                   struct ModeDecisionContext *context_ptr,
-                                    BlkStruct *blk_ptr, ModeDecisionCandidate *candidate_ptr,
-                                    uint32_t qp, uint64_t luma_distortion,
-                                    uint64_t chroma_distortion, uint64_t lambda,
-                                    PictureControlSet *pcs_ptr, CandidateMv *ref_mv_stack,
-                                    const BlockGeom *blk_geom, uint32_t miRow, uint32_t miCol,
-                                    uint8_t enable_inter_intra,
+extern uint64_t    av1_intra_fast_cost(struct ModeDecisionContext *context_ptr, BlkStruct *blk_ptr,
+                                       ModeDecisionCandidate *candidate_ptr, uint32_t qp,
+                                       uint64_t luma_distortion, uint64_t chroma_distortion,
+                                       uint64_t lambda, PictureControlSet *pcs_ptr,
+                                       CandidateMv *ref_mv_stack, const BlockGeom *blk_geom,
+                                       uint32_t miRow, uint32_t miCol, uint8_t enable_inter_intra,
+                                       uint32_t left_neighbor_mode, uint32_t top_neighbor_mode);
+
+extern uint64_t av1_inter_fast_cost(struct ModeDecisionContext *context_ptr, BlkStruct *blk_ptr,
+                                    ModeDecisionCandidate *candidate_ptr, uint32_t qp,
+                                    uint64_t luma_distortion, uint64_t chroma_distortion,
+                                    uint64_t lambda, PictureControlSet *pcs_ptr,
+                                    CandidateMv *ref_mv_stack, const BlockGeom *blk_geom,
+                                    uint32_t miRow, uint32_t miCol, uint8_t enable_inter_intra,
                                     uint32_t left_neighbor_mode, uint32_t top_neighbor_mode);
 
-extern uint64_t av1_inter_fast_cost(
-                                   struct ModeDecisionContext *context_ptr,
-                                    BlkStruct *blk_ptr, ModeDecisionCandidate *candidate_ptr,
-                                    uint32_t qp, uint64_t luma_distortion,
-                                    uint64_t chroma_distortion, uint64_t lambda,
-                                    PictureControlSet *pcs_ptr, CandidateMv *ref_mv_stack,
-                                    const BlockGeom *blk_geom, uint32_t miRow, uint32_t miCol,
-                                    uint8_t enable_inter_intra,
-                                    uint32_t left_neighbor_mode, uint32_t top_neighbor_mode);
-
-#if LIGHT_PD0
-EbErrorType av1_full_cost_light_pd0(ModeDecisionContext *context_ptr,
-    struct ModeDecisionCandidateBuffer *candidate_buffer_ptr,
-    uint64_t *y_distortion, uint64_t lambda, uint64_t *y_coeff_bits
-);
-#endif
+EbErrorType        av1_full_cost_light_pd0(ModeDecisionContext *               context_ptr,
+                                           struct ModeDecisionCandidateBuffer *candidate_buffer_ptr,
+                                           uint64_t *y_distortion, uint64_t lambda,
+                                           uint64_t *y_coeff_bits);
 extern EbErrorType av1_intra_full_cost(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
                                        struct ModeDecisionCandidateBuffer *candidate_buffer_ptr,
                                        BlkStruct *blk_ptr, uint64_t *y_distortion,
@@ -174,13 +141,12 @@ extern uint64_t    get_tx_size_bits(ModeDecisionCandidateBuffer *candidateBuffer
 
 MvJointType svt_av1_get_mv_joint(const MV *mv);
 
-#if LIGHT_PD1_MACRO
 static INLINE uint8_t av1_drl_ctx(const CandidateMv *ref_mv_stack, int32_t ref_idx) {
     return ref_mv_stack[ref_idx].weight >= REF_CAT_LEVEL
         ? ref_mv_stack[ref_idx + 1].weight >= REF_CAT_LEVEL ? 0 : 1
-        : ref_mv_stack[ref_idx + 1].weight < REF_CAT_LEVEL ? 2 : 0;
+        : ref_mv_stack[ref_idx + 1].weight < REF_CAT_LEVEL ? 2
+                                                           : 0;
 }
-#endif
 #ifdef __cplusplus
 }
 #endif

@@ -48,9 +48,6 @@
 #define MAX_GF_INTERVAL 32
 #define FIXED_GF_INTERVAL 8 // Used in some testing modes only
 #define MAX_GF_LENGTH_LAP 16
-#if !FIX_INTRA_PERIOD_2PASS
-#define MAX_NUM_SEC_INTRA 5
-#endif
 #define MAX_ARF_LAYERS 6
 
 enum {
@@ -73,14 +70,11 @@ typedef enum rate_factor_level {
     KF_STD             = 5,
     RATE_FACTOR_LEVELS = 6
 } rate_factor_level;
-#if FTR_RC_CAP
 // max bit rate average period in second. default is set to 2 second
-#define MAX_RATE_AVG_PERIOD_IN_SEC        2
+#define MAX_RATE_AVG_PERIOD_IN_SEC 2
 #define CODED_FRAMES_STAT_QUEUE_MAX_DEPTH 2000
-#if TUNE_CAPPED_CRF
 #define CRITICAL_BUFFER_LEVEL 15
 #define OPTIMAL_BUFFER_LEVEL 70
-#endif
 /**************************************
  * Coded Frames Stats
  **************************************/
@@ -92,89 +86,34 @@ typedef struct coded_frames_stats_entry {
 } coded_frames_stats_entry;
 
 extern EbErrorType rate_control_coded_frames_stats_context_ctor(coded_frames_stats_entry *entry_ptr,
-    uint64_t               picture_number);
-#endif
+                                                                uint64_t picture_number);
 typedef struct {
-#if !RFCTR_RC_P1
-    int sb64_target_rate;
-    int last_q[FRAME_TYPES]; // Separate values for Intra/Inter
-#endif
-    int last_boosted_qindex; // Last boosted GF/KF/ARF q
-#if !RFCTR_RC_P1
-    int last_kf_qindex; // Q index of the last key frame coded.
-#endif
-    int gfu_boost;
-    int kf_boost;
-#if TUNE_OVERSHOOT_I83
+    int    last_boosted_qindex; // Last boosted GF/KF/ARF q
+    int    gfu_boost;
+    int    kf_boost;
     double rate_correction_factors[MAX_TEMPORAL_LAYERS + 1];
-#else
-    double rate_correction_factors[RATE_FACTOR_LEVELS];
-#endif
-#if !RFCTR_RC_P1
-    int frames_since_golden;
-#endif
-    int min_gf_interval;
-    int max_gf_interval;
-#if !RFCTR_RC_P1
-    int static_scene_max_gf_interval;
-#endif
-#if FTR_1PASS_CBR_RT
-    int frames_till_gf_update_due;
-    int onepass_cbr_mode; // 0: not 1pass cbr, 1: 1pass cbr normal, 2: 1pass cbr real time
-#endif
-    int baseline_gf_interval;
-    int constrained_gf_group;
-    int frames_to_key;
-    int frames_since_key;
-    int this_key_frame_forced;
-#if !RFCTR_RC_P1
-    int next_key_frame_forced;
-    int source_alt_ref_pending;
-    int source_alt_ref_active;
-#endif
-    int is_src_frame_alt_ref;
-#if !RFCTR_RC_P1
-    int sframe_due;
+    int    min_gf_interval;
+    int    max_gf_interval;
+    int    frames_till_gf_update_due;
+    int    onepass_cbr_mode; // 0: not 1pass cbr, 1: 1pass cbr normal, 2: 1pass cbr real time
+    int    baseline_gf_interval;
+    int    constrained_gf_group;
+    int    frames_to_key;
+    int    frames_since_key;
+    int    this_key_frame_forced;
+    int    is_src_frame_alt_ref;
 
-    // Length of the bi-predictive frame group interval
-    int bipred_group_interval;
-
-    // NOTE: Different types of frames may have different bits allocated
-    //       accordingly, aiming to achieve the overall optimal RD performance.
-    int is_bwd_ref_frame;
-    int is_last_bipred_frame;
-    int is_bipred_frame;
-    int is_src_frame_ext_arf;
-#endif
-
-    int avg_frame_bandwidth; // Average frame size target for clip
-    int min_frame_bandwidth; // Minimum allocation used for any frame
-    int max_frame_bandwidth; // Maximum burst rate allowed for a frame.
-#if !RFCTR_RC_P1
-    int    ni_av_qi;
-    int    ni_tot_qi;
-    int    ni_frames;
-#endif
-    int    avg_frame_qindex[FRAME_TYPES];
-#if !RFCTR_RC_P1
-    double tot_q;
-    double avg_q;
-#endif
+    int     avg_frame_bandwidth; // Average frame size target for clip
+    int     min_frame_bandwidth; // Minimum allocation used for any frame
+    int     max_frame_bandwidth; // Maximum burst rate allowed for a frame.
+    int     avg_frame_qindex[FRAME_TYPES];
     int64_t buffer_level;
     int64_t bits_off_target;
     int64_t vbr_bits_off_target;
     int64_t vbr_bits_off_target_fast;
-#if !RFCTR_RC_P1
-    int decimation_factor;
-    int decimation_count;
-#endif
-    int rolling_target_bits;
-    int rolling_actual_bits;
-#if !RFCTR_RC_P1
-    int long_rolling_target_bits;
-    int long_rolling_actual_bits;
-#endif
-    int rate_error_estimate;
+    int     rolling_target_bits;
+    int     rolling_actual_bits;
+    int     rate_error_estimate;
 
     int64_t total_actual_bits;
     int64_t total_target_bits;
@@ -206,9 +145,6 @@ typedef struct {
     int prev_avg_frame_bandwidth; //only for CBR?
     int active_worst_quality;
     int active_best_quality[MAX_ARF_LAYERS + 1];
-#if !RFCTR_RC_P1
-    int base_layer_qp;
-#endif
     int gf_interval;
 
     // gop bit budget
@@ -220,18 +156,10 @@ typedef struct {
     int num_stats_used_for_gfu_boost;
     // Total number of stats required by gfu_boost calculation.
     int num_stats_required_for_gfu_boost;
-#if !RFCTR_RC_P1
-    int enable_scenecut_detection;
-#endif
-#if !RFCTR_RC_P1
-    int use_arf_in_this_kf_group;
-    int next_is_fwd_key;
-#endif
-#if FTR_RC_CAP
     // Rate Control stat Queue
     coded_frames_stats_entry **coded_frames_stat_queue;
-    uint32_t                coded_frames_stat_queue_head_index;
-    uint32_t                coded_frames_stat_queue_tail_index;
+    uint32_t                   coded_frames_stat_queue_head_index;
+    uint32_t                   coded_frames_stat_queue_tail_index;
 
     uint64_t total_bit_actual_per_sw;
     uint64_t max_bit_actual_per_sw;
@@ -239,9 +167,7 @@ typedef struct {
     uint64_t min_bit_actual_per_gop;
     uint64_t avg_bit_actual_per_gop;
     uint64_t rate_average_periodin_frames;
-#endif
 } RATE_CONTROL;
-#if FTR_1PAS_VBR
 typedef struct RateControlIntervalParamContext {
     EbDctor  dctor;
     uint64_t first_poc;
@@ -252,11 +178,8 @@ typedef struct RateControlIntervalParamContext {
     // Error score of frames still to be coded in kf group
     int64_t kf_group_error_left;
     uint8_t end_of_seq_seen;
-#if FIX_HANG_IN_RATE_CONTROL_PARAM_QUEUE
     int32_t processed_frame_number;
-#endif
 } RateControlIntervalParamContext;
-#endif
 /**************************************
  * Input Port Types
  **************************************/
@@ -276,19 +199,17 @@ typedef struct RateControlPorts {
     uint32_t                  count;
 } RateControlPorts;
 
-#if FIX_PMG_PORT
 typedef enum PicMgrInputPortTypes {
-   PIC_MGR_INPUT_PORT_SOP = 0,
-   PIC_MGR_INPUT_PORT_PACKETIZATION = 1,
-   PIC_MGR_INPUT_PORT_REST = 2,
-   PIC_MGR_INPUT_PORT_TOTAL_COUNT = 3,
-   PIC_MGR_INPUT_PORT_INVALID = ~0,
+    PIC_MGR_INPUT_PORT_SOP           = 0,
+    PIC_MGR_INPUT_PORT_PACKETIZATION = 1,
+    PIC_MGR_INPUT_PORT_REST          = 2,
+    PIC_MGR_INPUT_PORT_TOTAL_COUNT   = 3,
+    PIC_MGR_INPUT_PORT_INVALID       = ~0,
 } PicMgrInputPortTypes;
 typedef struct PicMgrPorts {
     PicMgrInputPortTypes type;
     uint32_t             count;
 } PicMgrPorts;
-#endif
 /**************************************
  * Context
  **************************************/
@@ -296,18 +217,15 @@ typedef struct PicMgrPorts {
 /**************************************
  * Extern Function Declarations
  **************************************/
-#if FIXED_POINTS_PLANEWISE
 int32_t svt_av1_convert_qindex_to_q_fp8(int32_t qindex, AomBitDepth bit_depth);
-#endif
-double svt_av1_convert_qindex_to_q(int32_t qindex, AomBitDepth bit_depth);
-int    svt_av1_rc_get_default_min_gf_interval(int width, int height, double framerate);
-int    svt_av1_rc_get_default_max_gf_interval(double framerate, int min_gf_interval);
-double svt_av1_get_gfu_boost_projection_factor(double min_factor, double max_factor,
-                                               int frame_count);
+double  svt_av1_convert_qindex_to_q(int32_t qindex, AomBitDepth bit_depth);
+int     svt_av1_rc_get_default_min_gf_interval(int width, int height, double framerate);
+int     svt_av1_rc_get_default_max_gf_interval(double framerate, int min_gf_interval);
+double  svt_av1_get_gfu_boost_projection_factor(double min_factor, double max_factor,
+                                                int frame_count);
 
 EbErrorType rate_control_context_ctor(EbThreadContext *  thread_context_ptr,
-                                      const EbEncHandle *enc_handle_ptr,
-                                      int me_port_index);
+                                      const EbEncHandle *enc_handle_ptr, int me_port_index);
 
 extern void *rate_control_kernel(void *input_ptr);
 #endif // EbRateControl_h

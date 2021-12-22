@@ -230,11 +230,7 @@ typedef struct AomDenoiseAndModel {
     int32_t num_blocks_h;
 
     // Buffers for image and noise_psd allocated on the fly
-#if OPT_FILM_GRAIN
     float                noise_psd[3];
-#else
-    float *              noise_psd[3];
-#endif
     uint8_t *            denoised[3];
     uint8_t *            flat_blocks;
     uint16_t *           packed[3];
@@ -319,11 +315,7 @@ int32_t svt_aom_noise_model_get_grain_parameters(AomNoiseModel *const noise_mode
      */
 int32_t svt_aom_wiener_denoise_2d(const uint8_t *const data[3], uint8_t *denoised[3], int32_t w,
                                   int32_t h, int32_t stride[3], int32_t chroma_sub_log2[2],
-#if OPT_FILM_GRAIN
                                   float noise_psd[3], int32_t block_size, int32_t bit_depth,
-#else
-                                  float *noise_psd[3], int32_t block_size, int32_t bit_depth,
-#endif
                                   int32_t use_highbd);
 
 struct AomDenoiseAndModel;

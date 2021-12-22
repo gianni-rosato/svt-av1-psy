@@ -18,12 +18,13 @@
 #include "EbSvtAv1Enc.h"
 #include "EbLog.h"
 
-EB_API SvtMetadataT *svt_metadata_alloc(
-    const uint32_t type, const uint8_t *data, const size_t sz) {
-    if (!data || sz == 0) return NULL;
+EB_API SvtMetadataT *svt_metadata_alloc(const uint32_t type, const uint8_t *data, const size_t sz) {
+    if (!data || sz == 0)
+        return NULL;
     SvtMetadataT *metadata = (SvtMetadataT *)malloc(sizeof(SvtMetadataT));
-    if (!metadata) return NULL;
-    metadata->type = type;
+    if (!metadata)
+        return NULL;
+    metadata->type    = type;
     metadata->payload = (uint8_t *)malloc(sz);
     if (!metadata->payload) {
         free(metadata);
@@ -48,7 +49,8 @@ EB_API void svt_metadata_free(void *ptr) {
 
 EB_API SvtMetadataArrayT *svt_metadata_array_alloc(const size_t sz) {
     SvtMetadataArrayT *arr = (SvtMetadataArrayT *)calloc(1, sizeof(SvtMetadataArrayT));
-    if (!arr) return NULL;
+    if (!arr)
+        return NULL;
     if (sz > 0) {
         arr->metadata_array = (SvtMetadataT **)calloc(sz, sizeof(SvtMetadataT *));
         if (!arr->metadata_array) {
@@ -74,21 +76,25 @@ EB_API void svt_metadata_array_free(void *arr) {
     *metadata = NULL;
 }
 
-EB_API int svt_add_metadata(EbBufferHeaderType *buffer, const uint32_t type, const uint8_t *data, const size_t sz) {
-    if (!buffer) return -1;
+EB_API int svt_add_metadata(EbBufferHeaderType *buffer, const uint32_t type, const uint8_t *data,
+                            const size_t sz) {
+    if (!buffer)
+        return -1;
     if (!buffer->metadata) {
         buffer->metadata = svt_metadata_array_alloc(0);
-        if (!buffer->metadata) return -1;
+        if (!buffer->metadata)
+            return -1;
     }
     SvtMetadataT *metadata = svt_metadata_alloc(type, data, sz);
-    if (!metadata) return -1;
-    SvtMetadataT **metadata_array =
-        (SvtMetadataT **)realloc(buffer->metadata->metadata_array, (buffer->metadata->sz + 1) * sizeof(metadata));
+    if (!metadata)
+        return -1;
+    SvtMetadataT **metadata_array = (SvtMetadataT **)realloc(
+        buffer->metadata->metadata_array, (buffer->metadata->sz + 1) * sizeof(metadata));
     if (!metadata_array) {
         svt_metadata_free(&metadata);
         return -1;
     }
-    buffer->metadata->metadata_array = metadata_array;
+    buffer->metadata->metadata_array                       = metadata_array;
     buffer->metadata->metadata_array[buffer->metadata->sz] = metadata;
     buffer->metadata->sz++;
     return 0;

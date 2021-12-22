@@ -58,10 +58,9 @@ typedef unsigned int (*AomSadFn)(const uint8_t *a, int a_stride, const uint8_t *
 
 typedef unsigned int (*AomVarianceFn)(const uint8_t *a, int a_stride, const uint8_t *b,
                                       int b_stride, unsigned int *sse);
-typedef unsigned int(*AomSubpixVarianceFn)(const uint8_t *a, int a_stride,
-    int xoffset, int yoffset,
-    const uint8_t *b, int b_stride,
-    unsigned int *sse);
+typedef unsigned int (*AomSubpixVarianceFn)(const uint8_t *a, int a_stride, int xoffset,
+                                            int yoffset, const uint8_t *b, int b_stride,
+                                            unsigned int *sse);
 typedef void (*AomSadMultiDFn)(const uint8_t *a, int a_stride, const uint8_t *const b_array[],
                                int b_stride, unsigned int *sad_array);
 
@@ -89,9 +88,7 @@ int svt_av1_full_pixel_search(struct PictureControlSet *pcs, IntraBcContext /*MA
                               const MV *ref_mv, int var_max, int rd, int x_pos, int y_pos,
                               int intra);
 int mv_err_cost(const MV *mv, const MV *ref, const int *mvjcost, int *mvcost[2], int error_per_bit);
-#if  FTR_SIMPLIFIED_MV_COST
 int mv_err_cost_light(const MV *mv, const MV *ref);
-#endif
 #ifdef __cplusplus
 } // extern "C"
 #endif

@@ -102,21 +102,21 @@ void svt_av1_jnt_convolve_x_sse2(const uint8_t *src, int32_t src_stride, uint8_t
                                  InterpFilterParams *filter_params_x,
                                  InterpFilterParams *filter_params_y, const int32_t subpel_x_q4,
                                  const int32_t subpel_y_q4, ConvolveParams *conv_params) {
-    const int      bd                    = 8;
-    CONV_BUF_TYPE *dst                   = conv_params->dst;
-    const int      dst_stride            = conv_params->dst_stride;
-    const int      fo_horiz              = filter_params_x->taps / 2 - 1;
-    const uint8_t *src_ptr               = src - fo_horiz;
-    const int      bits                  = FILTER_BITS - conv_params->round_1;
-    const __m128i  left_shift            = _mm_cvtsi32_si128(bits);
-    const __m128i  round_const           = _mm_set1_epi32((1 << conv_params->round_0) >> 1);
-    const __m128i  round_shift           = _mm_cvtsi32_si128(conv_params->round_0);
-    const int      w0                    = conv_params->fwd_offset;
-    const int      w1                    = conv_params->bck_offset;
-    const __m128i  wt0                   = _mm_set1_epi16(w0);
-    const __m128i  wt1                   = _mm_set1_epi16(w1);
-    const __m128i  wt                    = _mm_unpacklo_epi16(wt0, wt1);
-    const int      do_average            = conv_params->do_average;
+    const int      bd               = 8;
+    CONV_BUF_TYPE *dst              = conv_params->dst;
+    const int      dst_stride       = conv_params->dst_stride;
+    const int      fo_horiz         = filter_params_x->taps / 2 - 1;
+    const uint8_t *src_ptr          = src - fo_horiz;
+    const int      bits             = FILTER_BITS - conv_params->round_1;
+    const __m128i  left_shift       = _mm_cvtsi32_si128(bits);
+    const __m128i  round_const      = _mm_set1_epi32((1 << conv_params->round_0) >> 1);
+    const __m128i  round_shift      = _mm_cvtsi32_si128(conv_params->round_0);
+    const int      w0               = conv_params->fwd_offset;
+    const int      w1               = conv_params->bck_offset;
+    const __m128i  wt0              = _mm_set1_epi16(w0);
+    const __m128i  wt1              = _mm_set1_epi16(w1);
+    const __m128i  wt               = _mm_unpacklo_epi16(wt0, wt1);
+    const int      do_average       = conv_params->do_average;
     const int      use_jnt_comp_avg = conv_params->use_jnt_comp_avg;
     const int      offset_0 = bd + 2 * FILTER_BITS - conv_params->round_0 - conv_params->round_1;
     const int      offset   = (1 << offset_0) + (1 << (offset_0 - 1));
@@ -127,9 +127,18 @@ void svt_av1_jnt_convolve_x_sse2(const uint8_t *src, int32_t src_stride, uint8_t
 
     prepare_coeffs(filter_params_x, subpel_x_q4, coeffs);
     if (w < 4) {
-        svt_av1_jnt_convolve_x_c(src,src_stride,dst8,dst8_stride,w,h,filter_params_x,filter_params_y,subpel_x_q4,subpel_y_q4,conv_params);
-    }
-    else if (w == 4) {
+        svt_av1_jnt_convolve_x_c(src,
+                                 src_stride,
+                                 dst8,
+                                 dst8_stride,
+                                 w,
+                                 h,
+                                 filter_params_x,
+                                 filter_params_y,
+                                 subpel_x_q4,
+                                 subpel_y_q4,
+                                 conv_params);
+    } else if (w == 4) {
         do {
             const __m128i data = _mm_loadu_si128((__m128i *)src_ptr);
             __m128i       s[4];
@@ -228,17 +237,17 @@ void svt_av1_jnt_convolve_y_sse2(const uint8_t *src, int32_t src_stride, uint8_t
                                  InterpFilterParams *filter_params_x,
                                  InterpFilterParams *filter_params_y, const int32_t subpel_x_q4,
                                  const int32_t subpel_y_q4, ConvolveParams *conv_params) {
-    const int      bd                    = 8;
-    CONV_BUF_TYPE *dst                   = conv_params->dst;
-    const int      dst_stride            = conv_params->dst_stride;
-    const int      fo_vert               = filter_params_y->taps / 2 - 1;
-    const uint8_t *src_ptr               = src - fo_vert * src_stride;
-    const int      bits                  = FILTER_BITS - conv_params->round_0;
-    const __m128i  left_shift            = _mm_cvtsi32_si128(bits);
-    const __m128i  wt0                   = _mm_set1_epi16(conv_params->fwd_offset);
-    const __m128i  wt1                   = _mm_set1_epi16(conv_params->bck_offset);
-    const __m128i  wt                    = _mm_unpacklo_epi16(wt0, wt1);
-    const int      do_average            = conv_params->do_average;
+    const int      bd               = 8;
+    CONV_BUF_TYPE *dst              = conv_params->dst;
+    const int      dst_stride       = conv_params->dst_stride;
+    const int      fo_vert          = filter_params_y->taps / 2 - 1;
+    const uint8_t *src_ptr          = src - fo_vert * src_stride;
+    const int      bits             = FILTER_BITS - conv_params->round_0;
+    const __m128i  left_shift       = _mm_cvtsi32_si128(bits);
+    const __m128i  wt0              = _mm_set1_epi16(conv_params->fwd_offset);
+    const __m128i  wt1              = _mm_set1_epi16(conv_params->bck_offset);
+    const __m128i  wt               = _mm_unpacklo_epi16(wt0, wt1);
+    const int      do_average       = conv_params->do_average;
     const int      use_jnt_comp_avg = conv_params->use_jnt_comp_avg;
     const int      offset_0 = bd + 2 * FILTER_BITS - conv_params->round_0 - conv_params->round_1;
     const int      offset   = (1 << offset_0) + (1 << (offset_0 - 1));

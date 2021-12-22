@@ -133,11 +133,8 @@ static void force_wmtype(EbWarpedMotionParams *wm, TransformationType wmtype) {
 }
 
 int64_t svt_av1_refine_integerized_param(EbWarpedMotionParams *wm, TransformationType wmtype,
-#if FTR_MEM_OPT_WM
-                                         int use_hbd, int bd, uint8_t *ref,uint8_t *ref_2b, int r_width,
-#else
-                                         int use_hbd, int bd, uint8_t *ref, int r_width,
-#endif
+                                         int use_hbd, int bd, uint8_t *ref, uint8_t *ref_2b,
+                                         int r_width,
                                          int r_height, int r_stride, uint8_t *dst, int d_width,
                                          int d_height, int d_stride, int n_refinements,
                                          int64_t best_frame_error) {
@@ -157,9 +154,7 @@ int64_t svt_av1_refine_integerized_param(EbWarpedMotionParams *wm, Transformatio
                                     use_hbd,
                                     bd,
                                     ref,
-#if FTR_MEM_OPT_WM
                                     ref_2b,
-#endif
                                     r_width,
                                     r_height,
                                     r_stride,
@@ -187,9 +182,7 @@ int64_t svt_av1_refine_integerized_param(EbWarpedMotionParams *wm, Transformatio
                                             use_hbd,
                                             bd,
                                             ref,
-#if FTR_MEM_OPT_WM
                                             ref_2b,
-#endif
                                             r_width,
                                             r_height,
                                             r_stride,
@@ -214,9 +207,7 @@ int64_t svt_av1_refine_integerized_param(EbWarpedMotionParams *wm, Transformatio
                                             use_hbd,
                                             bd,
                                             ref,
-#if FTR_MEM_OPT_WM
                                             ref_2b,
-#endif
                                             r_width,
                                             r_height,
                                             r_stride,
@@ -244,9 +235,7 @@ int64_t svt_av1_refine_integerized_param(EbWarpedMotionParams *wm, Transformatio
                                                 use_hbd,
                                                 bd,
                                                 ref,
-#if FTR_MEM_OPT_WM
                                                 ref_2b,
-#endif
                                                 r_width,
                                                 r_height,
                                                 r_stride,

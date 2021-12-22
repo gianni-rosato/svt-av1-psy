@@ -1,13 +1,14 @@
 /*
-* Copyright(c) 2019 Netflix, Inc.
-*
-* This source code is subject to the terms of the BSD 2 Clause License and
-* the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
-* was not distributed with this source code in the LICENSE file, you can
-* obtain it at https://www.aomedia.org/license/software-license. If the Alliance for Open
-* Media Patent License 1.0 was not distributed with this source code in the
-* PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
-*/
+ * Copyright(c) 2019 Netflix, Inc.
+ *
+ * This source code is subject to the terms of the BSD 2 Clause License and
+ * the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
+ * was not distributed with this source code in the LICENSE file, you can
+ * obtain it at https://www.aomedia.org/license/software-license. If the
+ * Alliance for Open Media Patent License 1.0 was not distributed with this
+ * source code in the PATENTS file, you can obtain it at
+ * https://www.aomedia.org/license/patent-license.
+ */
 
 /******************************************************************************
  * @file OBMCsad_Test.cc
@@ -40,7 +41,7 @@ namespace {
 static const int MaskMax = 64;
 
 using Obmcsad_Func = uint32_t (*)(const uint8_t* pre, int pre_stride,
-                                 const int32_t* wsrc, const int32_t* mask);
+                                  const int32_t* wsrc, const int32_t* mask);
 using Obmcsad_Param = tuple<Obmcsad_Func, Obmcsad_Func>;
 
 class OBMCsad_Test : public ::testing::TestWithParam<Obmcsad_Param> {

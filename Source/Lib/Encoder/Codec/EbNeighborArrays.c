@@ -85,9 +85,7 @@ EbErrorType neighbor_array_unit_ctor(NeighborArrayUnit *na_unit_ptr, uint32_t ma
     na_unit_ptr->granularity_top_left_log2 = (uint8_t)(
         svt_log2f(na_unit_ptr->granularity_top_left));
 
-#if CLN_NA
     na_unit_ptr->max_pic_h = max_picture_height;
-#endif
 
     na_unit_ptr->left_array_size     = (uint16_t)((type_mask & NEIGHBOR_ARRAY_UNIT_LEFT_MASK)
                                                       ? max_picture_height >>

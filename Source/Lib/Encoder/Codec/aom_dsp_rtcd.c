@@ -21,9 +21,7 @@
 #include "EbPictureOperators.h"
 #include "EbComputeMean.h"
 #include "EbMeSadCalculation.h"
-#if OPTIMIZE_SVT_UNPACK_2B
 #include "EbPackUnPack_C.h"
-#endif
 
 /**************************************
  * Instruction Set Support
@@ -96,9 +94,7 @@
 #define SET_SSE41_AVX2_AVX512(ptr, c, sse4_1, avx2, avx512) SET_FUNCTIONS(ptr, c, 0, 0, 0, 0, 0, sse4_1, 0, 0, avx2, avx512)
 #define SET_AVX2(ptr, c, avx2)                              SET_FUNCTIONS(ptr, c, 0, 0, 0, 0, 0, 0, 0, 0, avx2, 0)
 #define SET_AVX2_AVX512(ptr, c, avx2, avx512)               SET_FUNCTIONS(ptr, c, 0, 0, 0, 0, 0, 0, 0, 0, avx2, avx512)
-#if SSE_CODE_OPT
 #define SET_SSE2_AVX2_AVX512(ptr, c, sse2, avx2, avx512)    SET_FUNCTIONS(ptr, c, 0, 0, sse2, 0, 0, 0, 0, 0, avx2, avx512)
-#endif
 
 void setup_rtcd_internal(CPU_FLAGS flags) {
     /* Avoid check that pointer is set double, after first  setup. */
@@ -127,17 +123,9 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
     SET_AVX2(svt_av1_calc_frame_error, svt_av1_calc_frame_error_c, svt_av1_calc_frame_error_avx2);
     SET_AVX2(svt_subtract_average, svt_subtract_average_c, svt_subtract_average_avx2);
     SET_AVX2(svt_get_proj_subspace, svt_get_proj_subspace_c, svt_get_proj_subspace_avx2);
-#if SSE_CODE_OPT
     SET_SSE41_AVX2(svt_aom_quantize_b, svt_aom_quantize_b_c_ii, svt_aom_quantize_b_sse4_1, svt_aom_quantize_b_avx2);
-#else
-    SET_AVX2(svt_aom_quantize_b, svt_aom_quantize_b_c_ii, svt_aom_quantize_b_avx2);
-#endif
     SET_AVX2(svt_aom_highbd_quantize_b, svt_aom_highbd_quantize_b_c, svt_aom_highbd_quantize_b_avx2);
-#if SSE_CODE_OPT
     SET_SSE41_AVX2(svt_av1_quantize_fp, svt_av1_quantize_fp_c, svt_av1_quantize_fp_sse4_1, svt_av1_quantize_fp_avx2);
-#else
-    SET_AVX2(svt_av1_quantize_fp, svt_av1_quantize_fp_c, svt_av1_quantize_fp_avx2);
-#endif
     SET_AVX2(svt_av1_quantize_fp_32x32, svt_av1_quantize_fp_32x32_c, svt_av1_quantize_fp_32x32_avx2);
     SET_AVX2(svt_av1_quantize_fp_64x64, svt_av1_quantize_fp_64x64_c, svt_av1_quantize_fp_64x64_avx2);
     SET_AVX2(svt_av1_highbd_quantize_fp, svt_av1_highbd_quantize_fp_c, svt_av1_highbd_quantize_fp_avx2);
@@ -189,18 +177,10 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
     SET_AVX2_AVX512(svt_aom_sad128x128x4d, svt_aom_sad128x128x4d_c, svt_aom_sad128x128x4d_avx2, svt_aom_sad128x128x4d_avx512);
     SET_AVX2_AVX512(svt_aom_sad128x64, svt_aom_sad128x64_c, svt_aom_sad128x64_avx2, svt_aom_sad128x64_avx512);
     SET_AVX2_AVX512(svt_aom_sad128x64x4d, svt_aom_sad128x64x4d_c, svt_aom_sad128x64x4d_avx2, svt_aom_sad128x64x4d_avx512);
-#if SSE_CODE_OPT
     SET_SSE41_AVX2_AVX512(svt_av1_txb_init_levels, svt_av1_txb_init_levels_c, svt_av1_txb_init_levels_sse4_1, svt_av1_txb_init_levels_avx2, svt_av1_txb_init_levels_avx512);
-#else
-    SET_AVX2_AVX512(svt_av1_txb_init_levels, svt_av1_txb_init_levels_c, svt_av1_txb_init_levels_avx2, svt_av1_txb_init_levels_avx512);
-#endif
     SET_AVX2(svt_aom_satd, svt_aom_satd_c, svt_aom_satd_avx2);
     SET_AVX2(svt_av1_block_error, svt_av1_block_error_c, svt_av1_block_error_avx2);
-#if SSE_CODE_OPT
     SET_SSE2(svt_aom_upsampled_pred, svt_aom_upsampled_pred_c, svt_aom_upsampled_pred_sse2);
-#else
-    SET_AVX2(svt_aom_upsampled_pred, svt_aom_upsampled_pred_c, svt_aom_upsampled_pred_sse2);
-#endif
 
     SET_AVX2(svt_aom_obmc_sad4x4, svt_aom_obmc_sad4x4_c, svt_aom_obmc_sad4x4_avx2);
     SET_AVX2(svt_aom_obmc_sad4x8, svt_aom_obmc_sad4x8_c, svt_aom_obmc_sad4x8_avx2);
@@ -279,7 +259,6 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
     SET_SSE2(svt_aom_variance8x8, svt_aom_variance8x8_c, svt_aom_variance8x8_sse2);
     SET_SSE2(svt_aom_variance8x16, svt_aom_variance8x16_c, svt_aom_variance8x16_sse2);
     SET_SSE2(svt_aom_variance8x32, svt_aom_variance8x32_c, svt_aom_variance8x32_sse2);
-#if SSE_CODE_OPT
     SET_SSE2_AVX2(svt_aom_variance16x4, svt_aom_variance16x4_c, svt_aom_variance16x4_sse2, svt_aom_variance16x4_avx2);
     SET_SSE2_AVX2(svt_aom_variance16x8, svt_aom_variance16x8_c, svt_aom_variance16x8_sse2, svt_aom_variance16x8_avx2);
     SET_SSE2_AVX2(svt_aom_variance16x16, svt_aom_variance16x16_c, svt_aom_variance16x16_sse2, svt_aom_variance16x16_avx2);
@@ -295,23 +274,6 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
     SET_SSE2_AVX2_AVX512(svt_aom_variance64x128, svt_aom_variance64x128_c, svt_aom_variance64x128_sse2, svt_aom_variance64x128_avx2, svt_aom_variance64x128_avx512);
     SET_SSE2_AVX2_AVX512(svt_aom_variance128x64, svt_aom_variance128x64_c, svt_aom_variance128x64_sse2, svt_aom_variance128x64_avx2, svt_aom_variance128x64_avx512);
     SET_SSE2_AVX2_AVX512(svt_aom_variance128x128, svt_aom_variance128x128_c,svt_aom_variance128x128_sse2, svt_aom_variance128x128_avx2, svt_aom_variance128x128_avx512);
-#else
-    SET_AVX2(svt_aom_variance16x4, svt_aom_variance16x4_c, svt_aom_variance16x4_avx2);
-    SET_AVX2(svt_aom_variance16x8, svt_aom_variance16x8_c, svt_aom_variance16x8_avx2);
-    SET_AVX2(svt_aom_variance16x16, svt_aom_variance16x16_c, svt_aom_variance16x16_avx2);
-    SET_AVX2(svt_aom_variance16x32, svt_aom_variance16x32_c, svt_aom_variance16x32_avx2);
-    SET_AVX2(svt_aom_variance16x64, svt_aom_variance16x64_c, svt_aom_variance16x64_avx2);
-    SET_AVX2_AVX512(svt_aom_variance32x8, svt_aom_variance32x8_c, svt_aom_variance32x8_avx2, svt_aom_variance32x8_avx512);
-    SET_AVX2_AVX512(svt_aom_variance32x16, svt_aom_variance32x16_c, svt_aom_variance32x16_avx2, svt_aom_variance32x16_avx512);
-    SET_AVX2_AVX512(svt_aom_variance32x32, svt_aom_variance32x32_c, svt_aom_variance32x32_avx2, svt_aom_variance32x32_avx512);
-    SET_AVX2_AVX512(svt_aom_variance32x64, svt_aom_variance32x64_c, svt_aom_variance32x64_avx2, svt_aom_variance32x64_avx512);
-    SET_AVX2_AVX512(svt_aom_variance64x16, svt_aom_variance64x16_c, svt_aom_variance64x16_avx2, svt_aom_variance64x16_avx512);
-    SET_AVX2_AVX512(svt_aom_variance64x32, svt_aom_variance64x32_c, svt_aom_variance64x32_avx2, svt_aom_variance64x32_avx512);
-    SET_AVX2_AVX512(svt_aom_variance64x64, svt_aom_variance64x64_c, svt_aom_variance64x64_avx2, svt_aom_variance64x64_avx512);
-    SET_AVX2_AVX512(svt_aom_variance64x128, svt_aom_variance64x128_c, svt_aom_variance64x128_avx2, svt_aom_variance64x128_avx512);
-    SET_AVX2_AVX512(svt_aom_variance128x64, svt_aom_variance128x64_c, svt_aom_variance128x64_avx2, svt_aom_variance128x64_avx512);
-    SET_AVX2_AVX512(svt_aom_variance128x128, svt_aom_variance128x128_c, svt_aom_variance128x128_avx2, svt_aom_variance128x128_avx512);
-#endif
 
     //VARIANCEHBP
     SET_ONLY_C(svt_aom_highbd_10_variance4x4, svt_aom_highbd_10_variance4x4_c);
@@ -362,7 +324,6 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
     //QIQ
     //transform
     SET_SSE41(svt_av1_fwd_txfm2d_4x4, svt_av1_transform_two_d_4x4_c, svt_av1_fwd_txfm2d_4x4_sse4_1);
-#if SSE_CODE_OPT
     SET_SSE41_AVX2(svt_av1_fwd_txfm2d_4x8, svt_av1_fwd_txfm2d_4x8_c, svt_av1_fwd_txfm2d_4x8_sse4_1, svt_av1_fwd_txfm2d_4x8_avx2);
     SET_SSE41_AVX2(svt_av1_fwd_txfm2d_4x16, svt_av1_fwd_txfm2d_4x16_c, svt_av1_fwd_txfm2d_4x16_sse4_1, svt_av1_fwd_txfm2d_4x16_avx2);
     SET_SSE41_AVX2(svt_av1_fwd_txfm2d_8x4, svt_av1_fwd_txfm2d_8x4_c, svt_av1_fwd_txfm2d_8x4_sse4_1, svt_av1_fwd_txfm2d_8x4_avx2);
@@ -381,26 +342,6 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
     SET_SSE41_AVX2_AVX512(svt_av1_fwd_txfm2d_64x16, svt_av1_fwd_txfm2d_64x16_c, svt_av1_fwd_txfm2d_64x16_sse4_1, svt_av1_fwd_txfm2d_64x16_avx2, av1_fwd_txfm2d_64x16_avx512);
     SET_SSE41_AVX2_AVX512(svt_av1_fwd_txfm2d_64x32, svt_av1_fwd_txfm2d_64x32_c, svt_av1_fwd_txfm2d_64x32_sse4_1, svt_av1_fwd_txfm2d_64x32_avx2, av1_fwd_txfm2d_64x32_avx512);
     SET_SSE41_AVX2_AVX512(svt_av1_fwd_txfm2d_64x64, svt_av1_transform_two_d_64x64_c, svt_av1_fwd_txfm2d_64x64_sse4_1, svt_av1_fwd_txfm2d_64x64_avx2, av1_fwd_txfm2d_64x64_avx512);
-#else
-    SET_AVX2(svt_av1_fwd_txfm2d_4x8, svt_av1_fwd_txfm2d_4x8_c, svt_av1_fwd_txfm2d_4x8_avx2);
-    SET_AVX2(svt_av1_fwd_txfm2d_4x16, svt_av1_fwd_txfm2d_4x16_c, svt_av1_fwd_txfm2d_4x16_avx2);
-    SET_AVX2(svt_av1_fwd_txfm2d_8x4, svt_av1_fwd_txfm2d_8x4_c, svt_av1_fwd_txfm2d_8x4_avx2);
-    SET_AVX2(svt_av1_fwd_txfm2d_8x8, svt_av1_transform_two_d_8x8_c, svt_av1_fwd_txfm2d_8x8_avx2);
-    SET_AVX2(svt_av1_fwd_txfm2d_8x16, svt_av1_fwd_txfm2d_8x16_c, svt_av1_fwd_txfm2d_8x16_avx2);
-    SET_AVX2(svt_av1_fwd_txfm2d_8x32, svt_av1_fwd_txfm2d_8x32_c, svt_av1_fwd_txfm2d_8x32_avx2);
-    SET_AVX2(svt_av1_fwd_txfm2d_16x4, svt_av1_fwd_txfm2d_16x4_c, svt_av1_fwd_txfm2d_16x4_avx2);
-    SET_AVX2(svt_av1_fwd_txfm2d_16x8, svt_av1_fwd_txfm2d_16x8_c, svt_av1_fwd_txfm2d_16x8_avx2);
-    SET_AVX2_AVX512(svt_av1_fwd_txfm2d_16x16, svt_av1_transform_two_d_16x16_c, svt_av1_fwd_txfm2d_16x16_avx2, av1_fwd_txfm2d_16x16_avx512);
-    SET_AVX2_AVX512(svt_av1_fwd_txfm2d_16x32, svt_av1_fwd_txfm2d_16x32_c, svt_av1_fwd_txfm2d_16x32_avx2, av1_fwd_txfm2d_16x32_avx512);
-    SET_AVX2_AVX512(svt_av1_fwd_txfm2d_16x64, svt_av1_fwd_txfm2d_16x64_c, svt_av1_fwd_txfm2d_16x64_avx2, av1_fwd_txfm2d_16x64_avx512);
-    SET_AVX2(svt_av1_fwd_txfm2d_32x8, svt_av1_fwd_txfm2d_32x8_c, svt_av1_fwd_txfm2d_32x8_avx2);
-    SET_AVX2_AVX512(svt_av1_fwd_txfm2d_32x16, svt_av1_fwd_txfm2d_32x16_c, svt_av1_fwd_txfm2d_32x16_avx2, av1_fwd_txfm2d_32x16_avx512);
-    SET_AVX2_AVX512(svt_av1_fwd_txfm2d_32x32, svt_av1_transform_two_d_32x32_c, svt_av1_fwd_txfm2d_32x32_avx2, av1_fwd_txfm2d_32x32_avx512);
-    SET_AVX2_AVX512(svt_av1_fwd_txfm2d_32x64, svt_av1_fwd_txfm2d_32x64_c, svt_av1_fwd_txfm2d_32x64_avx2, av1_fwd_txfm2d_32x64_avx512);
-    SET_AVX2_AVX512(svt_av1_fwd_txfm2d_64x16, svt_av1_fwd_txfm2d_64x16_c, svt_av1_fwd_txfm2d_64x16_avx2, av1_fwd_txfm2d_64x16_avx512);
-    SET_AVX2_AVX512(svt_av1_fwd_txfm2d_64x32, svt_av1_fwd_txfm2d_64x32_c, svt_av1_fwd_txfm2d_64x32_avx2, av1_fwd_txfm2d_64x32_avx512);
-    SET_AVX2_AVX512(svt_av1_fwd_txfm2d_64x64, svt_av1_transform_two_d_64x64_c, svt_av1_fwd_txfm2d_64x64_avx2, av1_fwd_txfm2d_64x64_avx512);
-#endif
     SET_AVX2(svt_handle_transform16x64, svt_handle_transform16x64_c, svt_handle_transform16x64_avx2);
     SET_AVX2(svt_handle_transform32x64, svt_handle_transform32x64_c, svt_handle_transform32x64_avx2);
     SET_AVX2(svt_handle_transform64x16, svt_handle_transform64x16_c, svt_handle_transform64x16_avx2);
@@ -465,31 +406,17 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
     SET_SSE41_AVX2_AVX512(svt_sad_loop_kernel, svt_sad_loop_kernel_c, svt_sad_loop_kernel_sse4_1_intrin, svt_sad_loop_kernel_avx2_intrin, svt_sad_loop_kernel_avx512_intrin);
     SET_AVX2(svt_av1_apply_temporal_filter_planewise, svt_av1_apply_temporal_filter_planewise_c, svt_av1_apply_temporal_filter_planewise_avx2);
     SET_AVX2(svt_av1_apply_temporal_filter_planewise_hbd, svt_av1_apply_temporal_filter_planewise_hbd_c, svt_av1_apply_temporal_filter_planewise_hbd_avx2);
-#if FIXED_POINTS_PLANEWISE
     SET_AVX2(svt_av1_apply_temporal_filter_planewise_medium, svt_av1_apply_temporal_filter_planewise_medium_c, svt_av1_apply_temporal_filter_planewise_medium_avx2);
     SET_AVX2(svt_av1_apply_temporal_filter_planewise_medium_hbd, svt_av1_apply_temporal_filter_planewise_medium_hbd_c, svt_av1_apply_temporal_filter_planewise_medium_hbd_avx2);
-#endif /*FIXED_POINTS_PLANEWISE*/
-#if OPT_TFILTER
     SET_AVX2(svt_av1_apply_temporal_filter_planewise_fast, svt_av1_apply_temporal_filter_planewise_fast_c, svt_av1_apply_temporal_filter_planewise_fast_avx2);
     SET_AVX2(svt_av1_apply_temporal_filter_planewise_fast_hbd, svt_av1_apply_temporal_filter_planewise_fast_hbd_c, svt_av1_apply_temporal_filter_planewise_fast_hbd_avx2);
-#endif
     SET_AVX2(get_final_filtered_pixels, get_final_filtered_pixels_c, get_final_filtered_pixels_avx2);
     SET_AVX2(apply_filtering_central, apply_filtering_central_c, apply_filtering_central_avx2);
     SET_AVX2(apply_filtering_central_highbd, apply_filtering_central_highbd_c, apply_filtering_central_highbd_avx2);
-#if DOWNSAMPLE_2D_AVX2
     SET_AVX2(downsample_2d, downsample_2d_c, downsample_2d_avx2);
-#endif
-#if SSE_CODE_OPT
     SET_SSE41_AVX2(svt_ext_sad_calculation_8x8_16x16, svt_ext_sad_calculation_8x8_16x16_c, svt_ext_sad_calculation_8x8_16x16_sse4_1_intrin, svt_ext_sad_calculation_8x8_16x16_avx2_intrin);
-#else
-    SET_AVX2(svt_ext_sad_calculation_8x8_16x16, svt_ext_sad_calculation_8x8_16x16_c, svt_ext_sad_calculation_8x8_16x16_avx2_intrin);
-#endif
     SET_SSE41(svt_ext_sad_calculation_32x32_64x64, svt_ext_sad_calculation_32x32_64x64_c, svt_ext_sad_calculation_32x32_64x64_sse4_intrin);
-#if SSE_CODE_OPT
     SET_SSE41_AVX2(svt_ext_all_sad_calculation_8x8_16x16, svt_ext_all_sad_calculation_8x8_16x16_c, svt_ext_all_sad_calculation_8x8_16x16_sse4_1, svt_ext_all_sad_calculation_8x8_16x16_avx2);
-#else
-    SET_AVX2(svt_ext_all_sad_calculation_8x8_16x16, svt_ext_all_sad_calculation_8x8_16x16_c, svt_ext_all_sad_calculation_8x8_16x16_avx2);
-#endif
     SET_AVX2(svt_ext_eight_sad_calculation_32x32_64x64, svt_ext_eight_sad_calculation_32x32_64x64_c, svt_ext_eight_sad_calculation_32x32_64x64_avx2);
     SET_SSE2(svt_initialize_buffer_32bits, svt_initialize_buffer_32bits_c, svt_initialize_buffer_32bits_sse2_intrin);
     SET_AVX2(svt_nxm_sad_kernel_sub_sampled, svt_nxm_sad_kernel_helper_c, svt_nxm_sad_kernel_sub_sampled_helper_avx2);
@@ -506,15 +433,7 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
     SET_AVX2(svt_av1_calc_indices_dim2, svt_av1_calc_indices_dim2_c, svt_av1_calc_indices_dim2_avx2);
     SET_AVX2(variance_highbd, variance_highbd_c, variance_highbd_avx2);
     SET_AVX2(svt_av1_haar_ac_sad_8x8_uint8_input, svt_av1_haar_ac_sad_8x8_uint8_input_c, svt_av1_haar_ac_sad_8x8_uint8_input_avx2);
-#if FTR_USE_PSAD
-#if SSE_CODE_OPT
     SET_SSE41_AVX2(svt_pme_sad_loop_kernel, svt_pme_sad_loop_kernel_c, svt_pme_sad_loop_kernel_sse4_1, svt_pme_sad_loop_kernel_avx2);
-#else
-    SET_AVX2(svt_pme_sad_loop_kernel, svt_pme_sad_loop_kernel_c, svt_pme_sad_loop_kernel_avx2);
-#endif
-#endif
-#if OPTIMIZE_SVT_UNPACK_2B
     SET_AVX2(svt_unpack_and_2bcompress, svt_unpack_and_2bcompress_c, svt_unpack_and_2bcompress_avx2);
-#endif
 }
 // clang-format on

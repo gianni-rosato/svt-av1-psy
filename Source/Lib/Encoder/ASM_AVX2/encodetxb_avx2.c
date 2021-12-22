@@ -235,21 +235,20 @@ DECLARE_ALIGNED(32, static const uint8_t, pos_to_offsets[256]) = {
     16, 16, 6,  21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, //+192
     21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21,
     16, 16, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, //+224
-    21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21
-};
+    21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21};
 
 static INLINE void get_4_nz_map_contexts_2d_sse2(const uint8_t *levels, const int32_t height,
-                                            const ptrdiff_t *const offsets,
-                                            int8_t *const          coeff_contexts) {
+                                                 const ptrdiff_t *const offsets,
+                                                 int8_t *const          coeff_contexts) {
     const int32_t stride              = 4 + TX_PAD_HOR;
     const __m128i pos_to_offset_large = _mm_set1_epi8(21);
     __m128i       pos_to_offset       = (height == 4)
-        ? _mm_setr_epi8(0, 1, 6, 6, 1, 6, 6, 21, 6, 6, 21, 21, 6, 21, 21, 21)
-        : _mm_setr_epi8(0, 11, 11, 11, 11, 11, 11, 11, 6, 6, 21, 21, 6, 21, 21, 21);
-    __m128i count;
-    __m128i level[5];
-    int8_t *cc  = coeff_contexts;
-    int32_t row = height;
+                    ? _mm_setr_epi8(0, 1, 6, 6, 1, 6, 6, 21, 6, 6, 21, 21, 6, 21, 21, 21)
+                    : _mm_setr_epi8(0, 11, 11, 11, 11, 11, 11, 11, 6, 6, 21, 21, 6, 21, 21, 21);
+    __m128i       count;
+    __m128i       level[5];
+    int8_t *      cc  = coeff_contexts;
+    int32_t       row = height;
 
     assert(!(height % 4));
 
@@ -396,7 +395,7 @@ static INLINE void get_32n_coeff_contexts_2d_avx2(const uint8_t *levels, const i
         pos_to_offset[3] = _mm256_loadu_si256((__m256i *)(pos_to_offsets + 96));
 
         pos_to_offset[1] = pos_to_offset_large[0] = pos_to_offset_large[1] = pos_to_offset[0];
-        pos_to_offset[4] = pos_to_offset_large[2];
+        pos_to_offset[4]                                                   = pos_to_offset_large[2];
     }
 
     do {
@@ -426,8 +425,8 @@ static INLINE void get_32n_coeff_contexts_2d_avx2(const uint8_t *levels, const i
 }
 
 static INLINE void get_4_nz_map_contexts_hor_sse2(const uint8_t *levels, const int32_t height,
-                                             const ptrdiff_t *const offsets,
-                                             int8_t *               coeff_contexts) {
+                                                  const ptrdiff_t *const offsets,
+                                                  int8_t *               coeff_contexts) {
     const int32_t stride        = 4 + TX_PAD_HOR;
     const __m128i pos_to_offset = _mm_setr_epi8(SIG_COEF_CONTEXTS_2D + 0,
                                                 SIG_COEF_CONTEXTS_2D + 5,
@@ -608,8 +607,8 @@ static INLINE void get_32n_coeff_contexts_hor_avx2(const uint8_t *levels, const 
 }
 
 static INLINE void get_4_nz_map_contexts_ver_sse2(const uint8_t *levels, const int32_t height,
-                                             const ptrdiff_t *const offsets,
-                                             int8_t *               coeff_contexts) {
+                                                  const ptrdiff_t *const offsets,
+                                                  int8_t *               coeff_contexts) {
     const int32_t stride              = 4 + TX_PAD_HOR;
     const __m128i pos_to_offset_large = _mm_set1_epi8(SIG_COEF_CONTEXTS_2D + 10);
     __m128i       pos_to_offset       = _mm_setr_epi8(SIG_COEF_CONTEXTS_2D + 0,

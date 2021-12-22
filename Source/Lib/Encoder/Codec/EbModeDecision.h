@@ -40,26 +40,24 @@ struct ModeDecisionContext;
     * Mode Decision Candidate
     **************************************/
 typedef struct ModeDecisionCandidate {
-    uint8_t intra_luma_mode;   // HEVC mode, use pred_mode for AV1
-    int16_t motion_vector_xl0;
-    int16_t motion_vector_yl0;
-    int16_t motion_vector_xl1;
-    int16_t motion_vector_yl1;
-    uint8_t      skip_flag;
-    EbBool       skip_mode_allowed;
-    uint16_t     count_non_zero_coeffs;
-    uint8_t      type;
-    PaletteInfo *palette_info;
-#if OPT_MEM_PALETTE
-    uint8_t palette_size[2];
-#endif
-    uint64_t                 fast_luma_rate;
-    uint64_t                 fast_chroma_rate;
-    uint64_t                 total_rate;
-    uint32_t                 luma_fast_distortion;
-    uint64_t                 full_distortion;
-    EbPtr                    prediction_context_ptr;
-    EbPredDirection          prediction_direction
+    uint8_t         intra_luma_mode; // HEVC mode, use pred_mode for AV1
+    int16_t         motion_vector_xl0;
+    int16_t         motion_vector_yl0;
+    int16_t         motion_vector_xl1;
+    int16_t         motion_vector_yl1;
+    uint8_t         skip_flag;
+    EbBool          skip_mode_allowed;
+    uint16_t        count_non_zero_coeffs;
+    uint8_t         type;
+    PaletteInfo *   palette_info;
+    uint8_t         palette_size[2];
+    uint64_t        fast_luma_rate;
+    uint64_t        fast_chroma_rate;
+    uint64_t        total_rate;
+    uint32_t        luma_fast_distortion;
+    uint64_t        full_distortion;
+    EbPtr           prediction_context_ptr;
+    EbPredDirection prediction_direction
         [MAX_NUM_OF_PU_PER_CU]; // 2 bits // Hsan: does not seem to be used why not removed ?
 
     int16_t motion_vector_pred_x
@@ -118,16 +116,13 @@ typedef EbErrorType (*EbPredictionFunc)(uint8_t                             hbd_
                                         struct ModeDecisionContext *        context_ptr,
                                         PictureControlSet *                 pcs_ptr,
                                         struct ModeDecisionCandidateBuffer *candidate_buffer_ptr);
-typedef uint64_t (*EbFastCostFunc)(
-                                   struct ModeDecisionContext *context_ptr,
-                                   BlkStruct *                   blk_ptr,
+typedef uint64_t (*EbFastCostFunc)(struct ModeDecisionContext *context_ptr, BlkStruct *blk_ptr,
                                    struct ModeDecisionCandidate *candidate_buffer, uint32_t qp,
                                    uint64_t luma_distortion, uint64_t chroma_distortion,
                                    uint64_t lambda, PictureControlSet *pcs_ptr,
                                    CandidateMv *ref_mv_stack, const BlockGeom *blk_geom,
                                    uint32_t miRow, uint32_t miCol, uint8_t enable_inter_intra,
-                                   uint32_t left_neighbor_mode,
-                                   uint32_t top_neighbor_mode);
+                                   uint32_t left_neighbor_mode, uint32_t top_neighbor_mode);
 
 typedef EbErrorType (*EB_FULL_COST_FUNC)(
     SuperBlock *sb_ptr, BlkStruct *blk_ptr, uint32_t cu_size, uint32_t cu_size_log2,
@@ -168,9 +163,7 @@ typedef struct ModeDecisionCandidateBuffer {
     EbPictureBufferDesc *prediction_ptr;
     EbPictureBufferDesc *recon_coeff_ptr;
     EbPictureBufferDesc *residual_ptr;
-#if REFCTR_ADD_QUANT_COEFF_BUFF_MD
     EbPictureBufferDesc *quant_coeff_ptr;
-#endif
 
     // *Note - We should be able to combine the recon_coeff_ptr & recon_ptr pictures (they aren't needed at the same time)
     EbPictureBufferDesc *recon_ptr;
@@ -178,54 +171,32 @@ typedef struct ModeDecisionCandidateBuffer {
     // Costs
     uint64_t *fast_cost_ptr;
     uint64_t *full_cost_ptr;
-#if !CLN_MOVE_SKIP_MODE_CHECK
-    uint64_t *full_cost_skip_ptr;
-    uint64_t *full_cost_merge_ptr;
-#endif
 } ModeDecisionCandidateBuffer;
 
 /**************************************
     * Extern Function Declarations
     **************************************/
-#if CLN_MOVE_SKIP_MODE_CHECK
 extern EbErrorType mode_decision_candidate_buffer_ctor(
     ModeDecisionCandidateBuffer *buffer_ptr, EbBitDepthEnum max_bitdepth, uint8_t sb_size,
     uint32_t buffer_mask, EbPictureBufferDesc *temp_residual_ptr,
     EbPictureBufferDesc *temp_recon_ptr, uint64_t *fast_cost_ptr, uint64_t *full_cost_ptr);
-#else
-extern EbErrorType mode_decision_candidate_buffer_ctor(
-    ModeDecisionCandidateBuffer *buffer_ptr, EbBitDepthEnum max_bitdepth, uint8_t sb_size,
-    uint32_t buffer_mask, EbPictureBufferDesc *temp_residual_ptr,
-    EbPictureBufferDesc *temp_recon_ptr, uint64_t *fast_cost_ptr, uint64_t *full_cost_ptr,
-    uint64_t *full_cost_skip_ptr, uint64_t *full_cost_merge_ptr);
-#endif
 
 extern EbErrorType mode_decision_scratch_candidate_buffer_ctor(
     ModeDecisionCandidateBuffer *buffer_ptr, uint8_t sb_size, EbBitDepthEnum max_bitdepth);
 
-#if LIGHT_PD0
-uint32_t product_full_mode_decision_light_pd0(struct ModeDecisionContext *context_ptr, BlkStruct *blk_ptr,
-                                    ModeDecisionCandidateBuffer **buffer_ptr_array);
-#endif
-#if LIGHT_PD1_MACRO
-uint32_t product_full_mode_decision_light_pd1(struct ModeDecisionContext *context_ptr, BlkStruct *blk_ptr,
-                                    PictureControlSet *pcs,
-                                    uint32_t sb_addr,
-                                    ModeDecisionCandidateBuffer **buffer_ptr_array,
-                                    uint32_t                      lowest_cost_index);
-#endif
+uint32_t product_full_mode_decision_light_pd0(struct ModeDecisionContext *  context_ptr,
+                                              BlkStruct *                   blk_ptr,
+                                              ModeDecisionCandidateBuffer **buffer_ptr_array);
+uint32_t product_full_mode_decision_light_pd1(struct ModeDecisionContext *context_ptr,
+                                              BlkStruct *blk_ptr, PictureControlSet *pcs,
+                                              uint32_t                      sb_addr,
+                                              ModeDecisionCandidateBuffer **buffer_ptr_array,
+                                              uint32_t                      lowest_cost_index);
 uint32_t product_full_mode_decision(struct ModeDecisionContext *context_ptr, BlkStruct *blk_ptr,
-#if FTR_BYPASS_ENCDEC
-                                    PictureControlSet *pcs,
-                                    uint32_t sb_addr,
-#endif
+                                    PictureControlSet *pcs, uint32_t sb_addr,
                                     ModeDecisionCandidateBuffer **buffer_ptr_array,
                                     uint32_t                      candidate_total_count,
                                     uint32_t *                    best_candidate_index_array);
-#if !SS_OPT_SET_LAMDA
-uint32_t get_blk_tuned_full_lambda(struct ModeDecisionContext *context_ptr,
-                                   PictureControlSet *pcs_ptr, uint32_t pic_full_lambda);
-#endif
 void     set_tuned_blk_lambda(struct ModeDecisionContext *context_ptr, PictureControlSet *pcs_ptr);
 
 typedef EbErrorType (*EB_INTRA_4x4_FAST_LUMA_COST_FUNC)(

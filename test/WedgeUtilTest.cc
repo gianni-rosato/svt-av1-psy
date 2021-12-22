@@ -1,13 +1,14 @@
 /*
-* Copyright(c) 2019 Netflix, Inc.
-*
-* This source code is subject to the terms of the BSD 2 Clause License and
-* the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
-* was not distributed with this source code in the LICENSE file, you can
-* obtain it at https://www.aomedia.org/license/software-license. If the Alliance for Open
-* Media Patent License 1.0 was not distributed with this source code in the
-* PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
-*/
+ * Copyright(c) 2019 Netflix, Inc.
+ *
+ * This source code is subject to the terms of the BSD 2 Clause License and
+ * the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
+ * was not distributed with this source code in the LICENSE file, you can
+ * obtain it at https://www.aomedia.org/license/software-license. If the
+ * Alliance for Open Media Patent License 1.0 was not distributed with this
+ * source code in the PATENTS file, you can obtain it at
+ * https://www.aomedia.org/license/patent-license.
+ */
 
 /******************************************************************************
  * @file WedgeUtilTest.cc
@@ -171,7 +172,8 @@ TEST_F(WedgeUtilTest, ComputeDeltaSquareTest) {
         // check the output
         for (int i = 0; i < N; ++i) {
             ASSERT_EQ(ref_diff[i], tst_diff[i])
-                << "unit test for svt_av1_wedge_compute_delta_squares_avx2 fail at "
+                << "unit test for svt_av1_wedge_compute_delta_squares_avx2 "
+                   "fail at "
                    "iteration "
                 << k;
         }
@@ -288,8 +290,8 @@ class AomSumSquaresTest : public ::testing::TestWithParam<AomHSumSquaresParam> {
                 src_[j] = rnd_.random();
             }
 
-            uint64_t res_ref_ =
-                svt_aom_sum_squares_i16_c((const int16_t *)src_, width * height);
+            uint64_t res_ref_ = svt_aom_sum_squares_i16_c((const int16_t *)src_,
+                                                          width * height);
 
             uint64_t res_tst_ =
                 test_impl((const int16_t *)src_, width * height);

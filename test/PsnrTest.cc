@@ -1,13 +1,14 @@
 /*
-* Copyright(c) 2019 Netflix, Inc.
-*
-* This source code is subject to the terms of the BSD 2 Clause License and
-* the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
-* was not distributed with this source code in the LICENSE file, you can
-* obtain it at https://www.aomedia.org/license/software-license. If the Alliance for Open
-* Media Patent License 1.0 was not distributed with this source code in the
-* PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
-*/
+ * Copyright(c) 2019 Netflix, Inc.
+ *
+ * This source code is subject to the terms of the BSD 2 Clause License and
+ * the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
+ * was not distributed with this source code in the LICENSE file, you can
+ * obtain it at https://www.aomedia.org/license/software-license. If the
+ * Alliance for Open Media Patent License 1.0 was not distributed with this
+ * source code in the PATENTS file, you can obtain it at
+ * https://www.aomedia.org/license/patent-license.
+ */
 
 /******************************************************************************
  * @file PsnrTest.cc
@@ -44,8 +45,8 @@ using svt_av1_test_tool::SVTRandom;
 extern "C" int32_t svt_aom_realloc_frame_buffer(
     Yv12BufferConfig* ybf, int32_t width, int32_t height, int32_t ss_x,
     int32_t ss_y, int32_t use_highbitdepth, int32_t border,
-    int32_t byte_alignment, AomCodecFrameBuffer* fb,
-    AomGetFrameBufferCbFn cb, void* cb_priv);
+    int32_t byte_alignment, AomCodecFrameBuffer* fb, AomGetFrameBufferCbFn cb,
+    void* cb_priv);
 
 /** setup_test_env is implemented in test/TestEnv.c */
 extern "C" void setup_test_env();

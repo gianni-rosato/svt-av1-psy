@@ -1,13 +1,14 @@
 /*
-* Copyright(c) 2019 Netflix, Inc.
-*
-* This source code is subject to the terms of the BSD 2 Clause License and
-* the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
-* was not distributed with this source code in the LICENSE file, you can
-* obtain it at https://www.aomedia.org/license/software-license. If the Alliance for Open
-* Media Patent License 1.0 was not distributed with this source code in the
-* PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
-*/
+ * Copyright(c) 2019 Netflix, Inc.
+ *
+ * This source code is subject to the terms of the BSD 2 Clause License and
+ * the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
+ * was not distributed with this source code in the LICENSE file, you can
+ * obtain it at https://www.aomedia.org/license/software-license. If the
+ * Alliance for Open Media Patent License 1.0 was not distributed with this
+ * source code in the PATENTS file, you can obtain it at
+ * https://www.aomedia.org/license/patent-license.
+ */
 
 /******************************************************************************
  * @file intrapred_edge_filter_test.cc
@@ -185,11 +186,9 @@ typedef void (*AomUpsampledPredFunc)(MacroBlockD *,
                                      const MV *const, uint8_t *, int, int, int,
                                      int, const uint8_t *, int, int);
 
-#if SSE_CODE_OPT
-typedef ::testing::tuple<BlockSize, AomUpsampledPredFunc, int, int, int, uint64_t> AomUpsampledPredParam;
-#else
-typedef ::testing::tuple<BlockSize, AomUpsampledPredFunc, int, int, int> AomUpsampledPredParam;
-#endif
+typedef ::testing::tuple<BlockSize, AomUpsampledPredFunc, int, int, int,
+                         uint64_t>
+    AomUpsampledPredParam;
 
 class AomUpsampledPredTest
     : public ::testing::TestWithParam<AomUpsampledPredParam> {
@@ -217,19 +216,17 @@ class AomUpsampledPredTest
         memset(comp_pred_ref_, 1, sizeof(comp_pred_ref_));
         memset(comp_pred_tst_, 1, sizeof(comp_pred_tst_));
 
-        //Function svt_aom_upsampled_pred_sse2 call inside function pointer which have to be set properly
-        // by setup_common_rtcd_internal(), we want to test intrinsic version of it, so AVX2 flag is necessary
-#if SSE_CODE_OPT
+        // Function svt_aom_upsampled_pred_sse2 call inside function pointer
+        // which have to be set properly
+        // by setup_common_rtcd_internal(), we want to test intrinsic version of
+        // it, so AVX2 flag is necessary
         uint64_t CPU_FLAGS = TEST_GET_PARAM(5);
         setup_common_rtcd_internal(CPU_FLAGS);
-#else
-        setup_common_rtcd_internal(CPU_FLAGS_AVX2);
-#endif
 
         const int run_times = 100;
         for (int i = 0; i < run_times; ++i) {
             memset(ref_, 1, sizeof(ref_));
-            for (int j = 0; j < width * height+ 3 * width; j++) {
+            for (int j = 0; j < width * height + 3 * width; j++) {
                 ref_[j] = rnd_.random();
             }
 
@@ -274,28 +271,16 @@ TEST_P(AomUpsampledPredTest, MatchTest) {
     run_test();
 }
 
-#if SSE_CODE_OPT
 INSTANTIATE_TEST_CASE_P(
     UPSAMPLED_PRED_TEST, AomUpsampledPredTest,
     ::testing::Combine(::testing::Range(BLOCK_4X4, BlockSizeS_ALL),
                        ::testing::Values(svt_aom_upsampled_pred_sse2),
                        ::testing::Values(USE_2_TAPS, USE_4_TAPS, USE_8_TAPS),
-                       ::testing::Values(0, 1, 2),
-                       ::testing::Values(0, 1, 2),
+                       ::testing::Values(0, 1, 2), ::testing::Values(0, 1, 2),
                        ::testing::Values(CPU_FLAGS_SSSE3, CPU_FLAGS_AVX2)));
-#else
-INSTANTIATE_TEST_CASE_P(
-    UPSAMPLED_PRED_TEST, AomUpsampledPredTest,
-    ::testing::Combine(::testing::Range(BLOCK_4X4, BlockSizeS_ALL),
-                       ::testing::Values(svt_aom_upsampled_pred_sse2),
-                       ::testing::Values(USE_2_TAPS, USE_4_TAPS, USE_8_TAPS),
-                       ::testing::Values(0, 1, 2),
-                       ::testing::Values(0, 1, 2)));
-#endif
 
-
-typedef void (*CflLumaSubsamplingLbdFunc)(const uint8_t *, int32_t, int16_t *, int32_t,
-                                   int32_t);
+typedef void (*CflLumaSubsamplingLbdFunc)(const uint8_t *, int32_t, int16_t *,
+                                          int32_t, int32_t);
 typedef ::testing::tuple<BlockSize, CflLumaSubsamplingLbdFunc>
     CflLumaSubsamplingLbdParam;
 
@@ -329,7 +314,6 @@ class CflLumaSubsamplingLbdTest
 
         const int run_times = 100;
         for (int i = 0; i < run_times; ++i) {
-
             memset(input, 1, sizeof(input));
             for (int j = 0; j < MAX_SB_SQUARE; j++) {
                 input[j] = rnd_.random();
@@ -343,7 +327,6 @@ class CflLumaSubsamplingLbdTest
             ASSERT_EQ(
                 0,
                 memcmp(output_q3_ref_, output_q3_tst_, sizeof(output_q3_ref_)));
-
         }
     }
 
@@ -357,9 +340,9 @@ TEST_P(CflLumaSubsamplingLbdTest, MatchTest) {
 
 INSTANTIATE_TEST_CASE_P(
     CFL_LUMA_SUBSAMPLING_LBD, CflLumaSubsamplingLbdTest,
-    ::testing::Combine(::testing::Range(BLOCK_4X4, BlockSizeS_ALL),
+    ::testing::Combine(
+        ::testing::Range(BLOCK_4X4, BlockSizeS_ALL),
         ::testing::Values(svt_cfl_luma_subsampling_420_lbd_avx2)));
-
 
 typedef void (*CflLumaSubsamplingHbdFunc)(const uint16_t *, int32_t, int16_t *,
                                           int32_t, int32_t);
@@ -422,7 +405,8 @@ TEST_P(CflLumaSubsamplingHbdTest, MatchTest) {
 
 INSTANTIATE_TEST_CASE_P(
     CFL_LUMA_SUBSAMPLING_HBD, CflLumaSubsamplingHbdTest,
-    ::testing::Combine(::testing::Range(BLOCK_4X4, BlockSizeS_ALL),
+    ::testing::Combine(
+        ::testing::Range(BLOCK_4X4, BlockSizeS_ALL),
         ::testing::Values(svt_cfl_luma_subsampling_420_hbd_avx2)));
 
 }  // namespace

@@ -257,20 +257,13 @@ static void jnt_convolve_2d_ver_2tap_avx2(const int16_t *const im_block, const i
                                           const int32_t                   subpel_y_q4,
                                           const ConvolveParams *const conv_params, uint8_t *dst8,
                                           const int32_t dst8_stride) {
-    const int32_t  dst_stride     = conv_params->dst_stride;
-    const int32_t  bd             = 8;
-    const int32_t  round_0        = 3;
-    const int16_t *im             = im_block;
-    const int32_t  round_1        = COMPOUND_ROUND1_BITS;
-    const int32_t  offset_bits    = bd + 2 * FILTER_BITS - round_0; // 19
-    const int32_t  round_bits     = 2 * FILTER_BITS - round_0 - round_1; // 4
-#if !FIX_USE_NOINIT_VALUES
-    const int32_t  round_offset   = 1 << (offset_bits - round_1);
-    const int32_t  factor         = conv_params->fwd_offset | (conv_params->bck_offset << 16);
-    const int32_t offset_comp_avg = (round_offset + (round_offset >> 1)) * conv_params->bck_offset -
-        (round_offset << DIST_PRECISION_BITS) - (round_offset << (DIST_PRECISION_BITS - 1)) +
-        (1 << (round_bits + DIST_PRECISION_BITS - 1));
-#endif
+    const int32_t  dst_stride  = conv_params->dst_stride;
+    const int32_t  bd          = 8;
+    const int32_t  round_0     = 3;
+    const int16_t *im          = im_block;
+    const int32_t  round_1     = COMPOUND_ROUND1_BITS;
+    const int32_t  offset_bits = bd + 2 * FILTER_BITS - round_0; // 19
+    const int32_t  round_bits  = 2 * FILTER_BITS - round_0 - round_1; // 4
     const int32_t offset_avg = (1 << (round_1 - 1)) + (1 << (round_bits + round_1)) -
         (1 << offset_bits) - (1 << (offset_bits - 1));
     const int32_t offset_no_avg = (1 << (round_1 - 1)) + (1 << offset_bits) +
@@ -279,12 +272,8 @@ static void jnt_convolve_2d_ver_2tap_avx2(const int16_t *const im_block, const i
     int32_t      y   = h;
 
     if (w <= 4) {
-#if !FIX_USE_NOINIT_VALUES
-        const __m128i factor_128          = _mm_set1_epi32(factor);
-        const __m128i offset_comp_avg_128 = _mm_set1_epi32(offset_comp_avg);
-#endif
-        const __m128i offset_avg_128      = _mm_set1_epi32(offset_avg);
-        const __m128i offset_no_avg_128   = _mm_set1_epi32(offset_no_avg);
+        const __m128i offset_avg_128    = _mm_set1_epi32(offset_avg);
+        const __m128i offset_no_avg_128 = _mm_set1_epi32(offset_no_avg);
         __m128i       coeffs_128;
 
         prepare_coeffs_2tap_sse2(filter_params_y, subpel_y_q4, &coeffs_128);
@@ -296,15 +285,16 @@ static void jnt_convolve_2d_ver_2tap_avx2(const int16_t *const im_block, const i
 
             if (conv_params->do_average) {
                 if (conv_params->use_jnt_comp_avg) {
-#if FIX_USE_NOINIT_VALUES
-                    const int32_t  round_offset   = 1 << (offset_bits - round_1);
-                    const int32_t  factor         = conv_params->fwd_offset | (conv_params->bck_offset << 16);
-                    const int32_t offset_comp_avg = (round_offset + (round_offset >> 1)) * conv_params->bck_offset -
-                        (round_offset << DIST_PRECISION_BITS) - (round_offset << (DIST_PRECISION_BITS - 1)) +
+                    const int32_t round_offset = 1 << (offset_bits - round_1);
+                    const int32_t factor       = conv_params->fwd_offset |
+                        (conv_params->bck_offset << 16);
+                    const int32_t offset_comp_avg = (round_offset + (round_offset >> 1)) *
+                            conv_params->bck_offset -
+                        (round_offset << DIST_PRECISION_BITS) -
+                        (round_offset << (DIST_PRECISION_BITS - 1)) +
                         (1 << (round_bits + DIST_PRECISION_BITS - 1));
                     const __m128i factor_128          = _mm_set1_epi32(factor);
                     const __m128i offset_comp_avg_128 = _mm_set1_epi32(offset_comp_avg);
-#endif
                     do {
                         const __m128i res = xy_y_convolve_2tap_2x2_sse2(im, s_32, &coeffs_128);
                         jnt_2d_comp_avg_round_store_2x2_sse2(res,
@@ -348,15 +338,16 @@ static void jnt_convolve_2d_ver_2tap_avx2(const int16_t *const im_block, const i
 
             if (conv_params->do_average) {
                 if (conv_params->use_jnt_comp_avg) {
-#if FIX_USE_NOINIT_VALUES
-                    const int32_t  round_offset   = 1 << (offset_bits - round_1);
-                    const int32_t  factor         = conv_params->fwd_offset | (conv_params->bck_offset << 16);
-                    const int32_t offset_comp_avg = (round_offset + (round_offset >> 1)) * conv_params->bck_offset -
-                        (round_offset << DIST_PRECISION_BITS) - (round_offset << (DIST_PRECISION_BITS - 1)) +
+                    const int32_t round_offset = 1 << (offset_bits - round_1);
+                    const int32_t factor       = conv_params->fwd_offset |
+                        (conv_params->bck_offset << 16);
+                    const int32_t offset_comp_avg = (round_offset + (round_offset >> 1)) *
+                            conv_params->bck_offset -
+                        (round_offset << DIST_PRECISION_BITS) -
+                        (round_offset << (DIST_PRECISION_BITS - 1)) +
                         (1 << (round_bits + DIST_PRECISION_BITS - 1));
                     const __m128i factor_128          = _mm_set1_epi32(factor);
                     const __m128i offset_comp_avg_128 = _mm_set1_epi32(offset_comp_avg);
-#endif
                     do {
                         xy_y_convolve_2tap_4x2_sse2(im, s_64, &coeffs_128, r);
                         jnt_2d_comp_avg_round_store_4x2_sse2(
@@ -388,12 +379,8 @@ static void jnt_convolve_2d_ver_2tap_avx2(const int16_t *const im_block, const i
             }
         }
     } else {
-#if !FIX_USE_NOINIT_VALUES
-        const __m256i factor_256          = _mm256_set1_epi32(factor);
-        const __m256i offset_comp_avg_256 = _mm256_set1_epi32(offset_comp_avg);
-#endif
-        const __m256i offset_avg_256      = _mm256_set1_epi32(offset_avg);
-        const __m256i offset_no_avg_256   = _mm256_set1_epi32(offset_no_avg);
+        const __m256i offset_avg_256    = _mm256_set1_epi32(offset_avg);
+        const __m256i offset_no_avg_256 = _mm256_set1_epi32(offset_no_avg);
         __m256i       coeffs_256;
 
         prepare_coeffs_2tap_avx2(filter_params_y, subpel_y_q4, &coeffs_256);
@@ -407,15 +394,16 @@ static void jnt_convolve_2d_ver_2tap_avx2(const int16_t *const im_block, const i
             if (conv_params->do_average) {
                 if (conv_params->use_jnt_comp_avg) {
                     do {
-#if FIX_USE_NOINIT_VALUES
-                    const int32_t  round_offset   = 1 << (offset_bits - round_1);
-                    const int32_t  factor         = conv_params->fwd_offset | (conv_params->bck_offset << 16);
-                    const int32_t offset_comp_avg = (round_offset + (round_offset >> 1)) * conv_params->bck_offset -
-                        (round_offset << DIST_PRECISION_BITS) - (round_offset << (DIST_PRECISION_BITS - 1)) +
-                        (1 << (round_bits + DIST_PRECISION_BITS - 1));
-                    const __m256i factor_256          = _mm256_set1_epi32(factor);
-                    const __m256i offset_comp_avg_256 = _mm256_set1_epi32(offset_comp_avg);
-#endif
+                        const int32_t round_offset = 1 << (offset_bits - round_1);
+                        const int32_t factor       = conv_params->fwd_offset |
+                            (conv_params->bck_offset << 16);
+                        const int32_t offset_comp_avg = (round_offset + (round_offset >> 1)) *
+                                conv_params->bck_offset -
+                            (round_offset << DIST_PRECISION_BITS) -
+                            (round_offset << (DIST_PRECISION_BITS - 1)) +
+                            (1 << (round_bits + DIST_PRECISION_BITS - 1));
+                        const __m256i factor_256          = _mm256_set1_epi32(factor);
+                        const __m256i offset_comp_avg_256 = _mm256_set1_epi32(offset_comp_avg);
                         xy_y_convolve_2tap_8x2_avx2(im, s_128, &coeffs_256, r);
                         jnt_2d_comp_avg_round_store_8x2_avx2(
                             r, factor_256, offset_comp_avg_256, dst, dst_stride, dst8, dst8_stride);
@@ -451,15 +439,16 @@ static void jnt_convolve_2d_ver_2tap_avx2(const int16_t *const im_block, const i
 
             if (conv_params->do_average) {
                 if (conv_params->use_jnt_comp_avg) {
-#if FIX_USE_NOINIT_VALUES
-                    const int32_t  round_offset   = 1 << (offset_bits - round_1);
-                    const int32_t  factor         = conv_params->fwd_offset | (conv_params->bck_offset << 16);
-                    const int32_t offset_comp_avg = (round_offset + (round_offset >> 1)) * conv_params->bck_offset -
-                        (round_offset << DIST_PRECISION_BITS) - (round_offset << (DIST_PRECISION_BITS - 1)) +
+                    const int32_t round_offset = 1 << (offset_bits - round_1);
+                    const int32_t factor       = conv_params->fwd_offset |
+                        (conv_params->bck_offset << 16);
+                    const int32_t offset_comp_avg = (round_offset + (round_offset >> 1)) *
+                            conv_params->bck_offset -
+                        (round_offset << DIST_PRECISION_BITS) -
+                        (round_offset << (DIST_PRECISION_BITS - 1)) +
                         (1 << (round_bits + DIST_PRECISION_BITS - 1));
                     const __m256i factor_256          = _mm256_set1_epi32(factor);
                     const __m256i offset_comp_avg_256 = _mm256_set1_epi32(offset_comp_avg);
-#endif
                     do {
                         xy_y_convolve_2tap_16x2_avx2(im, s_256, &coeffs_256, r);
                         jnt_2d_comp_avg_round_store_16x2_avx2(
@@ -498,15 +487,16 @@ static void jnt_convolve_2d_ver_2tap_avx2(const int16_t *const im_block, const i
             if (conv_params->do_average) {
                 if (conv_params->use_jnt_comp_avg) {
                     do {
-#if FIX_USE_NOINIT_VALUES
-                    const int32_t  round_offset   = 1 << (offset_bits - round_1);
-                    const int32_t  factor         = conv_params->fwd_offset | (conv_params->bck_offset << 16);
-                    const int32_t offset_comp_avg = (round_offset + (round_offset >> 1)) * conv_params->bck_offset -
-                        (round_offset << DIST_PRECISION_BITS) - (round_offset << (DIST_PRECISION_BITS - 1)) +
-                        (1 << (round_bits + DIST_PRECISION_BITS - 1));
-                    const __m256i factor_256          = _mm256_set1_epi32(factor);
-                    const __m256i offset_comp_avg_256 = _mm256_set1_epi32(offset_comp_avg);
-#endif
+                        const int32_t round_offset = 1 << (offset_bits - round_1);
+                        const int32_t factor       = conv_params->fwd_offset |
+                            (conv_params->bck_offset << 16);
+                        const int32_t offset_comp_avg = (round_offset + (round_offset >> 1)) *
+                                conv_params->bck_offset -
+                            (round_offset << DIST_PRECISION_BITS) -
+                            (round_offset << (DIST_PRECISION_BITS - 1)) +
+                            (1 << (round_bits + DIST_PRECISION_BITS - 1));
+                        const __m256i factor_256          = _mm256_set1_epi32(factor);
+                        const __m256i offset_comp_avg_256 = _mm256_set1_epi32(offset_comp_avg);
                         xy_y_convolve_2tap_32_avx2(im + 1 * 32, s_256[0], s_256[1], &coeffs_256, r);
                         jnt_2d_comp_avg_round_store_32_avx2(
                             r + 0, r + 2, factor_256, offset_comp_avg_256, dst, dst8);
@@ -563,15 +553,16 @@ static void jnt_convolve_2d_ver_2tap_avx2(const int16_t *const im_block, const i
 
             if (conv_params->do_average) {
                 if (conv_params->use_jnt_comp_avg) {
-#if FIX_USE_NOINIT_VALUES
-                    const int32_t  round_offset   = 1 << (offset_bits - round_1);
-                    const int32_t  factor         = conv_params->fwd_offset | (conv_params->bck_offset << 16);
-                    const int32_t offset_comp_avg = (round_offset + (round_offset >> 1)) * conv_params->bck_offset -
-                        (round_offset << DIST_PRECISION_BITS) - (round_offset << (DIST_PRECISION_BITS - 1)) +
+                    const int32_t round_offset = 1 << (offset_bits - round_1);
+                    const int32_t factor       = conv_params->fwd_offset |
+                        (conv_params->bck_offset << 16);
+                    const int32_t offset_comp_avg = (round_offset + (round_offset >> 1)) *
+                            conv_params->bck_offset -
+                        (round_offset << DIST_PRECISION_BITS) -
+                        (round_offset << (DIST_PRECISION_BITS - 1)) +
                         (1 << (round_bits + DIST_PRECISION_BITS - 1));
                     const __m256i factor_256          = _mm256_set1_epi32(factor);
                     const __m256i offset_comp_avg_256 = _mm256_set1_epi32(offset_comp_avg);
-#endif
                     do {
                         __m256i r[4];
 
@@ -676,15 +667,16 @@ static void jnt_convolve_2d_ver_2tap_avx2(const int16_t *const im_block, const i
 
             if (conv_params->do_average) {
                 if (conv_params->use_jnt_comp_avg) {
-#if FIX_USE_NOINIT_VALUES
-                    const int32_t  round_offset   = 1 << (offset_bits - round_1);
-                    const int32_t  factor         = conv_params->fwd_offset | (conv_params->bck_offset << 16);
-                    const int32_t offset_comp_avg = (round_offset + (round_offset >> 1)) * conv_params->bck_offset -
-                        (round_offset << DIST_PRECISION_BITS) - (round_offset << (DIST_PRECISION_BITS - 1)) +
+                    const int32_t round_offset = 1 << (offset_bits - round_1);
+                    const int32_t factor       = conv_params->fwd_offset |
+                        (conv_params->bck_offset << 16);
+                    const int32_t offset_comp_avg = (round_offset + (round_offset >> 1)) *
+                            conv_params->bck_offset -
+                        (round_offset << DIST_PRECISION_BITS) -
+                        (round_offset << (DIST_PRECISION_BITS - 1)) +
                         (1 << (round_bits + DIST_PRECISION_BITS - 1));
                     const __m256i factor_256          = _mm256_set1_epi32(factor);
                     const __m256i offset_comp_avg_256 = _mm256_set1_epi32(offset_comp_avg);
-#endif
                     do {
                         __m256i r[4];
 
@@ -882,20 +874,13 @@ static void jnt_convolve_2d_ver_2tap_half_avx2(const int16_t *const im_block, co
                                                const int32_t                   subpel_y_q4,
                                                const ConvolveParams *const     conv_params,
                                                uint8_t *dst8, const int32_t dst8_stride) {
-    const int32_t  dst_stride     = conv_params->dst_stride;
-    const int32_t  bd             = 8;
-    const int32_t  round_0        = 3;
-    const int16_t *im             = im_block;
-    const int32_t  round_1        = COMPOUND_ROUND1_BITS;
-    const int32_t  offset_bits    = bd + 2 * FILTER_BITS - round_0; // 19
-    const int32_t  round_bits     = 2 * FILTER_BITS - round_0 - round_1; // 4
-#if !FIX_USE_NOINIT_VALUES
-    const int32_t  round_offset   = 1 << (offset_bits - round_1);
-    const int32_t  factor         = conv_params->fwd_offset | (conv_params->bck_offset << 16);
-    const int32_t offset_comp_avg = (round_offset + (round_offset >> 1)) * conv_params->bck_offset -
-        (round_offset << DIST_PRECISION_BITS) - (round_offset << (DIST_PRECISION_BITS - 1)) +
-        (1 << (round_bits + DIST_PRECISION_BITS - 1));
-#endif
+    const int32_t  dst_stride  = conv_params->dst_stride;
+    const int32_t  bd          = 8;
+    const int32_t  round_0     = 3;
+    const int16_t *im          = im_block;
+    const int32_t  round_1     = COMPOUND_ROUND1_BITS;
+    const int32_t  offset_bits = bd + 2 * FILTER_BITS - round_0; // 19
+    const int32_t  round_bits  = 2 * FILTER_BITS - round_0 - round_1; // 4
     const int32_t offset_avg = (1 << (round_1 - COMPOUND_ROUND1_BITS)) +
         (1 << (round_bits + round_1 - COMPOUND_ROUND1_BITS + 1)) -
         (1 << (offset_bits - COMPOUND_ROUND1_BITS + 1)) -
@@ -910,12 +895,8 @@ static void jnt_convolve_2d_ver_2tap_half_avx2(const int16_t *const im_block, co
     (void)subpel_y_q4;
 
     if (w <= 4) {
-#if !FIX_USE_NOINIT_VALUES
-        const __m128i factor_128          = _mm_set1_epi32(factor);
-        const __m128i offset_comp_avg_128 = _mm_set1_epi32(offset_comp_avg);
-#endif
-        const __m128i offset_avg_128      = _mm_set1_epi16(offset_avg);
-        const __m128i offset_no_avg_128   = _mm_set1_epi16(offset_no_avg);
+        const __m128i offset_avg_128    = _mm_set1_epi16(offset_avg);
+        const __m128i offset_no_avg_128 = _mm_set1_epi16(offset_no_avg);
 
         if (w == 2) {
             __m128i s_32[2];
@@ -924,15 +905,16 @@ static void jnt_convolve_2d_ver_2tap_half_avx2(const int16_t *const im_block, co
 
             if (conv_params->do_average) {
                 if (conv_params->use_jnt_comp_avg) {
-#if FIX_USE_NOINIT_VALUES
-                    const int32_t  round_offset   = 1 << (offset_bits - round_1);
-                    const int32_t  factor         = conv_params->fwd_offset | (conv_params->bck_offset << 16);
-                    const int32_t offset_comp_avg = (round_offset + (round_offset >> 1)) * conv_params->bck_offset -
-                        (round_offset << DIST_PRECISION_BITS) - (round_offset << (DIST_PRECISION_BITS - 1)) +
+                    const int32_t round_offset = 1 << (offset_bits - round_1);
+                    const int32_t factor       = conv_params->fwd_offset |
+                        (conv_params->bck_offset << 16);
+                    const int32_t offset_comp_avg = (round_offset + (round_offset >> 1)) *
+                            conv_params->bck_offset -
+                        (round_offset << DIST_PRECISION_BITS) -
+                        (round_offset << (DIST_PRECISION_BITS - 1)) +
                         (1 << (round_bits + DIST_PRECISION_BITS - 1));
                     const __m128i factor_128          = _mm_set1_epi32(factor);
                     const __m128i offset_comp_avg_128 = _mm_set1_epi32(offset_comp_avg);
-#endif
                     do {
                         const __m128i res = xy_y_convolve_2tap_2x2_half_pel_sse2(im, s_32);
                         jnt_2d_comp_avg_round_store_half_pel_2x2_sse2(res,
@@ -977,15 +959,16 @@ static void jnt_convolve_2d_ver_2tap_half_avx2(const int16_t *const im_block, co
 
             if (conv_params->do_average) {
                 if (conv_params->use_jnt_comp_avg) {
-#if FIX_USE_NOINIT_VALUES
-                    const int32_t  round_offset   = 1 << (offset_bits - round_1);
-                    const int32_t  factor         = conv_params->fwd_offset | (conv_params->bck_offset << 16);
-                    const int32_t offset_comp_avg = (round_offset + (round_offset >> 1)) * conv_params->bck_offset -
-                        (round_offset << DIST_PRECISION_BITS) - (round_offset << (DIST_PRECISION_BITS - 1)) +
+                    const int32_t round_offset = 1 << (offset_bits - round_1);
+                    const int32_t factor       = conv_params->fwd_offset |
+                        (conv_params->bck_offset << 16);
+                    const int32_t offset_comp_avg = (round_offset + (round_offset >> 1)) *
+                            conv_params->bck_offset -
+                        (round_offset << DIST_PRECISION_BITS) -
+                        (round_offset << (DIST_PRECISION_BITS - 1)) +
                         (1 << (round_bits + DIST_PRECISION_BITS - 1));
                     const __m128i factor_128          = _mm_set1_epi32(factor);
                     const __m128i offset_comp_avg_128 = _mm_set1_epi32(offset_comp_avg);
-#endif
                     do {
                         const __m128i res = xy_y_convolve_2tap_4x2_half_pel_sse2(im, s_64);
                         jnt_2d_comp_avg_round_store_half_pel_4x2_sse2(res,
@@ -1023,12 +1006,8 @@ static void jnt_convolve_2d_ver_2tap_half_avx2(const int16_t *const im_block, co
             }
         }
     } else {
-#if !FIX_USE_NOINIT_VALUES
-        const __m256i factor_256          = _mm256_set1_epi32(factor);
-        const __m256i offset_comp_avg_256 = _mm256_set1_epi32(offset_comp_avg);
-#endif
-        const __m256i offset_avg_256      = _mm256_set1_epi16(offset_avg);
-        const __m256i offset_no_avg_256   = _mm256_set1_epi16(offset_no_avg);
+        const __m256i offset_avg_256    = _mm256_set1_epi16(offset_avg);
+        const __m256i offset_no_avg_256 = _mm256_set1_epi16(offset_no_avg);
 
         if (w == 8) {
             __m128i s_128[2];
@@ -1037,15 +1016,16 @@ static void jnt_convolve_2d_ver_2tap_half_avx2(const int16_t *const im_block, co
 
             if (conv_params->do_average) {
                 if (conv_params->use_jnt_comp_avg) {
-#if FIX_USE_NOINIT_VALUES
-                    const int32_t  round_offset   = 1 << (offset_bits - round_1);
-                    const int32_t  factor         = conv_params->fwd_offset | (conv_params->bck_offset << 16);
-                    const int32_t offset_comp_avg = (round_offset + (round_offset >> 1)) * conv_params->bck_offset -
-                        (round_offset << DIST_PRECISION_BITS) - (round_offset << (DIST_PRECISION_BITS - 1)) +
+                    const int32_t round_offset = 1 << (offset_bits - round_1);
+                    const int32_t factor       = conv_params->fwd_offset |
+                        (conv_params->bck_offset << 16);
+                    const int32_t offset_comp_avg = (round_offset + (round_offset >> 1)) *
+                            conv_params->bck_offset -
+                        (round_offset << DIST_PRECISION_BITS) -
+                        (round_offset << (DIST_PRECISION_BITS - 1)) +
                         (1 << (round_bits + DIST_PRECISION_BITS - 1));
                     const __m256i factor_256          = _mm256_set1_epi32(factor);
                     const __m256i offset_comp_avg_256 = _mm256_set1_epi32(offset_comp_avg);
-#endif
                     do {
                         const __m256i res = xy_y_convolve_2tap_8x2_half_pel_avx2(im, s_128);
                         jnt_2d_comp_avg_round_store_half_pel_8x2_avx2(res,
@@ -1088,15 +1068,16 @@ static void jnt_convolve_2d_ver_2tap_half_avx2(const int16_t *const im_block, co
 
             if (conv_params->do_average) {
                 if (conv_params->use_jnt_comp_avg) {
-#if FIX_USE_NOINIT_VALUES
-                    const int32_t  round_offset   = 1 << (offset_bits - round_1);
-                    const int32_t  factor         = conv_params->fwd_offset | (conv_params->bck_offset << 16);
-                    const int32_t offset_comp_avg = (round_offset + (round_offset >> 1)) * conv_params->bck_offset -
-                        (round_offset << DIST_PRECISION_BITS) - (round_offset << (DIST_PRECISION_BITS - 1)) +
+                    const int32_t round_offset = 1 << (offset_bits - round_1);
+                    const int32_t factor       = conv_params->fwd_offset |
+                        (conv_params->bck_offset << 16);
+                    const int32_t offset_comp_avg = (round_offset + (round_offset >> 1)) *
+                            conv_params->bck_offset -
+                        (round_offset << DIST_PRECISION_BITS) -
+                        (round_offset << (DIST_PRECISION_BITS - 1)) +
                         (1 << (round_bits + DIST_PRECISION_BITS - 1));
                     const __m256i factor_256          = _mm256_set1_epi32(factor);
                     const __m256i offset_comp_avg_256 = _mm256_set1_epi32(offset_comp_avg);
-#endif
                     do {
                         xy_y_convolve_2tap_16x2_half_pel_avx2(im, s_256, r);
                         jnt_2d_comp_avg_round_store_half_pel_16x2_avx2(
@@ -1135,15 +1116,16 @@ static void jnt_convolve_2d_ver_2tap_half_avx2(const int16_t *const im_block, co
 
             if (conv_params->do_average) {
                 if (conv_params->use_jnt_comp_avg) {
-#if FIX_USE_NOINIT_VALUES
-                    const int32_t  round_offset   = 1 << (offset_bits - round_1);
-                    const int32_t  factor         = conv_params->fwd_offset | (conv_params->bck_offset << 16);
-                    const int32_t offset_comp_avg = (round_offset + (round_offset >> 1)) * conv_params->bck_offset -
-                        (round_offset << DIST_PRECISION_BITS) - (round_offset << (DIST_PRECISION_BITS - 1)) +
+                    const int32_t round_offset = 1 << (offset_bits - round_1);
+                    const int32_t factor       = conv_params->fwd_offset |
+                        (conv_params->bck_offset << 16);
+                    const int32_t offset_comp_avg = (round_offset + (round_offset >> 1)) *
+                            conv_params->bck_offset -
+                        (round_offset << DIST_PRECISION_BITS) -
+                        (round_offset << (DIST_PRECISION_BITS - 1)) +
                         (1 << (round_bits + DIST_PRECISION_BITS - 1));
                     const __m256i factor_256          = _mm256_set1_epi32(factor);
                     const __m256i offset_comp_avg_256 = _mm256_set1_epi32(offset_comp_avg);
-#endif
                     do {
                         xy_y_convolve_2tap_half_pel_32_avx2(im + 1 * 32, s_256[0], s_256[1], r);
                         jnt_2d_comp_avg_round_store_half_pel_32_avx2(
@@ -1200,15 +1182,16 @@ static void jnt_convolve_2d_ver_2tap_half_avx2(const int16_t *const im_block, co
 
             if (conv_params->do_average) {
                 if (conv_params->use_jnt_comp_avg) {
-#if FIX_USE_NOINIT_VALUES
-                    const int32_t  round_offset   = 1 << (offset_bits - round_1);
-                    const int32_t  factor         = conv_params->fwd_offset | (conv_params->bck_offset << 16);
-                    const int32_t offset_comp_avg = (round_offset + (round_offset >> 1)) * conv_params->bck_offset -
-                        (round_offset << DIST_PRECISION_BITS) - (round_offset << (DIST_PRECISION_BITS - 1)) +
+                    const int32_t round_offset = 1 << (offset_bits - round_1);
+                    const int32_t factor       = conv_params->fwd_offset |
+                        (conv_params->bck_offset << 16);
+                    const int32_t offset_comp_avg = (round_offset + (round_offset >> 1)) *
+                            conv_params->bck_offset -
+                        (round_offset << DIST_PRECISION_BITS) -
+                        (round_offset << (DIST_PRECISION_BITS - 1)) +
                         (1 << (round_bits + DIST_PRECISION_BITS - 1));
                     const __m256i factor_256          = _mm256_set1_epi32(factor);
                     const __m256i offset_comp_avg_256 = _mm256_set1_epi32(offset_comp_avg);
-#endif
                     do {
                         __m256i r[2];
 
@@ -1304,15 +1287,16 @@ static void jnt_convolve_2d_ver_2tap_half_avx2(const int16_t *const im_block, co
 
             if (conv_params->do_average) {
                 if (conv_params->use_jnt_comp_avg) {
-#if FIX_USE_NOINIT_VALUES
-                    const int32_t  round_offset   = 1 << (offset_bits - round_1);
-                    const int32_t  factor         = conv_params->fwd_offset | (conv_params->bck_offset << 16);
-                    const int32_t offset_comp_avg = (round_offset + (round_offset >> 1)) * conv_params->bck_offset -
-                        (round_offset << DIST_PRECISION_BITS) - (round_offset << (DIST_PRECISION_BITS - 1)) +
+                    const int32_t round_offset = 1 << (offset_bits - round_1);
+                    const int32_t factor       = conv_params->fwd_offset |
+                        (conv_params->bck_offset << 16);
+                    const int32_t offset_comp_avg = (round_offset + (round_offset >> 1)) *
+                            conv_params->bck_offset -
+                        (round_offset << DIST_PRECISION_BITS) -
+                        (round_offset << (DIST_PRECISION_BITS - 1)) +
                         (1 << (round_bits + DIST_PRECISION_BITS - 1));
                     const __m256i factor_256          = _mm256_set1_epi32(factor);
                     const __m256i offset_comp_avg_256 = _mm256_set1_epi32(offset_comp_avg);
-#endif
                     do {
                         __m256i r[2];
 
@@ -1477,20 +1461,13 @@ void jnt_convolve_2d_ver_4tap_avx2(const int16_t *const im_block, const int32_t 
                                    const int32_t                   subpel_y_q4,
                                    const ConvolveParams *const conv_params, uint8_t *dst8,
                                    const int32_t dst8_stride) {
-    const int32_t  dst_stride     = conv_params->dst_stride;
-    const int32_t  bd             = 8;
-    const int32_t  round_0        = 3;
-    const int16_t *im             = im_block;
-    const int32_t  round_1        = COMPOUND_ROUND1_BITS;
-    const int32_t  offset_bits    = bd + 2 * FILTER_BITS - round_0; // 19
-    const int32_t  round_bits     = 2 * FILTER_BITS - round_0 - round_1; // 4
-#if !FIX_USE_NOINIT_VALUES
-    const int32_t  round_offset   = 1 << (offset_bits - round_1);
-    const int32_t  factor         = conv_params->fwd_offset | (conv_params->bck_offset << 16);
-    const int32_t offset_comp_avg = (round_offset + (round_offset >> 1)) * conv_params->bck_offset -
-        (round_offset << DIST_PRECISION_BITS) - (round_offset << (DIST_PRECISION_BITS - 1)) +
-        (1 << (round_bits + DIST_PRECISION_BITS - 1));
-#endif
+    const int32_t  dst_stride  = conv_params->dst_stride;
+    const int32_t  bd          = 8;
+    const int32_t  round_0     = 3;
+    const int16_t *im          = im_block;
+    const int32_t  round_1     = COMPOUND_ROUND1_BITS;
+    const int32_t  offset_bits = bd + 2 * FILTER_BITS - round_0; // 19
+    const int32_t  round_bits  = 2 * FILTER_BITS - round_0 - round_1; // 4
     const int32_t offset_avg = (1 << (round_1 - 1)) + (1 << (round_bits + round_1)) -
         (1 << offset_bits) - (1 << (offset_bits - 1));
     const int32_t offset_no_avg = (1 << (round_1 - 1)) + (1 << offset_bits) +
@@ -1499,12 +1476,8 @@ void jnt_convolve_2d_ver_4tap_avx2(const int16_t *const im_block, const int32_t 
     ConvBufType *dst = conv_params->dst;
 
     if (w == 2) {
-#if !FIX_USE_NOINIT_VALUES
-        const __m128i factor_128          = _mm_set1_epi32(factor);
-        const __m128i offset_comp_avg_128 = _mm_set1_epi32(offset_comp_avg);
-#endif
-        const __m128i offset_avg_128      = _mm_set1_epi32(offset_avg);
-        const __m128i offset_no_avg_128   = _mm_set1_epi32(offset_no_avg);
+        const __m128i offset_avg_128    = _mm_set1_epi32(offset_avg);
+        const __m128i offset_no_avg_128 = _mm_set1_epi32(offset_no_avg);
         __m128i       coeffs_128[4], s_32[4], ss_128[2];
 
         prepare_coeffs_4tap_sse2(filter_params_y, subpel_y_q4, coeffs_128);
@@ -1520,15 +1493,15 @@ void jnt_convolve_2d_ver_4tap_avx2(const int16_t *const im_block, const int32_t 
 
         if (conv_params->do_average) {
             if (conv_params->use_jnt_comp_avg) {
-#if FIX_USE_NOINIT_VALUES
-                const int32_t  round_offset   = 1 << (offset_bits - round_1);
-                const int32_t  factor         = conv_params->fwd_offset | (conv_params->bck_offset << 16);
-                const int32_t offset_comp_avg = (round_offset + (round_offset >> 1)) * conv_params->bck_offset -
-                    (round_offset << DIST_PRECISION_BITS) - (round_offset << (DIST_PRECISION_BITS - 1)) +
+                const int32_t round_offset = 1 << (offset_bits - round_1);
+                const int32_t factor = conv_params->fwd_offset | (conv_params->bck_offset << 16);
+                const int32_t offset_comp_avg = (round_offset + (round_offset >> 1)) *
+                        conv_params->bck_offset -
+                    (round_offset << DIST_PRECISION_BITS) -
+                    (round_offset << (DIST_PRECISION_BITS - 1)) +
                     (1 << (round_bits + DIST_PRECISION_BITS - 1));
                 const __m128i factor_128          = _mm_set1_epi32(factor);
                 const __m128i offset_comp_avg_128 = _mm_set1_epi32(offset_comp_avg);
-#endif
                 do {
                     const __m128i res = xy_y_convolve_4tap_2x2_sse2(im, s_32, ss_128, coeffs_128);
                     jnt_2d_comp_avg_round_store_2x2_sse2(
@@ -1559,12 +1532,8 @@ void jnt_convolve_2d_ver_4tap_avx2(const int16_t *const im_block, const int32_t 
             } while (y);
         }
     } else {
-#if !FIX_USE_NOINIT_VALUES
-        const __m256i factor_256          = _mm256_set1_epi32(factor);
-        const __m256i offset_comp_avg_256 = _mm256_set1_epi32(offset_comp_avg);
-#endif
-        const __m256i offset_avg_256      = _mm256_set1_epi32(offset_avg);
-        const __m256i offset_no_avg_256   = _mm256_set1_epi32(offset_no_avg);
+        const __m256i offset_avg_256    = _mm256_set1_epi32(offset_avg);
+        const __m256i offset_no_avg_256 = _mm256_set1_epi32(offset_no_avg);
         __m256i       coeffs_256[4];
 
         prepare_coeffs_4tap_avx2(filter_params_y, subpel_y_q4, coeffs_256);
@@ -1585,15 +1554,16 @@ void jnt_convolve_2d_ver_4tap_avx2(const int16_t *const im_block, const int32_t 
 
             if (conv_params->do_average) {
                 if (conv_params->use_jnt_comp_avg) {
-#if FIX_USE_NOINIT_VALUES
-                    const int32_t  round_offset   = 1 << (offset_bits - round_1);
-                    const int32_t  factor         = conv_params->fwd_offset | (conv_params->bck_offset << 16);
-                    const int32_t offset_comp_avg = (round_offset + (round_offset >> 1)) * conv_params->bck_offset -
-                        (round_offset << DIST_PRECISION_BITS) - (round_offset << (DIST_PRECISION_BITS - 1)) +
+                    const int32_t round_offset = 1 << (offset_bits - round_1);
+                    const int32_t factor       = conv_params->fwd_offset |
+                        (conv_params->bck_offset << 16);
+                    const int32_t offset_comp_avg = (round_offset + (round_offset >> 1)) *
+                            conv_params->bck_offset -
+                        (round_offset << DIST_PRECISION_BITS) -
+                        (round_offset << (DIST_PRECISION_BITS - 1)) +
                         (1 << (round_bits + DIST_PRECISION_BITS - 1));
                     const __m256i factor_256          = _mm256_set1_epi32(factor);
                     const __m256i offset_comp_avg_256 = _mm256_set1_epi32(offset_comp_avg);
-#endif
                     do {
                         const __m256i res = xy_y_convolve_4tap_4x2_avx2(
                             im, s_64, ss_256, coeffs_256);
@@ -1643,15 +1613,16 @@ void jnt_convolve_2d_ver_4tap_avx2(const int16_t *const im_block, const int32_t 
 
             if (conv_params->do_average) {
                 if (conv_params->use_jnt_comp_avg) {
-#if FIX_USE_NOINIT_VALUES
-                    const int32_t  round_offset   = 1 << (offset_bits - round_1);
-                    const int32_t  factor         = conv_params->fwd_offset | (conv_params->bck_offset << 16);
-                    const int32_t offset_comp_avg = (round_offset + (round_offset >> 1)) * conv_params->bck_offset -
-                        (round_offset << DIST_PRECISION_BITS) - (round_offset << (DIST_PRECISION_BITS - 1)) +
+                    const int32_t round_offset = 1 << (offset_bits - round_1);
+                    const int32_t factor       = conv_params->fwd_offset |
+                        (conv_params->bck_offset << 16);
+                    const int32_t offset_comp_avg = (round_offset + (round_offset >> 1)) *
+                            conv_params->bck_offset -
+                        (round_offset << DIST_PRECISION_BITS) -
+                        (round_offset << (DIST_PRECISION_BITS - 1)) +
                         (1 << (round_bits + DIST_PRECISION_BITS - 1));
                     const __m256i factor_256          = _mm256_set1_epi32(factor);
                     const __m256i offset_comp_avg_256 = _mm256_set1_epi32(offset_comp_avg);
-#endif
                     do {
                         xy_y_convolve_4tap_8x2_avx2(im, ss_256, coeffs_256, r);
                         jnt_2d_comp_avg_round_store_8x2_avx2(
@@ -1700,15 +1671,16 @@ void jnt_convolve_2d_ver_4tap_avx2(const int16_t *const im_block, const int32_t 
 
             if (conv_params->do_average) {
                 if (conv_params->use_jnt_comp_avg) {
-#if FIX_USE_NOINIT_VALUES
-                    const int32_t  round_offset   = 1 << (offset_bits - round_1);
-                    const int32_t  factor         = conv_params->fwd_offset | (conv_params->bck_offset << 16);
-                    const int32_t offset_comp_avg = (round_offset + (round_offset >> 1)) * conv_params->bck_offset -
-                        (round_offset << DIST_PRECISION_BITS) - (round_offset << (DIST_PRECISION_BITS - 1)) +
+                    const int32_t round_offset = 1 << (offset_bits - round_1);
+                    const int32_t factor       = conv_params->fwd_offset |
+                        (conv_params->bck_offset << 16);
+                    const int32_t offset_comp_avg = (round_offset + (round_offset >> 1)) *
+                            conv_params->bck_offset -
+                        (round_offset << DIST_PRECISION_BITS) -
+                        (round_offset << (DIST_PRECISION_BITS - 1)) +
                         (1 << (round_bits + DIST_PRECISION_BITS - 1));
                     const __m256i factor_256          = _mm256_set1_epi32(factor);
                     const __m256i offset_comp_avg_256 = _mm256_set1_epi32(offset_comp_avg);
-#endif
                     do {
                         xy_y_convolve_4tap_16x2_avx2(im, s_256, ss_256, tt_256, coeffs_256, r);
                         jnt_2d_comp_avg_round_store_16x2_avx2(
@@ -1748,20 +1720,13 @@ static void jnt_convolve_2d_ver_6tap_avx2(const int16_t *const im_block, const i
                                           const int32_t                   subpel_y_q4,
                                           const ConvolveParams *const conv_params, uint8_t *dst8,
                                           const int32_t dst8_stride) {
-    const int32_t  dst_stride     = conv_params->dst_stride;
-    const int32_t  bd             = 8;
-    const int32_t  round_0        = 3;
-    const int16_t *im             = im_block;
-    const int32_t  round_1        = COMPOUND_ROUND1_BITS;
-    const int32_t  offset_bits    = bd + 2 * FILTER_BITS - round_0; // 19
-    const int32_t  round_bits     = 2 * FILTER_BITS - round_0 - round_1; // 4
-#if !FIX_USE_NOINIT_VALUES
-    const int32_t  round_offset   = 1 << (offset_bits - round_1);
-    const int32_t  factor         = conv_params->fwd_offset | (conv_params->bck_offset << 16);
-    const int32_t offset_comp_avg = (round_offset + (round_offset >> 1)) * conv_params->bck_offset -
-        (round_offset << DIST_PRECISION_BITS) - (round_offset << (DIST_PRECISION_BITS - 1)) +
-        (1 << (round_bits + DIST_PRECISION_BITS - 1));
-#endif
+    const int32_t  dst_stride  = conv_params->dst_stride;
+    const int32_t  bd          = 8;
+    const int32_t  round_0     = 3;
+    const int16_t *im          = im_block;
+    const int32_t  round_1     = COMPOUND_ROUND1_BITS;
+    const int32_t  offset_bits = bd + 2 * FILTER_BITS - round_0; // 19
+    const int32_t  round_bits  = 2 * FILTER_BITS - round_0 - round_1; // 4
     const int32_t offset_avg = (1 << (round_1 - 1)) + (1 << (round_bits + round_1)) -
         (1 << offset_bits) - (1 << (offset_bits - 1));
     const int32_t offset_no_avg = (1 << (round_1 - 1)) + (1 << offset_bits) +
@@ -1769,12 +1734,8 @@ static void jnt_convolve_2d_ver_6tap_avx2(const int16_t *const im_block, const i
     ConvBufType *dst = conv_params->dst;
 
     if (w == 2) {
-#if !FIX_USE_NOINIT_VALUES
-        const __m128i factor_128          = _mm_set1_epi32(factor);
-        const __m128i offset_comp_avg_128 = _mm_set1_epi32(offset_comp_avg);
-#endif
-        const __m128i offset_avg_128      = _mm_set1_epi32(offset_avg);
-        const __m128i offset_no_avg_128   = _mm_set1_epi32(offset_no_avg);
+        const __m128i offset_avg_128    = _mm_set1_epi32(offset_avg);
+        const __m128i offset_no_avg_128 = _mm_set1_epi32(offset_no_avg);
         __m128i       coeffs_128[3], s_32[6], ss_128[3];
 
         prepare_coeffs_6tap_ssse3(filter_params_y, subpel_y_q4, coeffs_128);
@@ -1797,15 +1758,15 @@ static void jnt_convolve_2d_ver_6tap_avx2(const int16_t *const im_block, const i
 
         if (conv_params->do_average) {
             if (conv_params->use_jnt_comp_avg) {
-#if FIX_USE_NOINIT_VALUES
-                    const int32_t  round_offset   = 1 << (offset_bits - round_1);
-                    const int32_t  factor         = conv_params->fwd_offset | (conv_params->bck_offset << 16);
-                    const int32_t offset_comp_avg = (round_offset + (round_offset >> 1)) * conv_params->bck_offset -
-                        (round_offset << DIST_PRECISION_BITS) - (round_offset << (DIST_PRECISION_BITS - 1)) +
-                        (1 << (round_bits + DIST_PRECISION_BITS - 1));
-                    const __m128i factor_128          = _mm_set1_epi32(factor);
-                    const __m128i offset_comp_avg_128 = _mm_set1_epi32(offset_comp_avg);
-#endif
+                const int32_t round_offset = 1 << (offset_bits - round_1);
+                const int32_t factor = conv_params->fwd_offset | (conv_params->bck_offset << 16);
+                const int32_t offset_comp_avg = (round_offset + (round_offset >> 1)) *
+                        conv_params->bck_offset -
+                    (round_offset << DIST_PRECISION_BITS) -
+                    (round_offset << (DIST_PRECISION_BITS - 1)) +
+                    (1 << (round_bits + DIST_PRECISION_BITS - 1));
+                const __m128i factor_128          = _mm_set1_epi32(factor);
+                const __m128i offset_comp_avg_128 = _mm_set1_epi32(offset_comp_avg);
                 do {
                     const __m128i res = xy_y_convolve_6tap_2x2_sse2(im, s_32, ss_128, coeffs_128);
                     jnt_2d_comp_avg_round_store_2x2_sse2(
@@ -1836,12 +1797,8 @@ static void jnt_convolve_2d_ver_6tap_avx2(const int16_t *const im_block, const i
             } while (y);
         }
     } else {
-#if !FIX_USE_NOINIT_VALUES
-        const __m256i factor_256          = _mm256_set1_epi32(factor);
-        const __m256i offset_comp_avg_256 = _mm256_set1_epi32(offset_comp_avg);
-#endif
-        const __m256i offset_avg_256      = _mm256_set1_epi32(offset_avg);
-        const __m256i offset_no_avg_256   = _mm256_set1_epi32(offset_no_avg);
+        const __m256i offset_avg_256    = _mm256_set1_epi32(offset_avg);
+        const __m256i offset_no_avg_256 = _mm256_set1_epi32(offset_no_avg);
         __m256i       coeffs_256[3];
 
         prepare_coeffs_6tap_avx2(filter_params_y, subpel_y_q4, coeffs_256);
@@ -1869,15 +1826,16 @@ static void jnt_convolve_2d_ver_6tap_avx2(const int16_t *const im_block, const i
 
             if (conv_params->do_average) {
                 if (conv_params->use_jnt_comp_avg) {
-#if FIX_USE_NOINIT_VALUES
-                    const int32_t  round_offset   = 1 << (offset_bits - round_1);
-                    const int32_t  factor         = conv_params->fwd_offset | (conv_params->bck_offset << 16);
-                    const int32_t offset_comp_avg = (round_offset + (round_offset >> 1)) * conv_params->bck_offset -
-                        (round_offset << DIST_PRECISION_BITS) - (round_offset << (DIST_PRECISION_BITS - 1)) +
+                    const int32_t round_offset = 1 << (offset_bits - round_1);
+                    const int32_t factor       = conv_params->fwd_offset |
+                        (conv_params->bck_offset << 16);
+                    const int32_t offset_comp_avg = (round_offset + (round_offset >> 1)) *
+                            conv_params->bck_offset -
+                        (round_offset << DIST_PRECISION_BITS) -
+                        (round_offset << (DIST_PRECISION_BITS - 1)) +
                         (1 << (round_bits + DIST_PRECISION_BITS - 1));
                     const __m256i factor_256          = _mm256_set1_epi32(factor);
                     const __m256i offset_comp_avg_256 = _mm256_set1_epi32(offset_comp_avg);
-#endif
                     do {
                         const __m256i res = xy_y_convolve_6tap_4x2_avx2(
                             im, s_64, ss_256, coeffs_256);
@@ -1933,15 +1891,16 @@ static void jnt_convolve_2d_ver_6tap_avx2(const int16_t *const im_block, const i
 
             if (conv_params->do_average) {
                 if (conv_params->use_jnt_comp_avg) {
-#if FIX_USE_NOINIT_VALUES
-                    const int32_t  round_offset   = 1 << (offset_bits - round_1);
-                    const int32_t  factor         = conv_params->fwd_offset | (conv_params->bck_offset << 16);
-                    const int32_t offset_comp_avg = (round_offset + (round_offset >> 1)) * conv_params->bck_offset -
-                        (round_offset << DIST_PRECISION_BITS) - (round_offset << (DIST_PRECISION_BITS - 1)) +
+                    const int32_t round_offset = 1 << (offset_bits - round_1);
+                    const int32_t factor       = conv_params->fwd_offset |
+                        (conv_params->bck_offset << 16);
+                    const int32_t offset_comp_avg = (round_offset + (round_offset >> 1)) *
+                            conv_params->bck_offset -
+                        (round_offset << DIST_PRECISION_BITS) -
+                        (round_offset << (DIST_PRECISION_BITS - 1)) +
                         (1 << (round_bits + DIST_PRECISION_BITS - 1));
                     const __m256i factor_256          = _mm256_set1_epi32(factor);
                     const __m256i offset_comp_avg_256 = _mm256_set1_epi32(offset_comp_avg);
-#endif
                     do {
                         xy_y_convolve_6tap_8x2_avx2(im, ss_256, coeffs_256, r);
                         jnt_2d_comp_avg_round_store_8x2_avx2(
@@ -1979,15 +1938,16 @@ static void jnt_convolve_2d_ver_6tap_avx2(const int16_t *const im_block, const i
 
             if (conv_params->do_average) {
                 if (conv_params->use_jnt_comp_avg) {
-#if FIX_USE_NOINIT_VALUES
-                    const int32_t  round_offset   = 1 << (offset_bits - round_1);
-                    const int32_t  factor         = conv_params->fwd_offset | (conv_params->bck_offset << 16);
-                    const int32_t offset_comp_avg = (round_offset + (round_offset >> 1)) * conv_params->bck_offset -
-                        (round_offset << DIST_PRECISION_BITS) - (round_offset << (DIST_PRECISION_BITS - 1)) +
+                    const int32_t round_offset = 1 << (offset_bits - round_1);
+                    const int32_t factor       = conv_params->fwd_offset |
+                        (conv_params->bck_offset << 16);
+                    const int32_t offset_comp_avg = (round_offset + (round_offset >> 1)) *
+                            conv_params->bck_offset -
+                        (round_offset << DIST_PRECISION_BITS) -
+                        (round_offset << (DIST_PRECISION_BITS - 1)) +
                         (1 << (round_bits + DIST_PRECISION_BITS - 1));
                     const __m256i factor_256          = _mm256_set1_epi32(factor);
                     const __m256i offset_comp_avg_256 = _mm256_set1_epi32(offset_comp_avg);
-#endif
                     do {
                         xy_y_convolve_6tap_16x2_avx2(im, 16, s_256, ss_256, tt_256, coeffs_256, r);
                         jnt_2d_comp_avg_round_store_16x2_avx2(
@@ -2035,15 +1995,16 @@ static void jnt_convolve_2d_ver_6tap_avx2(const int16_t *const im_block, const i
 
                 if (conv_params->do_average) {
                     if (conv_params->use_jnt_comp_avg) {
-#if FIX_USE_NOINIT_VALUES
-                    const int32_t  round_offset   = 1 << (offset_bits - round_1);
-                    const int32_t  factor         = conv_params->fwd_offset | (conv_params->bck_offset << 16);
-                    const int32_t offset_comp_avg = (round_offset + (round_offset >> 1)) * conv_params->bck_offset -
-                        (round_offset << DIST_PRECISION_BITS) - (round_offset << (DIST_PRECISION_BITS - 1)) +
-                        (1 << (round_bits + DIST_PRECISION_BITS - 1));
-                    const __m256i factor_256          = _mm256_set1_epi32(factor);
-                    const __m256i offset_comp_avg_256 = _mm256_set1_epi32(offset_comp_avg);
-#endif
+                        const int32_t round_offset = 1 << (offset_bits - round_1);
+                        const int32_t factor       = conv_params->fwd_offset |
+                            (conv_params->bck_offset << 16);
+                        const int32_t offset_comp_avg = (round_offset + (round_offset >> 1)) *
+                                conv_params->bck_offset -
+                            (round_offset << DIST_PRECISION_BITS) -
+                            (round_offset << (DIST_PRECISION_BITS - 1)) +
+                            (1 << (round_bits + DIST_PRECISION_BITS - 1));
+                        const __m256i factor_256          = _mm256_set1_epi32(factor);
+                        const __m256i offset_comp_avg_256 = _mm256_set1_epi32(offset_comp_avg);
                         do {
                             xy_y_convolve_6tap_16x2_avx2(
                                 s, w, s_256[0], ss_256[0], tt_256[0], coeffs_256, r0);
@@ -2104,20 +2065,13 @@ static void jnt_convolve_2d_ver_8tap_avx2(const int16_t *const im_block, const i
                                           const int32_t                   subpel_y_q4,
                                           const ConvolveParams *const conv_params, uint8_t *dst8,
                                           const int32_t dst8_stride) {
-    const int32_t  dst_stride     = conv_params->dst_stride;
-    const int32_t  bd             = 8;
-    const int32_t  round_0        = 3;
-    const int16_t *im             = im_block;
-    const int32_t  round_1        = COMPOUND_ROUND1_BITS;
-    const int32_t  offset_bits    = bd + 2 * FILTER_BITS - round_0; // 19
-    const int32_t  round_bits     = 2 * FILTER_BITS - round_0 - round_1; // 4
-#if !FIX_USE_NOINIT_VALUES
-    const int32_t  round_offset   = 1 << (offset_bits - round_1);
-    const int32_t  factor         = conv_params->fwd_offset | (conv_params->bck_offset << 16);
-    const int32_t offset_comp_avg = (round_offset + (round_offset >> 1)) * conv_params->bck_offset -
-        (round_offset << DIST_PRECISION_BITS) - (round_offset << (DIST_PRECISION_BITS - 1)) +
-        (1 << (round_bits + DIST_PRECISION_BITS - 1));
-#endif
+    const int32_t  dst_stride  = conv_params->dst_stride;
+    const int32_t  bd          = 8;
+    const int32_t  round_0     = 3;
+    const int16_t *im          = im_block;
+    const int32_t  round_1     = COMPOUND_ROUND1_BITS;
+    const int32_t  offset_bits = bd + 2 * FILTER_BITS - round_0; // 19
+    const int32_t  round_bits  = 2 * FILTER_BITS - round_0 - round_1; // 4
     const int32_t offset_avg = (1 << (round_1 - 1)) + (1 << (round_bits + round_1)) -
         (1 << offset_bits) - (1 << (offset_bits - 1));
     const int32_t offset_no_avg = (1 << (round_1 - 1)) + (1 << offset_bits) +
@@ -2125,12 +2079,8 @@ static void jnt_convolve_2d_ver_8tap_avx2(const int16_t *const im_block, const i
     ConvBufType *dst = conv_params->dst;
 
     if (w == 2) {
-#if !FIX_USE_NOINIT_VALUES
-        const __m128i factor_128          = _mm_set1_epi32(factor);
-        const __m128i offset_comp_avg_128 = _mm_set1_epi32(offset_comp_avg);
-#endif
-        const __m128i offset_avg_128      = _mm_set1_epi32(offset_avg);
-        const __m128i offset_no_avg_128   = _mm_set1_epi32(offset_no_avg);
+        const __m128i offset_avg_128    = _mm_set1_epi32(offset_avg);
+        const __m128i offset_no_avg_128 = _mm_set1_epi32(offset_no_avg);
         __m128i       coeffs_128[4], s_32[8], ss_128[4];
 
         prepare_coeffs_8tap_sse2(filter_params_y, subpel_y_q4, coeffs_128);
@@ -2158,15 +2108,15 @@ static void jnt_convolve_2d_ver_8tap_avx2(const int16_t *const im_block, const i
 
         if (conv_params->do_average) {
             if (conv_params->use_jnt_comp_avg) {
-#if FIX_USE_NOINIT_VALUES
-                    const int32_t  round_offset   = 1 << (offset_bits - round_1);
-                    const int32_t  factor         = conv_params->fwd_offset | (conv_params->bck_offset << 16);
-                    const int32_t offset_comp_avg = (round_offset + (round_offset >> 1)) * conv_params->bck_offset -
-                        (round_offset << DIST_PRECISION_BITS) - (round_offset << (DIST_PRECISION_BITS - 1)) +
-                        (1 << (round_bits + DIST_PRECISION_BITS - 1));
-                    const __m128i factor_128          = _mm_set1_epi32(factor);
-                    const __m128i offset_comp_avg_128 = _mm_set1_epi32(offset_comp_avg);
-#endif
+                const int32_t round_offset = 1 << (offset_bits - round_1);
+                const int32_t factor = conv_params->fwd_offset | (conv_params->bck_offset << 16);
+                const int32_t offset_comp_avg = (round_offset + (round_offset >> 1)) *
+                        conv_params->bck_offset -
+                    (round_offset << DIST_PRECISION_BITS) -
+                    (round_offset << (DIST_PRECISION_BITS - 1)) +
+                    (1 << (round_bits + DIST_PRECISION_BITS - 1));
+                const __m128i factor_128          = _mm_set1_epi32(factor);
+                const __m128i offset_comp_avg_128 = _mm_set1_epi32(offset_comp_avg);
                 do {
                     const __m128i res = xy_y_convolve_8tap_2x2_sse2(im, s_32, ss_128, coeffs_128);
                     jnt_2d_comp_avg_round_store_2x2_sse2(
@@ -2197,12 +2147,8 @@ static void jnt_convolve_2d_ver_8tap_avx2(const int16_t *const im_block, const i
             } while (y);
         }
     } else {
-#if !FIX_USE_NOINIT_VALUES
-        const __m256i factor_256          = _mm256_set1_epi32(factor);
-        const __m256i offset_comp_avg_256 = _mm256_set1_epi32(offset_comp_avg);
-#endif
-        const __m256i offset_avg_256      = _mm256_set1_epi32(offset_avg);
-        const __m256i offset_no_avg_256   = _mm256_set1_epi32(offset_no_avg);
+        const __m256i offset_avg_256    = _mm256_set1_epi32(offset_avg);
+        const __m256i offset_no_avg_256 = _mm256_set1_epi32(offset_no_avg);
         __m256i       coeffs_256[4];
 
         prepare_coeffs_8tap_avx2(filter_params_y, subpel_y_q4, coeffs_256);
@@ -2235,15 +2181,16 @@ static void jnt_convolve_2d_ver_8tap_avx2(const int16_t *const im_block, const i
 
             if (conv_params->do_average) {
                 if (conv_params->use_jnt_comp_avg) {
-#if FIX_USE_NOINIT_VALUES
-                    const int32_t  round_offset   = 1 << (offset_bits - round_1);
-                    const int32_t  factor         = conv_params->fwd_offset | (conv_params->bck_offset << 16);
-                    const int32_t offset_comp_avg = (round_offset + (round_offset >> 1)) * conv_params->bck_offset -
-                        (round_offset << DIST_PRECISION_BITS) - (round_offset << (DIST_PRECISION_BITS - 1)) +
+                    const int32_t round_offset = 1 << (offset_bits - round_1);
+                    const int32_t factor       = conv_params->fwd_offset |
+                        (conv_params->bck_offset << 16);
+                    const int32_t offset_comp_avg = (round_offset + (round_offset >> 1)) *
+                            conv_params->bck_offset -
+                        (round_offset << DIST_PRECISION_BITS) -
+                        (round_offset << (DIST_PRECISION_BITS - 1)) +
                         (1 << (round_bits + DIST_PRECISION_BITS - 1));
                     const __m256i factor_256          = _mm256_set1_epi32(factor);
                     const __m256i offset_comp_avg_256 = _mm256_set1_epi32(offset_comp_avg);
-#endif
                     do {
                         const __m256i res = xy_y_convolve_8tap_4x2_avx2(
                             im, s_64, ss_256, coeffs_256);
@@ -2297,15 +2244,16 @@ static void jnt_convolve_2d_ver_8tap_avx2(const int16_t *const im_block, const i
 
             if (conv_params->do_average) {
                 if (conv_params->use_jnt_comp_avg) {
-#if FIX_USE_NOINIT_VALUES
-                    const int32_t  round_offset   = 1 << (offset_bits - round_1);
-                    const int32_t  factor         = conv_params->fwd_offset | (conv_params->bck_offset << 16);
-                    const int32_t offset_comp_avg = (round_offset + (round_offset >> 1)) * conv_params->bck_offset -
-                        (round_offset << DIST_PRECISION_BITS) - (round_offset << (DIST_PRECISION_BITS - 1)) +
+                    const int32_t round_offset = 1 << (offset_bits - round_1);
+                    const int32_t factor       = conv_params->fwd_offset |
+                        (conv_params->bck_offset << 16);
+                    const int32_t offset_comp_avg = (round_offset + (round_offset >> 1)) *
+                            conv_params->bck_offset -
+                        (round_offset << DIST_PRECISION_BITS) -
+                        (round_offset << (DIST_PRECISION_BITS - 1)) +
                         (1 << (round_bits + DIST_PRECISION_BITS - 1));
                     const __m256i factor_256          = _mm256_set1_epi32(factor);
                     const __m256i offset_comp_avg_256 = _mm256_set1_epi32(offset_comp_avg);
-#endif
                     do {
                         xy_y_convolve_8tap_8x2_avx2(im, ss_256, coeffs_256, r);
                         jnt_2d_comp_avg_round_store_8x2_avx2(
@@ -2346,15 +2294,16 @@ static void jnt_convolve_2d_ver_8tap_avx2(const int16_t *const im_block, const i
 
             if (conv_params->do_average) {
                 if (conv_params->use_jnt_comp_avg) {
-#if FIX_USE_NOINIT_VALUES
-                    const int32_t  round_offset   = 1 << (offset_bits - round_1);
-                    const int32_t  factor         = conv_params->fwd_offset | (conv_params->bck_offset << 16);
-                    const int32_t offset_comp_avg = (round_offset + (round_offset >> 1)) * conv_params->bck_offset -
-                        (round_offset << DIST_PRECISION_BITS) - (round_offset << (DIST_PRECISION_BITS - 1)) +
+                    const int32_t round_offset = 1 << (offset_bits - round_1);
+                    const int32_t factor       = conv_params->fwd_offset |
+                        (conv_params->bck_offset << 16);
+                    const int32_t offset_comp_avg = (round_offset + (round_offset >> 1)) *
+                            conv_params->bck_offset -
+                        (round_offset << DIST_PRECISION_BITS) -
+                        (round_offset << (DIST_PRECISION_BITS - 1)) +
                         (1 << (round_bits + DIST_PRECISION_BITS - 1));
                     const __m256i factor_256          = _mm256_set1_epi32(factor);
                     const __m256i offset_comp_avg_256 = _mm256_set1_epi32(offset_comp_avg);
-#endif
                     do {
                         xy_y_convolve_8tap_16x2_avx2(im, 16, coeffs_256, s_256, ss_256, tt_256, r);
                         jnt_2d_comp_avg_round_store_16x2_avx2(
@@ -2407,15 +2356,16 @@ static void jnt_convolve_2d_ver_8tap_avx2(const int16_t *const im_block, const i
 
                 if (conv_params->do_average) {
                     if (conv_params->use_jnt_comp_avg) {
-#if FIX_USE_NOINIT_VALUES
-                    const int32_t  round_offset   = 1 << (offset_bits - round_1);
-                    const int32_t  factor         = conv_params->fwd_offset | (conv_params->bck_offset << 16);
-                    const int32_t offset_comp_avg = (round_offset + (round_offset >> 1)) * conv_params->bck_offset -
-                        (round_offset << DIST_PRECISION_BITS) - (round_offset << (DIST_PRECISION_BITS - 1)) +
-                        (1 << (round_bits + DIST_PRECISION_BITS - 1));
-                    const __m256i factor_256          = _mm256_set1_epi32(factor);
-                    const __m256i offset_comp_avg_256 = _mm256_set1_epi32(offset_comp_avg);
-#endif
+                        const int32_t round_offset = 1 << (offset_bits - round_1);
+                        const int32_t factor       = conv_params->fwd_offset |
+                            (conv_params->bck_offset << 16);
+                        const int32_t offset_comp_avg = (round_offset + (round_offset >> 1)) *
+                                conv_params->bck_offset -
+                            (round_offset << DIST_PRECISION_BITS) -
+                            (round_offset << (DIST_PRECISION_BITS - 1)) +
+                            (1 << (round_bits + DIST_PRECISION_BITS - 1));
+                        const __m256i factor_256          = _mm256_set1_epi32(factor);
+                        const __m256i offset_comp_avg_256 = _mm256_set1_epi32(offset_comp_avg);
                         do {
                             xy_y_convolve_8tap_16x2_avx2(
                                 s, w, coeffs_256, s_256[0], ss_256[0], tt_256[0], r0);

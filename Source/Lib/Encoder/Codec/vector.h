@@ -42,16 +42,10 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 /***** STRUCTURES *****/
 
 typedef struct Vector {
-#if OPT_IBC_HASH_SEARCH
     uint32_t size;
     uint32_t capacity;
     uint32_t element_size;
-#else
-    size_t size;
-    size_t capacity;
-    size_t element_size;
-#endif
-    void *data;
+    void *   data;
 } Vector;
 
 typedef struct Iterator {
@@ -62,11 +56,7 @@ typedef struct Iterator {
 /***** METHODS *****/
 
 /* Constructor */
-#if OPT_IBC_HASH_SEARCH
-int svt_aom_vector_setup(Vector* vector, uint32_t capacity, uint32_t element_size);
-#else
-int svt_aom_vector_setup(Vector *vector, size_t capacity, size_t element_size);
-#endif
+int svt_aom_vector_setup(Vector *vector, uint32_t capacity, uint32_t element_size);
 
 /* Destructor */
 int svt_aom_vector_destroy(Vector *vector);
@@ -95,10 +85,6 @@ bool _vector_should_grow(Vector *vector);
 void *_vector_offset(Vector *vector, size_t index);
 void  _vector_assign(Vector *vector, size_t index, void *element);
 int   _vector_adjust_capacity(Vector *vector);
-#if OPT_IBC_HASH_SEARCH
-int _vector_reallocate(Vector* vector, uint32_t new_capacity);
-#else
-int   _vector_reallocate(Vector *vector, size_t new_capacity);
-#endif
+int   _vector_reallocate(Vector *vector, uint32_t new_capacity);
 
 #endif /* VECTOR_H */

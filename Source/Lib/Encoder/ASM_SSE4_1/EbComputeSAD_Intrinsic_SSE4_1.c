@@ -16,10 +16,8 @@
 #include "EbUtility.h"
 #include <smmintrin.h>
 
-#if FTR_USE_PSAD
 #include "EbComputeSAD.h"
 #include "mcomp.h"
-#endif
 
 #define UPDATE_BEST(s, k, offset)      \
     tem_sum = _mm_extract_epi32(s, k); \
@@ -107,9 +105,7 @@ void svt_sad_loop_kernel_sse4_1_intrin(
     uint32_t  block_width, // input parameter, block width (N)
     uint64_t *best_sad, int16_t *x_search_center, int16_t *y_search_center,
     uint32_t src_stride_raw, // input parameter, source stride (no line skipping)
-#if FTR_PREHME_SUB
     uint8_t skip_search_line,
-#endif
     int16_t search_area_width, int16_t search_area_height) {
     int16_t        x_best = *x_search_center, y_best = *y_search_center;
     uint32_t       low_sum = 0xffffff;
@@ -526,14 +522,12 @@ void svt_sad_loop_kernel_sse4_1_intrin(
     case 16:
         if (block_height <= 16) {
             for (i = 0; i < search_area_height; i++) {
-#if FIX_FTR_PREHME_SUB
                 if (skip_search_line) {
                     if ((i & 1) == 0) {
                         ref += src_stride_raw;
                         continue;
                     }
                 }
-#endif
                 for (j = 0; j <= search_area_width - 8; j += 8) {
                     p_src = src;
                     p_ref = ref + j;
@@ -2055,9 +2049,7 @@ void svt_sad_loop_kernel_sse4_1_intrin(
                               x_search_center,
                               y_search_center,
                               src_stride_raw,
-#if FTR_PREHME_SUB
-                             skip_search_line,
-#endif
+                              skip_search_line,
                               search_area_width,
                               search_area_height);
         return;
@@ -2068,40 +2060,36 @@ void svt_sad_loop_kernel_sse4_1_intrin(
     *y_search_center = y_best;
 }
 
-#if SSE_CODE_OPT
-void svt_ext_sad_calculation_8x8_16x16_sse4_1_intrin(uint8_t *src, uint32_t src_stride, uint8_t *ref,
-                                                   uint32_t ref_stride, uint32_t *p_best_sad_8x8,
-                                                   uint32_t *p_best_sad_16x16,
-                                                   uint32_t *p_best_mv8x8, uint32_t *p_best_mv16x16,
-                                                   uint32_t mv, uint32_t *p_sad16x16,
-                                                   uint32_t *p_sad8x8, EbBool sub_sad) {
+void svt_ext_sad_calculation_8x8_16x16_sse4_1_intrin(
+    uint8_t *src, uint32_t src_stride, uint8_t *ref, uint32_t ref_stride, uint32_t *p_best_sad_8x8,
+    uint32_t *p_best_sad_16x16, uint32_t *p_best_mv8x8, uint32_t *p_best_mv16x16, uint32_t mv,
+    uint32_t *p_sad16x16, uint32_t *p_sad8x8, EbBool sub_sad) {
     __m128i xmm_sad16x16, xmm_sad16x16_total, sad8x8_0_3;
     __m128i sad8x8_less_than_bitmask, best_mv8x8;
     __m128i best_sad8x8, xmm_best_sad8x8, xmm_best_mv8x8;
     __m128i sad8x8_0_1, sad8x8_2_3, src_128_1, src_128_2, ref_128_1, ref_128_2;
     __m128i xmm_mv = _mm_set1_epi32(mv);
 
-
-    src_128_1 = _mm_loadu_si128((__m128i const *)(src + 0 * src_stride));
-    src_128_2 = _mm_loadu_si128((__m128i const *)(src + 8 * src_stride));
-    ref_128_1 = _mm_loadu_si128((__m128i const *)(ref + 0 * ref_stride));
-    ref_128_2 = _mm_loadu_si128((__m128i const *)(ref + 8 * ref_stride));
+    src_128_1  = _mm_loadu_si128((__m128i const *)(src + 0 * src_stride));
+    src_128_2  = _mm_loadu_si128((__m128i const *)(src + 8 * src_stride));
+    ref_128_1  = _mm_loadu_si128((__m128i const *)(ref + 0 * ref_stride));
+    ref_128_2  = _mm_loadu_si128((__m128i const *)(ref + 8 * ref_stride));
     sad8x8_0_1 = _mm_sad_epu8(src_128_1, ref_128_1);
     sad8x8_2_3 = _mm_sad_epu8(src_128_2, ref_128_2);
 
-    src_128_1 = _mm_loadu_si128((__m128i const *)(src + 2 * src_stride));
-    src_128_2 = _mm_loadu_si128((__m128i const *)(src + 10 * src_stride));
-    ref_128_1 = _mm_loadu_si128((__m128i const *)(ref + 2 * ref_stride));
-    ref_128_2 = _mm_loadu_si128((__m128i const *)(ref + 10 * ref_stride));
+    src_128_1  = _mm_loadu_si128((__m128i const *)(src + 2 * src_stride));
+    src_128_2  = _mm_loadu_si128((__m128i const *)(src + 10 * src_stride));
+    ref_128_1  = _mm_loadu_si128((__m128i const *)(ref + 2 * ref_stride));
+    ref_128_2  = _mm_loadu_si128((__m128i const *)(ref + 10 * ref_stride));
     sad8x8_0_1 = _mm_add_epi32(_mm_sad_epu8(src_128_1, ref_128_1), sad8x8_0_1);
     sad8x8_2_3 = _mm_add_epi32(_mm_sad_epu8(src_128_2, ref_128_2), sad8x8_2_3);
 
-    src_128_1      = _mm_loadu_si128((__m128i const *)(src + 4 * src_stride));
-    src_128_2      = _mm_loadu_si128((__m128i const *)(src + 12 * src_stride));
-    ref_128_1      = _mm_loadu_si128((__m128i const *)(ref + 4 * ref_stride));
-    ref_128_2      = _mm_loadu_si128((__m128i const *)(ref + 12 * ref_stride));
-    sad8x8_0_1     = _mm_add_epi32(_mm_sad_epu8(src_128_1, ref_128_1), sad8x8_0_1);
-    sad8x8_2_3     = _mm_add_epi32(_mm_sad_epu8(src_128_2, ref_128_2), sad8x8_2_3);
+    src_128_1  = _mm_loadu_si128((__m128i const *)(src + 4 * src_stride));
+    src_128_2  = _mm_loadu_si128((__m128i const *)(src + 12 * src_stride));
+    ref_128_1  = _mm_loadu_si128((__m128i const *)(ref + 4 * ref_stride));
+    ref_128_2  = _mm_loadu_si128((__m128i const *)(ref + 12 * ref_stride));
+    sad8x8_0_1 = _mm_add_epi32(_mm_sad_epu8(src_128_1, ref_128_1), sad8x8_0_1);
+    sad8x8_2_3 = _mm_add_epi32(_mm_sad_epu8(src_128_2, ref_128_2), sad8x8_2_3);
 
     src_128_1  = _mm_loadu_si128((__m128i const *)(src + 6 * src_stride));
     src_128_2  = _mm_loadu_si128((__m128i const *)(src + 14 * src_stride));
@@ -2113,8 +2101,7 @@ void svt_ext_sad_calculation_8x8_16x16_sse4_1_intrin(uint8_t *src, uint32_t src_
     if (sub_sad) {
         sad8x8_0_1 = _mm_slli_epi32(sad8x8_0_1, 1);
         sad8x8_2_3 = _mm_slli_epi32(sad8x8_2_3, 1);
-    }
-    else {
+    } else {
         src_128_1  = _mm_loadu_si128((__m128i const *)(src + 1 * src_stride));
         src_128_2  = _mm_loadu_si128((__m128i const *)(src + 9 * src_stride));
         ref_128_1  = _mm_loadu_si128((__m128i const *)(ref + 1 * ref_stride));
@@ -2168,15 +2155,13 @@ void svt_ext_sad_calculation_8x8_16x16_sse4_1_intrin(uint8_t *src, uint32_t src_
 }
 
 void svt_ext_all_sad_calculation_8x8_16x16_sse4_1(uint8_t *src, uint32_t src_stride, uint8_t *ref,
-                                                uint32_t ref_stride, uint32_t mv,
-#if OPT_TFILTER
-                                                uint8_t out_8x8,
-#endif
-                                                uint32_t *p_best_sad_8x8,
-                                                uint32_t *p_best_sad_16x16, uint32_t *p_best_mv8x8,
-                                                uint32_t *p_best_mv16x16,
-                                                uint32_t  p_eight_sad16x16[16][8],
-                                                uint32_t p_eight_sad8x8[64][8], EbBool sub_sad) {
+                                                  uint32_t ref_stride, uint32_t mv,
+                                                  uint8_t out_8x8,
+                                                  uint32_t *p_best_sad_8x8,
+                                                  uint32_t *p_best_sad_16x16,
+                                                  uint32_t *p_best_mv8x8, uint32_t *p_best_mv16x16,
+                                                  uint32_t p_eight_sad16x16[16][8],
+                                                  uint32_t p_eight_sad8x8[64][8], EbBool sub_sad) {
     static const char offsets[16] = {0, 1, 4, 5, 2, 3, 6, 7, 8, 9, 12, 13, 10, 11, 14, 15};
 
     //---- 16x16 : 0, 1, 4, 5, 2, 3, 6, 7, 8, 9, 12, 13, 10, 11, 14, 15
@@ -2186,17 +2171,17 @@ void svt_ext_all_sad_calculation_8x8_16x16_sse4_1(uint8_t *src, uint32_t src_str
             const uint32_t start_8x8_pos   = 4 * start_16x16_pos;
             const uint8_t *s               = src + 16 * y * src_stride + 16 * x;
             const uint8_t *r               = ref + 16 * y * ref_stride + 16 * x;
-            __m128i sad0, sad1, sad2, sad3;
+            __m128i        sad0, sad1, sad2, sad3;
             sad0 = sad1 = sad2 = sad3 = _mm_setzero_si128();
 
             if (sub_sad) {
                 for (int i = 0; i < 4; i++) {
-                    const __m128i src01   = _mm_loadu_si128((__m128i *)(s + 0 * src_stride));
-                    const __m128i src23   = _mm_loadu_si128((__m128i *)(s + 8 * src_stride));
-                    const __m128i ref0    = _mm_loadu_si128((__m128i *)(r + 0 * ref_stride + 0));
-                    const __m128i ref1    = _mm_loadu_si128((__m128i *)(r + 0 * ref_stride + 8));
-                    const __m128i ref2    = _mm_loadu_si128((__m128i *)(r + 8 * ref_stride + 0));
-                    const __m128i ref3    = _mm_loadu_si128((__m128i *)(r + 8 * ref_stride + 8));
+                    const __m128i src01 = _mm_loadu_si128((__m128i *)(s + 0 * src_stride));
+                    const __m128i src23 = _mm_loadu_si128((__m128i *)(s + 8 * src_stride));
+                    const __m128i ref0  = _mm_loadu_si128((__m128i *)(r + 0 * ref_stride + 0));
+                    const __m128i ref1  = _mm_loadu_si128((__m128i *)(r + 0 * ref_stride + 8));
+                    const __m128i ref2  = _mm_loadu_si128((__m128i *)(r + 8 * ref_stride + 0));
+                    const __m128i ref3  = _mm_loadu_si128((__m128i *)(r + 8 * ref_stride + 8));
 
                     sad0 = _mm_adds_epu16(sad0, _mm_mpsadbw_epu8(ref0, src01, 0));
                     sad2 = _mm_adds_epu16(sad2, _mm_mpsadbw_epu8(ref2, src23, 0));
@@ -2257,27 +2242,21 @@ void svt_ext_all_sad_calculation_8x8_16x16_sse4_1(uint8_t *src, uint32_t src_str
             best_sad8x8         = _mm_min_epi32(best_sad8x8, sad8x8);
             _mm_storeu_si128((__m128i *)(p_best_sad_8x8 + start_8x8_pos), best_sad8x8);
 
-#if OPT_TFILTER
             const __m128i mvs = _mm_set1_epi32(mv);
             if (out_8x8) {
-#endif
                 __m128i best_mv8x8 = _mm_loadu_si128((__m128i *)(p_best_mv8x8 + start_8x8_pos));
-#if !OPT_TFILTER
-                const __m128i mvs = _mm_set1_epi32(mv);
-#endif
                 const __m128i mv8x8 = _mm_add_epi16(mvs, pos8x8);
                 best_mv8x8          = _mm_blendv_epi8(best_mv8x8, mv8x8, mask);
                 _mm_storeu_si128((__m128i *)(p_best_mv8x8 + start_8x8_pos), best_mv8x8);
-#if OPT_TFILTER
             }
-#endif
             const __m128i sum01       = _mm_add_epi16(sad0, sad1);
             const __m128i sum23       = _mm_add_epi16(sad2, sad3);
             const __m128i sad16x16_16 = _mm_add_epi16(sum01, sum23);
 
-            _mm_storeu_si128((__m128i *)(p_eight_sad16x16[start_16x16_pos]), _mm_cvtepu16_epi32(sad16x16_16));
-            _mm_storeu_si128((__m128i *)(p_eight_sad16x16[start_16x16_pos] + 4), _mm_cvtepu16_epi32(_mm_srli_si128(sad16x16_16, 8)));
-
+            _mm_storeu_si128((__m128i *)(p_eight_sad16x16[start_16x16_pos]),
+                             _mm_cvtepu16_epi32(sad16x16_16));
+            _mm_storeu_si128((__m128i *)(p_eight_sad16x16[start_16x16_pos] + 4),
+                             _mm_cvtepu16_epi32(_mm_srli_si128(sad16x16_16, 8)));
 
             const __m128i  minpos16x16 = _mm_minpos_epu16(sad16x16_16);
             const uint32_t min16x16    = _mm_extract_epi16(minpos16x16, 0);
@@ -2294,9 +2273,6 @@ void svt_ext_all_sad_calculation_8x8_16x16_sse4_1(uint8_t *src, uint32_t src_str
     }
 }
 
-
-
-#if FTR_USE_PSAD
 int fp_mv_err_cost(const MV *mv, const MV_COST_PARAMS *mv_cost_params);
 #define UPDATE_BEST_PME_32(s, k, offset)                                \
     tem_sum_1   = _mm_extract_epi32(s, k);                              \
@@ -2321,16 +2297,17 @@ int fp_mv_err_cost(const MV *mv, const MV_COST_PARAMS *mv_cost_params);
     }
 
 void svt_pme_sad_loop_kernel_sse4_1(const struct svt_mv_cost_param *mv_cost_params,
-                                  uint8_t * src, // input parameter, source samples Ptr
-                                  uint32_t  src_stride, // input parameter, source stride
-                                  uint8_t * ref, // input parameter, reference samples Ptr
-                                  uint32_t  ref_stride, // input parameter, reference stride
-                                  uint32_t  block_height, // input parameter, block height (M)
-                                  uint32_t  block_width, // input parameter, block width (N)
-                                  uint32_t *best_cost, int16_t *best_mvx, int16_t *best_mvy,
-                                  int16_t search_position_start_x, int16_t search_position_start_y,
-                                  int16_t search_area_width, int16_t search_area_height,
-                                  int16_t search_step, int16_t mvx, int16_t mvy) {
+                                    uint8_t * src, // input parameter, source samples Ptr
+                                    uint32_t  src_stride, // input parameter, source stride
+                                    uint8_t * ref, // input parameter, reference samples Ptr
+                                    uint32_t  ref_stride, // input parameter, reference stride
+                                    uint32_t  block_height, // input parameter, block height (M)
+                                    uint32_t  block_width, // input parameter, block width (N)
+                                    uint32_t *best_cost, int16_t *best_mvx, int16_t *best_mvy,
+                                    int16_t search_position_start_x,
+                                    int16_t search_position_start_y, int16_t search_area_width,
+                                    int16_t search_area_height, int16_t search_step, int16_t mvx,
+                                    int16_t mvy) {
     int16_t        x_best = *best_mvx, y_best = *best_mvy;
     uint32_t       low_sum   = *best_cost;
     uint32_t       tem_sum_1 = 0;
@@ -2342,13 +2319,9 @@ void svt_pme_sad_loop_kernel_sse4_1(const struct svt_mv_cost_param *mv_cost_para
     switch (block_width) {
     case 4:
         for (i = 0; i < search_area_height; i += search_step) {
-#if FTR_USE_PSAD
             for (j = 0; j <= search_area_width - 8; j += (8 + search_step - 1)) {
                 if ((search_area_width - j) < 8)
                     continue;
-#else
-            for (j = 0; j <= search_area_width - 8; j += 8) {
-#endif
                 p_src = src;
                 p_ref = ref + j;
                 s3    = _mm_setzero_si128();
@@ -2373,17 +2346,13 @@ void svt_pme_sad_loop_kernel_sse4_1(const struct svt_mv_cost_param *mv_cost_para
             }
             ref += search_step * ref_stride;
         }
-    break;
+        break;
 
     case 8:
         for (i = 0; i < search_area_height; i += search_step) {
-#if FTR_USE_PSAD
             for (j = 0; j <= search_area_width - 8; j += (8 + search_step - 1)) {
                 if ((search_area_width - j) < 8)
                     continue;
-#else
-            for (j = 0; j <= search_area_width - 8; j += 8) {
-#endif
                 p_src = src;
                 p_ref = ref + j;
                 s3 = s4 = _mm_setzero_si128();
@@ -2411,22 +2380,18 @@ void svt_pme_sad_loop_kernel_sse4_1(const struct svt_mv_cost_param *mv_cost_para
             }
             ref += search_step * ref_stride;
         }
-    break;
+        break;
 
     case 16:
         if (block_height <= 16) {
             for (i = 0; i < search_area_height; i += search_step) {
-#if FTR_USE_PSAD
                 for (j = 0; j <= search_area_width - 8; j += (8 + search_step - 1)) {
                     if ((search_area_width - j) < 8)
                         continue;
-#else
-                for (j = 0; j <= search_area_width - 8; j += 8) {
-#endif
                     p_src = src;
                     p_ref = ref + j;
                     s4 = s5 = _mm_setzero_si128();
-                    for (k = 0; k < block_height; k ++) {
+                    for (k = 0; k < block_height; k++) {
                         s0 = _mm_loadu_si128((__m128i *)p_ref);
                         s1 = _mm_loadu_si128((__m128i *)(p_ref + 8));
                         s2 = _mm_loadu_si128((__m128i *)p_src);
@@ -2453,13 +2418,9 @@ void svt_pme_sad_loop_kernel_sse4_1(const struct svt_mv_cost_param *mv_cost_para
             }
         } else {
             for (i = 0; i < search_area_height; i += search_step) {
-#if FTR_USE_PSAD
                 for (j = 0; j <= search_area_width - 8; j += (8 + search_step - 1)) {
                     if ((search_area_width - j) < 8)
                         continue;
-#else
-                for (j = 0; j <= search_area_width - 8; j += 8) {
-#endif
                     p_src = src;
                     p_ref = ref + j;
 
@@ -2509,13 +2470,9 @@ void svt_pme_sad_loop_kernel_sse4_1(const struct svt_mv_cost_param *mv_cost_para
 
     case 24:
         for (i = 0; i < search_area_height; i += search_step) {
-#if FTR_USE_PSAD
             for (j = 0; j <= search_area_width - 8; j += (8 + search_step - 1)) {
                 if ((search_area_width - j) < 8)
                     continue;
-#else
-            for (j = 0; j <= search_area_width - 8; j += 8) {
-#endif
                 p_src = src;
                 p_ref = ref + j;
                 s3 = s4 = s5 = s6 = _mm_setzero_si128();
@@ -2561,13 +2518,9 @@ void svt_pme_sad_loop_kernel_sse4_1(const struct svt_mv_cost_param *mv_cost_para
     case 32:
         if (block_height <= 32) {
             for (i = 0; i < search_area_height; i += search_step) {
-#if FTR_USE_PSAD
                 for (j = 0; j <= search_area_width - 8; j += (8 + (search_step - 1))) {
                     if ((search_area_width - j) < 8)
                         continue;
-#else
-                for (j = 0; j <= search_area_width - 8; j += 8) {
-#endif
                     p_src = src;
                     p_ref = ref + j;
                     s3 = s4 = s5 = s6 = _mm_setzero_si128();
@@ -2614,13 +2567,9 @@ void svt_pme_sad_loop_kernel_sse4_1(const struct svt_mv_cost_param *mv_cost_para
         } else {
             __m128i s9, s10, s11, s12;
             for (i = 0; i < search_area_height; i += search_step) {
-#if FTR_USE_PSAD
                 for (j = 0; j <= search_area_width - 8; j += (8 + search_step - 1)) {
                     if ((search_area_width - j) < 8)
                         continue;
-#else
-                for (j = 0; j <= search_area_width - 8; j += 8) {
-#endif
                     p_src = src;
                     p_ref = ref + j;
                     s3 = s4 = s5 = s6 = _mm_setzero_si128();
@@ -2701,13 +2650,9 @@ void svt_pme_sad_loop_kernel_sse4_1(const struct svt_mv_cost_param *mv_cost_para
         if (block_height <= 32) {
             __m128i s9, s10, s11, s12;
             for (i = 0; i < search_area_height; i += search_step) {
-#if FTR_USE_PSAD
                 for (j = 0; j <= search_area_width - 8; j += (8 + search_step - 1)) {
                     if ((search_area_width - j) < 8)
                         continue;
-#else
-                for (j = 0; j <= search_area_width - 8; j += 8) {
-#endif
                     p_src = src;
                     p_ref = ref + j;
                     s3 = s4 = s5 = s6 = _mm_setzero_si128();
@@ -2798,13 +2743,9 @@ void svt_pme_sad_loop_kernel_sse4_1(const struct svt_mv_cost_param *mv_cost_para
         } else {
             __m128i s9, s10;
             for (i = 0; i < search_area_height; i += search_step) {
-#if FTR_USE_PSAD
                 for (j = 0; j <= search_area_width - 8; j += (8 + search_step - 1)) {
                     if ((search_area_width - j) < 8)
                         continue;
-#else
-                for (j = 0; j <= search_area_width - 8; j += 8) {
-#endif
                     p_src = src;
                     p_ref = ref + j;
                     s9 = s10 = _mm_setzero_si128();
@@ -2867,13 +2808,9 @@ void svt_pme_sad_loop_kernel_sse4_1(const struct svt_mv_cost_param *mv_cost_para
         if (block_height <= 32) {
             __m128i s9, s10, s11, s12;
             for (i = 0; i < search_area_height; i += search_step) {
-#if FTR_USE_PSAD
                 for (j = 0; j <= search_area_width - 8; j += (8 + search_step - 1)) {
                     if ((search_area_width - j) < 8)
                         continue;
-#else
-                for (j = 0; j <= search_area_width - 8; j += 8) {
-#endif
                     p_src = src;
                     p_ref = ref + j;
                     s3 = s4 = s5 = s6 = _mm_setzero_si128();
@@ -2976,16 +2913,12 @@ void svt_pme_sad_loop_kernel_sse4_1(const struct svt_mv_cost_param *mv_cost_para
                 }
                 ref += search_step * ref_stride;
             }
-        } else{
+        } else {
             __m128i s9, s10;
             for (i = 0; i < search_area_height; i += search_step) {
-#if FTR_USE_PSAD
                 for (j = 0; j <= search_area_width - 8; j += (8 + search_step - 1)) {
                     if ((search_area_width - j) < 8)
                         continue;
-#else
-                for (j = 0; j <= search_area_width - 8; j += 8) {
-#endif
                     p_src = src;
                     p_ref = ref + j;
                     s9 = s10 = _mm_setzero_si128();
@@ -3050,17 +2983,12 @@ void svt_pme_sad_loop_kernel_sse4_1(const struct svt_mv_cost_param *mv_cost_para
             }
         }
         break;
-    case 128:
-    {
+    case 128: {
         __m128i s9, s10;
         for (i = 0; i < search_area_height; i += search_step) {
-#if FTR_USE_PSAD
             for (j = 0; j <= search_area_width - 8; j += (8 + search_step - 1)) {
                 if ((search_area_width - j) < 8)
                     continue;
-#else
-            for (j = 0; j <= search_area_width - 8; j += 8) {
-#endif
                 p_src = src;
                 p_ref = ref + j;
                 s9 = s10 = _mm_setzero_si128();
@@ -3152,8 +3080,7 @@ void svt_pme_sad_loop_kernel_sse4_1(const struct svt_mv_cost_param *mv_cost_para
             }
             ref += search_step * ref_stride;
         }
-    }
-        break;
+    } break;
 
     default:
         svt_pme_sad_loop_kernel_c(mv_cost_params,
@@ -3180,6 +3107,4 @@ void svt_pme_sad_loop_kernel_sse4_1(const struct svt_mv_cost_param *mv_cost_para
     *best_mvx  = x_best;
     *best_mvy  = y_best;
 }
-#endif
 
-#endif//SSE_CODE_OPT

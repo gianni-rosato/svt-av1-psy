@@ -50,10 +50,10 @@ extern EbErrorType svt_destroy_semaphore(EbHandle semaphore_handle);
 /**************************************
      * Mutex
      **************************************/
-extern EbHandle          svt_create_mutex(void);
-extern EbErrorType       svt_release_mutex(EbHandle mutex_handle);
-extern EbErrorType       svt_block_on_mutex(EbHandle mutex_handle);
-extern EbErrorType       svt_destroy_mutex(EbHandle mutex_handle);
+extern EbHandle    svt_create_mutex(void);
+extern EbErrorType svt_release_mutex(EbHandle mutex_handle);
+extern EbErrorType svt_block_on_mutex(EbHandle mutex_handle);
+extern EbErrorType svt_destroy_mutex(EbHandle mutex_handle);
 #ifdef _WIN32
 
 #define EB_CREATE_THREAD(pointer, thread_function, thread_context)    \

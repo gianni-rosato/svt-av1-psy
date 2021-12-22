@@ -3281,10 +3281,8 @@ int palette_color_index_context_lookup[MAX_COLOR_CONTEXT_HASH + 1] = {
     -1, -1, 0, -1, -1, 4, 3, 2, 1};
 
 #define NUM_PALETTE_NEIGHBORS 3 // left, top-left and top.
-#if SS_OPT_PALETTE_COST
 int av1_get_palette_color_index_context_optimized(const uint8_t *color_map, int stride, int r,
-                                                    int c, int *color_idx) {
-
+                                                  int c, int *color_idx) {
     assert(r > 0 || c > 0);
 
     // This goes in the order of left, top, and top-left. This has the advantage
@@ -3294,11 +3292,10 @@ int av1_get_palette_color_index_context_optimized(const uint8_t *color_map, int 
     int color_neighbors[NUM_PALETTE_NEIGHBORS];
     color_neighbors[0] = (c - 1 >= 0) ? color_map[r * stride + c - 1] : -1;
     color_neighbors[1] = (r - 1 >= 0) ? color_map[(r - 1) * stride + c] : -1;
-    color_neighbors[2] =
-        (c - 1 >= 0 && r - 1 >= 0) ? color_map[(r - 1) * stride + c - 1] : -1;
+    color_neighbors[2] = (c - 1 >= 0 && r - 1 >= 0) ? color_map[(r - 1) * stride + c - 1] : -1;
 
     // Since our array is so small, using a couple if statements is faster
-    int scores[NUM_PALETTE_NEIGHBORS] = { 2, 2, 1 };
+    int scores[NUM_PALETTE_NEIGHBORS] = {2, 2, 1};
     if (color_neighbors[0] == color_neighbors[1]) {
         scores[0] += scores[1];
         color_neighbors[1] = -1;
@@ -3307,19 +3304,17 @@ int av1_get_palette_color_index_context_optimized(const uint8_t *color_map, int 
             scores[0] += scores[2];
             color_neighbors[2] = -1;
         }
-    }
-    else if (color_neighbors[0] == color_neighbors[2]) {
+    } else if (color_neighbors[0] == color_neighbors[2]) {
         scores[0] += scores[2];
         color_neighbors[2] = -1;
-    }
-    else if (color_neighbors[1] == color_neighbors[2]) {
+    } else if (color_neighbors[1] == color_neighbors[2]) {
         scores[1] += scores[2];
         color_neighbors[2] = -1;
     }
 
-    int color_rank[NUM_PALETTE_NEIGHBORS] = { -1, -1, -1 };
-    int score_rank[NUM_PALETTE_NEIGHBORS] = { 0, 0, 0 };
-    int num_valid_colors = 0;
+    int color_rank[NUM_PALETTE_NEIGHBORS] = {-1, -1, -1};
+    int score_rank[NUM_PALETTE_NEIGHBORS] = {0, 0, 0};
+    int num_valid_colors                  = 0;
     for (int idx = 0; idx < NUM_PALETTE_NEIGHBORS; idx++) {
         if (color_neighbors[idx] != -1) {
             score_rank[num_valid_colors] = scores[idx];
@@ -3334,26 +3329,26 @@ int av1_get_palette_color_index_context_optimized(const uint8_t *color_map, int 
         (score_rank[0] == score_rank[1] && color_rank[0] > color_rank[1])) {
         const int tmp_score = score_rank[0];
         const int tmp_color = color_rank[0];
-        score_rank[0] = score_rank[1];
-        color_rank[0] = color_rank[1];
-        score_rank[1] = tmp_score;
-        color_rank[1] = tmp_color;
+        score_rank[0]       = score_rank[1];
+        color_rank[0]       = color_rank[1];
+        score_rank[1]       = tmp_score;
+        color_rank[1]       = tmp_color;
     }
     if (score_rank[0] < score_rank[2]) {
         const int tmp_score = score_rank[0];
         const int tmp_color = color_rank[0];
-        score_rank[0] = score_rank[2];
-        color_rank[0] = color_rank[2];
-        score_rank[2] = tmp_score;
-        color_rank[2] = tmp_color;
+        score_rank[0]       = score_rank[2];
+        color_rank[0]       = color_rank[2];
+        score_rank[2]       = tmp_score;
+        color_rank[2]       = tmp_color;
     }
     if (score_rank[1] < score_rank[2]) {
         const int tmp_score = score_rank[1];
         const int tmp_color = color_rank[1];
-        score_rank[1] = score_rank[2];
-        color_rank[1] = color_rank[2];
-        score_rank[2] = tmp_score;
-        color_rank[2] = tmp_color;
+        score_rank[1]       = score_rank[2];
+        color_rank[1]       = color_rank[2];
+        score_rank[2]       = tmp_score;
+        color_rank[2]       = tmp_color;
     }
 
     if (color_idx != NULL) {
@@ -3361,12 +3356,11 @@ int av1_get_palette_color_index_context_optimized(const uint8_t *color_map, int 
         // then we move up by 1 unless the current color is the same as one of the
         // neighbor
         const int current_color = *color_idx = color_map[r * stride + c];
-        int same_neighbor = -1;
+        int       same_neighbor              = -1;
         for (int idx = 0; idx < NUM_PALETTE_NEIGHBORS; idx++) {
             if (color_rank[idx] > current_color) {
                 (*color_idx)++;
-            }
-            else if (color_rank[idx] == current_color) {
+            } else if (color_rank[idx] == current_color) {
                 same_neighbor = idx;
             }
         }
@@ -3376,8 +3370,8 @@ int av1_get_palette_color_index_context_optimized(const uint8_t *color_map, int 
     }
 
     // Get hash value of context.
-    int color_index_ctx_hash = 0;
-    static const int hash_multipliers[NUM_PALETTE_NEIGHBORS] = { 1, 2, 2 };
+    int              color_index_ctx_hash                    = 0;
+    static const int hash_multipliers[NUM_PALETTE_NEIGHBORS] = {1, 2, 2};
     for (int idx = 0; idx < NUM_PALETTE_NEIGHBORS; ++idx) {
         color_index_ctx_hash += score_rank[idx] * hash_multipliers[idx];
     }
@@ -3385,66 +3379,11 @@ int av1_get_palette_color_index_context_optimized(const uint8_t *color_map, int 
     assert(color_index_ctx_hash <= MAX_COLOR_CONTEXT_HASH);
 
     // Lookup context from hash.
-    const int color_index_ctx =
-        palette_color_index_context_lookup[color_index_ctx_hash];
-    assert(color_index_ctx >= 0);
-    assert(color_index_ctx < PALETTE_COLOR_INDEX_CONTEXTS);
-    return color_index_ctx;
-}
-#else
-int av1_get_palette_color_index_context_optimized(const uint8_t *color_map, int stride, int r,
-                                                  int c, int palette_size, int *color_idx) {
-    assert(palette_size <= PALETTE_MAX_SIZE);
-    assert(r > 0 || c > 0);
-    uint8_t scores[PALETTE_MAX_SIZE]              = {0};
-    uint8_t inverse_color_order[PALETTE_MAX_SIZE] = {0, 1, 2, 3, 4, 5, 6, 7};
-    uint8_t color_order[PALETTE_MAX_SIZE]         = {0, 1, 2, 3, 4, 5, 6, 7};
-    int8_t  i;
-
-    if (c - 1 >= 0)
-        scores[color_map[r * stride + c - 1]] = 2;
-    if (c - 1 >= 0 && r - 1 >= 0)
-        scores[color_map[(r - 1) * stride + c - 1]] += 1;
-    if (r - 1 >= 0)
-        scores[color_map[(r - 1) * stride + c]] += 2;
-
-    // Get the top NUM_PALETTE_NEIGHBORS scores (sorted from large to small).
-    for (i = 0; i < NUM_PALETTE_NEIGHBORS; ++i) {
-        uint8_t max     = scores[i];
-        int8_t  max_idx = i;
-        for (int8_t j = i + 1; j < palette_size; ++j) {
-            if (scores[j] > max) {
-                max     = scores[j];
-                max_idx = j;
-            }
-        }
-        if (max_idx != i) {
-            const uint8_t max_color_order = color_order[max_idx];
-            for (int8_t k = max_idx; k > i; --k) {
-                scores[k]                           = scores[k - 1];
-                color_order[k]                      = color_order[k - 1];
-                inverse_color_order[color_order[k]] = k;
-            }
-            scores[i]                            = max;
-            color_order[i]                       = max_color_order;
-            inverse_color_order[max_color_order] = i;
-        }
-    }
-
-    if (color_idx != NULL)
-        *color_idx = inverse_color_order[color_map[r * stride + c]];
-
-    int color_index_ctx_hash = scores[0] + scores[1] * 2 + scores[2] * 2;
-
-    assert(color_index_ctx_hash > 0);
-    assert(color_index_ctx_hash <= MAX_COLOR_CONTEXT_HASH);
-
     const int color_index_ctx = palette_color_index_context_lookup[color_index_ctx_hash];
     assert(color_index_ctx >= 0);
     assert(color_index_ctx < PALETTE_COLOR_INDEX_CONTEXTS);
     return color_index_ctx;
 }
-#endif
 #undef NUM_PALETTE_NEIGHBORS
 #undef MAX_COLOR_CONTEXT_HASH
 

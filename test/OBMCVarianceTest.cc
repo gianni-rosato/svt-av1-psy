@@ -1,13 +1,14 @@
 /*
-* Copyright(c) 2019 Netflix, Inc.
-*
-* This source code is subject to the terms of the BSD 2 Clause License and
-* the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
-* was not distributed with this source code in the LICENSE file, you can
-* obtain it at https://www.aomedia.org/license/software-license. If the Alliance for Open
-* Media Patent License 1.0 was not distributed with this source code in the
-* PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
-*/
+ * Copyright(c) 2019 Netflix, Inc.
+ *
+ * This source code is subject to the terms of the BSD 2 Clause License and
+ * the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
+ * was not distributed with this source code in the LICENSE file, you can
+ * obtain it at https://www.aomedia.org/license/software-license. If the
+ * Alliance for Open Media Patent License 1.0 was not distributed with this
+ * source code in the PATENTS file, you can obtain it at
+ * https://www.aomedia.org/license/patent-license.
+ */
 
 /******************************************************************************
  * @file OBMCVarianceTest.cc
@@ -204,7 +205,8 @@ TEST_P(OBMCSubPixelVarianceTest, RunCheckOutput) {
     run_test(1000);
 };
 
-#define OBMC_SUB_PIX_VAR_FUNC_C(W, H) svt_aom_obmc_sub_pixel_variance##W##x##H##_c
+#define OBMC_SUB_PIX_VAR_FUNC_C(W, H) \
+    svt_aom_obmc_sub_pixel_variance##W##x##H##_c
 #define OBMC_SUB_PIX_VAR_FUNC_SSE41(W, H) \
     svt_aom_obmc_sub_pixel_variance##W##x##H##_sse4_1
 #define GEN_OBMC_SUB_PIX_VAR_TEST_PARAM(W, H)         \

@@ -1,13 +1,14 @@
 /*
  * Copyright(c) 2019 Netflix, Inc.
-*
-* This source code is subject to the terms of the BSD 2 Clause License and
-* the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
-* was not distributed with this source code in the LICENSE file, you can
-* obtain it at https://www.aomedia.org/license/software-license. If the Alliance for Open
-* Media Patent License 1.0 was not distributed with this source code in the
-* PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
-*/
+ *
+ * This source code is subject to the terms of the BSD 2 Clause License and
+ * the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
+ * was not distributed with this source code in the LICENSE file, you can
+ * obtain it at https://www.aomedia.org/license/software-license. If the
+ * Alliance for Open Media Patent License 1.0 was not distributed with this
+ * source code in the PATENTS file, you can obtain it at
+ * https://www.aomedia.org/license/patent-license.
+ */
 
 /******************************************************************************
  * @file BitstreamWriterTest.cc
@@ -93,26 +94,18 @@ class BitstreamWriterTest : public ::testing::Test {
             for (int bit_gen_method = 0; bit_gen_method < 3; ++bit_gen_method) {
                 const int buffer_size = 10000;
                 AomWriter bw;
-#if FIX_EC_OVERFLOW
                 OutputBitstreamUnit output_bitstream_ptr;
                 uint8_t bw_buffer[buffer_size];
                 output_bitstream_ptr.buffer_av1 = bw_buffer;
                 output_bitstream_ptr.buffer_begin_av1 = bw_buffer;
                 output_bitstream_ptr.size = buffer_size;
-#else
-                uint8_t bw_buffer[buffer_size];
-#endif
                 uint8_t test_bits[total_bits];
 
                 // setup random bits 0/1
                 generate_random_bits(test_bits, total_bits, bit_gen_method);
 
                 // encode the bits
-#if FIX_EC_OVERFLOW
                 aom_start_encode(&bw, &output_bitstream_ptr);
-#else
-                aom_start_encode(&bw, bw_buffer);
-#endif
                 for (int i = 0; i < total_bits; ++i) {
                     aom_write(&bw, test_bits[i], static_cast<int>(probas[i]));
                 }
@@ -184,7 +177,10 @@ class BitstreamWriterTest : public ::testing::Test {
         // setup test bits
         switch (bit_gen_method) {
         case 0:
-        case 1: memset(test_bits, bit_gen_method, total_bits * sizeof(test_bits[0])); break;
+        case 1:
+            memset(
+                test_bits, bit_gen_method, total_bits * sizeof(test_bits[0]));
+            break;
         default:
             for (int i = 0; i < total_bits; ++i)
                 test_bits[i] = bit_dist(gen_);
@@ -209,22 +205,14 @@ TEST(Entropy_BitstreamWriter, write_literal_extreme_int) {
     constexpr int32_t min_int = std::numeric_limits<int32_t>::min();
 
     const int buffer_size = 1024;
-#if FIX_EC_OVERFLOW
     OutputBitstreamUnit output_bitstream_ptr;
     uint8_t stream_buffer[buffer_size];
     output_bitstream_ptr.buffer_av1 = stream_buffer;
     output_bitstream_ptr.buffer_begin_av1 = stream_buffer;
     output_bitstream_ptr.size = buffer_size;
-#else
-    uint8_t stream_buffer[buffer_size];
-#endif
     AomWriter bw;
 
-#if FIX_EC_OVERFLOW
     aom_start_encode(&bw, &output_bitstream_ptr);
-#else
-    aom_start_encode(&bw, stream_buffer);
-#endif
     aom_write_literal(&bw, max_int, 32);
     aom_write_literal(&bw, min_int, 32);
     aom_stop_encode(&bw);
@@ -242,15 +230,11 @@ TEST(Entropy_BitstreamWriter, write_symbol_no_update) {
     memset(&bw, 0, sizeof(bw));
 
     const int buffer_size = 1024;
-#if FIX_EC_OVERFLOW
     OutputBitstreamUnit output_bitstream_ptr;
     uint8_t stream_buffer[buffer_size];
     output_bitstream_ptr.buffer_av1 = stream_buffer;
     output_bitstream_ptr.buffer_begin_av1 = stream_buffer;
     output_bitstream_ptr.size = buffer_size;
-#else
-    uint8_t stream_buffer[buffer_size];
-#endif
     // get default cdf
     const int base_qindex = 20;
     FRAME_CONTEXT fc;
@@ -262,11 +246,7 @@ TEST(Entropy_BitstreamWriter, write_symbol_no_update) {
     std::bernoulli_distribution rnd(0.5);
     std::mt19937 gen(deterministic_seeds);
 
-#if FIX_EC_OVERFLOW
     aom_start_encode(&bw, &output_bitstream_ptr);
-#else
-    aom_start_encode(&bw, stream_buffer);
-#endif
     for (int i = 0; i < 500; ++i) {
         aom_write_symbol(&bw, rnd(gen), fc.txb_skip_cdf[0][0], 2);
         aom_write_symbol(&bw, rnd(gen), fc.txb_skip_cdf[0][0], 2);
@@ -292,15 +272,11 @@ TEST(Entropy_BitstreamWriter, write_symbol_with_update) {
     memset(&bw, 0, sizeof(bw));
 
     const int buffer_size = 1024;
-#if FIX_EC_OVERFLOW
     OutputBitstreamUnit output_bitstream_ptr;
     uint8_t stream_buffer[buffer_size];
     output_bitstream_ptr.buffer_av1 = stream_buffer;
     output_bitstream_ptr.buffer_begin_av1 = stream_buffer;
     output_bitstream_ptr.size = buffer_size;
-#else
-    uint8_t stream_buffer[buffer_size];
-#endif
     bw.allow_update_cdf = 1;
 
     // get default cdf
@@ -315,11 +291,7 @@ TEST(Entropy_BitstreamWriter, write_symbol_with_update) {
     std::bernoulli_distribution rnd(0.5);
     std::mt19937 gen(deterministic_seeds);
 
-#if FIX_EC_OVERFLOW
     aom_start_encode(&bw, &output_bitstream_ptr);
-#else
-    aom_start_encode(&bw, stream_buffer);
-#endif
     for (int i = 0; i < 500; ++i) {
         aom_write_symbol(&bw, rnd(gen), fc.txb_skip_cdf[0][0], 2);
         aom_write_symbol(&bw, rnd(gen), fc.txb_skip_cdf[0][0], 2);

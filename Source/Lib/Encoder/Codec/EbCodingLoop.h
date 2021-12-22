@@ -24,31 +24,16 @@ extern "C" {
      * ModeDecisionSb
      *   performs CL (SB)
      *******************************************/
-#if FTR_VLPD0 && !CLN_MERGE_LPD0_VLPD0
-    extern EbErrorType mode_decision_sb_very_light_pd0(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
-        const MdcSbData *const mdcResultTbPtr, SuperBlock *sb_ptr,
-        uint16_t sb_origin_x, uint16_t sb_origin_y, uint32_t sb_addr,
-        ModeDecisionContext *context_ptr);
-#endif
-#if LIGHT_PD0
-extern EbErrorType mode_decision_sb_light_pd0(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
-    const MdcSbData *const mdcResultTbPtr, SuperBlock *sb_ptr,
-    uint16_t sb_origin_x, uint16_t sb_origin_y, uint32_t sb_addr,
-    ModeDecisionContext *context_ptr);
-#endif
-#if LIGHT_PD1_MACRO
-#if FTR_10BIT_MDS3_LPD1
+extern EbErrorType mode_decision_sb_light_pd0(SequenceControlSet *   scs_ptr,
+                                              PictureControlSet *    pcs_ptr,
+                                              const MdcSbData *const mdcResultTbPtr,
+                                              SuperBlock *sb_ptr, uint16_t sb_origin_x,
+                                              uint16_t sb_origin_y, uint32_t sb_addr,
+                                              ModeDecisionContext *context_ptr);
 extern void mode_decision_sb_light_pd1(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
-                                    const MdcSbData *const mdcResultTbPtr, SuperBlock *sb_ptr,
-                                    uint16_t sb_origin_x, uint16_t sb_origin_y, uint32_t sb_addr,
-                                    ModeDecisionContext *context_ptr);
-#else
-extern void mode_decision_sb_light_pd1(PictureControlSet *pcs_ptr,
-                                    const MdcSbData *const mdcResultTbPtr, SuperBlock *sb_ptr,
-                                    uint16_t sb_origin_x, uint16_t sb_origin_y, uint32_t sb_addr,
-                                    ModeDecisionContext *context_ptr);
-#endif
-#endif
+                                       const MdcSbData *const mdcResultTbPtr, SuperBlock *sb_ptr,
+                                       uint16_t sb_origin_x, uint16_t sb_origin_y, uint32_t sb_addr,
+                                       ModeDecisionContext *context_ptr);
 extern EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
                                     const MdcSbData *const mdcResultTbPtr, SuperBlock *sb_ptr,
                                     uint16_t sb_origin_x, uint16_t sb_origin_y, uint32_t sb_addr,
@@ -56,21 +41,9 @@ extern EbErrorType mode_decision_sb(SequenceControlSet *scs_ptr, PictureControlS
 extern void        av1_encode_decode(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
                                      SuperBlock *sb_ptr, uint32_t sb_addr, uint32_t sb_origin_x,
                                      uint32_t sb_origin_y, EncDecContext *context_ptr);
-#if REFCTR_SEP_ENCDEC
-#if OPT_MEM_PALETTE
-extern EbErrorType        av1_encdec_update(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
-#else
-extern void        av1_encdec_update(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
-#endif
+extern EbErrorType av1_encdec_update(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr,
                                      SuperBlock *sb_ptr, uint32_t sb_addr, uint32_t sb_origin_x,
                                      uint32_t sb_origin_y, EncDecContext *context_ptr);
-#endif
-
-#if NO_ENCDEC
-void no_enc_dec_pass(SequenceControlSet *scs_ptr, PictureControlSet *pcs_ptr, SuperBlock *sb_ptr,
-                     uint32_t sb_addr, uint32_t sb_origin_x, uint32_t sb_origin_y, uint32_t sb_qp,
-                     EncDecContext *context_ptr);
-#endif
 
 void store16bit_input_src(EbPictureBufferDesc *input_sample16bit_buffer, PictureControlSet *pcs_ptr,
                           uint32_t sb_x, uint32_t sb_y, uint32_t sb_w, uint32_t sb_h);
@@ -79,7 +52,7 @@ void residual_kernel(uint8_t *input, uint32_t input_offset, uint32_t input_strid
                      uint32_t pred_offset, uint32_t pred_stride, int16_t *residual,
                      uint32_t residual_offset, uint32_t residual_stride, EbBool hbd,
                      uint32_t area_width, uint32_t area_height);
-static const uint16_t block_prob_tab[5][9][3][2]       = {{{{75, 75}, {43, 43}, {17, 17}},
+static const uint16_t block_prob_tab[5][9][3][2] = {{{{75, 75}, {43, 43}, {17, 17}},
                                                      {{8, 9}, {29, 29}, {17, 17}},
                                                      {{6, 7}, {7, 7}, {17, 17}},
                                                      {{2, 2}, {5, 6}, {0, 0}},
@@ -380,31 +353,11 @@ static const uint32_t me_idx[] = {
     84, 20, 20, 20, 20, 20, 20, 20, 20, 75, 75, 75, 75, 75, 75, 75, 75, 75, 76, 76, 76, 76, 76, 76,
     76, 76, 76, 83, 83, 83, 83, 83, 83, 83, 83, 83, 84, 84, 84, 84, 84, 84, 84, 84, 84,
 };
-#if  CLN_GEOM
 static const uint32_t me_idx_85[] = {
-       0,
-       1,
-       5, 21, 22, 29, 30,
-       6, 23, 24, 31, 32,
-       9, 37, 38, 45, 46,
-       10, 39, 40, 47, 48,
-       2,
-       7, 25, 26, 33, 34,
-       8, 27, 28, 35, 36,
-       11, 41, 42, 49, 50,
-       12, 43, 44, 51, 52,
-       3,
-       13, 53, 54, 61, 62,
-       14, 55, 56, 63, 64,
-       17, 69, 70, 77, 78,
-       18, 71, 72, 79, 80,
-       4,
-       15, 57, 58, 65, 66,
-       16, 59, 60, 67, 68,
-       19, 73, 74, 81, 82,
-       20, 75, 76, 83, 84
-};
-#endif
+    0,  1,  5,  21, 22, 29, 30, 6,  23, 24, 31, 32, 9,  37, 38, 45, 46, 10, 39, 40, 47, 48,
+    2,  7,  25, 26, 33, 34, 8,  27, 28, 35, 36, 11, 41, 42, 49, 50, 12, 43, 44, 51, 52, 3,
+    13, 53, 54, 61, 62, 14, 55, 56, 63, 64, 17, 69, 70, 77, 78, 18, 71, 72, 79, 80, 4,  15,
+    57, 58, 65, 66, 16, 59, 60, 67, 68, 19, 73, 74, 81, 82, 20, 75, 76, 83, 84};
 
 static const int32_t me_idx_128x128[4][BLOCK_MAX_COUNT_SB_128] = {
     {-1, -1, -1, -1, -1, 0,  -1, -1, -1, -1, -1, 0,  -1, -1, -1, -1, -1, 0,  0,  0,  0,  0,  1,  2,

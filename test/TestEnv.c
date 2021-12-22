@@ -1,13 +1,14 @@
 /*
-* Copyright(c) 2019 Netflix, Inc.
-*
-* This source code is subject to the terms of the BSD 2 Clause License and
-* the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
-* was not distributed with this source code in the LICENSE file, you can
-* obtain it at https://www.aomedia.org/license/software-license. If the Alliance for Open
-* Media Patent License 1.0 was not distributed with this source code in the
-* PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
-*/
+ * Copyright(c) 2019 Netflix, Inc.
+ *
+ * This source code is subject to the terms of the BSD 2 Clause License and
+ * the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
+ * was not distributed with this source code in the LICENSE file, you can
+ * obtain it at https://www.aomedia.org/license/software-license. If the
+ * Alliance for Open Media Patent License 1.0 was not distributed with this
+ * source code in the PATENTS file, you can obtain it at
+ * https://www.aomedia.org/license/patent-license.
+ */
 
 /******************************************************************************
  * @file TestEnv.c
@@ -23,16 +24,12 @@
 /** setup_test_env is a util for unit test setup environment without create a
  * encoder */
 void setup_test_env() {
-#if FIXED_POINTS_PLANEWISE
 #ifdef ARCH_X86_64
-     CPU_FLAGS cpu_flags = get_cpu_flags_to_use();
- #else
-     CPU_FLAGS cpu_flags = 0;
- #endif
-    setup_common_rtcd_internal(cpu_flags);
-#else /*FIXED_POINTS_PLANEWISE*/
     CPU_FLAGS cpu_flags = get_cpu_flags_to_use();
-#endif /*FIXED_POINTS_PLANEWISE*/
+#else
+    CPU_FLAGS cpu_flags = 0;
+#endif
+    setup_common_rtcd_internal(cpu_flags);
 
     setup_rtcd_internal(cpu_flags);
 }

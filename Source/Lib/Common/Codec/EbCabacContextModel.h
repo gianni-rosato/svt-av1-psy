@@ -847,16 +847,7 @@ void av1_setup_past_independence(struct AV1Common *cm);
 static INLINE int32_t av1_ceil_log2(int32_t n) {
     if (n < 2)
         return 0;
-#if OPT_CODE_LOG
     return svt_log2f(n - 1) + 1;
-#else
-    int32_t i = 1, p = 2;
-    while (p < n) {
-        i++;
-        p = p << 1;
-    }
-    return i;
-#endif
 }
 
 static AomCdfProb cdf_element_prob(const AomCdfProb *const cdf, size_t element) {
@@ -898,13 +889,8 @@ static INLINE void partition_gather_vert_alike(AomCdfProb *out, const AomCdfProb
 // onyxc_int.h
 
 /**********************************************************************************************************************/
-#if SS_OPT_PALETTE_COST
 int av1_get_palette_color_index_context_optimized(const uint8_t *color_map, int stride, int r,
                                                   int c, int *color_idx);
-#else
-int av1_get_palette_color_index_context_optimized(const uint8_t *color_map, int stride, int r,
-                                                  int c, int palette_size, int *color_idx);
-#endif
 /**********************************************************************************************************************/
 /**********************************************************************************************************************/
 

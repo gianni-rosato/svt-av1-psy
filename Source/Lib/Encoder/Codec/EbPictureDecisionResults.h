@@ -21,17 +21,17 @@
  * Process Results
  **************************************/
 typedef struct PictureDecisionResults {
-    EbDctor          dctor;
-    EbObjectWrapper *pcs_wrapper_ptr;
-    uint32_t         segment_index;
-    uint8_t          task_type; //0:ME   1:Temporal Filtering
-    uint8_t          lst0_cnt;
-    uint8_t          lst1_cnt;
-    uint8_t          tmp_layer_idx;
-    uint8_t          is_reference;
-    uint8_t          sc_class0;
-    uint8_t          sc_class1;
-    uint8_t          sc_class2;
+    EbDctor                     dctor;
+    EbObjectWrapper *           pcs_wrapper_ptr;
+    uint32_t                    segment_index;
+    uint8_t                     task_type; //0:ME   1:Temporal Filtering
+    uint8_t                     lst0_cnt;
+    uint8_t                     lst1_cnt;
+    uint8_t                     tmp_layer_idx;
+    uint8_t                     is_reference;
+    uint8_t                     sc_class0;
+    uint8_t                     sc_class1;
+    uint8_t                     sc_class2;
     EbDownScaledBufDescPtrArray ref_ds[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
 } PictureDecisionResults;
 

@@ -22,41 +22,37 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#if CLIP_BASED_DYNAMIC_MINIGOP
-    typedef struct MiniGopSizeCtrls {
-        EbBool adptive_enable; // 0: Off, 1: Switch at clip level, 2: Switch at GOP level
-        double short_shot_th; // Threshold to determine short scene.
-        double animation_type_th; // Threshold to determine animation scene
-        double lm_th; // Threshold to determine low motion scene
-        double hm_th; // Threshold to determine high motion scene
-        double lfr_th; // Threshold to determine low frame rate scene
-        double hsa_th; // Threshold to determine high static area scene
-        double hmv_di_th; // Threshold to determine high mv direction scene
-        double lmv_di_th; // Threshold to determine low mv direction scene
-    } MiniGopSizeCtrls;
-#endif
-#if CLN_ENC_CONFIG_SIG
-    typedef enum EncPass {
-        ENC_SINGLE_PASS, //single pass mode
-        ENC_FIRST_PASS, // first pass of multi pass mode
-        ENC_MIDDLE_PASS, // middle pass of multi pass mode
-        ENC_LAST_PASS, // last pass of multi pass mode
-        MAX_ENCODE_PASS = 3,
-    } EncPass;
+typedef struct MiniGopSizeCtrls {
+    EbBool adptive_enable; // 0: Off, 1: Switch at clip level, 2: Switch at GOP level
+    double short_shot_th; // Threshold to determine short scene.
+    double animation_type_th; // Threshold to determine animation scene
+    double lm_th; // Threshold to determine low motion scene
+    double hm_th; // Threshold to determine high motion scene
+    double lfr_th; // Threshold to determine low frame rate scene
+    double hsa_th; // Threshold to determine high static area scene
+    double hmv_di_th; // Threshold to determine high mv direction scene
+    double lmv_di_th; // Threshold to determine low mv direction scene
+} MiniGopSizeCtrls;
+typedef enum EncPass {
+    ENC_SINGLE_PASS, //single pass mode
+    ENC_FIRST_PASS, // first pass of multi pass mode
+    ENC_MIDDLE_PASS, // middle pass of multi pass mode
+    ENC_LAST_PASS, // last pass of multi pass mode
+    MAX_ENCODE_PASS = 3,
+} EncPass;
 
-    typedef struct IppPassControls {
-        uint8_t skip_frame_first_pass; // Enable the ability to skip frame
-        uint8_t ds; // use downsampled input
-        uint8_t bypass_blk_step; // bypass every other row and col
-        uint8_t dist_ds; // downsample distortion
-        uint8_t bypass_zz_check; // Bypas the (0,0)_MV check against HME_MV before performing ME
-        uint8_t use8blk;
-        uint8_t reduce_me_search; //Reduce HME_ME SR areas
-    } IppPassControls;
-    typedef struct MidPassControls {
-        uint8_t ds; // use downsampled input
-    } MidPassControls;
-#endif
+typedef struct IppPassControls {
+    uint8_t skip_frame_first_pass; // Enable the ability to skip frame
+    uint8_t ds; // use downsampled input
+    uint8_t bypass_blk_step; // bypass every other row and col
+    uint8_t dist_ds; // downsample distortion
+    uint8_t bypass_zz_check; // Bypas the (0,0)_MV check against HME_MV before performing ME
+    uint8_t use8blk;
+    uint8_t reduce_me_search; //Reduce HME_ME SR areas
+} IppPassControls;
+typedef struct MidPassControls {
+    uint8_t ds; // use downsampled input
+} MidPassControls;
 /************************************
      * Sequence Control Set
      ************************************/
@@ -65,10 +61,7 @@ typedef struct SequenceControlSet {
     EbDctor dctor;
     /*!< Encoding context pointer containing the handle pointer */
     EncodeContext *encode_context_ptr;
-     /*!< 2ndpass enc mode, available at firstpass encoder */
-#if !IPP_CTRL
-     int8_t enc_mode_2ndpass;
-#endif
+    /*!< 2ndpass enc mode, available at firstpass encoder */
     /*!< API structure */
     EbSvtAv1EncConfiguration static_config;
     /*!< Pointer to prediction structure containing the mini-gop information */
@@ -106,19 +99,17 @@ typedef struct SequenceControlSet {
     uint8_t cdf_mode;
     /*!< Down-sampling method @ ME and alt-ref temporal filtering
         (The signal changes per preset; 0: filtering, 1: decimation) Default is 0. */
-    uint8_t down_sampling_method_me_search;
-#if CLN_GEOM
-    uint32_t geom_idx;   //geometry type
-#endif
+    uint8_t  down_sampling_method_me_search;
+    uint32_t geom_idx; //geometry type
 
     /*  1..15    | 17..31  | 33..47  |
               16 |       32|       48|
       lad mg=2: delay the first MG (1-16) until the next 2 MGs(17-48) are gop , TF, and ME ready
     */
-    uint8_t lad_mg;   //delay all pictures within a given MG, until N future MGs are  gop , TF, and ME ready
-#if FTR_LAD_INPUT
-    uint8_t tpl_lad_mg;   //delay all pictures within a given MG, until N future MGs are  gop , TF, and ME ready used for tpl
-#endif
+    uint8_t
+        lad_mg; //delay all pictures within a given MG, until N future MGs are  gop , TF, and ME ready
+    uint8_t
+        tpl_lad_mg; //delay all pictures within a given MG, until N future MGs are  gop , TF, and ME ready used for tpl
     /*!< 1: Specifies that loop restoration filter should use boundary pixels in the search.  Must be
             set at the sequence level because it requires a buffer allocation to copy the pixels
             to be used in the search.
@@ -167,21 +158,14 @@ typedef struct SequenceControlSet {
     /*!< Super block parameters set for the stream */
     uint8_t  sb_sz;
     uint8_t  max_sb_depth;
-#if FTR_16K
-    uint16_t  pic_width_in_sb;
-    uint16_t  picture_height_in_sb;
-#else
-    uint8_t  pic_width_in_sb;
-    uint8_t  picture_height_in_sb;
-#endif
+    uint16_t pic_width_in_sb;
+    uint16_t picture_height_in_sb;
     uint16_t sb_total_count;
     uint16_t sb_size_pix;
     uint16_t sb_tot_cnt;
     uint16_t max_block_cnt;
-#if FTR_NEW_WN_LVLS
     /*!< Restoration Unit parameters set for the stream */
     int32_t rest_units_per_tile;
-#endif
     /*!< Block limits */
     uint8_t max_blk_size;
     uint8_t min_blk_size;
@@ -199,10 +183,6 @@ typedef struct SequenceControlSet {
     /*!< Segements (sub picture) count for different processes */
     uint32_t me_segment_column_count_array[MAX_TEMPORAL_LAYERS];
     uint32_t me_segment_row_count_array[MAX_TEMPORAL_LAYERS];
-#if OPT_1P
-    uint32_t fpass_segment_column_count;
-    uint32_t fpass_segment_row_count;
-#endif
     uint32_t enc_dec_segment_col_count_array[MAX_TEMPORAL_LAYERS];
     uint32_t enc_dec_segment_row_count_array[MAX_TEMPORAL_LAYERS];
     uint32_t tpl_segment_col_count_array;
@@ -244,58 +224,41 @@ typedef struct SequenceControlSet {
     uint32_t rest_fifo_init_count;
 
     /*!< Thread count for each process */
-    uint32_t picture_analysis_process_init_count;
-    uint32_t motion_estimation_process_init_count;
-    uint32_t source_based_operations_process_init_count;
-    uint32_t mode_decision_configuration_process_init_count;
-    uint32_t enc_dec_process_init_count;
-    uint32_t entropy_coding_process_init_count;
-    uint32_t dlf_process_init_count;
-    uint32_t cdef_process_init_count;
-    uint32_t rest_process_init_count;
-    uint32_t tpl_disp_process_init_count;
-    uint32_t total_process_init_count;
-    int32_t  lap_enabled;
-    TWO_PASS twopass;
-    double   double_frame_rate;
-    Quants   quants_bd; // follows input bit depth
-    Dequants deq_bd; // follows input bit depth
-    Quants   quants_8bit; // 8bit
-    Dequants deq_8bit; // 8bit
-    ScaleFactors sf_identity;
-#if !CLN_MERGE_MRP_SIG
-    uint8_t  mrp_init_level; //sequence based MRP level
-#endif
-    int32_t nmv_vec_cost[MV_JOINTS];
-    int32_t nmv_costs[2][MV_VALS];
-    uint8_t mvrate_set;
-#if CLIP_BASED_DYNAMIC_MINIGOP
+    uint32_t         picture_analysis_process_init_count;
+    uint32_t         motion_estimation_process_init_count;
+    uint32_t         source_based_operations_process_init_count;
+    uint32_t         mode_decision_configuration_process_init_count;
+    uint32_t         enc_dec_process_init_count;
+    uint32_t         entropy_coding_process_init_count;
+    uint32_t         dlf_process_init_count;
+    uint32_t         cdef_process_init_count;
+    uint32_t         rest_process_init_count;
+    uint32_t         tpl_disp_process_init_count;
+    uint32_t         total_process_init_count;
+    int32_t          lap_enabled;
+    TWO_PASS         twopass;
+    double           double_frame_rate;
+    Quants           quants_bd; // follows input bit depth
+    Dequants         deq_bd; // follows input bit depth
+    Quants           quants_8bit; // 8bit
+    Dequants         deq_8bit; // 8bit
+    ScaleFactors     sf_identity;
+    int32_t          nmv_vec_cost[MV_JOINTS];
+    int32_t          nmv_costs[2][MV_VALS];
+    uint8_t          mvrate_set;
     MiniGopSizeCtrls mgs_ctls;
-#endif
-#if CLN_TF_ENC_CONFIG
-    TfControls tf_params_per_type[3]; // [I_SLICE][BASE][L1]
-#endif
-#if CLN_MRP_ENC_CONFIG
-    MrpCtrls mrp_ctrls;
-#endif
-#if FTR_OPT_MPASS
+    TfControls       tf_params_per_type[3]; // [I_SLICE][BASE][L1]
+    MrpCtrls         mrp_ctrls;
     /*!< The RC stat generation pass mode (0: The default, 1: optimized)*/
-    uint8_t rc_stat_gen_pass_mode;
-#endif
-#if FTR_NEW_QPS
-    int cqp_base_q_tf;
-    int cqp_base_q;
-#endif
-#if TUNE_VBR_OVERSHOOT
-    uint8_t is_short_clip; //less than 200 frames, used in VBR and set in multipass encode
-#endif
-#if CLN_ENC_CONFIG_SIG
-    uint8_t passes;
+    uint8_t         rc_stat_gen_pass_mode;
+    int             cqp_base_q_tf;
+    int             cqp_base_q;
+    uint8_t         is_short_clip; //less than 200 frames, used in VBR and set in multipass encode
+    uint8_t         passes;
     IppPassControls ipp_pass_ctrls;
     MidPassControls mid_pass_ctrls;
-    uint8_t ipp_was_ds;
-    uint8_t final_pass_preset;
-#endif
+    uint8_t         ipp_was_ds;
+    uint8_t         final_pass_preset;
 } SequenceControlSet;
 
 typedef struct EbSequenceControlSetInitData {
@@ -329,30 +292,7 @@ extern EbErrorType derive_input_resolution(EbInputResolution *input_resolution,
                                            uint32_t           input_size);
 
 EbErrorType sb_geom_init(SequenceControlSet *scs_ptr);
-#if !CLN_ENC_CONFIG_SIG
-inline static EbBool use_input_stat(const SequenceControlSet *scs_ptr) {
-    return !!scs_ptr->static_config.rc_twopass_stats_in.sz;
-}
 
-inline static EbBool use_output_stat(const SequenceControlSet* scs_ptr) {
-    return scs_ptr->static_config.rc_firstpass_stats_out;
-}
-#endif
-
-#if FTR_MULTI_PASS_API
-#if !CLN_ENC_CONFIG_SIG
-inline static EbBool is_middle_pass(const SequenceControlSet *scs_ptr) {
-    return scs_ptr->static_config.rc_middlepass_stats_out;
-}
-#endif
-#if !CLN_ENC_CONFIG_SIG
-#if FTR_OPT_MPASS_DOWN_SAMPLE
-inline static EbBool is_middle_pass_ds(const SequenceControlSet *scs_ptr) {
-    return scs_ptr->static_config.rc_middlepass_ds_stats_out;
-}
-#endif
-#endif
-#endif
 #ifdef __cplusplus
 }
 #endif

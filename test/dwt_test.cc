@@ -43,8 +43,10 @@ TEST(haar_ac_sad_8x8_uint8_input_test, 8bit) {
     for (int i = 0; i < test_times; i++) {
         prepare_data_8x8(input_data, &rnd);
 
-        int output_tst = svt_av1_haar_ac_sad_8x8_uint8_input_avx2(input_data, 8, 0);
-        int output_c_ref = svt_av1_haar_ac_sad_8x8_uint8_input_c(input_data, 8, 0);
+        int output_tst =
+            svt_av1_haar_ac_sad_8x8_uint8_input_avx2(input_data, 8, 0);
+        int output_c_ref =
+            svt_av1_haar_ac_sad_8x8_uint8_input_c(input_data, 8, 0);
 
         // compare results
         ASSERT_EQ(output_tst, output_c_ref)

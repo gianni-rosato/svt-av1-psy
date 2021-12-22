@@ -14,9 +14,7 @@
 #include "EbPredictionStructure.h"
 #include "EbUtility.h"
 #include "common_dsp_rtcd.h"
-#if CLN_MRP_ENC_CONFIG
 #include "EbSequenceControlSet.h"
-#endif
 /**********************************************************
  * Macros
  **********************************************************/
@@ -185,7 +183,7 @@ PredictionStructureConfigEntry four_level_hierarchical_pred_struct[] = {
     {
         0, // GOP Index 0 - Temporal Layer
         0, // GOP Index 0 - Decode Order
-        { 8, 16, 0, 0 }, // GOP Index 0 - Ref List 0
+        {8, 16, 0, 0}, // GOP Index 0 - Ref List 0
         {8, 0, 0, 0} // GOP Index 0 - Ref List 1
     },
     {
@@ -470,7 +468,7 @@ PredictionStructureConfigEntry six_level_hierarchical_pred_struct[] = {
     {
         5, // GOP Index 13 - Temporal Layer
         15, // GOP Index 13 - Decode Order
-        {1, 5, 2 ,13}, // GOP Index 13 - Ref List 0
+        {1, 5, 2, 13}, // GOP Index 13 - Ref List 0
         {-1, -3, -19, 0} // GOP Index 13 - Ref List 1
     },
     {
@@ -566,7 +564,7 @@ PredictionStructureConfigEntry six_level_hierarchical_pred_struct[] = {
     {
         5, // GOP Index 29 - Temporal Layer
         30, // GOP Index 29 - Decode Order
-        {1, 5, 2 ,13}, // GOP Index 29 - Ref List 0
+        {1, 5, 2, 13}, // GOP Index 29 - Ref List 0
         {-1, -3, 0, 0} // GOP Index 29 - Ref List 1
     },
     {
@@ -660,11 +658,6 @@ static void prediction_structure_dctor(EbPtr p) {
         }
         EB_FREE_2D(obj->pred_struct_entry_ptr_array);
     }
-#if !CLN_PRED_STRUCT
-    EB_FREE_ARRAY(obj->decode_order_table);
-    EB_FREE_ARRAY(obj->display_order_table);
-    EB_FREE_ARRAY(obj->timeline_map);
-#endif
 }
 
 /********************************************************************************************
@@ -1045,19 +1038,12 @@ static EbErrorType prediction_structure_ctor(
             // Set Leading Picture's Reference List 0 Count
             // AV1 supports 4 forward and 3 backward maximum.
             // For low delay b case, will use the first 3 refs in L0 as refs in L0 and L1.
-#if FIX_PA_REF_RELEASE_HANG
             // LDP is used for incomplete MGs, so should have the same ref structure as RA
             // otherwise the dependent_count of the RA pics will be off
             predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
                 ->ref_list0.reference_list_count = (predType == EB_PRED_LOW_DELAY_B)
                 ? MIN(3, ref_index)
                 : ref_index;
-#else
-            predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
-                ->ref_list0.reference_list_count = (predType == EB_PRED_LOW_DELAY_B || predType == EB_PRED_LOW_DELAY_P)
-                ? MIN(3, ref_index)
-                : ref_index;
-#endif
 
             // Allocate the Leading Picture Reference List 0
             if (predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
@@ -1197,20 +1183,13 @@ static EbErrorType prediction_structure_ctor(
                    predictionStructureConfigPtr->entry_array[config_entry_index]
                            .ref_list0[ref_index] != 0)
                 ++ref_index;
-            // Set Reference List 0 Count
-#if FIX_PA_REF_RELEASE_HANG
+                // Set Reference List 0 Count
             // LDP is used for incomplete MGs, so should have the same ref structure as RA
             // otherwise the dependent_count of the RA pics will be off
             predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
                 ->ref_list0.reference_list_count = (predType == EB_PRED_LOW_DELAY_B)
                 ? MIN(3, ref_index)
                 : ref_index;
-#else
-            predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
-                ->ref_list0.reference_list_count = (predType == EB_PRED_LOW_DELAY_B || predType == EB_PRED_LOW_DELAY_P)
-                ? MIN(3, ref_index)
-                : ref_index;
-#endif
 
             // Allocate Reference List 0
             EB_MALLOC_ARRAY(predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
@@ -1378,15 +1357,9 @@ static EbErrorType prediction_structure_ctor(
                      ref_index < predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
                                      ->ref_list0.reference_list_count;
                      ++ref_index) {
-#if FIX_INT_OVERLOW
                     dep_index = (int64_t)picture_number -
                         predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
                             ->ref_list0.reference_list[ref_index];
-#else
-                    dep_index = picture_number -
-                        predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
-                            ->ref_list0.reference_list[ref_index];
-#endif
 
                     if (dep_index >= 0 &&
                         dep_index < (int32_t)(predictionStructurePtr->steady_state_index +
@@ -1455,15 +1428,9 @@ static EbErrorType prediction_structure_ctor(
                      ref_index < predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
                                      ->ref_list0.reference_list_count;
                      ++ref_index) {
-#if FIX_INT_OVERLOW
                     dep_index = (int64_t)picture_number -
                         predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
                             ->ref_list0.reference_list[ref_index];
-#else
-                    dep_index = picture_number -
-                        predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
-                            ->ref_list0.reference_list[ref_index];
-#endif
 
                     if (dep_index >= 0 &&
                         dep_index < (int32_t)(predictionStructurePtr->steady_state_index +
@@ -1532,15 +1499,9 @@ static EbErrorType prediction_structure_ctor(
                      ref_index < predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
                                      ->ref_list1.reference_list_count;
                      ++ref_index) {
-#if FIX_INT_OVERLOW
                     dep_index = (int64_t)picture_number -
                         predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
                             ->ref_list1.reference_list[ref_index];
-#else
-                    dep_index = picture_number -
-                        predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
-                            ->ref_list1.reference_list[ref_index];
-#endif
 
                     if (dep_index >= 0 &&
                         dep_index < (int32_t)(predictionStructurePtr->steady_state_index +
@@ -1560,15 +1521,9 @@ static EbErrorType prediction_structure_ctor(
                      ref_index < predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
                                      ->ref_list1.reference_list_count;
                      ++ref_index) {
-#if FIX_INT_OVERLOW
                     dep_index = (int64_t)picture_number -
                         predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
                             ->ref_list1.reference_list[ref_index];
-#else
-                    dep_index = picture_number -
-                        predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
-                            ->ref_list1.reference_list[ref_index];
-#endif
 
                     if (dep_index >= 0 &&
                         dep_index < (int32_t)(predictionStructurePtr->steady_state_index +
@@ -1615,15 +1570,9 @@ static EbErrorType prediction_structure_ctor(
                      ref_index < predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
                                      ->ref_list1.reference_list_count;
                      ++ref_index) {
-#if FIX_INT_OVERLOW
                     dep_index = (int64_t)picture_number -
                         predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
                             ->ref_list1.reference_list[ref_index];
-#else
-                    dep_index = picture_number -
-                        predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
-                            ->ref_list1.reference_list[ref_index];
-#endif
 
                     if (dep_index >= 0 &&
                         dep_index < (int32_t)(predictionStructurePtr->steady_state_index +
@@ -1648,15 +1597,9 @@ static EbErrorType prediction_structure_ctor(
                      ref_index < predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
                                      ->ref_list1.reference_list_count;
                      ++ref_index) {
-#if FIX_INT_OVERLOW
                     dep_index = (int64_t)picture_number -
                         predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
                             ->ref_list1.reference_list[ref_index];
-#else
-                    dep_index = picture_number -
-                        predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
-                            ->ref_list1.reference_list[ref_index];
-#endif
 
                     // Assign the Reference to the Dep List and Increment the Dep List Count
                     if (dep_index >= 0 &&
@@ -1691,181 +1634,42 @@ static EbErrorType prediction_structure_ctor(
             : EB_FALSE;
     }
 
-#if !CLN_PRED_STRUCT
-    //----------------------------------------
-    // CONSTRUCT THE RPSes
-    //----------------------------------------
-    {
-        // Counts & Indicies
-        uint32_t dep_index;
-        uint32_t current_poc_index;
-        uint32_t ref_poc_index;
-
-        uint32_t  decode_order_table_size;
-        int32_t * decode_order_table;
-        uint32_t *display_order_table;
-
-        // Timeline Map Variables
-        EbBool * timeline_map;
-        uint32_t timeline_size;
-
-        int32_t lifetime_start;
-        int32_t lifetime_span;
-
-        int32_t adjusted_dep_index;
-
-        // Allocate & Initialize the Timeline map
-        timeline_size           = predictionStructurePtr->pred_struct_entry_count;
-        decode_order_table_size = CEILING(predictionStructurePtr->pred_struct_entry_count +
-                                              predictionStructurePtr->maximum_extent,
-                                          predictionStructurePtr->pred_struct_entry_count);
-        EB_CALLOC_ARRAY(predictionStructurePtr->timeline_map, SQR(timeline_size));
-        timeline_map = predictionStructurePtr->timeline_map;
-
-        // Construct the Decode & Display Order
-        EB_MALLOC_ARRAY(predictionStructurePtr->decode_order_table, decode_order_table_size);
-        decode_order_table = predictionStructurePtr->decode_order_table;
-
-        EB_MALLOC_ARRAY(predictionStructurePtr->display_order_table, decode_order_table_size);
-        display_order_table = predictionStructurePtr->display_order_table;
-
-        for (current_poc_index = 0, entry_index = 0; current_poc_index < decode_order_table_size;
-             ++current_poc_index) {
-            // Set the Decode Order
-            const uint32_t gop_number = current_poc_index /
-                predictionStructurePtr->pred_struct_period;
-            const uint32_t base_number = gop_number * predictionStructurePtr->pred_struct_period;
-
-            if (predType == EB_PRED_RANDOM_ACCESS)
-                decode_order_table[current_poc_index] = base_number +
-                    predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]->decode_order;
-            else
-                decode_order_table[current_poc_index] = current_poc_index;
-            display_order_table[decode_order_table[current_poc_index]] = current_poc_index;
-
-            // Increment the entry_index
-            entry_index = (entry_index == predictionStructurePtr->pred_struct_entry_count - 1)
-                ? predictionStructurePtr->pred_struct_entry_count -
-                    predictionStructurePtr->pred_struct_period
-                : entry_index + 1;
-        }
-//#if !CLN_PRED_STRUCT
-        // Construct the timeline map from the dependency lists
-        for (ref_poc_index = 0, entry_index = 0; ref_poc_index < timeline_size; ++ref_poc_index) {
-            // Initialize Max to most negative signed value and Min to most positive signed value
-            int32_t dep_list_max = MIN_SIGNED_VALUE;
-            int32_t dep_list_min = MAX_SIGNED_VALUE;
-
-            // Find dep_list_max and dep_list_min for the entry_index in the prediction structure for dep_list0
-            for (dep_index = 0;
-                 dep_index < predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
-                                 ->dep_list0.list_count;
-                 ++dep_index) {
-                adjusted_dep_index = predictionStructurePtr
-                                         ->pred_struct_entry_ptr_array[entry_index]
-                                         ->dep_list0.list[dep_index] +
-                    (int32_t)ref_poc_index;
-
-                //if(adjusted_dep_index >= 0 && adjusted_dep_index < (int32_t) timeline_size) {
-                if (adjusted_dep_index >= 0) {
-                    // Update Max
-                    dep_list_max = MAX(decode_order_table[adjusted_dep_index], dep_list_max);
-
-                    // Update Min
-                    dep_list_min = MIN(decode_order_table[adjusted_dep_index], dep_list_min);
-                }
-            }
-
-            // Continue search for dep_list_max and dep_list_min for the entry_index in the prediction structure for dep_list1,
-            //   the lists are combined in the RPS logic
-            for (dep_index = 0;
-                 dep_index < predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
-                                 ->dep_list1.list_count;
-                 ++dep_index) {
-                adjusted_dep_index = predictionStructurePtr
-                                         ->pred_struct_entry_ptr_array[entry_index]
-                                         ->dep_list1.list[dep_index] +
-                    (int32_t)ref_poc_index;
-
-                //if(adjusted_dep_index >= 0 && adjusted_dep_index < (int32_t) timeline_size)  {
-                if (adjusted_dep_index >= 0) {
-                    // Update Max
-                    dep_list_max = MAX(decode_order_table[adjusted_dep_index], dep_list_max);
-
-                    // Update Min
-                    dep_list_min = MIN(decode_order_table[adjusted_dep_index], dep_list_min);
-                }
-            }
-
-            // If the Dependent Lists are empty, ensure that no RPS signaling is set
-            if ((predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
-                     ->dep_list0.list_count > 0) ||
-                (predictionStructurePtr->pred_struct_entry_ptr_array[entry_index]
-                     ->dep_list1.list_count > 0)) {
-                // Determine lifetime_start and lifetime_span - its important to note that out-of-range references are
-                //   clipped/eliminated to not violate IDR/CRA referencing rules
-                lifetime_start = dep_list_min;
-
-                if (lifetime_start < (int32_t)timeline_size) {
-                    lifetime_start = CLIP3(0, (int32_t)(timeline_size - 1), lifetime_start);
-
-                    lifetime_span = dep_list_max - dep_list_min + 1;
-                    lifetime_span = CLIP3(
-                        0, (int32_t)timeline_size - lifetime_start, lifetime_span);
-
-                    // Set the timeline_map
-                    for (current_poc_index = (uint32_t)lifetime_start;
-                         current_poc_index < (uint32_t)(lifetime_start + lifetime_span);
-                         ++current_poc_index)
-                        timeline_map[ref_poc_index * timeline_size +
-                                     display_order_table[current_poc_index]] = EB_TRUE;
-                }
-            }
-
-            // Increment the entry_index
-            entry_index = (entry_index == predictionStructurePtr->pred_struct_entry_count - 1)
-                ? predictionStructurePtr->pred_struct_entry_count -
-                    predictionStructurePtr->pred_struct_period
-                : entry_index + 1;
-        }
-    }
-#endif
     return EB_ErrorNone;
 }
 
-uint32_t tot_past_refs[MAX_TEMPORAL_LAYERS] = {0,0,0,0,0,0};
+uint32_t tot_past_refs[MAX_TEMPORAL_LAYERS] = {0, 0, 0, 0, 0, 0};
 /*
  returns max number of references from past mni-gops
 */
-void  get_past_refs(PredictionStructureConfig *prediction_structure_config_array)
-{
-/*5L
+void get_past_refs(PredictionStructureConfig *prediction_structure_config_array) {
+    /*5L
   |0|16|32|48| ........ |240|256|
 */
 
-    for (uint32_t hierarchical=0;   hierarchical < MAX_TEMPORAL_LAYERS; hierarchical++) {
-
-        int steady_state_mg_end = 256; //far enough to reach all  references
-        int steady_state_mg_start = steady_state_mg_end - prediction_structure_config_array[hierarchical].entry_count;
-        int past_ref_arr[128];
+    for (uint32_t hierarchical = 0; hierarchical < MAX_TEMPORAL_LAYERS; hierarchical++) {
+        int steady_state_mg_end   = 256; //far enough to reach all  references
+        int steady_state_mg_start = steady_state_mg_end -
+            prediction_structure_config_array[hierarchical].entry_count;
+        int     past_ref_arr[128];
         uint8_t tot_past = 0;
-        for (uint32_t gop_i = 0; gop_i < prediction_structure_config_array[hierarchical].entry_count; ++gop_i) {
-
-            int disp_num = gop_i == 0 ?
-                prediction_structure_config_array[hierarchical].entry_count + steady_state_mg_start :
-                gop_i + steady_state_mg_start;
+        for (uint32_t gop_i = 0;
+             gop_i < prediction_structure_config_array[hierarchical].entry_count;
+             ++gop_i) {
+            int disp_num = gop_i == 0
+                ? prediction_structure_config_array[hierarchical].entry_count +
+                    steady_state_mg_start
+                : gop_i + steady_state_mg_start;
 
             for (uint32_t listi = 0; listi < 2; ++listi) {
-
-                int32_t *ref_diff_list = (listi == 0) ?
-                    prediction_structure_config_array[hierarchical].entry_array[gop_i].ref_list0 :
-                    prediction_structure_config_array[hierarchical].entry_array[gop_i].ref_list1;
+                int32_t *ref_diff_list = (listi == 0)
+                    ? prediction_structure_config_array[hierarchical].entry_array[gop_i].ref_list0
+                    : prediction_structure_config_array[hierarchical].entry_array[gop_i].ref_list1;
 
                 for (uint32_t i = 0; i < MAX_REF_IDX; ++i) {
                     int ref_diff = ref_diff_list[i];
                     //if the ref is used
                     if (ref_diff > 0) {
-                        int ref_num = disp_num - ref_diff;
+                        int ref_num                = disp_num - ref_diff;
                         int is_ref_outside_curr_mg = ref_num <= steady_state_mg_start ? 1 : 0;
                         if (is_ref_outside_curr_mg) {
                             uint8_t ref_already_there = 0;
@@ -1884,18 +1688,17 @@ void  get_past_refs(PredictionStructureConfig *prediction_structure_config_array
         }
         tot_past_refs[hierarchical] = tot_past;
     }
-
-
 }
 /* count number of refs in a steady state MG*/
-uint32_t  get_num_refs_in_one_mg(PredictionStructure *pred_struct)
-{
-    uint32_t steady_state_pic_count = pred_struct->pred_struct_period;
+uint32_t get_num_refs_in_one_mg(PredictionStructure *pred_struct) {
+    uint32_t steady_state_pic_count  = pred_struct->pred_struct_period;
     uint32_t terminating_entry_index = pred_struct->steady_state_index + steady_state_pic_count;
 
     uint32_t tot_refs = 0;
-    for (uint32_t entry_index = pred_struct->steady_state_index; entry_index < terminating_entry_index; ++entry_index)
-        if(pred_struct->pred_struct_entry_ptr_array[entry_index]->is_referenced)
+    for (uint32_t entry_index = pred_struct->steady_state_index;
+         entry_index < terminating_entry_index;
+         ++entry_index)
+        if (pred_struct->pred_struct_entry_ptr_array[entry_index]->is_referenced)
             tot_refs++;
 
     return tot_refs;
@@ -1907,53 +1710,6 @@ static void prediction_structure_group_dctor(EbPtr p) {
     PredictionStructureConfigArray *array = (PredictionStructureConfigArray *)obj->priv;
     EB_DELETE(array);
 }
-#if !CLN_MERGE_MRP_SIG
-typedef struct MrpInitCtrls {
-    EbBool enable;                  // MRP ON/OFF
-    uint8_t ref_count_used_base;    //number of reference to use in each ref list for     base pictures
-    uint8_t ref_count_used_non_base;//number of reference to use in each ref list for non base pictures
-} MrpInitCtrls;
-/*This controls MRP setting at init time. run time setting should be within the init settings*/
-void set_mrp_init_ctrls( MrpInitCtrls* ctrls, uint8_t  level) {
-
-
-    switch (level)
-    {
-    case 0: //OFF
-        ctrls->enable = 0;
-        ctrls->ref_count_used_base = 1;
-        ctrls->ref_count_used_non_base = 1;
-        break;
-    case 1: //FULL ON
-        ctrls->enable = 1;
-        ctrls->ref_count_used_base = MAX_REF_IDX;
-        ctrls->ref_count_used_non_base = MAX_REF_IDX;
-        break;
-    case 2:
-        ctrls->enable = 1;
-        ctrls->ref_count_used_base = MAX_REF_IDX;
-        ctrls->ref_count_used_non_base = 3;
-        break;
-    case 3:
-        ctrls->enable = 1;
-        ctrls->ref_count_used_base = MAX_REF_IDX;
-        ctrls->ref_count_used_non_base = 2;
-        break;
-    case 4:
-        ctrls->enable = 1;
-        ctrls->ref_count_used_base = MAX_REF_IDX;
-        ctrls->ref_count_used_non_base = 1;
-        break;
-
-    default:
-        ctrls->enable = 0;
-        ctrls->ref_count_used_base = 1;
-        ctrls->ref_count_used_non_base = 1;
-        assert(0);
-        break;
-    }
-}
-#endif
 /*************************************************
  * Prediction Structure Group Ctor
  *
@@ -1973,23 +1729,9 @@ void set_mrp_init_ctrls( MrpInitCtrls* ctrls, uint8_t  level) {
  *      # Random Access
  *
  *************************************************/
-#if CLN_MERGE_MRP_SIG
-#if CLN_MRP_ENC_CONFIG
-EbErrorType prediction_structure_group_ctor(
-    PredictionStructureGroup* pred_struct_group_ptr,
-    struct SequenceControlSet* scs_ptr) {
-
-    EbSvtAv1EncConfiguration* config = &scs_ptr->static_config;
-#else
-EbErrorType prediction_structure_group_ctor(
-    PredictionStructureGroup* pred_struct_group_ptr,
-    EbSvtAv1EncConfiguration* config) {
-#endif
-#else
-EbErrorType prediction_structure_group_ctor(PredictionStructureGroup *pred_struct_group_ptr,
-    uint8_t   mrp_init_level,
-                                            EbEncMode enc_mode, EbSvtAv1EncConfiguration *config) {
-#endif
+EbErrorType prediction_structure_group_ctor(PredictionStructureGroup * pred_struct_group_ptr,
+                                            struct SequenceControlSet *scs_ptr) {
+    EbSvtAv1EncConfiguration *config = &scs_ptr->static_config;
     uint32_t pred_struct_index = 0;
     uint32_t ref_idx;
     uint32_t hierarchical_level_idx;
@@ -1997,89 +1739,90 @@ EbErrorType prediction_structure_group_ctor(PredictionStructureGroup *pred_struc
     uint32_t number_of_references;
 
     pred_struct_group_ptr->dctor = prediction_structure_group_dctor;
-#if CLN_MERGE_MRP_SIG
-#if CLN_MRP_ENC_CONFIG
-    MrpCtrls* mrp_ctrl = &(scs_ptr->mrp_ctrls);
-#else
-    MrpCtrls* mrp_ctrl = &(config->mrp_ctrls);
-#endif
+    MrpCtrls *mrp_ctrl = &(scs_ptr->mrp_ctrls);
     // Derive the max count at BASE
-    uint8_t ref_count_used_base =
-        MAX(mrp_ctrl->sc_base_ref_list0_count,
-            MAX(mrp_ctrl->sc_base_ref_list1_count,
-                MAX(mrp_ctrl->base_ref_list0_count, mrp_ctrl->base_ref_list1_count)));
+    uint8_t ref_count_used_base = MAX(
+        mrp_ctrl->sc_base_ref_list0_count,
+        MAX(mrp_ctrl->sc_base_ref_list1_count,
+            MAX(mrp_ctrl->base_ref_list0_count, mrp_ctrl->base_ref_list1_count)));
 
     // Derive the max count at non-BASE
-    uint8_t ref_count_used =
-        MAX(mrp_ctrl->sc_non_base_ref_list0_count,
-            MAX(mrp_ctrl->sc_non_base_ref_list1_count,
-                MAX(mrp_ctrl->non_base_ref_list0_count, mrp_ctrl->non_base_ref_list1_count)));
+    uint8_t ref_count_used = MAX(
+        mrp_ctrl->sc_non_base_ref_list0_count,
+        MAX(mrp_ctrl->sc_non_base_ref_list1_count,
+            MAX(mrp_ctrl->non_base_ref_list0_count, mrp_ctrl->non_base_ref_list1_count)));
 
-    if(mrp_ctrl->referencing_scheme == 1)
-#else
-    MrpInitCtrls mrp_init_ctrls;
-    set_mrp_init_ctrls(&mrp_init_ctrls, mrp_init_level);
-    uint8_t ref_count_used = mrp_init_ctrls.ref_count_used_non_base;
-    uint8_t ref_count_used_base = mrp_init_ctrls.ref_count_used_base;
-
-
-    (void)enc_mode;
-    if (mrp_init_level == 1)
-#endif
+    if (mrp_ctrl->referencing_scheme == 1)
     {
 
         {
-            int32_t ref_list0_tmp[] = { 1, 9, 2, 17 }; // GOP Index 1 - Ref List 0
-            memcpy(five_level_hierarchical_pred_struct[1].ref_list0, ref_list0_tmp, REF_LIST_MAX_DEPTH * sizeof(int32_t));
+            int32_t ref_list0_tmp[] = {1, 9, 2, 17}; // GOP Index 1 - Ref List 0
+            memcpy(five_level_hierarchical_pred_struct[1].ref_list0,
+                   ref_list0_tmp,
+                   REF_LIST_MAX_DEPTH * sizeof(int32_t));
         }
         {
-            int32_t ref_list0_tmp[] = { 1, 5, 2, 13 }; // GOP Index 5 - Ref List 0
-            memcpy(five_level_hierarchical_pred_struct[5].ref_list0, ref_list0_tmp, REF_LIST_MAX_DEPTH * sizeof(int32_t));
+            int32_t ref_list0_tmp[] = {1, 5, 2, 13}; // GOP Index 5 - Ref List 0
+            memcpy(five_level_hierarchical_pred_struct[5].ref_list0,
+                   ref_list0_tmp,
+                   REF_LIST_MAX_DEPTH * sizeof(int32_t));
         }
         {
-            int32_t ref_list0_tmp[] = { 1, 3, 2, 7 }; // GOP Index 7 - Ref List 0
-            memcpy(five_level_hierarchical_pred_struct[7].ref_list0, ref_list0_tmp, REF_LIST_MAX_DEPTH * sizeof(int32_t));
+            int32_t ref_list0_tmp[] = {1, 3, 2, 7}; // GOP Index 7 - Ref List 0
+            memcpy(five_level_hierarchical_pred_struct[7].ref_list0,
+                   ref_list0_tmp,
+                   REF_LIST_MAX_DEPTH * sizeof(int32_t));
         }
         {
-            int32_t ref_list0_tmp[] = { 1, 9, 2, 17 }; // GOP Index 9 - Ref List 0
-            memcpy(five_level_hierarchical_pred_struct[9].ref_list0, ref_list0_tmp, REF_LIST_MAX_DEPTH * sizeof(int32_t));
+            int32_t ref_list0_tmp[] = {1, 9, 2, 17}; // GOP Index 9 - Ref List 0
+            memcpy(five_level_hierarchical_pred_struct[9].ref_list0,
+                   ref_list0_tmp,
+                   REF_LIST_MAX_DEPTH * sizeof(int32_t));
         }
         {
-            int32_t ref_list1_tmp[] = { -4, 5, 0, 0 }; // GOP Index 12 - Ref List 1
-            memcpy(five_level_hierarchical_pred_struct[12].ref_list1, ref_list1_tmp, REF_LIST_MAX_DEPTH * sizeof(int32_t));
+            int32_t ref_list1_tmp[] = {-4, 5, 0, 0}; // GOP Index 12 - Ref List 1
+            memcpy(five_level_hierarchical_pred_struct[12].ref_list1,
+                   ref_list1_tmp,
+                   REF_LIST_MAX_DEPTH * sizeof(int32_t));
         }
         {
-            int32_t ref_list0_tmp[] = { 1, 5, 2, 13 }; // GOP Index 13 - Ref List 0
-            memcpy(five_level_hierarchical_pred_struct[13].ref_list0, ref_list0_tmp, REF_LIST_MAX_DEPTH * sizeof(int32_t));
+            int32_t ref_list0_tmp[] = {1, 5, 2, 13}; // GOP Index 13 - Ref List 0
+            memcpy(five_level_hierarchical_pred_struct[13].ref_list0,
+                   ref_list0_tmp,
+                   REF_LIST_MAX_DEPTH * sizeof(int32_t));
         }
         {
-            int32_t ref_list1_tmp[] = { -2, 3, 0, 0 }; // GOP Index 14 - Ref List 1
-            memcpy(five_level_hierarchical_pred_struct[14].ref_list1, ref_list1_tmp, REF_LIST_MAX_DEPTH * sizeof(int32_t));
+            int32_t ref_list1_tmp[] = {-2, 3, 0, 0}; // GOP Index 14 - Ref List 1
+            memcpy(five_level_hierarchical_pred_struct[14].ref_list1,
+                   ref_list1_tmp,
+                   REF_LIST_MAX_DEPTH * sizeof(int32_t));
         }
         {
-            int32_t ref_list0_tmp[] = { 1, 3, 2, 7 }; // GOP Index 15 - Ref List 0
-            memcpy(five_level_hierarchical_pred_struct[15].ref_list0, ref_list0_tmp, REF_LIST_MAX_DEPTH * sizeof(int32_t));
+            int32_t ref_list0_tmp[] = {1, 3, 2, 7}; // GOP Index 15 - Ref List 0
+            memcpy(five_level_hierarchical_pred_struct[15].ref_list0,
+                   ref_list0_tmp,
+                   REF_LIST_MAX_DEPTH * sizeof(int32_t));
         }
 
-
         {
-            int32_t ref_list0_tmp[] = { 1, 3, 5, 2 };// GOP Index 1 - Ref List 0
-            memcpy(four_level_hierarchical_pred_struct[1].ref_list0, ref_list0_tmp, REF_LIST_MAX_DEPTH * sizeof(int32_t));
+            int32_t ref_list0_tmp[] = {1, 3, 5, 2}; // GOP Index 1 - Ref List 0
+            memcpy(four_level_hierarchical_pred_struct[1].ref_list0,
+                   ref_list0_tmp,
+                   REF_LIST_MAX_DEPTH * sizeof(int32_t));
         }
         {
-            int32_t ref_list0_tmp[] = { 1, 3, 5, 2 };// GOP Index 5 - Ref List 0
-            memcpy(four_level_hierarchical_pred_struct[5].ref_list0, ref_list0_tmp, REF_LIST_MAX_DEPTH * sizeof(int32_t));
-
+            int32_t ref_list0_tmp[] = {1, 3, 5, 2}; // GOP Index 5 - Ref List 0
+            memcpy(four_level_hierarchical_pred_struct[5].ref_list0,
+                   ref_list0_tmp,
+                   REF_LIST_MAX_DEPTH * sizeof(int32_t));
         }
         {
-            int32_t ref_list0_tmp[] = { 1, 3, 5, 2 };// GOP Index 7 - Ref List 0
-            memcpy(four_level_hierarchical_pred_struct[7].ref_list0, ref_list0_tmp, REF_LIST_MAX_DEPTH * sizeof(int32_t));
-
+            int32_t ref_list0_tmp[] = {1, 3, 5, 2}; // GOP Index 7 - Ref List 0
+            memcpy(four_level_hierarchical_pred_struct[7].ref_list0,
+                   ref_list0_tmp,
+                   REF_LIST_MAX_DEPTH * sizeof(int32_t));
         }
-
     }
-
-
 
     PredictionStructureConfigArray *config_array;
     EB_NEW(config_array, prediction_structure_config_array_ctor);
@@ -2156,10 +1899,8 @@ EbErrorType prediction_structure_group_ctor(PredictionStructureGroup *pred_struc
             prediction_structure_config_array[4].entry_array[gop_i].ref_list1[i] = 0;
             prediction_structure_config_array[5].entry_array[gop_i].ref_list0[i] = 0;
             prediction_structure_config_array[5].entry_array[gop_i].ref_list1[i] = 0;
-
         }
     }
-
 
     get_past_refs(prediction_structure_config_array);
 

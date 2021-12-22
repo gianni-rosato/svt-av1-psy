@@ -195,21 +195,13 @@ static void reset_entropy_coding_picture(EntropyCodingContext *context_ptr,
             (OutputBitstreamUnit *)(pcs_ptr->entropy_coding_info[tile_idx]
                                         ->entropy_coder_ptr->ec_output_bitstream_ptr);
         //****************************************************************//
-#if !FIX_EC_OVERFLOW
-        uint8_t *data = output_bitstream_ptr->buffer_av1;
-#endif
         pcs_ptr->entropy_coding_info[tile_idx]->entropy_coder_ptr->ec_writer.allow_update_cdf =
             !pcs_ptr->parent_pcs_ptr->large_scale_tile;
         pcs_ptr->entropy_coding_info[tile_idx]->entropy_coder_ptr->ec_writer.allow_update_cdf =
             pcs_ptr->entropy_coding_info[tile_idx]->entropy_coder_ptr->ec_writer.allow_update_cdf &&
             !frm_hdr->disable_cdf_update;
-#if FIX_EC_OVERFLOW
         aom_start_encode(&pcs_ptr->entropy_coding_info[tile_idx]->entropy_coder_ptr->ec_writer,
-            output_bitstream_ptr);
-#else
-        aom_start_encode(&pcs_ptr->entropy_coding_info[tile_idx]->entropy_coder_ptr->ec_writer,
-                         data);
-#endif
+                         output_bitstream_ptr);
         // ADD Reset here
         if (pcs_ptr->parent_pcs_ptr->frm_hdr.primary_ref_frame != PRIMARY_REF_NONE)
             svt_memcpy(
@@ -395,19 +387,10 @@ void *entropy_coding_kernel(void *input_ptr) {
                 }
 
 #if TURN_OFF_EC_FIRST_PASS
-#if  FTR_OPT_MPASS_BYPASS_FRAMES
-#if FTR_OP_TEST
-                if (!use_output_stat(scs_ptr) && !(!pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag && 1 && !pcs_ptr->parent_pcs_ptr->first_frame_in_minigop)) {
-#else
-#if CLN_ENC_CONFIG_SIG
-                if (scs_ptr->static_config.pass != ENC_FIRST_PASS && !(!pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag && scs_ptr->rc_stat_gen_pass_mode && !pcs_ptr->parent_pcs_ptr->first_frame_in_minigop)) {
-#else
-                if (!use_output_stat(scs_ptr) && !(!pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag && scs_ptr->rc_stat_gen_pass_mode && !pcs_ptr->parent_pcs_ptr->first_frame_in_minigop)) {
-#endif
-#endif
-#else
-                if (!use_output_stat(scs_ptr)) {
-#endif
+                if (scs_ptr->static_config.pass != ENC_FIRST_PASS &&
+                    !(!pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag &&
+                      scs_ptr->rc_stat_gen_pass_mode &&
+                      !pcs_ptr->parent_pcs_ptr->first_frame_in_minigop)) {
 #endif
                     for (uint32_t x_sb_index = 0; x_sb_index < tile_width_in_sb; ++x_sb_index) {
                         uint16_t    sb_index = (uint16_t)((x_sb_index + tile_sb_start_x) +
@@ -427,7 +410,8 @@ void *entropy_coding_kernel(void *input_ptr) {
                              : pcs_ptr->entropy_coding_info[tile_idx]
                                   ->entropy_coder_ptr->ec_writer.ec.offs; //residual_bc.pos
 
-                        EbPictureBufferDesc *coeff_picture_ptr = pcs_ptr->parent_pcs_ptr->enc_dec_ptr->quantized_coeff[sb_index];
+                        EbPictureBufferDesc *coeff_picture_ptr =
+                            pcs_ptr->parent_pcs_ptr->enc_dec_ptr->quantized_coeff[sb_index];
                         write_sb(context_ptr,
                                  sb_ptr,
                                  pcs_ptr,
@@ -438,9 +422,6 @@ void *entropy_coding_kernel(void *input_ptr) {
                                                   ->entropy_coder_ptr->ec_writer.ec.offs -
                                               prev_pos)
                             << 3;
-#if !RFCTR_RC_P2
-                        pcs_ptr->parent_pcs_ptr->quantized_coeff_num_bits += sb_ptr->total_bits;
-#endif
                         row_total_bits += sb_ptr->total_bits;
                     }
 
@@ -496,16 +477,16 @@ void *entropy_coding_kernel(void *input_ptr) {
                             if (pcs_ptr->parent_pcs_ptr->superres_total_recode_loop == 0) {
                                 // Release the List 0 Reference Pictures
                                 for (uint32_t ref_idx = 0;
-                                    ref_idx < pcs_ptr->parent_pcs_ptr->ref_list0_count;
-                                    ++ref_idx) {
+                                     ref_idx < pcs_ptr->parent_pcs_ptr->ref_list0_count;
+                                     ++ref_idx) {
                                     if (pcs_ptr->ref_pic_ptr_array[0][ref_idx] != NULL) {
                                         svt_release_object(pcs_ptr->ref_pic_ptr_array[0][ref_idx]);
                                     }
                                 }
                                 // Release the List 1 Reference Pictures
                                 for (uint32_t ref_idx = 0;
-                                    ref_idx < pcs_ptr->parent_pcs_ptr->ref_list1_count;
-                                    ++ref_idx) {
+                                     ref_idx < pcs_ptr->parent_pcs_ptr->ref_list1_count;
+                                     ++ref_idx) {
                                     if (pcs_ptr->ref_pic_ptr_array[1][ref_idx] != NULL) {
                                         svt_release_object(pcs_ptr->ref_pic_ptr_array[1][ref_idx]);
                                     }

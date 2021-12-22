@@ -1,13 +1,14 @@
 /*
-* Copyright(c) 2019 Netflix, Inc.
-*
-* This source code is subject to the terms of the BSD 2 Clause License and
-* the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
-* was not distributed with this source code in the LICENSE file, you can
-* obtain it at https://www.aomedia.org/license/software-license. If the Alliance for Open
-* Media Patent License 1.0 was not distributed with this source code in the
-* PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
-*/
+ * Copyright(c) 2019 Netflix, Inc.
+ *
+ * This source code is subject to the terms of the BSD 2 Clause License and
+ * the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
+ * was not distributed with this source code in the LICENSE file, you can
+ * obtain it at https://www.aomedia.org/license/software-license. If the
+ * Alliance for Open Media Patent License 1.0 was not distributed with this
+ * source code in the PATENTS file, you can obtain it at
+ * https://www.aomedia.org/license/patent-license.
+ */
 
 /******************************************************************************
  * @file pixel_proj_err_test.cc
@@ -88,16 +89,16 @@ class PixelProjErrorTest
 
     virtual void SetUp() {
         src_ = (Sample *)(svt_aom_malloc(MAX_DATA_BLOCK * MAX_DATA_BLOCK *
-                                        sizeof(*src_)));
+                                         sizeof(*src_)));
         ASSERT_NE(src_, nullptr);
         dgd_ = (Sample *)(svt_aom_malloc(MAX_DATA_BLOCK * MAX_DATA_BLOCK *
-                                        sizeof(*dgd_)));
+                                         sizeof(*dgd_)));
         ASSERT_NE(dgd_, nullptr);
         flt0_ = (int32_t *)(svt_aom_malloc(MAX_DATA_BLOCK * MAX_DATA_BLOCK *
-                                          sizeof(*flt0_)));
+                                           sizeof(*flt0_)));
         ASSERT_NE(flt0_, nullptr);
         flt1_ = (int32_t *)(svt_aom_malloc(MAX_DATA_BLOCK * MAX_DATA_BLOCK *
-                                          sizeof(*flt1_)));
+                                           sizeof(*flt1_)));
         ASSERT_NE(flt1_, nullptr);
     }
 

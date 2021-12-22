@@ -21,5 +21,5 @@
 
 typedef int (*RansacFunc)(int *matched_points, int npoints, int *num_inliers_by_motion,
                           MotionModel *params_by_motion, int num_motions);
-RansacFunc       svt_av1_get_ransac_type(TransformationType type);
+RansacFunc svt_av1_get_ransac_type(TransformationType type);
 #endif // AOM_AV1_ENCODER_RANSAC_H_

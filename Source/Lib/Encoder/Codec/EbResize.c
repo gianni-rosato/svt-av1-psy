@@ -21,12 +21,8 @@
 #include "aom_dsp_rtcd.h"
 #include "EbModeDecisionProcess.h"
 
-#if FTR_MEM_OPT
-EbPictureBufferDesc * get_ref_pic_buffer(PictureControlSet *pcs_ptr,
-                                         uint8_t is_highbd,
-                                         uint8_t list_idx,
-                                         uint8_t ref_idx);
-#endif
+EbPictureBufferDesc *get_ref_pic_buffer(PictureControlSet *pcs_ptr, uint8_t is_highbd,
+                                        uint8_t list_idx, uint8_t ref_idx);
 
 #define DIVIDE_AND_ROUND(x, y) (((x) + ((y) >> 1)) / (y))
 
@@ -499,11 +495,11 @@ static EbErrorType av1_resize_plane(const uint8_t *const input, int height, int 
     return EB_ErrorNone;
 }
 
-static EbErrorType av1_resize_plane_horizontal(const uint8_t* const input, int height, int width,
-    int in_stride, uint8_t* output, int height2, int width2,
-    int out_stride) {
+static EbErrorType av1_resize_plane_horizontal(const uint8_t *const input, int height, int width,
+                                               int in_stride, uint8_t *output, int height2,
+                                               int width2, int out_stride) {
     int      i;
-    uint8_t* tmpbuf;
+    uint8_t *tmpbuf;
 
     assert(width > 0);
     assert(height > 0);
@@ -795,11 +791,12 @@ static EbErrorType av1_highbd_resize_plane(const uint16_t *const input, int heig
     return EB_ErrorNone;
 }
 
-static EbErrorType av1_highbd_resize_plane_horizontal(const uint16_t* const input, int height, int width,
-    int in_stride, uint16_t* output, int height2, int width2,
-    int out_stride, int bd) {
+static EbErrorType av1_highbd_resize_plane_horizontal(const uint16_t *const input, int height,
+                                                      int width, int in_stride, uint16_t *output,
+                                                      int height2, int width2, int out_stride,
+                                                      int bd) {
     int       i;
-    uint16_t* tmpbuf;
+    uint16_t *tmpbuf;
 
     UNUSED(height2);
     assert(height2 == height);
@@ -833,13 +830,12 @@ void save_YUV_to_file_highbd(char *filename, uint16_t *buffer_y, uint16_t *buffe
                              uint16_t stride_u, uint16_t stride_v, uint16_t origin_y,
                              uint16_t origin_x, uint32_t ss_x, uint32_t ss_y);
 #endif
-
-typedef EbErrorType (*Av1HighbdResizePlane)(const uint16_t* const input, int height, int width,
-                                    int in_stride, uint16_t* output, int height2, int width2,
-                                    int out_stride, int bd);
-typedef EbErrorType (*Av1ResizePlane)(const uint8_t* const input, int height, int width,
-                                     int in_stride, uint8_t* output, int height2, int width2,
-                                     int out_stride);
+typedef EbErrorType (*Av1HighbdResizePlane)(const uint16_t *const input, int height, int width,
+                                            int in_stride, uint16_t *output, int height2,
+                                            int width2, int out_stride, int bd);
+typedef EbErrorType (*Av1ResizePlane)(const uint8_t *const input, int height, int width,
+                                      int in_stride, uint8_t *output, int height2, int width2,
+                                      int out_stride);
 
 /*
  * Resize frame according to dst resolution.
@@ -867,7 +863,6 @@ static EbErrorType av1_resize_frame(const EbPictureBufferDesc *src, EbPictureBuf
         dst_buffer_highbd[1] = (uint16_t *)dst->buffer_cb;
         dst_buffer_highbd[2] = (uint16_t *)dst->buffer_cr;
     }
-
 #if DEBUG_SCALING
     if (bd > 8)
         save_YUV_to_file_highbd("unscaled_pic_highbd.yuv",
@@ -901,8 +896,9 @@ static EbErrorType av1_resize_frame(const EbPictureBufferDesc *src, EbPictureBuf
 
     for (int plane = 0; plane <= AOMMIN(num_planes, MAX_MB_PLANE - 1); ++plane) {
         if (bd > 8) {
-            Av1HighbdResizePlane resize_plane_func = (src->height == dst->height) ?
-                av1_highbd_resize_plane_horizontal : av1_highbd_resize_plane;
+            Av1HighbdResizePlane resize_plane_func = (src->height == dst->height)
+                ? av1_highbd_resize_plane_horizontal
+                : av1_highbd_resize_plane;
             switch (plane) {
             case 0:
                 resize_plane_func(
@@ -917,38 +913,37 @@ static EbErrorType av1_resize_frame(const EbPictureBufferDesc *src, EbPictureBuf
                     bd);
                 break;
             case 1:
-                resize_plane_func(
-                    src_buffer_highbd[1] + (src->origin_y >> ss_y) * src->stride_cb +
-                        (src->origin_x >> ss_x),
-                    src->height >> ss_y,
-                    src->width >> ss_x,
-                    src->stride_cb,
-                    dst_buffer_highbd[1] + (dst->origin_y >> ss_y) * dst->stride_cb +
-                        (dst->origin_x >> ss_x),
-                    (dst->height + ss_y) >> ss_y,
-                    (dst->width + ss_x) >> ss_x,
-                    dst->stride_cb,
-                    bd);
+                resize_plane_func(src_buffer_highbd[1] + (src->origin_y >> ss_y) * src->stride_cb +
+                                      (src->origin_x >> ss_x),
+                                  src->height >> ss_y,
+                                  src->width >> ss_x,
+                                  src->stride_cb,
+                                  dst_buffer_highbd[1] + (dst->origin_y >> ss_y) * dst->stride_cb +
+                                      (dst->origin_x >> ss_x),
+                                  (dst->height + ss_y) >> ss_y,
+                                  (dst->width + ss_x) >> ss_x,
+                                  dst->stride_cb,
+                                  bd);
                 break;
             case 2:
-                resize_plane_func(
-                    src_buffer_highbd[2] + (src->origin_y >> ss_y) * src->stride_cr +
-                        (src->origin_x >> ss_x),
-                    src->height >> ss_y,
-                    src->width >> ss_x,
-                    src->stride_cr,
-                    dst_buffer_highbd[2] + (dst->origin_y >> ss_y) * dst->stride_cr +
-                        (dst->origin_x >> ss_x),
-                    (dst->height + ss_y) >> ss_y,
-                    (dst->width + ss_x) >> ss_x,
-                    dst->stride_cr,
-                    bd);
+                resize_plane_func(src_buffer_highbd[2] + (src->origin_y >> ss_y) * src->stride_cr +
+                                      (src->origin_x >> ss_x),
+                                  src->height >> ss_y,
+                                  src->width >> ss_x,
+                                  src->stride_cr,
+                                  dst_buffer_highbd[2] + (dst->origin_y >> ss_y) * dst->stride_cr +
+                                      (dst->origin_x >> ss_x),
+                                  (dst->height + ss_y) >> ss_y,
+                                  (dst->width + ss_x) >> ss_x,
+                                  dst->stride_cr,
+                                  bd);
                 break;
             default: break;
             }
         } else {
-            Av1ResizePlane resize_plane_func = (src->height == dst->height) ?
-                av1_resize_plane_horizontal : av1_resize_plane;
+            Av1ResizePlane resize_plane_func = (src->height == dst->height)
+                ? av1_resize_plane_horizontal
+                : av1_resize_plane;
             switch (plane) {
             case 0:
                 resize_plane_func(src->buffer_y + src->origin_y * src->stride_y + src->origin_x,
@@ -963,36 +958,35 @@ static EbErrorType av1_resize_frame(const EbPictureBufferDesc *src, EbPictureBuf
             case 1:
                 if (dst->buffer_cb) {
                     resize_plane_func(src->buffer_cb + (src->origin_y >> ss_y) * src->stride_cb +
-                                         (src->origin_x >> ss_x),
-                                     src->height >> ss_y,
-                                     src->width >> ss_x,
-                                     src->stride_cb,
-                                     dst->buffer_cb + (dst->origin_y >> ss_y) * dst->stride_cb +
-                                         (dst->origin_x >> ss_x),
-                                     (dst->height + ss_y) >> ss_y,
-                                     (dst->width + ss_x) >> ss_x,
-                                     dst->stride_cb);
+                                          (src->origin_x >> ss_x),
+                                      src->height >> ss_y,
+                                      src->width >> ss_x,
+                                      src->stride_cb,
+                                      dst->buffer_cb + (dst->origin_y >> ss_y) * dst->stride_cb +
+                                          (dst->origin_x >> ss_x),
+                                      (dst->height + ss_y) >> ss_y,
+                                      (dst->width + ss_x) >> ss_x,
+                                      dst->stride_cb);
                 }
                 break;
             case 2:
                 if (dst->buffer_cr) {
                     resize_plane_func(src->buffer_cr + (src->origin_y >> ss_y) * src->stride_cr +
-                                         (src->origin_x >> ss_x),
-                                     src->height >> ss_y,
-                                     src->width >> ss_x,
-                                     src->stride_cr,
-                                     dst->buffer_cr + (dst->origin_y >> ss_y) * dst->stride_cr +
-                                         (dst->origin_x >> ss_x),
-                                     (dst->height + ss_y) >> ss_y,
-                                     (dst->width + ss_x) >> ss_x,
-                                     dst->stride_cr);
+                                          (src->origin_x >> ss_x),
+                                      src->height >> ss_y,
+                                      src->width >> ss_x,
+                                      src->stride_cr,
+                                      dst->buffer_cr + (dst->origin_y >> ss_y) * dst->stride_cr +
+                                          (dst->origin_x >> ss_x),
+                                      (dst->height + ss_y) >> ss_y,
+                                      (dst->width + ss_x) >> ss_x,
+                                      dst->stride_cr);
                 }
                 break;
             default: break;
             }
         }
     }
-
 #if DEBUG_SCALING
     if (bd > 8)
         save_YUV_to_file_highbd("scaled_pic_highbd.yuv",
@@ -1023,7 +1017,6 @@ static EbErrorType av1_resize_frame(const EbPictureBufferDesc *src, EbPictureBuf
                          1,
                          1);
 #endif
-
     if (bd > 8 && !is_packed) {
         unpack_highbd_pic(dst_buffer_highbd, dst, ss_x, ss_y, EB_TRUE);
 
@@ -1047,13 +1040,13 @@ static INLINE unsigned int lcg_rand16(unsigned int *state) {
 // Compute the horizontal frequency components' energy in a frame
 // by calculuating the 16x4 Horizontal DCT. This is to be used to
 // decide the superresolution parameters.
-static void analyze_hor_freq(PictureParentControlSet* pcs_ptr, double* energy) {
-    uint64_t freq_energy[16] = { 0 };
+static void analyze_hor_freq(PictureParentControlSet *pcs_ptr, double *energy) {
+    uint64_t freq_energy[16] = {0};
 
-    EbPictureBufferDesc* input_picture_ptr = pcs_ptr->enhanced_picture_ptr;
-    uint8_t* in = input_picture_ptr->buffer_y + input_picture_ptr->origin_x +
+    EbPictureBufferDesc *input_picture_ptr = pcs_ptr->enhanced_picture_ptr;
+    uint8_t *            in = input_picture_ptr->buffer_y + input_picture_ptr->origin_x +
         input_picture_ptr->origin_y * input_picture_ptr->stride_y;
-    const int width = input_picture_ptr->width;
+    const int width  = input_picture_ptr->width;
     const int height = input_picture_ptr->height;
 
     DECLARE_ALIGNED(64, int32_t, coeff[16 * 4]);
@@ -1069,8 +1062,7 @@ static void analyze_hor_freq(PictureParentControlSet* pcs_ptr, double* energy) {
                     src16[ii * 16 + jj] = in[(i + ii) * input_picture_ptr->stride_y + (j + jj)];
             svt_av1_fwd_txfm2d_16x4(src16, coeff, 16, H_DCT, EB_8BIT);
             for (int k = 1; k < 16; ++k) {
-                const uint64_t this_energy =
-                    ((int64_t)coeff[k] * coeff[k]) +
+                const uint64_t this_energy = ((int64_t)coeff[k] * coeff[k]) +
                     ((int64_t)coeff[k + 16] * coeff[k + 16]) +
                     ((int64_t)coeff[k + 32] * coeff[k + 32]) +
                     ((int64_t)coeff[k + 48] * coeff[k + 48]);
@@ -1084,8 +1076,7 @@ static void analyze_hor_freq(PictureParentControlSet* pcs_ptr, double* energy) {
         for (int k = 1; k < 16; ++k) energy[k] = (double)freq_energy[k] / n;
         // Convert to cumulative energy
         for (int k = 14; k > 0; --k) energy[k] += energy[k + 1];
-    }
-    else {
+    } else {
         for (int k = 1; k < 16; ++k) energy[k] = 1e+20;
     }
 }
@@ -1095,48 +1086,46 @@ static void analyze_hor_freq(PictureParentControlSet* pcs_ptr, double* energy) {
 #define SUPERRES_ENERGY_BY_Q2_THRESH_ARFFRAME 0.008
 #define SUPERRES_ENERGY_BY_AC_THRESH 0.2
 
-static double get_energy_by_q2_thresh(const RATE_CONTROL* rc, int frame_update_type) {
+static double get_energy_by_q2_thresh(const RATE_CONTROL *rc, int frame_update_type) {
     // TODO(now): Return keyframe thresh * factor based on frame type / pyramid
     // level.
     if (frame_update_type == ARF_UPDATE) {
         return SUPERRES_ENERGY_BY_Q2_THRESH_ARFFRAME;
-    }
-    else if (frame_update_type == KF_UPDATE) {
+    } else if (frame_update_type == KF_UPDATE) {
         if (rc->frames_to_key <= 1)
             return SUPERRES_ENERGY_BY_Q2_THRESH_KEYFRAME_SOLO;
         else
             return SUPERRES_ENERGY_BY_Q2_THRESH_KEYFRAME;
-    }
-    else {
+    } else {
         assert(0);
     }
     return 0;
 }
 
-static int av1_superres_in_recode_allowed(SequenceControlSet* scs_ptr) {
-    const EbSvtAv1EncConfiguration* const static_config = &scs_ptr->static_config;
+static int av1_superres_in_recode_allowed(SequenceControlSet *scs_ptr) {
+    const EbSvtAv1EncConfiguration *const static_config = &scs_ptr->static_config;
     // Empirically found to not be beneficial for image coding.
     return static_config->superres_mode == SUPERRES_AUTO &&
-        static_config->superres_auto_search_type != SUPERRES_AUTO_SOLO/* &&
-        scs_ptr->encode_context_ptr->rc.frames_to_key > 1*/;
+        static_config->superres_auto_search_type != SUPERRES_AUTO_SOLO /* &&
+        scs_ptr->encode_context_ptr->rc.frames_to_key > 1*/
+        ;
 }
 
-static uint8_t get_superres_denom_from_qindex_energy(int qindex, double* energy,
-    double threshq,
-    double threshp) {
-    const double q = svt_av1_convert_qindex_to_q(qindex, AOM_BITS_8);
-    const double tq = threshq * q * q;
-    const double tp = threshp * energy[1];
+static uint8_t get_superres_denom_from_qindex_energy(int qindex, double *energy, double threshq,
+                                                     double threshp) {
+    const double q      = svt_av1_convert_qindex_to_q(qindex, AOM_BITS_8);
+    const double tq     = threshq * q * q;
+    const double tp     = threshp * energy[1];
     const double thresh = AOMMIN(tq, tp);
-    int k;
+    int          k;
     for (k = SCALE_NUMERATOR * 2; k > SCALE_NUMERATOR; --k) {
-        if (energy[k - 1] > thresh) break;
+        if (energy[k - 1] > thresh)
+            break;
     }
     return 3 * SCALE_NUMERATOR - k;
 }
 
-int32_t get_frame_update_type(SequenceControlSet* scs_ptr, PictureParentControlSet* pcs_ptr)
-{
+int32_t get_frame_update_type(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_ptr) {
     // Reasons why not use gf_group->update_type:
     //   1. It is valid only in 2nd pass of 2-pass encoding or lap_enabled is true. E.g. It's invalid in 1-pass CQP mode.
     //   2. It is set in RC process, so can't use it in processes before RC.
@@ -1147,25 +1136,22 @@ int32_t get_frame_update_type(SequenceControlSet* scs_ptr, PictureParentControlS
     if (scs_ptr->max_temporal_layers > 0) {
         if (pcs_ptr->temporal_layer_index == 0) {
             return ARF_UPDATE;
-        }
-        else if (pcs_ptr->temporal_layer_index == pcs_ptr->hierarchical_levels) {
+        } else if (pcs_ptr->temporal_layer_index == pcs_ptr->hierarchical_levels) {
             return LF_UPDATE;
-        }
-        else {
+        } else {
             return INTNL_ARF_UPDATE;
         }
-    }
-    else {
+    } else {
         return LF_UPDATE;
     }
 }
 
-static uint8_t get_superres_denom_for_qindex(SequenceControlSet* scs_ptr, PictureParentControlSet* pcs_ptr,
-    int qindex, int sr_kf, int sr_arf) {
+static uint8_t get_superres_denom_for_qindex(SequenceControlSet *     scs_ptr,
+                                             PictureParentControlSet *pcs_ptr, int qindex,
+                                             int sr_kf, int sr_arf) {
     // Use superres for Key-frames and Alt-ref frames only.
     int32_t update_type = get_frame_update_type(scs_ptr, pcs_ptr);
-    if (update_type != KF_UPDATE &&
-        update_type != ARF_UPDATE) {
+    if (update_type != KF_UPDATE && update_type != ARF_UPDATE) {
         return SCALE_NUMERATOR;
     }
     if (update_type == KF_UPDATE && !sr_kf) {
@@ -1178,9 +1164,9 @@ static uint8_t get_superres_denom_for_qindex(SequenceControlSet* scs_ptr, Pictur
     double energy[16];
     analyze_hor_freq(pcs_ptr, energy);
 
-    const double energy_by_q2_thresh =
-        get_energy_by_q2_thresh(&scs_ptr->encode_context_ptr->rc, update_type);
-    int denom = get_superres_denom_from_qindex_energy(
+    const double energy_by_q2_thresh = get_energy_by_q2_thresh(&scs_ptr->encode_context_ptr->rc,
+                                                               update_type);
+    int          denom               = get_superres_denom_from_qindex_energy(
         qindex, energy, energy_by_q2_thresh, SUPERRES_ENERGY_BY_AC_THRESH);
 
 #if DEBUG_SUPERRES_ENERGY
@@ -1210,15 +1196,15 @@ static uint8_t get_superres_denom_for_qindex(SequenceControlSet* scs_ptr, Pictur
 static void calc_superres_params(superres_params_type *spr_params, SequenceControlSet *scs_ptr,
                                  PictureParentControlSet *pcs_ptr) {
     pcs_ptr->superres_total_recode_loop = 0;
-    pcs_ptr->superres_recode_loop = 0;
-    spr_params->superres_denom  = SCALE_NUMERATOR;
-    static unsigned int seed    = 34567;
-    FrameHeader *       frm_hdr = &pcs_ptr->frm_hdr;
+    pcs_ptr->superres_recode_loop       = 0;
+    spr_params->superres_denom          = SCALE_NUMERATOR;
+    static unsigned int seed            = 34567;
+    FrameHeader *       frm_hdr         = &pcs_ptr->frm_hdr;
 
-    uint8_t superres_mode = scs_ptr->static_config.superres_mode;
-    uint8_t cfg_denom     = scs_ptr->static_config.superres_denom;
-    uint8_t cfg_kf_denom  = scs_ptr->static_config.superres_kf_denom;
-    uint8_t superres_qthres = quantizer_to_qindex[scs_ptr->static_config.superres_qthres];
+    uint8_t superres_mode      = scs_ptr->static_config.superres_mode;
+    uint8_t cfg_denom          = scs_ptr->static_config.superres_denom;
+    uint8_t cfg_kf_denom       = scs_ptr->static_config.superres_kf_denom;
+    uint8_t superres_qthres    = quantizer_to_qindex[scs_ptr->static_config.superres_qthres];
     uint8_t superres_kf_qthres = quantizer_to_qindex[scs_ptr->static_config.superres_kf_qthres];
 
     // super-res can only be enabled in case allow_intrabc is disabled
@@ -1236,14 +1222,14 @@ static void calc_superres_params(superres_params_type *spr_params, SequenceContr
     case SUPERRES_RANDOM: spr_params->superres_denom = (uint8_t)(lcg_rand16(&seed) % 9 + 8); break;
     case SUPERRES_QTHRESH: {
         // Do not use superres when screen content tools are used.
-        if (frm_hdr->allow_screen_content_tools) break;
+        if (frm_hdr->allow_screen_content_tools)
+            break;
 
-        const int q = quantizer_to_qindex[pcs_ptr->picture_qp];
+        const int q       = quantizer_to_qindex[pcs_ptr->picture_qp];
         const int qthresh = frame_is_intra_only(pcs_ptr) ? superres_kf_qthres : superres_qthres;
         if (q <= qthresh) {
             spr_params->superres_denom = SCALE_NUMERATOR;
-        }
-        else {
+        } else {
             spr_params->superres_denom = get_superres_denom_for_qindex(scs_ptr, pcs_ptr, q, 1, 1);
         }
         break;
@@ -1252,35 +1238,33 @@ static void calc_superres_params(superres_params_type *spr_params, SequenceContr
         const int q = quantizer_to_qindex[pcs_ptr->picture_qp];
 
         const int sr_search_type = scs_ptr->static_config.superres_auto_search_type;
-        const int qthresh = (sr_search_type == SUPERRES_AUTO_SOLO) ? 128 : 0;
+        const int qthresh        = (sr_search_type == SUPERRES_AUTO_SOLO) ? 128 : 0;
         if (q <= qthresh) {
-            spr_params->superres_denom = SCALE_NUMERATOR;  // Don't use superres.
-        }
-        else {
+            spr_params->superres_denom = SCALE_NUMERATOR; // Don't use superres.
+        } else {
             if (sr_search_type == SUPERRES_AUTO_SOLO) {
-                spr_params->superres_denom = get_superres_denom_for_qindex(scs_ptr, pcs_ptr, q, 1, 1);
-            }
-            else if (sr_search_type == SUPERRES_AUTO_DUAL) {
-                pcs_ptr->superres_denom_array[0] = get_superres_denom_for_qindex(scs_ptr, pcs_ptr, q, 1, 1);
+                spr_params->superres_denom = get_superres_denom_for_qindex(
+                    scs_ptr, pcs_ptr, q, 1, 1);
+            } else if (sr_search_type == SUPERRES_AUTO_DUAL) {
+                pcs_ptr->superres_denom_array[0] = get_superres_denom_for_qindex(
+                    scs_ptr, pcs_ptr, q, 1, 1);
                 if (pcs_ptr->superres_denom_array[0] != SCALE_NUMERATOR) {
-                    pcs_ptr->superres_denom_array[1] = SCALE_NUMERATOR;
-                    spr_params->superres_denom = pcs_ptr->superres_denom_array[0];
+                    pcs_ptr->superres_denom_array[1]    = SCALE_NUMERATOR;
+                    spr_params->superres_denom          = pcs_ptr->superres_denom_array[0];
                     pcs_ptr->superres_total_recode_loop = 2;
                 }
-            }
-            else { // SUPERRES_AUTO_ALL
+            } else { // SUPERRES_AUTO_ALL
                 assert(sr_search_type == SUPERRES_AUTO_ALL);
                 int32_t update_type = get_frame_update_type(scs_ptr, pcs_ptr);
                 if (update_type == KF_UPDATE || update_type == ARF_UPDATE) {
                     for (int i = 0; i < SCALE_NUMERATOR + 1; i++) {
                         if (i < SCALE_NUMERATOR) {
                             pcs_ptr->superres_denom_array[i] = SCALE_NUMERATOR + 1 + i;
-                        }
-                        else {
+                        } else {
                             pcs_ptr->superres_denom_array[i] = SCALE_NUMERATOR;
                         }
                     }
-                    spr_params->superres_denom = pcs_ptr->superres_denom_array[0];
+                    spr_params->superres_denom          = pcs_ptr->superres_denom_array[0];
                     pcs_ptr->superres_total_recode_loop = SCALE_NUMERATOR + 1;
                 }
             }
@@ -1304,11 +1288,11 @@ static EbErrorType downscaled_source_buffer_desc_ctor(
     initData.max_height         = spr_params.encoding_height;
     initData.bit_depth          = picture_ptr_for_reference->bit_depth;
     initData.color_format       = picture_ptr_for_reference->color_format;
-    initData.split_mode         = (picture_ptr_for_reference->bit_depth > EB_8BIT) ? EB_TRUE : EB_FALSE;
-    initData.left_padding       = picture_ptr_for_reference->origin_x;
-    initData.right_padding      = picture_ptr_for_reference->origin_x;
-    initData.top_padding        = picture_ptr_for_reference->origin_y;
-    initData.bot_padding        = picture_ptr_for_reference->origin_bot_y;
+    initData.split_mode    = (picture_ptr_for_reference->bit_depth > EB_8BIT) ? EB_TRUE : EB_FALSE;
+    initData.left_padding  = picture_ptr_for_reference->origin_x;
+    initData.right_padding = picture_ptr_for_reference->origin_x;
+    initData.top_padding   = picture_ptr_for_reference->origin_y;
+    initData.bot_padding   = picture_ptr_for_reference->origin_bot_y;
 
     EB_NEW(*picture_ptr, svt_picture_buffer_desc_ctor, (EbPtr)&initData);
 
@@ -1395,51 +1379,30 @@ void scale_pcs_params(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_
  */
 static EbErrorType allocate_downscaled_reference_pics(
     EbPictureBufferDesc **downscaled_reference_picture_ptr,
-#if !FTR_MEM_OPT
-    EbPictureBufferDesc **downscaled_reference_picture16bit,
-#endif
-    EbPictureBufferDesc* picture_ptr_for_reference, PictureParentControlSet* pcs_ptr) {
+    EbPictureBufferDesc *picture_ptr_for_reference, PictureParentControlSet *pcs_ptr) {
     EbPictureBufferDescInitData ref_pic_buf_desc_init_data;
 
     // Initialize the various Picture types
-    ref_pic_buf_desc_init_data.max_width          = pcs_ptr->frame_width;  // aligned_width;
-    ref_pic_buf_desc_init_data.max_height         = pcs_ptr->frame_height; // aligned_height;
-    ref_pic_buf_desc_init_data.bit_depth          = pcs_ptr->scs_ptr->encoder_bit_depth;
-    ref_pic_buf_desc_init_data.color_format       = pcs_ptr->scs_ptr->static_config.encoder_color_format;
+    ref_pic_buf_desc_init_data.max_width    = pcs_ptr->frame_width; // aligned_width;
+    ref_pic_buf_desc_init_data.max_height   = pcs_ptr->frame_height; // aligned_height;
+    ref_pic_buf_desc_init_data.bit_depth    = pcs_ptr->scs_ptr->encoder_bit_depth;
+    ref_pic_buf_desc_init_data.color_format = pcs_ptr->scs_ptr->static_config.encoder_color_format;
     ref_pic_buf_desc_init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK;
 
-    ref_pic_buf_desc_init_data.left_padding = picture_ptr_for_reference->origin_x;
+    ref_pic_buf_desc_init_data.left_padding  = picture_ptr_for_reference->origin_x;
     ref_pic_buf_desc_init_data.right_padding = picture_ptr_for_reference->origin_x;
-    ref_pic_buf_desc_init_data.top_padding = picture_ptr_for_reference->origin_y;
-    ref_pic_buf_desc_init_data.bot_padding = picture_ptr_for_reference->origin_bot_y;
+    ref_pic_buf_desc_init_data.top_padding   = picture_ptr_for_reference->origin_y;
+    ref_pic_buf_desc_init_data.bot_padding   = picture_ptr_for_reference->origin_bot_y;
     ref_pic_buf_desc_init_data.mfmv          = pcs_ptr->scs_ptr->mfmv_enabled;
 
     //TODO:12bit
     if (ref_pic_buf_desc_init_data.bit_depth == EB_10BIT) {
         // Hsan: set split_mode to 0 to construct the packed reference buffer (used @ EP)
-#if !FTR_MEM_OPT
-        ref_pic_buf_desc_init_data.split_mode = EB_FALSE;
-        EB_NEW(*downscaled_reference_picture16bit,
-               svt_picture_buffer_desc_ctor,
-               (EbPtr)&ref_pic_buf_desc_init_data);
-#endif
 
         // align with svt_reference_object_ctor()
-#if FTR_MEM_OPT
         // Use 10bit here to use in MD
         ref_pic_buf_desc_init_data.split_mode = EB_TRUE;
         ref_pic_buf_desc_init_data.bit_depth  = EB_10BIT;
-#else
-        // Use 8bit here to use in MD
-        ref_pic_buf_desc_init_data.split_mode = EB_FALSE;
-        ref_pic_buf_desc_init_data.bit_depth  = EB_8BIT;
-#endif
-#if !FTR_MEM_OPT
-        // if hbd_md = 1, and we only use 8bit luma for obmc_motion_refine
-        if (pcs_ptr->hbd_mode_decision == EB_10_BIT_MD) {
-            ref_pic_buf_desc_init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_LUMA_MASK;
-        }
-#endif
         EB_NEW(*downscaled_reference_picture_ptr,
                svt_picture_buffer_desc_ctor,
                (EbPtr)&ref_pic_buf_desc_init_data);
@@ -1461,8 +1424,7 @@ static EbErrorType allocate_downscaled_source_reference_pics(
     EbPictureBufferDesc **input_padded_picture_ptr,
     EbPictureBufferDesc **quarter_downsampled_picture_ptr,
     EbPictureBufferDesc **sixteenth_downsampled_picture_ptr,
-    EbPictureBufferDesc *picture_ptr_for_reference,
-    superres_params_type spr_params) {
+    EbPictureBufferDesc *picture_ptr_for_reference, superres_params_type spr_params) {
     EbPictureBufferDescInitData initData;
 
     initData.buffer_enable_mask = PICTURE_BUFFER_DESC_LUMA_MASK;
@@ -1470,37 +1432,37 @@ static EbErrorType allocate_downscaled_source_reference_pics(
     initData.max_height         = spr_params.encoding_height;
     initData.bit_depth          = picture_ptr_for_reference->bit_depth;
     initData.color_format       = picture_ptr_for_reference->color_format;
-    initData.split_mode         = (picture_ptr_for_reference->bit_depth > EB_8BIT) ? EB_TRUE : EB_FALSE;
-    initData.left_padding       = picture_ptr_for_reference->origin_x;
-    initData.right_padding      = picture_ptr_for_reference->origin_x;
-    initData.top_padding        = picture_ptr_for_reference->origin_y;
-    initData.bot_padding        = picture_ptr_for_reference->origin_bot_y;
+    initData.split_mode    = (picture_ptr_for_reference->bit_depth > EB_8BIT) ? EB_TRUE : EB_FALSE;
+    initData.left_padding  = picture_ptr_for_reference->origin_x;
+    initData.right_padding = picture_ptr_for_reference->origin_x;
+    initData.top_padding   = picture_ptr_for_reference->origin_y;
+    initData.bot_padding   = picture_ptr_for_reference->origin_bot_y;
 
     EB_NEW(*input_padded_picture_ptr, svt_picture_buffer_desc_ctor, (EbPtr)&initData);
 
     initData.buffer_enable_mask = PICTURE_BUFFER_DESC_LUMA_MASK;
-    initData.max_width = spr_params.encoding_width >> 1;
-    initData.max_height = spr_params.encoding_height >> 1;
-    initData.bit_depth = picture_ptr_for_reference->bit_depth;
-    initData.color_format = picture_ptr_for_reference->color_format;
-    initData.split_mode = (picture_ptr_for_reference->bit_depth > EB_8BIT) ? EB_TRUE : EB_FALSE;
-    initData.left_padding = picture_ptr_for_reference->origin_x >> 1;
+    initData.max_width          = spr_params.encoding_width >> 1;
+    initData.max_height         = spr_params.encoding_height >> 1;
+    initData.bit_depth          = picture_ptr_for_reference->bit_depth;
+    initData.color_format       = picture_ptr_for_reference->color_format;
+    initData.split_mode    = (picture_ptr_for_reference->bit_depth > EB_8BIT) ? EB_TRUE : EB_FALSE;
+    initData.left_padding  = picture_ptr_for_reference->origin_x >> 1;
     initData.right_padding = picture_ptr_for_reference->origin_x >> 1;
-    initData.top_padding = picture_ptr_for_reference->origin_y >> 1;
-    initData.bot_padding = picture_ptr_for_reference->origin_bot_y >> 1;
+    initData.top_padding   = picture_ptr_for_reference->origin_y >> 1;
+    initData.bot_padding   = picture_ptr_for_reference->origin_bot_y >> 1;
 
     EB_NEW(*quarter_downsampled_picture_ptr, svt_picture_buffer_desc_ctor, (EbPtr)&initData);
 
     initData.buffer_enable_mask = PICTURE_BUFFER_DESC_LUMA_MASK;
-    initData.max_width = spr_params.encoding_width >> 2;
-    initData.max_height = spr_params.encoding_height >> 2;
-    initData.bit_depth = picture_ptr_for_reference->bit_depth;
-    initData.color_format = picture_ptr_for_reference->color_format;
-    initData.split_mode = (picture_ptr_for_reference->bit_depth > EB_8BIT) ? EB_TRUE : EB_FALSE;
-    initData.left_padding = picture_ptr_for_reference->origin_x >> 2;
+    initData.max_width          = spr_params.encoding_width >> 2;
+    initData.max_height         = spr_params.encoding_height >> 2;
+    initData.bit_depth          = picture_ptr_for_reference->bit_depth;
+    initData.color_format       = picture_ptr_for_reference->color_format;
+    initData.split_mode    = (picture_ptr_for_reference->bit_depth > EB_8BIT) ? EB_TRUE : EB_FALSE;
+    initData.left_padding  = picture_ptr_for_reference->origin_x >> 2;
     initData.right_padding = picture_ptr_for_reference->origin_x >> 2;
-    initData.top_padding = picture_ptr_for_reference->origin_y >> 2;
-    initData.bot_padding = picture_ptr_for_reference->origin_bot_y >> 2;
+    initData.top_padding   = picture_ptr_for_reference->origin_y >> 2;
+    initData.bot_padding   = picture_ptr_for_reference->origin_bot_y >> 2;
 
     EB_NEW(*sixteenth_downsampled_picture_ptr, svt_picture_buffer_desc_ctor, (EbPtr)&initData);
     return EB_ErrorNone;
@@ -1519,16 +1481,10 @@ void scale_source_references(SequenceControlSet *scs_ptr, PictureParentControlSe
     const int32_t  num_planes = 0; // Y only
     const uint32_t ss_x       = scs_ptr->subsampling_x;
     const uint32_t ss_y       = scs_ptr->subsampling_y;
-#if CLN_ME_NUM_LISTS
-    uint32_t num_of_list_to_search = (pcs_ptr->slice_type == P_SLICE) ? 1 /*List 0 only*/ : 2 /*List 0 + 1*/;
+    uint32_t num_of_list_to_search =
+        (pcs_ptr->slice_type == P_SLICE) ? 1 /*List 0 only*/ : 2 /*List 0 + 1*/;
 
     for (uint8_t list_index = REF_LIST_0; list_index < num_of_list_to_search; ++list_index) {
-#else
-    uint32_t num_of_list_to_search = (pcs_ptr->slice_type == P_SLICE) ? (uint32_t)REF_LIST_0
-                                                                      : (uint32_t)REF_LIST_1;
-
-    for (uint8_t list_index = REF_LIST_0; list_index <= num_of_list_to_search; ++list_index) {
-#endif
         uint8_t ref_pic_index;
         uint8_t num_of_ref_pic_to_search = (pcs_ptr->slice_type == P_SLICE)
             ? pcs_ptr->ref_list0_count
@@ -1549,7 +1505,7 @@ void scale_source_references(SequenceControlSet *scs_ptr, PictureParentControlSe
 
                 svt_block_on_mutex(reference_object->resize_mutex[denom_idx]);
                 if (reference_object->downscaled_input_padded_picture_ptr[denom_idx] == NULL) {
-                    superres_params_type spr_params = {pcs_ptr->frame_width,  // aligned_width
+                    superres_params_type spr_params = {pcs_ptr->frame_width, // aligned_width
                                                        pcs_ptr->frame_height, // aligned_height
                                                        scs_ptr->static_config.superres_mode};
 
@@ -1595,14 +1551,15 @@ void scale_source_references(SequenceControlSet *scs_ptr, PictureParentControlSe
                             pcs_ptr,
                             down_ref_pic_ptr,
                             reference_object->downscaled_quarter_downsampled_picture_ptr[denom_idx],
-                            reference_object->downscaled_sixteenth_downsampled_picture_ptr[denom_idx]);
-                    }
-                    else {
+                            reference_object
+                                ->downscaled_sixteenth_downsampled_picture_ptr[denom_idx]);
+                    } else {
                         downsample_decimation_input_picture(
                             pcs_ptr,
                             down_ref_pic_ptr,
                             reference_object->downscaled_quarter_downsampled_picture_ptr[denom_idx],
-                            reference_object->downscaled_sixteenth_downsampled_picture_ptr[denom_idx]);
+                            reference_object
+                                ->downscaled_sixteenth_downsampled_picture_ptr[denom_idx]);
                     }
 
                     reference_object->downscaled_picture_number[denom_idx] = ref_picture_number;
@@ -1627,7 +1584,7 @@ static void scale_input_references(PictureParentControlSet *pcs_ptr,
     EbPaReferenceObject *src_object = (EbPaReferenceObject *)
                                           pcs_ptr->pa_reference_picture_wrapper_ptr->object_ptr;
     EbPictureBufferDesc *padded_pic_ptr = src_object->input_padded_picture_ptr;
-    EbBool do_resize = EB_FALSE;
+    EbBool               do_resize      = EB_FALSE;
 
     svt_block_on_mutex(src_object->resize_mutex[denom_idx]);
 
@@ -1693,16 +1650,10 @@ void scale_rec_references(PictureControlSet *pcs_ptr, EbPictureBufferDesc *input
     const int32_t  num_planes = av1_num_planes(&scs_ptr->seq_header.color_config);
     const uint32_t ss_x       = scs_ptr->subsampling_x;
     const uint32_t ss_y       = scs_ptr->subsampling_y;
-#if CLN_ME_NUM_LISTS
-    uint32_t num_of_list_to_search = (pcs_ptr->slice_type == P_SLICE) ? 1 /*List 0 only*/ : 2 /*List 0 + 1*/;
+    uint32_t num_of_list_to_search =
+        (pcs_ptr->slice_type == P_SLICE) ? 1 /*List 0 only*/ : 2 /*List 0 + 1*/;
 
     for (uint8_t list_index = REF_LIST_0; list_index < num_of_list_to_search; ++list_index) {
-#else
-    uint32_t num_of_list_to_search = (ppcs_ptr->slice_type == P_SLICE) ? (uint32_t)REF_LIST_0
-                                                                       : (uint32_t)REF_LIST_1;
-
-    for (uint8_t list_index = REF_LIST_0; list_index <= num_of_list_to_search; ++list_index) {
-#endif
         uint8_t ref_pic_index;
         uint8_t num_of_ref_pic_to_search = (ppcs_ptr->slice_type == P_SLICE)
             ? ppcs_ptr->ref_list0_count
@@ -1716,49 +1667,23 @@ void scale_rec_references(PictureControlSet *pcs_ptr, EbPictureBufferDesc *input
             uint64_t ref_picture_number = ppcs_ptr->ref_pic_poc_array[list_index][ref_pic_index];
 
             EbPictureBufferDesc *ref_pic_ptr =
-#if FTR_MEM_OPT
                 get_ref_pic_buffer(pcs_ptr, hbd_mode_decision, list_index, ref_pic_index);
-#else
-#if !FTR_MEM_OPT
-                hbd_mode_decision
-                ? reference_object->reference_picture16bit
-                :
-#endif
-                reference_object->reference_picture;
-#endif
             // if the size of the reference pic is different than the size of the input pic, then scale references
             if (ref_pic_ptr->width != input_picture_ptr->width) {
                 EbBool do_resize = EB_FALSE;
 
                 svt_block_on_mutex(reference_object->resize_mutex[denom_idx]);
 
-#if !FTR_MEM_OPT
-                EbPictureBufferDesc *down_ref_pic16bit = NULL;
-#endif
-                EbPictureBufferDesc *down_ref_pic8bit = reference_object->downscaled_reference_picture[denom_idx];
-
-#if !FTR_MEM_OPT
-                if (hbd_mode_decision != EB_8_BIT_MD)
-                    down_ref_pic16bit = reference_object->downscaled_reference_picture16bit[denom_idx];
-#endif
+                EbPictureBufferDesc *down_ref_pic8bit =
+                    reference_object->downscaled_reference_picture[denom_idx];
 
                 EbPictureBufferDesc *down_ref_pic_ptr =
-#if !FTR_MEM_OPT
-                    hbd_mode_decision
-                    ? down_ref_pic16bit :
-#endif
-                    down_ref_pic8bit;
+                                      down_ref_pic8bit;
 
                 if (down_ref_pic_ptr != NULL) {
                     if (ref_pic_ptr->bit_depth != down_ref_pic_ptr->bit_depth) {
-#if !FTR_MEM_OPT
-                        EB_DELETE(reference_object->downscaled_reference_picture16bit[denom_idx]);
-#endif
                         EB_DELETE(reference_object->downscaled_reference_picture[denom_idx]);
-#if !FTR_MEM_OPT
-                        down_ref_pic16bit = NULL;
-#endif
-                        down_ref_pic8bit  = NULL;
+                        down_ref_pic8bit = NULL;
                         down_ref_pic_ptr = NULL;
                     }
                 }
@@ -1767,16 +1692,10 @@ void scale_rec_references(PictureControlSet *pcs_ptr, EbPictureBufferDesc *input
                     // Allocate downsampled reference picture buffer descriptors
                     allocate_downscaled_reference_pics(
                         &reference_object->downscaled_reference_picture[denom_idx],
-#if !FTR_MEM_OPT
-                        &reference_object->downscaled_reference_picture16bit[denom_idx],
-#endif
                         ref_pic_ptr,
                         ppcs_ptr);
 
                     down_ref_pic8bit = reference_object->downscaled_reference_picture[denom_idx];
-#if !FTR_MEM_OPT
-                    down_ref_pic16bit = reference_object->downscaled_reference_picture16bit[denom_idx];
-#endif
                     do_resize = EB_TRUE;
                 }
 
@@ -1785,19 +1704,6 @@ void scale_rec_references(PictureControlSet *pcs_ptr, EbPictureBufferDesc *input
                 }
 
                 if (do_resize) {
-#if !FTR_MEM_OPT
-                    if (down_ref_pic16bit != NULL) {
-                        // downsample input padded picture buffer
-                        av1_resize_frame(reference_object->reference_picture16bit,
-                                         down_ref_pic16bit,
-                                         down_ref_pic16bit->bit_depth,
-                                         num_planes,
-                                         ss_x,
-                                         ss_y,
-                                         down_ref_pic16bit->packed_flag
-                        );
-                    }
-#endif
 
                     // downsample input padded picture buffer
                     av1_resize_frame(reference_object->reference_picture,
@@ -1806,40 +1712,14 @@ void scale_rec_references(PictureControlSet *pcs_ptr, EbPictureBufferDesc *input
                                      num_planes,
                                      ss_x,
                                      ss_y,
-                                     down_ref_pic8bit->packed_flag
-                    );
-#if !FTR_MEM_OPT
-                    if (down_ref_pic16bit != NULL) {
-                        generate_padding16_bit((uint16_t *)down_ref_pic16bit->buffer_y,
-                                               down_ref_pic16bit->stride_y,
-                                               down_ref_pic16bit->width,
-                                               down_ref_pic16bit->height,
-                                               down_ref_pic16bit->origin_x,
-                                               down_ref_pic16bit->origin_y);
-
-                        generate_padding16_bit((uint16_t *)down_ref_pic16bit->buffer_cb,
-                                               down_ref_pic16bit->stride_cb,
-                                               down_ref_pic16bit->width >> ss_x,
-                                               down_ref_pic16bit->height >> ss_y,
-                                               down_ref_pic16bit->origin_x >> ss_x,
-                                               down_ref_pic16bit->origin_y >> ss_y);
-
-                        generate_padding16_bit((uint16_t *)down_ref_pic16bit->buffer_cr,
-                                               down_ref_pic16bit->stride_cr,
-                                               down_ref_pic16bit->width >> ss_x,
-                                               down_ref_pic16bit->height >> ss_y,
-                                               down_ref_pic16bit->origin_x >> ss_x,
-                                               down_ref_pic16bit->origin_y >> ss_y);
-                    }
-#endif
+                                     down_ref_pic8bit->packed_flag);
                     generate_padding(down_ref_pic8bit->buffer_y,
-                                        down_ref_pic8bit->stride_y,
-                                        down_ref_pic8bit->width,
-                                        down_ref_pic8bit->height,
-                                        down_ref_pic8bit->origin_x,
-                                        down_ref_pic8bit->origin_y);
+                                     down_ref_pic8bit->stride_y,
+                                     down_ref_pic8bit->width,
+                                     down_ref_pic8bit->height,
+                                     down_ref_pic8bit->origin_x,
+                                     down_ref_pic8bit->origin_y);
 
-#if FTR_MEM_OPT
                     if (down_ref_pic8bit->bit_depth == EB_10BIT &&
                         down_ref_pic8bit->buffer_bit_inc_y) {
                         generate_padding(down_ref_pic8bit->buffer_bit_inc_y,
@@ -1849,7 +1729,6 @@ void scale_rec_references(PictureControlSet *pcs_ptr, EbPictureBufferDesc *input
                                          down_ref_pic8bit->origin_x,
                                          down_ref_pic8bit->origin_y);
                     }
-#endif
 
                     if (down_ref_pic8bit->buffer_cb) {
                         generate_padding(down_ref_pic8bit->buffer_cb,
@@ -1869,7 +1748,6 @@ void scale_rec_references(PictureControlSet *pcs_ptr, EbPictureBufferDesc *input
                                          down_ref_pic8bit->origin_y >> ss_y);
                     }
 
-#if FTR_MEM_OPT
                     if (down_ref_pic8bit->bit_depth == EB_10BIT &&
                         down_ref_pic8bit->buffer_bit_inc_cb) {
                         generate_padding(down_ref_pic8bit->buffer_bit_inc_cb,
@@ -1889,7 +1767,6 @@ void scale_rec_references(PictureControlSet *pcs_ptr, EbPictureBufferDesc *input
                                          down_ref_pic8bit->origin_x >> ss_x,
                                          down_ref_pic8bit->origin_y >> ss_y);
                     }
-#endif
 
                     reference_object->downscaled_picture_number[denom_idx] = ref_picture_number;
                     //printf("rescaled reference picture %d\n", (int)ref_picture_number);
@@ -1911,14 +1788,7 @@ void use_scaled_rec_refs_if_needed(PictureControlSet *  pcs_ptr,
                                    uint8_t hbd_mode_decision) {
     if ((*ref_pic)->width != input_picture_ptr->width) {
         uint8_t denom_idx = get_denom_idx(pcs_ptr->parent_pcs_ptr->superres_denom);
-#if !FTR_MEM_OPT
-        if (hbd_mode_decision) {
-            assert(ref_obj->downscaled_reference_picture16bit[denom_idx] != NULL);
-            *ref_pic = ref_obj->downscaled_reference_picture16bit[denom_idx];
-        } else
-#else
         UNUSED(hbd_mode_decision);
-#endif
         {
             assert(ref_obj->downscaled_reference_picture[denom_idx] != NULL);
             *ref_pic = ref_obj->downscaled_reference_picture[denom_idx];
@@ -1944,18 +1814,18 @@ void use_scaled_source_refs_if_needed(PictureParentControlSet *pcs_ptr,
         assert(ref_obj->downscaled_input_padded_picture_ptr[denom_idx] != NULL);
 
         *ref_pic_ptr           = ref_obj->downscaled_input_padded_picture_ptr[denom_idx];
-        *quarter_ref_pic_ptr = ref_obj->downscaled_quarter_downsampled_picture_ptr[denom_idx];
+        *quarter_ref_pic_ptr   = ref_obj->downscaled_quarter_downsampled_picture_ptr[denom_idx];
         *sixteenth_ref_pic_ptr = ref_obj->downscaled_sixteenth_downsampled_picture_ptr[denom_idx];
     }
     assert((*ref_pic_ptr)->width == input_picture_ptr->width);
 }
 
-void reset_resized_picture(SequenceControlSet* scs_ptr, PictureParentControlSet* pcs_ptr,
-    EbPictureBufferDesc* input_picture_ptr) {
-    superres_params_type spr_params = { input_picture_ptr->width,  // encoding_width
-                                        input_picture_ptr->height, // encoding_height
-                                        SCALE_NUMERATOR };
-    pcs_ptr->superres_denom = spr_params.superres_denom;
+void reset_resized_picture(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_ptr,
+                           EbPictureBufferDesc *input_picture_ptr) {
+    superres_params_type spr_params = {input_picture_ptr->width, // encoding_width
+                                       input_picture_ptr->height, // encoding_height
+                                       SCALE_NUMERATOR};
+    pcs_ptr->superres_denom         = spr_params.superres_denom;
     pcs_ptr->frame_superres_enabled = EB_FALSE;
     // restore frame size (width) which was changed by super-res tool
     scale_pcs_params(
@@ -1977,16 +1847,16 @@ void init_resize_picture(SequenceControlSet *scs_ptr, PictureParentControlSet *p
                                        input_picture_ptr->height, // encoding_height
                                        scs_ptr->static_config.superres_denom};
 
-    EbBool first_loop = !(scs_ptr->static_config.superres_mode == SUPERRES_AUTO && pcs_ptr->superres_recode_loop > 0);
-    if (first_loop) {  // first loop of multiple coding loop (auto-dual or auto-all mode) or the only loop (all the other modes)
+    EbBool first_loop = !(scs_ptr->static_config.superres_mode == SUPERRES_AUTO &&
+                          pcs_ptr->superres_recode_loop > 0);
+    if (first_loop) { // first loop of multiple coding loop (auto-dual or auto-all mode) or the only loop (all the other modes)
         // determine super-res denom
         calc_superres_params(&spr_params, scs_ptr, pcs_ptr);
-    }
-    else {
+    } else {
         if (pcs_ptr->superres_recode_loop < pcs_ptr->superres_total_recode_loop) {
-            spr_params.superres_denom = pcs_ptr->superres_denom_array[pcs_ptr->superres_recode_loop];
-        }
-        else {  // extra loop to pick up a scaled recode
+            spr_params.superres_denom =
+                pcs_ptr->superres_denom_array[pcs_ptr->superres_recode_loop];
+        } else { // extra loop to pick up a scaled recode
             // denom is set by downstream packetization process
             spr_params.superres_denom = pcs_ptr->superres_denom;
         }
@@ -2016,8 +1886,7 @@ void init_resize_picture(SequenceControlSet *scs_ptr, PictureParentControlSet *p
                          num_planes,
                          ss_x,
                          ss_y,
-                         pcs_ptr->enhanced_downscaled_picture_ptr->packed_flag
-        );
+                         pcs_ptr->enhanced_downscaled_picture_ptr->packed_flag);
 
         generate_padding(pcs_ptr->enhanced_downscaled_picture_ptr->buffer_y,
                          pcs_ptr->enhanced_downscaled_picture_ptr->stride_y,
@@ -2078,8 +1947,7 @@ void init_resize_picture(SequenceControlSet *scs_ptr, PictureParentControlSet *p
         if (pcs_ptr->slice_type != I_SLICE) {
             scale_source_references(scs_ptr, pcs_ptr, pcs_ptr->enhanced_picture_ptr);
         }
-    }
-    else {
+    } else {
         // pcs_ptr previously might be used and dirty in params
         // clean up if current frame doesn't need scaling
         pcs_ptr->enhanced_picture_ptr = pcs_ptr->enhanced_unscaled_picture_ptr;

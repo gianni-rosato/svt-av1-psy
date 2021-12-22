@@ -1,13 +1,14 @@
 /*
-* Copyright(c) 2019 Netflix, Inc.
-*
-* This source code is subject to the terms of the BSD 2 Clause License and
-* the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
-* was not distributed with this source code in the LICENSE file, you can
-* obtain it at https://www.aomedia.org/license/software-license. If the Alliance for Open
-* Media Patent License 1.0 was not distributed with this source code in the
-* PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
-*/
+ * Copyright(c) 2019 Netflix, Inc.
+ *
+ * This source code is subject to the terms of the BSD 2 Clause License and
+ * the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
+ * was not distributed with this source code in the LICENSE file, you can
+ * obtain it at https://www.aomedia.org/license/software-license. If the
+ * Alliance for Open Media Patent License 1.0 was not distributed with this
+ * source code in the PATENTS file, you can obtain it at
+ * https://www.aomedia.org/license/patent-license.
+ */
 
 /******************************************************************************
  * @file FFTTest.cc
@@ -211,7 +212,6 @@ INSTANTIATE_TEST_CASE_P(
         FFT2DTestParam(svt_aom_fft32x32_float_avx2, svt_aom_fft32x32_float_c,
                        svt_aom_ifft32x32_float_c, 32)));
 
-
 class IFFT2DTest : public ::testing::TestWithParam<IFFT2DTestParam> {
   public:
     IFFT2DTest()
@@ -221,8 +221,8 @@ class IFFT2DTest : public ::testing::TestWithParam<IFFT2DTestParam> {
     }
 
     void SetUp() override {
-        input_ = reinterpret_cast<float *>(svt_aom_memalign(
-            32, 2 * txfm_size_ * txfm_size_ * sizeof(float)));
+        input_ = reinterpret_cast<float *>(
+            svt_aom_memalign(32, 2 * txfm_size_ * txfm_size_ * sizeof(float)));
         memset(input_, 0, 2 * txfm_size_ * txfm_size_ * sizeof(float));
         temp_tst_ = reinterpret_cast<float *>(
             svt_aom_memalign(32, txfm_size_ * txfm_size_ * sizeof(float)));
@@ -272,14 +272,14 @@ class IFFT2DTest : public ::testing::TestWithParam<IFFT2DTestParam> {
     }
 
   protected:
-    IFFTFloatFcn tst_fcn_;     /**< pointer of IFFT test function */
-    IFFTFloatFcn ref_fcn_;     /**< pointer of IFFT reference function */
-    int txfm_size_;           /**< transform size, max transform is DCT64 */
-    float *input_;            /**< IFFT input data buffer */
-    float *temp_tst_;         /**< temp buffer for IFFT test function */
-    float *temp_ref_;         /**< temp buffer for IFFT test function */
-    float *output_tst_;       /**< output buffer for IFFT test function */
-    float *output_ref_; /**< output buufer for IFFT reference function*/
+    IFFTFloatFcn tst_fcn_; /**< pointer of IFFT test function */
+    IFFTFloatFcn ref_fcn_; /**< pointer of IFFT reference function */
+    int txfm_size_;        /**< transform size, max transform is DCT64 */
+    float *input_;         /**< IFFT input data buffer */
+    float *temp_tst_;      /**< temp buffer for IFFT test function */
+    float *temp_ref_;      /**< temp buffer for IFFT test function */
+    float *output_tst_;    /**< output buffer for IFFT test function */
+    float *output_ref_;    /**< output buufer for IFFT reference function*/
 };
 
 TEST_P(IFFT2DTest, run_ifft_accuracy_check) {
@@ -292,7 +292,8 @@ INSTANTIATE_TEST_CASE_P(
         IFFT2DTestParam(svt_aom_ifft2x2_float_c, svt_aom_ifft2x2_float_c, 2),
         IFFT2DTestParam(svt_aom_ifft4x4_float_sse2, svt_aom_ifft4x4_float_c, 4),
         IFFT2DTestParam(svt_aom_ifft8x8_float_avx2, svt_aom_ifft8x8_float_c, 8),
-        IFFT2DTestParam(svt_aom_ifft16x16_float_avx2, svt_aom_ifft16x16_float_c, 16),
-        IFFT2DTestParam(svt_aom_ifft32x32_float_avx2, svt_aom_ifft32x32_float_c, 32))
-);
+        IFFT2DTestParam(svt_aom_ifft16x16_float_avx2, svt_aom_ifft16x16_float_c,
+                        16),
+        IFFT2DTestParam(svt_aom_ifft32x32_float_avx2, svt_aom_ifft32x32_float_c,
+                        32)));
 }  // namespace

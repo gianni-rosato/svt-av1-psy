@@ -23,7 +23,4 @@ EbErrorType initial_rate_control_context_ctor(EbThreadContext *  thread_context_
                                               const EbEncHandle *enc_handle_ptr);
 
 extern void *initial_rate_control_kernel(void *input_ptr);
-#if !CLN_NON_MOVING_CNT
-void init_zz_cost_info(PictureParentControlSet *pcs_ptr);
-#endif
 #endif // EbInitialRateControl_h

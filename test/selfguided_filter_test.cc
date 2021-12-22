@@ -4,9 +4,10 @@
  * This source code is subject to the terms of the BSD 2 Clause License and
  * the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
  * was not distributed with this source code in the LICENSE file, you can
- * obtain it at https://www.aomedia.org/license/software-license. If the Alliance for Open
- * Media Patent License 1.0 was not distributed with this source code in the
- * PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
+ * obtain it at https://www.aomedia.org/license/software-license. If the
+ * Alliance for Open Media Patent License 1.0 was not distributed with this
+ * source code in the PATENTS file, you can obtain it at
+ * https://www.aomedia.org/license/patent-license.
  */
 
 #include <ctime>
@@ -61,7 +62,8 @@ class AV1SelfguidedFilterTest
             32, stride * (height + 32) * sizeof(uint8_t));
         uint8_t *output_ = (uint8_t *)svt_aom_memalign(
             32, out_stride * (height + 32) * sizeof(uint8_t));
-        int32_t *tmpbuf = (int32_t *)svt_aom_memalign(32, RESTORATION_TMPBUF_SIZE);
+        int32_t *tmpbuf =
+            (int32_t *)svt_aom_memalign(32, RESTORATION_TMPBUF_SIZE);
         uint8_t *input = input_ + stride * 16 + 16;
         uint8_t *output = output_ + out_stride * 16 + 16;
 
@@ -170,7 +172,8 @@ class AV1SelfguidedFilterTest
             32, out_stride * (max_h + 32) * sizeof(uint8_t));
         uint8_t *output2_ = (uint8_t *)svt_aom_memalign(
             32, out_stride * (max_h + 32) * sizeof(uint8_t));
-        int32_t *tmpbuf = (int32_t *)svt_aom_memalign(32, RESTORATION_TMPBUF_SIZE);
+        int32_t *tmpbuf =
+            (int32_t *)svt_aom_memalign(32, RESTORATION_TMPBUF_SIZE);
 
         uint8_t *input = input_ + stride * 16 + 16;
         uint8_t *output = output_ + out_stride * 16 + 16;
@@ -284,7 +287,8 @@ class AV1HighbdSelfguidedFilterTest
             32, stride * (height + 32) * sizeof(uint16_t));
         uint16_t *output_ = (uint16_t *)svt_aom_memalign(
             32, out_stride * (height + 32) * sizeof(uint16_t));
-        int32_t *tmpbuf = (int32_t *)svt_aom_memalign(32, RESTORATION_TMPBUF_SIZE);
+        int32_t *tmpbuf =
+            (int32_t *)svt_aom_memalign(32, RESTORATION_TMPBUF_SIZE);
         uint16_t *input = input_ + stride * 16 + 16;
         uint16_t *output = output_ + out_stride * 16 + 16;
 
@@ -315,17 +319,18 @@ class AV1HighbdSelfguidedFilterTest
                     int32_t h = AOMMIN(pu_height, height - k);
                     uint16_t *input_p = input + k * stride + j;
                     uint16_t *output_p = output + k * out_stride + j;
-                    svt_apply_selfguided_restoration_c(CONVERT_TO_BYTEPTR(input_p),
-                                                       w,
-                                                       h,
-                                                       stride,
-                                                       eps,
-                                                       xqd,
-                                                       CONVERT_TO_BYTEPTR(output_p),
-                                                       out_stride,
-                                                       tmpbuf,
-                                                       bit_depth,
-                                                       1);
+                    svt_apply_selfguided_restoration_c(
+                        CONVERT_TO_BYTEPTR(input_p),
+                        w,
+                        h,
+                        stride,
+                        eps,
+                        xqd,
+                        CONVERT_TO_BYTEPTR(output_p),
+                        out_stride,
+                        tmpbuf,
+                        bit_depth,
+                        1);
                 }
         }
         svt_av1_get_time(&middle_time_seconds, &middle_time_useconds);
@@ -397,7 +402,8 @@ class AV1HighbdSelfguidedFilterTest
             32, out_stride * (max_h + 32) * sizeof(uint16_t));
         uint16_t *output2_ = (uint16_t *)svt_aom_memalign(
             32, out_stride * (max_h + 32) * sizeof(uint16_t));
-        int32_t *tmpbuf = (int32_t *)svt_aom_memalign(32, RESTORATION_TMPBUF_SIZE);
+        int32_t *tmpbuf =
+            (int32_t *)svt_aom_memalign(32, RESTORATION_TMPBUF_SIZE);
 
         uint16_t *input = input_ + stride * 16 + 16;
         uint16_t *output = output_ + out_stride * 16 + 16;
@@ -481,6 +487,5 @@ INSTANTIATE_TEST_CASE_P(
     AVX2, AV1HighbdSelfguidedFilterTest,
     ::testing::Combine(::testing::Values(svt_apply_selfguided_restoration_avx2),
                        ::testing::ValuesIn(highbd_params_avx2)));
-
 
 }  // namespace

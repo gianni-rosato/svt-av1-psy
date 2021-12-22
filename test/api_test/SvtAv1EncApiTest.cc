@@ -1,13 +1,14 @@
 /*
-* Copyright(c) 2019 Netflix, Inc.
-*
-* This source code is subject to the terms of the BSD 2 Clause License and
-* the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
-* was not distributed with this source code in the LICENSE file, you can
-* obtain it at https://www.aomedia.org/license/software-license. If the Alliance for Open
-* Media Patent License 1.0 was not distributed with this source code in the
-* PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
-*/
+ * Copyright(c) 2019 Netflix, Inc.
+ *
+ * This source code is subject to the terms of the BSD 2 Clause License and
+ * the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
+ * was not distributed with this source code in the LICENSE file, you can
+ * obtain it at https://www.aomedia.org/license/software-license. If the
+ * Alliance for Open Media Patent License 1.0 was not distributed with this
+ * source code in the PATENTS file, you can obtain it at
+ * https://www.aomedia.org/license/patent-license.
+ */
 
 /******************************************************************************
  * @file SvtAv1EncApiTest.cc
@@ -75,12 +76,14 @@ TEST(EncApiTest, check_null_pointer) {
     memset(&context, 0, sizeof(context));
 
     // initialize encoder and with all null pointer
-    EXPECT_EQ(EB_ErrorBadParameter, svt_av1_enc_init_handle(nullptr, nullptr, nullptr));
+    EXPECT_EQ(EB_ErrorBadParameter,
+              svt_av1_enc_init_handle(nullptr, nullptr, nullptr));
     // initialize encoder and with all null pointer and get handle
     EXPECT_EQ(EB_ErrorBadParameter,
               svt_av1_enc_init_handle(&context.enc_handle, nullptr, nullptr));
     // setup encoder parameters with null pointer
-    EXPECT_EQ(EB_ErrorBadParameter, svt_av1_enc_set_parameter(nullptr, nullptr));
+    EXPECT_EQ(EB_ErrorBadParameter,
+              svt_av1_enc_set_parameter(nullptr, nullptr));
     // TODO: Some function will crash with nullptr input,
     // and it will block test on linux platform. please refer to
     // EncApiDeathTest-->check_null_pointer
@@ -91,10 +94,11 @@ TEST(EncApiTest, check_null_pointer) {
     EXPECT_EQ(EB_ErrorBadParameter, svt_av1_enc_init(nullptr));
     // get end of sequence NAL with null pointer
     // EXPECT_EQ(EB_ErrorBadParameter, svt_av1_enc_send_picture(nullptr,
-    // nullptr)); EXPECT_EQ(EB_ErrorBadParameter, svt_av1_enc_get_packet(nullptr,
-    // nullptr, 0)); EXPECT_EQ(EB_ErrorBadParameter, svt_av1_get_recon(nullptr,
-    // nullptr)); No return value, just feed nullptr as parameter.
-    // release output buffer with null pointer
+    // nullptr)); EXPECT_EQ(EB_ErrorBadParameter,
+    // svt_av1_enc_get_packet(nullptr, nullptr, 0));
+    // EXPECT_EQ(EB_ErrorBadParameter, svt_av1_get_recon(nullptr, nullptr)); No
+    // return value, just feed nullptr as parameter. release output buffer with
+    // null pointer
     svt_av1_enc_release_out_buffer(nullptr);
     // close encoder with null pointer
     EXPECT_EQ(EB_ErrorBadParameter, svt_av1_enc_deinit(nullptr));
@@ -128,16 +132,17 @@ TEST(EncApiTest, DISABLED_check_normal_setup) {
     const int height = 720;
 
     // initialize encoder and get handle
-    EXPECT_EQ(
-        EB_ErrorNone,
-        svt_av1_enc_init_handle(&context.enc_handle, &context, &context.enc_params))
+    EXPECT_EQ(EB_ErrorNone,
+              svt_av1_enc_init_handle(
+                  &context.enc_handle, &context, &context.enc_params))
         << "svt_av1_enc_init_handle failed";
     // setup source width/height with default value
     context.enc_params.source_width = width;
     context.enc_params.source_height = height;
     // setup encoder parameters with all default
-    EXPECT_EQ(EB_ErrorNone,
-              svt_av1_enc_set_parameter(context.enc_handle, &context.enc_params))
+    EXPECT_EQ(
+        EB_ErrorNone,
+        svt_av1_enc_set_parameter(context.enc_handle, &context.enc_params))
         << "svt_av1_enc_set_parameter failed";
     // open encoder
     EXPECT_EQ(EB_ErrorNone, svt_av1_enc_init(context.enc_handle))
@@ -176,9 +181,9 @@ TEST(EncApiTest, DISABLED_repeat_normal_setup) {
 
     for (size_t i = 0; i < 500; ++i) {
         // initialize encoder and get handle
-        ASSERT_EQ(
-            EB_ErrorNone,
-            svt_av1_enc_init_handle(&context.enc_handle, &context, &context.enc_params))
+        ASSERT_EQ(EB_ErrorNone,
+                  svt_av1_enc_init_handle(
+                      &context.enc_handle, &context, &context.enc_params))
             << "svt_av1_enc_init_handle failed at " << i << " times";
         // setup source width/height with default value
         context.enc_params.source_width = width;

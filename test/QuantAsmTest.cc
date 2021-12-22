@@ -1,13 +1,14 @@
 /*
-* Copyright(c) 2019 Netflix, Inc.
-*
-* This source code is subject to the terms of the BSD 2 Clause License and
-* the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
-* was not distributed with this source code in the LICENSE file, you can
-* obtain it at https://www.aomedia.org/license/software-license. If the Alliance for Open
-* Media Patent License 1.0 was not distributed with this source code in the
-* PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
-*/
+ * Copyright(c) 2019 Netflix, Inc.
+ *
+ * This source code is subject to the terms of the BSD 2 Clause License and
+ * the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
+ * was not distributed with this source code in the LICENSE file, you can
+ * obtain it at https://www.aomedia.org/license/software-license. If the
+ * Alliance for Open Media Patent License 1.0 was not distributed with this
+ * source code in the PATENTS file, you can obtain it at
+ * https://www.aomedia.org/license/patent-license.
+ */
 
 /******************************************************************************
  * @file QuantAsmTest.c
@@ -44,14 +45,13 @@
 #include "random.h"
 
 namespace QuantizeAsmTest {
-extern "C" void svt_av1_build_quantizer(AomBitDepth bit_depth, int32_t y_dc_delta_q,
-                                        int32_t u_dc_delta_q, int32_t u_ac_delta_q,
-                                        int32_t v_dc_delta_q, int32_t v_ac_delta_q,
-                                        Quants *const quants, Dequants *const deq);
+extern "C" void svt_av1_build_quantizer(
+    AomBitDepth bit_depth, int32_t y_dc_delta_q, int32_t u_dc_delta_q,
+    int32_t u_ac_delta_q, int32_t v_dc_delta_q, int32_t v_ac_delta_q,
+    Quants *const quants, Dequants *const deq);
 
 using QuantizeFunc = void (*)(const TranLow *coeff_ptr, intptr_t n_coeffs,
-                              const int16_t *zbin_ptr,
-                              const int16_t *round_ptr,
+                              const int16_t *zbin_ptr, const int16_t *round_ptr,
                               const int16_t *quant_ptr,
                               const int16_t *quant_shift_ptr,
                               TranLow *qcoeff_ptr, TranLow *dqcoeff_ptr,
@@ -60,18 +60,14 @@ using QuantizeFunc = void (*)(const TranLow *coeff_ptr, intptr_t n_coeffs,
                               const QmVal *qm_ptr, const QmVal *iqm_ptr,
                               const int32_t log_scale);
 
-#if SSE_CODE_OPT
 using QuantizeParam = std::tuple<int, int, QuantizeFunc>;
-#else
-using QuantizeParam = std::tuple<int, int>;
-#endif
 
 using svt_av1_test_tool::SVTRandom;  // to generate the random
 /**
  * @brief Unit test for quantize avx2 functions:
  * - svt_aom_highbd_quantize_b_avx2
  * - svt_aom_quantize_b_avx2
-  *
+ *
  * Test strategy:
  * These tests use quantize C function as reference, input the same data and
  * compare C function output with avx2 function output, so as to check
@@ -94,8 +90,7 @@ class QuantizeBTest : public ::testing::TestWithParam<QuantizeParam> {
     QuantizeBTest()
         : tx_size_(static_cast<TxSize>(TEST_GET_PARAM(0))),
           bd_(static_cast<AomBitDepth>(TEST_GET_PARAM(1))),
-        log_scale(0)
-    {
+          log_scale(0) {
         n_coeffs_ = av1_get_max_eob(tx_size_);
         coeff_min_ = -(1 << (7 + bd_));
         coeff_max_ = (1 << (7 + bd_)) - 1;
@@ -138,23 +133,17 @@ class QuantizeBTest : public ::testing::TestWithParam<QuantizeParam> {
      */
     void setup_func_ptrs() {
         if (bd_ == AOM_BITS_8) {
-                quant_ref_ = svt_aom_quantize_b_c_ii;
-#if SSE_CODE_OPT
-                quant_test_ = TEST_GET_PARAM(2);
-#else
-                quant_test_ = svt_aom_quantize_b_avx2;
-#endif
+            quant_ref_ = svt_aom_quantize_b_c_ii;
+            quant_test_ = TEST_GET_PARAM(2);
         } else {
-                quant_ref_ = svt_aom_highbd_quantize_b_c;
-                quant_test_ = svt_aom_highbd_quantize_b_avx2;
+            quant_ref_ = svt_aom_highbd_quantize_b_c;
+            quant_test_ = svt_aom_highbd_quantize_b_avx2;
         }
         if (tx_size_ == TX_32X32) {
             log_scale = 1;
-        }
-        else if (tx_size_ == TX_64X64) {
+        } else if (tx_size_ == TX_64X64) {
             log_scale = 2;
-        }
-        else {
+        } else {
             log_scale = 0;
         }
     }
@@ -206,7 +195,7 @@ class QuantizeBTest : public ::testing::TestWithParam<QuantizeParam> {
                     sc->iscan,
                     NULL,
                     NULL,
-                   log_scale);
+                    log_scale);
 
         for (int j = 0; j < n_coeffs_; ++j) {
             ASSERT_EQ(qcoeff_ref_[j], qcoeff_test_[j])
@@ -246,8 +235,8 @@ class QuantizeBTest : public ::testing::TestWithParam<QuantizeParam> {
     const AomBitDepth bd_;    /**< input param 8bit or 10bit */
     int n_coeffs_;            /**< coeff number */
     int32_t log_scale;
-    uint16_t eob_ref_;        /**< output ref eob */
-    uint16_t eob_test_;       /**< output test eob */
+    uint16_t eob_ref_;  /**< output ref eob */
+    uint16_t eob_test_; /**< output test eob */
 
     TranLow *coeff_in_;
     TranLow *qcoeff_ref_;
@@ -324,7 +313,6 @@ TEST_P(QuantizeBTest, input_random_all_q_all) {
 }
 
 #ifndef FULL_UNIT_TEST
-#if SSE_CODE_OPT
 INSTANTIATE_TEST_CASE_P(
     Quant, QuantizeBTest,
     ::testing::Combine(::testing::Values(static_cast<int>(TX_16X16),
@@ -332,16 +320,8 @@ INSTANTIATE_TEST_CASE_P(
                                          static_cast<int>(TX_64X64)),
                        ::testing::Values(static_cast<int>(AOM_BITS_8),
                                          static_cast<int>(AOM_BITS_10)),
-                       ::testing::Values(svt_aom_quantize_b_sse4_1, svt_aom_quantize_b_avx2)));
-#else
-INSTANTIATE_TEST_CASE_P(
-    Quant, QuantizeBTest,
-    ::testing::Combine(::testing::Values(static_cast<int>(TX_16X16),
-                                         static_cast<int>(TX_32X32),
-                                         static_cast<int>(TX_64X64)),
-                       ::testing::Values(static_cast<int>(AOM_BITS_8),
-                                         static_cast<int>(AOM_BITS_10))));
-#endif
+                       ::testing::Values(svt_aom_quantize_b_sse4_1,
+                                         svt_aom_quantize_b_avx2)));
 #else
 INSTANTIATE_TEST_CASE_P(
     Quant, QuantizeBTest,

@@ -369,8 +369,7 @@ void atomic_set_u32(AtomicVarU32 *var, uint32_t in) {
     a lock(mutex) and enter the sleeping state.
     it could be seen as a combined: wait and release mutex
 */
-EbErrorType svt_create_cond_var(CondVar *cond_var)
-{
+EbErrorType svt_create_cond_var(CondVar *cond_var) {
     EbErrorType return_error;
     cond_var->val = 0;
 #ifdef _WIN32
@@ -383,13 +382,11 @@ EbErrorType svt_create_cond_var(CondVar *cond_var)
 
 #endif
     return return_error;
-
 }
 /*
     set a  condition variable to the new value
 */
-EbErrorType svt_set_cond_var(CondVar *cond_var, int32_t newval)
-{
+EbErrorType svt_set_cond_var(CondVar *cond_var, int32_t newval) {
     EbErrorType return_error;
 #ifdef _WIN32
     EnterCriticalSection(&cond_var->cs);
@@ -398,7 +395,7 @@ EbErrorType svt_set_cond_var(CondVar *cond_var, int32_t newval)
     LeaveCriticalSection(&cond_var->cs);
     return_error = EB_ErrorNone;
 #else
-    return_error = pthread_mutex_lock(&cond_var->m_mutex);
+    return_error  = pthread_mutex_lock(&cond_var->m_mutex);
     cond_var->val = newval;
     return_error |= pthread_cond_broadcast(&cond_var->m_cond);
     return_error |= pthread_mutex_unlock(&cond_var->m_mutex);
@@ -410,15 +407,13 @@ EbErrorType svt_set_cond_var(CondVar *cond_var, int32_t newval)
     different than input
 */
 
-EbErrorType svt_wait_cond_var(CondVar *cond_var, int32_t input)
-{
+EbErrorType svt_wait_cond_var(CondVar *cond_var, int32_t input) {
     EbErrorType return_error;
 
 #ifdef _WIN32
 
     EnterCriticalSection(&cond_var->cs);
-    while (cond_var->val == input)
-        SleepConditionVariableCS(&cond_var->cv, &cond_var->cs, INFINITE);
+    while (cond_var->val == input) SleepConditionVariableCS(&cond_var->cv, &cond_var->cs, INFINITE);
     LeaveCriticalSection(&cond_var->cs);
     return_error = EB_ErrorNone;
 #else

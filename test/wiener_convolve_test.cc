@@ -1,13 +1,14 @@
 /*
-* Copyright(c) 2019 Netflix, Inc.
-*
-* This source code is subject to the terms of the BSD 2 Clause License and
-* the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
-* was not distributed with this source code in the LICENSE file, you can
-* obtain it at https://www.aomedia.org/license/software-license. If the Alliance for Open
-* Media Patent License 1.0 was not distributed with this source code in the
-* PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
-*/
+ * Copyright(c) 2019 Netflix, Inc.
+ *
+ * This source code is subject to the terms of the BSD 2 Clause License and
+ * the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
+ * was not distributed with this source code in the LICENSE file, you can
+ * obtain it at https://www.aomedia.org/license/software-license. If the
+ * Alliance for Open Media Patent License 1.0 was not distributed with this
+ * source code in the PATENTS file, you can obtain it at
+ * https://www.aomedia.org/license/patent-license.
+ */
 
 /******************************************************************************
  * @file wiener_convolve_test.cc
@@ -80,28 +81,13 @@ typedef std::tuple<BlkSize, WienerConvolveFunc> WienerConvolveParam;
 typedef std::tuple<BlkSize, HbdWienerConvolveFunc, int32_t>
     HbdWienerConvolveParam;
 
-static const BlkSize test_block_size_table[] = {BlkSize(96, 96),
-                                                BlkSize(96, 97),
-                                                BlkSize(88, 88),
-                                                BlkSize(88, 85),
-                                                BlkSize(80, 80),
-                                                BlkSize(80, 79),
-                                                BlkSize(72, 72),
-                                                BlkSize(72, 71),
-                                                BlkSize(64, 64),
-                                                BlkSize(64, 63),
-                                                BlkSize(56, 56),
-                                                BlkSize(56, 57),
-                                                BlkSize(48, 48),
-                                                BlkSize(48, 49),
-                                                BlkSize(32, 32),
-                                                BlkSize(32, 33),
-                                                BlkSize(24, 24),
-                                                BlkSize(24, 23),
-                                                BlkSize(16, 16),
-                                                BlkSize(16, 15),
-                                                BlkSize(8, 9),
-                                                BlkSize(8, 8)};
+static const BlkSize test_block_size_table[] = {
+    BlkSize(96, 96), BlkSize(96, 97), BlkSize(88, 88), BlkSize(88, 85),
+    BlkSize(80, 80), BlkSize(80, 79), BlkSize(72, 72), BlkSize(72, 71),
+    BlkSize(64, 64), BlkSize(64, 63), BlkSize(56, 56), BlkSize(56, 57),
+    BlkSize(48, 48), BlkSize(48, 49), BlkSize(32, 32), BlkSize(32, 33),
+    BlkSize(24, 24), BlkSize(24, 23), BlkSize(16, 16), BlkSize(16, 15),
+    BlkSize(8, 9),   BlkSize(8, 8)};
 
 static const int test_tap_table[] = {7, 5, 3};
 

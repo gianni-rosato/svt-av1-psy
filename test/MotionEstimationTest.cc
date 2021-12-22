@@ -1,13 +1,14 @@
 /*
-* Copyright(c) 2019 Intel Corporation
-*
-* This source code is subject to the terms of the BSD 2 Clause License and
-* the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
-* was not distributed with this source code in the LICENSE file, you can
-* obtain it at https://www.aomedia.org/license/software-license. If the Alliance for Open
-* Media Patent License 1.0 was not distributed with this source code in the
-* PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
-*/
+ * Copyright(c) 2019 Intel Corporation
+ *
+ * This source code is subject to the terms of the BSD 2 Clause License and
+ * the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
+ * was not distributed with this source code in the LICENSE file, you can
+ * obtain it at https://www.aomedia.org/license/software-license. If the
+ * Alliance for Open Media Patent License 1.0 was not distributed with this
+ * source code in the PATENTS file, you can obtain it at
+ * https://www.aomedia.org/license/patent-license.
+ */
 
 #include "gtest/gtest.h"
 #include "aom_dsp_rtcd.h"
@@ -32,12 +33,12 @@ const struct DistInfo sad_size_info[num_sad] = {
     {32, 8},  {32, 16},  {32, 32},  {32, 64},  {64, 16}, {64, 32},
     {64, 64}, {64, 128}, {128, 64}, {128, 128}};
 
-typedef uint32_t (*AomSadFn)(const uint8_t *a, int a_stride,
-                                 const uint8_t *b, int b_stride);
+typedef uint32_t (*AomSadFn)(const uint8_t *a, int a_stride, const uint8_t *b,
+                             int b_stride);
 
 typedef void (*AomSadMultiDFn)(const uint8_t *a, int a_stride,
-                                     const uint8_t *const b_array[],
-                                     int b_stride, uint32_t *sad_array);
+                               const uint8_t *const b_array[], int b_stride,
+                               uint32_t *sad_array);
 
 AomSadFn aom_sad_c_func_ptr_array[num_sad] = {
     svt_aom_sad4x4_c,    svt_aom_sad4x8_c,    svt_aom_sad4x16_c,
@@ -119,7 +120,7 @@ void sadMxN_match_test(const AomSadFn *const func_table) {
         init_data_sadMxN(&src_ptr, &src_stride, &ref_ptr, &ref_stride);
 
         for (int j = 0; j < num_sad; j++) {
-            if(func_table[j] == NULL)
+            if (func_table[j] == NULL)
                 continue;
             const uint32_t sad_org = aom_sad_c_func_ptr_array[j](
                 src_ptr, src_stride, ref_ptr, ref_stride);
@@ -142,7 +143,7 @@ void sadMxNx4d_match_test(const AomSadMultiDFn *const func_table) {
         init_data_sadMxNx4d(&src_ptr, &src_stride, ref_ptr, &ref_stride);
 
         for (int j = 0; j < num_sad; j++) {
-            if(func_table[j] == NULL)
+            if (func_table[j] == NULL)
                 continue;
             svt_buf_random_u32(sad_array_opt, 4);
             aom_sad_4d_c_func_ptr_array[j](
@@ -169,7 +170,7 @@ void sadMxN_speed_test(const AomSadFn *const func_table) {
     init_data_sadMxN(&src_ptr, &src_stride, &ref_ptr, &ref_stride);
 
     for (int j = 0; j < num_sad; j++) {
-        if(func_table[j] == NULL)
+        if (func_table[j] == NULL)
             continue;
         const uint32_t width = sad_size_info[j].width;
         const uint32_t height = sad_size_info[j].height;
@@ -229,7 +230,7 @@ void sadMxNx4d_speed_test(const AomSadMultiDFn *const func_table) {
     svt_buf_random_u32(sad_array_opt, 4);
 
     for (int j = 0; j < num_sad; j++) {
-        if(func_table[j] == NULL)
+        if (func_table[j] == NULL)
             continue;
         const uint32_t width = sad_size_info[j].width;
         const uint32_t height = sad_size_info[j].height;
@@ -295,27 +296,54 @@ TEST(MotionEstimation_avx2, DISABLED_sadMxNx4d_speed) {
 
 #if EN_AVX512_SUPPORT
 
-//NULL means not implemented
-AomSadFn aom_sad_avx512_func_ptr_array[num_sad] = {
-    NULL, NULL, NULL,
-    NULL, NULL, NULL,
-    NULL, NULL, NULL,
-    NULL, NULL, NULL,
-    NULL, NULL, NULL,
-    NULL, svt_aom_sad64x16_avx512, svt_aom_sad64x32_avx512,
-    svt_aom_sad64x64_avx512, svt_aom_sad64x128_avx512,
-    svt_aom_sad128x64_avx512, svt_aom_sad128x128_avx512};
+// NULL means not implemented
+AomSadFn aom_sad_avx512_func_ptr_array[num_sad] = {NULL,
+                                                   NULL,
+                                                   NULL,
+                                                   NULL,
+                                                   NULL,
+                                                   NULL,
+                                                   NULL,
+                                                   NULL,
+                                                   NULL,
+                                                   NULL,
+                                                   NULL,
+                                                   NULL,
+                                                   NULL,
+                                                   NULL,
+                                                   NULL,
+                                                   NULL,
+                                                   svt_aom_sad64x16_avx512,
+                                                   svt_aom_sad64x32_avx512,
+                                                   svt_aom_sad64x64_avx512,
+                                                   svt_aom_sad64x128_avx512,
+                                                   svt_aom_sad128x64_avx512,
+                                                   svt_aom_sad128x128_avx512};
 
-//NULL means not implemented
+// NULL means not implemented
 AomSadMultiDFn aom_sad_4d_avx512_func_ptr_array[num_sad] = {
-    NULL, NULL, NULL,
-    NULL, NULL, NULL,
-    NULL, NULL, NULL,
-    NULL, NULL, NULL,
-    NULL, NULL, NULL,
-    NULL, svt_aom_sad64x16x4d_avx2, svt_aom_sad64x32x4d_avx2,
-    svt_aom_sad64x64x4d_avx2, svt_aom_sad64x128x4d_avx2,
-    svt_aom_sad128x64x4d_avx512, svt_aom_sad128x128x4d_avx512};
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    svt_aom_sad64x16x4d_avx2,
+    svt_aom_sad64x32x4d_avx2,
+    svt_aom_sad64x64x4d_avx2,
+    svt_aom_sad64x128x4d_avx2,
+    svt_aom_sad128x64x4d_avx512,
+    svt_aom_sad128x128x4d_avx512};
 
 TEST(MotionEstimation_avx512, sadMxN_match) {
     sadMxN_match_test(aom_sad_avx512_func_ptr_array);

@@ -1,13 +1,14 @@
 /*
  * Copyright(c) 2019 Intel Corporation
-*
-* This source code is subject to the terms of the BSD 2 Clause License and
-* the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
-* was not distributed with this source code in the LICENSE file, you can
-* obtain it at https://www.aomedia.org/license/software-license. If the Alliance for Open
-* Media Patent License 1.0 was not distributed with this source code in the
-* PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
-*/
+ *
+ * This source code is subject to the terms of the BSD 2 Clause License and
+ * the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
+ * was not distributed with this source code in the LICENSE file, you can
+ * obtain it at https://www.aomedia.org/license/software-license. If the
+ * Alliance for Open Media Patent License 1.0 was not distributed with this
+ * source code in the PATENTS file, you can obtain it at
+ * https://www.aomedia.org/license/patent-license.
+ */
 
 #ifndef EbUnitTestUtility_h
 #define EbUnitTestUtility_h
@@ -30,14 +31,15 @@ extern void svt_buf_random_void(void *const buf, const uint32_t sizeBuf);
 extern void svt_buf_random_u8(uint8_t *const buf, const uint32_t sizeBuf);
 extern void svt_buf_random_u8_to_0_or_255(uint8_t *const buf,
                                           const uint32_t sizeBuf);
-extern void svt_buf_random_u8_to_255(uint8_t *const buf, const uint32_t sizeBuf);
+extern void svt_buf_random_u8_to_255(uint8_t *const buf,
+                                     const uint32_t sizeBuf);
 extern void svt_buf_random_s16(int16_t *const buf, const uint32_t sizeBuf);
 extern void svt_buf_random_u16(uint16_t *const buf, const uint32_t sizeBuf);
 extern void svt_buf_random_u16_to_0_or_bd(uint16_t *const buf,
                                           const uint32_t sizeBuf,
                                           const uint32_t bd);
-extern void svt_buf_random_u16_to_bd(uint16_t *const buf, const uint32_t sizeBuf,
-                                     const uint32_t bd);
+extern void svt_buf_random_u16_to_bd(uint16_t *const buf,
+                                     const uint32_t sizeBuf, const uint32_t bd);
 extern void svt_buf_random_u16_with_bd(uint16_t *const buf,
                                        const uint32_t sizeBuf,
                                        const uint32_t bd);

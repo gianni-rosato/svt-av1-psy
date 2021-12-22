@@ -164,4 +164,3 @@ void find_segment_qps(SegmentationParams *segmentation_params,
         bin_center += step_size;
     }
 }
-

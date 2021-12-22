@@ -284,42 +284,30 @@ typedef struct EbPictureBufferDescInitData {
     EbBitDepthEnum bit_depth;
     EbColorFormat  color_format;
     uint32_t       buffer_enable_mask;
-#if FTR_NEW_WN_LVLS
     int32_t        rest_units_per_tile;
-#endif
     uint16_t       left_padding;
     uint16_t       right_padding;
     uint16_t       top_padding;
     uint16_t       bot_padding;
     EbBool         split_mode; //ON: allocate 8bit data seperately from nbit data
 
-    EbBool         down_sampled_filtered;
+    EbBool down_sampled_filtered;
 
-    uint8_t        mfmv;
-    EbBool         is_16bit_pipeline;
-#if OPT_MEMORY_REST
-        int8_t enc_mode;
-#endif
-#if FTR_VLPD1
-    int32_t        sb_total_count;
-#endif
+    uint8_t mfmv;
+    EbBool  is_16bit_pipeline;
+    int8_t  enc_mode;
+    int32_t sb_total_count;
 } EbPictureBufferDescInitData;
 
 /**************************************
      * Extern Function Declarations
      **************************************/
 
-#if OPT_PA_REF
 extern EbErrorType svt_picture_buffer_desc_ctor_noy8b(EbPictureBufferDesc *object_ptr,
-    const EbPtr          object_init_data_ptr);
-#endif
+                                                      const EbPtr          object_init_data_ptr);
 extern EbErrorType svt_picture_buffer_desc_ctor(EbPictureBufferDesc *object_ptr,
                                                 const EbPtr          object_init_data_ptr);
 
-#if SIM_OLD_TPL
-extern EbErrorType svt_picture_buffer_desc_ctor_zeroout(EbPictureBufferDesc *object_ptr,
-    const EbPtr          object_init_data_ptr);
-#endif
 extern EbErrorType svt_recon_picture_buffer_desc_ctor(EbPictureBufferDesc *object_ptr,
                                                       EbPtr                object_init_data_ptr);
 

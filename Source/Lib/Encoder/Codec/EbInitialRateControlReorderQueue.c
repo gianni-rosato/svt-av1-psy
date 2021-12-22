@@ -19,4 +19,3 @@ EbErrorType initial_rate_control_reorder_entry_ctor(InitialRateControlReorderEnt
 
     return EB_ErrorNone;
 }
-

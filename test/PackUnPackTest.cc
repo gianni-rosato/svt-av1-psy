@@ -1,13 +1,14 @@
 /*
-* Copyright(c) 2019 Netflix, Inc.
-*
-* This source code is subject to the terms of the BSD 2 Clause License and
-* the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
-* was not distributed with this source code in the LICENSE file, you can
-* obtain it at https://www.aomedia.org/license/software-license. If the Alliance for Open
-* Media Patent License 1.0 was not distributed with this source code in the
-* PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
-*/
+ * Copyright(c) 2019 Netflix, Inc.
+ *
+ * This source code is subject to the terms of the BSD 2 Clause License and
+ * the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
+ * was not distributed with this source code in the LICENSE file, you can
+ * obtain it at https://www.aomedia.org/license/software-license. If the
+ * Alliance for Open Media Patent License 1.0 was not distributed with this
+ * source code in the PATENTS file, you can obtain it at
+ * https://www.aomedia.org/license/patent-license.
+ */
 
 /******************************************************************************
  * @file PackUnPackTest.cc
@@ -65,7 +66,6 @@ AreaSize TEST_PACK_SIZES[] = {AreaSize(32, 32),
                               AreaSize(64, 32),
                               AreaSize(32, 64)};
 
-#if OPTIMIZE_COMPRESS_PACK_SB
 #define MAX_TEST_SIZE 2048
 AreaSize TEST_PACK_SIZES_EXTEND[] = {AreaSize(128, 128),
                                      AreaSize(128, 8),
@@ -86,7 +86,6 @@ AreaSize TEST_PACK_SIZES_EXTEND[] = {AreaSize(128, 128),
                                      AreaSize(176, 144),
                                      AreaSize(800, 600),
                                      AreaSize(640, 480)};
-#endif
 
 // test svt_c_pack_avx2_intrin, which only support width of 32 and 64;
 class PackTest : public ::testing::TestWithParam<AreaSize> {
@@ -174,8 +173,9 @@ class PackTest : public ::testing::TestWithParam<AreaSize> {
                          in_compn_bit_buffer2_);
 
             EXPECT_FALSE(HasFailure())
-                << "svt_c_pack_avx2_intrin failed at " << i << "th test with size ("
-                << area_width_ << "," << area_height_ << ")";
+                << "svt_c_pack_avx2_intrin failed at " << i
+                << "th test with size (" << area_width_ << "," << area_height_
+                << ")";
         }
     }
 
@@ -199,15 +199,9 @@ class PackMsbTest : public ::testing::TestWithParam<AreaSize> {
     PackMsbTest()
         : area_width_(std::get<0>(GetParam())),
           area_height_(std::get<1>(GetParam())) {
-#if OPTIMIZE_COMPRESS_PACK_SB
         in8_stride_ = out_stride_ = MAX_TEST_SIZE;
         inn_stride_ = in8_stride_ >> 2;
         test_size_ = MAX_TEST_SIZE * MAX_TEST_SIZE;
-#else
-        in8_stride_ = out_stride_ = MAX_PU_SIZE;
-        inn_stride_ = in8_stride_ >> 2;
-        test_size_ = MAX_PU_SIZE * MAX_PU_SIZE;
-#endif
         inn_bit_buffer_ = nullptr;
         in_8bit_buffer_ = nullptr;
         out_16bit_buffer1_ = nullptr;
@@ -258,43 +252,23 @@ class PackMsbTest : public ::testing::TestWithParam<AreaSize> {
         for (int i = 0; i < RANDOM_TIME; i++) {
             svt_buf_random_u8(inn_bit_buffer_, test_size_ >> 2);
             svt_buf_random_u8(in_8bit_buffer_, test_size_);
-#if SS_2B_COMPRESS
             svt_compressed_packmsb_avx2_intrin(in_8bit_buffer_,
-                in8_stride_,
-                inn_bit_buffer_,
-                inn_stride_,
-                out_16bit_buffer1_,
-                out_stride_,
-                area_width_,
-                area_height_);
-
-            svt_compressed_packmsb_c(in_8bit_buffer_,
-                in8_stride_,
-                inn_bit_buffer_,
-                inn_stride_,
-                out_16bit_buffer2_,
-                out_stride_,
-                area_width_,
-                area_height_);
-#else
-            svt_compressed_packmsb_avx2_intrin(in_8bit_buffer_,
-                                           in8_stride_,
-                                           inn_bit_buffer_,
-                                           out_16bit_buffer1_,
-                                           inn_stride_,
-                                           out_stride_,
-                                           area_width_,
-                                           area_height_);
+                                               in8_stride_,
+                                               inn_bit_buffer_,
+                                               inn_stride_,
+                                               out_16bit_buffer1_,
+                                               out_stride_,
+                                               area_width_,
+                                               area_height_);
 
             svt_compressed_packmsb_c(in_8bit_buffer_,
                                      in8_stride_,
                                      inn_bit_buffer_,
-                                     out_16bit_buffer2_,
                                      inn_stride_,
+                                     out_16bit_buffer2_,
                                      out_stride_,
                                      area_width_,
                                      area_height_);
-#endif
 
             check_output(area_width_,
                          area_height_,
@@ -322,12 +296,9 @@ TEST_P(PackMsbTest, PackMsbTest) {
 INSTANTIATE_TEST_CASE_P(PACKMSB, PackMsbTest,
                         ::testing::ValuesIn(TEST_PACK_SIZES));
 
-#if OPTIMIZE_COMPRESS_PACK_SB
 INSTANTIATE_TEST_CASE_P(PACKMSB_EXTEND, PackMsbTest,
                         ::testing::ValuesIn(TEST_PACK_SIZES_EXTEND));
-#endif
 
-#if OPTIMIZE_SVT_UNPACK_2B
 // test svt_unpack_and_2bcompress_avx2
 class Unpack2bCompress : public ::testing::TestWithParam<AreaSize> {
   public:
@@ -345,11 +316,16 @@ class Unpack2bCompress : public ::testing::TestWithParam<AreaSize> {
     }
 
     void SetUp() override {
-        out_2bit_buffer_ref_ = reinterpret_cast<uint8_t *>(svt_aom_memalign(32, test_size_ >> 2));
-        out_2bit_buffer_mod_ = reinterpret_cast<uint8_t *>(svt_aom_memalign(32, test_size_ >> 2));
-        out_8bit_buffer_ref_ = reinterpret_cast<uint8_t *>(svt_aom_memalign(32, test_size_));
-        out_8bit_buffer_mod_ = reinterpret_cast<uint8_t *>(svt_aom_memalign(32, test_size_));
-        in_16bit_ = reinterpret_cast<uint16_t *>(svt_aom_memalign(32, sizeof(uint16_t) * test_size_));
+        out_2bit_buffer_ref_ =
+            reinterpret_cast<uint8_t *>(svt_aom_memalign(32, test_size_ >> 2));
+        out_2bit_buffer_mod_ =
+            reinterpret_cast<uint8_t *>(svt_aom_memalign(32, test_size_ >> 2));
+        out_8bit_buffer_ref_ =
+            reinterpret_cast<uint8_t *>(svt_aom_memalign(32, test_size_));
+        out_8bit_buffer_mod_ =
+            reinterpret_cast<uint8_t *>(svt_aom_memalign(32, test_size_));
+        in_16bit_ = reinterpret_cast<uint16_t *>(
+            svt_aom_memalign(32, sizeof(uint16_t) * test_size_));
 
         memset(out_2bit_buffer_ref_, 0, test_size_ >> 2);
         memset(out_2bit_buffer_mod_, 0, test_size_ >> 2);
@@ -391,31 +367,31 @@ class Unpack2bCompress : public ::testing::TestWithParam<AreaSize> {
             svt_buf_random_u16_with_bd(in_16bit_, test_size_, 10);
 
             svt_unpack_and_2bcompress_avx2(in_16bit_,
-                in_stride_,
-                out_8bit_buffer_mod_,
-                out8_stride_,
-                out_2bit_buffer_mod_,
-                out2_stride_,
-                area_width_,
-                area_height_);
+                                           in_stride_,
+                                           out_8bit_buffer_mod_,
+                                           out8_stride_,
+                                           out_2bit_buffer_mod_,
+                                           out2_stride_,
+                                           area_width_,
+                                           area_height_);
 
             svt_unpack_and_2bcompress_c(in_16bit_,
-                in_stride_,
-                out_8bit_buffer_ref_,
-                out8_stride_,
-                out_2bit_buffer_ref_,
-                out2_stride_,
-                area_width_,
-                area_height_);
+                                        in_stride_,
+                                        out_8bit_buffer_ref_,
+                                        out8_stride_,
+                                        out_2bit_buffer_ref_,
+                                        out2_stride_,
+                                        area_width_,
+                                        area_height_);
 
-            //2bit output
+            // 2bit output
             check_output(area_width_ >> 2,
                          area_height_,
                          out_2bit_buffer_mod_,
                          out_2bit_buffer_ref_,
                          out2_stride_);
 
-            //8bit output
+            // 8bit output
             check_output(area_width_,
                          area_height_,
                          out_8bit_buffer_mod_,
@@ -429,7 +405,8 @@ class Unpack2bCompress : public ::testing::TestWithParam<AreaSize> {
         }
     }
 
-    uint8_t *out_2bit_buffer_ref_, *out_2bit_buffer_mod_, *out_8bit_buffer_ref_, *out_8bit_buffer_mod_;
+    uint8_t *out_2bit_buffer_ref_, *out_2bit_buffer_mod_, *out_8bit_buffer_ref_,
+        *out_8bit_buffer_mod_;
     uint32_t out8_stride_, out2_stride_, in_stride_;
     uint16_t *in_16bit_;
     uint32_t area_width_, area_height_;
@@ -445,7 +422,6 @@ INSTANTIATE_TEST_CASE_P(UNPACK2BCOMPRESS, Unpack2bCompress,
 
 INSTANTIATE_TEST_CASE_P(UNPACK2BCOMPRESS_EXTEND, Unpack2bCompress,
                         ::testing::ValuesIn(TEST_PACK_SIZES_EXTEND));
-#endif
 
 // test svt_enc_msb_pack2d_avx2_intrin_al and svt_enc_msb_pack2d_sse2_intrin.
 // There is an implicit assumption that the width should be multiple of 4.
@@ -541,13 +517,13 @@ class Pack2dTest : public ::testing::TestWithParam<AreaSize> {
                                 area_width_,
                                 area_height_);
             svt_enc_msb_pack2d_sse2_intrin(in_8bit_buffer_,
-                                            in_stride_,
-                                            inn_bit_buffer_,
-                                            out_16bit_buffer_sse2_,
-                                            out_stride_,
-                                            out_stride_,
-                                            area_width_,
-                                            area_height_);
+                                           in_stride_,
+                                           inn_bit_buffer_,
+                                           out_16bit_buffer_sse2_,
+                                           out_stride_,
+                                           out_stride_,
+                                           area_width_,
+                                           area_height_);
 
             check_output(area_width_,
                          area_height_,
@@ -647,11 +623,11 @@ class UnPackTest : public ::testing::TestWithParam<AreaSize> {
         for (int i = 0; i < RANDOM_TIME; i++) {
             svt_buf_random_u16(in_16bit_buffer_, test_size_);
             svt_enc_un_pack8_bit_data_avx2_intrin(in_16bit_buffer_,
-                                                     in_stride_,
-                                                     out_8bit_buffer1_,
-                                                     out_stride_,
-                                                     area_width_,
-                                                     area_height_);
+                                                  in_stride_,
+                                                  out_8bit_buffer1_,
+                                                  out_stride_,
+                                                  area_width_,
+                                                  area_height_);
             svt_un_pack8_bit_data_c(in_16bit_buffer_,
                                     in_stride_,
                                     out_8bit_buffer2_,
@@ -727,9 +703,10 @@ INSTANTIATE_TEST_CASE_P(UNPACK, UnPackTest,
                         ::testing::ValuesIn(TEST_COMMON_SIZES));
 
 // test svt_unpack_avg_avx2_intrin
-// only width of {4, 8, 16, 32, 64} are implemented in svt_unpack_avg_avx2_intrin.
-// only width of {8, 16, 32, 64} are implemented in
-// svt_unpack_avg_safe_sub_avx2_intrin. use TEST_AVG_SIZES to cover all the cases.
+// only width of {4, 8, 16, 32, 64} are implemented in
+// svt_unpack_avg_avx2_intrin. only width of {8, 16, 32, 64} are implemented in
+// svt_unpack_avg_safe_sub_avx2_intrin. use TEST_AVG_SIZES to cover all the
+// cases.
 AreaSize TEST_AVG_SIZES[] = {AreaSize(4, 4),
                              AreaSize(4, 8),
                              AreaSize(8, 4),

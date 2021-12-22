@@ -26,10 +26,10 @@ static EbErrorType create_stats_buffer(FIRSTPASS_STATS **frame_stats_buffer,
     if (*frame_stats_buffer == NULL)
         return EB_ErrorInsufficientResources;
 
-    stats_buf_context->stats_in_start   = *frame_stats_buffer;
+    stats_buf_context->stats_in_start     = *frame_stats_buffer;
     stats_buf_context->stats_in_end_write = stats_buf_context->stats_in_start;
-    stats_buf_context->stats_in_end     = stats_buf_context->stats_in_start;
-    stats_buf_context->stats_in_buf_end = stats_buf_context->stats_in_start + size;
+    stats_buf_context->stats_in_end       = stats_buf_context->stats_in_start;
+    stats_buf_context->stats_in_buf_end   = stats_buf_context->stats_in_start + size;
 
     // stats_buf_context->total_left_stats = aom_calloc(1, sizeof(FIRSTPASS_STATS));
     EB_MALLOC_ARRAY(stats_buf_context->total_left_stats, 1);
@@ -41,9 +41,7 @@ static EbErrorType create_stats_buffer(FIRSTPASS_STATS **frame_stats_buffer,
     if (stats_buf_context->total_stats == NULL)
         return EB_ErrorInsufficientResources;
     svt_av1_twopass_zero_stats(stats_buf_context->total_stats);
-#if FTR_1PAS_VBR
     stats_buf_context->last_frame_accumulated = -1;
-#endif
     return res;
 }
 
@@ -59,9 +57,7 @@ static void encode_context_dctor(EbPtr p) {
     EB_DESTROY_MUTEX(obj->sc_buffer_mutex);
     EB_DESTROY_MUTEX(obj->shared_reference_mutex);
     EB_DESTROY_MUTEX(obj->stat_file_mutex);
-#if FTR_1PASS_CBR_RT_MT
     EB_DESTROY_MUTEX(obj->frame_updated_mutex);
-#endif
     EB_DELETE(obj->prediction_structure_group_ptr);
     EB_DELETE_PTR_ARRAY(obj->picture_decision_reorder_queue,
                         PICTURE_DECISION_REORDER_QUEUE_MAX_DEPTH);
@@ -76,13 +72,11 @@ static void encode_context_dctor(EbPtr p) {
     EB_DELETE_PTR_ARRAY(obj->packetization_reorder_queue, PACKETIZATION_REORDER_QUEUE_MAX_DEPTH);
     EB_FREE(obj->stats_out.stat);
     destroy_stats_buffer(&obj->stats_buf_context, obj->frame_stats_buffer);
-#if FTR_RC_CAP
     EB_DELETE_PTR_ARRAY(obj->rc.coded_frames_stat_queue, CODED_FRAMES_STAT_QUEUE_MAX_DEPTH);
-#endif
 }
 
 EbErrorType encode_context_ctor(EncodeContext *encode_context_ptr, EbPtr object_init_data_ptr) {
-    uint32_t    picture_index;
+    uint32_t picture_index;
 
     encode_context_ptr->dctor = encode_context_dctor;
 
@@ -90,9 +84,7 @@ EbErrorType encode_context_ctor(EncodeContext *encode_context_ptr, EbPtr object_
     CHECK_REPORT_ERROR(1, encode_context_ptr->app_callback_ptr, EB_ENC_EC_ERROR29);
 
     EB_CREATE_MUTEX(encode_context_ptr->total_number_of_recon_frame_mutex);
-#if FTR_1PASS_CBR_RT_MT
     EB_CREATE_MUTEX(encode_context_ptr->frame_updated_mutex);
-#endif
     EB_ALLOC_PTR_ARRAY(encode_context_ptr->picture_decision_reorder_queue,
                        PICTURE_DECISION_REORDER_QUEUE_MAX_DEPTH);
 
@@ -151,7 +143,7 @@ EbErrorType encode_context_ctor(EncodeContext *encode_context_ptr, EbPtr object_
                picture_index);
     }
 
-    encode_context_ptr->initial_picture   = EB_TRUE;
+    encode_context_ptr->initial_picture = EB_TRUE;
 
     // Sequence Termination Flags
     encode_context_ptr->terminating_picture_number = ~0u;
@@ -172,15 +164,14 @@ EbErrorType encode_context_ctor(EncodeContext *encode_context_ptr, EbPtr object_
     create_stats_buffer(&encode_context_ptr->frame_stats_buffer,
                         &encode_context_ptr->stats_buf_context,
                         *num_lap_buffers);
-#if FTR_RC_CAP
-    EB_ALLOC_PTR_ARRAY(encode_context_ptr->rc.coded_frames_stat_queue, CODED_FRAMES_STAT_QUEUE_MAX_DEPTH);
+    EB_ALLOC_PTR_ARRAY(encode_context_ptr->rc.coded_frames_stat_queue,
+                       CODED_FRAMES_STAT_QUEUE_MAX_DEPTH);
 
     for (picture_index = 0; picture_index < CODED_FRAMES_STAT_QUEUE_MAX_DEPTH; ++picture_index) {
         EB_NEW(encode_context_ptr->rc.coded_frames_stat_queue[picture_index],
-            rate_control_coded_frames_stats_context_ctor,
-            picture_index);
+               rate_control_coded_frames_stats_context_ctor,
+               picture_index);
     }
     encode_context_ptr->rc.min_bit_actual_per_gop = 0xfffffffffffff;
-#endif
     return EB_ErrorNone;
 }

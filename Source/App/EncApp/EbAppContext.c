@@ -77,28 +77,11 @@ static EbErrorType allocate_frame_buffer(EbConfig *config, uint8_t *p_buffer) {
     const uint8_t       subsampling_x = (color_format == EB_YUV444 ? 1 : 2) - 1;
 
     // Determine size of each plane
-#if FTR_OPT_MPASS_DOWN_SAMPLE  && !CLN_ENC_CONFIG_SIG
-    size_t luma_8bit_size;
-#if FTR_OP_TEST
-    if(1)
-#else
-#if FTR_OPT_IPP_DOWN_SAMPLE
-    if (config->config.rc_middlepass_ds_stats_out || config->config.ipp_ctrls.ipp_ds)
-#else
-    if (config->config.rc_middlepass_ds_stats_out)
-#endif
-#endif
-        luma_8bit_size = (config->org_input_padded_width) * (config->org_input_padded_height) *(1 << ten_bit_packed_mode);
-    else
-        luma_8bit_size = config->input_padded_width * config->input_padded_height *(1 << ten_bit_packed_mode);
-#else
     const size_t luma_8bit_size = config->input_padded_width * config->input_padded_height *
         (1 << ten_bit_packed_mode);
-#endif
 
     const size_t chroma_8bit_size = luma_8bit_size >> (3 - color_format);
 
-#if FIX_COMPRESSED_10BIT
     const size_t luma_10bit_size = (cfg->encoder_bit_depth > 8 && ten_bit_packed_mode == 0)
         ? luma_8bit_size >> 2
         : 0;
@@ -106,42 +89,12 @@ static EbErrorType allocate_frame_buffer(EbConfig *config, uint8_t *p_buffer) {
     const size_t chroma_10bit_size = (cfg->encoder_bit_depth > 8 && ten_bit_packed_mode == 0)
         ? chroma_8bit_size >> 2
         : 0;
-#else
-    const size_t luma_10bit_size = (cfg->encoder_bit_depth > 8 && ten_bit_packed_mode == 0)
-        ? luma_8bit_size
-        : 0;
-
-    const size_t chroma_10bit_size = (cfg->encoder_bit_depth > 8 && ten_bit_packed_mode == 0)
-        ? chroma_8bit_size
-        : 0;
-#endif
 
     // Determine
     EbSvtIOFormat *input_ptr = (EbSvtIOFormat *)p_buffer;
-#if FTR_OPT_MPASS_DOWN_SAMPLE  && !CLN_ENC_CONFIG_SIG
-#if FTR_OP_TEST
-    if (1) {
-#else
-#if FTR_OPT_IPP_DOWN_SAMPLE
-    if (config->config.rc_middlepass_ds_stats_out || config->config.ipp_ctrls.ipp_ds) {
-#else
-    if (config->config.rc_middlepass_ds_stats_out) {
-#endif
-#endif
-        input_ptr->y_stride = (config->org_input_padded_width);
-        input_ptr->cr_stride = (config->org_input_padded_width) >> subsampling_x;
-        input_ptr->cb_stride = (config->org_input_padded_width) >> subsampling_x;
-    }
-    else {
-        input_ptr->y_stride = config->input_padded_width;
-        input_ptr->cr_stride = config->input_padded_width >> subsampling_x;
-        input_ptr->cb_stride = config->input_padded_width >> subsampling_x;
-    }
-#else
-    input_ptr->y_stride      = config->input_padded_width;
-    input_ptr->cr_stride     = config->input_padded_width >> subsampling_x;
-    input_ptr->cb_stride     = config->input_padded_width >> subsampling_x;
-#endif
+    input_ptr->y_stride  = config->input_padded_width;
+    input_ptr->cr_stride = config->input_padded_width >> subsampling_x;
+    input_ptr->cb_stride = config->input_padded_width >> subsampling_x;
 
     if (luma_8bit_size) {
         EB_APP_MALLOC(
@@ -242,21 +195,13 @@ EbErrorType allocate_output_recon_buffers(EbConfig *config, EbAppContext *callba
     // Initialize Header
     callback_data->recon_buffer->size = sizeof(EbBufferHeaderType);
 
-#if CLN_RTIME_MEM_ALLOC
     if (config->config.recon_enabled) {
         EB_APP_MALLOC(uint8_t *,
-            callback_data->recon_buffer->p_buffer,
-            frame_size,
-            EB_N_PTR,
-            EB_ErrorInsufficientResources);
+                      callback_data->recon_buffer->p_buffer,
+                      frame_size,
+                      EB_N_PTR,
+                      EB_ErrorInsufficientResources);
     }
-#else
-    EB_APP_MALLOC(uint8_t *,
-                  callback_data->recon_buffer->p_buffer,
-                  frame_size,
-                  EB_N_PTR,
-                  EB_ErrorInsufficientResources);
-#endif
 
     callback_data->recon_buffer->n_alloc_len   = (uint32_t)frame_size;
     callback_data->recon_buffer->p_app_private = NULL;
@@ -265,30 +210,9 @@ EbErrorType allocate_output_recon_buffers(EbConfig *config, EbAppContext *callba
 }
 
 EbErrorType preload_frames_info_ram(EbConfig *config) {
-    EbErrorType         return_error        = EB_ErrorNone;
-#if FTR_OPT_MPASS_DOWN_SAMPLE  && !CLN_ENC_CONFIG_SIG
-    int32_t             input_padded_width;
-    int32_t             input_padded_height;
-#if FTR_OP_TEST
-    if (1){
-#else
-#if FTR_OPT_IPP_DOWN_SAMPLE
-    if (config->config.rc_middlepass_ds_stats_out || config->config.ipp_ctrls.ipp_ds) {
-#else
-    if (config->config.rc_middlepass_ds_stats_out) {
-#endif
-#endif
-        input_padded_width = config->org_input_padded_width;
-        input_padded_height = config->org_input_padded_height;
-    }
-    else {
-        input_padded_width = config->input_padded_width;
-        input_padded_height = config->input_padded_height;
-    }
-#else
-    int32_t             input_padded_width = config->input_padded_width;
-    int32_t             input_padded_height = config->input_padded_height;
-#endif
+    EbErrorType return_error = EB_ErrorNone;
+    int32_t input_padded_width  = config->input_padded_width;
+    int32_t input_padded_height = config->input_padded_height;
     size_t              read_size;
     const EbColorFormat color_format =
         (EbColorFormat)config->config.encoder_color_format; // Chroma subsampling
@@ -340,7 +264,6 @@ EbErrorType preload_frames_info_ram(EbConfig *config) {
  * Initialize Core & Component
  ***********************************/
 EbErrorType init_encoder(EbConfig *config, EbAppContext *callback_data, uint32_t instance_idx) {
-
     // Allocate a memory table hosting all allocated pointers
     allocate_memory_table(instance_idx);
 
@@ -396,13 +319,8 @@ EbErrorType de_init_encoder(EbAppContext *callback_data_ptr, uint32_t instance_i
     EbMemoryMapEntry *memory_entry = (EbMemoryMapEntry *)0;
 
     // Loop through the ptr table and free all malloc'd pointers per channel
-#if FIX_INT_OVERLOW
     for (ptr_index = (int32_t)app_memory_map_index_all_channels[instance_index] - 1; ptr_index >= 0;
          --ptr_index) {
-#else
-    for (ptr_index = app_memory_map_index_all_channels[instance_index] - 1; ptr_index >= 0;
-         --ptr_index) {
-#endif
         memory_entry = &app_memory_map_all_channels[instance_index][ptr_index];
         switch (memory_entry->ptr_type) {
         case EB_N_PTR: free(memory_entry->ptr); break;

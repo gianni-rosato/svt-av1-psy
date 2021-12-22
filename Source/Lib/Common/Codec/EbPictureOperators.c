@@ -230,130 +230,19 @@ void svt_full_distortion_kernel_cbf_zero32_bits_c(int32_t *coeff, uint32_t coeff
     distortion_result[DIST_CALC_PREDICTION] = prediction_distortion;
 }
 
-#if CLN_SSE
-void  picture_full_distortion32_bits_single(
-    int32_t *coeff,
-    int32_t *recon_coeff,
-    uint32_t stride,
-    uint32_t bwidth, uint32_t bheight,
-    uint64_t* distortion, uint32_t count_non_zero_coeffs)
-{
-
+void picture_full_distortion32_bits_single(int32_t *coeff, int32_t *recon_coeff, uint32_t stride,
+                                           uint32_t bwidth, uint32_t bheight, uint64_t *distortion,
+                                           uint32_t count_non_zero_coeffs) {
     distortion[0] = 0;
     distortion[1] = 0;
 
     if (count_non_zero_coeffs) {
         svt_full_distortion_kernel32_bits(
-            coeff,
-            stride,
-            recon_coeff,
-            stride,
-            distortion,
-            bwidth,
-            bheight);
+            coeff, stride, recon_coeff, stride, distortion, bwidth, bheight);
+    } else {
+        svt_full_distortion_kernel_cbf_zero32_bits(coeff, stride, distortion, bwidth, bheight);
     }
-    else {
-        svt_full_distortion_kernel_cbf_zero32_bits(
-            coeff,
-            stride,
-            distortion,
-            bwidth,
-            bheight);
-    }
-
-
 }
-#else
-EbErrorType picture_full_distortion32_bits(
-    EbPictureBufferDesc *coeff, uint32_t coeff_luma_origin_index,
-    uint32_t coeff_chroma_origin_index, EbPictureBufferDesc *recon_coeff,
-    uint32_t recon_coeff_luma_origin_index, uint32_t recon_coeff_chroma_origin_index,
-    uint32_t bwidth, uint32_t bheight, uint32_t bwidth_uv, uint32_t bheight_uv,
-    uint64_t y_distortion[DIST_CALC_TOTAL], uint64_t cb_distortion[DIST_CALC_TOTAL],
-    uint64_t cr_distortion[DIST_CALC_TOTAL], uint32_t y_count_non_zero_coeffs,
-    uint32_t cb_count_non_zero_coeffs, uint32_t cr_count_non_zero_coeffs,
-    COMPONENT_TYPE component_type) {
-    EbErrorType return_error = EB_ErrorNone;
-
-    //TODO due to a change in full kernel distortion , ASM has to be updated to not accumulate the input distortion by the output
-
-    if (component_type == COMPONENT_LUMA || component_type == COMPONENT_ALL) {
-        y_distortion[0] = 0;
-        y_distortion[1] = 0;
-
-        bwidth  = bwidth < 64 ? bwidth : 32;
-        bheight = bheight < 64 ? bheight : 32;
-
-        if (y_count_non_zero_coeffs) {
-            svt_full_distortion_kernel32_bits(
-                &(((int32_t *)coeff->buffer_y)[coeff_luma_origin_index]),
-                bwidth,
-                &(((int32_t *)recon_coeff->buffer_y)[recon_coeff_luma_origin_index]),
-                bwidth,
-                y_distortion,
-                bwidth,
-                bheight);
-        } else {
-            svt_full_distortion_kernel_cbf_zero32_bits(
-                &(((int32_t *)coeff->buffer_y)[coeff_luma_origin_index]),
-                bwidth,
-                y_distortion,
-                bwidth,
-                bheight);
-        }
-    }
-
-    if (component_type == COMPONENT_CHROMA_CB || component_type == COMPONENT_CHROMA ||
-        component_type == COMPONENT_ALL) {
-        cb_distortion[0] = 0;
-        cb_distortion[1] = 0;
-
-        // CB
-        if (cb_count_non_zero_coeffs) {
-            svt_full_distortion_kernel32_bits(
-                &(((int32_t *)coeff->buffer_cb)[coeff_chroma_origin_index]),
-                bwidth_uv,
-                &(((int32_t *)recon_coeff->buffer_cb)[recon_coeff_chroma_origin_index]),
-                bwidth_uv,
-                cb_distortion,
-                bwidth_uv,
-                bheight_uv);
-        } else {
-            svt_full_distortion_kernel_cbf_zero32_bits(
-                &(((int32_t *)coeff->buffer_cb)[coeff_chroma_origin_index]),
-                bwidth_uv,
-                cb_distortion,
-                bwidth_uv,
-                bheight_uv);
-        }
-    }
-    if (component_type == COMPONENT_CHROMA_CR || component_type == COMPONENT_CHROMA ||
-        component_type == COMPONENT_ALL) {
-        cr_distortion[0] = 0;
-        cr_distortion[1] = 0;
-        // CR
-        if (cr_count_non_zero_coeffs) {
-            svt_full_distortion_kernel32_bits(
-                &(((int32_t *)coeff->buffer_cr)[coeff_chroma_origin_index]),
-                bwidth_uv,
-                &(((int32_t *)recon_coeff->buffer_cr)[recon_coeff_chroma_origin_index]),
-                bwidth_uv,
-                cr_distortion,
-                bwidth_uv,
-                bheight_uv);
-        } else {
-            svt_full_distortion_kernel_cbf_zero32_bits(
-                &(((int32_t *)coeff->buffer_cr)[coeff_chroma_origin_index]),
-                bwidth_uv,
-                cr_distortion,
-                bwidth_uv,
-                bheight_uv);
-        }
-    }
-
-    return return_error;
-}
-#endif
 void un_pack2d(uint16_t *in16_bit_buffer, uint32_t in_stride, uint8_t *out8_bit_buffer,
                uint32_t out8_stride, uint8_t *outn_bit_buffer, uint32_t outn_stride, uint32_t width,
                uint32_t height) {
@@ -405,61 +294,14 @@ void pack2d_src(uint8_t *in8_bit_buffer, uint32_t in8_stride, uint8_t *inn_bit_b
 void compressed_pack_sb(uint8_t *in8_bit_buffer, uint32_t in8_stride, uint8_t *inn_bit_buffer,
                         uint32_t inn_stride, uint16_t *out16_bit_buffer, uint32_t out_stride,
                         uint32_t width, uint32_t height) {
-#if SS_2B_COMPRESS
-#if OPTIMIZE_COMPRESS_PACK_SB
     svt_compressed_packmsb(in8_bit_buffer,
-            in8_stride,
-            inn_bit_buffer,
-            inn_stride,
-            out16_bit_buffer,
-            out_stride,
-            width,
-            height);
-#else
-    if (width == 64 || width == 32) {
-        svt_compressed_packmsb(in8_bit_buffer,
-            in8_stride,
-            inn_bit_buffer,
-            inn_stride,
-            out16_bit_buffer,
-            out_stride,
-            width,
-            height);
-    }
-    else {
-        svt_compressed_packmsb_c(in8_bit_buffer,
-            in8_stride,
-            inn_bit_buffer,
-            inn_stride,
-            out16_bit_buffer,
-            out_stride,
-            width,
-            height);
-    }
-#endif
-#else
-    if (width == 64 || width == 32) {
-        svt_compressed_packmsb(in8_bit_buffer,
-                               in8_stride,
-                               inn_bit_buffer,
-                               out16_bit_buffer,
-                               inn_stride,
-                               out_stride,
-                               width,
-                               height);
-    } else {
-
-        svt_compressed_packmsb_c(in8_bit_buffer,
-                                 in8_stride,
-                                 inn_bit_buffer,
-                                 out16_bit_buffer,
-                                 inn_stride,
-                                 out_stride,
-                                 width,
-                                 height);
-
-    }
-#endif
+                           in8_stride,
+                           inn_bit_buffer,
+                           inn_stride,
+                           out16_bit_buffer,
+                           out_stride,
+                           width,
+                           height);
 }
 // Copies the source image into the destination image and updates the
 // destination's UMV borders.

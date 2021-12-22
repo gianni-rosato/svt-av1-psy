@@ -50,7 +50,7 @@ EbErrorType svt_sequence_control_set_ctor(SequenceControlSet *scs_ptr, EbPtr obj
         object_init_data_ptr;
     uint32_t segment_index;
     scs_ptr->mvrate_set = 0;
-    scs_ptr->dctor = svt_sequence_control_set_dctor;
+    scs_ptr->dctor      = svt_sequence_control_set_dctor;
 
     scs_ptr->static_config.sb_sz           = 64;
     scs_ptr->static_config.partition_depth = 4;
@@ -98,14 +98,8 @@ EbErrorType svt_sequence_control_set_ctor(SequenceControlSet *scs_ptr, EbPtr obj
     // Quantization
     scs_ptr->static_config.qp = 20;
     // Initialize SB params
-#if FTR_16K
     //allocation will happen in ress-corrd
     scs_ptr->sb_params_array = 0;
-#else
-    EB_MALLOC_ARRAY(scs_ptr->sb_params_array,
-                    ((MAX_PICTURE_WIDTH_SIZE + scs_ptr->sb_sz - 1) / scs_ptr->sb_sz) *
-                        ((MAX_PICTURE_HEIGHT_SIZE + scs_ptr->sb_sz - 1) / scs_ptr->sb_sz));
-#endif
 
     scs_ptr->seq_header.frame_width_bits              = 16;
     scs_ptr->seq_header.frame_height_bits             = 16;
@@ -117,17 +111,11 @@ EbErrorType svt_sequence_control_set_ctor(SequenceControlSet *scs_ptr, EbPtr obj
     if (scs_init_data && scs_init_data->sb_size == 128) {
         scs_ptr->seq_header.sb_size = BLOCK_128X128;
         scs_ptr->sb_size_pix        = 128;
-#if !CLN_GEOM
-        scs_ptr->max_block_cnt      = 4421;
-#endif
         scs_ptr->seq_header.sb_mi_size   = 32; // Size of the superblock in units of MI blocks
         scs_ptr->seq_header.sb_size_log2 = 5;
     } else {
         scs_ptr->seq_header.sb_size = BLOCK_64X64;
         scs_ptr->sb_size_pix        = 64;
-#if !CLN_GEOM
-        scs_ptr->max_block_cnt      = 1101;
-#endif
 
         scs_ptr->seq_header.sb_mi_size   = 16; // Size of the superblock in units of MI blocks
         scs_ptr->seq_header.sb_size_log2 = 4;
@@ -152,18 +140,6 @@ EbErrorType svt_sequence_control_set_ctor(SequenceControlSet *scs_ptr, EbPtr obj
     // 2 - adaptive
 
     scs_ptr->seq_header.order_hint_info.enable_ref_frame_mvs = 1;
-#if NO_ENCDEC
-    if (scs_ptr->static_config.cdef_mode == DEFAULT)
-        scs_ptr->seq_header.enable_cdef = 0;
-    else
-        scs_ptr->seq_header.enable_cdef = (uint8_t)(scs_ptr->static_config.cdef_mode > 0);
-
-    if (scs_ptr->static_config.enable_restoration_filtering == DEFAULT)
-        scs_ptr->seq_header.enable_restoration = 0;
-    else
-        scs_ptr->seq_header.enable_restoration =
-            (uint8_t)scs_ptr->static_config.enable_restoration_filtering;
-#else
     if (scs_ptr->static_config.cdef_level == DEFAULT)
         scs_ptr->seq_header.cdef_level = 1;
     else
@@ -174,7 +150,6 @@ EbErrorType svt_sequence_control_set_ctor(SequenceControlSet *scs_ptr, EbPtr obj
     else
         scs_ptr->seq_header.enable_restoration =
             (uint8_t)scs_ptr->static_config.enable_restoration_filtering;
-#endif
 
     if (scs_ptr->static_config.enable_intra_edge_filter == DEFAULT)
         scs_ptr->seq_header.enable_intra_edge_filter = 1;
@@ -257,7 +232,7 @@ EbErrorType copy_sequence_control_set(SequenceControlSet *dst, SequenceControlSe
     dst->picture_control_set_pool_init_count       = src->picture_control_set_pool_init_count;
     dst->me_pool_init_count                        = src->me_pool_init_count;
     dst->picture_control_set_pool_init_count_child = src->picture_control_set_pool_init_count_child;
-    dst->enc_dec_pool_init_count                 = src->enc_dec_pool_init_count;
+    dst->enc_dec_pool_init_count                   = src->enc_dec_pool_init_count;
     dst->pa_reference_picture_buffer_init_count    = src->pa_reference_picture_buffer_init_count;
     dst->reference_picture_buffer_init_count       = src->reference_picture_buffer_init_count;
     dst->input_buffer_fifo_init_count              = src->input_buffer_fifo_init_count;
@@ -299,13 +274,8 @@ EbErrorType copy_sequence_control_set(SequenceControlSet *dst, SequenceControlSe
         dst->tile_group_row_count_array[i]      = src->tile_group_row_count_array[i];
     }
 
-#if OPT_1P
-     dst->fpass_segment_column_count = src->fpass_segment_column_count;
-     dst->fpass_segment_row_count = src->fpass_segment_row_count;
-#endif
-
-    dst->tpl_segment_col_count_array  = src->tpl_segment_col_count_array;
-    dst->tpl_segment_row_count_array  = src->tpl_segment_row_count_array;
+    dst->tpl_segment_col_count_array = src->tpl_segment_col_count_array;
+    dst->tpl_segment_row_count_array = src->tpl_segment_row_count_array;
 
     dst->cdef_segment_column_count = src->cdef_segment_column_count;
     dst->cdef_segment_row_count    = src->cdef_segment_row_count;
@@ -324,49 +294,25 @@ EbErrorType copy_sequence_control_set(SequenceControlSet *dst, SequenceControlSe
     dst->enable_dec_order               = src->enable_dec_order;
     dst->lap_enabled                    = src->lap_enabled;
 
-    dst->lad_mg                         = src->lad_mg;
-#if FTR_LAD_INPUT
-    dst->tpl_lad_mg                     = src->tpl_lad_mg;
-#endif
-    dst->use_boundaries_in_rest_search  = src->use_boundaries_in_rest_search;
-#if !CLN_MERGE_MRP_SIG
-    dst->mrp_init_level = src->mrp_init_level;
-#endif
-#if CLN_GEOM
-    dst->geom_idx = src->geom_idx;
+    dst->lad_mg = src->lad_mg;
+    dst->tpl_lad_mg = src->tpl_lad_mg;
+    dst->use_boundaries_in_rest_search = src->use_boundaries_in_rest_search;
+    dst->geom_idx      = src->geom_idx;
     dst->max_block_cnt = src->max_block_cnt;
-#endif
-#if !IPP_CTRL
-    dst->enc_mode_2ndpass = src->enc_mode_2ndpass;
-#endif
-#if FTR_OPT_MPASS
     dst->rc_stat_gen_pass_mode = src->rc_stat_gen_pass_mode;
-#endif
-#if FTR_NEW_QPS
     dst->cqp_base_q_tf = src->cqp_base_q_tf;
-    dst->cqp_base_q = src->cqp_base_q;
-#endif
-#if TUNE_VBR_OVERSHOOT
+    dst->cqp_base_q    = src->cqp_base_q;
     dst->is_short_clip = src->is_short_clip;
-#endif
-#if TUNE_MEM_SHUT
     dst->input_resolution = src->input_resolution;
-#endif
-#if CLN_TF_ENC_CONFIG //--
     dst->tf_params_per_type[0] = src->tf_params_per_type[0];
     dst->tf_params_per_type[1] = src->tf_params_per_type[1];
     dst->tf_params_per_type[2] = src->tf_params_per_type[2];
-#endif
-#if CLN_MRP_ENC_CONFIG
     dst->mrp_ctrls = src->mrp_ctrls;
-#endif
-#if CLN_ENC_CONFIG_SIG
-    dst->passes = src->passes;
-    dst->ipp_pass_ctrls = src->ipp_pass_ctrls;
-    dst->mid_pass_ctrls = src->mid_pass_ctrls;
-    dst->ipp_was_ds = src->ipp_was_ds;
+    dst->passes            = src->passes;
+    dst->ipp_pass_ctrls    = src->ipp_pass_ctrls;
+    dst->mid_pass_ctrls    = src->mid_pass_ctrls;
+    dst->ipp_was_ds        = src->ipp_was_ds;
     dst->final_pass_preset = src->final_pass_preset;
-#endif
     return EB_ErrorNone;
 }
 
@@ -419,17 +365,10 @@ extern EbErrorType sb_params_init(SequenceControlSet *scs_ptr) {
     uint16_t    sb_index;
     uint16_t    raster_scan_blk_index;
 
-#if FTR_16K
-    uint16_t picture_sb_width =
-        (scs_ptr->seq_header.max_frame_width + scs_ptr->sb_sz - 1) / scs_ptr->sb_sz;
-    uint16_t picture_sb_height =
-        (scs_ptr->seq_header.max_frame_height + scs_ptr->sb_sz - 1) / scs_ptr->sb_sz;
-#else
-    uint8_t     picture_sb_width = (uint8_t)(
-        (scs_ptr->seq_header.max_frame_width + scs_ptr->sb_sz - 1) / scs_ptr->sb_sz);
-    uint8_t picture_sb_height = (uint8_t)(
-        (scs_ptr->seq_header.max_frame_height + scs_ptr->sb_sz - 1) / scs_ptr->sb_sz);
-#endif
+    uint16_t picture_sb_width = (scs_ptr->seq_header.max_frame_width + scs_ptr->sb_sz - 1) /
+        scs_ptr->sb_sz;
+    uint16_t picture_sb_height = (scs_ptr->seq_header.max_frame_height + scs_ptr->sb_sz - 1) /
+        scs_ptr->sb_sz;
     //free old one;
     EB_FREE_ARRAY(scs_ptr->sb_params_array);
 
@@ -496,12 +435,10 @@ extern EbErrorType sb_params_init(SequenceControlSet *scs_ptr) {
     return return_error;
 }
 
-#if CLN_RTIME_MEM_ALLOC
-EbErrorType rtime_alloc_sb_geom(SequenceControlSet* scs_ptr, uint32_t size) {
+EbErrorType rtime_alloc_sb_geom(SequenceControlSet *scs_ptr, uint32_t size) {
     EB_MALLOC_ARRAY(scs_ptr->sb_geom, size);
     return EB_ErrorNone;
 }
-#endif
 EbErrorType sb_geom_init(SequenceControlSet *scs_ptr) {
     uint16_t sb_index;
     uint16_t md_scan_block_index;
@@ -511,11 +448,7 @@ EbErrorType sb_geom_init(SequenceControlSet *scs_ptr) {
         scs_ptr->sb_size_pix;
 
     EB_FREE_ARRAY(scs_ptr->sb_geom);
-#if CLN_RTIME_MEM_ALLOC
     rtime_alloc_sb_geom(scs_ptr, picture_sb_width * picture_sb_height);
-#else
-    EB_MALLOC_ARRAY(scs_ptr->sb_geom, picture_sb_width * picture_sb_height);
-#endif
 
     for (sb_index = 0; sb_index < picture_sb_width * picture_sb_height; ++sb_index) {
         scs_ptr->sb_geom[sb_index].horizontal_index = sb_index % picture_sb_width;

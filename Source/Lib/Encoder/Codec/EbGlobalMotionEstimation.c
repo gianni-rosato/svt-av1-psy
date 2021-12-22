@@ -32,26 +32,19 @@ void global_motion_estimation(PictureParentControlSet *pcs_ptr,
     EbPictureBufferDesc *quarter_picture_ptr;
     EbPictureBufferDesc *sixteenth_ref_pic_ptr;
     EbPictureBufferDesc *sixteenth_picture_ptr;
-    pa_reference_object          = (EbPaReferenceObject *)
+    pa_reference_object = (EbPaReferenceObject *)
                               pcs_ptr->pa_reference_picture_wrapper_ptr->object_ptr;
-    quarter_picture_ptr = (EbPictureBufferDesc *)pa_reference_object->quarter_downsampled_picture_ptr;
-    sixteenth_picture_ptr = (EbPictureBufferDesc *)pa_reference_object->sixteenth_downsampled_picture_ptr;
-#if CLN_ME_NUM_LISTS
-    uint32_t num_of_list_to_search = (pcs_ptr->slice_type == P_SLICE) ? 1 /*List 0 only*/ : 2 /*List 0 + 1*/;
-#else
-    uint32_t num_of_list_to_search = (pcs_ptr->slice_type == P_SLICE) ? (uint32_t)REF_LIST_0
-                                                                      : (uint32_t)REF_LIST_1;
-#endif
+    quarter_picture_ptr = (EbPictureBufferDesc *)
+                              pa_reference_object->quarter_downsampled_picture_ptr;
+    sixteenth_picture_ptr = (EbPictureBufferDesc *)
+                                pa_reference_object->sixteenth_downsampled_picture_ptr;
+    uint32_t num_of_list_to_search =
+        (pcs_ptr->slice_type == P_SLICE) ? 1 /*List 0 only*/ : 2 /*List 0 + 1*/;
     // Initilize global motion to be OFF for all references frames.
     memset(pcs_ptr->is_global_motion, EB_FALSE, MAX_NUM_OF_REF_PIC_LIST * REF_LIST_MAX_DEPTH);
     // Initilize wmtype to be IDENTITY for all references frames
-#if CLN_ME_NUM_LISTS
     // Ref List Loop
     for (uint32_t list_index = REF_LIST_0; list_index < num_of_list_to_search; ++list_index) {
-#else
-    // Ref List Loop
-    for (uint32_t list_index = REF_LIST_0; list_index <= num_of_list_to_search; ++list_index) {
-#endif
         uint32_t num_of_ref_pic_to_search = REF_LIST_MAX_DEPTH;
         // Ref Picture Loop
         for (uint32_t ref_pic_index = 0; ref_pic_index < num_of_ref_pic_to_search;
@@ -60,9 +53,9 @@ void global_motion_estimation(PictureParentControlSet *pcs_ptr,
         }
     }
     // Derive total_me_sad
-    uint32_t total_me_sad = 0;
+    uint32_t total_me_sad        = 0;
     uint32_t total_stationary_sb = 0;
-    uint32_t total_gm_sbs = 0;
+    uint32_t total_gm_sbs        = 0;
     for (uint16_t sb_index = 0; sb_index < pcs_ptr->sb_total_count; ++sb_index) {
         total_me_sad += pcs_ptr->rc_me_distortion[sb_index];
         total_stationary_sb += pcs_ptr->stationary_block_present_sb[sb_index];
@@ -85,17 +78,15 @@ void global_motion_estimation(PictureParentControlSet *pcs_ptr,
     else
         global_motion_estimation_level = 3;
     if (pcs_ptr->gm_ctrls.bypass_based_on_me) {
-
         if ((total_gm_sbs < (uint32_t)(pcs_ptr->sb_total_count >> 1)) ||
-           (pcs_ptr->gm_ctrls.use_stationary_block && (total_stationary_sb > (uint32_t)((pcs_ptr->sb_total_count * 5)/100)))) // if more than 5% of SB(s) have stationary block(s) then shut gm
+            (pcs_ptr->gm_ctrls.use_stationary_block &&
+             (total_stationary_sb >
+              (uint32_t)((pcs_ptr->sb_total_count * 5) /
+                         100)))) // if more than 5% of SB(s) have stationary block(s) then shut gm
             global_motion_estimation_level = 0;
     }
     if (global_motion_estimation_level)
-#if CLN_ME_NUM_LISTS
         for (uint32_t list_index = REF_LIST_0; list_index < num_of_list_to_search; ++list_index) {
-#else
-        for (uint32_t list_index = REF_LIST_0; list_index <= num_of_list_to_search; ++list_index) {
-#endif
             uint32_t num_of_ref_pic_to_search;
             num_of_ref_pic_to_search = pcs_ptr->slice_type == P_SLICE ? pcs_ptr->ref_list0_count_try
                 : list_index == REF_LIST_0                            ? pcs_ptr->ref_list0_count_try
@@ -115,23 +106,16 @@ void global_motion_estimation(PictureParentControlSet *pcs_ptr,
 
                 // Set the source and the reference picture to be used by the global motion search
                 // based on the input search mode
-#if CLN_ME_SIGS
                 if (pcs_ptr->gm_ctrls.downsample_level == GM_DOWN16) {
-#else
-                if (pcs_ptr->gm_level == GM_DOWN16) {
-#endif
-                    sixteenth_ref_pic_ptr = (EbPictureBufferDesc *)reference_object->sixteenth_downsampled_picture_ptr;
-                    ref_picture_ptr       = sixteenth_ref_pic_ptr;
-                    input_picture_ptr     = sixteenth_picture_ptr;
-#if CLN_ME_SIGS
-                }
-                else if (pcs_ptr->gm_ctrls.downsample_level == GM_DOWN) {
-#else
-                } else if (pcs_ptr->gm_level == GM_DOWN) {
-#endif
-                    quarter_ref_pic_ptr = (EbPictureBufferDesc *)reference_object->quarter_downsampled_picture_ptr;
-                    ref_picture_ptr     = quarter_ref_pic_ptr;
-                    input_picture_ptr   = quarter_picture_ptr;
+                    sixteenth_ref_pic_ptr = (EbPictureBufferDesc *)
+                                                reference_object->sixteenth_downsampled_picture_ptr;
+                    ref_picture_ptr   = sixteenth_ref_pic_ptr;
+                    input_picture_ptr = sixteenth_picture_ptr;
+                } else if (pcs_ptr->gm_ctrls.downsample_level == GM_DOWN) {
+                    quarter_ref_pic_ptr = (EbPictureBufferDesc *)
+                                              reference_object->quarter_downsampled_picture_ptr;
+                    ref_picture_ptr   = quarter_ref_pic_ptr;
+                    input_picture_ptr = quarter_picture_ptr;
                 } else {
                     ref_picture_ptr = (EbPictureBufferDesc *)
                                           reference_object->input_padded_picture_ptr;
@@ -152,11 +136,7 @@ void global_motion_estimation(PictureParentControlSet *pcs_ptr,
                 }
             }
         }
-#if CLN_ME_NUM_LISTS
     for (uint32_t list_index = REF_LIST_0; list_index < num_of_list_to_search; ++list_index) {
-#else
-    for (uint32_t list_index = REF_LIST_0; list_index <= num_of_list_to_search; ++list_index) {
-#endif
         uint32_t num_of_ref_pic_to_search = pcs_ptr->slice_type == P_SLICE
             ? pcs_ptr->ref_list0_count
             : list_index == REF_LIST_0 ? pcs_ptr->ref_list0_count
@@ -193,10 +173,8 @@ void compute_global_motion(PictureParentControlSet *pcs_ptr, EbPictureBufferDesc
     unsigned char *ref_buffer = ref_pic->buffer_y + ref_pic->origin_x +
         ref_pic->origin_y * ref_pic->stride_y;
 
-#if FTR_MEM_OPT_WM
     unsigned char *ref_buffer_2b = ref_pic->buffer_bit_inc_y + ref_pic->origin_x +
         ref_pic->origin_y * ref_pic->stride_bit_inc_y;
-#endif
     EbWarpedMotionParams global_motion = default_warp_params;
 
     // TODO: check ref_params
@@ -256,9 +234,7 @@ void compute_global_motion(PictureParentControlSet *pcs_ptr, EbPictureBufferDesc
                         EB_FALSE,
                         EB_8BIT,
                         ref_buffer,
-#if FTR_MEM_OPT_WM
                         ref_buffer_2b,
-#endif
                         ref_pic->width,
                         ref_pic->height,
                         ref_pic->stride_y,
@@ -266,11 +242,7 @@ void compute_global_motion(PictureParentControlSet *pcs_ptr, EbPictureBufferDesc
                         input_pic->width,
                         input_pic->height,
                         input_pic->stride_y,
-#if FTR_LIMIT_GM_REFINEMENT
                         pcs_ptr->gm_ctrls.params_refinement_steps,
-#else
-                        5,
-#endif
                         best_warp_error);
                     if (warp_error < best_warp_error) {
                         best_warp_error = warp_error;

@@ -110,11 +110,8 @@ static int64_t highbd_frame_error(const uint16_t *const ref, int stride, const u
     return sum_error;
 }
 
-#if FTR_MEM_OPT_WM
-static int64_t highbd_warp_error(EbWarpedMotionParams *wm, const uint8_t *const ref8,const uint8_t *const ref_2b, int width,
-#else
-static int64_t highbd_warp_error(EbWarpedMotionParams *wm, const uint8_t *const ref8, int width,
-#endif
+static int64_t highbd_warp_error(EbWarpedMotionParams *wm, const uint8_t *const ref8,
+                                 const uint8_t *const ref_2b, int width,
                                  int height, int stride, const uint8_t *const dst8, int p_col,
                                  int p_row, int p_width, int p_height, int p_stride,
                                  int subsampling_x, int subsampling_y, int bd, int64_t best_error) {
@@ -133,9 +130,7 @@ static int64_t highbd_warp_error(EbWarpedMotionParams *wm, const uint8_t *const 
             const int warp_h = AOMMIN(error_bsize_h, p_row + p_height - i);
             svt_highbd_warp_plane(wm,
                                   ref8,
-#if FTR_MEM_OPT_WM
                                   ref_2b,
-#endif
                                   width,
                                   height,
                                   stride,
@@ -231,11 +226,8 @@ int64_t svt_av1_frame_error(int use_hbd, int bd, const uint8_t *ref, int stride,
     return svt_av1_calc_frame_error(ref, stride, dst, p_width, p_height, p_stride);
 }
 
-#if FTR_MEM_OPT_WM
-int64_t svt_av1_warp_error(EbWarpedMotionParams *wm, int use_hbd, int bd, const uint8_t *ref, const uint8_t *ref_2b,
-#else
 int64_t svt_av1_warp_error(EbWarpedMotionParams *wm, int use_hbd, int bd, const uint8_t *ref,
-#endif
+                           const uint8_t *ref_2b,
                            int width, int height, int stride, uint8_t *dst, int p_col, int p_row,
                            int p_width, int p_height, int p_stride, int subsampling_x,
                            int subsampling_y, int64_t best_error) {
@@ -245,9 +237,7 @@ int64_t svt_av1_warp_error(EbWarpedMotionParams *wm, int use_hbd, int bd, const 
     if (use_hbd)
         return highbd_warp_error(wm,
                                  ref,
-#if FTR_MEM_OPT_WM
                                  ref_2b,
-#endif
                                  width,
                                  height,
                                  stride,

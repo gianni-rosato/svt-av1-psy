@@ -22,35 +22,31 @@
 #include "common_dsp_rtcd.h"
 #include "EbLog.h"
 #include "EbPictureDecisionProcess.h"
-#if FTR_1PAS_VBR
 #include "firstpass.h"
-#endif
 /**************************************
  * Context
  **************************************/
 typedef struct LadQueueEntry {
-    EbDctor dctor;
+    EbDctor                  dctor;
     PictureParentControlSet *pcs;
 } LadQueueEntry;
 
 typedef struct LadQueue {
-    LadQueueEntry **cir_buf;  //circular buffer holding the entries
-    uint32_t          head;
-    uint32_t          tail;
+    LadQueueEntry **cir_buf; //circular buffer holding the entries
+    uint32_t        head;
+    uint32_t        tail;
 } LadQueue;
 
 /* look ahead queue constructor*/
 EbErrorType lad_queue_entry_ctor(LadQueueEntry *entry_ptr) {
-
     entry_ptr->pcs = NULL;
     return EB_ErrorNone;
 }
 
-
 typedef struct InitialRateControlContext {
-    EbFifo *motion_estimation_results_input_fifo_ptr;
-    EbFifo *initialrate_control_results_output_fifo_ptr;
-    LadQueue         *lad_queue;
+    EbFifo *  motion_estimation_results_input_fifo_ptr;
+    EbFifo *  initialrate_control_results_output_fifo_ptr;
+    LadQueue *lad_queue;
 
 } InitialRateControlContext;
 
@@ -93,35 +89,18 @@ EbErrorType initial_rate_control_context_ctor(EbThreadContext *  thread_context_
 
     return EB_ErrorNone;
 }
-#if !CLN_NON_MOVING_CNT
-/****************************************
-* Init ZZ Cost array to default values
-** Used when no Lookahead is available
-****************************************/
-void init_zz_cost_info(PictureParentControlSet *pcs_ptr) {
-    uint16_t sb_idx;
-    pcs_ptr->non_moving_index_average = INVALID_ZZ_COST;
-    // SB Loop
-    for (sb_idx = 0; sb_idx < pcs_ptr->sb_total_count; ++sb_idx)
-        pcs_ptr->non_moving_index_array[sb_idx] = INVALID_ZZ_COST;
-    return;
-}
-#endif
 
 void svt_av1_build_quantizer(AomBitDepth bit_depth, int32_t y_dc_delta_q, int32_t u_dc_delta_q,
                              int32_t u_ac_delta_q, int32_t v_dc_delta_q, int32_t v_ac_delta_q,
                              Quants *const quants, Dequants *const deq);
 
-
-
 /*
  get size  of the  lad queue
 */
-uint32_t  get_lad_q_size(InitialRateControlContext *ctx)
-{
-    uint32_t size = 0;
-    uint32_t idx = ctx->lad_queue->head;
-    LadQueueEntry   *queue_entry = ctx->lad_queue->cir_buf[idx];
+uint32_t get_lad_q_size(InitialRateControlContext *ctx) {
+    uint32_t       size        = 0;
+    uint32_t       idx         = ctx->lad_queue->head;
+    LadQueueEntry *queue_entry = ctx->lad_queue->cir_buf[idx];
     while (queue_entry->pcs != NULL) {
         queue_entry = ctx->lad_queue->cir_buf[++idx];
         size++;
@@ -153,36 +132,33 @@ void print_lad_queue(InitialRateControlContext *ctx, uint8_t log)
 /*
  store pictures in the lad queue
 */
-void push_to_lad_queue(
-    PictureParentControlSet *pcs,
-    InitialRateControlContext *ctx)
-{
-    LadQueue *queue = ctx->lad_queue;
-    uint32_t entry_idx = pcs->decode_order % REFERENCE_QUEUE_MAX_DEPTH;
-    LadQueueEntry   *queue_entry  = queue->cir_buf[entry_idx];
+void push_to_lad_queue(PictureParentControlSet *pcs, InitialRateControlContext *ctx) {
+    LadQueue *     queue       = ctx->lad_queue;
+    uint32_t       entry_idx   = pcs->decode_order % REFERENCE_QUEUE_MAX_DEPTH;
+    LadQueueEntry *queue_entry = queue->cir_buf[entry_idx];
     assert_err(queue_entry->pcs == NULL, "lad queue overflow");
     if (queue_entry->pcs == NULL)
-       queue_entry->pcs = pcs;
+        queue_entry->pcs = pcs;
     else
         SVT_ERROR("\n lad queue overflow \n");
-
 }
 
 /* send picture out from irc process */
-void irc_send_picture_out(InitialRateControlContext *ctx, PictureParentControlSet *pcs, EbBool superres_recode)
-{
+void irc_send_picture_out(InitialRateControlContext *ctx, PictureParentControlSet *pcs,
+                          EbBool superres_recode) {
     EbObjectWrapper *out_results_wrapper_ptr;
     // Get Empty Results Object
     svt_get_empty_object(ctx->initialrate_control_results_output_fifo_ptr,
-           &out_results_wrapper_ptr);
-    InitialRateControlResults *out_results_ptr =
-          (InitialRateControlResults *)out_results_wrapper_ptr->object_ptr;
+                         &out_results_wrapper_ptr);
+    InitialRateControlResults *out_results_ptr = (InitialRateControlResults *)
+                                                     out_results_wrapper_ptr->object_ptr;
     //SVT_LOG("iRC Out:%lld\n",pcs->picture_number);
     out_results_ptr->pcs_wrapper_ptr = pcs->p_pcs_wrapper_ptr;
     out_results_ptr->superres_recode = superres_recode;
     svt_post_full_object(out_results_wrapper_ptr);
 }
-uint8_t is_frame_already_exists(PictureParentControlSet *pcs, uint32_t end_index, uint64_t pic_num) {
+uint8_t is_frame_already_exists(PictureParentControlSet *pcs, uint32_t end_index,
+                                uint64_t pic_num) {
     for (uint32_t i = 0; i < end_index; i++)
         if (pcs->tpl_group[i]->picture_number == pic_num)
             return 1;
@@ -190,41 +166,33 @@ uint8_t is_frame_already_exists(PictureParentControlSet *pcs, uint32_t end_index
 }
 
 /* decide to inject a frame into the tpl group*/
-uint8_t  inj_to_tpl_group( PictureParentControlSet* pcs)
-{
+uint8_t inj_to_tpl_group(PictureParentControlSet *pcs) {
     uint8_t inj = 0;
     if (pcs->hierarchical_levels != 4) {
         if (pcs->temporal_layer_index < pcs->hierarchical_levels)
             inj = 1;
         else
             inj = 0;
-    }
-    else {
-#if CLN_MERGE_MRP_SIG
-#if CLN_MRP_ENC_CONFIG
+    } else {
         if (pcs->scs_ptr->mrp_ctrls.referencing_scheme == 1) {
-#else
-        if (pcs->scs_ptr->static_config.mrp_ctrls.referencing_scheme == 1) {
-#endif
-#else
-        if (pcs->scs_ptr->mrp_init_level == 1) {
-#endif
             if (pcs->temporal_layer_index < 4)
                 inj = 1;
-            else if (pcs->is_used_as_reference_flag && (pcs->pic_index == 6 || pcs->pic_index == 10))//TODO: could be removed once TPL r0 adapts dyncamically  to TPL group size
+            else if (
+                pcs->is_used_as_reference_flag &&
+                (pcs->pic_index == 6 ||
+                 pcs->pic_index ==
+                     10)) //TODO: could be removed once TPL r0 adapts dyncamically  to TPL group size
                 inj = 1;
             else
                 inj = 0;
 
-        }
-        else {
+        } else {
             if (pcs->temporal_layer_index < 4)
                 inj = 1;
             else if (pcs->is_used_as_reference_flag && (pcs->pic_index == 0 || pcs->pic_index == 8))
                 inj = 1;
             else
                 inj = 0;
-
         }
     }
 
@@ -233,22 +201,16 @@ uint8_t  inj_to_tpl_group( PictureParentControlSet* pcs)
 /*
  copy the number of pcs entries from the the output queue to extended  buffer
 */
-void store_extended_group(
-    PictureParentControlSet    *pcs,
-    InitialRateControlContext  *ctx,
-    uint32_t                    start_idx,
-    int64_t                     end_mg)
-{
-    LadQueue* queue = ctx->lad_queue;
-    uint32_t pic_i = 0;
-    uint32_t q_idx = start_idx;
-    LadQueueEntry  *entry = queue->cir_buf[q_idx];
+void store_extended_group(PictureParentControlSet *pcs, InitialRateControlContext *ctx,
+                          uint32_t start_idx, int64_t end_mg) {
+    LadQueue *     queue = ctx->lad_queue;
+    uint32_t       pic_i = 0;
+    uint32_t       q_idx = start_idx;
+    LadQueueEntry *entry = queue->cir_buf[q_idx];
 
     while (entry->pcs != NULL) {
-
         if (entry->pcs->ext_mg_id <= end_mg) {
-
-            assert_err(pic_i < MAX_TPL_EXT_GROUP_SIZE,"exceeding size of ext group");
+            assert_err(pic_i < MAX_TPL_EXT_GROUP_SIZE, "exceeding size of ext group");
             pcs->ext_group[pic_i++] = queue->cir_buf[q_idx]->pcs;
         }
 
@@ -273,74 +235,38 @@ void store_extended_group(
     }
 #endif
 
-#if 0 //force test
-    if (pcs->tpl_group_size != pcs->ext_group_size)
-        printf("asfafs");
-    for (uint32_t i = 0; i < pcs->ext_group_size; i++)
-        if (pcs->tpl_group[i] != pcs->ext_group[i])
-            printf("asfafs");
-
-
-    pcs->tpl_group_size = pcs->ext_group_size;
-
-    for (uint32_t i = 0; i < pcs->ext_group_size; i++)
-        pcs->tpl_group[i] = pcs->ext_group[i];
-#endif
-
 
     //new tpl group needs to stop at the second I
     pcs->ntpl_group_size = 0;
-    uint8_t is_gop_end = 0;
+    uint8_t is_gop_end   = 0;
     int64_t last_intra_mg_id;
-#if FTR_1PAS_VBR
-#if FTR_LAD_INPUT
-#if FIX_DATA_RACE_2PASS
     uint32_t mg_size;
     if (pcs->scs_ptr->static_config.enable_adaptive_mini_gop == 0) {
         mg_size = 1 << pcs->scs_ptr->static_config.hierarchical_levels;
-    }
-    else {
-#if FIX_DG
+    } else {
         mg_size = 1 << pcs->scs_ptr->static_config.max_heirachical_level;
-#else
-        mg_size = 1 << pcs->hierarchical_levels;
-#endif
     }
-#else
-    uint32_t mg_size                = 1 << pcs->scs_ptr->static_config.hierarchical_levels;
-#endif
     uint32_t limited_tpl_group_size = pcs->slice_type == I_SLICE
         ? MIN(1 + (pcs->scs_ptr->tpl_lad_mg + 1) * mg_size, pcs->ext_group_size)
         : MIN((pcs->scs_ptr->tpl_lad_mg + 1) * mg_size, pcs->ext_group_size);
-#else
-    uint32_t limited_tpl_group_size = pcs->slice_type == I_SLICE ? MIN(33, pcs->ext_group_size) : MIN(32, pcs->ext_group_size);
-#endif
     for (uint32_t i = 0; i < limited_tpl_group_size; i++) {
-#else
-    for (uint32_t i = 0; i < pcs->ext_group_size; i++) {
-#endif
         PictureParentControlSet *cur_pcs = pcs->ext_group[i];
         if (cur_pcs->slice_type == I_SLICE) {
             if (is_delayed_intra(cur_pcs)) {
                 if (i == 0) {
                     pcs->ntpl_group[pcs->ntpl_group_size++] = cur_pcs;
-                }
-                else
+                } else
                     break;
-            }
-            else {
+            } else {
                 if (i == 0) {
                     pcs->ntpl_group[pcs->ntpl_group_size++] = cur_pcs;
-                }
-                else{
+                } else {
                     pcs->ntpl_group[pcs->ntpl_group_size++] = cur_pcs;
-                    last_intra_mg_id = cur_pcs->ext_mg_id;
-                    is_gop_end = 1;
+                    last_intra_mg_id                        = cur_pcs->ext_mg_id;
+                    is_gop_end                              = 1;
                 }
             }
-        }
-        else {
-
+        } else {
             if (is_gop_end == 0)
                 pcs->ntpl_group[pcs->ntpl_group_size++] = cur_pcs;
             else if (cur_pcs->ext_mg_id == last_intra_mg_id)
@@ -349,14 +275,10 @@ void store_extended_group(
                 break;
         }
     }
-#if !OPT_COMBINE_TPL_FOR_LAD
-    SequenceControlSet *scs_ptr = (SequenceControlSet *)pcs->scs_wrapper_ptr->object_ptr;
-    if (scs_ptr->lad_mg)
-#endif
     {
         pcs->tpl_group_size = pcs->ntpl_group_size;
         memset(pcs->tpl_valid_pic, 0, MAX_TPL_EXT_GROUP_SIZE * sizeof(uint8_t));
-        pcs->tpl_valid_pic[0] = 1;
+        pcs->tpl_valid_pic[0]   = 1;
         pcs->used_tpl_frame_num = 0;
         for (uint32_t i = 0; i < pcs->ntpl_group_size; i++) {
             pcs->tpl_group[i] = pcs->ntpl_group[i];
@@ -367,26 +289,18 @@ void store_extended_group(
                 if (inject_frame) {
                     if (pcs->slice_type != I_SLICE) {
                         // Discard low important pictures from tpl group
-#if OPT5_TPL_REDUCE_PIC
-                        if (pcs->tpl_ctrls.tpl_opt_flag && (pcs->tpl_ctrls.reduced_tpl_group >= 0)) {
-#else
-                        if (pcs->tpl_ctrls.tpl_opt_flag && pcs->tpl_ctrls.reduced_tpl_group) {
-#endif
-#if !TPL_CLEANUP
-                            if (pcs->tpl_group[i]->temporal_layer_index <= pcs->tpl_ctrls.reduced_tpl_group + (pcs->hierarchical_levels == 5 ? 1 : 0)) {
-#else
-                            if (pcs->tpl_group[i]->temporal_layer_index <= pcs->tpl_ctrls.reduced_tpl_group) {
-#endif
+                        if (pcs->tpl_ctrls.tpl_opt_flag &&
+                            (pcs->tpl_ctrls.reduced_tpl_group >= 0)) {
+                            if (pcs->tpl_group[i]->temporal_layer_index <=
+                                pcs->tpl_ctrls.reduced_tpl_group) {
                                 pcs->tpl_valid_pic[i] = 1;
                                 pcs->used_tpl_frame_num++;
                             }
-                        }
-                        else {
+                        } else {
                             pcs->tpl_valid_pic[i] = 1;
                             pcs->used_tpl_frame_num++;
                         }
-                    }
-                    else {
+                    } else {
                         pcs->tpl_valid_pic[i] = 1;
                         pcs->used_tpl_frame_num++;
                     }
@@ -414,125 +328,118 @@ void store_extended_group(
  pictures are stored in dec order.
  only base pictures are hold. the rest including LDP ones are pass-thru
 */
-void process_lad_queue(
-    InitialRateControlContext *ctx, uint8_t pass_thru)
-{
-    LadQueue *queue = ctx->lad_queue;
-    LadQueueEntry  *head_entry = queue->cir_buf[queue->head];
+void process_lad_queue(InitialRateControlContext *ctx, uint8_t pass_thru) {
+    LadQueue *     queue      = ctx->lad_queue;
+    LadQueueEntry *head_entry = queue->cir_buf[queue->head];
 
     while (head_entry->pcs != NULL) {
-
         PictureParentControlSet *head_pcs = head_entry->pcs;
-
 
         uint8_t send_out;
         if (!pass_thru) {
             if (head_pcs->temporal_layer_index == 0) {
-
                 //delayed Intra can use the whole window relative to the next Base
-                uint8_t target_mgs = is_delayed_intra(head_pcs) ? head_pcs->scs_ptr->lad_mg + 1 : head_pcs->scs_ptr->lad_mg;
-                target_mgs++;//add one for the MG including the head
+                uint8_t target_mgs = is_delayed_intra(head_pcs) ? head_pcs->scs_ptr->lad_mg + 1
+                                                                : head_pcs->scs_ptr->lad_mg;
+                target_mgs++; //add one for the MG including the head
                 {
-
-                    uint8_t num_mgs = 0;//number of MGs accumulated so far in the queue including the MG where the head belongs
+                    uint8_t num_mgs =
+                        0; //number of MGs accumulated so far in the queue including the MG where the head belongs
                     int64_t cur_mg = head_pcs->ext_mg_id;
 
-                    uint32_t  tmp_idx = queue->head;
-                    LadQueueEntry  *tmp_entry = queue->cir_buf[tmp_idx];
-                    uint32_t tot_acc_frames_in_cur_mg = 0;
-                    send_out = 0;
+                    uint32_t       tmp_idx                  = queue->head;
+                    LadQueueEntry *tmp_entry                = queue->cir_buf[tmp_idx];
+                    uint32_t       tot_acc_frames_in_cur_mg = 0;
+                    send_out                                = 0;
                     while (tmp_entry->pcs != NULL) {
                         PictureParentControlSet *tmp_pcs = tmp_entry->pcs;
 
                         assert_err(tmp_pcs->ext_mg_id >= head_pcs->ext_mg_id, "err in mg id");
                         //adjust the lad if we hit an EOS
                         if (tmp_pcs->end_of_sequence_flag)
-                            target_mgs = MIN(target_mgs, (uint8_t)(tmp_pcs->ext_mg_id - head_pcs->ext_mg_id + 1));//+1: to include the MG where the head belongs
-#if FTR_1PAS_VBR
+                            target_mgs = MIN(
+                                target_mgs,
+                                (uint8_t)(tmp_pcs->ext_mg_id - head_pcs->ext_mg_id +
+                                          1)); //+1: to include the MG where the head belongs
                         if (tmp_pcs->end_of_sequence_flag)
                             head_pcs->end_of_sequence_region = EB_TRUE;
-#endif
                         if (tmp_pcs->ext_mg_id >= cur_mg) {
-
                             if (tmp_pcs->ext_mg_id > cur_mg)
-                               assert_err(tmp_pcs->ext_mg_id == cur_mg+1, "err continuity in mg id");
+                                assert_err(tmp_pcs->ext_mg_id == cur_mg + 1,
+                                           "err continuity in mg id");
 
                             tot_acc_frames_in_cur_mg++;
 
                             if (tot_acc_frames_in_cur_mg == tmp_pcs->ext_mg_size) {
                                 num_mgs++;
-                                cur_mg = tmp_pcs->ext_mg_id;
+                                cur_mg                   = tmp_pcs->ext_mg_id;
                                 tot_acc_frames_in_cur_mg = 0;
                             }
 
                             if (num_mgs == target_mgs) {
-                                store_extended_group(head_pcs, ctx, queue->head, tmp_pcs->ext_mg_id);
+                                store_extended_group(
+                                    head_pcs, ctx, queue->head, tmp_pcs->ext_mg_id);
                                 send_out = 1;
                                 break;
                             }
                         }
 
-                        tmp_idx = OUT_Q_ADVANCE(tmp_idx);
+                        tmp_idx   = OUT_Q_ADVANCE(tmp_idx);
                         tmp_entry = queue->cir_buf[tmp_idx];
                     }
                 }
 
-            }
-            else {
+            } else {
                 send_out = 1;
             }
-        }
-        else {
+        } else {
             send_out = 1;
         }
 
         if (send_out) {
-#if FTR_1PAS_VBR
-#if CLN_ENC_CONFIG_SIG
-            if(head_pcs->scs_ptr->static_config.pass == ENC_MIDDLE_PASS || head_pcs->scs_ptr->static_config.pass == ENC_LAST_PASS || head_pcs->scs_ptr->lap_enabled) {
-#else
-            if (head_pcs->scs_ptr->lap_enabled || use_input_stat(head_pcs->scs_ptr)) {
-#endif
+            if (head_pcs->scs_ptr->static_config.pass == ENC_MIDDLE_PASS ||
+                head_pcs->scs_ptr->static_config.pass == ENC_LAST_PASS ||
+                head_pcs->scs_ptr->lap_enabled) {
                 head_pcs->stats_in_offset = head_pcs->decode_order;
-#if CLN_ENC_CONFIG_SIG
-                head_pcs->stats_in_end_offset = head_pcs->ext_group_size && !(head_pcs->scs_ptr->static_config.pass == ENC_MIDDLE_PASS || head_pcs->scs_ptr->static_config.pass == ENC_LAST_PASS) ?
-#else
-                head_pcs->stats_in_end_offset = head_pcs->ext_group_size && !use_input_stat(head_pcs->scs_ptr) ?
-#endif
-                    MIN((uint64_t)(head_pcs->scs_ptr->twopass.stats_buf_ctx->stats_in_end_write - head_pcs->scs_ptr->twopass.stats_buf_ctx->stats_in_start),
-                      head_pcs->stats_in_offset + (uint64_t)head_pcs->ext_group_size + 1) :
-                    (uint64_t)(head_pcs->scs_ptr->twopass.stats_buf_ctx->stats_in_end_write - head_pcs->scs_ptr->twopass.stats_buf_ctx->stats_in_start);
-                head_pcs->frames_in_sw = (int)(head_pcs->stats_in_end_offset - head_pcs->stats_in_offset);
-#if FIX_VBR_R2R
-                if (head_pcs->scs_ptr->enable_dec_order == 0 && head_pcs->scs_ptr->lap_enabled && head_pcs->temporal_layer_index == 0) {
-#else
-                if (head_pcs->scs_ptr->lap_enabled && head_pcs->temporal_layer_index == 0) {
-#endif
-                    for (uint64_t num_frames = head_pcs->stats_in_offset; num_frames < head_pcs->stats_in_end_offset; ++num_frames) {
+                head_pcs->stats_in_end_offset = head_pcs->ext_group_size &&
+                        !(head_pcs->scs_ptr->static_config.pass == ENC_MIDDLE_PASS ||
+                          head_pcs->scs_ptr->static_config.pass == ENC_LAST_PASS)
+                    ?
+                    MIN((uint64_t)(head_pcs->scs_ptr->twopass.stats_buf_ctx->stats_in_end_write -
+                                   head_pcs->scs_ptr->twopass.stats_buf_ctx->stats_in_start),
+                        head_pcs->stats_in_offset + (uint64_t)head_pcs->ext_group_size + 1)
+                    : (uint64_t)(head_pcs->scs_ptr->twopass.stats_buf_ctx->stats_in_end_write -
+                                 head_pcs->scs_ptr->twopass.stats_buf_ctx->stats_in_start);
+                head_pcs->frames_in_sw = (int)(head_pcs->stats_in_end_offset -
+                                               head_pcs->stats_in_offset);
+                if (head_pcs->scs_ptr->enable_dec_order == 0 && head_pcs->scs_ptr->lap_enabled &&
+                    head_pcs->temporal_layer_index == 0) {
+                    for (uint64_t num_frames = head_pcs->stats_in_offset;
+                         num_frames < head_pcs->stats_in_end_offset;
+                         ++num_frames) {
                         FIRSTPASS_STATS *cur_frame =
                             head_pcs->scs_ptr->twopass.stats_buf_ctx->stats_in_start + num_frames;
-                        if ((int64_t)cur_frame->frame > head_pcs->scs_ptr->twopass.stats_buf_ctx->last_frame_accumulated) {
-                            svt_av1_accumulate_stats(head_pcs->scs_ptr->twopass.stats_buf_ctx->total_stats, cur_frame);
-                            head_pcs->scs_ptr->twopass.stats_buf_ctx->last_frame_accumulated = (int64_t)cur_frame->frame;
+                        if ((int64_t)cur_frame->frame >
+                            head_pcs->scs_ptr->twopass.stats_buf_ctx->last_frame_accumulated) {
+                            svt_av1_accumulate_stats(
+                                head_pcs->scs_ptr->twopass.stats_buf_ctx->total_stats, cur_frame);
+                            head_pcs->scs_ptr->twopass.stats_buf_ctx->last_frame_accumulated =
+                                (int64_t)cur_frame->frame;
                         }
                     }
                 }
             }
-#endif
             //take the picture out from iRc process
             irc_send_picture_out(ctx, head_pcs, EB_FALSE);
             //advance the head
             head_entry->pcs = NULL;
-            queue->head = OUT_Q_ADVANCE(queue->head);
-            head_entry = queue->cir_buf[queue->head];
-        }
-        else {
+            queue->head     = OUT_Q_ADVANCE(queue->head);
+            head_entry      = queue->cir_buf[queue->head];
+        } else {
             break;
         }
     }
-
 }
-
 
 /* Initial Rate Control Kernel */
 
@@ -591,16 +498,17 @@ void *initial_rate_control_kernel(void *input_ptr) {
                 {
                     // Release Pa Ref pictures when not needed
                     // Don't release if superres recode loop is actived (auto-dual or auto-all mode)
-                    if (pcs_ptr->superres_total_recode_loop == 0) {  // QThreshold or auto-solo mode
+                    if (pcs_ptr->superres_total_recode_loop == 0) { // QThreshold or auto-solo mode
                         if (scs_ptr->static_config.enable_tpl_la) {
                             for (uint32_t i = 0; i < pcs_ptr->tpl_group_size; i++) {
                                 if (pcs_ptr->tpl_group[i]->slice_type == P_SLICE) {
                                     if (pcs_ptr->tpl_group[i]->ext_mg_id == pcs_ptr->ext_mg_id + 1)
-                                        release_pa_reference_objects(scs_ptr, pcs_ptr->tpl_group[i]);
-                                }
-                                else {
+                                        release_pa_reference_objects(scs_ptr,
+                                                                     pcs_ptr->tpl_group[i]);
+                                } else {
                                     if (pcs_ptr->tpl_group[i]->ext_mg_id == pcs_ptr->ext_mg_id)
-                                        release_pa_reference_objects(scs_ptr, pcs_ptr->tpl_group[i]);
+                                        release_pa_reference_objects(scs_ptr,
+                                                                     pcs_ptr->tpl_group[i]);
                                 }
                                 if (pcs_ptr->tpl_group[i]->non_tf_input)
                                     EB_DELETE(pcs_ptr->tpl_group[i]->non_tf_input);
@@ -612,11 +520,8 @@ void *initial_rate_control_kernel(void *input_ptr) {
 
                     /*In case Look-Ahead is zero there is no need to place pictures in the
                       re-order queue. this will cause an artificial delay since pictures come in dec-order*/
-                    pcs_ptr->frames_in_sw = 0;
+                    pcs_ptr->frames_in_sw           = 0;
                     pcs_ptr->end_of_sequence_region = EB_FALSE;
-#if !CLN_NON_MOVING_CNT
-                    init_zz_cost_info(pcs_ptr);
-#endif
                 }
 
                 // post to downstream process
@@ -664,39 +569,22 @@ void *initial_rate_control_kernel(void *input_ptr) {
             //   1. TPL is OFF and
             //   2. super-res mode is NONE or FIXED or RANDOM.
             //     For other super-res modes, pa_ref_objs are needed in TASK_SUPERRES_RE_ME task
-#if FIX_LAD_MG_0_HANG && !FIX_I51
-            // Release Pa Ref if mg_lad is 0 and P slice (not belonging to any TPL group)
-            uint8_t release_pa_ref = 0;
-            if (scs_ptr->static_config.enable_tpl_la == 0 && scs_ptr->static_config.superres_mode <= SUPERRES_RANDOM)
-                release_pa_ref = 1;
-#if FTR_LAD_INPUT && !FIX_VBR_R2R
-            else if (scs_ptr->tpl_lad_mg == 0 && pcs_ptr->slice_type == P_SLICE)
-#else
-            else if (scs_ptr->lad_mg == 0 && pcs_ptr->slice_type == P_SLICE)
-#endif
-                release_pa_ref = 1;
-
-            if (release_pa_ref)
-#else
-            if (scs_ptr->static_config.enable_tpl_la == 0 && scs_ptr->static_config.superres_mode <= SUPERRES_RANDOM)
-#endif
+            if (scs_ptr->static_config.enable_tpl_la == 0 &&
+                scs_ptr->static_config.superres_mode <= SUPERRES_RANDOM)
                 release_pa_reference_objects(scs_ptr, pcs_ptr);
 
             /*In case Look-Ahead is zero there is no need to place pictures in the
               re-order queue. this will cause an artificial delay since pictures come in dec-order*/
             pcs_ptr->frames_in_sw           = 0;
             pcs_ptr->end_of_sequence_region = EB_FALSE;
-#if !CLN_NON_MOVING_CNT
-            init_zz_cost_info(pcs_ptr);
-#endif
 
             push_to_lad_queue(pcs_ptr, context_ptr);
 #if LAD_MG_PRINT
             print_lad_queue(context_ptr,0);
 #endif
-            uint8_t lad_queue_pass_thru = !(scs_ptr->static_config.enable_tpl_la && !pcs_ptr->frame_superres_enabled);
+            uint8_t lad_queue_pass_thru = !(scs_ptr->static_config.enable_tpl_la &&
+                                            !pcs_ptr->frame_superres_enabled);
             process_lad_queue(context_ptr, lad_queue_pass_thru);
-
         }
         // Release the Input Results
         svt_release_object(in_results_wrapper_ptr);

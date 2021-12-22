@@ -23,12 +23,8 @@ extern "C" {
 #define MAX_PA_ME_MV 7 // 1 per ref = up 7 = up 4+ up to 3
 #define MAX_PA_ME_CAND 23 // [Single Ref = 7] + [BiDir = 12 = 3*4 ] + [4 = 3+1]
 #define SQUARE_PU_COUNT 85
-#if ME_8X8
-#define  MAX_SB64_PU_COUNT_NO_8X8   21 //num,ber of square PUs from 64x64 to 16x16
-#endif
-#if FTR_M13
-#define MAX_SB64_PU_COUNT_WO_16X16  5 // number of square PUs for 64x64 and 32x32 block sizes
-#endif
+#define MAX_SB64_PU_COUNT_NO_8X8 21 //num,ber of square PUs from 64x64 to 16x16
+#define MAX_SB64_PU_COUNT_WO_16X16 5 // number of square PUs for 64x64 and 32x32 block sizes
 
 typedef struct MeCandidate {
     uint8_t direction : 2;
@@ -37,7 +33,6 @@ typedef struct MeCandidate {
     uint8_t ref0_list : 1;
     uint8_t ref1_list : 1;
 } MeCandidate;
-#if OPT_ME
 
 typedef union MvCandidate {
     uint32_t as_int;
@@ -46,19 +41,9 @@ typedef union MvCandidate {
         signed short y_mv;
     };
 } MvCandidate;
-#else
-
-typedef struct MvCandidate {
-    signed short x_mv;
-    signed short y_mv;
-} MvCandidate;
-#endif
 // move this to a new file with ctor & dtor
 typedef struct MeSbResults {
     EbDctor      dctor;
-#if !OPT_TPL_64X64_32X32
-    uint32_t     sb_distortion;
-#endif
     uint8_t *    total_me_candidate_index;
     MvCandidate *me_mv_array;
     MeCandidate *me_candidate_array;

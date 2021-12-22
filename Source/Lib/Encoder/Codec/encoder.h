@@ -55,31 +55,8 @@ enum {
 //struct AV1LevelParams;
 
 typedef struct {
-#if !RFCTR_RC_P1
-    // Indicates the minimum distance to a key frame.
-    int key_freq_min;
-#endif
     // Indicates the maximum distance to a key frame.
     int key_freq_max;
-#if !RFCTR_RC_P1
-    // Indicates if temporal filtering should be applied on keyframe.
-    int enable_keyframe_filtering;
-    // Indicates the number of frames after which a frame may be coded as an
-    // S-Frame.
-    int sframe_dist;
-    // Indicates how an S-Frame should be inserted.
-    // 1: the considered frame will be made into an S-Frame only if it is an
-    // altref frame. 2: the next altref frame will be made into an S-Frame.
-    int sframe_mode;
-    // Indicates if encoder should autodetect cut scenes and set the keyframes.
-    bool auto_key;
-    // Indicates if forward keyframe reference should be enabled.
-    bool fwd_kf_enabled;
-    // Indicates if S-Frames should be enabled for the sequence.
-    bool enable_sframe;
-    // Indicates if intra block copy prediction mode should be enabled or not.
-    bool enable_intrabc;
-#endif
 } KeyFrameCfg;
 
 /*!\endcond */
@@ -144,23 +121,12 @@ typedef struct {
     int gf_min_pyr_height;
     // Indicates the maximum height for GF group pyramid structure to be used.
     int gf_max_pyr_height;
-#if !RFCTR_RC_P1
-    // Indicates if automatic set and use of altref frames should be enabled.
-    bool enable_auto_arf;
-    // Indicates if automatic set and use of (b)ackward (r)ef (f)rames should be
-    // enabled.
-    bool enable_auto_brf;
-#endif
 } GFConfig;
 
 typedef int aom_bit_depth_t;
 typedef struct {
     int             frame_width;
     int             frame_height;
-#if !TUNE_RC
-    int             mi_rows;
-    int             mi_cols;
-#endif
     int             mb_rows;
     int             mb_cols;
     int             num_mbs;
@@ -774,12 +740,6 @@ typedef struct AV1_COMP {
    * INVALID_IDX.
    */
     int existing_fb_idx_to_show;
-#if !RFCTR_RC_P1
-    /*!
-   * When set, indicates that internal ARFs are enabled.
-   */
-    int internal_altref_allowed;
-#endif
     /*!
    * A flag to indicate if intrabc is ever used in current frame.
    */
@@ -949,28 +909,6 @@ static INLINE int get_stats_buf_size(int num_lap_buffer, int num_lag_buffer) {
     /* if lookahead is enabled return num_lap_buffers else num_lag_buffers */
     return (num_lap_buffer > 0 ? num_lap_buffer + 1 : num_lag_buffer);
 }
-#if !RFCTR_RC_P1
-/*!\cond */
-static INLINE int is_lossless_requested(const RateControlCfg *const rc_cfg) {
-    return rc_cfg->best_allowed_q == 0 && rc_cfg->worst_allowed_q == 0;
-}
-#define ALT_MIN_LAG 3
-static INLINE int is_altref_enabled(int lag_in_frames, bool enable_auto_arf) {
-    return lag_in_frames >= ALT_MIN_LAG && enable_auto_arf;
-}
-
-// Check if statistics consumption stage
-static INLINE int is_stat_consumption_stage_twopass(const AV1_COMP *const cpi) {
-    return (cpi->oxcf.pass == 2);
-}
-
-// Check if statistics consumption stage
-static INLINE int is_stat_consumption_stage(const AV1_COMP *const cpi) {
-    return (
-        is_stat_consumption_stage_twopass(cpi) ||
-        (cpi->oxcf.pass == 0 /*&& (cpi->compressor_stage == ENCODE_STAGE)*/ && cpi->lap_enabled));
-}
-#endif
 
 #ifdef __cplusplus
 } // extern "C"

@@ -116,26 +116,17 @@ typedef struct InterPredictionContext {
     MotionCompensationPredictionContext *mcp_context;
 } InterPredictionContext;
 
-#if LIGHT_PD0
-void svt_inter_predictor_light_pd0(const uint8_t *src, int32_t src_stride, uint8_t *dst, int32_t dst_stride,
-    int32_t w, int32_t h, ConvolveParams *conv_params);
-#if FTR_MEM_OPT
-void svt_highbd_inter_predictor_light_pd0( uint8_t *src, uint8_t* src_ptr_2b, int32_t src_stride, uint16_t *dst,
-#else
-void svt_highbd_inter_predictor_light_pd0(const uint16_t *src, int32_t src_stride, uint16_t *dst,
-#endif
-    int32_t dst_stride, int32_t w, int32_t h,
-    ConvolveParams *conv_params, int32_t bd);
-#endif
-#if FTR_10BIT_MDS3_LPD1
-#if FTR_MEM_OPT
-void svt_inter_predictor_light_pd1(uint8_t *src, uint8_t *src_2b,int32_t src_stride, uint8_t *dst,
-#else
-void svt_inter_predictor_light_pd1(uint8_t *src, int32_t src_stride, uint8_t *dst,
-#endif
-    int32_t dst_stride, int32_t w, int32_t h, InterpFilterParams* filter_x, InterpFilterParams* filter_y,
-    int32_t mv_x, int32_t mv_y, ConvolveParams *conv_params, int32_t bd);
-#endif
+void svt_inter_predictor_light_pd0(const uint8_t *src, int32_t src_stride, uint8_t *dst,
+                                   int32_t dst_stride, int32_t w, int32_t h,
+                                   ConvolveParams *conv_params);
+void svt_highbd_inter_predictor_light_pd0(uint8_t *src, uint8_t *src_ptr_2b, int32_t src_stride,
+                                          uint16_t *dst, int32_t dst_stride, int32_t w, int32_t h,
+                                          ConvolveParams *conv_params, int32_t bd);
+void svt_inter_predictor_light_pd1(uint8_t *src, uint8_t *src_2b, int32_t src_stride, uint8_t *dst,
+                                   int32_t dst_stride, int32_t w, int32_t h,
+                                   InterpFilterParams *filter_x, InterpFilterParams *filter_y,
+                                   int32_t mv_x, int32_t mv_y, ConvolveParams *conv_params,
+                                   int32_t bd);
 void svt_inter_predictor(const uint8_t *src, int32_t src_stride, uint8_t *dst, int32_t dst_stride,
                          const SubpelParams *subpel_params, const ScaleFactors *sf, int32_t w,
                          int32_t h, ConvolveParams *conv_params, InterpFilters interp_filters,
@@ -159,11 +150,11 @@ void build_masked_compound_no_round(uint8_t *dst, int dst_stride, const CONV_BUF
                                     ConvolveParams *conv_params, uint8_t bd, EbBool is_16bit);
 
 static const InterpFilterParams av1_interp_4tap[2] = {
-    {(const int16_t*)sub_pel_filters_4, SUBPEL_TAPS, SUBPEL_SHIFTS, EIGHTTAP_REGULAR},
-    {(const int16_t*)sub_pel_filters_4smooth, SUBPEL_TAPS, SUBPEL_SHIFTS, EIGHTTAP_SMOOTH} };
+    {(const int16_t *)sub_pel_filters_4, SUBPEL_TAPS, SUBPEL_SHIFTS, EIGHTTAP_REGULAR},
+    {(const int16_t *)sub_pel_filters_4smooth, SUBPEL_TAPS, SUBPEL_SHIFTS, EIGHTTAP_SMOOTH}};
 
-static INLINE InterpFilterParams av1_get_interp_filter_params_with_block_size(const InterpFilter interp_filter,
-    const int32_t      w) {
+static INLINE InterpFilterParams
+av1_get_interp_filter_params_with_block_size(const InterpFilter interp_filter, const int32_t w) {
     if (w <= 4 && (interp_filter == MULTITAP_SHARP || interp_filter == EIGHTTAP_REGULAR))
         return av1_interp_4tap[0];
     else if (w <= 4 && interp_filter == EIGHTTAP_SMOOTH)
@@ -172,12 +163,14 @@ static INLINE InterpFilterParams av1_get_interp_filter_params_with_block_size(co
     return av1_interp_filter_params_list[interp_filter];
 }
 
-static INLINE void av1_get_convolve_filter_params(uint32_t interp_filters, InterpFilterParams* params_x,
-    InterpFilterParams* params_y, int32_t w, int32_t h) {
+static INLINE void av1_get_convolve_filter_params(uint32_t            interp_filters,
+                                                  InterpFilterParams *params_x,
+                                                  InterpFilterParams *params_y, int32_t w,
+                                                  int32_t h) {
     InterpFilter filter_x = av1_extract_interp_filter(interp_filters, 1);
     InterpFilter filter_y = av1_extract_interp_filter(interp_filters, 0);
-    *params_x = av1_get_interp_filter_params_with_block_size(filter_x, w);
-    *params_y = av1_get_interp_filter_params_with_block_size(filter_y, h);
+    *params_x             = av1_get_interp_filter_params_with_block_size(filter_x, w);
+    *params_y             = av1_get_interp_filter_params_with_block_size(filter_y, h);
 };
 /* Mapping of interintra to intra mode for use in the intra component */
 static const PredictionMode interintra_to_intra_mode[INTERINTRA_MODES] = {
@@ -450,39 +443,32 @@ static INLINE uint32_t have_nearmv_in_inter_mode(PredictionMode mode) {
     return (mode == NEARMV || mode == NEAR_NEARMV || mode == NEAR_NEWMV || mode == NEW_NEARMV);
 }
 
-#if OPT_MEMORY_MIP
-static INLINE int is_intrabc_block(const BlockModeInfoEnc *block_mi) { return block_mi->use_intrabc; }
-static INLINE int is_intrabc_block_dec(const BlockModeInfo *block_mi) { return block_mi->use_intrabc; }
-#else
-static INLINE int is_intrabc_block(const BlockModeInfo *block_mi) { return block_mi->use_intrabc; }
-#endif
-#if OPT_MEMORY_MIP
+static INLINE int is_intrabc_block(const BlockModeInfoEnc *block_mi) {
+    return block_mi->use_intrabc;
+}
+static INLINE int is_intrabc_block_dec(const BlockModeInfo *block_mi) {
+    return block_mi->use_intrabc;
+}
 static INLINE int is_inter_block(const BlockModeInfoEnc *bloc_mi) {
     return is_intrabc_block(bloc_mi) || bloc_mi->ref_frame[0] > INTRA_FRAME;
 }
 static INLINE int is_inter_block_dec(const BlockModeInfo *bloc_mi) {
     return is_intrabc_block_dec(bloc_mi) || bloc_mi->ref_frame[0] > INTRA_FRAME;
 }
-#else
-static INLINE int is_inter_block(const BlockModeInfo *bloc_mi) {
-    return is_intrabc_block(bloc_mi) || bloc_mi->ref_frame[0] > INTRA_FRAME;
-}
-#endif
-#if OPT_INLINE_FUNCS
 
 #define n_elements(x) (int32_t)(sizeof(x) / sizeof(x[0]))
 
 static INLINE MvReferenceFrame comp_ref0(int32_t ref_idx) {
     static const MvReferenceFrame lut[] = {
-            LAST_FRAME, // LAST_LAST2_FRAMES,
-            LAST_FRAME, // LAST_LAST3_FRAMES,
-            LAST_FRAME, // LAST_GOLDEN_FRAMES,
-            BWDREF_FRAME, // BWDREF_ALTREF_FRAMES,
-            LAST2_FRAME, // LAST2_LAST3_FRAMES
-            LAST2_FRAME, // LAST2_GOLDEN_FRAMES,
-            LAST3_FRAME, // LAST3_GOLDEN_FRAMES,
-            BWDREF_FRAME, // BWDREF_ALTREF2_FRAMES,
-            ALTREF2_FRAME, // ALTREF2_ALTREF_FRAMES,
+        LAST_FRAME, // LAST_LAST2_FRAMES,
+        LAST_FRAME, // LAST_LAST3_FRAMES,
+        LAST_FRAME, // LAST_GOLDEN_FRAMES,
+        BWDREF_FRAME, // BWDREF_ALTREF_FRAMES,
+        LAST2_FRAME, // LAST2_LAST3_FRAMES
+        LAST2_FRAME, // LAST2_GOLDEN_FRAMES,
+        LAST3_FRAME, // LAST3_GOLDEN_FRAMES,
+        BWDREF_FRAME, // BWDREF_ALTREF2_FRAMES,
+        ALTREF2_FRAME, // ALTREF2_ALTREF_FRAMES,
     };
     assert(n_elements(lut) == TOTAL_UNIDIR_COMP_REFS);
     return lut[ref_idx];
@@ -490,15 +476,15 @@ static INLINE MvReferenceFrame comp_ref0(int32_t ref_idx) {
 
 static INLINE MvReferenceFrame comp_ref1(int32_t ref_idx) {
     static const MvReferenceFrame lut[] = {
-            LAST2_FRAME, // LAST_LAST2_FRAMES,
-            LAST3_FRAME, // LAST_LAST3_FRAMES,
-            GOLDEN_FRAME, // LAST_GOLDEN_FRAMES,
-            ALTREF_FRAME, // BWDREF_ALTREF_FRAMES,
-            LAST3_FRAME, // LAST2_LAST3_FRAMES
-            GOLDEN_FRAME, // LAST2_GOLDEN_FRAMES,
-            GOLDEN_FRAME, // LAST3_GOLDEN_FRAMES,
-            ALTREF2_FRAME, // BWDREF_ALTREF2_FRAMES,
-            ALTREF_FRAME, // ALTREF2_ALTREF_FRAMES,
+        LAST2_FRAME, // LAST_LAST2_FRAMES,
+        LAST3_FRAME, // LAST_LAST3_FRAMES,
+        GOLDEN_FRAME, // LAST_GOLDEN_FRAMES,
+        ALTREF_FRAME, // BWDREF_ALTREF_FRAMES,
+        LAST3_FRAME, // LAST2_LAST3_FRAMES
+        GOLDEN_FRAME, // LAST2_GOLDEN_FRAMES,
+        GOLDEN_FRAME, // LAST3_GOLDEN_FRAMES,
+        ALTREF2_FRAME, // BWDREF_ALTREF2_FRAMES,
+        ALTREF_FRAME, // ALTREF2_ALTREF_FRAMES,
     };
     assert(n_elements(lut) == TOTAL_UNIDIR_COMP_REFS);
     return lut[ref_idx];
@@ -506,13 +492,16 @@ static INLINE MvReferenceFrame comp_ref1(int32_t ref_idx) {
 
 static INLINE int8_t get_uni_comp_ref_idx(const MvReferenceFrame *const rf) {
     // Single ref pred
-    if (rf[1] <= INTRA_FRAME) return -1;
+    if (rf[1] <= INTRA_FRAME)
+        return -1;
 
     // Bi-directional comp ref pred
-    if ((rf[0] < BWDREF_FRAME) && (rf[1] >= BWDREF_FRAME)) return -1;
+    if ((rf[0] < BWDREF_FRAME) && (rf[1] >= BWDREF_FRAME))
+        return -1;
 
     for (int8_t ref_idx = 0; ref_idx < TOTAL_UNIDIR_COMP_REFS; ++ref_idx) {
-        if (rf[0] == comp_ref0(ref_idx) && rf[1] == comp_ref1(ref_idx)) return ref_idx;
+        if (rf[0] == comp_ref0(ref_idx) && rf[1] == comp_ref1(ref_idx))
+            return ref_idx;
     }
     return -1;
 }
@@ -522,10 +511,9 @@ static INLINE int8_t av1_ref_frame_type(const MvReferenceFrame *const rf) {
         const int8_t uni_comp_ref_idx = get_uni_comp_ref_idx(rf);
         if (uni_comp_ref_idx >= 0) {
             assert((TOTAL_REFS_PER_FRAME + FWD_REFS * BWD_REFS + uni_comp_ref_idx) <
-                MODE_CTX_REF_FRAMES);
+                   MODE_CTX_REF_FRAMES);
             return TOTAL_REFS_PER_FRAME + FWD_REFS * BWD_REFS + uni_comp_ref_idx;
-        }
-        else {
+        } else {
             return TOTAL_REFS_PER_FRAME + FWD_RF_OFFSET(rf[0]) + BWD_RF_OFFSET(rf[1]) * FWD_REFS;
         }
     }
@@ -557,22 +545,18 @@ static MvReferenceFrame ref_frame_map[TOTAL_COMP_REFS][2] = {
     {LAST2_FRAME, GOLDEN_FRAME},
     {LAST3_FRAME, GOLDEN_FRAME},
     {BWDREF_FRAME, ALTREF2_FRAME},
-    {ALTREF2_FRAME, ALTREF_FRAME} };
+    {ALTREF2_FRAME, ALTREF_FRAME}};
 
 static INLINE void av1_set_ref_frame(MvReferenceFrame *rf, int8_t ref_frame_type) {
     if (ref_frame_type >= TOTAL_REFS_PER_FRAME) {
         rf[0] = ref_frame_map[ref_frame_type - TOTAL_REFS_PER_FRAME][0];
         rf[1] = ref_frame_map[ref_frame_type - TOTAL_REFS_PER_FRAME][1];
-    }
-    else {
+    } else {
         rf[0] = ref_frame_type;
         rf[1] = NONE_FRAME;
         // assert(ref_frame_type > NONE_FRAME); AMIR
     }
 }
-#else
-void av1_set_ref_frame(MvReferenceFrame *rf, int8_t ref_frame_type);
-#endif
 int svt_av1_skip_u4x4_pred_in_obmc(BlockSize bsize, int dir, int subsampling_x, int subsampling_y);
 
 #ifdef __cplusplus

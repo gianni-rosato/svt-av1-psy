@@ -57,7 +57,6 @@ static INLINE void av1_round_shift_rect_array_32_sse4_1(__m128i *input, __m128i 
     }
 }
 
-#if SSE_CODE_OPT
 #define TRANSPOSE_4X4(x0, x1, x2, x3, y0, y1, y2, y3) \
     do {                                              \
         __m128i u0, u1, u2, u3;                       \
@@ -120,7 +119,6 @@ static INLINE void transpose_8x8(const __m128i *in, __m128i *out) {
     TRANSPOSE_4X4(in[8], in[10], in[12], in[14], out[1], out[3], out[5], out[7]);
     TRANSPOSE_4X4(in[9], in[11], in[13], in[15], out[9], out[11], out[13], out[15]);
 }
-#endif
 
 #ifdef __cplusplus
 }

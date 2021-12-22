@@ -1,13 +1,14 @@
 /*
-* Copyright(c) 2019 Netflix, Inc.
-*
-* This source code is subject to the terms of the BSD 2 Clause License and
-* the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
-* was not distributed with this source code in the LICENSE file, you can
-* obtain it at https://www.aomedia.org/license/software-license. If the Alliance for Open
-* Media Patent License 1.0 was not distributed with this source code in the
-* PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
-*/
+ * Copyright(c) 2019 Netflix, Inc.
+ *
+ * This source code is subject to the terms of the BSD 2 Clause License and
+ * the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
+ * was not distributed with this source code in the LICENSE file, you can
+ * obtain it at https://www.aomedia.org/license/software-license. If the
+ * Alliance for Open Media Patent License 1.0 was not distributed with this
+ * source code in the PATENTS file, you can obtain it at
+ * https://www.aomedia.org/license/patent-license.
+ */
 
 /******************************************************************************
  * @file ResidualTest.cc
@@ -122,10 +123,10 @@ class ResidualTestBase : public ::testing::Test {
     uint32_t test_size_;
 };
 
-typedef void (*svt_residual_kernel8bit_func)(uint8_t *input, uint32_t input_stride,
-                                    uint8_t *pred, uint32_t pred_stride,
-                                    int16_t *residual, uint32_t residual_stride,
-                                    uint32_t area_width, uint32_t area_height);
+typedef void (*svt_residual_kernel8bit_func)(
+    uint8_t *input, uint32_t input_stride, uint8_t *pred, uint32_t pred_stride,
+    int16_t *residual, uint32_t residual_stride, uint32_t area_width,
+    uint32_t area_height);
 
 static const svt_residual_kernel8bit_func residual_kernel8bit_func_table[] = {
     svt_residual_kernel8bit_avx2,
@@ -200,8 +201,8 @@ class ResidualKernelTest
                                   area_width_,
                                   area_height_);
 
-        for (int i = 0; i < (int) (sizeof(residual_kernel8bit_func_table) /
-                                sizeof(*residual_kernel8bit_func_table));
+        for (int i = 0; i < (int)(sizeof(residual_kernel8bit_func_table) /
+                                  sizeof(*residual_kernel8bit_func_table));
              i++) {
             svt_buf_random_s16(residual2_, test_size_);
             residual_kernel8bit_func_table[i](input_,
@@ -245,8 +246,8 @@ class ResidualKernelTest
                                                          middle_time_seconds,
                                                          middle_time_useconds);
 
-        for (int i = 0; i < (int) (sizeof(residual_kernel8bit_func_table) /
-                                sizeof(*residual_kernel8bit_func_table));
+        for (int i = 0; i < (int)(sizeof(residual_kernel8bit_func_table) /
+                                  sizeof(*residual_kernel8bit_func_table));
              i++) {
             svt_buf_random_s16(residual2_, test_size_);
 
@@ -254,13 +255,13 @@ class ResidualKernelTest
 
             for (uint64_t j = 0; j < num_loop; j++) {
                 residual_kernel8bit_func_table[i](input_,
-                                             input_stride_,
-                                             pred_,
-                                             pred_stride_,
-                                             residual2_,
-                                             residual_stride_,
-                                             area_width_,
-                                             area_height_);
+                                                  input_stride_,
+                                                  pred_,
+                                                  pred_stride_,
+                                                  residual2_,
+                                                  residual_stride_,
+                                                  area_width_,
+                                                  area_height_);
             }
             check_residuals(area_width_, area_height_);
 
@@ -299,8 +300,6 @@ class ResidualKernelTest
                                    area_height_);
 
         check_residuals(area_width_, area_height_);
-
-
     }
 
     void run_16bit_test_avx2() {

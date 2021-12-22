@@ -109,12 +109,6 @@ typedef struct PredictionStructure {
     uint32_t leading_pic_index;
     uint32_t init_pic_index;
     uint32_t steady_state_index;
-#if !CLN_PRED_STRUCT
-    //private use only
-    int32_t * decode_order_table;
-    uint32_t *display_order_table;
-    EbBool *  timeline_map;
-#endif
 } PredictionStructure;
 
 /************************************************
@@ -133,22 +127,9 @@ typedef struct PredictionStructureGroup {
 /************************************************
      * Declarations
      ************************************************/
-#if CLN_MERGE_MRP_SIG
-#if CLN_MRP_ENC_CONFIG
- //EbErrorType prediction_structure_group_ctor(
- //   PredictionStructureGroup* pred_struct_group_ptr,
- //   struct SequenceControlSet* scs_ptr);
-#else
-extern EbErrorType prediction_structure_group_ctor(
-    PredictionStructureGroup* pred_struct_group_ptr,
-    EbSvtAv1EncConfiguration* config);
-#endif
-#else
-extern EbErrorType prediction_structure_group_ctor(PredictionStructureGroup *pred_struct_group_ptr,
-    uint8_t   mrp_init_level,
-                                                   EbEncMode                 enc_mode,
-                                                   EbSvtAv1EncConfiguration *config);
-#endif
+//EbErrorType prediction_structure_group_ctor(
+//   PredictionStructureGroup* pred_struct_group_ptr,
+//   struct SequenceControlSet* scs_ptr);
 extern PredictionStructure *get_prediction_structure(
     PredictionStructureGroup *prediction_structure_group_ptr, EbPred pred_structure,
     uint32_t number_of_references, uint32_t levels_of_hierarchy);

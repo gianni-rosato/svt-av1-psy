@@ -21,9 +21,9 @@ extern "C" {
 #endif
 
 uint64_t svt_compute_mean_c(uint8_t* input_samples, /**< input parameter, input samples Ptr */
-    uint32_t input_stride, /**< input parameter, input stride */
-    uint32_t input_area_width, /**< input parameter, input area width */
-    uint32_t input_area_height); /**< input parameter, input area height */
+                            uint32_t input_stride, /**< input parameter, input stride */
+                            uint32_t input_area_width, /**< input parameter, input area width */
+                            uint32_t input_area_height); /**< input parameter, input area height */
 
 uint64_t svt_compute_mean_squared_values_c(
     uint8_t* input_samples, /**< input parameter, input samples Ptr */

@@ -282,7 +282,7 @@ typedef struct MeHmeRefPruneCtrls {
         prune_ref_if_hme_sad_dev_bigger_than_th; // TH used to prune references based on hme sad deviation
     uint16_t
         prune_ref_if_me_sad_dev_bigger_than_th; // TH used to prune references based on me sad deviation
-    EbBool  protect_closest_refs; // if true, do not prune closest ref frames
+    EbBool protect_closest_refs; // if true, do not prune closest ref frames
 } MeHmeRefPruneCtrls;
 
 typedef struct MeSrCtrls {
@@ -302,40 +302,32 @@ typedef struct MeSrCtrls {
 
 #define SEARCH_REGION_COUNT 2
 typedef struct SearchArea {
-    uint16_t   width;  // search area width
-    uint16_t   height; // search area height
+    uint16_t width; // search area width
+    uint16_t height; // search area height
 } SearchArea;
 typedef struct SearchAreaMinMax {
-    SearchArea   sa_min;  // min search area
-    SearchArea   sa_max;  // max search area
+    SearchArea sa_min; // min search area
+    SearchArea sa_max; // max search area
 } SearchAreaMinMax;
 typedef struct SearchInfo {
-    SearchArea       sa;      // search area sizes
-    IntMv            best_mv; // best mv
-    uint64_t         sad;     // best sad
+    SearchArea sa; // search area sizes
+    IntMv      best_mv; // best mv
+    uint64_t   sad; // best sad
 } SearchInfo;
 
 typedef struct PreHmeCtrls {
-    uint8_t enable;
-    SearchAreaMinMax   prehme_sa_cfg[SEARCH_REGION_COUNT];
-#if FTR_PREHME_SUB
-    uint8_t skip_search_line; //if 1 skips every other search region line
-#endif
-#if FTR_PREHME_OPT
-    uint8_t l1_early_exit;
-#endif
-#if OPT_PREHME
-    uint8_t  use_tf_motion; // use TF motion to direct prehme searches
-#endif
+    uint8_t          enable;
+    SearchAreaMinMax prehme_sa_cfg[SEARCH_REGION_COUNT];
+    uint8_t          skip_search_line; //if 1 skips every other search region line
+    uint8_t          l1_early_exit;
+    uint8_t          use_tf_motion; // use TF motion to direct prehme searches
 } PreHmeCtrls;
-#if CLN_ME_HME_AREA_SIGS
 typedef struct MeHmeSearchAreaCtrls {
     SearchAreaMinMax hme_l0_sa[SEARCH_REGION_COUNT];
-    SearchArea hme_l1_sa[SEARCH_REGION_COUNT];
-    SearchArea hme_l2_sa[SEARCH_REGION_COUNT];
+    SearchArea       hme_l1_sa[SEARCH_REGION_COUNT];
+    SearchArea       hme_l2_sa[SEARCH_REGION_COUNT];
     SearchAreaMinMax me_sa[SEARCH_REGION_COUNT];
-}MeHmeSearchAreaCtrls;
-#endif
+} MeHmeSearchAreaCtrls;
 typedef struct HmeResults {
     uint8_t  list_i; // list index of this ref
     uint8_t  ref_i; // ref list index of this ref
@@ -347,21 +339,12 @@ typedef struct HmeResults {
 typedef struct MeContext {
     EbDctor dctor;
     // Search region stride
-    uint32_t                  interpolated_full_stride[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX];
+    uint32_t interpolated_full_stride[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX];
     uint32_t me_distortion[SQUARE_PU_COUNT];
 
-
-#if OPT_TFILTER
-#if FIXED_POINTS_PLANEWISE
-    uint32_t tf_decay_factor_fp16[MAX_MB_PLANE];
-#endif /*FIXED_POINTS_PLANEWISE*/
-#if FTR_TF_STRENGTH_PER_QP
-    double tf_decay_factor[3];
-#else
-    double tf_decay_factor;
-#endif
+    uint32_t   tf_decay_factor_fp16[MAX_MB_PLANE];
+    double     tf_decay_factor[3];
     TfControls tf_ctrls;
-#endif
 
     uint8_t * sb_src_ptr;
     uint32_t  sb_src_stride;
@@ -393,15 +376,10 @@ typedef struct MeContext {
     EB_ALIGN(64) uint32_t p_eight_sad16x16[16][8];
     EB_ALIGN(64) uint32_t p_eight_sad8x8[64][8];
     EbBitFraction *mvd_bits_array;
-#if !FIX_ISSUE_104
-    uint64_t       lambda;
-#endif
     uint8_t        hme_search_method;
     uint8_t        me_search_method;
 
-#if TUNE_HME_SUB
     uint8_t            skip_search_line_hme0;
-#endif
     EbBool             enable_hme_flag;
     EbBool             enable_hme_level0_flag;
     EbBool             enable_hme_level1_flag;
@@ -409,56 +387,23 @@ typedef struct MeContext {
     MeHmeRefPruneCtrls me_hme_prune_ctrls;
     MeSrCtrls          me_sr_adjustment_ctrls;
     uint8_t            max_hme_sr_area_multipler;
-#if CLN_ME_HME_AREA_SIGS
     // ME
-    uint8_t  best_list_idx;
-    uint8_t  best_ref_idx;
+    uint8_t          best_list_idx;
+    uint8_t          best_ref_idx;
     SearchAreaMinMax me_sa;
 
     // HME
-#if CLN_ME_REDENDANT_VAR
-    uint16_t   num_hme_sa_w;
-    uint16_t   num_hme_sa_h;
-#else
-    uint16_t   number_hme_search_region_in_width;
-    uint16_t   number_hme_search_region_in_height;
-#endif
+    uint16_t         num_hme_sa_w;
+    uint16_t         num_hme_sa_h;
     SearchAreaMinMax hme_l0_sa; // Total HME Level-0 search area
-    SearchArea hme_l1_sa; // HME Level-1 search area per HME-L0 search centre
-    SearchArea hme_l2_sa; // HME Level-2 search area per HME-L1 search centre
-#else
-    // ME
-    uint16_t search_area_width;
-    uint16_t search_area_height;
-    uint16_t max_me_search_width;
-    uint16_t max_me_search_height;
-    uint8_t  best_list_idx;
-    uint8_t  best_ref_idx;
-    // HME
-    uint16_t   number_hme_search_region_in_width;
-    uint16_t   number_hme_search_region_in_height;
-    uint16_t   hme_level0_total_search_area_width;
-    uint16_t   hme_level0_total_search_area_height;
-    uint16_t   hme_level0_search_area_in_width_array[EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT];
-    uint16_t   hme_level0_search_area_in_height_array[EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
-    uint16_t   hme_level0_max_total_search_area_width;
-    uint16_t   hme_level0_max_total_search_area_height;
-    uint16_t   hme_level0_max_search_area_in_width_array[EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT];
-    uint16_t   hme_level0_max_search_area_in_height_array[EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
-    uint16_t   hme_level1_search_area_in_width_array[EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT];
-    uint16_t   hme_level1_search_area_in_height_array[EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
-    uint16_t   hme_level2_search_area_in_width_array[EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT];
-    uint16_t   hme_level2_search_area_in_height_array[EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
-#endif
-#if !CLN_REMOVE_HME_DECIMATION
-    uint8_t    hme_decimation;
-#endif
-    HmeResults hme_results[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
-    uint32_t   reduce_me_sr_divisor[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
+    SearchArea       hme_l1_sa; // HME Level-1 search area per HME-L0 search centre
+    SearchArea       hme_l2_sa; // HME Level-2 search area per HME-L1 search centre
+    HmeResults       hme_results[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
+    uint32_t         reduce_me_sr_divisor[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
 
-    SearchInfo         prehme_data[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][SEARCH_REGION_COUNT];
-    PreHmeCtrls     prehme_ctrl;
-    int16_t    x_hme_level0_search_center[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX]
+    SearchInfo  prehme_data[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][SEARCH_REGION_COUNT];
+    PreHmeCtrls prehme_ctrl;
+    int16_t     x_hme_level0_search_center[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX]
                                       [EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT]
                                       [EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
     int16_t y_hme_level0_search_center[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX]
@@ -502,11 +447,9 @@ typedef struct MeContext {
     uint8_t      tf_chroma;
     int          tf_frame_index;
     int          tf_index_center;
-#if OPT_UPGRADE_TF
     signed short tf_64x64_mv_x;
     signed short tf_64x64_mv_y;
     uint64_t     tf_64x64_block_error;
-#endif
     signed short tf_16x16_mv_x[16];
     signed short tf_16x16_mv_y[16];
     uint64_t     tf_16x16_block_error[16];
@@ -518,45 +461,25 @@ typedef struct MeContext {
     int          tf_16x16_search_do[4];
     int          tf_block_row;
     int          tf_block_col;
-    uint32_t idx_32x32;
+    uint32_t     idx_32x32;
     uint16_t     min_frame_size;
-#if SS_CLN_ME_CAND_ARRAY
-    int32_t prune_me_candidates_th;
-#else
-    int64_t prune_me_candidates_th;
-#endif
-#if FTR_LIMIT_ME_CANDS
-    uint8_t use_best_unipred_cand_only; // Use only the best unipred candidate when MRP is off
-#endif
-    uint8_t reduce_hme_l0_sr_th_min;
-    uint8_t reduce_hme_l0_sr_th_max;
-#if FTR_BIAS_STAT
-    uint8_t stat_factor;
-#endif
-#if OPT_EARLY_TF_ME_EXIT
-    uint16_t tf_me_exit_th;
-    uint8_t tf_use_pred_64x64_only_th;
-#endif
-#if FTR_HME_ME_EARLY_EXIT
-    uint32_t zz_sad[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
-    uint32_t me_early_exit_th;
-#endif
-#if FTR_TUNE_PRUNING
-    uint8_t input_resolution;
-    uint8_t clip_class;
-#endif
-#if OPT_PREHME
-    uint32_t  tf_tot_vert_blks;    //total vertical motion blocks in TF
-    uint32_t  tf_tot_horz_blks;    //total horizontal motion blocks in TF
-#endif
-#if FIX_ISSUE_121
-    uint8_t skip_frame;
-    uint8_t bypass_blk_step;
-#endif
-#if CLN_ME_REDENDANT_VAR
-    uint32_t block_width;
-    uint32_t block_height;
-#endif
+    int32_t      prune_me_candidates_th;
+    uint8_t      use_best_unipred_cand_only; // Use only the best unipred candidate when MRP is off
+    uint8_t      reduce_hme_l0_sr_th_min;
+    uint8_t      reduce_hme_l0_sr_th_max;
+    uint8_t      stat_factor;
+    uint16_t     tf_me_exit_th;
+    uint8_t      tf_use_pred_64x64_only_th;
+    uint32_t     zz_sad[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
+    uint32_t     me_early_exit_th;
+    uint8_t      input_resolution;
+    uint8_t      clip_class;
+    uint32_t     tf_tot_vert_blks; //total vertical motion blocks in TF
+    uint32_t     tf_tot_horz_blks; //total horizontal motion blocks in TF
+    uint8_t      skip_frame;
+    uint8_t      bypass_blk_step;
+    uint32_t     block_width;
+    uint32_t     block_height;
 } MeContext;
 
 typedef uint64_t (*EB_ME_DISTORTION_FUNC)(uint8_t *src, uint32_t src_stride, uint8_t *ref,

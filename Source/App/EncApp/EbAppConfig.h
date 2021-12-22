@@ -36,8 +36,6 @@ typedef enum AppExitConditionType {
 the App.
 */
 typedef enum AppPortActiveType { APP_PortActive = 0, APP_PortInactive } AppPortActiveType;
-#if FTR_MULTI_PASS_API
-#if CLN_ENC_CONFIG_SIG
 typedef enum EncPass {
     ENC_SINGLE_PASS, //single pass mode
     ENC_FIRST_PASS, // first pass of multi pass mode
@@ -45,23 +43,6 @@ typedef enum EncPass {
     ENC_LAST_PASS, // last pass of multi pass mode
     MAX_ENC_PASS = 3,
 } EncPass;
-#else
-typedef enum EncodePass {
-    ENCODE_SINGLE_PASS, //single pass mode
-    ENCODE_FIRST_PASS, // first pass of multi pass mode
-    ENCODE_MIDDLE_PASS, // middle pass of multi pass mode
-    ENCODE_LAST_PASS, // last pass of multi pass mode
-    MAX_ENCODE_PASS = 3,
-} EncodePass;
-#endif
-#else
-typedef enum EncodePass {
-    ENCODE_SINGLE_PASS, //single pass mode
-    ENCODE_FIRST_PASS, // first pass of multi pass mode
-    ENCODE_LAST_PASS, // last pass of multi pass mode
-    MAX_ENCODE_PASS = 2,
-} EncodePass;
-#endif
 
 /** The EbPtr type is intended to be used to pass pointers to and from the svt
 API.  This is a 32 bit pointer and is aligned on a 32 bit word boundary.
@@ -181,41 +162,34 @@ typedef struct EbPerformanceContext {
 
 } EbPerformanceContext;
 
-#if OPT_MMAP_FILE
-typedef struct MemMapFile{
-    uint8_t  enable;         //enable mem mapped file
-    int64_t  file_size;      //size of the input file
-    int32_t  align_mask;     //page size alignment mask
-    int32_t  fd;             //file descriptor
-    int64_t  y4m_seq_hdr;    //y4m seq length
-    uint32_t y4m_frm_hdr;    //y4m frame length
-    uint64_t file_frame_it;  //frame iterator within the input file
+typedef struct MemMapFile {
+    uint8_t  enable; //enable mem mapped file
+    int64_t  file_size; //size of the input file
+    int32_t  align_mask; //page size alignment mask
+    int32_t  fd; //file descriptor
+    int64_t  y4m_seq_hdr; //y4m seq length
+    uint32_t y4m_frm_hdr; //y4m frame length
+    uint64_t file_frame_it; //frame iterator within the input file
 } MemMapFile;
-#endif
 
 typedef struct EbConfig {
     /****************************************
      * File I/O
      ****************************************/
-    FILE * config_file;
-    FILE * input_file;
-#if OPT_MMAP_FILE
-    MemMapFile mmap;  //memory mapped file handler
-#endif
-    EbBool input_file_is_fifo;
-    FILE * bitstream_file;
-    FILE * recon_file;
-    FILE * error_log_file;
-    FILE * stat_file;
-    FILE * buffer_file;
-    FILE * qp_file;
+    FILE *     config_file;
+    FILE *     input_file;
+    MemMapFile mmap; //memory mapped file handler
+    EbBool     input_file_is_fifo;
+    FILE *     bitstream_file;
+    FILE *     recon_file;
+    FILE *     error_log_file;
+    FILE *     stat_file;
+    FILE *     buffer_file;
+    FILE *     qp_file;
     /* two pass */
-#if !CLN_ENC_CONFIG_SIG
-    int         pass;
-#endif
-    const char *stats;
-    FILE *      input_stat_file;
-    FILE *      output_stat_file;
+    const char *  stats;
+    FILE *        input_stat_file;
+    FILE *        output_stat_file;
     FILE *        input_pred_struct_file;
     char *        input_pred_struct_filename;
     EbBool        y4m_input;
@@ -229,10 +203,6 @@ typedef struct EbConfig {
 
     uint32_t input_padded_width;
     uint32_t input_padded_height;
-#if FTR_OPT_MPASS_DOWN_SAMPLE && !CLN_ENC_CONFIG_SIG
-    uint32_t org_input_padded_width;
-    uint32_t org_input_padded_height;
-#endif
     // -1 indicates unknown (auto-detect at earliest opportunity)
     // auto-detect is performed on load for files and at end of stream for pipes
     int64_t   frames_to_be_encoded;
@@ -279,42 +249,18 @@ typedef struct EncChannel {
 typedef struct EncApp {
     SvtAv1FixedBuf rc_twopasses_stats;
 } EncApp;
-#if CLN_ENC_CONFIG_SIG
 EbConfig *svt_config_ctor();
 void      svt_config_dtor(EbConfig *config_ptr);
 
-EbErrorType enc_channel_ctor(EncChannel *c);
-void        enc_channel_dctor(EncChannel *c, uint32_t inst_cnt);
-#else
-EbConfig *svt_config_ctor(EncodePass pass);
-void      svt_config_dtor(EbConfig *config_ptr);
-
-EbErrorType enc_channel_ctor(EncChannel *c, EncodePass pass);
-void        enc_channel_dctor(EncChannel *c, uint32_t inst_cnt);
-#endif
+EbErrorType        enc_channel_ctor(EncChannel *c);
+void               enc_channel_dctor(EncChannel *c, uint32_t inst_cnt);
 extern EbErrorType read_command_line(int32_t argc, char *const argv[], EncChannel *channels,
                                      uint32_t num_channels, char *warning_str[WARNING_LENGTH]);
-int get_version(int argc, char *argv[]);
+int                get_version(int argc, char *argv[]);
 extern uint32_t    get_help(int32_t argc, char *const argv[]);
 extern uint32_t    get_number_of_channels(int32_t argc, char *const argv[]);
-#if TUNE_MULTI_PASS
-#if CLN_ENC_CONFIG_SIG
-uint32_t           get_passes(int32_t argc, char* const argv[], EncPass enc_pass[MAX_ENC_PASS], MultiPassModes* multi_pass_mode);
-#else
-uint32_t           get_passes(int32_t argc, char *const argv[], EncodePass pass[MAX_ENCODE_PASS], MultiPassModes *multi_pass_mode);
-#endif
-#else
-uint32_t           get_passes(int32_t argc, char *const argv[], EncodePass pass[MAX_ENCODE_PASS]);
-#endif
-#if CLN_ENC_CONFIG_SIG
-EbErrorType handle_stats_file(
-    EbConfig* config,
-    EncPass pass,
-    const SvtAv1FixedBuf* rc_twopass_stats_in,
-    uint32_t channel_number);
-#else
-EbErrorType        set_two_passes_stats(EbConfig *config, EncodePass pass,
-                                        const SvtAv1FixedBuf *rc_twopass_stats_in,
-                                        uint32_t              channel_number);
-#endif
+uint32_t           get_passes(int32_t argc, char *const argv[], EncPass enc_pass[MAX_ENC_PASS],
+                              MultiPassModes *multi_pass_mode);
+EbErrorType        handle_stats_file(EbConfig *config, EncPass pass,
+                                     const SvtAv1FixedBuf *rc_twopass_stats_in, uint32_t channel_number);
 #endif //EbAppConfig_h

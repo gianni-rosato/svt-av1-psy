@@ -14,7 +14,7 @@
 #include "filter.h"
 
 static INLINE void svt_prepare_coeffs_12tap(const InterpFilterParams *filter_params, int subpel_q4,
-                                        __m128i *coeffs /* [6] */) {
+                                            __m128i *coeffs /* [6] */) {
     const int16_t *const y_filter = av1_get_interp_filter_subpel_kernel(*filter_params,
                                                                         subpel_q4 & SUBPEL_MASK);
 
@@ -31,10 +31,12 @@ static INLINE void svt_prepare_coeffs_12tap(const InterpFilterParams *filter_par
     coeffs[5] = _mm_shuffle_epi32(coeffs_y, 85); // coeffs 10 11 10 11 10 11 10 11
 }
 
-void svt_av1_convolve_2d_sr_12tap_sse2(const uint8_t *src, int src_stride, uint8_t *dst, int dst_stride,
-                                   int w, int h, const InterpFilterParams *filter_params_x,
-                                   const InterpFilterParams *filter_params_y, const int subpel_x_qn,
-                                   const int subpel_y_qn, ConvolveParams *conv_params) {
+void svt_av1_convolve_2d_sr_12tap_sse2(const uint8_t *src, int src_stride, uint8_t *dst,
+                                       int dst_stride, int w, int h,
+                                       const InterpFilterParams *filter_params_x,
+                                       const InterpFilterParams *filter_params_y,
+                                       const int subpel_x_qn, const int subpel_y_qn,
+                                       ConvolveParams *conv_params) {
     const int bd = 8;
 
     DECLARE_ALIGNED(16, int16_t, im_block[(MAX_SB_SIZE + MAX_FILTER_TAP - 1) * MAX_SB_SIZE]);
@@ -200,35 +202,35 @@ void svt_av1_convolve_2d_sr_12tap_sse2(const uint8_t *src, int src_stride, uint8
 }
 
 void svt_av1_convolve_2d_sr_sse2(const uint8_t *src, int32_t src_stride, uint8_t *dst,
-                              int32_t dst_stride, int32_t w, int32_t h,
-                              InterpFilterParams *filter_params_x,
-                              InterpFilterParams *filter_params_y, const int32_t subpel_x_q4,
-                              const int32_t subpel_y_q4, ConvolveParams *conv_params) {
+                                 int32_t dst_stride, int32_t w, int32_t h,
+                                 InterpFilterParams *filter_params_x,
+                                 InterpFilterParams *filter_params_y, const int32_t subpel_x_q4,
+                                 const int32_t subpel_y_q4, ConvolveParams *conv_params) {
     if (filter_params_x->taps > 8) {
         if (w < 8) {
             svt_av1_convolve_2d_sr_c(src,
-                                 src_stride,
-                                 dst,
-                                 dst_stride,
-                                 w,
-                                 h,
-                                 filter_params_x,
-                                 filter_params_y,
-                                 subpel_x_q4,
-                                 subpel_y_q4,
-                                 conv_params);
+                                     src_stride,
+                                     dst,
+                                     dst_stride,
+                                     w,
+                                     h,
+                                     filter_params_x,
+                                     filter_params_y,
+                                     subpel_x_q4,
+                                     subpel_y_q4,
+                                     conv_params);
         } else {
             svt_av1_convolve_2d_sr_12tap_sse2(src,
-                                          src_stride,
-                                          dst,
-                                          dst_stride,
-                                          w,
-                                          h,
-                                          filter_params_x,
-                                          filter_params_y,
-                                          subpel_x_q4,
-                                          subpel_y_q4,
-                                          conv_params);
+                                              src_stride,
+                                              dst,
+                                              dst_stride,
+                                              w,
+                                              h,
+                                              filter_params_x,
+                                              filter_params_y,
+                                              subpel_x_q4,
+                                              subpel_y_q4,
+                                              conv_params);
         }
     } else {
         const int bd = 8;

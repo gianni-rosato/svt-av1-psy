@@ -79,36 +79,7 @@ void initialize_samples_neighboring_reference_picture_8bit(EbByte   recon_sample
 void initialize_samples_neighboring_reference_picture(
     EbReferenceObject *          reference_object,
     EbPictureBufferDescInitData *picture_buffer_desc_init_data_ptr, EbBitDepthEnum bit_depth) {
-
-#if !FTR_MEM_OPT
-    if (bit_depth == EB_10BIT) {
-        initialize_samples_neighboring_reference_picture16_bit(
-            reference_object->reference_picture16bit->buffer_y,
-            reference_object->reference_picture16bit->stride_y,
-            reference_object->reference_picture16bit->width,
-            reference_object->reference_picture16bit->height,
-            picture_buffer_desc_init_data_ptr->left_padding,
-            picture_buffer_desc_init_data_ptr->top_padding);
-
-        initialize_samples_neighboring_reference_picture16_bit(
-            reference_object->reference_picture16bit->buffer_cb,
-            reference_object->reference_picture16bit->stride_cb,
-            reference_object->reference_picture16bit->width >> 1,
-            reference_object->reference_picture16bit->height >> 1,
-            picture_buffer_desc_init_data_ptr->left_padding >> 1,
-            picture_buffer_desc_init_data_ptr->top_padding >> 1);
-
-        initialize_samples_neighboring_reference_picture16_bit(
-            reference_object->reference_picture16bit->buffer_cr,
-            reference_object->reference_picture16bit->stride_cr,
-            reference_object->reference_picture16bit->width >> 1,
-            reference_object->reference_picture16bit->height >> 1,
-            picture_buffer_desc_init_data_ptr->left_padding >> 1,
-            picture_buffer_desc_init_data_ptr->top_padding >> 1);
-    } else
-#else
     UNUSED(bit_depth);
-#endif
     {
         initialize_samples_neighboring_reference_picture_8bit(
             reference_object->reference_picture->buffer_y,
@@ -138,32 +109,17 @@ void initialize_samples_neighboring_reference_picture(
 
 static void svt_reference_object_dctor(EbPtr p) {
     EbReferenceObject *obj = (EbReferenceObject *)p;
-#if !FTR_MEM_OPT
-    EB_DELETE(obj->reference_picture16bit);
-#endif
 
     EB_DELETE(obj->reference_picture);
-#if FTR_NEW_WN_LVLS
     EB_FREE_2D(obj->unit_info);
-#endif
     EB_FREE_ALIGNED_ARRAY(obj->mvs);
-#if FTR_VLPD1
     EB_FREE_ARRAY(obj->sb_intra);
     EB_FREE_ARRAY(obj->sb_skip);
     EB_FREE_ARRAY(obj->sb_64x64_mvp);
-#endif
-#if !FTR_NEW_MULTI_PASS
-    EB_DESTROY_MUTEX(obj->referenced_area_mutex);
-#endif
     for (uint8_t denom_idx = 0; denom_idx < NUM_SCALES; denom_idx++) {
         if (obj->downscaled_reference_picture[denom_idx] != NULL) {
             EB_DELETE(obj->downscaled_reference_picture[denom_idx]);
         }
-#if !FTR_MEM_OPT
-        if (obj->downscaled_reference_picture16bit[denom_idx] != NULL) {
-            EB_DELETE(obj->downscaled_reference_picture16bit[denom_idx]);
-        }
-#endif
         EB_DESTROY_MUTEX(obj->resize_mutex[denom_idx]);
     }
     EB_DELETE(obj->quarter_reference_picture);
@@ -192,33 +148,9 @@ EbErrorType svt_reference_object_ctor(EbReferenceObject *reference_object,
     //TODO:12bit
     if (picture_buffer_desc_init_data_16bit_ptr.bit_depth == EB_10BIT) {
         // Hsan: set split_mode to 0 to construct the packed reference buffer (used @ EP)
-#if !FTR_MEM_OPT
-        picture_buffer_desc_init_data_16bit_ptr.split_mode = EB_FALSE;
-        EB_NEW(reference_object->reference_picture16bit,
-               svt_picture_buffer_desc_ctor,
-               (EbPtr)&picture_buffer_desc_init_data_16bit_ptr);
-
-        initialize_samples_neighboring_reference_picture(
-            reference_object,
-            &picture_buffer_desc_init_data_16bit_ptr,
-            picture_buffer_desc_init_data_16bit_ptr.bit_depth);
-#endif
-#if FTR_MEM_OPT
         // Use 10bit here to use in MD
         picture_buffer_desc_init_data_16bit_ptr.split_mode = EB_TRUE;
-        picture_buffer_desc_init_data_16bit_ptr.bit_depth = EB_10BIT;
-#else
-        // Use 8bit here to use in MD
-        picture_buffer_desc_init_data_16bit_ptr.split_mode = EB_FALSE;
-        picture_buffer_desc_init_data_16bit_ptr.bit_depth  = EB_8BIT;
-#endif
-#if !FTR_MEM_OPT
-        // if hbd_md = 1, and we only use 8bit luma for obmc_motion_refine
-        if (ref_init_ptr->hbd_mode_decision == EB_10_BIT_MD) {
-            picture_buffer_desc_init_data_16bit_ptr.buffer_enable_mask =
-                PICTURE_BUFFER_DESC_LUMA_MASK;
-        }
-#endif
+        picture_buffer_desc_init_data_16bit_ptr.bit_depth  = EB_10BIT;
         EB_NEW(reference_object->reference_picture,
                svt_picture_buffer_desc_ctor,
                (EbPtr)&picture_buffer_desc_init_data_16bit_ptr);
@@ -233,30 +165,15 @@ EbErrorType svt_reference_object_ctor(EbReferenceObject *reference_object,
             reference_object,
             picture_buffer_desc_init_data_ptr,
             picture_buffer_desc_init_data_16bit_ptr.bit_depth);
-#if !FTR_MEM_OPT
-        if (picture_buffer_desc_init_data_ptr->is_16bit_pipeline) {
-            picture_buffer_desc_init_data_16bit_ptr.split_mode = EB_FALSE;
-            picture_buffer_desc_init_data_16bit_ptr.bit_depth  = EB_10BIT;
-            EB_NEW(reference_object->reference_picture16bit,
-                   svt_picture_buffer_desc_ctor,
-                   (EbPtr)&picture_buffer_desc_init_data_16bit_ptr);
-
-            initialize_samples_neighboring_reference_picture(
-                reference_object,
-                picture_buffer_desc_init_data_ptr,
-                picture_buffer_desc_init_data_16bit_ptr.bit_depth);
-            reference_object->reference_picture16bit->bit_depth = EB_8BIT;
-        }
-#endif
     }
     reference_object->input_picture = NULL;
 
     uint32_t mi_rows = reference_object->reference_picture->height >> MI_SIZE_LOG2;
     uint32_t mi_cols = reference_object->reference_picture->width >> MI_SIZE_LOG2;
-#if FTR_NEW_WN_LVLS
     // there should be one unit info per plane and per rest unit
-    EB_MALLOC_2D(reference_object->unit_info, MAX_MB_PLANE, picture_buffer_desc_init_data_ptr->rest_units_per_tile);
-#endif
+    EB_MALLOC_2D(reference_object->unit_info,
+                 MAX_MB_PLANE,
+                 picture_buffer_desc_init_data_ptr->rest_units_per_tile);
 
     if (picture_buffer_desc_init_data_ptr->mfmv) {
         //MFMV map is 8x8 based.
@@ -270,26 +187,19 @@ EbErrorType svt_reference_object_ctor(EbReferenceObject *reference_object,
     reference_object->ds_pics.quarter_picture_ptr   = reference_object->quarter_reference_picture;
     reference_object->ds_pics.sixteenth_picture_ptr = reference_object->sixteenth_reference_picture;
     memset(&reference_object->film_grain_params, 0, sizeof(reference_object->film_grain_params));
-#if !FTR_NEW_MULTI_PASS
-    EB_CREATE_MUTEX(reference_object->referenced_area_mutex);
-#endif
     // set all supplemental downscaled reference picture pointers to NULL
     for (uint8_t down_idx = 0; down_idx < NUM_SCALES; down_idx++) {
-        reference_object->downscaled_reference_picture[down_idx]      = NULL;
-#if !FTR_MEM_OPT
-        reference_object->downscaled_reference_picture16bit[down_idx] = NULL;
-#endif
-        reference_object->downscaled_picture_number[down_idx]         = (uint64_t)~0;
+        reference_object->downscaled_reference_picture[down_idx] = NULL;
+        reference_object->downscaled_picture_number[down_idx] = (uint64_t)~0;
         EB_CREATE_MUTEX(reference_object->resize_mutex[down_idx]);
     }
 
     reference_object->mi_rows = mi_rows;
     reference_object->mi_cols = mi_cols;
-#if FTR_VLPD1
     EB_MALLOC_ARRAY(reference_object->sb_intra, picture_buffer_desc_init_data_ptr->sb_total_count);
     EB_MALLOC_ARRAY(reference_object->sb_skip, picture_buffer_desc_init_data_ptr->sb_total_count);
-    EB_MALLOC_ARRAY(reference_object->sb_64x64_mvp, picture_buffer_desc_init_data_ptr->sb_total_count);
-#endif
+    EB_MALLOC_ARRAY(reference_object->sb_64x64_mvp,
+                    picture_buffer_desc_init_data_ptr->sb_total_count);
     return EB_ErrorNone;
 }
 
@@ -303,8 +213,8 @@ EbErrorType svt_reference_object_creator(EbPtr *object_dbl_ptr, EbPtr object_ini
     return EB_ErrorNone;
 }
 
-EbErrorType svt_reference_object_reset(EbReferenceObject* reference_object,
-    SequenceControlSet* scs_ptr) {
+EbErrorType svt_reference_object_reset(EbReferenceObject * reference_object,
+                                       SequenceControlSet *scs_ptr) {
     reference_object->mi_rows = scs_ptr->max_input_luma_height >> MI_SIZE_LOG2;
     reference_object->mi_cols = scs_ptr->max_input_luma_width >> MI_SIZE_LOG2;
 
@@ -339,7 +249,7 @@ EbErrorType svt_pa_reference_object_ctor(EbPaReferenceObject *pa_ref_obj_,
     EbPictureBufferDescInitData *picture_buffer_desc_init_data_ptr = (EbPictureBufferDescInitData *)
         object_init_data_ptr;
 
-    pa_ref_obj_->dctor                                    = svt_pa_reference_object_dctor;
+    pa_ref_obj_->dctor = svt_pa_reference_object_dctor;
 
     // Reference picture constructor
     EB_NEW(pa_ref_obj_->input_padded_picture_ptr,
@@ -347,15 +257,15 @@ EbErrorType svt_pa_reference_object_ctor(EbPaReferenceObject *pa_ref_obj_,
            (EbPtr)picture_buffer_desc_init_data_ptr);
     // Downsampled reference picture constructor
     EB_NEW(pa_ref_obj_->quarter_downsampled_picture_ptr,
-        svt_picture_buffer_desc_ctor,
-        (EbPtr)(picture_buffer_desc_init_data_ptr + 1));
+           svt_picture_buffer_desc_ctor,
+           (EbPtr)(picture_buffer_desc_init_data_ptr + 1));
     EB_NEW(pa_ref_obj_->sixteenth_downsampled_picture_ptr,
-        svt_picture_buffer_desc_ctor,
-        (EbPtr)(picture_buffer_desc_init_data_ptr + 2));
+           svt_picture_buffer_desc_ctor,
+           (EbPtr)(picture_buffer_desc_init_data_ptr + 2));
     // set all supplemental downscaled reference picture pointers to NULL
     for (uint8_t down_idx = 0; down_idx < NUM_SCALES; down_idx++) {
-        pa_ref_obj_->downscaled_input_padded_picture_ptr[down_idx]        = NULL;
-        pa_ref_obj_->downscaled_quarter_downsampled_picture_ptr[down_idx] = NULL;
+        pa_ref_obj_->downscaled_input_padded_picture_ptr[down_idx]          = NULL;
+        pa_ref_obj_->downscaled_quarter_downsampled_picture_ptr[down_idx]   = NULL;
         pa_ref_obj_->downscaled_sixteenth_downsampled_picture_ptr[down_idx] = NULL;
         pa_ref_obj_->downscaled_picture_number[down_idx]                    = (uint64_t)~0;
         EB_CREATE_MUTEX(pa_ref_obj_->resize_mutex[down_idx]);
@@ -382,17 +292,11 @@ EbErrorType svt_pa_reference_object_creator(EbPtr *object_dbl_ptr, EbPtr object_
 void release_pa_reference_objects(SequenceControlSet *scs_ptr, PictureParentControlSet *pcs_ptr) {
     // PA Reference Pictures
     if (pcs_ptr->slice_type != I_SLICE) {
-#if CLN_ME_NUM_LISTS
-        uint32_t num_of_list_to_search = (pcs_ptr->slice_type == P_SLICE) ? 1 /*List 0 only*/ : 2 /*List 0 + 1*/;
+        uint32_t num_of_list_to_search =
+            (pcs_ptr->slice_type == P_SLICE) ? 1 /*List 0 only*/ : 2 /*List 0 + 1*/;
 
         // List Loop
         for (uint32_t list_index = REF_LIST_0; list_index < num_of_list_to_search; ++list_index) {
-#else
-        uint32_t num_of_list_to_search = (pcs_ptr->slice_type == P_SLICE) ? REF_LIST_0 : REF_LIST_1;
-
-        // List Loop
-        for (uint32_t list_index = REF_LIST_0; list_index <= num_of_list_to_search; ++list_index) {
-#endif
             // Release PA Reference Pictures
             uint8_t num_of_ref_pic_to_search = (pcs_ptr->slice_type == P_SLICE)
                 ? MIN(pcs_ptr->ref_list0_count, scs_ptr->reference_count)
@@ -405,11 +309,9 @@ void release_pa_reference_objects(SequenceControlSet *scs_ptr, PictureParentCont
                 if (pcs_ptr->ref_pa_pic_ptr_array[list_index][ref_pic_index] != NULL) {
                     //assert((int32_t)pcs_ptr->ref_pa_pic_ptr_array[list_index][ref_pic_index]->live_count > 0);
                     svt_release_object(pcs_ptr->ref_pa_pic_ptr_array[list_index][ref_pic_index]);
-#if OPT_PA_REF
                     //y8b  needs to get decremented at the same time of pa ref
                     // svt_release_object_with_call_stack(pcs_ptr->ref_pa_pic_ptr_array[list_index][ref_pic_index]->friend_wrapper, 2000, pcs_ptr->picture_number);
                     svt_release_object(pcs_ptr->ref_y8b_array[list_index][ref_pic_index]);
-#endif
                 }
             }
         }
@@ -418,15 +320,11 @@ void release_pa_reference_objects(SequenceControlSet *scs_ptr, PictureParentCont
     if (pcs_ptr->pa_reference_picture_wrapper_ptr != NULL) {
         //assert((int32_t)pcs_ptr->pa_reference_picture_wrapper_ptr->live_count > 0);
         svt_release_object(pcs_ptr->pa_reference_picture_wrapper_ptr);
-#if OPT_PA_REF
         //y8b needs to get decremented at the same time of pa ref
-       // svt_release_object_with_call_stack(pcs_ptr->eb_y8b_wrapper_ptr, 2500,  pcs_ptr->picture_number);
+        // svt_release_object_with_call_stack(pcs_ptr->eb_y8b_wrapper_ptr, 2500,  pcs_ptr->picture_number);
         svt_release_object(pcs_ptr->eb_y8b_wrapper_ptr);
-#endif
     }
-#if FIX_I51
     // Mark that the PCS released PA references
     pcs_ptr->reference_released = 1;
-#endif
     return;
 }

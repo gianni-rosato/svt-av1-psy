@@ -5,9 +5,10 @@
  * This source code is subject to the terms of the BSD 2 Clause License and
  * the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
  * was not distributed with this source code in the LICENSE file, you can
- * obtain it at https://www.aomedia.org/license/software-license. If the Alliance for Open
- * Media Patent License 1.0 was not distributed with this source code in the
- * PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
+ * obtain it at https://www.aomedia.org/license/software-license. If the
+ * Alliance for Open Media Patent License 1.0 was not distributed with this
+ * source code in the PATENTS file, you can obtain it at
+ * https://www.aomedia.org/license/patent-license.
  */
 
 /******************************************************************************
@@ -59,8 +60,7 @@ void reference_adst_1d(const double *in, double *out, int size);
 
 void reference_idtx_1d(const double *in, double *out, int size);
 
-void reference_txfm_1d(TxType1D type, const double *in, double *out,
-                       int size);
+void reference_txfm_1d(TxType1D type, const double *in, double *out, int size);
 
 TxType1D get_txfm1d_types(TxfmType txfm_type);
 

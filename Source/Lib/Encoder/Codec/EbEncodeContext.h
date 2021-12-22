@@ -27,9 +27,7 @@
 #include "EbObject.h"
 #include "encoder.h"
 #include "firstpass.h"
-#if FTR_RC_CAP
 #include "EbRateControlProcess.h"
-#endif
 
 // *Note - the queues are small for testing purposes.  They should be increased when they are done.
 #define PRE_ASSIGNMENT_MAX_DEPTH 128 // should be large enough to hold an entire prediction period
@@ -42,21 +40,8 @@
 #define PICTURE_MANAGER_REORDER_QUEUE_MAX_DEPTH 2048
 #define HIGH_LEVEL_RATE_CONTROL_HISTOGRAM_QUEUE_MAX_DEPTH 2048
 #define PACKETIZATION_REORDER_QUEUE_MAX_DEPTH 2048
-#if FIX_PRESET_TUNING
-#if OPT_TPL_ALL64X64
-#define TPL_PADX 64
-#define TPL_PADY 64
-#elif OPT_TPL_ALL32X32
 #define TPL_PADX 32
 #define TPL_PADY 32
-#else
-#define TPL_PADX 16
-#define TPL_PADY 16
-#endif
-#else
-#define TPL_PADX 20
-#define TPL_PADY 20
-#endif
 // RC Groups: They should be a power of 2, so we can replace % by &.
 // Instead of using x % y, we use x && (y-1)
 #define PARALLEL_GOP_MAX_NUMBER 256
@@ -210,11 +195,9 @@ typedef struct EncodeContext {
     RecodeLoopType    recode_loop;
     // This feature controls the tolerence vs target used in deciding whether to
     // recode a frame. It has no meaning if recode is disabled.
-    int recode_tolerance;
-#if FTR_1PASS_CBR_RT_MT
-    int32_t frame_updated;
+    int      recode_tolerance;
+    int32_t  frame_updated;
     EbHandle frame_updated_mutex;
-#endif
 } EncodeContext;
 
 typedef struct EncodeContextInitData {

@@ -1,13 +1,14 @@
 /*
  * Copyright(c) 2019 Intel Corporation
-*
-* This source code is subject to the terms of the BSD 2 Clause License and
-* the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
-* was not distributed with this source code in the LICENSE file, you can
-* obtain it at https://www.aomedia.org/license/software-license. If the Alliance for Open
-* Media Patent License 1.0 was not distributed with this source code in the
-* PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
-*/
+ *
+ * This source code is subject to the terms of the BSD 2 Clause License and
+ * the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
+ * was not distributed with this source code in the LICENSE file, you can
+ * obtain it at https://www.aomedia.org/license/software-license. If the
+ * Alliance for Open Media Patent License 1.0 was not distributed with this
+ * source code in the PATENTS file, you can obtain it at
+ * https://www.aomedia.org/license/patent-license.
+ */
 
 #include <string>
 
@@ -21,9 +22,8 @@ void set_enc_config(void *config_ptr, const char *name, const char *value) {
     set_config_value(config, name, value);
 }
 
-bool set_default_config(EbSvtAv1EncConfiguration* config)
-{
-    EbComponentType* handle;
+bool set_default_config(EbSvtAv1EncConfiguration *config) {
+    EbComponentType *handle;
     if (svt_av1_enc_init_handle(&handle, NULL, config) != EB_ErrorNone) {
         return false;
     }
@@ -39,11 +39,7 @@ void release_enc_config(void *config_ptr) {
 }
 
 void *create_enc_config() {
-#if CLN_ENC_CONFIG_SIG
     EbConfig *config = svt_config_ctor();
-#else
-    EbConfig *config = svt_config_ctor(ENCODE_SINGLE_PASS);
-#endif
     assert(config != NULL);
     if (!set_default_config(&config->config)) {
         release_enc_config(config);
@@ -55,9 +51,7 @@ void *create_enc_config() {
 
 int copy_enc_param(EbSvtAv1EncConfiguration *dst_enc_config, void *config_ptr) {
     EbConfig *config = (EbConfig *)config_ptr;
-    memcpy(dst_enc_config,
-           &config->config,
-           sizeof(EbSvtAv1EncConfiguration));
+    memcpy(dst_enc_config, &config->config, sizeof(EbSvtAv1EncConfiguration));
     return 0;
 }
 

@@ -4,9 +4,10 @@
  * This source code is subject to the terms of the BSD 2 Clause License and
  * the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
  * was not distributed with this source code in the LICENSE file, you can
- * obtain it at https://www.aomedia.org/license/software-license. If the Alliance for Open
- * Media Patent License 1.0 was not distributed with this source code in the
- * PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
+ * obtain it at https://www.aomedia.org/license/software-license. If the
+ * Alliance for Open Media Patent License 1.0 was not distributed with this
+ * source code in the PATENTS file, you can obtain it at
+ * https://www.aomedia.org/license/patent-license.
  */
 #include "gtest/gtest.h"
 #include "warp_filter_test_util.h"
@@ -41,11 +42,9 @@ INSTANTIATE_TEST_CASE_P(
     AVX2, AV1WarpFilterTest,
     libaom_test::AV1WarpFilter::BuildParams(svt_av1_warp_affine_avx2));
 
-#if SSE_CODE_OPT
 INSTANTIATE_TEST_CASE_P(
     SSE4_1, AV1WarpFilterTest,
     libaom_test::AV1WarpFilter::BuildParams(svt_av1_warp_affine_sse4_1));
-#endif
 
 INSTANTIATE_TEST_CASE_P(AVX2, AV1HighbdWarpFilterTest,
                         libaom_test::AV1HighbdWarpFilter::BuildParams(
