@@ -9,7 +9,6 @@
 * PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
 */
 
-
 /*
 * This file contains only debug macros that are used during the development
 * and are supposed to be cleaned up every tag cycle
@@ -25,9 +24,10 @@
 * - #if 0 / #if 1 are not to be used
 */
 
-
 #ifndef EbDebugMacros_h
 #define EbDebugMacros_h
+
+// clang-format off
 
 #ifdef __cplusplus
 extern "C" {
@@ -941,5 +941,7 @@ typedef enum MultiPassModes {
 #ifdef __cplusplus
 }
 #endif // __cplusplus
+
+// clang-format on
 
 #endif // EbDebugMacros_h
