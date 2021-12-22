@@ -1,11 +1,10 @@
 ---
 Language: Cpp
-# BasedOnStyle:  Google
+BasedOnStyle: Google
 AlignAfterOpenBracket: Align
 AlignEscapedNewlines: Left
 AlignConsecutiveAssignments: true
 AlignConsecutiveDeclarations: true
-AlignEscapedNewlines: Left
 AlignOperands: false
 AlignTrailingComments: false
 AllowAllParametersOfDeclarationOnNextLine: true
@@ -24,7 +23,6 @@ BraceWrapping:
   AfterFunction: false
   AfterStruct: false
   AfterUnion: false
-  AfterExternBlock: false
   BeforeElse: false
   IndentBraces: false
   SplitEmptyFunction: true
@@ -40,7 +38,6 @@ ContinuationIndentWidth: 4
 DerivePointerAlignment: true
 DisableFormat: false
 ExperimentalAutoDetectBinPacking: false
-IncludeBlocks: Preserve
 IncludeCategories:
   - Regex: '^<ext/.*\.h>'
     Priority: 2
@@ -52,7 +49,6 @@ IncludeCategories:
     Priority: 3
 IncludeIsMainRegex: "([-_](test|unittest))?$"
 IndentCaseLabels: false
-IndentPPDirectives: None
 IndentWidth: 4
 IndentWrappedFunctionNames: false
 KeepEmptyLinesAtTheStartOfBlocks: false
