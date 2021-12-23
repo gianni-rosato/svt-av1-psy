@@ -57,6 +57,8 @@ EbErrorType check_00_center(PictureParentControlSet *pcs_ptr, EbPictureBufferDes
                             MeContext *context_ptr, uint32_t sb_origin_x, uint32_t sb_origin_y,
                             uint32_t sb_width, uint32_t sb_height, int16_t *x_search_center,
                             int16_t *y_search_center, uint32_t zz_sad);
+void set_gm_controls(PictureParentControlSet *pcs_ptr, uint8_t gm_level);
+uint8_t derive_gm_level(PictureParentControlSet *pcs_ptr);
 
 /************************************************
  * Set ME/HME Params from Config
@@ -685,6 +687,12 @@ void *motion_estimation_kernel(void *input_ptr) {
             tf_signal_derivation_me_kernel_oq(pcs_ptr, context_ptr);
         else // TASK_FIRST_PASS_ME
             first_pass_signal_derivation_me_kernel(scs_ptr, pcs_ptr, context_ptr);
+
+        if (in_results_ptr->task_type == TASK_SUPERRES_RE_ME) {
+            // reset gm based on super-res on/off
+            uint8_t gm_level = derive_gm_level(pcs_ptr);
+            set_gm_controls(pcs_ptr, gm_level);
+        }
 
         if ((in_results_ptr->task_type == TASK_PAME) ||
             (in_results_ptr->task_type == TASK_SUPERRES_RE_ME)) {

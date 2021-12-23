@@ -1597,6 +1597,25 @@ void set_gm_controls(PictureParentControlSet *pcs_ptr, uint8_t gm_level)
         break;
     }
 }
+uint8_t derive_gm_level(PictureParentControlSet* pcs_ptr) {
+    SequenceControlSet* scs_ptr = pcs_ptr->scs_ptr;
+    uint8_t gm_level = 0;
+    if (scs_ptr->static_config.enable_global_motion == EB_TRUE &&
+        pcs_ptr->frame_superres_enabled == EB_FALSE) {
+        if (pcs_ptr->enc_mode <= ENC_MRS)
+            gm_level = 2;
+        else if (pcs_ptr->enc_mode <= ENC_M2)
+            gm_level = 3;
+        else if (pcs_ptr->enc_mode <= ENC_M5)
+            gm_level = pcs_ptr->is_used_as_reference_flag ? 4 : 0;
+        else if (pcs_ptr->enc_mode <= ENC_M6)
+            gm_level = pcs_ptr->is_used_as_reference_flag ? 5 : 0;
+        else
+            gm_level = 0;
+    }
+    return gm_level;
+}
+
 /******************************************************
 * Derive Multi-Processes Settings for OQ
 Input   : encoder mode and tune
@@ -1873,22 +1892,6 @@ EbErrorType signal_derivation_multi_processes_oq(
             pcs_ptr->frm_hdr.use_ref_frame_mvs = 1;
         }
 
-        uint8_t gm_level = 0;
-        if (scs_ptr->static_config.enable_global_motion == EB_TRUE &&
-            pcs_ptr->frame_superres_enabled == EB_FALSE) {
-            if (pcs_ptr->enc_mode <= ENC_MRS)
-                gm_level = 2;
-            else if (pcs_ptr->enc_mode <= ENC_M2)
-                gm_level = 3;
-            else if (pcs_ptr->enc_mode <= ENC_M5)
-                gm_level = pcs_ptr->is_used_as_reference_flag ? 4 : 0;
-            else if (pcs_ptr->enc_mode <= ENC_M6)
-                gm_level = pcs_ptr->is_used_as_reference_flag ? 5 : 0;
-            else
-                gm_level = 0;
-        }
-
-        set_gm_controls(pcs_ptr, gm_level);
     (void)context_ptr;
 
     // Tune TPL for better chroma.Only for 240P. 0 is OFF
@@ -5013,21 +5016,7 @@ void send_picture_out(
         }
     }
 
-    uint8_t gm_level = 0;
-    if (scs->static_config.enable_global_motion == EB_TRUE &&
-        pcs->frame_superres_enabled == EB_FALSE) {
-        if (pcs->enc_mode <= ENC_MRS)
-            gm_level = 2;
-        else if (pcs->enc_mode <= ENC_M1)
-            gm_level = 3;
-        else if (pcs->enc_mode <= ENC_M5)
-            gm_level = pcs->is_used_as_reference_flag ? 4 : 0;
-        else if (pcs->enc_mode <= ENC_M8)
-            gm_level = pcs->is_used_as_reference_flag ? 5 : 0;
-        else
-            gm_level = 0;
-    }
-
+    uint8_t gm_level = derive_gm_level(pcs);
     set_gm_controls(pcs, gm_level);
 
     for (uint32_t segment_index = 0; segment_index < pcs->me_segments_total_count; ++segment_index) {
