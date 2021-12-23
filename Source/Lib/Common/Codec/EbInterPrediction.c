@@ -1377,7 +1377,7 @@ void svt_highbd_inter_predictor_light_pd0(uint8_t *src, uint8_t *src_ptr_2b, int
                                           ConvolveParams *conv_params, int32_t bd) {
     uint16_t *src_10b;
     // pack the reference into temp 16bit buffer
-    int32_t stride;
+    int32_t stride = STRIDE_PACK;
 
     uint8_t offset = INTERPOLATION_OFFSET;
     DECLARE_ALIGNED(16, uint16_t, packed_buf[PACKED_BUFFER_SIZE]);
@@ -1386,12 +1386,11 @@ void svt_highbd_inter_predictor_light_pd0(uint8_t *src, uint8_t *src_ptr_2b, int
                src_ptr_2b - offset - (offset * src_stride),
                src_stride,
                (uint16_t *)packed_buf,
-               MAX_SB_SIZE,
+               stride,
                w + (offset << 1),
                h + (offset << 1));
 
-    src_10b = (uint16_t *)packed_buf + offset + (offset * MAX_SB_SIZE);
-    stride  = MAX_SB_SIZE;
+    src_10b = (uint16_t *)packed_buf + offset + (offset * stride);
 
     convolveHbd[0][0][conv_params->is_compound](src_10b,
                                                 stride,
@@ -1416,7 +1415,7 @@ void svt_inter_predictor_light_pd1(uint8_t *src, uint8_t *src_2b, int32_t src_st
 
         uint16_t *src_10b;
         // pack the reference into temp 16bit buffer
-        int32_t stride;
+        int32_t stride = STRIDE_PACK ;
         uint8_t offset = INTERPOLATION_OFFSET;
         DECLARE_ALIGNED(16, uint16_t, packed_buf[PACKED_BUFFER_SIZE]);
         pack_block(src - offset - (offset * src_stride),
@@ -1424,12 +1423,11 @@ void svt_inter_predictor_light_pd1(uint8_t *src, uint8_t *src_2b, int32_t src_st
                    src_2b - offset - (offset * src_stride),
                    src_stride,
                    (uint16_t *)packed_buf,
-                   MAX_SB_SIZE,
+                   stride,
                    w + (offset << 1),
                    h + (offset << 1));
 
-        src_10b = (uint16_t *)packed_buf + offset + (offset * MAX_SB_SIZE);
-        stride  = MAX_SB_SIZE;
+        src_10b = (uint16_t*)packed_buf + offset + (offset * stride);
 
         convolveHbd[mv_x != 0][mv_y != 0][conv_params->is_compound](
             src_10b,

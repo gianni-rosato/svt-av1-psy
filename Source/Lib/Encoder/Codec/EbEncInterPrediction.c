@@ -2252,19 +2252,18 @@ static void chroma_plane_warped_motion_prediction_sub8x8(
         DECLARE_ALIGNED(16, uint16_t, packed_buf[PACKED_BUFFER_SIZE]);
         // pack the reference into temp 16bit buffer
         uint8_t offset = INTERPOLATION_OFFSET;
-        int32_t stride;
+        int32_t stride = STRIDE_PACK;
 
         pack_block(src_ptr_l0 - offset - (offset * src_stride),
                    src_stride,
                    src_ptr_2b_l0 - offset - (offset * src_stride),
                    src_stride,
                    (uint16_t *)packed_buf,
-                   MAX_SB_SIZE,
+                   stride,
                    bwidth + (offset << 1),
                    bheight + (offset << 1));
 
-        src_10b = (uint16_t *)packed_buf + offset + (offset * MAX_SB_SIZE);
-        stride  = MAX_SB_SIZE;
+        src_10b = (uint16_t*)packed_buf + offset + (offset * stride);
 
         convolveHbd[subpel_x != 0][subpel_y != 0][is_compound](src_10b,
                                                                stride,
@@ -2333,19 +2332,18 @@ static void chroma_plane_warped_motion_prediction_sub8x8(
             DECLARE_ALIGNED(16, uint16_t, packed_buf[PACKED_BUFFER_SIZE]);
             // pack the reference into temp 16bit buffer
             uint8_t offset = INTERPOLATION_OFFSET;
-            int32_t stride;
+            int32_t stride = STRIDE_PACK;
 
             pack_block(src_ptr_l1 - offset - (offset * src_stride),
                        src_stride,
                        src_ptr_2b_l1 - offset - (offset * src_stride),
                        src_stride,
                        (uint16_t *)packed_buf,
-                       MAX_SB_SIZE,
+                       stride,
                        bwidth + (offset << 1),
                        bheight + (offset << 1));
 
-            src_10b = (uint16_t *)packed_buf + offset + (offset * MAX_SB_SIZE);
-            stride  = MAX_SB_SIZE;
+            src_10b = (uint16_t*)packed_buf + offset + (offset * stride);
 
             convolveHbd[subpel_x != 0][subpel_y != 0][is_compound](
                 src_10b,

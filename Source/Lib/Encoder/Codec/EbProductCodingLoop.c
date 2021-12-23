@@ -3155,7 +3155,7 @@ void perform_md_reference_pruning(PictureControlSet *pcs_ptr, ModeDecisionContex
                     DECLARE_ALIGNED(16, uint16_t, packed_buf[PACKED_BUFFER_SIZE]);
                     // pack the reference into temp 16bit buffer
                     uint8_t offset = INTERPOLATION_OFFSET;
-                    int32_t stride;
+                    int32_t stride = STRIDE_PACK ;
 
                     pack_block(ref_pic->buffer_y + ref_origin_index - offset -
                                    (offset * ref_pic->stride_y),
@@ -3164,12 +3164,11 @@ void perform_md_reference_pruning(PictureControlSet *pcs_ptr, ModeDecisionContex
                                    (offset * ref_pic->stride_bit_inc_y),
                                ref_pic->stride_bit_inc_y,
                                (uint16_t *)packed_buf,
-                               MAX_SB_SIZE,
+                               stride,
                                context_ptr->blk_geom->bwidth + (offset << 1),
                                context_ptr->blk_geom->bheight + (offset << 1));
 
-                    src_10b = (uint16_t *)packed_buf + offset + (offset * MAX_SB_SIZE);
-                    stride  = MAX_SB_SIZE;
+                    src_10b = (uint16_t*)packed_buf + offset + (offset * stride);
 
                     mvp_distortion = sad_16b_kernel(
                         ((uint16_t *)input_picture_ptr->buffer_y) + input_origin_index,
@@ -3239,7 +3238,7 @@ void perform_md_reference_pruning(PictureControlSet *pcs_ptr, ModeDecisionContex
                     DECLARE_ALIGNED(16, uint16_t, packed_buf[PACKED_BUFFER_SIZE]);
                     // pack the reference into temp 16bit buffer
                     uint8_t offset = INTERPOLATION_OFFSET;
-                    int32_t stride;
+                    int32_t stride = STRIDE_PACK;
 
                     pack_block(ref_pic->buffer_y + ref_origin_index - offset -
                                    (offset * ref_pic->stride_y),
@@ -3248,12 +3247,11 @@ void perform_md_reference_pruning(PictureControlSet *pcs_ptr, ModeDecisionContex
                                    (offset * ref_pic->stride_bit_inc_y),
                                ref_pic->stride_bit_inc_y,
                                (uint16_t *)packed_buf,
-                               MAX_SB_SIZE,
+                               stride,
                                context_ptr->blk_geom->bwidth + (offset << 1),
                                context_ptr->blk_geom->bheight + (offset << 1));
 
-                    src_10b = (uint16_t *)packed_buf + offset + (offset * MAX_SB_SIZE);
-                    stride  = MAX_SB_SIZE;
+                    src_10b = (uint16_t*)packed_buf + offset + (offset * stride);
 
                     pa_me_distortion = sad_16b_kernel(
                         ((uint16_t *)input_picture_ptr->buffer_y) + input_origin_index,
