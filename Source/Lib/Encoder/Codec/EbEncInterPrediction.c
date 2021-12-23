@@ -3296,7 +3296,7 @@ EbErrorType warped_motion_prediction(
     uint8_t             is_compound  = (mv_unit->pred_direction == BI_PRED) ? 1 : 0;
     SequenceControlSet *scs_ptr      = (SequenceControlSet *)
                                       picture_control_set_ptr->scs_wrapper_ptr->object_ptr;
-    EbBool is_16bit_pipeline = scs_ptr->static_config.is_16bit_pipeline;
+    EbBool is_16bit_pipeline = scs_ptr->is_16bit_pipeline;
     EbBool is16bit = (EbBool)(bit_depth > EB_8BIT) || (is_encode_pass && is_16bit_pipeline);
 
     int32_t  src_stride;
@@ -3944,7 +3944,7 @@ EbErrorType warped_motion_prediction_16bit_pipeline(
 
     SequenceControlSet *scs_ptr = (SequenceControlSet *)
                                       picture_control_set_ptr->scs_wrapper_ptr->object_ptr;
-    EbBool is_16bit_pipeline = scs_ptr->static_config.is_16bit_pipeline;
+    EbBool is_16bit_pipeline = scs_ptr->is_16bit_pipeline;
     EbBool is16bit           = (EbBool)(bit_depth > EB_8BIT) || is_16bit_pipeline;
 
     int32_t  src_stride;

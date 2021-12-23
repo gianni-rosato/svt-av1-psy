@@ -1,4 +1,4 @@
-/*
+﻿/*
 * Copyright(c) 2019 Intel Corporation
 * Copyright (c) 2016, Alliance for Open Media. All rights reserved
 *
@@ -53,6 +53,7 @@ typedef struct IppPassControls {
 typedef struct MidPassControls {
     uint8_t ds; // use downsampled input
 } MidPassControls;
+
 /************************************
      * Sequence Control Set
      ************************************/
@@ -259,6 +260,181 @@ typedef struct SequenceControlSet {
     MidPassControls mid_pass_ctrls;
     uint8_t         ipp_was_ds;
     uint8_t         final_pass_preset;
+    /* Palette Mode
+    *
+    * -1: Default, 0: OFF, 1: Fully ON, 2 ... 6: Faster levels */
+    int32_t palette_level;
+    /* enable angle intra
+    *
+    * Default is -1. */
+    int intra_angle_delta;
+    /* Specifies whether to use 16bit pipeline.
+    *
+    * 0: 8 bit pipeline.
+    * 1: 16 bit pipeline.
+    * Now 16bit pipeline is only enabled in filter
+    * Default is 0. */
+    EbBool is_16bit_pipeline;
+
+    /* Super block size (mm-signal)
+    *
+    * Default is 128. */
+    uint32_t super_block_size;
+
+    /* Warped motion
+    *
+    * Default is -1. */
+    int enable_warped_motion;
+
+    /* Global motion
+    *
+    * Default is 1. */
+    EbBool enable_global_motion;
+    int sg_filter_mode;
+    int wn_filter_mode;
+
+    /* inter intra compound
+    *
+    * Default is -1. */
+    int inter_intra_compound;
+
+    /* enable paeth
+    *
+    * Default is -1. */
+    int enable_paeth;
+
+    /* enable smooth
+    *
+    * Default is -1. */
+    int enable_smooth;
+
+    /* spatial sse in full loop
+    *
+    * -1: Default, 0: OFF, 1: ON. */
+    int spatial_sse_full_loop_level;
+    /* over boundry block
+    *
+    * Default is -1. */
+    int over_bndry_blk;
+    /* new nearest comb injection
+    *
+    * Default is -1. */
+    int new_nearest_comb_inject;
+
+    /* nsq table
+    *
+    * Default is -1. */
+    int nsq_table;
+    /* frame end cdf update
+    *
+    * Default is -1. */
+    int frame_end_cdf_update;
+
+    /* Predictive Me
+    *
+    * Default is -1. */
+    int pred_me;
+
+    /* Bipred 3x3 Injection
+    *
+    * Default is -1. */
+    int bipred_3x3_inject;
+
+    /* Compound Mode
+    *
+    * Default is -1. */
+    int compound_level;
+
+    /* Chroma mode
+    *
+    * Level                Settings
+    * CHROMA_MODE_0  0     Full chroma search @ MD
+    * CHROMA_MODE_1  1     Fast chroma search @ MD
+    * CHROMA_MODE_2  2     Chroma blind @ MD + CFL @ EP
+    * CHROMA_MODE_3  3     Chroma blind @ MD + no CFL @ EP
+    *
+    * Default is -1 (AUTO) */
+    int set_chroma_mode;
+    /* Disable chroma from luma (CFL)
+    *
+    * Default is -1 (auto) */
+    int disable_cfl_flag;
+    /* obmc_level specifies the level of the OBMC feature that would be
+    * considered when the level is specified in the command line instruction (CLI).
+    * The meaning of the feature level in the CLI is different from that for
+    * the default settings. See description of pic_obmc_level for the full details.
+    *
+    * The table below specifies the meaning of obmc_level when specified in the CLI.
+    *     obmc_level   | Command Line Settings
+    *        -1        | Default settings (auto)
+    *         0        | OFF everywhere in encoder
+    *         1        | ON
+    *
+    * Default is -1 (auto). */
+    int8_t obmc_level;
+    /* RDOQ
+    *
+    * -1: Default, 0: OFF, 1: ON. */
+    int rdoq_level;
+
+    /* Filter intra prediction
+    *
+    * The table below specifies the meaning of filter_intra_level when specified in the CLI.
+    * filter_intra_level | Command Line Settings
+    *        -1          | Default settings (auto)
+    *         0          | OFF everywhere in encoder
+    *         1          | ON */
+    int8_t filter_intra_level;
+    /* Intra Edge Filter
+    *
+    * Default is -1. */
+    int enable_intra_edge_filter;
+
+    /* Picture based rate estimation
+    *
+    * Default is - 1. */
+    int pic_based_rate_est;
+
+    /* Flag to enable the use of non-swaure partitions
+    *
+    * Default is 1. */
+    EbBool ext_block_flag;
+
+    /* Flag to control intraBC mode
+    *  0      OFF
+    *  1      slow
+    *  2      faster
+    *  3      fastest
+    *
+    * Default is -1 (DEFAULT behavior). */
+    int intrabc_mode;
+
+    // MD Parameters
+    /* Enable the use of HBD (10-bit) for 10 bit content at the mode decision step
+     *
+     * 0 = 8bit mode decision
+     * 1 = 10bit mode decision
+     * 2 = Auto: 8bit & 10bit mode decision
+     *
+    * Default is 1. */
+    int8_t enable_hbd_mode_decision;
+
+    /* Enable picture QP scaling between hierarchical levels
+    *
+    * Default is null.*/
+    int enable_qp_scaling_flag;
+
+    int ten_bit_format;
+
+    int enable_adaptive_mini_gop;
+    int max_heirachical_level;
+    /* Flag to enable the Speed Control functionality to achieve the real-time
+    * encoding speed defined by dynamically changing the encoding preset to meet
+    * the average speed defined in injectorFrameRate. When this parameter is set
+    * to 1 it forces -inj to be 1 -inj-frm-rt to be set to the -fps.
+    *
+    * Default is 0. */
+    int speed_control_flag;
 } SequenceControlSet;
 
 typedef struct EbSequenceControlSetInitData {

@@ -140,9 +140,8 @@ static const std::vector<EncTestSetting> default_enc_settings = {
     {"FilmGrainTest4", {{"FilmGrain", "10"}, {"BlankFrame", "10"}}, default_test_vectors},
     {"FilmGrainTest5", {{"FilmGrain", "50"}, {"BlankFrame", "10"}}, default_test_vectors},
 
-    // Skip enable_denoise_flag, enable_warped_motion, in_loop_me_flag
-    // partition_depth and ext_block_flag, since they are
-    // not used in encoder;
+    // Skip enable_denoise_flag, enable_warped_motion, in_loop_me_flag and
+    // ext_block_flag, since they are not used in encoder;
 
     // test constrained intra, default is 0
     {"ConstrainIntraTest1", {{"ConstrainedIntra", "1"}}, default_test_vectors},
@@ -169,8 +168,6 @@ static const std::vector<EncTestSetting> default_enc_settings = {
     {"TileTest1", {{"TileRow", "1"}}, default_test_vectors},
     {"TileTest2", {{"TileCol", "1"}}, default_test_vectors},
     {"TileTest3", {{"TileCol", "1"}, {"TileRow", "1"}}, default_test_vectors},
-
-    {"SpeedControlTest1", {{"speed_control_flag", "1"}}, default_test_vectors},
 
     // Validate by setting a low bitrate and MaxQpAllowed, push the encoder to producing
     // large partitions.

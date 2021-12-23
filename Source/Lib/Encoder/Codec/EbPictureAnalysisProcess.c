@@ -2920,7 +2920,7 @@ void *picture_analysis_kernel(void *input_ptr) {
         // Mariana : save enhanced picture ptr, move this from here
         pcs_ptr->enhanced_unscaled_picture_ptr = pcs_ptr->enhanced_picture_ptr;
         pcs_ptr->enhanced_unscaled_picture_ptr->is_16bit_pipeline =
-            scs_ptr->static_config.is_16bit_pipeline;
+            scs_ptr->is_16bit_pipeline;
 
         // There is no need to do processing for overlay picture. Overlay and AltRef share the same results.
         if (!pcs_ptr->is_overlay) {

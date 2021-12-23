@@ -162,11 +162,6 @@ class CodingOptionTest : public SvtAv1E2ETestFramework {
             << "config profile: " << config->profile << "got "
             << stream_info->profile;
 
-        // verify the superblock size
-        EXPECT_EQ(config->super_block_size, stream_info->sb_size)
-            << "config sb size: " << config->super_block_size << " got "
-            << stream_info->sb_size;
-
         // Verify bit depth
         EXPECT_EQ(config->encoder_bit_depth, stream_info->bit_depth)
             << "config bitdepth: " << config->encoder_bit_depth << " got "
@@ -228,11 +223,6 @@ class CodingOptionTest : public SvtAv1E2ETestFramework {
             << "Tile rows " << stream_info->tile_rows << " actual"
             << expect_rows;
 
-        //
-        // Verify the coding tools by checking the sps header
-        //
-        EXPECT_EQ(stream_info->enable_warped_motion,
-                  config->enable_warped_motion);
     }
 };
 

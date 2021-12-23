@@ -105,7 +105,7 @@ EbErrorType rest_context_ctor(EbThreadContext *thread_context_ptr,
     context_ptr->picture_demux_fifo_ptr = svt_system_resource_get_producer_fifo(
         enc_handle_ptr->picture_demux_results_resource_ptr, demux_index);
 
-    EbBool is_16bit = scs_ptr->static_config.is_16bit_pipeline;
+    EbBool is_16bit = scs_ptr->is_16bit_pipeline;
     if (get_enable_restoration(init_data_ptr->enc_mode,
                                config->enable_restoration_filtering,
                                scs_ptr->input_resolution)) {
@@ -121,7 +121,7 @@ EbErrorType rest_context_ctor(EbThreadContext *thread_context_ptr,
         init_data.top_padding        = AOM_BORDER_IN_PIXELS;
         init_data.bot_padding        = AOM_BORDER_IN_PIXELS;
         init_data.split_mode         = EB_FALSE;
-        init_data.is_16bit_pipeline  = config->is_16bit_pipeline;
+        init_data.is_16bit_pipeline  = is_16bit;
 
         EB_NEW(context_ptr->trial_frame_rst, svt_picture_buffer_desc_ctor, (EbPtr)&init_data);
         if (scs_ptr->use_boundaries_in_rest_search)
@@ -393,7 +393,7 @@ EbErrorType copy_recon_enc(SequenceControlSet *scs_ptr, EbPictureBufferDesc *rec
         ? PICTURE_BUFFER_DESC_LUMA_MASK
         : PICTURE_BUFFER_DESC_FULL_MASK;
 
-    uint32_t bytesPerPixel = scs_ptr->static_config.is_16bit_pipeline ? 2 : 1;
+    uint32_t bytesPerPixel = scs_ptr->is_16bit_pipeline ? 2 : 1;
 
     // Allocate the Picture Buffers (luma & chroma)
     if (recon_picture_dst->buffer_enable_mask & PICTURE_BUFFER_DESC_Y_FLAG) {
@@ -415,7 +415,7 @@ EbErrorType copy_recon_enc(SequenceControlSet *scs_ptr, EbPictureBufferDesc *rec
     } else
         recon_picture_dst->buffer_cr = 0;
 
-    int use_highbd = scs_ptr->static_config.is_16bit_pipeline;
+    int use_highbd = scs_ptr->is_16bit_pipeline;
 
     if (!skip_copy) {
         for (int plane = 0; plane < num_planes; ++plane) {
@@ -463,7 +463,7 @@ void svt_av1_superres_upscale_frame(struct Av1Common *cm, PictureControlSet *pcs
     // Set these parameters for testing since they are not correctly populated yet
     EbPictureBufferDesc *recon_ptr;
 
-    EbBool is_16bit = scs_ptr->static_config.is_16bit_pipeline;
+    EbBool is_16bit = scs_ptr->is_16bit_pipeline;
 
     get_recon_pic(pcs_ptr, &recon_ptr, is_16bit);
 
@@ -549,7 +549,7 @@ void *rest_kernel(void *input_ptr) {
         pcs_ptr               = (PictureControlSet *)cdef_results_ptr->pcs_wrapper_ptr->object_ptr;
         scs_ptr               = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
         FrameHeader *frm_hdr  = &pcs_ptr->parent_pcs_ptr->frm_hdr;
-        EbBool       is_16bit = scs_ptr->static_config.is_16bit_pipeline;
+        EbBool       is_16bit = scs_ptr->is_16bit_pipeline;
         Av1Common *  cm       = pcs_ptr->parent_pcs_ptr->av1_cm;
 
         if (scs_ptr->seq_header.enable_restoration && frm_hdr->allow_intrabc == 0) {

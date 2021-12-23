@@ -1438,21 +1438,21 @@ void set_intrabc_level(PictureParentControlSet* pcs_ptr, SequenceControlSet *scs
         intraBC_ctrls->ibc_shift = 0;
         intraBC_ctrls->ibc_direction = 0;
         intraBC_ctrls->hash_4x4_blocks = !get_disallow_4x4(pcs_ptr->enc_mode, pcs_ptr->slice_type);
-        intraBC_ctrls->max_block_size_hash = scs_ptr->static_config.super_block_size;
+        intraBC_ctrls->max_block_size_hash = scs_ptr->super_block_size;
         break;
     case 2:
         intraBC_ctrls->enabled = pcs_ptr->sc_class1;
         intraBC_ctrls->ibc_shift = 1;
         intraBC_ctrls->ibc_direction = 0;
         intraBC_ctrls->hash_4x4_blocks = !get_disallow_4x4(pcs_ptr->enc_mode, pcs_ptr->slice_type);
-        intraBC_ctrls->max_block_size_hash = scs_ptr->static_config.super_block_size;
+        intraBC_ctrls->max_block_size_hash = scs_ptr->super_block_size;
         break;
     case 3:
         intraBC_ctrls->enabled = pcs_ptr->sc_class1;
         intraBC_ctrls->ibc_shift = 1;
         intraBC_ctrls->ibc_direction = 1;
         intraBC_ctrls->hash_4x4_blocks = !get_disallow_4x4(pcs_ptr->enc_mode, pcs_ptr->slice_type);
-        intraBC_ctrls->max_block_size_hash = scs_ptr->static_config.super_block_size;
+        intraBC_ctrls->max_block_size_hash = scs_ptr->super_block_size;
         break;
     case 4:
         intraBC_ctrls->enabled = pcs_ptr->sc_class1;
@@ -1600,7 +1600,7 @@ void set_gm_controls(PictureParentControlSet *pcs_ptr, uint8_t gm_level)
 uint8_t derive_gm_level(PictureParentControlSet* pcs_ptr) {
     SequenceControlSet* scs_ptr = pcs_ptr->scs_ptr;
     uint8_t gm_level = 0;
-    if (scs_ptr->static_config.enable_global_motion == EB_TRUE &&
+    if (scs_ptr->enable_global_motion == EB_TRUE &&
         pcs_ptr->frame_superres_enabled == EB_FALSE) {
         if (pcs_ptr->enc_mode <= ENC_MRS)
             gm_level = 2;
@@ -1719,7 +1719,7 @@ EbErrorType signal_derivation_multi_processes_oq(
     uint8_t intrabc_level = 0;
     if (pcs_ptr->slice_type == I_SLICE) {
         frm_hdr->allow_screen_content_tools = pcs_ptr->sc_class1;
-        if (scs_ptr->static_config.intrabc_mode == DEFAULT) {
+        if (scs_ptr->intrabc_mode == DEFAULT) {
             if (pcs_ptr->enc_mode <= ENC_M5)
                 intrabc_level = 1;
             else if (pcs_ptr->enc_mode <= ENC_M7)
@@ -1731,7 +1731,7 @@ EbErrorType signal_derivation_multi_processes_oq(
             else
                 intrabc_level = 0;
         } else {
-            intrabc_level = (uint8_t)scs_ptr->static_config.intrabc_mode;
+            intrabc_level = (uint8_t)scs_ptr->intrabc_mode;
         }
     }
     else {
@@ -1743,7 +1743,7 @@ EbErrorType signal_derivation_multi_processes_oq(
     frm_hdr->allow_intrabc = pcs_ptr->intraBC_ctrls.enabled;
     // Set palette_level
     if (frm_hdr->allow_screen_content_tools) {
-        if (scs_ptr->static_config.palette_level == DEFAULT) { //auto mode; if not set by cfg
+        if (scs_ptr->palette_level == DEFAULT) { //auto mode; if not set by cfg
             if (pcs_ptr->enc_mode <= ENC_M11)
                 pcs_ptr->palette_level = pcs_ptr->temporal_layer_index == 0 ? 2 : 0;
             else if (pcs_ptr->enc_mode <= ENC_M12)
@@ -1752,7 +1752,7 @@ EbErrorType signal_derivation_multi_processes_oq(
                 pcs_ptr->palette_level = 0;
         }
         else
-            pcs_ptr->palette_level = scs_ptr->static_config.palette_level;
+            pcs_ptr->palette_level = scs_ptr->palette_level;
     }
     else
         pcs_ptr->palette_level = 0;
@@ -1836,7 +1836,7 @@ EbErrorType signal_derivation_multi_processes_oq(
     // 3             1 step refinement
     // 4             0 step refinement
     Av1Common* cm = pcs_ptr->av1_cm;
-    if (scs_ptr->static_config.sg_filter_mode == DEFAULT) {
+    if (scs_ptr->sg_filter_mode == DEFAULT) {
         if (pcs_ptr->enc_mode <= ENC_M2)
             cm->sg_filter_mode = 1;
         else if (pcs_ptr->enc_mode <= ENC_M4)
@@ -1845,7 +1845,7 @@ EbErrorType signal_derivation_multi_processes_oq(
             cm->sg_filter_mode = 0;
     }
     else
-        cm->sg_filter_mode = scs_ptr->static_config.sg_filter_mode;
+        cm->sg_filter_mode = scs_ptr->sg_filter_mode;
 
     // WN Level        Settings
     // 0               OFF
@@ -1855,14 +1855,14 @@ EbErrorType signal_derivation_multi_processes_oq(
     // 4               5-Tap luma/ 5-Tap chroma; refinement OFF
     // 5               5-Tap luma/ 5-Tap chroma; refinement OFF; use prev. frame coeffs
     uint8_t wn_filter_lvl = 0;
-    if (scs_ptr->static_config.wn_filter_mode == DEFAULT) {
+    if (scs_ptr->wn_filter_mode == DEFAULT) {
         if (pcs_ptr->enc_mode <= ENC_M4)
             wn_filter_lvl = 1;
         else
             wn_filter_lvl = 4;
     }
     else
-        wn_filter_lvl = scs_ptr->static_config.wn_filter_mode;
+        wn_filter_lvl = scs_ptr->wn_filter_mode;
 
     set_wn_filter_ctrls(cm, wn_filter_lvl);
         // Set tx size search mode
@@ -1878,10 +1878,10 @@ EbErrorType signal_derivation_multi_processes_oq(
         // Set frame end cdf update mode      Settings
         // 0                                     OFF
         // 1                                     ON
-        if (scs_ptr->static_config.frame_end_cdf_update == DEFAULT)
+        if (scs_ptr->frame_end_cdf_update == DEFAULT)
             pcs_ptr->frame_end_cdf_update_mode = 1;
         else
-            pcs_ptr->frame_end_cdf_update_mode = scs_ptr->static_config.frame_end_cdf_update;
+            pcs_ptr->frame_end_cdf_update_mode = scs_ptr->frame_end_cdf_update;
 
 
         //MFMV
@@ -1906,7 +1906,7 @@ EbErrorType signal_derivation_multi_processes_oq(
     else
         list0_only_base = 4;
     set_list0_only_base(pcs_ptr, list0_only_base);
-    if (scs_ptr->static_config.enable_hbd_mode_decision == DEFAULT)
+    if (scs_ptr->enable_hbd_mode_decision == DEFAULT)
         if (pcs_ptr->enc_mode <= ENC_MR)
             pcs_ptr->hbd_mode_decision = 1;
         else if (pcs_ptr->enc_mode <= ENC_M1)
@@ -1920,7 +1920,7 @@ EbErrorType signal_derivation_multi_processes_oq(
         else
             pcs_ptr->hbd_mode_decision = pcs_ptr->slice_type == I_SLICE ? 2 : 0;
     else
-        pcs_ptr->hbd_mode_decision = scs_ptr->static_config.enable_hbd_mode_decision;
+        pcs_ptr->hbd_mode_decision = scs_ptr->enable_hbd_mode_decision;
     pcs_ptr->max_can_count = get_max_can_count(pcs_ptr->enc_mode );
     if (pcs_ptr->enc_mode <= ENC_M9)
         pcs_ptr->use_best_me_unipred_cand_only = 0;

@@ -564,10 +564,10 @@ EbErrorType first_pass_signal_derivation_multi_processes(SequenceControlSet *   
     // Set frame end cdf update mode      Settings
     // 0                                  OFF
     // 1                                  ON
-    if (scs_ptr->static_config.frame_end_cdf_update == DEFAULT)
+    if (scs_ptr->frame_end_cdf_update == DEFAULT)
         pcs_ptr->frame_end_cdf_update_mode = 0;
     else
-        pcs_ptr->frame_end_cdf_update_mode = scs_ptr->static_config.frame_end_cdf_update;
+        pcs_ptr->frame_end_cdf_update_mode = scs_ptr->frame_end_cdf_update;
 
     pcs_ptr->frm_hdr.use_ref_frame_mvs = 0;
     // GM off

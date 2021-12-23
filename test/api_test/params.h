@@ -370,25 +370,6 @@ static const vector<uint32_t> invalid_super_block_size = {
     */
 };
 
-/* The maximum partitioning depth with 0 being the superblock depth
- *
- * Default is 4. */
-static const vector<uint32_t> default_partition_depth = {
-    4,
-};
-static const vector<uint32_t> valid_partition_depth = {
-    0,
-    1,
-    2,
-    3,
-    EB_MAX_SB_DEPTH,
-};
-static const vector<uint32_t> invalid_partition_depth = {
-    /* partition_depth override in code
-    (EB_MAX_SB_DEPTH + 1),
-    */
-};
-
 // Quantization
 /* Initial quantization parameter for the Intra pictures used under constant
  * qp rate control mode.
@@ -427,21 +408,6 @@ static const vector<EbBool> invalid_use_qp_file = {
     // none
 };
 
-/* Enable picture QP scaling between hierarchical levels
- *
- * Default is null.*/
-// TODO: the description of this parameter is incorrect, refer to source code,
-// it should be a EbBool
-static const vector<uint32_t> default_enable_qp_scaling_flag = {
-    EB_FALSE,
-};
-static const vector<uint32_t> valid_enable_qp_scaling_flag = {
-    EB_FALSE,
-    EB_TRUE,
-};
-static const vector<uint32_t> invalid_enable_qp_scaling_flag = {
-    // none
-};
 
 // Deblock Filter
 /* Flag to disable the Deblocking Loop Filtering.

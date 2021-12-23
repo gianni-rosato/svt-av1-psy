@@ -888,7 +888,7 @@ void *packetization_kernel(void *input_ptr) {
                 pcs_ptr->parent_pcs_ptr->data_ll_head_ptr = app_data_ll_head_temp_ptr;
             }
 
-            if (scs_ptr->static_config.speed_control_flag) {
+            if (scs_ptr->speed_control_flag) {
                 // update speed control variables
                 svt_block_on_mutex(encode_context_ptr->sc_buffer_mutex);
                 encode_context_ptr->sc_frame_out++;

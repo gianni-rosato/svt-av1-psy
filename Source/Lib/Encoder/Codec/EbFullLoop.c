@@ -1612,7 +1612,7 @@ int32_t av1_quantize_inv_quantize(PictureControlSet *pcs_ptr, ModeDecisionContex
     if (perform_rdoq &&
         ((!component_type && md_context->rdoq_ctrls.fp_q_y) ||
          (component_type && md_context->rdoq_ctrls.fp_q_uv))) {
-        if ((bit_depth > EB_8BIT) || (is_encode_pass && scs_ptr->static_config.is_16bit_pipeline)) {
+        if ((bit_depth > EB_8BIT) || (is_encode_pass && scs_ptr->is_16bit_pipeline)) {
             svt_av1_highbd_quantize_fp_facade((TranLow *)coeff,
                                               n_coeffs,
                                               &candidate_plane,
@@ -1632,7 +1632,7 @@ int32_t av1_quantize_inv_quantize(PictureControlSet *pcs_ptr, ModeDecisionContex
                                        &qparam);
         }
     } else {
-        if ((bit_depth > EB_8BIT) || (is_encode_pass && scs_ptr->static_config.is_16bit_pipeline)) {
+        if ((bit_depth > EB_8BIT) || (is_encode_pass && scs_ptr->is_16bit_pipeline)) {
             svt_av1_highbd_quantize_b_facade((TranLow *)coeff,
                                              n_coeffs,
                                              &candidate_plane,
@@ -1671,7 +1671,7 @@ int32_t av1_quantize_inv_quantize(PictureControlSet *pcs_ptr, ModeDecisionContex
         }
         if (perform_rdoq == 0) {
             if ((bit_depth > EB_8BIT) ||
-                (is_encode_pass && scs_ptr->static_config.is_16bit_pipeline)) {
+                (is_encode_pass && scs_ptr->is_16bit_pipeline)) {
                 svt_av1_highbd_quantize_b_facade((TranLow *)coeff,
                                                  n_coeffs,
                                                  &candidate_plane,

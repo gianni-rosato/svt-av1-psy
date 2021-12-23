@@ -455,7 +455,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     // pic_filter_intra_level | Settings
     // 0                      | OFF
     // 1                      | ON
-    if (scs_ptr->static_config.filter_intra_level == DEFAULT) {
+    if (scs_ptr->filter_intra_level == DEFAULT) {
         if (scs_ptr->seq_header.filter_intra_level) {
             if (pcs_ptr->enc_mode <= ENC_M5)
                 pcs_ptr->pic_filter_intra_level = 1;
@@ -464,7 +464,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         } else
             pcs_ptr->pic_filter_intra_level = 0;
     } else
-        pcs_ptr->pic_filter_intra_level = scs_ptr->static_config.filter_intra_level;
+        pcs_ptr->pic_filter_intra_level = scs_ptr->filter_intra_level;
     if (pcs_ptr->enc_mode <= ENC_M6)
         pcs_ptr->parent_pcs_ptr->partition_contexts = PARTITION_CONTEXTS;
     else
@@ -527,8 +527,8 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         }
     }
 
-    if (pcs_ptr->parent_pcs_ptr->scs_ptr->static_config.enable_warped_motion != DEFAULT)
-        enable_wm = (EbBool)pcs_ptr->parent_pcs_ptr->scs_ptr->static_config.enable_warped_motion;
+    if (pcs_ptr->parent_pcs_ptr->scs_ptr->enable_warped_motion != DEFAULT)
+        enable_wm = (EbBool)pcs_ptr->parent_pcs_ptr->scs_ptr->enable_warped_motion;
 
     // Note: local warp should be disabled when super-res is ON
     // according to the AV1 spec 5.11.27
@@ -545,7 +545,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     //  pic_obmc_level  | Default Encoder Settings
     //         0        | OFF subject to possible constraints
     //       > 1        | Faster level subject to possible constraints
-    if (scs_ptr->static_config.obmc_level == DEFAULT) {
+    if (scs_ptr->obmc_level == DEFAULT) {
         if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M3)
             pcs_ptr->parent_pcs_ptr->pic_obmc_level = 1;
         else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M7)
@@ -554,7 +554,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
             pcs_ptr->parent_pcs_ptr->pic_obmc_level = 0;
 
     } else
-        pcs_ptr->parent_pcs_ptr->pic_obmc_level = scs_ptr->static_config.obmc_level;
+        pcs_ptr->parent_pcs_ptr->pic_obmc_level = scs_ptr->obmc_level;
 
     // Switchable Motion Mode
     frm_hdr->is_motion_mode_switchable = frm_hdr->is_motion_mode_switchable ||
@@ -674,7 +674,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     }
     // Set the level for the chroma path
     pcs_ptr->chroma_level = 0;
-    if (scs_ptr->static_config.set_chroma_mode == DEFAULT) {
+    if (scs_ptr->set_chroma_mode == DEFAULT) {
         if (enc_mode <= ENC_MRS)
             pcs_ptr->chroma_level = 1;
         else if (enc_mode <= ENC_M1)
@@ -684,7 +684,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         else
             pcs_ptr->chroma_level = 4;
     } else // use specified level
-        pcs_ptr->chroma_level = scs_ptr->static_config.set_chroma_mode;
+        pcs_ptr->chroma_level = scs_ptr->set_chroma_mode;
 
     // Set the level for cfl
     pcs_ptr->cfl_level = 0;
@@ -703,13 +703,13 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         pcs_ptr->cfl_level = 0;
 
     // Set the level for new/nearest/near injection
-    if (scs_ptr->static_config.new_nearest_comb_inject == DEFAULT)
+    if (scs_ptr->new_nearest_comb_inject == DEFAULT)
         if (enc_mode <= ENC_M0)
             pcs_ptr->new_nearest_near_comb_injection = 1;
         else
             pcs_ptr->new_nearest_near_comb_injection = 0;
     else
-        pcs_ptr->new_nearest_near_comb_injection = scs_ptr->static_config.new_nearest_comb_inject;
+        pcs_ptr->new_nearest_near_comb_injection = scs_ptr->new_nearest_comb_inject;
 
     // Set the level for unipred3x3 injection
     if (enc_mode <= ENC_M0)
@@ -720,7 +720,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         pcs_ptr->unipred3x3_injection = 0;
 
     // Set the level for bipred3x3 injection
-    if (scs_ptr->static_config.bipred_3x3_inject == DEFAULT) {
+    if (scs_ptr->bipred_3x3_inject == DEFAULT) {
         if (enc_mode <= ENC_M1)
             pcs_ptr->bipred3x3_injection = 1;
         else if (enc_mode <= ENC_M5)
@@ -728,12 +728,12 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         else
             pcs_ptr->bipred3x3_injection = 0;
     } else {
-        pcs_ptr->bipred3x3_injection = scs_ptr->static_config.bipred_3x3_inject;
+        pcs_ptr->bipred3x3_injection = scs_ptr->bipred_3x3_inject;
     }
 
     // Set the level for inter-inter compound
     if (scs_ptr->compound_mode) {
-        if (scs_ptr->static_config.compound_level == DEFAULT) {
+        if (scs_ptr->compound_level == DEFAULT) {
             if (enc_mode <= ENC_MR)
                 pcs_ptr->inter_compound_mode = 1;
             else if (enc_mode <= ENC_M2)
@@ -743,7 +743,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
             else
                 pcs_ptr->inter_compound_mode = 0;
         } else {
-            pcs_ptr->inter_compound_mode = scs_ptr->static_config.compound_level;
+            pcs_ptr->inter_compound_mode = scs_ptr->compound_level;
         }
     } else {
         pcs_ptr->inter_compound_mode = 0;
@@ -764,7 +764,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
 
     // Set the level the spatial sse @ full-loop
     pcs_ptr->spatial_sse_full_loop_level = 0;
-    if (scs_ptr->static_config.spatial_sse_full_loop_level == DEFAULT)
+    if (scs_ptr->spatial_sse_full_loop_level == DEFAULT)
         if (pcs_ptr->parent_pcs_ptr->sc_class1)
             pcs_ptr->spatial_sse_full_loop_level = 1;
         else if (enc_mode <= ENC_M9)
@@ -772,7 +772,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         else
             pcs_ptr->spatial_sse_full_loop_level = 0;
     else
-        pcs_ptr->spatial_sse_full_loop_level = scs_ptr->static_config.spatial_sse_full_loop_level;
+        pcs_ptr->spatial_sse_full_loop_level = scs_ptr->spatial_sse_full_loop_level;
     // Set the level for coeff-based NSQ accuracy reduction
     pcs_ptr->parent_sq_coeff_area_based_cycles_reduction_level = 0;
     if (enc_mode <= ENC_MRS)
@@ -931,7 +931,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         ppcs->sc_class1,
         pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag,
         pcs_ptr->temporal_layer_index);
-    if (scs_ptr->static_config.super_block_size == 64) {
+    if (scs_ptr->super_block_size == 64) {
         if (slice_type == I_SLICE) {
             if (ppcs->sc_class1)
                 pcs_ptr->pic_depth_removal_level = 0;
@@ -1036,7 +1036,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         pcs_ptr->pic_block_based_depth_refinement_level = is_base ? 2 : 4;
     else
         pcs_ptr->pic_block_based_depth_refinement_level = is_base ? 6 : 10;
-    if (scs_ptr->static_config.max_heirachical_level == (EB_MAX_TEMPORAL_LAYERS - 1))
+    if (scs_ptr->max_heirachical_level == (EB_MAX_TEMPORAL_LAYERS - 1))
         pcs_ptr->pic_block_based_depth_refinement_level = MAX(
             0, pcs_ptr->pic_block_based_depth_refinement_level - 1);
     if (pcs_ptr->parent_pcs_ptr->sc_class1) {
@@ -1065,7 +1065,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     // may force pred_depth_only at the light-pd1 detector
     if (pcs_ptr->pic_lpd1_lvl &&
         !(ppcs->hbd_mode_decision == 0 && ppcs->disallow_nsq == EB_TRUE &&
-          pcs_ptr->pic_disallow_4x4 == EB_TRUE && scs_ptr->static_config.super_block_size == 64)) {
+          pcs_ptr->pic_disallow_4x4 == EB_TRUE && scs_ptr->super_block_size == 64)) {
         pcs_ptr->pic_lpd1_lvl = 0;
     }
 

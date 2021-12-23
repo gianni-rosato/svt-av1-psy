@@ -52,8 +52,7 @@ EbErrorType svt_sequence_control_set_ctor(SequenceControlSet *scs_ptr, EbPtr obj
     scs_ptr->mvrate_set = 0;
     scs_ptr->dctor      = svt_sequence_control_set_dctor;
 
-    scs_ptr->static_config.sb_sz           = 64;
-    scs_ptr->static_config.partition_depth = 4;
+    scs_ptr->sb_sz           = 64;
 
     // Segments
     for (segment_index = 0; segment_index < MAX_TEMPORAL_LAYERS; ++segment_index) {
@@ -87,7 +86,8 @@ EbErrorType svt_sequence_control_set_ctor(SequenceControlSet *scs_ptr, EbPtr obj
     scs_ptr->max_ref_count = 1;
 
     // SB
-    scs_ptr->sb_sz        = 64;
+    scs_ptr->sb_sz = 64;
+    scs_ptr->super_block_size        = 128;
     scs_ptr->max_sb_depth = 3;
 
     // CU
@@ -97,6 +97,33 @@ EbErrorType svt_sequence_control_set_ctor(SequenceControlSet *scs_ptr, EbPtr obj
     scs_ptr->min_intra_size = 8;
     // Quantization
     scs_ptr->static_config.qp = 20;
+    // AV1 features
+    scs_ptr->enable_warped_motion = DEFAULT;
+    scs_ptr->enable_global_motion = 1;
+    scs_ptr->sg_filter_mode = DEFAULT;
+    scs_ptr->wn_filter_mode = DEFAULT;
+    scs_ptr->inter_intra_compound = DEFAULT;
+    scs_ptr->enable_paeth = DEFAULT;
+    scs_ptr->enable_smooth = DEFAULT;
+    scs_ptr->spatial_sse_full_loop_level = DEFAULT;
+    scs_ptr->over_bndry_blk = DEFAULT;
+    scs_ptr->new_nearest_comb_inject = DEFAULT;
+    scs_ptr->nsq_table = DEFAULT;
+    scs_ptr->frame_end_cdf_update = DEFAULT;
+    scs_ptr->set_chroma_mode = DEFAULT;
+    scs_ptr->disable_cfl_flag = DEFAULT;
+    scs_ptr->obmc_level = DEFAULT;
+    scs_ptr->rdoq_level = DEFAULT;
+    scs_ptr->pred_me = DEFAULT;
+    scs_ptr->bipred_3x3_inject = DEFAULT;
+    scs_ptr->compound_level = DEFAULT;
+    scs_ptr->filter_intra_level = DEFAULT;
+    scs_ptr->enable_intra_edge_filter = DEFAULT;
+    scs_ptr->pic_based_rate_est = DEFAULT;
+    scs_ptr->ext_block_flag = EB_FALSE;
+    scs_ptr->ten_bit_format = EB_FALSE;
+
+
     // Initialize SB params
     //allocation will happen in ress-corrd
     scs_ptr->sb_params_array = 0;
@@ -151,22 +178,20 @@ EbErrorType svt_sequence_control_set_ctor(SequenceControlSet *scs_ptr, EbPtr obj
         scs_ptr->seq_header.enable_restoration =
             (uint8_t)scs_ptr->static_config.enable_restoration_filtering;
 
-    if (scs_ptr->static_config.enable_intra_edge_filter == DEFAULT)
+    if (scs_ptr->enable_intra_edge_filter == DEFAULT)
         scs_ptr->seq_header.enable_intra_edge_filter = 1;
     else
         scs_ptr->seq_header.enable_intra_edge_filter =
-            (uint8_t)scs_ptr->static_config.enable_intra_edge_filter;
+            (uint8_t)scs_ptr->enable_intra_edge_filter;
 
-    if (scs_ptr->static_config.pic_based_rate_est == DEFAULT)
+    if (scs_ptr->pic_based_rate_est == DEFAULT)
         scs_ptr->seq_header.pic_based_rate_est = 0;
     else
-        scs_ptr->seq_header.pic_based_rate_est = (uint8_t)scs_ptr->static_config.pic_based_rate_est;
-
-    if (scs_ptr->static_config.enable_warped_motion == DEFAULT)
+        scs_ptr->seq_header.pic_based_rate_est = (uint8_t)scs_ptr->pic_based_rate_est;
+    if (scs_ptr->enable_warped_motion == DEFAULT)
         scs_ptr->seq_header.enable_warped_motion = 1;
     else
-        scs_ptr->seq_header.enable_warped_motion = (uint8_t)
-                                                       scs_ptr->static_config.enable_warped_motion;
+        scs_ptr->seq_header.enable_warped_motion = (uint8_t)scs_ptr->enable_warped_motion;
 
     scs_ptr->film_grain_random_seed = 7391;
     scs_ptr->reference_count        = 4;
@@ -179,6 +204,23 @@ EbErrorType svt_sequence_control_set_ctor(SequenceControlSet *scs_ptr, EbPtr obj
         HIGHER_THAN_CLASS_1_REGION_SPLIT_PER_WIDTH;
     scs_ptr->picture_analysis_number_of_regions_per_height =
         HIGHER_THAN_CLASS_1_REGION_SPLIT_PER_HEIGHT;
+
+    scs_ptr->palette_level = DEFAULT;
+
+    // intra angle delta
+    scs_ptr->intra_angle_delta = DEFAULT;
+
+    scs_ptr->is_16bit_pipeline = EB_FALSE;
+
+    scs_ptr->intrabc_mode = DEFAULT;
+
+    scs_ptr->enable_qp_scaling_flag = 1;
+
+    scs_ptr->enable_adaptive_mini_gop = 0;
+
+    scs_ptr->max_heirachical_level = 5;
+
+    scs_ptr->speed_control_flag = 0;
 
     return EB_ErrorNone;
 }
@@ -221,6 +263,7 @@ EbErrorType copy_sequence_control_set(SequenceControlSet *dst, SequenceControlSe
     dst->subsampling_y                             = src->subsampling_y;
     dst->pred_struct_ptr                           = src->pred_struct_ptr;
     dst->max_ref_count                             = src->max_ref_count;
+    dst->super_block_size                          = src->super_block_size;
     dst->sb_sz                                     = src->sb_sz;
     dst->max_sb_depth                              = src->max_sb_depth;
     dst->max_blk_size                              = src->max_blk_size;
@@ -313,6 +356,39 @@ EbErrorType copy_sequence_control_set(SequenceControlSet *dst, SequenceControlSe
     dst->mid_pass_ctrls    = src->mid_pass_ctrls;
     dst->ipp_was_ds        = src->ipp_was_ds;
     dst->final_pass_preset = src->final_pass_preset;
+    dst->palette_level                 = src->palette_level;
+    dst->intra_angle_delta             = src->intra_angle_delta;
+    dst->is_16bit_pipeline = src->is_16bit_pipeline;
+    dst->enable_warped_motion = src->enable_warped_motion;
+    dst->enable_global_motion = src->enable_global_motion;
+    dst->sg_filter_mode = src->sg_filter_mode;
+    dst->wn_filter_mode = src->wn_filter_mode;
+    dst->inter_intra_compound = src->inter_intra_compound;
+    dst->enable_paeth = src->enable_paeth;
+    dst->enable_smooth = src->enable_smooth;
+    dst->spatial_sse_full_loop_level = src->spatial_sse_full_loop_level;
+    dst->over_bndry_blk = src->spatial_sse_full_loop_level;
+    dst->new_nearest_comb_inject = src->new_nearest_comb_inject;
+    dst->nsq_table = src->nsq_table;
+    dst->frame_end_cdf_update = src->frame_end_cdf_update;
+    dst->set_chroma_mode = src->set_chroma_mode;
+    dst->disable_cfl_flag = src->disable_cfl_flag;
+    dst->obmc_level = src->obmc_level;
+    dst->rdoq_level = src->rdoq_level;
+    dst->pred_me = src->pred_me;
+    dst->bipred_3x3_inject = src->bipred_3x3_inject;
+    dst->compound_level = src->compound_level;
+    dst->filter_intra_level = src->filter_intra_level;
+    dst->enable_intra_edge_filter = src->enable_intra_edge_filter;
+    dst->pic_based_rate_est = src->pic_based_rate_est;
+    dst->ext_block_flag = src->ext_block_flag;
+    dst->intrabc_mode = src->intrabc_mode;
+    dst->enable_hbd_mode_decision      = src->enable_hbd_mode_decision;
+    dst->enable_qp_scaling_flag        = src->enable_qp_scaling_flag;
+    dst->ten_bit_format                = src->ten_bit_format;
+    dst->enable_adaptive_mini_gop      = src->enable_adaptive_mini_gop;
+    dst->max_heirachical_level         = src->max_heirachical_level;
+    dst->speed_control_flag            = src->speed_control_flag;
     return EB_ErrorNone;
 }
 

@@ -241,10 +241,10 @@ void store_extended_group(PictureParentControlSet *pcs, InitialRateControlContex
     uint8_t is_gop_end   = 0;
     int64_t last_intra_mg_id;
     uint32_t mg_size;
-    if (pcs->scs_ptr->static_config.enable_adaptive_mini_gop == 0) {
+    if (pcs->scs_ptr->enable_adaptive_mini_gop == 0) {
         mg_size = 1 << pcs->scs_ptr->static_config.hierarchical_levels;
     } else {
-        mg_size = 1 << pcs->scs_ptr->static_config.max_heirachical_level;
+        mg_size = 1 << pcs->scs_ptr->max_heirachical_level;
     }
     uint32_t limited_tpl_group_size = pcs->slice_type == I_SLICE
         ? MIN(1 + (pcs->scs_ptr->tpl_lad_mg + 1) * mg_size, pcs->ext_group_size)

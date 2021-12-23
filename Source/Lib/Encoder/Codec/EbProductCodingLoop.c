@@ -4683,7 +4683,7 @@ void tx_update_neighbor_arrays(PictureControlSet *pcs_ptr, ModeDecisionContext *
 }
 void tx_reset_neighbor_arrays(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
                               EbBool is_inter, uint8_t tx_depth) {
-    int      sb_size  = pcs_ptr->parent_pcs_ptr->scs_ptr->static_config.super_block_size;
+    int      sb_size  = pcs_ptr->parent_pcs_ptr->scs_ptr->super_block_size;
     uint16_t tile_idx = context_ptr->tile_index;
     if (tx_depth) {
         if (!is_inter) {
@@ -7176,7 +7176,7 @@ void full_loop_core(PictureControlSet *pcs_ptr, BlkStruct *blk_ptr,
             context_ptr->blk_geom->bheight >> context_ptr->md_staging_subres_step);
     // Check if should perform TX type search
     if (((SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr)
-                ->static_config.super_block_size == 64 &&
+                ->super_block_size == 64 &&
         start_tx_depth == 0 && end_tx_depth == 0 && // TXS off
         !pcs_ptr->parent_pcs_ptr
              ->sc_class1 && // Can't be SC b/c SC tries DCT_DCT and IDTX when only_dct_dct is 1
@@ -10568,7 +10568,7 @@ void init_block_data(PictureControlSet *pcs, ModeDecisionContext *ctx,
     ctx->md_local_blk_unit[blk_idx_mds].left_neighbor_partition  = INVALID_NEIGHBOR_DATA;
     ctx->md_local_blk_unit[blk_idx_mds].above_neighbor_partition = INVALID_NEIGHBOR_DATA;
     ctx->sb64_sq_no4xn_geom                                      = 0;
-    if (pcs->parent_pcs_ptr->scs_ptr->static_config.super_block_size == 64 &&
+    if (pcs->parent_pcs_ptr->scs_ptr->super_block_size == 64 &&
         blk_geom->bwidth == blk_geom->bheight && blk_geom->bsize > BLOCK_8X4)
         ctx->sb64_sq_no4xn_geom = 1;
 

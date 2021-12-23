@@ -433,12 +433,12 @@ EbErrorType load_default_buffer_configuration_settings(
     if (return_ppcs == -1)
         return EB_ErrorInsufficientResources;
 
-    uint32_t enc_dec_seg_h = (core_count == SINGLE_CORE_COUNT || is_pic_width_single_sb(scs_ptr->static_config.super_block_size, scs_ptr->max_input_luma_width)) ? 1 :
-        (scs_ptr->static_config.super_block_size == 128) ?
+    uint32_t enc_dec_seg_h = (core_count == SINGLE_CORE_COUNT || is_pic_width_single_sb(scs_ptr->super_block_size, scs_ptr->max_input_luma_width)) ? 1 :
+        (scs_ptr->super_block_size == 128) ?
         ((scs_ptr->max_input_luma_height + 64) / 128) :
         ((scs_ptr->max_input_luma_height + 32) / 64);
     uint32_t enc_dec_seg_w = (core_count == SINGLE_CORE_COUNT) ? 1 :
-        (scs_ptr->static_config.super_block_size == 128) ?
+        (scs_ptr->super_block_size == 128) ?
         ((scs_ptr->max_input_luma_width + 64) / 128) :
         ((scs_ptr->max_input_luma_width + 32) / 64);
 
@@ -722,7 +722,7 @@ EbErrorType load_default_buffer_configuration_settings(
     max_me_proc = max_me * me_seg_w * me_seg_h;
     max_tpl_proc = get_max_wavefronts(scs_ptr->max_input_luma_width, scs_ptr->max_input_luma_height, 64);
     max_mdc_proc = scs_ptr->picture_control_set_pool_init_count_child;
-    max_md_proc = scs_ptr->picture_control_set_pool_init_count_child * get_max_wavefronts(scs_ptr->max_input_luma_width, scs_ptr->max_input_luma_height, scs_ptr->static_config.super_block_size);
+    max_md_proc = scs_ptr->picture_control_set_pool_init_count_child * get_max_wavefronts(scs_ptr->max_input_luma_width, scs_ptr->max_input_luma_height, scs_ptr->super_block_size);
     max_ec_proc = scs_ptr->picture_control_set_pool_init_count_child;
     max_dlf_proc = scs_ptr->picture_control_set_pool_init_count_child;
     max_cdef_proc = scs_ptr->picture_control_set_pool_init_count_child * scs_ptr->cdef_segment_column_count * scs_ptr->cdef_segment_row_count;
@@ -1358,14 +1358,14 @@ static int create_ref_buf_descs(EbEncHandle *enc_handle_ptr, uint32_t instance_i
     ref_pic_buf_desc_init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK;
     ref_pic_buf_desc_init_data.rest_units_per_tile = scs_ptr->rest_units_per_tile;
     ref_pic_buf_desc_init_data.sb_total_count = scs_ptr->sb_total_count;
-    uint16_t padding = scs_ptr->static_config.super_block_size + 32;
+    uint16_t padding = scs_ptr->super_block_size + 32;
 
     ref_pic_buf_desc_init_data.left_padding = padding;
     ref_pic_buf_desc_init_data.right_padding = padding;
     ref_pic_buf_desc_init_data.top_padding = padding;
     ref_pic_buf_desc_init_data.bot_padding = padding;
     ref_pic_buf_desc_init_data.mfmv = scs_ptr->mfmv_enabled;
-    ref_pic_buf_desc_init_data.is_16bit_pipeline = scs_ptr->static_config.is_16bit_pipeline;
+    ref_pic_buf_desc_init_data.is_16bit_pipeline = scs_ptr->is_16bit_pipeline;
     // Hsan: split_mode is set @ eb_reference_object_ctor() as both unpacked reference and packed reference are needed for a 10BIT input; unpacked reference @ MD, and packed reference @ EP
 
     ref_pic_buf_desc_init_data.split_mode = EB_FALSE;
@@ -1376,7 +1376,7 @@ static int create_ref_buf_descs(EbEncHandle *enc_handle_ptr, uint32_t instance_i
 
     eb_ref_obj_ect_desc_init_data_structure.reference_picture_desc_init_data = ref_pic_buf_desc_init_data;
     eb_ref_obj_ect_desc_init_data_structure.hbd_mode_decision =
-        scs_ptr->static_config.enable_hbd_mode_decision;
+        scs_ptr->enable_hbd_mode_decision;
 
     // Reference Picture Buffers
     EB_NEW(
@@ -1426,7 +1426,7 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
 
     init_intra_predictors_internal();
     EbSequenceControlSetInitData scs_init;
-    scs_init.sb_size = enc_handle_ptr->scs_instance_array[0]->scs_ptr->static_config.super_block_size;
+    scs_init.sb_size = enc_handle_ptr->scs_instance_array[0]->scs_ptr->super_block_size;
 
     build_blk_geom(enc_handle_ptr->scs_instance_array[0]->scs_ptr->geom_idx);
 
@@ -1464,18 +1464,18 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
         input_data.color_format = color_format;
         input_data.sb_sz = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->sb_sz;
         input_data.max_depth = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->max_sb_depth;
-        input_data.ten_bit_format = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.ten_bit_format;
+        input_data.ten_bit_format = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->ten_bit_format;
         input_data.compressed_ten_bit_format = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.compressed_ten_bit_format;
         input_data.enc_mode = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.enc_mode;
-        input_data.speed_control = (uint8_t)enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.speed_control_flag;
-        input_data.hbd_mode_decision = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.enable_hbd_mode_decision;
+        input_data.speed_control = (uint8_t)enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->speed_control_flag;
+        input_data.hbd_mode_decision = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->enable_hbd_mode_decision;
         input_data.film_grain_noise_level = enc_handle_ptr->scs_instance_array[0]->scs_ptr->static_config.film_grain_denoise_strength;
         input_data.bit_depth = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.encoder_bit_depth;
-        input_data.ext_block_flag = (uint8_t)enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.ext_block_flag;
+        input_data.ext_block_flag = (uint8_t)enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->ext_block_flag;
         input_data.log2_tile_rows = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.tile_rows;
         input_data.log2_tile_cols = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.tile_columns;
         input_data.log2_sb_sz = (scs_init.sb_size == 128) ? 5 : 4;
-        input_data.is_16bit_pipeline = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.is_16bit_pipeline;
+        input_data.is_16bit_pipeline = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->is_16bit_pipeline;
         input_data.non_m8_pad_w = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->max_input_pad_right;
         input_data.non_m8_pad_h = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->max_input_pad_bottom;
 
@@ -1569,7 +1569,7 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
             input_data.sb_sz = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->sb_sz;
             input_data.sb_size_pix = scs_init.sb_size;
             input_data.max_depth = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->max_sb_depth;
-            input_data.hbd_mode_decision = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.enable_hbd_mode_decision;
+            input_data.hbd_mode_decision = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->enable_hbd_mode_decision;
             input_data.cdf_mode = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->cdf_mode;
             input_data.mfmv = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->mfmv_enabled;
             input_data.cfg_palette = enc_handle_ptr->scs_instance_array[0]->scs_ptr->static_config.screen_content_mode;
@@ -1577,7 +1577,7 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
             PictureParentControlSet *parent_pcs = (PictureParentControlSet *)enc_handle_ptr->picture_parent_control_set_pool_ptr_array[instance_index]->wrapper_ptr_pool[0]->object_ptr;
             input_data.tile_row_count = parent_pcs->av1_cm->tiles_info.tile_rows;
             input_data.tile_column_count = parent_pcs->av1_cm->tiles_info.tile_cols;
-            input_data.is_16bit_pipeline = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.is_16bit_pipeline;
+            input_data.is_16bit_pipeline = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->is_16bit_pipeline;
             input_data.av1_cm = parent_pcs->av1_cm;
             input_data.enc_mode = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.enc_mode;
 
@@ -1631,7 +1631,7 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
             input_data.sb_sz = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->sb_sz;
             input_data.sb_size_pix = scs_init.sb_size;
             input_data.max_depth = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->max_sb_depth;
-            input_data.hbd_mode_decision = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.enable_hbd_mode_decision;
+            input_data.hbd_mode_decision = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->enable_hbd_mode_decision;
             input_data.cdf_mode = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->cdf_mode;
             input_data.mfmv = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->mfmv_enabled;
             input_data.cfg_palette = enc_handle_ptr->scs_instance_array[0]->scs_ptr->static_config.screen_content_mode;
@@ -1639,7 +1639,7 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
             PictureParentControlSet *parent_pcs = (PictureParentControlSet *)enc_handle_ptr->picture_parent_control_set_pool_ptr_array[instance_index]->wrapper_ptr_pool[0]->object_ptr;
             input_data.tile_row_count = parent_pcs->av1_cm->tiles_info.tile_rows;
             input_data.tile_column_count = parent_pcs->av1_cm->tiles_info.tile_cols;
-            input_data.is_16bit_pipeline = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.is_16bit_pipeline;
+            input_data.is_16bit_pipeline = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->is_16bit_pipeline;
             input_data.av1_cm = parent_pcs->av1_cm;
             input_data.enc_mode = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.enc_mode;
             input_data.static_config = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config;
@@ -3303,19 +3303,19 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     // in 240P resolution, sb size is set to 64
     if (scs_ptr->static_config.pass == ENC_FIRST_PASS ||
         (scs_ptr->static_config.enable_tpl_la && scs_ptr->input_resolution == INPUT_SIZE_240p_RANGE))
-        scs_ptr->static_config.super_block_size = 64;
+        scs_ptr->super_block_size = 64;
     else
         if (scs_ptr->static_config.enc_mode <= ENC_M2)
-            scs_ptr->static_config.super_block_size = 128;
+            scs_ptr->super_block_size = 128;
         else
-            scs_ptr->static_config.super_block_size = 64;
+            scs_ptr->super_block_size = 64;
     if (scs_ptr->static_config.rate_control_mode && !(scs_ptr->static_config.pass == ENC_MIDDLE_PASS || scs_ptr->static_config.pass == ENC_LAST_PASS) && !scs_ptr->lap_enabled)
-        scs_ptr->static_config.super_block_size = 64;
+        scs_ptr->super_block_size = 64;
 
     // scs_ptr->static_config.hierarchical_levels = (scs_ptr->static_config.rate_control_mode > 1) ? 3 : scs_ptr->static_config.hierarchical_levels;
     // unrestricted_motion_vector 0 && SB 128x128 not supported
     // Forcing unrestricted_motion_vector to 1
-    if (scs_ptr->static_config.unrestricted_motion_vector == 0 && scs_ptr->static_config.super_block_size == 128) {
+    if (scs_ptr->static_config.unrestricted_motion_vector == 0 && scs_ptr->super_block_size == 128) {
         scs_ptr->static_config.unrestricted_motion_vector = 1;
         SVT_WARN("Unrestricted_motion_vector 0 and SB 128x128 not supoorted, set to 1\n");
     }
@@ -3328,7 +3328,7 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     for (EB_SLICE slice_type = 0; slice_type < IDR_SLICE + 1; slice_type++)
         disallow_4x4 = MIN(disallow_4x4, get_disallow_4x4(scs_ptr->static_config.enc_mode, slice_type));
 
-    if (scs_ptr->static_config.super_block_size == 128) {
+    if (scs_ptr->super_block_size == 128) {
         scs_ptr->geom_idx = GEOM_2;
         scs_ptr->max_block_cnt = 4421;
     }
@@ -3348,7 +3348,7 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     scs_ptr->left_padding = BLOCK_SIZE_64 + 4;
     scs_ptr->top_padding = BLOCK_SIZE_64 + 4;
     scs_ptr->right_padding = BLOCK_SIZE_64 + 4;
-    scs_ptr->bot_padding = scs_ptr->static_config.super_block_size + 4;
+    scs_ptr->bot_padding = scs_ptr->super_block_size + 4;
 
     //for 10bit,  increase the pad of source from 68 to 72 (mutliple of 8) to accomodate 2bit-compression flow
     //we actually need to change the horizontal dimension only, but for simplicity/uniformity we do all directions
@@ -3402,10 +3402,10 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     // Set over_boundary_block_mode     Settings
     // 0                            0: not allowed
     // 1                            1: allowed
-    if (scs_ptr->static_config.over_bndry_blk == DEFAULT)
+    if (scs_ptr->over_bndry_blk == DEFAULT)
         scs_ptr->over_boundary_block_mode = 1;
     else
-        scs_ptr->over_boundary_block_mode = scs_ptr->static_config.over_bndry_blk;
+        scs_ptr->over_boundary_block_mode = scs_ptr->over_bndry_blk;
     if (scs_ptr->static_config.pass == ENC_FIRST_PASS)
         scs_ptr->over_boundary_block_mode = 0;
     if (scs_ptr->static_config.enable_mfmv == DEFAULT)
@@ -3415,7 +3415,7 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
 
     // Set hbd_mode_decision OFF for high encode modes or bitdepth < 10
     if (scs_ptr->static_config.encoder_bit_depth < 10)
-        scs_ptr->static_config.enable_hbd_mode_decision = 0;
+        scs_ptr->enable_hbd_mode_decision = 0;
 
     // Throws a warning when scene change is on, as the feature is not optimal and may produce false detections
     if (scs_ptr->static_config.scene_change_detection == 1)
@@ -3540,13 +3540,13 @@ void set_max_mini_gop_size(SequenceControlSet *scs_ptr, MiniGopSizeCtrls *mgs_ct
 
 
     }
-    scs_ptr->static_config.enable_adaptive_mini_gop = mgs_ctls->adptive_enable;
-    scs_ptr->static_config.max_heirachical_level = scs_ptr->static_config.hierarchical_levels;
+    scs_ptr->enable_adaptive_mini_gop = mgs_ctls->adptive_enable;
+    scs_ptr->max_heirachical_level = scs_ptr->static_config.hierarchical_levels;
 }
 void copy_api_from_app(
     SequenceControlSet       *scs_ptr,
     EbSvtAv1EncConfiguration   *config_struct){
-    uint32_t                  hme_region_index = 0;
+
     scs_ptr->max_input_luma_width = config_struct->source_width;
     scs_ptr->max_input_luma_height = config_struct->source_height;
     scs_ptr->frame_rate = ((EbSvtAv1EncConfiguration*)config_struct)->frame_rate;
@@ -3557,16 +3557,21 @@ void copy_api_from_app(
         ((EbSvtAv1EncConfiguration*)config_struct)->enable_tpl_la = 0;
         SVT_WARN("TPL is disabled in low delay applications.\n");
     }
-    scs_ptr->static_config.enable_qp_scaling_flag = 1;
+    scs_ptr->enable_qp_scaling_flag = 1;
     scs_ptr->max_blk_size = (uint8_t)64;
     scs_ptr->min_blk_size = (uint8_t)8;
     scs_ptr->max_intra_size = (uint8_t)32;
     scs_ptr->min_intra_size = (uint8_t)8;
     scs_ptr->max_ref_count = 1;
+    scs_ptr->palette_level = DEFAULT;
+    scs_ptr->intra_angle_delta = DEFAULT;
+    scs_ptr->intrabc_mode = DEFAULT;
+    scs_ptr->ten_bit_format = 0;
+    scs_ptr->speed_control_flag = 0;
 
     // Padding Offsets
-    scs_ptr->sb_sz = (uint8_t)((EbSvtAv1EncConfiguration*)config_struct)->sb_sz;
-    scs_ptr->max_sb_depth = (uint8_t)((EbSvtAv1EncConfiguration*)config_struct)->partition_depth;
+    scs_ptr->sb_sz = 64;
+    scs_ptr->max_sb_depth = (uint8_t)EB_MAX_SB_DEPTH;
     scs_ptr->static_config.intra_period_length = ((EbSvtAv1EncConfiguration*)config_struct)->intra_period_length;
     scs_ptr->static_config.intra_refresh_type = ((EbSvtAv1EncConfiguration*)config_struct)->intra_refresh_type;
     scs_ptr->static_config.hierarchical_levels = ((EbSvtAv1EncConfiguration*)config_struct)->hierarchical_levels;
@@ -3576,7 +3581,7 @@ void copy_api_from_app(
     scs_ptr->static_config.key_frame_chroma_qindex_offset = ((EbSvtAv1EncConfiguration*)config_struct)->key_frame_chroma_qindex_offset;
     scs_ptr->static_config.key_frame_qindex_offset = ((EbSvtAv1EncConfiguration*)config_struct)->key_frame_qindex_offset;
     if (scs_ptr->static_config.use_fixed_qindex_offsets == 1) {
-        scs_ptr->static_config.enable_qp_scaling_flag = 0;
+        scs_ptr->enable_qp_scaling_flag = 0;
         scs_ptr->static_config.use_qp_file = 0;
         memcpy(scs_ptr->static_config.qindex_offsets, ((EbSvtAv1EncConfiguration*)config_struct)->qindex_offsets,
             MAX_TEMPORAL_LAYERS * sizeof(int32_t));
@@ -3588,99 +3593,19 @@ void copy_api_from_app(
     // Deblock Filter
     scs_ptr->static_config.disable_dlf_flag = ((EbSvtAv1EncConfiguration*)config_struct)->disable_dlf_flag;
 
-    // Local Warped Motion
-    scs_ptr->static_config.enable_warped_motion = ((EbSvtAv1EncConfiguration*)config_struct)->enable_warped_motion;
-
-    // Global motion
-    scs_ptr->static_config.enable_global_motion = ((EbSvtAv1EncConfiguration*)config_struct)->enable_global_motion;
-
     // CDEF
     scs_ptr->static_config.cdef_level = ((EbSvtAv1EncConfiguration*)config_struct)->cdef_level;
 
     // Restoration filtering
     scs_ptr->static_config.enable_restoration_filtering = ((EbSvtAv1EncConfiguration*)config_struct)->enable_restoration_filtering;
-    scs_ptr->static_config.sg_filter_mode = ((EbSvtAv1EncConfiguration*)config_struct)->sg_filter_mode;
-    scs_ptr->static_config.wn_filter_mode = ((EbSvtAv1EncConfiguration*)config_struct)->wn_filter_mode;
     // motion field motion vector
     scs_ptr->static_config.enable_mfmv                  = ((EbSvtAv1EncConfiguration*)config_struct)->enable_mfmv;
-    // redundant block
-    scs_ptr->static_config.enable_redundant_blk         = ((EbSvtAv1EncConfiguration*)config_struct)->enable_redundant_blk;
-    // spatial sse in full loop
-    scs_ptr->static_config.spatial_sse_full_loop_level  = ((EbSvtAv1EncConfiguration*)config_struct)->spatial_sse_full_loop_level;
-    // over boundry block mode
-    scs_ptr->static_config.over_bndry_blk               = ((EbSvtAv1EncConfiguration*)config_struct)->over_bndry_blk;
-    // new nearest comb injection
-    scs_ptr->static_config.new_nearest_comb_inject      = ((EbSvtAv1EncConfiguration*)config_struct)->new_nearest_comb_inject;
-    // intra angle delta
-    scs_ptr->static_config.intra_angle_delta            = ((EbSvtAv1EncConfiguration*)config_struct)->intra_angle_delta;
-    // inter intra compoound
-    scs_ptr->static_config.inter_intra_compound         = ((EbSvtAv1EncConfiguration*)config_struct)->inter_intra_compound;
-    // NSQ table
-    scs_ptr->static_config.nsq_table                    = ((EbSvtAv1EncConfiguration*)config_struct)->nsq_table;
-    // frame end cdf update mode
-    scs_ptr->static_config.frame_end_cdf_update         = ((EbSvtAv1EncConfiguration*)config_struct)->frame_end_cdf_update;
 
-    // Chroma mode
-    scs_ptr->static_config.set_chroma_mode = ((EbSvtAv1EncConfiguration*)config_struct)->set_chroma_mode;
-
-    // Chroma mode
-    scs_ptr->static_config.disable_cfl_flag = ((EbSvtAv1EncConfiguration*)config_struct)->disable_cfl_flag;
-
-    // OBMC
-    scs_ptr->static_config.obmc_level = ((EbSvtAv1EncConfiguration*)config_struct)->obmc_level;
-    // RDOQ
-    scs_ptr->static_config.rdoq_level = ((EbSvtAv1EncConfiguration*)config_struct)->rdoq_level;
-
-    // Predictive ME
-    scs_ptr->static_config.pred_me  = ((EbSvtAv1EncConfiguration*)config_struct)->pred_me;
-    // BiPred 3x3 injection
-    scs_ptr->static_config.bipred_3x3_inject = ((EbSvtAv1EncConfiguration*)config_struct)->bipred_3x3_inject;
-    // Compound mode
-    scs_ptr->static_config.compound_level = ((EbSvtAv1EncConfiguration*)config_struct)->compound_level;
-
-    scs_ptr->static_config.enable_paeth = ((EbSvtAv1EncConfiguration*)config_struct)->enable_paeth;
-    scs_ptr->static_config.enable_smooth = ((EbSvtAv1EncConfiguration*)config_struct)->enable_smooth;
-
-    // Filter intra prediction
-    scs_ptr->static_config.filter_intra_level = ((EbSvtAv1EncConfiguration*)config_struct)->filter_intra_level;
-    // Intra Edge Filter
-    scs_ptr->static_config.enable_intra_edge_filter = ((EbSvtAv1EncConfiguration*)config_struct)->enable_intra_edge_filter;
-
-    // Picture based rate estimation, only active with lp 1
-    if(((EbSvtAv1EncConfiguration*)config_struct)->logical_processors > 1)
-        scs_ptr->static_config.pic_based_rate_est = 0;
-    else
-        scs_ptr->static_config.pic_based_rate_est = ((EbSvtAv1EncConfiguration*)config_struct)->pic_based_rate_est;
-    // ME Tools
-    scs_ptr->static_config.use_default_me_hme = ((EbSvtAv1EncConfiguration*)config_struct)->use_default_me_hme;
-    scs_ptr->static_config.enable_hme_flag = ((EbSvtAv1EncConfiguration*)config_struct)->enable_hme_flag;
-    scs_ptr->static_config.enable_hme_level0_flag = ((EbSvtAv1EncConfiguration*)config_struct)->enable_hme_level0_flag;
-    scs_ptr->static_config.enable_hme_level1_flag = ((EbSvtAv1EncConfiguration*)config_struct)->enable_hme_level1_flag;
-    scs_ptr->static_config.enable_hme_level2_flag = ((EbSvtAv1EncConfiguration*)config_struct)->enable_hme_level2_flag;
-    scs_ptr->static_config.search_area_width = ((EbSvtAv1EncConfiguration*)config_struct)->search_area_width;
-    scs_ptr->static_config.search_area_height = ((EbSvtAv1EncConfiguration*)config_struct)->search_area_height;
-    scs_ptr->static_config.number_hme_search_region_in_width = ((EbSvtAv1EncConfiguration*)config_struct)->number_hme_search_region_in_width;
-    scs_ptr->static_config.number_hme_search_region_in_height = ((EbSvtAv1EncConfiguration*)config_struct)->number_hme_search_region_in_height;
-    scs_ptr->static_config.hme_level0_total_search_area_width = ((EbSvtAv1EncConfiguration*)config_struct)->hme_level0_total_search_area_width;
-    scs_ptr->static_config.hme_level0_total_search_area_height = ((EbSvtAv1EncConfiguration*)config_struct)->hme_level0_total_search_area_height;
-    scs_ptr->static_config.ext_block_flag = ((EbSvtAv1EncConfiguration*)config_struct)->ext_block_flag;
-    for (hme_region_index = 0; hme_region_index < scs_ptr->static_config.number_hme_search_region_in_width; ++hme_region_index) {
-        scs_ptr->static_config.hme_level0_search_area_in_width_array[hme_region_index] = ((EbSvtAv1EncConfiguration*)config_struct)->hme_level0_search_area_in_width_array[hme_region_index];
-        scs_ptr->static_config.hme_level1_search_area_in_width_array[hme_region_index] = ((EbSvtAv1EncConfiguration*)config_struct)->hme_level1_search_area_in_width_array[hme_region_index];
-        scs_ptr->static_config.hme_level2_search_area_in_width_array[hme_region_index] = ((EbSvtAv1EncConfiguration*)config_struct)->hme_level2_search_area_in_width_array[hme_region_index];
-    }
-
-    for (hme_region_index = 0; hme_region_index < scs_ptr->static_config.number_hme_search_region_in_height; ++hme_region_index) {
-        scs_ptr->static_config.hme_level0_search_area_in_height_array[hme_region_index] = ((EbSvtAv1EncConfiguration*)config_struct)->hme_level0_search_area_in_height_array[hme_region_index];
-        scs_ptr->static_config.hme_level1_search_area_in_height_array[hme_region_index] = ((EbSvtAv1EncConfiguration*)config_struct)->hme_level1_search_area_in_height_array[hme_region_index];
-        scs_ptr->static_config.hme_level2_search_area_in_height_array[hme_region_index] = ((EbSvtAv1EncConfiguration*)config_struct)->hme_level2_search_area_in_height_array[hme_region_index];
-    }
     //Film Grain
     scs_ptr->static_config.film_grain_denoise_strength = ((EbSvtAv1EncConfiguration*)config_struct)->film_grain_denoise_strength;
 
     // MD Parameters
-    scs_ptr->static_config.enable_hbd_mode_decision = ((EbSvtAv1EncConfiguration*)config_struct)->encoder_bit_depth > 8 ? ((EbSvtAv1EncConfiguration*)config_struct)->enable_hbd_mode_decision : 0;
-    scs_ptr->static_config.palette_level = ((EbSvtAv1EncConfiguration*)config_struct)->palette_level;
+    scs_ptr->enable_hbd_mode_decision = ((EbSvtAv1EncConfiguration*)config_struct)->encoder_bit_depth > 8 ? DEFAULT : 0;
     // Adaptive Loop Filter
     scs_ptr->static_config.tile_rows = scs_ptr->static_config.pass == ENC_FIRST_PASS ? 0 : ((EbSvtAv1EncConfiguration*)config_struct)->tile_rows;
     scs_ptr->static_config.tile_columns = scs_ptr->static_config.pass == ENC_FIRST_PASS ? 0 : ((EbSvtAv1EncConfiguration*)config_struct)->tile_columns;
@@ -3753,10 +3678,9 @@ void copy_api_from_app(
     scs_ptr->chroma_format_idc = (uint32_t)(scs_ptr->static_config.encoder_color_format);
     scs_ptr->encoder_bit_depth = (uint32_t)(scs_ptr->static_config.encoder_bit_depth);
     //16bit pipeline
-    scs_ptr->static_config.is_16bit_pipeline = ((((EbSvtAv1EncConfiguration*)config_struct)->encoder_bit_depth) > EB_8BIT) ? EB_TRUE: ((EbSvtAv1EncConfiguration*)config_struct)->is_16bit_pipeline;
+    scs_ptr->is_16bit_pipeline = ((((EbSvtAv1EncConfiguration*)config_struct)->encoder_bit_depth) > EB_8BIT) ? EB_TRUE: EB_FALSE;
     scs_ptr->subsampling_x = (scs_ptr->chroma_format_idc == EB_YUV444 ? 1 : 2) - 1;
     scs_ptr->subsampling_y = (scs_ptr->chroma_format_idc >= EB_YUV422 ? 1 : 2) - 1;
-    scs_ptr->static_config.ten_bit_format = ((EbSvtAv1EncConfiguration*)config_struct)->ten_bit_format;
     scs_ptr->static_config.compressed_ten_bit_format = ((EbSvtAv1EncConfiguration*)config_struct)->compressed_ten_bit_format;
 
     // Thresholds
@@ -3766,15 +3690,12 @@ void copy_api_from_app(
     uint8_t disable_sc_detection = (scs_ptr->static_config.pass == ENC_FIRST_PASS) ? 1 : 0;
     if (disable_sc_detection)
         scs_ptr->static_config.screen_content_mode = 0;
-    scs_ptr->static_config.intrabc_mode = ((EbSvtAv1EncConfiguration*)config_struct)->intrabc_mode;
 
     // Annex A parameters
     scs_ptr->static_config.profile = ((EbSvtAv1EncConfiguration*)config_struct)->profile;
     scs_ptr->static_config.tier = ((EbSvtAv1EncConfiguration*)config_struct)->tier;
     scs_ptr->static_config.level = ((EbSvtAv1EncConfiguration*)config_struct)->level;
     scs_ptr->static_config.stat_report = ((EbSvtAv1EncConfiguration*)config_struct)->stat_report;
-
-    scs_ptr->static_config.speed_control_flag = ((EbSvtAv1EncConfiguration*)config_struct)->speed_control_flag;
 
     // Buffers - Hardcoded(Cleanup)
     scs_ptr->static_config.use_cpu_flags = ((EbSvtAv1EncConfiguration*)config_struct)->use_cpu_flags;
@@ -3869,39 +3790,6 @@ void copy_api_from_app(
 /******************************************
 * Verify Settings
 ******************************************/
-#define PowerOfTwoCheck(x) (((x) != 0) && (((x) & (~(x) + 1)) == (x)))
-static int verify_hme_dimension(unsigned int index, unsigned int HmeLevel0SearchAreaInWidth, uint32_t number_hme_search_region_in_width_array[EB_HME_SEARCH_AREA_ROW_MAX_COUNT], unsigned int number_hme_search_region_in_width)
-{
-    int           return_error = 0;
-    uint32_t        i;
-    uint32_t        total_search_width = 0;
-
-    for (i = 0; i < number_hme_search_region_in_width; i++)
-        total_search_width += number_hme_search_region_in_width_array[i];
-    if ((total_search_width) != (HmeLevel0SearchAreaInWidth)) {
-        SVT_LOG("Error Instance %u: Summed values of HME area does not equal the total area. \n", index);
-        return_error = -1;
-        return return_error;
-    }
-
-    return return_error;
-}
-static int verify_hme_dimension_l1_l2(unsigned int index, uint32_t number_hme_search_region_in_width_array[EB_HME_SEARCH_AREA_ROW_MAX_COUNT], unsigned int number_hme_search_region_in_width)
-{
-    int             return_error = 0;
-    uint32_t        i;
-    uint32_t        total_search_width = 0;
-
-    for (i = 0; i < number_hme_search_region_in_width; i++)
-        total_search_width += number_hme_search_region_in_width_array[i];
-    if ((total_search_width > 480) || (total_search_width == 0)) {
-        SVT_LOG("Error Instance %u: Invalid HME Total Search Area. Must be [1 - 480].\n", index);
-        return_error = -1;
-        return return_error;
-    }
-
-    return return_error;
-}
 static EbErrorType verify_settings(
     SequenceControlSet       *scs_ptr)
 {
@@ -3914,10 +3802,6 @@ static EbErrorType verify_settings(
     }
     if (config->enc_mode == MAX_ENC_PRESET) {
         SVT_WARN("EncoderMode (preset): %d was developed for the sole purpose of debugging and or running fast convex-hull encoding. This configuration should not be used for any benchmarking or quality analysis\n", MAX_ENC_PRESET);
-    }
-    if (config->ext_block_flag > 1) {
-        SVT_LOG("Error instance %u: ExtBlockFlag must be [0-1]\n", channel_number + 1);
-        return_error = EB_ErrorBadParameter;
     }
     if (scs_ptr->max_input_luma_width < 64) {
         SVT_LOG("Error instance %u: Source Width must be at least 64\n", channel_number + 1);
@@ -3972,74 +3856,10 @@ if (scs_ptr->max_input_luma_width > 16384) {
         SVT_LOG("Error Instance %u: Invalid LoopFilterDisable. LoopFilterDisable must be [0 - 1]\n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
-    if (config->use_default_me_hme > 1) {
-        SVT_LOG("Error Instance %u: invalid use_default_me_hme. use_default_me_hme must be [0 - 1]\n", channel_number + 1);
-        return_error = EB_ErrorBadParameter;
-    }
-    if (config->enable_hme_flag > 1) {
-        SVT_LOG("Error Instance %u: invalid HME. HME must be [0 - 1]\n", channel_number + 1);
-        return_error = EB_ErrorBadParameter;
-    }
 
-    if (config->enable_hme_level0_flag > 1) {
-        SVT_LOG("Error Instance %u: invalid enable HMELevel0. HMELevel0 must be [0 - 1]\n", channel_number + 1);
-        return_error = EB_ErrorBadParameter;
-    }
-
-    if (config->enable_hme_level1_flag > 1) {
-        SVT_LOG("Error Instance %u: invalid enable HMELevel1. HMELevel1 must be [0 - 1]\n", channel_number + 1);
-        return_error = EB_ErrorBadParameter;
-    }
-
-    if (config->enable_hme_level2_flag > 1) {
-        SVT_LOG("Error Instance %u: invalid enable HMELevel2. HMELevel2 must be [0 - 1]\n", channel_number + 1);
-        return_error = EB_ErrorBadParameter;
-    }
-
-    if ((config->search_area_width > 480) || (config->search_area_width == 0)) {
-        SVT_LOG("Error Instance %u: Invalid search_area_width. search_area_width must be [1 - 480]\n", channel_number + 1);
-        return_error = EB_ErrorBadParameter;
-    }
-
-    if ((config->search_area_height > 480) || (config->search_area_height == 0)) {
-        SVT_LOG("Error Instance %u: Invalid search_area_height. search_area_height must be [1 - 480]\n", channel_number + 1);
-        return_error = EB_ErrorBadParameter;
-    }
     if (config->rate_control_mode > 2 && (config->pass == ENC_FIRST_PASS || config->rc_twopass_stats_in.buf)) {
         SVT_LOG("Error Instance %u: Only rate control mode 0~2 are supported for 2-pass \n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
-    }
-    if (config->enable_hme_flag) {
-        if ((config->number_hme_search_region_in_width > (uint32_t)EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT) || (config->number_hme_search_region_in_width == 0)) {
-            SVT_LOG("Error Instance %u: Invalid number_hme_search_region_in_width. number_hme_search_region_in_width must be [1 - %d]\n", channel_number + 1, EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT);
-            return_error = EB_ErrorBadParameter;
-        }
-
-        if ((config->number_hme_search_region_in_height > (uint32_t)EB_HME_SEARCH_AREA_ROW_MAX_COUNT) || (config->number_hme_search_region_in_height == 0)) {
-            SVT_LOG("Error Instance %u: Invalid number_hme_search_region_in_height. number_hme_search_region_in_height must be [1 - %d]\n", channel_number + 1, EB_HME_SEARCH_AREA_ROW_MAX_COUNT);
-            return_error = EB_ErrorBadParameter;
-        }
-
-        if ((config->hme_level0_total_search_area_height > 480) || (config->hme_level0_total_search_area_height == 0)) {
-            SVT_LOG("Error Instance %u: Invalid hme_level0_total_search_area_height. hme_level0_total_search_area_height must be [1 - 480]\n", channel_number + 1);
-            return_error = EB_ErrorBadParameter;
-        }
-        if ((config->hme_level0_total_search_area_width > 480) || (config->hme_level0_total_search_area_width == 0)) {
-            SVT_LOG("Error Instance %u: Invalid hme_level0_total_search_area_width. hme_level0_total_search_area_width must be [1 - 480]\n", channel_number + 1);
-            return_error = EB_ErrorBadParameter;
-        }
-        if (verify_hme_dimension(channel_number + 1, config->hme_level0_total_search_area_height, config->hme_level0_search_area_in_height_array, config->number_hme_search_region_in_height))
-            return_error = EB_ErrorBadParameter;
-        if (verify_hme_dimension(channel_number + 1, config->hme_level0_total_search_area_width, config->hme_level0_search_area_in_width_array, config->number_hme_search_region_in_width))
-            return_error = EB_ErrorBadParameter;
-        if (verify_hme_dimension_l1_l2(channel_number + 1, config->hme_level1_search_area_in_width_array, config->number_hme_search_region_in_width))
-            return_error = EB_ErrorBadParameter;
-        if (verify_hme_dimension_l1_l2(channel_number + 1, config->hme_level1_search_area_in_height_array, config->number_hme_search_region_in_width))
-            return_error = EB_ErrorBadParameter;
-        if (verify_hme_dimension_l1_l2(channel_number + 1, config->hme_level2_search_area_in_width_array, config->number_hme_search_region_in_width))
-            return_error = EB_ErrorBadParameter;
-        if (verify_hme_dimension_l1_l2(channel_number + 1, config->hme_level2_search_area_in_height_array, config->number_hme_search_region_in_width))
-            return_error = EB_ErrorBadParameter;
     }
     if (config->profile > 2) {
         SVT_LOG("Error Instance %u: The maximum allowed profile value is 2 \n", channel_number + 1);
@@ -4121,12 +3941,12 @@ if (scs_ptr->max_input_luma_width > 16384) {
     }
 
     // IntraBC
-    if (config->intrabc_mode > 3 || config->intrabc_mode < -1) {
-        SVT_LOG( "Error instance %u: Invalid intraBC mode [0-3, -1 for default], your input: %i\n", channel_number + 1, config->intrabc_mode);
+    if (scs_ptr->intrabc_mode > 3 || scs_ptr->intrabc_mode < -1) {
+        SVT_LOG( "Error instance %u: Invalid intraBC mode [0-3, -1 for default], your input: %i\n", channel_number + 1, scs_ptr->intrabc_mode);
         return_error = EB_ErrorBadParameter;
     }
 
-    if (config->intrabc_mode > 0 && config->screen_content_mode != 1) {
+    if (scs_ptr->intrabc_mode > 0 && config->screen_content_mode != 1) {
         SVT_LOG("Error instance %u: The intra BC feature is only available when screen_content_mode is set to 1\n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
@@ -4174,11 +3994,6 @@ if (scs_ptr->max_input_luma_width > 16384) {
         return_error = EB_ErrorBadParameter;
     }
 
-    if (config->speed_control_flag > 1) {
-        SVT_LOG("Error Instance %u: Invalid Speed Control flag [0 - 1]\n", channel_number + 1);
-        return_error = EB_ErrorBadParameter;
-    }
-
     if (config->use_cpu_flags & CPU_FLAGS_INVALID) {
         SVT_LOG("Error Instance %u: param '--asm' have invalid value.\n"
             "Value should be [0 - 11] or [c, mmx, sse, sse2, sse3, ssse3, sse4_1, sse4_2, avx, avx2, avx512, max]\n", channel_number + 1);
@@ -4190,66 +4005,10 @@ if (scs_ptr->max_input_luma_width > 16384) {
         return_error = EB_ErrorBadParameter;
     }
 
-    // Local Warped Motion
-    if (config->enable_warped_motion != 0 && config->enable_warped_motion != 1 && config->enable_warped_motion != -1) {
-      SVT_LOG("Error instance %u: Invalid warped motion flag [0/1, -1], your input: %d\n", channel_number + 1, config->enable_warped_motion);
-      return_error = EB_ErrorBadParameter;
-    }
-
-    // Global Motion
-    if (config->enable_global_motion != 0 && config->enable_global_motion != 1) {
-      SVT_LOG("Error instance %u: Invalid global motion flag [0 - 1], your input: %d\n", channel_number + 1, config->enable_global_motion);
-      return_error = EB_ErrorBadParameter;
-    }
-
-    // OBMC
-    if (config->obmc_level < (int32_t)(-1) || config->obmc_level > 3) {
-      SVT_LOG("Error instance %u: Invalid OBMC flag [-1, 0, 1, 2, 3], your input: %d\n", channel_number + 1, config->obmc_level);
-      return_error = EB_ErrorBadParameter;
-    }
-    // Filter Intra prediction
-    if (config->filter_intra_level < (int32_t)(-1) || config->filter_intra_level > 1) {
-        SVT_LOG("Error instance %u: Invalid Filter Intra flag [0 - 1], your input: %d\n", channel_number + 1, config->filter_intra_level);
-        return_error = EB_ErrorBadParameter;
-    }
-    // Intra Edge Filter
-    if (config->enable_intra_edge_filter != 0 && config->enable_intra_edge_filter != 1 && config->enable_intra_edge_filter != -1) {
-        SVT_LOG("Error instance %u: Invalid Filter Intra flag [0/1, -1], your input: %d\n", channel_number + 1, config->enable_intra_edge_filter);
-        return_error = EB_ErrorBadParameter;
-    }
-
-    // Picture based rate estimation
-    if (config->pic_based_rate_est != 0 && config->pic_based_rate_est != 1 && config->pic_based_rate_est != -1) {
-        SVT_LOG("Error instance %u: Invalid pic_based_rate_est [0/1, -1], your input: %d\n", channel_number + 1, config->pic_based_rate_est);
-        return_error = EB_ErrorBadParameter;
-    }
 
     // HBD mode decision
-    if (config->enable_hbd_mode_decision < (int8_t)(-1) || config->enable_hbd_mode_decision > 2) {
-         SVT_LOG("Error instance %u: Invalid HBD mode decision flag [-1 - 2], your input: %d\n", channel_number + 1, config->enable_hbd_mode_decision);
-    return_error = EB_ErrorBadParameter;
-    }
-
-    // palette
-    if (config->palette_level < (int32_t)(-1) || config->palette_level > 2) {
-        SVT_LOG("Error instance %u: Invalid Palette Mode [0 .. 2], your input: %i\n", channel_number + 1, config->palette_level);
-        return_error = EB_ErrorBadParameter;
-    }
-    // RDOQ
-    if (config->rdoq_level != 0 && config->rdoq_level != 1 && config->rdoq_level != -1) {
-        SVT_LOG("Error instance %u: Invalid RDOQ parameter [-1, 0, 1], your input: %i\n", channel_number + 1, config->rdoq_level);
-        return_error = EB_ErrorBadParameter;
-    }
-
-    // Chroma Level
-    if (config->set_chroma_mode > 3 || config->set_chroma_mode < -1) {
-      SVT_LOG("Error instance %u: Invalid Chroma Mode [0 - 3, -1 for auto], your input: %d\n", channel_number + 1, config->set_chroma_mode);
-      return_error = EB_ErrorBadParameter;
-    }
-
-    // Disable chroma from luma (CFL)
-    if (config->disable_cfl_flag != 0 && config->disable_cfl_flag != 1 && config->disable_cfl_flag != -1) {
-        SVT_LOG( "Error instance %u: Invalid CFL flag [0/1, -1], your input: %i\n", channel_number + 1, config->disable_cfl_flag);
+    if (scs_ptr->enable_hbd_mode_decision < (int8_t)(-1) || scs_ptr->enable_hbd_mode_decision > 2) {
+         SVT_LOG("Error instance %u: Invalid HBD mode decision flag [-1 - 2], your input: %d\n", channel_number + 1, scs_ptr->enable_hbd_mode_decision);
         return_error = EB_ErrorBadParameter;
     }
 
@@ -4265,80 +4024,8 @@ if (scs_ptr->max_input_luma_width > 16384) {
       return_error = EB_ErrorBadParameter;
     }
 
-    if (config->sg_filter_mode > 4 || config->sg_filter_mode < -1) {
-        SVT_LOG("Error instance %u: Invalid self-guided filter mode [0 - 4, -1 for auto], your input: %d\n", channel_number + 1, config->sg_filter_mode);
-        return_error = EB_ErrorBadParameter;
-    }
-
-    if (config->wn_filter_mode > 3 || config->wn_filter_mode < -1) {
-        SVT_LOG("Error instance %u: Invalid Wiener filter mode [0 - 3, -1 for auto], your input: %d\n", channel_number + 1, config->wn_filter_mode);
-        return_error = EB_ErrorBadParameter;
-    }
-
-    if (config->pred_me > 5 || config->pred_me < -1) {
-      SVT_LOG("Error instance %u: Invalid predictive me level [0-5, -1 for auto], your input: %d\n", channel_number + 1, config->pred_me);
-      return_error = EB_ErrorBadParameter;
-    }
-
-    if (config->bipred_3x3_inject > 2 || config->bipred_3x3_inject < -1) {
-      SVT_LOG("Error instance %u: Invalid bipred_3x3_inject mode [0-2, -1 for auto], your input: %d\n", channel_number + 1, config->bipred_3x3_inject);
-      return_error = EB_ErrorBadParameter;
-    }
-
-    if (config->compound_level > 2 || config->compound_level < -1) {
-      SVT_LOG("Error instance %u: Invalid compound level [0-2, -1 for auto], your input: %d\n", channel_number + 1, config->compound_level);
-      return_error = EB_ErrorBadParameter;
-    }
-
-    if (config->intra_angle_delta != 0 && config->intra_angle_delta != 1 && config->intra_angle_delta != -1) {
-        SVT_LOG("Error instance %u: Invalid Enable intra angle delta flag [0/1 or -1 for auto], your input: %d\n", channel_number + 1, config->intra_angle_delta);
-        return_error = EB_ErrorBadParameter;
-    }
-
-    if (config->inter_intra_compound != 0 && config->inter_intra_compound != 1 && config->inter_intra_compound != -1) {
-      SVT_LOG("Error instance %u: Invalid Inter Intra Compound flag [0/1 or -1 for auto], your input: %d\n", channel_number + 1, config->inter_intra_compound);
-      return_error = EB_ErrorBadParameter;
-    }
-
-    if (config->enable_paeth != 0 && config->enable_paeth != 1 && config->enable_paeth != -1) {
-        SVT_LOG("Error instance %u: Invalid Paeth flag [0/1 or -1 for auto], your input: %d\n", channel_number + 1, config->enable_paeth);
-        return_error = EB_ErrorBadParameter;
-    }
-
-    if (config->enable_smooth != 0 && config->enable_smooth != 1 && config->enable_smooth != -1) {
-        SVT_LOG("Error instance %u: Invalid Smooth flag [0/1 or -1 for auto], your input: %d\n", channel_number + 1, config->enable_smooth);
-        return_error = EB_ErrorBadParameter;
-    }
     if (config->enable_mfmv != 0 && config->enable_mfmv != 1 && config->enable_mfmv != -1) {
       SVT_LOG("Error instance %u: Invalid motion field motion vector flag [0/1 or -1 for auto], your input: %d\n", channel_number + 1, config->enable_mfmv);
-      return_error = EB_ErrorBadParameter;
-    }
-
-    if (config->enable_redundant_blk != 0 && config->enable_redundant_blk != 1 && config->enable_redundant_blk != -1) {
-      SVT_LOG("Error instance %u: Invalid enable_redundant_blk  flag [0/1 or -1 for auto], your input: %d\n", channel_number + 1, config->enable_redundant_blk);
-      return_error = EB_ErrorBadParameter;
-    }
-
-    if (config->spatial_sse_full_loop_level != 0 && config->spatial_sse_full_loop_level != 1 && config->spatial_sse_full_loop_level != -1) {
-        SVT_LOG("Error instance %u: Invalid spatial_sse_fl flag [0/1 or -1 for auto], your input: %d\n", channel_number + 1, config->spatial_sse_full_loop_level);
-        return_error = EB_ErrorBadParameter;
-    }
-    if (config->over_bndry_blk != 0 && config->over_bndry_blk != 1 && config->over_bndry_blk != -1) {
-      SVT_LOG("Error instance %u: Invalid over_bndry_blk flag [0/1 or -1 for auto], your input: %d\n", channel_number + 1, config->over_bndry_blk);
-      return_error = EB_ErrorBadParameter;
-    }
-
-    if (config->new_nearest_comb_inject != 0 && config->new_nearest_comb_inject != 1 && config->new_nearest_comb_inject != -1) {
-      SVT_LOG("Error instance %u: Invalid new_nearest_comb_inject flag [0/1 or -1 for auto], your input: %d\n", channel_number + 1, config->new_nearest_comb_inject);
-      return_error = EB_ErrorBadParameter;
-    }
-    if (config->nsq_table != 0 && config->nsq_table != 1 && config->nsq_table != -1) {
-      SVT_LOG("Error instance %u: Invalid nsq_table flag [0/1 or -1 for auto], your input: %d\n", channel_number + 1, config->nsq_table);
-      return_error = EB_ErrorBadParameter;
-    }
-
-    if (config->frame_end_cdf_update != 0 && config->frame_end_cdf_update != 1 && config->frame_end_cdf_update != -1) {
-      SVT_LOG("Error instance %u: Invalid frame_end_cdf_update flag [0/1 or -1 for auto], your input: %d\n", channel_number + 1, config->frame_end_cdf_update);
       return_error = EB_ErrorBadParameter;
     }
 
@@ -4476,8 +4163,6 @@ EbErrorType svt_svt_enc_init_parameter(
     config_ptr->frame_rate_numerator = 60000;
     config_ptr->frame_rate_denominator = 1000;
     config_ptr->encoder_bit_depth = 8;
-    config_ptr->is_16bit_pipeline = EB_FALSE;
-    config_ptr->ten_bit_format = 0;
     config_ptr->compressed_ten_bit_format = 0;
     config_ptr->source_width = 0;
     config_ptr->source_height = 0;
@@ -4509,64 +4194,12 @@ EbErrorType svt_svt_enc_init_parameter(
     config_ptr->intra_refresh_type = 2;
     config_ptr->hierarchical_levels = 4;
     config_ptr->pred_structure = EB_PRED_RANDOM_ACCESS;
-    config_ptr->enable_qp_scaling_flag = 1;
     config_ptr->disable_dlf_flag = EB_FALSE;
-    config_ptr->enable_warped_motion = DEFAULT;
-    config_ptr->enable_global_motion = EB_TRUE;
     config_ptr->cdef_level = DEFAULT;
     config_ptr->enable_restoration_filtering = DEFAULT;
-    config_ptr->sg_filter_mode = DEFAULT;
-    config_ptr->wn_filter_mode = DEFAULT;
-    config_ptr->intra_angle_delta = DEFAULT;
-    config_ptr->inter_intra_compound = DEFAULT;
-    config_ptr->enable_paeth = DEFAULT;
-    config_ptr->enable_smooth = DEFAULT;
     config_ptr->enable_mfmv = DEFAULT;
-    config_ptr->enable_redundant_blk = DEFAULT;
-    config_ptr->spatial_sse_full_loop_level = DEFAULT;
-    config_ptr->over_bndry_blk = DEFAULT;
-    config_ptr->new_nearest_comb_inject = DEFAULT;
-    config_ptr->nsq_table = DEFAULT;
-    config_ptr->frame_end_cdf_update = DEFAULT;
-    config_ptr->set_chroma_mode = DEFAULT;
-    config_ptr->disable_cfl_flag = DEFAULT;
-    config_ptr->obmc_level = DEFAULT;
-    config_ptr->rdoq_level = DEFAULT;
-    config_ptr->pred_me = DEFAULT;
-    config_ptr->bipred_3x3_inject = DEFAULT;
-    config_ptr->compound_level = DEFAULT;
-    config_ptr->filter_intra_level = DEFAULT;
-    config_ptr->enable_intra_edge_filter = DEFAULT;
-    config_ptr->pic_based_rate_est = DEFAULT;
-    config_ptr->ext_block_flag = EB_FALSE;
-    config_ptr->use_default_me_hme = EB_TRUE;
-    config_ptr->enable_hme_flag = EB_TRUE;
-    config_ptr->enable_hme_level0_flag = EB_TRUE;
-    config_ptr->enable_hme_level1_flag = EB_FALSE;
-    config_ptr->enable_hme_level2_flag = EB_FALSE;
-    config_ptr->search_area_width = 16;
-    config_ptr->search_area_height = 7;
-    config_ptr->number_hme_search_region_in_width = 2;
-    config_ptr->number_hme_search_region_in_height = 2;
-    config_ptr->hme_level0_total_search_area_width = 64;
-    config_ptr->hme_level0_total_search_area_height = 25;
-    config_ptr->hme_level0_search_area_in_width_array[0] = 32;
-    config_ptr->hme_level0_search_area_in_width_array[1] = 32;
-    config_ptr->hme_level0_search_area_in_height_array[0] = 12;
-    config_ptr->hme_level0_search_area_in_height_array[1] = 13;
-    config_ptr->hme_level1_search_area_in_width_array[0] = 1;
-    config_ptr->hme_level1_search_area_in_width_array[1] = 1;
-    config_ptr->hme_level1_search_area_in_height_array[0] = 1;
-    config_ptr->hme_level1_search_area_in_height_array[1] = 1;
-    config_ptr->hme_level2_search_area_in_width_array[0] = 1;
-    config_ptr->hme_level2_search_area_in_width_array[1] = 1;
-    config_ptr->hme_level2_search_area_in_height_array[0] = 1;
-    config_ptr->hme_level2_search_area_in_height_array[1] = 1;
-    config_ptr->enable_hbd_mode_decision = DEFAULT;
-    config_ptr->palette_level = DEFAULT;
     config_ptr->enable_manual_pred_struct = EB_FALSE;
     config_ptr->encoder_color_format = EB_YUV420;
-    config_ptr->mrp_level = DEFAULT;
     // Two pass data rate control options
     config_ptr->vbr_bias_pct = 50;
     config_ptr->vbr_min_section_pct = 0;
@@ -4586,21 +4219,12 @@ EbErrorType svt_svt_enc_init_parameter(
     config_ptr->high_dynamic_range_input = 0;
     config_ptr->screen_content_mode = 2;
 
-    config_ptr->intrabc_mode = DEFAULT;
-
     // Annex A parameters
     config_ptr->profile = 0;
     config_ptr->tier = 0;
     config_ptr->level = 0;
 
     // Latency
-    config_ptr->speed_control_flag = 0;
-    config_ptr->super_block_size = 128;
-
-    config_ptr->sb_sz = 64;
-    config_ptr->partition_depth = (uint8_t)EB_MAX_SB_DEPTH;
-
-    config_ptr->speed_control_flag = 0;
     config_ptr->film_grain_denoise_strength = 0;
 
     // CPU Flags
@@ -4635,8 +4259,6 @@ EbErrorType svt_svt_enc_init_parameter(
     config_ptr->color_range = 0;
     memset(&config_ptr->mastering_display, 0, sizeof(config_ptr->mastering_display));
     memset(&config_ptr->content_light_level, 0, sizeof(config_ptr->content_light_level));
-    config_ptr->enable_adaptive_mini_gop = 0;
-    config_ptr->max_heirachical_level = 5;
     return return_error;
 }
 
@@ -4769,8 +4391,8 @@ EB_API EbErrorType svt_av1_enc_set_parameter(
         enc_handle->scs_instance_array[instance_index]->scs_ptr);
     MiniGopSizeCtrls *mgs_ctls = &enc_handle->scs_instance_array[instance_index]->scs_ptr->mgs_ctls;
     uint8_t mg_level = (enc_handle->scs_instance_array[instance_index]->scs_ptr->static_config.pass == ENC_MIDDLE_PASS || enc_handle->scs_instance_array[instance_index]->scs_ptr->static_config.pass == ENC_LAST_PASS) ? 1 : 0;
-    enc_handle->scs_instance_array[instance_index]->scs_ptr->static_config.max_heirachical_level = enc_handle->scs_instance_array[instance_index]->scs_ptr->static_config.hierarchical_levels;
-    enc_handle->scs_instance_array[instance_index]->scs_ptr->static_config.enable_adaptive_mini_gop = 0;
+    enc_handle->scs_instance_array[instance_index]->scs_ptr->max_heirachical_level = enc_handle->scs_instance_array[instance_index]->scs_ptr->static_config.hierarchical_levels;
+    enc_handle->scs_instance_array[instance_index]->scs_ptr->enable_adaptive_mini_gop = 0;
     set_mini_gop_size_controls(mgs_ctls, mg_level, enc_handle->scs_instance_array[instance_index]->scs_ptr->input_resolution);
     if (mgs_ctls->adptive_enable)
         set_max_mini_gop_size(

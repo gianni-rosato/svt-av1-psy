@@ -3109,12 +3109,12 @@ EbErrorType open_loop_intra_search_mb(PictureParentControlSet *pcs_ptr, uint32_t
                                                        bsize);
             uint8_t        ois_intra_mode;
             uint8_t        intra_mode_start = DC_PRED;
-            EbBool         enable_paeth   = pcs_ptr->scs_ptr->static_config.enable_paeth == DEFAULT
+            EbBool         enable_paeth   = pcs_ptr->scs_ptr->enable_paeth == DEFAULT
                           ? EB_TRUE
-                          : (EbBool)pcs_ptr->scs_ptr->static_config.enable_paeth;
-            EbBool         enable_smooth  = pcs_ptr->scs_ptr->static_config.enable_smooth == DEFAULT
+                          : (EbBool)pcs_ptr->scs_ptr->enable_paeth;
+            EbBool         enable_smooth  = pcs_ptr->scs_ptr->enable_smooth == DEFAULT
                          ? EB_TRUE
-                         : (EbBool)pcs_ptr->scs_ptr->static_config.enable_smooth;
+                         : (EbBool)pcs_ptr->scs_ptr->enable_smooth;
             uint8_t        intra_mode_end = pcs_ptr->tpl_ctrls.tpl_opt_flag ? DC_PRED
                        : enable_paeth                                       ? PAETH_PRED
                        : enable_smooth                                      ? SMOOTH_H_PRED

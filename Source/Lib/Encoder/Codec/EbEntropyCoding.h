@@ -89,7 +89,7 @@ static INLINE int32_t frame_might_allow_ref_frame_mvs(const PictureParentControl
 static INLINE int32_t frame_might_allow_warped_motion(const PictureParentControlSet *pcs_ptr,
                                                       SequenceControlSet *           scs_ptr) {
     return !pcs_ptr->frm_hdr.error_resilient_mode && !frame_is_intra_only(pcs_ptr) &&
-        scs_ptr->static_config.enable_warped_motion;
+        scs_ptr->enable_warped_motion;
 }
 
 static INLINE uint8_t major_minor_to_seq_level_idx(BitstreamLevel bl) {

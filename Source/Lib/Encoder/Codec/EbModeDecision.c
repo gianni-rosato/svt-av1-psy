@@ -5305,9 +5305,9 @@ void  inject_intra_candidates(
     ModeDecisionCandidate    *cand_array = context_ptr->fast_candidate_array;
     EbBool                      disable_cfl_flag = (MAX(context_ptr->blk_geom->bheight, context_ptr->blk_geom->bwidth) > 32) ? EB_TRUE : EB_FALSE;
     disable_cfl_flag = context_ptr->cfl_ctrls.enabled ? disable_cfl_flag : EB_TRUE;
-    if (scs_ptr->static_config.disable_cfl_flag != DEFAULT && !disable_cfl_flag)
+    if (scs_ptr->disable_cfl_flag != DEFAULT && !disable_cfl_flag)
         // if disable_cfl_flag == 1 then it doesn't matter what cli says otherwise change it to cli
-        disable_cfl_flag = (EbBool)scs_ptr->static_config.disable_cfl_flag;
+        disable_cfl_flag = (EbBool)scs_ptr->disable_cfl_flag;
 
     uint8_t     angle_delta_shift = 1;
     EbBool use_angle_delta = av1_use_angle_delta(context_ptr->blk_geom->bsize, context_ptr->intra_ctrls.angular_pred_level);
@@ -5463,9 +5463,9 @@ void  inject_filter_intra_candidates(
     EbBool                      disable_cfl_flag = (MAX(context_ptr->blk_geom->bheight, context_ptr->blk_geom->bwidth) > 32) ? EB_TRUE : EB_FALSE;
     disable_cfl_flag = context_ptr->cfl_ctrls.enabled ? disable_cfl_flag : EB_TRUE;
     SequenceControlSet *scs_ptr = (SequenceControlSet*)pcs_ptr->scs_wrapper_ptr->object_ptr;
-    if (scs_ptr->static_config.disable_cfl_flag != DEFAULT && !disable_cfl_flag)
+    if (scs_ptr->disable_cfl_flag != DEFAULT && !disable_cfl_flag)
         // if disable_cfl_flag == 1 then it doesn't matter what cli says otherwise change it to cli
-        disable_cfl_flag = (EbBool)scs_ptr->static_config.disable_cfl_flag;
+        disable_cfl_flag = (EbBool)scs_ptr->disable_cfl_flag;
 
     FrameHeader *frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
 
@@ -5607,9 +5607,9 @@ void  inject_palette_candidates(
     uint8_t  * palette_size_array_1  = context_ptr->palette_size_array_1;
 
     SequenceControlSet *scs_ptr = (SequenceControlSet*)pcs_ptr->scs_wrapper_ptr->object_ptr;
-    if (scs_ptr->static_config.disable_cfl_flag != DEFAULT && !disable_cfl_flag)
+    if (scs_ptr->disable_cfl_flag != DEFAULT && !disable_cfl_flag)
         // if disable_cfl_flag == 1 then it doesn't matter what cli says otherwise change it to cli
-        disable_cfl_flag = (EbBool)scs_ptr->static_config.disable_cfl_flag;
+        disable_cfl_flag = (EbBool)scs_ptr->disable_cfl_flag;
 
     search_palette_luma(
         pcs_ptr,

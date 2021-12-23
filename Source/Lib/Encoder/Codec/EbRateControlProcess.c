@@ -824,7 +824,7 @@ static int cqp_qindex_calc_tpl_la(PictureControlSet *pcs_ptr, RATE_CONTROL *rc, 
             pcs_ptr->parent_pcs_ptr->r0 = pcs_ptr->parent_pcs_ptr->r0 / factor;
         }
         pcs_ptr->parent_pcs_ptr->r0 = pcs_ptr->parent_pcs_ptr->r0 /
-            tpl_hl_islice_div_factor[scs_ptr->static_config.max_heirachical_level];
+            tpl_hl_islice_div_factor[scs_ptr->max_heirachical_level];
         if (pcs_ptr->parent_pcs_ptr->frm_hdr.frame_type == KEY_FRAME) {
             {
                 double factor = 1.0;
@@ -873,7 +873,7 @@ static int cqp_qindex_calc_tpl_la(PictureControlSet *pcs_ptr, RATE_CONTROL *rc, 
                 }
             pcs_ptr->parent_pcs_ptr->r0 = pcs_ptr->parent_pcs_ptr->r0 / div_factor;
             pcs_ptr->parent_pcs_ptr->r0 = pcs_ptr->parent_pcs_ptr->r0 /
-                tpl_hl_base_frame_div_factor[scs_ptr->static_config.max_heirachical_level];
+                tpl_hl_base_frame_div_factor[scs_ptr->max_heirachical_level];
         }
 
         int num_stats_required_for_gfu_boost = pcs_ptr->parent_pcs_ptr->tpl_group_size +
@@ -3198,10 +3198,8 @@ void *rate_control_kernel(void *input_ptr) {
                            frm_hdr->quantization_params.base_q_idx,
                            chroma_qindex);
 */
-                } else
-
-                    if (scs_ptr->static_config.enable_qp_scaling_flag &&
-                        pcs_ptr->parent_pcs_ptr->qp_on_the_fly == EB_FALSE) {
+                } else if (scs_ptr->enable_qp_scaling_flag &&
+                           pcs_ptr->parent_pcs_ptr->qp_on_the_fly == EB_FALSE) {
                     const int32_t qindex = quantizer_to_qindex[(uint8_t)scs_ptr->static_config.qp];
                     // if there are need enough pictures in the LAD/SlidingWindow, the adaptive QP scaling is not used
                     int32_t new_qindex;

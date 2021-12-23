@@ -303,7 +303,7 @@ void svt_av1_filter_block_plane_vert(const PictureControlSet *const pcs_ptr, con
     // TODO
     // when loop_filter_mode = 1, dblk is processed in encdec
     // 16 bit dblk for loop_filter_mode = 1 needs to enabled after 16bit encdec is done
-    EbBool         is_16bit   = scs_ptr->static_config.is_16bit_pipeline;
+    EbBool         is_16bit   = scs_ptr->is_16bit_pipeline;
     const int32_t  row_step   = MI_SIZE >> MI_SIZE_LOG2;
     const uint32_t scale_horz = plane_ptr->subsampling_x;
     const uint32_t scale_vert = plane_ptr->subsampling_y;
@@ -427,7 +427,7 @@ void svt_av1_filter_block_plane_horz(const PictureControlSet *const pcs_ptr, con
                                       pcs_ptr->parent_pcs_ptr->scs_wrapper_ptr->object_ptr;
     // when loop_filter_mode = 1, dblk is processed in encdec
     // 16 bit dblk for loop_filter_mode = 1 needs to enabled after 16bit encdec is done
-    EbBool         is_16bit   = scs_ptr->static_config.is_16bit_pipeline;
+    EbBool         is_16bit   = scs_ptr->is_16bit_pipeline;
     const int32_t  col_step   = MI_SIZE >> MI_SIZE_LOG2;
     const uint32_t scale_horz = plane_ptr->subsampling_x;
     const uint32_t scale_vert = plane_ptr->subsampling_y;
@@ -574,7 +574,7 @@ void loop_filter_sb(EbPictureBufferDesc *frame_buffer, //reconpicture,
     pd[2].plane_type    = PLANE_TYPE_UV;
     pd[2].is_16bit      = frame_buffer->bit_depth > 8;
 
-    if (pcs_ptr->parent_pcs_ptr->scs_ptr->static_config.is_16bit_pipeline)
+    if (pcs_ptr->parent_pcs_ptr->scs_ptr->is_16bit_pipeline)
         pd[0].is_16bit = pd[1].is_16bit = pd[2].is_16bit = EB_TRUE;
 
     for (plane = plane_start; plane < plane_end; plane++) {
@@ -701,7 +701,7 @@ extern int16_t svt_av1_ac_quant_q3(int32_t qindex, int32_t delta, AomBitDepth bi
 
 void svt_copy_buffer(EbPictureBufferDesc *srcBuffer, EbPictureBufferDesc *dstBuffer,
                      PictureControlSet *pcs_ptr, uint8_t plane) {
-    EbBool is_16bit        = pcs_ptr->parent_pcs_ptr->scs_ptr->static_config.is_16bit_pipeline;
+    EbBool is_16bit        = pcs_ptr->parent_pcs_ptr->scs_ptr->is_16bit_pipeline;
     dstBuffer->origin_x    = srcBuffer->origin_x;
     dstBuffer->origin_y    = srcBuffer->origin_y;
     dstBuffer->width       = srcBuffer->width;
@@ -775,7 +775,7 @@ uint64_t picture_sse_calculations(PictureControlSet *pcs_ptr, EbPictureBufferDes
 
 {
     SequenceControlSet *scs_ptr  = pcs_ptr->parent_pcs_ptr->scs_ptr;
-    EbBool              is_16bit = scs_ptr->static_config.is_16bit_pipeline;
+    EbBool              is_16bit = scs_ptr->is_16bit_pipeline;
 
     const uint32_t ss_x = scs_ptr->subsampling_x;
     const uint32_t ss_y = scs_ptr->subsampling_y;
@@ -923,7 +923,7 @@ static int64_t try_filter_frame(
     if (plane == 0 && dir == 1)
         filter_level[0] = frm_hdr->loop_filter_params.filter_level[0];
 
-    EbBool is_16bit = pcs_ptr->parent_pcs_ptr->scs_ptr->static_config.is_16bit_pipeline;
+    EbBool is_16bit = pcs_ptr->parent_pcs_ptr->scs_ptr->is_16bit_pipeline;
     EbPictureBufferDesc *recon_buffer;
     get_recon_pic(pcs_ptr, &recon_buffer, is_16bit);
 
@@ -974,7 +974,7 @@ static int32_t search_filter_level(
     int32_t filt_mid    = clamp(lvl, min_filter_level, max_filter_level);
     int32_t filter_step = filt_mid < 16 ? 4 : filt_mid / 4;
 
-    EbBool is_16bit = pcs_ptr->parent_pcs_ptr->scs_ptr->static_config.is_16bit_pipeline;
+    EbBool is_16bit = pcs_ptr->parent_pcs_ptr->scs_ptr->is_16bit_pipeline;
     EbPictureBufferDesc *recon_buffer;
     get_recon_pic(pcs_ptr, &recon_buffer, is_16bit);
     // Sum squared error at each filter level
@@ -1105,7 +1105,7 @@ EbErrorType svt_av1_pick_filter_level(
         lf->filter_level_u  = clamp(filt_guess_chroma, min_filter_level, max_filter_level);
         lf->filter_level_v  = clamp(filt_guess_chroma, min_filter_level, max_filter_level);
     } else {
-        uint16_t                    padding = scs_ptr->static_config.super_block_size + 32;
+        uint16_t                    padding = scs_ptr->super_block_size + 32;
         EbPictureBufferDescInitData temp_lf_recon_desc_init_data;
         temp_lf_recon_desc_init_data.max_width          = (uint16_t)scs_ptr->max_input_luma_width;
         temp_lf_recon_desc_init_data.max_height         = (uint16_t)scs_ptr->max_input_luma_height;
@@ -1118,7 +1118,7 @@ EbErrorType svt_av1_pick_filter_level(
         temp_lf_recon_desc_init_data.split_mode    = EB_FALSE;
         temp_lf_recon_desc_init_data.color_format  = scs_ptr->static_config.encoder_color_format;
         EbBool is_16bit = scs_ptr->static_config.encoder_bit_depth > 8 ? EB_TRUE : EB_FALSE;
-        if (scs_ptr->static_config.is_16bit_pipeline || is_16bit) {
+        if (scs_ptr->is_16bit_pipeline || is_16bit) {
             temp_lf_recon_desc_init_data.bit_depth = EB_16BIT;
             EB_NEW(pcs_ptr->temp_lf_recon_picture16bit_ptr,
                    svt_recon_picture_buffer_desc_ctor,
@@ -1133,7 +1133,7 @@ EbErrorType svt_av1_pick_filter_level(
         }
         const int32_t last_frame_filter_level[4] = {
             lf->filter_level[0], lf->filter_level[1], lf->filter_level_u, lf->filter_level_v};
-        EbPictureBufferDesc *temp_lf_recon_buffer = scs_ptr->static_config.is_16bit_pipeline
+        EbPictureBufferDesc *temp_lf_recon_buffer = scs_ptr->is_16bit_pipeline
             ? pcs_ptr->temp_lf_recon_picture16bit_ptr
             : pcs_ptr->temp_lf_recon_picture_ptr;
 

@@ -92,14 +92,15 @@ EbErrorType enc_dec_context_ctor(EbThreadContext *  thread_context_ptr,
     const EbSvtAv1EncConfiguration *static_config =
         &enc_handle_ptr->scs_instance_array[0]->scs_ptr->static_config;
     EbColorFormat color_format             = static_config->encoder_color_format;
-    int8_t        enable_hbd_mode_decision = static_config->enable_hbd_mode_decision;
+    int8_t        enable_hbd_mode_decision =
+        enc_handle_ptr->scs_instance_array[0]->scs_ptr->enable_hbd_mode_decision;
 
     EncDecContext *context_ptr;
     EB_CALLOC_ARRAY(context_ptr, 1);
     thread_context_ptr->priv  = context_ptr;
     thread_context_ptr->dctor = enc_dec_context_dctor;
 
-    context_ptr->is_16bit     = static_config->is_16bit_pipeline;
+    context_ptr->is_16bit     = enc_handle_ptr->scs_instance_array[0]->scs_ptr->is_16bit_pipeline;
     context_ptr->color_format = color_format;
 
     // Input/Output System Resource Manager FIFOs
@@ -164,7 +165,7 @@ EbErrorType enc_dec_context_ctor(EbThreadContext *  thread_context_ptr,
     EB_NEW(context_ptr->md_context,
            mode_decision_context_ctor,
            color_format,
-           static_config->super_block_size,
+           enc_handle_ptr->scs_instance_array[0]->scs_ptr->super_block_size,
            static_config->enc_mode,
            enc_handle_ptr->scs_instance_array[0]->scs_ptr->max_block_cnt,
            static_config->encoder_bit_depth,
@@ -208,7 +209,7 @@ static void reset_encode_pass_neighbor_arrays(PictureControlSet *pcs_ptr, uint16
     neighbor_array_unit_reset(pcs_ptr->ep_cr_dc_sign_level_coeff_neighbor_array_update[tile_idx]);
     neighbor_array_unit_reset(pcs_ptr->ep_partition_context_neighbor_array[tile_idx]);
     // TODO(Joel): 8-bit ep_luma_recon_neighbor_array (Cb,Cr) when is_16bit==0?
-    if (pcs_ptr->parent_pcs_ptr->scs_ptr->static_config.is_16bit_pipeline) {
+    if (pcs_ptr->parent_pcs_ptr->scs_ptr->is_16bit_pipeline) {
         neighbor_array_unit_reset(pcs_ptr->ep_luma_recon_neighbor_array16bit[tile_idx]);
         neighbor_array_unit_reset(pcs_ptr->ep_cb_recon_neighbor_array16bit[tile_idx]);
         neighbor_array_unit_reset(pcs_ptr->ep_cr_recon_neighbor_array16bit[tile_idx]);
@@ -221,7 +222,7 @@ static void reset_encode_pass_neighbor_arrays(PictureControlSet *pcs_ptr, uint16
  **************************************************/
 static void reset_enc_dec(EncDecContext *context_ptr, PictureControlSet *pcs_ptr,
                           SequenceControlSet *scs_ptr, uint32_t segment_index) {
-    context_ptr->is_16bit   = scs_ptr->static_config.is_16bit_pipeline;
+    context_ptr->is_16bit   = scs_ptr->is_16bit_pipeline;
     context_ptr->bit_depth  = scs_ptr->static_config.encoder_bit_depth;
     uint16_t tile_group_idx = context_ptr->tile_group_index;
     (*av1_lambda_assignment_function_table[pcs_ptr->parent_pcs_ptr->pred_structure])(
@@ -476,7 +477,7 @@ void recon_output(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr) {
                 pcs_ptr->parent_pcs_ptr->frm_hdr.film_grain_params.apply_grain) {
                 AomFilmGrain *film_grain_ptr;
 
-                uint16_t                    padding = scs_ptr->static_config.super_block_size + 32;
+                uint16_t                    padding = scs_ptr->super_block_size + 32;
                 EbPictureBufferDescInitData temp_recon_desc_init_data;
                 temp_recon_desc_init_data.max_width  = (uint16_t)scs_ptr->max_input_luma_width;
                 temp_recon_desc_init_data.max_height = (uint16_t)scs_ptr->max_input_luma_height;
@@ -863,7 +864,7 @@ EbErrorType ssim_calculations(PictureControlSet *pcs_ptr, SequenceControlSet *sc
         double cb_ssim   = 0.0;
         double cr_ssim   = 0.0;
 
-        if (scs_ptr->static_config.ten_bit_format == 1) {
+        if (scs_ptr->ten_bit_format == 1) {
             /* SSIM calculation for compressed 10-bit format has not been verified and debugged,
                since this format is not supported elsewhere in this version. See verify_settings(),
                which exits with an error if compressed 10-bit format is enabled. To avoid
@@ -1275,7 +1276,7 @@ EbErrorType psnr_calculations(PictureControlSet *pcs_ptr, SequenceControlSet *sc
         EbByte    input_buffer_bit_inc;
         uint16_t *recon_coeff_buffer;
 
-        if (scs_ptr->static_config.ten_bit_format == 1) {
+        if (scs_ptr->ten_bit_format == 1) {
             const uint32_t luma_width   = input_picture_ptr->width - scs_ptr->max_input_pad_right;
             const uint32_t luma_height  = input_picture_ptr->height - scs_ptr->max_input_pad_bottom;
             const uint32_t chroma_width = luma_width >> ss_x;
@@ -1764,7 +1765,7 @@ void pad_ref_and_set_flags(PictureControlSet *pcs_ptr, SequenceControlSet *scs_p
                       (ref_pic_16bit_ptr->width + (ref_pic_ptr->origin_x << 1)) >> 1,
                       (ref_pic_16bit_ptr->height + (ref_pic_ptr->origin_y << 1)) >> 1);
     }
-    if ((scs_ptr->static_config.is_16bit_pipeline) && (!is_16bit)) {
+    if ((scs_ptr->is_16bit_pipeline) && (!is_16bit)) {
         // Y samples
         generate_padding16_bit((uint16_t *)ref_pic_16bit_ptr->buffer_y,
                                ref_pic_16bit_ptr->stride_y,
@@ -4436,7 +4437,7 @@ that use 8x8 blocks will lose significant BD-Rate as the parent 16x16 me data wi
         ctx->depth_removal_ctrls.disallow_below_16x16 = EB_FALSE;
 
         // me_distortion/variance generated for 64x64 blocks only
-    if (scs_ptr->static_config.super_block_size == 64) {
+    if (scs_ptr->super_block_size == 64) {
         set_depth_removal_level_controls(pcs_ptr, ctx, pcs_ptr->pic_depth_removal_level);
     }
     if (/*scs_ptr->rc_stat_gen_pass_mode || */ ctx->skip_pd0) {
@@ -4748,7 +4749,7 @@ uint64_t compute_subres_th(SequenceControlSet *scs, PictureControlSet *pcs,
                            ModeDecisionContext *ctx) {
     uint32_t fast_lambda = ctx->hbd_mode_decision ? ctx->fast_lambda_md[EB_10_BIT_MD]
                                                   : ctx->fast_lambda_md[EB_8_BIT_MD];
-    uint32_t sb_size = scs->static_config.super_block_size * scs->static_config.super_block_size;
+    uint32_t sb_size = scs->super_block_size * scs->super_block_size;
     uint64_t cost_th_rate  = 1 << 13;
     uint64_t use_subres_th = 0;
 
@@ -4765,7 +4766,7 @@ uint64_t compute_subres_th(SequenceControlSet *scs, PictureControlSet *pcs,
 uint64_t compute_pf_th(SequenceControlSet *scs, PictureControlSet *pcs, ModeDecisionContext *ctx) {
     uint32_t fast_lambda = ctx->hbd_mode_decision ? ctx->fast_lambda_md[EB_10_BIT_MD]
                                                   : ctx->fast_lambda_md[EB_8_BIT_MD];
-    uint32_t sb_size = scs->static_config.super_block_size * scs->static_config.super_block_size;
+    uint32_t sb_size = scs->super_block_size * scs->super_block_size;
     uint64_t cost_th_rate = 1 << 13;
     uint64_t use_pf_th    = 0;
 
@@ -4948,13 +4949,13 @@ void set_intra_ctrls(PictureControlSet *pcs, ModeDecisionContext *ctx, uint8_t i
         ctx->skip_intra = pcs->skip_intra;
 
         // Check user-defined settings
-        if (pcs->parent_pcs_ptr->scs_ptr->static_config.enable_paeth == 0)
+        if (pcs->parent_pcs_ptr->scs_ptr->enable_paeth == 0)
             ctrls->intra_mode_end = MIN(ctrls->intra_mode_end, SMOOTH_H_PRED);
 
-        if (pcs->parent_pcs_ptr->scs_ptr->static_config.enable_smooth == 0)
+        if (pcs->parent_pcs_ptr->scs_ptr->enable_smooth == 0)
             ctrls->intra_mode_end = MIN(ctrls->intra_mode_end, D67_PRED);
 
-        if (pcs->parent_pcs_ptr->scs_ptr->static_config.intra_angle_delta == 0)
+        if (pcs->parent_pcs_ptr->scs_ptr->intra_angle_delta == 0)
             ctrls->angular_pred_level = 0;
     } else {
         ctx->skip_intra = !(ctrls->enable_intra) || pcs->skip_intra;
@@ -5419,7 +5420,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet * sequence_co
     uint32_t       me_64x64_distortion  = (uint32_t)~0;
     uint8_t        l0_was_skip = 0, l1_was_skip = 0;
     uint8_t        ref_skip_perc = pcs_ptr->ref_skip_percentage;
-
+    UNUSED(sequence_control_set_ptr);
     set_cand_reduction_ctrls(pcs_ptr,
                              context_ptr,
                              pd_pass == PD_PASS_0 ? 0 : pcs_ptr->cand_reduction_level,
@@ -5494,10 +5495,9 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet * sequence_co
     // Derive redundant block
     if (pd_pass == PD_PASS_0 || context_ptr->md_disallow_nsq)
         context_ptr->redundant_blk = EB_FALSE;
-    else if (sequence_control_set_ptr->static_config.enable_redundant_blk == DEFAULT)
-        context_ptr->redundant_blk = EB_TRUE;
     else
-        context_ptr->redundant_blk = sequence_control_set_ptr->static_config.enable_redundant_blk;
+        context_ptr->redundant_blk = EB_TRUE;
+
     set_parent_sq_coeff_area_based_cycles_reduction_ctrls(
         context_ptr,
         pcs_ptr->parent_pcs_ptr->input_resolution,
@@ -6375,7 +6375,7 @@ void exaustive_light_pd1_features(ModeDecisionContext *md_ctx, PictureParentCont
             ppcs->frm_hdr.tx_mode != TX_MODE_SELECT &&
             md_ctx->txs_ctrls.enabled == 0 && md_ctx->pred_depth_only &&
             md_ctx->md_disallow_nsq == EB_TRUE && md_ctx->disallow_4x4 == EB_TRUE &&
-            ppcs->scs_ptr->static_config.super_block_size == 64 && ppcs->ref_list0_count_try == 1 &&
+            ppcs->scs_ptr->super_block_size == 64 && ppcs->ref_list0_count_try == 1 &&
             ppcs->ref_list1_count_try == 1 &&
             md_ctx->cfl_ctrls.enabled == 0 &&
             md_ctx->uv_ctrls.nd_uv_serach_mode == 0 && md_ctx->uv_ctrls.uv_mode == CHROMA_MODE_1) {
@@ -6890,7 +6890,7 @@ void *mode_decision_kernel(void *input_ptr) {
                         // Signal initialized here; if needed, will be set in md_encode_block before MDS3
                         md_ctx->need_hbd_comp_mds3 = 0;
                         uint8_t skip_pd_pass_0 =
-                            (scs_ptr->static_config.super_block_size == 64 &&
+                            (scs_ptr->super_block_size == 64 &&
                              context_ptr->md_context->depth_removal_ctrls.disallow_below_64x64)
                             ? 1
                             : 0;
@@ -7016,7 +7016,7 @@ void *mode_decision_kernel(void *input_ptr) {
                         if (!(md_ctx->hbd_mode_decision == 0 &&
                               md_ctx->pred_depth_only && ppcs->disallow_nsq == EB_TRUE &&
                               md_ctx->disallow_4x4 == EB_TRUE &&
-                              scs_ptr->static_config.super_block_size == 64)) {
+                              scs_ptr->super_block_size == 64)) {
 
                             md_ctx->lpd1_ctrls.pd1_level = REGULAR_PD1;
                         }

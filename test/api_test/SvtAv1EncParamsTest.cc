@@ -250,18 +250,6 @@ PARAM_TEST(EncParamEncBitDepthTest);
 DEFINE_PARAM_TEST_CLASS(EncParamCompr10BitFmtTest, compressed_ten_bit_format);
 PARAM_TEST(EncParamCompr10BitFmtTest);
 
-/** Test case for sb_sz*/
-DEFINE_PARAM_TEST_CLASS(EncParamSbSizeTest, sb_sz);
-PARAM_TEST(EncParamSbSizeTest);
-
-/** Test case for super_block_size*/
-DEFINE_PARAM_TEST_CLASS(EncParamSuperBlockSizeTest, super_block_size);
-PARAM_TEST(EncParamSuperBlockSizeTest);
-
-/** Test case for partition_depth*/
-DEFINE_PARAM_TEST_CLASS(EncParamPartitionDepthTest, partition_depth);
-PARAM_TEST(EncParamPartitionDepthTest);
-
 /** Test case for qp*/
 DEFINE_PARAM_TEST_CLASS(EncParamQPTest, qp);
 PARAM_TEST(EncParamQPTest);
@@ -269,10 +257,6 @@ PARAM_TEST(EncParamQPTest);
 /** Test case for use_qp_file*/
 DEFINE_PARAM_TEST_CLASS(EncParamUseQPFileTest, use_qp_file);
 PARAM_TEST(EncParamUseQPFileTest);
-
-/** Test case for enable_qp_scaling_flag*/
-DEFINE_PARAM_TEST_CLASS(EncParamEnableQPScaleTest, enable_qp_scaling_flag);
-PARAM_TEST(EncParamEnableQPScaleTest);
 
 /** Test case for disable_dlf_flag*/
 DEFINE_PARAM_TEST_CLASS(EncParamDisableDlfTest, disable_dlf_flag);
@@ -282,38 +266,6 @@ PARAM_TEST(EncParamDisableDlfTest);
 DEFINE_PARAM_TEST_CLASS(EncParamFilmGrainDenoiseStrTest,
                         film_grain_denoise_strength);
 PARAM_TEST(EncParamFilmGrainDenoiseStrTest);
-
-/** Test case for enable_warped_motion*/
-DEFINE_PARAM_TEST_CLASS(EncParamEnableWarpedMotionTest, enable_warped_motion);
-PARAM_TEST(EncParamEnableWarpedMotionTest);
-
-/** Test case for enable_global_motion*/
-DEFINE_PARAM_TEST_CLASS(EncParamEnableGlobalMotionTest, enable_global_motion);
-PARAM_TEST(EncParamEnableGlobalMotionTest);
-
-/** Test case for use_default_me_hme*/
-DEFINE_PARAM_TEST_CLASS(EncParamUseDefaultMeHmeTest, use_default_me_hme);
-PARAM_TEST(EncParamUseDefaultMeHmeTest);
-
-/** Test case for enable_hme_flag*/
-DEFINE_PARAM_TEST_CLASS(EncParamEnableHmeTest, enable_hme_flag);
-PARAM_TEST(EncParamEnableHmeTest);
-
-/** Test case for ext_block_flag*/
-DEFINE_PARAM_TEST_CLASS(EncParamExtBlockTest, ext_block_flag);
-PARAM_TEST(EncParamExtBlockTest);
-
-/** Test case for search_area_width*/
-DEFINE_PARAM_TEST_CLASS(EncParamSearchAreaWidthTest, search_area_width);
-PARAM_TEST(EncParamSearchAreaWidthTest);
-
-/** Test case for search_area_height*/
-DEFINE_PARAM_TEST_CLASS(EncParamSearchAreaHeightTest, search_area_height);
-PARAM_TEST(EncParamSearchAreaHeightTest);
-
-/** Test case for palette_level*/
-DEFINE_PARAM_TEST_CLASS(EncParamEnablePaletteTest, palette_level);
-PARAM_TEST(EncParamEnablePaletteTest);
 
 /** Test case for rate_control_mode*/
 DEFINE_PARAM_TEST_CLASS(EncParamRateCtrlModeTest, rate_control_mode);
@@ -363,10 +315,6 @@ PARAM_TEST(EncParamChIdTest);
 /** Test case for active_channel_count*/
 DEFINE_PARAM_TEST_CLASS(EncParamActiveChCountTest, active_channel_count);
 PARAM_TEST(EncParamActiveChCountTest);
-
-/** Test case for speed_control_flag*/
-DEFINE_PARAM_TEST_CLASS(EncParamSpeedCtrlTest, speed_control_flag);
-PARAM_TEST(EncParamSpeedCtrlTest);
 
 /** Test case for logical_processors*/
 DEFINE_PARAM_TEST_CLASS(EncParamLogicalProcessorsTest, logical_processors);

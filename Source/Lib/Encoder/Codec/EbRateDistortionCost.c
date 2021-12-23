@@ -610,9 +610,9 @@ uint64_t av1_intra_fast_cost(struct ModeDecisionContext *ctx, BlkStruct *blk_ptr
         EbBool is_cfl_allowed = (blk_geom->bwidth <= 32 && blk_geom->bheight <= 32) ? 1 : 0;
 
         SequenceControlSet *scs_ptr = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
-        if (scs_ptr->static_config.disable_cfl_flag != DEFAULT && is_cfl_allowed)
+        if (scs_ptr->disable_cfl_flag != DEFAULT && is_cfl_allowed)
             // if is_cfl_allowed == 0 then it doesn't matter what cli says otherwise change it to cli
-            is_cfl_allowed = (EbBool)!scs_ptr->static_config.disable_cfl_flag;
+            is_cfl_allowed = (EbBool)!scs_ptr->disable_cfl_flag;
 
         // In fast loop CFL alphas are not know yet. The chroma mode bits are calculated based on DC Mode, and if CFL is the winner compared to CFL, ChromaBits are updated
         uint32_t chroma_mode = candidate_ptr->intra_chroma_mode == UV_CFL_PRED
@@ -1720,9 +1720,9 @@ EbErrorType av1_full_cost(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
                                  : 0;
                 SequenceControlSet *scs_ptr        = (SequenceControlSet *)
                                                   pcs_ptr->scs_wrapper_ptr->object_ptr;
-                if (scs_ptr->static_config.disable_cfl_flag != DEFAULT && is_cfl_allowed)
+                if (scs_ptr->disable_cfl_flag != DEFAULT && is_cfl_allowed)
                     // if is_cfl_allowed == 0 then it doesn't matter what cli says otherwise change it to cli
-                    is_cfl_allowed = (EbBool)!scs_ptr->static_config.disable_cfl_flag;
+                    is_cfl_allowed = (EbBool)!scs_ptr->disable_cfl_flag;
 
                 chroma_rate +=
                     context_ptr->md_rate_estimation_ptr->cfl_alpha_fac_bits

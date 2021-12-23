@@ -22,8 +22,7 @@ extern "C" {
 #include <stdio.h>
 
 //***HME***
-#define EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT 2
-#define EB_HME_SEARCH_AREA_ROW_MAX_COUNT 2
+
 #define MAX_HIERARCHICAL_LEVEL 6
 #define REF_LIST_MAX_DEPTH 4
 #define MAX_ENC_PRESET 13
@@ -85,59 +84,6 @@ typedef struct PredictionStructureConfigEntry {
     int32_t  ref_list1[REF_LIST_MAX_DEPTH];
 } PredictionStructureConfigEntry;
 
-typedef struct TfControls {
-    // Filtering set
-    uint8_t enabled; // Specifies whether the current input will be filtered or not (0: OFF, 1: ON)
-    uint8_t
-        do_chroma; // Specifies whether the U& V planes will be filered or not (0: filter all planes, 1 : filter Y plane only)
-    uint8_t
-        use_medium_filter; // Specifies whether the weights generation will use approximations or not (0: do not use approximations, 1: per-block weights derivation, use an approximated exponential & log, use an approximated noise level)
-    uint8_t
-        use_fast_filter; // Specifies whether the weights derivation will use the distance factor(MV - based correction) and the 5x5 window error or not (0: OFF, 1 : ON)
-    uint8_t
-        use_fixed_point; // Specifies noise-level-estimation and filtering precision (0: use float/double precision, 1: use fixed point precision)
-
-    // Number of reference frame(s) set
-    uint8_t num_past_pics; // Specifies the default number of frame(s) from past
-    uint8_t num_future_pics; // Specifies the default number of frame(s) from future
-    uint8_t
-        noise_adjust_past_pics; // Specifies whether num_past_pics will be incremented or not based on the noise level of the central frame(0: OFF or 1 : ON)
-    uint8_t
-        noise_adjust_future_pics; // Specifies whether num_future_pics will be incremented or not based on the noise level of the central frame(0: OFF or 1 : ON)
-    uint8_t
-        use_intra_for_noise_est; // Specifies whether to use the key- rame noise level for all inputs or to re - compute the noise level for each input
-    uint8_t
-        activity_adjust_th; // Specifies whether num_past_picsand num_future_pics will be decremented or not based on the activity of the outer reference frame(s) compared to the central frame(∞: OFF, else remove the reference frame if the cumulative differences between the histogram bins of the central frameand the histogram bins of the reference frame is higher than activity_adjust_th
-    uint8_t
-        max_num_past_pics; // Specifies the maximum number of frame(s) from past(after all adjustments)
-    uint8_t
-        max_num_future_pics; // Specifies the maximum number of frame(s) from future(after all adjustments)
-
-    // Motion search
-    uint8_t
-        hme_me_level; // Specifies the accuracy of the ME search (note that ME performs a HME search, then a Full - Pel search).
-    uint8_t
-        half_pel_mode; // Specifies the accuracy of the Half-Pel search (0: OFF, 1 : perform refinement for the 8 neighboring positions, 2/3 : perform refinement for the 2 horizontal-neighboring positions and for the 2 vertical-neighboring positions, but not for all the 4 diagonal-neighboring positions = function(horizontal & vertical distortions)
-    uint8_t
-        quarter_pel_mode; // Specifies the accuracy of the Quarter-Pel search (0: OFF, 1 : perform refinement for the 8 neighboring positions, 2/3 : perform refinement for the 2 horizontal-neighboring positions and for the 2 vertical-neighboring positions, but not for all the 4 diagonal-neighboring positions = function(horizontal & vertical distortions)
-    uint8_t
-        eight_pel_mode; // Specifies the accuracy of the Eight-Pel search (0: OFF, 1 : perform refinement for the 8 neighboring positions)
-    uint8_t
-        use_8bit_subpel; // Specifies whether the Sub-Pel search for a 10bit input will be performed in 8bit resolution(0: OFF, 1 : ON, NA if 8bit input)
-    uint8_t
-        avoid_2d_qpel; // Specifies whether the Sub-Pel positions that require a 2D interpolation will be tested or not (0: OFF, 1 : ON, NA if 16x16 block or if the Sub-Pel mode is set to 1)
-    uint8_t
-        use_2tap; // Specifies the Sub-Pel search filter type(0: regular, 1 : bilinear, NA if 16x16 block or if the Sub - Pel mode is set to 1)
-    uint8_t
-        sub_sampling_shift; // Specifies whether sub-sampled input / prediction will be used at the distortion computation of the Sub-Pel search
-    uint64_t
-        pred_error_32x32_th; // Specifies the 32x32 prediction error(after subpel) under which the subpel for the 16x16 block(s) is bypassed
-    uint32_t
-        me_exit_th; // Specifies whether to exit ME after HME or not (0: perform both HME and Full-Pel search, else if the HME distortion is less than me_exit_th then exit after HME(i.e. do not perform the Full-Pel search), NA if use_fast_filter is set 0)
-    uint8_t
-        use_pred_64x64_only_th; // Specifies whether to perform Sub-Pel search for only the 64x64 block or to use default size(s) (32x32 or/ and 16x16) (∞: perform Sub-Pel search for default size(s), else if the deviation between the 64x64 ME distortion and the sum of the 4 32x32 ME distortions is less than use_pred_64x64_only_th then perform Sub - Pel search for only the 64x64 block, NA if use_fast_filter is set 0)
-
-} TfControls;
 // super-res modes
 typedef enum {
     SUPERRES_NONE, // No frame superres allowed.
@@ -172,21 +118,7 @@ typedef struct SvtAv1FixedBuf {
     uint64_t sz; /**< Length of the buffer, in chars */
 } SvtAv1FixedBuf; /**< alias for struct aom_fixed_buf */
 
-typedef struct MrpCtrls {
-    // Referencing scheme
-    uint8_t referencing_scheme; // 0 or 1
 
-    // SC signals
-    uint8_t sc_base_ref_list0_count;
-    uint8_t sc_base_ref_list1_count;
-    uint8_t sc_non_base_ref_list0_count;
-    uint8_t sc_non_base_ref_list1_count;
-    // non-SC signals
-    uint8_t base_ref_list0_count;
-    uint8_t base_ref_list1_count;
-    uint8_t non_base_ref_list0_count;
-    uint8_t non_base_ref_list1_count;
-} MrpCtrls;
 // Will contain the EbEncApi which will live in the EncHandle class
 // Only modifiable during config-time.
 typedef struct EbSvtAv1EncConfiguration {
@@ -278,13 +210,6 @@ typedef struct EbSvtAv1EncConfiguration {
      *
      * Default is 8. */
     uint32_t encoder_bit_depth;
-    /* Specifies whether to use 16bit pipeline.
-     *
-     * 0: 8 bit pipeline.
-     * 1: 16 bit pipeline.
-     * Now 16bit pipeline is only enabled in filter
-     * Default is 0. */
-    EbBool is_16bit_pipeline;
     /* Specifies the chroma subsampleing format of input video.
      *
      * 0 = mono.
@@ -298,20 +223,6 @@ typedef struct EbSvtAv1EncConfiguration {
      *
      * Default is 0. */
     uint32_t compressed_ten_bit_format;
-
-    /* Super block size for motion estimation
-    *
-    * Default is 64. */
-    uint32_t sb_sz;
-
-    /* Super block size (mm-signal)
-    *
-    * Default is 128. */
-    uint32_t super_block_size;
-    /* The maximum partitioning depth with 0 being the superblock depth
-    *
-    * Default is 4. */
-    uint32_t partition_depth;
 
     /* Instruct the library to calculate the recon to source for PSNR calculation
     *
@@ -341,10 +252,6 @@ typedef struct EbSvtAv1EncConfiguration {
     /* input buffer for the second pass */
     SvtAv1FixedBuf rc_twopass_stats_in;
     int            pass;
-    /* Enable picture QP scaling between hierarchical levels
-    *
-    * Default is null.*/
-    uint32_t enable_qp_scaling_flag;
 
     // Deblock Filter
     /* Flag to disable the Deblocking Loop Filtering.
@@ -358,16 +265,6 @@ typedef struct EbSvtAv1EncConfiguration {
     * Default is 0. */
     uint32_t film_grain_denoise_strength;
 
-    /* Warped motion
-    *
-    * Default is -1. */
-    int enable_warped_motion;
-
-    /* Global motion
-    *
-    * Default is 1. */
-    EbBool enable_global_motion;
-
     /* CDEF Level
     *
     * Default is -1. */
@@ -380,163 +277,11 @@ typedef struct EbSvtAv1EncConfiguration {
     *
     * Default is -1. */
     int enable_restoration_filtering;
-    int sg_filter_mode;
-    int wn_filter_mode;
-
-    /* enable angle intra
-    *
-    * Default is -1. */
-    int intra_angle_delta;
-
-    /* inter intra compound
-    *
-    * Default is -1. */
-    int inter_intra_compound;
-
-    /* enable paeth
-    *
-    * Default is -1. */
-    int enable_paeth;
-
-    /* mrp level
-    *
-    * Default is -1. */
-    int mrp_level;
-
-    /* enable smooth
-    *
-    * Default is -1. */
-    int enable_smooth;
     /* motion field motion vector
     *
     *  Default is -1. */
     int enable_mfmv;
-    /* redundant block
-    *
-    * Default is -1. */
-    int enable_redundant_blk;
-    /* spatial sse in full loop
-    *
-    * -1: Default, 0: OFF, 1: ON. */
-    int spatial_sse_full_loop_level;
-    /* over boundry block
-    *
-    * Default is -1. */
-    int over_bndry_blk;
-    /* new nearest comb injection
-    *
-    * Default is -1. */
-    int new_nearest_comb_inject;
 
-    /* nsq table
-    *
-    * Default is -1. */
-    int nsq_table;
-    /* frame end cdf update
-    *
-    * Default is -1. */
-    int frame_end_cdf_update;
-
-    /* Predictive Me
-    *
-    * Default is -1. */
-    int pred_me;
-
-    /* Bipred 3x3 Injection
-    *
-    * Default is -1. */
-    int bipred_3x3_inject;
-
-    /* Compound Mode
-    *
-    * Default is -1. */
-    int compound_level;
-
-    /* Chroma mode
-    *
-    * Level                Settings
-    * CHROMA_MODE_0  0     Full chroma search @ MD
-    * CHROMA_MODE_1  1     Fast chroma search @ MD
-    * CHROMA_MODE_2  2     Chroma blind @ MD + CFL @ EP
-    * CHROMA_MODE_3  3     Chroma blind @ MD + no CFL @ EP
-    *
-    * Default is -1 (AUTO) */
-    int set_chroma_mode;
-
-    /* Disable chroma from luma (CFL)
-     *
-     * Default is -1 (auto) */
-    int disable_cfl_flag;
-    /* obmc_level specifies the level of the OBMC feature that would be
-     * considered when the level is specified in the command line instruction (CLI).
-     * The meaning of the feature level in the CLI is different from that for
-     * the default settings. See description of pic_obmc_level for the full details.
-     *
-     * The table below specifies the meaning of obmc_level when specified in the CLI.
-     *     obmc_level   | Command Line Settings
-     *        -1        | Default settings (auto)
-     *         0        | OFF everywhere in encoder
-     *         1        | ON
-     *
-     * Default is -1 (auto). */
-    int8_t obmc_level;
-    /* RDOQ
-    *
-    * -1: Default, 0: OFF, 1: ON. */
-    int rdoq_level;
-    /* Filter intra prediction
-    *
-    * The table below specifies the meaning of filter_intra_level when specified in the CLI.
-    * filter_intra_level | Command Line Settings
-    *        -1          | Default settings (auto)
-    *         0          | OFF everywhere in encoder
-    *         1          | ON */
-    int8_t filter_intra_level;
-    /* Intra Edge Filter
-    *
-    * Default is -1. */
-    int enable_intra_edge_filter;
-
-    /* Picture based rate estimation
-    *
-    * Default is - 1. */
-    int pic_based_rate_est;
-    /* Flag to enable the use of default ME HME parameters.
-    *
-    * Default is 1. */
-    EbBool use_default_me_hme;
-
-    /* Flag to enable Hierarchical Motion Estimation.
-    *
-    * Default is 1. */
-    EbBool enable_hme_flag;
-
-    /* Flag to enable the use of non-swaure partitions
-    *
-    * Default is 1. */
-    EbBool ext_block_flag;
-    // ME Parameters
-    /* Number of search positions in the horizontal direction.
-     *
-     * Default depends on input resolution. */
-    uint32_t search_area_width;
-    /* Number of search positions in the vertical direction.
-     *
-     * Default depends on input resolution. */
-    uint32_t search_area_height;
-    // MD Parameters
-    /* Enable the use of HBD (10-bit) for 10 bit content at the mode decision step
-     *
-     * 0 = 8bit mode decision
-     * 1 = 10bit mode decision
-     * 2 = Auto: 8bit & 10bit mode decision
-     *
-    * Default is 1. */
-    int8_t enable_hbd_mode_decision;
-    /* Palette Mode
-    *
-    * -1: Default, 0: OFF, 1: Fully ON, 2 ... 6: Faster levels */
-    int32_t palette_level;
     // Rate Control
 
     /* Rate control mode.
@@ -639,15 +384,6 @@ typedef struct EbSvtAv1EncConfiguration {
     * Default is 0. */
     uint32_t screen_content_mode;
 
-    /* Flag to control intraBC mode
-    *  0      OFF
-    *  1      slow
-    *  2      faster
-    *  3      fastest
-    *
-    * Default is -1 (DEFAULT behavior). */
-    int intrabc_mode;
-
     /* Enable adaptive quantization within a frame using segmentation.
      *
      * Default is 2. */
@@ -690,14 +426,6 @@ typedef struct EbSvtAv1EncConfiguration {
      * same application. */
     uint32_t channel_id;
     uint32_t active_channel_count;
-
-    /* Flag to enable the Speed Control functionality to achieve the real-time
-    * encoding speed defined by dynamically changing the encoding preset to meet
-    * the average speed defined in injectorFrameRate. When this parameter is set
-    * to 1 it forces -inj to be 1 -inj-frm-rt to be set to the -fps.
-    *
-    * Default is 0. */
-    uint32_t speed_control_flag;
 
     /* Flag to constrain motion vectors.
      *
@@ -744,39 +472,6 @@ typedef struct EbSvtAv1EncConfiguration {
         * Default is 0. */
     int32_t tile_columns;
     int32_t tile_rows;
-
-    /* To be deprecated.
- * Encoder configuration parameters below this line are to be deprecated. */
-    /* Flag to enable Hierarchical Motion Estimation 1/16th of the picture
-    *
-    * Default is 1. */
-    EbBool enable_hme_level0_flag;
-
-    /* Flag to enable Hierarchical Motion Estimation 1/4th of the picture
-    *
-    * Default is 1. */
-    EbBool enable_hme_level1_flag;
-
-    /* Flag to enable Hierarchical Motion Estimation full sample of the picture
-    *
-    * Default is 1. */
-    EbBool enable_hme_level2_flag;
-
-    // HME Parameters
-    /* Number of search positions in width and height for the HME
-    *
-    * Default depends on input resolution. */
-    uint32_t number_hme_search_region_in_width;
-    uint32_t number_hme_search_region_in_height;
-    uint32_t hme_level0_total_search_area_width;
-    uint32_t hme_level0_total_search_area_height;
-    uint32_t hme_level0_search_area_in_width_array[EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT];
-    uint32_t hme_level0_search_area_in_height_array[EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
-    uint32_t hme_level1_search_area_in_width_array[EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT];
-    uint32_t hme_level1_search_area_in_height_array[EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
-    uint32_t hme_level2_search_area_in_width_array[EB_HME_SEARCH_AREA_COLUMN_MAX_COUNT];
-    uint32_t hme_level2_search_area_in_height_array[EB_HME_SEARCH_AREA_ROW_MAX_COUNT];
-    uint32_t ten_bit_format;
 
     /* Variables to control the use of ALT-REF (temporally filtered frames)
     */
@@ -838,9 +533,6 @@ typedef struct EbSvtAv1EncConfiguration {
     * values are from set using svt_aom_parse_content_light_level()
     */
     struct EbContentLightLevel content_light_level;
-
-    uint8_t enable_adaptive_mini_gop;
-    uint8_t max_heirachical_level;
 } EbSvtAv1EncConfiguration;
 
 /**

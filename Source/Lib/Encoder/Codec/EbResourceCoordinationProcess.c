@@ -323,11 +323,11 @@ void set_tpl_extended_controls(PictureParentControlSet *pcs_ptr, uint8_t tpl_lev
     }
     if (!scs_ptr->lad_mg)
         tpl_ctrls->r0_adjust_factor *= 3;
-    if (pcs_ptr->scs_ptr->static_config.enable_adaptive_mini_gop == 0) {
+    if (pcs_ptr->scs_ptr->enable_adaptive_mini_gop == 0) {
         if (scs_ptr->static_config.hierarchical_levels < 4)
             tpl_ctrls->r0_adjust_factor = 0.1;
     } else {
-        if (pcs_ptr->scs_ptr->static_config.max_heirachical_level < 4)
+        if (pcs_ptr->scs_ptr->max_heirachical_level < 4)
             tpl_ctrls->r0_adjust_factor = 0.1;
     }
 }
@@ -383,16 +383,16 @@ Output  : Pre-Analysis signal(s)
 EbErrorType signal_derivation_pre_analysis_oq_scs(SequenceControlSet *scs_ptr) {
     EbErrorType return_error = EB_ErrorNone;
 
-    if (scs_ptr->static_config.enable_intra_edge_filter == DEFAULT)
+    if (scs_ptr->enable_intra_edge_filter == DEFAULT)
         scs_ptr->seq_header.enable_intra_edge_filter = 1;
     else
         scs_ptr->seq_header.enable_intra_edge_filter =
-            (uint8_t)scs_ptr->static_config.enable_intra_edge_filter;
+            (uint8_t)scs_ptr->enable_intra_edge_filter;
 
-    if (scs_ptr->static_config.pic_based_rate_est == DEFAULT)
+    if (scs_ptr->pic_based_rate_est == DEFAULT)
         scs_ptr->seq_header.pic_based_rate_est = 0;
     else
-        scs_ptr->seq_header.pic_based_rate_est = (uint8_t)scs_ptr->static_config.pic_based_rate_est;
+        scs_ptr->seq_header.pic_based_rate_est = (uint8_t)scs_ptr->pic_based_rate_est;
 
     if (scs_ptr->static_config.enable_restoration_filtering == DEFAULT) {
         scs_ptr->seq_header.enable_restoration = get_enable_restoration(
@@ -408,11 +408,11 @@ EbErrorType signal_derivation_pre_analysis_oq_scs(SequenceControlSet *scs_ptr) {
     else
         scs_ptr->seq_header.cdef_level = (uint8_t)(scs_ptr->static_config.cdef_level > 0);
 
-    if (scs_ptr->static_config.enable_warped_motion == DEFAULT) {
+    if (scs_ptr->enable_warped_motion == DEFAULT) {
         scs_ptr->seq_header.enable_warped_motion = 1;
     } else
         scs_ptr->seq_header.enable_warped_motion = (uint8_t)
-                                                       scs_ptr->static_config.enable_warped_motion;
+                                                       scs_ptr->enable_warped_motion;
 
     return return_error;
 }
@@ -1060,29 +1060,26 @@ void *resource_coordination_kernel(void *input_ptr) {
                     SUPERRES_NONE
                 ? 1
                 : 0;
-            if (scs_ptr->static_config.inter_intra_compound == DEFAULT)
+            if (scs_ptr->inter_intra_compound == DEFAULT)
                 scs_ptr->seq_header.enable_interintra_compound = 1;
             else
                 scs_ptr->seq_header.enable_interintra_compound =
-                    scs_ptr->static_config.inter_intra_compound;
+                    scs_ptr->inter_intra_compound;
                 // Enable/Disable Filter Intra
                 // seq_header.filter_intra_level | Settings
                 // 0                             | Disable
                 // 1                             | Enable
-            if (scs_ptr->static_config.filter_intra_level == DEFAULT)
+            if (scs_ptr->filter_intra_level == DEFAULT)
                 scs_ptr->seq_header.filter_intra_level = 1;
             else
-                scs_ptr->seq_header.filter_intra_level = scs_ptr->static_config.filter_intra_level;
+                scs_ptr->seq_header.filter_intra_level = scs_ptr->filter_intra_level;
                 // Set compound mode      Settings
                 // 0                 OFF: No compond mode search : AVG only
                 // 1                 ON: full
-            if (scs_ptr->static_config.compound_level == DEFAULT)
+            if (scs_ptr->compound_level == DEFAULT)
                 scs_ptr->compound_mode = 1;
             else
-                scs_ptr->compound_mode = scs_ptr->static_config.compound_level;
-#if M8_NEW_REF
-            scs_ptr->compound_mode = 1;
-#endif
+                scs_ptr->compound_mode = scs_ptr->compound_level;
             if (scs_ptr->compound_mode) {
                 scs_ptr->seq_header.order_hint_info.enable_jnt_comp = 1; //DISTANCE
                 scs_ptr->seq_header.enable_masked_compound          = 1; //DIFF+WEDGE
@@ -1215,7 +1212,7 @@ void *resource_coordination_kernel(void *input_ptr) {
             pcs_ptr->scene_change_flag = EB_FALSE;
             pcs_ptr->qp_on_the_fly     = EB_FALSE;
             pcs_ptr->sb_total_count    = scs_ptr->sb_total_count;
-            if (scs_ptr->static_config.speed_control_flag) {
+            if (scs_ptr->speed_control_flag) {
                 speed_buffer_control(context_ptr, pcs_ptr, scs_ptr);
             } else
                 pcs_ptr->enc_mode = (EbEncMode)scs_ptr->static_config.enc_mode;

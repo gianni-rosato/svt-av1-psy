@@ -724,14 +724,14 @@ void tpl_mc_flow_dispenser_sb_generic(EncodeContext *     encode_context_ptr,
                                                                    bsize,
                                                                    bsize);
 
-                        EbBool  enable_paeth   = pcs_ptr->scs_ptr->static_config.enable_paeth ==
+                        EbBool  enable_paeth   = pcs_ptr->scs_ptr->enable_paeth ==
                                 DEFAULT
                                ? EB_TRUE
-                               : (EbBool)pcs_ptr->scs_ptr->static_config.enable_paeth;
-                        EbBool  enable_smooth  = pcs_ptr->scs_ptr->static_config.enable_smooth ==
+                               : (EbBool)pcs_ptr->scs_ptr->enable_paeth;
+                        EbBool  enable_smooth  = pcs_ptr->scs_ptr->enable_smooth ==
                                 DEFAULT
                               ? EB_TRUE
-                              : (EbBool)pcs_ptr->scs_ptr->static_config.enable_smooth;
+                              : (EbBool)pcs_ptr->scs_ptr->enable_smooth;
                         uint8_t intra_mode_end = pcs_ptr->tpl_ctrls.tpl_opt_flag ? DC_PRED
                             : enable_paeth                                       ? PAETH_PRED
                             : enable_smooth                                      ? SMOOTH_H_PRED

@@ -343,7 +343,7 @@ void svt_av1_cdef_frame(EncDecContext *context_ptr, SequenceControlSet *scs_ptr,
     CdefList  dlist[MI_SIZE_64X64 * MI_SIZE_64X64];
     uint8_t * row_cdef, *prev_row_cdef, *curr_row_cdef;
     int32_t   cdef_count;
-    const uint32_t sb_size = scs_ptr->static_config.super_block_size;
+    const uint32_t sb_size = scs_ptr->super_block_size;
     int32_t mi_wide_l2[3];
     int32_t mi_high_l2[3];
     int32_t xdec[3];
@@ -688,7 +688,7 @@ void av1_cdef_frame16bit(EncDecContext *context_ptr, SequenceControlSet *scs_ptr
     CdefList  dlist[MI_SIZE_64X64 * MI_SIZE_64X64];
     uint8_t * row_cdef, *prev_row_cdef, *curr_row_cdef;
     int32_t   cdef_count;
-    const uint32_t sb_size = scs_ptr->static_config.super_block_size;
+    const uint32_t sb_size = scs_ptr->super_block_size;
     int32_t mi_wide_l2[3];
     int32_t mi_high_l2[3];
     int32_t xdec[3];

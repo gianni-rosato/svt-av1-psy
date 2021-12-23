@@ -74,7 +74,6 @@
 #define FRAME_RATE_NUMERATOR_TOKEN "-fps-num"
 #define FRAME_RATE_DENOMINATOR_TOKEN "-fps-denom"
 #define ENCODER_BIT_DEPTH "-bit-depth"
-#define ENCODER_16BIT_PIPELINE "-16bit-pipeline"
 #define ENCODER_COLOR_FORMAT "-color-format"
 #define INPUT_COMPRESSED_TEN_BIT_FORMAT "-compressed-ten-bit-format"
 #define ENCMODE_TOKEN "-enc-mode"
@@ -89,40 +88,8 @@
 #define LOOP_FILTER_DISABLE_TOKEN "-dlf"
 #define CDEF_LEVEL_TOKEN "-cdef-level"
 #define RESTORATION_ENABLE_TOKEN "-restoration-filtering"
-#define SG_FILTER_MODE_TOKEN "-sg-filter-mode"
-#define WN_FILTER_MODE_TOKEN "-wn-filter-mode"
-#define INTRA_ANGLE_DELTA_TOKEN "-intra-angle-delta"
-#define INTER_INTRA_COMPOUND_TOKEN "-interintra-comp"
-#define PAETH_TOKEN "-paeth"
-#define SMOOTH_TOKEN "-smooth"
 #define MFMV_ENABLE_TOKEN "-mfmv"
-#define REDUNDANT_BLK_TOKEN "-redundant-blk"
-#define SPATIAL_SSE_FL_TOKEN "-spatial-sse-full-loop-level"
-#define OVR_BNDRY_BLK_TOKEN "-over-bndry-blk"
-#define NEW_NEAREST_COMB_INJECT_TOKEN "-new-nrst-near-comb"
-#define NSQ_TABLE_TOKEN "-nsq-table-use"
-#define FRAME_END_CDF_UPDATE_TOKEN "-framend-cdf-upd-mode"
-#define LOCAL_WARPED_ENABLE_TOKEN "-local-warp"
-#define GLOBAL_MOTION_ENABLE_TOKEN "-global-motion"
-#define OBMC_TOKEN "-obmc-level"
-#define RDOQ_TOKEN "-rdoq-level"
-#define PRED_ME_TOKEN "-pred-me"
-#define BIPRED_3x3_TOKEN "-bipred-3x3"
-#define COMPOUND_LEVEL_TOKEN "-compound"
-#define FILTER_INTRA_TOKEN "-filter-intra-level"
-#define INTRA_EDGE_FILTER_TOKEN "-intra-edge-filter"
-#define PIC_BASED_RATE_EST_TOKEN "-pic-based-rate-est"
-#define PIC_BASED_RATE_EST_NEW_TOKEN "--enable-pic-based-rate-est"
-#define USE_DEFAULT_ME_HME_TOKEN "-use-default-me-hme"
-#define HME_ENABLE_TOKEN "-hme"
-#define HME_L0_ENABLE_TOKEN "-hme-l0"
-#define HME_L1_ENABLE_TOKEN "-hme-l1"
-#define HME_L2_ENABLE_TOKEN "-hme-l2"
-#define EXT_BLOCK "-ext-block"
-#define SEARCH_AREA_WIDTH_TOKEN "-search-w"
-#define SEARCH_AREA_HEIGHT_TOKEN "-search-h"
 #define SCREEN_CONTENT_TOKEN "-scm"
-#define INTRABC_MODE_TOKEN "-intrabc-mode"
 // --- start: ALTREF_FILTERING_SUPPORT
 #define TF_LEVEL "-tf-level"
 #define ENABLE_OVERLAYS "-enable-overlays"
@@ -134,8 +101,6 @@
 #define SUPERRES_QTHRES "-superres-qthres"
 #define SUPERRES_KF_QTHRES "-superres-kf-qthres"
 // --- end: SUPER-RESOLUTION SUPPORT
-#define HBD_MD_ENABLE_TOKEN "-hbd-md"
-#define PALETTE_TOKEN "-palette-level"
 #define HDR_INPUT_TOKEN "-hdr"
 #define RATE_CONTROL_ENABLE_TOKEN "-rc"
 #define TARGET_BIT_RATE_TOKEN "-tbr"
@@ -158,9 +123,6 @@
 #define SUPER_BLOCK_SIZE_TOKEN "-sb-size"
 #define TILE_ROW_TOKEN "-tile-rows"
 #define TILE_COL_TOKEN "-tile-columns"
-
-#define CHROMA_MODE_TOKEN "-chroma-mode"
-#define DISABLE_CFL_TOKEN "-dcfl"
 
 #define SCENE_CHANGE_DETECTION_TOKEN "-scd"
 #define INJECTOR_TOKEN "-inj" // no Eval
@@ -194,18 +156,7 @@
 
 #define STAT_REPORT_NEW_TOKEN "--enable-stat-report"
 #define RESTORATION_ENABLE_NEW_TOKEN "--enable-restoration-filtering"
-#define INTER_INTRA_COMPOUND_NEW_TOKEN "--enable-interintra-comp"
 #define MFMV_ENABLE_NEW_TOKEN "--enable-mfmv"
-#define REDUNDANT_BLK_NEW_TOKEN "--enable-redundant-blk"
-#define SPATIAL_SSE_FL_NEW_TOKEN "--enable-spatial-sse-full-loop-level"
-#define OVR_BNDRY_BLK_NEW_TOKEN "--enable-over-bndry-blk"
-#define NEW_NEAREST_COMB_INJECT_NEW_TOKEN "--enable-new-nrst-near-comb"
-#define NSQ_TABLE_NEW_TOKEN "--enable-nsq-table-use"
-#define FRAME_END_CDF_UPDATE_NEW_TOKEN "--enable-framend-cdf-upd-mode"
-#define LOCAL_WARPED_ENABLE_NEW_TOKEN "--enable-local-warp"
-#define GLOBAL_MOTION_ENABLE_NEW_TOKEN "--enable-global-motion"
-#define RDOQ_NEW_TOKEN "--rdoq-level"
-#define FILTER_INTRA_NEW_TOKEN "--filter-intra-level"
 #define HDR_INPUT_NEW_TOKEN "--enable-hdr"
 #define ADAPTIVE_QP_ENABLE_NEW_TOKEN "--aq-mode"
 #define INPUT_FILE_LONG_TOKEN "--input"
@@ -217,12 +168,6 @@
 #define QP_LONG_TOKEN "--qp"
 #define CRF_LONG_TOKEN "--crf"
 #define LOOP_FILTER_DISABLE_NEW_TOKEN "--disable-dlf"
-#define DISABLE_CFL_NEW_TOKEN "--disable-cfl"
-#define INTRA_EDGE_FILTER_NEW_TOKEN "--enable-intra-edge-filter"
-#define INTRA_ANGLE_DELTA_NEW_TOKEN "--enable-intra-angle-delta"
-#define PAETH_NEW_TOKEN "--enable-paeth"
-#define SMOOTH_NEW_TOKEN "--enable-smooth"
-#define MRP_LEVEL_TOKEN "--mrp-level"
 
 #define COLOR_PRIMARIES_NEW_TOKEN "--color-primaries"
 #define TRANSFER_CHARACTERISTICS_NEW_TOKEN "--transfer-characteristics"
@@ -423,9 +368,6 @@ static void set_frame_rate_denominator(const char *value, EbConfig *cfg) {
 static void set_encoder_bit_depth(const char *value, EbConfig *cfg) {
     cfg->config.encoder_bit_depth = strtoul(value, NULL, 0);
 }
-static void set_encoder_16bit_pipeline(const char *value, EbConfig *cfg) {
-    cfg->config.is_16bit_pipeline = (EbBool)strtoul(value, NULL, 0);
-}
 static void set_encoder_color_format(const char *value, EbConfig *cfg) {
     cfg->config.encoder_color_format = (EbColorFormat)strtoul(value, NULL, 0);
 }
@@ -525,95 +467,14 @@ static void set_cfg_film_grain(const char *value, EbConfig *cfg) {
 static void set_disable_dlf_flag(const char *value, EbConfig *cfg) {
     cfg->config.disable_dlf_flag = (EbBool)strtoul(value, NULL, 0);
 };
-static void set_enable_local_warped_motion_flag(const char *value, EbConfig *cfg) {
-    cfg->config.enable_warped_motion = strtol(value, NULL, 0);
-};
-static void set_enable_global_motion_flag(const char *value, EbConfig *cfg) {
-    cfg->config.enable_global_motion = (EbBool)strtoul(value, NULL, 0);
-};
 static void set_cdef_level(const char *value, EbConfig *cfg) {
     cfg->config.cdef_level = strtol(value, NULL, 0);
 };
 static void set_enable_restoration_filter_flag(const char *value, EbConfig *cfg) {
     cfg->config.enable_restoration_filtering = strtol(value, NULL, 0);
 };
-static void set_sg_filter_mode(const char *value, EbConfig *cfg) {
-    cfg->config.sg_filter_mode = strtol(value, NULL, 0);
-};
-static void set_wn_filter_mode(const char *value, EbConfig *cfg) {
-    cfg->config.wn_filter_mode = strtol(value, NULL, 0);
-};
-static void set_intra_angle_delta_flag(const char *value, EbConfig *cfg) {
-    cfg->config.intra_angle_delta = strtol(value, NULL, 0);
-};
-static void set_interintra_compound_flag(const char *value, EbConfig *cfg) {
-    cfg->config.inter_intra_compound = strtol(value, NULL, 0);
-};
-static void set_enable_paeth_flag(const char *value, EbConfig *cfg) {
-    cfg->config.enable_paeth = strtol(value, NULL, 0);
-};
-static void set_enable_smooth_flag(const char *value, EbConfig *cfg) {
-    cfg->config.enable_smooth = strtol(value, NULL, 0);
-};
-static void set_mrp_level(const char *value, EbConfig *cfg) {
-    cfg->config.mrp_level = strtol(value, NULL, 0);
-};
 static void set_enable_mfmv_flag(const char *value, EbConfig *cfg) {
     cfg->config.enable_mfmv = strtol(value, NULL, 0);
-};
-static void set_enable_redundant_blk_flag(const char *value, EbConfig *cfg) {
-    cfg->config.enable_redundant_blk = strtol(value, NULL, 0);
-};
-static void set_spatial_sse_full_loop_level_flag(const char *value, EbConfig *cfg) {
-    cfg->config.spatial_sse_full_loop_level = strtol(value, NULL, 0);
-};
-static void set_over_bndry_blk_flag(const char *value, EbConfig *cfg) {
-    cfg->config.over_bndry_blk = strtol(value, NULL, 0);
-};
-static void set_new_nearest_comb_inject_flag(const char *value, EbConfig *cfg) {
-    cfg->config.new_nearest_comb_inject = strtol(value, NULL, 0);
-};
-static void set_nsq_table_flag(const char *value, EbConfig *cfg) {
-    cfg->config.nsq_table = strtol(value, NULL, 0);
-};
-static void set_frame_end_cdf_update_flag(const char *value, EbConfig *cfg) {
-    cfg->config.frame_end_cdf_update = strtol(value, NULL, 0);
-};
-static void set_chroma_mode(const char *value, EbConfig *cfg) {
-    cfg->config.set_chroma_mode = strtol(value, NULL, 0);
-};
-static void set_disable_cfl_flag(const char *value, EbConfig *cfg) {
-    cfg->config.disable_cfl_flag = strtol(value, NULL, 0);
-};
-static void set_obmc_level_flag(const char *value, EbConfig *cfg) {
-    cfg->config.obmc_level = (EbBool)strtoul(value, NULL, 0);
-};
-static void set_rdoq_level_flag(const char *value, EbConfig *cfg) {
-    cfg->config.rdoq_level = strtol(value, NULL, 0);
-};
-static void set_predictive_me_flag(const char *value, EbConfig *cfg) {
-    cfg->config.pred_me = strtol(value, NULL, 0);
-};
-static void set_bipred3x3inject_flag(const char *value, EbConfig *cfg) {
-    cfg->config.bipred_3x3_inject = strtol(value, NULL, 0);
-};
-static void set_compound_level_flag(const char *value, EbConfig *cfg) {
-    cfg->config.compound_level = strtol(value, NULL, 0);
-};
-static void set_filter_intra_level_flag(const char *value, EbConfig *cfg) {
-    cfg->config.filter_intra_level = (int8_t)strtoul(value, NULL, 0);
-};
-static void set_enable_intra_edge_filter_flag(const char *value, EbConfig *cfg) {
-    cfg->config.enable_intra_edge_filter = strtol(value, NULL, 0);
-};
-static void set_pic_based_rate_est(const char *value, EbConfig *cfg) {
-    cfg->config.pic_based_rate_est = strtol(value, NULL, 0);
-};
-static void set_enable_hme_flag(const char *value, EbConfig *cfg) {
-    cfg->config.enable_hme_flag = (EbBool)strtoul(value, NULL, 0);
-};
-static void set_enable_hme_level_0_flag(const char *value, EbConfig *cfg) {
-    cfg->config.enable_hme_level0_flag = (EbBool)strtoul(value, NULL, 0);
 };
 static void set_tile_row(const char *value, EbConfig *cfg) {
     cfg->config.tile_rows = strtoul(value, NULL, 0);
@@ -676,29 +537,8 @@ static void set_recode_loop(const char *value, EbConfig *cfg) {
 static void set_adaptive_quantization(const char *value, EbConfig *cfg) {
     cfg->config.enable_adaptive_quantization = (EbBool)strtol(value, NULL, 0);
 };
-static void set_enable_hme_level_1_flag(const char *value, EbConfig *cfg) {
-    cfg->config.enable_hme_level1_flag = (EbBool)strtoul(value, NULL, 0);
-};
-static void set_enable_hme_level_2_flag(const char *value, EbConfig *cfg) {
-    cfg->config.enable_hme_level2_flag = (EbBool)strtoul(value, NULL, 0);
-};
-static void set_cfg_search_area_width(const char *value, EbConfig *cfg) {
-    cfg->config.search_area_width = strtoul(value, NULL, 0);
-};
-static void set_cfg_search_area_height(const char *value, EbConfig *cfg) {
-    cfg->config.search_area_height = strtoul(value, NULL, 0);
-};
-static void set_cfg_use_default_me_hme(const char *value, EbConfig *cfg) {
-    cfg->config.use_default_me_hme = (EbBool)strtol(value, NULL, 0);
-};
-static void set_enable_ext_block_flag(const char *value, EbConfig *cfg) {
-    cfg->config.ext_block_flag = (EbBool)strtoul(value, NULL, 0);
-};
 static void set_screen_content_mode(const char *value, EbConfig *cfg) {
     cfg->config.screen_content_mode = strtoul(value, NULL, 0);
-};
-static void set_intrabc_mode(const char *value, EbConfig *cfg) {
-    cfg->config.intrabc_mode = strtol(value, NULL, 0);
 };
 // --- start: ALTREF_FILTERING_SUPPORT
 static void set_tf_level(const char *value, EbConfig *cfg) {
@@ -726,12 +566,6 @@ static void set_superres_kf_qthres(const char *value, EbConfig *cfg) {
     cfg->config.superres_kf_qthres = (uint8_t)strtoul(value, NULL, 0);
 };
 // --- end: SUPER-RESOLUTION SUPPORT
-static void set_enable_hbd_mode_decision(const char *value, EbConfig *cfg) {
-    cfg->config.enable_hbd_mode_decision = (uint8_t)strtoul(value, NULL, 0);
-};
-static void set_palette_level(const char *value, EbConfig *cfg) {
-    cfg->config.palette_level = (int32_t)strtoul(value, NULL, 0);
-};
 static void set_high_dynamic_range_input(const char *value, EbConfig *cfg) {
     cfg->config.high_dynamic_range_input = strtol(value, NULL, 0);
 };
@@ -925,10 +759,6 @@ ConfigEntry config_entry_global_options[] = {
      INPUT_DEPTH_TOKEN,
      "Bit depth for codec (8 [default] , 10)",
      set_encoder_bit_depth},
-    {SINGLE_INPUT,
-     ENCODER_16BIT_PIPELINE,
-     "Bit depth for enc-dec(0: lbd[default], 1: hbd)",
-     set_encoder_16bit_pipeline},
     {SINGLE_INPUT,
      INPUT_COMPRESSED_TEN_BIT_FORMAT,
      "Offline packing of the 2bits: requires two bits packed input (0: OFF[default], 1: ON)",
@@ -1133,19 +963,6 @@ ConfigEntry config_entry_specific[] = {
      "Enable the loop restoration filter(0: OFF ,1: ON ,-1:DEFAULT)",
      set_enable_restoration_filter_flag},
     {SINGLE_INPUT,
-     SG_FILTER_MODE_TOKEN,
-     "Self-guided filter mode (0:OFF, 1: step 0, 2: step 1, 3: step 4, 4: step 16, -1: DEFAULT)",
-     set_sg_filter_mode},
-    {SINGLE_INPUT,
-     WN_FILTER_MODE_TOKEN,
-     "Wiener filter mode (0:OFF, 1: 3-Tap luma/ 3-Tap chroma, 2: 5-Tap luma/ 5-Tap chroma, 3: "
-     "7-Tap luma/ 7-Tap chroma, -1: DEFAULT)",
-     set_wn_filter_mode},
-    {SINGLE_INPUT,
-     MRP_LEVEL_TOKEN,
-     "Multi reference frame levels( 0: OFF, 1: FULL, 2: Level1 .. 9: Level8,  -1: DEFAULT)",
-     set_mrp_level},
-    {SINGLE_INPUT,
      ENABLE_TPL_LA_TOKEN,
      "RDO based on frame temporal dependency (0: off, 1: backward source based)",
      set_enable_tpl_la},
@@ -1153,161 +970,12 @@ ConfigEntry config_entry_specific[] = {
      MFMV_ENABLE_NEW_TOKEN,
      "Enable motion field motion vector( 0: OFF, 1: ON, -1: DEFAULT)",
      set_enable_mfmv_flag},
-    {SINGLE_INPUT,
-     REDUNDANT_BLK_NEW_TOKEN,
-     "Use the same md results(mode, residual , cost,etc..)as the previously processed identical "
-     "block(0: OFF, 1: ON, -1: DEFAULT)",
-     set_enable_redundant_blk_flag},
-    {SINGLE_INPUT,
-     SPATIAL_SSE_FL_NEW_TOKEN,
-     "Enable spatial sse full loop(0: OFF, 1: ON, -1: DEFAULT)",
-     set_spatial_sse_full_loop_level_flag},
-    {SINGLE_INPUT,
-     OVR_BNDRY_BLK_NEW_TOKEN,
-     "Enable over boundary block mode (0: OFF, 1: ON, -1: DEFAULT)",
-     set_over_bndry_blk_flag},
-    {SINGLE_INPUT,
-     NEW_NEAREST_COMB_INJECT_NEW_TOKEN,
-     "Enable new nearest near comb injection (0: OFF, 1: ON, -1: DEFAULT)",
-     set_new_nearest_comb_inject_flag},
-    {SINGLE_INPUT,
-     NSQ_TABLE_NEW_TOKEN,
-     "Enable nsq table (0: OFF, 1: ON, -1: DEFAULT)",
-     set_nsq_table_flag},
-    {SINGLE_INPUT,
-     FRAME_END_CDF_UPDATE_NEW_TOKEN,
-     "Enable frame end cdf update mode (0: OFF, 1: ON, -1: DEFAULT)",
-     set_frame_end_cdf_update_flag},
 
-    // CHROMA
-    {SINGLE_INPUT, CHROMA_MODE_TOKEN, "Select chroma mode([0-3], -1: DEFAULT)", set_chroma_mode},
-    {SINGLE_INPUT,
-     DISABLE_CFL_NEW_TOKEN,
-     "Disable chroma from luma (CFL) flag (0: OFF (do not disable), 1: ON (disable), -1: DEFAULT)",
-     set_disable_cfl_flag},
-
-    // LOCAL WARPED MOTION
-    {SINGLE_INPUT,
-     LOCAL_WARPED_ENABLE_NEW_TOKEN,
-     "Enable warped motion use , 0 = OFF, 1 = ON, -1 = DEFAULT",
-     set_enable_local_warped_motion_flag},
-    // GLOBAL MOTION
-    {SINGLE_INPUT,
-     GLOBAL_MOTION_ENABLE_NEW_TOKEN,
-     "Enable global motion (0: OFF, 1: ON [default])",
-     set_enable_global_motion_flag},
-    // INTRA ANGLE DELTA
-    {SINGLE_INPUT,
-     INTRA_ANGLE_DELTA_TOKEN,
-     "Enable intra angle delta filtering filtering (0: OFF, 1: ON, -1: DEFAULT)",
-     set_intra_angle_delta_flag},
-    // INTER INTRA COMPOUND
-    {SINGLE_INPUT,
-     INTER_INTRA_COMPOUND_NEW_TOKEN,
-     "Enable interintra compound (0: OFF, 1: ON (default))",
-     set_interintra_compound_flag},
-    // PAETH
-    {SINGLE_INPUT,
-     PAETH_NEW_TOKEN,
-     "Enable paeth (0: OFF, 1: ON, -1: DEFAULT)",
-     set_enable_paeth_flag},
-    // SMOOTH
-    {SINGLE_INPUT,
-     SMOOTH_NEW_TOKEN,
-     "Enable smooth (0: OFF, 1: ON, -1: DEFAULT)",
-     set_enable_smooth_flag},
-    // OBMC
-    {SINGLE_INPUT,
-     OBMC_TOKEN,
-     "OBMC Level(0: OFF, 1: Fully ON, 2 and 3 are faster levels, -1: DEFAULT)",
-     set_obmc_level_flag},
-    // RDOQ
-    {SINGLE_INPUT, RDOQ_NEW_TOKEN, "Enable RDOQ (0: OFF, 1: ON, -1: DEFAULT)", set_rdoq_level_flag},
-
-    // Filter Intra
-    {SINGLE_INPUT,
-     FILTER_INTRA_NEW_TOKEN,
-     "Enable filter intra prediction mode (0: OFF, 1: ON [default])",
-     set_filter_intra_level_flag},
-
-    // Edge Intra Filter
-    {SINGLE_INPUT,
-     INTRA_EDGE_FILTER_NEW_TOKEN,
-     "Enable intra edge filter (0: OFF, 1: ON, -1: DEFAULT)",
-     set_enable_intra_edge_filter_flag},
-    // Picture based rate estimation
-    {SINGLE_INPUT,
-     PIC_BASED_RATE_EST_NEW_TOKEN,
-     "Enable picture based rate estimation (0: OFF, 1: ON, -1: DEFAULT)",
-     set_pic_based_rate_est},
-
-    // PREDICTIVE ME
-    {SINGLE_INPUT,
-     PRED_ME_TOKEN,
-     "Set predictive motion estimation level(-1: default, [0-5])",
-     set_predictive_me_flag},
-    // BIPRED 3x3 INJECTION
-    {SINGLE_INPUT,
-     BIPRED_3x3_TOKEN,
-     "Set bipred3x3 injection (0: OFF, 1: ON FULL, 2: Reduced set, -1: DEFAULT)",
-     set_bipred3x3inject_flag},
-    // COMPOUND MODE
-    {SINGLE_INPUT,
-     COMPOUND_LEVEL_TOKEN,
-     "Enable compound mode(0: OFF, 1:ON[AVG/DIST/DIFF], 2: ON[AVG/DIST/DIFF/WEDGE], -1: default)",
-     set_compound_level_flag},
-    // ME Tools
-    {SINGLE_INPUT,
-     USE_DEFAULT_ME_HME_TOKEN,
-     "Use default motion estimation/hierarchical motion estimation settings(0: OFF, 1: "
-     "ON[default])",
-     set_cfg_use_default_me_hme},
-    {SINGLE_INPUT,
-     HME_ENABLE_TOKEN,
-     "Enable hierarchical motion estimation(0: OFF, 1: ON)",
-     set_enable_hme_flag},
-    {SINGLE_INPUT,
-     HME_L0_ENABLE_TOKEN,
-     "Enable hierarchical motion estimation Level 0 (0: OFF, 1: ON)",
-     set_enable_hme_level_0_flag},
-    {SINGLE_INPUT,
-     HME_L1_ENABLE_TOKEN,
-     "Enable hierarchical motion estimation Level 1 (0: OFF, 1: ON)",
-     set_enable_hme_level_1_flag},
-    {SINGLE_INPUT,
-     HME_L2_ENABLE_TOKEN,
-     "Enable hierarchical motion estimation Level 2 (0: OFF, 1: ON)",
-     set_enable_hme_level_2_flag},
-    {SINGLE_INPUT,
-     EXT_BLOCK,
-     "Enable the rectangular and asymetric block (0: OFF, 1: ON)",
-     set_enable_ext_block_flag},
-    // ME Parameters
-    {SINGLE_INPUT,
-     SEARCH_AREA_WIDTH_TOKEN,
-     "Set search area in width[1-256]",
-     set_cfg_search_area_width},
-    {SINGLE_INPUT,
-     SEARCH_AREA_HEIGHT_TOKEN,
-     "Set search area in height[1-256]",
-     set_cfg_search_area_height},
     // MD Parameters
     {SINGLE_INPUT,
      SCREEN_CONTENT_TOKEN,
      "Set screen content detection level([0-2], 2 Content adaptive decision: DEFAULT)",
      set_screen_content_mode},
-    {SINGLE_INPUT,
-     INTRABC_MODE_TOKEN,
-     "Set intraBC mode (0: OFF, 1: ON slow, 2: ON faster, 3: ON fastest, -1: DEFAULT)",
-     set_intrabc_mode},
-    {SINGLE_INPUT,
-     HBD_MD_ENABLE_TOKEN,
-     "Enable high bit depth mode decision(0: OFF, 1: ON partially[default],2: fully ON)",
-     set_enable_hbd_mode_decision},
-    {SINGLE_INPUT,
-     PALETTE_TOKEN,
-     "Set palette prediction mode(-1: default or [0-6])",
-     set_palette_level},
     // Optional Features
     {SINGLE_INPUT,
      UNRESTRICTED_MOTION_VECTOR,
@@ -1328,11 +996,6 @@ ConfigEntry config_entry_specific[] = {
      "extra reference frame for the base-layer picture(0: OFF[default], 1: ON)",
      set_enable_overlays},
     // --- end: ALTREF_FILTERING_SUPPORT
-
-    {SINGLE_INPUT,
-     INTRA_ANGLE_DELTA_NEW_TOKEN,
-     "Enable intra angle delta filtering filtering (0: OFF, 1: ON, -1: DEFAULT)",
-     set_intra_angle_delta_flag},
 
     // Termination
     {SINGLE_INPUT, NULL, NULL, NULL}};
@@ -1400,7 +1063,6 @@ ConfigEntry config_entry[] = {
      "FrameRateDenominator",
      set_frame_rate_denominator},
     {SINGLE_INPUT, ENCODER_BIT_DEPTH, "EncoderBitDepth", set_encoder_bit_depth},
-    {SINGLE_INPUT, ENCODER_16BIT_PIPELINE, "Encoder16BitPipeline", set_encoder_16bit_pipeline},
     {SINGLE_INPUT, ENCODER_COLOR_FORMAT, "EncoderColorFormat", set_encoder_color_format},
     {SINGLE_INPUT,
      INPUT_COMPRESSED_TEN_BIT_FORMAT,
@@ -1482,74 +1144,9 @@ ConfigEntry config_entry[] = {
      RESTORATION_ENABLE_TOKEN,
      "RestorationFilter",
      set_enable_restoration_filter_flag},
-    {SINGLE_INPUT, SG_FILTER_MODE_TOKEN, "SelfGuidedFilterMode", set_sg_filter_mode},
-    {SINGLE_INPUT, WN_FILTER_MODE_TOKEN, "WienerFilterMode", set_wn_filter_mode},
-    {SINGLE_INPUT, MRP_LEVEL_TOKEN, "MrpLevel", set_mrp_level},
     {SINGLE_INPUT, MFMV_ENABLE_TOKEN, "Mfmv", set_enable_mfmv_flag},
-    {SINGLE_INPUT, REDUNDANT_BLK_TOKEN, "RedundantBlock", set_enable_redundant_blk_flag},
-    {SINGLE_INPUT, SPATIAL_SSE_FL_TOKEN, "SpatialSSEfl", set_spatial_sse_full_loop_level_flag},
-    {SINGLE_INPUT, OVR_BNDRY_BLK_TOKEN, "OverBoundryBlock", set_over_bndry_blk_flag},
-    {SINGLE_INPUT,
-     NEW_NEAREST_COMB_INJECT_TOKEN,
-     "NewNearestCombInjection",
-     set_new_nearest_comb_inject_flag},
-    {SINGLE_INPUT, NSQ_TABLE_TOKEN, "NsqTable", set_nsq_table_flag},
-    {SINGLE_INPUT, FRAME_END_CDF_UPDATE_TOKEN, "FrameEndCdfUpdate", set_frame_end_cdf_update_flag},
-
-    // CHROMA
-    {SINGLE_INPUT, CHROMA_MODE_TOKEN, "ChromaMode", set_chroma_mode},
-    {SINGLE_INPUT, DISABLE_CFL_TOKEN, "DisableCFL", set_disable_cfl_flag},
-
-    // LOCAL WARPED MOTION
-    {SINGLE_INPUT,
-     LOCAL_WARPED_ENABLE_TOKEN,
-     "LocalWarpedMotion",
-     set_enable_local_warped_motion_flag},
-    // GLOBAL MOTION
-    {SINGLE_INPUT, GLOBAL_MOTION_ENABLE_TOKEN, "GlobalMotion", set_enable_global_motion_flag},
-    // INTRA ANGLE DELTA
-    {SINGLE_INPUT, INTRA_ANGLE_DELTA_TOKEN, "IntraAngleDelta", set_intra_angle_delta_flag},
-
-    // INTER INTRA COMPOUND
-    {SINGLE_INPUT, INTER_INTRA_COMPOUND_TOKEN, "InterIntraCompound", set_interintra_compound_flag},
-    // PAETH
-    {SINGLE_INPUT, PAETH_TOKEN, "Paeth", set_enable_paeth_flag},
-    // SMOOTH
-    {SINGLE_INPUT, SMOOTH_TOKEN, "Smooth", set_enable_smooth_flag},
-    // OBMC
-    {SINGLE_INPUT, OBMC_TOKEN, "Obmc", set_obmc_level_flag},
-    // RDOQ
-    {SINGLE_INPUT, RDOQ_TOKEN, "RDOQ", set_rdoq_level_flag},
-    // Filter Intra
-    {SINGLE_INPUT, FILTER_INTRA_TOKEN, "FilterIntra", set_filter_intra_level_flag},
-    // Edge Intra Filter
-    {SINGLE_INPUT, INTRA_EDGE_FILTER_TOKEN, "IntraEdgeFilter", set_enable_intra_edge_filter_flag},
-
-    // Picture based rate estimation
-    {SINGLE_INPUT, PIC_BASED_RATE_EST_TOKEN, "PicBasedRateEst", set_pic_based_rate_est},
-    {SINGLE_INPUT, PIC_BASED_RATE_EST_NEW_TOKEN, "PicBasedRateEst", set_pic_based_rate_est},
-
-    // PREDICTIVE ME
-    {SINGLE_INPUT, PRED_ME_TOKEN, "PredMe", set_predictive_me_flag},
-    // BIPRED 3x3 INJECTION
-    {SINGLE_INPUT, BIPRED_3x3_TOKEN, "Bipred3x3", set_bipred3x3inject_flag},
-    // COMPOUND MODE
-    {SINGLE_INPUT, COMPOUND_LEVEL_TOKEN, "CompoundLevel", set_compound_level_flag},
-    // ME Tools
-    {SINGLE_INPUT, USE_DEFAULT_ME_HME_TOKEN, "UseDefaultMeHme", set_cfg_use_default_me_hme},
-    {SINGLE_INPUT, HME_ENABLE_TOKEN, "HME", set_enable_hme_flag},
-    {SINGLE_INPUT, HME_L0_ENABLE_TOKEN, "HMELevel0", set_enable_hme_level_0_flag},
-    {SINGLE_INPUT, HME_L1_ENABLE_TOKEN, "HMELevel1", set_enable_hme_level_1_flag},
-    {SINGLE_INPUT, HME_L2_ENABLE_TOKEN, "HMELevel2", set_enable_hme_level_2_flag},
-    {SINGLE_INPUT, EXT_BLOCK, "ExtBlockFlag", set_enable_ext_block_flag},
-    // ME Parameters
-    {SINGLE_INPUT, SEARCH_AREA_WIDTH_TOKEN, "SearchAreaWidth", set_cfg_search_area_width},
-    {SINGLE_INPUT, SEARCH_AREA_HEIGHT_TOKEN, "SearchAreaHeight", set_cfg_search_area_height},
     // MD Parameters
     {SINGLE_INPUT, SCREEN_CONTENT_TOKEN, "ScreenContentMode", set_screen_content_mode},
-    {SINGLE_INPUT, INTRABC_MODE_TOKEN, "IntraBCMode", set_intrabc_mode},
-    {SINGLE_INPUT, HBD_MD_ENABLE_TOKEN, "HighBitDepthModeDecision", set_enable_hbd_mode_decision},
-    {SINGLE_INPUT, PALETTE_TOKEN, "PaletteLevel", set_palette_level},
     // Thread Management
     {SINGLE_INPUT, THREAD_MGMNT, "LogicalProcessors", set_logical_processors},
     {SINGLE_INPUT, UNPIN_TOKEN, "UnpinExecution", set_unpin_execution},
@@ -1607,34 +1204,7 @@ ConfigEntry config_entry[] = {
      RESTORATION_ENABLE_NEW_TOKEN,
      "Restoration Filter",
      set_enable_restoration_filter_flag},
-    {SINGLE_INPUT,
-     INTER_INTRA_COMPOUND_NEW_TOKEN,
-     "Inter Intra Compound",
-     set_interintra_compound_flag},
-    //{SINGLE_INPUT, FRAC_SEARCH_64_NEW_TOKEN, "FracSearch64", ??}, // todo
     {SINGLE_INPUT, MFMV_ENABLE_NEW_TOKEN, "Mfmv token with double dash", set_enable_mfmv_flag},
-    {SINGLE_INPUT, REDUNDANT_BLK_NEW_TOKEN, "Redundant Block", set_enable_redundant_blk_flag},
-    {SINGLE_INPUT,
-     SPATIAL_SSE_FL_NEW_TOKEN,
-     "Spatial SSE fl",
-     set_spatial_sse_full_loop_level_flag},
-    {SINGLE_INPUT, OVR_BNDRY_BLK_NEW_TOKEN, "Over Boundry Block", set_over_bndry_blk_flag},
-    {SINGLE_INPUT,
-     NEW_NEAREST_COMB_INJECT_NEW_TOKEN,
-     "New Nearest Comb Injection",
-     set_new_nearest_comb_inject_flag},
-    {SINGLE_INPUT, NSQ_TABLE_NEW_TOKEN, "Nsq Table", set_nsq_table_flag},
-    {SINGLE_INPUT,
-     FRAME_END_CDF_UPDATE_NEW_TOKEN,
-     "Frame End Cdf Update",
-     set_frame_end_cdf_update_flag},
-    {SINGLE_INPUT,
-     LOCAL_WARPED_ENABLE_NEW_TOKEN,
-     "Local Warped Motion [0 = OFF, 1 = ON, -1 = DEFAULT]",
-     set_enable_local_warped_motion_flag},
-    {SINGLE_INPUT, GLOBAL_MOTION_ENABLE_NEW_TOKEN, "Global Motion", set_enable_global_motion_flag},
-    {SINGLE_INPUT, RDOQ_NEW_TOKEN, "RDOQ double dash token", set_rdoq_level_flag},
-    {SINGLE_INPUT, FILTER_INTRA_NEW_TOKEN, "Filter Intra", set_filter_intra_level_flag},
     {SINGLE_INPUT, HDR_INPUT_NEW_TOKEN, "High Dynamic Range Input", set_high_dynamic_range_input},
     {SINGLE_INPUT,
      ADAPTIVE_QP_ENABLE_NEW_TOKEN,
@@ -1654,15 +1224,6 @@ ConfigEntry config_entry[] = {
     {SINGLE_INPUT, QP_LONG_TOKEN, "QP double dash token", set_cfg_qp},
     {SINGLE_INPUT, CRF_LONG_TOKEN, "CRF double dash token", set_cfg_crf},
     {SINGLE_INPUT, LOOP_FILTER_DISABLE_NEW_TOKEN, "Loop Filter Disable", set_disable_dlf_flag},
-
-    {SINGLE_INPUT, DISABLE_CFL_NEW_TOKEN, "Disable CFL", set_disable_cfl_flag},
-    {SINGLE_INPUT,
-     INTRA_EDGE_FILTER_NEW_TOKEN,
-     "Intra Edge Filter",
-     set_enable_intra_edge_filter_flag},
-    {SINGLE_INPUT, INTRA_ANGLE_DELTA_NEW_TOKEN, "Intra Angle Delta", set_intra_angle_delta_flag},
-    {SINGLE_INPUT, PAETH_NEW_TOKEN, "Paeth New Token", set_enable_paeth_flag},
-    {SINGLE_INPUT, SMOOTH_NEW_TOKEN, "Smooth New Token", set_enable_smooth_flag},
 
     // Color description
     {SINGLE_INPUT, COLOR_PRIMARIES_NEW_TOKEN, "ColorPrimaries", set_cfg_color_primaries},
@@ -2921,45 +2482,12 @@ const char *handle_warnings(const char *token, char *print_message, uint8_t doub
         linked_token = STAT_REPORT_NEW_TOKEN;
     if (strcmp(token, RESTORATION_ENABLE_TOKEN) == 0)
         linked_token = RESTORATION_ENABLE_NEW_TOKEN;
-    if (strcmp(token, INTER_INTRA_COMPOUND_TOKEN) == 0)
-        linked_token = INTER_INTRA_COMPOUND_NEW_TOKEN;
     if (strcmp(token, MFMV_ENABLE_TOKEN) == 0)
         linked_token = MFMV_ENABLE_NEW_TOKEN;
-    if (strcmp(token, REDUNDANT_BLK_TOKEN) == 0)
-        linked_token = REDUNDANT_BLK_NEW_TOKEN;
-    if (strcmp(token, SPATIAL_SSE_FL_TOKEN) == 0)
-        linked_token = SPATIAL_SSE_FL_NEW_TOKEN;
-    if (strcmp(token, OVR_BNDRY_BLK_TOKEN) == 0)
-        linked_token = OVR_BNDRY_BLK_NEW_TOKEN;
-    if (strcmp(token, NEW_NEAREST_COMB_INJECT_TOKEN) == 0)
-        linked_token = NEW_NEAREST_COMB_INJECT_NEW_TOKEN;
-    if (strcmp(token, NSQ_TABLE_TOKEN) == 0)
-        linked_token = NSQ_TABLE_NEW_TOKEN;
-    if (strcmp(token, FRAME_END_CDF_UPDATE_TOKEN) == 0)
-        linked_token = FRAME_END_CDF_UPDATE_NEW_TOKEN;
-    if (strcmp(token, LOCAL_WARPED_ENABLE_TOKEN) == 0)
-        linked_token = LOCAL_WARPED_ENABLE_NEW_TOKEN;
-    if (strcmp(token, GLOBAL_MOTION_ENABLE_TOKEN) == 0)
-        linked_token = GLOBAL_MOTION_ENABLE_NEW_TOKEN;
-    if (strcmp(token, RDOQ_TOKEN) == 0)
-        linked_token = RDOQ_NEW_TOKEN;
     if (strcmp(token, HDR_INPUT_TOKEN) == 0)
         linked_token = HDR_INPUT_NEW_TOKEN;
     if (strcmp(token, ADAPTIVE_QP_ENABLE_TOKEN) == 0)
         linked_token = ADAPTIVE_QP_ENABLE_NEW_TOKEN;
-
-    if (strcmp(token, DISABLE_CFL_TOKEN) == 0)
-        linked_token = DISABLE_CFL_NEW_TOKEN;
-    if (strcmp(token, INTRA_EDGE_FILTER_TOKEN) == 0)
-        linked_token = INTRA_EDGE_FILTER_NEW_TOKEN;
-    if (strcmp(token, INTRA_ANGLE_DELTA_TOKEN) == 0)
-        linked_token = INTRA_ANGLE_DELTA_NEW_TOKEN;
-    if (strcmp(token, PAETH_TOKEN) == 0)
-        linked_token = PAETH_NEW_TOKEN;
-    if (strcmp(token, SMOOTH_TOKEN) == 0)
-        linked_token = SMOOTH_NEW_TOKEN;
-    if (strcmp(token, PIC_BASED_RATE_EST_TOKEN) == 0)
-        linked_token = PIC_BASED_RATE_EST_NEW_TOKEN;
 
     if (strnlen_s(linked_token, WARNING_LENGTH) > 1) {
         const char *message_str = " will be deprecated soon, please use ";
