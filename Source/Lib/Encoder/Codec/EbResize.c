@@ -843,7 +843,7 @@ typedef EbErrorType (*Av1ResizePlane)(const uint8_t *const input, int height, in
  */
 static EbErrorType av1_resize_frame(const EbPictureBufferDesc *src, EbPictureBufferDesc *dst,
                                     int bd, const int num_planes, const uint32_t ss_x,
-                                    const uint32_t ss_y, uint8_t is_packed) {
+                                    const uint32_t ss_y, uint8_t is_packed, uint32_t buffer_enable_mask) {
     uint16_t *src_buffer_highbd[MAX_MB_PLANE];
     uint16_t *dst_buffer_highbd[MAX_MB_PLANE];
 
@@ -901,42 +901,47 @@ static EbErrorType av1_resize_frame(const EbPictureBufferDesc *src, EbPictureBuf
                 : av1_highbd_resize_plane;
             switch (plane) {
             case 0:
-                resize_plane_func(
-                    src_buffer_highbd[0] + src->origin_y * src->stride_y + src->origin_x,
-                    src->height,
-                    src->width,
-                    src->stride_y,
-                    dst_buffer_highbd[0] + dst->origin_y * dst->stride_y + dst->origin_x,
-                    dst->height,
-                    dst->width,
-                    dst->stride_y,
-                    bd);
+                if ((buffer_enable_mask & PICTURE_BUFFER_DESC_Y_FLAG) && src_buffer_highbd[0] && dst_buffer_highbd[0])
+                    resize_plane_func(
+                        src_buffer_highbd[0] + src->origin_y * src->stride_y + src->origin_x,
+                        src->height,
+                        src->width,
+                        src->stride_y,
+                        dst_buffer_highbd[0] + dst->origin_y * dst->stride_y + dst->origin_x,
+                        dst->height,
+                        dst->width,
+                        dst->stride_y,
+                        bd);
                 break;
             case 1:
-                resize_plane_func(src_buffer_highbd[1] + (src->origin_y >> ss_y) * src->stride_cb +
-                                      (src->origin_x >> ss_x),
-                                  src->height >> ss_y,
-                                  src->width >> ss_x,
-                                  src->stride_cb,
-                                  dst_buffer_highbd[1] + (dst->origin_y >> ss_y) * dst->stride_cb +
-                                      (dst->origin_x >> ss_x),
-                                  (dst->height + ss_y) >> ss_y,
-                                  (dst->width + ss_x) >> ss_x,
-                                  dst->stride_cb,
-                                  bd);
+                if ((buffer_enable_mask & PICTURE_BUFFER_DESC_Cb_FLAG) && src_buffer_highbd[1] && dst_buffer_highbd[1])
+                    resize_plane_func(
+                        src_buffer_highbd[1] + (src->origin_y >> ss_y) * src->stride_cb +
+                            (src->origin_x >> ss_x),
+                        src->height >> ss_y,
+                        src->width >> ss_x,
+                        src->stride_cb,
+                        dst_buffer_highbd[1] + (dst->origin_y >> ss_y) * dst->stride_cb +
+                            (dst->origin_x >> ss_x),
+                        (dst->height + ss_y) >> ss_y,
+                        (dst->width + ss_x) >> ss_x,
+                        dst->stride_cb,
+                        bd);
                 break;
             case 2:
-                resize_plane_func(src_buffer_highbd[2] + (src->origin_y >> ss_y) * src->stride_cr +
-                                      (src->origin_x >> ss_x),
-                                  src->height >> ss_y,
-                                  src->width >> ss_x,
-                                  src->stride_cr,
-                                  dst_buffer_highbd[2] + (dst->origin_y >> ss_y) * dst->stride_cr +
-                                      (dst->origin_x >> ss_x),
-                                  (dst->height + ss_y) >> ss_y,
-                                  (dst->width + ss_x) >> ss_x,
-                                  dst->stride_cr,
-                                  bd);
+                if ((buffer_enable_mask & PICTURE_BUFFER_DESC_Cr_FLAG) && src_buffer_highbd[2] && dst_buffer_highbd[2])
+                    resize_plane_func(
+                        src_buffer_highbd[2] + (src->origin_y >> ss_y) * src->stride_cr +
+                            (src->origin_x >> ss_x),
+                        src->height >> ss_y,
+                        src->width >> ss_x,
+                        src->stride_cr,
+                        dst_buffer_highbd[2] + (dst->origin_y >> ss_y) * dst->stride_cr +
+                            (dst->origin_x >> ss_x),
+                        (dst->height + ss_y) >> ss_y,
+                        (dst->width + ss_x) >> ss_x,
+                        dst->stride_cr,
+                        bd);
                 break;
             default: break;
             }
@@ -946,47 +951,95 @@ static EbErrorType av1_resize_frame(const EbPictureBufferDesc *src, EbPictureBuf
                 : av1_resize_plane;
             switch (plane) {
             case 0:
-                resize_plane_func(src->buffer_y + src->origin_y * src->stride_y + src->origin_x,
-                                  src->height,
-                                  src->width,
-                                  src->stride_y,
-                                  dst->buffer_y + dst->origin_y * dst->stride_y + dst->origin_x,
-                                  dst->height,
-                                  dst->width,
-                                  dst->stride_y);
+                if ((buffer_enable_mask & PICTURE_BUFFER_DESC_Y_FLAG) && src->buffer_y && dst->buffer_y)
+                    resize_plane_func(src->buffer_y + src->origin_y * src->stride_y + src->origin_x,
+                                      src->height,
+                                      src->width,
+                                      src->stride_y,
+                                      dst->buffer_y + dst->origin_y * dst->stride_y + dst->origin_x,
+                                      dst->height,
+                                      dst->width,
+                                      dst->stride_y);
                 break;
             case 1:
-                if (dst->buffer_cb) {
+                if ((buffer_enable_mask & PICTURE_BUFFER_DESC_Cb_FLAG) && src->buffer_cb && dst->buffer_cb)
                     resize_plane_func(src->buffer_cb + (src->origin_y >> ss_y) * src->stride_cb +
-                                          (src->origin_x >> ss_x),
+                                      (src->origin_x >> ss_x),
                                       src->height >> ss_y,
                                       src->width >> ss_x,
                                       src->stride_cb,
                                       dst->buffer_cb + (dst->origin_y >> ss_y) * dst->stride_cb +
-                                          (dst->origin_x >> ss_x),
+                                      (dst->origin_x >> ss_x),
                                       (dst->height + ss_y) >> ss_y,
                                       (dst->width + ss_x) >> ss_x,
                                       dst->stride_cb);
-                }
                 break;
             case 2:
-                if (dst->buffer_cr) {
+                if ((buffer_enable_mask & PICTURE_BUFFER_DESC_Cr_FLAG) && src->buffer_cr && dst->buffer_cr)
                     resize_plane_func(src->buffer_cr + (src->origin_y >> ss_y) * src->stride_cr +
-                                          (src->origin_x >> ss_x),
-                                      src->height >> ss_y,
-                                      src->width >> ss_x,
-                                      src->stride_cr,
-                                      dst->buffer_cr + (dst->origin_y >> ss_y) * dst->stride_cr +
-                                          (dst->origin_x >> ss_x),
-                                      (dst->height + ss_y) >> ss_y,
-                                      (dst->width + ss_x) >> ss_x,
-                                      dst->stride_cr);
-                }
+                                         (src->origin_x >> ss_x),
+                                     src->height >> ss_y,
+                                     src->width >> ss_x,
+                                     src->stride_cr,
+                                     dst->buffer_cr + (dst->origin_y >> ss_y) * dst->stride_cr +
+                                         (dst->origin_x >> ss_x),
+                                     (dst->height + ss_y) >> ss_y,
+                                     (dst->width + ss_x) >> ss_x,
+                                     dst->stride_cr);
                 break;
             default: break;
             }
         }
     }
+
+    // padding before unpack to support 10-bit with 2b compressed format
+    if (bd > 8) {
+        if ((buffer_enable_mask & PICTURE_BUFFER_DESC_Y_FLAG) && dst_buffer_highbd[0])
+            generate_padding16_bit(dst_buffer_highbd[0],
+                                    dst->stride_y,
+                                    dst->width,
+                                    dst->height,
+                                    dst->origin_x,
+                                    dst->origin_y);
+        if ((buffer_enable_mask & PICTURE_BUFFER_DESC_Cb_FLAG) && dst_buffer_highbd[1])
+            generate_padding16_bit(dst_buffer_highbd[1],
+                                    dst->stride_cb,
+                                    (dst->width + ss_x) >> ss_x,
+                                    (dst->height + ss_y) >> ss_y,
+                                    (dst->origin_x + ss_x) >> ss_x,
+                                    (dst->origin_y + ss_y) >> ss_y);
+        if ((buffer_enable_mask & PICTURE_BUFFER_DESC_Cr_FLAG) && dst_buffer_highbd[2])
+            generate_padding16_bit(dst_buffer_highbd[2],
+                                    dst->stride_cb,
+                                    (dst->width + ss_x) >> ss_x,
+                                    (dst->height + ss_y) >> ss_y,
+                                    (dst->origin_x + ss_x) >> ss_x,
+                                    (dst->origin_y + ss_y) >> ss_y);
+    }
+    else {
+        if ((buffer_enable_mask & PICTURE_BUFFER_DESC_Y_FLAG) && dst->buffer_y)
+            generate_padding(dst->buffer_y,
+                             dst->stride_y,
+                             dst->width,
+                             dst->height,
+                             dst->origin_x,
+                             dst->origin_y);
+        if ((buffer_enable_mask & PICTURE_BUFFER_DESC_Cb_FLAG) && dst->buffer_cb)
+            generate_padding(dst->buffer_cb,
+                             dst->stride_cb,
+                             (dst->width + ss_x) >> ss_x,
+                             (dst->height + ss_y) >> ss_y,
+                             (dst->origin_x + ss_x) >> ss_x,
+                             (dst->origin_y + ss_y) >> ss_y);
+        if ((buffer_enable_mask & PICTURE_BUFFER_DESC_Cr_FLAG) && dst->buffer_cr)
+            generate_padding(dst->buffer_cr,
+                             dst->stride_cr,
+                             (dst->width + ss_x) >> ss_x,
+                             (dst->height + ss_y) >> ss_y,
+                             (dst->origin_x + ss_x) >> ss_x,
+                             (dst->origin_y + ss_y) >> ss_y);
+    }
+
 #if DEBUG_SCALING
     if (bd > 8)
         save_YUV_to_file_highbd("scaled_pic_highbd.yuv",
@@ -1535,15 +1588,8 @@ void scale_source_references(SequenceControlSet *scs_ptr, PictureParentControlSe
                                      num_planes,
                                      ss_x,
                                      ss_y,
-                                     0 // is_packed
-                    );
-
-                    generate_padding(down_ref_pic_ptr->buffer_y,
-                                     down_ref_pic_ptr->stride_y,
-                                     down_ref_pic_ptr->width,
-                                     down_ref_pic_ptr->height,
-                                     down_ref_pic_ptr->origin_x,
-                                     down_ref_pic_ptr->origin_y);
+                                     0, // is_packed
+                                     PICTURE_BUFFER_DESC_LUMA_MASK); // buffer_enable_mask
 
                     // 1/4 & 1/16 input picture downsampling
                     if (scs_ptr->down_sampling_method_me_search == ME_FILTERED_DOWNSAMPLED) {
@@ -1704,7 +1750,6 @@ void scale_rec_references(PictureControlSet *pcs_ptr, EbPictureBufferDesc *input
                 }
 
                 if (do_resize) {
-
                     // downsample input padded picture buffer
                     av1_resize_frame(reference_object->reference_picture,
                                      down_ref_pic8bit,
@@ -1712,61 +1757,8 @@ void scale_rec_references(PictureControlSet *pcs_ptr, EbPictureBufferDesc *input
                                      num_planes,
                                      ss_x,
                                      ss_y,
-                                     down_ref_pic8bit->packed_flag);
-                    generate_padding(down_ref_pic8bit->buffer_y,
-                                     down_ref_pic8bit->stride_y,
-                                     down_ref_pic8bit->width,
-                                     down_ref_pic8bit->height,
-                                     down_ref_pic8bit->origin_x,
-                                     down_ref_pic8bit->origin_y);
-
-                    if (down_ref_pic8bit->bit_depth == EB_10BIT &&
-                        down_ref_pic8bit->buffer_bit_inc_y) {
-                        generate_padding(down_ref_pic8bit->buffer_bit_inc_y,
-                                         down_ref_pic8bit->stride_bit_inc_y,
-                                         down_ref_pic8bit->width,
-                                         down_ref_pic8bit->height,
-                                         down_ref_pic8bit->origin_x,
-                                         down_ref_pic8bit->origin_y);
-                    }
-
-                    if (down_ref_pic8bit->buffer_cb) {
-                        generate_padding(down_ref_pic8bit->buffer_cb,
-                                         down_ref_pic8bit->stride_cb,
-                                         down_ref_pic8bit->width >> ss_x,
-                                         down_ref_pic8bit->height >> ss_y,
-                                         down_ref_pic8bit->origin_x >> ss_x,
-                                         down_ref_pic8bit->origin_y >> ss_y);
-                    }
-
-                    if (down_ref_pic8bit->buffer_cr) {
-                        generate_padding(down_ref_pic8bit->buffer_cr,
-                                         down_ref_pic8bit->stride_cr,
-                                         down_ref_pic8bit->width >> ss_x,
-                                         down_ref_pic8bit->height >> ss_y,
-                                         down_ref_pic8bit->origin_x >> ss_x,
-                                         down_ref_pic8bit->origin_y >> ss_y);
-                    }
-
-                    if (down_ref_pic8bit->bit_depth == EB_10BIT &&
-                        down_ref_pic8bit->buffer_bit_inc_cb) {
-                        generate_padding(down_ref_pic8bit->buffer_bit_inc_cb,
-                                         down_ref_pic8bit->stride_bit_inc_cb,
-                                         down_ref_pic8bit->width >> ss_x,
-                                         down_ref_pic8bit->height >> ss_y,
-                                         down_ref_pic8bit->origin_x >> ss_x,
-                                         down_ref_pic8bit->origin_y >> ss_y);
-                    }
-
-                    if (down_ref_pic8bit->bit_depth == EB_10BIT &&
-                        down_ref_pic8bit->buffer_bit_inc_cr) {
-                        generate_padding(down_ref_pic8bit->buffer_bit_inc_cr,
-                                         down_ref_pic8bit->stride_bit_inc_cr,
-                                         down_ref_pic8bit->width >> ss_x,
-                                         down_ref_pic8bit->height >> ss_y,
-                                         down_ref_pic8bit->origin_x >> ss_x,
-                                         down_ref_pic8bit->origin_y >> ss_y);
-                    }
+                                     down_ref_pic8bit->packed_flag,
+                                     PICTURE_BUFFER_DESC_FULL_MASK); // buffer_enable_mask
 
                     reference_object->downscaled_picture_number[denom_idx] = ref_picture_number;
                     //printf("rescaled reference picture %d\n", (int)ref_picture_number);
@@ -1886,52 +1878,8 @@ void init_resize_picture(SequenceControlSet *scs_ptr, PictureParentControlSet *p
                          num_planes,
                          ss_x,
                          ss_y,
-                         pcs_ptr->enhanced_downscaled_picture_ptr->packed_flag);
-
-        generate_padding(pcs_ptr->enhanced_downscaled_picture_ptr->buffer_y,
-                         pcs_ptr->enhanced_downscaled_picture_ptr->stride_y,
-                         pcs_ptr->enhanced_downscaled_picture_ptr->width,
-                         pcs_ptr->enhanced_downscaled_picture_ptr->height,
-                         pcs_ptr->enhanced_downscaled_picture_ptr->origin_x,
-                         pcs_ptr->enhanced_downscaled_picture_ptr->origin_y);
-
-        // padding downscaled input buffer_cb & buffer_cr to fix green lines on the right
-        generate_padding(pcs_ptr->enhanced_downscaled_picture_ptr->buffer_cb,
-                         pcs_ptr->enhanced_downscaled_picture_ptr->stride_cb,
-                         pcs_ptr->enhanced_downscaled_picture_ptr->width >> ss_x,
-                         pcs_ptr->enhanced_downscaled_picture_ptr->height >> ss_y,
-                         pcs_ptr->enhanced_downscaled_picture_ptr->origin_x >> ss_x,
-                         pcs_ptr->enhanced_downscaled_picture_ptr->origin_y >> ss_y);
-
-        generate_padding(pcs_ptr->enhanced_downscaled_picture_ptr->buffer_cr,
-                         pcs_ptr->enhanced_downscaled_picture_ptr->stride_cr,
-                         pcs_ptr->enhanced_downscaled_picture_ptr->width >> ss_x,
-                         pcs_ptr->enhanced_downscaled_picture_ptr->height >> ss_y,
-                         pcs_ptr->enhanced_downscaled_picture_ptr->origin_x >> ss_x,
-                         pcs_ptr->enhanced_downscaled_picture_ptr->origin_y >> ss_y);
-
-        // generate padding if hbd buffer is unpacked
-        if (pcs_ptr->enhanced_downscaled_picture_ptr->buffer_bit_inc_y)
-            generate_padding(pcs_ptr->enhanced_downscaled_picture_ptr->buffer_bit_inc_y,
-                             pcs_ptr->enhanced_downscaled_picture_ptr->stride_bit_inc_y,
-                             pcs_ptr->enhanced_downscaled_picture_ptr->width,
-                             pcs_ptr->enhanced_downscaled_picture_ptr->height,
-                             pcs_ptr->enhanced_downscaled_picture_ptr->origin_x,
-                             pcs_ptr->enhanced_downscaled_picture_ptr->origin_y);
-        if (pcs_ptr->enhanced_downscaled_picture_ptr->buffer_bit_inc_cb)
-            generate_padding(pcs_ptr->enhanced_downscaled_picture_ptr->buffer_bit_inc_cb,
-                             pcs_ptr->enhanced_downscaled_picture_ptr->stride_bit_inc_cb,
-                             (pcs_ptr->enhanced_downscaled_picture_ptr->width + 0) >> ss_x,
-                             (pcs_ptr->enhanced_downscaled_picture_ptr->height + ss_y) >> ss_y,
-                             pcs_ptr->enhanced_downscaled_picture_ptr->origin_x >> ss_x,
-                             pcs_ptr->enhanced_downscaled_picture_ptr->origin_y >> ss_y);
-        if (pcs_ptr->enhanced_downscaled_picture_ptr->buffer_bit_inc_cr)
-            generate_padding(pcs_ptr->enhanced_downscaled_picture_ptr->buffer_bit_inc_cr,
-                             pcs_ptr->enhanced_downscaled_picture_ptr->stride_bit_inc_cr,
-                             (pcs_ptr->enhanced_downscaled_picture_ptr->width + 0) >> ss_x,
-                             (pcs_ptr->enhanced_downscaled_picture_ptr->height + ss_y) >> ss_y,
-                             pcs_ptr->enhanced_downscaled_picture_ptr->origin_x >> ss_x,
-                             pcs_ptr->enhanced_downscaled_picture_ptr->origin_y >> ss_y);
+                         pcs_ptr->enhanced_downscaled_picture_ptr->packed_flag,
+                         PICTURE_BUFFER_DESC_FULL_MASK); // buffer_enable_mask
 
         // use downscaled picture instead of original res for mode decision, encoding loop etc
         // after temporal filtering and motion estimation
