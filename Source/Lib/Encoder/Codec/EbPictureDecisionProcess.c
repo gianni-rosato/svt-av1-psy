@@ -2738,7 +2738,7 @@ static void  av1_generate_rps_info(
             else
                 SVT_LOG("Error in GOp indexing\n");
             if (pcs_ptr->scs_ptr->mrp_ctrls.referencing_scheme == 1) {
-                av1_rps->refresh_frame_mask = 1 << (lay3_idx);
+                av1_rps->refresh_frame_mask = pcs_ptr->is_overlay ? 0 : 1 << (lay3_idx);
             }
             else {
               if (picture_index == 0)

@@ -3806,6 +3806,11 @@ void copy_api_from_app(
     scs_ptr->static_config.tf_level = config_struct->tf_level;
     scs_ptr->static_config.enable_overlays = config_struct->enable_overlays;
 
+    if (config_struct->pass > 0 && scs_ptr->static_config.enable_overlays) {
+        SVT_WARN("2 pass encode for overlays is not supported, enable_overlays is set to 0\n");
+        scs_ptr->static_config.enable_overlays = 0;
+    }
+
     scs_ptr->static_config.superres_mode = config_struct->superres_mode;
     scs_ptr->static_config.superres_denom = config_struct->superres_denom;
     scs_ptr->static_config.superres_kf_denom = config_struct->superres_kf_denom;

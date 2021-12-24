@@ -2254,7 +2254,7 @@ static EbErrorType verify_settings(EbConfig *config, uint32_t channel_number) {
                 config->config.hierarchical_levels);
             return EB_ErrorBadParameter;
         }
-        if (config->config.enable_overlays) {
+        if (pass > 0 && config->config.enable_overlays) {
             fprintf(config->error_log_file,
                     "Error instance %u: 2 pass encode for overlays is not supported\n",
                     channel_number + 1);
