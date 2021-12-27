@@ -113,6 +113,7 @@ class BitstreamWriterTest : public ::testing::Test {
 
                 // read out the bits and verify
                 SvtReader br;
+                memset(&br, 0, sizeof(br));
                 init_svt_reader(
                     &br, bw_buffer, bw_buffer + buffer_size, bw.pos, 0);
                 for (int i = 0; i < total_bits; ++i) {
@@ -218,6 +219,7 @@ TEST(Entropy_BitstreamWriter, write_literal_extreme_int) {
     aom_stop_encode(&bw);
 
     SvtReader br;
+    memset(&br, 0, sizeof(br));
     init_svt_reader(&br, stream_buffer, stream_buffer + buffer_size, bw.pos, 0);
     EXPECT_EQ(svt_read_literal(&br, 32, nullptr), max_int)
         << "read max_int fail";
@@ -258,6 +260,7 @@ TEST(Entropy_BitstreamWriter, write_symbol_no_update) {
     gen.seed(deterministic_seeds);
 
     SvtReader br;
+    memset(&br, 0, sizeof(br));
     init_svt_reader(&br, stream_buffer, stream_buffer + buffer_size, bw.pos, 0);
     for (int i = 0; i < 500; ++i) {
         ASSERT_EQ(svt_read_symbol(&br, fc.txb_skip_cdf[0][0], 2, nullptr),
@@ -303,6 +306,7 @@ TEST(Entropy_BitstreamWriter, write_symbol_with_update) {
     gen.seed(deterministic_seeds);
 
     SvtReader br;
+    memset(&br, 0, sizeof(br));
     init_svt_reader(&br, stream_buffer, stream_buffer + buffer_size, bw.pos, 1);
     svt_av1_default_coef_probs(&fc, base_qindex);  // reset cdf
     for (int i = 0; i < 500; i++) {

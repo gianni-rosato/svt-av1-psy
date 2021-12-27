@@ -129,6 +129,7 @@ typedef struct VideoFrame : public VideoFrameParam {
         } else
             printf("video frame buffer is out of memory!!\n");
     }
+    VideoFrame &operator=(const VideoFrame &) = default;
     VideoFrame(const VideoFrame &origin) {
         // copy information from origin
         *this = origin;

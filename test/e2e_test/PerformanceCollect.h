@@ -36,11 +36,11 @@ class PerformanceCollect {
         uint64_t last_start_tick; /**< time tick of last start of counting */
         uint64_t count_ticks;     /**< time ticks sum of every counting */
         const std::string name;   /**< name of test item */
-        Collector(const std::string &name, const uint64_t unite_tick)
-            : name(name) {
-            init_tick = unite_tick ? unite_tick : get_time_tick();
-            last_start_tick = 0;
-            count_ticks = 0;
+        Collector(const std::string &n, const uint64_t unite_tick)
+            : init_tick(unite_tick ? unite_tick : get_time_tick()),
+              last_start_tick(0),
+              count_ticks(0),
+              name(n) {
         }
         /** tag_once() ends a counting of and save this perid of time in sum */
         void tag_once() {

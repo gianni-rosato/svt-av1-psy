@@ -171,9 +171,9 @@ typedef struct EncTestSetting {
         return str;
     }
 
-    void append_token(std::string& str, const char* name) const {
+    void append_token(std::string& str, const char* n) const {
         str += " ";
-        str += get_enc_token(name);
+        str += get_enc_token(n);
         str += " ";
     }
 
@@ -231,7 +231,7 @@ static inline const std::vector<EncTestSetting> generate_vector_from_config(
             uint32_t y4m = 0;
             TestVectorFormat file_type;
             char color_fmt[10];
-            VideoColorFormat color_fmt_type;
+            VideoColorFormat color_fmt_type = IMG_FMT_420;
             uint32_t w;
             uint32_t h;
             uint32_t bit_depth;

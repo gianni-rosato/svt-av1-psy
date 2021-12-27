@@ -636,7 +636,7 @@ void SvtAv1E2ETestFramework::decode_compress_data(const uint8_t *data,
 void SvtAv1E2ETestFramework::check_psnr(const VideoFrame &frame) {
     // Calculate psnr with input frame and
     EbSvtIOFormat *src_frame =
-        psnr_src_->get_frame_by_index((const uint32_t)frame.timestamp);
+        psnr_src_->get_frame_by_index((uint32_t)frame.timestamp);
     if (src_frame) {
         double luma_psnr = 0.0;
         double cb_psnr = 0.0;

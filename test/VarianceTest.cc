@@ -570,10 +570,10 @@ class AvxSubpelVarianceTest : public ::testing::TestWithParam<TestParams> {
     uint8_t *src_;
     uint8_t *ref_;
     uint8_t *sec_;
-    SubpixVarMxNFunc func_ref;
-    SubpixVarMxNFunc func_tst;
     int log2width, log2height;
+    SubpixVarMxNFunc func_tst;
     bool use_high_bit_depth;
+    SubpixVarMxNFunc func_ref;
     int width, height;
     int block_size;
     int32_t mask;

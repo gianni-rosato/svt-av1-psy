@@ -202,7 +202,7 @@ class TemporalFilterTestPlanewise
     }
     void RunTest(int width, int height, int run_times);
 
-    void GenRandomData(int width, int height, int stride, int stride2) {
+    void GenRandomData(int width, int height, int strd, int stride2) {
         int mode = rnd_.Rand8() < 128;
 
         float range = 100;
@@ -218,17 +218,17 @@ class TemporalFilterTestPlanewise
 
         for (int ii = 0; ii < height; ii++) {
             for (int jj = 0; jj < width; jj++) {
-                src_ptr[C_Y][ii * stride + jj] = rnd_.Rand8();
-                src_ptr[C_U][ii * stride + jj] = rnd_.Rand8();
-                src_ptr[C_V][ii * stride + jj] = rnd_.Rand8();
+                src_ptr[C_Y][ii * strd + jj] = rnd_.Rand8();
+                src_ptr[C_U][ii * strd + jj] = rnd_.Rand8();
+                src_ptr[C_V][ii * strd + jj] = rnd_.Rand8();
 
                 if (mode) {
-                    int val1 = -16 + src_ptr[C_Y][ii * stride + jj] +
-                               rnd_.Rand8() % 32;
-                    int val2 = -16 + src_ptr[C_U][ii * stride + jj] +
-                               rnd_.Rand8() % 32;
-                    int val3 = -16 + src_ptr[C_V][ii * stride + jj] +
-                               rnd_.Rand8() % 32;
+                    int val1 =
+                        -16 + src_ptr[C_Y][ii * strd + jj] + rnd_.Rand8() % 32;
+                    int val2 =
+                        -16 + src_ptr[C_U][ii * strd + jj] + rnd_.Rand8() % 32;
+                    int val3 =
+                        -16 + src_ptr[C_V][ii * strd + jj] + rnd_.Rand8() % 32;
                     pred_ptr[C_Y][ii * stride2 + jj] = MAX(0, val1);
                     pred_ptr[C_U][ii * stride2 + jj] = MAX(0, val2);
                     pred_ptr[C_V][ii * stride2 + jj] = MAX(0, val3);
@@ -613,7 +613,7 @@ class TemporalFilterTestPlanewiseHbd
     }
     void RunTest(int width, int height, int run_times);
 
-    void GenRandomData(int width, int height, int stride, int stride2) {
+    void GenRandomData(int width, int height, int strd, int stride2) {
         int mode = rnd_.Rand8() < 128;
         float range = 100;
         if (rnd_.Rand8() < 128) {
@@ -628,16 +628,16 @@ class TemporalFilterTestPlanewiseHbd
 
         for (int ii = 0; ii < height; ii++) {
             for (int jj = 0; jj < width; jj++) {
-                src_ptr[C_Y][ii * stride + jj] = rnd_.random();
-                src_ptr[C_U][ii * stride + jj] = rnd_.random();
-                src_ptr[C_V][ii * stride + jj] = rnd_.random();
+                src_ptr[C_Y][ii * strd + jj] = rnd_.random();
+                src_ptr[C_U][ii * strd + jj] = rnd_.random();
+                src_ptr[C_V][ii * strd + jj] = rnd_.random();
 
                 if (mode) {
-                    int val1 = -512 + src_ptr[C_Y][ii * stride + jj] +
+                    int val1 = -512 + src_ptr[C_Y][ii * strd + jj] +
                                rnd_.random() % 1024;
-                    int val2 = -512 + src_ptr[C_U][ii * stride + jj] +
+                    int val2 = -512 + src_ptr[C_U][ii * strd + jj] +
                                rnd_.random() % 1024;
-                    int val3 = -512 + src_ptr[C_V][ii * stride + jj] +
+                    int val3 = -512 + src_ptr[C_V][ii * strd + jj] +
                                rnd_.random() % 1024;
                     pred_ptr[C_Y][ii * stride2 + jj] = MAX(0, val1);
                     pred_ptr[C_U][ii * stride2 + jj] = MAX(0, val2);
