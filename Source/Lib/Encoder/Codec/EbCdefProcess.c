@@ -203,10 +203,8 @@ void cdef_seg_search(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr,
             } else {
                 pcs_ptr->skip_cdef_seg[fb_idx] = 0;
             }
-            uint8_t(*dir)[CDEF_NBLOCKS] = (uint8_t(*)[CDEF_NBLOCKS]) &
-                (pcs_ptr->cdef_dir_data[fb_idx].dir[0][0]);
-            int32_t(*var)[CDEF_NBLOCKS] = (int32_t(*)[CDEF_NBLOCKS]) &
-                (pcs_ptr->cdef_dir_data[fb_idx].var[0][0]);
+            uint8_t(*dir)[CDEF_NBLOCKS][CDEF_NBLOCKS] = &pcs_ptr->cdef_dir_data[fb_idx].dir;
+            int32_t(*var)[CDEF_NBLOCKS][CDEF_NBLOCKS] = &pcs_ptr->cdef_dir_data[fb_idx].var;
             for (pli = 0; pli < num_planes; pli++) {
                 /* We avoid filtering the pixels for which some of the pixels to
                    average are outside the frame. We could change the filter instead,
@@ -257,9 +255,9 @@ void cdef_seg_search(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr,
                                            in,
                                            xdec[pli],
                                            ydec[pli],
-                                           dir,
+                                           *dir,
                                            &dirinit,
-                                           var,
+                                           *var,
                                            pli,
                                            dlist,
                                            cdef_count,
@@ -308,9 +306,9 @@ void cdef_seg_search(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr,
                                            in,
                                            xdec[pli],
                                            ydec[pli],
-                                           dir,
+                                           *dir,
                                            &dirinit,
-                                           var,
+                                           *var,
                                            pli,
                                            dlist,
                                            cdef_count,
@@ -461,10 +459,8 @@ void cdef_seg_search16bit(PictureControlSet *pcs_ptr, SequenceControlSet *scs_pt
             } else {
                 pcs_ptr->skip_cdef_seg[fb_idx] = 0;
             }
-            uint8_t(*dir)[CDEF_NBLOCKS] = (uint8_t(*)[CDEF_NBLOCKS]) &
-                (pcs_ptr->cdef_dir_data[fb_idx].dir[0][0]);
-            int32_t(*var)[CDEF_NBLOCKS] = (int32_t(*)[CDEF_NBLOCKS]) &
-                (pcs_ptr->cdef_dir_data[fb_idx].var[0][0]);
+            uint8_t(*dir)[CDEF_NBLOCKS][CDEF_NBLOCKS] = &pcs_ptr->cdef_dir_data[fb_idx].dir;
+            int32_t(*var)[CDEF_NBLOCKS][CDEF_NBLOCKS] = &pcs_ptr->cdef_dir_data[fb_idx].var;
             for (pli = 0; pli < num_planes; pli++) {
                 /* We avoid filtering the pixels for which some of the pixels to
                    average are outside the frame. We could change the filter instead,
@@ -520,9 +516,9 @@ void cdef_seg_search16bit(PictureControlSet *pcs_ptr, SequenceControlSet *scs_pt
                                            in,
                                            xdec[pli],
                                            ydec[pli],
-                                           dir,
+                                           *dir,
                                            &dirinit,
-                                           var,
+                                           *var,
                                            pli,
                                            dlist,
                                            cdef_count,
@@ -571,9 +567,9 @@ void cdef_seg_search16bit(PictureControlSet *pcs_ptr, SequenceControlSet *scs_pt
                                            in,
                                            xdec[pli],
                                            ydec[pli],
-                                           dir,
+                                           *dir,
                                            &dirinit,
-                                           var,
+                                           *var,
                                            pli,
                                            dlist,
                                            cdef_count,

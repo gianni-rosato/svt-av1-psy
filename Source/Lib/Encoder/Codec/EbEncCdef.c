@@ -453,10 +453,8 @@ void svt_av1_cdef_frame(EncDecContext *context_ptr, SequenceControlSet *scs_ptr,
                     ((fbr & 1) && (sb_type == BLOCK_128X128 || sb_type == BLOCK_64X128)))
                     dirinit = 0;
             }
-            uint8_t(*dir)[CDEF_NBLOCKS] = (uint8_t(*)[CDEF_NBLOCKS]) &
-                (pCs->cdef_dir_data[fbr * nhfb + fbc].dir[0][0]);
-            int32_t(*var)[CDEF_NBLOCKS] = (int32_t(*)[CDEF_NBLOCKS]) &
-                (pCs->cdef_dir_data[fbr * nhfb + fbc].var[0][0]);
+            uint8_t(*dir)[CDEF_NBLOCKS][CDEF_NBLOCKS] = &pCs->cdef_dir_data[fbr * nhfb + fbc].dir;
+            int32_t(*var)[CDEF_NBLOCKS][CDEF_NBLOCKS] = &pCs->cdef_dir_data[fbr * nhfb + fbc].var;
             curr_row_cdef[fbc] = 1;
             for (int32_t pli = 0; pli < num_planes; pli++) {
                 int32_t coffset;
@@ -634,9 +632,9 @@ void svt_av1_cdef_frame(EncDecContext *context_ptr, SequenceControlSet *scs_ptr,
                         &src[CDEF_VBORDER * CDEF_BSTRIDE + CDEF_HBORDER],
                         xdec[pli],
                         ydec[pli],
-                        dir,
+                        *dir,
                         &dirinit,
-                        var,
+                        *var,
                         pli,
                         dlist,
                         cdef_count,
@@ -798,10 +796,8 @@ void av1_cdef_frame16bit(EncDecContext *context_ptr, SequenceControlSet *scs_ptr
                     ((fbr & 1) && (sb_type == BLOCK_128X128 || sb_type == BLOCK_64X128)))
                     dirinit = 0;
             }
-            uint8_t(*dir)[CDEF_NBLOCKS] = (uint8_t(*)[CDEF_NBLOCKS]) &
-                (pCs->cdef_dir_data[fbr * nhfb + fbc].dir[0][0]);
-            int32_t(*var)[CDEF_NBLOCKS] = (int32_t(*)[CDEF_NBLOCKS]) &
-                (pCs->cdef_dir_data[fbr * nhfb + fbc].var[0][0]);
+            uint8_t(*dir)[CDEF_NBLOCKS][CDEF_NBLOCKS] = &pCs->cdef_dir_data[fbr * nhfb + fbc].dir;
+            int32_t(*var)[CDEF_NBLOCKS][CDEF_NBLOCKS] = &pCs->cdef_dir_data[fbr * nhfb + fbc].var;
             curr_row_cdef[fbc] = 1;
             for (int32_t pli = 0; pli < num_planes; pli++) {
                 int32_t coffset;
@@ -979,9 +975,9 @@ void av1_cdef_frame16bit(EncDecContext *context_ptr, SequenceControlSet *scs_ptr
                         &src[CDEF_VBORDER * CDEF_BSTRIDE + CDEF_HBORDER],
                         xdec[pli],
                         ydec[pli],
-                        dir,
+                        *dir,
                         &dirinit,
-                        var,
+                        *var,
                         pli,
                         dlist,
                         cdef_count,
