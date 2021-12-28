@@ -567,10 +567,14 @@ static void set_superres_kf_qthres(const char *value, EbConfig *cfg) {
 };
 // --- end: SUPER-RESOLUTION SUPPORT
 static void set_high_dynamic_range_input(const char *value, EbConfig *cfg) {
-    cfg->config.high_dynamic_range_input = strtol(value, NULL, 0);
+    cfg->config.high_dynamic_range_input = !!strtol(value, NULL, 0);
 };
 static void set_profile(const char *value, EbConfig *cfg) {
-    cfg->config.profile = strtol(value, NULL, 0);
+    switch (strtol(value, NULL, 0)) {
+    case 1: cfg->config.profile = HIGH_PROFILE; break;
+    case 2: cfg->config.profile = PROFESSIONAL_PROFILE; break;
+    default: cfg->config.profile = MAIN_PROFILE; break;
+    }
 };
 static void set_tier(const char *value, EbConfig *cfg) {
     cfg->config.tier = strtol(value, NULL, 0);

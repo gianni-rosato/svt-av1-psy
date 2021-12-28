@@ -124,11 +124,16 @@ typedef struct SvtAv1FixedBuf {
 typedef struct EbSvtAv1EncConfiguration {
     // Encoding preset
 
-    /* A preset defining the quality vs density tradeoff point that the encoding
-     * is to be performed at. 0 is the highest quality mode, 3 is the highest
-     * density mode.
+    /**
+     * @brief Encoder preset used.
+     * -2 and -1 are for debug purposes and should not be used.
+     * 0 is the highest quality mode but is the slowest,
+     * 13 is the fastest mode but is not as high quality.
      *
-     * Default is defined as MAX_ENC_PRESET. */
+     * Min value is -2.
+     * Max value is 13.
+     * Default is 12.
+     */
     int8_t enc_mode;
 
     // GOP Structure
@@ -175,13 +180,23 @@ typedef struct EbSvtAv1EncConfiguration {
     uint8_t pred_structure;
 
     // Input Info
-    /* The width of input source in units of picture luma pixels.
+
+    /**
+     * @brief Frame width in pixels.
      *
-     * Default is 0. */
+     * Min is 64.
+     * Max is 16384.
+     * Default is 0.
+     */
     uint32_t source_width;
-    /* The height of input source in units of picture luma pixels.
+
+    /**
+     * @brief Frame height in pixels
      *
-     * Default is 0. */
+     * Min is 64.
+     * Max is 8704.
+     * Default is 0.
+     */
     uint32_t source_height;
 
     /* The frequecy of images being displayed. If the number is less than 1000,
@@ -210,14 +225,15 @@ typedef struct EbSvtAv1EncConfiguration {
      *
      * Default is 8. */
     uint32_t encoder_bit_depth;
-    /* Specifies the chroma subsampleing format of input video.
+
+    /**
+     * @brief Encoder color format.
+     * Only YUV420 is supported for now.
      *
-     * 0 = mono.
-     * 1 = 420.
-     * 2 = 422.
-     * 3 = 444.
-     *
-     * Default is 1. */
+     * Min is YUV400.
+     * Max is YUV444.
+     * Default is YUV420.
+     */
     EbColorFormat encoder_color_format;
     /* Offline packing of the 2bits: requires two bits packed input.
      *
@@ -390,18 +406,23 @@ typedef struct EbSvtAv1EncConfiguration {
     EbBool enable_adaptive_quantization;
 
     // Tresholds
-    /* Flag to signal that the input yuv is HDR10 BT2020 using SMPTE ST2048, requires
-     *
-     * Default is 0. */
-    uint32_t high_dynamic_range_input;
 
-    /* Defined set of coding tools to create bitstream.
+    /**
+     * @brief Enable writing of HDR metadata in the bitstream
      *
-     * 1 = Main, allows bit depth of 8.
-     * 2 = Main 10, allows bit depth of 8 to 10.
+     * Default is false.
+     */
+    EbBool high_dynamic_range_input;
+
+    /**
+     * @brief Bitstream profile to use.
+     * 0: main, 1: high, 2: professional.
      *
-     * Default is 2. */
-    uint32_t profile;
+     * Min is MAIN_PROFILE.
+     * Max is PROFESSIONAL_PROFILE.
+     * Default is MAIN_PROFILE.
+     */
+    EbAv1SeqProfile profile;
     /* Constraints for bitstream in terms of max bitrate and max buffer size.
      *
      * 0 = Main, for most applications.
@@ -422,9 +443,22 @@ typedef struct EbSvtAv1EncConfiguration {
 
     // Application Specific parameters
 
-    /* ID assigned to each channel when multiple instances are running within the
-     * same application. */
+    /**
+     * @brief API signal for the library to know the channel ID (used for pinning to cores).
+     *
+     * Min value is 0.
+     * Max value is 0xFFFFFFFF.
+     * Default is 0.
+     */
     uint32_t channel_id;
+
+    /**
+     * @brief API signal for the library to know the active number of channels being encoded simultaneously.
+     *
+     * Min value is 1.
+     * Max value is 0xFFFFFFFF.
+     * Default is 1.
+     */
     uint32_t active_channel_count;
 
     /* Flag to constrain motion vectors.
@@ -462,11 +496,14 @@ typedef struct EbSvtAv1EncConfiguration {
 
     // Debug tools
 
-    /* Output reconstructed yuv used for debug purposes. The value is set through
-     * ReconFile token (-o) and using the feature will affect the speed of encoder.
+    /**
+     * @brief API Signal to output reconstructed yuv used for debug purposes.
+     * Using this will affect the speed of encoder.
      *
-     * Default is 0. */
-    uint32_t recon_enabled;
+     * Default is false.
+     */
+    EbBool recon_enabled;
+
     /* Log 2 Tile Rows and colums . 0 means no tiling,1 means that we split the dimension
         * into 2
         * Default is 0. */
@@ -486,16 +523,28 @@ typedef struct EbSvtAv1EncConfiguration {
     uint8_t superres_kf_qthres;
     uint8_t superres_auto_search_type;
 
-    /* Prediction Structure user defined
-   */
+    /**
+     * @brief API signal containing the manual prediction structure parameters.
+     * Only used when enable_manual_pred_struct is enabled. This list is copied
+     * into internal buffers after svt_av1_enc_set_parameter().
+     */
     PredictionStructureConfigEntry pred_struct[1 << (MAX_HIERARCHICAL_LEVEL - 1)];
-    /* Flag to enable use prediction structure user defined
-   *
-   * Default is false. */
+
+    /**
+     * @brief API signal to overwrite the encoder's default prediction structure.
+     *
+     * Default is false.
+     */
     EbBool enable_manual_pred_struct;
-    /* The minigop size of prediction structure user defined
-   *
-   * Default is 0. */
+
+    /**
+     * @brief API signal specifying the size (number of entries) of the manual prediction structure buffer.
+     * Only checked and used when enable_manual_pred_struct is enabled.
+     *
+     * Min is 1.
+     * Max is 32.
+     * Default is 0.
+     */
     int32_t manual_pred_struct_entry_num;
 
     // Color description

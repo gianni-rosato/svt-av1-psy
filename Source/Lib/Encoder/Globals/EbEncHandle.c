@@ -4198,7 +4198,9 @@ EbErrorType svt_svt_enc_init_parameter(
     config_ptr->cdef_level = DEFAULT;
     config_ptr->enable_restoration_filtering = DEFAULT;
     config_ptr->enable_mfmv = DEFAULT;
+    memset(config_ptr->pred_struct, 0, sizeof(config_ptr->pred_struct));
     config_ptr->enable_manual_pred_struct = EB_FALSE;
+    config_ptr->manual_pred_struct_entry_num = 0;
     config_ptr->encoder_color_format = EB_YUV420;
     // Two pass data rate control options
     config_ptr->vbr_bias_pct = 50;

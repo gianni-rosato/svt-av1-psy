@@ -767,8 +767,11 @@ static const vector<CPU_FLAGS> valid_use_cpu_flags = {
 static const vector<CPU_FLAGS> invalid_use_cpu_flags = {CPU_FLAGS_INVALID};
 
 // Application Specific parameters
-/* ID assigned to each channel when multiple instances are running within the
- * same application. */
+/**
+ * @brief API signal for the library to know the channel ID (used for pinning to
+ * cores)
+ *
+ */
 static const vector<uint32_t> default_channel_id = {
     0,
 };
@@ -785,6 +788,11 @@ static const vector<uint32_t> invalid_channel_id = {
     // none
 };
 
+/**
+ * @brief API signal for the library to know the active number of channels being
+ * encoded simultaneously
+ *
+ */
 static const vector<uint32_t> default_active_channel_count = {
     1,
 };

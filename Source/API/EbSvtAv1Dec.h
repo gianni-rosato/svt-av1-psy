@@ -118,11 +118,23 @@ typedef struct EbSvtAv1DecConfiguration {
 
     // Application Specific parameters
 
-    /* ID assigned to each channel when multiple instances are running within the
-     * same application. */
+    /**
+     * @brief API signal for the library to know the channel ID (used for pinning to cores)
+     *
+     * Min value is 0
+     * Max value is 0xFFFFFFFF
+     * Default is 0
+     */
     uint32_t channel_id;
-    uint32_t active_channel_count;
 
+    /**
+     * @brief API signal for the library to know the active number of channels being encoded simultaneously
+     *
+     * Min value is 1
+     * Max value is 0xFFFFFFFF
+     * Default is 1
+     */
+    uint32_t active_channel_count;
     uint32_t stat_report;
     /* Decoder internal bit-depth is set to 16-bit even if the bitstream is 8-bit
  *

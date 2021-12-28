@@ -14,6 +14,7 @@
 #include <string.h>
 #include <math.h>
 
+#include "EbSvtAv1.h"
 #include "EbEntropyCoding.h"
 #include "EbEntropyCodingUtil.h"
 #include "EbUtility.h"
@@ -3043,7 +3044,7 @@ static AOM_INLINE void write_bitdepth(const SequenceControlSet *const scs_ptr,
     // Profile 0/1: [0] for 8 bit, [1]  10-bit
     // Profile   2: [0] for 8 bit, [10] 10-bit, [11] - 12-bit
     svt_aom_wb_write_bit(wb, scs_ptr->static_config.encoder_bit_depth == EB_8BIT ? 0 : 1);
-    if (scs_ptr->static_config.profile == PROFILE_2 &&
+    if (scs_ptr->static_config.profile == PROFESSIONAL_PROFILE &&
         scs_ptr->static_config.encoder_bit_depth != EB_8BIT) {
         SVT_LOG("ERROR[AN]: Profile 2 Not supported\n");
         svt_aom_wb_write_bit(wb, scs_ptr->static_config.encoder_bit_depth == EB_10BIT ? 0 : 1);
@@ -3055,7 +3056,7 @@ static AOM_INLINE void write_color_config(const SequenceControlSet *const scs_pt
     write_bitdepth(scs_ptr, wb);
     const int is_monochrome = 0; // monochrome is not supported yet
     // monochrome bit
-    if (scs_ptr->static_config.profile != PROFILE_1)
+    if (scs_ptr->static_config.profile != HIGH_PROFILE)
         svt_aom_wb_write_bit(wb, is_monochrome);
     else
         assert(!is_monochrome);
@@ -3078,18 +3079,18 @@ static AOM_INLINE void write_color_config(const SequenceControlSet *const scs_pt
         scs_ptr->static_config.transfer_characteristics == AOM_CICP_TC_SRGB &&
         scs_ptr->static_config.matrix_coefficients == AOM_CICP_MC_IDENTITY) {
         /* assert(scs_ptr->subsampling_x == 0 && scs_ptr->subsampling_y == 0);
-        assert(scs_ptr->static_config.profile == PROFILE_1 ||
-               (scs_ptr->static_config.profile == PROFILE_2 && scs_ptr->encoder_bit_depth == AOM_BITS_12)); */
+        assert(scs_ptr->static_config.profile == HIGH_PROFILE ||
+               (scs_ptr->static_config.profile == PROFESSIONAL_PROFILE && scs_ptr->encoder_bit_depth == AOM_BITS_12)); */
     } else {
         // 0: [16, 235] (i.e. xvYCC), 1: [0, 255]
         svt_aom_wb_write_bit(wb, scs_ptr->static_config.color_range);
-        if (scs_ptr->static_config.profile == PROFILE_0) {
+        if (scs_ptr->static_config.profile == MAIN_PROFILE) {
             // 420 only
             assert(scs_ptr->subsampling_x == 1 && scs_ptr->subsampling_y == 1);
-        } else if (scs_ptr->static_config.profile == PROFILE_1) {
+        } else if (scs_ptr->static_config.profile == HIGH_PROFILE) {
             // 444 only
             assert(scs_ptr->subsampling_x == 0 && scs_ptr->subsampling_y == 0);
-        } else if (scs_ptr->static_config.profile == PROFILE_2) {
+        } else if (scs_ptr->static_config.profile == PROFESSIONAL_PROFILE) {
             if (scs_ptr->encoder_bit_depth == AOM_BITS_12) {
                 // 420, 444 or 422
                 svt_aom_wb_write_bit(wb, scs_ptr->subsampling_x);
