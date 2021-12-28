@@ -4418,11 +4418,11 @@ void av1_inter_prediction_light_pd0(MvUnit *mv_unit, uint16_t pu_origin_x, uint1
 /*
   inter prediction for light PD1
 */
-EbErrorType av1_inter_prediction_light_pd1(
+EbErrorType av1_inter_prediction_light_pd1(SequenceControlSet* scs_ptr,
     MvUnit *mv_unit, struct ModeDecisionContext *md_context, uint16_t pu_origin_x,
     uint16_t pu_origin_y, uint8_t bwidth, uint8_t bheight, EbPictureBufferDesc *ref_pic_list0,
     EbPictureBufferDesc *ref_pic_list1, EbPictureBufferDesc *pred_pic, uint16_t dst_origin_x,
-    uint16_t dst_origin_y, uint32_t component_mask, uint8_t hbd_mode_decision) {
+    uint16_t dst_origin_y, uint32_t component_mask, uint8_t hbd_mode_decision, ScaleFactors* sf0, ScaleFactors* sf1) {
     EbErrorType return_error = EB_ErrorNone;
     int32_t     bit_depth    = hbd_mode_decision ? EB_10BIT : EB_8BIT;
     uint8_t     is_16bit     = hbd_mode_decision ? 1 : 0;
@@ -4432,6 +4432,7 @@ EbErrorType av1_inter_prediction_light_pd1(
     const BlockGeom *blk_geom = md_context->blk_geom;
     uint8_t         *src_mod;
     uint8_t         *src_mod_2b;
+
     // Luma prediction
     if (component_mask & PICTURE_BUFFER_DESC_LUMA_MASK) {
         ConvolveParams conv_params_y = get_conv_params_no_round(
@@ -4450,12 +4451,21 @@ EbErrorType av1_inter_prediction_light_pd1(
 
             SubpelParams subpel_params;
             int32_t      pos_y, pos_x;
-            MV           mv_q4 = clamp_mv_to_umv_border_sb(
-                md_context->blk_ptr->av1xd, &mv, bwidth, bheight, 0, 0);
-            subpel_params.subpel_x = (mv_q4.col & SUBPEL_MASK);
-            subpel_params.subpel_y = (mv_q4.row & SUBPEL_MASK);
-            pos_y                  = pu_origin_y + (mv_q4.row >> SUBPEL_BITS);
-            pos_x                  = pu_origin_x + (mv_q4.col >> SUBPEL_BITS);
+            compute_subpel_params(scs_ptr,
+                pu_origin_y,
+                pu_origin_x,
+                mv,
+                sf0,
+                ref_pic_list0->width,
+                ref_pic_list0->height,
+                bwidth,
+                bheight,
+                md_context->blk_ptr->av1xd,
+                0,
+                0,
+                &subpel_params,
+                &pos_y,
+                &pos_x);
 
             src_mod = ref_pic_list0->buffer_y +
                 ((ref_pic_list0->origin_x + pos_x +
@@ -4472,8 +4482,7 @@ EbErrorType av1_inter_prediction_light_pd1(
                                           bheight,
                                           &filter_params,
                                           &filter_params,
-                                          subpel_params.subpel_x,
-                                          subpel_params.subpel_y,
+                                          &subpel_params,
                                           &conv_params_y,
                                           bit_depth);
         }
@@ -4484,17 +4493,29 @@ EbErrorType av1_inter_prediction_light_pd1(
             mv.col = mv_unit->mv[REF_LIST_1].x;
             mv.row = mv_unit->mv[REF_LIST_1].y;
 
-            if (is_compound) { conv_params_y.do_average = 1; }
+            if (is_compound) {
+                conv_params_y.do_average = 1;
+                conv_params_y.use_dist_wtd_comp_avg = 0;
+            }
 
             SubpelParams subpel_params;
             int32_t      pos_y, pos_x;
-            MV           mv_q4 = clamp_mv_to_umv_border_sb(
-                md_context->blk_ptr->av1xd, &mv, bwidth, bheight, 0, 0);
-            subpel_params.subpel_x = (mv_q4.col & SUBPEL_MASK);
-            subpel_params.subpel_y = (mv_q4.row & SUBPEL_MASK);
-            pos_y                  = pu_origin_y + (mv_q4.row >> SUBPEL_BITS);
-            pos_x                  = pu_origin_x + (mv_q4.col >> SUBPEL_BITS);
-            src_mod                = ref_pic_list1->buffer_y +
+            compute_subpel_params(scs_ptr,
+                pu_origin_y,
+                pu_origin_x,
+                mv,
+                sf1,
+                ref_pic_list1->width,
+                ref_pic_list1->height,
+                bwidth,
+                bheight,
+                md_context->blk_ptr->av1xd,
+                0,
+                0,
+                &subpel_params,
+                &pos_y,
+                &pos_x);
+            src_mod = ref_pic_list1->buffer_y +
                 ((ref_pic_list1->origin_x + pos_x +
                   (ref_pic_list1->origin_y + pos_y) * ref_pic_list1->stride_y));
             src_mod_2b = ref_pic_list1->buffer_bit_inc_y +
@@ -4509,8 +4530,7 @@ EbErrorType av1_inter_prediction_light_pd1(
                                           bheight,
                                           &filter_params,
                                           &filter_params,
-                                          subpel_params.subpel_x,
-                                          subpel_params.subpel_y,
+                                          &subpel_params,
                                           &conv_params_y,
                                           bit_depth);
         }
@@ -4549,12 +4569,21 @@ EbErrorType av1_inter_prediction_light_pd1(
 
             SubpelParams subpel_params;
             int32_t      pos_y, pos_x;
-            MV           mv_q4 = clamp_mv_to_umv_border_sb(
-                md_context->blk_ptr->av1xd, &mv, blk_geom->bwidth_uv, blk_geom->bheight_uv, 1, 1);
-            subpel_params.subpel_x = (mv_q4.col & SUBPEL_MASK);
-            subpel_params.subpel_y = (mv_q4.row & SUBPEL_MASK);
-            pos_y                  = pu_origin_y_chroma + (mv_q4.row >> SUBPEL_BITS);
-            pos_x                  = pu_origin_x_chroma + (mv_q4.col >> SUBPEL_BITS);
+            compute_subpel_params(scs_ptr,
+                pu_origin_y_chroma,
+                pu_origin_x_chroma,
+                mv,
+                sf0,
+                ref_pic_list0->width,
+                ref_pic_list0->height,
+                bwidth,
+                bheight,
+                md_context->blk_ptr->av1xd,
+                1,
+                1,
+                &subpel_params,
+                &pos_y,
+                &pos_x);
             if (component_mask & PICTURE_BUFFER_DESC_Cb_FLAG) {
                 src_mod = ref_pic_list0->buffer_cb +
                     ((ref_pic_list0->origin_x / 2 + pos_x +
@@ -4562,7 +4591,6 @@ EbErrorType av1_inter_prediction_light_pd1(
                 src_mod_2b = ref_pic_list0->buffer_bit_inc_cb +
                     ((ref_pic_list0->origin_x / 2 + pos_x +
                       (ref_pic_list0->origin_y / 2 + pos_y) * ref_pic_list0->stride_bit_inc_cb));
-
                 svt_inter_predictor_light_pd1(src_mod,
                                               src_mod_2b,
                                               ref_pic_list0->stride_cb,
@@ -4572,8 +4600,7 @@ EbErrorType av1_inter_prediction_light_pd1(
                                               blk_geom->bheight_uv,
                                               &filter_params_x,
                                               &filter_params_y,
-                                              subpel_params.subpel_x,
-                                              subpel_params.subpel_y,
+                                              &subpel_params,
                                               &conv_params_cb,
                                               bit_depth);
             }
@@ -4594,8 +4621,7 @@ EbErrorType av1_inter_prediction_light_pd1(
                                               blk_geom->bheight_uv,
                                               &filter_params_x,
                                               &filter_params_y,
-                                              subpel_params.subpel_x,
-                                              subpel_params.subpel_y,
+                                              &subpel_params,
                                               &conv_params_cr,
                                               bit_depth);
             }
@@ -4610,16 +4636,27 @@ EbErrorType av1_inter_prediction_light_pd1(
             if (is_compound) {
                 conv_params_cb.do_average = 1;
                 conv_params_cr.do_average = 1;
+                conv_params_cb.use_dist_wtd_comp_avg = 0;
+                conv_params_cr.use_dist_wtd_comp_avg = 0;
             }
 
             SubpelParams subpel_params;
             int32_t      pos_y, pos_x;
-            MV           mv_q4 = clamp_mv_to_umv_border_sb(
-                md_context->blk_ptr->av1xd, &mv, blk_geom->bwidth_uv, blk_geom->bheight_uv, 1, 1);
-            subpel_params.subpel_x = (mv_q4.col & SUBPEL_MASK);
-            subpel_params.subpel_y = (mv_q4.row & SUBPEL_MASK);
-            pos_y                  = pu_origin_y_chroma + (mv_q4.row >> SUBPEL_BITS);
-            pos_x                  = pu_origin_x_chroma + (mv_q4.col >> SUBPEL_BITS);
+            compute_subpel_params(scs_ptr,
+                pu_origin_y_chroma,
+                pu_origin_x_chroma,
+                mv,
+                sf1,
+                ref_pic_list1->width,
+                ref_pic_list1->height,
+                bwidth,
+                bheight,
+                md_context->blk_ptr->av1xd,
+                1,
+                1,
+                &subpel_params,
+                &pos_y,
+                &pos_x);
             if (component_mask & PICTURE_BUFFER_DESC_Cb_FLAG) {
                 src_mod = ref_pic_list1->buffer_cb +
                     ((ref_pic_list1->origin_x / 2 + pos_x +
@@ -4636,8 +4673,7 @@ EbErrorType av1_inter_prediction_light_pd1(
                                               blk_geom->bheight_uv,
                                               &filter_params_x,
                                               &filter_params_y,
-                                              subpel_params.subpel_x,
-                                              subpel_params.subpel_y,
+                                              &subpel_params,
                                               &conv_params_cb,
                                               bit_depth);
             }
@@ -4658,8 +4694,7 @@ EbErrorType av1_inter_prediction_light_pd1(
                                               blk_geom->bheight_uv,
                                               &filter_params_x,
                                               &filter_params_y,
-                                              subpel_params.subpel_x,
-                                              subpel_params.subpel_y,
+                                              &subpel_params,
                                               &conv_params_cr,
                                               bit_depth);
             }
@@ -5956,7 +5991,28 @@ EbErrorType inter_pu_prediction_av1_light_pd1(uint8_t                      hbd_m
         : md_context_ptr->lpd1_chroma_comp == COMPONENT_CHROMA    ? PICTURE_BUFFER_DESC_CHROMA_MASK
         : md_context_ptr->lpd1_chroma_comp == COMPONENT_CHROMA_CB ? PICTURE_BUFFER_DESC_Cb_FLAG
                                                                   : PICTURE_BUFFER_DESC_Cr_FLAG;
-    av1_inter_prediction_light_pd1(&mv_unit,
+    SequenceControlSet* scs_ptr = (SequenceControlSet*)picture_control_set_ptr->scs_wrapper_ptr->object_ptr;
+
+    ScaleFactors ref0_scale_factors = scs_ptr->sf_identity;
+    if (!picture_control_set_ptr->parent_pcs_ptr->is_superres_none && ref_pic_list0 != NULL) {
+        svt_av1_setup_scale_factors_for_frame(&ref0_scale_factors,
+            ref_pic_list0->width,
+            ref_pic_list0->height,
+            picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr->width,
+            picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr->height);
+    }
+
+    ScaleFactors ref1_scale_factors = scs_ptr->sf_identity;
+    if (!picture_control_set_ptr->parent_pcs_ptr->is_superres_none && ref_pic_list1 != NULL) {
+        svt_av1_setup_scale_factors_for_frame(&ref1_scale_factors,
+            ref_pic_list1->width,
+            ref_pic_list1->height,
+            picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr->width,
+            picture_control_set_ptr->parent_pcs_ptr->enhanced_picture_ptr->height);
+    }
+
+    av1_inter_prediction_light_pd1(scs_ptr,
+                                   &mv_unit,
                                    md_context_ptr,
                                    md_context_ptr->blk_origin_x,
                                    md_context_ptr->blk_origin_y,
@@ -5968,7 +6024,9 @@ EbErrorType inter_pu_prediction_av1_light_pd1(uint8_t                      hbd_m
                                    md_context_ptr->blk_geom->origin_x,
                                    md_context_ptr->blk_geom->origin_y,
                                    component_mask,
-                                   hbd_mode_decision);
+                                   hbd_mode_decision,
+                                   &ref0_scale_factors,
+                                   &ref1_scale_factors);
 
     return EB_ErrorNone;
 }

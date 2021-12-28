@@ -215,8 +215,8 @@ static const std::vector<EncTestSetting> default_enc_settings = {
 
     // test super resolution mode
     {"SuperResTest1", {{"SuperresMode", "2"}}, default_test_vectors},
-    {"SuperResTest2", {{"SuperresMode", "2"}, {"Obmc", "0"}}, default_test_vectors},
-    {"SuperResTest3", {{"SuperresMode", "2"}, {"Obmc", "1"}}, default_test_vectors},
+    {"SuperResTest2", {{"SuperresMode", "2"}, {"Obmc", "0"}, {"EncoderMode", "8"}}, default_test_vectors},
+    {"SuperResTest3", {{"SuperresMode", "2"}, {"Obmc", "1"}, {"EncoderMode", "8"}}, default_test_vectors},
 #ifdef ENBALE_16BIT_PIPELINE_TEST
     {"SuperResTest4", {{"SuperresMode", "2"}, {"Obmc", "1"}, {"Encoder16BitPipeline", "1"}}, default_test_vectors},
 #endif // ENBALE_16BIT_PIPELINE_TEST
