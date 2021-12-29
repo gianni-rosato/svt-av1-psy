@@ -137,174 +137,184 @@ or
 The encoder parameters present in the `Sample.cfg` file are listed in this table below along with their status of support, command line parameter and the range of values that the parameters can take.
 
 #### Options
-| **Configuration file parameter** | **Command line** | **Range** | **Default** | **Description** |
-| --- | --- | --- | --- | --- |
-| **InputFile** | -i | any string | None | Input file path; "stdin" to take input from standard input stream |
-| **StreamFile** | -b | any string | null | Output bitstream file path; "stdout" to emit output to standard output stream |
-| **ConfigFile** | -c | any string | null | Configuration file path |
-| **ErrorFile** | --errlog | any string | stderr | error log displaying configuration or encode errors |
-| **ReconFile** | -o | any string | null | Recon file path. Optional output of recon. |
-| **StatFile** | --stat-file | any string | Null | Path to statistics file if specified and StatReport is set to 1, per picture statistics are outputted in the file|
-| **Progress** | --progress | [0,1,2] | 1 | Use `--progress 0` to disable printing of frame processed when encoding, `--progress 1` for default printing, and `--progress 2` for aomenc style printing |
-| **NoProgress** | --no-progress | [0,1] | 0 | `--no-progress 1` is equivalent to `--progress 0` and `--no-progress 0` is equivalent to `--progress 1` |
-| **EncoderMode** | --preset | [-2,-1, 0 - 8] | 8 | Encoder Preset [-2, -1, 0,1,2,3,4,5,6,7,8] -2=debug preset, -1=debug preset 0 = highest quality, 8 = highest speed |
-| **ChannelNumber** | --nch | [1 - 6] | 1 | Number of simultaneous encoding instances |
+
+| **Configuration file parameter** | **Command line**   | **Range**  | **Default** | **Description**                                                                                                 |
+|----------------------------------|--------------------|------------|-------------|-----------------------------------------------------------------------------------------------------------------|
+|                                  | --help             |            |             | Shows the command lines options currently available                                                             |
+|                                  | --version          |            |             | Shows the version of the library that's linked to the library                                                   |
+| **InputFile**                    | -i                 | any string | None        | Input raw video (y4m and yuv) file path, use `stdin` to read from pipe                                          |
+| **StreamFile**                   | -b                 | any string | None        | Output compressed (ivf) file path, use `stdout` to write to pipe                                                |
+| **ConfigFile**                   | -c                 | any string | None        | Configuration file path                                                                                         |
+| **ErrorFile**                    | --errlog           | any string | `stderr`    | Error file path                                                                                                 |
+| **ReconFile**                    | -o                 | any string | None        | Reconstructed yuv file path                                                                                     |
+| **StatFile**                     | --stat-file        | any string | None        | PSNR / SSIM per picture stat output file path, requires `--enable-stat-report 1`                                |
+| **PredStructFile**               | --pred-struct-file | any string | None        | Manual prediction structure filepath                                                                            |
+| **Progress**                     | --progress         | [0-2]      | 1           | Verbosity of the output [0: no progress is printed, 2: aomenc style output]                                     |
+| **NoProgress**                   | --no-progress      | [0-1]      | 0           | Do not print out progress [1: `--progress 0`, 0: `--progress 1`]                                                |
+| **EncoderMode**                  | --preset           | [-2-13]    | 12          | Encoder preset, presets < 0 are for debugging. Higher presets means faster encodes, but with a quality tradeoff |
+| **ChannelNumber**                | --nch              | [1-6]      | 1           | Number of channels (library instance) that will be instantiated                                                 |
 
 #### Encoder Global Options
-| **Configuration file parameter** | **Command line** | **Range** | **Default** | **Description** |
-| --- | --- | --- | --- | --- |
-| **SourceWidth** | -w | [64 - 4096] | None | Input source width |
-| **SourceHeight** | -h | [0 - 2304] | None | Input source height |
-| **FrameToBeEncoded** | -n | [0 - 2^64 -1] | 0 | Number of frames to be encoded, if number of frames is > number of frames in file, the encoder will loop to the beginning and continue the encode. Use -1 to not buffer. |
-| **BufferedInput** | --nb | [-1, 1 to 2^31 -1] | -1 | number of frames to preload to the RAM before the start of the encode If --nb = 100 and -n 1000 -- > the encoder will encode the first 100 frames of the video 10 times |
-| **EncoderColorFormat** | --color-format | [0-3] | 1 | Set encoder color format(YUV400, YUV420, YUV422, YUV444 : YUV420 [default]) |
-| **Profile** | --profile | [0-2] | 0 | Bitstream profile number to use (0: main profile[default], 1: high profile, 2: professional profile) |
-| **FrameRate** | --fps | [0 - 2^64 -1] | 25 | If the number is less than 1000, the input frame rate is an integer number between 1 and 60, else the input number is in Q16 format (shifted by 16 bits) [Max allowed is 240 fps] |
-| **FrameRateNumerator** | --fps-num | [0 - 2^64 -1] | 0 | Frame rate numerator e.g. 6000 |
-| **FrameRateDenominator** | --fps-denom | [0 - 2^64 -1] | 0 | Frame rate denominator e.g. 100 |
-| **EncoderBitDepth** | --input-depth | [8 , 10] | 8 | specifies the bit depth of the input video |
-| **Encoder16BitPipeline** | --16bit-pipeline | [0 , 1] | 0 | Bit depth for enc-dec(0: lbd[default], 1: hbd) |
-| **CompressedTenBitFormat** | --compressed-ten-bit-format | [0-1] | 0 | Offline packing of the 2bits: requires two bits packed input (0: OFF, 1: ON) |
-| **HierarchicalLevels** | --hierarchical-levels | [0 - 5] | 4 | 0 : Flat4: 5-Level HierarchyMinigop Size = (2^HierarchicalLevels) (e.g. 0 == > 0B pyramid, 1 == > 1B pyramid, 2 == > 3B pyramid, 3 == > 7B pyramid, 4 == > 15B Pyramid) |
-| **PredStructure** | --pred-struct | [0-2] | 2 | Set prediction structure( 0: low delay P, 1: low delay B, 2: random access [default]) |
-| **Injector** | --inj | [0-1] | 0 | Inject pictures at defined frame rate(0: OFF[default],1: ON) |
-| **InjectorFrameRate** | --inj-frm-rt | Null | Null | Set injector frame rate |
-| **StatReport** | --enable-stat-report | [0-1] | 0 | When set to 1, calculates and outputs average PSNR values |
-| **Asm** | --asm |  [0 - 11] or [c, mmx, sse, sse2, sse3, ssse3, sse4_1, sse4_2, avx, avx2, avx512, max] | 11 or max | Limit assembly instruction set ("0" is equivalent to "c", "1" is "mmx" etc, max value is "11" or "max"), by default select highest assembly instruction that is supported by CPU |
-| **LogicalProcessorNumber** | --lp | [0, total number of logical processor] | 0 | The number of logical processor which encoder threads run on.Refer to Appendix A.1 |
-| **UnpinExecution** | --unpin | [0, 1] | 1 | Allows the execution to be pined/unpined to/from a specific number of cores.--unpin is overwritten to 0 when --ss is set to 0 or 1. 0=OFF, 1= ON |
-| **TargetSocket** | --ss | [-1,1] | -1 | For dual socket systems, this can specify which socket the encoder runs on.Refer to Appendix A.1 |
+
+| **Configuration file parameter** | **Command line**            | **Range**                      | **Default** | **Description**                                                                                               |
+|----------------------------------|-----------------------------|--------------------------------|-------------|---------------------------------------------------------------------------------------------------------------|
+| **SourceWidth**                  | -w                          | [64-16384]                     | None        | Frame width in pixels, infered if y4m.                                                                        |
+| **SourceHeight**                 | -h                          | [64-8704]                      | None        | Frame width in pixels, infered if y4m.                                                                        |
+| **FrameToBeEncoded**             | -n                          | [0-`(2^63)-1`]                 | 0           | Number of frames to encode. If `n` is larger than the input, the encoder will loop back and continue encoding |
+| **BufferedInput**                | --nb                        | [-1, 1-`(2^31)-1`]             | -1          | Buffer `n` input frames into memory and use them to encode                                                    |
+| **EncoderColorFormat**           | --color-format              | [0-3]                          | 1           | Color format, only yuv420 is supported at this time [0: yuv400, 1: yuv420, 2: yuv422, 3: yuv444]              |
+| **Profile**                      | --profile                   | [0-2]                          | 0           | Bitstream profile [0: main, 1: high, 2: professional]                                                         |
+| **Level**                        | --level                     | [0,2.0-6.3]                    | 0           | Bitstream level, defined in A.3 of the av1 spec [0: auto]                                                     |
+| **HighDynamicRangeInput**        | --enable-hdr                | [0-1]                          | 0           | Enable writing of HDR metadata in the bitstream                                                               |
+| **Level**                        | --level                     | [0, 2.0-7.3]                   | 0           | Bitstream level, 0 for auto                                                                                   |
+| **FrameRate**                    | --fps                       | [1-240, 1001-`(241<<16)-1`]    | 25          | Input video frame rate, integer values only, infered if y4m.                                                  |
+| **FrameRateNumerator**           | --fps-num                   | [0-2^32-1]                     | 25000       | Input video frame rate numerator                                                                              |
+| **FrameRateDenominator**         | --fps-denom                 | [0-2^32-1]                     | 1000        | Input video frame rate denominator                                                                            |
+| **EncoderBitDepth**              | --input-depth               | [8, 10]                        | 8           | Input video file and output bitstream bit-depth                                                               |
+| **CompressedTenBitFormat**       | --compressed-ten-bit-format | [0-1]                          | 0           | Pack 10bit video, handled between the app and library                                                         |
+| **Injector**                     | --inj                       | [0-1]                          | 0           | Inject pictures to the library at defined frame rate                                                          |
+| **InjectorFrameRate**            | --inj-frm-rt                | [0-240]                        | 60          | Set injector frame rate, only applicable with `--inj 1`                                                       |
+| **HierarchicalLevels**           | --hierarchical-levels       | [3-5]                          | 4           | Set hierarchical levels beyond the base layer [3: 4 temporal layers, 5: 6 temporal layers]                    |
+| **PredStructure**                | --pred-struct               | [0-2]                          | 2           | Set prediction structure [1: low delay, 2: random access]                                                     |
+| **StatReport**                   | --enable-stat-report        | [0-1]                          | 0           | Calculates and outputs PSNR SSIM metrics at the end of the encode                                             |
+| **Asm**                          | --asm                       | [0-11, c-max]                  | max         | Limit assembly instruction set [c, mmx, sse, sse2, sse3, ssse3, sse4_1, sse4_2, avx, avx2, avx512, max]       |
+| **LogicalProcessorNumber**       | --lp                        | [0, core count of the machine] | 0           | Target number of logical cores to be used. 0 means all. Refer to Appendix A.1                                 |
+| **UnpinExecution**               | --unpin                     | [0-1]                          | 1           | unpin the execution from a socket. Overwritten to 0 when `--ss` is set. Refer to Appendix A.1                 |
+| **TargetSocket**                 | --ss                        | [-1,1]                         | -1          | Specifies which socket to run on, assumes a max of two sockets. Refer to Appendix A.1                         |
+
 
 #### Rate Control Options
-| **Configuration file parameter** | **Command line** | **Range** | **Default** | **Description** |
-| --- | --- | --- | --- | --- |
-| **RateControlMode** | --rc | [0 - 1] | 0 | Rate control mode(0 = CQP if --enable-tpl-la is set to 0, else CRF , 1 = VBR)|
-| **QP** | -q | [0 - 63] | 50 | Quantization parameter used when RateControl is set to 0 and EnableTPLModel is set to 0, also represents the CRF value if EnableTPLModel is set to 0 |
-| **CRF** | --crf | [0 - 63] | 50 | Rate control parameter used to set CRF and forces RateControlMode to 0 and EnableTPLModel to 1 |
-| **TargetBitRate** | --tbr | [1 - 4294967] | 7000 | Target bitrate in kilobits per second when RateControlMode is set to 1, or 2 |
-| **MaximumBitRate** | --mbr | [1 - 4294967] | 0 | Maximum bitrate in kilobits per second when RateControlMode is set to 0. To be set for capped CRF |
-| **UseQpFile** | --use-q-file | [0-1] | 0 | When set to 1, overwrite the picture qp assignment using qp values in QpFile, can be used for initial crf values as well if EnableTPLModel is set to 1, the encoder may still change crf per block |
-| **QpFile** | --qpfile | any string | Null | Path to qp file |
-| **MaxQpAllowed** | --max-qp | [1 - 63] | Null | Maximum (worst) quantizer[1-63] only applicable  when --rc > 0 |
-| **MinQpAllowed** | --min-qp | [1 - 63] | Null | Minimum (best) quantizer[1-63] only applicable  when --rc > 0 |
-| **AdaptiveQuantization** | --adaptive-quantization | [0 - 2] | 2 | 0 = OFF , 1 = variance base using segments , 2 = Deltaq pred efficiency (default) |
-| **VBVBufSize** | --vbv-bufsize | [1 - 4294967] | 1 second TargetBitRate | VBV Buffer Size when RateControl is 2. |
-| **UseFixedQIndexOffsets** | --use-fixed-qindex-offsets | [0 - 1] | 0 | 0 = OFF, 1 = enable fixed qindex offset based on temporal layer and frame type when rc mode is 0. qindex offsets are specified by the following arguments |
-| **QIndexOffsets** | --qindex-offsets | [v0,v1,..,vn] | [0,0,..,0] | list of qindex offsets vi, enclosed in [], seperated by ,. vi is in the range of [-256,255]. this argument should be used after hierarchical-levels, the number of qindex offsets equals to hierarchical-levels + 1 |
-| **KeyFrameQIndexOffset** | --key-frame-qindex-offset | [-256, 255] | 0 | qindex offset for Key frame |
-| **ChromaQIndexOffsets** | --chroma-qindex-offsets | [v0,v1,..,vn] | [0,0,..,0] | list of qindex offset vi, enclosed in [], seperated by ,. vi is in the range of [-256, 255]. this argument should be used after hierarchical-levels, the number of qindex offsets equals to hierarchical-levels + 1 |
-| **KeyFrameChromaQIndexOffset** | --key-frame-chroma-qindex-offset | [-256, 255] | 0 | chroma qindex offset for Key frame |
+
+| **Configuration file parameter** | **Command line**                 | **Range**      | **Default**     | **Description**                                                                                                      |
+|----------------------------------|----------------------------------|----------------|-----------------|----------------------------------------------------------------------------------------------------------------------|
+| **RateControlMode**              | --rc                             | [0-2]          | 0               | Rate control mode [0: CRF or CQP (if `--enable-tpl-la` is 0) [Default], 1: VBR, 2: CBR]                              |
+| **QP**                           | --qp                             | [1-63]         | 50              | Initial qp level value                                                                                               |
+| **CRF**                          | --crf                            | [0-63]         | 50              | Constant Rate Factor value, setting this value is equal to `--rc 0 --enable-tpl-la 1 --qp x`                         |
+| **TargetBitRate**                | --tbr                            | [1-4294967]    | 7000            | Target Bitrate (kbps), only applicable for VBR and CBR encoding                                                      |
+| **MaximumBitRate**               | --mbr                            | [1-4294967]    | 0               | Maximum Bitrate (kbps) only applicable for CRF and VBR encoding                                                      |
+| **UseQpFile**                    | --use-q-file                     | [0-1]          | 0               | Overwrite the encoder default picture based QP assignments and use qp values from `--qp-file`                        |
+| **QpFile**                       | --qpfile                         | any string     | Null            | Path to a file containing per picture qp value                                                                       |
+| **MaxQpAllowed**                 | --max-qp                         | [1-63]         | Null            | Maximum (highest) quantizer [1-63] only applicable when `--rc` > 0                                                   |
+| **MinQpAllowed**                 | --min-qp                         | [1-63]         | Null            | Minimum (lowest) quantizer [1-63] only applicable when `--rc` > 0                                                    |
+| **AdaptiveQuantization**         | --adaptive-quantization          | [0-2]          | 2               | Set adaptive QP level [0: off, 1: variance base using AV1 segments, 2: deltaq pred efficiency]                       |
+| **VBVBufSize**                   | --vbv-bufsize                    | [1-4294967]    | `TargetBitRate` | VBV buffer size.                                                                                                     |
+| **UseFixedQIndexOffsets**        | --use-fixed-qindex-offsets       | [0-1]          | 0               | Overwrite the encoder default hierarchical layer based QP assignment and use fixed Q index offsets                   |
+| **QIndexOffsets**                | --qindex-offsets                 | any string     | `0,0,..,0`      | list of luma Q index offsets per hierarchical layer, separated by `,` with each offset in the range of [-256-255]    |
+| **KeyFrameQIndexOffset**         | --key-frame-qindex-offset        | [-256-255]     | 0               | Overwrite the encoder default keyframe Q index assignment                                                            |
+| **ChromaQIndexOffsets**          | --chroma-qindex-offsets          | any string     | `0,0,..,0`      | list of chroma Q index offsets per hierarchical layer, separated by `,` with each offset in the range of [-256-255]  |
+| **KeyFrameChromaQIndexOffset**   | --key-frame-chroma-qindex-offset | [-256-255]     | 0               | Overwrite the encoder default chroma keyframe Q index assignment                                                     |
+| **UnderShootPct**                | --undershoot-pct                 | [0-100]        | 25              | Alowable datarate undershoot (min) target (%), default depends on the ratecontrol mode                               |
+| **OverShootPct**                 | --overshoot-pct                  | [0-100]        | 25              | Alowable datarate overshoot (max) target (%), default depends on the ratecontrol mode                                |
+| **BufSz**                        | --buf-sz                         | [0-`(2^63)-1`] | 6000            | Client buffer size (ms), only applicable for CBR                                                                     |
+| **BufInitialSz**                 | --buf-initial-sz                 | [0-`(2^63)-1`] | 4000            | Client initial buffer size (ms), only applicable for CBR                                                             |
+| **BufOptimalSz**                 | --buf-optimal-sz                 | [0-`(2^63)-1`] | 5000            | Client optimal buffer size (ms), only applicable for CBR                                                             |
+| **RecodeLoop**                   | --recode-loop                    | [0-4]          | 4               | Recode loop level, look at the "Recode loop level table" in the user's guide for more info [0: off, 4: preset based] |
+
+##### **UseFixedQIndexOffsets** and more information
+
+`UseFixedQIndexOffsets` and its associated arguments (`HierarchicalLevels`, `QIndexOffsets`, `ChromaQIndexOffsets`, `KeyFrameQIndexOffset`, `KeyFrameChromaQIndexOffset`)
+are used together to specify the qindex offsets based on frame type and temporal layer when rc is set to 0.
+
+QP value specified by the `--qp` argument is assigned to the pictures at the highest temporal layer.
+It is first converted to a qindex, then the corresponding qindex offsets are added on top of it based on the frame types (Key/Inter) and temporal layer id.
+
+Qindex offset can be negative.
+The final qindex value will be clamped within the valid min/max qindex range.
+
+For chroma plane, after deciding the qindex for the luma plane, the corresponding chroma qindex offsets are added on top of the luma plane qindex based on frame types and temporal layer id.
+
+`--qindex-offsets` and `--chroma-qindex-offsets` have to be used after the `--hierarchical-levels` parameter.
+The number of qindex offsets should be `HierarchicalLevels` plus 1 and they can be encosed in `[]` to separate the list.
+
+An example command line is:
+
+```bash
+SvtAv1EncApp -i in.y4m -b out.ivf --rc 0 -q 42 --hierarchical-levels 3 --use-fixed-qindex-offsets 1 --qindex-offsets [-12,-8,-4,0] --key-frame-qindex-offset -20 --key-frame-chroma-qindex-offset -6 --chroma-qindex-offsets [-6,0,12,24]
+```
+
+For this command line, corresponding qindex values are:
+
+| **Frame Type**   | **Luma qindex** | **Chroma qindex** |
+|------------------|-----------------|-------------------|
+| **Key Frame**    | 148 (42x4 - 20) | 142 (148 - 6)     |
+| **Layer0 Frame** | 156 (42x4 - 12) | 150 (156 - 6)     |
+| **Layer1 Frame** | 160 (42x4 - 8)  | 160 (160 + 0)     |
+| **Layer2 Frame** | 164 (42x4 - 4)  | 176 (164 + 12)    |
+| **Layer3 Frame** | 168 (42x4 + 0)  | 192 (168 + 24)    |
+
+##### Recode loop level table
+
+| level | description                                                                     |
+|-------|---------------------------------------------------------------------------------|
+| 0     | Off                                                                             |
+| 1     | Allow recode for KF and exceeding maximum frame bandwidth                       |
+| 2     | Allow recode only for key frames, alternate reference frames, and Golden frames |
+| 3     | Allow recode for all frame types based on bitrate constraints                   |
+| 4     | Preset based decision                                                           |
 
 
-use-fixed-qindex-offsets and associtated arguments (hierarchical-levels, qindex-offsets, chroma-qindex-offsets, key-frame-qindex-offset, key-frame-chroma-qindex-offset) are used together to specify the qindex offsets based on frame type and temporal layer when rc mode = 0.
+#### Multi-pass Options
 
-qp value specified by -q argument is assigned to the pictures at the highest temporal layer. it is first converted to qindex, then corresponding qindex offsets are added on top of it based on frame types (Key/Inter) and temporal layer id.
+| **Configuration file parameter** | **Command line** | **Range**      | **Default**        | **Description**                                                                                   |
+|----------------------------------|------------------|----------------|--------------------|---------------------------------------------------------------------------------------------------|
+| **Pass**                         | --pass           | [0-3]          | 0                  | Multi-pass selection [0: single pass encode, 1: first pass, 2: second pass, 3: third pass]        |
+| **Stats**                        | --stats          | any string     | "svtav1_2pass.log" | Filename for multi-pass encoding                                                                  |
+| **Passes**                       | --passes         | [1-2]          | 1                  | Number of encoding passes, default is preset dependent [1: one pass encode, 2: multi-pass encode] |
+| **VBRBiasPct**                   | --bias-pct       | [0-100]        | 50                 | CBR/VBR bias [0: CBR-like, 100: VBR-like]                                                         |
+| **MinSectionPct**                | --minsection-pct | [0-`(2^32)-1`] | 0                  | GOP min bitrate (expressed as a percentage of the target rate)                                    |
+| **MaxSectionPct**                | --maxsection-pct | [0-`(2^32)-1`] | 2000               | GOP max bitrate (expressed as a percentage of the target rate)                                    |
 
-qindex offset can be negative. the final qindex value will be clamped in the valid min/max qindex range.
+<!-- The following two will be combined with --stats at another time, they currently do not work -->
+<!-- | **OutputStatFile** | --output-stat-file | any string | Null | Output stat file for first pass| -->
+<!-- | **InputStatFile** | --input-stat-file | any string | Null | Input stat file for second pass| -->
 
-for chroma plane, after deciding the qindex for the luma plane, corresponding chroma qindex offsets are added on top of the luma plane qindex based on frame types and temporal layer id.
+##### **Pass** information
 
---qindex-offsets and --chroma-qindex-offsets have to be used after the --hierachical-levels parameter. number of qindex offsets should be hierachical levels plus 1.
+| **Pass** | **Stats** io            |
+|----------|-------------------------|
+| 0        | ""                      |
+| 1        | "w"                     |
+| 2        | "rw" if 3-pass else "r" |
+| 3        | "r"                     |
 
-an example command line is:
-"--rc 0 -q 42 --hierarchical-levels 3 --use-fixed-qindex-offsets 1 --qindex-offsets [-12,-8,-4,0] --key-frame-qindex-offset -20 --key-frame-chroma-qindex-offset -6 --chroma-qindex-offsets [-6,0,12,24]"
-
-for this command line, corresponding qindex are:
-
-| **Frame Type** | **Luma qindex** | **Chroma qindex** |
-| --- | --- | --- |
-| **Key Frame** | 148 (42x4 - 20) | 142 (148 - 6) |
-| **Layer0 Frame** | 156 (42x4 - 12) | 150 (156 - 6) |
-| **Layer1 Frame** | 160 (42x4 - 8) | 160 (160 + 0) |
-| **Layer2 Frame** | 164 (42x4 - 4) | 176 (164 + 12) |
-| **Layer3 Frame** | 168 (42x4 + 0) | 192 (168 + 24) |
-
-#### Twopass Options
-| **Configuration file parameter** | **Command line** | **Range** | **Default** | **Description** |
-| --- | --- | --- | --- | --- |
-| **Passes** | --passes | [1-2] | 1 | Number of passes (1: one pass encode, 2: two passes encode) applicable only for rc > 0 |
-| **Pass** | --pass | [1-2] | Null | Specify which pass the run is on (1=First Pass, 2=Second Pass) |
-| **Stats** | --stats | any string | Null | Output stat file containing information from first pass |
-| **OutputStatFile** | --output-stat-file | any string | Null | Output stat file for first pass|
-| **InputStatFile** | --input-stat-file | any string | Null | Input stat file for second pass|
-| **VBRBiasPct** | --bias-pct | [0 - 100] | 50 | 2pass CBR/VBR bias percent (0=CBR-like, 100=VBR-like) |
-| **MinSectionPct** | --minsection-pct | [0 - ] | 0 | 2pass VBR GOP min bitrate (percent of target) |
-| **MaxSectionPct** | --maxsection-pct | [0 - ] | 2000 | 2pass VBR GOP max bitrate (percent of target) |
-| **UnderShootPct** | --undershoot-pct | [0 - 100] | 25 | Datarate undershoot (min) target (percent) |
-| **OverShootPct** | --overshoot-pct | [0 - 100] | 25 | Datarate overshoot (max) target (percent) |
-| **BufSz** | --buf-sz | [0 - ] | 6000 | Client (max) buffer size (ms) |
-| **BufInitialSz** | --buf-initial-sz | [0 - ] | 4000 | Client initial buffer size (ms) |
-| **BufOptimalSz** | --buf-optimal-sz | [0 - ] | 5000 | Client optimal buffer size (ms) |
-| **RecodeLoop** | --recode-loop | [0 - 4] | 4 | Recode loop levels for 2pass VBR (0=disable reencode, 1=reencode key frames, 2=reencode base layer frames, 3=reencode all frames, 4=preset based decision [Default]) |
+`--pass 3` is only available for non-crf modes and all passes except single-pass requires the `--stats` parameter to point to a valid path
 
 #### GOP size and type Options
-| **Configuration file parameter** | **Command line** | **Range** | **Default** | **Description** |
-| --- | --- | --- | --- | --- |
-| **IntraPeriod** | --keyint | [-2 - 2^31-2] | -2 | Intra period interval(frames) -2: default intra period , -1: No intra update or an integer >= 0. if RateControlMode >= 1 intra-period limited to [-2, 255] |
-| **IntraRefreshType** | --irefresh-type | [1 - 2] | 2 | Intra refresh type (1: FWD Frame (Open GOP), 2: KEY Frame (Closed GOP)[default]) |
-| **SceneChangeDetection** | --scd | [0 - 1] | 0 | Enables or disables the scene change detection algorithm (0: OFF, 1: ON) |
+
+| **Configuration file parameter** | **Command line** | **Range**       | **Default** | **Description**                                                                                                            |
+|----------------------------------|------------------|-----------------|-------------|----------------------------------------------------------------------------------------------------------------------------|
+| **IntraPeriod**                  | --keyint         | [-2-`(2^31)-2`] | -2          | Intra period interval (frames) [-2: Default intra period (set to 2 seconds long), -1: No intra update]                     |
+| **IntraRefreshType**             | --irefresh-type  | [1-2]           | 2           | Intra refresh type [1: FWD Frame (Open GOP), 2: KEY Frame (Closed GOP)]                                                    |
+| **SceneChangeDetection**         | --scd            | [0-1]           | 0           | Scene change detection control                                                                                             |
+| **Lookahead**                    | --lookahead      | [0-120]         | 4294967295  | Number of frames in the future to look ahead, includes minigop, temporal filtering, and  rate control. [4294967295: auto]. |
 
 #### AV1 Specific Options
-| **Configuration file parameter** | **Command line** | **Range** | **Default** | **Description** |
-| --- | --- | --- | --- | --- |
-| **TileRow** | --tile-rows | [0-6] | 0 | log2 of tile rows |
-| **TileCol** | --tile-columns | [0-4] | 0 | log2 of tile columns |
-| **LoopFilterDisable** | --disable-dlf | [0-1] | 0 | Disable loop filter(0: loop filter enabled[default] ,1: loop filter disabled) |
-| **EnableTPLModel** | --enable-tpl-la | [0-1] | 1 | RDO based on frame temporal dependency (0: off, 1: backward source based)|
-| **CDEFLevel** | --cdef-level | [0-5] | -1 | CDEF Level, 0: OFF, 1-5: ON with 64,16,8,4,1 step refinement, -1: DEFAULT|
-| **RestorationFilter** | --enable-restoration-filtering | [0-1] | -1 | Enable restoration filtering , 0 = OFF, 1 = ON, -1 = DEFAULT|
-| **SelfGuidedFilterMode** | --sg-filter-mode | [0-4] | -1 | Self-guided filter mode (0:OFF, 1: step 0, 2: step 1, 3: step 4, 4: step 16, -1: DEFAULT)|
-| **WienerFilterMode** | --wn-filter-mode | [0-3] | -1 | Wiener filter mode (0:OFF, 1: 3-Tap luma/ 3-Tap chroma, 2: 5-Tap luma/ 5-Tap chroma, 3: 7-Tap luma/ 7-Tap chroma, -1: DEFAULT)|
-| **Mfmv** | --enable-mfmv | [0-1] | -1 | Enable motion field motion vector, 0 = OFF, 1 = ON, -1 = DEFAULT|
-| **RedundantBlock** | --enable-redundant-blk | [0-1] | -1 | Enable redundant block skipping same neighbors non-square partitions, 0 = OFF, 1 = ON, -1 = DEFAULT|
-| **SpatialSSEfl** | --enable-spatial-sse-full-loop-level | [0-1] | -1 | Enable spatial sse full loop, 0 = OFF, 1 = ON, -1 = DEFAULT|
-| **OverBoundryBlock** | --enable-over-bndry-blk | [0-1] | -1 | Enable over boundary block mode, 0 = OFF, 1 = ON, -1 = DEFAULT|
-| **NewNearestCombInjection** | --enable-new-nrst-near-comb | [0-1] | -1 | Enable new nearest near comb injection, 0 = OFF, 1 = ON, -1 = DEFAULT|
-| **NsqTable** | --enable-nsq-table-use | [0-1] | -1 | Enable nsq table, 0 = OFF, 1 = ON, -1 = DEFAULT|
-| **FrameEndCdfUpdate** | --enable-framend-cdf-upd-mode | [0-1] | -1 | Enable frame end cdf update mode, 0 = OFF, 1 = ON, -1 = DEFAULT|
-| **ChromaMode** | --chroma-mode | [0-3] | -1 | Chroma Mode <br>-1 = DEFAULT<br>0 = Full chroma search @ MD  <br>1 = Fast chroma search @ MD  <br>2 = Chroma blind @ MD + CFL @ EP <br>3 = Chroma blind @ MD + no CFL @ EP |
-| **DisableCfl** | --disable-cfl | [0-1] | -1 | Disable chroma from luma (CFL), 0 = OFF (do not disable), 1 = ON (disable), -1 = DEFAULT|
-| **LocalWarpedMotion** | --enable-local-warp | [0-1] | -1 | Enable warped motion use , 0 = OFF, 1 = ON, -1 DEFAULT |
-| **GlobalMotion** | --enable-global-motion | [0-1] | 1 | Enable global motion (0: OFF, 1: ON [default]) |
-| **PicBasedRateEst** | --enable-pic-based-rate-est | [0-1] | -1 | Enable picture based rate estimation. Only active with lp 1 (0: OFF, 1: ON, -1: DEFAULT)|
-| **IntraAngleDelta** | --enable-intra-angle-delta | [0-1] | -1 | Enable intra angle delta filtering (0: OFF, 1: ON, -1 = DEFAULT |
-| **InterIntraCompound** | --enable-interintra-comp | [0-1] | -1 | Enable inter intra compound, 0 = OFF, 1 = ON, -1 = DEFAULT|
-| **Paeth** | --enable-paeth | [0-1] | -1 | Enable Intra Paeth pred, 0 = OFF, 1 = ON, -1 = DEFAULT|
-| **Smooth** | --enable-smooth | [0-1] | -1 | Enable Intra Smooth pred, 0 = OFF, 1 = ON, -1 = DEFAULT|
-| **MultiReferencePictures** | --mrp-level | [0-9] | -1 | Multi reference frame levels( 0: OFF, 1: FULL, 2: Level1 .. 9: Level8,  -1: DEFAULT)|
-| **Obmc** | --obmc-level | [0-3] | -1 | OBMC Level(0: OFF, 1: Fully ON, 2 and 3 are faster levels, -1: DEFAULT) |
-| **RDOQ** | --rdoq-level | [0-1] | -1 | Enable RDOQ, 0 = OFF, 1 = ON, -1 = DEFAULT |
-| **FilterIntra** | --filter-intra-level | [0-1] | -1 | Enable filter intra prediction mode (0: OFF, 1: ON [default]) |
-| **IntraEdgeFilter** | --enable-intra-edge-filter | [0-1] | -1 | Enable intra edge filter (0: OFF, 1: ON, -1: DEFAULT)|
-| **PredMe** | --pred-me | [0-5] | -1 | Closed loop motion search. Set predictive me level: <BR>-1 = DEFAULT<BR>0 = OFF <BR>1 = 7x5 full-pel search + sub-pel refinement off <BR>2 = 7x5 full-pel search +  (H + V) sub-pel refinement only = 4 half-pel + 4 quarter-pel = 8 positions + pred_me_distortion to pa_me_distortion deviation on <BR>3 = 7x5 full-pel search +  (H + V + D only ~ the best) sub-pel refinement = up to 6 half-pel + up to 6  quarter-pel = up to 12 positions + pred_me_distortion to pa_me_distortion deviation on <BR>4 = 7x5 full-pel search +  (H + V + D) sub-pel refinement = 8 half-pel + 8 quarter-pel = 16 positions + pred_me_distortion to pa_me_distortion deviation on <BR>5 = 7x5 full-pel search +  (H + V + D) sub-pel refinement = 8 half-pel + 8 quarter-pel = 16 positions + pred_me_distortion to pa_me_distortion deviation off |
-| **Bipred3x3** | --bipred-3x3 | [0-2] | -1 | Set bipred3x3 injection, 0 = OFF, 1 = ON FULL, 2 = Reduced set, -1 = DEFAULT|
-| **CompoundLevel** | --compound | [0-2] | -1 | Set compound mode: <BR>-1 = DEFAULT<BR>0 = OFF: No compond mode search : AVG only <BR>1 = ON: compond mode search: AVG/DIST/DIFF <BR>2 = ON: AVG/DIST/DIFF/WEDGE |
-| **UseDefaultMeHme** | --use-default-me-hme | [0-1] | 1 | 0 : Overwrite Default ME HME parameters1 : Use default ME HME parameters, dependent on width and height |
-| **HME** | --hme | [0-1] | 1 | Enable HME, 0 = OFF, 1 = ON |
-| **HMELevel0** | --hme-l0 | [0-1] | 1 | Enable HME Level 0 , 0 = OFF, 1 = ON |
-| **HMELevel1** | --hme-l1 | [0-1] | Depends on input resolution | Enable HME Level 1 , 0 = OFF, 1 = ON |
-| **HMELevel2** | --hme-l2 | [0-1] | Depends on input resolution | Enable HME Level 2 , 0 = OFF, 1 = ON |
-| **ExtBlockFlag** | --ext-block | [0-1] | Depends on --preset | Enable the non-square block 0=OFF, 1= ON |
-| **SearchAreaWidth** | --search-w | [1 - 480] | Depends on input resolution | Search Area in Width |
-| **SearchAreaHeight** | --search-h | [1 - 480] | Depends on input resolution | Search Area in Height |
-| **ScreenContentMode** | --scm | [0 - 2] | 2 | Enable Screen Content Optimization mode (0: OFF, 1: ON, 2: Content Based Detection) |
-| **IntraBCMode** | --intrabc-mode | [-1 - 3]] | -1 | IntraBC mode (0 = OFF, 1 = ON slow, 1 = ON faster, 2 = ON fastest, -1 = DEFAULT) |
-| **HighBitDepthModeDecision** | --hbd-md | [0-2] | 1 | Enable high bit depth mode decision(0: OFF, 1: ON partially[default],2: fully ON) |
-| **PaletteLevel** | --palette-level | [-1 - 6] | -1 | Enable Palette mode (-1: DEFAULT (ON at level6 when SC is detected), 0: OFF 1: ON Level 1, ...6: ON Level6 ) |
-| **UnrestrictedMotionVector** | --umv | [0-1] | 1 | Enables or disables unrestriced motion vectors, 0 = OFF(motion vectors are constrained within tile boundary), 1 = ON. For MCTS support, set --umv 0 |
-| **FilmGrain** | --film-grain | [0-50] | 0 | Enable film grain(0: OFF[default], 1 - 50: Level of denoising for film grain) |
-| **AltRefLevel** | --tf-level | [-1 - 1] | -1 | Enable automatic alt reference frames(-1: Default; 0: OFF; 1: ON) |
-| **EnableOverlays** | --enable-overlays | [0-1] | 0 | Enable the insertion of an extra picture called overlayer picture which will be used as an extra reference frame for the base-layer picture(0: OFF[default], 1: ON) |
-| **SquareWeight** | --sqw | 0 for off and any whole number percentage | 100 | Weighting applied to square/h/v shape costs when deciding if a and b shapes could be skipped. Set to 100 for neutral weighting, lesser than 100 for faster encode and BD-Rate loss, and greater than 100 for slower encode and BD-Rate gain|
-the DEFAULT option would allow the encoder to choose adaptively any of the values in the range for that option whether on a preset, picture, or SB level.
-| **ChannelNumber** | --nch | [1 - 6] | 1 | Number of encode instances |
-| **StatReport** | --enable-stat-report | [0-1] | 0 | When set to 1, calculates and outputs average PSNR values |
-| **ColorPrimaries** | --color-primaries | [0-12, 22] | 2 | Set color primaries, please see the subsection 6.4.2 of the [AV1 Bitstream & Decoding Process Specification](https://aomediacodec.github.io/av1-spec/av1-spec.pdf) for details. Refer to Appendix A.2 for an example |
-| **TransferCharacteristics** | --transfer-characteristics | [0-22] | 2 | Set transfer characteristics, please see the subsection 6.4.2 of the [AV1 Bitstream & Decoding Process Specification](https://aomediacodec.github.io/av1-spec/av1-spec.pdf) for details. Refer to Appendix A.2 for an example |
-| **MatrixCoefficients** | --matrix-coefficients | [0-14] | 2 | Set matrix coefficients, please see the subsection 6.4.2 of the [AV1 Bitstream &; Decoding Process Specification](https://aomediacodec.github.io/av1-spec/av1-spec.pdf) for details. Refer to Appendix A.2 for an example |
-| **ColorRange** | --color-range | [0-1] | 0 | Set color range, please see the subsection 6.4.2 of the [AV1 Bitstream &; Decoding Process Specification](https://aomediacodec.github.io/av1-spec/av1-spec.pdf) for details. Refer to Appendix A.2 for an example |
-| **MasteringDisplay** | --mastering-display | any string | none | Set mastering display metadata in the format of "G(x,y)B(x,y)R(x,y)WP(x,y)L(max,min)", please see the subsection 6.7.4 of the [AV1 Bitstream &; Decoding Process Specification](https://aomediacodec.github.io/av1-spec/av1-spec.pdf) for details. Refer to Appendix A.2 for an example |
-| **ContentLightLevel** | --content-light | any string | none | Set content light level in the format of "max_cll,max_fall", please see the subsection 6.7.3 of the [AV1 Bitstream &; Decoding Process Specification](https://aomediacodec.github.io/av1-spec/av1-spec.pdf) for details. Refer to Appendix A.2 for an example |
+
+| **Configuration file parameter** | **Command line**               | **Range** | **Default** | **Description**                                                                                                           |
+|----------------------------------|--------------------------------|-----------|-------------|---------------------------------------------------------------------------------------------------------------------------|
+| **TileRow**                      | --tile-rows                    | [0-6]     | 0           | Number of tile rows to use, `TileRow == log2(x)`, default changes per resolution                                          |
+| **TileCol**                      | --tile-columns                 | [0-4]     | 0           | Number of tile columns to use, `TileCol == log2(x)`, default changes per resolution                                       |
+| **LoopFilterDisable**            | --disable-dlf                  | [0-1]     | 0           | Deblocking loop filter control                                                                                            |
+| **CDEFLevel**                    | --cdef-level                   | [-1-5]    | -1          | CDEF Level, [-1: auto, 0: off, 1-5: ON with (64, 16, 8, 4, 1) step refinement]                                            |
+| **RestorationFilter**            | --enable-restoration-filtering | [-1-1]    | -1          | Restoration filter control, [-1: auto]                                                                                    |
+| **EnableTPLModel**               | --enable-tpl-la                | [0-1]     | 1           | Temporal Dependency model control, only applicable when `--rc` is set to 0                                                |
+| **Mfmv**                         | --enable-mfmv                  | [-1-1]    | -1          | Motion Field Motion Vector control, [-1: auto]                                                                            |
+| **ScreenContentMode**            | --scm                          | [0-2]     | 2           | Set screen content detection level, 0: off, 1: on, 2: content adaptive                                                    |
+| **UnrestrictedMotionVector**     | --umv                          | [0-1]     | 1           | Allow motion vectors to reach outside of the picture boundary                                                             |
+| **FilmGrain**                    | --film-grain                   | [0-50]    | 0           | Enable film grain, 0: off, 1-50: level of denoising for film grain                                                        |
+| **AltRefLevel**                  | --tf-level                     | [-1-1]    | -1          | Set remporal filtering control, [-1: auto]                                                                                |
+| **EnableOverlays**               | --enable-overlays              | [0-1]     | 0           | Enable the insertion of overlayer pictures which will be used as an additional reference frame for the base layer picture |
+
+#### Color Description Options
+
+| **Configuration file parameter** | **Command line**           | **Range**  | **Default** | **Description**                                                                                                                          |
+|----------------------------------|----------------------------|------------|-------------|------------------------------------------------------------------------------------------------------------------------------------------|
+| **ColorPrimaries**               | --color-primaries          | [0-12, 22] | 2           | Color primaries, refer to the user guide Appendix A.2 for full details                                                                   |
+| **TransferCharacteristics**      | --transfer-characteristics | [0-22]     | 2           | Transfer characteristics, refer to the user guide Appendix A.2 for full details                                                          |
+| **MatrixCoefficients**           | --matrix-coefficients      | [0-14]     | 2           | Matrix coefficients, refer to the user guide Appendix A.2 for full details                                                               |
+| **ColorRange**                   | --color-range              | [0-1]      | 0           | Color range, [0: Studio, 1: Full]                                                                                                        |
+| **MasteringDisplay**             | --mastering-display        | any string | none        | Mastering display metadata in the format of "G(x,y)B(x,y)R(x,y)WP(x,y)L(max,min)", refer to the user guide Appendix A.2 for full details |
+| **ContentLightLevel**            | --content-light            | any string | none        | Set content light level in the format of "max_cll,max_fall", refer to the user guide Appendix A.2 for full details                       |
 
 ## Appendix A Encoder Parameters
 
@@ -348,9 +358,23 @@ Example: 72 core machine:
 
 ### 2. AV1 metadata
 
-MasteringDisplay (`--mastering-display`) and ContentLightLevel (`--content-light`) parameters are used to set the mastering display and content light level in the AV1 bitstream.
-MasteringDisplay takes the format of `G(x,y)B(x,y)R(x,y)WP(x,y)L(max,min)` where `G(x,y)` is the green channel of the mastering display, `B(x,y)` is the blue channel of the mastering display, `R(x,y)` is the red channel of the mastering display, `WP(x,y)` is the white point of the mastering display, and `L(max,min)` is the light level of the mastering display.
-the x and y values can be coordinates from 0.0 to 1.0 as specified in CIE 1931 while the min,max values can be floating point values representing candelas per square meter.
+Please see the subsection 6.4.2, 6.7.3, and 6.7.4 of the [AV1 Bitstream & Decoding Process Specification](https://aomediacodec.github.io/av1-spec/av1-spec.pdf) for more details on some of the expected values.
+
+`MasteringDisplay` (`--mastering-display`) and `ContentLightLevel` (`--content-light`) parameters are used to set the mastering display and content light level in the AV1 bitstream.
+
+`MasteringDisplay` takes the format of `G(x,y)B(x,y)R(x,y)WP(x,y)L(max,min)` where
+
+- `G(x,y)` is the green channel of the mastering display
+- `B(x,y)` is the blue channel of the mastering display
+- `R(x,y)` is the red channel of the mastering display
+- `WP(x,y)` is the white point of the mastering display
+- `L(max,min)` is the light level of the mastering display
+
+The `x` and `y` values can be coordinates from 0.0 to 1.0, as specified in CIE 1931 while the min,max values can be floating point values representing candelas per square meter, or nits.
+For the `max,min` values, they are generally specified in the range of 0.0 to 1.0, but there are no constraints on the provided values.
+Invalid values will be clipped accordingly.
+
+`ContentLightLevel` takes the format of `max_cll,max_fall` where both values are integers clipped into range of 0 to 65535.
 
 Examples:
 
