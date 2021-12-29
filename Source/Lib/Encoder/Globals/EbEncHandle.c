@@ -3820,7 +3820,7 @@ static EbErrorType verify_settings(
         return_error = EB_ErrorBadParameter;
     }
 
-if (scs_ptr->max_input_luma_width > 16384) {
+    if (scs_ptr->max_input_luma_width > 16384) {
         SVT_LOG("Error instance %u: Source Width must be less than 16384\n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
