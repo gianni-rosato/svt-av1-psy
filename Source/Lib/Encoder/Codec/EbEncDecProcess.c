@@ -855,7 +855,7 @@ EbErrorType ssim_calculations(PictureControlSet *pcs_ptr, SequenceControlSet *sc
 
         get_recon_pic(pcs_ptr, &recon_ptr, is_16bit);
         EbPictureBufferDesc *input_picture_ptr = (EbPictureBufferDesc *)
-                                                     pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr;
+                                                     pcs_ptr->parent_pcs_ptr->enhanced_unscaled_picture_ptr;
 
         EbByte    input_buffer;
         uint16_t *recon_coeff_buffer;
@@ -1026,11 +1026,11 @@ EbErrorType ssim_calculations(PictureControlSet *pcs_ptr, SequenceControlSet *sc
 
                 uint8_t *uncompressed_pics[3];
                 EB_MALLOC_ARRAY(uncompressed_pics[0],
-                                pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr->luma_size);
+                                pcs_ptr->parent_pcs_ptr->enhanced_unscaled_picture_ptr->luma_size);
                 EB_MALLOC_ARRAY(uncompressed_pics[1],
-                                pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr->chroma_size);
+                                pcs_ptr->parent_pcs_ptr->enhanced_unscaled_picture_ptr->chroma_size);
                 EB_MALLOC_ARRAY(uncompressed_pics[2],
-                                pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr->chroma_size);
+                                pcs_ptr->parent_pcs_ptr->enhanced_unscaled_picture_ptr->chroma_size);
 
                 svt_c_unpack_compressed_10bit(input_picture_ptr->buffer_bit_inc_y,
                                               input_picture_ptr->stride_bit_inc_y / 4,
@@ -1524,11 +1524,11 @@ EbErrorType psnr_calculations(PictureControlSet *pcs_ptr, SequenceControlSet *sc
 
                 uint8_t *uncompressed_pics[3];
                 EB_MALLOC_ARRAY(uncompressed_pics[0],
-                                pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr->luma_size);
+                                pcs_ptr->parent_pcs_ptr->enhanced_unscaled_picture_ptr->luma_size);
                 EB_MALLOC_ARRAY(uncompressed_pics[1],
-                                pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr->chroma_size);
+                                pcs_ptr->parent_pcs_ptr->enhanced_unscaled_picture_ptr->chroma_size);
                 EB_MALLOC_ARRAY(uncompressed_pics[2],
-                                pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr->chroma_size);
+                                pcs_ptr->parent_pcs_ptr->enhanced_unscaled_picture_ptr->chroma_size);
 
                 svt_c_unpack_compressed_10bit(input_picture_ptr->buffer_bit_inc_y,
                                               input_picture_ptr->stride_bit_inc_y / 4,

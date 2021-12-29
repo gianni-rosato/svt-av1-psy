@@ -50,12 +50,14 @@ EbErrorType av1_inter_prediction(
     EbPictureBufferDesc *ref_pic_list0, EbPictureBufferDesc *ref_pic_list1,
     EbPictureBufferDesc *prediction_ptr, uint16_t dst_origin_x, uint16_t dst_origin_y,
     uint32_t component_mask, uint8_t bit_depth, uint8_t is_16bit_pipeline);
-void av1_inter_prediction_light_pd0(MvUnit *mv_unit, uint16_t pu_origin_x, uint16_t pu_origin_y,
+void av1_inter_prediction_light_pd0(SequenceControlSet* scs_ptr,
+                                    MvUnit* mv_unit, struct ModeDecisionContext* md_context,
+                                    uint16_t pu_origin_x, uint16_t pu_origin_y,
                                     uint8_t bwidth, uint8_t bheight,
-                                    EbPictureBufferDesc *ref_pic_list0,
-                                    EbPictureBufferDesc *ref_pic_list1,
-                                    EbPictureBufferDesc *prediction_ptr, uint16_t dst_origin_x,
-                                    uint16_t dst_origin_y, uint8_t bit_depth);
+                                    EbPictureBufferDesc* ref_pic_list0,
+                                    EbPictureBufferDesc* ref_pic_list1,
+                                    EbPictureBufferDesc* prediction_ptr, uint16_t dst_origin_x,
+                                    uint16_t dst_origin_y, uint8_t bit_depth, ScaleFactors* sf0, ScaleFactors* sf1);
 
 void search_compound_diff_wedge(PictureControlSet *pcs_ptr, struct ModeDecisionContext *context_ptr,
                                 ModeDecisionCandidate *candidate_ptr);
