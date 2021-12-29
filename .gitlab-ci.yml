@@ -240,8 +240,8 @@ Linux (GCC 10, Tests, Static):
   variables:
     CC: gcc-10
     CXX: g++-10
-    EXTRA_CFLAGS: -Wno-error -g
-    EXTRA_CXXFLAGS: -Wno-error -g
+    EXTRA_CFLAGS: -g
+    EXTRA_CXXFLAGS: -g
     EXTRA_LDFLAGS: -static -static-libgcc -static-libstdc++
     EXTRA_CMAKE_FLAGS: -DBUILD_TESTING=ON -DBUILD_APPS=OFF
   artifacts:
