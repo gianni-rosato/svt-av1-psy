@@ -3829,6 +3829,12 @@ static EbErrorType verify_settings(
         SVT_LOG("Error instance %u: Source Height must be less than 8704)\n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
+
+    if (config->level != 0 && (config->level < 20 || config->level > 73)) {
+        SVT_LOG("Error instance %u: Level must be in the range of [2.0-7.3]\n", channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+
     if (config->qp > MAX_QP_VALUE) {
         SVT_LOG("Error instance %u: %s must be [0 - %d]\n", channel_number + 1, config->enable_tpl_la ? "CRF" : "QP", MAX_QP_VALUE);
         return_error = EB_ErrorBadParameter;

@@ -749,6 +749,10 @@ ConfigEntry config_entry_global_options[] = {
      "Bitstream profile number to use(0: main profile[default], 1: high profile, 2: professional "
      "profile) ",
      set_profile},
+    {SINGLE_INPUT,
+     LEVEL_TOKEN,
+     "Bitstream level to use [0: autodetect based on input [Default], 2.0-6.3]",
+     set_level},
     {SINGLE_INPUT, FRAME_RATE_TOKEN, "Stream frame rate, integer values only", set_frame_rate},
     {SINGLE_INPUT,
      FRAME_RATE_NUMERATOR_TOKEN,
@@ -777,7 +781,6 @@ ConfigEntry config_entry_global_options[] = {
      "Set injector frame rate (0 - 240), only applicable when"
      " --inj is set to 1",
      set_injector_frame_rate},
-    //{SINGLE_INPUT, LEVEL_TOKEN, "Level", set_level},
     {SINGLE_INPUT,
      HIERARCHICAL_LEVELS_TOKEN,
      "Set hierarchical levels (1 [2 temporal layers] - 5  [6 temporal layers] : 4 [default])",

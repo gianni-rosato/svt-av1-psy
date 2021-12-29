@@ -430,11 +430,17 @@ typedef struct EbSvtAv1EncConfiguration {
      *
      * Default is 0. */
     uint32_t tier;
-    /* Constraints for bitstream in terms of max bitrate and max buffer size.
+
+    /**
+     * @brief Bitstream level.
+     * 0: autodetect from bitstream, 20: level 2.0, 63: level 6.3, only levels 2.0-6.3 are properly defined.
+     * The levels are defined at https://aomediacodec.github.io/av1-spec/av1-spec.pdf
+     * under "A.3. Levels".
      *
-     * 0 = auto determination.
-     *
-     * Default is 0. */
+     * Min is 0.
+     * Max is 73.
+     * Default is 0.
+     */
     uint32_t level;
 
     /* CPU FLAGS to limit assembly instruction set used by encoder.

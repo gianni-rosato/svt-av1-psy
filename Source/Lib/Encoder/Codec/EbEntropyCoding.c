@@ -130,7 +130,10 @@ static void set_bitstream_level_tier(SequenceControlSet *scs_ptr) {
     // rate, etc. that are not covered by this function.
 
     BitstreamLevel bl = {9, 3};
-    if (does_level_match(scs_ptr->seq_header.max_frame_width,
+    if (scs_ptr->static_config.level) {
+        bl.major = scs_ptr->static_config.level / 10 % 10;
+        bl.minor = scs_ptr->static_config.level % 10;
+    } else if (does_level_match(scs_ptr->seq_header.max_frame_width,
                          scs_ptr->seq_header.max_frame_height,
                          (scs_ptr->frame_rate >> 16),
                          512,
