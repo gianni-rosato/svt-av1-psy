@@ -1158,26 +1158,29 @@ void fast_loop_core_light_pd0(ModeDecisionCandidateBuffer *candidate_buffer,
         assert(rf[1] == NONE_FRAME);
 
         EbPictureBufferDesc *ref_pic;
-
         const int8_t ref_idx_first  = get_ref_frame_idx(rf[0]);
         const int8_t list_idx_first = get_list_idx(rf[0]);
         int32_t      ref_origin_index;
+        int16_t      mv_x, mv_y;
 
+        EbReferenceObject* ref_obj = (EbReferenceObject*)pcs_ptr->ref_pic_ptr_array[list_idx_first][ref_idx_first]->object_ptr;
         if (list_idx_first == 0) {
             ref_pic = get_ref_pic_buffer(pcs_ptr, context_ptr->hbd_mode_decision, 0, ref_idx_first);
-            ref_origin_index = ref_pic->origin_x +
-                (context_ptr->blk_origin_x + (candidate_ptr->motion_vector_xl0 >> 3)) +
-                (context_ptr->blk_origin_y + (candidate_ptr->motion_vector_yl0 >> 3) +
-                 ref_pic->origin_y) *
-                    ref_pic->stride_y;
+            mv_x = candidate_ptr->motion_vector_xl0 >> 3;
+            mv_y = candidate_ptr->motion_vector_yl0 >> 3;
         } else {
             ref_pic = get_ref_pic_buffer(pcs_ptr, context_ptr->hbd_mode_decision, 1, ref_idx_first);
-            ref_origin_index = ref_pic->origin_x +
-                (context_ptr->blk_origin_x + (candidate_ptr->motion_vector_xl1 >> 3)) +
-                (context_ptr->blk_origin_y + (candidate_ptr->motion_vector_yl1 >> 3) +
-                 ref_pic->origin_y) *
-                    ref_pic->stride_y;
+            mv_x = candidate_ptr->motion_vector_xl1 >> 3;
+            mv_y = candidate_ptr->motion_vector_yl1 >> 3;
         }
+
+        // -------
+        // Use scaled references if resolution of the reference is different from that of the input
+        // -------
+        use_scaled_rec_refs_if_needed(pcs_ptr, input_picture_ptr, ref_obj, &ref_pic, context_ptr->hbd_mode_decision);
+        ref_origin_index = ref_pic->origin_x +
+            (context_ptr->blk_origin_x + mv_x) +
+            (context_ptr->blk_origin_y + mv_y + ref_pic->origin_y) * ref_pic->stride_y;
 
         EbSpatialFullDistType spatial_full_dist_type_fun = context_ptr->hbd_mode_decision
             ? svt_full_distortion_kernel16_bits
@@ -2771,7 +2774,7 @@ int md_subpel_search(PictureControlSet *pcs_ptr, ModeDecisionContext *context_pt
 }
 // Copy ME_MVs (generated @ PA) from input buffer (pcs_ptr-> .. ->me_results) to local
 // MD buffers (context_ptr->sb_me_mv) - simplified for LPD1
-void read_refine_me_mvs_light_pd1(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr) {
+void read_refine_me_mvs_light_pd1(PictureControlSet *pcs_ptr, EbPictureBufferDesc *input_picture_ptr, ModeDecisionContext *context_ptr) {
     // derive me offsets
     context_ptr->geom_offset_x = 0;
     context_ptr->geom_offset_y = 0;
@@ -2797,6 +2800,12 @@ void read_refine_me_mvs_light_pd1(PictureControlSet *pcs_ptr, ModeDecisionContex
 
             if (is_me_data_present(context_ptr, me_results, list_idx, ref_idx)) {
                 EbPictureBufferDesc *ref_pic = get_ref_pic_buffer(pcs_ptr, 0, list_idx, ref_idx);
+                EbReferenceObject* ref_obj = (EbReferenceObject*)pcs_ptr->ref_pic_ptr_array[list_idx][ref_idx]->object_ptr;
+                // -------
+                // Use scaled references if resolution of the reference is different from that of the input
+                // -------
+                use_scaled_rec_refs_if_needed(pcs_ptr, input_picture_ptr, ref_obj, &ref_pic, context_ptr->hbd_mode_decision);
+
                 int16_t me_mv_x;
                 int16_t me_mv_y;
                 if (list_idx == 0) {
@@ -6672,6 +6681,7 @@ COMPONENT_TYPE chroma_complexity_check(PictureControlSet *pcs_ptr, ModeDecisionC
     in chroma, and chroma should be performed. */
     if (candidate_ptr->type == INTER_MODE) {
         EbPictureBufferDesc *ref_pic;
+        EbReferenceObject *ref_obj;
         int16_t              mv_x, mv_y;
         MvReferenceFrame     rf[2];
         av1_set_ref_frame(rf, candidate_ptr->ref_frame_type);
@@ -6679,14 +6689,20 @@ COMPONENT_TYPE chroma_complexity_check(PictureControlSet *pcs_ptr, ModeDecisionC
 
         if (candidate_ptr->prediction_direction[0] == UNI_PRED_LIST_0 ||
             candidate_ptr->prediction_direction[0] == BI_PRED) {
+            ref_obj = (EbReferenceObject*)pcs_ptr->ref_pic_ptr_array[0][ref_idx_first]->object_ptr;
             ref_pic = get_ref_pic_buffer(pcs_ptr, context_ptr->hbd_mode_decision, 0, ref_idx_first);
             mv_x = candidate_ptr->motion_vector_xl0 >> 3;
             mv_y = candidate_ptr->motion_vector_yl0 >> 3;
         } else {
+            ref_obj = (EbReferenceObject*)pcs_ptr->ref_pic_ptr_array[1][ref_idx_first]->object_ptr;
             ref_pic = get_ref_pic_buffer(pcs_ptr, context_ptr->hbd_mode_decision, 1, ref_idx_first);
             mv_x = candidate_ptr->motion_vector_xl1 >> 3;
             mv_y = candidate_ptr->motion_vector_yl1 >> 3;
         }
+        // -------
+        // Use scaled references if resolution of the reference is different from that of the input
+        // -------
+        use_scaled_rec_refs_if_needed(pcs_ptr, input_picture_ptr, ref_obj, &ref_pic, context_ptr->hbd_mode_decision);
 
         uint32_t src_y_offset = ref_pic->origin_x + context_ptr->blk_origin_x + mv_x +
             (ref_pic->origin_y + context_ptr->blk_origin_y + mv_y) * ref_pic->stride_y;
@@ -9477,7 +9493,7 @@ void md_encode_block_light_pd1(PictureControlSet *pcs_ptr, ModeDecisionContext *
         : 0;
     // Read and (if needed) perform 1/8 Pel ME MVs refinement
     if (pcs_ptr->slice_type != I_SLICE)
-        read_refine_me_mvs_light_pd1(pcs_ptr, context_ptr);
+        read_refine_me_mvs_light_pd1(pcs_ptr, input_picture_ptr, context_ptr);
     generate_md_stage_0_cand_light_pd1(
         context_ptr->sb_ptr, context_ptr, &fast_candidate_total_count, pcs_ptr);
 
