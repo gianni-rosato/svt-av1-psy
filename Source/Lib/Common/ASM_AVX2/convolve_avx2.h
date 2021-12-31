@@ -983,7 +983,7 @@ static INLINE void x_convolve_2tap_32_avx2(const uint8_t *const src, const __m25
 }
 
 static INLINE __m128i x_convolve_4tap_2x2_ssse3(const uint8_t *const src, const ptrdiff_t stride,
-                                                const __m128i coeffs[1]) {
+                                                const __m128i coeffs[2]) {
     const __m128i sfl0 = _mm_setr_epi8(0, 1, 1, 2, 8, 9, 9, 10, 0, 0, 0, 0, 0, 0, 0, 0);
     const __m128i sfl1 = _mm_setr_epi8(2, 3, 3, 4, 10, 11, 11, 12, 0, 0, 0, 0, 0, 0, 0, 0);
     const __m128i s    = load_u8_8x2_sse2(src, stride);
@@ -995,7 +995,7 @@ static INLINE __m128i x_convolve_4tap_2x2_ssse3(const uint8_t *const src, const 
 }
 
 static INLINE __m128i x_convolve_4tap_4x2_ssse3(const uint8_t *const src, const ptrdiff_t stride,
-                                                const __m128i coeffs[1]) {
+                                                const __m128i coeffs[2]) {
     const __m128i s    = load_u8_8x2_sse2(src, stride);
     const __m128i sfl0 = _mm_setr_epi8(0, 1, 1, 2, 2, 3, 3, 4, 8, 9, 9, 10, 10, 11, 11, 12);
     const __m128i sfl1 = _mm_setr_epi8(2, 3, 3, 4, 4, 5, 5, 6, 10, 11, 11, 12, 12, 13, 13, 14);
@@ -1477,7 +1477,7 @@ static INLINE void xy_y_convolve_2tap_half_pel_32_all_avx2(const int16_t *const 
 }
 
 static INLINE __m128i xy_y_convolve_4tap_2x2_sse2(const int16_t *const src, __m128i s_32[4],
-                                                  __m128i ss_128[2], const __m128i coeffs[1]) {
+                                                  __m128i ss_128[2], const __m128i coeffs[2]) {
     s_32[3]             = _mm_cvtsi32_si128(*(int32_t *)(src + 3 * 2));
     const __m128i src23 = _mm_unpacklo_epi32(s_32[2], s_32[3]);
     s_32[2]             = _mm_cvtsi32_si128(*(int32_t *)(src + 4 * 2));
