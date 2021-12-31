@@ -148,7 +148,7 @@ The encoder parameters present in the `Sample.cfg` file are listed in this table
 | **ErrorFile**                    | --errlog           | any string | `stderr`    | Error file path                                                                                                 |
 | **ReconFile**                    | -o                 | any string | None        | Reconstructed yuv file path                                                                                     |
 | **StatFile**                     | --stat-file        | any string | None        | PSNR / SSIM per picture stat output file path, requires `--enable-stat-report 1`                                |
-| **PredStructFile**               | --pred-struct-file | any string | None        | Manual prediction structure filepath                                                                            |
+| **PredStructFile**               | --pred-struct-file | any string | None        | Manual prediction structure file path                                                                           |
 | **Progress**                     | --progress         | [0-2]      | 1           | Verbosity of the output [0: no progress is printed, 2: aomenc style output]                                     |
 | **NoProgress**                   | --no-progress      | [0-1]      | 0           | Do not print out progress [1: `--progress 0`, 0: `--progress 1`]                                                |
 | **EncoderMode**                  | --preset           | [-2-13]    | 12          | Encoder preset, presets < 0 are for debugging. Higher presets means faster encodes, but with a quality tradeoff |
@@ -158,8 +158,8 @@ The encoder parameters present in the `Sample.cfg` file are listed in this table
 
 | **Configuration file parameter** | **Command line**            | **Range**                      | **Default** | **Description**                                                                                               |
 |----------------------------------|-----------------------------|--------------------------------|-------------|---------------------------------------------------------------------------------------------------------------|
-| **SourceWidth**                  | -w                          | [64-16384]                     | None        | Frame width in pixels, infered if y4m.                                                                        |
-| **SourceHeight**                 | -h                          | [64-8704]                      | None        | Frame width in pixels, infered if y4m.                                                                        |
+| **SourceWidth**                  | -w                          | [64-16384]                     | None        | Frame width in pixels, inferred if y4m.                                                                       |
+| **SourceHeight**                 | -h                          | [64-8704]                      | None        | Frame width in pixels, inferred if y4m.                                                                       |
 | **FrameToBeEncoded**             | -n                          | [0-`(2^63)-1`]                 | 0           | Number of frames to encode. If `n` is larger than the input, the encoder will loop back and continue encoding |
 | **BufferedInput**                | --nb                        | [-1, 1-`(2^31)-1`]             | -1          | Buffer `n` input frames into memory and use them to encode                                                    |
 | **EncoderColorFormat**           | --color-format              | [0-3]                          | 1           | Color format, only yuv420 is supported at this time [0: yuv400, 1: yuv420, 2: yuv422, 3: yuv444]              |
@@ -176,7 +176,7 @@ The encoder parameters present in the `Sample.cfg` file are listed in this table
 | **InjectorFrameRate**            | --inj-frm-rt                | [0-240]                        | 60          | Set injector frame rate, only applicable with `--inj 1`                                                       |
 | **HierarchicalLevels**           | --hierarchical-levels       | [3-5]                          | 4           | Set hierarchical levels beyond the base layer [3: 4 temporal layers, 5: 6 temporal layers]                    |
 | **PredStructure**                | --pred-struct               | [0-2]                          | 2           | Set prediction structure [1: low delay, 2: random access]                                                     |
-| **StatReport**                   | --enable-stat-report        | [0-1]                          | 0           | Calculates and outputs PSNR SSIM metrics at the end of the encode                                             |
+| **StatReport**                   | --enable-stat-report        | [0-1]                          | 0           | Calculates and outputs PSNR SSIM metrics at the end of encoding                                               |
 | **Asm**                          | --asm                       | [0-11, c-max]                  | max         | Limit assembly instruction set [c, mmx, sse, sse2, sse3, ssse3, sse4_1, sse4_2, avx, avx2, avx512, max]       |
 | **LogicalProcessorNumber**       | --lp                        | [0, core count of the machine] | 0           | Target number of logical cores to be used. 0 means all. Refer to Appendix A.1                                 |
 | **UnpinExecution**               | --unpin                     | [0-1]                          | 1           | unpin the execution from a socket. Overwritten to 0 when `--ss` is set. Refer to Appendix A.1                 |
@@ -188,12 +188,12 @@ The encoder parameters present in the `Sample.cfg` file are listed in this table
 | **Configuration file parameter** | **Command line**                 | **Range**      | **Default**     | **Description**                                                                                                      |
 |----------------------------------|----------------------------------|----------------|-----------------|----------------------------------------------------------------------------------------------------------------------|
 | **RateControlMode**              | --rc                             | [0-2]          | 0               | Rate control mode [0: CRF or CQP (if `--enable-tpl-la` is 0) [Default], 1: VBR, 2: CBR]                              |
-| **QP**                           | --qp                             | [1-63]         | 50              | Initial qp level value                                                                                               |
+| **QP**                           | --qp                             | [1-63]         | 50              | Initial QP level value                                                                                               |
 | **CRF**                          | --crf                            | [0-63]         | 50              | Constant Rate Factor value, setting this value is equal to `--rc 0 --enable-tpl-la 1 --qp x`                         |
 | **TargetBitRate**                | --tbr                            | [1-4294967]    | 7000            | Target Bitrate (kbps), only applicable for VBR and CBR encoding                                                      |
 | **MaximumBitRate**               | --mbr                            | [1-4294967]    | 0               | Maximum Bitrate (kbps) only applicable for CRF and VBR encoding                                                      |
-| **UseQpFile**                    | --use-q-file                     | [0-1]          | 0               | Overwrite the encoder default picture based QP assignments and use qp values from `--qp-file`                        |
-| **QpFile**                       | --qpfile                         | any string     | Null            | Path to a file containing per picture qp value                                                                       |
+| **UseQpFile**                    | --use-q-file                     | [0-1]          | 0               | Overwrite the encoder default picture based QP assignments and use QP values from `--qp-file`                        |
+| **QpFile**                       | --qpfile                         | any string     | Null            | Path to a file containing per picture QP value                                                                       |
 | **MaxQpAllowed**                 | --max-qp                         | [1-63]         | Null            | Maximum (highest) quantizer [1-63] only applicable when `--rc` > 0                                                   |
 | **MinQpAllowed**                 | --min-qp                         | [1-63]         | Null            | Minimum (lowest) quantizer [1-63] only applicable when `--rc` > 0                                                    |
 | **AdaptiveQuantization**         | --aq-mode                        | [0-2]          | 2               | Set adaptive QP level [0: off, 1: variance base using AV1 segments, 2: deltaq pred efficiency]                       |
@@ -203,8 +203,8 @@ The encoder parameters present in the `Sample.cfg` file are listed in this table
 | **KeyFrameQIndexOffset**         | --key-frame-qindex-offset        | [-256-255]     | 0               | Overwrite the encoder default keyframe Q index assignment                                                            |
 | **ChromaQIndexOffsets**          | --chroma-qindex-offsets          | any string     | `0,0,..,0`      | list of chroma Q index offsets per hierarchical layer, separated by `,` with each offset in the range of [-256-255]  |
 | **KeyFrameChromaQIndexOffset**   | --key-frame-chroma-qindex-offset | [-256-255]     | 0               | Overwrite the encoder default chroma keyframe Q index assignment                                                     |
-| **UnderShootPct**                | --undershoot-pct                 | [0-100]        | 25              | Alowable datarate undershoot (min) target (%), default depends on the ratecontrol mode                               |
-| **OverShootPct**                 | --overshoot-pct                  | [0-100]        | 25              | Alowable datarate overshoot (max) target (%), default depends on the ratecontrol mode                                |
+| **UnderShootPct**                | --undershoot-pct                 | [0-100]        | 25              | Allowable datarate undershoot (min) target (%), default depends on the rate control mode                             |
+| **OverShootPct**                 | --overshoot-pct                  | [0-100]        | 25              | Allowable datarate overshoot (max) target (%), default depends on the rate control mode                              |
 | **BufSz**                        | --buf-sz                         | [0-`(2^63)-1`] | 6000            | Client buffer size (ms), only applicable for CBR                                                                     |
 | **BufInitialSz**                 | --buf-initial-sz                 | [0-`(2^63)-1`] | 4000            | Client initial buffer size (ms), only applicable for CBR                                                             |
 | **BufOptimalSz**                 | --buf-optimal-sz                 | [0-`(2^63)-1`] | 5000            | Client optimal buffer size (ms), only applicable for CBR                                                             |
@@ -224,7 +224,7 @@ The final qindex value will be clamped within the valid min/max qindex range.
 For chroma plane, after deciding the qindex for the luma plane, the corresponding chroma qindex offsets are added on top of the luma plane qindex based on frame types and temporal layer id.
 
 `--qindex-offsets` and `--chroma-qindex-offsets` have to be used after the `--hierarchical-levels` parameter.
-The number of qindex offsets should be `HierarchicalLevels` plus 1 and they can be encosed in `[]` to separate the list.
+The number of qindex offsets should be `HierarchicalLevels` plus 1, and they can be enclosed in `[]` to separate the list.
 
 An example command line is:
 
@@ -300,9 +300,9 @@ For this command line, corresponding qindex values are:
 | **EnableTPLModel**               | --enable-tpl-la                | [0-1]     | 1           | Temporal Dependency model control, only applicable when `--rc` is set to 0                                                |
 | **Mfmv**                         | --enable-mfmv                  | [-1-1]    | -1          | Motion Field Motion Vector control, [-1: auto]                                                                            |
 | **ScreenContentMode**            | --scm                          | [0-2]     | 2           | Set screen content detection level, 0: off, 1: on, 2: content adaptive                                                    |
-| **UnrestrictedMotionVector**     | --umv                          | [0-1]     | 1           | Allow motion vectors to reach outside of the picture boundary                                                             |
+| **UnrestrictedMotionVector**     | --umv                          | [0-1]     | 1           | Allow motion vectors to reach outside the picture boundary                                                                |
 | **FilmGrain**                    | --film-grain                   | [0-50]    | 0           | Enable film grain, 0: off, 1-50: level of denoising for film grain                                                        |
-| **AltRefLevel**                  | --tf-level                     | [-1-1]    | -1          | Set remporal filtering control, [-1: auto]                                                                                |
+| **AltRefLevel**                  | --tf-level                     | [-1-1]    | -1          | Set temporal filtering control, [-1: auto]                                                                                |
 | **EnableOverlays**               | --enable-overlays              | [0-1]     | 0           | Enable the insertion of overlayer pictures which will be used as an additional reference frame for the base layer picture |
 | **SuperresMode**                 | --superres-mode                | [0-4]     | 0           | Enable super-resolution mode, refer to the super-resolution section below for more info                                   |
 | **SuperresDenom**                | --superres-denom               | [8-16]    | 8           | Super-resolution denominator, only applicable for mode == 1 [8: no scaling, 16: half-scaling]                             |
@@ -325,7 +325,7 @@ the original resolution by the decoder.
 | 4                | Automatically select the super-resolution mode for appropriate frames                                                       |
 
 The performance of the encoder will be affected for all modes other than 0, and for mode 4, it should be noted that
-the encoder will at least twice, one for downscaling, and another with no scaling, and then it will choose the best
+the encoder will at least twice, one for down scaling, and another with no scaling, and then it will choose the best
 one for each of the appropriate frames.
 
 For more information on the decision-making process,
@@ -346,23 +346,23 @@ please look at [section 2.2 of the super-resolution doc](./Appendix-Super-Resolu
 
 ### 1. Thread management parameters
 
-LogicalProcessorNumber (`--lp`) and TargetSocket (`--ss`) parameters are used to management thread affinity on Windows and Ubuntu OS. These are some examples how you use them together.
+`LogicalProcessorNumber` (`--lp`) and `TargetSocket` (`--ss`) parameters are used to management thread affinity on Windows and Ubuntu OS. These are some examples how you use them together.
 
-If LogicalProcessorNumber and TargetSocket are not set, threads are managed by OS thread scheduler.
+If `LogicalProcessorNumber` and `TargetSocket` are not set, threads are managed by OS thread scheduler.
 
 `SvtAv1EncApp.exe -i in.yuv -w 3840 -h 2160 --lp 40`
 
-If only LogicalProcessorNumber is set, threads run on 40 logical processors. Threads may run on dual sockets if 40 is larger than logical processor number of a socket.
+If only `LogicalProcessorNumber` is set, threads run on 40 logical processors. Threads may run on dual sockets if 40 is larger than logical processor number of a socket.
 
 NOTE: On Windows, thread affinity can be set only by group on system with more than 64 logical processors. So, if 40 is larger than logical processor number of a single socket, threads run on all logical processors of both sockets.
 
 `SvtAv1EncApp.exe -i in.yuv -w 3840 -h 2160 --ss 1`
 
-If only TargetSocket is set, threads run on all the logical processors of socket 1.
+If only `TargetSocket` is set, threads run on all the logical processors of socket 1.
 
 `SvtAv1EncApp.exe -i in.yuv -w 3840 -h 2160 --lp 20 --ss 0`
 
-If both LogicalProcessorNumber and TargetSocket are set, threads run on 20 logical processors of socket 0. Threads guaranteed to run only on socket 0 if 20 is larger than logical processor number of socket 0.
+If both `LogicalProcessorNumber` and `TargetSocket` are set, threads run on 20 logical processors of socket 0. Threads guaranteed to run only on socket 0 if 20 is larger than logical processor number of socket 0.
 
 The (`-unpin`) option allows the user to pin/unpin the execution to/from a specific number of cores.
 
@@ -384,7 +384,7 @@ Example: 72 core machine:
 
 ### 2. AV1 metadata
 
-Please see the subsection 6.4.2, 6.7.3, and 6.7.4 of the [AV1 Bitstream & Decoding Process Specification](https://aomediacodec.github.io/av1-spec/av1-spec.pdf) for more details on some of the expected values.
+Please see the subsection 6.4.2, 6.7.3, and 6.7.4 of the [AV1 Bitstream & Decoding Process Specification](https://aomediacodec.github.io/av1-spec/av1-spec.pdf) for more details on some expected values.
 
 `MasteringDisplay` (`--mastering-display`) and `ContentLightLevel` (`--content-light`) parameters are used to set the mastering display and content light level in the AV1 bitstream.
 
@@ -400,7 +400,7 @@ The `x` and `y` values can be coordinates from 0.0 to 1.0, as specified in CIE 1
 For the `max,min` values, they are generally specified in the range of 0.0 to 1.0, but there are no constraints on the provided values.
 Invalid values will be clipped accordingly.
 
-`ContentLightLevel` takes the format of `max_cll,max_fall` where both values are integers clipped into range of 0 to 65535.
+`ContentLightLevel` takes the format of `max_cll,max_fall` where both values are integers clipped into a range of 0 to 65535.
 
 Examples:
 
