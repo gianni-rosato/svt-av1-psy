@@ -304,6 +304,32 @@ For this command line, corresponding qindex values are:
 | **FilmGrain**                    | --film-grain                   | [0-50]    | 0           | Enable film grain, 0: off, 1-50: level of denoising for film grain                                                        |
 | **AltRefLevel**                  | --tf-level                     | [-1-1]    | -1          | Set remporal filtering control, [-1: auto]                                                                                |
 | **EnableOverlays**               | --enable-overlays              | [0-1]     | 0           | Enable the insertion of overlayer pictures which will be used as an additional reference frame for the base layer picture |
+| **SuperresMode**                 | --superres-mode                | [0-4]     | 0           | Enable super-resolution mode, refer to the super-resolution section below for more info                                   |
+| **SuperresDenom**                | --superres-denom               | [8-16]    | 8           | Super-resolution denominator, only applicable for mode == 1 [8: no scaling, 16: half-scaling]                             |
+| **SuperresKfDenom**              | --superres-kf-denom            | [8-16]    | 8           | Super-resolution denominator for key frames, only applicable for mode == 1 [8: no scaling, 16: half-scaling]              |
+| **SuperresQthres**               | --superres-qthres              | [0-63]    | 43          | Super-resolution q-threshold, only applicable for mode == 3                                                               |
+| **SuperresKfQthres**             | --superres-kf-qthres           | [0-63]    | 43          | Super-resolution q-threshold for key frames, only applicable for mode == 3                                                |
+
+##### **Super-Resolution**
+
+Super resolution is better described in [the Super-Resolution documentation](./Appendix-Super-Resolution.md), but
+this basically allows the input to be encoded at a lower resolution, horizontally, but then later upscaled back to
+the original resolution by the decoder.
+
+| **SuperresMode** | **Value**                                                                                                                   |
+|------------------|-----------------------------------------------------------------------------------------------------------------------------|
+| 0                | None, no frame super-resolution allowed                                                                                     |
+| 1                | All frames are encoded at the specified scale of 8/`denom`, thus a `denom` of 8 means no scaling, and 16 means half-scaling |
+| 2                | All frames are coded at a random scale                                                                                      |
+| 3                | Super-resolution scale for a frame is determined based on the q_index, a qthreshold of 63 means no scaling                  |
+| 4                | Automatically select the super-resolution mode for appropriate frames                                                       |
+
+The performance of the encoder will be affected for all modes other than 0, and for mode 4, it should be noted that
+the encoder will at least twice, one for downscaling, and another with no scaling, and then it will choose the best
+one for each of the appropriate frames.
+
+For more information on the decision-making process,
+please look at [section 2.2 of the super-resolution doc](./Appendix-Super-Resolution.md#22-determination-of-the-downscaling-factor)
 
 #### Color Description Options
 
