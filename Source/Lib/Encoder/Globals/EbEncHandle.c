@@ -3724,11 +3724,6 @@ void copy_api_from_app(
     scs_ptr->static_config.tf_level = config_struct->tf_level;
     scs_ptr->static_config.enable_overlays = config_struct->enable_overlays;
 
-    if (config_struct->pass > 0 && scs_ptr->static_config.enable_overlays) {
-        SVT_WARN("2 pass encode for overlays is not supported, enable_overlays is set to 0\n");
-        scs_ptr->static_config.enable_overlays = 0;
-    }
-
     scs_ptr->static_config.superres_mode = config_struct->superres_mode;
     scs_ptr->static_config.superres_denom = config_struct->superres_denom;
     scs_ptr->static_config.superres_kf_denom = config_struct->superres_kf_denom;
@@ -4131,6 +4126,21 @@ static EbErrorType verify_settings(
         return_error = EB_ErrorBadParameter;
     }
 
+    if (config->pass > 0 && scs_ptr->static_config.enable_overlays) {
+        SVT_WARN("The overlay frames feature is currently not supported with multi-pass encoding\n");
+        return_error = EB_ErrorBadParameter;
+    }
+    int pass = config->pass;
+
+    if (pass != 3 && pass != 2 && pass != 1 && pass != 0) {
+        SVT_LOG("Error instance %u: %d pass encode is not supported. --pass has a range of [0-3]\n", channel_number + 1, pass);
+        return_error = EB_ErrorBadParameter;
+    }
+
+    if (config->intra_refresh_type != 2 && pass > 0) {
+        SVT_LOG("Error instance %u: Multi-pass encode only supports closed-gop configurations.\n", channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
 
     /* Warnings about the use of features that are incomplete */
 
@@ -4158,6 +4168,10 @@ static EbErrorType verify_settings(
 
     if (config->film_grain_denoise_strength > 0 && config->enc_mode > 3) {
         SVT_WARN("It is recommended to not use Film Grain for presets greater than 3 as it produces a significant compute overhead. This combination should only be used for debug purposes.\n");
+    }
+
+    if (config->pred_structure == 1) {
+        SVT_WARN("The Low Delay encoding mode is a work-in-progress projects, and is only available for demos, experimentation , and further development uses and should not be used for benchmarking until fully implemented.\n");
     }
 
 

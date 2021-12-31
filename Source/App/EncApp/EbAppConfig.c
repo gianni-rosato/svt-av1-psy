@@ -50,8 +50,6 @@
 #define PASS_TOKEN "--pass"
 #define TWO_PASS_STATS_TOKEN "--stats"
 #define PASSES_TOKEN "--passes"
-#define INPUT_STAT_FILE_TOKEN "-input-stat-file"
-#define OUTPUT_STAT_FILE_TOKEN "-output-stat-file"
 #define STAT_FILE_TOKEN "-stat-file"
 #define INPUT_PREDSTRUCT_FILE_TOKEN "-pred-struct-file"
 #define WIDTH_TOKEN "-w"
@@ -1770,24 +1768,7 @@ static EbErrorType verify_settings(EbConfig *config, uint32_t channel_number) {
                 channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
-
-
     int pass = config->config.pass;
-    if (pass != 3 && pass != 2 && pass != 1 && pass != 0 && pass != DEFAULT) {
-        fprintf(config->error_log_file,
-                "Error instance %u: %d pass encode is not supported\n",
-                channel_number + 1,
-                config->config.pass);
-        return EB_ErrorBadParameter;
-    }
-
-    if (pass != DEFAULT && (config->input_stat_file || config->output_stat_file)) {
-        fprintf(
-            config->error_log_file,
-            "Error instance %u: --pass can't work with -input-stat-file or -output-stat-file \n",
-            channel_number + 1);
-        return EB_ErrorBadParameter;
-    }
 
     if ((pass != DEFAULT || config->input_stat_file || config->output_stat_file) &&
         channel_number > 0) {
@@ -1795,29 +1776,6 @@ static EbErrorType verify_settings(EbConfig *config, uint32_t channel_number) {
                 "Error instance %u: 2 pass encode for multi instance is not supported\n",
                 channel_number + 1);
         return EB_ErrorBadParameter;
-    }
-    if (pass != DEFAULT || config->input_stat_file || config->output_stat_file) {
-        if (config->config.hierarchical_levels < 2) {
-            fprintf(
-                config->error_log_file,
-                "Error instance %u: 2 pass encode for hierarchical_levels %u is not supported\n",
-                channel_number + 1,
-                config->config.hierarchical_levels);
-            return EB_ErrorBadParameter;
-        }
-        if (pass > 0 && config->config.enable_overlays) {
-            fprintf(config->error_log_file,
-                    "Error instance %u: 2 pass encode for overlays is not supported\n",
-                    channel_number + 1);
-            return EB_ErrorBadParameter;
-        }
-        if (config->config.intra_refresh_type != 2) {
-            fprintf(config->error_log_file,
-                    "Error instance %u: 2 pass encode for intra_refresh_type %u is not supported\n",
-                    channel_number + 1,
-                    config->config.intra_refresh_type);
-            return EB_ErrorBadParameter;
-        }
     }
 
     return return_error;
@@ -2048,15 +2006,13 @@ static EbBool check_two_pass_conflicts(int32_t argc, char *const argv[]) {
     char        config_string[COMMAND_LINE_MAX_SIZE];
     const char *conflicts[] = {
         PASS_TOKEN,
-        INPUT_STAT_FILE_TOKEN,
-        OUTPUT_STAT_FILE_TOKEN,
         NULL,
     };
     int         i = 0;
     const char *token;
     while ((token = conflicts[i])) {
         if (find_token(argc, argv, token, config_string) == 0) {
-            fprintf(stderr, "--passes 2 conflicts with %s\n", token);
+            fprintf(stderr, "[SVT-Error]: --passes is not accepted in combination with %s\n", token);
             return EB_TRUE;
         }
         i++;
@@ -2081,9 +2037,13 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncPass enc_pass[MAX_ENC_P
             fprintf(stderr, "Error: The rate control mode must be [0 - 2] \n");
             return 0;
         }
+        if (rc_mode == 2){
+            fprintf(stderr, "[SVT-Warning]: CBR Rate control is currently not supported, switching to VBR \n");
+            rc_mode = 1;
+        }
     }
 
-    int32_t passes = rc_mode ? -1 : 1;
+    int32_t passes = -1;
     int using_fifo = 0;
 
     if (find_token(argc, argv, INPUT_FILE_LONG_TOKEN, config_string) == 0 ||
@@ -2123,12 +2083,12 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncPass enc_pass[MAX_ENC_P
         find_token(argc, argv, "--keyint", config_string) == 0) {
         ip = strtol(config_string, NULL, 0);
         if ((ip < -2 || ip > 2 * ((1 << 30) - 1)) && rc_mode == 0) {
-            fprintf(stderr, "Error: The intra period must be [-2, 2^31-2]  \n");
+            fprintf(stderr, "[SVT-Error]: The intra period must be [-2, 2^31-2]  \n");
             return 0;
         }
         if ((ip < 0) && rc_mode >= 1) {
             fprintf(
-                stderr, "Error: The intra period must be > 0 for RateControlMode %d \n", rc_mode);
+                stderr, "[SVT-Error]: The intra period must be > 0 for RateControlMode %d \n", rc_mode);
             return 0;
         }
     }
@@ -2137,59 +2097,53 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncPass enc_pass[MAX_ENC_P
         passes = strtol(config_string, NULL, 0);
         if (passes == 0 || passes > 2) {
             fprintf(stderr,
-                    "Error: The number of passes has to be within the range [1,%u]\n",
-                    (uint32_t)2);
+                    "[SVT-Error]: The number of passes has to be within the range [1,2], 2 being multi-pass encoding\n");
             return 0;
         }
     }
+
+    if (passes != -1 && check_two_pass_conflicts(argc, argv))
+        return 0;
+
+    // set default passes to 1 if not specified by the user
+    passes = (passes == -1) ? 1 : passes;
+
     if (using_fifo && passes > 1) {
         fprintf(stderr,
-                "Warning: The number of passes has to be 1 when using a fifo, using 1-pass\n");
+                "[SVT-Warning]: The number of passes has to be 1 when using a fifo, using 1-pass\n");
         *multi_pass_mode = SINGLE_PASS;
         passes           = 1;
     }
     // Determine the number of passes in CRF mode
     if (rc_mode == 0) {
-        if (passes == -1)
-            passes = (enc_mode <= ENC_M7) ? 2 : 1;
         if (ip > -1 && ip < 16) {
             passes = 1;
             fprintf(stderr,
-                    "\nWarning: Multipass CRF is not supported for Intra_period %d. Switching to "
+                    "[SVT-Warning]: Multipass CRF is not supported for Intra_period %d. Switching to "
                     "1-pass encoding\n\n",
                     ip);
         }
         *multi_pass_mode = passes == 2 ? TWO_PASS_IPP_FINAL : SINGLE_PASS;
     }
     // Determine the number of passes in rate control mode
-    else {
-        if (passes == -1) {
-            enc_pass[0]      = ENC_SINGLE_PASS;
-            *multi_pass_mode = SINGLE_PASS;
-            return 1;
-        }
+    else if (rc_mode == 1) {
         if (passes == 1)
             *multi_pass_mode = SINGLE_PASS;
         else if (passes > 1) {
             if (enc_mode > ENC_M12) {
                 fprintf(stderr,
-                        "\nWarning: Multipass VBR is not supported for preset %d. Switching to "
+                        "[SVT-Warning]: Multipass VBR is not supported for preset %d. Switching to "
                         "1-pass encoding\n\n",
                         enc_mode);
                 passes           = 1;
                 *multi_pass_mode = SINGLE_PASS;
-            } else
-                if (rc_mode > 1)
-                *multi_pass_mode = (passes == 2) ? TWO_PASS_IPP_FINAL : SINGLE_PASS;
-            else {
+            } else {
                 passes           = 3;
                 *multi_pass_mode = THREE_PASS_IPP_SAMEPRED_FINAL;
             }
         }
     }
 
-    if (check_two_pass_conflicts(argc, argv))
-        return 0;
     // Set the settings for each pass based on multi_pass_mode
     switch (*multi_pass_mode) {
     case SINGLE_PASS: enc_pass[0] = ENC_SINGLE_PASS; break;
