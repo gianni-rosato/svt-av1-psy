@@ -3671,10 +3671,7 @@ void copy_api_from_app(
     // Misc
     scs_ptr->static_config.encoder_bit_depth = ((EbSvtAv1EncConfiguration*)config_struct)->encoder_bit_depth;
     scs_ptr->static_config.encoder_color_format = ((EbSvtAv1EncConfiguration*)config_struct)->encoder_color_format;
-    if (scs_ptr->static_config.encoder_color_format == EB_YUV400) {
-        SVT_WARN("Color format EB_YUV400 not supported, set to EB_YUV420\n");
-        scs_ptr->static_config.encoder_color_format = EB_YUV420;
-    }
+
     scs_ptr->chroma_format_idc = (uint32_t)(scs_ptr->static_config.encoder_color_format);
     scs_ptr->encoder_bit_depth = (uint32_t)(scs_ptr->static_config.encoder_bit_depth);
     //16bit pipeline
@@ -4107,6 +4104,35 @@ static EbErrorType verify_settings(
         SVT_LOG("Error instance %u: invalid superres-denom %d, should be in the range [%d - %d] \n", channel_number + 1, config->superres_denom, MIN_SUPERRES_DENOM, MAX_SUPERRES_DENOM);
         return_error = EB_ErrorBadParameter;
     }
+    if (config->matrix_coefficients == 0 && config->encoder_color_format != EB_YUV444) {
+        SVT_LOG("Error instance %u: Identity matrix (matrix_coefficient = 0) may be used only with 4:4:4 color format.\n",
+            channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+    if (config->hierarchical_levels < 3 || config->hierarchical_levels > 4) {
+        SVT_LOG("Error instance %u: Only hierarchical levels 3 and 4 currently supported\n", channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+
+    if (config->rate_control_mode != 0 && config->intra_period_length == -1) {
+        SVT_LOG("Error instance %u: keyint = -1 is not supported for modes other than CRF rate control encoding modes.\n", channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+    // Limit 8K & 16K configurations ( due to  memory constraints)
+    if ((uint64_t) (scs_ptr->max_input_luma_width*scs_ptr->max_input_luma_height) > INPUT_SIZE_4K_TH &&
+        config->enc_mode <= ENC_M7) {
+        SVT_LOG("Error instance %u: 8k+ resolution support is limited to M8 and faster presets.\n", channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+
+    if (config->enable_adaptive_quantization == 1 &&
+        (config->tile_columns > 0 || config->tile_rows > 0)) {
+        SVT_LOG("Error instance %u: Adaptive quantization using segmentation is not supported in combination with tiles.\n", channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+
+
+    /* Warnings about the use of features that are incomplete */
 
     // color description
     if (config->color_primaries == 0 || config->color_primaries == 3 ||
@@ -4120,17 +4146,12 @@ static EbErrorType verify_settings(
         SVT_WARN("Warning instance %u: value %u for transfer_characteristics is reserved and not recommended for usage.\n",
             channel_number + 1, config->transfer_characteristics);
     }
-    if (config->matrix_coefficients == 0 && config->encoder_color_format != EB_YUV444) {
-        SVT_LOG("Error instance %u: Identity matrix (matrix_coefficient = 0) may be used only with 4:4:4 color format.\n",
-            channel_number + 1);
-        return_error = EB_ErrorBadParameter;
-    }
+
     if (config->matrix_coefficients == 3 || config->matrix_coefficients > 14) {
         SVT_WARN("Warning instance %u: value %u for matrix_coefficients is reserved and not recommended for usage.\n",
             channel_number + 1, config->matrix_coefficients);
     }
 
-    /* Warnings about the use of features that are incomplete */
     if (config->rate_control_mode == 1 || config->rate_control_mode == 2) {
         SVT_WARN("The VBR and CBR rate control modes are a work-in-progress projects, and are only available for demos, experimental and further development uses and should not be used for benchmarking until fully implemented.\n");
     }
@@ -4139,15 +4160,7 @@ static EbErrorType verify_settings(
         SVT_WARN("It is recommended to not use Film Grain for presets greater than 3 as it produces a significant compute overhead. This combination should only be used for debug purposes.\n");
     }
 
-    if (config->hierarchical_levels < 3 || config->hierarchical_levels > 4) {
-        SVT_LOG("Error instance %u: Only hierarchical levels 3 and 4 currently supported\n", channel_number + 1);
-        return_error = EB_ErrorBadParameter;
-    }
 
-    if (config->rate_control_mode != 0 && config->intra_period_length == -1) {
-        SVT_LOG("Error instance %u: keyint = -1 is not supported for modes other than CRF rate control encoding modes.\n", channel_number + 1);
-        return_error = EB_ErrorBadParameter;
-    }
 
     return return_error;
 }

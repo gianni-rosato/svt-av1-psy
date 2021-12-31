@@ -1750,12 +1750,6 @@ static EbErrorType verify_settings(EbConfig *config, uint32_t channel_number) {
         return_error = EB_ErrorBadParameter;
     }
 
-    if (config->config.encoder_color_format != 1) {
-        fprintf(config->error_log_file,
-                "Error instance %u: Only support 420 now \n",
-                channel_number + 1);
-        return_error = EB_ErrorBadParameter;
-    }
     if (config->injector > 1) {
         fprintf(config->error_log_file,
                 "Error Instance %u: Invalid injector [0 - 1]\n",
@@ -1777,22 +1771,7 @@ static EbErrorType verify_settings(EbConfig *config, uint32_t channel_number) {
         return_error = EB_ErrorBadParameter;
     }
 
-    // target_socket
-    if (config->config.target_socket != -1 && config->config.target_socket != 0 &&
-        config->config.target_socket != 1) {
-        fprintf(config->error_log_file,
-                "Error instance %u: Invalid target_socket [-1 - 1], your input: %d\n",
-                channel_number + 1,
-                config->config.target_socket);
-        return_error = EB_ErrorBadParameter;
-    }
 
-    if (config->input_stat_file && config->output_stat_file) {
-        fprintf(config->error_log_file,
-                "Error instance %u: do not set input_stat_file and output_stat_file at same time\n",
-                channel_number + 1);
-        return EB_ErrorBadParameter;
-    }
     int pass = config->config.pass;
     if (pass != 3 && pass != 2 && pass != 1 && pass != 0 && pass != DEFAULT) {
         fprintf(config->error_log_file,
@@ -1841,30 +1820,6 @@ static EbErrorType verify_settings(EbConfig *config, uint32_t channel_number) {
         }
     }
 
-    // Limit 8K & 16K configurations ( due to  memory constraints)
-    if (config->config.source_width * config->config.source_height >= 7680 * 4320 &&
-        config->config.enc_mode <= ENC_M7) {
-        fprintf(config->error_log_file,
-                "Error instance %u: 8k+ encodes are limited to M8 and up\n",
-                channel_number + 1);
-        return EB_ErrorBadParameter;
-    }
-
-    if (config->config.hierarchical_levels == 0 && config->config.rate_control_mode == 1) {
-        fprintf(config->error_log_file,
-                "Error instance %u: VBR encode for hierarchical_levels %u is not supported\n",
-                channel_number + 1,
-                config->config.hierarchical_levels);
-        return EB_ErrorBadParameter;
-    }
-    if (config->config.enable_adaptive_quantization == 1 &&
-        (config->config.tile_columns > 0 || config->config.tile_rows > 0)) {
-        fprintf(config->error_log_file,
-                "Error instance %u: Adaptive quantization using segmentation with tiles is not "
-                "supported\n",
-                channel_number + 1);
-        return EB_ErrorBadParameter;
-    }
     return return_error;
 }
 
