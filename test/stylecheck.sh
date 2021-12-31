@@ -54,7 +54,9 @@ $(
         ':!third_party' ':!test/e2e_test/test_vector_list.txt' \
         ':!test/vectors/smoking_test.cfg' \
         ':!test/vectors/video_src.cfg' \
-        ':!*.png'
+        ':!*.png' \
+        ':!*.PNG' \
+        ':!*.pdf'
 )
 EOF
 
