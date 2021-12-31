@@ -521,7 +521,7 @@ typedef struct MotionEstimationData {
     OisMbResults **ois_mb_results;
     TplStats **    tpl_stats;
 
-    TplSrcStats *tpl_src_stats; //tpl src based stats
+    TplSrcStats *tpl_src_stats_buffer; //tpl src based stats
 
     int32_t base_rdmult;
     double *tpl_beta;

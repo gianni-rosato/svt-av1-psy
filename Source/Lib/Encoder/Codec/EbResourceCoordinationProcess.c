@@ -855,7 +855,7 @@ static void copy_input_buffer(SequenceControlSet *sequenceControlSet, EbBufferHe
 void read_stat(SequenceControlSet *scs_ptr) {
     EncodeContext *encode_context_ptr = scs_ptr->encode_context_ptr;
 
-    encode_context_ptr->rc_twopass_stats_in = scs_ptr->static_config.rc_twopass_stats_in;
+    encode_context_ptr->rc_stats_buffer = scs_ptr->static_config.rc_stats_buffer;
 }
 void setup_two_pass(SequenceControlSet *scs_ptr) {
     EncodeContext *encode_context_ptr = scs_ptr->encode_context_ptr;
@@ -865,13 +865,13 @@ void setup_two_pass(SequenceControlSet *scs_ptr) {
     if (scs_ptr->static_config.pass == ENC_MIDDLE_PASS ||
         scs_ptr->static_config.pass == ENC_LAST_PASS) {
         const size_t packet_sz = sizeof(FIRSTPASS_STATS);
-        const int    packets   = (int)(encode_context_ptr->rc_twopass_stats_in.sz / packet_sz);
+        const int    packets   = (int)(encode_context_ptr->rc_stats_buffer.sz / packet_sz);
 
         if (!scs_ptr->lap_enabled) {
             /*Re-initialize to stats buffer, populated by application in the case of
                 * two pass*/
             scs_ptr->twopass.stats_buf_ctx->stats_in_start =
-                encode_context_ptr->rc_twopass_stats_in.buf;
+                encode_context_ptr->rc_stats_buffer.buf;
             scs_ptr->twopass.stats_in = scs_ptr->twopass.stats_buf_ctx->stats_in_start;
             scs_ptr->twopass.stats_buf_ctx->stats_in_end_write =
                 &scs_ptr->twopass.stats_buf_ctx->stats_in_start[packets - 1];

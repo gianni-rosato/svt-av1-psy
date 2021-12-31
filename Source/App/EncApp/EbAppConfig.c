@@ -1566,7 +1566,7 @@ static int32_t read_config_file(EbConfig *config, char *config_path, uint32_t in
     return return_error;
 }
 
-/* get config->rc_twopass_stats_in from config->input_stat_file */
+/* get config->rc_stats_buffer from config->input_stat_file */
 EbBool load_twopass_stats_in(EbConfig *cfg) {
     EbSvtAv1EncConfiguration *config = &cfg->config;
 #ifdef _WIN32
@@ -1581,10 +1581,10 @@ EbBool load_twopass_stats_in(EbConfig *cfg) {
     if (ret) {
         return EB_FALSE;
     }
-    config->rc_twopass_stats_in.buf = malloc(file_stat.st_size);
-    if (config->rc_twopass_stats_in.buf) {
-        config->rc_twopass_stats_in.sz = (uint64_t)file_stat.st_size;
-        if (fread(config->rc_twopass_stats_in.buf, 1, file_stat.st_size, cfg->input_stat_file) !=
+    config->rc_stats_buffer.buf = malloc(file_stat.st_size);
+    if (config->rc_stats_buffer.buf) {
+        config->rc_stats_buffer.sz = (uint64_t)file_stat.st_size;
+        if (fread(config->rc_stats_buffer.buf, 1, file_stat.st_size, cfg->input_stat_file) !=
             (size_t)file_stat.st_size) {
             return EB_FALSE;
         }
@@ -1592,10 +1592,10 @@ EbBool load_twopass_stats_in(EbConfig *cfg) {
             return EB_FALSE;
         }
     }
-    return config->rc_twopass_stats_in.buf != NULL;
+    return config->rc_stats_buffer.buf != NULL;
 }
 EbErrorType handle_stats_file(EbConfig *config, EncPass enc_pass,
-                              const SvtAv1FixedBuf *rc_twopass_stats_in, uint32_t channel_number) {
+                              const SvtAv1FixedBuf *rc_stats_buffer, uint32_t channel_number) {
     switch (enc_pass) {
     case ENC_SINGLE_PASS: {
         const char *stats = config->stats ? config->stats : "svtav1_2pass.log";
@@ -1679,24 +1679,24 @@ EbErrorType handle_stats_file(EbConfig *config, EncPass enc_pass,
     }
 
     case ENC_MIDDLE_PASS: {
-        if (!rc_twopass_stats_in->sz) {
+        if (!rc_stats_buffer->sz) {
             fprintf(config->error_log_file,
                     "Error instance %u: combined multi passes need stats in for the middle pass \n",
                     channel_number + 1);
             return EB_ErrorBadParameter;
         }
-        config->config.rc_twopass_stats_in = *rc_twopass_stats_in;
+        config->config.rc_stats_buffer = *rc_stats_buffer;
         break;
     }
 
     case ENC_LAST_PASS: {
-        if (!rc_twopass_stats_in->sz) {
+        if (!rc_stats_buffer->sz) {
             fprintf(config->error_log_file,
                     "Error instance %u: combined multi passes need stats in for the final pass \n",
                     channel_number + 1);
             return EB_ErrorBadParameter;
         }
-        config->config.rc_twopass_stats_in = *rc_twopass_stats_in;
+        config->config.rc_stats_buffer = *rc_stats_buffer;
         break;
     }
 

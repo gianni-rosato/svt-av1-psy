@@ -265,8 +265,9 @@ typedef struct EbSvtAv1EncConfiguration {
     int32_t key_frame_chroma_qindex_offset;
     int32_t key_frame_qindex_offset;
     int32_t chroma_qindex_offsets[EB_MAX_TEMPORAL_LAYERS];
-    /* input buffer for the second pass */
-    SvtAv1FixedBuf rc_twopass_stats_in;
+
+    // input / output buffer to be used for multi-pass encoding
+    SvtAv1FixedBuf rc_stats_buffer;
     int            pass;
 
     // Deblock Filter

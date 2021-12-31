@@ -262,5 +262,5 @@ extern uint32_t    get_number_of_channels(int32_t argc, char *const argv[]);
 uint32_t           get_passes(int32_t argc, char *const argv[], EncPass enc_pass[MAX_ENC_PASS],
                               MultiPassModes *multi_pass_mode);
 EbErrorType        handle_stats_file(EbConfig *config, EncPass pass,
-                                     const SvtAv1FixedBuf *rc_twopass_stats_in, uint32_t channel_number);
+                                     const SvtAv1FixedBuf *rc_stats_buffer, uint32_t channel_number);
 #endif //EbAppConfig_h

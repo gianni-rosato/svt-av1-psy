@@ -628,9 +628,9 @@ void tpl_mc_flow_dispenser_sb_generic(EncodeContext *     encode_context_ptr,
 
         PredictionMode best_intra_mode = DC_PRED;
 
-        TplSrcStats *tpl_src_stats =
+        TplSrcStats *tpl_src_stats_buffer =
             &pcs_ptr->pa_me_data
-                 ->tpl_src_stats[(mb_origin_y >> 4) * aligned16_width + (mb_origin_x >> 4)];
+                 ->tpl_src_stats_buffer[(mb_origin_y >> 4) * aligned16_width + (mb_origin_x >> 4)];
 
         //perform src based path if not yet done in previous TPL groups
         if (pcs_ptr->tpl_src_data_ready == 0) {
@@ -987,23 +987,23 @@ void tpl_mc_flow_dispenser_sb_generic(EncodeContext *     encode_context_ptr,
             }
             if (scs_ptr->tpl_lad_mg > 0) {
                 //store src based stats
-                tpl_src_stats->srcrf_dist      = tpl_stats.srcrf_dist;
-                tpl_src_stats->srcrf_rate      = tpl_stats.srcrf_rate;
-                tpl_src_stats->mv              = final_best_mv;
-                tpl_src_stats->best_rf_idx     = best_rf_idx;
-                tpl_src_stats->ref_frame_poc   = best_ref_poc;
-                tpl_src_stats->best_mode       = best_mode;
-                tpl_src_stats->best_intra_mode = best_intra_mode;
+                tpl_src_stats_buffer->srcrf_dist      = tpl_stats.srcrf_dist;
+                tpl_src_stats_buffer->srcrf_rate      = tpl_stats.srcrf_rate;
+                tpl_src_stats_buffer->mv              = final_best_mv;
+                tpl_src_stats_buffer->best_rf_idx     = best_rf_idx;
+                tpl_src_stats_buffer->ref_frame_poc   = best_ref_poc;
+                tpl_src_stats_buffer->best_mode       = best_mode;
+                tpl_src_stats_buffer->best_intra_mode = best_intra_mode;
             }
         } else {
             // get src based stats from previously computed data
-            tpl_stats.srcrf_dist = tpl_src_stats->srcrf_dist;
-            tpl_stats.srcrf_rate = tpl_src_stats->srcrf_rate;
-            final_best_mv        = tpl_src_stats->mv;
-            best_rf_idx          = tpl_src_stats->best_rf_idx;
-            best_ref_poc         = tpl_src_stats->ref_frame_poc;
-            best_mode            = tpl_src_stats->best_mode;
-            best_intra_mode      = tpl_src_stats->best_intra_mode;
+            tpl_stats.srcrf_dist = tpl_src_stats_buffer->srcrf_dist;
+            tpl_stats.srcrf_rate = tpl_src_stats_buffer->srcrf_rate;
+            final_best_mv        = tpl_src_stats_buffer->mv;
+            best_rf_idx          = tpl_src_stats_buffer->best_rf_idx;
+            best_ref_poc         = tpl_src_stats_buffer->ref_frame_poc;
+            best_mode            = tpl_src_stats_buffer->best_mode;
+            best_intra_mode      = tpl_src_stats_buffer->best_intra_mode;
         }
 
         //Recon path

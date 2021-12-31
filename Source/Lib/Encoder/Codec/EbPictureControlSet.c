@@ -1531,8 +1531,8 @@ static void me_dctor(EbPtr p) {
         EB_FREE_ARRAY(obj->tpl_rdmult_scaling_factors);
     if (obj->tpl_sb_rdmult_scaling_factors)
         EB_FREE_ARRAY(obj->tpl_sb_rdmult_scaling_factors);
-    if (obj->tpl_src_stats)
-        EB_FREE_ARRAY(obj->tpl_src_stats);
+    if (obj->tpl_src_stats_buffer)
+        EB_FREE_ARRAY(obj->tpl_src_stats_buffer);
 }
 EbErrorType me_ctor(MotionEstimationData *object_ptr, EbPtr object_init_data_ptr) {
     PictureControlSetInitData *init_data_ptr    = (PictureControlSetInitData *)object_init_data_ptr;
@@ -1578,10 +1578,10 @@ EbErrorType me_ctor(MotionEstimationData *object_ptr, EbPtr object_init_data_ptr
                      (uint32_t)((adaptive_picture_width_in_mb) * (adaptive_picture_height_in_mb)),
                      1);
         if (init_data_ptr->tpl_lad_mg > 0)
-            EB_MALLOC_ARRAY(object_ptr->tpl_src_stats,
+            EB_MALLOC_ARRAY(object_ptr->tpl_src_stats_buffer,
                             (uint32_t)picture_width_in_mb * (uint32_t)picture_height_in_mb);
         else
-            object_ptr->tpl_src_stats = NULL;
+            object_ptr->tpl_src_stats_buffer = NULL;
         EB_MALLOC_ARRAY(object_ptr->tpl_beta, sb_total_count);
         EB_MALLOC_ARRAY(object_ptr->tpl_rdmult_scaling_factors,
                         adaptive_picture_width_in_mb * adaptive_picture_height_in_mb);
@@ -1593,7 +1593,7 @@ EbErrorType me_ctor(MotionEstimationData *object_ptr, EbPtr object_init_data_ptr
         object_ptr->tpl_beta                      = NULL;
         object_ptr->tpl_rdmult_scaling_factors    = NULL;
         object_ptr->tpl_sb_rdmult_scaling_factors = NULL;
-        object_ptr->tpl_src_stats                 = NULL;
+        object_ptr->tpl_src_stats_buffer                 = NULL;
     }
     return return_error;
 }

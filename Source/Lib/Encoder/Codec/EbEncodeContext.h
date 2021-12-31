@@ -190,7 +190,7 @@ typedef struct EncodeContext {
     // Number of stats buffers required for look ahead
     int               num_lap_buffers;
     STATS_BUFFER_CTX  stats_buf_context;
-    SvtAv1FixedBuf    rc_twopass_stats_in; // replaced oxcf->two_pass_cfg.stats_in in aom
+    SvtAv1FixedBuf    rc_stats_buffer; // replaced oxcf->two_pass_cfg.stats_in in aom
     FirstPassStatsOut stats_out;
     RecodeLoopType    recode_loop;
     // This feature controls the tolerence vs target used in deciding whether to

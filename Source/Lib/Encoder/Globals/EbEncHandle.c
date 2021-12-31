@@ -3588,7 +3588,7 @@ void copy_api_from_app(
         memcpy(scs_ptr->static_config.chroma_qindex_offsets, ((EbSvtAv1EncConfiguration*)config_struct)->chroma_qindex_offsets,
             MAX_TEMPORAL_LAYERS * sizeof(int32_t));
     }
-    scs_ptr->static_config.rc_twopass_stats_in = ((EbSvtAv1EncConfiguration*)config_struct)->rc_twopass_stats_in;
+    scs_ptr->static_config.rc_stats_buffer = ((EbSvtAv1EncConfiguration*)config_struct)->rc_stats_buffer;
     scs_ptr->static_config.pass = ((EbSvtAv1EncConfiguration*)config_struct)->pass;
     // Deblock Filter
     scs_ptr->static_config.disable_dlf_flag = ((EbSvtAv1EncConfiguration*)config_struct)->disable_dlf_flag;
@@ -3863,7 +3863,7 @@ static EbErrorType verify_settings(
         return_error = EB_ErrorBadParameter;
     }
 
-    if (config->rate_control_mode > 2 && (config->pass == ENC_FIRST_PASS || config->rc_twopass_stats_in.buf)) {
+    if (config->rate_control_mode > 2 && (config->pass == ENC_FIRST_PASS || config->rc_stats_buffer.buf)) {
         SVT_LOG("Error Instance %u: Only rate control mode 0~2 are supported for 2-pass \n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
@@ -4083,7 +4083,7 @@ static EbErrorType verify_settings(
                 channel_number + 1, config->superres_mode, SUPERRES_NONE, SUPERRES_AUTO);
         return_error = EB_ErrorBadParameter;
     }
-    if (config->superres_mode > 0 && ((config->rc_twopass_stats_in.sz || config->pass == ENC_FIRST_PASS))) {
+    if (config->superres_mode > 0 && ((config->rc_stats_buffer.sz || config->pass == ENC_FIRST_PASS))) {
         SVT_LOG("Error instance %u: superres is not supported for 2-pass\n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
