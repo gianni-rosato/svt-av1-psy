@@ -7,7 +7,7 @@ if ! type git > /dev/null 2>&1; then
     exit 1
 fi
 
-git fetch --all -pf
+git fetch --all -pf || true
 
 echo "Checking for tabs" >&2
 ! git --no-pager grep -InP --heading "\t" -- . ':!third_party/**/*' || ret=1
