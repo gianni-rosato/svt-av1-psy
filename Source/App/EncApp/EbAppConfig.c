@@ -1002,6 +1002,30 @@ ConfigEntry config_entry_specific[] = {
      set_enable_overlays},
     // --- end: ALTREF_FILTERING_SUPPORT
 
+    // --- start: SUPER-RESOLUTION SUPPORT
+    {SINGLE_INPUT,
+     SUPERRES_MODE_INPUT,
+     "Enable super-resolution mode [0: none, 1: fixed scale, 2: random scale, 3: threshold based, "
+     "4: auto]",
+     set_superres_mode},
+    {SINGLE_INPUT,
+     SUPERRES_DENOM,
+     "Super-resolution denominator, only applicable for mode == 1 [8-16]",
+     set_superres_denom},
+    {SINGLE_INPUT,
+     SUPERRES_KF_DENOM,
+     "Super-resolution denominator for key frames, only applicable for mode == 1 [8-16]",
+     set_superres_kf_denom},
+    {SINGLE_INPUT,
+     SUPERRES_QTHRES,
+     "Super-resolution q-threshold, only applicable for mode == 3 [0-63]",
+     set_superres_qthres},
+    {SINGLE_INPUT,
+     SUPERRES_KF_QTHRES,
+     "Super-resolution q-threshold for key frames, only applicable for mode == 3 [0-63]",
+     set_superres_kf_qthres},
+    // --- end: SUPER-RESOLUTION SUPPORT
+
     // Termination
     {SINGLE_INPUT, NULL, NULL, NULL}};
 
