@@ -1802,6 +1802,11 @@ static EbErrorType verify_settings(EbConfig *config, uint32_t channel_number) {
         return EB_ErrorBadParameter;
     }
 
+    if (config->config.rate_control_mode == 2) {
+        // A warning should have been printed out in get_passes(), so don't print it here
+        config->config.rate_control_mode = 1;
+    }
+
     return return_error;
 }
 
