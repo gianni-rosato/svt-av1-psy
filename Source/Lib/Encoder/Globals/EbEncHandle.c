@@ -3614,6 +3614,12 @@ void copy_api_from_app(
     // Rate Control
     scs_ptr->static_config.scene_change_detection = ((EbSvtAv1EncConfiguration*)config_struct)->scene_change_detection;
     scs_ptr->static_config.rate_control_mode = ((EbSvtAv1EncConfiguration*)config_struct)->rate_control_mode;
+
+    if (scs_ptr->static_config.rate_control_mode == 2) {
+        SVT_WARN("CBR Rate control is currently not supported, switching to VBR\n");
+        scs_ptr->static_config.rate_control_mode = 1;
+    }
+
     if (scs_ptr->static_config.rate_control_mode == 2 && scs_ptr->static_config.pass != ENC_FIRST_PASS && !(scs_ptr->static_config.pass == ENC_MIDDLE_PASS || scs_ptr->static_config.pass == ENC_LAST_PASS) &&
         scs_ptr->static_config.pred_structure != 0) {
         scs_ptr->static_config.pred_structure = 0;
