@@ -489,10 +489,8 @@ int32_t main(int32_t argc, char* argv[]) {
         if (return_error != EB_ErrorNone)
             break;
 
-#ifndef _WIN32
-#ifndef __APPLE__
+#ifdef __linux__
         malloc_trim(0);
-#endif
 #endif
     }
     enc_app_dctor(&enc_app);
