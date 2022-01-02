@@ -489,7 +489,7 @@ int32_t main(int32_t argc, char* argv[]) {
         if (return_error != EB_ErrorNone)
             break;
 
-#ifdef __linux__
+#ifdef __GLIBC__
         malloc_trim(0);
 #endif
     }
