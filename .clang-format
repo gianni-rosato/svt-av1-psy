@@ -1,6 +1,6 @@
 ---
 Language: Cpp
-BasedOnStyle: Google
+# BasedOnStyle: Google
 AlignAfterOpenBracket: Align
 AlignEscapedNewlines: Left
 AlignConsecutiveAssignments: true
