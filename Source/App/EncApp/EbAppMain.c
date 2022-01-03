@@ -180,7 +180,10 @@ static EbErrorType enc_context_ctor(EncApp* enc_app, EncContext* enc_context, in
                                  &config->performance_context.lib_start_time[1]);
             // Update pass
             config->config.pass = passes == 1 ? config->config.pass // Single-Pass
-                                              : (int)enc_pass; // Multi-Pass
+                // Skip to ENC_LAST_PASS for crf
+                : config->config.rate_control_mode == 0 && enc_pass == ENC_MIDDLE_PASS
+                ? ENC_LAST_PASS
+                : (int)enc_pass; // Multi-Pass
             c->return_error = handle_stats_file(
                 config, enc_pass, &enc_app->rc_twopasses_stats, num_channels);
             if (c->return_error == EB_ErrorNone) {
