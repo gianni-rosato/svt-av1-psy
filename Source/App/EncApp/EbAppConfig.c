@@ -230,26 +230,28 @@ static void set_cfg_input_file(const char *filename, EbConfig *cfg) {
         return;
     }
 
-    if (!strcmp(filename, "stdin"))
+    if (!strcmp(filename, "stdin")) {
         cfg->input_file = stdin;
-    else
+        cfg->input_file_is_fifo = EB_TRUE;
+    } else
         FOPEN(cfg->input_file, filename, "rb");
 
     if (cfg->input_file == NULL) {
         return;
     }
-
+    if (cfg->input_file != stdin) {
 #ifdef _WIN32
-    HANDLE handle = (HANDLE)_get_osfhandle(_fileno(cfg->input_file));
-    if (handle == INVALID_HANDLE_VALUE)
-        return;
-    cfg->input_file_is_fifo = GetFileType(handle) == FILE_TYPE_PIPE;
+        HANDLE handle = (HANDLE)_get_osfhandle(_fileno(cfg->input_file));
+        if (handle == INVALID_HANDLE_VALUE)
+            return;
+        cfg->input_file_is_fifo = GetFileType(handle) == FILE_TYPE_PIPE;
 #else
-    int         fd = fileno(cfg->input_file);
-    struct stat statbuf;
-    fstat(fd, &statbuf);
-    cfg->input_file_is_fifo = S_ISFIFO(statbuf.st_mode);
+        int         fd = fileno(cfg->input_file);
+        struct stat statbuf;
+        fstat(fd, &statbuf);
+        cfg->input_file_is_fifo = S_ISFIFO(statbuf.st_mode);
 #endif
+    }
 
     cfg->y4m_input = check_if_y4m(cfg);
 };
