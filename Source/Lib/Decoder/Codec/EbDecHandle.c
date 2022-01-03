@@ -75,12 +75,9 @@ EbErrorType decode_multiple_obu(EbDecHandle *dec_handle_ptr, uint8_t **data, siz
                                 uint32_t is_annexb);
 
 static void dec_switch_to_real_time() {
-#ifndef _WIN32
-
-    struct sched_param schedParam = {.sched_priority = 99};
-
-    int32_t retValue = pthread_setschedparam(pthread_self(), SCHED_FIFO, &schedParam);
-    UNUSED(retValue);
+#if !defined(_WIN32) && !DISABLE_REALTIME
+    (void)pthread_setschedparam(
+        pthread_self(), SCHED_FIFO, &(struct sched_param){.sched_priority = 99});
 #endif
 }
 

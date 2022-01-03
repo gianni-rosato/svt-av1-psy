@@ -310,14 +310,9 @@ void init_intra_predictors_internal(void);
 void svt_av1_init_me_luts(void);
 
 static void enc_switch_to_real_time(){
-#ifndef _WIN32
-
-    struct sched_param schedParam = {
-        .sched_priority = 99
-    };
-
-    int32_t retValue = pthread_setschedparam(pthread_self(), SCHED_FIFO, &schedParam);
-    UNUSED(retValue);
+#if !defined(_WIN32) && !DISABLE_REALTIME
+    (void)pthread_setschedparam(
+        pthread_self(), SCHED_FIFO, &(struct sched_param){.sched_priority = 99});
 #endif
 }
 #define SINGLE_CORE_COUNT       1
