@@ -212,6 +212,15 @@ int32_t read_y4m_header(EbConfig *cfg) {
     /* TODO: when implemented, need to set input bit depth
         (instead of the encoder bit depth) and chroma format */
 
+    if (strcmp("420", chroma)) {
+        fprintf(cfg->error_log_file,
+                "Error instance %u: %s chroma format not supported, only 420 is supported at this "
+                "time.\n",
+                cfg->config.channel_id + 1,
+                chroma);
+        return EB_ErrorBadParameter;
+    }
+
     return EB_ErrorNone;
 #undef CHROMA_MAX
 }
