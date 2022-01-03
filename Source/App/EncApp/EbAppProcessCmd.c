@@ -154,8 +154,8 @@ void svt_munmap(MemMapFile *h, void *addr, int64_t size) {
 #endif
 }
 /* release  memory mapped file  */
-void release_memory_mapped_file(EbConfig *config, uint8_t is_16bit,
-                                EbBufferHeaderType *header_ptr) {
+static void release_memory_mapped_file(EbConfig *config, uint8_t is_16bit,
+                                       EbBufferHeaderType *header_ptr) {
     const uint32_t input_padded_width  = config->input_padded_width;
     const uint32_t input_padded_height = config->input_padded_height;
     uint64_t luma_read_size = (uint64_t)input_padded_width * input_padded_height
@@ -588,7 +588,8 @@ void process_input_buffer(EncChannel *channel) {
             // Send the picture
             svt_av1_enc_send_picture(component_handle, header_ptr);
 
-            release_memory_mapped_file(config, is_16bit, header_ptr);
+            if (config->mmap.enable)
+                release_memory_mapped_file(config, is_16bit, header_ptr);
         }
 
         if ((config->processed_frame_count == (uint64_t)config->frames_to_be_encoded) ||
