@@ -472,7 +472,6 @@ extern EbErrorType first_pass_signal_derivation_pre_analysis_scs(SequenceControl
 void set_tf_controls(PictureParentControlSet *pcs_ptr, uint8_t tf_level);
 void set_wn_filter_ctrls(Av1Common *cm, uint8_t wn_filter_lvl);
 void set_dlf_controls(PictureParentControlSet *pcs_ptr, uint8_t dlf_level);
-void set_gm_controls(PictureParentControlSet *pcs_ptr, uint8_t gm_level);
 /******************************************************
 * Derive Multi-Processes Settings for first pass
 Input   : encoder mode and tune
@@ -663,7 +662,6 @@ void *set_first_pass_me_hme_params_oq(MeContext *me_context_ptr, SequenceControl
 };
 void set_me_hme_ref_prune_ctrls(MeContext *context_ptr, uint8_t prune_level);
 void set_me_sr_adjustment_ctrls(MeContext *context_ptr, uint8_t sr_adjustment_level);
-void set_gm_controls(PictureParentControlSet *pcs_ptr, uint8_t gm_level);
 void set_prehme_ctrls(MeContext *context, uint8_t level);
 /******************************************************
 * Derive ME Settings for first pass

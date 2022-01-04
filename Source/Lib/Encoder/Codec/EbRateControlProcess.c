@@ -3315,6 +3315,9 @@ void *rate_control_kernel(void *input_ptr) {
                         // determine denom and scale down picture by selected denom
                         init_resize_picture(scs_ptr, pcs_ptr->parent_pcs_ptr);
                         if (pcs_ptr->parent_pcs_ptr->frame_superres_enabled) {
+                            // reset gm based on super-res on/off
+                            set_gm_controls(pcs_ptr->parent_pcs_ptr, derive_gm_level(pcs_ptr->parent_pcs_ptr));
+
                             // Initialize Segments as picture decision process
                             pcs_ptr->parent_pcs_ptr->me_segments_completion_count = 0;
                             pcs_ptr->parent_pcs_ptr->me_processed_sb_count        = 0;

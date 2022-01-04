@@ -4937,8 +4937,6 @@ void store_tpl_pictures(
     }
 }
 
-extern void set_gm_controls(PictureParentControlSet* pcs_ptr, uint8_t gm_level);
-
 void send_picture_out(
     SequenceControlSet      *scs,
     PictureParentControlSet *pcs,

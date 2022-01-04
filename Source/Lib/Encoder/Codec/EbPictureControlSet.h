@@ -1169,6 +1169,10 @@ extern EbErrorType picture_parent_control_set_creator(EbPtr *object_dbl_ptr,
 extern EbErrorType me_creator(EbPtr *object_dbl_ptr, EbPtr object_init_data_ptr);
 extern EbErrorType me_sb_results_ctor(MeSbResults *              obj_ptr,
                                       PictureControlSetInitData *init_data_ptr);
+
+extern void set_gm_controls(PictureParentControlSet* pcs_ptr, uint8_t gm_level);
+extern uint8_t derive_gm_level(PictureParentControlSet* pcs_ptr);
+
 #ifdef __cplusplus
 }
 #endif

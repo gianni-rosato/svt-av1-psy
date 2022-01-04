@@ -520,6 +520,9 @@ void *packetization_kernel(void *input_ptr) {
                     if (do_recode) {
                         init_resize_picture(scs_ptr, parent_pcs_ptr);
 
+                        // reset gm based on super-res on/off
+                        set_gm_controls(parent_pcs_ptr, derive_gm_level(parent_pcs_ptr));
+
                         // Initialize Segments as picture decision process
                         parent_pcs_ptr->me_segments_completion_count = 0;
                         parent_pcs_ptr->me_processed_sb_count        = 0;
@@ -534,6 +537,7 @@ void *packetization_kernel(void *input_ptr) {
                     printf("\n%s - send superres recode task to open loop ME. Frame %d, denom %d\n", __FUNCTION__,
                         (int)parent_pcs_ptr->picture_number, parent_pcs_ptr->superres_denom);
 #endif
+
                         for (uint32_t segment_index = 0;
                              segment_index < parent_pcs_ptr->me_segments_total_count;
                              ++segment_index) {
