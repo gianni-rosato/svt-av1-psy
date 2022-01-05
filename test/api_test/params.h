@@ -830,7 +830,7 @@ static const vector<uint32_t> invalid_speed_control_flag = {
 // Threads management
 
 /* The number of logical processor which encoder threads run on. If
- * LogicalProcessorNumber and TargetSocket are not set, threads are managed by
+ * LogicalProcessors and TargetSocket are not set, threads are managed by
  * OS thread scheduler. */
 static const vector<uint32_t> default_logical_processors = {
     0,

@@ -144,7 +144,7 @@ The encoder parameters present in the `Sample.cfg` file are listed in this table
 |                                  | --version          |            |             | Shows the version of the library that's linked to the library                                                   |
 | **InputFile**                    | -i                 | any string | None        | Input raw video (y4m and yuv) file path, use `stdin` to read from pipe                                          |
 | **StreamFile**                   | -b                 | any string | None        | Output compressed (ivf) file path, use `stdout` to write to pipe                                                |
-| **ConfigFile**                   | -c                 | any string | None        | Configuration file path                                                                                         |
+|                                  | -c                 | any string | None        | Configuration file path                                                                                         |
 | **ErrorFile**                    | --errlog           | any string | `stderr`    | Error file path                                                                                                 |
 | **ReconFile**                    | -o                 | any string | None        | Reconstructed yuv file path                                                                                     |
 | **StatFile**                     | --stat-file        | any string | None        | PSNR / SSIM per picture stat output file path, requires `--enable-stat-report 1`                                |
@@ -152,7 +152,7 @@ The encoder parameters present in the `Sample.cfg` file are listed in this table
 | **Progress**                     | --progress         | [0-2]      | 1           | Verbosity of the output [0: no progress is printed, 2: aomenc style output]                                     |
 | **NoProgress**                   | --no-progress      | [0-1]      | 0           | Do not print out progress [1: `--progress 0`, 0: `--progress 1`]                                                |
 | **EncoderMode**                  | --preset           | [-2-13]    | 12          | Encoder preset, presets < 0 are for debugging. Higher presets means faster encodes, but with a quality tradeoff |
-| **ChannelNumber**                | --nch              | [1-6]      | 1           | Number of channels (library instance) that will be instantiated                                                 |
+|                                  | --nch              | [1-6]      | 1           | Number of channels (library instance) that will be instantiated                                                 |
 
 #### Encoder Global Options
 
@@ -177,7 +177,7 @@ The encoder parameters present in the `Sample.cfg` file are listed in this table
 | **PredStructure**                | --pred-struct               | [0-2]                          | 2           | Set prediction structure [1: low delay, 2: random access]                                                     |
 | **StatReport**                   | --enable-stat-report        | [0-1]                          | 0           | Calculates and outputs PSNR SSIM metrics at the end of encoding                                               |
 | **Asm**                          | --asm                       | [0-11, c-max]                  | max         | Limit assembly instruction set [c, mmx, sse, sse2, sse3, ssse3, sse4_1, sse4_2, avx, avx2, avx512, max]       |
-| **LogicalProcessorNumber**       | --lp                        | [0, core count of the machine] | 0           | Target number of logical cores to be used. 0 means all. Refer to Appendix A.1                                 |
+| **LogicalProcessors**            | --lp                        | [0, core count of the machine] | 0           | Target number of logical cores to be used. 0 means all. Refer to Appendix A.1                                 |
 | **UnpinExecution**               | --unpin                     | [0-1]                          | 1           | unpin the execution from a socket. Overwritten to 0 when `--ss` is set. Refer to Appendix A.1                 |
 | **TargetSocket**                 | --ss                        | [-1,1]                         | -1          | Specifies which socket to run on, assumes a max of two sockets. Refer to Appendix A.1                         |
 
@@ -190,7 +190,7 @@ The encoder parameters present in the `Sample.cfg` file are listed in this table
 | **QP**                           | --qp                             | [1-63]         | 50              | Initial QP level value                                                                                               |
 | **CRF**                          | --crf                            | [0-63]         | 50              | Constant Rate Factor value, setting this value is equal to `--rc 0 --enable-tpl-la 1 --qp x`                         |
 | **TargetBitRate**                | --tbr                            | [1-4294967]    | 7000            | Target Bitrate (kbps), only applicable for VBR and CBR encoding                                                      |
-| **MaximumBitRate**               | --mbr                            | [1-4294967]    | 0               | Maximum Bitrate (kbps) only applicable for CRF and VBR encoding                                                      |
+| **MaxBitRate**                   | --mbr                            | [1-4294967]    | 0               | Maximum Bitrate (kbps) only applicable for CRF and VBR encoding                                                      |
 | **UseQpFile**                    | --use-q-file                     | [0-1]          | 0               | Overwrite the encoder default picture based QP assignments and use QP values from `--qp-file`                        |
 | **QpFile**                       | --qpfile                         | any string     | Null            | Path to a file containing per picture QP value                                                                       |
 | **MaxQpAllowed**                 | --max-qp                         | [1-63]         | Null            | Maximum (highest) quantizer [1-63] only applicable when `--rc` > 0                                                   |
@@ -301,7 +301,7 @@ For this command line, corresponding qindex values are:
 | **ScreenContentMode**            | --scm                          | [0-2]     | 2           | Set screen content detection level, 0: off, 1: on, 2: content adaptive                                                    |
 | **UnrestrictedMotionVector**     | --umv                          | [0-1]     | 1           | Allow motion vectors to reach outside the picture boundary                                                                |
 | **FilmGrain**                    | --film-grain                   | [0-50]    | 0           | Enable film grain, 0: off, 1-50: level of denoising for film grain                                                        |
-| **AltRefLevel**                  | --tf-level                     | [-1-1]    | -1          | Set temporal filtering control, [-1: auto]                                                                                |
+| **TfLevel**                      | --tf-level                     | [-1-1]    | -1          | Set temporal filtering control, [-1: auto]                                                                                |
 | **EnableOverlays**               | --enable-overlays              | [0-1]     | 0           | Enable the insertion of overlayer pictures which will be used as an additional reference frame for the base layer picture |
 | **SuperresMode**                 | --superres-mode                | [0-4]     | 0           | Enable super-resolution mode, refer to the super-resolution section below for more info                                   |
 | **SuperresDenom**                | --superres-denom               | [8-16]    | 8           | Super-resolution denominator, only applicable for mode == 1 [8: no scaling, 16: half-scaling]                             |
@@ -345,13 +345,13 @@ please look at [section 2.2 of the super-resolution doc](./Appendix-Super-Resolu
 
 ### 1. Thread management parameters
 
-`LogicalProcessorNumber` (`--lp`) and `TargetSocket` (`--ss`) parameters are used to management thread affinity on Windows and Ubuntu OS. These are some examples how you use them together.
+`LogicalProcessors` (`--lp`) and `TargetSocket` (`--ss`) parameters are used to management thread affinity on Windows and Ubuntu OS. These are some examples how you use them together.
 
-If `LogicalProcessorNumber` and `TargetSocket` are not set, threads are managed by OS thread scheduler.
+If `LogicalProcessors` and `TargetSocket` are not set, threads are managed by OS thread scheduler.
 
 `SvtAv1EncApp.exe -i in.yuv -w 3840 -h 2160 --lp 40`
 
-If only `LogicalProcessorNumber` is set, threads run on 40 logical processors. Threads may run on dual sockets if 40 is larger than logical processor number of a socket.
+If only `LogicalProcessors` is set, threads run on 40 logical processors. Threads may run on dual sockets if 40 is larger than logical processor number of a socket.
 
 NOTE: On Windows, thread affinity can be set only by group on system with more than 64 logical processors. So, if 40 is larger than logical processor number of a single socket, threads run on all logical processors of both sockets.
 
@@ -361,7 +361,7 @@ If only `TargetSocket` is set, threads run on all the logical processors of sock
 
 `SvtAv1EncApp.exe -i in.yuv -w 3840 -h 2160 --lp 20 --ss 0`
 
-If both `LogicalProcessorNumber` and `TargetSocket` are set, threads run on 20 logical processors of socket 0. Threads guaranteed to run only on socket 0 if 20 is larger than logical processor number of socket 0.
+If both `LogicalProcessors` and `TargetSocket` are set, threads run on 20 logical processors of socket 0. Threads guaranteed to run only on socket 0 if 20 is larger than logical processor number of socket 0.
 
 The (`-unpin`) option allows the user to pin/unpin the execution to/from a specific number of cores.
 
