@@ -82,7 +82,7 @@ static EbErrorType realloc_stats_out(SequenceControlSet *scs_ptr, FirstPassStats
     return EB_ErrorNone;
 }
 
-static AOM_INLINE void output_stats(SequenceControlSet *scs_ptr, FIRSTPASS_STATS *stats,
+static AOM_INLINE void output_stats(SequenceControlSet *scs_ptr, const FIRSTPASS_STATS *stats,
                                     uint64_t frame_number) {
     FirstPassStatsOut *stats_out = &scs_ptr->encode_context_ptr->stats_out;
     svt_block_on_mutex(scs_ptr->encode_context_ptr->stat_file_mutex);
@@ -297,7 +297,7 @@ static void update_firstpass_stats(PictureParentControlSet *pcs_ptr, const FRAME
     // We will store the stats inside the persistent twopass struct (and NOT the
     // local variable 'fps'), and then cpi->output_pkt_list will point to it.
     *this_frame_stats = fps;
-    output_stats(scs_ptr, this_frame_stats, pcs_ptr->picture_number);
+    output_stats(scs_ptr, &fps, pcs_ptr->picture_number);
     if (twopass->stats_buf_ctx->total_stats != NULL &&
         scs_ptr->static_config.pass == ENC_FIRST_PASS) {
         svt_av1_accumulate_stats(twopass->stats_buf_ctx->total_stats, &fps);
@@ -417,6 +417,8 @@ void first_pass_frame_end(PictureParentControlSet *pcs_ptr, uint8_t skip_frame,
         : mi_params->MBs;*/
         stats.intra_factor      = stats.intra_factor / (double)num_mbs;
         stats.brightness_factor = stats.brightness_factor / (double)num_mbs;
+    } else {
+        memset(&stats, 0, sizeof(stats));
     }
     update_firstpass_stats(
         pcs_ptr,
