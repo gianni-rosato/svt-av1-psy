@@ -85,7 +85,6 @@
 #define INTRA_REFRESH_TYPE_TOKEN "-irefresh-type" // no Eval
 #define LOOP_FILTER_DISABLE_TOKEN "-dlf"
 #define CDEF_ENABLE_TOKEN "--enable-cdef"
-#define RESTORATION_ENABLE_TOKEN "-restoration-filtering"
 #define MFMV_ENABLE_TOKEN "-mfmv"
 #define SCREEN_CONTENT_TOKEN "-scm"
 // --- start: ALTREF_FILTERING_SUPPORT
@@ -153,7 +152,7 @@
 #define LOOKAHEAD_NEW_TOKEN "--lookahead"
 
 #define STAT_REPORT_NEW_TOKEN "--enable-stat-report"
-#define RESTORATION_ENABLE_NEW_TOKEN "--enable-restoration-filtering"
+#define ENABLE_RESTORATION_TOKEN "--enable-restoration"
 #define MFMV_ENABLE_NEW_TOKEN "--enable-mfmv"
 #define HDR_INPUT_NEW_TOKEN "--enable-hdr"
 #define ADAPTIVE_QP_ENABLE_NEW_TOKEN "--aq-mode"
@@ -471,8 +470,8 @@ static void set_cdef_enable(const char *value, EbConfig *cfg) {
     // Set CDEF to either DEFAULT or 0
     cfg->config.cdef_level = -!!strtoul(value, NULL, 0);
 };
-static void set_enable_restoration_filter_flag(const char *value, EbConfig *cfg) {
-    cfg->config.enable_restoration_filtering = strtol(value, NULL, 0);
+static void set_enable_restoration_flag(const char *value, EbConfig *cfg) {
+    cfg->config.enable_restoration_filtering = -!!strtoul(value, NULL, 0);
 };
 static void set_enable_mfmv_flag(const char *value, EbConfig *cfg) {
     cfg->config.enable_mfmv = strtol(value, NULL, 0);
@@ -967,9 +966,9 @@ ConfigEntry config_entry_specific[] = {
      set_cdef_enable},
     // RESTORATION
     {SINGLE_INPUT,
-     RESTORATION_ENABLE_NEW_TOKEN,
-     "Enable the loop restoration filter(0: OFF ,1: ON ,-1:DEFAULT)",
-     set_enable_restoration_filter_flag},
+     ENABLE_RESTORATION_TOKEN,
+     "Enable the loop restoration filter [0: off, 1: on default]",
+     set_enable_restoration_flag},
     {SINGLE_INPUT,
      ENABLE_TPL_LA_TOKEN,
      "RDO based on frame temporal dependency (0: off, 1: backward source based)",
@@ -1160,10 +1159,7 @@ ConfigEntry config_entry[] = {
     {SINGLE_INPUT, CDEF_ENABLE_TOKEN, "CDEFLevel", set_cdef_enable},
 
     // RESTORATION
-    {SINGLE_INPUT,
-     RESTORATION_ENABLE_TOKEN,
-     "RestorationFilter",
-     set_enable_restoration_filter_flag},
+    {SINGLE_INPUT, ENABLE_RESTORATION_TOKEN, "EnableRestoration", set_enable_restoration_flag},
     {SINGLE_INPUT, MFMV_ENABLE_TOKEN, "Mfmv", set_enable_mfmv_flag},
     // MD Parameters
     {SINGLE_INPUT, SCREEN_CONTENT_TOKEN, "ScreenContentMode", set_screen_content_mode},
@@ -1208,10 +1204,6 @@ ConfigEntry config_entry[] = {
     {SINGLE_INPUT, LOOKAHEAD_NEW_TOKEN, "Lookahead", set_look_ahead_distance},
     {SINGLE_INPUT, LOOK_AHEAD_DIST_TOKEN, "Lookahead", set_look_ahead_distance},
     {SINGLE_INPUT, STAT_REPORT_NEW_TOKEN, "StatReport", set_stat_report},
-    {SINGLE_INPUT,
-     RESTORATION_ENABLE_NEW_TOKEN,
-     "RestorationFilter",
-     set_enable_restoration_filter_flag},
     {SINGLE_INPUT, MFMV_ENABLE_NEW_TOKEN, "Mfmv", set_enable_mfmv_flag},
     {SINGLE_INPUT, HDR_INPUT_NEW_TOKEN, "HighDynamicRangeInput", set_high_dynamic_range_input},
     {SINGLE_INPUT, ADAPTIVE_QP_ENABLE_NEW_TOKEN, "AdaptiveQuantization", set_adaptive_quantization},
@@ -2399,8 +2391,6 @@ const char *handle_warnings(const char *token, char *print_message, uint8_t doub
 
     if (strcmp(token, STAT_REPORT_TOKEN) == 0)
         linked_token = STAT_REPORT_NEW_TOKEN;
-    if (strcmp(token, RESTORATION_ENABLE_TOKEN) == 0)
-        linked_token = RESTORATION_ENABLE_NEW_TOKEN;
     if (strcmp(token, MFMV_ENABLE_TOKEN) == 0)
         linked_token = MFMV_ENABLE_NEW_TOKEN;
     if (strcmp(token, HDR_INPUT_TOKEN) == 0)
