@@ -84,7 +84,7 @@
 #define FILM_GRAIN_TOKEN "-film-grain"
 #define INTRA_REFRESH_TYPE_TOKEN "-irefresh-type" // no Eval
 #define LOOP_FILTER_DISABLE_TOKEN "-dlf"
-#define CDEF_LEVEL_TOKEN "-cdef-level"
+#define CDEF_ENABLE_TOKEN "--enable-cdef"
 #define RESTORATION_ENABLE_TOKEN "-restoration-filtering"
 #define MFMV_ENABLE_TOKEN "-mfmv"
 #define SCREEN_CONTENT_TOKEN "-scm"
@@ -467,8 +467,9 @@ static void set_cfg_film_grain(const char *value, EbConfig *cfg) {
 static void set_disable_dlf_flag(const char *value, EbConfig *cfg) {
     cfg->config.disable_dlf_flag = (EbBool)strtoul(value, NULL, 0);
 };
-static void set_cdef_level(const char *value, EbConfig *cfg) {
-    cfg->config.cdef_level = strtol(value, NULL, 0);
+static void set_cdef_enable(const char *value, EbConfig *cfg) {
+    // Set CDEF to either DEFAULT or 0
+    cfg->config.cdef_level = -!!strtoul(value, NULL, 0);
 };
 static void set_enable_restoration_filter_flag(const char *value, EbConfig *cfg) {
     cfg->config.enable_restoration_filtering = strtol(value, NULL, 0);
@@ -961,9 +962,9 @@ ConfigEntry config_entry_specific[] = {
      set_disable_dlf_flag},
     // CDEF
     {SINGLE_INPUT,
-     CDEF_LEVEL_TOKEN,
-     "CDEF Level, 0: OFF, 1-5: ON with 64,16,8,4,1 step refinement, -1: DEFAULT",
-     set_cdef_level},
+     CDEF_ENABLE_TOKEN,
+     "Enable Constrained Directional Enhancement Filter [0: off, 1: on default]",
+     set_cdef_enable},
     // RESTORATION
     {SINGLE_INPUT,
      RESTORATION_ENABLE_NEW_TOKEN,
@@ -1153,7 +1154,7 @@ ConfigEntry config_entry[] = {
     {SINGLE_INPUT, LOOP_FILTER_DISABLE_TOKEN, "LoopFilterDisable", set_disable_dlf_flag},
 
     // CDEF
-    {SINGLE_INPUT, CDEF_LEVEL_TOKEN, "CDEFLevel", set_cdef_level},
+    {SINGLE_INPUT, CDEF_ENABLE_TOKEN, "CDEFLevel", set_cdef_enable},
 
     // RESTORATION
     {SINGLE_INPUT,
