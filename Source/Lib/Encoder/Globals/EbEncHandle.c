@@ -2458,7 +2458,7 @@ static void update_look_ahead(SequenceControlSet *scs_ptr) {
         scs_ptr->static_config.look_ahead_distance = mg_size + 1 + (eos_delay + scs_ptr->scd_delay);
         SVT_WARN("Minimum lookahead distance to run %dL with TF %d is %d. Force the look_ahead_distance to be %d\n",
             scs_ptr->static_config.hierarchical_levels + 1,
-            scs_ptr->static_config.tf_level == 0 ? 0 : 1,
+            scs_ptr->static_config.enable_tf,
             scs_ptr->static_config.look_ahead_distance,
             scs_ptr->static_config.look_ahead_distance);
     }
@@ -2878,9 +2878,7 @@ void tf_controls(SequenceControlSet *scs_ptr, uint8_t tf_level) {
 void derive_tf_params(SequenceControlSet *scs_ptr) {
 
     // Do not perform TF if LD or 1 Layer or 1st pass
-    uint8_t do_tf =
-        (scs_ptr->static_config.tf_level && scs_ptr->static_config.hierarchical_levels >= 1 && scs_ptr->static_config.pass != ENC_FIRST_PASS)
-        ? 1 : 0;
+    EbBool do_tf = scs_ptr->static_config.enable_tf && scs_ptr->static_config.hierarchical_levels >= 1 && scs_ptr->static_config.pass != ENC_FIRST_PASS;
     uint8_t tf_level = 0;
     if (do_tf == 0) {
         tf_level = 0;
@@ -3356,7 +3354,7 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     }
 
 
-    scs_ptr->static_config.enable_overlays = scs_ptr->static_config.tf_level == 0 ||
+    scs_ptr->static_config.enable_overlays = !scs_ptr->static_config.enable_tf ||
         (scs_ptr->static_config.rate_control_mode > 0) ?
         0 : scs_ptr->static_config.enable_overlays;
     //0: ON
@@ -3722,7 +3720,7 @@ void copy_api_from_app(
         scs_ptr->static_config.intra_period_length = compute_default_intra_period(scs_ptr);
     if (scs_ptr->static_config.look_ahead_distance == (uint32_t)~0)
         scs_ptr->static_config.look_ahead_distance = compute_default_look_ahead(&scs_ptr->static_config);
-    scs_ptr->static_config.tf_level = config_struct->tf_level;
+    scs_ptr->static_config.enable_tf = config_struct->enable_tf;
     scs_ptr->static_config.enable_overlays = config_struct->enable_overlays;
 
     scs_ptr->static_config.superres_mode = config_struct->superres_mode;
@@ -4277,7 +4275,7 @@ EbErrorType svt_svt_enc_init_parameter(
     config_ptr->recon_enabled = 0;
 
     // Alt-Ref default values
-    config_ptr->tf_level = DEFAULT;
+    config_ptr->enable_tf = EB_TRUE;
     config_ptr->enable_overlays = EB_FALSE;
 
     // Super-resolution default values

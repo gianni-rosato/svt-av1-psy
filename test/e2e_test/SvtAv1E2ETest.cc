@@ -161,8 +161,8 @@ static const std::vector<EncTestSetting> default_enc_settings = {
     // test enable_adaptive_quantization, default is 0
     {"AdapQTest1", {{"AdaptiveQuantization", "1"}}, default_test_vectors},
 
-    // test tf_level, default is -1;
-    {"AltrefTest1", {{"TfLevel", "0"}}, default_test_vectors},
+    // test enable_tf, default is 1;
+    {"AltrefTest1", {{"EnableTF", "0"}}, default_test_vectors},
 
     // test tile settings
     {"TileTest1", {{"TileRow", "1"}}, default_test_vectors},

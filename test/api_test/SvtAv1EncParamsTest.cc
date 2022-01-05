@@ -342,8 +342,8 @@ PARAM_TEST(EncParamTileRowsTest);
 DEFINE_PARAM_TEST_CLASS(EncParamScreenContentModeTest, screen_content_mode);
 PARAM_TEST(EncParamScreenContentModeTest);
 
-/** Test case for tf_level*/
-DEFINE_PARAM_TEST_CLASS(EncParamEnableAltRefsTest, tf_level);
+/** Test case for enable_tf*/
+DEFINE_PARAM_TEST_CLASS(EncParamEnableAltRefsTest, enable_tf);
 PARAM_TEST(EncParamEnableAltRefsTest);
 
 /** Test case for enable_overlays*/

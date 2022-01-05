@@ -89,7 +89,7 @@
 #define MFMV_ENABLE_TOKEN "-mfmv"
 #define SCREEN_CONTENT_TOKEN "-scm"
 // --- start: ALTREF_FILTERING_SUPPORT
-#define TF_LEVEL "-tf-level"
+#define ENABLE_TF_TOKEN "--enable-tf"
 #define ENABLE_OVERLAYS "-enable-overlays"
 // --- end: ALTREF_FILTERING_SUPPORT
 // --- start: SUPER-RESOLUTION SUPPORT
@@ -542,8 +542,8 @@ static void set_screen_content_mode(const char *value, EbConfig *cfg) {
     cfg->config.screen_content_mode = strtoul(value, NULL, 0);
 };
 // --- start: ALTREF_FILTERING_SUPPORT
-static void set_tf_level(const char *value, EbConfig *cfg) {
-    cfg->config.tf_level = (int8_t)strtoul(value, NULL, 0);
+static void set_enable_tf(const char *value, EbConfig *cfg) {
+    cfg->config.enable_tf = !!strtol(value, NULL, 0);
 };
 
 static void set_enable_overlays(const char *value, EbConfig *cfg) {
@@ -996,7 +996,10 @@ ConfigEntry config_entry_specific[] = {
      "Enable film grain(0: OFF[default], 1-50: ON, film-grain denoising strength)",
      set_cfg_film_grain},
     // --- start: ALTREF_FILTERING_SUPPORT
-    {SINGLE_INPUT, TF_LEVEL, "Set altref level(-1: Default; 0: OFF; 1: ON)", set_tf_level},
+    {SINGLE_INPUT,
+     ENABLE_TF_TOKEN,
+     "Enable ALT-REF (temporally filtered) frames [0: off, 1: on default]",
+     set_enable_tf},
 
     {SINGLE_INPUT,
      ENABLE_OVERLAYS,
@@ -1187,7 +1190,7 @@ ConfigEntry config_entry[] = {
     // Asm Type
     {SINGLE_INPUT, ASM_TYPE_TOKEN, "Asm", set_asm_type},
     // --- start: ALTREF_FILTERING_SUPPORT
-    {SINGLE_INPUT, TF_LEVEL, "TfLevel", set_tf_level},
+    {SINGLE_INPUT, ENABLE_TF_TOKEN, "EnableTf", set_enable_tf},
     {SINGLE_INPUT, ENABLE_OVERLAYS, "EnableOverlays", set_enable_overlays},
     // --- end: ALTREF_FILTERING_SUPPORT
     // Super-resolution support

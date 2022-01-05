@@ -517,10 +517,13 @@ typedef struct EbSvtAv1EncConfiguration {
     int32_t tile_columns;
     int32_t tile_rows;
 
-    /* Variables to control the use of ALT-REF (temporally filtered frames)
-    */
-    // -1: Default; 0: OFF; 1: ON
-    int8_t tf_level;
+    /**
+     * @brief Enable use of ALT-REF (temporally filtered) frames.
+     *
+     * Default is true.
+     */
+    EbBool enable_tf;
+
     EbBool enable_overlays;
     // super-resolution parameters
     uint8_t superres_mode;
