@@ -289,25 +289,25 @@ For this command line, corresponding qindex values are:
 
 #### AV1 Specific Options
 
-| **Configuration file parameter** | **Command line**               | **Range** | **Default** | **Description**                                                                                                           |
-|----------------------------------|--------------------------------|-----------|-------------|---------------------------------------------------------------------------------------------------------------------------|
-| **TileRow**                      | --tile-rows                    | [0-6]     | 0           | Number of tile rows to use, `TileRow == log2(x)`, default changes per resolution                                          |
-| **TileCol**                      | --tile-columns                 | [0-4]     | 0           | Number of tile columns to use, `TileCol == log2(x)`, default changes per resolution                                       |
-| **LoopFilterDisable**            | --disable-dlf                  | [0-1]     | 0           | Deblocking loop filter control                                                                                            |
-| **CDEFLevel**                    | --enable-cdef                  | [0-1]     | 1           | Enable Constrained Directional Enhancement Filter                                                                         |
-| **EnableRestoration**            | --enable-restoration           | [0-1]     | 1           | Enable loop restoration filter                                                                                            |
-| **EnableTPLModel**               | --enable-tpl-la                | [0-1]     | 1           | Temporal Dependency model control, only applicable when `--rc` is set to 0                                                |
-| **Mfmv**                         | --enable-mfmv                  | [-1-1]    | -1          | Motion Field Motion Vector control, [-1: auto]                                                                            |
-| **ScreenContentMode**            | --scm                          | [0-2]     | 2           | Set screen content detection level, 0: off, 1: on, 2: content adaptive                                                    |
-| **UnrestrictedMotionVector**     | --umv                          | [0-1]     | 1           | Allow motion vectors to reach outside the picture boundary                                                                |
-| **FilmGrain**                    | --film-grain                   | [0-50]    | 0           | Enable film grain, 0: off, 1-50: level of denoising for film grain                                                        |
-| **EnableTF**                     | --enable-tf                    | [0-1]     | 1           | Enable ALT-REF (temporally filtered) frames                                                                               |
-| **EnableOverlays**               | --enable-overlays              | [0-1]     | 0           | Enable the insertion of overlayer pictures which will be used as an additional reference frame for the base layer picture |
-| **SuperresMode**                 | --superres-mode                | [0-4]     | 0           | Enable super-resolution mode, refer to the super-resolution section below for more info                                   |
-| **SuperresDenom**                | --superres-denom               | [8-16]    | 8           | Super-resolution denominator, only applicable for mode == 1 [8: no scaling, 16: half-scaling]                             |
-| **SuperresKfDenom**              | --superres-kf-denom            | [8-16]    | 8           | Super-resolution denominator for key frames, only applicable for mode == 1 [8: no scaling, 16: half-scaling]              |
-| **SuperresQthres**               | --superres-qthres              | [0-63]    | 43          | Super-resolution q-threshold, only applicable for mode == 3                                                               |
-| **SuperresKfQthres**             | --superres-kf-qthres           | [0-63]    | 43          | Super-resolution q-threshold for key frames, only applicable for mode == 3                                                |
+| **Configuration file parameter** | **Command line**     | **Range** | **Default** | **Description**                                                                                                           |
+|----------------------------------|----------------------|-----------|-------------|---------------------------------------------------------------------------------------------------------------------------|
+| **TileRow**                      | --tile-rows          | [0-6]     | 0           | Number of tile rows to use, `TileRow == log2(x)`, default changes per resolution                                          |
+| **TileCol**                      | --tile-columns       | [0-4]     | 0           | Number of tile columns to use, `TileCol == log2(x)`, default changes per resolution                                       |
+| **LoopFilterDisable**            | --disable-dlf        | [0-1]     | 0           | Deblocking loop filter control                                                                                            |
+| **CDEFLevel**                    | --enable-cdef        | [0-1]     | 1           | Enable Constrained Directional Enhancement Filter                                                                         |
+| **EnableRestoration**            | --enable-restoration | [0-1]     | 1           | Enable loop restoration filter                                                                                            |
+| **EnableTPLModel**               | --enable-tpl-la      | [0-1]     | 1           | Temporal Dependency model control, only applicable when `--rc` is set to 0                                                |
+| **Mfmv**                         | --enable-mfmv        | [-1-1]    | -1          | Motion Field Motion Vector control, [-1: auto]                                                                            |
+| **ScreenContentMode**            | --scm                | [0-2]     | 2           | Set screen content detection level, 0: off, 1: on, 2: content adaptive                                                    |
+| **UnrestrictedMotionVector**     | --umv                | [0-1]     | 1           | Allow motion vectors to reach outside the picture boundary                                                                |
+| **FilmGrain**                    | --film-grain         | [0-50]    | 0           | Enable film grain, 0: off, 1-50: level of denoising for film grain                                                        |
+| **EnableTF**                     | --enable-tf          | [0-1]     | 1           | Enable ALT-REF (temporally filtered) frames                                                                               |
+| **EnableOverlays**               | --enable-overlays    | [0-1]     | 0           | Enable the insertion of overlayer pictures which will be used as an additional reference frame for the base layer picture |
+| **SuperresMode**                 | --superres-mode      | [0-4]     | 0           | Enable super-resolution mode, refer to the super-resolution section below for more info                                   |
+| **SuperresDenom**                | --superres-denom     | [8-16]    | 8           | Super-resolution denominator, only applicable for mode == 1 [8: no scaling, 16: half-scaling]                             |
+| **SuperresKfDenom**              | --superres-kf-denom  | [8-16]    | 8           | Super-resolution denominator for key frames, only applicable for mode == 1 [8: no scaling, 16: half-scaling]              |
+| **SuperresQthres**               | --superres-qthres    | [0-63]    | 43          | Super-resolution q-threshold, only applicable for mode == 3                                                               |
+| **SuperresKfQthres**             | --superres-kf-qthres | [0-63]    | 43          | Super-resolution q-threshold for key frames, only applicable for mode == 3                                                |
 
 ##### **Super-Resolution**
 
