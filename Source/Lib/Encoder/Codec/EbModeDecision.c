@@ -924,7 +924,7 @@ void unipred_3x3_candidates_injection(const SequenceControlSet *scs_ptr, Picture
     IntMv        best_pred_mv[2]      = {{0}, {0}};
     int          inside_tile          = 1;
     MacroBlockD *xd                   = context_ptr->blk_ptr->av1xd;
-    int          umv0tile             = (scs_ptr->static_config.unrestricted_motion_vector == 0);
+    int          umv0tile             = scs_ptr->static_config.restricted_motion_vector;
     uint32_t     mi_row               = context_ptr->blk_origin_y >> MI_SIZE_LOG2;
     uint32_t     mi_col               = context_ptr->blk_origin_x >> MI_SIZE_LOG2;
 
@@ -1253,7 +1253,7 @@ void bipred_3x3_candidates_injection(const SequenceControlSet *scs_ptr, PictureC
     EbBool       is_compound_enabled  = (frm_hdr->reference_mode == SINGLE_REFERENCE) ? 0 : 1;
     IntMv        best_pred_mv[2]      = {{0}, {0}};
     MacroBlockD *xd                   = context_ptr->blk_ptr->av1xd;
-    int          umv0tile             = (scs_ptr->static_config.unrestricted_motion_vector == 0);
+    int          umv0tile             = scs_ptr->static_config.restricted_motion_vector;
     uint32_t     mi_row               = context_ptr->blk_origin_y >> MI_SIZE_LOG2;
     uint32_t     mi_col               = context_ptr->blk_origin_x >> MI_SIZE_LOG2;
 
@@ -1884,7 +1884,7 @@ void inject_mvp_candidates_ii(const SequenceControlSet *scs_ptr, PictureControlS
     uint8_t                drli, max_drl_index;
     IntMv                  nearestmv[2], nearmv[2], ref_mv[2];
     int                    inside_tile = 1;
-    int                    umv0tile    = (scs_ptr->static_config.unrestricted_motion_vector == 0);
+    int                    umv0tile    = scs_ptr->static_config.restricted_motion_vector;
     uint32_t               mi_row      = context_ptr->blk_origin_y >> MI_SIZE_LOG2;
     uint32_t               mi_col      = context_ptr->blk_origin_x >> MI_SIZE_LOG2;
     BlockSize              bsize       = context_ptr->blk_geom->bsize; // bloc size
@@ -2340,7 +2340,7 @@ void inject_new_nearest_new_comb_candidates(const SequenceControlSet *scs_ptr,
     ModeDecisionCandidate *cand_array = context_ptr->fast_candidate_array;
     MacroBlockD *          xd         = context_ptr->blk_ptr->av1xd;
     IntMv                  nearestmv[2], nearmv[2], ref_mv[2];
-    int                    umv0tile = (scs_ptr->static_config.unrestricted_motion_vector == 0);
+    int                    umv0tile = scs_ptr->static_config.restricted_motion_vector;
     uint32_t               mi_row   = context_ptr->blk_origin_y >> MI_SIZE_LOG2;
     uint32_t               mi_col   = context_ptr->blk_origin_x >> MI_SIZE_LOG2;
 
@@ -2808,7 +2808,7 @@ void inject_warped_motion_candidates(PictureControlSet *         pcs_ptr,
     int                 inside_tile = 1;
     SequenceControlSet *scs_ptr     = (SequenceControlSet *)
                                       pcs_ptr->parent_pcs_ptr->scs_wrapper_ptr->object_ptr;
-    int              umv0_tile = (scs_ptr->static_config.unrestricted_motion_vector == 0);
+    int              umv0_tile = scs_ptr->static_config.restricted_motion_vector;
     uint32_t         mi_row    = context_ptr->blk_origin_y >> MI_SIZE_LOG2;
     uint32_t         mi_col    = context_ptr->blk_origin_x >> MI_SIZE_LOG2;
     uint32_t         ref_it;
@@ -3795,7 +3795,7 @@ void inject_new_candidates(const SequenceControlSet *  scs_ptr,
         &me_results->me_candidate_array[context_ptr->me_cand_offset];
     MacroBlockD *xd             = context_ptr->blk_ptr->av1xd;
     int          inside_tile    = 1;
-    int          umv0tile       = (scs_ptr->static_config.unrestricted_motion_vector == 0);
+    int          umv0tile       = scs_ptr->static_config.restricted_motion_vector;
     uint32_t     mi_row         = context_ptr->blk_origin_y >> MI_SIZE_LOG2;
     uint32_t     mi_col         = context_ptr->blk_origin_x >> MI_SIZE_LOG2;
     BlockSize    bsize          = context_ptr->blk_geom->bsize; // bloc size
@@ -4237,7 +4237,7 @@ void inject_global_candidates(const SequenceControlSet *  scs_ptr,
     uint8_t                inj_mv;
     int                    inside_tile = 1;
     MacroBlockD *          xd          = context_ptr->blk_ptr->av1xd;
-    int                    umv0tile    = (scs_ptr->static_config.unrestricted_motion_vector == 0);
+    int                    umv0tile    = scs_ptr->static_config.restricted_motion_vector;
     uint32_t               mi_row      = context_ptr->blk_origin_y >> MI_SIZE_LOG2;
     uint32_t               mi_col      = context_ptr->blk_origin_x >> MI_SIZE_LOG2;
     BlockSize              bsize       = context_ptr->blk_geom->bsize; // bloc size

@@ -1290,7 +1290,7 @@ void *resource_coordination_kernel(void *input_ptr) {
             // y8b follows longest life cycle of pa ref and input. so it needs to build on top of live count of pa ref
             if (!pcs_ptr->is_overlay)
                 svt_object_inc_live_count(pcs_ptr->eb_y8b_wrapper_ptr, 2);
-            if (scs_ptr->static_config.unrestricted_motion_vector == 0) {
+            if (scs_ptr->static_config.restricted_motion_vector) {
                 struct PictureParentControlSet *ppcs_ptr        = pcs_ptr;
                 Av1Common *const                cm              = ppcs_ptr->av1_cm;
                 uint8_t                         pic_width_in_sb = (uint8_t)(

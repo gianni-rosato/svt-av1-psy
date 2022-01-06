@@ -3306,11 +3306,9 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
         scs_ptr->super_block_size = 64;
 
     // scs_ptr->static_config.hierarchical_levels = (scs_ptr->static_config.rate_control_mode > 1) ? 3 : scs_ptr->static_config.hierarchical_levels;
-    // unrestricted_motion_vector 0 && SB 128x128 not supported
-    // Forcing unrestricted_motion_vector to 1
-    if (scs_ptr->static_config.unrestricted_motion_vector == 0 && scs_ptr->super_block_size == 128) {
-        scs_ptr->static_config.unrestricted_motion_vector = 1;
-        SVT_WARN("Unrestricted_motion_vector 0 and SB 128x128 not supoorted, set to 1\n");
+    if (scs_ptr->static_config.restricted_motion_vector && scs_ptr->super_block_size == 128) {
+        scs_ptr->static_config.restricted_motion_vector = EB_FALSE;
+        SVT_WARN("Restricted_motion_vector and SB 128x128 not supoorted, setting rmv to false\n");
     }
     if (scs_ptr->static_config.intra_refresh_type == 1 && scs_ptr->static_config.hierarchical_levels != 4){
         scs_ptr->static_config.hierarchical_levels = 4;
@@ -3602,7 +3600,7 @@ void copy_api_from_app(
     // Adaptive Loop Filter
     scs_ptr->static_config.tile_rows = scs_ptr->static_config.pass == ENC_FIRST_PASS ? 0 : ((EbSvtAv1EncConfiguration*)config_struct)->tile_rows;
     scs_ptr->static_config.tile_columns = scs_ptr->static_config.pass == ENC_FIRST_PASS ? 0 : ((EbSvtAv1EncConfiguration*)config_struct)->tile_columns;
-    scs_ptr->static_config.unrestricted_motion_vector = ((EbSvtAv1EncConfiguration*)config_struct)->unrestricted_motion_vector;
+    scs_ptr->static_config.restricted_motion_vector = ((EbSvtAv1EncConfiguration*)config_struct)->restricted_motion_vector;
 
     // Rate Control
     scs_ptr->static_config.scene_change_detection = ((EbSvtAv1EncConfiguration*)config_struct)->scene_change_detection;
@@ -3896,8 +3894,8 @@ static EbErrorType verify_settings(
         SVT_LOG("Error Instance %u: MaxTiles is 128 and MaxTileCols is 16 (Annex A.3) \n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
-    if (config->unrestricted_motion_vector > 1) {
-        SVT_LOG("Error Instance %u : Invalid Unrestricted Motion Vector flag [0 - 1]\n", channel_number + 1);
+    if (config->restricted_motion_vector > 1) {
+        SVT_LOG("Error Instance %u : Invalid Restricted Motion Vector flag [0 - 1]\n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
 
@@ -4248,7 +4246,7 @@ EbErrorType svt_svt_enc_init_parameter(
     // Bitstream options
     //config_ptr->codeVpsSpsPps = 0;
     //config_ptr->codeEosNal = 0;
-    config_ptr->unrestricted_motion_vector = EB_TRUE;
+    config_ptr->restricted_motion_vector = EB_FALSE;
 
     config_ptr->high_dynamic_range_input = 0;
     config_ptr->screen_content_mode = 2;

@@ -299,7 +299,7 @@ For this command line, corresponding qindex values are:
 | **EnableTPLModel**               | --enable-tpl-la      | [0-1]     | 1           | Temporal Dependency model control, only applicable when `--rc` is set to 0                                                |
 | **Mfmv**                         | --enable-mfmv        | [-1-1]    | -1          | Motion Field Motion Vector control, [-1: auto]                                                                            |
 | **ScreenContentMode**            | --scm                | [0-2]     | 2           | Set screen content detection level, 0: off, 1: on, 2: content adaptive                                                    |
-| **UnrestrictedMotionVector**     | --umv                | [0-1]     | 1           | Allow motion vectors to reach outside the picture boundary                                                                |
+| **RestrictedMotionVector**       | --rmv                | [0-1]     | 0           | Restrict motion vectors from reaching outside the picture boundary                                                        |
 | **FilmGrain**                    | --film-grain         | [0-50]    | 0           | Enable film grain, 0: off, 1-50: level of denoising for film grain                                                        |
 | **EnableTF**                     | --enable-tf          | [0-1]     | 1           | Enable ALT-REF (temporally filtered) frames                                                                               |
 | **EnableOverlays**               | --enable-overlays    | [0-1]     | 0           | Enable the insertion of overlayer pictures which will be used as an additional reference frame for the base layer picture |

@@ -127,7 +127,7 @@
 #define THREAD_MGMNT "-lp"
 #define UNPIN_TOKEN "-unpin"
 #define TARGET_SOCKET "-ss"
-#define UNRESTRICTED_MOTION_VECTOR "-umv"
+#define RESTRICTED_MOTION_VECTOR "--rmv"
 #define CONFIG_FILE_COMMENT_CHAR '#'
 #define CONFIG_FILE_NEWLINE_CHAR '\n'
 #define CONFIG_FILE_RETURN_CHAR '\r'
@@ -642,8 +642,8 @@ static void set_unpin_execution(const char *value, EbConfig *cfg) {
 static void set_target_socket(const char *value, EbConfig *cfg) {
     cfg->config.target_socket = (int32_t)strtol(value, NULL, 0);
 };
-static void set_unrestricted_motion_vector(const char *value, EbConfig *cfg) {
-    cfg->config.unrestricted_motion_vector = (EbBool)strtol(value, NULL, 0);
+static void set_restricted_motion_vector(const char *value, EbConfig *cfg) {
+    cfg->config.restricted_motion_vector = !!strtol(value, NULL, 0);
 };
 static void set_cfg_color_primaries(const char *value, EbConfig *cfg) {
     cfg->config.color_primaries = (uint8_t)strtoul(value, NULL, 0);
@@ -984,9 +984,9 @@ ConfigEntry config_entry_specific[] = {
      set_screen_content_mode},
     // Optional Features
     {SINGLE_INPUT,
-     UNRESTRICTED_MOTION_VECTOR,
-     "Allow motion vectors to reach outside of the picture boundary(O: OFF, 1: ON[default])",
-     set_unrestricted_motion_vector},
+     RESTRICTED_MOTION_VECTOR,
+     "Restrict motion vectors from reaching outside the picture boundary [0: off default, 1: on]",
+     set_restricted_motion_vector},
 
     // Annex A parameters
     {SINGLE_INPUT,
@@ -1168,9 +1168,9 @@ ConfigEntry config_entry[] = {
     {SINGLE_INPUT, TARGET_SOCKET, "TargetSocket", set_target_socket},
     // Optional Features
     {SINGLE_INPUT,
-     UNRESTRICTED_MOTION_VECTOR,
-     "UnrestrictedMotionVector",
-     set_unrestricted_motion_vector},
+     RESTRICTED_MOTION_VECTOR,
+     "RestrictedMotionVector",
+     set_restricted_motion_vector},
 
     //    { SINGLE_INPUT, BITRATE_REDUCTION_TOKEN, "bit_rate_reduction", SetBitRateReduction },
     {SINGLE_INPUT, HDR_INPUT_TOKEN, "HighDynamicRangeInput", set_high_dynamic_range_input},

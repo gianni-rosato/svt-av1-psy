@@ -471,13 +471,12 @@ typedef struct EbSvtAv1EncConfiguration {
      */
     uint32_t active_channel_count;
 
-    /* Flag to constrain motion vectors.
+    /**
+     * @brief API signal to constrain motion vectors.
      *
-     * 1: Motion vectors are allowed to point outside frame boundary.
-     * 0: Motion vectors are NOT allowed to point outside frame boundary.
-     *
-     * Default is 1. */
-    uint8_t unrestricted_motion_vector;
+     * Default is false.
+     */
+    EbBool restricted_motion_vector;
 
     // Threads management
 

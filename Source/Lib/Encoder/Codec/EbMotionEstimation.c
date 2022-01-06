@@ -1403,7 +1403,7 @@ void integer_search_sb(PictureParentControlSet *pcs_ptr, uint32_t sb_index, uint
             x_search_area_origin = x_search_center - (search_area_width >> 1);
             y_search_area_origin = y_search_center - (search_area_height >> 1);
 
-            if (scs_ptr->static_config.unrestricted_motion_vector == 0) {
+            if (scs_ptr->static_config.restricted_motion_vector) {
                 // sb_params_array in scs and ppcs are different when super-res is enabled
                 // ME_OPEN_LOOP is performed on downscaled frames while others (ME_MCTF and ME_FIRST_PASS) are performed on unscaled frames
                 SbParams *sb_params_array = context_ptr->me_type != ME_OPEN_LOOP
@@ -1463,7 +1463,7 @@ void integer_search_sb(PictureParentControlSet *pcs_ptr, uint32_t sb_index, uint
                 search_area_width = (search_area_width < 8) ? search_area_width
                                                             : search_area_width & ~0x07;
             }
-            if (scs_ptr->static_config.unrestricted_motion_vector == 0) {
+            if (scs_ptr->static_config.restricted_motion_vector) {
                 // sb_params_array in scs and ppcs are different when super-res is enabled
                 // ME_OPEN_LOOP is performed on downscaled frames while others (ME_MCTF and ME_FIRST_PASS) are performed on unscaled frames
                 SbParams *sb_params_array = context_ptr->me_type != ME_OPEN_LOOP
