@@ -4289,6 +4289,7 @@ EbErrorType svt_svt_enc_init_parameter(
     config_ptr->transfer_characteristics = 2;
     config_ptr->matrix_coefficients = 2;
     config_ptr->color_range = 0;
+    config_ptr->pass = 0;
     memset(&config_ptr->mastering_display, 0, sizeof(config_ptr->mastering_display));
     memset(&config_ptr->content_light_level, 0, sizeof(config_ptr->content_light_level));
     return return_error;
