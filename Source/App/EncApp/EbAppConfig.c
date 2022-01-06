@@ -1758,6 +1758,13 @@ static EbErrorType verify_settings(EbConfig *config, uint32_t channel_number) {
     }
     int pass = config->config.pass;
 
+    if (pass == 3 && config->config.rate_control_mode == 0) {
+        fprintf(config->error_log_file,
+                "Error Instance %u: CRF does not support 3-pass\n",
+                channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+
     if ((pass != DEFAULT || config->input_stat_file || config->output_stat_file) &&
         channel_number > 0) {
         fprintf(config->error_log_file,
