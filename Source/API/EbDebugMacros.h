@@ -35,13 +35,6 @@
 extern "C" {
 #endif // __cplusplus
 
-
-typedef enum MultiPassModes {
-    SINGLE_PASS, //single pass mode
-    TWO_PASS_IPP_FINAL, // two pass: IPP + final
-    THREE_PASS_IPP_SAMEPRED_FINAL, // three pass: IPP + Same Pred + final
-} MultiPassModes;
-
 #define DS_SC_FACT              23
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one

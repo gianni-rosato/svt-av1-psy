@@ -246,6 +246,12 @@ typedef struct EncChannel {
     EbBool               active;
 } EncChannel;
 
+typedef enum MultiPassModes {
+    SINGLE_PASS, //single pass mode
+    TWO_PASS_IPP_FINAL, // two pass: IPP + final
+    THREE_PASS_IPP_SAMEPRED_FINAL, // three pass: IPP + Same Pred + final
+} MultiPassModes;
+
 typedef struct EncApp {
     SvtAv1FixedBuf rc_twopasses_stats;
 } EncApp;
