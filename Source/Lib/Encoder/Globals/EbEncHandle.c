@@ -3584,7 +3584,7 @@ void copy_api_from_app(
     scs_ptr->static_config.rc_stats_buffer = ((EbSvtAv1EncConfiguration*)config_struct)->rc_stats_buffer;
     scs_ptr->static_config.pass = ((EbSvtAv1EncConfiguration*)config_struct)->pass;
     // Deblock Filter
-    scs_ptr->static_config.disable_dlf_flag = ((EbSvtAv1EncConfiguration*)config_struct)->disable_dlf_flag;
+    scs_ptr->static_config.enable_dlf_flag = ((EbSvtAv1EncConfiguration*)config_struct)->enable_dlf_flag;
 
     // CDEF
     scs_ptr->static_config.cdef_level = ((EbSvtAv1EncConfiguration*)config_struct)->cdef_level;
@@ -3849,8 +3849,8 @@ static EbErrorType verify_settings(
         return_error = EB_ErrorBadParameter;
     }
 
-    if (config->disable_dlf_flag > 1) {
-        SVT_LOG("Error Instance %u: Invalid LoopFilterDisable. LoopFilterDisable must be [0 - 1]\n", channel_number + 1);
+    if (config->enable_dlf_flag > 1) {
+        SVT_LOG("Error Instance %u: Invalid LoopFilterEnable. LoopFilterEnable must be [0 - 1]\n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
 
@@ -4226,7 +4226,7 @@ EbErrorType svt_svt_enc_init_parameter(
     config_ptr->intra_refresh_type = 2;
     config_ptr->hierarchical_levels = 4;
     config_ptr->pred_structure = EB_PRED_RANDOM_ACCESS;
-    config_ptr->disable_dlf_flag = EB_FALSE;
+    config_ptr->enable_dlf_flag = EB_TRUE;
     config_ptr->cdef_level = DEFAULT;
     config_ptr->enable_restoration_filtering = DEFAULT;
     config_ptr->enable_mfmv = DEFAULT;

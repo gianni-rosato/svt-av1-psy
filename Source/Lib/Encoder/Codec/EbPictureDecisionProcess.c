@@ -1759,7 +1759,7 @@ EbErrorType signal_derivation_multi_processes_oq(
 
     set_palette_level(pcs_ptr, pcs_ptr->palette_level);
     uint8_t dlf_level = 0;
-    if (!pcs_ptr->scs_ptr->static_config.disable_dlf_flag && frm_hdr->allow_intrabc == 0) {
+    if (pcs_ptr->scs_ptr->static_config.enable_dlf_flag && frm_hdr->allow_intrabc == 0) {
         dlf_level = get_dlf_level(pcs_ptr->enc_mode, pcs_ptr->is_used_as_reference_flag);
     }
     set_dlf_controls(pcs_ptr, dlf_level);

@@ -83,7 +83,6 @@
 #define LEVEL_TOKEN "-level"
 #define FILM_GRAIN_TOKEN "-film-grain"
 #define INTRA_REFRESH_TYPE_TOKEN "-irefresh-type" // no Eval
-#define LOOP_FILTER_DISABLE_TOKEN "-dlf"
 #define CDEF_ENABLE_TOKEN "--enable-cdef"
 #define MFMV_ENABLE_TOKEN "-mfmv"
 #define SCREEN_CONTENT_TOKEN "-scm"
@@ -164,7 +163,7 @@
 #define NUMBER_OF_PICTURES_LONG_TOKEN "--frames"
 #define QP_LONG_TOKEN "--qp"
 #define CRF_LONG_TOKEN "--crf"
-#define LOOP_FILTER_DISABLE_NEW_TOKEN "--disable-dlf"
+#define LOOP_FILTER_ENABLE "--enable-dlf"
 
 #define COLOR_PRIMARIES_NEW_TOKEN "--color-primaries"
 #define TRANSFER_CHARACTERISTICS_NEW_TOKEN "--transfer-characteristics"
@@ -463,9 +462,9 @@ static void set_cfg_chroma_qindex_offsets(const char *value, EbConfig *cfg) {
 static void set_cfg_film_grain(const char *value, EbConfig *cfg) {
     cfg->config.film_grain_denoise_strength = strtol(value, NULL, 0);
 }; //not bool to enable possible algorithm extension in the future
-static void set_disable_dlf_flag(const char *value, EbConfig *cfg) {
-    cfg->config.disable_dlf_flag = (EbBool)strtoul(value, NULL, 0);
-};
+static void set_enable_dlf_flag(const char *value, EbConfig *cfg) {
+    cfg->config.enable_dlf_flag = !!strtoul(value, NULL, 0);
+}
 static void set_cdef_enable(const char *value, EbConfig *cfg) {
     // Set CDEF to either DEFAULT or 0
     cfg->config.cdef_level = -!!strtoul(value, NULL, 0);
@@ -956,9 +955,9 @@ ConfigEntry config_entry_specific[] = {
 
     // DLF
     {SINGLE_INPUT,
-     LOOP_FILTER_DISABLE_NEW_TOKEN,
-     "Disable loop filter(0: loop filter enabled[default] ,1: loop filter disabled)",
-     set_disable_dlf_flag},
+     LOOP_FILTER_ENABLE,
+     "Enable loop filter [0: off, 1: on default]",
+     set_enable_dlf_flag},
     // CDEF
     {SINGLE_INPUT,
      CDEF_ENABLE_TOKEN,
@@ -1153,7 +1152,7 @@ ConfigEntry config_entry[] = {
     {SINGLE_INPUT, RECODE_LOOP_TOKEN, "RecodeLoop", set_recode_loop},
 
     // DLF
-    {SINGLE_INPUT, LOOP_FILTER_DISABLE_TOKEN, "LoopFilterDisable", set_disable_dlf_flag},
+    {SINGLE_INPUT, LOOP_FILTER_ENABLE, "LoopFilterEnable", set_enable_dlf_flag},
 
     // CDEF
     {SINGLE_INPUT, CDEF_ENABLE_TOKEN, "CDEFLevel", set_cdef_enable},
@@ -1218,7 +1217,6 @@ ConfigEntry config_entry[] = {
     {SINGLE_INPUT, NUMBER_OF_PICTURES_LONG_TOKEN, "FrameToBeEncoded", set_cfg_frames_to_be_encoded},
     {SINGLE_INPUT, QP_LONG_TOKEN, "QP", set_cfg_qp},
     {SINGLE_INPUT, CRF_LONG_TOKEN, "CRF", set_cfg_crf},
-    {SINGLE_INPUT, LOOP_FILTER_DISABLE_NEW_TOKEN, "LoopFilterDisable", set_disable_dlf_flag},
 
     // Color description
     {SINGLE_INPUT, COLOR_PRIMARIES_NEW_TOKEN, "ColorPrimaries", set_cfg_color_primaries},

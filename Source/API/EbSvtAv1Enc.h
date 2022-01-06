@@ -271,10 +271,13 @@ typedef struct EbSvtAv1EncConfiguration {
     int            pass;
 
     // Deblock Filter
-    /* Flag to disable the Deblocking Loop Filtering.
+
+    /**
+     * @brief Deblocking loop filter control
      *
-     * Default is 0. */
-    EbBool disable_dlf_flag;
+     * Default is true.
+     */
+    EbBool enable_dlf_flag;
 
     /* Film grain denoising the input picture
     * Flag to enable the denoising

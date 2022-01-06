@@ -258,9 +258,9 @@ PARAM_TEST(EncParamQPTest);
 DEFINE_PARAM_TEST_CLASS(EncParamUseQPFileTest, use_qp_file);
 PARAM_TEST(EncParamUseQPFileTest);
 
-/** Test case for disable_dlf_flag*/
-DEFINE_PARAM_TEST_CLASS(EncParamDisableDlfTest, disable_dlf_flag);
-PARAM_TEST(EncParamDisableDlfTest);
+/** Test case for enable_dlf_flag*/
+DEFINE_PARAM_TEST_CLASS(EncParamEnableDlfTest, enable_dlf_flag);
+PARAM_TEST(EncParamEnableDlfTest);
 
 /** Test case for film_grain_denoise_strength*/
 DEFINE_PARAM_TEST_CLASS(EncParamFilmGrainDenoiseStrTest,

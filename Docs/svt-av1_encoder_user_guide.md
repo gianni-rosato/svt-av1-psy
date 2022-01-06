@@ -293,7 +293,7 @@ For this command line, corresponding qindex values are:
 |----------------------------------|----------------------|-----------|-------------|---------------------------------------------------------------------------------------------------------------------------|
 | **TileRow**                      | --tile-rows          | [0-6]     | 0           | Number of tile rows to use, `TileRow == log2(x)`, default changes per resolution                                          |
 | **TileCol**                      | --tile-columns       | [0-4]     | 0           | Number of tile columns to use, `TileCol == log2(x)`, default changes per resolution                                       |
-| **LoopFilterDisable**            | --disable-dlf        | [0-1]     | 0           | Deblocking loop filter control                                                                                            |
+| **LoopFilterEnable**             | --enable-dlf         | [0-1]     | 1           | Deblocking loop filter control                                                                                            |
 | **CDEFLevel**                    | --enable-cdef        | [0-1]     | 1           | Enable Constrained Directional Enhancement Filter                                                                         |
 | **EnableRestoration**            | --enable-restoration | [0-1]     | 1           | Enable loop restoration filter                                                                                            |
 | **EnableTPLModel**               | --enable-tpl-la      | [0-1]     | 1           | Temporal Dependency model control, only applicable when `--rc` is set to 0                                                |

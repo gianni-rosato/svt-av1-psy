@@ -130,8 +130,8 @@ static const std::vector<EncTestSetting> default_enc_settings = {
     {"QpTest5", {{"RateControlMode", "0"}, {"QP", "44"}}, default_test_vectors},
     {"QpTest6", {{"RateControlMode", "0"}, {"QP", "63"}}, default_test_vectors},
 
-    // test disable_dlf_flag, default is 0
-    {"DlfTest1", {{"LoopFilterDisable", "1"}}, default_test_vectors},
+    // test enable_dlf_flag, default is 0
+    {"DlfTest1", {{"LoopFilterEnable", "1"}}, default_test_vectors},
 
     // test film_grain_denoise_strength, default is 0
     {"FilmGrainTest1", {{"FilmGrain", "0"}, {"BlankFrame", "10"}}, default_test_vectors},

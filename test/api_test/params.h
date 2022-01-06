@@ -410,17 +410,17 @@ static const vector<EbBool> invalid_use_qp_file = {
 
 
 // Deblock Filter
-/* Flag to disable the Deblocking Loop Filtering.
+/* Flag to enable the Deblocking Loop Filtering.
  *
- * Default is 0. */
-static const vector<EbBool> default_disable_dlf_flag = {
-    EB_FALSE,
+ * Default is true. */
+static const vector<EbBool> default_enable_dlf_flag = {
+    EB_TRUE,
 };
-static const vector<EbBool> valid_disable_dlf_flag = {
+static const vector<EbBool> valid_enable_dlf_flag = {
     EB_FALSE,
     EB_TRUE,
 };
-static const vector<EbBool> invalid_disable_dlf_flag = {
+static const vector<EbBool> invalid_enable_dlf_flag = {
     // none
 };
 
