@@ -1802,6 +1802,7 @@ void full_loop_chroma_light_pd1(PictureControlSet *pcs_ptr, ModeDecisionContext 
         if (use_pfn4_cond)
             pf_shape = N4_SHAPE;
     }
+    assert(tx_size_uv < TX_SIZES_ALL);
     const int32_t chroma_shift = (MAX_TX_SCALE - av1_get_tx_scale_tab[tx_size_uv]) * 2;
     uint32_t      bwidth       = context_ptr->blk_geom->tx_width_uv[0][0];
     uint32_t      bheight      = context_ptr->blk_geom->tx_height_uv[0][0];

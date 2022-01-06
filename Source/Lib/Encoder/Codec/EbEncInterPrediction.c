@@ -4372,6 +4372,7 @@ void av1_inter_prediction_light_pd0(SequenceControlSet* scs_ptr,
         int32_t      pos_y, pos_x;
         pos_x = pu_origin_x + (mv_unit->mv[REF_LIST_0].x >> 3);
         pos_y = pu_origin_y + (mv_unit->mv[REF_LIST_0].y >> 3);
+        assert(ref_pic_list0 != NULL);
         if (av1_is_scaled(sf0)) {
             MV mv;
             mv.col = mv_unit->mv[REF_LIST_0].x;
@@ -4417,6 +4418,7 @@ void av1_inter_prediction_light_pd0(SequenceControlSet* scs_ptr,
         int32_t      pos_y, pos_x;
         pos_x = pu_origin_x + (mv_unit->mv[REF_LIST_1].x >> 3);
         pos_y = pu_origin_y + (mv_unit->mv[REF_LIST_1].y >> 3);
+        assert(ref_pic_list1 != NULL);
         if (av1_is_scaled(sf1)) {
             MV mv;
             mv.col = mv_unit->mv[REF_LIST_1].x;
@@ -4806,7 +4808,7 @@ static uint8_t inter_chroma_4xn_pred(PictureControlSet *pcs, MacroBlockD *xd,
             }
         }
     }
-
+    assert(pcs != NULL);
     if (sub8x8_inter) {
         // block size
         const int32_t   b4_w        = block_size_wide[bsize] >> ss_x;
@@ -4817,7 +4819,7 @@ static uint8_t inter_chroma_4xn_pred(PictureControlSet *pcs, MacroBlockD *xd,
         const int32_t b8_h = block_size_high[plane_bsize] >> ss_y;
 
         ScaleFactors scale_factors[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
-        if (pcs != NULL && !use_intrabc && !pcs->parent_pcs_ptr->is_superres_none) {
+        if (!use_intrabc && !pcs->parent_pcs_ptr->is_superres_none) {
             uint32_t num_of_list_to_search = (pcs->parent_pcs_ptr->slice_type == P_SLICE)
                 ? (uint32_t)REF_LIST_0
                 : (uint32_t)REF_LIST_1;
@@ -6044,6 +6046,7 @@ EbErrorType inter_pu_prediction_av1_light_pd1(uint8_t                      hbd_m
         ref_pic_list1             = get_ref_pic_buffer(
             picture_control_set_ptr, hbd_mode_decision, list_idx_sec, ref_idx_sec);
     }
+
     // WM disallowed in light-PD1 path so motion mode is always SIMPLE_TRANSLATION
     if (picture_control_set_ptr->parent_pcs_ptr->frm_hdr.allow_warped_motion) {
         wm_count_samples(
@@ -6263,6 +6266,8 @@ EbErrorType inter_pu_prediction_av1(uint8_t hbd_mode_decision, ModeDecisionConte
                         ref_pic_list1 = get_ref_pic_buffer(
                             picture_control_set_ptr, 0, list_idx1, ref_idx_l1);
                 }
+                assert(ref_pic_list0 != NULL);
+                assert(ref_pic_list1 != NULL);
                 // only perform interpolation filter search for quarter pel positions
                 if (md_context_ptr->ifs_ctrls.quarter_pel_only) {
                     int is_integer_l0 = 0;

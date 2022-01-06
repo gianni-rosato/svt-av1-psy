@@ -1102,6 +1102,7 @@ void finish_cdef_search(PictureControlSet *pcs_ptr) {
         int32_t *sb_index = (int32_t *)malloc(nvfb * nhfb * sizeof(*sb_index));
         int32_t  best_gi  = 0;
         sb_count          = 0;
+        assert(sb_index != NULL);
         for (fbr = 0; fbr < nvfb; ++fbr) {
             for (fbc = 0; fbc < nhfb; ++fbc) {
                 ModeInfo **mi = pcs_ptr->mi_grid_base + MI_SIZE_64X64 * fbr * cm->mi_stride +

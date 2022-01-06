@@ -2228,9 +2228,12 @@ void derive_me_offsets(const SequenceControlSet *scs_ptr, PictureControlSet *pcs
                                                           MAX_SB64_PU_COUNT_NO_8X8];
                 if (!context_ptr->sb_ptr->pcs_ptr->parent_pcs_ptr->enable_me_16x16)
                     if (context_ptr->me_block_offset >= MAX_SB64_PU_COUNT_WO_16X16)
+                    {
+                        assert(context_ptr->me_block_offset < 21);
                         context_ptr->me_block_offset =
                             me_idx_16x16_to_parent_32x32_conversion[context_ptr->me_block_offset -
-                                                                    MAX_SB64_PU_COUNT_WO_16X16];
+                            MAX_SB64_PU_COUNT_WO_16X16];
+                    }
             }
         }
         else
@@ -4892,7 +4895,7 @@ void perform_tx_light_pd0(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
         else
             assert(0);
     }
-
+    assert(tx_size < TX_SIZES_ALL);
     const int32_t  tx_type          = DCT_DCT;
     const uint32_t txb_origin_index = context_ptr->blk_geom->origin_x +
         (context_ptr->blk_geom->origin_y * candidate_buffer->residual_ptr->stride_y);
@@ -6093,7 +6096,7 @@ void perform_dct_dct_tx_light_pd1(PictureControlSet *pcs_ptr, ModeDecisionContex
                         context_ptr->blk_geom->bwidth,
                         context_ptr->blk_geom->bheight);
     TxSize tx_size = context_ptr->blk_geom->txsize[0][0];
-
+    assert(tx_size < TX_SIZES_ALL);
     EB_TRANS_COEFF_SHAPE pf_shape = context_ptr->pf_ctrls.pf_shape;
     if (context_ptr->use_tx_shortcuts_mds3) {
         pf_shape = N4_SHAPE;
@@ -6303,6 +6306,7 @@ void perform_dct_dct_tx(PictureControlSet *pcs_ptr, ModeDecisionContext *context
         else
             assert(0);
     }
+    assert(tx_size < TX_SIZES_ALL);
     EB_TRANS_COEFF_SHAPE pf_shape = context_ptr->pf_ctrls.pf_shape;
     if (context_ptr->md_stage == MD_STAGE_3 && context_ptr->use_tx_shortcuts_mds3) {
         pf_shape = N4_SHAPE;
@@ -8590,9 +8594,12 @@ void md_encode_block_light_pd0(PictureControlSet *pcs_ptr, ModeDecisionContext *
                                                           MAX_SB64_PU_COUNT_NO_8X8];
                 if (!pcs_ptr->parent_pcs_ptr->enable_me_16x16)
                     if (context_ptr->me_block_offset >= MAX_SB64_PU_COUNT_WO_16X16)
+                    {
+                        assert(context_ptr->me_block_offset < 21);
                         context_ptr->me_block_offset =
                             me_idx_16x16_to_parent_32x32_conversion[context_ptr->me_block_offset -
-                                                                    MAX_SB64_PU_COUNT_WO_16X16];
+                            MAX_SB64_PU_COUNT_WO_16X16];
+                    }
             }
         }
         else
@@ -8640,6 +8647,7 @@ void md_encode_block_light_pd0(PictureControlSet *pcs_ptr, ModeDecisionContext *
             context_ptr->md_local_blk_unit[blk_ptr->mds_idx].default_cost = *(
                 context_ptr->candidate_buffer_ptr_array[context_ptr->mds0_best_idx]->full_cost_ptr);
     }
+    assert(context_ptr->lpd1_ctrls.pd1_level < LPD1_LEVELS);
     // Save info used by the light-PD1 detector (detector uses 64x64 block info only)
     if (context_ptr->lpd1_ctrls.pd1_level > REGULAR_PD1 &&
         context_ptr->pd0_level != VERY_LIGHT_PD0 &&
@@ -9466,9 +9474,12 @@ void md_encode_block_light_pd1(PictureControlSet *pcs_ptr, ModeDecisionContext *
                                                       MAX_SB64_PU_COUNT_NO_8X8];
             if (!pcs_ptr->parent_pcs_ptr->enable_me_16x16)
                 if (context_ptr->me_block_offset >= MAX_SB64_PU_COUNT_WO_16X16)
+                {
+                    assert(context_ptr->me_block_offset < 21);
                     context_ptr->me_block_offset =
                         me_idx_16x16_to_parent_32x32_conversion[context_ptr->me_block_offset -
-                                                                MAX_SB64_PU_COUNT_WO_16X16];
+                        MAX_SB64_PU_COUNT_WO_16X16];
+                }
         }
     } else
         context_ptr->me_block_offset = me_idx[context_ptr->blk_geom->blkidx_mds];

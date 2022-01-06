@@ -1350,13 +1350,13 @@ void log_redundancy_similarity(uint32_t max_block_count) {
 
             if (cur_geom->bsize == search_geom->bsize &&
                 cur_geom->origin_x == search_geom->origin_x &&
-                cur_geom->origin_y == search_geom->origin_y && s_it != blk_it) {
+                cur_geom->origin_y == search_geom->origin_y && s_it != blk_it && cur_geom->similar_list.list_size < 3) {
                 //one block could have similar and redundant blocks
                 cur_geom->similar = 1;
                 cur_geom->similar_list.blk_mds_table[cur_geom->similar_list.list_size] =
                     search_geom->blkidx_mds;
                 cur_geom->similar_list.list_size++;
-                if (cur_geom->nsi == 0 && search_geom->nsi == 0) {
+                if (cur_geom->nsi == 0 && search_geom->nsi == 0 && cur_geom->redund_list.list_size < 3) {
                     cur_geom->redund = 1;
                     cur_geom->redund_list.blk_mds_table[cur_geom->redund_list.list_size] =
                         search_geom->blkidx_mds;

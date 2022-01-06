@@ -5983,6 +5983,7 @@ uint8_t is_child_to_current_deviation_small(SequenceControlSet * scs_ptr,
     const uint32_t ns_d1_offset = blk_geom->d1_depth_offset;
 
     (void)scs_ptr;
+    assert(blk_geom->depth < 6);
     const uint32_t ns_depth_plus1_offset = ns_depth_offset[blk_geom->geom_idx][blk_geom->depth + 1];
     const uint32_t child_block_idx_1 = blk_index + ns_d1_offset;
     const uint32_t child_block_idx_2 = child_block_idx_1 + ns_depth_plus1_offset;

@@ -771,7 +771,7 @@ EbErrorType svt_av1_intra_prediction_cl(
                 mode = (candidate_buffer_ptr->candidate_ptr->intra_chroma_mode == UV_CFL_PRED) ? (PredictionMode)UV_DC_PRED : (PredictionMode)candidate_buffer_ptr->candidate_ptr->intra_chroma_mode;
             else
                 mode = candidate_buffer_ptr->candidate_ptr->pred_mode;
-
+            assert(mode < INTRA_MODES);
              int ang = plane ? candidate_buffer_ptr->candidate_ptr->angle_delta[PLANE_TYPE_UV] : candidate_buffer_ptr->candidate_ptr->angle_delta[PLANE_TYPE_Y];
              if (ang==0 ){
                     IntraSize intra_size = intra_unit[mode];
@@ -906,7 +906,7 @@ EbErrorType svt_av1_intra_prediction_cl(
             else
                 mode = candidate_buffer_ptr->candidate_ptr->pred_mode;
 
-
+            assert(mode < INTRA_MODES);
             int ang = plane ? candidate_buffer_ptr->candidate_ptr->angle_delta[PLANE_TYPE_UV] : candidate_buffer_ptr->candidate_ptr->angle_delta[PLANE_TYPE_Y];
             if (ang == 0) {
 

@@ -113,10 +113,12 @@ void init_memory_file_map(EbConfig* config) {
             fseeko(config->input_file, 0L, SEEK_END);
             config->mmap.file_size = ftello(config->input_file);
             fseeko(config->input_file, curr_loc, SEEK_SET); // seek back to that location
+#ifndef _WIN32
+            config->mmap.fd = fileno(config->input_file);
+#endif
         }
         config->mmap.file_frame_it = 0;
 #ifndef _WIN32
-        config->mmap.fd         = fileno(config->input_file);
         config->mmap.align_mask = sysconf(_SC_PAGESIZE) - 1;
 #endif
     }

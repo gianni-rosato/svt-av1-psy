@@ -2983,6 +2983,7 @@ static void coded_frames_stat_calc(PictureParentControlSet *ppcs_ptr) {
             }
             uint32_t frame_rate = ((scs_ptr->frame_rate + (1 << (RC_PRECISION - 1))) >>
                                    RC_PRECISION);
+            assert(frames_in_sw > 0);
             if (frames_in_sw == (uint32_t)rc->rate_average_periodin_frames) {
                 rc->max_bit_actual_per_sw = MAX(
                     rc->max_bit_actual_per_sw,

@@ -3055,7 +3055,8 @@ static INLINE void fwd_txfm2d_sse4_1(const int16_t *input, int32_t *output, cons
     const int8_t       cos_bit_row     = cfg->cos_bit_row;
     const TxfmFuncSSE2 txfm_func_col   = fwd_txfm_type_to_func(cfg->txfm_type_col);
     const TxfmFuncSSE2 txfm_func_row   = fwd_txfm_type_to_func(cfg->txfm_type_row);
-
+    ASSERT(txfm_func_col);
+    ASSERT(txfm_func_row);
     __m128i *buf_128         = (__m128i *)txfm_buf;
     __m128i *out_128         = (__m128i *)output;
     int      num_per_128     = 4;

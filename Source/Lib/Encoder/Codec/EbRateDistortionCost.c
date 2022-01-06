@@ -635,7 +635,7 @@ uint64_t av1_intra_fast_cost(struct ModeDecisionContext *ctx, BlkStruct *blk_ptr
         uint32_t luma_rate   = 0;
         uint32_t chroma_rate = 0;
         uint64_t luma_sad, chromasad_;
-
+        assert(intra_mode < INTRA_MODES);
         // Luma and chroma distortion
         uint64_t      total_distortion;
         const int32_t above_ctx = intra_mode_context[top_neighbor_mode];

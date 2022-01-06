@@ -2152,9 +2152,9 @@ void perform_inter_coding_loop(SequenceControlSet *scs, PictureControlSet *pcs, 
 
     // Initialize the Transform Loop
     ctx->txb_itr         = 0;
-    uint32_t y_has_coeff = 0;
-    uint32_t u_has_coeff = 0;
-    uint32_t v_has_coeff = 0;
+    uint8_t y_has_coeff = 0;
+    uint8_t u_has_coeff = 0;
+    uint8_t v_has_coeff = 0;
     uint32_t count_non_zero_coeffs[3];
     uint16_t eobs[MAX_TXB_COUNT][3];
     uint16_t tot_tu = blk_geom->txb_count[blk_ptr->tx_depth];
