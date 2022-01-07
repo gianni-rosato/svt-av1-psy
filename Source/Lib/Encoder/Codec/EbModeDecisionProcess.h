@@ -457,7 +457,7 @@ typedef struct Lpd1Ctrls {
     EbBool use_ref_info
         [LPD1_LEVELS]; // Use info of ref frames - incl. colocated SBs - such as mode, coeffs, etc. in the detector
     uint32_t cost_th_dist[LPD1_LEVELS]; // Distortion value used in cost TH for detector
-    uint16_t coeff_th[LPD1_LEVELS]; // Num non-zero coeffs used in detector
+    uint32_t coeff_th[LPD1_LEVELS]; // Num non-zero coeffs used in detector
     uint16_t max_mv_length
         [LPD1_LEVELS]; // Max MV length TH used in the detector: 0 - (0,0) MV only; (uint16_t)~0 means no MV check (higher is more aggressive)
     uint32_t me_8x8_cost_variance_th

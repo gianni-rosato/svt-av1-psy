@@ -1763,49 +1763,8 @@ EbErrorType signal_derivation_multi_processes_oq(
         dlf_level = get_dlf_level(pcs_ptr->enc_mode, pcs_ptr->is_used_as_reference_flag);
     }
     set_dlf_controls(pcs_ptr, dlf_level);
-//CDEF Levels description:
-//Level 0:
-// OFF
-//Level 1: Full search
-// pf_set {0,1,..,15}
-// sf_set {0,1,..,3}
 
-//Level 2
-// pf_set {0,1,2,4,5,6,8,9,10,12,13,14}
-// sf_set {0,1,2,3}
-
-//Level 3
-// pf_set {0,2,4,6,8,10,12,14}
-// sf_set {0,1,2,3}
-
-//Level 4
-// pf_set {0,4,8,12,15}
-// sf_set {0,1,2,3}
-
-//Level 5
-// pf_set {0,5,10,15}
-// sf_set {0,1,2,3}
-
-//Level 6
-// pf_set {0,7,15}
-// sf_set {0,1,2,3}
-
-//Level 7
-// pf_set {0,7,15}
-// sf_set {0,1,3}
-
-//Level 8
-// pf_set {0,7,15}
-// sf_set {0,2}
-
-//Level 9
-// pf_set {0,15}
-// sf_set {0,2}
-
-//Level 10
-// pf_set {0,15}
-// sf_set {0}
-
+    // Set CDEF controls
     if (scs_ptr->seq_header.cdef_level && frm_hdr->allow_intrabc == 0) {
         if (scs_ptr->static_config.cdef_level == DEFAULT) {
             if (pcs_ptr->enc_mode <= ENC_M0)
@@ -1820,7 +1779,7 @@ EbErrorType signal_derivation_multi_processes_oq(
             else if (pcs_ptr->enc_mode <= ENC_M12)
                 pcs_ptr->cdef_level = (scs_ptr->input_resolution <= INPUT_SIZE_1080p_RANGE) ? (pcs_ptr->temporal_layer_index == 0 ? 15 : pcs_ptr->is_used_as_reference_flag ? 16 : 17) : (pcs_ptr->temporal_layer_index == 0 ? 13 : pcs_ptr->is_used_as_reference_flag ? 13 : 14);
             else
-                pcs_ptr->cdef_level = 0;
+                pcs_ptr->cdef_level = pcs_ptr->slice_type == I_SLICE ? 15 : 0;
         }
         else
             pcs_ptr->cdef_level = (int8_t)(scs_ptr->static_config.cdef_level);

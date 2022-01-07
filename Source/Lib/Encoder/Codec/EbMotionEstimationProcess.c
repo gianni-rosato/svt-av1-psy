@@ -462,7 +462,7 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
         prehme_level = 1;
     else
     {
-        if (enc_mode <= ENC_M12)
+        if (enc_mode <= ENC_M11)
             prehme_level = 1;
         else if (enc_mode <= ENC_M13)
             prehme_level = 3;

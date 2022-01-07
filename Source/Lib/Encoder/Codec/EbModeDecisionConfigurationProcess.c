@@ -923,7 +923,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     else if (enc_mode <= ENC_M12)
         pcs_ptr->pic_skip_pd0 = 0;
     else
-        pcs_ptr->pic_skip_pd0 = 1;
+        pcs_ptr->pic_skip_pd0 = is_base ? 0 : 1;
     pcs_ptr->pic_disallow_below_16x16 = get_disallow_below_16x16_picture_level(
         enc_mode,
         input_resolution,

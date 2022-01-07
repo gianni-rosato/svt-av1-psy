@@ -4311,43 +4311,90 @@ void set_lpd1_ctrls(ModeDecisionContext *ctx, uint8_t lpd1_lvl) {
         ctrls->skip_pd0_me_shift[LPD1_LVL_1]       = 2;
         break;
     case 4:
-        ctrls->pd1_level = LPD1_LVL_2;
+        ctrls->pd1_level = LPD1_LVL_3;
 
         // Set LPD1 level 0 controls
         ctrls->use_lpd1_detector[LPD1_LVL_0]       = 1;
         ctrls->use_ref_info[LPD1_LVL_0]            = 0;
-        ctrls->cost_th_dist[LPD1_LVL_0]            = 256 << 9;
-        ctrls->coeff_th[LPD1_LVL_0]                = 8192;
-        ctrls->max_mv_length[LPD1_LVL_0]           = 2048;
+        ctrls->cost_th_dist[LPD1_LVL_0]            = 256 << 15;
+        ctrls->coeff_th[LPD1_LVL_0]                = 8192 * 16;
+        ctrls->max_mv_length[LPD1_LVL_0]           = 2048 * 16;
         ctrls->me_8x8_cost_variance_th[LPD1_LVL_0] = (uint32_t)~0;
-        ctrls->skip_pd0_edge_dist_th[LPD1_LVL_0]   = 16384;
-        ctrls->skip_pd0_me_shift[LPD1_LVL_0]       = 3;
+        ctrls->skip_pd0_edge_dist_th[LPD1_LVL_0]   = 16384 * 7;
+        ctrls->skip_pd0_me_shift[LPD1_LVL_0]       = 5;
 
         // Set LPD1 level 1 controls
         ctrls->use_lpd1_detector[LPD1_LVL_1]       = 1;
         ctrls->use_ref_info[LPD1_LVL_1]            = 0;
-        ctrls->cost_th_dist[LPD1_LVL_1]            = 256 << 9;
-        ctrls->coeff_th[LPD1_LVL_1]                = 8192;
-        ctrls->max_mv_length[LPD1_LVL_1]           = 2048;
+        ctrls->cost_th_dist[LPD1_LVL_1]            = 256 << 13;
+        ctrls->coeff_th[LPD1_LVL_1]                = 8192 * 8;
+        ctrls->max_mv_length[LPD1_LVL_1]           = 2048 * 8;
         ctrls->me_8x8_cost_variance_th[LPD1_LVL_1] = (uint32_t)~0;
-        ctrls->skip_pd0_edge_dist_th[LPD1_LVL_1]   = 16384;
-        ctrls->skip_pd0_me_shift[LPD1_LVL_1]       = 3;
+        ctrls->skip_pd0_edge_dist_th[LPD1_LVL_1]   = 16384 * 6;
+        ctrls->skip_pd0_me_shift[LPD1_LVL_1]       = 5;
 
         // Set LPD1 level 2 controls
         ctrls->use_lpd1_detector[LPD1_LVL_2]       = 1;
-        ctrls->use_ref_info[LPD1_LVL_2]            = 1;
-        ctrls->cost_th_dist[LPD1_LVL_2]            = 256 << 6;
-        ctrls->coeff_th[LPD1_LVL_2]                = 2000;
-        ctrls->max_mv_length[LPD1_LVL_2]           = 1600;
-        ctrls->me_8x8_cost_variance_th[LPD1_LVL_2] = 500000;
-        ctrls->skip_pd0_edge_dist_th[LPD1_LVL_2]   = 16384;
-        ctrls->skip_pd0_me_shift[LPD1_LVL_2]       = 2;
+        ctrls->use_ref_info[LPD1_LVL_2]            = 0;
+        ctrls->cost_th_dist[LPD1_LVL_2]            = 256 << 13;
+        ctrls->coeff_th[LPD1_LVL_2]                = 8192 * 8;
+        ctrls->max_mv_length[LPD1_LVL_2]           = 2048 * 8;
+        ctrls->me_8x8_cost_variance_th[LPD1_LVL_2] = (uint32_t)~0;
+        ctrls->skip_pd0_edge_dist_th[LPD1_LVL_2]   = 16384 * 6;
+        ctrls->skip_pd0_me_shift[LPD1_LVL_2]       = 5;
+
+        // Set LPD1 level 3 controls
+        ctrls->use_lpd1_detector[LPD1_LVL_3]       = 1;
+        ctrls->use_ref_info[LPD1_LVL_3]            = 1;
+        ctrls->cost_th_dist[LPD1_LVL_3]            = 256 << 9;
+        ctrls->coeff_th[LPD1_LVL_3]                = 8192;
+        ctrls->max_mv_length[LPD1_LVL_3]           = 2048;
+        ctrls->me_8x8_cost_variance_th[LPD1_LVL_3] = (uint32_t)~0;
+        ctrls->skip_pd0_edge_dist_th[LPD1_LVL_3]   = 16384 * 2;
+        ctrls->skip_pd0_me_shift[LPD1_LVL_3]       = 3;
         break;
     case 5:
         ctrls->pd1_level = LPD1_LVL_4;
 
-        // LPD1 level 3 doesn't use the detector (will be used for all SBs)
-        ctrls->use_lpd1_detector[LPD1_LVL_3] = 0;
+        // Set LPD1 level 0 controls
+        ctrls->use_lpd1_detector[LPD1_LVL_0]       = 1;
+        ctrls->use_ref_info[LPD1_LVL_0]            = 0;
+        ctrls->cost_th_dist[LPD1_LVL_0]            = 256 << 15;
+        ctrls->coeff_th[LPD1_LVL_0]                = 8192 * 16;
+        ctrls->max_mv_length[LPD1_LVL_0]           = 2048 * 16;
+        ctrls->me_8x8_cost_variance_th[LPD1_LVL_0] = (uint32_t)~0;
+        ctrls->skip_pd0_edge_dist_th[LPD1_LVL_0]   = 16384 * 7;
+        ctrls->skip_pd0_me_shift[LPD1_LVL_0]       = 5;
+
+        // Set LPD1 level 1 controls
+        ctrls->use_lpd1_detector[LPD1_LVL_1]       = 1;
+        ctrls->use_ref_info[LPD1_LVL_1]            = 0;
+        ctrls->cost_th_dist[LPD1_LVL_1]            = 256 << 15;
+        ctrls->coeff_th[LPD1_LVL_1]                = 8192 * 16;
+        ctrls->max_mv_length[LPD1_LVL_1]           = 2048 * 16;
+        ctrls->me_8x8_cost_variance_th[LPD1_LVL_1] = (uint32_t)~0;
+        ctrls->skip_pd0_edge_dist_th[LPD1_LVL_1]   = 16384 * 7;
+        ctrls->skip_pd0_me_shift[LPD1_LVL_1]       = 5;
+
+        // Set LPD1 level 2 controls
+        ctrls->use_lpd1_detector[LPD1_LVL_2]       = 1;
+        ctrls->use_ref_info[LPD1_LVL_2]            = 0;
+        ctrls->cost_th_dist[LPD1_LVL_2]            = 256 << 15;
+        ctrls->coeff_th[LPD1_LVL_2]                = 8192 * 16;
+        ctrls->max_mv_length[LPD1_LVL_2]           = 2048 * 16;
+        ctrls->me_8x8_cost_variance_th[LPD1_LVL_2] = (uint32_t)~0;
+        ctrls->skip_pd0_edge_dist_th[LPD1_LVL_2]   = 16384 * 7;
+        ctrls->skip_pd0_me_shift[LPD1_LVL_2]       = 5;
+
+        // Set LPD1 level 3 controls
+        ctrls->use_lpd1_detector[LPD1_LVL_3]       = 1;
+        ctrls->use_ref_info[LPD1_LVL_3]            = 0;
+        ctrls->cost_th_dist[LPD1_LVL_3]            = 256 << 15;
+        ctrls->coeff_th[LPD1_LVL_3]                = 8192 * 16;
+        ctrls->max_mv_length[LPD1_LVL_3]           = 2048 * 16;
+        ctrls->me_8x8_cost_variance_th[LPD1_LVL_3] = (uint32_t)~0;
+        ctrls->skip_pd0_edge_dist_th[LPD1_LVL_3]   = 16384 * 7;
+        ctrls->skip_pd0_me_shift[LPD1_LVL_3]       = 5;
 
         // Set LPD1 level 4 controls
         ctrls->use_lpd1_detector[LPD1_LVL_4]       = 1;
@@ -5250,9 +5297,9 @@ void signal_derivation_enc_dec_kernel_oq_light_pd1(PictureControlSet *  pcs_ptr,
         cand_reduction_level = 0;
     else if (lpd1_level <= LPD1_LVL_0)
         cand_reduction_level = 2;
-    else if (lpd1_level <= LPD1_LVL_1)
-        cand_reduction_level = 3;
     else if (lpd1_level <= LPD1_LVL_2)
+        cand_reduction_level = 3;
+    else if (lpd1_level <= LPD1_LVL_3)
         cand_reduction_level = 4;
     else
         cand_reduction_level = 5;
@@ -5287,33 +5334,34 @@ void signal_derivation_enc_dec_kernel_oq_light_pd1(PictureControlSet *  pcs_ptr,
             : 15;
     else if (lpd1_level <= LPD1_LVL_2) {
         context_ptr->md_subpel_me_level = pcs_ptr->parent_pcs_ptr->input_resolution <=
-                INPUT_SIZE_1080p_RANGE
-            ? (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? 12 : 14)
+            INPUT_SIZE_1080p_RANGE
+            ? (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? 13 : 14)
+            : 15;
+    }
+    else if (lpd1_level <= LPD1_LVL_3) {
+        context_ptr->md_subpel_me_level = pcs_ptr->parent_pcs_ptr->input_resolution <=
+            INPUT_SIZE_1080p_RANGE
+            ? (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? 13 : 14)
             : 15;
         if (((l0_was_skip && l1_was_skip && ref_skip_perc > 50) ||
-             (l0_was_64x64_mvp && l1_was_64x64_mvp)) &&
+            (l0_was_64x64_mvp && l1_was_64x64_mvp)) &&
             me_8x8_cost_variance < (200 * picture_qp) && me_64x64_distortion < (200 * picture_qp))
             context_ptr->md_subpel_me_level = 0;
-    } else {
-        if (pcs_ptr->temporal_layer_index != 0)
+    }
+    else {
+        context_ptr->md_subpel_me_level = 15;
+
+        if (((l0_was_skip && l1_was_skip && ref_skip_perc > 30) ||
+                (l0_was_64x64_mvp && l1_was_64x64_mvp)) &&
+            me_8x8_cost_variance < (500 * picture_qp) &&
+            me_64x64_distortion < (500 * picture_qp))
             context_ptr->md_subpel_me_level = 0;
-        else {
-            context_ptr->md_subpel_me_level = pcs_ptr->parent_pcs_ptr->input_resolution <=
-                    INPUT_SIZE_1080p_RANGE
-                ? (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? 12 : 14)
-                : 15;
-            if (((l0_was_skip && l1_was_skip && ref_skip_perc > 50) ||
-                 (l0_was_64x64_mvp && l1_was_64x64_mvp)) &&
-                me_8x8_cost_variance < (200 * picture_qp) &&
-                me_64x64_distortion < (200 * picture_qp))
-                context_ptr->md_subpel_me_level = 0;
-        }
     }
 
     md_subpel_me_controls(context_ptr, context_ptr->md_subpel_me_level);
 
     uint8_t mds0_level = 0;
-    if (lpd1_level <= LPD1_LVL_1)
+    if (lpd1_level <= LPD1_LVL_2)
         mds0_level = 4;
     else {
         mds0_level = 4;
@@ -5325,7 +5373,7 @@ void signal_derivation_enc_dec_kernel_oq_light_pd1(PictureControlSet *  pcs_ptr,
 
     set_mds0_controls(pcs_ptr, context_ptr, mds0_level);
     uint8_t lpd1_tx_level = 0;
-    if (lpd1_level <= LPD1_LVL_1)
+    if (lpd1_level <= LPD1_LVL_2)
         lpd1_tx_level = pcs_ptr->parent_pcs_ptr->input_resolution <= INPUT_SIZE_1080p_RANGE ? 3 : 2;
     else if (lpd1_level <= LPD1_LVL_3) {
         lpd1_tx_level = pcs_ptr->parent_pcs_ptr->input_resolution <= INPUT_SIZE_1080p_RANGE ? 4 : 2;
@@ -5386,7 +5434,7 @@ void signal_derivation_enc_dec_kernel_oq_light_pd1(PictureControlSet *  pcs_ptr,
     uint8_t pf_level = 1;
     set_pf_controls(context_ptr, pf_level);
     uint8_t intra_level = 0;
-    if (lpd1_level <= LPD1_LVL_1)
+    if (lpd1_level <= LPD1_LVL_2)
         intra_level = 4;
     else
         intra_level = 5;
