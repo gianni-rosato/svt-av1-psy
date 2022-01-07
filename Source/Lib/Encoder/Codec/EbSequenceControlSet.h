@@ -23,7 +23,7 @@
 extern "C" {
 #endif
 typedef struct MiniGopSizeCtrls {
-    EbBool adptive_enable; // 0: Off, 1: Switch at clip level, 2: Switch at GOP level
+    int adptive_enable; // 0: Off, 1: Switch at clip level, 2: Switch at GOP level
     double short_shot_th; // Threshold to determine short scene.
     double animation_type_th; // Threshold to determine animation scene
     double lm_th; // Threshold to determine low motion scene

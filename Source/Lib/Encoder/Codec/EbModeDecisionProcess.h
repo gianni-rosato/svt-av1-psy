@@ -843,7 +843,7 @@ typedef struct ModeDecisionContext {
         pred_depth_only; // Indicates whether only pred depth refinement is used in PD1 - not yet supported
     uint16_t coded_area_sb;
     uint16_t coded_area_sb_uv;
-    EbBool   pd0_level;
+    uint8_t  pd0_level;
     // 0 : Use regular PD0
     // 1 : Use light PD0 path.  Assumes one class, no NSQ, no 4x4, TXT off, TXS off, PME off, etc.
     // 2 : Use very light PD0 path: only mds0 (no transform path), no compensation(s) @ mds0

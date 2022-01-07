@@ -952,9 +952,9 @@ static const vector<EbBool> invalid_enable_overlays = {/*none*/};
 
 /* Variables to control the super-resolution tool
  */
-static const vector<EbBool> default_superres_mode = {0};
-static const vector<EbBool> valid_superres_mode = {0, 1, 2};
-static const vector<EbBool> invalid_superres_mode = {3};
+static const vector<uint8_t> default_superres_mode = {0};
+static const vector<uint8_t> valid_superres_mode = {0, 1, 2};
+static const vector<uint8_t> invalid_superres_mode = {3};
 
 static const vector<uint8_t> default_superres_denom = {8};
 static const vector<uint8_t> valid_superres_denom = {

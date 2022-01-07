@@ -415,7 +415,7 @@ typedef struct PictureControlSet {
     uint8_t  md_pme_level;
     uint8_t  mds0_level;
     uint8_t  pic_disallow_4x4; //disallow 4x4 at pic level
-    EbBool   pic_pd0_level; // pd0_level at pic level
+    uint8_t  pic_pd0_level; // pd0_level at pic level
     uint8_t  pic_skip_pd0; // skip_pd0 at pic level
     uint8_t  pic_disallow_below_16x16; // disallow_below_16x16 signal at pic level
     uint8_t  pic_depth_removal_level; // depth_removal_level signal at the picture level

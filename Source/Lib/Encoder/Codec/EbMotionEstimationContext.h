@@ -286,7 +286,7 @@ typedef struct MeHmeRefPruneCtrls {
 } MeHmeRefPruneCtrls;
 
 typedef struct MeSrCtrls {
-    EbBool enable_me_sr_adjustment;
+    uint8_t enable_me_sr_adjustment;
     uint16_t
         reduce_me_sr_based_on_mv_length_th; // reduce the ME search region if HME MVs and HME sad are small
     uint16_t

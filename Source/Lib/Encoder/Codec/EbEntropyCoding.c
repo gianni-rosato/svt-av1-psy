@@ -1390,7 +1390,8 @@ static void encode_skip_mode_av1(FRAME_CONTEXT *frame_context, AomWriter *ec_wri
 *   Encodes the Prediction Mode
 *********************************************************************/
 static void encode_pred_mode_av1(FRAME_CONTEXT *frame_context, AomWriter *ec_writer,
-                                 EbBool predModeFlag, uint32_t blk_origin_x, uint32_t blk_origin_y,
+                                 unsigned predModeFlag, uint32_t blk_origin_x,
+                                 uint32_t           blk_origin_y,
                                  NeighborArrayUnit *mode_type_neighbor_array) {
     uint32_t mode_type_left_neighbor_index = get_neighbor_array_unit_left_index(
         mode_type_neighbor_array, blk_origin_y);
@@ -4455,7 +4456,7 @@ EbErrorType ec_update_neighbors(PictureControlSet *pcs_ptr, EntropyCodingContext
     NeighborArrayUnit32 *interpolation_type_neighbor_array =
         pcs_ptr->interpolation_type_neighbor_array[tile_idx];
     const BlockGeom *blk_geom   = get_blk_geom_mds(blk_ptr->mds_idx);
-    EbBool           skip_coeff = !blk_ptr->block_has_coeff;
+    uint8_t          skip_coeff = !blk_ptr->block_has_coeff;
     PartitionContext partition;
 
     // Update the Leaf Depth Neighbor Array

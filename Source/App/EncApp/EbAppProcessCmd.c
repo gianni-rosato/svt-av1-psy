@@ -481,7 +481,7 @@ static long get_next_qp_from_qp_file(FILE *const qp_file, int *const qp_read_fro
     return qp;
 }
 
-static unsigned char send_qp_on_the_fly(FILE *const qp_file, uint8_t *use_qp_file) {
+static unsigned char send_qp_on_the_fly(FILE *const qp_file, EbBool *use_qp_file) {
     long tmp_qp            = 0;
     int  qp_read_from_file = 0;
 

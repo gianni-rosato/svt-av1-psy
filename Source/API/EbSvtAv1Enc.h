@@ -407,7 +407,7 @@ typedef struct EbSvtAv1EncConfiguration {
     /* Enable adaptive quantization within a frame using segmentation.
      *
      * Default is 2. */
-    EbBool enable_adaptive_quantization;
+    uint8_t enable_adaptive_quantization;
 
     // Tresholds
 
