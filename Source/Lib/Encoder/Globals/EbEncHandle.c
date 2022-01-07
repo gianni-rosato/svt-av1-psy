@@ -121,8 +121,9 @@ typedef struct logicalProcessorGroup {
 #define INITIAL_PROCESSOR_GROUP 16
 static processorGroup           *lp_group = NULL;
 #endif
-
+#if !CLN_TPL
 uint8_t  get_tpl_level(int8_t enc_mode);
+#endif
 uint8_t  get_tpl_synthesizer_block_size(int8_t tpl_level, uint32_t picture_width, uint32_t picture_height);
 
 uint8_t get_disallow_nsq(EbEncMode enc_mode);
@@ -573,7 +574,11 @@ EbErrorType load_default_buffer_configuration_settings(
         min_ref = num_ref_from_past_mgs + num_ref_from_cur_mg + num_ref_lad_mgs;
         if (scs_ptr->static_config.pass == ENC_FIRST_PASS)
             min_me = min_parent;
+#if CLN_TPL
+        else if (scs_ptr->tpl_level) {
+#else
         else if (scs_ptr->static_config.enable_tpl_la) {
+#endif
             // PictureDecisionContext.mg_size = mg_size + overlay; see EbPictureDecisionProcess.c line 5680
             min_me = 1 +                  // potential delay I
                      lad_mg_pictures +    // 16 + 1 ME data used in store_tpl_pictures() at line 5717
@@ -637,7 +642,11 @@ EbErrorType load_default_buffer_configuration_settings(
         max_recon = max_ref;
         // if tpl_la is disabled when super-res fix/random, input speed is much faster than recon output speed,
         // recon_output_fifo might be full and freeze at recon_output()
+#if CLN_TPL
+        if (!scs_ptr->tpl_level && scs_ptr->static_config.recon_enabled)
+#else
         if (!scs_ptr->static_config.enable_tpl_la && scs_ptr->static_config.recon_enabled)
+#endif
             max_recon = min_recon = MAX(max_ref, 30);
     }
 
@@ -1474,7 +1483,11 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
         input_data.non_m8_pad_w = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->max_input_pad_right;
         input_data.non_m8_pad_h = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->max_input_pad_bottom;
 
+#if CLN_TPL
+        input_data.enable_tpl_la = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->tpl_level;
+#else
         input_data.enable_tpl_la = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.enable_tpl_la;
+#endif
         input_data.in_loop_ois = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->in_loop_ois;
         input_data.enc_dec_segment_col = (uint16_t)enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->tpl_segment_col_count_array;
         input_data.enc_dec_segment_row = (uint16_t)enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->tpl_segment_row_count_array;
@@ -1499,7 +1512,12 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
             MAX(mrp_ctrl->sc_base_ref_list1_count,
                 MAX(mrp_ctrl->base_ref_list1_count,
                     MAX(mrp_ctrl->sc_non_base_ref_list1_count, mrp_ctrl->non_base_ref_list1_count)));
+#if CLN_TPL
+        input_data.tpl_synth_size = get_tpl_synthesizer_block_size( enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->tpl_level,
+            input_data.picture_width, input_data.picture_height);
+#else
         input_data.tpl_synth_size = get_tpl_synthesizer_block_size( get_tpl_level(input_data.enc_mode), input_data.picture_width, input_data.picture_height);
+#endif
         input_data.enable_adaptive_quantization = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.enable_adaptive_quantization;
         input_data.scene_change_detection = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.scene_change_detection;
 
@@ -3043,6 +3061,36 @@ void set_mid_pass_ctrls(
         break;
     }
 }
+#if CLN_TPL
+uint8_t get_tpl_level(int8_t enc_mode, int32_t pass, int32_t lap_enabled, uint8_t pred_structure, uint8_t superres_mode) {
+    uint8_t tpl_level;
+
+    if (pred_structure == EB_PRED_LOW_DELAY_B) {
+        SVT_WARN("TPL is disabled in low delay applications.\n");
+        tpl_level = 0;
+    }
+    else if (pass == ENC_FIRST_PASS && lap_enabled == 0) {
+        tpl_level = 0;
+    }
+    // allow TPL with auto-dual and auto-all
+    else if (superres_mode > SUPERRES_NONE && superres_mode != SUPERRES_AUTO && superres_mode != SUPERRES_QTHRESH) {
+        SVT_WARN("TPL will be disabled when super resolution is enabled!\n");
+        tpl_level = 0;
+    }
+    else if (enc_mode <= ENC_M5)
+        tpl_level = 1;
+    else if (enc_mode <= ENC_M7)
+        tpl_level = 3;
+    else if (enc_mode <= ENC_M8)
+        tpl_level = 4;
+    else if (enc_mode <= ENC_M9)
+        tpl_level = 5;
+    else
+        tpl_level = 7;
+
+    return tpl_level;
+}
+#endif
 /*
 * Set multi Pass Params
 */
@@ -3081,7 +3129,9 @@ void set_multi_pass_params(SequenceControlSet *scs_ptr)
             scs_ptr->final_pass_preset = config->enc_mode;
             scs_ptr->static_config.enc_mode = MAX_ENC_PRESET;
             scs_ptr->static_config.look_ahead_distance = 0;
+#if !CLN_TPL
             scs_ptr->static_config.enable_tpl_la = 0;
+#endif
             scs_ptr->static_config.rate_control_mode = 0;
             scs_ptr->static_config.intra_refresh_type = 2;
             scs_ptr->static_config.max_bit_rate = 0;
@@ -3103,12 +3153,16 @@ void set_multi_pass_params(SequenceControlSet *scs_ptr)
                 scs_ptr->static_config.enc_mode = ENC_M12;
             else
                 scs_ptr->static_config.enc_mode = MAX_ENC_PRESET;
+#if !CLN_TPL
             scs_ptr->static_config.enable_tpl_la = 1;
+#endif
             scs_ptr->static_config.rate_control_mode = 0;
             scs_ptr->static_config.qp = 43;
             scs_ptr->static_config.intra_refresh_type = 2;
             scs_ptr->static_config.max_bit_rate = 0;
+#if !CLN_TPL
             scs_ptr->static_config.enable_tpl_la = 1;
+#endif
             scs_ptr->static_config.intra_refresh_type = 2;
             break;
         }
@@ -3121,7 +3175,9 @@ void set_multi_pass_params(SequenceControlSet *scs_ptr)
             else
                 scs_ptr->ipp_was_ds = config->rate_control_mode == 0 ? 1 : 0;
             scs_ptr->final_pass_preset = config->enc_mode;
+#if !CLN_TPL
             scs_ptr->static_config.enable_tpl_la = 1;
+#endif
             scs_ptr->static_config.intra_refresh_type = 2;
             break;
         }
@@ -3143,13 +3199,16 @@ void set_multi_pass_params(SequenceControlSet *scs_ptr)
     }
 
     if (scs_ptr->lap_enabled) {
+#if !CLN_TPL
         scs_ptr->static_config.enable_tpl_la = 1;
+#endif
         scs_ptr->static_config.intra_refresh_type = 2;
     }
 
+#if !CLN_TPL
     if (scs_ptr->static_config.pred_structure == EB_PRED_LOW_DELAY_B)
         scs_ptr->static_config.enable_tpl_la = 0;
-
+#endif
     if (scs_ptr->static_config.pass == ENC_MIDDLE_PASS && scs_ptr->final_pass_preset > ENC_M8)
         scs_ptr->rc_stat_gen_pass_mode = 1;
     else
@@ -3173,9 +3232,13 @@ void set_multi_pass_params(SequenceControlSet *scs_ptr)
 }
 void set_param_based_on_input(SequenceControlSet *scs_ptr)
 {
-
     set_multi_pass_params(
         scs_ptr);
+
+#if CLN_TPL
+    scs_ptr->tpl_level = get_tpl_level(scs_ptr->static_config.enc_mode, scs_ptr->static_config.pass, scs_ptr->lap_enabled, scs_ptr->static_config.pred_structure, scs_ptr->static_config.superres_mode);
+#endif
+
     uint16_t subsampling_x = scs_ptr->subsampling_x;
     uint16_t subsampling_y = scs_ptr->subsampling_y;
     // Update picture width, and picture height
@@ -3213,6 +3276,7 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
         scs_ptr->static_config.superres_mode = SUPERRES_NONE;
     }
     if (scs_ptr->static_config.superres_mode > SUPERRES_NONE) {
+#if !CLN_TPL
         // allow TPL with auto-dual and auto-all
         if ((scs_ptr->static_config.superres_mode != SUPERRES_AUTO) && (scs_ptr->static_config.superres_mode != SUPERRES_QTHRESH)) {
             if (scs_ptr->static_config.enable_tpl_la != 0) {
@@ -3220,6 +3284,7 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
                 scs_ptr->static_config.enable_tpl_la = 0;
             }
         }
+#endif
 
         if (scs_ptr->static_config.tile_rows || scs_ptr->static_config.tile_columns) {
             // disable tiles if super-res is on
@@ -3272,7 +3337,11 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     else
      {
         uint8_t tpl_lad_mg = 1; // Specify the number of mini-gops to be used as LAD. 0: 1 mini-gop, 1: 2 mini-gops and 3: 3 mini-gops
+#if CLN_TPL
+        if (scs_ptr->static_config.enc_mode <= ENC_M11 && scs_ptr->tpl_level != 0)
+#else
         if (scs_ptr->static_config.enc_mode <= ENC_M11)
+#endif
             tpl_lad_mg = 1;
         else
             tpl_lad_mg = 0;
@@ -3295,7 +3364,11 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     // In two pass encoding, the first pass uses sb size=64. Also when tpl is used
     // in 240P resolution, sb size is set to 64
     if (scs_ptr->static_config.pass == ENC_FIRST_PASS ||
+#if CLN_TPL
+        (scs_ptr->tpl_level && scs_ptr->input_resolution == INPUT_SIZE_240p_RANGE))
+#else
         (scs_ptr->static_config.enable_tpl_la && scs_ptr->input_resolution == INPUT_SIZE_240p_RANGE))
+#endif
         scs_ptr->super_block_size = 64;
     else
         if (scs_ptr->static_config.enc_mode <= ENC_M2)
@@ -3368,7 +3441,11 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     // Enforce starting frame in decode order (at PicMgr)
     // Does not wait for feedback from PKT
     if (scs_ptr->static_config.logical_processors == 1 && // LP1
+#if CLN_TPL
+        scs_ptr->tpl_level)
+#else
         scs_ptr->static_config.enable_tpl_la)
+#endif
         scs_ptr->enable_pic_mgr_dec_order = 1;
     else
         scs_ptr->enable_pic_mgr_dec_order = 0;
@@ -4344,10 +4421,19 @@ static void print_lib_params(
     else if (config->rate_control_mode == 2)
         SVT_LOG("\nSVT [config]: RCMode / TargetBitrate (kbps)/ SceneChange\t\t: Constraint VBR / %d /  %d ", (int)config->target_bit_rate/1000,  config->scene_change_detection);
     else if (config->rate_control_mode == 0 && config->max_bit_rate)
+#if CLN_TPL
+        SVT_LOG("\nSVT [config]: BRC Mode / %s / MaxBitrate (kbps)/ SceneChange\t\t: %s / %d / %d / %d ", scs->tpl_level ? "Rate Factor" : "CQP Assignment", scs->tpl_level ? "Capped CRF" : "CQP", scs->static_config.qp,
+        (int)config->max_bit_rate / 1000, config->scene_change_detection);
+#else
         SVT_LOG("\nSVT [config]: BRC Mode / %s / MaxBitrate (kbps)/ SceneChange\t\t: %s / %d / %d / %d ", scs->static_config.enable_tpl_la ? "Rate Factor" : "CQP Assignment", scs->static_config.enable_tpl_la ? "Capped CRF" : "CQP", scs->static_config.qp,
         (int)config->max_bit_rate / 1000, config->scene_change_detection);
+#endif
     else
+#if CLN_TPL
+            SVT_INFO("SVT [config]: BRC Mode / %s / SceneChange\t\t\t\t: %s / %d / %d\n", scs->tpl_level ? "Rate Factor" : "CQP Assignment", scs->tpl_level ? "CRF" : "CQP", scs->static_config.qp, config->scene_change_detection);
+#else
         SVT_INFO("SVT [config]: BRC Mode / %s / SceneChange\t\t\t\t: %s / %d / %d\n", scs->static_config.enable_tpl_la ? "Rate Factor" : "CQP Assignment", scs->static_config.enable_tpl_la ? "CRF" : "CQP", scs->static_config.qp, config->scene_change_detection);
+#endif
 #ifdef DEBUG_BUFFERS
     SVT_INFO("SVT [config]: INPUT / OUTPUT \t\t\t\t\t\t\t: %d / %d\n", scs->input_buffer_fifo_init_count, scs->output_stream_buffer_fifo_init_count);
     SVT_INFO("SVT [config]: CPCS / PAREF / REF / ME\t\t\t\t\t\t: %d / %d / %d / %d\n", scs->picture_control_set_pool_init_count_child, scs->pa_reference_picture_buffer_init_count, scs->reference_picture_buffer_init_count, scs->me_pool_init_count);

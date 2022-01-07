@@ -529,6 +529,9 @@ typedef struct MotionEstimationData {
     double *tpl_sb_rdmult_scaling_factors;
 } MotionEstimationData;
 typedef struct TplControls {
+#if CLN_TPL
+    uint8_t              enable; // 0: TPL OFF; 1: TPL ON
+#endif
     uint8_t              tpl_opt_flag; // 0:OFF 1:ON - TPL optimizations : no rate, only DC
     uint8_t              enable_tpl_qps; // 0:OFF 1:ON - QPS in TPL
     uint8_t              disable_intra_pred_nref; // 0:OFF 1:ON - Disable intra prediction in NREF

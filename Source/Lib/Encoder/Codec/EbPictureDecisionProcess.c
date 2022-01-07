@@ -51,8 +51,9 @@ extern PredictionStructureConfigEntry four_level_hierarchical_pred_struct[];
 extern PredictionStructureConfigEntry five_level_hierarchical_pred_struct[];
 extern PredictionStructureConfigEntry six_level_hierarchical_pred_struct[];
 
-
+#if !CLN_TPL
 uint8_t  get_tpl_level(int8_t enc_mode);
+#endif
 void set_tpl_extended_controls(PictureParentControlSet *pcs_ptr, uint8_t tpl_level);
 
 void  get_max_allocated_me_refs(uint8_t ref_count_used_list0, uint8_t ref_count_used_list1, uint8_t* max_ref_to_alloc, uint8_t* max_cand_to_alloc);
@@ -1887,8 +1888,12 @@ EbErrorType signal_derivation_multi_processes_oq(
         pcs_ptr->use_best_me_unipred_cand_only = 1;
 
     //TPL level should not be modified outside of this function
+#if CLN_TPL
+    set_tpl_extended_controls(pcs_ptr, scs_ptr->tpl_level);
+#else
     uint8_t tpl_level = get_tpl_level(pcs_ptr->enc_mode);
     set_tpl_extended_controls(pcs_ptr, tpl_level);
+#endif
 
 
 
@@ -6750,7 +6755,11 @@ void* picture_decision_kernel(void *input_ptr)
                         //Process previous delayed Intra if we have one
                         if (context_ptr->prev_delayed_intra) {
                             pcs_ptr = context_ptr->prev_delayed_intra;
+#if CLN_TPL
+                            if (pcs_ptr->tpl_ctrls.enable)
+#else
                             if (scs_ptr->static_config.enable_tpl_la)
+#endif
                                 store_tpl_pictures(pcs_ptr, context_ptr, mg_size);
 
                             mctf_frame(scs_ptr, pcs_ptr, context_ptr, out_stride_diff64);
@@ -6762,7 +6771,11 @@ void* picture_decision_kernel(void *input_ptr)
                             pcs_ptr = context_ptr->mg_pictures_array_disp_order[pic_i];
 
                             if (is_delayed_intra(pcs_ptr) == EB_FALSE) {
+#if CLN_TPL
+                                if (pcs_ptr->tpl_ctrls.enable && pcs_ptr->temporal_layer_index == 0 )
+#else
                                 if (scs_ptr->static_config.enable_tpl_la && pcs_ptr->temporal_layer_index == 0 )
+#endif
                                     store_tpl_pictures(pcs_ptr, context_ptr, mg_size);
 
                                 mctf_frame(scs_ptr, pcs_ptr, context_ptr, out_stride_diff64);

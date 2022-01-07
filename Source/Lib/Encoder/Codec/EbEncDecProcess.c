@@ -6383,7 +6383,11 @@ static void recode_loop_decision_maker(PictureControlSet *pcs_ptr, SequenceContr
 
         // 2pass QPM with tpl_la
         if (scs_ptr->static_config.enable_adaptive_quantization == 2 &&
+#if CLN_TPL
+            ppcs_ptr->tpl_ctrls.enable && ppcs_ptr->r0 != 0)
+#else
             scs_ptr->static_config.enable_tpl_la && ppcs_ptr->r0 != 0)
+#endif
             sb_qp_derivation_tpl_la(pcs_ptr);
         else {
             ppcs_ptr->frm_hdr.delta_q_params.delta_q_present = 0;

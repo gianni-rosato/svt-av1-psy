@@ -499,7 +499,11 @@ void *initial_rate_control_kernel(void *input_ptr) {
                     // Release Pa Ref pictures when not needed
                     // Don't release if superres recode loop is actived (auto-dual or auto-all mode)
                     if (pcs_ptr->superres_total_recode_loop == 0) { // QThreshold or auto-solo mode
+#if CLN_TPL
+                        if (pcs_ptr->tpl_ctrls.enable) {
+#else
                         if (scs_ptr->static_config.enable_tpl_la) {
+#endif
                             for (uint32_t i = 0; i < pcs_ptr->tpl_group_size; i++) {
                                 if (pcs_ptr->tpl_group[i]->slice_type == P_SLICE) {
                                     if (pcs_ptr->tpl_group[i]->ext_mg_id == pcs_ptr->ext_mg_id + 1)
@@ -560,7 +564,11 @@ void *initial_rate_control_kernel(void *input_ptr) {
                 }
             }
             // perform tpl_la on unscaled frames only
+#if CLN_TPL
+            if (pcs_ptr->tpl_ctrls.enable && !pcs_ptr->frame_superres_enabled) {
+#else
             if (scs_ptr->static_config.enable_tpl_la && !pcs_ptr->frame_superres_enabled) {
+#endif
                 svt_set_cond_var(&pcs_ptr->me_ready, 1);
             }
 
@@ -569,7 +577,11 @@ void *initial_rate_control_kernel(void *input_ptr) {
             //   1. TPL is OFF and
             //   2. super-res mode is NONE or FIXED or RANDOM.
             //     For other super-res modes, pa_ref_objs are needed in TASK_SUPERRES_RE_ME task
+#if CLN_TPL
+            if (pcs_ptr->tpl_ctrls.enable == 0 &&
+#else
             if (scs_ptr->static_config.enable_tpl_la == 0 &&
+#endif
                 scs_ptr->static_config.superres_mode <= SUPERRES_RANDOM)
                 release_pa_reference_objects(scs_ptr, pcs_ptr);
 
@@ -582,7 +594,11 @@ void *initial_rate_control_kernel(void *input_ptr) {
 #if LAD_MG_PRINT
             print_lad_queue(context_ptr,0);
 #endif
+#if CLN_TPL
+            uint8_t lad_queue_pass_thru = !(pcs_ptr->tpl_ctrls.enable &&
+#else
             uint8_t lad_queue_pass_thru = !(scs_ptr->static_config.enable_tpl_la &&
+#endif
                                             !pcs_ptr->frame_superres_enabled);
             process_lad_queue(context_ptr, lad_queue_pass_thru);
         }

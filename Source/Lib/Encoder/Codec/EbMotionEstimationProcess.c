@@ -906,7 +906,11 @@ void *motion_estimation_kernel(void *input_ptr) {
                         }
                     }
                 }
+#if CLN_TPL
+                if (scs_ptr->in_loop_ois == 0 && pcs_ptr->tpl_ctrls.enable)
+#else
                 if (scs_ptr->in_loop_ois == 0 && scs_ptr->static_config.enable_tpl_la)
+#endif
                     for (uint32_t y_sb_index = y_sb_start_index; y_sb_index < y_sb_end_index;
                          ++y_sb_index)
                         for (uint32_t x_sb_index = x_sb_start_index; x_sb_index < x_sb_end_index;

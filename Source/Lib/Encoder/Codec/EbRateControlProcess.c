@@ -1077,9 +1077,18 @@ int compute_rdmult_sse(PictureControlSet *pcs_ptr, uint8_t q_index, uint8_t bit_
     assert(pcs_ptr->parent_pcs_ptr->tpl_ctrls.vq_adjust_lambda_sb > 0);
     int    qdiff = q_index - quantizer_to_qindex[pcs_ptr->parent_pcs_ptr->picture_qp];
     int8_t qidx  = (qdiff < -8) ? 0 : (qdiff < -4) ? 1 : (qdiff < -2) ? 2 : (qdiff <= 4) ? 3 : 4;
+#if CLN_TPL
+    if (pcs_ptr->parent_pcs_ptr->tpl_ctrls.enable)
+    {
+        rdmult       = (rdmult *
+            q_factor[pcs_ptr->parent_pcs_ptr->tpl_ctrls.vq_adjust_lambda_sb - 1][qidx]) >>
+            7;
+    }
+#else
     rdmult       = (rdmult *
               q_factor[pcs_ptr->parent_pcs_ptr->tpl_ctrls.vq_adjust_lambda_sb - 1][qidx]) >>
         7;
+#endif
     return (int)rdmult;
 }
 static void sb_setup_lambda(PictureControlSet *pcs_ptr, SuperBlock *sb_ptr) {
@@ -3206,7 +3215,11 @@ void *rate_control_kernel(void *input_ptr) {
                     int32_t new_qindex;
                     if (scs_ptr->static_config.pass != ENC_FIRST_PASS) {
                         // Content adaptive qp assignment
+#if CLN_TPL
+                        if (pcs_ptr->parent_pcs_ptr->tpl_ctrls.enable)
+#else
                         if (scs_ptr->static_config.enable_tpl_la)
+#endif
                         {
                             if (pcs_ptr->picture_number == 0) {
                                 rc->active_worst_quality =
@@ -3223,7 +3236,11 @@ void *rate_control_kernel(void *input_ptr) {
                                     .update_type[pcs_ptr->parent_pcs_ptr->gf_group_index];
                             frm_hdr->quantization_params.base_q_idx =
                                 quantizer_to_qindex[pcs_ptr->picture_qp];
+#if CLN_TPL
+                            if (pcs_ptr->parent_pcs_ptr->tpl_ctrls.enable &&
+#else
                             if (scs_ptr->static_config.enable_tpl_la &&
+#endif
                                 pcs_ptr->parent_pcs_ptr->r0 != 0 &&
                                 (update_type == KF_UPDATE || update_type == GF_UPDATE ||
                                  update_type == ARF_UPDATE)) {
@@ -3266,7 +3283,11 @@ void *rate_control_kernel(void *input_ptr) {
                 int32_t new_qindex;
                 int32_t update_type = scs_ptr->encode_context_ptr->gf_group
                                           .update_type[pcs_ptr->parent_pcs_ptr->gf_group_index];
+#if CLN_TPL
+                if (pcs_ptr->parent_pcs_ptr->tpl_ctrls.enable && pcs_ptr->parent_pcs_ptr->r0 != 0 &&
+#else
                 if (scs_ptr->static_config.enable_tpl_la && pcs_ptr->parent_pcs_ptr->r0 != 0 &&
+#endif
                     (update_type == KF_UPDATE || update_type == GF_UPDATE ||
                      update_type == ARF_UPDATE)) {
                     process_tpl_stats_frame_kf_gfu_boost(pcs_ptr);
@@ -3348,7 +3369,11 @@ void *rate_control_kernel(void *input_ptr) {
                             break;
                         } else {
                             // pa_ref_objs are no longer needed if super-res isn't performed on current frame
+#if CLN_TPL
+                            if (pcs_ptr->parent_pcs_ptr->tpl_ctrls.enable) {
+#else
                             if (scs_ptr->static_config.enable_tpl_la) {
+#endif
                                 if (pcs_ptr->parent_pcs_ptr->temporal_layer_index == 0) {
                                     for (uint32_t i = 0;
                                          i < pcs_ptr->parent_pcs_ptr->tpl_group_size;
@@ -3379,7 +3404,11 @@ void *rate_control_kernel(void *input_ptr) {
 
             // QPM with tpl_la
             if (scs_ptr->static_config.enable_adaptive_quantization == 2 &&
+#if CLN_TPL
+                pcs_ptr->parent_pcs_ptr->tpl_ctrls.enable && pcs_ptr->parent_pcs_ptr->r0 != 0)
+#else
                 scs_ptr->static_config.enable_tpl_la && pcs_ptr->parent_pcs_ptr->r0 != 0)
+#endif
                 sb_qp_derivation_tpl_la(pcs_ptr);
             else {
                 pcs_ptr->parent_pcs_ptr->frm_hdr.delta_q_params.delta_q_present = 0;

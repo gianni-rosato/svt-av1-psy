@@ -134,7 +134,7 @@ EbErrorType resource_coordination_context_ctor(EbThreadContext *thread_contxt_pt
 
     return EB_ErrorNone;
 }
-
+#if !CLN_TPL
 /*
    determine TPL level
 */
@@ -152,14 +152,20 @@ uint8_t get_tpl_level(int8_t enc_mode) {
         tpl_level = 6;
     return tpl_level;
 }
-
+#endif
 /* Warapper function to compute TPL Synthesizer block size: Used in init memory allocation and TPL Controls*/
 uint8_t get_tpl_synthesizer_block_size(int8_t tpl_level, uint32_t picture_width,
                                        uint32_t picture_height) {
     uint8_t blk_size;
+#if CLN_TPL
+    if (tpl_level <= 5)
+        blk_size = AOMMIN(picture_width, picture_height) >= 720 ? 16 : 8;
+    if (tpl_level <= 6)
+#else
     if (tpl_level <= 4)
         blk_size = AOMMIN(picture_width, picture_height) >= 720 ? 16 : 8;
     if (tpl_level <= 5)
+#endif
         blk_size = 16;
     else
         blk_size = AOMMIN(picture_width, picture_height) >= 720 ? 32 : 16;
@@ -180,7 +186,9 @@ void set_tpl_extended_controls(PictureParentControlSet *pcs_ptr, uint8_t tpl_lev
     TplControls *       tpl_ctrls = &pcs_ptr->tpl_ctrls;
     SequenceControlSet *scs_ptr   = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;
     switch (tpl_level) {
+#if CLN_TPL
     case 0:
+        tpl_ctrls->enable                   = 0;
         tpl_ctrls->tpl_opt_flag             = 0;
         tpl_ctrls->enable_tpl_qps           = 0;
         tpl_ctrls->disable_intra_pred_nbase = 0;
@@ -198,7 +206,35 @@ void set_tpl_extended_controls(PictureParentControlSet *pcs_ptr, uint8_t tpl_lev
             tpl_level, pcs_ptr->aligned_width, pcs_ptr->aligned_height);
         tpl_ctrls->vq_adjust_lambda_sb = 1;
         break;
+
     case 1:
+        tpl_ctrls->enable                   = 1;
+#else
+    case 0:
+#endif
+        tpl_ctrls->tpl_opt_flag             = 0;
+        tpl_ctrls->enable_tpl_qps           = 0;
+        tpl_ctrls->disable_intra_pred_nbase = 0;
+        tpl_ctrls->disable_intra_pred_nref  = 0;
+        tpl_ctrls->reduced_tpl_group = -1;
+        tpl_ctrls->pf_shape                     = DEFAULT_SHAPE;
+        tpl_ctrls->use_pred_sad_in_intra_search = 0;
+        tpl_ctrls->get_best_ref                 = 0;
+        tpl_ctrls->use_pred_sad_in_inter_search = 0;
+        tpl_ctrls->skip_rdoq_uv_qp_based_th     = 4;
+        tpl_ctrls->r0_adjust_factor             = 0.1;
+        tpl_ctrls->dispenser_search_level = 0;
+        tpl_ctrls->subsample_tx = 0;
+        tpl_ctrls->synth_blk_size = get_tpl_synthesizer_block_size(
+            tpl_level, pcs_ptr->aligned_width, pcs_ptr->aligned_height);
+        tpl_ctrls->vq_adjust_lambda_sb = 1;
+        break;
+#if CLN_TPL
+    case 2:
+        tpl_ctrls->enable                   = 1;
+#else
+    case 1:
+#endif
         tpl_ctrls->tpl_opt_flag             = 1;
         tpl_ctrls->enable_tpl_qps           = 0;
         tpl_ctrls->disable_intra_pred_nbase = 0;
@@ -216,7 +252,12 @@ void set_tpl_extended_controls(PictureParentControlSet *pcs_ptr, uint8_t tpl_lev
             tpl_level, pcs_ptr->aligned_width, pcs_ptr->aligned_height);
         tpl_ctrls->vq_adjust_lambda_sb = 1;
         break;
+#if CLN_TPL
+    case 3:
+        tpl_ctrls->enable                   = 1;
+#else
     case 2:
+#endif
         tpl_ctrls->tpl_opt_flag             = 1;
         tpl_ctrls->enable_tpl_qps           = 0;
         tpl_ctrls->disable_intra_pred_nbase = 0;
@@ -234,7 +275,12 @@ void set_tpl_extended_controls(PictureParentControlSet *pcs_ptr, uint8_t tpl_lev
             tpl_level, pcs_ptr->aligned_width, pcs_ptr->aligned_height);
         tpl_ctrls->vq_adjust_lambda_sb = 1;
         break;
+#if CLN_TPL
+    case 4:
+        tpl_ctrls->enable                   = 1;
+#else
     case 3:
+#endif
         tpl_ctrls->tpl_opt_flag             = 1;
         tpl_ctrls->enable_tpl_qps           = 0;
         tpl_ctrls->disable_intra_pred_nbase = 0;
@@ -253,7 +299,12 @@ void set_tpl_extended_controls(PictureParentControlSet *pcs_ptr, uint8_t tpl_lev
             tpl_level, pcs_ptr->aligned_width, pcs_ptr->aligned_height);
         tpl_ctrls->vq_adjust_lambda_sb = 1;
         break;
+#if CLN_TPL
+    case 5:
+        tpl_ctrls->enable                   = 1;
+#else
     case 4:
+#endif
         tpl_ctrls->tpl_opt_flag             = 1;
         tpl_ctrls->enable_tpl_qps           = 0;
         tpl_ctrls->disable_intra_pred_nbase = 0;
@@ -275,7 +326,12 @@ void set_tpl_extended_controls(PictureParentControlSet *pcs_ptr, uint8_t tpl_lev
             tpl_level, pcs_ptr->aligned_width, pcs_ptr->aligned_height);
         tpl_ctrls->vq_adjust_lambda_sb = 1;
         break;
+#if CLN_TPL
+    case 6:
+        tpl_ctrls->enable                   = 1;
+#else
     case 5:
+#endif
         tpl_ctrls->tpl_opt_flag             = 1;
         tpl_ctrls->enable_tpl_qps           = 0;
         tpl_ctrls->disable_intra_pred_nbase = 0;
@@ -297,7 +353,12 @@ void set_tpl_extended_controls(PictureParentControlSet *pcs_ptr, uint8_t tpl_lev
             tpl_level, pcs_ptr->aligned_width, pcs_ptr->aligned_height);
         tpl_ctrls->vq_adjust_lambda_sb = 1;
         break;
+#if CLN_TPL
+    case 7:
+        tpl_ctrls->enable                   = 1;
+#else
     case 6:
+#endif
         tpl_ctrls->tpl_opt_flag             = 1;
         tpl_ctrls->enable_tpl_qps           = 0;
         tpl_ctrls->disable_intra_pred_nbase = 0;
