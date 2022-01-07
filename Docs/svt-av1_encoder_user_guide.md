@@ -282,7 +282,7 @@ For this command line, corresponding qindex values are:
 
 | **Configuration file parameter** | **Command line** | **Range**       | **Default** | **Description**                                                                                                            |
 |----------------------------------|------------------|-----------------|-------------|----------------------------------------------------------------------------------------------------------------------------|
-| **IntraPeriod**                  | --keyint         | [-2-`(2^31)-2`] | -2          | Intra period interval (frames) [-2: Default intra period (set to 2 seconds long), -1: No intra update]                     |
+| **Keyint**                       | --keyint         | [-2-`(2^31)-1`] | -2          | Maximum GOP size (frames) [-2: ~2 seconds, -1: "infinite" and only applicable for CRF, 0: same as -1]                      |
 | **IntraRefreshType**             | --irefresh-type  | [1-2]           | 2           | Intra refresh type [1: FWD Frame (Open GOP), 2: KEY Frame (Closed GOP)]                                                    |
 | **SceneChangeDetection**         | --scd            | [0-1]           | 0           | Scene change detection control                                                                                             |
 | **Lookahead**                    | --lookahead      | [0-120]         | 4294967295  | Number of frames in the future to look ahead, includes minigop, temporal filtering, and  rate control. [4294967295: auto]. |

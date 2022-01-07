@@ -378,6 +378,11 @@ static void set_enc_mode(const char *value, EbConfig *cfg) {
 static void set_cfg_intra_period(const char *value, EbConfig *cfg) {
     cfg->config.intra_period_length = strtol(value, NULL, 0);
 };
+// --keyint 0 == --keyint -1
+static void set_keyint(const char *value, EbConfig *cfg) {
+    const long keyint               = strtol(value, NULL, 0);
+    cfg->config.intra_period_length = keyint < 0 ? keyint : keyint - 1;
+}
 static void set_cfg_intra_refresh_type(const char *value, EbConfig *cfg) {
     cfg->config.intra_refresh_type = strtol(value, NULL, 0);
 };
@@ -929,10 +934,9 @@ ConfigEntry config_entry_2p[] = {
 ConfigEntry config_entry_intra_refresh[] = {
     {SINGLE_INPUT,
      KEYINT_TOKEN,
-     "Intra period interval(frames) (-2: default intra period (set to 2 sec long) , -1: No intra "
-     "update or [0 - "
-     "2^31-2]",
-     set_cfg_intra_period},
+     "Maximum GOP size (frames) [-2: ~2 seconds, -1: \"infinite\" and only applicable for CRF, 0: "
+     "same as -1, 1-(2^31)-1]",
+     set_keyint},
     {SINGLE_INPUT,
      INTRA_REFRESH_TYPE_TOKEN,
      "Intra refresh type (1: FWD Frame (Open GOP), 2: KEY Frame (Closed GOP)[default])",
@@ -1088,6 +1092,7 @@ ConfigEntry config_entry[] = {
     {SINGLE_INPUT, NO_PROGRESS_TOKEN, "NoProgress", set_no_progress},
     {SINGLE_INPUT, ENCMODE_TOKEN, "EncoderMode", set_enc_mode},
     {SINGLE_INPUT, INTRA_PERIOD_TOKEN, "IntraPeriod", set_cfg_intra_period},
+    {SINGLE_INPUT, KEYINT_TOKEN, "Keyint", set_keyint},
     {SINGLE_INPUT, INTRA_REFRESH_TYPE_TOKEN, "IntraRefreshType", set_cfg_intra_refresh_type},
     {SINGLE_INPUT, FRAME_RATE_TOKEN, "FrameRate", set_frame_rate},
     {SINGLE_INPUT, FRAME_RATE_NUMERATOR_TOKEN, "FrameRateNumerator", set_frame_rate_numerator},
@@ -1199,7 +1204,6 @@ ConfigEntry config_entry[] = {
     {SINGLE_INPUT, PRESET_TOKEN, "EncoderMode", set_enc_mode},
     {SINGLE_INPUT, QP_FILE_NEW_TOKEN, "QpFile", set_cfg_qp_file},
     {SINGLE_INPUT, INPUT_DEPTH_TOKEN, "EncoderBitDepth", set_encoder_bit_depth},
-    {SINGLE_INPUT, KEYINT_TOKEN, "IntraPeriod", set_cfg_intra_period},
     {SINGLE_INPUT, LOOKAHEAD_NEW_TOKEN, "Lookahead", set_look_ahead_distance},
     {SINGLE_INPUT, LOOK_AHEAD_DIST_TOKEN, "Lookahead", set_look_ahead_distance},
     {SINGLE_INPUT, STAT_REPORT_NEW_TOKEN, "StatReport", set_stat_report},
@@ -2068,9 +2072,13 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncPass enc_pass[MAX_ENC_P
     }
 
     if (find_token(argc, argv, INTRA_PERIOD_TOKEN, config_string) == 0 ||
-        find_token(argc, argv, "--intra-period", config_string) == 0 ||
-        find_token(argc, argv, "--keyint", config_string) == 0) {
+        find_token(argc, argv, "-" INTRA_PERIOD_TOKEN, config_string) == 0 ||
+        find_token(argc, argv, KEYINT_TOKEN, config_string) == 0) {
         ip = strtol(config_string, NULL, 0);
+        if (find_token(argc, argv, KEYINT_TOKEN, NULL) == 0) {
+            fprintf(stderr, "[SVT-Warning]: --keyint is now intra-period + 1!\n");
+            --ip;
+        }
         if ((ip < -2 || ip > 2 * ((1 << 30) - 1)) && rc_mode == 0) {
             fprintf(stderr, "[SVT-Error]: The intra period must be [-2, 2^31-2]  \n");
             return 0;
