@@ -2453,7 +2453,7 @@ static void update_look_ahead(SequenceControlSet *scs_ptr) {
     uint32_t eos_delay = 1;
 
     uint32_t mg_size = 1 << scs_ptr->static_config.hierarchical_levels;
-    if (scs_ptr->static_config.look_ahead_distance - (eos_delay + scs_ptr->scd_delay) < mg_size + 1) {
+    if ((int32_t) (scs_ptr->static_config.look_ahead_distance - (eos_delay + scs_ptr->scd_delay)) < (int32_t) (mg_size + 1)) {
         // Not enough pictures to form the minigop. update mg_size
         scs_ptr->static_config.look_ahead_distance = mg_size + 1 + (eos_delay + scs_ptr->scd_delay);
         SVT_WARN("Minimum lookahead distance to run %dL with TF %d is %d. Force the look_ahead_distance to be %d\n",
