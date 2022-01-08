@@ -130,11 +130,11 @@ static const vector<uint32_t> invalid_intra_refresh_type = {
  *
  * Default is 3. */
 static const vector<uint32_t> default_hierarchical_levels = {
-    4,
+    3,
 };
-static const vector<uint32_t> valid_hierarchical_levels = {3, 4};
+static const vector<uint32_t> valid_hierarchical_levels = {3, 4, 5};
 static const vector<uint32_t> invalid_hierarchical_levels = {
-    0, 1, 2, 5,  // ...
+    0, 1, 2, 6,  // ...
 };
 
 /* Prediction structure used to construct GOP. There are two main structures
