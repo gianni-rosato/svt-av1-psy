@@ -140,7 +140,7 @@ The encoder parameters present in the `Sample.cfg` file are listed in this table
 
 | **Configuration file parameter** | **Command line**   | **Range**  | **Default** | **Description**                                                                                                 |
 |----------------------------------|--------------------|------------|-------------|-----------------------------------------------------------------------------------------------------------------|
-|                                  | --help             |            |             | Shows the command lines options currently available                                                             |
+|                                  | --help             |            |             | Shows the command line options currently available                                                              |
 |                                  | --version          |            |             | Shows the version of the library that's linked to the library                                                   |
 | **InputFile**                    | -i                 | any string | None        | Input raw video (y4m and yuv) file path, use `stdin` to read from pipe                                          |
 | **StreamFile**                   | -b                 | any string | None        | Output compressed (ivf) file path, use `stdout` to write to pipe                                                |
@@ -173,14 +173,11 @@ The encoder parameters present in the `Sample.cfg` file are listed in this table
 | **CompressedTenBitFormat**       | --compressed-ten-bit-format | [0-1]                          | 0           | Pack 10bit video, handled between the app and library                                                         |
 | **Injector**                     | --inj                       | [0-1]                          | 0           | Inject pictures to the library at defined frame rate                                                          |
 | **InjectorFrameRate**            | --inj-frm-rt                | [0-240]                        | 60          | Set injector frame rate, only applicable with `--inj 1`                                                       |
-| **HierarchicalLevels**           | --hierarchical-levels       | [3-5]                          | 4           | Set hierarchical levels beyond the base layer [3: 4 temporal layers, 5: 6 temporal layers]                    |
-| **PredStructure**                | --pred-struct               | [0-2]                          | 2           | Set prediction structure [0: low delay P-frames, 1: low delay B-frames, 2: random access]                     |
 | **StatReport**                   | --enable-stat-report        | [0-1]                          | 0           | Calculates and outputs PSNR SSIM metrics at the end of encoding                                               |
 | **Asm**                          | --asm                       | [0-11, c-max]                  | max         | Limit assembly instruction set [c, mmx, sse, sse2, sse3, ssse3, sse4_1, sse4_2, avx, avx2, avx512, max]       |
 | **LogicalProcessors**            | --lp                        | [0, core count of the machine] | 0           | Target number of logical cores to be used. 0 means all. Refer to Appendix A.1                                 |
-| **UnpinExecution**               | --unpin                     | [0-1]                          | 1           | unpin the execution from a socket. Overwritten to 0 when `--ss` is set. Refer to Appendix A.1                 |
+| **UnpinExecution**               | --unpin                     | [0-1]                          | 1           | Unpin the execution from a socket. Overwritten to 0 when `--ss` is set. Refer to Appendix A.1                 |
 | **TargetSocket**                 | --ss                        | [-1,1]                         | -1          | Specifies which socket to run on, assumes a max of two sockets. Refer to Appendix A.1                         |
-
 
 #### Rate Control Options
 
@@ -208,6 +205,9 @@ The encoder parameters present in the `Sample.cfg` file are listed in this table
 | **BufInitialSz**                 | --buf-initial-sz                 | [0-`(2^63)-1`] | 4000            | Client initial buffer size (ms), only applicable for CBR                                                             |
 | **BufOptimalSz**                 | --buf-optimal-sz                 | [0-`(2^63)-1`] | 5000            | Client optimal buffer size (ms), only applicable for CBR                                                             |
 | **RecodeLoop**                   | --recode-loop                    | [0-4]          | 4               | Recode loop level, look at the "Recode loop level table" in the user's guide for more info [0: off, 4: preset based] |
+| **VBRBiasPct**                   | --bias-pct                       | [0-100]        | 50              | CBR/VBR bias [0: CBR-like, 100: VBR-like]                                                                            |
+| **MinSectionPct**                | --minsection-pct                 | [0-`(2^32)-1`] | 0               | GOP min bitrate (expressed as a percentage of the target rate)                                                       |
+| **MaxSectionPct**                | --maxsection-pct                 | [0-`(2^32)-1`] | 2000            | GOP max bitrate (expressed as a percentage of the target rate)                                                       |
 
 ##### **UseFixedQIndexOffsets** and more information
 
@@ -259,13 +259,6 @@ For this command line, corresponding qindex values are:
 | **Pass**                         | --pass           | [0-3]          | 0                  | Multi-pass selection [0: single pass encode, 1: first pass, 2: second pass, 3: third pass]        |
 | **Stats**                        | --stats          | any string     | "svtav1_2pass.log" | Filename for multi-pass encoding                                                                  |
 | **Passes**                       | --passes         | [1-2]          | 1                  | Number of encoding passes, default is preset dependent [1: one pass encode, 2: multi-pass encode] |
-| **VBRBiasPct**                   | --bias-pct       | [0-100]        | 50                 | CBR/VBR bias [0: CBR-like, 100: VBR-like]                                                         |
-| **MinSectionPct**                | --minsection-pct | [0-`(2^32)-1`] | 0                  | GOP min bitrate (expressed as a percentage of the target rate)                                    |
-| **MaxSectionPct**                | --maxsection-pct | [0-`(2^32)-1`] | 2000               | GOP max bitrate (expressed as a percentage of the target rate)                                    |
-
-<!-- The following two will be combined with --stats at another time, they currently do not work -->
-<!-- | **OutputStatFile** | --output-stat-file | any string | Null | Output stat file for first pass| -->
-<!-- | **InputStatFile** | --input-stat-file | any string | Null | Input stat file for second pass| -->
 
 ##### **Pass** information
 
@@ -280,12 +273,14 @@ For this command line, corresponding qindex values are:
 
 #### GOP size and type Options
 
-| **Configuration file parameter** | **Command line** | **Range**       | **Default** | **Description**                                                                                                            |
-|----------------------------------|------------------|-----------------|-------------|----------------------------------------------------------------------------------------------------------------------------|
-| **Keyint**                       | --keyint         | [-2-`(2^31)-1`] | -2          | Maximum GOP size (frames) [-2: ~2 seconds, -1: "infinite" and only applicable for CRF, 0: same as -1]                      |
-| **IntraRefreshType**             | --irefresh-type  | [1-2]           | 2           | Intra refresh type [1: FWD Frame (Open GOP), 2: KEY Frame (Closed GOP)]                                                    |
-| **SceneChangeDetection**         | --scd            | [0-1]           | 0           | Scene change detection control                                                                                             |
-| **Lookahead**                    | --lookahead      | [0-120]         | 4294967295  | Number of frames in the future to look ahead, includes minigop, temporal filtering, and  rate control. [4294967295: auto]. |
+| **Configuration file parameter** | **Command line**      | **Range**       | **Default** | **Description**                                                                                                 |
+|----------------------------------|-----------------------|-----------------|-------------|-----------------------------------------------------------------------------------------------------------------|
+| **Keyint**                       | --keyint              | [-2-`(2^31)-1`] | -2          | GOP size (frames) [-2: ~2 seconds, -1: "infinite" and only applicable for CRF, 0: same as -1]                   |
+| **IntraRefreshType**             | --irefresh-type       | [1-2]           | 2           | Intra refresh type [1: FWD Frame (Open GOP), 2: KEY Frame (Closed GOP)]                                         |
+| **SceneChangeDetection**         | --scd                 | [0-1]           | 0           | Scene change detection control                                                                                  |
+| **Lookahead**                    | --lookahead           | [-1,0-120]      | -1          | Number of frames in the future to look ahead, includes minigop, temporal filtering, and rate control [-1: auto] |
+| **HierarchicalLevels**           | --hierarchical-levels | [3-5]           | 4           | Set hierarchical levels beyond the base layer [3: 4 temporal layers, 5: 6 temporal layers]                      |
+| **PredStructure**                | --pred-struct         | [0-2]           | 2           | Set prediction structure [0: low delay P-frames, 1: low delay B-frames, 2: random access]                       |
 
 #### AV1 Specific Options
 
@@ -296,13 +291,13 @@ For this command line, corresponding qindex values are:
 | **LoopFilterEnable**             | --enable-dlf         | [0-1]     | 1           | Deblocking loop filter control                                                                                            |
 | **CDEFLevel**                    | --enable-cdef        | [0-1]     | 1           | Enable Constrained Directional Enhancement Filter                                                                         |
 | **EnableRestoration**            | --enable-restoration | [0-1]     | 1           | Enable loop restoration filter                                                                                            |
-| **EnableTPLModel**               | --enable-tpl-la      | [0-1]     | 1           | Temporal Dependency model control, only applicable when `--rc` is set to 0                                                |
-| **Mfmv**                         | --enable-mfmv        | [-1-1]    | -1          | Motion Field Motion Vector control, [-1: auto]                                                                            |
-| **ScreenContentMode**            | --scm                | [0-2]     | 2           | Set screen content detection level, 0: off, 1: on, 2: content adaptive                                                    |
-| **RestrictedMotionVector**       | --rmv                | [0-1]     | 0           | Restrict motion vectors from reaching outside the picture boundary                                                        |
-| **FilmGrain**                    | --film-grain         | [0-50]    | 0           | Enable film grain, 0: off, 1-50: level of denoising for film grain                                                        |
+| **EnableTPLModel**               | --enable-tpl-la      | [0-1]     | 1           | Temporal Dependency model control, currently forced on library side, only applicable for CRF/CQP                          |
+| **Mfmv**                         | --enable-mfmv        | [-1-1]    | -1          | Motion Field Motion Vector control [-1: auto]                                                                             |
 | **EnableTF**                     | --enable-tf          | [0-1]     | 1           | Enable ALT-REF (temporally filtered) frames                                                                               |
 | **EnableOverlays**               | --enable-overlays    | [0-1]     | 0           | Enable the insertion of overlayer pictures which will be used as an additional reference frame for the base layer picture |
+| **ScreenContentMode**            | --scm                | [0-2]     | 2           | Set screen content detection level [0: off, 1: on, 2: content adaptive]                                                   |
+| **RestrictedMotionVector**       | --rmv                | [0-1]     | 0           | Restrict motion vectors from reaching outside the picture boundary                                                        |
+| **FilmGrain**                    | --film-grain         | [0-50]    | 0           | Enable film grain [0: off, 1-50: level of denoising for film grain]                                                       |
 | **SuperresMode**                 | --superres-mode      | [0-4]     | 0           | Enable super-resolution mode, refer to the super-resolution section below for more info                                   |
 | **SuperresDenom**                | --superres-denom     | [8-16]    | 8           | Super-resolution denominator, only applicable for mode == 1 [8: no scaling, 16: half-scaling]                             |
 | **SuperresKfDenom**              | --superres-kf-denom  | [8-16]    | 8           | Super-resolution denominator for key frames, only applicable for mode == 1 [8: no scaling, 16: half-scaling]              |
@@ -337,7 +332,7 @@ please look at [section 2.2 of the super-resolution doc](./Appendix-Super-Resolu
 | **ColorPrimaries**               | --color-primaries          | [0-12, 22] | 2           | Color primaries, refer to the user guide Appendix A.2 for full details                                                                   |
 | **TransferCharacteristics**      | --transfer-characteristics | [0-22]     | 2           | Transfer characteristics, refer to the user guide Appendix A.2 for full details                                                          |
 | **MatrixCoefficients**           | --matrix-coefficients      | [0-14]     | 2           | Matrix coefficients, refer to the user guide Appendix A.2 for full details                                                               |
-| **ColorRange**                   | --color-range              | [0-1]      | 0           | Color range, [0: Studio, 1: Full]                                                                                                        |
+| **ColorRange**                   | --color-range              | [0-1]      | 0           | Color range [0: Studio, 1: Full]                                                                                                         |
 | **MasteringDisplay**             | --mastering-display        | any string | none        | Mastering display metadata in the format of "G(x,y)B(x,y)R(x,y)WP(x,y)L(max,min)", refer to the user guide Appendix A.2 for full details |
 | **ContentLightLevel**            | --content-light            | any string | none        | Set content light level in the format of "max_cll,max_fall", refer to the user guide Appendix A.2 for full details                       |
 

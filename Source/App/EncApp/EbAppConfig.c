@@ -691,138 +691,174 @@ typedef struct config_entry_s {
  **********************************/
 ConfigEntry config_entry_options[] = {
     // File I/O
-    {SINGLE_INPUT, HELP_TOKEN, "Show usage options and exit", set_cfg_input_file},
-    {SINGLE_INPUT, VERSION_TOKEN, "Show version and exit", set_cfg_input_file},
-    {SINGLE_INPUT, INPUT_FILE_TOKEN, "Input filename", set_cfg_input_file},
-    {SINGLE_INPUT, INPUT_FILE_LONG_TOKEN, "Input filename", set_cfg_input_file},
+    {SINGLE_INPUT,
+     HELP_TOKEN,
+     "Shows the command line options currently available",
+     set_cfg_input_file},
+    {SINGLE_INPUT,
+     VERSION_TOKEN,
+     "Shows the version of the library that's linked to the library",
+     set_cfg_input_file},
+    {SINGLE_INPUT,
+     INPUT_FILE_TOKEN,
+     "Input raw video (y4m and yuv) file path, use `stdin` to read from pipe",
+     set_cfg_input_file},
+    {SINGLE_INPUT,
+     INPUT_FILE_LONG_TOKEN,
+     "Input raw video (y4m and yuv) file path, use `stdin` to read from pipe",
+     set_cfg_input_file},
 
-    {SINGLE_INPUT, OUTPUT_BITSTREAM_TOKEN, "Output filename", set_cfg_stream_file},
-    {SINGLE_INPUT, OUTPUT_BITSTREAM_LONG_TOKEN, "Output filename", set_cfg_stream_file},
+    {SINGLE_INPUT,
+     OUTPUT_BITSTREAM_TOKEN,
+     "Output compressed (ivf) file path, use `stdout` to write to pipe",
+     set_cfg_stream_file},
+    {SINGLE_INPUT,
+     OUTPUT_BITSTREAM_LONG_TOKEN,
+     "Output compressed (ivf) file path, use `stdout` to write to pipe",
+     set_cfg_stream_file},
 
-    {SINGLE_INPUT, ERROR_FILE_TOKEN, "Error filename", set_cfg_error_file},
-    {SINGLE_INPUT, OUTPUT_RECON_TOKEN, "Recon filename", set_cfg_recon_file},
-    {SINGLE_INPUT, OUTPUT_RECON_LONG_TOKEN, "Recon filename", set_cfg_recon_file},
+    {SINGLE_INPUT, CONFIG_FILE_TOKEN, "Configuration file path", set_cfg_input_file},
+    {SINGLE_INPUT, CONFIG_FILE_LONG_TOKEN, "Configuration file path", set_cfg_input_file},
 
-    {SINGLE_INPUT, STAT_FILE_TOKEN, "Stat filename", set_cfg_stat_file},
+    {SINGLE_INPUT, ERROR_FILE_TOKEN, "Error file path, defaults to stderr", set_cfg_error_file},
+    {SINGLE_INPUT, OUTPUT_RECON_TOKEN, "Reconstructed yuv file path", set_cfg_recon_file},
+    {SINGLE_INPUT, OUTPUT_RECON_LONG_TOKEN, "Reconstructed yuv file path", set_cfg_recon_file},
+
+    {SINGLE_INPUT,
+     STAT_FILE_TOKEN,
+     "PSNR / SSIM per picture stat output file path, requires `--enable-stat-report 1`",
+     set_cfg_stat_file},
+
+    {SINGLE_INPUT,
+     INPUT_PREDSTRUCT_FILE_TOKEN,
+     "Manual prediction structure file path",
+     set_pred_struct_file},
+
+    {SINGLE_INPUT,
+     PROGRESS_TOKEN,
+     "Verbosity of the output, default is 1 [0: no progress is printed, 2: aomenc style output]",
+     set_progress},
+    {SINGLE_INPUT,
+     NO_PROGRESS_TOKEN,
+     "Do not print out progress, default is 0 [1: `" PROGRESS_TOKEN " 0`, 0: `" PROGRESS_TOKEN
+     " 1`]",
+     set_no_progress},
+
     {SINGLE_INPUT,
      PRESET_TOKEN,
-     "Encoder mode/Preset used (-2 (debugging preset),-1 (debugging preset),0 - 13, 12 [default]) "
-     "the"
-     " higher the preset, the higher the speed, the lower the preset, the higher the quality",
+     "Encoder preset, presets < 0 are for debugging. Higher presets means faster encodes, but with "
+     "a quality tradeoff, default is 12 [-2-13]",
      set_enc_mode},
     {SINGLE_INPUT, NULL, NULL, NULL}};
 
 ConfigEntry config_entry_global_options[] = {
     // Picture Dimensions
-    {SINGLE_INPUT, WIDTH_TOKEN, "Frame width", set_cfg_source_width},
-    {SINGLE_INPUT, WIDTH_LONG_TOKEN, "Frame width", set_cfg_source_width},
+    {SINGLE_INPUT,
+     WIDTH_TOKEN,
+     "Frame width in pixels, inferred if y4m, default is 0 [64-16384]",
+     set_cfg_source_width},
+    {SINGLE_INPUT,
+     WIDTH_LONG_TOKEN,
+     "Frame width in pixels, inferred if y4m, default is 0 [64-16384]",
+     set_cfg_source_width},
 
-    {SINGLE_INPUT, HEIGHT_TOKEN, "Frame height", set_cfg_source_height},
-    {SINGLE_INPUT, HEIGHT_LONG_TOKEN, "Frame height", set_cfg_source_height},
+    {SINGLE_INPUT,
+     HEIGHT_TOKEN,
+     "Frame height in pixels, inferred if y4m, default is 0 [64-8704]",
+     set_cfg_source_height},
+    {SINGLE_INPUT,
+     HEIGHT_LONG_TOKEN,
+     "Frame height in pixels, inferred if y4m, default is 0 [64-8704]",
+     set_cfg_source_height},
 
     {SINGLE_INPUT,
      NUMBER_OF_PICTURES_TOKEN,
-     "Stop encoding after n input frames, if n is larger than the number of frames in the input "
-     "file,"
-     " the encoder will loop back to frame 0 and continue encoding",
+     "Number of frames to encode. If `n` is larger than the input, the encoder will loop back and "
+     "continue encoding, default is 0 [0: until EOF, 1-`(2^63)-1`]",
      set_cfg_frames_to_be_encoded},
     {SINGLE_INPUT,
      NUMBER_OF_PICTURES_LONG_TOKEN,
-     "Stop encoding after n input frames, if n is larger than the number of frames in the input "
-     "file,"
-     " the encoder will loop back to frame 0 and continue encoding",
+     "Number of frames to encode. If `n` is larger than the input, the encoder will loop back and "
+     "continue encoding, default is 0 [0: until EOF, 1-`(2^63)-1`]",
      set_cfg_frames_to_be_encoded},
 
-    {SINGLE_INPUT, BUFFERED_INPUT_TOKEN, "Buffer n input frames", set_buffered_input},
     {SINGLE_INPUT,
-     PROGRESS_TOKEN,
-     "Change verbosity of the output (0: no progress is printed, 1: default, 2: aomenc style "
-     "machine parsable output)",
-     set_progress},
-    {SINGLE_INPUT,
-     NO_PROGRESS_TOKEN,
-     "Do not print out progress, if set to 1 it is equivalent to `" PROGRESS_TOKEN
-     " 0`, else  `" PROGRESS_TOKEN " 1`",
-     set_no_progress},
+     BUFFERED_INPUT_TOKEN,
+     "Buffer `n` input frames into memory and use them to encode, default is -1 [-1: no frames "
+     "buffered, 1-`(2^31)-1`]",
+     set_buffered_input},
     {SINGLE_INPUT,
      ENCODER_COLOR_FORMAT,
-     "Set encoder color format(YUV400, YUV420, YUV422, YUV444 : YUV420 [default])",
+     "Color format, only yuv420 is supported at this time, default is 1 [0: yuv400, 1: yuv420, 2: "
+     "yuv422, 3: yuv444]",
      set_encoder_color_format},
     {SINGLE_INPUT,
      PROFILE_TOKEN,
-     "Bitstream profile number to use(0: main profile[default], 1: high profile, 2: professional "
-     "profile) ",
+     "Bitstream profile, default is 0 [0: main, 1: high, 2: professional]",
      set_profile},
     {SINGLE_INPUT,
      LEVEL_TOKEN,
-     "Bitstream level to use [0: autodetect based on input [Default], 2.0-6.3]",
+     "Bitstream level, defined in A.3 of the av1 spec, default is 0 [0: autodetect from input, "
+     "2.0-7.3]",
      set_level},
-    {SINGLE_INPUT, FRAME_RATE_TOKEN, "Stream frame rate, integer values only", set_frame_rate},
+    {SINGLE_INPUT,
+     HDR_INPUT_NEW_TOKEN,
+     "Enable writing of HDR metadata in the bitstream, default is 0 [0-1]",
+     set_high_dynamic_range_input},
+    {SINGLE_INPUT,
+     FRAME_RATE_TOKEN,
+     "Input video frame rate, integer values only, inferred if y4m, default is 25 [1-240]",
+     set_frame_rate},
     {SINGLE_INPUT,
      FRAME_RATE_NUMERATOR_TOKEN,
-     "Stream frame rate numerator",
+     "Input video frame rate numerator, default is 25000 [0-2^32-1]",
      set_frame_rate_numerator},
     {SINGLE_INPUT,
      FRAME_RATE_DENOMINATOR_TOKEN,
-     "Stream frame rate denominator",
+     "Input video frame rate denominator, default is 1000 [0-2^32-1]",
      set_frame_rate_denominator},
-    //{SINGLE_INPUT, ENCODER_BIT_DEPTH, "Bit depth for codec(8 or 10)", set_encoder_bit_depth},
     {SINGLE_INPUT,
      INPUT_DEPTH_TOKEN,
-     "Bit depth for codec (8 [default] , 10)",
+     "Input video file and output bitstream bit-depth, default is 8 [8, 10]",
      set_encoder_bit_depth},
     {SINGLE_INPUT,
      INPUT_COMPRESSED_TEN_BIT_FORMAT,
-     "Offline packing of the 2bits: requires two bits packed input (0: OFF[default], 1: ON)",
+     "Pack 10bit video, handled between the app and library, default is 0 [0-1]",
      set_compressed_ten_bit_format},
     // Latency
     {SINGLE_INPUT,
      INJECTOR_TOKEN,
-     "Inject pictures at defined frame rate(0: OFF[default],1: ON)",
+     "Inject pictures to the library at defined frame rate, default is 0 [0-1]",
      set_injector},
     {SINGLE_INPUT,
      INJECTOR_FRAMERATE_TOKEN,
-     "Set injector frame rate (0 - 240), only applicable when"
-     " --inj is set to 1",
+     "Set injector frame rate, only applicable with `--inj 1`, default is 60 [0-240]",
      set_injector_frame_rate},
     {SINGLE_INPUT,
-     HIERARCHICAL_LEVELS_TOKEN,
-     "Set hierarchical levels (1 [2 temporal layers] - 5  [6 temporal layers] : 4 [default])",
-     set_hierarchical_levels},
-    {SINGLE_INPUT,
-     PRED_STRUCT_TOKEN,
-     "Set prediction structure( (1: low delay, 2: random access) [default])",
-     set_cfg_pred_structure},
-    {SINGLE_INPUT,
      STAT_REPORT_NEW_TOKEN,
-     "outputs psnr ssim metrics at the end of the encode    (0: OFF[default], 1: ON)",
+     "Calculates and outputs PSNR SSIM metrics at the end of encoding, default is 0 [0-1]",
      set_stat_report},
 
     // Asm Type
     {SINGLE_INPUT,
      ASM_TYPE_TOKEN,
-     "Limit assembly instruction set [0 - 11] or [c, mmx, sse, sse2, sse3, ssse3, sse4_1, sse4_2,"
-     " avx, avx2, avx512, max], by default highest level supported by CPU",
+     "Limit assembly instruction set, only applicable to x86, default is max [c, mmx, sse, sse2, "
+     "sse3, ssse3, sse4_1, sse4_2, avx, avx2, avx512, max]",
      set_asm_type},
     {SINGLE_INPUT,
      THREAD_MGMNT,
-     "Target number of logical cores to be used (1-max number of cores on machine[default])",
+     "Target number of logical cores to be used. 0 means all. Refer to Appendix A.1 of the user "
+     "guide, default is 0 [0, core count of the machine]",
      set_logical_processors},
     {SINGLE_INPUT,
      UNPIN_TOKEN,
-     "Allows the execution to be pined/unpined to/from specific cores set by --lp \n"
-     "The combinational use of --unpin with --lp results in memory reduction while allowing the "
-     "execution to work on any of the cores and not restrict it to specific cores \n"
-     "--unpin is overwritten to 0 when --ss is set to 0 or 1. ( 0: OFF ,1: ON [default]) \n"
-     "Example: 72 core machine: \n"
-     "72 jobs x -- lp 1 -- unpin 1 \n"
-     "36 jobs x -- lp 2 -- unpin 1 \n"
-     "18 jobs x -- lp 4 -- unpin 1 ",
+     "Unpin the execution from a socket. Overwritten to 0 when `--ss` is set. Refer to Appendix "
+     "A.1 of the user guide, default is 1 [0-1]",
      set_unpin_execution},
     {SINGLE_INPUT,
      TARGET_SOCKET,
-     "Specify  which socket the encoder runs on"
-     "--unpin is overwritten to 0 when --ss is set to 0 or 1",
+     "Specifies which socket to run on, assumes a max of two sockets. Refer to Appendix A.1 of the "
+     "user guide, default is -1 [-1, 0, -1]",
      set_target_socket},
     // Termination
     {SINGLE_INPUT, NULL, NULL, NULL}};
@@ -831,209 +867,263 @@ ConfigEntry config_entry_rc[] = {
     // Rate Control
     {SINGLE_INPUT,
      RATE_CONTROL_ENABLE_TOKEN,
-     "Rate control mode(0 = CRF or CQP if --enable-tpl-la is set to 0 , 1 = VBR, 2 = CBR)",
+     "Rate control mode, default is 0 [0: CRF or CQP (if `--enable-tpl-la` is 0), 1: VBR, 2: CBR]",
      set_rate_control_mode},
-    {SINGLE_INPUT, TARGET_BIT_RATE_TOKEN, "Target Bitrate (kbps)", set_target_bit_rate},
-    {SINGLE_INPUT, MAX_BIT_RATE_TOKEN, "Maximum Bitrate (kbps)", set_max_bit_rate},
+    {SINGLE_INPUT, QP_TOKEN, "Initial QP level value, default is 50 [1-63]", set_cfg_qp},
+    {SINGLE_INPUT, QP_LONG_TOKEN, "Initial QP level value, default is 50 [1-63]", set_cfg_qp},
+    {SINGLE_INPUT,
+     CRF_LONG_TOKEN,
+     "Constant Rate Factor value, setting this value is equal to `--rc 0 --enable-tpl-la 1 --qp "
+     "x`, default is 50 [1-63]",
+     set_cfg_crf},
+
+    {SINGLE_INPUT,
+     TARGET_BIT_RATE_TOKEN,
+     "Target Bitrate (kbps), only applicable for VBR and CBR encoding, default is 7000 [1-4294967]",
+     set_target_bit_rate},
+    {SINGLE_INPUT,
+     MAX_BIT_RATE_TOKEN,
+     "Maximum Bitrate (kbps) only applicable for CRF and VBR encoding, default is 0 [1-4294967]",
+     set_max_bit_rate},
     {SINGLE_INPUT,
      USE_QP_FILE_TOKEN,
-     "Overwrite QP assignment using qp values in QP file",
+     "Overwrite the encoder default picture based QP assignments and use QP values from "
+     "`--qp-file`, default is 0 [0-1]",
      set_cfg_use_qp_file},
+    {SINGLE_INPUT,
+     QP_FILE_NEW_TOKEN,
+     "Path to a file containing per picture QP value separated by newlines",
+     set_cfg_qp_file},
+    {SINGLE_INPUT,
+     MAX_QP_TOKEN,
+     "Maximum (highest) quantizer, only applicable for VBR and CBR, default is 63 [1-63]",
+     set_max_qp_allowed},
+    {SINGLE_INPUT,
+     MIN_QP_TOKEN,
+     "Minimum (lowest) quantizer, only applicable for VBR and CBR, default is 1 [1-63]",
+     set_min_qp_allowed},
+
+    {SINGLE_INPUT,
+     ADAPTIVE_QP_ENABLE_NEW_TOKEN,
+     "Set adaptive QP level, default is 2 [0: off, 1: variance base using AV1 segments, 2: deltaq "
+     "pred efficiency]",
+     set_adaptive_quantization},
+
+    {SINGLE_INPUT,
+     VBV_BUFSIZE_TOKEN,
+     "VBV buffer size, default is the value of `--tbr` [1-4294967]",
+     set_vbv_buf_size},
 
     {SINGLE_INPUT,
      USE_FIXED_QINDEX_OFFSETS_TOKEN,
-     "Use fixed QIndex offset",
+     "Overwrite the encoder default hierarchical layer based QP assignment and use fixed Q index "
+     "offsets, default is 0 [0-1]",
      set_cfg_use_fixed_qindex_offsets},
     {SINGLE_INPUT,
      KEY_FRAME_QINDEX_OFFSET_TOKEN,
-     "Key Frame QIndex Offset",
+     "Overwrite the encoder default keyframe Q index assignment, default is 0 [-256-255]",
      set_cfg_key_frame_qindex_offset},
     {SINGLE_INPUT,
      KEY_FRAME_CHROMA_QINDEX_OFFSET_TOKEN,
-     "Key Frame Chroma QIndex Offset",
+     "Overwrite the encoder default chroma keyframe Q index assignment, default is 0 [-256-255]",
      set_cfg_key_frame_chroma_qindex_offset},
     {SINGLE_INPUT,
      QINDEX_OFFSETS_TOKEN,
      "list of luma Q index offsets per hierarchical layer, separated by `,` with each offset in "
-     "the range of [-256-255]",
+     "the range of [-256-255], default is `0,0,..,0`",
      set_cfg_qindex_offsets},
     {SINGLE_INPUT,
      CHROMA_QINDEX_OFFSETS_TOKEN,
      "list of chroma Q index offsets per hierarchical layer, separated by `,` with each offset in "
-     "the range of [-256-255]",
+     "the range of [-256-255], default is `0,0,..,0`",
      set_cfg_chroma_qindex_offsets},
 
-    {SINGLE_INPUT, QP_FILE_NEW_TOKEN, "Path to Qp file", set_cfg_qp_file},
-    {SINGLE_INPUT, QP_TOKEN, "Constant/Constrained Quality level", set_cfg_qp},
-    {SINGLE_INPUT, QP_LONG_TOKEN, "Constant/Constrained Quality level", set_cfg_qp},
-    {SINGLE_INPUT,
-     CRF_LONG_TOKEN,
-     "Constant Rate Factor, equal to --rc 0 --enable-tpl-la 1 --qp x",
-     set_cfg_crf},
-    {SINGLE_INPUT,
-     MAX_QP_TOKEN,
-     "Maximum (worst) quantizer[1-63] only applicable  when --rc > 0",
-     set_max_qp_allowed},
-    {SINGLE_INPUT,
-     MIN_QP_TOKEN,
-     "Minimum (best) quantizer[1-63] only applicable when --rc > 0",
-     set_min_qp_allowed},
-    {SINGLE_INPUT,
-     ADAPTIVE_QP_ENABLE_NEW_TOKEN,
-     "Set adaptive QP level(0: OFF ,1: variance base using segments ,2: Deltaq pred efficiency)",
-     set_adaptive_quantization},
-    {SINGLE_INPUT, VBV_BUFSIZE_TOKEN, "VBV buffer size", set_vbv_buf_size},
     {SINGLE_INPUT,
      UNDER_SHOOT_PCT_TOKEN,
-     "Datarate undershoot (min) target (%)",
+     "Allowable datarate undershoot (min) target (percentage), default is 25, but can change based "
+     "on rate control [0-100]",
      set_under_shoot_pct},
-    {SINGLE_INPUT, OVER_SHOOT_PCT_TOKEN, "Datarate overshoot (max) target (%)", set_over_shoot_pct},
-    {SINGLE_INPUT, BUFFER_SIZE_TOKEN, "Client buffer size (ms)", set_buf_sz},
+    {SINGLE_INPUT,
+     OVER_SHOOT_PCT_TOKEN,
+     "Allowable datarate overshoot (max) target (percentage), default is 25, but can change based "
+     "on rate control [0-100]",
+     set_over_shoot_pct},
+    {SINGLE_INPUT,
+     BUFFER_SIZE_TOKEN,
+     "Client buffer size (ms), only applicable for CBR, default is 6000 [0-`(2^63)-1`]",
+     set_buf_sz},
     {SINGLE_INPUT,
      BUFFER_INITIAL_SIZE_TOKEN,
-     "Client initial buffer size (ms)",
+     "Client initial buffer size (ms), only applicable for CBR, default is 4000 [0-`(2^63)-1`]",
      set_buf_initial_sz},
     {SINGLE_INPUT,
      BUFFER_OPTIMAL_SIZE_TOKEN,
-     "Client optimal buffer size (ms)",
+     "Client optimal buffer size (ms), only applicable for CBR, default is 5000 [0-`(2^63)-1`]",
      set_buf_optimal_sz},
     {SINGLE_INPUT,
      RECODE_LOOP_TOKEN,
-     "Recode loop levels    (0 : OFF, 1: Allow recode for KF and exceeding maximum frame "
-     "bandwidth, 2:Allow recode only for KF/ARF/GF frames, 3: Allow recode for all frames based on "
-     "bitrate constraints, 4: preset based decision [Default])",
+     "Recode loop level, refer to \"Recode loop level table\" in the user guide for more info [0: "
+     "off, 4: preset based]",
      set_recode_loop},
+    {SINGLE_INPUT,
+     VBR_BIAS_PCT_TOKEN,
+     "CBR/VBR bias, default is 50 [0: CBR-like, 1-99, 100: VBR-like]",
+     set_vbr_bias_pct},
+    {SINGLE_INPUT,
+     VBR_MIN_SECTION_PCT_TOKEN,
+     "GOP min bitrate (expressed as a percentage of the target rate), default is 0 [0-`(2^32)-1`]",
+     set_vbr_min_section_pct},
+    {SINGLE_INPUT,
+     VBR_MAX_SECTION_PCT_TOKEN,
+     "GOP max bitrate (expressed as a percentage of the target rate), default is 2000 "
+     "[0-`(2^32)-1`]",
+     set_vbr_max_section_pct},
     // Termination
     {SINGLE_INPUT, NULL, NULL, NULL}};
+
 ConfigEntry config_entry_2p[] = {
     // 2 pass
     {SINGLE_INPUT,
      PASS_TOKEN,
-     "Multipass bitrate control (1: first pass, generates stats file , 2: second pass, uses stats "
-     "file)",
+     "Multi-pass selection, pass 3 is only available for VBR, default is 0 [0: single pass encode, "
+     "1: first pass, 2: second pass, 3: third pass]",
      set_pass},
     {SINGLE_INPUT,
      TWO_PASS_STATS_TOKEN,
-     "Filename for 2 pass stats(\"svtav1_2pass.log\" : [Default])",
+     "Filename for multi-pass encoding, default is \"svtav1_2pass.log\"",
      set_two_pass_stats},
     {SINGLE_INPUT,
      PASSES_TOKEN,
-     "Number of passes (1: one pass encode, 2: multi-pass encode)",
+     "Number of encoding passes, default is preset dependent but generally 1 [1: one pass encode, "
+     "2: multi-pass encode]",
      set_passes},
-    {SINGLE_INPUT, VBR_BIAS_PCT_TOKEN, "CBR/VBR bias (0=CBR-like, 100=VBR-like)", set_vbr_bias_pct},
-    {SINGLE_INPUT,
-     VBR_MIN_SECTION_PCT_TOKEN,
-     "GOP min bitrate (% of target)",
-     set_vbr_min_section_pct},
-    {SINGLE_INPUT,
-     VBR_MAX_SECTION_PCT_TOKEN,
-     "GOP max bitrate (% of target)",
-     set_vbr_max_section_pct},
     // Termination
     {SINGLE_INPUT, NULL, NULL, NULL}};
+
 ConfigEntry config_entry_intra_refresh[] = {
     {SINGLE_INPUT,
      KEYINT_TOKEN,
-     "Maximum GOP size (frames) [-2: ~2 seconds, -1: \"infinite\" and only applicable for CRF, 0: "
-     "same as -1, 1-(2^31)-1]",
+     "GOP size (frames), default is -2 [-2: ~2 seconds, -1: \"infinite\" and only applicable for "
+     "CRF, 0: same as -1]",
      set_keyint},
     {SINGLE_INPUT,
      INTRA_REFRESH_TYPE_TOKEN,
-     "Intra refresh type (1: FWD Frame (Open GOP), 2: KEY Frame (Closed GOP)[default])",
+     "Intra refresh type, default is 2 [1: FWD Frame (Open GOP), 2: KEY Frame (Closed GOP)]",
      set_cfg_intra_refresh_type},
     {SINGLE_INPUT,
      SCENE_CHANGE_DETECTION_TOKEN,
-     "Enables or disables the scene change detection algorithm (0: OFF [default], 1: ON)",
+     "Scene change detection control, default is 0 [0-1]",
      set_scene_change_detection},
     {SINGLE_INPUT,
      LOOKAHEAD_NEW_TOKEN,
-     "The lookahead is the total number of frames in future used by the encoder, including"
-     " frames to form a minigop, temporal filtering and rate control. [0 - 120]",
+     "Number of frames in the future to look ahead, includes minigop, temporal filtering, and rate "
+     "control, default is -1 [-1: auto, 0-120]",
      set_look_ahead_distance},
-
+    {SINGLE_INPUT,
+     HIERARCHICAL_LEVELS_TOKEN,
+     "Set hierarchical levels beyond the base layer, default is 4 [3: 4 temporal layers, 4: 5 "
+     "layers, 5: 6 layers]",
+     set_hierarchical_levels},
+    {SINGLE_INPUT,
+     PRED_STRUCT_TOKEN,
+     "Set prediction structure, default is 2 [0: low delay P-frames, 1: low delay B-frames, 2: "
+     "random access]",
+     set_cfg_pred_structure},
     // Termination
     {SINGLE_INPUT, NULL, NULL, NULL}};
+
 ConfigEntry config_entry_specific[] = {
-    {SINGLE_INPUT, TILE_ROW_TOKEN, "Number of tile rows to use, log2[0-6]", set_tile_row},
-    {SINGLE_INPUT, TILE_COL_TOKEN, "Number of tile columns to use, log2[0-4]", set_tile_col},
+    {SINGLE_INPUT,
+     TILE_ROW_TOKEN,
+     "Number of tile rows to use, `TileRow == log2(x)`, default changes per resolution but is 1 "
+     "[0-6]",
+     set_tile_row},
+    {SINGLE_INPUT,
+     TILE_COL_TOKEN,
+     "Number of tile columns to use, `TileCol == log2(x)`, default changes per resolution but is 1 "
+     "[0-4]",
+     set_tile_col},
 
     // DLF
     {SINGLE_INPUT,
      LOOP_FILTER_ENABLE,
-     "Enable loop filter [0: off, 1: on default]",
+     "Deblocking loop filter control, default is 1 [0-1]",
      set_enable_dlf_flag},
     // CDEF
     {SINGLE_INPUT,
      CDEF_ENABLE_TOKEN,
-     "Enable Constrained Directional Enhancement Filter [0: off, 1: on default]",
+     "Enable Constrained Directional Enhancement Filter, default is 1 [0-1]",
      set_cdef_enable},
     // RESTORATION
     {SINGLE_INPUT,
      ENABLE_RESTORATION_TOKEN,
-     "Enable the loop restoration filter [0: off, 1: on default]",
+     "Enable loop restoration filter, default is 1 [0-1]",
      set_enable_restoration_flag},
     {SINGLE_INPUT,
      ENABLE_TPL_LA_TOKEN,
-     "RDO based on frame temporal dependency (0: off, 1: backward source based)",
+     "Temporal Dependency model control, currently forced on library side, only applicable for "
+     "CRF/CQP, default is 1 [0-1]",
      set_enable_tpl_la},
     {SINGLE_INPUT,
      MFMV_ENABLE_NEW_TOKEN,
-     "Enable motion field motion vector( 0: OFF, 1: ON, -1: DEFAULT)",
+     "Motion Field Motion Vector control, default is -1 [-1: auto, 0-1]",
      set_enable_mfmv_flag},
+    // --- start: ALTREF_FILTERING_SUPPORT
+    {SINGLE_INPUT,
+     ENABLE_TF_TOKEN,
+     "Enable ALT-REF (temporally filtered) frames, default is 1 [0-1]",
+     set_enable_tf},
+
+    {SINGLE_INPUT,
+     ENABLE_OVERLAYS,
+     "Enable the insertion of overlayer pictures which will be used as an additional reference "
+     "frame for the base layer picture, default is 0 [0-1]",
+     set_enable_overlays},
+    // --- end: ALTREF_FILTERING_SUPPORT
 
     // MD Parameters
     {SINGLE_INPUT,
      SCREEN_CONTENT_TOKEN,
-     "Set screen content detection level([0-2], 2 Content adaptive decision: DEFAULT)",
+     "Set screen content detection level, default is 2 [0: off, 1: on, 2: content adaptive]",
      set_screen_content_mode},
     // Optional Features
     {SINGLE_INPUT,
      RESTRICTED_MOTION_VECTOR,
-     "Restrict motion vectors from reaching outside the picture boundary [0: off default, 1: on]",
+     "Restrict motion vectors from reaching outside the picture boundary, default is 0 [0-1]",
      set_restricted_motion_vector},
 
     // Annex A parameters
     {SINGLE_INPUT,
      FILM_GRAIN_TOKEN,
-     "Enable film grain(0: OFF[default], 1-50: ON, film-grain denoising strength)",
+     "Enable film grain, default is 0 [0: off, 1-50: level of denoising for film grain]",
      set_cfg_film_grain},
-    // --- start: ALTREF_FILTERING_SUPPORT
-    {SINGLE_INPUT,
-     ENABLE_TF_TOKEN,
-     "Enable ALT-REF (temporally filtered) frames [0: off, 1: on default]",
-     set_enable_tf},
-
-    {SINGLE_INPUT,
-     ENABLE_OVERLAYS,
-     "Enable the insertion of an extra picture called overlayer picture which will be used as an "
-     "extra reference frame for the base-layer picture(0: OFF[default], 1: ON)",
-     set_enable_overlays},
-    // --- end: ALTREF_FILTERING_SUPPORT
 
     // --- start: SUPER-RESOLUTION SUPPORT
     {SINGLE_INPUT,
      SUPERRES_MODE_INPUT,
-     "Enable super-resolution mode [0: none, 1: fixed scale, 2: random scale, 3: threshold based, "
-     "4: auto]",
+     "Enable super-resolution mode, refer to the super-resolution section in the user guide, "
+     "default is 0 [0: off, 1-3, 4: auto-select mode]",
      set_superres_mode},
     {SINGLE_INPUT,
      SUPERRES_DENOM,
-     "Super-resolution denominator, only applicable for mode == 1 [8-16]",
+     "Super-resolution denominator, only applicable for mode == 1, default is 8 [8: no scaling, "
+     "9-15, 16: half-scaling]",
      set_superres_denom},
     {SINGLE_INPUT,
      SUPERRES_KF_DENOM,
-     "Super-resolution denominator for key frames, only applicable for mode == 1 [8-16]",
+     "Super-resolution denominator for key frames, only applicable for mode == 1, default is 8 [8: "
+     "no scaling, 9-15, 16: half-scaling]",
      set_superres_kf_denom},
     {SINGLE_INPUT,
      SUPERRES_QTHRES,
-     "Super-resolution q-threshold, only applicable for mode == 3 [0-63]",
+     "Super-resolution q-threshold, only applicable for mode == 3, default is 43 [0-63]",
      set_superres_qthres},
     {SINGLE_INPUT,
      SUPERRES_KF_QTHRES,
-     "Super-resolution q-threshold for key frames, only applicable for mode == 3 [0-63]",
+     "Super-resolution q-threshold for key frames, only applicable for mode == 3, default is 43 "
+     "[0-63]",
      set_superres_kf_qthres},
     // --- end: SUPER-RESOLUTION SUPPORT
-
     // Termination
     {SINGLE_INPUT, NULL, NULL, NULL}};
 
@@ -1041,84 +1131,123 @@ ConfigEntry config_entry_color_description[] = {
     // Color description
     {SINGLE_INPUT,
      COLOR_PRIMARIES_NEW_TOKEN,
-     "Color primaries ([0-12, 22], 2: DEFAULT)",
+     "Color primaries, refer to Appendix A.2 of the user guide, default is 2 [0-12, 22]",
      set_cfg_color_primaries},
     {SINGLE_INPUT,
      TRANSFER_CHARACTERISTICS_NEW_TOKEN,
-     "Transfer characteristics ([0-22], 2: DEFAULT)",
+     "Transfer characteristics, refer to Appendix A.2 of the user guide, default is 2 [0-22]",
      set_cfg_transfer_characteristics},
     {SINGLE_INPUT,
      MATRIX_COEFFICIENTS_NEW_TOKEN,
-     "Matrix coefficients ([0-14], 2: DEFAULT)",
+     "Matrix coefficients, refer to Appendix A.2 of the user guide, default is 2 [0-14]",
      set_cfg_matrix_coefficients},
     {SINGLE_INPUT,
      COLOR_RANGE_NEW_TOKEN,
-     "Color range, [0-1], 0: Studio (default), 1: Full",
+     "Color range, default is 0 [0: Studio, 1: Full]",
      set_cfg_color_range},
 
     {SINGLE_INPUT,
      MASTERING_DISPLAY_TOKEN,
-     "String in the format of G(x,y)B(x,y)R(x,y)WP(x,y)L(max,min)",
+     "Mastering display metadata in the format of \"G(x,y)B(x,y)R(x,y)WP(x,y)L(max,min)\", refer "
+     "to the user guide Appendix A.2",
      set_cfg_mastering_display},
 
     {SINGLE_INPUT,
      CONTENT_LIGHT_LEVEL_TOKEN,
-     "String in the format of max_cll,max_fall",
+     "Set content light level in the format of \"max_cll,max_fall\", refer to the user guide "
+     "Appendix A.2",
      set_cfg_content_light},
-
     // Termination
     {SINGLE_INPUT, NULL, NULL, NULL}};
 
 ConfigEntry config_entry[] = {
-    // File I/O
+    // Options
     {SINGLE_INPUT, INPUT_FILE_TOKEN, "InputFile", set_cfg_input_file},
+    {SINGLE_INPUT, INPUT_FILE_LONG_TOKEN, "InputFile", set_cfg_input_file},
     {SINGLE_INPUT, OUTPUT_BITSTREAM_TOKEN, "StreamFile", set_cfg_stream_file},
+    {SINGLE_INPUT, OUTPUT_BITSTREAM_LONG_TOKEN, "StreamFile", set_cfg_stream_file},
     {SINGLE_INPUT, ERROR_FILE_TOKEN, "ErrorFile", set_cfg_error_file},
     {SINGLE_INPUT, OUTPUT_RECON_TOKEN, "ReconFile", set_cfg_recon_file},
-    {SINGLE_INPUT, QP_FILE_TOKEN, "QpFile", set_cfg_qp_file},
+    {SINGLE_INPUT, OUTPUT_RECON_LONG_TOKEN, "ReconFile", set_cfg_recon_file},
     {SINGLE_INPUT, STAT_FILE_TOKEN, "StatFile", set_cfg_stat_file},
-
-    // two pass
-    {SINGLE_INPUT, PASS_TOKEN, "Pass", set_pass},
-    {SINGLE_INPUT, TWO_PASS_STATS_TOKEN, "Stats", set_two_pass_stats},
     {SINGLE_INPUT, INPUT_PREDSTRUCT_FILE_TOKEN, "PredStructFile", set_pred_struct_file},
-    // Picture Dimensions
-    {SINGLE_INPUT, WIDTH_TOKEN, "SourceWidth", set_cfg_source_width},
-    {SINGLE_INPUT, HEIGHT_TOKEN, "SourceHeight", set_cfg_source_height},
-    // Prediction Structure
-    {SINGLE_INPUT, NUMBER_OF_PICTURES_TOKEN, "FrameToBeEncoded", set_cfg_frames_to_be_encoded},
-    {SINGLE_INPUT, BUFFERED_INPUT_TOKEN, "BufferedInput", set_buffered_input},
     {SINGLE_INPUT, PROGRESS_TOKEN, "Progress", set_progress},
     {SINGLE_INPUT, NO_PROGRESS_TOKEN, "NoProgress", set_no_progress},
     {SINGLE_INPUT, ENCMODE_TOKEN, "EncoderMode", set_enc_mode},
-    {SINGLE_INPUT, INTRA_PERIOD_TOKEN, "IntraPeriod", set_cfg_intra_period},
-    {SINGLE_INPUT, KEYINT_TOKEN, "Keyint", set_keyint},
-    {SINGLE_INPUT, INTRA_REFRESH_TYPE_TOKEN, "IntraRefreshType", set_cfg_intra_refresh_type},
+    {SINGLE_INPUT, PRESET_TOKEN, "EncoderMode", set_enc_mode},
+
+    // Encoder Global Options
+    //   Picture Dimensions
+    {SINGLE_INPUT, WIDTH_TOKEN, "SourceWidth", set_cfg_source_width},
+    {SINGLE_INPUT, WIDTH_LONG_TOKEN, "SourceWidth", set_cfg_source_width},
+    {SINGLE_INPUT, HEIGHT_TOKEN, "SourceHeight", set_cfg_source_height},
+    {SINGLE_INPUT, HEIGHT_LONG_TOKEN, "SourceHeight", set_cfg_source_height},
+
+    {SINGLE_INPUT, NUMBER_OF_PICTURES_TOKEN, "FrameToBeEncoded", set_cfg_frames_to_be_encoded},
+    {SINGLE_INPUT, NUMBER_OF_PICTURES_LONG_TOKEN, "FrameToBeEncoded", set_cfg_frames_to_be_encoded},
+    {SINGLE_INPUT, BUFFERED_INPUT_TOKEN, "BufferedInput", set_buffered_input},
+
+    //   Annex A parameters
+    {SINGLE_INPUT, TIER_TOKEN, "Tier", set_tier}, // Lacks a command line flag for now
+    {SINGLE_INPUT, ENCODER_COLOR_FORMAT, "EncoderColorFormat", set_encoder_color_format},
+    {SINGLE_INPUT, PROFILE_TOKEN, "Profile", set_profile},
+    {SINGLE_INPUT, LEVEL_TOKEN, "Level", set_level},
+    {SINGLE_INPUT, HDR_INPUT_TOKEN, "HighDynamicRangeInput", set_high_dynamic_range_input},
+    {SINGLE_INPUT, HDR_INPUT_NEW_TOKEN, "HighDynamicRangeInput", set_high_dynamic_range_input},
+
+    //   Frame Rate tokens
     {SINGLE_INPUT, FRAME_RATE_TOKEN, "FrameRate", set_frame_rate},
     {SINGLE_INPUT, FRAME_RATE_NUMERATOR_TOKEN, "FrameRateNumerator", set_frame_rate_numerator},
     {SINGLE_INPUT,
      FRAME_RATE_DENOMINATOR_TOKEN,
      "FrameRateDenominator",
      set_frame_rate_denominator},
+
+    //   Bit depth tokens
     {SINGLE_INPUT, ENCODER_BIT_DEPTH, "EncoderBitDepth", set_encoder_bit_depth},
-    {SINGLE_INPUT, ENCODER_COLOR_FORMAT, "EncoderColorFormat", set_encoder_color_format},
+    {SINGLE_INPUT, INPUT_DEPTH_TOKEN, "EncoderBitDepth", set_encoder_bit_depth},
+
     {SINGLE_INPUT,
      INPUT_COMPRESSED_TEN_BIT_FORMAT,
      "CompressedTenBitFormat",
      set_compressed_ten_bit_format},
-    {SINGLE_INPUT, HIERARCHICAL_LEVELS_TOKEN, "HierarchicalLevels", set_hierarchical_levels},
-    {SINGLE_INPUT, PRED_STRUCT_TOKEN, "PredStructure", set_cfg_pred_structure},
-    {SINGLE_INPUT, TILE_ROW_TOKEN, "TileRow", set_tile_row},
-    {SINGLE_INPUT, TILE_COL_TOKEN, "TileCol", set_tile_col},
-    // Rate Control
-    {SINGLE_INPUT,
-     SCENE_CHANGE_DETECTION_TOKEN,
-     "SceneChangeDetection",
-     set_scene_change_detection},
-    {SINGLE_INPUT, QP_TOKEN, "QP", set_cfg_qp},
-    {SINGLE_INPUT, CRF_LONG_TOKEN, "CRF", set_cfg_crf},
-    {SINGLE_INPUT, USE_QP_FILE_TOKEN, "UseQpFile", set_cfg_use_qp_file},
 
+    //   Latency
+    {SINGLE_INPUT, INJECTOR_TOKEN, "Injector", set_injector},
+    {SINGLE_INPUT, INJECTOR_FRAMERATE_TOKEN, "InjectorFrameRate", set_injector_frame_rate},
+
+    {SINGLE_INPUT, STAT_REPORT_TOKEN, "StatReport", set_stat_report},
+    {SINGLE_INPUT, STAT_REPORT_NEW_TOKEN, "StatReport", set_stat_report},
+
+    //   Asm Type
+    {SINGLE_INPUT, ASM_TYPE_TOKEN, "Asm", set_asm_type},
+
+    //   Thread Management
+    {SINGLE_INPUT, THREAD_MGMNT, "LogicalProcessors", set_logical_processors},
+    {SINGLE_INPUT, UNPIN_TOKEN, "UnpinExecution", set_unpin_execution},
+    {SINGLE_INPUT, TARGET_SOCKET, "TargetSocket", set_target_socket},
+
+    // Rate Control Options
+    {SINGLE_INPUT, RATE_CONTROL_ENABLE_TOKEN, "RateControlMode", set_rate_control_mode},
+    {SINGLE_INPUT, QP_TOKEN, "QP", set_cfg_qp},
+    {SINGLE_INPUT, QP_LONG_TOKEN, "QP", set_cfg_qp},
+    {SINGLE_INPUT, CRF_LONG_TOKEN, "CRF", set_cfg_crf},
+    {SINGLE_INPUT, TARGET_BIT_RATE_TOKEN, "TargetBitRate", set_target_bit_rate},
+    {SINGLE_INPUT, MAX_BIT_RATE_TOKEN, "MaxBitRate", set_max_bit_rate},
+
+    {SINGLE_INPUT, USE_QP_FILE_TOKEN, "UseQpFile", set_cfg_use_qp_file},
+    {SINGLE_INPUT, QP_FILE_TOKEN, "QpFile", set_cfg_qp_file},
+    {SINGLE_INPUT, QP_FILE_NEW_TOKEN, "QpFile", set_cfg_qp_file},
+
+    {SINGLE_INPUT, MAX_QP_TOKEN, "MaxQpAllowed", set_max_qp_allowed},
+    {SINGLE_INPUT, MIN_QP_TOKEN, "MinQpAllowed", set_min_qp_allowed},
+
+    {SINGLE_INPUT, ADAPTIVE_QP_ENABLE_TOKEN, "AdaptiveQuantization", set_adaptive_quantization},
+    {SINGLE_INPUT, ADAPTIVE_QP_ENABLE_NEW_TOKEN, "AdaptiveQuantization", set_adaptive_quantization},
+
+    {SINGLE_INPUT, VBV_BUFSIZE_TOKEN, "VBVBufSize", set_vbv_buf_size},
+
+    //   qindex offsets
     {SINGLE_INPUT,
      USE_FIXED_QINDEX_OFFSETS_TOKEN,
      "UseFixedQIndexOffsets",
@@ -1137,92 +1266,63 @@ ConfigEntry config_entry[] = {
      "ChromaQIndexOffsets",
      set_cfg_chroma_qindex_offsets},
 
-    {SINGLE_INPUT, STAT_REPORT_TOKEN, "StatReport", set_stat_report},
-    {SINGLE_INPUT, RATE_CONTROL_ENABLE_TOKEN, "RateControlMode", set_rate_control_mode},
-    {SINGLE_INPUT, ENABLE_TPL_LA_TOKEN, "EnableTPLModel", set_enable_tpl_la},
-    {SINGLE_INPUT, TARGET_BIT_RATE_TOKEN, "TargetBitRate", set_target_bit_rate},
-    {SINGLE_INPUT, MAX_BIT_RATE_TOKEN, "MaxBitRate", set_max_bit_rate},
-    {SINGLE_INPUT, MAX_QP_TOKEN, "MaxQpAllowed", set_max_qp_allowed},
-    {SINGLE_INPUT, MIN_QP_TOKEN, "MinQpAllowed", set_min_qp_allowed},
-    {SINGLE_INPUT, VBV_BUFSIZE_TOKEN, "VBVBufSize", set_vbv_buf_size},
-    {SINGLE_INPUT, ADAPTIVE_QP_ENABLE_NEW_TOKEN, "AdaptiveQuantization", set_adaptive_quantization},
-    {SINGLE_INPUT, VBR_BIAS_PCT_TOKEN, "VBRBiasPct", set_vbr_bias_pct},
-    {SINGLE_INPUT, VBR_MIN_SECTION_PCT_TOKEN, "MinSectionPct", set_vbr_min_section_pct},
-    {SINGLE_INPUT, VBR_MAX_SECTION_PCT_TOKEN, "MaxSectionPct", set_vbr_max_section_pct},
     {SINGLE_INPUT, UNDER_SHOOT_PCT_TOKEN, "UnderShootPct", set_under_shoot_pct},
     {SINGLE_INPUT, OVER_SHOOT_PCT_TOKEN, "OverShootPct", set_over_shoot_pct},
     {SINGLE_INPUT, BUFFER_SIZE_TOKEN, "BufSz", set_buf_sz},
     {SINGLE_INPUT, BUFFER_INITIAL_SIZE_TOKEN, "BufInitialSz", set_buf_initial_sz},
     {SINGLE_INPUT, BUFFER_OPTIMAL_SIZE_TOKEN, "BufOptimalSz", set_buf_optimal_sz},
     {SINGLE_INPUT, RECODE_LOOP_TOKEN, "RecodeLoop", set_recode_loop},
+    {SINGLE_INPUT, VBR_BIAS_PCT_TOKEN, "VBRBiasPct", set_vbr_bias_pct},
+    {SINGLE_INPUT, VBR_MIN_SECTION_PCT_TOKEN, "MinSectionPct", set_vbr_min_section_pct},
+    {SINGLE_INPUT, VBR_MAX_SECTION_PCT_TOKEN, "MaxSectionPct", set_vbr_max_section_pct},
 
-    // DLF
+    // Multi-pass Options
+    {SINGLE_INPUT, PASS_TOKEN, "Pass", set_pass},
+    {SINGLE_INPUT, TWO_PASS_STATS_TOKEN, "Stats", set_two_pass_stats},
+    {SINGLE_INPUT, PASSES_TOKEN, "Passes", set_passes},
+
+    // GOP size and type Options
+    {SINGLE_INPUT, INTRA_PERIOD_TOKEN, "IntraPeriod", set_cfg_intra_period},
+    {SINGLE_INPUT, KEYINT_TOKEN, "Keyint", set_keyint},
+    {SINGLE_INPUT, INTRA_REFRESH_TYPE_TOKEN, "IntraRefreshType", set_cfg_intra_refresh_type},
+    {SINGLE_INPUT,
+     SCENE_CHANGE_DETECTION_TOKEN,
+     "SceneChangeDetection",
+     set_scene_change_detection},
+    {SINGLE_INPUT, LOOKAHEAD_NEW_TOKEN, "Lookahead", set_look_ahead_distance},
+    {SINGLE_INPUT, LOOK_AHEAD_DIST_TOKEN, "Lookahead", set_look_ahead_distance},
+    //   Prediction Structure
+    {SINGLE_INPUT, HIERARCHICAL_LEVELS_TOKEN, "HierarchicalLevels", set_hierarchical_levels},
+    {SINGLE_INPUT, PRED_STRUCT_TOKEN, "PredStructure", set_cfg_pred_structure},
+
+    // AV1 Specific Options
+    {SINGLE_INPUT, TILE_ROW_TOKEN, "TileRow", set_tile_row},
+    {SINGLE_INPUT, TILE_COL_TOKEN, "TileCol", set_tile_col},
     {SINGLE_INPUT, LOOP_FILTER_ENABLE, "LoopFilterEnable", set_enable_dlf_flag},
-
-    // CDEF
     {SINGLE_INPUT, CDEF_ENABLE_TOKEN, "CDEFLevel", set_cdef_enable},
-
-    // RESTORATION
     {SINGLE_INPUT, ENABLE_RESTORATION_TOKEN, "EnableRestoration", set_enable_restoration_flag},
+    {SINGLE_INPUT, ENABLE_TPL_LA_TOKEN, "EnableTPLModel", set_enable_tpl_la},
     {SINGLE_INPUT, MFMV_ENABLE_TOKEN, "Mfmv", set_enable_mfmv_flag},
-    // MD Parameters
+    {SINGLE_INPUT, MFMV_ENABLE_NEW_TOKEN, "Mfmv", set_enable_mfmv_flag},
+    //   ALT-REF filtering support
+    {SINGLE_INPUT, ENABLE_TF_TOKEN, "EnableTf", set_enable_tf},
+    {SINGLE_INPUT, ENABLE_OVERLAYS, "EnableOverlays", set_enable_overlays},
+
     {SINGLE_INPUT, SCREEN_CONTENT_TOKEN, "ScreenContentMode", set_screen_content_mode},
-    // Thread Management
-    {SINGLE_INPUT, THREAD_MGMNT, "LogicalProcessors", set_logical_processors},
-    {SINGLE_INPUT, UNPIN_TOKEN, "UnpinExecution", set_unpin_execution},
-    {SINGLE_INPUT, TARGET_SOCKET, "TargetSocket", set_target_socket},
-    // Optional Features
     {SINGLE_INPUT,
      RESTRICTED_MOTION_VECTOR,
      "RestrictedMotionVector",
      set_restricted_motion_vector},
-
-    //    { SINGLE_INPUT, BITRATE_REDUCTION_TOKEN, "bit_rate_reduction", SetBitRateReduction },
-    {SINGLE_INPUT, HDR_INPUT_TOKEN, "HighDynamicRangeInput", set_high_dynamic_range_input},
-    // Latency
-    {SINGLE_INPUT, INJECTOR_TOKEN, "Injector", set_injector},
-    {SINGLE_INPUT, INJECTOR_FRAMERATE_TOKEN, "InjectorFrameRate", set_injector_frame_rate},
-    // Annex A parameters
-    {SINGLE_INPUT, PROFILE_TOKEN, "Profile", set_profile},
-    {SINGLE_INPUT, TIER_TOKEN, "Tier", set_tier},
-    {SINGLE_INPUT, LEVEL_TOKEN, "Level", set_level},
     {SINGLE_INPUT, FILM_GRAIN_TOKEN, "FilmGrain", set_cfg_film_grain},
-    // Asm Type
-    {SINGLE_INPUT, ASM_TYPE_TOKEN, "Asm", set_asm_type},
-    // --- start: ALTREF_FILTERING_SUPPORT
-    {SINGLE_INPUT, ENABLE_TF_TOKEN, "EnableTf", set_enable_tf},
-    {SINGLE_INPUT, ENABLE_OVERLAYS, "EnableOverlays", set_enable_overlays},
-    // --- end: ALTREF_FILTERING_SUPPORT
-    // Super-resolution support
+
+    //   Super-resolution support
     {SINGLE_INPUT, SUPERRES_MODE_INPUT, "SuperresMode", set_superres_mode},
     {SINGLE_INPUT, SUPERRES_DENOM, "SuperresDenom", set_superres_denom},
     {SINGLE_INPUT, SUPERRES_KF_DENOM, "SuperresKfDenom", set_superres_kf_denom},
     {SINGLE_INPUT, SUPERRES_QTHRES, "SuperresQthres", set_superres_qthres},
     {SINGLE_INPUT, SUPERRES_KF_QTHRES, "SuperresKfQthres", set_superres_kf_qthres},
 
-    // double dash
-    {SINGLE_INPUT, PRESET_TOKEN, "EncoderMode", set_enc_mode},
-    {SINGLE_INPUT, QP_FILE_NEW_TOKEN, "QpFile", set_cfg_qp_file},
-    {SINGLE_INPUT, INPUT_DEPTH_TOKEN, "EncoderBitDepth", set_encoder_bit_depth},
-    {SINGLE_INPUT, LOOKAHEAD_NEW_TOKEN, "Lookahead", set_look_ahead_distance},
-    {SINGLE_INPUT, LOOK_AHEAD_DIST_TOKEN, "Lookahead", set_look_ahead_distance},
-    {SINGLE_INPUT, STAT_REPORT_NEW_TOKEN, "StatReport", set_stat_report},
-    {SINGLE_INPUT, MFMV_ENABLE_NEW_TOKEN, "Mfmv", set_enable_mfmv_flag},
-    {SINGLE_INPUT, HDR_INPUT_NEW_TOKEN, "HighDynamicRangeInput", set_high_dynamic_range_input},
-    {SINGLE_INPUT, ADAPTIVE_QP_ENABLE_NEW_TOKEN, "AdaptiveQuantization", set_adaptive_quantization},
-    {SINGLE_INPUT, ADAPTIVE_QP_ENABLE_TOKEN, "AdaptiveQuantization", set_adaptive_quantization},
-
-    {SINGLE_INPUT, INPUT_FILE_LONG_TOKEN, "InputFile", set_cfg_input_file},
-    {SINGLE_INPUT, OUTPUT_BITSTREAM_LONG_TOKEN, "StreamFile", set_cfg_stream_file},
-    {SINGLE_INPUT, OUTPUT_RECON_LONG_TOKEN, "ReconFile", set_cfg_recon_file},
-
-    {SINGLE_INPUT, WIDTH_LONG_TOKEN, "SourceWidth", set_cfg_source_width},
-    {SINGLE_INPUT, HEIGHT_LONG_TOKEN, "SourceHeight", set_cfg_source_height},
-    {SINGLE_INPUT, NUMBER_OF_PICTURES_LONG_TOKEN, "FrameToBeEncoded", set_cfg_frames_to_be_encoded},
-    {SINGLE_INPUT, QP_LONG_TOKEN, "QP", set_cfg_qp},
-    {SINGLE_INPUT, CRF_LONG_TOKEN, "CRF", set_cfg_crf},
-
-    // Color description
+    // Color Description Options
     {SINGLE_INPUT, COLOR_PRIMARIES_NEW_TOKEN, "ColorPrimaries", set_cfg_color_primaries},
     {SINGLE_INPUT,
      TRANSFER_CHARACTERISTICS_NEW_TOKEN,
@@ -1233,11 +1333,8 @@ ConfigEntry config_entry[] = {
      "MatrixCoefficients",
      set_cfg_matrix_coefficients},
     {SINGLE_INPUT, COLOR_RANGE_NEW_TOKEN, "ColorRange", set_cfg_color_range},
-
     {SINGLE_INPUT, MASTERING_DISPLAY_TOKEN, "MasteringDisplay", set_cfg_mastering_display},
-
     {SINGLE_INPUT, CONTENT_LIGHT_LEVEL_TOKEN, "ContentLightLevel", set_cfg_content_light},
-
     // Termination
     {SINGLE_INPUT, NULL, NULL, NULL}};
 
@@ -1842,7 +1939,8 @@ uint32_t get_help(int32_t argc, char *const argv[]) {
         return 0;
 
     printf(
-        "Usage: SvtAv1EncApp <options> -b dst_filename -i src_filename\n\n"
+        "Usage: SvtAv1EncApp <options> <-b dst_filename> -i src_filename\n"
+        "\n"
         "Examples:\n"
         "Multi-pass encode (VBR):\n"
         "    SvtAv1EncApp <--stats svtav1_2pass.log> --passes 2 --rc 1 --tbr 1000 -b dst_filename "
@@ -1851,9 +1949,9 @@ uint32_t get_help(int32_t argc, char *const argv[]) {
         "    SvtAv1EncApp <--stats svtav1_2pass.log> --passes 2 --rc 0 --crf 43 -b dst_filename -i "
         "src_filename\n"
         "Single-pass encode (VBR):\n"
-        "    SvtAv1EncApp <--stats svtav1_2pass.log> --passes 1 --rc 1 --tbr 1000 -b dst_filename "
-        "-i src_filename\n"
-        "\nOptions:\n");
+        "    SvtAv1EncApp --passes 1 --rc 1 --tbr 1000 -b dst_filename -i src_filename\n"
+        "\n"
+        "Options:\n");
     for (ConfigEntry *options_token_index = config_entry_options; options_token_index->token;
          ++options_token_index) {
         // this only works if short and long token are one after another
