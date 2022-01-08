@@ -4101,8 +4101,9 @@ static EbErrorType verify_settings(
             channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
-    if (config->hierarchical_levels < 3 || config->hierarchical_levels > 4) {
-        SVT_LOG("Error instance %u: Only hierarchical levels 3 and 4 currently supported\n", channel_number + 1);
+
+    if (config->hierarchical_levels < 3 || config->hierarchical_levels > 5) {
+        SVT_LOG("Error instance %u: Only hierarchical levels 3-5 is currently supported.\n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
 
