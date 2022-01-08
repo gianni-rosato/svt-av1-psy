@@ -261,9 +261,7 @@ void read_input_frames(EbConfig *config, uint8_t is_16bit, EbBufferHeaderType *h
                     offset += chroma_read_size;
                     input_ptr->cr = svt_mmap(&config->mmap, offset, chroma_read_size);
                     header_ptr->n_filled_len += (input_ptr->cr ? chroma_read_size : 0);
-
-                } else {
-
+                } else if (!config->input_file_is_fifo) {
                     fseek(input_file, 0, SEEK_SET);
                     if (config->y4m_input == EB_TRUE) {
                         read_and_skip_y4m_header(config->input_file);
