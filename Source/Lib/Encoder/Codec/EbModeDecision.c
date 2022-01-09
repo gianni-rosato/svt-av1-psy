@@ -31,10 +31,12 @@
 #include "EbLog.h"
 #include "EbResize.h"
 #include "mcomp.h"
-#define INCRMENT_CAND_TOTAL_COUNT(cnt, max_can_count) \
+#define INC_MD_CAND_CNT(cnt, max_can_count) \
     MULTI_LINE_MACRO_BEGIN                            \
     if (cnt + 1 < max_can_count)                      \
         cnt++;                                        \
+    else                                              \
+        SVT_ERROR("Mode decision candidate count exceeded"); \
     MULTI_LINE_MACRO_END
 
 #define SUPERRES_INVALID_STATE 0x7fffffff
@@ -1063,7 +1065,7 @@ void unipred_3x3_candidates_injection(const SequenceControlSet *scs_ptr, Picture
                                 //}
                             }
 
-                            INCRMENT_CAND_TOTAL_COUNT(cand_total_cnt,
+                            INC_MD_CAND_CNT(cand_total_cnt,
                                                       pcs_ptr->parent_pcs_ptr->max_can_count);
                         }
                         context_ptr->injected_mv_x_l0_array[context_ptr->injected_mv_count_l0] =
@@ -1216,7 +1218,7 @@ void unipred_3x3_candidates_injection(const SequenceControlSet *scs_ptr, Picture
                                     //}
                                 }
 
-                                INCRMENT_CAND_TOTAL_COUNT(cand_total_cnt,
+                                INC_MD_CAND_CNT (cand_total_cnt,
                                                           pcs_ptr->parent_pcs_ptr->max_can_count);
                             }
                             context_ptr->injected_mv_x_l1_array[context_ptr->injected_mv_count_l1] =
@@ -1405,7 +1407,7 @@ void bipred_3x3_candidates_injection(const SequenceControlSet *scs_ptr, PictureC
                                 //BIP 3x3
                                 determine_compound_mode(
                                     pcs_ptr, context_ptr, &cand_array[cand_total_cnt], cur_type);
-                                INCRMENT_CAND_TOTAL_COUNT(cand_total_cnt,
+                                INC_MD_CAND_CNT (cand_total_cnt,
                                                           pcs_ptr->parent_pcs_ptr->max_can_count);
                             }
                             context_ptr->injected_mv_x_bipred_l0_array
@@ -1555,7 +1557,7 @@ void bipred_3x3_candidates_injection(const SequenceControlSet *scs_ptr, PictureC
                                 //BIP 3x3
                                 determine_compound_mode(
                                     pcs_ptr, context_ptr, &cand_array[cand_total_cnt], cur_type);
-                                INCRMENT_CAND_TOTAL_COUNT(cand_total_cnt,
+                                INC_MD_CAND_CNT (cand_total_cnt,
                                                           pcs_ptr->parent_pcs_ptr->max_can_count);
                             }
                             context_ptr->injected_mv_x_bipred_l0_array
@@ -1676,7 +1678,7 @@ void inject_mvp_candidates_ii_light_pd1(PictureControlSet *pcs, ModeDecisionCont
                 cand_array[cand_idx].motion_vector_yl1 = to_inject_mv_y;
             }
 
-            INCRMENT_CAND_TOTAL_COUNT(cand_idx, pcs->parent_pcs_ptr->max_can_count);
+            INC_MD_CAND_CNT (cand_idx, pcs->parent_pcs_ptr->max_can_count);
 
             if (list_idx == 0) {
                 ctx->injected_mv_x_l0_array[ctx->injected_mv_count_l0]     = to_inject_mv_x;
@@ -1728,7 +1730,7 @@ void inject_mvp_candidates_ii_light_pd1(PictureControlSet *pcs, ModeDecisionCont
                         cand_array[cand_idx].motion_vector_yl1 = to_inject_mv_y;
                     }
 
-                    INCRMENT_CAND_TOTAL_COUNT(cand_idx, pcs->parent_pcs_ptr->max_can_count);
+                    INC_MD_CAND_CNT (cand_idx, pcs->parent_pcs_ptr->max_can_count);
 
                     if (list_idx == 0) {
                         ctx->injected_mv_x_l0_array[ctx->injected_mv_count_l0]     = to_inject_mv_x;
@@ -1783,7 +1785,7 @@ void inject_mvp_candidates_ii_light_pd1(PictureControlSet *pcs, ModeDecisionCont
             cand_array[cand_idx].compound_idx         = 1;
             cand_array[cand_idx].interinter_comp.type = COMPOUND_AVERAGE;
 
-            INCRMENT_CAND_TOTAL_COUNT(cand_idx, pcs->parent_pcs_ptr->max_can_count);
+            INC_MD_CAND_CNT (cand_idx, pcs->parent_pcs_ptr->max_can_count);
 
             ctx->injected_mv_x_bipred_l0_array[ctx->injected_mv_count_bipred]  = to_inject_mv_x_l0;
             ctx->injected_mv_y_bipred_l0_array[ctx->injected_mv_count_bipred]  = to_inject_mv_y_l0;
@@ -1840,7 +1842,7 @@ void inject_mvp_candidates_ii_light_pd1(PictureControlSet *pcs, ModeDecisionCont
                     cand_array[cand_idx].compound_idx         = 1;
                     cand_array[cand_idx].interinter_comp.type = COMPOUND_AVERAGE;
 
-                    INCRMENT_CAND_TOTAL_COUNT(cand_idx, pcs->parent_pcs_ptr->max_can_count);
+                    INC_MD_CAND_CNT (cand_idx, pcs->parent_pcs_ptr->max_can_count);
 
                     ctx->injected_mv_x_bipred_l0_array[ctx->injected_mv_count_bipred] =
                         to_inject_mv_x_l0;
@@ -1977,7 +1979,7 @@ void inject_mvp_candidates_ii(const SequenceControlSet *scs_ptr, PictureControlS
                             cand_array[cand_idx].motion_mode        = OBMC_CAUSAL;
                         }
                     }
-                    INCRMENT_CAND_TOTAL_COUNT(cand_idx, pcs_ptr->parent_pcs_ptr->max_can_count);
+                    INC_MD_CAND_CNT (cand_idx, pcs_ptr->parent_pcs_ptr->max_can_count);
                 }
                 if (list_idx == 0) {
                     context_ptr->injected_mv_x_l0_array[context_ptr->injected_mv_count_l0] =
@@ -2078,7 +2080,7 @@ void inject_mvp_candidates_ii(const SequenceControlSet *scs_ptr, PictureControlS
                             }
                         }
 
-                        INCRMENT_CAND_TOTAL_COUNT(cand_idx, pcs_ptr->parent_pcs_ptr->max_can_count);
+                        INC_MD_CAND_CNT (cand_idx, pcs_ptr->parent_pcs_ptr->max_can_count);
                     }
                     if (list_idx == 0) {
                         context_ptr->injected_mv_x_l0_array[context_ptr->injected_mv_count_l0] =
@@ -2200,7 +2202,7 @@ void inject_mvp_candidates_ii(const SequenceControlSet *scs_ptr, PictureControlS
                         }
                         determine_compound_mode(
                             pcs_ptr, context_ptr, &cand_array[cand_idx], cur_type);
-                        INCRMENT_CAND_TOTAL_COUNT(cand_idx, pcs_ptr->parent_pcs_ptr->max_can_count);
+                        INC_MD_CAND_CNT (cand_idx, pcs_ptr->parent_pcs_ptr->max_can_count);
                     }
                     context_ptr
                         ->injected_mv_x_bipred_l0_array[context_ptr->injected_mv_count_bipred] =
@@ -2305,7 +2307,7 @@ void inject_mvp_candidates_ii(const SequenceControlSet *scs_ptr, PictureControlS
                             }
                             determine_compound_mode(
                                 pcs_ptr, context_ptr, &cand_array[cand_idx], cur_type);
-                            INCRMENT_CAND_TOTAL_COUNT(cand_idx,
+                            INC_MD_CAND_CNT (cand_idx,
                                                       pcs_ptr->parent_pcs_ptr->max_can_count);
                         }
                         context_ptr
@@ -2465,7 +2467,7 @@ void inject_new_nearest_new_comb_candidates(const SequenceControlSet *scs_ptr,
                             }
                             determine_compound_mode(
                                 pcs_ptr, context_ptr, &cand_array[cand_idx], cur_type);
-                            INCRMENT_CAND_TOTAL_COUNT(cand_idx,
+                            INC_MD_CAND_CNT (cand_idx,
                                                       pcs_ptr->parent_pcs_ptr->max_can_count);
                         }
                         context_ptr
@@ -2577,7 +2579,7 @@ void inject_new_nearest_new_comb_candidates(const SequenceControlSet *scs_ptr,
                             }
                             determine_compound_mode(
                                 pcs_ptr, context_ptr, &cand_array[cand_idx], cur_type);
-                            INCRMENT_CAND_TOTAL_COUNT(cand_idx,
+                            INC_MD_CAND_CNT (cand_idx,
                                                       pcs_ptr->parent_pcs_ptr->max_can_count);
                         }
                         context_ptr
@@ -2677,7 +2679,7 @@ void inject_new_nearest_new_comb_candidates(const SequenceControlSet *scs_ptr,
                                 determine_compound_mode(
                                     pcs_ptr, context_ptr, &cand_array[cand_idx], cur_type);
 
-                                INCRMENT_CAND_TOTAL_COUNT(cand_idx,
+                                INC_MD_CAND_CNT (cand_idx,
                                                           pcs_ptr->parent_pcs_ptr->max_can_count);
                             }
                             context_ptr->injected_mv_x_bipred_l0_array
@@ -2773,7 +2775,7 @@ void inject_new_nearest_new_comb_candidates(const SequenceControlSet *scs_ptr,
                                 }
                                 determine_compound_mode(
                                     pcs_ptr, context_ptr, &cand_array[cand_idx], cur_type);
-                                INCRMENT_CAND_TOTAL_COUNT(cand_idx,
+                                INC_MD_CAND_CNT (cand_idx,
                                                           pcs_ptr->parent_pcs_ptr->max_can_count);
                             }
                             context_ptr->injected_mv_x_bipred_l0_array
@@ -2887,7 +2889,7 @@ void inject_warped_motion_candidates(PictureControlSet *         pcs_ptr,
                     &cand_array[can_idx].num_proj_ref);
 
                 if (cand_array[can_idx].local_warp_valid)
-                    INCRMENT_CAND_TOTAL_COUNT(can_idx, pcs_ptr->parent_pcs_ptr->max_can_count);
+                    INC_MD_CAND_CNT (can_idx, pcs_ptr->parent_pcs_ptr->max_can_count);
             }
             //NEAR
             max_drl_index = get_max_drl_index(xd->ref_mv_count[frame_type], NEARMV);
@@ -2941,7 +2943,7 @@ void inject_warped_motion_candidates(PictureControlSet *         pcs_ptr,
                         &cand_array[can_idx].num_proj_ref);
 
                     if (cand_array[can_idx].local_warp_valid)
-                        INCRMENT_CAND_TOTAL_COUNT(can_idx, pcs_ptr->parent_pcs_ptr->max_can_count);
+                        INC_MD_CAND_CNT (can_idx, pcs_ptr->parent_pcs_ptr->max_can_count);
                 }
             }
         }
@@ -3062,7 +3064,7 @@ void inject_warped_motion_candidates(PictureControlSet *         pcs_ptr,
                             &cand_array[can_idx].num_proj_ref);
 
                         if (cand_array[can_idx].local_warp_valid)
-                            INCRMENT_CAND_TOTAL_COUNT(can_idx,
+                            INC_MD_CAND_CNT (can_idx,
                                                       pcs_ptr->parent_pcs_ptr->max_can_count);
                     }
                 }
@@ -3154,7 +3156,7 @@ void inject_warped_motion_candidates(PictureControlSet *         pcs_ptr,
                             &cand_array[can_idx].num_proj_ref);
 
                         if (cand_array[can_idx].local_warp_valid)
-                            INCRMENT_CAND_TOTAL_COUNT(can_idx,
+                            INC_MD_CAND_CNT (can_idx,
                                                       pcs_ptr->parent_pcs_ptr->max_can_count);
                     }
                 }
@@ -3448,7 +3450,7 @@ void inject_new_candidates_light_pd0(struct ModeDecisionContext *context_ptr,
 
             // will be needed later by the rate estimation
             cand_array[cand_total_cnt].ref_frame_type = to_inject_ref_type;
-            INCRMENT_CAND_TOTAL_COUNT(cand_total_cnt, pcs_ptr->parent_pcs_ptr->max_can_count);
+            INC_MD_CAND_CNT (cand_total_cnt, pcs_ptr->parent_pcs_ptr->max_can_count);
             if (cand_total_cnt > 2)
                 break;
         }
@@ -3479,7 +3481,7 @@ void inject_new_candidates_light_pd0(struct ModeDecisionContext *context_ptr,
                 cand_array[cand_total_cnt].motion_vector_yl1 = to_inject_mv_y;
                 // will be needed later by the rate estimation
                 cand_array[cand_total_cnt].ref_frame_type = to_inject_ref_type;
-                INCRMENT_CAND_TOTAL_COUNT(cand_total_cnt, pcs_ptr->parent_pcs_ptr->max_can_count);
+                INC_MD_CAND_CNT (cand_total_cnt, pcs_ptr->parent_pcs_ptr->max_can_count);
                 if (cand_total_cnt > 2)
                     break;
             }
@@ -3519,7 +3521,7 @@ void inject_new_candidates_light_pd0(struct ModeDecisionContext *context_ptr,
                     cand_array[cand_total_cnt].ref_frame_type          = to_inject_ref_type;
                     determine_compound_mode(
                         pcs_ptr, context_ptr, &cand_array[cand_total_cnt], MD_COMP_AVG);
-                    INCRMENT_CAND_TOTAL_COUNT(cand_total_cnt,
+                    INC_MD_CAND_CNT (cand_total_cnt,
                                               pcs_ptr->parent_pcs_ptr->max_can_count);
                     if (cand_total_cnt > 2)
                         break;
@@ -3606,7 +3608,7 @@ void inject_new_candidates_light_pd1(PictureControlSet *pcs, struct ModeDecision
                     cand_array[cand_total_cnt].motion_vector_pred_y[REF_LIST_0] =
                         best_pred_mv[0].as_mv.row;
 
-                    INCRMENT_CAND_TOTAL_COUNT(cand_total_cnt, pcs->parent_pcs_ptr->max_can_count);
+                    INC_MD_CAND_CNT (cand_total_cnt, pcs->parent_pcs_ptr->max_can_count);
                     // Add the injected MV to the list of injected MVs
                     ctx->injected_mv_x_l0_array[ctx->injected_mv_count_l0]     = to_inject_mv_x;
                     ctx->injected_mv_y_l0_array[ctx->injected_mv_count_l0]     = to_inject_mv_y;
@@ -3668,7 +3670,7 @@ void inject_new_candidates_light_pd1(PictureControlSet *pcs, struct ModeDecision
                         cand_array[cand_total_cnt].motion_vector_pred_y[REF_LIST_1] =
                             best_pred_mv[0].as_mv.row;
 
-                        INCRMENT_CAND_TOTAL_COUNT(cand_total_cnt,
+                        INC_MD_CAND_CNT (cand_total_cnt,
                                                   pcs->parent_pcs_ptr->max_can_count);
 
                         // Add the injected MV to the list of injected MVs
@@ -3759,7 +3761,7 @@ void inject_new_candidates_light_pd1(PictureControlSet *pcs, struct ModeDecision
                         cand_array[cand_total_cnt].comp_group_idx       = 0;
                         cand_array[cand_total_cnt].compound_idx         = 1;
                         cand_array[cand_total_cnt].interinter_comp.type = COMPOUND_AVERAGE;
-                        INCRMENT_CAND_TOTAL_COUNT(cand_total_cnt,
+                        INC_MD_CAND_CNT (cand_total_cnt,
                                                   pcs->parent_pcs_ptr->max_can_count);
 
                         // Add the injected MV to the list of injected MVs
@@ -3930,7 +3932,7 @@ void inject_new_candidates(const SequenceControlSet *  scs_ptr,
                                     pcs_ptr, context_ptr, &cand_array[cand_total_cnt], REF_LIST_0);
                             }
                         }
-                        INCRMENT_CAND_TOTAL_COUNT(cand_total_cnt,
+                        INC_MD_CAND_CNT (cand_total_cnt,
                                                   pcs_ptr->parent_pcs_ptr->max_can_count);
                     }
                     context_ptr->injected_mv_x_l0_array[context_ptr->injected_mv_count_l0] =
@@ -4065,7 +4067,7 @@ void inject_new_candidates(const SequenceControlSet *  scs_ptr,
                                                            REF_LIST_1);
                                 }
                             }
-                            INCRMENT_CAND_TOTAL_COUNT(cand_total_cnt,
+                            INC_MD_CAND_CNT (cand_total_cnt,
                                                       pcs_ptr->parent_pcs_ptr->max_can_count);
                         }
                         context_ptr->injected_mv_x_l1_array[context_ptr->injected_mv_count_l1] =
@@ -4205,7 +4207,7 @@ void inject_new_candidates(const SequenceControlSet *  scs_ptr,
                                 }
                                 determine_compound_mode(
                                     pcs_ptr, context_ptr, &cand_array[cand_total_cnt], cur_type);
-                                INCRMENT_CAND_TOTAL_COUNT(cand_total_cnt,
+                                INC_MD_CAND_CNT (cand_total_cnt,
                                                           pcs_ptr->parent_pcs_ptr->max_can_count);
                             }
                             context_ptr->injected_mv_x_bipred_l0_array
@@ -4351,7 +4353,7 @@ void inject_global_candidates(const SequenceControlSet *  scs_ptr,
                             }
                         }
                     }
-                    INCRMENT_CAND_TOTAL_COUNT(cand_total_cnt,
+                    INC_MD_CAND_CNT (cand_total_cnt,
                                               pcs_ptr->parent_pcs_ptr->max_can_count);
                 }
                 if (list_idx == 0) {
@@ -4471,7 +4473,7 @@ void inject_global_candidates(const SequenceControlSet *  scs_ptr,
                     //GLOB-GLOB
                     determine_compound_mode(
                         pcs_ptr, context_ptr, &cand_array[cand_total_cnt], cur_type);
-                    INCRMENT_CAND_TOTAL_COUNT(cand_total_cnt,
+                    INC_MD_CAND_CNT (cand_total_cnt,
                                               pcs_ptr->parent_pcs_ptr->max_can_count);
                 }
                 context_ptr->injected_mv_x_bipred_l0_array[context_ptr->injected_mv_count_bipred] =
@@ -4659,10 +4661,10 @@ void inject_pme_candidates(
                             }
                             if (!(is_warp_allowed &&
                                   inter_type == (tot_inter_types - (1 + is_obmc_allowed))))
-                                INCRMENT_CAND_TOTAL_COUNT(cand_total_cnt,
+                                INC_MD_CAND_CNT (cand_total_cnt,
                                                           pcs_ptr->parent_pcs_ptr->max_can_count);
                             else if (cand_array[cand_total_cnt].local_warp_valid)
-                                INCRMENT_CAND_TOTAL_COUNT(cand_total_cnt,
+                                INC_MD_CAND_CNT (cand_total_cnt,
                                                           pcs_ptr->parent_pcs_ptr->max_can_count);
                         }
                     }
@@ -4763,7 +4765,7 @@ void inject_pme_candidates(
                             }
                             determine_compound_mode(
                                 pcs_ptr, context_ptr, &cand_array[cand_total_cnt], cur_type);
-                            INCRMENT_CAND_TOTAL_COUNT(cand_total_cnt,
+                            INC_MD_CAND_CNT (cand_total_cnt,
                                                       pcs_ptr->parent_pcs_ptr->max_can_count);
                         }
                         context_ptr
@@ -5202,7 +5204,7 @@ void inject_intra_bc_candidates(PictureControlSet *pcs_ptr, ModeDecisionContext 
         cand_array[*cand_cnt].drl_index         = 0;
         cand_array[*cand_cnt].interp_filters    = av1_broadcast_interp_filter(BILINEAR);
         cand_array[*cand_cnt].filter_intra_mode = FILTER_INTRA_MODES;
-        INCRMENT_CAND_TOTAL_COUNT((*cand_cnt), pcs_ptr->parent_pcs_ptr->max_can_count);
+        INC_MD_CAND_CNT ((*cand_cnt), pcs_ptr->parent_pcs_ptr->max_can_count);
     }
 }
 // Indices are sign, integer, and fractional part of the gradient value
@@ -5281,7 +5283,7 @@ void svt_av1_get_gradient_hist_c(const uint8_t *src, int src_stride, int rows,
      cand_array[cand_total_cnt].pred_mode = (PredictionMode)DC_PRED;
      cand_array[cand_total_cnt].motion_mode = SIMPLE_TRANSLATION;
      cand_array[cand_total_cnt].is_interintra_used = 0;
-    INCRMENT_CAND_TOTAL_COUNT(cand_total_cnt,pcs_ptr->parent_pcs_ptr->max_can_count);
+    INC_MD_CAND_CNT (cand_total_cnt,pcs_ptr->parent_pcs_ptr->max_can_count);
 
      // update the total number of candidates injected
      (*candidate_total_cnt) = cand_total_cnt;
@@ -5377,7 +5379,7 @@ void  inject_intra_candidates(
                     cand_array[cand_total_cnt].pred_mode = (PredictionMode)open_loop_intra_candidate;
                     cand_array[cand_total_cnt].motion_mode = SIMPLE_TRANSLATION;
                     cand_array[cand_total_cnt].is_interintra_used = 0;
-                    INCRMENT_CAND_TOTAL_COUNT(cand_total_cnt,pcs_ptr->parent_pcs_ptr->max_can_count);
+                    INC_MD_CAND_CNT (cand_total_cnt,pcs_ptr->parent_pcs_ptr->max_can_count);
             }
         }
         }
@@ -5435,7 +5437,7 @@ void  inject_intra_candidates(
             cand_array[cand_total_cnt].pred_mode = (PredictionMode)open_loop_intra_candidate;
             cand_array[cand_total_cnt].motion_mode = SIMPLE_TRANSLATION;
             cand_array[cand_total_cnt].is_interintra_used = 0;
-            INCRMENT_CAND_TOTAL_COUNT(cand_total_cnt,pcs_ptr->parent_pcs_ptr->max_can_count);
+            INC_MD_CAND_CNT (cand_total_cnt,pcs_ptr->parent_pcs_ptr->max_can_count);
         }
     }
 
@@ -5521,7 +5523,7 @@ void  inject_filter_intra_candidates(
             cand_array[cand_total_cnt].pred_mode = DC_PRED;
             cand_array[cand_total_cnt].motion_mode = SIMPLE_TRANSLATION;
             cand_array[cand_total_cnt].is_interintra_used = 0;
-            INCRMENT_CAND_TOTAL_COUNT(cand_total_cnt,pcs_ptr->parent_pcs_ptr->max_can_count);
+            INC_MD_CAND_CNT (cand_total_cnt,pcs_ptr->parent_pcs_ptr->max_can_count);
     }
 
     // update the total number of candidates injected
@@ -5570,7 +5572,7 @@ void inject_zz_backup_candidate(
 
     cand_array[cand_total_cnt].is_interintra_used = 0;
     cand_array[cand_total_cnt].motion_mode = SIMPLE_TRANSLATION;
-    INCRMENT_CAND_TOTAL_COUNT(cand_total_cnt,pcs_ptr->parent_pcs_ptr->max_can_count);
+    INC_MD_CAND_CNT (cand_total_cnt,pcs_ptr->parent_pcs_ptr->max_can_count);
     // update the total number of candidates injected
     (*candidate_total_cnt) = cand_total_cnt;
     }
@@ -5666,7 +5668,7 @@ void  inject_palette_candidates(
         cand_array[can_total_cnt].ref_frame_type = INTRA_FRAME;
         cand_array[can_total_cnt].pred_mode = (PredictionMode)DC_PRED;
         cand_array[can_total_cnt].motion_mode = SIMPLE_TRANSLATION;
-        INCRMENT_CAND_TOTAL_COUNT(can_total_cnt,pcs_ptr->parent_pcs_ptr->max_can_count);
+        INC_MD_CAND_CNT (can_total_cnt,pcs_ptr->parent_pcs_ptr->max_can_count);
     }
 
     // update the total number of candidates injected
