@@ -187,6 +187,9 @@ INSTANTIATE_TEST_CASE_P(
     AVX2, SpatialFullDistortionTest,
     ::testing::Values(svt_spatial_full_distortion_kernel_avx2));
 
+INSTANTIATE_TEST_CASE_P(SSE4_1, SpatialFullDistortionTest,
+    ::testing::Values(svt_spatial_full_distortion_kernel_sse4_1));
+
 #if EN_AVX512_SUPPORT
 INSTANTIATE_TEST_CASE_P(
     AVX512, SpatialFullDistortionTest,
@@ -369,16 +372,18 @@ INSTANTIATE_TEST_CASE_P(
     ::testing::Combine(
         ::testing::ValuesIn(TEST_AREA_SIZES),
         ::testing::ValuesIn(TEST_PATTERNS),
-        ::testing::Values(svt_spatial_full_distortion_kernel_avx2,
+        ::testing::Values(svt_spatial_full_distortion_kernel_sse4_1,
+                          svt_spatial_full_distortion_kernel_avx2,
                           svt_spatial_full_distortion_kernel_avx512)));
-#else
+#endif
+
 INSTANTIATE_TEST_CASE_P(
     SpatialKernelFunc, SpatialFullDistortionKernelFuncTest,
     ::testing::Combine(
         ::testing::ValuesIn(TEST_AREA_SIZES),
         ::testing::ValuesIn(TEST_PATTERNS),
-        ::testing::Values(svt_spatial_full_distortion_kernel_avx2)));
-#endif
+        ::testing::Values(svt_spatial_full_distortion_kernel_sse4_1,
+                          svt_spatial_full_distortion_kernel_avx2)));
 
 class FullDistortionKernel16BitsFuncTest
     : public SpatialFullDistortionFuncTestBase,
@@ -542,10 +547,172 @@ TEST_P(FullDistortionKernel16BitsFuncTest, DISABLED_Speed) {
 }
 
 INSTANTIATE_TEST_CASE_P(
+    FullDistortionKernel16FuncTest_SSE4_1, FullDistortionKernel16BitsFuncTest,
+    ::testing::Combine(
+        ::testing::ValuesIn(TEST_AREA_SIZES),
+        ::testing::ValuesIn(TEST_PATTERNS),
+        ::testing::Values(svt_full_distortion_kernel16_bits_sse4_1)));
+
+INSTANTIATE_TEST_CASE_P(
     FullDistortionKernel16FuncTest, FullDistortionKernel16BitsFuncTest,
     ::testing::Combine(
         ::testing::ValuesIn(TEST_AREA_SIZES),
         ::testing::ValuesIn(TEST_PATTERNS),
         ::testing::Values(svt_full_distortion_kernel16_bits_avx2)));
+
+typedef void (*fullDistortionKernel32BitsFunc)(
+    int32_t *coeff, uint32_t coeff_stride, int32_t *recon_coeff,
+    uint32_t recon_coeff_stride, uint64_t distortion_result[DIST_CALC_TOTAL],
+    uint32_t area_width, uint32_t area_height);
+
+class fullDistortionKernel32Bits
+    : public ::testing::TestWithParam<fullDistortionKernel32BitsFunc> {
+  public:
+    fullDistortionKernel32Bits() : func_(GetParam()) {
+    }
+
+    ~fullDistortionKernel32Bits(){};
+
+    void SetUp() {
+        coeff_stride_ = svt_create_random_aligned_stride(MAX_SB_SIZE, 64);
+        recon_stride_ = svt_create_random_aligned_stride(MAX_SB_SIZE, 64);
+        coeff = reinterpret_cast<int32_t *>(
+            malloc(sizeof(*coeff) * MAX_SB_SIZE * coeff_stride_));
+        recon = reinterpret_cast<int32_t *>(
+            malloc(sizeof(*recon) * MAX_SB_SIZE * recon_stride_));
+    }
+    void TearDown() {
+        free(recon);
+        free(coeff);
+        aom_clear_system_state();
+    }
+
+  protected:
+    void RunCheckOutput();
+
+    void init_data() {
+        svt_buf_random_u32_with_max((uint32_t *)coeff, MAX_SB_SIZE * coeff_stride_, (1<<15));
+        svt_buf_random_u32_with_max((uint32_t *)recon, MAX_SB_SIZE * recon_stride_, (1<<15));
+    }
+
+    uint64_t result_ref[DIST_CALC_TOTAL];
+    uint64_t result_mod[DIST_CALC_TOTAL];
+    fullDistortionKernel32BitsFunc func_;
+    int32_t *coeff;
+    int32_t *recon;
+    uint32_t coeff_stride_;
+    uint32_t recon_stride_;
+};
+
+void fullDistortionKernel32Bits::RunCheckOutput() {
+    for (int i = 0; i < 10; i++) {
+        init_data();
+        for (uint32_t area_width = 4; area_width <= 128; area_width += 4) {
+            for (uint32_t area_height = 4; area_height <= 128; area_height += 4) {
+                svt_full_distortion_kernel32_bits_c(coeff,
+                                                    coeff_stride_,
+                                                    recon,
+                                                    recon_stride_,
+                                                    result_ref,
+                                                    area_width,
+                                                    area_height);
+                func_(coeff,
+                      coeff_stride_,
+                      recon,
+                      recon_stride_,
+                      result_mod,
+                      area_width,
+                      area_height);
+
+                EXPECT_EQ(memcmp(result_ref, result_mod, sizeof(result_ref)), 0);
+            }
+        }
+    }
+}
+
+TEST_P(fullDistortionKernel32Bits, CheckOutput) {
+    RunCheckOutput();
+}
+
+INSTANTIATE_TEST_CASE_P(
+    SSE4_1, fullDistortionKernel32Bits,
+    ::testing::Values(svt_full_distortion_kernel32_bits_sse4_1));
+
+INSTANTIATE_TEST_CASE_P(
+    AVX2, fullDistortionKernel32Bits,
+    ::testing::Values(svt_full_distortion_kernel32_bits_avx2));
+
+typedef void (*fullDistortionKernelCbfZero32BitsFunc)(
+    int32_t *coeff, uint32_t coeff_stride,
+    uint64_t distortion_result[DIST_CALC_TOTAL], uint32_t area_width,
+    uint32_t area_height);
+
+class fullDistortionKernelCbfZero32Bits
+    : public ::testing::TestWithParam<fullDistortionKernelCbfZero32BitsFunc> {
+  public:
+    fullDistortionKernelCbfZero32Bits() : func_(GetParam()) {
+    }
+
+    ~fullDistortionKernelCbfZero32Bits(){};
+
+    void SetUp() {
+        coeff_stride_ = svt_create_random_aligned_stride(MAX_SB_SIZE, 64);
+        coeff = reinterpret_cast<int32_t *>(
+            malloc(sizeof(*coeff) * MAX_SB_SIZE * coeff_stride_));
+    }
+    void TearDown() {
+        free(coeff);
+        aom_clear_system_state();
+    }
+
+  protected:
+    void RunCheckOutput();
+
+    void init_data() {
+        svt_buf_random_u32_with_max(
+            (uint32_t *)coeff, MAX_SB_SIZE * coeff_stride_, (1 << 15));
+    }
+
+    uint64_t result_ref[DIST_CALC_TOTAL];
+    uint64_t result_mod[DIST_CALC_TOTAL];
+    fullDistortionKernelCbfZero32BitsFunc func_;
+    int32_t *coeff;
+    uint32_t coeff_stride_;
+};
+
+void fullDistortionKernelCbfZero32Bits::RunCheckOutput() {
+    for (int i = 0; i < 10; i++) {
+        init_data();
+        for (uint32_t area_width = 4; area_width <= 128; area_width += 4) {
+            for (uint32_t area_height = 4; area_height <= 128;
+                 area_height += 4) {
+                svt_full_distortion_kernel_cbf_zero32_bits_c(coeff,
+                                                    coeff_stride_,
+                                                    result_ref,
+                                                    area_width,
+                                                    area_height);
+                func_(coeff,
+                      coeff_stride_,
+                      result_mod,
+                      area_width,
+                      area_height);
+
+                EXPECT_EQ(memcmp(result_ref, result_mod, sizeof(result_ref)), 0);
+            }
+        }
+    }
+}
+
+TEST_P(fullDistortionKernelCbfZero32Bits, CheckOutput) {
+    RunCheckOutput();
+}
+
+INSTANTIATE_TEST_CASE_P(
+    SSE4_1, fullDistortionKernelCbfZero32Bits,
+    ::testing::Values(svt_full_distortion_kernel_cbf_zero32_bits_sse4_1));
+
+INSTANTIATE_TEST_CASE_P(
+    AVX2, fullDistortionKernelCbfZero32Bits,
+    ::testing::Values(svt_full_distortion_kernel_cbf_zero32_bits_avx2));
 
 }  // namespace

@@ -138,6 +138,13 @@ TestPattern TEST_PATTERNS[] = {REF_MAX, SRC_MAX, RANDOM, UNALIGN};
 SADPattern TEST_SAD_PATTERNS[] = {BUF_MAX, BUF_MIN, BUF_SMALL, BUF_RANDOM};
 typedef std::tuple<TestPattern, BlkSize> Testsad_Param;
 
+typedef uint32_t (*nxm_sad_kernel_fn_ptr)(const uint8_t *src,
+                                          uint32_t src_stride,
+                                          const uint8_t *ref,
+                                          uint32_t ref_stride, uint32_t height,
+                                          uint32_t width);
+typedef std::tuple<TestPattern, BlkSize, nxm_sad_kernel_fn_ptr> Testsad_Param_nxm_kernel;
+
 /**
  * @Brief Base class for SAD test. SADTestBase handle test vector in memory,
  * provide SAD and SAD avg reference function
@@ -328,12 +335,15 @@ class SADTestBase : public ::testing::Test {
  *  Test vector pattern {REF_MAX, SRC_MAX, RANDOM, UNALIGN}
  *
  */
-class SADTestSubSample : public ::testing::WithParamInterface<Testsad_Param>,
+class SADTestSubSample : public ::testing::WithParamInterface<Testsad_Param_nxm_kernel>,
                          public SADTestBase {
+  protected:
+    nxm_sad_kernel_fn_ptr fn_ptr;
   public:
     SADTestSubSample()
         : SADTestBase(std::get<0>(TEST_GET_PARAM(1)),
                       std::get<1>(TEST_GET_PARAM(1)), TEST_GET_PARAM(0)) {
+        fn_ptr = TEST_GET_PARAM(2);
     }
 
   protected:
@@ -351,12 +361,14 @@ class SADTestSubSample : public ::testing::WithParamInterface<Testsad_Param>,
                                                    ref1_stride_,
                                                    height_,
                                                    width_);
-        avx2_sad = svt_nxm_sad_kernel_sub_sampled_helper_avx2(src_aligned_,
-                                                              src_stride_,
-                                                              ref1_aligned_,
-                                                              ref1_stride_,
-                                                              height_,
-                                                              width_);
+
+        avx2_sad = fn_ptr(src_aligned_,
+                          src_stride_,
+                          ref1_aligned_,
+                          ref1_stride_,
+                          height_,
+                          width_);
+
         EXPECT_EQ(non_avx2_sad, avx2_sad)
             << "compare non_avx2_sad(" << non_avx2_sad << ") and avx2_sad("
             << avx2_sad << ") error, ref: " << ref_sad;
@@ -369,8 +381,11 @@ TEST_P(SADTestSubSample, SADTestSubSample) {
 
 INSTANTIATE_TEST_CASE_P(
     SAD, SADTestSubSample,
-    ::testing::Combine(::testing::ValuesIn(TEST_PATTERNS),
-                       ::testing::ValuesIn(TEST_BLOCK_SIZES)));
+    ::testing::Combine(
+        ::testing::ValuesIn(TEST_PATTERNS),
+        ::testing::ValuesIn(TEST_BLOCK_SIZES),
+        ::testing::Values(svt_nxm_sad_kernel_sub_sampled_helper_sse4_1,
+                          svt_nxm_sad_kernel_sub_sampled_helper_avx2)));
 /**
  * @brief Unit test for SAD functions include:
  *  - svt_nxm_sad_kernel_helper_c
@@ -396,12 +411,15 @@ INSTANTIATE_TEST_CASE_P(
  *  Test vector pattern {REF_MAX, SRC_MAX, RANDOM, UNALIGN}.
  *
  */
-class SADTest : public ::testing::WithParamInterface<Testsad_Param>,
+class SADTest : public ::testing::WithParamInterface<Testsad_Param_nxm_kernel>,
                 public SADTestBase {
+  protected:
+    nxm_sad_kernel_fn_ptr fn_ptr;
   public:
     SADTest()
         : SADTestBase(std::get<0>(TEST_GET_PARAM(1)),
                       std::get<1>(TEST_GET_PARAM(1)), TEST_GET_PARAM(0)) {
+        fn_ptr = TEST_GET_PARAM(2);
     }
 
   protected:
@@ -419,12 +437,12 @@ class SADTest : public ::testing::WithParamInterface<Testsad_Param>,
                                                    ref1_stride_,
                                                    height_,
                                                    width_);
-        avx2_sad = svt_nxm_sad_kernel_helper_avx2(src_aligned_,
-                                                  src_stride_,
-                                                  ref1_aligned_,
-                                                  ref1_stride_,
-                                                  height_,
-                                                  width_);
+        avx2_sad = fn_ptr(src_aligned_,
+                          src_stride_,
+                          ref1_aligned_,
+                          ref1_stride_,
+                          height_,
+                          width_);
         EXPECT_EQ(non_avx2_sad, avx2_sad)
             << "compare non_avx2_sad(" << non_avx2_sad << ") and avx2_sad("
             << avx2_sad << ") error, ref: " << ref_sad;
@@ -438,7 +456,9 @@ TEST_P(SADTest, SADTest) {
 INSTANTIATE_TEST_CASE_P(
     SAD, SADTest,
     ::testing::Combine(::testing::ValuesIn(TEST_PATTERNS),
-                       ::testing::ValuesIn(TEST_BLOCK_SIZES)));
+                       ::testing::ValuesIn(TEST_BLOCK_SIZES),
+                       ::testing::Values(svt_nxm_sad_kernel_helper_sse4_1,
+                                         svt_nxm_sad_kernel_helper_avx2)));
 
 typedef std::tuple<int16_t, int16_t> SearchArea;
 SearchArea TEST_LOOP_AREAS[] = {

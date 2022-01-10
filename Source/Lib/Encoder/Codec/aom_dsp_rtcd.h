@@ -1493,6 +1493,11 @@ extern "C" {
         uint32_t height, uint32_t width);
     uint32_t svt_nxm_sad_kernel_helper_avx2(const uint8_t *src, uint32_t src_stride, const uint8_t *ref,
         uint32_t ref_stride, uint32_t height, uint32_t width);
+    uint32_t svt_nxm_sad_kernel_sub_sampled_helper_sse4_1(const uint8_t *src, uint32_t src_stride,
+        const uint8_t *ref, uint32_t ref_stride,
+        uint32_t height, uint32_t width);
+    uint32_t svt_nxm_sad_kernel_helper_sse4_1(const uint8_t *src, uint32_t src_stride, const uint8_t *ref,
+        uint32_t ref_stride, uint32_t height, uint32_t width);
     uint32_t nxm_sad_avg_kernel_helper_avx2(uint8_t *src, uint32_t src_stride, uint8_t *ref1,
         uint32_t ref1_stride, uint8_t *ref2, uint32_t ref2_stride,
         uint32_t height, uint32_t width);

@@ -129,6 +129,7 @@ typedef void (*svt_residual_kernel8bit_func)(
     uint32_t area_height);
 
 static const svt_residual_kernel8bit_func residual_kernel8bit_func_table[] = {
+    svt_residual_kernel8bit_sse4_1,
     svt_residual_kernel8bit_avx2,
 #if EN_AVX512_SUPPORT
     svt_residual_kernel8bit_avx512

@@ -1429,7 +1429,7 @@ void svt_full_distortion_kernel32_bits_avx2(int32_t *coeff, uint32_t coeff_strid
             sum2 = _mm256_add_epi64(sum2, z);
             x    = _mm256_sub_epi64(x, y);
             x    = _mm256_mul_epi32(x, x);
-            sum1 = _mm256_add_epi32(sum1, x);
+            sum1 = _mm256_add_epi64(sum1, x);
             coeff_temp += 4;
             recon_coeff_temp += 4;
         } while (--col_count);
