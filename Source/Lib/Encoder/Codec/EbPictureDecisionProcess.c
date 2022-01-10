@@ -4868,7 +4868,7 @@ void tpl_prep_info(PictureParentControlSet    *pcs) {
          }
      }
 }
-
+#if !CLN_TPL_GROUP
 void store_tpl_pictures(
     PictureParentControlSet *pcs,
     PictureDecisionContext  *ctx,
@@ -4900,6 +4900,7 @@ void store_tpl_pictures(
         //printf("====[%ld]: TPL group Base %ld, TPL group size %d\n",pcs->picture_number, pcs_tpl_ptr->picture_number, pcs->tpl_group_size);
     }
 }
+#endif
 
 void send_picture_out(
     SequenceControlSet      *scs,
@@ -6755,13 +6756,14 @@ void* picture_decision_kernel(void *input_ptr)
                         //Process previous delayed Intra if we have one
                         if (context_ptr->prev_delayed_intra) {
                             pcs_ptr = context_ptr->prev_delayed_intra;
+#if !CLN_TPL_GROUP
 #if CLN_TPL
                             if (pcs_ptr->tpl_ctrls.enable)
 #else
                             if (scs_ptr->static_config.enable_tpl_la)
 #endif
                                 store_tpl_pictures(pcs_ptr, context_ptr, mg_size);
-
+#endif
                             mctf_frame(scs_ptr, pcs_ptr, context_ptr, out_stride_diff64);
 
                         }
@@ -6771,12 +6773,14 @@ void* picture_decision_kernel(void *input_ptr)
                             pcs_ptr = context_ptr->mg_pictures_array_disp_order[pic_i];
 
                             if (is_delayed_intra(pcs_ptr) == EB_FALSE) {
+#if !CLN_TPL_GROUP
 #if CLN_TPL
                                 if (pcs_ptr->tpl_ctrls.enable && pcs_ptr->temporal_layer_index == 0 )
 #else
                                 if (scs_ptr->static_config.enable_tpl_la && pcs_ptr->temporal_layer_index == 0 )
 #endif
                                     store_tpl_pictures(pcs_ptr, context_ptr, mg_size);
+#endif
 
                                 mctf_frame(scs_ptr, pcs_ptr, context_ptr, out_stride_diff64);
                             }

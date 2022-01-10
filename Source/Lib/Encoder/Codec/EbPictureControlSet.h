@@ -985,12 +985,15 @@ typedef struct PictureParentControlSet {
 
     int64_t ext_mg_id;
     int64_t ext_mg_size; //same as mg expect for MGops with [LDP-I] which are split into 2
-
+#if !CLN_TPL_GROUP
     struct PictureParentControlSet
         *    ntpl_group[MAX_TPL_EXT_GROUP_SIZE]; //new tpl group formed the extended group
+#endif
     uint8_t  tpl_valid_pic[MAX_TPL_EXT_GROUP_SIZE];
     uint8_t  used_tpl_frame_num;
+#if !CLN_TPL_GROUP
     uint32_t ntpl_group_size;
+#endif
 
     // Tune TPL for better chroma.Only for 240P
     uint8_t      tune_tpl_for_chroma;

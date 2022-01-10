@@ -198,6 +198,35 @@ uint8_t inj_to_tpl_group(PictureParentControlSet *pcs) {
 
     return inj;
 }
+#if CLN_TPL_GROUP
+// validate pictures that will be used by the tpl algorithm based on tpl opts
+void validate_pic_for_tpl(PictureParentControlSet *pcs, uint32_t pic_index) {
+    // Check wether the i-th pic already exists in the tpl group
+    if (!is_frame_already_exists(pcs, pic_index, pcs->tpl_group[pic_index]->picture_number)) {
+        // Discard non-ref pic from the tpl group
+        uint8_t inject_frame = inj_to_tpl_group(pcs->tpl_group[pic_index]);
+        if (inject_frame) {
+            if (pcs->slice_type != I_SLICE) {
+                // Discard low important pictures from tpl group
+                if (pcs->tpl_ctrls.tpl_opt_flag &&
+                    (pcs->tpl_ctrls.reduced_tpl_group >= 0)) {
+                    if (pcs->tpl_group[pic_index]->temporal_layer_index <=
+                        pcs->tpl_ctrls.reduced_tpl_group) {
+                        pcs->tpl_valid_pic[pic_index] = 1;
+                        pcs->used_tpl_frame_num++;
+                    }
+                } else {
+                    pcs->tpl_valid_pic[pic_index] = 1;
+                    pcs->used_tpl_frame_num++;
+                }
+            } else {
+                pcs->tpl_valid_pic[pic_index] = 1;
+                pcs->used_tpl_frame_num++;
+            }
+        }
+    }
+}
+#endif
 /*
  copy the number of pcs entries from the the output queue to extended  buffer
 */
@@ -234,8 +263,57 @@ void store_extended_group(PictureParentControlSet *pcs, InitialRateControlContex
         SVT_LOG("\n");
     }
 #endif
-
-
+#if CLN_TPL_GROUP
+    //new tpl group needs to stop at the second I
+    pcs->tpl_group_size = 0;
+    memset(pcs->tpl_valid_pic, 0, MAX_TPL_EXT_GROUP_SIZE * sizeof(uint8_t));
+    pcs->tpl_valid_pic[0]   = 1;
+    pcs->used_tpl_frame_num = 0;
+    uint8_t is_gop_end   = 0;
+    int64_t last_intra_mg_id;
+    uint32_t mg_size;
+    if (pcs->scs_ptr->enable_adaptive_mini_gop == 0) {
+        mg_size = 1 << pcs->scs_ptr->static_config.hierarchical_levels;
+    } else {
+        mg_size = 1 << pcs->scs_ptr->max_heirachical_level;
+    }
+    uint32_t limited_tpl_group_size = pcs->slice_type == I_SLICE
+        ? MIN(1 + (pcs->scs_ptr->tpl_lad_mg + 1) * mg_size, pcs->ext_group_size)
+        : MIN((pcs->scs_ptr->tpl_lad_mg + 1) * mg_size, pcs->ext_group_size);
+    for (uint32_t i = 0; i < limited_tpl_group_size; i++) {
+        PictureParentControlSet *cur_pcs = pcs->ext_group[i];
+        if (cur_pcs->slice_type == I_SLICE) {
+            if (is_delayed_intra(cur_pcs)) {
+                if (i == 0) {
+                    pcs->tpl_group[pcs->tpl_group_size++] = cur_pcs;
+                    validate_pic_for_tpl(pcs, i);
+                } else
+                    break;
+            } else {
+                if (i == 0) {
+                    pcs->tpl_group[pcs->tpl_group_size++] = cur_pcs;
+                    validate_pic_for_tpl(pcs, i);
+                } else {
+                    pcs->tpl_group[pcs->tpl_group_size++] = cur_pcs;
+                    validate_pic_for_tpl(pcs, i);
+                    last_intra_mg_id                        = cur_pcs->ext_mg_id;
+                    is_gop_end                              = 1;
+                }
+            }
+        } else {
+            if (is_gop_end == 0) {
+                pcs->tpl_group[pcs->tpl_group_size++] = cur_pcs;
+                validate_pic_for_tpl(pcs, i);
+            }
+            else if (cur_pcs->ext_mg_id == last_intra_mg_id) {
+                pcs->tpl_group[pcs->tpl_group_size++] = cur_pcs;
+                validate_pic_for_tpl(pcs, i);
+            }
+            else
+                break;
+        }
+    }
+#else
     //new tpl group needs to stop at the second I
     pcs->ntpl_group_size = 0;
     uint8_t is_gop_end   = 0;
@@ -308,7 +386,7 @@ void store_extended_group(PictureParentControlSet *pcs, InitialRateControlContex
             }
         }
     }
-
+#endif
 #if LAD_MG_PRINT
     if (log) {
         SVT_LOG("\n NEW TPL group Pic:%lld  size:%i  \n", pcs->picture_number, pcs->ntpl_group_size);

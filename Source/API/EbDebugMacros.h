@@ -35,9 +35,11 @@
 extern "C" {
 #endif // __cplusplus
 
-#define DS_SC_FACT              23
-#define CLN_TPL                 1
+#define CLN_TPL                 1 // clean up the tpl signal, tpl_level = 0 turns tpl off, static_config.enable_tpl_la is no longer used to determine the state of tpl
+#define CLN_TPL_GROUP           1 // remove ntpl_group[], and remove the storage of tpl pics from pic decision kernel as it is made redundant by the storage of tpl pics in irc kernel
 #define FIX_CHROMA_VQ           1
+
+#define DS_SC_FACT              23
 
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one
