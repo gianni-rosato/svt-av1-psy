@@ -23,9 +23,21 @@ extern "C" {
 struct SvtMetadataArray;
 
 // API Version
-#define SVT_VERSION_MAJOR 0
-#define SVT_VERSION_MINOR 8
-#define SVT_VERSION_PATCHLEVEL 7
+#define SVT_AV1_VERSION_MAJOR 0
+#define SVT_AV1_VERSION_MINOR 8
+#define SVT_AV1_VERSION_PATCHLEVEL 7
+
+#ifndef SVT_VERSION_MAJOR
+#define SVT_VERSION_MAJOR SVT_AV1_VERSION_MAJOR
+#define SVT_VERSION_MINOR SVT_AV1_VERSION_MINOR
+#define SVT_VERSION_PATCHLEVEL SVT_AV1_VERSION_PATCHLEVEL
+#endif
+
+#define SVT_AV1_CHECK_VERSION(major, minor, patch)                            \
+    (SVT_AV1_VERSION_MAJOR > (major) ||                                       \
+     (SVT_AV1_VERSION_MAJOR == (major) && SVT_AV1_VERSION_MINOR > (minor)) || \
+     (SVT_AV1_VERSION_MAJOR == (major) && SVT_AV1_VERSION_MINOR == (minor) && \
+      SVT_AV1_VERSION_PATCHLEVEL >= (patch)))
 
 #if defined(_WIN32)
 #define EB_HELPER_EXPORT __declspec(dllexport)
