@@ -37,6 +37,7 @@ extern "C" {
 
 #define DS_SC_FACT              23
 #define CLN_TPL                 1
+#define FIX_CHROMA_VQ           1
 
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one

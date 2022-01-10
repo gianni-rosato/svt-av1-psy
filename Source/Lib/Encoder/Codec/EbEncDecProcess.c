@@ -4826,11 +4826,17 @@ uint64_t compute_pf_th(SequenceControlSet *scs, PictureControlSet *pcs, ModeDeci
 
     return use_pf_th;
 }
+#if FIX_CHROMA_VQ
+void set_lpd1_tx_ctrls(PictureControlSet *pcs, ModeDecisionContext *ctx, uint8_t lpd1_tx_level) {
+    PictureParentControlSet* ppcs = pcs->parent_pcs_ptr;
+#else
 void set_lpd1_tx_ctrls(ModeDecisionContext *ctx, uint8_t lpd1_tx_level) {
+#endif
     Lpd1TxCtrls *ctrls = &ctx->lpd1_tx_ctrls;
 
     switch (lpd1_tx_level) {
-    case 0: ctrls->zero_y_coeff_exit = 0;
+    case 0:
+        ctrls->zero_y_coeff_exit = 0;
         ctrls->skip_nrst_nrst_luma_tx = 0;
         ctrls->skip_tx_th                   = 0;
         ctrls->use_uv_shortcuts_on_y_coeffs = 0;
@@ -4838,7 +4844,9 @@ void set_lpd1_tx_ctrls(ModeDecisionContext *ctx, uint8_t lpd1_tx_level) {
         ctrls->use_mds3_shortcuts_th = 0;
         ctrls->use_neighbour_info    = 0;
         break;
-    case 1: ctrls->zero_y_coeff_exit = 1; ctrls->chroma_detector_level = 1;
+    case 1:
+        ctrls->zero_y_coeff_exit = 1;
+        ctrls->chroma_detector_level = 1;
         ctrls->skip_nrst_nrst_luma_tx = 0;
         ctrls->skip_tx_th             = 0;
         ctrls->use_uv_shortcuts_on_y_coeffs = 1;
@@ -4846,7 +4854,9 @@ void set_lpd1_tx_ctrls(ModeDecisionContext *ctx, uint8_t lpd1_tx_level) {
         ctrls->use_mds3_shortcuts_th = 25;
         ctrls->use_neighbour_info    = 0;
         break;
-    case 2: ctrls->zero_y_coeff_exit = 1; ctrls->chroma_detector_level = 1;
+    case 2:
+        ctrls->zero_y_coeff_exit = 1;
+        ctrls->chroma_detector_level = 1;
         ctrls->skip_nrst_nrst_luma_tx = 1;
         ctrls->skip_tx_th             = 25;
         ctrls->use_uv_shortcuts_on_y_coeffs = 1;
@@ -4854,7 +4864,13 @@ void set_lpd1_tx_ctrls(ModeDecisionContext *ctx, uint8_t lpd1_tx_level) {
         ctrls->use_mds3_shortcuts_th = 25;
         ctrls->use_neighbour_info    = 0;
         break;
-    case 3: ctrls->zero_y_coeff_exit = 1; ctrls->chroma_detector_level = 2;
+    case 3:
+        ctrls->zero_y_coeff_exit = 1;
+#if FIX_CHROMA_VQ
+        ctrls->chroma_detector_level = ppcs->is_used_as_reference_flag ? 2 : 3;
+#else
+        ctrls->chroma_detector_level = 2;
+#endif
         ctrls->skip_nrst_nrst_luma_tx = 1;
         ctrls->skip_tx_th             = 25;
         ctrls->use_uv_shortcuts_on_y_coeffs = 1;
@@ -4862,7 +4878,13 @@ void set_lpd1_tx_ctrls(ModeDecisionContext *ctx, uint8_t lpd1_tx_level) {
         ctrls->use_mds3_shortcuts_th = 25;
         ctrls->use_neighbour_info    = 0;
         break;
-    case 4: ctrls->zero_y_coeff_exit = 1; ctrls->chroma_detector_level = 2;
+    case 4:
+        ctrls->zero_y_coeff_exit = 1;
+#if FIX_CHROMA_VQ
+        ctrls->chroma_detector_level = ppcs->is_used_as_reference_flag ? 2 : 3;
+#else
+        ctrls->chroma_detector_level = 2;
+#endif
         ctrls->skip_nrst_nrst_luma_tx = 1;
         ctrls->skip_tx_th             = 25;
         ctrls->use_uv_shortcuts_on_y_coeffs = 1;
@@ -4870,7 +4892,13 @@ void set_lpd1_tx_ctrls(ModeDecisionContext *ctx, uint8_t lpd1_tx_level) {
         ctrls->use_mds3_shortcuts_th = 50;
         ctrls->use_neighbour_info    = 1;
         break;
-    case 5: ctrls->zero_y_coeff_exit = 1; ctrls->chroma_detector_level = 2;
+    case 5:
+        ctrls->zero_y_coeff_exit = 1;
+#if FIX_CHROMA_VQ
+        ctrls->chroma_detector_level = ppcs->is_used_as_reference_flag ? 2 : 3;
+#else
+        ctrls->chroma_detector_level = 2;
+#endif
         ctrls->skip_nrst_nrst_luma_tx = 1;
         ctrls->skip_tx_th             = 50;
         ctrls->use_uv_shortcuts_on_y_coeffs = 1;
@@ -4878,7 +4906,13 @@ void set_lpd1_tx_ctrls(ModeDecisionContext *ctx, uint8_t lpd1_tx_level) {
         ctrls->use_mds3_shortcuts_th = 50;
         ctrls->use_neighbour_info    = 2;
         break;
-    case 6: ctrls->zero_y_coeff_exit = 1; ctrls->chroma_detector_level = 2;
+    case 6:
+        ctrls->zero_y_coeff_exit = 1;
+#if FIX_CHROMA_VQ
+        ctrls->chroma_detector_level = ppcs->is_used_as_reference_flag ? 2 : 3;
+#else
+        ctrls->chroma_detector_level = 2;
+#endif
         ctrls->skip_nrst_nrst_luma_tx = 1;
         ctrls->skip_tx_th             = 70;
         ctrls->use_uv_shortcuts_on_y_coeffs = 1;
@@ -5008,7 +5042,12 @@ void set_intra_ctrls(PictureControlSet *pcs, ModeDecisionContext *ctx, uint8_t i
         ctx->skip_intra = !(ctrls->enable_intra) || pcs->skip_intra;
     }
 }
+#if FIX_CHROMA_VQ
+void set_tx_shortcut_ctrls(PictureControlSet *pcs, ModeDecisionContext *ctx, uint8_t tx_shortcut_level) {
+    PictureParentControlSet* ppcs = pcs->parent_pcs_ptr;
+#else
 void set_tx_shortcut_ctrls(ModeDecisionContext *ctx, uint8_t tx_shortcut_level) {
+#endif
     TxShortcutCtrls *ctrls = &ctx->tx_shortcut_ctrls;
 
     switch (tx_shortcut_level) {
@@ -5017,39 +5056,62 @@ void set_tx_shortcut_ctrls(ModeDecisionContext *ctx, uint8_t tx_shortcut_level) 
         ctrls->apply_pf_on_coeffs    = 0;
         ctrls->use_mds3_shortcuts_th = 0;
         ctrls->use_neighbour_info    = 0;
+#if FIX_CHROMA_VQ
+        ctrls->chroma_detector_level = 0;
+#endif
         break;
     case 1:
         ctrls->bypass_tx_when_zcoeff = 1;
         ctrls->apply_pf_on_coeffs    = 0;
         ctrls->use_mds3_shortcuts_th = 0;
+#if FIX_CHROMA_VQ
+        ctrls->chroma_detector_level = 1;
+#endif
         ctrls->use_neighbour_info    = 0;
         break;
     case 2:
         ctrls->bypass_tx_when_zcoeff = 2;
         ctrls->apply_pf_on_coeffs    = 1;
         ctrls->use_mds3_shortcuts_th = 0;
+#if FIX_CHROMA_VQ
+        ctrls->chroma_detector_level = 1;
+#endif
         ctrls->use_neighbour_info    = 0;
         break;
     case 3:
         ctrls->bypass_tx_when_zcoeff = 2;
         ctrls->apply_pf_on_coeffs    = 1;
         ctrls->use_mds3_shortcuts_th = 25;
+#if FIX_CHROMA_VQ
+        ctrls->chroma_detector_level = 1;
+#endif
         ctrls->use_neighbour_info    = 0;
         break;
     case 4:
         ctrls->bypass_tx_when_zcoeff = 2;
         ctrls->apply_pf_on_coeffs    = 1;
         ctrls->use_mds3_shortcuts_th = 25;
+#if FIX_CHROMA_VQ
+        ctrls->chroma_detector_level = ppcs->is_used_as_reference_flag ? 1 : 0;
+#endif
         ctrls->use_neighbour_info    = 1;
         break;
     case 5:
         ctrls->bypass_tx_when_zcoeff = 2;
         ctrls->apply_pf_on_coeffs    = 1;
         ctrls->use_mds3_shortcuts_th = 50;
+#if FIX_CHROMA_VQ
+        ctrls->chroma_detector_level = 0;
+#endif
         ctrls->use_neighbour_info    = 1;
         break;
     default: assert(0); break;
     }
+#if FIX_CHROMA_VQ
+    // Chroma detector should be used in M12 and below (at least in REF frames) to prevent blurring artifacts in some clips
+    if (tx_shortcut_level && ppcs->is_used_as_reference_flag && pcs->enc_mode <= ENC_M12)
+        assert(ctrls->chroma_detector_level && "Chroma detector should be used for ref frames in low presets to prevent blurring artifacts.");
+#endif
 }
 void set_mds0_controls(PictureControlSet *pcs, ModeDecisionContext *ctx, uint8_t mds0_level) {
     Mds0Ctrls *ctrls = &ctx->mds0_ctrls;
@@ -5390,9 +5452,22 @@ void signal_derivation_enc_dec_kernel_oq_light_pd1(PictureControlSet *  pcs_ptr,
             (me_8x8_cost_variance < (100 * picture_qp) && me_64x64_distortion < (100 * picture_qp)))
             lpd1_tx_level = 6;
     }
-
+#if FIX_CHROMA_VQ
+    set_lpd1_tx_ctrls(pcs_ptr, context_ptr, lpd1_tx_level);
+#else
     set_lpd1_tx_ctrls(context_ptr, lpd1_tx_level);
+#endif
+#if FIX_CHROMA_VQ
+    /* In modes below M13, only use level 1-3 for chroma detector, as more aggressive levels will cause
+    blurring artifacts in certain clips.
 
+    Do not test this signal in M12 and below during preset tuning.  This signal should be kept as an enc_mode check
+    instead of and LPD1_LEVEL check to ensure that M12 and below do not use it.
+    */
+    if (pcs_ptr->enc_mode >= ENC_M13) {
+        context_ptr->lpd1_tx_ctrls.chroma_detector_level = 4;
+    }
+#endif
     /* In modes below M13, only skip non-NEAREST_NEAREST TX b/c skipping all inter TX will cause blocking artifacts
     in certain clips.  This signal is separated from the general lpd1_tx_ctrls (above) to avoid
     accidentally turning this on for modes below M13.
@@ -5482,8 +5557,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet * sequence_co
     set_txt_controls(context_ptr,
                      pd_pass == PD_PASS_0 ? 0 : pcs_ptr->txt_level,
                      pcs_ptr->parent_pcs_ptr->input_resolution);
-
+#if FIX_CHROMA_VQ
+    set_tx_shortcut_ctrls(pcs_ptr, context_ptr, pd_pass == PD_PASS_0 ? 0 : pcs_ptr->tx_shortcut_level);
+#else
     set_tx_shortcut_ctrls(context_ptr, pd_pass == PD_PASS_0 ? 0 : pcs_ptr->tx_shortcut_level);
+#endif
 
     set_interpolation_search_level_ctrls(
         context_ptr, pd_pass == PD_PASS_0 ? 0 : pcs_ptr->interpolation_search_level);

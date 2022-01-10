@@ -637,6 +637,9 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         pcs_ptr->txt_level = 0;
 
     // Set the level for the txt shortcut feature
+#if FIX_CHROMA_VQ
+    // Any tx_shortcut_level having the chroma detector off in REF frames should be reserved for M13+
+#endif
     pcs_ptr->tx_shortcut_level = 0;
     if (enc_mode <= ENC_M5)
         pcs_ptr->tx_shortcut_level = 0;
