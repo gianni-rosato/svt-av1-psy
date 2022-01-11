@@ -6679,129 +6679,128 @@ static const uint16_t eb_av1_var_offs_hbd[MAX_SB_SIZE] = {
 
 #if FIX_CHROMA_VQ
 // Detect blocks that whose chroma component is important (used as a detector for chroma TX shortcuts in reg. PD1 and LPD1)
-COMPONENT_TYPE chroma_complexity_check_pred(ModeDecisionContext *context_ptr,
-    ModeDecisionCandidateBuffer *candidate_buffer,
-    EbPictureBufferDesc *input_picture_ptr, BlockLocation *loc, uint8_t use_var) {
+// Update ctx->chroma_complexity accordingly
+void chroma_complexity_check_pred(ModeDecisionContext *ctx,
+    ModeDecisionCandidateBuffer *cand_buffer,
+    EbPictureBufferDesc *input_pic, BlockLocation *loc, uint8_t use_var) {
 
-    if (context_ptr->chroma_complexity == COMPONENT_CHROMA)
-        return COMPONENT_CHROMA;
+    if (ctx->chroma_complexity == COMPONENT_CHROMA)
+        return;
 
     uint32_t y_dist = 0, cb_dist = 0, cr_dist = 0;
     uint8_t shift = 0;
-    shift = context_ptr->blk_geom->bheight_uv > 8 ? 2
-        : context_ptr->blk_geom->bheight_uv > 4 ? 1
+    shift = ctx->blk_geom->bheight_uv > 8 ? 2
+        : ctx->blk_geom->bheight_uv > 4 ? 1
         : 0; // no shift for 4x4
 
-    if (!context_ptr->hbd_mode_decision) {
+    if (!ctx->hbd_mode_decision) {
         y_dist = svt_nxm_sad_kernel_sub_sampled(
-            input_picture_ptr->buffer_y + loc->input_origin_index,
-            input_picture_ptr->stride_y << shift,
-            candidate_buffer->prediction_ptr->buffer_y + loc->blk_origin_index,
-            candidate_buffer->prediction_ptr->stride_y << shift,
-            context_ptr->blk_geom->bheight_uv >> shift,
-            context_ptr->blk_geom->bwidth_uv);
+            input_pic->buffer_y + loc->input_origin_index,
+            input_pic->stride_y << shift,
+            cand_buffer->prediction_ptr->buffer_y + loc->blk_origin_index,
+            cand_buffer->prediction_ptr->stride_y << shift,
+            ctx->blk_geom->bheight_uv >> shift,
+            ctx->blk_geom->bwidth_uv);
 
         cb_dist = svt_nxm_sad_kernel_sub_sampled(
-            input_picture_ptr->buffer_cb + loc->input_cb_origin_in_index,
-            input_picture_ptr->stride_cb << shift,
-            candidate_buffer->prediction_ptr->buffer_cb + loc->blk_chroma_origin_index,
-            candidate_buffer->prediction_ptr->stride_cb << shift,
-            context_ptr->blk_geom->bheight_uv >> shift,
-            context_ptr->blk_geom->bwidth_uv);
+            input_pic->buffer_cb + loc->input_cb_origin_in_index,
+            input_pic->stride_cb << shift,
+            cand_buffer->prediction_ptr->buffer_cb + loc->blk_chroma_origin_index,
+            cand_buffer->prediction_ptr->stride_cb << shift,
+            ctx->blk_geom->bheight_uv >> shift,
+            ctx->blk_geom->bwidth_uv);
 
         cr_dist = svt_nxm_sad_kernel_sub_sampled(
-            input_picture_ptr->buffer_cr + loc->input_cb_origin_in_index,
-            input_picture_ptr->stride_cr << shift,
-            candidate_buffer->prediction_ptr->buffer_cr + loc->blk_chroma_origin_index,
-            candidate_buffer->prediction_ptr->stride_cr << shift,
-            context_ptr->blk_geom->bheight_uv >> shift,
-            context_ptr->blk_geom->bwidth_uv);
+            input_pic->buffer_cr + loc->input_cb_origin_in_index,
+            input_pic->stride_cr << shift,
+            cand_buffer->prediction_ptr->buffer_cr + loc->blk_chroma_origin_index,
+            cand_buffer->prediction_ptr->stride_cr << shift,
+            ctx->blk_geom->bheight_uv >> shift,
+            ctx->blk_geom->bwidth_uv);
     }
     else {
         y_dist = sad_16b_kernel(
-            ((uint16_t *)input_picture_ptr->buffer_y) + loc->input_origin_index,
-            input_picture_ptr->stride_y << shift,
-            ((uint16_t *)candidate_buffer->prediction_ptr->buffer_y) +
+            ((uint16_t *)input_pic->buffer_y) + loc->input_origin_index,
+            input_pic->stride_y << shift,
+            ((uint16_t *)cand_buffer->prediction_ptr->buffer_y) +
             loc->blk_origin_index,
-            candidate_buffer->prediction_ptr->stride_y << shift,
-            context_ptr->blk_geom->bheight_uv >> shift,
-            context_ptr->blk_geom->bwidth_uv);
+            cand_buffer->prediction_ptr->stride_y << shift,
+            ctx->blk_geom->bheight_uv >> shift,
+            ctx->blk_geom->bwidth_uv);
 
         cb_dist = sad_16b_kernel(
-            ((uint16_t *)input_picture_ptr->buffer_cb) + loc->input_cb_origin_in_index,
-            input_picture_ptr->stride_cb << shift,
-            ((uint16_t *)candidate_buffer->prediction_ptr->buffer_cb) +
+            ((uint16_t *)input_pic->buffer_cb) + loc->input_cb_origin_in_index,
+            input_pic->stride_cb << shift,
+            ((uint16_t *)cand_buffer->prediction_ptr->buffer_cb) +
             loc->blk_chroma_origin_index,
-            candidate_buffer->prediction_ptr->stride_cb << shift,
-            context_ptr->blk_geom->bheight_uv >> shift,
-            context_ptr->blk_geom->bwidth_uv);
+            cand_buffer->prediction_ptr->stride_cb << shift,
+            ctx->blk_geom->bheight_uv >> shift,
+            ctx->blk_geom->bwidth_uv);
 
         cr_dist = sad_16b_kernel(
-            ((uint16_t *)input_picture_ptr->buffer_cr) + loc->input_cb_origin_in_index,
-            input_picture_ptr->stride_cr << shift,
-            ((uint16_t *)candidate_buffer->prediction_ptr->buffer_cr) +
+            ((uint16_t *)input_pic->buffer_cr) + loc->input_cb_origin_in_index,
+            input_pic->stride_cr << shift,
+            ((uint16_t *)cand_buffer->prediction_ptr->buffer_cr) +
             loc->blk_chroma_origin_index,
-            candidate_buffer->prediction_ptr->stride_cr << shift,
-            context_ptr->blk_geom->bheight_uv >> shift,
-            context_ptr->blk_geom->bwidth_uv);
+            cand_buffer->prediction_ptr->stride_cr << shift,
+            ctx->blk_geom->bheight_uv >> shift,
+            ctx->blk_geom->bwidth_uv);
     }
 
     if ((cb_dist + cr_dist) > (y_dist * 3) >> 1)
-        return COMPONENT_CHROMA;
+        ctx->chroma_complexity = COMPONENT_CHROMA;
 
     if (use_var) {
-        const AomVarianceFnPtr *fn_ptr = &mefn_ptr[context_ptr->blk_geom->bsize_uv];
+        const AomVarianceFnPtr *fn_ptr = &mefn_ptr[ctx->blk_geom->bsize_uv];
         unsigned int            sse;
         unsigned int var_cb;
         unsigned int var_cr;
-        if (context_ptr->hbd_mode_decision) {
+        if (ctx->hbd_mode_decision) {
             var_cb = fn_ptr->vf_hbd_10(
-                CONVERT_TO_BYTEPTR(((uint16_t *)input_picture_ptr->buffer_cb) +
+                CONVERT_TO_BYTEPTR(((uint16_t *)input_pic->buffer_cb) +
                     loc->input_cb_origin_in_index),
-                input_picture_ptr->stride_cb,
+                input_pic->stride_cb,
                 CONVERT_TO_BYTEPTR(eb_av1_var_offs_hbd),
                 0,
                 &sse);
             var_cr = fn_ptr->vf_hbd_10(
-                CONVERT_TO_BYTEPTR(((uint16_t *)input_picture_ptr->buffer_cr) +
+                CONVERT_TO_BYTEPTR(((uint16_t *)input_pic->buffer_cr) +
                     loc->input_cb_origin_in_index),
-                input_picture_ptr->stride_cr,
+                input_pic->stride_cr,
                 CONVERT_TO_BYTEPTR(eb_av1_var_offs_hbd),
                 0,
                 &sse);
         }
         else {
-            var_cb = fn_ptr->vf(input_picture_ptr->buffer_cb + loc->input_cb_origin_in_index,
-                input_picture_ptr->stride_cb,
+            var_cb = fn_ptr->vf(input_pic->buffer_cb + loc->input_cb_origin_in_index,
+                input_pic->stride_cb,
                 eb_av1_var_offs,
                 0,
                 &sse);
-            var_cr = fn_ptr->vf(input_picture_ptr->buffer_cr + loc->input_cb_origin_in_index,
-                input_picture_ptr->stride_cr,
+            var_cr = fn_ptr->vf(input_pic->buffer_cr + loc->input_cb_origin_in_index,
+                input_pic->stride_cr,
                 eb_av1_var_offs,
                 0,
                 &sse);
         }
 
         int block_var_cb = ROUND_POWER_OF_TWO(
-            var_cb, num_pels_log2_lookup[context_ptr->blk_geom->bsize_uv]);
+            var_cb, num_pels_log2_lookup[ctx->blk_geom->bsize_uv]);
         int block_var_cr = ROUND_POWER_OF_TWO(
-            var_cr, num_pels_log2_lookup[context_ptr->blk_geom->bsize_uv]);
+            var_cr, num_pels_log2_lookup[ctx->blk_geom->bsize_uv]);
 
         // th controls how safe the detector is (can be changed in the future, or made a parameter)
         uint16_t th = 150;
         if (block_var_cb > th && block_var_cr > th) {
-            return COMPONENT_CHROMA;
+            ctx->chroma_complexity = COMPONENT_CHROMA;
         }
         else if (block_var_cb > th) {
-            return context_ptr->chroma_complexity == COMPONENT_CHROMA_CR ? COMPONENT_CHROMA : COMPONENT_CHROMA_CB;
+            ctx->chroma_complexity = (ctx->chroma_complexity == COMPONENT_CHROMA_CR) ? COMPONENT_CHROMA : COMPONENT_CHROMA_CB;
         }
         else if (block_var_cr > th) {
-            return context_ptr->chroma_complexity == COMPONENT_CHROMA_CB ? COMPONENT_CHROMA : COMPONENT_CHROMA_CR;
+            ctx->chroma_complexity = (ctx->chroma_complexity == COMPONENT_CHROMA_CB) ? COMPONENT_CHROMA : COMPONENT_CHROMA_CR;
         }
     }
-
-    return context_ptr->chroma_complexity;
 }
 #endif
 // Detect blocks that whose chroma component is important (used as a detector for skipping the chroma TX path in LPD1)
@@ -7152,8 +7151,7 @@ void full_loop_core_light_pd1(PictureControlSet *pcs_ptr, BlkStruct *blk_ptr,
         if (context_ptr->lpd1_tx_ctrls.chroma_detector_level && context_ptr->lpd1_tx_ctrls.chroma_detector_level <= 3 &&
             context_ptr->chroma_complexity != COMPONENT_CHROMA &&
             (context_ptr->use_tx_shortcuts_mds3 || context_ptr->lpd1_tx_ctrls.use_uv_shortcuts_on_y_coeffs)) {
-            context_ptr->chroma_complexity = chroma_complexity_check_pred(
-                context_ptr, candidate_buffer, input_picture_ptr, loc, 0/*use_var*/);
+            chroma_complexity_check_pred(context_ptr, candidate_buffer, input_picture_ptr, loc, 0/*use_var*/);
         }
 #endif
         //CHROMA
@@ -7415,7 +7413,7 @@ void full_loop_core(PictureControlSet *pcs_ptr, BlkStruct *blk_ptr,
         loc.blk_origin_index = blk_origin_index;
         loc.blk_chroma_origin_index = blk_chroma_origin_index;
 
-        context_ptr->chroma_complexity = chroma_complexity_check_pred(
+        chroma_complexity_check_pred(
             context_ptr, candidate_buffer, input_picture_ptr, &loc, 1/*use_var*/);
     }
 #endif

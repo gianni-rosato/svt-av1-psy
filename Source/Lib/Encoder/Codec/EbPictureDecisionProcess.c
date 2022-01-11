@@ -769,6 +769,12 @@ EbErrorType generate_mini_gop_rps(
     }
     return return_error;
 }
+#if OPT_REMOVE_HIST
+static INLINE void update_list0_only_base(PictureParentControlSet* pcs_ptr) {
+    if (pcs_ptr->pic_avg_variance < pcs_ptr->list0_only_base_ctrls.noise_variance_th)
+        pcs_ptr->ref_list1_count_try = 0;
+}
+#else
 void update_list0_only_base(SequenceControlSet *scs_ptr, PictureParentControlSet* pcs_ptr) {
     PictureParentControlSet *prev_pcs_ptr = pcs_ptr->pd_window[0];
     PictureParentControlSet *current_pcs_ptr = pcs_ptr->pd_window[1];
@@ -790,6 +796,7 @@ void update_list0_only_base(SequenceControlSet *scs_ptr, PictureParentControlSet
 
     pcs_ptr->ref_list1_count_try = (pcs_ptr->pic_avg_variance < pcs_ptr->list0_only_base_ctrls.noise_variance_th || ahd < ahd_th) ? 0 : pcs_ptr->ref_list1_count_try;
 }
+#endif
 uint8_t pf_gi[16] = { 0,4,8,12,16,20,24,28,32,36,40,44,48,52,56,60 };
 
 void set_cdef_controls(PictureParentControlSet *pcs_ptr, uint8_t cdef_level) {
@@ -1329,6 +1336,23 @@ void set_list0_only_base(PictureParentControlSet* pcs_ptr, uint8_t list0_only_ba
     List0OnlyBase* ctrls = &pcs_ptr->list0_only_base_ctrls;
 
     switch (list0_only_base) {
+#if OPT_REMOVE_HIST
+    case 0:
+        ctrls->enabled = 0;
+        ctrls->noise_variance_th = 0;
+        break;
+    case 1:
+        ctrls->enabled = 1;
+        ctrls->noise_variance_th = 1000;
+        break;
+    case 2:
+        ctrls->enabled = 1;
+        ctrls->noise_variance_th = (uint16_t)~0;
+        break;
+    default:
+        assert(0);
+        break;
+#else
     case 0:
         ctrls->enabled = 0;
         ctrls->noise_variance_th = 0;
@@ -1357,6 +1381,7 @@ void set_list0_only_base(PictureParentControlSet* pcs_ptr, uint8_t list0_only_ba
     default:
         assert(0);
         break;
+#endif
     }
 }
 
@@ -1860,12 +1885,23 @@ EbErrorType signal_derivation_multi_processes_oq(
 #else
     pcs_ptr->tune_tpl_for_chroma = 0;
 #endif
+#if OPT_REMOVE_HIST
+    uint8_t list0_only_base = 0;
+    if (pcs_ptr->enc_mode <= ENC_M6)
+        list0_only_base = 0;
+    else  if (pcs_ptr->enc_mode <= ENC_M9)
+        list0_only_base = 1;
+    else
+        list0_only_base = 2;
+    set_list0_only_base(pcs_ptr, list0_only_base);
+#else
     uint8_t list0_only_base = 0;
     if (pcs_ptr->enc_mode <= ENC_M6)
         list0_only_base = 0;
     else
         list0_only_base = 4;
     set_list0_only_base(pcs_ptr, list0_only_base);
+#endif
     if (scs_ptr->enable_hbd_mode_decision == DEFAULT)
         if (pcs_ptr->enc_mode <= ENC_MR)
             pcs_ptr->hbd_mode_decision = 1;
@@ -5055,7 +5091,7 @@ void print_pre_ass_buffer(EncodeContext *ctx, PictureParentControlSet *pcs_ptr, 
     }
 }
 #endif
-
+#if !OPT_REMOVE_HIST
 /***************************************************************************************************
  * Helper function. Compare two frames: center frame and target frame. Return the summation of
  * absolute difference between the two frames from a histogram of luma values
@@ -5081,7 +5117,7 @@ static inline uint32_t compute_luma_sad_between_center_and_target_frame(
     }
     return ahd;
 }
-
+#endif
 void pack_highbd_pic(const EbPictureBufferDesc *pic_ptr, uint16_t *buffer_16bit[3], uint32_t ss_x,
     uint32_t ss_y, EbBool include_padding);
 
@@ -5341,6 +5377,10 @@ EbErrorType derive_tf_window_params(
                 }
             }
         }
+#if OPT_REMOVE_HIST
+        pcs_ptr->past_altref_nframes = actual_past_pics;
+        pcs_ptr->future_altref_nframes = actual_future_pics;
+#else
         int index_center = actual_past_pics;
         int pic_itr;
         int ahd;
@@ -5363,7 +5403,7 @@ EbErrorType derive_tf_window_params(
                 break;
         }
         pcs_ptr->future_altref_nframes = pic_itr - index_center;
-
+#endif
         // adjust the temporal filtering pcs buffer to remove unused past pictures
         if (actual_past_pics != num_past_pics) {
 
@@ -5395,6 +5435,7 @@ EbErrorType derive_tf_window_params(
 
             pcs_ptr->past_altref_nframes = 0;
             pcs_ptr->future_altref_nframes = pic_i;
+#if !OPT_REMOVE_HIST
             int index_center = 0;
             uint32_t actual_future_pics = pcs_ptr->future_altref_nframes;
             int pic_itr;
@@ -5409,6 +5450,7 @@ EbErrorType derive_tf_window_params(
                     break;
             }
             pcs_ptr->future_altref_nframes = pic_itr - index_center;
+#endif
         }
         else
             if (pcs_ptr->idr_flag) {
@@ -5436,6 +5478,7 @@ EbErrorType derive_tf_window_params(
 
                 pcs_ptr->past_altref_nframes = 0;
                 pcs_ptr->future_altref_nframes = pic_i;
+#if !OPT_REMOVE_HIST
                 int index_center = 0;
                 uint32_t actual_future_pics = pcs_ptr->future_altref_nframes;
                 int pic_itr;
@@ -5450,6 +5493,7 @@ EbErrorType derive_tf_window_params(
                 }
                 pcs_ptr->future_altref_nframes = pic_itr - index_center;
                 //SVT_LOG("\nPOC %d\t PAST %d\t FUTURE %d\n", pcs_ptr->picture_number, pcs_ptr->past_altref_nframes, pcs_ptr->future_altref_nframes);
+#endif
             }
             else
             {
@@ -5500,6 +5544,10 @@ EbErrorType derive_tf_window_params(
                         }
                     }
                 }
+#if OPT_REMOVE_HIST
+                pcs_ptr->past_altref_nframes = actual_past_pics;
+                pcs_ptr->future_altref_nframes = actual_future_pics;
+#else
                 int index_center = actual_past_pics;
                 int pic_itr;
                 int ahd;
@@ -5522,7 +5570,7 @@ EbErrorType derive_tf_window_params(
                         break;
                 }
                 pcs_ptr->future_altref_nframes = pic_itr - index_center;
-
+#endif
                 // adjust the temporal filtering pcs buffer to remove unused past pictures
                 if (actual_past_pics != num_past_pics) {
 
@@ -6513,8 +6561,14 @@ void* picture_decision_kernel(void *input_ptr)
                                 pcs_ptr->ref_list1_count = (picture_type == I_SLICE || pcs_ptr->is_overlay) ? 0 : (uint8_t)pred_position_ptr->ref_list1.reference_list_count;
 
                                 update_count_try(scs_ptr, pcs_ptr);
+#if OPT_REMOVE_HIST
+                                if (picture_type == B_SLICE && pcs_ptr->temporal_layer_index == 0 && pcs_ptr->list0_only_base_ctrls.enabled) {
+                                    update_list0_only_base(pcs_ptr);
+                                }
+#else
                                 if (picture_type == B_SLICE && pcs_ptr->temporal_layer_index == 0 && pcs_ptr->list0_only_base_ctrls.enabled)
                                     update_list0_only_base(scs_ptr, pcs_ptr);
+#endif
                                 assert(pcs_ptr->ref_list0_count_try <= pcs_ptr->ref_list0_count);
                                 assert(pcs_ptr->ref_list1_count_try <= pcs_ptr->ref_list1_count);
                                 if (!pcs_ptr->is_overlay) {
@@ -6791,10 +6845,11 @@ void* picture_decision_kernel(void *input_ptr)
                             context_ptr->prev_delayed_intra = NULL;
                             send_picture_out(scs_ptr, pcs_ptr, context_ptr);
                         }
+#if !OPT_REMOVE_AVG_INTENSITY
                         if (pcs_ptr->reference_picture_wrapper_ptr != NULL)
                             ((EbReferenceObject *)pcs_ptr->reference_picture_wrapper_ptr->object_ptr)->average_intensity =
                             pcs_ptr->average_intensity[0];
-
+#endif
                        //split MG into two for these two special cases
                        uint8_t ldp_delayi_mg = 0;
                        uint8_t ldp_i_eos_mg = 0;

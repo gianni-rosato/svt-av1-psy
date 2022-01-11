@@ -880,7 +880,11 @@ void *picture_manager_kernel(void *input_ptr) {
                         child_pcs_ptr->sb_total_count_pix = pic_width_in_sb * picture_height_in_sb;
 
                         // force re-ctor sb_ptr since child_pcs_ptrs are reused, and sb_ptr could be altered by superres tool when coding previous pictures
+#if OPT_PCS_REINIT
+                        if (scs_ptr->static_config.superres_mode > SUPERRES_NONE) {
+#else
                         {
+#endif
                             // Modify sb_prt_array in child pcs
                             uint16_t sb_index;
                             uint16_t sb_origin_x = 0;

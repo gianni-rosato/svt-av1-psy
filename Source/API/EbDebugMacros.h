@@ -35,9 +35,12 @@
 extern "C" {
 #endif // __cplusplus
 
-#define CLN_TPL                 1 // clean up the tpl signal, tpl_level = 0 turns tpl off, static_config.enable_tpl_la is no longer used to determine the state of tpl
-#define CLN_TPL_GROUP           1 // remove ntpl_group[], and remove the storage of tpl pics from pic decision kernel as it is made redundant by the storage of tpl pics in irc kernel
-#define FIX_CHROMA_VQ           1
+#define CLN_TPL                     1 // clean up the tpl signal, tpl_level = 0 turns tpl off, static_config.enable_tpl_la is no longer used to determine the state of tpl
+#define CLN_TPL_GROUP               1 // remove ntpl_group[], and remove the storage of tpl pics from pic decision kernel as it is made redundant by the storage of tpl pics in irc kernel
+#define FIX_CHROMA_VQ               1 // Improve chroma complexity detector to address VQ artifacts; use detector when applying chroma TX shortcuts based on luma info
+#define OPT_REMOVE_HIST             1 // Remove the use of luma histograms; only generate histograms when scene detection is used
+#define OPT_REMOVE_AVG_INTENSITY    1 // Remove unused avg. intensity variable/calculation
+#define OPT_PCS_REINIT              1 // Bypass unnecessary call to largest_coding_unit_ctor and largest_coding_unit_dctor
 
 #define DS_SC_FACT              23
 

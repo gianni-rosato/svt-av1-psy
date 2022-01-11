@@ -625,7 +625,9 @@ typedef struct CdefControls {
 typedef struct List0OnlyBase {
     uint8_t  enabled;
     uint16_t noise_variance_th;
+#if !OPT_REMOVE_HIST
     uint32_t ahd_mult;
+#endif
 } List0OnlyBase;
 typedef struct DlfCtrls {
     uint8_t enabled;
@@ -739,7 +741,9 @@ typedef struct PictureParentControlSet {
     uint32_t         pre_assignment_buffer_count;
     uint16_t         pic_avg_variance;
     EbBool           scene_transition_flag[MAX_NUM_OF_REF_PIC_LIST];
+#if !OPT_REMOVE_AVG_INTENSITY
     uint8_t          average_intensity[3];
+#endif
     // Histograms
     uint32_t ****picture_histogram;
     uint64_t     average_intensity_per_region[MAX_NUMBER_OF_REGIONS_IN_WIDTH]

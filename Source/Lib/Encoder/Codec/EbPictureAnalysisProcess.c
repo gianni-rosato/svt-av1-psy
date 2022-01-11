@@ -2216,7 +2216,7 @@ void compute_picture_spatial_statistics(SequenceControlSet *     scs_ptr,
 
     return;
 }
-
+#if !OPT_REMOVE_AVG_INTENSITY
 void calculate_input_average_intensity(SequenceControlSet *     scs_ptr,
                                        PictureParentControlSet *pcs_ptr,
                                        EbPictureBufferDesc *    input_picture_ptr,
@@ -2277,7 +2277,7 @@ void calculate_input_average_intensity(SequenceControlSet *     scs_ptr,
 
     return;
 }
-
+#endif
 /************************************************
  * Gathering statistics per picture
  ** Calculating the pixel intensity histogram bins per picture needed for SCD
@@ -2291,7 +2291,24 @@ void gathering_picture_statistics(SequenceControlSet *scs_ptr, PictureParentCont
     uint64_t sum_avg_intensity_ttl_regions_luma = 0;
     uint64_t sum_avg_intensity_ttl_regions_cb   = 0;
     uint64_t sum_avg_intensity_ttl_regions_cr   = 0;
+#if OPT_REMOVE_HIST
+    // Histogram bins
+    if (scs_ptr->static_config.scene_change_detection) {
+        // Use 1/16 Luma for Histogram generation
+        // 1/16 input ready
+        sub_sample_luma_generate_pixel_intensity_histogram_bins(
+            scs_ptr, pcs_ptr, sixteenth_decimated_picture_ptr, &sum_avg_intensity_ttl_regions_luma);
 
+        // Use 1/4 Chroma for Histogram generation
+        // 1/4 input not ready => perform operation on the fly
+        sub_sample_chroma_generate_pixel_intensity_histogram_bins(scs_ptr,
+            pcs_ptr,
+            input_picture_ptr,
+            &sum_avg_intensity_ttl_regions_cb,
+            &sum_avg_intensity_ttl_regions_cr,
+            4);
+    }
+#else
     // Histogram bins
     // Use 1/16 Luma for Histogram generation
     // 1/16 input ready
@@ -2308,6 +2325,8 @@ void gathering_picture_statistics(SequenceControlSet *scs_ptr, PictureParentCont
                                                                   &sum_avg_intensity_ttl_regions_cb,
                                                                   &sum_avg_intensity_ttl_regions_cr,
                                                                   4);
+#endif
+#if !OPT_REMOVE_AVG_INTENSITY
     //
     // Calculate the LUMA average intensity
     calculate_input_average_intensity(scs_ptr,
@@ -2316,7 +2335,7 @@ void gathering_picture_statistics(SequenceControlSet *scs_ptr, PictureParentCont
                                       sum_avg_intensity_ttl_regions_luma,
                                       sum_avg_intensity_ttl_regions_cb,
                                       sum_avg_intensity_ttl_regions_cr);
-
+#endif
     compute_picture_spatial_statistics(scs_ptr, pcs_ptr, input_padded_picture_ptr, sb_total_count);
 
     return;

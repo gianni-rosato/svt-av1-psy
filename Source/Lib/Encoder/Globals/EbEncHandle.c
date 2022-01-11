@@ -2539,7 +2539,9 @@ void tf_controls(SequenceControlSet *scs_ptr, uint8_t tf_level) {
         scs_ptr->tf_params_per_type[0].enabled                  = 1;
         scs_ptr->tf_params_per_type[0].num_future_pics          = 16;
         scs_ptr->tf_params_per_type[0].noise_adjust_future_pics = 1;
+#if !OPT_REMOVE_HIST
         scs_ptr->tf_params_per_type[0].activity_adjust_th       = 35;
+#endif
         scs_ptr->tf_params_per_type[0].max_num_future_pics      = MIN((1 << scs_ptr->static_config.hierarchical_levels), 16);
         scs_ptr->tf_params_per_type[0].hme_me_level             = 0;
         scs_ptr->tf_params_per_type[0].half_pel_mode            = 1;
@@ -2564,7 +2566,9 @@ void tf_controls(SequenceControlSet *scs_ptr, uint8_t tf_level) {
         scs_ptr->tf_params_per_type[1].num_future_pics          = 6;
         scs_ptr->tf_params_per_type[1].noise_adjust_past_pics   = 1;
         scs_ptr->tf_params_per_type[1].noise_adjust_future_pics = 1;
+#if !OPT_REMOVE_HIST
         scs_ptr->tf_params_per_type[1].activity_adjust_th       = 35;
+#endif
         scs_ptr->tf_params_per_type[1].max_num_past_pics        = MIN((1 << scs_ptr->static_config.hierarchical_levels), 3);
         scs_ptr->tf_params_per_type[1].max_num_future_pics      = MIN((1 << scs_ptr->static_config.hierarchical_levels), 6);
         scs_ptr->tf_params_per_type[1].hme_me_level             = 0;
@@ -2590,7 +2594,9 @@ void tf_controls(SequenceControlSet *scs_ptr, uint8_t tf_level) {
         scs_ptr->tf_params_per_type[2].num_future_pics          = 1;
         scs_ptr->tf_params_per_type[2].noise_adjust_past_pics   = 0;
         scs_ptr->tf_params_per_type[2].noise_adjust_future_pics = 0;
+#if !OPT_REMOVE_HIST
         scs_ptr->tf_params_per_type[2].activity_adjust_th       = 35;
+#endif
         scs_ptr->tf_params_per_type[2].max_num_past_pics        = MIN((1 << scs_ptr->static_config.hierarchical_levels) / 2, 1);
         scs_ptr->tf_params_per_type[2].max_num_future_pics      = MIN((1 << scs_ptr->static_config.hierarchical_levels) / 2, 1);
         scs_ptr->tf_params_per_type[2].hme_me_level             = 0;
@@ -2617,7 +2623,9 @@ void tf_controls(SequenceControlSet *scs_ptr, uint8_t tf_level) {
         scs_ptr->tf_params_per_type[0].enabled = 1;
         scs_ptr->tf_params_per_type[0].num_future_pics = 16;
         scs_ptr->tf_params_per_type[0].noise_adjust_future_pics = 1;
+#if !OPT_REMOVE_HIST
         scs_ptr->tf_params_per_type[0].activity_adjust_th = 35;
+#endif
         scs_ptr->tf_params_per_type[0].max_num_future_pics = MIN((1 << scs_ptr->static_config.hierarchical_levels), 16);
         scs_ptr->tf_params_per_type[0].hme_me_level = 1;
         scs_ptr->tf_params_per_type[0].half_pel_mode = 1;
@@ -2643,7 +2651,9 @@ void tf_controls(SequenceControlSet *scs_ptr, uint8_t tf_level) {
         scs_ptr->tf_params_per_type[1].num_future_pics = 3;
         scs_ptr->tf_params_per_type[1].noise_adjust_past_pics = 1;
         scs_ptr->tf_params_per_type[1].noise_adjust_future_pics = 1;
+#if !OPT_REMOVE_HIST
         scs_ptr->tf_params_per_type[1].activity_adjust_th = 35;
+#endif
         scs_ptr->tf_params_per_type[1].max_num_past_pics = MIN((1 << scs_ptr->static_config.hierarchical_levels), 3);
         scs_ptr->tf_params_per_type[1].max_num_future_pics = MIN((1 << scs_ptr->static_config.hierarchical_levels), 6);
         scs_ptr->tf_params_per_type[1].hme_me_level = 1;
@@ -2670,7 +2680,9 @@ void tf_controls(SequenceControlSet *scs_ptr, uint8_t tf_level) {
         scs_ptr->tf_params_per_type[2].num_future_pics = 1;
         scs_ptr->tf_params_per_type[2].noise_adjust_past_pics = 0;
         scs_ptr->tf_params_per_type[2].noise_adjust_future_pics = 0;
+#if !OPT_REMOVE_HIST
         scs_ptr->tf_params_per_type[2].activity_adjust_th = 35;
+#endif
         scs_ptr->tf_params_per_type[2].max_num_past_pics = MIN((1 << scs_ptr->static_config.hierarchical_levels) / 2, 1);
         scs_ptr->tf_params_per_type[2].max_num_future_pics = MIN((1 << scs_ptr->static_config.hierarchical_levels) / 2, 1);
         scs_ptr->tf_params_per_type[2].hme_me_level = 1;
@@ -2696,7 +2708,9 @@ void tf_controls(SequenceControlSet *scs_ptr, uint8_t tf_level) {
         scs_ptr->tf_params_per_type[0].enabled                  = 1;
         scs_ptr->tf_params_per_type[0].num_future_pics          = 8;
         scs_ptr->tf_params_per_type[0].noise_adjust_future_pics = 1;
+#if !OPT_REMOVE_HIST
         scs_ptr->tf_params_per_type[0].activity_adjust_th       = 35;
+#endif
         scs_ptr->tf_params_per_type[0].max_num_future_pics      = MIN((1 << scs_ptr->static_config.hierarchical_levels), 16);
         scs_ptr->tf_params_per_type[0].hme_me_level             = 2;
         scs_ptr->tf_params_per_type[0].half_pel_mode            = 1;
@@ -2721,7 +2735,9 @@ void tf_controls(SequenceControlSet *scs_ptr, uint8_t tf_level) {
         scs_ptr->tf_params_per_type[1].num_future_pics          = 2;
         scs_ptr->tf_params_per_type[1].noise_adjust_past_pics   = 0;
         scs_ptr->tf_params_per_type[1].noise_adjust_future_pics = 0;
+#if !OPT_REMOVE_HIST
         scs_ptr->tf_params_per_type[1].activity_adjust_th       = 35;
+#endif
         scs_ptr->tf_params_per_type[1].max_num_past_pics        = MIN((1 << scs_ptr->static_config.hierarchical_levels), 3);
         scs_ptr->tf_params_per_type[1].max_num_future_pics      = MIN((1 << scs_ptr->static_config.hierarchical_levels), 6);
         scs_ptr->tf_params_per_type[1].hme_me_level             = 2;
@@ -2747,7 +2763,9 @@ void tf_controls(SequenceControlSet *scs_ptr, uint8_t tf_level) {
         scs_ptr->tf_params_per_type[2].num_future_pics          = 1;
         scs_ptr->tf_params_per_type[2].noise_adjust_past_pics   = 0;
         scs_ptr->tf_params_per_type[2].noise_adjust_future_pics = 0;
+#if !OPT_REMOVE_HIST
         scs_ptr->tf_params_per_type[2].activity_adjust_th       = 35;
+#endif
         scs_ptr->tf_params_per_type[2].max_num_past_pics        = MIN((1 << scs_ptr->static_config.hierarchical_levels) / 2, 1);
         scs_ptr->tf_params_per_type[2].max_num_future_pics      = MIN((1 << scs_ptr->static_config.hierarchical_levels) / 2, 1);
         scs_ptr->tf_params_per_type[2].hme_me_level             = 2;
@@ -2774,7 +2792,9 @@ void tf_controls(SequenceControlSet *scs_ptr, uint8_t tf_level) {
         scs_ptr->tf_params_per_type[0].enabled                  = 1;
         scs_ptr->tf_params_per_type[0].num_future_pics          = 8;
         scs_ptr->tf_params_per_type[0].noise_adjust_future_pics = 0;
+#if !OPT_REMOVE_HIST
         scs_ptr->tf_params_per_type[0].activity_adjust_th       = 20;
+#endif
         scs_ptr->tf_params_per_type[0].max_num_future_pics      = MIN((1 << scs_ptr->static_config.hierarchical_levels), 16);
         scs_ptr->tf_params_per_type[0].hme_me_level             = 2;
         scs_ptr->tf_params_per_type[0].half_pel_mode            = 2;
@@ -2799,7 +2819,9 @@ void tf_controls(SequenceControlSet *scs_ptr, uint8_t tf_level) {
         scs_ptr->tf_params_per_type[1].num_future_pics          = 1;
         scs_ptr->tf_params_per_type[1].noise_adjust_past_pics   = 0;
         scs_ptr->tf_params_per_type[1].noise_adjust_future_pics = 0;
+#if !OPT_REMOVE_HIST
         scs_ptr->tf_params_per_type[1].activity_adjust_th       = 20;
+#endif
         scs_ptr->tf_params_per_type[1].max_num_past_pics        = MIN((1 << scs_ptr->static_config.hierarchical_levels), 3);
         scs_ptr->tf_params_per_type[1].max_num_future_pics      = MIN((1 << scs_ptr->static_config.hierarchical_levels), 6);
         scs_ptr->tf_params_per_type[1].hme_me_level             = 2;
@@ -2828,7 +2850,9 @@ void tf_controls(SequenceControlSet *scs_ptr, uint8_t tf_level) {
         scs_ptr->tf_params_per_type[0].enabled                  = 1;
         scs_ptr->tf_params_per_type[0].num_future_pics          = 8;
         scs_ptr->tf_params_per_type[0].noise_adjust_future_pics = 0;
+#if !OPT_REMOVE_HIST
         scs_ptr->tf_params_per_type[0].activity_adjust_th       = 20;
+#endif
         scs_ptr->tf_params_per_type[0].max_num_future_pics      = MIN((1 << scs_ptr->static_config.hierarchical_levels), 16);
         scs_ptr->tf_params_per_type[0].hme_me_level             = 2;
         scs_ptr->tf_params_per_type[0].half_pel_mode            = 2;
@@ -2853,7 +2877,9 @@ void tf_controls(SequenceControlSet *scs_ptr, uint8_t tf_level) {
         scs_ptr->tf_params_per_type[1].num_future_pics          = 1;
         scs_ptr->tf_params_per_type[1].noise_adjust_past_pics   = 0;
         scs_ptr->tf_params_per_type[1].noise_adjust_future_pics = 0;
+#if !OPT_REMOVE_HIST
         scs_ptr->tf_params_per_type[1].activity_adjust_th       = 20;
+#endif
         scs_ptr->tf_params_per_type[1].max_num_past_pics        = MIN((1 << scs_ptr->static_config.hierarchical_levels), 3);
         scs_ptr->tf_params_per_type[1].max_num_future_pics      = MIN((1 << scs_ptr->static_config.hierarchical_levels), 6);
         scs_ptr->tf_params_per_type[1].hme_me_level             = 2;

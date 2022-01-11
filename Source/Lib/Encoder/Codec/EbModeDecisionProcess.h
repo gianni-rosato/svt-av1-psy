@@ -507,8 +507,7 @@ typedef struct TxShortcutCtrls {
     uint8_t bypass_tx_when_zcoeff; // Skip TX at MDS3 if the MDS1 TX gave 0 coeffs
     uint8_t apply_pf_on_coeffs; // Apply pf based on the number of coeffs
 #if FIX_CHROMA_VQ
-    uint8_t
-        chroma_detector_level; // Use a detector to protect chroma from aggressive actions based on luma info: 0: OFF, 1: saftest, 2, 3: medium
+    uint8_t chroma_detector_level; // Use a detector to protect chroma from aggressive actions based on luma info: 0: OFF, 1: saftest, 2, 3: medium
 #endif
     uint32_t
         use_mds3_shortcuts_th; // if (best_mds0_distortion/QP < TH) use shortcuts for candidates at MDS3; 0: OFF, higher: more aggressive
@@ -875,7 +874,7 @@ typedef struct ModeDecisionContext {
     uint8_t     updated_enable_pme;
     Lpd1TxCtrls lpd1_tx_ctrls;
 #if FIX_CHROMA_VQ
-    uint8_t chroma_complexity;
+    uint8_t chroma_complexity; // Indicates which chroma components (if any) are complex, relative to luma. Chroma TX shortcuts based on luma should not be used when chroma is complex.
 #endif
     uint8_t
         lpd1_skip_inter_tx_level; // Signal to skip INTER TX in LPD1; should only be used by M13 as this causes blocking artifacts.
