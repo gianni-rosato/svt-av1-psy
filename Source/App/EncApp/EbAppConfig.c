@@ -33,100 +33,90 @@
 /**********************************
  * Defines
  **********************************/
-#define HELP_TOKEN "-help"
-#define HELP_LONG_TOKEN "--help"
+#define HELP_TOKEN "--help"
 #define VERSION_TOKEN "--version"
-#define CHANNEL_NUMBER_TOKEN "-nch"
+#define CHANNEL_NUMBER_TOKEN "--nch"
 #define COMMAND_LINE_MAX_SIZE 2048
 #define CONFIG_FILE_TOKEN "-c"
 #define CONFIG_FILE_LONG_TOKEN "--config"
 #define INPUT_FILE_TOKEN "-i"
 #define OUTPUT_BITSTREAM_TOKEN "-b"
 #define OUTPUT_RECON_TOKEN "-o"
-#define ERROR_FILE_TOKEN "-errlog"
-#define QP_FILE_TOKEN "-qp-file"
+#define ERROR_FILE_TOKEN "--errlog"
 
 /* two pass token */
 #define PASS_TOKEN "--pass"
 #define TWO_PASS_STATS_TOKEN "--stats"
 #define PASSES_TOKEN "--passes"
-#define STAT_FILE_TOKEN "-stat-file"
-#define INPUT_PREDSTRUCT_FILE_TOKEN "-pred-struct-file"
+#define STAT_FILE_TOKEN "--stat-file"
+#define INPUT_PREDSTRUCT_FILE_TOKEN "--pred-struct-file"
 #define WIDTH_TOKEN "-w"
 #define HEIGHT_TOKEN "-h"
 #define NUMBER_OF_PICTURES_TOKEN "-n"
-#define BUFFERED_INPUT_TOKEN "-nb"
+#define BUFFERED_INPUT_TOKEN "--nb"
 #define NO_PROGRESS_TOKEN "--no-progress" // tbd if it should be removed
 #define PROGRESS_TOKEN "--progress"
 #define QP_TOKEN "-q"
-#define USE_QP_FILE_TOKEN "-use-q-file"
+#define USE_QP_FILE_TOKEN "--use-q-file"
 
-#define USE_FIXED_QINDEX_OFFSETS_TOKEN "-use-fixed-qindex-offsets"
-#define QINDEX_OFFSETS_TOKEN "-qindex-offsets"
-#define KEY_FRAME_QINDEX_OFFSET_TOKEN "-key-frame-qindex-offset"
-#define KEY_FRAME_CHROMA_QINDEX_OFFSET_TOKEN "-key-frame-chroma-qindex-offset"
-#define CHROMA_QINDEX_OFFSETS_TOKEN "-chroma-qindex-offsets"
+#define USE_FIXED_QINDEX_OFFSETS_TOKEN "--use-fixed-qindex-offsets"
+#define QINDEX_OFFSETS_TOKEN "--qindex-offsets"
+#define KEY_FRAME_QINDEX_OFFSET_TOKEN "--key-frame-qindex-offset"
+#define KEY_FRAME_CHROMA_QINDEX_OFFSET_TOKEN "--key-frame-chroma-qindex-offset"
+#define CHROMA_QINDEX_OFFSETS_TOKEN "--chroma-qindex-offsets"
 
-#define STAT_REPORT_TOKEN "-stat-report"
-#define FRAME_RATE_TOKEN "-fps"
-#define FRAME_RATE_NUMERATOR_TOKEN "-fps-num"
-#define FRAME_RATE_DENOMINATOR_TOKEN "-fps-denom"
-#define ENCODER_BIT_DEPTH "-bit-depth"
-#define ENCODER_COLOR_FORMAT "-color-format"
-#define INPUT_COMPRESSED_TEN_BIT_FORMAT "-compressed-ten-bit-format"
-#define ENCMODE_TOKEN "-enc-mode"
-#define HIERARCHICAL_LEVELS_TOKEN "-hierarchical-levels" // no Eval
-#define PRED_STRUCT_TOKEN "-pred-struct"
-#define INTRA_PERIOD_TOKEN "-intra-period"
-#define PROFILE_TOKEN "-profile"
-#define TIER_TOKEN "-tier"
-#define LEVEL_TOKEN "-level"
-#define FILM_GRAIN_TOKEN "-film-grain"
-#define INTRA_REFRESH_TYPE_TOKEN "-irefresh-type" // no Eval
+#define FRAME_RATE_TOKEN "--fps"
+#define FRAME_RATE_NUMERATOR_TOKEN "--fps-num"
+#define FRAME_RATE_DENOMINATOR_TOKEN "--fps-denom"
+#define ENCODER_COLOR_FORMAT "--color-format"
+#define INPUT_COMPRESSED_TEN_BIT_FORMAT "--compressed-ten-bit-format"
+#define HIERARCHICAL_LEVELS_TOKEN "--hierarchical-levels" // no Eval
+#define PRED_STRUCT_TOKEN "--pred-struct"
+#define PROFILE_TOKEN "--profile"
+#define TIER_TOKEN "--tier"
+#define LEVEL_TOKEN "--level"
+#define FILM_GRAIN_TOKEN "--film-grain"
+#define INTRA_REFRESH_TYPE_TOKEN "--irefresh-type" // no Eval
 #define CDEF_ENABLE_TOKEN "--enable-cdef"
-#define MFMV_ENABLE_TOKEN "-mfmv"
-#define SCREEN_CONTENT_TOKEN "-scm"
+#define SCREEN_CONTENT_TOKEN "--scm"
 // --- start: ALTREF_FILTERING_SUPPORT
 #define ENABLE_TF_TOKEN "--enable-tf"
-#define ENABLE_OVERLAYS "-enable-overlays"
+#define ENABLE_OVERLAYS "--enable-overlays"
 // --- end: ALTREF_FILTERING_SUPPORT
 // --- start: SUPER-RESOLUTION SUPPORT
-#define SUPERRES_MODE_INPUT "-superres-mode"
-#define SUPERRES_DENOM "-superres-denom"
-#define SUPERRES_KF_DENOM "-superres-kf-denom"
-#define SUPERRES_QTHRES "-superres-qthres"
-#define SUPERRES_KF_QTHRES "-superres-kf-qthres"
+#define SUPERRES_MODE_INPUT "--superres-mode"
+#define SUPERRES_DENOM "--superres-denom"
+#define SUPERRES_KF_DENOM "--superres-kf-denom"
+#define SUPERRES_QTHRES "--superres-qthres"
+#define SUPERRES_KF_QTHRES "--superres-kf-qthres"
 // --- end: SUPER-RESOLUTION SUPPORT
-#define HDR_INPUT_TOKEN "-hdr"
-#define RATE_CONTROL_ENABLE_TOKEN "-rc"
-#define TARGET_BIT_RATE_TOKEN "-tbr"
-#define MAX_BIT_RATE_TOKEN "-mbr"
-#define MAX_QP_TOKEN "-max-qp"
-#define VBV_BUFSIZE_TOKEN "-vbv-bufsize"
-#define MIN_QP_TOKEN "-min-qp"
-#define VBR_BIAS_PCT_TOKEN "-bias-pct"
-#define VBR_MIN_SECTION_PCT_TOKEN "-minsection-pct"
-#define VBR_MAX_SECTION_PCT_TOKEN "-maxsection-pct"
-#define UNDER_SHOOT_PCT_TOKEN "-undershoot-pct"
-#define OVER_SHOOT_PCT_TOKEN "-overshoot-pct"
-#define BUFFER_SIZE_TOKEN "-buf-sz"
-#define BUFFER_INITIAL_SIZE_TOKEN "-buf-initial-sz"
-#define BUFFER_OPTIMAL_SIZE_TOKEN "-buf-optimal-sz"
-#define RECODE_LOOP_TOKEN "-recode-loop"
-#define ADAPTIVE_QP_ENABLE_TOKEN "-adaptive-quantization"
-#define LOOK_AHEAD_DIST_TOKEN "-lad"
-#define ENABLE_TPL_LA_TOKEN "-enable-tpl-la"
-#define SUPER_BLOCK_SIZE_TOKEN "-sb-size"
-#define TILE_ROW_TOKEN "-tile-rows"
-#define TILE_COL_TOKEN "-tile-columns"
+#define RATE_CONTROL_ENABLE_TOKEN "--rc"
+#define TARGET_BIT_RATE_TOKEN "--tbr"
+#define MAX_BIT_RATE_TOKEN "--mbr"
+#define MAX_QP_TOKEN "--max-qp"
+#define VBV_BUFSIZE_TOKEN "--vbv-bufsize"
+#define MIN_QP_TOKEN "--min-qp"
+#define VBR_BIAS_PCT_TOKEN "--bias-pct"
+#define VBR_MIN_SECTION_PCT_TOKEN "--minsection-pct"
+#define VBR_MAX_SECTION_PCT_TOKEN "--maxsection-pct"
+#define UNDER_SHOOT_PCT_TOKEN "--undershoot-pct"
+#define OVER_SHOOT_PCT_TOKEN "--overshoot-pct"
+#define BUFFER_SIZE_TOKEN "--buf-sz"
+#define BUFFER_INITIAL_SIZE_TOKEN "--buf-initial-sz"
+#define BUFFER_OPTIMAL_SIZE_TOKEN "--buf-optimal-sz"
+#define RECODE_LOOP_TOKEN "--recode-loop"
+#define ENABLE_TPL_LA_TOKEN "--enable-tpl-la"
+#define SUPER_BLOCK_SIZE_TOKEN "--sb-size"
+#define TILE_ROW_TOKEN "--tile-rows"
+#define TILE_COL_TOKEN "--tile-columns"
 
-#define SCENE_CHANGE_DETECTION_TOKEN "-scd"
-#define INJECTOR_TOKEN "-inj" // no Eval
-#define INJECTOR_FRAMERATE_TOKEN "-inj-frm-rt" // no Eval
-#define ASM_TYPE_TOKEN "-asm"
-#define THREAD_MGMNT "-lp"
-#define UNPIN_TOKEN "-unpin"
-#define TARGET_SOCKET "-ss"
+#define SCENE_CHANGE_DETECTION_TOKEN "--scd"
+#define INJECTOR_TOKEN "--inj" // no Eval
+#define INJECTOR_FRAMERATE_TOKEN "--inj-frm-rt" // no Eval
+#define ASM_TYPE_TOKEN "--asm"
+#define THREAD_MGMNT "--lp"
+#define UNPIN_TOKEN "--unpin"
+#define TARGET_SOCKET "--ss"
 #define RESTRICTED_MOTION_VECTOR "--rmv"
 #define CONFIG_FILE_COMMENT_CHAR '#'
 #define CONFIG_FILE_NEWLINE_CHAR '\n'
@@ -374,9 +364,6 @@ static void set_compressed_ten_bit_format(const char *value, EbConfig *cfg) {
 }
 static void set_enc_mode(const char *value, EbConfig *cfg) {
     cfg->config.enc_mode = (uint8_t)strtoul(value, NULL, 0);
-};
-static void set_cfg_intra_period(const char *value, EbConfig *cfg) {
-    cfg->config.intra_period_length = strtol(value, NULL, 0);
 };
 // --keyint 0 == --keyint -1
 static void set_keyint(const char *value, EbConfig *cfg) {
@@ -1173,7 +1160,6 @@ ConfigEntry config_entry[] = {
     {SINGLE_INPUT, INPUT_PREDSTRUCT_FILE_TOKEN, "PredStructFile", set_pred_struct_file},
     {SINGLE_INPUT, PROGRESS_TOKEN, "Progress", set_progress},
     {SINGLE_INPUT, NO_PROGRESS_TOKEN, "NoProgress", set_no_progress},
-    {SINGLE_INPUT, ENCMODE_TOKEN, "EncoderMode", set_enc_mode},
     {SINGLE_INPUT, PRESET_TOKEN, "EncoderMode", set_enc_mode},
 
     // Encoder Global Options
@@ -1192,7 +1178,6 @@ ConfigEntry config_entry[] = {
     {SINGLE_INPUT, ENCODER_COLOR_FORMAT, "EncoderColorFormat", set_encoder_color_format},
     {SINGLE_INPUT, PROFILE_TOKEN, "Profile", set_profile},
     {SINGLE_INPUT, LEVEL_TOKEN, "Level", set_level},
-    {SINGLE_INPUT, HDR_INPUT_TOKEN, "HighDynamicRangeInput", set_high_dynamic_range_input},
     {SINGLE_INPUT, HDR_INPUT_NEW_TOKEN, "HighDynamicRangeInput", set_high_dynamic_range_input},
 
     //   Frame Rate tokens
@@ -1204,7 +1189,6 @@ ConfigEntry config_entry[] = {
      set_frame_rate_denominator},
 
     //   Bit depth tokens
-    {SINGLE_INPUT, ENCODER_BIT_DEPTH, "EncoderBitDepth", set_encoder_bit_depth},
     {SINGLE_INPUT, INPUT_DEPTH_TOKEN, "EncoderBitDepth", set_encoder_bit_depth},
 
     {SINGLE_INPUT,
@@ -1216,7 +1200,6 @@ ConfigEntry config_entry[] = {
     {SINGLE_INPUT, INJECTOR_TOKEN, "Injector", set_injector},
     {SINGLE_INPUT, INJECTOR_FRAMERATE_TOKEN, "InjectorFrameRate", set_injector_frame_rate},
 
-    {SINGLE_INPUT, STAT_REPORT_TOKEN, "StatReport", set_stat_report},
     {SINGLE_INPUT, STAT_REPORT_NEW_TOKEN, "StatReport", set_stat_report},
 
     //   Asm Type
@@ -1236,13 +1219,11 @@ ConfigEntry config_entry[] = {
     {SINGLE_INPUT, MAX_BIT_RATE_TOKEN, "MaxBitRate", set_max_bit_rate},
 
     {SINGLE_INPUT, USE_QP_FILE_TOKEN, "UseQpFile", set_cfg_use_qp_file},
-    {SINGLE_INPUT, QP_FILE_TOKEN, "QpFile", set_cfg_qp_file},
     {SINGLE_INPUT, QP_FILE_NEW_TOKEN, "QpFile", set_cfg_qp_file},
 
     {SINGLE_INPUT, MAX_QP_TOKEN, "MaxQpAllowed", set_max_qp_allowed},
     {SINGLE_INPUT, MIN_QP_TOKEN, "MinQpAllowed", set_min_qp_allowed},
 
-    {SINGLE_INPUT, ADAPTIVE_QP_ENABLE_TOKEN, "AdaptiveQuantization", set_adaptive_quantization},
     {SINGLE_INPUT, ADAPTIVE_QP_ENABLE_NEW_TOKEN, "AdaptiveQuantization", set_adaptive_quantization},
 
     {SINGLE_INPUT, VBV_BUFSIZE_TOKEN, "VBVBufSize", set_vbv_buf_size},
@@ -1282,7 +1263,6 @@ ConfigEntry config_entry[] = {
     {SINGLE_INPUT, PASSES_TOKEN, "Passes", set_passes},
 
     // GOP size and type Options
-    {SINGLE_INPUT, INTRA_PERIOD_TOKEN, "IntraPeriod", set_cfg_intra_period},
     {SINGLE_INPUT, KEYINT_TOKEN, "Keyint", set_keyint},
     {SINGLE_INPUT, INTRA_REFRESH_TYPE_TOKEN, "IntraRefreshType", set_cfg_intra_refresh_type},
     {SINGLE_INPUT,
@@ -1290,7 +1270,6 @@ ConfigEntry config_entry[] = {
      "SceneChangeDetection",
      set_scene_change_detection},
     {SINGLE_INPUT, LOOKAHEAD_NEW_TOKEN, "Lookahead", set_look_ahead_distance},
-    {SINGLE_INPUT, LOOK_AHEAD_DIST_TOKEN, "Lookahead", set_look_ahead_distance},
     //   Prediction Structure
     {SINGLE_INPUT, HIERARCHICAL_LEVELS_TOKEN, "HierarchicalLevels", set_hierarchical_levels},
     {SINGLE_INPUT, PRED_STRUCT_TOKEN, "PredStructure", set_cfg_pred_structure},
@@ -1302,7 +1281,6 @@ ConfigEntry config_entry[] = {
     {SINGLE_INPUT, CDEF_ENABLE_TOKEN, "CDEFLevel", set_cdef_enable},
     {SINGLE_INPUT, ENABLE_RESTORATION_TOKEN, "EnableRestoration", set_enable_restoration_flag},
     {SINGLE_INPUT, ENABLE_TPL_LA_TOKEN, "EnableTPLModel", set_enable_tpl_la},
-    {SINGLE_INPUT, MFMV_ENABLE_TOKEN, "Mfmv", set_enable_mfmv_flag},
     {SINGLE_INPUT, MFMV_ENABLE_NEW_TOKEN, "Mfmv", set_enable_mfmv_flag},
     //   ALT-REF filtering support
     {SINGLE_INPUT, ENABLE_TF_TOKEN, "EnableTf", set_enable_tf},
@@ -1934,8 +1912,7 @@ int get_version(int argc, char *argv[]) {
 
 uint32_t get_help(int32_t argc, char *const argv[]) {
     char config_string[COMMAND_LINE_MAX_SIZE];
-    if (find_token(argc, argv, HELP_TOKEN, config_string) &&
-        find_token(argc, argv, HELP_LONG_TOKEN, config_string))
+    if (find_token(argc, argv, HELP_TOKEN, config_string))
         return 0;
 
     printf(
@@ -2166,9 +2143,7 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncPass enc_pass[MAX_ENC_P
 #endif
         }
     }
-    if (find_token(argc, argv, ENCMODE_TOKEN, config_string) == 0 ||
-        find_token(argc, argv, "-enc-mode", config_string) == 0 ||
-        find_token(argc, argv, "--preset", config_string) == 0) {
+    if (find_token(argc, argv, PRESET_TOKEN, config_string) == 0) {
         enc_mode = strtol(config_string, NULL, 0);
         if (enc_mode > MAX_ENC_PRESET || enc_mode < 0) {
             fprintf(stderr, "Error: EncoderMode must be in the range of [0-%d]\n", MAX_ENC_PRESET);
@@ -2176,22 +2151,9 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncPass enc_pass[MAX_ENC_P
         }
     }
 
-    if ((!find_token(argc, argv, INTRA_PERIOD_TOKEN, NULL) ||
-         !find_token(argc, argv, "-" INTRA_PERIOD_TOKEN, NULL)) &&
-        !find_token(argc, argv, KEYINT_TOKEN, NULL)) {
-        fprintf(stderr,
-                "[SVT-Warning]: --keyint and --intra-period specified, --keyint will take "
-                "precedence!\n");
-    }
-
-    if (find_token(argc, argv, INTRA_PERIOD_TOKEN, config_string) == 0 ||
-        find_token(argc, argv, "-" INTRA_PERIOD_TOKEN, config_string) == 0 ||
-        find_token(argc, argv, KEYINT_TOKEN, config_string) == 0) {
-        ip = strtol(config_string, NULL, 0);
-        if (find_token(argc, argv, KEYINT_TOKEN, NULL) == 0) {
-            fprintf(stderr, "[SVT-Warning]: --keyint is now intra-period + 1!\n");
-            --ip;
-        }
+    if (find_token(argc, argv, KEYINT_TOKEN, config_string) == 0) {
+        fprintf(stderr, "[SVT-Warning]: --keyint is now intra-period + 1!\n");
+        ip = strtol(config_string, NULL, 0) - 1;
         if ((ip < -2 || ip > 2 * ((1 << 30) - 1)) && rc_mode == 0) {
             fprintf(stderr, "[SVT-Error]: The intra period must be [-2, 2^31-2]  \n");
             return 0;
@@ -2484,80 +2446,52 @@ static int32_t read_pred_struct_file(EbConfig *config, char *PredStructPath,
     return return_error;
 }
 
-EbErrorType handle_short_tokens(char *string) {
-    char *short_token_only = string + 2;
-    if (*(string + 3) == '\0') {
+static EbBool warn_legacy_token(const char *const token) {
+    static struct warn_set {
+        const char *old_token;
+        const char *new_token;
+    } warning_set[] = {
+        {"-adaptive-quantization", ADAPTIVE_QP_ENABLE_NEW_TOKEN},
+        {"-bit-depth", INPUT_DEPTH_TOKEN},
+        {"-enc-mode", PRESET_TOKEN},
+        {"-hdr", HDR_INPUT_NEW_TOKEN},
+        {"-intra-period", KEYINT_TOKEN},
+        {"-lad", LOOKAHEAD_NEW_TOKEN},
+        {"-mfmv", MFMV_ENABLE_NEW_TOKEN},
+        {"-qp-file", QP_FILE_NEW_TOKEN},
+        {"-stat-report", STAT_REPORT_NEW_TOKEN},
+        {NULL, NULL},
+    };
+    for (struct warn_set *tok = warning_set; tok->old_token; ++tok) {
+        if (strcmp(token, tok->old_token))
+            continue;
         fprintf(stderr,
-                "warning: please use -%s instead of --%s\n",
-                short_token_only,
-                short_token_only);
-        return EB_ErrorBadParameter;
+                "[SVT-Error]: %s has been removed, use %s instead\n",
+                tok->old_token,
+                tok->new_token);
+        return EB_TRUE;
     }
-    return EB_ErrorNone;
-}
-
-const char *handle_warnings(const char *token, char *print_message, uint8_t double_dash_token) {
-    const char *linked_token = "";
-
-    if (strcmp(token, ENCMODE_TOKEN) == 0)
-        linked_token = PRESET_TOKEN;
-    if (strcmp(token, ENCODER_BIT_DEPTH) == 0)
-        linked_token = INPUT_DEPTH_TOKEN;
-    if (strcmp(token, INTRA_PERIOD_TOKEN) == 0)
-        linked_token = KEYINT_TOKEN;
-    if (strcmp(token, QP_FILE_TOKEN) == 0)
-        linked_token = QP_FILE_NEW_TOKEN;
-
-    if (strcmp(token, STAT_REPORT_TOKEN) == 0)
-        linked_token = STAT_REPORT_NEW_TOKEN;
-    if (strcmp(token, MFMV_ENABLE_TOKEN) == 0)
-        linked_token = MFMV_ENABLE_NEW_TOKEN;
-    if (strcmp(token, HDR_INPUT_TOKEN) == 0)
-        linked_token = HDR_INPUT_NEW_TOKEN;
-    if (strcmp(token, ADAPTIVE_QP_ENABLE_TOKEN) == 0)
-        linked_token = ADAPTIVE_QP_ENABLE_NEW_TOKEN;
-
-    if (strnlen_s(linked_token, WARNING_LENGTH) > 1) {
-        const char *message_str = " will be deprecated soon, please use ";
-        size_t      offset;
-        strcpy_s(print_message, WARNING_LENGTH, token);
-        offset = strnlen_s(print_message, WARNING_LENGTH);
-        strcpy_s(print_message + offset, WARNING_LENGTH - offset, message_str);
-        offset = strnlen_s(print_message, WARNING_LENGTH);
-        strcpy_s(print_message + offset, WARNING_LENGTH - offset, linked_token);
-        return print_message;
-    } else if (double_dash_token == 0) {
-        const char *message_str = " will be deprecated soon, please use -";
-        size_t      offset;
-        strcpy_s(print_message, WARNING_LENGTH, token);
-        offset = strnlen_s(print_message, WARNING_LENGTH);
-        strcpy_s(print_message + offset, WARNING_LENGTH - offset, message_str);
-        offset = strnlen_s(print_message, WARNING_LENGTH);
-        strcpy_s(print_message + offset, WARNING_LENGTH - offset, token);
-        return print_message;
-    }
-    return "";
+    return EB_FALSE;
 }
 
 /******************************************
 * Read Command Line
 ******************************************/
 EbErrorType read_command_line(int32_t argc, char *const argv[], EncChannel *channels,
-                              uint32_t num_channels, char *warning_str[WARNING_LENGTH]) {
+                              uint32_t num_channels) {
     EbErrorType return_error = EB_ErrorNone;
     char        config_string[COMMAND_LINE_MAX_SIZE]; // for one input options
     char *      config_strings[MAX_CHANNEL_NUMBER]; // for multiple input options
     char *      cmd_copy[MAX_NUM_TOKENS]; // keep track of extra tokens
     uint32_t    index         = 0;
     int32_t     cmd_token_cnt = 0; // total number of tokens
-    int32_t     token_index   = -1;
     int32_t     ret_y4m;
 
     for (index = 0; index < MAX_CHANNEL_NUMBER; ++index)
         config_strings[index] = (char *)malloc(sizeof(char) * COMMAND_LINE_MAX_SIZE);
     // Copy tokens (except for CHANNEL_NUMBER_TOKEN and PASSES_TOKEN ) into a temp token buffer hosting all tokens that are passed through the command line
     size_t len = COMMAND_LINE_MAX_SIZE;
-    for (token_index = 0; token_index < argc; ++token_index) {
+    for (int32_t token_index = 0; token_index < argc; ++token_index) {
         if ((argv[token_index][0] == '-') &&
             strncmp(argv[token_index], CHANNEL_NUMBER_TOKEN, len) &&
             strncmp(argv[token_index], PASSES_TOKEN, len) && !is_negative_number(argv[token_index]))
@@ -2596,66 +2530,40 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EncChannel *chan
             return_error = EB_ErrorNone;
     }
 
-    /***************************************************************************************************/
+    /********************************************************************************************************/
     /***********   Find SINGLE_INPUT configuration parameter tokens and call respective functions  **********/
-    /***************************************************************************************************/
-    token_index                     = -1;
-    EbErrorType return_result_error = EB_ErrorNone;
-    int32_t warning_index = -1;
-    // Parse command line for tokens
-    while (config_entry[++token_index].name != NULL) {
-        if (config_entry[token_index].type == SINGLE_INPUT) {
-            char message[WARNING_LENGTH] = "";
-            // concat strings with '-'
-            char concat_str[WARNING_LENGTH] = "-";
-            strcpy_s(concat_str + 1, sizeof(concat_str) - 1, config_entry[token_index].token);
-            if (find_token_multiple_inputs(
-                    argc, argv, config_entry[token_index].token, config_strings) == 0) {
-                //Warning for one dash
-                if (*(config_entry[token_index].token + 2) != '\0' && // check for small token
-                    *(config_entry[token_index].token + 1) != '-' && // check for --
-                    return_result_error != EB_ErrorBadParameter) {
-                    handle_warnings(config_entry[token_index].token, message, 0);
-                    strcpy_s(warning_str[++warning_index], WARNING_LENGTH, message);
-                }
-                // When a token is found mark it as found in the temp token buffer
-                mark_token_as_read(config_entry[token_index].token, cmd_copy, &cmd_token_cnt);
+    /********************************************************************************************************/
 
-                // Fill up the values corresponding to each channel
-                for (index = 0; index < num_channels; ++index) {
-                    EncChannel *c = channels + index;
-                    if (strcmp(config_strings[index], " "))
-                        (*config_entry[token_index].scf)(config_strings[index], c->config);
-                    else
-                        break;
-                }
-            } else if (find_token_multiple_inputs(argc, argv, concat_str, config_strings) ==
-                       0) { // handle double dash
-                handle_warnings(config_entry[token_index].token, message, 1);
-                // handle warnings for new tokens
-                if (strnlen_s(message, sizeof(message) > 1)) {
-                    char double_dash_warning[WARNING_LENGTH] = "-";
-                    strcpy_s(double_dash_warning + 1, sizeof(double_dash_warning) - 1, message);
-                    strcpy_s(warning_str[++warning_index], WARNING_LENGTH, double_dash_warning);
-                    warning_index++;
-                }
-                return_result_error = handle_short_tokens(concat_str);
-                // When a token is found mark it as found in the temp token buffer
-                mark_token_as_read(concat_str, cmd_copy, &cmd_token_cnt);
-
-                // Fill up the values corresponding to each channel
-                for (index = 0; index < num_channels; ++index) {
-                    EncChannel *c = channels + index;
-                    if (strcmp(config_strings[index], " "))
-                        (*config_entry[token_index].scf)(config_strings[index], c->config);
-                    else
-                        break;
-                }
-            }
+    // Check tokens for invalid tokens
+    for (char *const *indx = argv + 1; *indx; ++indx) {
+        // stop at --
+        if (!strcmp(*indx, "--"))
+            break;
+        // Check removed tokens
+        if (warn_legacy_token(*indx))
+            return EB_ErrorBadParameter;
+        // exclude single letter tokens
+        if ((*indx)[0] == '-' && (*indx)[1] != '-' && (*indx)[2] != '\0') {
+            fprintf(stderr, "[SVT-Error]: single dash long tokens have been removed!\n");
+            return EB_ErrorBadParameter;
         }
     }
-    if (return_result_error == EB_ErrorBadParameter)
-        return EB_ErrorBadParameter;
+
+    // Parse command line for tokens
+    for (ConfigEntry *entry = config_entry; entry->token; ++entry) {
+        if (entry->type != SINGLE_INPUT)
+            continue;
+        if (find_token_multiple_inputs(argc, argv, entry->token, config_strings))
+            continue;
+        // When a token is found mark it as found in the temp token buffer
+        mark_token_as_read(entry->token, cmd_copy, &cmd_token_cnt);
+        // Fill up the values corresponding to each channel
+        for (uint32_t chan = 0; chan < num_channels; ++chan) {
+            if (!strcmp(config_strings[chan], " "))
+                break;
+            (entry->scf)(config_strings[chan], channels[chan].config);
+        }
+    }
 
     /***************************************************************************************************/
     /********************** Parse parameters from input file if in y4m format **************************/

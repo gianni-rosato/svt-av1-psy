@@ -157,7 +157,7 @@ static EbErrorType enc_context_ctor(EncApp* enc_app, EncContext* enc_context, in
     }
     // Process any command line options, including the configuration file
     // Read all configuration files.
-    return_error = read_command_line(argc, argv, enc_context->channels, num_channels, warning);
+    return_error = read_command_line(argc, argv, enc_context->channels, num_channels);
     if (return_error != EB_ErrorNone) {
         fprintf(stderr, "Error in configuration, could not begin encoding! ... \n");
         fprintf(stderr, "Run %s --help for a list of options\n", argv[0]);
