@@ -2409,17 +2409,6 @@ static int32_t compute_default_intra_period(
     return intra_period;
 }
 
-// Set configurations for the hardcoded parameters
-void set_default_configuration_parameters(
-    SequenceControlSet       *scs_ptr)
-{
-    // SB Definitions
-    scs_ptr->sb_sz = MAX_SB_SIZE;
-    scs_ptr->max_sb_depth = (uint8_t)EB_MAX_SB_DEPTH;
-    scs_ptr->static_config.enable_adaptive_quantization = 2;
-
-    return;
-}
 /*
 Calculates the default LAD value
 */
@@ -4407,12 +4396,6 @@ EB_API EbErrorType svt_av1_enc_set_parameter(
 
     // Acquire Config Mutex
     svt_block_on_mutex(enc_handle->scs_instance_array[instance_index]->config_mutex);
-
-
-
-
-    set_default_configuration_parameters(
-        enc_handle->scs_instance_array[instance_index]->scs_ptr);
 
     copy_api_from_app(
         enc_handle->scs_instance_array[instance_index]->scs_ptr,
