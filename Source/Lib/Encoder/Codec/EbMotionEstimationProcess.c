@@ -351,7 +351,30 @@ void set_me_sr_adjustment_ctrls(MeContext *context_ptr, uint8_t sr_adjustment_le
         }
     }
 }
-
+/*set the skip_frame flag for ipp*/
+void set_skip_frame_in_ipp(PictureParentControlSet * pcs,MeContext *ctx) {
+    ctx->skip_frame = 0;
+    if (!pcs->scs_ptr->ipp_pass_ctrls.skip_frame_first_pass) {
+        if (pcs->scs_ptr->static_config.enc_mode < ENC_M8)
+            ctx->skip_frame = 0;
+        else if (pcs->scs_ptr->static_config.pass == ENC_SINGLE_PASS)
+            if (pcs->picture_number > 3 && pcs->picture_number % 4 > 0)
+                ctx->skip_frame = 1;
+    }
+    else {
+        if ((pcs->scs_ptr->ipp_pass_ctrls.skip_frame_first_pass == 1) &&
+            (pcs->picture_number % 8 > 0))
+            ctx->skip_frame = 1;
+        else if ((pcs->scs_ptr->ipp_pass_ctrls.skip_frame_first_pass == 2) &&
+            (pcs->picture_number > 7 && pcs->picture_number % 8 > 0))
+            ctx->skip_frame = 1;
+        else
+            if (pcs->picture_number > 3 && pcs->picture_number % 4 > 0)
+                ctx->skip_frame = 1;
+            else
+                ctx->skip_frame = 0;
+    }
+}
 /*configure PreHme control*/
 void set_prehme_ctrls(MeContext *context, uint8_t level) {
     PreHmeCtrls *ctrl = &context->prehme_ctrl;
@@ -526,6 +549,8 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
         context_ptr->me_context_ptr->me_early_exit_th = BLOCK_SIZE_64 * BLOCK_SIZE_64 * 8;
     else
         context_ptr->me_context_ptr->me_early_exit_th = BLOCK_SIZE_64 * BLOCK_SIZE_64 * 9;
+
+    context_ptr->me_context_ptr->skip_frame = 0;
     return return_error;
 };
 void open_loop_first_pass(struct PictureParentControlSet *ppcs_ptr,
@@ -617,6 +642,7 @@ EbErrorType tf_signal_derivation_me_kernel_oq(PictureParentControlSet *  pcs_ptr
     context_ptr->me_context_ptr->stat_factor             = 100;
     context_ptr->me_context_ptr->reduce_hme_l0_sr_th_min = 0;
     context_ptr->me_context_ptr->reduce_hme_l0_sr_th_max = 0;
+    context_ptr->me_context_ptr->skip_frame = 0;
     return return_error;
 };
 

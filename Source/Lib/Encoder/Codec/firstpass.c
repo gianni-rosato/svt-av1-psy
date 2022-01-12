@@ -663,6 +663,7 @@ void *set_first_pass_me_hme_params_oq(MeContext *me_context_ptr, SequenceControl
 void set_me_hme_ref_prune_ctrls(MeContext *context_ptr, uint8_t prune_level);
 void set_me_sr_adjustment_ctrls(MeContext *context_ptr, uint8_t sr_adjustment_level);
 void set_prehme_ctrls(MeContext *context, uint8_t level);
+void set_skip_frame_in_ipp(PictureParentControlSet *  pcs, MeContext *ctx);
 /******************************************************
 * Derive ME Settings for first pass
   Input   : encoder mode and tune
@@ -711,6 +712,7 @@ EbErrorType first_pass_signal_derivation_me_kernel(SequenceControlSet *       sc
     context_ptr->me_context_ptr->prune_me_candidates_th = 0; // No impact on tf
     context_ptr->me_context_ptr->use_best_unipred_cand_only = 0; // No impact on tf
     set_prehme_ctrls(context_ptr->me_context_ptr, 0);
+    set_skip_frame_in_ipp(pcs_ptr, context_ptr->me_context_ptr);
     return return_error;
 };
 
@@ -1314,21 +1316,7 @@ void open_loop_first_pass(PictureParentControlSet *  ppcs_ptr,
     me_context_ptr->me_context_ptr->min_frame_size = MIN(ppcs_ptr->aligned_height,
                                                          ppcs_ptr->aligned_width);
     // Perform the me for the first pass for each segment
-    if (!ppcs_ptr->scs_ptr->ipp_pass_ctrls.skip_frame_first_pass)
-        me_context_ptr->me_context_ptr->skip_frame = 0;
-    else {
-        if ((ppcs_ptr->scs_ptr->ipp_pass_ctrls.skip_frame_first_pass == 1) &&
-            (ppcs_ptr->picture_number % 8 > 0))
-            me_context_ptr->me_context_ptr->skip_frame = 1;
-        else if ((ppcs_ptr->scs_ptr->ipp_pass_ctrls.skip_frame_first_pass == 2) &&
-                 (ppcs_ptr->picture_number > 7 && ppcs_ptr->picture_number % 8 > 0))
-            me_context_ptr->me_context_ptr->skip_frame = 1;
-        else
-            if (ppcs_ptr->picture_number > 3 && ppcs_ptr->picture_number % 4 > 0)
-            me_context_ptr->me_context_ptr->skip_frame = 1;
-        else
-            me_context_ptr->me_context_ptr->skip_frame = 0;
-    }
+
     me_context_ptr->me_context_ptr->bypass_blk_step =
         ppcs_ptr->scs_ptr->ipp_pass_ctrls.bypass_blk_step
         ?
