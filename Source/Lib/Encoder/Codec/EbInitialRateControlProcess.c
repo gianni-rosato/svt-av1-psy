@@ -198,7 +198,7 @@ uint8_t inj_to_tpl_group(PictureParentControlSet *pcs) {
 
     return inj;
 }
-#if CLN_TPL_GROUP
+
 // validate pictures that will be used by the tpl algorithm based on tpl opts
 void validate_pic_for_tpl(PictureParentControlSet *pcs, uint32_t pic_index) {
     // Check wether the i-th pic already exists in the tpl group
@@ -226,7 +226,7 @@ void validate_pic_for_tpl(PictureParentControlSet *pcs, uint32_t pic_index) {
         }
     }
 }
-#endif
+
 /*
  copy the number of pcs entries from the the output queue to extended  buffer
 */
@@ -263,7 +263,6 @@ void store_extended_group(PictureParentControlSet *pcs, InitialRateControlContex
         SVT_LOG("\n");
     }
 #endif
-#if CLN_TPL_GROUP
     //new tpl group needs to stop at the second I
     pcs->tpl_group_size = 0;
     memset(pcs->tpl_valid_pic, 0, MAX_TPL_EXT_GROUP_SIZE * sizeof(uint8_t));
@@ -313,80 +312,6 @@ void store_extended_group(PictureParentControlSet *pcs, InitialRateControlContex
                 break;
         }
     }
-#else
-    //new tpl group needs to stop at the second I
-    pcs->ntpl_group_size = 0;
-    uint8_t is_gop_end   = 0;
-    int64_t last_intra_mg_id;
-    uint32_t mg_size;
-    if (pcs->scs_ptr->enable_adaptive_mini_gop == 0) {
-        mg_size = 1 << pcs->scs_ptr->static_config.hierarchical_levels;
-    } else {
-        mg_size = 1 << pcs->scs_ptr->max_heirachical_level;
-    }
-    uint32_t limited_tpl_group_size = pcs->slice_type == I_SLICE
-        ? MIN(1 + (pcs->scs_ptr->tpl_lad_mg + 1) * mg_size, pcs->ext_group_size)
-        : MIN((pcs->scs_ptr->tpl_lad_mg + 1) * mg_size, pcs->ext_group_size);
-    for (uint32_t i = 0; i < limited_tpl_group_size; i++) {
-        PictureParentControlSet *cur_pcs = pcs->ext_group[i];
-        if (cur_pcs->slice_type == I_SLICE) {
-            if (is_delayed_intra(cur_pcs)) {
-                if (i == 0) {
-                    pcs->ntpl_group[pcs->ntpl_group_size++] = cur_pcs;
-                } else
-                    break;
-            } else {
-                if (i == 0) {
-                    pcs->ntpl_group[pcs->ntpl_group_size++] = cur_pcs;
-                } else {
-                    pcs->ntpl_group[pcs->ntpl_group_size++] = cur_pcs;
-                    last_intra_mg_id                        = cur_pcs->ext_mg_id;
-                    is_gop_end                              = 1;
-                }
-            }
-        } else {
-            if (is_gop_end == 0)
-                pcs->ntpl_group[pcs->ntpl_group_size++] = cur_pcs;
-            else if (cur_pcs->ext_mg_id == last_intra_mg_id)
-                pcs->ntpl_group[pcs->ntpl_group_size++] = cur_pcs;
-            else
-                break;
-        }
-    }
-    {
-        pcs->tpl_group_size = pcs->ntpl_group_size;
-        memset(pcs->tpl_valid_pic, 0, MAX_TPL_EXT_GROUP_SIZE * sizeof(uint8_t));
-        pcs->tpl_valid_pic[0]   = 1;
-        pcs->used_tpl_frame_num = 0;
-        for (uint32_t i = 0; i < pcs->ntpl_group_size; i++) {
-            pcs->tpl_group[i] = pcs->ntpl_group[i];
-            // Check wether the i-th pic already exists in the tpl group
-            if (!is_frame_already_exists(pcs, i, pcs->tpl_group[i]->picture_number)) {
-                // Discard non-ref pic from the tpl group
-                uint8_t inject_frame = inj_to_tpl_group(pcs->tpl_group[i]);
-                if (inject_frame) {
-                    if (pcs->slice_type != I_SLICE) {
-                        // Discard low important pictures from tpl group
-                        if (pcs->tpl_ctrls.tpl_opt_flag &&
-                            (pcs->tpl_ctrls.reduced_tpl_group >= 0)) {
-                            if (pcs->tpl_group[i]->temporal_layer_index <=
-                                pcs->tpl_ctrls.reduced_tpl_group) {
-                                pcs->tpl_valid_pic[i] = 1;
-                                pcs->used_tpl_frame_num++;
-                            }
-                        } else {
-                            pcs->tpl_valid_pic[i] = 1;
-                            pcs->used_tpl_frame_num++;
-                        }
-                    } else {
-                        pcs->tpl_valid_pic[i] = 1;
-                        pcs->used_tpl_frame_num++;
-                    }
-                }
-            }
-        }
-    }
-#endif
 #if LAD_MG_PRINT
     if (log) {
         SVT_LOG("\n NEW TPL group Pic:%lld  size:%i  \n", pcs->picture_number, pcs->ntpl_group_size);
@@ -577,11 +502,7 @@ void *initial_rate_control_kernel(void *input_ptr) {
                     // Release Pa Ref pictures when not needed
                     // Don't release if superres recode loop is actived (auto-dual or auto-all mode)
                     if (pcs_ptr->superres_total_recode_loop == 0) { // QThreshold or auto-solo mode
-#if CLN_TPL
                         if (pcs_ptr->tpl_ctrls.enable) {
-#else
-                        if (scs_ptr->static_config.enable_tpl_la) {
-#endif
                             for (uint32_t i = 0; i < pcs_ptr->tpl_group_size; i++) {
                                 if (pcs_ptr->tpl_group[i]->slice_type == P_SLICE) {
                                     if (pcs_ptr->tpl_group[i]->ext_mg_id == pcs_ptr->ext_mg_id + 1)
@@ -642,11 +563,7 @@ void *initial_rate_control_kernel(void *input_ptr) {
                 }
             }
             // perform tpl_la on unscaled frames only
-#if CLN_TPL
             if (pcs_ptr->tpl_ctrls.enable && !pcs_ptr->frame_superres_enabled) {
-#else
-            if (scs_ptr->static_config.enable_tpl_la && !pcs_ptr->frame_superres_enabled) {
-#endif
                 svt_set_cond_var(&pcs_ptr->me_ready, 1);
             }
 
@@ -655,11 +572,7 @@ void *initial_rate_control_kernel(void *input_ptr) {
             //   1. TPL is OFF and
             //   2. super-res mode is NONE or FIXED or RANDOM.
             //     For other super-res modes, pa_ref_objs are needed in TASK_SUPERRES_RE_ME task
-#if CLN_TPL
             if (pcs_ptr->tpl_ctrls.enable == 0 &&
-#else
-            if (scs_ptr->static_config.enable_tpl_la == 0 &&
-#endif
                 scs_ptr->static_config.superres_mode <= SUPERRES_RANDOM)
                 release_pa_reference_objects(scs_ptr, pcs_ptr);
 
@@ -672,11 +585,7 @@ void *initial_rate_control_kernel(void *input_ptr) {
 #if LAD_MG_PRINT
             print_lad_queue(context_ptr,0);
 #endif
-#if CLN_TPL
             uint8_t lad_queue_pass_thru = !(pcs_ptr->tpl_ctrls.enable &&
-#else
-            uint8_t lad_queue_pass_thru = !(scs_ptr->static_config.enable_tpl_la &&
-#endif
                                             !pcs_ptr->frame_superres_enabled);
             process_lad_queue(context_ptr, lad_queue_pass_thru);
         }

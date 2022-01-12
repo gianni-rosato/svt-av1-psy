@@ -100,10 +100,6 @@ typedef struct TfControls {
         noise_adjust_future_pics; // Specifies whether num_future_pics will be incremented or not based on the noise level of the central frame(0: OFF or 1 : ON)
     uint8_t
         use_intra_for_noise_est; // Specifies whether to use the key- rame noise level for all inputs or to re - compute the noise level for each input
-#if !OPT_REMOVE_HIST
-    uint8_t
-        activity_adjust_th; // Specifies whether num_past_picsand num_future_pics will be decremented or not based on the activity of the outer reference frame(s) compared to the central frame(∞: OFF, else remove the reference frame if the cumulative differences between the histogram bins of the central frameand the histogram bins of the reference frame is higher than activity_adjust_th
-#endif
     uint8_t
         max_num_past_pics; // Specifies the maximum number of frame(s) from past(after all adjustments)
     uint8_t

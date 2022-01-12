@@ -6677,7 +6677,6 @@ static const uint16_t eb_av1_var_offs_hbd[MAX_SB_SIZE] = {
     512, 512, 512, 512, 512, 512, 512, 512, 512, 512, 512, 512, 512, 512, 512, 512, 512, 512, 512,
     512, 512, 512, 512, 512, 512, 512, 512, 512, 512, 512, 512, 512, 512};
 
-#if FIX_CHROMA_VQ
 // Detect blocks that whose chroma component is important (used as a detector for chroma TX shortcuts in reg. PD1 and LPD1)
 // Update ctx->chroma_complexity accordingly
 void chroma_complexity_check_pred(ModeDecisionContext *ctx,
@@ -6802,7 +6801,7 @@ void chroma_complexity_check_pred(ModeDecisionContext *ctx,
         }
     }
 }
-#endif
+
 // Detect blocks that whose chroma component is important (used as a detector for skipping the chroma TX path in LPD1)
 COMPONENT_TYPE chroma_complexity_check(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
                                        ModeDecisionCandidate *candidate_ptr,
@@ -6966,14 +6965,11 @@ COMPONENT_TYPE chroma_complexity_check(PictureControlSet *pcs_ptr, ModeDecisionC
             return COMPONENT_CHROMA_CR;
         }
     }
-#if FIX_CHROMA_VQ
+
     /* For INTRA blocks, if the chroma variance of the block is high, perform chroma. Can also use variance check as an additional
     check for INTER blocks. */
     if (candidate_ptr->type == INTRA_MODE || context_ptr->lpd1_tx_ctrls.chroma_detector_level <= 2) {
-#else
-    else {
-    /* For INTRA blocks, if the chroma variance of the block is high, perform chroma. */
-#endif
+
         const AomVarianceFnPtr *fn_ptr = &mefn_ptr[context_ptr->blk_geom->bsize_uv];
         unsigned int            sse;
         unsigned int var_cb;
@@ -7010,12 +7006,8 @@ COMPONENT_TYPE chroma_complexity_check(PictureControlSet *pcs_ptr, ModeDecisionC
         int block_var_cr = ROUND_POWER_OF_TWO(
             var_cr, num_pels_log2_lookup[context_ptr->blk_geom->bsize_uv]);
 
-        // th controls how safe the detector is (can be changed in the future, or made a parameter)
-#if FIX_CHROMA_VQ
+        // th controls how safe the detector is
         uint16_t th = context_ptr->lpd1_tx_ctrls.chroma_detector_level <= 1 ? 75 : 150;
-#else
-        uint16_t th = 75;
-#endif
         if (block_var_cb > th && block_var_cr > th) {
             return COMPONENT_CHROMA;
         } else if (block_var_cb > th) {
@@ -7106,18 +7098,16 @@ void full_loop_core_light_pd1(PictureControlSet *pcs_ptr, BlkStruct *blk_ptr,
     uint8_t perform_chroma = candidate_ptr->block_has_coeff ||
         !(context_ptr->lpd1_tx_ctrls.zero_y_coeff_exit);
     COMPONENT_TYPE chroma_component = COMPONENT_CHROMA;
-#if FIX_CHROMA_VQ
     context_ptr->chroma_complexity = COMPONENT_LUMA;
-#endif
+
     // If going to skip chroma TX, detect if block is complex in chroma, and if so, force chroma to be performed.
     if (!perform_chroma) {
         if (context_ptr->lpd1_tx_ctrls.chroma_detector_level) {
             chroma_component = chroma_complexity_check(
                 pcs_ptr, context_ptr, candidate_ptr, input_picture_ptr, loc);
-#if FIX_CHROMA_VQ
+
             if (context_ptr->lpd1_tx_ctrls.chroma_detector_level <= 3)
                 context_ptr->chroma_complexity = chroma_component;
-#endif
         }
         else {
             chroma_component = COMPONENT_LUMA;
@@ -7146,14 +7136,14 @@ void full_loop_core_light_pd1(PictureControlSet *pcs_ptr, BlkStruct *blk_ptr,
         //Chroma Prediction
         svt_product_prediction_fun_table_light_pd1[candidate_ptr->type](
             context_ptr->hbd_mode_decision, context_ptr, pcs_ptr, candidate_buffer);
-#if FIX_CHROMA_VQ
+
         // Perform additional check to detect complex chroma blocks
         if (context_ptr->lpd1_tx_ctrls.chroma_detector_level && context_ptr->lpd1_tx_ctrls.chroma_detector_level <= 3 &&
             context_ptr->chroma_complexity != COMPONENT_CHROMA &&
             (context_ptr->use_tx_shortcuts_mds3 || context_ptr->lpd1_tx_ctrls.use_uv_shortcuts_on_y_coeffs)) {
             chroma_complexity_check_pred(context_ptr, candidate_buffer, input_picture_ptr, loc, 0/*use_var*/);
         }
-#endif
+
         //CHROMA
         full_loop_chroma_light_pd1(pcs_ptr,
                                    context_ptr,
@@ -7402,7 +7392,6 @@ void full_loop_core(PictureControlSet *pcs_ptr, BlkStruct *blk_ptr,
     cb_coeff_bits = 0;
     cr_coeff_bits = 0;
 
-#if FIX_CHROMA_VQ
     context_ptr->chroma_complexity = COMPONENT_LUMA;
     if (context_ptr->tx_shortcut_ctrls.chroma_detector_level &&
         context_ptr->md_stage == MD_STAGE_3 &&
@@ -7416,7 +7405,7 @@ void full_loop_core(PictureControlSet *pcs_ptr, BlkStruct *blk_ptr,
         chroma_complexity_check_pred(
             context_ptr, candidate_buffer, input_picture_ptr, &loc, 1/*use_var*/);
     }
-#endif
+
     // FullLoop and TU search
     uint16_t cb_qindex = context_ptr->qp_index;
     if (context_ptr->md_staging_skip_full_chroma == EB_FALSE) {

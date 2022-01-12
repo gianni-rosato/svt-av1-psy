@@ -529,9 +529,7 @@ typedef struct MotionEstimationData {
     double *tpl_sb_rdmult_scaling_factors;
 } MotionEstimationData;
 typedef struct TplControls {
-#if CLN_TPL
     uint8_t              enable; // 0: TPL OFF; 1: TPL ON
-#endif
     uint8_t              tpl_opt_flag; // 0:OFF 1:ON - TPL optimizations : no rate, only DC
     uint8_t              enable_tpl_qps; // 0:OFF 1:ON - QPS in TPL
     uint8_t              disable_intra_pred_nref; // 0:OFF 1:ON - Disable intra prediction in NREF
@@ -625,9 +623,6 @@ typedef struct CdefControls {
 typedef struct List0OnlyBase {
     uint8_t  enabled;
     uint16_t noise_variance_th;
-#if !OPT_REMOVE_HIST
-    uint32_t ahd_mult;
-#endif
 } List0OnlyBase;
 typedef struct DlfCtrls {
     uint8_t enabled;
@@ -741,9 +736,7 @@ typedef struct PictureParentControlSet {
     uint32_t         pre_assignment_buffer_count;
     uint16_t         pic_avg_variance;
     EbBool           scene_transition_flag[MAX_NUM_OF_REF_PIC_LIST];
-#if !OPT_REMOVE_AVG_INTENSITY
-    uint8_t          average_intensity[3];
-#endif
+
     // Histograms
     uint32_t ****picture_histogram;
     uint64_t     average_intensity_per_region[MAX_NUMBER_OF_REGIONS_IN_WIDTH]
@@ -989,15 +982,8 @@ typedef struct PictureParentControlSet {
 
     int64_t ext_mg_id;
     int64_t ext_mg_size; //same as mg expect for MGops with [LDP-I] which are split into 2
-#if !CLN_TPL_GROUP
-    struct PictureParentControlSet
-        *    ntpl_group[MAX_TPL_EXT_GROUP_SIZE]; //new tpl group formed the extended group
-#endif
     uint8_t  tpl_valid_pic[MAX_TPL_EXT_GROUP_SIZE];
     uint8_t  used_tpl_frame_num;
-#if !CLN_TPL_GROUP
-    uint32_t ntpl_group_size;
-#endif
 
     // Tune TPL for better chroma.Only for 240P
     uint8_t      tune_tpl_for_chroma;

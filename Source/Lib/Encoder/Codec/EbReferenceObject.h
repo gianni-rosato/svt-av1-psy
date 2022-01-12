@@ -39,9 +39,6 @@ typedef struct EbReferenceObject {
     uint8_t              tmp_layer_idx;
     EbBool               is_scene_change;
     uint16_t             pic_avg_variance;
-#if !OPT_REMOVE_AVG_INTENSITY
-    uint8_t              average_intensity;
-#endif
     AomFilmGrain         film_grain_params; //Film grain parameters for a reference frame
     int8_t               sg_frame_ep;
     FRAME_CONTEXT        frame_context;

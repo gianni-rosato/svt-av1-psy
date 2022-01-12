@@ -566,11 +566,7 @@ void *packetization_kernel(void *input_ptr) {
             if (parent_pcs_ptr->superres_total_recode_loop > 0) {
                 // Release pa_ref_objs
                 // Delayed call from Initial Rate Control process / Source Based Operations process
-#if CLN_TPL
                 if (parent_pcs_ptr->tpl_ctrls.enable) {
-#else
-                if (scs_ptr->static_config.enable_tpl_la) {
-#endif
                     if (parent_pcs_ptr->temporal_layer_index == 0) {
                         for (uint32_t i = 0; i < parent_pcs_ptr->tpl_group_size; i++) {
                             if (parent_pcs_ptr->tpl_group[i]->slice_type == P_SLICE) {

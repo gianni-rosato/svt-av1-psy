@@ -1786,19 +1786,11 @@ void full_loop_chroma_light_pd1(PictureControlSet *pcs_ptr, ModeDecisionContext 
     const TxSize tx_size_uv = context_ptr->blk_geom->txsize_uv[0][0];
 
     EB_TRANS_COEFF_SHAPE pf_shape = context_ptr->pf_ctrls.pf_shape;
-#if FIX_CHROMA_VQ
     if (context_ptr->use_tx_shortcuts_mds3 && (context_ptr->chroma_complexity == COMPONENT_LUMA || context_ptr->chroma_complexity == COMPONENT_CHROMA_CB)) {
-#else
-    if (context_ptr->use_tx_shortcuts_mds3) {
-#endif
         pf_shape = N4_SHAPE;
     } else {
         uint8_t use_pfn4_cond = 0;
-#if FIX_CHROMA_VQ
         if (context_ptr->lpd1_tx_ctrls.use_uv_shortcuts_on_y_coeffs && (context_ptr->chroma_complexity == COMPONENT_LUMA || context_ptr->chroma_complexity == COMPONENT_CHROMA_CB)) {
-#else
-        if (context_ptr->lpd1_tx_ctrls.use_uv_shortcuts_on_y_coeffs) {
-#endif
             const uint16_t th = ((context_ptr->blk_geom->tx_width_uv[0][0] >> 4) *
                                  (context_ptr->blk_geom->tx_height_uv[0][0] >> 4));
             use_pfn4_cond     = (candidate_buffer->candidate_ptr->count_non_zero_coeffs < th) ||
@@ -1888,7 +1880,7 @@ void full_loop_chroma_light_pd1(PictureControlSet *pcs_ptr, ModeDecisionContext 
         candidate_buffer->candidate_ptr->u_has_coeff = (candidate_buffer->candidate_ptr->eob[1][0] >
                                                         0);
     }
-#if FIX_CHROMA_VQ
+
     pf_shape = context_ptr->pf_ctrls.pf_shape;
     if (context_ptr->use_tx_shortcuts_mds3 && (context_ptr->chroma_complexity == COMPONENT_LUMA || context_ptr->chroma_complexity == COMPONENT_CHROMA_CR)) {
         pf_shape = N4_SHAPE;
@@ -1912,7 +1904,7 @@ void full_loop_chroma_light_pd1(PictureControlSet *pcs_ptr, ModeDecisionContext 
         bwidth = MAX((bwidth >> pf_shape), 4);
         bheight = (bheight >> pf_shape);
     }
-#endif
+
     if (component_type == COMPONENT_CHROMA || component_type == COMPONENT_CHROMA_CR) {
         //Cr Residual
         residual_kernel(input_picture_ptr->buffer_cr,
@@ -2067,20 +2059,12 @@ void full_loop_r(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
                                         candidate_buffer->residual_ptr->stride_cr)) >>
             1;
         EB_TRANS_COEFF_SHAPE pf_shape = context_ptr->pf_ctrls.pf_shape;
-#if FIX_CHROMA_VQ
         if (context_ptr->md_stage == MD_STAGE_3 && context_ptr->use_tx_shortcuts_mds3 && context_ptr->chroma_complexity == COMPONENT_LUMA) {
-#else
-        if (context_ptr->md_stage == MD_STAGE_3 && context_ptr->use_tx_shortcuts_mds3) {
-#endif
             pf_shape = N4_SHAPE;
         }
         // for chroma path, use luma coeff info to make shortcut decisions (available even if MDS1 is skipped)
         else if (context_ptr->tx_shortcut_ctrls.apply_pf_on_coeffs &&
-#if FIX_CHROMA_VQ
             context_ptr->md_stage == MD_STAGE_3 && context_ptr->chroma_complexity == COMPONENT_LUMA) {
-#else
-                 context_ptr->md_stage == MD_STAGE_3) {
-#endif
             uint8_t use_pfn4_cond = 0;
 
             const uint16_t th = ((context_ptr->blk_geom->tx_width_uv[tx_depth][txb_itr] >> 4) *

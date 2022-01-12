@@ -2163,11 +2163,7 @@ void *source_based_operations_kernel(void *input_ptr) {
         context_ptr->complete_sb_count = 0;
 
         if (in_results_ptr->superres_recode) {
-#if CLN_TPL
             if (pcs_ptr->tpl_ctrls.enable) {
-#else
-            if (scs_ptr->static_config.enable_tpl_la) {
-#endif
                 // regenerate r0 and tpl_beta since they are frame size dependency
                 generate_r0beta(pcs_ptr);
             }
@@ -2179,11 +2175,7 @@ void *source_based_operations_kernel(void *input_ptr) {
         }
 
         // Get TPL ME
-#if CLN_TPL
         if (pcs_ptr->tpl_ctrls.enable) {
-#else
-        if (scs_ptr->static_config.enable_tpl_la) {
-#endif
             if (!pcs_ptr->frame_superres_enabled && pcs_ptr->temporal_layer_index == 0) {
                 tpl_prep_info(pcs_ptr);
                 tpl_mc_flow(scs_ptr->encode_context_ptr, scs_ptr, pcs_ptr, context_ptr);

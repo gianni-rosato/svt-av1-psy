@@ -435,10 +435,9 @@ typedef struct SequenceControlSet {
     *
     * Default is 0. */
     int speed_control_flag;
-#if CLN_TPL
+
     //Flag that will hold the tpl level, set at init time, level 0 is off, other levels are set by preset
     uint8_t tpl_level;
-#endif
 } SequenceControlSet;
 
 typedef struct EbSequenceControlSetInitData {

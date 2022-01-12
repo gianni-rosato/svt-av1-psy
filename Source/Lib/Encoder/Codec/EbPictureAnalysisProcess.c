@@ -2216,68 +2216,7 @@ void compute_picture_spatial_statistics(SequenceControlSet *     scs_ptr,
 
     return;
 }
-#if !OPT_REMOVE_AVG_INTENSITY
-void calculate_input_average_intensity(SequenceControlSet *     scs_ptr,
-                                       PictureParentControlSet *pcs_ptr,
-                                       EbPictureBufferDesc *    input_picture_ptr,
-                                       uint64_t                 sum_avg_intensity_ttl_regions_luma,
-                                       uint64_t                 sum_avg_intensity_ttl_regions_cb,
-                                       uint64_t                 sum_avg_intensity_ttl_regions_cr) {
-    if (scs_ptr->scd_mode == SCD_MODE_0) {
-        uint16_t block_index_in_width;
-        uint16_t block_index_in_height;
-        uint64_t mean = 0;
 
-        const uint16_t stride_y = input_picture_ptr->stride_y;
-        // Loop over 8x8 blocks and calculates the mean value
-        if (scs_ptr->block_mean_calc_prec == BLOCK_MEAN_PREC_FULL) {
-            for (block_index_in_height = 0; input_picture_ptr->height >> 3 > block_index_in_height;
-                 ++block_index_in_height) {
-                for (block_index_in_width = 0; input_picture_ptr->width >> 3 > block_index_in_width;
-                     ++block_index_in_width)
-                    mean += svt_compute_mean_8x8(
-                        &(input_picture_ptr->buffer_y[(block_index_in_width << 3) +
-                                                      (block_index_in_height << 3) *
-                                                          input_picture_ptr->stride_y]),
-                        input_picture_ptr->stride_y,
-                        8,
-                        8);
-            }
-        } else {
-            for (block_index_in_height = 0; input_picture_ptr->height >> 3 > block_index_in_height;
-                 ++block_index_in_height) {
-                for (block_index_in_width = 0; input_picture_ptr->width >> 3 > block_index_in_width;
-                     ++block_index_in_width)
-                    mean += svt_compute_sub_mean_8x8(
-                        &(input_picture_ptr->buffer_y[(block_index_in_width << 3) +
-                                                      (block_index_in_height << 3) * stride_y]),
-                        stride_y);
-            }
-        }
-        mean = ((mean + ((input_picture_ptr->height * input_picture_ptr->width) >> 7)) /
-                ((input_picture_ptr->height * input_picture_ptr->width) >> 6));
-        mean = (mean + (1 << (MEAN_PRECISION - 1))) >> MEAN_PRECISION;
-        pcs_ptr->average_intensity[0] = (uint8_t)mean;
-    }
-
-    else {
-        pcs_ptr->average_intensity[0] = (uint8_t)(
-            (sum_avg_intensity_ttl_regions_luma +
-             ((input_picture_ptr->width * input_picture_ptr->height) >> 1)) /
-            (input_picture_ptr->width * input_picture_ptr->height));
-        pcs_ptr->average_intensity[1] = (uint8_t)(
-            (sum_avg_intensity_ttl_regions_cb +
-             ((input_picture_ptr->width * input_picture_ptr->height) >> 3)) /
-            ((input_picture_ptr->width * input_picture_ptr->height) >> 2));
-        pcs_ptr->average_intensity[2] = (uint8_t)(
-            (sum_avg_intensity_ttl_regions_cr +
-             ((input_picture_ptr->width * input_picture_ptr->height) >> 3)) /
-            ((input_picture_ptr->width * input_picture_ptr->height) >> 2));
-    }
-
-    return;
-}
-#endif
 /************************************************
  * Gathering statistics per picture
  ** Calculating the pixel intensity histogram bins per picture needed for SCD
@@ -2291,7 +2230,7 @@ void gathering_picture_statistics(SequenceControlSet *scs_ptr, PictureParentCont
     uint64_t sum_avg_intensity_ttl_regions_luma = 0;
     uint64_t sum_avg_intensity_ttl_regions_cb   = 0;
     uint64_t sum_avg_intensity_ttl_regions_cr   = 0;
-#if OPT_REMOVE_HIST
+
     // Histogram bins
     if (scs_ptr->static_config.scene_change_detection) {
         // Use 1/16 Luma for Histogram generation
@@ -2308,34 +2247,7 @@ void gathering_picture_statistics(SequenceControlSet *scs_ptr, PictureParentCont
             &sum_avg_intensity_ttl_regions_cr,
             4);
     }
-#else
-    // Histogram bins
-    // Use 1/16 Luma for Histogram generation
-    // 1/16 input ready
-    sub_sample_luma_generate_pixel_intensity_histogram_bins(
-        scs_ptr, pcs_ptr, sixteenth_decimated_picture_ptr, &sum_avg_intensity_ttl_regions_luma);
 
-    if (scs_ptr->static_config.scene_change_detection)
-
-        // Use 1/4 Chroma for Histogram generation
-        // 1/4 input not ready => perform operation on the fly
-        sub_sample_chroma_generate_pixel_intensity_histogram_bins(scs_ptr,
-                                                                  pcs_ptr,
-                                                                  input_picture_ptr,
-                                                                  &sum_avg_intensity_ttl_regions_cb,
-                                                                  &sum_avg_intensity_ttl_regions_cr,
-                                                                  4);
-#endif
-#if !OPT_REMOVE_AVG_INTENSITY
-    //
-    // Calculate the LUMA average intensity
-    calculate_input_average_intensity(scs_ptr,
-                                      pcs_ptr,
-                                      input_picture_ptr,
-                                      sum_avg_intensity_ttl_regions_luma,
-                                      sum_avg_intensity_ttl_regions_cb,
-                                      sum_avg_intensity_ttl_regions_cr);
-#endif
     compute_picture_spatial_statistics(scs_ptr, pcs_ptr, input_padded_picture_ptr, sb_total_count);
 
     return;

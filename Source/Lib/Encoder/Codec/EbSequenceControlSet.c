@@ -389,9 +389,8 @@ EbErrorType copy_sequence_control_set(SequenceControlSet *dst, SequenceControlSe
     dst->enable_adaptive_mini_gop      = src->enable_adaptive_mini_gop;
     dst->max_heirachical_level         = src->max_heirachical_level;
     dst->speed_control_flag            = src->speed_control_flag;
-#if CLN_TPL
     dst->tpl_level = src->tpl_level;
-#endif
+
     return EB_ErrorNone;
 }
 
