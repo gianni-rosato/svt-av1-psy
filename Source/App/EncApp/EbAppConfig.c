@@ -1776,7 +1776,7 @@ EbErrorType handle_stats_file(EbConfig *config, EncPass enc_pass,
 /******************************************
 * Verify Settings
 ******************************************/
-static EbErrorType verify_settings(EbConfig *config, uint32_t channel_number) {
+static EbErrorType app_verify_config(EbConfig *config, uint32_t channel_number) {
     EbErrorType return_error = EB_ErrorNone;
 
     // Check Input File
@@ -2621,7 +2621,7 @@ EbErrorType read_command_line(int32_t argc, char *const argv[], EncChannel *chan
             EncChannel *c = channels + index;
             if (c->return_error == EB_ErrorNone) {
                 EbConfig *config = c->config;
-                c->return_error  = verify_settings(config, index);
+                c->return_error  = app_verify_config(config, index);
                 // set inj_frame_rate to q16 format
                 if (c->return_error == EB_ErrorNone && config->injector == 1)
                     config->injector_frame_rate <<= 16;
