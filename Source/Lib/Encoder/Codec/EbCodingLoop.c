@@ -438,7 +438,7 @@ static void av1_encode_loop(PictureControlSet *pcs_ptr, EncDecContext *context_p
 
         if (count_non_zero_coeffs[0] == 0) {
             // INTER. Chroma follows Luma in transform type
-            if (blk_ptr->prediction_mode_flag == INTER_MODE) {
+            if (blk_ptr->prediction_mode_flag == INTER_MODE || blk_ptr->use_intrabc) {
                 txb_ptr->transform_type[PLANE_TYPE_Y]  = DCT_DCT;
                 txb_ptr->transform_type[PLANE_TYPE_UV] = DCT_DCT;
             } else { // INTRA
@@ -828,7 +828,7 @@ static void av1_encode_loop_16bit(PictureControlSet *pcs_ptr, EncDecContext *con
 
             if (count_non_zero_coeffs[0] == 0) {
                 // INTER. Chroma follows Luma in transform type
-                if (blk_ptr->prediction_mode_flag == INTER_MODE) {
+                if (blk_ptr->prediction_mode_flag == INTER_MODE || blk_ptr->use_intrabc) {
                     txb_ptr->transform_type[PLANE_TYPE_Y]  = DCT_DCT;
                     txb_ptr->transform_type[PLANE_TYPE_UV] = DCT_DCT;
                 } else { // INTRA
