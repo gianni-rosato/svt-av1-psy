@@ -2308,7 +2308,7 @@ EB_API EbErrorType svt_av1_enc_deinit(EbComponentType *svt_enc_component){
     return EB_ErrorNone;
 }
 
-EbErrorType svt_svt_enc_init_parameter(
+static EbErrorType svt_set_default_params(
     EbSvtAv1EncConfiguration * config_ptr);
 
 EbErrorType init_svt_av1_encoder_handle(
@@ -2343,7 +2343,7 @@ EB_API EbErrorType svt_av1_enc_init_handle(
 
     if (return_error == EB_ErrorNone) {
         ((EbComponentType*)(*p_handle))->p_application_private = p_app_data;
-        return_error = svt_svt_enc_init_parameter(config_ptr);
+        return_error = svt_set_default_params(config_ptr);
     }
     if (return_error != EB_ErrorNone) {
         svt_av1_enc_deinit(*p_handle);
@@ -4183,7 +4183,7 @@ static EbErrorType verify_settings(
 /**********************************
 Set Default Library Params
 **********************************/
-EbErrorType svt_svt_enc_init_parameter(
+static EbErrorType svt_set_default_params(
     EbSvtAv1EncConfiguration * config_ptr)
 {
     EbErrorType                  return_error = EB_ErrorNone;
