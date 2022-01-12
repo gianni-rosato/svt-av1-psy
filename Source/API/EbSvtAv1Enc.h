@@ -102,6 +102,13 @@ typedef enum {
     SUPERRES_AUTO_SEARCH_TYPES
 } SUPERRES_AUTO_SEARCH_TYPE;
 
+/** The SvtAv1IntraRefreshType is used to describe the intra refresh type.
+*/
+typedef enum SvtAv1IntraRefreshType {
+    SVT_AV1_FWDKF_REFRESH = 1,
+    SVT_AV1_KF_REFRESH = 2,
+} SvtAv1IntraRefreshType;
+
 typedef enum {
     SVT_AV1_STREAM_INFO_START                = 1,
     SVT_AV1_STREAM_INFO_FIRST_PASS_STATS_OUT = SVT_AV1_STREAM_INFO_START,
@@ -154,7 +161,7 @@ typedef struct EbSvtAv1EncConfiguration {
      * 2 = IDR, closed GOP.
      *
      * Default is 1. */
-    uint32_t intra_refresh_type;
+    SvtAv1IntraRefreshType intra_refresh_type;
     /* Number of hierarchical layers used to construct GOP.
      * Minigop size = 2^HierarchicalLevels.
      *

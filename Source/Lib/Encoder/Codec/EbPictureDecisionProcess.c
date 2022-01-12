@@ -1867,7 +1867,7 @@ EbErrorType signal_derivation_multi_processes_oq(
     // Set cqp_qps_model; 0: use fixed QP-Offsets, 1: QP-Offsets are funtion of the base_qp
     // Use cqp_qps_model 1 for only Open-GOP 6L RA and for only 4K
     if (pcs_ptr->enc_mode <= ENC_M2 && pcs_ptr->input_resolution == INPUT_SIZE_4K_RANGE &&
-        pcs_ptr->scs_ptr->static_config.intra_refresh_type == CRA_REFRESH &&
+        pcs_ptr->scs_ptr->static_config.intra_refresh_type == SVT_AV1_FWDKF_REFRESH &&
         pcs_ptr->hierarchical_levels >= 5 &&
         pcs_ptr->pred_structure == 2)
 
@@ -5771,14 +5771,14 @@ void* picture_decision_kernel(void *input_ptr)
                 // If an #IntraPeriodLength has passed since the last Intra, then introduce a CRA or IDR based on Intra Refresh type
                 else if (scs_ptr->static_config.intra_period_length != -1) {
                     pcs_ptr->cra_flag =
-                        (scs_ptr->static_config.intra_refresh_type != CRA_REFRESH) ?
+                        (scs_ptr->static_config.intra_refresh_type != SVT_AV1_FWDKF_REFRESH) ?
                         pcs_ptr->cra_flag :
                         ((encode_context_ptr->intra_period_position == (uint32_t)scs_ptr->static_config.intra_period_length) || (pcs_ptr->scene_change_flag == EB_TRUE)) ?
                         EB_TRUE :
                         pcs_ptr->cra_flag;
 
                     pcs_ptr->idr_flag =
-                        (scs_ptr->static_config.intra_refresh_type != IDR_REFRESH) ?
+                        (scs_ptr->static_config.intra_refresh_type != SVT_AV1_KF_REFRESH) ?
                         pcs_ptr->idr_flag :
                         ((encode_context_ptr->intra_period_position == (uint32_t)scs_ptr->static_config.intra_period_length) || (pcs_ptr->scene_change_flag == EB_TRUE)) ?
                         EB_TRUE :

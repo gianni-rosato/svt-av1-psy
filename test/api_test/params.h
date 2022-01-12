@@ -112,17 +112,15 @@ static const vector<int32_t> invalid_intra_period_length = {
  * 1 = CRA, open GOP.
  * 2 = IDR, closed GOP.
  *
- * Default is 1. */
-static const vector<uint32_t> default_intra_refresh_type = {
-    1,
+ * Default is 2. */
+static const vector<SvtAv1IntraRefreshType> default_intra_refresh_type = {
+    SVT_AV1_KF_REFRESH,
 };
-static const vector<uint32_t> valid_intra_refresh_type = {
-    1,  // CRA, open GOP
-    2,  // IDR, closed GOP
+static const vector<SvtAv1IntraRefreshType> valid_intra_refresh_type = {
+    SVT_AV1_FWDKF_REFRESH,  // CRA, open GOP
+    SVT_AV1_KF_REFRESH,  // IDR, closed GOP
 };
-static const vector<uint32_t> invalid_intra_refresh_type = {
-    0,
-    3,
+static const vector<SvtAv1IntraRefreshType> invalid_intra_refresh_type = {
 };
 
 /* Number of hierarchical layers used to construct GOP.

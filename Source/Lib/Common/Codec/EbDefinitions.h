@@ -2126,15 +2126,6 @@ typedef uint8_t EbPartMode;
 #define SIZE_nRx2N 7
 #define SIZE_PART_MODE 8
 
-/** The EbIntraRefreshType is used to describe the intra refresh type.
-*/
-typedef enum EbIntraRefreshType
-{
-    NO_REFRESH = 0,
-    CRA_REFRESH = 1,
-    IDR_REFRESH = 2
-}EbIntraRefreshType;
-
 #define SIZE_2Nx2N_PARTITION_MASK   (1 << SIZE_2Nx2N)
 #define SIZE_2NxN_PARTITION_MASK    (1 << SIZE_2NxN)
 #define SIZE_Nx2N_PARTITION_MASK    (1 << SIZE_Nx2N)

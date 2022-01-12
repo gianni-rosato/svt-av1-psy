@@ -3088,7 +3088,7 @@ void set_multi_pass_params(SequenceControlSet *scs_ptr)
             scs_ptr->static_config.enc_mode = MAX_ENC_PRESET;
             scs_ptr->static_config.look_ahead_distance = 0;
             scs_ptr->static_config.rate_control_mode = 0;
-            scs_ptr->static_config.intra_refresh_type = 2;
+            scs_ptr->static_config.intra_refresh_type = SVT_AV1_KF_REFRESH;
             scs_ptr->static_config.max_bit_rate = 0;
             scs_ptr->static_config.hierarchical_levels = 0;
             break;
@@ -3110,9 +3110,8 @@ void set_multi_pass_params(SequenceControlSet *scs_ptr)
                 scs_ptr->static_config.enc_mode = MAX_ENC_PRESET;
             scs_ptr->static_config.rate_control_mode = 0;
             scs_ptr->static_config.qp = 43;
-            scs_ptr->static_config.intra_refresh_type = 2;
+            scs_ptr->static_config.intra_refresh_type = SVT_AV1_KF_REFRESH;
             scs_ptr->static_config.max_bit_rate = 0;
-            scs_ptr->static_config.intra_refresh_type = 2;
             break;
         }
 
@@ -3124,7 +3123,7 @@ void set_multi_pass_params(SequenceControlSet *scs_ptr)
             else
                 scs_ptr->ipp_was_ds = config->rate_control_mode == 0 ? 1 : 0;
             scs_ptr->final_pass_preset = config->enc_mode;
-            scs_ptr->static_config.intra_refresh_type = 2;
+            scs_ptr->static_config.intra_refresh_type = SVT_AV1_KF_REFRESH;
             break;
         }
         default: {
@@ -3145,7 +3144,7 @@ void set_multi_pass_params(SequenceControlSet *scs_ptr)
     }
 
     if (scs_ptr->lap_enabled) {
-        scs_ptr->static_config.intra_refresh_type = 2;
+        scs_ptr->static_config.intra_refresh_type = SVT_AV1_KF_REFRESH;
     }
 
     if (scs_ptr->static_config.pass == ENC_MIDDLE_PASS && scs_ptr->final_pass_preset > ENC_M8)
@@ -3302,7 +3301,7 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
         scs_ptr->static_config.restricted_motion_vector = EB_FALSE;
         SVT_WARN("Restricted_motion_vector and SB 128x128 not supoorted, setting rmv to false\n");
     }
-    if (scs_ptr->static_config.intra_refresh_type == 1 && scs_ptr->static_config.hierarchical_levels != 4){
+    if (scs_ptr->static_config.intra_refresh_type == SVT_AV1_FWDKF_REFRESH && scs_ptr->static_config.hierarchical_levels != 4){
         scs_ptr->static_config.hierarchical_levels = 4;
         SVT_WARN("Fwd key frame is only supported for hierarchical levels 4 at this point. Hierarchical levels are set to 4\n");
     }

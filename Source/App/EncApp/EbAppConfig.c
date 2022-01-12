@@ -375,7 +375,10 @@ static void set_keyint(const char *value, EbConfig *cfg) {
     cfg->config.intra_period_length = keyint < 0 ? keyint : keyint - 1;
 }
 static void set_cfg_intra_refresh_type(const char *value, EbConfig *cfg) {
-    cfg->config.intra_refresh_type = strtol(value, NULL, 0);
+    switch (strtol(value, NULL, 0)) {
+    case 1: cfg->config.intra_refresh_type = SVT_AV1_FWDKF_REFRESH; break;
+    default: cfg->config.intra_refresh_type = SVT_AV1_KF_REFRESH; break;
+    }
 };
 static void set_look_ahead_distance(const char *value, EbConfig *cfg) {
     cfg->config.look_ahead_distance = strtol(value, NULL, 0);
