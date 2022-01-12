@@ -4132,6 +4132,11 @@ static EbErrorType verify_settings(
         return_error = EB_ErrorBadParameter;
     }
 
+    if (pass == 3 && config->rate_control_mode == 0) {
+        SVT_LOG("Error Instance %u: CRF does not support 3-pass\n", channel_number + 1);
+        return_error = EB_ErrorBadParameter;
+    }
+
     /* Warnings about the use of features that are incomplete */
 
     // color description
