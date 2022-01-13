@@ -290,7 +290,9 @@ void copy_rect(uint16_t *dst, int32_t dstride, const uint16_t *src, int32_t sstr
         for (int32_t j = 0; j < h; j++) dst[i * dstride + j] = src[i * sstride + j];
     }
 }
-
+/*
+ * Loop over the non-skip 8x8 blocks.  For each block, find the CDEF direction, then apply the specified filter.
+*/
 void svt_cdef_filter_fb(uint8_t *dst8, uint16_t *dst16, int32_t dstride, uint16_t *in, int32_t xdec,
                         int32_t ydec, uint8_t dir[CDEF_NBLOCKS][CDEF_NBLOCKS], int32_t *dirinit,
                         int32_t var[CDEF_NBLOCKS][CDEF_NBLOCKS], int32_t pli, CdefList *dlist,

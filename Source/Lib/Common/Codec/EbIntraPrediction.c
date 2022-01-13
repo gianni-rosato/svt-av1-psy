@@ -362,7 +362,10 @@ void svt_av1_dr_prediction_z2_c(uint8_t *dst, ptrdiff_t stride, int32_t bw, int3
 }
 
 /* clang-format on */
-
+/************************************************************************************************
+* svt_cfl_luma_subsampling_420_lbd_c
+* Subsample luma samples to match chroma size. Low bit depth and C
+************************************************************************************************/
 void svt_cfl_luma_subsampling_420_lbd_c(const uint8_t *input, int32_t input_stride,
                                         int16_t *output_q3, int32_t width, int32_t height) {
     for (int32_t j = 0; j < height; j += 2) {
@@ -374,6 +377,10 @@ void svt_cfl_luma_subsampling_420_lbd_c(const uint8_t *input, int32_t input_stri
         output_q3 += CFL_BUF_LINE;
     }
 }
+/************************************************************************************************
+* svt_cfl_luma_subsampling_420_hbd_c
+* Subsample luma samples to match chroma size. High bit depth and C
+************************************************************************************************/
 void svt_cfl_luma_subsampling_420_hbd_c(const uint16_t *input, int32_t input_stride,
                                         int16_t *output_q3, int32_t width, int32_t height) {
     for (int32_t j = 0; j < height; j += 2, input += input_stride << 1, output_q3 += CFL_BUF_LINE) {
@@ -383,6 +390,10 @@ void svt_cfl_luma_subsampling_420_hbd_c(const uint16_t *input, int32_t input_str
         }
     }
 }
+/************************************************************************************************
+* svt_subtract_average_c
+* Calculate the DC value by averaging over all sample. Subtract DC value to get AC values In C
+************************************************************************************************/
 void svt_subtract_average_c(int16_t *pred_buf_q3, int32_t width, int32_t height,
                             int32_t round_offset, int32_t num_pel_log2) {
     int32_t  sum_q3   = 0;

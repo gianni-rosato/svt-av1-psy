@@ -23,6 +23,10 @@
 //#include "EbLog.h"
 
 void get_recon_pic(PictureControlSet *pcs_ptr, EbPictureBufferDesc **recon_ptr, EbBool is_highbd);
+/*************************************************************************************************
+ * svt_av1_loop_filter_init
+ * Initialize the loop filter limits and thresholds
+ *************************************************************************************************/
 void svt_av1_loop_filter_init(PictureControlSet *pcs_ptr) {
     //assert(MB_MODE_COUNT == n_elements(mode_lf_lut));
     LoopFilterInfoN *  lfi = &pcs_ptr->parent_pcs_ptr->lf_info;
@@ -294,7 +298,10 @@ static TxSize set_lpf_parameters(Av1DeblockingParameters *const params, const ui
 
     return ts;
 }
-
+/*************************************************************************************************
+* svt_av1_filter_block_plane_vert
+* Filter all the vertical edges in the same superblock
+*************************************************************************************************/
 void svt_av1_filter_block_plane_vert(const PictureControlSet *const pcs_ptr, const int32_t plane,
                                      const MacroblockdPlane *const plane_ptr, const uint32_t mi_row,
                                      const uint32_t mi_col) {
@@ -419,7 +426,10 @@ void svt_av1_filter_block_plane_vert(const PictureControlSet *const pcs_ptr, con
         }
     }
 }
-
+/*************************************************************************************************
+* svt_av1_filter_block_plane_horz
+* Filter all the horizontal edges in the same superblock
+*************************************************************************************************/
 void svt_av1_filter_block_plane_horz(const PictureControlSet *const pcs_ptr, const int32_t plane,
                                      const MacroblockdPlane *const plane_ptr, const uint32_t mi_row,
                                      const uint32_t mi_col) {
@@ -551,8 +561,10 @@ void svt_av1_filter_block_plane_horz(const PictureControlSet *const pcs_ptr, con
         }
     }
 }
-
-// New function to filter each sb (64x64)
+/*************************************************************************************************
+* loop_filter_sb
+* Loop over all superblocks in the picture and filter each superblock
+*************************************************************************************************/
 void loop_filter_sb(EbPictureBufferDesc *frame_buffer, //reconpicture,
                     //Yv12BufferConfig *frame_buffer,
                     PictureControlSet *pcs_ptr, int32_t mi_row, int32_t mi_col, int32_t plane_start,
@@ -587,7 +599,7 @@ void loop_filter_sb(EbPictureBufferDesc *frame_buffer, //reconpicture,
             continue;
 
         if (frm_hdr->loop_filter_params.combine_vert_horz_lf) {
-            // filter all vertical and horizontal edges in every 64x64 super block
+            // filter all vertical and horizontal edges in every super block
             // filter vertical edges
             svt_av1_setup_dst_planes(pcs_ptr,
                                      pd,
@@ -654,7 +666,10 @@ void loop_filter_sb(EbPictureBufferDesc *frame_buffer, //reconpicture,
         }
     }
 }
-
+/*************************************************************************************************
+* svt_av1_loop_filter_frame
+* Apply loop filtering to the frame based on the selected loop filter parameters
+*************************************************************************************************/
 void svt_av1_loop_filter_frame(EbPictureBufferDesc *frame_buffer, PictureControlSet *pcs_ptr,
                                int32_t plane_start, int32_t plane_end) {
     SequenceControlSet *scs_ptr = (SequenceControlSet *)
@@ -904,7 +919,11 @@ uint64_t picture_sse_calculations(PictureControlSet *pcs_ptr, EbPictureBufferDes
         return 0;
     }
 }
-
+/*************************************************************************************************
+* try_filter_frame
+* Sett the filter levels, compute the filtering sse, and resett the recon buffer.
+* Returns the filtering SSE
+*************************************************************************************************/
 static int64_t try_filter_frame(
     //const Yv12BufferConfig *sd,
     //Av1Comp *const cpi,
@@ -949,6 +968,10 @@ static int64_t try_filter_frame(
 
     return filt_err;
 }
+/*************************************************************************************************
+* search_filter_level
+* Perform a search for the best filter level for the picture data plane
+*************************************************************************************************/
 static int32_t search_filter_level(
     //const Yv12BufferConfig *sd, Av1Comp *cpi,
     EbPictureBufferDesc *sd, // source
@@ -1052,6 +1075,10 @@ static int32_t search_filter_level(
         *best_cost_ret = (double)best_err; //RDCOST_DBL(x->rdmult, 0, best_err);
     return filt_best;
 }
+/*************************************************************************************************
+* svt_av1_pick_filter_level
+* Choose the optimal loop filter levels
+*************************************************************************************************/
 EbErrorType svt_av1_pick_filter_level(
     EbPictureBufferDesc *srcBuffer, // source input
     PictureControlSet *pcs_ptr, LpfPickMethod method) {

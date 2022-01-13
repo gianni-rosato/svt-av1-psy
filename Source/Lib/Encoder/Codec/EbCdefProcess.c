@@ -82,6 +82,11 @@ EbErrorType cdef_context_ctor(EbThreadContext *  thread_context_ptr,
 }
 
 #define default_mse_uv 1040400
+/* Search for the best filter strength pair for each 64x64 filter block.
+ *
+ * For each 64x64 filter block and each plane, search the allowable filter strength pairs.
+ * Call cdef_filter_fb() to perform filtering, then compute the MSE for each pair.
+*/
 void cdef_seg_search(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr,
                      uint32_t segment_index) {
     struct PictureParentControlSet *ppcs    = pcs_ptr->parent_pcs_ptr;
@@ -342,7 +347,11 @@ void cdef_seg_search(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr,
         }
     }
 }
-
+/* Search for the best filter strength pair for each 64x64 filter block.
+ *
+ * For each 64x64 filter block and each plane, search the allowable filter strength pairs.
+ * Call cdef_filter_fb() to perform filtering, then compute the MSE for each pair.
+*/
 void cdef_seg_search16bit(PictureControlSet *pcs_ptr, SequenceControlSet *scs_ptr,
                           uint32_t segment_index) {
     EbPictureBufferDesc *input_pic_ptr = pcs_ptr->input_frame16bit;

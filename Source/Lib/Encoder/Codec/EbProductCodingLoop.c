@@ -799,6 +799,10 @@ int sq_block_index[TOTAL_SQ_BLOCK_COUNT] = {
     1012, 1013, 1018, 1019, 1020, 1021, 1022, 1027, 1028, 1029, 1030, 1031, 1036, 1037, 1038, 1039,
     1040, 1065, 1070, 1071, 1072, 1073, 1074, 1079, 1080, 1081, 1082, 1083, 1088, 1089, 1090, 1091,
     1092, 1097, 1098, 1099, 1100};
+/************************************************************************************************
+* av1_perform_inverse_transform_recon_luma
+* Apply inverse transform for Luma samples
+************************************************************************************************/
 void av1_perform_inverse_transform_recon_luma(ModeDecisionContext *        context_ptr,
                                               ModeDecisionCandidateBuffer *candidate_buffer) {
     uint32_t tu_total_count;
@@ -3786,7 +3790,10 @@ void av1_cost_calc_cfl(PictureControlSet *pcs_ptr, ModeDecisionCandidateBuffer *
 
 #define PLANE_SIGN_TO_JOINT_SIGN(plane, a, b) \
     (plane == CFL_PRED_U ? a * CFL_SIGNS + b - 1 : b * CFL_SIGNS + a - 1)
-/*************************Pick the best alpha for cfl mode  or Choose DC******************************************************/
+/************************************************************************************************
+* md_cfl_rd_pick_alpha
+* Pick the best alpha for cfl mode or Choose DC
+************************************************************************************************/
 void md_cfl_rd_pick_alpha(PictureControlSet *pcs_ptr, ModeDecisionCandidateBuffer *candidate_buffer,
                           ModeDecisionContext *context_ptr,
                           EbPictureBufferDesc *input_picture_ptr, uint32_t input_cb_origin_in_index,
@@ -3940,11 +3947,14 @@ void md_cfl_rd_pick_alpha(PictureControlSet *pcs_ptr, ModeDecisionCandidateBuffe
         candidate_buffer->candidate_ptr->cfl_alpha_signs = best_joint_sign;
     }
 }
-// If mode is CFL:
-// 1: recon the Luma
-// 2: Form the pred_buf_q3
-// 3: Loop over alphas and find the best or choose DC
-// 4: Recalculate the residual for chroma
+/************************************************************************************************
+* cfl_prediction
+* Performed cfl prediction in the following steps:
+* 1: recon the Luma
+* 2: Form the pred_buf_q3
+* 3: Loop over alphas and find the best or choose DC
+* 4: Recalculate the residual for chroma
+************************************************************************************************/
 static void cfl_prediction(PictureControlSet *pcs_ptr,
                            ModeDecisionCandidateBuffer *candidate_buffer,
                            ModeDecisionContext *context_ptr, EbPictureBufferDesc *input_picture_ptr,

@@ -315,6 +315,10 @@ int32_t svt_sb_compute_cdef_list(PictureControlSet *pcs_ptr, const Av1Common *co
     return count;
 }
 
+/*
+Loop over all 64x64 filter blocks and perform the CDEF filtering for each block, using
+the filter strength pairs chosen in finish_cdef_search().
+*/
 void svt_av1_cdef_frame(EncDecContext *context_ptr, SequenceControlSet *scs_ptr,
                         PictureControlSet *pCs) {
     (void)context_ptr;
@@ -421,17 +425,21 @@ void svt_av1_cdef_frame(EncDecContext *context_ptr, SequenceControlSet *scs_ptr,
             else
                 frame_right = 1;
 
+            // Find the index of the CDEF strength for the filter block
             const int32_t mbmi_cdef_strength =
                 pCs->mi_grid_base[MI_SIZE_64X64 * fbr * cm->mi_stride + MI_SIZE_64X64 * fbc]
                     ->mbmi.cdef_strength;
             level = frm_hdr->cdef_params.cdef_y_strength[mbmi_cdef_strength] / CDEF_SEC_STRENGTHS;
             sec_strength = frm_hdr->cdef_params.cdef_y_strength[mbmi_cdef_strength] %
                 CDEF_SEC_STRENGTHS;
+            // Secondary luma strength takes values in {0, 1, 2, 4}. If sec_strength is equal to 3 from the step above, change it to 4.
             sec_strength += sec_strength == 3;
+            // Set primary and secondary chroma strengths.
             uv_level = frm_hdr->cdef_params.cdef_uv_strength[mbmi_cdef_strength] /
                 CDEF_SEC_STRENGTHS;
             uv_sec_strength = frm_hdr->cdef_params.cdef_uv_strength[mbmi_cdef_strength] %
                 CDEF_SEC_STRENGTHS;
+            // Secondary chroma strength takes values in {0, 1, 2, 4}. If sec_strength is equal to 3 from the step above, change it to 4.
             uv_sec_strength += uv_sec_strength == 3;
             if ((level == 0 && sec_strength == 0 && uv_level == 0 && uv_sec_strength == 0) ||
                 (cdef_count = svt_sb_compute_cdef_list(
@@ -661,6 +669,10 @@ void svt_av1_cdef_frame(EncDecContext *context_ptr, SequenceControlSet *scs_ptr,
     }
 }
 
+/*
+Loop over all 64x64 filter blocks and perform the CDEF filtering for each block, using
+the filter strength pairs chosen in finish_cdef_search().
+*/
 void av1_cdef_frame16bit(EncDecContext *context_ptr, SequenceControlSet *scs_ptr,
                          PictureControlSet *pCs) {
     (void)context_ptr;
@@ -1004,8 +1016,20 @@ void av1_cdef_frame16bit(EncDecContext *context_ptr, SequenceControlSet *scs_ptr
 }
 
 ///-------search
-/* Search for the best luma+chroma strength to add as an option, knowing we
-already selected nb_strengths options. */
+/*
+ * Search for the best luma+chroma strength to add as an option, knowing we
+ * already selected nb_strengths options
+ *
+ * Params:
+ *
+ * lev0 : Array of indices of selected luma strengths.
+ * lev1 : Array of indices of selected chroma strengths.
+ * nb_strengths : Number of selected (Luma_strength, Chroma_strength) pairs.
+ * mse : Array of luma and chroma filtering mse values.
+ * sb_count : Number of filter blocks in the frame.
+ * start_gi : starting strength index for the search of the additional strengths.
+ * end_gi : End index for the for the search of the additional strengths.
+*/
 uint64_t svt_search_one_dual_c(int *lev0, int *lev1, int nb_strengths,
                                uint64_t **mse[2], int sb_count, int start_gi,
                                int end_gi) {
@@ -1016,9 +1040,13 @@ uint64_t svt_search_one_dual_c(int *lev0, int *lev1, int nb_strengths,
     int32_t       best_id1        = 0;
     const int32_t total_strengths = end_gi;
     memset(tot_mse, 0, sizeof(tot_mse));
+    /* Loop over the filter blocks in the frame */
     for (i = 0; i < sb_count; i++) {
         int32_t  gi;
         uint64_t best_mse = (uint64_t)1 << 63;
+        /* Loop over the already selected nb_strengths (Luma_strength,
+           Chroma_strength) pairs, and find the pair that has the smallest mse
+           (best_mse) for the current filter block.*/
         /* Find best mse among already selected options. */
         for (gi = 0; gi < nb_strengths; gi++) {
             uint64_t curr = mse[0][i][lev0[gi]];
@@ -1026,6 +1054,10 @@ uint64_t svt_search_one_dual_c(int *lev0, int *lev1, int nb_strengths,
             if (curr < best_mse)
                 best_mse = curr;
         }
+        /* Loop over the set of available (Luma_strength, Chroma_strength)
+           pairs, identify any that provide an mse better than best_mse from the
+           step above for the current filter block, and update any corresponding
+           total mse (tot_mse[j][k]). */
         /* Find best mse when adding each possible new option. */
         for (j = start_gi; j < total_strengths; j++) {
             int32_t k;
@@ -1039,33 +1071,58 @@ uint64_t svt_search_one_dual_c(int *lev0, int *lev1, int nb_strengths,
             }
         }
     }
-
-    for (j = start_gi; j < total_strengths; j++) {
+    /* Loop over the additionally searched (Luma_strength, Chroma_strength) pairs
+       from the step above, and identify any such pair that provided the best mse for
+       the whole frame. The identified pair would be added to the set of already selected pairs. */
+    for (j = start_gi; j < total_strengths; j++) { // Loop over the additionally searched luma strengths
         int32_t k;
-        for (k = start_gi; k < total_strengths; k++) {
+        for (k = start_gi; k < total_strengths; k++) { // Loop over the additionally searched chroma strengths
             if (tot_mse[j][k] < best_tot_mse) {
                 best_tot_mse = tot_mse[j][k];
-                best_id0     = j;
-                best_id1     = k;
+                best_id0     = j; // index for the best luma strength
+                best_id1     = k; // index for the best chroma strength
             }
         }
     }
-    lev0[nb_strengths] = best_id0;
-    lev1[nb_strengths] = best_id1;
+    lev0[nb_strengths] = best_id0; // Add the identified luma strength to the list of selected luma strengths
+    lev1[nb_strengths] = best_id1; // Add the identified chroma strength to the list of selected chroma strengths
     return best_tot_mse;
 }
-/* Search for the set of luma+chroma strengths that minimizes mse. */
+/*
+ * Search for the set of luma+chroma strengths that minimizes mse.
+ *
+ * Params:
+ *
+ * best_lev0 : Array of indices of selected luma strengths.
+ * best_lev1 : Array of indices of selected chroma strengths.
+ * nb_strengths : Number of selected (Luma_strength, Chroma_strength) pairs.
+ * mse : Array of luma and chroma filtering mse values.
+ * sb_count : Number of filter blocks in the frame.
+ * start_gi : starting strength index for the search of the additional strengths.
+ * end_gi : End index for the for the search of the additional strengths.
+*/
 static uint64_t joint_strength_search_dual(int32_t *best_lev0, int32_t *best_lev1,
                                            int32_t nb_strengths, uint64_t **mse[2],
                                            int32_t sb_count, int32_t start_gi, int32_t end_gi) {
     uint64_t best_tot_mse;
     int32_t  i;
     best_tot_mse = (uint64_t)1 << 63;
-    /* Greedy search: add one strength options at a time. */
+    /* Greedy search: add one strength options at a time.
+
+    Determine nb_strengths (Luma_strength, Chroma_strength) pairs.
+    The list of nb_strengths pairs is determined by adding one such pair at
+    a time through the call to the function search_one_dual. When the
+    function search_one_dual is called, the search accounts for the
+    strength pairs that have already been added in the previous iteration of
+    the loop below. The loop below returns in the end best_tot_mse
+    representing the best filtering mse for the whole frame based on the
+    selected list of best (Luma_strength, Chroma_strength) pairs.
+    */
     for (i = 0; i < nb_strengths; i++)
         best_tot_mse = svt_search_one_dual(
             best_lev0, best_lev1, i, mse, sb_count, start_gi, end_gi);
-    /* Trying to refine the greedy search by reconsidering each
+    /* Performing further refinements on the search based on the results
+    from the step above. Trying to refine the greedy search by reconsidering each
     already-selected option. */
     for (i = 0; i < 4 * nb_strengths; i++) {
         int32_t j;

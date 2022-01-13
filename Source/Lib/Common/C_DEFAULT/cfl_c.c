@@ -18,7 +18,10 @@ static INLINE int32_t get_scaled_luma_q0(int32_t alpha_q3, int16_t pred_buf_q3) 
     int32_t scaled_luma_q6 = alpha_q3 * pred_buf_q3;
     return ROUND_POWER_OF_TWO_SIGNED(scaled_luma_q6, 6);
 }
-
+/************************************************************************************************
+* svt_cfl_predict_lbd_c
+* CFL prediction by multiplying alpha to ac values and addint the dc chroma pred
+************************************************************************************************/
 void svt_cfl_predict_lbd_c(const int16_t *pred_buf_q3,
                            uint8_t *      pred, // AMIR ADDED
                            int32_t        pred_stride,
@@ -35,7 +38,10 @@ void svt_cfl_predict_lbd_c(const int16_t *pred_buf_q3,
         pred_buf_q3 += CFL_BUF_LINE;
     }
 }
-
+/************************************************************************************************
+* svt_cfl_predict_hbd_c
+* CFL prediction by multiplying alpha to ac values and addint the dc chroma pred
+************************************************************************************************/
 void svt_cfl_predict_hbd_c(const int16_t *pred_buf_q3,
                            uint16_t *     pred, // AMIR ADDED
                            int32_t        pred_stride,

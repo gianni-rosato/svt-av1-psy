@@ -172,7 +172,10 @@ static INLINE __m256i _mm256_addl_epi16(__m256i a) {
     return _mm256_add_epi32(_mm256_unpacklo_epi16(a, _mm256_setzero_si256()),
                             _mm256_unpackhi_epi16(a, _mm256_setzero_si256()));
 }
-
+/************************************************************************************************
+* svt_subtract_average_avx2
+* Calculate the DC value by averaging over all sample. Subtract DC value to get AC values In AVX2
+************************************************************************************************/
 /*staticINLINE*/ void svt_subtract_average_avx2(int16_t *pred_buf_q3, int32_t width, int32_t height,
                                                 int32_t round_offset, int32_t num_pel_log2) {
     // Use SSE2 version for smaller widths
@@ -279,7 +282,10 @@ static INLINE __m256i _mm256_addl_epi16(__m256i a) {
         } while (src < end);
     }
 }
-
+/************************************************************************************************
+* svt_cfl_luma_subsampling_420_hbd_avx2
+* Subsample luma samples to match chroma size. High bit depth and avx2
+************************************************************************************************/
 void svt_cfl_luma_subsampling_420_hbd_avx2(const uint16_t *input, int32_t input_stride,
                                            int16_t *output_q3, int32_t width, int32_t height) {
     const int      luma_stride = input_stride << 1;
@@ -334,7 +340,10 @@ void svt_cfl_luma_subsampling_420_hbd_avx2(const uint16_t *input, int32_t input_
         input += luma_stride;
     } while ((row += CFL_BUF_LINE_I256) < row_end);
 }
-
+/************************************************************************************************
+* svt_cfl_luma_subsampling_420_lbd_avx2
+* Subsample luma samples to match chroma size. Low bit depth and avx2
+************************************************************************************************/
 void svt_cfl_luma_subsampling_420_lbd_avx2(const uint8_t *input, int32_t input_stride,
                                            int16_t *output_q3, int32_t width, int32_t height) {
     const __m128i  twos_128    = _mm_set1_epi8(2);

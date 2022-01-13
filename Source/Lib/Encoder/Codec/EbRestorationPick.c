@@ -1092,6 +1092,9 @@ static int32_t count_wiener_bits(int32_t wiener_win, WienerInfo *wiener_info,
 }
 
 #define USE_WIENER_REFINEMENT_SEARCH 1
+/* Perform refinement search around inital wiener filter coeffs passed in rui->wiener_info;
+   compute and return the SSE of the best filter parameters.
+*/
 static int64_t finer_tile_search_wiener_seg(const RestSearchCtxt *       rsc,
                                             const RestorationTileLimits *limits,
                                             const Av1PixelRect *tile, RestorationUnitInfo *rui,
@@ -1280,6 +1283,7 @@ static int32_t rest_tiles_in_plane(const Av1Common *cm, int32_t plane) {
 void *svt_aom_memalign(size_t align, size_t size);
 void  svt_aom_free(void *memblk);
 
+/* Perform search for the best self-guided filter parameters and compute the SSE. */
 static void search_sgrproj_seg(const RestorationTileLimits *limits, const Av1PixelRect *tile,
                                int32_t rest_unit_idx, void *priv) {
     RestSearchCtxt *    rsc  = (RestSearchCtxt *)priv;
@@ -1325,6 +1329,7 @@ static void search_sgrproj_seg(const RestorationTileLimits *limits, const Av1Pix
     rusi->sse[RESTORE_SGRPROJ] = try_restoration_unit_seg(rsc, limits, tile, &rui);
 }
 
+/* Get the cost/SSE/rate of using self-guided filtering for a given restoration unit. */
 static void search_sgrproj_finish(const RestorationTileLimits *limits, const Av1PixelRect *tile,
                                   int32_t rest_unit_idx, void *priv) {
     (void)limits;
@@ -1353,6 +1358,7 @@ static void search_sgrproj_finish(const RestorationTileLimits *limits, const Av1
         rsc->sgrproj = rusi->sgrproj;
 }
 
+/*Get the best Wiender filter parameters and SSE.*/
 static void search_wiener_seg(const RestorationTileLimits *limits, const Av1PixelRect *tile_rect,
                               int32_t rest_unit_idx, void *priv) {
     RestSearchCtxt *       rsc  = (RestSearchCtxt *)priv;
@@ -1428,6 +1434,7 @@ static void search_wiener_seg(const RestorationTileLimits *limits, const Av1Pixe
         aom_clear_system_state();
 #endif
     }
+    // Perform refinement search for filter coeffs and compute SSE
     rusi->sse[RESTORE_WIENER] = finer_tile_search_wiener_seg(
         rsc, limits, tile_rect, &rui, wiener_win);
     rusi->wiener = rui.wiener_info;
@@ -1437,6 +1444,7 @@ static void search_wiener_seg(const RestorationTileLimits *limits, const Av1Pixe
         assert(rui.wiener_info.hfilter[0] == 0 && rui.wiener_info.hfilter[WIENER_WIN - 1] == 0);
     }
 }
+/* Get the cost/SSE/rate of using wiener filtering for a given restoration unit. */
 static void search_wiener_finish(const RestorationTileLimits *limits, const Av1PixelRect *tile_rect,
                                  int32_t rest_unit_idx, void *priv) {
     (void)limits;
@@ -1500,6 +1508,7 @@ static void search_norestore_seg(const RestorationTileLimits *limits, const Av1P
     rusi->sse[RESTORE_NONE] = sse_restoration_unit(
         limits, rsc->src, rsc->cm->frame_to_show, rsc->plane, highbd);
 }
+// Get the SSE for a resotration unit with no filtering applied
 static void search_norestore_finish(const RestorationTileLimits *limits,
                                     const Av1PixelRect *tile_rect, int32_t rest_unit_idx,
                                     void *priv) {
@@ -1513,6 +1522,7 @@ static void search_norestore_finish(const RestorationTileLimits *limits,
 
     rsc->sse += rusi->sse[RESTORE_NONE];
 }
+/* Get the cost/SSE/rate for the entire frame associated with using the passed restoration filter type. */
 static double search_rest_type_finish(RestSearchCtxt *rsc, RestorationType rtype) {
     static const RestUnitVisitor funs[RESTORE_TYPES] = {
         search_norestore_finish, search_wiener_finish, search_sgrproj_finish, search_switchable};
@@ -1523,7 +1533,11 @@ static double search_rest_type_finish(RestSearchCtxt *rsc, RestorationType rtype
 
     return RDCOST_DBL(rsc->x->rdmult, rsc->bits >> 4, rsc->sse);
 }
+/* Search the available type of restoration filters: OFF, Wiener, and self-guided.
 
+   The search will return the best parameters for each type of filter and their associated SSEs,
+   to be used in the final decision for filtering the frame.
+*/
 void restoration_seg_search(int32_t *rst_tmpbuf, Yv12BufferConfig *org_fts,
                             const Yv12BufferConfig *src, Yv12BufferConfig *trial_frame_rst,
                             PictureControlSet *pcs_ptr, uint32_t segment_index) {
@@ -1590,7 +1604,9 @@ void restoration_seg_search(int32_t *rst_tmpbuf, Yv12BufferConfig *org_fts,
                                                segment_index);
     }
 }
-
+/* Given the best parameters for each type of filter and their associated SSEs,
+   decide which filter should be used for each filter block.
+*/
 void rest_finish_search(PictureControlSet *pcs_ptr) {
     Macroblock *             x         = pcs_ptr->parent_pcs_ptr->av1x;
     Av1Common *const         cm        = pcs_ptr->parent_pcs_ptr->av1_cm;

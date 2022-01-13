@@ -1502,6 +1502,9 @@ static void foreach_rest_unit_in_tile_seg(
         ++i;
     }
 }
+/* For each restoration unit in the frame, get the best filter parameters and distortions
+   for the passed filter type.
+*/
 void av1_foreach_rest_unit_in_frame_seg(Av1Common *cm, int32_t plane, RestTileStartVisitor on_tile,
                                         RestUnitVisitor on_rest_unit, void *priv,
                                         uint8_t rest_segments_column_count,
