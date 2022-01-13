@@ -420,8 +420,6 @@ typedef struct SuperBlock {
     unsigned       origin_x : 32;
     unsigned       origin_y : 32;
     uint8_t        qindex;
-    uint32_t       total_bits;
-
     // Quantized Coefficients
     TileInfo tile_info;
 } SuperBlock;

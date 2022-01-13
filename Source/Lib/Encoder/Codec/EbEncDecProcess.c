@@ -6777,10 +6777,7 @@ void *mode_decision_kernel(void *input_ptr) {
                                  &enc_dec_results_wrapper_ptr);
             enc_dec_results_ptr = (EncDecResults *)enc_dec_results_wrapper_ptr->object_ptr;
             enc_dec_results_ptr->pcs_wrapper_ptr              = enc_dec_tasks_ptr->pcs_wrapper_ptr;
-            enc_dec_results_ptr->completed_sb_row_index_start = 0;
-            enc_dec_results_ptr->completed_sb_row_count =
-                ((pcs_ptr->parent_pcs_ptr->aligned_height + scs_ptr->sb_size_pix - 1) >>
-                 sb_size_log2);
+
             // Post EncDec Results
             svt_post_full_object(enc_dec_results_wrapper_ptr);
         } else {
@@ -7261,11 +7258,7 @@ void *mode_decision_kernel(void *input_ptr) {
                                          &enc_dec_results_wrapper_ptr);
                     enc_dec_results_ptr = (EncDecResults *)enc_dec_results_wrapper_ptr->object_ptr;
                     enc_dec_results_ptr->pcs_wrapper_ptr = enc_dec_tasks_ptr->pcs_wrapper_ptr;
-                    //CHKN these are not needed for DLF
-                    enc_dec_results_ptr->completed_sb_row_index_start = 0;
-                    enc_dec_results_ptr->completed_sb_row_count =
-                        ((pcs_ptr->parent_pcs_ptr->aligned_height + scs_ptr->sb_size_pix - 1) >>
-                         sb_size_log2);
+
                     // Post EncDec Results
                     svt_post_full_object(enc_dec_results_wrapper_ptr);
                 }

@@ -24,8 +24,6 @@ extern "C" {
 typedef struct EncDecResults {
     EbDctor          dctor;
     EbObjectWrapper *pcs_wrapper_ptr;
-    uint32_t         completed_sb_row_index_start;
-    uint32_t         completed_sb_row_count;
 } EncDecResults;
 
 typedef struct DlfResults {
@@ -43,8 +41,6 @@ typedef struct CdefResults {
 typedef struct RestResults {
     EbDctor          dctor;
     EbObjectWrapper *pcs_wrapper_ptr;
-    uint32_t         completed_sb_row_index_start;
-    uint32_t         completed_sb_row_count;
     uint16_t         tile_index;
 } RestResults;
 

@@ -1547,21 +1547,12 @@ EbErrorType reset_entropy_coder(EncodeContext *encode_context_ptr, EntropyCoder 
 static void entropy_tile_info_dctor(EbPtr p) {
     EntropyTileInfo *obj = (EntropyTileInfo *)p;
     EB_DELETE(obj->entropy_coder_ptr);
-    EB_DESTROY_MUTEX(obj->entropy_coding_mutex);
 }
 
 EbErrorType entropy_tile_info_ctor(EntropyTileInfo *eti, uint32_t buf_size) {
     EbErrorType return_error = EB_ErrorNone;
     eti->dctor               = entropy_tile_info_dctor;
-    EB_CREATE_MUTEX(eti->entropy_coding_mutex);
     EB_NEW(eti->entropy_coder_ptr, entropy_coder_ctor, buf_size);
-    eti->entropy_coding_current_available_row = 0;
-    for (unsigned rowIndex = 0; rowIndex < MAX_SB_ROWS; ++rowIndex) {
-        eti->entropy_coding_row_array[rowIndex] = EB_FALSE;
-    }
-    eti->entropy_coding_current_row = 0;
-    eti->entropy_coding_row_count   = 0;
-    eti->entropy_coding_in_progress = 0;
     eti->entropy_coding_tile_done   = EB_FALSE;
     return return_error;
 }

@@ -3474,15 +3474,6 @@ void *rate_control_kernel(void *input_ptr) {
             svt_release_object(rate_control_tasks_wrapper_ptr);
             break;
 
-        case RC_ENTROPY_CODING_ROW_FEEDBACK_RESULT:
-
-            // Extract bits-per-sb-row
-
-            // Release Rate Control Tasks
-            svt_release_object(rate_control_tasks_wrapper_ptr);
-
-            break;
-
         default:
             pcs_ptr = (PictureControlSet *)rate_control_tasks_ptr->pcs_wrapper_ptr->object_ptr;
             scs_ptr = (SequenceControlSet *)pcs_ptr->scs_wrapper_ptr->object_ptr;

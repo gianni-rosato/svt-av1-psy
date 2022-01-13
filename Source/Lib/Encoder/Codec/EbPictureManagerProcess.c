@@ -302,22 +302,7 @@ void init_enc_dec_segement(PictureParentControlSet *parentpicture_control_set_pt
                 for (uint16_t d = top_left_tile_col_idx; d < bottom_right_tile_col_idx; d++) {
                     uint16_t tileIdx = s * tile_cols + d;
                     parentpicture_control_set_ptr->child_pcs->entropy_coding_info[tileIdx]
-                        ->entropy_coding_current_row = 0;
-                    parentpicture_control_set_ptr->child_pcs->entropy_coding_info[tileIdx]
-                        ->entropy_coding_current_available_row = 0;
-                    parentpicture_control_set_ptr->child_pcs->entropy_coding_info[tileIdx]
-                        ->entropy_coding_row_count = (cm->tiles_info.tile_row_start_mi[s + 1] -
-                                                      cm->tiles_info.tile_row_start_mi[s]) >>
-                        sb_size_log2;
-                    parentpicture_control_set_ptr->child_pcs->entropy_coding_info[tileIdx]
-                        ->entropy_coding_in_progress = EB_FALSE;
-                    parentpicture_control_set_ptr->child_pcs->entropy_coding_info[tileIdx]
                         ->entropy_coding_tile_done = EB_FALSE;
-
-                    for (unsigned rowIndex = 0; rowIndex < MAX_SB_ROWS; ++rowIndex) {
-                        parentpicture_control_set_ptr->child_pcs->entropy_coding_info[tileIdx]
-                            ->entropy_coding_row_array[rowIndex] = EB_FALSE;
-                    }
                 }
             }
             parentpicture_control_set_ptr->child_pcs->entropy_coding_pic_reset_flag = EB_TRUE;

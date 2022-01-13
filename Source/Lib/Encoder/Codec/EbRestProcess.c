@@ -745,23 +745,13 @@ void *rest_kernel(void *input_ptr) {
             tile_cols = pcs_ptr->parent_pcs_ptr->av1_cm->tiles_info.tile_cols;
             tile_rows = pcs_ptr->parent_pcs_ptr->av1_cm->tiles_info.tile_rows;
 
-            //Jing: TODO
-            //Consider to add parallelism here, sending line by line, not waiting for a full frame
-            int sb_size_log2 = scs_ptr->seq_header.sb_size_log2;
             for (int tile_row_idx = 0; tile_row_idx < tile_rows; tile_row_idx++) {
-                uint16_t tile_height_in_sb = (cm->tiles_info.tile_row_start_mi[tile_row_idx + 1] -
-                                              cm->tiles_info.tile_row_start_mi[tile_row_idx] +
-                                              (1 << sb_size_log2) - 1) >>
-                    sb_size_log2;
                 for (int tile_col_idx = 0; tile_col_idx < tile_cols; tile_col_idx++) {
                     const int tile_idx = tile_row_idx * tile_cols + tile_col_idx;
                     svt_get_empty_object(context_ptr->rest_output_fifo_ptr,
                                          &rest_results_wrapper_ptr);
                     rest_results_ptr = (struct RestResults *)rest_results_wrapper_ptr->object_ptr;
                     rest_results_ptr->pcs_wrapper_ptr = cdef_results_ptr->pcs_wrapper_ptr;
-                    rest_results_ptr->completed_sb_row_index_start = 0;
-                    // Set to tile rows
-                    rest_results_ptr->completed_sb_row_count = tile_height_in_sb;
                     rest_results_ptr->tile_index             = tile_idx;
                     // Post Rest Results
                     svt_post_full_object(rest_results_wrapper_ptr);

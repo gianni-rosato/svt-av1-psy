@@ -2415,8 +2415,6 @@ void(*error_handler)(
 #define MIN_CU_BLK_COUNT                            ((BLOCK_SIZE_64 / MIN_BLOCK_SIZE) * (BLOCK_SIZE_64 / MIN_BLOCK_SIZE))
 #define MAX_NUM_OF_TU_PER_CU                        21
 #define MIN_NUM_OF_TU_PER_CU                        5
-
-#define MAX_SB_ROWS                                ((10000) / (BLOCK_SIZE_64))
 // super-resolution definitions
 #define MIN_SUPERRES_DENOM                          8
 #define MAX_SUPERRES_DENOM                          16

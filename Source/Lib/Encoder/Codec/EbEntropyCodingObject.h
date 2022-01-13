@@ -36,12 +36,6 @@ typedef struct EntropyCoder {
 typedef struct EntropyTileInfo {
     EbDctor       dctor;
     EntropyCoder* entropy_coder_ptr;
-    int8_t        entropy_coding_current_available_row;
-    EbBool        entropy_coding_row_array[MAX_SB_ROWS];
-    int8_t        entropy_coding_current_row;
-    int8_t        entropy_coding_row_count;
-    EbHandle      entropy_coding_mutex;
-    EbBool        entropy_coding_in_progress;
     EbBool        entropy_coding_tile_done;
 } EntropyTileInfo;
 
