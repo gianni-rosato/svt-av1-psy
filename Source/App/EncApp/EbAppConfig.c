@@ -73,6 +73,7 @@
 #define HIERARCHICAL_LEVELS_TOKEN "--hierarchical-levels" // no Eval
 #define PRED_STRUCT_TOKEN "--pred-struct"
 #define PROFILE_TOKEN "--profile"
+#define INTRA_PERIOD_TOKEN "--intra-period"
 #define TIER_TOKEN "--tier"
 #define LEVEL_TOKEN "--level"
 #define FILM_GRAIN_TOKEN "--film-grain"
@@ -364,6 +365,9 @@ static void set_compressed_ten_bit_format(const char *value, EbConfig *cfg) {
 }
 static void set_enc_mode(const char *value, EbConfig *cfg) {
     cfg->config.enc_mode = (uint8_t)strtoul(value, NULL, 0);
+};
+static void set_cfg_intra_period(const char *value, EbConfig *cfg) {
+    cfg->config.intra_period_length = strtol(value, NULL, 0);
 };
 // --keyint 0 == --keyint -1
 static void set_keyint(const char *value, EbConfig *cfg) {
@@ -1263,6 +1267,7 @@ ConfigEntry config_entry[] = {
     {SINGLE_INPUT, PASSES_TOKEN, "Passes", set_passes},
 
     // GOP size and type Options
+    {SINGLE_INPUT, INTRA_PERIOD_TOKEN, "IntraPeriod", set_cfg_intra_period},
     {SINGLE_INPUT, KEYINT_TOKEN, "Keyint", set_keyint},
     {SINGLE_INPUT, INTRA_REFRESH_TYPE_TOKEN, "IntraRefreshType", set_cfg_intra_refresh_type},
     {SINGLE_INPUT,
@@ -2151,9 +2156,23 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncPass enc_pass[MAX_ENC_P
         }
     }
 
-    if (find_token(argc, argv, KEYINT_TOKEN, config_string) == 0) {
-        fprintf(stderr, "[SVT-Warning]: --keyint is now intra-period + 1!\n");
-        ip = strtol(config_string, NULL, 0) - 1;
+    if ((!find_token(argc, argv, INTRA_PERIOD_TOKEN, NULL) ||
+         !find_token(argc, argv, "-" INTRA_PERIOD_TOKEN, NULL)) &&
+        !find_token(argc, argv, KEYINT_TOKEN, NULL)) {
+        fprintf(stderr,
+                "[SVT-Warning]: --keyint and --intra-period specified, --keyint will take "
+                "precedence!\n");
+    }
+
+    if (find_token(argc, argv, INTRA_PERIOD_TOKEN, config_string) == 0 ||
+        find_token(argc, argv, "-" INTRA_PERIOD_TOKEN, config_string) == 0 ||
+        find_token(argc, argv, KEYINT_TOKEN, config_string) == 0) {
+        ip = strtol(config_string, NULL, 0);
+        if (find_token(argc, argv, KEYINT_TOKEN, NULL) == 0) {
+            fprintf(stderr, "[SVT-Warning]: --keyint is now intra-period + 1!\n");
+            --ip;
+        } else
+            fprintf(stderr, "[SVT-Warning]: --intra-period is deprecated for --keyint\n");
         if ((ip < -2 || ip > 2 * ((1 << 30) - 1)) && rc_mode == 0) {
             fprintf(stderr, "[SVT-Error]: The intra period must be [-2, 2^31-2]  \n");
             return 0;
