@@ -168,6 +168,4 @@
 .common-ci-base:
   rules:
     - !reference [.source_code_rules]
-    - if: ("$NIGHTLY" || "$WEEKEND") && $CI_PIPELINE_SOURCE == "schedule"
-      when: never
-    - if: $CI_PIPELINE_SOURCE == "schedule"
+

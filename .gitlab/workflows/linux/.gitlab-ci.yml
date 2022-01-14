@@ -1,0 +1,465 @@
+#
+# Linux CI jobs
+#
+
+#
+# Anchors
+#
+
+.linux-compiler-base:
+  extends: .common-ci-base
+  stage: compile
+  tags:
+    - gitlab-org
+  image: registry.gitlab.com/aomediacodec/aom-testing/ubuntu2004
+  variables: !reference [.compiler-variables]
+  script: !reference [.compiler-script]
+
+.linux-test-base:
+  extends: .common-ci-base
+  stage: test
+  tags:
+    - gitlab-org
+  image: registry.gitlab.com/aomediacodec/aom-testing/ubuntu2004
+  before_script:
+    - !reference [.linux-extract-videos]
+
+.linux-unit-test-base:
+  extends: .linux-test-base
+  variables:
+    GTEST_OUTPUT: xml:report.xml
+  artifacts:
+    when: always
+    reports:
+      junit: report.xml
+  needs:
+    - Linux (GCC 10, Tests, Static)
+
+#
+# Compile jobs
+#
+
+Linux (Valgrind):
+  extends: .linux-compiler-base
+  image: registry.gitlab.com/aomediacodec/aom-testing/ubuntu1804
+  variables:
+    EXTRA_CFLAGS: -Wno-error
+    EXTRA_CXXFLAGS: -Wno-error
+    EXTRA_CMAKE_FLAGS: -DCMAKE_OUTPUT_DIRECTORY=valgrind
+    CMAKE_BUILD_TYPE: Debug
+  artifacts:
+    untracked: false
+    expire_in: 1 days
+    paths:
+      - valgrind/
+
+Linux (Clang):
+  extends: .linux-compiler-base
+  parallel:
+    matrix:
+      - CC: clang-6.0
+        CXX: clang++-6.0
+      - CC: clang-10
+        CXX: clang++-10
+
+Linux (GCC 4):
+  extends: .linux-compiler-base
+  image: registry.gitlab.com/aomediacodec/aom-testing/centos7
+
+Linux (GCC):
+  extends: .linux-compiler-base
+  parallel:
+    matrix:
+      - CC: gcc-7
+        CXX: g++-7
+      - CC: gcc-8
+        CXX: g++-8
+      - CC: gcc-9
+        CXX: g++-9
+      - CC: gcc-10
+        CXX: g++-10
+        EXTRA_CMAKE_FLAGS: -DENABLE_AVX512=ON
+      - CC: aarch64-linux-gnu-gcc
+        CXX: aarch64-linux-gnu-g++
+        EXTRA_CMAKE_FLAGS: -DCMAKE_TOOLCHAIN_FILE=$CI_PROJECT_DIR/aarch64-linux-gnu.cmake
+      - CC: powerpc64le-linux-gnu-gcc
+        CXX: powerpc64le-linux-gnu-g++
+        EXTRA_CMAKE_FLAGS: -DCMAKE_TOOLCHAIN_FILE=$CI_PROJECT_DIR/powerpc64le-linux-gnu.cmake -DCROSS=powerpc64le-linux-gnu-
+  before_script:
+    - |
+      case $CC in
+      aarch64-linux-gnu-gcc)
+        curl -Ls "https://aomedia.googlesource.com/aom/+/refs/heads/main/build/cmake/toolchains/arm64-linux-gcc.cmake?format=TEXT" |
+          base64 -d > aarch64-linux-gnu.cmake
+        ;;
+      powerpc64le-linux-gnu-gcc)
+        curl -Ls "https://aomedia.googlesource.com/aom/+/refs/heads/main/build/cmake/toolchains/ppc-linux-gcc.cmake?format=TEXT" |
+          base64 -d > powerpc64le-linux-gnu.cmake
+        ;;
+      esac
+
+Linux (GCC 10, Static):
+  extends: .linux-compiler-base
+  variables:
+    CC: gcc-10
+    CXX: g++-10
+    EXTRA_LDFLAGS: -static -static-libgcc -static-libstdc++
+    GIT_DEPTH: 0
+  parallel:
+    matrix:
+      - CMAKE_BUILD_TYPE: [Release, Debug]
+  artifacts:
+    untracked: false
+    expire_in: 30 days
+    paths:
+      - Bin/*/SvtAv1EncApp
+      - Bin/*/SvtAv1DecApp
+
+Linux (GCC 10, Tests, Static):
+  extends: .linux-compiler-base
+  variables:
+    CC: gcc-10
+    CXX: g++-10
+    EXTRA_CFLAGS: -g
+    EXTRA_CXXFLAGS: -g
+    EXTRA_LDFLAGS: -static -static-libgcc -static-libstdc++
+    EXTRA_CMAKE_FLAGS: -DBUILD_TESTING=ON -DBUILD_APPS=OFF
+  artifacts:
+    untracked: false
+    expire_in: 1 day
+    paths:
+      - Bin/Release/SvtAv1UnitTests
+      - Bin/Release/SvtAv1ApiTests
+      - Bin/Release/SvtAv1E2ETests
+
+Linux Sanitizer Compile:
+  extends: .linux-compiler-base
+  variables:
+    CC: clang-10
+    CXX: clang++-10
+    CMAKE_BUILD_TYPE: Debug
+    EXTRA_CMAKE_FLAGS: -DCMAKE_OUTPUT_DIRECTORY=$SANITIZER -DSANITIZER=$SANITIZER
+  parallel:
+    matrix:
+      - SANITIZER: [address, memory, thread]
+  artifacts:
+    untracked: false
+    expire_in: 1 days
+    paths:
+      - address/
+      - memory/
+      - thread/
+
+Linux Integer Overflow Compile:
+  extends: .linux-compiler-base
+  variables:
+    CC: clang-10
+    CXX: clang++-10
+    CMAKE_BUILD_TYPE: Debug
+    EXTRA_CFLAGS: -fsanitize=signed-integer-overflow,unsigned-integer-overflow
+    EXTRA_CXXFLAGS: -fsanitize=signed-integer-overflow,unsigned-integer-overflow
+  artifacts:
+    untracked: false
+    expire_in: 1 days
+    paths:
+      - Bin/Debug/SvtAv1EncApp
+
+#
+# Test jobs
+#
+
+Valgrind:
+  extends: .linux-test-base
+  image: registry.gitlab.com/aomediacodec/aom-testing/ubuntu1804
+  parallel:
+    matrix:
+      - PASSES: 2
+      - PASS: 1
+  script:
+    # --error-limit=no --leak-check=full --show-leak-kinds=all makes the log very huge and takes around 16 minutes
+    - valgrind --error-exitcode=1 --track-origins=yes --suppressions=/usr/lib/valgrind/debian.supp -- ./valgrind/SvtAv1EncApp --preset 6 ${PASS:+--pass $PASS} -i akiyo_cif.y4m --rc 1 --tbr 500 -n 10 --lp 7 -b test1.ivf
+  needs:
+    - Linux (Valgrind)
+
+Linux Sanitizer Test:
+  extends: .linux-test-base
+  tags:
+    - gitlab-org
+  image: registry.gitlab.com/aomediacodec/aom-testing/ubuntu2004
+  variables:
+    LSAN_OPTIONS: verbosity=2:color=always:log_pointers=1:log_threads=1:report_objects=1
+    ASAN_OPTIONS: verbosity=2:color=always:print_cmdline=1:strict_string_checks=1:symbolize=1:detect_leaks=1:fast_unwind_on_malloc=0:strict_memcmp=0
+    MSAN_OPTIONS: verbosity=2:color=always
+    # TSAN_OPTIONS: verbosity=2:color=always:suppressions=./.gitlab/sanitizers-known-warnings.txt
+  parallel:
+    matrix:
+      - SANITIZER: address
+      - SANITIZER: memory
+        svt_asm: 0
+      - SANITIZER: thread
+  script:
+    - |
+      command="$PWD/$SANITIZER/SvtAv1EncApp -i Chimera-Aerial_480x264_2997fps_10bit_420_150frames.y4m ${svt_asm:+--asm $svt_asm} -n 60 --preset 8 -b output.ivf"
+      case $SANITIZER in
+      address|memory) $command ;;
+      *) gdb -q -ex "handle SIG32 nostop" -ex r -ex bt -ex q --return-child-result --args $command ;;
+      esac
+  needs:
+    - Linux Sanitizer Compile
+
+Linux Unit Tests:
+  extends: .linux-unit-test-base
+  parallel:
+    matrix:
+      - UNIT_TEST: [SvtAv1UnitTests, SvtAv1E2ETests]
+        GTEST_TOTAL_SHARDS: 10
+        GTEST_SHARD_INDEX: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+  variables:
+    SVT_AV1_TEST_VECTOR_PATH: $CI_PROJECT_DIR/test/vectors
+  cache:
+    key: testvectors
+    paths:
+      - test/vectors
+    policy: pull-push
+  script:
+    - |
+      if [ -n "$SVT_AV1_TEST_VECTOR_PATH" ]; then
+        cmake -B Build -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON
+        cmake --build Build --target TestVectors
+      fi
+    - ./Bin/Release/$UNIT_TEST
+
+Linux RC Test:
+  extends: .linux-test-base
+  stage: test
+  variables:
+    SVT_AV1_CLIP_TARGETS: akiyo_cif.y4m::71.18 Chimera-Aerial_480x264_2997fps_10bit_420_150frames.y4m::241.02
+  script:
+    - |
+      ret=true
+      for ct in $SVT_AV1_CLIP_TARGETS; do
+        clip=${ct%%::*}
+        target=${ct##*::}
+        [ -f "$clip" ] || continue
+        printf 'Testing clip %s\n' "$clip"
+        bitrate=$(
+          ./Bin/Release/SvtAv1EncApp \
+            --preset 8 --lp 7 \
+            --rc 1 --tbr "$target" \
+            -i "$clip" \
+            --undershoot-pct 10 \
+            --overshoot-pct 5 2>&1 |
+            awk '$1" "$2 == "Total Frames" {getline; print $5}'
+        )
+        [ 1 = "$(echo "$target*0.9 < $bitrate && $bitrate < $target*1.1" | bc -l)" ] || {
+          ret=false
+          printf 'Clip %s failed to stay within 10%% of target %s with bitrate %s\n' "$clip" "$target" "$bitrate"
+        }
+      done
+      $ret
+  needs:
+    - Linux (GCC 10, Static)
+
+Linux Enc Test:
+  extends: .linux-test-base
+  stage: test
+  script:
+    - !reference [.enc-test-script]
+  parallel: !reference [.enc-test-parallel]
+  artifacts: !reference [.enc-test-artifacts]
+  needs:
+    - Linux (GCC 10, Static)
+
+Linux Intra Enc Test:
+  extends: .linux-test-base
+  stage: test
+  script:
+    - |
+      for INTRA_PERIOD in -1 200; do
+        ./Bin/Release/SvtAv1EncApp --preset 2 --keyint $INTRA_PERIOD -i "$SVT_ENCTEST_FILENAME" -n 17 -b "test-${BRANCH:-pr}-$(uname)-intra${INTRA_PERIOD}-${SVT_ENCTEST_BITNESS}bit-m2.ivf"
+        ./Bin/Release/SvtAv1EncApp --preset 8 --keyint $INTRA_PERIOD -i "$SVT_ENCTEST_FILENAME" -n 120 -b "test-${BRANCH:-pr}-$(uname)-intra${INTRA_PERIOD}-${SVT_ENCTEST_BITNESS}bit-m8.ivf"
+      done
+  parallel: !reference [.enc-test-parallel]
+  artifacts: !reference [.enc-test-artifacts]
+  needs:
+    - Linux (GCC 10, Static)
+
+Linux Integer Overflow Test:
+  extends:
+    - .linux-test-base
+  stage: test
+  allow_failure: false
+  script:
+    - |
+      ret=true
+      ./Bin/Debug/SvtAv1EncApp --preset 2 -i "$SVT_ENCTEST_FILENAME" -n 17 -b "test-int-overflow-${BRANCH:-pr}-$(uname)-${SVT_ENCTEST_BITNESS}bit-m2.ivf" 2> "test-int-overflow-${BRANCH:-pr}-$(uname)-${SVT_ENCTEST_BITNESS}bit-m2.log"
+      ./Bin/Debug/SvtAv1EncApp --preset 8 -i "$SVT_ENCTEST_FILENAME" -n 120 -b "test-int-overflow-${BRANCH:-pr}-$(uname)-${SVT_ENCTEST_BITNESS}bit-m8.ivf" 2> "test-int-overflow-${BRANCH:-pr}-$(uname)-${SVT_ENCTEST_BITNESS}bit-m8.log"
+      num_errors=$(sort -u test-int-overflow-${BRANCH:-pr}-$(uname)-${SVT_ENCTEST_BITNESS}bit-m*.log | awk 'BEGIN{count=0}/error/ {print $0 > "/dev/stderr"; count=count+1} END{print count}')
+
+      if [[ $num_errors > 0 ]]; then
+        ret=false
+        echo "Found $num_errors integer overflows"
+      fi
+      $ret
+  parallel: !reference [.enc-test-parallel]
+  needs:
+    - Linux Integer Overflow Compile
+
+Linux Passes vs Passes Test:
+  extends: .linux-test-base
+  stage: test
+  script:
+      - |
+         ./Bin/Release/SvtAv1EncApp --preset 2 --passes 2 --irefresh-type 2 --keyint -1 -i "$SVT_ENCTEST_FILENAME" -n 17 -b "test-${BRANCH:-pr}-$(uname)-passes=2-${SVT_ENCTEST_BITNESS}bit-m2.ivf"
+         ./Bin/Release/SvtAv1EncApp --preset 8 --passes 2 --irefresh-type 2 --keyint -1 -i "$SVT_ENCTEST_FILENAME" -n 120 -b "test-${BRANCH:-pr}-$(uname)-passes=2-${SVT_ENCTEST_BITNESS}bit-m8.ivf"
+         ./Bin/Release/SvtAv1EncApp --preset 2 --pass 1 --irefresh-type 2 --keyint -1 -i "$SVT_ENCTEST_FILENAME" -n 17 --stats "test-${BRANCH:-pr}-$(uname)-pass=2-${SVT_ENCTEST_BITNESS}bit-m2.stat"
+         ./Bin/Release/SvtAv1EncApp --preset 2 --pass 2 --irefresh-type 2 --keyint -1 -i "$SVT_ENCTEST_FILENAME" -n 17 --stats "test-${BRANCH:-pr}-$(uname)-pass=2-${SVT_ENCTEST_BITNESS}bit-m2.stat" -b "test-${BRANCH:-pr}-$(uname)-pass=2-${SVT_ENCTEST_BITNESS}bit-m2.ivf"
+         ./Bin/Release/SvtAv1EncApp --preset 8 --pass 1 --irefresh-type 2 --keyint -1 -i "$SVT_ENCTEST_FILENAME" -n 120 --stats "test-${BRANCH:-pr}-$(uname)-pass=2-${SVT_ENCTEST_BITNESS}bit-m8.stat"
+         ./Bin/Release/SvtAv1EncApp --preset 8 --pass 2 --irefresh-type 2 --keyint -1 -i "$SVT_ENCTEST_FILENAME" -n 120 --stats "test-${BRANCH:-pr}-$(uname)-pass=2-${SVT_ENCTEST_BITNESS}bit-m8.stat" -b "test-${BRANCH:-pr}-$(uname)-pass=2-${SVT_ENCTEST_BITNESS}bit-m8.ivf"
+
+  parallel: !reference [.enc-test-parallel]
+  artifacts: !reference [.enc-test-artifacts]
+  needs:
+    - Linux (GCC 10, Static)
+
+Linux Default Branch:
+  extends:
+    - .linux-compiler-base
+    - .linux-test-base
+  stage: compile
+  variables:
+    BRANCH: default
+  before_script:
+    - git fetch https://gitlab.com/AOMediaCodec/SVT-AV1.git HEAD
+    - git checkout ${CI_MERGE_REQUEST_TARGET_BRANCH_NAME:-FETCH_HEAD}
+    - !reference [.linux-extract-videos]
+  script:
+    - !reference [.compiler-script]
+    - !reference [.enc-test-script]
+  parallel: !reference [.enc-test-parallel]
+  artifacts: !reference [.enc-test-artifacts]
+
+Enc Default Diff test:
+  extends: .common-ci-base
+  stage: .post
+  image: registry.gitlab.com/aomediacodec/aom-testing/alpine3
+  allow_failure: true
+  script:
+    - |
+      success=true
+      for dist in *.ivf; do
+          case $dist in
+          test-pr-Linux-Release-*bit-*.ivf) continue ;;
+          *-8bit-m2.ivf) diff -q test-pr-Linux-Release-8bit-m2.ivf "$dist" || success=false ;;
+          *-8bit-m8.ivf) diff -q test-pr-Linux-Release-8bit-m8.ivf "$dist" || success=false ;;
+          *-10bit-m2.ivf) diff -q test-pr-Linux-Release-10bit-m2.ivf "$dist" || success=false ;;
+          *-10bit-m8.ivf) diff -q test-pr-Linux-Release-10bit-m8.ivf "$dist" || success=false ;;
+          esac
+      done
+      $success
+  needs:
+    - Linux Enc Test
+    - Linux Default Branch
+
+Enc Intra Diff Test:
+  extends: .common-ci-base
+  stage: .post
+  image: registry.gitlab.com/aomediacodec/aom-testing/alpine3
+  allow_failure: true
+  script:
+    - |
+      success=true
+      for dist in *.ivf; do
+          case $dist in
+          test-pr-Linux-intra-1-*bit-*.ivf) continue ;;
+          *-8bit-m2.ivf) diff -q test-pr-Linux-intra-1-8bit-m2.ivf "$dist" || success=false ;;
+          *-10bit-m8.ivf) diff -q test-pr-Linux-intra-1-10bit-m8.ivf "$dist" || success=false ;;
+          esac
+      done
+      $success
+  needs:
+    - Linux Intra Enc Test
+
+Linux Gstreamer (Static):
+  extends: .linux-test-base
+  stage: compile
+  variables:
+    CC: gcc-10
+    CXX: g++-10
+    CFLAGS: -pipe
+    CXXFLAGS: -pipe
+    LDFLAGS: -pipe
+    PKG_CONFIG_PATH: /usr/local/lib/pkgconfig
+    GIT_DEPTH: 0
+  script:
+    - cmake -B Build -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=/usr -DBUILD_APPS=OFF -DBUILD_DEC=OFF -DREPRODUCIBLE_BUILDS=ON
+    - cmake --build Build --config Release --target install
+    - meson setup -Dprefix=/usr --buildtype release gstreamer-plugin/build gstreamer-plugin
+    - meson install -C gstreamer-plugin/build
+    - |
+      gst-launch-1.0 -v filesrc location=akiyo_cif.y4m \
+        ! y4mdec \
+        ! svtav1enc \
+        ! webmmux \
+        ! filesink location=akiyo.mkv
+
+Linux FFmpeg (Static):
+  extends: .linux-test-base
+  stage: compile
+  variables:
+    CC: gcc-10
+    CXX: g++-10
+    CFLAGS: -pipe
+    CXXFLAGS: -pipe
+    LDFLAGS: -pipe -static -static-libgcc -static-libstdc++
+    GIT_DEPTH: 0
+  before_script:
+    - !reference [.ffmpeg-before-script-clone]
+    - !reference [.ffmpeg-before-script-export]
+  script:
+    - !reference [.ffmpeg-svtav1-script]
+    - !reference [.ffmpeg-aom-script]
+    - !reference [.ffmpeg-libvpx-script]
+    - !reference [.ffmpeg-dav1d-script]
+    - !reference [.ffmpeg-vmaf-script]
+    # symbol conflict tests
+    - |
+      conflicts=$(
+        nm -Ag --defined-only ${PREFIX_DIR}/lib/lib{SvtAv1Enc,aom,dav1d,vpx,vmaf}.a 2>/dev/null |
+        sort -k3 |
+        uniq -D -f2 |
+        sed '/:$/d;/^$/d'
+      )
+      if [ -n "$conflicts" ]; then
+        printf 'Conflicts Found!\n%s\n' "$conflicts"
+        exit 1
+      fi
+    - !reference [.ffmpeg-ffmpeg-script]
+    - ccache -s
+  artifacts:
+    untracked: false
+    expire_in: 30 days
+    paths:
+      - ffmpeg
+
+Decoder Test:
+  extends: .linux-test-base
+  stage: .post
+  # parallel:
+  #   matrix:
+  #     - threads: [1, 2]
+  before_script:
+    - "true"
+  script:
+    - ./Bin/Release/SvtAv1DecApp ${threads:+-threads $threads} -i test-pr-Linux-Release-8bit-m8.ivf -o decout8.yuv
+    - ./ffmpeg -i test-pr-Linux-Release-8bit-m8.ivf ffmpegout8.yuv
+    - echo Testing 8bit decoding
+    - diff decout8.yuv ffmpegout8.yuv
+    - ./Bin/Release/SvtAv1DecApp ${threads:+-threads $threads} -i test-pr-Linux-Release-10bit-m8.ivf -o decout10.yuv
+    - ./ffmpeg -i test-pr-Linux-Release-10bit-m8.ivf ffmpegout10.yuv
+    - echo Testing 10bit decoding
+    - diff decout10.yuv ffmpegout10.yuv
+  needs:
+    - Linux Enc Test
+    - Linux (GCC 10, Static)
+    - Linux FFmpeg (Static)
