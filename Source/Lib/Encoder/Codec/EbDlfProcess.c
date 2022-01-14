@@ -99,12 +99,10 @@ void *dlf_kernel(void *input_ptr) {
             }
         }
         EbBool dlf_enable_flag = (EbBool)pcs_ptr->parent_pcs_ptr->dlf_ctrls.enabled;
-        uint16_t total_tile_cnt = pcs_ptr->parent_pcs_ptr->av1_cm->tiles_info.tile_cols *
-            pcs_ptr->parent_pcs_ptr->av1_cm->tiles_info.tile_rows;
-        // Jing: Move sb level lf to here if tile_parallel
+        const uint16_t tg_count = pcs_ptr->parent_pcs_ptr->tile_group_cols * pcs_ptr->parent_pcs_ptr->tile_group_rows;
+        // Move sb level lf to here if tile_parallel
         if ((dlf_enable_flag && !pcs_ptr->parent_pcs_ptr->dlf_ctrls.sb_based_dlf) ||
-            (dlf_enable_flag && pcs_ptr->parent_pcs_ptr->dlf_ctrls.sb_based_dlf &&
-             total_tile_cnt > 1)) {
+            (dlf_enable_flag &&  pcs_ptr->parent_pcs_ptr->dlf_ctrls.sb_based_dlf  && tg_count > 1)) {
             EbPictureBufferDesc *recon_buffer;
             get_recon_pic(pcs_ptr, &recon_buffer, is_16bit);
             svt_av1_loop_filter_init(pcs_ptr);

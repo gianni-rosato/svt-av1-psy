@@ -458,9 +458,9 @@ EbErrorType load_default_buffer_configuration_settings(
     // Segments will be parallelized within a tile group
     // We can use tile group to control the threads/parallelism in ED stage
     // NOTE:1 col will have better perf for segments for large resolutions
-    uint8_t tile_group_col_count = (1 << scs_ptr->static_config.tile_columns);
-    uint8_t tile_group_row_count = (1 << scs_ptr->static_config.tile_rows);
-
+    //by default, do not use tile prallel. to enable, one can set one tile-group per tile.
+    uint8_t tile_group_col_count = 1;
+    uint8_t tile_group_row_count = 1;
     scs_ptr->tile_group_col_count_array[0] = tile_group_col_count;
     scs_ptr->tile_group_col_count_array[1] = tile_group_col_count;
     scs_ptr->tile_group_col_count_array[2] = tile_group_col_count;

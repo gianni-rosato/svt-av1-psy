@@ -2661,8 +2661,8 @@ EB_EXTERN EbErrorType av1_encdec_update(SequenceControlSet *scs, PictureControlS
 
     // Dereferencing early
     uint16_t tile_idx       = ctx->tile_index;
-    uint16_t total_tile_cnt = pcs->parent_pcs_ptr->av1_cm->tiles_info.tile_cols *
-        pcs->parent_pcs_ptr->av1_cm->tiles_info.tile_rows;
+    const uint16_t tg_count = pcs->parent_pcs_ptr->tile_group_cols *
+        pcs->parent_pcs_ptr->tile_group_rows;
 
     get_recon_pic(pcs, &recon_buffer, is_16bit);
     ctx->coded_area_sb    = 0;
@@ -3158,7 +3158,7 @@ EB_EXTERN EbErrorType av1_encdec_update(SequenceControlSet *scs, PictureControlS
         pcs->parent_pcs_ptr->dlf_ctrls.sb_based_dlf;
 
     // First Pass Deblocking
-    if (enable_dlf && total_tile_cnt == 1) {
+    if (enable_dlf && tg_count == 1) {
 
         //Generate the loop iflter parameters
         if (sb_addr == 0) {
