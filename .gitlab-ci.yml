@@ -22,6 +22,17 @@ default:
       - .ccache
     policy: pull-push
 
+.source_code_rules: &source_code_rules
+  changes:
+    - "**/*.asm"
+    - "**/*.c"
+    - "**/*.cc"
+    - "**/*.cpp"
+    - "**/CMakeLists.txt"
+    - "**/*.cmake"
+    - "**/*.h"
+    - "**/*.in"
+
 #
 # General checks
 #
@@ -37,6 +48,8 @@ Style check:
     - ./test/stylecheck.sh
 
 Static analysis (cppcheck):
+  rules:
+    - *source_code_rules
   stage: compile
   image: registry.gitlab.com/aomediacodec/aom-testing/ubuntu1804
   cache:
