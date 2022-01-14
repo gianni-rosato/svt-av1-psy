@@ -1,3 +1,10 @@
+workflow:
+  rules:
+    # Use merge-request pipelines
+    - if: $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS && $CI_PIPELINE_SOURCE == "push"
+      when: never
+    - when: always
+
 stages:
   - compile
   - test
