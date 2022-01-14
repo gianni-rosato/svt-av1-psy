@@ -1,0 +1,173 @@
+#
+# !reference [] Anchors
+#
+
+.source_code_rules:
+  changes:
+    - "**/*.asm"
+    - "**/*.c"
+    - "**/*.cc"
+    - "**/*.cpp"
+    - "**/CMakeLists.txt"
+    - "**/*.cmake"
+    - "**/*.h"
+    - "**/*.in"
+    - "**/.gitlab-ci.yml"
+
+.compiler-variables:
+  CFLAGS: -Werror -Wshadow -pipe $EXTRA_CFLAGS
+  CXXFLAGS: -Werror -Wshadow -pipe $EXTRA_CXXFLAGS
+  LDFLAGS: -Werror -Wshadow -pipe $EXTRA_LDFLAGS
+  CMAKE_BUILD_TYPE: Release
+  BUILD_SHARED_LIBS: "OFF"
+  PREFIX_DIR: /usr/local
+
+.compiler-script:
+  - eval cmake
+    -B Build
+    -DREPRODUCIBLE_BUILDS=ON
+    -DCMAKE_BUILD_TYPE="$CMAKE_BUILD_TYPE"
+    -DBUILD_SHARED_LIBS="$BUILD_SHARED_LIBS"
+    -DCMAKE_INSTALL_PREFIX="$PREFIX_DIR"
+    $EXTRA_CMAKE_FLAGS
+  - cmake --build Build --config "$CMAKE_BUILD_TYPE" ${TARGET:+--target $TARGET}
+
+.linux-extract-videos:
+  - cp /*.zst .
+  - zstd -d *.zst
+
+.enc-test-parallel:
+  matrix:
+    - SVT_ENCTEST_FILENAME: akiyo_cif.y4m
+      SVT_ENCTEST_BITNESS: 8
+    - SVT_ENCTEST_FILENAME: Chimera-Aerial_480x264_2997fps_10bit_420_150frames.y4m
+      SVT_ENCTEST_BITNESS: 10
+
+.enc-test-artifacts:
+  untracked: false
+  expire_in: 1 days
+  paths:
+    - "test-*-*-*bit-m*.ivf"
+
+.enc-test-script: |
+  for CMAKE_BUILD_TYPE in Debug Release; do
+    test -e "./Bin/$CMAKE_BUILD_TYPE/SvtAv1EncApp" || continue
+    ./Bin/$CMAKE_BUILD_TYPE/SvtAv1EncApp --preset 2 -i "$SVT_ENCTEST_FILENAME" -n 17 -b "test-${BRANCH:-pr}-$(uname)-${CMAKE_BUILD_TYPE}-${SVT_ENCTEST_BITNESS}bit-m2.ivf"
+    ./Bin/$CMAKE_BUILD_TYPE/SvtAv1EncApp --preset 8 -i "$SVT_ENCTEST_FILENAME" -n 120 -b "test-${BRANCH:-pr}-$(uname)-${CMAKE_BUILD_TYPE}-${SVT_ENCTEST_BITNESS}bit-m8.ivf"
+  done
+
+.ffmpeg-before-script-clone:
+  - git clone $PWD svtav1-src
+  - git clone https://aomedia.googlesource.com/aom aom-src
+  - git clone https://chromium.googlesource.com/webm/libvpx libvpx-src
+  - git clone https://code.videolan.org/videolan/dav1d.git dav1d-src
+  - git clone https://github.com/Netflix/vmaf.git vmaf-src
+  - git clone https://github.com/FFmpeg/FFmpeg.git ffmpeg-src
+
+.ffmpeg-before-script-export:
+  - true "${CMAKE_BUILD_TYPE:=Release}" "${BUILD_SHARED_LIBS:=OFF}" "${PREFIX_DIR:=/usr/local}"
+  - export PKG_CONFIG_PATH=$PREFIX_DIR/lib/pkgconfig${PKG_CONFIG_PATH:+:PKG_CONFIG_PATH}
+
+# SVT-AV1
+.ffmpeg-svtav1-script:
+  - cmake
+    -S svtav1-src
+    -B svtav1-build
+    -DCMAKE_BUILD_TYPE="$CMAKE_BUILD_TYPE"
+    -DBUILD_SHARED_LIBS="$BUILD_SHARED_LIBS"
+    -DCMAKE_INSTALL_PREFIX="$PREFIX_DIR"
+    -DBUILD_APPS=OFF
+    -DBUILD_DEC=OFF
+    -DREPRODUCIBLE_BUILDS=ON
+  - cmake --build svtav1-build --config Release --target install
+# aom
+.ffmpeg-aom-script:
+  - cmake
+    -S aom-src
+    -B aom-build
+    -DCMAKE_BUILD_TYPE="$CMAKE_BUILD_TYPE"
+    -DBUILD_SHARED_LIBS="$BUILD_SHARED_LIBS"
+    -DCMAKE_INSTALL_PREFIX="$PREFIX_DIR"
+    -DENABLE_TESTS=0
+    -DENABLE_EXAMPLES=0
+    -DENABLE_DOCS=0
+    -DENABLE_TESTDATA=0
+    -DENABLE_TOOLS=0
+  - cmake --build aom-build --config Release --target install
+# libvpx
+.ffmpeg-libvpx-script:
+  - mkdir vpx-build
+  - cd vpx-build
+  - dash ../libvpx-src/configure
+    --disable-dependency-tracking
+    --disable-docs
+    --disable-examples
+    --disable-libyuv
+    --disable-postproc
+    --disable-shared
+    --disable-tools
+    --disable-unit-tests
+    --disable-webm-io
+    --enable-postproc
+    --enable-runtime-cpu-detect
+    --enable-vp8 --enable-vp9
+    --enable-vp9-highbitdepth
+    --enable-vp9-postproc
+    --prefix="${PREFIX_DIR}"
+  - make -j $(getconf _NPROCESSORS_ONLN 2>/dev/null || sysctl -n hw.ncpu) install
+  - cd -
+# dav1d
+.ffmpeg-dav1d-script:
+  - meson setup
+    --default-library static
+    --buildtype release
+    --libdir lib
+    --prefix "${PREFIX_DIR}"
+    -Denable_tests=false
+    -Denable_examples=false
+    -Denable_tools=false
+    dav1d-build dav1d-src
+  - meson install -C dav1d-build
+# vmaf
+.ffmpeg-vmaf-script:
+  - meson setup
+    --default-library static
+    --buildtype release
+    --libdir lib
+    --prefix "${PREFIX_DIR}"
+    -Denable_tests=false
+    -Denable_docs=false
+    -Dbuilt_in_models=true
+    -Denable_float=true
+    vmaf-build vmaf-src/libvmaf
+  - meson install -C vmaf-build
+# FFmpeg
+# Uses ld=CXX for libvmaf to autolink the stdc++ library
+.ffmpeg-ffmpeg-script:
+  - mkdir ffmpeg-build
+  - cd ffmpeg-build
+  - dash ../ffmpeg-src/configure
+    --arch=x86_64
+    --pkg-config-flags="--static"
+    --cc="${CC:-ccache gcc}"
+    --cxx="${CXX:-ccache g++}"
+    --ld="${CXX:-ccache g++}"
+    --enable-gpl --enable-static
+    --prefix="${PREFIX_DIR}"
+    --enable-libaom
+    --enable-libdav1d
+    --enable-libsvtav1
+    --enable-libvmaf
+    --enable-libvpx
+    --disable-shared || { less ffbuild/config.log; exit 1; }
+  - make -j $(getconf _NPROCESSORS_ONLN 2>/dev/null || sysctl -n hw.ncpu) install
+  - cp ./ffmpeg $CI_PROJECT_DIR
+
+# Extends bases
+
+.common-ci-base:
+  rules:
+    - !reference [.source_code_rules]
+    - if: ("$NIGHTLY" || "$WEEKEND") && $CI_PIPELINE_SOURCE == "schedule"
+      when: never
+    - if: $CI_PIPELINE_SOURCE == "schedule"

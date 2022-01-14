@@ -22,18 +22,8 @@ default:
       - .ccache
     policy: pull-push
 
-.source_code_rules: &source_code_rules
-  changes:
-    - "**/*.asm"
-    - "**/*.c"
-    - "**/*.cc"
-    - "**/*.cpp"
-    - "**/CMakeLists.txt"
-    - "**/*.cmake"
-    - "**/*.h"
-    - "**/*.in"
-
 include:
+  - local: /.gitlab/workflows/common/.gitlab-ci.yml
   - local: /.gitlab/workflows/nightly/.gitlab-ci.yml
     rules:
       - if: $CI_PIPELINE_SOURCE == "schedule" && "$NIGHTLY"
@@ -54,7 +44,7 @@ Style check:
 
 Static analysis (cppcheck):
   rules:
-    - *source_code_rules
+    - !reference [.source_code_rules]
   stage: compile
   image: registry.gitlab.com/aomediacodec/aom-testing/ubuntu1804
   cache:
@@ -77,40 +67,15 @@ Static analysis (cppcheck):
         --cppcheck-build-dir=.cppcheck \
         --suppress=unusedFunction > /dev/null
 
-#
-# Yaml Anchors
-#
-
-.common-ci-base:
-  rules:
-    - *source_code_rules
-    - if: ("$NIGHTLY" || "$WEEKEND") && $CI_PIPELINE_SOURCE == "schedule"
-      when: never
-    - if: $CI_PIPELINE_SOURCE == "schedule"
-
 .linux-compiler-base:
   extends: .common-ci-base
   stage: compile
   tags:
     - gitlab-org
   image: registry.gitlab.com/aomediacodec/aom-testing/ubuntu2004
-  variables: &compiler-variables
-    CFLAGS: -Werror -Wshadow -pipe $EXTRA_CFLAGS
-    CXXFLAGS: -Werror -Wshadow -pipe $EXTRA_CXXFLAGS
-    LDFLAGS: -Werror -Wshadow -pipe $EXTRA_LDFLAGS
-    CMAKE_BUILD_TYPE: Release
-    BUILD_SHARED_LIBS: "OFF"
-    PREFIX_DIR: /usr/local
-  script: &compiler-script
-    - |
-      eval cmake \
-        -B Build \
-        -DREPRODUCIBLE_BUILDS=ON \
-        -DCMAKE_BUILD_TYPE="$CMAKE_BUILD_TYPE" \
-        -DBUILD_SHARED_LIBS="$BUILD_SHARED_LIBS" \
-        -DCMAKE_INSTALL_PREFIX="$PREFIX_DIR" \
-        $EXTRA_CMAKE_FLAGS
-    - cmake --build Build --config "$CMAKE_BUILD_TYPE" ${TARGET:+--target $TARGET}
+  variables:
+    !reference [.compiler-variables]
+  script: !reference [.compiler-script]
 
 .linux-test-base:
   extends: .common-ci-base
@@ -119,9 +84,7 @@ Static analysis (cppcheck):
     - gitlab-org
   image: registry.gitlab.com/aomediacodec/aom-testing/ubuntu2004
   before_script:
-    - &linux-extract-videos |
-      cp /*.zst .
-      zstd -d *.zst
+    - !reference [.linux-extract-videos]
 
 .linux-unit-test-base:
   extends: .linux-test-base
@@ -140,8 +103,8 @@ Static analysis (cppcheck):
   tags:
     - macos-ci
   variables:
-    <<: *compiler-variables
-  script: *compiler-script
+    !reference [.compiler-variables]
+  script: !reference [.compiler-script]
 
 .macos-test-base:
   extends: .common-ci-base
@@ -509,23 +472,9 @@ Linux Enc Test:
   extends: .linux-test-base
   stage: test
   script:
-    - &enc-test-script |
-      for CMAKE_BUILD_TYPE in Debug Release; do
-        test -e "./Bin/$CMAKE_BUILD_TYPE/SvtAv1EncApp" || continue
-        ./Bin/$CMAKE_BUILD_TYPE/SvtAv1EncApp --preset 2 -i "$SVT_ENCTEST_FILENAME" -n 17 -b "test-${BRANCH:-pr}-$(uname)-${CMAKE_BUILD_TYPE}-${SVT_ENCTEST_BITNESS}bit-m2.ivf"
-        ./Bin/$CMAKE_BUILD_TYPE/SvtAv1EncApp --preset 8 -i "$SVT_ENCTEST_FILENAME" -n 120 -b "test-${BRANCH:-pr}-$(uname)-${CMAKE_BUILD_TYPE}-${SVT_ENCTEST_BITNESS}bit-m8.ivf"
-      done
-  parallel: &enc-test-parallel
-    matrix:
-      - SVT_ENCTEST_FILENAME: akiyo_cif.y4m
-        SVT_ENCTEST_BITNESS: 8
-      - SVT_ENCTEST_FILENAME: Chimera-Aerial_480x264_2997fps_10bit_420_150frames.y4m
-        SVT_ENCTEST_BITNESS: 10
-  artifacts: &enc-test-artifacts
-    untracked: false
-    expire_in: 1 days
-    paths:
-      - "test-*-*-*bit-m*.ivf"
+    - !reference [.enc-test-script]
+  parallel: !reference [.enc-test-parallel]
+  artifacts: !reference [.enc-test-artifacts]
   needs:
     - Linux (GCC 10)
 
@@ -538,8 +487,8 @@ Linux Intra Enc Test:
           ./Bin/Release/SvtAv1EncApp --preset 2 --keyint $INTRA_PERIOD -i "$SVT_ENCTEST_FILENAME" -n 17 -b "test-${BRANCH:-pr}-$(uname)-intra${INTRA_PERIOD}-${SVT_ENCTEST_BITNESS}bit-m2.ivf"
           ./Bin/Release/SvtAv1EncApp --preset 8 --keyint $INTRA_PERIOD -i "$SVT_ENCTEST_FILENAME" -n 120 -b "test-${BRANCH:-pr}-$(uname)-intra${INTRA_PERIOD}-${SVT_ENCTEST_BITNESS}bit-m8.ivf"
         done
-  parallel: *enc-test-parallel
-  artifacts: *enc-test-artifacts
+  parallel: !reference [.enc-test-parallel]
+  artifacts: !reference [.enc-test-artifacts]
   needs:
     - Linux (GCC 10)
 
@@ -560,12 +509,7 @@ Linux Integer Overflow Test:
         echo "Found $num_errors integer overflows"
       fi
       $ret
-  parallel: &enc-test-parallel
-    matrix:
-      - SVT_ENCTEST_FILENAME: akiyo_cif.y4m
-        SVT_ENCTEST_BITNESS: 8
-      - SVT_ENCTEST_FILENAME: Chimera-Aerial_480x264_2997fps_10bit_420_150frames.y4m
-        SVT_ENCTEST_BITNESS: 10
+  parallel: !reference [.enc-test-parallel]
   needs:
     - Linux Integer Overflow Compile
 
@@ -597,20 +541,20 @@ Linux Default Branch:
   before_script:
     - git fetch https://gitlab.com/AOMediaCodec/SVT-AV1.git HEAD
     - git checkout ${CI_MERGE_REQUEST_TARGET_BRANCH_NAME:-FETCH_HEAD}
-    - *linux-extract-videos
+    - !reference [.linux-extract-videos]
   script:
-    - *compiler-script
-    - *enc-test-script
-  parallel: *enc-test-parallel
-  artifacts: *enc-test-artifacts
+    - !reference [.compiler-script]
+    - !reference [.enc-test-script]
+  parallel: !reference [.enc-test-parallel]
+  artifacts: !reference [.enc-test-artifacts]
 
 macOS Enc Test:
   extends: .macos-test-base
   variables:
     TEST_FILES: akiyo_cif.y4m Chimera-Aerial_480x264_2997fps_10bit_420_150frames.y4m
-  script: *enc-test-script
-  parallel: *enc-test-parallel
-  artifacts: *enc-test-artifacts
+  script: !reference [.enc-test-script]
+  parallel: !reference [.enc-test-parallel]
+  artifacts: !reference [.enc-test-artifacts]
   needs:
     - macOS (Static, Tests)
 
@@ -621,8 +565,8 @@ Win64 Enc Test:
     - ./Bin/Release/SvtAv1EncApp.exe --preset 8 -i "$env:SVT_ENCTEST_FILENAME" -n 120 -b "test-pr-Windows-Release-${env:SVT_ENCTEST_BITNESS}bit-m8.ivf"
     - ./Bin/Debug/SvtAv1EncApp.exe --preset 2 -i "$env:SVT_ENCTEST_FILENAME" -n 17 -b "test-pr-Windows-Debug-${env:SVT_ENCTEST_BITNESS}bit-m2.ivf"
     - ./Bin/Debug/SvtAv1EncApp.exe --preset 8 -i "$env:SVT_ENCTEST_FILENAME" -n 120 -b "test-pr-Windows-Debug-${env:SVT_ENCTEST_BITNESS}bit-m8.ivf"
-  parallel: *enc-test-parallel
-  artifacts: *enc-test-artifacts
+  parallel: !reference [.enc-test-parallel]
+  artifacts: !reference [.enc-test-artifacts]
   needs:
     - Win64 (MSVC, Tests)
 
@@ -742,90 +686,14 @@ Linux FFmpeg (Static):
     LDFLAGS: -pipe -static -static-libgcc -static-libstdc++
     GIT_DEPTH: 0
   before_script:
-    - &ffmpeg-before-script-clone |
-      git clone $PWD svtav1-src
-      git clone https://aomedia.googlesource.com/aom aom-src
-      git clone https://chromium.googlesource.com/webm/libvpx libvpx-src
-      git clone https://code.videolan.org/videolan/dav1d.git dav1d-src
-      git clone https://github.com/Netflix/vmaf.git vmaf-src
-      git clone https://github.com/FFmpeg/FFmpeg.git ffmpeg-src
-    - &ffmpeg-before-script-export |
-      true "${CMAKE_BUILD_TYPE:=Release}" "${BUILD_SHARED_LIBS:=OFF}" "${PREFIX_DIR:=/usr/local}"
-      export PKG_CONFIG_PATH=$PREFIX_DIR/lib/pkgconfig${PKG_CONFIG_PATH:+:PKG_CONFIG_PATH}
+    - !reference [.ffmpeg-before-script-clone]
+    - !reference [.ffmpeg-before-script-export]
   script:
-    # SVT-AV1
-    - &ffmpeg-svtav1-script |
-      cmake \
-        -S svtav1-src \
-        -B svtav1-build \
-        -DCMAKE_BUILD_TYPE="$CMAKE_BUILD_TYPE" \
-        -DBUILD_SHARED_LIBS="$BUILD_SHARED_LIBS" \
-        -DCMAKE_INSTALL_PREFIX="$PREFIX_DIR" \
-        -DBUILD_APPS=OFF \
-        -DBUILD_DEC=OFF \
-        -DREPRODUCIBLE_BUILDS=ON
-      cmake --build svtav1-build --config Release --target install
-    # aom
-    - &ffmpeg-aom-script |
-      cmake \
-        -S aom-src \
-        -B aom-build \
-        -DCMAKE_BUILD_TYPE="$CMAKE_BUILD_TYPE" \
-        -DBUILD_SHARED_LIBS="$BUILD_SHARED_LIBS" \
-        -DCMAKE_INSTALL_PREFIX="$PREFIX_DIR" \
-        -DENABLE_TESTS=0 \
-        -DENABLE_EXAMPLES=0 \
-        -DENABLE_DOCS=0 \
-        -DENABLE_TESTDATA=0 \
-        -DENABLE_TOOLS=0
-      cmake --build aom-build --config Release --target install
-    # libvpx
-    - &ffmpeg-libvpx-script |
-      mkdir vpx-build
-      cd vpx-build
-      dash ../libvpx-src/configure \
-        --disable-dependency-tracking \
-        --disable-docs \
-        --disable-examples \
-        --disable-libyuv \
-        --disable-postproc \
-        --disable-shared \
-        --disable-tools \
-        --disable-unit-tests \
-        --disable-webm-io \
-        --enable-postproc \
-        --enable-runtime-cpu-detect \
-        --enable-vp8 --enable-vp9 \
-        --enable-vp9-highbitdepth \
-        --enable-vp9-postproc \
-        --prefix="${PREFIX_DIR}"
-      make -j $(getconf _NPROCESSORS_ONLN 2>/dev/null || sysctl -n hw.ncpu) install
-      cd -
-    # dav1d
-    - &ffmpeg-dav1d-script |
-      meson setup \
-        --default-library static \
-        --buildtype release \
-        --libdir lib \
-        --prefix "${PREFIX_DIR}" \
-        -Denable_tests=false \
-        -Denable_examples=false \
-        -Denable_tools=false \
-        dav1d-build dav1d-src
-      meson install -C dav1d-build
-    # vmaf
-    - &ffmpeg-vmaf-script |
-      meson setup \
-        --default-library static \
-        --buildtype release \
-        --libdir lib \
-        --prefix "${PREFIX_DIR}" \
-        -Denable_tests=false \
-        -Denable_docs=false \
-        -Dbuilt_in_models=true \
-        -Denable_float=true \
-        vmaf-build vmaf-src/libvmaf
-      meson install -C vmaf-build
+    - !reference [.ffmpeg-svtav1-script]
+    - !reference [.ffmpeg-aom-script]
+    - !reference [.ffmpeg-libvpx-script]
+    - !reference [.ffmpeg-dav1d-script]
+    - !reference [.ffmpeg-vmaf-script]
     # symbol conflict tests
     - |
       conflicts=$(
@@ -838,30 +706,7 @@ Linux FFmpeg (Static):
         printf 'Conflicts Found!\n%s\n' "$conflicts"
         exit 1
       fi
-    # FFmpeg
-    # Uses ld=CXX for libvmaf to autolink the stdc++ library
-    - &ffmpeg-ffmpeg-script |
-      mkdir ffmpeg-build
-      cd ffmpeg-build
-      dash ../ffmpeg-src/configure \
-        --arch=x86_64 \
-        --pkg-config-flags="--static" \
-        --cc="${CC:-ccache gcc}" \
-        --cxx="${CXX:-ccache g++}" \
-        --ld="${CXX:-ccache g++}" \
-        --enable-gpl --enable-static \
-        --prefix="${PREFIX_DIR}" \
-        --enable-libaom \
-        --enable-libdav1d \
-        --enable-libsvtav1 \
-        --enable-libvmaf \
-        --enable-libvpx \
-        --disable-shared || {
-          less ffbuild/config.log
-          exit 1
-        }
-      make -j $(getconf _NPROCESSORS_ONLN 2>/dev/null || sysctl -n hw.ncpu) install
-      cp ./ffmpeg $CI_PROJECT_DIR
+    - !reference [.ffmpeg-ffmpeg-script]
     - ccache -s
   artifacts:
     untracked: false
@@ -901,14 +746,14 @@ macOS FFmpeg (Static):
     GIT_DEPTH: 0
     PREFIX_DIR: ${CI_PROJECT_DIR}/SVT-Install/
   before_script:
-    - *ffmpeg-before-script-clone
-    - *ffmpeg-before-script-export
+    - !reference [.ffmpeg-before-script-clone]
+    - !reference [.ffmpeg-before-script-export]
   script:
-    - *ffmpeg-svtav1-script
-    - *ffmpeg-aom-script
-    - *ffmpeg-libvpx-script
-    - *ffmpeg-dav1d-script
-    - *ffmpeg-vmaf-script
+    - !reference [.ffmpeg-svtav1-script]
+    - !reference [.ffmpeg-aom-script]
+    - !reference [.ffmpeg-libvpx-script]
+    - !reference [.ffmpeg-dav1d-script]
+    - !reference [.ffmpeg-vmaf-script]
     # symbol conflict tests
     - |
       conflicts=$(
@@ -926,7 +771,7 @@ macOS FFmpeg (Static):
         done
         exit 1
       fi
-    - *ffmpeg-ffmpeg-script
+    - !reference [.ffmpeg-ffmpeg-script]
     - ccache -s
   artifacts:
     untracked: false
@@ -946,7 +791,7 @@ Win64 FFmpeg (Static):
     GIT_DEPTH: 0
     PREFIX_DIR: C:/msys64/mingw64
   before_script:
-    - *ffmpeg-before-script-clone
+    - !reference [.ffmpeg-before-script-clone]
   script:
     # SVT-AV1
     - |
