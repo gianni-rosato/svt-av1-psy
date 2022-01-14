@@ -523,6 +523,24 @@ Linux Integer Overflow Test:
   needs:
     - Linux Integer Overflow Compile
 
+Linux Passes vs Passes Test:
+  extends: .linux-test-base
+  stage: test
+  script:
+      - |
+         ./Bin/Release/SvtAv1EncApp --preset 2 --passes 2 --irefresh-type 2 --keyint -1 -i "$SVT_ENCTEST_FILENAME" -n 17 -b "test-${BRANCH:-pr}-$(uname)-passes=2-${SVT_ENCTEST_BITNESS}bit-m2.ivf"
+         ./Bin/Release/SvtAv1EncApp --preset 8 --passes 2 --irefresh-type 2 --keyint -1 -i "$SVT_ENCTEST_FILENAME" -n 120 -b "test-${BRANCH:-pr}-$(uname)-passes=2-${SVT_ENCTEST_BITNESS}bit-m8.ivf"
+         ./Bin/Release/SvtAv1EncApp --preset 2 --pass 1 --irefresh-type 2 --keyint -1 -i "$SVT_ENCTEST_FILENAME" -n 17 --stats "test-${BRANCH:-pr}-$(uname)-pass=2-${SVT_ENCTEST_BITNESS}bit-m2.stat"
+         ./Bin/Release/SvtAv1EncApp --preset 2 --pass 2 --irefresh-type 2 --keyint -1 -i "$SVT_ENCTEST_FILENAME" -n 17 --stats "test-${BRANCH:-pr}-$(uname)-pass=2-${SVT_ENCTEST_BITNESS}bit-m2.stat" -b "test-${BRANCH:-pr}-$(uname)-pass=2-${SVT_ENCTEST_BITNESS}bit-m2.ivf"
+         ./Bin/Release/SvtAv1EncApp --preset 8 --pass 1 --irefresh-type 2 --keyint -1 -i "$SVT_ENCTEST_FILENAME" -n 120 --stats "test-${BRANCH:-pr}-$(uname)-pass=2-${SVT_ENCTEST_BITNESS}bit-m8.stat"
+         ./Bin/Release/SvtAv1EncApp --preset 8 --pass 2 --irefresh-type 2 --keyint -1 -i "$SVT_ENCTEST_FILENAME" -n 120 --stats "test-${BRANCH:-pr}-$(uname)-pass=2-${SVT_ENCTEST_BITNESS}bit-m8.stat" -b "test-${BRANCH:-pr}-$(uname)-pass=2-${SVT_ENCTEST_BITNESS}bit-m8.ivf"
+
+  parallel: *enc-test-parallel
+  artifacts: *enc-test-artifacts
+  needs:
+    - Linux (GCC 10)
+
+
 Linux Default Branch:
   extends:
     - .linux-compiler-base
@@ -621,6 +639,24 @@ Enc Intra Diff Test:
       $success
   needs:
     - Linux Intra Enc Test
+
+Enc Passes Diff Test:
+  stage: .post
+  image: registry.gitlab.com/aomediacodec/aom-testing/alpine3
+  allow_failure: true
+  script:
+    - |
+      success=true
+      for dist in *.ivf; do
+          case $dist in
+          test-pr-Linux-passes=2-*bit-*.ivf) continue ;;
+          *-8bit-m2.ivf) diff -q test-pr-Linux-passes=2-8bit-m2.ivf "$dist" || success=false ;;
+          *-10bit-m8.ivf) diff -q test-pr-Linux-passes=2-10bit-m8.ivf "$dist" || success=false ;;
+          esac
+      done
+      $success
+  needs:
+    - Linux Passes vs Passes Test
 
 
 Linux Gstreamer (Static):
