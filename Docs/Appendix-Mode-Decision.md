@@ -120,3 +120,7 @@ This process is illustrated in Figure 6. The arrows represent the block z-scan c
 ![md_figure6](./img/md_figure6.png)
 
 ##### Figure 6. Neighbor array data illustration.
+
+## Notes
+
+The feature settings that are described in this document were compiled at v0.9.0 of the code and may not reflect the current status of the code. The description in this document represents an example showing how features would interact with the SVT architecture. For the most up-to-date settings, it's recommended to review the section of the code implementing this feature.

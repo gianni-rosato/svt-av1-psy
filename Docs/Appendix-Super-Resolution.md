@@ -79,7 +79,7 @@ The Fixed mode with constant QP configuration can achieve less bandwidth require
 The Qthreshold or Auto mode with VBR configuration is expected to have better coding efficiency than other modes because for most natural videos and common bit rates, enabling super-resolution actually leads to a drop in compression efficiency. According to internal tests, coding gain is achieved only at very low bit rates with the Auto mode. With Qthreshold and Auto modes, super-resolution is only conducted on selected frames. The selection is based on the frame QP (Qthreshold mode) and rate-distortion cost (Auto mode).
 
 ## 5. Notes
-The feature settings that are described in this document were compiled at v0.8.7 of the code and may not reflect the current status of the code. The description in this document represents an example showing how features would interact with the SVT architecture. For the most up-to-date settings, it's recommended to review the section of the code implementing this feature.
+The feature settings that are described in this document were compiled at v0.9.0 of the code and may not reflect the current status of the code. The description in this document represents an example showing how features would interact with the SVT architecture. For the most up-to-date settings, it's recommended to review the section of the code implementing this feature.
 
 ## 6. References
 [1] Jingning Han, Bohan Li, Debargha Mukherjee, Ching-Han Chiang, Adrian Grange, Cheng Chen, Hui Su, Sarah Parker, Sai Deng, Urvang Joshi, Yue Chen, Yunqing Wang, Paul Wilkins, Yaowu Xu, James Bankoski, “A Technical Overview of AV1”
