@@ -413,7 +413,7 @@ static const char* get_pass_name(EncPass enc_pass, int32_t passes) {
     } else { // passes == 2
         switch (enc_pass) {
         case ENC_FIRST_PASS: return "Pass 1/2 ";
-        case ENC_THIRD_PASS: return "Pass 2/2 ";
+        case ENC_SECOND_PASS: return "Pass 2/2 ";
         default: return "";
         }
     }
