@@ -525,7 +525,11 @@ void *packetization_kernel(void *input_ptr) {
 
                         // Initialize Segments as picture decision process
                         parent_pcs_ptr->me_segments_completion_count = 0;
+#if CLN_ME
+                        parent_pcs_ptr->me_processed_b64_count        = 0;
+#else
                         parent_pcs_ptr->me_processed_sb_count        = 0;
+#endif
 
                         if (parent_pcs_ptr->reference_picture_wrapper_ptr != NULL) {
                             // update mi_rows and mi_cols for the reference pic wrapper (used in mfmv for other pictures)

@@ -6547,7 +6547,11 @@ void* picture_decision_kernel(void *input_ptr)
 
                             //set the ref frame types used for this picture,
                             set_all_ref_frame_type(pcs_ptr, pcs_ptr->ref_frame_type_arr, &pcs_ptr->tot_ref_frame_types);
+#if CLN_ME
+                            pcs_ptr->me_processed_b64_count = 0;
+#else
                             pcs_ptr->me_processed_sb_count = 0;
+#endif
 
                             uint32_t pic_it = out_stride_diff64 - context_ptr->mini_gop_start_index[mini_gop_index];
                             context_ptr->mg_pictures_array[pic_it] = pcs_ptr;

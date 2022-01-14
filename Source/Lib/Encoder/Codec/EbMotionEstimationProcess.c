@@ -1,3 +1,4 @@
+// clang-format off
 /*
 * Copyright(c) 2019 Intel Corporation
 *
@@ -391,7 +392,9 @@ void set_prehme_ctrls(MeContext *context, uint8_t level) {
         ctrl->prehme_sa_cfg[1].sa_max = (SearchArea){384, 3};
         ctrl->skip_search_line = 0;
         ctrl->l1_early_exit = 0;
+#if !CLN_ME
         ctrl->use_tf_motion = 0;
+#endif
         break;
     case 2: ctrl->enable = 1;
         // vertical shape search region
@@ -402,7 +405,9 @@ void set_prehme_ctrls(MeContext *context, uint8_t level) {
         ctrl->prehme_sa_cfg[1].sa_max = (SearchArea){200, 7};
         ctrl->skip_search_line = 1;
         ctrl->l1_early_exit = 0;
+#if !CLN_ME
         ctrl->use_tf_motion = 0;
+#endif
         break;
     case 3:
         ctrl->enable = 1;
@@ -414,9 +419,9 @@ void set_prehme_ctrls(MeContext *context, uint8_t level) {
         ctrl->prehme_sa_cfg[1].sa_max = (SearchArea){128, 7};
         ctrl->skip_search_line        = 1;
         ctrl->l1_early_exit = 1;
-
+#if !CLN_ME
         ctrl->use_tf_motion = 0;
-
+#endif
         break;
     default: assert(0); break;
     }
@@ -470,6 +475,7 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
             context_ptr->me_context_ptr->reduce_hme_l0_sr_th_max = 0;
         }
     }
+#if !CLN_ME
     // skip search line hme level0
     if (enc_mode <= ENC_M13)
         context_ptr->me_context_ptr->skip_search_line_hme0 = 0;
@@ -478,7 +484,7 @@ EbErrorType signal_derivation_me_kernel_oq(SequenceControlSet *       scs_ptr,
                 INPUT_SIZE_720p_RANGE
             ? 0
             : 1;
-
+#endif
     // Set pre-hme level (0-2)
     uint8_t prehme_level = 0;
     if (pcs_ptr->sc_class1)
@@ -736,12 +742,24 @@ void *motion_estimation_kernel(void *input_ptr) {
                 input_picture_ptr = pcs_ptr->enhanced_unscaled_picture_ptr;
             // Segments
             uint32_t segment_index   = in_results_ptr->segment_index;
+#if CLN_ME
+            uint32_t pic_width_in_b64 = (pcs_ptr->aligned_width + scs_ptr->sb_sz - 1) / scs_ptr->sb_sz;
+            uint32_t picture_height_in_b64 = (pcs_ptr->aligned_height + scs_ptr->sb_sz - 1) / scs_ptr->sb_sz;
+#else
             uint32_t pic_width_in_sb = (pcs_ptr->aligned_width + scs_ptr->sb_sz - 1) /
                 scs_ptr->sb_sz;
             uint32_t picture_height_in_sb = (pcs_ptr->aligned_height + scs_ptr->sb_sz - 1) /
                 scs_ptr->sb_sz;
+#endif
             uint32_t y_segment_index;
             uint32_t x_segment_index;
+#if CLN_ME
+            SEGMENT_CONVERT_IDX_TO_XY(segment_index, x_segment_index, y_segment_index, pcs_ptr->me_segments_column_count);
+            uint32_t x_b64_start_index = SEGMENT_START_IDX(x_segment_index, pic_width_in_b64, pcs_ptr->me_segments_column_count);
+            uint32_t x_b64_end_index = SEGMENT_END_IDX(x_segment_index, pic_width_in_b64, pcs_ptr->me_segments_column_count);
+            uint32_t y_b64_start_index = SEGMENT_START_IDX(y_segment_index, picture_height_in_b64, pcs_ptr->me_segments_row_count);
+            uint32_t y_b64_end_index = SEGMENT_END_IDX(y_segment_index, picture_height_in_b64, pcs_ptr->me_segments_row_count);
+#else
             SEGMENT_CONVERT_IDX_TO_XY(
                 segment_index, x_segment_index, y_segment_index, pcs_ptr->me_segments_column_count);
             uint32_t x_sb_start_index = SEGMENT_START_IDX(
@@ -752,6 +770,7 @@ void *motion_estimation_kernel(void *input_ptr) {
                 y_segment_index, picture_height_in_sb, pcs_ptr->me_segments_row_count);
             uint32_t y_sb_end_index = SEGMENT_END_IDX(
                 y_segment_index, picture_height_in_sb, pcs_ptr->me_segments_row_count);
+#endif
             EbBool skip_me = EB_FALSE;
             if (scs_ptr->static_config.pass == ENC_FIRST_PASS ||
                 (!pcs_ptr->is_used_as_reference_flag && scs_ptr->rc_stat_gen_pass_mode &&
@@ -767,7 +786,20 @@ void *motion_estimation_kernel(void *input_ptr) {
                                                      &input_padded_picture_ptr,
                                                      &quarter_picture_ptr,
                                                      &sixteenth_picture_ptr);
+#if CLN_ME
+                    // 64x64 Block Loop
+                    for (uint32_t y_b64_index = y_b64_start_index; y_b64_index < y_b64_end_index; ++y_b64_index) {
+                        for (uint32_t x_b64_index = x_b64_start_index; x_b64_index < x_b64_end_index; ++x_b64_index) {
 
+                            uint32_t b64_index    = (uint16_t)(x_b64_index + y_b64_index * pic_width_in_b64);
+
+                            uint32_t b64_origin_x = x_b64_index * scs_ptr->sb_sz;
+                            uint32_t b64_origin_y = y_b64_index * scs_ptr->sb_sz;
+
+                            // Load the 64x64 Block from the input to the intermediate block buffer
+                            uint32_t buffer_index = (input_picture_ptr->origin_y + b64_origin_y) * input_picture_ptr->stride_y +
+                                input_picture_ptr->origin_x + b64_origin_x;
+#else
                     // SB Loop
                     for (uint32_t y_sb_index = y_sb_start_index; y_sb_index < y_sb_end_index;
                          ++y_sb_index) {
@@ -782,9 +814,16 @@ void *motion_estimation_kernel(void *input_ptr) {
                             uint32_t buffer_index = (input_picture_ptr->origin_y + sb_origin_y) *
                                     input_picture_ptr->stride_y +
                                 input_picture_ptr->origin_x + sb_origin_x;
-
+#endif
 #ifdef ARCH_X86_64
                             uint8_t *src_ptr   = &input_padded_picture_ptr->buffer_y[buffer_index];
+#if CLN_ME
+                            uint32_t b64_height = (pcs_ptr->aligned_height - b64_origin_y) < BLOCK_SIZE_64
+                                ? pcs_ptr->aligned_height - b64_origin_y : BLOCK_SIZE_64;
+                            //_MM_HINT_T0     //_MM_HINT_T1    //_MM_HINT_T2//_MM_HINT_NTA
+                            for (uint32_t i = 0; i < b64_height; i++) {
+                                char const *p = (char const *)(src_ptr + i * input_padded_picture_ptr->stride_y);
+#else
                             uint32_t sb_height = (pcs_ptr->aligned_height - sb_origin_y) <
                                     BLOCK_SIZE_64
                                 ? pcs_ptr->aligned_height - sb_origin_y
@@ -794,15 +833,38 @@ void *motion_estimation_kernel(void *input_ptr) {
                                 char const *p =
                                     (char const *)(src_ptr +
                                                    i * input_padded_picture_ptr->stride_y);
-
+#endif
                                 _mm_prefetch(p, _MM_HINT_T2);
                             }
 #endif
-
+#if CLN_ME
+                            context_ptr->me_context_ptr->b64_src_ptr = &input_padded_picture_ptr->buffer_y[buffer_index];
+                            context_ptr->me_context_ptr->b64_src_stride = input_padded_picture_ptr->stride_y;
+#else
                             context_ptr->me_context_ptr->sb_src_ptr =
                                 &input_padded_picture_ptr->buffer_y[buffer_index];
                             context_ptr->me_context_ptr->sb_src_stride =
                                 input_padded_picture_ptr->stride_y;
+#endif
+#if CLN_ME
+                            // Load the 1/4 decimated SB from the 1/4 decimated input to the 1/4 intermediate SB buffer
+                            if (context_ptr->me_context_ptr->enable_hme_level1_flag) {
+                                buffer_index = (quarter_picture_ptr->origin_y + (b64_origin_y >> 1)) * quarter_picture_ptr->stride_y +
+                                    quarter_picture_ptr->origin_x + (b64_origin_x >> 1);
+
+                                context_ptr->me_context_ptr->quarter_b64_buffer = &quarter_picture_ptr->buffer_y[buffer_index];
+                                context_ptr->me_context_ptr->quarter_b64_buffer_stride = quarter_picture_ptr->stride_y;
+                            }
+
+                            // Load the 1/16 decimated SB from the 1/16 decimated input to the 1/16 intermediate SB buffer
+                            if (context_ptr->me_context_ptr->enable_hme_level0_flag) {
+                                buffer_index = (sixteenth_picture_ptr->origin_y + (b64_origin_y >> 2)) * sixteenth_picture_ptr->stride_y +
+                                    sixteenth_picture_ptr->origin_x + (b64_origin_x >> 2);
+
+                                context_ptr->me_context_ptr->sixteenth_b64_buffer = &sixteenth_picture_ptr->buffer_y[buffer_index];
+                                context_ptr->me_context_ptr->sixteenth_b64_buffer_stride = sixteenth_picture_ptr->stride_y;
+                            }
+#else
                             // Load the 1/4 decimated SB from the 1/4 decimated input to the 1/4 intermediate SB buffer
                             if (context_ptr->me_context_ptr->enable_hme_level1_flag) {
                                 buffer_index = (quarter_picture_ptr->origin_y +
@@ -827,8 +889,56 @@ void *motion_estimation_kernel(void *input_ptr) {
                                 context_ptr->me_context_ptr->sixteenth_sb_buffer_stride =
                                     sixteenth_picture_ptr->stride_y;
                             }
+#endif
                             context_ptr->me_context_ptr->me_type = ME_OPEN_LOOP;
+#if CLN_ME_II
+                            if ((in_results_ptr->task_type == TASK_PAME) || (in_results_ptr->task_type == TASK_SUPERRES_RE_ME)) {
+                                context_ptr->me_context_ptr->num_of_list_to_search =
+                                    (pcs_ptr->slice_type == P_SLICE) ? 1 /*List 0 only*/
+                                    : 2 /*List 0 + 1*/;
 
+                                context_ptr->me_context_ptr->num_of_ref_pic_to_search[0] = pcs_ptr->ref_list0_count_try;
+                                if (pcs_ptr->slice_type == B_SLICE)
+                                    context_ptr->me_context_ptr->num_of_ref_pic_to_search[1] = pcs_ptr->ref_list1_count_try;
+                                context_ptr->me_context_ptr->temporal_layer_index = pcs_ptr->temporal_layer_index;
+                                context_ptr->me_context_ptr->is_used_as_reference_flag = pcs_ptr->is_used_as_reference_flag;
+
+                                if (pcs_ptr->frame_superres_enabled) {
+                                    for (int i = 0;  i < context_ptr->me_context_ptr->num_of_list_to_search; i++) {
+                                        for (int j = 0; j < context_ptr->me_context_ptr->num_of_ref_pic_to_search[i]; j++) {
+                                            //assert((int)pcs_ptr->ref_pa_pic_ptr_array[i][j]->live_count > 0);
+                                            uint8_t denom_idx = (uint8_t)(pcs_ptr->superres_denom - SCALE_NUMERATOR - 1);
+                                            EbPaReferenceObject *reference_object =
+                                                (EbPaReferenceObject *)pcs_ptr->ref_pa_pic_ptr_array[i][j]->object_ptr;
+                                            context_ptr->me_context_ptr->me_ds_ref_array[i][j].picture_ptr =
+                                                reference_object->downscaled_input_padded_picture_ptr[denom_idx];
+                                            context_ptr->me_context_ptr->me_ds_ref_array[i][j].quarter_picture_ptr =
+                                                reference_object->downscaled_quarter_downsampled_picture_ptr[denom_idx];
+                                            context_ptr->me_context_ptr->me_ds_ref_array[i][j].sixteenth_picture_ptr =
+                                                reference_object->downscaled_sixteenth_downsampled_picture_ptr[denom_idx];
+                                            context_ptr->me_context_ptr->me_ds_ref_array[i][j].picture_number =
+                                                reference_object->picture_number;
+                                        }
+                                    }
+                                } else {
+                                    for (int i = 0; i < context_ptr->me_context_ptr->num_of_list_to_search; i++) {
+                                        for (int j = 0; j < context_ptr->me_context_ptr->num_of_ref_pic_to_search[i]; j++) {
+                                            //assert((int)pcs_ptr->ref_pa_pic_ptr_array[i][j]->live_count > 0);
+                                            EbPaReferenceObject *reference_object =
+                                                (EbPaReferenceObject *)pcs_ptr->ref_pa_pic_ptr_array[i][j]->object_ptr;
+                                            context_ptr->me_context_ptr->me_ds_ref_array[i][j].picture_ptr =
+                                                reference_object->input_padded_picture_ptr;
+                                            context_ptr->me_context_ptr->me_ds_ref_array[i][j].quarter_picture_ptr =
+                                                reference_object->quarter_downsampled_picture_ptr;
+                                            context_ptr->me_context_ptr->me_ds_ref_array[i][j].sixteenth_picture_ptr =
+                                                reference_object->sixteenth_downsampled_picture_ptr;
+                                            context_ptr->me_context_ptr->me_ds_ref_array[i][j].picture_number =
+                                                reference_object->picture_number;
+                                        }
+                                    }
+                                }
+                            }
+#else
                             if ((in_results_ptr->task_type == TASK_PAME) ||
                                 (in_results_ptr->task_type == TASK_SUPERRES_RE_ME)) {
                                 context_ptr->me_context_ptr->num_of_list_to_search =
@@ -905,13 +1015,38 @@ void *motion_estimation_kernel(void *input_ptr) {
                                     }
                                 }
                             }
+#endif
+
+#if CLN_ME
+                            motion_estimate(pcs_ptr,
+                                b64_index,
+                                b64_origin_x,
+                                b64_origin_y,
+                                context_ptr->me_context_ptr,
+                                input_picture_ptr);
+#else
                             motion_estimate_sb(pcs_ptr,
                                                sb_index,
                                                sb_origin_x,
                                                sb_origin_y,
                                                context_ptr->me_context_ptr,
                                                input_picture_ptr);
+#endif
+#if CLN_ME
+                            if ((in_results_ptr->task_type == TASK_PAME) || (in_results_ptr->task_type == TASK_SUPERRES_RE_ME)) {
+                                svt_block_on_mutex(pcs_ptr->me_processed_b64_mutex);
+                                pcs_ptr->me_processed_b64_count++;
+                                // We need to finish ME for all SBs to do GM
+                                if (pcs_ptr->me_processed_b64_count == pcs_ptr->sb_total_count) {
+                                    if (pcs_ptr->gm_ctrls.enabled)
+                                        global_motion_estimation(pcs_ptr, input_picture_ptr);
+                                    else
+                                        // Initilize global motion to be OFF when GM is OFF
+                                        memset(pcs_ptr->is_global_motion, EB_FALSE, MAX_NUM_OF_REF_PIC_LIST * REF_LIST_MAX_DEPTH);
+                                }
 
+                                svt_release_mutex(pcs_ptr->me_processed_b64_mutex);
+#else
                             if ((in_results_ptr->task_type == TASK_PAME) ||
                                 (in_results_ptr->task_type == TASK_SUPERRES_RE_ME)) {
                                 svt_block_on_mutex(pcs_ptr->me_processed_sb_mutex);
@@ -928,11 +1063,20 @@ void *motion_estimation_kernel(void *input_ptr) {
                                 }
 
                                 svt_release_mutex(pcs_ptr->me_processed_sb_mutex);
+#endif
                             }
                         }
                     }
                 }
 
+#if CLN_ME
+                if (scs_ptr->in_loop_ois == 0 && pcs_ptr->tpl_ctrls.enable)
+                    for (uint32_t y_b64_index = y_b64_start_index; y_b64_index < y_b64_end_index; ++y_b64_index)
+                        for (uint32_t x_b64_index = x_b64_start_index; x_b64_index < x_b64_end_index; ++x_b64_index) {
+                            uint32_t b64_index = (uint16_t)(x_b64_index + y_b64_index * pic_width_in_b64);
+                            open_loop_intra_search_mb(pcs_ptr, b64_index, input_picture_ptr);
+                        }
+#else
                 if (scs_ptr->in_loop_ois == 0 && pcs_ptr->tpl_ctrls.enable)
                     for (uint32_t y_sb_index = y_sb_start_index; y_sb_index < y_sb_end_index;
                          ++y_sb_index)
@@ -942,6 +1086,7 @@ void *motion_estimation_kernel(void *input_ptr) {
                                                            y_sb_index * pic_width_in_sb);
                             open_loop_intra_search_mb(pcs_ptr, sb_index, input_picture_ptr);
                         }
+#endif
             }
             // Get Empty Results Object
             svt_get_empty_object(context_ptr->motion_estimation_results_output_fifo_ptr,
@@ -977,3 +1122,4 @@ void *motion_estimation_kernel(void *input_ptr) {
 
     return NULL;
 }
+// clang-format on

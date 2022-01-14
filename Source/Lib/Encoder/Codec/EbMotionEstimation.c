@@ -1,3 +1,4 @@
+// clang-format off
 /*
 * Copyright(c) 2019 Intel Corporation
 * Copyright(c) 2019 Netflix, Inc.
@@ -473,9 +474,13 @@ static void open_loop_me_get_eight_search_point_results_block(
     uint32_t curr_mv_1 = (((uint16_t)y_search_index) << 18);
     uint16_t curr_mv_2 = (((uint16_t)x_search_index << 2));
     uint32_t curr_mv   = curr_mv_1 | curr_mv_2;
-
+#if CLN_ME
+    svt_ext_all_sad_calculation_8x8_16x16(context_ptr->b64_src_ptr,
+        context_ptr->b64_src_stride,
+#else
     svt_ext_all_sad_calculation_8x8_16x16(context_ptr->sb_src_ptr,
                                           context_ptr->sb_src_stride,
+#endif
                                           ref_ptr,
                                           ref_luma_stride,
                                           curr_mv,
@@ -511,7 +516,11 @@ static void open_loop_me_get_search_point_results_block(
 // vertical direction, used to derive yMV
 {
     const EbBool sub_sad = (context_ptr->me_search_method == SUB_SAD_SEARCH);
+#if CLN_ME
+    uint8_t *    src_ptr = context_ptr->b64_src_ptr;
+#else
     uint8_t *    src_ptr = context_ptr->sb_src_ptr;
+#endif
 
     // uint8_t  *ref_ptr = ref_pic_ptr->buffer_y; // NADER
     uint8_t *ref_ptr = context_ptr->integer_buffer_ptr[list_index][ref_pic_index] +
@@ -541,8 +550,11 @@ static void open_loop_me_get_search_point_results_block(
     uint32_t *p_sad8x8              = context_ptr->p_sad8x8;
 
     // TODO: block_index search_position_index could be removed
-
+#if CLN_ME
+    const uint32_t src_stride = context_ptr->b64_src_stride;
+#else
     const uint32_t src_stride = context_ptr->sb_src_stride;
+#endif
     src_next_16x16_offset     = src_stride << 4;
 
     //---- 16x16 : 0
@@ -915,6 +927,27 @@ static void hme_level_0(
         y_top_left_search_region * sixteenth_ref_pic_ptr->stride_y;
 
     // Put the first search location into level0 results
+#if CLN_ME
+    svt_sad_loop_kernel(
+        &context_ptr->sixteenth_b64_buffer[0],
+        (context_ptr->hme_search_method == FULL_SAD_SEARCH)
+        ? context_ptr->sixteenth_b64_buffer_stride
+        : context_ptr->sixteenth_b64_buffer_stride * 2,
+        &sixteenth_ref_pic_ptr->buffer_y[search_region_index],
+        (context_ptr->hme_search_method == FULL_SAD_SEARCH) ? sixteenth_ref_pic_ptr->stride_y
+        : sixteenth_ref_pic_ptr->stride_y * 2,
+        (context_ptr->hme_search_method == FULL_SAD_SEARCH) ? block_height : block_height >> 1,
+        block_width,
+        /* results */
+        best_sad,
+        hme_l0_sc_x,
+        hme_l0_sc_y,
+        /* range */
+        sixteenth_ref_pic_ptr->stride_y,
+        0, // skip search line
+        sa_width,
+        sa_height);
+#else
     svt_sad_loop_kernel(
         &context_ptr->sixteenth_sb_buffer[0],
         (context_ptr->hme_search_method == FULL_SAD_SEARCH)
@@ -934,7 +967,7 @@ static void hme_level_0(
         context_ptr->skip_search_line_hme0,
         sa_width,
         sa_height);
-
+#endif
     *best_sad = (context_ptr->hme_search_method == FULL_SAD_SEARCH)
         ? *best_sad
         : *best_sad * 2; // Multiply by 2 because considered only ever other line
@@ -1017,11 +1050,19 @@ void hme_level_1(
         y_top_left_search_region * quarter_ref_pic_ptr->stride_y;
 
     // Put the first search location into level1 results
+#if CLN_ME
+    svt_sad_loop_kernel(
+        &context_ptr->quarter_b64_buffer[0],
+        (context_ptr->hme_search_method == FULL_SAD_SEARCH)
+        ? context_ptr->quarter_b64_buffer_stride
+        : context_ptr->quarter_b64_buffer_stride * 2,
+#else
     svt_sad_loop_kernel(
         &context_ptr->quarter_sb_buffer[0],
         (context_ptr->hme_search_method == FULL_SAD_SEARCH)
             ? context_ptr->quarter_sb_buffer_stride
             : context_ptr->quarter_sb_buffer_stride * 2,
+#endif
         &quarter_ref_pic_ptr->buffer_y[search_region_index],
         (context_ptr->hme_search_method == FULL_SAD_SEARCH) ? quarter_ref_pic_ptr->stride_y
                                                             : quarter_ref_pic_ptr->stride_y * 2,
@@ -1111,10 +1152,17 @@ void hme_level_2(MeContext *          context_ptr, // ME context Ptr, used to ge
         y_top_left_search_region * ref_pic_ptr->stride_y;
 
     // Put the first search location into level2 results
+#if CLN_ME
+    svt_sad_loop_kernel(
+        context_ptr->b64_src_ptr,
+        (context_ptr->hme_search_method == FULL_SAD_SEARCH) ? context_ptr->b64_src_stride
+        : context_ptr->b64_src_stride * 2,
+#else
     svt_sad_loop_kernel(
         context_ptr->sb_src_ptr,
         (context_ptr->hme_search_method == FULL_SAD_SEARCH) ? context_ptr->sb_src_stride
                                                             : context_ptr->sb_src_stride * 2,
+#endif
         &ref_pic_ptr->buffer_y[search_region_index],
         (context_ptr->hme_search_method == FULL_SAD_SEARCH) ? ref_pic_ptr->stride_y
                                                             : ref_pic_ptr->stride_y * 2,
@@ -1186,8 +1234,13 @@ uint32_t check_00_center(EbPictureBufferDesc *ref_pic_ptr, MeContext *context_pt
     if (context_ptr->me_early_exit_th)
         zero_mv_sad = zz_sad;
     else
+#if CLN_ME
+        zero_mv_sad = svt_nxm_sad_kernel(context_ptr->b64_src_ptr,
+            context_ptr->b64_src_stride << subsample_sad,
+#else
         zero_mv_sad = svt_nxm_sad_kernel(context_ptr->sb_src_ptr,
                                          context_ptr->sb_src_stride << subsample_sad,
+#endif
                                          &(ref_pic_ptr->buffer_y[search_region_index]),
                                          ref_pic_ptr->stride_y << subsample_sad,
                                          sb_height >> subsample_sad,
@@ -1220,8 +1273,13 @@ uint32_t check_00_center(EbPictureBufferDesc *ref_pic_ptr, MeContext *context_pt
     search_region_index = (int16_t)(ref_pic_ptr->origin_x + origin_x) + *x_search_center +
         ((int16_t)(ref_pic_ptr->origin_y + origin_y) + *y_search_center) * ref_pic_ptr->stride_y;
 
+#if CLN_ME
+    hme_mv_sad = svt_nxm_sad_kernel(context_ptr->b64_src_ptr,
+        context_ptr->b64_src_stride << subsample_sad,
+#else
     hme_mv_sad = svt_nxm_sad_kernel(context_ptr->sb_src_ptr,
                                     context_ptr->sb_src_stride << subsample_sad,
+#endif
                                     &(ref_pic_ptr->buffer_y[search_region_index]),
                                     ref_pic_ptr->stride_y << subsample_sad,
                                     sb_height >> subsample_sad,
@@ -1272,27 +1330,51 @@ static EbPictureBufferDesc *get_me_reference(PictureParentControlSet *pcs_ptr,
     return ref_pic_ptr;
 }
 
+#if CLN_ME
+// factor to slowdown the ME search region growth to MAX
+uint8_t get_scaled_picture_distance(uint8_t dist) {
+
+    uint8_t round_up = ((dist % 8) == 0) ? 0 : 1;
+    return ((dist * 5) / 8) + round_up;
+}
+#endif
+
 /*******************************************
  *   performs integer search motion estimation for
  all avaiable references frames
  *******************************************/
-
+#if CLN_ME_II
+void integer_search_sb(PictureParentControlSet *pcs_ptr, uint32_t b64_index, uint32_t b64_origin_x,
+    uint32_t b64_origin_y, MeContext *context_ptr,
+    EbPictureBufferDesc *input_ptr) {
+#else
 void integer_search_sb(PictureParentControlSet *pcs_ptr, uint32_t sb_index, uint32_t sb_origin_x,
                        uint32_t sb_origin_y, MeContext *context_ptr,
                        EbPictureBufferDesc *input_ptr) {
+#endif
     SequenceControlSet *scs_ptr        = pcs_ptr->scs_ptr;
     int16_t             picture_width  = pcs_ptr->aligned_width;
     int16_t             picture_height = pcs_ptr->aligned_height;
+#if CLN_ME_II
+    uint32_t            b64_width       = (input_ptr->width - b64_origin_x) < BLOCK_SIZE_64 ? input_ptr->width - b64_origin_x : BLOCK_SIZE_64;
+    uint32_t            b64_height      = (input_ptr->height - b64_origin_y) < BLOCK_SIZE_64 ? input_ptr->height - b64_origin_y : BLOCK_SIZE_64;
+#else
     uint32_t            sb_width       = (input_ptr->width - sb_origin_x) < BLOCK_SIZE_64
                          ? input_ptr->width - sb_origin_x
                          : BLOCK_SIZE_64;
     uint32_t            sb_height      = (input_ptr->height - sb_origin_y) < BLOCK_SIZE_64
                         ? input_ptr->height - sb_origin_y
                         : BLOCK_SIZE_64;
+#endif
     int16_t             pad_width      = (int16_t)BLOCK_SIZE_64 - 1;
     int16_t             pad_height     = (int16_t)BLOCK_SIZE_64 - 1;
+#if CLN_ME_II
+    int16_t             origin_x       = (int16_t)b64_origin_x;
+    int16_t             origin_y       = (int16_t)b64_origin_y;
+#else
     int16_t             origin_x       = (int16_t)sb_origin_x;
     int16_t             origin_y       = (int16_t)sb_origin_y;
+#endif
     int16_t             search_area_width;
     int16_t             search_area_height;
     int16_t             x_search_area_origin;
@@ -1326,17 +1408,29 @@ void integer_search_sb(PictureParentControlSet *pcs_ptr, uint32_t sb_index, uint
                                            input_ptr->width,
                                            input_ptr->height);
             // Get hme results
+#if CLN_ME
+            if (context_ptr->search_results[list_index][ref_pic_index].do_ref == 0)
+                continue; //so will not get ME results for those references.
+            x_search_center = context_ptr->search_results[list_index][ref_pic_index].hme_sc_x;
+            y_search_center = context_ptr->search_results[list_index][ref_pic_index].hme_sc_y;
+            search_area_width  = context_ptr->me_sa.sa_min.width;
+            search_area_height = context_ptr->me_sa.sa_min.height;
+#else
             if (context_ptr->hme_results[list_index][ref_pic_index].do_ref == 0)
                 continue; //so will not get ME results for those references.
             x_search_center = context_ptr->hme_results[list_index][ref_pic_index].hme_sc_x;
             y_search_center = context_ptr->hme_results[list_index][ref_pic_index].hme_sc_y;
             search_area_width  = context_ptr->me_sa.sa_min.width;
             search_area_height = context_ptr->me_sa.sa_min.height;
-
+#endif
             // factor to slowdown the ME search region growth to MAX
             if (context_ptr->me_type != ME_MCTF) {
+#if CLN_ME
+                dist = get_scaled_picture_distance(dist);
+#else
                 int8_t round_up = ((dist % 8) == 0) ? 0 : 1;
                 dist            = ((dist * 5) / 8) + round_up;
+#endif
             }
             search_area_width  = MIN((search_area_width * dist), context_ptr->me_sa.sa_max.width);
             search_area_height = MIN((search_area_height * dist), context_ptr->me_sa.sa_max.height);
@@ -1366,6 +1460,20 @@ void integer_search_sb(PictureParentControlSet *pcs_ptr, uint32_t sb_index, uint
                     context_ptr->me_type != ME_FIRST_PASS)
                     if ((x_search_center != 0 || y_search_center != 0) &&
                         (context_ptr->is_used_as_reference_flag == EB_TRUE)) {
+#if CLN_ME_II
+                        best_hme_sad = check_00_center(
+                            ref_pic_ptr,
+                            context_ptr,
+                            b64_origin_x,
+                            b64_origin_y,
+                            b64_width,
+                            b64_height,
+                            &x_search_center,
+                            &y_search_center
+                            ,
+                            context_ptr->zz_sad[list_index][ref_pic_index]
+                        );
+#else
                         best_hme_sad = check_00_center(
                             ref_pic_ptr,
                             context_ptr,
@@ -1378,15 +1486,24 @@ void integer_search_sb(PictureParentControlSet *pcs_ptr, uint32_t sb_index, uint
                             ,
                             context_ptr->zz_sad[list_index][ref_pic_index]
                         );
+#endif
                         if (x_search_center == 0 && y_search_center == 0)
                             hme_is_accuarte = 0;
                     }
                 if (context_ptr->me_sr_adjustment_ctrls.enable_me_sr_adjustment == 2) {
+#if CLN_ME
+                    if ((hme_is_accuarte && (best_hme_sad < (24 * 24))) ||
+                        (context_ptr->is_used_as_reference_flag &&
+                            context_ptr->search_results[list_index][ref_pic_index].hme_sad < (24 * 24))) {
+                        search_area_height = search_area_height / 2;
+                    }
+#else
                     if ((hme_is_accuarte && (best_hme_sad < (24 * 24))) ||
                         (context_ptr->is_used_as_reference_flag &&
                          context_ptr->hme_results[list_index][ref_pic_index].hme_sad < (24 * 24))) {
                         search_area_height = search_area_height / 2;
                     }
+#endif
                 }
                 if (context_ptr->me_sr_adjustment_ctrls.enable_me_sr_adjustment == 2) {
                     if (list_index || ref_pic_index) {
@@ -1409,8 +1526,13 @@ void integer_search_sb(PictureParentControlSet *pcs_ptr, uint32_t sb_index, uint
                 SbParams *sb_params_array = context_ptr->me_type != ME_OPEN_LOOP
                     ? scs_ptr->sb_params_array
                     : pcs_ptr->sb_params_array;
+#if CLN_ME_II
+                int       tile_start_x    = sb_params_array[b64_index].tile_start_x;
+                int       tile_end_x      = sb_params_array[b64_index].tile_end_x;
+#else
                 int       tile_start_x    = sb_params_array[sb_index].tile_start_x;
                 int       tile_end_x      = sb_params_array[sb_index].tile_end_x;
+#endif
                 // Correct the left edge of the Search Area if it is not on the
                 // reference Picture
                 x_search_area_origin = ((origin_x + x_search_area_origin) < tile_start_x)
@@ -1469,8 +1591,13 @@ void integer_search_sb(PictureParentControlSet *pcs_ptr, uint32_t sb_index, uint
                 SbParams *sb_params_array = context_ptr->me_type != ME_OPEN_LOOP
                     ? scs_ptr->sb_params_array
                     : pcs_ptr->sb_params_array;
+#if CLN_ME_II
+                int       tile_start_y    = sb_params_array[b64_index].tile_start_y;
+                int       tile_end_y      = sb_params_array[b64_index].tile_end_y;
+#else
                 int       tile_start_y    = sb_params_array[sb_index].tile_start_y;
                 int       tile_end_y      = sb_params_array[sb_index].tile_end_y;
+#endif
                 // Correct the top edge of the Search Area if it is not on the
                 // reference Picture
                 y_search_area_origin = ((origin_y + y_search_area_origin) < tile_start_y)
@@ -1518,10 +1645,17 @@ void integer_search_sb(PictureParentControlSet *pcs_ptr, uint32_t sb_index, uint
             }
             context_ptr->adj_search_area_width  = search_area_width;
             context_ptr->adj_search_area_height = search_area_height;
+#if CLN_ME_II
+            x_top_left_search_region            = (int16_t)(ref_pic_ptr->origin_x + b64_origin_x) -
+                (ME_FILTER_TAP >> 1) + x_search_area_origin;
+            y_top_left_search_region = (int16_t)(ref_pic_ptr->origin_y + b64_origin_y) -
+                (ME_FILTER_TAP >> 1) + y_search_area_origin;
+#else
             x_top_left_search_region            = (int16_t)(ref_pic_ptr->origin_x + sb_origin_x) -
                 (ME_FILTER_TAP >> 1) + x_search_area_origin;
             y_top_left_search_region = (int16_t)(ref_pic_ptr->origin_y + sb_origin_y) -
                 (ME_FILTER_TAP >> 1) + y_search_area_origin;
+#endif
             search_region_index = (x_top_left_search_region) +
                 (y_top_left_search_region)*ref_pic_ptr->stride_y;
             context_ptr->integer_buffer_ptr[list_index][ref_pic_index] = &(
@@ -1529,10 +1663,15 @@ void integer_search_sb(PictureParentControlSet *pcs_ptr, uint32_t sb_index, uint
             context_ptr->interpolated_full_stride[list_index][ref_pic_index] =
                 ref_pic_ptr->stride_y;
             // Move to the top left of the search region
+#if CLN_ME_II
+            x_top_left_search_region = (int16_t)(ref_pic_ptr->origin_x + b64_origin_x) + x_search_area_origin;
+            y_top_left_search_region = (int16_t)(ref_pic_ptr->origin_y + b64_origin_y) + y_search_area_origin;
+#else
             x_top_left_search_region = (int16_t)(ref_pic_ptr->origin_x + sb_origin_x) +
                 x_search_area_origin;
             y_top_left_search_region = (int16_t)(ref_pic_ptr->origin_y + sb_origin_y) +
                 y_search_area_origin;
+#endif
             search_region_index = x_top_left_search_region +
                 y_top_left_search_region * ref_pic_ptr->stride_y;
             svt_initialize_buffer_32bits(
@@ -1575,28 +1714,48 @@ void me_prune_ref(MeContext *context_ptr) {
         uint8_t num_of_ref_pic_to_search = context_ptr->num_of_ref_pic_to_search[list_index];
         // Ref Picture Loop
         for (uint8_t ref_pic_index = 0; ref_pic_index < num_of_ref_pic_to_search; ++ref_pic_index) {
+#if CLN_ME
+            context_ptr->search_results[list_index][ref_pic_index].hme_sad = 0;
+            // Get hme results
+            if (context_ptr->search_results[list_index][ref_pic_index].do_ref == 0) {
+                context_ptr->search_results[list_index][ref_pic_index].hme_sad = MAX_SAD_VALUE * 64;
+                continue;
+            }
+#else
             context_ptr->hme_results[list_index][ref_pic_index].hme_sad = 0;
             // Get hme results
             if (context_ptr->hme_results[list_index][ref_pic_index].do_ref == 0) {
                 context_ptr->hme_results[list_index][ref_pic_index].hme_sad = MAX_SAD_VALUE * 64;
                 continue;
             }
+#endif
             context_ptr->p_best_sad_8x8 = &(
                 context_ptr->p_sb_best_sad[list_index][ref_pic_index][ME_TIER_ZERO_PU_8x8_0]);
             // 8x8   [64 partitions]
             for (uint32_t pu_index = 0; pu_index < 64; ++pu_index) {
                 uint32_t idx = tab8x8[pu_index];
+#if CLN_ME
+                context_ptr->search_results[list_index][ref_pic_index].hme_sad +=
+                    context_ptr->p_best_sad_8x8[idx];
+#else
                 context_ptr->hme_results[list_index][ref_pic_index].hme_sad +=
                     context_ptr->p_best_sad_8x8[idx];
+#endif
             }
         }
     }
     uint64_t best = (uint64_t)~0;
     for (int i = 0; i < MAX_NUM_OF_REF_PIC_LIST; ++i) {
         for (int j = 0; j < REF_LIST_MAX_DEPTH; ++j) {
+#if CLN_ME
+            if (context_ptr->search_results[i][j].hme_sad < best) {
+                best = context_ptr->search_results[i][j].hme_sad;
+            }
+#else
             if (context_ptr->hme_results[i][j].hme_sad < best) {
                 best = context_ptr->hme_results[i][j].hme_sad;
             }
+#endif
         }
     }
     for (uint32_t li = 0; li < MAX_NUM_OF_REF_PIC_LIST; li++) {
@@ -1607,9 +1766,16 @@ void me_prune_ref(MeContext *context_ptr) {
             if (context_ptr->me_hme_prune_ctrls.enable_me_hme_ref_pruning &&
                 (!context_ptr->me_hme_prune_ctrls.protect_closest_refs || ri > 0) &&
                 (prune_ref_th != (uint16_t)~0) &&
+#if CLN_ME
+                (context_ptr->search_results[li][ri].hme_sad - best) * 100 > (prune_ref_th * best)) {
+                context_ptr->search_results[li][ri].do_ref = 0;
+            }
+
+#else
                 (context_ptr->hme_results[li][ri].hme_sad - best) * 100 > (prune_ref_th * best)) {
                 context_ptr->hme_results[li][ri].do_ref = 0;
             }
+#endif
         }
     }
 }
@@ -1685,11 +1851,19 @@ void prehme_core(MeContext *context_ptr, int16_t origin_x, int16_t origin_y, uin
     search_region_index = x_top_left_search_region +
         y_top_left_search_region * sixteenth_ref_pic_ptr->stride_y;
 
+#if CLN_ME
+    svt_sad_loop_kernel(
+        &context_ptr->sixteenth_b64_buffer[0],
+        context_ptr->hme_search_method == FULL_SAD_SEARCH
+        ? context_ptr->sixteenth_b64_buffer_stride
+        : context_ptr->sixteenth_b64_buffer_stride * 2,
+#else
     svt_sad_loop_kernel(
         &context_ptr->sixteenth_sb_buffer[0],
         context_ptr->hme_search_method == FULL_SAD_SEARCH
             ? context_ptr->sixteenth_sb_buffer_stride
             : context_ptr->sixteenth_sb_buffer_stride * 2,
+#endif
         &sixteenth_ref_pic_ptr->buffer_y[search_region_index],
         (context_ptr->hme_search_method == FULL_SAD_SEARCH) ? sixteenth_ref_pic_ptr->stride_y
                                                             : sixteenth_ref_pic_ptr->stride_y * 2,
@@ -1726,8 +1900,13 @@ uint32_t get_zz_sad(EbPictureBufferDesc *ref_pic_ptr, MeContext *context_ptr, ui
     search_region_index = (int16_t)ref_pic_ptr->origin_x + origin_x +
         ((int16_t)ref_pic_ptr->origin_y + origin_y) * ref_pic_ptr->stride_y;
 
+#if CLN_ME
+    zero_mv_sad = svt_nxm_sad_kernel(context_ptr->b64_src_ptr,
+        context_ptr->b64_src_stride << subsample_sad,
+#else
     zero_mv_sad = svt_nxm_sad_kernel(context_ptr->sb_src_ptr,
                                      context_ptr->sb_src_stride << subsample_sad,
+#endif
                                      &(ref_pic_ptr->buffer_y[search_region_index]),
                                      ref_pic_ptr->stride_y << subsample_sad,
                                      sb_height >> subsample_sad,
@@ -1764,7 +1943,7 @@ static EbBool check_prehme_early_exit(PictureParentControlSet *pcs_ptr, MeContex
             return 1;
         }
     }
-
+#if !CLN_ME
     if (ctx->prehme_ctrl.use_tf_motion) {
         if (pcs_ptr->temporal_layer_index > 0 ||
             pcs_ptr->scs_ptr->input_resolution < INPUT_SIZE_1080p_RANGE) {
@@ -1784,7 +1963,7 @@ static EbBool check_prehme_early_exit(PictureParentControlSet *pcs_ptr, MeContex
             }
         }
     }
-
+#endif
     return 0;
 }
 
@@ -1803,9 +1982,13 @@ static void prehme_b64(PictureParentControlSet *pcs, uint32_t origin_x, uint32_t
                 pcs, ctx, list_i, ref_i, 0, &dist, input_ptr->width, input_ptr->height);
 
             if (ctx->temporal_layer_index > 0 || list_i == 0) {
+#if CLN_ME
+                uint32_t hme_sr_factor = get_scaled_picture_distance(dist);
+#else
                 // factor to scaledown the ME search region growth to MAX
                 uint8_t  round_up      = ((dist % 8) == 0) ? 0 : 1;
                 uint32_t hme_sr_factor = ((dist * 5) / 8) + round_up;
+#endif
 
                 for (uint8_t sr_i = 0; sr_i < SEARCH_REGION_COUNT; sr_i++) {
                     if (check_prehme_early_exit(pcs, ctx, list_i, ref_i, sr_i))
@@ -1897,9 +2080,13 @@ static void get_hme_l0_search_area(MeContext *context_ptr, uint8_t list_index,
             (y_offset + ref_pic_index);
     }
 
+#if CLN_ME
+    int32_t hme_sr_factor = get_scaled_picture_distance(dist);
+#else
     // Factor to scaledown the HME search region growth to MAX
     int8_t  round_up      = ((dist % 8) == 0) ? 0 : 1;
     int32_t hme_sr_factor = ((dist * 5) / 8) + round_up;
+#endif
 
     // Derive the search area width and height, rounding the width up to the nearest sixteenth
     int16_t search_area_width = context_ptr->hme_l0_sa.sa_min.width / context_ptr->num_hme_sa_w;
@@ -2319,7 +2506,16 @@ void set_final_seach_centre_sb(PictureParentControlSet *pcs_ptr, MeContext *cont
                 x_search_center = 0;
                 y_search_center = 0;
             }
+#if CLN_ME
+            //sc valid for all cases. 0,0 if hme not done.
+            context_ptr->search_results[list_index][ref_pic_index].hme_sc_x = x_search_center;
+            context_ptr->search_results[list_index][ref_pic_index].hme_sc_y = y_search_center;
 
+            context_ptr->search_results[list_index][ref_pic_index].hme_sad =
+                hmeMvSad; //this is not valid in all cases. only when HME is done, and when HMELevel2 is done
+                          //also for base layer some references are redundant!!
+            context_ptr->search_results[list_index][ref_pic_index].do_ref = 1;
+#else
             //sc valid for all cases. 0,0 if hme not done.
             context_ptr->hme_results[list_index][ref_pic_index].hme_sc_x = x_search_center;
             context_ptr->hme_results[list_index][ref_pic_index].hme_sc_y = y_search_center;
@@ -2328,6 +2524,7 @@ void set_final_seach_centre_sb(PictureParentControlSet *pcs_ptr, MeContext *cont
                 hmeMvSad; //this is not valid in all cases. only when HME is done, and when HMELevel2 is done
             //also for base layer some references are redundant!!
             context_ptr->hme_results[list_index][ref_pic_index].do_ref = 1;
+#endif
             if (hmeMvSad < best_cost) {
                 best_cost                  = hmeMvSad;
                 context_ptr->best_list_idx = list_index;
@@ -2385,9 +2582,15 @@ void hme_b64(PictureParentControlSet *pcs_ptr, uint32_t origin_x, uint32_t origi
     set_final_seach_centre_sb(pcs_ptr, context_ptr);
 
     if (context_ptr->me_type == ME_MCTF) {
+#if CLN_ME
+        if (ABS(context_ptr->search_results[0][0].hme_sc_x) >
+            ABS(context_ptr->search_results[0][0].hme_sc_y))
+            context_ptr->tf_tot_horz_blks++;
+#else
         if (ABS(context_ptr->hme_results[0][0].hme_sc_x) >
             ABS(context_ptr->hme_results[0][0].hme_sc_y))
             context_ptr->tf_tot_horz_blks++;
+#endif
         else
             context_ptr->tf_tot_vert_blks++;
     }
@@ -2397,9 +2600,15 @@ void hme_prune_ref_and_adjust_sr(MeContext *context_ptr) {
     uint64_t best = (uint64_t)~0;
     for (int i = 0; i < MAX_NUM_OF_REF_PIC_LIST; ++i) {
         for (int j = 0; j < REF_LIST_MAX_DEPTH; ++j) {
+#if CLN_ME
+            if (context_ptr->search_results[i][j].hme_sad < best) {
+                best = context_ptr->search_results[i][j].hme_sad;
+            }
+#else
             if (context_ptr->hme_results[i][j].hme_sad < best) {
                 best = context_ptr->hme_results[i][j].hme_sad;
             }
+#endif
         }
     }
     uint16_t prune_ref_th = context_ptr->me_hme_prune_ctrls.prune_ref_if_hme_sad_dev_bigger_than_th;
@@ -2414,12 +2623,30 @@ void hme_prune_ref_and_adjust_sr(MeContext *context_ptr) {
             if (context_ptr->me_hme_prune_ctrls.enable_me_hme_ref_pruning &&
                 (!context_ptr->me_hme_prune_ctrls.protect_closest_refs || ri > 0) &&
                 (prune_ref_th != (uint16_t)~0) &&
+#if CLN_ME
+                ((context_ptr->search_results[li][ri].hme_sad - best) * 100 > (prune_ref_th * best))) {
+                context_ptr->search_results[li][ri].do_ref = 0;
+            }
+#else
                 ((context_ptr->hme_results[li][ri].hme_sad - best) * 100 > (prune_ref_th * best))) {
                 context_ptr->hme_results[li][ri].do_ref = 0;
             }
+#endif
 
             // Reduce the ME search region if the hme sad is low
             if (context_ptr->me_sr_adjustment_ctrls.enable_me_sr_adjustment) {
+#if CLN_ME
+                if (ABS(context_ptr->search_results[li][ri].hme_sc_x) <= mv_length_th &&
+                    ABS(context_ptr->search_results[li][ri].hme_sc_y) <= mv_length_th &&
+                    context_ptr->search_results[li][ri].hme_sad < stationary_hme_sad_abs_th) {
+                    context_ptr->reduce_me_sr_divisor[li][ri] =
+                        context_ptr->me_sr_adjustment_ctrls.stationary_me_sr_divisor;
+                } else if (context_ptr->search_results[li][ri].hme_sad <
+                    reduce_me_sr_based_on_hme_sad_abs_th) {
+                    context_ptr->reduce_me_sr_divisor[li][ri] =
+                        context_ptr->me_sr_adjustment_ctrls.me_sr_divisor_for_low_hme_sad;
+                }
+#else
                 if (ABS(context_ptr->hme_results[li][ri].hme_sc_x) <= mv_length_th &&
                     ABS(context_ptr->hme_results[li][ri].hme_sc_y) <= mv_length_th &&
                     context_ptr->hme_results[li][ri].hme_sad < stationary_hme_sad_abs_th) {
@@ -2430,6 +2657,7 @@ void hme_prune_ref_and_adjust_sr(MeContext *context_ptr) {
                     context_ptr->reduce_me_sr_divisor[li][ri] =
                         context_ptr->me_sr_adjustment_ctrls.me_sr_divisor_for_low_hme_sad;
                 }
+#endif
             }
         }
     }
@@ -2462,12 +2690,21 @@ void construct_me_candidate_array_mrp_off(PictureParentControlSet *pcs_ptr, MeCo
 
     // Set whether the reference from each list is allowed
     uint8_t blk_do_ref_org[MAX_NUM_OF_REF_PIC_LIST];
+#if CLN_ME
+    blk_do_ref_org[REF_LIST_0] = context_ptr->search_results[REF_LIST_0][0].do_ref;
+    blk_do_ref_org[REF_LIST_1] = (num_of_list_to_search == 1)
+        ? 0
+        : context_ptr->search_results[REF_LIST_1][0].do_ref;
+    if (num_of_list_to_search < 2 || !context_ptr->search_results[REF_LIST_1][0].do_ref)
+        num_of_list_to_search = 1;
+#else
     blk_do_ref_org[REF_LIST_0] = context_ptr->hme_results[REF_LIST_0][0].do_ref;
     blk_do_ref_org[REF_LIST_1] = (num_of_list_to_search == 1)
         ? 0
         : context_ptr->hme_results[REF_LIST_1][0].do_ref;
     if (num_of_list_to_search < 2 || !context_ptr->hme_results[REF_LIST_1][0].do_ref)
         num_of_list_to_search = 1;
+#endif
     const uint32_t me_prune_th = (blk_do_ref_org[0] && blk_do_ref_org[1])
         ? context_ptr->prune_me_candidates_th
         : 0;
@@ -2596,8 +2833,13 @@ void construct_me_candidate_array(PictureParentControlSet *pcs_ptr, MeContext *c
                 for (uint32_t ref_pic = 0;
                      ref_pic < context_ptr->num_of_ref_pic_to_search[list_index];
                      ++ref_pic) {
+#if CLN_ME
+                    if (context_ptr->search_results[list_index][ref_pic].do_ref ==
+                        0) // TODO: make this a local variable
+#else
                     if (context_ptr->hme_results[list_index][ref_pic].do_ref ==
                         0) // TODO: make this a local variable
+#endif
                         continue;
 
                     best_me_dist = context_ptr->p_sb_best_sad[list_index][ref_pic][n_idx] <
@@ -2618,13 +2860,21 @@ void construct_me_candidate_array(PictureParentControlSet *pcs_ptr, MeContext *c
             for (uint32_t ref_pic_index = 0;
                  (ref_pic_index < num_of_ref_pic_to_search) && (use_me_pu || (me_cand_offset == 0));
                  ++ref_pic_index) {
+#if CLN_ME
+                blk_do_ref[list_index][ref_pic_index] =
+                    context_ptr->search_results[list_index][ref_pic_index].do_ref;
 
+                //ME was skipped, so do not add this Unipred candidate
+                if (context_ptr->search_results[list_index][ref_pic_index].do_ref == 0)
+                    continue;
+#else
                 blk_do_ref[list_index][ref_pic_index] =
                     context_ptr->hme_results[list_index][ref_pic_index].do_ref;
 
                 //ME was skipped, so do not add this Unipred candidate
                 if (context_ptr->hme_results[list_index][ref_pic_index].do_ref == 0)
                     continue;
+#endif
 
                 if (me_prune_th > 0) {
                     current_to_best_dist_distance =
@@ -2946,6 +3196,15 @@ static INLINE void init_me_hme_data(MeContext *context_ptr) {
     //init hme results buffer
     for (uint32_t li = 0; li < MAX_NUM_OF_REF_PIC_LIST; li++) {
         for (uint32_t ri = 0; ri < REF_LIST_MAX_DEPTH; ri++) {
+#if CLN_ME
+            if (context_ptr->me_type != ME_MCTF)
+                context_ptr->search_results[li][ri].list_i = li;
+            context_ptr->search_results[li][ri].ref_i    = ri;
+            context_ptr->search_results[li][ri].do_ref   = 1;
+            context_ptr->search_results[li][ri].hme_sad  = 0xFFFFFFFF;
+            context_ptr->reduce_me_sr_divisor[li][ri] = 1;
+            context_ptr->zz_sad[li][ri] = (uint32_t)~0;
+#else
             if (context_ptr->me_type != ME_MCTF)
                 context_ptr->hme_results[li][ri].list_i = li;
             context_ptr->hme_results[li][ri].ref_i    = ri;
@@ -2953,10 +3212,22 @@ static INLINE void init_me_hme_data(MeContext *context_ptr) {
             context_ptr->hme_results[li][ri].hme_sad  = 0xFFFFFFFF;
             context_ptr->reduce_me_sr_divisor[li][ri] = 1;
             context_ptr->zz_sad[li][ri] = (uint32_t)~0;
+#endif
         }
     }
 }
+#if CLN_ME_II
+/*******************************************
+* motion_estimate
+*   performs ME
+*******************************************/
 
+EbErrorType motion_estimate(
+    PictureParentControlSet *pcs_ptr, // input parameter, Picture Control Set Ptr
+    uint32_t                 b64_index, // input parameter, SB Index
+    uint32_t                 b64_origin_x, // input parameter, SB Origin X
+    uint32_t                 b64_origin_y, // input parameter, SB Origin X
+#else
 /*******************************************
  * motion_estimate_sb
  *   performs ME (SB)
@@ -2967,6 +3238,7 @@ EbErrorType motion_estimate_sb(
     uint32_t                 sb_index, // input parameter, SB Index
     uint32_t                 sb_origin_x, // input parameter, SB Origin X
     uint32_t                 sb_origin_y, // input parameter, SB Origin X
+#endif
     MeContext
         *context_ptr, // input parameter, ME Context Ptr, used to store decimated/interpolated SB/SR
     EbPictureBufferDesc *input_ptr) // input parameter, source Picture Ptr
@@ -2975,20 +3247,37 @@ EbErrorType motion_estimate_sb(
     EbErrorType return_error = EB_ErrorNone;
 
     uint32_t num_of_list_to_search = context_ptr->num_of_list_to_search;
+#if CLN_ME_II
+    context_ptr->block_width  = (input_ptr->width - b64_origin_x) < BLOCK_SIZE_64
+        ? input_ptr->width - b64_origin_x
+        : BLOCK_SIZE_64;
+    context_ptr->block_height = (input_ptr->height - b64_origin_y) < BLOCK_SIZE_64
+        ? input_ptr->height - b64_origin_y
+        : BLOCK_SIZE_64;
+#else
     context_ptr->block_width  = (input_ptr->width - sb_origin_x) < BLOCK_SIZE_64
          ? input_ptr->width - sb_origin_x
          : BLOCK_SIZE_64;
     context_ptr->block_height = (input_ptr->height - sb_origin_y) < BLOCK_SIZE_64
         ? input_ptr->height - sb_origin_y
         : BLOCK_SIZE_64;
+#endif
     //pruning of the references is not done for alt-ref / when HMeLevel2 not done
     uint8_t prune_ref = context_ptr->enable_hme_flag && context_ptr->me_type != ME_MCTF;
     // Initialize ME/HME buffers
     init_me_hme_data(context_ptr);
     // HME: Perform Hierachical Motion Estimation for all refrence frames for the current 64x64 block.
+#if CLN_ME_II
+    hme_b64(pcs_ptr, b64_origin_x, b64_origin_y, context_ptr, input_ptr);
+#else
     hme_b64(pcs_ptr, sb_origin_x, sb_origin_y, context_ptr, input_ptr);
+#endif
     if (context_ptr->me_type == ME_MCTF &&
+#if CLN_ME
+        context_ptr->search_results[0][0].hme_sad < context_ptr->tf_me_exit_th) {
+#else
         context_ptr->hme_results[0][0].hme_sad < context_ptr->tf_me_exit_th) {
+#endif
         context_ptr->tf_use_pred_64x64_only_th = (uint8_t)~0;
         return return_error;
     }
@@ -2999,7 +3288,11 @@ EbErrorType motion_estimate_sb(
         hme_prune_ref_and_adjust_sr(context_ptr);
     }
     // Full pel: Perform the Integer Motion Estimation on the allowed refrence frames.
+#if CLN_ME_II
+    integer_search_sb(pcs_ptr, b64_index, b64_origin_x, b64_origin_y, context_ptr, input_ptr);
+#else
     integer_search_sb(pcs_ptr, sb_index, sb_origin_x, sb_origin_y, context_ptr, input_ptr);
+#endif
     // prune the refrence frames
     if (prune_ref && context_ptr->me_hme_prune_ctrls.enable_me_hme_ref_pruning) {
         me_prune_ref(context_ptr);
@@ -3007,10 +3300,28 @@ EbErrorType motion_estimate_sb(
 
     if (context_ptr->me_type != ME_MCTF) {
         {
+#if CLN_ME_II
+            if (context_ptr->num_of_ref_pic_to_search[REF_LIST_0] == 1 &&
+                context_ptr->num_of_ref_pic_to_search[REF_LIST_1] == 1)
+                construct_me_candidate_array_mrp_off(
+                    pcs_ptr, context_ptr, num_of_list_to_search, b64_index);
+#else
             if (context_ptr->num_of_ref_pic_to_search[REF_LIST_0] == 1 &&
                 context_ptr->num_of_ref_pic_to_search[REF_LIST_1] == 1)
                 construct_me_candidate_array_mrp_off(
                     pcs_ptr, context_ptr, num_of_list_to_search, sb_index);
+#endif
+#if CLN_ME_II
+            else
+                construct_me_candidate_array(pcs_ptr,
+                    context_ptr,
+                    num_of_list_to_search,
+                    b64_index);
+        }
+        if (context_ptr->me_type != ME_FIRST_PASS)
+            // Save the distortion per block size
+            compute_distortion(pcs_ptr, b64_index, context_ptr);
+#else
             else
                 construct_me_candidate_array(pcs_ptr,
                                              context_ptr,
@@ -3020,7 +3331,16 @@ EbErrorType motion_estimate_sb(
         if (context_ptr->me_type != ME_FIRST_PASS)
             // Save the distortion per block size
             compute_distortion(pcs_ptr, sb_index, context_ptr);
+#endif
+#if CLN_ME_II
+        // Perform GM detection if GM is enabled
+        pcs_ptr->stationary_block_present_sb[b64_index] = 0;
+        pcs_ptr->rc_me_allow_gm[b64_index]              = 0;
 
+        if (pcs_ptr->gm_ctrls.enabled)
+            perform_gm_detection(pcs_ptr, b64_index, context_ptr);
+    }
+#else
         // Perform GM detection if GM is enabled
         pcs_ptr->stationary_block_present_sb[sb_index] = 0;
         pcs_ptr->rc_me_allow_gm[sb_index]              = 0;
@@ -3028,7 +3348,7 @@ EbErrorType motion_estimate_sb(
         if (pcs_ptr->gm_ctrls.enabled)
             perform_gm_detection(pcs_ptr, sb_index, context_ptr);
     }
-
+#endif
     return return_error;
 }
 
@@ -3204,3 +3524,4 @@ EbErrorType open_loop_intra_search_mb(PictureParentControlSet *pcs_ptr, uint32_t
     }
     return return_error;
 }
+// clang-format on

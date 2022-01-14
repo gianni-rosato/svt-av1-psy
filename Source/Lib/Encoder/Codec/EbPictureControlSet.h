@@ -764,9 +764,13 @@ typedef struct PictureParentControlSet {
     // Global motion estimation results
     EbBool               is_global_motion[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
     EbWarpedMotionParams global_motion_estimation[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
-
+#if CLN_ME
+    uint16_t              me_processed_b64_count;
+    EbHandle              me_processed_b64_mutex;
+#else
     uint16_t              me_processed_sb_count;
     EbHandle              me_processed_sb_mutex;
+#endif
     FirstPassData         firstpass_data;
     RefreshFrameFlagsInfo refresh_frame;
     double                ts_duration;

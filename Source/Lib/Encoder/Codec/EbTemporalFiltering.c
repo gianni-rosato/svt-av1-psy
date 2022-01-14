@@ -1,3 +1,4 @@
+// clang-format off
 /*
  * Copyright(c) 2019 Netflix, Inc.
  * Copyright(c) 2019 Intel Corporation
@@ -318,32 +319,69 @@ static void create_me_context_and_picture_control(
     EbPictureBufferDesc *quarter_pic_ptr   = src_object->quarter_downsampled_picture_ptr;
     EbPictureBufferDesc *sixteenth_pic_ptr = src_object->sixteenth_downsampled_picture_ptr;
     // Parts from MotionEstimationKernel()
+#if CLN_ME_II
+    uint32_t b64_origin_x = (uint32_t)(blk_col * BW);
+    uint32_t b64_origin_y = (uint32_t)(blk_row * BH);
+#else
     uint32_t sb_origin_x = (uint32_t)(blk_col * BW);
     uint32_t sb_origin_y = (uint32_t)(blk_row * BH);
+#endif
 
     // Load the SB from the input to the intermediate SB buffer
+#if CLN_ME_II
+    int buffer_index = (input_picture_ptr_central->origin_y + b64_origin_y) *
+        input_picture_ptr_central->stride_y +
+        input_picture_ptr_central->origin_x + b64_origin_x;
+#else
     int buffer_index = (input_picture_ptr_central->origin_y + sb_origin_y) *
             input_picture_ptr_central->stride_y +
         input_picture_ptr_central->origin_x + sb_origin_x;
+#endif
     // set search method
     context_ptr->me_context_ptr->hme_search_method = FULL_SAD_SEARCH;
 #ifdef ARCH_X86_64
     {
         uint8_t *src_ptr = &(padded_pic_ptr->buffer_y[buffer_index]);
 
+#if CLN_ME_II
+        uint32_t b64_height = (input_picture_ptr_central->height - b64_origin_y) < BLOCK_SIZE_64
+            ? input_picture_ptr_central->height - b64_origin_y
+            : BLOCK_SIZE_64;
+        //_MM_HINT_T0     //_MM_HINT_T1    //_MM_HINT_T2    //_MM_HINT_NTA
+        uint32_t i;
+        for (i = 0; i < b64_height; i++) {
+#else
         uint32_t sb_height = (input_picture_ptr_central->height - sb_origin_y) < BLOCK_SIZE_64
             ? input_picture_ptr_central->height - sb_origin_y
             : BLOCK_SIZE_64;
         //_MM_HINT_T0     //_MM_HINT_T1    //_MM_HINT_T2    //_MM_HINT_NTA
         uint32_t i;
         for (i = 0; i < sb_height; i++) {
+#endif
             char const *p = (char const *)(src_ptr + i * padded_pic_ptr->stride_y);
 
             _mm_prefetch(p, _MM_HINT_T2);
         }
     }
 #endif
+#if CLN_ME
+    context_ptr->me_context_ptr->b64_src_ptr    = &(padded_pic_ptr->buffer_y[buffer_index]);
+    context_ptr->me_context_ptr->b64_src_stride = padded_pic_ptr->stride_y;
 
+    // Load the 1/4 decimated SB from the 1/4 decimated input to the 1/4 intermediate SB buffer
+    buffer_index = (quarter_pic_ptr->origin_y + (b64_origin_y >> ss_y)) * quarter_pic_ptr->stride_y +
+        quarter_pic_ptr->origin_x + (b64_origin_x >> ss_x);
+
+    context_ptr->me_context_ptr->quarter_b64_buffer = &quarter_pic_ptr->buffer_y[buffer_index];
+    context_ptr->me_context_ptr->quarter_b64_buffer_stride = quarter_pic_ptr->stride_y;
+
+    // Load the 1/16 decimated SB from the 1/16 decimated input to the 1/16 intermediate SB buffer
+    buffer_index = (sixteenth_pic_ptr->origin_y + (b64_origin_y >> 2)) * sixteenth_pic_ptr->stride_y +
+        sixteenth_pic_ptr->origin_x + (b64_origin_x >> 2);
+
+    context_ptr->me_context_ptr->sixteenth_b64_buffer = &sixteenth_pic_ptr->buffer_y[buffer_index];
+    context_ptr->me_context_ptr->sixteenth_b64_buffer_stride = sixteenth_pic_ptr->stride_y;
+#else
     context_ptr->me_context_ptr->sb_src_ptr    = &(padded_pic_ptr->buffer_y[buffer_index]);
     context_ptr->me_context_ptr->sb_src_stride = padded_pic_ptr->stride_y;
 
@@ -361,6 +399,7 @@ static void create_me_context_and_picture_control(
 
     context_ptr->me_context_ptr->sixteenth_sb_buffer = &sixteenth_pic_ptr->buffer_y[buffer_index];
     context_ptr->me_context_ptr->sixteenth_sb_buffer_stride = sixteenth_pic_ptr->stride_y;
+#endif
 }
 
 static INLINE void calculate_squared_errors(const uint8_t *s, int s_stride, const uint8_t *p,
@@ -2688,6 +2727,15 @@ static void tf_64x64_sub_pel_search(PictureParentControlSet *pcs_ptr, MeContext 
     blk_struct.av1xd->mb_to_right_edge  = ((pcs_ptr->av1_cm->mi_cols - bh - micol) * MI_SIZE) * 8;
     context_ptr->tf_64x64_block_error   = INT_MAX;
 
+#if CLN_ME
+    signed short mv_x = mv_unit.mv->x = (context_ptr->tf_use_pred_64x64_only_th == (uint8_t)~0)
+        ? context_ptr->search_results[0][0].hme_sc_x << 3
+        : (_MVXT(context_ptr->p_best_mv64x64[0])) << 1;
+
+    signed short mv_y = mv_unit.mv->y = (context_ptr->tf_use_pred_64x64_only_th == (uint8_t)~0)
+        ? context_ptr->search_results[0][0].hme_sc_y << 3
+        : (_MVYT(context_ptr->p_best_mv64x64[0])) << 1;
+#else
     signed short mv_x = mv_unit.mv->x = (context_ptr->tf_use_pred_64x64_only_th == (uint8_t)~0)
         ? context_ptr->hme_results[0][0].hme_sc_x << 3
         : (_MVXT(context_ptr->p_best_mv64x64[0])) << 1;
@@ -2695,7 +2743,7 @@ static void tf_64x64_sub_pel_search(PictureParentControlSet *pcs_ptr, MeContext 
     signed short mv_y = mv_unit.mv->y = (context_ptr->tf_use_pred_64x64_only_th == (uint8_t)~0)
         ? context_ptr->hme_results[0][0].hme_sc_y << 3
         : (_MVYT(context_ptr->p_best_mv64x64[0])) << 1;
-
+#endif
     BlkStruct *blk_ptr = &blk_struct;
     signed short            best_mv_x = mv_x;
     signed short            best_mv_y = mv_y;
@@ -4909,12 +4957,21 @@ static EbErrorType produce_temporally_filtered_pic(
                         picture_control_set_ptr_central->tf_ctrls.use_pred_64x64_only_th;
                     // Perform ME - context_ptr will store the outputs (MVs, buffers, etc)
                     // Block-based MC using open-loop HME + refinement
+#if CLN_ME_II
+                    motion_estimate(picture_control_set_ptr_central,
+                        (uint32_t)blk_row * blk_cols + blk_col,
+                        (uint32_t)blk_col * BW, // x block
+                        (uint32_t)blk_row * BH, // y block
+                        context_ptr,
+                        input_picture_ptr_central); // source picture
+#else
                     motion_estimate_sb(picture_control_set_ptr_central,
                                        (uint32_t)blk_row * blk_cols + blk_col,
                                        (uint32_t)blk_col * BW, // x block
                                        (uint32_t)blk_row * BH, // y block
                                        context_ptr,
                                        input_picture_ptr_central); // source picture
+#endif
                     if (context_ptr->tf_use_pred_64x64_only_th &&
                         (context_ptr->tf_use_pred_64x64_only_th == (uint8_t)~0 ||
                          tf_use_64x64_pred(context_ptr))) {
@@ -5527,3 +5584,4 @@ EbErrorType svt_av1_init_temporal_filtering(
 
     return EB_ErrorNone;
 }
+// clang-format on

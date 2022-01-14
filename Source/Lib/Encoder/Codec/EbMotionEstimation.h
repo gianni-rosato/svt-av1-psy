@@ -27,6 +27,15 @@
 extern "C" {
 #endif
 
+#if CLN_ME_II
+    extern EbErrorType motion_estimate(
+        PictureParentControlSet      *pcs_ptr,
+        uint32_t                       b64_index,
+        uint32_t                       b64_origin_x,
+        uint32_t                       b64_origin_y,
+        MeContext                 *context_ptr,
+        EbPictureBufferDesc       *input_ptr);
+#else
     extern EbErrorType motion_estimate_sb(
         PictureParentControlSet      *pcs_ptr,
         uint32_t                       sb_index,
@@ -34,6 +43,7 @@ extern "C" {
         uint32_t                       sb_origin_y,
         MeContext                 *context_ptr,
         EbPictureBufferDesc       *input_ptr);
+#endif
 
     extern void decimation_2d(
         uint8_t                   *input_samples,
@@ -204,6 +214,11 @@ extern "C" {
         const BlockGeom *blk_geom,
         uint32_t         geom_offset_x,
         uint32_t         geom_offset_y);
+
+#if CLN_ME
+    // factor to slowdown the ME search region growth to MAX
+    uint8_t get_scaled_picture_distance(uint8_t dist);
+#endif
 
 #ifdef __cplusplus
 }

@@ -3325,7 +3325,11 @@ void *rate_control_kernel(void *input_ptr) {
 
                             // Initialize Segments as picture decision process
                             pcs_ptr->parent_pcs_ptr->me_segments_completion_count = 0;
+#if CLN_ME
+                            pcs_ptr->parent_pcs_ptr->me_processed_b64_count        = 0;
+#else
                             pcs_ptr->parent_pcs_ptr->me_processed_sb_count        = 0;
+#endif
 
                             for (uint32_t segment_index = 0;
                                  segment_index < pcs_ptr->parent_pcs_ptr->me_segments_total_count;

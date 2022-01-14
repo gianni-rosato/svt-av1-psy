@@ -2513,8 +2513,12 @@ void md_sq_motion_search(PictureControlSet *pcs, ModeDecisionContext *ctx,
         int16_t  best_search_mvy  = (int16_t)~0;
         uint32_t best_search_cost = (uint32_t)~0;
 
+#if CLN_ME
+        dist = get_scaled_picture_distance(dist);
+#else
         int8_t round_up = ((dist % 8) == 0) ? 0 : 1;
         dist = ((dist * 5) / 8) + round_up; // factor to slow down the search region growth to MAX
+#endif
 
         // Sparse-search Level_0
         if (md_sq_me_ctrls->sprs_lev0_enabled) {

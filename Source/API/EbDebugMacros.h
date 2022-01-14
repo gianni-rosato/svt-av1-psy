@@ -35,6 +35,9 @@
 extern "C" {
 #endif // __cplusplus
 
+#define CLN_ME                  1 // clean up ME signals, rename functions and remove unused variables
+#define CLN_ME_II               1 // clean up ME signals, rename functions and remove unused variables
+
 #define DS_SC_FACT              23
 
 //FOR DEBUGGING - Do not remove
