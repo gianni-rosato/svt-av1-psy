@@ -1839,15 +1839,6 @@ static EbErrorType app_verify_config(EbConfig *config, uint32_t channel_number) 
                 channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
-    int pass = config->config.pass;
-
-    if ((pass != DEFAULT || config->input_stat_file || config->output_stat_file) &&
-        channel_number > 0) {
-        fprintf(config->error_log_file,
-                "Error instance %u: 2 pass encode for multi instance is not supported\n",
-                channel_number + 1);
-        return EB_ErrorBadParameter;
-    }
 
     if (config->config.rate_control_mode == 2) {
         // A warning should have been printed out in get_passes(), so don't print it here
