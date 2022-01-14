@@ -4,6 +4,15 @@ stages:
 
 variables:
   CMAKE_GENERATOR: Ninja
+  CCACHE_DIR: $CI_PROJECT_DIR/.ccache
+
+default:
+  interruptible: true
+  cache:
+    key: ${CI_JOB_NAME}
+    paths:
+      - .ccache
+    policy: pull-push
 
 #
 # General checks
@@ -51,15 +60,9 @@ Static analysis (cppcheck):
     CFLAGS: -Werror -Wshadow -pipe $EXTRA_CFLAGS
     CXXFLAGS: -Werror -Wshadow -pipe $EXTRA_CXXFLAGS
     LDFLAGS: -Werror -Wshadow -pipe $EXTRA_LDFLAGS
-    CCACHE_DIR: $CI_PROJECT_DIR/.ccache
     CMAKE_BUILD_TYPE: Release
     BUILD_SHARED_LIBS: "OFF"
     PREFIX_DIR: /usr/local
-  cache:
-    key: ${CI_JOB_NAME}
-    paths:
-      - .ccache
-    policy: pull-push
   script: &compiler-script
     - |
       eval cmake \
@@ -668,14 +671,8 @@ Linux Gstreamer (Static):
     CFLAGS: -pipe
     CXXFLAGS: -pipe
     LDFLAGS: -pipe
-    CCACHE_DIR: $CI_PROJECT_DIR/.ccache
     PKG_CONFIG_PATH: /usr/local/lib/pkgconfig
     GIT_DEPTH: 0
-  cache:
-    key: ${CI_JOB_NAME}
-    paths:
-      - .ccache
-    policy: pull-push
   script:
     - cmake -B Build -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=/usr -DBUILD_APPS=OFF -DBUILD_DEC=OFF -DREPRODUCIBLE_BUILDS=ON
     - cmake --build Build --config Release --target install
@@ -697,13 +694,7 @@ Linux FFmpeg (Static):
     CFLAGS: -pipe
     CXXFLAGS: -pipe
     LDFLAGS: -pipe -static -static-libgcc -static-libstdc++
-    CCACHE_DIR: $CI_PROJECT_DIR/.ccache
     GIT_DEPTH: 0
-  cache:
-    key: ${CI_JOB_NAME}
-    paths:
-      - .ccache
-    policy: pull-push
   before_script:
     - &ffmpeg-before-script-clone |
       git clone $PWD svtav1-src
@@ -906,14 +897,8 @@ Win64 FFmpeg (Static):
     CFLAGS: -pipe
     CXXFLAGS: -pipe
     LDFLAGS: -pipe -static -static-libgcc -static-libstdc++
-    CCACHE_DIR: $CI_PROJECT_DIR/.ccache
     GIT_DEPTH: 0
     PREFIX_DIR: C:/msys64/mingw64
-  cache:
-    key: ${CI_JOB_NAME}
-    paths:
-      - .ccache
-    policy: pull-push
   before_script:
     - *ffmpeg-before-script-clone
   script:
