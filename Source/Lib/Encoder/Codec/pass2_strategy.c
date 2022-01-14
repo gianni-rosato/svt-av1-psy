@@ -644,7 +644,6 @@ static void av1_gop_bit_allocation_same_pred(PictureParentControlSet *pcs, GF_GR
     // For key frames the frame target rate is already set and it
     // is also the golden frame.
     int frame_index = (pcs->slice_type == I_SLICE) ? 1 : 0;
-    assert(gf_stats.gf_group_err != 0);
     for (int idx = frame_index; idx < pcs->gf_interval; ++idx) {
         uint8_t gf_group_index = pcs->slice_type == I_SLICE ? idx : idx + 1;
         gf_group->bit_allocation[gf_group_index] =
