@@ -805,23 +805,25 @@ EbErrorType load_default_buffer_configuration_settings(
     }
 
     scs_ptr->total_process_init_count += 6; // single processes count
-    SVT_INFO("Number of logical cores available: %u\n", core_count);
-    SVT_INFO("Number of PPCS %u\n", scs_ptr->picture_control_set_pool_init_count);
+    if (scs_ptr->static_config.pass == 0 || scs_ptr->static_config.pass == 3){
+        SVT_INFO("Number of logical cores available: %u\n", core_count);
+        SVT_INFO("Number of PPCS %u\n", scs_ptr->picture_control_set_pool_init_count);
 
-    /******************************************************************
-    * Platform detection, limit cpu flags to hardware available CPU
-    ******************************************************************/
+        /******************************************************************
+        * Platform detection, limit cpu flags to hardware available CPU
+        ******************************************************************/
 #ifdef ARCH_X86_64
-    const CPU_FLAGS cpu_flags = get_cpu_flags();
-    const CPU_FLAGS cpu_flags_to_use = get_cpu_flags_to_use();
-    scs_ptr->static_config.use_cpu_flags &= cpu_flags_to_use;
-    SVT_INFO("[asm level on system : up to %s]\n", get_asm_level_name_str(cpu_flags));
-    SVT_INFO("[asm level selected : up to %s]\n", get_asm_level_name_str(scs_ptr->static_config.use_cpu_flags));
+        const CPU_FLAGS cpu_flags = get_cpu_flags();
+        const CPU_FLAGS cpu_flags_to_use = get_cpu_flags_to_use();
+        scs_ptr->static_config.use_cpu_flags &= cpu_flags_to_use;
+        SVT_INFO("[asm level on system : up to %s]\n", get_asm_level_name_str(cpu_flags));
+        SVT_INFO("[asm level selected : up to %s]\n", get_asm_level_name_str(scs_ptr->static_config.use_cpu_flags));
 #else
-    scs_ptr->static_config.use_cpu_flags &= 0;
-    SVT_INFO("[asm level on system : up to %s]\n", get_asm_level_name_str(0));
-    SVT_INFO("[asm level selected : up to %s]\n", get_asm_level_name_str(scs_ptr->static_config.use_cpu_flags));
+        scs_ptr->static_config.use_cpu_flags &= 0;
+        SVT_INFO("[asm level on system : up to %s]\n", get_asm_level_name_str(0));
+        SVT_INFO("[asm level selected : up to %s]\n", get_asm_level_name_str(scs_ptr->static_config.use_cpu_flags));
 #endif
+    }
     return return_error;
 }
  // Rate Control
@@ -3047,6 +3049,9 @@ void set_multi_pass_params(SequenceControlSet *scs_ptr)
     else
         scs_ptr->passes = 1;
 
+    if (config->rate_control_mode == 0 && config->pass == 2)
+        scs_ptr->static_config.pass = 3; //use last pass for 2nd pass CRF
+
     switch (config->pass) {
 
         case ENC_SINGLE_PASS: {
@@ -4296,39 +4301,42 @@ static void print_lib_params(
     EbSvtAv1EncConfiguration*   config = &scs->static_config;
 
     SVT_INFO("-------------------------------------------\n");
-    SVT_INFO("SVT [config]: %s\tTier %s\tLevel %s\n",
-             config->profile == MAIN_PROFILE
-                ? "Main Profile"
-                : config->profile == HIGH_PROFILE
-                    ? "High Profile"
-                    : config->profile == PROFESSIONAL_PROFILE
-                        ? "Professional Profile"
-                        : "Unknown Profile",
-             tier_to_str(config->tier),
-             level_to_str(config->level));
 
     if (config->pass == ENC_FIRST_PASS)
         SVT_INFO("SVT [config]: Preset \t\t\t\t\t\t\t: Pass 1\n");
-    else
+    else if (config->pass == ENC_MIDDLE_PASS)
+        SVT_INFO("SVT [config]: Preset \t\t\t\t\t\t\t: Pass 2\n");
+    else {
+        SVT_INFO("SVT [config]: %s\tTier %s\tLevel %s\n",
+            config->profile == MAIN_PROFILE
+            ? "Main Profile"
+            : config->profile == HIGH_PROFILE
+            ? "High Profile"
+            : config->profile == PROFESSIONAL_PROFILE
+            ? "Professional Profile"
+            : "Unknown Profile",
+            tier_to_str(config->tier),
+            level_to_str(config->level));
         SVT_INFO("SVT [config]: Preset \t\t\t\t\t\t\t: %d\n", config->enc_mode);
-    SVT_INFO("SVT [config]: EncoderBitDepth / EncoderColorFormat / CompressedTenBitFormat\t: %d / %d / %d\n", config->encoder_bit_depth, config->encoder_color_format, config->compressed_ten_bit_format);
-    SVT_INFO("SVT [config]: SourceWidth / SourceHeight\t\t\t\t\t: %d / %d\n", config->source_width, config->source_height);
-    if (config->frame_rate_denominator != 0 && config->frame_rate_numerator != 0)
-        SVT_INFO("SVT [config]: Fps_Numerator / Fps_Denominator / Gop Size / IntraRefreshType \t: %d / %d / %d / %d\n", config->frame_rate_numerator, config->frame_rate_denominator,
-            config->intra_period_length + 1,
-            config->intra_refresh_type);
-    else
-        SVT_INFO("SVT [config]: FrameRate / Gop Size\t\t\t\t\t\t: %d / %d\n", config->frame_rate > 1000 ? config->frame_rate >> 16 : config->frame_rate, config->intra_period_length + 1);
-    SVT_INFO("SVT [config]: HierarchicalLevels  / PredStructure\t\t\t\t: %d / %d\n", config->hierarchical_levels, config->pred_structure);
-    if (config->rate_control_mode == 1)
-        SVT_INFO("SVT [config]: RCMode / TargetBitrate (kbps)/ SceneChange\t\t: VBR / %d /  %d\n", (int)config->target_bit_rate/1000, config->scene_change_detection);
-    else if (config->rate_control_mode == 2)
-        SVT_LOG("\nSVT [config]: RCMode / TargetBitrate (kbps)/ SceneChange\t\t: Constraint VBR / %d /  %d ", (int)config->target_bit_rate/1000,  config->scene_change_detection);
-    else if (config->rate_control_mode == 0 && config->max_bit_rate)
-        SVT_LOG("\nSVT [config]: BRC Mode / %s / MaxBitrate (kbps)/ SceneChange\t\t: %s / %d / %d / %d ", scs->tpl_level ? "Rate Factor" : "CQP Assignment", scs->tpl_level ? "Capped CRF" : "CQP", scs->static_config.qp,
-        (int)config->max_bit_rate / 1000, config->scene_change_detection);
-    else
-        SVT_INFO("SVT [config]: BRC Mode / %s / SceneChange\t\t\t\t: %s / %d / %d\n", scs->tpl_level ? "Rate Factor" : "CQP Assignment", scs->tpl_level ? "CRF" : "CQP", scs->static_config.qp, config->scene_change_detection);
+        SVT_INFO("SVT [config]: EncoderBitDepth / EncoderColorFormat / CompressedTenBitFormat\t: %d / %d / %d\n", config->encoder_bit_depth, config->encoder_color_format, config->compressed_ten_bit_format);
+        SVT_INFO("SVT [config]: SourceWidth / SourceHeight\t\t\t\t\t: %d / %d\n", config->source_width, config->source_height);
+        if (config->frame_rate_denominator != 0 && config->frame_rate_numerator != 0)
+            SVT_INFO("SVT [config]: Fps_Numerator / Fps_Denominator / Gop Size / IntraRefreshType \t: %d / %d / %d / %d\n", config->frame_rate_numerator, config->frame_rate_denominator,
+                config->intra_period_length + 1,
+                config->intra_refresh_type);
+        else
+            SVT_INFO("SVT [config]: FrameRate / Gop Size\t\t\t\t\t\t: %d / %d\n", config->frame_rate > 1000 ? config->frame_rate >> 16 : config->frame_rate, config->intra_period_length + 1);
+        SVT_INFO("SVT [config]: HierarchicalLevels  / PredStructure\t\t\t\t: %d / %d\n", config->hierarchical_levels, config->pred_structure);
+        if (config->rate_control_mode == 1)
+            SVT_INFO("SVT [config]: RCMode / TargetBitrate (kbps)/ SceneChange\t\t: VBR / %d /  %d\n", (int)config->target_bit_rate/1000, config->scene_change_detection);
+        else if (config->rate_control_mode == 2)
+            SVT_LOG("\nSVT [config]: RCMode / TargetBitrate (kbps)/ SceneChange\t\t: Constraint VBR / %d /  %d ", (int)config->target_bit_rate/1000,  config->scene_change_detection);
+        else if (config->rate_control_mode == 0 && config->max_bit_rate)
+            SVT_LOG("\nSVT [config]: BRC Mode / %s / MaxBitrate (kbps)/ SceneChange\t\t: %s / %d / %d / %d ", scs->tpl_level ? "Rate Factor" : "CQP Assignment", scs->tpl_level ? "Capped CRF" : "CQP", scs->static_config.qp,
+            (int)config->max_bit_rate / 1000, config->scene_change_detection);
+        else
+            SVT_INFO("SVT [config]: BRC Mode / %s / SceneChange\t\t\t\t: %s / %d / %d\n", scs->tpl_level ? "Rate Factor" : "CQP Assignment", scs->tpl_level ? "CRF" : "CQP", scs->static_config.qp, config->scene_change_detection);
+    }
 #ifdef DEBUG_BUFFERS
     SVT_INFO("SVT [config]: INPUT / OUTPUT \t\t\t\t\t\t\t: %d / %d\n", scs->input_buffer_fifo_init_count, scs->output_stream_buffer_fifo_init_count);
     SVT_INFO("SVT [config]: CPCS / PAREF / REF / ME\t\t\t\t\t\t: %d / %d / %d / %d\n", scs->picture_control_set_pool_init_count_child, scs->pa_reference_picture_buffer_init_count, scs->reference_picture_buffer_init_count, scs->me_pool_init_count);

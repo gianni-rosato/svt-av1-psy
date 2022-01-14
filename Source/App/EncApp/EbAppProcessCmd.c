@@ -870,7 +870,7 @@ void process_output_stream_buffer(EncChannel *channel, EncApp *enc_app, int32_t 
                         }
                     }
                 }
-                if (config->config.pass == ENC_MIDDLE_PASS) {
+                if (config->config.pass == ENC_SECOND_PASS) {
 
                     if (config->output_stat_file && config->config.rc_stats_buffer.buf) {
                         fwrite(config->config.rc_stats_buffer.buf,

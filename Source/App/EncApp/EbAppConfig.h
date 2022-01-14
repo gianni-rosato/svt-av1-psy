@@ -39,8 +39,8 @@ typedef enum AppPortActiveType { APP_PortActive = 0, APP_PortInactive } AppPortA
 typedef enum EncPass {
     ENC_SINGLE_PASS, //single pass mode
     ENC_FIRST_PASS, // first pass of multi pass mode
-    ENC_MIDDLE_PASS, // middle pass of multi pass mode
-    ENC_LAST_PASS, // last pass of multi pass mode
+    ENC_SECOND_PASS, // second pass of multi pass mode (last pass for CRF / middle pass for VBR)
+    ENC_THIRD_PASS, // third pass of multi pass mode (last pass for VBR)
     MAX_ENC_PASS = 3,
 } EncPass;
 

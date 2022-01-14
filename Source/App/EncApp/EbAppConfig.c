@@ -1747,7 +1747,7 @@ EbErrorType handle_stats_file(EbConfig *config, EncPass enc_pass,
         break;
     }
 
-    case ENC_MIDDLE_PASS: {
+    case ENC_SECOND_PASS: {
         if (!rc_stats_buffer->sz) {
             fprintf(config->error_log_file,
                     "Error instance %u: combined multi passes need stats in for the middle pass \n",
@@ -1758,7 +1758,7 @@ EbErrorType handle_stats_file(EbConfig *config, EncPass enc_pass,
         break;
     }
 
-    case ENC_LAST_PASS: {
+    case ENC_THIRD_PASS: {
         if (!rc_stats_buffer->sz) {
             fprintf(config->error_log_file,
                     "Error instance %u: combined multi passes need stats in for the final pass \n",
@@ -2236,12 +2236,12 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncPass enc_pass[MAX_ENC_P
     case SINGLE_PASS: enc_pass[0] = ENC_SINGLE_PASS; break;
     case TWO_PASS_IPP_FINAL:
         enc_pass[0] = ENC_FIRST_PASS;
-        enc_pass[1] = ENC_LAST_PASS;
+        enc_pass[1] = ENC_SECOND_PASS;
         break;
     case THREE_PASS_IPP_SAMEPRED_FINAL:
         enc_pass[0] = ENC_FIRST_PASS;
-        enc_pass[1] = ENC_MIDDLE_PASS;
-        enc_pass[2] = ENC_LAST_PASS;
+        enc_pass[1] = ENC_SECOND_PASS;
+        enc_pass[2] = ENC_THIRD_PASS;
         break;
     default: break;
     }
