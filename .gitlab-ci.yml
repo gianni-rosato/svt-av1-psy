@@ -76,7 +76,15 @@ Static analysis (cppcheck):
 # Yaml Anchors
 #
 
+.common-ci-base:
+  rules:
+    - *source_code_rules
+    - if: ("$NIGHTLY" || "$WEEKEND") && $CI_PIPELINE_SOURCE == "schedule"
+      when: never
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+
 .linux-compiler-base:
+  extends: .common-ci-base
   stage: compile
   tags:
     - gitlab-org
@@ -100,6 +108,7 @@ Static analysis (cppcheck):
     - cmake --build Build --config "$CMAKE_BUILD_TYPE" ${TARGET:+--target $TARGET}
 
 .linux-test-base:
+  extends: .common-ci-base
   stage: test
   tags:
     - gitlab-org
@@ -121,6 +130,7 @@ Static analysis (cppcheck):
     - Linux (GCC 10, Tests, Static)
 
 .macos-compiler-base:
+  extends: .common-ci-base
   stage: compile
   tags:
     - macos-ci
@@ -129,6 +139,7 @@ Static analysis (cppcheck):
   script: *compiler-script
 
 .macos-test-base:
+  extends: .common-ci-base
   stage: test
   tags:
     - macos-ci
@@ -150,6 +161,7 @@ Static analysis (cppcheck):
     - macOS (Static, Tests)
 
 .windows-compiler-base:
+  extends: .common-ci-base
   stage: compile
   image: registry.gitlab.com/aomediacodec/aom-testing/core1809
   tags:
@@ -164,6 +176,7 @@ Static analysis (cppcheck):
     - cmake --build Build --config $(if ($env:CMAKE_BUILD_TYPE) {$env:CMAKE_BUILD_TYPE} else {"Release"})
 
 .windows-test-base:
+  extends: .common-ci-base
   stage: test
   image: registry.gitlab.com/aomediacodec/aom-testing/core1809
   tags:
@@ -609,6 +622,7 @@ Win64 Enc Test:
     - Win64 (MSVC, Tests)
 
 Enc OS Diff Test:
+  extends: .common-ci-base
   stage: .post
   image: registry.gitlab.com/aomediacodec/aom-testing/alpine3
   script:
@@ -630,6 +644,7 @@ Enc OS Diff Test:
     - Win64 Enc Test
 
 Enc Default Diff test:
+  extends: .common-ci-base
   stage: .post
   image: registry.gitlab.com/aomediacodec/aom-testing/alpine3
   allow_failure: true
@@ -651,6 +666,7 @@ Enc Default Diff test:
     - Linux Default Branch
 
 Enc Intra Diff Test:
+  extends: .common-ci-base
   stage: .post
   image: registry.gitlab.com/aomediacodec/aom-testing/alpine3
   allow_failure: true
