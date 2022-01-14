@@ -26,6 +26,10 @@ default:
 #
 
 Style check:
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: never
+    - when: always
   stage: compile
   image: registry.gitlab.com/aomediacodec/aom-testing/alpine3
   script:
