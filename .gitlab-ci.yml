@@ -33,6 +33,11 @@ default:
     - "**/*.h"
     - "**/*.in"
 
+include:
+  - local: /.gitlab/workflows/nightly/.gitlab-ci.yml
+    rules:
+      - if: $CI_PIPELINE_SOURCE == "schedule" && "$NIGHTLY"
+
 #
 # General checks
 #
