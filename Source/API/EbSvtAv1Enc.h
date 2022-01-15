@@ -495,10 +495,10 @@ typedef struct EbSvtAv1EncConfiguration {
     /* Unpin the execution .This option does not
     * set the execution to be pinned to a specific number of cores when set to 1. this allows the execution
     * of multiple encodes on the CPU without having to pin them to a specific mask
-    * 1: unpinned
-    * 0: pinned
+    * 1: pinned threads
+    * 0: unpinned
     * default 1 */
-    uint32_t unpin;
+    uint32_t pin_threads;
 
     /* Target socket to run on. For dual socket systems, this can specify which
      * socket the encoder runs on.

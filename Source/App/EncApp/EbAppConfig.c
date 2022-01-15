@@ -116,7 +116,7 @@
 #define INJECTOR_FRAMERATE_TOKEN "--inj-frm-rt" // no Eval
 #define ASM_TYPE_TOKEN "--asm"
 #define THREAD_MGMNT "--lp"
-#define UNPIN_TOKEN "--unpin"
+#define PIN_TOKEN "--pin"
 #define TARGET_SOCKET "--ss"
 #define RESTRICTED_MOTION_VECTOR "--rmv"
 #define CONFIG_FILE_COMMENT_CHAR '#'
@@ -635,8 +635,8 @@ static void set_asm_type(const char *value, EbConfig *cfg) {
 static void set_logical_processors(const char *value, EbConfig *cfg) {
     cfg->config.logical_processors = (uint32_t)strtoul(value, NULL, 0);
 };
-static void set_unpin_execution(const char *value, EbConfig *cfg) {
-    cfg->config.unpin = (uint32_t)strtoul(value, NULL, 0);
+static void set_pinned_execution(const char *value, EbConfig *cfg) {
+    cfg->config.pin_threads = (uint32_t)strtoul(value, NULL, 0);
 };
 static void set_target_socket(const char *value, EbConfig *cfg) {
     cfg->config.target_socket = (int32_t)strtol(value, NULL, 0);
@@ -845,10 +845,10 @@ ConfigEntry config_entry_global_options[] = {
      "guide, default is 0 [0, core count of the machine]",
      set_logical_processors},
     {SINGLE_INPUT,
-     UNPIN_TOKEN,
-     "Unpin the execution from a socket. Overwritten to 0 when `--ss` is set. Refer to Appendix "
+     PIN_TOKEN,
+     "Pin the execution to the first --lp cores. Overwritten to 0 when `--ss` is set. Refer to Appendix "
      "A.1 of the user guide, default is 1 [0-1]",
-     set_unpin_execution},
+     set_pinned_execution},
     {SINGLE_INPUT,
      TARGET_SOCKET,
      "Specifies which socket to run on, assumes a max of two sockets. Refer to Appendix A.1 of the "
@@ -1214,7 +1214,7 @@ ConfigEntry config_entry[] = {
 
     //   Thread Management
     {SINGLE_INPUT, THREAD_MGMNT, "LogicalProcessors", set_logical_processors},
-    {SINGLE_INPUT, UNPIN_TOKEN, "UnpinExecution", set_unpin_execution},
+    {SINGLE_INPUT, PIN_TOKEN, "PinnedExecution", set_pinned_execution },
     {SINGLE_INPUT, TARGET_SOCKET, "TargetSocket", set_target_socket},
 
     // Rate Control Options

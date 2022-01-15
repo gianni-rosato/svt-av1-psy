@@ -176,7 +176,7 @@ The encoder parameters present in the `Sample.cfg` file are listed in this table
 | **StatReport**                   | --enable-stat-report        | [0-1]                          | 0           | Calculates and outputs PSNR SSIM metrics at the end of encoding                                               |
 | **Asm**                          | --asm                       | [0-11, c-max]                  | max         | Limit assembly instruction set [c, mmx, sse, sse2, sse3, ssse3, sse4_1, sse4_2, avx, avx2, avx512, max]       |
 | **LogicalProcessors**            | --lp                        | [0, core count of the machine] | 0           | Target (best effort) number of logical cores to be used. 0 means all. Refer to Appendix A.1                   |
-| **UnpinExecution**               | --unpin                     | [0-1]                          | 1           | Unpin the execution from a socket. Overwritten to 0 when `--ss` is set. Refer to Appendix A.1                 |
+| **PinnedExecution**              | --pin                       | [0-1]                          | 0           | Pin the execution to the first --lp cores. Overwritten to 0 when `--ss` is set. Refer to Appendix A.1         |
 | **TargetSocket**                 | --ss                        | [-1,1]                         | -1          | Specifies which socket to run on, assumes a max of two sockets. Refer to Appendix A.1                         |
 
 #### Rate Control Options
@@ -358,23 +358,23 @@ If only `TargetSocket` is set, threads run on all the logical processors of sock
 
 If both `LogicalProcessors` and `TargetSocket` are set, threads run on 20 logical processors of socket 0. Threads guaranteed to run only on socket 0 if 20 is larger than logical processor number of socket 0.
 
-The (`-unpin`) option allows the user to pin/unpin the execution to/from a specific number of cores.
+The (`--pin`) option allows the user to pin/unpin the execution to/from a specific number of cores.
 
-The combinational use of (`-unpin`)  with (`-lp`) results in memory reduction while allowing the execution to work on any of the cores and not restrict it to specific cores.
+The combinational use of (`--pin`)  with (`--lp`) results in memory reduction while allowing the execution to work on any of the cores and not restrict it to specific cores.
 
 This is an example on how to use them together.
 
-so -lp 4 with -unpin 0 would restrict the encoder to work on cpu0-3 and reduce the resource allocation to only what's needed to using 4 cores. -lp 4 with -unpin 1, would reduce the allocation to what's needed for 4 cores but not restrict the encoder to run on cpu 0-3, in this case the encoder might end up using more than 4 cores due to the multi-threading nature of the encoder, but would at least allow for more multiple -lp4 encodes to run on the same machine without them being all restricted to run on cpu 0-3 or overflow the memory usage.
+so -lp 4 with --pin 1 would restrict the encoder to work on cpu0-3 and reduce the resource allocation to only what's needed to using 4 cores. --lp 4 with --pin 1, would reduce the allocation to what's needed for 4 cores but not restrict the encoder to run on cpu 0-3, in this case the encoder might end up using more than 4 cores due to the multi-threading nature of the encoder, but would at least allow for more multiple -lp4 encodes to run on the same machine without them being all restricted to run on cpu 0-3 or overflow the memory usage.
 
 Example: 72 core machine:
 
-72 jobs x --lp 1 --unpin 1 (In order to maximize the CPU utilization 72 jobs are run simultaneously with each job utilitizing 1 core without being pined to a specific core)
+72 jobs x --lp 1 --pin 0 (In order to maximize the CPU utilization 72 jobs are run simultaneously with each job utilitizing 1 core without being pined to a specific core)
 
-36 jobs x --lp 2 --unpin 1
+36 jobs x --lp 2 --pin 1
 
-18 jobs x --lp 4 --unpin 1
+18 jobs x --lp 4 --pin 1
 
-(`-ss`) and (`-unpin 1`) is not a valid combination.(`-unpin`) is overwritten to 0 when (`-ss`) is used.
+(`--ss`) and (`--pin 0`) is not a valid combination.(`--pin`) is overwritten to 1 when (`-ss`) is used.
 
 ### 2. AV1 metadata
 

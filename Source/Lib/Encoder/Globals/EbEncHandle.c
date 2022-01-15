@@ -2189,7 +2189,7 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
     * Thread Handles
     ************************************/
     EbSvtAv1EncConfiguration   *config_ptr = &enc_handle_ptr->scs_instance_array[0]->scs_ptr->static_config;
-    if (config_ptr->unpin == 0)
+    if (config_ptr->pin_threads == 1)
         svt_set_thread_management_parameters(config_ptr);
 
     control_set_ptr = enc_handle_ptr->scs_instance_array[0]->scs_ptr;
@@ -3678,11 +3678,11 @@ void copy_api_from_app(
     scs_ptr->static_config.channel_id = ((EbSvtAv1EncConfiguration*)config_struct)->channel_id;
     scs_ptr->static_config.active_channel_count = ((EbSvtAv1EncConfiguration*)config_struct)->active_channel_count;
     scs_ptr->static_config.logical_processors = ((EbSvtAv1EncConfiguration*)config_struct)->logical_processors;
-    scs_ptr->static_config.unpin = ((EbSvtAv1EncConfiguration*)config_struct)->unpin;
+    scs_ptr->static_config.pin_threads = ((EbSvtAv1EncConfiguration*)config_struct)->pin_threads;
     scs_ptr->static_config.target_socket = ((EbSvtAv1EncConfiguration*)config_struct)->target_socket;
-    if ((scs_ptr->static_config.unpin == 1) && (scs_ptr->static_config.target_socket != -1)){
-        SVT_WARN("unpin 1 and ss %d is not a valid combination: unpin will be set to 0\n", scs_ptr->static_config.target_socket);
-        scs_ptr->static_config.unpin = 0;
+    if ((scs_ptr->static_config.pin_threads == 0) && (scs_ptr->static_config.target_socket != -1)){
+        SVT_WARN("threads pinning 0 and ss %d is not a valid combination: unpin will be set to 0\n", scs_ptr->static_config.target_socket);
+        scs_ptr->static_config.pin_threads = 1;
     }
     scs_ptr->static_config.qp = ((EbSvtAv1EncConfiguration*)config_struct)->qp;
     scs_ptr->static_config.recon_enabled = ((EbSvtAv1EncConfiguration*)config_struct)->recon_enabled;
@@ -4254,7 +4254,7 @@ static EbErrorType svt_set_default_params(
 
     // Channel info
     config_ptr->logical_processors = 0;
-    config_ptr->unpin = 1;
+    config_ptr->pin_threads = 0;
     config_ptr->target_socket = -1;
     config_ptr->channel_id = 0;
     config_ptr->active_channel_count = 1;
