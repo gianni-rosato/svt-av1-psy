@@ -497,7 +497,7 @@ typedef struct EbSvtAv1EncConfiguration {
     * of multiple encodes on the CPU without having to pin them to a specific mask
     * 1: pinned threads
     * 0: unpinned
-    * default 1 */
+    * default 0 */
     uint32_t pin_threads;
 
     /* Target socket to run on. For dual socket systems, this can specify which

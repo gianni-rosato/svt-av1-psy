@@ -4147,7 +4147,7 @@ static EbErrorType verify_settings(
     }
 
     if (config->rate_control_mode == 1 || config->rate_control_mode == 2) {
-        SVT_WARN("The VBR and CBR rate control modes are a work-in-progress projects, and are only available for demos, experimental and further development uses and should not be used for benchmarking until fully implemented.\n");
+        SVT_WARN("The VBR and CBR rate control modes are a work-in-progress projects, and are only available for demos, experimentation, and further development uses and should not be used for benchmarking until fully implemented.\n");
     }
 
     if (config->film_grain_denoise_strength > 0 && config->enc_mode > 3) {
@@ -4155,12 +4155,12 @@ static EbErrorType verify_settings(
     }
 
     if (config->pred_structure == 1) {
-        SVT_WARN("The low delay encoding mode is a work-in-progress projects, and is only available for demos, experimentation , and further development uses and should not be used for benchmarking until fully implemented.\n");
+        SVT_WARN("The low delay encoding mode is a work-in-progress project, and is only available for demos, experimentation, and further development uses and should not be used for benchmarking until fully implemented.\n");
     }
 
     // Limit 8K & 16K support
     if ((uint64_t)(scs_ptr->max_input_luma_width*scs_ptr->max_input_luma_height) > INPUT_SIZE_4K_TH) {
-        SVT_WARN("8K and higher resolution support is currently a work-in-progress project, and are only available for demos, experimental and further development uses and should not be used for benchmarking until fully implemented.\n");
+        SVT_WARN("8K and higher resolution support is currently a work-in-progress project, and is only available for demos, experimentation, and further development uses and should not be used for benchmarking until fully implemented.\n");
     }
 
     return return_error;
