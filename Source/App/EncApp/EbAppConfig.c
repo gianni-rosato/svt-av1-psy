@@ -1840,11 +1840,6 @@ static EbErrorType app_verify_config(EbConfig *config, uint32_t channel_number) 
         return_error = EB_ErrorBadParameter;
     }
 
-    if (config->config.rate_control_mode == 2) {
-        // A warning should have been printed out in get_passes(), so don't print it here
-        config->config.rate_control_mode = 1;
-    }
-
     return return_error;
 }
 
@@ -2060,7 +2055,7 @@ uint32_t get_number_of_channels(int32_t argc, char *const argv[]) {
         uint32_t channel_number = strtol(config_string, NULL, 0);
         if ((channel_number > MAX_CHANNEL_NUMBER) || channel_number == 0) {
             fprintf(stderr,
-                    "Error: The number of channels has to be within the range [1,%u]\n",
+                    "[SVT-Error]: The number of channels has to be within the range [1,%u]\n",
                     MAX_CHANNEL_NUMBER);
             return 0;
         }
@@ -2105,7 +2100,8 @@ uint32_t get_passes(int32_t argc, char *const argv[], EncPass enc_pass[MAX_ENC_P
             return 0;
         }
         if (rc_mode == 2){
-            fprintf(stderr, "[SVT-Warning]: CBR Rate control is currently not supported, switching to VBR \n");
+            // this is covered in the library
+            //fprintf(stderr, "[SVT-Warning]: CBR Rate control is currently not supported, switching to VBR \n");
             rc_mode = 1;
         }
     }
