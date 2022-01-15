@@ -4328,9 +4328,9 @@ static void print_lib_params(
             SVT_INFO("SVT [config]: FrameRate / Gop Size\t\t\t\t\t\t: %d / %d\n", config->frame_rate > 1000 ? config->frame_rate >> 16 : config->frame_rate, config->intra_period_length + 1);
         SVT_INFO("SVT [config]: HierarchicalLevels  / PredStructure\t\t\t\t: %d / %d\n", config->hierarchical_levels, config->pred_structure);
         if (config->rate_control_mode == 1)
-            SVT_INFO("SVT [config]: RCMode / TargetBitrate (kbps)/ SceneChange\t\t: VBR / %d /  %d\n", (int)config->target_bit_rate/1000, config->scene_change_detection);
+            SVT_INFO("SVT [config]: BRC Mode / TargetBitrate (kbps)/ SceneChange\t\t\t: VBR / %d /  %d\n", (int)config->target_bit_rate/1000, config->scene_change_detection);
         else if (config->rate_control_mode == 2)
-            SVT_LOG("\nSVT [config]: RCMode / TargetBitrate (kbps)/ SceneChange\t\t: Constraint VBR / %d /  %d ", (int)config->target_bit_rate/1000,  config->scene_change_detection);
+            SVT_LOG("\nSVT [config]: BRC Mode / TargetBitrate (kbps)/ SceneChange\t\t\t: Constraint VBR / %d /  %d ", (int)config->target_bit_rate/1000,  config->scene_change_detection);
         else if (config->rate_control_mode == 0 && config->max_bit_rate)
             SVT_LOG("\nSVT [config]: BRC Mode / %s / MaxBitrate (kbps)/ SceneChange\t\t: %s / %d / %d / %d ", scs->tpl_level ? "Rate Factor" : "CQP Assignment", scs->tpl_level ? "Capped CRF" : "CQP", scs->static_config.qp,
             (int)config->max_bit_rate / 1000, config->scene_change_detection);
