@@ -181,7 +181,7 @@ static EbErrorType enc_context_ctor(EncApp* enc_app, EncContext* enc_context, in
             app_svt_av1_get_time(&config->performance_context.lib_start_time[0],
                                  &config->performance_context.lib_start_time[1]);
             // Update pass
-            config->config.pass = passes == 1 ? 0 // Single-Pass
+            config->config.pass = passes == 1 ? config->config.pass // Single-Pass
                 : (int)enc_pass; // Multi-Pass
 
             c->return_error = handle_stats_file(
