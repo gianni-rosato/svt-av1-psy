@@ -841,7 +841,7 @@ ConfigEntry config_entry_global_options[] = {
      set_asm_type},
     {SINGLE_INPUT,
      THREAD_MGMNT,
-     "Target number of logical cores to be used. 0 means all. Refer to Appendix A.1 of the user "
+     "Target (best effort) number of logical cores to be used. 0 means all. Refer to Appendix A.1 of the user "
      "guide, default is 0 [0, core count of the machine]",
      set_logical_processors},
     {SINGLE_INPUT,
@@ -1010,7 +1010,7 @@ ConfigEntry config_entry_intra_refresh[] = {
      set_scene_change_detection},
     {SINGLE_INPUT,
      LOOKAHEAD_NEW_TOKEN,
-     "Number of frames in the future to look ahead, includes minigop, temporal filtering, and rate "
+     "Number of frames in the future to look ahead, not including minigop, temporal filtering, and rate "
      "control, default is -1 [-1: auto, 0-120]",
      set_look_ahead_distance},
     {SINGLE_INPUT,

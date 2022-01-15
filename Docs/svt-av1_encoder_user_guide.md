@@ -175,7 +175,7 @@ The encoder parameters present in the `Sample.cfg` file are listed in this table
 | **InjectorFrameRate**            | --inj-frm-rt                | [0-240]                        | 60          | Set injector frame rate, only applicable with `--inj 1`                                                       |
 | **StatReport**                   | --enable-stat-report        | [0-1]                          | 0           | Calculates and outputs PSNR SSIM metrics at the end of encoding                                               |
 | **Asm**                          | --asm                       | [0-11, c-max]                  | max         | Limit assembly instruction set [c, mmx, sse, sse2, sse3, ssse3, sse4_1, sse4_2, avx, avx2, avx512, max]       |
-| **LogicalProcessors**            | --lp                        | [0, core count of the machine] | 0           | Target number of logical cores to be used. 0 means all. Refer to Appendix A.1                                 |
+| **LogicalProcessors**            | --lp                        | [0, core count of the machine] | 0           | Target (best effort) number of logical cores to be used. 0 means all. Refer to Appendix A.1                   |
 | **UnpinExecution**               | --unpin                     | [0-1]                          | 1           | Unpin the execution from a socket. Overwritten to 0 when `--ss` is set. Refer to Appendix A.1                 |
 | **TargetSocket**                 | --ss                        | [-1,1]                         | -1          | Specifies which socket to run on, assumes a max of two sockets. Refer to Appendix A.1                         |
 
@@ -186,7 +186,7 @@ The encoder parameters present in the `Sample.cfg` file are listed in this table
 | **RateControlMode**              | --rc                             | [0-2]          | 0               | Rate control mode [0: CRF or CQP (if `--enable-tpl-la` is 0) [Default], 1: VBR, 2: CBR]                              |
 | **QP**                           | --qp                             | [1-63]         | 50              | Initial QP level value                                                                                               |
 | **CRF**                          | --crf                            | [1-63]         | 50              | Constant Rate Factor value, setting this value is equal to `--rc 0 --enable-tpl-la 1 --qp x`                         |
-| **TargetBitRate**                | --tbr                            | [1-4294967]    | 7000            | Target Bitrate (kbps), only applicable for VBR and CBR encoding                                                      |
+| **TargetBitRate**                | --tbr                            | [1-4294967]    | 2000            | Target Bitrate (kbps), only applicable for VBR and CBR encoding                                                      |
 | **MaxBitRate**                   | --mbr                            | [1-4294967]    | 0               | Maximum Bitrate (kbps) only applicable for CRF and VBR encoding                                                      |
 | **UseQpFile**                    | --use-q-file                     | [0-1]          | 0               | Overwrite the encoder default picture based QP assignments and use QP values from `--qp-file`                        |
 | **QpFile**                       | --qpfile                         | any string     | Null            | Path to a file containing per picture QP value                                                                       |
@@ -278,7 +278,7 @@ For this command line, corresponding qindex values are:
 | **Keyint**                       | --keyint              | [-2-`(2^31)-1`] | -2          | GOP size (frames) [-2: ~2 seconds, -1: "infinite" and only applicable for CRF, 0: same as -1]                   |
 | **IntraRefreshType**             | --irefresh-type       | [1-2]           | 2           | Intra refresh type [1: FWD Frame (Open GOP), 2: KEY Frame (Closed GOP)]                                         |
 | **SceneChangeDetection**         | --scd                 | [0-1]           | 0           | Scene change detection control                                                                                  |
-| **Lookahead**                    | --lookahead           | [-1,0-120]      | -1          | Number of frames in the future to look ahead, includes minigop, temporal filtering, and rate control [-1: auto] |
+| **Lookahead**                    | --lookahead           | [-1,0-120]      | -1          | Number of frames in the future to look ahead, beyond minigop, temporal filtering, and rate control [-1: auto]   |
 | **HierarchicalLevels**           | --hierarchical-levels | [3-5]           | 4           | Set hierarchical levels beyond the base layer [3: 4 temporal layers, 5: 6 temporal layers]                      |
 | **PredStructure**                | --pred-struct         | [0-2]           | 2           | Set prediction structure [0: low delay P-frames, 1: low delay B-frames, 2: random access]                       |
 
