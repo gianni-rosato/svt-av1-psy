@@ -4106,7 +4106,7 @@ static EbErrorType verify_settings(
     }
 
     if (config->pass > 0 && scs_ptr->static_config.enable_overlays) {
-        SVT_WARN("The overlay frames feature is currently not supported with multi-pass encoding\n");
+        SVT_LOG("The overlay frames feature is currently not supported with multi-pass encoding\n");
         return_error = EB_ErrorBadParameter;
     }
     int pass = config->pass;
@@ -4155,10 +4155,13 @@ static EbErrorType verify_settings(
     }
 
     if (config->pred_structure == 1) {
-        SVT_WARN("The Low Delay encoding mode is a work-in-progress projects, and is only available for demos, experimentation , and further development uses and should not be used for benchmarking until fully implemented.\n");
+        SVT_WARN("The low delay encoding mode is a work-in-progress projects, and is only available for demos, experimentation , and further development uses and should not be used for benchmarking until fully implemented.\n");
     }
 
-
+    // Limit 8K & 16K support
+    if ((uint64_t)(scs_ptr->max_input_luma_width*scs_ptr->max_input_luma_height) > INPUT_SIZE_4K_TH) {
+        SVT_WARN("8K and higher resolution support is currently a work-in-progress project, and are only available for demos, experimental and further development uses and should not be used for benchmarking until fully implemented.\n");
+    }
 
     return return_error;
 }
