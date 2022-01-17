@@ -320,9 +320,6 @@ typedef struct PreHmeCtrls {
     SearchAreaMinMax prehme_sa_cfg[SEARCH_REGION_COUNT];
     uint8_t          skip_search_line; //if 1 skips every other search region line
     uint8_t          l1_early_exit;
-#if !CLN_ME
-    uint8_t          use_tf_motion; // use TF motion to direct prehme searches
-#endif
 } PreHmeCtrls;
 typedef struct MeHmeSearchAreaCtrls {
     SearchAreaMinMax hme_l0_sa[SEARCH_REGION_COUNT];
@@ -330,7 +327,6 @@ typedef struct MeHmeSearchAreaCtrls {
     SearchArea       hme_l2_sa[SEARCH_REGION_COUNT];
     SearchAreaMinMax me_sa[SEARCH_REGION_COUNT];
 } MeHmeSearchAreaCtrls;
-#if CLN_ME
 typedef struct SearchResults {
     uint8_t  list_i; // list index of this ref
     uint8_t  ref_i; // ref list index of this ref
@@ -339,16 +335,6 @@ typedef struct SearchResults {
     uint64_t hme_sad; // hme sad
     uint8_t  do_ref; // to process this ref in ME or not
 } SearchResults;
-#else
-typedef struct HmeResults {
-    uint8_t  list_i; // list index of this ref
-    uint8_t  ref_i; // ref list index of this ref
-    int16_t  hme_sc_x; // hme search centre x
-    int16_t  hme_sc_y; // hme search centre y
-    uint64_t hme_sad; // hme sad
-    uint8_t  do_ref; // to process this ref in ME or not
-} HmeResults;
-#endif
 typedef struct MeContext {
     EbDctor dctor;
     // Search region stride
@@ -358,7 +344,7 @@ typedef struct MeContext {
     uint32_t   tf_decay_factor_fp16[MAX_MB_PLANE];
     double     tf_decay_factor[3];
     TfControls tf_ctrls;
-#if CLN_ME
+
     uint8_t * b64_src_ptr;
     uint32_t  b64_src_stride;
 
@@ -366,15 +352,6 @@ typedef struct MeContext {
     uint32_t  quarter_b64_buffer_stride;
     uint8_t * sixteenth_b64_buffer;
     uint32_t  sixteenth_b64_buffer_stride;
-#else
-    uint8_t * sb_src_ptr;
-    uint32_t  sb_src_stride;
-
-    uint8_t * quarter_sb_buffer;
-    uint32_t  quarter_sb_buffer_stride;
-    uint8_t * sixteenth_sb_buffer;
-    uint32_t  sixteenth_sb_buffer_stride;
-#endif
     uint8_t * integer_buffer_ptr[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX];
     uint32_t *p_best_sad_8x8;
     uint32_t *p_best_sad_16x16;
@@ -401,9 +378,6 @@ typedef struct MeContext {
     EbBitFraction *mvd_bits_array;
     uint8_t        hme_search_method;
     uint8_t        me_search_method;
-#if !CLN_ME
-    uint8_t            skip_search_line_hme0;
-#endif
     EbBool             enable_hme_flag;
     EbBool             enable_hme_level0_flag;
     EbBool             enable_hme_level1_flag;
@@ -422,11 +396,7 @@ typedef struct MeContext {
     SearchAreaMinMax hme_l0_sa; // Total HME Level-0 search area
     SearchArea       hme_l1_sa; // HME Level-1 search area per HME-L0 search centre
     SearchArea       hme_l2_sa; // HME Level-2 search area per HME-L1 search centre
-#if CLN_ME
     SearchResults       search_results[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
-#else
-    HmeResults       hme_results[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
-#endif
     uint32_t         reduce_me_sr_divisor[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
 
     SearchInfo  prehme_data[MAX_NUM_OF_REF_PIC_LIST][MAX_REF_IDX][SEARCH_REGION_COUNT];

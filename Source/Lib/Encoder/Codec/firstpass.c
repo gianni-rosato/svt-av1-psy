@@ -694,10 +694,7 @@ EbErrorType first_pass_signal_derivation_me_kernel(SequenceControlSet *       sc
 
     // ME Search Method
     context_ptr->me_context_ptr->me_search_method = SUB_SAD_SEARCH;
-#if !CLN_ME
-    // skip search line hme level0
-    context_ptr->me_context_ptr->skip_search_line_hme0 = 0;
-#endif
+
     uint8_t gm_level = 0;
     set_gm_controls(pcs_ptr, gm_level);
 
@@ -1196,22 +1193,12 @@ static void first_pass_setup_me_context(MotionEstimationContext_t *context_ptr,
 
     EbPictureBufferDesc *sixteenth_pic_ptr = ppcs_ptr->ds_pics.sixteenth_picture_ptr;
     // Parts from MotionEstimationKernel()
-#if CLN_ME_II
     uint32_t b64_origin_x = (uint32_t)(blk_col * BLOCK_SIZE_64);
     uint32_t b64_origin_y = (uint32_t)(blk_row * BLOCK_SIZE_64);
-#else
-    uint32_t sb_origin_x = (uint32_t)(blk_col * BLOCK_SIZE_64);
-    uint32_t sb_origin_y = (uint32_t)(blk_row * BLOCK_SIZE_64);
-#endif
 
     // Load the SB from the input to the intermediate SB buffer
-#if CLN_ME_II
     int buffer_index = (input_picture_ptr->origin_y + b64_origin_y) * input_picture_ptr->stride_y +
         input_picture_ptr->origin_x + b64_origin_x;
-#else
-    int buffer_index = (input_picture_ptr->origin_y + sb_origin_y) * input_picture_ptr->stride_y +
-        input_picture_ptr->origin_x + sb_origin_x;
-#endif
 
     // set search method
     context_ptr->me_context_ptr->hme_search_method = SUB_SAD_SEARCH;
@@ -1219,26 +1206,16 @@ static void first_pass_setup_me_context(MotionEstimationContext_t *context_ptr,
 #ifdef ARCH_X86_64
     uint8_t *src_ptr = &(input_picture_ptr->buffer_y[buffer_index]);
 
-#if CLN_ME_II
     uint32_t b64_height = (input_picture_ptr->height - b64_origin_y) < BLOCK_SIZE_64
         ? input_picture_ptr->height - b64_origin_y
         : BLOCK_SIZE_64;
     //_MM_HINT_T0     //_MM_HINT_T1    //_MM_HINT_T2    //_MM_HINT_NTA
     uint32_t i;
     for (i = 0; i < b64_height; i++) {
-#else
-    uint32_t sb_height = (input_picture_ptr->height - sb_origin_y) < BLOCK_SIZE_64
-        ? input_picture_ptr->height - sb_origin_y
-        : BLOCK_SIZE_64;
-    //_MM_HINT_T0     //_MM_HINT_T1    //_MM_HINT_T2    //_MM_HINT_NTA
-    uint32_t i;
-    for (i = 0; i < sb_height; i++) {
-#endif
         char const *p = (char const *)(src_ptr + i * input_picture_ptr->stride_y);
         _mm_prefetch(p, _MM_HINT_T2);
     }
 #endif
-#if CLN_ME
     context_ptr->me_context_ptr->b64_src_ptr    = &(input_picture_ptr->buffer_y[buffer_index]);
     context_ptr->me_context_ptr->b64_src_stride = input_picture_ptr->stride_y;
 
@@ -1255,25 +1232,6 @@ static void first_pass_setup_me_context(MotionEstimationContext_t *context_ptr,
 
     context_ptr->me_context_ptr->sixteenth_b64_buffer = &sixteenth_pic_ptr->buffer_y[buffer_index];
     context_ptr->me_context_ptr->sixteenth_b64_buffer_stride = sixteenth_pic_ptr->stride_y;
-#else
-    context_ptr->me_context_ptr->sb_src_ptr    = &(input_picture_ptr->buffer_y[buffer_index]);
-    context_ptr->me_context_ptr->sb_src_stride = input_picture_ptr->stride_y;
-
-    // Load the 1/4 decimated SB from the 1/4 decimated input to the 1/4 intermediate SB buffer
-    buffer_index = (quarter_pic_ptr->origin_y + (sb_origin_y >> ss_y)) * quarter_pic_ptr->stride_y +
-        quarter_pic_ptr->origin_x + (sb_origin_x >> ss_x);
-
-    context_ptr->me_context_ptr->quarter_sb_buffer = &quarter_pic_ptr->buffer_y[buffer_index];
-    context_ptr->me_context_ptr->quarter_sb_buffer_stride = quarter_pic_ptr->stride_y;
-
-    // Load the 1/16 decimated SB from the 1/16 decimated input to the 1/16 intermediate SB buffer
-    buffer_index = (sixteenth_pic_ptr->origin_y + (sb_origin_y >> 2)) *
-            sixteenth_pic_ptr->stride_y +
-        sixteenth_pic_ptr->origin_x + (sb_origin_x >> 2);
-
-    context_ptr->me_context_ptr->sixteenth_sb_buffer = &sixteenth_pic_ptr->buffer_y[buffer_index];
-    context_ptr->me_context_ptr->sixteenth_sb_buffer_stride = sixteenth_pic_ptr->stride_y;
-#endif
 }
 /***************************************************************************
 * Perform the motion estimation for first pass.
@@ -1318,53 +1276,27 @@ static EbErrorType first_pass_me(PictureParentControlSet *  ppcs_ptr,
     ppcs_ptr->pa_me_data->max_cand = 3;
     ppcs_ptr->pa_me_data->max_refs = 2;
     ppcs_ptr->pa_me_data->max_l0   = 1;
-    for (uint32_t blk_index_y = (y_b64_start_idx * blks_in_b64); blk_index_y < blk_index_y_end;
-         blk_index_y += blks_in_b64) {
-        for (uint32_t blk_index_x = (x_b64_start_idx * blks_in_b64); blk_index_x < blk_index_x_end;
-             blk_index_x += blks_in_b64) {
-#if CLN_ME_II
+    for (uint32_t blk_index_y = (y_b64_start_idx * blks_in_b64); blk_index_y < blk_index_y_end; blk_index_y += blks_in_b64) {
+        for (uint32_t blk_index_x = (x_b64_start_idx * blks_in_b64); blk_index_x < blk_index_x_end; blk_index_x += blks_in_b64) {
             int b64_index_x = blk_index_x / blks_in_b64;
             int b64_index_y = blk_index_y / blks_in_b64;
-#else
-            int sb_index_x = blk_index_x / blks_in_b64;
-            int sb_index_y = blk_index_y / blks_in_b64;
-#endif
+
             uint8_t bypass_blk_step = me_context_ptr->me_context_ptr->bypass_blk_step;
             if (bypass_blk_step > 1)
-#if CLN_ME_II
                 if ((b64_index_x % (uint32_t)bypass_blk_step != 0) || (b64_index_y % (uint32_t)bypass_blk_step != 0))
                     continue;
-#else
-                if ((sb_index_x % (uint32_t)bypass_blk_step != 0) ||
-                    (sb_index_y % (uint32_t)bypass_blk_step != 0))
-                    continue;
-#endif
 
-#if CLN_ME_II
             // Initialize ME context
             first_pass_setup_me_context(me_context_ptr, ppcs_ptr, input_picture_ptr, b64_index_y, b64_index_x, ss_x, ss_y);
             // Perform ME - context_ptr will store the outputs (MVs, buffers, etc)
             // Block-based MC using open-loop HME + refinement
 
-            motion_estimate(ppcs_ptr, // source picture control set -> references come from here
+            motion_estimation_b64(ppcs_ptr, // source picture control set -> references come from here
                 (uint32_t)b64_index_y * sb_cols + b64_index_x,
                 (uint32_t)b64_index_x * BLOCK_SIZE_64, // x block
                 (uint32_t)b64_index_y * BLOCK_SIZE_64, // y block
                 context_ptr,
                 input_picture_ptr); // source picture
-#else
-            // Initialize ME context
-            first_pass_setup_me_context(
-                me_context_ptr, ppcs_ptr, input_picture_ptr, sb_index_y, sb_index_x, ss_x, ss_y);
-            // Perform ME - context_ptr will store the outputs (MVs, buffers, etc)
-            // Block-based MC using open-loop HME + refinement
-            motion_estimate_sb(ppcs_ptr, // source picture control set -> references come from here
-                               (uint32_t)sb_index_y * sb_cols + sb_index_x,
-                               (uint32_t)sb_index_x * BLOCK_SIZE_64, // x block
-                               (uint32_t)sb_index_y * BLOCK_SIZE_64, // y block
-                               context_ptr,
-                               input_picture_ptr); // source picture
-#endif
         }
     }
     return EB_ErrorNone;
