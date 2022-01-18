@@ -173,7 +173,7 @@ You will be required to execute the appropriate [contributor agreement](http://a
 
 ### How to Report Bugs and Provide Feedback
 
-Use the [Issues](https://gitlab.com/AOMediaCodec/SVT-AV1/issues) tab on Github. To avoid duplicate issues, please make sure you go through the existing issues before logging a new one.
+Use the [Issues](https://gitlab.com/AOMediaCodec/SVT-AV1/issues) tab on GitLab. To avoid duplicate issues, please make sure you go through the existing issues before logging a new one.
 
 ## IRC
 
