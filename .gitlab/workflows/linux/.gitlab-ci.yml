@@ -330,8 +330,8 @@ Linux Default Branch:
   variables:
     BRANCH: default
   before_script:
-    - git fetch https://gitlab.com/AOMediaCodec/SVT-AV1.git HEAD
-    - git checkout ${CI_MERGE_REQUEST_TARGET_BRANCH_NAME:-FETCH_HEAD}
+    - git fetch ${CI_MERGE_REQUEST_PROJECT_URL:-https://gitlab.com/AOMediaCodec/SVT-AV1.git} "${CI_MERGE_REQUEST_TARGET_BRANCH_NAME:-master}"
+    - git checkout FETCH_HEAD
     - !reference [.linux-extract-videos]
   script:
     - !reference [.compiler-script]
