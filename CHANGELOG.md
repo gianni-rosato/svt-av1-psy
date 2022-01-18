@@ -1,5 +1,31 @@
 # Changelog
 
+## [0.9] - 2022-01-19
+
+Encoder
+- New faster presets M9-M12, M12 reaching similar complexity level to that of x264 veryfast
+- New multi-pass and single pass VBR implementation minimizing the quality difference vs CRF while reducing the cycle overhead
+- Quality vs density tradeoffs improvements across all presets in CRF mode
+- Added support for CRF with capped bitrate
+- Added support for overlay frames and super resolution
+- Fixed film grain synthesis bugs
+- Added experimental support for > 4k resolutions
+- Added experimental support for the low delay prediction structure
+- Significant memory reduction especially for faster presets in a multi-threaded environment
+- API configuration structure cleanup removing all invalid or out of date parameters
+- Speedup legacy CPUs for faster development by adding SSE code for corresponding C-kernels
+- Updated the code license from BSD 2-clause to BSD 3-clause clear
+- Cleaned up the code for various kernels
+- Updated the user guide and feature documentation
+
+Build and Testing
+- Bug fixes
+- Improve CI coverage
+- Improve Unit Test Coverage
+- Address C vs asm mismatches
+- Fix static analysis warnings / errors
+
+
 ## [0.8.7] - 2021-05-08
 
 Encoder
