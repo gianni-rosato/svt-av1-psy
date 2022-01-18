@@ -92,6 +92,7 @@ static const BlkSize test_block_size_table[] = {
 static const int test_tap_table[] = {7, 5, 3};
 
 static const WienerConvolveFunc wiener_convolve_func_table[] = {
+    svt_av1_wiener_convolve_add_src_sse2,
     svt_av1_wiener_convolve_add_src_avx2,
 #if EN_AVX512_SUPPORT
     svt_av1_wiener_convolve_add_src_avx512
@@ -99,6 +100,7 @@ static const WienerConvolveFunc wiener_convolve_func_table[] = {
 };
 
 static const HbdWienerConvolveFunc hbd_wiener_convolve_func_table[] = {
+    svt_av1_highbd_wiener_convolve_add_src_ssse3,
     svt_av1_highbd_wiener_convolve_add_src_avx2,
 };
 

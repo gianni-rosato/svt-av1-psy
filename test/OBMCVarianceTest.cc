@@ -104,9 +104,10 @@ TEST_P(OBMCVarianceTest, RunCheckOutput) {
 };
 
 #define OBMC_VAR_FUNC_C(W, H) svt_aom_obmc_variance##W##x##H##_c
+#define OBMC_VAR_FUNC_SSE4_1(W, H) svt_aom_obmc_variance##W##x##H##_sse4_1
 #define OBMC_VAR_FUNC_AVX2(W, H) svt_aom_obmc_variance##W##x##H##_avx2
 #define GEN_OBMC_VAR_TEST_PARAM(W, H) \
-    ObmcVarParam(OBMC_VAR_FUNC_C(W, H), OBMC_VAR_FUNC_AVX2(W, H))
+    ObmcVarParam(OBMC_VAR_FUNC_C(W, H), OBMC_VAR_FUNC_AVX2(W, H)), ObmcVarParam(OBMC_VAR_FUNC_C(W, H), OBMC_VAR_FUNC_SSE4_1(W, H))
 #define GEN_TEST_PARAMS(GEN_PARAM)                                          \
     GEN_PARAM(128, 128), GEN_PARAM(128, 64), GEN_PARAM(64, 128),            \
         GEN_PARAM(64, 64), GEN_PARAM(64, 32), GEN_PARAM(32, 64),            \

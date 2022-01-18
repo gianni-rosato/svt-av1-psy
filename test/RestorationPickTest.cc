@@ -241,7 +241,8 @@ TEST_P(av1_compute_stats_test, DISABLED_speed) {
 INSTANTIATE_TEST_CASE_P(
     AV1_COMPUTE_STATS_AVX2, av1_compute_stats_test,
     ::testing::Combine(::testing::Range(BLOCK_4X4, BlockSizeS_ALL),
-                       ::testing::Values(svt_av1_compute_stats_avx2),
+                       ::testing::Values(svt_av1_compute_stats_sse4_1,
+                                         svt_av1_compute_stats_avx2),
                        ::testing::Range(0, 6),
                        ::testing::Values(WIENER_WIN_CHROMA, WIENER_WIN,
                                          WIENER_WIN_3TAP)));
@@ -501,7 +502,8 @@ INSTANTIATE_TEST_CASE_P(
     AV1_COMPUTE_STATS_HBD_AVX2, av1_compute_stats_test_hbd,
     ::testing::Combine(
         ::testing::Range(BLOCK_4X4, BlockSizeS_ALL),
-        ::testing::Values(svt_av1_compute_stats_highbd_avx2),
+        ::testing::Values(svt_av1_compute_stats_highbd_sse4_1,
+                          svt_av1_compute_stats_highbd_avx2),
         ::testing::Range(0, 8),
         ::testing::Values(WIENER_WIN_CHROMA, WIENER_WIN, WIENER_WIN_3TAP),
         ::testing::Values(AOM_BITS_8, AOM_BITS_10, AOM_BITS_12)));

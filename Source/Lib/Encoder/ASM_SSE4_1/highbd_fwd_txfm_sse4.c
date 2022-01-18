@@ -3005,6 +3005,70 @@ static INLINE void int16_array_with_stride_to_int32_array_without_stride(const i
     }
 }
 
+static INLINE void load_buffer_64x64_sse4_1(const int16_t *input, int32_t stride, __m128i *output) {
+    __m128i x0, x1, x2, x3, x4, x5, x6, x7;
+    int32_t i;
+
+    for (i = 0; i < 64; ++i) {
+        x0 = _mm_loadl_epi64((const __m128i *)(input + 0 * 4));
+        x1 = _mm_loadl_epi64((const __m128i *)(input + 1 * 4));
+        x2 = _mm_loadl_epi64((const __m128i *)(input + 2 * 4));
+        x3 = _mm_loadl_epi64((const __m128i *)(input + 3 * 4));
+        x4 = _mm_loadl_epi64((const __m128i *)(input + 4 * 4));
+        x5 = _mm_loadl_epi64((const __m128i *)(input + 5 * 4));
+        x6 = _mm_loadl_epi64((const __m128i *)(input + 6 * 4));
+        x7 = _mm_loadl_epi64((const __m128i *)(input + 7 * 4));
+
+        x0 = _mm_cvtepi16_epi32(x0);
+        x1 = _mm_cvtepi16_epi32(x1);
+        x2 = _mm_cvtepi16_epi32(x2);
+        x3 = _mm_cvtepi16_epi32(x3);
+        x4 = _mm_cvtepi16_epi32(x4);
+        x5 = _mm_cvtepi16_epi32(x5);
+        x6 = _mm_cvtepi16_epi32(x6);
+        x7 = _mm_cvtepi16_epi32(x7);
+
+        _mm_storeu_si128(output + 0, x0);
+        _mm_storeu_si128(output + 1, x1);
+        _mm_storeu_si128(output + 2, x2);
+        _mm_storeu_si128(output + 3, x3);
+        _mm_storeu_si128(output + 4, x4);
+        _mm_storeu_si128(output + 5, x5);
+        _mm_storeu_si128(output + 6, x6);
+        _mm_storeu_si128(output + 7, x7);
+
+        x0 = _mm_loadl_epi64((const __m128i *)(input + 8 * 4));
+        x1 = _mm_loadl_epi64((const __m128i *)(input + 9 * 4));
+        x2 = _mm_loadl_epi64((const __m128i *)(input + 10 * 4));
+        x3 = _mm_loadl_epi64((const __m128i *)(input + 11 * 4));
+        x4 = _mm_loadl_epi64((const __m128i *)(input + 12 * 4));
+        x5 = _mm_loadl_epi64((const __m128i *)(input + 13 * 4));
+        x6 = _mm_loadl_epi64((const __m128i *)(input + 14 * 4));
+        x7 = _mm_loadl_epi64((const __m128i *)(input + 15 * 4));
+
+        x0 = _mm_cvtepi16_epi32(x0);
+        x1 = _mm_cvtepi16_epi32(x1);
+        x2 = _mm_cvtepi16_epi32(x2);
+        x3 = _mm_cvtepi16_epi32(x3);
+        x4 = _mm_cvtepi16_epi32(x4);
+        x5 = _mm_cvtepi16_epi32(x5);
+        x6 = _mm_cvtepi16_epi32(x6);
+        x7 = _mm_cvtepi16_epi32(x7);
+
+        _mm_storeu_si128(output + 8, x0);
+        _mm_storeu_si128(output + 9, x1);
+        _mm_storeu_si128(output + 10, x2);
+        _mm_storeu_si128(output + 11, x3);
+        _mm_storeu_si128(output + 12, x4);
+        _mm_storeu_si128(output + 13, x5);
+        _mm_storeu_si128(output + 14, x6);
+        _mm_storeu_si128(output + 15, x7);
+
+        input += stride;
+        output += 16;
+    }
+}
+
 static INLINE void flip_buf_sse4_1(__m128i *in, __m128i *out, int size) {
     for (int i = 0; i < size; i += 2) in[30 - i] = out[i];
     for (int i = 1; i < size; i += 2) in[size - i] = out[i];
@@ -3657,7 +3721,7 @@ void svt_av1_fwd_txfm2d_64x64_sse4_1(int16_t *input, int32_t *output, uint32_t s
 
     switch (tx_type) {
     case DCT_DCT:
-        int16_array_with_stride_to_int32_array_without_stride(input, stride, output, txfm_size);
+        load_buffer_64x64_sse4_1(input, stride, out_128);
         /*col wise transform*/
         fdct64_new_sse4_1(out_128, buf_128, cos_bit_col, stage_range_col);
         av1_round_shift_array_32_sse4_1(buf_128, out_128, txfm2d_size_128, -shift[1]);
@@ -3672,7 +3736,7 @@ void svt_av1_fwd_txfm2d_64x64_sse4_1(int16_t *input, int32_t *output, uint32_t s
         transpose_8nx8n(buf_128, out_128, 64, 64);
         break;
     case IDTX:
-        int16_array_with_stride_to_int32_array_without_stride(input, stride, output, txfm_size);
+        load_buffer_64x64_sse4_1(input, stride, out_128);
         /*col wise transform*/
         fidtx64x64_sse4_1(out_128, buf_128, cos_bit_col, stage_range_col);
         av1_round_shift_array_32_sse4_1(buf_128, out_128, txfm2d_size_128, -shift[1]);
