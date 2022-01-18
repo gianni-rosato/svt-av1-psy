@@ -318,7 +318,7 @@ the original resolution by the decoder.
 | 3                | Super-resolution scale for a frame is determined based on the q_index, a qthreshold of 63 means no scaling                  |
 | 4                | Automatically select the super-resolution mode for appropriate frames                                                       |
 
-The performance of the encoder will be affected for all modes other than 0, and for mode 4. It should be noted that
+The performance of the encoder will be affected for all modes other than mode 0. And for mode 4, it should be noted that
 the encoder will run at least twice, one for down scaling, and another with no scaling, and then it will choose the best
 one for each of the appropriate frames.
 
