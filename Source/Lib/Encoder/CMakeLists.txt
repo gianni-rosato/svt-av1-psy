@@ -1,10 +1,10 @@
 #
 # Copyright(c) 2019 Intel Corporation
 #
-# This source code is subject to the terms of the BSD 2 Clause License and
-# the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
+# This source code is subject to the terms of the BSD 3 Clause Clear License and
+# the Alliance for Open Media Patent License 1.0. If the BSD 3 Clause Clear License
 # was not distributed with this source code in the LICENSE file, you can
-# obtain it at https://www.aomedia.org/license/software-license. If the Alliance for Open
+# obtain it at https://www.aomedia.org/license/license. If the Alliance for Open
 # Media Patent License 1.0 was not distributed with this source code in the
 # PATENTS file, you can obtain it at https://www.aomedia.org/license/patent-license.
 #
@@ -13,8 +13,8 @@
 
 # Shared Encoder Version
 set(ENC_VERSION_MAJOR 0)
-set(ENC_VERSION_MINOR 8)
-set(ENC_VERSION_PATCH 7)
+set(ENC_VERSION_MINOR 9)
+set(ENC_VERSION_PATCH 0)
 set(ENC_VERSION ${ENC_VERSION_MAJOR}.${ENC_VERSION_MINOR}.${ENC_VERSION_PATCH})
 
 if(UNIX)
