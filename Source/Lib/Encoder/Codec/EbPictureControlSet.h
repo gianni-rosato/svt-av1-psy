@@ -308,9 +308,6 @@ typedef struct PictureControlSet {
 
     // Rate Control
     uint8_t picture_qp;
-#if !REDUCE_4K_CHECKS
-    uint8_t dif_blk_delta_qp_depth;
-#endif
     // SB Array
     uint16_t     sb_total_count;
     SuperBlock **sb_ptr_array;
@@ -1064,9 +1061,6 @@ typedef struct PictureParentControlSet {
     uint32_t tf_tot_vert_blks; //total vertical motion blocks in TF
     uint32_t tf_tot_horz_blks; //total horizontal motion blocks in TF
     int8_t   tf_motion_direction; //motion direction in TF   -1:invalid   0:horz  1:vert
-#if !REDUCE_4K_CHECKS
-    uint8_t  cqp_qps_model; // 0: use fixed QP-Offsets, 1: QP-Offsets are funtion of the base_qp
-#endif
     uint8_t  adjust_under_shoot_gf;
 } PictureParentControlSet;
 

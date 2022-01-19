@@ -73,18 +73,8 @@ void set_hme_search_params(PictureParentControlSet *pcs_ptr, MeContext *me_conte
 
     // Set HME level 0 min and max search areas
     if (pcs_ptr->enc_mode <= ENC_MRS) {
-#if REDUCE_4K_CHECKS
         me_context_ptr->hme_l0_sa.sa_min = (SearchArea){ 240, 240 };
         me_context_ptr->hme_l0_sa.sa_max = (SearchArea){ 480, 480 };
-#else
-        if (input_resolution < INPUT_SIZE_4K_RANGE) {
-            me_context_ptr->hme_l0_sa.sa_min = (SearchArea){120, 120};
-            me_context_ptr->hme_l0_sa.sa_max = (SearchArea){480, 480};
-        } else {
-            me_context_ptr->hme_l0_sa.sa_min = (SearchArea){240, 240};
-            me_context_ptr->hme_l0_sa.sa_max = (SearchArea){480, 480};
-        }
-#endif
     } else if (pcs_ptr->enc_mode <= ENC_M0) {
         if (input_resolution < INPUT_SIZE_4K_RANGE) {
             me_context_ptr->hme_l0_sa.sa_min = (SearchArea){32, 32};
@@ -109,7 +99,6 @@ void set_hme_search_params(PictureParentControlSet *pcs_ptr, MeContext *me_conte
                 me_context_ptr->hme_l0_sa.sa_max = (SearchArea){192, 192};
             }
         }
-#if REDUCE_4K_CHECKS
     }
     else if (pcs_ptr->enc_mode <= ENC_M12) {
         if (pcs_ptr->sc_class1) {
@@ -137,22 +126,7 @@ void set_hme_search_params(PictureParentControlSet *pcs_ptr, MeContext *me_conte
             me_context_ptr->hme_l0_sa.sa_max = (SearchArea){ 96, 96 };
         }
     }
-#else
-    } else {
-        if (pcs_ptr->sc_class1) {
-            me_context_ptr->hme_l0_sa.sa_min = (SearchArea){32, 32};
-            me_context_ptr->hme_l0_sa.sa_max = (SearchArea){192, 192};
-        } else {
-            if (input_resolution < INPUT_SIZE_4K_RANGE) {
-                me_context_ptr->hme_l0_sa.sa_min = (SearchArea){8, 8};
-                me_context_ptr->hme_l0_sa.sa_max = (SearchArea){96, 96};
-            } else {
-                me_context_ptr->hme_l0_sa.sa_min = (SearchArea){16, 16};
-                me_context_ptr->hme_l0_sa.sa_max = (SearchArea){96, 96};
-            }
-        }
-    }
-#endif
+
     // Set the HME Level 1 and Level 2 refinement areas
     if (pcs_ptr->enc_mode <= ENC_M1) {
         me_context_ptr->hme_l1_sa = (SearchArea){16, 16};

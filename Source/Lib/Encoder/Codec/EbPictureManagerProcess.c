@@ -954,12 +954,6 @@ void *picture_manager_kernel(void *input_ptr) {
                         configure_picture_edges(entry_scs_ptr, child_pcs_ptr);
                         // Error resilience related
                         child_pcs_ptr->colocated_pu_ref_list = REF_LIST_0; // to be modified
-#if !REDUCE_4K_CHECKS
-                        // Rate Control
-                        child_pcs_ptr->dif_blk_delta_qp_depth =
-                            (uint8_t)entry_scs_ptr->input_resolution <= INPUT_SIZE_1080p_RANGE ? 2
-                                                                                               : 3;
-#endif
                         // Reset the Reference Lists
                         EB_MEMSET(child_pcs_ptr->ref_pic_ptr_array[REF_LIST_0],
                                   0,

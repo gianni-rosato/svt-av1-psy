@@ -4604,152 +4604,97 @@ static EbErrorType produce_temporally_filtered_pic(
         FP_ASSERT(TF_FILTER_STRENGTH == 5);
         FP_ASSERT(TF_STRENGTH_THRESHOLD == 4);
         FP_ASSERT(TF_Q_DECAY_THRESHOLD == 20);
-#if !REDUCE_4K_CHECKS
-        if (picture_control_set_ptr_central->cqp_qps_model) {
-            if (picture_control_set_ptr_central->temporal_layer_index == 0) {
-                const double qratio_grad = picture_control_set_ptr_central->hierarchical_levels <= 4
-                    ? 0.3
-                    : 0.2;
 
-                const double qstep_ratio = 0.2 +
-                    (1.0 - (double)active_worst_quality / MAXQ) * qratio_grad;
+        int offset_idx = -1;
+        if (!picture_control_set_ptr_central->is_used_as_reference_flag)
+            offset_idx = -1;
 
-                q = picture_control_set_ptr_central->scs_ptr->cqp_base_q_tf =
-                    svt_av1_get_q_index_from_qstep_ratio(
-                        active_worst_quality, qstep_ratio, bit_depth);
-            } else if (picture_control_set_ptr_central->is_used_as_reference_flag) {
-                int this_height = picture_control_set_ptr_central->temporal_layer_index + 1;
-                int arf_q       = picture_control_set_ptr_central->scs_ptr->cqp_base_q_tf;
-                while (this_height > 1) {
-                    arf_q = (arf_q + active_worst_quality + 1) / 2;
-                    --this_height;
-                }
-                q = arf_q;
-            } else {
-                q = active_worst_quality;
-            }
-        } else {
-#endif
-            int offset_idx = -1;
-            if (!picture_control_set_ptr_central->is_used_as_reference_flag)
-                offset_idx = -1;
+        else if (picture_control_set_ptr_central->idr_flag)
+            offset_idx = 0;
+        else
+            offset_idx = MIN(picture_control_set_ptr_central->temporal_layer_index + 1,
+                                FIXED_QP_OFFSET_COUNT - 1);
 
-            else if (picture_control_set_ptr_central->idr_flag)
-                offset_idx = 0;
-            else
-                offset_idx = MIN(picture_control_set_ptr_central->temporal_layer_index + 1,
-                                 FIXED_QP_OFFSET_COUNT - 1);
+        // Fixed-QP offsets are use here since final picture QP(s) are not generated @ this early stage
+        int32_t q_val_fp8 = svt_av1_convert_qindex_to_q_fp8(active_worst_quality, bit_depth);
 
-            // Fixed-QP offsets are use here since final picture QP(s) are not generated @ this early stage
-            int32_t q_val_fp8 = svt_av1_convert_qindex_to_q_fp8(active_worst_quality, bit_depth);
+        const int32_t q_val_target_fp8 = (offset_idx == -1)
+            ? q_val_fp8
+            : MAX(q_val_fp8 -
+                        (q_val_fp8 *
+                        percents[picture_control_set_ptr_central->hierarchical_levels <= 4]
+                                [offset_idx] /
+                        100),
+                    0);
 
-            const int32_t q_val_target_fp8 = (offset_idx == -1)
-                ? q_val_fp8
-                : MAX(q_val_fp8 -
-                          (q_val_fp8 *
-                           percents[picture_control_set_ptr_central->hierarchical_levels <= 4]
-                                   [offset_idx] /
-                           100),
-                      0);
+        const int32_t delta_qindex_f = svt_av1_compute_qdelta_fp(
+            q_val_fp8, q_val_target_fp8, bit_depth);
+        active_best_quality = (int32_t)(active_worst_quality + delta_qindex_f);
+        q                   = active_best_quality;
 
-            const int32_t delta_qindex_f = svt_av1_compute_qdelta_fp(
-                q_val_fp8, q_val_target_fp8, bit_depth);
-            active_best_quality = (int32_t)(active_worst_quality + delta_qindex_f);
-            q                   = active_best_quality;
-#if !REDUCE_4K_CHECKS
-        }
-#endif
-        FP_ASSERT(q < (1 << 20));
-        //double q_decay = pow((double)q / TF_Q_DECAY_THRESHOLD, 2);
+    FP_ASSERT(q < (1 << 20));
+    //double q_decay = pow((double)q / TF_Q_DECAY_THRESHOLD, 2);
 
-        //TODO: FIX1 uint32_t???
-        int32_t  q_treshold_fp8 = (q * ((int32_t)1 << 8)) / TF_Q_DECAY_THRESHOLD;
-        uint32_t q_decay_fp8    = (q_treshold_fp8 * q_treshold_fp8) >> 8;
+    //TODO: FIX1 uint32_t???
+    int32_t  q_treshold_fp8 = (q * ((int32_t)1 << 8)) / TF_Q_DECAY_THRESHOLD;
+    uint32_t q_decay_fp8    = (q_treshold_fp8 * q_treshold_fp8) >> 8;
 
-        //  q_decay_fp8 = ((q_decay_fp8) < (1) ? (1) : (q_decay_fp8) > (1<<8) ? (1<<8) : (q_decay_fp8));
-        q_decay_fp8 = CLIP(q_decay_fp8, 1, 1 << 8);
-        if (q >= TF_QINDEX_CUTOFF) {
-            // Max q_factor is 255, therefore the upper bound of q_decay is 8.
-            // We do not need a clip here.
-            //q_decay = 0.5 * pow((double)q / 64, 2);
-            FP_ASSERT(q < (1 << 15));
-            q_decay_fp8 = (q * q) >> 5;
-        }
+    //  q_decay_fp8 = ((q_decay_fp8) < (1) ? (1) : (q_decay_fp8) > (1<<8) ? (1<<8) : (q_decay_fp8));
+    q_decay_fp8 = CLIP(q_decay_fp8, 1, 1 << 8);
+    if (q >= TF_QINDEX_CUTOFF) {
+        // Max q_factor is 255, therefore the upper bound of q_decay is 8.
+        // We do not need a clip here.
+        //q_decay = 0.5 * pow((double)q / 64, 2);
+        FP_ASSERT(q < (1 << 15));
+        q_decay_fp8 = (q * q) >> 5;
+    }
 
-        const int32_t const_0dot7_fp16 = 45875; //0.7
-        /*Calculation of log and dceay_factor possible to move to estimate_noise() and calculate one time for GOP*/
-        //decay_control * (0.7 + log1p(noise_levels[C_Y]))
-        int32_t n_decay_fp10 = (decay_control * (const_0dot7_fp16 + noise_levels_log1p_fp16[C_Y])) /
+    const int32_t const_0dot7_fp16 = 45875; //0.7
+    /*Calculation of log and dceay_factor possible to move to estimate_noise() and calculate one time for GOP*/
+    //decay_control * (0.7 + log1p(noise_levels[C_Y]))
+    int32_t n_decay_fp10 = (decay_control * (const_0dot7_fp16 + noise_levels_log1p_fp16[C_Y])) /
+        ((int32_t)1 << 6);
+    //2 * n_decay * n_decay * q_decay * (s_decay always is 1);
+    context_ptr->tf_decay_factor_fp16[C_Y] = (uint32_t)(
+        (((((int64_t)n_decay_fp10) * ((int64_t)n_decay_fp10))) * q_decay_fp8) >> 11);
+
+    if (context_ptr->tf_chroma) {
+        n_decay_fp10 = (decay_control * (const_0dot7_fp16 + noise_levels_log1p_fp16[C_U])) /
             ((int32_t)1 << 6);
-        //2 * n_decay * n_decay * q_decay * (s_decay always is 1);
-        context_ptr->tf_decay_factor_fp16[C_Y] = (uint32_t)(
+        context_ptr->tf_decay_factor_fp16[C_U] = (uint32_t)(
             (((((int64_t)n_decay_fp10) * ((int64_t)n_decay_fp10))) * q_decay_fp8) >> 11);
 
-        if (context_ptr->tf_chroma) {
-            n_decay_fp10 = (decay_control * (const_0dot7_fp16 + noise_levels_log1p_fp16[C_U])) /
-                ((int32_t)1 << 6);
-            context_ptr->tf_decay_factor_fp16[C_U] = (uint32_t)(
-                (((((int64_t)n_decay_fp10) * ((int64_t)n_decay_fp10))) * q_decay_fp8) >> 11);
+        n_decay_fp10 = (decay_control * (const_0dot7_fp16 + noise_levels_log1p_fp16[C_V])) /
+            ((int32_t)1 << 6);
+        context_ptr->tf_decay_factor_fp16[C_V] = (uint32_t)(
+            (((((int64_t)n_decay_fp10) * ((int64_t)n_decay_fp10))) * q_decay_fp8) >> 11);
+    }
+} else {
+        double q_val      = svt_av1_convert_qindex_to_q(active_worst_quality, bit_depth);
+        int    offset_idx = -1;
+        if (!picture_control_set_ptr_central->is_used_as_reference_flag)
+            offset_idx = -1;
+        else if (picture_control_set_ptr_central->idr_flag)
+            offset_idx = 0;
+        else
+            offset_idx = MIN(picture_control_set_ptr_central->temporal_layer_index + 1,
+                                FIXED_QP_OFFSET_COUNT - 1);
 
-            n_decay_fp10 = (decay_control * (const_0dot7_fp16 + noise_levels_log1p_fp16[C_V])) /
-                ((int32_t)1 << 6);
-            context_ptr->tf_decay_factor_fp16[C_V] = (uint32_t)(
-                (((((int64_t)n_decay_fp10) * ((int64_t)n_decay_fp10))) * q_decay_fp8) >> 11);
-        }
-    } else {
-#if !REDUCE_4K_CHECKS
-        if (picture_control_set_ptr_central->cqp_qps_model) {
-            if (picture_control_set_ptr_central->temporal_layer_index == 0) {
-                const double qratio_grad = picture_control_set_ptr_central->hierarchical_levels <= 4
-                    ? 0.3
-                    : 0.2;
+        const double q_val_target = (offset_idx == -1)
+            ? q_val
+            : MAX(q_val -
+                        (q_val *
+                        percents[picture_control_set_ptr_central->hierarchical_levels <= 4]
+                                [offset_idx] /
+                        100),
+                    0.0);
 
-                const double qstep_ratio = 0.2 +
-                    (1.0 - (double)active_worst_quality / MAXQ) * qratio_grad;
+        const int32_t delta_qindex = svt_av1_compute_qdelta(q_val, q_val_target, bit_depth);
 
-                q = picture_control_set_ptr_central->scs_ptr->cqp_base_q_tf =
-                    svt_av1_get_q_index_from_qstep_ratio(
-                        active_worst_quality, qstep_ratio, bit_depth);
-            } else if (picture_control_set_ptr_central->is_used_as_reference_flag) {
-                int this_height = picture_control_set_ptr_central->temporal_layer_index + 1;
-                int arf_q       = picture_control_set_ptr_central->scs_ptr->cqp_base_q_tf;
-                while (this_height > 1) {
-                    arf_q = (arf_q + active_worst_quality + 1) / 2;
-                    --this_height;
-                }
-                q = arf_q;
-            } else {
-                q = active_worst_quality;
-            }
-        } else {
-#endif
-            double q_val      = svt_av1_convert_qindex_to_q(active_worst_quality, bit_depth);
-            int    offset_idx = -1;
-            if (!picture_control_set_ptr_central->is_used_as_reference_flag)
-                offset_idx = -1;
-            else if (picture_control_set_ptr_central->idr_flag)
-                offset_idx = 0;
-            else
-                offset_idx = MIN(picture_control_set_ptr_central->temporal_layer_index + 1,
-                                 FIXED_QP_OFFSET_COUNT - 1);
+        active_best_quality = (int32_t)(active_worst_quality + delta_qindex);
+        q                   = active_best_quality;
+        clamp(q, active_best_quality, active_worst_quality);
 
-            const double q_val_target = (offset_idx == -1)
-                ? q_val
-                : MAX(q_val -
-                          (q_val *
-                           percents[picture_control_set_ptr_central->hierarchical_levels <= 4]
-                                   [offset_idx] /
-                           100),
-                      0.0);
-
-            const int32_t delta_qindex = svt_av1_compute_qdelta(q_val, q_val_target, bit_depth);
-
-            active_best_quality = (int32_t)(active_worst_quality + delta_qindex);
-            q                   = active_best_quality;
-            clamp(q, active_best_quality, active_worst_quality);
-#if !REDUCE_4K_CHECKS
-        }
-#endif
         double q_decay = pow((double)q / TF_Q_DECAY_THRESHOLD, 2);
         q_decay        = CLIP(q_decay, 1e-5, 1);
         if (q >= TF_QINDEX_CUTOFF) {

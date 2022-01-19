@@ -2514,7 +2514,6 @@ void set_tf_64x64_params(
 /*
  * Control TF
  */
-#if REDUCE_4K_CHECKS
 void tf_controls(SequenceControlSet* scs_ptr, uint8_t tf_level) {
 
     switch (tf_level)
@@ -2757,7 +2756,6 @@ void tf_controls(SequenceControlSet* scs_ptr, uint8_t tf_level) {
         break;
 
     case 4:
-#if REDUCE_4K_CHECKS
         // I_SLICE TF Params
         scs_ptr->tf_params_per_type[0].enabled = 1;
         scs_ptr->tf_params_per_type[0].num_future_pics = 8;
@@ -2807,57 +2805,7 @@ void tf_controls(SequenceControlSet* scs_ptr, uint8_t tf_level) {
             &scs_ptr->tf_params_per_type[1].me_exit_th, 35, 16 * 16);
         // L1 TF Params
         scs_ptr->tf_params_per_type[2].enabled = 0;
-#else
-        // I_SLICE TF Params
-        scs_ptr->tf_params_per_type[0].enabled = 1;
-        scs_ptr->tf_params_per_type[0].num_future_pics = 8;
-        scs_ptr->tf_params_per_type[0].noise_adjust_future_pics = 0;
-        scs_ptr->tf_params_per_type[0].max_num_future_pics = MIN((1 << scs_ptr->static_config.hierarchical_levels), 16);
-        scs_ptr->tf_params_per_type[0].hme_me_level = 2;
-        scs_ptr->tf_params_per_type[0].half_pel_mode = 2;
-        scs_ptr->tf_params_per_type[0].quarter_pel_mode = 3;
-        scs_ptr->tf_params_per_type[0].eight_pel_mode = 0;
-        scs_ptr->tf_params_per_type[0].do_chroma = 0;
-        scs_ptr->tf_params_per_type[0].pred_error_32x32_th = (uint64_t)~0;
-        scs_ptr->tf_params_per_type[0].sub_sampling_shift = 0;
-        scs_ptr->tf_params_per_type[0].use_fast_filter = 0;
-        scs_ptr->tf_params_per_type[0].use_medium_filter = 1; // case 6, M9
-        scs_ptr->tf_params_per_type[0].avoid_2d_qpel = 1;
-        scs_ptr->tf_params_per_type[0].use_2tap = 1;
-        scs_ptr->tf_params_per_type[0].use_intra_for_noise_est = 1;
-        scs_ptr->tf_params_per_type[0].use_8bit_subpel = 0;
-        set_tf_64x64_params(
-            scs_ptr->tf_params_per_type[0].use_fast_filter,
-            &scs_ptr->tf_params_per_type[0].use_pred_64x64_only_th,
-            &scs_ptr->tf_params_per_type[0].me_exit_th, 0, 0);
-        // BASE TF Params
-        scs_ptr->tf_params_per_type[1].enabled = 1;
-        scs_ptr->tf_params_per_type[1].num_past_pics = 1;
-        scs_ptr->tf_params_per_type[1].num_future_pics = 1;
-        scs_ptr->tf_params_per_type[1].noise_adjust_past_pics = 0;
-        scs_ptr->tf_params_per_type[1].noise_adjust_future_pics = 0;
-        scs_ptr->tf_params_per_type[1].max_num_past_pics = MIN((1 << scs_ptr->static_config.hierarchical_levels), 3);
-        scs_ptr->tf_params_per_type[1].max_num_future_pics = MIN((1 << scs_ptr->static_config.hierarchical_levels), 6);
-        scs_ptr->tf_params_per_type[1].hme_me_level = 2;
-        scs_ptr->tf_params_per_type[1].half_pel_mode = 2;
-        scs_ptr->tf_params_per_type[1].quarter_pel_mode = 3;
-        scs_ptr->tf_params_per_type[1].eight_pel_mode = 0;
-        scs_ptr->tf_params_per_type[1].do_chroma = 0;
-        scs_ptr->tf_params_per_type[1].pred_error_32x32_th = (uint64_t)~0;
-        scs_ptr->tf_params_per_type[1].sub_sampling_shift = scs_ptr->static_config.encoder_bit_depth == EB_8BIT ? 1 : 0;
-        scs_ptr->tf_params_per_type[1].use_fast_filter = 0;
-        scs_ptr->tf_params_per_type[1].use_medium_filter = 1; // case 6, M9
-        scs_ptr->tf_params_per_type[1].avoid_2d_qpel = 1;
-        scs_ptr->tf_params_per_type[1].use_2tap = 1;
-        scs_ptr->tf_params_per_type[1].use_intra_for_noise_est = 1;
-        scs_ptr->tf_params_per_type[1].use_8bit_subpel = 0;
-        set_tf_64x64_params(
-            scs_ptr->tf_params_per_type[1].use_fast_filter,
-            &scs_ptr->tf_params_per_type[1].use_pred_64x64_only_th,
-            &scs_ptr->tf_params_per_type[1].me_exit_th, 0, 0);
-        // L1 TF Params
-        scs_ptr->tf_params_per_type[2].enabled = 0;
-#endif
+
         break;
 
     case 5:
@@ -2911,7 +2859,6 @@ void tf_controls(SequenceControlSet* scs_ptr, uint8_t tf_level) {
         // L1 TF Params
         scs_ptr->tf_params_per_type[2].enabled = 0;
         break;
-
     default:
         assert(0);
         break;
@@ -2925,366 +2872,7 @@ void tf_controls(SequenceControlSet* scs_ptr, uint8_t tf_level) {
     scs_ptr->tf_params_per_type[2].use_fixed_point = 1;
 
 }
-#else
-void tf_controls(SequenceControlSet *scs_ptr, uint8_t tf_level) {
 
-    switch (tf_level)
-    {
-    case 0:
-        // I_SLICE TF Params
-        scs_ptr->tf_params_per_type[0].enabled = 0;
-
-        // BASE TF Params
-        scs_ptr->tf_params_per_type[1].enabled = 0;
-
-        // L1 TF Params
-        scs_ptr->tf_params_per_type[2].enabled = 0;
-        break;
-
-    case 1:
-        // I_SLICE TF Params
-        scs_ptr->tf_params_per_type[0].enabled                  = 1;
-        scs_ptr->tf_params_per_type[0].num_future_pics          = 16;
-        scs_ptr->tf_params_per_type[0].noise_adjust_future_pics = 1;
-        scs_ptr->tf_params_per_type[0].max_num_future_pics      = MIN((1 << scs_ptr->static_config.hierarchical_levels), 16);
-        scs_ptr->tf_params_per_type[0].hme_me_level             = 0;
-        scs_ptr->tf_params_per_type[0].half_pel_mode            = 1;
-        scs_ptr->tf_params_per_type[0].quarter_pel_mode         = 1;
-        scs_ptr->tf_params_per_type[0].eight_pel_mode           = 1;
-        scs_ptr->tf_params_per_type[0].do_chroma                = 1;
-        scs_ptr->tf_params_per_type[0].pred_error_32x32_th      = 0;
-        scs_ptr->tf_params_per_type[0].sub_sampling_shift       = 0;
-        scs_ptr->tf_params_per_type[0].use_fast_filter = 0;
-        scs_ptr->tf_params_per_type[0].use_medium_filter = 0;
-        scs_ptr->tf_params_per_type[0].avoid_2d_qpel = 0;
-        scs_ptr->tf_params_per_type[0].use_2tap = 0;
-        scs_ptr->tf_params_per_type[0].use_intra_for_noise_est = 0;
-        scs_ptr->tf_params_per_type[0].use_8bit_subpel = 0;
-        set_tf_64x64_params(
-            scs_ptr->tf_params_per_type[0].use_fast_filter,
-            &scs_ptr->tf_params_per_type[0].use_pred_64x64_only_th,
-            &scs_ptr->tf_params_per_type[0].me_exit_th, 0, 0);
-        // BASE TF Params
-        scs_ptr->tf_params_per_type[1].enabled                  = 1;
-        scs_ptr->tf_params_per_type[1].num_past_pics            = 3;
-        scs_ptr->tf_params_per_type[1].num_future_pics          = 6;
-        scs_ptr->tf_params_per_type[1].noise_adjust_past_pics   = 1;
-        scs_ptr->tf_params_per_type[1].noise_adjust_future_pics = 1;
-        scs_ptr->tf_params_per_type[1].max_num_past_pics        = MIN((1 << scs_ptr->static_config.hierarchical_levels), 3);
-        scs_ptr->tf_params_per_type[1].max_num_future_pics      = MIN((1 << scs_ptr->static_config.hierarchical_levels), 6);
-        scs_ptr->tf_params_per_type[1].hme_me_level             = 0;
-        scs_ptr->tf_params_per_type[1].half_pel_mode            = 1;
-        scs_ptr->tf_params_per_type[1].quarter_pel_mode         = 1;
-        scs_ptr->tf_params_per_type[1].eight_pel_mode           = 1;
-        scs_ptr->tf_params_per_type[1].do_chroma                = 1;
-        scs_ptr->tf_params_per_type[1].pred_error_32x32_th      = 0;
-        scs_ptr->tf_params_per_type[1].sub_sampling_shift       = 0;
-        scs_ptr->tf_params_per_type[1].use_fast_filter = 0;
-        scs_ptr->tf_params_per_type[1].use_medium_filter = 0;
-        scs_ptr->tf_params_per_type[1].avoid_2d_qpel = 0;
-        scs_ptr->tf_params_per_type[1].use_2tap = 0;
-        scs_ptr->tf_params_per_type[1].use_intra_for_noise_est = 0;
-        scs_ptr->tf_params_per_type[1].use_8bit_subpel = 0;
-        set_tf_64x64_params(
-            scs_ptr->tf_params_per_type[1].use_fast_filter,
-            &scs_ptr->tf_params_per_type[1].use_pred_64x64_only_th,
-            &scs_ptr->tf_params_per_type[1].me_exit_th, 0, 0);
-        // L1 TF Params
-        scs_ptr->tf_params_per_type[2].enabled                  = 1;
-        scs_ptr->tf_params_per_type[2].num_past_pics            = 1;
-        scs_ptr->tf_params_per_type[2].num_future_pics          = 1;
-        scs_ptr->tf_params_per_type[2].noise_adjust_past_pics   = 0;
-        scs_ptr->tf_params_per_type[2].noise_adjust_future_pics = 0;
-        scs_ptr->tf_params_per_type[2].max_num_past_pics        = MIN((1 << scs_ptr->static_config.hierarchical_levels) / 2, 1);
-        scs_ptr->tf_params_per_type[2].max_num_future_pics      = MIN((1 << scs_ptr->static_config.hierarchical_levels) / 2, 1);
-        scs_ptr->tf_params_per_type[2].hme_me_level             = 0;
-        scs_ptr->tf_params_per_type[2].half_pel_mode            = 1;
-        scs_ptr->tf_params_per_type[2].quarter_pel_mode         = 1;
-        scs_ptr->tf_params_per_type[2].eight_pel_mode           = 1;
-        scs_ptr->tf_params_per_type[2].do_chroma                = 1;
-        scs_ptr->tf_params_per_type[2].pred_error_32x32_th      = 0;
-        scs_ptr->tf_params_per_type[2].sub_sampling_shift       = 0;
-        scs_ptr->tf_params_per_type[2].use_fast_filter = 0;
-        scs_ptr->tf_params_per_type[2].use_medium_filter = 0;
-        scs_ptr->tf_params_per_type[2].avoid_2d_qpel = 0;
-        scs_ptr->tf_params_per_type[2].use_2tap = 0;
-        scs_ptr->tf_params_per_type[2].use_intra_for_noise_est = 0;
-        scs_ptr->tf_params_per_type[2].use_8bit_subpel = 0;
-        set_tf_64x64_params(
-            scs_ptr->tf_params_per_type[2].use_fast_filter,
-            &scs_ptr->tf_params_per_type[2].use_pred_64x64_only_th,
-            &scs_ptr->tf_params_per_type[2].me_exit_th, 0, 0);
-        break;
-
-    case 2:
-        // I_SLICE TF Params
-        scs_ptr->tf_params_per_type[0].enabled = 1;
-        scs_ptr->tf_params_per_type[0].num_future_pics = 16;
-        scs_ptr->tf_params_per_type[0].noise_adjust_future_pics = 1;
-        scs_ptr->tf_params_per_type[0].max_num_future_pics = MIN((1 << scs_ptr->static_config.hierarchical_levels), 16);
-        scs_ptr->tf_params_per_type[0].hme_me_level = 1;
-        scs_ptr->tf_params_per_type[0].half_pel_mode = 1;
-        scs_ptr->tf_params_per_type[0].quarter_pel_mode = 1;
-        scs_ptr->tf_params_per_type[0].eight_pel_mode = 1;
-        scs_ptr->tf_params_per_type[0].do_chroma = 1;
-        scs_ptr->tf_params_per_type[0].pred_error_32x32_th = 0;
-        scs_ptr->tf_params_per_type[0].sub_sampling_shift = 0;
-        scs_ptr->tf_params_per_type[0].use_fast_filter = 0;
-        scs_ptr->tf_params_per_type[0].use_medium_filter = (scs_ptr->input_resolution < INPUT_SIZE_720p_RANGE) ? 1 : 0; //case 3, M4-5
-        scs_ptr->tf_params_per_type[0].avoid_2d_qpel = 0;
-        scs_ptr->tf_params_per_type[0].use_2tap = 0;
-        scs_ptr->tf_params_per_type[0].use_intra_for_noise_est = 0;
-        scs_ptr->tf_params_per_type[0].use_8bit_subpel = 0;
-        set_tf_64x64_params(
-            scs_ptr->tf_params_per_type[0].use_fast_filter,
-            &scs_ptr->tf_params_per_type[0].use_pred_64x64_only_th,
-            &scs_ptr->tf_params_per_type[0].me_exit_th, 0, 0);
-
-        // BASE TF Params
-        scs_ptr->tf_params_per_type[1].enabled = 1;
-        scs_ptr->tf_params_per_type[1].num_past_pics = 3;
-        scs_ptr->tf_params_per_type[1].num_future_pics = 3;
-        scs_ptr->tf_params_per_type[1].noise_adjust_past_pics = 1;
-        scs_ptr->tf_params_per_type[1].noise_adjust_future_pics = 1;
-        scs_ptr->tf_params_per_type[1].max_num_past_pics = MIN((1 << scs_ptr->static_config.hierarchical_levels), 3);
-        scs_ptr->tf_params_per_type[1].max_num_future_pics = MIN((1 << scs_ptr->static_config.hierarchical_levels), 6);
-        scs_ptr->tf_params_per_type[1].hme_me_level = 1;
-        scs_ptr->tf_params_per_type[1].half_pel_mode = 1;
-        scs_ptr->tf_params_per_type[1].quarter_pel_mode = 1;
-        scs_ptr->tf_params_per_type[1].eight_pel_mode = 1;
-        scs_ptr->tf_params_per_type[1].do_chroma = 1;
-        scs_ptr->tf_params_per_type[1].pred_error_32x32_th = 0;
-        scs_ptr->tf_params_per_type[1].sub_sampling_shift = 0;
-        scs_ptr->tf_params_per_type[1].use_fast_filter = 0;
-        scs_ptr->tf_params_per_type[1].use_medium_filter = (scs_ptr->input_resolution < INPUT_SIZE_720p_RANGE) ? 1 : 0; //case 3, M4-5
-        scs_ptr->tf_params_per_type[1].avoid_2d_qpel = 0;
-        scs_ptr->tf_params_per_type[1].use_2tap = 0;
-        scs_ptr->tf_params_per_type[1].use_intra_for_noise_est = 0;
-        scs_ptr->tf_params_per_type[1].use_8bit_subpel = 0;
-        set_tf_64x64_params(
-            scs_ptr->tf_params_per_type[1].use_fast_filter,
-            &scs_ptr->tf_params_per_type[1].use_pred_64x64_only_th,
-            &scs_ptr->tf_params_per_type[1].me_exit_th, 0, 0);
-
-        // L1 TF Params
-        scs_ptr->tf_params_per_type[2].enabled = 1;
-        scs_ptr->tf_params_per_type[2].num_past_pics = 1;
-        scs_ptr->tf_params_per_type[2].num_future_pics = 1;
-        scs_ptr->tf_params_per_type[2].noise_adjust_past_pics = 0;
-        scs_ptr->tf_params_per_type[2].noise_adjust_future_pics = 0;
-        scs_ptr->tf_params_per_type[2].max_num_past_pics = MIN((1 << scs_ptr->static_config.hierarchical_levels) / 2, 1);
-        scs_ptr->tf_params_per_type[2].max_num_future_pics = MIN((1 << scs_ptr->static_config.hierarchical_levels) / 2, 1);
-        scs_ptr->tf_params_per_type[2].hme_me_level = 1;
-        scs_ptr->tf_params_per_type[2].half_pel_mode = 1;
-        scs_ptr->tf_params_per_type[2].quarter_pel_mode = 1;
-        scs_ptr->tf_params_per_type[2].eight_pel_mode = 1;
-        scs_ptr->tf_params_per_type[2].do_chroma = 1;
-        scs_ptr->tf_params_per_type[2].pred_error_32x32_th = 0;
-        scs_ptr->tf_params_per_type[2].sub_sampling_shift = 0;
-        scs_ptr->tf_params_per_type[2].use_fast_filter = 0;
-        scs_ptr->tf_params_per_type[2].use_medium_filter = (scs_ptr->input_resolution < INPUT_SIZE_720p_RANGE) ? 1 : 0; //case 3, M4-5
-        scs_ptr->tf_params_per_type[2].avoid_2d_qpel = 0;
-        scs_ptr->tf_params_per_type[2].use_2tap = 0;
-        scs_ptr->tf_params_per_type[2].use_intra_for_noise_est = 0;
-        scs_ptr->tf_params_per_type[2].use_8bit_subpel = 0;
-        set_tf_64x64_params(
-            scs_ptr->tf_params_per_type[2].use_fast_filter,
-            &scs_ptr->tf_params_per_type[2].use_pred_64x64_only_th,
-            &scs_ptr->tf_params_per_type[2].me_exit_th, 0, 0);
-        break;
-    case 3:
-        // I_SLICE TF Params
-        scs_ptr->tf_params_per_type[0].enabled                  = 1;
-        scs_ptr->tf_params_per_type[0].num_future_pics          = 8;
-        scs_ptr->tf_params_per_type[0].noise_adjust_future_pics = 1;
-        scs_ptr->tf_params_per_type[0].max_num_future_pics      = MIN((1 << scs_ptr->static_config.hierarchical_levels), 16);
-        scs_ptr->tf_params_per_type[0].hme_me_level             = 2;
-        scs_ptr->tf_params_per_type[0].half_pel_mode            = 1;
-        scs_ptr->tf_params_per_type[0].quarter_pel_mode         = 1;
-        scs_ptr->tf_params_per_type[0].eight_pel_mode           = 0;
-        scs_ptr->tf_params_per_type[0].do_chroma                = 1;
-        scs_ptr->tf_params_per_type[0].pred_error_32x32_th      = 20 * 32 * 32;
-        scs_ptr->tf_params_per_type[0].sub_sampling_shift       = 0;
-        scs_ptr->tf_params_per_type[0].use_fast_filter = 0;
-        scs_ptr->tf_params_per_type[0].use_medium_filter = (scs_ptr->input_resolution < INPUT_SIZE_4K_RANGE) ? 1 : 0; // case 5, M7-8
-        scs_ptr->tf_params_per_type[0].avoid_2d_qpel = 0;
-        scs_ptr->tf_params_per_type[0].use_2tap = 0;
-        scs_ptr->tf_params_per_type[0].use_intra_for_noise_est = 0;
-        scs_ptr->tf_params_per_type[0].use_8bit_subpel = 0;
-        set_tf_64x64_params(
-            scs_ptr->tf_params_per_type[0].use_fast_filter,
-            &scs_ptr->tf_params_per_type[0].use_pred_64x64_only_th,
-            &scs_ptr->tf_params_per_type[0].me_exit_th, 0, 0);
-        // BASE TF Params
-        scs_ptr->tf_params_per_type[1].enabled                  = 1;
-        scs_ptr->tf_params_per_type[1].num_past_pics            = 2;
-        scs_ptr->tf_params_per_type[1].num_future_pics          = 2;
-        scs_ptr->tf_params_per_type[1].noise_adjust_past_pics   = 0;
-        scs_ptr->tf_params_per_type[1].noise_adjust_future_pics = 0;
-        scs_ptr->tf_params_per_type[1].max_num_past_pics        = MIN((1 << scs_ptr->static_config.hierarchical_levels), 3);
-        scs_ptr->tf_params_per_type[1].max_num_future_pics      = MIN((1 << scs_ptr->static_config.hierarchical_levels), 6);
-        scs_ptr->tf_params_per_type[1].hme_me_level             = 2;
-        scs_ptr->tf_params_per_type[1].half_pel_mode            = 1;
-        scs_ptr->tf_params_per_type[1].quarter_pel_mode         = 1;
-        scs_ptr->tf_params_per_type[1].eight_pel_mode           = 0;
-        scs_ptr->tf_params_per_type[1].do_chroma                = 1;
-        scs_ptr->tf_params_per_type[1].pred_error_32x32_th      = 20 * 32 * 32;
-        scs_ptr->tf_params_per_type[1].sub_sampling_shift       = 0;
-        scs_ptr->tf_params_per_type[1].use_fast_filter = 0;
-        scs_ptr->tf_params_per_type[1].use_medium_filter = (scs_ptr->input_resolution < INPUT_SIZE_4K_RANGE)? 1 : 0; // case 5, M7-8
-        scs_ptr->tf_params_per_type[1].avoid_2d_qpel = 0;
-        scs_ptr->tf_params_per_type[1].use_2tap = 0;
-        scs_ptr->tf_params_per_type[1].use_intra_for_noise_est = 0;
-        scs_ptr->tf_params_per_type[1].use_8bit_subpel = 0;
-        set_tf_64x64_params(
-            scs_ptr->tf_params_per_type[1].use_fast_filter,
-            &scs_ptr->tf_params_per_type[1].use_pred_64x64_only_th,
-            &scs_ptr->tf_params_per_type[1].me_exit_th, 0, 0);
-        // L1 TF Params
-        scs_ptr->tf_params_per_type[2].enabled                  = 1;
-        scs_ptr->tf_params_per_type[2].num_past_pics            = 1;
-        scs_ptr->tf_params_per_type[2].num_future_pics          = 1;
-        scs_ptr->tf_params_per_type[2].noise_adjust_past_pics   = 0;
-        scs_ptr->tf_params_per_type[2].noise_adjust_future_pics = 0;
-        scs_ptr->tf_params_per_type[2].max_num_past_pics        = MIN((1 << scs_ptr->static_config.hierarchical_levels) / 2, 1);
-        scs_ptr->tf_params_per_type[2].max_num_future_pics      = MIN((1 << scs_ptr->static_config.hierarchical_levels) / 2, 1);
-        scs_ptr->tf_params_per_type[2].hme_me_level             = 2;
-        scs_ptr->tf_params_per_type[2].half_pel_mode            = 1;
-        scs_ptr->tf_params_per_type[2].quarter_pel_mode         = 1;
-        scs_ptr->tf_params_per_type[2].eight_pel_mode           = 0;
-        scs_ptr->tf_params_per_type[2].do_chroma                = 1;
-        scs_ptr->tf_params_per_type[2].pred_error_32x32_th      = 20 * 32 * 32;
-        scs_ptr->tf_params_per_type[2].sub_sampling_shift       = 0;
-        scs_ptr->tf_params_per_type[2].use_fast_filter = 0;
-        scs_ptr->tf_params_per_type[2].use_medium_filter = (scs_ptr->input_resolution < INPUT_SIZE_4K_RANGE)? 1 : 0; // case 5, M7-8
-        scs_ptr->tf_params_per_type[2].avoid_2d_qpel = 0;
-        scs_ptr->tf_params_per_type[2].use_2tap = 0;
-        scs_ptr->tf_params_per_type[2].use_intra_for_noise_est = 0;
-        scs_ptr->tf_params_per_type[2].use_8bit_subpel = 0;
-        set_tf_64x64_params(
-            scs_ptr->tf_params_per_type[2].use_fast_filter,
-            &scs_ptr->tf_params_per_type[2].use_pred_64x64_only_th,
-            &scs_ptr->tf_params_per_type[2].me_exit_th, 0, 0);
-        break;
-
-    case 4:
-        // I_SLICE TF Params
-        scs_ptr->tf_params_per_type[0].enabled                  = 1;
-        scs_ptr->tf_params_per_type[0].num_future_pics          = 8;
-        scs_ptr->tf_params_per_type[0].noise_adjust_future_pics = 0;
-        scs_ptr->tf_params_per_type[0].max_num_future_pics      = MIN((1 << scs_ptr->static_config.hierarchical_levels), 16);
-        scs_ptr->tf_params_per_type[0].hme_me_level             = 2;
-        scs_ptr->tf_params_per_type[0].half_pel_mode            = 2;
-        scs_ptr->tf_params_per_type[0].quarter_pel_mode         = 3;
-        scs_ptr->tf_params_per_type[0].eight_pel_mode           = 0;
-        scs_ptr->tf_params_per_type[0].do_chroma                = 0;
-        scs_ptr->tf_params_per_type[0].pred_error_32x32_th      = (uint64_t)~0;
-        scs_ptr->tf_params_per_type[0].sub_sampling_shift = 0;
-        scs_ptr->tf_params_per_type[0].use_fast_filter = 0;
-        scs_ptr->tf_params_per_type[0].use_medium_filter = 1; // case 6, M9
-        scs_ptr->tf_params_per_type[0].avoid_2d_qpel = 1;
-        scs_ptr->tf_params_per_type[0].use_2tap = 1;
-        scs_ptr->tf_params_per_type[0].use_intra_for_noise_est = 1;
-        scs_ptr->tf_params_per_type[0].use_8bit_subpel = 0;
-        set_tf_64x64_params(
-            scs_ptr->tf_params_per_type[0].use_fast_filter,
-            &scs_ptr->tf_params_per_type[0].use_pred_64x64_only_th,
-            &scs_ptr->tf_params_per_type[0].me_exit_th, 0, 0);
-        // BASE TF Params
-        scs_ptr->tf_params_per_type[1].enabled                  = 1;
-        scs_ptr->tf_params_per_type[1].num_past_pics            = 1;
-        scs_ptr->tf_params_per_type[1].num_future_pics          = 1;
-        scs_ptr->tf_params_per_type[1].noise_adjust_past_pics   = 0;
-        scs_ptr->tf_params_per_type[1].noise_adjust_future_pics = 0;
-        scs_ptr->tf_params_per_type[1].max_num_past_pics        = MIN((1 << scs_ptr->static_config.hierarchical_levels), 3);
-        scs_ptr->tf_params_per_type[1].max_num_future_pics      = MIN((1 << scs_ptr->static_config.hierarchical_levels), 6);
-        scs_ptr->tf_params_per_type[1].hme_me_level             = 2;
-        scs_ptr->tf_params_per_type[1].half_pel_mode            = 2;
-        scs_ptr->tf_params_per_type[1].quarter_pel_mode         = 3;
-        scs_ptr->tf_params_per_type[1].eight_pel_mode           = 0;
-        scs_ptr->tf_params_per_type[1].do_chroma                = 0;
-        scs_ptr->tf_params_per_type[1].pred_error_32x32_th      = (uint64_t)~0;
-        scs_ptr->tf_params_per_type[1].sub_sampling_shift = scs_ptr->static_config.encoder_bit_depth == EB_8BIT ? 1 : 0;
-        scs_ptr->tf_params_per_type[1].use_fast_filter = 0;
-        scs_ptr->tf_params_per_type[1].use_medium_filter = 1; // case 6, M9
-        scs_ptr->tf_params_per_type[1].avoid_2d_qpel = 1;
-        scs_ptr->tf_params_per_type[1].use_2tap = 1;
-        scs_ptr->tf_params_per_type[1].use_intra_for_noise_est = 1;
-        scs_ptr->tf_params_per_type[1].use_8bit_subpel = 0;
-        set_tf_64x64_params(
-            scs_ptr->tf_params_per_type[1].use_fast_filter,
-            &scs_ptr->tf_params_per_type[1].use_pred_64x64_only_th,
-            &scs_ptr->tf_params_per_type[1].me_exit_th, 0, 0);
-        // L1 TF Params
-        scs_ptr->tf_params_per_type[2].enabled                  = 0;
-        break;
-
-     case 5:
-        // I_SLICE TF Params
-        scs_ptr->tf_params_per_type[0].enabled                  = 1;
-        scs_ptr->tf_params_per_type[0].num_future_pics          = 8;
-        scs_ptr->tf_params_per_type[0].noise_adjust_future_pics = 0;
-        scs_ptr->tf_params_per_type[0].max_num_future_pics      = MIN((1 << scs_ptr->static_config.hierarchical_levels), 16);
-        scs_ptr->tf_params_per_type[0].hme_me_level             = 2;
-        scs_ptr->tf_params_per_type[0].half_pel_mode            = 2;
-        scs_ptr->tf_params_per_type[0].quarter_pel_mode         = 3;
-        scs_ptr->tf_params_per_type[0].eight_pel_mode           = 0;
-        scs_ptr->tf_params_per_type[0].do_chroma                = 0;
-        scs_ptr->tf_params_per_type[0].pred_error_32x32_th      = (uint64_t)~0;
-        scs_ptr->tf_params_per_type[0].sub_sampling_shift       = 1;
-        scs_ptr->tf_params_per_type[0].use_fast_filter = (scs_ptr->input_resolution < INPUT_SIZE_4K_RANGE) ? 1 : 0;
-        scs_ptr->tf_params_per_type[0].use_medium_filter = (scs_ptr->input_resolution < INPUT_SIZE_4K_RANGE) ? 0 : 1; // case 8, M10,11
-        scs_ptr->tf_params_per_type[0].avoid_2d_qpel            = 1;
-        scs_ptr->tf_params_per_type[0].use_2tap                 = 1;
-        scs_ptr->tf_params_per_type[0].use_intra_for_noise_est  = 1;
-        scs_ptr->tf_params_per_type[0].use_8bit_subpel = 1;
-        set_tf_64x64_params(
-            scs_ptr->tf_params_per_type[0].use_fast_filter,
-            &scs_ptr->tf_params_per_type[0].use_pred_64x64_only_th,
-            &scs_ptr->tf_params_per_type[0].me_exit_th, 35, 16 * 16);
-        // BASE TF Params
-        scs_ptr->tf_params_per_type[1].enabled                  = 1;
-        scs_ptr->tf_params_per_type[1].num_past_pics            = 1;
-        scs_ptr->tf_params_per_type[1].num_future_pics          = 1;
-        scs_ptr->tf_params_per_type[1].noise_adjust_past_pics   = 0;
-        scs_ptr->tf_params_per_type[1].noise_adjust_future_pics = 0;
-        scs_ptr->tf_params_per_type[1].max_num_past_pics        = MIN((1 << scs_ptr->static_config.hierarchical_levels), 3);
-        scs_ptr->tf_params_per_type[1].max_num_future_pics      = MIN((1 << scs_ptr->static_config.hierarchical_levels), 6);
-        scs_ptr->tf_params_per_type[1].hme_me_level             = 2;
-        scs_ptr->tf_params_per_type[1].half_pel_mode            = 2;
-        scs_ptr->tf_params_per_type[1].quarter_pel_mode         = 3;
-        scs_ptr->tf_params_per_type[1].eight_pel_mode           = 0;
-        scs_ptr->tf_params_per_type[1].do_chroma                = 0;
-        scs_ptr->tf_params_per_type[1].pred_error_32x32_th      = (uint64_t)~0;
-        scs_ptr->tf_params_per_type[1].sub_sampling_shift       = 1;
-        scs_ptr->tf_params_per_type[1].use_fast_filter = (scs_ptr->input_resolution < INPUT_SIZE_4K_RANGE) ? 1 : 0;
-        scs_ptr->tf_params_per_type[1].use_medium_filter = (scs_ptr->input_resolution < INPUT_SIZE_4K_RANGE) ? 0 : 1; // case 8, M10,11
-        scs_ptr->tf_params_per_type[1].avoid_2d_qpel            = 1;
-        scs_ptr->tf_params_per_type[1].use_2tap                 = 1;
-        scs_ptr->tf_params_per_type[1].use_intra_for_noise_est  = 1;
-        scs_ptr->tf_params_per_type[1].use_8bit_subpel = 1;
-        set_tf_64x64_params(
-            scs_ptr->tf_params_per_type[1].use_fast_filter,
-            &scs_ptr->tf_params_per_type[1].use_pred_64x64_only_th,
-            &scs_ptr->tf_params_per_type[1].me_exit_th, 35, 16*16);
-        // L1 TF Params
-        scs_ptr->tf_params_per_type[2].enabled                  = 0;
-        break;
-
-    default:
-        assert(0);
-        break;
-    }
-    // Limit the future frames used in TF for lowdelay prediction structure
-    if (scs_ptr->static_config.pred_structure == EB_PRED_LOW_DELAY_P)
-        scs_ptr->tf_params_per_type[1].max_num_future_pics = 0;
-
-    scs_ptr->tf_params_per_type[0].use_fixed_point = 1;
-    scs_ptr->tf_params_per_type[1].use_fixed_point = 1;
-    scs_ptr->tf_params_per_type[2].use_fixed_point = 1;
-
-}
-#endif
 /*
  * Derive TF Params
  */
@@ -3305,11 +2893,9 @@ void derive_tf_params(SequenceControlSet *scs_ptr) {
     else if (scs_ptr->static_config.enc_mode <= ENC_M7) {
         tf_level = 3;
     }
-#if REDUCE_4K_CHECKS
     else if (scs_ptr->static_config.enc_mode <= ENC_M9) {
         tf_level = 4;
     }
-#endif
     else
         tf_level = 5;
     tf_controls(scs_ptr, tf_level);

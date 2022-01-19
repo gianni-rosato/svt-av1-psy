@@ -987,68 +987,41 @@ static int cqp_qindex_calc(PictureControlSet *pcs_ptr, int qindex) {
     SequenceControlSet *scs_ptr = pcs_ptr->parent_pcs_ptr->scs_ptr;
     int       q;
     const int bit_depth = scs_ptr->static_config.encoder_bit_depth;
-#if !REDUCE_4K_CHECKS
-    if (pcs_ptr->parent_pcs_ptr->cqp_qps_model) {
-        int active_worst_quality = qindex;
 
-        if (pcs_ptr->temporal_layer_index == 0) {
-            const double qratio_grad = pcs_ptr->parent_pcs_ptr->hierarchical_levels <= 4 ? 0.3
-                                                                                         : 0.2;
+    int active_best_quality  = 0;
+    int active_worst_quality = qindex;
 
-            const double qstep_ratio = 0.2 +
-                (1.0 - (double)active_worst_quality / MAXQ) * qratio_grad;
+    double q_val = svt_av1_convert_qindex_to_q(qindex, bit_depth);
 
-            q = scs_ptr->cqp_base_q = svt_av1_get_q_index_from_qstep_ratio(
-                active_worst_quality, qstep_ratio, bit_depth);
-        } else if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag) {
-            int this_height = pcs_ptr->parent_pcs_ptr->temporal_layer_index + 1;
-            int arf_q       = scs_ptr->cqp_base_q;
-            while (this_height > 1) {
-                arf_q = (arf_q + active_worst_quality + 1) / 2;
-                --this_height;
-            }
-            q = arf_q;
-        } else {
-            q = active_worst_quality;
+    int offset_idx = -1;
+    if (!pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag)
+        offset_idx = -1;
+    else if (pcs_ptr->parent_pcs_ptr->idr_flag)
+        offset_idx = 0;
+    else
+        offset_idx = MIN(pcs_ptr->temporal_layer_index + 1, FIXED_QP_OFFSET_COUNT - 1);
+    double q_val_target = (offset_idx == -1)
+        ?
+        q_val
+        : MAX(q_val -
+                    (q_val *
+                    percents[pcs_ptr->parent_pcs_ptr->hierarchical_levels <= 4][offset_idx] /
+                    100),
+                0.0);
+    if (scs_ptr->static_config.pred_structure == EB_PRED_LOW_DELAY_P ||
+        scs_ptr->static_config.pred_structure == EB_PRED_LOW_DELAY_B) {
+        if (pcs_ptr->parent_pcs_ptr->temporal_layer_index) {
+            int8_t boost = non_base_boost(pcs_ptr);
+            if (boost)
+                q_val_target = MAX(0, q_val_target - (boost * q_val_target) / 100);
         }
-    } else {
-#endif
-        int active_best_quality  = 0;
-        int active_worst_quality = qindex;
-
-        double q_val = svt_av1_convert_qindex_to_q(qindex, bit_depth);
-
-        int offset_idx = -1;
-        if (!pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag)
-            offset_idx = -1;
-        else if (pcs_ptr->parent_pcs_ptr->idr_flag)
-            offset_idx = 0;
-        else
-            offset_idx = MIN(pcs_ptr->temporal_layer_index + 1, FIXED_QP_OFFSET_COUNT - 1);
-        double q_val_target = (offset_idx == -1)
-            ?
-            q_val
-            : MAX(q_val -
-                      (q_val *
-                       percents[pcs_ptr->parent_pcs_ptr->hierarchical_levels <= 4][offset_idx] /
-                       100),
-                  0.0);
-        if (scs_ptr->static_config.pred_structure == EB_PRED_LOW_DELAY_P ||
-            scs_ptr->static_config.pred_structure == EB_PRED_LOW_DELAY_B) {
-            if (pcs_ptr->parent_pcs_ptr->temporal_layer_index) {
-                int8_t boost = non_base_boost(pcs_ptr);
-                if (boost)
-                    q_val_target = MAX(0, q_val_target - (boost * q_val_target) / 100);
-            }
-        }
-        const int32_t delta_qindex = svt_av1_compute_qdelta(q_val, q_val_target, bit_depth);
-
-        active_best_quality = (int32_t)(qindex + delta_qindex);
-        q                   = active_best_quality;
-        clamp(q, active_best_quality, active_worst_quality);
-#if !REDUCE_4K_CHECKS
     }
-#endif
+    const int32_t delta_qindex = svt_av1_compute_qdelta(q_val, q_val_target, bit_depth);
+
+    active_best_quality = (int32_t)(qindex + delta_qindex);
+    q                   = active_best_quality;
+    clamp(q, active_best_quality, active_worst_quality);
+
     return q;
 }
 const int64_t q_factor[2][6] = {{100, 110, 120, 138, 140, 150}, {100, 110, 112, 125, 135, 140}};
