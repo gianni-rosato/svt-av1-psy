@@ -987,7 +987,7 @@ static int cqp_qindex_calc(PictureControlSet *pcs_ptr, int qindex) {
     SequenceControlSet *scs_ptr = pcs_ptr->parent_pcs_ptr->scs_ptr;
     int       q;
     const int bit_depth = scs_ptr->static_config.encoder_bit_depth;
-
+#if !REDUCE_4K_CHECKS
     if (pcs_ptr->parent_pcs_ptr->cqp_qps_model) {
         int active_worst_quality = qindex;
 
@@ -1012,6 +1012,7 @@ static int cqp_qindex_calc(PictureControlSet *pcs_ptr, int qindex) {
             q = active_worst_quality;
         }
     } else {
+#endif
         int active_best_quality  = 0;
         int active_worst_quality = qindex;
 
@@ -1045,7 +1046,9 @@ static int cqp_qindex_calc(PictureControlSet *pcs_ptr, int qindex) {
         active_best_quality = (int32_t)(qindex + delta_qindex);
         q                   = active_best_quality;
         clamp(q, active_best_quality, active_worst_quality);
+#if !REDUCE_4K_CHECKS
     }
+#endif
     return q;
 }
 const int64_t q_factor[2][6] = {{100, 110, 120, 138, 140, 150}, {100, 110, 112, 125, 135, 140}};

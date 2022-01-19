@@ -1747,7 +1747,11 @@ EbErrorType signal_derivation_multi_processes_oq(
             else if (pcs_ptr->enc_mode <= ENC_M9)
                 pcs_ptr->cdef_level = pcs_ptr->temporal_layer_index == 0 ? 8 : pcs_ptr->is_used_as_reference_flag ? 9 : 10;
             else if (pcs_ptr->enc_mode <= ENC_M12)
+#if REDUCE_4K_CHECKS
+                pcs_ptr->cdef_level = pcs_ptr->temporal_layer_index == 0 ? 15 : pcs_ptr->is_used_as_reference_flag ? 16 : 17;
+#else
                 pcs_ptr->cdef_level = (scs_ptr->input_resolution <= INPUT_SIZE_1080p_RANGE) ? (pcs_ptr->temporal_layer_index == 0 ? 15 : pcs_ptr->is_used_as_reference_flag ? 16 : 17) : (pcs_ptr->temporal_layer_index == 0 ? 13 : pcs_ptr->is_used_as_reference_flag ? 13 : 14);
+#endif
             else
                 pcs_ptr->cdef_level = pcs_ptr->slice_type == I_SLICE ? 15 : 0;
         }
@@ -1862,7 +1866,7 @@ EbErrorType signal_derivation_multi_processes_oq(
     //TPL level should not be modified outside of this function
     set_tpl_extended_controls(pcs_ptr, scs_ptr->tpl_level);
 
-
+#if !REDUCE_4K_CHECKS
     // For only CQP
     // Set cqp_qps_model; 0: use fixed QP-Offsets, 1: QP-Offsets are funtion of the base_qp
     // Use cqp_qps_model 1 for only Open-GOP 6L RA and for only 4K
@@ -1874,6 +1878,7 @@ EbErrorType signal_derivation_multi_processes_oq(
         pcs_ptr->cqp_qps_model = 1;
     else
         pcs_ptr->cqp_qps_model = 0;
+#endif
     pcs_ptr->adjust_under_shoot_gf = 0;
     if (scs_ptr->passes == 1 && scs_ptr->static_config.rate_control_mode == 1)
         pcs_ptr->adjust_under_shoot_gf = pcs_ptr->enc_mode <= ENC_M11 ? 1 : 2;

@@ -4604,6 +4604,7 @@ static EbErrorType produce_temporally_filtered_pic(
         FP_ASSERT(TF_FILTER_STRENGTH == 5);
         FP_ASSERT(TF_STRENGTH_THRESHOLD == 4);
         FP_ASSERT(TF_Q_DECAY_THRESHOLD == 20);
+#if !REDUCE_4K_CHECKS
         if (picture_control_set_ptr_central->cqp_qps_model) {
             if (picture_control_set_ptr_central->temporal_layer_index == 0) {
                 const double qratio_grad = picture_control_set_ptr_central->hierarchical_levels <= 4
@@ -4628,6 +4629,7 @@ static EbErrorType produce_temporally_filtered_pic(
                 q = active_worst_quality;
             }
         } else {
+#endif
             int offset_idx = -1;
             if (!picture_control_set_ptr_central->is_used_as_reference_flag)
                 offset_idx = -1;
@@ -4654,7 +4656,9 @@ static EbErrorType produce_temporally_filtered_pic(
                 q_val_fp8, q_val_target_fp8, bit_depth);
             active_best_quality = (int32_t)(active_worst_quality + delta_qindex_f);
             q                   = active_best_quality;
+#if !REDUCE_4K_CHECKS
         }
+#endif
         FP_ASSERT(q < (1 << 20));
         //double q_decay = pow((double)q / TF_Q_DECAY_THRESHOLD, 2);
 
@@ -4693,6 +4697,7 @@ static EbErrorType produce_temporally_filtered_pic(
                 (((((int64_t)n_decay_fp10) * ((int64_t)n_decay_fp10))) * q_decay_fp8) >> 11);
         }
     } else {
+#if !REDUCE_4K_CHECKS
         if (picture_control_set_ptr_central->cqp_qps_model) {
             if (picture_control_set_ptr_central->temporal_layer_index == 0) {
                 const double qratio_grad = picture_control_set_ptr_central->hierarchical_levels <= 4
@@ -4717,6 +4722,7 @@ static EbErrorType produce_temporally_filtered_pic(
                 q = active_worst_quality;
             }
         } else {
+#endif
             double q_val      = svt_av1_convert_qindex_to_q(active_worst_quality, bit_depth);
             int    offset_idx = -1;
             if (!picture_control_set_ptr_central->is_used_as_reference_flag)
@@ -4741,7 +4747,9 @@ static EbErrorType produce_temporally_filtered_pic(
             active_best_quality = (int32_t)(active_worst_quality + delta_qindex);
             q                   = active_best_quality;
             clamp(q, active_best_quality, active_worst_quality);
+#if !REDUCE_4K_CHECKS
         }
+#endif
         double q_decay = pow((double)q / TF_Q_DECAY_THRESHOLD, 2);
         q_decay        = CLIP(q_decay, 1e-5, 1);
         if (q >= TF_QINDEX_CUTOFF) {

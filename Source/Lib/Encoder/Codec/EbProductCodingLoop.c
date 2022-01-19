@@ -4966,9 +4966,17 @@ void perform_tx_light_pd0(PictureControlSet *pcs_ptr, ModeDecisionContext *conte
     //LUMA-ONLY
 
     const uint32_t th = ((bwidth * bheight) >> 5);
+#if REDUCE_4K_CHECKS
+    uint8_t input_resolution_factor[INPUT_SIZE_COUNT] = {0,1,2,3,4,4,4};
+#endif
     if (context_ptr->rate_est_ctrls.coeff_rate_est_lvl == 0)
+#if REDUCE_4K_CHECKS
+        * y_coeff_bits = 5000 + (input_resolution_factor[pcs_ptr->parent_pcs_ptr->input_resolution] * 1600) +
+        (candidate_buffer->candidate_ptr->eob[0][0] * 100);
+#else
         *y_coeff_bits = 5000 + (pcs_ptr->parent_pcs_ptr->input_resolution * 1600) +
             (candidate_buffer->candidate_ptr->eob[0][0] * 100);
+#endif
     else if (context_ptr->rate_est_ctrls.coeff_rate_est_lvl >= 2 &&
              (candidate_buffer->candidate_ptr->eob[0][0] < th))
         *y_coeff_bits = 6000 + candidate_buffer->candidate_ptr->eob[0][0] * 500;

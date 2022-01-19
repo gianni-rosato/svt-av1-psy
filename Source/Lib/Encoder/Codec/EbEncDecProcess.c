@@ -5399,6 +5399,27 @@ void signal_derivation_enc_dec_kernel_oq_light_pd1(PictureControlSet *  pcs_ptr,
     }
 
     set_mds0_controls(pcs_ptr, context_ptr, mds0_level);
+#if REDUCE_4K_CHECKS
+    uint8_t lpd1_tx_level = 0;
+    if (lpd1_level <= LPD1_LVL_2)
+        lpd1_tx_level = 3;
+    else if (lpd1_level <= LPD1_LVL_3) {
+        lpd1_tx_level = 4;
+        if (((l0_was_skip && l1_was_skip && ref_skip_perc > 35) &&
+            me_8x8_cost_variance < (800 * picture_qp) &&
+            me_64x64_distortion < (800 * picture_qp)) ||
+            (me_8x8_cost_variance < (100 * picture_qp) && me_64x64_distortion < (100 * picture_qp)))
+            lpd1_tx_level = 6;
+    }
+    else {
+        lpd1_tx_level = 5;
+        if (((l0_was_skip && l1_was_skip && ref_skip_perc > 35) &&
+            me_8x8_cost_variance < (800 * picture_qp) &&
+            me_64x64_distortion < (800 * picture_qp)) ||
+            (me_8x8_cost_variance < (100 * picture_qp) && me_64x64_distortion < (100 * picture_qp)))
+            lpd1_tx_level = 6;
+    }
+#else
     uint8_t lpd1_tx_level = 0;
     if (lpd1_level <= LPD1_LVL_2)
         lpd1_tx_level = pcs_ptr->parent_pcs_ptr->input_resolution <= INPUT_SIZE_1080p_RANGE ? 3 : 2;
@@ -5417,6 +5438,7 @@ void signal_derivation_enc_dec_kernel_oq_light_pd1(PictureControlSet *  pcs_ptr,
             (me_8x8_cost_variance < (100 * picture_qp) && me_64x64_distortion < (100 * picture_qp)))
             lpd1_tx_level = 6;
     }
+#endif
     set_lpd1_tx_ctrls(pcs_ptr, context_ptr, lpd1_tx_level);
 
     /* In modes below M13, only use level 1-3 for chroma detector, as more aggressive levels will cause
@@ -5440,11 +5462,15 @@ void signal_derivation_enc_dec_kernel_oq_light_pd1(PictureControlSet *  pcs_ptr,
         context_ptr->lpd1_skip_inter_tx_level = 0;
     else {
         assert(pcs_ptr->enc_mode >= ENC_M13 && "Only enable this feature for M13+");
+#if REDUCE_4K_CHECKS
+        context_ptr->lpd1_skip_inter_tx_level = 1;
+#else
         context_ptr->lpd1_skip_inter_tx_level = pcs_ptr->parent_pcs_ptr->input_resolution <=
                     INPUT_SIZE_1080p_RANGE ||
                 lpd1_level > LPD1_LVL_3
             ? 1
             : 0;
+#endif
         if (((l0_was_skip && l1_was_skip && ref_skip_perc > 35) &&
              me_8x8_cost_variance < (800 * picture_qp) &&
              me_64x64_distortion < (800 * picture_qp)) ||
@@ -5457,10 +5483,15 @@ void signal_derivation_enc_dec_kernel_oq_light_pd1(PictureControlSet *  pcs_ptr,
     if (lpd1_level <= LPD1_LVL_0)
         rate_est_level = 4;
     else
+#if REDUCE_4K_CHECKS
         rate_est_level = pcs_ptr->slice_type == I_SLICE
-            ? 4
+        ? 4
+        : 0;
+#else
+        rate_est_level = pcs_ptr->slice_type == I_SLICE
+        ? 4
             : (pcs_ptr->parent_pcs_ptr->input_resolution <= INPUT_SIZE_1080p_RANGE ? 0 : 4);
-
+#endif
     set_rate_est_ctrls(context_ptr, rate_est_level);
 
     // If want to turn off approximating inter rate, must ensure that the approximation is also disabled
@@ -5676,11 +5707,21 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet * sequence_co
         context_ptr->md_subpel_pme_level = enc_mode <= ENC_M0 ? 3 : 0;
     else if (enc_mode <= ENC_M0)
         context_ptr->md_subpel_pme_level = 1;
+#if REDUCE_4K_CHECKS
+    else if (enc_mode <= ENC_M5)
+        context_ptr->md_subpel_pme_level = 2;
+    else
+        context_ptr->md_subpel_pme_level = pcs_ptr->parent_pcs_ptr->input_resolution <=
+        INPUT_SIZE_720p_RANGE
+        ? 2
+        : 4;
+#else
     else
         context_ptr->md_subpel_pme_level = pcs_ptr->parent_pcs_ptr->input_resolution <=
                 INPUT_SIZE_1080p_RANGE
             ? 2
             : 4;
+#endif
     md_subpel_pme_controls(context_ptr, context_ptr->md_subpel_pme_level);
     uint8_t rate_est_level = 0;
     if (pd_pass == PD_PASS_0) {
