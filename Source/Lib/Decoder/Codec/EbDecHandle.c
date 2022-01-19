@@ -182,7 +182,7 @@ int svt_dec_out_buf(EbDecHandle *dec_handle_ptr, EbBufferHeaderType *p_buffer) {
             out_img->cr_stride = wd;
             chroma_size        = size * ht * wd;
             break;
-        default: SVT_LOG("Unsupported colour format. \n"); return 0;
+        default: SVT_ERROR("Unsupported colour format.\n"); return 0;
         }
 
         /* FilmGrain module req. even dim. for internal operation */
@@ -190,10 +190,8 @@ int svt_dec_out_buf(EbDecHandle *dec_handle_ptr, EbBufferHeaderType *p_buffer) {
         out_img->width    = wd;
         out_img->height   = ht;
         if (out_img->bit_depth != (EbBitDepth)recon_picture_buf->bit_depth) {
-            SVT_LOG(
-                "Warning : Output bit depth conversion not supported."
-                " Output depth set to %d. ",
-                recon_picture_buf->bit_depth);
+            SVT_WARN("Output bit depth conversion not supported. Output depth set to %d.\n",
+                     recon_picture_buf->bit_depth);
             out_img->bit_depth = (EbBitDepth)recon_picture_buf->bit_depth;
         }
 

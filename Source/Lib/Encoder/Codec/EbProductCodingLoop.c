@@ -7854,13 +7854,13 @@ void move_blk_data(PictureControlSet *pcs, EncDecContext *context_ptr, BlkStruct
     if (svt_av1_allow_palette(pcs->parent_pcs_ptr->palette_level, context_ptr->blk_geom->bsize)) {
 
         svt_memcpy(&dst_cu->palette_info->pmi, &src_cu->palette_info->pmi, sizeof(PaletteModeInfo));
-        assert(dst_cu->palette_info->color_idx_map != NULL && "palette:Not-Enough-Memory");
+        assert(dst_cu->palette_info->color_idx_map != NULL && "palette: Not-Enough-Memory");
         if (dst_cu->palette_info->color_idx_map != NULL)
             svt_memcpy(dst_cu->palette_info->color_idx_map,
                        src_cu->palette_info->color_idx_map,
                        MAX_PALETTE_SQUARE);
         else
-            SVT_LOG("ERROR palette:Not-Enough-Memory\n");
+            SVT_ERROR("palette: Not-Enough-Memory\n");
 
     }
     dst_cu->interp_filters              = src_cu->interp_filters;

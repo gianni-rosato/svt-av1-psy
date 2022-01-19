@@ -2193,7 +2193,7 @@ static void  av1_generate_rps_info(
             break;
 
         default:
-            SVT_LOG("Error: unexpected picture mini Gop number\n");
+            SVT_ERROR("unexpected picture mini Gop number\n");
             break;
         }
 
@@ -2363,7 +2363,7 @@ static void  av1_generate_rps_info(
             break;
 
         default:
-            SVT_LOG("Error: unexpected picture mini Gop number\n");
+            SVT_ERROR("unexpected picture mini Gop number\n");
             break;
         }
 
@@ -2679,7 +2679,7 @@ static void  av1_generate_rps_info(
             break;
 
         default:
-            SVT_LOG("Error: unexpected picture mini Gop number\n");
+            SVT_ERROR("unexpected picture mini Gop number\n");
             break;
         }
 
@@ -3172,7 +3172,7 @@ static void  av1_generate_rps_info(
             break;
 
         default:
-            SVT_LOG("Error: unexpected picture mini Gop number\n");
+            SVT_ERROR("unexpected picture mini Gop number\n");
             break;
         }
 
@@ -3954,7 +3954,7 @@ static void  av1_generate_rps_info(
             break;
 
         default:
-            SVT_LOG("Error: unexpected picture mini Gop number\n");
+            SVT_ERROR("unexpected picture mini Gop number\n");
             break;
         }
 
@@ -4022,7 +4022,7 @@ static void  av1_generate_rps_info(
             context_ptr->lay1_toggle = 1 - context_ptr->lay1_toggle;
         }
     }else {
-        SVT_LOG("Error: Not supported GOP structure!");
+        SVT_ERROR("Not supported GOP structure!");
         exit(0);
     }
 }
@@ -4099,11 +4099,11 @@ static EbErrorType av1_generate_rps_info_from_user_config(
                 av1_rps->ref_dpb_index[ref_idx] = dpb_list_idx;
                 --dpb_list_ptr[dpb_list_idx].dep_count;
                 if (dpb_list_ptr[dpb_list_idx].dep_count < 0) {
-                    SVT_LOG("Error: dep_count error in dpb list0\n");
+                    SVT_ERROR("dep_count error in dpb list0\n");
                     return EB_Corrupt_Frame;
                 }
             } else {
-                SVT_LOG("Error: can't find ref frame in dpb list0\n");
+                SVT_ERROR("can't find ref frame in dpb list0\n");
                 return EB_Corrupt_Frame;
             }
         }
@@ -4131,11 +4131,11 @@ static EbErrorType av1_generate_rps_info_from_user_config(
                     av1_rps->ref_dpb_index[ref_idx] = dpb_list_idx;
                     --dpb_list_ptr[dpb_list_idx].dep_count;
                     if (dpb_list_ptr[dpb_list_idx].dep_count < 0) {
-                        SVT_LOG("Error: dep_count error in dpb list1\n");
+                        SVT_ERROR("dep_count error in dpb list1\n");
                         return EB_Corrupt_Frame;
                     }
                 } else {
-                    SVT_LOG("Error: can't find ref frame in dpb list1\n");
+                    SVT_ERROR("can't find ref frame in dpb list1\n");
                     return EB_Corrupt_Frame;
                 }
             }
@@ -4199,7 +4199,7 @@ static EbErrorType av1_generate_rps_info_from_user_config(
             dpb_list_ptr[dpb_list_idx].dep_count = dpb_list_ptr[dpb_list_idx].dep_list0_count +
                 dpb_list_ptr[dpb_list_idx].dep_list1_count;
         } else {
-            SVT_LOG("Error: can't find unused dpb to hold current frame\n");
+            SVT_ERROR("can't find unused dpb to hold current frame\n");
             return EB_Corrupt_Frame;
         }
     }

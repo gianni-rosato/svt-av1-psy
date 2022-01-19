@@ -829,7 +829,7 @@ static EbErrorType copy_metadata_buffer(EbBufferHeaderType *dst, EbBufferHeaderT
         const size_t   sz               = current_metadata->sz;
 
         if (svt_add_metadata(dst, type, payload, sz) != 0)
-            SVT_LOG("Error: Metadata of type %d could not be added to the buffer.\n", type);
+            SVT_ERROR("Metadata of type %d could not be added to the buffer.\n", type);
     }
     return return_error;
 }
@@ -1267,7 +1267,7 @@ void *resource_coordination_kernel(void *input_ptr) {
             if (scs_ptr->static_config.use_qp_file == 1) {
                 pcs_ptr->qp_on_the_fly = EB_TRUE;
                 if (pcs_ptr->input_ptr->qp > MAX_QP_VALUE) {
-                    SVT_LOG("SVT [WARNING]: INPUT QP/CRF OUTSIDE OF RANGE\n");
+                    SVT_WARN("INPUT QP/CRF OUTSIDE OF RANGE\n");
                     pcs_ptr->qp_on_the_fly = EB_FALSE;
                 }
                 pcs_ptr->picture_qp = (uint8_t)pcs_ptr->input_ptr->qp;

@@ -181,7 +181,7 @@ static void print_detailed_frame_info(PacketizationContext* context_ptr, const P
         if (context_ptr->disp_order_continuity_count == queue_entry_ptr->poc)
             context_ptr->disp_order_continuity_count++;
         else {
-            SVT_LOG("SVT [ERROR]: disp_order_continuity_count Error1 POC:%i\n",
+            SVT_ERROR("disp_order_continuity_count Error1 POC:%i\n",
                     (int32_t)queue_entry_ptr->poc);
             exit(0);
         }
@@ -192,7 +192,7 @@ static void print_detailed_frame_info(PacketizationContext* context_ptr, const P
             context_ptr->dpb_disp_order[queue_entry_ptr->show_existing_frame])
             context_ptr->disp_order_continuity_count++;
         else {
-            SVT_LOG("SVT [ERROR]: disp_order_continuity_count Error2 POC:%i\n",
+            SVT_ERROR("disp_order_continuity_count Error2 POC:%i\n",
                     (int32_t)queue_entry_ptr->poc);
             exit(0);
         }

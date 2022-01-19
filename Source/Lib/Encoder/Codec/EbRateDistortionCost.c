@@ -1505,7 +1505,7 @@ uint64_t av1_inter_fast_cost(struct ModeDecisionContext *ctx, BlkStruct *blk_ptr
     chromasad_                      = chroma_distortion << AV1_COST_PRECISION;
     total_distortion                = luma_sad + chromasad_;
     if (blk_geom->has_uv == 0 && chromasad_ != 0)
-        SVT_LOG("av1_inter_fast_cost: Chroma error");
+        SVT_ERROR("av1_inter_fast_cost: Chroma error");
     rate = luma_rate + chroma_rate;
     // Assign fast cost
     if (candidate_ptr->skip_mode_allowed) {

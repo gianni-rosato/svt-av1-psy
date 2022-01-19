@@ -528,7 +528,7 @@ static void generate_chroma_grain_blocks(
                     wsum_cb = wsum_cb + params->ar_coeffs_cb[pos] * av_luma;
                     wsum_cr = wsum_cr + params->ar_coeffs_cr[pos] * av_luma;
                 } else {
-                    SVT_LOG(
+                    SVT_ERROR(
                         "Grain synthesis: prediction between two chroma components is "
                         "not supported!");
                     exit(1);
