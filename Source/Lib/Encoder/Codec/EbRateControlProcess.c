@@ -1000,14 +1000,12 @@ static int cqp_qindex_calc(PictureControlSet *pcs_ptr, int qindex) {
         offset_idx = 0;
     else
         offset_idx = MIN(pcs_ptr->temporal_layer_index + 1, FIXED_QP_OFFSET_COUNT - 1);
+
     double q_val_target = (offset_idx == -1)
         ?
         q_val
-        : MAX(q_val -
-                    (q_val *
-                    percents[pcs_ptr->parent_pcs_ptr->hierarchical_levels <= 4][offset_idx] /
-                    100),
-                0.0);
+        : MAX(q_val - (q_val * percents[pcs_ptr->parent_pcs_ptr->hierarchical_levels <= 4][offset_idx] / 100), 0.0);
+
     if (scs_ptr->static_config.pred_structure == EB_PRED_LOW_DELAY_P ||
         scs_ptr->static_config.pred_structure == EB_PRED_LOW_DELAY_B) {
         if (pcs_ptr->parent_pcs_ptr->temporal_layer_index) {

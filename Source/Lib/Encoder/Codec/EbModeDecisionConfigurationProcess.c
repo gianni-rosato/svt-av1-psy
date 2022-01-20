@@ -611,9 +611,9 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         pcs_ptr->txt_level = 5;
     else if (enc_mode <= ENC_M13) {
         pcs_ptr->txt_level = pcs_ptr->temporal_layer_index == 0 ? 6 : 8;
-        if (pcs_ptr->ref_intra_percentage < 85 && pcs_ptr->temporal_layer_index &&
-            pcs_ptr->parent_pcs_ptr->input_resolution > INPUT_SIZE_720p_RANGE &&
-            !pcs_ptr->parent_pcs_ptr->sc_class1) {
+        if (pcs_ptr->ref_intra_percentage < 85 &&
+            pcs_ptr->temporal_layer_index &&
+            pcs_ptr->parent_pcs_ptr->input_resolution > INPUT_SIZE_720p_RANGE && !pcs_ptr->parent_pcs_ptr->sc_class1) {
             pcs_ptr->txt_level = 0;
         }
     }

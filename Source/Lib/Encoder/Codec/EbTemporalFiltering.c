@@ -4605,10 +4605,9 @@ static EbErrorType produce_temporally_filtered_pic(
         FP_ASSERT(TF_STRENGTH_THRESHOLD == 4);
         FP_ASSERT(TF_Q_DECAY_THRESHOLD == 20);
 
-        int offset_idx = -1;
+        int offset_idx;
         if (!picture_control_set_ptr_central->is_used_as_reference_flag)
             offset_idx = -1;
-
         else if (picture_control_set_ptr_central->idr_flag)
             offset_idx = 0;
         else
@@ -4630,47 +4629,48 @@ static EbErrorType produce_temporally_filtered_pic(
         const int32_t delta_qindex_f = svt_av1_compute_qdelta_fp(
             q_val_fp8, q_val_target_fp8, bit_depth);
         active_best_quality = (int32_t)(active_worst_quality + delta_qindex_f);
-        q                   = active_best_quality;
+        q = active_best_quality;
 
-    FP_ASSERT(q < (1 << 20));
-    //double q_decay = pow((double)q / TF_Q_DECAY_THRESHOLD, 2);
+        FP_ASSERT(q < (1 << 20));
+        //double q_decay = pow((double)q / TF_Q_DECAY_THRESHOLD, 2);
 
-    //TODO: FIX1 uint32_t???
-    int32_t  q_treshold_fp8 = (q * ((int32_t)1 << 8)) / TF_Q_DECAY_THRESHOLD;
-    uint32_t q_decay_fp8    = (q_treshold_fp8 * q_treshold_fp8) >> 8;
+        //TODO: FIX1 uint32_t???
+        int32_t  q_treshold_fp8 = (q * ((int32_t)1 << 8)) / TF_Q_DECAY_THRESHOLD;
+        uint32_t q_decay_fp8 = (q_treshold_fp8 * q_treshold_fp8) >> 8;
 
-    //  q_decay_fp8 = ((q_decay_fp8) < (1) ? (1) : (q_decay_fp8) > (1<<8) ? (1<<8) : (q_decay_fp8));
-    q_decay_fp8 = CLIP(q_decay_fp8, 1, 1 << 8);
-    if (q >= TF_QINDEX_CUTOFF) {
-        // Max q_factor is 255, therefore the upper bound of q_decay is 8.
-        // We do not need a clip here.
-        //q_decay = 0.5 * pow((double)q / 64, 2);
-        FP_ASSERT(q < (1 << 15));
-        q_decay_fp8 = (q * q) >> 5;
-    }
+        //  q_decay_fp8 = ((q_decay_fp8) < (1) ? (1) : (q_decay_fp8) > (1<<8) ? (1<<8) : (q_decay_fp8));
+        q_decay_fp8 = CLIP(q_decay_fp8, 1, 1 << 8);
+        if (q >= TF_QINDEX_CUTOFF) {
+            // Max q_factor is 255, therefore the upper bound of q_decay is 8.
+            // We do not need a clip here.
+            //q_decay = 0.5 * pow((double)q / 64, 2);
+            FP_ASSERT(q < (1 << 15));
+            q_decay_fp8 = (q * q) >> 5;
+        }
 
-    const int32_t const_0dot7_fp16 = 45875; //0.7
-    /*Calculation of log and dceay_factor possible to move to estimate_noise() and calculate one time for GOP*/
-    //decay_control * (0.7 + log1p(noise_levels[C_Y]))
-    int32_t n_decay_fp10 = (decay_control * (const_0dot7_fp16 + noise_levels_log1p_fp16[C_Y])) /
-        ((int32_t)1 << 6);
-    //2 * n_decay * n_decay * q_decay * (s_decay always is 1);
-    context_ptr->tf_decay_factor_fp16[C_Y] = (uint32_t)(
-        (((((int64_t)n_decay_fp10) * ((int64_t)n_decay_fp10))) * q_decay_fp8) >> 11);
-
-    if (context_ptr->tf_chroma) {
-        n_decay_fp10 = (decay_control * (const_0dot7_fp16 + noise_levels_log1p_fp16[C_U])) /
+        const int32_t const_0dot7_fp16 = 45875; //0.7
+        /*Calculation of log and dceay_factor possible to move to estimate_noise() and calculate one time for GOP*/
+        //decay_control * (0.7 + log1p(noise_levels[C_Y]))
+        int32_t n_decay_fp10 = (decay_control * (const_0dot7_fp16 + noise_levels_log1p_fp16[C_Y])) /
             ((int32_t)1 << 6);
-        context_ptr->tf_decay_factor_fp16[C_U] = (uint32_t)(
+        //2 * n_decay * n_decay * q_decay * (s_decay always is 1);
+        context_ptr->tf_decay_factor_fp16[C_Y] = (uint32_t)(
             (((((int64_t)n_decay_fp10) * ((int64_t)n_decay_fp10))) * q_decay_fp8) >> 11);
 
-        n_decay_fp10 = (decay_control * (const_0dot7_fp16 + noise_levels_log1p_fp16[C_V])) /
-            ((int32_t)1 << 6);
-        context_ptr->tf_decay_factor_fp16[C_V] = (uint32_t)(
-            (((((int64_t)n_decay_fp10) * ((int64_t)n_decay_fp10))) * q_decay_fp8) >> 11);
+        if (context_ptr->tf_chroma) {
+            n_decay_fp10 = (decay_control * (const_0dot7_fp16 + noise_levels_log1p_fp16[C_U])) /
+                ((int32_t)1 << 6);
+            context_ptr->tf_decay_factor_fp16[C_U] = (uint32_t)(
+                (((((int64_t)n_decay_fp10) * ((int64_t)n_decay_fp10))) * q_decay_fp8) >> 11);
+
+            n_decay_fp10 = (decay_control * (const_0dot7_fp16 + noise_levels_log1p_fp16[C_V])) /
+                ((int32_t)1 << 6);
+            context_ptr->tf_decay_factor_fp16[C_V] = (uint32_t)(
+                (((((int64_t)n_decay_fp10) * ((int64_t)n_decay_fp10))) * q_decay_fp8) >> 11);
+        }
     }
-} else {
-        double q_val      = svt_av1_convert_qindex_to_q(active_worst_quality, bit_depth);
+    else {
+        double q_val = svt_av1_convert_qindex_to_q(active_worst_quality, bit_depth);
         int    offset_idx = -1;
         if (!picture_control_set_ptr_central->is_used_as_reference_flag)
             offset_idx = -1;
@@ -4678,25 +4678,25 @@ static EbErrorType produce_temporally_filtered_pic(
             offset_idx = 0;
         else
             offset_idx = MIN(picture_control_set_ptr_central->temporal_layer_index + 1,
-                                FIXED_QP_OFFSET_COUNT - 1);
+                FIXED_QP_OFFSET_COUNT - 1);
 
         const double q_val_target = (offset_idx == -1)
             ? q_val
             : MAX(q_val -
-                        (q_val *
-                        percents[picture_control_set_ptr_central->hierarchical_levels <= 4]
-                                [offset_idx] /
-                        100),
-                    0.0);
+                (q_val *
+                    percents[picture_control_set_ptr_central->hierarchical_levels <= 4]
+                    [offset_idx] /
+                    100),
+                0.0);
 
         const int32_t delta_qindex = svt_av1_compute_qdelta(q_val, q_val_target, bit_depth);
 
         active_best_quality = (int32_t)(active_worst_quality + delta_qindex);
-        q                   = active_best_quality;
+        q = active_best_quality;
         clamp(q, active_best_quality, active_worst_quality);
 
         double q_decay = pow((double)q / TF_Q_DECAY_THRESHOLD, 2);
-        q_decay        = CLIP(q_decay, 1e-5, 1);
+        q_decay = CLIP(q_decay, 1e-5, 1);
         if (q >= TF_QINDEX_CUTOFF) {
             // Max q_factor is 255, therefore the upper bound of q_decay is 8.
             // We do not need a clip here.
@@ -4705,9 +4705,9 @@ static EbErrorType produce_temporally_filtered_pic(
 
         // Smaller strength -> smaller filtering weight.
         double s_decay = pow((double)TF_FILTER_STRENGTH / TF_STRENGTH_THRESHOLD, 2);
-        s_decay        = CLIP(s_decay, 1e-5, 1);
+        s_decay = CLIP(s_decay, 1e-5, 1);
         double n_decay;
-        n_decay                           = (double)decay_control * (0.7 + log1p(noise_levels[0]));
+        n_decay = (double)decay_control * (0.7 + log1p(noise_levels[0]));
         context_ptr->tf_decay_factor[C_Y] = 2 * n_decay * n_decay * q_decay * s_decay;
 
         if (context_ptr->tf_chroma) {
