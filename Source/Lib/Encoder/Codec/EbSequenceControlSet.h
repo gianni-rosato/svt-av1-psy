@@ -438,6 +438,10 @@ typedef struct SequenceControlSet {
 
     //Flag that will hold the tpl level, set at init time, level 0 is off, other levels are set by preset
     uint8_t tpl_level;
+#if FTR_SKIP_VAR
+    // If true, calculate and store the SB-based variance
+    uint8_t calculate_variance;
+#endif
 } SequenceControlSet;
 
 typedef struct EbSequenceControlSetInitData {

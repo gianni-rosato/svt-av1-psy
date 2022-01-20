@@ -767,10 +767,21 @@ EbErrorType generate_mini_gop_rps(
     return return_error;
 }
 
+#if FTR_SKIP_VAR
+static INLINE void update_list0_only_base(SequenceControlSet* scs, PictureParentControlSet* pcs) {
+
+    // If noise_variance_th is MAX, then always skip list 1, else compare to the avg variance (if available)
+    if (pcs->list0_only_base_ctrls.noise_variance_th == (uint16_t)~0 ||
+        (scs->calculate_variance && (pcs->pic_avg_variance < pcs->list0_only_base_ctrls.noise_variance_th))) {
+        pcs->ref_list1_count_try = 0;
+    }
+}
+#else
 static INLINE void update_list0_only_base(PictureParentControlSet* pcs_ptr) {
     if (pcs_ptr->pic_avg_variance < pcs_ptr->list0_only_base_ctrls.noise_variance_th)
         pcs_ptr->ref_list1_count_try = 0;
 }
+#endif
 
 uint8_t pf_gi[16] = { 0,4,8,12,16,20,24,28,32,36,40,44,48,52,56,60 };
 
@@ -6343,7 +6354,11 @@ void* picture_decision_kernel(void *input_ptr)
                                 update_count_try(scs_ptr, pcs_ptr);
 
                                 if (picture_type == B_SLICE && pcs_ptr->temporal_layer_index == 0 && pcs_ptr->list0_only_base_ctrls.enabled) {
+#if FTR_SKIP_VAR
+                                    update_list0_only_base(scs_ptr, pcs_ptr);
+#else
                                     update_list0_only_base(pcs_ptr);
+#endif
                                 }
                                 assert(pcs_ptr->ref_list0_count_try <= pcs_ptr->ref_list0_count);
                                 assert(pcs_ptr->ref_list1_count_try <= pcs_ptr->ref_list1_count);

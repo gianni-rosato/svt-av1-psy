@@ -7769,7 +7769,9 @@ static void md_stage_3_light_pd1(PictureControlSet *pcs_ptr, BlkStruct *blk_ptr,
     context_ptr->uv_intra_comp_only = EB_TRUE;
     // If EncDec is bypassed, disable features affecting the TX that are usually disabled in EncDec
     if (context_ptr->bypass_encdec) {
+#if !FASTER_M13_LPD1
         context_ptr->pf_ctrls.pf_shape       = DEFAULT_SHAPE;
+#endif
         context_ptr->rdoq_ctrls.skip_uv      = 0;
         context_ptr->rdoq_ctrls.dct_dct_only = 0;
     }

@@ -560,8 +560,14 @@ typedef enum ATTRIBUTE_PACKED {
     LPD1_LVL_1  = 1, // Light PD1 path, having more shortcuts than previous LPD1 level
     LPD1_LVL_2  = 2, // Light PD1 path, having more shortcuts than previous LPD1 level
     LPD1_LVL_3  = 3, // Light PD1 path, having more shortcuts than previous LPD1 level
+#if FASTER_M13_LPD1
+    LPD1_LVL_4  = 4, // Light PD1 path, having more shortcuts than previous LPD1 level
+    LPD1_LVL_5  = 5, // Light-PD1 path, with most aggressive feature levels
+    LPD1_LEVELS // Number of light-PD1 paths (regular PD1 isn't a light-PD1 path)
+#else
     LPD1_LVL_4  = 4, // Light-PD1 path, with most aggressive feature levels
     LPD1_LEVELS = LPD1_LVL_4 + 1 // Number of light-PD1 paths (regular PD1 isn't a light-PD1 path)
+#endif
 } Pd1Level;
 typedef enum CandClass {
     CAND_CLASS_0,

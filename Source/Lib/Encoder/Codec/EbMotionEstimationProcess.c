@@ -118,8 +118,13 @@ void set_hme_search_params(PictureParentControlSet *pcs_ptr, MeContext *me_conte
     }
     else {
         if (pcs_ptr->sc_class1) {
+#if TUNE_M12_M13_LVLS
+            me_context_ptr->hme_l0_sa.sa_min = (SearchArea) { 16, 16 };
+            me_context_ptr->hme_l0_sa.sa_max = (SearchArea) { 96, 96 };
+#else
             me_context_ptr->hme_l0_sa.sa_min = (SearchArea){ 32, 32 };
             me_context_ptr->hme_l0_sa.sa_max = (SearchArea){ 192, 192 };
+#endif
         }
         else {
             me_context_ptr->hme_l0_sa.sa_min = (SearchArea){ 8, 8 };
@@ -162,10 +167,21 @@ void set_me_search_params(SequenceControlSet *scs_ptr, PictureParentControlSet *
         } else if (pcs_ptr->enc_mode <= ENC_M10) {
             me_context_ptr->me_sa.sa_min = (SearchArea){32, 32};
             me_context_ptr->me_sa.sa_max = (SearchArea){96, 96};
+#if TUNE_M12_M13_LVLS
+        } else if (pcs_ptr->enc_mode <= ENC_M12) {
+            me_context_ptr->me_sa.sa_min = (SearchArea) { 16, 16 };
+            me_context_ptr->me_sa.sa_max = (SearchArea) { 96, 96 };
+        }
+        else {
+            me_context_ptr->me_sa.sa_min = (SearchArea) { 8, 8 };
+            me_context_ptr->me_sa.sa_max = (SearchArea) { 32, 32 };
+        }
+#else
         } else {
             me_context_ptr->me_sa.sa_min = (SearchArea){16, 16};
             me_context_ptr->me_sa.sa_max = (SearchArea){96, 96};
         }
+#endif
     } else if (pcs_ptr->enc_mode <= ENC_M0) {
         me_context_ptr->me_sa.sa_min = (SearchArea){64, 64};
         me_context_ptr->me_sa.sa_max = (SearchArea){256, 256};

@@ -53,6 +53,10 @@ typedef struct EbReferenceObject {
     uint8_t *            sb_intra;
     uint8_t *            sb_skip;
     uint8_t *            sb_64x64_mvp;
+#if NEW_LPD1_DET
+    uint32_t *           sb_me_64x64_dist;
+    uint32_t *           sb_me_8x8_cost_var;
+#endif
     int32_t              mi_cols;
     int32_t              mi_rows;
     WienerUnitInfo *

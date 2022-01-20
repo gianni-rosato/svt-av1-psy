@@ -1525,6 +1525,9 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
         input_data.tpl_synth_size = get_tpl_synthesizer_block_size( enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->tpl_level,
             input_data.picture_width, input_data.picture_height);
         input_data.enable_adaptive_quantization = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.enable_adaptive_quantization;
+#if FTR_SKIP_VAR
+        input_data.calculate_variance = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->calculate_variance;
+#endif
         input_data.scene_change_detection = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.scene_change_detection;
 
         input_data.tpl_lad_mg = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->tpl_lad_mg;
@@ -3465,6 +3468,17 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
 
     set_mrp_ctrl(scs_ptr, mrp_level);
     scs_ptr->is_short_clip = 0; // set to 1 if multipass and less than 200 frames in resourcecordination
+
+#if FTR_SKIP_VAR
+    // Varaince is required for scene change detection and segmentation-based quantization
+    if (scs_ptr->static_config.enable_adaptive_quantization == 1 ||
+        scs_ptr->static_config.scene_change_detection == 1)
+        scs_ptr->calculate_variance = 1;
+    else if (scs_ptr->static_config.enc_mode <= ENC_M11)
+        scs_ptr->calculate_variance = 1;
+    else
+        scs_ptr->calculate_variance = 0;
+#endif
 }
 /******************************************************
  * Read Stat from File

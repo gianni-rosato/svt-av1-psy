@@ -2248,8 +2248,14 @@ void gathering_picture_statistics(SequenceControlSet *scs_ptr, PictureParentCont
             4);
     }
 
+#if FTR_SKIP_VAR
+    if (scs_ptr->calculate_variance)
+        compute_picture_spatial_statistics(scs_ptr, pcs_ptr, input_padded_picture_ptr, sb_total_count);
+    else
+        pcs_ptr->pic_avg_variance = 0;
+#else
     compute_picture_spatial_statistics(scs_ptr, pcs_ptr, input_padded_picture_ptr, sb_total_count);
-
+#endif
     return;
 }
 
