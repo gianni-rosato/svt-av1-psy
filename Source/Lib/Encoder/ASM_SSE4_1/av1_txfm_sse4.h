@@ -27,32 +27,42 @@ static INLINE __m128i av1_round_shift_32_sse4_1(__m128i vec, int32_t bit) {
 }
 
 static INLINE void av1_round_shift_array_32_sse4_1(__m128i *input, __m128i *output,
-                                                   const int32_t size, const int32_t bit) {
+                                                 const int32_t size, const int32_t bit) {
+    int32_t i;
     if (bit > 0) {
-        int32_t i;
-        for (i = 0; i < size; i++) output[i] = av1_round_shift_32_sse4_1(input[i], bit);
+        const __m128i round = _mm_set1_epi32(1 << (bit - 1));
+        for (i = 0; i < size; i++) {
+            output[i] = _mm_srai_epi32(_mm_add_epi32(input[i], round), bit);
+        }
     } else {
-        int32_t i;
-        for (i = 0; i < size; i++) output[i] = _mm_slli_epi32(input[i], -bit);
+        for (i = 0; i < size; i++) {
+        output[i]     = _mm_slli_epi32(input[i], -bit);
+        }
     }
 }
 
 static INLINE void av1_round_shift_rect_array_32_sse4_1(__m128i *input, __m128i *output,
                                                         const int32_t size, const int32_t bit) {
     const __m128i sqrt2 = _mm_set1_epi32(new_sqrt2);
+    const __m128i round2 = _mm_set1_epi32(1 << (new_sqrt2_bits - 1));
+    int32_t       i;
     if (bit > 0) {
-        int32_t i;
+        const __m128i round1 = _mm_set1_epi32(1 << (bit - 1));
+        __m128i       r0, r1, r2, r3;
         for (i = 0; i < size; i++) {
-            const __m128i r0 = av1_round_shift_32_sse4_1(input[i], bit);
-            const __m128i r1 = _mm_mullo_epi32(sqrt2, r0);
-            output[i]        = av1_round_shift_32_sse4_1(r1, new_sqrt2_bits);
+            r0        = _mm_add_epi32(input[i], round1);
+            r1        = _mm_srai_epi32(r0, bit);
+            r2        = _mm_mullo_epi32(sqrt2, r1);
+            r3        = _mm_add_epi32(r2, round2);
+            output[i] = _mm_srai_epi32(r3, new_sqrt2_bits);
         }
     } else {
-        int32_t i;
+        __m128i r0, r1, r2;
         for (i = 0; i < size; i++) {
-            const __m128i r0 = _mm_slli_epi32(input[i], -bit);
-            const __m128i r1 = _mm_mullo_epi32(sqrt2, r0);
-            output[i]        = av1_round_shift_32_sse4_1(r1, new_sqrt2_bits);
+            r0        = _mm_slli_epi32(input[i], -bit);
+            r1        = _mm_mullo_epi32(sqrt2, r0);
+            r2        = _mm_add_epi32(r1, round2);
+            output[i] = _mm_srai_epi32(r2, new_sqrt2_bits);
         }
     }
 }

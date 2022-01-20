@@ -77,7 +77,7 @@ static const FwdTxfm2dFunc fwd_txfm_2d_sse4_1_func[TX_SIZES_ALL] = {
     svt_av1_fwd_txfm2d_64x16_sse4_1,
 };
 
-static const FwdTxfm2dFunc fwd_txfm_2d_N2_asm_func[TX_SIZES_ALL] = {
+static const FwdTxfm2dFunc fwd_txfm_2d_N2_avx2_func[TX_SIZES_ALL] = {
     svt_av1_fwd_txfm2d_4x4_N2_sse4_1, svt_av1_fwd_txfm2d_8x8_N2_avx2,
     svt_av1_fwd_txfm2d_16x16_N2_avx2, svt_av1_fwd_txfm2d_32x32_N2_avx2,
     svt_av1_fwd_txfm2d_64x64_N2_avx2, svt_av1_fwd_txfm2d_4x8_N2_avx2,
@@ -90,7 +90,7 @@ static const FwdTxfm2dFunc fwd_txfm_2d_N2_asm_func[TX_SIZES_ALL] = {
     svt_av1_fwd_txfm2d_64x16_N2_avx2,
 };
 
-static const FwdTxfm2dFunc fwd_txfm_2d_N4_asm_func[TX_SIZES_ALL] = {
+static const FwdTxfm2dFunc fwd_txfm_2d_N4_avx2_func[TX_SIZES_ALL] = {
     svt_av1_fwd_txfm2d_4x4_N4_sse4_1, svt_av1_fwd_txfm2d_8x8_N4_avx2,
     svt_av1_fwd_txfm2d_16x16_N4_avx2, svt_av1_fwd_txfm2d_32x32_N4_avx2,
     svt_av1_fwd_txfm2d_64x64_N4_avx2, svt_av1_fwd_txfm2d_4x8_N4_avx2,
@@ -101,6 +101,32 @@ static const FwdTxfm2dFunc fwd_txfm_2d_N4_asm_func[TX_SIZES_ALL] = {
     svt_av1_fwd_txfm2d_16x4_N4_avx2,  svt_av1_fwd_txfm2d_8x32_N4_avx2,
     svt_av1_fwd_txfm2d_32x8_N4_avx2,  svt_av1_fwd_txfm2d_16x64_N4_avx2,
     svt_av1_fwd_txfm2d_64x16_N4_avx2,
+};
+
+static const FwdTxfm2dFunc fwd_txfm_2d_N2_sse4_1_func[TX_SIZES_ALL] = {
+    svt_av1_fwd_txfm2d_4x4_N2_sse4_1, svt_av1_fwd_txfm2d_8x8_N2_sse4_1,
+    svt_av1_fwd_txfm2d_16x16_N2_sse4_1, svt_av1_fwd_txfm2d_32x32_N2_sse4_1,
+    svt_av1_fwd_txfm2d_64x64_N2_sse4_1, svt_av1_fwd_txfm2d_4x8_N2_sse4_1,
+    svt_av1_fwd_txfm2d_8x4_N2_sse4_1,   svt_av1_fwd_txfm2d_8x16_N2_sse4_1,
+    svt_av1_fwd_txfm2d_16x8_N2_sse4_1,  svt_av1_fwd_txfm2d_16x32_N2_sse4_1,
+    svt_av1_fwd_txfm2d_32x16_N2_sse4_1, svt_av1_fwd_txfm2d_32x64_N2_sse4_1,
+    svt_av1_fwd_txfm2d_64x32_N2_sse4_1, svt_av1_fwd_txfm2d_4x16_N2_sse4_1,
+    svt_av1_fwd_txfm2d_16x4_N2_sse4_1,  svt_av1_fwd_txfm2d_8x32_N2_sse4_1,
+    svt_av1_fwd_txfm2d_32x8_N2_sse4_1,  svt_av1_fwd_txfm2d_16x64_N2_sse4_1,
+    svt_av1_fwd_txfm2d_64x16_N2_sse4_1,
+};
+
+static const FwdTxfm2dFunc fwd_txfm_2d_N4_sse4_1_func[TX_SIZES_ALL] = {
+    svt_av1_fwd_txfm2d_4x4_N4_sse4_1, svt_av1_fwd_txfm2d_8x8_N4_sse4_1,
+    svt_av1_fwd_txfm2d_16x16_N4_sse4_1, svt_av1_fwd_txfm2d_32x32_N4_sse4_1,
+    svt_av1_fwd_txfm2d_64x64_N4_sse4_1, svt_av1_fwd_txfm2d_4x8_N4_sse4_1,
+    svt_av1_fwd_txfm2d_8x4_N4_sse4_1,   svt_av1_fwd_txfm2d_8x16_N4_sse4_1,
+    svt_av1_fwd_txfm2d_16x8_N4_sse4_1,  svt_av1_fwd_txfm2d_16x32_N4_sse4_1,
+    svt_av1_fwd_txfm2d_32x16_N4_sse4_1, svt_av1_fwd_txfm2d_32x64_N4_sse4_1,
+    svt_av1_fwd_txfm2d_64x32_N4_sse4_1, svt_av1_fwd_txfm2d_4x16_N4_sse4_1,
+    svt_av1_fwd_txfm2d_16x4_N4_sse4_1,  svt_av1_fwd_txfm2d_8x32_N4_sse4_1,
+    svt_av1_fwd_txfm2d_32x8_N4_sse4_1,  svt_av1_fwd_txfm2d_16x64_N4_sse4_1,
+    svt_av1_fwd_txfm2d_64x16_N4_sse4_1,
 };
 
 static const FwdTxfm2dFunc fwd_txfm_2d_N2_c_func[TX_SIZES_ALL] = {
@@ -218,36 +244,56 @@ class FwdTxfm2dAsmTest : public ::testing::TestWithParam<FwdTxfm2dAsmParam> {
         execute_test(test_func, ref_func, DEFAULT_SHAPE);
     }
 
-    void run_match_test_N2() {
-        FwdTxfm2dFunc test_func_asm = fwd_txfm_2d_N2_asm_func[tx_size_];
+    void run_match_test_avx2_N2() {
+        FwdTxfm2dFunc test_func_avx2 = fwd_txfm_2d_N2_avx2_func[tx_size_];
         FwdTxfm2dFunc test_func_c = fwd_txfm_2d_N2_c_func[tx_size_];
         FwdTxfm2dFunc ref_func = fwd_txfm_2d_c_func[tx_size_];
-        execute_test(test_func_asm, ref_func, N2_SHAPE);
+        execute_test(test_func_avx2, ref_func, N2_SHAPE);
         execute_test(test_func_c, ref_func, N2_SHAPE);
     }
 
-    void run_match_test_N4() {
-        FwdTxfm2dFunc test_func_asm = fwd_txfm_2d_N4_asm_func[tx_size_];
+    void run_match_test_avx2_N4() {
+        FwdTxfm2dFunc test_func_avx2 = fwd_txfm_2d_N4_avx2_func[tx_size_];
         FwdTxfm2dFunc test_func_c = fwd_txfm_2d_N4_c_func[tx_size_];
         FwdTxfm2dFunc ref_func = fwd_txfm_2d_c_func[tx_size_];
-        execute_test(test_func_asm, ref_func, N4_SHAPE);
+        execute_test(test_func_avx2, ref_func, N4_SHAPE);
+        execute_test(test_func_c, ref_func, N4_SHAPE);
+    }
+
+    void run_match_test_sse4_1_N2() {
+        FwdTxfm2dFunc test_func_sse4_1 = fwd_txfm_2d_N2_sse4_1_func[tx_size_];
+        FwdTxfm2dFunc test_func_c = fwd_txfm_2d_N2_c_func[tx_size_];
+        FwdTxfm2dFunc ref_func = fwd_txfm_2d_c_func[tx_size_];
+        execute_test(test_func_sse4_1, ref_func, N2_SHAPE);
+        execute_test(test_func_c, ref_func, N2_SHAPE);
+    }
+
+    void run_match_test_sse4_1_N4() {
+        FwdTxfm2dFunc test_func_sse4_1 = fwd_txfm_2d_N4_sse4_1_func[tx_size_];
+        FwdTxfm2dFunc test_func_c = fwd_txfm_2d_N4_c_func[tx_size_];
+        FwdTxfm2dFunc ref_func = fwd_txfm_2d_c_func[tx_size_];
+        execute_test(test_func_sse4_1, ref_func, N4_SHAPE);
         execute_test(test_func_c, ref_func, N4_SHAPE);
     }
 
     void speed_test_avx2() {
         FwdTxfm2dFunc test_func = fwd_txfm_2d_avx2_func[tx_size_];
         FwdTxfm2dFunc ref_func = fwd_txfm_2d_c_func[tx_size_];
-        run_speed_test("C   AND ASM", test_func, ref_func);
+        run_speed_test("C    AND AVX2", test_func, ref_func);
         run_speed_test(
-            "ASM AND N2 ", fwd_txfm_2d_N2_asm_func[tx_size_], test_func);
+            "AVX2 AND N2  ", fwd_txfm_2d_N2_avx2_func[tx_size_], test_func);
         run_speed_test(
-            "ASM AND N4 ", fwd_txfm_2d_N4_asm_func[tx_size_], test_func);
+            "AVX2 AND N4  ", fwd_txfm_2d_N4_avx2_func[tx_size_], test_func);
     }
 
     void speed_test_sse4_1() {
         FwdTxfm2dFunc test_func = fwd_txfm_2d_sse4_1_func[tx_size_];
         FwdTxfm2dFunc ref_func = fwd_txfm_2d_c_func[tx_size_];
-        run_speed_test("C   AND ASM", test_func, ref_func);
+        run_speed_test("C    AND SSE4", test_func, ref_func);
+        run_speed_test(
+            "SSE4 AND N2  ", fwd_txfm_2d_N2_sse4_1_func[tx_size_], test_func);
+        run_speed_test(
+            "SSE4 AND N4  ", fwd_txfm_2d_N4_sse4_1_func[tx_size_], test_func);
     }
 #if EN_AVX512_SUPPORT
     void run_match_test_N2_512() {
@@ -450,12 +496,21 @@ TEST_P(FwdTxfm2dAsmTest, match_test_sse4_1) {
     run_match_test_sse4_1();
 }
 
-TEST_P(FwdTxfm2dAsmTest, match_test_N2) {
-    run_match_test_N2();
+TEST_P(FwdTxfm2dAsmTest, match_test_avx2_N2) {
+    run_match_test_avx2_N2();
 }
 
-TEST_P(FwdTxfm2dAsmTest, match_test_N4) {
-    run_match_test_N4();
+TEST_P(FwdTxfm2dAsmTest, match_test_avx2_N4) {
+    run_match_test_avx2_N4();
+}
+
+
+TEST_P(FwdTxfm2dAsmTest, match_test_sse4_1_N2) {
+    run_match_test_sse4_1_N2();
+}
+
+TEST_P(FwdTxfm2dAsmTest, match_test_sse4_1_N4) {
+    run_match_test_sse4_1_N4();
 }
 
 TEST_P(FwdTxfm2dAsmTest, DISABLED_speed_test_avx2) {
