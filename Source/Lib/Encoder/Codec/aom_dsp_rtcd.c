@@ -124,11 +124,11 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
     SET_AVX2(svt_subtract_average, svt_subtract_average_c, svt_subtract_average_avx2);
     SET_AVX2(svt_get_proj_subspace, svt_get_proj_subspace_c, svt_get_proj_subspace_avx2);
     SET_SSE41_AVX2(svt_aom_quantize_b, svt_aom_quantize_b_c_ii, svt_aom_quantize_b_sse4_1, svt_aom_quantize_b_avx2);
-    SET_AVX2(svt_aom_highbd_quantize_b, svt_aom_highbd_quantize_b_c, svt_aom_highbd_quantize_b_avx2);
+    SET_SSE41_AVX2(svt_aom_highbd_quantize_b, svt_aom_highbd_quantize_b_c, svt_aom_highbd_quantize_b_sse4_1, svt_aom_highbd_quantize_b_avx2);
     SET_SSE41_AVX2(svt_av1_quantize_fp, svt_av1_quantize_fp_c, svt_av1_quantize_fp_sse4_1, svt_av1_quantize_fp_avx2);
     SET_AVX2(svt_av1_quantize_fp_32x32, svt_av1_quantize_fp_32x32_c, svt_av1_quantize_fp_32x32_avx2);
     SET_AVX2(svt_av1_quantize_fp_64x64, svt_av1_quantize_fp_64x64_c, svt_av1_quantize_fp_64x64_avx2);
-    SET_AVX2(svt_av1_highbd_quantize_fp, svt_av1_highbd_quantize_fp_c, svt_av1_highbd_quantize_fp_avx2);
+    SET_SSE41_AVX2(svt_av1_highbd_quantize_fp, svt_av1_highbd_quantize_fp_c, svt_av1_highbd_quantize_fp_sse4_1, svt_av1_highbd_quantize_fp_avx2);
     SET_SSE2(svt_aom_highbd_8_mse16x16, svt_aom_highbd_8_mse16x16_c, svt_aom_highbd_8_mse16x16_sse2);
 
     //SAD
@@ -404,12 +404,12 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
     SET_SSE2_AVX2(svt_av1_get_nz_map_contexts, svt_av1_get_nz_map_contexts_c, svt_av1_get_nz_map_contexts_sse2, svt_av1_get_nz_map_contexts_avx2);
     SET_AVX2_AVX512(svt_search_one_dual, svt_search_one_dual_c, svt_search_one_dual_avx2, svt_search_one_dual_avx512);
     SET_SSE41_AVX2_AVX512(svt_sad_loop_kernel, svt_sad_loop_kernel_c, svt_sad_loop_kernel_sse4_1_intrin, svt_sad_loop_kernel_avx2_intrin, svt_sad_loop_kernel_avx512_intrin);
-    SET_AVX2(svt_av1_apply_temporal_filter_planewise, svt_av1_apply_temporal_filter_planewise_c, svt_av1_apply_temporal_filter_planewise_avx2);
-    SET_AVX2(svt_av1_apply_temporal_filter_planewise_hbd, svt_av1_apply_temporal_filter_planewise_hbd_c, svt_av1_apply_temporal_filter_planewise_hbd_avx2);
-    SET_AVX2(svt_av1_apply_temporal_filter_planewise_medium, svt_av1_apply_temporal_filter_planewise_medium_c, svt_av1_apply_temporal_filter_planewise_medium_avx2);
-    SET_AVX2(svt_av1_apply_temporal_filter_planewise_medium_hbd, svt_av1_apply_temporal_filter_planewise_medium_hbd_c, svt_av1_apply_temporal_filter_planewise_medium_hbd_avx2);
-    SET_AVX2(svt_av1_apply_temporal_filter_planewise_fast, svt_av1_apply_temporal_filter_planewise_fast_c, svt_av1_apply_temporal_filter_planewise_fast_avx2);
-    SET_AVX2(svt_av1_apply_temporal_filter_planewise_fast_hbd, svt_av1_apply_temporal_filter_planewise_fast_hbd_c, svt_av1_apply_temporal_filter_planewise_fast_hbd_avx2);
+    SET_SSE41_AVX2(svt_av1_apply_temporal_filter_planewise, svt_av1_apply_temporal_filter_planewise_c, svt_av1_apply_temporal_filter_planewise_sse4_1, svt_av1_apply_temporal_filter_planewise_avx2);
+    SET_SSE41_AVX2(svt_av1_apply_temporal_filter_planewise_hbd, svt_av1_apply_temporal_filter_planewise_hbd_c, svt_av1_apply_temporal_filter_planewise_hbd_sse4_1, svt_av1_apply_temporal_filter_planewise_hbd_avx2);
+    SET_SSE41_AVX2(svt_av1_apply_temporal_filter_planewise_medium, svt_av1_apply_temporal_filter_planewise_medium_c, svt_av1_apply_temporal_filter_planewise_medium_sse4_1, svt_av1_apply_temporal_filter_planewise_medium_avx2);
+    SET_SSE41_AVX2(svt_av1_apply_temporal_filter_planewise_medium_hbd, svt_av1_apply_temporal_filter_planewise_medium_hbd_c, svt_av1_apply_temporal_filter_planewise_medium_hbd_sse4_1, svt_av1_apply_temporal_filter_planewise_medium_hbd_avx2);
+    SET_SSE41_AVX2(svt_av1_apply_temporal_filter_planewise_fast, svt_av1_apply_temporal_filter_planewise_fast_c, svt_av1_apply_temporal_filter_planewise_fast_sse4_1, svt_av1_apply_temporal_filter_planewise_fast_avx2);
+    SET_SSE41_AVX2(svt_av1_apply_temporal_filter_planewise_fast_hbd, svt_av1_apply_temporal_filter_planewise_fast_hbd_c, svt_av1_apply_temporal_filter_planewise_fast_hbd_sse4_1, svt_av1_apply_temporal_filter_planewise_fast_hbd_avx2);
     SET_AVX2(get_final_filtered_pixels, get_final_filtered_pixels_c, get_final_filtered_pixels_avx2);
     SET_AVX2(apply_filtering_central, apply_filtering_central_c, apply_filtering_central_avx2);
     SET_AVX2(apply_filtering_central_highbd, apply_filtering_central_highbd_c, apply_filtering_central_highbd_avx2);
@@ -431,7 +431,7 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
     SET_AVX2(svt_av1_k_means_dim2, svt_av1_k_means_dim2_c, svt_av1_k_means_dim2_avx2);
     SET_AVX2(svt_av1_calc_indices_dim1, svt_av1_calc_indices_dim1_c, svt_av1_calc_indices_dim1_avx2);
     SET_AVX2(svt_av1_calc_indices_dim2, svt_av1_calc_indices_dim2_c, svt_av1_calc_indices_dim2_avx2);
-    SET_AVX2(variance_highbd, variance_highbd_c, variance_highbd_avx2);
+    SET_SSE41_AVX2(variance_highbd, variance_highbd_c, variance_highbd_sse4_1, variance_highbd_avx2);
     SET_AVX2(svt_av1_haar_ac_sad_8x8_uint8_input, svt_av1_haar_ac_sad_8x8_uint8_input_c, svt_av1_haar_ac_sad_8x8_uint8_input_avx2);
     SET_SSE41_AVX2(svt_pme_sad_loop_kernel, svt_pme_sad_loop_kernel_c, svt_pme_sad_loop_kernel_sse4_1, svt_pme_sad_loop_kernel_avx2);
     SET_AVX2(svt_unpack_and_2bcompress, svt_unpack_and_2bcompress_c, svt_unpack_and_2bcompress_avx2);

@@ -592,6 +592,7 @@ TEST_P(HbdSquareVarianceNoRoundTest, MatchTest) {
 INSTANTIATE_TEST_CASE_P(
     Variance, HbdSquareVarianceNoRoundTest,
     ::testing::Combine(::testing::Values(16, 32),
-                       ::testing::Values(variance_highbd_avx2)));
+                       ::testing::Values(variance_highbd_sse4_1,
+                                         variance_highbd_avx2)));
 
 }  // namespace

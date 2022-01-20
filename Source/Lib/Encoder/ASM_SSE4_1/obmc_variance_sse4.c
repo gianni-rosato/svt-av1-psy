@@ -214,3 +214,74 @@ OBMC_SUBPIX_VAR(8, 32)
 OBMC_SUBPIX_VAR(32, 8)
 OBMC_SUBPIX_VAR(16, 64)
 OBMC_SUBPIX_VAR(64, 16)
+
+static void aom_highbd_calc16x16var_sse4_1(const uint16_t *src, int src_stride, const uint16_t *ref,
+                                         int ref_stride, uint32_t *sse, int *sum) {
+    __m128i       v_sum_d = _mm_setzero_si128();
+    __m128i       v_sse_d = _mm_setzero_si128();
+    const __m128i one     = _mm_set1_epi16(1);
+    for (int i = 0; i < 16; ++i) {
+        __m128i v_p_a     = _mm_loadu_si128((const __m128i *)src);
+        __m128i v_p_b     = _mm_loadu_si128((const __m128i *)ref);
+        __m128i v_diff    = _mm_sub_epi16(v_p_a, v_p_b);
+        __m128i v_sqrdiff = _mm_madd_epi16(v_diff, v_diff);
+        v_sum_d           = _mm_add_epi16(v_sum_d, v_diff);
+        v_sse_d           = _mm_add_epi32(v_sse_d, v_sqrdiff);
+        v_p_a             = _mm_loadu_si128((const __m128i *)(src + 8));
+        v_p_b             = _mm_loadu_si128((const __m128i *)(ref + 8));
+        v_diff            = _mm_sub_epi16(v_p_a, v_p_b);
+        v_sqrdiff         = _mm_madd_epi16(v_diff, v_diff);
+        v_sum_d           = _mm_add_epi16(v_sum_d, v_diff);
+        v_sse_d           = _mm_add_epi32(v_sse_d, v_sqrdiff);
+        src += src_stride;
+        ref += ref_stride;
+    }
+    __m128i v_sum0 = _mm_madd_epi16(v_sum_d, one);
+
+    __m128i v_d_l = _mm_unpacklo_epi32(v_sum0, v_sse_d);
+    __m128i v_d_h = _mm_unpackhi_epi32(v_sum0, v_sse_d);
+
+    __m128i v_d = _mm_add_epi32(v_d_l, v_d_h);
+    v_d         = _mm_add_epi32(v_d, _mm_srli_si128(v_d, 8));
+    *sum        = _mm_extract_epi32(v_d, 0);
+    *sse        = _mm_extract_epi32(v_d, 1);
+}
+
+static inline void variance_highbd_32x32_sse4_1(const uint16_t *src, int src_stride,
+                                              const uint16_t *ref, int ref_stride, uint32_t *sse,
+                                              int *sum) {
+    uint32_t sse0;
+    int      sum0;
+
+    for (int i = 0; i < 32; i += 16) {
+        for (int j = 0; j < 32; j += 16) {
+            aom_highbd_calc16x16var_sse4_1(src + src_stride * i + j,
+                                         src_stride,
+                                         ref + ref_stride * i + j,
+                                         ref_stride,
+                                         &sse0,
+                                         &sum0);
+            *sum += sum0;
+            *sse += sse0;
+        }
+    }
+}
+
+/*
+* Helper function to compute variance with 16 bit input for square blocks of size 16 and 32
+*/
+uint32_t variance_highbd_sse4_1(const uint16_t *a, int a_stride, const uint16_t *b, int b_stride,
+                              int w, int h, uint32_t *sse) {
+    assert(w == h);
+
+    int sum = 0;
+    *sse    = 0;
+
+    switch (w) {
+    case 16: aom_highbd_calc16x16var_sse4_1(a, a_stride, b, b_stride, sse, &sum); break;
+    case 32: variance_highbd_32x32_sse4_1(a, a_stride, b, b_stride, sse, &sum); break;
+    default: assert(0);
+    }
+
+    return *sse - ((int64_t)sum * sum) / (w * h);
+}

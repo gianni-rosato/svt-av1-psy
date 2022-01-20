@@ -137,7 +137,7 @@ class QuantizeBTest : public ::testing::TestWithParam<QuantizeParam> {
             quant_test_ = TEST_GET_PARAM(2);
         } else {
             quant_ref_ = svt_aom_highbd_quantize_b_c;
-            quant_test_ = svt_aom_highbd_quantize_b_avx2;
+            quant_test_ = TEST_GET_PARAM(2);
         }
         if (tx_size_ == TX_32X32) {
             log_scale = 1;
@@ -314,14 +314,21 @@ TEST_P(QuantizeBTest, input_random_all_q_all) {
 
 #ifndef FULL_UNIT_TEST
 INSTANTIATE_TEST_CASE_P(
-    Quant, QuantizeBTest,
+    QuantLBD, QuantizeBTest,
     ::testing::Combine(::testing::Values(static_cast<int>(TX_16X16),
                                          static_cast<int>(TX_32X32),
                                          static_cast<int>(TX_64X64)),
-                       ::testing::Values(static_cast<int>(AOM_BITS_8),
-                                         static_cast<int>(AOM_BITS_10)),
+                       ::testing::Values(static_cast<int>(AOM_BITS_8)),
                        ::testing::Values(svt_aom_quantize_b_sse4_1,
                                          svt_aom_quantize_b_avx2)));
+INSTANTIATE_TEST_CASE_P(
+    QuantHBD, QuantizeBTest,
+    ::testing::Combine(::testing::Values(static_cast<int>(TX_16X16),
+                                         static_cast<int>(TX_32X32),
+                                         static_cast<int>(TX_64X64)),
+                       ::testing::Values(static_cast<int>(AOM_BITS_10)),
+                       ::testing::Values(svt_aom_highbd_quantize_b_sse4_1,
+                                         svt_aom_highbd_quantize_b_avx2)));
 #else
 INSTANTIATE_TEST_CASE_P(
     Quant, QuantizeBTest,
