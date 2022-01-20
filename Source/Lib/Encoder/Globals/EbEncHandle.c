@@ -399,6 +399,7 @@ EbErrorType load_default_buffer_configuration_settings(
     EbErrorType           return_error = EB_ErrorNone;
     unsigned int lp_count   = get_num_processors();
     unsigned int core_count = lp_count;
+    uint32_t me_seg_h, me_seg_w;
 #if defined(_WIN32) || defined(__linux__)
     if (scs_ptr->static_config.target_socket != -1)
         core_count /= num_groups;
@@ -434,10 +435,20 @@ EbErrorType load_default_buffer_configuration_settings(
         ((scs_ptr->max_input_luma_width + 64) / 128) :
         ((scs_ptr->max_input_luma_width + 32) / 64);
 
-    uint32_t me_seg_h = (core_count == SINGLE_CORE_COUNT) ? 1 :
-        (((scs_ptr->max_input_luma_height + 32) / BLOCK_SIZE_64) < 6) ? 1 : 2;
-    uint32_t me_seg_w = (core_count == SINGLE_CORE_COUNT) ? 1 :
-        (((scs_ptr->max_input_luma_width + 32) / BLOCK_SIZE_64) < 10) ? 1 : 3;
+    if (scs_ptr->static_config.rate_control_mode != 0)
+    {
+        me_seg_h = (core_count == SINGLE_CORE_COUNT) ? 1 :
+            (((scs_ptr->max_input_luma_height + 32) / BLOCK_SIZE_64) < 6) ? 1 : 8;
+        me_seg_w = (core_count == SINGLE_CORE_COUNT) ? 1 :
+            (((scs_ptr->max_input_luma_width + 32) / BLOCK_SIZE_64) < 10) ? 1 : 6;
+
+    }
+    else {
+        me_seg_h = (core_count == SINGLE_CORE_COUNT) ? 1 :
+            (((scs_ptr->max_input_luma_height + 32) / BLOCK_SIZE_64) < 6) ? 1 : 2;
+        me_seg_w = (core_count == SINGLE_CORE_COUNT) ? 1 :
+            (((scs_ptr->max_input_luma_width + 32) / BLOCK_SIZE_64) < 10) ? 1 : 3;
+    }
     // ME segments
     scs_ptr->me_segment_row_count_array[0] = me_seg_h;
     scs_ptr->me_segment_row_count_array[1] = me_seg_h;
@@ -510,8 +521,17 @@ EbErrorType load_default_buffer_configuration_settings(
     scs_ptr->rest_segment_column_count =  MIN(rest_seg_w, 6);
     scs_ptr->rest_segment_row_count =  MIN(rest_seg_h, 4);
 
-    scs_ptr->tf_segment_column_count = me_seg_w;//1;//
-    scs_ptr->tf_segment_row_count =  me_seg_h;//1;//
+    if (scs_ptr->static_config.rate_control_mode != 0)
+    {
+        scs_ptr->tf_segment_column_count = 15;
+        scs_ptr->tf_segment_row_count = 15;
+
+    }
+    else
+    {
+        scs_ptr->tf_segment_column_count = me_seg_w;//1;//
+        scs_ptr->tf_segment_row_count = me_seg_h;//1;//
+    }
 
     // adjust buffer count for superres
     uint32_t superres_count = (scs_ptr->static_config.superres_mode == SUPERRES_AUTO &&
@@ -615,22 +635,32 @@ EbErrorType load_default_buffer_configuration_settings(
         }
         //Configure max needed buffers to process 1+n_extra_mg Mini-Gops in the pipeline. n extra MGs to feed to picMgr on top of current one.
         uint32_t n_extra_mg;
-        if ((core_count < PARALLEL_LEVEL_4_RANGE) || (scs_ptr->input_resolution > INPUT_SIZE_8K_RANGE)){
-            n_extra_mg = 0;
-        }
-        else if ((core_count >= PARALLEL_LEVEL_4_RANGE) &&  (core_count < PARALLEL_LEVEL_8_RANGE)) {
-            n_extra_mg = 1;
-        }
-        else if ((core_count >= PARALLEL_LEVEL_8_RANGE) &&  (core_count < PARALLEL_LEVEL_16_RANGE)) {
-            n_extra_mg = 2;
-        }
-        else if ((core_count >= PARALLEL_LEVEL_16_RANGE) && (core_count < PARALLEL_LEVEL_32_RANGE)) {
-            n_extra_mg = 3;
+        if (scs_ptr->static_config.rate_control_mode != 0)
+        {
+            if ((core_count < PARALLEL_LEVEL_4_RANGE) || (scs_ptr->input_resolution > INPUT_SIZE_8K_RANGE)) {
+                n_extra_mg = 0;
+            }
+            else {
+                n_extra_mg = scs_ptr->input_resolution <= INPUT_SIZE_1080p_RANGE ? 2 : 1;
+            }
         }
         else {
-            n_extra_mg = scs_ptr->input_resolution <= INPUT_SIZE_1080p_RANGE ? 6 : scs_ptr->input_resolution <= INPUT_SIZE_8K_RANGE ? 5 : 0;
+            if ((core_count < PARALLEL_LEVEL_4_RANGE) || (scs_ptr->input_resolution > INPUT_SIZE_8K_RANGE)) {
+                n_extra_mg = 0;
+            }
+            else if ((core_count >= PARALLEL_LEVEL_4_RANGE) && (core_count < PARALLEL_LEVEL_8_RANGE)) {
+                n_extra_mg = 1;
+            }
+            else if ((core_count >= PARALLEL_LEVEL_8_RANGE) && (core_count < PARALLEL_LEVEL_16_RANGE)) {
+                n_extra_mg = 2;
+            }
+            else if ((core_count >= PARALLEL_LEVEL_16_RANGE) && (core_count < PARALLEL_LEVEL_32_RANGE)) {
+                n_extra_mg = 3;
+            }
+            else {
+                n_extra_mg = scs_ptr->input_resolution <= INPUT_SIZE_1080p_RANGE ? 6 : scs_ptr->input_resolution <= INPUT_SIZE_8K_RANGE ? 5 : 0;
+            }
         }
-
         max_input  = min_input + (1 + mg_size) * n_extra_mg;
         max_parent = max_input;
         max_child = (mg_size / 2) * (n_extra_mg + 1);
