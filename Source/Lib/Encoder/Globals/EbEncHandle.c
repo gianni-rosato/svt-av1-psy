@@ -661,6 +661,9 @@ EbErrorType load_default_buffer_configuration_settings(
                 n_extra_mg = scs_ptr->input_resolution <= INPUT_SIZE_1080p_RANGE ? 6 : scs_ptr->input_resolution <= INPUT_SIZE_8K_RANGE ? 5 : 0;
             }
         }
+#if RC_NO_R2R
+    n_extra_mg = 0;
+#endif
         max_input  = min_input + (1 + mg_size) * n_extra_mg;
         max_parent = max_input;
         max_child = (mg_size / 2) * (n_extra_mg + 1);
@@ -3289,10 +3292,13 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
             tpl_lad_mg = 0;
 
         // special conditions for higher resolutions in order to decrease memory usage for tpl_lad_mg
+#if !RC_NO_R2R
         if (scs_ptr->static_config.logical_processors == 1 && scs_ptr->input_resolution >= INPUT_SIZE_4K_RANGE && scs_ptr->static_config.hierarchical_levels >= 4) {
             tpl_lad_mg = 0;
         }
-        else if (scs_ptr->input_resolution >= INPUT_SIZE_8K_RANGE && scs_ptr->static_config.hierarchical_levels >= 4){
+        else
+#endif
+       if (scs_ptr->input_resolution >= INPUT_SIZE_8K_RANGE && scs_ptr->static_config.hierarchical_levels >= 4) {
             tpl_lad_mg = 0;
         }
 
