@@ -390,9 +390,7 @@ EbErrorType copy_sequence_control_set(SequenceControlSet *dst, SequenceControlSe
     dst->max_heirachical_level         = src->max_heirachical_level;
     dst->speed_control_flag            = src->speed_control_flag;
     dst->tpl_level = src->tpl_level;
-#if FTR_SKIP_VAR
     dst->calculate_variance = src->calculate_variance;
-#endif
 
     return EB_ErrorNone;
 }

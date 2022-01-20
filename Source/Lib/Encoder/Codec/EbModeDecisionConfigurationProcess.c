@@ -609,7 +609,6 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         pcs_ptr->txt_level = (pcs_ptr->temporal_layer_index == 0) ? 1 : 3;
     else if (enc_mode <= ENC_M8)
         pcs_ptr->txt_level = 5;
-#if TUNE_M12_M13_LVLS
     else if (enc_mode <= ENC_M11) {
         pcs_ptr->txt_level = pcs_ptr->temporal_layer_index == 0 ? 6 : 8;
         if (pcs_ptr->ref_intra_percentage < 85 && pcs_ptr->temporal_layer_index &&
@@ -626,18 +625,6 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     }
     else
         pcs_ptr->txt_level = 0;
-#else
-    else if (enc_mode <= ENC_M13) {
-        pcs_ptr->txt_level = pcs_ptr->temporal_layer_index == 0 ? 6 : 8;
-        if (pcs_ptr->ref_intra_percentage < 85 &&
-            pcs_ptr->temporal_layer_index &&
-            pcs_ptr->parent_pcs_ptr->input_resolution > INPUT_SIZE_720p_RANGE && !pcs_ptr->parent_pcs_ptr->sc_class1) {
-            pcs_ptr->txt_level = 0;
-        }
-    }
-    else
-        pcs_ptr->txt_level = 0;
-#endif
 
     // Set the level for the txt shortcut feature
     // Any tx_shortcut_level having the chroma detector off in REF frames should be reserved for M13+
@@ -935,16 +922,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         pcs_ptr->temporal_layer_index);
     if (scs_ptr->super_block_size == 64) {
         if (slice_type == I_SLICE) {
-#if FTR_SKIP_VAR
             pcs_ptr->pic_depth_removal_level = 0;
-#else
-            if (ppcs->sc_class1)
-                pcs_ptr->pic_depth_removal_level = 0;
-            else if (enc_mode <= ENC_M12)
-                pcs_ptr->pic_depth_removal_level = 0;
-            else
-                pcs_ptr->pic_depth_removal_level = 1;
-#endif
         } else {
             // Set depth_removal_level_controls
             if (pcs_ptr->parent_pcs_ptr->sc_class1) {
@@ -1017,21 +995,12 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
                     pcs_ptr->pic_depth_removal_level = is_base ? 3 : 8;
             }
             else {
-#if TUNE_M12_M13_LVLS
                 if (input_resolution <= INPUT_SIZE_360p_RANGE)
                     pcs_ptr->pic_depth_removal_level = 7;
                 else if (input_resolution <= INPUT_SIZE_480p_RANGE)
                     pcs_ptr->pic_depth_removal_level = is_base ? 9 : 11;
                 else
                     pcs_ptr->pic_depth_removal_level = is_base ? 9 : 14;
-#else
-                if (input_resolution <= INPUT_SIZE_360p_RANGE)
-                    pcs_ptr->pic_depth_removal_level = is_base ? 3 : 7;
-                else if (input_resolution <= INPUT_SIZE_480p_RANGE)
-                    pcs_ptr->pic_depth_removal_level = is_base ? 5 : 11;
-                else
-                    pcs_ptr->pic_depth_removal_level = is_base ? 5 : 14;
-#endif
             }
         }
     }
@@ -1063,23 +1032,13 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         if (enc_mode <= ENC_M7)
             pcs_ptr->pic_lpd1_lvl = 0;
         else if (enc_mode <= ENC_M9)
-#if TUNE_M12_M13_LVLS
             pcs_ptr->pic_lpd1_lvl = is_ref ? 0 : 1;
-#else
-            pcs_ptr->pic_lpd1_lvl = (input_resolution <= INPUT_SIZE_480p_RANGE) ? 0
-                                                                                : (is_ref ? 0 : 1);
-#endif
         else if (enc_mode <= ENC_M10)
             pcs_ptr->pic_lpd1_lvl = is_ref ? 0 : 2;
-#if TUNE_M12_M13_LVLS
         else if (enc_mode <= ENC_M11)
             pcs_ptr->pic_lpd1_lvl = is_base ? 0 : 2;
         else
             pcs_ptr->pic_lpd1_lvl = is_base ? 0 : 4;
-#else
-        else
-            pcs_ptr->pic_lpd1_lvl = is_base ? 0 : 2;
-#endif
     }
     else if (enc_mode <= ENC_M9)
         pcs_ptr->pic_lpd1_lvl = 0;
@@ -1090,11 +1049,8 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     else if (enc_mode <= ENC_M12)
         pcs_ptr->pic_lpd1_lvl = is_base ? 0 : 4;
     else
-#if FASTER_M13_LPD1
         pcs_ptr->pic_lpd1_lvl = is_base ? 0 : 6;
-#else
-        pcs_ptr->pic_lpd1_lvl = is_base ? 0 : 5;
-#endif
+
     // Can only use light-PD1 under the following conditions
     // There is another check before PD1 is called; pred_depth_only is not checked here, because some modes
     // may force pred_depth_only at the light-pd1 detector

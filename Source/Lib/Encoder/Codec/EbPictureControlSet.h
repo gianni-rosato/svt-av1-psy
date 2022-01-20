@@ -314,10 +314,7 @@ typedef struct PictureControlSet {
     uint8_t *    sb_intra;
     uint8_t *    sb_skip;
     uint8_t *    sb_64x64_mvp;
-#if NEW_LPD1_DET
-    uint32_t*    sb_me_64x64_dist;
-    uint32_t*    sb_me_8x8_cost_var;
-#endif
+
     // Mode Decision Neighbor Arrays
     NeighborArrayUnit **md_intra_luma_mode_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
     NeighborArrayUnit **md_skip_flag_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
@@ -1146,9 +1143,7 @@ typedef struct PictureControlSetInitData {
     uint8_t use8blk;
     uint8_t reduce_me_search;
     uint8_t input_resolution;
-#if FTR_SKIP_VAR
     uint8_t calculate_variance;
-#endif
 } PictureControlSetInitData;
 
 typedef struct Av1Comp {

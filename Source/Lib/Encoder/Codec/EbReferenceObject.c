@@ -116,10 +116,8 @@ static void svt_reference_object_dctor(EbPtr p) {
     EB_FREE_ARRAY(obj->sb_intra);
     EB_FREE_ARRAY(obj->sb_skip);
     EB_FREE_ARRAY(obj->sb_64x64_mvp);
-#if NEW_LPD1_DET
     EB_FREE_ARRAY(obj->sb_me_64x64_dist);
     EB_FREE_ARRAY(obj->sb_me_8x8_cost_var);
-#endif
     for (uint8_t denom_idx = 0; denom_idx < NUM_SCALES; denom_idx++) {
         if (obj->downscaled_reference_picture[denom_idx] != NULL) {
             EB_DELETE(obj->downscaled_reference_picture[denom_idx]);
@@ -203,10 +201,8 @@ EbErrorType svt_reference_object_ctor(EbReferenceObject *reference_object,
     EB_MALLOC_ARRAY(reference_object->sb_intra, picture_buffer_desc_init_data_ptr->sb_total_count);
     EB_MALLOC_ARRAY(reference_object->sb_skip, picture_buffer_desc_init_data_ptr->sb_total_count);
     EB_MALLOC_ARRAY(reference_object->sb_64x64_mvp, picture_buffer_desc_init_data_ptr->sb_total_count);
-#if NEW_LPD1_DET
     EB_MALLOC_ARRAY(reference_object->sb_me_64x64_dist, picture_buffer_desc_init_data_ptr->sb_total_count);
     EB_MALLOC_ARRAY(reference_object->sb_me_8x8_cost_var, picture_buffer_desc_init_data_ptr->sb_total_count);
-#endif
     return EB_ErrorNone;
 }
 

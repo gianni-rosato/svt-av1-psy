@@ -209,10 +209,6 @@ void picture_control_set_dctor(EbPtr p) {
     EB_FREE_ARRAY(obj->sb_intra);
     EB_FREE_ARRAY(obj->sb_skip);
     EB_FREE_ARRAY(obj->sb_64x64_mvp);
-#if NEW_LPD1_DET
-    EB_FREE_ARRAY(obj->sb_me_64x64_dist);
-    EB_FREE_ARRAY(obj->sb_me_8x8_cost_var);
-#endif
     EB_DELETE(obj->bitstream_ptr);
     EB_DELETE_PTR_ARRAY(obj->entropy_coding_info, tile_cnt);
 
@@ -517,10 +513,6 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
     EB_MALLOC_ARRAY(object_ptr->sb_intra, object_ptr->sb_total_count);
     EB_MALLOC_ARRAY(object_ptr->sb_skip, object_ptr->sb_total_count);
     EB_MALLOC_ARRAY(object_ptr->sb_64x64_mvp, object_ptr->sb_total_count);
-#if NEW_LPD1_DET
-    EB_MALLOC_ARRAY(object_ptr->sb_me_64x64_dist, object_ptr->sb_total_count);
-    EB_MALLOC_ARRAY(object_ptr->sb_me_8x8_cost_var, object_ptr->sb_total_count);
-#endif
 
     sb_origin_x = 0;
     sb_origin_y = 0;
@@ -1270,12 +1262,10 @@ static void picture_parent_control_set_dctor(EbPtr ptr) {
 
     if (obj->is_chroma_downsampled_picture_ptr_owner)
         EB_DELETE(obj->chroma_downsampled_picture_ptr);
-#if FTR_SKIP_VAR
+
     if (obj->variance)
         EB_FREE_2D(obj->variance);
-#else
-    EB_FREE_2D(obj->variance);
-#endif
+
     if (obj->picture_histogram) {
         for (int region_in_picture_width_index = 0;
              region_in_picture_width_index < MAX_NUMBER_OF_REGIONS_IN_WIDTH;
@@ -1393,7 +1383,7 @@ EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr,
 
     object_ptr->data_ll_head_ptr         = (EbLinkedListNode *)NULL;
     object_ptr->app_out_data_ll_head_ptr = (EbLinkedListNode *)NULL;
-#if FTR_SKIP_VAR
+
     if (init_data_ptr->calculate_variance) {
         uint8_t block_count;
         if (init_data_ptr->enable_adaptive_quantization == 1)
@@ -1402,14 +1392,7 @@ EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr,
             block_count = 1;
         EB_MALLOC_2D(object_ptr->variance, object_ptr->sb_total_count, block_count);
     }
-#else
-    uint8_t block_count;
-    if (init_data_ptr->enable_adaptive_quantization == 1)
-        block_count = 85;
-    else
-        block_count = 1;
-    EB_MALLOC_2D(object_ptr->variance, object_ptr->sb_total_count, block_count);
-#endif
+
     uint8_t plane = init_data_ptr->scene_change_detection ? 3 : 0;
     if (plane) {
         EB_ALLOC_PTR_ARRAY(object_ptr->picture_histogram, MAX_NUMBER_OF_REGIONS_IN_WIDTH);

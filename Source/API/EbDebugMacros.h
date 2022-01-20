@@ -35,14 +35,6 @@
 extern "C" {
 #endif // __cplusplus
 
-#define TUNE_M12_M13_LVLS       1 // Tune M12/M13 levels for speedup
-#define FTR_SKIP_VAR            1 // Skip calculating variance
-#define FIX_ME_SCALING          1 // Fix ME width scaling so that min width is 8
-#define FASTER_M13_LPD1         1 // Faster LPD1 for M13
-#if FASTER_M13_LPD1
-#define NEW_LPD1_DET            1 // Improve the LPD1 detector
-#endif
-
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch

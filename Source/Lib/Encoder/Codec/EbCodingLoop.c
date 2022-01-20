@@ -2670,10 +2670,6 @@ EB_EXTERN EbErrorType av1_encdec_update(SequenceControlSet *scs, PictureControlS
     pcs->sb_intra[sb_addr]     = 0;
     pcs->sb_skip[sb_addr]      = 1;
     pcs->sb_64x64_mvp[sb_addr] = 0;
-#if NEW_LPD1_DET
-    pcs->sb_me_64x64_dist[sb_addr] = pcs->parent_pcs_ptr->me_64x64_distortion[sb_addr];
-    pcs->sb_me_8x8_cost_var[sb_addr] = pcs->parent_pcs_ptr->me_8x8_cost_variance[sb_addr];
-#endif
 
     // CU Loop
     uint32_t final_blk_itr = 0;

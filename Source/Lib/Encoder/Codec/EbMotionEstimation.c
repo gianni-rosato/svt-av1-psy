@@ -1344,14 +1344,7 @@ void integer_search_b64(PictureParentControlSet *pcs_ptr, uint32_t b64_index, ui
 
             // Constrain x_ME to be a multiple of 8 (round up)
             // Update ME search reagion size based on hme-data
-#if FIX_ME_SCALING
             search_area_width = (MAX(1, (search_area_width / context_ptr->reduce_me_sr_divisor[list_index][ref_pic_index])) + 7) & ~0x07;
-#else
-            search_area_width = ((search_area_width /
-                                  context_ptr->reduce_me_sr_divisor[list_index][ref_pic_index]) +
-                                 7) &
-                ~0x07;
-#endif
             search_area_height = MAX(
                 3,
                 (search_area_height /
