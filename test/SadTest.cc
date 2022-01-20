@@ -386,6 +386,14 @@ INSTANTIATE_TEST_CASE_P(
         ::testing::ValuesIn(TEST_BLOCK_SIZES),
         ::testing::Values(svt_nxm_sad_kernel_sub_sampled_helper_sse4_1,
                           svt_nxm_sad_kernel_sub_sampled_helper_avx2)));
+
+INSTANTIATE_TEST_CASE_P(
+    SAD_128x128, SADTestSubSample,
+    ::testing::Combine(
+        ::testing::ValuesIn(TEST_PATTERNS),
+        ::testing::Values(BlkSize(128, 128)),
+        ::testing::Values(svt_nxm_sad_kernel_sub_sampled_helper_sse4_1,
+                          svt_nxm_sad_kernel_sub_sampled_helper_avx2)));
 /**
  * @brief Unit test for SAD functions include:
  *  - svt_nxm_sad_kernel_helper_c

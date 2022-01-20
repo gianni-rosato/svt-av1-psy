@@ -3500,6 +3500,7 @@ uint32_t svt_av1_compute128x_m_sad_sse4_1_intrin(
         sad = _mm_add_epi32(sad, _mm_sad_epu8(_mm_loadu_si128((__m128i*)(src+64)), _mm_loadu_si128((__m128i*)(ref+64))));
         sad = _mm_add_epi32(sad, _mm_sad_epu8(_mm_loadu_si128((__m128i*)(src+80)), _mm_loadu_si128((__m128i*)(ref+80))));
         sad = _mm_add_epi32(sad, _mm_sad_epu8(_mm_loadu_si128((__m128i*)(src+96)), _mm_loadu_si128((__m128i*)(ref+96))));
+        sad = _mm_add_epi32(sad, _mm_sad_epu8(_mm_loadu_si128((__m128i*)(src+112)), _mm_loadu_si128((__m128i*)(ref+112))));
 
         sad = _mm_add_epi32(sad, _mm_sad_epu8(_mm_loadu_si128((__m128i*)(src+src_stride)), _mm_loadu_si128((__m128i*)(ref+ref_stride))));
         sad = _mm_add_epi32(sad, _mm_sad_epu8(_mm_loadu_si128((__m128i*)(src+src_stride+16)), _mm_loadu_si128((__m128i*)(ref+ref_stride+16))));
@@ -3508,6 +3509,7 @@ uint32_t svt_av1_compute128x_m_sad_sse4_1_intrin(
         sad = _mm_add_epi32(sad, _mm_sad_epu8(_mm_loadu_si128((__m128i*)(src+src_stride+64)), _mm_loadu_si128((__m128i*)(ref+ref_stride+64))));
         sad = _mm_add_epi32(sad, _mm_sad_epu8(_mm_loadu_si128((__m128i*)(src+src_stride+80)), _mm_loadu_si128((__m128i*)(ref+ref_stride+80))));
         sad = _mm_add_epi32(sad, _mm_sad_epu8(_mm_loadu_si128((__m128i*)(src+src_stride+96)), _mm_loadu_si128((__m128i*)(ref+ref_stride+96))));
+        sad = _mm_add_epi32(sad, _mm_sad_epu8(_mm_loadu_si128((__m128i*)(src+src_stride+112)), _mm_loadu_si128((__m128i*)(ref+ref_stride+112))));
 
         sad = _mm_add_epi32(sad, _mm_sad_epu8(_mm_loadu_si128((__m128i*)(src+2*src_stride)), _mm_loadu_si128((__m128i*)(ref+2*ref_stride))));
         sad = _mm_add_epi32(sad, _mm_sad_epu8(_mm_loadu_si128((__m128i*)(src+2*src_stride+16)), _mm_loadu_si128((__m128i*)(ref+2*ref_stride+16))));
@@ -3516,6 +3518,7 @@ uint32_t svt_av1_compute128x_m_sad_sse4_1_intrin(
         sad = _mm_add_epi32(sad, _mm_sad_epu8(_mm_loadu_si128((__m128i*)(src+2*src_stride+64)), _mm_loadu_si128((__m128i*)(ref+2*ref_stride+64))));
         sad = _mm_add_epi32(sad, _mm_sad_epu8(_mm_loadu_si128((__m128i*)(src+2*src_stride+80)), _mm_loadu_si128((__m128i*)(ref+2*ref_stride+80))));
         sad = _mm_add_epi32(sad, _mm_sad_epu8(_mm_loadu_si128((__m128i*)(src+2*src_stride+96)), _mm_loadu_si128((__m128i*)(ref+2*ref_stride+96))));
+        sad = _mm_add_epi32(sad, _mm_sad_epu8(_mm_loadu_si128((__m128i*)(src+2*src_stride+112)), _mm_loadu_si128((__m128i*)(ref+2*ref_stride+112))));
 
         sad = _mm_add_epi32(sad, _mm_sad_epu8(_mm_loadu_si128((__m128i*)(src+3 * src_stride )), _mm_loadu_si128((__m128i*)(ref+3 * ref_stride))));
         sad = _mm_add_epi32(sad, _mm_sad_epu8(_mm_loadu_si128((__m128i*)(src+3 * src_stride +16)), _mm_loadu_si128((__m128i*)(ref+3 * ref_stride+16))));
@@ -3524,6 +3527,7 @@ uint32_t svt_av1_compute128x_m_sad_sse4_1_intrin(
         sad = _mm_add_epi32(sad, _mm_sad_epu8(_mm_loadu_si128((__m128i*)(src+3 * src_stride +64)), _mm_loadu_si128((__m128i*)(ref+3 * ref_stride+64))));
         sad = _mm_add_epi32(sad, _mm_sad_epu8(_mm_loadu_si128((__m128i*)(src+3 * src_stride +80)), _mm_loadu_si128((__m128i*)(ref+3 * ref_stride+80))));
         sad = _mm_add_epi32(sad, _mm_sad_epu8(_mm_loadu_si128((__m128i*)(src+3 * src_stride +96)), _mm_loadu_si128((__m128i*)(ref+3 * ref_stride+96))));
+        sad = _mm_add_epi32(sad, _mm_sad_epu8(_mm_loadu_si128((__m128i*)(src+3 * src_stride +112)), _mm_loadu_si128((__m128i*)(ref+3 * ref_stride+112))));
 
         src += 4 * src_stride;
         ref += 4 * ref_stride;
