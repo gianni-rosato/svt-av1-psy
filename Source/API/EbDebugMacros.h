@@ -49,6 +49,11 @@ extern "C" {
 #define LAD_MG_PRINT            0 // Report LAD
 #define RC_NO_R2R               0 // This is a debugging flag for RC and makes encoder to run with no R2R in RC mode
                                   // Note that the speed might impacted significantly
+#if RC_NO_R2R
+#define REMOVE_LP1_LPN_DIFF     1 // Disallow single-thread/multi-thread differences
+#else
+#define REMOVE_LP1_LPN_DIFF     0 // Disallow single-thread/multi-thread differences
+#endif
 // Super-resolution debugging code
 #define DEBUG_SCALING           0
 #define DEBUG_TF                0
