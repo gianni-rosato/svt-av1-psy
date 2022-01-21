@@ -114,8 +114,7 @@ evaluated and the one that provides the best RD cost is selected.
 
 In distance-based prediction mode, the weighting applied to the two
 inter predictions is a function of the distance between the reference
-frames and the current frame. The idea is to provide more weight to the
-prediction from the closer reference frame. Let d0 and d1 denote the
+frames and the current frame. Let d0 and d1 denote the
 distances from the current frame to the forward and backward reference
 pictures. The weights depend on the ratio d1/d0, and on a set of the
 thresholds for the ratio. Let fwd\_offset and bck\_offset be the weights

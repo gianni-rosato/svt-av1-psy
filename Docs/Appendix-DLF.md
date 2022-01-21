@@ -310,7 +310,7 @@ filter14)
 
 | **Flag**                | **Level** | **Description**                                                                                                                                                                                                                                                                                         |
 | ----------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| -dlf                    | Configuration | 0: OFF (disable), 1: ON (DEFAULT)                                                                                                                                                                                                                                     |
+| --enable-dlf                    | Configuration | Deblocking loop filter control (0:ON (Default), 1: OFF)   |
 | DlfCtrls      | Picture   | Describes the Dlf control signal.                                                                                                                                                                                                           |
 | combine\_vert\_horz\_lf | Picture   | When set, it implies performing filtering of vertical edges in the current SB followed by filtering of horizontal edges in the preceding SB in the same SB row. When OFF, it implies performing filtering of vertical edges in the current SB followed by filtering of horizontal edges in the same SB. |
 

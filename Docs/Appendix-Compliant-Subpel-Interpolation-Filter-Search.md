@@ -1,6 +1,7 @@
 # Sub-pel Interpolation and Interpolation Filter Search
 
-## 1. Description of the algorithm
+## 1. Compliant Sub-Pel Interpolation
+### 1.1 Introduction
 
 Motion vectors in SVT-AV1 can be provided with up to eighth-pel accuracy
 for luma. The main compliant interpolation filters in AV1 are the
@@ -96,111 +97,80 @@ The steps involved in the process are outlined in the following:
 
 ##### Figure 2. Example of sub-pel calculations.
 
-## 2.  Implementation of the algorithm
+### 1.2  Implementation of the sub-pel search
+#### 1.2.1 Sub-pel search in the SVT-AV1 Encoder
 
-**Inputs:**
+Figure 3 illustrates the different encoder tasks that involve sub-pel search. The Motion Estimation (ME) performs a Hierarchical Motion Estimation (HME) for each single 64x64, and a Full-Pel search around the HME-MV for the square blocks from 8x8 to 64x64. Those operations are performed at the Motion Estimation Process where only source input pictures could be used as reference pictures. In the Mode Decision Process, where the reconstructed pictures could be used as reference pictures, full-pel MVs are derived for the 4x4, the 128x128 and the non-square bocks, a then sub-pel search could take place.
 
-  - Reference luminance samples.
+The sub-pel refinement could be performed at both partitioning decision pass 0 (PD_PASS_0) and the partitioning decision pass 1 (PD_PASS_1). However the refinement accuracy is always higher at PD_PASS_1. The sub-pel refinement is also considered in the Predictive Motion Estimation (PME) step.
 
-  - Source luminance samples.
+The sub-pel search deploys non-compliant/short filters (e.g., 4-tap or bilinear), and once all full-pel ME/PME MVs for a each given (list, reference) are refined, the MD candidates are constructed and then placed into the MD queue for evaluation through the different MD stages where the use of compliant filters becomes necessary (e.g., at MD_Stage_0 towards an accurate prediction, and at MD_Stage_3 towards compliant streams for the cases where the Encode-Pass is bypassed).
 
-  - frame\_type\_neighbor\_array
+![csifs_figure3](./img/csifs_figure3.png)
 
-  - interpolation\_type\_neighbor\_array
+Figure 3. Sub-pel calculations in the Mode Decision process.
 
-**Outputs**:
+#### 1.2.2 Search method
 
-  - Predicted block.
+The Sub-pel search is a logarithmic search that keeps stepping at 1/2-Pel units until no further block-error reduction, then repeats the same process for 1/4-Pel refinement and 1/8-Pel refinement. Along the way it skips many diagonal positions.
 
-**Control macros/flags**:
+#### 1.2.3 Sub-pel search control
 
-The control flags associated with interpolation filtering are indicated
-in Table 2 below.
+##### Table 2. Sub-Pel search control signals.
+| **Signal(s)**        | **Description**  |
+| -----------          | -----------------|
+| enabled              | Specifies whether the sub-pel search will be performed or not (0: OFF, 1: ON). |
+| subpel_search_type   | Specifies the interpolation filter tap (1: 2-tap filter, 2: 4-tap filter, 3: 8-tap filter). |
+| max_precision        | Specifies the refinement precision (or number of rounds) (0: 1/8-pel (3 rounds), 1: 1/4-pel (2 rounds), 2: 1/2-pel (1 round), 3: Full-pel-no refinement (0 round)). |
+| subpel_search_method | Specifies whether pruning will be applied to 1/2-pel position(s) or not (SUBPEL_TREE: No, SUBPEL_TREE_PRUNED: YES). |
+| subpel_iters_per_step| Specifies the maximum number of steps in the logarithmic sub-pel search before giving up.  |
+| pred_variance_th     | Specifies the full-pel prediction-block-variance threshold under which the sub-pel search is not performed; do not perform sub-pel if the variance of the full-pel prediction-block is low (where interpolation would unlikely modify the full-pel samples).  |
+| abs_th_mult          | Specifies the full-pel prediction-block-error-threshold below which sub-pel search is not performed; do not perform sub-pel if the prediction-block-error is already low.  |
+| round_dev_th         | Specifies the prediction-block-error deviation threshold between round-(N-1) and round-(N-2) under which the refinement is paused; pause the refinement if the prediction-block-error is not getting better through the process (the check takes place at only the 2nd round (prior to the 1/4-Pel refinement) or the 3rd round (prior to the 1/8-Pel refinement).  |
+| skip_diag_refinement | Specifies the refinement accuracy for diagonal position(s).  |
+| skip_zz_mv           | Specifies whether the sub-pel search will be performed  around (0,0) or not (0: OFF, 1: ON). |
 
-Table 2. Control flags for interpolation filtering.
+## 2. Interpolation Filter Search
+### 2.1 Search Method
 
-| **Flag**                     | **Level (sequence/Picture)** | **Description**                                                                                     |
-| ---------------------------- | ---------------------------- | --------------------------------------------------------------------------------------------------- |
-| allow\_high\_precision\_mv   | Picture                     | When set, it indicates that eighth-pel MV precision is active.                                      |
-| interpolation\_search\_level | Picture                      | Setting to decide on the tradeoff between complexity and performance in interpolation filter search |
+To account for the varying characteristics of the video picture in both the horizontal and vertical directions, the selection of the interpolation filter could be done independently for each of the two directions. The selection could be performed through an interpolation filter search, where in addition to the (Regular, Regular) vertical and horizontal filter pair, eight other combination pairs could be evaluated in motion compensation for the same motion vector. The selection of the pair to work with is based on a rate-distortion cost where the filter combination that provides the lowest rate-distortion cost is selected as the best filter pair. The selected filter pair (which corresponds to the best filter combination) is used in the Encode Pass final motion compensation in the case where the associated candidate is selected as the best candidate in inter-depth decision.
 
-## 3. Optimization of the algorithm
-
-To account for the varying characteristics of the video picture in both the horizontal and vertical directions, the selection of the interpolation filter could be done independently for each of the two directions. The selection could be performed through an interpolation filter search, where in addition to the (Regular, Regular) vertical and horizontal filter pair, eight other combination pairs could be evaluated in motion compensation for the same motion vector.  The selection of the pair to work with is based on a rate-distortion cost where the filter combination that provides the lowest rate-distortion cost is selected as the best filter pair. The selected filter pair (which corresponds to the best filter combination) is used in the encode pass final motion compensation in the case where the associated candidate is selected as the best candidate in inter-depth decision.
-
-  As depicted in the Figure 3 below, the interpolation filter search
-  consists of three main steps:
-
-<!-- end list -->
-
-  - Step1: Test Regular filters for both vertical and
-    horizontal directions.
-
-  - Step2: Fix the horizontal filter to be Regular and
-    search for the best vertical filter.
-
-  - Step3: Fix the vertical filter to be the best filter from
-    step 2 and search for the best horizontal filter.
+As depicted in the Figure 4 below, the interpolation filter search consists of three main steps:
+- Step1: Test Regular filters for both vertical and horizontal directions.
+- Step2: Fix the horizontal filter to be Regular and search for the best vertical filter.
+- Step3: Fix the vertical filter to be the best filter from step 2 and search for the best horizontal filter.
 
 ![csifsa_fig4](./img/csifsa_fig4.png)
+Figure 4. Diagram illustrating the interpolation filter search process.
 
-##### Figure 3. Diagram illustrating the interpolation filter search process.
+In the current implementation, the dual option is not active in any of the presets. Only (Regular, Regular), (Smooth, Smooth) and (Sharp, Sharp) are available.
 
-The optimization of the interpolation filter search is performed at
-two levels. The first level concerns the block sizes where interpolation
-search in invoked. The use of interpolation filter search could be
-restricted according to block size using the
-```interpolation_filter_search_blk_size``` flag as indicated in the
-Table 3 and Table 4 below.
+### 2.2 Optimization of the Interpolation Filter Search
 
-##### Table 3. Description of the different interpolation\_filter\_search\_blk\_size settings.
+Various signals are used to specify the interpolation filter search settings. The following table presents a brief description for each signal. These parameters are decided by ```interpolation_search_level```, which is also function of the enc_mode, input resolution, and skip selection at the reference frame(s) if available (for temporal layer 1 and higher). Basically, the higher the resolution and the skip selection at the reference frame(s), the higher is ```interpolation_search_level``` towards a faster interpolation filter search.
 
-| **interpolation\_filter\_search\_blk\_size** | **Description**                                     |
-| -------------------------------------------- | --------------------------------------------------- |
-| 0                                            | Interpolation filter search ON for 8x8 and above.   |
-| 1                                            | Interpolation filter search ON for 16x16 and above. |
-| 2                                            | Interpolation filter search ON for 32x32 and above. |
+The ```interpolation_search_level``` is set at the Mode Decision Configuration Process, while ```set_interpolation_search_level_ctrls()``` is called at the Mode Decision Process for only the second Partitioning Decision Pass (PD_PASS_1) as the  interpolation filter search is not used in the first Partitioning Decision Pass (PD_PASS_0) (i.e. (Regular, Regular) is used for all candidates).
 
-##### Table 4. interpolation\_filter\_search\_blk\_size settings as a function of the encoder preset.
+##### Table 3. Control flags for the interpolation filter search.
+| **Signal(s)**                  | **Description**  |
+| -----------                    | -----------------|
+| Level                          | Specifies the MD Stage where the interpolation filter search will take place (IFS_MDS0, IFS_MDS1, IFS_MDS2, or IFS_MDS3 for MD Stage 0, MD Stage 1, MD Stage 2, and MD Stage 3, respectively).   |
+| quarter_pel_only               | Specifies whether the interpolation filter search will use 1/8-Pel precision or 1/4 -Pel precision (0: 1/8-Pel precision, 1: 1/4 -Pel precision).|
+| modulate_filter_per_resolution | Specifies whether certain combination(s) will be skipped depending on the input resolution or not (0: NO, 1: only (regular, regular) and (sharp, sharp) if 480p and below, and only (regular, regular) and (smooth, smooth) otherwise.  |
+| early_skip                     | Specifies whether an early interpolation filter search exit could take place based on the cost of signaling a switchable filter type (0: OFF, 1: ON).|
+| subsampled_distortion          | Specifies whether sub-sampled input/prediction will be used at the distortion computation (0: OFF, 1: ON, NA for block height 16 and lower).  |
+| skip_sse_rd_model              | Specifies whether a model will be used for rate estimation or not (0: NO (assume rate is 0), 1: estimate rate from distortion).  |
 
-| **Encoder Preset** | **interpolation\_filter\_search\_blk\_size** |
-| ------------------ | -------------------------------------------- |
-| 0 to 4             | 0                                            |
-| 5 to 8             | 1                                            |
+## 3. Signaling
 
-The second level of optimization concerns where in the MD pipeline
-interpolation filter search is used. The flag
-```interpolation_search_level``` is used to indicate different levels of
-quality-complexity tradeoff points in term of interpolation filter
-search, as indicated in the Table 5 below.
-
-##### Table 5. Description of the different settings of the interpolation\_search\_level flag.
-
-| **interpolation\_search\_level**         | **Description**                                                                                                     |
-| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| IT\_SEARCH\_OFF (0)                      | Disable interpolation search                                                                                        |
-| IT\_SEARCH\_INTER\_DEPTH (1)             | Apply interpolation search at inter depth decision level on the best candidate if it is applicable                  |
-| IT\_SEARCH\_FULL\_LOOP (2)               | Apply interpolation search at the full-loop level on the survived mode candidate from the fast-loop when applicable |
-| IT\_SEARCH\_FAST\_LOOP\_UV\_BLIND (3)    | Apply interpolation in the fast-loop for luminance only when applicable                                             |
-| IT\_SEARCH\_FAST\_LOOP (4)               | Apply interpolation in the fast-loop when applicable                                                                |
-
-The ```interpolation_search_level``` is set as a function the PD\_PASS
-as indicated in Table 6 below.
-
-##### Table 6. Description of the interpolation\_search\_level as a function of the encoder preset.
-
-![img_table6](./img/csifsa_table6.png)
-
-## 4.  Signaling
-
-Each of the vertical filter type and horizontal filter type are
-signaled independently in the bitstream.
+Each of the vertical filter type and horizontal filter type are signaled independently in the bitstream.
 
 ## Notes
 
-The feature settings that are described in this document were compiled at v0.8.3 of the code and may not reflect the current status of the code. The description in this document represents an example showing  how features would interact with the SVT architecture. For the most up-to-date settings, it's recommended to review the section of the code implementing this feature.
+The feature settings that are described in this document were compiled at v0.9.0 of the code and may not reflect the current status of the code. The description in this document represents an example showing  how features would interact with the SVT architecture. For the most up-to-date settings, it's recommended to review the section of the code implementing this feature.
 
 ## References
 
-\[1\] C. Chiang, J Han, S. Vitvitskyy, D. Mukherjee, and Y. Xu,
-“Adaptive interpolation filter scheme in AV1,” International Conference on Image Processing, 2017.
+[1] Ching-Han Chiang, Jingning Han, Stan Vitvitskyy, Debargha Mukherjee, and Yaowu Xu, “Adaptive interpolation filter scheme in AV1,” International Conference on Image Processing, 2017.
+
+[2] Jingning Han, Bohan Li, Debargha Mukherjee, Ching-Han Chiang, Adrian Grange, Cheng Chen, Hui Su, Sarah Parker, Sai Deng, Urvang Joshi, Yue Chen, Yunqing Wang, Paul Wilkins, Yaowu Xu, James  Bankoski, “A Technical Overview of AV1,” Proceedings of the IEEE, vol. 109, no. 9, pp. 1435-1462, Sept. 2021.

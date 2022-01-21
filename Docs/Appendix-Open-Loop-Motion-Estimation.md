@@ -167,7 +167,6 @@ Reference pruning controls are set in ```set_me_hme_ref_prune_ctrls()```, with t
 If the (0,0) SAD is low, pre-HME and HME can be skipped, and the ME search area can be reduced.  The feature is controlled by ```me_early_exit_th```,
 which is the threshold used to determine if the (0,0) SAD is low enough to apply the optimizations.
 
-
 ## Notes
 
 The feature settings that are described in this document were compiled at v0.9.0 of the code and may not reflect the current status of the code. The description in this document represents an example showing how features would interact with the SVT architecture. For the most up-to-date settings, it's recommended to review the section of the code implementing this feature.

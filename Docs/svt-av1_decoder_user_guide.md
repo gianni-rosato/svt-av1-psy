@@ -38,4 +38,3 @@ The sample application typically takes the following command line parameters:
 ```
 
 Sample usage: `SvtAv1DecApp.exe -i test.ivf -o out.yuv`
-

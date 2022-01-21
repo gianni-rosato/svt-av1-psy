@@ -121,6 +121,10 @@ The optimization of the OBMC algorithm is based on limiting the blocks where OBM
 
 The flag ```is_motion_mode_switchable specifyies``` if the motion mode can change from one block to another. As a result, a block-based field called ```motion_mode``` is sent to indicate, when set, that the type of motion for the block could be either SIMPLE_TRANSLATION, OBMC, or WARPED.
 
+## Notes
+
+The feature settings that are described in this document were compiled at v0.9.0 of the code and may not reflect the current status of the code. The description in this document represents an example showing  how features would interact with the SVT architecture. For the most up-to-date settings, it's recommended to review the section of the code implementing this feature.
+
 ## References
 
 \[1\] Yue Chen and Debargha Mukherjee, “Variable block-size overlapped block motion compensation in the next generation open-source video codec,” International Conference on Image Processing, pp. 938-942, 2017

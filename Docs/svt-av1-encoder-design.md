@@ -758,23 +758,23 @@ The following appendices highlight the design and implementation of features in 
 - [Compound Mode Prediction Appendix](Appendix-Compound-Mode-Prediction.md)
 - [Deblocking Loop Filter (LF) Appendix](Appendix-DLF.md)
 - [Film Grain Synthesis](Appendix-Film-Grain-Synthesis.md)
-- [Filter Intra Appendix](Appendix-Filter-Intra.md)
 - [Global Motion Appendix](Appendix-Global-Motion.md)
 - [Intra Block Copy Appendix](Appendix-Intra-Block-Copy.md)
+- [IPP Pass Appendix](Appendix-IPP-Pass.md)
 - [Local Warped Motion appendix](Appendix-Local-Warped-Motion.md)
 - [Mode Decision Appendix](Appendix-Mode-Decision.md)
 - [Motion Estimation Appendix](Appendix-Open-Loop-Motion-Estimation.md)
-- [Overlapped Block Motion Compensation Appendix](Appendix-Open-Block-Motion-Compensation.md)
+- [Overlapped Block Motion Compensation Appendix](Appendix-Overlapped-Block-Motion-Compensation.md)
 - [Palette Prediction Appendix](Appendix-Palette-Prediction.md)
+- [Rate Control Appendix](Appendix-Rate-Control.md)
+- [Recursive Intra Appendix](Appendix-Recursive-Intra.md)
 - [Restoration Filter Appendix](Appendix-Restoration-Filter.md)
 - [SQ Weight Appendix](Appendix-SQ-Weight.md)
-- [Subpel Interpolation in the Open Loop Motion Estimation Appendix](Appendix-Subpel-Interpolation-Open-Loop-ME.md)
 - [Super-resolution Appendix](Appendix-Super-Resolution.md)
 - [Temporal Dependency Model](Appendix-TPL.md)
 - [Transform Search Appendix](Appendix-TX-Search.md)
-- [Variance Based Adaptive Quantization Appendix](Appendix-Variance-Based-Adaptive-Quantization.md)
 
 
 ## Notes
 
-The information in this document was compiled at <mark>v0.8.3</mark> may not reflect the latest status of the encoder design. For the most up-to-date settings and implementation, it's recommended to visit the section of the code implementing the feature / section in question.
+The information in this document was compiled at <mark>v0.9.0</mark> may not reflect the latest status of the encoder design. For the most up-to-date settings and implementation, it's recommended to visit the section of the code implementing the feature / section in question.
