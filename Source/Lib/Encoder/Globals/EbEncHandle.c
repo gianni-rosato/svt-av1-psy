@@ -640,8 +640,14 @@ EbErrorType load_default_buffer_configuration_settings(
             if ((core_count < PARALLEL_LEVEL_4_RANGE) || (scs_ptr->input_resolution > INPUT_SIZE_8K_RANGE)) {
                 n_extra_mg = 0;
             }
+            else if ((core_count >= PARALLEL_LEVEL_4_RANGE) && (core_count < PARALLEL_LEVEL_8_RANGE)) {
+                n_extra_mg = 1;
+            }
+            else if ((core_count >= PARALLEL_LEVEL_8_RANGE) && (core_count < PARALLEL_LEVEL_16_RANGE)) {
+                n_extra_mg = 2;
+            }
             else {
-                n_extra_mg = scs_ptr->input_resolution <= INPUT_SIZE_1080p_RANGE ? 2 : 1;
+                n_extra_mg = 3;
             }
         }
         else {
@@ -661,7 +667,7 @@ EbErrorType load_default_buffer_configuration_settings(
                 n_extra_mg = scs_ptr->input_resolution <= INPUT_SIZE_1080p_RANGE ? 6 : scs_ptr->input_resolution <= INPUT_SIZE_8K_RANGE ? 5 : 0;
             }
         }
-        
+
         max_input  = min_input + (1 + mg_size) * n_extra_mg;
         max_parent = max_input;
         max_child = (mg_size / 2) * (n_extra_mg + 1);
