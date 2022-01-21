@@ -27,7 +27,7 @@ if(Git_FOUND AND EXISTS "${GIT_ROOT_DIR}/.git")
         ${GIT_EXECUTABLE}  -C ${GIT_ROOT_DIR}
             describe
             --tags --dirty --abbrev
-            --match "v[0-9].[0-9]*"
+            --always --match "v[0-9].[0-9]*"
         RESULT_VARIABLE git_describe_status
         OUTPUT_VARIABLE git_describe_output
         ERROR_VARIABLE git_describe_error
@@ -40,5 +40,7 @@ if(Git_FOUND AND EXISTS "${GIT_ROOT_DIR}/.git")
         set(PACKAGE_VERSION_STRING ${git_describe_output})
     endif()
 endif()
+
+message(STATUS "Configured version: ${PACKAGE_VERSION_STRING}")
 
 configure_file(${INPUT_FILE} ${OUTPUT_FILE} @ONLY)

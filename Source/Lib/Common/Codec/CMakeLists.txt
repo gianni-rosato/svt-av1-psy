@@ -19,7 +19,7 @@ else()
         ${CMAKE_COMMAND}
             -D INPUT_FILE=${CMAKE_CURRENT_SOURCE_DIR}/EbVersion.h.in
             -D OUTPUT_FILE=EbVersion.h
-            -D GIT_ROOT_DIR=${CMAKE_SOURCE_DIR}
+            -D GIT_ROOT_DIR=${PROJECT_SOURCE_DIR}
             -D PACKAGE_VERSION_STRING=${PROJECT_VERSION}
             -P ${CMAKE_CURRENT_SOURCE_DIR}/ConfigureGitVersion.cmake
         BYPRODUCTS EbVersion.h
