@@ -54,6 +54,7 @@ extern "C" {
 #else
 #define REMOVE_LP1_LPN_DIFF     0 // Disallow single-thread/multi-thread differences
 #endif
+#define FIX_TBR                 1 // Fix target bitrate generation overflow
 // Super-resolution debugging code
 #define DEBUG_SCALING           0
 #define DEBUG_TF                0
