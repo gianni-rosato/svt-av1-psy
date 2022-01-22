@@ -234,14 +234,9 @@ static int get_twopass_worst_quality(PictureParentControlSet *pcs_ptr, const dou
         //    : cpi->common.mi_params.MBs;
         const int    active_mbs              = AOMMAX(1, num_mbs - (int)(num_mbs * inactive_zone));
         const double av_err_per_mb           = section_err / active_mbs;
-#if FIX_TBR
         const int    target_norm_bits_per_mb = (int)(((uint64_t)section_target_bandwidth << BPER_MB_NORMBITS) /
             active_mbs);
-#else
-        const int    target_norm_bits_per_mb = (int)((uint64_t)section_target_bandwidth
-                                                  << BPER_MB_NORMBITS) /
-            active_mbs;
-#endif
+
         int rate_err_tol = AOMMIN(rc_cfg->under_shoot_pct, rc_cfg->over_shoot_pct);
 
         // Try and pick a max Q that will be high enough to encode the

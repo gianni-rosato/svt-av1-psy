@@ -64,6 +64,8 @@ void assert_err(uint32_t condition, char *err_msg);
 #define AOM_LEFT_TOP_MARGIN_SCALED(subsampling) \
     (AOM_LEFT_TOP_MARGIN_PX(subsampling) << SCALE_SUBPEL_BITS)
 
+#define DS_SC_FACT              23
+
 typedef struct MrpCtrls {
     // Referencing scheme
     uint8_t referencing_scheme; // 0 or 1
