@@ -43,7 +43,7 @@
 #include "third_party/safestringlib/safe_str_lib.h"
 #endif
 
-#ifndef __APPLE__
+#ifdef __GLIBC__
 #include <malloc.h>
 #endif
 
