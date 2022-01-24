@@ -118,11 +118,11 @@ EB_API size_t svt_metadata_size(SvtMetadataArrayT *metadata, const EbAv1Metadata
     return sz;
 }
 
-static inline uint16_t swap16(uint16_t x) { return x << 8 | x >> 8; }
-static inline uint32_t swap32(uint32_t x) {
+static inline uint16_t intswap16(uint16_t x) { return x << 8 | x >> 8; }
+static inline uint32_t intswap32(uint32_t x) {
     return x >> 24 | (x >> 8 & 0xff00) | (x << 8 & 0xff0000) | x << 24;
 }
-static inline uint16_t clip16be(double x) { return swap16(x > 65535 ? 65535 : (uint16_t)x); }
+static inline uint16_t clip16be(double x) { return intswap16(x > 65535 ? 65535 : (uint16_t)x); }
 
 // Parses "(d1,d2)" into two double values and returns the pointer to after the closing parenthesis.
 // returns NULL if it fails
@@ -138,7 +138,7 @@ static inline char *parse_double(const char *p, double *d1, double *d2) {
 }
 
 EB_API int svt_aom_parse_mastering_display(struct EbSvtAv1MasteringDisplayInfo *mdi,
-                                           const char *                         md_str) {
+                                           const char                          *md_str) {
     if (!mdi || !md_str)
         return 0;
     double gx = 0, gy = 0, bx = 0, by = 0, rx = 0, ry = 0, wx = 0, wy = 0, max_luma = 0,
@@ -191,15 +191,15 @@ EB_API int svt_aom_parse_mastering_display(struct EbSvtAv1MasteringDisplayInfo *
         .x = clip16be(wx),
         .y = clip16be(wy),
     };
-    mdi->max_luma = swap32((uint32_t)max_luma);
-    mdi->min_luma = swap32((uint32_t)min_luma);
+    mdi->max_luma = intswap32((uint32_t)max_luma);
+    mdi->min_luma = intswap32((uint32_t)min_luma);
     return 1;
 }
 
 EB_API int svt_aom_parse_content_light_level(struct EbContentLightLevel *cll, const char *cll_str) {
     if (!cll || !cll_str)
         return 0;
-    char * endptr;
+    char  *endptr;
     double max_cll = strtod(cll_str, &endptr);
     if (*endptr != ',')
         goto fail;
