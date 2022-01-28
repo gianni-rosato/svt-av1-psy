@@ -33,6 +33,7 @@
 #include <errno.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <unistd.h>
 #endif
 
 #if defined(_MSC_VER)
@@ -75,9 +76,10 @@ EbErrorType decode_multiple_obu(EbDecHandle *dec_handle_ptr, uint8_t **data, siz
                                 uint32_t is_annexb);
 
 static void dec_switch_to_real_time() {
-#if !defined(_WIN32) && !DISABLE_REALTIME
-    (void)pthread_setschedparam(
-        pthread_self(), SCHED_FIFO, &(struct sched_param){.sched_priority = 99});
+#if !defined(_WIN32)
+    if (!geteuid())
+        (void)pthread_setschedparam(
+            pthread_self(), SCHED_FIFO, &(struct sched_param){.sched_priority = 99});
 #endif
 }
 

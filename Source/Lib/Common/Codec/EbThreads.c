@@ -17,8 +17,12 @@
 
 #if defined(__has_feature)
 #if __has_feature(thread_sanitizer)
-#define EB_THREAD_SANITIZER_ENABLED
+#define EB_THREAD_SANITIZER_ENABLED 1
 #endif
+#endif
+
+#ifndef EB_THREAD_SANITIZER_ENABLED
+#define EB_THREAD_SANITIZER_ENABLED 0
 #endif
 
 /****************************************
@@ -74,43 +78,30 @@ EbHandle svt_create_thread(void *thread_function(void *), void *thread_context) 
 
 #else
 
-    int        ret;
-    pthread_t *th;
-
-    th = malloc(sizeof(pthread_t));
+    pthread_t *th = malloc(sizeof(*th));
     if (th == NULL)
         return NULL;
 
-#if !defined(EB_THREAD_SANITIZER_ENABLED) && !DISABLE_REALTIME
-    pthread_attr_t attr;
-    pthread_attr_init(&attr);
-    pthread_attr_setschedpolicy(&attr, SCHED_FIFO);
-    pthread_attr_setinheritsched(&attr, PTHREAD_EXPLICIT_SCHED);
-
-    struct sched_param param = {.sched_priority = 99};
-    pthread_attr_setschedparam(&attr, &param);
-
-    ret = pthread_create(th, &attr, thread_function, thread_context);
-    pthread_attr_destroy(&attr);
-
-    if (ret == EPERM) {
-        // When creating the thread failed because setting scheduling
-        // parameters failed, retry creating the thread without them.
-        ret = pthread_create(th, NULL, thread_function, thread_context);
-    }
-#else
-    // When running with thread sanitizer, we are not running as root
-    // so the above priority change will always fail, which will cause
-    // issues with the thread sanitizer.
-    // See https://github.com/google/sanitizers/issues/1088
-    // Therefore we never try this, with the thread sanitizer
-    // and just create a normal thread here.
-    ret = pthread_create(th, NULL, thread_function, thread_context);
-#endif
-
-    if (ret != 0) {
+    if (pthread_create(th, NULL, thread_function, thread_context)) {
         free(th);
         return NULL;
+    }
+
+    /* We can only use realtime priority if we are running as root, so
+     * check if geteuid() == 0 (meaning either root or sudo).
+     * If we don't do this check, we will eventually run into memory
+     * issues if the encoder is uninitalized and re-initalized multiple
+     * times in one executable due to a bug in glibc.
+     * https://sourceware.org/bugzilla/show_bug.cgi?id=19511
+     *
+     * We still need to exclude the case of thread sanitizer because we
+     * run the test as root inside the container and trying to change
+     * the thread priority will __always__ fail the thread sanitizer.
+     * https://github.com/google/sanitizers/issues/1088
+     */
+    if (!EB_THREAD_SANITIZER_ENABLED && !geteuid()) {
+        (void)pthread_setschedparam(*th, SCHED_FIFO, &(struct sched_param){.sched_priority = 99});
+        // ignore if this failed
     }
     thread_handle = th;
 #endif // _WIN32
