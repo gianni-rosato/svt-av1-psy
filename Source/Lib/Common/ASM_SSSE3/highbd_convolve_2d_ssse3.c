@@ -152,7 +152,7 @@ void svt_av1_highbd_convolve_2d_sr_ssse3(const uint16_t *src, int32_t src_stride
           __m128i res_odd1 = _mm_packs_epi32(res_odd, res_odd);
           __m128i res = _mm_unpacklo_epi16(res_even1, res_odd1);
 
-          _mm_store_si128((__m128i *)&im_block[i * im_stride], res);
+          _mm_storeu_si128((__m128i *)&im_block[i * im_stride], res);
         }
       }
 
@@ -337,7 +337,7 @@ void svt_av1_highbd_convolve_2d_sr_ssse3(const uint16_t *src, int32_t src_stride
           __m128i res_odd1 = _mm_packs_epi32(res_odd, res_odd);
           __m128i res = _mm_unpacklo_epi16(res_even1, res_odd1);
 
-          _mm_store_si128((__m128i *)&im_block[i * im_stride], res);
+          _mm_storeu_si128((__m128i *)&im_block[i * im_stride], res);
         }
       }
 

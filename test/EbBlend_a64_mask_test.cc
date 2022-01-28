@@ -335,6 +335,9 @@ class BlendA64MaskTest8B_d16
 };
 
 TEST_CLASS(BlendA64MaskTest8B_d16, svt_aom_lowbd_blend_a64_d16_mask_c,
+           svt_aom_lowbd_blend_a64_d16_mask_sse4_1, Mask_Blend_d16_SSE4_1)
+
+TEST_CLASS(BlendA64MaskTest8B_d16, svt_aom_lowbd_blend_a64_d16_mask_c,
            svt_aom_lowbd_blend_a64_d16_mask_avx2, Mask_Blend_d16_AVX2)
 
 //////////////////////////////////////////////////////////////////////////////
@@ -536,6 +539,9 @@ class BlendA64MaskTestHBD_d16
     int bit_depth_;
     int src_max_bits_mask_;
 };
+
+TEST_CLASS(BlendA64MaskTestHBD_d16, svt_aom_highbd_blend_a64_d16_mask_c,
+           svt_aom_highbd_blend_a64_d16_mask_sse4_1, _Mask_Blend_Hbd_d16_SSE4_1)
 
 TEST_CLASS(BlendA64MaskTestHBD_d16, svt_aom_highbd_blend_a64_d16_mask_c,
            svt_aom_highbd_blend_a64_d16_mask_avx2, _Mask_Blend_Hbd_d16_AVX2)

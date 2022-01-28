@@ -13,6 +13,7 @@
 #include "EbDefinitions.h"
 #include "common_dsp_rtcd.h"
 #include "filter.h"
+#include "synonyms.h"
 
 static INLINE void svt_prepare_coeffs(const InterpFilterParams *const filter_params,
                                       const int subpel_q4, __m128i *const coeffs /* [4] */) {
@@ -526,4 +527,163 @@ void svt_av1_convolve_x_sr_sse2(const uint8_t *src, int32_t src_stride, uint8_t 
             } while (++i < h);
         }
     }
+}
+
+#define MAX_MASK_VALUE (1 << WEDGE_WEIGHT_BITS)
+
+uint64_t svt_av1_wedge_sse_from_residuals_sse2(const int16_t *r1, const int16_t *d,
+                                               const uint8_t *m, int N) {
+    int n  = -N;
+    int n8 = n + 8;
+
+    uint64_t csse;
+
+    const __m128i v_mask_max_w = _mm_set1_epi16(MAX_MASK_VALUE);
+    const __m128i v_zext_q     = xx_set1_64_from_32i(0xffffffff);
+
+    __m128i v_acc0_q = _mm_setzero_si128();
+
+    assert(N % 64 == 0);
+
+    r1 += N;
+    d += N;
+    m += N;
+
+    do {
+        const __m128i v_r0_w  = _mm_loadu_si128((__m128i *)(r1 + n));
+        const __m128i v_r1_w  = _mm_loadu_si128((__m128i *)(r1 + n8));
+        const __m128i v_d0_w  = _mm_loadu_si128((__m128i *)(d + n));
+        const __m128i v_d1_w  = _mm_loadu_si128((__m128i *)(d + n8));
+        const __m128i v_m01_b = _mm_loadu_si128((__m128i *)(m + n));
+
+        const __m128i v_rd0l_w = _mm_unpacklo_epi16(v_d0_w, v_r0_w);
+        const __m128i v_rd0h_w = _mm_unpackhi_epi16(v_d0_w, v_r0_w);
+        const __m128i v_rd1l_w = _mm_unpacklo_epi16(v_d1_w, v_r1_w);
+        const __m128i v_rd1h_w = _mm_unpackhi_epi16(v_d1_w, v_r1_w);
+        const __m128i v_m0_w   = _mm_unpacklo_epi8(v_m01_b, _mm_setzero_si128());
+        const __m128i v_m1_w   = _mm_unpackhi_epi8(v_m01_b, _mm_setzero_si128());
+
+        const __m128i v_m0l_w = _mm_unpacklo_epi16(v_m0_w, v_mask_max_w);
+        const __m128i v_m0h_w = _mm_unpackhi_epi16(v_m0_w, v_mask_max_w);
+        const __m128i v_m1l_w = _mm_unpacklo_epi16(v_m1_w, v_mask_max_w);
+        const __m128i v_m1h_w = _mm_unpackhi_epi16(v_m1_w, v_mask_max_w);
+
+        const __m128i v_t0l_d = _mm_madd_epi16(v_rd0l_w, v_m0l_w);
+        const __m128i v_t0h_d = _mm_madd_epi16(v_rd0h_w, v_m0h_w);
+        const __m128i v_t1l_d = _mm_madd_epi16(v_rd1l_w, v_m1l_w);
+        const __m128i v_t1h_d = _mm_madd_epi16(v_rd1h_w, v_m1h_w);
+
+        const __m128i v_t0_w = _mm_packs_epi32(v_t0l_d, v_t0h_d);
+        const __m128i v_t1_w = _mm_packs_epi32(v_t1l_d, v_t1h_d);
+
+        const __m128i v_sq0_d = _mm_madd_epi16(v_t0_w, v_t0_w);
+        const __m128i v_sq1_d = _mm_madd_epi16(v_t1_w, v_t1_w);
+
+        const __m128i v_sum0_q = _mm_add_epi64(_mm_and_si128(v_sq0_d, v_zext_q),
+                                               _mm_srli_epi64(v_sq0_d, 32));
+        const __m128i v_sum1_q = _mm_add_epi64(_mm_and_si128(v_sq1_d, v_zext_q),
+                                               _mm_srli_epi64(v_sq1_d, 32));
+
+        v_acc0_q = _mm_add_epi64(v_acc0_q, v_sum0_q);
+        v_acc0_q = _mm_add_epi64(v_acc0_q, v_sum1_q);
+
+        n8 += 16;
+        n += 16;
+    } while (n);
+
+    v_acc0_q = _mm_add_epi64(v_acc0_q, _mm_srli_si128(v_acc0_q, 8));
+
+#if ARCH_X86_64
+    csse = (uint64_t)_mm_cvtsi128_si64(v_acc0_q);
+#else
+    xx_storel_64(&csse, v_acc0_q);
+#endif
+
+    return ROUND_POWER_OF_TWO(csse, 2 * WEDGE_WEIGHT_BITS);
+}
+
+int8_t svt_av1_wedge_sign_from_residuals_sse2(const int16_t *ds, const uint8_t *m, int N,
+                                          int64_t limit) {
+    int64_t acc;
+
+    __m128i v_sign_d;
+    __m128i v_acc0_d = _mm_setzero_si128();
+    __m128i v_acc1_d = _mm_setzero_si128();
+    __m128i v_acc_q;
+
+    // Input size limited to 8192 by the use of 32 bit accumulators and m
+    // being between [0, 64]. Overflow might happen at larger sizes,
+    // though it is practically impossible on real video input.
+    assert(N < 8192);
+    assert(N % 64 == 0);
+
+    do {
+        const __m128i v_m01_b = _mm_loadu_si128((__m128i *)(m));
+        const __m128i v_m23_b = _mm_loadu_si128((__m128i *)(m + 16));
+        const __m128i v_m45_b = _mm_loadu_si128((__m128i *)(m + 32));
+        const __m128i v_m67_b = _mm_loadu_si128((__m128i *)(m + 48));
+
+        const __m128i v_d0_w = _mm_loadu_si128((__m128i *)(ds));
+        const __m128i v_d1_w = _mm_loadu_si128((__m128i *)(ds + 8));
+        const __m128i v_d2_w = _mm_loadu_si128((__m128i *)(ds + 16));
+        const __m128i v_d3_w = _mm_loadu_si128((__m128i *)(ds + 24));
+        const __m128i v_d4_w = _mm_loadu_si128((__m128i *)(ds + 32));
+        const __m128i v_d5_w = _mm_loadu_si128((__m128i *)(ds + 40));
+        const __m128i v_d6_w = _mm_loadu_si128((__m128i *)(ds + 48));
+        const __m128i v_d7_w = _mm_loadu_si128((__m128i *)(ds + 56));
+
+        const __m128i v_m0_w = _mm_unpacklo_epi8(v_m01_b, _mm_setzero_si128());
+        const __m128i v_m1_w = _mm_unpackhi_epi8(v_m01_b, _mm_setzero_si128());
+        const __m128i v_m2_w = _mm_unpacklo_epi8(v_m23_b, _mm_setzero_si128());
+        const __m128i v_m3_w = _mm_unpackhi_epi8(v_m23_b, _mm_setzero_si128());
+        const __m128i v_m4_w = _mm_unpacklo_epi8(v_m45_b, _mm_setzero_si128());
+        const __m128i v_m5_w = _mm_unpackhi_epi8(v_m45_b, _mm_setzero_si128());
+        const __m128i v_m6_w = _mm_unpacklo_epi8(v_m67_b, _mm_setzero_si128());
+        const __m128i v_m7_w = _mm_unpackhi_epi8(v_m67_b, _mm_setzero_si128());
+
+        const __m128i v_p0_d = _mm_madd_epi16(v_d0_w, v_m0_w);
+        const __m128i v_p1_d = _mm_madd_epi16(v_d1_w, v_m1_w);
+        const __m128i v_p2_d = _mm_madd_epi16(v_d2_w, v_m2_w);
+        const __m128i v_p3_d = _mm_madd_epi16(v_d3_w, v_m3_w);
+        const __m128i v_p4_d = _mm_madd_epi16(v_d4_w, v_m4_w);
+        const __m128i v_p5_d = _mm_madd_epi16(v_d5_w, v_m5_w);
+        const __m128i v_p6_d = _mm_madd_epi16(v_d6_w, v_m6_w);
+        const __m128i v_p7_d = _mm_madd_epi16(v_d7_w, v_m7_w);
+
+        const __m128i v_p01_d = _mm_add_epi32(v_p0_d, v_p1_d);
+        const __m128i v_p23_d = _mm_add_epi32(v_p2_d, v_p3_d);
+        const __m128i v_p45_d = _mm_add_epi32(v_p4_d, v_p5_d);
+        const __m128i v_p67_d = _mm_add_epi32(v_p6_d, v_p7_d);
+
+        const __m128i v_p0123_d = _mm_add_epi32(v_p01_d, v_p23_d);
+        const __m128i v_p4567_d = _mm_add_epi32(v_p45_d, v_p67_d);
+
+        v_acc0_d = _mm_add_epi32(v_acc0_d, v_p0123_d);
+        v_acc1_d = _mm_add_epi32(v_acc1_d, v_p4567_d);
+
+        ds += 64;
+        m += 64;
+
+        N -= 64;
+    } while (N);
+
+    v_sign_d = _mm_cmplt_epi32(v_acc0_d, _mm_setzero_si128());
+    v_acc0_d = _mm_add_epi64(_mm_unpacklo_epi32(v_acc0_d, v_sign_d),
+                             _mm_unpackhi_epi32(v_acc0_d, v_sign_d));
+
+    v_sign_d = _mm_cmplt_epi32(v_acc1_d, _mm_setzero_si128());
+    v_acc1_d = _mm_add_epi64(_mm_unpacklo_epi32(v_acc1_d, v_sign_d),
+                             _mm_unpackhi_epi32(v_acc1_d, v_sign_d));
+
+    v_acc_q = _mm_add_epi64(v_acc0_d, v_acc1_d);
+
+    v_acc_q = _mm_add_epi64(v_acc_q, _mm_srli_si128(v_acc_q, 8));
+
+#if ARCH_X86_64
+    acc = (uint64_t)_mm_cvtsi128_si64(v_acc_q);
+#else
+    xx_storel_64(&acc, v_acc_q);
+#endif
+
+    return acc > limit;
 }

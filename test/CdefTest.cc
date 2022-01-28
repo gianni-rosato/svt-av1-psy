@@ -477,7 +477,9 @@ TEST_P(CDEFFindDirTest, MatchTest) {
 #if defined(_WIN64) || !defined(_MSC_VER) || defined(__clang__)
 
 INSTANTIATE_TEST_CASE_P(Cdef, CDEFFindDirTest,
-                        ::testing::Values(make_tuple(&svt_cdef_find_dir_avx2,
+                        ::testing::Values(make_tuple(&svt_cdef_find_dir_sse4_1,
+                                                     &svt_cdef_find_dir_c),
+                                          make_tuple(&svt_cdef_find_dir_avx2,
                                                      &svt_cdef_find_dir_c)));
 
 #endif  // defined(_WIN64) || !defined(_MSC_VER)
@@ -524,7 +526,7 @@ TEST(CdefToolTest, CopyRectMatchTest) {
 
             svt_copy_rect8_8bit_to_16bit_c(
                 dst_ref_, CDEF_BSTRIDE, src_, CDEF_BSTRIDE, vsize, hsize);
-            svt_copy_rect8_8bit_to_16bit_avx2(
+            svt_copy_rect8_8bit_to_16bit_sse4_1(
                 dst_tst_, CDEF_BSTRIDE, src_, CDEF_BSTRIDE, vsize, hsize);
 
             for (int i = 0; i < vsize; ++i) {

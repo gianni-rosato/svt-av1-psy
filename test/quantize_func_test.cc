@@ -611,7 +611,15 @@ const QuantizeParam kQParamArrayAvx2[] = {
                static_cast<TxSize>(TX_16X64), TYPE_FP, AOM_BITS_8),
     make_tuple(&svt_av1_quantize_fp_32x32_c, &svt_av1_quantize_fp_32x32_avx2,
                static_cast<TxSize>(TX_64X16), TYPE_FP, AOM_BITS_8),
+    make_tuple(&svt_av1_quantize_fp_32x32_c, &svt_av1_quantize_fp_32x32_sse4_1,
+               static_cast<TxSize>(TX_32X32), TYPE_FP, AOM_BITS_8),
+    make_tuple(&svt_av1_quantize_fp_32x32_c, &svt_av1_quantize_fp_32x32_sse4_1,
+               static_cast<TxSize>(TX_16X64), TYPE_FP, AOM_BITS_8),
+    make_tuple(&svt_av1_quantize_fp_32x32_c, &svt_av1_quantize_fp_32x32_sse4_1,
+               static_cast<TxSize>(TX_64X16), TYPE_FP, AOM_BITS_8),
     make_tuple(&svt_av1_quantize_fp_64x64_c, &svt_av1_quantize_fp_64x64_avx2,
+               static_cast<TxSize>(TX_64X64), TYPE_FP, AOM_BITS_8),
+    make_tuple(&svt_av1_quantize_fp_64x64_c, &svt_av1_quantize_fp_64x64_sse4_1,
                static_cast<TxSize>(TX_64X64), TYPE_FP, AOM_BITS_8)};
 
 const QuantizeHbdParam kQHbdParamArraySse41[] = {

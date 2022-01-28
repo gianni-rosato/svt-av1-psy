@@ -568,3 +568,9 @@ void svt_aom_upsampled_pred_sse2(MacroBlockD *xd, const struct AV1Common *const 
             temp_start_vert, MAX_SB_SIZE, comp_pred, width, NULL, -1, kernel_y, 16, width, height);
     }
 }
+
+unsigned int svt_aom_mse16x16_sse2(const uint8_t *src, int32_t src_stride, const uint8_t *ref,
+                                   int32_t ref_stride, uint32_t *sse) {
+    svt_aom_variance16x16_sse2(src, src_stride, ref, ref_stride, sse);
+    return *sse;
+}

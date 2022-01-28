@@ -106,6 +106,9 @@ static void highbd_10_variance_sse2(const uint16_t *src, int32_t src_stride, con
         return (var >= 0) ? (uint32_t)var : 0;                                            \
     }
 
+VAR_FN(128, 128, 16, 14);
+VAR_FN(128, 64, 16, 13);
+VAR_FN(64, 128, 16, 13);
 VAR_FN(64, 64, 16, 12);
 VAR_FN(64, 32, 16, 11);
 VAR_FN(32, 64, 16, 11);

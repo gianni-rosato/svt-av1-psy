@@ -135,10 +135,11 @@ TEST_P(MseTest, MaxTest) {
     run_max_test();
 };
 
-INSTANTIATE_TEST_CASE_P(Variance, MseTest,
-                        ::testing::Values(TestMseParam(16, 16,
-                                                       &svt_aom_mse16x16_avx2,
-                                                       &svt_aom_mse16x16_c)));
+INSTANTIATE_TEST_CASE_P(
+    Variance, MseTest,
+    ::testing::Values(
+        TestMseParam(16, 16, &svt_aom_mse16x16_sse2, &svt_aom_mse16x16_c),
+        TestMseParam(16, 16, &svt_aom_mse16x16_avx2, &svt_aom_mse16x16_c)));
 
 class MseTestHighbd : public ::testing::TestWithParam<TestMseParamHighbd> {
   public:

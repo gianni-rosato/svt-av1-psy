@@ -62,9 +62,15 @@ class WedgeUtilTest : public ::testing::Test {
             ds[i] = clamp(r0[i] * r0[i] - r1[i] * r1[i], INT16_MIN, INT16_MAX);
         const int8_t ref_sign =
             svt_av1_wedge_sign_from_residuals_c(ds, m, N, limit);
-        const int8_t tst_sign =
+        const int8_t sse2_tst_sign =
+            svt_av1_wedge_sign_from_residuals_sse2(ds, m, N, limit);
+        const int8_t avx2_tst_sign =
             svt_av1_wedge_sign_from_residuals_avx2(ds, m, N, limit);
-        ASSERT_EQ(ref_sign, tst_sign)
+        ASSERT_EQ(ref_sign, sse2_tst_sign)
+            << "unit test for svt_av1_wedge_sign_from_residuals_sse2 fail at "
+               "iteration "
+            << k;
+        ASSERT_EQ(ref_sign, avx2_tst_sign)
             << "unit test for svt_av1_wedge_sign_from_residuals_avx2 fail at "
                "iteration "
             << k;
@@ -201,10 +207,15 @@ TEST_F(WedgeUtilTest, SseFromResidualRandomTest) {
         const int N = 64 * n_rnd.random();
 
         uint64_t ref_sse = svt_av1_wedge_sse_from_residuals_c(r0, r1, m, N);
-        uint64_t tst_sse = svt_av1_wedge_sse_from_residuals_avx2(r0, r1, m, N);
+        uint64_t sse2_tst_sse = svt_av1_wedge_sse_from_residuals_sse2(r0, r1, m, N);
+        uint64_t avx2_tst_sse = svt_av1_wedge_sse_from_residuals_avx2(r0, r1, m, N);
 
         // check output
-        ASSERT_EQ(ref_sse, tst_sse)
+        ASSERT_EQ(ref_sse, sse2_tst_sse)
+            << "unit test for svt_av1_wedge_sse_from_residuals_sse2 fail at "
+               "iteration "
+            << k;
+        ASSERT_EQ(ref_sse, avx2_tst_sse)
             << "unit test for svt_av1_wedge_sse_from_residuals_avx2 fail at "
                "iteration "
             << k;
@@ -254,10 +265,15 @@ TEST_F(WedgeUtilTest, SseFromResidualExtremeTest) {
         const int N = 64 * n_rnd.random();
 
         uint64_t ref_sse = svt_av1_wedge_sse_from_residuals_c(r0, r1, m, N);
-        uint64_t tst_sse = svt_av1_wedge_sse_from_residuals_avx2(r0, r1, m, N);
+        uint64_t sse2_tst_sse = svt_av1_wedge_sse_from_residuals_sse2(r0, r1, m, N);
+        uint64_t avx2_tst_sse = svt_av1_wedge_sse_from_residuals_avx2(r0, r1, m, N);
 
         // check output
-        ASSERT_EQ(ref_sse, tst_sse)
+        ASSERT_EQ(ref_sse, sse2_tst_sse)
+            << "unit test for svt_av1_wedge_sse_from_residuals_sse2 fail at "
+               "iteration "
+            << k;
+        ASSERT_EQ(ref_sse, avx2_tst_sse)
             << "unit test for svt_av1_wedge_sse_from_residuals_avx2 fail at "
                "iteration "
             << k;

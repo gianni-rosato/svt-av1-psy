@@ -330,6 +330,8 @@ TEST_P(PixelProjErrorLbdTest, DISABLED_SpeedTest) {
 }
 
 static const PixelProjErrorTestParam lbd_test_vector[] = {
+    make_tuple(svt_av1_lowbd_pixel_proj_error_sse4_1,
+               svt_av1_lowbd_pixel_proj_error_c),
     make_tuple(svt_av1_lowbd_pixel_proj_error_avx2,
                svt_av1_lowbd_pixel_proj_error_c),
 #if EN_AVX512_SUPPORT
@@ -378,8 +380,11 @@ TEST_P(PixelProjErrorHbdTest, MatchTestWithExtremeValue) {
     run_extreme_test();
 }
 
-static const PixelProjErrorTestParam hbd_test_vector[] = {make_tuple(
-    svt_av1_highbd_pixel_proj_error_avx2, svt_av1_highbd_pixel_proj_error_c)};
+static const PixelProjErrorTestParam hbd_test_vector[] = {
+    make_tuple(svt_av1_highbd_pixel_proj_error_sse4_1,
+               svt_av1_highbd_pixel_proj_error_c),
+    make_tuple(svt_av1_highbd_pixel_proj_error_avx2,
+               svt_av1_highbd_pixel_proj_error_c)};
 
 INSTANTIATE_TEST_CASE_P(RST, PixelProjErrorHbdTest,
                         ::testing::ValuesIn(hbd_test_vector));

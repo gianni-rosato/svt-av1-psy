@@ -896,3 +896,189 @@ void svt_av1_cdef_filter_block_sse4_1(uint8_t *dst8, uint16_t *dst16, int dstrid
         }
     }
 }
+
+/* partial A is a 16-bit vector of the form:
+   [x8 x7 x6 x5 x4 x3 x2 x1] and partial B has the form:
+   [0  y1 y2 y3 y4 y5 y6 y7].
+   This function computes (x1^2+y1^2)*C1 + (x2^2+y2^2)*C2 + ...
+   (x7^2+y2^7)*C7 + (x8^2+0^2)*C8 where the C1..C8 constants are in const1
+   and const2. */
+static INLINE __m128i fold_mul_and_sum(__m128i partiala, __m128i partialb, __m128i const1,
+                                       __m128i const2) {
+    __m128i tmp;
+    /* Reverse partial B. */
+    partialb = _mm_shuffle_epi8(partialb,
+                              _mm_set_epi32(0x0f0e0100, 0x03020504, 0x07060908, 0x0b0a0d0c));
+    /* Interleave the x and y values of identical indices and pair x8 with 0. */
+    tmp      = partiala;
+    partiala = _mm_unpacklo_epi16(partialb, partiala);
+    partialb = _mm_unpackhi_epi16(partialb, tmp);
+    /* Square and add the corresponding x and y values. */
+    partiala = _mm_madd_epi16(partiala, partiala);
+    partialb = _mm_madd_epi16(partialb, partialb);
+    /* Multiply by constant. */
+    partiala = _mm_mullo_epi32(partiala, const1);
+    partialb = _mm_mullo_epi32(partialb, const2);
+    /* Sum all results. */
+    partiala = _mm_add_epi32(partiala, partialb);
+    return partiala;
+}
+
+static INLINE __m128i hsum4(__m128i x0, __m128i x1, __m128i x2, __m128i x3) {
+    __m128i t0, t1, t2, t3;
+    t0 = _mm_unpacklo_epi32(x0, x1);
+    t1 = _mm_unpacklo_epi32(x2, x3);
+    t2 = _mm_unpackhi_epi32(x0, x1);
+    t3 = _mm_unpackhi_epi32(x2, x3);
+    x0 = _mm_unpacklo_epi64(t0, t1);
+    x1 = _mm_unpackhi_epi64(t0, t1);
+    x2 = _mm_unpacklo_epi64(t2, t3);
+    x3 = _mm_unpackhi_epi64(t2, t3);
+    return _mm_add_epi32(_mm_add_epi32(x0, x1), _mm_add_epi32(x2, x3));
+}
+
+static INLINE void compute_directions(__m128i lines[8], int32_t tmp_cost1[4]) {
+    __m128i partial4a, partial4b, partial5a, partial5b, partial7a, partial7b;
+    __m128i partial6;
+    __m128i tmp;
+    /* Partial sums for lines 0 and 1. */
+    partial4a = _mm_slli_si128(lines[0], 14);
+    partial4b = _mm_srli_si128(lines[0], 2);
+    partial4a = _mm_add_epi16(partial4a, _mm_slli_si128(lines[1], 12));
+    partial4b = _mm_add_epi16(partial4b, _mm_srli_si128(lines[1], 4));
+    tmp       = _mm_add_epi16(lines[0], lines[1]);
+    partial5a = _mm_slli_si128(tmp, 10);
+    partial5b = _mm_srli_si128(tmp, 6);
+    partial7a = _mm_slli_si128(tmp, 4);
+    partial7b = _mm_srli_si128(tmp, 12);
+    partial6  = tmp;
+
+    /* Partial sums for lines 2 and 3. */
+    partial4a = _mm_add_epi16(partial4a, _mm_slli_si128(lines[2], 10));
+    partial4b = _mm_add_epi16(partial4b, _mm_srli_si128(lines[2], 6));
+    partial4a = _mm_add_epi16(partial4a, _mm_slli_si128(lines[3], 8));
+    partial4b = _mm_add_epi16(partial4b, _mm_srli_si128(lines[3], 8));
+    tmp       = _mm_add_epi16(lines[2], lines[3]);
+    partial5a = _mm_add_epi16(partial5a, _mm_slli_si128(tmp, 8));
+    partial5b = _mm_add_epi16(partial5b, _mm_srli_si128(tmp, 8));
+    partial7a = _mm_add_epi16(partial7a, _mm_slli_si128(tmp, 6));
+    partial7b = _mm_add_epi16(partial7b, _mm_srli_si128(tmp, 10));
+    partial6  = _mm_add_epi16(partial6, tmp);
+
+    /* Partial sums for lines 4 and 5. */
+    partial4a = _mm_add_epi16(partial4a, _mm_slli_si128(lines[4], 6));
+    partial4b = _mm_add_epi16(partial4b, _mm_srli_si128(lines[4], 10));
+    partial4a = _mm_add_epi16(partial4a, _mm_slli_si128(lines[5], 4));
+    partial4b = _mm_add_epi16(partial4b, _mm_srli_si128(lines[5], 12));
+    tmp       = _mm_add_epi16(lines[4], lines[5]);
+    partial5a = _mm_add_epi16(partial5a, _mm_slli_si128(tmp, 6));
+    partial5b = _mm_add_epi16(partial5b, _mm_srli_si128(tmp, 10));
+    partial7a = _mm_add_epi16(partial7a, _mm_slli_si128(tmp, 8));
+    partial7b = _mm_add_epi16(partial7b, _mm_srli_si128(tmp, 8));
+    partial6  = _mm_add_epi16(partial6, tmp);
+
+    /* Partial sums for lines 6 and 7. */
+    partial4a = _mm_add_epi16(partial4a, _mm_slli_si128(lines[6], 2));
+    partial4b = _mm_add_epi16(partial4b, _mm_srli_si128(lines[6], 14));
+    partial4a = _mm_add_epi16(partial4a, lines[7]);
+    tmp       = _mm_add_epi16(lines[6], lines[7]);
+    partial5a = _mm_add_epi16(partial5a, _mm_slli_si128(tmp, 4));
+    partial5b = _mm_add_epi16(partial5b, _mm_srli_si128(tmp, 12));
+    partial7a = _mm_add_epi16(partial7a, _mm_slli_si128(tmp, 10));
+    partial7b = _mm_add_epi16(partial7b, _mm_srli_si128(tmp, 6));
+    partial6  = _mm_add_epi16(partial6, tmp);
+
+    /* Compute costs in terms of partial sums. */
+    partial4a = fold_mul_and_sum(
+        partial4a, partial4b, _mm_set_epi32(210, 280, 420, 840), _mm_set_epi32(105, 120, 140, 168));
+    partial7a = fold_mul_and_sum(
+        partial7a, partial7b, _mm_set_epi32(210, 420, 0, 0), _mm_set_epi32(105, 105, 105, 140));
+    partial5a = fold_mul_and_sum(
+        partial5a, partial5b, _mm_set_epi32(210, 420, 0, 0), _mm_set_epi32(105, 105, 105, 140));
+    partial6 = _mm_madd_epi16(partial6, partial6);
+    partial6 = _mm_mullo_epi32(partial6, _mm_set1_epi32(105));
+
+    partial4a = hsum4(partial4a, partial5a, partial6, partial7a);
+    _mm_storeu_si128((__m128i *)tmp_cost1, partial4a);
+}
+
+/* transpose and reverse the order of the lines -- equivalent to a 90-degree
+counter-clockwise rotation of the pixels. */
+static INLINE void array_reverse_transpose_8x8(__m128i *in, __m128i *res) {
+    const __m128i tr0_0 = _mm_unpacklo_epi16(in[0], in[1]);
+    const __m128i tr0_1 = _mm_unpacklo_epi16(in[2], in[3]);
+    const __m128i tr0_2 = _mm_unpackhi_epi16(in[0], in[1]);
+    const __m128i tr0_3 = _mm_unpackhi_epi16(in[2], in[3]);
+    const __m128i tr0_4 = _mm_unpacklo_epi16(in[4], in[5]);
+    const __m128i tr0_5 = _mm_unpacklo_epi16(in[6], in[7]);
+    const __m128i tr0_6 = _mm_unpackhi_epi16(in[4], in[5]);
+    const __m128i tr0_7 = _mm_unpackhi_epi16(in[6], in[7]);
+
+    const __m128i tr1_0 = _mm_unpacklo_epi32(tr0_0, tr0_1);
+    const __m128i tr1_1 = _mm_unpacklo_epi32(tr0_4, tr0_5);
+    const __m128i tr1_2 = _mm_unpackhi_epi32(tr0_0, tr0_1);
+    const __m128i tr1_3 = _mm_unpackhi_epi32(tr0_4, tr0_5);
+    const __m128i tr1_4 = _mm_unpacklo_epi32(tr0_2, tr0_3);
+    const __m128i tr1_5 = _mm_unpacklo_epi32(tr0_6, tr0_7);
+    const __m128i tr1_6 = _mm_unpackhi_epi32(tr0_2, tr0_3);
+    const __m128i tr1_7 = _mm_unpackhi_epi32(tr0_6, tr0_7);
+
+    res[7] = _mm_unpacklo_epi64(tr1_0, tr1_1);
+    res[6] = _mm_unpackhi_epi64(tr1_0, tr1_1);
+    res[5] = _mm_unpacklo_epi64(tr1_2, tr1_3);
+    res[4] = _mm_unpackhi_epi64(tr1_2, tr1_3);
+    res[3] = _mm_unpacklo_epi64(tr1_4, tr1_5);
+    res[2] = _mm_unpackhi_epi64(tr1_4, tr1_5);
+    res[1] = _mm_unpacklo_epi64(tr1_6, tr1_7);
+    res[0] = _mm_unpackhi_epi64(tr1_6, tr1_7);
+}
+uint8_t svt_cdef_find_dir_sse4_1(const uint16_t *img, int32_t stride, int32_t *var,
+                               int32_t coeff_shift) {
+    int     i;
+    int32_t cost[8];
+    int32_t best_cost = 0;
+    int     best_dir  = 0;
+    __m128i lines[8];
+    __m128i const_128 = _mm_set1_epi16(128);
+    for (i = 0; i < 8; i++) {
+        lines[i] = _mm_lddqu_si128((__m128i *)&img[i * stride]);
+        lines[i] = _mm_sub_epi16(_mm_sra_epi16(lines[i], _mm_cvtsi32_si128(coeff_shift)),
+                                 const_128);
+    }
+
+    /* Compute "mostly vertical" directions. */
+    compute_directions(lines, cost + 4);
+
+    array_reverse_transpose_8x8(lines, lines);
+
+    /* Compute "mostly horizontal" directions. */
+    compute_directions(lines, cost);
+
+    for (i = 0; i < 8; i++) {
+        if (cost[i] > best_cost) {
+            best_cost = cost[i];
+            best_dir  = i;
+        }
+    }
+
+    /* Difference between the optimal variance and the variance along the
+     orthogonal direction. Again, the sum(x^2) terms cancel out. */
+    *var = best_cost - cost[(best_dir + 4) & 7];
+    /* We'd normally divide by 840, but dividing by 1024 is close enough
+     for what we're going to do with this. */
+    *var >>= 10;
+    return best_dir;
+}
+
+void svt_copy_rect8_8bit_to_16bit_sse4_1(uint16_t *dst, int32_t dstride, const uint8_t *src,
+                                       int32_t sstride, int32_t v, int32_t h) {
+    int32_t i, j;
+    for (i = 0; i < v; i++) {
+        for (j = 0; j < (h & ~0x7); j += 8) {
+            __m128i row = _mm_loadl_epi64((__m128i *)&src[i * sstride + j]);
+            _mm_storeu_si128((__m128i *)&dst[i * dstride + j],
+                             _mm_unpacklo_epi8(row, _mm_setzero_si128()));
+        }
+        for (; j < h; j++) dst[i * dstride + j] = src[i * sstride + j];
+    }
+}
