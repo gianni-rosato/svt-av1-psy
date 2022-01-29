@@ -1359,17 +1359,30 @@ uint8_t get_disallow_nsq(EbEncMode enc_mode){
 * 2 -- SB-Based DLF
 * 3 -- SB-Based DLF + skip DLF if SB has 0 coeffs
 */
+#if OPT_M13_10BIT
+uint8_t get_dlf_level(EbEncMode enc_mode, uint8_t is_used_as_reference_flag, uint8_t is_16bit) {
+#else
 uint8_t get_dlf_level(EbEncMode enc_mode, uint8_t is_used_as_reference_flag) {
+#endif
 
     uint8_t dlf_level;
     if (enc_mode <= ENC_M4)
         dlf_level = 1;
+#if OPT_M9_4K
+    else if (enc_mode <= ENC_M8)
+        dlf_level = 2;
+#else
     else if (enc_mode <= ENC_M9)
         dlf_level = 2;
+#endif
     else if (enc_mode <= ENC_M12)
         dlf_level = is_used_as_reference_flag ? 2 : 0;
     else
+#if OPT_M13_10BIT
+        dlf_level = (is_16bit && is_used_as_reference_flag) ? 2 : 0;
+#else
         dlf_level = 0;
+#endif
 
     return dlf_level;
 }
@@ -1610,10 +1623,17 @@ EbErrorType signal_derivation_multi_processes_oq(
         pcs_ptr->enable_hme_level1_flag = 1;
         pcs_ptr->enable_hme_level2_flag = 1;
     }
+#if OPT_M7_4K
+    else if (pcs_ptr->enc_mode <= ENC_M6) {
+        pcs_ptr->enable_hme_level1_flag = 1;
+        pcs_ptr->enable_hme_level2_flag = 1;
+    }
+#else
     else if (pcs_ptr->enc_mode <= ENC_M7) {
         pcs_ptr->enable_hme_level1_flag = 1;
         pcs_ptr->enable_hme_level2_flag = 1;
     }
+#endif
     else if (pcs_ptr->enc_mode <= ENC_M13) {
         pcs_ptr->enable_hme_level1_flag = 1;
         pcs_ptr->enable_hme_level2_flag = 0;
@@ -1734,7 +1754,11 @@ EbErrorType signal_derivation_multi_processes_oq(
     set_palette_level(pcs_ptr, pcs_ptr->palette_level);
     uint8_t dlf_level = 0;
     if (pcs_ptr->scs_ptr->static_config.enable_dlf_flag && frm_hdr->allow_intrabc == 0) {
+#if OPT_M13_10BIT
+        dlf_level = get_dlf_level(pcs_ptr->enc_mode, pcs_ptr->is_used_as_reference_flag, scs_ptr->static_config.encoder_bit_depth > EB_8BIT);
+#else
         dlf_level = get_dlf_level(pcs_ptr->enc_mode, pcs_ptr->is_used_as_reference_flag);
+#endif
     }
     set_dlf_controls(pcs_ptr, dlf_level);
 
@@ -1750,10 +1774,22 @@ EbErrorType signal_derivation_multi_processes_oq(
 
             else if (pcs_ptr->enc_mode <= ENC_M9)
                 pcs_ptr->cdef_level = pcs_ptr->temporal_layer_index == 0 ? 8 : pcs_ptr->is_used_as_reference_flag ? 9 : 10;
+#if OPT_M12_4K_SPACING
+            else if (pcs_ptr->enc_mode <= ENC_M11)
+                pcs_ptr->cdef_level = pcs_ptr->temporal_layer_index == 0 ? 15 : pcs_ptr->is_used_as_reference_flag ? 16 : 17;
+            else if (pcs_ptr->enc_mode <= ENC_M12) {
+                if (pcs_ptr->input_resolution <= INPUT_SIZE_1080p_RANGE)
+                    pcs_ptr->cdef_level = pcs_ptr->temporal_layer_index == 0 ? 15 : pcs_ptr->is_used_as_reference_flag ? 16 : 17;
+                else
+                    pcs_ptr->cdef_level = pcs_ptr->slice_type == I_SLICE ? 15 : pcs_ptr->is_used_as_reference_flag ? 16 : 17;
+            }
+#else
             else if (pcs_ptr->enc_mode <= ENC_M12)
                 pcs_ptr->cdef_level = pcs_ptr->temporal_layer_index == 0 ? 15 : pcs_ptr->is_used_as_reference_flag ? 16 : 17;
+#endif
             else
                 pcs_ptr->cdef_level = pcs_ptr->slice_type == I_SLICE ? 15 : 0;
+
         }
         else
             pcs_ptr->cdef_level = (int8_t)(scs_ptr->static_config.cdef_level);
@@ -1805,25 +1841,25 @@ EbErrorType signal_derivation_multi_processes_oq(
         pcs_ptr->tx_size_search_mode = (pcs_ptr->temporal_layer_index == 0) ? 1 : 0;
     else if (pcs_ptr->enc_mode <= ENC_M11)
         pcs_ptr->tx_size_search_mode = (pcs_ptr->slice_type == I_SLICE) ? 1 : 0;
-        else
-            pcs_ptr->tx_size_search_mode = 0;
+    else
+        pcs_ptr->tx_size_search_mode = 0;
 
-        // Set frame end cdf update mode      Settings
-        // 0                                     OFF
-        // 1                                     ON
-        if (scs_ptr->frame_end_cdf_update == DEFAULT)
-            pcs_ptr->frame_end_cdf_update_mode = 1;
-        else
-            pcs_ptr->frame_end_cdf_update_mode = scs_ptr->frame_end_cdf_update;
+    // Set frame end cdf update mode      Settings
+    // 0                                     OFF
+    // 1                                     ON
+    if (scs_ptr->frame_end_cdf_update == DEFAULT)
+        pcs_ptr->frame_end_cdf_update_mode = 1;
+    else
+        pcs_ptr->frame_end_cdf_update_mode = scs_ptr->frame_end_cdf_update;
 
 
-        //MFMV
-        if (pcs_ptr->slice_type == I_SLICE || scs_ptr->mfmv_enabled == 0) {
-            pcs_ptr->frm_hdr.use_ref_frame_mvs = 0;
-        }
-        else {
-            pcs_ptr->frm_hdr.use_ref_frame_mvs = 1;
-        }
+    //MFMV
+    if (pcs_ptr->slice_type == I_SLICE || scs_ptr->mfmv_enabled == 0) {
+        pcs_ptr->frm_hdr.use_ref_frame_mvs = 0;
+    }
+    else {
+        pcs_ptr->frm_hdr.use_ref_frame_mvs = 1;
+    }
 
     (void)context_ptr;
 
@@ -1834,8 +1870,13 @@ EbErrorType signal_derivation_multi_processes_oq(
     pcs_ptr->tune_tpl_for_chroma = 0;
 #endif
     uint8_t list0_only_base = 0;
+#if OPT_M7_4K
+    if (pcs_ptr->enc_mode <= ENC_M7)
+        list0_only_base = 0;
+#else
     if (pcs_ptr->enc_mode <= ENC_M6)
         list0_only_base = 0;
+#endif
     else  if (pcs_ptr->enc_mode <= ENC_M9)
         list0_only_base = 1;
     else

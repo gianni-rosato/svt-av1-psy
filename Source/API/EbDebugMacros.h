@@ -35,6 +35,24 @@
 extern "C" {
 #endif // __cplusplus
 
+#define OPT_RES_CHECKS          1 // Reduce resolution checks in M7/M8
+#define OPT_RES_CHECKS_2        1 // Reduce resolution checks in M9-M13
+#define OPT_RES_CHECKS_3        1 // Reduce resolutions checks for M3+
+#define OPT_REMOVE_SC_RES_CHECKS 1 // Remove resolution checks for SC content
+#define CLN_REMOVE_UNUSED_RES   1 // Remove unused resolution checks
+
+    // For 4k tuning
+#define OPT_M12_4K              1 // Tune M12 for 4k
+#define OPT_M11_4K              1 // Tune M11 for 4k
+#define OPT_M10_4K              1 // Tune M10 for 4k
+#define OPT_M9_4K               1 // Tune M9 for 4k
+#define OPT_M8_4K               1 // Tune M8 for 4k
+#define OPT_M7_4K               1 // Tune M7 for 4k
+#define OPT_M12_4K_SPACING      1 // Adjusted M12 spacing for 4k
+#define OPT_M13_4K              1 // Tune M13 for 4k
+#define OPT_M13_10BIT           1 // Tune M13 for 10bit
+#define OPT_M6_4K               1 // Tune M6 for 4k
+
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch

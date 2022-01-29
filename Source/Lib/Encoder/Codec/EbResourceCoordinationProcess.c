@@ -347,8 +347,11 @@ uint8_t get_enable_restoration(EbEncMode enc_mode, int8_t config_enable_restorat
                                uint8_t input_resolution) {
 
     uint8_t enable_restoration;
-
+#if OPT_M7_4K
+    enable_restoration = (enc_mode <= ENC_M7) ? 1 : 0;
+#else
     enable_restoration = (enc_mode <= ENC_M6) ? 1 : 0;
+#endif
 
     // higher resolutions will shut restoration to save memory
     if (input_resolution >= INPUT_SIZE_8K_RANGE)

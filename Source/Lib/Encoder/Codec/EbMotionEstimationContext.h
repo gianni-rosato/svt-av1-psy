@@ -470,8 +470,10 @@ typedef struct MeContext {
     uint8_t      tf_use_pred_64x64_only_th;
     uint32_t     zz_sad[MAX_NUM_OF_REF_PIC_LIST][REF_LIST_MAX_DEPTH];
     uint32_t     me_early_exit_th;
+#if !OPT_REMOVE_SC_RES_CHECKS
     uint8_t      input_resolution;
     uint8_t      clip_class;
+#endif
     uint32_t     tf_tot_vert_blks; //total vertical motion blocks in TF
     uint32_t     tf_tot_horz_blks; //total horizontal motion blocks in TF
     uint8_t      skip_frame;

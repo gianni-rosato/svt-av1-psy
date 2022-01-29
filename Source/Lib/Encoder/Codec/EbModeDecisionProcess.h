@@ -424,8 +424,10 @@ typedef struct InterpolationSearchCtrls {
         level; // Specifies the MD Stage where the interpolation filter search will take place (IFS_MDS0, IFS_MDS1, IFS_MDS2, or IFS_MDS3 for respectively MD Stage 0, MD Stage 1, MD Stage 2, and MD Stage 3)
     uint8_t
         quarter_pel_only; // Specifies whether the interpolation filter search will use 1/8-Pel precision or 1/4-Pel precision (0: 1/8-Pel precision, 1: 1/4-Pel precision)
+#if !CLN_REMOVE_UNUSED_RES
     uint8_t
         modulate_filter_per_resolution; // Specifies whether certain combination(s) will be skipped depending on the input resolution or not (0: NO, 1: only (regular, regular) and (sharp, sharp) if 480p and below, and only (regular, regular) and (smooth, smooth) otherwise
+#endif
     uint8_t
         early_skip; // Specifies whether an early interpolation filter search exit could take place based on the cost of signaling a switchable filter type (0: OFF, 1: ON)
     uint8_t

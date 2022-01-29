@@ -57,8 +57,13 @@ uint8_t get_bypass_encdec(EbEncMode enc_mode, uint8_t hbd_mode_decision,
     uint8_t bypass_encdec = 1;
     if (encoder_bit_depth == EB_8BIT) {
         // 8bit settings
+#if OPT_M6_4K
+        if (enc_mode <= ENC_M5)
+            bypass_encdec = 0;
+#else
         if (enc_mode <= ENC_M6)
             bypass_encdec = 0;
+#endif
         else
             bypass_encdec = 1;
     } else {
@@ -3240,7 +3245,11 @@ void set_parent_sq_coeff_area_based_cycles_reduction_ctrls(ModeDecisionContext *
     default: assert(0); break;
     }
 }
+#if OPT_RES_CHECKS_2
+void set_txt_controls(ModeDecisionContext *mdctxt, uint8_t txt_level) {
+#else
 void set_txt_controls(ModeDecisionContext *mdctxt, uint8_t txt_level, uint8_t resolution) {
+#endif
 
     TxtControls *txt_ctrls = &mdctxt->txt_ctrls;
 
@@ -3320,7 +3329,11 @@ void set_txt_controls(ModeDecisionContext *mdctxt, uint8_t txt_level, uint8_t re
         txt_ctrls->txt_group_intra_gt_eq_16x16 = 4;
 
         txt_ctrls->early_exit_dist_th  = 100;
+#if OPT_RES_CHECKS_2
+        txt_ctrls->early_exit_coeff_th = 4;
+#else
         txt_ctrls->early_exit_coeff_th = (resolution <= INPUT_SIZE_720p_RANGE) ? 4 : 16;
+#endif
         break;
     case 7:
         txt_ctrls->enabled = 1;
@@ -3332,7 +3345,11 @@ void set_txt_controls(ModeDecisionContext *mdctxt, uint8_t txt_level, uint8_t re
         txt_ctrls->txt_group_intra_gt_eq_16x16 = 3;
 
         txt_ctrls->early_exit_dist_th  = 400;
+#if OPT_RES_CHECKS_2
+        txt_ctrls->early_exit_coeff_th = 8;
+#else
         txt_ctrls->early_exit_coeff_th = (resolution <= INPUT_SIZE_720p_RANGE) ? 8 : 32;
+#endif
         break;
     case 8:
         txt_ctrls->enabled = 1;
@@ -3343,7 +3360,11 @@ void set_txt_controls(ModeDecisionContext *mdctxt, uint8_t txt_level, uint8_t re
         txt_ctrls->txt_group_intra_lt_16x16    = 4;
         txt_ctrls->txt_group_intra_gt_eq_16x16 = 2;
         txt_ctrls->early_exit_dist_th  = 400;
+#if OPT_RES_CHECKS_2
+        txt_ctrls->early_exit_coeff_th = 8;
+#else
         txt_ctrls->early_exit_coeff_th = (resolution <= INPUT_SIZE_720p_RANGE) ? 8 : 32;
+#endif
         break;
     case 9:
         txt_ctrls->enabled = 1;
@@ -3354,7 +3375,11 @@ void set_txt_controls(ModeDecisionContext *mdctxt, uint8_t txt_level, uint8_t re
         txt_ctrls->txt_group_intra_lt_16x16    = 4;
         txt_ctrls->txt_group_intra_gt_eq_16x16 = 2;
         txt_ctrls->early_exit_dist_th  = 400;
+#if OPT_RES_CHECKS_2
+        txt_ctrls->early_exit_coeff_th = 8;
+#else
         txt_ctrls->early_exit_coeff_th = (resolution <= INPUT_SIZE_720p_RANGE) ? 8 : 32;
+#endif
         break;
     case 10:
         txt_ctrls->enabled = 1;
@@ -3364,7 +3389,11 @@ void set_txt_controls(ModeDecisionContext *mdctxt, uint8_t txt_level, uint8_t re
         txt_ctrls->txt_group_intra_lt_16x16    = 3;
         txt_ctrls->txt_group_intra_gt_eq_16x16 = 2;
         txt_ctrls->early_exit_dist_th          = 400;
+#if OPT_RES_CHECKS_2
+        txt_ctrls->early_exit_coeff_th = 8;
+#else
         txt_ctrls->early_exit_coeff_th         = (resolution <= INPUT_SIZE_720p_RANGE) ? 8 : 32;
+#endif
         break;
     default: assert(0); break;
     }
@@ -3377,7 +3406,9 @@ void set_interpolation_search_level_ctrls(ModeDecisionContext *context_ptr,
     case 0:
         ifs_ctrls->level = IFS_OFF;
         ifs_ctrls->quarter_pel_only               = 0;
+#if !CLN_REMOVE_UNUSED_RES
         ifs_ctrls->modulate_filter_per_resolution = 0;
+#endif
         ifs_ctrls->early_skip            = 0;
         ifs_ctrls->subsampled_distortion = 0;
         ifs_ctrls->skip_sse_rd_model     = 0;
@@ -3385,7 +3416,9 @@ void set_interpolation_search_level_ctrls(ModeDecisionContext *context_ptr,
     case 1:
         ifs_ctrls->level = IFS_MDS0;
         ifs_ctrls->quarter_pel_only               = 0;
+#if !CLN_REMOVE_UNUSED_RES
         ifs_ctrls->modulate_filter_per_resolution = 0;
+#endif
         ifs_ctrls->early_skip            = 0;
         ifs_ctrls->subsampled_distortion = 0;
         ifs_ctrls->skip_sse_rd_model     = 0;
@@ -3393,7 +3426,9 @@ void set_interpolation_search_level_ctrls(ModeDecisionContext *context_ptr,
     case 2:
         ifs_ctrls->level = IFS_MDS1;
         ifs_ctrls->quarter_pel_only               = 0;
+#if !CLN_REMOVE_UNUSED_RES
         ifs_ctrls->modulate_filter_per_resolution = 0;
+#endif
         ifs_ctrls->early_skip            = 0;
         ifs_ctrls->subsampled_distortion = 0;
         ifs_ctrls->skip_sse_rd_model     = 0;
@@ -3401,7 +3436,9 @@ void set_interpolation_search_level_ctrls(ModeDecisionContext *context_ptr,
     case 3:
         ifs_ctrls->level = IFS_MDS2;
         ifs_ctrls->quarter_pel_only               = 0;
+#if !CLN_REMOVE_UNUSED_RES
         ifs_ctrls->modulate_filter_per_resolution = 0;
+#endif
         ifs_ctrls->early_skip            = 0;
         ifs_ctrls->subsampled_distortion = 0;
         ifs_ctrls->skip_sse_rd_model     = 0;
@@ -3409,11 +3446,29 @@ void set_interpolation_search_level_ctrls(ModeDecisionContext *context_ptr,
     case 4:
         ifs_ctrls->level = IFS_MDS3;
         ifs_ctrls->quarter_pel_only               = 0;
+#if !CLN_REMOVE_UNUSED_RES
         ifs_ctrls->modulate_filter_per_resolution = 0;
+#endif
         ifs_ctrls->early_skip            = 0;
         ifs_ctrls->subsampled_distortion = 0;
         ifs_ctrls->skip_sse_rd_model     = 0;
         break;
+#if CLN_REMOVE_UNUSED_RES
+    case 5:
+        ifs_ctrls->level = IFS_MDS3;
+        ifs_ctrls->quarter_pel_only               = 0;
+        ifs_ctrls->early_skip                     = 1;
+        ifs_ctrls->subsampled_distortion          = 1;
+        ifs_ctrls->skip_sse_rd_model              = 1;
+        break;
+    case 6:
+        ifs_ctrls->level = IFS_MDS3;
+        ifs_ctrls->quarter_pel_only               = 1;
+        ifs_ctrls->early_skip                     = 1;
+        ifs_ctrls->subsampled_distortion          = 1;
+        ifs_ctrls->skip_sse_rd_model              = 1;
+        break;
+#else
     case 5:
         ifs_ctrls->level = IFS_MDS3;
         ifs_ctrls->quarter_pel_only               = 1;
@@ -3438,6 +3493,7 @@ void set_interpolation_search_level_ctrls(ModeDecisionContext *context_ptr,
         ifs_ctrls->subsampled_distortion          = 1;
         ifs_ctrls->skip_sse_rd_model              = 1;
         break;
+#endif
     default: assert(0); break;
     }
 }
@@ -4500,12 +4556,22 @@ uint8_t get_disallow_below_16x16_picture_level(EbEncMode enc_mode, EbInputResolu
         disallow_below_16x16 = 0;
     else if (enc_mode <= ENC_M8)
         disallow_below_16x16 = 0;
+#if OPT_M9_4K
+    else if (enc_mode <= ENC_M9)
+        if (resolution <= INPUT_SIZE_1080p_RANGE)
+            disallow_below_16x16 = is_used_as_reference_flag ? 0 : 1;
+        else {
+            disallow_below_16x16 = (slice_type == I_SLICE) ? 0 : 1;
+        }
+#else
     else if (enc_mode <= ENC_M9)
         disallow_below_16x16 = is_used_as_reference_flag ? 0 : 1;
+#endif
     else if (enc_mode <= ENC_M11)
         disallow_below_16x16 = (resolution <= INPUT_SIZE_480p_RANGE)
             ? (temporal_layer_index == 0 ? 0 : 1)
             : ((slice_type == I_SLICE) ? 0 : 1);
+
     else
         disallow_below_16x16 = (slice_type == I_SLICE) ? 0 : 1;
 
@@ -5266,10 +5332,14 @@ EbErrorType signal_derivation_enc_dec_kernel_oq_light_pd0(SequenceControlSet * s
                 fast_lambda, 0, pcs->parent_pcs_ptr->me_64x64_distortion[ctx->sb_index]);
 
             if (ctx->pd0_level <= LIGHT_PD0_LVL3) {
+#if CLN_REMOVE_UNUSED_RES
+                pf_level = (cost_64x64 < use_pf_th) ? 3 : 1;
+#else
                 if (pcs->parent_pcs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE)
                     pf_level = 1;
                 else
                     pf_level = (cost_64x64 < use_pf_th) ? 3 : 1;
+#endif
             } else {
                 if (pcs->parent_pcs_ptr->is_used_as_reference_flag)
                     pf_level = (cost_64x64 < use_pf_th) ? 3 : 1;
@@ -5630,10 +5700,14 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet * sequence_co
                              l0_was_skip,
                              l1_was_skip,
                              ref_skip_perc);
-
+#if OPT_RES_CHECKS_2
+    set_txt_controls(context_ptr,
+                     pd_pass == PD_PASS_0 ? 0 : pcs_ptr->txt_level);
+#else
     set_txt_controls(context_ptr,
                      pd_pass == PD_PASS_0 ? 0 : pcs_ptr->txt_level,
                      pcs_ptr->parent_pcs_ptr->input_resolution);
+#endif
 
     set_tx_shortcut_ctrls(pcs_ptr, context_ptr, pd_pass == PD_PASS_0 ? 0 : pcs_ptr->tx_shortcut_level);
 
@@ -5765,6 +5839,14 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet * sequence_co
         context_ptr->md_subpel_me_level = (pcs_ptr->temporal_layer_index == 0)
             ? 2
             : ((pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? 4 : 7);
+#if OPT_RES_CHECKS_2
+    else if (enc_mode <= ENC_M11)
+        context_ptr->md_subpel_me_level = (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? 4 : 7;
+    else if (enc_mode <= ENC_M12)
+        context_ptr->md_subpel_me_level = pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? 9 : 11;
+    else
+        context_ptr->md_subpel_me_level = pcs_ptr->temporal_layer_index == 0 ? 9 : 0;
+#else
     else if (enc_mode <= ENC_M11)
         context_ptr->md_subpel_me_level = pcs_ptr->parent_pcs_ptr->input_resolution <=
                 INPUT_SIZE_720p_RANGE
@@ -5786,12 +5868,26 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet * sequence_co
                 ? ((pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? 9 : 11)
                 : ((pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag) ? 12 : 13);
     }
-
+#endif
     md_subpel_me_controls(context_ptr, context_ptr->md_subpel_me_level);
     if (pd_pass == PD_PASS_0)
         context_ptr->md_subpel_pme_level = enc_mode <= ENC_M0 ? 3 : 0;
     else if (enc_mode <= ENC_M0)
         context_ptr->md_subpel_pme_level = 1;
+#if OPT_RES_CHECKS
+#if OPT_RES_CHECKS_2
+    else
+        context_ptr->md_subpel_pme_level = 2;
+#else
+    else if (enc_mode <= ENC_M8)
+        context_ptr->md_subpel_pme_level = 2;
+    else // temp level
+        context_ptr->md_subpel_pme_level = pcs_ptr->parent_pcs_ptr->input_resolution <=
+        INPUT_SIZE_720p_RANGE
+        ? 2
+        : 4;
+#endif
+#else
     else if (enc_mode <= ENC_M5)
         context_ptr->md_subpel_pme_level = 2;
     else
@@ -5799,6 +5895,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet * sequence_co
         INPUT_SIZE_720p_RANGE
         ? 2
         : 4;
+#endif
 
     md_subpel_pme_controls(context_ptr, context_ptr->md_subpel_pme_level);
     uint8_t rate_est_level = 0;
@@ -5810,14 +5907,26 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet * sequence_co
     } else {
         if (enc_mode <= ENC_M3)
             rate_est_level = 1;
+#if !OPT_M10_4K
         else if (enc_mode <= ENC_M9)
             rate_est_level = 2;
+#else
+        else if (enc_mode <= ENC_M10)
+            rate_est_level = 2;
+#endif
+#if OPT_RES_CHECKS_2
+        else if (enc_mode <= ENC_M12)
+            rate_est_level = (pcs_ptr->slice_type == I_SLICE) ? 3 : 4;
+        else
+            rate_est_level = (pcs_ptr->slice_type == I_SLICE) ? 3 : 0;
+#else
         else if (enc_mode <= ENC_M11)
             rate_est_level = (pcs_ptr->slice_type == I_SLICE) ? 3 : 4;
         else
             rate_est_level = pcs_ptr->slice_type == I_SLICE                            ? 3
                 : (pcs_ptr->parent_pcs_ptr->input_resolution <= INPUT_SIZE_720p_RANGE) ? 4
                                                                                        : 0;
+#endif
     }
 
     set_rate_est_ctrls(context_ptr, rate_est_level);
@@ -5845,10 +5954,17 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet * sequence_co
         intra_level = pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ? 1 : 4;
     else if (enc_mode <= ENC_M5)
         intra_level = (pcs_ptr->temporal_layer_index == 0) ? 1 : 4;
+#if OPT_M7_4K
+    else if (enc_mode <= ENC_M7)
+        intra_level = pcs_ptr->slice_type == I_SLICE ? 1
+        : (pcs_ptr->temporal_layer_index == 0)   ? 2
+        : 4;
+#else
     else if (enc_mode <= ENC_M6)
         intra_level = pcs_ptr->slice_type == I_SLICE ? 1
-            : (pcs_ptr->temporal_layer_index == 0)   ? 2
-                                                     : 4;
+        : (pcs_ptr->temporal_layer_index == 0)   ? 2
+        : 4;
+#endif
     else
         intra_level = pcs_ptr->slice_type == I_SLICE ? 3 : 4;
 

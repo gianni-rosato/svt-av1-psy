@@ -10483,14 +10483,22 @@ void md_pme_search_controls(ModeDecisionContext *ctx, uint8_t md_pme_level);
 void set_inter_intra_ctrls(ModeDecisionContext *ctx, uint8_t inter_intra_level);
 void set_dist_based_ref_pruning_controls(ModeDecisionContext *mdctxt,
                                          uint8_t              dist_based_ref_pruning_level);
+#if OPT_RES_CHECKS_2
+void set_txt_controls(ModeDecisionContext *mdctxt, uint8_t txt_level);
+#else
 void set_txt_controls(ModeDecisionContext *mdctxt, uint8_t txt_level, uint8_t resolution);
+#endif
 
 // Set the levels used by features which apply aggressive settings for certain blocks (e.g. NSQ stats)
 // Return 1 to skip, else 0
 //
 // Level 0 - skip
 // Level 1-4 - adjust certain settings
+#if OPT_RES_CHECKS_2
+EbBool update_md_settings(ModeDecisionContext *ctx, uint8_t level) {
+#else
 EbBool update_md_settings(ModeDecisionContext *ctx, uint8_t level, uint8_t resolution) {
+#endif
     // Level 0 is skip
     if (level == 0)
         return 1;
@@ -10522,7 +10530,11 @@ EbBool update_md_settings(ModeDecisionContext *ctx, uint8_t level, uint8_t resol
             ctx->nic_ctrls.scaling_ctrls.stage3_scaling_num, 1);
     }
     if (level >= 4) {
+#if OPT_RES_CHECKS_2
+        set_txt_controls(ctx, 5);
+#else
         set_txt_controls(ctx, 5, resolution);
+#endif
         ctx->uv_ctrls.uv_mode = CHROMA_MODE_1;
     }
     return 0;
@@ -10530,6 +10542,52 @@ EbBool update_md_settings(ModeDecisionContext *ctx, uint8_t level, uint8_t resol
 
 // Update MD settings or skip NSQ block based on the coeff-area of the parent SQ block
 // Returns 1 to skip the NSQ block; 0 otherwise
+#if OPT_RES_CHECKS_2
+uint8_t update_md_settings_based_on_sq_coeff_area(ModeDecisionContext *ctx) {
+    uint8_t                                     skip_nsq = 0;
+    ParentSqCoeffAreaBasedCyclesReductionCtrls *cycles_red_ctrls =
+        &ctx->parent_sq_coeff_area_based_cycles_reduction_ctrls;
+    if (cycles_red_ctrls->enabled) {
+        if (ctx->blk_geom->shape != PART_N) {
+            if (ctx->avail_blk_flag[ctx->blk_geom->sqi_mds]) {
+                uint32_t count_non_zero_coeffs =
+                    ctx->md_local_blk_unit[ctx->blk_geom->sqi_mds].count_non_zero_coeffs;
+                uint32_t total_samples = (ctx->blk_geom->sq_size * ctx->blk_geom->sq_size);
+                // High frequency band actions
+                if (count_non_zero_coeffs >=
+                    ((total_samples * cycles_red_ctrls->high_freq_band1_th) / 100))
+                    skip_nsq = update_md_settings(
+                        ctx, cycles_red_ctrls->high_freq_band1_level);
+                else if (count_non_zero_coeffs >=
+                         ((total_samples * cycles_red_ctrls->high_freq_band2_th) / 100))
+                    skip_nsq = update_md_settings(
+                        ctx, cycles_red_ctrls->high_freq_band2_level);
+                else if (count_non_zero_coeffs >=
+                         ((total_samples * cycles_red_ctrls->high_freq_band3_th) / 100))
+                    skip_nsq = update_md_settings(
+                        ctx, cycles_red_ctrls->high_freq_band3_level);
+                // Low frequency band actions
+                else if (cycles_red_ctrls->enable_zero_coeff_action && count_non_zero_coeffs == 0) {
+                    skip_nsq = update_md_settings(
+                        ctx, cycles_red_ctrls->zero_coeff_action);
+                    set_txt_controls(ctx, 0);
+                } else if (cycles_red_ctrls->enable_one_coeff_action && count_non_zero_coeffs == 1)
+                    skip_nsq = update_md_settings(
+                        ctx, cycles_red_ctrls->one_coeff_action);
+                else if (count_non_zero_coeffs <
+                         ((total_samples * cycles_red_ctrls->low_freq_band1_th) / 100))
+                    skip_nsq = update_md_settings(
+                        ctx, cycles_red_ctrls->low_freq_band1_level);
+                else if (count_non_zero_coeffs <
+                         ((total_samples * cycles_red_ctrls->low_freq_band2_th) / 100))
+                    skip_nsq = update_md_settings(
+                        ctx, cycles_red_ctrls->low_freq_band2_level);
+            }
+        }
+    }
+    return skip_nsq;
+}
+#else
 uint8_t update_md_settings_based_on_sq_coeff_area(ModeDecisionContext *ctx, uint8_t resolution) {
     uint8_t                                     skip_nsq = 0;
     ParentSqCoeffAreaBasedCyclesReductionCtrls *cycles_red_ctrls =
@@ -10574,6 +10632,7 @@ uint8_t update_md_settings_based_on_sq_coeff_area(ModeDecisionContext *ctx, uint
     }
     return skip_nsq;
 }
+#endif
 /*
  * Pad high bit depth pictures.
  *
@@ -11046,8 +11105,12 @@ void process_block(SequenceControlSet *scs, PictureControlSet *pcs, ModeDecision
         if (!ctx->md_disallow_nsq) {
             skip_processing_block |= update_skip_nsq_based_on_sq_recon_dist(ctx);
             skip_processing_block |= update_skip_nsq_shapes(ctx);
+#if OPT_RES_CHECKS_2
+            skip_processing_block |= update_md_settings_based_on_sq_coeff_area(ctx);
+#else
             skip_processing_block |= update_md_settings_based_on_sq_coeff_area(
                 ctx, pcs->parent_pcs_ptr->input_resolution);
+#endif
         }
         if (!skip_processing_block &&
             pcs->parent_pcs_ptr->sb_geom[sb_addr].block_is_allowed[blk_ptr->mds_idx]) {

@@ -381,8 +381,11 @@ EbErrorType recon_coef_ctor(EncDecSet *object_ptr, EbPtr object_init_data_ptr) {
 
     return EB_ErrorNone;
 }
-
+#if OPT_M13_10BIT
+uint8_t get_dlf_level(EbEncMode enc_mode, uint8_t is_used_as_reference_flag, uint8_t is_16bit);
+#else
 uint8_t get_dlf_level(EbEncMode enc_mode, uint8_t is_used_as_reference_flag);
+#endif
 
 uint8_t get_enable_restoration(EbEncMode enc_mode, int8_t config_enable_restoration,
                                uint8_t input_resolution);
@@ -456,11 +459,21 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
     else
         for (uint8_t is_used_as_reference_flag = 0; is_used_as_reference_flag < 2;
              is_used_as_reference_flag++) {
+#if OPT_M13_10BIT
+            for (uint8_t is_hbd = 0; is_hbd < 2; is_hbd++) {
+                    lf_recon_needed = get_dlf_level(init_data_ptr->enc_mode, is_used_as_reference_flag, is_hbd) == 1
+                        ? 1
+                        : 0;
+                    if (lf_recon_needed)
+                        break;
+                }
+#else
             lf_recon_needed = get_dlf_level(init_data_ptr->enc_mode, is_used_as_reference_flag) == 1
                 ? 1
                 : 0;
             if (lf_recon_needed)
                 break;
+#endif
         }
     object_ptr->temp_lf_recon_picture16bit_ptr = (EbPictureBufferDesc *)NULL;
     object_ptr->temp_lf_recon_picture_ptr      = (EbPictureBufferDesc *)NULL;

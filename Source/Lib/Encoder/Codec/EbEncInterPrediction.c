@@ -2953,6 +2953,7 @@ void interpolation_filter_search(PictureControlSet           *picture_control_se
                     if (/*cm->seq_params.enable_dual_filter*/ picture_control_set_ptr
                             ->parent_pcs_ptr->scs_ptr->seq_header.enable_dual_filter == 0)
                         if (filter_sets[i][0] != filter_sets[i][1]) continue;
+#if !CLN_REMOVE_UNUSED_RES
                     // only use reg+sharp for <=480p, reg+smooth for >480p
                     if (md_context_ptr->ifs_ctrls.modulate_filter_per_resolution) {
                         if (picture_control_set_ptr->parent_pcs_ptr->input_resolution <=
@@ -2961,6 +2962,7 @@ void interpolation_filter_search(PictureControlSet           *picture_control_se
                         } else if (filter_sets[i][0] == 2)
                             continue;
                     }
+#endif
                     /*mbmi*/ candidate_buffer_ptr->candidate_ptr->interp_filters =
                         av1_make_interp_filters((InterpFilter)filter_sets[i][0],
                                                 (InterpFilter)filter_sets[i][1]);
