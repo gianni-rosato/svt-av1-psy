@@ -78,6 +78,8 @@ The SVT-AV1 Encoder library supports the x86 architecture
 
 ### Linux* Operating Systems (64-bit)
 
+Note - a Dockerfile is provided to build the encoder into a tiny Alpine Linux Docker image.
+
 - __Build Requirements__
   - GCC 5.4.0 or later
   - CMake 3.5.1 or later
