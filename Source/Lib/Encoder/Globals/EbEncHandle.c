@@ -3367,7 +3367,10 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     else
      {
         uint8_t tpl_lad_mg = 1; // Specify the number of mini-gops to be used as LAD. 0: 1 mini-gop, 1: 2 mini-gops and 3: 3 mini-gops
-        if (scs_ptr->static_config.enc_mode <= ENC_M11 && scs_ptr->static_config.look_ahead_distance != 0 && scs_ptr->tpl_level != 0)
+        uint32_t mg_size = 1 << scs_ptr->static_config.hierarchical_levels;
+        if (scs_ptr->static_config.look_ahead_distance < mg_size)
+            tpl_lad_mg = 0;
+        else if (scs_ptr->static_config.enc_mode <= ENC_M11 && scs_ptr->tpl_level != 0)
             tpl_lad_mg = 1;
         else
             tpl_lad_mg = 0;
