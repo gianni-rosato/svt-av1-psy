@@ -644,6 +644,9 @@ static void av1_gop_bit_allocation_same_pred(PictureParentControlSet *pcs, GF_GR
     // For key frames the frame target rate is already set and it
     // is also the golden frame.
     int frame_index = (pcs->slice_type == I_SLICE) ? 1 : 0;
+#if FIX_VBR_DIV0
+    assert(gf_stats.gf_group_err != 0);
+#endif
     for (int idx = frame_index; idx < pcs->gf_interval; ++idx) {
         uint8_t gf_group_index = pcs->slice_type == I_SLICE ? idx : idx + 1;
         gf_group->bit_allocation[gf_group_index] =
@@ -1976,6 +1979,10 @@ void svt_av1_get_second_pass_params(PictureParentControlSet *pcs_ptr) {
     pcs_ptr->gf_group_index = gf_group->index;
     if (!twopass->stats_in)
         return;
+#if FIX_VBR_DIV0
+    if (!scs_ptr->static_config.rate_control_mode)
+        return;
+#endif
 #ifdef ARCH_X86_64
     aom_clear_system_state();
 #endif

@@ -3097,25 +3097,32 @@ void *rate_control_kernel(void *input_ptr) {
                         context_ptr->rate_control_param_queue[interval_index_temp];
                 }
                 pcs_ptr->parent_pcs_ptr->rate_control_param_ptr = rate_control_param_ptr;
-
+#if FIX_VBR_DIV0
+                if (scs_ptr->static_config.rate_control_mode)
+#else
                 if (scs_ptr->static_config.pass == ENC_MIDDLE_PASS ||
                     scs_ptr->static_config.pass == ENC_LAST_PASS || scs_ptr->lap_enabled ||
                     (!(scs_ptr->static_config.pass == ENC_MIDDLE_PASS ||
                        scs_ptr->static_config.pass == ENC_LAST_PASS) &&
                      scs_ptr->static_config.pass != ENC_FIRST_PASS &&
                      scs_ptr->static_config.rate_control_mode == 2))
+#endif
                 {
                     if (pcs_ptr->picture_number == 0) {
                         set_rc_buffer_sizes(scs_ptr);
                         av1_rc_init(scs_ptr);
                     }
                     restore_param(pcs_ptr->parent_pcs_ptr, rate_control_param_ptr);
-
+#if FIX_VBR_DIV0
+                    if (scs_ptr->static_config.rate_control_mode == 2 &&
+                        scs_ptr->static_config.pred_structure == EB_PRED_LOW_DELAY_P)
+#else
                     if (!(scs_ptr->static_config.pass == ENC_MIDDLE_PASS ||
                           scs_ptr->static_config.pass == ENC_LAST_PASS) &&
                         scs_ptr->static_config.pass != ENC_FIRST_PASS &&
                         scs_ptr->static_config.rate_control_mode == 2 &&
                         scs_ptr->static_config.pred_structure == EB_PRED_LOW_DELAY_P)
+#endif
                         svt_av1_get_one_pass_rt_params(pcs_ptr->parent_pcs_ptr);
                     else
                         svt_av1_get_second_pass_params(pcs_ptr->parent_pcs_ptr);
@@ -3192,6 +3199,7 @@ void *rate_control_kernel(void *input_ptr) {
                             new_qindex = cqp_qindex_calc_tpl_la(
                                 pcs_ptr, rc, rc->active_worst_quality);
                         }
+#if !FIX_VBR_DIV0
                         else if (scs_ptr->static_config.pass == ENC_MIDDLE_PASS ||
                                  scs_ptr->static_config.pass == ENC_LAST_PASS) {
                             int32_t update_type =
@@ -3208,7 +3216,9 @@ void *rate_control_kernel(void *input_ptr) {
                             }
                             // VBR Qindex calculating
                             new_qindex = rc_pick_q_and_bounds(pcs_ptr);
-                        } else
+                        }
+#endif
+                        else
                             new_qindex = cqp_qindex_calc(pcs_ptr, qindex);
                     } else {
                         new_qindex = find_fp_qindex(
@@ -3249,11 +3259,17 @@ void *rate_control_kernel(void *input_ptr) {
                      update_type == ARF_UPDATE)) {
                     process_tpl_stats_frame_kf_gfu_boost(pcs_ptr);
                 }
+#if FIX_VBR_DIV0
+                // Qindex calculating
+                if (scs_ptr->static_config.rate_control_mode == 2 &&
+                    scs_ptr->static_config.pass == ENC_SINGLE_PASS)
+#else
                 // VBR Qindex calculating
                 if (!(scs_ptr->static_config.pass == ENC_MIDDLE_PASS ||
                       scs_ptr->static_config.pass == ENC_LAST_PASS) &&
                     scs_ptr->static_config.pass != ENC_FIRST_PASS &&
                     scs_ptr->static_config.rate_control_mode == 2)
+#endif
                     new_qindex = rc_pick_q_and_bounds_no_stats_cbr(pcs_ptr);
                 else
                     new_qindex = rc_pick_q_and_bounds(pcs_ptr);
@@ -3366,7 +3382,11 @@ void *rate_control_kernel(void *input_ptr) {
                     sb_ptr->qindex     = quantizer_to_qindex[pcs_ptr->picture_qp];
                 }
             }
+#if FIX_VBR_DIV0
+            if (scs_ptr->static_config.rate_control_mode && !is_superres_recode_task) {
+#else
             if (!is_superres_recode_task) {
+#endif
                 update_rc_counts(pcs_ptr->parent_pcs_ptr);
             }
             // Get Empty Rate Control Results Buffer
@@ -3419,14 +3439,22 @@ void *rate_control_kernel(void *input_ptr) {
                     rate_control_param_ptr->processed_frame_number = 0;
                 }
             }
-
+#if FIX_VBR_DIV0
+            if (scs_ptr->static_config.rate_control_mode) {
+#else
             if (scs_ptr->static_config.pass != ENC_FIRST_PASS) {
+#endif
                 restore_gf_group_param(parentpicture_control_set_ptr);
                 av1_rc_postencode_update(parentpicture_control_set_ptr);
-
+#if FIX_VBR_DIV0
+                // Qindex calculating
+                if (!(scs_ptr->static_config.rate_control_mode == 2 &&
+                    scs_ptr->static_config.pass == ENC_SINGLE_PASS))
+#else
                 if (!(!(scs_ptr->static_config.pass == ENC_MIDDLE_PASS ||
                         scs_ptr->static_config.pass == ENC_LAST_PASS) &&
                       scs_ptr->static_config.rate_control_mode == 2))
+#endif
                     svt_av1_twopass_postencode_update(parentpicture_control_set_ptr);
             }
             // Queue variables

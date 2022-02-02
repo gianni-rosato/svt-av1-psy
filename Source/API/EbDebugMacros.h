@@ -53,6 +53,7 @@ extern "C" {
 #define OPT_M13_10BIT           1 // Tune M13 for 10bit
 #define OPT_M6_4K               1 // Tune M6 for 4k
 
+#define FIX_VBR_DIV0            1 // Fix the VBR div by zero in multipass mode
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch
