@@ -3889,12 +3889,12 @@ static EbErrorType verify_settings(
     }
 
     if (scs_ptr->max_input_luma_width > 16384) {
-        SVT_ERROR("Instance %u: Source Width must be less than 16384\n", channel_number + 1);
+        SVT_ERROR("Instance %u: Source Width must be less than or equal to 16384\n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
 
     if (scs_ptr->max_input_luma_height > 8704) {
-        SVT_ERROR("Instance %u: Source Height must be less than 8704)\n", channel_number + 1);
+        SVT_ERROR("Instance %u: Source Height must be less than or equal to 8704)\n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
 
