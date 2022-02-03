@@ -9751,6 +9751,14 @@ void md_encode_block_light_pd1(PictureControlSet *pcs_ptr, ModeDecisionContext *
         context_ptr->use_tx_shortcuts_mds3                = 1;
         context_ptr->lpd1_allow_skipping_tx               = 1;
     }
+    // For 10bit content, when recon is not needed, hbd_mode_decision can stay =0,
+    // and the 8bit prediction is used to produce the residual (with 8bit source).
+    // When recon is needed, the prediction must be re-done in 10bit,
+    // and the residual will be generated with the 10bit pred and 10bit source
+
+    // Using the 8bit residual for the TX will cause different streams compared to using the 10bit residual.
+    // To generate the same streams, compute the 10bit prediction before computing the recon
+
     if (context_ptr->encoder_bit_depth > EB_8BIT && context_ptr->bypass_encdec &&
         perform_md_recon) {
         context_ptr->hbd_mode_decision = 2;
@@ -10200,6 +10208,15 @@ void md_encode_block(PictureControlSet *pcs_ptr, ModeDecisionContext *context_pt
 
     uint8_t org_hbd = context_ptr->hbd_mode_decision;
     uint8_t perform_md_recon = do_md_recon(pcs_ptr->parent_pcs_ptr, context_ptr);
+
+    // For 10bit content, when recon is not needed, hbd_mode_decision can stay =0,
+    // and the 8bit prediction is used to produce the residual (with 8bit source).
+    // When recon is needed, the prediction must be re-done in 10bit,
+    // and the residual will be generated with the 10bit pred and 10bit source
+
+    // Using the 8bit residual for the TX will cause different streams compared to using the 10bit residual.
+    // To generate the same streams, compute the 10bit prediction before computing the recon
+
     if (context_ptr->encoder_bit_depth > EB_8BIT && context_ptr->bypass_encdec &&
         !context_ptr->hbd_mode_decision && context_ptr->pd_pass == PD_PASS_1 && perform_md_recon) {
         context_ptr->hbd_mode_decision  = 2;
