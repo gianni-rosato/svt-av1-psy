@@ -5419,7 +5419,9 @@ EB_API void svt_av1_print_version(void) {
     SVT_INFO("-------------------------------------------\n");
     SVT_INFO("SVT [version]:\tSVT-AV1 Encoder Lib %s\n", SVT_AV1_CVS_VERSION);
     const char *compiler =
-#if defined( _MSC_VER ) && (_MSC_VER >= 1920)
+#if defined( _MSC_VER ) && (_MSC_VER >= 1930)
+    "Visual Studio 2022"
+#elif defined( _MSC_VER ) && (_MSC_VER >= 1920)
     "Visual Studio 2019"
 #elif defined( _MSC_VER ) && (_MSC_VER >= 1910)
     "Visual Studio 2017"
