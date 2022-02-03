@@ -687,3 +687,78 @@ int8_t svt_av1_wedge_sign_from_residuals_sse2(const int16_t *ds, const uint8_t *
 
     return acc > limit;
 }
+
+// Loads and stores to do away with the tedium of casting the address
+// to the right type.
+static INLINE __m128i xx_load_128(const void *a) { return _mm_loadu_si128((const __m128i *)a); }
+
+static INLINE uint64_t xx_cvtsi128_si64(__m128i a) {
+#if ARCH_X86_64
+    return (uint64_t)_mm_cvtsi128_si64(a);
+#else
+    {
+        uint64_t tmp;
+        _mm_storel_epi64((__m128i *)&tmp, a);
+        return tmp;
+    }
+#endif
+}
+static uint64_t aom_sum_squares_i16_64n_sse2(const int16_t *src, uint32_t n) {
+    const __m128i v_zext_mask_q = xx_set1_64_from_32i(0xffffffff);
+    __m128i       v_acc0_q      = _mm_setzero_si128();
+    __m128i       v_acc1_q      = _mm_setzero_si128();
+
+    const int16_t *const end = src + n;
+
+    assert(n % 64 == 0);
+
+    while (src < end) {
+        const __m128i v_val_0_w = xx_load_128(src);
+        const __m128i v_val_1_w = xx_load_128(src + 8);
+        const __m128i v_val_2_w = xx_load_128(src + 16);
+        const __m128i v_val_3_w = xx_load_128(src + 24);
+        const __m128i v_val_4_w = xx_load_128(src + 32);
+        const __m128i v_val_5_w = xx_load_128(src + 40);
+        const __m128i v_val_6_w = xx_load_128(src + 48);
+        const __m128i v_val_7_w = xx_load_128(src + 56);
+
+        const __m128i v_sq_0_d = _mm_madd_epi16(v_val_0_w, v_val_0_w);
+        const __m128i v_sq_1_d = _mm_madd_epi16(v_val_1_w, v_val_1_w);
+        const __m128i v_sq_2_d = _mm_madd_epi16(v_val_2_w, v_val_2_w);
+        const __m128i v_sq_3_d = _mm_madd_epi16(v_val_3_w, v_val_3_w);
+        const __m128i v_sq_4_d = _mm_madd_epi16(v_val_4_w, v_val_4_w);
+        const __m128i v_sq_5_d = _mm_madd_epi16(v_val_5_w, v_val_5_w);
+        const __m128i v_sq_6_d = _mm_madd_epi16(v_val_6_w, v_val_6_w);
+        const __m128i v_sq_7_d = _mm_madd_epi16(v_val_7_w, v_val_7_w);
+
+        const __m128i v_sum_01_d = _mm_add_epi32(v_sq_0_d, v_sq_1_d);
+        const __m128i v_sum_23_d = _mm_add_epi32(v_sq_2_d, v_sq_3_d);
+        const __m128i v_sum_45_d = _mm_add_epi32(v_sq_4_d, v_sq_5_d);
+        const __m128i v_sum_67_d = _mm_add_epi32(v_sq_6_d, v_sq_7_d);
+
+        const __m128i v_sum_0123_d = _mm_add_epi32(v_sum_01_d, v_sum_23_d);
+        const __m128i v_sum_4567_d = _mm_add_epi32(v_sum_45_d, v_sum_67_d);
+
+        const __m128i v_sum_d = _mm_add_epi32(v_sum_0123_d, v_sum_4567_d);
+
+        v_acc0_q = _mm_add_epi64(v_acc0_q, _mm_and_si128(v_sum_d, v_zext_mask_q));
+        v_acc1_q = _mm_add_epi64(v_acc1_q, _mm_srli_epi64(v_sum_d, 32));
+
+        src += 64;
+    }
+
+    v_acc0_q = _mm_add_epi64(v_acc0_q, v_acc1_q);
+    v_acc0_q = _mm_add_epi64(v_acc0_q, _mm_srli_si128(v_acc0_q, 8));
+    return xx_cvtsi128_si64(v_acc0_q);
+}
+
+uint64_t svt_aom_sum_squares_i16_sse2(const int16_t *src, uint32_t n) {
+    if (n % 64 == 0) {
+        return aom_sum_squares_i16_64n_sse2(src, n);
+    } else if (n > 64) {
+        int k = n & ~(64 - 1);
+        return aom_sum_squares_i16_64n_sse2(src, k) + svt_aom_sum_squares_i16_c(src + k, n - k);
+    } else {
+        return svt_aom_sum_squares_i16_c(src, n);
+    }
+}
