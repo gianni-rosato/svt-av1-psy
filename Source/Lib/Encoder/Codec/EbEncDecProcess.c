@@ -6815,15 +6815,25 @@ void lpd1_detector_skip_pd0(PictureControlSet *pcs, ModeDecisionContext *md_ctx,
                         (EbReferenceObject *)pcs->ref_pic_ptr_array[REF_LIST_0][0]->object_ptr;
                     uint8_t l0_was_intra = ref_obj_l0->sb_intra[md_ctx->sb_index], l1_was_intra = 0;
                     uint8_t l0_was_skip = ref_obj_l0->sb_skip[md_ctx->sb_index], l1_was_skip = 1;
+#if FIX_USE_ME_DATA_ISLICE
+                    uint32_t l0_me_64x64_dist = ref_obj_l0->slice_type != I_SLICE ? ref_obj_l0->sb_me_64x64_dist[md_ctx->sb_index] : 0, l1_me_64x64_dist = 0;
+                    uint32_t l0_me_8x8_cost_var = ref_obj_l0->slice_type != I_SLICE ? ref_obj_l0->sb_me_8x8_cost_var[md_ctx->sb_index] : 0, l1_me_8x8_cost_var = 0;
+#else
                     uint32_t l0_me_64x64_dist = ref_obj_l0->sb_me_64x64_dist[md_ctx->sb_index], l1_me_64x64_dist = 0;
                     uint32_t l0_me_8x8_cost_var = ref_obj_l0->sb_me_8x8_cost_var[md_ctx->sb_index], l1_me_8x8_cost_var = 0;
+#endif
                     if (pcs->slice_type == B_SLICE) {
                         EbReferenceObject *ref_obj_l1 =
                             (EbReferenceObject *)pcs->ref_pic_ptr_array[REF_LIST_1][0]->object_ptr;
                         l1_was_intra = ref_obj_l1->sb_intra[md_ctx->sb_index];
                         l1_was_skip  = ref_obj_l1->sb_skip[md_ctx->sb_index];
+#if FIX_USE_ME_DATA_ISLICE
+                        l1_me_64x64_dist = ref_obj_l1->slice_type != I_SLICE ? ref_obj_l1->sb_me_64x64_dist[md_ctx->sb_index] : 0;
+                        l1_me_8x8_cost_var = ref_obj_l1->slice_type != I_SLICE ? ref_obj_l1->sb_me_8x8_cost_var[md_ctx->sb_index] : 0;
+#else
                         l1_me_64x64_dist = ref_obj_l1->sb_me_64x64_dist[md_ctx->sb_index];
                         l1_me_8x8_cost_var = ref_obj_l1->sb_me_8x8_cost_var[md_ctx->sb_index];
+#endif
                     }
 
                     // Keep a complexity score for the SB, based on available information.

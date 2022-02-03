@@ -6712,22 +6712,29 @@ void chroma_complexity_check_pred(ModeDecisionContext *ctx,
             cand_buffer->prediction_ptr->stride_y << shift,
             ctx->blk_geom->bheight_uv >> shift,
             ctx->blk_geom->bwidth_uv);
+#if FIX_CHROMA_PREDICTION_AVAILABILITY
+        // Only need to check Cb component if not already identified as complex
+        if (ctx->chroma_complexity == COMPONENT_LUMA || ctx->chroma_complexity == COMPONENT_CHROMA_CR)
+#endif
+            cb_dist = svt_nxm_sad_kernel_sub_sampled(
+                input_pic->buffer_cb + loc->input_cb_origin_in_index,
+                input_pic->stride_cb << shift,
+                cand_buffer->prediction_ptr->buffer_cb + loc->blk_chroma_origin_index,
+                cand_buffer->prediction_ptr->stride_cb << shift,
+                ctx->blk_geom->bheight_uv >> shift,
+                ctx->blk_geom->bwidth_uv);
+#if FIX_CHROMA_PREDICTION_AVAILABILITY
+        // Only need to check Cr component if not already identified as complex
+        if (ctx->chroma_complexity == COMPONENT_LUMA || ctx->chroma_complexity == COMPONENT_CHROMA_CB)
+#endif
+            cr_dist = svt_nxm_sad_kernel_sub_sampled(
+                input_pic->buffer_cr + loc->input_cb_origin_in_index,
+                input_pic->stride_cr << shift,
+                cand_buffer->prediction_ptr->buffer_cr + loc->blk_chroma_origin_index,
+                cand_buffer->prediction_ptr->stride_cr << shift,
+                ctx->blk_geom->bheight_uv >> shift,
+                ctx->blk_geom->bwidth_uv);
 
-        cb_dist = svt_nxm_sad_kernel_sub_sampled(
-            input_pic->buffer_cb + loc->input_cb_origin_in_index,
-            input_pic->stride_cb << shift,
-            cand_buffer->prediction_ptr->buffer_cb + loc->blk_chroma_origin_index,
-            cand_buffer->prediction_ptr->stride_cb << shift,
-            ctx->blk_geom->bheight_uv >> shift,
-            ctx->blk_geom->bwidth_uv);
-
-        cr_dist = svt_nxm_sad_kernel_sub_sampled(
-            input_pic->buffer_cr + loc->input_cb_origin_in_index,
-            input_pic->stride_cr << shift,
-            cand_buffer->prediction_ptr->buffer_cr + loc->blk_chroma_origin_index,
-            cand_buffer->prediction_ptr->stride_cr << shift,
-            ctx->blk_geom->bheight_uv >> shift,
-            ctx->blk_geom->bwidth_uv);
     }
     else {
         y_dist = sad_16b_kernel(
@@ -6738,29 +6745,49 @@ void chroma_complexity_check_pred(ModeDecisionContext *ctx,
             cand_buffer->prediction_ptr->stride_y << shift,
             ctx->blk_geom->bheight_uv >> shift,
             ctx->blk_geom->bwidth_uv);
-
-        cb_dist = sad_16b_kernel(
-            ((uint16_t *)input_pic->buffer_cb) + loc->input_cb_origin_in_index,
-            input_pic->stride_cb << shift,
-            ((uint16_t *)cand_buffer->prediction_ptr->buffer_cb) +
-            loc->blk_chroma_origin_index,
-            cand_buffer->prediction_ptr->stride_cb << shift,
-            ctx->blk_geom->bheight_uv >> shift,
-            ctx->blk_geom->bwidth_uv);
-
-        cr_dist = sad_16b_kernel(
-            ((uint16_t *)input_pic->buffer_cr) + loc->input_cb_origin_in_index,
-            input_pic->stride_cr << shift,
-            ((uint16_t *)cand_buffer->prediction_ptr->buffer_cr) +
-            loc->blk_chroma_origin_index,
-            cand_buffer->prediction_ptr->stride_cr << shift,
-            ctx->blk_geom->bheight_uv >> shift,
-            ctx->blk_geom->bwidth_uv);
+#if FIX_CHROMA_PREDICTION_AVAILABILITY
+        // Only need to check Cb component if not already identified as complex
+        if (ctx->chroma_complexity == COMPONENT_LUMA || ctx->chroma_complexity == COMPONENT_CHROMA_CR)
+#endif
+            cb_dist = sad_16b_kernel(
+                ((uint16_t *)input_pic->buffer_cb) + loc->input_cb_origin_in_index,
+                input_pic->stride_cb << shift,
+                ((uint16_t *)cand_buffer->prediction_ptr->buffer_cb) +
+                loc->blk_chroma_origin_index,
+                cand_buffer->prediction_ptr->stride_cb << shift,
+                ctx->blk_geom->bheight_uv >> shift,
+                ctx->blk_geom->bwidth_uv);
+#if FIX_CHROMA_PREDICTION_AVAILABILITY
+        // Only need to check Cr component if not already identified as complex
+        if (ctx->chroma_complexity == COMPONENT_LUMA || ctx->chroma_complexity == COMPONENT_CHROMA_CB)
+#endif
+            cr_dist = sad_16b_kernel(
+                ((uint16_t *)input_pic->buffer_cr) + loc->input_cb_origin_in_index,
+                input_pic->stride_cr << shift,
+                ((uint16_t *)cand_buffer->prediction_ptr->buffer_cr) +
+                loc->blk_chroma_origin_index,
+                cand_buffer->prediction_ptr->stride_cr << shift,
+                ctx->blk_geom->bheight_uv >> shift,
+                ctx->blk_geom->bwidth_uv);
     }
+#if FIX_CHROMA_PREDICTION_AVAILABILITY
+    y_dist <<= 1;
+
+    if (cb_dist > y_dist && cr_dist > y_dist) {
+        ctx->chroma_complexity = COMPONENT_CHROMA;
+    }
+    else if (cb_dist > y_dist) {
+        ctx->chroma_complexity = (ctx->chroma_complexity == COMPONENT_CHROMA_CR) ? COMPONENT_CHROMA : COMPONENT_CHROMA_CB;
+    }
+    else if (cr_dist > y_dist) {
+        ctx->chroma_complexity = (ctx->chroma_complexity == COMPONENT_CHROMA_CB) ? COMPONENT_CHROMA : COMPONENT_CHROMA_CR;
+    }
+
+#else
 
     if ((cb_dist + cr_dist) > (y_dist * 3) >> 1)
         ctx->chroma_complexity = COMPONENT_CHROMA;
-
+#endif
     if (use_var) {
         const AomVarianceFnPtr *fn_ptr = &mefn_ptr[ctx->blk_geom->bsize_uv];
         unsigned int            sse;
@@ -7145,6 +7172,11 @@ void full_loop_core_light_pd1(PictureControlSet *pcs_ptr, BlkStruct *blk_ptr,
     // If no luma coeffs, may skip chroma TX and full cost calc (skip chroma compensation
     // if not needed for recon)
     if (perform_chroma) {
+#if FIX_CHROMA_PREDICTION_AVAILABILITY
+        // If using chroma pred samples in the next chroma complexity detector, need to generate pred samples for all components
+        if (!recon_needed)
+            context_ptr->lpd1_chroma_comp = context_ptr->lpd1_tx_ctrls.chroma_detector_level <= 3 ? COMPONENT_CHROMA : chroma_component;
+#endif
         //Chroma Prediction
         svt_product_prediction_fun_table_light_pd1[candidate_ptr->type](
             context_ptr->hbd_mode_decision, context_ptr, pcs_ptr, candidate_buffer);
@@ -7801,10 +7833,18 @@ static void md_stage_3(PictureControlSet *pcs_ptr, BlkStruct *blk_ptr,
         uint32_t cand_index = context_ptr->best_candidate_index_array[full_loop_candidate_index];
         ModeDecisionCandidateBuffer *candidate_buffer = candidate_buffer_ptr_array[cand_index];
         ModeDecisionCandidate *      candidate_ptr    = candidate_buffer->candidate_ptr;
+#if FIX_PALETTE_10BIT
+        if(candidate_buffer->candidate_ptr->pred_mode == DC_PRED)
+            if (context_ptr->scale_palette)
+                if (candidate_ptr->palette_info != NULL && candidate_ptr->palette_size[0] > 0)
+                    // if MD is done on 8bit( when HBD is 0 and bypass encdec is ON)
+                    // Scale  palette colors to 10bit
+#else
         if (context_ptr->scale_palette)
             if (candidate_ptr->palette_info != NULL)
                 if (candidate_ptr->palette_size[0] > 0)
                     //MD was done on 8bit, scale  palette colors to 10bit
+#endif
                     for (uint8_t col = 0; col < candidate_ptr->palette_size[0]; col++)
                         candidate_ptr->palette_info->pmi.palette_colors[col] *= 4;
         // If EncDec is bypassed, disable features affecting the TX that are usually disabled in EncDec

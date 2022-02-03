@@ -2699,9 +2699,13 @@ EB_EXTERN EbErrorType av1_encdec_update(SequenceControlSet *scs, PictureControlS
             blk_geom->origin_y == 0) {
             pcs->parent_pcs_ptr->pcs_total_rate = 0;
         }
-
+#if FIX_CHECK_NON_INITIALIZED_VAR
+        if (!pcs->parent_pcs_ptr->sb_geom[sb_addr].block_is_allowed[blk_it] ||
+            blk_ptr->part == PARTITION_SPLIT) {
+#else
         if (blk_ptr->part == PARTITION_SPLIT ||
             !pcs->parent_pcs_ptr->sb_geom[sb_addr].block_is_allowed[blk_it]) {
+#endif
             blk_it += ctx->blk_geom->d1_depth_offset;
             continue;
         }
