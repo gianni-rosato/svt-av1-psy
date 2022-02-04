@@ -105,6 +105,9 @@
 #define ENCDEC_INPUT_PORT_MDC                                0
 #define ENCDEC_INPUT_PORT_ENCDEC                             1
 #define ENCDEC_INPUT_PORT_INVALID                           -1
+#if FIX_1PVBR
+#define DEFAULT_QP 50
+#endif
 /**************************************
  * Globals
  **************************************/
@@ -3282,6 +3285,31 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
                 "This mode retains a significant amount of memory, much more than other modes!\n");
         }
     }
+#if FIX_1PVBR
+    // Set initial qp for single pass vbr
+    if ((scs_ptr->static_config.rate_control_mode) && (scs_ptr->static_config.pass == ENC_SINGLE_PASS)){
+        if (scs_ptr->static_config.qp != DEFAULT_QP) {
+            SVT_WARN("The input q vlaue is ignored in vbr mode %d", scs_ptr->static_config.qp);
+        }
+        const uint8_t tbr_bands[6] = { 1,2,4,6,8,10 };
+        const uint64_t src_samples = (uint64_t)(scs_ptr->seq_header.max_frame_width*scs_ptr->seq_header.max_frame_height);
+        const uint64_t target_bit_rate = scs_ptr->static_config.target_bit_rate / src_samples;
+        if (target_bit_rate < tbr_bands[0])
+            scs_ptr->static_config.qp = 50;
+        else if (target_bit_rate < tbr_bands[1])
+            scs_ptr->static_config.qp = 45;
+        else if (target_bit_rate < tbr_bands[2])
+            scs_ptr->static_config.qp = 40;
+        else if (target_bit_rate < tbr_bands[3])
+            scs_ptr->static_config.qp = 35;
+        else if (target_bit_rate < tbr_bands[4])
+            scs_ptr->static_config.qp = 30;
+        else if (target_bit_rate < tbr_bands[5])
+            scs_ptr->static_config.qp = 25;
+        else
+            scs_ptr->static_config.qp = 20;
+    }
+#endif
     derive_input_resolution(
         &scs_ptr->input_resolution,
         scs_ptr->seq_header.max_frame_width*scs_ptr->seq_header.max_frame_height);
@@ -4287,8 +4315,11 @@ static EbErrorType svt_set_default_params(
     config_ptr->stat_report = 0;
     config_ptr->tile_rows = 0;
     config_ptr->tile_columns = 0;
-
+#if FIX_1PVBR
+    config_ptr->qp = DEFAULT_QP;
+#else
     config_ptr->qp = 50;
+#endif
     config_ptr->use_qp_file = EB_FALSE;
 
     config_ptr->use_fixed_qindex_offsets = EB_FALSE;
