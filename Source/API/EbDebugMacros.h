@@ -55,10 +55,10 @@ extern "C" {
 
 #define FIX_VBR_DIV0            1 // Fix the VBR div by zero in multipass mode
 
-#define FIX_CHECK_NON_INITIALIZED_VAR   1 // Move around the condition to avoid non-initialized variable
-#define FIX_USE_ME_DATA_ISLICE          1 // Properly initialize the ME data when the picture is I-SLICE and used as reference
-#define FIX_PALETTE_10BIT               1 // Remove palette scaling for non-intra candidates
-
+#define FIX_CHECK_NON_INITIALIZED_VAR       1 // Move around the condition to avoid non-initialized variable
+#define FIX_USE_ME_DATA_ISLICE              1 // Properly initialize the ME data when the picture is I-SLICE and used as reference
+#define FIX_PALETTE_10BIT                   1 // Remove palette scaling for non-intra candidates
+#define FIX_CHROMA_PREDICTION_AVAILABILITY  1 // Align chroma prediction generation and use
 
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one
