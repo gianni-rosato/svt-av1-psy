@@ -638,6 +638,18 @@ EB_API EbErrorType svt_av1_enc_set_parameter(
     EbSvtAv1EncConfiguration *
         pComponentParameterStructure); // pComponentParameterStructure contents will be copied to the library
 
+/* OPTIONAL: Set a single configuration parameter.
+     *
+     * Parameter:
+     * @ *pComponentParameterStructure  Encoder parameters structure.
+     * @ *name                          Null terminated string containing the parameter name
+     * @ *value                         Null terminated string containing the parameter value */
+EB_API EbErrorType svt_av1_enc_parse_parameter(
+    EbSvtAv1EncConfiguration *
+        pComponentParameterStructure,
+    const char *name,
+    const char *value);
+
 /* STEP 3: Initialize encoder and allocates memory to necessary buffers.
      *
      * Parameter:

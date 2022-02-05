@@ -705,3 +705,537 @@ void svt_av1_print_lib_params(SequenceControlSet* scs) {
 
     fflush(stdout);
 }
+
+/**********************************
+* Parse Single Parameter
+**********************************/
+//assume the input list of values are in the format of "[v1,v2,v3,...]"
+static EbErrorType parse_list(const char *nptr, int32_t *list, size_t n) {
+    const char *ptr = nptr;
+    char *      endptr;
+    size_t      i = 0;
+    while (*ptr) {
+        if (*ptr == '[' || *ptr == ']') {
+            ptr++;
+            continue;
+        }
+
+        int32_t rawval = strtol(ptr, &endptr, 10);
+        if (i >= n) {
+            return EB_ErrorBadParameter;
+        } else if (*endptr == ',' || *endptr == ']') {
+            endptr++;
+        } else if (*endptr) {
+            return EB_ErrorBadParameter;
+        }
+        list[i++] = rawval;
+        ptr       = endptr;
+    }
+    return EB_ErrorNone;
+}
+
+static EbErrorType str_to_int64(const char *nptr, int64_t *out)
+{
+    char *endptr;
+    int64_t val;
+
+    val = strtoll(nptr, &endptr, 0);
+
+    if (endptr == nptr || *endptr)
+        return EB_ErrorBadParameter;
+
+    *out = val;
+    return EB_ErrorNone;
+}
+
+static EbErrorType str_to_int(const char *nptr, int32_t *out)
+{
+    char *endptr;
+    int32_t val;
+
+    val = strtol(nptr, &endptr, 0);
+
+    if (endptr == nptr || *endptr)
+        return EB_ErrorBadParameter;
+
+    *out = val;
+    return EB_ErrorNone;
+}
+
+static EbErrorType str_to_uint(const char *nptr, uint32_t *out)
+{
+    char *endptr;
+    uint32_t val;
+
+    val = strtoul(nptr, &endptr, 0);
+
+    if (endptr == nptr || *endptr)
+        return EB_ErrorBadParameter;
+
+    *out = val;
+    return EB_ErrorNone;
+}
+
+#ifdef _MSC_VER
+#define strcasecmp _stricmp
+#endif
+
+static EbErrorType str_to_bool(const char *nptr, EbBool *out)
+{
+    EbBool val;
+
+    if (    !strcmp(nptr, "1")    ||
+        !strcasecmp(nptr, "true") ||
+        !strcasecmp(nptr, "yes"))
+        val = EB_TRUE;
+    else if (    !strcmp(nptr, "0")     ||
+             !strcasecmp(nptr, "false") ||
+             !strcasecmp(nptr, "no"))
+        val = EB_FALSE;
+    else
+        return EB_ErrorBadParameter;
+
+    *out = val;
+    return EB_ErrorNone;
+}
+
+static EbErrorType str_to_crf(const char *nptr, EbSvtAv1EncConfiguration *config_struct)
+{
+    uint32_t crf;
+    EbErrorType return_error;
+
+    return_error = str_to_uint(nptr, &crf);
+    if (return_error == EB_ErrorBadParameter)
+        return return_error;
+
+    config_struct->qp = crf;
+    config_struct->rate_control_mode = 0;
+    config_struct->enable_tpl_la = 1;
+
+    return EB_ErrorNone;
+}
+
+static EbErrorType str_to_keyint(const char *nptr, int32_t *out)
+{
+    int32_t keyint;
+    EbErrorType return_error;
+
+    return_error = str_to_int(nptr, &keyint);
+    if (return_error == EB_ErrorBadParameter)
+        return return_error;
+
+    *out = keyint < 0 ? keyint : keyint - 1;
+
+    return EB_ErrorNone;
+}
+
+static EbErrorType str_to_profile(const char *nptr, EbAv1SeqProfile *out)
+{
+    const struct {
+        const char *name;
+        EbAv1SeqProfile profile;
+    } profiles[] = {
+        { "main",          MAIN_PROFILE },
+        { "high",          HIGH_PROFILE },
+        { "professional",  PROFESSIONAL_PROFILE },
+    };
+    const size_t profiles_size = sizeof(profiles) / sizeof(profiles[0]);
+
+    for (size_t i = 0; i < profiles_size; i++) {
+        if (!strcmp(nptr, profiles[i].name)) {
+            *out = profiles[i].profile;
+            return EB_ErrorNone;
+        }
+    }
+
+    return EB_ErrorBadParameter;
+}
+
+static EbErrorType str_to_color_fmt(const char *nptr, EbColorFormat *out)
+{
+    const struct {
+        const char *name;
+        EbColorFormat fmt;
+    } color_formats[] = {
+        { "mono", EB_YUV400 },
+        { "400",  EB_YUV400 },
+        { "420",  EB_YUV420 },
+        { "422",  EB_YUV422 },
+        { "444",  EB_YUV444 },
+    };
+    const size_t color_format_size = sizeof(color_formats) / sizeof(color_formats[0]);
+
+    for (size_t i = 0; i < color_format_size; i++) {
+        if (!strcmp(nptr, color_formats[i].name)) {
+            *out = color_formats[i].fmt;
+            return EB_ErrorNone;
+        }
+    }
+
+    return EB_ErrorBadParameter;
+}
+
+static EbErrorType str_to_intra_rt(const char *nptr, SvtAv1IntraRefreshType *out)
+{
+    const struct {
+        const char *name;
+        SvtAv1IntraRefreshType type;
+    } refresh_types[] = {
+        { "cra",  SVT_AV1_FWDKF_REFRESH },
+        { "fwdkf", SVT_AV1_FWDKF_REFRESH },
+        { "idr",  SVT_AV1_KF_REFRESH },
+        { "kf",   SVT_AV1_KF_REFRESH },
+    };
+    const size_t refresh_type_size = sizeof(refresh_types) / sizeof(refresh_types[0]);
+
+    for (size_t i = 0; i < refresh_type_size; i++) {
+        if (!strcmp(nptr, refresh_types[i].name)) {
+            *out = refresh_types[i].type;
+            return EB_ErrorNone;
+        }
+    }
+
+    return EB_ErrorBadParameter;
+}
+
+static EbErrorType str_to_color_primaries(const char *nptr, uint8_t *out)
+{
+    const struct {
+        const char *name;
+        EbColorPrimaries primaries;
+    } color_primaries[] = {
+        { "bt709",    EB_CICP_CP_BT_709 },
+        { "bt470m",   EB_CICP_CP_BT_470_M },
+        { "bt470bg",  EB_CICP_CP_BT_470_B_G },
+        { "bt601",    EB_CICP_CP_BT_601 },
+        { "smpte240", EB_CICP_CP_SMPTE_240 },
+        { "film",     EB_CICP_CP_GENERIC_FILM },
+        { "bt2020",   EB_CICP_CP_BT_2020 },
+        { "xyz",      EB_CICP_CP_XYZ },
+        { "smpte431", EB_CICP_CP_SMPTE_431 },
+        { "smpte432", EB_CICP_CP_SMPTE_432 },
+        { "ebu3213",  EB_CICP_CP_EBU_3213 },
+    };
+    const size_t color_primaries_size =
+        sizeof(color_primaries) / sizeof(color_primaries[0]);
+
+    for (size_t i = 0; i < color_primaries_size; i++) {
+        if (!strcmp(nptr, color_primaries[i].name)) {
+            *out = color_primaries[i].primaries;
+            return EB_ErrorNone;
+        }
+    }
+
+    return EB_ErrorBadParameter;
+}
+
+static EbErrorType str_to_transfer_characteristics(const char *nptr, uint8_t *out)
+{
+    const struct {
+        const char *name;
+        EbTransferCharacteristics tfc;
+    } transfer_characteristics[] = {
+        { "bt709",         EB_CICP_TC_BT_709 },
+        { "bt470m",        EB_CICP_TC_BT_470_M },
+        { "bt470bg",       EB_CICP_TC_BT_470_B_G },
+        { "bt601",         EB_CICP_TC_BT_601 },
+        { "smpte240",      EB_CICP_TC_SMPTE_240 },
+        { "linear",        EB_CICP_TC_LINEAR },
+        { "log100",        EB_CICP_TC_LOG_100 },
+        { "log100-sqrt10", EB_CICP_TC_LOG_100_SQRT10 },
+        { "iec61966",      EB_CICP_TC_IEC_61966 },
+        { "bt1361",        EB_CICP_TC_BT_1361 },
+        { "srgb",          EB_CICP_TC_SRGB },
+        { "bt2020-10",     EB_CICP_TC_BT_2020_10_BIT },
+        { "bt2020-12",     EB_CICP_TC_BT_2020_12_BIT },
+        { "smpte2084",     EB_CICP_TC_SMPTE_2084 },
+        { "smpte428",      EB_CICP_TC_SMPTE_428 },
+        { "hlg",           EB_CICP_TC_HLG },
+    };
+    const size_t transfer_characteristics_size =
+        sizeof(transfer_characteristics) / sizeof(transfer_characteristics[0]);
+
+    for (size_t i = 0; i < transfer_characteristics_size; i++) {
+        if (!strcmp(nptr, transfer_characteristics[i].name)) {
+            *out = transfer_characteristics[i].tfc;
+            return EB_ErrorNone;
+        }
+    }
+
+    return EB_ErrorBadParameter;
+}
+
+static EbErrorType str_to_matrix_coefficients(const char *nptr, uint8_t *out)
+{
+    const struct {
+        const char *name;
+        EbMatrixCoefficients coeff;
+    } matrix_coefficients[] = {
+        { "identity",   EB_CICP_MC_IDENTITY },
+        { "bt709",      EB_CICP_MC_BT_709 },
+        { "fcc",        EB_CICP_MC_FCC },
+        { "bt470bg",    EB_CICP_MC_BT_470_B_G },
+        { "bt601",      EB_CICP_MC_BT_601 },
+        { "smpte240",   EB_CICP_MC_SMPTE_240 },
+        { "ycgco",      EB_CICP_MC_SMPTE_YCGCO },
+        { "bt2020-ncl", EB_CICP_MC_BT_2020_NCL },
+        { "bt2020-cl",  EB_CICP_MC_BT_2020_CL },
+        { "smpte2085",  EB_CICP_MC_SMPTE_2085 },
+        { "chroma-ncl", EB_CICP_MC_CHROMAT_NCL },
+        { "chroma-cl",  EB_CICP_MC_CHROMAT_CL },
+        { "ictcp",      EB_CICP_MC_ICTCP },
+    };
+    const size_t matrix_coefficients_size =
+        sizeof(matrix_coefficients) / sizeof(matrix_coefficients[0]);
+
+    for (size_t i = 0; i < matrix_coefficients_size; i++) {
+        if (!strcmp(nptr, matrix_coefficients[i].name)) {
+            *out = matrix_coefficients[i].coeff;
+            return EB_ErrorNone;
+        }
+    }
+
+    return EB_ErrorBadParameter;
+}
+
+static EbErrorType str_to_color_range(const char *nptr, uint8_t *out)
+{
+    const struct {
+        const char *name;
+        EbColorRange range;
+    } color_range[] = {
+        { "studio", EB_CR_STUDIO_RANGE },
+        { "full",   EB_CR_FULL_RANGE },
+    };
+    const size_t color_range_size =
+        sizeof(color_range) / sizeof(color_range[0]);
+
+    for (size_t i = 0; i < color_range_size; i++) {
+        if (!strcmp(nptr, color_range[i].name)) {
+            *out = color_range[i].range;
+            return EB_ErrorNone;
+        }
+    }
+
+    return EB_ErrorBadParameter;
+}
+
+#define COLOR_OPT(par, opt) \
+    do { \
+        if (!strcmp(name, #par)) { \
+            return_error = str_to_##opt(value, &config_struct->opt); \
+            if (return_error == EB_ErrorNone) \
+                return return_error; \
+            uint32_t val; \
+            return_error = str_to_uint(value, &val); \
+            if (return_error == EB_ErrorNone) \
+                config_struct->opt = val; \
+            return return_error; \
+        } \
+    } while(0)
+
+#define COLOR_METADATA_OPT(par, opt) \
+    do { \
+        if (!strcmp(name, #par)) \
+            return svt_aom_parse_##opt(&config_struct->opt, value) ? \
+                       EB_ErrorNone : EB_ErrorBadParameter; \
+    } while(0)
+
+EB_API EbErrorType svt_av1_enc_parse_parameter(
+    EbSvtAv1EncConfiguration *config_struct,
+    const char               *name,
+    const char               *value)
+{
+    if (config_struct == NULL || name == NULL || value == NULL)
+        return EB_ErrorBadParameter;
+
+    EbErrorType return_error = EB_ErrorBadParameter;
+
+    if (!strcmp(name, "Keyint"))
+        return str_to_keyint(value, &config_struct->intra_period_length);
+
+    // options updating more than one field
+    if (!strcmp(name, "CRF"))
+        return str_to_crf(value, config_struct);
+
+    // custom enum fields
+    if (!strcmp(name, "Profile"))
+        return str_to_profile(value,             &config_struct->profile) == EB_ErrorBadParameter ?
+                  str_to_uint(value, (uint32_t *)&config_struct->profile) : EB_ErrorNone;
+
+    if (!strcmp(name, "EncoderColorFormat"))
+        return str_to_color_fmt(value,             &config_struct->encoder_color_format) == EB_ErrorBadParameter ?
+                    str_to_uint(value, (uint32_t *)&config_struct->encoder_color_format) : EB_ErrorNone;
+
+    if (!strcmp(name, "IntraRefreshType"))
+        return str_to_intra_rt(value,             &config_struct->intra_refresh_type) == EB_ErrorBadParameter ?
+                   str_to_uint(value, (uint32_t *)&config_struct->intra_refresh_type) : EB_ErrorNone;
+
+    COLOR_OPT(ColorPrimaries, color_primaries);
+    COLOR_OPT(TransferCharacteristics, transfer_characteristics);
+    COLOR_OPT(MatrixCoefficients, matrix_coefficients);
+    COLOR_OPT(ColorRange, color_range);
+
+    // custom struct fields
+    COLOR_METADATA_OPT(MasteringDisplay, mastering_display);
+    COLOR_METADATA_OPT(ContentLightLevel, content_light_level);
+
+    // arrays
+    if (!strcmp(name, "QIndexOffsets"))
+        return parse_list(value, config_struct->qindex_offsets, EB_MAX_TEMPORAL_LAYERS);
+
+    if (!strcmp(name, "ChromaQIndexOffsets"))
+        return parse_list(value, config_struct->chroma_qindex_offsets, EB_MAX_TEMPORAL_LAYERS);
+
+    // uint32_t fields
+    const struct {
+        const char *name;
+        uint32_t *out;
+    } uint_opts[] = {
+        { "SourceWidth", &config_struct->source_width },
+        { "SourceHeight", &config_struct->source_height },
+        { "QP", &config_struct->qp },
+        { "FilmGrain", &config_struct->film_grain_denoise_strength },
+        { "HierarchicalLevels", &config_struct->hierarchical_levels },
+        { "Tier", &config_struct->tier },
+        { "Level", &config_struct->level },
+        { "LogicalProcessors", &config_struct->logical_processors },
+        { "PinnedExecution", &config_struct->pin_threads },
+        { "FrameRateNumerator", &config_struct->frame_rate_numerator },
+        { "FrameRateDenominator", &config_struct->frame_rate_denominator },
+        { "RateControlMode", &config_struct->rate_control_mode },
+        { "Lookahead", &config_struct->look_ahead_distance },
+        { "TargetBitRate", &config_struct->target_bit_rate },
+        { "MaxBitRate", &config_struct->max_bit_rate },
+        { "VBVBufSize", &config_struct->vbv_bufsize },
+        { "SceneChangeDetection", &config_struct->scene_change_detection },
+        { "MaxQpAllowed", &config_struct->max_qp_allowed },
+        { "MinQpAllowed", &config_struct->min_qp_allowed },
+        { "VBRBiasPct", &config_struct->vbr_bias_pct },
+        { "MinSectionPct", &config_struct->vbr_min_section_pct },
+        { "MaxSectionPct", &config_struct->vbr_max_section_pct },
+        { "UnderShootPct", &config_struct->under_shoot_pct },
+        { "OverShootPct", &config_struct->over_shoot_pct },
+        { "RecodeLoop", &config_struct->recode_loop },
+        { "StatReport", &config_struct->stat_report },
+        { "ScreenContentMode", &config_struct->screen_content_mode },
+        { "EncoderBitDepth", &config_struct->encoder_bit_depth },
+        { "CompressedTenBitFormat", &config_struct->compressed_ten_bit_format },
+    };
+    const size_t uint_opts_size = sizeof(uint_opts) / sizeof(uint_opts[0]);
+
+    for (size_t i = 0; i < uint_opts_size; i++) {
+        if (!strcmp(name, uint_opts[i].name)) {
+            return str_to_uint(value, uint_opts[i].out);
+        }
+    }
+
+    // uint8_t fields
+    const struct {
+        const char *name;
+        uint8_t *out;
+    } uint8_opts[] = {
+        { "PredStructure", &config_struct->pred_structure },
+        { "EnableTPLModel", &config_struct->enable_tpl_la },
+        { "AdaptiveQuantization", &config_struct->enable_adaptive_quantization },
+        { "SuperresMode", &config_struct->superres_mode },
+        { "SuperresQthres", &config_struct->superres_qthres },
+        { "SuperresKfQthres", &config_struct->superres_kf_qthres },
+        { "SuperresDenom", &config_struct->superres_denom },
+        { "SuperresKfDenom", &config_struct->superres_kf_denom },
+    };
+    const size_t uint8_opts_size = sizeof(uint8_opts) / sizeof(uint8_opts[0]);
+
+    for (size_t i = 0; i < uint8_opts_size; i++) {
+        if (!strcmp(name, uint8_opts[i].name)) {
+            uint32_t val;
+            return_error = str_to_uint(value, &val);
+            if (return_error == EB_ErrorNone)
+                *uint8_opts[i].out = val;
+            return return_error;
+        }
+    }
+
+    // int64_t fields
+    const struct {
+        const char *name;
+        int64_t *out;
+    } int64_opts[] = {
+        { "BufInitialSz", &config_struct->starting_buffer_level_ms },
+        { "BufOptimalSz", &config_struct->optimal_buffer_level_ms },
+        { "BufSz", &config_struct->maximum_buffer_size_ms },
+    };
+    const size_t int64_opts_size = sizeof(int64_opts) / sizeof(int64_opts[0]);
+
+    for (size_t i = 0; i < int64_opts_size; i++) {
+        if (!strcmp(name, int64_opts[i].name)) {
+            return str_to_int64(value, int64_opts[i].out);
+        }
+    }
+
+    // int32_t fields
+    const struct {
+        const char *name;
+        int32_t *out;
+    } int_opts[] = {
+        { "KeyFrameChromaQIndexOffset", &config_struct->key_frame_chroma_qindex_offset },
+        { "KeyFrameQIndexOffset", &config_struct->key_frame_qindex_offset },
+        { "Pass", &config_struct->pass },
+        { "CDEFLevel", &config_struct->cdef_level },
+        { "EnableRestoration", &config_struct->enable_restoration_filtering },
+        { "Mfmv", &config_struct->enable_mfmv },
+        { "IntraPeriod", &config_struct->intra_period_length },
+        { "TileRow", &config_struct->tile_rows },
+        { "TileCol", &config_struct->tile_columns },
+        { "TargetSocket", &config_struct->target_socket },
+    };
+    const size_t int_opts_size = sizeof(int_opts) / sizeof(int_opts[0]);
+
+    for (size_t i = 0; i < int_opts_size; i++) {
+        if (!strcmp(name, int_opts[i].name)) {
+            return str_to_int(value, int_opts[i].out);
+        }
+    }
+
+    // int8_t fields
+    const struct {
+        const char *name;
+        int8_t *out;
+    } int8_opts[] = {
+        { "EncoderMode", &config_struct->enc_mode },
+    };
+    const size_t int8_opts_size = sizeof(int8_opts) / sizeof(int8_opts[0]);
+
+    for (size_t i = 0; i < int8_opts_size; i++) {
+        if (!strcmp(name, int8_opts[i].name)) {
+            int32_t val;
+            return_error = str_to_int(value, &val);
+            if (return_error == EB_ErrorNone)
+                *int8_opts[i].out = val;
+            return return_error;
+        }
+    }
+
+    // EbBool fields
+    const struct {
+        const char *name;
+        EbBool *out;
+    } bool_opts[] = {
+        { "UseQpFile", &config_struct->use_qp_file },
+        { "UseFixedQIndexOffsets", &config_struct->use_fixed_qindex_offsets },
+        { "LoopFilterEnable", &config_struct->enable_dlf_flag },
+        { "RestrictedMotionVector", &config_struct->restricted_motion_vector },
+        { "EnableTF", &config_struct->enable_tf },
+        { "EnableOverlays", &config_struct->enable_overlays },
+        { "HighDynamicRangeInput", &config_struct->high_dynamic_range_input },
+    };
+    const size_t bool_opts_size = sizeof(bool_opts) / sizeof(bool_opts[0]);
+
+    for (size_t i = 0; i < bool_opts_size; i++) {
+        if (!strcmp(name, bool_opts[i].name)) {
+            return str_to_bool(value, bool_opts[i].out);
+        }
+    }
+
+    return return_error;
+}
