@@ -2118,9 +2118,8 @@ static INLINE __m256i jnt_copy_load_src_16_avx2(const uint8_t *const src) {
 }
 
 static INLINE void jnt_copy_load_src_32_avx2(const uint8_t *const src, __m256i s_256[2]) {
-    const __m256i s8     = _mm256_loadu_si256((__m256i *)src);
-    const __m128i s8_lo  = _mm256_castsi256_si128(s8);
-    const __m128i s8_hi  = _mm256_extracti128_si256(s8, 1);
+    const __m128i s8_lo  = _mm_loadu_si128((__m128i *)src);
+    const __m128i s8_hi  = _mm_loadu_si128((__m128i *)(src + 16));
     const __m256i s16_lo = _mm256_cvtepu8_epi16(s8_lo);
     const __m256i s16_hi = _mm256_cvtepu8_epi16(s8_hi);
     s_256[0]             = _mm256_slli_epi16(s16_lo, LEFT_SHIFT);
