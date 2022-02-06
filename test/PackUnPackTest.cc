@@ -458,6 +458,17 @@ INSTANTIATE_TEST_CASE_P(
                        ::testing::Values(svt_unpack_and_2bcompress_sse4_1,
                                          svt_unpack_and_2bcompress_avx2)));
 
+INSTANTIATE_TEST_CASE_P(
+    UNPACK2BCOMPRESS_EXTEND2, Unpack2bCompress,
+    ::testing::Combine(::testing::Values(AreaSize(32, 1), AreaSize(32, 2),
+                                         AreaSize(32, 3), AreaSize(32, 5),
+                                         AreaSize(64, 1), AreaSize(64, 2),
+                                         AreaSize(64, 3), AreaSize(64, 5),
+                                         AreaSize(65, 3), AreaSize(66, 5),
+                                         AreaSize(129, 3), AreaSize(129, 5)),
+                       ::testing::Values(svt_unpack_and_2bcompress_sse4_1,
+                                         svt_unpack_and_2bcompress_avx2)));
+
 // test svt_enc_msb_pack2d_avx2_intrin_al and svt_enc_msb_pack2d_sse2_intrin.
 // There is an implicit assumption that the width should be multiple of 4.
 // Also there are special snippet to handle width of {4, 8, 16, 32, 64}, so use
