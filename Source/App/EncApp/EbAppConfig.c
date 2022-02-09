@@ -140,6 +140,7 @@
 #define INPUT_DEPTH_TOKEN "--input-depth"
 #define KEYINT_TOKEN "--keyint"
 #define LOOKAHEAD_NEW_TOKEN "--lookahead"
+#define SVTAV1_PARAMS "--svtav1-params"
 
 #define STAT_REPORT_NEW_TOKEN "--enable-stat-report"
 #define ENABLE_RESTORATION_TOKEN "--enable-restoration"
@@ -366,6 +367,64 @@ static void set_compressed_ten_bit_format(const char *value, EbConfig *cfg) {
 static void set_enc_mode(const char *value, EbConfig *cfg) {
     cfg->config.enc_mode = (uint8_t)strtoul(value, NULL, 0);
 };
+
+/**
+ * @brief split colon separated string into key=value pairs
+ *
+ * @param[in]  str colon separated string of key=val
+ * @param[out] opt key and val, both need to be freed
+ */
+struct ParseOpt {
+    char *key;
+    char *val;
+};
+
+static struct ParseOpt split_colon_keyequalval_pairs(const char **p) {
+    const char *str = *p;
+    struct ParseOpt opt = { NULL, NULL };
+    const size_t string_len = strcspn(str, ":");
+
+    const char *val = strchr(str, '=');
+    if (!val || !*++val)
+        return opt;
+
+    const size_t key_len = val - str - 1;
+    const size_t val_len = string_len - key_len - 1;
+    if (!key_len || !val_len)
+        return opt;
+
+    opt.key = (char *)malloc(key_len + 1);
+    opt.val = (char *)malloc(val_len + 1);
+    if (!opt.key || !opt.val) {
+        free(opt.key); opt.key = NULL;
+        free(opt.val); opt.val = NULL;
+        return opt;
+    }
+
+    memcpy(opt.key, str, key_len);
+    memcpy(opt.val, val, val_len);
+    opt.key[key_len] = '\0';
+    opt.val[val_len] = '\0';
+    str += string_len;
+    if (*str)
+        str++;
+    *p = str;
+    return opt;
+}
+
+static void parse_svtav1_params(const char *value, EbConfig *cfg) {
+    const char *p = value;
+    while (*p) {
+        struct ParseOpt opt = split_colon_keyequalval_pairs(&p);
+        if (!opt.key || !opt.val)
+            continue;
+        if (EB_ErrorBadParameter == svt_av1_enc_parse_parameter(&cfg->config, opt.key, opt.val))
+            fprintf(stderr, "Warning: failed to set parameter '%s' with key '%s'\n", opt.key, opt.val);
+        free(opt.key);
+        free(opt.val);
+    }
+}
+
 static void set_cfg_intra_period(const char *value, EbConfig *cfg) {
     cfg->config.intra_period_length = strtol(value, NULL, 0);
 };
@@ -743,6 +802,12 @@ ConfigEntry config_entry_options[] = {
      "Encoder preset, presets < 0 are for debugging. Higher presets means faster encodes, but with "
      "a quality tradeoff, default is 12 [-2-13]",
      set_enc_mode},
+
+    {SINGLE_INPUT,
+     SVTAV1_PARAMS,
+     "colon separated list of key=value pairs of parameters with keys based on config file options",
+     parse_svtav1_params},
+
     {SINGLE_INPUT, NULL, NULL, NULL}};
 
 ConfigEntry config_entry_global_options[] = {
@@ -1168,6 +1233,7 @@ ConfigEntry config_entry[] = {
     {SINGLE_INPUT, PROGRESS_TOKEN, "Progress", set_progress},
     {SINGLE_INPUT, NO_PROGRESS_TOKEN, "NoProgress", set_no_progress},
     {SINGLE_INPUT, PRESET_TOKEN, "EncoderMode", set_enc_mode},
+    {SINGLE_INPUT, SVTAV1_PARAMS, "SvtAv1Params", parse_svtav1_params},
 
     // Encoder Global Options
     //   Picture Dimensions
