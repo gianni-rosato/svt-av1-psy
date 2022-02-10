@@ -59,6 +59,7 @@ extern "C" {
 #define FIX_USE_ME_DATA_ISLICE              1 // Properly initialize the ME data when the picture is I-SLICE and used as reference
 #define FIX_PALETTE_10BIT                   1 // Remove palette scaling for non-intra candidates
 #define FIX_CHROMA_PREDICTION_AVAILABILITY  1 // Align chroma prediction generation and use
+#define FIX_SB_TOTAL_COUNT                  1 // Fix the use of sb_total_count by sb_total_count_pix which takes into account the actual SB size
 
 
 #define TPL_LAD_MG_ZERO         1 // Set tpl_lad_mg to 0 when lookAhead is smalller than mini_gop size

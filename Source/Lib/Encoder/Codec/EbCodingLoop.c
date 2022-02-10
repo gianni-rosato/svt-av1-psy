@@ -2523,8 +2523,13 @@ EB_EXTERN void av1_encode_decode(SequenceControlSet *scs, PictureControlSet *pcs
         //And the mds_idx of the parent block is not set properly
         //And it will generate the wrong cdf ctx and influence the MD for the next SB
         blk_ptr->mds_idx = blk_it;
+#if FIX_CHECK_NON_INITIALIZED_VAR
+        if (!pcs->parent_pcs_ptr->sb_geom[sb_addr].block_is_allowed[blk_it]||
+            blk_ptr->part == PARTITION_SPLIT ) {
+#else
         if (blk_ptr->part == PARTITION_SPLIT ||
             !pcs->parent_pcs_ptr->sb_geom[sb_addr].block_is_allowed[blk_it]) {
+#endif
             blk_it += ctx->blk_geom->d1_depth_offset;
             continue;
         }

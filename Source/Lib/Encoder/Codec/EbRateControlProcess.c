@@ -968,12 +968,20 @@ int8_t non_base_boost(PictureControlSet *pcs_ptr) {
         (EbReferenceObject *)pcs_ptr->ref_pic_ptr_array[REF_LIST_0][0]->object_ptr;
     uint32_t l0_was_intra = 0;
     if (ref_obj_l0->slice_type != I_SLICE) {
-        for (uint32_t sb_index = 0; sb_index < pcs_ptr->sb_total_count; sb_index++) {
+#if FIX_SB_TOTAL_COUNT
+        for (uint32_t sb_index = 0; sb_index < pcs_ptr->sb_total_count_pix ; sb_index++) {
+#else
+        for (uint32_t sb_index = 0; sb_index < pcs_ptr->sb_total_count ; sb_index++) {
+#endif
             l0_was_intra += ref_obj_l0->sb_intra[sb_index];
         }
     }
     if (l0_was_intra) {
-        int8_t intra_percentage = (l0_was_intra * 100) / pcs_ptr->sb_total_count;
+#if FIX_SB_TOTAL_COUNT
+        int8_t intra_percentage = (l0_was_intra * 100) / pcs_ptr->sb_total_count_pix ;
+#else
+        int8_t intra_percentage = (l0_was_intra * 100) / pcs_ptr->sb_total_count ;
+#endif
         q_boost                 = intra_percentage >> 2;
     }
     return q_boost;
