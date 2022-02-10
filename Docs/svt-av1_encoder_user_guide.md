@@ -152,7 +152,28 @@ The encoder parameters present in the `Sample.cfg` file are listed in this table
 | **Progress**                     | --progress         | [0-2]      | 1           | Verbosity of the output [0: no progress is printed, 2: aomenc style output]                                     |
 | **NoProgress**                   | --no-progress      | [0-1]      | 0           | Do not print out progress [1: `--progress 0`, 0: `--progress 1`]                                                |
 | **EncoderMode**                  | --preset           | [-2-13]    | 12          | Encoder preset, presets < 0 are for debugging. Higher presets means faster encodes, but with a quality tradeoff |
+| **SvtAv1Params**                 | --svtav1-params    | any string | None        | Colon-separated list of `key=value` pairs of parameters with keys based on config file options                  |
 |                                  | --nch              | [1-6]      | 1           | Number of channels (library instance) that will be instantiated                                                 |
+
+##### Usage of **SvtAv1Params**
+
+To use the `--svtav1-params` option, the syntax is `--svtav1-params option1=value1:option2=value2...`.
+
+An example is:
+
+```bash
+SvtAv1EncApp \
+  -i input.y4m \
+  -b output.ivf \
+  --svtav1-params \
+  "EncoderMode=10:CRF=30:IntraRefreshType=kf:MatrixCoefficients=bt709:MasteringDisplay=G(0.2649,0.6900)B(0.1500,0.0600)R(0.6800,0.3200)WP(0.3127,0.3290)L(1000.0,1)"
+```
+
+This will set `--preset` to 10 and `--crf` to 30 inside the API along with some other parameters.
+
+Do note however, that there is no error checking for duplicate keys and only for invalid keys or values.
+
+For more information on valid values for specific keys, refer to the [EbEncSettings](../Source/Lib/Encoder/Globals/EbEncSettings.c) file.
 
 #### Encoder Global Options
 
