@@ -1166,7 +1166,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
                     pcs_ptr->pic_depth_removal_level = 2;
             }
 #if OPT_M8_4K
+#if TUNE_PRESET_GAP
+            else if (enc_mode <= ENC_M7) {
+#else
             else if (enc_mode <= ENC_M8) {
+#endif
                 if (input_resolution <= INPUT_SIZE_360p_RANGE)
                     pcs_ptr->pic_depth_removal_level = 1;
                 else if (input_resolution <= INPUT_SIZE_1080p_RANGE)
@@ -1249,7 +1253,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     else if (enc_mode <= ENC_M4)
         pcs_ptr->pic_block_based_depth_refinement_level = is_base ? 0 : 2;
 #if OPT_M6_4K
+#if TUNE_PRESET_GAP
+    else if (enc_mode <= ENC_M7)
+#else
     else if (enc_mode <= ENC_M6)
+#endif
         pcs_ptr->pic_block_based_depth_refinement_level = is_base ? 1 : 2;
 #else
     else if (enc_mode <= ENC_M5)
