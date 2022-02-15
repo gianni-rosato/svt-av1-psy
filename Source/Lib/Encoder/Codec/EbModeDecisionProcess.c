@@ -150,6 +150,7 @@ EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr, EbColor
 
     // Maximum number of candidates MD can support
     // determine MAX_NICS for a given preset
+#if !FIX_NIC_BUFF
     uint32_t max_nics = 0;
 
     // get max number of NICS
@@ -161,18 +162,34 @@ EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr, EbColor
         }
         max_nics = MAX(max_nics, nics);
     }
-
-    // get the min scalling level ( smallest scalling level is the most concervative
+#endif
+    // get the min scaling level (the smallest scaling level is the most conservative)
     uint8_t min_nic_scaling_level = NICS_SCALING_LEVELS - 1;
-        for (uint8_t temporal_layer_index = 0; temporal_layer_index < MAX_TEMPORAL_LAYERS;
-             temporal_layer_index++) {
-            uint8_t nic_level = get_nic_level(enc_mode, temporal_layer_index);
-            uint8_t nic_scaling_level = set_nic_controls(NULL, nic_level);
-            min_nic_scaling_level     = MIN(min_nic_scaling_level, nic_scaling_level);
-        }
-    // scale max_nics
+    for (uint8_t temporal_layer_index = 0; temporal_layer_index < MAX_TEMPORAL_LAYERS;
+            temporal_layer_index++) {
+        uint8_t nic_level = get_nic_level(enc_mode, temporal_layer_index);
+        uint8_t nic_scaling_level = set_nic_controls(NULL, nic_level);
+        min_nic_scaling_level     = MIN(min_nic_scaling_level, nic_scaling_level);
+    }
     uint8_t stage1_scaling_num = MD_STAGE_NICS_SCAL_NUM[min_nic_scaling_level][MD_STAGE_1];
+
+    // scale max_nics
+#if FIX_NIC_BUFF
+    uint32_t max_nics = 0;
+    for (uint8_t pic_type = 0; pic_type < NICS_PIC_TYPE; pic_type++) {
+        uint32_t nics = 0;
+        for (CandClass cand_class_it = CAND_CLASS_0; cand_class_it < CAND_CLASS_TOTAL;
+            cand_class_it++) {
+            const uint32_t class_nics = MD_STAGE_NICS[pic_type][cand_class_it];
+            // For REF frames, if the stage1_scaling_num is > 0, the NICs cannot be scaled below 2
+            if (class_nics)
+                nics += MAX((stage1_scaling_num ? 2 : 1), DIVIDE_AND_ROUND(class_nics * stage1_scaling_num, MD_STAGE_NICS_SCAL_DENUM));
+        }
+        max_nics = MAX(max_nics, nics);
+    }
+#else
     max_nics = MAX(2, DIVIDE_AND_ROUND(max_nics * stage1_scaling_num, MD_STAGE_NICS_SCAL_DENUM));
+#endif
 
     max_nics += CAND_CLASS_TOTAL; //need one extra temp buffer for each fast loop call
     context_ptr->max_nics    = max_nics;
