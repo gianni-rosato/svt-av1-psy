@@ -209,6 +209,9 @@ void picture_control_set_dctor(EbPtr p) {
     EB_FREE_ARRAY(obj->sb_intra);
     EB_FREE_ARRAY(obj->sb_skip);
     EB_FREE_ARRAY(obj->sb_64x64_mvp);
+#if OPT_DECODER
+    EB_FREE_ARRAY(obj->sb_count_nz_coeffs);
+#endif
     EB_DELETE(obj->bitstream_ptr);
     EB_DELETE_PTR_ARRAY(obj->entropy_coding_info, tile_cnt);
 
@@ -382,13 +385,22 @@ EbErrorType recon_coef_ctor(EncDecSet *object_ptr, EbPtr object_init_data_ptr) {
     return EB_ErrorNone;
 }
 #if OPT_M13_10BIT
+#if OPT_DECODER
+uint8_t get_dlf_level(EbEncMode enc_mode, uint8_t is_used_as_reference_flag, uint8_t is_16bit, uint8_t decode_opt);
+#else
 uint8_t get_dlf_level(EbEncMode enc_mode, uint8_t is_used_as_reference_flag, uint8_t is_16bit);
+#endif
 #else
 uint8_t get_dlf_level(EbEncMode enc_mode, uint8_t is_used_as_reference_flag);
 #endif
 
+#if OPT_DECODER
+uint8_t get_enable_restoration(EbEncMode enc_mode, int8_t config_enable_restoration,
+    uint8_t input_resolution, uint8_t decode_opt);
+#else
 uint8_t get_enable_restoration(EbEncMode enc_mode, int8_t config_enable_restoration,
                                uint8_t input_resolution);
+#endif
 uint8_t get_disallow_4x4(EbEncMode enc_mode, EB_SLICE slice_type);
 uint8_t get_disallow_nsq(EbEncMode enc_mode);
 
@@ -461,7 +473,11 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
              is_used_as_reference_flag++) {
 #if OPT_M13_10BIT
             for (uint8_t is_hbd = 0; is_hbd < 2; is_hbd++) {
+#if OPT_DECODER
+                lf_recon_needed = get_dlf_level(init_data_ptr->enc_mode, is_used_as_reference_flag, is_hbd, init_data_ptr->static_config.decode_opt) == 1
+#else
                     lf_recon_needed = get_dlf_level(init_data_ptr->enc_mode, is_used_as_reference_flag, is_hbd) == 1
+#endif
                         ? 1
                         : 0;
                     if (lf_recon_needed)
@@ -481,7 +497,12 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
     }
     if (get_enable_restoration(init_data_ptr->enc_mode,
                                init_data_ptr->static_config.enable_restoration_filtering,
+#if OPT_DECODER
+                               init_data_ptr->input_resolution,
+                               init_data_ptr->static_config.decode_opt)) {
+#else
                                init_data_ptr->input_resolution)) {
+#endif
         set_restoration_unit_size(init_data_ptr->picture_width,
                                   init_data_ptr->picture_height,
                                   1,
@@ -526,6 +547,9 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
     EB_MALLOC_ARRAY(object_ptr->sb_intra, object_ptr->sb_total_count);
     EB_MALLOC_ARRAY(object_ptr->sb_skip, object_ptr->sb_total_count);
     EB_MALLOC_ARRAY(object_ptr->sb_64x64_mvp, object_ptr->sb_total_count);
+#if OPT_DECODER
+    EB_MALLOC_ARRAY(object_ptr->sb_count_nz_coeffs, object_ptr->sb_total_count);
+#endif
 
     sb_origin_x = 0;
     sb_origin_y = 0;
@@ -1245,7 +1269,12 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
     }
     if (get_enable_restoration(init_data_ptr->enc_mode,
                                init_data_ptr->static_config.enable_restoration_filtering,
+#if OPT_DECODER
+                               init_data_ptr->input_resolution,
+                               init_data_ptr->static_config.decode_opt))
+#else
                                init_data_ptr->input_resolution))
+#endif
         EB_MALLOC_ALIGNED(object_ptr->rst_tmpbuf, RESTORATION_TMPBUF_SIZE);
 
     return EB_ErrorNone;

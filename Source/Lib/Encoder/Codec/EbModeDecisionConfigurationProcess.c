@@ -415,7 +415,9 @@ EbErrorType rtime_alloc_ec_ctx_array(PictureControlSet *pcs_ptr, uint16_t all_sb
 uint8_t get_nic_level(EbEncMode enc_mode, uint8_t temporal_layer_index);
 EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet *scs_ptr,
                                                              PictureControlSet * pcs_ptr) {
+#if !OPT_DECODER
     UNUSED(scs_ptr);
+#endif
     EbErrorType return_error = EB_ErrorNone;
     const EbEncMode         enc_mode         = pcs_ptr->enc_mode;
     const uint8_t           is_ref           = pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag;
@@ -424,7 +426,41 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     const EB_SLICE           slice_type = pcs_ptr->slice_type;
     PictureParentControlSet *ppcs       = pcs_ptr->parent_pcs_ptr;
 
+#if OPT_DECODER
+    //MFMV
+    if (pcs_ptr->slice_type == I_SLICE || scs_ptr->mfmv_enabled == 0) {
+        ppcs->frm_hdr.use_ref_frame_mvs = 0;
+    }
+    else {
+        if (scs_ptr->static_config.decode_opt <= 0)
+            ppcs->frm_hdr.use_ref_frame_mvs = 1;
+        else {
+            uint64_t avg_me_dist = 0;
+            for (uint16_t sb_idx = 0; sb_idx < ppcs->sb_total_count; sb_idx++) {
+                avg_me_dist += ppcs->me_64x64_distortion[sb_idx];
+            }
+            avg_me_dist /= ppcs->sb_total_count;
+            avg_me_dist /= pcs_ptr->picture_qp;
+
+            if (scs_ptr->static_config.decode_opt <= 1)
+                ppcs->frm_hdr.use_ref_frame_mvs = avg_me_dist < 200 || input_resolution <= INPUT_SIZE_480p_RANGE ? 1 : 0;
+            else
+                ppcs->frm_hdr.use_ref_frame_mvs = avg_me_dist < 50 || input_resolution <= INPUT_SIZE_480p_RANGE ? 1 : 0;
+        }
+    }
+#endif
+
     uint8_t update_cdf_level = 0;
+#if OPT_DECODER
+    if (pcs_ptr->enc_mode <= ENC_M2)
+        update_cdf_level = 1;
+    else if (pcs_ptr->enc_mode <= ENC_M6)
+        update_cdf_level = (pcs_ptr->temporal_layer_index == 0) ? 1 : 3;
+    else if (pcs_ptr->enc_mode <= ENC_M10)
+        update_cdf_level = pcs_ptr->slice_type == I_SLICE ? 1 : 0;
+    else
+        update_cdf_level = 0;
+#else
     if (pcs_ptr->enc_mode <= ENC_M2)
         update_cdf_level = 1;
     else if (pcs_ptr->enc_mode <= ENC_M4)
@@ -448,6 +484,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         update_cdf_level = pcs_ptr->slice_type == I_SLICE ? 1 : 0;
     else
         update_cdf_level = 0;
+#endif
 
     //set the conrols uisng the required level
     set_cdf_controls(pcs_ptr, update_cdf_level);
@@ -475,6 +512,21 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
             pcs_ptr->pic_filter_intra_level = 0;
     } else
         pcs_ptr->pic_filter_intra_level = scs_ptr->filter_intra_level;
+#if OPT_DECODER
+    if (scs_ptr->static_config.decode_opt <= 0) {
+        if (pcs_ptr->enc_mode <= ENC_M5)
+            pcs_ptr->parent_pcs_ptr->partition_contexts = PARTITION_CONTEXTS;
+        else
+            pcs_ptr->parent_pcs_ptr->partition_contexts = 4;
+    }
+    else {
+        if (pcs_ptr->enc_mode <= ENC_M4)
+            pcs_ptr->parent_pcs_ptr->partition_contexts = PARTITION_CONTEXTS;
+        else
+            pcs_ptr->parent_pcs_ptr->partition_contexts = 4;
+
+    }
+#else
 #if OPT_M6_4K
     if (pcs_ptr->enc_mode <= ENC_M5)
         pcs_ptr->parent_pcs_ptr->partition_contexts = PARTITION_CONTEXTS;
@@ -484,6 +536,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
 #endif
     else
         pcs_ptr->parent_pcs_ptr->partition_contexts = 4;
+#endif
     FrameHeader *frm_hdr             = &pcs_ptr->parent_pcs_ptr->frm_hdr;
     frm_hdr->allow_high_precision_mv = frm_hdr->quantization_params.base_q_idx <
                 HIGH_PRECISION_MV_QTHRESH &&
@@ -937,6 +990,20 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
 
     // Set the level for the tx search
     pcs_ptr->txs_level = 0;
+#if OPT_DECODER
+    if (pcs_ptr->parent_pcs_ptr->tx_size_search_mode == 0)
+        pcs_ptr->txs_level = 0;
+    else if (enc_mode <= ENC_MRS)
+        pcs_ptr->txs_level = 1;
+    else if (enc_mode <= ENC_MR)
+        pcs_ptr->txs_level = 2;
+    else if (enc_mode <= ENC_M6)
+        pcs_ptr->txs_level = (pcs_ptr->temporal_layer_index == 0) ? 2 : 3;
+    else if (enc_mode <= ENC_M10)
+        pcs_ptr->txs_level = 3;
+    else
+        pcs_ptr->txs_level = 4;
+#else
     if (pcs_ptr->parent_pcs_ptr->tx_size_search_mode == 0)
         pcs_ptr->txs_level = 0;
     else if (enc_mode <= ENC_MRS)
@@ -956,6 +1023,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
             ? 5 : 4;
     else
         pcs_ptr->txs_level = 0;
+#endif
 #endif
     // Set the level for nic
     pcs_ptr->nic_level = get_nic_level(enc_mode, pcs_ptr->temporal_layer_index);
@@ -1004,9 +1072,14 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     // or if NSQ is enabled for 10bit content (causes r2r).
     // TODO: This signal can only be modified per picture right now, not per SB.  Per SB requires
     // neighbour array updates at EncDec for all SBs, that are currently skipped if EncDec is bypassed.
-
+#if FIX_UPDATE_COEF
+    // TODO: Bypassing EncDec doesn't work if pcs_ptr->cdf_ctrl.update_coef is enabled for non-ISLICE frames (causes r2r)
+#endif
     if (ppcs->disallow_HVA_HVB_HV4 &&
         (scs_ptr->static_config.encoder_bit_depth == EB_8BIT || ppcs->disallow_nsq) &&
+#if FIX_UPDATE_COEF
+        (!pcs_ptr->cdf_ctrl.update_coef || slice_type == I_SLICE) &&
+#endif
         !ppcs->frm_hdr.segmentation_params.segmentation_enabled) {
         pcs_ptr->pic_bypass_encdec = get_bypass_encdec(
             enc_mode, ppcs->hbd_mode_decision, scs_ptr->static_config.encoder_bit_depth);
@@ -1577,8 +1650,10 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
                 pcs_ptr, pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr, pcs_ptr->hbd_mode_decision);
         }
 
+#if !OPT_DECODER
         if (pcs_ptr->slice_type != I_SLICE && scs_ptr->mfmv_enabled)
             av1_setup_motion_field(pcs_ptr->parent_pcs_ptr->av1_cm, pcs_ptr);
+#endif
 
         FrameHeader *frm_hdr = &pcs_ptr->parent_pcs_ptr->frm_hdr;
         // Get intra % in ref frame
@@ -1591,6 +1666,11 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
             first_pass_signal_derivation_mode_decision_config_kernel(pcs_ptr);
         else
             signal_derivation_mode_decision_config_kernel_oq(scs_ptr, pcs_ptr);
+
+#if OPT_DECODER
+        if (pcs_ptr->slice_type != I_SLICE && scs_ptr->mfmv_enabled)
+            av1_setup_motion_field(pcs_ptr->parent_pcs_ptr->av1_cm, pcs_ptr);
+#endif
 
         pcs_ptr->intra_coded_area = 0;
         pcs_ptr->skip_coded_area = 0;

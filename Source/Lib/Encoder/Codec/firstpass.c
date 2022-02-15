@@ -572,6 +572,7 @@ EbErrorType first_pass_signal_derivation_multi_processes(SequenceControlSet *   
         pcs_ptr->frame_end_cdf_update_mode = scs_ptr->frame_end_cdf_update;
 
     pcs_ptr->frm_hdr.use_ref_frame_mvs = 0;
+
     // GM off
     set_gm_controls(pcs_ptr, 0);
     return return_error;

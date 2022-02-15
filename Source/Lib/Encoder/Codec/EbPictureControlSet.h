@@ -314,6 +314,9 @@ typedef struct PictureControlSet {
     uint8_t *    sb_intra;
     uint8_t *    sb_skip;
     uint8_t *    sb_64x64_mvp;
+#if OPT_DECODER
+    uint32_t *    sb_count_nz_coeffs;
+#endif
 
     // Mode Decision Neighbor Arrays
     NeighborArrayUnit **md_intra_luma_mode_neighbor_array[NEIGHBOR_ARRAY_TOTAL_COUNT];
@@ -616,6 +619,9 @@ typedef struct CdefControls {
         search_best_ref_fs; // Only search best filter strengths of the nearest ref frames (skips the search if the filters of list0/list1 are the same).
     uint16_t
             zero_fs_cost_bias; // 0: OFF, higher is safer. Scaling factor to decrease the zero filter strength cost: : <x>/64
+#if OPT_DECODER
+    uint8_t scale_cost_bias_on_nz_coeffs; // When enabled, use non-zero coeff info to make the cost-biasing factor more aggressive (when cost biasing is enabled)
+#endif
     uint8_t use_skip_detector;
 } CdefControls;
 
@@ -626,6 +632,9 @@ typedef struct List0OnlyBase {
 typedef struct DlfCtrls {
     uint8_t enabled;
     uint8_t sb_based_dlf; // if true, perform DLF per SB, not per picture
+#if OPT_DECODER
+    uint8_t min_filter_level; // when DLF filter level is selected from QP, if the filter level is less than or equal to this TH, the filter level is set to 0
+#endif
 } DlfCtrls;
 typedef struct IntraBCCtrls {
     uint8_t enabled;

@@ -3397,7 +3397,16 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
         else
 #endif
             if (scs_ptr->static_config.enc_mode <= ENC_M11 && scs_ptr->tpl_level != 0)
+#if OPT_DECODER
+                if (scs_ptr->static_config.decode_opt <= 1)
+                    tpl_lad_mg = 1;
+                else if (scs_ptr->static_config.decode_opt <= 2)
+                    tpl_lad_mg = scs_ptr->input_resolution <= INPUT_SIZE_720p_RANGE ? 1 : 0;
+                else
+                    tpl_lad_mg = scs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? 1 : 0;
+#else
                 tpl_lad_mg = 1;
+#endif
             else
                 tpl_lad_mg = 0;
 
@@ -3745,6 +3754,26 @@ void copy_api_from_app(
     scs_ptr->static_config.enable_restoration_filtering = ((EbSvtAv1EncConfiguration*)config_struct)->enable_restoration_filtering;
     // motion field motion vector
     scs_ptr->static_config.enable_mfmv                  = ((EbSvtAv1EncConfiguration*)config_struct)->enable_mfmv;
+
+#if OPT_DECODER
+    // Decoder Optimization Flag
+    scs_ptr->static_config.decode_opt                  = ((EbSvtAv1EncConfiguration*)config_struct)->decode_opt;
+    //If the set decode_opt value is in the allowable range, check that the value is supported for the current preset.
+    // If the value is valid, but not supported in the current preset, change the value to one that is supported.
+    if (scs_ptr->static_config.decode_opt &&
+        (scs_ptr->static_config.decode_opt >= 0 && scs_ptr->static_config.decode_opt <=3)) {
+        if (scs_ptr->static_config.enc_mode <= ENC_M4 ||
+            (scs_ptr->static_config.enc_mode == ENC_M9 && scs_ptr->static_config.decode_opt > 2) ||
+            (scs_ptr->static_config.enc_mode == ENC_M10 && scs_ptr->static_config.decode_opt > 1) ||
+            scs_ptr->static_config.enc_mode >= ENC_M11) {
+            SVT_WARN("Decoder speedup level %d is not supported in M%d.\n", scs_ptr->static_config.decode_opt, scs_ptr->static_config.enc_mode);
+            SVT_WARN("Decoder speedup levels are supported as follows:\
+                \n\t<= M4: not supported\n\tM5-M8: levels 1-3 supported\n\tM9:levels 1-2 supported\n\tM10: level 1 supported\n\t>= M11: not supported\n");
+            scs_ptr->static_config.decode_opt = scs_ptr->static_config.enc_mode == ENC_M9 ? 2 : scs_ptr->static_config.enc_mode == ENC_M10 ? 1 : 0;
+            SVT_WARN("Switching to decoder speedup level %d.\n", scs_ptr->static_config.decode_opt);
+        }
+    }
+#endif
 
     //Film Grain
     scs_ptr->static_config.film_grain_denoise_strength = ((EbSvtAv1EncConfiguration*)config_struct)->film_grain_denoise_strength;

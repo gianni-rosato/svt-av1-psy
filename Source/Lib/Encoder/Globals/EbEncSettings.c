@@ -280,7 +280,12 @@ EbErrorType svt_av1_verify_settings(
       SVT_ERROR("Instance %u: Invalid motion field motion vector flag [0/1 or -1 for auto], your input: %d\n", channel_number + 1, config->enable_mfmv);
       return_error = EB_ErrorBadParameter;
     }
-
+#if OPT_DECODER
+    if (config->decode_opt != 0 && config->decode_opt != 1 && config->decode_opt != 2 && config->decode_opt != 3) {
+        SVT_ERROR("Instance %u: Invalid decode opt flag [0/1/2/3, 0 for no decoder optimization], your input: %d\n", channel_number + 1, config->decode_opt);
+        return_error = EB_ErrorBadParameter;
+    }
+#endif
     // prediction structure
     if(config->enable_manual_pred_struct) {
         if(config->manual_pred_struct_entry_num > (1<<(MAX_HIERARCHICAL_LEVEL-1))){
@@ -498,6 +503,9 @@ EbErrorType svt_av1_set_default_params(
     config_ptr->cdef_level = DEFAULT;
     config_ptr->enable_restoration_filtering = DEFAULT;
     config_ptr->enable_mfmv = DEFAULT;
+#if OPT_DECODER
+    config_ptr->decode_opt = 0;
+#endif
     memset(config_ptr->pred_struct, 0, sizeof(config_ptr->pred_struct));
     config_ptr->enable_manual_pred_struct = EB_FALSE;
     config_ptr->manual_pred_struct_entry_num = 0;

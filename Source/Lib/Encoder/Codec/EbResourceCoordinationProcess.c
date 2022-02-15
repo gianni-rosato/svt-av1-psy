@@ -344,13 +344,24 @@ void set_tpl_extended_controls(PictureParentControlSet *pcs_ptr, uint8_t tpl_lev
   Used by signal_derivation_pre_analysis_oq and memory allocation
 */
 uint8_t get_enable_restoration(EbEncMode enc_mode, int8_t config_enable_restoration,
+#if OPT_DECODER
+                               uint8_t input_resolution, uint8_t decode_opt) {
+#else
                                uint8_t input_resolution) {
+#endif
 
     uint8_t enable_restoration;
+#if OPT_DECODER
+    if (decode_opt <= 2)
+        enable_restoration = (enc_mode <= ENC_M7) ? 1 : 0;
+    else
+        enable_restoration = (enc_mode <= ENC_M4) ? 1 : input_resolution <= INPUT_SIZE_360p_RANGE ? 1 : 0;
+#else
 #if OPT_M7_4K
     enable_restoration = (enc_mode <= ENC_M7) ? 1 : 0;
 #else
     enable_restoration = (enc_mode <= ENC_M6) ? 1 : 0;
+#endif
 #endif
 
     // higher resolutions will shut restoration to save memory
@@ -409,7 +420,12 @@ EbErrorType signal_derivation_pre_analysis_oq_scs(SequenceControlSet *scs_ptr) {
         scs_ptr->seq_header.enable_restoration = get_enable_restoration(
             scs_ptr->static_config.enc_mode,
             scs_ptr->static_config.enable_restoration_filtering,
+#if OPT_DECODER
+            scs_ptr->input_resolution,
+            scs_ptr->static_config.decode_opt);
+#else
             scs_ptr->input_resolution);
+#endif
     } else
         scs_ptr->seq_header.enable_restoration =
             (uint8_t)scs_ptr->static_config.enable_restoration_filtering;

@@ -2675,6 +2675,9 @@ EB_EXTERN EbErrorType av1_encdec_update(SequenceControlSet *scs, PictureControlS
     pcs->sb_intra[sb_addr]     = 0;
     pcs->sb_skip[sb_addr]      = 1;
     pcs->sb_64x64_mvp[sb_addr] = 0;
+#if OPT_DECODER
+    pcs->sb_count_nz_coeffs[sb_addr] = 0;
+#endif
 
     // CU Loop
     uint32_t final_blk_itr = 0;
@@ -2746,6 +2749,9 @@ EB_EXTERN EbErrorType av1_encdec_update(SequenceControlSet *scs, PictureControlS
             } else {
                 pcs->sb_skip[sb_addr] = 0;
             }
+#if OPT_DECODER
+            pcs->sb_count_nz_coeffs[sb_addr] += md_ctx->md_local_blk_unit[blk_ptr->mds_idx].count_non_zero_coeffs;
+#endif
             svt_block_on_mutex(pcs->parent_pcs_ptr->pcs_total_rate_mutex);
             pcs->parent_pcs_ptr->pcs_total_rate += blk_ptr->total_rate;
             svt_release_mutex(pcs->parent_pcs_ptr->pcs_total_rate_mutex);

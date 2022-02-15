@@ -5899,6 +5899,48 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet * sequence_co
 
     md_subpel_pme_controls(context_ptr, context_ptr->md_subpel_pme_level);
     uint8_t rate_est_level = 0;
+#if OPT_DECODER
+    if (pd_pass == PD_PASS_0) {
+        if (enc_mode <= ENC_M2)
+            rate_est_level = 1;
+        else
+            rate_est_level = 2;
+    }
+    else if (sequence_control_set_ptr->static_config.decode_opt <= 0) {
+        if (enc_mode <= ENC_M3)
+            rate_est_level = 1;
+        else if (enc_mode <= ENC_M10)
+            rate_est_level = 2;
+        else if (enc_mode <= ENC_M12)
+            rate_est_level = (pcs_ptr->slice_type == I_SLICE) ? 3 : 4;
+        else
+            rate_est_level = (pcs_ptr->slice_type == I_SLICE) ? 3 : 0;
+    }
+    else if (sequence_control_set_ptr->static_config.decode_opt <= 2) {
+        if (enc_mode <= ENC_M3)
+            rate_est_level = 1;
+        else if (enc_mode <= ENC_M4)
+            rate_est_level = 2;
+        else if (enc_mode <= ENC_M10)
+            rate_est_level = pcs_ptr->parent_pcs_ptr->input_resolution <= INPUT_SIZE_480p_RANGE ? 2 : 3;
+        else if (enc_mode <= ENC_M12)
+            rate_est_level = (pcs_ptr->slice_type == I_SLICE) ? 3 : 4;
+        else
+            rate_est_level = (pcs_ptr->slice_type == I_SLICE) ? 3 : 0;
+    }
+    else {
+        if (enc_mode <= ENC_M3)
+            rate_est_level = 1;
+        else if (enc_mode <= ENC_M4)
+            rate_est_level = 2;
+        else if (enc_mode <= ENC_M10)
+            rate_est_level = pcs_ptr->parent_pcs_ptr->input_resolution <= INPUT_SIZE_360p_RANGE ? 2 : 3;
+        else if (enc_mode <= ENC_M12)
+            rate_est_level = (pcs_ptr->slice_type == I_SLICE) ? 3 : 4;
+        else
+            rate_est_level = (pcs_ptr->slice_type == I_SLICE) ? 3 : 0;
+    }
+#else
     if (pd_pass == PD_PASS_0) {
         if (enc_mode <= ENC_M2)
             rate_est_level = 1;
@@ -5928,7 +5970,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet * sequence_co
                                                                                        : 0;
 #endif
     }
-
+#endif
     set_rate_est_ctrls(context_ptr, rate_est_level);
 
     // set at pic-level b/c feature depends on some pic-level initializations

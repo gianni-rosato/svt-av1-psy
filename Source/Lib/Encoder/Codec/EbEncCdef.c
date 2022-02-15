@@ -1218,6 +1218,10 @@ void finish_cdef_search(PictureControlSet *pcs_ptr) {
         return;
     }
     int32_t *sb_index = (int32_t *)malloc(nvfb * nhfb * sizeof(*sb_index));
+#if OPT_DECODER
+    // to keep track of the sb_address in units of SBs (not mi_size)
+    int32_t *sb_addr = (int32_t *)malloc(nvfb * nhfb * sizeof(*sb_index));
+#endif
     int32_t start_gi = 0;
     int32_t end_gi   = first_pass_fs_num + default_second_pass_fs_num;
     assert(sb_index != NULL);
@@ -1261,6 +1265,9 @@ void finish_cdef_search(PictureControlSet *pcs_ptr) {
             mse[1][sb_count] = pcs_ptr->mse_seg[1][fbr * nhfb + fbc];
 
             sb_index[sb_count] = MI_SIZE_64X64 * fbr * pcs_ptr->mi_stride + MI_SIZE_64X64 * fbc;
+#if OPT_DECODER
+            sb_addr[sb_count] = fbr * nhfb + fbc;
+#endif
             sb_count++;
         }
     }
@@ -1269,11 +1276,21 @@ void finish_cdef_search(PictureControlSet *pcs_ptr) {
     // Scale down the cost of the (0,0) filter strength to bias selection towards off.
     // When off, can save the cost of the application.
     if (cdef_ctrls->zero_fs_cost_bias) {
+#if OPT_DECODER
+        for (i = 0; i < sb_count; i++) {
+            uint16_t factor = cdef_ctrls->zero_fs_cost_bias;
+            if (cdef_ctrls->scale_cost_bias_on_nz_coeffs)
+                factor -= (pcs_ptr->sb_count_nz_coeffs[sb_addr[i]] / (512 >> pcs_ptr->temporal_layer_index));
+            mse[0][i][0] = (factor * mse[0][i][0]) >> 6;
+            mse[1][i][0] = (factor * mse[1][i][0]) >> 6;
+        }
+#else
         const uint16_t factor = cdef_ctrls->zero_fs_cost_bias;
         for (i = 0; i < sb_count; i++) {
             mse[0][i][0] = (factor * mse[0][i][0]) >> 6;
             mse[1][i][0] = (factor * mse[1][i][0]) >> 6;
         }
+#endif
     }
     /* Search for different number of signalling bits. */
     for (i = 0; i <= 3; i++) {
@@ -1356,4 +1373,7 @@ void finish_cdef_search(PictureControlSet *pcs_ptr) {
     free(mse[0]);
     free(mse[1]);
     free(sb_index);
+#if OPT_DECODER
+    free(sb_addr);
+#endif
 }

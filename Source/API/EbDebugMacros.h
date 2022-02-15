@@ -64,6 +64,8 @@ extern "C" {
 
 #define TPL_LAD_MG_ZERO         1 // Set tpl_lad_mg to 0 when lookAhead is smalller than mini_gop size
 #define TUNE_LP_VBR             1 // Tune lp 16 and above for VBR
+#define FIX_UPDATE_COEF         1 // Don't allow bypass_encdec when update_coef is used for non_ISLICE (causes r2r)
+#define OPT_DECODER             1 // Decoder optimizations
 
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one

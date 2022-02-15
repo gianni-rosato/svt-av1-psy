@@ -145,6 +145,9 @@
 #define STAT_REPORT_NEW_TOKEN "--enable-stat-report"
 #define ENABLE_RESTORATION_TOKEN "--enable-restoration"
 #define MFMV_ENABLE_NEW_TOKEN "--enable-mfmv"
+#if OPT_DECODER
+#define DECODER_OPT_TOKEN "--decode-opt"
+#endif
 #define HDR_INPUT_NEW_TOKEN "--enable-hdr"
 #define ADAPTIVE_QP_ENABLE_NEW_TOKEN "--aq-mode"
 #define INPUT_FILE_LONG_TOKEN "--input"
@@ -533,6 +536,11 @@ static void set_enable_restoration_flag(const char *value, EbConfig *cfg) {
 static void set_enable_mfmv_flag(const char *value, EbConfig *cfg) {
     cfg->config.enable_mfmv = strtol(value, NULL, 0);
 };
+#if OPT_DECODER
+static void set_decoder_opt_flag(const char *value, EbConfig *cfg) {
+    cfg->config.decode_opt = (uint8_t)strtol(value, NULL, 0);
+};
+#endif
 static void set_tile_row(const char *value, EbConfig *cfg) {
     cfg->config.tile_rows = strtoul(value, NULL, 0);
 };
@@ -1127,6 +1135,12 @@ ConfigEntry config_entry_specific[] = {
      MFMV_ENABLE_NEW_TOKEN,
      "Motion Field Motion Vector control, default is -1 [-1: auto, 0-1]",
      set_enable_mfmv_flag},
+#if OPT_DECODER
+    {SINGLE_INPUT,
+    DECODER_OPT_TOKEN,
+    "Decoder optimization levels, default is 0 [0-3]",
+    set_decoder_opt_flag},
+#endif
     // --- start: ALTREF_FILTERING_SUPPORT
     {SINGLE_INPUT,
      ENABLE_TF_TOKEN,
@@ -1356,6 +1370,9 @@ ConfigEntry config_entry[] = {
     {SINGLE_INPUT, ENABLE_RESTORATION_TOKEN, "EnableRestoration", set_enable_restoration_flag},
     {SINGLE_INPUT, ENABLE_TPL_LA_TOKEN, "EnableTPLModel", set_enable_tpl_la},
     {SINGLE_INPUT, MFMV_ENABLE_NEW_TOKEN, "Mfmv", set_enable_mfmv_flag},
+#if OPT_DECODER
+     {SINGLE_INPUT, DECODER_OPT_TOKEN, "DecoderOpt", set_decoder_opt_flag},
+#endif
     //   ALT-REF filtering support
     {SINGLE_INPUT, ENABLE_TF_TOKEN, "EnableTf", set_enable_tf},
     {SINGLE_INPUT, ENABLE_OVERLAYS, "EnableOverlays", set_enable_overlays},

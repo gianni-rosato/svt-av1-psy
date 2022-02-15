@@ -1125,6 +1125,9 @@ EbErrorType svt_av1_pick_filter_level(
             filt_guess -= 4;
 
         filt_guess = filt_guess > 2 ? filt_guess - 2 : filt_guess > 1 ? filt_guess - 1 : filt_guess;
+#if OPT_DECODER
+        filt_guess = filt_guess > pcs_ptr->parent_pcs_ptr->dlf_ctrls.min_filter_level ? filt_guess : 0;
+#endif
         int32_t filt_guess_chroma = filt_guess > 1 ? filt_guess / 2 : filt_guess;
 
         lf->filter_level[0] = clamp(filt_guess, min_filter_level, max_filter_level);
