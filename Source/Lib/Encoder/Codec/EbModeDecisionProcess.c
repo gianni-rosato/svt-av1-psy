@@ -183,7 +183,7 @@ EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr, EbColor
             const uint32_t class_nics = MD_STAGE_NICS[pic_type][cand_class_it];
             // For REF frames, if the stage1_scaling_num is > 0, the NICs cannot be scaled below 2
             if (class_nics)
-                nics += MAX((stage1_scaling_num ? 2 : 1), DIVIDE_AND_ROUND(class_nics * stage1_scaling_num, MD_STAGE_NICS_SCAL_DENUM));
+                nics += MAX((uint32_t)(stage1_scaling_num ? 2 : 1), DIVIDE_AND_ROUND(class_nics * stage1_scaling_num, MD_STAGE_NICS_SCAL_DENUM));
         }
         max_nics = MAX(max_nics, nics);
     }

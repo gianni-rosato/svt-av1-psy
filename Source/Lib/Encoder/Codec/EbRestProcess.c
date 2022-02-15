@@ -81,7 +81,7 @@ static void rest_context_dctor(EbPtr p) {
 }
 uint8_t get_enable_restoration(EbEncMode enc_mode, int8_t config_enable_restoration,
 #if OPT_DECODER
-                               uint8_t input_resolution, uint8_t decode_opt);
+                               uint8_t input_resolution, uint8_t fast_decode);
 #else
                                uint8_t input_resolution);
 #endif
@@ -114,7 +114,7 @@ EbErrorType rest_context_ctor(EbThreadContext *thread_context_ptr,
                                config->enable_restoration_filtering,
 #if OPT_DECODER
                                scs_ptr->input_resolution,
-                               scs_ptr->static_config.decode_opt)) {
+                               scs_ptr->static_config.fast_decode)) {
 #else
                                scs_ptr->input_resolution)) {
 #endif

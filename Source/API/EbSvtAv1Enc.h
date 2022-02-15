@@ -604,11 +604,11 @@ typedef struct EbSvtAv1EncConfiguration {
 #if OPT_DECODER
     /* Decoder speed optimization level
     * 0: No decoder speed optimization
-    * 1: Low-level decoder speed optimization
-    * 2: Medium-level decoder speed optimization
-    * 3: High-level decoder speed optimization
+    * 1: Low-level decoder speed optimization (fast decode)
+    * 2: Medium-level decoder speed optimization (faster decode)
+    * 3: High-level decoder speed optimization (fastest decode)
     */
-    uint8_t decode_opt;
+    uint8_t fast_decode;
 #endif
 } EbSvtAv1EncConfiguration;
 

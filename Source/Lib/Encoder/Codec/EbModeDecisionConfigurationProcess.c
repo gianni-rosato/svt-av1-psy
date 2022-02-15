@@ -419,30 +419,40 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     UNUSED(scs_ptr);
 #endif
     EbErrorType return_error = EB_ErrorNone;
+#if OPT_DECODER
+    PictureParentControlSet *ppcs            = pcs_ptr->parent_pcs_ptr;
+    const EbEncMode         enc_mode         = pcs_ptr->enc_mode;
+    const uint8_t           is_ref           = ppcs->is_used_as_reference_flag;
+    const uint8_t           is_base          = ppcs->temporal_layer_index == 0;
+    const EbInputResolution input_resolution = ppcs->input_resolution;
+    const EB_SLICE          slice_type       = pcs_ptr->slice_type;
+    const uint8_t           fast_decode      = scs_ptr->static_config.fast_decode;
+#else
     const EbEncMode         enc_mode         = pcs_ptr->enc_mode;
     const uint8_t           is_ref           = pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag;
     const uint8_t           is_base          = pcs_ptr->parent_pcs_ptr->temporal_layer_index == 0;
     const EbInputResolution input_resolution = pcs_ptr->parent_pcs_ptr->input_resolution;
     const EB_SLICE           slice_type = pcs_ptr->slice_type;
     PictureParentControlSet *ppcs       = pcs_ptr->parent_pcs_ptr;
+#endif
 
 #if OPT_DECODER
     //MFMV
-    if (pcs_ptr->slice_type == I_SLICE || scs_ptr->mfmv_enabled == 0) {
+    if (slice_type == I_SLICE || scs_ptr->mfmv_enabled == 0) {
         ppcs->frm_hdr.use_ref_frame_mvs = 0;
     }
     else {
-        if (scs_ptr->static_config.decode_opt <= 0)
+        if (fast_decode <= 0)
             ppcs->frm_hdr.use_ref_frame_mvs = 1;
         else {
             uint64_t avg_me_dist = 0;
-            for (uint16_t sb_idx = 0; sb_idx < ppcs->sb_total_count; sb_idx++) {
-                avg_me_dist += ppcs->me_64x64_distortion[sb_idx];
+            for (uint16_t b64_idx = 0; b64_idx < ppcs->sb_total_count; b64_idx++) {
+                avg_me_dist += ppcs->me_64x64_distortion[b64_idx];
             }
             avg_me_dist /= ppcs->sb_total_count;
             avg_me_dist /= pcs_ptr->picture_qp;
 
-            if (scs_ptr->static_config.decode_opt <= 1)
+            if (fast_decode <= 1)
                 ppcs->frm_hdr.use_ref_frame_mvs = avg_me_dist < 200 || input_resolution <= INPUT_SIZE_480p_RANGE ? 1 : 0;
             else
                 ppcs->frm_hdr.use_ref_frame_mvs = avg_me_dist < 50 || input_resolution <= INPUT_SIZE_480p_RANGE ? 1 : 0;
@@ -452,12 +462,12 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
 
     uint8_t update_cdf_level = 0;
 #if OPT_DECODER
-    if (pcs_ptr->enc_mode <= ENC_M2)
+    if (enc_mode <= ENC_M2)
         update_cdf_level = 1;
-    else if (pcs_ptr->enc_mode <= ENC_M6)
-        update_cdf_level = (pcs_ptr->temporal_layer_index == 0) ? 1 : 3;
-    else if (pcs_ptr->enc_mode <= ENC_M10)
-        update_cdf_level = pcs_ptr->slice_type == I_SLICE ? 1 : 0;
+    else if (enc_mode <= ENC_M6)
+        update_cdf_level = is_base ? 1 : 3;
+    else if (enc_mode <= ENC_M10)
+        update_cdf_level = slice_type == I_SLICE ? 1 : 0;
     else
         update_cdf_level = 0;
 #else
@@ -513,7 +523,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     } else
         pcs_ptr->pic_filter_intra_level = scs_ptr->filter_intra_level;
 #if OPT_DECODER
-    if (scs_ptr->static_config.decode_opt <= 0) {
+    if (fast_decode <= 0) {
         if (pcs_ptr->enc_mode <= ENC_M5)
             pcs_ptr->parent_pcs_ptr->partition_contexts = PARTITION_CONTEXTS;
         else

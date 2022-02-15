@@ -146,7 +146,7 @@
 #define ENABLE_RESTORATION_TOKEN "--enable-restoration"
 #define MFMV_ENABLE_NEW_TOKEN "--enable-mfmv"
 #if OPT_DECODER
-#define DECODER_OPT_TOKEN "--decode-opt"
+#define FAST_DECODE_TOKEN "--fast-decode"
 #endif
 #define HDR_INPUT_NEW_TOKEN "--enable-hdr"
 #define ADAPTIVE_QP_ENABLE_NEW_TOKEN "--aq-mode"
@@ -537,8 +537,8 @@ static void set_enable_mfmv_flag(const char *value, EbConfig *cfg) {
     cfg->config.enable_mfmv = strtol(value, NULL, 0);
 };
 #if OPT_DECODER
-static void set_decoder_opt_flag(const char *value, EbConfig *cfg) {
-    cfg->config.decode_opt = (uint8_t)strtol(value, NULL, 0);
+static void set_fast_decode_flag(const char *value, EbConfig *cfg) {
+    cfg->config.fast_decode = (uint8_t)strtol(value, NULL, 0);
 };
 #endif
 static void set_tile_row(const char *value, EbConfig *cfg) {
@@ -1137,9 +1137,9 @@ ConfigEntry config_entry_specific[] = {
      set_enable_mfmv_flag},
 #if OPT_DECODER
     {SINGLE_INPUT,
-    DECODER_OPT_TOKEN,
-    "Decoder optimization levels, default is 0 [0-3]",
-    set_decoder_opt_flag},
+    FAST_DECODE_TOKEN,
+    "Fast Decoder levels, default is 0 [0-3]",
+    set_fast_decode_flag},
 #endif
     // --- start: ALTREF_FILTERING_SUPPORT
     {SINGLE_INPUT,
@@ -1371,7 +1371,7 @@ ConfigEntry config_entry[] = {
     {SINGLE_INPUT, ENABLE_TPL_LA_TOKEN, "EnableTPLModel", set_enable_tpl_la},
     {SINGLE_INPUT, MFMV_ENABLE_NEW_TOKEN, "Mfmv", set_enable_mfmv_flag},
 #if OPT_DECODER
-     {SINGLE_INPUT, DECODER_OPT_TOKEN, "DecoderOpt", set_decoder_opt_flag},
+    {SINGLE_INPUT, FAST_DECODE_TOKEN, "FastDecode", set_fast_decode_flag},
 #endif
     //   ALT-REF filtering support
     {SINGLE_INPUT, ENABLE_TF_TOKEN, "EnableTf", set_enable_tf},

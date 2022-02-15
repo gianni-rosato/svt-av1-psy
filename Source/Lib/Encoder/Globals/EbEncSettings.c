@@ -281,8 +281,8 @@ EbErrorType svt_av1_verify_settings(
       return_error = EB_ErrorBadParameter;
     }
 #if OPT_DECODER
-    if (config->decode_opt != 0 && config->decode_opt != 1 && config->decode_opt != 2 && config->decode_opt != 3) {
-        SVT_ERROR("Instance %u: Invalid decode opt flag [0/1/2/3, 0 for no decoder optimization], your input: %d\n", channel_number + 1, config->decode_opt);
+    if (config->fast_decode != 0 && config->fast_decode != 1 && config->fast_decode != 2 && config->fast_decode != 3) {
+        SVT_ERROR("Instance %u: Invalid fast decode flag [0 - 3, 0 for no decoder optimization], your input: %d\n", channel_number + 1, config->fast_decode);
         return_error = EB_ErrorBadParameter;
     }
 #endif
@@ -504,7 +504,7 @@ EbErrorType svt_av1_set_default_params(
     config_ptr->enable_restoration_filtering = DEFAULT;
     config_ptr->enable_mfmv = DEFAULT;
 #if OPT_DECODER
-    config_ptr->decode_opt = 0;
+    config_ptr->fast_decode = 0;
 #endif
     memset(config_ptr->pred_struct, 0, sizeof(config_ptr->pred_struct));
     config_ptr->enable_manual_pred_struct = EB_FALSE;

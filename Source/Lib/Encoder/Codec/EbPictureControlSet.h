@@ -603,26 +603,25 @@ typedef struct GmControls {
 typedef struct CdefControls {
     uint8_t enabled;
     uint8_t number_of_prim_in_second_loop[2];
-    uint8_t first_pass_fs_num;
-    uint8_t default_first_pass_fs[TOTAL_STRENGTHS];
-    uint8_t default_second_pass_fs_num;
-    uint8_t default_second_pass_fs[TOTAL_STRENGTHS];
-    int8_t  default_first_pass_fs_uv[TOTAL_STRENGTHS];
-    int8_t  default_second_pass_fs_uv[TOTAL_STRENGTHS];
-    int8_t  use_reference_cdef_fs;
-    int8_t  pred_y_f;
-    int8_t  pred_uv_f;
-    uint8_t
-        subsampling_factor; // Allowable levels: [1,2,4] ---> 1: no subsampling; 2: process every 2nd row; 4: process every 4th row for 8x8 blocks, every 2nd row for smaller sizes.
-    // NB subsampling is capped for certain block sizes, based on how many points the intrinsics can process at once.
-    uint8_t
-        search_best_ref_fs; // Only search best filter strengths of the nearest ref frames (skips the search if the filters of list0/list1 are the same).
-    uint16_t
-            zero_fs_cost_bias; // 0: OFF, higher is safer. Scaling factor to decrease the zero filter strength cost: : <x>/64
+    uint8_t first_pass_fs_num; // Number of primary filters considered in the first pass. (luma and chroma)
+    uint8_t default_first_pass_fs[TOTAL_STRENGTHS]; //Primary filter strengths to consider in the first pass.
+    uint8_t default_second_pass_fs_num; // Number of secondary filters considered in the second pass. (luma and chroma)
+    uint8_t default_second_pass_fs[TOTAL_STRENGTHS]; // Secondary filter strengths to consider in the second pass. 
+    int8_t  default_first_pass_fs_uv[TOTAL_STRENGTHS]; // Mask for primary filters to be considered for chroma and indicates a subset of the primary
+                                                       // filter strengths considered in default_first_pass_fs[64]
+    int8_t  default_second_pass_fs_uv[TOTAL_STRENGTHS]; // Mask for secondary filters to be considered for chroma and indicates a subset of the secondary
+                                                        // filter strengths considered in default_second_pass_fs[64]
+    int8_t  use_reference_cdef_fs; // Flag to indicate the use of reference frames' filter strengths.
+    int8_t  pred_y_f; // Predicted filter strength pair index for the luma component based on reference picture filter strength pairs.
+    int8_t  pred_uv_f; // Predicted filter strength pair index for the chroma component based on reference picture filter strength pairs.
+    uint8_t subsampling_factor; // Allowable levels: [1,2,4] ---> 1: no subsampling; 2: process every 2nd row; 4: process every 4th row for 8x8 blocks, every 2nd row for smaller sizes.
+                                // NB subsampling is capped for certain block sizes, based on how many points the intrinsics can process at once.
+    uint8_t search_best_ref_fs; // Only search best filter strengths of the nearest ref frames (skips the search if the filters of list0/list1 are the same).
+    uint16_t zero_fs_cost_bias; // 0: OFF, higher is safer. Scaling factor to decrease the zero filter strength cost: : <x>/64
 #if OPT_DECODER
     uint8_t scale_cost_bias_on_nz_coeffs; // When enabled, use non-zero coeff info to make the cost-biasing factor more aggressive (when cost biasing is enabled)
 #endif
-    uint8_t use_skip_detector;
+    uint8_t use_skip_detector; // Shut CDEF at the picture level based on the skip area of the nearest reference frames.
 } CdefControls;
 
 typedef struct List0OnlyBase {

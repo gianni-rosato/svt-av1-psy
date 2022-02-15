@@ -386,7 +386,7 @@ EbErrorType recon_coef_ctor(EncDecSet *object_ptr, EbPtr object_init_data_ptr) {
 }
 #if OPT_M13_10BIT
 #if OPT_DECODER
-uint8_t get_dlf_level(EbEncMode enc_mode, uint8_t is_used_as_reference_flag, uint8_t is_16bit, uint8_t decode_opt);
+uint8_t get_dlf_level(EbEncMode enc_mode, uint8_t is_used_as_reference_flag, uint8_t is_16bit, uint8_t fast_decode);
 #else
 uint8_t get_dlf_level(EbEncMode enc_mode, uint8_t is_used_as_reference_flag, uint8_t is_16bit);
 #endif
@@ -396,7 +396,7 @@ uint8_t get_dlf_level(EbEncMode enc_mode, uint8_t is_used_as_reference_flag);
 
 #if OPT_DECODER
 uint8_t get_enable_restoration(EbEncMode enc_mode, int8_t config_enable_restoration,
-    uint8_t input_resolution, uint8_t decode_opt);
+    uint8_t input_resolution, uint8_t fast_decode);
 #else
 uint8_t get_enable_restoration(EbEncMode enc_mode, int8_t config_enable_restoration,
                                uint8_t input_resolution);
@@ -474,7 +474,7 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
 #if OPT_M13_10BIT
             for (uint8_t is_hbd = 0; is_hbd < 2; is_hbd++) {
 #if OPT_DECODER
-                lf_recon_needed = get_dlf_level(init_data_ptr->enc_mode, is_used_as_reference_flag, is_hbd, init_data_ptr->static_config.decode_opt) == 1
+                lf_recon_needed = get_dlf_level(init_data_ptr->enc_mode, is_used_as_reference_flag, is_hbd, init_data_ptr->static_config.fast_decode) == 1
 #else
                     lf_recon_needed = get_dlf_level(init_data_ptr->enc_mode, is_used_as_reference_flag, is_hbd) == 1
 #endif
@@ -499,7 +499,7 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
                                init_data_ptr->static_config.enable_restoration_filtering,
 #if OPT_DECODER
                                init_data_ptr->input_resolution,
-                               init_data_ptr->static_config.decode_opt)) {
+                               init_data_ptr->static_config.fast_decode)) {
 #else
                                init_data_ptr->input_resolution)) {
 #endif
@@ -547,9 +547,6 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
     EB_MALLOC_ARRAY(object_ptr->sb_intra, object_ptr->sb_total_count);
     EB_MALLOC_ARRAY(object_ptr->sb_skip, object_ptr->sb_total_count);
     EB_MALLOC_ARRAY(object_ptr->sb_64x64_mvp, object_ptr->sb_total_count);
-#if OPT_DECODER
-    EB_MALLOC_ARRAY(object_ptr->sb_count_nz_coeffs, object_ptr->sb_total_count);
-#endif
 
     sb_origin_x = 0;
     sb_origin_y = 0;
@@ -563,6 +560,10 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
     const uint16_t all_sb = picture_sb_w * picture_sb_h;
 
     object_ptr->sb_total_count_pix = all_sb;
+
+#if OPT_DECODER
+    EB_MALLOC_ARRAY(object_ptr->sb_count_nz_coeffs, object_ptr->sb_total_count_pix);
+#endif
 
     for (sb_index = 0; sb_index < all_sb; ++sb_index) {
         EB_NEW(object_ptr->sb_ptr_array[sb_index],
@@ -1271,7 +1272,7 @@ EbErrorType picture_control_set_ctor(PictureControlSet *object_ptr, EbPtr object
                                init_data_ptr->static_config.enable_restoration_filtering,
 #if OPT_DECODER
                                init_data_ptr->input_resolution,
-                               init_data_ptr->static_config.decode_opt))
+                               init_data_ptr->static_config.fast_decode))
 #else
                                init_data_ptr->input_resolution))
 #endif

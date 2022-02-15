@@ -345,14 +345,14 @@ void set_tpl_extended_controls(PictureParentControlSet *pcs_ptr, uint8_t tpl_lev
 */
 uint8_t get_enable_restoration(EbEncMode enc_mode, int8_t config_enable_restoration,
 #if OPT_DECODER
-                               uint8_t input_resolution, uint8_t decode_opt) {
+                               uint8_t input_resolution, uint8_t fast_decode) {
 #else
                                uint8_t input_resolution) {
 #endif
 
     uint8_t enable_restoration;
 #if OPT_DECODER
-    if (decode_opt <= 2)
+    if (fast_decode <= 2)
         enable_restoration = (enc_mode <= ENC_M7) ? 1 : 0;
     else
         enable_restoration = (enc_mode <= ENC_M4) ? 1 : input_resolution <= INPUT_SIZE_360p_RANGE ? 1 : 0;
@@ -422,7 +422,7 @@ EbErrorType signal_derivation_pre_analysis_oq_scs(SequenceControlSet *scs_ptr) {
             scs_ptr->static_config.enable_restoration_filtering,
 #if OPT_DECODER
             scs_ptr->input_resolution,
-            scs_ptr->static_config.decode_opt);
+            scs_ptr->static_config.fast_decode);
 #else
             scs_ptr->input_resolution);
 #endif
