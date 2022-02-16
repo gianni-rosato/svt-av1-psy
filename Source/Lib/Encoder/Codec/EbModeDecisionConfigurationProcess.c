@@ -442,7 +442,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         ppcs->frm_hdr.use_ref_frame_mvs = 0;
     }
     else {
-        if (fast_decode <= 0)
+        if (fast_decode == 0)
             ppcs->frm_hdr.use_ref_frame_mvs = 1;
         else {
             uint64_t avg_me_dist = 0;
@@ -523,7 +523,7 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     } else
         pcs_ptr->pic_filter_intra_level = scs_ptr->filter_intra_level;
 #if OPT_DECODER
-    if (fast_decode <= 0) {
+    if (fast_decode == 0) {
         if (pcs_ptr->enc_mode <= ENC_M5)
             pcs_ptr->parent_pcs_ptr->partition_contexts = PARTITION_CONTEXTS;
         else

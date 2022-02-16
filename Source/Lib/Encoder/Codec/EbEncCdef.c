@@ -1280,7 +1280,8 @@ void finish_cdef_search(PictureControlSet *pcs_ptr) {
         for (i = 0; i < sb_count; i++) {
             uint16_t factor = cdef_ctrls->zero_fs_cost_bias;
             if (cdef_ctrls->scale_cost_bias_on_nz_coeffs) {
-                uint16_t factor_modifier = ((pcs_ptr->sb_count_nz_coeffs[sb_addr[i]] + 128) / 256);
+                // count of nz-coeffs is divided by 256; adding 128 is for rounding
+                uint16_t factor_modifier = ((pcs_ptr->sb_count_nz_coeffs[sb_addr[i]] + 128) >> 8);
                 factor = factor_modifier < factor ? factor - factor_modifier : 0;
             }
             mse[0][i][0] = (factor * mse[0][i][0]) >> 6;

@@ -1581,7 +1581,7 @@ uint8_t get_dlf_level(EbEncMode enc_mode, uint8_t is_used_as_reference_flag) {
 
     uint8_t dlf_level;
 #if OPT_DECODER
-    if (fast_decode <= 0) {
+    if (fast_decode == 0) {
         if (enc_mode <= ENC_M4)
             dlf_level = 1;
         else if (enc_mode <= ENC_M8)

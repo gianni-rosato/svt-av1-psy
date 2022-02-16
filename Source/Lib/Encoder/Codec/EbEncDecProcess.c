@@ -5937,7 +5937,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet * sequence_co
         else
             rate_est_level = 2;
     }
-    else if (fast_decode <= 0) {
+    else if (fast_decode == 0) {
         if (enc_mode <= ENC_M3)
             rate_est_level = 1;
         else if (enc_mode <= ENC_M10)

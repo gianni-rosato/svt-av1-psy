@@ -3767,13 +3767,20 @@ void copy_api_from_app(
     if (scs_ptr->static_config.fast_decode &&
         (scs_ptr->static_config.fast_decode <=3)) {
         if (scs_ptr->static_config.enc_mode <= ENC_M4 ||
-            (scs_ptr->static_config.enc_mode == ENC_M9 && scs_ptr->static_config.fast_decode > 2) ||
-            (scs_ptr->static_config.enc_mode == ENC_M10 && scs_ptr->static_config.fast_decode > 1) ||
+            (scs_ptr->static_config.enc_mode >= ENC_M8 && scs_ptr->static_config.fast_decode > 2) ||
+            (scs_ptr->static_config.enc_mode >= ENC_M10 && scs_ptr->static_config.fast_decode > 1) ||
             scs_ptr->static_config.enc_mode >= ENC_M11) {
             SVT_WARN("Decoder speedup level %d is not supported in M%d.\n", scs_ptr->static_config.fast_decode, scs_ptr->static_config.enc_mode);
             SVT_WARN("Decoder speedup levels are supported as follows:\
-                \n\t<= M4: not supported\n\tM5-M8: levels 1-3 supported\n\tM9:levels 1-2 supported\n\tM10: level 1 supported\n\t>= M11: not supported\n");
-            scs_ptr->static_config.fast_decode = scs_ptr->static_config.enc_mode == ENC_M9 ? 2 : scs_ptr->static_config.enc_mode == ENC_M10 ? 1 : 0;
+                \n\t<= M4: not supported\n\tM5-M7: levels 1-3 supported\n\tM8-M9:levels 1-2 supported\n\tM10: level 1 supported\n\t>= M11: not supported\n");
+            if (scs_ptr->static_config.enc_mode <= ENC_M4)
+                scs_ptr->static_config.fast_decode = 0;
+            else if (scs_ptr->static_config.enc_mode <= ENC_M9)
+                scs_ptr->static_config.fast_decode = 2;
+            else if (scs_ptr->static_config.enc_mode <= ENC_M10)
+                scs_ptr->static_config.fast_decode = 1;
+            else
+                scs_ptr->static_config.fast_decode = 0;
             SVT_WARN("Switching to decoder speedup level %d.\n", scs_ptr->static_config.fast_decode);
         }
     }

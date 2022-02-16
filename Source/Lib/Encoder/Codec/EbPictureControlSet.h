@@ -606,7 +606,7 @@ typedef struct CdefControls {
     uint8_t first_pass_fs_num; // Number of primary filters considered in the first pass. (luma and chroma)
     uint8_t default_first_pass_fs[TOTAL_STRENGTHS]; //Primary filter strengths to consider in the first pass.
     uint8_t default_second_pass_fs_num; // Number of secondary filters considered in the second pass. (luma and chroma)
-    uint8_t default_second_pass_fs[TOTAL_STRENGTHS]; // Secondary filter strengths to consider in the second pass. 
+    uint8_t default_second_pass_fs[TOTAL_STRENGTHS]; // Secondary filter strengths to consider in the second pass.
     int8_t  default_first_pass_fs_uv[TOTAL_STRENGTHS]; // Mask for primary filters to be considered for chroma and indicates a subset of the primary
                                                        // filter strengths considered in default_first_pass_fs[64]
     int8_t  default_second_pass_fs_uv[TOTAL_STRENGTHS]; // Mask for secondary filters to be considered for chroma and indicates a subset of the secondary

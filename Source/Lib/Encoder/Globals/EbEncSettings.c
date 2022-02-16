@@ -281,7 +281,7 @@ EbErrorType svt_av1_verify_settings(
       return_error = EB_ErrorBadParameter;
     }
 #if OPT_DECODER
-    if (config->fast_decode != 0 && config->fast_decode != 1 && config->fast_decode != 2 && config->fast_decode != 3) {
+    if (config->fast_decode > 3) {
         SVT_ERROR("Instance %u: Invalid fast decode flag [0 - 3, 0 for no decoder optimization], your input: %d\n", channel_number + 1, config->fast_decode);
         return_error = EB_ErrorBadParameter;
     }
