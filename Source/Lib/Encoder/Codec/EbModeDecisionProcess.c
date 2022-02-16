@@ -89,6 +89,10 @@ static void mode_decision_context_dctor(EbPtr p) {
 
 uint8_t get_nic_level(EbEncMode enc_mode, uint8_t temporal_layer_index);
 uint8_t set_nic_controls(ModeDecisionContext *ctx, uint8_t nic_level);
+#if FIX_NIC_BUFF
+void set_nics(NicScalingCtrls* scaling_ctrls, uint32_t mds1_count[CAND_CLASS_TOTAL],
+    uint32_t mds2_count[CAND_CLASS_TOTAL], uint32_t mds3_count[CAND_CLASS_TOTAL], uint8_t pic_type);
+#endif
 /*
 * return the max canidate count for MDS0
   Used by candidate injection and memory allocation
@@ -176,16 +180,24 @@ EbErrorType mode_decision_context_ctor(ModeDecisionContext *context_ptr, EbColor
     // scale max_nics
 #if FIX_NIC_BUFF
     uint32_t max_nics = 0;
-    for (uint8_t pic_type = 0; pic_type < NICS_PIC_TYPE; pic_type++) {
-        uint32_t nics = 0;
-        for (CandClass cand_class_it = CAND_CLASS_0; cand_class_it < CAND_CLASS_TOTAL;
-            cand_class_it++) {
-            const uint32_t class_nics = MD_STAGE_NICS[pic_type][cand_class_it];
-            // For REF frames, if the stage1_scaling_num is > 0, the NICs cannot be scaled below 2
-            if (class_nics)
-                nics += MAX((uint32_t)(stage1_scaling_num ? 2 : 1), DIVIDE_AND_ROUND(class_nics * stage1_scaling_num, MD_STAGE_NICS_SCAL_DENUM));
+    {
+        NicScalingCtrls scaling_ctrls;
+        scaling_ctrls.stage1_scaling_num = stage1_scaling_num;
+        scaling_ctrls.stage2_scaling_num = stage1_scaling_num;
+        scaling_ctrls.stage3_scaling_num = stage1_scaling_num;
+        uint32_t mds1_count[CAND_CLASS_TOTAL];
+        uint32_t mds2_count[CAND_CLASS_TOTAL];
+        uint32_t mds3_count[CAND_CLASS_TOTAL];
+        for (uint8_t pic_type = 0; pic_type < NICS_PIC_TYPE; pic_type++) {
+
+            set_nics(&scaling_ctrls, mds1_count, mds2_count, mds3_count, pic_type);
+
+            uint32_t nics = 0;
+            for (CandClass cidx = CAND_CLASS_0; cidx < CAND_CLASS_TOTAL; cidx++) {
+                nics += mds1_count[cidx];
+            }
+            max_nics = MAX(max_nics, nics);
         }
-        max_nics = MAX(max_nics, nics);
     }
 #else
     max_nics = MAX(2, DIVIDE_AND_ROUND(max_nics * stage1_scaling_num, MD_STAGE_NICS_SCAL_DENUM));

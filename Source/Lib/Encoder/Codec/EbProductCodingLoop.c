@@ -1605,6 +1605,73 @@ void set_inter_comp_controls(ModeDecisionContext *ctx, uint8_t inter_comp_mode) 
     default: assert(0); break;
     }
 }
+#if FIX_NIC_BUFF
+void set_nics(NicScalingCtrls* scaling_ctrls, uint32_t mds1_count[CAND_CLASS_TOTAL],
+    uint32_t mds2_count[CAND_CLASS_TOTAL], uint32_t mds3_count[CAND_CLASS_TOTAL], uint8_t pic_type) {
+
+    for (CandClass cidx = CAND_CLASS_0; cidx < CAND_CLASS_TOTAL; cidx++) {
+        mds1_count[cidx] = MD_STAGE_NICS[pic_type][cidx];
+        mds2_count[cidx] = MD_STAGE_NICS[pic_type][cidx] >> 1;
+        mds3_count[cidx] = MD_STAGE_NICS[pic_type][cidx] >> 2;
+    }
+
+    // minimum nics allowed
+    uint32_t min_mds1_nics = (pic_type < 2 && scaling_ctrls->stage1_scaling_num) ? 2 : 1;
+    uint32_t min_mds2_nics = (pic_type < 2 && scaling_ctrls->stage2_scaling_num) ? 2 : 1;
+    uint32_t min_mds3_nics = (pic_type < 2 && scaling_ctrls->stage3_scaling_num) ? 2 : 1;
+
+    // Set the scaling numerators
+    uint32_t stage1_num = scaling_ctrls->stage1_scaling_num;
+    uint32_t stage2_num = scaling_ctrls->stage2_scaling_num;
+    uint32_t stage3_num = scaling_ctrls->stage3_scaling_num;
+    // The scaling denominator is 16 for all stages
+    uint32_t scale_denum = MD_STAGE_NICS_SCAL_DENUM;
+    // no NIC setting should be done beyond this point
+    for (CandClass cidx = 0; cidx < CAND_CLASS_TOTAL; ++cidx) {
+        mds1_count[cidx] =
+            MAX(min_mds1_nics, DIVIDE_AND_ROUND(mds1_count[cidx] * stage1_num, scale_denum));
+        mds2_count[cidx] =
+            MAX(min_mds2_nics, DIVIDE_AND_ROUND(mds2_count[cidx] * stage2_num, scale_denum));
+        mds3_count[cidx] =
+            MAX(min_mds3_nics, DIVIDE_AND_ROUND(mds3_count[cidx] * stage3_num, scale_denum));
+    }
+}
+
+void set_md_stage_counts(PictureControlSet *pcs, ModeDecisionContext *ctx) {
+
+    // Step 1: Set the number of NICs for each stage
+    // no NIC setting should be done beyond this point
+    // Set md_stage count
+    uint8_t pic_type = pcs->slice_type == I_SLICE ? 0
+        : pcs->parent_pcs_ptr->is_used_as_reference_flag ? 1
+        : 2;
+    set_nics(&ctx->nic_ctrls.scaling_ctrls, ctx->md_stage_1_count, ctx->md_stage_2_count, ctx->md_stage_3_count, pic_type);
+
+    // Step 2: derive bypass_stage1 flags
+    ctx->bypass_md_stage_1 = (ctx->nic_ctrls.md_staging_mode == MD_STAGING_MODE_1 ||
+        ctx->nic_ctrls.md_staging_mode == MD_STAGING_MODE_2)
+        ? EB_FALSE
+        : EB_TRUE;
+    ctx->bypass_md_stage_2 = (ctx->nic_ctrls.md_staging_mode == MD_STAGING_MODE_2)
+        ? EB_FALSE
+        : EB_TRUE;
+
+    // Step 3: update count for md_stage_1 and d_stage_2 if bypassed (no NIC
+    // setting should be done beyond this point)
+    if (ctx->bypass_md_stage_1) {
+        ctx->md_stage_2_count[CAND_CLASS_0] = ctx->md_stage_1_count[CAND_CLASS_0];
+        ctx->md_stage_2_count[CAND_CLASS_1] = ctx->md_stage_1_count[CAND_CLASS_1];
+        ctx->md_stage_2_count[CAND_CLASS_2] = ctx->md_stage_1_count[CAND_CLASS_2];
+        ctx->md_stage_2_count[CAND_CLASS_3] = ctx->md_stage_1_count[CAND_CLASS_3];
+    }
+    if (ctx->bypass_md_stage_2) {
+        ctx->md_stage_3_count[CAND_CLASS_0] = ctx->md_stage_2_count[CAND_CLASS_0];
+        ctx->md_stage_3_count[CAND_CLASS_1] = ctx->md_stage_2_count[CAND_CLASS_1];
+        ctx->md_stage_3_count[CAND_CLASS_2] = ctx->md_stage_2_count[CAND_CLASS_2];
+        ctx->md_stage_3_count[CAND_CLASS_3] = ctx->md_stage_2_count[CAND_CLASS_3];
+    }
+}
+#else
 void scale_nics(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr) {
     // minimum nics allowed
     uint32_t min_nics_stage1 = (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag &&
@@ -1680,6 +1747,7 @@ void set_md_stage_counts(PictureControlSet *pcs_ptr, ModeDecisionContext *contex
         context_ptr->md_stage_3_count[CAND_CLASS_3] = context_ptr->md_stage_2_count[CAND_CLASS_3];
     }
 }
+#endif
 void sort_fast_cost_based_candidates(
     struct ModeDecisionContext *context_ptr, uint32_t input_buffer_start_idx,
     uint32_t
