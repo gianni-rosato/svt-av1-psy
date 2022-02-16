@@ -18,7 +18,6 @@
 #include "EbMemory_AVX2.h"
 #include "EbMemory_SSE4_1.h"
 #include "synonyms.h"
-#include "synonyms_avx2.h"
 
 #define LEFT_SHIFT (2 * FILTER_BITS - 3 - COMPOUND_ROUND1_BITS)
 

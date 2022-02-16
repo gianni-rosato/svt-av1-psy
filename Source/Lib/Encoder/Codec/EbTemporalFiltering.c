@@ -4426,6 +4426,8 @@ void get_final_filtered_pixels_c(MeContext *context_ptr, EbByte *src_center_ptr_
         int pos = blk_y_src_offset;
         for (i = 0, k = 0; i < BH; i++) {
             for (j = 0; j < BW; j++, k++) {
+                assert(OD_DIVU(
+                    accum[C_Y][k] + (count[C_Y][k] >> 1), count[C_Y][k]) < 256);
                 src_center_ptr_start[C_Y][pos] = (uint8_t)OD_DIVU(
                     accum[C_Y][k] + (count[C_Y][k] >> 1), count[C_Y][k]);
                 pos++;
@@ -4437,8 +4439,12 @@ void get_final_filtered_pixels_c(MeContext *context_ptr, EbByte *src_center_ptr_
             pos = blk_ch_src_offset;
             for (i = 0, k = 0; i < blk_height_ch; i++) {
                 for (j = 0; j < blk_width_ch; j++, k++) {
+                    assert(OD_DIVU(
+                        accum[C_U][k] + (count[C_U][k] >> 1), count[C_U][k]) < 256);
                     src_center_ptr_start[C_U][pos] = (uint8_t)OD_DIVU(
                         accum[C_U][k] + (count[C_U][k] >> 1), count[C_U][k]);
+                    assert(OD_DIVU(
+                        accum[C_U][k] + (count[C_U][k] >> 1), count[C_U][k]) < 256);
                     src_center_ptr_start[C_V][pos] = (uint8_t)OD_DIVU(
                         accum[C_V][k] + (count[C_V][k] >> 1), count[C_V][k]);
                     pos++;

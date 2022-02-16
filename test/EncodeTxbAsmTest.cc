@@ -167,13 +167,12 @@ INSTANTIATE_TEST_CASE_P(
                        ::testing::Range(0, static_cast<int>(TX_TYPES), 1),
                        ::testing::Range(0, static_cast<int>(TX_SIZES_ALL), 1)));
 
-#if GET_NZ_MAP_CONTEXTS_AVX2
 INSTANTIATE_TEST_CASE_P(
     AVX2, EncodeTxbTest,
     ::testing::Combine(::testing::Values(&svt_av1_get_nz_map_contexts_avx2),
                        ::testing::Range(0, static_cast<int>(TX_TYPES), 1),
                        ::testing::Range(0, static_cast<int>(TX_SIZES_ALL), 1)));
-#endif
+
 // test assembly code of svt_av1_txb_init_levels
 using TxbInitLevelsFunc = void (*)(const TranLow *const coeff, const int width,
                                    const int height, uint8_t *const levels);

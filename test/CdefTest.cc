@@ -54,7 +54,7 @@ typedef void (*svt_cdef_filter_block_8xn_16_func)(
 static const svt_cdef_filter_block_8xn_16_func
     svt_cdef_filter_block_8xn_16_func_table[] = {
         svt_cdef_filter_block_8xn_16_avx2,
-#ifndef EN_AVX512_SUPPORT
+#if EN_AVX512_SUPPORT
         svt_cdef_filter_block_8xn_16_avx512
 #endif
 };

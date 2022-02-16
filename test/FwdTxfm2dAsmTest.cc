@@ -52,7 +52,7 @@ namespace {
 using FwdTxfm2dAsmParam = std::tuple<int, int>;
 
 static const FwdTxfm2dFunc fwd_txfm_2d_avx2_func[TX_SIZES_ALL] = {
-    svt_av1_fwd_txfm2d_4x4_sse4_1, svt_av1_fwd_txfm2d_8x8_avx2,
+    NULL, svt_av1_fwd_txfm2d_8x8_avx2,
     svt_av1_fwd_txfm2d_16x16_avx2, svt_av1_fwd_txfm2d_32x32_avx2,
     svt_av1_fwd_txfm2d_64x64_avx2, svt_av1_fwd_txfm2d_4x8_avx2,
     svt_av1_fwd_txfm2d_8x4_avx2,   svt_av1_fwd_txfm2d_8x16_avx2,
@@ -78,7 +78,7 @@ static const FwdTxfm2dFunc fwd_txfm_2d_sse4_1_func[TX_SIZES_ALL] = {
 };
 
 static const FwdTxfm2dFunc fwd_txfm_2d_N2_avx2_func[TX_SIZES_ALL] = {
-    svt_av1_fwd_txfm2d_4x4_N2_sse4_1, svt_av1_fwd_txfm2d_8x8_N2_avx2,
+    NULL, svt_av1_fwd_txfm2d_8x8_N2_avx2,
     svt_av1_fwd_txfm2d_16x16_N2_avx2, svt_av1_fwd_txfm2d_32x32_N2_avx2,
     svt_av1_fwd_txfm2d_64x64_N2_avx2, svt_av1_fwd_txfm2d_4x8_N2_avx2,
     svt_av1_fwd_txfm2d_8x4_N2_avx2,   svt_av1_fwd_txfm2d_8x16_N2_avx2,
@@ -91,7 +91,7 @@ static const FwdTxfm2dFunc fwd_txfm_2d_N2_avx2_func[TX_SIZES_ALL] = {
 };
 
 static const FwdTxfm2dFunc fwd_txfm_2d_N4_avx2_func[TX_SIZES_ALL] = {
-    svt_av1_fwd_txfm2d_4x4_N4_sse4_1, svt_av1_fwd_txfm2d_8x8_N4_avx2,
+    NULL, svt_av1_fwd_txfm2d_8x8_N4_avx2,
     svt_av1_fwd_txfm2d_16x16_N4_avx2, svt_av1_fwd_txfm2d_32x32_N4_avx2,
     svt_av1_fwd_txfm2d_64x64_N4_avx2, svt_av1_fwd_txfm2d_4x8_N4_avx2,
     svt_av1_fwd_txfm2d_8x4_N4_avx2,   svt_av1_fwd_txfm2d_8x16_N4_avx2,
@@ -156,6 +156,28 @@ static const FwdTxfm2dFunc fwd_txfm_2d_N4_c_func[TX_SIZES_ALL] = {
 };
 
 #if EN_AVX512_SUPPORT
+static const FwdTxfm2dFunc fwd_txfm_2d_avx512_func[TX_SIZES_ALL] = {
+    NULL,
+    NULL,
+    av1_fwd_txfm2d_16x16_avx512,
+    av1_fwd_txfm2d_32x32_avx512,
+    av1_fwd_txfm2d_64x64_avx512,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    av1_fwd_txfm2d_16x32_avx512,
+    av1_fwd_txfm2d_32x16_avx512,
+    av1_fwd_txfm2d_32x64_avx512,
+    av1_fwd_txfm2d_64x32_avx512,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    av1_fwd_txfm2d_16x64_avx512,
+    av1_fwd_txfm2d_64x16_avx512,
+};
+
 static const FwdTxfm2dFunc fwd_txfm_2d_N2_asm512_func[TX_SIZES_ALL] = {
     NULL,
     NULL,
@@ -238,6 +260,14 @@ class FwdTxfm2dAsmTest : public ::testing::TestWithParam<FwdTxfm2dAsmParam> {
         execute_test(test_func, ref_func, DEFAULT_SHAPE);
     }
 
+#if EN_AVX512_SUPPORT
+    void run_match_test_avx512() {
+        FwdTxfm2dFunc test_func = fwd_txfm_2d_avx512_func[tx_size_];
+        FwdTxfm2dFunc ref_func = fwd_txfm_2d_avx2_func[tx_size_];
+        execute_test(test_func, ref_func, DEFAULT_SHAPE);
+    }
+#endif
+
     void run_match_test_sse4_1() {
         FwdTxfm2dFunc test_func = fwd_txfm_2d_sse4_1_func[tx_size_];
         FwdTxfm2dFunc ref_func = fwd_txfm_2d_c_func[tx_size_];
@@ -310,13 +340,13 @@ class FwdTxfm2dAsmTest : public ::testing::TestWithParam<FwdTxfm2dAsmParam> {
 
     void speed_test_512() {
         FwdTxfm2dFunc test_func = fwd_txfm_2d_N2_asm512_func[tx_size_];
-        FwdTxfm2dFunc ref_func = fwd_txfm_2d_N2_asm_func[tx_size_];
+        FwdTxfm2dFunc ref_func = fwd_txfm_2d_N2_avx2_func[tx_size_];
         if (test_func && ref_func) {
             run_speed_test("N2 AVX512 AVX2 ", test_func, ref_func);
         }
 
         test_func = fwd_txfm_2d_N4_asm512_func[tx_size_];
-        ref_func = fwd_txfm_2d_N4_asm_func[tx_size_];
+        ref_func = fwd_txfm_2d_N2_avx2_func[tx_size_];
         if (test_func && ref_func) {
             run_speed_test("N4 AVX512 AVX2", test_func, ref_func);
         }
@@ -491,6 +521,12 @@ class FwdTxfm2dAsmTest : public ::testing::TestWithParam<FwdTxfm2dAsmParam> {
 TEST_P(FwdTxfm2dAsmTest, match_test_avx2) {
     run_match_test_avx2();
 }
+
+#if EN_AVX512_SUPPORT
+TEST_P(FwdTxfm2dAsmTest, match_test_avx512) {
+    run_match_test_avx512();
+}
+#endif
 
 TEST_P(FwdTxfm2dAsmTest, match_test_sse4_1) {
     run_match_test_sse4_1();

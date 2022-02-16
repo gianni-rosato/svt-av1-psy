@@ -92,6 +92,9 @@ typedef std::tuple<int, int> BlkSize;
 typedef enum { REF_MAX, SRC_MAX, RANDOM, UNALIGN } TestPattern;
 typedef enum { BUF_MAX, BUF_MIN, BUF_SMALL, BUF_RANDOM } SADPattern;
 BlkSize TEST_BLOCK_SIZES[] = {
+    BlkSize(4, 10),  BlkSize(4, 12),  BlkSize(8, 10),  BlkSize(8, 12),
+    BlkSize(24, 10), BlkSize(40, 10), BlkSize(48, 10), BlkSize(56, 10),
+    BlkSize(24, 14), BlkSize(40, 14), BlkSize(48, 14), BlkSize(56, 14),
     BlkSize(16, 10), BlkSize(16, 5),  BlkSize(32, 10), BlkSize(32, 20),
     BlkSize(64, 20), BlkSize(64, 64), BlkSize(64, 32), BlkSize(32, 64),
     BlkSize(32, 32), BlkSize(32, 16), BlkSize(16, 32), BlkSize(16, 16),

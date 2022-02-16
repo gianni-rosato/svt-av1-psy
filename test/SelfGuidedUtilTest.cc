@@ -393,7 +393,7 @@ INSTANTIATE_TEST_CASE_P(RST, PixelProjErrorHbdTest,
 TEST(SelfGuidedToolsTest, GetProjSubspaceMatchTest) {
     const int32_t pu_width = RESTORATION_PROC_UNIT_SIZE;
     const int32_t pu_height = RESTORATION_PROC_UNIT_SIZE;
-    const int32_t width = 256, height = 256, stride = 288, out_stride = 288;
+    const int32_t width = 270, height = 256, stride = 300, out_stride = 300;
     const int NUM_ITERS = 2000;
     int i, j, k;
 
@@ -411,14 +411,27 @@ TEST(SelfGuidedToolsTest, GetProjSubspaceMatchTest) {
     // check all the sg params
     SVTRandom rnd(8, false);
     for (int iter = 0; iter < NUM_ITERS; ++iter) {
-        // prepare src data and recon data
-        for (i = -16; i < height + 16; ++i) {
-            for (j = -16; j < width + 16; ++j) {
-                input[i * stride + j] = rnd.random();
-                if (iter == 0)
-                    output[i * stride + j] = input[i * stride + j];
-                else
-                    output[i * stride + j] = rnd.random();
+        if (iter == 0) {
+            // prepare src data and recon data
+            for (i = -16; i < height + 16; ++i) {
+                for (j = -16; j < width + 16; ++j) {
+                    input[i * stride + j] = rnd.random();
+                    if (iter == 0)
+                        output[i * stride + j] = input[i * stride + j];
+                    else
+                        output[i * stride + j] = rnd.random();
+                }
+            }
+        } else {
+            // prepare src data and recon data
+            for (i = -16; i < height + 16; ++i) {
+                for (j = -16; j < width + 16; ++j) {
+                    input[i * stride + j] = 0;
+                    if (iter == 0)
+                        output[i * stride + j] = input[i * stride + j];
+                    else
+                        output[i * stride + j] = 0;
+                }
             }
         }
 
@@ -489,4 +502,121 @@ TEST(SelfGuidedToolsTest, GetProjSubspaceMatchTest) {
     svt_aom_free(output_);
     svt_aom_free(tmpbuf);
 }
+
+
+// test svt_get_proj_subspace
+TEST(SelfGuidedToolsTest, GetProjSubspaceMatchTestHbd) {
+    const int32_t pu_width = RESTORATION_PROC_UNIT_SIZE;
+    const int32_t pu_height = RESTORATION_PROC_UNIT_SIZE;
+    const int32_t width = 270, height = 256, stride = 300, out_stride = 300;
+    const int NUM_ITERS = 2000;
+    int i, j, k;
+
+    uint16_t *input_ = (uint16_t *)svt_aom_memalign(
+        32, stride * (height + 32) * sizeof(uint16_t));
+    uint16_t *output_ = (uint16_t *)svt_aom_memalign(
+        32, out_stride * (height + 32) * sizeof(uint16_t));
+    int32_t *tmpbuf = (int32_t *)svt_aom_memalign(32, RESTORATION_TMPBUF_SIZE);
+    uint16_t *input = input_ + stride * 16 + 16;
+    uint16_t *output = output_ + out_stride * 16 + 16;
+    int32_t *flt0 = tmpbuf;
+    int32_t *flt1 = flt0 + RESTORATION_UNITPELS_MAX;
+    int32_t flt_stride = ((width + 7) & ~7) + 8;
+
+    // check all the sg params
+    SVTRandom rnd(8, false);
+    for (int iter = 0; iter < NUM_ITERS; ++iter) {
+        if (iter == 0) {
+            // prepare src data and recon data
+            for (i = -16; i < height + 16; ++i) {
+                for (j = -16; j < width + 16; ++j) {
+                    input[i * stride + j] = rnd.random();
+                    if (iter == 0)
+                        output[i * stride + j] = input[i * stride + j];
+                    else
+                        output[i * stride + j] = rnd.random();
+                }
+            }
+        } else {
+            // prepare src data and recon data
+            for (i = -16; i < height + 16; ++i) {
+                for (j = -16; j < width + 16; ++j) {
+                    input[i * stride + j] = 0;
+                    if (iter == 0)
+                        output[i * stride + j] = input[i * stride + j];
+                    else
+                        output[i * stride + j] = 0;
+                }
+            }
+        }
+
+        for (int32_t ep = 0; ep < SGRPROJ_PARAMS; ++ep) {
+            // apply selfguided filter to get A and b
+            for (k = 0; k < height; k += pu_height) {
+                for (j = 0; j < width; j += pu_width) {
+                    int32_t w = AOMMIN(pu_width, width - j);
+                    int32_t h = AOMMIN(pu_height, height - k);
+                    uint16_t *output_p = output + k * out_stride + j;
+                    int32_t *flt0_p = flt0 + k * flt_stride + j;
+                    int32_t *flt1_p = flt1 + k * flt_stride + j;
+                    assert(w * h <= RESTORATION_UNITPELS_MAX);
+
+                    svt_av1_selfguided_restoration_avx2((uint8_t *)output_p,
+                                                        w,
+                                                        h,
+                                                        out_stride,
+                                                        flt0_p,
+                                                        flt1_p,
+                                                        flt_stride,
+                                                        ep,
+                                                        8,
+                                                        0);
+                }
+            }
+
+            aom_clear_system_state();
+            int32_t xqd_c[2] = {0};
+            int32_t xqd_asm[2] = {0};
+            const SgrParamsType *const params = &eb_sgr_params[ep];
+            svt_get_proj_subspace_c(CONVERT_TO_BYTEPTR(input),
+                                    width,
+                                    height,
+                                    stride,
+                                    CONVERT_TO_BYTEPTR(output),
+                                    out_stride,
+                                    1,
+                                    flt0,
+                                    flt_stride,
+                                    flt1,
+                                    flt_stride,
+                                    xqd_c,
+                                    params);
+            svt_get_proj_subspace_avx2(CONVERT_TO_BYTEPTR(input),
+                                       width,
+                                       height,
+                                       stride,
+                                       CONVERT_TO_BYTEPTR(output),
+                                       out_stride,
+                                       1,
+                                       flt0,
+                                       flt_stride,
+                                       flt1,
+                                       flt_stride,
+                                       xqd_asm,
+                                       params);
+
+            ASSERT_EQ(xqd_c[0], xqd_asm[0])
+                << "xqd_asm[0] does not match with xqd_asm[0] with iter "
+                << iter << " ep " << ep;
+            ASSERT_EQ(xqd_c[1], xqd_asm[1])
+                << "xqd_asm[1] does not match with xqd_asm[1] with iter "
+                << iter << " ep " << ep;
+        }
+    }
+
+    svt_aom_free(input_);
+    svt_aom_free(output_);
+    svt_aom_free(tmpbuf);
+}
+
 }  // namespace

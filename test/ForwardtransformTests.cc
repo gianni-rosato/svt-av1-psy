@@ -41,9 +41,9 @@ svt_av1_frwd_txfm_func av1_frwd_txfm_func_ptr_array_opt[9] = {
     av1_fwd_txfm2d_64x32_avx512,
     av1_fwd_txfm2d_16x32_avx512,
     av1_fwd_txfm2d_32x16_avx512};
-int tx_16[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
-int tx_32[] = {0, 9};
-int tx_64[] = {0, 9};
+int tx_16[] = {DCT_DCT, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
+int tx_32[] = {DCT_DCT, IDTX};
+int tx_64[] = {DCT_DCT, IDTX};
 int bitDepth[] = {8, 10, 12};
 
 static void init_data(int16_t **input, int16_t **input_opt,
@@ -142,7 +142,7 @@ TEST(ForwardTransformTest, av1_frwd_txfm_kernels) {
                     }
                     break;
                 case 2:  // 64x64
-                    for (int j = 0; j < 1; j++) {
+                    for (int j = 0; j < 2; j++) {
                         init_data(&input, &input_opt, stride);
                         ASSERT(svt_buf_compare_s16(input,
                                                    input_opt,
@@ -167,7 +167,7 @@ TEST(ForwardTransformTest, av1_frwd_txfm_kernels) {
                     }
                     break;
                 case 3:  // 16x64
-                    for (int j = 0; j < 1; j++) {
+                    for (int j = 0; j < 2; j++) {
                         init_data(&input, &input_opt, stride);
                         ASSERT(svt_buf_compare_s16(input,
                                                    input_opt,
@@ -192,7 +192,7 @@ TEST(ForwardTransformTest, av1_frwd_txfm_kernels) {
                     }
                     break;
                 case 4:  // 64x16
-                    for (int j = 0; j < 1; j++) {
+                    for (int j = 0; j < 2; j++) {
                         init_data(&input, &input_opt, stride);
                         ASSERT(svt_buf_compare_s16(input,
                                                    input_opt,
@@ -217,7 +217,7 @@ TEST(ForwardTransformTest, av1_frwd_txfm_kernels) {
                     }
                     break;
                 case 5:  // 32x64
-                    for (int j = 0; j < 1; j++) {
+                    for (int j = 0; j < 2; j++) {
                         init_data(&input, &input_opt, stride);
                         ASSERT(svt_buf_compare_s16(input,
                                                    input_opt,
@@ -242,7 +242,7 @@ TEST(ForwardTransformTest, av1_frwd_txfm_kernels) {
                     }
                     break;
                 case 6:  // 64x32
-                    for (int j = 0; j < 1; j++) {
+                    for (int j = 0; j < 2; j++) {
                         init_data(&input, &input_opt, stride);
                         ASSERT(svt_buf_compare_s16(input,
                                                    input_opt,

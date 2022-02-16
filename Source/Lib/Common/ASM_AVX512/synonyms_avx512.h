@@ -13,7 +13,6 @@
 #define AOM_DSP_X86_SYNONYMS_AVX512_H_
 
 #include <immintrin.h>
-#include "synonyms.h"
 
 #if EN_AVX512_SUPPORT
 

@@ -49,35 +49,35 @@ class av1_compute_stats_test
         if (!idx) {
             memset(dgd,
                    0,
-                   sizeof(*dgd) * 2 * RESTORATION_UNITSIZE_MAX * dgd_stride);
+                   sizeof(*dgd) * 2 * RESTORATION_UNITPELS_HORZ_MAX * dgd_stride);
             memset(src,
                    0,
-                   sizeof(*src) * 2 * RESTORATION_UNITSIZE_MAX * src_stride);
+                   sizeof(*src) * 2 * RESTORATION_UNITPELS_HORZ_MAX * src_stride);
         } else if (1 == idx) {
             svt_buf_random_u8_to_255(dgd,
-                                     2 * RESTORATION_UNITSIZE_MAX * dgd_stride);
+                                     2 * RESTORATION_UNITPELS_HORZ_MAX * dgd_stride);
             svt_buf_random_u8_to_255(src,
-                                     2 * RESTORATION_UNITSIZE_MAX * src_stride);
+                                     2 * RESTORATION_UNITPELS_HORZ_MAX * src_stride);
         } else if (2 == idx) {
             svt_buf_random_u8_to_255(dgd,
-                                     2 * RESTORATION_UNITSIZE_MAX * dgd_stride);
+                                     2 * RESTORATION_UNITPELS_HORZ_MAX * dgd_stride);
             memset(src,
                    0,
-                   sizeof(*src) * 2 * RESTORATION_UNITSIZE_MAX * src_stride);
+                   sizeof(*src) * 2 * RESTORATION_UNITPELS_HORZ_MAX * src_stride);
         } else if (3 == idx) {
             memset(dgd,
                    0,
-                   sizeof(*dgd) * 2 * RESTORATION_UNITSIZE_MAX * dgd_stride);
+                   sizeof(*dgd) * 2 * RESTORATION_UNITPELS_HORZ_MAX * dgd_stride);
             svt_buf_random_u8_to_255(src,
-                                     2 * RESTORATION_UNITSIZE_MAX * src_stride);
+                                     2 * RESTORATION_UNITPELS_HORZ_MAX * src_stride);
         } else if (4 == idx) {
             svt_buf_random_u8_to_0_or_255(
-                dgd, 2 * RESTORATION_UNITSIZE_MAX * dgd_stride);
+                dgd, 2 * RESTORATION_UNITPELS_HORZ_MAX * dgd_stride);
             svt_buf_random_u8_to_0_or_255(
-                src, 2 * RESTORATION_UNITSIZE_MAX * src_stride);
+                src, 2 * RESTORATION_UNITPELS_HORZ_MAX * src_stride);
         } else {
-            svt_buf_random_u8(dgd, 2 * RESTORATION_UNITSIZE_MAX * dgd_stride);
-            svt_buf_random_u8(src, 2 * RESTORATION_UNITSIZE_MAX * src_stride);
+            svt_buf_random_u8(dgd, 2 * RESTORATION_UNITPELS_HORZ_MAX * dgd_stride);
+            svt_buf_random_u8(src, 2 * RESTORATION_UNITPELS_HORZ_MAX * src_stride);
         }
     }
 
@@ -91,8 +91,20 @@ class av1_compute_stats_test
   public:
     void match_test() {
         const int block_size = TEST_GET_PARAM(0);
-        int width = block_size_wide[block_size];
-        int height = block_size_high[block_size];
+        int width;
+        int height;
+        if (block_size < BlockSizeS_ALL) {
+            width = block_size_wide[block_size];
+            height = block_size_high[block_size];
+        } else {
+            if (block_size == BlockSizeS_ALL) {
+                width = 308;
+                height = 308;
+            } else {
+                width = 304;
+                height = 304;
+            }
+        }
         av1_compute_stats_func func = TEST_GET_PARAM(1);
         int test_idx = TEST_GET_PARAM(2);
         int wiener_win = TEST_GET_PARAM(3);
@@ -102,9 +114,9 @@ class av1_compute_stats_test
             svt_create_random_aligned_stride(2 * RESTORATION_UNITSIZE_MAX, 64);
         src_stride =
             svt_create_random_aligned_stride(2 * RESTORATION_UNITSIZE_MAX, 64);
-        dgd = (uint8_t *)malloc(sizeof(*dgd) * 2 * RESTORATION_UNITSIZE_MAX *
+        dgd = (uint8_t *)malloc(sizeof(*dgd) * 2 * RESTORATION_UNITPELS_HORZ_MAX *
                                 dgd_stride);
-        src = (uint8_t *)malloc(sizeof(*src) * 2 * RESTORATION_UNITSIZE_MAX *
+        src = (uint8_t *)malloc(sizeof(*src) * 2 * RESTORATION_UNITPELS_HORZ_MAX *
                                 src_stride);
 
         int test_times = test_idx == 0 ? 1 : 10;
@@ -159,17 +171,17 @@ class av1_compute_stats_test
             svt_create_random_aligned_stride(2 * RESTORATION_UNITSIZE_MAX, 64);
         src_stride =
             svt_create_random_aligned_stride(2 * RESTORATION_UNITSIZE_MAX, 64);
-        dgd = (uint8_t *)malloc(sizeof(*dgd) * 2 * RESTORATION_UNITSIZE_MAX *
+        dgd = (uint8_t *)malloc(sizeof(*dgd) * 2 * RESTORATION_UNITPELS_HORZ_MAX *
                                 dgd_stride);
-        src = (uint8_t *)malloc(sizeof(*src) * 2 * RESTORATION_UNITSIZE_MAX *
+        src = (uint8_t *)malloc(sizeof(*src) * 2 * RESTORATION_UNITPELS_HORZ_MAX *
                                 src_stride);
         init_data(5);
         uint8_t *const d = dgd + WIENER_WIN * dgd_stride;
         uint8_t *const s = src + WIENER_WIN * src_stride;
         const int32_t h_start = 0;
         const int32_t v_start = 0;
-        const int32_t h_end = RESTORATION_UNITSIZE_MAX;
-        const int32_t v_end = RESTORATION_UNITSIZE_MAX;
+        const int32_t h_end = RESTORATION_UNITPELS_HORZ_MAX;
+        const int32_t v_end = RESTORATION_UNITPELS_HORZ_MAX;
 
         const uint64_t num_loop = 100000 / (wiener_win * wiener_win);
 
@@ -240,7 +252,7 @@ TEST_P(av1_compute_stats_test, DISABLED_speed) {
 
 INSTANTIATE_TEST_CASE_P(
     AV1_COMPUTE_STATS_AVX2, av1_compute_stats_test,
-    ::testing::Combine(::testing::Range(BLOCK_4X4, BlockSizeS_ALL),
+    ::testing::Combine(::testing::Range(BLOCK_4X4,  (BlockSize)(BlockSizeS_ALL + 2)),
                        ::testing::Values(svt_av1_compute_stats_sse4_1,
                                          svt_av1_compute_stats_avx2),
                        ::testing::Range(0, 6),
@@ -250,7 +262,7 @@ INSTANTIATE_TEST_CASE_P(
 #if EN_AVX512_SUPPORT
 INSTANTIATE_TEST_CASE_P(
     AV1_COMPUTE_STATS_AVX512, av1_compute_stats_test,
-    ::testing::Combine(::testing::Range(BLOCK_4X4, BlockSizeS_ALL),
+    ::testing::Combine(::testing::Range(BLOCK_4X4, (BlockSize)(BlockSizeS_ALL + 2)),
                        ::testing::Values(svt_av1_compute_stats_avx512),
                        ::testing::Range(0, 6),
                        ::testing::Values(WIENER_WIN_CHROMA, WIENER_WIN,
@@ -272,55 +284,55 @@ class av1_compute_stats_test_hbd
         if (!idx) {
             memset(dgd,
                    0,
-                   sizeof(*dgd) * 2 * RESTORATION_UNITSIZE_MAX * dgd_stride);
+                   sizeof(*dgd) * 2 * RESTORATION_UNITPELS_HORZ_MAX * dgd_stride);
             memset(src,
                    0,
-                   sizeof(*src) * 2 * RESTORATION_UNITSIZE_MAX * src_stride);
+                   sizeof(*src) * 2 * RESTORATION_UNITPELS_HORZ_MAX * src_stride);
         } else if (1 == idx) {
             svt_buf_random_u16_to_bd(
-                dgd, 2 * RESTORATION_UNITSIZE_MAX * dgd_stride, bd);
+                dgd, 2 * RESTORATION_UNITPELS_HORZ_MAX * dgd_stride, bd);
             svt_buf_random_u16_to_bd(
-                src, 2 * RESTORATION_UNITSIZE_MAX * src_stride, bd);
+                src, 2 * RESTORATION_UNITPELS_HORZ_MAX * src_stride, bd);
         } else if (2 == idx) {
             svt_buf_random_u16_to_bd(
-                dgd, 2 * RESTORATION_UNITSIZE_MAX * dgd_stride, bd);
+                dgd, 2 * RESTORATION_UNITPELS_HORZ_MAX * dgd_stride, bd);
             memset(src,
                    0,
-                   sizeof(*src) * 2 * RESTORATION_UNITSIZE_MAX * src_stride);
+                   sizeof(*src) * 2 * RESTORATION_UNITPELS_HORZ_MAX * src_stride);
         } else if (3 == idx) {
             memset(dgd,
                    0,
-                   sizeof(*dgd) * 2 * RESTORATION_UNITSIZE_MAX * dgd_stride);
+                   sizeof(*dgd) * 2 * RESTORATION_UNITPELS_HORZ_MAX * dgd_stride);
             svt_buf_random_u16_to_bd(
-                src, 2 * RESTORATION_UNITSIZE_MAX * src_stride, bd);
+                src, 2 * RESTORATION_UNITPELS_HORZ_MAX * src_stride, bd);
         } else if (4 == idx) {
             svt_buf_random_u16_to_0_or_bd(
-                dgd, 2 * RESTORATION_UNITSIZE_MAX * dgd_stride, bd);
+                dgd, 2 * RESTORATION_UNITPELS_HORZ_MAX * dgd_stride, bd);
             svt_buf_random_u16_to_0_or_bd(
-                src, 2 * RESTORATION_UNITSIZE_MAX * src_stride, bd);
+                src, 2 * RESTORATION_UNITPELS_HORZ_MAX * src_stride, bd);
         } else if (5 == idx) {
             // Trigger the 32-bit overflow in Step 3 and 4 for AOM_BITS_12.
             svt_buf_random_u16_to_bd(
-                dgd, 2 * RESTORATION_UNITSIZE_MAX * dgd_stride, bd);
-            for (int i = 0; i < 2 * RESTORATION_UNITSIZE_MAX; i++) {
+                dgd, 2 * RESTORATION_UNITPELS_HORZ_MAX * dgd_stride, bd);
+            for (int i = 0; i < 2 * RESTORATION_UNITPELS_HORZ_MAX; i++) {
                 memset(dgd + i * dgd_stride, 0, sizeof(*dgd) * 20);
             }
             memset(src,
                    0,
-                   sizeof(*src) * 2 * RESTORATION_UNITSIZE_MAX * src_stride);
+                   sizeof(*src) * 2 * RESTORATION_UNITPELS_HORZ_MAX * src_stride);
         } else if (6 == idx) {
             // Trigger the 32-bit overflow in Step 5 and 6 for AOM_BITS_12.
             svt_buf_random_u16_to_bd(
-                dgd, 2 * RESTORATION_UNITSIZE_MAX * dgd_stride, bd);
-            memset(dgd, 0, sizeof(*dgd) * 2 * RESTORATION_UNITSIZE_MAX * 20);
+                dgd, 2 * RESTORATION_UNITPELS_HORZ_MAX * dgd_stride, bd);
+            memset(dgd, 0, sizeof(*dgd) * 2 * RESTORATION_UNITPELS_HORZ_MAX * 20);
             memset(src,
                    0,
-                   sizeof(*src) * 2 * RESTORATION_UNITSIZE_MAX * src_stride);
+                   sizeof(*src) * 2 * RESTORATION_UNITPELS_HORZ_MAX * src_stride);
         } else {
             svt_buf_random_u16_with_bd(
-                dgd, 2 * RESTORATION_UNITSIZE_MAX * dgd_stride, bd);
+                dgd, 2 * RESTORATION_UNITPELS_HORZ_MAX * dgd_stride, bd);
             svt_buf_random_u16_with_bd(
-                src, 2 * RESTORATION_UNITSIZE_MAX * src_stride, bd);
+                src, 2 * RESTORATION_UNITPELS_HORZ_MAX * src_stride, bd);
         }
     }
 
@@ -334,8 +346,20 @@ class av1_compute_stats_test_hbd
   public:
     void highbd_match_test() {
         const int block_size = TEST_GET_PARAM(0);
-        int width = block_size_wide[block_size];
-        int height = block_size_high[block_size];
+        int width;
+        int height;
+        if (block_size < BlockSizeS_ALL) {
+            width = block_size_wide[block_size];
+            height = block_size_high[block_size];
+        } else {
+            if (block_size == BlockSizeS_ALL) {
+                width = 308;
+                height = 308;
+            } else {
+                width = 304;
+                height = 304;
+            }
+        }
         av1_compute_stats_highbd_func func = TEST_GET_PARAM(1);
         int test_idx = TEST_GET_PARAM(2);
         int wiener_win = TEST_GET_PARAM(3);
@@ -346,9 +370,9 @@ class av1_compute_stats_test_hbd
             svt_create_random_aligned_stride(2 * RESTORATION_UNITSIZE_MAX, 64);
         src_stride =
             svt_create_random_aligned_stride(2 * RESTORATION_UNITSIZE_MAX, 64);
-        dgd = (uint16_t *)malloc(sizeof(*dgd) * 2 * RESTORATION_UNITSIZE_MAX *
+        dgd = (uint16_t *)malloc(sizeof(*dgd) * 2 * RESTORATION_UNITPELS_HORZ_MAX *
                                  dgd_stride);
-        src = (uint16_t *)malloc(sizeof(*src) * 2 * RESTORATION_UNITSIZE_MAX *
+        src = (uint16_t *)malloc(sizeof(*src) * 2 * RESTORATION_UNITPELS_HORZ_MAX *
                                  src_stride);
 
         int test_times = test_idx == 0 ? 1 : 10;
@@ -412,15 +436,15 @@ class av1_compute_stats_test_hbd
             svt_create_random_aligned_stride(2 * RESTORATION_UNITSIZE_MAX, 64);
         src_stride =
             svt_create_random_aligned_stride(2 * RESTORATION_UNITSIZE_MAX, 64);
-        dgd = (uint16_t *)malloc(sizeof(*dgd) * 2 * RESTORATION_UNITSIZE_MAX *
+        dgd = (uint16_t *)malloc(sizeof(*dgd) * 2 * RESTORATION_UNITPELS_HORZ_MAX *
                                  dgd_stride);
-        src = (uint16_t *)malloc(sizeof(*src) * 2 * RESTORATION_UNITSIZE_MAX *
+        src = (uint16_t *)malloc(sizeof(*src) * 2 * RESTORATION_UNITPELS_HORZ_MAX *
                                  src_stride);
 
         const int32_t h_start = 0;
         const int32_t v_start = 0;
-        const int32_t h_end = RESTORATION_UNITSIZE_MAX;
-        const int32_t v_end = RESTORATION_UNITSIZE_MAX;
+        const int32_t h_end = RESTORATION_UNITPELS_HORZ_MAX;
+        const int32_t v_end = RESTORATION_UNITPELS_HORZ_MAX;
 
         init_data_highbd(bit_depth, 7);
         uint16_t *const d = dgd + WIENER_WIN * dgd_stride;
@@ -501,7 +525,7 @@ TEST_P(av1_compute_stats_test_hbd, DISABLED_speed) {
 INSTANTIATE_TEST_CASE_P(
     AV1_COMPUTE_STATS_HBD_AVX2, av1_compute_stats_test_hbd,
     ::testing::Combine(
-        ::testing::Range(BLOCK_4X4, BlockSizeS_ALL),
+        ::testing::Range(BLOCK_4X4, (BlockSize)(BlockSizeS_ALL + 2)),
         ::testing::Values(svt_av1_compute_stats_highbd_sse4_1,
                           svt_av1_compute_stats_highbd_avx2),
         ::testing::Range(0, 8),
@@ -512,7 +536,7 @@ INSTANTIATE_TEST_CASE_P(
 INSTANTIATE_TEST_CASE_P(
     AV1_COMPUTE_STATS_HBD_AVX512, av1_compute_stats_test_hbd,
     ::testing::Combine(
-        ::testing::Range(BLOCK_4X4, BlockSizeS_ALL),
+        ::testing::Range(BLOCK_4X4, (BlockSize)(BlockSizeS_ALL + 2)),
         ::testing::Values(svt_av1_compute_stats_highbd_avx512),
         ::testing::Range(0, 8),
         ::testing::Values(WIENER_WIN_CHROMA, WIENER_WIN, WIENER_WIN_3TAP),

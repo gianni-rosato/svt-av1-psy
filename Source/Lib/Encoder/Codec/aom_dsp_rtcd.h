@@ -228,21 +228,21 @@ extern "C" {
     RTCD_EXTERN uint64_t(*svt_handle_transform64x32)(int32_t *output);
     uint64_t svt_handle_transform64x64_c(int32_t *output);
     RTCD_EXTERN uint64_t(*svt_handle_transform64x64)(int32_t *output);
-    uint64_t handle_transform16x64_N2_N4_c(int32_t *output);
-    uint64_t handle_transform16x64_N2_N4_avx2(int32_t *output);
-    RTCD_EXTERN uint64_t(*handle_transform16x64_N2_N4)(int32_t *output);
-    uint64_t handle_transform32x64_N2_N4_c(int32_t *output);
-    uint64_t handle_transform32x64_N2_N4_avx2(int32_t *output);
-    RTCD_EXTERN uint64_t(*handle_transform32x64_N2_N4)(int32_t *output);
-    uint64_t handle_transform64x16_N2_N4_c(int32_t *output);
-    uint64_t handle_transform64x16_N2_N4_avx2(int32_t *output);
-    RTCD_EXTERN uint64_t(*handle_transform64x16_N2_N4)(int32_t *output);
-    uint64_t handle_transform64x32_N2_N4_c(int32_t *output);
-    uint64_t handle_transform64x32_N2_N4_avx2(int32_t *output);
-    RTCD_EXTERN uint64_t(*handle_transform64x32_N2_N4)(int32_t *output);
-    uint64_t handle_transform64x64_N2_N4_c(int32_t *output);
-    uint64_t handle_transform64x64_N2_N4_avx2(int32_t *output);
-    RTCD_EXTERN uint64_t(*handle_transform64x64_N2_N4)(int32_t *output);
+    uint64_t svt_handle_transform16x64_N2_N4_c(int32_t *output);
+    uint64_t svt_handle_transform16x64_N2_N4_avx2(int32_t *output);
+    RTCD_EXTERN uint64_t(*svt_handle_transform16x64_N2_N4)(int32_t *output);
+    uint64_t svt_handle_transform32x64_N2_N4_c(int32_t *output);
+    uint64_t svt_handle_transform32x64_N2_N4_avx2(int32_t *output);
+    RTCD_EXTERN uint64_t(*svt_handle_transform32x64_N2_N4)(int32_t *output);
+    uint64_t svt_handle_transform64x16_N2_N4_c(int32_t *output);
+    uint64_t svt_handle_transform64x16_N2_N4_avx2(int32_t *output);
+    RTCD_EXTERN uint64_t(*svt_handle_transform64x16_N2_N4)(int32_t *output);
+    uint64_t svt_handle_transform64x32_N2_N4_c(int32_t *output);
+    uint64_t svt_handle_transform64x32_N2_N4_avx2(int32_t *output);
+    RTCD_EXTERN uint64_t(*svt_handle_transform64x32_N2_N4)(int32_t *output);
+    uint64_t svt_handle_transform64x64_N2_N4_c(int32_t *output);
+    uint64_t svt_handle_transform64x64_N2_N4_avx2(int32_t *output);
+    RTCD_EXTERN uint64_t(*svt_handle_transform64x64_N2_N4)(int32_t *output);
     uint64_t svt_search_one_dual_c(int *lev0, int *lev1, int nb_strengths, uint64_t** mse[2], int sb_count, int start_gi, int end_gi);
     RTCD_EXTERN uint64_t(*svt_search_one_dual)(int *lev0, int *lev1, int nb_strengths, uint64_t** mse[2], int sb_count, int start_gi, int end_gi);
     uint32_t svt_aom_mse16x16_c(const uint8_t *src_ptr, int32_t  source_stride, const uint8_t *ref_ptr, int32_t  recon_stride, uint32_t *sse);
@@ -875,9 +875,6 @@ extern "C" {
     void svt_unpack_and_2bcompress_avx2(uint16_t *in16b_buffer, uint32_t in16b_stride, uint8_t *out8b_buffer, uint32_t out8b_stride, uint8_t *out2b_buffer, uint32_t out2b_stride, uint32_t width, uint32_t height);
     RTCD_EXTERN void (*svt_unpack_and_2bcompress)(uint16_t *in16b_buffer, uint32_t in16b_stride, uint8_t *out8b_buffer, uint32_t out8b_stride,uint8_t *out2b_buffer, uint32_t out2b_stride, uint32_t width, uint32_t height);
 #ifdef ARCH_X86_64
-    uint32_t combined_averaging_ssd_avx2(uint8_t *src, ptrdiff_t src_stride, uint8_t *ref1, ptrdiff_t ref1_stride, uint8_t *ref2, ptrdiff_t ref2_stride, uint32_t height, uint32_t width);
-    uint32_t combined_averaging_ssd_avx512(uint8_t *src, ptrdiff_t src_stride, uint8_t *ref1, ptrdiff_t ref1_stride, uint8_t *ref2, ptrdiff_t ref2_stride, uint32_t height, uint32_t width);
-
     int64_t svt_aom_sse_avx2(const uint8_t *a, int a_stride, const uint8_t *b, int b_stride, int width, int height);
     int64_t svt_aom_highbd_sse_avx2(const uint8_t *a8, int a_stride, const uint8_t *b8, int b_stride, int width, int height);
 

@@ -1057,11 +1057,28 @@ class AomSseHighbdTest : public ::testing::TestWithParam<AomSseParam> {
     void run_test() {
         const int block_size = TEST_GET_PARAM(0);
         AomSseFunc test_impl = TEST_GET_PARAM(1);
-        const int width = block_size_wide[block_size];
-        const int height = block_size_high[block_size];
+        int run_times = 100;
+        int width;
+        int height;
+        if (block_size < BlockSizeS_ALL) {
+            width = block_size_wide[block_size];
+            height = block_size_high[block_size];
+        } else {
+            run_times = 10;
+            // unusual sizes
+            if (block_size > BlockSizeS_ALL) {
+                //block_size == BlockSizeS_ALL +1
+                width = 36;
+                height = 36;
+            } else {
+                //block_size == BlockSizeS_ALL
+                width = 40;
+                height = 40;
+            }
+        }
+
         DECLARE_ALIGNED(16, uint16_t, a_[MAX_SB_SQUARE]);
         DECLARE_ALIGNED(16, uint16_t, b_[MAX_SB_SQUARE]);
-        const int run_times = 100;
         for (int i = 0; i < run_times; ++i) {
             memset(a_, 0, sizeof(a_));
             memset(b_, 0, sizeof(b_));
@@ -1090,6 +1107,11 @@ TEST_P(AomSseHighbdTest, MatchTest) {
 INSTANTIATE_TEST_CASE_P(
     SSETEST, AomSseHighbdTest,
     ::testing::Combine(::testing::Range(BLOCK_4X4, BlockSizeS_ALL),
+                       ::testing::Values(svt_aom_highbd_sse_avx2)));
+
+INSTANTIATE_TEST_CASE_P(
+    SSETEST_unusula_sizes, AomSseHighbdTest,
+    ::testing::Combine(::testing::Range(BlockSizeS_ALL, (BlockSize)(BlockSizeS_ALL +2)),
                        ::testing::Values(svt_aom_highbd_sse_avx2)));
 
 typedef void (*AomSubstractBlockFunc)(int, int, int16_t *, ptrdiff_t,

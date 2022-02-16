@@ -527,7 +527,7 @@ void setup_common_rtcd_internal(CPU_FLAGS flags) {
     /* No C version, use only internal in kerneal: svt_cdef_filter_block_avx2() */
 #ifdef ARCH_X86_64
     if (flags & HAS_AVX2)    svt_cdef_filter_block_8xn_16 = svt_cdef_filter_block_8xn_16_avx2;
-#ifndef EN_AVX512_SUPPORT
+#if EN_AVX512_SUPPORT
     if (flags & HAS_AVX512F) svt_cdef_filter_block_8xn_16 = svt_cdef_filter_block_8xn_16_avx512;
 #endif
 #endif

@@ -150,14 +150,6 @@ void svt_residual_kernel8bit_avx512(uint8_t *input, uint32_t input_stride, uint8
     }
 }
 
-static INLINE int32_t Hadd32_AVX512_INTRIN(const __m512i src) {
-    const __m256i src_l = _mm512_castsi512_si256(src);
-    const __m256i src_h = _mm512_extracti64x4_epi64(src, 1);
-    const __m256i sum   = _mm256_add_epi32(src_l, src_h);
-
-    return hadd32_avx2_intrin(sum);
-}
-
 static INLINE void Distortion_AVX512_INTRIN(const __m256i input, const __m256i recon,
                                             __m512i *const sum) {
     const __m512i in   = _mm512_cvtepu8_epi16(input);

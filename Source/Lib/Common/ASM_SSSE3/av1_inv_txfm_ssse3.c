@@ -2895,6 +2895,7 @@ void svt_av1_inv_txfm_add_ssse3(const TranLow *dqcoeff, uint8_t *dst_r, int32_t 
                                 uint8_t *dst_w, int32_t stride_w, const TxfmParam *txfm_param) {
     const TxType tx_type = txfm_param->tx_type;
     if (!txfm_param->lossless) {
+        assert(txfm_param->bd == 8);
         svt_av1_lowbd_inv_txfm2d_add_ssse3(dqcoeff,
                                            dst_r,
                                            stride_r,

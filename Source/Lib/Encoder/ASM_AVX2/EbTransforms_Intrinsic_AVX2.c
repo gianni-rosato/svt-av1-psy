@@ -124,29 +124,29 @@ uint64_t svt_handle_transform64x64_avx2(int32_t *output) {
 
     return three_quad_energy;
 }
-uint64_t handle_transform16x64_N2_N4_avx2(int32_t *output) {
+uint64_t svt_handle_transform16x64_N2_N4_avx2(int32_t *output) {
     (void)output;
     return 0;
 }
 
-uint64_t handle_transform32x64_N2_N4_avx2(int32_t *output) {
+uint64_t svt_handle_transform32x64_N2_N4_avx2(int32_t *output) {
     (void)output;
     return 0;
 }
 
-uint64_t handle_transform64x16_N2_N4_avx2(int32_t *output) {
+uint64_t svt_handle_transform64x16_N2_N4_avx2(int32_t *output) {
     // Re-pack non-zero coeffs in the first 32x16 indices.
     copy_256x_bytes_avx2(output + 64, output + 32, 15);
     return 0;
 }
 
-uint64_t handle_transform64x32_N2_N4_avx2(int32_t *output) {
+uint64_t svt_handle_transform64x32_N2_N4_avx2(int32_t *output) {
     // Re-pack non-zero coeffs in the first 32x32 indices.
     copy_256x_bytes_avx2(output + 64, output + 32, 31);
     return 0;
 }
 
-uint64_t handle_transform64x64_N2_N4_avx2(int32_t *output) {
+uint64_t svt_handle_transform64x64_N2_N4_avx2(int32_t *output) {
     // Re-pack non-zero coeffs in the first 32x32 indices.
     copy_256x_bytes_avx2(output + 64, output + 32, 31);
     return 0;

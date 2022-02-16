@@ -19,22 +19,6 @@ extern "C" {
 
 #define pair_set_epi16(a, b) _mm_set1_epi32((int32_t)(((uint16_t)(a)) | (((uint32_t)(b)) << 16)))
 
-static INLINE void btf_16_w4_sse2(const __m128i *const w0, const __m128i *const w1,
-                                  const __m128i __rounding, const int8_t cos_bit,
-                                  const __m128i *const in0, const __m128i *const in1,
-                                  __m128i *const out0, __m128i *const out1) {
-    const __m128i t0 = _mm_unpacklo_epi16(*in0, *in1);
-    const __m128i u0 = _mm_madd_epi16(t0, *w0);
-    const __m128i v0 = _mm_madd_epi16(t0, *w1);
-    const __m128i a0 = _mm_add_epi32(u0, __rounding);
-    const __m128i b0 = _mm_add_epi32(v0, __rounding);
-    const __m128i c0 = _mm_srai_epi32(a0, cos_bit);
-    const __m128i d0 = _mm_srai_epi32(b0, cos_bit);
-
-    *out0 = _mm_packs_epi32(c0, c0);
-    *out1 = _mm_packs_epi32(d0, c0);
-}
-
 #define btf_16_4p_sse2(w0, w1, in0, in1, out0, out1, __rounding) \
     {                                                            \
         __m128i t0 = _mm_unpacklo_epi16(in0, in1);               \

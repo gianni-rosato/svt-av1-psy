@@ -12,6 +12,7 @@
 #include "aom_dsp_rtcd.h"
 #include <tmmintrin.h>
 #include "synonyms.h"
+#include "synonyms_avx2.h"
 #include "convolve_avx2.h"
 
 static INLINE int64_t summary_all_avx2(const __m256i *sum_all) {

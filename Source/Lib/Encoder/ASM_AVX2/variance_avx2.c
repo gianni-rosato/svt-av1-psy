@@ -12,7 +12,6 @@
 #include "EbDefinitions.h"
 #include <immintrin.h>
 #include "aom_dsp_rtcd.h"
-#include "EbVariance_SSE2.h"
 
 // Alpha blending with alpha values from the range [0, 256], where 256
 // means use the first input and 0 means use the second input.

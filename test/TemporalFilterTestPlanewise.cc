@@ -1180,7 +1180,6 @@ INSTANTIATE_TEST_CASE_P(
             svt_av1_apply_temporal_filter_planewise_fast_hbd_avx2_wraper),
         ::testing::Values(0, 1)));
 
-#if TUNE_REDESIGN_TF_CTRLS
 class TemporalFilterTestGetFinalFilteredPixels : public ::testing::Test {
   private:
     uint32_t width;
@@ -1246,11 +1245,14 @@ class TemporalFilterTestGetFinalFilteredPixels : public ::testing::Test {
         }
     }
 
-    void SetRandData() {
+    void SetRandData(EbBool is_highbd) {
         for (int color_channel = 0; color_channel < 3; ++color_channel) {
             for (int i = 0; i < BH * BW; ++i) {
-                accum[color_channel][i] =
-                    rand() % 1024;  //(uint8_t)(rand() % 256);;
+                if (is_highbd) {
+                    accum[color_channel][i] = rand() % 1024;
+                } else {
+                    accum[color_channel][i] = rand() % 256;
+                }
                 uint16_t rand16 = rand() % 256;
                 if (rand16 == 0) {
                     rand16 = 1;
@@ -1270,7 +1272,7 @@ class TemporalFilterTestGetFinalFilteredPixels : public ::testing::Test {
         uint16_t blk_width_ch = 48;
         uint16_t blk_height_ch = 61;
 
-        SetRandData();
+        SetRandData(is_highbd);
 
         get_final_filtered_pixels_c(context_ptr,
                                     org_src_center_ptr_start,
@@ -1321,8 +1323,6 @@ TEST_F(TemporalFilterTestGetFinalFilteredPixels, test_hbd) {
         RunTest(true);
     }
 }
-
-#if SS_OPT_TF2_ME_COPY
 
 class TemporalFilterTestApplyFilteringCentral : public ::testing::Test {
   private:
@@ -1469,5 +1469,3 @@ TEST_F(TemporalFilterTestApplyFilteringCentral, test_hbd) {
         RunTest(true);
     }
 }
-#endif /*SS_OPT_TF2_ME_COPY*/
-#endif /*TUNE_REDESIGN_TF_CTRLS*/

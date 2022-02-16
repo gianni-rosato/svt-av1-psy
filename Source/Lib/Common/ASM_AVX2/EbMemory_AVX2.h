@@ -12,7 +12,9 @@
 #ifndef EbMemory_AVX2_h
 #define EbMemory_AVX2_h
 
-#include "synonyms.h"
+#include <immintrin.h>
+#include "EbDefinitions.h"
+#include "common_dsp_rtcd.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -30,6 +32,13 @@ extern "C" {
 #ifndef _mm256_cvtsi256_si32
 #define _mm256_cvtsi256_si32(a) _mm_cvtsi128_si32(_mm256_castsi256_si128(a))
 #endif
+
+static INLINE __m256i load_u8_4x2_avx2(const uint8_t *const src, const ptrdiff_t stride) {
+    __m128i src01;
+    src01 = _mm_cvtsi32_si128(*(int32_t *)(src + 0 * stride));
+    src01 = _mm_insert_epi32(src01, *(int32_t *)(src + 1 * stride), 1);
+    return _mm256_setr_m128i(src01, _mm_setzero_si128());
+}
 
 static INLINE __m256i load_u8_4x4_avx2(const uint8_t *const src, const ptrdiff_t stride) {
     __m128i src01, src23;
@@ -55,12 +64,6 @@ static INLINE __m256i load_u8_8x4_avx2(const uint8_t *const src, const ptrdiff_t
     src23 = _mm_castpd_si128(
         _mm_loadh_pd(_mm_castsi128_pd(src23), (double *)(void *)(src + 3 * stride)));
     return _mm256_setr_m128i(src01, src23);
-}
-
-static INLINE __m256i load_u8_16x2_avx2(const uint8_t *const src, const ptrdiff_t stride) {
-    const __m128i src0 = _mm_loadu_si128((__m128i *)(src + 0 * stride));
-    const __m128i src1 = _mm_loadu_si128((__m128i *)(src + 1 * stride));
-    return _mm256_setr_m128i(src0, src1);
 }
 
 static INLINE __m256i loadu_8bit_16x2_avx2(const void *const src, const ptrdiff_t strideInByte) {

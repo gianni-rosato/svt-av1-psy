@@ -409,21 +409,13 @@ class DenoiseModelRunTest : public ::testing::Test {
         data_ptr_[2] = in_pic_.buffer_cr;
 
         memset(&output_film_grain, 0, sizeof(output_film_grain));
-        // initialize the global function variables since
-        // svt_aom_wiener_denoise_2d will use these vars;
-        {
-            svt_aom_fft2x2_float = svt_aom_fft2x2_float_c;
-            svt_aom_fft4x4_float = svt_aom_fft4x4_float_c;
-            svt_aom_fft16x16_float = svt_aom_fft16x16_float_c;
-            svt_aom_fft32x32_float = svt_aom_fft32x32_float_c;
-            svt_aom_fft8x8_float = svt_aom_fft8x8_float_c;
 
-            svt_aom_ifft16x16_float = svt_aom_ifft16x16_float_avx2;
-            svt_aom_ifft32x32_float = svt_aom_ifft32x32_float_avx2;
-            svt_aom_ifft8x8_float = svt_aom_ifft8x8_float_avx2;
-            svt_aom_ifft2x2_float = svt_aom_ifft2x2_float_c;
-            svt_aom_ifft4x4_float = svt_aom_ifft4x4_float_sse2;
-        }
+#ifdef ARCH_X86_64
+        CPU_FLAGS cpu_flags = get_cpu_flags_to_use();
+#else
+        CPU_FLAGS cpu_flags = 0;
+#endif
+        setup_rtcd_internal(cpu_flags);
     }
 
     void init_data() {

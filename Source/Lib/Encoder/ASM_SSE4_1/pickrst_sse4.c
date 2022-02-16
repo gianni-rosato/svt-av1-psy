@@ -222,7 +222,8 @@ static uint16_t find_average_highbd_sse4_1(const uint16_t *src, int32_t h_start,
     int32_t         i        = height;
     __m128i         sss      = _mm_setzero_si128();
 
-    if (bit_depth <= 10 || width <= 256) {
+    assert(bit_depth <= 10);
+    if (width <= 256) {
         if (!leftover) {
             do {
                 __m128i ss = _mm_setzero_si128();
@@ -1904,7 +1905,6 @@ static void compute_stats_win3_sse4_1(const int16_t *const d, const int32_t d_st
         __m128i        se0[2], se1[2], xx[2], yy[2];
         __m128i        delta[2];
         se0[0] = se0[1] = _mm_setzero_si128(); // Initialize to avoid warning.
-        //ASSERT(h8 > 0);
         y = 0;
         while (y < h8) {
             // 00s 01s 10s 11s 20s 21s 30s 31s  00e 01e 10e 11e 20e 21e 30e 31e

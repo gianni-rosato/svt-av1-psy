@@ -17,6 +17,7 @@
 #include "EbInterPrediction.h"
 #include "EbMemory_AVX2.h"
 #include "synonyms.h"
+#include "synonyms_avx2.h"
 
 static INLINE void sr_y_round_store_32_avx2(const __m256i res[2], uint8_t *const dst) {
     __m256i r[2];

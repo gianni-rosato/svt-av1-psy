@@ -376,7 +376,7 @@ INSTANTIATE_TEST_CASE_P(
         ::testing::Values(svt_spatial_full_distortion_kernel_sse4_1,
                           svt_spatial_full_distortion_kernel_avx2,
                           svt_spatial_full_distortion_kernel_avx512)));
-#endif
+#else
 
 INSTANTIATE_TEST_CASE_P(
     SpatialKernelFunc, SpatialFullDistortionKernelFuncTest,
@@ -385,6 +385,7 @@ INSTANTIATE_TEST_CASE_P(
         ::testing::ValuesIn(TEST_PATTERNS),
         ::testing::Values(svt_spatial_full_distortion_kernel_sse4_1,
                           svt_spatial_full_distortion_kernel_avx2)));
+#endif
 
 class FullDistortionKernel16BitsFuncTest
     : public SpatialFullDistortionFuncTestBase,

@@ -1919,7 +1919,8 @@ void svt_av1_lowbd_inv_txfm2d_add_avx2(const int32_t *input, uint8_t *output_r, 
 void svt_av1_inv_txfm_add_avx2(const TranLow *dqcoeff, uint8_t *dst_r, int32_t stride_r,
                                uint8_t *dst_w, int32_t stride_w, const TxfmParam *txfm_param) {
     const TxType tx_type = txfm_param->tx_type;
-    if (!txfm_param->lossless)
+    if (!txfm_param->lossless) {
+        assert(txfm_param->bd == 8);
         svt_av1_lowbd_inv_txfm2d_add_avx2(dqcoeff,
                                           dst_r,
                                           stride_r,
@@ -1928,6 +1929,6 @@ void svt_av1_inv_txfm_add_avx2(const TranLow *dqcoeff, uint8_t *dst_r, int32_t s
                                           tx_type,
                                           txfm_param->tx_size,
                                           txfm_param->eob);
-    else
+    } else
         svt_av1_inv_txfm_add_c(dqcoeff, dst_r, stride_r, dst_w, stride_w, txfm_param);
 }

@@ -16,6 +16,7 @@
 #include "EbDefinitions.h"
 #include "EbMemory_AVX2.h"
 #include "EbPictureOperators_SSE2.h"
+#include "synonyms.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -175,6 +175,7 @@ static inline void variance_highbd_32x32_avx2(const uint16_t *src, int src_strid
 uint32_t variance_highbd_avx2(const uint16_t *a, int a_stride, const uint16_t *b, int b_stride,
                               int w, int h, uint32_t *sse) {
     assert(w == h);
+    assert(w == 16 || w == 32);
 
     int sum = 0;
     *sse    = 0;
@@ -182,7 +183,6 @@ uint32_t variance_highbd_avx2(const uint16_t *a, int a_stride, const uint16_t *b
     switch (w) {
     case 16: aom_highbd_calc16x16var_avx2(a, a_stride, b, b_stride, sse, &sum); break;
     case 32: variance_highbd_32x32_avx2(a, a_stride, b, b_stride, sse, &sum); break;
-    default: assert(0);
     }
 
     return *sse - ((int64_t)sum * sum) / (w * h);

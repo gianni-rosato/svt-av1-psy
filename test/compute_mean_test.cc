@@ -82,7 +82,6 @@ static const uint8_t* prepare_data_8x8(uint8_t* data, SVTRandom* rnd) {
     return data;
 }
 
-#if FIX_COMPUTE_MEAN_8X8
 TEST(ComputeMeanTest, run_compute_mean_test) {
     SVTRandom rnd[2] = {
         SVTRandom(8, false),  /**< random generator of normal test vector */
@@ -114,7 +113,6 @@ TEST(ComputeMeanTest, run_compute_mean_test) {
         }
     }
 }
-#endif
 
 TEST(ComputeMeanTest, run_compute_mean_squared_values_test) {
     SVTRandom rnd[2] = {
@@ -229,6 +227,54 @@ TEST(ComputeMeanTest, run_compute_mean_avx2_test) {
             << "compare mean of 8x8 squared block error"
             << print_data(input_data, 8, 8);
     }
+}
+
+typedef void (*test_compute_interm_var_four8x8_type)(
+    uint8_t* input_samples, uint16_t input_stride, uint64_t* mean_of8x8_blocks,
+    uint64_t* mean_of_squared8x8_blocks);
+
+static void test_mach(
+    test_compute_interm_var_four8x8_type compute_interm_var_four8x8) {
+    SVTRandom rnd[2] = {
+        SVTRandom(8, false),  /**< random generator of normal test vector */
+        SVTRandom(0xE0, 0xFF) /**< random generator of boundary test vector */
+    };
+
+    uint8_t input_data[block_size];
+
+    for (int i = 0; i < 2; i++) {
+        // prepare data
+        prepare_data_8x8(input_data, &rnd[i]);
+
+        uint64_t output_ref[4] = {0};
+        uint64_t output_squared_ref[4] = {0};
+        svt_compute_interm_var_four8x8_c(
+            input_data, 8, output_ref, output_squared_ref);
+
+        uint64_t output_tst[4] = {0};
+        uint64_t output_squared_tst[4] = {0};
+        compute_interm_var_four8x8(
+            input_data, 8, output_tst, output_squared_tst);
+
+        // compare results
+        EXPECT_EQ(0, memcmp(output_tst, output_ref, sizeof(output_ref)))
+            << "compare mean of 8x8 block error"
+            << print_data(input_data, 8, 8);
+        EXPECT_EQ(0,
+                  memcmp(output_squared_tst,
+                         output_squared_ref,
+                         sizeof(output_squared_ref)))
+            << "compare mean of 8x8 squared block error"
+            << print_data(input_data, 8, 8);
+    }
+}
+
+TEST(ComputeMeanTest, compute_interm_var_four8x8_avx2) {
+    test_mach(svt_compute_interm_var_four8x8_avx2_intrin);
+}
+
+TEST(ComputeMeanTest, compute_interm_var_four8x8_sse2) {
+    test_mach(svt_compute_interm_var_four8x8_helper_sse2);
 }
 
 }  // namespace

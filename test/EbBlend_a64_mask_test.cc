@@ -82,9 +82,9 @@ class BlendA64MaskTest : public ACMRandom {
         return this->Rand8() & 1;
     }
 
-    void RunOneTest(int block_size, int subx, int suby, int run_times) {
-        w_ = block_size_wide[block_size];
-        h_ = block_size_high[block_size];
+    void RunOneTest(int width, int height, int subx, int suby, int run_times) {
+        w_ = width;
+        h_ = height;
         run_times = run_times > 1 ? run_times / w_ : 1;
         ASSERT_GT(run_times, 0);
         subx_ = subx;
@@ -123,7 +123,7 @@ class BlendA64MaskTest : public ACMRandom {
         }
     }
 
-    void RunTest(int type) {
+    void RunTest(int type, int small_sizes) {
         int run_times = 1;
         for (int iter = 0;
              iter < kIterations && !::testing::Test::HasFatalFailure();
@@ -132,13 +132,30 @@ class BlendA64MaskTest : public ACMRandom {
             int block_size = this->Rand8() % BLOCK_SIZES_ALL;
             subx_ = Rand1();
             suby_ = Rand1();
-            RunOneTest(block_size, subx_, suby_, run_times);
+            int width = block_size_wide[block_size];
+            int height = block_size_high[block_size];
+            RunOneTest(width, height, subx_, suby_, run_times);
+        }
+
+        //Test small sizes
+        if (small_sizes) {
+            int swh[3] = {1, 2, 4};
+            for (int iter = 0;
+                 iter < 10 && !::testing::Test::HasFatalFailure();
+                 ++iter) {
+                prepare_data(type);
+                subx_ = Rand1();
+                suby_ = Rand1();
+                int width = swh[this->Rand8() % 3];
+                int height = swh[this->Rand8() % 3];
+                RunOneTest(width, height, subx_, suby_, run_times);
+            }
         }
     }
 
-    void Run() {
-        RunTest(0);  // RandomValues
-        RunTest(1);  // ExtremeValues
+    void Run(int small_sizes) {
+        RunTest(0, small_sizes);  // RandomValues
+        RunTest(1, small_sizes);  // ExtremeValues
     }
 
     DstPixel dst_ref_[kBufSize];
@@ -240,17 +257,17 @@ class BlendA64MaskTest8B : public BlendA64MaskTest<F8B, uint8_t, uint8_t> {
     }
 };
 
-#define TEST_CLASS(type_name, ref, tst, match_test) \
-    TEST(type_name, match_test) {                   \
-        type_name *test = new type_name(ref, tst);  \
-        test->Run();                                \
-        delete test;                                \
+#define TEST_CLASS(type_name, ref, tst, match_test, small_sizes) \
+    TEST(type_name, match_test) {                                \
+        type_name *test = new type_name(ref, tst);               \
+        test->Run(small_sizes);                                  \
+        delete test;                                             \
     }
 
 TEST_CLASS(BlendA64MaskTest8B, svt_aom_blend_a64_mask_c,
-           svt_aom_blend_a64_mask_sse4_1, Mask_Blend_SSE4_1)
+           svt_aom_blend_a64_mask_sse4_1, Mask_Blend_SSE4_1, 1)
 TEST_CLASS(BlendA64MaskTest8B, svt_aom_blend_a64_mask_sse4_1,
-           svt_aom_blend_a64_mask_avx2, Mask_Blend_AVX2)
+           svt_aom_blend_a64_mask_avx2, Mask_Blend_AVX2, 1)
 
 //////////////////////////////////////////////////////////////////////////////
 // 8 bit _d16 version
@@ -335,10 +352,10 @@ class BlendA64MaskTest8B_d16
 };
 
 TEST_CLASS(BlendA64MaskTest8B_d16, svt_aom_lowbd_blend_a64_d16_mask_c,
-           svt_aom_lowbd_blend_a64_d16_mask_sse4_1, Mask_Blend_d16_SSE4_1)
+           svt_aom_lowbd_blend_a64_d16_mask_sse4_1, Mask_Blend_d16_SSE4_1, 0)
 
 TEST_CLASS(BlendA64MaskTest8B_d16, svt_aom_lowbd_blend_a64_d16_mask_c,
-           svt_aom_lowbd_blend_a64_d16_mask_avx2, Mask_Blend_d16_AVX2)
+           svt_aom_lowbd_blend_a64_d16_mask_avx2, Mask_Blend_d16_AVX2, 0)
 
 //////////////////////////////////////////////////////////////////////////////
 // High bit-depth version
@@ -431,7 +448,7 @@ class BlendA64MaskTestHBD : public BlendA64MaskTest<FHBD, uint16_t, uint16_t> {
 };
 
 TEST_CLASS(BlendA64MaskTestHBD, svt_aom_highbd_blend_a64_mask_c,
-           svt_aom_highbd_blend_a64_mask_8bit_sse4_1, Mask_Blend_Hbd_SSE4_1)
+           svt_aom_highbd_blend_a64_mask_8bit_sse4_1, Mask_Blend_Hbd_SSE4_1, 1)
 
 //////////////////////////////////////////////////////////////////////////////
 // HBD _d16 version
@@ -541,8 +558,8 @@ class BlendA64MaskTestHBD_d16
 };
 
 TEST_CLASS(BlendA64MaskTestHBD_d16, svt_aom_highbd_blend_a64_d16_mask_c,
-           svt_aom_highbd_blend_a64_d16_mask_sse4_1, _Mask_Blend_Hbd_d16_SSE4_1)
+           svt_aom_highbd_blend_a64_d16_mask_sse4_1, _Mask_Blend_Hbd_d16_SSE4_1, 0)
 
 TEST_CLASS(BlendA64MaskTestHBD_d16, svt_aom_highbd_blend_a64_d16_mask_c,
-           svt_aom_highbd_blend_a64_d16_mask_avx2, _Mask_Blend_Hbd_d16_AVX2)
+           svt_aom_highbd_blend_a64_d16_mask_avx2, _Mask_Blend_Hbd_d16_AVX2, 0)
 };  // namespace

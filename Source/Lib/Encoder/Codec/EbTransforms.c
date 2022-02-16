@@ -2591,17 +2591,17 @@ uint64_t svt_handle_transform16x64_c(int32_t *output) {
     return three_quad_energy;
 }
 
-uint64_t handle_transform16x64_N2_N4_c(int32_t *output) {
+uint64_t svt_handle_transform16x64_N2_N4_c(int32_t *output) {
     (void)output;
     return 0;
 }
 
-uint64_t handle_transform32x64_N2_N4_c(int32_t *output) {
+uint64_t svt_handle_transform32x64_N2_N4_c(int32_t *output) {
     (void)output;
     return 0;
 }
 
-uint64_t handle_transform64x16_N2_N4_c(int32_t *output) {
+uint64_t svt_handle_transform64x16_N2_N4_c(int32_t *output) {
     // Re-pack non-zero coeffs in the first 32x16 indices.
     for (int32_t row = 1; row < 16; ++row)
         svt_memcpy_c(output + row * 32, output + row * 64, 32 * sizeof(*output));
@@ -2609,7 +2609,7 @@ uint64_t handle_transform64x16_N2_N4_c(int32_t *output) {
     return 0;
 }
 
-uint64_t handle_transform64x32_N2_N4_c(int32_t *output) {
+uint64_t svt_handle_transform64x32_N2_N4_c(int32_t *output) {
     // Re-pack non-zero coeffs in the first 32x32 indices.
     for (int32_t row = 1; row < 32; ++row)
         svt_memcpy_c(output + row * 32, output + row * 64, 32 * sizeof(*output));
@@ -2617,7 +2617,7 @@ uint64_t handle_transform64x32_N2_N4_c(int32_t *output) {
     return 0;
 }
 
-uint64_t handle_transform64x64_N2_N4_c(int32_t *output) {
+uint64_t svt_handle_transform64x64_N2_N4_c(int32_t *output) {
     // Re-pack non-zero coeffs in the first 32x32 indices.
     for (int32_t row = 1; row < 32; ++row)
         svt_memcpy_c(output + row * 32, output + row * 64, 32 * sizeof(*output));
@@ -2734,7 +2734,7 @@ static EbErrorType av1_estimate_transform_N2(int16_t *residual_buffer, uint32_t 
             svt_av1_fwd_txfm2d_64x32_N2_c(
                 residual_buffer, coeff_buffer, residual_stride, transform_type, bit_depth);
 
-        *three_quad_energy = handle_transform64x32_N2_N4(coeff_buffer);
+        *three_quad_energy = svt_handle_transform64x32_N2_N4(coeff_buffer);
 
         break;
 
@@ -2746,7 +2746,7 @@ static EbErrorType av1_estimate_transform_N2(int16_t *residual_buffer, uint32_t 
             svt_av1_fwd_txfm2d_32x64_N2_c(
                 residual_buffer, coeff_buffer, residual_stride, transform_type, bit_depth);
 
-        *three_quad_energy = handle_transform32x64_N2_N4(coeff_buffer);
+        *three_quad_energy = svt_handle_transform32x64_N2_N4(coeff_buffer);
 
         break;
 
@@ -2758,7 +2758,7 @@ static EbErrorType av1_estimate_transform_N2(int16_t *residual_buffer, uint32_t 
             svt_av1_fwd_txfm2d_64x16_N2_c(
                 residual_buffer, coeff_buffer, residual_stride, transform_type, bit_depth);
 
-        *three_quad_energy = handle_transform64x16_N2_N4(coeff_buffer);
+        *three_quad_energy = svt_handle_transform64x16_N2_N4(coeff_buffer);
 
         break;
 
@@ -2770,7 +2770,7 @@ static EbErrorType av1_estimate_transform_N2(int16_t *residual_buffer, uint32_t 
             svt_av1_fwd_txfm2d_16x64_N2_c(
                 residual_buffer, coeff_buffer, residual_stride, transform_type, bit_depth);
 
-        *three_quad_energy = handle_transform16x64_N2_N4(coeff_buffer);
+        *three_quad_energy = svt_handle_transform16x64_N2_N4(coeff_buffer);
 
         break;
 
@@ -2846,7 +2846,7 @@ static EbErrorType av1_estimate_transform_N2(int16_t *residual_buffer, uint32_t 
         svt_av1_fwd_txfm2d_64x64_N2(
             residual_buffer, coeff_buffer, residual_stride, transform_type, bit_depth);
 
-        *three_quad_energy = handle_transform64x64_N2_N4(coeff_buffer);
+        *three_quad_energy = svt_handle_transform64x64_N2_N4(coeff_buffer);
 
         break;
 
@@ -2910,7 +2910,7 @@ static EbErrorType av1_estimate_transform_N4(int16_t *residual_buffer, uint32_t 
             svt_av1_fwd_txfm2d_64x32_N4_c(
                 residual_buffer, coeff_buffer, residual_stride, transform_type, bit_depth);
 
-        *three_quad_energy = handle_transform64x32_N2_N4(coeff_buffer);
+        *three_quad_energy = svt_handle_transform64x32_N2_N4(coeff_buffer);
 
         break;
 
@@ -2922,7 +2922,7 @@ static EbErrorType av1_estimate_transform_N4(int16_t *residual_buffer, uint32_t 
             svt_av1_fwd_txfm2d_32x64_N4_c(
                 residual_buffer, coeff_buffer, residual_stride, transform_type, bit_depth);
 
-        *three_quad_energy = handle_transform32x64_N2_N4(coeff_buffer);
+        *three_quad_energy = svt_handle_transform32x64_N2_N4(coeff_buffer);
 
         break;
 
@@ -2934,7 +2934,7 @@ static EbErrorType av1_estimate_transform_N4(int16_t *residual_buffer, uint32_t 
             svt_av1_fwd_txfm2d_64x16_N4_c(
                 residual_buffer, coeff_buffer, residual_stride, transform_type, bit_depth);
 
-        *three_quad_energy = handle_transform64x16_N2_N4(coeff_buffer);
+        *three_quad_energy = svt_handle_transform64x16_N2_N4(coeff_buffer);
 
         break;
 
@@ -2946,7 +2946,7 @@ static EbErrorType av1_estimate_transform_N4(int16_t *residual_buffer, uint32_t 
             svt_av1_fwd_txfm2d_16x64_N4_c(
                 residual_buffer, coeff_buffer, residual_stride, transform_type, bit_depth);
 
-        *three_quad_energy = handle_transform16x64_N2_N4(coeff_buffer);
+        *three_quad_energy = svt_handle_transform16x64_N2_N4(coeff_buffer);
 
         break;
 
@@ -3022,7 +3022,7 @@ static EbErrorType av1_estimate_transform_N4(int16_t *residual_buffer, uint32_t 
         svt_av1_fwd_txfm2d_64x64_N4(
             residual_buffer, coeff_buffer, residual_stride, transform_type, bit_depth);
 
-        *three_quad_energy = handle_transform64x64_N2_N4(coeff_buffer);
+        *three_quad_energy = svt_handle_transform64x64_N2_N4(coeff_buffer);
 
         break;
 

@@ -150,15 +150,10 @@ static INLINE uint16_t find_average_highbd_avx2(const uint16_t *src, int32_t h_s
                     const __m256i s = _mm256_loadu_si256((__m256i *)(src_t + j));
                     ss              = _mm256_add_epi16(ss, s);
                     j += 16;
-                } while (j < 256);
-
-                add_u16_to_u32_avx2(ss, &sss);
-                ss = _mm256_setzero_si256();
-
-                do {
-                    const __m256i s = _mm256_loadu_si256((__m256i *)(src_t + j));
-                    ss              = _mm256_add_epi16(ss, s);
-                    j += 16;
+                    if (j % 256 == 0) {
+                        add_u16_to_u32_avx2(ss, &sss);
+                        ss = _mm256_setzero_si256();
+                    }
                 } while (j < width);
 
                 add_u16_to_u32_avx2(ss, &sss);
@@ -173,19 +168,15 @@ static INLINE uint16_t find_average_highbd_avx2(const uint16_t *src, int32_t h_s
                 __m256i ss = _mm256_setzero_si256();
 
                 int32_t j = 0;
-                while (j < 256) {
-                    const __m256i s = _mm256_loadu_si256((__m256i *)(src_t + j));
-                    ss              = _mm256_add_epi16(ss, s);
-                    j += 16;
-                };
-
-                add_u16_to_u32_avx2(ss, &sss);
-                ss = _mm256_setzero_si256();
 
                 while (j < w16) {
                     const __m256i s = _mm256_loadu_si256((__m256i *)(src_t + j));
                     ss              = _mm256_add_epi16(ss, s);
                     j += 16;
+                    if (j % 256 == 0) {
+                        add_u16_to_u32_avx2(ss, &sss);
+                        ss = _mm256_setzero_si256();
+                    }
                 }
 
                 const __m256i s   = _mm256_loadu_si256((__m256i *)(src_t + j));
@@ -1220,7 +1211,6 @@ static INLINE void compute_stats_win3_avx2(const int16_t *const d, const int32_t
         __m256i        se0, se1, xx, yy;
         __m256i        delta;
         se0 = _mm256_setzero_si256(); // Initialize to avoid warning.
-        ASSERT(h8 > 0);
         y = 0;
         while (y < h8) {
             // 00s 01s 10s 11s 20s 21s 30s 31s  00e 01e 10e 11e 20e 21e 30e 31e

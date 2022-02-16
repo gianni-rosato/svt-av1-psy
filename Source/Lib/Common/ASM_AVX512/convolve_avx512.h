@@ -17,8 +17,6 @@
 #include "EbInterPrediction.h"
 #include "EbMemory_AVX2.h"
 #include "EbMemory_SSE4_1.h"
-#include "synonyms.h"
-#include "synonyms_avx2.h"
 #include "synonyms_avx512.h"
 
 #if EN_AVX512_SUPPORT
