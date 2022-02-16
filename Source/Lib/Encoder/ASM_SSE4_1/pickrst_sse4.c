@@ -215,6 +215,7 @@ static uint8_t find_average_sse4_1(const uint8_t *src, int32_t h_start, int32_t 
 static uint16_t find_average_highbd_sse4_1(const uint16_t *src, int32_t h_start, int32_t h_end,
                                            int32_t v_start, int32_t v_end, int32_t stride,
                                            AomBitDepth bit_depth) {
+    UNUSED(bit_depth);
     const int32_t   width    = h_end - h_start;
     const int32_t   height   = v_end - v_start;
     const uint16_t *src_t    = src + v_start * stride + h_start;

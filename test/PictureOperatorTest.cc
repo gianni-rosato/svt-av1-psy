@@ -205,11 +205,16 @@ INSTANTIATE_TEST_CASE_P(PictureOperator, PictureOperatorTest,
                         ::testing::Combine(::testing::ValuesIn(TEST_PU_SIZES),
                                            ::testing::ValuesIn(TEST_PATTERNS)));
 
+typedef void (*downsample_2d_fn)(uint8_t *input_samples, uint32_t input_stride,
+                              uint32_t input_area_width,
+                              uint32_t input_area_height,
+                              uint8_t *decim_samples, uint32_t decim_stride,
+                              uint32_t decim_step);
 uint32_t DECIM_STEPS[] = {2, 4, 8};
 PUSize DOWNSAMPLE_SIZES[] = {
     PUSize(1920, 1080), PUSize(960, 540), PUSize(176, 144), PUSize(88, 72)};
 
-typedef std::tuple<PUSize, uint32_t> Downsample2DParam;
+typedef std::tuple<PUSize, uint32_t, downsample_2d_fn> Downsample2DParam;
 
 class Downsample2DTest
     : public ::testing::Test,
@@ -218,7 +223,8 @@ class Downsample2DTest
     Downsample2DTest()
         : pu_width(std::get<0>(TEST_GET_PARAM(0))),
           pu_height(std::get<1>(TEST_GET_PARAM(0))),
-          decim_step(TEST_GET_PARAM(1)) {
+          decim_step(TEST_GET_PARAM(1)),
+          fn_ptr(TEST_GET_PARAM(2)) {
         max_size = sizeof(uint8_t) * (1920 + 3) * (1080 + 3);
         stride = pu_width + 3;
         decim_stride = (pu_width / decim_step) + 3;
@@ -258,13 +264,13 @@ class Downsample2DTest
                         decim_stride,
                         decim_step);
 
-        downsample_2d_avx2(src_ptr,
-                           stride,
-                           pu_width,
-                           pu_height,
-                           dst_tst_ptr,
-                           decim_stride,
-                           decim_step);
+        fn_ptr(src_ptr,
+               stride,
+               pu_width,
+               pu_height,
+               dst_tst_ptr,
+               decim_stride,
+               decim_step);
 
         EXPECT_EQ(memcmp(dst_ref_ptr, dst_tst_ptr, max_size), 0);
     }
@@ -276,6 +282,7 @@ class Downsample2DTest
     uint32_t stride;
     uint8_t *src_ptr;
     uint8_t *dst_ref_ptr, *dst_tst_ptr;
+    downsample_2d_fn fn_ptr;
 };
 
 TEST_P(Downsample2DTest, test) {
@@ -287,5 +294,7 @@ TEST_P(Downsample2DTest, test) {
 INSTANTIATE_TEST_CASE_P(
     Downsample2D, Downsample2DTest,
     ::testing::Combine(::testing::ValuesIn(DOWNSAMPLE_SIZES),
-                       ::testing::ValuesIn(DECIM_STEPS)));
+                       ::testing::ValuesIn(DECIM_STEPS),
+                       ::testing::Values(downsample_2d_sse4_1,
+                                         downsample_2d_avx2)));
 }  // namespace

@@ -818,6 +818,11 @@ typedef void (*svt_ext_all_sad_calculation_8x8_16x16_fn)(
     uint32_t *p_best_mv16x16, uint32_t p_eight_sad16x16[16][8],
     uint32_t p_eight_sad8x8[64][8], EbBool sub_sad);
 
+typedef void (*svt_ext_eight_sad_calculation_32x32_64x64_fn)(
+    uint32_t p_sad16x16[16][8], uint32_t *p_best_sad_32x32,
+    uint32_t *p_best_sad_64x64, uint32_t *p_best_mv32x32,
+    uint32_t *p_best_mv64x64, uint32_t mv, uint32_t p_sad32x32[4][8]);
+
 typedef std::tuple<TestPattern, SADPattern> sad_CalTestParam;
 
 /**
@@ -989,7 +994,7 @@ class Allsad_CalculationTest
         ASSERT_TRUE(0);
     }
 
-    void check_get_32x32_sad() {
+    void check_get_32x32_sad(svt_ext_eight_sad_calculation_32x32_64x64_fn test_fn) {
         uint32_t best_sad32x32[2][4];
         uint32_t best_sad64x64[2];
         uint32_t best_mv32x32[2][4] = {{0}};
@@ -1009,13 +1014,13 @@ class Allsad_CalculationTest
                                                     0,
                                                     sad_32x32[0]);
 
-        svt_ext_eight_sad_calculation_32x32_64x64_avx2(sad16x16_32b,
-                                                       best_sad32x32[1],
-                                                       &best_sad64x64[1],
-                                                       best_mv32x32[1],
-                                                       &best_mv64x64[1],
-                                                       0,
-                                                       sad_32x32[1]);
+        test_fn(sad16x16_32b,
+                best_sad32x32[1],
+                &best_sad64x64[1],
+                best_mv32x32[1],
+                &best_mv64x64[1],
+                0,
+                sad_32x32[1]);
 
         EXPECT_EQ(
             0,
@@ -1042,8 +1047,11 @@ TEST_P(Allsad_CalculationTest, 8x8_16x16_Test_sse4_1) {
     check_get_8x8_sad(svt_ext_all_sad_calculation_8x8_16x16_sse4_1);
 }
 
-TEST_P(Allsad_CalculationTest, 32x32_64x64_Test) {
-    check_get_32x32_sad();
+TEST_P(Allsad_CalculationTest, 32x32_64x64_Test_sse4_1) {
+    check_get_32x32_sad(svt_ext_eight_sad_calculation_32x32_64x64_sse4_1);
+}
+TEST_P(Allsad_CalculationTest, 32x32_64x64_Test_avx2) {
+    check_get_32x32_sad(svt_ext_eight_sad_calculation_32x32_64x64_avx2);
 }
 INSTANTIATE_TEST_CASE_P(
     ALLSAD, Allsad_CalculationTest,

@@ -1180,6 +1180,12 @@ INSTANTIATE_TEST_CASE_P(
             svt_av1_apply_temporal_filter_planewise_fast_hbd_avx2_wraper),
         ::testing::Values(0, 1)));
 
+typedef void (*get_final_filtered_pixels_fn)(
+    struct MeContext *context_ptr, EbByte *src_center_ptr_start,
+    uint16_t **altref_buffer_highbd_start, uint32_t **accum, uint16_t **count,
+    const uint32_t *stride, int blk_y_src_offset, int blk_ch_src_offset,
+    uint16_t blk_width_ch, uint16_t blk_height_ch, EbBool is_highbd);
+
 class TemporalFilterTestGetFinalFilteredPixels : public ::testing::Test {
   private:
     uint32_t width;
@@ -1266,7 +1272,7 @@ class TemporalFilterTestGetFinalFilteredPixels : public ::testing::Test {
         context_ptr->tf_chroma = rand() % 2;
     }
 
-    void RunTest(EbBool is_highbd) {
+    void RunTest(EbBool is_highbd, get_final_filtered_pixels_fn tst_fn) {
         int blk_y_src_offset = 1;
         int blk_ch_src_offset = 2;
         uint16_t blk_width_ch = 48;
@@ -1286,17 +1292,17 @@ class TemporalFilterTestGetFinalFilteredPixels : public ::testing::Test {
                                     blk_height_ch,
                                     is_highbd);
 
-        get_final_filtered_pixels_avx2(context_ptr,
-                                       ref_src_center_ptr_start,
-                                       ref_altref_buffer_highbd_start,
-                                       accum,
-                                       count,
-                                       width_stride,
-                                       blk_y_src_offset,
-                                       blk_ch_src_offset,
-                                       blk_width_ch,
-                                       blk_height_ch,
-                                       is_highbd);
+        tst_fn(context_ptr,
+               ref_src_center_ptr_start,
+               ref_altref_buffer_highbd_start,
+               accum,
+               count,
+               width_stride,
+               blk_y_src_offset,
+               blk_ch_src_offset,
+               blk_width_ch,
+               blk_height_ch,
+               is_highbd);
 
         for (int color_channel = 0; color_channel < 3; ++color_channel) {
             EXPECT_EQ(memcmp(org_src_center_ptr_start[color_channel],
@@ -1312,17 +1318,41 @@ class TemporalFilterTestGetFinalFilteredPixels : public ::testing::Test {
     }
 };
 
-TEST_F(TemporalFilterTestGetFinalFilteredPixels, test_lbd) {
+TEST_F(TemporalFilterTestGetFinalFilteredPixels, test_lbd_sse4_1) {
     for (int i = 0; i < 100; ++i) {
-        RunTest(false);
+        RunTest(false, get_final_filtered_pixels_sse4_1);
     }
 }
 
-TEST_F(TemporalFilterTestGetFinalFilteredPixels, test_hbd) {
+TEST_F(TemporalFilterTestGetFinalFilteredPixels, test_lbd_avx2) {
     for (int i = 0; i < 100; ++i) {
-        RunTest(true);
+        RunTest(false, get_final_filtered_pixels_avx2);
     }
 }
+
+TEST_F(TemporalFilterTestGetFinalFilteredPixels, test_hbd_sse4_1) {
+    for (int i = 0; i < 100; ++i) {
+        RunTest(true, get_final_filtered_pixels_sse4_1);
+    }
+}
+
+TEST_F(TemporalFilterTestGetFinalFilteredPixels, test_hbd_avx2) {
+    for (int i = 0; i < 100; ++i) {
+        RunTest(true, get_final_filtered_pixels_avx2);
+    }
+}
+
+typedef void (*apply_filtering_central_fn)(
+    struct MeContext *context_ptr,
+    EbPictureBufferDesc *input_picture_ptr_central, EbByte *src,
+    uint32_t **accum, uint16_t **count, uint16_t blk_width, uint16_t blk_height,
+    uint32_t ss_x, uint32_t ss_y);
+
+typedef void (*apply_filtering_central_highbd_fn)(
+    struct MeContext *context_ptr,
+    EbPictureBufferDesc *input_picture_ptr_central, uint16_t **src_16bit,
+    uint32_t **accum, uint16_t **count, uint16_t blk_width, uint16_t blk_height,
+    uint32_t ss_x, uint32_t ss_y);
 
 class TemporalFilterTestApplyFilteringCentral : public ::testing::Test {
   private:
@@ -1395,7 +1425,8 @@ class TemporalFilterTestApplyFilteringCentral : public ::testing::Test {
         input_picture_central.stride_y = BW + 5;
     }
 
-    void RunTest(EbBool is_highbd) {
+    void RunTest(EbBool is_highbd, apply_filtering_central_fn lbd_fn_ptr,
+                 apply_filtering_central_highbd_fn hbd_fn_ptr) {
         int blk_y_src_offset = 1;
         int blk_ch_src_offset = 2;
         uint16_t blk_width_ch = 48;
@@ -1405,6 +1436,7 @@ class TemporalFilterTestApplyFilteringCentral : public ::testing::Test {
         SetRandData();
 
         if (!is_highbd) {
+            assert(lbd_fn_ptr);
             apply_filtering_central_c(context_ptr,
                                       &input_picture_central,
                                       src,
@@ -1414,16 +1446,17 @@ class TemporalFilterTestApplyFilteringCentral : public ::testing::Test {
                                       blk_height_ch,
                                       ss_x,
                                       ss_y);
-            apply_filtering_central_avx2(context_ptr,
-                                         &input_picture_central,
-                                         src,
-                                         ref_accum,
-                                         ref_count,
-                                         blk_width_ch,
-                                         blk_height_ch,
-                                         ss_x,
-                                         ss_y);
+            lbd_fn_ptr(context_ptr,
+                   &input_picture_central,
+                   src,
+                   ref_accum,
+                   ref_count,
+                   blk_width_ch,
+                   blk_height_ch,
+                   ss_x,
+                   ss_y);
         } else {
+            assert(hbd_fn_ptr);
             apply_filtering_central_highbd_c(context_ptr,
                                              &input_picture_central,
                                              src_highbd,
@@ -1433,15 +1466,15 @@ class TemporalFilterTestApplyFilteringCentral : public ::testing::Test {
                                              blk_height_ch,
                                              ss_x,
                                              ss_y);
-            apply_filtering_central_highbd_avx2(context_ptr,
-                                                &input_picture_central,
-                                                src_highbd,
-                                                ref_accum,
-                                                ref_count,
-                                                blk_width_ch,
-                                                blk_height_ch,
-                                                ss_x,
-                                                ss_y);
+            hbd_fn_ptr(context_ptr,
+                       &input_picture_central,
+                       src_highbd,
+                       ref_accum,
+                       ref_count,
+                       blk_width_ch,
+                       blk_height_ch,
+                       ss_x,
+                       ss_y);
         }
 
         for (int color_channel = 0; color_channel < 3; ++color_channel) {
@@ -1458,14 +1491,26 @@ class TemporalFilterTestApplyFilteringCentral : public ::testing::Test {
     }
 };
 
-TEST_F(TemporalFilterTestApplyFilteringCentral, test_lbd) {
+TEST_F(TemporalFilterTestApplyFilteringCentral, test_lbd_sse4_1) {
     for (int i = 0; i < 100; ++i) {
-        RunTest(false);
+        RunTest(false, apply_filtering_central_sse4_1, NULL);
     }
 }
 
-TEST_F(TemporalFilterTestApplyFilteringCentral, test_hbd) {
+TEST_F(TemporalFilterTestApplyFilteringCentral, test_lbd_avx2) {
     for (int i = 0; i < 100; ++i) {
-        RunTest(true);
+        RunTest(false, apply_filtering_central_avx2, NULL);
+    }
+}
+
+TEST_F(TemporalFilterTestApplyFilteringCentral, test_hbd_sse4_1) {
+    for (int i = 0; i < 100; ++i) {
+        RunTest(true, NULL, apply_filtering_central_highbd_sse4_1);
+    }
+}
+
+TEST_F(TemporalFilterTestApplyFilteringCentral, test_hbd_avx2) {
+    for (int i = 0; i < 100; ++i) {
+        RunTest(true, NULL, apply_filtering_central_highbd_avx2);
     }
 }

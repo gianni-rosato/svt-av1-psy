@@ -1908,3 +1908,214 @@ void svt_av1_apply_temporal_filter_planewise_medium_hbd_sse4_1(
             encoder_bit_depth);
     }
 }
+
+static INLINE __m128i __mm_div_epi32(const __m128i *a, const __m128i *b) {
+    __m128 d_f = _mm_div_ps(_mm_cvtepi32_ps(*a), _mm_cvtepi32_ps(*b));
+    return _mm_cvtps_epi32(_mm_floor_ps(d_f));
+}
+
+static void process_block_lbd_sse4_1(int h, int w, uint8_t *buff_lbd_start, uint32_t *accum,
+                                     uint16_t *count, uint32_t stride) {
+    int i, j, k;
+    int pos = 0;
+    for (i = 0, k = 0; i < h; i++) {
+        for (j = 0; j < w; j += 8, k += 8) {
+            //buff_lbd_start[pos] = (uint8_t)OD_DIVU(accum[k] + (count[k] >> 1), count[k]);
+            //buff_lbd_start[pos] = (uint8_t)((accum[k] + (count[k] >> 1))/ count[k]);
+            __m128i accum_a = _mm_loadu_si128((__m128i *)(accum + k));
+            __m128i accum_b = _mm_loadu_si128((__m128i *)(accum + k + 4));
+            __m128i count_a = _mm_cvtepi16_epi32(_mm_loadl_epi64((__m128i *)(count + k)));
+            __m128i count_b = _mm_cvtepi16_epi32(_mm_loadl_epi64((__m128i *)(count + k + 4)));
+
+            //accum[k] + (count[k] >> 1)
+            __m128i tmp_a = _mm_add_epi32(accum_a, _mm_srli_epi32(count_a, 1));
+            __m128i tmp_b = _mm_add_epi32(accum_b, _mm_srli_epi32(count_b, 1));
+
+            //accum[k] + (count[k] >> 1))/ count[k]
+            tmp_a          = __mm_div_epi32(&tmp_a, &count_a);
+            tmp_b          = __mm_div_epi32(&tmp_b, &count_b);
+            __m128i tmp_ab = _mm_packus_epi16(_mm_packs_epi32(tmp_a, tmp_b), _mm_setzero_si128());
+
+            _mm_storel_epi64((__m128i *)(buff_lbd_start + pos), tmp_ab);
+
+            pos += 8;
+        }
+        pos += stride;
+    }
+}
+
+static void process_block_hbd_sse4_1(int h, int w, uint16_t *buff_hbd_start, uint32_t *accum,
+                                     uint16_t *count, uint32_t stride) {
+    int i, j, k;
+    int pos = 0;
+    for (i = 0, k = 0; i < h; i++) {
+        for (j = 0; j < w; j += 8, k += 8) {
+            //buff_lbd_start[pos] = (uint8_t)OD_DIVU(accum[k] + (count[k] >> 1), count[k]);
+            //buff_lbd_start[pos] = (uint8_t)((accum[k] + (count[k] >> 1))/ count[k]);
+            __m128i accum_a = _mm_loadu_si128((__m128i *)(accum + k));
+            __m128i accum_b = _mm_loadu_si128((__m128i *)(accum + k + 4));
+            __m128i count_a = _mm_cvtepi16_epi32(_mm_loadl_epi64((__m128i *)(count + k)));
+            __m128i count_b = _mm_cvtepi16_epi32(_mm_loadl_epi64((__m128i *)(count + k + 4)));
+
+            //accum[k] + (count[k] >> 1)
+            __m128i tmp_a = _mm_add_epi32(accum_a, _mm_srli_epi32(count_a, 1));
+            __m128i tmp_b = _mm_add_epi32(accum_b, _mm_srli_epi32(count_b, 1));
+
+            //accum[k] + (count[k] >> 1))/ count[k]
+            tmp_a          = __mm_div_epi32(&tmp_a, &count_a);
+            tmp_b          = __mm_div_epi32(&tmp_b, &count_b);
+            __m128i tmp_ab = _mm_packs_epi32(tmp_a, tmp_b), _mm_setzero_si128();
+
+            _mm_storeu_si128((__m128i *)(buff_hbd_start + pos), tmp_ab);
+
+            pos += 8;
+        }
+        pos += stride;
+    }
+}
+
+void get_final_filtered_pixels_sse4_1(MeContext *context_ptr, EbByte *src_center_ptr_start,
+                                      uint16_t **altref_buffer_highbd_start, uint32_t **accum,
+                                      uint16_t **count, const uint32_t *stride,
+                                      int blk_y_src_offset, int blk_ch_src_offset,
+                                      uint16_t blk_width_ch, uint16_t blk_height_ch,
+                                      EbBool is_highbd) {
+    assert(blk_width_ch % 16 == 0);
+    assert(BW % 16 == 0);
+
+    if (!is_highbd) {
+        //Process luma
+        process_block_lbd_sse4_1(BH,
+                                 BW,
+                                 &src_center_ptr_start[C_Y][blk_y_src_offset],
+                                 accum[C_Y],
+                                 count[C_Y],
+                                 stride[C_Y] - BW);
+        // Process chroma
+        if (context_ptr->tf_chroma) {
+            process_block_lbd_sse4_1(blk_height_ch,
+                                     blk_width_ch,
+                                     &src_center_ptr_start[C_U][blk_ch_src_offset],
+                                     accum[C_U],
+                                     count[C_U],
+                                     stride[C_U] - blk_width_ch);
+            process_block_lbd_sse4_1(blk_height_ch,
+                                     blk_width_ch,
+                                     &src_center_ptr_start[C_V][blk_ch_src_offset],
+                                     accum[C_V],
+                                     count[C_V],
+                                     stride[C_V] - blk_width_ch);
+        }
+    } else {
+        // Process luma
+        process_block_hbd_sse4_1(BH,
+                                 BW,
+                                 &altref_buffer_highbd_start[C_Y][blk_y_src_offset],
+                                 accum[C_Y],
+                                 count[C_Y],
+                                 stride[C_Y] - BW);
+        // Process chroma
+        if (context_ptr->tf_chroma) {
+            process_block_hbd_sse4_1(blk_height_ch,
+                                     blk_width_ch,
+                                     &altref_buffer_highbd_start[C_U][blk_ch_src_offset],
+                                     accum[C_U],
+                                     count[C_U],
+                                     stride[C_U] - blk_width_ch);
+            process_block_hbd_sse4_1(blk_height_ch,
+                                     blk_width_ch,
+                                     &altref_buffer_highbd_start[C_V][blk_ch_src_offset],
+                                     accum[C_V],
+                                     count[C_V],
+                                     stride[C_V] - blk_width_ch);
+        }
+    }
+}
+
+static void apply_filtering_central_loop_lbd(uint16_t w, uint16_t h, uint8_t *src,
+                                             uint16_t src_stride, uint32_t *accum,
+                                             uint16_t *count) {
+    assert(w % 8 == 0);
+
+    __m128i modifier       = _mm_set1_epi32(TF_PLANEWISE_FILTER_WEIGHT_SCALE);
+    __m128i modifier_epi16 = _mm_set1_epi16(TF_PLANEWISE_FILTER_WEIGHT_SCALE);
+
+    for (uint16_t k = 0, i = 0; i < h; i++) {
+        for (uint16_t j = 0; j < w; j += 8) {
+            __m128i src_16 = _mm_cvtepu8_epi16(
+                _mm_loadl_epi64((__m128i *)(src + i * src_stride + j)));
+            _mm_storeu_si128((__m128i *)(accum + k), _mm_mullo_epi32(modifier, _mm_cvtepu16_epi32(src_16)));
+            _mm_storeu_si128((__m128i *)(accum + k + 4), _mm_mullo_epi32(modifier, _mm_cvtepu16_epi32(_mm_srli_si128(src_16, 8))));
+            _mm_storeu_si128((__m128i *)(count + k), modifier_epi16);
+            k += 8;
+        }
+    }
+}
+
+static void apply_filtering_central_loop_hbd(uint16_t w, uint16_t h, uint16_t *src,
+                                             uint16_t src_stride, uint32_t *accum,
+                                             uint16_t *count) {
+    assert(w % 8 == 0);
+
+    __m128i modifier       = _mm_set1_epi32(TF_PLANEWISE_FILTER_WEIGHT_SCALE);
+    __m128i modifier_epi16 = _mm_set1_epi16(TF_PLANEWISE_FILTER_WEIGHT_SCALE);
+
+    for (uint16_t k = 0, i = 0; i < h; i++) {
+        for (uint16_t j = 0; j < w; j += 8) {
+            __m128i src_1 = _mm_cvtepu16_epi32(_mm_loadl_epi64((__m128i *)(src + i * src_stride + j)));
+            __m128i src_2 = _mm_cvtepu16_epi32(_mm_loadl_epi64((__m128i *)(src + i * src_stride + j + 4)));
+            _mm_storeu_si128((__m128i *)(accum + k), _mm_mullo_epi32(modifier, src_1));
+            _mm_storeu_si128((__m128i *)(accum + k + 4), _mm_mullo_epi32(modifier, src_2));
+            _mm_storeu_si128((__m128i *)(count + k), modifier_epi16);
+            k += 8;
+        }
+    }
+}
+
+// Apply filtering to the central picture
+void apply_filtering_central_sse4_1(MeContext *          context_ptr,
+                                    EbPictureBufferDesc *input_picture_ptr_central, EbByte *src,
+                                    uint32_t **accum, uint16_t **count, uint16_t blk_width,
+                                    uint16_t blk_height, uint32_t ss_x, uint32_t ss_y) {
+    uint16_t src_stride_y = input_picture_ptr_central->stride_y;
+
+    // Luma
+    apply_filtering_central_loop_lbd(
+        blk_width, blk_height, src[C_Y], src_stride_y, accum[C_Y], count[C_Y]);
+
+    // Chroma
+    if (context_ptr->tf_chroma) {
+        uint16_t blk_height_ch = blk_height >> ss_y;
+        uint16_t blk_width_ch  = blk_width >> ss_x;
+        uint16_t src_stride_ch = src_stride_y >> ss_x;
+        apply_filtering_central_loop_lbd(
+            blk_width_ch, blk_height_ch, src[C_U], src_stride_ch, accum[C_U], count[C_U]);
+        apply_filtering_central_loop_lbd(
+            blk_width_ch, blk_height_ch, src[C_V], src_stride_ch, accum[C_V], count[C_V]);
+    }
+}
+
+// Apply filtering to the central picture
+void apply_filtering_central_highbd_sse4_1(MeContext *          context_ptr,
+                                           EbPictureBufferDesc *input_picture_ptr_central,
+                                           uint16_t **src_16bit, uint32_t **accum, uint16_t **count,
+                                           uint16_t blk_width, uint16_t blk_height, uint32_t ss_x,
+                                           uint32_t ss_y) {
+    uint16_t src_stride_y = input_picture_ptr_central->stride_y;
+
+    // Luma
+    apply_filtering_central_loop_hbd(
+        blk_width, blk_height, src_16bit[C_Y], src_stride_y, accum[C_Y], count[C_Y]);
+
+    // Chroma
+    if (context_ptr->tf_chroma) {
+        uint16_t blk_height_ch = blk_height >> ss_y;
+        uint16_t blk_width_ch  = blk_width >> ss_x;
+        uint16_t src_stride_ch = src_stride_y >> ss_x;
+        apply_filtering_central_loop_hbd(
+            blk_width_ch, blk_height_ch, src_16bit[C_U], src_stride_ch, accum[C_U], count[C_U]);
+        apply_filtering_central_loop_hbd(
+            blk_width_ch, blk_height_ch, src_16bit[C_V], src_stride_ch, accum[C_V], count[C_V]);
+    }
+}
+

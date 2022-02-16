@@ -606,6 +606,16 @@ TEST(CdefToolTest, ComputeCdefDistMatchTest) {
                                                                    coeff_shift,
                                                                    plane,
                                                                    subsampling);
+                        const uint64_t sse_mse =
+                            compute_cdef_dist_16bit_sse4_1(dst_data_,
+                                                           stride,
+                                                           src_data_,
+                                                           dlist,
+                                                           cdef_count,
+                                                           test_bs[i],
+                                                           coeff_shift,
+                                                           plane,
+                                                           subsampling);
                         const uint64_t avx_mse =
                             compute_cdef_dist_16bit_avx2(dst_data_,
                                                          stride,
@@ -616,6 +626,10 @@ TEST(CdefToolTest, ComputeCdefDistMatchTest) {
                                                          coeff_shift,
                                                          plane,
                                                          subsampling);
+                        ASSERT_EQ(c_mse, sse_mse)
+                            << "compute_cdef_dist_16bit_sse4_1 failed "
+                            << "bitdepth: " << bd << " plane: " << plane
+                            << " BlockSize " << test_bs[i] << " loop: " << k;
                         ASSERT_EQ(c_mse, avx_mse)
                             << "compute_cdef_dist_16bit_avx2 failed "
                             << "bitdepth: " << bd << " plane: " << plane
@@ -677,6 +691,16 @@ TEST(CdefToolTest, ComputeCdefDist8bitMatchTest) {
                                                      coeff_shift,
                                                      plane,
                                                      subsampling);
+                        const uint64_t sse_mse =
+                            compute_cdef_dist_8bit_sse4_1(dst_data_,
+                                                          stride,
+                                                          src_data_,
+                                                          dlist,
+                                                          cdef_count,
+                                                          test_bs[i],
+                                                          coeff_shift,
+                                                          plane,
+                                                          subsampling);
                         const uint64_t avx_mse =
                             compute_cdef_dist_8bit_avx2(dst_data_,
                                                         stride,
@@ -687,6 +711,10 @@ TEST(CdefToolTest, ComputeCdefDist8bitMatchTest) {
                                                         coeff_shift,
                                                         plane,
                                                         subsampling);
+                        ASSERT_EQ(c_mse, sse_mse)
+                            << "compute_cdef_dist_8bit_sse4_1 failed "
+                            << "bitdepth: " << bd << " plane: " << plane
+                            << " BlockSize " << test_bs[i] << " loop: " << k;
                         ASSERT_EQ(c_mse, avx_mse)
                             << "compute_cdef_dist_8bit_avx2 failed "
                             << "bitdepth: " << bd << " plane: " << plane
