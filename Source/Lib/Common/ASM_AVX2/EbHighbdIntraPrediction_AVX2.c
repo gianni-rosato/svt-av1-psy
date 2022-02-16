@@ -21,7 +21,7 @@
 
 // Handle number of elements: up to 64.
 static INLINE __m128i dc_sum_large(const __m256i src) {
-    const __m128i s_lo = _mm256_extracti128_si256(src, 0);
+    const __m128i s_lo = _mm256_castsi256_si128(src);
     const __m128i s_hi = _mm256_extracti128_si256(src, 1);
     __m128i       sum, sum_hi;
     sum    = _mm_add_epi16(s_lo, s_hi);
@@ -35,7 +35,7 @@ static INLINE __m128i dc_sum_large(const __m256i src) {
 
 // Handle number of elements: 65 to 128.
 static INLINE __m128i dc_sum_larger(const __m256i src) {
-    const __m128i s_lo = _mm256_extracti128_si256(src, 0);
+    const __m128i s_lo = _mm256_castsi256_si128(src);
     const __m128i s_hi = _mm256_extracti128_si256(src, 1);
     __m128i       sum, sum_hi;
     sum = _mm_add_epi16(s_lo, s_hi);
@@ -49,7 +49,7 @@ static INLINE __m128i dc_sum_larger(const __m256i src) {
 
 static INLINE __m128i dc_sum_16(const uint16_t *const src) {
     const __m256i s    = _mm256_loadu_si256((const __m256i *)src);
-    const __m128i s_lo = _mm256_extracti128_si256(s, 0);
+    const __m128i s_lo = _mm256_castsi256_si128(s);
     const __m128i s_hi = _mm256_extracti128_si256(s, 1);
     const __m128i sum  = _mm_add_epi16(s_lo, s_hi);
     return dc_sum_8x16bit(sum);
@@ -76,7 +76,7 @@ static INLINE __m128i dc_sum_64(const uint16_t *const src) {
 static INLINE __m128i dc_sum_4_16(const uint16_t *const src_4, const uint16_t *const src_16) {
     const __m128i s_4         = _mm_loadl_epi64((const __m128i *)src_4);
     const __m256i s_16        = _mm256_loadu_si256((const __m256i *)src_16);
-    const __m128i s_lo        = _mm256_extracti128_si256(s_16, 0);
+    const __m128i s_lo        = _mm256_castsi256_si128(s_16);
     const __m128i s_hi        = _mm256_extracti128_si256(s_16, 1);
     const __m128i s_16_sum0   = _mm_add_epi16(s_lo, s_hi);
     const __m128i s_16_sum_hi = _mm_srli_si128(s_16_sum0, 8);
@@ -88,7 +88,7 @@ static INLINE __m128i dc_sum_4_16(const uint16_t *const src_4, const uint16_t *c
 static INLINE __m128i dc_sum_8_16(const uint16_t *const src_8, const uint16_t *const src_16) {
     const __m128i s_8      = _mm_loadu_si128((const __m128i *)src_8);
     const __m256i s_16     = _mm256_loadu_si256((const __m256i *)src_16);
-    const __m128i s_lo     = _mm256_extracti128_si256(s_16, 0);
+    const __m128i s_lo     = _mm256_castsi256_si128(s_16);
     const __m128i s_hi     = _mm256_extracti128_si256(s_16, 1);
     const __m128i s_16_sum = _mm_add_epi16(s_lo, s_hi);
     const __m128i sum      = _mm_add_epi16(s_16_sum, s_8);
@@ -100,7 +100,7 @@ static INLINE __m128i dc_sum_8_32(const uint16_t *const src_8, const uint16_t *c
     const __m256i s_32_0   = _mm256_loadu_si256((const __m256i *)(src_32 + 0x00));
     const __m256i s_32_1   = _mm256_loadu_si256((const __m256i *)(src_32 + 0x10));
     const __m256i s_32     = _mm256_add_epi16(s_32_0, s_32_1);
-    const __m128i s_lo     = _mm256_extracti128_si256(s_32, 0);
+    const __m128i s_lo     = _mm256_castsi256_si128(s_32);
     const __m128i s_hi     = _mm256_extracti128_si256(s_32, 1);
     const __m128i s_16_sum = _mm_add_epi16(s_lo, s_hi);
     const __m128i sum      = _mm_add_epi16(s_8, s_16_sum);
@@ -1444,7 +1444,7 @@ static INLINE void smooth_pred_8x2(const __m256i *const weights_w, const __m256i
                                    uint16_t **const dst, const ptrdiff_t stride) {
     // 00 01 02 03 04 05 06 07  10 11 12 13 14 15 16 17
     const __m256i d = smooth_pred_kernel(weights_w, weights_h, rep, ab, lr);
-    _mm_storeu_si128((__m128i *)*dst, _mm256_extracti128_si256(d, 0));
+    _mm_storeu_si128((__m128i *)*dst, _mm256_castsi256_si128(d));
     *dst += stride;
     _mm_storeu_si128((__m128i *)*dst, _mm256_extracti128_si256(d, 1));
     *dst += stride;
@@ -1958,7 +1958,7 @@ static INLINE void smooth_h_pred_8x2(const __m256i *const weights, __m256i *cons
     const __m256i t = _mm256_shuffle_epi8(*lr, rep); // 0 0 0 0  1 1 1 1
     // 00 01 02 03 04 05 06 07  10 11 12 13 14 15 16 17
     const __m256i d = smooth_h_pred_kernel(weights, t);
-    _mm_storeu_si128((__m128i *)*dst, _mm256_extracti128_si256(d, 0));
+    _mm_storeu_si128((__m128i *)*dst, _mm256_castsi256_si128(d));
     *dst += stride;
     _mm_storeu_si128((__m128i *)*dst, _mm256_extracti128_si256(d, 1));
     *dst += stride;
@@ -2348,7 +2348,7 @@ static INLINE void smooth_v_pred_8x2(const __m256i weights, const __m256i rep,
                                      const ptrdiff_t stride) {
     // 00 01 02 03 04 05 06 07  10 11 12 13 14 15 16 17
     const __m256i d = smooth_v_pred_kernel(weights, rep, ab);
-    _mm_storeu_si128((__m128i *)*dst, _mm256_extracti128_si256(d, 0));
+    _mm_storeu_si128((__m128i *)*dst, _mm256_castsi256_si128(d));
     *dst += stride;
     _mm_storeu_si128((__m128i *)*dst, _mm256_extracti128_si256(d, 1));
     *dst += stride;

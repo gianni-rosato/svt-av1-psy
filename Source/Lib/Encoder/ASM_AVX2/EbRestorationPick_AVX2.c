@@ -19,10 +19,10 @@ static INLINE void avx2_mul_epi16_epi32(__m256i *a, __m256i *b, __m256i *out) {
     __m256i b_32[2];
 
     a_32[0] = _mm256_cvtepi16_epi32(_mm256_extracti128_si256(*a, 1));
-    a_32[1] = _mm256_cvtepi16_epi32(_mm256_extracti128_si256(*a, 0));
+    a_32[1] = _mm256_cvtepi16_epi32(_mm256_castsi256_si128(*a));
 
     b_32[0] = _mm256_cvtepi16_epi32(_mm256_extracti128_si256(*b, 1));
-    b_32[1] = _mm256_cvtepi16_epi32(_mm256_extracti128_si256(*b, 0));
+    b_32[1] = _mm256_cvtepi16_epi32(_mm256_castsi256_si128(*b));
 
     out[0] = _mm256_mullo_epi32(a_32[0], b_32[0]);
     out[1] = _mm256_mullo_epi32(a_32[1], b_32[1]);

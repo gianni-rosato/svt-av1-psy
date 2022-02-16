@@ -48,7 +48,7 @@ uint64_t svt_compute_mean8x8_avx2_intrin(
     upper         = _mm_add_epi32(upper,
                           _mm_srli_si128(upper, 8)); // shift 2nd 16 bits to the 1st and sum both
 
-    __m128i lower = _mm256_extractf128_si256(sum, 0); //extract lower 128 bit
+    __m128i lower = _mm256_castsi256_si128(sum); //extract lower 128 bit
     lower         = _mm_add_epi32(lower,
                           _mm_srli_si128(lower, 8)); // shift 2nd 16 bits to the 1st and sum both
 
@@ -149,8 +149,7 @@ void svt_compute_interm_var_four8x8_avx2_intrin(uint8_t *input_samples, uint16_t
                                                               ymm_permute8);
 
     ymm_block_mean_squared_lo = _mm256_castsi256_si128(ymm_block_mean_squared_low); //lower 128
-    ymm_block_mean_squared_hi = _mm256_extracti128_si256(ymm_block_mean_squared_high,
-                                                         0); //lower 128
+    ymm_block_mean_squared_hi = _mm256_castsi256_si128(ymm_block_mean_squared_high); //lower 128
 
     ymm_result   = _mm256_unpacklo_epi32(_mm256_castsi128_si256(ymm_block_mean_squared_lo),
                                        _mm256_castsi128_si256(ymm_block_mean_squared_hi));

@@ -211,7 +211,7 @@ static INLINE void mse_8xn_8bit_avx2(const uint8_t **src, const uint8_t *dst, co
 }
 
 static INLINE uint32_t sum32(const __m256i src) {
-    const __m128i src_l = _mm256_extracti128_si256(src, 0);
+    const __m128i src_l = _mm256_castsi256_si128(src);
     const __m128i src_h = _mm256_extracti128_si256(src, 1);
     const __m128i s     = _mm_add_epi32(src_l, src_h);
     __m128i       dst;
@@ -259,7 +259,7 @@ static INLINE uint64_t dist_8xn_16bit_avx2(const uint16_t **src, const uint16_t 
     ssdd                 = _mm256_hadd_epi16(ss, dd);
     ssdd                 = _mm256_hadd_epi16(ssdd, ssdd);
     ssdd                 = _mm256_unpacklo_epi16(ssdd, _mm256_setzero_si256());
-    const __m128i ssdd_l = _mm256_extracti128_si256(ssdd, 0);
+    const __m128i ssdd_l = _mm256_castsi256_si128(ssdd);
     const __m128i ssdd_h = _mm256_extracti128_si256(ssdd, 1);
     sum                  = _mm_add_epi32(ssdd_l, ssdd_h);
     sum                  = _mm_hadd_epi32(sum, sum);
@@ -314,7 +314,7 @@ static INLINE uint64_t dist_8xn_8bit_avx2(const uint8_t **src, const uint8_t *ds
     ssdd                 = _mm256_hadd_epi16(ss, dd);
     ssdd                 = _mm256_hadd_epi16(ssdd, ssdd);
     ssdd                 = _mm256_unpacklo_epi16(ssdd, _mm256_setzero_si256());
-    const __m128i ssdd_l = _mm256_extracti128_si256(ssdd, 0);
+    const __m128i ssdd_l = _mm256_castsi256_si128(ssdd);
     const __m128i ssdd_h = _mm256_extracti128_si256(ssdd, 1);
     sum                  = _mm_add_epi32(ssdd_l, ssdd_h);
     sum                  = _mm_hadd_epi32(sum, sum);
@@ -343,7 +343,7 @@ static INLINE void sum_32_to_64(const __m256i src, __m256i *dst) {
 }
 
 static INLINE uint64_t sum64(const __m256i src) {
-    const __m128i src_l = _mm256_extracti128_si256(src, 0);
+    const __m128i src_l = _mm256_castsi256_si128(src);
     const __m128i src_h = _mm256_extracti128_si256(src, 1);
     const __m128i s     = _mm_add_epi64(src_l, src_h);
     const __m128i dst   = _mm_add_epi64(s, _mm_srli_si128(s, 8));

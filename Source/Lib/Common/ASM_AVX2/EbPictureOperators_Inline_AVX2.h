@@ -189,7 +189,7 @@ static INLINE void spatial_full_distortion_kernel32_avx2_intrin(const uint8_t *c
 }
 
 static INLINE int32_t hadd32_avx2_intrin(const __m256i src) {
-    const __m128i src_l = _mm256_extracti128_si256(src, 0);
+    const __m128i src_l = _mm256_castsi256_si128(src);
     const __m128i src_h = _mm256_extracti128_si256(src, 1);
     const __m128i sum   = _mm_add_epi32(src_l, src_h);
 

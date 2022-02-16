@@ -2117,7 +2117,7 @@ static void dr_prediction_z2_hxw_avx2(int32_t H, int32_t W, uint8_t *dst, ptrdif
 
                     __m256i base_y_offset    = _mm256_sub_epi16(base_y_c256, min_y256);
                     __m128i base_y_offset128 = _mm_packs_epi16(
-                        _mm256_extracti128_si256(base_y_offset, 0),
+                        _mm256_castsi256_si128(base_y_offset),
                         _mm256_extracti128_si256(base_y_offset, 1));
 
                     __m128i a0_y128 = _mm_maskload_epi32((int *)(left + min_y),
@@ -4950,7 +4950,7 @@ void svt_aom_highbd_paeth_predictor_8x4_avx2(uint16_t *dst, ptrdiff_t stride, co
         l16 = _mm256_setr_m128i(_mm_set1_epi16(left[i]), _mm_set1_epi16(left[i + 1]));
 
         row = paeth_pred(&l16, &t0, &tl);
-        _mm_storeu_si128((__m128i *)dst, _mm256_extractf128_si256(row, 0));
+        _mm_storeu_si128((__m128i *)dst, _mm256_castsi256_si128(row));
         dst += stride;
         _mm_storeu_si128((__m128i *)dst, _mm256_extractf128_si256(row, 1));
         dst += stride;
@@ -4970,7 +4970,7 @@ void svt_aom_highbd_paeth_predictor_8x8_avx2(uint16_t *dst, ptrdiff_t stride, co
         l16 = _mm256_setr_m128i(_mm_set1_epi16(left[i]), _mm_set1_epi16(left[i + 1]));
 
         row = paeth_pred(&l16, &t0, &tl);
-        _mm_storeu_si128((__m128i *)dst, _mm256_extractf128_si256(row, 0));
+        _mm_storeu_si128((__m128i *)dst, _mm256_castsi256_si128(row));
         dst += stride;
         _mm_storeu_si128((__m128i *)dst, _mm256_extractf128_si256(row, 1));
         dst += stride;
@@ -4990,7 +4990,7 @@ void svt_aom_highbd_paeth_predictor_8x16_avx2(uint16_t *dst, ptrdiff_t stride,
         l16 = _mm256_setr_m128i(_mm_set1_epi16(left[i]), _mm_set1_epi16(left[i + 1]));
 
         row = paeth_pred(&l16, &t0, &tl);
-        _mm_storeu_si128((__m128i *)dst, _mm256_extractf128_si256(row, 0));
+        _mm_storeu_si128((__m128i *)dst, _mm256_castsi256_si128(row));
         dst += stride;
         _mm_storeu_si128((__m128i *)dst, _mm256_extractf128_si256(row, 1));
         dst += stride;
@@ -5010,7 +5010,7 @@ void svt_aom_highbd_paeth_predictor_8x32_avx2(uint16_t *dst, ptrdiff_t stride,
         l16 = _mm256_setr_m128i(_mm_set1_epi16(left[i]), _mm_set1_epi16(left[i + 1]));
 
         row = paeth_pred(&l16, &t0, &tl);
-        _mm_storeu_si128((__m128i *)dst, _mm256_extractf128_si256(row, 0));
+        _mm_storeu_si128((__m128i *)dst, _mm256_castsi256_si128(row));
         dst += stride;
         _mm_storeu_si128((__m128i *)dst, _mm256_extractf128_si256(row, 1));
         dst += stride;

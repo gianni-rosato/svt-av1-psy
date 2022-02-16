@@ -170,9 +170,9 @@ void dec_svt_av1_highbd_warp_affine_avx2(const int32_t *mat, const uint16_t *ref
 
                         __m256i v_refu = _mm256_alignr_epi8(v_ref, v_refl, 2); // R8R15R14...R2R1
                         v_refl         = _mm256_inserti128_si256(
-                            v_refl, _mm256_extracti128_si256(v_refu, 0), 1);
+                            v_refl, _mm256_castsi256_si128(v_refu), 1);
                         v_refu = _mm256_inserti128_si256(
-                            v_refu, _mm256_extracti128_si256(v_ref, 0), 0);
+                            v_refu, _mm256_castsi256_si128(v_ref), 0);
 
                         __m256i v_sum  = _mm256_set1_epi32(ohoriz);
                         __m256i parsum = _mm256_madd_epi16(
@@ -236,9 +236,9 @@ void dec_svt_av1_highbd_warp_affine_avx2(const int32_t *mat, const uint16_t *ref
                         __m256i v_refu = _mm256_alignr_epi8(v_ref, v_refl, 2); // R8R15R14...R2R1
 
                         v_refl = _mm256_inserti128_si256(
-                            v_refl, _mm256_extracti128_si256(v_refu, 0), 1);
+                            v_refl, _mm256_castsi256_si128(v_refu), 1);
                         v_refu = _mm256_inserti128_si256(
-                            v_refu, _mm256_extracti128_si256(v_ref, 0), 0);
+                            v_refu, _mm256_castsi256_si128(v_ref), 0);
 
                         __m256i v_sum  = _mm256_set1_epi32(ohoriz);
                         __m256i parsum = _mm256_madd_epi16(v_c01,
@@ -339,9 +339,9 @@ void dec_svt_av1_highbd_warp_affine_avx2(const int32_t *mat, const uint16_t *ref
                         __m256i v_refu = _mm256_alignr_epi8(v_ref, v_refl, 2); // R8R15R14...R2R1
 
                         v_refl = _mm256_inserti128_si256(
-                            v_refl, _mm256_extracti128_si256(v_refu, 0), 1);
+                            v_refl, _mm256_castsi256_si128(v_refu), 1);
                         v_refu = _mm256_inserti128_si256(
-                            v_refu, _mm256_extracti128_si256(v_ref, 0), 0);
+                            v_refu, _mm256_castsi256_si128(v_ref), 0);
 
                         __m256i v_sum  = _mm256_set1_epi32(ohoriz);
                         __m256i parsum = _mm256_madd_epi16(
@@ -462,9 +462,9 @@ void dec_svt_av1_highbd_warp_affine_avx2(const int32_t *mat, const uint16_t *ref
                         __m256i v_refu = _mm256_alignr_epi8(v_ref, v_refl, 2); // R8R15R14...R2R1
 
                         v_refl = _mm256_inserti128_si256(
-                            v_refl, _mm256_extracti128_si256(v_refu, 0), 1);
+                            v_refl, _mm256_castsi256_si128(v_refu), 1);
                         v_refu = _mm256_inserti128_si256(
-                            v_refu, _mm256_extracti128_si256(v_ref, 0), 0);
+                            v_refu, _mm256_castsi256_si128(v_ref), 0);
 
                         __m256i v_sum  = _mm256_set1_epi32(ohoriz);
                         __m256i parsum = _mm256_madd_epi16(v_c01,
@@ -602,11 +602,11 @@ void dec_svt_av1_highbd_warp_affine_avx2(const int32_t *mat, const uint16_t *ref
                         __m256i v_sum16 = _mm256_packus_epi32(v_sum1, v_sum1);
                         v_sum16         = _mm256_permute4x64_epi64(v_sum16, 0xD8);
                         v_sum16         = _mm256_min_epi16(v_sum16, clip_pixel);
-                        _mm_storeu_si128(dst16, _mm256_extracti128_si256(v_sum16, 0));
+                        _mm_storeu_si128(dst16, _mm256_castsi256_si128(v_sum16));
                     } else {
                         v_sum           = _mm256_packus_epi32(v_sum, v_sum);
                         __m256i v_sum16 = _mm256_permute4x64_epi64(v_sum, 0xD8);
-                        _mm_storeu_si128(p, _mm256_extracti128_si256(v_sum16, 0));
+                        _mm_storeu_si128(p, _mm256_castsi256_si128(v_sum16));
                     }
                 } else {
                     // Round and pack into 8 bits
@@ -625,7 +625,7 @@ void dec_svt_av1_highbd_warp_affine_avx2(const int32_t *mat, const uint16_t *ref
 
                     __m128i *const p = (__m128i *)&pred[(i + k + 4) * p_stride + j];
 
-                    _mm_storeu_si128(p, _mm256_extracti128_si256(v_sum16, 0));
+                    _mm_storeu_si128(p, _mm256_castsi256_si128(v_sum16));
                 }
             }
         }
@@ -774,9 +774,9 @@ void svt_av1_highbd_warp_affine_avx2(const int32_t *mat, const uint8_t *ref8b, c
 
                         __m256i v_refu = _mm256_alignr_epi8(v_ref, v_refl, 2); // R8R15R14...R2R1
                         v_refl         = _mm256_inserti128_si256(
-                            v_refl, _mm256_extracti128_si256(v_refu, 0), 1);
+                            v_refl, _mm256_castsi256_si128(v_refu), 1);
                         v_refu = _mm256_inserti128_si256(
-                            v_refu, _mm256_extracti128_si256(v_ref, 0), 0);
+                            v_refu, _mm256_castsi256_si128(v_ref), 0);
 
                         __m256i v_sum  = _mm256_set1_epi32(ohoriz);
                         __m256i parsum = _mm256_madd_epi16(
@@ -834,9 +834,9 @@ void svt_av1_highbd_warp_affine_avx2(const int32_t *mat, const uint8_t *ref8b, c
                         __m256i v_refu = _mm256_alignr_epi8(v_ref, v_refl, 2); // R8R15R14...R2R1
 
                         v_refl = _mm256_inserti128_si256(
-                            v_refl, _mm256_extracti128_si256(v_refu, 0), 1);
+                            v_refl, _mm256_castsi256_si128(v_refu), 1);
                         v_refu = _mm256_inserti128_si256(
-                            v_refu, _mm256_extracti128_si256(v_ref, 0), 0);
+                            v_refu, _mm256_castsi256_si128(v_ref), 0);
 
                         __m256i v_sum  = _mm256_set1_epi32(ohoriz);
                         __m256i parsum = _mm256_madd_epi16(v_c01,
@@ -931,9 +931,9 @@ void svt_av1_highbd_warp_affine_avx2(const int32_t *mat, const uint8_t *ref8b, c
                         __m256i v_refu = _mm256_alignr_epi8(v_ref, v_refl, 2); // R8R15R14...R2R1
 
                         v_refl = _mm256_inserti128_si256(
-                            v_refl, _mm256_extracti128_si256(v_refu, 0), 1);
+                            v_refl, _mm256_castsi256_si128(v_refu), 1);
                         v_refu = _mm256_inserti128_si256(
-                            v_refu, _mm256_extracti128_si256(v_ref, 0), 0);
+                            v_refu, _mm256_castsi256_si128(v_ref), 0);
 
                         __m256i v_sum  = _mm256_set1_epi32(ohoriz);
                         __m256i parsum = _mm256_madd_epi16(
@@ -1047,9 +1047,9 @@ void svt_av1_highbd_warp_affine_avx2(const int32_t *mat, const uint8_t *ref8b, c
                         __m256i v_refu = _mm256_alignr_epi8(v_ref, v_refl, 2); // R8R15R14...R2R1
 
                         v_refl = _mm256_inserti128_si256(
-                            v_refl, _mm256_extracti128_si256(v_refu, 0), 1);
+                            v_refl, _mm256_castsi256_si128(v_refu), 1);
                         v_refu = _mm256_inserti128_si256(
-                            v_refu, _mm256_extracti128_si256(v_ref, 0), 0);
+                            v_refu, _mm256_castsi256_si128(v_ref), 0);
 
                         __m256i v_sum  = _mm256_set1_epi32(ohoriz);
                         __m256i parsum = _mm256_madd_epi16(v_c01,
@@ -1187,11 +1187,11 @@ void svt_av1_highbd_warp_affine_avx2(const int32_t *mat, const uint8_t *ref8b, c
                         __m256i v_sum16 = _mm256_packus_epi32(v_sum1, v_sum1);
                         v_sum16         = _mm256_permute4x64_epi64(v_sum16, 0xD8);
                         v_sum16         = _mm256_min_epi16(v_sum16, clip_pixel);
-                        _mm_storeu_si128(dst16, _mm256_extracti128_si256(v_sum16, 0));
+                        _mm_storeu_si128(dst16, _mm256_castsi256_si128(v_sum16));
                     } else {
                         v_sum           = _mm256_packus_epi32(v_sum, v_sum);
                         __m256i v_sum16 = _mm256_permute4x64_epi64(v_sum, 0xD8);
-                        _mm_storeu_si128(p, _mm256_extracti128_si256(v_sum16, 0));
+                        _mm_storeu_si128(p, _mm256_castsi256_si128(v_sum16));
                     }
                 } else {
                     // Round and pack into 8 bits
@@ -1210,7 +1210,7 @@ void svt_av1_highbd_warp_affine_avx2(const int32_t *mat, const uint8_t *ref8b, c
 
                     __m128i *const p = (__m128i *)&pred[(i + k + 4) * p_stride + j];
 
-                    _mm_storeu_si128(p, _mm256_extracti128_si256(v_sum16, 0));
+                    _mm_storeu_si128(p, _mm256_castsi256_si128(v_sum16));
                 }
             }
         }

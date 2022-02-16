@@ -391,11 +391,11 @@ void svt_c_pack_avx2_intrin(const uint8_t *inn_bit_buffer, uint32_t inn_stride,
                     __m256i c0 = _mm256_loadu_si256((__m256i *)(local_ptr));
                     __m256i c1 = _mm256_loadu_si256((__m256i *)(local_ptr + 32));
                     _mm_storeu_si128((__m128i *)(in_compn_bit_buffer),
-                                     _mm256_extractf128_si256(c0, 0));
+                                     _mm256_castsi256_si128(c0));
                     _mm_storeu_si128((__m128i *)(in_compn_bit_buffer + out_stride),
                                      _mm256_extractf128_si256(c0, 1));
                     _mm_storeu_si128((__m128i *)(in_compn_bit_buffer + 2 * out_stride),
-                                     _mm256_extractf128_si256(c1, 0));
+                                     _mm256_castsi256_si128(c1));
                     _mm_storeu_si128((__m128i *)(in_compn_bit_buffer + 3 * out_stride),
                                      _mm256_extractf128_si256(c1, 1));
                     in_compn_bit_buffer += 4 * out_stride;

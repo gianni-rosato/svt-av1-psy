@@ -945,9 +945,9 @@ static INLINE void diagonal_copy_stats_avx2(const int32_t wiener_win2, int64_t *
         transpose_64bit_4x4_avx2(in, out);
 
         _mm_storel_epi64((__m128i *)(H + (i + 1) * wiener_win2 + i),
-                         _mm256_extracti128_si256(out[0], 0));
+                         _mm256_castsi256_si128(out[0]));
         _mm_storeu_si128((__m128i *)(H + (i + 2) * wiener_win2 + i),
-                         _mm256_extracti128_si256(out[1], 0));
+                         _mm256_castsi256_si128(out[1]));
         _mm256_storeu_si256((__m256i *)(H + (i + 3) * wiener_win2 + i), out[2]);
         _mm256_storeu_si256((__m256i *)(H + (i + 4) * wiener_win2 + i), out[3]);
 
@@ -979,9 +979,9 @@ static INLINE void div4_diagonal_copy_stats_avx2(const int32_t wiener_win2, int6
         transpose_64bit_4x4_avx2(in, out);
 
         _mm_storel_epi64((__m128i *)(H + (i + 1) * wiener_win2 + i),
-                         _mm256_extracti128_si256(out[0], 0));
+                         _mm256_castsi256_si128(out[0]));
         _mm_storeu_si128((__m128i *)(H + (i + 2) * wiener_win2 + i),
-                         _mm256_extracti128_si256(out[1], 0));
+                         _mm256_castsi256_si128(out[1]));
         _mm256_storeu_si256((__m256i *)(H + (i + 3) * wiener_win2 + i), out[2]);
         _mm256_storeu_si256((__m256i *)(H + (i + 4) * wiener_win2 + i), out[3]);
 
@@ -1009,9 +1009,9 @@ static INLINE void div16_diagonal_copy_stats_avx2(const int32_t wiener_win2, int
         transpose_64bit_4x4_avx2(in, out);
 
         _mm_storel_epi64((__m128i *)(H + (i + 1) * wiener_win2 + i),
-                         _mm256_extracti128_si256(out[0], 0));
+                         _mm256_castsi256_si128(out[0]));
         _mm_storeu_si128((__m128i *)(H + (i + 2) * wiener_win2 + i),
-                         _mm256_extracti128_si256(out[1], 0));
+                         _mm256_castsi256_si128(out[1]));
         _mm256_storeu_si256((__m256i *)(H + (i + 3) * wiener_win2 + i), out[2]);
         _mm256_storeu_si256((__m256i *)(H + (i + 4) * wiener_win2 + i), out[3]);
 
@@ -1073,7 +1073,7 @@ static INLINE void compute_stats_win3_avx512(const int16_t *const d, const int32
             } while (--y);
 
             const __m256i s_m = hadd_four_32_to_64_avx512(sum_m[0], sum_m[1], sum_m[2], sum_m[2]);
-            _mm_storeu_si128((__m128i *)(M + wiener_win * j), _mm256_extracti128_si256(s_m, 0));
+            _mm_storeu_si128((__m128i *)(M + wiener_win * j), _mm256_castsi256_si128(s_m));
             _mm_storel_epi64((__m128i *)&M[wiener_win * j + 2], _mm256_extracti128_si256(s_m, 1));
 
             const __m256i s_h = hadd_four_32_to_64_avx512(sum_h[0], sum_h[1], sum_h[2], sum_h[2]);
@@ -1162,7 +1162,7 @@ static INLINE void compute_stats_win3_avx512(const int16_t *const d, const int32
             } while (height_t < height);
 
             const __m256i s_m = hadd_four_64_avx512(sum_m[0], sum_m[1], sum_m[2], sum_m[2]);
-            _mm_storeu_si128((__m128i *)(M + wiener_win * j), _mm256_extracti128_si256(s_m, 0));
+            _mm_storeu_si128((__m128i *)(M + wiener_win * j), _mm256_castsi256_si128(s_m));
             _mm_storel_epi64((__m128i *)&M[wiener_win * j + 2], _mm256_extracti128_si256(s_m, 1));
 
             const __m256i s_h = hadd_four_64_avx512(sum_h[0], sum_h[1], sum_h[2], sum_h[2]);
@@ -1334,13 +1334,13 @@ static INLINE void compute_stats_win3_avx512(const int16_t *const d, const int32
             delta = _mm256_permutevar8x32_epi32(delta, _mm256_setr_epi32(0, 2, 4, 6, 1, 3, 5, 7));
 
             update_4_stats_avx2(H + 0 * wiener_win * wiener_win2 + 0 * wiener_win,
-                                _mm256_extracti128_si256(delta, 0),
+                                _mm256_castsi256_si128(delta),
                                 H + 1 * wiener_win * wiener_win2 + 1 * wiener_win);
             update_4_stats_avx2(H + 1 * wiener_win * wiener_win2 + 1 * wiener_win,
                                 _mm256_extracti128_si256(delta, 1),
                                 H + 2 * wiener_win * wiener_win2 + 2 * wiener_win);
         } else {
-            const __m256i d0 = _mm256_cvtepi32_epi64(_mm256_extracti128_si256(delta, 0));
+            const __m256i d0 = _mm256_cvtepi32_epi64(_mm256_castsi256_si128(delta));
             const __m256i d1 = _mm256_cvtepi32_epi64(_mm256_extracti128_si256(delta, 1));
             deltas[0]        = _mm256_add_epi64(deltas[0], d0);
             deltas[1]        = _mm256_add_epi64(deltas[1], d1);
@@ -1482,7 +1482,7 @@ static INLINE void compute_stats_win3_avx512(const int16_t *const d, const int32
         // calculated later, so it won't overflow.
         if (bit_depth < AOM_BITS_12) {
             update_4_stats_avx2(H + 0 * wiener_win * wiener_win2 + 1 * wiener_win,
-                                _mm256_extracti128_si256(delta, 0),
+                                _mm256_castsi256_si128(delta),
                                 H + 1 * wiener_win * wiener_win2 + 2 * wiener_win);
             H[(1 * wiener_win + 1) * wiener_win2 + 2 * wiener_win] =
                 H[(0 * wiener_win + 1) * wiener_win2 + 1 * wiener_win] +
@@ -1491,7 +1491,7 @@ static INLINE void compute_stats_win3_avx512(const int16_t *const d, const int32
                 H[(0 * wiener_win + 2) * wiener_win2 + 1 * wiener_win] +
                 _mm256_extract_epi32(delta, 5);
         } else {
-            const __m256i d0 = _mm256_cvtepi32_epi64(_mm256_extracti128_si256(delta, 0));
+            const __m256i d0 = _mm256_cvtepi32_epi64(_mm256_castsi256_si128(delta));
             const __m256i d1 = _mm256_cvtepi32_epi64(_mm256_extracti128_si256(delta, 1));
             deltas[0]        = _mm256_add_epi64(deltas[0], d0);
             deltas[1]        = _mm256_add_epi64(deltas[1], d1);
@@ -1549,7 +1549,7 @@ static INLINE void compute_stats_win3_avx512(const int16_t *const d, const int32
                     deltas[0][0], deltas[0][1], deltas[1][0], deltas[1][1]);
             }
             update_2_stats_sse2(H + (i * wiener_win + 0) * wiener_win2 + j * wiener_win,
-                                _mm256_extracti128_si256(delta64, 0),
+                                _mm256_castsi256_si128(delta64),
                                 H + (i * wiener_win + 1) * wiener_win2 + j * wiener_win + 1);
             update_2_stats_sse2(H + (i * wiener_win + 1) * wiener_win2 + j * wiener_win,
                                 _mm256_extracti128_si256(delta64, 1),
@@ -1593,7 +1593,7 @@ static INLINE void compute_stats_win3_avx512(const int16_t *const d, const int32
         } else {
             const __m256i delta64 = hadd_four_30_to_64_avx512(
                 deltas[0], deltas[1], deltas[2], deltas[2]);
-            delta01 = _mm256_extracti128_si256(delta64, 0);
+            delta01 = _mm256_castsi256_si128(delta64);
             delta2  = _mm256_extract_epi64(delta64, 2);
         }
 
@@ -1685,9 +1685,9 @@ static INLINE void compute_stats_win5_avx512(const int16_t *const d, const int32
 
             const __m256i sum = hadd_four_32_to_64_avx512(sum_h[0], sum_h[1], sum_h[2], sum_h[3]);
             _mm_storel_epi64((__m128i *)&H[1 * wiener_win2 + j * wiener_win],
-                             _mm256_extracti128_si256(sum, 0));
+                             _mm256_castsi256_si128(sum));
             _mm_storeh_epi64((__m128i *)&H[2 * wiener_win2 + j * wiener_win],
-                             _mm256_extracti128_si256(sum, 0));
+                             _mm256_castsi256_si128(sum));
             _mm_storel_epi64((__m128i *)&H[3 * wiener_win2 + j * wiener_win],
                              _mm256_extracti128_si256(sum, 1));
             _mm_storeh_epi64((__m128i *)&H[4 * wiener_win2 + j * wiener_win],
@@ -1799,9 +1799,9 @@ static INLINE void compute_stats_win5_avx512(const int16_t *const d, const int32
 
             const __m256i sum = hadd_four_64_avx512(sum_h[0], sum_h[1], sum_h[2], sum_h[3]);
             _mm_storel_epi64((__m128i *)&H[1 * wiener_win2 + j * wiener_win],
-                             _mm256_extracti128_si256(sum, 0));
+                             _mm256_castsi256_si128(sum));
             _mm_storeh_epi64((__m128i *)&H[2 * wiener_win2 + j * wiener_win],
-                             _mm256_extracti128_si256(sum, 0));
+                             _mm256_castsi256_si128(sum));
             _mm_storel_epi64((__m128i *)&H[3 * wiener_win2 + j * wiener_win],
                              _mm256_extracti128_si256(sum, 1));
             _mm_storeh_epi64((__m128i *)&H[4 * wiener_win2 + j * wiener_win],
@@ -1828,22 +1828,22 @@ static INLINE void compute_stats_win5_avx512(const int16_t *const d, const int32
                 transpose_32bit_8x8_avx2(deltas, deltas);
 
                 update_5_stats_avx2(H + 0 * wiener_win * wiener_win2 + 0 * wiener_win,
-                                    _mm256_extracti128_si256(deltas[0], 0),
+                                    _mm256_castsi256_si128(deltas[0]),
                                     _mm256_extract_epi32(deltas[0], 4),
                                     H + 1 * wiener_win * wiener_win2 + 1 * wiener_win);
 
                 update_5_stats_avx2(H + 1 * wiener_win * wiener_win2 + 1 * wiener_win,
-                                    _mm256_extracti128_si256(deltas[1], 0),
+                                    _mm256_castsi256_si128(deltas[1]),
                                     _mm256_extract_epi32(deltas[1], 4),
                                     H + 2 * wiener_win * wiener_win2 + 2 * wiener_win);
 
                 update_5_stats_avx2(H + 2 * wiener_win * wiener_win2 + 2 * wiener_win,
-                                    _mm256_extracti128_si256(deltas[2], 0),
+                                    _mm256_castsi256_si128(deltas[2]),
                                     _mm256_extract_epi32(deltas[2], 4),
                                     H + 3 * wiener_win * wiener_win2 + 3 * wiener_win);
 
                 update_5_stats_avx2(H + 3 * wiener_win * wiener_win2 + 3 * wiener_win,
-                                    _mm256_extracti128_si256(deltas[3], 0),
+                                    _mm256_castsi256_si128(deltas[3]),
                                     _mm256_extract_epi32(deltas[3], 4),
                                     H + 4 * wiener_win * wiener_win2 + 4 * wiener_win);
             } else {
@@ -2197,7 +2197,7 @@ static INLINE void compute_stats_win5_avx512(const int16_t *const d, const int32
 
             if (bit_depth < AOM_BITS_12) {
                 update_4_stats_avx2(H + (i - 1) * wiener_win * wiener_win2 + (j - 1) * wiener_win,
-                                    _mm256_extracti128_si256(delta, 0),
+                                    _mm256_castsi256_si128(delta),
                                     H + i * wiener_win * wiener_win2 + j * wiener_win);
                 H[i * wiener_win * wiener_win2 + j * wiener_win + 4] =
                     H[(i - 1) * wiener_win * wiener_win2 + (j - 1) * wiener_win + 4] +
@@ -2216,7 +2216,7 @@ static INLINE void compute_stats_win5_avx512(const int16_t *const d, const int32
                     H[((i - 1) * wiener_win + 4) * wiener_win2 + (j - 1) * wiener_win] +
                     _mm_extract_epi32(delta128, 3);
             } else {
-                const __m256i d0 = _mm256_cvtepi32_epi64(_mm256_extracti128_si256(delta, 0));
+                const __m256i d0 = _mm256_cvtepi32_epi64(_mm256_castsi256_si128(delta));
                 const __m128i d1 = _mm_cvtepi32_epi64(_mm256_extracti128_si256(delta, 1));
                 const __m256i d2 = _mm256_cvtepi32_epi64(delta128);
                 deltas[0]        = _mm256_add_epi64(deltas[0], d0);
@@ -2384,7 +2384,7 @@ static INLINE void compute_stats_win5_avx512(const int16_t *const d, const int32
                 deltas[4], deltas[5], deltas[6], deltas[9]);
 
             update_2_stats_sse2(H + (i * wiener_win + 1) * wiener_win2 + i * wiener_win + 1,
-                                _mm256_extracti128_si256(delta64, 0),
+                                _mm256_castsi256_si128(delta64),
                                 H + (i * wiener_win + 2) * wiener_win2 + i * wiener_win + 2);
             H[(i * wiener_win + 2) * wiener_win2 + i * wiener_win + 4] =
                 H[(i * wiener_win + 1) * wiener_win2 + i * wiener_win + 3] +
@@ -2449,8 +2449,7 @@ static INLINE void compute_stats_win7_avx512(const int16_t *const d, const int32
             const __m256i s_m0 = hadd_four_32_to_64_avx512(sum_m[0], sum_m[1], sum_m[2], sum_m[3]);
             const __m256i s_m1 = hadd_four_32_to_64_avx512(sum_m[4], sum_m[5], sum_m[6], sum_m[6]);
             _mm256_storeu_si256((__m256i *)(M + wiener_win * j + 0), s_m0);
-            _mm_storeu_si128((__m128i *)(M + wiener_win * j + 4),
-                             _mm256_extracti128_si256(s_m1, 0));
+            _mm_storeu_si128((__m128i *)(M + wiener_win * j + 4), _mm256_castsi256_si128(s_m1));
             _mm_storel_epi64((__m128i *)&M[wiener_win * j + 6], _mm256_extracti128_si256(s_m1, 1));
 
             const __m256i sh_0 = hadd_four_32_to_64_avx512(sum_h[0], sum_h[1], sum_h[2], sum_h[3]);
@@ -2487,9 +2486,9 @@ static INLINE void compute_stats_win7_avx512(const int16_t *const d, const int32
             const __m256i sum0123 = hadd_four_32_to_64_avx512(
                 sum_h[0], sum_h[1], sum_h[2], sum_h[3]);
             _mm_storel_epi64((__m128i *)&H[1 * wiener_win2 + j * wiener_win],
-                             _mm256_extracti128_si256(sum0123, 0));
+                             _mm256_castsi256_si128(sum0123));
             _mm_storeh_epi64((__m128i *)&H[2 * wiener_win2 + j * wiener_win],
-                             _mm256_extracti128_si256(sum0123, 0));
+                             _mm256_castsi256_si128(sum0123));
             _mm_storel_epi64((__m128i *)&H[3 * wiener_win2 + j * wiener_win],
                              _mm256_extracti128_si256(sum0123, 1));
             _mm_storeh_epi64((__m128i *)&H[4 * wiener_win2 + j * wiener_win],
@@ -2562,8 +2561,7 @@ static INLINE void compute_stats_win7_avx512(const int16_t *const d, const int32
             const __m256i s_m0 = hadd_four_64_avx512(sum_m[0], sum_m[1], sum_m[2], sum_m[3]);
             const __m256i s_m1 = hadd_four_64_avx512(sum_m[4], sum_m[5], sum_m[6], sum_m[6]);
             _mm256_storeu_si256((__m256i *)(M + wiener_win * j + 0), s_m0);
-            _mm_storeu_si128((__m128i *)(M + wiener_win * j + 4),
-                             _mm256_extracti128_si256(s_m1, 0));
+            _mm_storeu_si128((__m128i *)(M + wiener_win * j + 4), _mm256_castsi256_si128(s_m1));
             _mm_storel_epi64((__m128i *)&M[wiener_win * j + 6], _mm256_extracti128_si256(s_m1, 1));
 
             const __m256i sh_0 = hadd_four_64_avx512(sum_h[0], sum_h[1], sum_h[2], sum_h[3]);
@@ -2615,9 +2613,9 @@ static INLINE void compute_stats_win7_avx512(const int16_t *const d, const int32
 
             const __m256i sum0123 = hadd_four_64_avx512(sum_h[0], sum_h[1], sum_h[2], sum_h[3]);
             _mm_storel_epi64((__m128i *)&H[1 * wiener_win2 + j * wiener_win],
-                             _mm256_extracti128_si256(sum0123, 0));
+                             _mm256_castsi256_si128(sum0123));
             _mm_storeh_epi64((__m128i *)&H[2 * wiener_win2 + j * wiener_win],
-                             _mm256_extracti128_si256(sum0123, 0));
+                             _mm256_castsi256_si128(sum0123));
             _mm_storel_epi64((__m128i *)&H[3 * wiener_win2 + j * wiener_win],
                              _mm256_extracti128_si256(sum0123, 1));
             _mm_storeh_epi64((__m128i *)&H[4 * wiener_win2 + j * wiener_win],
@@ -2972,9 +2970,9 @@ static INLINE void compute_stats_win7_avx512(const int16_t *const d, const int32
                     H[((i - 1) * wiener_win + 6) * wiener_win2 + (j - 1) * wiener_win] +
                     _mm256_extract_epi32(deltas[1], 5);
             } else {
-                const __m256i d0 = _mm256_cvtepi32_epi64(_mm256_extracti128_si256(deltas[0], 0));
+                const __m256i d0 = _mm256_cvtepi32_epi64(_mm256_castsi256_si128(deltas[0]));
                 const __m256i d1 = _mm256_cvtepi32_epi64(_mm256_extracti128_si256(deltas[0], 1));
-                const __m256i d2 = _mm256_cvtepi32_epi64(_mm256_extracti128_si256(deltas[1], 0));
+                const __m256i d2 = _mm256_cvtepi32_epi64(_mm256_castsi256_si128(deltas[1]));
                 const __m256i d3 = _mm256_cvtepi32_epi64(_mm256_extracti128_si256(deltas[1], 1));
 
                 deltas[0] = _mm256_add_epi64(deltas_tt[0], d0);
@@ -3212,7 +3210,7 @@ static INLINE void compute_stats_win7_avx512(const int16_t *const d, const int32
 
             // Row 4: 3 points
             update_2_stats_sse2(H + (i * wiener_win + 3) * wiener_win2 + i * wiener_win + 3,
-                                _mm256_extracti128_si256(delta0, 0),
+                                _mm256_castsi256_si128(delta0),
                                 H + (i * wiener_win + 4) * wiener_win2 + i * wiener_win + 4);
             H[(i * wiener_win + 4) * wiener_win2 + i * wiener_win + 6] =
                 H[(i * wiener_win + 3) * wiener_win2 + i * wiener_win + 5] +
@@ -3220,7 +3218,7 @@ static INLINE void compute_stats_win7_avx512(const int16_t *const d, const int32
 
             // Row 5: 2 points
             update_2_stats_sse2(H + (i * wiener_win + 4) * wiener_win2 + i * wiener_win + 4,
-                                _mm256_extracti128_si256(delta1, 0),
+                                _mm256_castsi256_si128(delta1),
                                 H + (i * wiener_win + 5) * wiener_win2 + i * wiener_win + 5);
 
             // Row 6: 1 points

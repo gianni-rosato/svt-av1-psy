@@ -685,7 +685,7 @@ static INLINE void xy_x_round_store_32_avx2(const __m256i res[2], int16_t *const
 
     r[0]             = xy_x_round_avx2(res[0]);
     r[1]             = xy_x_round_avx2(res[1]);
-    const __m256i d0 = _mm256_inserti128_si256(r[0], _mm256_extracti128_si256(r[1], 0), 1);
+    const __m256i d0 = _mm256_inserti128_si256(r[0], _mm256_castsi256_si128(r[1]), 1);
     const __m256i d1 = _mm256_inserti128_si256(r[1], _mm256_extracti128_si256(r[0], 1), 0);
     _mm256_storeu_si256((__m256i *)dst, d0);
     _mm256_storeu_si256((__m256i *)(dst + 16), d1);
@@ -909,7 +909,7 @@ static INLINE void sr_x_2tap_32_avg_avx2(const uint8_t *const src, uint8_t *cons
 
 static INLINE void jnt_no_avg_store_16x2_avx2(const __m256i src0, const __m256i src1,
                                               ConvBufType *const dst, const ptrdiff_t stride) {
-    const __m256i d0 = _mm256_inserti128_si256(src0, _mm256_extracti128_si256(src1, 0), 1);
+    const __m256i d0 = _mm256_inserti128_si256(src0, _mm256_castsi256_si128(src1), 1);
     const __m256i d1 = _mm256_inserti128_si256(src1, _mm256_extracti128_si256(src0, 1), 0);
     _mm256_storeu_si256((__m256i *)dst, d0);
     _mm256_storeu_si256((__m256i *)(dst + stride), d1);

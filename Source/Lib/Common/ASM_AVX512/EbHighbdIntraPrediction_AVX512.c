@@ -198,7 +198,7 @@ static const uint16_t sm_weights_64[128] = {
 
 // Handle number of elements: up to 64.
 static INLINE __m128i dc_sum_large(const __m256i src) {
-    const __m128i s_lo = _mm256_extracti128_si256(src, 0);
+    const __m128i s_lo = _mm256_castsi256_si128(src);
     const __m128i s_hi = _mm256_extracti128_si256(src, 1);
     __m128i       sum, sum_hi;
     sum    = _mm_add_epi16(s_lo, s_hi);
@@ -241,7 +241,7 @@ static INLINE void dc_common_predictor_64xh(uint16_t *const dst, const ptrdiff_t
 
 static INLINE __m128i dc_sum_16(const uint16_t *const src) {
     const __m256i s    = _mm256_loadu_si256((const __m256i *)src);
-    const __m128i s_lo = _mm256_extracti128_si256(s, 0);
+    const __m128i s_lo = _mm256_castsi256_si128(s);
     const __m128i s_hi = _mm256_extracti128_si256(s, 1);
     const __m128i sum  = _mm_add_epi16(s_lo, s_hi);
     return dc_sum_8x16bit(sum);
@@ -460,7 +460,7 @@ static INLINE __m128i dc_sum_8_32(const uint16_t *const src_8, const uint16_t *c
     const __m256i s_32_0   = _mm512_castsi512_si256(s32_01);
     const __m256i s_32_1   = _mm512_extracti64x4_epi64(s32_01, 1);
     const __m256i s_32     = _mm256_add_epi16(s_32_0, s_32_1);
-    const __m128i s_lo     = _mm256_extracti128_si256(s_32, 0);
+    const __m128i s_lo     = _mm256_castsi256_si128(s_32);
     const __m128i s_hi     = _mm256_extracti128_si256(s_32, 1);
     const __m128i s_16_sum = _mm_add_epi16(s_lo, s_hi);
     const __m128i sum      = _mm_add_epi16(s_8, s_16_sum);
@@ -479,7 +479,7 @@ static INLINE __m128i dc_sum_16_32(const uint16_t *const src_16, const uint16_t 
 
 // Handle number of elements: 65 to 128.
 static INLINE __m128i dc_sum_larger(const __m256i src) {
-    const __m128i s_lo = _mm256_extracti128_si256(src, 0);
+    const __m128i s_lo = _mm256_castsi256_si128(src);
     const __m128i s_hi = _mm256_extracti128_si256(src, 1);
     __m128i       sum, sum_hi;
     sum = _mm_add_epi16(s_lo, s_hi);

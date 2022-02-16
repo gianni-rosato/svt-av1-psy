@@ -148,32 +148,32 @@ static const uint16_t mask_16bit[16][16] = {
 
 static INLINE void add_six_32_to_64_avx2(const __m256i src, __m256i *const sum,
                                          __m128i *const sum128) {
-    const __m256i s0 = _mm256_cvtepi32_epi64(_mm256_extracti128_si256(src, 0));
+    const __m256i s0 = _mm256_cvtepi32_epi64(_mm256_castsi256_si128(src));
     const __m128i s1 = _mm_cvtepi32_epi64(_mm256_extracti128_si256(src, 1));
     *sum             = _mm256_add_epi64(*sum, s0);
     *sum128          = _mm_add_epi64(*sum128, s1);
 }
 
 static INLINE __m128i add_hi_lo_64_avx2(const __m256i src) {
-    const __m128i s0 = _mm256_extracti128_si256(src, 0);
+    const __m128i s0 = _mm256_castsi256_si128(src);
     const __m128i s1 = _mm256_extracti128_si256(src, 1);
     return _mm_add_epi64(s0, s1);
 }
 
 static INLINE __m128i sub_hi_lo_32_avx2(const __m256i src) {
-    const __m128i s0 = _mm256_extracti128_si256(src, 0);
+    const __m128i s0 = _mm256_castsi256_si128(src);
     const __m128i s1 = _mm256_extracti128_si256(src, 1);
     return _mm_sub_epi32(s1, s0);
 }
 
 static INLINE __m256i hadd_32x8_to_64x4_avx2(const __m256i src) {
-    const __m256i s0 = _mm256_cvtepi32_epi64(_mm256_extracti128_si256(src, 0));
+    const __m256i s0 = _mm256_cvtepi32_epi64(_mm256_castsi256_si128(src));
     const __m256i s1 = _mm256_cvtepi32_epi64(_mm256_extracti128_si256(src, 1));
     return _mm256_add_epi64(s0, s1);
 }
 
 static INLINE __m256i hsub_32x8_to_64x4_avx2(const __m256i src) {
-    const __m256i s0 = _mm256_cvtepi32_epi64(_mm256_extracti128_si256(src, 0));
+    const __m256i s0 = _mm256_cvtepi32_epi64(_mm256_castsi256_si128(src));
     const __m256i s1 = _mm256_cvtepi32_epi64(_mm256_extracti128_si256(src, 1));
     return _mm256_sub_epi64(s1, s0);
 }
@@ -181,7 +181,7 @@ static INLINE __m256i hsub_32x8_to_64x4_avx2(const __m256i src) {
 static INLINE __m128i hadd_64_avx2(const __m256i src) {
     const __m256i t0   = _mm256_srli_si256(src, 8);
     const __m256i sum  = _mm256_add_epi64(src, t0);
-    const __m128i sum0 = _mm256_extracti128_si256(sum, 0); // 00+01 10+11
+    const __m128i sum0 = _mm256_castsi256_si128(sum); // 00+01 10+11
     const __m128i sum1 = _mm256_extracti128_si256(sum, 1); // 02+03 12+13
     return _mm_add_epi64(sum0, sum1); // 00+01+02+03 10+11+12+13
 }
@@ -190,7 +190,7 @@ static INLINE __m128i hadd_two_64_avx2(const __m256i src0, const __m256i src1) {
     const __m256i t0   = _mm256_unpacklo_epi64(src0, src1); // 00 10  02 12
     const __m256i t1   = _mm256_unpackhi_epi64(src0, src1); // 01 11  03 13
     const __m256i sum  = _mm256_add_epi64(t0, t1); // 00+01 10+11  02+03 12+13
-    const __m128i sum0 = _mm256_extracti128_si256(sum, 0); // 00+01 10+11
+    const __m128i sum0 = _mm256_castsi256_si128(sum); // 00+01 10+11
     const __m128i sum1 = _mm256_extracti128_si256(sum, 1); // 02+03 12+13
     return _mm_add_epi64(sum0, sum1); // 00+01+02+03 10+11+12+13
 }
@@ -203,7 +203,7 @@ static INLINE __m128i hadd_two_32_to_64_avx2(const __m256i src0, const __m256i s
 
 static INLINE __m128i hadd_two_32_avx2(const __m256i src0, const __m256i src1) {
     const __m256i s01  = _mm256_hadd_epi32(src0, src1); // 0 0 1 1  0 0 1 1
-    const __m128i sum0 = _mm256_extracti128_si256(s01, 0); // 0 0 1 1
+    const __m128i sum0 = _mm256_castsi256_si128(s01); // 0 0 1 1
     const __m128i sum1 = _mm256_extracti128_si256(s01, 1); // 0 0 1 1
     const __m128i sum  = _mm_add_epi32(sum0, sum1); // 0 0 1 1
     return _mm_hadd_epi32(sum, sum); // 0 1 0 1
@@ -214,7 +214,7 @@ static INLINE __m128i hadd_four_32_avx2(const __m256i src0, const __m256i src1, 
     const __m256i s01   = _mm256_hadd_epi32(src0, src1); // 0 0 1 1  0 0 1 1
     const __m256i s23   = _mm256_hadd_epi32(src2, src3); // 2 2 3 3  2 2 3 3
     const __m256i s0123 = _mm256_hadd_epi32(s01, s23); // 0 1 2 3  0 1 2 3
-    const __m128i sum0  = _mm256_extracti128_si256(s0123, 0); // 0 1 2 3
+    const __m128i sum0  = _mm256_castsi256_si128(s0123); // 0 1 2 3
     const __m128i sum1  = _mm256_extracti128_si256(s0123, 1); // 0 1 2 3
     return _mm_add_epi32(sum0, sum1); // 0 1 2 3
 }
@@ -237,7 +237,7 @@ static INLINE __m256i hadd_four_64_avx2(const __m256i src0, const __m256i src1, 
     s[1] = _mm256_add_epi64(t[2], t[3]); // 20+21 30+31  22+23 32+33
 
     // 00+01 10+11  20+21 30+31
-    t[0] = _mm256_inserti128_si256(s[0], _mm256_extracti128_si256(s[1], 0), 1);
+    t[0] = _mm256_inserti128_si256(s[0], _mm256_castsi256_si128(s[1]), 1);
     // 02+03 12+13  22+23 32+33
     t[1] = _mm256_inserti128_si256(s[1], _mm256_extracti128_si256(s[0], 1), 0);
 
@@ -340,7 +340,7 @@ static INLINE void update_5_stats_highbd_avx2(const int64_t *const src, const __
 
 static INLINE void update_8_stats_avx2(const int64_t *const src, const __m256i delta,
                                        int64_t *const dst) {
-    update_4_stats_avx2(src + 0, _mm256_extracti128_si256(delta, 0), dst + 0);
+    update_4_stats_avx2(src + 0, _mm256_castsi256_si128(delta), dst + 0);
     update_4_stats_avx2(src + 4, _mm256_extracti128_si256(delta, 1), dst + 4);
 }
 
