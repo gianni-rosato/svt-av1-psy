@@ -69,6 +69,8 @@ extern "C" {
 #define FIX_NIC_BUFF            1 // Fix the way the max NICs are derived
 
 #define TUNE_PRESET_GAP         1 // Correct the preset gap between M6 to M9
+#define TUNE_M8                 1 // Tune M8
+
 //FOR DEBUGGING - Do not remove
 #define LOG_ENC_DONE            0 // log encoder job one
 #define NO_ENCDEC               0 // bypass encDec to test cmpliance of MD. complained achieved when skip_flag is OFF. Port sample code from VCI-SW_AV1_Candidate1 branch

@@ -6038,6 +6038,10 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet * sequence_co
         : (pcs_ptr->temporal_layer_index == 0)   ? 2
         : 4;
 #endif
+#if TUNE_M8
+    else if (enc_mode <= ENC_M8)
+        intra_level = pcs_ptr->slice_type == I_SLICE ? 1 : 4;
+#endif
     else
         intra_level = pcs_ptr->slice_type == I_SLICE ? 3 : 4;
 

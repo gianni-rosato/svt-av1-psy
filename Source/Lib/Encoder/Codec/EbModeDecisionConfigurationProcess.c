@@ -740,7 +740,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     if (pcs_ptr->slice_type == I_SLICE)
         pcs_ptr->skip_intra = 0;
 #if OPT_M9_4K
+#if TUNE_M8
+    else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M7)
+#else
     else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M8)
+#endif
         pcs_ptr->skip_intra = 0;
 #else
     else if (pcs_ptr->parent_pcs_ptr->enc_mode <= ENC_M9)
@@ -774,7 +778,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         pcs_ptr->txt_level = 1;
     else if (enc_mode <= ENC_M4)
         pcs_ptr->txt_level = (pcs_ptr->temporal_layer_index == 0) ? 1 : 3;
+#if TUNE_M8
+    else if (enc_mode <= ENC_M7)
+#else
     else if (enc_mode <= ENC_M8)
+#endif
         pcs_ptr->txt_level = 5;
 #if OPT_RES_CHECKS_2
     else if (enc_mode <= ENC_M10)

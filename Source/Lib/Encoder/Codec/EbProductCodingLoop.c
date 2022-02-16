@@ -1606,6 +1606,10 @@ void set_inter_comp_controls(ModeDecisionContext *ctx, uint8_t inter_comp_mode) 
     }
 }
 #if FIX_NIC_BUFF
+/* Set the max number of NICs for each MD stage, based on the picture type and scaling settings.
+
+   pic_type = I_SLICE ? 0 : REF ? 1 : 2;
+*/
 void set_nics(NicScalingCtrls* scaling_ctrls, uint32_t mds1_count[CAND_CLASS_TOTAL],
     uint32_t mds2_count[CAND_CLASS_TOTAL], uint32_t mds3_count[CAND_CLASS_TOTAL], uint8_t pic_type) {
 
