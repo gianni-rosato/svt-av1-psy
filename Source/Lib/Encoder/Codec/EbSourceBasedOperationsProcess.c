@@ -1658,12 +1658,8 @@ static void generate_r0beta(PictureParentControlSet *pcs_ptr) {
         pcs_ptr->tpl_is_valid = 0;
     }
 #if DEBUG_TPL
-#if OPT_SBO_CALC_FACTORS
-    int64_t intra_cost_base = (recrf_dist_base_sum << (RDDIV_BITS));
-#endif
-    SVT_LOG("generate_r0beta ------> poc %ld\t%.0f\t%.0f \t%.5f base_rdmult=%d\n",
+    SVT_LOG("generate_r0beta ------> poc %ld\t%.0f\t%.5f\tbase_rdmult=%d\n",
         pcs_ptr->picture_number,
-        (double)intra_cost_base,
         (double)mc_dep_cost_base,
         pcs_ptr->r0,
         pcs_ptr->pa_me_data->base_rdmult);
@@ -1925,11 +1921,10 @@ EbErrorType tpl_mc_flow(EncodeContext *encode_context_ptr, SequenceControlSet *s
 #if DEBUG_TPL
 
 
-            for (uint32_t frame_idx = 0; frame_idx < frames_in_sw; frame_idx++)
+            for (int32_t frame_idx = 0; frame_idx < frames_in_sw; frame_idx++)
             {
                 PictureParentControlSet *pcs_ptr_tmp = pcs_ptr->tpl_group[frame_idx];
                 Av1Common *cm = pcs_ptr->av1_cm;
-                SequenceControlSet *scs_ptr = pcs_ptr_tmp->scs_ptr;
                 int64_t intra_cost_base = 0;
                 int64_t mc_dep_cost_base = 0;
 #if   FIX_R2R_TPL_IXX
@@ -1937,9 +1932,11 @@ EbErrorType tpl_mc_flow(EncodeContext *encode_context_ptr, SequenceControlSet *s
                 const int           step = 1 << (shift);
                 const int           mi_cols_sr = ((pcs_ptr->aligned_width + 15) / 16) << 2;
 #else
-                const int step = 2;// 1 << (pcs_ptr_tmp->is_720p_or_larger ? 2 : 1);
+                const int shift = pcs_ptr->tpl_ctrls.synth_blk_size == 8 ? 1
+        : pcs_ptr->tpl_ctrls.synth_blk_size == 16            ? 2
+                                                             : 3;
+                const int step = 1 << (shift);
                 const int mi_cols_sr = ((pcs_ptr_tmp->aligned_width + 15) / 16) << 2;
-                const int shift = 2;// pcs_ptr_tmp->is_720p_or_larger ? 2 : 1;
 #endif
                 for (int row = 0; row < cm->mi_rows; row += step) {
                     for (int col = 0; col < mi_cols_sr; col += step) {
@@ -1957,9 +1954,10 @@ EbErrorType tpl_mc_flow(EncodeContext *encode_context_ptr, SequenceControlSet *s
 
             }
         }
+#else
+}
 #endif
 
-}
 
 EB_DELETE(encode_context_ptr->mc_flow_rec_picture_buffer_noref);
 
