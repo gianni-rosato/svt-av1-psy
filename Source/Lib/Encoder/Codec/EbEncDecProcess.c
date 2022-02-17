@@ -5282,14 +5282,37 @@ EbErrorType signal_derivation_enc_dec_kernel_oq_light_pd0(SequenceControlSet * s
     ctx->shut_fast_rate = EB_TRUE;
 
     uint8_t intra_level = 0;
+#if ADD_VQ_MODE // intra lvl for light PD0
+    if (pcs->slice_type == I_SLICE || pcs->parent_pcs_ptr->transition_present)
+#else
     if (pcs->slice_type == I_SLICE)
+#endif
         intra_level = 1;
     else if (ctx->pd0_level <= LIGHT_PD0_LVL1)
         intra_level = (pcs->temporal_layer_index == 0) ? 1 : 0;
     else
         intra_level = 0;
     set_intra_ctrls(pcs, ctx, intra_level);
-
+#if ADD_VQ_MODE
+    if (ctx->pd0_level == VERY_LIGHT_PD0) {
+        // Modulate the inter-depth bias based on the QP and the temporal complexity of the SB
+        // towards more split for low QPs or/and complex SBs,
+        // and less split for high QPs or/and easy SBs (to compensate for the absence of the coeff rate)
+        ctx->inter_depth_bias = 950 +
+            pcs->parent_pcs_ptr->frm_hdr.quantization_params.base_q_idx;
+        if (pcs->parent_pcs_ptr->me_8x8_cost_variance[ctx->sb_index] > 1000)
+            ctx->inter_depth_bias = ctx->inter_depth_bias - 150;
+        else if (pcs->parent_pcs_ptr->me_8x8_cost_variance[ctx->sb_index] > 500)
+            ctx->inter_depth_bias = ctx->inter_depth_bias - 50;
+        else if (pcs->parent_pcs_ptr->me_8x8_cost_variance[ctx->sb_index] > 250)
+            ctx->inter_depth_bias = ctx->inter_depth_bias + 50;
+        else
+            ctx->inter_depth_bias = ctx->inter_depth_bias + 150;
+    }
+    else {
+        ctx->inter_depth_bias = 0;
+    }
+#else
     if (ctx->pd0_level == VERY_LIGHT_PD0) {
         // Modulate the inter-depth bias based on the QP and the temporal complexity of the SB
         // towards more split for low QPs or/and complex SBs,
@@ -5307,6 +5330,7 @@ EbErrorType signal_derivation_enc_dec_kernel_oq_light_pd0(SequenceControlSet * s
     } else {
         ctx->pd0_inter_depth_bias = 0;
     }
+#endif
     if (ctx->pd0_level == VERY_LIGHT_PD0)
         return return_error;
 
@@ -5320,7 +5344,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq_light_pd0(SequenceControlSet * s
     set_chroma_controls(ctx, 0 /*chroma off*/);
 
     uint8_t pf_level = 1;
+#if ADD_VQ_MODE // shut PF
+    if (pcs->slice_type != I_SLICE && !pcs->parent_pcs_ptr->transition_present) {
+#else
     if (pcs->slice_type != I_SLICE) {
+#endif
         if (ctx->pd0_level <= LIGHT_PD0_LVL2) {
             pf_level = 1;
         } else {
@@ -5406,12 +5434,20 @@ EbErrorType signal_derivation_enc_dec_kernel_oq_light_pd0(SequenceControlSet * s
                 fast_lambda, 0, pcs->parent_pcs_ptr->me_64x64_distortion[ctx->sb_index]);
 
             if (ctx->pd0_level <= LIGHT_PD0_LVL2) {
+#if ADD_VQ_MODE // shut subres
+                if (pcs->slice_type == I_SLICE || pcs->parent_pcs_ptr->transition_present)
+#else
                 if (pcs->slice_type == I_SLICE)
+#endif
                     subres_level = 1;
                 else
                     subres_level = (cost_64x64 < use_subres_th) ? 1 : 0;
             } else if (ctx->pd0_level <= LIGHT_PD0_LVL3) {
+#if ADD_VQ_MODE // shut subres
+                if (pcs->slice_type == I_SLICE || pcs->parent_pcs_ptr->transition_present)
+#else
                 if (pcs->slice_type == I_SLICE)
+#endif
                     subres_level = 1;
                 else if (pcs->parent_pcs_ptr->is_used_as_reference_flag)
                     subres_level = (cost_64x64 < use_subres_th) ? 1 : 0;
@@ -6015,7 +6051,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet * sequence_co
     // intra_level must be greater than 0 for I_SLICE
     uint8_t intra_level = 0;
     if (pd_pass == PD_PASS_0) {
+#if ADD_VQ_MODE // intra lvl for PD0
+        if (pcs_ptr->slice_type == I_SLICE || pcs_ptr->parent_pcs_ptr->transition_present)
+#else
         if (pcs_ptr->slice_type == I_SLICE)
+#endif
             intra_level = 5;
         else if (enc_mode <= ENC_M1)
             intra_level = 5;
@@ -6029,7 +6069,11 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet * sequence_co
         intra_level = (pcs_ptr->temporal_layer_index == 0) ? 1 : 4;
 #if OPT_M7_4K
     else if (enc_mode <= ENC_M7)
+#if ADD_VQ_MODE // intra lvl for PD1
+        intra_level = (pcs_ptr->slice_type == I_SLICE || pcs_ptr->parent_pcs_ptr->transition_present) ? 1
+#else
         intra_level = pcs_ptr->slice_type == I_SLICE ? 1
+#endif
         : (pcs_ptr->temporal_layer_index == 0)   ? 2
         : 4;
 #else
@@ -6043,12 +6087,20 @@ EbErrorType signal_derivation_enc_dec_kernel_oq(SequenceControlSet * sequence_co
         intra_level = pcs_ptr->slice_type == I_SLICE ? 1 : 4;
 #endif
     else
+#if ADD_VQ_MODE // intra lvl for PD1
+        intra_level = (pcs_ptr->slice_type == I_SLICE || pcs_ptr->parent_pcs_ptr->transition_present) ? 3 : 4;
+#else
         intra_level = pcs_ptr->slice_type == I_SLICE ? 3 : 4;
+#endif
 
     set_intra_ctrls(pcs_ptr, context_ptr, intra_level);
     set_mds0_controls(pcs_ptr, context_ptr, pd_pass == PD_PASS_0 ? 2 : pcs_ptr->mds0_level);
     set_subres_controls(context_ptr, 0);
+#if ADD_VQ_MODE
+    context_ptr->inter_depth_bias = 0;
+#else
     context_ptr->pd0_inter_depth_bias = 0;
+#endif
     return return_error;
 }
 void copy_neighbour_arrays_light_pd0(PictureControlSet *pcs_ptr, ModeDecisionContext *context_ptr,
@@ -6424,6 +6476,10 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
                                           ModeDecisionContext *context_ptr, uint32_t sb_index) {
     MdcSbData *results_ptr = context_ptr->mdc_sb_array;
     uint32_t   blk_index   = 0;
+#if ADD_VQ_MODE
+    uint8_t use_cost_band_based_modulation = (!scs_ptr->vq_ctrls.stability_ctrls.depth_refinement || (pcs_ptr->slice_type != I_SLICE && pcs_ptr->parent_pcs_ptr->me_8x8_cost_variance[context_ptr->sb_index] < VQ_STABILITY_ME_VAR_TH));
+#endif
+
     if (pcs_ptr->parent_pcs_ptr->disallow_nsq) {
         if (context_ptr->disallow_4x4) {
             memset(results_ptr->consider_block, 0, sizeof(uint8_t) * scs_ptr->max_block_cnt);
@@ -6521,8 +6577,13 @@ static void perform_pred_depth_refinement(SequenceControlSet *scs_ptr, PictureCo
 
                         uint8_t sq_size_idx = 7 - (uint8_t)svt_log2f((uint8_t)blk_geom->sq_size);
                         int64_t th_offset   = 0;
+
                         if (context_ptr->depth_refinement_ctrls.enabled &&
+#if ADD_VQ_MODE
+                            context_ptr->depth_refinement_ctrls.cost_band_based_modulation && use_cost_band_based_modulation &&
+#else
                             context_ptr->depth_refinement_ctrls.cost_band_based_modulation &&
+#endif
                             (s_depth != 0 || e_depth != 0)) {
                             update_pred_th_offset(
                                 context_ptr, blk_geom, &s_depth, &e_depth, &th_offset);

@@ -199,6 +199,8 @@ For more information on valid values for specific keys, refer to the [EbEncSetti
 | **LogicalProcessors**            | --lp                        | [0, core count of the machine] | 0           | Target (best effort) number of logical cores to be used. 0 means all. Refer to Appendix A.1                   |
 | **PinnedExecution**              | --pin                       | [0-1]                          | 0           | Pin the execution to the first --lp cores. Overwritten to 0 when `--ss` is set. Refer to Appendix A.1         |
 | **TargetSocket**                 | --ss                        | [-1,1]                         | -1          | Specifies which socket to run on, assumes a max of two sockets. Refer to Appendix A.1                         |
+| **FastDecode**                   | --fast-decode               | [0,3]                          | 0           | Tune settings to output bitstreams that can be decoded faster, higher values for faster decoding              |
+| **Tune**                         | --tune                      | [0,1]                          | 1           | Specifies whether to use PSNR or VQ as the tuning metric [0 = VQ, 1 = PSNR]                                   |
 
 #### Rate Control Options
 

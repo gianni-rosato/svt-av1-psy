@@ -2791,6 +2791,16 @@ void interpolation_filter_search(PictureControlSet           *picture_control_se
     NeighborArrayUnit *luma_recon_neighbor_array;
     NeighborArrayUnit *cb_recon_neighbor_array;
     NeighborArrayUnit *cr_recon_neighbor_array;
+
+#if ADD_VQ_MODE
+    static const uint64_t ifs_smooth_bias[] =
+    {
+       130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130,
+       120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120,
+       110, 110, 110, 110, 110, 110, 110, 110, 110, 110, 110, 110, 110, 110, 110, 110,
+       100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100
+    };
+#endif
     if (!hbd_mode_decision) {
         luma_recon_neighbor_array = md_context_ptr->luma_recon_neighbor_array;
         cb_recon_neighbor_array   = md_context_ptr->cb_recon_neighbor_array;
@@ -3029,9 +3039,19 @@ void interpolation_filter_search(PictureControlSet           *picture_control_se
                                     &tmp_rate,
                                     &tmp_dist,
                                     hbd_mode_decision ? EB_10BIT : EB_8BIT);
+#if ADD_VQ_MODE
+                    uint64_t tmp_rd = RDCOST(
+                        full_lambda_divided, tmp_rs + tmp_rate, tmp_dist);
+#else
                     const uint64_t tmp_rd = RDCOST(
                         full_lambda_divided, tmp_rs + tmp_rate, tmp_dist);
+#endif
 
+#if ADD_VQ_MODE
+                    if (scs_ptr->vq_ctrls.sharpness_ctrls.ifs && picture_control_set_ptr->parent_pcs_ptr->is_noise_level)
+                        if (filter_sets[i][0] == 1 || filter_sets[i][1] == 1)
+                            tmp_rd = (tmp_rd* ifs_smooth_bias[picture_control_set_ptr->picture_qp]) / 100;
+#endif
                     if (tmp_rd < rd) {
                         rd              = tmp_rd;
                         switchable_rate = tmp_rs;

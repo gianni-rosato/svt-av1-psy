@@ -2081,7 +2081,11 @@ void sub_sample_chroma_generate_pixel_intensity_histogram_bins(
         for (region_in_picture_height_index = 0; region_in_picture_height_index <
              scs_ptr->picture_analysis_number_of_regions_per_height;
              region_in_picture_height_index++) { // loop over vertical regions
+#if ADD_VQ_MODE
+            if (scs_ptr->static_config.scene_change_detection || scs_ptr->vq_ctrls.sharpness_ctrls.scene_transition) {
+#else
             if (scs_ptr->static_config.scene_change_detection) {
+#endif
                 // Initialize bins to 1
                 svt_initialize_buffer_32bits(
                     pcs_ptr->picture_histogram[region_in_picture_width_index]
@@ -2232,7 +2236,11 @@ void gathering_picture_statistics(SequenceControlSet *scs_ptr, PictureParentCont
     uint64_t sum_avg_intensity_ttl_regions_cr   = 0;
 
     // Histogram bins
+#if ADD_VQ_MODE
+    if (scs_ptr->static_config.scene_change_detection || scs_ptr->vq_ctrls.sharpness_ctrls.scene_transition) {
+#else
     if (scs_ptr->static_config.scene_change_detection) {
+#endif
         // Use 1/16 Luma for Histogram generation
         // 1/16 input ready
         sub_sample_luma_generate_pixel_intensity_histogram_bins(

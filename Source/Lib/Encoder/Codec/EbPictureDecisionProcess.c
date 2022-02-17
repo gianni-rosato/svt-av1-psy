@@ -284,7 +284,10 @@ EbErrorType picture_decision_context_ctor(
 
 
     context_ptr->mg_progress_id = 0;
-
+#if ADD_VQ_MODE
+    context_ptr->last_i_noise_levels_log1p_fp16[0] = 0;
+    context_ptr->transition_present = 0;
+#endif
 
     return EB_ErrorNone;
 }
@@ -5090,6 +5093,11 @@ void mctf_frame(
     }
     else
         pcs_ptr->temporal_filtering_on = EB_FALSE; // set temporal filtering flag OFF for current picture
+
+#if ADD_VQ_MODE //////
+    pcs_ptr->is_noise_level = (context_ptr->last_i_noise_levels_log1p_fp16[0] >= VQ_NOISE_LVL_TH);
+#endif
+
     if (scs_ptr->static_config.pred_structure != EB_PRED_RANDOM_ACCESS &&
         scs_ptr->tf_params_per_type[1].enabled&&
         pcs_ptr->temporal_layer_index == 0)
@@ -5506,6 +5514,10 @@ EbErrorType derive_tf_window_params(
        else
            noise_levels[0] = context_ptr->last_i_noise_levels[0];
 
+#if ADD_VQ_MODE
+    // Set is_noise_level for the tf off case
+    pcs_ptr->is_noise_level = (context_ptr->last_i_noise_levels_log1p_fp16[0] >= VQ_NOISE_LVL_TH);
+#endif
     // Adjust number of filtering frames based on noise and quantization factor.
     // Basically, we would like to use more frames to filter low-noise frame such
     // that the filtered frame can provide better predictions for more frames.
@@ -5513,6 +5525,9 @@ EbErrorType derive_tf_window_params(
     // we will not change the number of frames for key frame filtering, which is
     // to avoid visual quality drop.
     int adjust_num = 0;
+#if ADD_VQ_MODE
+    if (scs_ptr->vq_ctrls.sharpness_ctrls.tf == 0) {
+#endif
     if (pcs_ptr->tf_ctrls.use_fixed_point || pcs_ptr->tf_ctrls.use_medium_filter) {
         if (noise_levels_log1p_fp16[0] < 26572 /*FLOAT2FP(log1p(0.5), 16, int32_t)*/) {
             adjust_num = 6;
@@ -5533,9 +5548,17 @@ EbErrorType derive_tf_window_params(
     else if (noise_levels[0] < 2.0) {
         adjust_num = 2;
     }
+#if ADD_VQ_MODE
+    }
+#endif
     (void)out_stride_diff64;
 
-
+#if ADD_VQ_MODE
+    if (scs_ptr->vq_ctrls.sharpness_ctrls.tf && pcs_ptr->is_noise_level) {
+        pcs_ptr->tf_ctrls.num_past_pics = MIN(pcs_ptr->tf_ctrls.num_past_pics, 1);
+        pcs_ptr->tf_ctrls.num_future_pics = MIN(pcs_ptr->tf_ctrls.num_future_pics, 1);
+    }
+#endif
     if (scs_ptr->static_config.pred_structure != EB_PRED_RANDOM_ACCESS) {
         int num_past_pics = pcs_ptr->tf_ctrls.num_past_pics + (pcs_ptr->tf_ctrls.noise_adjust_past_pics ? (adjust_num >> 1) : 0);
         num_past_pics = MIN(pcs_ptr->tf_ctrls.max_num_past_pics, num_past_pics);
@@ -6060,12 +6083,28 @@ void* picture_decision_kernel(void *input_ptr)
             if (pcs_ptr->idr_flag == EB_TRUE)
                 context_ptr->last_solid_color_frame_poc = 0xFFFFFFFF;
             if (window_avail == EB_TRUE && queue_entry_ptr->picture_number > 0) {
+#if ADD_VQ_MODE
+                if (scs_ptr->static_config.scene_change_detection) {
+
+                    pcs_ptr->scene_change_flag = scene_transition_detector(
+                        context_ptr,
+                        scs_ptr,
+                        (PictureParentControlSet**)pcs_ptr->pd_window);
+                } else if (scs_ptr->vq_ctrls.sharpness_ctrls.scene_transition && context_ptr->transition_present == 0) {
+
+                    context_ptr->transition_present = scene_transition_detector(
+                        context_ptr,
+                        scs_ptr,
+                        (PictureParentControlSet**)pcs_ptr->pd_window);
+                }
+#else
                 if (scs_ptr->static_config.scene_change_detection) {
                     pcs_ptr->scene_change_flag = scene_transition_detector(
                         context_ptr,
                         scs_ptr,
                         (PictureParentControlSet **)pcs_ptr->pd_window);
                 }
+#endif
                 else
                     pcs_ptr->scene_change_flag = EB_FALSE;
                 pcs_ptr->cra_flag = (pcs_ptr->scene_change_flag == EB_TRUE) ?
@@ -6690,7 +6729,12 @@ void* picture_decision_kernel(void *input_ptr)
                                 pcs_ptr->ref_list1_count = (picture_type == I_SLICE || pcs_ptr->is_overlay) ? 0 : (uint8_t)pred_position_ptr->ref_list1.reference_list_count;
 
                                 update_count_try(scs_ptr, pcs_ptr);
-
+#if ADD_VQ_MODE
+                                if (context_ptr->transition_present && pcs_ptr->temporal_layer_index == 0) {
+                                    pcs_ptr->transition_present = 1;
+                                    context_ptr->transition_present = 0;
+                                }
+#endif
                                 if (picture_type == B_SLICE && pcs_ptr->temporal_layer_index == 0 && pcs_ptr->list0_only_base_ctrls.enabled) {
                                     update_list0_only_base(scs_ptr, pcs_ptr);
                                 }

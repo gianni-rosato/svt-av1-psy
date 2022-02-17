@@ -350,6 +350,9 @@ EbErrorType copy_sequence_control_set(SequenceControlSet *dst, SequenceControlSe
     dst->tf_params_per_type[0] = src->tf_params_per_type[0];
     dst->tf_params_per_type[1] = src->tf_params_per_type[1];
     dst->tf_params_per_type[2] = src->tf_params_per_type[2];
+#if ADD_VQ_MODE
+    dst->vq_ctrls = src->vq_ctrls;
+#endif
     dst->mrp_ctrls = src->mrp_ctrls;
     dst->passes            = src->passes;
     dst->ipp_pass_ctrls    = src->ipp_pass_ctrls;
@@ -391,7 +394,6 @@ EbErrorType copy_sequence_control_set(SequenceControlSet *dst, SequenceControlSe
     dst->speed_control_flag            = src->speed_control_flag;
     dst->tpl_level = src->tpl_level;
     dst->calculate_variance = src->calculate_variance;
-
     return EB_ErrorNone;
 }
 

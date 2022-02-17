@@ -868,7 +868,11 @@ typedef struct ModeDecisionContext {
     uint8_t
                 approx_inter_rate; // use approximate rate for inter cost (set at pic-level b/c some pic-level initializations will be removed)
     uint8_t     enable_psad; // Enable pSad
+#if ADD_VQ_MODE
+    uint32_t    inter_depth_bias;
+#else
     uint32_t    pd0_inter_depth_bias;
+#endif
     uint8_t     bipred_available;
     uint8_t     is_intra_bordered;
     uint8_t     updated_enable_pme;
@@ -912,6 +916,16 @@ static const uint8_t quantizer_to_qindex[] = {
 static const int percents[2][FIXED_QP_OFFSET_COUNT] = {
     {75, 70, 60, 20, 15, 0}, {76, 60, 30, 15, 8, 4} // libaom offsets
 };
+#if ADD_VQ_MODE
+static const uint64_t uni_psy_bias[] =
+{
+    50,  50,  50,  50,  50,  50,  50,  50,  50,  50,  50,  50,  50,  50,  50,  50,
+    60,  60,  60,  60,  60,  60,  60,  60,  70,  70,  70,  70,  70,  70,  70,  70,
+    80,  80,  80,  80,  80,  80,  80,  80,  90,  90,  90,  90,  90,  90,  90,  90,
+   100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100,
+};
+#endif
+
 extern void reset_mode_decision(SequenceControlSet *scs_ptr, ModeDecisionContext *context_ptr,
                                 PictureControlSet *pcs_ptr, uint16_t tile_row_idx,
                                 uint32_t segment_index);

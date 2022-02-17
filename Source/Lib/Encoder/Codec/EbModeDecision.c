@@ -6095,6 +6095,9 @@ uint32_t product_full_mode_decision(
     uint32_t candidate_total_count,
     uint32_t *best_candidate_index_array)
 {
+#if ADD_VQ_MODE
+    SequenceControlSet* scs_ptr = (SequenceControlSet*)pcs->scs_wrapper_ptr->object_ptr;
+#endif
     uint32_t lowest_cost_index = best_candidate_index_array[0];
 
     // Find the candidate with the lowest cost
@@ -6103,11 +6106,25 @@ uint32_t product_full_mode_decision(
         uint64_t lowest_cost = 0xFFFFFFFFFFFFFFFFull;
         for (uint32_t i = 0; i < candidate_total_count; ++i) {
             uint32_t cand_index = best_candidate_index_array[i];
+#if ADD_VQ_MODE
+            uint64_t cost = *(buffer_ptr_array[cand_index]->full_cost_ptr);
 
+            if (scs_ptr->vq_ctrls.sharpness_ctrls.unipred_bias && pcs->parent_pcs_ptr->is_noise_level && buffer_ptr_array[cand_index]->candidate_ptr->type == INTER_MODE &&
+               ( buffer_ptr_array[cand_index]->candidate_ptr->prediction_direction[0] == UNI_PRED_LIST_0 ||
+                 buffer_ptr_array[cand_index]->candidate_ptr->prediction_direction[0] == UNI_PRED_LIST_1 ) ){
+                cost = (cost * uni_psy_bias[pcs->picture_qp]) / 100;
+            }
+
+            if (cost < lowest_cost) {
+                lowest_cost_index = cand_index;
+                lowest_cost = cost;
+            }
+#else
             if (*(buffer_ptr_array[cand_index]->full_cost_ptr) < lowest_cost) {
                 lowest_cost_index = cand_index;
                 lowest_cost = *(buffer_ptr_array[cand_index]->full_cost_ptr);
             }
+#endif
         }
     }
 

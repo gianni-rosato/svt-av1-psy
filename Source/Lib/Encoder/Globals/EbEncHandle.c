@@ -1574,8 +1574,12 @@ EB_API EbErrorType svt_av1_enc_init(EbComponentType *svt_enc_component)
             input_data.picture_width, input_data.picture_height);
         input_data.enable_adaptive_quantization = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.enable_adaptive_quantization;
         input_data.calculate_variance = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->calculate_variance;
+#if ADD_VQ_MODE
+        input_data.scene_change_detection = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.scene_change_detection ||
+                                            enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->vq_ctrls.sharpness_ctrls.scene_transition;
+#else
         input_data.scene_change_detection = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->static_config.scene_change_detection;
-
+#endif
         input_data.tpl_lad_mg = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->tpl_lad_mg;
         input_data.input_resolution = enc_handle_ptr->scs_instance_array[instance_index]->scs_ptr->input_resolution;
 
@@ -2928,7 +2932,38 @@ void tf_controls(SequenceControlSet* scs_ptr, uint8_t tf_level) {
     scs_ptr->tf_params_per_type[2].use_fixed_point = 1;
 
 }
+#if ADD_VQ_MODE
+/*
+ * Derive tune Params; 0: use objective mode params, 1: use subjective mode params
+ */
+void derive_vq_params(SequenceControlSet* scs_ptr) {
+    VqCtrls* vq_ctrl = &scs_ptr->vq_ctrls;
 
+    if (scs_ptr->static_config.tune == 0) {
+
+        // Sharpness
+        vq_ctrl->sharpness_ctrls.scene_transition = 1;
+        vq_ctrl->sharpness_ctrls.tf               = 1;
+        vq_ctrl->sharpness_ctrls.unipred_bias     = 1;
+        vq_ctrl->sharpness_ctrls.ifs              = 1;
+        vq_ctrl->sharpness_ctrls.cdef             = 1;
+        vq_ctrl->sharpness_ctrls.restoration      = 1;
+        // Sharpness
+        vq_ctrl->stability_ctrls.depth_refinement = 1;
+    }
+    else {
+
+        // Sharpness
+        vq_ctrl->sharpness_ctrls.scene_transition = 0;
+        vq_ctrl->sharpness_ctrls.unipred_bias     = 0;
+        vq_ctrl->sharpness_ctrls.ifs              = 0;
+        vq_ctrl->sharpness_ctrls.cdef             = 0;
+        vq_ctrl->sharpness_ctrls.restoration      = 0;
+        // Sharpness
+        vq_ctrl->stability_ctrls.depth_refinement = 0;
+    }
+}
+#endif
 /*
  * Derive TF Params
  */
@@ -3358,6 +3393,11 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
     derive_input_resolution(
         &scs_ptr->input_resolution,
         scs_ptr->seq_header.max_frame_width*scs_ptr->seq_header.max_frame_height);
+#if ADD_VQ_MODE
+    // Set tune params
+    derive_vq_params(scs_ptr);
+#endif
+
     // Set TF level
     derive_tf_params(scs_ptr);
 
@@ -3384,7 +3424,11 @@ void set_param_based_on_input(SequenceControlSet *scs_ptr)
 
     // Update the scd_delay based on SCD, 1first pass
     // Delay needed for SCD , 1first pass of (2pass and 1pass VBR)
+#if ADD_VQ_MODE
+    if (scs_ptr->static_config.scene_change_detection || scs_ptr->vq_ctrls.sharpness_ctrls.scene_transition || scs_ptr->static_config.pass == ENC_FIRST_PASS || scs_ptr->lap_enabled)
+#else
     if (scs_ptr->static_config.scene_change_detection || scs_ptr->static_config.pass == ENC_FIRST_PASS || scs_ptr->lap_enabled)
+#endif
         scs_ptr->scd_delay = MAX(scs_ptr->scd_delay, 2);
 
     // no future minigop is used for lowdelay prediction structure
@@ -3914,7 +3958,9 @@ void copy_api_from_app(
         scs_ptr->static_config.look_ahead_distance = compute_default_look_ahead(&scs_ptr->static_config);
     scs_ptr->static_config.enable_tf = config_struct->enable_tf;
     scs_ptr->static_config.enable_overlays = config_struct->enable_overlays;
-
+#if ADD_VQ_MODE
+    scs_ptr->static_config.tune = config_struct->tune;
+#endif
     scs_ptr->static_config.superres_mode = config_struct->superres_mode;
     scs_ptr->static_config.superres_denom = config_struct->superres_denom;
     scs_ptr->static_config.superres_kf_denom = config_struct->superres_kf_denom;

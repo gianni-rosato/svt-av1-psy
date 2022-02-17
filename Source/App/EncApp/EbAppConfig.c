@@ -83,6 +83,9 @@
 // --- start: ALTREF_FILTERING_SUPPORT
 #define ENABLE_TF_TOKEN "--enable-tf"
 #define ENABLE_OVERLAYS "--enable-overlays"
+#if ADD_VQ_MODE
+#define TUNE_TOKEN "--tune"
+#endif
 // --- end: ALTREF_FILTERING_SUPPORT
 // --- start: SUPER-RESOLUTION SUPPORT
 #define SUPERRES_MODE_INPUT "--superres-mode"
@@ -613,6 +616,12 @@ static void set_enable_tf(const char *value, EbConfig *cfg) {
 static void set_enable_overlays(const char *value, EbConfig *cfg) {
     cfg->config.enable_overlays = (EbBool)strtoul(value, NULL, 0);
 };
+
+#if ADD_VQ_MODE
+static void set_tune(const char* value, EbConfig* cfg) {
+    cfg->config.tune = (EbBool)strtoul(value, NULL, 0);
+};
+#endif
 // --- end: ALTREF_FILTERING_SUPPORT
 // --- start: SUPER-RESOLUTION SUPPORT
 static void set_superres_mode(const char *value, EbConfig *cfg) {
@@ -1153,7 +1162,12 @@ ConfigEntry config_entry_specific[] = {
      "frame for the base layer picture, default is 0 [0-1]",
      set_enable_overlays},
     // --- end: ALTREF_FILTERING_SUPPORT
-
+#if ADD_VQ_MODE
+    {SINGLE_INPUT,
+     TUNE_TOKEN,
+     "Specifies whether to use PSNR or VQ as the tuning metric [0 = VQ, 1 = PSNR], default is 1 [0-1]",
+     set_tune},
+#endif
     // MD Parameters
     {SINGLE_INPUT,
      SCREEN_CONTENT_TOKEN,
@@ -1373,10 +1387,12 @@ ConfigEntry config_entry[] = {
 #if OPT_DECODER
     {SINGLE_INPUT, FAST_DECODE_TOKEN, "FastDecode", set_fast_decode_flag},
 #endif
+#if ADD_VQ_MODE
+     { SINGLE_INPUT, TUNE_TOKEN, "Tune", set_tune },
+#endif
     //   ALT-REF filtering support
     {SINGLE_INPUT, ENABLE_TF_TOKEN, "EnableTf", set_enable_tf},
     {SINGLE_INPUT, ENABLE_OVERLAYS, "EnableOverlays", set_enable_overlays},
-
     {SINGLE_INPUT, SCREEN_CONTENT_TOKEN, "ScreenContentMode", set_screen_content_mode},
     {SINGLE_INPUT,
      RESTRICTED_MOTION_VECTOR,

@@ -737,7 +737,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         pcs_ptr->approx_inter_rate = 0;
     else
         pcs_ptr->approx_inter_rate = 1;
+#if ADD_VQ_MODE // shut skip INTRA
+    if (pcs_ptr->slice_type == I_SLICE || pcs_ptr->parent_pcs_ptr->transition_present)
+#else
     if (pcs_ptr->slice_type == I_SLICE)
+#endif
         pcs_ptr->skip_intra = 0;
 #if OPT_M9_4K
 #if TUNE_M8
@@ -1113,8 +1117,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
     else if (enc_mode <= ENC_M10)
         pcs_ptr->pic_pd0_level = LIGHT_PD0_LVL2;
     else
+#if ADD_VQ_MODE
+        pcs_ptr->pic_pd0_level = (is_base || pcs_ptr->parent_pcs_ptr->transition_present) ? LIGHT_PD0_LVL4 : VERY_LIGHT_PD0;
+#else
         pcs_ptr->pic_pd0_level = is_base ? LIGHT_PD0_LVL4 : VERY_LIGHT_PD0;
-
+#endif
     if (pcs_ptr->parent_pcs_ptr->sc_class1 || scs_ptr->static_config.pass == ENC_MIDDLE_PASS)
         pcs_ptr->pic_skip_pd0 = 0;
     else if (enc_mode <= ENC_M12)
@@ -1130,7 +1137,11 @@ EbErrorType signal_derivation_mode_decision_config_kernel_oq(SequenceControlSet 
         pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag,
         pcs_ptr->temporal_layer_index);
     if (scs_ptr->super_block_size == 64) {
+#if ADD_VQ_MODE // depth removal
+        if (slice_type == I_SLICE || pcs_ptr->parent_pcs_ptr->transition_present) {
+#else
         if (slice_type == I_SLICE) {
+#endif
             pcs_ptr->pic_depth_removal_level = 0;
         } else {
             // Set depth_removal_level_controls
@@ -1825,7 +1836,11 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
         }
         CdefControls *cdef_ctrls = &pcs_ptr->parent_pcs_ptr->cdef_ctrls;
         uint8_t skip_perc = pcs_ptr->ref_skip_percentage;
+#if ADD_VQ_MODE
+        if ((skip_perc > 75 && cdef_ctrls->use_skip_detector) || (scs_ptr->vq_ctrls.sharpness_ctrls.cdef && pcs_ptr->parent_pcs_ptr->is_noise_level))
+#else
         if (skip_perc > 75 && cdef_ctrls->use_skip_detector)
+#endif
             pcs_ptr->parent_pcs_ptr->cdef_level = 0;
         else {
             if (cdef_ctrls->use_reference_cdef_fs) {
@@ -1930,6 +1945,18 @@ void *mode_decision_configuration_kernel(void *input_ptr) {
                 }
             }
         }
+
+
+#if ADD_VQ_MODE
+        Av1Common* cm = pcs_ptr->parent_pcs_ptr->av1_cm;
+        WnFilterCtrls* wn_ctrls = &cm->wn_filter_ctrls;
+
+        if (scs_ptr->vq_ctrls.sharpness_ctrls.restoration && pcs_ptr->parent_pcs_ptr->is_noise_level) {
+            wn_ctrls->enabled = 0;
+            cm->sg_filter_mode = 0;
+        }
+#endif
+
         // Post the results to the MD processes
 
         uint16_t tg_count = pcs_ptr->parent_pcs_ptr->tile_group_cols *

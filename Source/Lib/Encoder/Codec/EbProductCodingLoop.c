@@ -1915,6 +1915,11 @@ void md_stage_0(
     uint32_t input_cr_origin_in_index, BlkStruct *blk_ptr, uint32_t blk_origin_index,
     uint32_t blk_chroma_origin_index, uint32_t candidate_buffer_start_index, uint32_t max_buffers,
     EbBool scratch_buffer_pesent_flag) {
+
+#if ADD_VQ_MODE
+    SequenceControlSet* scs_ptr = (SequenceControlSet*)pcs_ptr->scs_wrapper_ptr->object_ptr;
+#endif
+
     int32_t  fast_loop_cand_index;
     uint32_t highest_cost_index;
     // Set MD Staging fast_loop_core settings
@@ -1955,6 +1960,14 @@ void md_stage_0(
                            blk_ptr,
                            blk_origin_index,
                            blk_chroma_origin_index);
+#if ADD_VQ_MODE
+            if (scs_ptr->vq_ctrls.sharpness_ctrls.unipred_bias && pcs_ptr->parent_pcs_ptr->is_noise_level &&
+                candidate_buffer->candidate_ptr->type == INTER_MODE &&
+                (candidate_buffer->candidate_ptr->prediction_direction[0] == UNI_PRED_LIST_0 ||
+                    candidate_buffer->candidate_ptr->prediction_direction[0] == UNI_PRED_LIST_1)) {
+                *candidate_buffer->fast_cost_ptr = (*candidate_buffer->fast_cost_ptr * uni_psy_bias[pcs_ptr->picture_qp]) / 100;
+            }
+#endif
             if (*candidate_buffer->fast_cost_ptr < context_ptr->mds0_best_cost) {
                 context_ptr->mds0_best_cost = *candidate_buffer->fast_cost_ptr;
                 context_ptr->mds0_best_class =

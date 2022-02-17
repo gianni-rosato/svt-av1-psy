@@ -2644,10 +2644,17 @@ uint32_t d2_inter_depth_block_decision(SequenceControlSet *scs_ptr, PictureContr
                                     &current_depth_cost);
             if (!pcs_ptr->parent_pcs_ptr->sb_geom[sb_addr].block_is_allowed[parent_depth_idx_mds])
                 parent_depth_cost = MAX_MODE_COST;
+#if ADD_VQ_MODE
+            if (context_ptr->inter_depth_bias) {
+                current_depth_cost = (current_depth_cost * context_ptr->inter_depth_bias) /
+                    1000;
+            }
+#else
             if (context_ptr->pd0_inter_depth_bias) {
                 current_depth_cost = (current_depth_cost * context_ptr->pd0_inter_depth_bias) /
                     1000;
             }
+#endif
             if (parent_depth_cost <= current_depth_cost) {
                 context_ptr->md_blk_arr_nsq[parent_depth_idx_mds].split_flag = EB_FALSE;
                 context_ptr->md_local_blk_unit[parent_depth_idx_mds].cost    = parent_depth_cost;

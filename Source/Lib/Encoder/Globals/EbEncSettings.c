@@ -286,6 +286,12 @@ EbErrorType svt_av1_verify_settings(
         return_error = EB_ErrorBadParameter;
     }
 #endif
+#if ADD_VQ_MODE
+    if (config->tune > 1) {
+        SVT_ERROR("Instance %u: Invalid tune flag [0 - 1, 0 for VQ and 1 for PSNR], your input: %d\n", channel_number + 1, config->tune);
+        return_error = EB_ErrorBadParameter;
+    }
+#endif
     // prediction structure
     if(config->enable_manual_pred_struct) {
         if(config->manual_pred_struct_entry_num > (1<<(MAX_HIERARCHICAL_LEVEL-1))){
@@ -553,7 +559,9 @@ EbErrorType svt_av1_set_default_params(
     // Alt-Ref default values
     config_ptr->enable_tf = EB_TRUE;
     config_ptr->enable_overlays = EB_FALSE;
-
+#if ADD_VQ_MODE
+    config_ptr->tune = 1;
+#endif
     // Super-resolution default values
     config_ptr->superres_mode = SUPERRES_NONE;
     config_ptr->superres_denom = 8;
@@ -1151,6 +1159,12 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(
         { "SuperresKfQthres", &config_struct->superres_kf_qthres },
         { "SuperresDenom", &config_struct->superres_denom },
         { "SuperresKfDenom", &config_struct->superres_kf_denom },
+#if OPT_DECODER
+        { "FastDecode", &config_struct->fast_decode },
+#endif
+#if ADD_VQ_MODE
+        { "Tune", &config_struct->tune },
+#endif
     };
     const size_t uint8_opts_size = sizeof(uint8_opts) / sizeof(uint8_opts[0]);
 

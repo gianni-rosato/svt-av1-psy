@@ -66,6 +66,29 @@ void assert_err(uint32_t condition, char *err_msg);
 
 #define DS_SC_FACT              23
 
+#if ADD_VQ_MODE
+
+#define VQ_NOISE_LVL_TH         15000
+#define VQ_STABILITY_ME_VAR_TH    750
+
+typedef struct SharpnessCtrls {
+    uint8_t scene_transition;
+    uint8_t tf;
+    uint8_t unipred_bias;
+    uint8_t ifs;
+    uint8_t cdef;
+    uint8_t restoration;
+} SharpnessCtrls;
+
+typedef struct StabilityCtrls {
+    uint8_t depth_refinement;
+} StabilityCtrls;
+
+typedef struct VqCtrls {
+    SharpnessCtrls sharpness_ctrls;
+    StabilityCtrls stability_ctrls;
+} VqCtrls;
+#endif
 typedef struct MrpCtrls {
     // Referencing scheme
     uint8_t referencing_scheme; // 0 or 1
@@ -2644,11 +2667,12 @@ static const uint8_t intra_area_th_class_1[MAX_HIERARCHICAL_LEVEL][MAX_TEMPORAL_
 #define CLASS_1_SIZE_PICTURE_ACTIVITY_REGIONS_TH            2
 #define HIGHER_THAN_CLASS_1_PICTURE_ACTIVITY_REGIONS_TH     8
 
+#if !ADD_VQ_MODE
 #define IS_COMPLEX_SB_VARIANCE_TH                          100
 #define IS_COMPLEX_SB_FLAT_VARIANCE_TH                     10
 #define IS_COMPLEX_SB_VARIANCE_DEVIATION_TH                13
 #define IS_COMPLEX_SB_ZZ_SAD_FACTOR_TH                     25
-
+#endif
 #define MAX_SUPPORTED_SEGMENTS                            7
 #define NUM_QPS                                           52
 

@@ -92,7 +92,11 @@ EbErrorType rate_control_context_ctor(EbThreadContext *  thread_context_ptr,
             ((interval_index + 1) * (uint32_t)(intra_period + 1)) - 1;
         context_ptr->rate_control_param_queue[interval_index]->processed_frame_number = 0;
         context_ptr->rate_control_param_queue[interval_index]->end_of_seq_seen        = 0;
+#if ADD_VQ_MODE
+        context_ptr->rate_control_param_queue[interval_index]->last_i_qp = 0;
+#else
         context_ptr->rate_control_param_queue[interval_index]->processed_frame_number = 0;
+#endif
     }
 
     return EB_ErrorNone;
@@ -3078,8 +3082,34 @@ void *rate_control_kernel(void *input_ptr) {
                 pcs_ptr->parent_pcs_ptr->blk_lambda_tuning = EB_FALSE;
             }
             reset_rc_param(pcs_ptr->parent_pcs_ptr);
+#if !ADD_VQ_MODE
             if (!is_superres_recode_task) {
+#endif
                 // Frame level RC. Find the ParamPtr for the current GOP
+#if ADD_VQ_MODE
+                {
+                    uint32_t interval_index_temp = 0;
+                    EbBool   interval_found = EB_FALSE;
+                    while ((interval_index_temp < PARALLEL_GOP_MAX_NUMBER) && !interval_found) {
+                        if (pcs_ptr->picture_number >=
+                            context_ptr->rate_control_param_queue[interval_index_temp]
+                            ->first_poc &&
+                            pcs_ptr->picture_number <=
+                            context_ptr->rate_control_param_queue[interval_index_temp]
+                            ->last_poc) {
+                            interval_found = EB_TRUE;
+                        }
+                        else
+                            interval_index_temp++;
+                    }
+                    CHECK_REPORT_ERROR(interval_index_temp != PARALLEL_GOP_MAX_NUMBER,
+                        scs_ptr->encode_context_ptr->app_callback_ptr,
+                        EB_ENC_RC_ERROR2);
+
+                    rate_control_param_ptr =
+                        context_ptr->rate_control_param_queue[interval_index_temp];
+                }
+#else
                 if (scs_ptr->static_config.intra_period_length == -1 ||
                     scs_ptr->static_config.rate_control_mode == 0) {
                     rate_control_param_ptr = context_ptr->rate_control_param_queue[0];
@@ -3104,7 +3134,11 @@ void *rate_control_kernel(void *input_ptr) {
                     rate_control_param_ptr =
                         context_ptr->rate_control_param_queue[interval_index_temp];
                 }
+#endif
                 pcs_ptr->parent_pcs_ptr->rate_control_param_ptr = rate_control_param_ptr;
+#if ADD_VQ_MODE
+                if (!is_superres_recode_task) {
+#endif
 #if FIX_VBR_DIV0
                 if (scs_ptr->static_config.rate_control_mode)
 #else
@@ -3307,6 +3341,27 @@ void *rate_control_kernel(void *input_ptr) {
                 }
                 frm_hdr->quantization_params.base_q_idx = quantizer_to_qindex[pcs_ptr->picture_qp];
             }
+#if ADD_VQ_MODE // QP
+            if (pcs_ptr->parent_pcs_ptr->slice_type == I_SLICE) {
+
+                rate_control_param_ptr->last_i_qp = pcs_ptr->picture_qp;
+            }
+            else if (pcs_ptr->parent_pcs_ptr->transition_present) {
+
+                uint32_t min_ref_qp = rate_control_param_ptr->last_i_qp;
+                if (pcs_ptr->ref_slice_type_array[0][0] != I_SLICE)
+                    min_ref_qp = pcs_ptr->ref_pic_qp_array[0][0];
+                if ((pcs_ptr->slice_type == B_SLICE) &&
+                    (pcs_ptr->ref_slice_type_array[1][0] != I_SLICE))
+                    min_ref_qp = MIN(min_ref_qp, pcs_ptr->ref_pic_qp_array[1][0]);
+
+                pcs_ptr->picture_qp = (uint8_t)CLIP3(scs_ptr->static_config.min_qp_allowed,
+                    scs_ptr->static_config.max_qp_allowed,
+                    (min_ref_qp + rate_control_param_ptr->last_i_qp) / 2);
+
+                frm_hdr->quantization_params.base_q_idx = quantizer_to_qindex[pcs_ptr->picture_qp];
+            }
+#endif
             pcs_ptr->parent_pcs_ptr->picture_qp = pcs_ptr->picture_qp;
 
             if (!is_superres_recode_task) {

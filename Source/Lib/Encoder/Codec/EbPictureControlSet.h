@@ -695,6 +695,9 @@ typedef struct PictureParentControlSet {
     EbBool   idr_flag;
     EbBool   cra_flag;
     EbBool   scene_change_flag;
+#if ADD_VQ_MODE
+    EbBool   transition_present;
+#endif
     EbBool   end_of_sequence_flag;
     uint8_t  picture_qp;
     uint64_t picture_number;
@@ -1071,6 +1074,9 @@ typedef struct PictureParentControlSet {
     uint32_t tf_tot_horz_blks; //total horizontal motion blocks in TF
     int8_t   tf_motion_direction; //motion direction in TF   -1:invalid   0:horz  1:vert
     uint8_t  adjust_under_shoot_gf;
+#if ADD_VQ_MODE
+    int32_t is_noise_level;
+#endif
 } PictureParentControlSet;
 
 typedef struct TplDispResults {

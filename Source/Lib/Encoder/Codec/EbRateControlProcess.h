@@ -179,6 +179,9 @@ typedef struct RateControlIntervalParamContext {
     int64_t kf_group_error_left;
     uint8_t end_of_seq_seen;
     int32_t processed_frame_number;
+#if ADD_VQ_MODE
+    uint8_t last_i_qp;
+#endif
 } RateControlIntervalParamContext;
 /**************************************
  * Input Port Types

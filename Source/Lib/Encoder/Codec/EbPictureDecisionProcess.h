@@ -65,7 +65,9 @@ typedef struct PictureDecisionContext {
     uint32_t **ahd_running_avg_cr;
     uint32_t **ahd_running_avg;
     EbBool     is_scene_change_detected;
-
+#if ADD_VQ_MODE
+    uint8_t    transition_present;
+#endif
     // Dynamic GOP
     uint32_t ttl_region_activity_cost[MAX_NUMBER_OF_REGIONS_IN_WIDTH]
                                      [MAX_NUMBER_OF_REGIONS_IN_HEIGHT];

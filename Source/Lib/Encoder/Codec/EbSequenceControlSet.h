@@ -247,6 +247,9 @@ typedef struct SequenceControlSet {
     int32_t          nmv_vec_cost[MV_JOINTS];
     int32_t          nmv_costs[2][MV_VALS];
     uint8_t          mvrate_set;
+#if ADD_VQ_MODE
+    VqCtrls         vq_ctrls;
+#endif
     MiniGopSizeCtrls mgs_ctls;
     TfControls       tf_params_per_type[3]; // [I_SLICE][BASE][L1]
     MrpCtrls         mrp_ctrls;

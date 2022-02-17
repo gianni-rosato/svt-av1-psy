@@ -534,6 +534,14 @@ typedef struct EbSvtAv1EncConfiguration {
     EbBool enable_tf;
 
     EbBool enable_overlays;
+#if ADD_VQ_MODE
+    /**
+     * @brief Tune for a particular metric; 0: VQ, 1: PSNR
+     *
+     * Default is 1.
+     */
+    uint8_t tune;
+#endif
     // super-resolution parameters
     uint8_t superres_mode;
     uint8_t superres_denom;

@@ -1156,6 +1156,10 @@ void *resource_coordination_kernel(void *input_ptr) {
 
             pcs_ptr->overlay_ppcs_ptr = NULL;
             pcs_ptr->is_alt_ref       = 0;
+#if ADD_VQ_MODE
+            pcs_ptr->transition_present = 0;
+            pcs_ptr->is_noise_level = 0;
+#endif
             if (loop_index) {
                 pcs_ptr->is_overlay = 1;
                 // set the overlay_ppcs_ptr in the original (ALT_REF) ppcs to the current ppcs
