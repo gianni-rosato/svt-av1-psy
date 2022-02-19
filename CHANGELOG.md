@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.9.1] - 2022-02-XX
+
+Encoder
+- New `key=val` API for setting encoder options along with `--svtav1-params` appside
+- New `--fast-decode` option for producing bitstreams tuned for faster decoding M5- M10
+- New `--tune` support for a subjectively optimized encoding mode
+- Quality vs density tradeoffs improvements for 4k resolutions and reduction or resolution checks
+- New SSE kernels for better encoding speed on older hardware
+- Bugfix: Removed `DISABLE_REALTIME` and instead implemented better checks for realtime encoding
+- All open library bugs resolved and closed
+
+Build and Testing
+- Windows: Moved .dll files to the binary directory next to the exe to fix dll loading issues
+- Windows: General VS 2017 compilation speedup
+- Windows: Added VS 2022
+- BSD: Fixed compilation issues and errors surounding GLIBC specific interfaces and conflicting names
+- Dockerfile added
+
 ## [0.9] - 2022-01-19
 
 Encoder

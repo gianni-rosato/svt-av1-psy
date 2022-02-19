@@ -16,7 +16,7 @@ if("${CMAKE_CURRENT_SOURCE_DIR}" STREQUAL "${CMAKE_CURRENT_BINARY_DIR}")
                     "Please use the Build folder or create your own.")
 endif()
 
-project(svt-av1 VERSION 0.9.0
+project(svt-av1 VERSION 0.9.1
     LANGUAGES C CXX)
 
 if(POLICY CMP0063)
