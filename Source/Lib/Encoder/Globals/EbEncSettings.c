@@ -1038,7 +1038,7 @@ static EbErrorType str_to_color_range(const char *nptr, uint8_t *out)
 
 #define COLOR_OPT(par, opt) \
     do { \
-        if (!strcmp(name, #par)) { \
+        if (!strcmp(name, par)) { \
             return_error = str_to_##opt(value, &config_struct->opt); \
             if (return_error == EB_ErrorNone) \
                 return return_error; \
@@ -1052,7 +1052,7 @@ static EbErrorType str_to_color_range(const char *nptr, uint8_t *out)
 
 #define COLOR_METADATA_OPT(par, opt) \
     do { \
-        if (!strcmp(name, #par)) \
+        if (!strcmp(name, par)) \
             return svt_aom_parse_##opt(&config_struct->opt, value) ? \
                        EB_ErrorNone : EB_ErrorBadParameter; \
     } while(0)
@@ -1067,40 +1067,40 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(
 
     EbErrorType return_error = EB_ErrorBadParameter;
 
-    if (!strcmp(name, "Keyint"))
+    if (!strcmp(name, "keyint"))
         return str_to_keyint(value, &config_struct->intra_period_length);
 
     // options updating more than one field
-    if (!strcmp(name, "CRF"))
+    if (!strcmp(name, "crf"))
         return str_to_crf(value, config_struct);
 
     // custom enum fields
-    if (!strcmp(name, "Profile"))
+    if (!strcmp(name, "profile"))
         return str_to_profile(value,             &config_struct->profile) == EB_ErrorBadParameter ?
                   str_to_uint(value, (uint32_t *)&config_struct->profile) : EB_ErrorNone;
 
-    if (!strcmp(name, "EncoderColorFormat"))
+    if (!strcmp(name, "color-format"))
         return str_to_color_fmt(value,             &config_struct->encoder_color_format) == EB_ErrorBadParameter ?
                     str_to_uint(value, (uint32_t *)&config_struct->encoder_color_format) : EB_ErrorNone;
 
-    if (!strcmp(name, "IntraRefreshType"))
+    if (!strcmp(name, "irefresh-type"))
         return str_to_intra_rt(value,             &config_struct->intra_refresh_type) == EB_ErrorBadParameter ?
                    str_to_uint(value, (uint32_t *)&config_struct->intra_refresh_type) : EB_ErrorNone;
 
-    COLOR_OPT(ColorPrimaries, color_primaries);
-    COLOR_OPT(TransferCharacteristics, transfer_characteristics);
-    COLOR_OPT(MatrixCoefficients, matrix_coefficients);
-    COLOR_OPT(ColorRange, color_range);
+    COLOR_OPT("color-primaries", color_primaries);
+    COLOR_OPT("transfer-characteristics", transfer_characteristics);
+    COLOR_OPT("matrix-coefficients", matrix_coefficients);
+    COLOR_OPT("color-range", color_range);
 
     // custom struct fields
-    COLOR_METADATA_OPT(MasteringDisplay, mastering_display);
-    COLOR_METADATA_OPT(ContentLightLevel, content_light_level);
+    COLOR_METADATA_OPT("mastering-display", mastering_display);
+    COLOR_METADATA_OPT("content-light", content_light_level);
 
     // arrays
-    if (!strcmp(name, "QIndexOffsets"))
+    if (!strcmp(name, "qindex-offsets"))
         return parse_list(value, config_struct->qindex_offsets, EB_MAX_TEMPORAL_LAYERS);
 
-    if (!strcmp(name, "ChromaQIndexOffsets"))
+    if (!strcmp(name, "chroma-qindex-offsets"))
         return parse_list(value, config_struct->chroma_qindex_offsets, EB_MAX_TEMPORAL_LAYERS);
 
     // uint32_t fields
@@ -1108,35 +1108,35 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(
         const char *name;
         uint32_t *out;
     } uint_opts[] = {
-        { "SourceWidth", &config_struct->source_width },
-        { "SourceHeight", &config_struct->source_height },
-        { "QP", &config_struct->qp },
-        { "FilmGrain", &config_struct->film_grain_denoise_strength },
-        { "HierarchicalLevels", &config_struct->hierarchical_levels },
-        { "Tier", &config_struct->tier },
-        { "Level", &config_struct->level },
-        { "LogicalProcessors", &config_struct->logical_processors },
-        { "PinnedExecution", &config_struct->pin_threads },
-        { "FrameRateNumerator", &config_struct->frame_rate_numerator },
-        { "FrameRateDenominator", &config_struct->frame_rate_denominator },
-        { "RateControlMode", &config_struct->rate_control_mode },
-        { "Lookahead", &config_struct->look_ahead_distance },
-        { "TargetBitRate", &config_struct->target_bit_rate },
-        { "MaxBitRate", &config_struct->max_bit_rate },
-        { "VBVBufSize", &config_struct->vbv_bufsize },
-        { "SceneChangeDetection", &config_struct->scene_change_detection },
-        { "MaxQpAllowed", &config_struct->max_qp_allowed },
-        { "MinQpAllowed", &config_struct->min_qp_allowed },
-        { "VBRBiasPct", &config_struct->vbr_bias_pct },
-        { "MinSectionPct", &config_struct->vbr_min_section_pct },
-        { "MaxSectionPct", &config_struct->vbr_max_section_pct },
-        { "UnderShootPct", &config_struct->under_shoot_pct },
-        { "OverShootPct", &config_struct->over_shoot_pct },
-        { "RecodeLoop", &config_struct->recode_loop },
-        { "StatReport", &config_struct->stat_report },
-        { "ScreenContentMode", &config_struct->screen_content_mode },
-        { "EncoderBitDepth", &config_struct->encoder_bit_depth },
-        { "CompressedTenBitFormat", &config_struct->compressed_ten_bit_format },
+        { "width", &config_struct->source_width },
+        { "height", &config_struct->source_height },
+        { "qp", &config_struct->qp },
+        { "film-grain", &config_struct->film_grain_denoise_strength },
+        { "hierarchical-levels", &config_struct->hierarchical_levels },
+        { "tier", &config_struct->tier },
+        { "level", &config_struct->level },
+        { "lp", &config_struct->logical_processors },
+        { "pin", &config_struct->pin_threads },
+        { "fps-num", &config_struct->frame_rate_numerator },
+        { "fps-denom", &config_struct->frame_rate_denominator },
+        { "rc", &config_struct->rate_control_mode },
+        { "lookahead", &config_struct->look_ahead_distance },
+        { "tbr", &config_struct->target_bit_rate },
+        { "mbr", &config_struct->max_bit_rate },
+        { "vbv-bufsize", &config_struct->vbv_bufsize },
+        { "scd", &config_struct->scene_change_detection },
+        { "max-qp", &config_struct->max_qp_allowed },
+        { "min-qp", &config_struct->min_qp_allowed },
+        { "bias-pct", &config_struct->vbr_bias_pct },
+        { "minsection-pct", &config_struct->vbr_min_section_pct },
+        { "maxsection-pct", &config_struct->vbr_max_section_pct },
+        { "undershoot-pct", &config_struct->under_shoot_pct },
+        { "overshoot-pct", &config_struct->over_shoot_pct },
+        { "recode-loop", &config_struct->recode_loop },
+        { "enable-stat-report", &config_struct->stat_report },
+        { "scm", &config_struct->screen_content_mode },
+        { "input-depth", &config_struct->encoder_bit_depth },
+        { "compressed-ten-bit-format", &config_struct->compressed_ten_bit_format },
     };
     const size_t uint_opts_size = sizeof(uint_opts) / sizeof(uint_opts[0]);
 
@@ -1151,19 +1151,19 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(
         const char *name;
         uint8_t *out;
     } uint8_opts[] = {
-        { "PredStructure", &config_struct->pred_structure },
-        { "EnableTPLModel", &config_struct->enable_tpl_la },
-        { "AdaptiveQuantization", &config_struct->enable_adaptive_quantization },
-        { "SuperresMode", &config_struct->superres_mode },
-        { "SuperresQthres", &config_struct->superres_qthres },
-        { "SuperresKfQthres", &config_struct->superres_kf_qthres },
-        { "SuperresDenom", &config_struct->superres_denom },
-        { "SuperresKfDenom", &config_struct->superres_kf_denom },
+        { "pred-struct", &config_struct->pred_structure },
+        { "enable-tpl-la", &config_struct->enable_tpl_la },
+        { "aq-mode", &config_struct->enable_adaptive_quantization },
+        { "superres-mode", &config_struct->superres_mode },
+        { "superres-qthres", &config_struct->superres_qthres },
+        { "superres-kf-qthres", &config_struct->superres_kf_qthres },
+        { "superres-denom", &config_struct->superres_denom },
+        { "superres-kf-denom", &config_struct->superres_kf_denom },
 #if OPT_DECODER
-        { "FastDecode", &config_struct->fast_decode },
+        { "fast-decode", &config_struct->fast_decode },
 #endif
 #if ADD_VQ_MODE
-        { "Tune", &config_struct->tune },
+        { "tune", &config_struct->tune },
 #endif
     };
     const size_t uint8_opts_size = sizeof(uint8_opts) / sizeof(uint8_opts[0]);
@@ -1183,9 +1183,9 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(
         const char *name;
         int64_t *out;
     } int64_opts[] = {
-        { "BufInitialSz", &config_struct->starting_buffer_level_ms },
-        { "BufOptimalSz", &config_struct->optimal_buffer_level_ms },
-        { "BufSz", &config_struct->maximum_buffer_size_ms },
+        { "buf-initial-sz", &config_struct->starting_buffer_level_ms },
+        { "buf-optimal-sz", &config_struct->optimal_buffer_level_ms },
+        { "buf-sz", &config_struct->maximum_buffer_size_ms },
     };
     const size_t int64_opts_size = sizeof(int64_opts) / sizeof(int64_opts[0]);
 
@@ -1200,16 +1200,16 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(
         const char *name;
         int32_t *out;
     } int_opts[] = {
-        { "KeyFrameChromaQIndexOffset", &config_struct->key_frame_chroma_qindex_offset },
-        { "KeyFrameQIndexOffset", &config_struct->key_frame_qindex_offset },
-        { "Pass", &config_struct->pass },
-        { "CDEFLevel", &config_struct->cdef_level },
-        { "EnableRestoration", &config_struct->enable_restoration_filtering },
-        { "Mfmv", &config_struct->enable_mfmv },
-        { "IntraPeriod", &config_struct->intra_period_length },
-        { "TileRow", &config_struct->tile_rows },
-        { "TileCol", &config_struct->tile_columns },
-        { "TargetSocket", &config_struct->target_socket },
+        { "key-frame-chroma-qindex-offset", &config_struct->key_frame_chroma_qindex_offset },
+        { "key-frame-qindex-offset", &config_struct->key_frame_qindex_offset },
+        { "pass", &config_struct->pass },
+        { "pass", &config_struct->cdef_level },
+        { "enable-restoration", &config_struct->enable_restoration_filtering },
+        { "enable-mfmv", &config_struct->enable_mfmv },
+        { "intra-period", &config_struct->intra_period_length },
+        { "tile-rows", &config_struct->tile_rows },
+        { "tile-columns", &config_struct->tile_columns },
+        { "ss", &config_struct->target_socket },
     };
     const size_t int_opts_size = sizeof(int_opts) / sizeof(int_opts[0]);
 
@@ -1224,7 +1224,7 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(
         const char *name;
         int8_t *out;
     } int8_opts[] = {
-        { "EncoderMode", &config_struct->enc_mode },
+        { "preset", &config_struct->enc_mode },
     };
     const size_t int8_opts_size = sizeof(int8_opts) / sizeof(int8_opts[0]);
 
@@ -1243,13 +1243,13 @@ EB_API EbErrorType svt_av1_enc_parse_parameter(
         const char *name;
         EbBool *out;
     } bool_opts[] = {
-        { "UseQpFile", &config_struct->use_qp_file },
-        { "UseFixedQIndexOffsets", &config_struct->use_fixed_qindex_offsets },
-        { "LoopFilterEnable", &config_struct->enable_dlf_flag },
-        { "RestrictedMotionVector", &config_struct->restricted_motion_vector },
-        { "EnableTF", &config_struct->enable_tf },
-        { "EnableOverlays", &config_struct->enable_overlays },
-        { "HighDynamicRangeInput", &config_struct->high_dynamic_range_input },
+        { "use-q-file", &config_struct->use_qp_file },
+        { "use-fixed-qindex-offsets", &config_struct->use_fixed_qindex_offsets },
+        { "enable-dlf", &config_struct->enable_dlf_flag },
+        { "rmv", &config_struct->restricted_motion_vector },
+        { "enable-tf", &config_struct->enable_tf },
+        { "enable-overlays", &config_struct->enable_overlays },
+        { "enable-hdr", &config_struct->high_dynamic_range_input },
     };
     const size_t bool_opts_size = sizeof(bool_opts) / sizeof(bool_opts[0]);
 
