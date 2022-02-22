@@ -152,7 +152,7 @@ The encoder parameters present in the `Sample.cfg` file are listed in this table
 | **Progress**                     | --progress         | [0-2]      | 1           | Verbosity of the output [0: no progress is printed, 2: aomenc style output]                                     |
 | **NoProgress**                   | --no-progress      | [0-1]      | 0           | Do not print out progress [1: `--progress 0`, 0: `--progress 1`]                                                |
 | **EncoderMode**                  | --preset           | [-2-13]    | 12          | Encoder preset, presets < 0 are for debugging. Higher presets means faster encodes, but with a quality tradeoff |
-| **SvtAv1Params**                 | --svtav1-params    | any string | None        | Colon-separated list of `key=value` pairs of parameters with keys based on config file options                  |
+| **SvtAv1Params**                 | --svtav1-params    | any string | None        | Colon-separated list of `key=value` pairs of parameters with keys based on command line options without `--`    |
 |                                  | --nch              | [1-6]      | 1           | Number of channels (library instance) that will be instantiated                                                 |
 
 ##### Usage of **SvtAv1Params**
@@ -166,7 +166,7 @@ SvtAv1EncApp \
   -i input.y4m \
   -b output.ivf \
   --svtav1-params \
-  "EncoderMode=10:CRF=30:IntraRefreshType=kf:MatrixCoefficients=bt709:MasteringDisplay=G(0.2649,0.6900)B(0.1500,0.0600)R(0.6800,0.3200)WP(0.3127,0.3290)L(1000.0,1)"
+  "preset=10:crf=30:irefresh-type=kf:matrix-coefficients=bt709:mastering-display=G(0.2649,0.6900)B(0.1500,0.0600)R(0.6800,0.3200)WP(0.3127,0.3290)L(1000.0,1)"
 ```
 
 This will set `--preset` to 10 and `--crf` to 30 inside the API along with some other parameters.
