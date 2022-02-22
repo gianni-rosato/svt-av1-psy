@@ -450,6 +450,11 @@ EbErrorType svt_av1_verify_settings(
         SVT_WARN("Instance %u: 8K and higher resolution support is currently a work-in-progress project, and is only available for demos, experimentation, and further development uses and should not be used for benchmarking until fully implemented.\n", channel_number + 1);
     }
 
+    if (config->pred_structure == 1 && config->tune == 0) {
+        SVT_WARN("Instance %u: Tune 0 is not applicable for low-delay, tune will be forced to 1.\n", channel_number + 1);
+        config->tune = 1;
+    }
+
     return return_error;
 }
 
